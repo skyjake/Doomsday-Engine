@@ -1,36 +1,29 @@
-/**\file p_mapdata.h
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * Playsim Data Structures, Macros and Constants.
+ * @file p_mapdata.h
+ * Playsim Data Structures, Macros and Constants. @ingroup play
  *
- * These are internal to Doomsday. The games have no direct access to
- * this data.
+ * These are internal to Doomsday. The games have no direct access to this data.
+ *
+ * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_PLAY_DATA_H
-#define LIBDENG_PLAY_DATA_H
+#ifndef LIBDENG_PLAY_MAPDATA_H
+#define LIBDENG_PLAY_MAPDATA_H
 
 #if defined(__JDOOM__) || defined(__JHERETIC__) || defined(__JHEXEN__)
 #  error "Attempted to include internal Doomsday p_mapdata.h from a game"
@@ -198,11 +191,22 @@ extern float mapGravity;
 
 #include "gamemap.h"
 
+// The current map.
 extern GameMap* theMap;
 
-void            P_SetCurrentMap(GameMap* map);
+/**
+ * Change the global "current" map.
+ */
+void P_SetCurrentMap(GameMap* map);
 
-const char*     P_GenerateUniqueMapId(const char* mapId);
+/**
+ * Generate a 'unique' identifier for the map.  This identifier
+ * contains information about the map tag (E3M3), the WAD that
+ * contains the map (DOOM.IWAD), and the game mode (doom-ultimate).
+ *
+ * The entire ID string will be in lowercase letters.
+ */
+const char* P_GenerateUniqueMapId(const char* mapId);
 
 /**
  * Is there a known map referenced by @a uri and if so, is it available for loading?
@@ -229,38 +233,70 @@ const char* P_MapSourceFile(const char* uri);
  */
 boolean P_LoadMap(const char* uri);
 
-void            P_PolyobjChanged(polyobj_t* po);
-void            P_RegisterUnknownTexture(const char* name, boolean planeTex);
-void            P_PrintMissingTextureList(void);
-void            P_FreeBadTexList(void);
+void P_PolyobjChanged(polyobj_t* po);
 
-/// To be called to initialize the game map object defs.
+void P_RegisterUnknownTexture(const char* name, boolean planeTex);
+
+/**
+ * Announce any bad texture names we came across when loading the map.
+ */
+void P_PrintMissingTextureList(void);
+
+/**
+ * Frees memory we allocated for bad texture name collection.
+ */
+void P_FreeBadTexList(void);
+
+/**
+ * To be called to initialize the game map object defs.
+ */
 void P_InitGameMapObjDefs(void);
 
-/// To be called to free all memory allocated for the map obj defs.
+/**
+ * To be called to free all memory allocated for the map obj defs.
+ */
 void P_ShutdownGameMapObjDefs(void);
 
-void            P_InitGameMapObjDefs(void);
-void            P_ShutdownGameMapObjDefs(void);
+void P_InitGameMapObjDefs(void);
+void P_ShutdownGameMapObjDefs(void);
 
-boolean         P_RegisterMapObj(int identifier, const char* name);
-boolean         P_RegisterMapObjProperty(int identifier, int propIdentifier,
-                                         const char* propName, valuetype_t type);
-gamemapobjdef_t* P_GetGameMapObjDef(int identifier, const char *objName,
-                                    boolean canCreate);
+/**
+ * Called by the game to register the map object types it wishes us to make
+ * public via the MPE interface.
+ */
+boolean P_RegisterMapObj(int identifier, const char* name);
 
-void            P_DestroyGameMapObjDB(gameobjdata_t* moData);
-void            P_AddGameMapObjValue(gameobjdata_t* moData, gamemapobjdef_t* gmoDef,
-                                uint propIdx, uint elmIdx, valuetype_t type,
-                                void* data);
-gamemapobj_t*   P_GetGameMapObj(gameobjdata_t* moData, gamemapobjdef_t* def,
-                                uint elmIdx, boolean canCreate);
+/**
+ * Called by the game to add a new property to a previously registered
+ * map object type definition.
+ */
+boolean P_RegisterMapObjProperty(int identifier, int propIdentifier,
+    const char* propName, valuetype_t type);
 
-uint            P_CountGameMapObjs(int identifier);
-byte            P_GetGMOByte(int identifier, uint elmIdx, int propIdentifier);
-short           P_GetGMOShort(int identifier, uint elmIdx, int propIdentifier);
-int             P_GetGMOInt(int identifier, uint elmIdx, int propIdentifier);
-fixed_t         P_GetGMOFixed(int identifier, uint elmIdx, int propIdentifier);
-angle_t         P_GetGMOAngle(int identifier, uint elmIdx, int propIdentifier);
-float           P_GetGMOFloat(int identifier, uint elmIdx, int propIdentifier);
-#endif /* LIBDENG_PLAY_DATA_H */
+/**
+ * Look up a mapobj definition.
+ *
+ * @param identifer     If objName is @c NULL, compare using this unique identifier.
+ * @param objName       If not @c NULL, compare using this unique name.
+ */
+gamemapobjdef_t* P_GetGameMapObjDef(int identifier, const char *objName, boolean canCreate);
+
+/**
+ * Destroy the given game map obj database.
+ */
+void P_DestroyGameMapObjDB(gameobjdata_t* moData);
+
+void P_AddGameMapObjValue(gameobjdata_t* moData, gamemapobjdef_t* gmoDef, uint propIdx,
+    uint elmIdx, valuetype_t type, void* data);
+
+gamemapobj_t* P_GetGameMapObj(gameobjdata_t* moData, gamemapobjdef_t* def, uint elmIdx, boolean canCreate);
+
+uint P_CountGameMapObjs(int identifier);
+byte P_GetGMOByte(int identifier, uint elmIdx, int propIdentifier);
+short P_GetGMOShort(int identifier, uint elmIdx, int propIdentifier);
+int P_GetGMOInt(int identifier, uint elmIdx, int propIdentifier);
+fixed_t P_GetGMOFixed(int identifier, uint elmIdx, int propIdentifier);
+angle_t P_GetGMOAngle(int identifier, uint elmIdx, int propIdentifier);
+float P_GetGMOFloat(int identifier, uint elmIdx, int propIdentifier);
+
+#endif /// LIBDENG_PLAY_MAPDATA_H
