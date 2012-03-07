@@ -842,7 +842,7 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
 
     if(df & SIDF_LINE_FLAGS)
     {
-        linedef_t *line = R_GetLineForSide(num);
+        linedef_t* line = sid->line;
         if(line)
         {
             // The delta includes the entire lowest byte.

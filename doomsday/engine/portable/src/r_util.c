@@ -256,26 +256,6 @@ float R_PointToDist(const float x, const float y)
     return dist;
 }
 
-linedef_t *R_GetLineForSide(const uint sideNumber)
-{
-    uint                i;
-    sidedef_t          *side = SIDE_PTR(sideNumber);
-    sector_t           *sector = side->sector;
-
-    // All sides may not have a sector.
-    if(!sector)
-        return NULL;
-
-    for(i = 0; i < sector->lineDefCount; ++i)
-        if(sector->lineDefs[i]->L_frontside == side ||
-           sector->lineDefs[i]->L_backside == side)
-        {
-            return sector->lineDefs[i];
-        }
-
-    return NULL;
-}
-
 void R_AmplifyColor(float rgb[3])
 {
     float max = 0;

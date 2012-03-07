@@ -123,9 +123,6 @@ static float deltaBaseScores[NUM_DELTA_TYPES];
 // the mobj being compared.
 static dt_mobj_t dummyZeroMobj;
 
-// Pointer to the owner line for each side.
-static linedef_t** sideOwners;
-
 // CODE --------------------------------------------------------------------
 
 /**
@@ -177,22 +174,13 @@ void Sv_InitPools(void)
         pools[i].isFirst = true;
     }
 
-    // Find the owners of all sides.
-    sideOwners = Z_Malloc(sizeof(linedef_t *) * NUM_SIDEDEFS, PU_MAP, 0);
-    for(i = 0; i < NUM_SIDEDEFS; ++i)
-    {
-        sideOwners[i] = R_GetLineForSide(i);
-    }
-
     // Store the current state of the world into both the registers.
     Sv_RegisterWorld(&worldRegister, false);
     Sv_RegisterWorld(&initialRegister, true);
 
-#ifdef _DEBUG
     // How much time did we spend?
-    Con_Message("Sv_InitPools: World registered, done in %.2f seconds.\n",
-                (Sys_GetRealTime() - startTime) / 1000.0f);
-#endif
+    DEBUG_Message(("Sv_InitPools: World registered, done in %.2f seconds.\n",
+                   (Sys_GetRealTime() - startTime) / 1000.0f));
 }
 
 /**
@@ -200,6 +188,7 @@ void Sv_InitPools(void)
  */
 void Sv_ShutdownPools(void)
 {
+    // Nothing to do.
 }
 
 /**
@@ -479,8 +468,8 @@ void Sv_RegisterSector(dt_sector_t* reg, uint number)
  */
 void Sv_RegisterSide(dt_side_t* reg, uint number)
 {
-    sidedef_t*          side = SIDE_PTR(number);
-    linedef_t*          line = sideOwners[number];
+    sidedef_t* side = SIDE_PTR(number);
+    linedef_t* line = side->line;
 
     reg->top.material = side->SW_topmaterial;
     reg->middle.material = side->SW_middlematerial;
@@ -764,12 +753,12 @@ boolean Sv_RegisterCompareSector(cregister_t* reg, uint number,
 boolean Sv_RegisterCompareSide(cregister_t* reg, uint number, sidedelta_t* d,
                                byte doUpdate)
 {
-    const sidedef_t*    s = SIDE_PTR(number);
-    const linedef_t*    line = sideOwners[number];
-    dt_side_t*          r = &reg->sideDefs[number];
-    int                 df = 0;
-    byte                lineFlags = (line ? line->flags & 0xff : 0);
-    byte                sideFlags = s->flags & 0xff;
+    const sidedef_t* s = SIDE_PTR(number);
+    const linedef_t* line = s->line;
+    dt_side_t* r = &reg->sideDefs[number];
+    byte lineFlags = (line ? line->flags & 0xff : 0);
+    byte sideFlags = s->flags & 0xff;
+    int df = 0;
 
     if(r->top.material != s->SW_topmaterial &&
        !(s->SW_topinflags & SUIF_FIX_MISSING_MATERIAL))
@@ -2277,8 +2266,7 @@ void Sv_NewSideDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
     for(i = start; i < end; ++i)
     {
         // The side must be owned by a line.
-        if(sideOwners[i] == NULL)
-            continue;
+        if(sideDefs[i].line == NULL) continue;
 
         if(Sv_RegisterCompareSide(reg, i, &delta, doUpdate))
         {
