@@ -293,7 +293,7 @@ void UILog_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     if(cfg.mapTitle && actualMapTime < 6 * 35) return;
     /// kludge end.
 
-    if(0 == pvisMsgCount) return;
+    if(!pvisMsgCount) return;
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -311,7 +311,7 @@ void UILog_Drawer(uiwidget_t* obj, const Point2Raw* offset)
         }
 
         // Nothing visible?
-        if(i == pvisMsgCount) return;
+        if(i == pvisMsgCount) goto stateCleanup;
 
         // There is possibly fewer potentially-visible messages now.
         pvisMsgCount -= firstMsg - firstPVisMsg;
@@ -408,6 +408,7 @@ void UILog_Drawer(uiwidget_t* obj, const Point2Raw* offset)
         y += lineHeight;
     }
 
+stateCleanup:
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
