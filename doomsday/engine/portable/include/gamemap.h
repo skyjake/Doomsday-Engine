@@ -30,14 +30,23 @@ struct thinkerlist_s;
 struct clmoinfo_s;
 
 /**
- * The client mobj hash is used for quickly finding a client mobj by its identifier.
+ * The client mobjs are stored into a hash for quickly locating a ClMobj by its identifier.
  */
+#define CLIENT_MOBJ_HASH_SIZE       (256)
+
 typedef struct cmhash_s {
     struct clmoinfo_s *first, *last;
 } cmhash_t;
 
-/// The client mobjs are stored into a hash to speed up the searching.
-#define CLIENT_MOBJ_HASH_SIZE       (256)
+#define CLIENT_MAX_MOVERS          1024 // Definitely enough!
+
+typedef enum {
+    CPT_FLOOR,
+    CPT_CEILING
+} clplanetype_t;
+
+struct clplane_s;
+struct clpolyobj_s;
 
 typedef struct gamemap_s {
     Uri* uri;
@@ -54,7 +63,12 @@ typedef struct gamemap_s {
         boolean inited;
     } thinkers;
 
-    cmhash_t cmHash[CLIENT_MOBJ_HASH_SIZE];
+    // Client only data:
+    cmhash_t clMobjHash[CLIENT_MOBJ_HASH_SIZE];
+
+    struct clplane_s* clActivePlanes[CLIENT_MAX_MOVERS];
+    struct clpolyobj_s* clActivePolyobjs[CLIENT_MAX_MOVERS];
+    // End client only data.
 
     uint numVertexes;
     vertex_t* vertexes;
@@ -460,6 +474,15 @@ void GameMap_ClMobjReset(GameMap* map);
  * @return  If the callback returns @c false.
  */
 boolean GameMap_ClMobjIterator(GameMap* map, boolean (*callback) (struct mobj_s*, void*), void* context);
+
+/**
+ * Allocate a new client-side plane mover.
+ *
+ * @param map  GameMap instance.
+ * @return  The new mover or @c NULL if arguments are invalid.
+ */
+struct clplane_s* GameMap_NewClPlane(GameMap* map, uint sectornum, clplanetype_t type,
+    float dest, float speed);
 
 /**
  * Initialize all Polyobjs in the map. To be called after map load.

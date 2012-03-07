@@ -51,7 +51,7 @@ extern int gotFrame; ///< @todo Remove this...
 static cmhash_t* GameMap_ClMobjHash(GameMap* map, thid_t id)
 {
     assert(map);
-    return &map->cmHash[(uint) id % CLIENT_MOBJ_HASH_SIZE];
+    return &map->clMobjHash[(uint) id % CLIENT_MOBJ_HASH_SIZE];
 }
 
 /// @note Part of the Doomsday public API.
@@ -144,7 +144,7 @@ boolean GameMap_ClMobjIterator(GameMap* map, boolean (*callback) (mobj_t*, void*
 
     for(i = 0; i < CLIENT_MOBJ_HASH_SIZE; ++i)
     {
-        for(info = map->cmHash[i].first; info; info = info->next)
+        for(info = map->clMobjHash[i].first; info; info = info->next)
         {
             if(!callback(ClMobj_MobjForInfo(info), parm))
                 return false;
@@ -320,7 +320,7 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int fl
 void GameMap_InitClMobjs(GameMap* map)
 {
     assert(map);
-    memset(map->cmHash, 0, sizeof(map->cmHash));
+    memset(map->clMobjHash, 0, sizeof(map->clMobjHash));
 }
 
 void GameMap_DestroyClMobjs(GameMap* map)
@@ -331,7 +331,7 @@ void GameMap_DestroyClMobjs(GameMap* map)
 
     for(i = 0; i < CLIENT_MOBJ_HASH_SIZE; ++i)
     {
-        for(info = map->cmHash[i].first; info; info = info->next)
+        for(info = map->clMobjHash[i].first; info; info = info->next)
         {
             mobj_t* mo = ClMobj_MobjForInfo(info);
             // Players' clmobjs are not linked anywhere.
@@ -350,7 +350,7 @@ void GameMap_ClMobjReset(GameMap* map)
     Cl_ResetFrame();
 
     // The PU_MAP memory was freed, so just clear the hash.
-    memset(map->cmHash, 0, sizeof(map->cmHash));
+    memset(map->clMobjHash, 0, sizeof(map->clMobjHash));
 }
 
 void GameMap_ExpireClMobjs(GameMap* map)
@@ -365,7 +365,7 @@ void GameMap_ExpireClMobjs(GameMap* map)
     // Move all client mobjs.
     for(i = 0; i < CLIENT_MOBJ_HASH_SIZE; ++i)
     {
-        for(info = map->cmHash[i].first; info; info = next)
+        for(info = map->clMobjHash[i].first; info; info = next)
         {
             next = info->next;
             mo = ClMobj_MobjForInfo(info);

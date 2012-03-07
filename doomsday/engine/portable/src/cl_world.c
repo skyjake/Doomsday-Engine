@@ -35,40 +35,37 @@
 #include "r_util.h"
 #include "materialarchive.h"
 
-#define MAX_MOVERS          1024 // Definitely enough!
 #define MAX_TRANSLATIONS    16384
 
 #define MVF_CEILING         0x1 // Move ceiling.
 #define MVF_SET_FLOORPIC    0x2 // Set floor texture when move done.
 
-typedef struct {
+typedef struct clplane_s {
     thinker_t   thinker;
-    uint        sectornum;
-    clmovertype_t type;
+    uint        sectorIndex;
+    clplanetype_t type;
     int         property; // floor or ceiling
     int         dmuPlane;
     float       destination;
     float       speed;
-} mover_t;
+} clplane_t;
 
-typedef struct {
+typedef struct clpolyobj_s {
     thinker_t   thinker;
     uint        number;
-    polyobj_t  *poly;
+    polyobj_t*  polyobj;
     boolean     move;
     boolean     rotate;
-} polymover_t;
+} clpolyobj_t;
 
 typedef struct {
     int size;
     int* serverToLocal;
 } indextranstable_t;
 
-void Cl_MoverThinker(mover_t* mover);
-void Cl_PolyMoverThinker(polymover_t* mover);
+void Cl_MoverThinker(clplane_t* mover);
+void Cl_PolyMoverThinker(clpolyobj_t* mover);
 
-static mover_t* activemovers[MAX_MOVERS];
-static polymover_t* activepolys[MAX_MOVERS];
 static MaterialArchive* serverMaterials;
 static indextranstable_t xlatMobjType;
 static indextranstable_t xlatMobjState;
@@ -176,16 +173,43 @@ int Cl_LocalMobjState(int serverMobjState)
     return xlatMobjState.serverToLocal[serverMobjState];
 }
 
-static boolean Cl_IsMoverValid(int i)
+static boolean GameMap_IsValidClPlane(GameMap* map, int i)
 {
-    if(!activemovers[i]) return false;
-    return (activemovers[i]->thinker.function == Cl_MoverThinker);
+    assert(map);
+    if(!map->clActivePlanes[i]) return false;
+    return (map->clActivePlanes[i]->thinker.function == Cl_MoverThinker);
 }
 
-static boolean Cl_IsPolyValid(int i)
+static boolean GameMap_IsValidClPolyobj(GameMap* map, int i)
 {
-    if(!activepolys[i]) return false;
-    return (activepolys[i]->thinker.function == Cl_PolyMoverThinker);
+    assert(map);
+    if(!map->clActivePolyobjs[i]) return false;
+    return (map->clActivePolyobjs[i]->thinker.function == Cl_PolyMoverThinker);
+}
+
+void GameMap_InitClMovers(GameMap* map)
+{
+    assert(map);
+    memset(map->clActivePlanes, 0, sizeof(map->clActivePlanes));
+    memset(map->clActivePolyobjs, 0, sizeof(map->clActivePolyobjs));
+}
+
+void GameMap_ResetClMovers(GameMap* map)
+{
+    int i;
+    assert(map);
+
+    for(i = 0; i < CLIENT_MAX_MOVERS; ++i)
+    {
+        if(GameMap_IsValidClPlane(map, i))
+        {
+            GameMap_ThinkerRemove(map, &map->clActivePlanes[i]->thinker);
+        }
+        if(GameMap_IsValidClPolyobj(map, i))
+        {
+            GameMap_ThinkerRemove(map, &map->clActivePolyobjs[i]->thinker);
+        }
+    }
 }
 
 /**
@@ -193,29 +217,14 @@ static boolean Cl_IsPolyValid(int i)
  */
 void Cl_WorldInit(void)
 {
-    memset(activemovers, 0, sizeof(activemovers));
-    memset(activepolys, 0, sizeof(activepolys));
+    if(theMap)
+    {
+        GameMap_InitClMovers(theMap);
+    }
+
     serverMaterials = 0;
     memset(&xlatMobjType, 0, sizeof(xlatMobjType));
     memset(&xlatMobjState, 0, sizeof(xlatMobjState));
-}
-
-void CL_MapReset(GameMap* map)
-{
-    int i;
-    if(!map) return;
-
-    for(i = 0; i < MAX_MOVERS; ++i)
-    {
-        if(Cl_IsMoverValid(i))
-        {
-            GameMap_ThinkerRemove(map, &activemovers[i]->thinker);
-        }
-        if(Cl_IsPolyValid(i))
-        {
-            GameMap_ThinkerRemove(map, &activepolys[i]->thinker);
-        }
-    }
 }
 
 /**
@@ -232,64 +241,92 @@ void Cl_WorldReset(void)
     setTableSize(&xlatMobjType, 0);
     setTableSize(&xlatMobjState, 0);
 
-    CL_MapReset(theMap);
+    if(theMap)
+    {
+        GameMap_ResetClMovers(theMap);
+    }
 }
 
-void Cl_RemoveActiveMover(mover_t* mover)
+int GameMap_ClPlaneIndex(GameMap* map, clplane_t* mover)
 {
     int i;
+    assert(map);
+    if(!map->clActivePlanes) return -1;
 
-    for(i = 0; i < MAX_MOVERS; ++i)
+    /// @todo Optimize lookup.
+    for(i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {
-        if(activemovers[i] != mover) continue;
+        if(map->clActivePlanes[i] == mover)
+            return i;
+    }
+    return -1;
+}
 
-        DEBUG_Message(("Cl_RemoveActiveMover: Removing mover [%i] in sector %i.\n", i, mover->sectornum));
-        GameMap_ThinkerRemove(theMap, &mover->thinker);
+int GameMap_ClPolyobjIndex(GameMap* map, clpolyobj_t* mover)
+{
+    int i;
+    assert(map);
+    if(!map->clActivePolyobjs) return -1;
+
+    /// @todo Optimize lookup.
+    for(i = 0; i < CLIENT_MAX_MOVERS; ++i)
+    {
+        if(map->clActivePolyobjs[i] == mover)
+            return i;
+    }
+    return -1;
+}
+
+void GameMap_DeleteClPlane(GameMap* map, clplane_t* mover)
+{
+    int index;
+    assert(map);
+
+    index = GameMap_ClPlaneIndex(map, mover);
+    if(index < 0)
+    {
+        DEBUG_Message(("GameMap_DeleteClPlane: Mover in sector #%i not removed!\n", mover->sectorIndex));
         return;
     }
 
-    DEBUG_Message(("Cl_RemoveActiveMover: Mover in sector %i not removed!\n", mover->sectornum));
+    DEBUG_Message(("GameMap_DeleteClPlane: Removing mover [%i] (sector: #%i).\n", index, mover->sectorIndex));
+    GameMap_ThinkerRemove(map, &mover->thinker);
 }
 
-/**
- * Removes the given polymover from the active polys array.
- */
-void Cl_RemoveActivePoly(polymover_t* mover)
+void GameMap_DeleteClPolyobj(GameMap* map, clpolyobj_t* mover)
 {
-    int i;
+    int index;
+    assert(map);
 
-    for(i = 0; i < MAX_MOVERS; ++i)
+    index = GameMap_ClPolyobjIndex(map, mover);
+    if(index < 0)
     {
-        if(activepolys[i] != mover) continue;
-
-        GameMap_ThinkerRemove(theMap, &mover->thinker);
-        break;
+        DEBUG_Message(("GameMap_DeleteClPolyobj: Mover not removed!\n"));
+        return;
     }
+
+    DEBUG_Message(("GameMap_DeleteClPolyobj: Removing mover [%i].\n", index));
+    GameMap_ThinkerRemove(map, &mover->thinker);
 }
 
 /**
  * Plane mover. Makes changes in planes using DMU.
  */
-void Cl_MoverThinker(mover_t *mover)
+void Cl_MoverThinker(clplane_t* mover)
 {
-    float               original;
-    boolean             remove = false;
-    boolean             freeMove;
-    float               fspeed;
+    GameMap* map = theMap; /// @fixme Do not assume mover is from the CURRENT map.
+    float original;
+    boolean remove = false;
+    boolean freeMove;
+    float fspeed;
 
-    if(!Cl_GameReady())
-        return; // Can we think yet?
+    // Can we think yet?
+    if(!Cl_GameReady()) return;
 
 #ifdef _DEBUG
+    if(GameMap_ClPlaneIndex(map, mover) < 0)
     {
-        int i, gotIt = false;
-        for(i = 0; i < MAX_MOVERS; ++i)
-        {
-            if(activemovers[i] == mover)
-                gotIt = true;
-        }
-        if(!gotIt)
-            Con_Message("Cl_MoverThinker: Running a mover that is not in activemovers!\n");
+        Con_Message("Cl_MoverThinker: Running a mover that is not in activemovers!\n");
     }
 #endif
 
@@ -298,46 +335,42 @@ void Cl_MoverThinker(mover_t *mover)
     fspeed = mover->speed;
 
     // How's the gap?
-    original = P_GetFloat(DMU_SECTOR, mover->sectornum, mover->property);
+    original = P_GetFloat(DMU_SECTOR, mover->sectorIndex, mover->property);
     if(fabs(fspeed) > 0 && fabs(mover->destination - original) > fabs(fspeed))
     {
         // Do the move.
-        P_SetFloat(DMU_SECTOR, mover->sectornum, mover->property, original + fspeed);
+        P_SetFloat(DMU_SECTOR, mover->sectorIndex, mover->property, original + fspeed);
     }
     else
     {
         // We have reached the destination.
-        P_SetFloat(DMU_SECTOR, mover->sectornum, mover->property, mover->destination);
+        P_SetFloat(DMU_SECTOR, mover->sectorIndex, mover->property, mover->destination);
 
         // This thinker can now be removed.
         remove = true;
     }
 
-#ifdef _DEBUG
-    VERBOSE2( Con_Message("Cl_MoverThinker: plane height %f in sector %i\n",
-                P_GetFloat(DMU_SECTOR, mover->sectornum, mover->property),
-                mover->sectornum) );
-#endif
+    DEBUG_VERBOSE2_Message(("Cl_MoverThinker: plane height %f in sector #%i\n",
+                            P_GetFloat(DMU_SECTOR, mover->sectorIndex, mover->property),
+                            mover->sectorIndex));
 
     // Let the game know of this.
     if(gx.SectorHeightChangeNotification)
     {
-        gx.SectorHeightChangeNotification(mover->sectornum);
+        gx.SectorHeightChangeNotification(mover->sectorIndex);
     }
 
     // Make sure the client didn't get stuck as a result of this move.
     if(freeMove != ClPlayer_IsFreeToMove(consolePlayer))
     {
-#ifdef _DEBUG
-        Con_Message("Cl_MoverThinker: move blocked in sector %i, undoing\n", mover->sectornum);
-#endif
+        DEBUG_Message(("Cl_MoverThinker: move blocked in sector %i, undoing\n", mover->sectorIndex));
 
         // Something was blocking the way! Go back to original height.
-        P_SetFloat(DMU_SECTOR, mover->sectornum, mover->property, original);
+        P_SetFloat(DMU_SECTOR, mover->sectorIndex, mover->property, original);
 
         if(gx.SectorHeightChangeNotification)
         {
-            gx.SectorHeightChangeNotification(mover->sectornum);
+            gx.SectorHeightChangeNotification(mover->sectorIndex);
         }
     }
     else
@@ -345,97 +378,100 @@ void Cl_MoverThinker(mover_t *mover)
         // Can we remove this thinker?
         if(remove)
         {
-#ifdef _DEBUG
-            /*VERBOSE2*/( Con_Message("Cl_MoverThinker: finished in %i\n", mover->sectornum) );
-#endif
-            // It stops.
-            P_SetFloat(DMU_SECTOR, mover->sectornum, mover->dmuPlane | DMU_SPEED, 0);
+            DEBUG_Message(("Cl_MoverThinker: finished in %i\n", mover->sectorIndex));
 
-            Cl_RemoveActiveMover(mover);
+            // It stops.
+            P_SetFloat(DMU_SECTOR, mover->sectorIndex, mover->dmuPlane | DMU_SPEED, 0);
+
+            GameMap_DeleteClPlane(map, mover);
         }
     }
 }
 
-void Cl_AddMover(uint sectornum, clmovertype_t type, float dest, float speed)
+clplane_t* GameMap_NewClPlane(GameMap* map, uint sectorIndex, clplanetype_t type, float dest, float speed)
 {
-    int                 i;
-    mover_t            *mov;
-    int                 dmuPlane = (type == MVT_FLOOR ? DMU_FLOOR_OF_SECTOR
-                                                      : DMU_CEILING_OF_SECTOR);
-#ifdef _DEBUG
-    /*VERBOSE2*/( Con_Message("Cl_AddMover: Sector=%i, type=%s, dest=%f, speed=%f\n",
-                          sectornum, type==MVT_FLOOR? "floor" : "ceiling",
-                          dest, speed) );
-#endif
+    int dmuPlane = (type == CPT_FLOOR ? DMU_FLOOR_OF_SECTOR : DMU_CEILING_OF_SECTOR);
+    clplane_t* mov;
+    int i;
+    assert(map);
 
-    if(sectornum >= NUM_SECTORS)
-        return;
+    DEBUG_Message(("GameMap_NewClPlane: Sector #%i, type:%s, dest:%f, speed:%f\n",
+                   sectorIndex, type==CPT_FLOOR? "floor" : "ceiling", dest, speed));
+
+    if(sectorIndex >= map->numSectors)
+    {
+        assert(0); // Invalid Sector index.
+        return NULL;
+    }
 
     // Remove any existing movers for the same plane.
-    for(i = 0; i < MAX_MOVERS; ++i)
+    for(i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {
-        if(Cl_IsMoverValid(i) &&
-           activemovers[i]->sectornum == sectornum &&
-           activemovers[i]->type == type)
+        if(GameMap_IsValidClPlane(map, i) &&
+           map->clActivePlanes[i]->sectorIndex == sectorIndex &&
+           map->clActivePlanes[i]->type == type)
         {
-#ifdef _DEBUG
-            Con_Message("Cl_AddMover: Removing existing mover [%i] in sector %i, type %s\n", i, sectornum,
-                        type == MVT_FLOOR? "floor" : "ceiling");
-#endif
-            Cl_RemoveActiveMover(activemovers[i]);
+            DEBUG_Message(("GameMap_NewClPlane: Removing existing mover [%i] in sector #%i, type %s\n",
+                           i, sectorIndex, type == CPT_FLOOR? "floor" : "ceiling"));
+
+            GameMap_DeleteClPlane(map, map->clActivePlanes[i]);
         }
     }
 
     // Add a new mover.
-    for(i = 0; i < MAX_MOVERS; ++i)
-        if(!activemovers[i])
+    for(i = 0; i < CLIENT_MAX_MOVERS; ++i)
+    {
+        if(map->clActivePlanes[i]) continue;
+
+        DEBUG_Message(("GameMap_NewClPlane: ...new mover [%i]\n", i));
+
+        // Allocate a new clplane_t thinker.
+        mov = map->clActivePlanes[i] = Z_Calloc(sizeof(clplane_t), PU_MAP, &map->clActivePlanes[i]);
+        mov->thinker.function = Cl_MoverThinker;
+        mov->type = type;
+        mov->sectorIndex = sectorIndex;
+        mov->destination = dest;
+        mov->speed = speed;
+        mov->property = dmuPlane | DMU_HEIGHT;
+        mov->dmuPlane = dmuPlane;
+
+        // Set the right sign for speed.
+        if(mov->destination < P_GetFloat(DMU_SECTOR, sectorIndex, mov->property))
+            mov->speed = -mov->speed;
+
+        // Update speed and target height.
+        P_SetFloat(DMU_SECTOR, sectorIndex, dmuPlane | DMU_TARGET_HEIGHT, dest);
+        P_SetFloat(DMU_SECTOR, sectorIndex, dmuPlane | DMU_SPEED, speed);
+
+        GameMap_ThinkerAdd(map, &mov->thinker, false /*not public*/);
+
+        // Immediate move?
+        if(FEQUAL(speed, 0))
         {
-#ifdef _DEBUG
-            Con_Message("Cl_AddMover: ...new mover [%i]\n", i);
-#endif
-            // Allocate a new mover_t thinker.
-            mov = activemovers[i] = Z_Calloc(sizeof(mover_t), PU_MAP, &activemovers[i]);
-            mov->thinker.function = Cl_MoverThinker;
-            mov->type = type;
-            mov->sectornum = sectornum;
-            mov->destination = dest;
-            mov->speed = speed;
-            mov->property = dmuPlane | DMU_HEIGHT;
-            mov->dmuPlane = dmuPlane;
-
-            // Set the right sign for speed.
-            if(mov->destination < P_GetFloat(DMU_SECTOR, sectornum, mov->property))
-                mov->speed = -mov->speed;
-
-            // Update speed and target height.
-            P_SetFloat(DMU_SECTOR, sectornum, dmuPlane | DMU_TARGET_HEIGHT, dest);
-            P_SetFloat(DMU_SECTOR, sectornum, dmuPlane | DMU_SPEED, speed);
-
-            GameMap_ThinkerAdd(theMap, &mov->thinker, false /*not public*/);
-
-            // Immediate move?
-            if(FEQUAL(speed, 0))
-            {
-                // This will remove the thinker immediately if the move is ok.
-                Cl_MoverThinker(mov);
-            }
-            break;
+            // This will remove the thinker immediately if the move is ok.
+            Cl_MoverThinker(mov);
         }
+        return mov;
+    }
+
+    Con_Error("GameMap_NewClPlane: Exhausted activemovers.");
+    exit(1); // Unreachable.
 }
 
-void Cl_PolyMoverThinker(polymover_t* mover)
+void Cl_PolyMoverThinker(clpolyobj_t* mover)
 {
-    polyobj_t*          poly = mover->poly;
-    float               dx, dy;
-    float               dist;
+    polyobj_t* po;
+    float dx, dy, dist;
+    assert(mover);
 
+    po = mover->polyobj;
     if(mover->move)
     {
         // How much to go?
-        dx = poly->dest[VX] - poly->pos[VX];
-        dy = poly->dest[VY] - poly->pos[VY];
+        dx = po->dest[VX] - po->pos[VX];
+        dy = po->dest[VY] - po->pos[VY];
         dist = P_ApproxDistance(dx, dy);
-        if(dist <= poly->speed || FEQUAL(poly->speed, 0))
+        if(dist <= po->speed || FEQUAL(po->speed, 0))
         {
             // We'll arrive at the destination.
             mover->move = false;
@@ -443,8 +479,8 @@ void Cl_PolyMoverThinker(polymover_t* mover)
         else
         {
             // Adjust deltas to fit speed.
-            dx = poly->speed * (dx / dist);
-            dy = poly->speed * (dy / dist);
+            dx = po->speed * (dx / dist);
+            dy = po->speed * (dy / dist);
         }
 
         // Do the move.
@@ -454,63 +490,72 @@ void Cl_PolyMoverThinker(polymover_t* mover)
     if(mover->rotate)
     {
         // How much to go?
-        int dist = poly->destAngle - poly->angle;
-        int speed = poly->angleSpeed;
+        int dist = po->destAngle - po->angle;
+        int speed = po->angleSpeed;
 
-        //dist = FIX2FLT(poly->destAngle - poly->angle);
-        //if(!poly->angleSpeed || dist > 0   /*(abs(FLT2FIX(dist) >> 4) <= abs(((signed) poly->angleSpeed) >> 4)*/
-        //    /* && poly->destAngle != -1*/) || !poly->angleSpeed)
-        if(!poly->angleSpeed || ABS(dist >> 2) <= ABS(speed >> 2))
+        //dist = FIX2FLT(po->destAngle - po->angle);
+        //if(!po->angleSpeed || dist > 0   /*(abs(FLT2FIX(dist) >> 4) <= abs(((signed) po->angleSpeed) >> 4)*/
+        //    /* && po->destAngle != -1*/) || !po->angleSpeed)
+        if(!po->angleSpeed || ABS(dist >> 2) <= ABS(speed >> 2))
         {
-#ifdef _DEBUG
-            Con_Message("Cl_PolyMoverThinker: Mover %i reached end of turn, destAngle=%x.\n", mover->number, poly->destAngle);
-#endif
+            DEBUG_Message(("Cl_PolyMoverThinker: Mover %i reached end of turn, destAngle=%x.\n",
+                           mover->number, po->destAngle));
+
             // We'll arrive at the destination.
             mover->rotate = false;
         }
         else
         {
             // Adjust to speed.
-            dist = /*FIX2FLT((int)*/ poly->angleSpeed;
+            dist = /*FIX2FLT((int)*/ po->angleSpeed;
         }
-
-/*#ifdef _DEBUG
-        Con_Message("%f\n", dist);
-#endif*/
 
         P_PolyobjRotate(P_PolyobjByID(mover->number), dist);
     }
 
     // Can we get rid of this mover?
     if(!mover->move && !mover->rotate)
-        Cl_RemoveActivePoly(mover);
+    {
+        /// @fixme Do not assume the move is from the CURRENT map.
+        GameMap_DeleteClPolyobj(theMap, mover);
+    }
 }
 
-polymover_t* Cl_FindOrMakeActivePoly(uint number)
+clpolyobj_t* GameMap_ClPolyobjByPolyobjIndex(GameMap* map, uint index)
 {
     int i;
-    int available = -1;
-    polymover_t* mover;
-
-    for(i = 0; i < MAX_MOVERS; ++i)
+    assert(map);
+    for(i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {
-        if(available < 0 && !activepolys[i])
-            available = i;
+        if(!GameMap_IsValidClPolyobj(map, i)) continue;
 
-        if(Cl_IsPolyValid(i) && activepolys[i]->number == number)
-            return activepolys[i];
+        if(map->clActivePolyobjs[i]->number == index)
+            return map->clActivePolyobjs[i];
     }
+    return NULL;
+}
 
-    // Not found, make a new one.
-    if(available >= 0)
+/**
+ * @important Assumes there is no existing ClPolyobj for Polyobj @a index.
+ */
+clpolyobj_t* GameMap_NewClPolyobj(GameMap* map, uint polyobjIndex)
+{
+    clpolyobj_t* mover;
+    int i;
+    assert(map);
+
+    // Take the first unused slot.
+    for(i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {
-        DEBUG_Message(("Cl_FindOrMakeActivePoly: New polymover [%i] in polyobj %i.\n", available, number));
+        if(map->clActivePolyobjs[i]) continue;
 
-        activepolys[available] = mover = Z_Calloc(sizeof(polymover_t), PU_MAP, &activepolys[available]);
+        DEBUG_Message(("GameMap_NewClPolyobj: New polymover [%i] for polyobj #%i.\n", i, polyobjIndex));
+
+        map->clActivePolyobjs[i] = mover = Z_Calloc(sizeof(clpolyobj_t), PU_MAP, &map->clActivePolyobjs[i]);
         mover->thinker.function = Cl_PolyMoverThinker;
-        mover->poly = polyObjs[number];
-        mover->number = number;
-        GameMap_ThinkerAdd(theMap, &mover->thinker, false /*not public*/);
+        mover->polyobj = map->polyObjs[polyobjIndex];
+        mover->number = polyobjIndex;
+        GameMap_ThinkerAdd(map, &mover->thinker, false /*not public*/);
         return mover;
     }
 
@@ -518,32 +563,43 @@ polymover_t* Cl_FindOrMakeActivePoly(uint number)
     return NULL;
 }
 
+clpolyobj_t* Cl_FindOrMakeActivePoly(uint polyobjIndex)
+{
+    GameMap* map = theMap;
+    clpolyobj_t* mover = GameMap_ClPolyobjByPolyobjIndex(map, polyobjIndex);
+    if(mover) return mover;
+    // Not found; make a new one.
+    return GameMap_NewClPolyobj(map, polyobjIndex);
+}
+
 void Cl_SetPolyMover(uint number, int move, int rotate)
 {
-    polymover_t* mover = Cl_FindOrMakeActivePoly(number);
+    clpolyobj_t* mover = Cl_FindOrMakeActivePoly(number);
     if(!mover)
     {
         Con_Message("Cl_SetPolyMover: Out of polymovers.\n");
         return;
     }
+
     // Flag for moving.
-    if(move)
-        mover->move = true;
-    if(rotate)
-        mover->rotate = true;
+    if(move) mover->move = true;
+    if(rotate) mover->rotate = true;
 }
 
-mover_t *Cl_GetActiveMover(uint sectornum, clmovertype_t type)
+clplane_t* GameMap_ClPlaneBySectorIndex(GameMap* map, uint sectorIndex, clplanetype_t type)
 {
-    int                 i;
+    int i;
+    assert(map);
 
-    for(i = 0; i < MAX_MOVERS; ++i)
-        if(Cl_IsMoverValid(i) &&
-           activemovers[i]->sectornum == sectornum &&
-           activemovers[i]->type == type)
-        {
-            return activemovers[i];
-        }
+    for(i = 0; i < CLIENT_MAX_MOVERS; ++i)
+    {
+        if(!GameMap_IsValidClPlane(map, i)) continue;
+        if(map->clActivePlanes[i]->sectorIndex != sectorIndex) continue;
+        if(map->clActivePlanes[i]->type != type) continue;
+
+        // Found it!
+        return map->clActivePlanes[i];
+    }
     return NULL;
 }
 
@@ -558,6 +614,7 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
     static plane_t* dummyPlaneArray[2];
     static plane_t dummyPlanes[2];
 
+    GameMap* map = theMap; /// @fixme Do not assume the CURRENT map.
     unsigned short num;
     sector_t* sec;
     int df;
@@ -648,20 +705,20 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
     // Do we need to start any moving planes?
     if(df & SDF_FLOOR_HEIGHT)
     {
-        Cl_AddMover(num, MVT_FLOOR, height[PLN_FLOOR], 0);
+        GameMap_NewClPlane(map, num, CPT_FLOOR, height[PLN_FLOOR], 0);
     }
     else if(df & (SDF_FLOOR_TARGET | SDF_FLOOR_SPEED))
     {
-        Cl_AddMover(num, MVT_FLOOR, target[PLN_FLOOR], speed[PLN_FLOOR]);
+        GameMap_NewClPlane(map, num, CPT_FLOOR, target[PLN_FLOOR], speed[PLN_FLOOR]);
     }
 
     if(df & SDF_CEILING_HEIGHT)
     {
-        Cl_AddMover(num, MVT_CEILING, height[PLN_CEILING], 0);
+        GameMap_NewClPlane(map, num, CPT_CEILING, height[PLN_CEILING], 0);
     }
     else if(df & (SDF_CEILING_TARGET | SDF_CEILING_SPEED))
     {
-        Cl_AddMover(num, MVT_CEILING, target[PLN_CEILING], speed[PLN_CEILING]);
+        GameMap_NewClPlane(map, num, CPT_CEILING, target[PLN_CEILING], speed[PLN_CEILING]);
     }
 }
 
