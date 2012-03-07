@@ -600,6 +600,8 @@ boolean DAM_AttemptMapLoad(const Uri* uri)
                 map->ambientLightLevel = 0;
             }
 
+            map->effectiveGravity = map->globalGravity;
+
             // @todo should be called from P_LoadMap() but R_InitMap requires the
             //       theMap to be set first.
             P_SetCurrentMap(map);

@@ -187,8 +187,6 @@ extern surfacelist_t* movingSurfaceList;
 extern surfacelist_t* decoratedSurfaceList;
 extern surfacelist_t* glowingSurfaceList;
 
-extern float mapGravity;
-
 #include "gamemap.h"
 
 // The current map.

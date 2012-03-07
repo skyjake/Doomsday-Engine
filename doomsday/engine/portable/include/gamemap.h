@@ -112,7 +112,9 @@ typedef struct gamemap_s {
     nodepile_t mobjNodes, lineNodes; // All kinds of wacky links.
     nodeindex_t* lineLinks; // Indices to roots.
 
-    float globalGravity; // Gravity for the current map.
+    float globalGravity; // The defined gravity for this map.
+    float effectiveGravity; // The effective gravity for this map.
+
     int ambientLightLevel; // Ambient lightlevel for the current map.
 
     /// Current LOS trace state.
@@ -131,6 +133,31 @@ const Uri* GameMap_Uri(GameMap* map);
 const char* GameMap_OldUniqueId(GameMap* map);
 
 void GameMap_Bounds(GameMap* map, float* min, float* max);
+
+/**
+ * Retrieve the current effective gravity multiplier for this map.
+ *
+ * @param map  GameMap instance.
+ * @return  Effective gravity multiplier for this map.
+ */
+float GameMap_Gravity(GameMap* map);
+
+/**
+ * Change the effective gravity multiplier for this map.
+ *
+ * @param map  GameMap instance.
+ * @param gravity  New gravity multiplier.
+ * @return  Same as @a map for caller convenience.
+ */
+GameMap* GameMap_SetGravity(GameMap* map, float gravity);
+
+/**
+ * Return the effective gravity multiplier to that originally defined for this map.
+ *
+ * @param map  GameMap instance.
+ * @return  Same as @a map for caller convenience.
+ */
+GameMap* GameMap_RestoreGravity(GameMap* map);
 
 /**
  * Retrieve an immutable copy of the LOS trace line.

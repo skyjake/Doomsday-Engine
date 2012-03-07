@@ -1083,7 +1083,8 @@ static void P_MoveParticle(ptcgen_t* gen, particle_t* pt)
     P_SpinParticle(gen, pt);
 
     // Changes to momentum.
-    pt->mov[VZ] -= FixedMul(FLT2FIX(mapGravity), st->gravity);
+    /// @fixme Do not assume generator is from the CURRENT map.
+    pt->mov[VZ] -= FixedMul(FLT2FIX(GameMap_Gravity(theMap)), st->gravity);
 
     // Vector force.
     if(stDef->vectorForce[VX] != 0 || stDef->vectorForce[VY] != 0 ||

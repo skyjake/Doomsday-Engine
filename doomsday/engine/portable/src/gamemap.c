@@ -54,6 +54,26 @@ void GameMap_Bounds(GameMap* map, float* min, float* max)
     max[VY] = map->bBox[BOXTOP];
 }
 
+float GameMap_Gravity(GameMap* map)
+{
+    assert(map);
+    return map->effectiveGravity;
+}
+
+GameMap* GameMap_SetGravity(GameMap* map, float gravity)
+{
+    assert(map);
+    map->effectiveGravity = gravity;
+    return map;
+}
+
+GameMap* GameMap_RestoreGravity(GameMap* map)
+{
+    assert(map);
+    map->effectiveGravity = map->globalGravity;
+    return map;
+}
+
 const divline_t* GameMap_TraceLOS(GameMap* map)
 {
     assert(map);

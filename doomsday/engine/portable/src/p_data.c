@@ -64,8 +64,6 @@ surfacelist_t* movingSurfaceList = NULL;
 surfacelist_t* decoratedSurfaceList = NULL;
 surfacelist_t* glowingSurfaceList = NULL;
 
-float mapGravity;
-
 GameMap* theMap = NULL;
 
 // Bad texture list
@@ -139,8 +137,6 @@ void P_SetCurrentMap(GameMap* map)
         decoratedSurfaceList = 0;
         glowingSurfaceList = 0;
 
-        mapGravity = 0;
-
         theMap = map;
         return;
     }
@@ -160,8 +156,6 @@ void P_SetCurrentMap(GameMap* map)
     movingSurfaceList = &map->movingSurfaceList;
     decoratedSurfaceList = &map->decoratedSurfaceList;
     glowingSurfaceList = &map->glowingSurfaceList;
-
-    mapGravity = map->globalGravity;
 
     theMap = map;
 }

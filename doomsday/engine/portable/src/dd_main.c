@@ -2215,7 +2215,8 @@ void* DD_GetVariable(int ddvalue)
         return &cplrThrustMul;*/
 
     case DD_GRAVITY:
-        return &mapGravity;
+        valueF = theMap? GameMap_Gravity(theMap) : 0;
+        return &valueF;
 
     case DD_TORCH_RED:
         return &torchColor[CR];
@@ -2289,7 +2290,7 @@ void DD_SetVariable(int ddvalue, void *parm)
             return;*/
 
         case DD_GRAVITY:
-            mapGravity = *(float*) parm;
+            if(theMap) GameMap_SetGravity(theMap, *(float*) parm);
             return;
 
         case DD_PSPRITE_OFFSET_X:
