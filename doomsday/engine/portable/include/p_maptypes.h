@@ -5,6 +5,11 @@
 
 #include "p_mapdata.h"
 
+// Each Sector and SideDef has an origin in the world (used for distance based delta queuing)
+typedef struct origin_s {
+    float               pos[2];
+} origin_t;
+
 #define LO_prev     link[0]
 #define LO_next     link[1]
 
@@ -303,6 +308,7 @@ typedef struct sector_s {
     unsigned int        changedBlockCount; // Number of blocks to mark changed.
     unsigned short*     blocks;        // Light grid block indices.
     float               reverb[NUM_REVERB_DATA];
+    origin_t            origin;
     msector_t           buildData;
 } sector_t;
 
@@ -369,7 +375,7 @@ typedef enum sidedefsection_e {
 typedef struct msidedef_s {
     // Sidedef index. Always valid after loading & pruning.
     int         index;
-    int			refCount;
+    int         refCount;
 } msidedef_t;
 
 typedef struct sidedef_s {
@@ -380,6 +386,7 @@ typedef struct sidedef_s {
     struct linedef_s*   line;
     struct sector_s*    sector;
     short               flags;
+    origin_t            origin;
     msidedef_t          buildData;
     int                 fakeRadioUpdateCount; // frame number of last update
     shadowcorner_t      topCorners[2];

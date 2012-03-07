@@ -27,6 +27,17 @@
 #include "de_refresh.h"
 #include "de_play.h"
 
+void SideDef_UpdateOrigin(sidedef_t* side)
+{
+    assert(side);
+
+    // The side must be owned by a line.
+    if(!side->line) return;
+
+    side->origin.pos[VX] = side->line->L_v1pos[VX] + side->line->dX / 2;
+    side->origin.pos[VY] = side->line->L_v1pos[VY] + side->line->dY / 2;
+}
+
 void SideDef_UpdateSurfaceTangents(sidedef_t* side)
 {
     surface_t* surface = &side->SW_topsurface;

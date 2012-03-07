@@ -89,13 +89,6 @@ typedef struct cregister_s {
     dt_poly_t*          polyObjs;
 } cregister_t;
 
-/**
- * Each entity (mobj, sector, side, etc.) has an origin the world.
- */
-typedef struct origin_s {
-    float               pos[2];
-} origin_t;
-
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -130,9 +123,6 @@ static float deltaBaseScores[NUM_DELTA_TYPES];
 // the mobj being compared.
 static dt_mobj_t dummyZeroMobj;
 
-// Origins of stuff. Calculated at the beginning of a map.
-static origin_t* sectorOrigins, *sideOrigins;
-
 // Pointer to the owner line for each side.
 static linedef_t** sideOwners;
 
@@ -145,12 +135,10 @@ static linedef_t** sideOwners;
 void Sv_InitPools(void)
 {
     uint                i;
-    sector_t*           sec;
     uint                startTime;
 
     // Clients don't register anything.
-    if(isClient)
-        return;
+    if(isClient) return;
 
     startTime = Sys_GetRealTime();
 
@@ -194,35 +182,6 @@ void Sv_InitPools(void)
     for(i = 0; i < NUM_SIDEDEFS; ++i)
     {
         sideOwners[i] = R_GetLineForSide(i);
-    }
-
-    // Origins of sectors.
-    sectorOrigins = Z_Malloc(sizeof(origin_t) * NUM_SECTORS, PU_MAP, 0);
-    for(i = 0; i < NUM_SECTORS; ++i)
-    {
-        sec = SECTOR_PTR(i);
-
-        sectorOrigins[i].pos[VX] =
-            (sec->bBox[BOXRIGHT] + sec->bBox[BOXLEFT]) / 2;
-        sectorOrigins[i].pos[VY] =
-            (sec->bBox[BOXBOTTOM] + sec->bBox[BOXTOP]) / 2;
-    }
-
-    // Origins of sides.
-    sideOrigins = Z_Malloc(sizeof(origin_t) * NUM_SIDEDEFS, PU_MAP, 0);
-    for(i = 0; i < NUM_SIDEDEFS; ++i)
-    {
-        vertex_t*           vtx;
-
-        // The side must be owned by a line.
-        if(sideOwners[i] == NULL)
-            continue;
-
-        vtx = sideOwners[i]->L_v1;
-        sideOrigins[i].pos[VX] =
-            vtx->V_pos[VX] + sideOwners[i]->dX / 2;
-        sideOrigins[i].pos[VY] =
-            vtx->V_pos[VY] + sideOwners[i]->dY / 2;
     }
 
     // Store the current state of the world into both the registers.
@@ -1575,10 +1534,10 @@ float Sv_MobjDistance(const mobj_t* mo, const ownerinfo_t* info, boolean isReal)
  */
 float Sv_SectorDistance(int index, const ownerinfo_t* info)
 {
-    sector_t*           sector = SECTOR_PTR(index);
+    sector_t* sector = SECTOR_PTR(index);
 
-    return P_ApproxDistance3(info->pos[VX] - sectorOrigins[index].pos[VX],
-                             info->pos[VY] - sectorOrigins[index].pos[VY],
+    return P_ApproxDistance3(info->pos[VX] - sector->origin.pos[VX],
+                             info->pos[VY] - sector->origin.pos[VY],
                              info->pos[VZ] -
                              ((sector->planes[PLN_CEILING]->height +
                                       sector->planes[PLN_FLOOR]->height) / 2));
@@ -1622,14 +1581,14 @@ float Sv_DeltaDistance(const void* deltaPtr, const ownerinfo_t* info)
 
     if(delta->type == DT_SIDE)
     {
-        return P_ApproxDistance(info->pos[VX] - sideOrigins[delta->id].pos[VX],
-                                info->pos[VY] - sideOrigins[delta->id].pos[VY]);
+        sidedef_t* sideDef = &sideDefs[delta->id];
+        return P_ApproxDistance(info->pos[VX] - sideDef->origin.pos[VX],
+                                info->pos[VY] - sideDef->origin.pos[VY]);
     }
 
     if(delta->type == DT_POLY)
     {
-        polyobj_t*          po = polyObjs[delta->id];
-
+        polyobj_t* po = polyObjs[delta->id];
         return P_ApproxDistance(info->pos[VX] - po->pos[VX],
                                 info->pos[VY] - po->pos[VY]);
     }

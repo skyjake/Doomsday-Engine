@@ -33,12 +33,24 @@
 #include "p_dmu.h"
 
 /**
+ * Update the origin of the sector according to the point defined by the center of
+ * the sector's axis-aligned bounding box (which must be initialized before calling).
+ *
+ * @param sec  Sector instance.
+ */
+void Sector_UpdateOrigin(sector_t* sec);
+
+/**
  * Get the value of a sector property, selected by DMU_* name.
+ *
+ * @param sec  Sector instance.
  */
 int Sector_GetProperty(const sector_t* sector, setargs_t* args);
 
 /**
- * Update the sector, property is selected by DMU_* name.
+ * Update the sector property, selected by DMU_* name.
+ *
+ * @param sec  Sector instance.
  */
 int Sector_SetProperty(sector_t* sector, const setargs_t* args);
 

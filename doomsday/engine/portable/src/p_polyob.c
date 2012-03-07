@@ -105,6 +105,23 @@ void Polyobj_UpdateSurfaceTangents(polyobj_t* po)
     }
 }
 
+void Polyobj_UpdateSideDefOrigins(polyobj_t* po)
+{
+    linedef_t** lineIter;
+    assert(po);
+
+    for(lineIter = po->lines; *lineIter; lineIter++)
+    {
+        linedef_t* line = *lineIter;
+
+        SideDef_UpdateOrigin(line->L_frontside);
+        if(line->L_backside)
+        {
+            SideDef_UpdateOrigin(line->L_backside);
+        }
+    }
+}
+
 static boolean mobjIsBlockingPolyobj(polyobj_t* po)
 {
     linedef_t** lineIter;
@@ -213,6 +230,8 @@ boolean P_PolyobjMove(polyobj_t* po, float delta[2])
         P_PolyobjLink(po);
         return false;
     }
+
+    Polyobj_UpdateSideDefOrigins(po);
 
     // Various parties may be interested in this change; signal it.
     P_PolyobjChanged(po);
@@ -323,6 +342,7 @@ boolean P_PolyobjRotate(polyobj_t* po, angle_t angle)
         return false;
     }
 
+    Polyobj_UpdateSideDefOrigins(po);
     Polyobj_UpdateSurfaceTangents(po);
 
     // Various parties may be interested in this change; signal it.

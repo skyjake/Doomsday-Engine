@@ -1302,15 +1302,15 @@ static void hardenLinedefs(GameMap *dest, editmap_t *src)
 
 static void hardenSidedefs(GameMap* dest, editmap_t* src)
 {
-    uint                i;
+    uint i;
 
     dest->numSideDefs = src->numSideDefs;
     dest->sideDefs = Z_Malloc(dest->numSideDefs * sizeof(sidedef_t), PU_MAPSTATIC, 0);
 
     for(i = 0; i < dest->numSideDefs; ++i)
     {
-        sidedef_t         *destS = &dest->sideDefs[i];
-        sidedef_t         *srcS = src->sideDefs[i];
+        sidedef_t* destS = &dest->sideDefs[i];
+        sidedef_t* srcS = src->sideDefs[i];
 
         memcpy(destS, srcS, sizeof(*destS));
         destS->sector = &dest->sectors[srcS->sector->buildData.index - 1];
@@ -1323,24 +1323,28 @@ static void hardenSidedefs(GameMap* dest, editmap_t* src)
         destS->SW_middlesurface.visOffset[1] = destS->SW_middlesurface.offset[1];
         destS->SW_topsurface.visOffset[0] = destS->SW_topsurface.offset[0];
         destS->SW_topsurface.visOffset[1] = destS->SW_topsurface.offset[1];
+
+        SideDef_UpdateOrigin(destS);
     }
 }
 
 static void hardenSectors(GameMap* dest, editmap_t* src)
 {
-    uint                i;
+    uint i;
 
     dest->numSectors = src->numSectors;
     dest->sectors = Z_Malloc(dest->numSectors * sizeof(sector_t), PU_MAPSTATIC, 0);
 
     for(i = 0; i < dest->numSectors; ++i)
     {
-        sector_t           *destS = &dest->sectors[i];
-        sector_t           *srcS = src->sectors[i];
+        sector_t* destS = &dest->sectors[i];
+        sector_t* srcS = src->sectors[i];
 
         memcpy(destS, srcS, sizeof(*destS));
         destS->planeCount = 0;
         destS->planes = NULL;
+
+        Sector_UpdateOrigin(destS);
     }
 }
 

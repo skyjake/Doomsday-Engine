@@ -27,6 +27,14 @@
 #include "de_refresh.h"
 #include "de_play.h"
 
+void Sector_UpdateOrigin(sector_t* sec)
+{
+    assert(sec);
+
+    sec->origin.pos[VX] = (sec->bBox[BOXRIGHT]  + sec->bBox[BOXLEFT]) / 2;
+    sec->origin.pos[VY] = (sec->bBox[BOXBOTTOM] + sec->bBox[BOXTOP])  / 2;
+}
+
 int Sector_SetProperty(sector_t* sec, const setargs_t* args)
 {
     switch(args->prop)

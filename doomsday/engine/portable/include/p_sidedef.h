@@ -33,6 +33,14 @@
 #include "p_dmu.h"
 
 /**
+ * Update the SideDef's map space origin according to the point defined by
+ * the center of the owning LineDef's vertices.
+ *
+ * @param sideDef  SideDef instance.
+ */
+void SideDef_UpdateOrigin(sidedef_t* side);
+
+/**
  * Update the SideDef's map space surface tangents according to the points
  * defined by the associated LineDef's vertices. If no LineDef is presently
  * associated this is a no-op.
