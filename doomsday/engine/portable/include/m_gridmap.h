@@ -40,7 +40,7 @@
  * GridmapBlock. Handy POD structure for defining a rectangular range
  * of cells, i.e., a "cell block".
  */
-typedef struct {
+typedef struct gridmapblock_s {
     union {
         struct {
             uint minX;

@@ -123,7 +123,6 @@ typedef struct biassurface_s {
     struct biassurface_s* next;
 } biassurface_t;
 
-#include "blockmap.h"
 #include "p_polyob.h"
 #include "p_maptypes.h"
 

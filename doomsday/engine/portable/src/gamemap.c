@@ -28,6 +28,7 @@
 #include "de_system.h"
 #include "de_refresh.h"
 
+#include "blockmap.h"
 #include "gamemap.h"
 
 const Uri* GameMap_Uri(GameMap* map)
