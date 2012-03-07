@@ -153,7 +153,7 @@ void Sfx_StartLogical(int id, mobj_t *origin, boolean isRepeating)
         return;
     }
 
-    if(origin)
+    if(origin && sfxOneSoundPerEmitter)
     {
         // Stop all previous sounds from this origin (only one per origin).
         Sfx_StopLogical(0, origin);

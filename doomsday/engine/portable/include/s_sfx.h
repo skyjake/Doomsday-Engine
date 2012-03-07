@@ -60,6 +60,7 @@ extern float sfxReverbStrength;
 extern int sfxMaxCacheKB, sfxMaxCacheTics;
 extern int sfxBits, sfxRate;
 extern int sfx3D, sfx16Bit, sfxSampleRate;
+extern byte sfxOneSoundPerEmitter;
 
 boolean         Sfx_Init(void);
 void            Sfx_Shutdown(void);

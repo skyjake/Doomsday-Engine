@@ -73,6 +73,7 @@ int sfxRate = 11025;
 int sfx3D = false;
 int sfx16Bit = false;
 int sfxSampleRate = 11025;
+byte sfxOneSoundPerEmitter = true;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -654,7 +655,7 @@ int Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
        volume <= 0)
         return false;
 
-    if(emitter)
+    if(emitter && sfxOneSoundPerEmitter)
     {
         // Stop any other sounds from the same origin. Only one sound is
         // allowed per emitter.

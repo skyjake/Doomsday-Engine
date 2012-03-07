@@ -930,6 +930,9 @@ desc = Sound effects sample rate (11025, 22050, 44100).
 [sound-16bit]
 desc = 1=16-bit sound effects/resampling.
 
+[sound-overlap-stop]
+desc = 1=Only allow one sound per emitter object (as in traditional Doom).
+
 [sound-3d]
 desc = 1=Play sound effects in 3D.
 
