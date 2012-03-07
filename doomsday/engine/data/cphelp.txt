@@ -219,6 +219,9 @@ inf = Params: after (tics) (cmd)\nFor example, 'after 35 "echo End"'.
 [alias]
 desc = Create aliases for a (set of) console commands.
 
+[apropos]
+desc = Summarize all help containing a search term.
+
 [bindevent]
 desc = Bind a console command to an event.
 inf = Params: bindevent (event-descriptor) (command)\nExamples:\n  bindevent "key-M-down" {print "M was pressed"}\n  bindevent "mouse-right-up + key-shift" {print "RMB released while Shift down"}
