@@ -690,40 +690,55 @@ static int PathDirectory_CalcPathLength(PathDirectory* pd, const PathDirectoryNo
     return requiredLen;
 }
 
+#ifdef LIBDENG_STACK_MONITOR
+static void* stackStart;
+static size_t maxStackDepth;
+#endif
+
+typedef struct pathconstructorparams_s {
+    PathDirectory* pd;
+    size_t length;
+    ddstring_t* dest;
+    char delimiter;
+    size_t delimiterLen;
+} pathconstructorparams_t;
+
 /**
  * Recursive path constructor. First finds the root and the full length of the
  * path (when descending), then allocates memory for the string, and finally
  * copies each fragment with the delimiters (on the way out).
  */
-static void pathConstructor(PathDirectory* pd, const PathDirectoryNode* trav,
-                            size_t* length, ddstring_t* dest, char delimiter)
+static void pathConstructor(pathconstructorparams_t* parm, const PathDirectoryNode* trav)
 {
-    const size_t delimiterLen = (delimiter? 1 : 0);
-    const ddstring_t* fragment = PathDirectory_GetFragment(pd, trav);
+    const ddstring_t* fragment = PathDirectory_GetFragment(parm->pd, trav);
 
-    *length += Str_Length(fragment);
+#ifdef LIBDENG_STACK_MONITOR
+    maxStackDepth = MAX_OF(maxStackDepth, stackStart - (void*)&fragment);
+#endif
+
+    parm->length += Str_Length(fragment);
 
     if(PathDirectoryNode_Parent(trav))
     {
         // There also needs to be a separator.
-        *length += delimiterLen;
+        parm->length += parm->delimiterLen;
 
         // Descend to parent level.
-        pathConstructor(pd, PathDirectoryNode_Parent(trav), length, dest, delimiter);
+        pathConstructor(parm, PathDirectoryNode_Parent(trav));
 
         // Append the separator.
-        if(delimiter)
-            Str_AppendCharWithoutAllocs(dest, delimiter);
+        if(parm->delimiter)
+            Str_AppendCharWithoutAllocs(parm->dest, parm->delimiter);
     }
     else
     {
         // We've arrived at the deepest level. The full length is now known.
         // Ensure there's enough memory for the string.
-        Str_ReserveNotPreserving(dest, *length);
+        Str_ReserveNotPreserving(parm->dest, parm->length);
     }
 
     // Assemble the path by appending the fragment.
-    Str_AppendWithoutAllocs(dest, fragment);
+    Str_AppendWithoutAllocs(parm->dest, fragment);
 }
 
 /**
@@ -741,24 +756,37 @@ static void pathConstructor(PathDirectory* pd, const PathDirectoryNode* trav,
 static ddstring_t* PathDirectory_ConstructPath(PathDirectory* pd, const PathDirectoryNode* node,
                                                ddstring_t* constructedPath, char delimiter)
 {
-    const size_t delimiterLen = (delimiter? 1 : 0);
-    size_t length = 0;
+    pathconstructorparams_t parm;
+
+#ifdef LIBDENG_STACK_MONITOR
+    stackStart = &parm;
+#endif
 
     assert(pd && node && constructedPath);
 
+    parm.dest = constructedPath;
+    parm.length = 0;
+    parm.pd = pd;
+    parm.delimiter = delimiter;
+    parm.delimiterLen = (delimiter? 1 : 0);
+
     // Include a terminating path separator for branches (directories).
     if(PathDirectoryNode_Type(node) == PT_BRANCH)
-        length += delimiterLen;
+        parm.length += parm.delimiterLen;
 
     // Recursively construct the path from fragments and delimiters.
     Str_Clear(constructedPath);
-    pathConstructor(pd, node, &length, constructedPath, delimiter);
+    pathConstructor(&parm, node);
 
     // Terminating delimiter for branches.
     if(delimiter && PathDirectoryNode_Type(node) == PT_BRANCH)
         Str_AppendCharWithoutAllocs(constructedPath, delimiter);
 
-    assert(Str_Length(constructedPath) == length);
+    assert(Str_Length(constructedPath) == parm.length);
+
+#ifdef LIBDENG_STACK_MONITOR
+    fprintf(stderr, "pathConstructor: max stack depth: %u bytes\n", (uint)maxStackDepth);
+#endif
 
     return constructedPath;
 }
