@@ -10,7 +10,7 @@ include(../config.pri)
 
 # Update the PK3 files.
 deng_packres {
-    system(cd $$PWD/scripts/ && python packres.py --quiet \"$$OUT_PWD/..\")
+    system(cd $$PWD/scripts/ && $$PYTHON packres.py --quiet \"$$OUT_PWD/..\")
 }
 
 # Install the launcher.
@@ -51,17 +51,27 @@ deng_snowberry {
         $${SB_ROOT}/plugins/wizard.py
     plugins.path = $$SB_DIR/plugins
 
-    # Include the launch script if it exists.
-    LAUNCHER = ../../distrib/linux/launch-doomsday
-    exists($$LAUNCHER) {
-        launch.files = $$LAUNCHER
-        launch.path = $$DENG_BIN_DIR
-        INSTALLS += launch
+    # Make may not have yet created the output directory at this point.
+    system(mkdir -p \"$$OUT_PWD\")
 
-        message(Installing the launch-doomsday script.)
-    }
+    # Generate a script for starting the laucher.
+    LAUNCH_FILE = launch-doomsday
+    !system(sed \"s:PYTHON:$$PYTHON:; s:SB_DIR:$$SB_DIR:\" \
+        <\"../../distrib/linux/$$LAUNCH_FILE\" \
+        >\"$$OUT_PWD/$$LAUNCH_FILE\" && \
+        chmod 755 \"$$OUT_PWD/$$LAUNCH_FILE\"): error(Can\'t build $$LAUNCH_FILE)
+    launch.files = $$OUT_PWD/$$LAUNCH_FILE
+    launch.path = $$DENG_BIN_DIR
 
-    INSTALLS += conf plugins sb
+    # Generate a .desktop file for the applications menu.
+    DESKTOP_FILE = doomsday-engine.desktop
+    !system(sed \"s:BIN_DIR:$$DENG_BIN_DIR:; s:SB_DIR:$$SB_DIR:\" \
+        <\"../../distrib/linux/$$DESKTOP_FILE\" \
+        >\"$$OUT_PWD/$$DESKTOP_FILE\"): error(Can\'t build $$DESKTOP_FILE)
+    desktop.files = $$OUT_PWD/$$DESKTOP_FILE
+    desktop.path = $$PREFIX/share/applications
+
+    INSTALLS += conf plugins sb launch desktop
 }
 
 deng_aptunstable {

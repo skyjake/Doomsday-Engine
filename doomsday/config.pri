@@ -8,6 +8,10 @@
 # NOTE: The PREFIX option should always be specified on the qmake command
 #       line, as it is checked before config_user.pri is read.
 #
+# User-definable variables:
+#   PREFIX      Install prefix for Unix (specify on qmake command line)
+#   PYTHON      Path of the Python interpreter binary
+#
 # CONFIG options for Doomsday:
 # - deng_32bitonly          Only do a 32-bit build (no 64-bit)
 # - deng_aptstable          Include the stable apt repository .list
@@ -164,6 +168,19 @@ macx {
 # Options defined by the user (may not exist).
 exists(config_user.pri) {
     include(config_user.pri)
+}
+
+# System Tools ---------------------------------------------------------------
+
+# See if Python is overridden.
+isEmpty(PYTHON) {
+    unix:!macx {
+        exists(/usr/bin/python): PYTHON = /usr/bin/python
+        exists(/usr/local/bin/python): PYTHON = /usr/local/bin/python
+    }
+    # Assume user has python on the path.
+    echo(Using Python on system path.)
+    PYTHON = python
 }
 
 # Apply deng_* Configuration -------------------------------------------------
