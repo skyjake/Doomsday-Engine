@@ -1178,6 +1178,8 @@ static int destroyModelInRepository(StringPoolId id, void* parm)
     }
     M_Free(m->vertexUsage);
     M_Free(m);
+
+    return 0;
 }
 
 static void clearModelList(void)

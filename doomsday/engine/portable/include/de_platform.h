@@ -64,6 +64,8 @@
 #define strdup _strdup
 #define spawnlp _spawnlp
 
+const char* strcasestr(const char* text, const char* sub);
+
 #endif                          // WIN32
 
 /*
