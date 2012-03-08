@@ -96,11 +96,11 @@ void Rend_ParticleRegister(void)
     C_VAR_BYTE("rend-dev-generator-show-indices", &devDrawGenerators, CVF_NO_ARCHIVE, 0, 1);
 }
 
-static boolean markPtcGenVisible(ptcgen_t* gen, void* context)
+static int markPtcGenVisible(ptcgen_t* gen, void* parameters)
 {
     visiblePtcGens[P_PtcGenToIndex(gen)] = true;
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 static boolean isPtcGenVisible(const ptcgen_t* gen)
@@ -268,30 +268,30 @@ static void checkOrderBuffer(size_t max)
         order = Z_Realloc(order, sizeof(porder_t) * orderSize, PU_APPSTATIC);
 }
 
-static boolean countParticles(ptcgen_t* gen, void* context)
+static int countParticles(ptcgen_t* gen, void* parameters)
 {
     if(isPtcGenVisible(gen))
     {
-        size_t* numParts = (size_t*) context;
+        size_t* numParts = (size_t*) parameters;
         int p;
-
         for(p = 0; p < gen->count; ++p)
+        {
             if(gen->ptcs[p].stage >= 0)
                 (*numParts)++;
+        }
     }
-
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
-static boolean populateSortBuffer(ptcgen_t* gen, void* context)
+static int populateSortBuffer(ptcgen_t* gen, void* parameters)
 {
-    size_t* m = (size_t*) context;
+    size_t* m = (size_t*) parameters;
     const ded_ptcgen_t* def;
     particle_t* pt;
     int p;
 
     if(!isPtcGenVisible(gen))
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     def = gen->def;
     for(p = 0, pt = gen->ptcs; p < gen->count; ++p, pt++)
@@ -350,7 +350,7 @@ static boolean populateSortBuffer(ptcgen_t* gen, void* context)
             hasNoBlend = true;
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**
@@ -859,11 +859,11 @@ void Rend_RenderParticles(void)
     }
 }
 
-static boolean drawGeneratorOrigin(ptcgen_t* gen, void* context)
+static int drawGeneratorOrigin(ptcgen_t* gen, void* parameters)
 {
 #define MAX_GENERATOR_DIST  2048
 
-    float* eye = (float*) context;
+    float* eye = (float*) parameters;
 
     // Determine approximate center.
     if((gen->source || (gen->flags & PGF_UNTRIGGERED)))
@@ -915,7 +915,7 @@ static boolean drawGeneratorOrigin(ptcgen_t* gen, void* context)
         }
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 
 #undef MAX_GENERATOR_DIST
 }

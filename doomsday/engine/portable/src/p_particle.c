@@ -92,13 +92,13 @@ static void unlinkPtcGen(ptcgen_t* gen)
     }
 }
 
-static boolean destroyPtcGen(ptcgen_t* gen, void* paramaters)
+static int destroyPtcGen(ptcgen_t* gen, void* parameters)
 {
     assert(gen);
     GameMap_ThinkerRemove(theMap, &gen->thinker);
     unlinkPtcGen(gen);
     destroyPtcGenParticles(gen, 0);
-    return true; // Can be used as an iterator, so continue.
+    return false; // Can be used as an iterator, so continue.
 }
 
 static void linkPtcGen(ptcgenid_t slot, ptcgen_t* gen)
@@ -108,25 +108,19 @@ static void linkPtcGen(ptcgenid_t slot, ptcgen_t* gen)
     activePtcGens[slot] = gen;
 }
 
-static boolean iterateSectorLinkedPtcGens(sector_t* sector,
-                                          boolean (*callback) (ptcgen_t*, void*),
-                                          void* context)
+static int iterateSectorLinkedPtcGens(sector_t* sector,
+    int (*callback) (ptcgen_t*, void*), void* parameters)
 {
-    boolean             result = true;
-
     if(sector)
     {
-        pglink_t*           it = pgLinks[GET_SECTOR_IDX(sector)];
-
-        while(it)
+        pglink_t* it;
+        for(it = it = pgLinks[GET_SECTOR_IDX(sector)]; it; it = it->next)
         {
-            if((result = callback(it->gen, context)) == 0)
-                break;
-            it = it->next;
+            int result = callback(it->gen, parameters);
+            if(result) return result;
         }
     }
-
-    return result;
+    return false; // Continue iteration.
 }
 
 static uint findSlotForNewGen(void)
@@ -1613,23 +1607,23 @@ void P_UpdateParticleGens(void)
     P_SpawnMapParticleGens(mapUri);
 }
 
-boolean P_IteratePtcGens(boolean (*callback) (ptcgen_t*, void*),
-    void* paramaters)
+int P_IteratePtcGens(int (*callback) (ptcgen_t*, void*), void* parameters)
 {
-    boolean result = true;
     ptcgenid_t i;
     for(i = 0; i < MAX_ACTIVE_PTCGENS; ++i)
     {
-        if(!activePtcGens[i])
-            continue;
-        if((result = callback(activePtcGens[i], paramaters)) == 0)
-            break;
+        int result;
+
+        // Only consider active generators.
+        if(!activePtcGens[i]) continue;
+
+        result = callback(activePtcGens[i], parameters);
+        if(result) return result;
     }
-    return result;
+    return false; // Continue iteration.
 }
 
-boolean P_IterateSectorLinkedPtcGens(sector_t* sector,
-    boolean (*callback) (ptcgen_t*, void*), void* paramaters)
+int P_IterateSectorLinkedPtcGens(sector_t* sector, int (*callback) (ptcgen_t*, void*), void* parameters)
 {
-    return iterateSectorLinkedPtcGens(sector, callback, paramaters);
+    return iterateSectorLinkedPtcGens(sector, callback, parameters);
 }

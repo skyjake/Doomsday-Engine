@@ -167,12 +167,12 @@ ptcgenid_t P_PtcGenToIndex(const ptcgen_t* gen);
 /**
  * Walk the entire list of particle generators.
  */
-boolean P_IteratePtcGens(boolean (*callback) (ptcgen_t*, void*), void* context);
+int P_IteratePtcGens(int (*callback) (ptcgen_t*, void*), void* parameters);
 
 /**
  * Walk the list of sector-linked particle generators.
  */
-boolean P_IterateSectorLinkedPtcGens(sector_t* sector, boolean (*callback) (ptcgen_t*, void*), void* context);
+int P_IterateSectorLinkedPtcGens(sector_t* sector, int (*callback) (ptcgen_t*, void*), void* parameters);
 
 /**
  * Creates a new mobj-triggered particle generator based on the given
