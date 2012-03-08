@@ -1,61 +1,64 @@
-/**\file p_particle.h
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * Particle Generator Management.
+ * @file particle.h
+ * Generator (particles) management. @ingroup map
+ *
+ * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_PARTICLES_H
-#define LIBDENG_PARTICLES_H
+#ifndef LIBDENG_MAP_GENERATORS_H
+#define LIBDENG_MAP_GENERATORS_H
 
 #include "def_data.h"
 
+// Maximum number of active generators.
 #define MAX_ACTIVE_PTCGENS      256
-#define MAX_PTC_TEXTURES        32 // Maximum # of textures in particle system
+
+// Maximum number of particle textures (not instances).
+#define MAX_PTC_TEXTURES        32
+
+// Maximum number of particle models (not instances).
 #define MAX_PTC_MODELS          100
 
-// Generator flags
-#define PGF_STATIC              0x1 // Can't be replaced by anything.
-#define PGF_RELATIVE_VELOCITY   0x2 // Particles inherit source's velocity.
-#define PGF_SPAWN_ONLY          0x4 // Generator is spawned only when source is being spawned.
-#define PGF_RELATIVE_VECTOR     0x8 // Rotate spawn vector w/mobj angle.
-#define PGF_ADD_BLEND           0x10 // Render using additive blending.
-#define PGF_FLOOR_SPAWN         0x20 // Flat-trig: spawn on floor.
-#define PGF_CEILING_SPAWN       0x40 // Flat-trig: spawn on ceiling.
-#define PGF_SPACE_SPAWN         0x80 // Flat-trig: spawn in air.
-#define PGF_PARTS_PER_128       0x100 // Definition specifies a density.
-#define PGF_MODEL_ONLY          0x200 // Only spawn if source is a 3D model.
-#define PGF_SCALED_RATE         0x400 // Spawn rate affected by a factor.
-#define PGF_GROUP               0x800 // Triggered by all in anim group.
-#define PGF_SUB_BLEND           0x1000 // Subtractive blending.
-#define PGF_REVSUB_BLEND        0x2000 // Reverse subtractive blending.
-#define PGF_MUL_BLEND           0x4000 // Multiplicative blending.
-#define PGF_INVMUL_BLEND        0x8000 // Inverse multiplicative blending.
-#define PGF_STATE_CHAIN         0x10000 // Chain after existing state gen(s).
+/**
+ * @defgroup generatorFlags  Generator Flags
+ */
+///@{
+#define PGF_STATIC              0x1 ///< Can't be replaced by anything.
+#define PGF_RELATIVE_VELOCITY   0x2 ///< Particles inherit source's velocity.
+#define PGF_SPAWN_ONLY          0x4 ///< Generator is spawned only when source is being spawned.
+#define PGF_RELATIVE_VECTOR     0x8 ///< Rotate spawn vector w/mobj angle.
+#define PGF_ADD_BLEND           0x10 ///< Render using additive blending.
+#define PGF_FLOOR_SPAWN         0x20 ///< Flat-trig: spawn on floor.
+#define PGF_CEILING_SPAWN       0x40 ///< Flat-trig: spawn on ceiling.
+#define PGF_SPACE_SPAWN         0x80 ///< Flat-trig: spawn in air.
+#define PGF_PARTS_PER_128       0x100 ///< Definition specifies a density.
+#define PGF_MODEL_ONLY          0x200 ///< Only spawn if source is a 3D model.
+#define PGF_SCALED_RATE         0x400 ///< Spawn rate affected by a factor.
+#define PGF_GROUP               0x800 ///< Triggered by all in anim group.
+#define PGF_SUB_BLEND           0x1000 ///< Subtractive blending.
+#define PGF_REVSUB_BLEND        0x2000 ///< Reverse subtractive blending.
+#define PGF_MUL_BLEND           0x4000 ///< Multiplicative blending.
+#define PGF_INVMUL_BLEND        0x8000 ///< Inverse multiplicative blending.
+#define PGF_STATE_CHAIN         0x10000 ///< Chain after existing state gen(s).
 
 // Runtime generator flags:
 #define PGF_UNTRIGGERED         0x8000000
+///@}
 
 // Particle types
 typedef enum {
@@ -68,20 +71,24 @@ typedef enum {
     PTC_MODEL = 1000
 } ptc_type_e;
 
-// Particle flags
-#define PTCF_STAGE_TOUCH        0x1 // Touching ends current stage.
-#define PTCF_DIE_TOUCH          0x2 // Dies from first touch.
-#define PTCF_BRIGHT             0x4 // Fullbright.
-#define PTCF_SHADING            0x8 // Pseudo-3D.
-#define PTCF_PLANE_FLAT         0x10 // Touches a plane => render as flat.
-#define PTCF_STAGE_WALL_TOUCH   0x20 // Touch a wall => end stage.
-#define PTCF_STAGE_FLAT_TOUCH   0x40 // Touch a flat => end stage.
-#define PTCF_WALL_FLAT          0x80 // Touches a wall => render as flat.
+/**
+ * @defgroup particleFlags  Particle Flags
+ */
+///@{
+#define PTCF_STAGE_TOUCH        0x1 ///< Touching ends current stage.
+#define PTCF_DIE_TOUCH          0x2 ///< Dies from first touch.
+#define PTCF_BRIGHT             0x4 ///< Fullbright.
+#define PTCF_SHADING            0x8 ///< Pseudo-3D.
+#define PTCF_PLANE_FLAT         0x10 ///< Touches a plane => render as flat.
+#define PTCF_STAGE_WALL_TOUCH   0x20 ///< Touch a wall => end stage.
+#define PTCF_STAGE_FLAT_TOUCH   0x40 ///< Touch a flat => end stage.
+#define PTCF_WALL_FLAT          0x80 ///< Touches a wall => render as flat.
 #define PTCF_SPHERE_FORCE       0x100
-#define PTCF_ZERO_YAW           0x200 // Set particle yaw to zero.
-#define PTCF_ZERO_PITCH         0x400 // Set particle pitch to zero.
+#define PTCF_ZERO_YAW           0x200 ///< Set particle yaw to zero.
+#define PTCF_ZERO_PITCH         0x400 ///< Set particle pitch to zero.
 #define PTCF_RANDOM_YAW         0x800
 #define PTCF_RANDOM_PITCH       0x1000
+///@}
 
 typedef struct {
     int             stage; // -1 => particle doesn't exist
@@ -125,32 +132,66 @@ typedef struct ptcgen_s {
 
 typedef short ptcgenid_t;
 
-void            P_PtcInit(void);
-void            P_PtcShutdown(void);
-void            P_PtcInitForMap(void);
+void P_PtcInit(void);
+void P_PtcShutdown(void);
+void P_PtcInitForMap(void);
 
 /**
  * Attempt to spawn all flat-triggered particle generators for the current map.
  * To be called after map setup is completed.
  *
- * \note Cannot presently be done in P_PtcInitForMap as this is called during
- *      initial Map load and before any saved game has been loaded.
+ * @note Cannot presently be done in P_PtcInitForMap as this is called during
+ *       initial Map load and before any saved game has been loaded.
  */
 void P_MapSpawnPlaneParticleGens(void);
 
-void            P_CreatePtcGenLinks(void);
+/**
+ * Link all active particle generators into the world.
+ */
+void P_CreatePtcGenLinks(void);
+
+/**
+ * Convert a particle generator id to pointer.
+ *
+ * @return  Pointer to ptcgen iff found, ELSE @c NULL.
+ */
 const ptcgen_t* P_IndexToPtcGen(ptcgenid_t ptcGenID);
-ptcgenid_t      P_PtcGenToIndex(const ptcgen_t* gen);
 
-boolean         P_IteratePtcGens(boolean (*callback) (ptcgen_t*, void*),
-                                 void* context);
-boolean         P_IterateSectorLinkedPtcGens(sector_t* sector,
-                                             boolean (*callback) (ptcgen_t*, void*),
-                                             void* context);
+/**
+ * Convert a particle generator point to id.
+ *
+ * @return  @c -1 iff NOT found, ELSE id of the specifed ptcgen.
+ */
+ptcgenid_t P_PtcGenToIndex(const ptcgen_t* gen);
 
+/**
+ * Walk the entire list of particle generators.
+ */
+boolean P_IteratePtcGens(boolean (*callback) (ptcgen_t*, void*), void* context);
+
+/**
+ * Walk the list of sector-linked particle generators.
+ */
+boolean P_IterateSectorLinkedPtcGens(sector_t* sector, boolean (*callback) (ptcgen_t*, void*), void* context);
+
+/**
+ * Creates a new mobj-triggered particle generator based on the given
+ * definition. The generator is added to the list of active ptcgens.
+ */
 void P_SpawnMobjParticleGen(const ded_ptcgen_t* def, mobj_t* source);
+
+/**
+ * Spawns all type-triggered particle generators, regardless of whether
+ * the type of mobj exists in the map or not (mobjs might be dynamically
+ * created).
+ */
 void P_SpawnTypeParticleGens(void);
+
 void P_SpawnMapParticleGens(const Uri* mapUri);
+
+/**
+ * A public function (games can call this directly).
+ */
 void P_SpawnDamageParticleGen(mobj_t* mo, mobj_t* inflictor, int amount);
 
 /**
@@ -159,8 +200,21 @@ void P_SpawnDamageParticleGen(mobj_t* mo, mobj_t* inflictor, int amount);
  */
 void P_SpawnPlaneParticleGen(const ded_ptcgen_t* def, plane_t* plane);
 
-void            P_UpdateParticleGens(void);
+/**
+ * Called after a reset once the definitions have been re-read.
+ */
+void P_UpdateParticleGens(void);
 
-float           P_GetParticleRadius(const ded_ptcstage_t* stageDef, int ptcIndex);
-float           P_GetParticleZ(const particle_t* pt);
-#endif /* LIBDENG_PARTICLES_H */
+/**
+ * Takes care of consistent variance.
+ * Currently only used visually, collisions use the constant radius.
+ * The variance can be negative (results will be larger).
+ */
+float P_GetParticleRadius(const ded_ptcstage_t* stageDef, int ptcIndex);
+
+/**
+ * A particle may be attached to the floor or ceiling of the sector.
+ */
+float P_GetParticleZ(const particle_t* pt);
+
+#endif /// LIBDENG_MAP_GENERATORS_H

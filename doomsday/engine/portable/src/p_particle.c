@@ -1,33 +1,27 @@
-/**\file p_particle.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * Particle Generator Management
+ * @file particle.c
+ * Generator (particles) management. @ingroup map
+ *
+ * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-// HEADER FILES ------------------------------------------------------------
+#include <math.h>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -36,10 +30,6 @@
 #include "de_refresh.h"
 #include "de_audio.h"
 #include "de_misc.h"
-
-#include <math.h>
-
-// MACROS ------------------------------------------------------------------
 
 #define ORDER(x,y,a,b)      ( (x)<(y)? ((a)=(x),(b)=(y)) : ((b)=(x),(a)=(y)) )
 #define DOT2F(a,b)          ( FIX2FLT(a[VX])*FIX2FLT(b[VX]) + FIX2FLT(a[VY])*FIX2FLT(b[VY]) )
@@ -53,32 +43,18 @@ BEGIN_PROF_TIMERS()
   PROF_PTCGEN_LINK
 END_PROF_TIMERS()
 
-// TYPES -------------------------------------------------------------------
-
 typedef struct pglink_s {
     struct pglink_s* next;
-    ptcgen_t*       gen;
+    ptcgen_t* gen;
 } pglink_t;
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 void P_PtcGenThinker(ptcgen_t* gen);
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
 static void P_Uncertain(fixed_t* pos, fixed_t low, fixed_t high);
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 byte useParticles = true;
 int maxParticles = 0; // Unlimited.
 float particleSpawnRate = 1; // Unmodified.
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean inited = false;
 static ptcgen_t* activePtcGens[MAX_ACTIVE_PTCGENS];
@@ -91,8 +67,6 @@ static AABoxf mbox;
 static fixed_t tmpz, tmprad, tmpx1, tmpx2, tmpy1, tmpy2;
 static boolean tmcross;
 static linedef_t* ptcHitLine;
-
-// CODE --------------------------------------------------------------------
 
 static boolean destroyPtcGenParticles(ptcgen_t* gen, void* paramaters)
 {
@@ -297,11 +271,6 @@ void P_MapSpawnPlaneParticleGens(void)
     }}
 }
 
-/**
- * Convert a particle generator id to pointer.
- *
- * @return              Pointer to ptcgen iff found, ELSE @c NULL.
- */
 const ptcgen_t* P_IndexToPtcGen(ptcgenid_t id)
 {
     if(id >= 0 && id < MAX_ACTIVE_PTCGENS)
@@ -310,11 +279,6 @@ const ptcgen_t* P_IndexToPtcGen(ptcgenid_t id)
     return NULL; // Not found!?
 }
 
-/**
- * Convert a particle generator point to id.
- *
- * @return              @c -1 iff NOT found, ELSE id of the specifed ptcgen.
- */
 ptcgenid_t P_PtcGenToIndex(const ptcgen_t* gen)
 {
     if(gen)
@@ -370,9 +334,6 @@ void P_ClearPtcGenLinks(void)
     pgCursor = 0;
 }
 
-/**
- * Link all active particle generators into the world.
- */
 void P_CreatePtcGenLinks(void)
 {
 #ifdef DD_PROFILE
@@ -475,10 +436,6 @@ static void P_PresimParticleGen(ptcgen_t* gen, int tics)
     gen->age = 0;
 }
 
-/**
- * Creates a new mobj-triggered particle generator based on the given
- * definition. The generator is added to the list of active ptcgens.
- */
 void P_SpawnMobjParticleGen(const ded_ptcgen_t* def, mobj_t* source)
 {
     ptcgen_t*           gen;
@@ -1008,11 +965,6 @@ fixed_t P_FixedDotProduct(fixed_t* a, fixed_t* b)
 }
 #endif
 
-/**
- * Takes care of consistent variance.
- * Currently only used visually, collisions use the constant radius.
- * The variance can be negative (results will be larger).
- */
 float P_GetParticleRadius(const ded_ptcstage_t* def, int ptcIDX)
 {
     static const float rnd[16] = { .875f, .125f, .3125f, .75f, .5f, .375f,
@@ -1027,9 +979,6 @@ float P_GetParticleRadius(const ded_ptcstage_t* def, int ptcIDX)
             (1 - def->radiusVariance)) * def->radius;
 }
 
-/**
- * A particle may be attached to the floor or ceiling of the sector.
- */
 float P_GetParticleZ(const particle_t* pt)
 {
     if(pt->pos[VZ] == DDMAXINT)
@@ -1445,11 +1394,6 @@ void P_PtcGenThinker(ptcgen_t* gen)
     }
 }
 
-/**
- * Spawns all type-triggered particle generators, regardless of whether
- * the type of mobj exists in the map or not (mobjs might be dynamically
- * created).
- */
 void P_SpawnTypeParticleGens(void)
 {
     int                 i;
@@ -1510,9 +1454,6 @@ void P_SpawnMapParticleGens(const Uri* uri)
     }
 }
 
-/**
- * A public function (games can call this directly).
- */
 void P_SpawnDamageParticleGen(mobj_t* mo, mobj_t* inflictor, int amount)
 {
     const ded_ptcgen_t* def;
@@ -1563,9 +1504,6 @@ void P_SpawnDamageParticleGen(mobj_t* mo, mobj_t* inflictor, int amount)
     }
 }
 
-/**
- * Called after a reset once the definitions have been re-read.
- */
 void P_UpdateParticleGens(void)
 {
     ptcgenid_t          i;
@@ -1675,9 +1613,6 @@ void P_UpdateParticleGens(void)
     P_SpawnMapParticleGens(mapUri);
 }
 
-/**
- * Walk the entire list of particle generators.
- */
 boolean P_IteratePtcGens(boolean (*callback) (ptcgen_t*, void*),
     void* paramaters)
 {
@@ -1693,9 +1628,6 @@ boolean P_IteratePtcGens(boolean (*callback) (ptcgen_t*, void*),
     return result;
 }
 
-/**
- * Walk the list of sector-linked particle generators.
- */
 boolean P_IterateSectorLinkedPtcGens(sector_t* sector,
     boolean (*callback) (ptcgen_t*, void*), void* paramaters)
 {
