@@ -100,7 +100,7 @@ const char* DMU_Str(uint prop)
         { DMU_HEDGE, "DMU_HEDGE" },
         { DMU_LINEDEF, "DMU_LINEDEF" },
         { DMU_SIDEDEF, "DMU_SIDEDEF" },
-        { DMU_NODE, "DMU_NODE" },
+        { DMU_BSPNODE, "DMU_BSPNODE" },
         { DMU_SUBSECTOR, "DMU_SUBSECTOR" },
         { DMU_SECTOR, "DMU_SECTOR" },
         { DMU_PLANE, "DMU_PLANE" },
@@ -195,7 +195,7 @@ int DMU_GetType(const void* ptr)
         case DMU_SUBSECTOR:
         case DMU_SECTOR:
         case DMU_PLANE:
-        case DMU_NODE:
+        case DMU_BSPNODE:
         case DMU_MATERIAL:
             return type;
 
@@ -439,8 +439,8 @@ uint P_ToIndex(const void* ptr)
     case DMU_SECTOR:
         return GET_SECTOR_IDX((sector_t*) ptr);
 
-    case DMU_NODE:
-        return GET_NODE_IDX((node_t*) ptr);
+    case DMU_BSPNODE:
+        return GET_BSPNODE_IDX((BspNode*) ptr);
 
     case DMU_PLANE:
         return GET_PLANE_IDX((plane_t*) ptr);
@@ -479,8 +479,8 @@ void* P_ToPtr(int type, uint index)
     case DMU_SECTOR:
         return SECTOR_PTR(index);
 
-    case DMU_NODE:
-        return NODE_PTR(index);
+    case DMU_BSPNODE:
+        return BSPNODE_PTR(index);
 
     case DMU_PLANE:
         Con_Error("P_ToPtr: Cannot convert %s to a ptr (sector is unknown).\n",
@@ -615,9 +615,9 @@ int P_Callback(int type, uint index, void* context,
             return callback(SIDE_PTR(index), context);
         break;
 
-    case DMU_NODE:
-        if(index < NUM_NODES)
-            return callback(NODE_PTR(index), context);
+    case DMU_BSPNODE:
+        if(index < NUM_BSPNODES)
+            return callback(BSPNODE_PTR(index), context);
         break;
 
     case DMU_SUBSECTOR:
@@ -674,7 +674,7 @@ int P_Callbackp(int type, void* ptr, void* context,
     case DMU_HEDGE:
     case DMU_LINEDEF:
     case DMU_SIDEDEF:
-    case DMU_NODE:
+    case DMU_BSPNODE:
     case DMU_SUBSECTOR:
     case DMU_SECTOR:
     case DMU_PLANE:
@@ -1105,8 +1105,8 @@ static int setProperty(void* obj, void* context)
         DMU_SetMaterialProperty(obj, args);
         break;
 
-    case DMU_NODE:
-        Con_Error("SetProperty: Property %s is not writable in DMU_NODE.\n",
+    case DMU_BSPNODE:
+        Con_Error("SetProperty: Property %s is not writable in DMU_BSPNODE.\n",
                   DMU_Str(args->prop));
         break;
 

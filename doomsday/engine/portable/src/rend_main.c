@@ -2910,11 +2910,11 @@ static void Rend_RenderNode(uint bspnum)
     else
     {
         const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
-        node_t* bsp;
+        BspNode* bsp;
         byte side;
 
         // Descend deeper into the nodes.
-        bsp = NODE_PTR(bspnum);
+        bsp = BSPNODE_PTR(bspnum);
 
         // Decide which side the view point is on.
         side = P_PointOnPartitionSide(viewData->current.pos[VX], viewData->current.pos[VY],
@@ -3408,9 +3408,9 @@ void Rend_RenderMap(void)
 
         // We don't want subsector clipchecking for the first subsector.
         firstsubsector = true;
-        if(NUM_NODES != 0)
+        if(NUM_BSPNODES != 0)
         {
-            Rend_RenderNode(NUM_NODES - 1);
+            Rend_RenderNode(NUM_BSPNODES - 1);
         }
         else
         {

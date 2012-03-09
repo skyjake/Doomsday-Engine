@@ -214,18 +214,18 @@ HEdge* GameMap_HEdge(GameMap* map, uint idx)
     return &map->hedges[idx];
 }
 
-int GameMap_NodeIndex(GameMap* map, node_t* node)
+int GameMap_BspNodeIndex(GameMap* map, BspNode* node)
 {
     assert(map);
-    if(!node || !(node >= map->nodes && node <= &map->nodes[map->numNodes])) return -1;
-    return node - map->nodes;
+    if(!node || !(node >= map->bspNodes && node <= &map->bspNodes[map->numBspNodes])) return -1;
+    return node - map->bspNodes;
 }
 
-node_t* GameMap_Node(GameMap* map, uint idx)
+BspNode* GameMap_BspNode(GameMap* map, uint idx)
 {
     assert(map);
-    if(idx >= map->numNodes) return NULL;
-    return &map->nodes[idx];
+    if(idx >= map->numBspNodes) return NULL;
+    return &map->bspNodes[idx];
 }
 
 uint GameMap_VertexCount(GameMap* map)
@@ -264,10 +264,10 @@ uint GameMap_HEdgeCount(GameMap* map)
     return map->numHEdges;
 }
 
-uint GameMap_NodeCount(GameMap* map)
+uint GameMap_BspNodeCount(GameMap* map)
 {
     assert(map);
-    return map->numNodes;
+    return map->numBspNodes;
 }
 
 uint GameMap_PolyobjCount(GameMap* map)
@@ -1117,13 +1117,13 @@ int GameMap_HEdgeIterator(GameMap* map, int (*callback) (HEdge*, void*), void* p
     return false; // Continue iteration.
 }
 
-int GameMap_NodeIterator(GameMap* map, int (*callback) (node_t*, void*), void* parameters)
+int GameMap_BspNodeIterator(GameMap* map, int (*callback) (BspNode*, void*), void* parameters)
 {
     uint i;
     assert(map);
-    for(i = 0; i < map->numNodes; ++i)
+    for(i = 0; i < map->numBspNodes; ++i)
     {
-        int result = callback(map->nodes + i, parameters);
+        int result = callback(map->bspNodes + i, parameters);
         if(result) return result;
     }
     return false; // Continue iteration.
@@ -1390,7 +1390,7 @@ int GameMap_PathXYTraverse(GameMap* map, float fromX, float fromY, float toX, fl
 
 subsector_t* GameMap_SubsectorAtPoint(GameMap* map, float point_[2])
 {
-    node_t* node = 0;
+    BspNode* node = 0;
     uint nodenum = 0;
     float point[2];
 
@@ -1398,16 +1398,16 @@ subsector_t* GameMap_SubsectorAtPoint(GameMap* map, float point_[2])
     point[1] = point_? point_[1] : 0;
 
     // single subsector is a special case
-    if(!map->numNodes)
+    if(!map->numBspNodes)
     {
         return (subsector_t*) map->subsectors;
     }
 
-    nodenum = map->numNodes - 1;
+    nodenum = map->numBspNodes - 1;
     while(!(nodenum & NF_SUBSECTOR))
     {
-        node = map->nodes + nodenum;
-        ASSERT_DMU_TYPE(node, DMU_NODE);
+        node = map->bspNodes + nodenum;
+        ASSERT_DMU_TYPE(node, DMU_BSPNODE);
         nodenum = node->children[P_PointOnPartitionSide(point[0], point[1], &node->partition)];
     }
 

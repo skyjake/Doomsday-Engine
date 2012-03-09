@@ -54,7 +54,7 @@ vertex_t* vertexes = NULL;
 HEdge* hedges = NULL;
 sector_t* sectors = NULL;
 subsector_t* subsectors = NULL;
-node_t* nodes = NULL;
+BspNode* bspNodes = NULL;
 linedef_t* lineDefs = NULL;
 sidedef_t* sideDefs = NULL;
 polyobj_t** polyObjs = NULL; // List of all poly-objects in the map.
@@ -122,7 +122,7 @@ void P_SetCurrentMap(GameMap* map)
         hedges = 0;
         sectors = 0;
         subsectors = 0;
-        nodes = 0;
+        bspNodes = 0;
         lineDefs = 0;
         sideDefs = 0;
         polyObjs = 0;
@@ -137,7 +137,7 @@ void P_SetCurrentMap(GameMap* map)
     hedges = map->hedges;
     sectors = map->sectors;
     subsectors = map->subsectors;
-    nodes = map->nodes;
+    bspNodes = map->bspNodes;
     lineDefs = map->lineDefs;
     sideDefs = map->sideDefs;
     polyObjs = map->polyObjs;

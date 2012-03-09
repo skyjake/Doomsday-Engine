@@ -211,7 +211,7 @@ static boolean crossBSPNode(GameMap* map, unsigned int bspNum, losdata_t* los)
 {
     while(!(bspNum & NF_SUBSECTOR))
     {
-        const node_t* node = &map->nodes[bspNum];
+        const BspNode* node = &map->bspNodes[bspNum];
         int side = P_PointOnPartitionSide(FIX2FLT(los->trace.pos[VX]), FIX2FLT(los->trace.pos[VY]),
                                           &node->partition);
 
@@ -275,5 +275,5 @@ boolean GameMap_CheckLineSight(GameMap* map, const float from[3], const float to
     }
 
     validCount++;
-    return crossBSPNode(map, map->numNodes - 1, &los);
+    return crossBSPNode(map, map->numBspNodes - 1, &los);
 }

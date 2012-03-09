@@ -33,7 +33,7 @@
 #define numsegs     (*(uint*) DD_GetVariable(DD_HEDGE_COUNT))
 #define numsectors  (*(uint*) DD_GetVariable(DD_SECTOR_COUNT))
 #define numsubsectors (*(uint*) DD_GetVariable(DD_SUBSECTOR_COUNT))
-#define numnodes    (*(uint*) DD_GetVariable(DD_NODE_COUNT))
+#define numnodes    (*(uint*) DD_GetVariable(DD_BSPNODE_COUNT))
 #define numlines    (*(uint*) DD_GetVariable(DD_LINE_COUNT))
 #define numsides    (*(uint*) DD_GetVariable(DD_SIDE_COUNT))
 

@@ -2134,8 +2134,8 @@ void* DD_GetVariable(int ddvalue)
         valueU = theMap? GameMap_SubsectorCount(theMap) : 0;
         return &valueU;
 
-    case DD_NODE_COUNT:
-        valueU = theMap? GameMap_NodeCount(theMap) : 0;
+    case DD_BSPNODE_COUNT:
+        valueU = theMap? GameMap_BspNodeCount(theMap) : 0;
         return &valueU;
 
     case DD_TRACE_ADDRESS:

@@ -204,7 +204,7 @@ typedef unsigned char binangle_t;
 
 // Forward declarations for map data types. The contents of these structs is
 // declared in p_maptypes.h.
-struct node_s;
+struct bspnode_s;
 struct vertex_s;
 struct linedef_s;
 struct side_s;

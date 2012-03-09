@@ -330,7 +330,7 @@ static boolean C_DECL hardenNode(binarytree_t* tree, void* data)
     binarytree_t*       right, *left;
     bspnodedata_t*      nodeData;
     hardenbspparams_t*  params;
-    node_t*             node;
+    BspNode*             node;
 
     if(BinaryTree_IsLeaf(tree))
         return true; // Continue iteration.
@@ -338,8 +338,8 @@ static boolean C_DECL hardenNode(binarytree_t* tree, void* data)
     nodeData = BinaryTree_GetData(tree);
     params = (hardenbspparams_t*) data;
 
-    node = &params->dest->nodes[nodeData->index = params->nodeCurIndex++];
-    node->header.type = DMU_NODE;
+    node = &params->dest->bspNodes[nodeData->index = params->nodeCurIndex++];
+    node->header.type = DMU_BSPNODE;
 
     node->partition.x = nodeData->partition.x;
     node->partition.y = nodeData->partition.y;
@@ -415,12 +415,12 @@ static boolean C_DECL countSSec(binarytree_t* tree, void* data)
 
 static void hardenBSP(GameMap* dest, binarytree_t* rootNode)
 {
-    dest->numNodes = 0;
-    BinaryTree_PostOrder(rootNode, countNode, &dest->numNodes);
-    if(dest->numNodes != 0)
-        dest->nodes = Z_Calloc(dest->numNodes * sizeof(node_t), PU_MAPSTATIC, 0);
+    dest->numBspNodes = 0;
+    BinaryTree_PostOrder(rootNode, countNode, &dest->numBspNodes);
+    if(dest->numBspNodes != 0)
+        dest->bspNodes = Z_Calloc(dest->numBspNodes * sizeof(BspNode), PU_MAPSTATIC, 0);
     else
-        dest->nodes = 0;
+        dest->bspNodes = 0;
 
     dest->numSubsectors = 0;
     BinaryTree_PostOrder(rootNode, countSSec, &dest->numSubsectors);

@@ -90,8 +90,8 @@ typedef struct gamemap_s {
     uint numSubsectors;
     subsector_t* subsectors;
 
-    uint numNodes;
-    node_t* nodes;
+    uint numBspNodes;
+    BspNode* bspNodes;
 
     uint numLineDefs;
     linedef_t* lineDefs;
@@ -252,13 +252,13 @@ subsector_t* GameMap_Subsector(GameMap* map, uint idx);
 HEdge* GameMap_HEdge(GameMap* map, uint idx);
 
 /**
- * Lookup a Node by its unique index.
+ * Lookup a BspNode by its unique index.
  *
  * @param map  GameMap instance.
- * @param idx  Unique index of the node.
- * @return  Pointer to Node with this index else @c NULL if @a idx is not valid.
+ * @param idx  Unique index of the bsp node.
+ * @return  Pointer to BspNode with this index else @c NULL if @a idx is not valid.
  */
-node_t* GameMap_Node(GameMap* map, uint idx);
+BspNode* GameMap_BspNode(GameMap* map, uint idx);
 
 /**
  * Lookup the unique index for @a vertex.
@@ -318,10 +318,10 @@ int GameMap_HEdgeIndex(GameMap* map, HEdge* hedge);
  * Lookup the unique index for @a node.
  *
  * @param map  GameMap instance.
- * @param node  Node to lookup.
- * @return  Unique index for the Node else @c -1 if not present.
+ * @param bspNode  BspNode to lookup.
+ * @return  Unique index for the BspNode else @c -1 if not present.
  */
-int GameMap_NodeIndex(GameMap* map, node_t* node);
+int GameMap_BspNodeIndex(GameMap* map, BspNode* bspNode);
 
 /**
  * Retrieve the number of Vertex instances owned by this.
@@ -372,12 +372,12 @@ uint GameMap_SubsectorCount(GameMap* map);
 uint GameMap_HEdgeCount(GameMap* map);
 
 /**
- * Retrieve the number of Node instances owned by this.
+ * Retrieve the number of BspNode instances owned by this.
  *
  * @param map  GameMap instance.
- * @return  Number Node.
+ * @return  Number BspNode.
  */
-uint GameMap_NodeCount(GameMap* map);
+uint GameMap_BspNodeCount(GameMap* map);
 
 /**
  * Retrieve the number of Polyobj instances owned by this.
@@ -688,7 +688,7 @@ int GameMap_SectorIterator(GameMap* map, int (*callback) (sector_t*, void*), voi
 
 int GameMap_HEdgeIterator(GameMap* map, int (*callback) (HEdge*, void*), void* parameters);
 
-int GameMap_NodeIterator(GameMap* map, int (*callback) (node_t*, void*), void* parameters);
+int GameMap_BspNodeIterator(GameMap* map, int (*callback) (BspNode*, void*), void* parameters);
 
 /**
  * Traces a line between @a from and @a to, making a callback for each

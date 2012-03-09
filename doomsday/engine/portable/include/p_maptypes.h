@@ -470,15 +470,15 @@ typedef struct linedef_s {
  * An infinite line of the form point + direction vectors.
  */
 typedef struct partition_s {
-	float				x, y;
-	float				dX, dY;
+    float x, y;
+    float dX, dY;
 } partition_t;
 
-typedef struct node_s {
+typedef struct bspnode_s {
     runtime_mapdata_header_t header;
     partition_t         partition;
     float               bBox[2][4];    // Bounding box for each child.
     unsigned int        children[2];   // If NF_SUBSECTOR it's a subsector.
-} node_t;
+} BspNode;
 
 #endif

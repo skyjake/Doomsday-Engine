@@ -41,7 +41,7 @@
 #define GET_SECTOR_IDX(sec)     GameMap_SectorIndex(theMap, sec)
 #define GET_SUBSECTOR_IDX(ssec) GameMap_SubsectorIndex(theMap, ssec)
 #define GET_HEDGE_IDX(he)       GameMap_HEdgeIndex(theMap, he)
-#define GET_NODE_IDX(nd)        GameMap_NodeIndex(theMap, nd)
+#define GET_BSPNODE_IDX(nd)     GameMap_BspNodeIndex(theMap, nd)
 
 #define VERTEX_PTR(idx)         GameMap_Vertex(theMap, idx)
 #define LINE_PTR(idx)           GameMap_LineDef(theMap, idx)
@@ -49,7 +49,7 @@
 #define SECTOR_PTR(idx)         GameMap_Sector(theMap, idx)
 #define SUBSECTOR_PTR(idx)      GameMap_Subsector(theMap, idx)
 #define HEDGE_PTR(idx)          GameMap_HEdge(theMap, idx)
-#define NODE_PTR(idx)           GameMap_Node(theMap, idx)
+#define BSPNODE_PTR(idx)        GameMap_BspNode(theMap, idx)
 
 #define NUM_VERTEXES            GameMap_VertexCount(theMap)
 #define NUM_LINEDEFS            GameMap_LineDefCount(theMap)
@@ -57,7 +57,7 @@
 #define NUM_SECTORS             GameMap_SectorCount(theMap)
 #define NUM_SUBSECTORS          GameMap_SubsectorCount(theMap)
 #define NUM_HEDGES              GameMap_HEdgeCount(theMap)
-#define NUM_NODES               GameMap_NodeCount(theMap)
+#define NUM_BSPNODES            GameMap_BspNodeCount(theMap)
 
 #define NUM_POLYOBJS            GameMap_PolyobjCount(theMap)
 
@@ -177,7 +177,7 @@ extern vertex_t* vertexes;
 extern HEdge* hedges;
 extern sector_t* sectors;
 extern subsector_t* subsectors;
-extern node_t* nodes;
+extern BspNode* bspNodes;
 extern linedef_t* lineDefs;
 extern sidedef_t* sideDefs;
 extern polyobj_t** polyObjs; ///< List of all polyobjs on the current map.

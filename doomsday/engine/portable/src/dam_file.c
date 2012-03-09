@@ -763,7 +763,7 @@ static void archiveSegs(GameMap *map, boolean write)
 
 static void writeNode(const GameMap *map, uint idx)
 {
-    node_t             *n = &map->nodes[idx];
+    BspNode             *n = &map->bspNodes[idx];
 
     writeFloat(n->partition.x);
     writeFloat(n->partition.y);
@@ -783,7 +783,7 @@ static void writeNode(const GameMap *map, uint idx)
 
 static void readNode(const GameMap *map, uint idx)
 {
-    node_t             *n = &map->nodes[idx];
+    BspNode             *n = &map->bspNodes[idx];
 
     n->partition.x = readFloat();
     n->partition.y = readFloat();
@@ -812,14 +812,14 @@ static void archiveNodes(GameMap *map, boolean write)
 
     if(write)
     {
-        writeLong(map->numNodes);
-        for(i = 0; i < map->numNodes; ++i)
+        writeLong(map->numBspNodes);
+        for(i = 0; i < map->numBspNodes; ++i)
             writeNode(map, i);
     }
     else
     {
-        map->numNodes = readLong();
-        for(i = 0; i < map->numNodes; ++i)
+        map->numBspNodes = readLong();
+        for(i = 0; i < map->numBspNodes; ++i)
             readNode(map, i);
     }
 
