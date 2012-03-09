@@ -200,7 +200,7 @@ static int linkGeneratorParticles(ptcgen_t* gen, void* parameters)
         if(gen->ptcs[i].stage < 0) continue;
 
         /// @fixme Do not assume sector is from the CURRENT map.
-        Generators_LinkToSector(gens, gen, GameMap_SectorIndex(theMap, gen->ptcs[i].sector));
+        Generators_LinkToList(gens, gen, GameMap_SectorIndex(theMap, gen->ptcs[i].sector));
     }
     return false; // Continue iteration.
 }
@@ -223,7 +223,7 @@ void P_CreatePtcGenLinks(void)
 
 BEGIN_PROF(PROF_PTCGEN_LINK);
 
-    Generators_ClearSectorLinks(gens);
+    Generators_EmptyLists(gens);
 
     if(useParticles)
     {
@@ -1401,13 +1401,6 @@ static int findDefForGenerator(ptcgen_t* gen, void* parameters)
             return i+1;
         }
 
-        // A state generator?
-        if(gen->source && def->state[0] &&
-           gen->source->state - states == Def_GetStateNum(def->state))
-        {
-            return i+1;
-        }
-
         // A flat generator?
         if(gen->plane && def->material)
         {
@@ -1449,6 +1442,13 @@ static int findDefForGenerator(ptcgen_t* gen, void* parameters)
                     }
                 }
             }
+        }
+
+        // A state generator?
+        if(gen->source && def->state[0] &&
+           gen->source->state - states == Def_GetStateNum(def->state))
+        {
+            return i+1;
         }
     }
 

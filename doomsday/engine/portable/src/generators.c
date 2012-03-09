@@ -43,17 +43,17 @@ struct generators_s {
     uint listsSize;
 };
 
-Generators* Generators_New(uint sectorCount)
+Generators* Generators_New(uint listCount)
 {
     Generators* gens = Z_Malloc(sizeof(*gens), PU_MAP, 0);
     if(!gens) Con_Error("Generators_New: Failed on allocation of %lu bytes for new Generators instance.", (unsigned long) sizeof(*gens));
 
     memset(gens->activeGens, 0, sizeof(gens->activeGens));
 
-    gens->listsSize = sectorCount;
-    gens->lists = Z_Calloc(sizeof(listnode_t*) * sectorCount, PU_MAP, 0);
+    gens->listsSize = listCount;
+    gens->lists = Z_Calloc(sizeof(listnode_t*) * listCount, PU_MAP, 0);
 
-    // We can link 64 generators each into four sectors each before running out of links.
+    // We can link 64 generators each into four lists each before running out of links.
     gens->linkStoreSize = 4 * GENERATORS_MAX;
     gens->linkStore = Z_Malloc(sizeof(listnode_t) * gens->linkStoreSize, PU_MAP, 0);
     gens->linkStoreCursor = 0;
@@ -72,7 +72,7 @@ void Generators_Delete(Generators* gens)
 void Generators_Clear(Generators* gens)
 {
     assert(gens);
-    Generators_ClearSectorLinks(gens);
+    Generators_EmptyLists(gens);
     memset(gens->activeGens, 0, sizeof(gens->activeGens));
 }
 
@@ -152,7 +152,7 @@ ptcgen_t* Generators_Link(Generators* gens, ptcgenid_t slot, ptcgen_t* gen)
     return gen;
 }
 
-ptcgen_t* Generators_LinkToSector(Generators* gens, ptcgen_t* gen, uint sectorIndex)
+ptcgen_t* Generators_LinkToList(Generators* gens, ptcgen_t* gen, uint listIndex)
 {
     listnode_t* link, *it;
     assert(gens);
@@ -160,10 +160,10 @@ ptcgen_t* Generators_LinkToSector(Generators* gens, ptcgen_t* gen, uint sectorIn
     assert(Generators_GeneratorId(gens, gen) >= 0);
 
     // Must check that it isn't already there...
-    for(it = gens->lists[sectorIndex]; it; it = it->next)
+    for(it = gens->lists[listIndex]; it; it = it->next)
     {
         if(it->gen == gen) return gen; // No, no...
-        /*Con_Error("Generators_LinkToSector: Attempted repeat link of generator %p to sector %u.", (void*)gen, sectorIndex);
+        /*Con_Error("Generators_LinkToList: Attempted repeat link of generator %p to list %u.", (void*)gen, listIndex);
         exit(1); // Unreachable.*/
     }
 
@@ -172,13 +172,13 @@ ptcgen_t* Generators_LinkToSector(Generators* gens, ptcgen_t* gen, uint sectorIn
     if(link)
     {
         link->gen = gen;
-        link->next = gens->lists[sectorIndex];
-        gens->lists[sectorIndex] = link;
+        link->next = gens->lists[listIndex];
+        gens->lists[listIndex] = link;
     }
     return gen;
 }
 
-void Generators_ClearSectorLinks(Generators* gens)
+void Generators_EmptyLists(Generators* gens)
 {
     assert(gens);
     if(!gens->lists) return;
@@ -204,12 +204,12 @@ int Generators_Iterate(Generators* gens, int (*callback) (ptcgen_t*, void*), voi
     return false; // Continue iteration.
 }
 
-int Generators_IterateSectorLinked(Generators* gens, uint sectorIndex,
+int Generators_IterateList(Generators* gens, uint listIndex,
     int (*callback) (ptcgen_t*, void*), void* parameters)
 {
     listnode_t* it;
     assert(gens);
-    for(it = it = gens->lists[sectorIndex]; it; it = it->next)
+    for(it = it = gens->lists[listIndex]; it; it = it->next)
     {
         int result = callback(it->gen, parameters);
         if(result) return result;

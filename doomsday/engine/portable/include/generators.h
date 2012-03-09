@@ -42,9 +42,9 @@ typedef struct generators_s Generators;
 /**
  * Constructs a new generators collection. Must be deleted with Generators_Delete().
  *
- * @param sectorCount  Number of sectors the collection must support.
+ * @param listCount  Number of lists the collection must support.
  */
-Generators* Generators_New(uint sectorCount);
+Generators* Generators_New(uint listCount);
 
 /**
  * Destructs the generators collection @a generators.
@@ -53,11 +53,11 @@ Generators* Generators_New(uint sectorCount);
 void Generators_Delete(Generators* generators);
 
 /**
- * Clear all references to any ptcgen_t instances currently owned by this
- * collection.
+ * Clear all ptcgen_t references in this collection.
  *
  * @warning Does nothing about any memory allocated for said instances.
- *          It is therefore the caller's responsibilty to
+ *
+ * @param generators  Generators instance.
  */
 void Generators_Clear(Generators* generators);
 
@@ -107,36 +107,49 @@ ptcgen_t* Generators_Unlink(Generators* generators, ptcgen_t* generator);
 ptcgen_t* Generators_Link(Generators* generators, ptcgenid_t slot, ptcgen_t* generator);
 
 /**
- * Clear all sector --> generator links.
+ * Empty all generator link lists.
  *
  * @param generators  Generators instance.
  */
-void Generators_ClearSectorLinks(Generators* generators);
+void Generators_EmptyLists(Generators* generators);
 
 /**
  * Link the a sector with a generator.
  *
  * @param generators  Generators instance.
- * @param generator   Generator to link with the identified sector.
- * @param sectorIndex  Index of the sector to link the generator with.
+ * @param generator   Generator to link with the identified list.
+ * @param listIndex  Index of the list to link the generator on.
  *
  * @return  Same as @a generator for caller convenience.
  */
-ptcgen_t* Generators_LinkToSector(Generators* generators, ptcgen_t* generator, uint sectorIndex);
+ptcgen_t* Generators_LinkToList(Generators* generators, ptcgen_t* generator, uint listIndex);
 
 /**
- * Walk the entire list of generators.
+ * Iterate over all generators in the collection making a callback for each.
+ * Iteration ends when all generators have been processed or a callback returns
+ * non-zero.
  *
  * @param generators  Generators instance.
+ * @param callback  Callback to make for each iteration.
+ * @param parameters  User data to be passed to the callback.
+ *
+ * @return  @c 0 iff iteration completed wholly.
  */
 int Generators_Iterate(Generators* generators, int (*callback) (ptcgen_t*, void*), void* parameters);
 
 /**
- * Walk the list of sector-linked generators.
+ * Iterate over all generators in the collection which are present on the identified
+ * list making a callback for each. Iteration ends when all targeted generators have
+ * been processed or a callback returns non-zero.
  *
  * @param generators  Generators instance.
+ * @param listIndex  Index of the list to traverse.
+ * @param callback  Callback to make for each iteration.
+ * @param parameters  User data to be passed to the callback.
+ *
+ * @return  @c 0 iff iteration completed wholly.
  */
-int Generators_IterateSectorLinked(Generators* generators, uint sectorIndex,
+int Generators_IterateList(Generators* generators, uint listIndex,
     int (*callback) (ptcgen_t*, void*), void* parameters);
 
 #endif /// LIBDENG_MAP_GENERATORS
