@@ -537,7 +537,6 @@ void R_Init(void)
     R_SkyInit();
     Rend_Init();
     frameCount = 0;
-    P_PtcInit();
 }
 
 /**

@@ -23,8 +23,11 @@
 #ifndef LIBDENG_GAMEMAP_H
 #define LIBDENG_GAMEMAP_H
 
+#include "p_particle.h"
+
 struct thinkerlist_s;
 struct clmoinfo_s;
+struct generators_s;
 
 /// Size of Blockmap blocks in map units. Must be an integer power of two.
 #define MAPBLOCKUNITS               (128)
@@ -65,6 +68,8 @@ typedef struct gamemap_s {
         struct thinkerlist_s** lists;
         boolean inited;
     } thinkers;
+
+    struct generators_s* generators;
 
     // Client only data:
     cmhash_t clMobjHash[CLIENT_MOBJ_HASH_SIZE];
@@ -515,6 +520,16 @@ struct clplane_s* GameMap_NewClPlane(GameMap* map, uint sectornum, clplanetype_t
     float dest, float speed);
 
 /**
+ * Retrieve a pointer to the Generators collection for this map.
+ * If no collection has yet been constructed a new empty collection will be
+ * initialized as a result of this call.
+ *
+ * @param map  GameMap instance.
+ * @return  Generators collection for this map.
+ */
+struct generators_s* GameMap_Generators(GameMap* map);
+
+/**
  * Initialize all Polyobjs in the map. To be called after map load.
  *
  * @param map  GameMap instance.
@@ -540,9 +555,9 @@ void GameMap_LinkMobjInBlockmap(GameMap* map, struct mobj_s* mo);
 boolean GameMap_UnlinkMobjInBlockmap(GameMap* map, struct mobj_s* mo);
 
 int GameMap_IterateCellMobjs(GameMap* map, const uint coords[2],
-    int (*callback) (struct mobj_s*, void*), void* paramaters);
+    int (*callback) (struct mobj_s*, void*), void* parameters);
 int GameMap_IterateCellBlockMobjs(GameMap* map, const struct gridmapblock_s* blockCoords,
-    int (*callback) (struct mobj_s*, void*), void* paramaters);
+    int (*callback) (struct mobj_s*, void*), void* parameters);
 
 int GameMap_MobjsBoxIterator(GameMap* map, const AABoxf* box,
     int (*callback) (struct mobj_s*, void*), void* parameters);
@@ -558,17 +573,19 @@ void GameMap_InitLineDefBlockmap(GameMap* map, const_pvec2_t min, const_pvec2_t 
 void GameMap_LinkLineDefInBlockmap(GameMap* map, linedef_t* lineDef);
 
 int GameMap_IterateCellLineDefs(GameMap* map, const uint coords[2],
-    int (*callback) (linedef_t*, void*), void* paramaters);
+    int (*callback) (linedef_t*, void*), void* parameters);
 int GameMap_IterateCellBlockLineDefs(GameMap* map, const struct gridmapblock_s* blockCoords,
-    int (*callback) (linedef_t*, void*), void* paramaters);
+    int (*callback) (linedef_t*, void*), void* parameters);
+
+int GameMap_LineDefIterator(GameMap* map, int (*callback) (linedef_t*, void*), void* parameters);
 
 int GameMap_IterateCellPolyobjLineDefs(GameMap* map, const uint coords[2],
-    int (*callback) (linedef_t*, void*), void* paramaters);
+    int (*callback) (linedef_t*, void*), void* parameters);
 int GameMap_IterateCellBlockPolyobjLineDefs(GameMap* map, const struct gridmapblock_s* blockCoords,
-    int (*callback) (linedef_t*, void*), void* paramaters);
+    int (*callback) (linedef_t*, void*), void* parameters);
 
 int GameMap_LineDefsBoxIterator(GameMap* map, const AABoxf* box,
-    int (*callback) (linedef_t*, void*), void* paramaters);
+    int (*callback) (linedef_t*, void*), void* parameters);
 
 int GameMap_PolyobjLinesBoxIterator(GameMap* map, const AABoxf* box,
     int (*callback) (linedef_t*, void*), void* parameters);
@@ -581,7 +598,7 @@ int GameMap_PolyobjLinesBoxIterator(GameMap* map, const AABoxf* box,
  * to GameMap_IterateCellLineDefs(), then make one or more calls to it.
  */
 int GameMap_AllLineDefsBoxIterator(GameMap* map, const AABoxf* box,
-    int (*callback) (linedef_t*, void*), void* paramaters);
+    int (*callback) (linedef_t*, void*), void* parameters);
 
 /**
  * Construct an initial (empty) Subsector Blockmap for this map.
@@ -595,13 +612,15 @@ void GameMap_LinkSubsectorInBlockmap(GameMap* map, subsector_t* subsector);
 
 int GameMap_IterateCellSubsectors(GameMap* map, const uint coords[2],
     sector_t* sector, const AABoxf* box, int localValidCount,
-    int (*callback) (subsector_t*, void*), void* paramaters);
+    int (*callback) (subsector_t*, void*), void* parameters);
 int GameMap_IterateCellBlockSubsectors(GameMap* map, const struct gridmapblock_s* blockCoords,
     sector_t* sector, const AABoxf* box, int localValidCount,
-    int (*callback) (subsector_t*, void*), void* paramaters);
+    int (*callback) (subsector_t*, void*), void* parameters);
 
 int GameMap_SubsectorsBoxIterator(GameMap* map, const AABoxf* box, sector_t* sector,
     int (*callback) (subsector_t*, void*), void* parameters);
+
+int GameMap_SubsectorIterator(GameMap* map, int (*callback) (subsector_t*, void*), void* parameters);
 
 /**
  * Construct an initial (empty) Polyobj Blockmap for this map.
@@ -615,9 +634,9 @@ void GameMap_LinkPolyobjInBlockmap(GameMap* map, polyobj_t* po);
 void  GameMap_UnlinkPolyobjInBlockmap(GameMap* map, polyobj_t* po);
 
 int GameMap_IterateCellPolyobjs(GameMap* map, const uint coords[2],
-    int (*callback) (polyobj_t*, void*), void* paramaters);
+    int (*callback) (polyobj_t*, void*), void* parameters);
 int GameMap_IterateCellBlockPolyobjs(GameMap* map, const struct gridmapblock_s* blockCoords,
-    int (*callback) (polyobj_t*, void*), void* paramaters);
+    int (*callback) (polyobj_t*, void*), void* parameters);
 
 /**
  * The validCount flags are used to avoid checking polys that are marked in
@@ -627,18 +646,30 @@ int GameMap_IterateCellBlockPolyobjs(GameMap* map, const struct gridmapblock_s* 
 int GameMap_PolyobjsBoxIterator(GameMap* map, const AABoxf* box,
     int (*callback) (struct polyobj_s*, void*), void* parameters);
 
+int GameMap_PolyobjIterator(GameMap* map, int (*callback) (polyobj_t*, void*), void* parameters);
+
+int GameMap_VertexIterator(GameMap* map, int (*callback) (vertex_t*, void*), void* parameters);
+
+int GameMap_SideDefIterator(GameMap* map, int (*callback) (sidedef_t*, void*), void* parameters);
+
+int GameMap_SectorIterator(GameMap* map, int (*callback) (sector_t*, void*), void* parameters);
+
+int GameMap_HEdgeIterator(GameMap* map, int (*callback) (HEdge*, void*), void* parameters);
+
+int GameMap_NodeIterator(GameMap* map, int (*callback) (node_t*, void*), void* parameters);
+
 /**
  * Traces a line between @a from and @a to, making a callback for each
  * interceptable object linked within Blockmap cells which cover the path this
  * defines.
  */
 int GameMap_PathTraverse2(GameMap* map, float const from[2], float const to[2],
-    int flags, traverser_t callback, void* paramaters);
+    int flags, traverser_t callback, void* parameters);
 int GameMap_PathTraverse(GameMap* map, float const from[2], float const to[2],
-    int flags, traverser_t callback/* void* paramaters=NULL*/);
+    int flags, traverser_t callback/* void* parameters=NULL*/);
 
 int GameMap_PathXYTraverse2(GameMap* map, float fromX, float fromY, float toX, float toY,
-    int flags, traverser_t callback, void* paramaters);
+    int flags, traverser_t callback, void* parameters);
 int GameMap_PathXYTraverse(GameMap* map, float fromX, float fromY, float toX, float toY,
     int flags, traverser_t callback);
 

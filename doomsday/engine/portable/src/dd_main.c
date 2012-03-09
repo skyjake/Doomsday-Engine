@@ -1115,7 +1115,6 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
         R_DestroyObjlinkBlockmap();
         R_ClearAnimGroups();
 
-        P_PtcShutdown();
         P_ControlShutdown();
         Con_Execute(CMDS_DDAY, "clearbindings", true, false);
 
@@ -1144,8 +1143,8 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
         // Clear player data, too, since we just lost all clmobjs.
         Cl_InitPlayers();
 
-        Z_FreeTags(PU_GAMESTATIC, PU_PURGELEVEL - 1);
         P_SetCurrentMap(0);
+        Z_FreeTags(PU_GAMESTATIC, PU_PURGELEVEL - 1);
 
         P_ShutdownGameMapObjDefs();
 
@@ -1221,7 +1220,6 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
 
         Materials_Init();
         FI_Init();
-        P_PtcInit(); /// @todo not needed in this mode.
     }
 
     // This is now the current game.

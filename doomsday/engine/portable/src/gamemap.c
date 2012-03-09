@@ -29,6 +29,7 @@
 #include "de_refresh.h"
 
 #include "blockmap.h"
+#include "generators.h"
 #include "gamemap.h"
 
 const Uri* GameMap_Uri(GameMap* map)
@@ -365,6 +366,17 @@ static void initPolyobj(polyobj_t* po)
     P_PolyobjLink(po);
 }
 
+Generators* GameMap_Generators(GameMap* map)
+{
+    assert(map);
+    // Time to initialize a new collection?
+    if(!map->generators)
+    {
+        map->generators = Generators_New(map->numSectors);
+    }
+    return map->generators;
+}
+
 void GameMap_InitPolyobjs(GameMap* map)
 {
     uint i;
@@ -691,6 +703,18 @@ int GameMap_IterateCellBlockLineDefs(GameMap* map, const GridmapBlock* blockCoor
                                             blockmapCellLinesIterator, (void*) &args);
 }
 
+int GameMap_LineDefIterator(GameMap* map, int (*callback) (linedef_t*, void*), void* parameters)
+{
+    uint i;
+    assert(map);
+    for(i = 0; i < map->numLineDefs; ++i)
+    {
+        int result = callback(map->lineDefs + i, parameters);
+        if(result) return result;
+    }
+    return false; // Continue iteration.
+}
+
 void GameMap_LinkSubsectorInBlockmap(GameMap* map, subsector_t* ssec)
 {
     Blockmap* blockmap;
@@ -813,6 +837,18 @@ int GameMap_SubsectorsBoxIterator(GameMap* map, const AABoxf* box, sector_t* sec
                                               localValidCount, callback, parameters);
 }
 
+int GameMap_SubsectorIterator(GameMap* map, int (*callback) (subsector_t*, void*), void* parameters)
+{
+    uint i;
+    assert(map);
+    for(i = 0; i < map->numSubsectors; ++i)
+    {
+        int result = callback(map->subsectors + i, parameters);
+        if(result) return result;
+    }
+    return false; // Continue iteration.
+}
+
 void GameMap_LinkPolyobjInBlockmap(GameMap* map, polyobj_t* po)
 {
     Blockmap* blockmap;
@@ -911,6 +947,18 @@ int GameMap_PolyobjsBoxIterator(GameMap* map, const AABoxf* box,
     return GameMap_IterateCellBlockPolyobjs(map, &blockCoords, callback, parameters);
 }
 
+int GameMap_PolyobjIterator(GameMap* map, int (*callback) (polyobj_t*, void*), void* parameters)
+{
+    uint i;
+    assert(map);
+    for(i = 0; i < map->numPolyObjs; ++i)
+    {
+        int result = callback(map->polyObjs[i], parameters);
+        if(result) return result;
+    }
+    return false; // Continue iteration.
+}
+
 typedef struct poiterparams_s {
     int (*func) (linedef_t*, void*);
     void* param;
@@ -995,6 +1043,66 @@ int GameMap_AllLineDefsBoxIterator(GameMap* map, const AABoxf* box,
         if(result) return result;
     }
     return P_LinesBoxIterator(box, callback, parameters);
+}
+
+int GameMap_VertexIterator(GameMap* map, int (*callback) (vertex_t*, void*), void* parameters)
+{
+    uint i;
+    assert(map);
+    for(i = 0; i < map->numVertexes; ++i)
+    {
+        int result = callback(map->vertexes + i, parameters);
+        if(result) return result;
+    }
+    return false; // Continue iteration.
+}
+
+int GameMap_SideDefIterator(GameMap* map, int (*callback) (sidedef_t*, void*), void* parameters)
+{
+    uint i;
+    assert(map);
+    for(i = 0; i < map->numSideDefs; ++i)
+    {
+        int result = callback(map->sideDefs + i, parameters);
+        if(result) return result;
+    }
+    return false; // Continue iteration.
+}
+
+int GameMap_SectorIterator(GameMap* map, int (*callback) (sector_t*, void*), void* parameters)
+{
+    uint i;
+    assert(map);
+    for(i = 0; i < map->numSectors; ++i)
+    {
+        int result = callback(map->sectors + i, parameters);
+        if(result) return result;
+    }
+    return false; // Continue iteration.
+}
+
+int GameMap_HEdgeIterator(GameMap* map, int (*callback) (HEdge*, void*), void* parameters)
+{
+    uint i;
+    assert(map);
+    for(i = 0; i < map->numHEdges; ++i)
+    {
+        int result = callback(map->hedges + i, parameters);
+        if(result) return result;
+    }
+    return false; // Continue iteration.
+}
+
+int GameMap_NodeIterator(GameMap* map, int (*callback) (node_t*, void*), void* parameters)
+{
+    uint i;
+    assert(map);
+    for(i = 0; i < map->numNodes; ++i)
+    {
+        int result = callback(map->nodes + i, parameters);
+        if(result) return result;
+    }
+    return false; // Continue iteration.
 }
 
 static int traverseCellPath2(Blockmap* bmap, uint const fromBlock[2],

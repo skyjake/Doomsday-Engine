@@ -25,9 +25,6 @@
 
 #include "def_data.h"
 
-// Maximum number of active generators.
-#define MAX_ACTIVE_PTCGENS      256
-
 // Maximum number of particle textures (not instances).
 #define MAX_PTC_TEXTURES        32
 
@@ -113,8 +110,8 @@ typedef struct {
 typedef struct ptcgen_s {
     thinker_t       thinker; // Func = P_PtcGenThinker
     plane_t*        plane; // Flat-triggered.
-    const ded_ptcgen_t* def; // The definition of this generator.
-    mobj_t*         source; // If mobj-triggered.
+    const struct ded_ptcgen_s* def; // The definition of this generator.
+    struct mobj_s*  source; // If mobj-triggered.
     int             srcid; // Source mobj ID.
     int             type; // Type-triggered; mobj type number (-1=none).
     int             type2; // Type-triggered; alternate type.
@@ -130,10 +127,6 @@ typedef struct ptcgen_s {
     ptcstage_t*     stages;
 } ptcgen_t;
 
-typedef short ptcgenid_t;
-
-void P_PtcInit(void);
-void P_PtcShutdown(void);
 void P_PtcInitForMap(void);
 
 /**
@@ -151,34 +144,10 @@ void P_MapSpawnPlaneParticleGens(void);
 void P_CreatePtcGenLinks(void);
 
 /**
- * Convert a particle generator id to pointer.
- *
- * @return  Pointer to ptcgen iff found, ELSE @c NULL.
- */
-const ptcgen_t* P_IndexToPtcGen(ptcgenid_t ptcGenID);
-
-/**
- * Convert a particle generator point to id.
- *
- * @return  @c -1 iff NOT found, ELSE id of the specifed ptcgen.
- */
-ptcgenid_t P_PtcGenToIndex(const ptcgen_t* gen);
-
-/**
- * Walk the entire list of particle generators.
- */
-int P_IteratePtcGens(int (*callback) (ptcgen_t*, void*), void* parameters);
-
-/**
- * Walk the list of sector-linked particle generators.
- */
-int P_IterateSectorLinkedPtcGens(sector_t* sector, int (*callback) (ptcgen_t*, void*), void* parameters);
-
-/**
  * Creates a new mobj-triggered particle generator based on the given
  * definition. The generator is added to the list of active ptcgens.
  */
-void P_SpawnMobjParticleGen(const ded_ptcgen_t* def, mobj_t* source);
+void P_SpawnMobjParticleGen(const struct ded_ptcgen_s* def, struct mobj_s* source);
 
 /**
  * Spawns all type-triggered particle generators, regardless of whether
@@ -187,18 +156,18 @@ void P_SpawnMobjParticleGen(const ded_ptcgen_t* def, mobj_t* source);
  */
 void P_SpawnTypeParticleGens(void);
 
-void P_SpawnMapParticleGens(const Uri* mapUri);
+void P_SpawnMapParticleGens(void);
 
 /**
  * A public function (games can call this directly).
  */
-void P_SpawnDamageParticleGen(mobj_t* mo, mobj_t* inflictor, int amount);
+void P_SpawnDamageParticleGen(struct mobj_s* mo, struct mobj_s* inflictor, int amount);
 
 /**
  * Creates a new flat-triggered particle generator based on the given
  * definition. The generator is added to the list of active ptcgens.
  */
-void P_SpawnPlaneParticleGen(const ded_ptcgen_t* def, plane_t* plane);
+void P_SpawnPlaneParticleGen(const struct ded_ptcgen_s* def, plane_t* plane);
 
 /**
  * Called after a reset once the definitions have been re-read.
@@ -210,7 +179,7 @@ void P_UpdateParticleGens(void);
  * Currently only used visually, collisions use the constant radius.
  * The variance can be negative (results will be larger).
  */
-float P_GetParticleRadius(const ded_ptcstage_t* stageDef, int ptcIndex);
+float P_GetParticleRadius(const struct ded_ptcstage_s* stageDef, int ptcIndex);
 
 /**
  * A particle may be attached to the floor or ceiling of the sector.

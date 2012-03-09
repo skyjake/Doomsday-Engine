@@ -1,32 +1,24 @@
-/**\file rend_particle.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * Particle Effect Rendering.
+ * @file rend_particle.c
+ * Particle Effect Rendering. @ingroup render
+ *
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <stdlib.h>
 
@@ -42,13 +34,10 @@
 
 #include "image.h"
 #include "texturecontent.h"
-
-// MACROS ------------------------------------------------------------------
+#include "generators.h"
 
 // Point + custom textures.
 #define NUM_TEX_NAMES           (MAX_PTC_TEXTURES)
-
-// TYPES -------------------------------------------------------------------
 
 typedef struct {
     ptcgenid_t ptcGenID; // Generator id.
@@ -56,34 +45,23 @@ typedef struct {
     float distance;
 } porder_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
 extern float vang, vpitch;
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 DGLuint pointTex, ptctexname[MAX_PTC_TEXTURES];
 int particleNearLimit = 0;
 float particleDiffuse = 4;
 byte devDrawGenerators = false; // Display active generators?
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static size_t numParts;
 static boolean hasPoints, hasLines, hasModels, hasNoBlend, hasBlend;
 static boolean hasPointTexs[NUM_TEX_NAMES];
-static byte visiblePtcGens[MAX_ACTIVE_PTCGENS];
+static byte visiblePtcGens[GENERATORS_MAX];
 
 static size_t orderSize = 0;
 static porder_t* order = NULL;
 
-// CODE --------------------------------------------------------------------
+// Currently active Generators collection. Global for performance.
+static Generators* gens;
 
 void Rend_ParticleRegister(void)
 {
@@ -98,14 +76,14 @@ void Rend_ParticleRegister(void)
 
 static int markPtcGenVisible(ptcgen_t* gen, void* parameters)
 {
-    visiblePtcGens[P_PtcGenToIndex(gen)] = true;
+    visiblePtcGens[Generators_GeneratorId(gens, gen)] = true;
 
     return false; // Continue iteration.
 }
 
 static boolean isPtcGenVisible(const ptcgen_t* gen)
 {
-    return visiblePtcGens[P_PtcGenToIndex(gen)];
+    return visiblePtcGens[Generators_GeneratorId(gens, gen)];
 }
 
 static float pointDist(fixed_t c[3])
@@ -216,24 +194,22 @@ void Rend_ParticleReleaseExtraTextures(void)
     memset(ptctexname, 0, sizeof(ptctexname));
 }
 
-/**
- * Prepare for rendering a new view of the world.
- */
 void Rend_ParticleInitForNewFrame(void)
 {
     if(!useParticles) return;
     // Clear all visibility flags.
-    memset(visiblePtcGens, 0, MAX_ACTIVE_PTCGENS);
+    memset(visiblePtcGens, 0, GENERATORS_MAX);
 }
 
-/**
- * The given sector is visible. All PGs in it should be rendered.
- * Scans PG links.
- */
 void Rend_ParticleMarkInSectorVisible(sector_t* sector)
 {
-    if(!useParticles) return;
-    P_IterateSectorLinkedPtcGens(sector, markPtcGenVisible, NULL);
+    if(!useParticles || !theMap || !sector) return;
+
+    /// @fixme Do the assume sector is from the CURRENT map.
+    gens = GameMap_Generators(theMap);
+    if(!gens) return;
+
+    Generators_IterateSectorLinked(gens, GameMap_SectorIndex(theMap, sector), markPtcGenVisible, NULL/*no parameters*/);
 }
 
 /**
@@ -317,7 +293,7 @@ static int populateSortBuffer(ptcgen_t* gen, void* parameters)
         // This particle is visible. Add it to the sort buffer.
         slot = &order[(*m)++];
 
-        slot->ptcGenID = P_PtcGenToIndex(gen);
+        slot->ptcGenID = Generators_GeneratorId(gens, gen);
         slot->ptID = p;
         slot->distance = dist;
 
@@ -365,7 +341,7 @@ static int listVisibleParticles(void)
 
     // First count how many particles are in the visible generators.
     numParts = 0;
-    P_IteratePtcGens(countParticles, &numParts);
+    Generators_Iterate(gens, countParticles, &numParts);
     if(!numParts)
         return false; // No visible generators.
 
@@ -375,7 +351,7 @@ static int listVisibleParticles(void)
     // Populate the particle sort buffer and determine what type(s) of
     // particle (model/point/line/etc...) we'll need to draw.
     numVisibleParticles = 0;
-    P_IteratePtcGens(populateSortBuffer, &numVisibleParticles);
+    Generators_Iterate(gens, populateSortBuffer, &numVisibleParticles);
     if(!numVisibleParticles)
         return false; // No visible particles (all too far?).
 
@@ -557,7 +533,7 @@ static void renderParticles(int rtype, boolean withBlend)
         boolean flatOnPlane = false, flatOnWall = false, nearPlane, nearWall;
         short stageType;
 
-        gen = P_IndexToPtcGen(slot->ptcGenID);
+        gen = Generators_Generator(gens, slot->ptcGenID);
         pt = &gen->ptcs[slot->ptID];
 
         st = &gen->stages[pt->stage];
@@ -802,6 +778,7 @@ static void renderParticles(int rtype, boolean withBlend)
 
 static void renderPass(boolean useBlending)
 {
+    int i;
     assert(!Sys_GLCheckError());
 
     // Set blending mode.
@@ -817,8 +794,8 @@ static void renderPass(boolean useBlending)
     if(hasPoints)
         renderParticles(PTC_POINT, useBlending);
 
-    { int i;
     for(i = 0; i < NUM_TEX_NAMES; ++i)
+    {
         if(hasPointTexs[i])
             renderParticles(PTC_TEXTURE + i, useBlending);
     }
@@ -830,19 +807,15 @@ static void renderPass(boolean useBlending)
     assert(!Sys_GLCheckError());
 }
 
-/**
- * Render all the visible particle generators.
- * We must render all particles ordered back->front, or otherwise
- * particles from one generator will obscure particles from another.
- * This would be especially bad with smoke trails.
- */
 void Rend_RenderParticles(void)
 {
-    if(!useParticles)
-        return;
+    if(!useParticles || !theMap) return;
 
-    if(!listVisibleParticles())
-        return; // No visible particles at all?
+    gens = GameMap_Generators(theMap);
+    if(!gens) return;
+
+    // No visible particles at all?
+    if(!listVisibleParticles()) return;
 
     // Render all the visible particles.
     if(hasNoBlend)
@@ -892,7 +865,7 @@ static int drawGeneratorOrigin(ptcgen_t* gen, void* parameters)
             float scale = dist / (theWindow->geometry.size.width / 2);
             char buf[80];
 
-            sprintf(buf, "%i", P_PtcGenToIndex(gen));
+            sprintf(buf, "%i", Generators_GeneratorId(gens, gen));
 
             glMatrixMode(GL_MODELVIEW);
             glPushMatrix();
@@ -920,15 +893,14 @@ static int drawGeneratorOrigin(ptcgen_t* gen, void* parameters)
 #undef MAX_GENERATOR_DIST
 }
 
-/**
- * Debugging aid; Draw all active generators.
- */
 void Rend_RenderGenerators(void)
 {
     float eye[3];
 
-    if(!devDrawGenerators)
-        return;
+    if(!devDrawGenerators || !theMap) return;
+
+    gens = GameMap_Generators(theMap);
+    if(!gens) return;
 
     eye[VX] = vx;
     eye[VY] = vz;
@@ -936,7 +908,7 @@ void Rend_RenderGenerators(void)
 
     glDisable(GL_DEPTH_TEST);
 
-    P_IteratePtcGens(drawGeneratorOrigin, eye);
+    Generators_Iterate(gens, drawGeneratorOrigin, eye);
 
     // Restore previous state.
     glEnable(GL_DEPTH_TEST);

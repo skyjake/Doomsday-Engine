@@ -347,7 +347,7 @@ typedef struct ded_embsound_s {
     float           volume;
 } ded_embsound_t;
 
-typedef struct {
+typedef struct ded_ptcstage_s {
     ded_flags_t     type;
     int             tics;
     float           variance; // Stage variance (time).
