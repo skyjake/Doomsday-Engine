@@ -671,6 +671,7 @@ static void updateSideSectionDecorations(sidedef_t* side, sidedefsection_t secti
  */
 void Rend_InitDecorationsForFrame(void)
 {
+    surfacelist_t* slist;
 #ifdef DD_PROFILE
     static int          i;
 
@@ -684,13 +685,17 @@ void Rend_InitDecorationsForFrame(void)
 #endif
 
     // This only needs to be done if decorations have been enabled.
-    if(0 != useLightDecorations)
-    {
+    if(!useLightDecorations) return;
+
 BEGIN_PROF( PROF_DECOR_PROJECT );
 
-        clearDecorations();
-        R_SurfaceListIterate(decoratedSurfaceList, R_ProjectSurfaceDecorations, &decorMaxDist);
+    clearDecorations();
+
+    slist = GameMap_DecoratedSurfaces(theMap);
+    if(slist)
+    {
+        R_SurfaceListIterate(slist, R_ProjectSurfaceDecorations, &decorMaxDist);
+    }
 
 END_PROF( PROF_DECOR_PROJECT );
-    }
 }

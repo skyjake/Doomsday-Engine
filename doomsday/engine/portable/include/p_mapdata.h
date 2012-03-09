@@ -183,9 +183,6 @@ extern sidedef_t* sideDefs;
 extern polyobj_t** polyObjs; ///< List of all polyobjs on the current map.
 
 extern watchedplanelist_t* watchedPlaneList;
-extern surfacelist_t* movingSurfaceList;
-extern surfacelist_t* decoratedSurfaceList;
-extern surfacelist_t* glowingSurfaceList;
 
 #include "gamemap.h"
 

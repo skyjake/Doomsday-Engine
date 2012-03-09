@@ -530,6 +530,30 @@ struct clplane_s* GameMap_NewClPlane(GameMap* map, uint sectornum, clplanetype_t
 struct generators_s* GameMap_Generators(GameMap* map);
 
 /**
+ * Retrieve a pointer to the decorated surface list for this map.
+ *
+ * @param map  GameMap instance.
+ * @return  List of decorated surfaces.
+ */
+surfacelist_t* GameMap_DecoratedSurfaces(GameMap* map);
+
+/**
+ * Retrieve a pointer to the glowing surface list for this map.
+ *
+ * @param map  GameMap instance.
+ * @return  List of glowing surfaces.
+ */
+surfacelist_t* GameMap_GlowingSurfaces(GameMap* map);
+
+/**
+ * Retrieve a pointer to the scrolling surface list for this map.
+ *
+ * @param map  GameMap instance.
+ * @return  List of scrolling surfaces.
+ */
+surfacelist_t* GameMap_ScrollingSurfaces(GameMap* map);
+
+/**
  * Initialize all Polyobjs in the map. To be called after map load.
  *
  * @param map  GameMap instance.

@@ -127,8 +127,8 @@ void            R_AddWatchedPlane(watchedplanelist_t* wpl, plane_t* pln);
 boolean         R_RemoveWatchedPlane(watchedplanelist_t* wpl,
                                      const plane_t* pln);
 
-void            R_UpdateMovingSurfaces(void);
-void            R_InterpolateMovingSurfaces(boolean resetNextViewer);
+void            R_UpdateSurfaceScroll(void);
+void            R_InterpolateSurfaceScroll(boolean resetNextViewer);
 
 /**
  * Adds the surface to the given surface list.

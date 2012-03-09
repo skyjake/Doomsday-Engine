@@ -60,17 +60,19 @@ boolean Surface_SetMaterial(surface_t* suf, material_t* mat)
 
             if(!ddMapSetup)
             {
+                GameMap* map = theMap; /// @fixme Do not assume surface is from the CURRENT map.
+
                 // If this plane's surface is in the decorated list, remove it.
-                R_SurfaceListRemove(decoratedSurfaceList, suf);
+                R_SurfaceListRemove(GameMap_DecoratedSurfaces(map), suf);
                 // If this plane's surface is in the glowing list, remove it.
-                R_SurfaceListRemove(glowingSurfaceList, suf);
+                R_SurfaceListRemove(GameMap_GlowingSurfaces(map), suf);
 
                 if(mat)
                 {
                     if(Material_HasGlow(mat))
-                        R_SurfaceListAdd(glowingSurfaceList, suf);
+                        R_SurfaceListAdd(GameMap_GlowingSurfaces(map), suf);
                     if(Materials_HasDecorations(mat))
-                        R_SurfaceListAdd(decoratedSurfaceList, suf);
+                        R_SurfaceListAdd(GameMap_DecoratedSurfaces(map), suf);
 
                     if(DMU_GetType(suf->owner) == DMU_PLANE)
                     {
@@ -99,7 +101,10 @@ boolean Surface_SetMaterialOriginX(surface_t* suf, float x)
         {
             suf->inFlags |= SUIF_UPDATE_DECORATIONS;
             if(!ddMapSetup)
-                R_SurfaceListAdd(movingSurfaceList, suf);
+            {
+                /// @fixme Do not assume surface is from the CURRENT map.
+                R_SurfaceListAdd(GameMap_ScrollingSurfaces(theMap), suf);
+            }
         }
     }
     return true;
@@ -115,7 +120,10 @@ boolean Surface_SetMaterialOriginY(surface_t* suf, float y)
         {
             suf->inFlags |= SUIF_UPDATE_DECORATIONS;
             if(!ddMapSetup)
-                R_SurfaceListAdd(movingSurfaceList, suf);
+            {
+                /// @fixme Do not assume surface is from the CURRENT map.
+                R_SurfaceListAdd(GameMap_ScrollingSurfaces(theMap), suf);
+            }
         }
     }
     return true;
@@ -132,7 +140,10 @@ boolean Surface_SetMaterialOrigin(surface_t* suf, float x, float y)
         {
             suf->inFlags |= SUIF_UPDATE_DECORATIONS;
             if(!ddMapSetup)
-                R_SurfaceListAdd(movingSurfaceList, suf);
+            {
+                /// @fixme Do not assume surface is from the CURRENT map.
+                R_SurfaceListAdd(GameMap_ScrollingSurfaces(theMap), suf);
+            }
         }
     }
     return true;
@@ -144,7 +155,7 @@ boolean Surface_SetColorRed(surface_t* suf, float r)
     r = MINMAX_OF(0, r, 1);
     if(suf->rgba[CR] != r)
     {
-        // \todo when surface colours are intergrated with the
+        // @todo when surface colours are intergrated with the
         // bias lighting model we will need to recalculate the
         // vertex colours when they are changed.
         suf->rgba[CR] = r;
@@ -158,7 +169,7 @@ boolean Surface_SetColorGreen(surface_t* suf, float g)
     g = MINMAX_OF(0, g, 1);
     if(suf->rgba[CG] != g)
     {
-        // \todo when surface colours are intergrated with the
+        // @todo when surface colours are intergrated with the
         // bias lighting model we will need to recalculate the
         // vertex colours when they are changed.
         suf->rgba[CG] = g;
@@ -172,7 +183,7 @@ boolean Surface_SetColorBlue(surface_t* suf, float b)
     b = MINMAX_OF(0, b, 1);
     if(suf->rgba[CB] != b)
     {
-        // \todo when surface colours are intergrated with the
+        // @todo when surface colours are intergrated with the
         // bias lighting model we will need to recalculate the
         // vertex colours when they are changed.
         suf->rgba[CB] = b;
@@ -186,7 +197,7 @@ boolean Surface_SetAlpha(surface_t* suf, float a)
     a = MINMAX_OF(0, a, 1);
     if(suf->rgba[CA] != a)
     {
-        // \todo when surface colours are intergrated with the
+        // @todo when surface colours are intergrated with the
         // bias lighting model we will need to recalculate the
         // vertex colours when they are changed.
         suf->rgba[CA] = a;
@@ -207,7 +218,7 @@ boolean Surface_SetColorAndAlpha(surface_t* suf, float r, float g, float b, floa
        suf->rgba[CA] == a)
         return true;
 
-    // \todo when surface colours are intergrated with the
+    // @todo when surface colours are intergrated with the
     // bias lighting model we will need to recalculate the
     // vertex colours when they are changed.
     suf->rgba[CR] = r;

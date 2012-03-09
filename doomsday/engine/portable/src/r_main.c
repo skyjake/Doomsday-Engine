@@ -781,7 +781,7 @@ void R_NewSharpWorld(void)
     }
 
     R_UpdateWatchedPlanes(watchedPlaneList);
-    R_UpdateMovingSurfaces();
+    R_UpdateSurfaceScroll();
 }
 
 void R_CreateMobjLinks(void)
@@ -821,7 +821,7 @@ void R_BeginWorldFrame(void)
     R_ClearSectorFlags();
 
     R_InterpolateWatchedPlanes(watchedPlaneList, resetNextViewer);
-    R_InterpolateMovingSurfaces(resetNextViewer);
+    R_InterpolateSurfaceScroll(resetNextViewer);
 
     if(!freezeRLs)
     {

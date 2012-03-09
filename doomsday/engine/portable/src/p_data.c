@@ -60,9 +60,6 @@ sidedef_t* sideDefs = NULL;
 polyobj_t** polyObjs = NULL; // List of all poly-objects in the map.
 
 watchedplanelist_t* watchedPlaneList = NULL;
-surfacelist_t* movingSurfaceList = NULL;
-surfacelist_t* decoratedSurfaceList = NULL;
-surfacelist_t* glowingSurfaceList = NULL;
 
 GameMap* theMap = NULL;
 
@@ -133,9 +130,6 @@ void P_SetCurrentMap(GameMap* map)
         polyObjs = 0;
 
         watchedPlaneList = 0;
-        movingSurfaceList = 0;
-        decoratedSurfaceList = 0;
-        glowingSurfaceList = 0;
 
         theMap = map;
         return;
@@ -153,9 +147,6 @@ void P_SetCurrentMap(GameMap* map)
     polyObjs = map->polyObjs;
 
     watchedPlaneList = &map->watchedPlaneList;
-    movingSurfaceList = &map->movingSurfaceList;
-    decoratedSurfaceList = &map->decoratedSurfaceList;
-    glowingSurfaceList = &map->glowingSurfaceList;
 
     theMap = map;
 }

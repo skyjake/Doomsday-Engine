@@ -223,7 +223,7 @@ boolean R_SurfaceListIterate(surfacelist_t* sl, boolean (*callback) (surface_t* 
     return result;
 }
 
-boolean updateMovingSurface(surface_t* suf, void* context)
+boolean updateSurfaceScroll(surface_t* suf, void* context)
 {
     // X Offset
     suf->oldOffset[0][0] = suf->oldOffset[0][1];
@@ -253,15 +253,17 @@ boolean updateMovingSurface(surface_t* suf, void* context)
 /**
  * $smoothmatoffset: Roll the surface material offset tracker buffers.
  */
-void R_UpdateMovingSurfaces(void)
+void R_UpdateSurfaceScroll(void)
 {
-    if(!movingSurfaceList)
-        return;
+    surfacelist_t* slist;
+    if(!theMap) return;
+    slist = GameMap_ScrollingSurfaces(theMap);
+    if(!slist) return;
 
-    R_SurfaceListIterate(movingSurfaceList, updateMovingSurface, NULL);
+    R_SurfaceListIterate(slist, updateSurfaceScroll, NULL);
 }
 
-boolean resetMovingSurface(surface_t* suf, void* context)
+boolean resetSurfaceScroll(surface_t* suf, void* context)
 {
     // X Offset.
     suf->visOffsetDelta[0] = 0;
@@ -272,12 +274,13 @@ boolean resetMovingSurface(surface_t* suf, void* context)
     suf->oldOffset[1][0] = suf->oldOffset[1][1] = suf->offset[1];
 
     Surface_Update(suf);
-    R_SurfaceListRemove(movingSurfaceList, suf);
+    /// @fixme Do not assume surface is from the CURRENT map.
+    R_SurfaceListRemove(GameMap_ScrollingSurfaces(theMap), suf);
 
     return true;
 }
 
-boolean interpMovingSurface(surface_t* suf, void* context)
+boolean interpSurfaceScroll(surface_t* suf, void* context)
 {
     // X Offset.
     suf->visOffsetDelta[0] =
@@ -296,9 +299,11 @@ boolean interpMovingSurface(surface_t* suf, void* context)
     Surface_Update(suf);
 
     // Has this material reached its destination?
-    if(suf->visOffset[0] == suf->offset[0] &&
-       suf->visOffset[1] == suf->offset[1])
-        R_SurfaceListRemove(movingSurfaceList, suf);
+    if(suf->visOffset[0] == suf->offset[0] && suf->visOffset[1] == suf->offset[1])
+    {
+        /// @fixme Do not assume surface is from the CURRENT map.
+        R_SurfaceListRemove(GameMap_ScrollingSurfaces(theMap), suf);
+    }
 
     return true;
 }
@@ -306,22 +311,25 @@ boolean interpMovingSurface(surface_t* suf, void* context)
 /**
  * $smoothmatoffset: interpolate the visual offset.
  */
-void R_InterpolateMovingSurfaces(boolean resetNextViewer)
+void R_InterpolateSurfaceScroll(boolean resetNextViewer)
 {
-    if(!movingSurfaceList)
-        return;
+    surfacelist_t* slist;
+
+    if(!theMap) return;
+    slist = GameMap_ScrollingSurfaces(theMap);
+    if(!slist) return;
 
     if(resetNextViewer)
     {
         // Reset the material offset trackers.
-        R_SurfaceListIterate(movingSurfaceList, resetMovingSurface, NULL);
+        R_SurfaceListIterate(slist, resetSurfaceScroll, NULL);
     }
     // While the game is paused there is no need to calculate any
     // visual material offsets.
     else //if(!clientPaused)
     {
         // Set the visible material offsets.
-        R_SurfaceListIterate(movingSurfaceList, interpMovingSurface, NULL);
+        R_SurfaceListIterate(slist, interpSurfaceScroll, NULL);
     }
 }
 
@@ -526,11 +534,14 @@ static boolean markSurfaceForDecorationUpdate(surface_t* surface, void* paramate
 
 void R_UpdateMapSurfacesOnMaterialChange(material_t* material)
 {
-    GameMap* map = theMap;
-    if(NULL == material || NULL == map || ddMapSetup) return;
+    surfacelist_t* slist;
+
+    if(!material || !theMap || ddMapSetup) return;
+    slist = GameMap_DecoratedSurfaces(theMap);
+    if(!slist) return;
 
     // Light decorations will need a refresh.
-    R_SurfaceListIterate(decoratedSurfaceList, markSurfaceForDecorationUpdate, material);
+    R_SurfaceListIterate(slist, markSurfaceForDecorationUpdate, material);
 }
 
 /**
@@ -652,10 +663,10 @@ void R_DestroyPlaneOfSector(uint id, sector_t* sec)
 {
     plane_t* plane, **newList = NULL;
     subsector_t** ssecIter;
+    surfacelist_t* slist;
     uint i;
 
-    if(!sec)
-        return; // Do wha?
+    if(!sec) return; // Do wha?
 
     if(id >= sec->planeCount)
         Con_Error("P_DestroyPlaneOfSector: Plane id #%i is not valid for "
@@ -666,7 +677,7 @@ void R_DestroyPlaneOfSector(uint id, sector_t* sec)
     // Create a new plane list?
     if(sec->planeCount > 1)
     {
-        uint                n;
+        uint n;
 
         newList = Z_Malloc(sizeof(plane_t**) * sec->planeCount, PU_MAP, 0);
 
@@ -674,8 +685,7 @@ void R_DestroyPlaneOfSector(uint id, sector_t* sec)
         n = 0;
         for(i = 0; i < sec->planeCount; ++i)
         {
-            if(i == id)
-                continue;
+            if(i == id) continue;
             newList[n++] = sec->planes[i];
         }
         newList[n] = NULL; // Terminate.
@@ -683,12 +693,18 @@ void R_DestroyPlaneOfSector(uint id, sector_t* sec)
 
     // If this plane is currently being watched, remove it.
     R_RemoveWatchedPlane(watchedPlaneList, plane);
+
     // If this plane's surface is in the moving list, remove it.
-    R_SurfaceListRemove(movingSurfaceList, &plane->surface);
+    slist = GameMap_ScrollingSurfaces(theMap);
+    if(slist) R_SurfaceListRemove(slist, &plane->surface);
+
     // If this plane's surface is in the deocrated list, remove it.
-    R_SurfaceListRemove(decoratedSurfaceList, &plane->surface);
+    slist = GameMap_DecoratedSurfaces(theMap);
+    if(slist) R_SurfaceListRemove(slist, &plane->surface);
+
     // If this plane's surface is in the glowing list, remove it.
-    R_SurfaceListRemove(glowingSurfaceList, &plane->surface);
+    slist = GameMap_GlowingSurfaces(theMap);
+    if(slist) R_SurfaceListRemove(slist, &plane->surface);
 
     // Destroy the biassurfaces for this plane.
     ssecIter = sec->subsectors;
@@ -710,20 +726,18 @@ void R_DestroyPlaneOfSector(uint id, sector_t* sec)
     sec->planes = newList;
 }
 
-surfacedecor_t* R_CreateSurfaceDecoration(surface_t *suf)
+surfacedecor_t* R_CreateSurfaceDecoration(surface_t* suf)
 {
     surfacedecor_t* d, *s, *decorations;
     uint i;
 
-    if(!suf)
-        return NULL;
+    if(!suf) return NULL;
 
-    decorations =
-        Z_Malloc(sizeof(*decorations) * (++suf->numDecorations),
-                 PU_MAP, 0);
+    decorations = Z_Malloc(sizeof(*decorations) * (++suf->numDecorations), PU_MAP, 0);
 
     if(suf->numDecorations > 1)
-    {   // Copy the existing decorations.
+    {
+        // Copy the existing decorations.
         for(i = 0; i < suf->numDecorations - 1; ++i)
         {
             d = &decorations[i];
@@ -743,10 +757,9 @@ surfacedecor_t* R_CreateSurfaceDecoration(surface_t *suf)
     return d;
 }
 
-void R_ClearSurfaceDecorations(surface_t *suf)
+void R_ClearSurfaceDecorations(surface_t* suf)
 {
-    if(!suf)
-        return;
+    if(!suf) return;
 
     if(suf->decorations)
         Z_Free(suf->decorations);
@@ -1317,16 +1330,16 @@ static void addToSurfaceLists(surface_t* suf, material_t* mat)
 {
     if(!suf || !mat) return;
 
-    if(Material_HasGlow(mat))        R_SurfaceListAdd(glowingSurfaceList,   suf);
-    if(Materials_HasDecorations(mat)) R_SurfaceListAdd(decoratedSurfaceList, suf);
+    if(Material_HasGlow(mat))         R_SurfaceListAdd(GameMap_GlowingSurfaces(theMap),   suf);
+    if(Materials_HasDecorations(mat)) R_SurfaceListAdd(GameMap_DecoratedSurfaces(theMap), suf);
 }
 
 void R_MapInitSurfaceLists(void)
 {
     if(novideo) return;
 
-    R_SurfaceListClear(decoratedSurfaceList);
-    R_SurfaceListClear(glowingSurfaceList);
+    R_SurfaceListClear(GameMap_DecoratedSurfaces(theMap));
+    R_SurfaceListClear(GameMap_GlowingSurfaces(theMap));
 
     { uint i;
     for(i = 0; i < NUM_SIDEDEFS; ++i)

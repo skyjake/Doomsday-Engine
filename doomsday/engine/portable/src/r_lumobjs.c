@@ -1021,8 +1021,7 @@ static boolean createGlowLightForSurface(surface_t* suf, void* paramaters)
 
 void LO_AddLuminousMobjs(void)
 {
-    if(!useDynlights && !useWallGlow)
-        return;
+    if(!useDynlights && !useWallGlow) return;
 
 BEGIN_PROF( PROF_LUMOBJ_INIT_ADD );
 
@@ -1045,7 +1044,11 @@ BEGIN_PROF( PROF_LUMOBJ_INIT_ADD );
     // to create dynlights and link them.
     if(useWallGlow)
     {
-        R_SurfaceListIterate(glowingSurfaceList, createGlowLightForSurface, 0);
+        surfacelist_t* slist = GameMap_GlowingSurfaces(theMap);
+        if(slist)
+        {
+            R_SurfaceListIterate(slist, createGlowLightForSurface, 0);
+        }
     }
 
 END_PROF( PROF_LUMOBJ_INIT_ADD );
