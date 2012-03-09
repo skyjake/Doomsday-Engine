@@ -104,10 +104,10 @@ typedef struct gamemap_s {
 
     gameobjdata_t gameObjData;
 
-    watchedplanelist_t watchedPlaneList;
-    surfacelist_t movingSurfaceList;
-    surfacelist_t decoratedSurfaceList;
-    surfacelist_t glowingSurfaceList;
+    planelist_t trackedPlanes;
+    surfacelist_t scrollingSurfaces;
+    surfacelist_t decoratedSurfaces;
+    surfacelist_t glowingSurfaces;
 
     struct blockmap_s* mobjBlockmap;
     struct blockmap_s* polyobjBlockmap;
@@ -552,6 +552,14 @@ surfacelist_t* GameMap_GlowingSurfaces(GameMap* map);
  * @return  List of scrolling surfaces.
  */
 surfacelist_t* GameMap_ScrollingSurfaces(GameMap* map);
+
+/**
+ * Retrieve a pointer to the tracked plane list for this map.
+ *
+ * @param map  GameMap instance.
+ * @return  List of tracked planes.
+ */
+planelist_t* GameMap_TrackedPlanes(GameMap* map);
 
 /**
  * Initialize all Polyobjs in the map. To be called after map load.

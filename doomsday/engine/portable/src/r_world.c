@@ -333,56 +333,55 @@ void R_InterpolateSurfaceScroll(boolean resetNextViewer)
     }
 }
 
-void R_AddWatchedPlane(watchedplanelist_t *wpl, plane_t *pln)
+void R_AddTrackedPlane(planelist_t* plist, plane_t *pln)
 {
-    uint                i;
+    uint i;
 
-    if(!wpl || !pln)
-        return;
+    if(!plist || !pln) return;
 
     // Check whether we are already tracking this plane.
-    for(i = 0; i < wpl->num; ++i)
-        if(wpl->list[i] == pln)
+    for(i = 0; i < plist->num; ++i)
+    {
+        if(plist->array[i] == pln)
             return; // Yes we are.
+    }
 
-    wpl->num++;
+    plist->num++;
 
     // Only allocate memory when it's needed.
-    if(wpl->num > wpl->maxNum)
+    if(plist->num > plist->maxNum)
     {
-        wpl->maxNum *= 2;
+        plist->maxNum *= 2;
 
         // The first time, allocate 8 watched plane nodes.
-        if(!wpl->maxNum)
-            wpl->maxNum = 8;
+        if(!plist->maxNum)
+            plist->maxNum = 8;
 
-        wpl->list =
-            Z_Realloc(wpl->list, sizeof(plane_t*) * (wpl->maxNum + 1),
-                      PU_MAP);
+        plist->array = Z_Realloc(plist->array, sizeof(plane_t*) * (plist->maxNum + 1), PU_MAP);
     }
 
     // Add the plane to the list.
-    wpl->list[wpl->num-1] = pln;
-    wpl->list[wpl->num] = NULL; // Terminate.
+    plist->array[plist->num-1] = pln;
+    plist->array[plist->num] = NULL; // Terminate.
 }
 
-boolean R_RemoveWatchedPlane(watchedplanelist_t *wpl, const plane_t *pln)
+boolean R_RemoveTrackedPlane(planelist_t *plist, const plane_t *pln)
 {
     uint            i;
 
-    if(!wpl || !pln)
+    if(!plist || !pln)
         return false;
 
-    for(i = 0; i < wpl->num; ++i)
+    for(i = 0; i < plist->num; ++i)
     {
-        if(wpl->list[i] == pln)
+        if(plist->array[i] == pln)
         {
-            if(i == wpl->num - 1)
-                wpl->list[i] = NULL;
+            if(i == plist->num - 1)
+                plist->array[i] = NULL;
             else
-                memmove(&wpl->list[i], &wpl->list[i+1],
-                        sizeof(plane_t*) * (wpl->num - 1 - i));
-            wpl->num--;
+                memmove(&plist->array[i], &plist->array[i+1],
+                        sizeof(plane_t*) * (plist->num - 1 - i));
+            plist->num--;
             return true;
         }
     }
@@ -393,16 +392,18 @@ boolean R_RemoveWatchedPlane(watchedplanelist_t *wpl, const plane_t *pln)
 /**
  * $smoothplane: Roll the height tracker buffers.
  */
-void R_UpdateWatchedPlanes(watchedplanelist_t *wpl)
+void R_UpdateTrackedPlanes(void)
 {
-    uint                i;
+    planelist_t* plist;
+    uint i;
 
-    if(!wpl)
-        return;
+    if(!theMap) return;
+    plist = GameMap_TrackedPlanes(theMap);
+    if(!plist) return;
 
-    for(i = 0; i < wpl->num; ++i)
+    for(i = 0; i < plist->num; ++i)
     {
-        plane_t        *pln = wpl->list[i];
+        plane_t* pln = plist->array[i];
 
         pln->oldHeight[0] = pln->oldHeight[1];
         pln->oldHeight[1] = pln->height;
@@ -420,21 +421,22 @@ void R_UpdateWatchedPlanes(watchedplanelist_t *wpl)
 /**
  * $smoothplane: interpolate the visual offset.
  */
-void R_InterpolateWatchedPlanes(watchedplanelist_t *wpl,
-                                boolean resetNextViewer)
+void R_InterpolateTrackedPlanes(boolean resetNextViewer)
 {
-    uint                i;
-    plane_t            *pln;
+    planelist_t* plist;
+    plane_t* pln;
+    uint i;
 
-    if(!wpl)
-        return;
+    if(!theMap) return;
+    plist = GameMap_TrackedPlanes(theMap);
+    if(!plist) return;
 
     if(resetNextViewer)
     {
         // $smoothplane: Reset the plane height trackers.
-        for(i = 0; i < wpl->num; ++i)
+        for(i = 0; i < plist->num; ++i)
         {
-            pln = wpl->list[i];
+            pln = plist->array[i];
 
             pln->visHeightDelta = 0;
             pln->visHeight = pln->oldHeight[0] = pln->oldHeight[1] = pln->height;
@@ -444,7 +446,7 @@ void R_InterpolateWatchedPlanes(watchedplanelist_t *wpl,
                 R_MarkDependantSurfacesForDecorationUpdate(pln);
             }
 
-            if(R_RemoveWatchedPlane(wpl, pln))
+            if(R_RemoveTrackedPlane(plist, pln))
                 i = (i > 0? i-1 : 0);
         }
     }
@@ -453,9 +455,9 @@ void R_InterpolateWatchedPlanes(watchedplanelist_t *wpl,
     else //if(!clientPaused)
     {
         // $smoothplane: Set the visible offsets.
-        for(i = 0; i < wpl->num; ++i)
+        for(i = 0; i < plist->num; ++i)
         {
-            pln = wpl->list[i];
+            pln = plist->array[i];
 
             pln->visHeightDelta = pln->oldHeight[0] * (1 - frameTimePos) +
                         pln->height * frameTimePos -
@@ -472,7 +474,7 @@ void R_InterpolateWatchedPlanes(watchedplanelist_t *wpl,
             // Has this plane reached its destination?
             if(pln->visHeight == pln->height) /// @todo  Can this fail? (float equality)
             {
-                if(R_RemoveWatchedPlane(wpl, pln))
+                if(R_RemoveTrackedPlane(plist, pln))
                     i = (i > 0? i-1 : 0);
             }
         }
@@ -664,6 +666,7 @@ void R_DestroyPlaneOfSector(uint id, sector_t* sec)
     plane_t* plane, **newList = NULL;
     subsector_t** ssecIter;
     surfacelist_t* slist;
+    planelist_t* plist;
     uint i;
 
     if(!sec) return; // Do wha?
@@ -692,7 +695,8 @@ void R_DestroyPlaneOfSector(uint id, sector_t* sec)
     }
 
     // If this plane is currently being watched, remove it.
-    R_RemoveWatchedPlane(watchedPlaneList, plane);
+    plist = GameMap_TrackedPlanes(theMap);
+    if(plist) R_RemoveTrackedPlane(plist, plane);
 
     // If this plane's surface is in the moving list, remove it.
     slist = GameMap_ScrollingSurfaces(theMap);

@@ -35,7 +35,7 @@ int Plane_SetProperty(plane_t* pln, const setargs_t* args)
         DMU_SetValue(DMT_PLANE_HEIGHT, &pln->height, args, 0);
         if(!ddMapSetup)
         {
-            R_AddWatchedPlane(watchedPlaneList, pln);
+            R_AddTrackedPlane(GameMap_TrackedPlanes(theMap), pln);
             R_MarkDependantSurfacesForDecorationUpdate(pln);
         }
         break;

@@ -380,19 +380,25 @@ Generators* GameMap_Generators(GameMap* map)
 surfacelist_t* GameMap_DecoratedSurfaces(GameMap* map)
 {
     assert(map);
-    return &map->decoratedSurfaceList;
+    return &map->decoratedSurfaces;
 }
 
 surfacelist_t* GameMap_GlowingSurfaces(GameMap* map)
 {
     assert(map);
-    return &map->glowingSurfaceList;
+    return &map->glowingSurfaces;
 }
 
 surfacelist_t* GameMap_ScrollingSurfaces(GameMap* map)
 {
     assert(map);
-    return &map->movingSurfaceList;
+    return &map->scrollingSurfaces;
+}
+
+planelist_t* GameMap_TrackedPlanes(GameMap* map)
+{
+    assert(map);
+    return &map->trackedPlanes;
 }
 
 void GameMap_InitPolyobjs(GameMap* map)

@@ -88,10 +88,10 @@ typedef struct edgespan_s {
     float           shift;
 } edgespan_t;
 
-typedef struct watchedplanelist_s {
+typedef struct planelist_s {
     uint            num, maxNum;
-    struct plane_s** list;
-} watchedplanelist_t;
+    struct plane_s** array;
+} planelist_t;
 
 typedef struct surfacelistnode_s {
     void*           data;
@@ -181,8 +181,6 @@ extern node_t* nodes;
 extern linedef_t* lineDefs;
 extern sidedef_t* sideDefs;
 extern polyobj_t** polyObjs; ///< List of all polyobjs on the current map.
-
-extern watchedplanelist_t* watchedPlaneList;
 
 #include "gamemap.h"
 

@@ -59,8 +59,6 @@ linedef_t* lineDefs = NULL;
 sidedef_t* sideDefs = NULL;
 polyobj_t** polyObjs = NULL; // List of all poly-objects in the map.
 
-watchedplanelist_t* watchedPlaneList = NULL;
-
 GameMap* theMap = NULL;
 
 // Bad texture list
@@ -129,8 +127,6 @@ void P_SetCurrentMap(GameMap* map)
         sideDefs = 0;
         polyObjs = 0;
 
-        watchedPlaneList = 0;
-
         theMap = map;
         return;
     }
@@ -145,8 +141,6 @@ void P_SetCurrentMap(GameMap* map)
     lineDefs = map->lineDefs;
     sideDefs = map->sideDefs;
     polyObjs = map->polyObjs;
-
-    watchedPlaneList = &map->watchedPlaneList;
 
     theMap = map;
 }

@@ -780,7 +780,7 @@ void R_NewSharpWorld(void)
         R_CheckViewerLimits(vd->lastSharp, &sharpView);
     }
 
-    R_UpdateWatchedPlanes(watchedPlaneList);
+    R_UpdateTrackedPlanes();
     R_UpdateSurfaceScroll();
 }
 
@@ -820,7 +820,7 @@ void R_BeginWorldFrame(void)
 {
     R_ClearSectorFlags();
 
-    R_InterpolateWatchedPlanes(watchedPlaneList, resetNextViewer);
+    R_InterpolateTrackedPlanes(resetNextViewer);
     R_InterpolateSurfaceScroll(resetNextViewer);
 
     if(!freezeRLs)

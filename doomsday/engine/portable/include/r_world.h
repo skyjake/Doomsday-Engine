@@ -120,12 +120,11 @@ void            R_DestroyPlaneOfSector(uint id, sector_t* sec);
 surfacedecor_t* R_CreateSurfaceDecoration(surface_t* suf);
 void            R_ClearSurfaceDecorations(surface_t* suf);
 
-void            R_UpdateWatchedPlanes(watchedplanelist_t* wpl);
-void            R_InterpolateWatchedPlanes(watchedplanelist_t* wpl,
-                                           boolean resetNextViewer);
-void            R_AddWatchedPlane(watchedplanelist_t* wpl, plane_t* pln);
-boolean         R_RemoveWatchedPlane(watchedplanelist_t* wpl,
-                                     const plane_t* pln);
+void            R_UpdateTrackedPlanes(void);
+void            R_InterpolateTrackedPlanes(boolean resetNextViewer);
+
+void            R_AddTrackedPlane(planelist_t* plist, plane_t* pln);
+boolean         R_RemoveTrackedPlane(planelist_t* plist, const plane_t* pln);
 
 void            R_UpdateSurfaceScroll(void);
 void            R_InterpolateSurfaceScroll(boolean resetNextViewer);
