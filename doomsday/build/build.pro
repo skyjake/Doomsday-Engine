@@ -10,7 +10,7 @@ include(../config.pri)
 
 # Update the PK3 files.
 deng_packres {
-    system(cd $$PWD/scripts/ && $$PYTHON packres.py --quiet \"$$OUT_PWD/..\")
+    system(cd $$PWD/scripts/ && python packres.py --quiet \"$$OUT_PWD/..\")
 }
 
 # Install the launcher.
@@ -56,7 +56,7 @@ deng_snowberry {
 
     # Generate a script for starting the laucher.
     LAUNCH_FILE = launch-doomsday
-    !system(sed \"s:PYTHON:$$PYTHON:; s:SB_DIR:$$SB_DIR:\" \
+    !system(sed \"s:PYTHON:$$SCRIPT_PYTHON:; s:SB_DIR:$$SB_DIR:\" \
         <\"../../distrib/linux/$$LAUNCH_FILE\" \
         >\"$$OUT_PWD/$$LAUNCH_FILE\" && \
         chmod 755 \"$$OUT_PWD/$$LAUNCH_FILE\"): error(Can\'t build $$LAUNCH_FILE)

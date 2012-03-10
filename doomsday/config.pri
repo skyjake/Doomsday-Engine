@@ -9,8 +9,9 @@
 #       line, as it is checked before config_user.pri is read.
 #
 # User-definable variables:
-#   PREFIX      Install prefix for Unix (specify on qmake command line)
-#   PYTHON      Path of the Python interpreter binary
+#   PREFIX          Install prefix for Unix (specify on qmake command line)
+#   SCRIPT_PYTHON   Path of the Python interpreter binary to be used in
+#                   generated scripts (python on path used for building)
 #
 # CONFIG options for Doomsday:
 # - deng_32bitonly          Only do a 32-bit build (no 64-bit)
@@ -172,15 +173,19 @@ exists(config_user.pri) {
 
 # System Tools ---------------------------------------------------------------
 
-# See if Python is overridden.
-isEmpty(PYTHON) {
-    unix:!macx {
-        exists(/usr/bin/python): PYTHON = /usr/bin/python
-        exists(/usr/local/bin/python): PYTHON = /usr/local/bin/python
+unix:!macx {
+    # Python to be used in generated scripts.
+    isEmpty(SCRIPT_PYTHON) {
+        exists(/usr/bin/python): SCRIPT_PYTHON = /usr/bin/python
+        exists(/usr/local/bin/python): SCRIPT_PYTHON = /usr/local/bin/python
     }
-    # Assume user has python on the path.
-    echo(Using Python on system path.)
-    PYTHON = python
+    isEmpty(SCRIPT_PYTHON) {
+        # Check the system path.
+        SCRIPT_PYTHON = $$system(which python)
+        isEmpty(SCRIPT_PYTHON) {
+            error("Variable SCRIPT_PYTHON not set (path of Python interpreter to be used in generated scripts)")
+        }
+    }
 }
 
 # Apply deng_* Configuration -------------------------------------------------
