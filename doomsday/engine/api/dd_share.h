@@ -781,7 +781,7 @@ enum { /* Do NOT change the numerical values of the constants. */
 
 /**
  * All map think-able objects must use this as a base. Also used for sound
- * origin purposes for all of: mobj_t, Polyobj, Sector/plane_t
+ * origin purposes for all of: mobj_t, Polyobj, Sector/Plane
  * @ingroup mobj
  */
 typedef struct ddmobj_base_s {

@@ -75,10 +75,10 @@ internal
 
 #define HEDGE_SIDEDEF(he)       ((he)->lineDef->sideDefs[(he)->side])
 
-// Seg flags
+// HEdge flags
 #define HEDGEF_POLYOBJ          0x1 /// < Half-edge is part of a poly object.
 
-// Seg frame flags
+// HEdge frame flags
 #define HEDGEINF_FACINGFRONT    0x0001
 end
 
@@ -224,7 +224,7 @@ internal
 #define PS_inflags              surface.inFlags
 end
 
-struct plane
+struct Plane
     PTR     ddmobj_base_t soundOrg // Sound origin for plane
     PTR     sector_s*   sector // Owner of the plane (temp)
     -       surface_t   surface

@@ -963,7 +963,7 @@ static boolean createGlowLightForSurface(surface_t* suf, void* paramaters)
     switch(DMU_GetType(suf->owner))
     {
     case DMU_PLANE: {
-        plane_t* pln = (plane_t*)suf->owner;
+        Plane* pln = (Plane*)suf->owner;
         Sector* sec = pln->sector;
         const averagecolor_analysis_t* avgColorAmplified;
         const materialvariantspecification_t* spec;

@@ -93,6 +93,6 @@ int R_IterateShadowProjections(uint listIdx, int (*callback) (const shadowprojec
  *
  * @return  Found plane else @c NULL if @a mobj is not presently sector-linked.
  */
-plane_t* R_FindShadowPlane(struct mobj_s* mobj);
+Plane* R_FindShadowPlane(struct mobj_s* mobj);
 
 #endif /* LIBDENG_REFRESH_SHADOW_H */

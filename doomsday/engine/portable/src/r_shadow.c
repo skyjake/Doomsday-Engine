@@ -353,16 +353,16 @@ int R_IterateShadowProjections(uint listIdx, int (*callback) (const shadowprojec
 
 int RIT_FindShadowPlaneIterator(Sector* sector, void* paramaters)
 {
-    plane_t** highest = (plane_t**)paramaters;
-    plane_t* compare = sector->SP_plane(PLN_FLOOR);
+    Plane** highest = (Plane**)paramaters;
+    Plane* compare = sector->SP_plane(PLN_FLOOR);
     if(compare->visHeight > (*highest)->visHeight)
         *highest = compare;
     return false; // Continue iteration.
 }
 
-plane_t* R_FindShadowPlane(mobj_t* mo)
+Plane* R_FindShadowPlane(mobj_t* mo)
 {
-    plane_t* plane = NULL;
+    Plane* plane = NULL;
     assert(mo);
     if(mo->bspLeaf)
     {

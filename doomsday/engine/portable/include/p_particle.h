@@ -109,7 +109,7 @@ typedef struct {
 // Particle Generator
 typedef struct ptcgen_s {
     thinker_t       thinker; // Func = P_PtcGenThinker
-    plane_t*        plane; // Flat-triggered.
+    Plane*          plane; // Flat-triggered.
     const struct ded_ptcgen_s* def; // The definition of this generator.
     struct mobj_s*  source; // If mobj-triggered.
     int             srcid; // Source mobj ID.
@@ -167,7 +167,7 @@ void P_SpawnDamageParticleGen(struct mobj_s* mo, struct mobj_s* inflictor, int a
  * Creates a new flat-triggered particle generator based on the given
  * definition. The generator is added to the list of active ptcgens.
  */
-void P_SpawnPlaneParticleGen(const struct ded_ptcgen_s* def, plane_t* plane);
+void P_SpawnPlaneParticleGen(const struct ded_ptcgen_s* def, Plane* plane);
 
 /**
  * Called after a reset once the definitions have been re-read.

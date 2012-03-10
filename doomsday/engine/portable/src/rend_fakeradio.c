@@ -1309,7 +1309,7 @@ static void processEdgeShadow(const BspLeaf* bspLeaf, const LineDef* lineDef,
     uint side, uint planeId, float shadowDark)
 {
     const SideDef* sideDef = lineDef->L_side(side? BACK : FRONT);
-    const plane_t* pln = sideDef->sector->SP_plane(planeId);
+    const Plane* pln = sideDef->sector->SP_plane(planeId);
     vec2_t inner[2], outer[2], edgeOpen, sideOpen;
     const materialvariantspecification_t* spec;
     const materialsnapshot_t* ms;
@@ -1504,7 +1504,7 @@ static void radioBspLeafEdges(const BspLeaf* bspLeaf)
     { uint pln;
     for(pln = 0; pln < bspLeaf->sector->planeCount; ++pln)
     {
-        const plane_t* plane = bspLeaf->sector->planes[pln];
+        const Plane* plane = bspLeaf->sector->planes[pln];
 
         vec[VZ] = vy - plane->visHeight;
 

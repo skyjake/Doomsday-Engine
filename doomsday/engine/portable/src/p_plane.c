@@ -1,4 +1,4 @@
-/**\file p_plane.c
+/**\file plane.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -27,7 +27,7 @@
 #include "de_refresh.h"
 #include "de_play.h"
 
-int Plane_SetProperty(plane_t* pln, const setargs_t* args)
+int Plane_SetProperty(Plane* pln, const setargs_t* args)
 {
     switch(args->prop)
     {
@@ -52,7 +52,7 @@ int Plane_SetProperty(plane_t* pln, const setargs_t* args)
     return false; // Continue iteration.
 }
 
-int Plane_GetProperty(const plane_t* pln, setargs_t* args)
+int Plane_GetProperty(const Plane* pln, setargs_t* args)
 {
     switch(args->prop)
     {

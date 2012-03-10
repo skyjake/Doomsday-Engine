@@ -333,7 +333,7 @@ void R_InterpolateSurfaceScroll(boolean resetNextViewer)
     }
 }
 
-void R_AddTrackedPlane(planelist_t* plist, plane_t *pln)
+void R_AddTrackedPlane(planelist_t* plist, Plane *pln)
 {
     uint i;
 
@@ -357,7 +357,7 @@ void R_AddTrackedPlane(planelist_t* plist, plane_t *pln)
         if(!plist->maxNum)
             plist->maxNum = 8;
 
-        plist->array = Z_Realloc(plist->array, sizeof(plane_t*) * (plist->maxNum + 1), PU_MAP);
+        plist->array = Z_Realloc(plist->array, sizeof(Plane*) * (plist->maxNum + 1), PU_MAP);
     }
 
     // Add the plane to the list.
@@ -365,7 +365,7 @@ void R_AddTrackedPlane(planelist_t* plist, plane_t *pln)
     plist->array[plist->num] = NULL; // Terminate.
 }
 
-boolean R_RemoveTrackedPlane(planelist_t *plist, const plane_t *pln)
+boolean R_RemoveTrackedPlane(planelist_t *plist, const Plane *pln)
 {
     uint            i;
 
@@ -380,7 +380,7 @@ boolean R_RemoveTrackedPlane(planelist_t *plist, const plane_t *pln)
                 plist->array[i] = NULL;
             else
                 memmove(&plist->array[i], &plist->array[i+1],
-                        sizeof(plane_t*) * (plist->num - 1 - i));
+                        sizeof(Plane*) * (plist->num - 1 - i));
             plist->num--;
             return true;
         }
@@ -403,7 +403,7 @@ void R_UpdateTrackedPlanes(void)
 
     for(i = 0; i < plist->num; ++i)
     {
-        plane_t* pln = plist->array[i];
+        Plane* pln = plist->array[i];
 
         pln->oldHeight[0] = pln->oldHeight[1];
         pln->oldHeight[1] = pln->height;
@@ -424,7 +424,7 @@ void R_UpdateTrackedPlanes(void)
 void R_InterpolateTrackedPlanes(boolean resetNextViewer)
 {
     planelist_t* plist;
-    plane_t* pln;
+    Plane* pln;
     uint i;
 
     if(!theMap) return;
@@ -486,7 +486,7 @@ void R_InterpolateTrackedPlanes(boolean resetNextViewer)
  * decoration origins for surfaces whose material offset is dependant upon
  * the given plane.
  */
-void R_MarkDependantSurfacesForDecorationUpdate(plane_t* pln)
+void R_MarkDependantSurfacesForDecorationUpdate(Plane* pln)
 {
     LineDef**           linep;
 
@@ -557,19 +557,19 @@ void R_UpdateMapSurfacesOnMaterialChange(material_t* material)
  *
  * @return  Ptr to the newly created plane.
  */
-plane_t* R_NewPlaneForSector(Sector* sec)
+Plane* R_NewPlaneForSector(Sector* sec)
 {
     surface_t* suf;
-    plane_t* plane;
+    Plane* plane;
 
     if(!sec)
         return NULL; // Do wha?
 
     // Allocate the new plane.
-    plane = Z_Malloc(sizeof(plane_t), PU_MAP, 0);
+    plane = Z_Malloc(sizeof(Plane), PU_MAP, 0);
 
     // Resize this sector's plane list.
-    sec->planes = Z_Realloc(sec->planes, sizeof(plane_t*) * (++sec->planeCount + 1), PU_MAP);
+    sec->planes = Z_Realloc(sec->planes, sizeof(Plane*) * (++sec->planeCount + 1), PU_MAP);
     // Add the new plane to the end of the list.
     sec->planes[sec->planeCount-1] = plane;
     sec->planes[sec->planeCount] = NULL; // Terminate.
@@ -663,7 +663,7 @@ plane_t* R_NewPlaneForSector(Sector* sec)
  */
 void R_DestroyPlaneOfSector(uint id, Sector* sec)
 {
-    plane_t* plane, **newList = NULL;
+    Plane* plane, **newList = NULL;
     BspLeaf** ssecIter;
     surfacelist_t* slist;
     planelist_t* plist;
@@ -682,7 +682,7 @@ void R_DestroyPlaneOfSector(uint id, Sector* sec)
     {
         uint n;
 
-        newList = Z_Malloc(sizeof(plane_t**) * sec->planeCount, PU_MAP, 0);
+        newList = Z_Malloc(sizeof(Plane**) * sec->planeCount, PU_MAP, 0);
 
         // Copy ptrs to the planes.
         n = 0;
@@ -1312,7 +1312,7 @@ void R_MapInitSurfaces(boolean forceUpdate)
         R_UpdateSector(sec, forceUpdate);
         for(j = 0; j < sec->planeCount; ++j)
         {
-            plane_t* pln = sec->SP_plane(j);
+            Plane* pln = sec->SP_plane(j);
 
             pln->visHeight = pln->oldHeight[0] = pln->oldHeight[1] = pln->height;
             initSurfaceMaterialOffset(&pln->surface);
@@ -1525,7 +1525,7 @@ void R_ClearSectorFlags(void)
     }
 }
 
-boolean R_IsGlowingPlane(const plane_t* pln)
+boolean R_IsGlowingPlane(const Plane* pln)
 {
     /// \fixme We should not need to prepare to determine this.
     material_t* mat = pln->surface.material;
@@ -1536,7 +1536,7 @@ boolean R_IsGlowingPlane(const plane_t* pln)
     return ((mat && !Material_IsDrawable(mat)) || ms->glowing > 0 || R_IsSkySurface(&pln->surface));
 }
 
-float R_GlowStrength(const plane_t* pln)
+float R_GlowStrength(const Plane* pln)
 {
     material_t* mat = pln->surface.material;
     if(mat)
@@ -1676,7 +1676,7 @@ void R_UpdateLinedefsOfSector(Sector* sec)
     }
 }
 
-boolean R_UpdatePlane(plane_t* pln, boolean forceUpdate)
+boolean R_UpdatePlane(Plane* pln, boolean forceUpdate)
 {
     Sector* sec = pln->sector;
     boolean changed = false;

@@ -40,7 +40,7 @@ boolean Surface_AttachedToMap(surface_t* suf)
     if(!suf->owner) return false;
     if(DMU_GetType(suf->owner) == DMU_PLANE)
     {
-        Sector* sec = ((plane_t*)suf->owner)->sector;
+        Sector* sec = ((Plane*)suf->owner)->sector;
         if(0 == sec->bspLeafCount)
             return false;
     }
@@ -77,7 +77,7 @@ boolean Surface_SetMaterial(surface_t* suf, material_t* mat)
                     if(DMU_GetType(suf->owner) == DMU_PLANE)
                     {
                         const ded_ptcgen_t* def = Materials_PtcGenDef(mat);
-                        P_SpawnPlaneParticleGen(def, (plane_t*)suf->owner);
+                        P_SpawnPlaneParticleGen(def, (Plane*)suf->owner);
                     }
                 }
             }

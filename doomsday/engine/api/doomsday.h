@@ -72,7 +72,7 @@ extern "C" {
     typedef struct hedge_s { int type; } HEdge;
     typedef struct bspleaf_s { int type; } BspLeaf;
     typedef struct sector_s { int type; } Sector;
-    typedef struct plane_s { int type; } plane_t;
+    typedef struct plane_s { int type; } Plane;
     typedef struct material_s { int type; } material_t;
 #endif
 

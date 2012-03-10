@@ -296,7 +296,7 @@ boolean LineDef_MiddleMaterialCoversOpening(const LineDef *line, int side,
     return false;
 }
 
-plane_t* LineDef_FloorMin(const LineDef* lineDef)
+Plane* LineDef_FloorMin(const LineDef* lineDef)
 {
     assert(lineDef);
     if(!lineDef->L_frontsector) return NULL; // No interfaces.
@@ -306,7 +306,7 @@ plane_t* LineDef_FloorMin(const LineDef* lineDef)
                lineDef->L_backsector->SP_plane(PLN_FLOOR) : lineDef->L_frontsector->SP_plane(PLN_FLOOR);
 }
 
-plane_t* LineDef_FloorMax(const LineDef* lineDef)
+Plane* LineDef_FloorMax(const LineDef* lineDef)
 {
     assert(lineDef);
     if(!lineDef->L_frontsector) return NULL; // No interfaces.
@@ -316,7 +316,7 @@ plane_t* LineDef_FloorMax(const LineDef* lineDef)
                lineDef->L_backsector->SP_plane(PLN_FLOOR) : lineDef->L_frontsector->SP_plane(PLN_FLOOR);
 }
 
-plane_t* LineDef_CeilingMin(const LineDef* lineDef)
+Plane* LineDef_CeilingMin(const LineDef* lineDef)
 {
     assert(lineDef);
     if(!lineDef->L_frontsector) return NULL; // No interfaces.
@@ -326,7 +326,7 @@ plane_t* LineDef_CeilingMin(const LineDef* lineDef)
                lineDef->L_backsector->SP_plane(PLN_CEILING) : lineDef->L_frontsector->SP_plane(PLN_CEILING);
 }
 
-plane_t* LineDef_CeilingMax(const LineDef* lineDef)
+Plane* LineDef_CeilingMax(const LineDef* lineDef)
 {
     assert(lineDef);
     if(!lineDef->L_frontsector) return NULL; // No interfaces.

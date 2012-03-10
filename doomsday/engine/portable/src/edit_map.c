@@ -1359,8 +1359,8 @@ static void hardenPlanes(GameMap* dest, editmap_t* src)
 
         for(j = 0; j < srcS->planeCount; ++j)
         {
-            plane_t*            destP = R_NewPlaneForSector(destS);
-            plane_t*            srcP = srcS->planes[j];
+            Plane*              destP = R_NewPlaneForSector(destS);
+            Plane*              srcP = srcS->planes[j];
 
             destP->height = destP->oldHeight[0] = destP->oldHeight[1] =
                 destP->visHeight = srcP->height;
@@ -2212,7 +2212,7 @@ uint MPE_PlaneCreate(uint sector, float height, materialid_t material,
 {
     uint                i;
     Sector*             s;
-    plane_t**           newList, *pln;
+    Plane**             newList, *pln;
 
     if(!editMapInited)
         return 0;
@@ -2222,7 +2222,7 @@ uint MPE_PlaneCreate(uint sector, float height, materialid_t material,
 
     s = map->sectors[sector - 1];
 
-    pln = M_Calloc(sizeof(plane_t));
+    pln = M_Calloc(sizeof(Plane));
     pln->surface.owner = (void*) pln;
     pln->height = height;
     Surface_SetMaterial(&pln->surface, Materials_ToMaterial(material));
@@ -2235,7 +2235,7 @@ uint MPE_PlaneCreate(uint sector, float height, materialid_t material,
     pln->type = (pln->PS_normal[VZ] < 0? PLN_CEILING : PLN_FLOOR);
 
     pln->sector = s;
-    newList = M_Malloc(sizeof(plane_t*) * (++s->planeCount + 1));
+    newList = M_Malloc(sizeof(Plane*) * (++s->planeCount + 1));
     for(i = 0; i < s->planeCount - 1; ++i)
     {
         newList[i] = s->planes[i];

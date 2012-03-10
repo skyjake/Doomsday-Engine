@@ -73,7 +73,7 @@ typedef struct decorsource_s {
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void updateSideSectionDecorations(SideDef* side, sidedefsection_t section);
-static void updatePlaneDecorations(plane_t* pln);
+static void updatePlaneDecorations(Plane* pln);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -394,7 +394,7 @@ boolean R_ProjectSurfaceDecorations(surface_t* suf, void* context)
             break;
             }
         case DMU_PLANE:
-            updatePlaneDecorations((plane_t*)suf->owner);
+            updatePlaneDecorations((Plane*)suf->owner);
             break;
         default:
             Con_Error("R_ProjectSurfaceDecorations: Internal Error, unknown type %s.", DMU_Str(DMU_GetType(suf->owner)));
@@ -545,7 +545,7 @@ static void updateSurfaceDecorations2(surface_t* suf, float offsetS, float offse
 /**
  * Generate decorations for a plane.
  */
-static void updatePlaneDecorations(plane_t* pln)
+static void updatePlaneDecorations(Plane* pln)
 {
     Sector*             sec = pln->sector;
     surface_t*          suf = &pln->surface;
@@ -577,7 +577,7 @@ static void updateSideSectionDecorations(SideDef* side, sidedefsection_t section
     int                 sid;
     float               offsetS = 0, offsetT = 0;
     boolean             visible = false;
-    const plane_t*      frontCeil, *frontFloor, *backCeil = NULL, *backFloor = NULL;
+    const Plane*        frontCeil, *frontFloor, *backCeil = NULL, *backFloor = NULL;
     float               bottom, top;
 
     if(!side->hedges || !side->hedges[0])

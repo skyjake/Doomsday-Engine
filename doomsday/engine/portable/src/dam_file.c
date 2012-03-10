@@ -430,7 +430,7 @@ static void writeSector(const GameMap *map, uint idx)
     writeLong(s->planeCount);
     for(i = 0; i < s->planeCount; ++i)
     {
-        plane_t            *p = s->planes[i];
+        Plane              *p = s->planes[i];
 
         writeFloat(p->height);
         writeFloat(p->target);
@@ -504,7 +504,7 @@ static void readSector(const GameMap *map, uint idx)
     numPlanes = (uint) readLong();
     for(i = 0; i < numPlanes; ++i)
     {
-        plane_t            *p = R_NewPlaneForSector(s);
+        Plane              *p = R_NewPlaneForSector(s);
 
         p->height = readFloat();
         p->target = readFloat();

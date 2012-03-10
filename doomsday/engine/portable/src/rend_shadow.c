@@ -80,7 +80,7 @@ static void processMobjShadow(mobj_t* mo)
 {
     float moz, moh, halfmoh, heightFromSurface, distanceFromViewer = 0;
     float mobjOrigin[3], shadowRadius, shadowStrength;
-    plane_t* plane;
+    Plane* plane;
 
     Mobj_OriginSmoothed(mo, mobjOrigin);
 

@@ -443,7 +443,7 @@ uint P_ToIndex(const void* ptr)
         return GET_BSPNODE_IDX((BspNode*) ptr);
 
     case DMU_PLANE:
-        return GET_PLANE_IDX((plane_t*) ptr);
+        return GET_PLANE_IDX((Plane*) ptr);
 
     case DMU_MATERIAL:
         return Materials_Id((material_t*) ptr);
@@ -525,7 +525,7 @@ int P_Iteratep(void *ptr, uint prop, void* context, int (*callback) (void* p, vo
 
             if(sec->planes)
             {
-                plane_t** planePtr = sec->planes;
+                Plane** planePtr = sec->planes;
                 while(*planePtr && !(result = callback(*planePtr, context)))
                     planePtr++;
             }
@@ -913,7 +913,7 @@ static int setProperty(void* obj, void* context)
 {
     setargs_t*          args = (setargs_t*) context;
     Sector*             updateSector1 = NULL, *updateSector2 = NULL;
-    plane_t*            updatePlane = NULL;
+    Plane*              updatePlane = NULL;
     LineDef*            updateLinedef = NULL;
     SideDef*            updateSidedef = NULL;
     surface_t*          updateSurface = NULL;
@@ -1014,7 +1014,7 @@ static int setProperty(void* obj, void* context)
 
     if(args->type == DMU_PLANE)
     {
-        updatePlane = (plane_t*) obj;
+        updatePlane = (Plane*) obj;
 
         switch(args->prop)
         {
@@ -1041,7 +1041,7 @@ static int setProperty(void* obj, void* context)
         case DMU_ALPHA:
         case DMU_BLENDMODE:
         case DMU_FLAGS:
-            obj = &((plane_t*) obj)->surface;
+            obj = &((Plane*) obj)->surface;
             args->type = DMU_SURFACE;
             break;
 
@@ -1494,7 +1494,7 @@ static int getProperty(void* obj, void* context)
         case DMU_ALPHA:
         case DMU_BLENDMODE:
         case DMU_FLAGS:
-            obj = &((plane_t*) obj)->surface;
+            obj = &((Plane*) obj)->surface;
             args->type = DMU_SURFACE;
             break;
 

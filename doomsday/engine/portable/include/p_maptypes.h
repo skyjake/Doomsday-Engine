@@ -202,8 +202,8 @@ typedef enum {
 #define PS_offset               surface.offset
 #define PS_visoffset            surface.visOffset
 #define PS_rgba                 surface.rgba
-#define	PS_flags				surface.flags
-#define	PS_inflags				surface.inFlags
+#define PS_flags                surface.flags
+#define PS_inflags              surface.inFlags
 
 typedef struct plane_s {
     runtime_mapdata_header_t header;
@@ -218,7 +218,7 @@ typedef struct plane_s {
     float               visHeightDelta;
     planetype_t         type;          // PLN_* type.
     int                 planeID;
-} plane_t;
+} Plane;
 
 // Helper macros for accessing sector floor/ceiling plane data elements.
 #define SP_plane(n)             planes[(n)]

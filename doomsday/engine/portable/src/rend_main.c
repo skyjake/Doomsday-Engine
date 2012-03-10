@@ -378,7 +378,7 @@ void Rend_PreparePlane(rvertex_t* rvertices, size_t numVertices,
 
 static void markSideDefSectionsPVisible(HEdge* hedge)
 {
-    const plane_t* fceil, *bceil, *ffloor, *bfloor;
+    const Plane* fceil, *bceil, *ffloor, *bfloor;
     SideDef* side;
     uint i;
 
@@ -488,7 +488,7 @@ static void doCalcSegDivisions(walldiv_t* div, const LineDef* line,
                     {
                         for(j = 0; j < scanSec->planeCount && !stopScan; ++j)
                         {
-                            plane_t* pln = scanSec->SP_plane(j);
+                            Plane* pln = scanSec->SP_plane(j);
 
                             if(pln->visHeight > bottomZ && pln->visHeight < topZ)
                             {
@@ -2028,8 +2028,8 @@ static boolean Rend_RenderSeg(BspLeaf* bspLeaf, HEdge* hedge)
 
 boolean R_FindBottomTop(LineDef* lineDef, int side, sidedefsection_t section,
     float matOffsetX, float matOffsetY,
-    const plane_t* ffloor, const plane_t* fceil,
-    const plane_t* bfloor, const plane_t* bceil,
+    const Plane* ffloor, const Plane* fceil,
+    const Plane* bfloor, const Plane* bceil,
     boolean unpegBottom, boolean unpegTop,
     boolean stretchMiddle, boolean isSelfRef,
     float* bottom, float* top, float texOffset[2])
@@ -2149,7 +2149,7 @@ static boolean Rend_RenderSegTwosided(BspLeaf* bspLeaf, HEdge* hedge)
     float               bottom, top, texOffset[2];
     Sector*             frontSec, *backSec;
     SideDef*            frontSide, *backSide;
-    plane_t*            ffloor, *fceil, *bfloor, *bceil;
+    Plane*              ffloor, *fceil, *bfloor, *bceil;
     LineDef*            line;
     int                 solidSeg = false;
 
@@ -2412,14 +2412,14 @@ static __inline float skyCapZ(BspLeaf* bspLeaf, int skyCap)
     return bspLeaf->sector->SP_planevisheight(plane);
 }
 
-static __inline float skyFixFloorZ(const plane_t* frontFloor, const plane_t* backFloor)
+static __inline float skyFixFloorZ(const Plane* frontFloor, const Plane* backFloor)
 {
     if(P_IsInVoid(viewPlayer))
         return frontFloor->visHeight;
     return skyFix[PLN_FLOOR].height;
 }
 
-static __inline float skyFixCeilZ(const plane_t* frontCeil, const plane_t* backCeil)
+static __inline float skyFixCeilZ(const Plane* frontCeil, const Plane* backCeil)
 {
     if(P_IsInVoid(viewPlayer))
         return frontCeil->visHeight;
@@ -2451,13 +2451,13 @@ static int segSkyFixes(HEdge* hedge)
                 // Lower fix?
                 if(hasSkyFloor)
                 {
-                    const plane_t* ffloor = frontSec->SP_plane(PLN_FLOOR);
-                    const plane_t* bfloor = backSec? backSec->SP_plane(PLN_FLOOR) : NULL;
+                    const Plane* ffloor = frontSec->SP_plane(PLN_FLOOR);
+                    const Plane* bfloor = backSec? backSec->SP_plane(PLN_FLOOR) : NULL;
                     const float skyZ = skyFixFloorZ(ffloor, bfloor);
 
                     if(hasClosedBack || (!R_IsSkySurface(&bfloor->surface) || P_IsInVoid(viewPlayer)))
                     {
-                        const plane_t* floor = (bfloor && R_IsSkySurface(&bfloor->surface)? bfloor : ffloor);
+                        const Plane* floor = (bfloor && R_IsSkySurface(&bfloor->surface)? bfloor : ffloor);
                         if(floor->visHeight > skyZ)
                             fixes |= SKYCAP_LOWER;
                     }
@@ -2466,13 +2466,13 @@ static int segSkyFixes(HEdge* hedge)
                 // Upper fix?
                 if(hasSkyCeiling)
                 {
-                    const plane_t* fceil = frontSec->SP_plane(PLN_CEILING);
-                    const plane_t* bceil = backSec? backSec->SP_plane(PLN_CEILING) : NULL;
+                    const Plane* fceil = frontSec->SP_plane(PLN_CEILING);
+                    const Plane* bceil = backSec? backSec->SP_plane(PLN_CEILING) : NULL;
                     const float skyZ = skyFixCeilZ(fceil, bceil);
 
                     if(hasClosedBack || (!R_IsSkySurface(&bceil->surface) || P_IsInVoid(viewPlayer)))
                     {
-                        const plane_t* ceil = (bceil && R_IsSkySurface(&bceil->surface)? bceil : fceil);
+                        const Plane* ceil = (bceil && R_IsSkySurface(&bceil->surface)? bceil : fceil);
                         if(ceil->visHeight < skyZ)
                             fixes |= SKYCAP_UPPER;
                     }
@@ -2493,10 +2493,10 @@ static void skyFixZCoords(HEdge* hedge, int skyCap, float* bottom, float* top)
 {
     const Sector* frontSec = hedge->HE_frontsector;
     const Sector* backSec  = hedge->HE_backsector;
-    const plane_t* ffloor = frontSec->SP_plane(PLN_FLOOR);
-    const plane_t* fceil  = frontSec->SP_plane(PLN_CEILING);
-    const plane_t* bceil  = backSec? backSec->SP_plane(PLN_CEILING) : NULL;
-    const plane_t* bfloor = backSec? backSec->SP_plane(PLN_FLOOR)   : NULL;
+    const Plane* ffloor = frontSec->SP_plane(PLN_FLOOR);
+    const Plane* fceil  = frontSec->SP_plane(PLN_CEILING);
+    const Plane* bceil  = backSec? backSec->SP_plane(PLN_CEILING) : NULL;
+    const Plane* bfloor = backSec? backSec->SP_plane(PLN_FLOOR)   : NULL;
 
     if(!bottom && !top) return;
     if(bottom) *bottom = 0;
@@ -2841,7 +2841,7 @@ static void Rend_RenderBspLeaf(uint bspLeafIdx)
     // Render all planes of this sector.
     for(i = 0; i < sect->planeCount; ++i)
     {
-        const plane_t* plane = sect->planes[i];
+        const Plane* plane = sect->planes[i];
         const surface_t* suf = &plane->surface;
         boolean isSkyMasked = false;
         boolean addDLights = true;
@@ -3046,7 +3046,7 @@ void Rend_RenderSurfaceVectors(void)
 
         for(j = 0; j < bspLeaf->sector->planeCount; ++j)
         {
-            plane_t* pln = bspLeaf->sector->SP_plane(j);
+            Plane* pln = bspLeaf->sector->SP_plane(j);
             vec3_t origin;
 
             V3_Set(origin, bspLeaf->midPoint.pos[VX], bspLeaf->midPoint.pos[VY], pln->visHeight);

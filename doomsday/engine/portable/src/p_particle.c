@@ -183,7 +183,7 @@ void P_MapSpawnPlaneParticleGens(void)
 
         for(j = 0; j < 2; ++j)
         {
-            plane_t* plane = sector->SP_plane(j);
+            Plane* plane = sector->SP_plane(j);
             const ded_ptcgen_t* def = Materials_PtcGenDef(plane->PS_material);
             P_SpawnPlaneParticleGen(def, plane);
         }
@@ -332,19 +332,19 @@ void P_SpawnMobjParticleGen(const ded_ptcgen_t* def, mobj_t* source)
 
 static int findGeneratorForPlane(ptcgen_t* gen, void* parameters)
 {
-    plane_t* plane = (plane_t*)parameters;
+    Plane* plane = (Plane*)parameters;
     if(gen->plane == plane) return true; // Stop iteration.
     return false; // Continue iteration.
 }
 
 /// @return  @c true iff there is an active ptcgen for the given plane.
-static boolean GameMap_HasGeneratorForPlane(GameMap* map, plane_t* plane)
+static boolean GameMap_HasGeneratorForPlane(GameMap* map, Plane* plane)
 {
     assert(map);
     return 0 != Generators_Iterate(GameMap_Generators(map), findGeneratorForPlane, (void*)plane);
 }
 
-void P_SpawnPlaneParticleGen(const ded_ptcgen_t* def, plane_t* plane)
+void P_SpawnPlaneParticleGen(const ded_ptcgen_t* def, Plane* plane)
 {
     GameMap* map = theMap; /// @fixme Do not assume plane is from the CURRENT map.
     planetype_t relPlane;
@@ -604,7 +604,7 @@ static void P_NewParticle(ptcgen_t* gen)
     else if(gen->plane)
     {
         fixed_t radius = gen->stages[pt->stage].radius;
-        const plane_t* plane = gen->plane;
+        const Plane* plane = gen->plane;
         const Sector* sector = gen->plane->sector;
         const float* bbox = sector->bBox;
 

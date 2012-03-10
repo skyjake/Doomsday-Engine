@@ -1,4 +1,4 @@
-/**\file p_plane.h
+/**\file plane.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -38,11 +38,11 @@
 /**
  * Get the value of a plane property, selected by DMU_* name.
  */
-int Plane_GetProperty(const plane_t* plane, setargs_t* args);
+int Plane_GetProperty(const Plane* plane, setargs_t* args);
 
 /**
  * Update the plane, property is selected by DMU_* name.
  */
-int Plane_SetProperty(plane_t* plane, const setargs_t* args);
+int Plane_SetProperty(Plane* plane, const setargs_t* args);
 
 #endif /* LIBDENG_MAP_PLANE_H */

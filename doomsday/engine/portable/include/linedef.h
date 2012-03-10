@@ -53,28 +53,28 @@ void LineDef_UpdateAABox(LineDef* lineDef);
  *     If both front and back floor Plane interfaces exist and are equal,
  *     the front Plane is returned. May return @c NULL if no interfaces.
  */
-plane_t* LineDef_FloorMin(const LineDef* lineDef);
+Plane* LineDef_FloorMin(const LineDef* lineDef);
 
 /**
  * @return  Maximal floor Plane which interfaces with this LineDef's face.
  *     If both front and back floor Plane interfaces exist and are equal,
  *     the front Plane is returned. May return @c NULL if no interfaces.
  */
-plane_t* LineDef_FloorMax(const LineDef* lineDef);
+Plane* LineDef_FloorMax(const LineDef* lineDef);
 
 /**
  * @return  Minimal ceiling Plane which interfaces with this LineDef's face.
  *     If both front and back ceiling Plane interfaces exist and are equal,
  *     the front Plane is returned. May return @c NULL if no interfaces.
  */
-plane_t* LineDef_CeilingMin(const LineDef* lineDef);
+Plane* LineDef_CeilingMin(const LineDef* lineDef);
 
 /**
  * @return  Maximal ceiling Plane which interfaces with this LineDef's face.
  *     If both front and back ceiling Plane interfaces exist and are equal,
  *     the front Plane is returned. May return @c NULL if no interfaces.
  */
-plane_t* LineDef_CeilingMax(const LineDef* lineDef);
+Plane* LineDef_CeilingMax(const LineDef* lineDef);
 
 /**
  * @param ignoreOpacity  @c true= do not consider Material opacity.

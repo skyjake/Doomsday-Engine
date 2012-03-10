@@ -109,12 +109,12 @@ void            R_OrderVertices(const LineDef* line, const Sector* sector,
                                 Vertex* verts[2]);
 boolean         R_FindBottomTop(LineDef* lineDef, int side, sidedefsection_t section,
                                 float matOffsetX, float matOffsetY,
-                                const plane_t* ffloor, const plane_t* fceil,
-                                const plane_t* bfloor, const plane_t* bceil,
+                                const Plane* ffloor, const Plane* fceil,
+                                const Plane* bfloor, const Plane* bceil,
                                 boolean unpegBottom, boolean unpegTop,
                                 boolean stretchMiddle, boolean isSelfRef,
                                 float* bottom, float* top, float texOffset[2]);
-plane_t*        R_NewPlaneForSector(Sector* sec);
+Plane*          R_NewPlaneForSector(Sector* sec);
 void            R_DestroyPlaneOfSector(uint id, Sector* sec);
 
 surfacedecor_t* R_CreateSurfaceDecoration(surface_t* suf);
@@ -123,8 +123,8 @@ void            R_ClearSurfaceDecorations(surface_t* suf);
 void            R_UpdateTrackedPlanes(void);
 void            R_InterpolateTrackedPlanes(boolean resetNextViewer);
 
-void            R_AddTrackedPlane(planelist_t* plist, plane_t* pln);
-boolean         R_RemoveTrackedPlane(planelist_t* plist, const plane_t* pln);
+void            R_AddTrackedPlane(planelist_t* plist, Plane* pln);
+boolean         R_RemoveTrackedPlane(planelist_t* plist, const Plane* pln);
 
 void            R_UpdateSurfaceScroll(void);
 void            R_InterpolateSurfaceScroll(boolean resetNextViewer);
@@ -148,7 +148,7 @@ void R_SurfaceListClear(surfacelist_t* sl);
  */
 boolean R_SurfaceListIterate(surfacelist_t* sl, boolean (*callback) (surface_t* suf, void*), void* context);
 
-void            R_MarkDependantSurfacesForDecorationUpdate(plane_t* pln);
+void            R_MarkDependantSurfacesForDecorationUpdate(Plane* pln);
 
 /**
  * To be called in response to a Material property changing which may
@@ -157,9 +157,9 @@ void            R_MarkDependantSurfacesForDecorationUpdate(plane_t* pln);
 void R_UpdateMapSurfacesOnMaterialChange(material_t* material);
 
 /// @return  @c true= @a plane is non-glowing (i.e. not glowing or a sky).
-boolean R_IsGlowingPlane(const plane_t* plane);
+boolean R_IsGlowingPlane(const Plane* plane);
 
-float R_GlowStrength(const plane_t* pln);
+float R_GlowStrength(const Plane* pln);
 
 lineowner_t*    R_GetVtxLineOwner(const Vertex* vtx, const LineDef* line);
 LineDef*        R_FindLineNeighbor(const Sector* sector,
