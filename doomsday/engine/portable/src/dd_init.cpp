@@ -29,6 +29,8 @@
 
 extern "C" {
 
+boolean DD_Init(void);
+
 #ifdef UNIX
 boolean DD_Unix_Init(int argc, char** argv);
 #endif
@@ -68,9 +70,9 @@ int main(int argc, char** argv)
 
     // Initialize.
 #ifdef UNIX
-    if(!DD_Unix_Init(argc, argv))
-        return 1;
-#endif
+    if(!DD_Unix_Init(argc, argv)) return 1;
+#endif   
+    if(!DD_Init()) return 2;
 
     // Run the main loop.
     int result = DD_GameLoop();
