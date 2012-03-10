@@ -74,7 +74,7 @@ static void Sv_IdentifySoundOrigin(mobj_t **origin, Sector **sector,
     {
         // No mobj ID => it's not a real mobj.
 
-        *poly = P_PolyobjByOrigin(*origin);
+        *poly = GameMap_PolyobjByOrigin(theMap, *origin);
         if(!*poly)
         {
             // It wasn't a polyobj.

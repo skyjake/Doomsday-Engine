@@ -70,23 +70,6 @@ static badtex_t* badTexNames = NULL;
 static uint numGameMapObjDefs;
 static gamemapobjdef_t* gameMapObjDefs;
 
-void P_PolyobjChanged(Polyobj* po)
-{
-    LineDef** lineIter;
-    for(lineIter = po->lines; *lineIter; lineIter++)
-    {
-        LineDef* line = *lineIter;
-        HEdge* hedge = line->L_frontside->hedges[0];
-        int i;
-
-        // Shadow bias must be told.
-        for(i = 0; i < 3; ++i)
-        {
-            SB_SurfaceMoved(hedge->bsuf[i]);
-        }
-    }
-}
-
 const char* P_GenerateUniqueMapId(const char* mapID)
 {
     static char uid[255];

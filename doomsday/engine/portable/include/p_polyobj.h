@@ -1,4 +1,4 @@
-/**\file p_polyobj.h
+/**\file p_polyobjs.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -22,13 +22,68 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef LIBDENG_P_POLYOBJ_H
-#define LIBDENG_P_POLYOBJ_H
+#ifndef LIBDENG_P_POLYOBJS_H
+#define LIBDENG_P_POLYOBJS_H
 
 #include "r_data.h"
-#include "p_dmu.h"
 
-boolean Polyobj_GetProperty(const Polyobj* po, setargs_t* args);
-boolean Polyobj_SetProperty(Polyobj* po, const setargs_t* args);
+/**
+ * Action the callback if set, otherwise this is no-op.
+ */
+void P_PolyobjCallback(struct mobj_s* mobj, LineDef* lineDef, Polyobj* polyobj);
 
-#endif /// LIBDENG_P_POLYOBJ_H
+/**
+ * The po_callback is called when a polyobj hits a mobj.
+ */
+void P_SetPolyobjCallback(void (*func) (struct mobj_s*, void*, void*));
+
+void P_PolyobjChanged(Polyobj* po);
+
+/**
+ * Lookup a Polyobj on the current map by unique ID.
+ *
+ * @param id  Unique identifier of the Polyobj to be found.
+ * @return  Found Polyobj instance else @c NULL.
+ */
+Polyobj* P_PolyobjByID(uint id);
+
+/**
+ * Lookup a Polyobj on the current map by tag.
+ *
+ * @param tag  Tag associated with the Polyobj to be found.
+ * @return  Found Polyobj instance else @c NULL.
+ */
+Polyobj* P_PolyobjByTag(int tag);
+
+/**
+ * Lookup a Polyobj on the current map by origin.
+ *
+ * @param tag  Tag associated with the Polyobj to be found.
+ * @return  Found Polyobj instance else @c NULL.
+ */
+Polyobj* P_PolyobjByOrigin(void* ddMobjBase);
+
+/**
+ * Translate the origin of @a polyobj in the map coordinate space.
+ */
+boolean P_PolyobjMove(Polyobj* polyobj, float xy[2]);
+boolean P_PolyobjMoveXY(Polyobj* polyobj, float x, float y);
+
+/**
+ * Rotate @a polyobj in the map coordinate space.
+ */
+boolean P_PolyobjRotate(Polyobj* polyobj, angle_t angle);
+
+/**
+ * Link @a polyobj to the current map. To be called after moving, rotating
+ * or any other translation of the Polyobj within the map.
+ */
+void P_PolyobjLink(Polyobj* polyobj);
+
+/**
+ * Unlink @a polyobj from the current map. To be called prior to moving,
+ * rotating or any other translation of the Polyobj within the map.
+ */
+void P_PolyobjUnlink(Polyobj* polyobj);
+
+#endif /// LIBDENG_P_POLYOBJS_H

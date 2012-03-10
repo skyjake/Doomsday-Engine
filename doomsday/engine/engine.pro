@@ -492,6 +492,7 @@ SOURCES += \
     portable/src/p_particle.c \
     portable/src/p_plane.c \
     portable/src/p_players.c \
+    portable/src/p_polyobjs.c \
     portable/src/p_seg.c \
     portable/src/p_sight.c \
     portable/src/p_surface.c \

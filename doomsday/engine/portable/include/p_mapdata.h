@@ -226,8 +226,6 @@ const char* P_MapSourceFile(const char* uri);
  */
 boolean P_LoadMap(const char* uri);
 
-void P_PolyobjChanged(Polyobj* po);
-
 void P_RegisterUnknownTexture(const char* name, boolean planeTex);
 
 /**

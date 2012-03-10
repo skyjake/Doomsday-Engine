@@ -29,44 +29,6 @@
 static void rotatePoint(int an, float* x, float* y, float startSpotX, float startSpotY);
 static boolean checkMobjBlocking(LineDef* line, Polyobj* po);
 
-// Called when the polyobj hits a mobj.
-static void (*po_callback) (mobj_t* mobj, void* line, void* polyobj);
-
-void P_SetPolyobjCallback(void (*func) (struct mobj_s*, void*, void*))
-{
-    po_callback = func;
-}
-
-/// @note Part of the Doomsday public API
-Polyobj* P_PolyobjByID(uint id)
-{
-    if(theMap)
-    {
-        return GameMap_PolyobjByID(theMap, id);
-    }
-    return NULL;
-}
-
-/// @note Part of the Doomsday public API
-Polyobj* P_PolyobjByTag(int tag)
-{
-    if(theMap)
-    {
-        return GameMap_PolyobjByTag(theMap, tag);
-    }
-    return NULL;
-}
-
-/// @note Part of the Doomsday public API
-Polyobj* P_PolyobjByOrigin(void* ddMobjBase)
-{
-    if(theMap)
-    {
-        return GameMap_PolyobjByOrigin(theMap, ddMobjBase);
-    }
-    return NULL;
-}
-
 void Polyobj_UpdateAABox(Polyobj* po)
 {
     LineDef** lineIter;
@@ -139,13 +101,12 @@ static boolean mobjIsBlockingPolyobj(Polyobj* po)
     return false;
 }
 
-boolean P_PolyobjMove(Polyobj* po, float delta[2])
+boolean Polyobj_Move(Polyobj* po, float delta[2])
 {
     fvertex_t* prevPts;
     LineDef** lineIter;
     uint i;
-
-    if(!po) return false;
+    assert(po);
 
     P_PolyobjUnlink(po);
 
@@ -239,12 +200,12 @@ boolean P_PolyobjMove(Polyobj* po, float delta[2])
     return true;
 }
 
-boolean P_PolyobjMoveXY(Polyobj* po, float x, float y)
+boolean Polyobj_MoveXY(Polyobj* po, float x, float y)
 {
     float delta[2];
     delta[VX] = x;
     delta[VY] = y;
-    return P_PolyobjMove(po, delta);
+    return Polyobj_Move(po, delta);
 }
 
 static void rotatePoint2d(float point[2], const float origin[2], uint fineAngle)
@@ -263,13 +224,12 @@ static void rotatePoint2d(float point[2], const float origin[2], uint fineAngle)
     point[VY] = rotated[VY] + rotated[VX] + origin[VY];
 }
 
-boolean P_PolyobjRotate(Polyobj* po, angle_t angle)
+boolean Polyobj_Rotate(Polyobj* po, angle_t angle)
 {
     fvertex_t* originalPts, *prevPts;
     uint i, fineAngle;
     LineDef** lineIter;
-
-    if(!po) return false;
+    assert(po);
 
     P_PolyobjUnlink(po);
 
@@ -350,18 +310,6 @@ boolean P_PolyobjRotate(Polyobj* po, angle_t angle)
     return true;
 }
 
-void P_PolyobjUnlink(Polyobj* po)
-{
-    GameMap* map = theMap;
-    GameMap_UnlinkPolyobjInBlockmap(map, po);
-}
-
-void P_PolyobjLink(Polyobj* po)
-{
-    GameMap* map = theMap;
-    GameMap_LinkPolyobjInBlockmap(map, po);
-}
-
 typedef struct ptrmobjblockingparams_s {
     boolean isBlocked;
     LineDef* line;
@@ -388,8 +336,7 @@ int PTR_checkMobjBlocking(mobj_t* mo, void* data)
         {
             if(P_BoxOnLineSide(&moBox, params->line) == -1)
             {
-                if(po_callback)
-                    po_callback(mo, params->line, params->polyobj);
+                P_PolyobjCallback(mo, params->line, params->polyobj);
 
                 params->isBlocked = true;
             }

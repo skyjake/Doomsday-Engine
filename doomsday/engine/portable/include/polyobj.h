@@ -23,6 +23,8 @@
 #ifndef LIBDENG_MAP_POLYOBJ_H
 #define LIBDENG_MAP_POLYOBJ_H
 
+//#include "p_dmu.h"
+
 // We'll use the base polyobj template directly as our polyobj.
 typedef struct polyobj_s {
 DD_BASE_POLYOBJ_ELEMENTS()
@@ -31,56 +33,21 @@ DD_BASE_POLYOBJ_ELEMENTS()
 #define POLYOBJ_SIZE        gx.polyobjSize
 
 /**
- * The po_callback is called when a polyobj hits a mobj.
- */
-void P_SetPolyobjCallback(void (*func) (struct mobj_s*, void*, void*));
-
-/**
- * Lookup a Polyobj on the current map by unique ID.
+ * Translate the origin in the map coordinate space.
  *
- * @param id  Unique identifier of the Polyobj to be found.
- * @return  Found Polyobj instance else @c NULL.
+ * @param polyobj  Polyobj instance.
+ * @param delta  Movement delta on the X|Y plane of the map coordinate space.
  */
-Polyobj* P_PolyobjByID(uint id);
+boolean Polyobj_Move(Polyobj* po, float delta[2]);
+boolean Polyobj_MoveXY(Polyobj* po, float x, float y);
 
 /**
- * Lookup a Polyobj on the current map by tag.
+ * Rotate in the map coordinate space.
  *
- * @param tag  Tag associated with the Polyobj to be found.
- * @return  Found Polyobj instance else @c NULL.
+ * @param polyobj  Polyobj instance.
+ * @param angle  World angle delta.
  */
-Polyobj* P_PolyobjByTag(int tag);
-
-/**
- * Lookup a Polyobj on the current map by origin.
- *
- * @param tag  Tag associated with the Polyobj to be found.
- * @return  Found Polyobj instance else @c NULL.
- */
-Polyobj* P_PolyobjByOrigin(void* ddMobjBase);
-
-/**
- * Translate the origin of @a polyobj in the map coordinate space.
- */
-boolean P_PolyobjMove(Polyobj* polyobj, float xy[2]);
-boolean P_PolyobjMoveXY(Polyobj* polyobj, float x, float y);
-
-/**
- * Rotate @a polyobj in the map coordinate space.
- */
-boolean P_PolyobjRotate(Polyobj* polyobj, angle_t angle);
-
-/**
- * Link @a polyobj to the current map. To be called after moving, rotating
- * or any other translation of the Polyobj within the map.
- */
-void P_PolyobjLink(Polyobj* polyobj);
-
-/**
- * Unlink @a polyobj from the current map. To be called prior to moving,
- * rotating or any other translation of the Polyobj within the map.
- */
-void P_PolyobjUnlink(Polyobj* polyobj);
+boolean Polyobj_Rotate(Polyobj* po, angle_t angle);
 
 /**
  * Update the Polyobj's map space axis-aligned bounding box to encompass
@@ -122,5 +89,10 @@ void Polyobj_UpdateSideDefOrigins(Polyobj* polyobj);
  */
 int Polyobj_LineIterator(Polyobj* polyobj,
     int (*callback) (struct linedef_s*, void* paramaters), void* paramaters);
+
+#if 0
+boolean Polyobj_GetProperty(const Polyobj* po, setargs_t* args);
+boolean Polyobj_SetProperty(Polyobj* po, const setargs_t* args);
+#endif
 
 #endif /// LIBDENG_MAP_POLYOB_H
