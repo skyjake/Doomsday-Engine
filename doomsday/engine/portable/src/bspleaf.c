@@ -36,8 +36,6 @@ void BspLeaf_UpdateAABox(BspLeaf* leaf)
     V2_Set(leaf->aaBox.min, DDMAXFLOAT, DDMAXFLOAT);
     V2_Set(leaf->aaBox.max, DDMINFLOAT, DDMINFLOAT);
 
-    memset(&leaf->aaBox, 0, sizeof(leaf->aaBox));
-
     hedgeIter = leaf->hedges;
     if(!*hedgeIter) return; // Very odd...
 

@@ -35,7 +35,7 @@
 void BspLeaf_UpdateAABox(BspLeaf* bspLeaf);
 
 /**
- * Update the center point in the map coordinate space.
+ * Update the mid point in the map coordinate space.
  *
  * @pre Axis-aligned bounding box must have been initialized.
  *
