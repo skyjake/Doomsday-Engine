@@ -199,6 +199,7 @@ DENG_HEADERS = \
     portable/include/gl_tex.h \
     portable/include/gl_texmanager.h \
     portable/include/gl_tga.h \
+    portable/include/hedge.h \
     portable/include/huffman.h \
     portable/include/image.h \
     portable/include/library.h \
@@ -240,7 +241,6 @@ DENG_HEADERS = \
     portable/include/p_particle.h \
     portable/include/p_players.h \
     portable/include/p_polyobjs.h \
-    portable/include/p_seg.h \
     portable/include/p_sight.h \
     portable/include/p_surface.h \
     portable/include/p_ticker.h \
@@ -451,6 +451,7 @@ SOURCES += \
     portable/src/gl_tex.c \
     portable/src/gl_texmanager.c \
     portable/src/gl_tga.c \
+    portable/src/hedge.c \
     portable/src/huffman.c \
     portable/src/image.c \
     portable/src/library.c \
@@ -492,7 +493,6 @@ SOURCES += \
     portable/src/p_particle.c \
     portable/src/p_players.c \
     portable/src/p_polyobjs.c \
-    portable/src/p_seg.c \
     portable/src/p_sight.c \
     portable/src/p_surface.c \
     portable/src/p_think.c \

@@ -36,7 +36,7 @@
 #include "sidedef.h"
 #include "linedef.h"
 #include "plane.h"
-#include "p_seg.h"
+#include "hedge.h"
 #include "bspleaf.h"
 #include "sector.h"
 #include "p_polyobjs.h"
