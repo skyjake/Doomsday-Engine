@@ -2189,7 +2189,7 @@ static void SV_WriteLine(LineDef* li)
     // For each side
     for(i = 0; i < 2; ++i)
     {
-        sidedef_t *si = P_GetPtrp(li, (i? DMU_SIDEDEF1:DMU_SIDEDEF0));
+        SideDef *si = P_GetPtrp(li, (i? DMU_SIDEDEF1:DMU_SIDEDEF0));
         if(!si)
             continue;
 
@@ -2337,7 +2337,7 @@ static void SV_ReadLine(LineDef* li)
     // For each side
     for(i = 0; i < 2; ++i)
     {
-        sidedef_t* si = P_GetPtrp(li, (i? DMU_SIDEDEF1:DMU_SIDEDEF0));
+        SideDef* si = P_GetPtrp(li, (i? DMU_SIDEDEF1:DMU_SIDEDEF0));
 
         if(!si)
             continue;
@@ -3751,7 +3751,7 @@ static void SV_WriteMaterialChanger(const materialchanger_t* mchanger)
 
 static int SV_ReadMaterialChanger(materialchanger_t* mchanger)
 {
-    sidedef_t* side;
+    SideDef* side;
     /*int ver =*/ SV_ReadByte(); // version byte.
 
     SV_ReadByte(); // Type byte.

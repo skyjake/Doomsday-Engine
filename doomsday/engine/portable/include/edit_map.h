@@ -39,7 +39,7 @@ typedef struct editmap_s {
     uint numLineDefs;
     LineDef** lineDefs;
     uint numSideDefs;
-    sidedef_t** sideDefs;
+    SideDef** sideDefs;
     uint numSectors;
     sector_t** sectors;
     uint numPolyObjs;

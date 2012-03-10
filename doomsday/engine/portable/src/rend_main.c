@@ -379,7 +379,7 @@ void Rend_PreparePlane(rvertex_t* rvertices, size_t numVertices,
 static void markSideDefSectionsPVisible(HEdge* hedge)
 {
     const plane_t* fceil, *bceil, *ffloor, *bfloor;
-    sidedef_t* side;
+    SideDef* side;
     uint i;
 
     if(!hedge->lineDef || !hedge->lineDef->L_side(hedge->side)) return;
@@ -552,7 +552,7 @@ static void doCalcSegDivisions(walldiv_t* div, const LineDef* line,
 static void calcSegDivisions(walldiv_t* div, const HEdge* hedge,
     const sector_t* frontSec, float bottomZ, float topZ, boolean doRight)
 {
-    sidedef_t* side;
+    SideDef* side;
 
     div->num = 0;
 
@@ -609,7 +609,7 @@ for(k = 0; k < div->num; ++k)
 }
 
 static void selectSurfaceColors(const float** topColor,
-    const float** bottomColor, sidedef_t* side, sidedefsection_t section)
+    const float** bottomColor, SideDef* side, sidedefsection_t section)
 {
     switch(section)
     {
@@ -1457,7 +1457,7 @@ static boolean doRenderSeg(HEdge* hedge,
                            boolean isTwosidedMiddle)
 {
     rendworldpoly_params_t params;
-    sidedef_t*          side = (hedge->lineDef? HEDGE_SIDEDEF(hedge) : NULL);
+    SideDef*            side = (hedge->lineDef? HEDGE_SIDEDEF(hedge) : NULL);
     rvertex_t*          rvertices;
 
     // Init the params.
@@ -1968,7 +1968,7 @@ static boolean rendSegSection(BspLeaf* bspLeaf, HEdge* hedge,
 static boolean Rend_RenderSeg(BspLeaf* bspLeaf, HEdge* hedge)
 {
     boolean solidSeg = true;
-    sidedef_t* side;
+    SideDef* side;
     LineDef* ldef;
     float ffloor, fceil;
     boolean backSide;
@@ -2148,7 +2148,7 @@ static boolean Rend_RenderSegTwosided(BspLeaf* bspLeaf, HEdge* hedge)
     int                 pid = viewPlayer - ddPlayers;
     float               bottom, top, texOffset[2];
     sector_t*           frontSec, *backSec;
-    sidedef_t*          frontSide, *backSide;
+    SideDef*            frontSide, *backSide;
     plane_t*            ffloor, *fceil, *bfloor, *bceil;
     LineDef*            line;
     int                 solidSeg = false;
@@ -2617,7 +2617,7 @@ static void rendBspLeafSky(BspLeaf* bspLeaf, int skyCap)
 static boolean skymaskSegIsVisible(HEdge* hedge, boolean clipBackFacing)
 {
     LineDef* lineDef;
-    sidedef_t* sideDef;
+    SideDef* sideDef;
     sector_t* backSec;
     sector_t* frontSec;
 
@@ -2976,7 +2976,7 @@ void Rend_RenderSurfaceVectors(void)
     {
         HEdge* hedge = &hedges[i];
         float x, y, bottom, top;
-        sidedef_t* side;
+        SideDef* side;
         surface_t* suf;
         vec3_t origin;
 

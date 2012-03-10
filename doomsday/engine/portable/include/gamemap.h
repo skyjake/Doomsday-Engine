@@ -97,7 +97,7 @@ typedef struct gamemap_s {
     LineDef* lineDefs;
 
     uint numSideDefs;
-    sidedef_t* sideDefs;
+    SideDef* sideDefs;
 
     uint numPolyObjs;
     polyobj_t** polyObjs;
@@ -222,7 +222,7 @@ LineDef* GameMap_LineDef(GameMap* map, uint idx);
  * @param idx  Unique index of the sidedef.
  * @return  Pointer to SideDef with this index else @c NULL if @a idx is not valid.
  */
-sidedef_t* GameMap_SideDef(GameMap* map, uint idx);
+SideDef* GameMap_SideDef(GameMap* map, uint idx);
 
 /**
  * Lookup a Sector by its unique index.
@@ -285,7 +285,7 @@ int GameMap_LineDefIndex(GameMap* map, LineDef* line);
  * @param side  SideDef to lookup.
  * @return  Unique index for the SideDef else @c -1 if not present.
  */
-int GameMap_SideDefIndex(GameMap* map, sidedef_t* side);
+int GameMap_SideDefIndex(GameMap* map, SideDef* side);
 
 /**
  * Lookup the unique index for @a sector.
@@ -682,7 +682,7 @@ int GameMap_PolyobjIterator(GameMap* map, int (*callback) (polyobj_t*, void*), v
 
 int GameMap_VertexIterator(GameMap* map, int (*callback) (vertex_t*, void*), void* parameters);
 
-int GameMap_SideDefIterator(GameMap* map, int (*callback) (sidedef_t*, void*), void* parameters);
+int GameMap_SideDefIterator(GameMap* map, int (*callback) (SideDef*, void*), void* parameters);
 
 int GameMap_SectorIterator(GameMap* map, int (*callback) (sector_t*, void*), void* parameters);
 

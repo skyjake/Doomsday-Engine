@@ -252,7 +252,7 @@ int applySurfaceColor(void* obj, void* context)
     if((dFlags & LDF_BLEND) &&
        params->frontSec == P_GetPtrp(li, DMU_FRONT_SECTOR))
     {
-        sidedef_t*          side = P_GetPtrp(li, DMU_SIDEDEF0);
+        SideDef*            side = P_GetPtrp(li, DMU_SIDEDEF0);
 
         if(side)
         {
@@ -280,7 +280,7 @@ int applySurfaceColor(void* obj, void* context)
     if((dFlags & LDF_BLEND) &&
        params->frontSec == P_GetPtrp(li, DMU_BACK_SECTOR))
     {
-        sidedef_t*          side = P_GetPtrp(li, DMU_SIDEDEF1);
+        SideDef*            side = P_GetPtrp(li, DMU_SIDEDEF1);
 
         if(side)
         {
@@ -991,7 +991,7 @@ static void P_FinalizeMap(void)
         material_t* mat = P_ToPtr(DMU_MATERIAL, Materials_ResolveUriCString(MN_TEXTURES_NAME":NUKE24"));
         material_t* bottomMat, *midMat;
         float yoff;
-        sidedef_t* sidedef;
+        SideDef* sidedef;
         LineDef* line;
 
         for(i = 0; i < numlines; ++i)

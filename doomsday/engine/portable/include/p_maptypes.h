@@ -393,7 +393,7 @@ typedef struct sidedef_s {
     shadowcorner_t      bottomCorners[2];
     shadowcorner_t      sideCorners[2];
     edgespan_t          spans[2];      // [left, right]
-} sidedef_t;
+} SideDef;
 
 // Helper macros for accessing linedef data elements.
 #define L_v(n)                  v[(n)? 1:0]

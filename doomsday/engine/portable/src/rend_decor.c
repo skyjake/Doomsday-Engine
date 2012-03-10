@@ -72,7 +72,7 @@ typedef struct decorsource_s {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void updateSideSectionDecorations(sidedef_t* side, sidedefsection_t section);
+static void updateSideSectionDecorations(SideDef* side, sidedefsection_t section);
 static void updatePlaneDecorations(plane_t* pln);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -389,7 +389,7 @@ boolean R_ProjectSurfaceDecorations(surface_t* suf, void* context)
         {
         case DMU_SIDEDEF:
             {
-            sidedef_t* side = (sidedef_t*)suf->owner;
+            SideDef* side = (SideDef*)suf->owner;
             updateSideSectionDecorations(side, &side->SW_middlesurface == suf? SS_MIDDLE : &side->SW_bottomsurface == suf? SS_BOTTOM : SS_TOP);
             break;
             }
@@ -569,7 +569,7 @@ static void updatePlaneDecorations(plane_t* pln)
     updateSurfaceDecorations2(suf, offsetS, offsetT, v1, v2, sec, suf->material? true : false);
 }
 
-static void updateSideSectionDecorations(sidedef_t* side, sidedefsection_t section)
+static void updateSideSectionDecorations(SideDef* side, sidedefsection_t section)
 {
     LineDef*            line;
     surface_t*          suf;

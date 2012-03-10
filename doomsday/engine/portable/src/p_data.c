@@ -56,7 +56,7 @@ sector_t* sectors = NULL;
 BspLeaf* bspLeafs = NULL;
 BspNode* bspNodes = NULL;
 LineDef* lineDefs = NULL;
-sidedef_t* sideDefs = NULL;
+SideDef* sideDefs = NULL;
 polyobj_t** polyObjs = NULL; // List of all poly-objects in the map.
 
 GameMap* theMap = NULL;

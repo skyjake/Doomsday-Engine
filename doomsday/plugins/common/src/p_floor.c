@@ -448,7 +448,7 @@ int findLineInSectorSmallestBottomMaterial(void *ptr, void *context)
 
     if(frontSec && backSec)
     {
-        sidedef_t* side;
+        SideDef* side;
         material_t* mat;
 
         side = P_GetPtrp(li, DMU_SIDEDEF0);
@@ -587,8 +587,8 @@ int EV_DoFloor(LineDef *line, floortype_e floortype)
 #if __JDOOM64__
     // jd64 > bitmip? wha?
     float bitmipL = 0, bitmipR = 0;
-    sidedef_t *front = P_GetPtrp(line, DMU_SIDEDEF0);
-    sidedef_t *back  = P_GetPtrp(line, DMU_SIDEDEF1);
+    SideDef *front = P_GetPtrp(line, DMU_SIDEDEF0);
+    SideDef *back  = P_GetPtrp(line, DMU_SIDEDEF1);
 
     bitmipL = P_GetFloatp(front, DMU_MIDDLE_MATERIAL_OFFSET_X);
     if(back)

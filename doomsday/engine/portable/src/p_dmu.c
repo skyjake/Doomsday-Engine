@@ -44,7 +44,7 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct dummysidedef_s {
-    sidedef_t sideDef; // Side data.
+    SideDef sideDef; // Side data.
     void* extraData; // Pointer to user data.
     boolean inUse; // true, if the dummy is being used.
 } dummysidedef_t;
@@ -431,7 +431,7 @@ uint P_ToIndex(const void* ptr)
         return GET_LINE_IDX((LineDef*) ptr);
 
     case DMU_SIDEDEF:
-        return GET_SIDE_IDX((sidedef_t*) ptr);
+        return GET_SIDE_IDX((SideDef*) ptr);
 
     case DMU_BSPLEAF:
         return GET_BSPLEAF_IDX((BspLeaf*) ptr);
@@ -915,7 +915,7 @@ static int setProperty(void* obj, void* context)
     sector_t*           updateSector1 = NULL, *updateSector2 = NULL;
     plane_t*            updatePlane = NULL;
     LineDef*            updateLinedef = NULL;
-    sidedef_t*          updateSidedef = NULL;
+    SideDef*            updateSidedef = NULL;
     surface_t*          updateSurface = NULL;
     // BspLeaf*           updateBspLeaf = NULL;
 
@@ -993,21 +993,21 @@ static int setProperty(void* obj, void* context)
 
     if(args->type == DMU_SIDEDEF)
     {
-        updateSidedef = (sidedef_t*) obj;
+        updateSidedef = (SideDef*) obj;
 
         if(args->modifiers & DMU_TOP_OF_SIDEDEF)
         {
-            obj = &((sidedef_t*) obj)->SW_topsurface;
+            obj = &((SideDef*) obj)->SW_topsurface;
             args->type = DMU_SURFACE;
         }
         else if(args->modifiers & DMU_MIDDLE_OF_SIDEDEF)
         {
-            obj = &((sidedef_t*) obj)->SW_middlesurface;
+            obj = &((SideDef*) obj)->SW_middlesurface;
             args->type = DMU_SURFACE;
         }
         else if(args->modifiers & DMU_BOTTOM_OF_SIDEDEF)
         {
-            obj = &((sidedef_t*) obj)->SW_bottomsurface;
+            obj = &((SideDef*) obj)->SW_bottomsurface;
             args->type = DMU_SURFACE;
         }
     }
@@ -1452,17 +1452,17 @@ static int getProperty(void* obj, void* context)
     {
         if(args->modifiers & DMU_TOP_OF_SIDEDEF)
         {
-            obj = &((sidedef_t*) obj)->SW_topsurface;
+            obj = &((SideDef*) obj)->SW_topsurface;
             args->type = DMU_SURFACE;
         }
         else if(args->modifiers & DMU_MIDDLE_OF_SIDEDEF)
         {
-            obj = &((sidedef_t*) obj)->SW_middlesurface;
+            obj = &((SideDef*) obj)->SW_middlesurface;
             args->type = DMU_SURFACE;
         }
         else if(args->modifiers & DMU_BOTTOM_OF_SIDEDEF)
         {
-            obj = &((sidedef_t*) obj)->SW_bottomsurface;
+            obj = &((SideDef*) obj)->SW_bottomsurface;
             args->type = DMU_SURFACE;
         }
     }

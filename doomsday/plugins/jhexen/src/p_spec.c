@@ -964,7 +964,7 @@ void P_AnimateSurfaces(void)
         IterList_RewindIterator(linespecials);
         while((line = IterList_MoveIterator(linespecials)) != NULL)
         {
-            sidedef_t*          side = 0;
+            SideDef*            side = 0;
             fixed_t             texOff[2];
             xline_t*            xline = P_ToXLine(line);
 

@@ -955,7 +955,7 @@ void P_UpdateSpecials(void)
 {
     float               x, y; // jd64 added @c y,
     LineDef*            line;
-    sidedef_t*          side;
+    SideDef*            side;
 
     // Extended lines and sectors.
     XG_Ticker();

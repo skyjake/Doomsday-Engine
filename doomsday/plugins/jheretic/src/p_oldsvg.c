@@ -425,7 +425,7 @@ void P_v13_UnArchiveWorld(void)
 
         for(j = 0; j < 2; j++)
         {
-            sidedef_t* sdef;
+            SideDef* sdef;
 
             if(j == 0)
                 sdef = P_GetPtrp(line, DMU_SIDEDEF0);

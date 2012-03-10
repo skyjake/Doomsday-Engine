@@ -109,9 +109,9 @@ static LineDef* createLine(void)
     return line;
 }
 
-static sidedef_t* createSide(void)
+static SideDef* createSide(void)
 {
-    sidedef_t*              side;
+    SideDef*                side;
 
     side = M_Calloc(sizeof(*side));
     side->header.type = DMU_SIDEDEF;
@@ -198,7 +198,7 @@ static void destroyEditableSideDefs(editmap_t *map)
         uint                i;
         for(i = 0; i < map->numSideDefs; ++i)
         {
-            sidedef_t             *side = map->sideDefs[i];
+            SideDef               *side = map->sideDefs[i];
             M_Free(side);
         }
 
@@ -420,7 +420,7 @@ static void pruneUnusedSidedefs(editmap_t* map)
 
     for(i = 0, newNum = 0; i < map->numSideDefs; ++i)
     {
-        sidedef_t*          s = map->sideDefs[i];
+        SideDef*            s = map->sideDefs[i];
 
         if(s->buildData.refCount == 0)
         {
@@ -454,7 +454,7 @@ static void pruneUnusedSectors(editmap_t* map)
 
     for(i = 0; i < map->numSideDefs; ++i)
     {
-        sidedef_t*          s = map->sideDefs[i];
+        SideDef*            s = map->sideDefs[i];
 
         if(s->sector)
             s->sector->buildData.refCount++;
@@ -1305,12 +1305,12 @@ static void hardenSidedefs(GameMap* dest, editmap_t* src)
     uint i;
 
     dest->numSideDefs = src->numSideDefs;
-    dest->sideDefs = Z_Malloc(dest->numSideDefs * sizeof(sidedef_t), PU_MAPSTATIC, 0);
+    dest->sideDefs = Z_Malloc(dest->numSideDefs * sizeof(SideDef), PU_MAPSTATIC, 0);
 
     for(i = 0; i < dest->numSideDefs; ++i)
     {
-        sidedef_t* destS = &dest->sideDefs[i];
-        sidedef_t* srcS = src->sideDefs[i];
+        SideDef* destS = &dest->sideDefs[i];
+        SideDef* srcS = src->sideDefs[i];
 
         memcpy(destS, srcS, sizeof(*destS));
         destS->sector = &dest->sectors[srcS->sector->buildData.index - 1];
@@ -1475,7 +1475,7 @@ static void testForWindowEffect(editmap_t* map, LineDef* l)
         LineDef*            n = map->lineDefs[i];
         double              dist;
         boolean             isFront;
-        sidedef_t*          hitSide;
+        SideDef*            hitSide;
         double              dX2, dY2;
 
         if(n == l || LINE_SELFREF(n) /*|| n->buildData.overlap ||
@@ -2049,7 +2049,7 @@ uint MPE_SidedefCreate(uint sector, short flags,
                        float bottomRed, float bottomGreen,
                        float bottomBlue)
 {
-    sidedef_t*          s;
+    SideDef*            s;
 
     if(!editMapInited)
         return 0;
@@ -2092,7 +2092,7 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide,
                        int flags)
 {
     LineDef*            l;
-    sidedef_t*          front = NULL, *back = NULL;
+    SideDef*            front = NULL, *back = NULL;
     vertex_t*           vtx1, *vtx2;
     float               length, dx, dy;
 

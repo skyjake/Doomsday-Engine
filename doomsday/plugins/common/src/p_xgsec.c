@@ -761,7 +761,7 @@ int FindPrevOf(int *list, int num, int h)
  */
 int XS_TextureHeight(LineDef* line, int part)
 {
-    sidedef_t*          side;
+    SideDef*            side;
     int                 snum = 0;
     int                 minfloor = 0, maxfloor = 0, maxceil = 0;
     sector_t*           front = P_GetPtrp(line, DMU_FRONT_SECTOR);
@@ -2618,7 +2618,7 @@ void XS_DoChain(sector_t* sec, int ch, int activating, void* act_thing)
     LineDef* dummyLine;
     xline_t* xdummyLine;
     linetype_t* ltype;
-    sidedef_t* dummySideDef;
+    SideDef* dummySideDef;
 
     xg = P_ToXSector(sec)->xg;
     info = &xg->info;

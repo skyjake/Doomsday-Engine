@@ -160,7 +160,7 @@ static superblock_t* createInitialHEdges(GameMap* map)
 
             if(line->sideDefs[FRONT])
             {
-                sidedef_t     *side = line->sideDefs[FRONT];
+                SideDef* side = line->sideDefs[FRONT];
 
                 if(!side->sector)
                     Con_Message("Warning: Bad sidedef on linedef #%d\n", line->buildData.index);
@@ -174,7 +174,7 @@ static superblock_t* createInitialHEdges(GameMap* map)
 
             if(line->sideDefs[BACK])
             {
-                sidedef_t     *side = line->sideDefs[BACK];
+                SideDef* side = line->sideDefs[BACK];
 
                 if(!side->sector)
                     Con_Message("Warning: Bad sidedef on linedef #%d\n", line->buildData.index);

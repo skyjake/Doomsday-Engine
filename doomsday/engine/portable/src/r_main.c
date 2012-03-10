@@ -583,7 +583,7 @@ void R_Update(void)
     { uint i;
     for(i = 0; i < NUM_SIDEDEFS; ++i)
     {
-        sidedef_t* side = &sideDefs[i];
+        SideDef* side = &sideDefs[i];
         Surface_Update(&side->SW_topsurface);
         Surface_Update(&side->SW_middlesurface);
         Surface_Update(&side->SW_bottomsurface);
@@ -597,7 +597,7 @@ void R_Update(void)
         for(lineIter = po->lines; *lineIter; lineIter++)
         {
             LineDef* line = *lineIter;
-            sidedef_t* side = line->L_frontside;
+            SideDef* side = line->L_frontside;
             Surface_Update(&side->SW_middlesurface);
         }
     }}

@@ -74,7 +74,7 @@ float Rend_RadioCalcShadowDarkness(float lightLevel)
 
 void Rend_RadioUpdateLinedef(LineDef* line, boolean backSide)
 {
-    sidedef_t* s;
+    SideDef* s;
 
     if(!rendFakeRadio || levelFullBright || !line) return;
 
@@ -469,7 +469,7 @@ static void scanEdges(shadowcorner_t topCorners[2],
                       const LineDef* line, boolean backSide)
 {
     uint                i, sid = (backSide? BACK : FRONT);
-    sidedef_t*          side;
+    SideDef*            side;
     LineDef*            other;
 
     side = line->L_side(sid);
@@ -1308,7 +1308,7 @@ static void addShadowEdge(vec2_t inner[2], vec2_t outer[2], float innerLeftZ,
 static void processEdgeShadow(const BspLeaf* bspLeaf, const LineDef* lineDef,
     uint side, uint planeId, float shadowDark)
 {
-    const sidedef_t* sideDef = lineDef->L_side(side? BACK : FRONT);
+    const SideDef* sideDef = lineDef->L_side(side? BACK : FRONT);
     const plane_t* pln = sideDef->sector->SP_plane(planeId);
     vec2_t inner[2], outer[2], edgeOpen, sideOpen;
     const materialvariantspecification_t* spec;

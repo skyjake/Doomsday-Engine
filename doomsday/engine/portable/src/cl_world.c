@@ -734,7 +734,7 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
     byte                lineFlags = 0, sideFlags = 0;
     float               toprgb[3] = {0,0,0}, midrgba[4] = {0,0,0,0};
     float               bottomrgb[3] = {0,0,0};
-    sidedef_t          *sid;
+    SideDef*            sid;
 
     // First read all the data.
     num = Reader_ReadUInt16(msgReader);

@@ -827,7 +827,7 @@ void R_UpdateSkyFixForSec(const sector_t* sec)
             // Must be twosided.
             if(li->L_frontside && li->L_backside)
             {
-                sidedef_t* si = li->L_frontsector == sec? li->L_frontside : li->L_backside;
+                SideDef* si = li->L_frontsector == sec? li->L_frontside : li->L_backside;
 
                 if(si->SW_middlematerial)
                 {
@@ -1322,7 +1322,7 @@ void R_MapInitSurfaces(boolean forceUpdate)
     { uint i;
     for(i = 0; i < NUM_SIDEDEFS; ++i)
     {
-        sidedef_t* si = SIDE_PTR(i);
+        SideDef* si = SIDE_PTR(i);
 
         initSurfaceMaterialOffset(&si->SW_topsurface);
         initSurfaceMaterialOffset(&si->SW_middlesurface);
@@ -1348,7 +1348,7 @@ void R_MapInitSurfaceLists(void)
     { uint i;
     for(i = 0; i < NUM_SIDEDEFS; ++i)
     {
-        sidedef_t* side = SIDE_PTR(i);
+        SideDef* side = SIDE_PTR(i);
 
         addToSurfaceLists(&side->SW_middlesurface, side->SW_middlematerial);
         addToSurfaceLists(&side->SW_topsurface,    side->SW_topmaterial);
@@ -1583,7 +1583,7 @@ boolean R_SectorContainsSkySurfaces(const sector_t* sec)
  * Non-animated materials are preferred.
  * Sky materials are ignored.
  */
-static material_t* chooseFixMaterial(sidedef_t* s, sidedefsection_t section)
+static material_t* chooseFixMaterial(SideDef* s, sidedefsection_t section)
 {
     material_t* choice1 = NULL, *choice2 = NULL;
 
@@ -1618,7 +1618,7 @@ static material_t* chooseFixMaterial(sidedef_t* s, sidedefsection_t section)
     return NULL;
 }
 
-static void updateSidedefSection(sidedef_t* s, sidedefsection_t section)
+static void updateSidedefSection(SideDef* s, sidedefsection_t section)
 {
     surface_t*          suf;
 
@@ -1643,7 +1643,7 @@ void R_UpdateLinedefsOfSector(sector_t* sec)
     for(i = 0; i < sec->lineDefCount; ++i)
     {
         LineDef*            li = sec->lineDefs[i];
-        sidedef_t*          front, *back;
+        SideDef*            front, *back;
         sector_t*           frontSec, *backSec;
 
         if(!li->L_frontside || !li->L_backside)
@@ -1810,7 +1810,7 @@ boolean R_UpdateLinedef(LineDef* line, boolean forceUpdate)
 /**
  * Stub.
  */
-boolean R_UpdateSidedef(sidedef_t* side, boolean forceUpdate)
+boolean R_UpdateSidedef(SideDef* side, boolean forceUpdate)
 {
     return false; // Not changed.
 }

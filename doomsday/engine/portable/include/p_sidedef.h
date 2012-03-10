@@ -1,4 +1,4 @@
-/**\file p_sidedef.h
+/**\file sidedef.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -38,7 +38,7 @@
  *
  * @param sideDef  SideDef instance.
  */
-void SideDef_UpdateOrigin(sidedef_t* side);
+void SideDef_UpdateOrigin(SideDef* side);
 
 /**
  * Update the SideDef's map space surface tangents according to the points
@@ -47,16 +47,16 @@ void SideDef_UpdateOrigin(sidedef_t* side);
  *
  * @param sideDef  SideDef instance.
  */
-void SideDef_UpdateSurfaceTangents(sidedef_t* sideDef);
+void SideDef_UpdateSurfaceTangents(SideDef* sideDef);
 
 /**
  * Get the value of a sidedef property, selected by DMU_* name.
  */
-int SideDef_GetProperty(const sidedef_t* sideDef, setargs_t* args);
+int SideDef_GetProperty(const SideDef* sideDef, setargs_t* args);
 
 /**
  * Update the sidedef, property is selected by DMU_* name.
  */
-int SideDef_SetProperty(sidedef_t* sideDef, const setargs_t* args);
+int SideDef_SetProperty(SideDef* sideDef, const setargs_t* args);
 
 #endif /* LIBDENG_MAP_SIDEDEF_H */

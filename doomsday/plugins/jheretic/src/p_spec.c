@@ -1062,7 +1062,7 @@ void P_UpdateSpecials(void)
     uint                i;
     float               x;
     LineDef*            line;
-    sidedef_t*          side;
+    SideDef*            side;
 
     // Extended lines and sectors.
     XG_Ticker();

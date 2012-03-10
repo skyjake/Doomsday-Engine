@@ -128,8 +128,8 @@ iterlist_t* P_GetSectorIterListForTag(int tag, boolean createNewList);
 LineDef* P_AllocDummyLine(void);
 void P_FreeDummyLine(LineDef* line);
 
-sidedef_t* P_AllocDummySideDef(void);
-void P_FreeDummySideDef(sidedef_t* sideDef);
+SideDef* P_AllocDummySideDef(void);
+void P_FreeDummySideDef(SideDef* sideDef);
 
 /**
  * Get the sector on the other side of the line that is NOT the given sector.

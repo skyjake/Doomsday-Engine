@@ -41,7 +41,7 @@ typedef enum {
 typedef struct {
     thinker_t       thinker;
     int             timer;
-    sidedef_t*      side;
+    SideDef*        side;
     sidedefsurfaceid_t ssurfaceID;
     material_t*     material;
 } materialchanger_t;
@@ -66,12 +66,12 @@ typedef struct {
 void            P_InitSwitchList(void);
 material_t*     P_GetSwitch(material_t* mat, const switchlist_t** info);
 
-boolean         P_ToggleSwitch(sidedef_t* side, int sound, boolean silent,
+boolean         P_ToggleSwitch(SideDef* side, int sound, boolean silent,
                                int tics);
 boolean         P_UseSpecialLine(mobj_t* mo, LineDef* line, int side);
 
 void            T_MaterialChanger(materialchanger_t* mchanger);
-void            P_SpawnMaterialChanger(sidedef_t* side, sidedefsurfaceid_t ssurfaceID,
+void            P_SpawnMaterialChanger(SideDef* side, sidedefsurfaceid_t ssurfaceID,
                                        material_t* mat, int tics);
 
 #endif

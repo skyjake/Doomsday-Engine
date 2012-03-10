@@ -326,7 +326,7 @@ static void archiveLines(GameMap *map, boolean write)
 static void writeSide(const GameMap *map, uint idx)
 {
     uint                i;
-    sidedef_t             *s = &map->sideDefs[idx];
+    SideDef            *s = &map->sideDefs[idx];
 
     for(i = 0; i < 3; ++i)
     {
@@ -357,7 +357,7 @@ static void readSide(const GameMap *map, uint idx)
     uint                i;
     long                secIdx;
     float               offset[2], rgba[4];
-    sidedef_t          *s = &map->sideDefs[idx];
+    SideDef            *s = &map->sideDefs[idx];
 
     for(i = 0; i < 3; ++i)
     {

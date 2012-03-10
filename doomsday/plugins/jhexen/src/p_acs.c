@@ -1770,7 +1770,7 @@ static int CmdSetLineTexture(void)
         IterList_RewindIterator(list);
         while((line = IterList_MoveIterator(list)) != NULL)
         {
-            sidedef_t*          sdef =
+            SideDef*            sdef =
                 P_GetPtrp(line, (side == 0? DMU_SIDEDEF0 : DMU_SIDEDEF1));
 
             if(position == TEXTURE_MIDDLE)

@@ -1,4 +1,4 @@
-/**\file p_sidedef.c
+/**\file sidedef.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -27,7 +27,7 @@
 #include "de_refresh.h"
 #include "de_play.h"
 
-void SideDef_UpdateOrigin(sidedef_t* side)
+void SideDef_UpdateOrigin(SideDef* side)
 {
     assert(side);
 
@@ -38,7 +38,7 @@ void SideDef_UpdateOrigin(sidedef_t* side)
     side->origin.pos[VY] = side->line->L_v1pos[VY] + side->line->dY / 2;
 }
 
-void SideDef_UpdateSurfaceTangents(sidedef_t* side)
+void SideDef_UpdateSurfaceTangents(SideDef* side)
 {
     surface_t* surface = &side->SW_topsurface;
     LineDef* line = side->line;
@@ -63,7 +63,7 @@ void SideDef_UpdateSurfaceTangents(sidedef_t* side)
     memcpy(side->SW_bottomnormal, surface->normal, sizeof(surface->normal));
 }
 
-int SideDef_SetProperty(sidedef_t* sid, const setargs_t* args)
+int SideDef_SetProperty(SideDef* sid, const setargs_t* args)
 {
     switch(args->prop)
     {
@@ -82,7 +82,7 @@ int SideDef_SetProperty(sidedef_t* sid, const setargs_t* args)
     return false; // Continue iteration.
 }
 
-int SideDef_GetProperty(const sidedef_t* sid, setargs_t* args)
+int SideDef_GetProperty(const SideDef* sid, setargs_t* args)
 {
     switch(args->prop)
     {

@@ -179,7 +179,7 @@ extern sector_t* sectors;
 extern BspLeaf* bspLeafs;
 extern BspNode* bspNodes;
 extern LineDef* lineDefs;
-extern sidedef_t* sideDefs;
+extern SideDef* sideDefs;
 extern polyobj_t** polyObjs; ///< List of all polyobjs on the current map.
 
 #include "gamemap.h"

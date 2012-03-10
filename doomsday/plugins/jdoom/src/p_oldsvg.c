@@ -412,7 +412,7 @@ void P_v19_UnArchiveWorld(void)
 
         for(j = 0; j < 2; ++j)
         {
-            sidedef_t* sdef = P_GetPtrp(line, (j? DMU_SIDEDEF1:DMU_SIDEDEF0));
+            SideDef* sdef = P_GetPtrp(line, (j? DMU_SIDEDEF1:DMU_SIDEDEF0));
 
             if(!sdef)
                 continue;

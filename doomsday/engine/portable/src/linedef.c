@@ -168,7 +168,7 @@ int LineDef_MiddleMaterialCoords(const LineDef* lineDef, int side,
 {
     float* top[2], *bottom[2], openingTop[2], openingBottom[2]; // {left, right}
     float tcYOff;
-    sidedef_t* sideDef;
+    SideDef* sideDef;
     int i, texHeight;
     assert(lineDef && bottomLeft && bottomRight && topLeft && topRight);
 
@@ -234,7 +234,7 @@ int LineDef_MiddleMaterialCoords(const LineDef* lineDef, int side,
 }
 
 /**
- * @fixme No need to do this each frame. Set a flag in sidedef_t->flags to
+ * @fixme No need to do this each frame. Set a flag in SideDef->flags to
  * denote this. Is sensitive to plane heights, surface properties
  * (e.g. alpha) and surface texture properties.
  */
@@ -244,7 +244,7 @@ boolean LineDef_MiddleMaterialCoversOpening(const LineDef *line, int side,
     assert(line);
     if(line->L_backside)
     {
-        sidedef_t* sideDef = line->L_side(side);
+        SideDef* sideDef = line->L_side(side);
         sector_t* frontSec = line->L_sector(side);
         sector_t*  backSec = line->L_sector(side^1);
 
@@ -374,7 +374,7 @@ int LineDef_SetProperty(LineDef* lin, const setargs_t* args)
         DMU_SetValue(DMT_LINEDEF_VALIDCOUNT, &lin->validCount, args, 0);
         break;
     case DMU_FLAGS: {
-        sidedef_t* s;
+        SideDef* s;
 
         DMU_SetValue(DMT_LINEDEF_FLAGS, &lin->flags, args, 0);
 

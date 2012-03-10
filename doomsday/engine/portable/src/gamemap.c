@@ -158,14 +158,14 @@ LineDef* GameMap_LineDef(GameMap* map, uint idx)
     return &map->lineDefs[idx];
 }
 
-int GameMap_SideDefIndex(GameMap* map, sidedef_t* side)
+int GameMap_SideDefIndex(GameMap* map, SideDef* side)
 {
     assert(map);
     if(!side || !(side >= map->sideDefs && side <= &map->sideDefs[map->numSideDefs])) return -1;
     return side - map->sideDefs;
 }
 
-sidedef_t* GameMap_SideDef(GameMap* map, uint idx)
+SideDef* GameMap_SideDef(GameMap* map, uint idx)
 {
     assert(map);
     if(idx >= map->numSideDefs) return NULL;
@@ -326,7 +326,7 @@ static void initPolyobj(polyobj_t* po)
     for(lineIter = po->lines; *lineIter; lineIter++)
     {
         LineDef* line = *lineIter;
-        sidedef_t* front = line->L_frontside;
+        SideDef* front = line->L_frontside;
 
         front->SW_topinflags |= SUIF_NO_RADIO;
         front->SW_middleinflags |= SUIF_NO_RADIO;
@@ -334,7 +334,7 @@ static void initPolyobj(polyobj_t* po)
 
         if(line->L_backside)
         {
-            sidedef_t* back = line->L_backside;
+            SideDef* back = line->L_backside;
 
             back->SW_topinflags |= SUIF_NO_RADIO;
             back->SW_middleinflags |= SUIF_NO_RADIO;
@@ -1081,7 +1081,7 @@ int GameMap_VertexIterator(GameMap* map, int (*callback) (vertex_t*, void*), voi
     return false; // Continue iteration.
 }
 
-int GameMap_SideDefIterator(GameMap* map, int (*callback) (sidedef_t*, void*), void* parameters)
+int GameMap_SideDefIterator(GameMap* map, int (*callback) (SideDef*, void*), void* parameters)
 {
     uint i;
     assert(map);

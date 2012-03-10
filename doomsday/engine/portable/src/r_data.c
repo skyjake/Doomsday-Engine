@@ -2661,7 +2661,7 @@ void R_PrecacheForMap(void)
 
         for(i = 0; i < NUM_SIDEDEFS; ++i)
         {
-            sidedef_t* side = SIDE_PTR(i);
+            SideDef* side = SIDE_PTR(i);
 
             if(side->SW_middlematerial)
                 Materials_Precache(side->SW_middlematerial, spec, true);

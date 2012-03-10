@@ -68,7 +68,7 @@ extern "C" {
     typedef struct bspnode_s { int type; } BspNode;
     typedef struct vertex_s {int type; } vertex_t;
     typedef struct linedef_s { int type; } LineDef;
-    typedef struct sidedef_s { int type; } sidedef_t;
+    typedef struct sidedef_s { int type; } SideDef;
     typedef struct hedge_s { int type; } HEdge;
     typedef struct bspleaf_s { int type; } BspLeaf;
     typedef struct sector_s { int type; } sector_t;

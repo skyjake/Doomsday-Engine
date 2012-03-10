@@ -403,7 +403,7 @@ typedef struct msidedef_s {
 } msidedef_t;
 end
 
-struct sidedef
+struct SideDef
     -       surface_t[3] sections
     UINT    uint        hedgeCount
     PTR     hedge_s**   hedges      // [hedgeCount] size, segs arranged left>right

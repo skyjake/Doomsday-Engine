@@ -867,7 +867,7 @@ void P_PlayerInSpecialSector(player_t* player)
 void P_UpdateSpecials(void)
 {
     LineDef*            line;
-    sidedef_t*          side;
+    SideDef*            side;
 
     // Extended lines and sectors.
     XG_Ticker();

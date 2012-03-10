@@ -78,19 +78,19 @@ void P_FreeDummyLine(LineDef* line)
     P_FreeDummy(line);
 }
 
-sidedef_t* P_AllocDummySideDef(void)
+SideDef* P_AllocDummySideDef(void)
 {
     return P_AllocDummy(DMU_SIDEDEF, 0);
 }
 
-void P_FreeDummySideDef(sidedef_t* sideDef)
+void P_FreeDummySideDef(SideDef* sideDef)
 {
     P_FreeDummy(sideDef);
 }
 
 void P_CopyLine(LineDef* dest, LineDef* src)
 {
-    sidedef_t* sidefrom, *sideto;
+    SideDef* sidefrom, *sideto;
     xline_t* xsrc = P_ToXLine(src);
     xline_t* xdest = P_ToXLine(dest);
     int i, sidx;

@@ -965,7 +965,7 @@ int XL_ValidateLineRef(LineDef* line, int reftype, void* context,
                        char* parmname)
 {
     int                 answer = 0;
-    sidedef_t*          side;
+    SideDef*            side;
 
     switch(reftype)
     {
@@ -1419,7 +1419,7 @@ int C_DECL XLTrav_ChangeWallMaterial(LineDef* line, boolean dummy,
                                      mobj_t* activator)
 {
     linetype_t*     info = context2;
-    sidedef_t*      side;
+    SideDef*        side;
     blendmode_t     blend = BM_NORMAL;
     byte            rgba[4];
     material_t*     mat = NULL;
@@ -1912,7 +1912,7 @@ void XL_SwapSwitchTextures(LineDef* line, int snum)
 {
     if(line)
     {
-        sidedef_t*          side = P_GetPtrp(line,
+        SideDef*            side = P_GetPtrp(line,
             snum? DMU_SIDEDEF1 : DMU_SIDEDEF0);
 
         if(side && P_ToggleSwitch(side, SFX_NONE, true, 0))
@@ -1930,7 +1930,7 @@ void XL_ChangeMaterial(LineDef* line, int sidenum, int section,
 {
     int                 i;
     int                 currentFlags;
-    sidedef_t*          side =
+    SideDef*            side =
         P_GetPtrp(line, sidenum? DMU_SIDEDEF1:DMU_SIDEDEF0);
 
     if(!side)
@@ -2531,7 +2531,7 @@ int XL_HitLine(LineDef *line, int sidenum, mobj_t *thing)
 
 void XL_DoChain(LineDef* lineDef, int chain, boolean activating, mobj_t* actThing)
 {
-    sidedef_t* dummyFrontSideDef, *dummyBackSideDef = NULL;
+    SideDef* dummyFrontSideDef, *dummyBackSideDef = NULL;
     LineDef* dummyLineDef;
     xline_t* xdummyLineDef;
 
@@ -2700,7 +2700,7 @@ void XL_Thinker(xlthinker_t* xl)
     {
         // The texture should be moved. Calculate the offsets.
         float               current[2]; // The current offset.
-        sidedef_t*          side;
+        SideDef*            side;
         float               spd = info->materialMoveSpeed;
         float               offset[2];
         angle_t             ang =

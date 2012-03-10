@@ -52,7 +52,7 @@
 
 // CODE --------------------------------------------------------------------
 
-static void hardenSidedefHEdgeList(GameMap* map, sidedef_t* side, HEdge* hedge,
+static void hardenSidedefHEdgeList(GameMap* map, SideDef* side, HEdge* hedge,
     bsp_hedge_t* bspHEdge)
 {
     uint count;
@@ -233,7 +233,7 @@ static void buildHEdgesFromBSPHEdges(GameMap* dest, binarytree_t* rootNode)
         // Front first
         if(hedge->lineDef && HEDGE_SIDEDEF(hedge))
         {
-            sidedef_t* side = HEDGE_SIDEDEF(hedge);
+            SideDef* side = HEDGE_SIDEDEF(hedge);
             surface_t* surface = &side->SW_topsurface;
 
             surface->normal[VY] = (hedge->HE_v1pos[VX] - hedge->HE_v2pos[VX]) / hedge->length;
@@ -305,7 +305,7 @@ static void hardenLeaf(GameMap* map, BspLeaf* dest,
         HEdge* hedge = *segp;
         if(!found && hedge->lineDef && HEDGE_SIDEDEF(hedge))
         {
-            sidedef_t* side = HEDGE_SIDEDEF(hedge);
+            SideDef* side = HEDGE_SIDEDEF(hedge);
             dest->sector = side->sector;
             found = true;
         }
