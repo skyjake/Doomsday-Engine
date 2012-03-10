@@ -381,8 +381,8 @@ int PIT_CrossLine(LineDef* ld, void* data)
              tmBox.maxY < aaBox->minY ||
              tmBox.minY > aaBox->maxY))
         {
-            if(P_PointOnLinedefSideXY(startPos[VX], startPos[VY], ld) !=
-               P_PointOnLinedefSideXY(endPos[VX], endPos[VY], ld))
+            if(P_PointXYOnLineDefSide(startPos[VX], startPos[VY], ld) !=
+               P_PointXYOnLineDefSide(endPos[VX], endPos[VY], ld))
                 // Line blocks trajectory.
                 return true;
         }
@@ -1509,8 +1509,8 @@ static boolean P_TryMove2(mobj_t* thing, float x, float y, boolean dropoff)
             // See if the line was crossed.
             if(P_ToXLine(ld)->special)
             {
-                side = P_PointOnLinedefSideXY(thing->pos[VX], thing->pos[VY], ld);
-                oldSide = P_PointOnLinedefSideXY(oldpos[VX], oldpos[VY], ld);
+                side = P_PointXYOnLineDefSide(thing->pos[VX], thing->pos[VY], ld);
+                oldSide = P_PointXYOnLineDefSide(oldpos[VX], oldpos[VY], ld);
                 if(side != oldSide)
                 {
 #if __JHEXEN__
@@ -1559,7 +1559,7 @@ static boolean P_TryMove2(mobj_t* thing, float x, float y, boolean dropoff)
         while((ld = IterList_MoveIterator(spechit)) != NULL)
         {
             // See if the line was crossed.
-            side = P_PointOnLinedefSideXY(thing->pos[VX], thing->pos[VY], ld);
+            side = P_PointXYOnLineDefSide(thing->pos[VX], thing->pos[VY], ld);
             checkForPushSpecial(ld, side, thing);
         }
     }
@@ -1584,7 +1584,7 @@ boolean P_TryMove(mobj_t* thing, float x, float y, boolean dropoff,
     {
         // Move not possible, see if the thing hit a line and send a Hit
         // event to it.
-        XL_HitLine(tmHitLine, P_PointOnLinedefSideXY(thing->pos[VX], thing->pos[VY], tmHitLine),
+        XL_HitLine(tmHitLine, P_PointXYOnLineDefSide(thing->pos[VX], thing->pos[VY], tmHitLine),
                    thing);
     }
 
@@ -1665,7 +1665,7 @@ int PTR_ShootTraverse(const intercept_t* in, void* paramaters)
         frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR);
         backSec = P_GetPtrp(li, DMU_BACK_SECTOR);
 
-        if(!backSec && P_PointOnLinedefSideXY(tracePos[VX], tracePos[VY], li))
+        if(!backSec && P_PointXYOnLineDefSide(tracePos[VX], tracePos[VY], li))
             return false; // Continue traversal.
 
         if(xline->special)
@@ -1967,7 +1967,7 @@ int PTR_AimTraverse(const intercept_t* in, void* paramaters)
             tracePos[VY] = FIX2FLT(trace->pos[VY]);
             tracePos[VZ] = shootZ;
 
-            return !P_PointOnLinedefSideXY(tracePos[VX], tracePos[VY], li);
+            return !P_PointXYOnLineDefSide(tracePos[VX], tracePos[VY], li);
         }
 
         // Crosses a two sided line.
@@ -2326,7 +2326,7 @@ int PTR_UseTraverse(const intercept_t* in, void* paramaters)
     }
 
     side = 0;
-    if(1 == P_PointOnLinedefSideXY(useThing->pos[VX], useThing->pos[VY], in->d.lineDef))
+    if(1 == P_PointXYOnLineDefSide(useThing->pos[VX], useThing->pos[VY], in->d.lineDef))
         side = 1;
 
 #if __JHERETIC__ || __JHEXEN__
@@ -2466,7 +2466,7 @@ static void P_HitSlideLine(LineDef* ld)
         return;
     }
 
-    side = P_PointOnLinedefSideXY(slideMo->pos[VX], slideMo->pos[VY], ld);
+    side = P_PointXYOnLineDefSide(slideMo->pos[VX], slideMo->pos[VY], ld);
     P_GetFloatpv(ld, DMU_DXY, d1);
     lineAngle = R_PointToAngle2(0, 0, d1[0], d1[1]);
     moveAngle = R_PointToAngle2(0, 0, tmMove[MX], tmMove[MY]);
@@ -2498,7 +2498,7 @@ int PTR_SlideTraverse(const intercept_t* in, void* paramaters)
 
     if(!P_GetPtrp(li, DMU_FRONT_SECTOR) || !P_GetPtrp(li, DMU_BACK_SECTOR))
     {
-        if(P_PointOnLinedefSideXY(slideMo->pos[VX], slideMo->pos[VY], li))
+        if(P_PointXYOnLineDefSide(slideMo->pos[VX], slideMo->pos[VY], li))
             return false; // Don't hit the back side.
 
         goto isblocking;
@@ -3111,7 +3111,7 @@ int PTR_BounceTraverse(const intercept_t* in, void* paramaters)
 
     if(!P_GetPtrp(li, DMU_FRONT_SECTOR) || !P_GetPtrp(li, DMU_BACK_SECTOR))
     {
-        if(P_PointOnLinedefSideXY(slideMo->pos[VX], slideMo->pos[VY], li))
+        if(P_PointXYOnLineDefSide(slideMo->pos[VX], slideMo->pos[VY], li))
             return false; // Don't hit the back side.
 
         goto bounceblocking;
@@ -3174,7 +3174,7 @@ void P_BounceWall(mobj_t* mo)
     if(!bestSlideLine)
         return; // We don't want to crash.
 
-    side = P_PointOnLinedefSideXY(mo->pos[VX], mo->pos[VY], bestSlideLine);
+    side = P_PointXYOnLineDefSide(mo->pos[VX], mo->pos[VY], bestSlideLine);
     P_GetFloatpv(bestSlideLine, DMU_DXY, d1);
     lineAngle = R_PointToAngle2(0, 0, d1[0], d1[1]);
     if(side == 1)
@@ -3243,7 +3243,7 @@ int PTR_PuzzleItemTraverse(const intercept_t* in, void* paramaters)
             return false; // Continue searching...
         }
 
-        if(P_PointOnLinedefSideXY(puzzleItemUser->pos[VX],
+        if(P_PointXYOnLineDefSide(puzzleItemUser->pos[VX],
                                 puzzleItemUser->pos[VY], line) == 1)
             return true; // Don't use back sides.
 

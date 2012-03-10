@@ -26,6 +26,7 @@
 #include "de_play.h"
 
 #include "m_bams.h"
+#include "m_misc.h"
 #include "materialvariant.h"
 #include "materials.h"
 
@@ -53,6 +54,72 @@ static LineDef* findBlendNeighbor(const LineDef* l, byte side, byte right,
     return R_FindLineNeighbor(l->L_sector(side), l, farVertOwner, right, diff);
 }
 
+int LineDef_PointOnSide(const LineDef* line, float const xy[2])
+{
+    assert(line);
+    if(!xy)
+    {
+        DEBUG_Message(("LineDef_PointOnSide: Invalid arguments, returning zero.\n"));
+        return 0;
+    }
+    return !P_PointOnLineSide(xy[0], xy[1], line->L_v1pos[VX], line->L_v1pos[VY], line->dX, line->dY);
+}
+
+int LineDef_PointXYOnSide(const LineDef* line, float x, float y)
+{
+    float point[2];
+    point[0] = x;
+    point[1] = y;
+    return LineDef_PointOnSide(line, point);
+}
+
+void LineDef_SetDivline(const LineDef* line, divline_t* dl)
+{
+    assert(line);
+
+    if(!dl) return;
+
+    dl->pos[VX] = FLT2FIX(line->L_v1pos[VX]);
+    dl->pos[VY] = FLT2FIX(line->L_v1pos[VY]);
+    dl->dX = FLT2FIX(line->dX);
+    dl->dY = FLT2FIX(line->dY);
+}
+
+void LineDef_SetTraceOpening(const LineDef* line, TraceOpening* opening)
+{
+    Sector* front, *back;
+    assert(line);
+
+    if(!opening) return;
+
+    if(!line->L_backside)
+    {
+        opening->range = 0;
+        return;
+    }
+
+    front = line->L_frontsector;
+    back  = line->L_backsector;
+
+    if(front->SP_ceilheight < back->SP_ceilheight)
+        opening->top = front->SP_ceilheight;
+    else
+        opening->top = back->SP_ceilheight;
+
+    if(front->SP_floorheight > back->SP_floorheight)
+    {
+        opening->bottom   = front->SP_floorheight;
+        opening->lowFloor = back->SP_floorheight;
+    }
+    else
+    {
+        opening->bottom   = back->SP_floorheight;
+        opening->lowFloor = front->SP_floorheight;
+    }
+
+    opening->range = opening->top - opening->bottom;
+}
+
 void LineDef_UpdateSlope(LineDef* line)
 {
     assert(line);
@@ -75,6 +142,26 @@ void LineDef_UpdateSlope(LineDef* line)
     else
     {
         line->slopeType = ST_NEGATIVE;
+    }
+}
+
+/**
+ * Returns a two-component float unit vector parallel to the line.
+ */
+void LineDef_UnitVector(LineDef* line, float* unitvec)
+{
+    float len;
+    assert(line);
+
+    len = M_ApproxDistancef(line->dX, line->dY);
+    if(len)
+    {
+        unitvec[VX] = line->dX / len;
+        unitvec[VY] = line->dY / len;
+    }
+    else
+    {
+        unitvec[VX] = unitvec[VY] = 0;
     }
 }
 

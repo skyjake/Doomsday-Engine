@@ -105,24 +105,6 @@ float P_ApproxDistance3(float dx, float dy, float dz)
 }
 
 /**
- * Returns a two-component float unit vector parallel to the line.
- */
-void P_LineUnitVector(LineDef* line, float* unitvec)
-{
-    float               len = M_ApproxDistancef(line->dX, line->dY);
-
-    if(len)
-    {
-        unitvec[VX] = line->dX / len;
-        unitvec[VY] = line->dY / len;
-    }
-    else
-    {
-        unitvec[VX] = unitvec[VY] = 0;
-    }
-}
-
-/**
  * Either end or fixpoint must be specified. The distance is measured
  * (approximately) in 3D. Start must always be specified.
  */
@@ -187,12 +169,7 @@ float P_FloatInterceptVertex(fvertex_t* start, fvertex_t* end,
     return r;
 }
 
-/**
- * @return              Non-zero if the point is on the right side of the
- *                      specified line.
- */
-int P_PointOnLineSide(float x, float y, float lX, float lY, float lDX,
-                      float lDY)
+int P_PointOnLineSide(float x, float y, float lX, float lY, float lDX, float lDY)
 {
     /*
        (AY-CY)(BX-AX)-(AX-CX)(BY-AY)
@@ -219,24 +196,26 @@ int P_PointOnDivLineSidef(fvertex_t* pnt, fdivline_t* dline)
                               dline->pos[VY], dline->dX, dline->dY);
 }
 
-/// \note Part of the Doomsday public API.
-int P_PointOnLinedefSide(float xy[2], const LineDef* lineDef)
+/// @note Part of the Doomsday public API.
+int P_PointOnLineDefSide(float const xy[2], const LineDef* lineDef)
 {
     if(!xy || !lineDef)
     {
-#if _DEBUG
-        Con_Message("P_PointOnLineDefSide: Invalid arguments, returning zero.\n");
-#endif
+        DEBUG_Message(("P_PointOnLineDefSide: Invalid arguments, returning zero.\n"));
         return 0;
     }
-    return P_PointOnLinedefSideXY(xy[0], xy[1], lineDef);
+    return LineDef_PointOnSide(lineDef, xy);
 }
 
-/// \note Part of the Doomsday public API.
-int P_PointOnLinedefSideXY(float x, float y, const LineDef* lineDef)
+/// @note Part of the Doomsday public API.
+int P_PointXYOnLineDefSide(float x, float y, const LineDef* lineDef)
 {
-    return !P_PointOnLineSide(x, y, lineDef->L_v1pos[VX], lineDef->L_v1pos[VY],
-                              lineDef->dX, lineDef->dY);
+    if(!lineDef)
+    {
+        DEBUG_Message(("P_PointXYOnLineDefSide: Invalid arguments, returning zero.\n"));
+        return 0;
+    }
+    return LineDef_PointXYOnSide(lineDef, x, y);
 }
 
 /**
@@ -372,13 +351,13 @@ int P_BoxOnLineSide2(float xl, float xh, float yl, float yh,
         break;
 
       case ST_POSITIVE:
-        a = P_PointOnLinedefSideXY(xl, yh, ld);
-        b = P_PointOnLinedefSideXY(xh, yl, ld);
+        a = P_PointXYOnLineDefSide(xl, yh, ld);
+        b = P_PointXYOnLineDefSide(xh, yl, ld);
         break;
 
     case ST_NEGATIVE:
-        a = P_PointOnLinedefSideXY(xh, yh, ld);
-        b = P_PointOnLinedefSideXY(xl, yl, ld);
+        a = P_PointXYOnLineDefSide(xh, yh, ld);
+        b = P_PointXYOnLineDefSide(xl, yl, ld);
         break;
     }
 
@@ -428,14 +407,15 @@ int P_PointOnDivlineSide(float fx, float fy, const divline_t* line)
     }
 }
 
-void P_MakeDivline(const LineDef* li, divline_t* dl)
+/// @note Part of the Doomsday public API.
+void P_MakeDivline(const LineDef* line, divline_t* dl)
 {
-    const Vertex*       vtx = li->L_v1;
-
-    dl->pos[VX] = FLT2FIX(vtx->V_pos[VX]);
-    dl->pos[VY] = FLT2FIX(vtx->V_pos[VY]);
-    dl->dX = FLT2FIX(li->dX);
-    dl->dY = FLT2FIX(li->dY);
+    if(!line || !dl)
+    {
+        DEBUG_Message(("P_MakeDivline: Invalid arguments.\n"));
+        return;
+    }
+    LineDef_SetDivline(line, dl);
 }
 
 /**
@@ -485,14 +465,15 @@ const TraceOpening* P_TraceOpening(void)
 }
 
 /// @note Part of the Doomsday public API
-void P_SetTraceOpening(LineDef* linedef)
+void P_SetTraceOpening(LineDef* lineDef)
 {
     if(!theMap)
     {
         DEBUG_Message(("Warning: P_SetTraceOpening() attempted with no current map, ignoring."));
         return;
     }
-    GameMap_SetTraceOpening(theMap, linedef);
+    /// @fixme Do not assume linedef is from the CURRENT map.
+    GameMap_SetTraceOpening(theMap, lineDef);
 }
 
 /// @note Part of the Doomsday public API
@@ -946,8 +927,8 @@ int PIT_AddLineDefIntercepts(LineDef* lineDef, void* paramaters)
     }
     else
     {
-        s1 = P_PointOnLinedefSideXY(FIX2FLT(traceLOS->pos[VX]), FIX2FLT(traceLOS->pos[VY]), lineDef);
-        s2 = P_PointOnLinedefSideXY(FIX2FLT(traceLOS->pos[VX] + traceLOS->dX),
+        s1 = P_PointXYOnLineDefSide(FIX2FLT(traceLOS->pos[VX]), FIX2FLT(traceLOS->pos[VY]), lineDef);
+        s2 = P_PointXYOnLineDefSide(FIX2FLT(traceLOS->pos[VX] + traceLOS->dX),
                                     FIX2FLT(traceLOS->pos[VY] + traceLOS->dY), lineDef);
     }
     if(s1 == s2) return false;

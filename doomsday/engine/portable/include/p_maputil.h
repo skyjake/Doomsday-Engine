@@ -32,8 +32,6 @@
 #include "m_vector.h"
 #include "p_object.h"
 
-#define MAXINTERCEPTS   128
-
 #define IS_SECTOR_LINKED(mo)    ((mo)->sPrev != NULL)
 #define IS_BLOCK_LINKED(mo)     ((mo)->bNext != NULL)
 
@@ -41,15 +39,20 @@ float           P_AccurateDistanceFixed(fixed_t dx, fixed_t dy);
 float           P_AccurateDistance(float dx, float dy);
 float           P_ApproxDistance(float dx, float dy);
 float           P_ApproxDistance3(float dx, float dy, float dz);
-void            P_LineUnitVector(LineDef *line, float *unitvec);
 float           P_MobjPointDistancef(mobj_t *start, mobj_t *end,
                                      float *fixpoint);
 
 /**
+ * @return              Non-zero if the point is on the right side of the
+ *                      specified line.
+ */
+int P_PointOnLineSide(float x, float y, float lX, float lY, float lDX, float lDY);
+
+/**
  * @return  Non-zero if the point is on the right side of the specified line.
  */
-int P_PointOnLinedefSide(float xy[2], const LineDef* lineDef);
-int P_PointOnLinedefSideXY(float x, float y, const LineDef* lineDef);
+int P_PointOnLineDefSide(float const xy[2], const LineDef* lineDef);
+int P_PointXYOnLineDefSide(float x, float y, const LineDef* lineDef);
 
 int             P_PointOnLinedefSide2(double pointX, double pointY,
                                    double lineDX, double lineDY,
@@ -63,7 +66,9 @@ int             P_BoxOnLineSide3(const int bbox[4], double lineSX,
                                  double lineSY, double lineDX, double lineDY,
                                  double linePerp, double lineLength,
                                  double epsilon);
-void            P_MakeDivline(const LineDef* li, divline_t* dl);
+
+void P_MakeDivline(const LineDef* lineDef, divline_t* divline);
+
 int             P_PointOnDivlineSide(float x, float y, const divline_t* line);
 float           P_InterceptVector(const divline_t* v2, const divline_t* v1);
 int             P_PointOnDivLineSidef(fvertex_t *pnt, fdivline_t *dline);

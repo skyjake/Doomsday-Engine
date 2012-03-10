@@ -440,8 +440,8 @@ EXPORTS
     P_AccurateDistance          @57 NONAME
     P_ApproxDistance            @58 NONAME
     P_ApproxDistance3           @243 NONAME
-    P_PointOnLinedefSide        @695 NONAME
-    P_PointOnLinedefSideXY      @59 NONAME
+    P_PointOnLineDefSide        @695 NONAME
+    P_PointXYOnLineDefSide      @59 NONAME
     P_BoxOnLineSide             @60 NONAME
     P_MakeDivline               @61 NONAME
     P_PointOnDivlineSide        @62 NONAME

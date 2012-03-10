@@ -415,8 +415,8 @@ boolean ClMobj_LocalActionsEnabled(struct mobj_s* mo);
  */
 ///@{
 
-    int             P_PointOnLinedefSide(float xy[2], const struct linedef_s* lineDef);
-    int             P_PointOnLinedefSideXY(float x, float y, const struct linedef_s* lineDef);
+    int             P_PointOnLineDefSide(float const xy[2], const struct linedef_s* lineDef);
+    int             P_PointXYOnLineDefSide(float x, float y, const struct linedef_s* lineDef);
 
     int             P_BoxOnLineSide(const AABoxf* box, const struct linedef_s* ld);
     void            P_MakeDivline(struct linedef_s* li, divline_t* dl);

@@ -89,39 +89,11 @@ const TraceOpening* GameMap_TraceOpening(GameMap* map)
 
 void GameMap_SetTraceOpening(GameMap* map, LineDef* lineDef)
 {
-    Sector* front, *back;
     assert(map);
-
     // Is the linedef part of this map?
-    if(-1 == GameMap_LineDefIndex(map, lineDef)) return; // Odd...
+    if(!lineDef || GameMap_LineDefIndex(map, lineDef) < 0) return; // Odd...
 
-    if(!lineDef->L_backside)
-    {
-        // A single-sided linedef.
-        map->traceOpening.range = 0;
-        return;
-    }
-
-    front = lineDef->L_frontsector;
-    back = lineDef->L_backsector;
-
-    if(front->SP_ceilheight < back->SP_ceilheight)
-        map->traceOpening.top = front->SP_ceilheight;
-    else
-        map->traceOpening.top = back->SP_ceilheight;
-
-    if(front->SP_floorheight > back->SP_floorheight)
-    {
-        map->traceOpening.bottom = front->SP_floorheight;
-        map->traceOpening.lowFloor = back->SP_floorheight;
-    }
-    else
-    {
-        map->traceOpening.bottom = back->SP_floorheight;
-        map->traceOpening.lowFloor = front->SP_floorheight;
-    }
-
-    map->traceOpening.range = map->traceOpening.top - map->traceOpening.bottom;
+    LineDef_SetTraceOpening(lineDef, &map->traceOpening);
 }
 
 int GameMap_AmbientLightLevel(GameMap* map)
@@ -668,7 +640,7 @@ void GameMap_LinkLineDefInBlockmap(GameMap* map, LineDef* lineDef)
         }
 
         // Would LineDef intersect this?
-        if(P_PointOnLinedefSide(from, lineDef) != P_PointOnLinedefSide(to, lineDef))
+        if(P_PointOnLineDefSide(from, lineDef) != P_PointOnLineDefSide(to, lineDef))
         {
             Blockmap_CreateCellAndLinkObjectXY(blockmap, x, y, lineDef);
         }

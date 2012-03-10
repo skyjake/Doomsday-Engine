@@ -1689,7 +1689,7 @@ int C_DECL XLTrav_LineTeleport(LineDef* newLine, boolean dummy,
         side = 1;
 
     // Make sure we are on correct side of exit linedef.
-    while(P_PointOnLinedefSideXY(newX, newY, newLine) != side && --fudge >= 0)
+    while(P_PointXYOnLineDefSide(newX, newY, newLine) != side && --fudge >= 0)
     {
         if(fabs(newLineDelta[0]) > fabs(newLineDelta[1]))
             newY -= FIX2FLT((newLineDelta[0] < 0) != side ? -1 : 1);

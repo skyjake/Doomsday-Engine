@@ -705,7 +705,7 @@ static void renderParticles(int rtype, boolean withBlend)
                 pos[VY] = FIX2FLT(pt->pos[VY]);
                 M_ProjectPointOnLine(pos, &vtx->V_pos[VX], line, 1, projected);
 
-                P_LineUnitVector(pt->contact, line);
+                LineDef_UnitVector(pt->contact, line);
 
                 glTexCoord2f(0, 0);
                 glVertex3f(projected[VX] - size * line[VX], center[VY] - size,

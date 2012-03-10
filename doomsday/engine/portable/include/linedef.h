@@ -27,6 +27,44 @@
 #include "p_dmu.h"
 
 /**
+ * On which side of this LineDef does the specified point lie?
+ *
+ * @param lineDef  LineDef instance.
+ * @param xy  Map space point to test.
+ * @return  Zero if the point is on the right side.
+ */
+int LineDef_PointOnSide(const LineDef* lineDef, float const xy[2]);
+int LineDef_PointXYOnSide(const LineDef* lineDef, float x, float y);
+
+/**
+ * Configure the specified divline_t by setting the origin point to this LineDef's
+ * left (i.e., first) vertex and the vector to this lineDef's parallel vector.
+ *
+ * @param lineDef  LineDef instance.
+ * @param divline  divline_t instance to be configured.
+ */
+void LineDef_SetDivline(const LineDef* lineDef, divline_t* divline);
+
+/**
+ * Configure the specified TraceOpening according to the opening defined by the
+ * inner-minimal planes heights which intercept this LineDef.
+ *
+ * @param lineDef  LineDef instance.
+ * @param opening  TraceOpening instance to be configured.
+ */
+void LineDef_SetTraceOpening(const LineDef* lineDef, TraceOpening* opening);
+
+/**
+ * Calculate a unit vector parallel to this LineDef.
+ *
+ * @todo This is no longer needed (SideDef stores tangent space normals).
+ *
+ * @param lineDef  LineDef instance.
+ * @param unitVector  Unit vector is written here.
+ */
+void LineDef_UnitVector(LineDef* lineDef, float* unitVec);
+
+/**
  * Update the LineDef's slopetype and map space angle delta according to
  * the points defined by it's vertices.
  *
