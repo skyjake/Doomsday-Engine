@@ -242,7 +242,6 @@ DENG_HEADERS = \
     portable/include/p_players.h \
     portable/include/p_polyob.h \
     portable/include/p_polyobj.h \
-    portable/include/p_sector.h \
     portable/include/p_seg.h \
     portable/include/p_sight.h \
     portable/include/p_surface.h \
@@ -279,6 +278,7 @@ DENG_HEADERS = \
     portable/include/r_things.h \
     portable/include/r_util.h \
     portable/include/r_world.h \
+    portable/include/sector.h \
     portable/include/sidedef.h \
     portable/include/stringarray.h \
     portable/include/sv_def.h \
@@ -493,7 +493,6 @@ SOURCES += \
     portable/src/p_plane.c \
     portable/src/p_players.c \
     portable/src/p_polyob.c \
-    portable/src/p_sector.c \
     portable/src/p_seg.c \
     portable/src/p_sight.c \
     portable/src/p_surface.c \
@@ -534,6 +533,7 @@ SOURCES += \
     portable/src/rend_sky.c \
     portable/src/rend_sprite.c \
     portable/src/resourcenamespace.c \
+    portable/src/sector.c \
     portable/src/sidedef.c \
     portable/src/smoother.c \
     portable/src/stringpool.c \

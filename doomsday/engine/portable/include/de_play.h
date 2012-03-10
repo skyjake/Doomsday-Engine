@@ -38,7 +38,7 @@
 #include "p_plane.h"
 #include "p_seg.h"
 #include "bspleaf.h"
-#include "p_sector.h"
+#include "sector.h"
 #include "p_polyobj.h"
 #include "p_dmu.h"
 #include "thinker.h"
