@@ -923,6 +923,17 @@ void *Z_Recalloc(void *ptr, size_t n, int callocTag)
     return p;
 }
 
+char* Z_StrDup(const char* text)
+{
+    if(!text) return 0;
+    {
+    size_t len = strlen(text);
+    char* buf = Z_Malloc(len + 1, PU_APPSTATIC, 0);
+    strcpy(buf, text);
+    return buf;
+    }
+}
+
 uint Z_VolumeCount(void)
 {
     memvolume_t    *volume;

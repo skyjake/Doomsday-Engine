@@ -118,12 +118,26 @@ Uri* Uri_Copy(Uri* uri, const Uri* other);
 /**
  * Attempt to compose a resolved copy of this Uri. Substitutes known symbolics
  * in the possibly templated path. Resulting path is a well-formed, filesys
- * compatible path (perhaps base-relative).
+ * compatible path (perhaps base-relative). Only use this if you want to keep
+ * a copy of the resolved Uri. If not, use Uri_ResolvedConst().
+ *
+ * @param uri  Uri instance.
  *
  * @return  Resolved path else @c NULL if non-resolvable. Caller should ensure
  *          to Str_Delete() when no longer needed.
  */
 ddstring_t* Uri_Resolved(const Uri* uri);
+
+/**
+ * Same as Uri_Resolved(), but the returned string is non-modifiable and must
+ * not be deleted. Always use this when you don't need to keep a copy of the
+ * resolved Uri.
+ *
+ * @param uri  Uri instance.
+ *
+ * @return  Resolved path else @c NULL if non-resolvable.
+ */
+const ddstring_t* Uri_ResolvedConst(const Uri* uri);
 
 /**
  * @param uri  Uri instance.

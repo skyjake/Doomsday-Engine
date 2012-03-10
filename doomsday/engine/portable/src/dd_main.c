@@ -1021,9 +1021,6 @@ static int DD_ActivateGameWorker(void* paramaters)
 
     Def_PostInit();
 
-    if(p->initiatedBusyMode)
-        Con_SetProgress(140);
-
     DD_ReadGameHelp();
 
     // Re-init to update the title, background etc.
@@ -1037,9 +1034,6 @@ static int DD_ActivateGameWorker(void* paramaters)
     // Make sure that the next frame does not use a filtered viewer.
     R_ResetViewer();
 
-    if(p->initiatedBusyMode)
-        Con_SetProgress(150);
-
     // Invalidate old cmds and init player values.
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
@@ -1047,18 +1041,11 @@ static int DD_ActivateGameWorker(void* paramaters)
 
         plr->extraLight = plr->targetExtraLight = 0;
         plr->extraLightCounter = 0;
-
-        /*
-        if(isServer && plr->shared.inGame)
-            clients[i].runTime = SECONDS_TO_TICKS(gameTime);
-         */
     }
 
     if(gx.PostInit)
     {
         gx.PostInit();
-        if(p->initiatedBusyMode)
-            Con_SetProgress(190);
     }
 
     if(p->initiatedBusyMode)

@@ -1114,8 +1114,8 @@ ul.games_list li a.game_badge span {
     background-color: transparent;
     background: url(http://code.iki.fi/dengine.net/images/download_badge.png) no-repeat;
     height: 60px;
-    width: 300px;
-    padding-top: 2em;
+    width: 320px;
+    padding-top: 1.5em;
     padding-bottom: 0;
     padding-left: 0;
     padding-right: 0;
@@ -1124,9 +1124,10 @@ ul.games_list li a.game_badge span {
 }
 
 .package_badge a.package_name {
-    padding-top: 2em;
+    padding-top: 1.5em;
     padding-bottom: 2em;
-    padding-left: 4em;
+    padding-left: 3em;
+    white-space:nowrap;
 }
 
 .package_badge a[class = "package_name"]:hover, .package_badge a[class = "package_name"]:visited:hover {

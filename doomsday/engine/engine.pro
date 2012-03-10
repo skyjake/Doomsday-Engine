@@ -278,6 +278,7 @@ DENG_HEADERS = \
     portable/include/r_world.h \
     portable/include/sector.h \
     portable/include/sidedef.h \
+    portable/include/string.hh \
     portable/include/stringarray.h \
     portable/include/surface.h \
     portable/include/sv_def.h \
@@ -535,7 +536,7 @@ SOURCES += \
     portable/src/sector.c \
     portable/src/sidedef.c \
     portable/src/smoother.c \
-    portable/src/stringpool.c \
+    portable/src/stringpool.cpp \
     portable/src/s_cache.c \
     portable/src/s_environ.c \
     portable/src/s_logic.c \
@@ -671,7 +672,7 @@ win32 {
 }
 else:unix:!macx {
     # Generic Unix installation.
-    INSTALLS += target data startupdata startupgfx startupfonts desktop readme
+    INSTALLS += target data startupdata startupgfx startupfonts readme
 
     target.path = $$DENG_BIN_DIR
 
@@ -679,9 +680,6 @@ else:unix:!macx {
     startupdata.path = $$DENG_DATA_DIR
     startupfonts.path = $$DENG_DATA_DIR/fonts
     startupgfx.path = $$DENG_DATA_DIR/graphics
-
-    desktop.files = ../../distrib/linux/doomsday-engine.desktop
-    desktop.path = $$PREFIX/share/applications
 
     readme.files = ../doc/output/doomsday.6
     readme.path = $$PREFIX/share/man/man6

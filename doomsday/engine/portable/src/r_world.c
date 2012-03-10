@@ -1430,6 +1430,8 @@ void R_SetupMap(int mode, int flags)
         Materials_ProcessCacheQueue();
         VERBOSE( Con_Message("Precaching took %.2f seconds.\n", Sys_GetSeconds() - startTime) )
 
+        S_SetupForChangedMap();
+
         // Map setup has been completed.
 
         // Run any commands specified in Map Info.

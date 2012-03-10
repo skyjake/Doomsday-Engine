@@ -646,3 +646,20 @@ void DD_Shutdown(void)
     free(utf8ConvBuf); utf8ConvBuf = 0;
 #endif
 }
+
+/**
+ * Windows implementation for the *nix strcasestr() function.
+ */
+const char* strcasestr(const char *text, const char *sub)
+{
+    int textLen = strlen(text);
+    int subLen = strlen(sub);
+    int i;
+
+    for(i = 0; i < textLen - subLen; ++i)
+    {
+        const char* start = text + i;
+        if(!strnicmp(start, sub, subLen)) return start;
+    }
+    return 0;
+}

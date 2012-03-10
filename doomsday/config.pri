@@ -1,12 +1,17 @@
 # The Doomsday Engine Project
-# Copyright (c) 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
-# Copyright (c) 2011 Daniel Swanson <danij@dengine.net>
+# Copyright (c) 2011-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+# Copyright (c) 2011-2012 Daniel Swanson <danij@dengine.net>
 #
 # Do not modify this file. Custom CONFIG options can be specified on the 
 # qmake command line or in config_user.pri.
 #
 # NOTE: The PREFIX option should always be specified on the qmake command
 #       line, as it is checked before config_user.pri is read.
+#
+# User-definable variables:
+#   PREFIX          Install prefix for Unix (specify on qmake command line)
+#   SCRIPT_PYTHON   Path of the Python interpreter binary to be used in
+#                   generated scripts (python on path used for building)
 #
 # CONFIG options for Doomsday:
 # - deng_32bitonly          Only do a 32-bit build (no 64-bit)
@@ -164,6 +169,23 @@ macx {
 # Options defined by the user (may not exist).
 exists(config_user.pri) {
     include(config_user.pri)
+}
+
+# System Tools ---------------------------------------------------------------
+
+unix:!macx {
+    # Python to be used in generated scripts.
+    isEmpty(SCRIPT_PYTHON) {
+        exists(/usr/bin/python): SCRIPT_PYTHON = /usr/bin/python
+        exists(/usr/local/bin/python): SCRIPT_PYTHON = /usr/local/bin/python
+    }
+    isEmpty(SCRIPT_PYTHON) {
+        # Check the system path.
+        SCRIPT_PYTHON = $$system(which python)
+        isEmpty(SCRIPT_PYTHON) {
+            error("Variable SCRIPT_PYTHON not set (path of Python interpreter to be used in generated scripts)")
+        }
+    }
 }
 
 # Apply deng_* Configuration -------------------------------------------------

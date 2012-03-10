@@ -73,6 +73,7 @@ int sfxRate = 11025;
 int sfx3D = false;
 int sfx16Bit = false;
 int sfxSampleRate = 11025;
+byte sfxOneSoundPerEmitter = true;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -318,16 +319,15 @@ int Sfx_CountPlaying(int id)
 /**
  * The priority of a sound is affected by distance, volume and age.
  */
-float Sfx_Priority(mobj_t* emitter, float* fixPos, float volume,
-                   int startTic)
+float Sfx_Priority(mobj_t* emitter, float* fixPos, float volume, int startTic)
 {
     // In five seconds all priority of a sound is gone.
-    float               timeoff =
-        1000 * (Sys_GetTime() - startTic) / (5.0f * TICSPERSEC);
-    float               orig[3];
+    float timeoff = 1000 * (Sys_GetTime() - startTic) / (5.0f * TICSPERSEC);
+    float orig[3];
 
     if(!listener || (!emitter && !fixPos))
-    {   // The sound does not have an origin.
+    {
+        // The sound does not have an origin.
         return 1000 * volume - timeoff;
     }
 
@@ -342,8 +342,7 @@ float Sfx_Priority(mobj_t* emitter, float* fixPos, float volume,
         memcpy(orig, fixPos, sizeof(orig));
     }
 
-    return 1000 * volume - P_MobjPointDistancef(listener, 0, orig) / 2 -
-        timeoff;
+    return 1000 * volume - P_MobjPointDistancef(listener, 0, orig) / 2 - timeoff;
 }
 
 /**
@@ -511,6 +510,11 @@ void Sfx_ChannelUpdate(sfxchannel_t* ch)
     }
 }
 
+void Sfx_SetListener(mobj_t* mobj)
+{
+    listener = mobj;
+}
+
 void Sfx_ListenerUpdate(void)
 {
     int                 i;
@@ -521,7 +525,7 @@ void Sfx_ListenerUpdate(void)
         return;
 
     // Update the listener mobj.
-    listener = S_GetListenerMobj();
+    Sfx_SetListener(S_GetListenerMobj());
 
     if(listener)
     {
@@ -651,6 +655,13 @@ int Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
        volume <= 0)
         return false;
 
+    if(emitter && sfxOneSoundPerEmitter)
+    {
+        // Stop any other sounds from the same origin. Only one sound is
+        // allowed per emitter.
+        Sfx_StopSound(0, emitter);
+    }
+
     // Calculate the new sound's priority.
     nowTime = Sys_GetTime();
     myPrio = Sfx_Priority(emitter, fixedPos, volume, nowTime);
@@ -673,13 +684,13 @@ int Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
             for(selCh = NULL, i = 0, ch = channels; i < numChannels;
                 ++i, ch++)
             {
-                if(ch->buffer && (ch->buffer->flags & SFXBF_PLAYING) &&
-                   ch->buffer->sample->id == sample->id &&
-                   myPrio >= channelPrios[i] &&
-                   (!selCh || channelPrios[i] <= lowPrio))
+                if(ch->buffer && (ch->buffer->flags & SFXBF_PLAYING) && ch->buffer->sample->id == sample->id)
                 {
-                    selCh = ch;
-                    lowPrio = channelPrios[i];
+                    if(myPrio >= channelPrios[i] && (!selCh || channelPrios[i] <= lowPrio))
+                    {
+                        selCh = ch;
+                        lowPrio = channelPrios[i];
+                    }
                 }
             }
 
@@ -1258,11 +1269,12 @@ void Sfx_DebugInfo(void)
             FR_SetColor(1, 1, 0);
         }
 
-        sprintf(buf, "%02i: %c%c%c v=%3.1f f=%3.3f st=%i et=%u", i,
+        sprintf(buf, "%02i: %c%c%c v=%3.1f f=%3.3f st=%i et=%u mobj=%i", i,
                 !(ch->flags & SFXCF_NO_ORIGIN) ? 'O' : '.',
                 !(ch->flags & SFXCF_NO_ATTENUATION) ? 'A' : '.',
                 ch->emitter ? 'E' : '.', ch->volume, ch->frequency,
-                ch->startTime, ch->buffer ? ch->buffer->endTime : 0);
+                ch->startTime, ch->buffer ? ch->buffer->endTime : 0,
+                ch->emitter? ch->emitter->thinker.id : 0);
         FR_DrawTextXY(buf, 5, lh * (1 + i * 2));
 
         if(!ch->buffer) continue;

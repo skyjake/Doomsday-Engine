@@ -32,9 +32,22 @@
 
 struct uri_s
 {
-    ddstring_t _scheme;
-    ddstring_t _path;
+    ddstring_t scheme;
+    ddstring_t path;
+
+    /// Cached copy of the resolved Uri.
+    ddstring_t resolved;
+
+    /// The cached copy only applies when this game is loaded. Add any other
+    /// conditions here that result in different results for resolveUri().
+    void* resolvedForGame;
 };
+
+static void clearCachedResolved(Uri* uri)
+{
+    Str_Clear(&uri->resolved);
+    uri->resolvedForGame = 0;
+}
 
 static __inline Uri* allocUri(const char* path, resourceclass_t defaultResourceClass)
 {
@@ -44,8 +57,10 @@ static __inline Uri* allocUri(const char* path, resourceclass_t defaultResourceC
         Con_Error("Uri::allocUri: Failed on allocation of %lu bytes.", (unsigned long) sizeof(*uri));
         return 0; // Unreachable.
     }
-    Str_Init(&uri->_scheme);
-    Str_Init(&uri->_path);
+    Str_Init(&uri->scheme);
+    Str_Init(&uri->path);
+    Str_InitStd(&uri->resolved);
+    uri->resolvedForGame = 0;
     if(path)
         Uri_SetUri3(uri, path, defaultResourceClass);
     return uri;
@@ -53,39 +68,40 @@ static __inline Uri* allocUri(const char* path, resourceclass_t defaultResourceC
 
 static void parseScheme(Uri* uri, resourceclass_t defaultResourceClass)
 {
-    Str_Clear(&uri->_scheme);
+    clearCachedResolved(uri);
+    Str_Clear(&uri->scheme);
 
-    { const char* p = Str_CopyDelim2(&uri->_scheme, Str_Text(&uri->_path), ':', CDF_OMIT_DELIMITER);
-    if(!p || p - Str_Text(&uri->_path) < URI_MINSCHEMELENGTH+1) // +1 for ':' delimiter.
+    { const char* p = Str_CopyDelim2(&uri->scheme, Str_Text(&uri->path), ':', CDF_OMIT_DELIMITER);
+    if(!p || p - Str_Text(&uri->path) < URI_MINSCHEMELENGTH+1) // +1 for ':' delimiter.
     {
-        Str_Clear(&uri->_scheme);
+        Str_Clear(&uri->scheme);
     }
     else if(defaultResourceClass != RC_NULL && F_SafeResourceNamespaceForName(Str_Text(Uri_Scheme(uri))) == 0)
     {
-        Con_Message("Warning: Unknown scheme in path \"%s\", using default.\n", Str_Text(&uri->_path));
+        Con_Message("Warning: Unknown scheme in path \"%s\", using default.\n", Str_Text(&uri->path));
         //Str_Clear(&uri->_scheme);
-        Str_Set(&uri->_path, p);
+        Str_Set(&uri->path, p);
     }
     else
     {
-        Str_Set(&uri->_path, p);
+        Str_Set(&uri->path, p);
         return;
     }}
 
     // Attempt to guess the scheme by interpreting the path?
     if(defaultResourceClass == RC_UNKNOWN)
-        defaultResourceClass = F_DefaultResourceClassForType(F_GuessResourceTypeByName(Str_Text(&uri->_path)));
+        defaultResourceClass = F_DefaultResourceClassForType(F_GuessResourceTypeByName(Str_Text(&uri->path)));
 
     if(VALID_RESOURCE_CLASS(defaultResourceClass))
     {
         const ddstring_t* name = F_ResourceNamespaceName(F_DefaultResourceNamespaceForClass(defaultResourceClass));
-        Str_Copy(&uri->_scheme, name);
+        Str_Copy(&uri->scheme, name);
     }
 }
 
-static ddstring_t* resolveUri(const Uri* uri)
+static boolean resolveUri(const Uri* uri, ddstring_t* dest)
 {
-    ddstring_t part, *dest = Str_New();
+    ddstring_t part;
     boolean successful = false;
     const char* p;
     assert(uri);
@@ -93,14 +109,14 @@ static ddstring_t* resolveUri(const Uri* uri)
     Str_Init(&part);
 
     // Copy the first part of the string as-is up to first '$' if present.
-    if((p = Str_CopyDelim2(dest, Str_Text(&uri->_path), '$', CDF_OMIT_DELIMITER)))
+    if((p = Str_CopyDelim2(dest, Str_Text(&uri->path), '$', CDF_OMIT_DELIMITER)))
     {
         int depth = 0;
 
         if(*p != '(')
         {
             Con_Message("Invalid character '%c' in \"%s\" at %lu (Uri::resolveUri).\n",
-                *p, Str_Text(&uri->_path), (unsigned long) (p - Str_Text(&uri->_path)));
+                *p, Str_Text(&uri->path), (unsigned long) (p - Str_Text(&uri->path)));
             goto parseEnded;
         }
         // Skip over the opening brace.
@@ -144,7 +160,7 @@ static ddstring_t* resolveUri(const Uri* uri)
             else
             {
                 Con_Message("Unknown identifier '%s' in \"%s\" (Uri::resolveUri).\n",
-                            Str_Text(&part), Str_Text(&uri->_path));
+                            Str_Text(&part), Str_Text(&uri->path));
                 goto parseEnded;
             }
             depth--;
@@ -157,7 +173,7 @@ static ddstring_t* resolveUri(const Uri* uri)
             if(*p != '(')
             {
                 Con_Message("Invalid character '%c' in \"%s\" at %lu (Uri::resolveUri).\n",
-                    *p, Str_Text(&uri->_path), (unsigned long) (p - Str_Text(&uri->_path)));
+                    *p, Str_Text(&uri->path), (unsigned long) (p - Str_Text(&uri->path)));
                 goto parseEnded;
             }
             // Skip over the opening brace.
@@ -179,12 +195,7 @@ static ddstring_t* resolveUri(const Uri* uri)
 
 parseEnded:
     Str_Free(&part);
-    if(!successful && dest)
-    {
-        Str_Delete(dest);
-        return 0;
-    }
-    return dest;
+    return successful;
 }
 
 void Uri_Clear(Uri* uri)
@@ -194,8 +205,9 @@ void Uri_Clear(Uri* uri)
         Con_Error("Attempted Uri::Clear with invalid reference (=NULL).");
         return; // Unreachable.
     }
-    Str_Clear(&uri->_scheme);
-    Str_Clear(&uri->_path);
+    Str_Clear(&uri->scheme);
+    Str_Clear(&uri->path);
+    clearCachedResolved(uri);
 }
 
 Uri* Uri_NewWithPath2(const char* path, resourceclass_t defaultResourceClass)
@@ -223,8 +235,8 @@ Uri* Uri_NewCopy(const Uri* other)
     }
 
     uri = allocUri(0, RC_NULL);
-    Str_Copy(&uri->_scheme, Uri_Scheme(other));
-    Str_Copy(&uri->_path, Uri_Path(other));
+    Str_Copy(&uri->scheme, Uri_Scheme(other));
+    Str_Copy(&uri->path, Uri_Path(other));
     return uri;
 }
 
@@ -242,8 +254,9 @@ void Uri_Delete(Uri* uri)
         Con_Error("Attempted Uri::Delete with invalid reference (=NULL).");
         return; // Unreachable.
     }
-    Str_Free(&uri->_scheme);
-    Str_Free(&uri->_path);
+    Str_Free(&uri->scheme);
+    Str_Free(&uri->path);
+    Str_Free(&uri->resolved);
     free(uri);
 }
 
@@ -259,8 +272,8 @@ Uri* Uri_Copy(Uri* uri, const Uri* other)
         Con_Error("Attempted Uri::Copy with invalid reference (other==0).");
         return 0; // Unreachable.
     }
-    Str_Copy(&uri->_scheme, Uri_Scheme(other));
-    Str_Copy(&uri->_path, Uri_Path(other));
+    Str_Copy(&uri->scheme, Uri_Scheme(other));
+    Str_Copy(&uri->path, Uri_Path(other));
     return uri;
 }
 
@@ -271,7 +284,7 @@ const ddstring_t* Uri_Scheme(const Uri* uri)
         Con_Error("Attempted Uri::Scheme with invalid reference (=NULL).");
         exit(1); // Unreachable.
     }
-    return &uri->_scheme;
+    return &uri->scheme;
 }
 
 const ddstring_t* Uri_Path(const Uri* uri)
@@ -281,17 +294,50 @@ const ddstring_t* Uri_Path(const Uri* uri)
         Con_Error("Attempted Uri::Path with invalid reference (=NULL).");
         exit(1); // Unreachable.
     }
-    return &uri->_path;
+    return &uri->path;
 }
 
 ddstring_t* Uri_Resolved(const Uri* uri)
 {
+    const ddstring_t* resolved = Uri_ResolvedConst(uri);
+    if(resolved)
+    {
+        return Str_Set(Str_New(), Str_Text(resolved));
+    }
+    return 0;
+}
+
+const ddstring_t* Uri_ResolvedConst(const Uri* uri)
+{
+    Uri* modifiable = (Uri*) uri;
+
     if(!uri)
     {
         Con_Error("Attempted Uri::Resolved with invalid reference (=NULL).");
         exit(1); // Unreachable.
     }
-    return resolveUri(uri);
+
+#ifndef LIBDENG_DISABLE_URI_RESOLVE_CACHING
+    if(uri->resolvedForGame && uri->resolvedForGame == (void*) theGame)
+    {
+        // We can just return the previously prepared resolved URI.
+        return &uri->resolved;
+    }
+#endif
+
+    clearCachedResolved(modifiable);
+
+    // Keep a copy of this, we'll likely need it many, many times.
+    if(resolveUri(uri, &modifiable->resolved))
+    {
+        modifiable->resolvedForGame = (void*) theGame;
+        return &uri->resolved;
+    }
+    else
+    {
+        clearCachedResolved(modifiable);
+        return 0;
+    }
 }
 
 Uri* Uri_SetScheme(Uri* uri, const char* scheme)
@@ -301,7 +347,8 @@ Uri* Uri_SetScheme(Uri* uri, const char* scheme)
         Con_Error("Attempted Uri::SetScheme with invalid reference (=NULL).");
         exit(1); // Unreachable.
     }
-    Str_Set(&uri->_scheme, scheme);
+    Str_Set(&uri->scheme, scheme);
+    clearCachedResolved(uri);
     return uri;
 }
 
@@ -312,7 +359,8 @@ Uri* Uri_SetPath(Uri* uri, const char* path)
         Con_Error("Attempted Uri::SetPath with invalid reference (=NULL).");
         exit(1); // Unreachable.
     }
-    Str_Set(&uri->_path, path);
+    Str_Set(&uri->path, path);
+    clearCachedResolved(uri);
     return uri;
 }
 
@@ -331,8 +379,8 @@ Uri* Uri_SetUri3(Uri* uri, const char* path, resourceclass_t defaultResourceClas
         Uri_Clear(uri);
         return uri;
     }
-    Str_Set(&uri->_path, path);
-    Str_Strip(&uri->_path);
+    Str_Set(&uri->path, path);
+    Str_Strip(&uri->path);
     parseScheme(uri, defaultResourceClass);
     return uri;
 }
@@ -353,9 +401,9 @@ ddstring_t* Uri_Compose(const Uri* uri)
     if(!uri) return Str_Set(Str_New(), "(nullptr)");
 
     out = Str_New();
-    if(!Str_IsEmpty(&uri->_scheme))
-        Str_Appendf(out, "%s:", Str_Text(&uri->_scheme));
-    Str_Append(out, Str_Text(&uri->_path));
+    if(!Str_IsEmpty(&uri->scheme))
+        Str_Appendf(out, "%s:", Str_Text(&uri->scheme));
+    Str_Append(out, Str_Text(&uri->path));
     return out;
 }
 
@@ -376,43 +424,33 @@ ddstring_t* Uri_ToString(const Uri* uri)
 boolean Uri_Equality(const Uri* uri, const Uri* other)
 {
     assert(uri && other);
-    { ddstring_t* thisPath, *otherPath;
+    { const ddstring_t* thisPath, *otherPath;
     int result;
 
     if(uri == other)
         return true;
 
     // First, lets check if the scheme differs.
-    if(Str_Length(&uri->_scheme) != Str_Length(Uri_Scheme(other)))
+    if(Str_Length(&uri->scheme) != Str_Length(Uri_Scheme(other)))
         return false;
-    if(Str_CompareIgnoreCase(&uri->_scheme, Str_Text(Uri_Scheme(other))))
+    if(Str_CompareIgnoreCase(&uri->scheme, Str_Text(Uri_Scheme(other))))
         return false;
 
-    if(!Str_CompareIgnoreCase(&uri->_path, Str_Text(Uri_Path(other))))
+    if(!Str_CompareIgnoreCase(&uri->path, Str_Text(Uri_Path(other))))
         return true; // No resolve necessary.
 
     // For comparison purposes we must be able to resolve both paths.
-    if((thisPath = Uri_Resolved(uri)) == 0)
+    if((thisPath = Uri_ResolvedConst(uri)) == 0)
         return false;
 
-    if((otherPath = Uri_Resolved(other)) == 0)
-    {
-        Str_Delete(thisPath);
+    if((otherPath = Uri_ResolvedConst(other)) == 0)
         return false;
-    }
 
     // Do not match on partial paths.
     if(Str_Length(thisPath) != Str_Length(otherPath))
-    {
-        Str_Delete(thisPath);
-        Str_Delete(otherPath);
         return false;
-    }
 
     result = Str_CompareIgnoreCase(thisPath, Str_Text(otherPath));
-
-    Str_Delete(thisPath);
-    Str_Delete(otherPath);
 
     return (result == 0);
     }
@@ -438,9 +476,9 @@ void Uri_Write2(const Uri* uri, Writer* writer, int omitComponents)
     }
     else
     {
-        scheme = &uri->_scheme;
+        scheme = &uri->scheme;
     }
-    writeUri(scheme, &uri->_path, writer);
+    writeUri(scheme, &uri->path, writer);
 }
 
 void Uri_Write(const Uri* uri, Writer* writer)
@@ -453,8 +491,8 @@ Uri* Uri_Read(Uri* uri, Reader* reader)
     assert(uri);
     assert(reader);
 
-    Str_Read(&uri->_scheme, reader);
-    Str_Read(&uri->_path, reader);
+    Str_Read(&uri->scheme, reader);
+    Str_Read(&uri->path, reader);
 
     return uri;
 }
@@ -462,9 +500,9 @@ Uri* Uri_Read(Uri* uri, Reader* reader)
 void Uri_ReadWithDefaultScheme(Uri* uri, Reader* reader, const char* defaultScheme)
 {
     Uri_Read(uri, reader);
-    if(Str_IsEmpty(&uri->_scheme) && defaultScheme)
+    if(Str_IsEmpty(&uri->scheme) && defaultScheme)
     {
-        Str_Set(&uri->_scheme, defaultScheme);
+        Str_Set(&uri->scheme, defaultScheme);
     }
 }
 
@@ -483,12 +521,11 @@ void Uri_Print3(const Uri* uri, int indent, int flags, const char* unresolvedTex
 
     if(flags & UPF_OUTPUT_RESOLVED)
     {
-        ddstring_t* resolved = Uri_Resolved(uri);
+        const ddstring_t* resolved = Uri_ResolvedConst(uri);
         Con_Printf("%s%s\n", (resolved != 0? "=> " : unresolvedText),
                    resolved != 0? ((flags & UPF_TRANSFORM_PATH_MAKEPRETTY)?
                                          F_PrettyPath(Str_Text(resolved)) : Str_Text(resolved))
                                 : "");
-        if(resolved) Str_Delete(resolved);
     }
     Con_Printf("\n");
 
