@@ -240,7 +240,6 @@ DENG_HEADERS = \
     portable/include/p_particle.h \
     portable/include/p_plane.h \
     portable/include/p_players.h \
-    portable/include/p_polyob.h \
     portable/include/p_polyobj.h \
     portable/include/p_seg.h \
     portable/include/p_sight.h \
@@ -249,6 +248,7 @@ DENG_HEADERS = \
     portable/include/p_vertex.h \
     portable/include/pathdirectory.h \
     portable/include/pathmap.h \
+    portable/include/polyobj.h \
     portable/include/protocol.h \
     portable/include/rend_bias.h \
     portable/include/rend_clip.h \
@@ -492,7 +492,6 @@ SOURCES += \
     portable/src/p_particle.c \
     portable/src/p_plane.c \
     portable/src/p_players.c \
-    portable/src/p_polyob.c \
     portable/src/p_seg.c \
     portable/src/p_sight.c \
     portable/src/p_surface.c \
@@ -501,8 +500,9 @@ SOURCES += \
     portable/src/p_vertex.c \
     portable/src/pathdirectory.c \
     portable/src/pathmap.c \
-    portable/src/protocol.c \
     portable/src/point.c \
+    portable/src/polyobj.c \
+    portable/src/protocol.c \
     portable/src/r_data.c \
     portable/src/r_draw.c \
     portable/src/r_fakeradio.c \

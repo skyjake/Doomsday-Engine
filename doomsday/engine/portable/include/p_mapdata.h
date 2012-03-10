@@ -116,7 +116,7 @@ typedef struct biassurface_s {
     struct biassurface_s* next;
 } biassurface_t;
 
-#include "p_polyob.h"
+#include "polyobj.h"
 #include "p_maptypes.h"
 
 // Game-specific, map object type definitions.
