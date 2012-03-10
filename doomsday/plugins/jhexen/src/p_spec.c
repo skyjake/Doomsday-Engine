@@ -188,7 +188,7 @@ static boolean CheckedLockedDoor(mobj_t* mo, byte lock)
     return true;
 }
 
-boolean EV_LineSearchForPuzzleItem(linedef_t* line, byte* args, mobj_t* mo)
+boolean EV_LineSearchForPuzzleItem(LineDef* line, byte* args, mobj_t* mo)
 {
     inventoryitemtype_t  type;
 
@@ -204,7 +204,7 @@ boolean EV_LineSearchForPuzzleItem(linedef_t* line, byte* args, mobj_t* mo)
     return P_InventoryUse(mo->player - players, type, false);
 }
 
-boolean P_ExecuteLineSpecial(int special, byte* args, linedef_t* line,
+boolean P_ExecuteLineSpecial(int special, byte* args, LineDef* line,
                              int side, mobj_t* mo)
 {
     boolean             success;
@@ -610,7 +610,7 @@ boolean P_ExecuteLineSpecial(int special, byte* args, linedef_t* line,
     return success;
 }
 
-boolean P_ActivateLine(linedef_t *line, mobj_t *mo, int side, int activationType)
+boolean P_ActivateLine(LineDef *line, mobj_t *mo, int side, int activationType)
 {
     int             lineActivation;
     boolean         repeat;
@@ -795,7 +795,7 @@ void P_UpdateSpecials(void)
 void P_SpawnSpecials(void)
 {
     uint        i;
-    linedef_t     *line;
+    LineDef    *line;
     xline_t    *xline;
     iterlist_t *list;
     sector_t   *sec;
@@ -871,7 +871,7 @@ void P_AnimateSurfaces(void)
 #define PLANE_MATERIAL_SCROLLUNIT (8.f/35*2)
 
     uint                i;
-    linedef_t*          line;
+    LineDef*            line;
 
     // Update scrolling plane materials.
     for(i = 0; i < numsectors; ++i)

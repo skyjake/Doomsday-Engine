@@ -433,12 +433,12 @@ void T_MoveFloor(floor_t* floor)
 typedef struct findlineinsectorsmallestbottommaterialparams_s {
     sector_t           *baseSec;
     int                 minSize;
-    linedef_t          *foundLine;
+    LineDef            *foundLine;
 } findlineinsectorsmallestbottommaterialparams_t;
 
 int findLineInSectorSmallestBottomMaterial(void *ptr, void *context)
 {
-    linedef_t* li = (linedef_t*) ptr;
+    LineDef* li = (LineDef*) ptr;
     findlineinsectorsmallestbottommaterialparams_t* params =
         (findlineinsectorsmallestbottommaterialparams_t*) context;
     sector_t* frontSec, *backSec;
@@ -492,7 +492,7 @@ int findLineInSectorSmallestBottomMaterial(void *ptr, void *context)
     return false; // Continue iteration.
 }
 
-linedef_t* P_FindLineInSectorSmallestBottomMaterial(sector_t *sec, int *val)
+LineDef* P_FindLineInSectorSmallestBottomMaterial(sector_t *sec, int *val)
 {
     findlineinsectorsmallestbottommaterialparams_t params;
 
@@ -529,7 +529,7 @@ typedef struct findfirstneighbouratfloorheightparams_s {
 
 static int findFirstNeighbourAtFloorHeight(void* ptr, void* context)
 {
-    linedef_t* ln = (linedef_t*) ptr;
+    LineDef* ln = (LineDef*) ptr;
     findfirstneighbouratfloorheightparams_t* params =
         (findfirstneighbouratfloorheightparams_t*) context;
     sector_t* other;
@@ -565,9 +565,9 @@ static sector_t* findSectorSurroundingAtFloorHeight(sector_t* sec,
  * Handle moving floors.
  */
 #if __JHEXEN__
-int EV_DoFloor(linedef_t *line, byte *args, floortype_e floortype)
+int EV_DoFloor(LineDef *line, byte *args, floortype_e floortype)
 #else
-int EV_DoFloor(linedef_t *line, floortype_e floortype)
+int EV_DoFloor(LineDef *line, floortype_e floortype)
 #endif
 {
 #if !__JHEXEN__
@@ -950,7 +950,7 @@ typedef struct {
 
 static int findSectorNeighborsForStairBuild(void* ptr, void* context)
 {
-    linedef_t*          li = (linedef_t*) ptr;
+    LineDef*            li = (LineDef*) ptr;
     findsectorneighborsforstairbuildparams_t* params =
         (findsectorneighborsforstairbuildparams_t*) context;
     sector_t*           frontSec, *backSec;
@@ -1004,7 +1004,7 @@ typedef struct spreadsectorparams_s {
 
 int findAdjacentSectorForSpread(void* ptr, void* context)
 {
-    linedef_t*          li = (linedef_t*) ptr;
+    LineDef*            li = (LineDef*) ptr;
     spreadsectorparams_t* params = (spreadsectorparams_t*) context;
     sector_t*           frontSec, *backSec;
     xsector_t*          xsec;
@@ -1041,7 +1041,7 @@ int findAdjacentSectorForSpread(void* ptr, void* context)
 #endif
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-int EV_BuildStairs(linedef_t* line, stair_e type)
+int EV_BuildStairs(LineDef* line, stair_e type)
 {
     int                 rtn = 0;
     xsector_t*          xsec;
@@ -1232,7 +1232,7 @@ static void processStairSector(sector_t *sec, int type, float height,
  * @param direction     Positive = up. Negative = down.
  */
 #if __JHEXEN__
-int EV_BuildStairs(linedef_t* line, byte* args, int direction,
+int EV_BuildStairs(LineDef* line, byte* args, int direction,
                    stairs_e stairsType)
 {
     float               height;
@@ -1291,12 +1291,12 @@ int EV_BuildStairs(linedef_t* line, byte* args, int direction,
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 typedef struct {
     sector_t*       sector;
-    linedef_t*      foundLineDef;
+    LineDef*        foundLineDef;
 } findfirsttwosidedparams_t;
 
 int findFirstTwosided(void *ptr, void *context)
 {
-    linedef_t* li = (linedef_t*) ptr;
+    LineDef* li = (LineDef*) ptr;
     findfirsttwosidedparams_t* params = (findfirsttwosidedparams_t*) context;
     sector_t* backSec = P_GetPtrp(li, DMU_BACK_SECTOR);
 
@@ -1311,7 +1311,7 @@ int findFirstTwosided(void *ptr, void *context)
 #endif
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-int EV_DoDonut(linedef_t* line)
+int EV_DoDonut(LineDef* line)
 {
     int rtn = 0;
     sector_t* sec, *outer, *ring;
@@ -1408,7 +1408,7 @@ static int stopFloorCrush(thinker_t* th, void* context)
     return false; // Continue iteration.
 }
 
-int EV_FloorCrushStop(linedef_t* line, byte* args)
+int EV_FloorCrushStop(LineDef* line, byte* args)
 {
     boolean             found = false;
 
@@ -1420,9 +1420,9 @@ int EV_FloorCrushStop(linedef_t* line, byte* args)
 
 #if __JHEXEN__ || __JDOOM64__
 # if __JHEXEN__
-int EV_DoFloorAndCeiling(linedef_t *line, byte *args, int ftype, int ctype)
+int EV_DoFloorAndCeiling(LineDef *line, byte *args, int ftype, int ctype)
 # else
-int EV_DoFloorAndCeiling(linedef_t* line, int ftype, int ctype)
+int EV_DoFloorAndCeiling(LineDef* line, int ftype, int ctype)
 # endif
 {
 # if __JHEXEN__

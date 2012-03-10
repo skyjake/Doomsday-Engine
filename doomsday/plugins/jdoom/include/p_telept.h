@@ -34,6 +34,6 @@
 
 #include "doomsday.h"
 
-int             EV_Teleport(linedef_t* line, int side, mobj_t* mo,
+int             EV_Teleport(LineDef* line, int side, mobj_t* mo,
                             boolean spawnFog);
 #endif

@@ -81,11 +81,11 @@ typedef struct plat_s {
 void        T_PlatRaise(plat_t* pl);
 
 #if __JHEXEN__
-int         EV_DoPlat(linedef_t* li, byte* args, plattype_e type,
+int         EV_DoPlat(LineDef* li, byte* args, plattype_e type,
                       int amount);
 int         P_PlatDeactivate(short tag);
 #else
-int         EV_DoPlat(linedef_t* li, plattype_e type, int amount);
+int         EV_DoPlat(LineDef* li, plattype_e type, int amount);
 int         P_PlatActivate(short tag);
 int         P_PlatDeactivate(short tag);
 #endif

@@ -68,7 +68,7 @@ iterlist_t* spechit = 0; /// For crossed line specials.
 int spreadSoundToNeighbors(void* ptr, void* context)
 {
     spreadsoundtoneighborsparams_t* params = (spreadsoundtoneighborsparams_t*) context;
-    linedef_t* li = (linedef_t*) ptr;
+    LineDef* li = (LineDef*) ptr;
     sector_t* frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR);
     sector_t* backSec = P_GetPtrp(li, DMU_BACK_SECTOR);
     sector_t* other;

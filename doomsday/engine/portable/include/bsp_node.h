@@ -43,8 +43,8 @@ typedef struct bspartition_s {
     double              x, y;
     double              dX, dY;
     double              length;
-    linedef_t*          lineDef; // Not NULL if partition originated from a linedef.
-    linedef_t*          sourceLine;
+    LineDef*            lineDef; // Not NULL if partition originated from a linedef.
+    LineDef*            sourceLineDef;
 
     double              pSX, pSY;
     double              pDX, pDY;

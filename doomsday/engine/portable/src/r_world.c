@@ -488,7 +488,7 @@ void R_InterpolateTrackedPlanes(boolean resetNextViewer)
  */
 void R_MarkDependantSurfacesForDecorationUpdate(plane_t* pln)
 {
-    linedef_t**         linep;
+    LineDef**           linep;
 
     if(!pln || !pln->sector->lineDefs)
         return;
@@ -499,7 +499,7 @@ void R_MarkDependantSurfacesForDecorationUpdate(plane_t* pln)
 
     while(*linep)
     {
-        linedef_t*          li = *linep;
+        LineDef*            li = *linep;
 
         if(!li->L_backside)
         {
@@ -819,10 +819,10 @@ void R_UpdateSkyFixForSec(const sector_t* sec)
     // floor and/or ceiling of their front and/or back sectors.
     if(sec->lineDefs && *sec->lineDefs)
     {
-        linedef_t** linePtr = sec->lineDefs;
+        LineDef** linePtr = sec->lineDefs;
         do
         {
-            linedef_t* li = *linePtr;
+            LineDef* li = *linePtr;
 
             // Must be twosided.
             if(li->L_frontside && li->L_backside)
@@ -880,7 +880,7 @@ void R_InitSkyFix(void)
  * @return              Ptr to the lineowner for this line for this vertex
  *                      else @c NULL.
  */
-lineowner_t* R_GetVtxLineOwner(const vertex_t *v, const linedef_t *line)
+lineowner_t* R_GetVtxLineOwner(const vertex_t *v, const LineDef *line)
 {
     if(v == line->L_v1)
         return line->L_vo1;
@@ -912,7 +912,7 @@ void R_SetupFogDefaults(void)
  * is the leftmost vertex and verts[1] is the rightmost vertex, when the
  * line lies at the edge of `sector.'
  */
-void R_OrderVertices(const linedef_t *line, const sector_t *sector, vertex_t *verts[2])
+void R_OrderVertices(const LineDef *line, const sector_t *sector, vertex_t *verts[2])
 {
     byte        edge;
 
@@ -925,12 +925,12 @@ void R_OrderVertices(const linedef_t *line, const sector_t *sector, vertex_t *ve
  * A neighbour is a line that shares a vertex with 'line', and faces the
  * specified sector.
  */
-linedef_t *R_FindLineNeighbor(const sector_t *sector, const linedef_t *line,
+LineDef *R_FindLineNeighbor(const sector_t *sector, const LineDef *line,
                               const lineowner_t *own, boolean antiClockwise,
                               binangle_t *diff)
 {
     lineowner_t            *cown = own->link[!antiClockwise];
-    linedef_t              *other = cown->lineDef;
+    LineDef                *other = cown->lineDef;
 
     if(other == line)
         return NULL;
@@ -953,13 +953,13 @@ linedef_t *R_FindLineNeighbor(const sector_t *sector, const linedef_t *line,
     return R_FindLineNeighbor(sector, line, cown, antiClockwise, diff);
 }
 
-linedef_t* R_FindSolidLineNeighbor(const sector_t* sector,
-                                   const linedef_t* line,
-                                   const lineowner_t* own,
-                                   boolean antiClockwise, binangle_t* diff)
+LineDef* R_FindSolidLineNeighbor(const sector_t* sector,
+                                 const LineDef* line,
+                                 const lineowner_t* own,
+                                 boolean antiClockwise, binangle_t* diff)
 {
     lineowner_t*        cown = own->link[!antiClockwise];
-    linedef_t*          other = cown->lineDef;
+    LineDef*            other = cown->lineDef;
     int                 side;
 
     if(other == line)
@@ -1023,14 +1023,14 @@ linedef_t* R_FindSolidLineNeighbor(const sector_t* sector,
  * They are the neighbouring line in the backsector of the imediate line
  * neighbor.
  */
-linedef_t *R_FindLineBackNeighbor(const sector_t *sector,
-                                  const linedef_t *line,
-                                  const lineowner_t *own,
-                                  boolean antiClockwise,
-                                  binangle_t *diff)
+LineDef *R_FindLineBackNeighbor(const sector_t *sector,
+                                const LineDef *line,
+                                const lineowner_t *own,
+                                boolean antiClockwise,
+                                binangle_t *diff)
 {
     lineowner_t        *cown = own->link[!antiClockwise];
-    linedef_t          *other = cown->lineDef;
+    LineDef            *other = cown->lineDef;
 
     if(other == line)
         return NULL;
@@ -1056,16 +1056,16 @@ linedef_t *R_FindLineBackNeighbor(const sector_t *sector,
  * a shadow between them. In practice, they would be considered a single,
  * long sidedef by the shadow generator).
  */
-linedef_t *R_FindLineAlignNeighbor(const sector_t *sec,
-                                   const linedef_t *line,
-                                   const lineowner_t *own,
-                                   boolean antiClockwise,
-                                   int alignment)
+LineDef *R_FindLineAlignNeighbor(const sector_t *sec,
+                                 const LineDef *line,
+                                 const lineowner_t *own,
+                                 boolean antiClockwise,
+                                 int alignment)
 {
 #define SEP 10
 
     lineowner_t        *cown = own->link[!antiClockwise];
-    linedef_t          *other = cown->lineDef;
+    LineDef            *other = cown->lineDef;
     binangle_t          diff;
 
     if(other == line)
@@ -1642,7 +1642,7 @@ void R_UpdateLinedefsOfSector(sector_t* sec)
 
     for(i = 0; i < sec->lineDefCount; ++i)
     {
-        linedef_t*          li = sec->lineDefs[i];
+        LineDef*            li = sec->lineDefs[i];
         sidedef_t*          front, *back;
         sector_t*           frontSec, *backSec;
 
@@ -1802,7 +1802,7 @@ boolean R_UpdateSector(sector_t* sec, boolean forceUpdate)
 /**
  * Stub.
  */
-boolean R_UpdateLinedef(linedef_t* line, boolean forceUpdate)
+boolean R_UpdateLinedef(LineDef* line, boolean forceUpdate)
 {
     return false; // Not changed.
 }

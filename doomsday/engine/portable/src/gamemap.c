@@ -87,7 +87,7 @@ const TraceOpening* GameMap_TraceOpening(GameMap* map)
     return &map->traceOpening;
 }
 
-void GameMap_SetTraceOpening(GameMap* map, linedef_t* lineDef)
+void GameMap_SetTraceOpening(GameMap* map, LineDef* lineDef)
 {
     sector_t* front, *back;
     assert(map);
@@ -144,14 +144,14 @@ int GameMap_VertexIndex(GameMap* map, vertex_t* vtx)
     return vtx - map->vertexes;
 }
 
-int GameMap_LineDefIndex(GameMap* map, linedef_t* line)
+int GameMap_LineDefIndex(GameMap* map, LineDef* line)
 {
     assert(map);
     if(!line || !(line >= map->lineDefs && line <= &map->lineDefs[map->numLineDefs])) return -1;
     return line - map->lineDefs;
 }
 
-linedef_t* GameMap_LineDef(GameMap* map, uint idx)
+LineDef* GameMap_LineDef(GameMap* map, uint idx)
 {
     assert(map);
     if(idx >= map->numLineDefs) return NULL;
@@ -316,7 +316,7 @@ polyobj_t* GameMap_PolyobjByOrigin(GameMap* map, void* ddMobjBase)
 
 static void initPolyobj(polyobj_t* po)
 {
-    linedef_t** lineIter;
+    LineDef** lineIter;
     BspLeaf* bspLeaf;
     vec2_t avg; /// < Used to find a polyobj's center, and hence BSP leaf.
 
@@ -325,7 +325,7 @@ static void initPolyobj(polyobj_t* po)
     V2_Set(avg, 0, 0);
     for(lineIter = po->lines; *lineIter; lineIter++)
     {
-        linedef_t* line = *lineIter;
+        LineDef* line = *lineIter;
         sidedef_t* front = line->L_frontside;
 
         front->SW_topinflags |= SUIF_NO_RADIO;
@@ -614,7 +614,7 @@ int GameMap_MobjsBoxIterator(GameMap* map, const AABoxf* box,
     return GameMap_IterateCellBlockMobjs(map, &blockCoords, callback, parameters);
 }
 
-void GameMap_LinkLineDefInBlockmap(GameMap* map, linedef_t* lineDef)
+void GameMap_LinkLineDefInBlockmap(GameMap* map, LineDef* lineDef)
 {
     vec2_t origin, cellSize, cell, from, to;
     GridmapBlock blockCoords;
@@ -677,13 +677,13 @@ void GameMap_LinkLineDefInBlockmap(GameMap* map, linedef_t* lineDef)
 
 typedef struct bmapiterparams_s {
     int localValidCount;
-    int (*func) (linedef_t*, void *);
+    int (*func) (LineDef*, void *);
     void* param;
 } bmapiterparams_t;
 
 static int blockmapCellLinesIterator(void* object, void* context)
 {
-    linedef_t* lineDef = (linedef_t*)object;
+    LineDef* lineDef = (LineDef*)object;
     bmapiterparams_t* args = (bmapiterparams_t*) context;
     if(lineDef->validCount != args->localValidCount)
     {
@@ -700,7 +700,7 @@ static int blockmapCellLinesIterator(void* object, void* context)
 }
 
 int GameMap_IterateCellLineDefs(GameMap* map, const uint coords[2],
-    int (*callback) (linedef_t*, void*), void* context)
+    int (*callback) (LineDef*, void*), void* context)
 {
     bmapiterparams_t args;
     assert(map);
@@ -714,7 +714,7 @@ int GameMap_IterateCellLineDefs(GameMap* map, const uint coords[2],
 }
 
 int GameMap_IterateCellBlockLineDefs(GameMap* map, const GridmapBlock* blockCoords,
-    int (*callback) (linedef_t*, void*), void* context)
+    int (*callback) (LineDef*, void*), void* context)
 {
     bmapiterparams_t args;
     assert(map);
@@ -727,7 +727,7 @@ int GameMap_IterateCellBlockLineDefs(GameMap* map, const GridmapBlock* blockCoor
                                             blockmapCellLinesIterator, (void*) &args);
 }
 
-int GameMap_LineDefIterator(GameMap* map, int (*callback) (linedef_t*, void*), void* parameters)
+int GameMap_LineDefIterator(GameMap* map, int (*callback) (LineDef*, void*), void* parameters)
 {
     uint i;
     assert(map);
@@ -984,7 +984,7 @@ int GameMap_PolyobjIterator(GameMap* map, int (*callback) (polyobj_t*, void*), v
 }
 
 typedef struct poiterparams_s {
-    int (*func) (linedef_t*, void*);
+    int (*func) (LineDef*, void*);
     void* param;
 } poiterparams_t;
 
@@ -997,7 +997,7 @@ int PTR_PolyobjLines(void* object, void* context)
 }
 
 int GameMap_IterateCellPolyobjLineDefsIterator(GameMap* map, const uint coords[2],
-    int (*callback) (linedef_t*, void*), void* context)
+    int (*callback) (LineDef*, void*), void* context)
 {
     bmappoiterparams_t args;
     poiterparams_t poargs;
@@ -1015,7 +1015,7 @@ int GameMap_IterateCellPolyobjLineDefsIterator(GameMap* map, const uint coords[2
 }
 
 int GameMap_IterateCellBlockPolyobjLineDefs(GameMap* map, const GridmapBlock* blockCoords,
-    int (*callback) (linedef_t*, void*), void* context)
+    int (*callback) (LineDef*, void*), void* context)
 {
     bmappoiterparams_t args;
     poiterparams_t poargs;
@@ -1033,7 +1033,7 @@ int GameMap_IterateCellBlockPolyobjLineDefs(GameMap* map, const GridmapBlock* bl
 }
 
 int GameMap_LineDefsBoxIterator(GameMap* map, const AABoxf* box,
-    int (*callback) (linedef_t*, void*), void* parameters)
+    int (*callback) (LineDef*, void*), void* parameters)
 {
     GridmapBlock blockCoords;
     assert(map);
@@ -1042,7 +1042,7 @@ int GameMap_LineDefsBoxIterator(GameMap* map, const AABoxf* box,
 }
 
 int GameMap_PolyobjLinesBoxIterator(GameMap* map, const AABoxf* box,
-    int (*callback) (linedef_t*, void*), void* parameters)
+    int (*callback) (LineDef*, void*), void* parameters)
 {
     GridmapBlock blockCoords;
     assert(map);
@@ -1058,7 +1058,7 @@ int GameMap_PolyobjLinesBoxIterator(GameMap* map, const AABoxf* box,
  * to GameMap_IterateCellLineDefs(), then make one or more calls to it.
  */
 int GameMap_AllLineDefsBoxIterator(GameMap* map, const AABoxf* box,
-    int (*callback) (linedef_t*, void*), void* parameters)
+    int (*callback) (LineDef*, void*), void* parameters)
 {
     assert(map);
     if(map->numPolyObjs > 0)
@@ -1309,7 +1309,7 @@ static int traverseCellPath(GameMap* map, Blockmap* bmap, float const from_[2],
 }
 
 typedef struct {
-    int (*callback) (linedef_t*, void*);
+    int (*callback) (LineDef*, void*);
     void* parameters;
 } iteratepolyobjlinedefs_params_t;
 

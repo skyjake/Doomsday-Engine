@@ -74,8 +74,8 @@ void            P_SpawnStrobeFlash(sector_t* sector, int fastOrSlow,
 void            T_Glow(glow_t* g);
 void            P_SpawnGlowingLight(sector_t* sector);
 
-void            EV_StartLightStrobing(linedef_t* line);
-void            EV_TurnTagLightsOff(linedef_t* line);
-void            EV_LightTurnOn(linedef_t* line, float bright);
+void            EV_StartLightStrobing(LineDef* line);
+void            EV_TurnTagLightsOff(LineDef* line);
+void            EV_LightTurnOn(LineDef* line, float bright);
 
 #endif

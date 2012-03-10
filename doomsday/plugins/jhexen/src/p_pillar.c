@@ -73,7 +73,7 @@ void T_BuildPillar(pillar_t *pillar)
     }
 }
 
-int EV_BuildPillar(linedef_t *line, byte *args, boolean crush)
+int EV_BuildPillar(LineDef *line, byte *args, boolean crush)
 {
     int                 rtn = 0;
     float               newHeight;
@@ -149,7 +149,7 @@ int EV_BuildPillar(linedef_t *line, byte *args, boolean crush)
     return rtn;
 }
 
-int EV_OpenPillar(linedef_t *line, byte *args)
+int EV_OpenPillar(LineDef *line, byte *args)
 {
     int                 rtn = 0;
     sector_t           *sec = NULL;

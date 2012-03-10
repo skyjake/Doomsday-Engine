@@ -183,7 +183,7 @@ typedef struct rtexcoord_s {
 
 typedef struct shadowlink_s {
     struct shadowlink_s* next;
-    linedef_t*      lineDef;
+    LineDef*        lineDef;
     byte            side;
 } shadowlink_t;
 

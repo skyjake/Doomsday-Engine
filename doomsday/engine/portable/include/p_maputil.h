@@ -41,29 +41,29 @@ float           P_AccurateDistanceFixed(fixed_t dx, fixed_t dy);
 float           P_AccurateDistance(float dx, float dy);
 float           P_ApproxDistance(float dx, float dy);
 float           P_ApproxDistance3(float dx, float dy, float dz);
-void            P_LineUnitVector(linedef_t *line, float *unitvec);
+void            P_LineUnitVector(LineDef *line, float *unitvec);
 float           P_MobjPointDistancef(mobj_t *start, mobj_t *end,
                                      float *fixpoint);
 
 /**
  * @return  Non-zero if the point is on the right side of the specified line.
  */
-int P_PointOnLinedefSide(float xy[2], const linedef_t* lineDef);
-int P_PointOnLinedefSideXY(float x, float y, const linedef_t* lineDef);
+int P_PointOnLinedefSide(float xy[2], const LineDef* lineDef);
+int P_PointOnLinedefSideXY(float x, float y, const LineDef* lineDef);
 
 int             P_PointOnLinedefSide2(double pointX, double pointY,
                                    double lineDX, double lineDY,
                                    double linePerp, double lineLength,
                                    double epsilon);
 
-int             P_BoxOnLineSide(const AABoxf* box, const linedef_t* ld);
+int             P_BoxOnLineSide(const AABoxf* box, const LineDef* ld);
 int             P_BoxOnLineSide2(float xl, float xh, float yl, float yh,
-                                 const linedef_t *ld);
+                                 const LineDef *ld);
 int             P_BoxOnLineSide3(const int bbox[4], double lineSX,
                                  double lineSY, double lineDX, double lineDY,
                                  double linePerp, double lineLength,
                                  double epsilon);
-void            P_MakeDivline(const linedef_t* li, divline_t* dl);
+void            P_MakeDivline(const LineDef* li, divline_t* dl);
 int             P_PointOnDivlineSide(float x, float y, const divline_t* line);
 float           P_InterceptVector(const divline_t* v2, const divline_t* v1);
 int             P_PointOnDivLineSidef(fvertex_t *pnt, fdivline_t *dline);
@@ -88,7 +88,7 @@ const TraceOpening* P_TraceOpening(void);
  * Update the TraceOpening state for the CURRENT map according to the opening
  * defined by the inner-minimal planes heights which intercept @a linedef
  */
-void P_SetTraceOpening(linedef_t* linedef);
+void P_SetTraceOpening(LineDef* linedef);
 
 /**
  * Determine the BSP leaf on the back side of the BS partition that lies in
@@ -149,20 +149,20 @@ void P_LinkMobjInBlockmap(mobj_t* mo);
 
 boolean P_UnlinkMobjFromBlockmap(mobj_t* mo);
 
-int PIT_AddLineDefIntercepts(linedef_t* ld, void* parameters);
+int PIT_AddLineDefIntercepts(LineDef* ld, void* parameters);
 int PIT_AddMobjIntercepts(mobj_t* mobj, void* parameters);
 
-int P_MobjLinesIterator(mobj_t* mo, int (*func) (linedef_t*, void*), void* parameters);
+int P_MobjLinesIterator(mobj_t* mo, int (*func) (LineDef*, void*), void* parameters);
 
 int P_MobjSectorsIterator(mobj_t* mo, int (*func) (sector_t*, void*), void* parameters);
 
-int P_LineMobjsIterator(linedef_t* lineDef, int (*func) (mobj_t*, void*), void* parameters);
+int P_LineMobjsIterator(LineDef* lineDef, int (*func) (mobj_t*, void*), void* parameters);
 
 int P_SectorTouchingMobjsIterator(sector_t* sector, int (*func) (mobj_t*, void*), void *parameters);
 
 int P_MobjsBoxIterator(const AABoxf* box, int (*callback) (mobj_t*, void*), void* parameters);
 
-int P_LinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, void*), void* parameters);
+int P_LinesBoxIterator(const AABoxf* box, int (*callback) (LineDef*, void*), void* parameters);
 
 /**
  * The validCount flags are used to avoid checking polys that are marked in
@@ -171,7 +171,7 @@ int P_LinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, void*), v
  */
 int P_PolyobjsBoxIterator(const AABoxf* box, int (*callback) (polyobj_t*, void*), void* parameters);
 
-int P_PolyobjLinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, void*), void* parameters);
+int P_PolyobjLinesBoxIterator(const AABoxf* box, int (*callback) (LineDef*, void*), void* parameters);
 
 /**
  * LineDefs and Polyobj LineDefs (note Polyobj LineDefs are iterated first).
@@ -180,7 +180,7 @@ int P_PolyobjLinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, vo
  * in multiple mapblocks, so increment validCount before the first call
  * to GameMap_IterateCellLineDefs(), then make one or more calls to it.
  */
-int P_AllLinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, void*), void* parameters);
+int P_AllLinesBoxIterator(const AABoxf* box, int (*callback) (LineDef*, void*), void* parameters);
 
 int P_BspLeafsBoxIterator(const AABoxf* box, sector_t* sector, int (*callback) (BspLeaf*, void*), void* parameters);
 

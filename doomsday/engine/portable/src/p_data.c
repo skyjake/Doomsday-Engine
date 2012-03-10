@@ -55,7 +55,7 @@ HEdge* hedges = NULL;
 sector_t* sectors = NULL;
 BspLeaf* bspLeafs = NULL;
 BspNode* bspNodes = NULL;
-linedef_t* lineDefs = NULL;
+LineDef* lineDefs = NULL;
 sidedef_t* sideDefs = NULL;
 polyobj_t** polyObjs = NULL; // List of all poly-objects in the map.
 
@@ -72,10 +72,10 @@ static gamemapobjdef_t* gameMapObjDefs;
 
 void P_PolyobjChanged(polyobj_t* po)
 {
-    linedef_t** lineIter;
+    LineDef** lineIter;
     for(lineIter = po->lines; *lineIter; lineIter++)
     {
-        linedef_t* line = *lineIter;
+        LineDef* line = *lineIter;
         HEdge* hedge = line->L_frontside->hedges[0];
         int i;
 

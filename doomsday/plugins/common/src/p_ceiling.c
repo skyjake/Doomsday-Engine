@@ -263,7 +263,7 @@ void T_MoveCeiling(ceiling_t* ceiling)
 }
 
 #if __JDOOM64__
-static int EV_DoCeiling2(linedef_t* line, int tag, float basespeed,
+static int EV_DoCeiling2(LineDef* line, int tag, float basespeed,
                          ceilingtype_e type)
 #elif __JHEXEN__
 static int EV_DoCeiling2(byte* arg, int tag, float basespeed, ceilingtype_e type)
@@ -442,9 +442,9 @@ static int EV_DoCeiling2(int tag, float basespeed, ceilingtype_e type)
  * Move a ceiling up/down.
  */
 #if __JHEXEN__
-int EV_DoCeiling(linedef_t *line, byte *args, ceilingtype_e type)
+int EV_DoCeiling(LineDef *line, byte *args, ceilingtype_e type)
 #else
-int EV_DoCeiling(linedef_t *line, ceilingtype_e type)
+int EV_DoCeiling(LineDef *line, ceilingtype_e type)
 #endif
 {
 #if __JHEXEN__

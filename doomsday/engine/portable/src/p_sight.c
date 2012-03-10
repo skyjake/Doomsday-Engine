@@ -37,7 +37,7 @@ typedef struct losdata_s {
     float to[3];
 } losdata_t;
 
-static boolean interceptLineDef(const linedef_t* li, losdata_t* los, divline_t* dl)
+static boolean interceptLineDef(const LineDef* li, losdata_t* los, divline_t* dl)
 {
     divline_t localDL, *dlPtr;
 
@@ -66,7 +66,7 @@ static boolean interceptLineDef(const linedef_t* li, losdata_t* los, divline_t* 
     return true; // Crossed.
 }
 
-static boolean crossLineDef(const linedef_t* li, byte side, losdata_t* los)
+static boolean crossLineDef(const LineDef* li, byte side, losdata_t* los)
 {
 #define RTOP            0x1
 #define RBOTTOM         0x2
@@ -172,10 +172,10 @@ static boolean crossBspLeaf(GameMap* map, uint bspLeafIdx, losdata_t* los)
     {
         // Check polyobj lines.
         polyobj_t* po = bspLeaf->polyObj;
-        linedef_t** lineIter = po->lines;
+        LineDef** lineIter = po->lines;
         while(*lineIter)
         {
-            linedef_t* line = *lineIter;
+            LineDef* line = *lineIter;
             if(line->validCount != validCount)
             {
                 line->validCount = validCount;
@@ -193,7 +193,7 @@ static boolean crossBspLeaf(GameMap* map, uint bspLeafIdx, losdata_t* los)
         const HEdge* hedge = *hedgeIter;
         if(hedge->lineDef && hedge->lineDef->validCount != validCount)
         {
-            linedef_t* li = hedge->lineDef;
+            LineDef* li = hedge->lineDef;
             li->validCount = validCount;
             if(!crossLineDef(li, hedge->side, los))
                 return false;

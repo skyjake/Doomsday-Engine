@@ -95,7 +95,7 @@ boolean mapSetup;
 /**
  * Converts a line to an xline.
  */
-xline_t* P_ToXLine(linedef_t* line)
+xline_t* P_ToXLine(LineDef* line)
 {
     if(!line)
         return NULL;
@@ -119,7 +119,7 @@ xline_t* P_GetXLine(uint idx)
 
 void P_SetLinedefAutomapVisibility(int player, uint lineIdx, boolean visible)
 {
-    linedef_t* line = P_ToPtr(DMU_LINEDEF, lineIdx);
+    LineDef* line = P_ToPtr(DMU_LINEDEF, lineIdx);
     xline_t* xline;
     if(NULL == line || P_IsDummy(line)) return;
 
@@ -241,7 +241,7 @@ int applySurfaceColor(void* obj, void* context)
 
 #define LTF_SWAPCOLORS      4
 
-    linedef_t*          li = (linedef_t*) obj;
+    LineDef*            li = (LineDef*) obj;
     applysurfacecolorparams_t* params =
         (applysurfacecolorparams_t*) context;
     byte                dFlags =
@@ -992,7 +992,7 @@ static void P_FinalizeMap(void)
         material_t* bottomMat, *midMat;
         float yoff;
         sidedef_t* sidedef;
-        linedef_t* line;
+        LineDef* line;
 
         for(i = 0; i < numlines; ++i)
         {

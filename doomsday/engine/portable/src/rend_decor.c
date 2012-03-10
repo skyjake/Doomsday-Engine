@@ -571,7 +571,7 @@ static void updatePlaneDecorations(plane_t* pln)
 
 static void updateSideSectionDecorations(sidedef_t* side, sidedefsection_t section)
 {
-    linedef_t*          line;
+    LineDef*            line;
     surface_t*          suf;
     vec3_t              v1, v2;
     int                 sid;

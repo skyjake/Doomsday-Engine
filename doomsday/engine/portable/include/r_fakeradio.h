@@ -49,6 +49,6 @@
 void R_InitFakeRadioForMap(void);
 
 /// @return  @c true if @a lineDef qualifies as a (edge) shadow caster.
-boolean R_IsShadowingLinedef(linedef_t* lineDef);
+boolean R_IsShadowingLinedef(LineDef* lineDef);
 
 #endif /* LIBDENG_REFRESH_FAKERADIO_H */

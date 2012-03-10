@@ -590,7 +590,7 @@ static int rendSeg(void* hedge_, void* data)
     const automapcfg_lineinfo_t* info;
     player_t* plr = rs.plr;
     float v1[2], v2[2];
-    linedef_t* line;
+    LineDef* line;
     xline_t* xLine;
 
     line = P_GetPtrp(hedge, DMU_LINEDEF);
@@ -715,7 +715,7 @@ static void renderWalls(uiwidget_t* obj, int objType, boolean addToLists)
     }
 }
 
-static void rendLinedef(linedef_t* line, float r, float g, float b, float a,
+static void rendLinedef(LineDef* line, float r, float g, float b, float a,
     blendmode_t blendMode, boolean drawNormal)
 {
     float length = P_GetFloatp(line, DMU_LENGTH);
@@ -779,7 +779,7 @@ static void rendLinedef(linedef_t* line, float r, float g, float b, float a,
  */
 int rendPolyobjLine(void* linePtr, void* context)
 {
-    linedef_t* line = (linedef_t*)linePtr;
+    LineDef* line = (LineDef*)linePtr;
     uiwidget_t* obj = (uiwidget_t*)context;
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     const float alpha = uiRendState->pageAlpha;
@@ -820,7 +820,7 @@ int rendPolyobjLine(void* linePtr, void* context)
 int rendLinesOfPolyobj(polyobj_t* po, void* context)
 {
     int result = false; // Continue iteration.
-    linedef_t** lineIter = po->lines;
+    LineDef** lineIter = po->lines;
     while(*lineIter && !(result = rendPolyobjLine(*lineIter, context)))
         lineIter++;
     return result;
@@ -844,7 +844,7 @@ static void rendPolyobjs(uiwidget_t* ob)
 }
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-int rendXGLinedef(linedef_t* line, void* context)
+int rendXGLinedef(LineDef* line, void* context)
 {
     assert(line && context && ((uiwidget_t*)context)->type == GUI_AUTOMAP);
     {

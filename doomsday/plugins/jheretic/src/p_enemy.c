@@ -69,7 +69,7 @@ boolean P_TestMobjLocation(mobj_t *mobj);
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern boolean fellDown; //$dropoff_fix: used to flag pushed off ledge
-extern linedef_t *blockLine; // $unstuck: blocking linedef
+extern LineDef *blockLine; // $unstuck: blocking linedef
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -186,7 +186,7 @@ boolean P_CheckMissileRange(mobj_t *actor)
 boolean P_Move(mobj_t *actor, boolean dropoff)
 {
     float       pos[2], step[2];
-    linedef_t     *ld;
+    LineDef    *ld;
     boolean     good;
 
     if(actor->moveDir == DI_NODIR)
@@ -356,7 +356,7 @@ static void newChaseDir(mobj_t *actor, float deltaX, float deltaY)
  * p_map.c::P_TryMove(), allows monsters to free themselves without making
  * them tend to hang over dropoffs.
  */
-static int PIT_AvoidDropoff(linedef_t* line, void* data)
+static int PIT_AvoidDropoff(LineDef* line, void* data)
 {
     sector_t* backsector = P_GetPtrp(line, DMU_BACK_SECTOR);
     AABoxf* aaBox = P_GetPtrp(line, DMU_BOUNDING_BOX);
@@ -2074,7 +2074,7 @@ void C_DECL A_BossDeath(mobj_t* actor)
         -1
     };
 
-    linedef_t*          dummyLine;
+    LineDef*            dummyLine;
     countmobjoftypeparams_t params;
 
     // Not a boss level?

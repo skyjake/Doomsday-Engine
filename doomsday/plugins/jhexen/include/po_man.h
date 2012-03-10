@@ -95,10 +95,10 @@ polyobj_t* P_GetPolyobj(uint num);
 
 void T_PolyDoor(polydoor_t* pd);
 void T_RotatePoly(polyevent_t* pe);
-boolean EV_RotatePoly(linedef_t* line, byte* args, int direction, boolean override);
+boolean EV_RotatePoly(LineDef* line, byte* args, int direction, boolean override);
 
 void T_MovePoly(polyevent_t* pe);
-boolean EV_MovePoly(linedef_t* line, byte* args, boolean timesEight, boolean override);
-boolean EV_OpenPolyDoor(linedef_t* line, byte* args, podoortype_t type);
+boolean EV_MovePoly(LineDef* line, byte* args, boolean timesEight, boolean override);
+boolean EV_OpenPolyDoor(LineDef* line, byte* args, podoortype_t type);
 
 #endif

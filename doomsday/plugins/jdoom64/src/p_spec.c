@@ -83,8 +83,8 @@ typedef struct animdef_s {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing);
-static void P_ShootSpecialLine(mobj_t *thing, linedef_t *line);
+static void P_CrossSpecialLine(LineDef *line, int side, mobj_t *thing);
+static void P_ShootSpecialLine(mobj_t *thing, LineDef *line);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -238,7 +238,7 @@ void P_InitPicAnims(void)
     loadAnimDefs(animsShared, false);
 }
 
-boolean P_ActivateLine(linedef_t *ld, mobj_t *mo, int side, int actType)
+boolean P_ActivateLine(LineDef *ld, mobj_t *mo, int side, int actType)
 {
     if(IS_CLIENT)
     {
@@ -271,7 +271,7 @@ boolean P_ActivateLine(linedef_t *ld, mobj_t *mo, int side, int actType)
  * Called every time a thing origin is about to cross a line with
  * a non 0 special.
  */
-void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
+void P_CrossSpecialLine(LineDef *line, int side, mobj_t *thing)
 {
     int                 ok;
     xline_t            *xline;
@@ -829,7 +829,7 @@ void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 /**
  * Called when a thing shoots a special line.
  */
-void P_ShootSpecialLine(mobj_t *thing, linedef_t *line)
+void P_ShootSpecialLine(mobj_t *thing, LineDef *line)
 {
     int                 ok;
     xline_t*            xline = P_ToXLine(line);
@@ -954,7 +954,7 @@ void P_PlayerInSpecialSector(player_t *player)
 void P_UpdateSpecials(void)
 {
     float               x, y; // jd64 added @c y,
-    linedef_t*          line;
+    LineDef*            line;
     sidedef_t*          side;
 
     // Extended lines and sectors.
@@ -1097,7 +1097,7 @@ void P_ThunderSector(void)
 void P_SpawnSpecials(void)
 {
     uint                i;
-    linedef_t          *line;
+    LineDef            *line;
     xline_t            *xline;
     iterlist_t         *list;
     sector_t           *sec;
@@ -1257,7 +1257,7 @@ void P_SpawnSpecials(void)
     XG_Init();
 }
 
-boolean P_UseSpecialLine2(mobj_t* mo, linedef_t* line, int side)
+boolean P_UseSpecialLine2(mobj_t* mo, LineDef* line, int side)
 {
     xline_t*            xline = P_ToXLine(line);
 

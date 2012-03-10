@@ -461,7 +461,7 @@ typedef struct linedef_s {
     boolean             mapped[DDMAXPLAYERS]; // Whether the line has been mapped by each player yet.
     mlinedef_t          buildData;
     unsigned short      shadowVisFrame[2]; // Framecount of last time shadows were drawn for this line, for each side [right, left].
-} linedef_t;
+} LineDef;
 
 #define RIGHT                   0
 #define LEFT                    1

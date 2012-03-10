@@ -442,12 +442,12 @@ static int checkDiv(walldiv_t* div, float height)
     return false;
 }
 
-static void doCalcSegDivisions(walldiv_t* div, const linedef_t* line,
+static void doCalcSegDivisions(walldiv_t* div, const LineDef* line,
     boolean backSide, const sector_t* frontSec, float bottomZ, float topZ,
     boolean doRight)
 {
     uint i, j;
-    linedef_t* iter;
+    LineDef* iter;
     sector_t* scanSec;
     lineowner_t* base, *own;
     boolean clockwise = !doRight;
@@ -1772,7 +1772,7 @@ static boolean rendSegSection(BspLeaf* bspLeaf, HEdge* hedge,
            viewData->current.pos[VZ] < top)
         {
             float delta[2], pos, result[2];
-            linedef_t* lineDef = hedge->lineDef;
+            LineDef* lineDef = hedge->lineDef;
 
             delta[0] = lineDef->dX;
             delta[1] = lineDef->dY;
@@ -1969,7 +1969,7 @@ static boolean Rend_RenderSeg(BspLeaf* bspLeaf, HEdge* hedge)
 {
     boolean solidSeg = true;
     sidedef_t* side;
-    linedef_t* ldef;
+    LineDef* ldef;
     float ffloor, fceil;
     boolean backSide;
     sector_t* frontsec;
@@ -2026,7 +2026,7 @@ static boolean Rend_RenderSeg(BspLeaf* bspLeaf, HEdge* hedge)
     return solidSeg;
 }
 
-boolean R_FindBottomTop(linedef_t* lineDef, int side, sidedefsection_t section,
+boolean R_FindBottomTop(LineDef* lineDef, int side, sidedefsection_t section,
     float matOffsetX, float matOffsetY,
     const plane_t* ffloor, const plane_t* fceil,
     const plane_t* bfloor, const plane_t* bceil,
@@ -2150,7 +2150,7 @@ static boolean Rend_RenderSegTwosided(BspLeaf* bspLeaf, HEdge* hedge)
     sector_t*           frontSec, *backSec;
     sidedef_t*          frontSide, *backSide;
     plane_t*            ffloor, *fceil, *bfloor, *bceil;
-    linedef_t*          line;
+    LineDef*            line;
     int                 solidSeg = false;
 
     frontSide = HEDGE_SIDEDEF(hedge);
@@ -2345,7 +2345,7 @@ static void Rend_MarkSegsFacingFront(BspLeaf *sub)
     {
         for(i = 0; i < sub->polyObj->lineCount; ++i)
         {
-            linedef_t* line = sub->polyObj->lines[i];
+            LineDef* line = sub->polyObj->lines[i];
 
             hedge = line->L_frontside->hedges[0];
 
@@ -2382,7 +2382,7 @@ static void occludeFrontFacingSegsInBspLeaf(const BspLeaf* bspLeaf)
 
     for(i = 0; i < bspLeaf->polyObj->lineCount; ++i)
     {
-        linedef_t* line = bspLeaf->polyObj->lines[i];
+        LineDef* line = bspLeaf->polyObj->lines[i];
 
         hedge = line->L_frontside->hedges[0];
 
@@ -2616,7 +2616,7 @@ static void rendBspLeafSky(BspLeaf* bspLeaf, int skyCap)
 
 static boolean skymaskSegIsVisible(HEdge* hedge, boolean clipBackFacing)
 {
-    linedef_t* lineDef;
+    LineDef* lineDef;
     sidedef_t* sideDef;
     sector_t* backSec;
     sector_t* frontSec;
@@ -2821,7 +2821,7 @@ static void Rend_RenderBspLeaf(uint bspLeafIdx)
     {
         for(i = 0; i < bspLeaf->polyObj->lineCount; ++i)
         {
-            linedef_t* line = bspLeaf->polyObj->lines[i];
+            LineDef* line = bspLeaf->polyObj->lines[i];
 
             hedge = line->L_frontside->hedges[0];
 
@@ -3067,7 +3067,7 @@ void Rend_RenderSurfaceVectors(void)
 
         for(j = 0; j < po->lineCount; ++j)
         {
-            linedef_t* line = po->lines[j];
+            LineDef* line = po->lines[j];
 
             V3_Set(origin, (line->L_v2pos[VX] + line->L_v1pos[VX])/2,
                            (line->L_v2pos[VY] + line->L_v1pos[VY])/2, zPos);
@@ -3088,7 +3088,7 @@ static void getVertexPlaneMinMax(const vertex_t* vtx, float* min, float* max)
     vo = base = vtx->lineOwners;
     do
     {
-        linedef_t* li = vo->lineDef;
+        LineDef* li = vo->lineDef;
 
         if(li->L_frontside)
         {
@@ -3172,7 +3172,7 @@ static void drawVertexIndex(const vertex_t* vtx, float z, float scale, float alp
 
 #define MAX_VERTEX_POINT_DIST 1280
 
-static int drawVertex1(linedef_t* li, void* context)
+static int drawVertex1(LineDef* li, void* context)
 {
     vertex_t* vtx = li->L_v1;
     polyobj_t* po = context;
@@ -3819,7 +3819,7 @@ static void Rend_RenderBoundingBoxes(void)
         {uint j;
         for(j = 0; j < po->lineCount; ++j)
         {
-            linedef_t* line = po->lines[j];
+            LineDef* line = po->lines[j];
             float width  = (line->aaBox.maxX - line->aaBox.minX)/2;
             float length = (line->aaBox.maxY - line->aaBox.minY)/2;
             float pos[3];

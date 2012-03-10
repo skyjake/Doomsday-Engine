@@ -1165,7 +1165,7 @@ boolean LOIT_ClipLumObjBySight(void* data, void* context)
         // between the viewpoint and the lumobj.
         for(i = 0; i < bspLeaf->polyObj->lineCount; ++i)
         {
-            linedef_t* line = bspLeaf->polyObj->lines[i];
+            LineDef* line = bspLeaf->polyObj->lines[i];
             HEdge* hedge = line->L_frontside->hedges[0];
 
             // Ignore hedges facing the wrong way.

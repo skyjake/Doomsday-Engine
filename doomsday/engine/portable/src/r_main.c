@@ -593,10 +593,10 @@ void R_Update(void)
     for(i = 0; i < NUM_POLYOBJS; ++i)
     {
         polyobj_t* po = polyObjs[i];
-        linedef_t** lineIter;
+        LineDef** lineIter;
         for(lineIter = po->lines; *lineIter; lineIter++)
         {
-            linedef_t* line = *lineIter;
+            LineDef* line = *lineIter;
             sidedef_t* side = line->L_frontside;
             Surface_Update(&side->SW_middlesurface);
         }

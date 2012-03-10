@@ -195,7 +195,7 @@ static boolean checkMissileRange(mobj_t *actor)
 static boolean moveMobj(mobj_t* actor, boolean dropoff)
 {
     float pos[3], step[3];
-    linedef_t* ld;
+    LineDef* ld;
     boolean good;
 
     if(actor->moveDir == DI_NODIR)
@@ -366,7 +366,7 @@ static void doNewChaseDir(mobj_t *actor, float deltaX, float deltaY)
  * p_map.c::P_TryMove(), allows monsters to free themselves without making
  * them tend to hang over dropoffs.
  */
-static int PIT_AvoidDropoff(linedef_t* line, void* data)
+static int PIT_AvoidDropoff(LineDef* line, void* data)
 {
     sector_t* backsector = P_GetPtrp(line, DMU_BACK_SECTOR);
     AABoxf* aaBox = P_GetPtrp(line, DMU_BOUNDING_BOX);
@@ -515,7 +515,7 @@ void C_DECL A_KeenDie(mobj_t* mo)
 
     if(!params.count)
     {   // No Keens left alive.
-        linedef_t*          dummyLine = P_AllocDummyLine();
+        LineDef*            dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 666;
         EV_DoDoor(dummyLine, DT_OPEN);
@@ -1494,7 +1494,7 @@ void C_DECL A_Explode(mobj_t* mo)
 void C_DECL A_BossDeath(mobj_t* mo)
 {
     int                 i;
-    linedef_t*          dummyLine;
+    LineDef*            dummyLine;
     countmobjoftypeparams_t params;
 
     // Has the boss already been killed?

@@ -66,13 +66,13 @@ static uint numSectorTagLists = 0;
 
 // CODE --------------------------------------------------------------------
 
-linedef_t* P_AllocDummyLine(void)
+LineDef* P_AllocDummyLine(void)
 {
     xline_t* extra = Z_Calloc(sizeof(xline_t), PU_GAMESTATIC, 0);
     return P_AllocDummy(DMU_LINEDEF, extra);
 }
 
-void P_FreeDummyLine(linedef_t* line)
+void P_FreeDummyLine(LineDef* line)
 {
     Z_Free(P_DummyExtraData(line));
     P_FreeDummy(line);
@@ -88,7 +88,7 @@ void P_FreeDummySideDef(sidedef_t* sideDef)
     P_FreeDummy(sideDef);
 }
 
-void P_CopyLine(linedef_t* dest, linedef_t* src)
+void P_CopyLine(LineDef* dest, LineDef* src)
 {
     sidedef_t* sidefrom, *sideto;
     xline_t* xsrc = P_ToXLine(src);
@@ -322,7 +322,7 @@ iterlist_t* P_GetSectorIterListForTag(int tag, boolean createNewList)
     return (tagList->list = IterList_ConstructDefault());
 }
 
-sector_t* P_GetNextSector(linedef_t* line, sector_t* sec)
+sector_t* P_GetNextSector(LineDef* line, sector_t* sec)
 {
     sector_t* frontSec;
     if(!sec || !line)
@@ -338,7 +338,7 @@ sector_t* P_GetNextSector(linedef_t* line, sector_t* sec)
 int findExtremalLightLevelInAdjacentSectors(void* ptr, void* context)
 {
     findlightlevelparams_t* params = (findlightlevelparams_t*) context;
-    sector_t* other = P_GetNextSector((linedef_t*) ptr, params->baseSec);
+    sector_t* other = P_GetNextSector((LineDef*) ptr, params->baseSec);
     float lightLevel;
 
     if(!other)
@@ -395,7 +395,7 @@ sector_t* P_FindSectorSurroundingHighestLight(sector_t* sec, float* val)
 int findNextLightLevel(void* ptr, void* context)
 {
     findnextlightlevelparams_t *params = (findnextlightlevelparams_t*) context;
-    linedef_t* li = (linedef_t*) ptr;
+    LineDef* li = (LineDef*) ptr;
     sector_t* other = P_GetNextSector(li, params->baseSec);
     float otherLight;
 
@@ -456,7 +456,7 @@ sector_t* P_FindSectorSurroundingNextHighestLight(sector_t* sec, float baseLight
 int findExtremalPlaneHeight(void* ptr, void* context)
 {
     findextremalplaneheightparams_t* params = (findextremalplaneheightparams_t*) context;
-    sector_t* other = P_GetNextSector((linedef_t*) ptr, params->baseSec);
+    sector_t* other = P_GetNextSector((LineDef*) ptr, params->baseSec);
     float height;
 
     if(!other)
@@ -535,7 +535,7 @@ sector_t* P_FindSectorSurroundingHighestCeiling(sector_t* sec, float min, float*
 int findNextPlaneHeight(void* ptr, void* context)
 {
     findnextplaneheightparams_t* params = (findnextplaneheightparams_t*) context;
-    sector_t* other = P_GetNextSector((linedef_t*) ptr, params->baseSec);
+    sector_t* other = P_GetNextSector((LineDef*) ptr, params->baseSec);
     float otherHeight;
 
     if(!other)

@@ -45,14 +45,14 @@
 
 typedef struct edge_s {
     boolean done;
-    linedef_t* line;
+    LineDef* line;
     sector_t* sector;
     float length;
     binangle_t diff;
 } edge_t;
 
 static void scanEdges(shadowcorner_t topCorners[2], shadowcorner_t bottomCorners[2],
-    shadowcorner_t sideCorners[2], edgespan_t spans[2], const linedef_t* line, boolean backSide);
+    shadowcorner_t sideCorners[2], edgespan_t spans[2], const LineDef* line, boolean backSide);
 
 int rendFakeRadio = true; ///< cvar
 float rendFakeRadioDarkness = 1.2f; ///< cvar
@@ -72,7 +72,7 @@ float Rend_RadioCalcShadowDarkness(float lightLevel)
     return (0.6f - lightLevel * 0.4f) * 0.65f * rendFakeRadioDarkness;
 }
 
-void Rend_RadioUpdateLinedef(linedef_t* line, boolean backSide)
+void Rend_RadioUpdateLinedef(LineDef* line, boolean backSide)
 {
     sidedef_t* s;
 
@@ -143,12 +143,12 @@ static __inline float calcTexCoordY(float z, float bottom, float top, float texH
     return bottom - z;
 }
 
-static void scanNeighbor(boolean scanTop, const linedef_t* line, uint side,
+static void scanNeighbor(boolean scanTop, const LineDef* line, uint side,
     edge_t* edge, boolean toLeft)
 {
 #define SEP             (10)
 
-    linedef_t*          iter;
+    LineDef*            iter;
     lineowner_t*        own;
     binangle_t          diff = 0;
     float               lengthDelta = 0, gap = 0;
@@ -333,7 +333,7 @@ static void scanNeighbor(boolean scanTop, const linedef_t* line, uint side,
                 // neighbor attached to this line. However, if this is not
                 // the case and a line which SHOULD be two sided isn't, we
                 // need to check whether there is a valid neighbor.
-                linedef_t *backNeighbor =
+                LineDef *backNeighbor =
                     R_FindLineNeighbor(startSector, iter, own, !toLeft, NULL);
 
                 if(backNeighbor && backNeighbor != iter)
@@ -365,7 +365,7 @@ static void scanNeighbor(boolean scanTop, const linedef_t* line, uint side,
 }
 
 static void scanNeighbors(shadowcorner_t top[2], shadowcorner_t bottom[2],
-                          const linedef_t* line, uint side,
+                          const LineDef* line, uint side,
                           edgespan_t spans[2], boolean toLeft)
 {
     uint                i;
@@ -466,11 +466,11 @@ static void scanNeighbors(shadowcorner_t top[2], shadowcorner_t bottom[2],
 static void scanEdges(shadowcorner_t topCorners[2],
                       shadowcorner_t bottomCorners[2],
                       shadowcorner_t sideCorners[2], edgespan_t spans[2],
-                      const linedef_t* line, boolean backSide)
+                      const LineDef* line, boolean backSide)
 {
     uint                i, sid = (backSide? BACK : FRONT);
     sidedef_t*          side;
-    linedef_t*          other;
+    LineDef*            other;
 
     side = line->L_side(sid);
 
@@ -1199,7 +1199,7 @@ static void setRelativeHeights(const sector_t* front, const sector_t* back, bool
     }
 }
 
-static uint radioEdgeHackType(const linedef_t* line, const sector_t* front, const sector_t* back,
+static uint radioEdgeHackType(const LineDef* line, const sector_t* front, const sector_t* back,
     int backside, boolean isCeiling, float fz, float bz)
 {
     surface_t* surface = &line->L_side(backside)->sections[isCeiling? SS_TOP:SS_BOTTOM];
@@ -1223,7 +1223,7 @@ static uint radioEdgeHackType(const linedef_t* line, const sector_t* front, cons
     // Check for unmasked midtextures on twosided lines that completely
     // fill the gap between floor and ceiling (we don't want to give away
     // the location of any secret areas (false walls)).
-    if(LineDef_MiddleMaterialCoversOpening((linedef_t*)line, backside, false))
+    if(LineDef_MiddleMaterialCoversOpening((LineDef*)line, backside, false))
         return 1; // Consider it fully closed.
 
     return 0;
@@ -1305,7 +1305,7 @@ static void addShadowEdge(vec2_t inner[2], vec2_t outer[2], float innerLeftZ,
     RL_AddPoly(PT_FAN, RPF_DEFAULT | (!renderWireframe? RPF_SHADOW : 0), 4, rvertices, rcolors);
 }
 
-static void processEdgeShadow(const BspLeaf* bspLeaf, const linedef_t* lineDef,
+static void processEdgeShadow(const BspLeaf* bspLeaf, const LineDef* lineDef,
     uint side, uint planeId, float shadowDark)
 {
     const sidedef_t* sideDef = lineDef->L_side(side? BACK : FRONT);
@@ -1367,7 +1367,7 @@ static void processEdgeShadow(const BspLeaf* bspLeaf, const linedef_t* lineDef,
     for(i = 0; i < 2; ++i)
     {
         lineowner_t* vo;
-        linedef_t* neighbor;
+        LineDef* neighbor;
 
         vo = lineDef->L_vo(side^i)->link[i^1];
         neighbor = vo->lineDef;
@@ -1612,7 +1612,7 @@ void Rend_DrawShadowOffsetVerts(void)
 
     for(i = 0; i < NUM_LINEDEFS; ++i)
     {
-        linedef_t* line = &lineDefs[i];
+        LineDef* line = &lineDefs[i];
 
         for(k = 0; k < 2; ++k)
         {

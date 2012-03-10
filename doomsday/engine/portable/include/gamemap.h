@@ -94,7 +94,7 @@ typedef struct gamemap_s {
     BspNode* bspNodes;
 
     uint numLineDefs;
-    linedef_t* lineDefs;
+    LineDef* lineDefs;
 
     uint numSideDefs;
     sidedef_t* sideDefs;
@@ -187,7 +187,7 @@ const TraceOpening* GameMap_TraceOpening(GameMap* map);
  * @param map  GameMap instance.
  * @param lineDef  LineDef to configure the opening for.
  */
-void GameMap_SetTraceOpening(GameMap* map, linedef_t* lineDef);
+void GameMap_SetTraceOpening(GameMap* map, LineDef* lineDef);
 
 /**
  * Retrieve the map-global ambient light level.
@@ -213,7 +213,7 @@ vertex_t* GameMap_Vertex(GameMap* map, uint idx);
  * @param idx  Unique index of the linedef.
  * @return  Pointer to LineDef with this index else @c NULL if @a idx is not valid.
  */
-linedef_t* GameMap_LineDef(GameMap* map, uint idx);
+LineDef* GameMap_LineDef(GameMap* map, uint idx);
 
 /**
  * Lookup a SideDef by its unique index.
@@ -276,7 +276,7 @@ int GameMap_VertexIndex(GameMap* map, vertex_t* vtx);
  * @param line  LineDef to lookup.
  * @return  Unique index for the LineDef else @c -1 if not present.
  */
-int GameMap_LineDefIndex(GameMap* map, linedef_t* line);
+int GameMap_LineDefIndex(GameMap* map, LineDef* line);
 
 /**
  * Lookup the unique index for @a sideDef.
@@ -602,25 +602,25 @@ int GameMap_MobjsBoxIterator(GameMap* map, const AABoxf* box,
  */
 void GameMap_InitLineDefBlockmap(GameMap* map, const_pvec2_t min, const_pvec2_t max);
 
-void GameMap_LinkLineDefInBlockmap(GameMap* map, linedef_t* lineDef);
+void GameMap_LinkLineDefInBlockmap(GameMap* map, LineDef* lineDef);
 
 int GameMap_IterateCellLineDefs(GameMap* map, const uint coords[2],
-    int (*callback) (linedef_t*, void*), void* parameters);
+    int (*callback) (LineDef*, void*), void* parameters);
 int GameMap_IterateCellBlockLineDefs(GameMap* map, const struct gridmapblock_s* blockCoords,
-    int (*callback) (linedef_t*, void*), void* parameters);
+    int (*callback) (LineDef*, void*), void* parameters);
 
-int GameMap_LineDefIterator(GameMap* map, int (*callback) (linedef_t*, void*), void* parameters);
+int GameMap_LineDefIterator(GameMap* map, int (*callback) (LineDef*, void*), void* parameters);
 
 int GameMap_IterateCellPolyobjLineDefs(GameMap* map, const uint coords[2],
-    int (*callback) (linedef_t*, void*), void* parameters);
+    int (*callback) (LineDef*, void*), void* parameters);
 int GameMap_IterateCellBlockPolyobjLineDefs(GameMap* map, const struct gridmapblock_s* blockCoords,
-    int (*callback) (linedef_t*, void*), void* parameters);
+    int (*callback) (LineDef*, void*), void* parameters);
 
 int GameMap_LineDefsBoxIterator(GameMap* map, const AABoxf* box,
-    int (*callback) (linedef_t*, void*), void* parameters);
+    int (*callback) (LineDef*, void*), void* parameters);
 
 int GameMap_PolyobjLinesBoxIterator(GameMap* map, const AABoxf* box,
-    int (*callback) (linedef_t*, void*), void* parameters);
+    int (*callback) (LineDef*, void*), void* parameters);
 
 /**
  * LineDefs and Polyobj LineDefs (note Polyobj LineDefs are iterated first).
@@ -630,7 +630,7 @@ int GameMap_PolyobjLinesBoxIterator(GameMap* map, const AABoxf* box,
  * to GameMap_IterateCellLineDefs(), then make one or more calls to it.
  */
 int GameMap_AllLineDefsBoxIterator(GameMap* map, const AABoxf* box,
-    int (*callback) (linedef_t*, void*), void* parameters);
+    int (*callback) (LineDef*, void*), void* parameters);
 
 /**
  * Construct an initial (empty) BspLeaf Blockmap for this map.

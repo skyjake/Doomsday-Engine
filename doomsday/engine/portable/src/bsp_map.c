@@ -189,7 +189,7 @@ static void buildHEdgesFromBSPHEdges(GameMap* dest, binarytree_t* rootNode)
         hedge->flags = 0;
         if(hedge->lineDef)
         {
-            linedef_t*          ldef = hedge->lineDef;
+            LineDef*            ldef = hedge->lineDef;
             vertex_t*           vtx = hedge->lineDef->L_v(hedge->side);
 
             if(ldef->L_side(hedge->side))
@@ -449,7 +449,7 @@ void BSP_InitForNodeBuild(GameMap* map)
 
     for(i = 0; i < map->numLineDefs; ++i)
     {
-        linedef_t*          l = &map->lineDefs[i];
+        LineDef*            l = &map->lineDefs[i];
         vertex_t*           start = l->v[0];
         vertex_t*           end   = l->v[1];
 
@@ -506,7 +506,7 @@ static void updateVertexLinks(GameMap* dest)
 
     for(i = 0; i < dest->numLineDefs; ++i)
     {
-        linedef_t*          line = &dest->lineDefs[i];
+        LineDef*          line = &dest->lineDefs[i];
 
         line->L_v1 = &dest->vertexes[line->L_v1->buildData.index - 1];
         line->L_v2 = &dest->vertexes[line->L_v2->buildData.index - 1];

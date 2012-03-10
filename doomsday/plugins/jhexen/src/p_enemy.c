@@ -231,7 +231,7 @@ boolean P_CheckMissileRange(mobj_t *mo)
 boolean P_Move(mobj_t* mo)
 {
     float tryPos[2], step[2];
-    linedef_t* ld;
+    LineDef* ld;
     boolean good;
 
     if(mo->flags2 & MF2_BLASTED)

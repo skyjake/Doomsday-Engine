@@ -54,12 +54,12 @@ void            P_SpawnSpecials(void);
 // every tic
 void            P_UpdateSpecials(void);
 
-boolean         P_ActivateLine(linedef_t *ld, mobj_t *mo, int side,
+boolean         P_ActivateLine(LineDef *ld, mobj_t *mo, int side,
                                int activationType);
 
 void            P_PlayerInSpecialSector(player_t *player);
 
-int             EV_DoDonut(linedef_t *line);
+int             EV_DoDonut(LineDef *line);
 
 typedef enum {
     build8, // slowly build by 8
@@ -76,8 +76,8 @@ result_e    T_MovePlane(sector_t* sector, float speed, float dest,
                         int crush, int floorOrCeiling, int direction);
 
 
-int         EV_BuildStairs(linedef_t* line, stair_e type);
+int         EV_BuildStairs(LineDef* line, stair_e type);
 
-boolean     P_UseSpecialLine2(mobj_t* mo, linedef_t* line, int side);
+boolean     P_UseSpecialLine2(mobj_t* mo, LineDef* line, int side);
 
 #endif

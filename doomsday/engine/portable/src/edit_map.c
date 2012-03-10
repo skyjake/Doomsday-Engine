@@ -93,9 +93,9 @@ vertex_t* createVertex(void)
     return vtx;
 }
 
-static linedef_t* createLine(void)
+static LineDef* createLine(void)
 {
-    linedef_t*              line;
+    LineDef*              line;
 
     line = M_Calloc(sizeof(*line));
     line->header.type = DMU_LINEDEF;
@@ -181,7 +181,7 @@ static void destroyEditableLineDefs(editmap_t* map)
         uint i;
         for(i = 0; i < map->numLineDefs; ++i)
         {
-            linedef_t* line = map->lineDefs[i];
+            LineDef* line = map->lineDefs[i];
             M_Free(line);
         }
 
@@ -324,7 +324,7 @@ static void findEquivalentVertexes(editmap_t *src)
     // Scan all linedefs.
     for(i = 0, newNum = 0; i < src->numLineDefs; ++i)
     {
-        linedef_t         *l = src->lineDefs[i];
+        LineDef         *l = src->lineDefs[i];
 
         // Handle duplicated vertices.
         while(l->v[0]->buildData.equiv)
@@ -352,7 +352,7 @@ static void pruneLinedefs(editmap_t* map)
 
     for(i = 0, newNum = 0; i < map->numLineDefs; ++i)
     {
-        linedef_t*          l = map->lineDefs[i];
+        LineDef*          l = map->lineDefs[i];
 
         if(!l->L_frontside && !l->L_backside)
         {
@@ -655,12 +655,12 @@ static void buildSectorBspLeafLists(GameMap *map)
 static void buildSectorLineLists(GameMap* map)
 {
     typedef struct linelink_s {
-        linedef_t* line;
+        LineDef* line;
         struct linelink_s* next;
     } linelink_t;
 
     uint i, j;
-    linedef_t* li;
+    LineDef* li;
     sector_t* sec;
 
     zblockset_t* lineLinksBlockSet;
@@ -707,10 +707,10 @@ static void buildSectorLineLists(GameMap* map)
 
     // Harden the sector line links into arrays.
     {
-    linedef_t** linebuffer;
-    linedef_t** linebptr;
+    LineDef** linebuffer;
+    LineDef** linebptr;
 
-    linebuffer = Z_Malloc((totallinks + map->numSectors) * sizeof(linedef_t*),
+    linebuffer = Z_Malloc((totallinks + map->numSectors) * sizeof(LineDef*),
                           PU_MAPSTATIC, 0);
     linebptr = linebuffer;
 
@@ -857,7 +857,7 @@ static void finishSectors(GameMap* map)
 static void finishLineDefs(GameMap* map)
 {
     uint                i;
-    linedef_t          *ld;
+    LineDef            *ld;
     vertex_t           *v[2];
     HEdge              *startSeg, *endSeg;
 
@@ -1004,7 +1004,7 @@ static int C_DECL lineAngleSorter(const void *a, const void *b)
     fixed_t             dx, dy;
     binangle_t          angles[2];
     lineowner_t        *own[2];
-    linedef_t          *line;
+    LineDef            *line;
 
     own[0] = (lineowner_t *)a;
     own[1] = (lineowner_t *)b;
@@ -1119,7 +1119,7 @@ static lineowner_t *sortLineOwners(lineowner_t *list,
     return list;
 }
 
-static void setVertexLineOwner(vertex_t *vtx, linedef_t *lineptr,
+static void setVertexLineOwner(vertex_t *vtx, LineDef *lineptr,
                                lineowner_t **storage)
 {
     lineowner_t        *p, *newOwner;
@@ -1180,7 +1180,7 @@ static void buildVertexOwnerRings(editmap_t* map)
     for(i = 0; i < map->numLineDefs; ++i)
     {
         uint                p;
-        linedef_t*          line = map->lineDefs[i];
+        LineDef*            line = map->lineDefs[i];
 
         for(p = 0; p < 2; ++p)
         {
@@ -1279,12 +1279,12 @@ static void hardenLinedefs(GameMap *dest, editmap_t *src)
     uint                i;
 
     dest->numLineDefs = src->numLineDefs;
-    dest->lineDefs = Z_Calloc(dest->numLineDefs * sizeof(linedef_t), PU_MAPSTATIC, 0);
+    dest->lineDefs = Z_Calloc(dest->numLineDefs * sizeof(LineDef), PU_MAPSTATIC, 0);
 
     for(i = 0; i < dest->numLineDefs; ++i)
     {
-        linedef_t          *destL = &dest->lineDefs[i];
-        linedef_t          *srcL = src->lineDefs[i];
+        LineDef            *destL = &dest->lineDefs[i];
+        LineDef            *srcL = src->lineDefs[i];
 
         memcpy(destL, srcL, sizeof(*destL));
 
@@ -1412,7 +1412,7 @@ static void hardenPolyobjs(GameMap* dest, editmap_t* src)
         destP->lines = Z_Malloc(sizeof(*destP->lines) * (destP->lineCount+1), PU_MAP, 0);
         for(j = 0; j < destP->lineCount; ++j)
         {
-            linedef_t* line = &dest->lineDefs[srcP->lines[j]->buildData.index - 1];
+            LineDef* line = &dest->lineDefs[srcP->lines[j]->buildData.index - 1];
             HEdge* hedge = &hedges[j];
             float dx, dy;
 
@@ -1448,7 +1448,7 @@ static void hardenPolyobjs(GameMap* dest, editmap_t* src)
  * Cast a line horizontally or vertically and see what we hit (OUCH, we
  * have to iterate over all linedefs!).
  */
-static void testForWindowEffect(editmap_t* map, linedef_t* l)
+static void testForWindowEffect(editmap_t* map, LineDef* l)
 {
 // Smallest distance between two points before being considered equal.
 #define DIST_EPSILON        (1.0 / 128.0)
@@ -1460,7 +1460,7 @@ static void testForWindowEffect(editmap_t* map, linedef_t* l)
     sector_t*           backOpen = NULL;
     double              frontDist = DDMAXFLOAT;
     sector_t*           frontOpen = NULL;
-    linedef_t*          frontLine = NULL, *backLine = NULL;
+    LineDef*            frontLine = NULL, *backLine = NULL;
 
     mX = (l->v[0]->buildData.pos[VX] + l->v[1]->buildData.pos[VX]) / 2.0;
     mY = (l->v[0]->buildData.pos[VY] + l->v[1]->buildData.pos[VY]) / 2.0;
@@ -1472,7 +1472,7 @@ static void testForWindowEffect(editmap_t* map, linedef_t* l)
 
     for(i = 0; i < map->numLineDefs; ++i)
     {
-        linedef_t*          n = map->lineDefs[i];
+        LineDef*            n = map->lineDefs[i];
         double              dist;
         boolean             isFront;
         sidedef_t*          hitSide;
@@ -1607,7 +1607,7 @@ void MPE_DetectWindowEffects(editmap_t* map)
 
     for(i = 0; i < map->numLineDefs; ++i)
     {
-        linedef_t*          l = map->lineDefs[i];
+        LineDef*            l = map->lineDefs[i];
 
         if((l->L_frontside && l->L_backside) || !l->L_frontside /*||
            (l->buildData.mlFlags & MLF_ZEROLENGTH) ||
@@ -1649,7 +1649,7 @@ Con_Message("FUNNY LINE %d : end vertex %d has odd number of one-siders\n",
  *                      the line is vertical, then the bottom-most).
  *                      @c => 0 for start, 1 for end.
  */
-static __inline int lineVertexLowest(const linedef_t* l)
+static __inline int lineVertexLowest(const LineDef* l)
 {
     return (((int) l->v[0]->buildData.pos[VX] < (int) l->v[1]->buildData.pos[VX] ||
              ((int) l->v[0]->buildData.pos[VX] == (int) l->v[1]->buildData.pos[VX] &&
@@ -1658,8 +1658,8 @@ static __inline int lineVertexLowest(const linedef_t* l)
 
 static int C_DECL lineStartCompare(const void* p1, const void* p2)
 {
-    const linedef_t*    a = (const linedef_t*) p1;
-    const linedef_t*    b = (const linedef_t*) p2;
+    const LineDef*      a = (const LineDef*) p1;
+    const LineDef*      b = (const LineDef*) p2;
     vertex_t*           c, *d;
 
     // Determine left-most vertex of each line.
@@ -1674,8 +1674,8 @@ static int C_DECL lineStartCompare(const void* p1, const void* p2)
 
 static int C_DECL lineEndCompare(const void* p1, const void* p2)
 {
-    const linedef_t*    a = (const linedef_t*) p1;
-    const linedef_t*    b = (const linedef_t*) p2;
+    const LineDef*      a = (const LineDef*) p1;
+    const LineDef*      b = (const LineDef*) p2;
     vertex_t*           c, *d;
 
     // Determine right-most vertex of each line.
@@ -1690,9 +1690,9 @@ static int C_DECL lineEndCompare(const void* p1, const void* p2)
 
 size_t numOverlaps;
 
-int testOverlaps(linedef_t* b, void* data)
+int testOverlaps(LineDef* b, void* data)
 {
-    linedef_t*          a = (linedef_t*) data;
+    LineDef*            a = (LineDef*) data;
 
     if(a != b)
     {
@@ -1713,7 +1713,7 @@ typedef struct {
     uint coords[2]; // Blockmap cell coordinates.
 } findoverlaps_params_t;
 
-int findOverlapsForLinedef(linedef_t* l, void* data)
+int findOverlapsForLinedef(LineDef* l, void* data)
 {
     findoverlaps_params_t* p = (findoverlaps_params_t*) data;
     GameMap_IterateCellLineDefs(p->map, p->coords, testOverlaps, l);
@@ -1865,12 +1865,12 @@ boolean MPE_End(void)
     for(i = 0; i < gamemap->numPolyObjs; ++i)
     {
         polyobj_t* po = gamemap->polyObjs[i];
-        linedef_t** lineIter;
+        LineDef** lineIter;
         uint n = 0;
 
         for(lineIter = po->lines; *lineIter; lineIter++, n++)
         {
-            linedef_t* line = *lineIter;
+            LineDef* line = *lineIter;
             HEdge* hedge = line->L_frontside->hedges[0];
 
             hedge->HE_v1 = line->L_v1;
@@ -2091,7 +2091,7 @@ uint MPE_SidedefCreate(uint sector, short flags,
 uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide,
                        int flags)
 {
-    linedef_t*          l;
+    LineDef*            l;
     sidedef_t*          front = NULL, *back = NULL;
     vertex_t*           vtx1, *vtx2;
     float               length, dx, dy;
@@ -2281,7 +2281,7 @@ uint MPE_PolyobjCreate(uint* lines, uint lineCount, int tag, int sequenceType,
     // already part of another polyobj.
     for(i = 0; i < lineCount; ++i)
     {
-        linedef_t* line;
+        LineDef* line;
 
         if(lines[i] == 0 || lines[i] > map->numLineDefs) return 0;
 
@@ -2296,10 +2296,10 @@ uint MPE_PolyobjCreate(uint* lines, uint lineCount, int tag, int sequenceType,
     po->pos[VY] = anchorY;
 
     po->lineCount = lineCount;
-    po->lines = M_Calloc(sizeof(linedef_t*) * (po->lineCount+1));
+    po->lines = M_Calloc(sizeof(LineDef*) * (po->lineCount+1));
     for(i = 0; i < lineCount; ++i)
     {
-        linedef_t* line = map->lineDefs[lines[i] - 1];
+        LineDef* line = map->lineDefs[lines[i] - 1];
 
         // This line belongs to a polyobj.
         line->inFlags |= LF_POLYOBJ;

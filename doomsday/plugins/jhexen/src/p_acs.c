@@ -367,7 +367,7 @@ void P_CheckACSStore(uint map)
  *                      map to start on (will be deferred).
  */
 boolean P_StartACS(int number, uint map, byte* args, mobj_t* activator,
-                   linedef_t* line, int side)
+                   LineDef* line, int side)
 {
     int                 i, infoIndex;
     acs_t*              script;
@@ -462,7 +462,7 @@ static boolean AddToACSStore(uint map, int number, const byte* args)
     return true;
 }
 
-boolean P_StartLockedACS(linedef_t *line, byte *args, mobj_t *mo, int side)
+boolean P_StartLockedACS(LineDef *line, byte *args, mobj_t *mo, int side)
 {
     int         i;
     int         lock;
@@ -1745,7 +1745,7 @@ static int CmdSetLineTexture(void)
 {
     int lineTag, side, position;
     material_t* mat;
-    linedef_t* line;
+    LineDef* line;
     iterlist_t* list;
     ddstring_t path;
     Uri* uri;
@@ -1793,7 +1793,7 @@ static int CmdSetLineTexture(void)
 
 static int CmdSetLineBlocking(void)
 {
-    linedef_t*          line;
+    LineDef*            line;
     int                 lineTag;
     boolean             blocking;
     iterlist_t*         list;
@@ -1818,7 +1818,7 @@ static int CmdSetLineBlocking(void)
 
 static int CmdSetLineSpecial(void)
 {
-    linedef_t*          line;
+    LineDef*            line;
     int                 lineTag;
     int                 special, arg1, arg2, arg3, arg4, arg5;
     iterlist_t*         list;

@@ -81,7 +81,7 @@ static void findMapLimits(GameMap* src, int* bbox)
 
     for(i = 0; i < src->numLineDefs; ++i)
     {
-        linedef_t*          l = &src->lineDefs[i];
+        LineDef*          l = &src->lineDefs[i];
 
         if(!(l->buildData.mlFlags & MLF_ZEROLENGTH))
         {
@@ -134,7 +134,7 @@ static superblock_t* createInitialHEdges(GameMap* map)
 
     for(i = 0; i < map->numLineDefs; ++i)
     {
-        linedef_t*          line = &map->lineDefs[i];
+        LineDef*          line = &map->lineDefs[i];
 
         if(line->buildData.mlFlags & MLF_POLYOBJ)
             continue;

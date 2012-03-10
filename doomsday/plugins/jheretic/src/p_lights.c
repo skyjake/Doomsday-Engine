@@ -169,7 +169,7 @@ void P_SpawnStrobeFlash(sector_t *sector, int fastOrSlow, int inSync)
 /**
  * Start strobing lights (usually from a trigger).
  */
-void EV_StartLightStrobing(linedef_t *line)
+void EV_StartLightStrobing(LineDef *line)
 {
     sector_t           *sec = NULL;
     iterlist_t         *list;
@@ -189,7 +189,7 @@ void EV_StartLightStrobing(linedef_t *line)
     }
 }
 
-void EV_TurnTagLightsOff(linedef_t *line)
+void EV_TurnTagLightsOff(LineDef *line)
 {
     sector_t           *sec = NULL;
     iterlist_t         *list;
@@ -214,7 +214,7 @@ void EV_TurnTagLightsOff(linedef_t *line)
     }
 }
 
-void EV_LightTurnOn(linedef_t *line, float max)
+void EV_LightTurnOn(LineDef *line, float max)
 {
     sector_t           *sec = NULL;
     iterlist_t         *list;

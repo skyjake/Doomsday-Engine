@@ -105,9 +105,9 @@ void R_InitSkyFix(void);
 void R_MapInitSurfaceLists(void);
 
 void            R_UpdateSkyFixForSec(const sector_t* sec);
-void            R_OrderVertices(const linedef_t* line, const sector_t* sector,
+void            R_OrderVertices(const LineDef* line, const sector_t* sector,
                                 vertex_t* verts[2]);
-boolean         R_FindBottomTop(linedef_t* lineDef, int side, sidedefsection_t section,
+boolean         R_FindBottomTop(LineDef* lineDef, int side, sidedefsection_t section,
                                 float matOffsetX, float matOffsetY,
                                 const plane_t* ffloor, const plane_t* fceil,
                                 const plane_t* bfloor, const plane_t* bceil,
@@ -161,18 +161,18 @@ boolean R_IsGlowingPlane(const plane_t* plane);
 
 float R_GlowStrength(const plane_t* pln);
 
-lineowner_t*    R_GetVtxLineOwner(const vertex_t* vtx, const linedef_t* line);
-linedef_t*      R_FindLineNeighbor(const sector_t* sector,
-                                   const linedef_t* line,
+lineowner_t*    R_GetVtxLineOwner(const vertex_t* vtx, const LineDef* line);
+LineDef*        R_FindLineNeighbor(const sector_t* sector,
+                                   const LineDef* line,
                                    const lineowner_t* own,
                                    boolean antiClockwise, binangle_t* diff);
-linedef_t*      R_FindSolidLineNeighbor(const sector_t* sector,
-                                        const linedef_t* line,
+LineDef*        R_FindSolidLineNeighbor(const sector_t* sector,
+                                        const LineDef* line,
                                         const lineowner_t* own,
                                         boolean antiClockwise,
                                         binangle_t* diff);
-linedef_t*      R_FindLineBackNeighbor(const sector_t* sector,
-                                       const linedef_t* line,
+LineDef*        R_FindLineBackNeighbor(const sector_t* sector,
+                                       const LineDef* line,
                                        const lineowner_t* own,
                                        boolean antiClockwise,
                                        binangle_t* diff);

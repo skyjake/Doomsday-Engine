@@ -120,7 +120,7 @@ extern xline_t* xlines;
 // If true we are in the process of setting up a map.
 extern boolean mapSetup;
 
-xline_t*        P_ToXLine(linedef_t* line);
+xline_t*        P_ToXLine(LineDef* line);
 xsector_t*      P_ToXSector(sector_t* sector);
 xsector_t*      P_ToXSectorOfBspLeaf(BspLeaf* sub);
 

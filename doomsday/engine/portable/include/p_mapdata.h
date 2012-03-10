@@ -178,7 +178,7 @@ extern HEdge* hedges;
 extern sector_t* sectors;
 extern BspLeaf* bspLeafs;
 extern BspNode* bspNodes;
-extern linedef_t* lineDefs;
+extern LineDef* lineDefs;
 extern sidedef_t* sideDefs;
 extern polyobj_t** polyObjs; ///< List of all polyobjs on the current map.
 

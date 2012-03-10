@@ -2145,7 +2145,7 @@ static void SV_ReadSector(sector_t* sec)
     xsec->soundTarget = 0;
 }
 
-static void SV_WriteLine(linedef_t* li)
+static void SV_WriteLine(LineDef* li)
 {
     uint                i, j;
     float               rgba[4];
@@ -2237,7 +2237,7 @@ static void SV_WriteLine(linedef_t* li)
  * Reads all versions of archived lines.
  * Including the old Ver1.
  */
-static void SV_ReadLine(linedef_t* li)
+static void SV_ReadLine(LineDef* li)
 {
     int i, j;
     lineclass_t type;

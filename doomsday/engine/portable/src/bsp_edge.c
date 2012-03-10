@@ -148,21 +148,20 @@ static void updateHEdge(bsp_hedge_t *hedge)
 /**
  * Create a new half-edge.
  */
-bsp_hedge_t *BSP_HEdge_Create(linedef_t *line, linedef_t *sourceLine,
-                      vertex_t *start, vertex_t *end, sector_t *sec,
-                      boolean back)
+bsp_hedge_t* BSP_HEdge_Create(LineDef* lineDef, LineDef* sourceLineDef,
+    vertex_t* start, vertex_t* end, sector_t* sec, boolean back)
 {
     bsp_hedge_t* hEdge = allocHEdge();
 
     hEdge->v[0] = start;
     hEdge->v[1] = end;
-    hEdge->lineDef = line;
+    hEdge->lineDef = lineDef;
     hEdge->side = (back? 1 : 0);
     hEdge->sector = sec;
     hEdge->twin = NULL;
     hEdge->nextOnSide = hEdge->prevOnSide = NULL;
 
-    hEdge->sourceLine = sourceLine;
+    hEdge->sourceLineDef = sourceLineDef;
     hEdge->index = -1;
 
     updateHEdge(hEdge);

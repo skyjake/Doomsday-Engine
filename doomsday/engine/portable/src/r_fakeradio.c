@@ -141,8 +141,8 @@ void R_UpdateVertexShadowOffsets(vertex_t *vtx)
         own = base = vtx->lineOwners;
         do
         {
-            linedef_t          *lineB = own->lineDef;
-            linedef_t          *lineA = own->LO_next->lineDef;
+            LineDef            *lineB = own->lineDef;
+            LineDef            *lineA = own->LO_next->lineDef;
 
             if(lineB->L_v1 == vtx)
             {
@@ -182,7 +182,7 @@ void R_UpdateVertexShadowOffsets(vertex_t *vtx)
 /**
  * Link a half-edge to an arbitary BSP leaf for the purposes of shadowing.
  */
-static void linkShadowLineDefToSSec(linedef_t *line, byte side, BspLeaf* bspLeaf)
+static void linkShadowLineDefToSSec(LineDef *line, byte side, BspLeaf* bspLeaf)
 {
     shadowlink_t* link;
 
@@ -207,7 +207,7 @@ static void linkShadowLineDefToSSec(linedef_t *line, byte side, BspLeaf* bspLeaf
 }
 
 typedef struct shadowlinkerparms_s {
-    linedef_t* lineDef;
+    LineDef* lineDef;
     byte side;
 } shadowlinkerparms_t;
 
@@ -222,7 +222,7 @@ int RIT_ShadowBspLeafLinker(BspLeaf* bspLeaf, void* parm)
     return false; // Continue iteration.
 }
 
-boolean R_IsShadowingLinedef(linedef_t* line)
+boolean R_IsShadowingLinedef(LineDef* line)
 {
     if(line)
     {
@@ -269,7 +269,7 @@ void R_InitFakeRadioForMap(void)
 
     for(i = 0; i < NUM_LINEDEFS; ++i)
     {
-        linedef_t* line = LINE_PTR(i);
+        LineDef* line = LINE_PTR(i);
         if(!R_IsShadowingLinedef(line)) continue;
 
         for(j = 0; j < 2; ++j)

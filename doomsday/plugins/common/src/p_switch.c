@@ -463,7 +463,7 @@ boolean P_ToggleSwitch(sidedef_t* side, int sound, boolean silent, int tics)
 /**
  * Called when a mobj "uses" a linedef.
  */
-boolean P_UseSpecialLine(mobj_t* mo, linedef_t* line, int side)
+boolean P_UseSpecialLine(mobj_t* mo, LineDef* line, int side)
 {
     // Extended functionality overrides old.
     if(XL_UseLine(line, side, mo))

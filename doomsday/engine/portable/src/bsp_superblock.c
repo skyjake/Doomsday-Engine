@@ -252,7 +252,7 @@ void BSP_DivideOneHEdge(bsp_hedge_t* cur, const bspartition_t* part,
     b = M_PerpDist(part->pDX, part->pDY, part->pPerp, part->length,
                    cur->pEX, cur->pEY);
 
-    if(cur->sourceLine == part->sourceLine)
+    if(cur->sourceLineDef == part->sourceLineDef)
         a = b = 0;
 
     // Check for being on the same line.
@@ -435,7 +435,7 @@ static int evalPartitionWorker(const superblock_t* hEdgeList, bsp_hedge_t* part,
             return true;
 
         // Get state of lines' relation to each other.
-        if(check->sourceLine == part->sourceLine)
+        if(check->sourceLineDef == part->sourceLineDef)
         {
             a = b = fa = fb = 0;
         }
@@ -718,7 +718,7 @@ Con_Message("BSP_PickPartition: Best has score %d.%02d  (%1.1f,%1.1f) -> "
         partition->dX = best->lineDef->v[best->side^1]->buildData.pos[VX] - partition->x;
         partition->dY = best->lineDef->v[best->side^1]->buildData.pos[VY] - partition->y;
         partition->lineDef = best->lineDef;
-        partition->sourceLine = best->sourceLine;
+        partition->sourceLineDef = best->sourceLineDef;
 
         partition->pDX = best->pDX;
         partition->pDY = best->pDY;

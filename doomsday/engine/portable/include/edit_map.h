@@ -37,7 +37,7 @@ typedef struct editmap_s {
     uint numVertexes;
     vertex_t** vertexes;
     uint numLineDefs;
-    linedef_t** lineDefs;
+    LineDef** lineDefs;
     uint numSideDefs;
     sidedef_t** sideDefs;
     uint numSectors;
@@ -97,6 +97,6 @@ boolean         MPE_RegisterUnclosedSectorNear(sector_t* sec, double x, double y
 void            MPE_PrintUnclosedSectorList(void);
 void            MPE_FreeUnclosedSectorList(void);
 
-GameMap*     MPE_GetLastBuiltMap(void);
-vertex_t*      createVertex(void);
+GameMap*        MPE_GetLastBuiltMap(void);
+vertex_t*       createVertex(void);
 #endif

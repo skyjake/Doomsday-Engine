@@ -50,7 +50,7 @@ typedef struct dummysidedef_s {
 } dummysidedef_t;
 
 typedef struct dummyline_s {
-    linedef_t line; // Line data.
+    LineDef line; // Line data.
     void* extraData; // Pointer to user data.
     boolean inUse; // true, if the dummy is being used.
 } dummyline_t;
@@ -428,7 +428,7 @@ uint P_ToIndex(const void* ptr)
         return GET_HEDGE_IDX((HEdge*) ptr);
 
     case DMU_LINEDEF:
-        return GET_LINE_IDX((linedef_t*) ptr);
+        return GET_LINE_IDX((LineDef*) ptr);
 
     case DMU_SIDEDEF:
         return GET_SIDE_IDX((sidedef_t*) ptr);
@@ -512,7 +512,7 @@ int P_Iteratep(void *ptr, uint prop, void* context, int (*callback) (void* p, vo
 
             if(sec->lineDefs)
             {
-                linedef_t** linePtr = sec->lineDefs;
+                LineDef** linePtr = sec->lineDefs;
                 while(*linePtr && !(result = callback(*linePtr, context)))
                     linePtr++;
             }
@@ -914,10 +914,10 @@ static int setProperty(void* obj, void* context)
     setargs_t*          args = (setargs_t*) context;
     sector_t*           updateSector1 = NULL, *updateSector2 = NULL;
     plane_t*            updatePlane = NULL;
-    linedef_t*          updateLinedef = NULL;
+    LineDef*            updateLinedef = NULL;
     sidedef_t*          updateSidedef = NULL;
     surface_t*          updateSurface = NULL;
-    // BspLeaf*       updateBspLeaf = NULL;
+    // BspLeaf*           updateBspLeaf = NULL;
 
     /**
      * \algorithm:
@@ -972,16 +972,16 @@ static int setProperty(void* obj, void* context)
 
     if(args->type == DMU_LINEDEF)
     {
-        updateLinedef = (linedef_t*) obj;
+        updateLinedef = (LineDef*) obj;
 
         if(args->modifiers & DMU_SIDEDEF0_OF_LINE)
         {
-            obj = ((linedef_t*) obj)->L_frontside;
+            obj = ((LineDef*) obj)->L_frontside;
             args->type = DMU_SIDEDEF;
         }
         else if(args->modifiers & DMU_SIDEDEF1_OF_LINE)
         {
-            linedef_t          *li = ((linedef_t*) obj);
+            LineDef* li = ((LineDef*) obj);
             if(!li->L_backside)
                 Con_Error("DMU_setProperty: Linedef %i has no back side.\n",
                           P_ToIndex(li));
@@ -1433,12 +1433,12 @@ static int getProperty(void* obj, void* context)
     {
         if(args->modifiers & DMU_SIDEDEF0_OF_LINE)
         {
-            obj = ((linedef_t*) obj)->L_frontside;
+            obj = ((LineDef*) obj)->L_frontside;
             args->type = DMU_SIDEDEF;
         }
         else if(args->modifiers & DMU_SIDEDEF1_OF_LINE)
         {
-            linedef_t          *li = ((linedef_t*) obj);
+            LineDef* li = ((LineDef*) obj);
             if(!li->L_backside)
                 Con_Error("DMU_setProperty: Linedef %i has no back side.\n",
                           P_ToIndex(li));

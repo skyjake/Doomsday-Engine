@@ -49,7 +49,7 @@ static int rendMobj(mobj_t* mo, void* paramaters)
     return false; // Continue iteration.
 }
 
-static int rendLineDef(linedef_t* line, void* paramaters)
+static int rendLineDef(LineDef* line, void* paramaters)
 {
     glVertex2f(line->L_v1pos[VX], line->L_v1pos[VY]);
     glVertex2f(line->L_v2pos[VX], line->L_v2pos[VY]);

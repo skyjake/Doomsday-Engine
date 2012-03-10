@@ -247,7 +247,7 @@ static void archiveVertexes(GameMap *map, boolean write)
 static void writeLine(const GameMap *map, uint idx)
 {
     int                 i;
-    linedef_t             *l = &map->lineDefs[idx];
+    LineDef            *l = &map->lineDefs[idx];
 
     writeLong((long) ((l->v[0] - map->vertexes) + 1));
     writeLong((long) ((l->v[1] - map->vertexes) + 1));
@@ -272,7 +272,7 @@ static void readLine(const GameMap *map, uint idx)
 {
     int                 i;
     long                sideIdx;
-    linedef_t             *l = &map->lineDefs[idx];
+    LineDef            *l = &map->lineDefs[idx];
 
     l->v[0] = &map->vertexes[(unsigned) (readLong() - 1)];
     l->v[1] = &map->vertexes[(unsigned) (readLong() - 1)];
@@ -558,7 +558,7 @@ static void readSector(const GameMap *map, uint idx)
 
     // Line list.
     s->lineDefCount = (uint) readLong();
-    s->lineDefs = Z_Malloc(sizeof(linedef_t*) * (s->lineDefCount + 1), PU_MAP, 0);
+    s->lineDefs = Z_Malloc(sizeof(LineDef*) * (s->lineDefCount + 1), PU_MAP, 0);
     for(i = 0; i < s->lineDefCount; ++i)
         s->lineDefs[i] = &map->lineDefs[(unsigned) readLong() - 1];
     s->lineDefs[i] = NULL; // Terminate.
@@ -881,7 +881,7 @@ static void writePolyobj(const GameMap* map, uint idx)
     writeLong((long) p->lineCount);
     for(i = 0; i < p->lineCount; ++i)
     {
-        linedef_t* line = p->lines[i];
+        LineDef* line = p->lines[i];
         HEdge* he = line->L_frontside->hedges[0];
 
         writeLong((he->v[0] - map->vertexes) + 1);
@@ -929,7 +929,7 @@ static void readPolyobj(const GameMap* map, uint idx)
     for(i = 0; i < p->lineCount; ++i)
     {
         HEdge* he = hedges + i;
-        linedef_t* line;
+        LineDef* line;
 
         he->v[0] = &map->vertexes[(unsigned) readLong() - 1];
         he->v[1] = &map->vertexes[(unsigned) readLong() - 1];

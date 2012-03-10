@@ -223,7 +223,7 @@ static mobj_t* getTeleportDestination(short tag)
     return NULL;
 }
 
-boolean EV_Teleport(linedef_t* line, int side, mobj_t* mo, boolean spawnFog)
+boolean EV_Teleport(LineDef* line, int side, mobj_t* mo, boolean spawnFog)
 {
     mobj_t*             dest;
 

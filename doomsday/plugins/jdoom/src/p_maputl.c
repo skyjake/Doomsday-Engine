@@ -67,7 +67,7 @@
  * If more than one linedef is contacted, the effects are cumulative, so
  * balancing is possible.
  */
-static int PIT_ApplyTorque(linedef_t* ld, void* data)
+static int PIT_ApplyTorque(LineDef* ld, void* data)
 {
     mobj_t*             mo = tmThing;
     float               dist;

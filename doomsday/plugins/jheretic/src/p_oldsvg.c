@@ -391,7 +391,7 @@ void P_v13_UnArchiveWorld(void)
     short*              get;
     sector_t*           sec;
     xsector_t*          xsec;
-    linedef_t*          line;
+    LineDef*            line;
     xline_t*            xline;
 
     get = (short *) save_p;

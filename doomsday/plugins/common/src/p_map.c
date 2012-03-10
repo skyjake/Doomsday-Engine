@@ -78,7 +78,7 @@ static void CheckMissileImpact(mobj_t* mobj);
 static void  CheckMissileImpact(mobj_t* mobj);
 #elif __JHEXEN__
 static void  P_FakeZMovement(mobj_t* mo);
-static void  checkForPushSpecial(linedef_t* line, int side, mobj_t* mobj);
+static void  checkForPushSpecial(LineDef* line, int side, mobj_t* mobj);
 #endif
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -102,11 +102,11 @@ boolean fellDown; // $dropoff_fix
 // The following is used to keep track of the linedefs that clip the open
 // height range e.g. PIT_CheckLine. They in turn are used with the &unstuck
 // logic and to prevent missiles from exploding against sky hack walls.
-linedef_t* ceilingLine;
-linedef_t* floorLine;
+LineDef* ceilingLine;
+LineDef* floorLine;
 
 mobj_t* lineTarget; // Who got hit (or NULL).
-linedef_t* blockLine; // $unstuck: blocking linedef
+LineDef* blockLine; // $unstuck: blocking linedef
 
 float attackRange;
 
@@ -120,11 +120,11 @@ mobj_t* blockingMobj;
 static float tm[3];
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 static float tmHeight;
-static linedef_t* tmHitLine;
+static LineDef* tmHitLine;
 #endif
 static float tmDropoffZ;
 static float bestSlideDistance, secondSlideDistance;
-static linedef_t* bestSlideLine, *secondSlideLine;
+static LineDef* bestSlideLine, *secondSlideLine;
 
 static mobj_t* slideMo;
 
@@ -366,7 +366,7 @@ boolean P_TeleportMove(mobj_t* thing, float x, float y, boolean alwaysStomp)
  *
  * @param data          Unused.
  */
-int PIT_CrossLine(linedef_t* ld, void* data)
+int PIT_CrossLine(LineDef* ld, void* data)
 {
     int                 flags = P_GetIntp(ld, DMU_FLAGS);
 
@@ -430,7 +430,7 @@ boolean P_CheckSides(mobj_t* actor, float x, float y)
  * $unstuck: used to test intersection between thing and line assuming NO
  * movement occurs -- used to avoid sticky situations.
  */
-static int untouched(linedef_t* ld)
+static int untouched(LineDef* ld)
 {
     const float x = tmThing->pos[VX];
     const float y = tmThing->pos[VY];
@@ -954,7 +954,7 @@ int PIT_CheckThing(mobj_t* thing, void* data)
 /**
  * Adjusts tmFloorZ and tmCeilingZ as lines are contacted.
  */
-int PIT_CheckLine(linedef_t* ld, void* data)
+int PIT_CheckLine(LineDef* ld, void* data)
 {
     AABoxf* aaBox = P_GetPtrp(ld, DMU_BOUNDING_BOX);
     const TraceOpening* opening;
@@ -1257,7 +1257,7 @@ static boolean P_TryMove2(mobj_t* thing, float x, float y, boolean dropoff)
 {
     float               oldpos[3];
     int                 side, oldSide;
-    linedef_t*          ld;
+    LineDef*            ld;
     boolean             isRemotePlayer = ((IS_DEDICATED && thing->dPlayer) ||
                                           (IS_CLIENT && thing->player && thing->player - players != CONSOLEPLAYER));
 
@@ -1644,7 +1644,7 @@ int PTR_ShootTraverse(const intercept_t* in, void* paramaters)
     float               pos[3], frac, slope, dist, thingTopSlope,
                         thingBottomSlope, cTop, cBottom, d[3], step,
                         stepv[3], tracePos[3], cFloor, cCeil;
-    linedef_t*          li;
+    LineDef*            li;
     mobj_t*             th;
     const divline_t* trace = P_TraceLOS();
     const TraceOpening* opening;
@@ -1946,7 +1946,7 @@ int PTR_AimTraverse(const intercept_t* in, void* paramaters)
 {
     float               slope, thingTopSlope, thingBottomSlope, dist;
     mobj_t*             th;
-    linedef_t*          li;
+    LineDef*            li;
     sector_t*           backSec, *frontSec;
 
     if(in->type == ICPT_LINE)
@@ -2447,7 +2447,7 @@ static boolean P_ThingHeightClip(mobj_t* thing)
  *
  * @param ld            The line being slid along.
  */
-static void P_HitSlideLine(linedef_t* ld)
+static void P_HitSlideLine(LineDef* ld)
 {
     int                 side;
     unsigned int        an;
@@ -2489,7 +2489,7 @@ static void P_HitSlideLine(linedef_t* ld)
 int PTR_SlideTraverse(const intercept_t* in, void* paramaters)
 {
     const TraceOpening* opening;
-    linedef_t* li;
+    LineDef* li;
 
     if(in->type != ICPT_LINE)
         Con_Error("PTR_SlideTraverse: Not a line?");
@@ -2850,7 +2850,7 @@ boolean P_TestMobjLocation(mobj_t* mobj)
 static void CheckMissileImpact(mobj_t* mobj)
 {
     int                 size;
-    linedef_t*          ld;
+    LineDef*            ld;
 
     if(IS_CLIENT || !mobj->target || !mobj->target->player || !(mobj->flags & MF_MISSILE))
         return;
@@ -3084,7 +3084,7 @@ static void P_FakeZMovement(mobj_t* mo)
     }
 }
 
-static void checkForPushSpecial(linedef_t* line, int side, mobj_t* mobj)
+static void checkForPushSpecial(LineDef* line, int side, mobj_t* mobj)
 {
     if(P_ToXLine(line)->special)
     {
@@ -3102,7 +3102,7 @@ static void checkForPushSpecial(linedef_t* line, int side, mobj_t* mobj)
 int PTR_BounceTraverse(const intercept_t* in, void* paramaters)
 {
     const TraceOpening* opening;
-    linedef_t* li;
+    LineDef* li;
 
     if(in->type != ICPT_LINE)
         Con_Error("PTR_BounceTraverse: Not a line?");
@@ -3200,7 +3200,7 @@ int PTR_PuzzleItemTraverse(const intercept_t* in, void* paramaters)
     {
     case ICPT_LINE: // Linedef.
         {
-        linedef_t*          line = in->d.lineDef;
+        LineDef*            line = in->d.lineDef;
         xline_t*            xline = P_ToXLine(line);
 
         if(xline->special != USE_PUZZLE_ITEM_SPECIAL)

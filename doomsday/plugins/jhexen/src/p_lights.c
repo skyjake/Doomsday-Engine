@@ -141,7 +141,7 @@ void T_Light(light_t *light)
     }
 }
 
-boolean EV_SpawnLight(linedef_t *line, byte *arg, lighttype_t type)
+boolean EV_SpawnLight(LineDef *line, byte *arg, lighttype_t type)
 {
     int         arg1, arg2, arg3, arg4;
     boolean     think = false;
@@ -294,7 +294,7 @@ typedef struct {
 
 static int findLightSequenceSector(void* p, void* context)
 {
-    linedef_t*          li = (linedef_t*) p;
+    LineDef*            li = (LineDef*) p;
     findlightsequencesectorparams_t* params =
         (findlightsequencesectorparams_t*) context;
     sector_t*           tempSec = P_GetNextSector(li, params->sec);
@@ -322,7 +322,7 @@ typedef struct {
 
 static int findLightSequenceStartSector(void* p, void* context)
 {
-    linedef_t*          li = (linedef_t*) p;
+    LineDef*           li = (LineDef*) p;
     findlightsequencestartsectorparams_t* params =
         (findlightsequencestartsectorparams_t*) context;
     sector_t*           tempSec = P_GetNextSector(li, params->sec);

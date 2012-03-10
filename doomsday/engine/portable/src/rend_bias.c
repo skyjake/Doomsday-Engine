@@ -445,7 +445,7 @@ void SB_InitForMap(const char* uniqueID)
 
         for(j = 0; j < po->lineCount; ++j)
         {
-            linedef_t* line = po->lines[j];
+            LineDef* line = po->lines[j];
             HEdge* hedge = line->L_frontside->hedges[0];
             int k;
 

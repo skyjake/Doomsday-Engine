@@ -45,7 +45,7 @@ float Rend_RadioCalcShadowDarkness(float lightLevel);
  * Called to update the shadow properties used when doing FakeRadio for the
  * given linedef.
  */
-void Rend_RadioUpdateLinedef(linedef_t* line, boolean backSide);
+void Rend_RadioUpdateLinedef(LineDef* line, boolean backSide);
 
 /**
  * Render FakeRadio for the given hedge section.

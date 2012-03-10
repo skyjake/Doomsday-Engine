@@ -118,7 +118,7 @@ void T_RotatePoly(polyevent_t* pe)
     }
 }
 
-boolean EV_RotatePoly(linedef_t *line, byte *args, int direction,
+boolean EV_RotatePoly(LineDef *line, byte *args, int direction,
                       boolean overRide)
 {
     int                 mirror, polyNum;
@@ -251,7 +251,7 @@ void T_MovePoly(polyevent_t* pe)
     }
 }
 
-boolean EV_MovePoly(linedef_t* line, byte* args, boolean timesEight,
+boolean EV_MovePoly(LineDef* line, byte* args, boolean timesEight,
                     boolean overRide)
 {
     int                 mirror, polyNum;
@@ -454,7 +454,7 @@ void T_PolyDoor(polydoor_t* pd)
     }
 }
 
-boolean EV_OpenPolyDoor(linedef_t* line, byte* args, podoortype_t type)
+boolean EV_OpenPolyDoor(LineDef* line, byte* args, podoortype_t type)
 {
     int                 mirror, polyNum;
     polydoor_t*         pd;
@@ -561,7 +561,7 @@ static int getPolyobjMirror(uint poly)
 
         if(po->tag == poly)
         {
-            linedef_t* line = po->lines[0];
+            LineDef* line = po->lines[0];
             return P_ToXLine(line)->arg2;
         }
     }
@@ -571,7 +571,7 @@ static int getPolyobjMirror(uint poly)
 
 static void thrustMobj(struct mobj_s* mo, void* linep, void* pop)
 {
-    linedef_t* line = (linedef_t*) linep;
+    LineDef* line = (LineDef*) linep;
     polyobj_t* po = (polyobj_t*) pop;
     float thrust[2], force;
     polyevent_t* pe;
