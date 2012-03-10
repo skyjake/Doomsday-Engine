@@ -1305,7 +1305,7 @@ static void addShadowEdge(vec2_t inner[2], vec2_t outer[2], float innerLeftZ,
     RL_AddPoly(PT_FAN, RPF_DEFAULT | (!renderWireframe? RPF_SHADOW : 0), 4, rvertices, rcolors);
 }
 
-static void processEdgeShadow(const subsector_t* ssec, const linedef_t* lineDef,
+static void processEdgeShadow(const BspLeaf* bspLeaf, const linedef_t* lineDef,
     uint side, uint planeId, float shadowDark)
 {
     const sidedef_t* sideDef = lineDef->L_side(side? BACK : FRONT);
@@ -1318,7 +1318,7 @@ static void processEdgeShadow(const subsector_t* ssec, const linedef_t* lineDef,
     const surface_t* suf;
     vec3_t shadowRGB;
     int i;
-    assert(ssec && lineDef && (side == FRONT || side == BACK) && lineDef->L_side(side) && planeId <= lineDef->L_sector(side)->planeCount);
+    assert(bspLeaf && lineDef && (side == FRONT || side == BACK) && lineDef->L_side(side) && planeId <= lineDef->L_sector(side)->planeCount);
 
     if(!(shadowDark > .0001)) return;
 
@@ -1374,7 +1374,7 @@ static void processEdgeShadow(const subsector_t* ssec, const linedef_t* lineDef,
 
         if(neighbor != lineDef && !neighbor->L_backside &&
            neighbor->buildData.windowEffect &&
-           neighbor->L_frontsector != ssec->sector)
+           neighbor->L_frontsector != bspLeaf->sector)
         {   // A one-way window, edgeOpen side.
             sideOpen[i] = 1;
         }
@@ -1431,22 +1431,22 @@ static void processEdgeShadow(const subsector_t* ssec, const linedef_t* lineDef,
     addShadowEdge(inner, outer, plnHeight, plnHeight, plnHeight, plnHeight, sideOpen, edgeOpen, suf->normal[VZ] > 0, shadowRGB, shadowDark);
 }
 
-static void drawLinkedEdgeShadows(const subsector_t* ssec, shadowlink_t* link,
+static void drawLinkedEdgeShadows(const BspLeaf* bspLeaf, shadowlink_t* link,
     const byte* doPlanes, float shadowDark)
 {
     uint pln;
-    assert(ssec && link && doPlanes);
+    assert(bspLeaf && link && doPlanes);
 
     if(!(shadowDark > .0001f)) return;
 
     if(doPlanes[PLN_FLOOR])
-        processEdgeShadow(ssec, link->lineDef, link->side, PLN_FLOOR, shadowDark);
+        processEdgeShadow(bspLeaf, link->lineDef, link->side, PLN_FLOOR, shadowDark);
     if(doPlanes[PLN_CEILING])
-        processEdgeShadow(ssec, link->lineDef, link->side, PLN_CEILING, shadowDark);
+        processEdgeShadow(bspLeaf, link->lineDef, link->side, PLN_CEILING, shadowDark);
 
-    for(pln = PLN_MID; pln < ssec->sector->planeCount; ++pln)
+    for(pln = PLN_MID; pln < bspLeaf->sector->planeCount; ++pln)
     {
-        processEdgeShadow(ssec, link->lineDef, link->side, pln, shadowDark);
+        processEdgeShadow(bspLeaf, link->lineDef, link->side, pln, shadowDark);
     }
 
     // Mark it rendered for this frame.
@@ -1454,18 +1454,18 @@ static void drawLinkedEdgeShadows(const subsector_t* ssec, shadowlink_t* link,
 }
 
 /**
- * Render the shadowpolygons linked to the subsector, if they haven't
+ * Render the shadowpolygons linked to the BspLeaf, if they haven't
  * already been rendered.
  *
- * Don't use the global radio state in here, the subsector can be part of
+ * Don't use the global radio state in here, the BSP leaf can be part of
  * any sector, not the one chosen for wall rendering.
  */
-static void radioSubsectorEdges(const subsector_t* subsector)
+static void radioBspLeafEdges(const BspLeaf* bspLeaf)
 {
     static size_t doPlaneSize = 0;
     static byte* doPlanes = NULL;
 
-    float sectorlight = subsector->sector->lightLevel;
+    float sectorlight = bspLeaf->sector->lightLevel;
     float shadowWallSize, shadowDark;
     boolean workToDo = false;
     float vec[3];
@@ -1483,12 +1483,12 @@ static void radioSubsectorEdges(const subsector_t* subsector)
     // Any need to continue?
     if(!(shadowDark > .0001f)) return;
 
-    vec[VX] = vx - subsector->midPoint.pos[VX];
-    vec[VY] = vz - subsector->midPoint.pos[VY];
+    vec[VX] = vx - bspLeaf->midPoint.pos[VX];
+    vec[VY] = vz - bspLeaf->midPoint.pos[VY];
     vec[VZ] = 0;
 
     // Do we need to enlarge the size of the doPlanes array?
-    if(subsector->sector->planeCount > doPlaneSize)
+    if(bspLeaf->sector->planeCount > doPlaneSize)
     {
         if(!doPlaneSize)
             doPlaneSize = 2;
@@ -1500,11 +1500,11 @@ static void radioSubsectorEdges(const subsector_t* subsector)
 
     memset(doPlanes, 0, doPlaneSize);
 
-    // See if any of this subsector's planes will get shadows.
+    // See if any of this BspLeaf's planes will get shadows.
     { uint pln;
-    for(pln = 0; pln < subsector->sector->planeCount; ++pln)
+    for(pln = 0; pln < bspLeaf->sector->planeCount; ++pln)
     {
-        const plane_t* plane = subsector->sector->planes[pln];
+        const plane_t* plane = bspLeaf->sector->planes[pln];
 
         vec[VZ] = vy - plane->visHeight;
 
@@ -1519,24 +1519,23 @@ static void radioSubsectorEdges(const subsector_t* subsector)
     if(!workToDo)
         return;
 
-    // We need to check all the shadow lines linked to this subsector for
+    // We need to check all the shadow lines linked to this BspLeaf for
     // the purpose of fakeradio shadowing.
     { shadowlink_t* link;
-    for(link = subsector->shadows; link != NULL; link = link->next)
+    for(link = bspLeaf->shadows; link != NULL; link = link->next)
     {
         // Already rendered during the current frame? We only want to
         // render each shadow once per frame.
         if(link->lineDef->shadowVisFrame[link->side] == (ushort) frameCount) continue;
-        drawLinkedEdgeShadows(subsector, link, doPlanes, shadowDark);
+        drawLinkedEdgeShadows(bspLeaf, link, doPlanes, shadowDark);
     }}
 }
 
-void Rend_RadioSubsectorEdges(subsector_t* subsector)
+void Rend_RadioBspLeafEdges(BspLeaf* bspLeaf)
 {
-    if(!rendFakeRadio || levelFullBright)
-        return;
+    if(!rendFakeRadio || levelFullBright) return;
 
-    radioSubsectorEdges(subsector);
+    radioBspLeafEdges(bspLeaf);
 }
 
 #if _DEBUG

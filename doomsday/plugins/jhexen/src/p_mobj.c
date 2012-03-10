@@ -88,7 +88,7 @@ static mobj_t *TIDMobj[MAX_TID_COUNT];
 
 const terraintype_t* P_MobjGetFloorTerrainType(mobj_t* mo)
 {
-    sector_t*           sec = P_GetPtrp(mo->subsector, DMU_SECTOR);
+    sector_t*           sec = P_GetPtrp(mo->bspLeaf, DMU_SECTOR);
 
     return P_PlaneMaterialTerrainType(sec, PLN_FLOOR);
 }
@@ -401,7 +401,7 @@ void P_MobjMoveXY(mobj_t* mo)
 
     if(mo->flags2 & MF2_WINDTHRUST)
     {
-        int special = P_ToXSectorOfSubsector(mo->subsector)->special;
+        int special = P_ToXSectorOfBspLeaf(mo->bspLeaf)->special;
         switch(special)
         {
         case 40:
@@ -668,7 +668,7 @@ explode:
         if(!INRANGE_OF(mo->mom[MX], 0, DROPOFFMOM_THRESHOLD) ||
            !INRANGE_OF(mo->mom[MY], 0, DROPOFFMOM_THRESHOLD))
         {
-            if(mo->floorZ != P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT))
+            if(mo->floorZ != P_GetFloatp(mo->bspLeaf, DMU_FLOOR_HEIGHT))
                 return;
         }
     }
@@ -940,7 +940,7 @@ void P_MobjMoveZ(mobj_t *mo)
             if(mo->type == MT_LIGHTNING_CEILING)
                 return;
 
-            if(P_GetIntp(P_GetPtrp(mo->subsector, DMU_CEILING_MATERIAL),
+            if(P_GetIntp(P_GetPtrp(mo->bspLeaf, DMU_CEILING_MATERIAL),
                            DMU_FLAGS) & MATF_SKYMASK)
             {
                 if(mo->type == MT_BLOODYSKULL)
@@ -1265,14 +1265,13 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
     }
     mo->lastLook = P_Random() % MAXPLAYERS;
 
-    // Must link before setting state.
     P_MobjSetState(mo, P_GetState(mo->type, SN_SPAWN));
 
-    // Set subsector and/or block links.
+    // Link the mobj into the world.
     P_MobjSetPosition(mo);
 
-    mo->floorZ = P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT);
-    mo->ceilingZ = P_GetFloatp(mo->subsector, DMU_CEILING_HEIGHT);
+    mo->floorZ = P_GetFloatp(mo->bspLeaf, DMU_FLOOR_HEIGHT);
+    mo->ceilingZ = P_GetFloatp(mo->bspLeaf, DMU_CEILING_HEIGHT);
 
     if((spawnFlags & MSF_Z_CEIL) || (info->flags & MF_SPAWNCEILING))
     {
@@ -1304,7 +1303,7 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
     mo->floorClip = 0;
 
     if((mo->flags2 & MF2_FLOORCLIP) &&
-        mo->pos[VZ] == P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT))
+        mo->pos[VZ] == P_GetFloatp(mo->bspLeaf, DMU_FLOOR_HEIGHT))
     {
         const terraintype_t* tt = P_MobjGetFloorTerrainType(mo);
 
@@ -1504,7 +1503,7 @@ boolean P_HitFloor(mobj_t *thing)
         return false;
     }
 
-    if(thing->floorZ != P_GetFloatp(thing->subsector, DMU_FLOOR_HEIGHT))
+    if(thing->floorZ != P_GetFloatp(thing->bspLeaf, DMU_FLOOR_HEIGHT))
     {   // Don't splash if landing on the edge above water/lava/etc....
         return false;
     }

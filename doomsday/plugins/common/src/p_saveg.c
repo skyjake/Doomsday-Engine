@@ -1463,9 +1463,9 @@ static void RestoreMobj(mobj_t *mo, int ver)
 
     P_MobjSetPosition(mo);
     mo->floorZ =
-        P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT);
+        P_GetFloatp(mo->bspLeaf, DMU_FLOOR_HEIGHT);
     mo->ceilingZ =
-        P_GetFloatp(mo->subsector, DMU_CEILING_HEIGHT);
+        P_GetFloatp(mo->bspLeaf, DMU_CEILING_HEIGHT);
 
     return;
 }
@@ -4201,7 +4201,7 @@ static void P_ArchiveSounds(void)
 
         if(i == numpolyobjs)
         {   // Sound is attached to a sector, not a polyobj.
-            sec = P_GetPtrp(P_SubsectorAtPointXY(node->mobj->pos[VX], node->mobj->pos[VY]),
+            sec = P_GetPtrp(P_BspLeafAtPointXY(node->mobj->pos[VX], node->mobj->pos[VY]),
                             DMU_SECTOR);
             difference = P_ToIndex(sec);
             SV_WriteLong(0); // 0 -- sector sound origin.

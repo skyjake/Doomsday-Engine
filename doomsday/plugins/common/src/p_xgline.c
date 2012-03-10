@@ -1728,7 +1728,7 @@ int C_DECL XLTrav_LineTeleport(linedef_t* newLine, boolean dummy,
     {
         mobj->floorClip = 0;
 
-        if(mobj->pos[VZ] == P_GetFloatp(mobj->subsector, DMU_FLOOR_HEIGHT))
+        if(mobj->pos[VZ] == P_GetFloatp(mobj->bspLeaf, DMU_FLOOR_HEIGHT))
         {
             const terraintype_t* tt = P_MobjGetFloorTerrainType(mobj);
 

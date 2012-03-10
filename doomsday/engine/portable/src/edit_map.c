@@ -604,7 +604,7 @@ boolean MPE_Begin(const char* mapUri)
     return true;
 }
 
-static void hardenSectorSSecList(GameMap* map, uint secIDX)
+static void hardenSectorBspLeafList(GameMap* map, uint secIDX)
 {
     assert(map && secIDX < map->numSectors);
     {
@@ -612,43 +612,43 @@ static void hardenSectorSSecList(GameMap* map, uint secIDX)
     uint i, n, count;
 
     count = 0;
-    for(i = 0; i < map->numSubsectors; ++i)
+    for(i = 0; i < map->numBspLeafs; ++i)
     {
-        subsector_t *ssec = &map->subsectors[i];
-        if(ssec->sector == sec)
+        BspLeaf *bspLeaf = &map->bspLeafs[i];
+        if(bspLeaf->sector == sec)
             ++count;
     }
 
     if(0 == count)
         return;
 
-    sec->subsectors = Z_Malloc((count + 1) * sizeof(subsector_t*), PU_MAPSTATIC, NULL);
+    sec->bspLeafs = Z_Malloc((count + 1) * sizeof(BspLeaf*), PU_MAPSTATIC, NULL);
 
     n = 0;
-    for(i = 0; i < map->numSubsectors; ++i)
+    for(i = 0; i < map->numBspLeafs; ++i)
     {
-        subsector_t* ssec = &map->subsectors[i];
-        if(ssec->sector == sec)
+        BspLeaf* bspLeaf = &map->bspLeafs[i];
+        if(bspLeaf->sector == sec)
         {
-            ssec->inSectorID = n;
-            sec->subsectors[n++] = ssec;
+            bspLeaf->inSectorID = n;
+            sec->bspLeafs[n++] = bspLeaf;
         }
     }
-    sec->subsectors[n] = NULL; // Terminate.
-    sec->subsectorCount = count;
+    sec->bspLeafs[n] = NULL; // Terminate.
+    sec->bspLeafCount = count;
     }
 }
 
 /**
- * Build subsector tables for all sectors.
+ * Build BspLeaf tables for all sectors.
  */
-static void buildSectorSSecLists(GameMap *map)
+static void buildSectorBspLeafLists(GameMap *map)
 {
-    VERBOSE( Con_Message(" Build subsector tables...\n") )
+    VERBOSE( Con_Message(" Build BSP leaf tables...\n") )
     { uint i;
     for(i = 0; i < map->numSectors; ++i)
     {
-        hardenSectorSSecList(map, i);
+        hardenSectorBspLeafList(map, i);
     }}
 }
 
@@ -943,7 +943,7 @@ static void updateMapBounds(GameMap* map)
     }
 }
 
-static void updateSSecMidPoint(subsector_t *sub)
+static void updateSSecMidPoint(BspLeaf *sub)
 {
     HEdge             **ptr;
     fvertex_t          *vtx;
@@ -980,15 +980,15 @@ static void updateSSecMidPoint(subsector_t *sub)
     sub->worldGridOffset[VY] = fmod(sub->aaBox.maxY, 64);
 }
 
-static void prepareSubsectors(GameMap* map)
+static void prepareBspLeafs(GameMap* map)
 {
     uint i;
 
-    for(i = 0; i < map->numSubsectors; ++i)
+    for(i = 0; i < map->numBspLeafs; ++i)
     {
-        subsector_t* ssec = &map->subsectors[i];
+        BspLeaf* bspLeaf = &map->bspLeafs[i];
 
-        updateSSecMidPoint(ssec);
+        updateSSecMidPoint(bspLeaf);
     }
 }
 
@@ -1425,7 +1425,7 @@ static void hardenPolyobjs(GameMap* dest, editmap_t* src)
             dy = line->L_v2pos[VY] - line->L_v1pos[VY];
             hedge->length = P_AccurateDistance(dx, dy);
             hedge->twin = NULL;
-            hedge->subsector = NULL;
+            hedge->bspLeaf = NULL;
             hedge->HE_frontsector = line->L_frontsector;
             hedge->HE_backsector = NULL;
             hedge->flags |= HEDGEF_POLYOBJ;
@@ -1886,17 +1886,17 @@ boolean MPE_End(void)
     // Polygonize.
     R_PolygonizeMap(gamemap);
 
-    buildSectorSSecLists(gamemap);
+    buildSectorBspLeafLists(gamemap);
 
     // Announce any issues detected with the map.
     MPE_PrintMapErrors();
 
-    // Map must be polygonized and sector->subsectors must be built before
+    // Map must be polygonized and sector->bspLeafs must be built before
     // this is called!
     hardenPlanes(gamemap, map);
 
     // Destroy the rest of editable map, we are finished with it.
-    // \note Only the vertexes should be left anyway.
+    /// @note Only the vertexes should be left anyway.
     destroyMap();
 
     if(!builtOK)
@@ -1912,7 +1912,7 @@ boolean MPE_End(void)
     finishSectors(gamemap);
     updateMapBounds(gamemap);
     S_DetermineSubsecsAffectingSectorReverb(gamemap);
-    prepareSubsectors(gamemap);
+    prepareBspLeafs(gamemap);
 
     P_FreeBadTexList();
     MPE_FreeUnclosedSectorList();

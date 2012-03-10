@@ -84,7 +84,7 @@ typedef struct hedge_s {
     struct vertex_s*    v[2];          // [Start, End] of the segment.
     struct linedef_s*   lineDef;
     struct sector_s*    sec[2];
-    struct subsector_s* subsector;
+    struct bspleaf_s*   bspLeaf;
     struct hedge_s*     twin;
     angle_t             angle;
     byte                side;          // 0=front, 1=back
@@ -95,9 +95,9 @@ typedef struct hedge_s {
     short               frameFlags;
 } HEdge;
 
-#define SUBF_MIDPOINT         0x80    // Midpoint is tri-fan centre.
+#define BLF_MIDPOINT         0x80    // Midpoint is tri-fan centre.
 
-typedef struct subsector_s {
+typedef struct bspleaf_s {
     runtime_mapdata_header_t header;
     unsigned int        hedgeCount;
     struct hedge_s**    hedges;        // [hedgeCount] size.
@@ -115,7 +115,7 @@ typedef struct subsector_s {
     struct fvertex_s**  vertices;      // [numvertices] size
     struct shadowlink_s* shadows;
     struct biassurface_s** bsuf;       // [sector->planeCount] size.
-} subsector_t;
+} BspLeaf;
 
 typedef enum {
     MEC_UNKNOWN = -1,
@@ -164,7 +164,7 @@ typedef struct material_s {
 
 typedef struct surfacedecor_s {
     float               pos[3]; // World coordinates of the decoration.
-    subsector_t*		subsector;
+    BspLeaf*		bspLeaf;
     const struct ded_decorlight_s* def;
 } surfacedecor_t;
 
@@ -297,10 +297,10 @@ typedef struct sector_s {
     struct mobj_s*      mobjList;      // List of mobjs in the sector.
     unsigned int        lineDefCount;
     struct linedef_s**  lineDefs;      // [lineDefCount+1] size.
-    unsigned int        subsectorCount;
-    struct subsector_s** subsectors;     // [subsectorCount+1] size.
-    unsigned int        numReverbSSecAttributors;
-    struct subsector_s** reverbSubsectors;  // [numReverbSSecAttributors] size.
+    unsigned int        bspLeafCount;
+    struct bspleaf_s**  bspLeafs;     // [bspLeafCount+1] size.
+    unsigned int        numReverbBspLeafAttributors;
+    struct bspleaf_s**  reverbBspLeafs;  // [numReverbBspLeafAttributors] size.
     ddmobj_base_t       soundOrg;
     unsigned int        planeCount;
     struct plane_s**    planes;        // [planeCount+1] size.
@@ -478,7 +478,7 @@ typedef struct bspnode_s {
     runtime_mapdata_header_t header;
     partition_t         partition;
     float               bBox[2][4];    // Bounding box for each child.
-    unsigned int        children[2];   // If NF_SUBSECTOR it's a subsector.
+    unsigned int        children[2];   // If NF_LEAF it's a BspLeaf.
 } BspNode;
 
 #endif

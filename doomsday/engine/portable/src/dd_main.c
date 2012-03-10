@@ -2130,8 +2130,8 @@ void* DD_GetVariable(int ddvalue)
         valueU = theMap? GameMap_HEdgeCount(theMap) : 0;
         return &valueU;
 
-    case DD_SUBSECTOR_COUNT:
-        valueU = theMap? GameMap_SubsectorCount(theMap) : 0;
+    case DD_BSPLEAF_COUNT:
+        valueU = theMap? GameMap_BspLeafCount(theMap) : 0;
         return &valueU;
 
     case DD_BSPNODE_COUNT:

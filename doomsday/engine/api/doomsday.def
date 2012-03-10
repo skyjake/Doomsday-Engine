@@ -449,12 +449,12 @@ EXPORTS
     P_TraceLOS                  @829 NONAME
     P_TraceOpening              @828 NONAME
     P_SetTraceOpening           @64 NONAME
-    P_SubsectorAtPointXY        @102 NONAME
+    P_BspLeafAtPointXY          @102 NONAME
     P_MobjsBoxIterator          @346 NONAME
     P_LinesBoxIterator          @435 NONAME
     P_AllLinesBoxIterator       @347 NONAME
     P_PolyobjsBoxIterator       @348 NONAME
-    P_SubsectorsBoxIterator     @345 NONAME
+    P_BspLeafsBoxIterator       @345 NONAME
     P_LineMobjsIterator         @73 NONAME
     P_SectorTouchingMobjsIterator @74 NONAME
     P_PathTraverse              @692 NONAME

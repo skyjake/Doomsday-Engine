@@ -53,7 +53,7 @@ Uri* mapUri; // Name by which the game referred to the current map.
 vertex_t* vertexes = NULL;
 HEdge* hedges = NULL;
 sector_t* sectors = NULL;
-subsector_t* subsectors = NULL;
+BspLeaf* bspLeafs = NULL;
 BspNode* bspNodes = NULL;
 linedef_t* lineDefs = NULL;
 sidedef_t* sideDefs = NULL;
@@ -121,7 +121,7 @@ void P_SetCurrentMap(GameMap* map)
         vertexes = 0;
         hedges = 0;
         sectors = 0;
-        subsectors = 0;
+        bspLeafs = 0;
         bspNodes = 0;
         lineDefs = 0;
         sideDefs = 0;
@@ -136,7 +136,7 @@ void P_SetCurrentMap(GameMap* map)
     vertexes = map->vertexes;
     hedges = map->hedges;
     sectors = map->sectors;
-    subsectors = map->subsectors;
+    bspLeafs = map->bspLeafs;
     bspNodes = map->bspNodes;
     lineDefs = map->lineDefs;
     sideDefs = map->sideDefs;

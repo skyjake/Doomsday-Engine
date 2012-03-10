@@ -209,7 +209,7 @@ struct vertex_s;
 struct linedef_s;
 struct side_s;
 struct hedge_s;
-struct subsector_s;
+struct bspleaf_s;
 struct sector_s;
 struct polyblock_s;
 struct polyobj_s;

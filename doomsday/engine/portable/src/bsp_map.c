@@ -129,7 +129,7 @@ static boolean hEdgeCollector(binarytree_t* tree, void* data)
             else
             {   // Count mode.
                 if(hEdge->index == -1)
-                    Con_Error("HEdge %p never reached a subsector!", hEdge);
+                    Con_Error("HEdge %p never reached a BspLeaf!", hEdge);
 
                 params->curIdx++;
             }
@@ -256,7 +256,7 @@ static void buildHEdgesFromBSPHEdges(GameMap* dest, binarytree_t* rootNode)
     M_Free(index);
 }
 
-static void hardenSubsectorHEdgeList(GameMap* dest, subsector_t* ssec,
+static void hardenBspLeafHEdgeList(GameMap* dest, BspLeaf* bspLeaf,
                               bsp_hedge_t* list, size_t hedgeCount)
 {
     size_t i;
@@ -270,12 +270,12 @@ static void hardenSubsectorHEdgeList(GameMap* dest, subsector_t* ssec,
     hedges[hedgeCount] = NULL; // Terminate.
 
     if(i != hedgeCount)
-        Con_Error("hardenSubsectorHEdgeList: Miscounted?");
+        Con_Error("hardenBspLeafHEdgeList: Miscounted?");
 
-    ssec->hedges = hedges;
+    bspLeaf->hedges = hedges;
 }
 
-static void hardenLeaf(GameMap* map, subsector_t* dest,
+static void hardenLeaf(GameMap* map, BspLeaf* dest,
                        const bspleafdata_t* src)
 {
     HEdge** segp;
@@ -290,14 +290,14 @@ static void hardenLeaf(GameMap* map, subsector_t* dest,
         hEdgeCount++;
     } while((hEdge = hEdge->next) != NULL);
 
-    dest->header.type = DMU_SUBSECTOR;
+    dest->header.type = DMU_BSPLEAF;
     dest->hedgeCount = (uint) hEdgeCount;
     dest->shadows = NULL;
     dest->vertices = NULL;
 
-    hardenSubsectorHEdgeList(map, dest, src->hEdges, hEdgeCount);
+    hardenBspLeafHEdgeList(map, dest, src->hEdges, hEdgeCount);
 
-    // Determine which sector this subsector belongs to.
+    // Determine which sector this BSP leaf belongs to.
     segp = dest->hedges;
     found = false;
     while(*segp)
@@ -309,19 +309,19 @@ static void hardenLeaf(GameMap* map, subsector_t* dest,
             dest->sector = side->sector;
             found = true;
         }
-        hedge->subsector = dest;
+        hedge->bspLeaf = dest;
         segp++;
     }
 
     if(!dest->sector)
     {
-        Con_Message("hardenLeaf: Warning orphan subsector %p.\n", dest);
+        Con_Message("hardenLeaf: Warning orphan BSP leaf %p.\n", dest);
     }
 }
 
 typedef struct {
-    GameMap*      dest;
-    uint            subsectorCurIndex;
+    GameMap*        dest;
+    uint            leafCurIndex;
     uint            nodeCurIndex;
 } hardenbspparams_t;
 
@@ -330,7 +330,7 @@ static boolean C_DECL hardenNode(binarytree_t* tree, void* data)
     binarytree_t*       right, *left;
     bspnodedata_t*      nodeData;
     hardenbspparams_t*  params;
-    BspNode*             node;
+    BspNode*            node;
 
     if(BinaryTree_IsLeaf(tree))
         return true; // Continue iteration.
@@ -362,10 +362,10 @@ static boolean C_DECL hardenNode(binarytree_t* tree, void* data)
         if(BinaryTree_IsLeaf(right))
         {
             bspleafdata_t*  leaf = (bspleafdata_t*) BinaryTree_GetData(right);
-            uint            idx = params->subsectorCurIndex++;
+            uint            idx = params->leafCurIndex++;
 
-            node->children[RIGHT] = idx | NF_SUBSECTOR;
-            hardenLeaf(params->dest, &params->dest->subsectors[idx], leaf);
+            node->children[RIGHT] = idx | NF_LEAF;
+            hardenLeaf(params->dest, &params->dest->bspLeafs[idx], leaf);
         }
         else
         {
@@ -381,10 +381,10 @@ static boolean C_DECL hardenNode(binarytree_t* tree, void* data)
         if(BinaryTree_IsLeaf(left))
         {
             bspleafdata_t*  leaf = (bspleafdata_t*) BinaryTree_GetData(left);
-            uint            idx = params->subsectorCurIndex++;
+            uint            idx = params->leafCurIndex++;
 
-            node->children[LEFT] = idx | NF_SUBSECTOR;
-            hardenLeaf(params->dest, &params->dest->subsectors[idx], leaf);
+            node->children[LEFT] = idx | NF_LEAF;
+            hardenLeaf(params->dest, &params->dest->bspLeafs[idx], leaf);
         }
         else
         {
@@ -422,22 +422,22 @@ static void hardenBSP(GameMap* dest, binarytree_t* rootNode)
     else
         dest->bspNodes = 0;
 
-    dest->numSubsectors = 0;
-    BinaryTree_PostOrder(rootNode, countSSec, &dest->numSubsectors);
-    dest->subsectors = Z_Calloc(dest->numSubsectors * sizeof(subsector_t), PU_MAPSTATIC, 0);
+    dest->numBspLeafs = 0;
+    BinaryTree_PostOrder(rootNode, countSSec, &dest->numBspLeafs);
+    dest->bspLeafs = Z_Calloc(dest->numBspLeafs * sizeof(BspLeaf), PU_MAPSTATIC, 0);
 
     if(!rootNode)
         return;
 
     if(BinaryTree_IsLeaf(rootNode))
     {
-        hardenLeaf(dest, &dest->subsectors[0], (bspleafdata_t*) BinaryTree_GetData(rootNode));
+        hardenLeaf(dest, &dest->bspLeafs[0], (bspleafdata_t*) BinaryTree_GetData(rootNode));
         return;
     }
 
     { hardenbspparams_t p;
     p.dest = dest;
-    p.subsectorCurIndex = 0;
+    p.leafCurIndex = 0;
     p.nodeCurIndex = 0;
     BinaryTree_PostOrder(rootNode, hardenNode, &p);
     }

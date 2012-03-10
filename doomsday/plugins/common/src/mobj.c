@@ -54,7 +54,7 @@ static float getFriction(mobj_t* mo)
     }
 
 #ifdef __JHERETIC__
-    if(P_ToXSector(P_GetPtrp(mo->subsector, DMU_SECTOR))->special == 15)
+    if(P_ToXSector(P_GetPtrp(mo->bspLeaf, DMU_SECTOR))->special == 15)
     {   // Friction_Low
         return FRICTION_LOW;
     }
@@ -103,7 +103,7 @@ void Mobj_XYMoveStopping(mobj_t* mo)
             if(!INRANGE_OF(mo->mom[MX], 0, DROPOFFMOMENTUM_THRESHOLD) ||
                !INRANGE_OF(mo->mom[MY], 0, DROPOFFMOMENTUM_THRESHOLD))
             {
-                if(mo->floorZ != P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT))
+                if(mo->floorZ != P_GetFloatp(mo->bspLeaf, DMU_FLOOR_HEIGHT))
                     return;
             }
         }

@@ -309,7 +309,7 @@ void LG_InitForMap(void)
                 sample.pos[VY] = lgOrigin[VY] + off[VY] + samplePoints[0].pos[VY];
 
                 ssamples[idx] =
-                    P_SubsectorAtPointXY(sample.pos[VX], sample.pos[VY])->sector;
+                    P_BspLeafAtPointXY(sample.pos[VX], sample.pos[VY])->sector;
                 if(!P_IsPointXYInSector(sample.pos[VX], sample.pos[VY], ssamples[idx]))
                    ssamples[idx] = NULL;
 
@@ -358,7 +358,7 @@ void LG_InitForMap(void)
                         sample.pos[VY] = lgOrigin[VY] + off[VY] + samplePoints[n].pos[VY];
 
                         ssamples[idx] =
-                            P_SubsectorAtPointXY(sample.pos[VX], sample.pos[VY])->sector;
+                            P_BspLeafAtPointXY(sample.pos[VX], sample.pos[VY])->sector;
                         if(!P_IsPointXYInSector(sample.pos[VX], sample.pos[VY], ssamples[idx]))
                            ssamples[idx] = NULL;
                     }
@@ -897,7 +897,7 @@ void LG_Evaluate(const vectorcomp_t point[3], float color[3])
      * lighting.
      *
      * Biasing the dimming is a good idea but the heights must be taken
-     * from the subsector which contains the surface and not the block.
+     * from the BSP Leaf which contains the surface and not the block.
      */
     if(block->sector)
     {

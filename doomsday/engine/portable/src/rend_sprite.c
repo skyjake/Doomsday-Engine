@@ -386,10 +386,10 @@ static void setupPSpriteParams(rendpspriteparams_t* params, vispsprite_t* spr)
         {
             float               lightLevel;
             const float*        secColor =
-                R_GetSectorLightColor(spr->data.sprite.subsector->sector);
+                R_GetSectorLightColor(spr->data.sprite.bspLeaf->sector);
 
             // No need for distance attentuation.
-            lightLevel = spr->data.sprite.subsector->sector->lightLevel;
+            lightLevel = spr->data.sprite.bspLeaf->sector->lightLevel;
 
             // Add extra light plus bonus.
             lightLevel += R_ExtraLightDelta();
@@ -409,7 +409,7 @@ static void setupPSpriteParams(rendpspriteparams_t* params, vispsprite_t* spr)
         lparams.center[VX] = spr->center[VX];
         lparams.center[VY] = spr->center[VY];
         lparams.center[VZ] = spr->center[VZ];
-        lparams.subsector = spr->data.sprite.subsector;
+        lparams.bspLeaf = spr->data.sprite.bspLeaf;
         lparams.ambientColor = params->ambientColor;
 
         params->vLightListIdx = R_CollectAffectingLights(&lparams);
@@ -774,10 +774,10 @@ static void setupModelParamsForVisPSprite(rendmodelparams_t* params,
         {
             float               lightLevel;
             const float*        secColor =
-                R_GetSectorLightColor(spr->data.model.subsector->sector);
+                R_GetSectorLightColor(spr->data.model.bspLeaf->sector);
 
             // Diminished light (with compression).
-            lightLevel = spr->data.model.subsector->sector->lightLevel;
+            lightLevel = spr->data.model.bspLeaf->sector->lightLevel;
 
             // No need for distance attentuation.
 
@@ -800,7 +800,7 @@ static void setupModelParamsForVisPSprite(rendmodelparams_t* params,
         lparams.center[VX] = spr->center[VX];
         lparams.center[VY] = spr->center[VY];
         lparams.center[VZ] = spr->center[VZ];
-        lparams.subsector = spr->data.model.subsector;
+        lparams.bspLeaf = spr->data.model.bspLeaf;
         lparams.ambientColor = params->ambientColor;
 
         params->vLightListIdx = R_CollectAffectingLights(&lparams);

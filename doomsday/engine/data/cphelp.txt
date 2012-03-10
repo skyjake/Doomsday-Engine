@@ -637,7 +637,7 @@ desc = 1=Display lumobj debug display.
 desc = 1=Display particle generator indices.
 
 [rend-dev-blockmap]
-desc = Enable drawing of the blockmap debug display: 1=Mobjs, 2=Linedefs, 3=Subsectors, 4=Polyobjs.
+desc = Enable drawing of the blockmap debug display: 1=Mobjs, 2=Linedefs, 3=BspLeafs, 4=Polyobjs.
 
 [rend-dev-blockmap-size]
 desc = Scale multiplier for the blockmap debug display.
@@ -1071,8 +1071,8 @@ desc = Halo dimming relative end distance.
 [rend-dev-freeze]
 desc = 1=Stop updating rendering lists.
 
-[rend-dev-cull-subsectors]
-desc = 1=Disable non-visible subsector culling.
+[rend-dev-cull-leafs]
+desc = 1=Disable non-visible bsp leaf culling.
 
 [rend-dev-mobj-bbox]
 desc = 1=Render mobj bounding boxes (as used for collision detection).

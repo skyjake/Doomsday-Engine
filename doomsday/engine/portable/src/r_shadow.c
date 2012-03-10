@@ -309,7 +309,7 @@ void R_InitShadowProjectionListsForNewFrame(void)
     }
 }
 
-uint R_ProjectShadowsToSurface(subsector_t* ssec, float blendFactor,
+uint R_ProjectShadowsToSurface(BspLeaf* bspLeaf, float blendFactor,
     vec3_t topLeft, vec3_t bottomRight, vec3_t tangent, vec3_t bitangent, vec3_t normal)
 {
     projectshadowonsurfaceiteratorparams_t p;
@@ -325,7 +325,7 @@ uint R_ProjectShadowsToSurface(subsector_t* ssec, float blendFactor,
     p.spParams.bitangent = bitangent;
     p.spParams.normal = normal;
 
-    R_IterateSubsectorContacts2(ssec, OT_MOBJ, RIT_ProjectShadowToSurfaceIterator, (void*)&p);
+    R_IterateBspLeafContacts2(bspLeaf, OT_MOBJ, RIT_ProjectShadowToSurfaceIterator, (void*)&p);
     // Did we produce a projection list?
     return p.listIdx;
 }
@@ -364,9 +364,9 @@ plane_t* R_FindShadowPlane(mobj_t* mo)
 {
     plane_t* plane = NULL;
     assert(mo);
-    if(mo->subsector)
+    if(mo->bspLeaf)
     {
-        plane = mo->subsector->sector->SP_plane(PLN_FLOOR);
+        plane = mo->bspLeaf->sector->SP_plane(PLN_FLOOR);
         P_MobjSectorsIterator(mo, RIT_FindShadowPlaneIterator, (void*)&plane);
     }
     return plane;

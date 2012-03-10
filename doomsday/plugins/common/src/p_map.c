@@ -182,7 +182,7 @@ float P_GetGravity(void)
  * Checks the reject matrix to find out if the two sectors are visible
  * from each other.
  */
-static boolean checkReject(subsector_t* a, subsector_t* b)
+static boolean checkReject(BspLeaf* a, BspLeaf* b)
 {
     if(rejectMatrix != NULL)
     {
@@ -190,7 +190,7 @@ static boolean checkReject(subsector_t* a, subsector_t* b)
         sector_t*           sec1 = P_GetPtrp(a, DMU_SECTOR);
         sector_t*           sec2 = P_GetPtrp(b, DMU_SECTOR);
 
-        // Determine subsector entries in REJECT table.
+        // Determine BSP leaf entries in REJECT table.
         s1 = P_ToIndex(sec1);
         s2 = P_ToIndex(sec2);
         pnum = s1 * numsectors + s2;
@@ -222,14 +222,14 @@ boolean P_CheckSight(const mobj_t* from, const mobj_t* to)
     float               fPos[3];
 
     // If either is unlinked, they can't see each other.
-    if(!from->subsector || !to->subsector)
+    if(!from->bspLeaf || !to->bspLeaf)
         return false;
 
     if(to->dPlayer && (to->dPlayer->flags & DDPF_CAMERA))
         return false; // Cameramen don't exist!
 
     // Check for trivial rejection.
-    if(!checkReject(from->subsector, to->subsector))
+    if(!checkReject(from->bspLeaf, to->bspLeaf))
         return false;
 
     fPos[VX] = from->pos[VX];
@@ -290,7 +290,7 @@ int PIT_StompThing(mobj_t* mo, void* data)
 boolean P_TeleportMove(mobj_t* thing, float x, float y, boolean alwaysStomp)
 {
     int stomping;
-    subsector_t* newSSec;
+    BspLeaf* newSSec;
     AABoxf tmBoxExpanded;
 
     // Kill anything occupying the position.
@@ -305,7 +305,7 @@ boolean P_TeleportMove(mobj_t* thing, float x, float y, boolean alwaysStomp)
     tmBox.maxX = tm[VX] + tmThing->radius;
     tmBox.maxY = tm[VY] + tmThing->radius;
 
-    newSSec = P_SubsectorAtPointXY(tm[VX], tm[VY]);
+    newSSec = P_BspLeafAtPointXY(tm[VX], tm[VY]);
 
     ceilingLine = floorLine = NULL;
 #if !__JHEXEN__
@@ -313,7 +313,7 @@ boolean P_TeleportMove(mobj_t* thing, float x, float y, boolean alwaysStomp)
     tmUnstuck = thing->dPlayer && thing->dPlayer->mo == thing;
 #endif
 
-    // The base floor / ceiling is from the subsector that contains the
+    // The base floor / ceiling is from the BSP leaf that contains the
     // point. Any contacted lines the step closer together will adjust them.
     tmFloorZ = tmDropoffZ = P_GetFloatp(newSSec, DMU_FLOOR_HEIGHT);
     tmCeilingZ = P_GetFloatp(newSSec, DMU_CEILING_HEIGHT);
@@ -1160,7 +1160,7 @@ boolean P_CheckPosition3f(mobj_t* thing, float x, float y, float z)
     tmBox.maxX = tm[VX] + tmThing->radius;
     tmBox.maxY = tm[VY] + tmThing->radius;
 
-    newSec = P_GetPtrp(P_SubsectorAtPointXY(tm[VX], tm[VY]), DMU_SECTOR);
+    newSec = P_GetPtrp(P_BspLeafAtPointXY(tm[VX], tm[VY]), DMU_SECTOR);
 
     ceilingLine = floorLine = NULL;
 #if !__JHEXEN__
@@ -1168,7 +1168,7 @@ boolean P_CheckPosition3f(mobj_t* thing, float x, float y, float z)
     tmUnstuck = ((thing->dPlayer && thing->dPlayer->mo == thing)? true : false);
 #endif
 
-    // The base floor/ceiling is from the subsector that contains the point.
+    // The base floor/ceiling is from the BSP leaf that contains the point.
     // Any contacted lines the step closer together will adjust them.
     tmFloorZ = tmDropoffZ = P_GetFloatp(newSec, DMU_FLOOR_HEIGHT);
     tmCeilingZ = P_GetFloatp(newSec, DMU_CEILING_HEIGHT);
@@ -1279,7 +1279,7 @@ static boolean P_TryMove2(mobj_t* thing, float x, float y, boolean dropoff)
             goto pushline;
         }
         else if(blockingMobj->pos[VZ] + blockingMobj->height - thing->pos[VZ] > 24 ||
-                (P_GetFloatp(blockingMobj->subsector, DMU_CEILING_HEIGHT) -
+                (P_GetFloatp(blockingMobj->bspLeaf, DMU_CEILING_HEIGHT) -
                  (blockingMobj->pos[VZ] + blockingMobj->height) < thing->height) ||
                 (tmCeilingZ - (blockingMobj->pos[VZ] + blockingMobj->height) <
                  thing->height))
@@ -1450,7 +1450,7 @@ static boolean P_TryMove2(mobj_t* thing, float x, float y, boolean dropoff)
 #if __JHEXEN__
         // Must stay within a sector of a certain floor type?
         if((thing->flags2 & MF2_CANTLEAVEFLOORPIC) &&
-           (tmFloorMaterial != P_GetPtrp(thing->subsector, DMU_FLOOR_MATERIAL) ||
+           (tmFloorMaterial != P_GetPtrp(thing->bspLeaf, DMU_FLOOR_MATERIAL) ||
             !FEQUAL(tmFloorZ, thing->pos[VZ])))
         {
             return false;
@@ -1490,7 +1490,7 @@ static boolean P_TryMove2(mobj_t* thing, float x, float y, boolean dropoff)
     {
         thing->floorClip = 0;
 
-        if(thing->pos[VZ] == P_GetFloatp(thing->subsector, DMU_FLOOR_HEIGHT))
+        if(thing->pos[VZ] == P_GetFloatp(thing->bspLeaf, DMU_FLOOR_HEIGHT))
         {
             const terraintype_t* tt = P_MobjGetFloorTerrainType(thing);
 
@@ -1649,7 +1649,7 @@ int PTR_ShootTraverse(const intercept_t* in, void* paramaters)
     const divline_t* trace = P_TraceLOS();
     const TraceOpening* opening;
     sector_t*           frontSec = NULL, *backSec = NULL;
-    subsector_t* contact, *originSub;
+    BspLeaf* contact, *originSub;
     xline_t*            xline;
     boolean             lineWasHit;
 
@@ -1732,8 +1732,8 @@ int PTR_ShootTraverse(const intercept_t* in, void* paramaters)
 
         lineWasHit = true;
 
-        // This is the subsector where the trace originates.
-        originSub = P_SubsectorAtPointXY(tracePos[VX], tracePos[VY]);
+        // This is the BSP leaf where the trace originates.
+        originSub = P_BspLeafAtPointXY(tracePos[VX], tracePos[VY]);
 
         d[VX] = pos[VX] - tracePos[VX];
         d[VY] = pos[VY] - tracePos[VY];
@@ -1741,7 +1741,7 @@ int PTR_ShootTraverse(const intercept_t* in, void* paramaters)
 
         if(!INRANGE_OF(d[VZ], 0, .0001f)) // Epsilon
         {
-            contact = P_SubsectorAtPointXY(pos[VX], pos[VY]);
+            contact = P_BspLeafAtPointXY(pos[VX], pos[VY]);
             step = P_ApproxDistance3(d[VX], d[VY], d[VZ]);
             stepv[VX] = d[VX] / step;
             stepv[VY] = d[VY] / step;
@@ -1758,7 +1758,7 @@ int PTR_ShootTraverse(const intercept_t* in, void* paramaters)
                 pos[VX] = tracePos[VX] + d[VX];
                 pos[VY] = tracePos[VY] + d[VY];
                 pos[VZ] = tracePos[VZ] + d[VZ];
-                contact = P_SubsectorAtPointXY(pos[VX], pos[VY]);
+                contact = P_BspLeafAtPointXY(pos[VX], pos[VY]);
             }
 
             // Should we backtrack to hit a plane instead?
@@ -2941,7 +2941,7 @@ int PIT_CheckOnmobjZ(mobj_t* thing, void* data)
 
 mobj_t* P_CheckOnMobj(mobj_t* thing)
 {
-    subsector_t*        newSSec;
+    BspLeaf*        newSSec;
     float               pos[3];
     mobj_t              oldMo;
     AABoxf tmBoxExpanded;
@@ -2972,11 +2972,11 @@ mobj_t* P_CheckOnMobj(mobj_t* thing)
     tmBox.maxX = pos[VX] + tmThing->radius;
     tmBox.maxY = pos[VY] + tmThing->radius;
 
-    newSSec = P_SubsectorAtPointXY(pos[VX], pos[VY]);
+    newSSec = P_BspLeafAtPointXY(pos[VX], pos[VY]);
     ceilingLine = floorLine = NULL;
 
-    // The base floor/ceiling is from the subsector that contains the
-    // point. Any contacted lines the step closer together will adjust them.
+    // The base floor/ceiling is from the BSP leaf that contains the point.
+    // Any contacted lines the step closer together will adjust them.
 
     tmFloorZ = tmDropoffZ = P_GetFloatp(newSSec, DMU_FLOOR_HEIGHT);
     tmCeilingZ = P_GetFloatp(newSSec, DMU_CEILING_HEIGHT);

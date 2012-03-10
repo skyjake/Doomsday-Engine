@@ -368,13 +368,13 @@ void SB_InitForMap(const char* uniqueID)
     for(i = 0; i < NUM_SECTORS; ++i)
     {
         sector_t* sec = &sectors[i];
-        if(sec->subsectors && *sec->subsectors)
+        if(sec->bspLeafs && *sec->bspLeafs)
         {
-            subsector_t** ssecIter = sec->subsectors;
+            BspLeaf** ssecIter = sec->bspLeafs;
             do
             {
-                subsector_t* ssec = *ssecIter;
-                numVertIllums += ssec->numVertices * sec->planeCount;
+                BspLeaf* bspLeaf = *ssecIter;
+                numVertIllums += bspLeaf->numVertices * sec->planeCount;
                 ssecIter++;
             } while(*ssecIter);
         }
@@ -415,23 +415,23 @@ void SB_InitForMap(const char* uniqueID)
     for(i = 0; i < NUM_SECTORS; ++i)
     {
         sector_t* sec = &sectors[i];
-        if(sec->subsectors && *sec->subsectors)
+        if(sec->bspLeafs && *sec->bspLeafs)
         {
-            subsector_t** ssecIter = sec->subsectors;
+            BspLeaf** ssecIter = sec->bspLeafs;
             do
             {
-                subsector_t* ssec = *ssecIter;
+                BspLeaf* bspLeaf = *ssecIter;
                 uint j;
 
                 for(j = 0; j < sec->planeCount; ++j)
                 {
                     biassurface_t* bsuf = SB_CreateSurface();
 
-                    bsuf->size = ssec->numVertices;
+                    bsuf->size = bspLeaf->numVertices;
                     bsuf->illum = illums;
-                    illums += ssec->numVertices;
+                    illums += bspLeaf->numVertices;
 
-                    ssec->bsuf[j] = bsuf;
+                    bspLeaf->bsuf[j] = bsuf;
                 }
                 ssecIter++;
             } while(*ssecIter);
@@ -641,7 +641,7 @@ static void updateAffected2(biassurface_t* bsuf, const struct rvertex_s* rvertic
         if(src->intensity <= 0)
             continue;
 
-        // Calculate minimum 2D distance to the subsector.
+        // Calculate minimum 2D distance to the BSP leaf.
         /// @fixme This is probably too accurate an estimate.
         for(k = 0; k < bsuf->size; ++k)
         {
@@ -781,7 +781,7 @@ BEGIN_PROF( PROF_BIAS_UPDATE );
             sector_t*           sector;
             float               oldIntensity = s->intensity;
 
-            sector = P_SubsectorAtPointXY(s->pos[VX], s->pos[VY])->sector;
+            sector = P_BspLeafAtPointXY(s->pos[VX], s->pos[VY])->sector;
 
             // The lower intensities are useless for light emission.
             if(sector->lightLevel >= maxLevel)
@@ -923,9 +923,9 @@ static boolean SB_CheckColorOverride(biasaffection_t *affected)
  * @param numVertices   Number of vertices (in the array) to be lit.
  * @param normal        Surface normal.
  * @param sectorLightLevel Sector light level.
- * @param mapObject     Ptr to either a hedge or subsector.
- * @param elmIdx        Used with subsectors to select a specific plane.
- * @param isHEdge       @c true, if @a mapObject is a HEdge ELSE a Subsector.
+ * @param mapObject     Ptr to either a HEdge or BspLeaf.
+ * @param elmIdx        Used with BspLeafs to select a specific plane.
+ * @param isHEdge       @c true, if @a mapObject is a HEdge ELSE a BspLeaf.
  */
 void SB_RendPoly(struct ColorRawf_s* rcolors, biassurface_t* bsuf,
                  const struct rvertex_s* rvertices,
@@ -970,11 +970,11 @@ void SB_RendPoly(struct ColorRawf_s* rcolors, biassurface_t* bsuf,
         }
         else
         {
-            subsector_t* ssec = (subsector_t*) mapObject;
+            BspLeaf* bspLeaf = (BspLeaf*) mapObject;
             vec3_t point;
 
-            V3_Set(point, ssec->midPoint.pos[VX], ssec->midPoint.pos[VY],
-                   ssec->sector->planes[elmIdx]->height);
+            V3_Set(point, bspLeaf->midPoint.pos[VX], bspLeaf->midPoint.pos[VY],
+                   bspLeaf->sector->planes[elmIdx]->height);
 
             updateAffected2(bsuf, rvertices, numVertices, point, normal);
         }

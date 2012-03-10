@@ -368,7 +368,7 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
     const particle_t* pt, const ptcstage_t* st, const ded_ptcstage_t* dst,
     float* center, float dist, float size, float mark, float alpha)
 {
-    subsector_t* ssec;
+    BspLeaf* bspLeaf;
     int frame;
 
     // Render the particle as a model.
@@ -376,7 +376,7 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
     params->center[VY] = center[VZ];
     params->center[VZ] = params->gzt = center[VY];
     params->distance = dist;
-    ssec = P_SubsectorAtPointXY(center[VX], center[VZ]);
+    bspLeaf = P_BspLeafAtPointXY(center[VX], center[VZ]);
 
     params->extraScale = size; // Extra scaling factor.
     params->mf = &modefs[dst->model];
@@ -453,7 +453,7 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
         lparams.center[VX] = params->center[VX];
         lparams.center[VY] = params->center[VY];
         lparams.center[VZ] = params->center[VZ];
-        lparams.subsector = ssec;
+        lparams.bspLeaf = bspLeaf;
         lparams.ambientColor = params->ambientColor;
 
         params->vLightListIdx = R_CollectAffectingLights(&lparams);

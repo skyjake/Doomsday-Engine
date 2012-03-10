@@ -65,7 +65,7 @@ xline_t*    P_ToXLine(linedef_t* line);
 xline_t*    P_GetXLine(uint index);
 xsector_t*  P_ToXSector(sector_t* sector);
 xsector_t*  P_GetXSector(uint index);
-xsector_t*  P_ToXSectorOfSubsector(subsector_t* sub);
+xsector_t*  P_ToXSectorOfBspLeaf(BspLeaf* sub);
 
 /**
  * Update the specified player's automap.

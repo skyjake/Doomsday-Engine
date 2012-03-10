@@ -542,9 +542,9 @@ void Sfx_ListenerUpdate(void)
         AudioDriver_SFX()->Listenerv(SFXLP_VELOCITY, vec);
 
         // Reverb effects. Has the current sector changed?
-        if(listenerSector != listener->subsector->sector)
+        if(listenerSector != listener->bspLeaf->sector)
         {
-            listenerSector = listener->subsector->sector;
+            listenerSector = listener->bspLeaf->sector;
 
             for(i = 0; i < NUM_REVERB_DATA; ++i)
             {

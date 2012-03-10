@@ -90,7 +90,7 @@ struct seg
     PTR     vertex_s*[2] v          // [Start, End] of the segment.
     PTR     linedef_s*  lineDef
     PTR     sector_s*[2] sec
-    PTR     subsector_s* subsector
+    PTR     bspleaf_s*  bspLeaf
     PTR     hedge_s*    twin
     ANGLE   angle_t     angle
     BYTE    byte        side        // 0=front, 1=back
@@ -102,10 +102,10 @@ struct seg
 end
 
 internal
-#define SUBF_MIDPOINT         0x80    // Midpoint is tri-fan centre.
+#define BLF_MIDPOINT             0x80 ///< Midpoint is tri-fan centre.
 end
 
-struct subsector
+struct BspLeaf
     UINT    uint        hedgeCount
     PTR     hedge_s**   hedges // [hedgeCount] size.
     PTR     polyobj_s*  polyObj // NULL, if there is no polyobj.
@@ -179,7 +179,7 @@ internal
 
 typedef struct surfacedecor_s {
     float               pos[3]; // World coordinates of the decoration.
-    subsector_t*		subsector;
+    BspLeaf*		bspLeaf;
     const struct ded_decorlight_s* def;
 } surfacedecor_t;
 end
@@ -318,10 +318,10 @@ struct sector
     PTR     mobj_s*     mobjList // List of mobjs in the sector.
     UINT    uint        lineDefCount
     PTR     linedef_s** lineDefs // [lineDefCount+1] size.
-    UINT    uint        subsectorCount
-    PTR     subsector_s** subsectors // [subsectorCount+1] size.
-    -       uint        numReverbSubsectorAttributors
-    -       subsector_s** reverbSubsectors // [numReverbSubsectorAttributors] size.
+    UINT    uint        bspLeafCount
+    PTR     bspleaf_s** bspLeafs // [bspLeafCount+1] size.
+    -       uint        numReverbBspLeafAttributors
+    -       bspleaf_s** reverbBspLeafs // [numReverbBspLeafAttributors] size.
     PTR     ddmobj_base_t soundOrg
     UINT    uint        planeCount
     -       plane_s**   planes // [planeCount+1] size.
@@ -513,5 +513,5 @@ end
 struct BspNode
     -       partition_t partition
     FLOAT   float[2][4] bBox // Bounding box for each child.
-    UINT    uint[2]     children // If NF_SUBSECTOR it's a subsector.
+    UINT    uint[2]     children // If NF_LEAF it's a BspLeaf.
 end

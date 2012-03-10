@@ -133,37 +133,37 @@ static ownernode_t* newOwnerNode(void)
     return node;
 }
 
-static void setSubsectorSectorOwner(ownerlist_t* ownerList, subsector_t* ssec)
+static void setBspLeafSectorOwner(ownerlist_t* ownerList, BspLeaf* bspLeaf)
 {
     ownernode_t* node;
 
-    if(!ssec) return;
+    if(!bspLeaf) return;
 
     // Add a new owner.
     // NOTE: No need to check for duplicates.
     ownerList->count++;
 
     node = newOwnerNode();
-    node->data = ssec;
+    node->data = bspLeaf;
     node->next = ownerList->head;
     ownerList->head = node;
 }
 
-static void findSubsectorsAffectingSector(GameMap* map, uint secIDX)
+static void findBspLeafsAffectingSector(GameMap* map, uint secIDX)
 {
     assert(map && secIDX < map->numSectors);
     {
     sector_t* sec = &map->sectors[secIDX];
-    ownerlist_t subsectorOwnerList;
+    ownerlist_t bspLeafOwnerList;
     ownernode_t* node, *p;
-    subsector_t* sub;
+    BspLeaf* bspLeaf;
     float bbox[4];
     uint i;
 
     if(0 == sec->lineDefCount)
         return;
 
-    memset(&subsectorOwnerList, 0, sizeof(subsectorOwnerList));
+    memset(&bspLeafOwnerList, 0, sizeof(bspLeafOwnerList));
 
     memcpy(bbox, sec->bBox, sizeof(bbox));
     bbox[BOXLEFT]   -= 128;
@@ -171,42 +171,40 @@ static void findSubsectorsAffectingSector(GameMap* map, uint secIDX)
     bbox[BOXTOP]    += 128;
     bbox[BOXBOTTOM] -= 128;
 
-/*#if _DEBUG
-Con_Message("sector %i: (%f,%f) - (%f,%f)\n", c,
-            bbox[BOXLEFT], bbox[BOXTOP], bbox[BOXRIGHT], bbox[BOXBOTTOM]);
-#endif*/
+    /*DEBUG_Message(("sector %i: (%f,%f) - (%f,%f)\n", c,
+                     bbox[BOXLEFT], bbox[BOXTOP], bbox[BOXRIGHT], bbox[BOXBOTTOM]));*/
 
-    for(i = 0; i < map->numSubsectors; ++i)
+    for(i = 0; i < map->numBspLeafs; ++i)
     {
-        sub = &map->subsectors[i];
+        bspLeaf = &map->bspLeafs[i];
 
-        // Is this subsector close enough?
-        if(sub->sector == sec || // subsector is IN this sector
-           (sub->midPoint.pos[VX] > bbox[BOXLEFT] &&
-            sub->midPoint.pos[VX] < bbox[BOXRIGHT] &&
-            sub->midPoint.pos[VY] < bbox[BOXTOP] &&
-            sub->midPoint.pos[VY] > bbox[BOXBOTTOM]))
+        // Is this BSP leaf close enough?
+        if(bspLeaf->sector == sec || // leaf is IN this sector
+           (bspLeaf->midPoint.pos[VX] > bbox[BOXLEFT] &&
+            bspLeaf->midPoint.pos[VX] < bbox[BOXRIGHT] &&
+            bspLeaf->midPoint.pos[VY] < bbox[BOXTOP] &&
+            bspLeaf->midPoint.pos[VY] > bbox[BOXBOTTOM]))
         {
             // It will contribute to the reverb settings of this sector.
-            setSubsectorSectorOwner(&subsectorOwnerList, sub);
+            setBspLeafSectorOwner(&bspLeafOwnerList, bspLeaf);
         }
     }
 
     // Now harden the list.
-    sec->numReverbSSecAttributors = subsectorOwnerList.count;
-    if(sec->numReverbSSecAttributors)
+    sec->numReverbBspLeafAttributors = bspLeafOwnerList.count;
+    if(sec->numReverbBspLeafAttributors)
     {
-        subsector_t **ptr;
+        BspLeaf **ptr;
 
-        sec->reverbSubsectors =
-            Z_Malloc((sec->numReverbSSecAttributors + 1) * sizeof(subsector_t*),
+        sec->reverbBspLeafs =
+            Z_Malloc((sec->numReverbBspLeafAttributors + 1) * sizeof(BspLeaf*),
                      PU_MAPSTATIC, 0);
 
-        for(i = 0, ptr = sec->reverbSubsectors, node = subsectorOwnerList.head;
-            i < sec->numReverbSSecAttributors; ++i, ptr++)
+        for(i = 0, ptr = sec->reverbBspLeafs, node = bspLeafOwnerList.head;
+            i < sec->numReverbBspLeafAttributors; ++i, ptr++)
         {
             p = node->next;
-            *ptr = (subsector_t*) node->data;
+            *ptr = (BspLeaf*) node->data;
 
             if(i < map->numSectors - 1)
             {
@@ -226,8 +224,8 @@ Con_Message("sector %i: (%f,%f) - (%f,%f)\n", c,
 }
 
 /**
- * Called during map init to determine which subsectors affect the reverb
- * properties of each sector. Given that subsectors do not change shape (in
+ * Called during map init to determine which BSP leafs affect the reverb
+ * properties of each sector. Given that BSP leafs do not change shape (in
  * two dimensions at least), they do not move and are not created/destroyed
  * once the map has been loaded; this step can be pre-processed.
  */
@@ -235,14 +233,14 @@ void S_DetermineSubsecsAffectingSectorReverb(GameMap* map)
 {
     uint i, startTime;
     ownernode_t* node, *p;
-
     assert(map);
 
     startTime = Sys_GetRealTime();
 
+    /// @optimize Make use of the BSP leaf blockmap.
     for(i = 0; i < map->numSectors; ++i)
     {
-        findSubsectorsAffectingSector(map, i);
+        findBspLeafsAffectingSector(map, i);
     }
 
     // Free any nodes left in the unused list.
@@ -261,7 +259,7 @@ void S_DetermineSubsecsAffectingSectorReverb(GameMap* map)
              (Sys_GetRealTime() - startTime) / 1000.0f));
 }
 
-static boolean calcSubsectorReverb(subsector_t* ssec)
+static boolean calcBspLeafReverb(BspLeaf* bspLeaf)
 {
     float materials[NUM_MATERIAL_ENV_CLASSES];
     material_env_class_t mclass;
@@ -269,24 +267,24 @@ static boolean calcSubsectorReverb(subsector_t* ssec)
     float total = 0;
     uint i, v;
 
-    if(!ssec->sector)
+    if(!bspLeaf->sector)
     {
-        ssec->reverb[SRD_SPACE] = ssec->reverb[SRD_VOLUME] =
-            ssec->reverb[SRD_DECAY] = ssec->reverb[SRD_DAMPING] = 0;
+        bspLeaf->reverb[SRD_SPACE] = bspLeaf->reverb[SRD_VOLUME] =
+            bspLeaf->reverb[SRD_DECAY] = bspLeaf->reverb[SRD_DAMPING] = 0;
         return false;
     }
 
     memset(&materials, 0, sizeof(materials));
 
-    // Space is the rough volume of the subsector (bounding box).
-    ssec->reverb[SRD_SPACE] =
-        (int) (ssec->sector->SP_ceilheight - ssec->sector->SP_floorheight) *
-        (ssec->aaBox.maxX - ssec->aaBox.minX) *
-        (ssec->aaBox.maxY - ssec->aaBox.minY);
+    // Space is the rough volume of the BSP leaf (bounding box).
+    bspLeaf->reverb[SRD_SPACE] =
+        (int) (bspLeaf->sector->SP_ceilheight - bspLeaf->sector->SP_floorheight) *
+        (bspLeaf->aaBox.maxX - bspLeaf->aaBox.minX) *
+        (bspLeaf->aaBox.maxY - bspLeaf->aaBox.minY);
 
     // The other reverb properties can be found out by taking a look at the
-    // materials of all surfaces in the subsector.
-    hedgeIter = ssec->hedges;
+    // materials of all surfaces in the BSP leaf.
+    hedgeIter = bspLeaf->hedges;
     while(*hedgeIter)
     {
         HEdge* hedge = *hedgeIter;
@@ -306,8 +304,8 @@ static boolean calcSubsectorReverb(subsector_t* ssec)
     if(!total)
     {
         // Huh?
-        ssec->reverb[SRD_VOLUME] = ssec->reverb[SRD_DECAY] =
-            ssec->reverb[SRD_DAMPING] = 0;
+        bspLeaf->reverb[SRD_VOLUME] = bspLeaf->reverb[SRD_DECAY] =
+            bspLeaf->reverb[SRD_DAMPING] = 0;
         return false;
     }
 
@@ -320,28 +318,26 @@ static boolean calcSubsectorReverb(subsector_t* ssec)
         v += materials[i] * matInfo[i].volumeMul;
     if(v > 255)
         v = 255;
-    ssec->reverb[SRD_VOLUME] = v;
+    bspLeaf->reverb[SRD_VOLUME] = v;
 
     // Decay time.
     for(i = 0, v = 0; i < NUM_MATERIAL_ENV_CLASSES; ++i)
         v += materials[i] * matInfo[i].decayMul;
     if(v > 255)
         v = 255;
-    ssec->reverb[SRD_DECAY] = v;
+    bspLeaf->reverb[SRD_DECAY] = v;
 
     // High frequency damping.
     for(i = 0, v = 0; i < NUM_MATERIAL_ENV_CLASSES; ++i)
         v += materials[i] * matInfo[i].dampingMul;
     if(v > 255)
         v = 255;
-    ssec->reverb[SRD_DAMPING] = v;
+    bspLeaf->reverb[SRD_DAMPING] = v;
 
-/*#if _DEBUG
-Con_Message("ssec %04i: vol:%3i sp:%3i dec:%3i dam:%3i\n",
-            GET_SUBSECTOR_IDX(ssec), ssec->reverb[SRD_VOLUME],
-            ssec->reverb[SRD_SPACE], ssec->reverb[SRD_DECAY],
-            ssec->reverb[SRD_DAMPING]);
-#endif*/
+    /* DEBUG_Message(("bspLeaf %04i: vol:%3i sp:%3i dec:%3i dam:%3i\n",
+                      GET_BSPLEAF_IDX(bspLeaf), bspLeaf->reverb[SRD_VOLUME],
+                      bspLeaf->reverb[SRD_SPACE], bspLeaf->reverb[SRD_DECAY],
+                      bspLeaf->reverb[SRD_DAMPING])); */
 
     return true;
 }
@@ -351,13 +347,13 @@ Con_Message("ssec %04i: vol:%3i sp:%3i dec:%3i dam:%3i\n",
  * whenever any of the properties governing reverb properties have changed
  * (i.e. hedge/plane texture or plane height changes).
  *
- * PRE: Subsector attributors must have been determined first.
+ * PRE: BspLeaf attributors must have been determined first.
  *
  * @param sec  Ptr to the sector to calculate reverb properties of.
  */
 void S_CalcSectorReverb(sector_t* sec)
 {
-    subsector_t* sub;
+    BspLeaf* sub;
     float spaceScatter;
     uint sectorSpace;
 
@@ -367,19 +363,17 @@ void S_CalcSectorReverb(sector_t* sec)
         (sec->bBox[BOXRIGHT] - sec->bBox[BOXLEFT]) *
         (sec->bBox[BOXTOP] - sec->bBox[BOXBOTTOM]);
 
-/*#if _DEBUG
-Con_Message("sector %i: secsp:%i\n", c, sectorSpace);
-#endif*/
+    // DEBUG_Message(("sector %i: secsp:%i\n", c, sectorSpace));
 
     sec->reverb[SRD_SPACE] = sec->reverb[SRD_VOLUME] =
         sec->reverb[SRD_DECAY] = sec->reverb[SRD_DAMPING] = 0;
 
     { uint i;
-    for(i = 0; i < sec->numReverbSSecAttributors; ++i)
+    for(i = 0; i < sec->numReverbBspLeafAttributors; ++i)
     {
-        sub = sec->reverbSubsectors[i];
+        sub = sec->reverbBspLeafs[i];
 
-        if(calcSubsectorReverb(sub))
+        if(calcBspLeafReverb(sub))
         {
             sec->reverb[SRD_SPACE]   += sub->reverb[SRD_SPACE];
 

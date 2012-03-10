@@ -668,7 +668,7 @@ void P_PlayerInSpecialSector(player_t* player)
         1.0 / 32 * 10,
         1.0 / 32 * 25
     };
-    sector_t* sector = P_GetPtrp(player->plr->mo->subsector, DMU_SECTOR);
+    sector_t* sector = P_GetPtrp(player->plr->mo->bspLeaf, DMU_SECTOR);
     xsector_t* xsector;
 
     if(player->plr->mo->pos[VZ] != P_GetFloatp(sector, DMU_FLOOR_HEIGHT))
@@ -772,7 +772,7 @@ void P_PlayerOnSpecialFloor(player_t* player)
         return;
 
     if(player->plr->mo->pos[VZ] >
-       P_GetFloatp(player->plr->mo->subsector, DMU_FLOOR_HEIGHT))
+       P_GetFloatp(player->plr->mo->bspLeaf, DMU_FLOOR_HEIGHT))
     {
         return; // Player is not touching the floor
     }

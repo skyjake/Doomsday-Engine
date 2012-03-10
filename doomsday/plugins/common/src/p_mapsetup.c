@@ -150,16 +150,15 @@ xsector_t* P_ToXSector(sector_t* sector)
 }
 
 /**
- * Given a subsector - find its parent xsector.
+ * Given a BSP leaf - find its parent xsector.
  */
-xsector_t* P_ToXSectorOfSubsector(subsector_t* sub)
+xsector_t* P_ToXSectorOfBspLeaf(BspLeaf* bspLeaf)
 {
-    sector_t*           sec;
+    sector_t* sec;
 
-    if(!sub)
-        return NULL;
+    if(!bspLeaf) return NULL;
 
-    sec = P_GetPtrp(sub, DMU_SECTOR);
+    sec = P_GetPtrp(bspLeaf, DMU_SECTOR);
 
     // Is it a dummy?
     if(P_IsDummy(sec))
@@ -556,8 +555,8 @@ static void loadMapSpots(void)
         // Sound sequence origin?
         if(spot->doomEdNum >= 1400 && spot->doomEdNum < 1410)
         {
-            subsector_t* ssec = P_SubsectorAtPointXY(spot->pos[VX], spot->pos[VY]);
-            xsector_t* xsector = P_ToXSector(P_GetPtrp(ssec, DMU_SECTOR));
+            BspLeaf* bspLeaf = P_BspLeafAtPointXY(spot->pos[VX], spot->pos[VY]);
+            xsector_t* xsector = P_ToXSector(P_GetPtrp(bspLeaf, DMU_SECTOR));
 
             xsector->seqType = spot->doomEdNum - 1400;
             continue;

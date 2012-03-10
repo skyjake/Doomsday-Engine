@@ -87,8 +87,8 @@ typedef struct gamemap_s {
     uint numSectors;
     sector_t* sectors;
 
-    uint numSubsectors;
-    subsector_t* subsectors;
+    uint numBspLeafs;
+    BspLeaf* bspLeafs;
 
     uint numBspNodes;
     BspNode* bspNodes;
@@ -112,7 +112,7 @@ typedef struct gamemap_s {
     struct blockmap_s* mobjBlockmap;
     struct blockmap_s* polyobjBlockmap;
     struct blockmap_s* lineDefBlockmap;
-    struct blockmap_s* subsectorBlockmap;
+    struct blockmap_s* bspLeafBlockmap;
 
     nodepile_t mobjNodes, lineNodes; // All kinds of wacky links.
     nodeindex_t* lineLinks; // Indices to roots.
@@ -234,13 +234,13 @@ sidedef_t* GameMap_SideDef(GameMap* map, uint idx);
 sector_t* GameMap_Sector(GameMap* map, uint idx);
 
 /**
- * Lookup a Subsector by its unique index.
+ * Lookup a BspLeaf by its unique index.
  *
  * @param map  GameMap instance.
- * @param idx  Unique index of the subsector.
- * @return  Pointer to Subsector with this index else @c NULL if @a idx is not valid.
+ * @param idx  Unique index of the bsp leaf.
+ * @return  Pointer to BspLeaf with this index else @c NULL if @a idx is not valid.
  */
-subsector_t* GameMap_Subsector(GameMap* map, uint idx);
+BspLeaf* GameMap_BspLeaf(GameMap* map, uint idx);
 
 /**
  * Lookup a HEdge by its unique index.
@@ -297,13 +297,13 @@ int GameMap_SideDefIndex(GameMap* map, sidedef_t* side);
 int GameMap_SectorIndex(GameMap* map, sector_t* sector);
 
 /**
- * Lookup the unique index for @a subsector.
+ * Lookup the unique index for @a bspLeaf.
  *
  * @param map  GameMap instance.
- * @param subsector  Subsector to lookup.
- * @return  Unique index for the Subsector else @c -1 if not present.
+ * @param bspLeaf  BspLeaf to lookup.
+ * @return  Unique index for the BspLeaf else @c -1 if not present.
  */
-int GameMap_SubsectorIndex(GameMap* map, subsector_t* subsector);
+int GameMap_BspLeafIndex(GameMap* map, BspLeaf* bspLeaf);
 
 /**
  * Lookup the unique index for @a hedge.
@@ -356,12 +356,12 @@ uint GameMap_SideDefCount(GameMap* map);
 uint GameMap_SectorCount(GameMap* map);
 
 /**
- * Retrieve the number of Subsector instances owned by this.
+ * Retrieve the number of BspLeaf instances owned by this.
  *
  * @param map  GameMap instance.
- * @return  Number Subsector.
+ * @return  Number BspLeaf.
  */
-uint GameMap_SubsectorCount(GameMap* map);
+uint GameMap_BspLeafCount(GameMap* map);
 
 /**
  * Retrieve the number of HEdge instances owned by this.
@@ -633,26 +633,26 @@ int GameMap_AllLineDefsBoxIterator(GameMap* map, const AABoxf* box,
     int (*callback) (linedef_t*, void*), void* parameters);
 
 /**
- * Construct an initial (empty) Subsector Blockmap for this map.
+ * Construct an initial (empty) BspLeaf Blockmap for this map.
  *
  * @param min  Minimal coordinates for the map.
  * @param max  Maximal coordinates for the map.
  */
-void GameMap_InitSubsectorBlockmap(GameMap* map, const_pvec2_t min, const_pvec2_t max);
+void GameMap_InitBspLeafBlockmap(GameMap* map, const_pvec2_t min, const_pvec2_t max);
 
-void GameMap_LinkSubsectorInBlockmap(GameMap* map, subsector_t* subsector);
+void GameMap_LinkBspLeafInBlockmap(GameMap* map, BspLeaf* bspLeaf);
 
-int GameMap_IterateCellSubsectors(GameMap* map, const uint coords[2],
+int GameMap_IterateCellBspLeafs(GameMap* map, const uint coords[2],
     sector_t* sector, const AABoxf* box, int localValidCount,
-    int (*callback) (subsector_t*, void*), void* parameters);
-int GameMap_IterateCellBlockSubsectors(GameMap* map, const struct gridmapblock_s* blockCoords,
+    int (*callback) (BspLeaf*, void*), void* parameters);
+int GameMap_IterateCellBlockBspLeafs(GameMap* map, const struct gridmapblock_s* blockCoords,
     sector_t* sector, const AABoxf* box, int localValidCount,
-    int (*callback) (subsector_t*, void*), void* parameters);
+    int (*callback) (BspLeaf*, void*), void* parameters);
 
-int GameMap_SubsectorsBoxIterator(GameMap* map, const AABoxf* box, sector_t* sector,
-    int (*callback) (subsector_t*, void*), void* parameters);
+int GameMap_BspLeafsBoxIterator(GameMap* map, const AABoxf* box, sector_t* sector,
+    int (*callback) (BspLeaf*, void*), void* parameters);
 
-int GameMap_SubsectorIterator(GameMap* map, int (*callback) (subsector_t*, void*), void* parameters);
+int GameMap_BspLeafIterator(GameMap* map, int (*callback) (BspLeaf*, void*), void* parameters);
 
 /**
  * Construct an initial (empty) Polyobj Blockmap for this map.
@@ -706,18 +706,18 @@ int GameMap_PathXYTraverse(GameMap* map, float fromX, float fromY, float toX, fl
     int flags, traverser_t callback);
 
 /**
- * Determine the BSP leaf (subsector) on the back side of the BS partition that
- * lies in front of the specified point within the map's coordinate space.
+ * Determine the BSP leaf on the back side of the BS partition that lies in front
+ * of the specified point within the map's coordinate space.
  *
- * @note Always returns a valid subsector although the point may not actually lay
+ * @note Always returns a valid BspLeaf although the point may not actually lay
  *       within it (however it is on the same side of the space partition)!
  *
  * @param map  GameMap instance.
  * @param x  X coordinate of the point to test.
  * @param y  Y coordinate of the point to test.
- * @return  Subsector instance for that BSP node's leaf.
+ * @return  BspLeaf instance for that BSP node's leaf.
  */
-subsector_t* GameMap_SubsectorAtPoint(GameMap* map, float point[2]);
-subsector_t* GameMap_SubsectorAtPointXY(GameMap* map, float x, float y);
+BspLeaf* GameMap_BspLeafAtPoint(GameMap* map, float point[2]);
+BspLeaf* GameMap_BspLeafAtPointXY(GameMap* map, float x, float y);
 
 #endif /// LIBDENG_GAMEMAP_H

@@ -39,7 +39,7 @@
 #define GET_LINE_IDX(li)        GameMap_LineDefIndex(theMap, li)
 #define GET_SIDE_IDX(si)        GameMap_SideDefIndex(theMap, si)
 #define GET_SECTOR_IDX(sec)     GameMap_SectorIndex(theMap, sec)
-#define GET_SUBSECTOR_IDX(ssec) GameMap_SubsectorIndex(theMap, ssec)
+#define GET_BSPLEAF_IDX(bspLeaf) GameMap_BspLeafIndex(theMap, bspLeaf)
 #define GET_HEDGE_IDX(he)       GameMap_HEdgeIndex(theMap, he)
 #define GET_BSPNODE_IDX(nd)     GameMap_BspNodeIndex(theMap, nd)
 
@@ -47,7 +47,7 @@
 #define LINE_PTR(idx)           GameMap_LineDef(theMap, idx)
 #define SIDE_PTR(idx)           GameMap_SideDef(theMap, idx)
 #define SECTOR_PTR(idx)         GameMap_Sector(theMap, idx)
-#define SUBSECTOR_PTR(idx)      GameMap_Subsector(theMap, idx)
+#define BSPLEAF_PTR(idx)        GameMap_BspLeaf(theMap, idx)
 #define HEDGE_PTR(idx)          GameMap_HEdge(theMap, idx)
 #define BSPNODE_PTR(idx)        GameMap_BspNode(theMap, idx)
 
@@ -55,16 +55,16 @@
 #define NUM_LINEDEFS            GameMap_LineDefCount(theMap)
 #define NUM_SIDEDEFS            GameMap_SideDefCount(theMap)
 #define NUM_SECTORS             GameMap_SectorCount(theMap)
-#define NUM_SUBSECTORS          GameMap_SubsectorCount(theMap)
+#define NUM_BSPLEAFS            GameMap_BspLeafCount(theMap)
 #define NUM_HEDGES              GameMap_HEdgeCount(theMap)
 #define NUM_BSPNODES            GameMap_BspNodeCount(theMap)
 
 #define NUM_POLYOBJS            GameMap_PolyobjCount(theMap)
 
 // Node flags.
-#define NF_SUBSECTOR            0x80000000
+#define NF_LEAF            0x80000000
 
-// Runtime map data objects, such as vertices, sectors, and subsectors all
+// Runtime map data objects, such as vertices, sectors, and BspLeafs all
 // have this header as their first member. This makes it possible to treat
 // an unknown map data pointer as a runtime_mapdata_header_t* and determine
 // its type. Note that this information is internal to the engine.
@@ -176,7 +176,7 @@ extern Uri* mapUri;
 extern vertex_t* vertexes;
 extern HEdge* hedges;
 extern sector_t* sectors;
-extern subsector_t* subsectors;
+extern BspLeaf* bspLeafs;
 extern BspNode* bspNodes;
 extern linedef_t* lineDefs;
 extern sidedef_t* sideDefs;

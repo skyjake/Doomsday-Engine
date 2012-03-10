@@ -1154,7 +1154,7 @@ int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
     if(player)
     {
         // End of game hell hack.
-        if(P_ToXSectorOfSubsector(target->subsector)->special == 11 &&
+        if(P_ToXSectorOfBspLeaf(target->bspLeaf)->special == 11 &&
            damage >= target->health)
         {
             damage = target->health - 1;

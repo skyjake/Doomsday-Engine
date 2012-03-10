@@ -557,13 +557,13 @@ boolean DAM_AttemptMapLoad(const Uri* uri)
 
             Rend_DecorInit();
 
-            // Init blockmap for searching subsectors.
+            // Init blockmap for searching BSP leafs.
             V2_Set(min, map->bBox[BOXLEFT],  map->bBox[BOXBOTTOM]);
             V2_Set(max, map->bBox[BOXRIGHT], map->bBox[BOXTOP]);
-            GameMap_InitSubsectorBlockmap(map, min, max);
-            for(i = 0; i < map->numSubsectors; ++i)
+            GameMap_InitBspLeafBlockmap(map, min, max);
+            for(i = 0; i < map->numBspLeafs; ++i)
             {
-                GameMap_LinkSubsectorInBlockmap(map, map->subsectors + i);
+                GameMap_LinkBspLeafInBlockmap(map, map->bspLeafs + i);
             }
 
             map->uri = Uri_NewCopy(dam->uri);

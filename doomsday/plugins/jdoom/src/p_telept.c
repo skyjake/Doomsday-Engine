@@ -77,7 +77,7 @@ static int findMobj(thinker_t* th, void* context)
 
     // Must be in the specified sector?
     if(params->sec &&
-       params->sec != P_GetPtrp(mo->subsector, DMU_SECTOR))
+       params->sec != P_GetPtrp(mo->bspLeaf, DMU_SECTOR))
         return false; // Continue iteration.
 
     // Found it!
@@ -171,7 +171,7 @@ int EV_Teleport(linedef_t* line, int side, mobj_t* mo, boolean spawnFog)
         {
             mo->floorClip = 0;
 
-            if(mo->pos[VZ] == P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT))
+            if(mo->pos[VZ] == P_GetFloatp(mo->bspLeaf, DMU_FLOOR_HEIGHT))
             {
                 const terraintype_t* tt = P_MobjGetFloorTerrainType(mo);
 

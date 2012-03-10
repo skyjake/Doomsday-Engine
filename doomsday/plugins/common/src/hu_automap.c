@@ -675,9 +675,9 @@ static int rendSeg(void* hedge_, void* data)
     }
 }
 
-static int rendSegsOfSubsector(subsector_t* ssec, void* context)
+static int rendBspLeafHEdges(BspLeaf* bspLeaf, void* context)
 {
-    return P_Iteratep(ssec, DMU_HEDGE, context, rendSeg);
+    return P_Iteratep(bspLeaf, DMU_HEDGE, context, rendSeg);
 }
 
 /**
@@ -703,14 +703,14 @@ static void renderWalls(uiwidget_t* obj, int objType, boolean addToLists)
     {
         AABoxf aaBox;
         UIAutomap_PVisibleAABounds(obj, &aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
-        P_SubsectorsBoxIterator(&aaBox, NULL, rendSegsOfSubsector, obj);
+        P_BspLeafsBoxIterator(&aaBox, NULL, rendBspLeafHEdges, obj);
     }
     else
     {   // No. As the map lists are considered static we want them to contain all
         // walls, not just those visible *now* (note rotation).
-        for(i = 0; i < numsubsectors; ++i)
+        for(i = 0; i < numbspleafs; ++i)
         {
-            P_Iteratep(P_ToPtr(DMU_SUBSECTOR, i), DMU_HEDGE, obj, rendSeg);
+            P_Iteratep(P_ToPtr(DMU_BSPLEAF, i), DMU_HEDGE, obj, rendSeg);
         }
     }
 }

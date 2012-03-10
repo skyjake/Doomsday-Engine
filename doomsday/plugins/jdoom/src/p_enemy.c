@@ -101,7 +101,7 @@ static const float dirSpeed[8][2] =
 void P_NoiseAlert(mobj_t *target, mobj_t *emitter)
 {
     VALIDCOUNT++;
-    P_RecursiveSound(target, P_GetPtrp(emitter->subsector, DMU_SECTOR), 0);
+    P_RecursiveSound(target, P_GetPtrp(emitter->bspLeaf, DMU_SECTOR), 0);
 }
 
 static boolean checkMeleeRange(mobj_t *actor)
@@ -531,7 +531,7 @@ void C_DECL A_Look(mobj_t* actor)
     sector_t*           sec = NULL;
     mobj_t*             targ;
 
-    sec = P_GetPtrp(actor->subsector, DMU_SECTOR);
+    sec = P_GetPtrp(actor->bspLeaf, DMU_SECTOR);
 
     if(!sec)
         return;
@@ -1379,7 +1379,7 @@ void C_DECL A_PainShootSkull(mobj_t* actor, angle_t angle)
         if(!(newmobj = P_SpawnMobj3fv(MT_SKULL, pos, angle, 0)))
             return;
 
-        sec = P_GetPtrp(newmobj->subsector, DMU_SECTOR);
+        sec = P_GetPtrp(newmobj->bspLeaf, DMU_SECTOR);
 
         // Check to see if the new Lost Soul's z value is above the
         // ceiling of its new sector, or below the floor. If so, kill it.

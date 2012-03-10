@@ -101,7 +101,7 @@ const char* DMU_Str(uint prop)
         { DMU_LINEDEF, "DMU_LINEDEF" },
         { DMU_SIDEDEF, "DMU_SIDEDEF" },
         { DMU_BSPNODE, "DMU_BSPNODE" },
-        { DMU_SUBSECTOR, "DMU_SUBSECTOR" },
+        { DMU_BSPLEAF, "DMU_BSPLEAF" },
         { DMU_SECTOR, "DMU_SECTOR" },
         { DMU_PLANE, "DMU_PLANE" },
         { DMU_MATERIAL, "DMU_MATERIAL" },
@@ -192,7 +192,7 @@ int DMU_GetType(const void* ptr)
         case DMU_HEDGE:
         case DMU_LINEDEF:
         case DMU_SIDEDEF:
-        case DMU_SUBSECTOR:
+        case DMU_BSPLEAF:
         case DMU_SECTOR:
         case DMU_PLANE:
         case DMU_BSPNODE:
@@ -433,8 +433,8 @@ uint P_ToIndex(const void* ptr)
     case DMU_SIDEDEF:
         return GET_SIDE_IDX((sidedef_t*) ptr);
 
-    case DMU_SUBSECTOR:
-        return GET_SUBSECTOR_IDX((subsector_t*) ptr);
+    case DMU_BSPLEAF:
+        return GET_BSPLEAF_IDX((BspLeaf*) ptr);
 
     case DMU_SECTOR:
         return GET_SECTOR_IDX((sector_t*) ptr);
@@ -473,8 +473,8 @@ void* P_ToPtr(int type, uint index)
     case DMU_SIDEDEF:
         return SIDE_PTR(index);
 
-    case DMU_SUBSECTOR:
-        return SUBSECTOR_PTR(index);
+    case DMU_BSPLEAF:
+        return BSPLEAF_PTR(index);
 
     case DMU_SECTOR:
         return SECTOR_PTR(index);
@@ -531,14 +531,14 @@ int P_Iteratep(void *ptr, uint prop, void* context, int (*callback) (void* p, vo
             }
             return result;
           }
-        case DMU_SUBSECTOR:
+        case DMU_BSPLEAF:
             {
             sector_t*           sec = (sector_t*) ptr;
             int                 result = false; // Continue iteration.
 
-            if(sec->subsectors)
+            if(sec->bspLeafs)
             {
-                subsector_t** ssecIter = sec->subsectors;
+                BspLeaf** ssecIter = sec->bspLeafs;
                 while(*ssecIter && !(result = callback(*ssecIter, context)))
                     ssecIter++;
             }
@@ -548,17 +548,17 @@ int P_Iteratep(void *ptr, uint prop, void* context, int (*callback) (void* p, vo
             Con_Error("P_Iteratep: Property %s unknown/not vector.\n", DMU_Str(prop));
         }
         break;
-    case DMU_SUBSECTOR:
+    case DMU_BSPLEAF:
         switch(prop)
         {
         case DMU_HEDGE:
             {
-            subsector_t* ssec = (subsector_t*) ptr;
+            BspLeaf* bspLeaf = (BspLeaf*) ptr;
             int result = false; // Continue iteration.
 
-            if(ssec->hedges)
+            if(bspLeaf->hedges)
             {
-                HEdge** segIter = ssec->hedges;
+                HEdge** segIter = bspLeaf->hedges;
                 while(*segIter && !(result = callback(*segIter, context)))
                     segIter++;
             }
@@ -620,9 +620,9 @@ int P_Callback(int type, uint index, void* context,
             return callback(BSPNODE_PTR(index), context);
         break;
 
-    case DMU_SUBSECTOR:
-        if(index < NUM_SUBSECTORS)
-            return callback(SUBSECTOR_PTR(index), context);
+    case DMU_BSPLEAF:
+        if(index < NUM_BSPLEAFS)
+            return callback(BSPLEAF_PTR(index), context);
         break;
 
     case DMU_SECTOR:
@@ -675,7 +675,7 @@ int P_Callbackp(int type, void* ptr, void* context,
     case DMU_LINEDEF:
     case DMU_SIDEDEF:
     case DMU_BSPNODE:
-    case DMU_SUBSECTOR:
+    case DMU_BSPLEAF:
     case DMU_SECTOR:
     case DMU_PLANE:
     case DMU_MATERIAL:
@@ -917,7 +917,7 @@ static int setProperty(void* obj, void* context)
     linedef_t*          updateLinedef = NULL;
     sidedef_t*          updateSidedef = NULL;
     surface_t*          updateSurface = NULL;
-    // subsector_t*       updateSubsector = NULL;
+    // BspLeaf*       updateBspLeaf = NULL;
 
     /**
      * \algorithm:
@@ -936,18 +936,18 @@ static int setProperty(void* obj, void* context)
      */
 
     // Dereference where necessary. Note the order, these cascade.
-    if(args->type == DMU_SUBSECTOR)
+    if(args->type == DMU_BSPLEAF)
     {
-        // updateSubsector = (subsector_t*) obj;
+        // updateBspLeaf = (BspLeaf*) obj;
 
         if(args->modifiers & DMU_FLOOR_OF_SECTOR)
         {
-            obj = ((subsector_t*) obj)->sector;
+            obj = ((BspLeaf*) obj)->sector;
             args->type = DMU_SECTOR;
         }
         else if(args->modifiers & DMU_CEILING_OF_SECTOR)
         {
-            obj = ((subsector_t*) obj)->sector;
+            obj = ((BspLeaf*) obj)->sector;
             args->type = DMU_SECTOR;
         }
     }
@@ -1093,8 +1093,8 @@ static int setProperty(void* obj, void* context)
         SideDef_SetProperty(obj, args);
         break;
 
-    case DMU_SUBSECTOR:
-        Subsector_SetProperty(obj, args);
+    case DMU_BSPLEAF:
+        BspLeaf_SetProperty(obj, args);
         break;
 
     case DMU_SECTOR:
@@ -1165,9 +1165,9 @@ static int setProperty(void* obj, void* context)
         R_UpdateSector(updateSector2, false);
     }
 
-/*  if(updateSubsector)
+/*  if(updateBspLeaf)
     {
-        R_UpdateSubsector(updateSubsector, false);
+        R_UpdateBspLeaf(updateBspLeaf, false);
     } */
 
     return true; // Continue iteration.
@@ -1399,16 +1399,16 @@ static int getProperty(void* obj, void* context)
     setargs_t*          args = (setargs_t*) context;
 
     // Dereference where necessary. Note the order, these cascade.
-    if(args->type == DMU_SUBSECTOR)
+    if(args->type == DMU_BSPLEAF)
     {
         if(args->modifiers & DMU_FLOOR_OF_SECTOR)
         {
-            obj = ((subsector_t*) obj)->sector;
+            obj = ((BspLeaf*) obj)->sector;
             args->type = DMU_SECTOR;
         }
         else if(args->modifiers & DMU_CEILING_OF_SECTOR)
         {
-            obj = ((subsector_t*) obj)->sector;
+            obj = ((BspLeaf*) obj)->sector;
             args->type = DMU_SECTOR;
         }
     }
@@ -1550,8 +1550,8 @@ static int getProperty(void* obj, void* context)
         SideDef_GetProperty(obj, args);
         break;
 
-    case DMU_SUBSECTOR:
-        Subsector_GetProperty(obj, args);
+    case DMU_BSPLEAF:
+        BspLeaf_GetProperty(obj, args);
         break;
 
     case DMU_MATERIAL:

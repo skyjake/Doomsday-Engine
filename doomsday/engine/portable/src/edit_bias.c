@@ -695,7 +695,7 @@ static void SBE_DrawLevelGauge(const Point2Raw* origin, int height)
 
     int off, secY, p, minY = 0, maxY = 0;
     Point2Raw labelOrigin;
-    subsector_t* ssec;
+    BspLeaf* bspLeaf;
     sector_t* sector;
     source_t* src;
     char buf[80];
@@ -706,10 +706,10 @@ static void SBE_DrawLevelGauge(const Point2Raw* origin, int height)
     else
         src = SBE_GetNearest();
 
-    ssec = P_SubsectorAtPointXY(src->pos[VX], src->pos[VY]);
-    if(!ssec) return;
+    bspLeaf = P_BspLeafAtPointXY(src->pos[VX], src->pos[VY]);
+    if(!bspLeaf) return;
 
-    sector = ssec->sector;
+    sector = bspLeaf->sector;
 
     if(lastSector != sector)
     {

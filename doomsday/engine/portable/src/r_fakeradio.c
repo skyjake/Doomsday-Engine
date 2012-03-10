@@ -180,30 +180,28 @@ void R_UpdateVertexShadowOffsets(vertex_t *vtx)
 }
 
 /**
- * Link a hedge to an arbitary subsector for the purposes of shadowing.
+ * Link a half-edge to an arbitary BSP leaf for the purposes of shadowing.
  */
-static void linkShadowLineDefToSSec(linedef_t *line, byte side,
-                                    subsector_t *subsector)
+static void linkShadowLineDefToSSec(linedef_t *line, byte side, BspLeaf* bspLeaf)
 {
-    shadowlink_t           *link;
+    shadowlink_t* link;
 
 #ifdef _DEBUG
-// Check the links for dupes!
-{
-shadowlink_t *i;
-
-for(i = subsector->shadows; i; i = i->next)
-    if(i->lineDef == line && i->side == side)
-        Con_Error("R_LinkShadow: Already here!!\n");
-}
+    // Check the links for dupes!
+    { shadowlink_t* i;
+    for(i = bspLeaf->shadows; i; i = i->next)
+    {
+        if(i->lineDef == line && i->side == side)
+            Con_Error("R_LinkShadow: Already here!!\n");
+    }}
 #endif
 
     // We'll need to allocate a new link.
     link = ZBlockSet_Allocate(shadowLinksBlockSet);
 
     // The links are stored into a linked list.
-    link->next = subsector->shadows;
-    subsector->shadows = link;
+    link->next = bspLeaf->shadows;
+    bspLeaf->shadows = link;
     link->lineDef = line;
     link->side = side;
 }
@@ -214,13 +212,13 @@ typedef struct shadowlinkerparms_s {
 } shadowlinkerparms_t;
 
 /**
- * If the shadow polygon (parm) contacts the subsector, link the poly
- * to the subsector's shadow list.
+ * If the shadow polygon (parm) contacts the BspLeaf, link the poly
+ * to the BspLeaf's shadow list.
  */
-int RIT_ShadowSubsectorLinker(subsector_t* subsector, void *parm)
+int RIT_ShadowBspLeafLinker(BspLeaf* bspLeaf, void* parm)
 {
     shadowlinkerparms_t* data = (shadowlinkerparms_t*) parm;
-    linkShadowLineDefToSSec(data->lineDef, data->side, subsector);
+    linkShadowLineDefToSSec(data->lineDef, data->side, bspLeaf);
     return false; // Continue iteration.
 }
 
@@ -258,14 +256,14 @@ void R_InitFakeRadioForMap(void)
     /**
      * The algorithm:
      *
-     * 1. Use the subsector blockmap to look for all the blocks that are
+     * 1. Use the BSP leaf blockmap to look for all the blocks that are
      *    within the linedef's shadow bounding box.
      *
-     * 2. Check the subsectors whose sector is the same as the linedef.
+     * 2. Check the BspLeafs whose sector is the same as the linedef.
      *
-     * 3. If any of the shadow points are in the subsector, or any of the
-     *    shadow edges cross one of the subsector's edges (not parallel),
-     *    link the linedef to the subsector.
+     * 3. If any of the shadow points are in the BSP leaf, or any of the
+     *    shadow edges cross one of the BSP leaf's edges (not parallel),
+     *    link the linedef to the BspLeaf.
      */
     shadowLinksBlockSet = ZBlockSet_New(sizeof(shadowlink_t), 1024, PU_MAP);
 
@@ -299,7 +297,7 @@ void R_InitFakeRadioForMap(void)
             data.lineDef = line;
             data.side = j;
 
-            P_SubsectorsBoxIterator(&bounds, line->L_sector(j), RIT_ShadowSubsectorLinker, &data);
+            P_BspLeafsBoxIterator(&bounds, line->L_sector(j), RIT_ShadowBspLeafLinker, &data);
         }
     }
 

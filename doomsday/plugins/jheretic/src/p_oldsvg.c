@@ -252,7 +252,7 @@ static void SV_v13_ReadMobj(void)
     SV_v13_ReadLong();
     SV_v13_ReadLong();
 
-    // Subsector.
+    // BspLeaf.
     SV_v13_ReadLong();
 
     floorz = FIX2FLT(SV_v13_ReadLong());
@@ -355,8 +355,8 @@ static void SV_v13_ReadMobj(void)
         mo->player->plr->mo->dPlayer = mo->player->plr;
     }
     P_MobjSetPosition(mo);
-    mo->floorZ = P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT);
-    mo->ceilingZ = P_GetFloatp(mo->subsector, DMU_CEILING_HEIGHT);
+    mo->floorZ = P_GetFloatp(mo->bspLeaf, DMU_FLOOR_HEIGHT);
+    mo->ceilingZ = P_GetFloatp(mo->bspLeaf, DMU_CEILING_HEIGHT);
 }
 
 void P_v13_UnArchivePlayers(void)

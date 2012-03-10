@@ -1,4 +1,4 @@
-/**\file p_subsector.h
+/**\file bspleaf.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,23 +23,23 @@
  */
 
 /**
- * Map subsector
+ * Map BSP leaf
  */
 
-#ifndef LIBDENG_MAP_SUBSECTOR_H
-#define LIBDENG_MAP_SUBSECTOR_H
+#ifndef LIBDENG_MAP_BSPLEAF_H
+#define LIBDENG_MAP_BSPLEAF_H
 
 #include "r_data.h"
 #include "p_dmu.h"
 
 /**
- * Get the value of a subsector property, selected by DMU_* name.
+ * Get the value of property, selected by DMU_* name.
  */
-int Subsector_GetProperty(const subsector_t* subsector, setargs_t* args);
+int BspLeaf_GetProperty(const BspLeaf* bspLeaf, setargs_t* args);
 
 /**
- * Update the subsector, property is selected by DMU_* name.
+ * Update a property, selected by DMU_* name.
  */
-int Subsector_SetProperty(subsector_t* subsector, const setargs_t* args);
+int BspLeaf_SetProperty(BspLeaf* bspLeaf, const setargs_t* args);
 
-#endif /* LIBDENG_MAP_SUBSECTOR_H */
+#endif /// LIBDENG_MAP_BSPLEAF_H

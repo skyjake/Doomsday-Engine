@@ -315,7 +315,7 @@ void P_SpawnMobjParticleGen(const ded_ptcgen_t* def, mobj_t* source)
     // Size of source sector might determine count.
     if(def->flags & PGF_SCALED_RATE)
     {
-        gen->spawnRateMultiplier = source->subsector->sector->approxArea;
+        gen->spawnRateMultiplier = source->bspLeaf->sector->approxArea;
     }
     else
     {
@@ -461,7 +461,7 @@ static void P_NewParticle(ptcgen_t* gen)
     int                 i;
     fixed_t             uncertain, len;
     angle_t             ang, ang2;
-    subsector_t*        subsec;
+    BspLeaf*        subsec;
     float               inter = -1;
     modeldef_t*         mf = 0, *nextmf = 0;
 
@@ -634,8 +634,8 @@ static void P_NewParticle(ptcgen_t* gen)
          * Choosing the XY spot is a bit more difficult.
          * But we must be fast and only sufficiently accurate.
          *
-         * \fixme Nothing prevents spawning on the wrong side (or inside)
-         * of one-sided walls (large diagonal subsectors!).
+         * @fixme Nothing prevents spawning on the wrong side (or inside)
+         * of one-sided walls (large diagonal BSP leafs!).
          */
         for(i = 0; i < 5; ++i) // Try a couple of times (max).
         {
@@ -644,7 +644,7 @@ static void P_NewParticle(ptcgen_t* gen)
             float               y =
                 (bbox[BOXBOTTOM] + RNG_RandFloat() * (bbox[BOXTOP]   - bbox[BOXBOTTOM]));
 
-            subsec = P_SubsectorAtPointXY(x, y);
+            subsec = P_BspLeafAtPointXY(x, y);
 
             if(subsec->sector == sector)
                 break;
@@ -665,7 +665,7 @@ static void P_NewParticle(ptcgen_t* gen)
             pt->pos[VX] = FLT2FIX(x);
             pt->pos[VY] = FLT2FIX(y);
 
-            if(P_SubsectorAtPointXY(x, y) == subsec)
+            if(P_BspLeafAtPointXY(x, y) == subsec)
                 break; // This is a good place.
         }
 
@@ -694,7 +694,7 @@ static void P_NewParticle(ptcgen_t* gen)
     if(gen->plane)
         pt->sector = gen->plane->sector;
     else
-        pt->sector = P_SubsectorAtPointXY(FIX2FLT(pt->pos[VX]),
+        pt->sector = P_BspLeafAtPointXY(FIX2FLT(pt->pos[VX]),
                                         FIX2FLT(pt->pos[VY]))->sector;
 
     // Play a stage sound?
@@ -1175,7 +1175,7 @@ static void P_MoveParticle(ptcgen_t* gen, particle_t* pt)
 
     // Should we update the sector pointer?
     if(tmcross)
-        pt->sector = P_SubsectorAtPointXY(FIX2FLT(x), FIX2FLT(y))->sector;
+        pt->sector = P_BspLeafAtPointXY(FIX2FLT(x), FIX2FLT(y))->sector;
 }
 
 /**

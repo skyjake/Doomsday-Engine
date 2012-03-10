@@ -70,7 +70,7 @@ extern "C" {
     typedef struct linedef_s { int type; } linedef_t;
     typedef struct sidedef_s { int type; } sidedef_t;
     typedef struct hedge_s { int type; } HEdge;
-    typedef struct subsector_s { int type; } subsector_t;
+    typedef struct bspleaf_s { int type; } BspLeaf;
     typedef struct sector_s { int type; } sector_t;
     typedef struct plane_s { int type; } plane_t;
     typedef struct material_s { int type; } material_t;
@@ -427,7 +427,7 @@ boolean ClMobj_LocalActionsEnabled(struct mobj_s* mo);
     TraceOpening*   P_TraceOpening(void);
     void            P_SetTraceOpening(struct linedef_s* linedef);
 
-    struct subsector_s* P_SubsectorAtPointXY(float x, float y);
+    struct bspleaf_s* P_BspLeafAtPointXY(float x, float y);
 
     // Object in bounding box iterators.
     int             P_MobjsBoxIterator(const AABoxf* box,
@@ -439,8 +439,8 @@ boolean ClMobj_LocalActionsEnabled(struct mobj_s* mo);
     int             P_AllLinesBoxIterator(const AABoxf* box,
                                           int (*func) (struct linedef_s*, void*),
                                           void* data);
-    int             P_SubsectorsBoxIterator(const AABoxf* box, sector_t* sector,
-                                           int (*func) (subsector_t*, void*),
+    int             P_BspLeafsBoxIterator(const AABoxf* box, sector_t* sector,
+                                           int (*func) (BspLeaf*, void*),
                                            void* data);
     int             P_PolyobjsBoxIterator(const AABoxf* box,
                                           int (*func) (struct polyobj_s*, void*),

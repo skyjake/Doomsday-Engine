@@ -54,9 +54,9 @@ void Rend_RadioSegSection(const rvertex_t* rvertices, const walldiv_t* divs,
     const rendsegradio_params_t* params);
 
 /**
- * Render FakeRadio for the given subsector.
+ * Render FakeRadio for the given BSP leaf.
  */
-void Rend_RadioSubsectorEdges(subsector_t* subsector);
+void Rend_RadioBspLeafEdges(BspLeaf* bspLeaf);
 
 /**
  * Render the shadow poly vertices, for debug.

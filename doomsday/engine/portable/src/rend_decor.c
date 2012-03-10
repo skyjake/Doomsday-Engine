@@ -58,7 +58,7 @@ typedef struct decorsource_s {
     float           pos[3];
     float           maxDistance;
     const surface_t* surface;
-    subsector_t*    subsector;
+    BspLeaf*        bspLeaf;
     unsigned int    lumIdx; // index+1 of linked lumobj, or 0.
     float           fadeMul;
     const ded_decorlight_t* def;
@@ -109,7 +109,7 @@ static void clearDecorations(void)
     sourceCursor = sourceFirst;
 }
 
-extern void getLightingParams(float x, float y, float z, subsector_t* ssec,
+extern void getLightingParams(float x, float y, float z, BspLeaf* bspLeaf,
                               float distance, boolean fullBright,
                               float ambientColor[3], uint* lightListIdx);
 
@@ -124,7 +124,7 @@ static void projectDecoration(decorsource_t* src)
     min = src->def->lightLevels[0];
     max = src->def->lightLevels[1];
 
-    if(!((brightness = R_CheckSectorLight(src->subsector->sector->lightLevel, min, max)) > 0))
+    if(!((brightness = R_CheckSectorLight(src->bspLeaf->sector->lightLevel, min, max)) > 0))
         return;
 
     if(src->fadeMul <= 0)
@@ -236,7 +236,7 @@ static void addLuminousDecoration(decorsource_t* src)
     min = def->lightLevels[0];
     max = def->lightLevels[1];
 
-    if(!((brightness = R_CheckSectorLight(src->subsector->sector->lightLevel, min, max)) > 0))
+    if(!((brightness = R_CheckSectorLight(src->bspLeaf->sector->lightLevel, min, max)) > 0))
         return;
 
     // Apply the brightness factor (was calculated using sector lightlevel).
@@ -247,11 +247,11 @@ static void addLuminousDecoration(decorsource_t* src)
         return;
 
     /**
-     * \todo From here on is pretty much the same as LO_AddLuminous,
-     * reconcile the two.
+     * @todo From here on is pretty much the same as LO_AddLuminous,
+     *       reconcile the two.
      */
 
-    lumIdx = LO_NewLuminous(LT_OMNI, src->subsector);
+    lumIdx = LO_NewLuminous(LT_OMNI, src->bspLeaf);
     l = LO_GetLuminous(lumIdx);
 
     l->pos[VX] = src->pos[VX];
@@ -329,7 +329,7 @@ static decorsource_t* addDecoration(void)
         src->lumIdx = 0;
         src->maxDistance = 0;
         src->pos[VX] = src->pos[VY] = src->pos[VZ] = 0;
-        src->subsector = 0;
+        src->bspLeaf = 0;
         src->surface = 0;
         src->def = NULL;
         src->flareTex = 0;
@@ -358,11 +358,11 @@ static void createDecorSource(const surface_t* suf, const surfacedecor_t* dec, c
     src->pos[VY] = dec->pos[VY];
     src->pos[VZ] = dec->pos[VZ];
     src->maxDistance = maxDistance;
-    src->subsector = dec->subsector;
+    src->bspLeaf = dec->bspLeaf;
     src->surface = suf;
     src->fadeMul = 1;
     src->def = dec->def;
-    if(NULL != src->def)
+    if(src->def)
     {
         const ded_decorlight_t* def = src->def;
         if(!def->flare || Str_CompareIgnoreCase(Uri_Path(def->flare), "-"))
@@ -484,7 +484,7 @@ static uint generateDecorLights(const ded_decorlight_t* def, surface_t* suf,
             if(d)
             {
                 V3_Copy(d->pos, pos);
-                d->subsector = P_SubsectorAtPointXY(d->pos[VX], d->pos[VY]);
+                d->bspLeaf = P_BspLeafAtPointXY(d->pos[VX], d->pos[VY]);
                 d->def = def;
                 num++;
             }

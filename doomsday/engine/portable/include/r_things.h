@@ -104,7 +104,7 @@ typedef struct rendspriteparams_s {
     uint            vLightListIdx;
 
 // Misc
-    struct subsector_s* subsector;
+    struct bspleaf_s* bspLeaf;
 } rendspriteparams_t;
 
 /** @name rendFlareFlags */
@@ -164,12 +164,12 @@ typedef struct vispsprite_s {
 
     union vispsprite_data_u {
         struct vispsprite_sprite_s {
-            subsector_t*    subsector;
+            BspLeaf*        bspLeaf;
             float           alpha;
             boolean         isFullBright;
         } sprite;
         struct vispsprite_model_s {
-            subsector_t*    subsector;
+            BspLeaf*        bspLeaf;
             float           gzt; // global top for silhouette clipping
             int             flags; // for color translation and shadow draw
             uint            id;
@@ -195,7 +195,7 @@ typedef struct vispsprite_s {
 typedef struct collectaffectinglights_params_s {
     float           center[3];
     float*          ambientColor;
-    subsector_t*    subsector;
+    BspLeaf*        bspLeaf;
     boolean         starkLight; // World light has a more pronounced effect.
 } collectaffectinglights_params_t;
 
@@ -236,7 +236,7 @@ void            R_ProjectPlayerSprites(void);
 
 void R_SortVisSprites(void);
 vissprite_t* R_NewVisSprite(void);
-void R_AddSprites(subsector_t* subsector);
+void R_AddSprites(BspLeaf* bspLeaf);
 
 /// To be called at the start of the current render frame to clear the vissprite list.
 void R_ClearVisSprites(void);

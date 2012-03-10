@@ -496,31 +496,31 @@ void P_SetTraceOpening(linedef_t* linedef)
 }
 
 /// @note Part of the Doomsday public API
-subsector_t* P_SubsectorAtPointXY(float x, float y)
+BspLeaf* P_BspLeafAtPointXY(float x, float y)
 {
     if(theMap)
     {
-        return GameMap_SubsectorAtPointXY(theMap, x, y);
+        return GameMap_BspLeafAtPointXY(theMap, x, y);
     }
     return NULL;
 }
 
-boolean P_IsPointXYInSubsector(float x, float y, const subsector_t* ssec)
+boolean P_IsPointXYInBspLeaf(float x, float y, const BspLeaf* bspLeaf)
 {
     fvertex_t* vi, *vj;
     uint i;
 
-    if(!ssec) return false; // I guess?
+    if(!bspLeaf) return false; // I guess?
 
-    for(i = 0; i < ssec->hedgeCount; ++i)
+    for(i = 0; i < bspLeaf->hedgeCount; ++i)
     {
-        vi = &ssec->hedges[i]->HE_v1->v;
-        vj = &ssec->hedges[(i + 1) % ssec->hedgeCount]->HE_v1->v;
+        vi = &bspLeaf->hedges[i]->HE_v1->v;
+        vj = &bspLeaf->hedges[(i + 1) % bspLeaf->hedgeCount]->HE_v1->v;
 
         if(((vi->pos[VY] - y) * (vj->pos[VX] - vi->pos[VX]) -
             (vi->pos[VX] - x) * (vj->pos[VY] - vi->pos[VY])) < 0)
         {
-            // Outside the subsector's edges.
+            // Outside the BSP leaf's edges.
             return false;
         }
     }
@@ -530,14 +530,14 @@ boolean P_IsPointXYInSubsector(float x, float y, const subsector_t* ssec)
 
 boolean P_IsPointXYInSector(float x, float y, const sector_t* sector)
 {
-    subsector_t* ssec;
+    BspLeaf* bspLeaf;
     if(!sector) return false; // I guess?
 
     /// @fixme Do not assume @a sector is from the current map.
-    ssec = GameMap_SubsectorAtPointXY(theMap, x, y);
-    if(ssec->sector != sector) return false;
+    bspLeaf = GameMap_BspLeafAtPointXY(theMap, x, y);
+    if(bspLeaf->sector != sector) return false;
 
-    return P_IsPointXYInSubsector(x, y, ssec);
+    return P_IsPointXYInBspLeaf(x, y, bspLeaf);
 }
 
 /**
@@ -701,17 +701,17 @@ void GameMap_LinkMobjToLineDefs(GameMap* map, mobj_t* mo)
 }
 
 /**
- * Links a mobj into both a block and a subsector based on it's (x,y).
- * Sets mobj->subsector properly. Calling with flags==0 only updates
- * the subsector pointer. Can be called without unlinking first.
+ * Links a mobj into both a block and a BSP leaf based on it's (x,y).
+ * Sets mobj->bspLeaf properly. Calling with flags==0 only updates
+ * the BspLeaf pointer. Can be called without unlinking first.
  */
 void P_MobjLink(mobj_t* mo, byte flags)
 {
     sector_t* sec;
 
     // Link into the sector.
-    mo->subsector = P_SubsectorAtPointXY(mo->pos[VX], mo->pos[VY]);
-    sec = mo->subsector->sector;
+    mo->bspLeaf = P_BspLeafAtPointXY(mo->pos[VX], mo->pos[VY]);
+    sec = mo->bspLeaf->sector;
 
     if(flags & DDLINK_SECTOR)
     {
@@ -756,9 +756,9 @@ void P_MobjLink(mobj_t* mo, byte flags)
         player->inVoid = true;
         if(P_IsPointXYInSector(player->mo->pos[VX],
                               player->mo->pos[VY],
-                              player->mo->subsector->sector) &&
-           (player->mo->pos[VZ] < player->mo->subsector->sector->SP_ceilvisheight + 4 &&
-            player->mo->pos[VZ] >= player->mo->subsector->sector->SP_floorvisheight))
+                              player->mo->bspLeaf->sector) &&
+           (player->mo->pos[VZ] < player->mo->bspLeaf->sector->SP_ceilvisheight + 4 &&
+            player->mo->pos[VZ] >= player->mo->bspLeaf->sector->SP_floorvisheight))
             player->inVoid = false;
     }
 }
@@ -810,7 +810,7 @@ int GameMap_MobjSectorsIterator(GameMap* map, mobj_t* mo,
     tn = map->mobjNodes.nodes;
 
     // Always process the mobj's own sector first.
-    *end++ = sec = mo->subsector->sector;
+    *end++ = sec = mo->bspLeaf->sector;
     sec->validCount = validCount;
 
     // Any good lines around here?
@@ -1118,11 +1118,11 @@ int P_PolyobjLinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, vo
 }
 
 /// @note Part of the Doomsday public API.
-int P_SubsectorsBoxIterator(const AABoxf* box, sector_t* sector,
-    int (*callback) (subsector_t*, void*), void* parameters)
+int P_BspLeafsBoxIterator(const AABoxf* box, sector_t* sector,
+    int (*callback) (BspLeaf*, void*), void* parameters)
 {
     if(!theMap) return false; // Continue iteration.
-    return GameMap_SubsectorsBoxIterator(theMap, box, sector, callback, parameters);
+    return GameMap_BspLeafsBoxIterator(theMap, box, sector, callback, parameters);
 }
 
 /// @note Part of the Doomsday public API.

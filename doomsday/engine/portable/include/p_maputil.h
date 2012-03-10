@@ -91,20 +91,20 @@ const TraceOpening* P_TraceOpening(void);
 void P_SetTraceOpening(linedef_t* linedef);
 
 /**
- * Determine the BSP leaf (subsector) on the back side of the BS partition that
- * lies in front of the specified point within the CURRENT map's coordinate space.
+ * Determine the BSP leaf on the back side of the BS partition that lies in
+ * front of the specified point within the CURRENT map's coordinate space.
  *
- * @note Always returns a valid subsector although the point may not actually lay
+ * @note Always returns a valid BspLeaf although the point may not actually lay
  *       within it (however it is on the same side of the space partition)!
  *
  * @param x  X coordinate of the point to test.
  * @param y  Y coordinate of the point to test.
- * @return  Subsector instance for that BSP node's leaf.
+ * @return  BspLeaf instance for that BSP node's leaf.
  */
-subsector_t* P_SubsectorAtPointXY(float x, float y);
+BspLeaf* P_BspLeafAtPointXY(float x, float y);
 
 /**
- * Is the point inside the sector, according to the edge lines of the subsector.
+ * Is the point inside the sector, according to the edge lines of the BspLeaf.
  *
  * @param  X coordinate to test.
  * @param  Y coordinate to test.
@@ -115,18 +115,18 @@ subsector_t* P_SubsectorAtPointXY(float x, float y);
 boolean P_IsPointXYInSector(float x, float y, const sector_t* sector);
 
 /**
- * Is the point inside the subsector, according to the edge lines of the subsector.
+ * Is the point inside the BspLeaf (according to the edges).
  *
  * @algorithm Uses the well-known algorithm described here:
  * http://www.alienryderflex.com/polygon/
  *
  * @param x  X coordinate to test.
  * @param y  Y coordinate to test.
- * @param subsector Subsector to test.
+ * @param bspLeaf  BspLeaf to test.
  *
- * @return  @c true, if the point is inside the subsector.
+ * @return  @c true, if the point is inside the BspLeaf.
  */
-boolean P_IsPointXYInSubsector(float x, float y, const subsector_t* subsector);
+boolean P_IsPointXYInBspLeaf(float x, float y, const BspLeaf* bspLeaf);
 
 void P_MobjLink(mobj_t* mo, byte flags);
 int P_MobjUnlink(mobj_t* mo);
@@ -182,7 +182,7 @@ int P_PolyobjLinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, vo
  */
 int P_AllLinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, void*), void* parameters);
 
-int P_SubsectorsBoxIterator(const AABoxf* box, sector_t* sector, int (*callback) (subsector_t*, void*), void* parameters);
+int P_BspLeafsBoxIterator(const AABoxf* box, sector_t* sector, int (*callback) (BspLeaf*, void*), void* parameters);
 
 int P_PathTraverse(float const from[2], float const to[2], int flags, traverser_t callback);
 int P_PathTraverse2(float const from[2], float const to[2], int flags, traverser_t callback, void* parameters);

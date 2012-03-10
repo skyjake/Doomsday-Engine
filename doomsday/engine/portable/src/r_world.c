@@ -605,36 +605,36 @@ plane_t* R_NewPlaneForSector(sector_t* sec)
     Surface_SetBlendMode(suf, BM_NORMAL);
 
     /**
-     * Resize the biassurface lists for the subsector planes.
+     * Resize the biassurface lists for the BSP leaf planes.
      * If we are in map setup mode, don't create the biassurfaces now,
      * as planes are created before the bias system is available.
      */
 
-    if(sec->subsectors && *sec->subsectors)
+    if(sec->bspLeafs && *sec->bspLeafs)
     {
-        subsector_t** ssecIter = sec->subsectors;
+        BspLeaf** ssecIter = sec->bspLeafs;
         do
         {
-            subsector_t* ssec = *ssecIter;
+            BspLeaf* bspLeaf = *ssecIter;
             biassurface_t** newList;
             uint n = 0;
 
             newList = Z_Calloc(sec->planeCount * sizeof(biassurface_t*), PU_MAP, NULL);
             // Copy the existing list?
-            if(ssec->bsuf)
+            if(bspLeaf->bsuf)
             {
                 for(; n < sec->planeCount - 1; ++n)
                 {
-                    newList[n] = ssec->bsuf[n];
+                    newList[n] = bspLeaf->bsuf[n];
                 }
-                Z_Free(ssec->bsuf);
+                Z_Free(bspLeaf->bsuf);
             }
 
             if(!ddMapSetup)
             {
                 biassurface_t* bsuf = SB_CreateSurface();
 
-                bsuf->size = ssec->numVertices;
+                bsuf->size = bspLeaf->numVertices;
                 bsuf->illum = Z_Calloc(sizeof(vertexillum_t) * bsuf->size, PU_MAP, 0);
 
                 { uint i;
@@ -645,7 +645,7 @@ plane_t* R_NewPlaneForSector(sector_t* sec)
                 newList[n] = bsuf;
             }
 
-            ssec->bsuf = newList;
+            bspLeaf->bsuf = newList;
 
             ssecIter++;
         } while(*ssecIter);
@@ -664,7 +664,7 @@ plane_t* R_NewPlaneForSector(sector_t* sec)
 void R_DestroyPlaneOfSector(uint id, sector_t* sec)
 {
     plane_t* plane, **newList = NULL;
-    subsector_t** ssecIter;
+    BspLeaf** ssecIter;
     surfacelist_t* slist;
     planelist_t* plist;
     uint i;
@@ -711,13 +711,13 @@ void R_DestroyPlaneOfSector(uint id, sector_t* sec)
     if(slist) R_SurfaceListRemove(slist, &plane->surface);
 
     // Destroy the biassurfaces for this plane.
-    ssecIter = sec->subsectors;
+    ssecIter = sec->bspLeafs;
     while(*ssecIter)
     {
-        subsector_t* ssec = *ssecIter;
-        SB_DestroySurface(ssec->bsuf[id]);
+        BspLeaf* bspLeaf = *ssecIter;
+        SB_DestroySurface(bspLeaf->bsuf[id]);
         if(id < sec->planeCount)
-            memmove(ssec->bsuf + id, ssec->bsuf + id + 1, sizeof(biassurface_t*));
+            memmove(bspLeaf->bsuf + id, bspLeaf->bsuf + id + 1, sizeof(biassurface_t*));
         ssecIter++;
     }
 
@@ -1094,12 +1094,12 @@ linedef_t *R_FindLineAlignNeighbor(const sector_t *sec,
 }
 
 /**
- * Create a list of map space vertices for the subsector which are suitable for
+ * Create a list of map space vertices for the BspLeaf which are suitable for
  * use as the points of a trifan primitive.
  *
  * Note that we do not want any overlapping or zero-area (degenerate) triangles.
  *
- * We are assured by the node build process that subsector->hedges has been ordered
+ * We are assured by the node build process that BspLeaf->hedges has been ordered
  * by angle, clockwise starting from the smallest angle. So, most of the time, the
  * points can be created directly from the hedge vertices.
  *
@@ -1111,10 +1111,10 @@ linedef_t *R_FindLineAlignNeighbor(const sector_t *sec,
  *
  * If a vertex exists which results in no zero-area triangles it is suitable for
  * use as the center of our trifan. If a suitable vertex is not found then the
- * center of subsector should be selected instead (it will always be valid as
- * subsectors are convex).
+ * center of BSP leaf should be selected instead (it will always be valid as
+ * BSP leafs are convex).
  */
-static void tessellateSubsector(subsector_t* ssec, boolean force)
+static void tessellateBspLeaf(BspLeaf* bspLeaf, boolean force)
 {
 #define MIN_TRIANGLE_EPSILON  (0.1) ///< Area
 
@@ -1122,32 +1122,32 @@ static void tessellateSubsector(subsector_t* ssec, boolean force)
     boolean ok = false;
 
     // Already built?
-    if(ssec->vertices && !force) return;
+    if(bspLeaf->vertices && !force) return;
 
     // Destroy any pre-existing data.
-    if(ssec->vertices)
+    if(bspLeaf->vertices)
     {
-        Z_Free(ssec->vertices);
-        ssec->vertices = NULL;
+        Z_Free(bspLeaf->vertices);
+        bspLeaf->vertices = NULL;
     }
-    ssec->flags &= ~SUBF_MIDPOINT;
+    bspLeaf->flags &= ~BLF_MIDPOINT;
 
     // Search for a good base.
-    if(ssec->hedgeCount > 3)
+    if(bspLeaf->hedgeCount > 3)
     {
-        // Subsectors with higher vertex counts demand checking.
+        // BspLeafs with higher vertex counts demand checking.
         fvertex_t* base, *a, *b;
 
         baseIDX = 0;
         do
         {
-            HEdge* hedge = ssec->hedges[baseIDX];
+            HEdge* hedge = bspLeaf->hedges[baseIDX];
 
             base = &hedge->HE_v1->v;
             i = 0;
             do
             {
-                HEdge* hedge2 = ssec->hedges[i];
+                HEdge* hedge2 = bspLeaf->hedges[i];
 
                 // Test this triangle?
                 if(!(baseIDX > 0 && (i == baseIDX || i == baseIDX - 1)))
@@ -1164,14 +1164,14 @@ static void tessellateSubsector(subsector_t* ssec, boolean force)
 
                 // On to the next triangle.
                 i++;
-            } while(base && i < ssec->hedgeCount);
+            } while(base && i < bspLeaf->hedgeCount);
 
             if(!base)
             {
                 // No good. Select the next vertex and start over.
                 baseIDX++;
             }
-        } while(!base && baseIDX < ssec->hedgeCount);
+        } while(!base && baseIDX < bspLeaf->hedgeCount);
 
         // Did we find something suitable?
         if(base) ok = true;
@@ -1182,45 +1182,45 @@ static void tessellateSubsector(subsector_t* ssec, boolean force)
         ok = true;
     }
 
-    ssec->numVertices = ssec->hedgeCount;
+    bspLeaf->numVertices = bspLeaf->hedgeCount;
     if(!ok)
     {
         // We'll use the midpoint.
-        ssec->flags |= SUBF_MIDPOINT;
-        ssec->numVertices += 2;
+        bspLeaf->flags |= BLF_MIDPOINT;
+        bspLeaf->numVertices += 2;
     }
 
     // Construct the vertex list.
-    ssec->vertices = Z_Malloc(sizeof(fvertex_t*) * (ssec->numVertices + 1), PU_MAP, 0);
+    bspLeaf->vertices = Z_Malloc(sizeof(fvertex_t*) * (bspLeaf->numVertices + 1), PU_MAP, 0);
 
     n = 0;
     // If this is a trifan the first vertex is always the midpoint.
-    if(ssec->flags & SUBF_MIDPOINT)
+    if(bspLeaf->flags & BLF_MIDPOINT)
     {
-        ssec->vertices[n++] = &ssec->midPoint;
+        bspLeaf->vertices[n++] = &bspLeaf->midPoint;
     }
 
     // Add the vertices for each hedge.
-    for(i = 0; i < ssec->hedgeCount; ++i)
+    for(i = 0; i < bspLeaf->hedgeCount; ++i)
     {
         HEdge* hedge;
         uint idx;
 
         idx = baseIDX + i;
-        if(idx >= ssec->hedgeCount)
-            idx = idx - ssec->hedgeCount; // Wrap around.
+        if(idx >= bspLeaf->hedgeCount)
+            idx = idx - bspLeaf->hedgeCount; // Wrap around.
 
-        hedge = ssec->hedges[idx];
-        ssec->vertices[n++] = &hedge->HE_v1->v;
+        hedge = bspLeaf->hedges[idx];
+        bspLeaf->vertices[n++] = &hedge->HE_v1->v;
     }
 
     // If this is a trifan the last vertex is always equal to the first.
-    if(ssec->flags & SUBF_MIDPOINT)
+    if(bspLeaf->flags & BLF_MIDPOINT)
     {
-        ssec->vertices[n++] = &ssec->hedges[0]->HE_v1->v;
+        bspLeaf->vertices[n++] = &bspLeaf->hedges[0]->HE_v1->v;
     }
 
-    ssec->vertices[n] = NULL; // terminate.
+    bspLeaf->vertices[n] = NULL; // terminate.
 
 #undef MIN_TRIANGLE_EPSILON
 }
@@ -1230,10 +1230,10 @@ void R_PolygonizeMap(GameMap* map)
     uint startTime = Sys_GetRealTime();
     uint i;
 
-    for(i = 0; i < map->numSubsectors; ++i)
+    for(i = 0; i < map->numBspLeafs; ++i)
     {
-        subsector_t* ssec = &map->subsectors[i];
-        tessellateSubsector(ssec, true/*force rebuild*/);
+        BspLeaf* bspLeaf = &map->bspLeafs[i];
+        tessellateBspLeaf(bspLeaf, true/*force rebuild*/);
     }
 
     // How much time did we spend?
@@ -1246,7 +1246,7 @@ void R_PolygonizeMap(GameMap* map)
 }
 
 /**
- * The test is done on subsectors.
+ * The test is done on BSP leafs.
  */
 #if 0 /* Currently unused. */
 static sector_t *getContainingSectorOf(GameMap* map, sector_t* sec)
@@ -1470,10 +1470,10 @@ void R_SetupMap(int mode, int flags)
             ddpl->inVoid = true;
             if(ddpl->mo)
             {
-                subsector_t* ssec = P_SubsectorAtPointXY(ddpl->mo->pos[VX], ddpl->mo->pos[VY]);
+                BspLeaf* bspLeaf = P_BspLeafAtPointXY(ddpl->mo->pos[VX], ddpl->mo->pos[VY]);
 
                 /// @fixme $nplanes
-                if(ssec && ddpl->mo->pos[VZ] >= ssec->sector->SP_floorvisheight && ddpl->mo->pos[VZ] < ssec->sector->SP_ceilvisheight - 4)
+                if(bspLeaf && ddpl->mo->pos[VZ] >= bspLeaf->sector->SP_floorvisheight && ddpl->mo->pos[VZ] < bspLeaf->sector->SP_ceilvisheight - 4)
                    ddpl->inVoid = false;
             }
         }
@@ -1684,7 +1684,7 @@ boolean R_UpdatePlane(plane_t* pln, boolean forceUpdate)
     // Geometry change?
     if(forceUpdate || pln->height != pln->oldHeight[1])
     {
-        subsector_t** ssecIter;
+        BspLeaf** ssecIter;
 
         // Check if there are any camera players in this sector. If their
         // height is now above the ceiling/below the floor they are now in
@@ -1695,11 +1695,11 @@ boolean R_UpdatePlane(plane_t* pln, boolean forceUpdate)
             player_t* plr = &ddPlayers[i];
             ddplayer_t* ddpl = &plr->shared;
 
-            if(!ddpl->inGame || !ddpl->mo || !ddpl->mo->subsector)
+            if(!ddpl->inGame || !ddpl->mo || !ddpl->mo->bspLeaf)
                 continue;
 
             //// \fixme $nplanes
-            if((ddpl->flags & DDPF_CAMERA) && ddpl->mo->subsector->sector == sec &&
+            if((ddpl->flags & DDPF_CAMERA) && ddpl->mo->bspLeaf->sector == sec &&
                (ddpl->mo->pos[VZ] > sec->SP_ceilheight - 4 || ddpl->mo->pos[VZ] < sec->SP_floorheight))
             {
                 ddpl->inVoid = true;
@@ -1710,13 +1710,13 @@ boolean R_UpdatePlane(plane_t* pln, boolean forceUpdate)
         pln->soundOrg.pos[VZ] = pln->height;
 
         // Inform the shadow bias of changed geometry.
-        if(sec->subsectors && *sec->subsectors)
+        if(sec->bspLeafs && *sec->bspLeafs)
         {
-            ssecIter = sec->subsectors;
+            ssecIter = sec->bspLeafs;
             do
             {
-                subsector_t* ssec = *ssecIter;
-                HEdge** hedgeIter = ssec->hedges;
+                BspLeaf* bspLeaf = *ssecIter;
+                HEdge** hedgeIter = bspLeaf->hedges;
                 while(*hedgeIter)
                 {
                     HEdge* hedge = *hedgeIter;
@@ -1729,7 +1729,7 @@ boolean R_UpdatePlane(plane_t* pln, boolean forceUpdate)
                     hedgeIter++;
                 }
 
-                SB_SurfaceMoved(ssec->bsuf[pln->planeID]);
+                SB_SurfaceMoved(bspLeaf->bsuf[pln->planeID]);
                 ssecIter++;
             } while(*ssecIter);
         }
@@ -1747,7 +1747,7 @@ boolean R_UpdatePlane(plane_t* pln, boolean forceUpdate)
 /**
  * Stub.
  */
-boolean R_UpdateSubsector(subsector_t* ssec, boolean forceUpdate)
+boolean R_UpdateBspLeaf(BspLeaf* bspLeaf, boolean forceUpdate)
 {
     return false; // Not changed.
 }

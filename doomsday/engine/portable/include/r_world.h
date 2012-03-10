@@ -31,7 +31,7 @@
 
 #include "r_data.h"
 
-// Used for vertex sector owners, side line owners and reverb subsectors.
+// Used for vertex sector owners, side line owners and reverb BSP leafs.
 typedef struct ownernode_s {
     void*           data;
     struct ownernode_s* next;
@@ -62,7 +62,7 @@ extern skyfix_t skyFix[2]; // [floor, ceiling]
 void R_SetupMap(int mode, int flags);
 
 /**
- * Polygonizes all subsectors in the map.
+ * Polygonizes all BSP leafs in the map.
  */
 void R_PolygonizeMap(GameMap* map);
 

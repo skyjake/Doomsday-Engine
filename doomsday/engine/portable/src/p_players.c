@@ -139,9 +139,9 @@ int P_GetDDPlayerIdx(ddplayer_t* ddpl)
 /**
  * Do we THINK the given (camera) player is currently in the void.
  * The method used to test this is to compare the position of the mobj
- * each time it is linked into a subsector.
+ * each time it is linked into a BSP leaf.
  *
- * \note Cannot be 100% accurate so best not to use it for anything critical...
+ * @note Cannot be 100% accurate so best not to use it for anything critical...
  *
  * @param player        The player to test.
  *
@@ -163,9 +163,9 @@ boolean P_IsInVoid(player_t* player)
         if(ddpl->inVoid)
             return true;
 
-        if(ddpl->mo && ddpl->mo->subsector)
+        if(ddpl->mo && ddpl->mo->bspLeaf)
         {
-            sector_t* sec = ddpl->mo->subsector->sector;
+            sector_t* sec = ddpl->mo->bspLeaf->sector;
 
             if(R_IsSkySurface(&sec->SP_ceilsurface))
             {

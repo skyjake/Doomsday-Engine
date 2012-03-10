@@ -319,11 +319,11 @@ D_CMD(InspectMobj)
                mo->pos[0], mo->pos[1], mo->pos[2],
                mo->mom[0], mo->mom[1], mo->mom[2]);
     Con_Printf("FloorZ:%f CeilingZ:%f\n", mo->floorZ, mo->ceilingZ);
-    if(mo->subsector)
+    if(mo->bspLeaf)
     {
-        Con_Printf("Sector:%i (FloorZ:%f CeilingZ:%f)\n", P_ToIndex(mo->subsector->sector),
-                   mo->subsector->sector->SP_floorheight,
-                   mo->subsector->sector->SP_ceilheight);
+        Con_Printf("Sector:%i (FloorZ:%f CeilingZ:%f)\n", P_ToIndex(mo->bspLeaf->sector),
+                   mo->bspLeaf->sector->SP_floorheight,
+                   mo->bspLeaf->sector->SP_ceilheight);
     }
     if(mo->onMobj)
     {

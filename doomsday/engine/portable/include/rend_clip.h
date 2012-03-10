@@ -53,7 +53,7 @@ int             C_CheckViewRelSeg(float x1, float y1, float x2, float y2);
 // Returns 1 if the specified angle is visible.
 int             C_IsAngleVisible(binangle_t bang);
 
-// Returns 1 if the subsector might be visible.
-int             C_CheckSubsector(subsector_t* subsector);
+// Returns 1 if the BSP leaf might be visible.
+int             C_CheckBspLeaf(BspLeaf* bspLeaf);
 
 #endif

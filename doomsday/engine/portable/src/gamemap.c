@@ -186,18 +186,18 @@ sector_t* GameMap_Sector(GameMap* map, uint idx)
     return &map->sectors[idx];
 }
 
-int GameMap_SubsectorIndex(GameMap* map, subsector_t* ssec)
+int GameMap_BspLeafIndex(GameMap* map, BspLeaf* bspLeaf)
 {
     assert(map);
-    if(!ssec || !(ssec >= map->subsectors && ssec <= &map->subsectors[map->numSubsectors])) return -1;
-    return ssec - map->subsectors;
+    if(!bspLeaf || !(bspLeaf >= map->bspLeafs && bspLeaf <= &map->bspLeafs[map->numBspLeafs])) return -1;
+    return bspLeaf - map->bspLeafs;
 }
 
-subsector_t* GameMap_Subsector(GameMap* map, uint idx)
+BspLeaf* GameMap_BspLeaf(GameMap* map, uint idx)
 {
     assert(map);
-    if(idx >= map->numSubsectors) return NULL;
-    return &map->subsectors[idx];
+    if(idx >= map->numBspLeafs) return NULL;
+    return &map->bspLeafs[idx];
 }
 
 int GameMap_HEdgeIndex(GameMap* map, HEdge* hedge)
@@ -252,10 +252,10 @@ uint GameMap_SectorCount(GameMap* map)
     return map->numSectors;
 }
 
-uint GameMap_SubsectorCount(GameMap* map)
+uint GameMap_BspLeafCount(GameMap* map)
 {
     assert(map);
-    return map->numSubsectors;
+    return map->numBspLeafs;
 }
 
 uint GameMap_HEdgeCount(GameMap* map)
@@ -317,8 +317,8 @@ polyobj_t* GameMap_PolyobjByOrigin(GameMap* map, void* ddMobjBase)
 static void initPolyobj(polyobj_t* po)
 {
     linedef_t** lineIter;
-    subsector_t* ssec;
-    vec2_t avg; // < Used to find a polyobj's center, and hence subsector.
+    BspLeaf* bspLeaf;
+    vec2_t avg; /// < Used to find a polyobj's center, and hence BSP leaf.
 
     if(!po) return;
 
@@ -345,17 +345,17 @@ static void initPolyobj(polyobj_t* po)
     }
     V2_Scale(avg, 1.f / po->lineCount);
 
-    ssec = P_SubsectorAtPointXY(avg[VX], avg[VY]);
-    if(ssec)
+    bspLeaf = P_BspLeafAtPointXY(avg[VX], avg[VY]);
+    if(bspLeaf)
     {
-        if(ssec->polyObj)
+        if(bspLeaf->polyObj)
         {
-            Con_Message("Warning: GameMap::initPolyobj: Multiple polyobjs in a single subsector\n"
-                        "  (subsector %ld, sector %ld). Previous polyobj overridden.\n",
-                        (long)GET_SUBSECTOR_IDX(ssec), (long)GET_SECTOR_IDX(ssec->sector));
+            Con_Message("Warning: GameMap::initPolyobj: Multiple polyobjs in a single BSP leaf\n"
+                        "  (BSP leaf %ld, sector %ld). Previous polyobj overridden.\n",
+                        (long)GET_BSPLEAF_IDX(bspLeaf), (long)GET_SECTOR_IDX(bspLeaf->sector));
         }
-        ssec->polyObj = po;
-        po->subsector = ssec;
+        bspLeaf->polyObj = po;
+        po->bspLeaf = bspLeaf;
     }
 
     Polyobj_UpdateAABox(po);
@@ -499,7 +499,7 @@ void GameMap_InitPolyobjBlockmap(GameMap* map, const_pvec2_t min_, const_pvec2_t
 #undef BLOCKMAP_MARGIN
 }
 
-void GameMap_InitSubsectorBlockmap(GameMap* map, const_pvec2_t min_, const_pvec2_t max_)
+void GameMap_InitBspLeafBlockmap(GameMap* map, const_pvec2_t min_, const_pvec2_t max_)
 {
 #define BLOCKMAP_MARGIN      8 // size guardband around map
 #define CELL_SIZE            MAPBLOCKUNITS
@@ -514,7 +514,7 @@ void GameMap_InitSubsectorBlockmap(GameMap* map, const_pvec2_t min_, const_pvec2
     V2_Set(max, max_[VX] + BLOCKMAP_MARGIN,
                 max_[VY] + BLOCKMAP_MARGIN);
 
-    map->subsectorBlockmap = Blockmap_New(min, max, CELL_SIZE, CELL_SIZE);
+    map->bspLeafBlockmap = Blockmap_New(min, max, CELL_SIZE, CELL_SIZE);
 
 #undef CELL_SIZE
 #undef BLOCKMAP_MARGIN
@@ -739,7 +739,7 @@ int GameMap_LineDefIterator(GameMap* map, int (*callback) (linedef_t*, void*), v
     return false; // Continue iteration.
 }
 
-void GameMap_LinkSubsectorInBlockmap(GameMap* map, subsector_t* ssec)
+void GameMap_LinkBspLeafInBlockmap(GameMap* map, BspLeaf* bspLeaf)
 {
     Blockmap* blockmap;
     GridmapBlock blockCoords;
@@ -747,27 +747,27 @@ void GameMap_LinkSubsectorInBlockmap(GameMap* map, subsector_t* ssec)
     uint x, y;
     assert(map);
 
-    // Do not link NULL subsectors.
-    if(!ssec)
+    // Do not link NULL BSP leafs.
+    if(!bspLeaf)
     {
-        DEBUG_Message(("Warning: GameMap::LinkSubsectorInBlockmap: Attempted with NULL subsector argument.\n"));
+        DEBUG_Message(("Warning: GameMap::LinkBspLeafInBlockmap: Attempted with NULL bspLeaf argument.\n"));
         return;
     }
 
-    // Subsectors without sectors don't get in.
-    if(!ssec->sector) return;
+    // BspLeafs without sectors don't get in.
+    if(!bspLeaf->sector) return;
 
-    blockmap = map->subsectorBlockmap;
-    aaBox.minX = ssec->aaBox.minX;
-    aaBox.minY = ssec->aaBox.minY;
-    aaBox.maxX = ssec->aaBox.maxX;
-    aaBox.maxY = ssec->aaBox.maxY;
+    blockmap = map->bspLeafBlockmap;
+    aaBox.minX = bspLeaf->aaBox.minX;
+    aaBox.minY = bspLeaf->aaBox.minY;
+    aaBox.maxX = bspLeaf->aaBox.maxX;
+    aaBox.maxY = bspLeaf->aaBox.maxY;
     Blockmap_CellBlockCoords(blockmap, &blockCoords, &aaBox);
 
     for(y = blockCoords.minY; y <= blockCoords.maxY; ++y)
     for(x = blockCoords.minX; x <= blockCoords.maxX; ++x)
     {
-        Blockmap_CreateCellAndLinkObjectXY(blockmap, x, y, ssec);
+        Blockmap_CreateCellAndLinkObjectXY(blockmap, x, y, bspLeaf);
     }
 }
 
@@ -775,48 +775,48 @@ typedef struct subseciterparams_s {
     const AABoxf* box;
     sector_t* sector;
     int localValidCount;
-    int (*func) (subsector_t*, void*);
+    int (*func) (BspLeaf*, void*);
     void* param;
-} bmapsubsectoriterateparams_t;
+} bmapbspleafiterateparams_t;
 
-static int blockmapCellSubsectorsIterator(void* object, void* context)
+static int blockmapCellBspLeafsIterator(void* object, void* context)
 {
-    subsector_t* ssec = (subsector_t*)object;
-    bmapsubsectoriterateparams_t* args = (bmapsubsectoriterateparams_t*) context;
-    if(ssec->validCount != args->localValidCount)
+    BspLeaf* bspLeaf = (BspLeaf*)object;
+    bmapbspleafiterateparams_t* args = (bmapbspleafiterateparams_t*) context;
+    if(bspLeaf->validCount != args->localValidCount)
     {
         boolean ok = true;
 
-        // This subsector has now been processed for the current iteration.
-        ssec->validCount = args->localValidCount;
+        // This BspLeaf has now been processed for the current iteration.
+        bspLeaf->validCount = args->localValidCount;
 
         // Check the sector restriction.
-        if(args->sector && ssec->sector != args->sector)
+        if(args->sector && bspLeaf->sector != args->sector)
             ok = false;
 
         // Check the bounds.
         if(args->box &&
-           (ssec->aaBox.maxX < args->box->minX ||
-            ssec->aaBox.minX > args->box->maxX ||
-            ssec->aaBox.minY > args->box->maxY ||
-            ssec->aaBox.maxY < args->box->minY))
+           (bspLeaf->aaBox.maxX < args->box->minX ||
+            bspLeaf->aaBox.minX > args->box->maxX ||
+            bspLeaf->aaBox.minY > args->box->maxY ||
+            bspLeaf->aaBox.maxY < args->box->minY))
             ok = false;
 
         if(ok)
         {
             // Action the callback.
-            int result = args->func(ssec, args->param);
+            int result = args->func(bspLeaf, args->param);
             if(result) return result; // Stop iteration.
         }
     }
     return false; // Continue iteration.
 }
 
-int GameMap_IterateCellSubsectors(GameMap* map, const uint coords[2],
+int GameMap_IterateCellBspLeafs(GameMap* map, const uint coords[2],
     sector_t* sector, const AABoxf* box, int localValidCount,
-    int (*callback) (subsector_t*, void*), void* context)
+    int (*callback) (BspLeaf*, void*), void* context)
 {
-    bmapsubsectoriterateparams_t args;
+    bmapbspleafiterateparams_t args;
     assert(map);
 
     args.localValidCount = localValidCount;
@@ -825,15 +825,15 @@ int GameMap_IterateCellSubsectors(GameMap* map, const uint coords[2],
     args.sector = sector;
     args.box = box;
 
-    return Blockmap_IterateCellObjects(map->subsectorBlockmap, coords,
-                                       blockmapCellSubsectorsIterator, (void*)&args);
+    return Blockmap_IterateCellObjects(map->bspLeafBlockmap, coords,
+                                       blockmapCellBspLeafsIterator, (void*)&args);
 }
 
-int GameMap_IterateCellBlockSubsectors(GameMap* map, const GridmapBlock* blockCoords,
+int GameMap_IterateCellBlockBspLeafs(GameMap* map, const GridmapBlock* blockCoords,
     sector_t* sector,  const AABoxf* box, int localValidCount,
-    int (*callback) (subsector_t*, void*), void* context)
+    int (*callback) (BspLeaf*, void*), void* context)
 {
-    bmapsubsectoriterateparams_t args;
+    bmapbspleafiterateparams_t args;
     assert(map);
 
     args.localValidCount = localValidCount;
@@ -842,12 +842,12 @@ int GameMap_IterateCellBlockSubsectors(GameMap* map, const GridmapBlock* blockCo
     args.sector = sector;
     args.box = box;
 
-    return Blockmap_IterateCellBlockObjects(map->subsectorBlockmap, blockCoords,
-                                            blockmapCellSubsectorsIterator, (void*) &args);
+    return Blockmap_IterateCellBlockObjects(map->bspLeafBlockmap, blockCoords,
+                                            blockmapCellBspLeafsIterator, (void*) &args);
 }
 
-int GameMap_SubsectorsBoxIterator(GameMap* map, const AABoxf* box, sector_t* sector,
-    int (*callback) (subsector_t*, void*), void* parameters)
+int GameMap_BspLeafsBoxIterator(GameMap* map, const AABoxf* box, sector_t* sector,
+    int (*callback) (BspLeaf*, void*), void* parameters)
 {
     static int localValidCount = 0;
     GridmapBlock blockCoords;
@@ -856,18 +856,18 @@ int GameMap_SubsectorsBoxIterator(GameMap* map, const AABoxf* box, sector_t* sec
     // This is only used here.
     localValidCount++;
 
-    Blockmap_CellBlockCoords(map->subsectorBlockmap, &blockCoords, box);
-    return GameMap_IterateCellBlockSubsectors(map, &blockCoords, sector, box,
+    Blockmap_CellBlockCoords(map->bspLeafBlockmap, &blockCoords, box);
+    return GameMap_IterateCellBlockBspLeafs(map, &blockCoords, sector, box,
                                               localValidCount, callback, parameters);
 }
 
-int GameMap_SubsectorIterator(GameMap* map, int (*callback) (subsector_t*, void*), void* parameters)
+int GameMap_BspLeafIterator(GameMap* map, int (*callback) (BspLeaf*, void*), void* parameters)
 {
     uint i;
     assert(map);
-    for(i = 0; i < map->numSubsectors; ++i)
+    for(i = 0; i < map->numBspLeafs; ++i)
     {
-        int result = callback(map->subsectors + i, parameters);
+        int result = callback(map->bspLeafs + i, parameters);
         if(result) return result;
     }
     return false; // Continue iteration.
@@ -1388,7 +1388,7 @@ int GameMap_PathXYTraverse(GameMap* map, float fromX, float fromY, float toX, fl
     return GameMap_PathXYTraverse2(map, fromX, fromY, toX, toY, flags, callback, NULL/*no parameters*/);
 }
 
-subsector_t* GameMap_SubsectorAtPoint(GameMap* map, float point_[2])
+BspLeaf* GameMap_BspLeafAtPoint(GameMap* map, float point_[2])
 {
     BspNode* node = 0;
     uint nodenum = 0;
@@ -1397,27 +1397,27 @@ subsector_t* GameMap_SubsectorAtPoint(GameMap* map, float point_[2])
     point[0] = point_? point_[0] : 0;
     point[1] = point_? point_[1] : 0;
 
-    // single subsector is a special case
+    // A single BSP leaf is a special case
     if(!map->numBspNodes)
     {
-        return (subsector_t*) map->subsectors;
+        return (BspLeaf*) map->bspLeafs;
     }
 
     nodenum = map->numBspNodes - 1;
-    while(!(nodenum & NF_SUBSECTOR))
+    while(!(nodenum & NF_LEAF))
     {
         node = map->bspNodes + nodenum;
         ASSERT_DMU_TYPE(node, DMU_BSPNODE);
         nodenum = node->children[P_PointOnPartitionSide(point[0], point[1], &node->partition)];
     }
 
-    return map->subsectors + (nodenum & ~NF_SUBSECTOR);
+    return map->bspLeafs + (nodenum & ~NF_LEAF);
 }
 
-subsector_t* GameMap_SubsectorAtPointXY(GameMap* map, float x, float y)
+BspLeaf* GameMap_BspLeafAtPointXY(GameMap* map, float x, float y)
 {
     float point[2];
     point[0] = x;
     point[1] = y;
-    return GameMap_SubsectorAtPoint(map, point);
+    return GameMap_BspLeafAtPoint(map, point);
 }

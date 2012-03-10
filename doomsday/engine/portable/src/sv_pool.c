@@ -343,7 +343,7 @@ void Sv_RegisterMobj(dt_mobj_t* reg, const mobj_t* mo)
     reg->thinker.id = mo->thinker.id;
     reg->type = mo->type;
     reg->dPlayer = mo->dPlayer;
-    reg->subsector = mo->subsector;
+    reg->bspLeaf = mo->bspLeaf;
     reg->pos[VX] = mo->pos[VX];
     reg->pos[VY] = mo->pos[VY];
     reg->pos[VZ] = Sv_GetMaxedMobjZ(mo);
@@ -1189,7 +1189,7 @@ void Sv_ApplyDeltaData(void* destDelta, const void* srcDelta)
         d->dPlayer = s->dPlayer;
 
         if(sf & (MDF_POS_X | MDF_POS_Y))
-            d->subsector = s->subsector;
+            d->bspLeaf = s->bspLeaf;
         if(sf & MDF_POS_X)
             d->pos[VX] = s->pos[VX];
         if(sf & MDF_POS_Y)

@@ -1,4 +1,4 @@
-/**\file p_subsector.c
+/**\file bspleaf.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -27,34 +27,34 @@
 #include "de_refresh.h"
 #include "de_play.h"
 
-int Subsector_SetProperty(subsector_t* sub, const setargs_t* args)
+int BspLeaf_SetProperty(BspLeaf* leaf, const setargs_t* args)
 {
-    Con_Error("Subsector_SetProperty: Property %s is not writable.\n", DMU_Str(args->prop));
+    Con_Error("BspLeaf_SetProperty: Property %s is not writable.\n", DMU_Str(args->prop));
     exit(1);// Unreachable.
 }
 
-int Subsector_GetProperty(const subsector_t* sub, setargs_t* args)
+int BspLeaf_GetProperty(const BspLeaf* leaf, setargs_t* args)
 {
     switch(args->prop)
     {
     case DMU_SECTOR:
-        DMU_GetValue(DMT_SUBSECTOR_SECTOR, &sub->sector, args, 0);
+        DMU_GetValue(DMT_BSPLEAF_SECTOR, &leaf->sector, args, 0);
         break;
     case DMU_LIGHT_LEVEL:
-        DMU_GetValue(DMT_SECTOR_LIGHTLEVEL, &sub->sector->lightLevel, args, 0);
+        DMU_GetValue(DMT_SECTOR_LIGHTLEVEL, &leaf->sector->lightLevel, args, 0);
         break;
     case DMT_MOBJS:
-        DMU_GetValue(DMT_SECTOR_MOBJLIST, &sub->sector->mobjList, args, 0);
+        DMU_GetValue(DMT_SECTOR_MOBJLIST, &leaf->sector->mobjList, args, 0);
         break;
     case DMU_HEDGE_COUNT: {
         // FIXME:
-        //DMU_GetValue(DMT_SUBSECTOR_HEDGECOUNT, &sub->hedgeCount, args, 0);
-        int val = (int) sub->hedgeCount;
+        //DMU_GetValue(DMT_BSPLEAF_HEDGECOUNT, &leaf->hedgeCount, args, 0);
+        int val = (int) leaf->hedgeCount;
         DMU_GetValue(DDVT_INT, &val, args, 0);
         break;
       }
     default:
-        Con_Error("Subsector_GetProperty: No property %s.\n", DMU_Str(args->prop));
+        Con_Error("BspLeaf_GetProperty: No property %s.\n", DMU_Str(args->prop));
     }
 
     return false; // Continue iteration.

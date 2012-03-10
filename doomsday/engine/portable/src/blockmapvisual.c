@@ -32,7 +32,7 @@
 #include "de_misc.h"
 #include "de_ui.h"
 
-byte bmapShowDebug = 0; // 1 = mobjs, 2 = linedefs, 3 = subsectors, 4 = polyobjs.
+byte bmapShowDebug = 0; // 1 = mobjs, 2 = linedefs, 3 = BSP leafs, 4 = polyobjs.
 float bmapDebugSize = 1.5f;
 
 #if 0
@@ -56,7 +56,7 @@ static int rendLineDef(linedef_t* line, void* paramaters)
     return false; // Continue iteration.
 }
 
-static int rendSubsector(subsector_t* ssec, void* paramaters)
+static int rendBspLeaf(BspLeaf* bspLeaf, void* paramaters)
 {
     const float scale = MAX_OF(bmapDebugSize, 1);
     const float width = (theWindow->geometry.size.width / 16) / scale;
@@ -64,7 +64,7 @@ static int rendSubsector(subsector_t* ssec, void* paramaters)
     HEdge** hedgeIter, *hedge;
     vec2_t start, end;
 
-    for(hedgeIter = ssec->hedges; *hedgeIter; hedgeIter++)
+    for(hedgeIter = bspLeaf->hedges; *hedgeIter; hedgeIter++)
     {
         hedge = *hedgeIter;
 
@@ -110,8 +110,8 @@ static int rendSubsector(subsector_t* ssec, void* paramaters)
         }
 
         // Draw the bounding box.
-        V2_Set(start, ssec->aaBox.minX, ssec->aaBox.minY);
-        V2_Set(end,   ssec->aaBox.maxX, ssec->aaBox.maxY);
+        V2_Set(start, bspLeaf->aaBox.minX, bspLeaf->aaBox.minY);
+        V2_Set(end,   bspLeaf->aaBox.maxX, bspLeaf->aaBox.maxY);
 
         glBegin(GL_LINES);
             glVertex2f(start[VX], start[VY]);
@@ -183,19 +183,19 @@ int rendCellMobjs(void* cellPtr, void* paramaters)
     return false; // Continue iteration.
 }
 
-int rendCellSubsectors(void* cellPtr, void* paramaters)
+int rendCellBspLeafs(void* cellPtr, void* paramaters)
 {
     BlockmapCell* cell = (BlockmapCell*)cellPtr;
     if(cell && cell->ringNodes)
     {
-        bmapsubsectoriterateparams_t bsiParams;
+        bmapbspleafiterateparams_t bsiParams;
         bsiParams.localValidCount = validCount;
-        bsiParams.func = rendSubsector;
+        bsiParams.func = rendBspLeaf;
         bsiParams.param = paramaters;
         bsiParams.sector = NULL;
         bsiParams.box = NULL;
 
-        BlockmapCell_IterateObjects(cell, blockmapCellSubsectorsIterator, (void*)&bsiParams);
+        BlockmapCell_IterateObjects(cell, blockmapCellBspLeafsIterator, (void*)&bsiParams);
     }
     return false; // Continue iteration.
 }
@@ -374,7 +374,7 @@ static void drawPolyobjCellInfoBox(Blockmap* blockmap, const Point2Raw* origin, 
     drawCellInfo(origin, info);
 }
 
-static void drawSubsectorCellInfoBox(Blockmap* blockmap, const Point2Raw* origin, uint coords[2])
+static void drawBspLeafCellInfoBox(Blockmap* blockmap, const Point2Raw* origin, uint coords[2])
 {
     uint count = 0;
     char info[160];
@@ -382,7 +382,7 @@ static void drawSubsectorCellInfoBox(Blockmap* blockmap, const Point2Raw* origin
     validCount++;
     Blockmap_IterateCellObjects(blockmap, coords, countCellObject, (void*)&count);
 
-    dd_snprintf(info, 160, "Cell:[%u,%u] Subsectors:#%u", coords[VX], coords[VY], count);
+    dd_snprintf(info, 160, "Cell:[%u,%u] BspLeafs:#%u", coords[VX], coords[VY], count);
     drawCellInfo(origin, info);
 }
 
@@ -604,12 +604,12 @@ void Rend_BlockmapDebug(void)
         cellInfoDrawer = drawLineDefCellInfoBox;
         break;
 
-    case 3: // Subsectors.
-        if(!map->subsectorBlockmap) return;
+    case 3: // BspLeafs.
+        if(!map->bspLeafBlockmap) return;
 
-        blockmap = map->subsectorBlockmap;
-        cellDrawer = rendCellSubsectors;
-        cellInfoDrawer = drawSubsectorCellInfoBox;
+        blockmap = map->bspLeafBlockmap;
+        cellDrawer = rendCellBspLeafs;
+        cellInfoDrawer = drawBspLeafCellInfoBox;
         break;
 
     case 4: // PolyobjLinks.

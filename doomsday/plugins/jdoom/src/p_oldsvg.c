@@ -338,8 +338,8 @@ static void SV_ReadMobj(void)
         mo->dPlayer->lookDir = 0; /* $unifiedangles */
     }
     P_MobjSetPosition(mo);
-    mo->floorZ   = P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT);
-    mo->ceilingZ = P_GetFloatp(mo->subsector, DMU_CEILING_HEIGHT);
+    mo->floorZ   = P_GetFloatp(mo->bspLeaf, DMU_FLOOR_HEIGHT);
+    mo->ceilingZ = P_GetFloatp(mo->bspLeaf, DMU_CEILING_HEIGHT);
 }
 
 void P_v19_UnArchivePlayers(void)

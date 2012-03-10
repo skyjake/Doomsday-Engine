@@ -26,7 +26,7 @@
  * Angle Clipper (clipnodes and oranges).
  *
  * The idea is to keep track of occluded angles around the camera.
- * Since subsectors are rendered front-to-back, the occlusion lists
+ * Since BSP leafs are rendered front-to-back, the occlusion lists
  * start a frame empty and eventually fill up to cover the whole 360
  * degrees around the camera.
  *
@@ -990,7 +990,7 @@ boolean C_IsPointOccluded(float *viewrelpoint)
 /**
  * Returns true if the point is visible after checking both the clipnodes
  * and the occlusion planes. Note that this test can only be done with
- * points that reside in subsectors that have not yet been rendered.
+ * points that reside in BSP leafs that have not yet been rendered.
  */
 boolean C_IsPointVisible(float x, float y, float height)
 {
@@ -1267,21 +1267,19 @@ clipnode_t *C_AngleClippedBy(binangle_t bang)
 }
 
 /**
- * @return              Non-zero if the subsector might be visible.
+ * @return  Non-zero if the BspLeaf might be visible.
  */
-int C_CheckSubsector(subsector_t* ssec)
+int C_CheckBspLeaf(BspLeaf* bspLeaf)
 {
-    uint        i;
-    HEdge     **ptr;
+    HEdge** ptr;
+    uint i;
 
-    if(!ssec || ssec->hedgeCount < 3)
-        return 0;
+    if(!bspLeaf || bspLeaf->hedgeCount < 3) return 0;
 
-    if(devNoCulling)
-        return 1;
+    if(devNoCulling) return 1;
 
     // Do we need to resize the angle list buffer?
-    if(ssec->hedgeCount > anglistSize)
+    if(bspLeaf->hedgeCount > anglistSize)
     {
         anglistSize *= 2;
         if(!anglistSize)
@@ -1291,7 +1289,7 @@ int C_CheckSubsector(subsector_t* ssec)
          Z_Realloc(anglist, sizeof(binangle_t) * anglistSize, PU_APPSTATIC);
     }
 
-    ptr = ssec->hedges;
+    ptr = bspLeaf->hedges;
     i = 0;
     while(*ptr) // Angles to all corners.
     {
@@ -1304,7 +1302,7 @@ int C_CheckSubsector(subsector_t* ssec)
     }
 
     // Check each of the ranges defined by the edges.
-    for(i = 0; i < ssec->hedgeCount - 1; ++i)
+    for(i = 0; i < bspLeaf->hedgeCount - 1; ++i)
     {
         uint        end = i + 1;
         binangle_t  angLen;
@@ -1314,10 +1312,10 @@ int C_CheckSubsector(subsector_t* ssec)
         // always already covered by the previous edges. (Right?)
 
         // If even one of the edges is not contained by a clipnode,
-        // the subsector is at least partially visible.
+        // the leaf is at least partially visible.
         angLen = anglist[end] - anglist[i];
 
-        // The viewer is on an edge, the subsector should be visible.
+        // The viewer is on an edge, the leaf should be visible.
         if(angLen == BANG_180)
             return 1;
 
@@ -1334,7 +1332,7 @@ int C_CheckSubsector(subsector_t* ssec)
         }
     }
 
-    // All clipped away, the subsector cannot be seen.
+    // All clipped away, the leaf cannot be seen.
     return 0;
 }
 

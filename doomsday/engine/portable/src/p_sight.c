@@ -163,15 +163,15 @@ static boolean crossLineDef(const linedef_t* li, byte side, losdata_t* los)
 }
 
 /**
- * @return  @c true iff trace crosses the given subsector.
+ * @return  @c true iff trace crosses the given BSP leaf.
  */
-static boolean crossSSec(GameMap* map, uint ssecIdx, losdata_t* los)
+static boolean crossBspLeaf(GameMap* map, uint bspLeafIdx, losdata_t* los)
 {
-    const subsector_t* ssec = &map->subsectors[ssecIdx];
-    if(ssec->polyObj)
+    const BspLeaf* bspLeaf = &map->bspLeafs[bspLeafIdx];
+    if(bspLeaf->polyObj)
     {
         // Check polyobj lines.
-        polyobj_t* po = ssec->polyObj;
+        polyobj_t* po = bspLeaf->polyObj;
         linedef_t** lineIter = po->lines;
         while(*lineIter)
         {
@@ -187,10 +187,10 @@ static boolean crossSSec(GameMap* map, uint ssecIdx, losdata_t* los)
     }
 
     // Check edges.
-    { HEdge** segPtr = ssec->hedges;
-    while(*segPtr)
+    { HEdge** hedgeIter = bspLeaf->hedges;
+    while(*hedgeIter)
     {
-        const HEdge* hedge = *segPtr;
+        const HEdge* hedge = *hedgeIter;
         if(hedge->lineDef && hedge->lineDef->validCount != validCount)
         {
             linedef_t* li = hedge->lineDef;
@@ -198,7 +198,7 @@ static boolean crossSSec(GameMap* map, uint ssecIdx, losdata_t* los)
             if(!crossLineDef(li, hedge->side, los))
                 return false;
         }
-        segPtr++;
+        hedgeIter++;
     }}
 
     return true; // Continue iteration.
@@ -207,9 +207,9 @@ static boolean crossSSec(GameMap* map, uint ssecIdx, losdata_t* los)
 /**
  * @return  @c true iff trace crosses the node.
  */
-static boolean crossBSPNode(GameMap* map, unsigned int bspNum, losdata_t* los)
+static boolean crossBspNode(GameMap* map, unsigned int bspNum, losdata_t* los)
 {
-    while(!(bspNum & NF_SUBSECTOR))
+    while(!(bspNum & NF_LEAF))
     {
         const BspNode* node = &map->bspNodes[bspNum];
         int side = P_PointOnPartitionSide(FIX2FLT(los->trace.pos[VX]), FIX2FLT(los->trace.pos[VY]),
@@ -224,14 +224,14 @@ static boolean crossBSPNode(GameMap* map, unsigned int bspNum, losdata_t* los)
         else
         {
             // No.
-            if(!crossBSPNode(map, node->children[side], los))
+            if(!crossBspNode(map, node->children[side], los))
                 return 0; // Cross the starting side.
 
             bspNum = node->children[side^1]; // Cross the ending side.
         }
     }
 
-    return crossSSec(map, bspNum & ~NF_SUBSECTOR, los);
+    return crossBspLeaf(map, bspNum & ~NF_LEAF, los);
 }
 
 boolean GameMap_CheckLineSight(GameMap* map, const float from[3], const float to[3],
@@ -275,5 +275,5 @@ boolean GameMap_CheckLineSight(GameMap* map, const float from[3], const float to
     }
 
     validCount++;
-    return crossBSPNode(map, map->numBspNodes - 1, &los);
+    return crossBspNode(map, map->numBspNodes - 1, &los);
 }

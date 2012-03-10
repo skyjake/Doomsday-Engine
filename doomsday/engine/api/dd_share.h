@@ -277,7 +277,7 @@ enum {
     DD_SIDE_COUNT,
     DD_VERTEX_COUNT,
     DD_HEDGE_COUNT,
-    DD_SUBSECTOR_COUNT,
+    DD_BSPLEAF_COUNT,
     DD_BSPNODE_COUNT,
     DD_POLYOBJ_COUNT,
     DD_XGFUNC_LINK, ///< XG line classes
@@ -656,7 +656,7 @@ enum {
     DMU_LINEDEF,
     DMU_SIDEDEF,
     DMU_BSPNODE,
-    DMU_SUBSECTOR,
+    DMU_BSPLEAF,
     DMU_SECTOR,
     DMU_PLANE,
     DMU_SURFACE,
@@ -1029,7 +1029,7 @@ typedef struct aaboxf_s {
     nodeindex_t     lineRoot; /* lines to which this is linked */ \
     struct mobj_s*  sNext, **sPrev; /* links in sector (if needed) */ \
 \
-    struct subsector_s* subsector; /* subsector in which this resides */ \
+    struct bspleaf_s* bspLeaf; /* bspLeaf in which this resides */ \
     float           mom[3]; \
     angle_t         angle; \
     spritenum_t     sprite; /* used to find patch_t and flip value */ \
@@ -1069,7 +1069,7 @@ typedef struct aaboxf_s {
 #define DD_BASE_POLYOBJ_ELEMENTS() \
     DD_BASE_DDMOBJ_ELEMENTS() \
 \
-    struct subsector_s* subsector; /* subsector in which this resides */ \
+    struct bspleaf_s* bspLeaf; /* bspLeaf in which this resides */ \
     unsigned int    idx; /* Idx of polyobject. */ \
     int             tag; /* Reference tag. */ \
     int             validCount; \

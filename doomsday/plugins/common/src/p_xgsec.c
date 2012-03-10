@@ -2198,8 +2198,8 @@ int C_DECL XSTrav_Teleport(sector_t* sector, boolean ceiling, void* context,
 
         memcpy(oldpos, thing->pos, sizeof(thing->pos));
         oldAngle = thing->angle;
-        thfloorz = P_GetFloatp(thing->subsector, DMU_FLOOR_HEIGHT);
-        thceilz  = P_GetFloatp(thing->subsector, DMU_CEILING_HEIGHT);
+        thfloorz = P_GetFloatp(thing->bspLeaf, DMU_FLOOR_HEIGHT);
+        thceilz  = P_GetFloatp(thing->bspLeaf, DMU_CEILING_HEIGHT);
         aboveFloor = thing->pos[VZ] - thfloorz;
 
         // Players get special consideration
@@ -2291,7 +2291,7 @@ int C_DECL XSTrav_Teleport(sector_t* sector, boolean ceiling, void* context,
             thing->floorClip = 0;
 
             if(thing->pos[VZ] ==
-               P_GetFloatp(thing->subsector, DMU_FLOOR_HEIGHT))
+               P_GetFloatp(thing->bspLeaf, DMU_FLOOR_HEIGHT))
             {
                 const terraintype_t* tt = P_MobjGetFloorTerrainType(thing);
 
@@ -2772,7 +2772,7 @@ int XSTrav_SectorChain(thinker_t* th, void* context)
         (xstrav_sectorchainparams_t*) context;
     mobj_t*             mo = (mobj_t *) th;
 
-    if(params->sec == P_GetPtrp(mo->subsector, DMU_SECTOR))
+    if(params->sec == P_GetPtrp(mo->bspLeaf, DMU_SECTOR))
     {
         boolean             activating;
 
@@ -2808,9 +2808,9 @@ void P_ApplyWind(mobj_t* mo, sector_t* sec)
        ((info->flags & STF_MISSILE_WIND) && (mo->flags & MF_MISSILE)))
     {
         float               thfloorz =
-            P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT);
+            P_GetFloatp(mo->bspLeaf, DMU_FLOOR_HEIGHT);
         float               thceilz  =
-            P_GetFloatp(mo->subsector, DMU_CEILING_HEIGHT);
+            P_GetFloatp(mo->bspLeaf, DMU_CEILING_HEIGHT);
 
         if(!(info->flags & (STF_FLOOR_WIND | STF_CEILING_WIND)) ||
            ((info->flags & STF_FLOOR_WIND) && mo->pos[VZ] <= thfloorz) ||
@@ -2836,7 +2836,7 @@ int XSTrav_Wind(thinker_t* th, void* context)
     xstrav_windparams_t* params = (xstrav_windparams_t*) context;
     mobj_t*             mo = (mobj_t *) th;
 
-    if(params->sec == P_GetPtrp(mo->subsector, DMU_SECTOR))
+    if(params->sec == P_GetPtrp(mo->bspLeaf, DMU_SECTOR))
     {
         P_ApplyWind(mo, params->sec);
     }
@@ -3134,12 +3134,12 @@ D_CMD(MovePlane)
         p = 2;
         if(!players[CONSOLEPLAYER].plr->mo)
             return false;
-        sector = P_GetPtrp(players[CONSOLEPLAYER].plr->mo->subsector, DMU_SECTOR);
+        sector = P_GetPtrp(players[CONSOLEPLAYER].plr->mo->bspLeaf, DMU_SECTOR);
     }
     else if(!stricmp(argv[1], "at") && argc >= 4)
     {
         p = 4;
-        sector = P_GetPtrp(P_SubsectorAtPointXY((float) strtol(argv[2], 0, 0), (float) strtol(argv[3], 0, 0)), DMU_SECTOR);
+        sector = P_GetPtrp(P_BspLeafAtPointXY((float) strtol(argv[2], 0, 0), (float) strtol(argv[3], 0, 0)), DMU_SECTOR);
     }
     else if(!stricmp(argv[1], "tag") && argc >= 3)
     {
