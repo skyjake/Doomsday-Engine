@@ -25,12 +25,44 @@
 #include "de_refresh.h"
 #include "de_play.h"
 
+void Sector_UpdateAABox(Sector* sec)
+{
+    LineDef** lineIter;
+    LineDef* line;
+    assert(sec);
+
+    V2_Set(sec->aaBox.min, DDMAXFLOAT, DDMAXFLOAT);
+    V2_Set(sec->aaBox.max, DDMINFLOAT, DDMINFLOAT);
+
+    lineIter = sec->lineDefs;
+    if(!lineIter) return;
+
+    line = *lineIter;
+    V2_InitBox(sec->aaBox.arvec2, line->aaBox.min);
+    V2_AddToBox(sec->aaBox.arvec2, line->aaBox.max);
+    lineIter++;
+
+    for(; *lineIter; lineIter++)
+    {
+        line = *lineIter;
+        V2_AddToBox(sec->aaBox.arvec2, line->aaBox.min);
+        V2_AddToBox(sec->aaBox.arvec2, line->aaBox.max);
+    }
+}
+
+void Sector_UpdateArea(Sector* sec)
+{
+    assert(sec);
+    // Only a very rough estimate is required.
+    sec->roughArea = ((sec->aaBox.maxX - sec->aaBox.minX) / 128) *
+                     ((sec->aaBox.maxY - sec->aaBox.minY) / 128);
+}
+
 void Sector_UpdateOrigin(Sector* sec)
 {
     assert(sec);
-
-    sec->origin.pos[VX] = (sec->bBox[BOXRIGHT]  + sec->bBox[BOXLEFT]) / 2;
-    sec->origin.pos[VY] = (sec->bBox[BOXBOTTOM] + sec->bBox[BOXTOP])  / 2;
+    sec->origin.pos[VX] = (sec->aaBox.minX + sec->aaBox.maxX) / 2;
+    sec->origin.pos[VY] = (sec->aaBox.minY + sec->aaBox.maxY) / 2;
 }
 
 int Sector_SetProperty(Sector* sec, const setargs_t* args)

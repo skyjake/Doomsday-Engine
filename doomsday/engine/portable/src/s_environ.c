@@ -157,7 +157,7 @@ static void findBspLeafsAffectingSector(GameMap* map, uint secIDX)
     ownerlist_t bspLeafOwnerList;
     ownernode_t* node, *p;
     BspLeaf* bspLeaf;
-    float bbox[4];
+    AABoxf aaBox;
     uint i;
 
     if(0 == sec->lineDefCount)
@@ -165,11 +165,11 @@ static void findBspLeafsAffectingSector(GameMap* map, uint secIDX)
 
     memset(&bspLeafOwnerList, 0, sizeof(bspLeafOwnerList));
 
-    memcpy(bbox, sec->bBox, sizeof(bbox));
-    bbox[BOXLEFT]   -= 128;
-    bbox[BOXRIGHT]  += 128;
-    bbox[BOXTOP]    += 128;
-    bbox[BOXBOTTOM] -= 128;
+    memcpy(&aaBox, &sec->aaBox, sizeof(aaBox));
+    aaBox.minX -= 128;
+    aaBox.minY -= 128;
+    aaBox.maxX += 128;
+    aaBox.maxY += 128;
 
     /*DEBUG_Message(("sector %i: (%f,%f) - (%f,%f)\n", c,
                      bbox[BOXLEFT], bbox[BOXTOP], bbox[BOXRIGHT], bbox[BOXBOTTOM]));*/
@@ -180,10 +180,10 @@ static void findBspLeafsAffectingSector(GameMap* map, uint secIDX)
 
         // Is this BSP leaf close enough?
         if(bspLeaf->sector == sec || // leaf is IN this sector
-           (bspLeaf->midPoint.pos[VX] > bbox[BOXLEFT] &&
-            bspLeaf->midPoint.pos[VX] < bbox[BOXRIGHT] &&
-            bspLeaf->midPoint.pos[VY] < bbox[BOXTOP] &&
-            bspLeaf->midPoint.pos[VY] > bbox[BOXBOTTOM]))
+           (bspLeaf->midPoint.pos[VX] > aaBox.minX &&
+            bspLeaf->midPoint.pos[VY] > aaBox.minY &&
+            bspLeaf->midPoint.pos[VX] < aaBox.maxX &&
+            bspLeaf->midPoint.pos[VY] < aaBox.maxY))
         {
             // It will contribute to the reverb settings of this sector.
             setBspLeafSectorOwner(&bspLeafOwnerList, bspLeaf);
@@ -360,8 +360,8 @@ void S_CalcSectorReverb(Sector* sec)
     if(!sec || 0 == sec->lineDefCount) return;
 
     sectorSpace = (int) (sec->SP_ceilheight - sec->SP_floorheight) *
-        (sec->bBox[BOXRIGHT] - sec->bBox[BOXLEFT]) *
-        (sec->bBox[BOXTOP] - sec->bBox[BOXBOTTOM]);
+        (sec->aaBox.maxX - sec->aaBox.minX) *
+        (sec->aaBox.maxY - sec->aaBox.minY);
 
     // DEBUG_Message(("sector %i: secsp:%i\n", c, sectorSpace));
 

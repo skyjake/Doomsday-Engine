@@ -315,7 +315,7 @@ void P_SpawnMobjParticleGen(const ded_ptcgen_t* def, mobj_t* source)
     // Size of source sector might determine count.
     if(def->flags & PGF_SCALED_RATE)
     {
-        gen->spawnRateMultiplier = source->bspLeaf->sector->approxArea;
+        gen->spawnRateMultiplier = source->bspLeaf->sector->roughArea;
     }
     else
     {
@@ -374,7 +374,7 @@ void P_SpawnPlaneParticleGen(const ded_ptcgen_t* def, Plane* plane)
     // Size of source sector might determine count.
     if(def->flags & PGF_PARTS_PER_128)
     {
-        gen->spawnRateMultiplier = plane->sector->approxArea;
+        gen->spawnRateMultiplier = plane->sector->roughArea;
     }
     else
     {
@@ -606,7 +606,6 @@ static void P_NewParticle(ptcgen_t* gen)
         fixed_t radius = gen->stages[pt->stage].radius;
         const Plane* plane = gen->plane;
         const Sector* sector = gen->plane->sector;
-        const float* bbox = sector->bBox;
 
         // Choose a random spot inside the sector, on the spawn plane.
         if(gen->flags & PGF_SPACE_SPAWN)
@@ -639,17 +638,15 @@ static void P_NewParticle(ptcgen_t* gen)
          */
         for(i = 0; i < 5; ++i) // Try a couple of times (max).
         {
-            float               x =
-                (bbox[BOXLEFT]   + RNG_RandFloat() * (bbox[BOXRIGHT] - bbox[BOXLEFT]));
-            float               y =
-                (bbox[BOXBOTTOM] + RNG_RandFloat() * (bbox[BOXTOP]   - bbox[BOXBOTTOM]));
+            float               x = sector->aaBox.minX +
+                RNG_RandFloat() * (sector->aaBox.maxX - sector->aaBox.minX);
+            float               y = sector->aaBox.minY +
+                RNG_RandFloat() * (sector->aaBox.maxY - sector->aaBox.minY);
 
             subsec = P_BspLeafAtPointXY(x, y);
+            if(subsec->sector == sector) break;
 
-            if(subsec->sector == sector)
-                break;
-            else
-                subsec = NULL;
+            subsec = NULL;
         }
         if(!subsec)
             goto spawn_failed;

@@ -27,6 +27,25 @@
 #include "p_dmu.h"
 
 /**
+ * Update the Sector's map space axis-aligned bounding box to encompass the points
+ * defined by it's LineDefs' vertices.
+ *
+ * @pre LineDef list must have been initialized.
+ *
+ * @param Sector  Sector instance.
+ */
+void Sector_UpdateAABox(Sector* sector);
+
+/**
+ * Update the Sector's rough area approximation.
+ *
+ * @pre Axis-aligned bounding box must have been initialized.
+ *
+ * @param Sector  Sector instance.
+ */
+void Sector_UpdateArea(Sector* sector);
+
+/**
  * Update the origin of the sector according to the point defined by the center of
  * the sector's axis-aligned bounding box (which must be initialized before calling).
  *

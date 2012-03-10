@@ -457,10 +457,10 @@ static void writeSector(const GameMap *map, uint idx)
     }
 
     writeLong(s->flags);
-    writeFloat(s->bBox[BOXLEFT]);
-    writeFloat(s->bBox[BOXRIGHT]);
-    writeFloat(s->bBox[BOXBOTTOM]);
-    writeFloat(s->bBox[BOXTOP]);
+    writeFloat(s->aaBox.minX);
+    writeFloat(s->aaBox.minY);
+    writeFloat(s->aaBox.maxX);
+    writeFloat(s->aaBox.maxY);
     writeFloat(s->soundOrg.pos[VX]);
     writeFloat(s->soundOrg.pos[VY]);
     writeFloat(s->soundOrg.pos[VZ]);
@@ -537,10 +537,10 @@ static void readSector(const GameMap *map, uint idx)
 
     secIdx = readLong();
     s->flags = readLong();
-    s->bBox[BOXLEFT] = readFloat();
-    s->bBox[BOXRIGHT] = readFloat();
-    s->bBox[BOXBOTTOM] = readFloat();
-    s->bBox[BOXTOP] = readFloat();
+    s->aaBox.minX = readFloat();
+    s->aaBox.minY = readFloat();
+    s->aaBox.maxX = readFloat();
+    s->aaBox.maxY = readFloat();
     secIdx = readLong();
     s->soundOrg.pos[VX] = readFloat();
     s->soundOrg.pos[VY] = readFloat();

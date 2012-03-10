@@ -728,79 +728,24 @@ static void buildSectorLineLists(GameMap* map)
     M_Free(sectorLineLinks);
 }
 
-/**
- * @pre Lines in sector must be setup before this is called!
- */
-static void updateSectorBounds(Sector* sec)
-{
-    uint i;
-    float* bbox;
-    Vertex* vtx;
-
-    if(!sec) return;
-
-    bbox = sec->bBox;
-
-    if(!(sec->lineDefCount > 0))
-    {
-        memset(sec->bBox, 0, sizeof(sec->bBox));
-        return;
-    }
-
-    vtx = sec->lineDefs[0]->L_v1;
-    bbox[BOXLEFT] = bbox[BOXRIGHT]  = vtx->V_pos[VX];
-    bbox[BOXTOP]  = bbox[BOXBOTTOM] = vtx->V_pos[VY];
-
-    for(i = 1; i < sec->lineDefCount; ++i)
-    {
-        vtx = sec->lineDefs[i]->L_v1;
-
-        if(vtx->V_pos[VX] < bbox[BOXLEFT])
-            bbox[BOXLEFT]   = vtx->V_pos[VX];
-        if(vtx->V_pos[VX] > bbox[BOXRIGHT])
-            bbox[BOXRIGHT]  = vtx->V_pos[VX];
-        if(vtx->V_pos[VY] < bbox[BOXBOTTOM])
-            bbox[BOXBOTTOM] = vtx->V_pos[VY];
-        if(vtx->V_pos[VY] > bbox[BOXTOP])
-            bbox[BOXTOP]   = vtx->V_pos[VY];
-    }
-
-    // This is very rough estimate of sector area.
-    sec->approxArea = ((bbox[BOXRIGHT] - bbox[BOXLEFT]) / 128) *
-        ((bbox[BOXTOP] - bbox[BOXBOTTOM]) / 128);
-}
-
-/**
- * @pre Sector bounds must be setup before this is called!
- */
-void P_GetSectorBounds(Sector* sec, float* min, float* max)
-{
-    min[VX] = sec->bBox[BOXLEFT];
-    min[VY] = sec->bBox[BOXBOTTOM];
-
-    max[VX] = sec->bBox[BOXRIGHT];
-    max[VY] = sec->bBox[BOXTOP];
-}
-
 static void finishSectors(GameMap* map)
 {
     uint i;
     for(i = 0; i < map->numSectors; ++i)
     {
-        uint k;
-        float min[2], max[2];
         Sector* sec = &map->sectors[i];
+        uint k;
 
-        updateSectorBounds(sec);
-        P_GetSectorBounds(sec, min, max);
+        Sector_UpdateAABox(sec);
+        Sector_UpdateArea(sec);
+        Sector_UpdateOrigin(sec);
 
         // Set the degenmobj_t to the middle of the bounding box.
-        sec->soundOrg.pos[VX] = (min[VX] + max[VX]) / 2;
-        sec->soundOrg.pos[VY] = (min[VY] + max[VY]) / 2;
+        sec->soundOrg.pos[VX] = (sec->aaBox.minX + sec->aaBox.maxX) / 2;
+        sec->soundOrg.pos[VY] = (sec->aaBox.minY + sec->aaBox.maxY) / 2;
 
         // Set the z height of the sector sound origin.
-        sec->soundOrg.pos[VZ] =
-            (sec->SP_ceilheight - sec->SP_floorheight) / 2;
+        sec->soundOrg.pos[VZ] = (sec->SP_ceilheight - sec->SP_floorheight) / 2;
 
         // Set the position of the sound origin for all plane sound origins.
         // Set target heights for all planes.
@@ -888,9 +833,19 @@ static void finishLineDefs(GameMap* map)
     }
 }
 
+static void initBBoxFromAABoxf(float bBox[4], const AABoxf* aaBox)
+{
+    assert(bBox && aaBox);
+    bBox[BOXLEFT]   = aaBox->minX;
+    bBox[BOXRIGHT]  = aaBox->maxX;
+    bBox[BOXBOTTOM] = aaBox->minY;
+    bBox[BOXTOP]    = aaBox->maxY;
+}
+
 static void updateMapBounds(GameMap* map)
 {
     boolean isFirst = true;
+    float bBox[4];
     uint i;
     assert(map);
 
@@ -902,15 +857,16 @@ static void updateMapBounds(GameMap* map)
 
         if(0 == sec->lineDefCount) continue;
 
+        initBBoxFromAABoxf(bBox, &sec->aaBox);
         if(isFirst)
         {
             // The first sector is used as is.
-            memcpy(map->bBox, sec->bBox, sizeof(map->bBox));
+            memcpy(map->bBox, bBox, sizeof(map->bBox));
         }
         else
         {
             // Expand the bounding box.
-            M_JoinBoxes(map->bBox, sec->bBox);
+            M_JoinBoxes(map->bBox, bBox);
         }
         isFirst = false;
     }
@@ -1281,8 +1237,6 @@ static void hardenSectors(GameMap* dest, editmap_t* src)
         memcpy(destS, srcS, sizeof(*destS));
         destS->planeCount = 0;
         destS->planes = NULL;
-
-        Sector_UpdateOrigin(destS);
     }
 }
 

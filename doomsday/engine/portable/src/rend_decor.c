@@ -547,24 +547,24 @@ static void updateSurfaceDecorations2(Surface* suf, float offsetS, float offsetT
  */
 static void updatePlaneDecorations(Plane* pln)
 {
-    Sector*             sec = pln->sector;
-    Surface*            suf = &pln->surface;
-    vec3_t              v1, v2;
-    float               offsetS, offsetT;
+    Sector*  sec = pln->sector;
+    Surface* suf = &pln->surface;
+    vec3_t v1, v2;
+    float offsetS, offsetT;
 
     if(pln->type == PLN_FLOOR)
     {
-        V3_Set(v1, sec->bBox[BOXLEFT], sec->bBox[BOXTOP], pln->visHeight);
-        V3_Set(v2, sec->bBox[BOXRIGHT], sec->bBox[BOXBOTTOM], pln->visHeight);
+        V3_Set(v1, sec->aaBox.minX, sec->aaBox.maxY, pln->visHeight);
+        V3_Set(v2, sec->aaBox.maxX, sec->aaBox.minY, pln->visHeight);
     }
     else
     {
-        V3_Set(v1, sec->bBox[BOXLEFT], sec->bBox[BOXBOTTOM], pln->visHeight);
-        V3_Set(v2, sec->bBox[BOXRIGHT], sec->bBox[BOXTOP], pln->visHeight);
+        V3_Set(v1, sec->aaBox.minX, sec->aaBox.minY, pln->visHeight);
+        V3_Set(v2, sec->aaBox.maxX, sec->aaBox.maxY, pln->visHeight);
     }
 
-    offsetS = -fmod(sec->bBox[BOXLEFT], 64);
-    offsetT = -fmod(sec->bBox[BOXBOTTOM], 64);
+    offsetS = -fmod(sec->aaBox.minX, 64);
+    offsetT = -fmod(sec->aaBox.minY, 64);
 
     updateSurfaceDecorations2(suf, offsetS, offsetT, v1, v2, sec, suf->material? true : false);
 }

@@ -309,8 +309,8 @@ struct Sector
     -       int         frameFlags
     INT     int         validCount // if == validCount, already checked.
     -       int         flags
-    -       float[4]    bBox // Bounding box for the sector.
-    -       float       approxArea // Rough approximation of sector area.
+    -       AABox       aaBox // Bounding box for the sector.
+    -       float       roughArea // Rough approximation of sector area.
     FLOAT   float       lightLevel
     -       float       oldLightLevel
     FLOAT   float[3]    rgb

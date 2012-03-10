@@ -288,8 +288,8 @@ typedef struct sector_s {
     int                 frameFlags;
     int                 validCount;    // if == validCount, already checked.
     int                 flags;
-    float               bBox[4];       // Bounding box for the sector.
-    float               approxArea;    // Rough approximation of sector area.
+    AABoxf              aaBox;         // Bounding box for the sector.
+    float               roughArea;    // Rough approximation of sector area.
     float               lightLevel;
     float               oldLightLevel;
     float               rgb[3];
