@@ -358,7 +358,7 @@ static void newChaseDir(mobj_t *actor, float deltaX, float deltaY)
  */
 static int PIT_AvoidDropoff(LineDef* line, void* data)
 {
-    sector_t* backsector = P_GetPtrp(line, DMU_BACK_SECTOR);
+    Sector* backsector = P_GetPtrp(line, DMU_BACK_SECTOR);
     AABoxf* aaBox = P_GetPtrp(line, DMU_BOUNDING_BOX);
 
     if(backsector &&
@@ -369,7 +369,7 @@ static int PIT_AvoidDropoff(LineDef* line, void* data)
        tmBox.maxY > aaBox->minY &&
        P_BoxOnLineSide(&tmBox, line) == -1)
     {
-        sector_t*           frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
+        Sector*             frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
         float               front = P_GetFloatp(frontsector, DMU_FLOOR_HEIGHT);
         float               back = P_GetFloatp(backsector, DMU_FLOOR_HEIGHT);
         float               d1[2];
@@ -548,7 +548,7 @@ boolean P_LookForPlayers(mobj_t* actor, boolean allAround)
 void C_DECL A_Look(mobj_t *actor)
 {
     mobj_t     *targ;
-    sector_t   *sec;
+    Sector     *sec;
 
     // Any shot will wake up
     actor->threshold = 0;

@@ -79,7 +79,7 @@ int sfxSampleRate = 11025;
 static int numChannels = 0;
 static sfxchannel_t* channels;
 static mobj_t* listener;
-static sector_t* listenerSector = NULL;
+static Sector* listenerSector = NULL;
 
 static thread_t refreshHandle;
 static volatile boolean allowRefresh, refreshing;

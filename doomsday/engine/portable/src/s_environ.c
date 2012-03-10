@@ -153,7 +153,7 @@ static void findBspLeafsAffectingSector(GameMap* map, uint secIDX)
 {
     assert(map && secIDX < map->numSectors);
     {
-    sector_t* sec = &map->sectors[secIDX];
+    Sector* sec = &map->sectors[secIDX];
     ownerlist_t bspLeafOwnerList;
     ownernode_t* node, *p;
     BspLeaf* bspLeaf;
@@ -351,7 +351,7 @@ static boolean calcBspLeafReverb(BspLeaf* bspLeaf)
  *
  * @param sec  Ptr to the sector to calculate reverb properties of.
  */
-void S_CalcSectorReverb(sector_t* sec)
+void S_CalcSectorReverb(Sector* sec)
 {
     BspLeaf* sub;
     float spaceScatter;

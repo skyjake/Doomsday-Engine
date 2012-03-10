@@ -557,7 +557,7 @@ void R_UpdateMapSurfacesOnMaterialChange(material_t* material)
  *
  * @return  Ptr to the newly created plane.
  */
-plane_t* R_NewPlaneForSector(sector_t* sec)
+plane_t* R_NewPlaneForSector(Sector* sec)
 {
     surface_t* suf;
     plane_t* plane;
@@ -661,7 +661,7 @@ plane_t* R_NewPlaneForSector(sector_t* sec)
  * @param id            The sector, plane id to be destroyed.
  * @param sec           Ptr to sector for which a plane will be destroyed.
  */
-void R_DestroyPlaneOfSector(uint id, sector_t* sec)
+void R_DestroyPlaneOfSector(uint id, Sector* sec)
 {
     plane_t* plane, **newList = NULL;
     BspLeaf** ssecIter;
@@ -771,7 +771,7 @@ void R_ClearSurfaceDecorations(surface_t* suf)
     suf->numDecorations = 0;
 }
 
-void R_UpdateSkyFixForSec(const sector_t* sec)
+void R_UpdateSkyFixForSec(const Sector* sec)
 {
     boolean skyFloor, skyCeil;
 
@@ -912,7 +912,7 @@ void R_SetupFogDefaults(void)
  * is the leftmost vertex and verts[1] is the rightmost vertex, when the
  * line lies at the edge of `sector.'
  */
-void R_OrderVertices(const LineDef *line, const sector_t *sector, vertex_t *verts[2])
+void R_OrderVertices(const LineDef *line, const Sector *sector, vertex_t *verts[2])
 {
     byte        edge;
 
@@ -925,9 +925,9 @@ void R_OrderVertices(const LineDef *line, const sector_t *sector, vertex_t *vert
  * A neighbour is a line that shares a vertex with 'line', and faces the
  * specified sector.
  */
-LineDef *R_FindLineNeighbor(const sector_t *sector, const LineDef *line,
-                              const lineowner_t *own, boolean antiClockwise,
-                              binangle_t *diff)
+LineDef *R_FindLineNeighbor(const Sector *sector, const LineDef *line,
+                            const lineowner_t *own, boolean antiClockwise,
+                            binangle_t *diff)
 {
     lineowner_t            *cown = own->link[!antiClockwise];
     LineDef                *other = cown->lineDef;
@@ -953,7 +953,7 @@ LineDef *R_FindLineNeighbor(const sector_t *sector, const LineDef *line,
     return R_FindLineNeighbor(sector, line, cown, antiClockwise, diff);
 }
 
-LineDef* R_FindSolidLineNeighbor(const sector_t* sector,
+LineDef* R_FindSolidLineNeighbor(const Sector* sector,
                                  const LineDef* line,
                                  const lineowner_t* own,
                                  boolean antiClockwise, binangle_t* diff)
@@ -1023,7 +1023,7 @@ LineDef* R_FindSolidLineNeighbor(const sector_t* sector,
  * They are the neighbouring line in the backsector of the imediate line
  * neighbor.
  */
-LineDef *R_FindLineBackNeighbor(const sector_t *sector,
+LineDef *R_FindLineBackNeighbor(const Sector *sector,
                                 const LineDef *line,
                                 const lineowner_t *own,
                                 boolean antiClockwise,
@@ -1056,7 +1056,7 @@ LineDef *R_FindLineBackNeighbor(const sector_t *sector,
  * a shadow between them. In practice, they would be considered a single,
  * long sidedef by the shadow generator).
  */
-LineDef *R_FindLineAlignNeighbor(const sector_t *sec,
+LineDef *R_FindLineAlignNeighbor(const Sector *sec,
                                  const LineDef *line,
                                  const lineowner_t *own,
                                  boolean antiClockwise,
@@ -1249,12 +1249,12 @@ void R_PolygonizeMap(GameMap* map)
  * The test is done on BSP leafs.
  */
 #if 0 /* Currently unused. */
-static sector_t *getContainingSectorOf(GameMap* map, sector_t* sec)
+static Sector *getContainingSectorOf(GameMap* map, Sector* sec)
 {
     uint                i;
     float               cdiff = -1, diff;
     float               inner[4], outer[4];
-    sector_t*           other, *closest = NULL;
+    Sector*             other, *closest = NULL;
 
     memcpy(inner, sec->bBox, sizeof(inner));
 
@@ -1306,7 +1306,7 @@ void R_MapInitSurfaces(boolean forceUpdate)
     { uint i;
     for(i = 0; i < NUM_SECTORS; ++i)
     {
-        sector_t* sec = SECTOR_PTR(i);
+        Sector* sec = SECTOR_PTR(i);
         uint j;
 
         R_UpdateSector(sec, forceUpdate);
@@ -1358,7 +1358,7 @@ void R_MapInitSurfaceLists(void)
     { uint i;
     for(i = 0; i < NUM_SECTORS; ++i)
     {
-        sector_t* sec = SECTOR_PTR(i);
+        Sector* sec = SECTOR_PTR(i);
         if(0 == sec->lineDefCount)
             continue;
 
@@ -1515,7 +1515,7 @@ void R_SetupMap(int mode, int flags)
 void R_ClearSectorFlags(void)
 {
     uint        i;
-    sector_t   *sec;
+    Sector     *sec;
 
     for(i = 0; i < NUM_SECTORS; ++i)
     {
@@ -1560,7 +1560,7 @@ float R_GlowStrength(const plane_t* pln)
  * @return              @c true, if one or more surfaces in the given sector
  *                      use the special sky mask material.
  */
-boolean R_SectorContainsSkySurfaces(const sector_t* sec)
+boolean R_SectorContainsSkySurfaces(const Sector* sec)
 {
     boolean sectorContainsSkySurfaces = false;
     uint n = 0;
@@ -1590,8 +1590,8 @@ static material_t* chooseFixMaterial(SideDef* s, sidedefsection_t section)
     if(section == SS_BOTTOM || section == SS_TOP)
     {
         byte sid = (s->line->L_frontside == s? 0 : 1);
-        sector_t* frontSec = s->line->L_sector(sid);
-        sector_t* backSec = s->line->L_sector(sid^1);
+        Sector* frontSec = s->line->L_sector(sid);
+        Sector* backSec = s->line->L_sector(sid^1);
         surface_t* suf;
 
         if(backSec && ((section == SS_BOTTOM && frontSec->SP_floorheight < backSec->SP_floorheight && frontSec->SP_ceilheight  > backSec->SP_floorheight) ||
@@ -1636,7 +1636,7 @@ static void updateSidedefSection(SideDef* s, sidedefsection_t section)
     }
 }
 
-void R_UpdateLinedefsOfSector(sector_t* sec)
+void R_UpdateLinedefsOfSector(Sector* sec)
 {
     uint                i;
 
@@ -1644,7 +1644,7 @@ void R_UpdateLinedefsOfSector(sector_t* sec)
     {
         LineDef*            li = sec->lineDefs[i];
         SideDef*            front, *back;
-        sector_t*           frontSec, *backSec;
+        Sector*             frontSec, *backSec;
 
         if(!li->L_frontside || !li->L_backside)
             continue;
@@ -1678,7 +1678,7 @@ void R_UpdateLinedefsOfSector(sector_t* sec)
 
 boolean R_UpdatePlane(plane_t* pln, boolean forceUpdate)
 {
-    sector_t* sec = pln->sector;
+    Sector* sec = pln->sector;
     boolean changed = false;
 
     // Geometry change?
@@ -1753,7 +1753,7 @@ boolean R_UpdateBspLeaf(BspLeaf* bspLeaf, boolean forceUpdate)
 }
 #endif
 
-boolean R_UpdateSector(sector_t* sec, boolean forceUpdate)
+boolean R_UpdateSector(Sector* sec, boolean forceUpdate)
 {
     uint                i;
     boolean             changed = false, planeChanged = false;
@@ -1873,7 +1873,7 @@ float R_CheckSectorLight(float lightlevel, float min, float max)
     return MINMAX_OF(0, (lightlevel - min) / (float) (max - min), 1);
 }
 
-const float* R_GetSectorLightColor(const sector_t* sector)
+const float* R_GetSectorLightColor(const Sector* sector)
 {
     static vec3_t skyLightColor, oldSkyAmbientColor = { -1, -1, -1 };
     static float oldRendSkyLight = -1;

@@ -133,7 +133,7 @@ void P_SetLinedefAutomapVisibility(int player, uint lineIdx, boolean visible)
 /**
  * Converts a sector to an xsector.
  */
-xsector_t* P_ToXSector(sector_t* sector)
+xsector_t* P_ToXSector(Sector* sector)
 {
     if(!sector)
         return NULL;
@@ -154,7 +154,7 @@ xsector_t* P_ToXSector(sector_t* sector)
  */
 xsector_t* P_ToXSectorOfBspLeaf(BspLeaf* bspLeaf)
 {
-    sector_t* sec;
+    Sector* sec;
 
     if(!bspLeaf) return NULL;
 
@@ -228,7 +228,7 @@ static void getSurfaceColor(uint idx, float rgba[4])
 }
 
 typedef struct applysurfacecolorparams_s {
-    sector_t*       frontSec;
+    Sector*         frontSec;
     float           topColor[4];
     float           bottomColor[4];
 } applysurfacecolorparams_t;
@@ -486,7 +486,7 @@ static void initXSectors(void)
         {
         applysurfacecolorparams_t params;
         float rgba[4];
-        sector_t* sec = P_ToPtr(DMU_SECTOR, i);
+        Sector* sec = P_ToPtr(DMU_SECTOR, i);
 
         getSurfaceColor(TOLIGHTIDX(
             P_GetGMOShort(MO_XSECTOR, i, MO_FLOORCOLOR)), rgba);

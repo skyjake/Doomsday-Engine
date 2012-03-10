@@ -61,7 +61,7 @@ mobj_t* P_SpawnTeleFog(float x, float y, angle_t angle)
 }
 
 typedef struct {
-    sector_t*           sec;
+    Sector*             sec;
     mobjtype_t          type;
     mobj_t*             foundMobj;
 } findmobjparams_t;
@@ -92,7 +92,7 @@ static mobj_t* getTeleportDestination(short tag)
     list = P_GetSectorIterListForTag(tag, false);
     if(list)
     {
-        sector_t*           sec = NULL;
+        Sector*             sec = NULL;
         findmobjparams_t    params;
 
         params.type = MT_TELEPORTMAN;

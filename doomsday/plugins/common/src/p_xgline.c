@@ -679,7 +679,7 @@ int XL_TraversePlanes(LineDef* line, int refType, int ref, void* data,
     int                 tag;
     mobj_t*             mo;
     boolean             ok, findSecTagged;
-    sector_t*           sec, *frontSec, *backSec;
+    Sector*             sec, *frontSec, *backSec;
     xsector_t*          xsec;
 
     if(xgDev)
@@ -1577,7 +1577,7 @@ int C_DECL XLTrav_LineTeleport(LineDef* newLine, boolean dummy,
     LineDef*            line = (LineDef *) context;
     linetype_t*         info = (linetype_t *) context2;
     vertex_t*           newV1, *newV2, *oldV1, *oldV2;
-    sector_t*           newFrontSec, *newBackSec;
+    Sector*             newFrontSec, *newBackSec;
     float               newX, newY, newZ, pos, s, c;
     float               oldLineDelta[2], newLineDelta[2];
     angle_t             angle;
@@ -2032,7 +2032,7 @@ void XL_ActivateLine(boolean activating, linetype_t* info, LineDef* line,
 {
     byte                rgba[4] = { 0, 0, 0, 0 };
     xgline_t*           xg;
-    sector_t*           frontsector;
+    Sector*             frontsector;
     mobj_t*             activator_thing = (mobj_t *) data;
     ddmobj_base_t*      soundOrg = 0;
 

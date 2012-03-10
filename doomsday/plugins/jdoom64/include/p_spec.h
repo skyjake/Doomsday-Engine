@@ -82,7 +82,7 @@ typedef enum {
 
 int             EV_BuildStairs(LineDef *line, stair_e type);
 
-result_e    T_MovePlane(sector_t* sector, float speed, float dest,
+result_e    T_MovePlane(Sector* sector, float speed, float dest,
                         int crush, int floorOrCeiling, int direction);
 int             EV_DoDonut(LineDef *line);
 

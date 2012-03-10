@@ -41,7 +41,7 @@ typedef enum {
 } sectorsoundorigin_t;
 
 void            S_MapMusic(uint episode, uint map);
-void            S_SectorSound(sector_t* sec, sectorsoundorigin_t origin,
+void            S_SectorSound(Sector* sec, sectorsoundorigin_t origin,
                               int id);
 
 #endif

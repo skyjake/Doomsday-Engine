@@ -690,13 +690,13 @@ static void SBE_InfoBox(source_t* s, int rightX, char* title, float alpha)
 
 static void SBE_DrawLevelGauge(const Point2Raw* origin, int height)
 {
-    static sector_t* lastSector = NULL;
+    static Sector* lastSector = NULL;
     static float minLevel = 0, maxLevel = 0;
 
     int off, secY, p, minY = 0, maxY = 0;
     Point2Raw labelOrigin;
     BspLeaf* bspLeaf;
-    sector_t* sector;
+    Sector* sector;
     source_t* src;
     char buf[80];
     assert(origin);

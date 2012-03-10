@@ -959,7 +959,7 @@ static void P_ShootSpecialLine(mobj_t* thing, LineDef* line)
  */
 void P_PlayerInSpecialSector(player_t *player)
 {
-    sector_t *sector = P_GetPtrp(player->plr->mo->bspLeaf, DMU_SECTOR);
+    Sector *sector = P_GetPtrp(player->plr->mo->bspLeaf, DMU_SECTOR);
 
     // Falling, not all the way down yet?
     if(player->plr->mo->pos[VZ] != P_GetFloatp(sector, DMU_FLOOR_HEIGHT))
@@ -1184,7 +1184,7 @@ void P_SpawnSpecials(void)
     LineDef    *line;
     xline_t    *xline;
     iterlist_t *list;
-    sector_t   *sec;
+    Sector     *sec;
     xsector_t  *xsec;
 
     // Init special SECTORs.
@@ -1332,7 +1332,7 @@ void P_PlayerInWindSector(player_t* player)
         2048.0 / FRACUNIT * 30,
         2048.0 / FRACUNIT * 35
     };
-    sector_t* sector = P_GetPtrp(player->plr->mo->bspLeaf, DMU_SECTOR);
+    Sector* sector = P_GetPtrp(player->plr->mo->bspLeaf, DMU_SECTOR);
     xsector_t* xsector = P_ToXSector(sector);
 
     switch(xsector->special)

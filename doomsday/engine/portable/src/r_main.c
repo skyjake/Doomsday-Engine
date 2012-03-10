@@ -574,7 +574,7 @@ void R_Update(void)
     { uint i;
     for(i = 0; i < NUM_SECTORS; ++i)
     {
-        sector_t* sec = &sectors[i];
+        Sector* sec = &sectors[i];
         uint j;
         for(j = 0; j < sec->planeCount; ++j)
             Surface_Update(&sec->SP_planesurface(j));
@@ -787,7 +787,7 @@ void R_NewSharpWorld(void)
 void R_CreateMobjLinks(void)
 {
     uint                i;
-    sector_t*           seciter;
+    Sector*             seciter;
 #ifdef DD_PROFILE
     static int          p;
 

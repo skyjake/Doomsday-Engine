@@ -2675,7 +2675,7 @@ void R_PrecacheForMap(void)
 
         for(i = 0; i < NUM_SECTORS; ++i)
         {
-            sector_t* sec = SECTOR_PTR(i);
+            Sector* sec = SECTOR_PTR(i);
             if(!sec->lineDefCount) continue;
             for(j = 0; j < sec->planeCount; ++j)
             {

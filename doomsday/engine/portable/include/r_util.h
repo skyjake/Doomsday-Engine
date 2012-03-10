@@ -38,7 +38,7 @@ angle_t         R_PointToAngle2(float x1, float y1,
                                 float x2, float y2);
 float           R_PointToDist(const float x, const float y);
 
-sector_t*       R_GetSectorForOrigin(const void* ddMobjBase);
+Sector*         R_GetSectorForOrigin(const void* ddMobjBase);
 
 /**
  * Scale @a color uniformly so that the highest component becomes one.

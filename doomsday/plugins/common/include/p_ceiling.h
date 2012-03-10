@@ -61,7 +61,7 @@ typedef enum {
 typedef struct {
     thinker_t       thinker;
     ceilingtype_e   type;
-    sector_t*       sector;
+    Sector*         sector;
     float           bottomHeight;
     float           topHeight;
     float           speed;

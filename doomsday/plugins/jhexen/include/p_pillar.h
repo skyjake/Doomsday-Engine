@@ -36,7 +36,7 @@
 
 typedef struct {
     thinker_t       thinker;
-    sector_t*       sector;
+    Sector*         sector;
     float           ceilingSpeed;
     float           floorSpeed;
     float           floorDest;

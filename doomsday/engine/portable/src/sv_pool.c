@@ -441,7 +441,7 @@ void Sv_RegisterPlayer(dt_player_t* reg, uint number)
 void Sv_RegisterSector(dt_sector_t* reg, uint number)
 {
     uint                i;
-    sector_t*           sec = SECTOR_PTR(number);
+    Sector*             sec = SECTOR_PTR(number);
 
     reg->lightLevel = sec->lightLevel;
     memcpy(reg->rgb, sec->rgb, sizeof(reg->rgb));
@@ -632,7 +632,7 @@ boolean Sv_RegisterCompareSector(cregister_t* reg, uint number,
                                  sectordelta_t* d, byte doUpdate)
 {
     dt_sector_t*        r = &reg->sectors[number];
-    const sector_t*     s = SECTOR_PTR(number);
+    const Sector*       s = SECTOR_PTR(number);
     int                 df = 0;
 
     // Determine which data is different.
@@ -1523,7 +1523,7 @@ float Sv_MobjDistance(const mobj_t* mo, const ownerinfo_t* info, boolean isReal)
  */
 float Sv_SectorDistance(int index, const ownerinfo_t* info)
 {
-    sector_t* sector = SECTOR_PTR(index);
+    Sector* sector = SECTOR_PTR(index);
 
     return P_ApproxDistance3(info->pos[VX] - sector->origin.pos[VX],
                              info->pos[VY] - sector->origin.pos[VY],
@@ -2309,7 +2309,7 @@ void Sv_NewPolyDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
  * \assume: No two sounds with the same ID play at the same time from the
  *          same origin.
  */
-void Sv_NewSoundDelta(int soundId, mobj_t* emitter, sector_t* sourceSector,
+void Sv_NewSoundDelta(int soundId, mobj_t* emitter, Sector* sourceSector,
                       polyobj_t* sourcePoly, float volume,
                       boolean isRepeating, int clientsMask)
 {

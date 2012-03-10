@@ -586,7 +586,7 @@ static int rendSeg(void* hedge_, void* data)
     HEdge* hedge = (HEdge*) hedge_;
     uiwidget_t* obj = (uiwidget_t*)data;
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    sector_t* frontSector, *backSector;
+    Sector* frontSector, *backSector;
     const automapcfg_lineinfo_t* info;
     player_t* plr = rs.plr;
     float v1[2], v2[2];

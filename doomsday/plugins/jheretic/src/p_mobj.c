@@ -71,7 +71,7 @@ mobj_t *missileMobj;
 
 const terraintype_t* P_MobjGetFloorTerrainType(mobj_t* mo)
 {
-    sector_t*           sec = P_GetPtrp(mo->bspLeaf, DMU_SECTOR);
+    Sector*             sec = P_GetPtrp(mo->bspLeaf, DMU_SECTOR);
 
     return P_PlaneMaterialTerrainType(sec, PLN_FLOOR);
 }
@@ -275,7 +275,7 @@ void P_WindThrust(mobj_t *mo)
 {
     static int          windTab[3] = { 2048 * 5, 2048 * 10, 2048 * 25 };
 
-    sector_t           *sec = P_GetPtrp(mo->bspLeaf, DMU_SECTOR);
+    Sector             *sec = P_GetPtrp(mo->bspLeaf, DMU_SECTOR);
     int                 special = P_ToXSector(sec)->special;
 
     switch(special)
@@ -317,7 +317,7 @@ float P_MobjGetFriction(mobj_t *mo)
     }
     else
     {
-        sector_t           *sec = P_GetPtrp(mo->bspLeaf, DMU_SECTOR);
+        Sector             *sec = P_GetPtrp(mo->bspLeaf, DMU_SECTOR);
 
         if(P_ToXSector(sec)->special == 15)
         {
@@ -401,7 +401,7 @@ void P_MobjMoveXY(mobj_t* mo)
             }
             else if(mo->flags & MF_MISSILE)
             {   // Explode a missile
-                sector_t* backSec;
+                Sector* backSec;
 
                 //// kludge: Prevent missiles exploding against the sky.
                 if(ceilingLine &&

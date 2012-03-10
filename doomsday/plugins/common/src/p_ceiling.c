@@ -273,7 +273,7 @@ static int EV_DoCeiling2(int tag, float basespeed, ceilingtype_e type)
 {
     int             rtn = 0;
     xsector_t*      xsec;
-    sector_t*       sec = NULL;
+    Sector*         sec = NULL;
     ceiling_t*      ceiling;
     iterlist_t*     list;
 

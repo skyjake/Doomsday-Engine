@@ -794,7 +794,7 @@ static void shootSpecialLine(mobj_t *thing, LineDef *line)
  */
 void P_PlayerInSpecialSector(player_t* player)
 {
-    sector_t* sector = P_GetPtrp(player->plr->mo->bspLeaf, DMU_SECTOR);
+    Sector* sector = P_GetPtrp(player->plr->mo->bspLeaf, DMU_SECTOR);
 
     if(IS_CLIENT) return;
 
@@ -917,7 +917,7 @@ void P_SpawnSpecials(void)
     LineDef*            line;
     xline_t*            xline;
     iterlist_t*         list;
-    sector_t*           sec;
+    Sector*             sec;
     xsector_t*          xsec;
 
     // Init special sectors.

@@ -106,8 +106,8 @@ boolean EV_StartFloorWaggle(int tag, int height, int speed, int offset,
                             int timer)
 {
     boolean             retCode = false;
-    sector_t*           sec = NULL;
-    waggle_t*      waggle;
+    Sector*             sec = NULL;
+    waggle_t*           waggle;
     iterlist_t*         list;
 
     list = P_GetSectorIterListForTag(tag, false);

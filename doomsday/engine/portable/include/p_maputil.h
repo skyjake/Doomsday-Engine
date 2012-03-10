@@ -112,7 +112,7 @@ BspLeaf* P_BspLeafAtPointXY(float x, float y);
  *
  * @return  @c true, if the point is inside the sector.
  */
-boolean P_IsPointXYInSector(float x, float y, const sector_t* sector);
+boolean P_IsPointXYInSector(float x, float y, const Sector* sector);
 
 /**
  * Is the point inside the BspLeaf (according to the edges).
@@ -154,11 +154,11 @@ int PIT_AddMobjIntercepts(mobj_t* mobj, void* parameters);
 
 int P_MobjLinesIterator(mobj_t* mo, int (*func) (LineDef*, void*), void* parameters);
 
-int P_MobjSectorsIterator(mobj_t* mo, int (*func) (sector_t*, void*), void* parameters);
+int P_MobjSectorsIterator(mobj_t* mo, int (*func) (Sector*, void*), void* parameters);
 
 int P_LineMobjsIterator(LineDef* lineDef, int (*func) (mobj_t*, void*), void* parameters);
 
-int P_SectorTouchingMobjsIterator(sector_t* sector, int (*func) (mobj_t*, void*), void *parameters);
+int P_SectorTouchingMobjsIterator(Sector* sector, int (*func) (mobj_t*, void*), void *parameters);
 
 int P_MobjsBoxIterator(const AABoxf* box, int (*callback) (mobj_t*, void*), void* parameters);
 
@@ -182,7 +182,7 @@ int P_PolyobjLinesBoxIterator(const AABoxf* box, int (*callback) (LineDef*, void
  */
 int P_AllLinesBoxIterator(const AABoxf* box, int (*callback) (LineDef*, void*), void* parameters);
 
-int P_BspLeafsBoxIterator(const AABoxf* box, sector_t* sector, int (*callback) (BspLeaf*, void*), void* parameters);
+int P_BspLeafsBoxIterator(const AABoxf* box, Sector* sector, int (*callback) (BspLeaf*, void*), void* parameters);
 
 int P_PathTraverse(float const from[2], float const to[2], int flags, traverser_t callback);
 int P_PathTraverse2(float const from[2], float const to[2], int flags, traverser_t callback, void* parameters);

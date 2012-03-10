@@ -964,7 +964,7 @@ static boolean createGlowLightForSurface(surface_t* suf, void* paramaters)
     {
     case DMU_PLANE: {
         plane_t* pln = (plane_t*)suf->owner;
-        sector_t* sec = pln->sector;
+        Sector* sec = pln->sector;
         const averagecolor_analysis_t* avgColorAmplified;
         const materialvariantspecification_t* spec;
         const materialsnapshot_t* ms;
@@ -1027,7 +1027,7 @@ BEGIN_PROF( PROF_LUMOBJ_INIT_ADD );
 
     if(useDynlights)
     {
-        sector_t* seciter;
+        Sector* seciter;
         uint i;
         for(i = 0, seciter = sectors; i < NUM_SECTORS; seciter++, ++i)
         {

@@ -95,7 +95,7 @@ extern xsector_t *xsectors;
 
 xline_t*    P_ToXLine(LineDef* line);
 xline_t*    P_GetXLine(uint index);
-xsector_t*  P_ToXSector(sector_t* sector);
+xsector_t*  P_ToXSector(Sector* sector);
 xsector_t*  P_GetXSector(uint index);
 xsector_t*  P_ToXSectorOfBspLeaf(BspLeaf* sub);
 

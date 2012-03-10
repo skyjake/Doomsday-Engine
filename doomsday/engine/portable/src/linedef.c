@@ -245,8 +245,8 @@ boolean LineDef_MiddleMaterialCoversOpening(const LineDef *line, int side,
     if(line->L_backside)
     {
         SideDef* sideDef = line->L_side(side);
-        sector_t* frontSec = line->L_sector(side);
-        sector_t*  backSec = line->L_sector(side^1);
+        Sector* frontSec = line->L_sector(side);
+        Sector*  backSec = line->L_sector(side^1);
 
         if(sideDef->SW_middlematerial)
         {
@@ -338,8 +338,8 @@ plane_t* LineDef_CeilingMax(const LineDef* lineDef)
 
 boolean LineDef_BackClosed(const LineDef* lineDef, int side, boolean ignoreOpacity)
 {
-    sector_t* frontSec;
-    sector_t* backSec;
+    Sector* frontSec;
+    Sector* backSec;
     assert(lineDef);
 
     if(!lineDef->L_side(side^1)) return true;
@@ -430,12 +430,12 @@ int LineDef_GetProperty(const LineDef* lin, setargs_t* args)
         DMU_GetValue(DMT_LINEDEF_SLOPETYPE, &lin->slopeType, args, 0);
         break;
     case DMU_FRONT_SECTOR: {
-        sector_t *sec = (lin->L_frontside? lin->L_frontsector : NULL);
+        Sector* sec = (lin->L_frontside? lin->L_frontsector : NULL);
         DMU_GetValue(DMT_LINEDEF_SEC, &sec, args, 0);
         break;
       }
     case DMU_BACK_SECTOR: {
-        sector_t *sec = (lin->L_backside? lin->L_backsector : NULL);
+        Sector* sec = (lin->L_backside? lin->L_backsector : NULL);
         DMU_GetValue(DMT_LINEDEF_SEC, &sec, args, 0);
         break;
       }

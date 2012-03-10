@@ -77,7 +77,7 @@
 
 const terraintype_t* P_MobjGetFloorTerrainType(mobj_t* mo)
 {
-    sector_t*           sec = P_GetPtrp(mo->bspLeaf, DMU_SECTOR);
+    Sector*             sec = P_GetPtrp(mo->bspLeaf, DMU_SECTOR);
 
     return P_PlaneMaterialTerrainType(sec, PLN_FLOOR);
 }
@@ -251,7 +251,7 @@ void P_MobjMoveXY(mobj_t* mo)
             }
             else if(mo->flags & MF_MISSILE)
             {
-                sector_t* backSec;
+                Sector* backSec;
 
                 //// kludge: Prevent missiles exploding against the sky.
                 if(ceilingLine &&
@@ -296,7 +296,7 @@ void P_MobjMoveXY(mobj_t* mo)
 }
 
 /*
-static int PIT_Splash(sector_t *sector, void *data)
+static int PIT_Splash(Sector *sector, void *data)
 {
     mobj_t             *mo = data;
     float               floorheight;

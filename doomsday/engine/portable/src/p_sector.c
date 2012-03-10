@@ -1,4 +1,4 @@
-/**\file p_sector.c
+/**\file sector.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -27,7 +27,7 @@
 #include "de_refresh.h"
 #include "de_play.h"
 
-void Sector_UpdateOrigin(sector_t* sec)
+void Sector_UpdateOrigin(Sector* sec)
 {
     assert(sec);
 
@@ -35,7 +35,7 @@ void Sector_UpdateOrigin(sector_t* sec)
     sec->origin.pos[VY] = (sec->bBox[BOXBOTTOM] + sec->bBox[BOXTOP])  / 2;
 }
 
-int Sector_SetProperty(sector_t* sec, const setargs_t* args)
+int Sector_SetProperty(Sector* sec, const setargs_t* args)
 {
     switch(args->prop)
     {
@@ -66,7 +66,7 @@ int Sector_SetProperty(sector_t* sec, const setargs_t* args)
     return false; // Continue iteration.
 }
 
-int Sector_GetProperty(const sector_t* sec, setargs_t* args)
+int Sector_GetProperty(const Sector* sec, setargs_t* args)
 {
     switch(args->prop)
     {

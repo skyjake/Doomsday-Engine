@@ -62,7 +62,7 @@ typedef enum {
 
 typedef struct plat_s {
     thinker_t       thinker;
-    sector_t*       sector;
+    Sector*         sector;
     float           speed;
     float           low;
     float           high;

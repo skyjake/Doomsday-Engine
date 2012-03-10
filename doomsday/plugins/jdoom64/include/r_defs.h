@@ -121,7 +121,7 @@ extern xline_t* xlines;
 extern boolean mapSetup;
 
 xline_t*        P_ToXLine(LineDef* line);
-xsector_t*      P_ToXSector(sector_t* sector);
+xsector_t*      P_ToXSector(Sector* sector);
 xsector_t*      P_ToXSectorOfBspLeaf(BspLeaf* sub);
 
 /**

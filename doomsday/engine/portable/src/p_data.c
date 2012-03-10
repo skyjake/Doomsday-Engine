@@ -52,7 +52,7 @@ Uri* mapUri; // Name by which the game referred to the current map.
 
 vertex_t* vertexes = NULL;
 HEdge* hedges = NULL;
-sector_t* sectors = NULL;
+Sector* sectors = NULL;
 BspLeaf* bspLeafs = NULL;
 BspNode* bspNodes = NULL;
 LineDef* lineDefs = NULL;

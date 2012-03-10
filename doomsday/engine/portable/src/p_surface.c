@@ -40,7 +40,7 @@ boolean Surface_AttachedToMap(surface_t* suf)
     if(!suf->owner) return false;
     if(DMU_GetType(suf->owner) == DMU_PLANE)
     {
-        sector_t* sec = ((plane_t*)suf->owner)->sector;
+        Sector* sec = ((plane_t*)suf->owner)->sector;
         if(0 == sec->bspLeafCount)
             return false;
     }

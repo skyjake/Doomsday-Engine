@@ -642,7 +642,7 @@ static void ScriptFinished(int number)
 static boolean TagBusy(int tag)
 {
     uint                k;
-    sector_t*           sec;
+    Sector*             sec;
     xsector_t*          xsec;
 
     // NOTE: We can't use the sector tag lists here as we might already be
@@ -1288,7 +1288,7 @@ static int CmdPolyWaitDirect(void)
 
 static int CmdChangeFloor(void)
 {
-    sector_t* sec = NULL;
+    Sector* sec = NULL;
     iterlist_t* list;
     material_t* mat;
     ddstring_t path;
@@ -1322,7 +1322,7 @@ static int CmdChangeFloor(void)
 
 static int CmdChangeFloorDirect(void)
 {
-    sector_t* sec = NULL;
+    Sector* sec = NULL;
     material_t* mat;
     iterlist_t* list;
     ddstring_t path;
@@ -1355,7 +1355,7 @@ static int CmdChangeFloorDirect(void)
 
 static int CmdChangeCeiling(void)
 {
-    sector_t* sec = NULL;
+    Sector* sec = NULL;
     material_t* mat;
     iterlist_t* list;
     ddstring_t path;
@@ -1389,7 +1389,7 @@ static int CmdChangeCeiling(void)
 
 static int CmdChangeCeilingDirect(void)
 {
-    sector_t* sec = NULL;
+    Sector* sec = NULL;
     material_t* mat;
     iterlist_t* list;
     ddstring_t path;
@@ -1664,7 +1664,7 @@ static int CmdSectorSound(void)
     mobj = NULL;
     if(ACScript->line)
     {
-        sector_t*           front =
+        Sector*             front =
             P_GetPtrp(ACScript->line, DMU_FRONT_SECTOR);
 
         mobj = P_GetPtrp(front, DMU_SOUND_ORIGIN);
@@ -1731,7 +1731,7 @@ static int CmdSoundSequence(void)
     mobj = NULL;
     if(ACScript->line)
     {
-        sector_t*           front =
+        Sector*             front =
             P_GetPtrp(ACScript->line, DMU_FRONT_SECTOR);
 
         mobj = P_GetPtrp(front, DMU_SOUND_ORIGIN);

@@ -175,7 +175,7 @@ void P_MapSpawnPlaneParticleGens(void)
 
     for(i = 0; i < NUM_SECTORS; ++i)
     {
-        sector_t* sector = SECTOR_PTR(i);
+        Sector* sector = SECTOR_PTR(i);
 
         // Only planes in sectors with volume on the world X/Y axis can support generators.
         if(0 == sector->lineDefCount)
@@ -605,7 +605,7 @@ static void P_NewParticle(ptcgen_t* gen)
     {
         fixed_t radius = gen->stages[pt->stage].radius;
         const plane_t* plane = gen->plane;
-        const sector_t* sector = gen->plane->sector;
+        const Sector* sector = gen->plane->sector;
         const float* bbox = sector->bBox;
 
         // Choose a random spot inside the sector, on the spawn plane.
@@ -748,7 +748,7 @@ static int manyNewParticles(thinker_t* th, void* context)
 int PIT_CheckLinePtc(LineDef* ld, void* data)
 {
     fixed_t             ceil, floor;
-    sector_t*           front, *back;
+    Sector*             front, *back;
 
     if(mbox.maxX <= ld->aaBox.minX || mbox.minX >= ld->aaBox.maxX ||
        mbox.maxY <= ld->aaBox.minY || mbox.minY >= ld->aaBox.maxY)
@@ -1072,7 +1072,7 @@ static void P_MoveParticle(ptcgen_t* gen, particle_t* pt)
         // particle should be killed (if it's moving slowly at max).
         if(pt->contact)
         {
-            sector_t*           front, *back;
+            Sector*             front, *back;
 
             front = (pt->contact->L_frontside? pt->contact->L_frontsector : NULL);
             back = (pt->contact->L_backside? pt->contact->L_backsector : NULL);

@@ -528,7 +528,7 @@ boolean P_IsPointXYInBspLeaf(float x, float y, const BspLeaf* bspLeaf)
     return true;
 }
 
-boolean P_IsPointXYInSector(float x, float y, const sector_t* sector)
+boolean P_IsPointXYInSector(float x, float y, const Sector* sector)
 {
     BspLeaf* bspLeaf;
     if(!sector) return false; // I guess?
@@ -707,7 +707,7 @@ void GameMap_LinkMobjToLineDefs(GameMap* map, mobj_t* mo)
  */
 void P_MobjLink(mobj_t* mo, byte flags)
 {
-    sector_t* sec;
+    Sector* sec;
 
     // Link into the sector.
     mo->bspLeaf = P_BspLeafAtPointXY(mo->pos[VX], mo->pos[VY]);
@@ -796,14 +796,14 @@ int GameMap_MobjLinesIterator(GameMap* map, mobj_t* mo,
  * above or under the sector.
  */
 int GameMap_MobjSectorsIterator(GameMap* map, mobj_t* mo,
-    int (*callback) (sector_t*, void*), void* parameters)
+    int (*callback) (Sector*, void*), void* parameters)
 {
     void* linkstore[MAXLINKED];
     void** end = linkstore, **it;
     nodeindex_t nix;
     linknode_t* tn;
     LineDef* ld;
-    sector_t* sec;
+    Sector* sec;
     int result = false;
     assert(map);
 
@@ -874,7 +874,7 @@ int GameMap_LineMobjsIterator(GameMap* map, LineDef* lineDef,
  * (Lovely name; actually this is a combination of SectorMobjs and
  * a bunch of LineMobjs iterations.)
  */
-int GameMap_SectorTouchingMobjsIterator(GameMap* map, sector_t* sector,
+int GameMap_SectorTouchingMobjsIterator(GameMap* map, Sector* sector,
     int (*callback) (mobj_t*, void*), void* parameters)
 {
     uint i;
@@ -1060,7 +1060,7 @@ int P_MobjLinesIterator(mobj_t* mo, int (*callback) (LineDef*, void*), void* par
  * partly inside). This is not a 3D check; the mobj may actually reside
  * above or under the sector.
  */
-int P_MobjSectorsIterator(mobj_t* mo, int (*callback) (sector_t*, void*), void* parameters)
+int P_MobjSectorsIterator(mobj_t* mo, int (*callback) (Sector*, void*), void* parameters)
 {
     /// @fixme Do not assume mobj is in the current map.
     if(!theMap) return false; // Continue iteration.
@@ -1082,7 +1082,7 @@ int P_LineMobjsIterator(LineDef* lineDef, int (*callback) (mobj_t*, void*), void
  * (Lovely name; actually this is a combination of SectorMobjs and
  * a bunch of LineMobjs iterations.)
  */
-int P_SectorTouchingMobjsIterator(sector_t* sector, int (*callback) (mobj_t*, void*), void* parameters)
+int P_SectorTouchingMobjsIterator(Sector* sector, int (*callback) (mobj_t*, void*), void* parameters)
 {
     /// @fixme Do not assume sector is in the current map.
     if(!theMap) return false; // Continue iteration.
@@ -1118,7 +1118,7 @@ int P_PolyobjLinesBoxIterator(const AABoxf* box, int (*callback) (LineDef*, void
 }
 
 /// @note Part of the Doomsday public API.
-int P_BspLeafsBoxIterator(const AABoxf* box, sector_t* sector,
+int P_BspLeafsBoxIterator(const AABoxf* box, Sector* sector,
     int (*callback) (BspLeaf*, void*), void* parameters)
 {
     if(!theMap) return false; // Continue iteration.

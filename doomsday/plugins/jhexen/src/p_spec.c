@@ -143,7 +143,7 @@ void P_InitSky(uint map)
 boolean EV_SectorSoundChange(byte* args)
 {
     boolean             rtn = false;
-    sector_t*           sec = NULL;
+    Sector*             sec = NULL;
     iterlist_t*         list;
 
     if(!args[0])
@@ -668,7 +668,7 @@ void P_PlayerInSpecialSector(player_t* player)
         1.0 / 32 * 10,
         1.0 / 32 * 25
     };
-    sector_t* sector = P_GetPtrp(player->plr->mo->bspLeaf, DMU_SECTOR);
+    Sector* sector = P_GetPtrp(player->plr->mo->bspLeaf, DMU_SECTOR);
     xsector_t* xsector;
 
     if(player->plr->mo->pos[VZ] != P_GetFloatp(sector, DMU_FLOOR_HEIGHT))
@@ -798,7 +798,7 @@ void P_SpawnSpecials(void)
     LineDef    *line;
     xline_t    *xline;
     iterlist_t *list;
-    sector_t   *sec;
+    Sector     *sec;
     xsector_t  *xsec;
 
     // Init special SECTORs.
@@ -1025,7 +1025,7 @@ void P_AnimateSurfaces(void)
 #undef PLANE_MATERIAL_SCROLLUNIT
 }
 
-static boolean isLightningSector(sector_t* sec)
+static boolean isLightningSector(Sector* sec)
 {
     xsector_t*              xsec = P_ToXSector(sec);
 
@@ -1060,7 +1060,7 @@ static void P_LightningFlash(void)
         {
             for(i = 0; i < numsectors; ++i)
             {
-                sector_t*               sec = P_ToPtr(DMU_SECTOR, i);
+                Sector*                 sec = P_ToPtr(DMU_SECTOR, i);
 
                 if(isLightningSector(sec))
                 {
@@ -1079,7 +1079,7 @@ static void P_LightningFlash(void)
         {   // Remove the alternate lightning flash special.
             for(i = 0; i < numsectors; ++i)
             {
-                sector_t*               sec = P_ToPtr(DMU_SECTOR, i);
+                Sector*                 sec = P_ToPtr(DMU_SECTOR, i);
 
                 if(isLightningSector(sec))
                 {
@@ -1101,7 +1101,7 @@ static void P_LightningFlash(void)
     foundSec = false;
     for(i = 0; i < numsectors; ++i)
     {
-        sector_t*           sec = P_ToPtr(DMU_SECTOR, i);
+        Sector*             sec = P_ToPtr(DMU_SECTOR, i);
 
         if(isLightningSector(sec))
         {
@@ -1202,7 +1202,7 @@ void P_InitLightning(void)
     secCount = 0;
     for(i = 0; i < numsectors; ++i)
     {
-        sector_t*           sec = P_ToPtr(DMU_SECTOR, i);
+        Sector*             sec = P_ToPtr(DMU_SECTOR, i);
 
         if(isLightningSector(sec))
         {

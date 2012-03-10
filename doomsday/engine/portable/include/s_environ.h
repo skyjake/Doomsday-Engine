@@ -31,7 +31,7 @@
 
 #include "p_mapdata.h"
 
-void S_CalcSectorReverb(sector_t* sec);
+void S_CalcSectorReverb(Sector* sec);
 void S_DetermineSubsecsAffectingSectorReverb(GameMap* map);
 
 /// @return  Environment class name for identifier @a mclass.

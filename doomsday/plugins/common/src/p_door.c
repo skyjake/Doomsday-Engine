@@ -318,8 +318,8 @@ static int EV_DoDoor2(int tag, float speed, int topwait, doortype_e type)
 {
     int         rtn = 0, sound;
     xsector_t  *xsec;
-    sector_t   *sec = NULL;
-    door_t   *door;
+    Sector     *sec = NULL;
+    door_t     *door;
     iterlist_t *list;
 
     list = P_GetSectorIterListForTag(tag, false);
@@ -694,7 +694,7 @@ boolean EV_VerticalDoor(LineDef* line, mobj_t* mo)
 {
     xline_t*            xline;
     xsector_t*          xsec;
-    sector_t*           sec;
+    Sector*             sec;
     door_t*             door;
 
     sec = P_GetPtrp(line, DMU_BACK_SECTOR);
@@ -865,7 +865,7 @@ boolean EV_VerticalDoor(LineDef* line, mobj_t* mo)
 }
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-void P_SpawnDoorCloseIn30(sector_t *sec)
+void P_SpawnDoorCloseIn30(Sector *sec)
 {
     door_t *door;
 
@@ -883,7 +883,7 @@ void P_SpawnDoorCloseIn30(sector_t *sec)
     door->topCountDown = 30 * TICSPERSEC;
 }
 
-void P_SpawnDoorRaiseIn5Mins(sector_t *sec)
+void P_SpawnDoorRaiseIn5Mins(Sector *sec)
 {
     door_t           *door;
 

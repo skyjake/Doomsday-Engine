@@ -176,9 +176,9 @@ void LG_InitForMap(void)
     float       off[2];
     lgsamplepoint_t *samplePoints = 0, sample;
 
-    sector_t  **ssamples;
-    sector_t  **blkSampleSectors;
-    GameMap  *map = theMap;
+    Sector    **ssamples;
+    Sector    **blkSampleSectors;
+    GameMap    *map = theMap;
 
     if(!lgEnabled || !map)
     {
@@ -229,7 +229,7 @@ void LG_InitForMap(void)
      */
 
     // Allocate memory for all the sample results.
-    ssamples = M_Malloc(sizeof(sector_t*) *
+    ssamples = M_Malloc(sizeof(Sector*) *
                         ((lgBlockWidth * lgBlockHeight) * numSamples));
 
     // Determine the size^2 of the samplePoint array plus its center.
@@ -386,7 +386,7 @@ void LG_InitForMap(void)
                 (unsigned long) (sizeof(gridblock_t) * lgBlockWidth * lgBlockHeight));
 
     // Allocate memory used for the collection of the sample results.
-    blkSampleSectors = M_Malloc(sizeof(sector_t*) * numSamples);
+    blkSampleSectors = M_Malloc(sizeof(Sector*) * numSamples);
     if(numSamples > 1)
         sampleResults = M_Calloc(sizeof(int) * numSamples);
 
@@ -453,7 +453,7 @@ void LG_InitForMap(void)
     // Find the blocks of all sectors.
     for(s = 0; s < NUM_SECTORS; ++s)
     {
-        sector_t* sector = SECTOR_PTR(s);
+        Sector* sector = SECTOR_PTR(s);
 
         count = changedCount = 0;
 
@@ -596,7 +596,7 @@ static void LG_ApplySector(gridblock_t *block, const float *color, float level,
 /**
  * Called when a sector has changed its light level.
  */
-void LG_SectorChanged(sector_t* sector)
+void LG_SectorChanged(Sector* sector)
 {
     if(!lgInited)
         return;
@@ -653,7 +653,7 @@ static boolean LG_BlockNeedsUpdate(int x, int y)
 {
     // First check the block itself.
     gridblock_t *block = GRID_BLOCK(x, y);
-    sector_t *blockSector;
+    Sector *blockSector;
     int     a, b;
     int     limitA[2];
     int     limitB;
@@ -748,7 +748,7 @@ void LG_Update(void)
 
     gridblock_t        *block, *lastBlock, *other;
     int                 x, y, a, b;
-    sector_t           *sector;
+    Sector             *sector;
     const float        *color;
     int                 bias;
     int                 height;

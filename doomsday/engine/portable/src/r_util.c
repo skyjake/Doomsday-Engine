@@ -393,10 +393,10 @@ boolean R_GenerateTexCoords(pvec2_t s, pvec2_t t, const_pvec3_t point, float xSc
  * @return              Ptr to the Sector where the ddmobj_base_t resides,
  *                      else @c NULL.
  */
-sector_t* R_GetSectorForOrigin(const void* ddMobjBase)
+Sector* R_GetSectorForOrigin(const void* ddMobjBase)
 {
     uint                i, k;
-    sector_t*           sec;
+    Sector*             sec;
 
     // Check all sectors; find where the sound is coming from.
     for(i = 0; i < NUM_SECTORS; ++i)

@@ -368,7 +368,7 @@ static void doNewChaseDir(mobj_t *actor, float deltaX, float deltaY)
  */
 static int PIT_AvoidDropoff(LineDef* line, void* data)
 {
-    sector_t* backsector = P_GetPtrp(line, DMU_BACK_SECTOR);
+    Sector* backsector = P_GetPtrp(line, DMU_BACK_SECTOR);
     AABoxf* aaBox = P_GetPtrp(line, DMU_BOUNDING_BOX);
 
     if(backsector &&
@@ -379,7 +379,7 @@ static int PIT_AvoidDropoff(LineDef* line, void* data)
        tmBox.maxY > aaBox->minY &&
        P_BoxOnLineSide(&tmBox, line) == -1)
     {
-        sector_t*           frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
+        Sector*             frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
         float               front = P_GetFloatp(frontsector, DMU_FLOOR_HEIGHT);
         float               back = P_GetFloatp(backsector, DMU_FLOOR_HEIGHT);
         float               d1[2];
@@ -528,7 +528,7 @@ void C_DECL A_KeenDie(mobj_t* mo)
  */
 void C_DECL A_Look(mobj_t* actor)
 {
-    sector_t*           sec = NULL;
+    Sector*             sec = NULL;
     mobj_t*             targ;
 
     sec = P_GetPtrp(actor->bspLeaf, DMU_SECTOR);
@@ -1339,7 +1339,7 @@ void C_DECL A_PainShootSkull(mobj_t* actor, angle_t angle)
     mobj_t*             newmobj;
     uint                an;
     float               prestep;
-    sector_t*           sec;
+    Sector*             sec;
 
     if(cfg.maxSkulls)
     {   // Limit the number of MT_SKULL's we should spawn.

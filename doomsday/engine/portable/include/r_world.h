@@ -72,7 +72,7 @@ void            R_SetupFogDefaults(void);
 /**
  * Sector light color may be affected by the sky light color.
  */
-const float* R_GetSectorLightColor(const sector_t* sector);
+const float* R_GetSectorLightColor(const Sector* sector);
 
 float           R_DistAttenuateLightLevel(float distToViewer, float lightLevel);
 
@@ -97,15 +97,15 @@ float R_CheckSectorLight(float lightlevel, float min, float max);
  */
 boolean R_IsSkySurface(const surface_t* suf);
 
-boolean R_SectorContainsSkySurfaces(const sector_t* sec);
+boolean R_SectorContainsSkySurfaces(const Sector* sec);
 
 void R_UpdatePlanes(void);
 void R_ClearSectorFlags(void);
 void R_InitSkyFix(void);
 void R_MapInitSurfaceLists(void);
 
-void            R_UpdateSkyFixForSec(const sector_t* sec);
-void            R_OrderVertices(const LineDef* line, const sector_t* sector,
+void            R_UpdateSkyFixForSec(const Sector* sec);
+void            R_OrderVertices(const LineDef* line, const Sector* sector,
                                 vertex_t* verts[2]);
 boolean         R_FindBottomTop(LineDef* lineDef, int side, sidedefsection_t section,
                                 float matOffsetX, float matOffsetY,
@@ -114,8 +114,8 @@ boolean         R_FindBottomTop(LineDef* lineDef, int side, sidedefsection_t sec
                                 boolean unpegBottom, boolean unpegTop,
                                 boolean stretchMiddle, boolean isSelfRef,
                                 float* bottom, float* top, float texOffset[2]);
-plane_t*        R_NewPlaneForSector(sector_t* sec);
-void            R_DestroyPlaneOfSector(uint id, sector_t* sec);
+plane_t*        R_NewPlaneForSector(Sector* sec);
+void            R_DestroyPlaneOfSector(uint id, Sector* sec);
 
 surfacedecor_t* R_CreateSurfaceDecoration(surface_t* suf);
 void            R_ClearSurfaceDecorations(surface_t* suf);
@@ -162,16 +162,16 @@ boolean R_IsGlowingPlane(const plane_t* plane);
 float R_GlowStrength(const plane_t* pln);
 
 lineowner_t*    R_GetVtxLineOwner(const vertex_t* vtx, const LineDef* line);
-LineDef*        R_FindLineNeighbor(const sector_t* sector,
+LineDef*        R_FindLineNeighbor(const Sector* sector,
                                    const LineDef* line,
                                    const lineowner_t* own,
                                    boolean antiClockwise, binangle_t* diff);
-LineDef*        R_FindSolidLineNeighbor(const sector_t* sector,
+LineDef*        R_FindSolidLineNeighbor(const Sector* sector,
                                         const LineDef* line,
                                         const lineowner_t* own,
                                         boolean antiClockwise,
                                         binangle_t* diff);
-LineDef*        R_FindLineBackNeighbor(const sector_t* sector,
+LineDef*        R_FindLineBackNeighbor(const Sector* sector,
                                        const LineDef* line,
                                        const lineowner_t* own,
                                        boolean antiClockwise,

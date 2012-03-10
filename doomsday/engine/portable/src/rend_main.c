@@ -443,12 +443,12 @@ static int checkDiv(walldiv_t* div, float height)
 }
 
 static void doCalcSegDivisions(walldiv_t* div, const LineDef* line,
-    boolean backSide, const sector_t* frontSec, float bottomZ, float topZ,
+    boolean backSide, const Sector* frontSec, float bottomZ, float topZ,
     boolean doRight)
 {
     uint i, j;
     LineDef* iter;
-    sector_t* scanSec;
+    Sector* scanSec;
     lineowner_t* base, *own;
     boolean clockwise = !doRight;
     boolean stopScan = false;
@@ -550,7 +550,7 @@ static void doCalcSegDivisions(walldiv_t* div, const LineDef* line,
 }
 
 static void calcSegDivisions(walldiv_t* div, const HEdge* hedge,
-    const sector_t* frontSec, float bottomZ, float topZ, boolean doRight)
+    const Sector* frontSec, float bottomZ, float topZ, boolean doRight)
 {
     SideDef* side;
 
@@ -572,7 +572,7 @@ static void calcSegDivisions(walldiv_t* div, const HEdge* hedge,
  * Division will only happen if it must be done.
  */
 static void applyWallHeightDivision(walldiv_t* divs, const HEdge* hedge,
-    const sector_t* frontsec, float low, float hi)
+    const Sector* frontsec, float low, float hi)
 {
     walldiv_t* div;
     uint i;
@@ -1589,7 +1589,7 @@ static void renderPlane(BspLeaf* bspLeaf, planetype_t type, float height,
     uint                numVertices = bspLeaf->numVertices;
     rvertex_t*          rvertices;
     boolean             blended = false;
-    sector_t*           sec = bspLeaf->sector;
+    Sector*             sec = bspLeaf->sector;
     material_t*         mat = NULL;
     const materialsnapshot_t* msA = NULL, *msB = NULL;
 
@@ -1744,7 +1744,7 @@ static boolean rendSegSection(BspLeaf* bspLeaf, HEdge* hedge,
                               const fvertex_t* from, const fvertex_t* to,
                               float bottom, float top,
                               const float texOffset[2],
-                              sector_t* frontsec, boolean softSurface,
+                              Sector* frontsec, boolean softSurface,
                               boolean addDLights, boolean addMobjShadows, short sideFlags)
 {
     boolean solidSeg = true;
@@ -1972,7 +1972,7 @@ static boolean Rend_RenderSeg(BspLeaf* bspLeaf, HEdge* hedge)
     LineDef* ldef;
     float ffloor, fceil;
     boolean backSide;
-    sector_t* frontsec;
+    Sector* frontsec;
     int pid;
 
     side = HEDGE_SIDEDEF(hedge);
@@ -2147,7 +2147,7 @@ static boolean Rend_RenderSegTwosided(BspLeaf* bspLeaf, HEdge* hedge)
 {
     int                 pid = viewPlayer - ddPlayers;
     float               bottom, top, texOffset[2];
-    sector_t*           frontSec, *backSec;
+    Sector*             frontSec, *backSec;
     SideDef*            frontSide, *backSide;
     plane_t*            ffloor, *fceil, *bfloor, *bceil;
     LineDef*            line;
@@ -2436,8 +2436,8 @@ static int segSkyFixes(HEdge* hedge)
     int fixes = 0;
     if(hedge && hedge->lineDef) // "minisegs" have no linedefs.
     {
-        const sector_t* frontSec = hedge->HE_frontsector;
-        const sector_t* backSec  = hedge->HE_backsector;
+        const Sector* frontSec = hedge->HE_frontsector;
+        const Sector* backSec  = hedge->HE_backsector;
 
         if(!backSec || backSec != hedge->HE_frontsector)
         {
@@ -2491,8 +2491,8 @@ static int segSkyFixes(HEdge* hedge)
  */
 static void skyFixZCoords(HEdge* hedge, int skyCap, float* bottom, float* top)
 {
-    const sector_t* frontSec = hedge->HE_frontsector;
-    const sector_t* backSec  = hedge->HE_backsector;
+    const Sector* frontSec = hedge->HE_frontsector;
+    const Sector* backSec  = hedge->HE_backsector;
     const plane_t* ffloor = frontSec->SP_plane(PLN_FLOOR);
     const plane_t* fceil  = frontSec->SP_plane(PLN_CEILING);
     const plane_t* bceil  = backSec? backSec->SP_plane(PLN_CEILING) : NULL;
@@ -2618,8 +2618,8 @@ static boolean skymaskSegIsVisible(HEdge* hedge, boolean clipBackFacing)
 {
     LineDef* lineDef;
     SideDef* sideDef;
-    sector_t* backSec;
-    sector_t* frontSec;
+    Sector* backSec;
+    Sector* frontSec;
 
     // "minisegs" have no linedefs.
     if(!hedge->lineDef) return false;
@@ -2662,7 +2662,7 @@ static void occludeBspLeaf(const BspLeaf* bspLeaf, boolean forwardFacing)
 {
     float fronth[2], backh[2];
     float* startv, *endv;
-    sector_t* front = bspLeaf->sector, *back;
+    Sector* front = bspLeaf->sector, *back;
     HEdge* hedge, **segIt;
 
     if(devNoCulling || P_IsInVoid(viewPlayer))
@@ -2730,7 +2730,7 @@ static void Rend_RenderBspLeaf(uint bspLeafIdx)
     uint i;
     BspLeaf* bspLeaf = BSPLEAF_PTR(bspLeafIdx);
     HEdge* hedge, **segIt;
-    sector_t* sect;
+    Sector* sect;
     float sceil, sfloor;
 
     if(!bspLeaf->sector) return; // An orphan BSP leaf?
@@ -3060,7 +3060,7 @@ void Rend_RenderSurfaceVectors(void)
     for(i = 0; i < NUM_POLYOBJS; ++i)
     {
         const polyobj_t* po = polyObjs[i];
-        const sector_t* sec = po->bspLeaf->sector;
+        const Sector* sec = po->bspLeaf->sector;
         float zPos = sec->SP_floorheight + (sec->SP_ceilheight - sec->SP_floorheight)/2;
         vec3_t origin;
         uint j;
@@ -3800,7 +3800,7 @@ static void Rend_RenderBoundingBoxes(void)
     for(i = 0; i < NUM_POLYOBJS; ++i)
     {
         const polyobj_t* po = polyObjs[i];
-        const sector_t* sec = po->bspLeaf->sector;
+        const Sector* sec = po->bspLeaf->sector;
         float width  = (po->aaBox.maxX - po->aaBox.minX)/2;
         float length = (po->aaBox.maxY - po->aaBox.minY)/2;
         float height = (sec->SP_ceilheight - sec->SP_floorheight)/2;

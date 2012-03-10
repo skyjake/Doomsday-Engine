@@ -610,13 +610,13 @@ clplane_t* GameMap_ClPlaneBySectorIndex(GameMap* map, uint sectorIndex, clplanet
 void Cl_ReadSectorDelta2(int deltaType, boolean skip)
 {
     /// @todo Skipping is never done nowadays...
-    static sector_t dummy; // Used when skipping.
+    static Sector dummy; // Used when skipping.
     static plane_t* dummyPlaneArray[2];
     static plane_t dummyPlanes[2];
 
     GameMap* map = theMap; /// @fixme Do not assume the CURRENT map.
     unsigned short num;
-    sector_t* sec;
+    Sector* sec;
     int df;
     float height[2] = { 0, 0 };
     float target[2] = { 0, 0 };

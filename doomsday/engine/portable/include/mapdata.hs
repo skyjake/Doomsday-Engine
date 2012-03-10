@@ -86,7 +86,7 @@ public
 #define DMT_HEDGE_SIDEDEF       DDVT_PTR
 end
 
-struct seg
+struct HEdge
     PTR     vertex_s*[2] v          // [Start, End] of the segment.
     PTR     linedef_s*  lineDef
     PTR     sector_s*[2] sec
@@ -305,7 +305,7 @@ typedef struct msector_s {
 } msector_t;
 end
 
-struct sector
+struct Sector
     -       int         frameFlags
     INT     int         validCount // if == validCount, already checked.
     -       int         flags

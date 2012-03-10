@@ -201,7 +201,7 @@ void Rend_ParticleInitForNewFrame(void)
     memset(visiblePtcGens, 0, GENERATORS_MAX);
 }
 
-void Rend_ParticleMarkInSectorVisible(sector_t* sector)
+void Rend_ParticleMarkInSectorVisible(Sector* sector)
 {
     if(!useParticles || !theMap || !sector) return;
 

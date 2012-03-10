@@ -41,7 +41,7 @@ typedef struct editmap_s {
     uint numSideDefs;
     SideDef** sideDefs;
     uint numSectors;
-    sector_t** sectors;
+    Sector** sectors;
     uint numPolyObjs;
     polyobj_t** polyObjs;
 
@@ -93,7 +93,7 @@ boolean         MPE_GameObjProperty(const char *objName, uint idx,
 
 void            MPE_PruneRedundantMapData(editmap_t* map, int flags);
 
-boolean         MPE_RegisterUnclosedSectorNear(sector_t* sec, double x, double y);
+boolean         MPE_RegisterUnclosedSectorNear(Sector* sec, double x, double y);
 void            MPE_PrintUnclosedSectorList(void);
 void            MPE_FreeUnclosedSectorList(void);
 

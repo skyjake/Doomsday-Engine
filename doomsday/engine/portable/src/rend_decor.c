@@ -429,7 +429,7 @@ static void getDecorationSkipPattern(const int patternSkip[2], int* skip)
 
 static uint generateDecorLights(const ded_decorlight_t* def, surface_t* suf,
     material_t* mat, const pvec3_t v1, const pvec3_t v2, float width, float height,
-    const pvec3_t delta, int axis, float offsetS, float offsetT, sector_t* sec)
+    const pvec3_t delta, int axis, float offsetS, float offsetT, Sector* sec)
 {
     vec3_t posBase, pos;
     float patternW, patternH;
@@ -498,7 +498,7 @@ static uint generateDecorLights(const ded_decorlight_t* def, surface_t* suf,
  * Generate decorations for the specified surface.
  */
 static void updateSurfaceDecorations2(surface_t* suf, float offsetS, float offsetT,
-    vec3_t v1, vec3_t v2, sector_t* sec, boolean visible)
+    vec3_t v1, vec3_t v2, Sector* sec, boolean visible)
 {
     vec3_t delta;
 
@@ -547,7 +547,7 @@ static void updateSurfaceDecorations2(surface_t* suf, float offsetS, float offse
  */
 static void updatePlaneDecorations(plane_t* pln)
 {
-    sector_t*           sec = pln->sector;
+    Sector*             sec = pln->sector;
     surface_t*          suf = &pln->surface;
     vec3_t              v1, v2;
     float               offsetS, offsetT;

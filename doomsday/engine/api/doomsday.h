@@ -58,7 +58,7 @@ extern "C" {
 /**
  * Public definitions of the internal map data pointers.  These can be
  * accessed externally, but only as identifiers to data instances.
- * For example, a game could use sector_t to identify to sector to
+ * For example, a game could use Sector to identify to sector to
  * change with the Map Update API.
  *
  * Define @c __INTERNAL_MAP_DATA_ACCESS__ if access to the internal map data
@@ -71,7 +71,7 @@ extern "C" {
     typedef struct sidedef_s { int type; } SideDef;
     typedef struct hedge_s { int type; } HEdge;
     typedef struct bspleaf_s { int type; } BspLeaf;
-    typedef struct sector_s { int type; } sector_t;
+    typedef struct sector_s { int type; } Sector;
     typedef struct plane_s { int type; } plane_t;
     typedef struct material_s { int type; } material_t;
 #endif
@@ -439,7 +439,7 @@ boolean ClMobj_LocalActionsEnabled(struct mobj_s* mo);
     int             P_AllLinesBoxIterator(const AABoxf* box,
                                           int (*func) (struct linedef_s*, void*),
                                           void* data);
-    int             P_BspLeafsBoxIterator(const AABoxf* box, sector_t* sector,
+    int             P_BspLeafsBoxIterator(const AABoxf* box, Sector* sector,
                                            int (*func) (BspLeaf*, void*),
                                            void* data);
     int             P_PolyobjsBoxIterator(const AABoxf* box,
@@ -450,7 +450,7 @@ boolean ClMobj_LocalActionsEnabled(struct mobj_s* mo);
     int             P_LineMobjsIterator(struct linedef_s* line,
                                         int (*func) (struct mobj_s*, void *), void* data);
     int             P_SectorTouchingMobjsIterator
-                        (sector_t* sector, int (*func) (struct mobj_s*, void*),
+                        (Sector* sector, int (*func) (struct mobj_s*, void*),
                          void* data);
 
     int             P_PathTraverse(float const from[2], float const to[2], int flags, traverser_t callback); /*paramaters=NULL*/
@@ -512,7 +512,7 @@ void            P_SpawnDamageParticleGen(struct mobj_s* mo, struct mobj_s* infli
                                         int (*func) (struct linedef_s*,
                                                           void*), void*);
     int             P_MobjSectorsIterator(struct mobj_s* mo,
-                                          int (*func) (sector_t*, void*),
+                                          int (*func) (Sector*, void*),
                                           void* data);
 ///@}
 

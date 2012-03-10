@@ -1911,7 +1911,7 @@ Con_Printf("P_UnArchivePlayers: Saved %i is now %i.\n", i, j);
     }
 }
 
-static void SV_WriteSector(sector_t *sec)
+static void SV_WriteSector(Sector *sec)
 {
     int         i, type;
     float       flooroffx = P_GetFloatp(sec, DMU_FLOOR_MATERIAL_OFFSET_X);
@@ -2006,7 +2006,7 @@ static void SV_WriteSector(sector_t *sec)
  * Reads all versions of archived sectors.
  * Including the old Ver1.
  */
-static void SV_ReadSector(sector_t* sec)
+static void SV_ReadSector(Sector* sec)
 {
     int i, ver = 1;
     int type = 0;
@@ -2540,7 +2540,7 @@ static void SV_WriteCeiling(const ceiling_t* ceiling)
 
 static int SV_ReadCeiling(ceiling_t* ceiling)
 {
-    sector_t*           sector;
+    Sector*             sector;
 
 #if __JHEXEN__
     if(saveVersion >= 4)
@@ -2653,7 +2653,7 @@ static void SV_WriteDoor(const door_t *door)
 
 static int SV_ReadDoor(door_t *door)
 {
-    sector_t *sector;
+    Sector *sector;
 
 #if __JHEXEN__
     if(saveVersion >= 4)
@@ -2751,7 +2751,7 @@ static void SV_WriteFloor(const floor_t *floor)
 
 static int SV_ReadFloor(floor_t* floor)
 {
-    sector_t*           sector;
+    Sector*             sector;
 
 #if __JHEXEN__
     if(saveVersion >= 4)
@@ -2890,7 +2890,7 @@ static void SV_WritePlat(const plat_t *plat)
 
 static int SV_ReadPlat(plat_t *plat)
 {
-    sector_t *sector;
+    Sector *sector;
 
 #if __JHEXEN__
     if(saveVersion >= 4)
@@ -2991,7 +2991,7 @@ static void SV_WriteLight(const light_t* th)
 
 static int SV_ReadLight(light_t* th)
 {
-    sector_t*           sector;
+    Sector*             sector;
 
     if(saveVersion >= 4)
     {
@@ -3052,7 +3052,7 @@ static void SV_WritePhase(const phase_t* th)
 
 static int SV_ReadPhase(phase_t* th)
 {
-    sector_t*           sector;
+    Sector*             sector;
 
     if(saveVersion >= 4)
     {
@@ -3358,7 +3358,7 @@ static void SV_WritePillar(const pillar_t* th)
 
 static int SV_ReadPillar(pillar_t* th)
 {
-    sector_t*           sector;
+    Sector*             sector;
 
     if(saveVersion >= 4)
     {
@@ -3427,7 +3427,7 @@ static void SV_WriteFloorWaggle(const waggle_t* th)
 
 static int SV_ReadFloorWaggle(waggle_t* th)
 {
-    sector_t*           sector;
+    Sector*             sector;
 
     if(saveVersion >= 4)
     {
@@ -3498,7 +3498,7 @@ static void SV_WriteFlash(const lightflash_t* flash)
 
 static int SV_ReadFlash(lightflash_t* flash)
 {
-    sector_t*           sector;
+    Sector*             sector;
 
     if(hdr.version >= 5)
     {   // Note: the thinker class byte has already been read.
@@ -3558,7 +3558,7 @@ static void SV_WriteStrobe(const strobe_t* strobe)
 
 static int SV_ReadStrobe(strobe_t* strobe)
 {
-    sector_t*           sector;
+    Sector*             sector;
 
     if(hdr.version >= 5)
     {   // Note: the thinker class byte has already been read.
@@ -3615,7 +3615,7 @@ static void SV_WriteGlow(const glow_t* glow)
 
 static int SV_ReadGlow(glow_t* glow)
 {
-    sector_t*           sector;
+    Sector*             sector;
 
     if(hdr.version >= 5)
     {   // Note: the thinker class byte has already been read.
@@ -3672,7 +3672,7 @@ static void SV_WriteFlicker(const fireflicker_t* flicker)
  */
 static int SV_ReadFlicker(fireflicker_t* flicker)
 {
-    sector_t*           sector;
+    Sector*             sector;
     /*int ver =*/ SV_ReadByte(); // version byte.
 
     // Note: the thinker class byte has already been read.
@@ -3712,7 +3712,7 @@ static void SV_WriteBlink(const lightblink_t* blink)
  */
 static int SV_ReadBlink(lightblink_t* blink)
 {
-    sector_t* sector;
+    Sector* sector;
     /*int ver =*/ SV_ReadByte(); // version byte.
 
     // Note: the thinker class byte has already been read.
@@ -4172,7 +4172,7 @@ static void P_ArchiveSounds(void)
     uint                i;
     int                 difference;
     seqnode_t*          node;
-    sector_t*           sec;
+    Sector*             sec;
 
     // Save the sound sequences.
     SV_BeginSegment(ASEG_SOUNDS);

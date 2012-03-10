@@ -85,7 +85,7 @@ typedef struct gamemap_s {
     HEdge* hedges;
 
     uint numSectors;
-    sector_t* sectors;
+    Sector* sectors;
 
     uint numBspLeafs;
     BspLeaf* bspLeafs;
@@ -231,7 +231,7 @@ SideDef* GameMap_SideDef(GameMap* map, uint idx);
  * @param idx  Unique index of the sector.
  * @return  Pointer to Sector with this index else @c NULL if @a idx is not valid.
  */
-sector_t* GameMap_Sector(GameMap* map, uint idx);
+Sector* GameMap_Sector(GameMap* map, uint idx);
 
 /**
  * Lookup a BspLeaf by its unique index.
@@ -294,7 +294,7 @@ int GameMap_SideDefIndex(GameMap* map, SideDef* side);
  * @param sector  Sector to lookup.
  * @return  Unique index for the Sector else @c -1 if not present.
  */
-int GameMap_SectorIndex(GameMap* map, sector_t* sector);
+int GameMap_SectorIndex(GameMap* map, Sector* sector);
 
 /**
  * Lookup the unique index for @a bspLeaf.
@@ -643,13 +643,13 @@ void GameMap_InitBspLeafBlockmap(GameMap* map, const_pvec2_t min, const_pvec2_t 
 void GameMap_LinkBspLeafInBlockmap(GameMap* map, BspLeaf* bspLeaf);
 
 int GameMap_IterateCellBspLeafs(GameMap* map, const uint coords[2],
-    sector_t* sector, const AABoxf* box, int localValidCount,
+    Sector* sector, const AABoxf* box, int localValidCount,
     int (*callback) (BspLeaf*, void*), void* parameters);
 int GameMap_IterateCellBlockBspLeafs(GameMap* map, const struct gridmapblock_s* blockCoords,
-    sector_t* sector, const AABoxf* box, int localValidCount,
+    Sector* sector, const AABoxf* box, int localValidCount,
     int (*callback) (BspLeaf*, void*), void* parameters);
 
-int GameMap_BspLeafsBoxIterator(GameMap* map, const AABoxf* box, sector_t* sector,
+int GameMap_BspLeafsBoxIterator(GameMap* map, const AABoxf* box, Sector* sector,
     int (*callback) (BspLeaf*, void*), void* parameters);
 
 int GameMap_BspLeafIterator(GameMap* map, int (*callback) (BspLeaf*, void*), void* parameters);
@@ -684,7 +684,7 @@ int GameMap_VertexIterator(GameMap* map, int (*callback) (vertex_t*, void*), voi
 
 int GameMap_SideDefIterator(GameMap* map, int (*callback) (SideDef*, void*), void* parameters);
 
-int GameMap_SectorIterator(GameMap* map, int (*callback) (sector_t*, void*), void* parameters);
+int GameMap_SectorIterator(GameMap* map, int (*callback) (Sector*, void*), void* parameters);
 
 int GameMap_HEdgeIterator(GameMap* map, int (*callback) (HEdge*, void*), void* parameters);
 

@@ -165,7 +165,7 @@ static void initShadowPrimitive(void)
 
 void Rend_RenderMobjShadows(void)
 {
-    const sector_t* sec;
+    const Sector* sec;
     mobj_t* mo;
     uint i;
 

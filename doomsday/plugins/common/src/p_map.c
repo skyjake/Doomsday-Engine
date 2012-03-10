@@ -187,8 +187,8 @@ static boolean checkReject(BspLeaf* a, BspLeaf* b)
     if(rejectMatrix != NULL)
     {
         uint                s1, s2, pnum, bytenum, bitnum;
-        sector_t*           sec1 = P_GetPtrp(a, DMU_SECTOR);
-        sector_t*           sec2 = P_GetPtrp(b, DMU_SECTOR);
+        Sector*             sec1 = P_GetPtrp(a, DMU_SECTOR);
+        Sector*             sec2 = P_GetPtrp(b, DMU_SECTOR);
 
         // Determine BSP leaf entries in REJECT table.
         s1 = P_ToIndex(sec1);
@@ -1136,7 +1136,7 @@ int PIT_CheckLine(LineDef* ld, void* data)
  */
 boolean P_CheckPosition3f(mobj_t* thing, float x, float y, float z)
 {
-    sector_t* newSec;
+    Sector* newSec;
     AABoxf tmBoxExpanded;
 
     tmThing = thing;
@@ -1648,8 +1648,8 @@ int PTR_ShootTraverse(const intercept_t* in, void* paramaters)
     mobj_t*             th;
     const divline_t* trace = P_TraceLOS();
     const TraceOpening* opening;
-    sector_t*           frontSec = NULL, *backSec = NULL;
-    BspLeaf* contact, *originSub;
+    Sector*             frontSec = NULL, *backSec = NULL;
+    BspLeaf*            contact, *originSub;
     xline_t*            xline;
     boolean             lineWasHit;
 
@@ -1947,7 +1947,7 @@ int PTR_AimTraverse(const intercept_t* in, void* paramaters)
     float               slope, thingTopSlope, thingBottomSlope, dist;
     mobj_t*             th;
     LineDef*            li;
-    sector_t*           backSec, *frontSec;
+    Sector*             backSec, *frontSec;
 
     if(in->type == ICPT_LINE)
     {
@@ -2789,7 +2789,7 @@ int PIT_ChangeSector(mobj_t* thing, void* data)
  * @param sector        The sector to check.
  * @param crunch        @c true = crush any things in the sector.
  */
-boolean P_ChangeSector(sector_t* sector, boolean crunch)
+boolean P_ChangeSector(Sector* sector, boolean crunch)
 {
     noFit = false;
     crushChange = crunch;

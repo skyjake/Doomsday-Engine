@@ -66,7 +66,7 @@ mobj_t* P_SpawnTeleFog(float x, float y, angle_t angle)
 }
 
 typedef struct {
-    sector_t*           sec;
+    Sector*             sec;
     mobjtype_t          type;
     mobj_t*             foundMobj;
 } findmobjparams_t;
@@ -97,7 +97,7 @@ static mobj_t* getTeleportDestination(short tag)
     list = P_GetSectorIterListForTag(tag, false);
     if(list)
     {
-        sector_t*           sec = NULL;
+        Sector*             sec = NULL;
         findmobjparams_t    params;
 
         params.type = MT_TELEPORTMAN;
@@ -302,7 +302,7 @@ static mobjtype_t isFadeSpawner(int doomEdNum)
 }
 
 typedef struct {
-    sector_t*           sec;
+    Sector*             sec;
     float               spawnHeight;
 } fadespawnparams_t;
 
@@ -362,7 +362,7 @@ int EV_FadeSpawn(LineDef* li, mobj_t* mo)
     list = P_GetSectorIterListForTag(P_ToXLine(li)->tag, false);
     if(list)
     {
-        sector_t*           sec;
+        Sector*             sec;
         fadespawnparams_t   params;
 
         params.spawnHeight = mo->pos[VZ];
@@ -387,7 +387,7 @@ typedef enum {
 } bitwiseop_t;
 
 typedef struct {
-    sector_t*           sec;
+    Sector*             sec;
     boolean             notPlayers;
     int                 flags;
     bitwiseop_t         op;
@@ -437,7 +437,7 @@ int PIT_ChangeMobjFlags(thinker_t* th, void* context)
  */
 int EV_FadeAway(LineDef* line, mobj_t* thing)
 {
-    sector_t*           sec = NULL;
+    Sector*             sec = NULL;
     iterlist_t*         list;
 
     list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);

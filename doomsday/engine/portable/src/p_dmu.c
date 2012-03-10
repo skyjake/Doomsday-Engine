@@ -56,7 +56,7 @@ typedef struct dummyline_s {
 } dummyline_t;
 
 typedef struct dummysector_s {
-    sector_t sector; // Sector data.
+    Sector sector; // Sector data.
     void* extraData; // Pointer to user data.
     boolean inUse; // true, if the dummy is being used.
 } dummysector_t;
@@ -437,7 +437,7 @@ uint P_ToIndex(const void* ptr)
         return GET_BSPLEAF_IDX((BspLeaf*) ptr);
 
     case DMU_SECTOR:
-        return GET_SECTOR_IDX((sector_t*) ptr);
+        return GET_SECTOR_IDX((Sector*) ptr);
 
     case DMU_BSPNODE:
         return GET_BSPNODE_IDX((BspNode*) ptr);
@@ -507,7 +507,7 @@ int P_Iteratep(void *ptr, uint prop, void* context, int (*callback) (void* p, vo
         {
         case DMU_LINEDEF:
             {
-            sector_t*           sec = (sector_t*) ptr;
+            Sector*             sec = (Sector*) ptr;
             int                 result = false; // Continue iteration.
 
             if(sec->lineDefs)
@@ -520,7 +520,7 @@ int P_Iteratep(void *ptr, uint prop, void* context, int (*callback) (void* p, vo
           }
         case DMU_PLANE:
             {
-            sector_t*           sec = (sector_t*) ptr;
+            Sector*             sec = (Sector*) ptr;
             int                 result = false; // Continue iteration.
 
             if(sec->planes)
@@ -533,7 +533,7 @@ int P_Iteratep(void *ptr, uint prop, void* context, int (*callback) (void* p, vo
           }
         case DMU_BSPLEAF:
             {
-            sector_t*           sec = (sector_t*) ptr;
+            Sector*             sec = (Sector*) ptr;
             int                 result = false; // Continue iteration.
 
             if(sec->bspLeafs)
@@ -912,7 +912,7 @@ void DMU_SetValue(valuetype_t valueType, void* dst, const setargs_t* args,
 static int setProperty(void* obj, void* context)
 {
     setargs_t*          args = (setargs_t*) context;
-    sector_t*           updateSector1 = NULL, *updateSector2 = NULL;
+    Sector*             updateSector1 = NULL, *updateSector2 = NULL;
     plane_t*            updatePlane = NULL;
     LineDef*            updateLinedef = NULL;
     SideDef*            updateSidedef = NULL;
@@ -954,17 +954,17 @@ static int setProperty(void* obj, void* context)
 
     if(args->type == DMU_SECTOR)
     {
-        updateSector1 = (sector_t*) obj;
+        updateSector1 = (Sector*) obj;
 
         if(args->modifiers & DMU_FLOOR_OF_SECTOR)
         {
-            sector_t           *sec = (sector_t*) obj;
+            Sector             *sec = (Sector*) obj;
             obj = sec->SP_plane(PLN_FLOOR);
             args->type = DMU_PLANE;
         }
         else if(args->modifiers & DMU_CEILING_OF_SECTOR)
         {
-            sector_t           *sec = (sector_t*) obj;
+            Sector             *sec = (Sector*) obj;
             obj = sec->SP_plane(PLN_CEILING);
             args->type = DMU_PLANE;
         }
@@ -1417,13 +1417,13 @@ static int getProperty(void* obj, void* context)
     {
         if(args->modifiers & DMU_FLOOR_OF_SECTOR)
         {
-            sector_t           *sec = (sector_t*) obj;
+            Sector             *sec = (Sector*) obj;
             obj = sec->SP_plane(PLN_FLOOR);
             args->type = DMU_PLANE;
         }
         else if(args->modifiers & DMU_CEILING_OF_SECTOR)
         {
-            sector_t           *sec = (sector_t*) obj;
+            Sector             *sec = (Sector*) obj;
             obj = sec->SP_plane(PLN_CEILING);
             args->type = DMU_PLANE;
         }

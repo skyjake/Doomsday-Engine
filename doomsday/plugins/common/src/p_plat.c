@@ -248,9 +248,9 @@ static int doPlat(LineDef *line, int tag, plattype_e type, int amount)
     int                 rtn = 0;
     float               floorHeight;
     plat_t             *plat;
-    sector_t           *sec = NULL;
+    Sector             *sec = NULL;
 #if !__JHEXEN__
-    sector_t           *frontSector = P_GetPtrp(line, DMU_FRONT_SECTOR);
+    Sector             *frontSector = P_GetPtrp(line, DMU_FRONT_SECTOR);
 #endif
     xsector_t          *xsec;
     iterlist_t         *list;

@@ -69,7 +69,7 @@
 
 #if __JHEXEN__
 typedef struct stairqueue_s {
-    sector_t*       sector;
+    Sector*         sector;
     int             type;
     float           height;
 } stairqueue_t;
@@ -94,7 +94,7 @@ typedef struct stairdata_s {
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 #if __JHEXEN__
-static void enqueueStairSector(sector_t *sec, int type, float height);
+static void enqueueStairSector(Sector *sec, int type, float height);
 #endif
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -115,7 +115,7 @@ static int stairQueueTail;
 /**
  * Move a plane (floor or ceiling) and check for crushing.
  */
-result_e T_MovePlane(sector_t* sector, float speed, float dest,
+result_e T_MovePlane(Sector* sector, float speed, float dest,
                      int crush, int isCeiling, int direction)
 {
     boolean     flag;
@@ -431,7 +431,7 @@ void T_MoveFloor(floor_t* floor)
 }
 
 typedef struct findlineinsectorsmallestbottommaterialparams_s {
-    sector_t           *baseSec;
+    Sector             *baseSec;
     int                 minSize;
     LineDef            *foundLine;
 } findlineinsectorsmallestbottommaterialparams_t;
@@ -441,7 +441,7 @@ int findLineInSectorSmallestBottomMaterial(void *ptr, void *context)
     LineDef* li = (LineDef*) ptr;
     findlineinsectorsmallestbottommaterialparams_t* params =
         (findlineinsectorsmallestbottommaterialparams_t*) context;
-    sector_t* frontSec, *backSec;
+    Sector* frontSec, *backSec;
 
     frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR);
     backSec = P_GetPtrp(li, DMU_BACK_SECTOR);
@@ -492,7 +492,7 @@ int findLineInSectorSmallestBottomMaterial(void *ptr, void *context)
     return false; // Continue iteration.
 }
 
-LineDef* P_FindLineInSectorSmallestBottomMaterial(sector_t *sec, int *val)
+LineDef* P_FindLineInSectorSmallestBottomMaterial(Sector *sec, int *val)
 {
     findlineinsectorsmallestbottommaterialparams_t params;
 
@@ -522,9 +522,9 @@ LineDef* P_FindLineInSectorSmallestBottomMaterial(sector_t *sec, int *val)
  */
 
 typedef struct findfirstneighbouratfloorheightparams_s {
-    sector_t*           baseSec;
+    Sector*             baseSec;
     float               height;
-    sector_t*           foundSec;
+    Sector*             foundSec;
 } findfirstneighbouratfloorheightparams_t;
 
 static int findFirstNeighbourAtFloorHeight(void* ptr, void* context)
@@ -532,7 +532,7 @@ static int findFirstNeighbourAtFloorHeight(void* ptr, void* context)
     LineDef* ln = (LineDef*) ptr;
     findfirstneighbouratfloorheightparams_t* params =
         (findfirstneighbouratfloorheightparams_t*) context;
-    sector_t* other;
+    Sector* other;
 
     other = P_GetNextSector(ln, params->baseSec);
 # if __JDOOM__ || __JDOOM64__
@@ -548,8 +548,7 @@ static int findFirstNeighbourAtFloorHeight(void* ptr, void* context)
     return false; // Continue iteration.
 }
 
-static sector_t* findSectorSurroundingAtFloorHeight(sector_t* sec,
-                                                    float height)
+static Sector* findSectorSurroundingAtFloorHeight(Sector* sec, float height)
 {
     findfirstneighbouratfloorheightparams_t params;
 
@@ -571,12 +570,12 @@ int EV_DoFloor(LineDef *line, floortype_e floortype)
 #endif
 {
 #if !__JHEXEN__
-    sector_t   *frontsector;
+    Sector     *frontsector;
 #endif
     int         rtn = 0;
     xsector_t  *xsec;
-    sector_t   *sec = NULL;
-    floor_t *floor = NULL;
+    Sector     *sec = NULL;
+    floor_t    *floor = NULL;
     iterlist_t *list;
 #if __JHEXEN__
     int         tag = (int) args[0];
@@ -913,7 +912,7 @@ int EV_DoFloor(LineDef *line, floortype_e floortype)
             floor->material = P_GetPtrp(sec, DMU_FLOOR_MATERIAL);
 
             {
-            sector_t* otherSec = findSectorSurroundingAtFloorHeight(sec,
+            Sector* otherSec = findSectorSurroundingAtFloorHeight(sec,
                 floor->floorDestHeight);
 
             if(otherSec)
@@ -953,7 +952,7 @@ static int findSectorNeighborsForStairBuild(void* ptr, void* context)
     LineDef*            li = (LineDef*) ptr;
     findsectorneighborsforstairbuildparams_t* params =
         (findsectorneighborsforstairbuildparams_t*) context;
-    sector_t*           frontSec, *backSec;
+    Sector*             frontSec, *backSec;
     xsector_t*          xsec;
 
     frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR);
@@ -996,9 +995,9 @@ static int findSectorNeighborsForStairBuild(void* ptr, void* context)
  * @important DO NOT USE THIS ANYWHERE ELSE!
  */
 typedef struct spreadsectorparams_s {
-    sector_t*           baseSec;
+    Sector*             baseSec;
     material_t*         material;
-    sector_t*           foundSec;
+    Sector*             foundSec;
     float               height, stairSize;
 } spreadsectorparams_t;
 
@@ -1006,7 +1005,7 @@ int findAdjacentSectorForSpread(void* ptr, void* context)
 {
     LineDef*            li = (LineDef*) ptr;
     spreadsectorparams_t* params = (spreadsectorparams_t*) context;
-    sector_t*           frontSec, *backSec;
+    Sector*             frontSec, *backSec;
     xsector_t*          xsec;
 
     frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR);
@@ -1045,7 +1044,7 @@ int EV_BuildStairs(LineDef* line, stair_e type)
 {
     int                 rtn = 0;
     xsector_t*          xsec;
-    sector_t*           sec = NULL;
+    Sector*             sec = NULL;
     floor_t*            floor;
     float               height = 0, stairsize = 0;
     float               speed = 0;
@@ -1143,7 +1142,7 @@ int EV_BuildStairs(LineDef* line, stair_e type)
 #endif
 
 #if __JHEXEN__
-static void enqueueStairSector(sector_t *sec, int type, float height)
+static void enqueueStairSector(Sector *sec, int type, float height)
 {
     if((stairQueueTail + 1) % STAIR_QUEUE_SIZE == stairQueueHead)
     {
@@ -1156,9 +1155,9 @@ static void enqueueStairSector(sector_t *sec, int type, float height)
     stairQueueTail = (stairQueueTail + 1) % STAIR_QUEUE_SIZE;
 }
 
-static sector_t *dequeueStairSector(int *type, float *height)
+static Sector *dequeueStairSector(int *type, float *height)
 {
-    sector_t           *sec;
+    Sector             *sec;
 
     if(stairQueueHead == stairQueueTail)
     {   // Queue is empty.
@@ -1173,7 +1172,7 @@ static sector_t *dequeueStairSector(int *type, float *height)
     return sec;
 }
 
-static void processStairSector(sector_t *sec, int type, float height,
+static void processStairSector(Sector *sec, int type, float height,
                                stairs_e stairsType, int delay, int resetDelay)
 {
     floor_t        *floor;
@@ -1239,7 +1238,7 @@ int EV_BuildStairs(LineDef* line, byte* args, int direction,
     int                 delay;
     int                 type;
     int                 resetDelay;
-    sector_t*           sec = NULL, *qSec;
+    Sector*             sec = NULL, *qSec;
     iterlist_t*         list;
 
     // Set global stairs variables
@@ -1290,7 +1289,7 @@ int EV_BuildStairs(LineDef* line, byte* args, int direction,
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 typedef struct {
-    sector_t*       sector;
+    Sector*         sector;
     LineDef*        foundLineDef;
 } findfirsttwosidedparams_t;
 
@@ -1298,7 +1297,7 @@ int findFirstTwosided(void *ptr, void *context)
 {
     LineDef* li = (LineDef*) ptr;
     findfirsttwosidedparams_t* params = (findfirsttwosidedparams_t*) context;
-    sector_t* backSec = P_GetPtrp(li, DMU_BACK_SECTOR);
+    Sector* backSec = P_GetPtrp(li, DMU_BACK_SECTOR);
 
     if(backSec && !(params->sector && backSec == params->sector))
     {
@@ -1314,7 +1313,7 @@ int findFirstTwosided(void *ptr, void *context)
 int EV_DoDonut(LineDef* line)
 {
     int rtn = 0;
-    sector_t* sec, *outer, *ring;
+    Sector* sec, *outer, *ring;
     iterlist_t* list;
 
     list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
@@ -1431,7 +1430,7 @@ int EV_DoFloorAndCeiling(LineDef* line, int ftype, int ctype)
     int                 tag = P_ToXLine(line)->tag;
 # endif
     boolean             floor, ceiling;
-    sector_t*           sec = NULL;
+    Sector*             sec = NULL;
     iterlist_t*         list;
 
     list = P_GetSectorIterListForTag(tag, false);

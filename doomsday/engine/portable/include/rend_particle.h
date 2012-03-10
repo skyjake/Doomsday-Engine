@@ -55,7 +55,7 @@ void Rend_ParticleInitForNewFrame(void);
  * The given sector is visible. All PGs in it should be rendered.
  * Scans PG links.
  */
-void Rend_ParticleMarkInSectorVisible(sector_t* sector);
+void Rend_ParticleMarkInSectorVisible(Sector* sector);
 
 /**
  * Render all the visible particle generators.

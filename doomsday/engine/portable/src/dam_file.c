@@ -421,7 +421,7 @@ static void archiveSides(GameMap *map, boolean write)
 static void writeSector(const GameMap *map, uint idx)
 {
     uint                i;
-    sector_t           *s = &map->sectors[idx];
+    Sector             *s = &map->sectors[idx];
 
     writeFloat(s->lightLevel);
     writeFloat(s->rgb[CR]);
@@ -495,7 +495,7 @@ static void readSector(const GameMap *map, uint idx)
     uint                i, numPlanes;
     long                secIdx;
     float               offset[2], rgba[4];
-    sector_t           *s = &map->sectors[idx];
+    Sector             *s = &map->sectors[idx];
 
     s->lightLevel = readFloat();
     s->rgb[CR] = readFloat();

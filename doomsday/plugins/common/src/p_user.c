@@ -263,7 +263,7 @@ void P_Thrust(player_t *player, angle_t angle, float move)
     if(!(player->powers[PT_FLIGHT] && !(mo->pos[VZ] <= mo->floorZ)))
     {
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-        sector_t* sec = P_GetPtrp(mo->bspLeaf, DMU_SECTOR);
+        Sector* sec = P_GetPtrp(mo->bspLeaf, DMU_SECTOR);
 #endif
 #if __JHEXEN__
         const terraintype_t* tt = P_MobjGetFloorTerrainType(mo);

@@ -72,7 +72,7 @@ typedef enum {
     pastdest
 } result_e;
 
-result_e    T_MovePlane(sector_t* sector, float speed, float dest,
+result_e    T_MovePlane(Sector* sector, float speed, float dest,
                         int crush, int floorOrCeiling, int direction);
 
 

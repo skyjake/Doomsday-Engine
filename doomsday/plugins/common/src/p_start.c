@@ -1339,7 +1339,7 @@ void P_TurnGizmosAwayFromDoors(void)
 {
 #define MAXLIST 200
 
-    sector_t   *sec;
+    Sector     *sec;
     mobj_t     *iter;
     uint        i, l;
     int         k, t;

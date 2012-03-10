@@ -175,7 +175,7 @@ typedef struct {
 extern Uri* mapUri;
 extern vertex_t* vertexes;
 extern HEdge* hedges;
-extern sector_t* sectors;
+extern Sector* sectors;
 extern BspLeaf* bspLeafs;
 extern BspNode* bspNodes;
 extern LineDef* lineDefs;

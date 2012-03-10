@@ -45,7 +45,7 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct usecrecord_s {
-    sector_t           *sec;
+    Sector             *sec;
     double              nearPos[2];
 } usecrecord_t;
 
@@ -128,9 +128,9 @@ static SideDef* createSide(void)
     return side;
 }
 
-static sector_t* createSector(void)
+static Sector* createSector(void)
 {
-    sector_t*           sec;
+    Sector*             sec;
 
     sec = M_Calloc(sizeof(*sec));
     sec->header.type = DMU_SECTOR;
@@ -216,7 +216,7 @@ static void destroyEditableSectors(editmap_t *map)
         for(i = 0; i < map->numSectors; ++i)
         {
             uint                j;
-            sector_t           *s = map->sectors[i];
+            Sector             *s = map->sectors[i];
 
             if(s->planes)
             {
@@ -463,7 +463,7 @@ static void pruneUnusedSectors(editmap_t* map)
     // Scan all sectors.
     for(i = 0, newNum = 0; i < map->numSectors; ++i)
     {
-        sector_t*           s = map->sectors[i];
+        Sector*             s = map->sectors[i];
 
         if(s->buildData.refCount == 0)
         {
@@ -523,7 +523,7 @@ void MPE_PruneRedundantMapData(editmap_t *map, int flags)
  *
  * @return              @c true, if sector was registered.
  */
-boolean MPE_RegisterUnclosedSectorNear(sector_t *sec, double x, double y)
+boolean MPE_RegisterUnclosedSectorNear(Sector *sec, double x, double y)
 {
     uint                i;
     usecrecord_t       *usec;
@@ -608,7 +608,7 @@ static void hardenSectorBspLeafList(GameMap* map, uint secIDX)
 {
     assert(map && secIDX < map->numSectors);
     {
-    sector_t* sec = &map->sectors[secIDX];
+    Sector* sec = &map->sectors[secIDX];
     uint i, n, count;
 
     count = 0;
@@ -661,7 +661,7 @@ static void buildSectorLineLists(GameMap* map)
 
     uint i, j;
     LineDef* li;
-    sector_t* sec;
+    Sector* sec;
 
     zblockset_t* lineLinksBlockSet;
     linelink_t** sectorLineLinks;
@@ -764,7 +764,7 @@ static void buildSectorLineLists(GameMap* map)
 /**
  * \pre Lines in sector must be setup before this is called!
  */
-static void updateSectorBounds(sector_t* sec)
+static void updateSectorBounds(Sector* sec)
 {
     uint                i;
     float*              bbox;
@@ -807,7 +807,7 @@ static void updateSectorBounds(sector_t* sec)
 /**
  * \pre Sector bounds must be setup before this is called!
  */
-void P_GetSectorBounds(sector_t *sec, float *min, float *max)
+void P_GetSectorBounds(Sector *sec, float *min, float *max)
 {
     min[VX] = sec->bBox[BOXLEFT];
     min[VY] = sec->bBox[BOXBOTTOM];
@@ -823,7 +823,7 @@ static void finishSectors(GameMap* map)
     {
         uint k;
         float min[2], max[2];
-        sector_t* sec = &map->sectors[i];
+        Sector* sec = &map->sectors[i];
 
         updateSectorBounds(sec);
         P_GetSectorBounds(sec, min, max);
@@ -927,7 +927,7 @@ static void updateMapBounds(GameMap* map)
     { uint i;
     for(i = 0; i < map->numSectors; ++i)
     {
-        sector_t* sec = &map->sectors[i];
+        Sector* sec = &map->sectors[i];
         if(0 == sec->lineDefCount)
             continue;
         if(isFirst)
@@ -1333,12 +1333,12 @@ static void hardenSectors(GameMap* dest, editmap_t* src)
     uint i;
 
     dest->numSectors = src->numSectors;
-    dest->sectors = Z_Malloc(dest->numSectors * sizeof(sector_t), PU_MAPSTATIC, 0);
+    dest->sectors = Z_Malloc(dest->numSectors * sizeof(Sector), PU_MAPSTATIC, 0);
 
     for(i = 0; i < dest->numSectors; ++i)
     {
-        sector_t* destS = &dest->sectors[i];
-        sector_t* srcS = src->sectors[i];
+        Sector* destS = &dest->sectors[i];
+        Sector* srcS = src->sectors[i];
 
         memcpy(destS, srcS, sizeof(*destS));
         destS->planeCount = 0;
@@ -1354,8 +1354,8 @@ static void hardenPlanes(GameMap* dest, editmap_t* src)
 
     for(i = 0; i < dest->numSectors; ++i)
     {
-        sector_t           *destS = &dest->sectors[i];
-        sector_t           *srcS = src->sectors[i];
+        Sector             *destS = &dest->sectors[i];
+        Sector             *srcS = src->sectors[i];
 
         for(j = 0; j < srcS->planeCount; ++j)
         {
@@ -1457,9 +1457,9 @@ static void testForWindowEffect(editmap_t* map, LineDef* l)
     double              mX, mY, dX, dY;
     boolean             castHoriz;
     double              backDist = DDMAXFLOAT;
-    sector_t*           backOpen = NULL;
+    Sector*             backOpen = NULL;
     double              frontDist = DDMAXFLOAT;
-    sector_t*           frontOpen = NULL;
+    Sector*             frontOpen = NULL;
     LineDef*            frontLine = NULL, *backLine = NULL;
 
     mX = (l->v[0]->buildData.pos[VX] + l->v[1]->buildData.pos[VX]) / 2.0;
@@ -2211,7 +2211,7 @@ uint MPE_PlaneCreate(uint sector, float height, materialid_t material,
                      float normalX, float normalY, float normalZ)
 {
     uint                i;
-    sector_t*           s;
+    Sector*             s;
     plane_t**           newList, *pln;
 
     if(!editMapInited)
@@ -2252,7 +2252,7 @@ uint MPE_PlaneCreate(uint sector, float height, materialid_t material,
 
 uint MPE_SectorCreate(float lightlevel, float red, float green, float blue)
 {
-    sector_t           *s;
+    Sector             *s;
 
     if(!editMapInited)
         return 0;

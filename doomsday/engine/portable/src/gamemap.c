@@ -89,7 +89,7 @@ const TraceOpening* GameMap_TraceOpening(GameMap* map)
 
 void GameMap_SetTraceOpening(GameMap* map, LineDef* lineDef)
 {
-    sector_t* front, *back;
+    Sector* front, *back;
     assert(map);
 
     // Is the linedef part of this map?
@@ -172,14 +172,14 @@ SideDef* GameMap_SideDef(GameMap* map, uint idx)
     return &map->sideDefs[idx];
 }
 
-int GameMap_SectorIndex(GameMap* map, sector_t* sec)
+int GameMap_SectorIndex(GameMap* map, Sector* sec)
 {
     assert(map);
     if(!sec || !(sec >= map->sectors && sec <= &map->sectors[map->numSectors])) return -1;
     return sec - map->sectors;
 }
 
-sector_t* GameMap_Sector(GameMap* map, uint idx)
+Sector* GameMap_Sector(GameMap* map, uint idx)
 {
     assert(map);
     if(idx >= map->numSectors) return NULL;
@@ -773,7 +773,7 @@ void GameMap_LinkBspLeafInBlockmap(GameMap* map, BspLeaf* bspLeaf)
 
 typedef struct subseciterparams_s {
     const AABoxf* box;
-    sector_t* sector;
+    Sector* sector;
     int localValidCount;
     int (*func) (BspLeaf*, void*);
     void* param;
@@ -813,7 +813,7 @@ static int blockmapCellBspLeafsIterator(void* object, void* context)
 }
 
 int GameMap_IterateCellBspLeafs(GameMap* map, const uint coords[2],
-    sector_t* sector, const AABoxf* box, int localValidCount,
+    Sector* sector, const AABoxf* box, int localValidCount,
     int (*callback) (BspLeaf*, void*), void* context)
 {
     bmapbspleafiterateparams_t args;
@@ -830,7 +830,7 @@ int GameMap_IterateCellBspLeafs(GameMap* map, const uint coords[2],
 }
 
 int GameMap_IterateCellBlockBspLeafs(GameMap* map, const GridmapBlock* blockCoords,
-    sector_t* sector,  const AABoxf* box, int localValidCount,
+    Sector* sector,  const AABoxf* box, int localValidCount,
     int (*callback) (BspLeaf*, void*), void* context)
 {
     bmapbspleafiterateparams_t args;
@@ -846,7 +846,7 @@ int GameMap_IterateCellBlockBspLeafs(GameMap* map, const GridmapBlock* blockCoor
                                             blockmapCellBspLeafsIterator, (void*) &args);
 }
 
-int GameMap_BspLeafsBoxIterator(GameMap* map, const AABoxf* box, sector_t* sector,
+int GameMap_BspLeafsBoxIterator(GameMap* map, const AABoxf* box, Sector* sector,
     int (*callback) (BspLeaf*, void*), void* parameters)
 {
     static int localValidCount = 0;
@@ -1093,7 +1093,7 @@ int GameMap_SideDefIterator(GameMap* map, int (*callback) (SideDef*, void*), voi
     return false; // Continue iteration.
 }
 
-int GameMap_SectorIterator(GameMap* map, int (*callback) (sector_t*, void*), void* parameters)
+int GameMap_SectorIterator(GameMap* map, int (*callback) (Sector*, void*), void* parameters)
 {
     uint i;
     assert(map);

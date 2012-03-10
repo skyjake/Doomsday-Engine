@@ -310,7 +310,7 @@ typedef struct sector_s {
     float               reverb[NUM_REVERB_DATA];
     origin_t            origin;
     msector_t           buildData;
-} sector_t;
+} Sector;
 
 // Sidedef sections.
 typedef enum sidedefsection_e {

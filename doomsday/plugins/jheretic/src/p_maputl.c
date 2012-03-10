@@ -73,7 +73,7 @@ static int PIT_ApplyTorque(LineDef* ld, void* data)
 {
     mobj_t*             mo = tmThing;
     float               dist;
-    sector_t*           frontsec, *backsec;
+    Sector*             frontsec, *backsec;
     float               ffloor, bfloor;
     float               d1[2], vtx[2];
 

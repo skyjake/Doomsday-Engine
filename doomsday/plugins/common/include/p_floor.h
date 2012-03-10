@@ -91,7 +91,7 @@ typedef struct {
     thinker_t       thinker;
     floortype_e     type;
     boolean         crush;
-    sector_t*       sector;
+    Sector*         sector;
     floorstate_e    state;
     int             newSpecial;
     material_t*     material;

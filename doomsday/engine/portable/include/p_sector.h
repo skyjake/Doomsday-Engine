@@ -1,4 +1,4 @@
-/**\file p_sector.h
+/**\file sector.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -36,22 +36,22 @@
  * Update the origin of the sector according to the point defined by the center of
  * the sector's axis-aligned bounding box (which must be initialized before calling).
  *
- * @param sec  Sector instance.
+ * @param sector  Sector instance.
  */
-void Sector_UpdateOrigin(sector_t* sec);
+void Sector_UpdateOrigin(Sector* sector);
 
 /**
  * Get the value of a sector property, selected by DMU_* name.
  *
- * @param sec  Sector instance.
+ * @param sector  Sector instance.
  */
-int Sector_GetProperty(const sector_t* sector, setargs_t* args);
+int Sector_GetProperty(const Sector* sector, setargs_t* args);
 
 /**
  * Update the sector property, selected by DMU_* name.
  *
- * @param sec  Sector instance.
+ * @param sector  Sector instance.
  */
-int Sector_SetProperty(sector_t* sector, const setargs_t* args);
+int Sector_SetProperty(Sector* sector, const setargs_t* args);
 
 #endif /* LIBDENG_MAP_SECTOR_H */

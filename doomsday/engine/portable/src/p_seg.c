@@ -64,14 +64,14 @@ int HEdge_GetProperty(const HEdge* hedge, setargs_t* args)
         DMU_GetValue(DMT_HEDGE_LINEDEF, &hedge->lineDef, args, 0);
         break;
     case DMU_FRONT_SECTOR: {
-        sector_t* sec = NULL;
+        Sector* sec = NULL;
         if(hedge->HE_frontsector && hedge->lineDef)
             sec = hedge->HE_frontsector;
         DMU_GetValue(DMT_HEDGE_SEC, &sec, args, 0);
         break;
       }
     case DMU_BACK_SECTOR: {
-        sector_t* sec = NULL;
+        Sector* sec = NULL;
         if(hedge->HE_backsector && hedge->lineDef)
             sec = hedge->HE_backsector;
         DMU_GetValue(DMT_HEDGE_SEC, &hedge->HE_backsector, args, 0);

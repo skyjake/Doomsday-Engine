@@ -367,7 +367,7 @@ void SB_InitForMap(const char* uniqueID)
 
     for(i = 0; i < NUM_SECTORS; ++i)
     {
-        sector_t* sec = &sectors[i];
+        Sector* sec = &sectors[i];
         if(sec->bspLeafs && *sec->bspLeafs)
         {
             BspLeaf** ssecIter = sec->bspLeafs;
@@ -414,7 +414,7 @@ void SB_InitForMap(const char* uniqueID)
 
     for(i = 0; i < NUM_SECTORS; ++i)
     {
-        sector_t* sec = &sectors[i];
+        Sector* sec = &sectors[i];
         if(sec->bspLeafs && *sec->bspLeafs)
         {
             BspLeaf** ssecIter = sec->bspLeafs;
@@ -778,7 +778,7 @@ BEGIN_PROF( PROF_BIAS_UPDATE );
         {
             float               minLevel = s->sectorLevel[0];
             float               maxLevel = s->sectorLevel[1];
-            sector_t*           sector;
+            Sector*             sector;
             float               oldIntensity = s->intensity;
 
             sector = P_BspLeafAtPointXY(s->pos[VX], s->pos[VY])->sector;

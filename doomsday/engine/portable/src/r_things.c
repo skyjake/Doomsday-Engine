@@ -951,7 +951,7 @@ typedef struct {
  * may be slightly different than the actual Z coordinate due to smoothed
  * plane movement.
  */
-int RIT_VisMobjZ(sector_t* sector, void* data)
+int RIT_VisMobjZ(Sector* sector, void* data)
 {
     vismobjzparams_t*   params;
 
@@ -1131,7 +1131,7 @@ void getLightingParams(float x, float y, float z, BspLeaf* bspLeaf,
  */
 void R_ProjectSprite(mobj_t* mo)
 {
-    sector_t* sect = mo->bspLeaf->sector;
+    Sector* sect = mo->bspLeaf->sector;
     float thangle = 0, alpha, floorClip, secFloor, secCeil;
     float pos[2], yaw = 0, pitch = 0;
     vec3_t visOff;
@@ -1577,7 +1577,7 @@ int RIT_AddSprite(void* ptr, void* paramaters)
 {
     mobj_t* mo = (mobj_t*) ptr;
     addspriteparams_t* params = (addspriteparams_t*)paramaters;
-    sector_t* sec = params->bspLeaf->sector;
+    Sector* sec = params->bspLeaf->sector;
 
     if(mo->addFrameCount != frameCount)
     {

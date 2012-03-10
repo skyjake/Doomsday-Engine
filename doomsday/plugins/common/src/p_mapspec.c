@@ -69,9 +69,9 @@ int spreadSoundToNeighbors(void* ptr, void* context)
 {
     spreadsoundtoneighborsparams_t* params = (spreadsoundtoneighborsparams_t*) context;
     LineDef* li = (LineDef*) ptr;
-    sector_t* frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR);
-    sector_t* backSec = P_GetPtrp(li, DMU_BACK_SECTOR);
-    sector_t* other;
+    Sector* frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR);
+    Sector* backSec = P_GetPtrp(li, DMU_BACK_SECTOR);
+    Sector* other;
     xline_t* xline;
 
     if(!(frontSec && backSec)) return false; // Continue iteration.
@@ -96,7 +96,7 @@ int spreadSoundToNeighbors(void* ptr, void* context)
     return false; // Continue iteration.
 }
 
-void P_RecursiveSound(struct mobj_s* soundTarget, sector_t* sec, int soundBlocks)
+void P_RecursiveSound(struct mobj_s* soundTarget, Sector* sec, int soundBlocks)
 {
     spreadsoundtoneighborsparams_t params;
     xsector_t* xsec = P_ToXSector(sec);

@@ -59,8 +59,8 @@ typedef struct intersection_s {
 
     // Sector on each side of the vertex (along the partition),
     // or NULL when that direction isn't OPEN.
-    sector_t*   before;
-    sector_t*   after;
+    Sector*     before;
+    Sector*     after;
 } intersection_t;
 
 void        BSP_InitIntersectionAllocator(void);

@@ -99,7 +99,7 @@ typedef struct bsp_hedge_s {
     // above. For "miniedges", this is the linedef of the partition line.
     LineDef*            sourceLineDef;
 
-    sector_t*           sector; // Adjacent sector, or NULL if invalid sidedef or minihedge.
+    Sector*             sector; // Adjacent sector, or NULL if invalid sidedef or minihedge.
     byte                side; // 0 for right, 1 for left.
 } bsp_hedge_t;
 
@@ -107,8 +107,8 @@ void        BSP_InitHEdgeAllocator(void);
 void        BSP_ShutdownHEdgeAllocator(void);
 
 bsp_hedge_t* BSP_HEdge_Create(LineDef* line, LineDef* sourceLine,
-                         vertex_t* start, vertex_t* end,
-                         sector_t* sec, boolean back);
+                              vertex_t* start, vertex_t* end,
+                              Sector* sec, boolean back);
 void        BSP_HEdge_Destroy(bsp_hedge_t* hEdge);
 
 bsp_hedge_t* BSP_HEdge_Split(bsp_hedge_t* oldHEdge, double x, double y);
@@ -117,5 +117,5 @@ bsp_hedge_t* BSP_HEdge_Split(bsp_hedge_t* oldHEdge, double x, double y);
 void        BSP_CreateVertexEdgeTip(vertex_t* vert, double dx, double dy,
                                     bsp_hedge_t* back, bsp_hedge_t* front);
 void        BSP_DestroyVertexEdgeTip(struct edgetip_s* tip);
-sector_t*   BSP_VertexCheckOpen(vertex_t* vert, double dx, double dy);
+Sector*     BSP_VertexCheckOpen(vertex_t* vert, double dx, double dy);
 #endif

@@ -33,7 +33,7 @@ typedef struct {
     const float* segOffset;
     const float* segLength;
     const float* linedefLength;
-    const sector_t* frontSec, *backSec;
+    const Sector* frontSec, *backSec;
 } rendsegradio_params_t;
 
 /// Register the console commands, variables, etc..., of this module.

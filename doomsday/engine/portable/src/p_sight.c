@@ -74,7 +74,7 @@ static boolean crossLineDef(const LineDef* li, byte side, losdata_t* los)
     float frac;
     byte ranges = 0;
     divline_t dl;
-    const sector_t* fsec, *bsec;
+    const Sector* fsec, *bsec;
     boolean noBack;
 
     if(!interceptLineDef(li, los, &dl))
