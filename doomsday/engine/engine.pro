@@ -245,7 +245,6 @@ DENG_HEADERS = \
     portable/include/p_sight.h \
     portable/include/p_surface.h \
     portable/include/p_ticker.h \
-    portable/include/p_vertex.h \
     portable/include/pathdirectory.h \
     portable/include/pathmap.h \
     portable/include/polyobj.h \
@@ -319,6 +318,7 @@ DENG_HEADERS = \
     portable/include/ui_main.h \
     portable/include/ui_mpi.h \
     portable/include/ui_panel.h \
+    portable/include/vertex.h \
     portable/include/wadfile.h \
     portable/include/zipfile.h
 
@@ -498,7 +498,6 @@ SOURCES += \
     portable/src/p_surface.c \
     portable/src/p_think.c \
     portable/src/p_ticker.c \
-    portable/src/p_vertex.c \
     portable/src/pathdirectory.c \
     portable/src/pathmap.c \
     portable/src/point.c \
@@ -572,6 +571,7 @@ SOURCES += \
     portable/src/ui_mpi.c \
     portable/src/ui_panel.c \
     portable/src/uri.c \
+    portable/src/vertex.c \
     portable/src/wadfile.c \
     portable/src/writer.c \
     portable/src/zipfile.c

@@ -30,7 +30,7 @@
 #define __DOOMSDAY_PLAYSIM__
 
 #include "p_mapdata.h"
-#include "p_vertex.h"
+#include "vertex.h"
 #include "material.h"
 #include "p_surface.h"
 #include "sidedef.h"
