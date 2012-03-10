@@ -35,7 +35,7 @@
 #include "p_surface.h"
 #include "sidedef.h"
 #include "linedef.h"
-#include "p_plane.h"
+#include "plane.h"
 #include "p_seg.h"
 #include "bspleaf.h"
 #include "sector.h"

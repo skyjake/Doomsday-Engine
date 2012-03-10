@@ -238,7 +238,6 @@ DENG_HEADERS = \
     portable/include/p_object.h \
     portable/include/p_objlink.h \
     portable/include/p_particle.h \
-    portable/include/p_plane.h \
     portable/include/p_players.h \
     portable/include/p_polyobjs.h \
     portable/include/p_seg.h \
@@ -247,6 +246,7 @@ DENG_HEADERS = \
     portable/include/p_ticker.h \
     portable/include/pathdirectory.h \
     portable/include/pathmap.h \
+    portable/include/plane.h \
     portable/include/polyobj.h \
     portable/include/protocol.h \
     portable/include/rend_bias.h \
@@ -490,7 +490,6 @@ SOURCES += \
     portable/src/p_mobj.c \
     portable/src/p_objlink.c \
     portable/src/p_particle.c \
-    portable/src/p_plane.c \
     portable/src/p_players.c \
     portable/src/p_polyobjs.c \
     portable/src/p_seg.c \
@@ -500,6 +499,7 @@ SOURCES += \
     portable/src/p_ticker.c \
     portable/src/pathdirectory.c \
     portable/src/pathmap.c \
+    portable/src/plane.c \
     portable/src/point.c \
     portable/src/polyobj.c \
     portable/src/protocol.c \
