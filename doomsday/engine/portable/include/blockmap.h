@@ -26,7 +26,7 @@
 #include "dd_types.h"
 #include "m_vector.h"
 #include "p_mapdata.h"
-#include "m_gridmap.h"
+#include "gridmap.h"
 
 struct blockmap_s; // The Blockmap instance (opaque).
 typedef struct blockmap_s Blockmap;

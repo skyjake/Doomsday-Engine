@@ -33,7 +33,7 @@
 #include "de_play.h"
 #include "de_defs.h"
 
-#include "m_gridmap.h"
+#include "gridmap.h"
 
 #define BLOCK_WIDTH                 (128)
 #define BLOCK_HEIGHT                (128)

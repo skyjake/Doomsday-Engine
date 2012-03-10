@@ -199,6 +199,7 @@ DENG_HEADERS = \
     portable/include/gl_tex.h \
     portable/include/gl_texmanager.h \
     portable/include/gl_tga.h \
+    portable/include/gridmap.h \
     portable/include/hedge.h \
     portable/include/huffman.h \
     portable/include/image.h \
@@ -215,7 +216,6 @@ DENG_HEADERS = \
     portable/include/m_bams.h \
     portable/include/m_binarytree.h \
     portable/include/m_decomp64.h \
-    portable/include/m_gridmap.h \
     portable/include/m_linkedlist.h \
     portable/include/m_md5.h \
     portable/include/m_misc.h \
@@ -452,6 +452,7 @@ SOURCES += \
     portable/src/gl_tex.c \
     portable/src/gl_texmanager.c \
     portable/src/gl_tga.c \
+    portable/src/gridmap.c \
     portable/src/hedge.c \
     portable/src/huffman.c \
     portable/src/image.c \
@@ -468,7 +469,6 @@ SOURCES += \
     portable/src/m_bams.c \
     portable/src/m_binarytree.c \
     portable/src/m_decomp64.c \
-    portable/src/m_gridmap.c \
     portable/src/m_linkedlist.c \
     portable/src/m_md5.c \
     portable/src/m_misc.c \
