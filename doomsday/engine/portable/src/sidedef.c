@@ -40,7 +40,7 @@ void SideDef_UpdateOrigin(SideDef* side)
 
 void SideDef_UpdateSurfaceTangents(SideDef* side)
 {
-    surface_t* surface = &side->SW_topsurface;
+    Surface* surface = &side->SW_topsurface;
     LineDef* line = side->line;
     byte sid;
     assert(side);

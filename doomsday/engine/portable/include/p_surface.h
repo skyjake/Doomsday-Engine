@@ -1,4 +1,4 @@
-/**\file p_surface.h
+/**\file surface.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -35,62 +35,62 @@
 /**
  * Get the value of a surface property, selected by DMU_* name.
  */
-int Surface_GetProperty(const surface_t* surface, setargs_t* args);
+int Surface_GetProperty(const Surface* surface, setargs_t* args);
 
 /**
  * Update the surface, property is selected by DMU_* name.
  */
-int Surface_SetProperty(surface_t* surface, const setargs_t* args);
+int Surface_SetProperty(Surface* surface, const setargs_t* args);
 
 /**
  * Mark the surface as requiring a full update. To be called
  * during engine reset.
  */
-void Surface_Update(surface_t* surface);
+void Surface_Update(Surface* surface);
 
 /// @return @c true= Surface is drawable (i.e., a drawable Material is bound).
-boolean Surface_IsDrawable(surface_t* surface);
+boolean Surface_IsDrawable(Surface* surface);
 
 /// @return @c true= Surface is owned by some element of the Map geometry.
-boolean Surface_AttachedToMap(surface_t* surface);
+boolean Surface_AttachedToMap(Surface* surface);
 
 /**
  * Change Material bound to this Surface.
  * @param mat  New Material.
  */
-boolean Surface_SetMaterial(surface_t* surface, material_t* material);
+boolean Surface_SetMaterial(Surface* surface, material_t* material);
 
 /**
  * Change Material origin.
  * @param x  New X origin in map space.
  * @param y  New Y origin in map space.
  */
-boolean Surface_SetMaterialOrigin(surface_t* surface, float x, float y);
+boolean Surface_SetMaterialOrigin(Surface* surface, float x, float y);
 
 /**
  * Change Material origin X coordinate.
  * @param x  New X origin in map space.
  */
-boolean Surface_SetMaterialOriginX(surface_t* surface, float x);
+boolean Surface_SetMaterialOriginX(Surface* surface, float x);
 
 /**
  * Change Material origin Y coordinate.
  * @param y  New Y origin in map space.
  */
-boolean Surface_SetMaterialOriginY(surface_t* surface, float y);
+boolean Surface_SetMaterialOriginY(Surface* surface, float y);
 
-boolean Surface_SetColorAndAlpha(surface_t* surface, float red, float green, float blue, float alpha);
+boolean Surface_SetColorAndAlpha(Surface* surface, float red, float green, float blue, float alpha);
 
-boolean Surface_SetColorRed(surface_t* surface, float red);
-boolean Surface_SetColorGreen(surface_t* surface, float green);
-boolean Surface_SetColorBlue(surface_t* surface, float blue);
+boolean Surface_SetColorRed(Surface* surface, float red);
+boolean Surface_SetColorGreen(Surface* surface, float green);
+boolean Surface_SetColorBlue(Surface* surface, float blue);
 
-boolean Surface_SetAlpha(surface_t* surface, float alpha);
+boolean Surface_SetAlpha(Surface* surface, float alpha);
 
 /**
  * Change blendmode.
  * @param blendMode  New blendmode.
  */
-boolean Surface_SetBlendMode(surface_t* surface, blendmode_t blendMode);
+boolean Surface_SetBlendMode(Surface* surface, blendmode_t blendMode);
 
 #endif /* LIBDENG_MAP_SURFACE_H */

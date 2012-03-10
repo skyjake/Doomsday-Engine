@@ -234,7 +234,7 @@ static void buildHEdgesFromBSPHEdges(GameMap* dest, binarytree_t* rootNode)
         if(hedge->lineDef && HEDGE_SIDEDEF(hedge))
         {
             SideDef* side = HEDGE_SIDEDEF(hedge);
-            surface_t* surface = &side->SW_topsurface;
+            Surface* surface = &side->SW_topsurface;
 
             surface->normal[VY] = (hedge->HE_v1pos[VX] - hedge->HE_v2pos[VX]) / hedge->length;
             surface->normal[VX] = (hedge->HE_v2pos[VY] - hedge->HE_v1pos[VY]) / hedge->length;

@@ -958,7 +958,7 @@ END_PROF( PROF_LUMOBJ_FRAME_SORT );
  * Generate one dynlight node for each plane glow.
  * The light is attached to the appropriate dynlight node list.
  */
-static boolean createGlowLightForSurface(surface_t* suf, void* paramaters)
+static boolean createGlowLightForSurface(Surface* suf, void* paramaters)
 {
     switch(DMU_GetType(suf->owner))
     {

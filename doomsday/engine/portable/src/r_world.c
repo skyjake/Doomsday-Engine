@@ -133,7 +133,7 @@ void R_SurfaceListNodeDestroy(surfacelistnode_t* node)
     unusedSurfaceListNodes = node;
 }
 
-void R_SurfaceListAdd(surfacelist_t* sl, surface_t* suf)
+void R_SurfaceListAdd(surfacelist_t* sl, Surface* suf)
 {
     surfacelistnode_t* node;
 
@@ -144,7 +144,7 @@ void R_SurfaceListAdd(surfacelist_t* sl, surface_t* suf)
     node = sl->head;
     while(node)
     {
-        if((surface_t*) node->data == suf)
+        if((Surface*) node->data == suf)
             return; // Yep.
         node = node->next;
     }
@@ -158,7 +158,7 @@ void R_SurfaceListAdd(surfacelist_t* sl, surface_t* suf)
     sl->num++;
 }
 
-boolean R_SurfaceListRemove(surfacelist_t* sl, const surface_t* suf)
+boolean R_SurfaceListRemove(surfacelist_t* sl, const Surface* suf)
 {
     surfacelistnode_t* last, *n;
 
@@ -171,7 +171,7 @@ boolean R_SurfaceListRemove(surfacelist_t* sl, const surface_t* suf)
         n = last->next;
         while(n)
         {
-            if((surface_t*) n->data == suf)
+            if((Surface*) n->data == suf)
             {
                 last->next = n->next;
                 R_SurfaceListNodeDestroy(n);
@@ -196,13 +196,13 @@ void R_SurfaceListClear(surfacelist_t* sl)
         while(node)
         {
             next = node->next;
-            R_SurfaceListRemove(sl, (surface_t*)node->data);
+            R_SurfaceListRemove(sl, (Surface*)node->data);
             node = next;
         }
     }
 }
 
-boolean R_SurfaceListIterate(surfacelist_t* sl, boolean (*callback) (surface_t* suf, void*),
+boolean R_SurfaceListIterate(surfacelist_t* sl, boolean (*callback) (Surface* suf, void*),
     void* context)
 {
     boolean  result = true;
@@ -214,7 +214,7 @@ boolean R_SurfaceListIterate(surfacelist_t* sl, boolean (*callback) (surface_t* 
         while(n)
         {
             np = n->next;
-            if((result = callback((surface_t*) n->data, context)) == 0)
+            if((result = callback((Surface*) n->data, context)) == 0)
                 break;
             n = np;
         }
@@ -223,7 +223,7 @@ boolean R_SurfaceListIterate(surfacelist_t* sl, boolean (*callback) (surface_t* 
     return result;
 }
 
-boolean updateSurfaceScroll(surface_t* suf, void* context)
+boolean updateSurfaceScroll(Surface* suf, void* context)
 {
     // X Offset
     suf->oldOffset[0][0] = suf->oldOffset[0][1];
@@ -263,7 +263,7 @@ void R_UpdateSurfaceScroll(void)
     R_SurfaceListIterate(slist, updateSurfaceScroll, NULL);
 }
 
-boolean resetSurfaceScroll(surface_t* suf, void* context)
+boolean resetSurfaceScroll(Surface* suf, void* context)
 {
     // X Offset.
     suf->visOffsetDelta[0] = 0;
@@ -280,7 +280,7 @@ boolean resetSurfaceScroll(surface_t* suf, void* context)
     return true;
 }
 
-boolean interpSurfaceScroll(surface_t* suf, void* context)
+boolean interpSurfaceScroll(Surface* suf, void* context)
 {
     // X Offset.
     suf->visOffsetDelta[0] =
@@ -524,7 +524,7 @@ void R_MarkDependantSurfacesForDecorationUpdate(Plane* pln)
     }
 }
 
-static boolean markSurfaceForDecorationUpdate(surface_t* surface, void* paramaters)
+static boolean markSurfaceForDecorationUpdate(Surface* surface, void* paramaters)
 {
     material_t* material = (material_t*) paramaters;
     if(material == surface->material)
@@ -559,7 +559,7 @@ void R_UpdateMapSurfacesOnMaterialChange(material_t* material)
  */
 Plane* R_NewPlaneForSector(Sector* sec)
 {
-    surface_t* suf;
+    Surface* suf;
     Plane* plane;
 
     if(!sec)
@@ -730,7 +730,7 @@ void R_DestroyPlaneOfSector(uint id, Sector* sec)
     sec->planes = newList;
 }
 
-surfacedecor_t* R_CreateSurfaceDecoration(surface_t* suf)
+surfacedecor_t* R_CreateSurfaceDecoration(Surface* suf)
 {
     surfacedecor_t* d, *s, *decorations;
     uint i;
@@ -761,7 +761,7 @@ surfacedecor_t* R_CreateSurfaceDecoration(surface_t* suf)
     return d;
 }
 
-void R_ClearSurfaceDecorations(surface_t* suf)
+void R_ClearSurfaceDecorations(Surface* suf)
 {
     if(!suf) return;
 
@@ -1286,7 +1286,7 @@ static Sector *getContainingSectorOf(GameMap* map, Sector* sec)
 }
 #endif
 
-static __inline void initSurfaceMaterialOffset(surface_t* suf)
+static __inline void initSurfaceMaterialOffset(Surface* suf)
 {
     assert(suf);
     suf->visOffset[VX] = suf->oldOffset[0][VX] =
@@ -1330,7 +1330,7 @@ void R_MapInitSurfaces(boolean forceUpdate)
     }}
 }
 
-static void addToSurfaceLists(surface_t* suf, material_t* mat)
+static void addToSurfaceLists(Surface* suf, material_t* mat)
 {
     if(!suf || !mat) return;
 
@@ -1592,7 +1592,7 @@ static material_t* chooseFixMaterial(SideDef* s, sidedefsection_t section)
         byte sid = (s->line->L_frontside == s? 0 : 1);
         Sector* frontSec = s->line->L_sector(sid);
         Sector* backSec = s->line->L_sector(sid^1);
-        surface_t* suf;
+        Surface* suf;
 
         if(backSec && ((section == SS_BOTTOM && frontSec->SP_floorheight < backSec->SP_floorheight && frontSec->SP_ceilheight  > backSec->SP_floorheight) ||
                        (section == SS_TOP    && frontSec->SP_ceilheight  > backSec->SP_ceilheight  && frontSec->SP_floorheight < backSec->SP_ceilheight)))
@@ -1620,7 +1620,7 @@ static material_t* chooseFixMaterial(SideDef* s, sidedefsection_t section)
 
 static void updateSidedefSection(SideDef* s, sidedefsection_t section)
 {
-    surface_t*          suf;
+    Surface*            suf;
 
     if(section == SS_MIDDLE)
         return; // Not applicable.
@@ -1818,7 +1818,7 @@ boolean R_UpdateSidedef(SideDef* side, boolean forceUpdate)
 /**
  * Stub.
  */
-boolean R_UpdateSurface(surface_t* suf, boolean forceUpdate)
+boolean R_UpdateSurface(Surface* suf, boolean forceUpdate)
 {
     return false; // Not changed.
 }

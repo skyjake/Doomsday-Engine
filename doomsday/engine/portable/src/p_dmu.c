@@ -916,7 +916,7 @@ static int setProperty(void* obj, void* context)
     Plane*              updatePlane = NULL;
     LineDef*            updateLinedef = NULL;
     SideDef*            updateSidedef = NULL;
-    surface_t*          updateSurface = NULL;
+    Surface*            updateSurface = NULL;
     // BspLeaf*           updateBspLeaf = NULL;
 
     /**
@@ -1052,13 +1052,13 @@ static int setProperty(void* obj, void* context)
 
     if(args->type == DMU_SURFACE)
     {
-        updateSurface = (surface_t*) obj;
+        updateSurface = (Surface*) obj;
 /*
         // Resolve implicit references to properties of the surface's material.
         switch(args->prop)
         {
         case UNKNOWN1:
-            obj = &((surface_t*) obj)->material;
+            obj = &((Surface*) obj)->material;
             args->type = DMU_MATERIAL;
             break;
 
@@ -1510,7 +1510,7 @@ static int getProperty(void* obj, void* context)
         switch(args->prop)
         {
         case UNKNOWN1:
-            obj = &((surface_t*) obj)->material;
+            obj = &((Surface*) obj)->material;
             args->type = DMU_MATERIAL;
             break;
 

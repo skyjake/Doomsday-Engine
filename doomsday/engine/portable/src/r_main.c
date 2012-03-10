@@ -214,7 +214,7 @@ void R_LoadSystemFonts(void)
     Con_SetFont(fontFixed);
 }
 
-boolean R_IsSkySurface(const surface_t* suf)
+boolean R_IsSkySurface(const Surface* suf)
 {
     return (suf && suf->material && Material_IsSkyMasked(suf->material));
 }

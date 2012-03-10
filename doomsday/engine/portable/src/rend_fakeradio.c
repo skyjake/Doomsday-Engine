@@ -1202,7 +1202,7 @@ static void setRelativeHeights(const Sector* front, const Sector* back, boolean 
 static uint radioEdgeHackType(const LineDef* line, const Sector* front, const Sector* back,
     int backside, boolean isCeiling, float fz, float bz)
 {
-    surface_t* surface = &line->L_side(backside)->sections[isCeiling? SS_TOP:SS_BOTTOM];
+    Surface* surface = &line->L_side(backside)->sections[isCeiling? SS_TOP:SS_BOTTOM];
 
     if(fz < bz && !surface->material &&
        !(surface->inFlags & SUIF_FIX_MISSING_MATERIAL))
@@ -1315,7 +1315,7 @@ static void processEdgeShadow(const BspLeaf* bspLeaf, const LineDef* lineDef,
     const materialsnapshot_t* ms;
     float plnHeight, fz, bz, bhz;
     Sector* front, *back;
-    const surface_t* suf;
+    const Surface* suf;
     vec3_t shadowRGB;
     int i;
     assert(bspLeaf && lineDef && (side == FRONT || side == BACK) && lineDef->L_side(side) && planeId <= lineDef->L_sector(side)->planeCount);

@@ -1663,7 +1663,7 @@ static void renderPlane(BspLeaf* bspLeaf, planetype_t type, float height,
         }
         else
         {
-            surface_t* suf = &bspLeaf->sector->planes[elmIdx]->surface;
+            Surface* suf = &bspLeaf->sector->planes[elmIdx]->surface;
             const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
                 MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
             const materialsnapshot_t* ms = Materials_Prepare(suf->material, spec, true);
@@ -1740,7 +1740,7 @@ static void Rend_RenderPlane(BspLeaf* bspLeaf, planetype_t type, float height,
 }
 
 static boolean rendSegSection(BspLeaf* bspLeaf, HEdge* hedge,
-                              sidedefsection_t section, surface_t* surface,
+                              sidedefsection_t section, Surface* surface,
                               const fvertex_t* from, const fvertex_t* to,
                               float bottom, float top,
                               const float texOffset[2],
@@ -2003,7 +2003,7 @@ static boolean Rend_RenderSeg(BspLeaf* bspLeaf, HEdge* hedge)
     if(side->SW_middleinflags & SUIF_PVIS)
     {
         float texOffset[2];
-        surface_t* surface = &side->SW_middlesurface;
+        Surface* surface = &side->SW_middlesurface;
 
         texOffset[0] = surface->visOffset[0] + hedge->offset;
         texOffset[1] = surface->visOffset[1];
@@ -2195,7 +2195,7 @@ static boolean Rend_RenderSegTwosided(BspLeaf* bspLeaf, HEdge* hedge)
     // Middle section.
     if(frontSide->SW_middleinflags & SUIF_PVIS)
     {
-        surface_t*          suf = &frontSide->SW_middlesurface;
+        Surface*            suf = &frontSide->SW_middlesurface;
 
         if(R_FindBottomTop(hedge->lineDef, hedge->side, SS_MIDDLE,
                hedge->offset + suf->visOffset[VX], suf->visOffset[VY],
@@ -2215,7 +2215,7 @@ static boolean Rend_RenderSegTwosided(BspLeaf* bspLeaf, HEdge* hedge)
             if(solidSeg)
             {
                 float               xbottom, xtop;
-                surface_t*          suf = &frontSide->SW_middlesurface;
+                Surface*            suf = &frontSide->SW_middlesurface;
 
                 if(LINE_SELFREF(line))
                 {
@@ -2241,7 +2241,7 @@ static boolean Rend_RenderSegTwosided(BspLeaf* bspLeaf, HEdge* hedge)
     // Upper section.
     if(frontSide->SW_topinflags & SUIF_PVIS)
     {
-        surface_t*      suf = &frontSide->SW_topsurface;
+        Surface*        suf = &frontSide->SW_topsurface;
 
         if(R_FindBottomTop(hedge->lineDef, hedge->side, SS_TOP,
                hedge->offset + suf->visOffset[VX], suf->visOffset[VY],
@@ -2261,7 +2261,7 @@ static boolean Rend_RenderSegTwosided(BspLeaf* bspLeaf, HEdge* hedge)
     // Lower section.
     if(frontSide->SW_bottominflags & SUIF_PVIS)
     {
-        surface_t*          suf = &frontSide->SW_bottomsurface;
+        Surface*            suf = &frontSide->SW_bottomsurface;
 
         if(R_FindBottomTop(hedge->lineDef, hedge->side, SS_BOTTOM,
                hedge->offset + suf->visOffset[VX], suf->visOffset[VY],
@@ -2842,7 +2842,7 @@ static void Rend_RenderBspLeaf(uint bspLeafIdx)
     for(i = 0; i < sect->planeCount; ++i)
     {
         const Plane* plane = sect->planes[i];
-        const surface_t* suf = &plane->surface;
+        const Surface* suf = &plane->surface;
         boolean isSkyMasked = false;
         boolean addDLights = true;
         boolean flipSurfaceNormal = false;
@@ -2937,7 +2937,7 @@ static void drawVector(const_pvec3_t origin, const_pvec3_t normal, float scalar,
     glEnd();
 }
 
-static void drawSurfaceTangentSpaceVectors(surface_t* suf, const_pvec3_t origin)
+static void drawSurfaceTangentSpaceVectors(Surface* suf, const_pvec3_t origin)
 {
 #define VISUAL_LENGTH       (20)
 
@@ -2977,7 +2977,7 @@ void Rend_RenderSurfaceVectors(void)
         HEdge* hedge = &hedges[i];
         float x, y, bottom, top;
         SideDef* side;
-        surface_t* suf;
+        Surface* suf;
         vec3_t origin;
 
         if(!hedge->lineDef || !hedge->HE_frontsector ||

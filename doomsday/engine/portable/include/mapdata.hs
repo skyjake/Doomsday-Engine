@@ -184,7 +184,7 @@ typedef struct surfacedecor_s {
 } surfacedecor_t;
 end
 
-struct surface
+struct Surface
     -       void*       owner // Either @c DMU_SIDEDEF, or @c DMU_PLANE
     INT     int         flags // SUF_ flags
     -       int         oldFlags
@@ -227,7 +227,7 @@ end
 struct Plane
     PTR     ddmobj_base_t soundOrg // Sound origin for plane
     PTR     sector_s*   sector // Owner of the plane (temp)
-    -       surface_t   surface
+    -       Surface     surface
     FLOAT   float       height // Current height
     -       float[2]    oldHeight
     FLOAT   float       target // Target height
@@ -404,7 +404,7 @@ typedef struct msidedef_s {
 end
 
 struct SideDef
-    -       surface_t[3] sections
+    -       Surface[3]  sections
     UINT    uint        hedgeCount
     PTR     hedge_s**   hedges      // [hedgeCount] size, segs arranged left>right
     PTR     linedef_s*  line
@@ -444,8 +444,8 @@ internal
 #define L_backsector            L_sector(BACK)
 
 // Is this line self-referencing (front sec == back sec)? 
-#define LINE_SELFREF(l)			((l)->L_frontside && (l)->L_backside && \
-								 (l)->L_frontsector == (l)->L_backsector)
+#define LINE_SELFREF(l)         ((l)->L_frontside && (l)->L_backside && \
+                                 (l)->L_frontsector == (l)->L_backsector)
 
 // Internal flags:
 #define LF_POLYOBJ              0x1 // Line is part of a polyobject.

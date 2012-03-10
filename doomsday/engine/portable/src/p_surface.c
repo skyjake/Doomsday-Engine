@@ -1,4 +1,4 @@
-/**\file p_surface.c
+/**\file surface.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -29,12 +29,12 @@
 
 #include "materialvariant.h"
 
-boolean Surface_IsDrawable(surface_t* surface)
+boolean Surface_IsDrawable(Surface* surface)
 {
     return surface->material && Material_IsDrawable(surface->material);
 }
 
-boolean Surface_AttachedToMap(surface_t* suf)
+boolean Surface_AttachedToMap(Surface* suf)
 {
     assert(suf);
     if(!suf->owner) return false;
@@ -47,7 +47,7 @@ boolean Surface_AttachedToMap(surface_t* suf)
     return true;
 }
 
-boolean Surface_SetMaterial(surface_t* suf, material_t* mat)
+boolean Surface_SetMaterial(Surface* suf, material_t* mat)
 {
     assert(suf);
     if(suf->material != mat)
@@ -91,7 +91,7 @@ boolean Surface_SetMaterial(surface_t* suf, material_t* mat)
     return true;
 }
 
-boolean Surface_SetMaterialOriginX(surface_t* suf, float x)
+boolean Surface_SetMaterialOriginX(Surface* suf, float x)
 {
     assert(suf);
     if(suf->offset[VX] != x)
@@ -110,7 +110,7 @@ boolean Surface_SetMaterialOriginX(surface_t* suf, float x)
     return true;
 }
 
-boolean Surface_SetMaterialOriginY(surface_t* suf, float y)
+boolean Surface_SetMaterialOriginY(Surface* suf, float y)
 {
     assert(suf);
     if(suf->offset[VY] != y)
@@ -129,7 +129,7 @@ boolean Surface_SetMaterialOriginY(surface_t* suf, float y)
     return true;
 }
 
-boolean Surface_SetMaterialOrigin(surface_t* suf, float x, float y)
+boolean Surface_SetMaterialOrigin(Surface* suf, float x, float y)
 {
     assert(suf);
     if(suf->offset[VX] != x || suf->offset[VY] != y)
@@ -149,7 +149,7 @@ boolean Surface_SetMaterialOrigin(surface_t* suf, float x, float y)
     return true;
 }
 
-boolean Surface_SetColorRed(surface_t* suf, float r)
+boolean Surface_SetColorRed(Surface* suf, float r)
 {
     assert(suf);
     r = MINMAX_OF(0, r, 1);
@@ -163,7 +163,7 @@ boolean Surface_SetColorRed(surface_t* suf, float r)
     return true;
 }
 
-boolean Surface_SetColorGreen(surface_t* suf, float g)
+boolean Surface_SetColorGreen(Surface* suf, float g)
 {
     assert(suf);
     g = MINMAX_OF(0, g, 1);
@@ -177,7 +177,7 @@ boolean Surface_SetColorGreen(surface_t* suf, float g)
     return true;
 }
 
-boolean Surface_SetColorBlue(surface_t* suf, float b)
+boolean Surface_SetColorBlue(Surface* suf, float b)
 {
     assert(suf);
     b = MINMAX_OF(0, b, 1);
@@ -191,7 +191,7 @@ boolean Surface_SetColorBlue(surface_t* suf, float b)
     return true;
 }
 
-boolean Surface_SetAlpha(surface_t* suf, float a)
+boolean Surface_SetAlpha(Surface* suf, float a)
 {
     assert(suf);
     a = MINMAX_OF(0, a, 1);
@@ -205,7 +205,7 @@ boolean Surface_SetAlpha(surface_t* suf, float a)
     return true;
 }
 
-boolean Surface_SetColorAndAlpha(surface_t* suf, float r, float g, float b, float a)
+boolean Surface_SetColorAndAlpha(Surface* suf, float r, float g, float b, float a)
 {
     assert(suf);
 
@@ -229,7 +229,7 @@ boolean Surface_SetColorAndAlpha(surface_t* suf, float r, float g, float b, floa
     return true;
 }
 
-boolean Surface_SetBlendMode(surface_t* suf, blendmode_t blendMode)
+boolean Surface_SetBlendMode(Surface* suf, blendmode_t blendMode)
 {
     assert(suf);
     if(suf->blendMode != blendMode)
@@ -239,14 +239,14 @@ boolean Surface_SetBlendMode(surface_t* suf, blendmode_t blendMode)
     return true;
 }
 
-void Surface_Update(surface_t* suf)
+void Surface_Update(Surface* suf)
 {
     assert(suf);
     if(!Surface_AttachedToMap(suf)) return;
     suf->inFlags |= SUIF_UPDATE_DECORATIONS;
 }
 
-int Surface_SetProperty(surface_t* suf, const setargs_t* args)
+int Surface_SetProperty(Surface* suf, const setargs_t* args)
 {
     switch(args->prop)
     {
@@ -325,7 +325,7 @@ int Surface_SetProperty(surface_t* suf, const setargs_t* args)
     return false; // Continue iteration.
 }
 
-int Surface_GetProperty(const surface_t* suf, setargs_t* args)
+int Surface_GetProperty(const Surface* suf, setargs_t* args)
 {
     switch(args->prop)
     {

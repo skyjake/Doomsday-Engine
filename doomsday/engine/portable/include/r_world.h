@@ -95,7 +95,7 @@ float R_CheckSectorLight(float lightlevel, float min, float max);
  * @param suf  Ptr to the surface to test.
  * @return boolean  @c true, iff the surface will be masked.
  */
-boolean R_IsSkySurface(const surface_t* suf);
+boolean R_IsSkySurface(const Surface* suf);
 
 boolean R_SectorContainsSkySurfaces(const Sector* sec);
 
@@ -117,8 +117,8 @@ boolean         R_FindBottomTop(LineDef* lineDef, int side, sidedefsection_t sec
 Plane*          R_NewPlaneForSector(Sector* sec);
 void            R_DestroyPlaneOfSector(uint id, Sector* sec);
 
-surfacedecor_t* R_CreateSurfaceDecoration(surface_t* suf);
-void            R_ClearSurfaceDecorations(surface_t* suf);
+surfacedecor_t* R_CreateSurfaceDecoration(Surface* suf);
+void            R_ClearSurfaceDecorations(Surface* suf);
 
 void            R_UpdateTrackedPlanes(void);
 void            R_InterpolateTrackedPlanes(boolean resetNextViewer);
@@ -135,8 +135,8 @@ void            R_InterpolateSurfaceScroll(boolean resetNextViewer);
  * @param sl  The surface list to add the surface to.
  * @param suf  The surface to add to the list.
  */
-void R_SurfaceListAdd(surfacelist_t* sl, surface_t* suf);
-boolean R_SurfaceListRemove(surfacelist_t* sl, const surface_t* suf);
+void R_SurfaceListAdd(surfacelist_t* sl, Surface* suf);
+boolean R_SurfaceListRemove(surfacelist_t* sl, const Surface* suf);
 void R_SurfaceListClear(surfacelist_t* sl);
 
 /**
@@ -146,7 +146,7 @@ void R_SurfaceListClear(surfacelist_t* sl);
  *      a callback returns a zero value.
  * @param context  Is passed to the callback function.
  */
-boolean R_SurfaceListIterate(surfacelist_t* sl, boolean (*callback) (surface_t* suf, void*), void* context);
+boolean R_SurfaceListIterate(surfacelist_t* sl, boolean (*callback) (Surface* suf, void*), void* context);
 
 void            R_MarkDependantSurfacesForDecorationUpdate(Plane* pln);
 

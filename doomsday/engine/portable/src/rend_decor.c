@@ -57,7 +57,7 @@ END_PROF_TIMERS()
 typedef struct decorsource_s {
     float           pos[3];
     float           maxDistance;
-    const surface_t* surface;
+    const Surface*  surface;
     BspLeaf*        bspLeaf;
     unsigned int    lumIdx; // index+1 of linked lumobj, or 0.
     float           fadeMul;
@@ -344,7 +344,7 @@ static decorsource_t* addDecoration(void)
 /**
  * A decorsource is created from the specified surface decoration.
  */
-static void createDecorSource(const surface_t* suf, const surfacedecor_t* dec, const float maxDistance)
+static void createDecorSource(const Surface* suf, const surfacedecor_t* dec, const float maxDistance)
 {
     decorsource_t* src;
 
@@ -376,7 +376,7 @@ static void createDecorSource(const surface_t* suf, const surfacedecor_t* dec, c
  * @return              As this can also be used with iterators, will always
  *                      return @c true.
  */
-boolean R_ProjectSurfaceDecorations(surface_t* suf, void* context)
+boolean R_ProjectSurfaceDecorations(Surface* suf, void* context)
 {
     float maxDist = *((float*) context);
     uint i;
@@ -427,7 +427,7 @@ static void getDecorationSkipPattern(const int patternSkip[2], int* skip)
     }
 }
 
-static uint generateDecorLights(const ded_decorlight_t* def, surface_t* suf,
+static uint generateDecorLights(const ded_decorlight_t* def, Surface* suf,
     material_t* mat, const pvec3_t v1, const pvec3_t v2, float width, float height,
     const pvec3_t delta, int axis, float offsetS, float offsetT, Sector* sec)
 {
@@ -497,7 +497,7 @@ static uint generateDecorLights(const ded_decorlight_t* def, surface_t* suf,
 /**
  * Generate decorations for the specified surface.
  */
-static void updateSurfaceDecorations2(surface_t* suf, float offsetS, float offsetT,
+static void updateSurfaceDecorations2(Surface* suf, float offsetS, float offsetT,
     vec3_t v1, vec3_t v2, Sector* sec, boolean visible)
 {
     vec3_t delta;
@@ -548,7 +548,7 @@ static void updateSurfaceDecorations2(surface_t* suf, float offsetS, float offse
 static void updatePlaneDecorations(Plane* pln)
 {
     Sector*             sec = pln->sector;
-    surface_t*          suf = &pln->surface;
+    Surface*            suf = &pln->surface;
     vec3_t              v1, v2;
     float               offsetS, offsetT;
 
@@ -572,7 +572,7 @@ static void updatePlaneDecorations(Plane* pln)
 static void updateSideSectionDecorations(SideDef* side, sidedefsection_t section)
 {
     LineDef*            line;
-    surface_t*          suf;
+    Surface*            suf;
     vec3_t              v1, v2;
     int                 sid;
     float               offsetS = 0, offsetT = 0;

@@ -186,7 +186,7 @@ typedef struct surface_s {
     short               inFlags;       // SUIF_* flags
     unsigned int        numDecorations;
     surfacedecor_t      *decorations;
-} surface_t;
+} Surface;
 
 typedef enum {
     PLN_FLOOR,
@@ -209,7 +209,7 @@ typedef struct plane_s {
     runtime_mapdata_header_t header;
     ddmobj_base_t       soundOrg;      // Sound origin for plane
     struct sector_s*    sector;        // Owner of the plane (temp)
-    surface_t           surface;
+    Surface             surface;
     float               height;        // Current height
     float               oldHeight[2];
     float               target;        // Target height
@@ -380,7 +380,7 @@ typedef struct msidedef_s {
 
 typedef struct sidedef_s {
     runtime_mapdata_header_t header;
-    surface_t           sections[3];
+    Surface             sections[3];
     unsigned int        hedgeCount;
     struct hedge_s**    hedges;          // [hedgeCount] size, hedges arranged left>right
     struct linedef_s*   line;
