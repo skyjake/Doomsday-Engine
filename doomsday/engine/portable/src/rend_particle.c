@@ -300,7 +300,7 @@ static boolean populateSortBuffer(ptcgen_t* gen, void* context)
         float dist;
         porder_t* slot;
 
-        if(pt->stage < 0)
+        if(pt->stage < 0 || !pt->sector)
             continue;
 
         // Is the particle's sector visible?

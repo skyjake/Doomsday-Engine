@@ -26,6 +26,7 @@
 #include "string.hh"
 #include "unittest.h"
 
+#include <stdio.h>
 #include <vector>
 #include <list>
 #include <set>

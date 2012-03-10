@@ -182,9 +182,6 @@ unix:!macx {
     isEmpty(SCRIPT_PYTHON) {
         # Check the system path.
         SCRIPT_PYTHON = $$system(which python)
-        isEmpty(SCRIPT_PYTHON) {
-            error("Variable SCRIPT_PYTHON not set (path of Python interpreter to be used in generated scripts)")
-        }
     }
 }
 

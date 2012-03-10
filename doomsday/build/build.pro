@@ -57,6 +57,10 @@ deng_snowberry {
     # Make may not have yet created the output directory at this point.
     system(mkdir -p \"$$OUT_PWD\")
 
+    isEmpty(SCRIPT_PYTHON) {
+        error("Variable SCRIPT_PYTHON not set (path of Python interpreter to be used in generated scripts)")
+    }
+
     # Generate a script for starting the laucher.
     LAUNCH_FILE = launch-doomsday
     !system(sed \"s:PYTHON:$$SCRIPT_PYTHON:; s:SB_DIR:$$SB_DIR:\" \
