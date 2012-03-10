@@ -880,7 +880,7 @@ void R_InitSkyFix(void)
  * @return              Ptr to the lineowner for this line for this vertex
  *                      else @c NULL.
  */
-lineowner_t* R_GetVtxLineOwner(const vertex_t *v, const LineDef *line)
+lineowner_t* R_GetVtxLineOwner(const Vertex *v, const LineDef *line)
 {
     if(v == line->L_v1)
         return line->L_vo1;
@@ -912,7 +912,7 @@ void R_SetupFogDefaults(void)
  * is the leftmost vertex and verts[1] is the rightmost vertex, when the
  * line lies at the edge of `sector.'
  */
-void R_OrderVertices(const LineDef *line, const Sector *sector, vertex_t *verts[2])
+void R_OrderVertices(const LineDef *line, const Sector *sector, Vertex *verts[2])
 {
     byte        edge;
 

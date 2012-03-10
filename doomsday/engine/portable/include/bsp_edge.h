@@ -61,7 +61,7 @@ typedef struct edgetip_s {
 } edgetip_t;
 
 typedef struct bsp_hedge_s {
-    vertex_t*           v[2]; // [Start, End] of the half-edge..
+    Vertex*             v[2]; // [Start, End] of the half-edge..
 
     // Half-edge on the other side, or NULL if one-sided. This relationship
     // is always one-to-one -- if one of the half-edges is split, the twin
@@ -107,15 +107,15 @@ void        BSP_InitHEdgeAllocator(void);
 void        BSP_ShutdownHEdgeAllocator(void);
 
 bsp_hedge_t* BSP_HEdge_Create(LineDef* line, LineDef* sourceLine,
-                              vertex_t* start, vertex_t* end,
+                              Vertex* start, Vertex* end,
                               Sector* sec, boolean back);
 void        BSP_HEdge_Destroy(bsp_hedge_t* hEdge);
 
 bsp_hedge_t* BSP_HEdge_Split(bsp_hedge_t* oldHEdge, double x, double y);
 
 // Edge tip functions:
-void        BSP_CreateVertexEdgeTip(vertex_t* vert, double dx, double dy,
+void        BSP_CreateVertexEdgeTip(Vertex* vert, double dx, double dy,
                                     bsp_hedge_t* back, bsp_hedge_t* front);
 void        BSP_DestroyVertexEdgeTip(struct edgetip_s* tip);
-Sector*     BSP_VertexCheckOpen(vertex_t* vert, double dx, double dy);
+Sector*     BSP_VertexCheckOpen(Vertex* vert, double dx, double dy);
 #endif

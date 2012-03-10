@@ -226,7 +226,7 @@ void BSP_ShutdownIntersectionAllocator(void)
 /**
  * Create a new intersection.
  */
-intersection_t* BSP_IntersectionCreate(vertex_t* vert,
+intersection_t* BSP_IntersectionCreate(Vertex* vert,
                                        const struct bspartition_s* part,
                                        boolean selfRef)
 {
@@ -325,7 +325,7 @@ void BSP_CutListEmpty(cutlist_t* cutList)
  *
  * @return              Ptr to the found intersection, else @c NULL;
  */
-intersection_t* BSP_CutListFindIntersection(cutlist_t* cutList, vertex_t* v)
+intersection_t* BSP_CutListFindIntersection(cutlist_t* cutList, Vertex* v)
 {
     clist_t*            list = (clist_t*) cutList;
     cnode_t*            node;

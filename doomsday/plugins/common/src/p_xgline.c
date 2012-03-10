@@ -1576,7 +1576,7 @@ int C_DECL XLTrav_LineTeleport(LineDef* newLine, boolean dummy,
     mobj_t*             flash;
     LineDef*            line = (LineDef *) context;
     linetype_t*         info = (linetype_t *) context2;
-    vertex_t*           newV1, *newV2, *oldV1, *oldV2;
+    Vertex*             newV1, *newV2, *oldV1, *oldV2;
     Sector*             newFrontSec, *newBackSec;
     float               newX, newY, newZ, pos, s, c;
     float               oldLineDelta[2], newLineDelta[2];

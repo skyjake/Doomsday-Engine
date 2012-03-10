@@ -422,7 +422,7 @@ uint P_ToIndex(const void* ptr)
     switch(DMU_GetType(ptr))
     {
     case DMU_VERTEX:
-        return GET_VERTEX_IDX((vertex_t*) ptr);
+        return GET_VERTEX_IDX((Vertex*) ptr);
 
     case DMU_HEDGE:
         return GET_HEDGE_IDX((HEdge*) ptr);

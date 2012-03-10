@@ -130,14 +130,14 @@ int GameMap_AmbientLightLevel(GameMap* map)
     return map->ambientLightLevel;
 }
 
-vertex_t* GameMap_Vertex(GameMap* map, uint idx)
+Vertex* GameMap_Vertex(GameMap* map, uint idx)
 {
     assert(map);
     if(idx >= map->numVertexes) return NULL;
     return &map->vertexes[idx];
 }
 
-int GameMap_VertexIndex(GameMap* map, vertex_t* vtx)
+int GameMap_VertexIndex(GameMap* map, Vertex* vtx)
 {
     assert(map);
     if(!vtx || !(vtx >= map->vertexes && vtx <= &map->vertexes[map->numVertexes])) return -1;
@@ -1069,7 +1069,7 @@ int GameMap_AllLineDefsBoxIterator(GameMap* map, const AABoxf* box,
     return P_LinesBoxIterator(box, callback, parameters);
 }
 
-int GameMap_VertexIterator(GameMap* map, int (*callback) (vertex_t*, void*), void* parameters)
+int GameMap_VertexIterator(GameMap* map, int (*callback) (Vertex*, void*), void* parameters)
 {
     uint i;
     assert(map);

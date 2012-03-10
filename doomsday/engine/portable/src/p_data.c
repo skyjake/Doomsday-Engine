@@ -50,7 +50,7 @@ extern boolean mapSetup;
  */
 Uri* mapUri; // Name by which the game referred to the current map.
 
-vertex_t* vertexes = NULL;
+Vertex* vertexes = NULL;
 HEdge* hedges = NULL;
 Sector* sectors = NULL;
 BspLeaf* bspLeafs = NULL;

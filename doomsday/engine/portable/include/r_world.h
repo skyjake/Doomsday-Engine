@@ -106,7 +106,7 @@ void R_MapInitSurfaceLists(void);
 
 void            R_UpdateSkyFixForSec(const Sector* sec);
 void            R_OrderVertices(const LineDef* line, const Sector* sector,
-                                vertex_t* verts[2]);
+                                Vertex* verts[2]);
 boolean         R_FindBottomTop(LineDef* lineDef, int side, sidedefsection_t section,
                                 float matOffsetX, float matOffsetY,
                                 const plane_t* ffloor, const plane_t* fceil,
@@ -161,7 +161,7 @@ boolean R_IsGlowingPlane(const plane_t* plane);
 
 float R_GlowStrength(const plane_t* pln);
 
-lineowner_t*    R_GetVtxLineOwner(const vertex_t* vtx, const LineDef* line);
+lineowner_t*    R_GetVtxLineOwner(const Vertex* vtx, const LineDef* line);
 LineDef*        R_FindLineNeighbor(const Sector* sector,
                                    const LineDef* line,
                                    const lineowner_t* own,

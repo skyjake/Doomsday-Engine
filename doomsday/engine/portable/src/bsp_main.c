@@ -262,7 +262,7 @@ static boolean C_DECL freeBSPData(binarytree_t *tree, void *data)
  * @param numVertexes   Number of vertexes in the array.
  * @return              @c true, if completed successfully.
  */
-boolean BSP_Build(GameMap* map, vertex_t*** vertexes, uint* numVertexes)
+boolean BSP_Build(GameMap* map, Vertex*** vertexes, uint* numVertexes)
 {
     boolean             builtOK;
     uint                startTime;

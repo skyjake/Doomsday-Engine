@@ -688,7 +688,7 @@ static void renderParticles(int rtype, boolean withBlend)
             else if(flatOnWall)
             {
                 float line[2], pos[2];
-                vertex_t* vtx;
+                Vertex* vtx;
 
                 line[0] = pt->contact->dX;
                 line[1] = pt->contact->dY;

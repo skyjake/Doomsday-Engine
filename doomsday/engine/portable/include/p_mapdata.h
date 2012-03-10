@@ -173,7 +173,7 @@ typedef struct {
  * The map data arrays are accessible globally inside the engine.
  */
 extern Uri* mapUri;
-extern vertex_t* vertexes;
+extern Vertex* vertexes;
 extern HEdge* hedges;
 extern Sector* sectors;
 extern BspLeaf* bspLeafs;

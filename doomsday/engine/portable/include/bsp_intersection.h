@@ -46,7 +46,7 @@ struct bspartition_s;
  */
 typedef struct intersection_s {
     // Vertex in question.
-    vertex_t*   vertex;
+    Vertex*     vertex;
 
     // How far along the partition line the vertex is. Zero is at the
     // partition half-edge's start point, positive values move in the same
@@ -66,7 +66,7 @@ typedef struct intersection_s {
 void        BSP_InitIntersectionAllocator(void);
 void        BSP_ShutdownIntersectionAllocator(void);
 
-intersection_t* BSP_IntersectionCreate(vertex_t* vert,
+intersection_t* BSP_IntersectionCreate(Vertex* vert,
                                        const struct bspartition_s* part,
                                        boolean selfRef);
 void        BSP_IntersectionDestroy(intersection_t* cut);
@@ -83,5 +83,5 @@ void        BSP_CutListPrint(cutlist_t* cutList);
 
 boolean     BSP_CutListInsertIntersection(cutlist_t* cutList,
                                           intersection_t* cut);
-intersection_t* BSP_CutListFindIntersection(cutlist_t* cutList, vertex_t* v);
+intersection_t* BSP_CutListFindIntersection(cutlist_t* cutList, Vertex* v);
 #endif

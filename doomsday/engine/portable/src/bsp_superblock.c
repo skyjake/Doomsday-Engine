@@ -209,7 +209,7 @@ void BSP_IncSuperBlockHEdgeCounts(superblock_t* superblock,
     } while(superblock != NULL);
 }
 
-static void makeIntersection(cutlist_t* cutList, vertex_t* vert,
+static void makeIntersection(cutlist_t* cutList, Vertex* vert,
                              const bspartition_t* part, boolean selfRef)
 {
     intersection_t*     cut = BSP_CutListFindIntersection(cutList, vert);

@@ -241,7 +241,7 @@ boolean Polyobj_Rotate(Polyobj* po, angle_t angle)
     for(i = 0; i < po->lineCount; ++i, lineIter++, originalPts++, prevPts++)
     {
         LineDef* line = *lineIter;
-        vertex_t* vtx = line->L_v1;
+        Vertex* vtx = line->L_v1;
 
         prevPts->pos[VX] = vtx->V_pos[VX];
         prevPts->pos[VY] = vtx->V_pos[VY];
@@ -278,7 +278,7 @@ boolean Polyobj_Rotate(Polyobj* po, angle_t angle)
         for(i = 0; i < po->lineCount; ++i, lineIter++, prevPts++)
         {
             LineDef* line = *lineIter;
-            vertex_t* vtx = line->L_v1;
+            Vertex* vtx = line->L_v1;
             vtx->V_pos[VX] = prevPts->pos[VX];
             vtx->V_pos[VY] = prevPts->pos[VY];
         }

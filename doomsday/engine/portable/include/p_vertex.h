@@ -35,11 +35,11 @@
 /**
  * Get the value of a vertex property, selected by DMU_* name.
  */
-int Vertex_GetProperty(const vertex_t* vtx, setargs_t* args);
+int Vertex_GetProperty(const Vertex* vtx, setargs_t* args);
 
 /**
  * Update the vertex, property is selected by DMU_* name.
  */
-int Vertex_SetProperty(vertex_t* vtx, const setargs_t* args);
+int Vertex_SetProperty(Vertex* vtx, const setargs_t* args);
 
 #endif /* LIBDENG_MAP_VERTEX_H */

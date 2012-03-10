@@ -48,7 +48,7 @@ typedef struct mvertex_s {
 } mvertex_t;
 end
 
-struct vertex
+struct Vertex
     -       uint        numLineOwners // Number of line owners.
     -       lineowner_t* lineOwners // Lineowner base ptr [numlineowners] size. A doubly, circularly linked list. The base is the line with the lowest angle and the next-most with the largest angle.
     -       fvertex_t   v

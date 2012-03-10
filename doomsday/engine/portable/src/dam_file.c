@@ -162,7 +162,7 @@ static void endSegment(void)
 
 static void writeVertex(const GameMap *map, uint idx)
 {
-    vertex_t           *v = &map->vertexes[idx];
+    Vertex             *v = &map->vertexes[idx];
 
     writeFloat(v->V_pos[VX]);
     writeFloat(v->V_pos[VY]);
@@ -185,7 +185,7 @@ static void writeVertex(const GameMap *map, uint idx)
 static void readVertex(const GameMap *map, uint idx)
 {
     uint                i;
-    vertex_t           *v = &map->vertexes[idx];
+    Vertex             *v = &map->vertexes[idx];
 
     v->V_pos[VX] = readFloat();
     v->V_pos[VY] = readFloat();

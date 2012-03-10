@@ -35,7 +35,7 @@
 // Editable map.
 typedef struct editmap_s {
     uint numVertexes;
-    vertex_t** vertexes;
+    Vertex** vertexes;
     uint numLineDefs;
     LineDef** lineDefs;
     uint numSideDefs;
@@ -98,5 +98,5 @@ void            MPE_PrintUnclosedSectorList(void);
 void            MPE_FreeUnclosedSectorList(void);
 
 GameMap*        MPE_GetLastBuiltMap(void);
-vertex_t*       createVertex(void);
+Vertex*         createVertex(void);
 #endif

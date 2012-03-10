@@ -1293,7 +1293,7 @@ int C_CheckBspLeaf(BspLeaf* bspLeaf)
     i = 0;
     while(*ptr) // Angles to all corners.
     {
-        vertex_t *vtx = (*ptr)->HE_v1;
+        Vertex *vtx = (*ptr)->HE_v1;
 
         // Shift for more accuracy.
         anglist[i++] = bamsAtan2((int) ((vtx->V_pos[VY] - vz) * 100),

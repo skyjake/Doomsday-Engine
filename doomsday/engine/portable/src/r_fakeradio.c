@@ -130,7 +130,7 @@ float R_ShadowEdgeWidth(const pvec2_t edge)
  *
  * @param vtx           Ptr to the vertex being updated.
  */
-void R_UpdateVertexShadowOffsets(vertex_t *vtx)
+void R_UpdateVertexShadowOffsets(Vertex *vtx)
 {
     vec2_t              left, right;
 
@@ -242,7 +242,7 @@ void R_InitFakeRadioForMap(void)
     uint startTime = Sys_GetRealTime();
 
     shadowlinkerparms_t data;
-    vertex_t* vtx0, *vtx1;
+    Vertex* vtx0, *vtx1;
     lineowner_t* vo0, *vo1;
     AABoxf bounds;
     vec2_t point;

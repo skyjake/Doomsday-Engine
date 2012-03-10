@@ -73,13 +73,13 @@ static GameMap *lastBuiltMap = NULL;
 static uint numUnclosedSectors;
 static usecrecord_t *unclosedSectors;
 
-static vertex_t *rootVtx; // Used when sorting vertex line owners.
+static Vertex *rootVtx; // Used when sorting vertex line owners.
 
 // CODE --------------------------------------------------------------------
 
-vertex_t* createVertex(void)
+Vertex* createVertex(void)
 {
-    vertex_t*               vtx;
+    Vertex*                 vtx;
 
     vtx = M_Calloc(sizeof(*vtx));
     vtx->header.type = DMU_VERTEX;
@@ -243,7 +243,7 @@ static void destroyEditableVertexes(editmap_t *map)
         uint                i;
         for(i = 0; i < map->numVertexes; ++i)
         {
-            vertex_t           *vtx = map->vertexes[i];
+            Vertex             *vtx = map->vertexes[i];
             edgetip_t          *tip, *n;
 
             tip = vtx->buildData.tipSet;
@@ -276,8 +276,8 @@ static void destroyMap(void)
 
 static int C_DECL vertexCompare(const void* p1, const void* p2)
 {
-    const vertex_t* a = *((const void**) p1);
-    const vertex_t* b = *((const void**) p2);
+    const Vertex* a = *((const void**) p1);
+    const Vertex* b = *((const void**) p2);
 
     if(a == b) return 0;
 
@@ -290,14 +290,14 @@ static int C_DECL vertexCompare(const void* p1, const void* p2)
 void MPE_DetectDuplicateVertices(editmap_t *map)
 {
     size_t              i;
-    vertex_t          **hits;
+    Vertex            **hits;
 
-    hits = M_Malloc(map->numVertexes * sizeof(vertex_t*));
+    hits = M_Malloc(map->numVertexes * sizeof(Vertex*));
 
     // Sort array of ptrs.
     for(i = 0; i < map->numVertexes; ++i)
         hits[i] = map->vertexes[i];
-    qsort(hits, map->numVertexes, sizeof(vertex_t*), vertexCompare);
+    qsort(hits, map->numVertexes, sizeof(Vertex*), vertexCompare);
 
     // Now mark them off.
     for(i = 0; i < map->numVertexes - 1; ++i)
@@ -305,8 +305,8 @@ void MPE_DetectDuplicateVertices(editmap_t *map)
         // A duplicate?
         if(vertexCompare(hits + i, hits + i + 1) == 0)
         {   // Yes.
-            vertex_t           *a = hits[i];
-            vertex_t           *b = hits[i + 1];
+            Vertex             *a = hits[i];
+            Vertex             *b = hits[i + 1];
 
             b->buildData.equiv =
                 (a->buildData.equiv ? a->buildData.equiv : a);
@@ -382,7 +382,7 @@ static void pruneVertices(editmap_t* map)
     // Scan all vertices.
     for(i = 0, newNum = 0; i < map->numVertexes; ++i)
     {
-        vertex_t           *v = map->vertexes[i];
+        Vertex             *v = map->vertexes[i];
 
         if(v->buildData.refCount < 0)
             Con_Error("Vertex %d ref_count is %d", i, v->buildData.refCount);
@@ -768,7 +768,7 @@ static void updateSectorBounds(Sector* sec)
 {
     uint                i;
     float*              bbox;
-    vertex_t*           vtx;
+    Vertex*             vtx;
 
     if(!sec)
         return;
@@ -858,7 +858,7 @@ static void finishLineDefs(GameMap* map)
 {
     uint                i;
     LineDef            *ld;
-    vertex_t           *v[2];
+    Vertex             *v[2];
     HEdge              *startSeg, *endSeg;
 
     VERBOSE2( Con_Message("Finalizing Linedefs...\n") )
@@ -1016,7 +1016,7 @@ static int C_DECL lineAngleSorter(const void *a, const void *b)
         }
         else
         {
-            vertex_t    *otherVtx;
+            Vertex      *otherVtx;
 
             line = own[i]->lineDef;
             otherVtx = line->L_v(line->L_v1 == rootVtx? 1:0);
@@ -1119,7 +1119,7 @@ static lineowner_t *sortLineOwners(lineowner_t *list,
     return list;
 }
 
-static void setVertexLineOwner(vertex_t *vtx, LineDef *lineptr,
+static void setVertexLineOwner(Vertex *vtx, LineDef *lineptr,
                                lineowner_t **storage)
 {
     lineowner_t        *p, *newOwner;
@@ -1184,7 +1184,7 @@ static void buildVertexOwnerRings(editmap_t* map)
 
         for(p = 0; p < 2; ++p)
         {
-            vertex_t*           vtx = line->L_v(p);
+            Vertex*             vtx = line->L_v(p);
 
             setVertexLineOwner(vtx, line, &allocator);
         }
@@ -1198,7 +1198,7 @@ static void hardenVertexOwnerRings(GameMap* dest, editmap_t* src)
     // Sort line owners and then finish the rings.
     for(i = 0; i < src->numVertexes; ++i)
     {
-        vertex_t*           v = src->vertexes[i];
+        Vertex*             v = src->vertexes[i];
 
         // Line owners:
         if(v->numLineOwners != 0)
@@ -1578,7 +1578,7 @@ Con_Message("front line: %d  front dist: %1.1f  front_open: %s\n",
 #undef DIST_EPSILON
 }
 
-static void countVertexLineOwners(vertex_t* vtx, uint* oneSided,
+static void countVertexLineOwners(Vertex* vtx, uint* oneSided,
                                   uint* twoSided)
 {
     lineowner_t*        p;
@@ -1660,7 +1660,7 @@ static int C_DECL lineStartCompare(const void* p1, const void* p2)
 {
     const LineDef*      a = (const LineDef*) p1;
     const LineDef*      b = (const LineDef*) p2;
-    vertex_t*           c, *d;
+    Vertex*             c, *d;
 
     // Determine left-most vertex of each line.
     c = (lineVertexLowest(a)? a->v[1] : a->v[0]);
@@ -1676,7 +1676,7 @@ static int C_DECL lineEndCompare(const void* p1, const void* p2)
 {
     const LineDef*      a = (const LineDef*) p1;
     const LineDef*      b = (const LineDef*) p2;
-    vertex_t*           c, *d;
+    Vertex*             c, *d;
 
     // Determine right-most vertex of each line.
     c = (lineVertexLowest(a)? a->v[0] : a->v[1]);
@@ -1756,10 +1756,10 @@ void MPE_DetectOverlappingLines(GameMap* map)
  * @param min  Minimal coordinates will be written here.
  * @param max  Maximal coordinates will be written here.
  */
-static void findBounds(vertex_t const** vertexes, uint numVertexes, vec2_t min, vec2_t max)
+static void findBounds(Vertex const** vertexes, uint numVertexes, vec2_t min, vec2_t max)
 {
     vec2_t bounds[2], point;
-    const vertex_t* vtx;
+    const Vertex* vtx;
     uint i;
 
     if(!min && !max) return;
@@ -1844,7 +1844,7 @@ boolean MPE_End(void)
     /**
      * Build blockmaps.
      */
-    findBounds((vertex_t const**)map->vertexes, map->numVertexes, min, max);
+    findBounds((Vertex const**)map->vertexes, map->numVertexes, min, max);
 
     GameMap_InitLineDefBlockmap(gamemap, min, max);
     for(i = 0; i < gamemap->numLineDefs; ++i)
@@ -1988,7 +1988,7 @@ void MPE_PrintMapErrors(void)
  */
 uint MPE_VertexCreate(float x, float y)
 {
-    vertex_t*           v;
+    Vertex*             v;
 
     if(!editMapInited)
         return 0;
@@ -2021,7 +2021,7 @@ boolean MPE_VertexCreatev(size_t num, float* values, uint* indices)
     // Create many vertexes.
     for(n = 0; n < num; ++n)
     {
-        vertex_t*           v;
+        Vertex*             v;
 
         v = createVertex();
         v->V_pos[VX] = values[n * 2];
@@ -2093,7 +2093,7 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide,
 {
     LineDef*            l;
     SideDef*            front = NULL, *back = NULL;
-    vertex_t*           vtx1, *vtx2;
+    Vertex*             vtx1, *vtx2;
     float               length, dx, dy;
 
     if(!editMapInited)

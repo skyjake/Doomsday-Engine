@@ -3078,7 +3078,7 @@ void Rend_RenderSurfaceVectors(void)
     glEnable(GL_CULL_FACE);
 }
 
-static void getVertexPlaneMinMax(const vertex_t* vtx, float* min, float* max)
+static void getVertexPlaneMinMax(const Vertex* vtx, float* min, float* max)
 {
     lineowner_t* vo, *base;
 
@@ -3112,7 +3112,7 @@ static void getVertexPlaneMinMax(const vertex_t* vtx, float* min, float* max)
     } while(vo != base);
 }
 
-static void drawVertexPoint(const vertex_t* vtx, float z, float alpha)
+static void drawVertexPoint(const Vertex* vtx, float z, float alpha)
 {
     glBegin(GL_POINTS);
         glColor4f(.7f, .7f, .2f, alpha * 2);
@@ -3120,7 +3120,7 @@ static void drawVertexPoint(const vertex_t* vtx, float z, float alpha)
     glEnd();
 }
 
-static void drawVertexBar(const vertex_t* vtx, float bottom, float top, float alpha)
+static void drawVertexBar(const Vertex* vtx, float bottom, float top, float alpha)
 {
 #define EXTEND_DIST     64
 
@@ -3141,7 +3141,7 @@ static void drawVertexBar(const vertex_t* vtx, float bottom, float top, float al
 #undef EXTEND_DIST
 }
 
-static void drawVertexIndex(const vertex_t* vtx, float z, float scale, float alpha)
+static void drawVertexIndex(const Vertex* vtx, float z, float scale, float alpha)
 {
     const Point2Raw origin = { 2, 2 };
     char buf[80];
@@ -3174,7 +3174,7 @@ static void drawVertexIndex(const vertex_t* vtx, float z, float scale, float alp
 
 static int drawVertex1(LineDef* li, void* context)
 {
-    vertex_t* vtx = li->L_v1;
+    Vertex* vtx = li->L_v1;
     Polyobj* po = context;
     float dist2D = M_ApproxDistancef(vx - vtx->V_pos[VX], vz - vtx->V_pos[VY]);
 
@@ -3244,7 +3244,7 @@ void Rend_Vertexes(void)
 
         for(i = 0; i < NUM_VERTEXES; ++i)
         {
-            vertex_t* vtx = &vertexes[i];
+            Vertex* vtx = &vertexes[i];
             float alpha;
 
             if(!vtx->lineOwners)
@@ -3276,7 +3276,7 @@ void Rend_Vertexes(void)
 
     for(i = 0; i < NUM_VERTEXES; ++i)
     {
-        vertex_t* vtx = &vertexes[i];
+        Vertex* vtx = &vertexes[i];
         float dist;
 
         if(!vtx->lineOwners)
@@ -3308,7 +3308,7 @@ void Rend_Vertexes(void)
 
         for(i = 0; i < NUM_VERTEXES; ++i)
         {
-            vertex_t* vtx = &vertexes[i];
+            Vertex* vtx = &vertexes[i];
             float pos[3], dist;
 
             if(!vtx->lineOwners) continue; // Not a linedef vertex.

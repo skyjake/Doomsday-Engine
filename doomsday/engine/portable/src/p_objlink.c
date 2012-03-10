@@ -342,7 +342,7 @@ static void processSeg(HEdge* hedge, void* paramaters)
     linkobjtobspleafparams_t loParams;
     BspLeaf* source, *dest;
     float distance;
-    vertex_t* vtx;
+    Vertex* vtx;
 
     // HEdge must be between two different BspLeafs.
     if(hedge->lineDef && (!hedge->twin || hedge->bspLeaf == hedge->twin->bspLeaf))

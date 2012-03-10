@@ -66,7 +66,7 @@ void        BSP_AddHEdgeToSuperBlock(struct superblock_s *block,
 
 void        ClockwiseBspTree(binarytree_t *rootNode);
 
-void        SaveMap(GameMap *dest, void *rootNode, vertex_t ***vertexes,
+void        SaveMap(GameMap *dest, void *rootNode, Vertex ***vertexes,
                     uint *numVertexes);
 
 typedef struct bspleafdata_s {

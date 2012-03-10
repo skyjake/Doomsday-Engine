@@ -149,7 +149,7 @@ static void updateHEdge(bsp_hedge_t *hedge)
  * Create a new half-edge.
  */
 bsp_hedge_t* BSP_HEdge_Create(LineDef* lineDef, LineDef* sourceLineDef,
-    vertex_t* start, vertex_t* end, Sector* sec, boolean back)
+    Vertex* start, Vertex* end, Sector* sec, boolean back)
 {
     bsp_hedge_t* hEdge = allocHEdge();
 
@@ -202,7 +202,7 @@ void BSP_HEdge_Destroy(bsp_hedge_t *hEdge)
 bsp_hedge_t *BSP_HEdge_Split(bsp_hedge_t* oldHEdge, double x, double y)
 {
     bsp_hedge_t* newHEdge;
-    vertex_t* newVert;
+    Vertex* newVert;
 
 /*#if _DEBUG
 if(oldHEdge->lineDef)
@@ -287,7 +287,7 @@ Con_Message("Splitting hEdge->twin %p\n", oldHEdge->twin);
     return newHEdge;
 }
 
-void BSP_CreateVertexEdgeTip(vertex_t *vert, double dx, double dy,
+void BSP_CreateVertexEdgeTip(Vertex *vert, double dx, double dy,
                              bsp_hedge_t *back, bsp_hedge_t *front)
 {
     edgetip_t          *tip = allocEdgeTip();
@@ -340,7 +340,7 @@ void BSP_DestroyVertexEdgeTip(edgetip_t *tip)
  * at this vertex is open. Returns a sector reference if it's open,
  * or NULL if closed (void space or directly along a linedef).
  */
-Sector* BSP_VertexCheckOpen(vertex_t *vert, double dX, double dY)
+Sector* BSP_VertexCheckOpen(Vertex *vert, double dX, double dY)
 {
     edgetip_t          *tip;
     angle_g             angle = M_SlopeToAngle(dX, dY);

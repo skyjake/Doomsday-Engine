@@ -79,7 +79,7 @@ typedef struct gamemap_s {
     // End client only data.
 
     uint numVertexes;
-    vertex_t* vertexes;
+    Vertex* vertexes;
 
     uint numHEdges;
     HEdge* hedges;
@@ -204,7 +204,7 @@ int GameMap_AmbientLightLevel(GameMap* map);
  * @param idx  Unique index of the vertex.
  * @return  Pointer to Vertex with this index else @c NULL if @a idx is not valid.
  */
-vertex_t* GameMap_Vertex(GameMap* map, uint idx);
+Vertex* GameMap_Vertex(GameMap* map, uint idx);
 
 /**
  * Lookup a LineDef by its unique index.
@@ -267,7 +267,7 @@ BspNode* GameMap_BspNode(GameMap* map, uint idx);
  * @param vtx  Vertex to lookup.
  * @return  Unique index for the Vertex else @c -1 if not present.
  */
-int GameMap_VertexIndex(GameMap* map, vertex_t* vtx);
+int GameMap_VertexIndex(GameMap* map, Vertex* vtx);
 
 /**
  * Lookup the unique index for @a lineDef.
@@ -680,7 +680,7 @@ int GameMap_PolyobjsBoxIterator(GameMap* map, const AABoxf* box,
 
 int GameMap_PolyobjIterator(GameMap* map, int (*callback) (Polyobj*, void*), void* parameters);
 
-int GameMap_VertexIterator(GameMap* map, int (*callback) (vertex_t*, void*), void* parameters);
+int GameMap_VertexIterator(GameMap* map, int (*callback) (Vertex*, void*), void* parameters);
 
 int GameMap_SideDefIterator(GameMap* map, int (*callback) (SideDef*, void*), void* parameters);
 

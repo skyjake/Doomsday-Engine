@@ -1397,7 +1397,7 @@ void P_TurnGizmosAwayFromDoors(void)
 
             if(closestline)
             {
-                vertex_t*       v0, *v1;
+                Vertex*         v0, *v1;
                 float           v0p[2], v1p[2];
 
                 v0 = P_GetPtrp(closestline, DMU_VERTEX0);

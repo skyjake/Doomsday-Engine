@@ -27,7 +27,7 @@
 #include "de_refresh.h"
 #include "de_play.h"
 
-int Vertex_SetProperty(vertex_t *vtx, const setargs_t *args)
+int Vertex_SetProperty(Vertex *vtx, const setargs_t *args)
 {
     // Vertices are not writable through DMU.
     Con_Error("Vertex_SetProperty: Is not writable.\n");
@@ -35,7 +35,7 @@ int Vertex_SetProperty(vertex_t *vtx, const setargs_t *args)
     return false; // Continue iteration.
 }
 
-int Vertex_GetProperty(const vertex_t* vtx, setargs_t* args)
+int Vertex_GetProperty(const Vertex* vtx, setargs_t* args)
 {
     switch(args->prop)
     {

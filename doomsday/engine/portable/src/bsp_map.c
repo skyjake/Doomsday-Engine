@@ -190,7 +190,7 @@ static void buildHEdgesFromBSPHEdges(GameMap* dest, binarytree_t* rootNode)
         if(hedge->lineDef)
         {
             LineDef*            ldef = hedge->lineDef;
-            vertex_t*           vtx = hedge->lineDef->L_v(hedge->side);
+            Vertex*             vtx = hedge->lineDef->L_v(hedge->side);
 
             if(ldef->L_side(hedge->side))
                 hedge->HE_frontsector = ldef->L_side(hedge->side)->sector;
@@ -450,8 +450,8 @@ void BSP_InitForNodeBuild(GameMap* map)
     for(i = 0; i < map->numLineDefs; ++i)
     {
         LineDef*            l = &map->lineDefs[i];
-        vertex_t*           start = l->v[0];
-        vertex_t*           end   = l->v[1];
+        Vertex*             start = l->v[0];
+        Vertex*             end   = l->v[1];
 
         start->buildData.refCount++;
         end->buildData.refCount++;
@@ -476,19 +476,19 @@ void BSP_InitForNodeBuild(GameMap* map)
     }
 }
 
-static void hardenVertexes(GameMap* dest, vertex_t*** vertexes,
+static void hardenVertexes(GameMap* dest, Vertex*** vertexes,
                            uint* numVertexes)
 {
     uint                i;
 
     dest->numVertexes = *numVertexes;
     dest->vertexes =
-        Z_Calloc(dest->numVertexes * sizeof(vertex_t), PU_MAPSTATIC, 0);
+        Z_Calloc(dest->numVertexes * sizeof(Vertex), PU_MAPSTATIC, 0);
 
     for(i = 0; i < dest->numVertexes; ++i)
     {
-        vertex_t*           destV = &dest->vertexes[i];
-        vertex_t*           srcV = (*vertexes)[i];
+        Vertex*             destV = &dest->vertexes[i];
+        Vertex*             srcV = (*vertexes)[i];
 
         destV->header.type = DMU_VERTEX;
         destV->numLineOwners = srcV->numLineOwners;
@@ -513,7 +513,7 @@ static void updateVertexLinks(GameMap* dest)
     }
 }
 
-void SaveMap(GameMap* dest, void* rootNode, vertex_t*** vertexes,
+void SaveMap(GameMap* dest, void* rootNode, Vertex*** vertexes,
              uint* numVertexes)
 {
     uint                startTime = Sys_GetRealTime();

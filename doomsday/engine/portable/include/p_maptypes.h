@@ -52,7 +52,7 @@ typedef struct vertex_s {
     lineowner_t*        lineOwners;    // Lineowner base ptr [numlineowners] size. A doubly, circularly linked list. The base is the line with the lowest angle and the next-most with the largest angle.
     fvertex_t           v;
     mvertex_t           buildData;
-} vertex_t;
+} Vertex;
 
 // Helper macros for accessing hedge data elements.
 #define FRONT 0

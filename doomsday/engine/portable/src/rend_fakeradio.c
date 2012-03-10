@@ -1616,7 +1616,7 @@ void Rend_DrawShadowOffsetVerts(void)
 
         for(k = 0; k < 2; ++k)
         {
-            vertex_t* vtx = line->L_v(k);
+            Vertex* vtx = line->L_v(k);
             lineowner_t* vo = vtx->lineOwners;
 
             for(j = 0; j < vtx->numLineOwners; ++j)

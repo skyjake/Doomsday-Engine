@@ -66,7 +66,7 @@ extern "C" {
  */
 #ifndef __INTERNAL_MAP_DATA_ACCESS__
     typedef struct bspnode_s { int type; } BspNode;
-    typedef struct vertex_s {int type; } vertex_t;
+    typedef struct vertex_s {int type; } Vertex;
     typedef struct linedef_s { int type; } LineDef;
     typedef struct sidedef_s { int type; } SideDef;
     typedef struct hedge_s { int type; } HEdge;
