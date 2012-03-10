@@ -1171,7 +1171,7 @@ static void P_MoveParticle(ptcgen_t* gen, particle_t* pt)
 
     // Check the new Z position only if not stuck to a plane.
     z = pt->pos[VZ] + pt->mov[VZ];
-    if(pt->pos[VZ] != DDMININT && pt->pos[VZ] != DDMAXINT)
+    if(pt->pos[VZ] != DDMININT && pt->pos[VZ] != DDMAXINT && pt->sector)
     {
         if(z > FLT2FIX(pt->sector->SP_ceilheight) - hardRadius)
         {
