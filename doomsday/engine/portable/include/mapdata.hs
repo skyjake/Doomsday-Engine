@@ -479,7 +479,7 @@ public
 #define DMT_LINEDEF_AABOX  DDVT_FLOAT
 end
 
-struct linedef
+struct LineDef
     PTR     vertex_s*[2] v
     -       lineowner_s*[2] vo      // Links to vertex line owner nodes [left, right]
     PTR     sidedef_s*[2] sideDefs

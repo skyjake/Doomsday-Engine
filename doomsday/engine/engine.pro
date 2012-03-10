@@ -202,6 +202,7 @@ DENG_HEADERS = \
     portable/include/huffman.h \
     portable/include/image.h \
     portable/include/library.h \
+    portable/include/linedef.h \
     portable/include/lumpdirectory.h \
     portable/include/lumpfile.h \
     portable/include/lumpinfo.h \
@@ -231,7 +232,6 @@ DENG_HEADERS = \
     portable/include/p_control.h \
     portable/include/p_dmu.h \
     portable/include/p_intercept.h \
-    portable/include/p_linedef.h \
     portable/include/p_mapdata.h \
     portable/include/p_maptypes.h \
     portable/include/p_maputil.h \
@@ -453,6 +453,7 @@ SOURCES += \
     portable/src/huffman.c \
     portable/src/image.c \
     portable/src/library.c \
+    portable/src/linedef.c \
     portable/src/lumpdirectory.c \
     portable/src/lumpfile.c \
     portable/src/material.c \
@@ -484,7 +485,6 @@ SOURCES += \
     portable/src/p_data.c \
     portable/src/p_dmu.c \
     portable/src/p_intercept.c \
-    portable/src/p_linedef.c \
     portable/src/p_maputil.c \
     portable/src/p_mobj.c \
     portable/src/p_objlink.c \

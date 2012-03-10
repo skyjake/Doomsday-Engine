@@ -34,7 +34,7 @@
 #include "material.h"
 #include "p_surface.h"
 #include "p_sidedef.h"
-#include "p_linedef.h"
+#include "linedef.h"
 #include "p_plane.h"
 #include "p_seg.h"
 #include "bspleaf.h"

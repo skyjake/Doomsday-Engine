@@ -31,7 +31,7 @@
 #include "materialvariant.h"
 #include "materials.h"
 
-#include "p_linedef.h"
+#include "linedef.h"
 
 static void calcNormal(const LineDef* l, byte side, pvec2_t normal)
 {
