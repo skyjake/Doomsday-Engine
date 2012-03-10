@@ -137,7 +137,7 @@ void V2_Rotate(pvec2_t vec, float radians)
 /**
  * Calculate the sum of two 2-dimensional vectors.
  */
-void V2_Sum(pvec2_t dest, const pvec2_t src1, const pvec2_t src2)
+void V2_Sum(pvec2_t dest, const_pvec2_t src1, const_pvec2_t src2)
 {
     dest[VX] = src1[VX] + src2[VX];
     dest[VY] = src1[VY] + src2[VY];
@@ -146,7 +146,7 @@ void V2_Sum(pvec2_t dest, const pvec2_t src1, const pvec2_t src2)
 /**
  * Subtract src1 from src2, return result in 'dest'.
  */
-void V2_Subtract(pvec2_t dest, const pvec2_t src1, const pvec2_t src2)
+void V2_Subtract(pvec2_t dest, const_pvec2_t src1, const_pvec2_t src2)
 {
     dest[VX] = src1[VX] - src2[VX];
     dest[VY] = src1[VY] - src2[VY];

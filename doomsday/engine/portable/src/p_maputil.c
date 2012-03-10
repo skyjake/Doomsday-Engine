@@ -482,7 +482,8 @@ void P_LineOpening(linedef_t* linedef)
     sector_t*           front, *back;
 
     if(!linedef->L_backside)
-    {   // Single sided line.
+    {
+        // Single sided line.
         openrange = 0;
         return;
     }
@@ -1218,7 +1219,7 @@ typedef struct {
 static int iteratePolyobjLineDefs(polyobj_t* po, void* paramaters)
 {
     const iteratepolyobjlinedefs_params_t* p = (iteratepolyobjlinedefs_params_t*)paramaters;
-    return P_PolyobjLinesIterator(po, p->callback, p->paramaters);
+    return Polyobj_LineDefIterator(po, p->callback, p->paramaters);
 }
 
 static int collectPolyobjLineDefIntercepts(uint const block[2], void* paramaters)

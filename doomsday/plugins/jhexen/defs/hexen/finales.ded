@@ -231,8 +231,8 @@ Finale
     image back FINALE1;
     # Fade into the first screen.
     filter 0 0 0 1; in 2 filter 0 0 0 0; wait 2;
-    textlump msg 20 100 WIN1MSG;
-    #text msg 20 100
+    textlump msg 20 5 WIN1MSG;
+    #text msg 20 5
       #>"with a scream of agony you are\n
       wrenched from this world into\n
       another, every part of your body\n

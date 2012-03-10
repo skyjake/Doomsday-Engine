@@ -50,15 +50,47 @@ int Sys_CriticalMessage(const char* msg);
 int Sys_CriticalMessagef(const char* format, ...) PRINTF_F(1,2);
 
 void Sys_Sleep(int millisecs);
+
+/**
+ * Blocks the thread for a very short period of time. If attempting to wait
+ * until a time in the past (or for more than 50 ms), returns immediately.
+ *
+ * @param realTimeMs  Block until this time is reached.
+ *
+ * @note Longer waits should use Sys_Sleep() -- this is a busy wait.
+ */
+void Sys_BlockUntilRealTime(uint realTimeMs);
+
 void Sys_ShowCursor(boolean show);
 void Sys_HideMouse(void);
 void Sys_MessageBox(const char* msg, boolean iserror);
 void Sys_OpenTextEditor(const char* filename);
 
+/**
+ * @def LIBDENG_ASSERT_IN_MAIN_THREAD
+ * In a debug build, this asserts that the current code is executing in the main thread.
+ */
+#ifdef _DEBUG
+#  define LIBDENG_ASSERT_IN_MAIN_THREAD() {assert(Sys_InMainThread());}
+#else
+#  define LIBDENG_ASSERT_IN_MAIN_THREAD()
+#endif
+
 thread_t Sys_StartThread(systhreadfunc_t startpos, void* parm);
 void Sys_SuspendThread(thread_t handle, boolean dopause);
 int Sys_WaitThread(thread_t handle);
-uint Sys_ThreadID(void);
+
+/**
+ * @param handle  Handle to the thread to return the id of.
+ *                Can be @c NULL in which case the current thread is assumed.
+ * @return  Identifier of the thread.
+ */
+uint Sys_ThreadId(thread_t handle);
+
+uint Sys_CurrentThreadId(void);
+
+void Sys_MarkAsMainThread(void);
+boolean Sys_InMainThread(void);
 
 mutex_t Sys_CreateMutex(const char* name);
 void Sys_DestroyMutex(mutex_t mutexHandle);

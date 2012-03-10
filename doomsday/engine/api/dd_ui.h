@@ -142,7 +142,6 @@ typedef struct fi_page_s {
 
     struct fi_page_background_s {
         struct material_s* material;
-        DGLuint tex;
         animatorvector4_t topColor;
         animatorvector4_t bottomColor;
     } _bg;
@@ -292,6 +291,7 @@ void FIData_TextSetPreColor(struct fi_object_s* text, uint id);
 void FIData_TextSetColor(struct fi_object_s* text, float red, float green, float blue, int steps);
 void FIData_TextSetAlpha(struct fi_object_s* text, float alpha, int steps);
 void FIData_TextSetColorAndAlpha(struct fi_object_s* text, float red, float green, float blue, float alpha, int steps);
+void FIData_TextAccelerate(struct fi_object_s* obj);
 
 /**
  * @return Length of the current text as a counter.

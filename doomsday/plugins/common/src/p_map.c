@@ -911,8 +911,23 @@ int PIT_CheckThing(mobj_t* thing, void* data)
         solid = true;
     else
         solid = (thing->flags & MF_SOLID) && !(thing->flags & MF_NOCLIP) &&
-            (tmThing->flags & MF_SOLID);
+                (tmThing->flags & MF_SOLID);
     // \kludge: end.
+
+#if __JHEXEN__
+    if(tmThing->player && tmThing->onMobj && solid)
+    {
+        /// @todo Unify Hexen's onMobj logic with the other games.
+
+        // We may be standing on more than one thing.
+        if(tmThing->pos[VZ] > thing->pos[VZ] + thing->height - 24)
+        {
+            // Stepping up on this is possible.
+            tmFloorZ = MAX_OF(tmFloorZ, thing->pos[VZ] + thing->height);
+            solid = false;
+        }
+    }
+#endif
 
     // Check for special pickup.
     if((thing->flags & MF_SPECIAL) && (tmThing->flags & MF_PICKUP))
@@ -1004,8 +1019,8 @@ int PIT_CheckLine(linedef_t* ld, void* data)
 #endif
     }
 
-    // \fixme Will never pass this test due to above. Is the previous check
-    // supposed to qualify player mobjs only?
+    /// @todo Will never pass this test due to above. Is the previous check
+    /// supposed to qualify player mobjs only?
 #if __JHERETIC__
     if(!P_GetPtrp(ld, DMU_BACK_SECTOR)) // one sided line
     {   // One sided line
@@ -1188,14 +1203,18 @@ boolean P_CheckPosition3f(mobj_t* thing, float x, float y, float z)
         blockingMobj = NULL;
 #endif
         if(P_MobjsBoxIterator(&tmBoxExpanded, PIT_CheckThing, 0))
+        {
             return false;
+        }
 
 #if _DEBUG
-        if(thing->onMobj)
-            Con_Message("thing->onMobj = %p/%i (solid:%i) [thing:%p/%i]\n", thing->onMobj,
-                        thing->onMobj->thinker.id,
-                        (thing->onMobj->flags & MF_SOLID)!=0,
-                        thing, thing->thinker.id);
+        VERBOSE2(
+            if(thing->onMobj)
+                Con_Message("thing->onMobj = %p/%i (solid:%i) [thing:%p/%i]\n", thing->onMobj,
+                            thing->onMobj->thinker.id,
+                            (thing->onMobj->flags & MF_SOLID)!=0,
+                            thing, thing->thinker.id)
+        );
 #endif
     }
 

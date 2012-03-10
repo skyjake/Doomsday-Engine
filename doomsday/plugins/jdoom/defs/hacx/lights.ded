@@ -1,0 +1,285 @@
+# HacX - Lights and Light Decorations
+#
+
+Header { Version = 5; }
+
+SkipIf -nodefaultfx;
+
+#####====--- LIGHT SOURCES ---====#####
+#
+# The default properties of all light-emitting objects are determined
+# automatically by the engine. Here we make a couple of minor tweaks.
+#
+# For further information on Light definition syntax and semantics see:
+#
+#   http://dengine.net/dew/?title=Light
+
+Light {
+  State = "RTORCHSHRT";
+  Color { .88 .7 .65 };
+  Size = 1;
+  Y Offset = 1;
+}
+
+# The default lights are a little too strong.
+Light {
+  State = "BROK";
+  Flags = nohalo;
+  Color { .36 .65 .33 };
+  Size = .8;
+}
+
+Copy Light {
+  State = "ROCK";
+  Size = .4;
+}
+
+Light {
+  State = "PLASEXP";
+  Flags = nohalo;
+  Color { .82 0 0 };
+  Size = .4;
+}
+
+Copy Light { State = "PLASEXP2"; Color { .7 0 0 }; Size = .5; }
+Copy Light { State = "PLASEXP3"; Color { .3 0 0 }; Size = .5; }
+Copy Light { State = "PLASEXP4"; Size = .2; }
+
+#####====--- LIGHT DECORATIONS ---====#####
+#
+# The default flags allow using these only with the original textures.
+# Use "dcf_pwad" and "dcf_ext" to allow using with PWAD and external
+# resources.
+#
+# There can only be one decoration per texture/flat. Newer decorations
+# override older ones.
+#
+# One decoration can specify up to 16 lights.
+#
+# For further information on Decoration definition syntax and semantics see:
+#
+#   http://dengine.net/dew/?title=Decoration
+
+Decoration {
+  Material = "flats:TLITE6_6";
+  Light {
+    Color { .26 6 .22 };
+    Offset { 20.5 45.5 };
+    Radius = .04;
+    Halo radius = .02;
+    Levels { 240 210 };
+  };
+  Light {
+    Color { .26 6 .22 };
+    Offset { 43.5 17.5 };
+    Radius = .04;
+    Halo radius = .02;
+    Levels { 240 210 };
+  };
+}
+
+Decoration {
+  Material = "flats:RROCK04";
+  Light {
+    Color { .98 .98 1 };
+    Offset { 16 16 };
+    Radius = .5;
+    Halo radius = .4;
+    # React to sector lightlevel.
+    Levels { 80 190 };
+  };
+  Light {
+    Color { .98 .98 1 };
+    Offset { 48 16 };
+    Radius = .5;
+    Halo radius = .4;
+    # React to sector lightlevel.
+    Levels { 80 190 };
+  };
+  Light {
+    Color { .98 .98 1 };
+    Offset { 48 48 };
+    Radius = .5;
+    Halo radius = .4;
+    # React to sector lightlevel.
+    Levels { 80 190 };
+  };
+  Light {
+    Color { .98 .98 1 };
+    Offset { 16 48 };
+    Radius = .5;
+    Halo radius = .4;
+    # React to sector lightlevel.
+    Levels { 80 190 };
+  };
+}
+
+Decoration {
+  Material = "textures:BIGBRIK1";
+  Light {
+    Color { 1 0 0 };
+    Offset { 2.5 102.5 };
+    Radius = .04;
+    Halo radius = .02;
+    Levels { 240 210 };
+  };
+}
+
+Decoration {
+  Material = "textures:BIGBRIK2";
+  Light {
+    Color { 1 0 0 };
+    Offset { 4.5 102.5 };
+    Radius = .04;
+    Halo radius = .02;
+    Levels { 240 210 };
+  };
+}
+
+Decoration {
+  Material = "textures:COMPSTA2";
+  Light {
+    Color { .6 0 0 };
+    Offset { 8 91 };
+    Radius = .04;
+    Halo radius = .02;
+    Levels { 240 210 };
+  };
+  Light {
+    Color { .6 0 0 };
+    Offset { 117 99 };
+    Radius = .04;
+    Halo radius = .02;
+    Levels { 240 210 };
+  };
+  Light {
+    Color { .56 0 0 };
+    Offset { 117 104 };
+    Radius = .04;
+    Halo radius = .02;
+    Levels { 240 210 };
+  };
+  Light {
+    Color { .6 0 0 };
+    Offset { 117 114 };
+    Radius = .04;
+    Halo radius = .02;
+    Levels { 240 210 };
+  };
+}
+
+Decoration {
+  Material = "textures:HD5";
+  Light {
+    Color { .9 0 0 };
+    Offset { 33 38 };
+    Radius = .18;
+    Halo radius = .3;
+    Levels { 240 210 };
+  };
+}
+
+Decoration {
+  Material = "textures:SLADWALL";
+  Light {
+    Color { .9 0 0 };
+    Offset { 67 99 };
+    Radius = .18;
+    Halo radius = .3;
+    Levels { 240 210 };
+  };
+}
+
+Decoration {
+  Material = "textures:HW214";
+  Light {
+    Color { .98 .98 1 };
+    Offset { 16 16 };
+    Radius = .95;
+    Halo radius = .7;
+    # React to sector lightlevel.
+    Levels { 80 190 };
+  };
+}
+
+Copy Decoration {
+  Material = "textures:NUKESLAD";
+}
+
+Decoration {
+  Material = "textures:SW1BRCOM";
+  Light {
+    Color { 1 0 0 };
+    Offset { 10 73 };
+    Radius = .04;
+    Halo radius = .02;
+    Levels { 240 210 };
+  };
+  Light {
+    Color { 1 0 0 };
+    Offset { 22 85 };
+    Radius = .04;
+    Halo radius = .02;
+    Levels { 240 210 };
+  };
+  Light {
+    Color { .3 0 0 };
+    Offset { 22 85 };
+    Radius = .1;
+    Halo radius = .2;
+    Levels { 240 210 };
+  };
+}
+
+Decoration {
+  Material = "textures:SW2BRCOM";
+  Light {
+    Color { .46 1 .43 };
+    Offset { 9.5 85.5 };
+    Radius = .04;
+    Halo radius = .02;
+    Levels { 240 210 };
+  };
+  Light {
+    Color { .46 1 .43 };
+    Offset { 21.5 73.5 };
+    Radius = .04;
+    Halo radius = .02;
+    Levels { 240 210 };
+  };
+  Light {
+    Color { .6 0 0 };
+    Offset { 22 85 };
+    Radius = .16;
+    Halo radius = .3;
+    Levels { 240 210 };
+  };
+  Light {
+    Color { 1 0 0 };
+    Offset { 16 40 };
+    Radius = .08;
+    Halo radius = .06;
+    Levels { 246 200 };
+  };
+  Light {
+    Color { .46 1 .43 };
+    Offset { 25.5 50.5 };
+    Radius = .02;
+    Halo radius = .02;
+    Levels { 240 210 };
+  };
+  Light {
+    Color { .46 1 .43 };
+    Offset { 40.5 80.5 };
+    Radius = .04;
+    Halo radius = .02;
+    Levels { 240 210 };
+  };
+  Light {
+    Color { .46 1 .43 };
+    Offset { 55.5 79.5 };
+    Radius = .04;
+    Halo radius = .02;
+    Levels { 240 210 };
+  };
+}

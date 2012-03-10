@@ -82,6 +82,15 @@ typedef struct {
 
     // Refresh.
     void          (*BeginFrame) (void);
+
+    /**
+     * Called at the end of a refresh frame. This is the last chance the game
+     * will have at updating the engine state before rendering of the frame
+     * begins. Once rendering begins, the viewer can still be updated however
+     * any changes will not take effect until the subsequent frame. Therefore
+     * this is the place where games should strive to update the viewer to
+     * ensure latency-free world refresh.
+     */
     void          (*EndFrame) (void);
 
     /**
@@ -107,8 +116,8 @@ typedef struct {
      *
      * @param port  Logical number of this view port.
      * @param portGeometry  Geometry of the view port in real screen pixels.
-     * @param windowGeometry  Geometry of the view window within the port,
-     *     in real screen pixels.
+     * @param windowGeometry  Geometry of the view window within the port, in
+     *                        real screen pixels.
      *
      * @param player  Console player number associated with the view port.
      * @param layer  Logical layer identifier for the content to be drawn:

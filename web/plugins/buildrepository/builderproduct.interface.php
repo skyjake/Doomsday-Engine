@@ -28,6 +28,7 @@ includeGuard('iBuilderProduct');
 interface iBuilderProduct
 {
     public function setBuildUniqueId($id);
+    public function buildUniqueId();
     public function &compileLogUri();
     public function compileWarnCount();
     public function compileErrorCount();

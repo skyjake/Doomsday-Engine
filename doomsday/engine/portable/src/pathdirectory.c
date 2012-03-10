@@ -34,7 +34,7 @@
 #include "pathdirectory.h"
 
 typedef struct pathdirectorynode_userdatapair_s {
-    StringPoolInternId internId;
+    StringPoolId internId;
     void* data;
 } pathdirectorynode_userdatapair_t;
 
@@ -57,12 +57,12 @@ struct pathdirectorynode_s {
 
 static PathDirectoryNode* newNode(PathDirectory* directory,
     pathdirectorynode_type_t type, PathDirectoryNode* parent,
-    StringPoolInternId internId, void* userData);
+    StringPoolId internId, void* userData);
 
 static void deleteNode(PathDirectoryNode* node);
 
 /// @return  Intern id for the string fragment owned by the PathDirectory of which this node is a child of.
-StringPoolInternId PathDirectoryNode_InternId(const PathDirectoryNode* node);
+StringPoolId PathDirectoryNode_InternId(const PathDirectoryNode* node);
 
 typedef struct {
     PathDirectoryNode* head;
@@ -71,10 +71,7 @@ typedef pathdirectory_nodelist_t pathdirectory_pathhash_t[PATHDIRECTORY_PATHHASH
 
 struct pathdirectory_s {
     /// Path name fragment intern pool.
-    struct pathdirectory_internpool_s {
-        StringPool* strings;
-        ushort* idHashMap; // Index by @c StringPoolInternId-1
-    } internPool;
+    StringPool* stringPool;
 
     int flags; /// @see pathDirectoryFlags
 
@@ -153,10 +150,10 @@ static void destroyPathHash(PathDirectory* pd, pathdirectorynode_type_t type)
 static void clearInternPool(PathDirectory* pd)
 {
     assert(pd);
-    if(pd->internPool.strings)
+    if(pd->stringPool)
     {
-        StringPool_Delete(pd->internPool.strings), pd->internPool.strings = NULL;
-        free(pd->internPool.idHashMap), pd->internPool.idHashMap = NULL;
+        StringPool_Delete(pd->stringPool);
+        pd->stringPool = NULL;
     }
 }
 
@@ -213,13 +210,13 @@ static size_t countNodes(PathDirectory* pd, int flags)
 }
 
 static PathDirectoryNode* findNode(PathDirectory* pd, PathDirectoryNode* parent,
-    pathdirectorynode_type_t nodeType, StringPoolInternId internId)
+    pathdirectorynode_type_t nodeType, StringPoolId internId)
 {
     pathdirectory_pathhash_t* ph = *hashAddressForNodeType(pd, nodeType);
     PathDirectoryNode* node = NULL;
     if(ph)
     {
-        ushort hash = pd->internPool.idHashMap[internId-1];
+        ushort hash = StringPool_UserValue(pd->stringPool, internId);
         for(node = (*ph)[hash].head; node; node = node->next)
         {
             if(parent != PathDirectoryNode_Parent(node)) continue;
@@ -230,43 +227,29 @@ static PathDirectoryNode* findNode(PathDirectory* pd, PathDirectoryNode* parent,
     return node;
 }
 
-static ushort hashForInternId(PathDirectory* pd, StringPoolInternId internId)
+static ushort hashForInternId(PathDirectory* pd, StringPoolId internId)
 {
     assert(pd);
     if(0 == internId)
         Con_Error("PathDirectory::hashForInternId: Invalid internId %u.", internId);
-    return pd->internPool.idHashMap[internId-1];
+    return StringPool_UserValue(pd->stringPool, internId);
 }
 
-static StringPoolInternId internNameAndUpdateIdHashMap(PathDirectory* pd,
+static StringPoolId internNameAndUpdateIdHashMap(PathDirectory* pd,
     const ddstring_t* name, ushort hash)
 {
     StringPool* pool;
-    StringPoolInternId internId;
-    uint oldSize;
+    StringPoolId internId;
+    //uint oldSize;
     assert(pd);
 
-    pool = pd->internPool.strings;
-    if(!pool)
+    if(!pd->stringPool)
     {
-        pool = pd->internPool.strings = StringPool_New();
+        pd->stringPool = StringPool_New();
     }
-    oldSize = StringPool_Size(pool);
-
+    pool = pd->stringPool;
     internId = StringPool_Intern(pool, name);
-    if(oldSize != StringPool_Size(pool))
-    {
-        // A new string was added to the pool.
-        pd->internPool.idHashMap = (ushort*) realloc(pd->internPool.idHashMap, sizeof *pd->internPool.idHashMap * StringPool_Size(pool));
-        if(!pd->internPool.idHashMap)
-            Con_Error("PathDirectory::internNameAndUpdateIdHashMap: Failed on (re)allocation of %lu bytes for the IdHashMap", (unsigned long) (sizeof *pd->internPool.idHashMap * StringPool_Size(pool)));
-
-        if(internId < StringPool_Size(pool))
-        {
-            memmove(pd->internPool.idHashMap + internId, pd->internPool.idHashMap + (internId-1), sizeof *pd->internPool.idHashMap * (StringPool_Size(pool) - internId));
-        }
-        pd->internPool.idHashMap[internId-1] = hash;
-    }
+    StringPool_SetUserValue(pd->stringPool, internId, hash);
     return internId;
 }
 
@@ -277,17 +260,17 @@ static StringPoolInternId internNameAndUpdateIdHashMap(PathDirectory* pd,
 static PathDirectoryNode* direcNode(PathDirectory* pd, PathDirectoryNode* parent,
     pathdirectorynode_type_t nodeType, const ddstring_t* name, char delimiter, void* userData)
 {
-    StringPoolInternId internId = 0;
+    StringPoolId internId = 0;
     pathdirectory_pathhash_t** phAdr;
     PathDirectoryNode* node;
     ushort hash;
     assert(pd && name);
 
     // Have we already encountered this?
-    if(pd->internPool.strings)
+    if(pd->stringPool)
     {
-        internId = StringPool_IsInterned(pd->internPool.strings, name);
-        if(0 != internId)
+        internId = StringPool_IsInterned(pd->stringPool, name);
+        if(internId)
         {
             // The name is known. Perhaps we have.
             node = findNode(pd, parent, nodeType, internId);
@@ -352,18 +335,16 @@ static PathDirectoryNode* buildDirecNodes(PathDirectory* pd, const char* path,
     while((p = Str_CopyDelim2(&part, p, delimiter, CDF_OMIT_DELIMITER))) // Get the next part.
     {
         node = direcNode(pd, parent, PT_BRANCH, &part, delimiter, NULL);
-        /// \todo Do not error here. If we're out of storage undo this action and return.
-        if(!node)
-            Con_Error("PathDirectory::buildDirecNodes: Exhausted storage while attempting to insert nodes for path \"%s\".", path);
+        /// @todo Do not error here. If we're out of storage undo this action and return.
+        if(!node) Con_Error("PathDirectory::buildDirecNodes: Exhausted storage while attempting to insert nodes for path \"%s\".", path);
         parent = node;
     }
 
     if(Str_Length(&part) != 0)
     {
         node = direcNode(pd, parent, PT_LEAF, &part, delimiter, NULL);
-        /// \todo Do not error here. If we're out of storage undo this action and return.
-        if(!node)
-            Con_Error("PathDirectory::buildDirecNodes: Exhausted storage while attempting to insert nodes for path \"%s\".", path);
+        /// @todo Do not error here. If we're out of storage undo this action and return.
+        if(!node) Con_Error("PathDirectory::buildDirecNodes: Exhausted storage while attempting to insert nodes for path \"%s\".", path);
     }
 
     Str_Free(&part);
@@ -519,8 +500,7 @@ PathDirectory* PathDirectory_NewWithFlags(int flags)
         Con_Error("PathDirectory::Construct: Failed on allocation of %lu bytes for new PathDirectory.", (unsigned long) sizeof *pd);
 
     pd->flags = flags;
-    pd->internPool.strings = NULL;
-    pd->internPool.idHashMap = NULL;
+    pd->stringPool = NULL;
     pd->pathLeafHash = NULL;
     pd->pathBranchHash = NULL;
     pd->size = 0;
@@ -681,10 +661,10 @@ PathDirectoryNode* PathDirectory_Find(PathDirectory* pd, int flags,
 const ddstring_t* PathDirectory_GetFragment(PathDirectory* pd, const PathDirectoryNode* node)
 {
     assert(pd);
-    return StringPool_String(pd->internPool.strings, PathDirectoryNode_InternId(node));
+    return StringPool_String(pd->stringPool, PathDirectoryNode_InternId(node));
 }
 
-/// Calculate the total length of the final composed path.
+// Calculate the total length of the final composed path.
 static int PathDirectory_CalcPathLength(PathDirectory* pd, const PathDirectoryNode* node, char delimiter)
 {
     const int delimiterLen = delimiter? 1 : 0;
@@ -710,51 +690,118 @@ static int PathDirectory_CalcPathLength(PathDirectory* pd, const PathDirectoryNo
     return requiredLen;
 }
 
-/// \assume @a foundPath already has sufficent characters reserved to hold the fully composed path.
-static ddstring_t* PathDirectory_ConstructPath(PathDirectory* pd, const PathDirectoryNode* node,
-    ddstring_t* foundPath, char delimiter)
+#ifdef LIBDENG_STACK_MONITOR
+static void* stackStart;
+static size_t maxStackDepth;
+#endif
+
+typedef struct pathconstructorparams_s {
+    PathDirectory* pd;
+    size_t length;
+    ddstring_t* dest;
+    char delimiter;
+    size_t delimiterLen;
+} pathconstructorparams_t;
+
+/**
+ * Recursive path constructor. First finds the root and the full length of the
+ * path (when descending), then allocates memory for the string, and finally
+ * copies each fragment with the delimiters (on the way out).
+ */
+static void pathConstructor(pathconstructorparams_t* parm, const PathDirectoryNode* trav)
 {
-    const int delimiterLen = delimiter? 1 : 0;
-    const PathDirectoryNode* trav;
-    const ddstring_t* fragment;
-    assert(pd && node && foundPath);
+    const ddstring_t* fragment = PathDirectory_GetFragment(parm->pd, trav);
 
-    if(PT_BRANCH == PathDirectoryNode_Type(node) && 0 != delimiterLen)
-        Str_AppendChar(foundPath, delimiter);
+#ifdef LIBDENG_STACK_MONITOR
+    maxStackDepth = MAX_OF(maxStackDepth, stackStart - (void*)&fragment);
+#endif
 
-    trav = node;
-    do
+    parm->length += Str_Length(fragment);
+
+    if(PathDirectoryNode_Parent(trav))
     {
-        fragment = PathDirectory_GetFragment(pd, trav);
-        Str_Prepend(foundPath, Str_Text(fragment));
-        if(NULL != PathDirectoryNode_Parent(trav) && 0 != delimiterLen)
-            Str_PrependChar(foundPath, delimiter);
-    } while((trav = PathDirectoryNode_Parent(trav)));
-    return foundPath;
+        // There also needs to be a separator.
+        parm->length += parm->delimiterLen;
+
+        // Descend to parent level.
+        pathConstructor(parm, PathDirectoryNode_Parent(trav));
+
+        // Append the separator.
+        if(parm->delimiter)
+            Str_AppendCharWithoutAllocs(parm->dest, parm->delimiter);
+    }
+    else
+    {
+        // We've arrived at the deepest level. The full length is now known.
+        // Ensure there's enough memory for the string.
+        Str_ReserveNotPreserving(parm->dest, parm->length);
+    }
+
+    // Assemble the path by appending the fragment.
+    Str_AppendWithoutAllocs(parm->dest, fragment);
+}
+
+/**
+ * @param pd         PathDirectory.
+ * @param node       Node whose path to construct.
+ * @param constructedPath  The constructed path is written here. Previous contents discarded.
+ * @param delimiter  Character to use for separating fragments.
+ *
+ * @return @a constructedPath
+ *
+ * @todo This is a good candidate for result caching: the constructed path
+ * could be saved and returned on subsequent calls. Are there any circumstances
+ * in which the cached result becomes obsolete? -jk
+ */
+static ddstring_t* PathDirectory_ConstructPath(PathDirectory* pd, const PathDirectoryNode* node,
+                                               ddstring_t* constructedPath, char delimiter)
+{
+    pathconstructorparams_t parm;
+
+#ifdef LIBDENG_STACK_MONITOR
+    stackStart = &parm;
+#endif
+
+    assert(pd && node && constructedPath);
+
+    parm.dest = constructedPath;
+    parm.length = 0;
+    parm.pd = pd;
+    parm.delimiter = delimiter;
+    parm.delimiterLen = (delimiter? 1 : 0);
+
+    // Include a terminating path separator for branches (directories).
+    if(PathDirectoryNode_Type(node) == PT_BRANCH)
+        parm.length += parm.delimiterLen;
+
+    // Recursively construct the path from fragments and delimiters.
+    Str_Clear(constructedPath);
+    pathConstructor(&parm, node);
+
+    // Terminating delimiter for branches.
+    if(delimiter && PathDirectoryNode_Type(node) == PT_BRANCH)
+        Str_AppendCharWithoutAllocs(constructedPath, delimiter);
+
+    assert(Str_Length(constructedPath) == parm.length);
+
+#ifdef LIBDENG_STACK_MONITOR
+    fprintf(stderr, "pathConstructor: max stack depth: %u bytes\n", (uint)maxStackDepth);
+#endif
+
+    return constructedPath;
 }
 
 ddstring_t* PathDirectory_ComposePath(PathDirectory* pd, const PathDirectoryNode* node,
     ddstring_t* foundPath, int* length, char delimiter)
 {
     assert(pd && node);
-    if(!foundPath && length)
+
+    if(!foundPath)
     {
-        *length = PathDirectory_CalcPathLength(pd, node, delimiter);
-        return foundPath;
+        if(length) PathDirectory_ComposePath(pd, node, NULL, length, delimiter);
+        return 0;
     }
-    else
-    {
-        int fullLength;
-
-        PathDirectory_ComposePath(pd, node, NULL, &fullLength, delimiter);
-        if(length) *length = fullLength;
-
-        if(!foundPath) return foundPath;
-
-        Str_Clear(foundPath);
-        Str_Reserve(foundPath, fullLength);
-        return PathDirectory_ConstructPath(pd, node, foundPath, delimiter);
-    }
+    return PathDirectory_ConstructPath(pd, node, foundPath, delimiter);
 }
 
 static void PathDirectory_CollectPathsInHash(pathdirectory_pathhash_t* ph, char delimiter,
@@ -1211,7 +1258,7 @@ void PathDirectory_PrintHashDistribution(PathDirectory* pd)
 
 static PathDirectoryNode* newNode(PathDirectory* directory,
     pathdirectorynode_type_t type, PathDirectoryNode* parent,
-    StringPoolInternId internId, void* userData)
+    StringPoolId internId, void* userData)
 {
     PathDirectoryNode* node;
 
@@ -1279,7 +1326,7 @@ const ddstring_t* PathDirectoryNode_TypeName(pathdirectorynode_type_t type)
     return &nodeNames[1 + (type - PATHDIRECTORYNODE_TYPE_FIRST)];
 }
 
-StringPoolInternId PathDirectoryNode_InternId(const PathDirectoryNode* node)
+StringPoolId PathDirectoryNode_InternId(const PathDirectoryNode* node)
 {
     assert(node);
     return node->pair.internId;
@@ -1291,8 +1338,8 @@ ushort PathDirectoryNode_Hash(const PathDirectoryNode* node)
     return hashForInternId(node->directory, node->pair.internId);
 }
 
-/// \note This routine is also used as an iteration callback, so only return
-/// a non-zero value when the node is a match for the search term.
+/// @note This routine is also used as an iteration callback, so only return
+///       a non-zero value when the node is a match for the search term.
 int PathDirectoryNode_MatchDirectory(PathDirectoryNode* node, int flags,
     PathMap* searchPattern, void* paramaters)
 {
@@ -1308,6 +1355,12 @@ int PathDirectoryNode_MatchDirectory(PathDirectoryNode* node, int flags,
     sfragment = PathMap_Fragment(searchPattern, 0);
     if(!sfragment) return false; // Hmm...
 
+//#ifdef _DEBUG
+//#  define EXIT_POINT(ep) fprintf(stderr, "MatchDirectory exit point %i\n", ep)
+//#else
+#  define EXIT_POINT(ep)
+//#endif
+
     // In reverse order, compare path fragments in the search term.
     fragmentCount = PathMap_Size(searchPattern);
     for(i = 0; i < fragmentCount; ++i)
@@ -1318,7 +1371,10 @@ int PathDirectoryNode_MatchDirectory(PathDirectoryNode* node, int flags,
             dd_snprintf(buf, 256, "%*s", sfragment->to - sfragment->from + 1, sfragment->from);
             fragment = PathDirectory_GetFragment(pd, node);
             if(!F_MatchFileName(Str_Text(fragment), buf))
+            {
+                EXIT_POINT(1);
                 return false;
+            }
         }
         else
         {
@@ -1326,31 +1382,54 @@ int PathDirectoryNode_MatchDirectory(PathDirectoryNode* node, int flags,
 
             if(!isWild)
             {
+                int sfraglen = 0;
+
                 // If the hashes don't match it can't possibly be this.
                 if(sfragment->hash != hashForInternId(pd, PathDirectoryNode_InternId(node)))
+                {
+                    EXIT_POINT(2);
                     return false;
+                }
+
+                // Determine length of the sfragment.
+                if(!strcmp(sfragment->to, "") && !strcmp(sfragment->from, ""))
+                    sfraglen = 0;
+                else
+                    sfraglen = (sfragment->to - sfragment->from) + 1;
 
                 // Compare the path fragment to that of the search term.
                 fragment = PathDirectory_GetFragment(pd, node);
-                if(Str_Length(fragment) < (sfragment->to - sfragment->from)+1 ||
+                if(Str_Length(fragment) < sfraglen ||
                    strnicmp(Str_Text(fragment), sfragment->from, Str_Length(fragment)))
+                {
+                    EXIT_POINT(3);
                     return false;
+                }
             }
         }
 
         // Have we arrived at the search target?
         if(i == fragmentCount-1)
+        {
+            EXIT_POINT(4);
             return (!(flags & PCF_MATCH_FULL) || !PathDirectoryNode_Parent(node));
+        }
 
         // Are there no more parent directories?
         if(!PathDirectoryNode_Parent(node))
+        {
+            EXIT_POINT(5);
             return false;
+        }
 
         // So far so good. Move one directory level upwards.
         node = PathDirectoryNode_Parent(node);
         sfragment = PathMap_Fragment(searchPattern, i+1);
     }
+    EXIT_POINT(6);
     return false;
+
+#undef EXIT_POINT
 }
 
 void PathDirectoryNode_AttachUserData(PathDirectoryNode* node, void* userData)

@@ -219,6 +219,9 @@ inf = Params: after (tics) (cmd)\nFor example, 'after 35 "echo End"'.
 [alias]
 desc = Create aliases for a (set of) console commands.
 
+[apropos]
+desc = Summarize all help containing a search term.
+
 [bindevent]
 desc = Bind a console command to an event.
 inf = Params: bindevent (event-descriptor) (command)\nExamples:\n  bindevent "key-M-down" {print "M was pressed"}\n  bindevent "mouse-right-up + key-shift" {print "RMB released while Shift down"}
@@ -622,7 +625,10 @@ desc = Display contrast: 1=normal.
 desc = Display brightness: -1=dark, 0=normal, 1=light.
 
 [rend-dev-wireframe]
-desc = 1=Render player view in wireframe mode.
+desc = 1=Render player view in wireframe mode. 2=Also render UI and text as wireframes.
+
+[rend-dev-fakeradio-update]
+desc = 1=Enable updating of the shadow edges used with simulated radiosity.
 
 [rend-dev-framecount]
 desc = Frame counter.
@@ -927,6 +933,9 @@ desc = Sound effects sample rate (11025, 22050, 44100).
 [sound-16bit]
 desc = 1=16-bit sound effects/resampling.
 
+[sound-overlap-stop]
+desc = 1=Only allow one sound per emitter object (as in traditional Doom).
+
 [sound-3d]
 desc = 1=Play sound effects in 3D.
 
@@ -953,6 +962,15 @@ desc = Automatically generate reject data when necessary, 0=Never, 1=When needed
 
 [refresh-rate-maximum]
 desc = Maximum limit for the frame rate (default: 200).
+
+[input-sharp-lateprocessing]
+desc = 1=Process sharp events after tickers during sharp tics. Increases input latency by 1/35 seconds.
+
+[input-toggle-sharp]
+desc = 1=Process toggle events only on sharp ticks for backwards compatible behavior.
+
+[input-conflict-zerocontrol]
+desc = 1=If a control is influenced by two or more conflicting input device states, the control position gets zeroed.
 
 [input-key-delay1]
 desc = The number of milliseconds to wait before first key repeat.

@@ -725,9 +725,7 @@ static void P_NewParticle(ptcgen_t* gen)
         pt->pos[VZ] += gen->center[VZ];
 
         // Calculate XY center with mobj angle.
-        ang =
-            (useSRVOAngle ? (gen->source->visAngle << 16) : gen->source->
-             angle) + (fixed_t) (FIX2FLT(gen->center[VY]) / 180.0f * ANG180);
+        ang = Mobj_AngleSmoothed(gen->source) + (fixed_t) (FIX2FLT(gen->center[VY]) / 180.0f * ANG180);
         ang2 = (ang + ANG90) >> ANGLETOFINESHIFT;
         ang >>= ANGLETOFINESHIFT;
         pt->pos[VX] += FixedMul(fineCosine[ang], gen->center[VX]);
@@ -1173,7 +1171,7 @@ static void P_MoveParticle(ptcgen_t* gen, particle_t* pt)
 
     // Check the new Z position only if not stuck to a plane.
     z = pt->pos[VZ] + pt->mov[VZ];
-    if(pt->pos[VZ] != DDMININT && pt->pos[VZ] != DDMAXINT)
+    if(pt->pos[VZ] != DDMININT && pt->pos[VZ] != DDMAXINT && pt->sector)
     {
         if(z > FLT2FIX(pt->sector->SP_ceilheight) - hardRadius)
         {

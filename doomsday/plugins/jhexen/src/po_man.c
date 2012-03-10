@@ -44,7 +44,7 @@
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static int getPolyobjMirror(uint polyNum);
-static void thrustMobj(struct mobj_s* mo, void* segp, void* pop);
+static void thrustMobj(struct mobj_s* mo, void* linep, void* pop);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -53,6 +53,18 @@ static void thrustMobj(struct mobj_s* mo, void* segp, void* pop);
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
+
+polyobj_t* P_GetPolyobj(uint num)
+{
+    // By unique ID?
+    if(num & 0x80000000)
+    {
+        return P_PolyobjByID(num & 0x7fffffff);
+    }
+
+    // By tag.
+    return P_PolyobjByTag((int)num);
+}
 
 void PO_StartSequence(polyobj_t* po, int seqBase)
 {
@@ -75,8 +87,8 @@ void PO_SetDestination(polyobj_t* po, float dist, uint an, float speed)
 
 void T_RotatePoly(polyevent_t* pe)
 {
-    unsigned int        absSpeed;
-    polyobj_t*          po = P_GetPolyobj(pe->polyobj);
+    unsigned int absSpeed;
+    polyobj_t* po = P_GetPolyobj(pe->polyobj);
 
     if(P_PolyobjRotate(po, pe->intSpeed))
     {
@@ -215,7 +227,7 @@ void T_MovePoly(polyevent_t* pe)
     unsigned int        absSpeed;
     polyobj_t*          po = P_GetPolyobj(pe->polyobj);
 
-    if(P_PolyobjMove(po, pe->speed[MX], pe->speed[MY]))
+    if(P_PolyobjMoveXY(po, pe->speed[MX], pe->speed[MY]))
     {
         absSpeed = abs(pe->intSpeed);
         pe->dist -= absSpeed;
@@ -342,7 +354,7 @@ void T_PolyDoor(polydoor_t* pd)
     switch(pd->type)
     {
     case PODOOR_SLIDE:
-        if(P_PolyobjMove(po, pd->speed[MX], pd->speed[MY]))
+        if(P_PolyobjMoveXY(po, pd->speed[MX], pd->speed[MY]))
         {
             absSpeed = abs(pd->intSpeed);
             pd->dist -= absSpeed;
@@ -559,26 +571,23 @@ static int getPolyobjMirror(uint poly)
     return 0;
 }
 
-static void thrustMobj(struct mobj_s* mo, void* segp, void* pop)
+static void thrustMobj(struct mobj_s* mo, void* linep, void* pop)
 {
-    seg_t*              seg = (seg_t*) segp;
-    polyobj_t*          po = (polyobj_t*) pop;
-    uint                thrustAn;
-    float               thrustX, thrustY, force;
-    polyevent_t*        pe;
+    linedef_t* line = (linedef_t*) linep;
+    polyobj_t* po = (polyobj_t*) pop;
+    float thrust[2], force;
+    polyevent_t* pe;
+    uint thrustAn;
 
     // Clients do no polyobj <-> mobj interaction.
-    if(IS_CLIENT)
-        return;
+    if(IS_CLIENT) return;
 
-    if(P_MobjIsCamera(mo)) // Cameras don't interact with polyobjs.
-        return;
+    // Cameras don't interact with polyobjs.
+    if(P_MobjIsCamera(mo)) return;
 
-    if(!(mo->flags & MF_SHOOTABLE) && !mo->player)
-        return;
+    if(!(mo->flags & MF_SHOOTABLE) && !mo->player) return;
 
-    thrustAn =
-        (P_GetAnglep(seg, DMU_ANGLE) - ANGLE_90) >> ANGLETOFINESHIFT;
+    thrustAn = (P_GetAnglep(line, DMU_ANGLE) - ANGLE_90) >> ANGLETOFINESHIFT;
 
     pe = (polyevent_t*) po->specialData;
     if(pe)
@@ -592,29 +601,21 @@ static void thrustMobj(struct mobj_s* mo, void* segp, void* pop)
             force = FIX2FLT(pe->intSpeed >> 3);
         }
 
-        if(force < 1)
-        {
-            force = 1;
-        }
-        else if(force > 4)
-        {
-            force = 4;
-        }
+        force = MINMAX_OF(1, force, 4);
     }
     else
     {
         force = 1;
     }
 
-    thrustX = force * FIX2FLT(finecosine[thrustAn]);
-    thrustY = force * FIX2FLT(finesine[thrustAn]);
-    mo->mom[MX] += thrustX;
-    mo->mom[MY] += thrustY;
+    thrust[VX] = force * FIX2FLT(finecosine[thrustAn]);
+    thrust[VY] = force * FIX2FLT(finesine[thrustAn]);
+    mo->mom[MX] += thrust[VX];
+    mo->mom[MY] += thrust[VY];
 
     if(po->crush)
     {
-        if(!P_CheckPosition2f(mo, mo->pos[VX] + thrustX,
-                              mo->pos[VY] + thrustY))
+        if(!P_CheckPosition2f(mo, mo->pos[VX] + thrust[VX], mo->pos[VY] + thrust[VY]))
         {
             P_DamageMobj(mo, NULL, NULL, 3, false);
         }
@@ -663,8 +664,8 @@ void PO_InitForMap(void)
         if(spot)
         {
             po->crush = (spot->doomEdNum == PO_SPAWNCRUSH_DOOMEDNUM? 1 : 0);
-            P_PolyobjMove(po, -po->pos[VX] + spot->pos[VX],
-                              -po->pos[VY] + spot->pos[VY]);
+            P_PolyobjMoveXY(po, -po->pos[VX] + spot->pos[VX],
+                                -po->pos[VY] + spot->pos[VY]);
         }
         else
         {

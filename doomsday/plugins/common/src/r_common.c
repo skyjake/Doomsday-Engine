@@ -26,8 +26,6 @@
  * Common routines for refresh.
  */
 
-// HEADER FILES ------------------------------------------------------------
-
 #include <assert.h>
 #include <math.h>
 #include <string.h>
@@ -51,28 +49,13 @@
 
 #include "r_common.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
+Size2Rawf viewScale = { 1, 1 };
+float aspectScale = 1;
 
 static int gammaLevel;
 #ifndef __JHEXEN__
 char gammamsg[5][81];
 #endif
-
-// CODE --------------------------------------------------------------------
 
 void R_PrecachePSprites(void)
 {
@@ -88,13 +71,13 @@ void R_PrecachePSprites(void)
         {
             pclass = players[CONSOLEPLAYER].class_;
 
-            R_PrecacheSkinsForState(weaponInfo[i][pclass].mode[k].states[WSN_UP]);
-            R_PrecacheSkinsForState(weaponInfo[i][pclass].mode[k].states[WSN_DOWN]);
-            R_PrecacheSkinsForState(weaponInfo[i][pclass].mode[k].states[WSN_READY]);
-            R_PrecacheSkinsForState(weaponInfo[i][pclass].mode[k].states[WSN_ATTACK]);
-            R_PrecacheSkinsForState(weaponInfo[i][pclass].mode[k].states[WSN_FLASH]);
+            R_PrecacheModelsForState(weaponInfo[i][pclass].mode[k].states[WSN_UP]);
+            R_PrecacheModelsForState(weaponInfo[i][pclass].mode[k].states[WSN_DOWN]);
+            R_PrecacheModelsForState(weaponInfo[i][pclass].mode[k].states[WSN_READY]);
+            R_PrecacheModelsForState(weaponInfo[i][pclass].mode[k].states[WSN_ATTACK]);
+            R_PrecacheModelsForState(weaponInfo[i][pclass].mode[k].states[WSN_FLASH]);
 #if __JHERETIC__ || __JHEXEN__
-            R_PrecacheSkinsForState(weaponInfo[i][pclass].mode[k].states[WSN_ATTACK_HOLD]);
+            R_PrecacheModelsForState(weaponInfo[i][pclass].mode[k].states[WSN_ATTACK_HOLD]);
 #endif
         }
     }
@@ -113,10 +96,26 @@ static boolean maximizedViewWindow(int player)
               !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))); // $democam: can be set on every game tic.
 }
 
+static void calcStatusBarSize(Size2Raw* size, Size2Rawf* viewScale, int maxWidth)
+{
+#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
+    float aspectScale = cfg.statusbarScale;
+
+    size->width = ST_WIDTH * viewScale->height;
+    if(size->width > maxWidth)
+        aspectScale *= (float)maxWidth/size->width;
+
+    size->width *= cfg.statusbarScale;
+    size->height = floor(ST_HEIGHT * 1.2f/*aspect correct*/ * aspectScale);
+#else
+    size->width = size->height  = 0;
+#endif
+}
+
 static void resizeViewWindow(int player, const RectRaw* newGeometry,
     const RectRaw* oldGeometry, boolean interpolate)
 {
-    RectRaw geom;
+    RectRaw window;
     assert(newGeometry);
 
     if(player < 0 || player >= MAXPLAYERS)
@@ -125,53 +124,45 @@ static void resizeViewWindow(int player, const RectRaw* newGeometry,
         exit(1); // Unreachable.
     }
 
-    memcpy(&geom, newGeometry, sizeof(geom));
-    geom.origin.x = geom.origin.y = 0;
+    // Calculate fixed 320x200 scale factors.
+    viewScale.width  = (float)newGeometry->size.width  / SCREENWIDTH;
+    viewScale.height = (float)newGeometry->size.height / SCREENHEIGHT;
+    aspectScale = newGeometry->size.width >= newGeometry->size.height? viewScale.width : viewScale.height;
+
+    // Determine view window geometry.
+    memcpy(&window, newGeometry, sizeof(window));
+    window.origin.x = window.origin.y = 0;
 
     // Override @c cfg.screenBlocks and force a maximized window?
     if(!maximizedViewWindow(player) && cfg.screenBlocks <= 10)
     {
-        const float xScale = (float)geom.size.width  / SCREENWIDTH;
-        const float yScale = (float)geom.size.height / SCREENHEIGHT;
-#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
-        float fscale = cfg.statusbarScale;
-        int statusBarHeight, needWidth;
-
-        needWidth = yScale * ST_WIDTH;
-        if(needWidth > geom.size.width)
-            fscale *= (float)geom.size.width/needWidth;
-        statusBarHeight = floor(ST_HEIGHT * fscale);
-#endif
+        Size2Raw statusBarSize;
+        calcStatusBarSize(&statusBarSize, &viewScale, newGeometry->size.width);
 
         if(cfg.screenBlocks != 10)
         {
-            geom.size.width = cfg.screenBlocks * SCREENWIDTH/10;
-            geom.origin.x = SCREENWIDTH/2 - geom.size.width/2;
-#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
-            geom.size.height = cfg.screenBlocks * (SCREENHEIGHT - statusBarHeight) / 10;
-            geom.origin.y = (SCREENHEIGHT - statusBarHeight - geom.size.height) / 2;
-#else
-            geom.size.height = cfg.screenBlocks * SCREENHEIGHT/10;
-            geom.origin.y = (SCREENHEIGHT - geom.size.height) / 2;
-#endif
+            window.size.width  = cfg.screenBlocks * SCREENWIDTH/10;
+            window.size.height = cfg.screenBlocks * (SCREENHEIGHT - statusBarSize.height) / 10;
+
+            window.origin.x = (SCREENWIDTH - window.size.width) / 2;
+            window.origin.y = (SCREENHEIGHT - statusBarSize.height - window.size.height) / 2;
         }
-#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
         else
         {
-            geom.origin.x = 0;
-            geom.origin.y = 0;
-            geom.size.width  = SCREENWIDTH;
-            geom.size.height = SCREENHEIGHT - statusBarHeight;
+            window.origin.x = 0;
+            window.origin.y = 0;
+            window.size.width  = SCREENWIDTH;
+            window.size.height = SCREENHEIGHT - statusBarSize.height;
         }
-#endif
+
         // Scale from fixed to viewport coordinates.
-        geom.origin.x = ROUND(geom.origin.x * xScale);
-        geom.origin.y = ROUND(geom.origin.y * yScale);
-        geom.size.width  = ROUND(geom.size.width  * xScale);
-        geom.size.height = ROUND(geom.size.height * yScale);
+        window.origin.x = ROUND(window.origin.x * viewScale.width);
+        window.origin.y = ROUND(window.origin.y * viewScale.height);
+        window.size.width  = ROUND(window.size.width  * viewScale.width);
+        window.size.height = ROUND(window.size.height * viewScale.height);
     }
 
-    R_SetViewWindowGeometry(player, &geom, interpolate);
+    R_SetViewWindowGeometry(player, &window, interpolate);
 }
 
 void R_ResizeViewWindow(int flags)

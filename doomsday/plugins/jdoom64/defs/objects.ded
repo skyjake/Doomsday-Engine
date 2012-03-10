@@ -133,7 +133,7 @@ Thing {
   Height = 72;
   Mass = 100;
   Flags = solid | shootable | countkill;
-  Flags2 = passmobj | telestomp;
+  Flags2 = telestomp;
 }
 
 Thing {
@@ -161,7 +161,7 @@ Thing {
   Height = 72;
   Mass = 100;
   Flags = solid | shootable | countkill;
-  Flags2 = passmobj | telestomp;
+  Flags2 = telestomp;
 }
 
 Thing {
@@ -241,7 +241,7 @@ Thing {
   Height = 64;
   Mass = 1000;
   Flags = solid | shootable | countkill;
-  Flags2 = passmobj | telestomp;
+  Flags2 = telestomp;
 }
 
 Thing {
@@ -296,7 +296,7 @@ Thing {
   Height = 72;
   Mass = 100;
   Flags = solid | shootable | countkill;
-  Flags2 = passmobj | telestomp;
+  Flags2 = telestomp;
 }
 
 Thing {
@@ -324,7 +324,7 @@ Thing {
   Height = 56;
   Mass = 400;
   Flags = solid | shootable | countkill;
-  Flags2 = passmobj | telestomp;
+  Flags2 = telestomp;
 }
 
 Thing {
@@ -352,7 +352,7 @@ Thing {
   Height = 56;
   Mass = 400;
   Flags = solid | shootable | shadow | countkill;
-  Flags2 = passmobj | telestomp;
+  Flags2 = telestomp;
 }
 
 Thing {
@@ -380,7 +380,7 @@ Thing {
   Height = 88;
   Mass = 400;
   Flags = solid | shootable | float | nogravity | countkill;
-  Flags2 = passmobj | telestomp;
+  Flags2 = telestomp;
 }
 
 Thing {
@@ -408,7 +408,7 @@ Thing {
   Height = 80;
   Mass = 1000;
   Flags = solid | shootable | countkill;
-  Flags2 = passmobj | telestomp;
+  Flags2 = telestomp;
 }
 
 Thing {
@@ -463,7 +463,7 @@ Thing {
   Height = 80;
   Mass = 1000;
   Flags = solid | shootable | countkill;
-  Flags2 = passmobj | telestomp;
+  Flags2 = telestomp;
 }
 
 Thing {
@@ -520,7 +520,7 @@ Thing {
   Height = 64;
   Mass = 600;
   Flags = solid | shootable | countkill;
-  Flags2 = passmobj | telestomp;
+  Flags2 = telestomp;
 }
 
 Thing {
@@ -548,7 +548,7 @@ Thing {
   Height = 160;
   Mass = 1000;
   Flags = solid | shootable | countkill;
-  Flags2 = passmobj | telestomp | boss;
+  Flags2 = telestomp | boss;
 }
 
 Thing {
@@ -576,7 +576,7 @@ Thing {
   Height = 110;
   Mass = 1000;
   Flags = solid | shootable | countkill;
-  Flags2 = passmobj | telestomp | boss;
+  Flags2 = telestomp | boss;
 }
 
 Thing {
@@ -604,7 +604,7 @@ Thing {
   Height = 56;
   Mass = 400;
   Flags = solid | shootable | float | nogravity | countkill;
-  Flags2 = passmobj | telestomp;
+  Flags2 = telestomp;
 }
 
 Thing {
@@ -3286,7 +3286,7 @@ Thing {
   Mass = 1000;
   Pain chance = 20;
   Flags = solid | shootable | countkill;
-  Flags2 = passmobj | telestomp;
+  Flags2 = telestomp;
 }
 
 Thing {
@@ -4834,7 +4834,7 @@ Thing {
   Height = 64;
   Mass = 1000;
   Flags = solid | shootable | countkill;
-  Flags2 = passmobj | telestomp;
+  Flags2 = telestomp;
 }
 
 Thing {
@@ -4862,7 +4862,7 @@ Thing {
   Height = 72;
   Mass = 100;
   Flags = solid | shootable | countkill;
-  Flags2 = passmobj | telestomp;
+  Flags2 = telestomp;
 }
 
 Thing {
@@ -4890,7 +4890,7 @@ Thing {
   Height = 56;
   Mass = 400;
   Flags = solid | shootable | shadow | countkill;
-  Flags2 = passmobj | telestomp;
+  Flags2 = telestomp;
 }
 
 Thing {
@@ -4947,7 +4947,7 @@ Thing {
   Height = 80;
   Mass = 1000;
   Flags = solid | shootable | countkill;
-  Flags2 = passmobj | telestomp;
+  Flags2 = telestomp;
 }
 
 Thing {
@@ -5146,7 +5146,7 @@ Thing {
   Height = 72;
   Mass = 100;
   Flags = solid | shootable | countkill;
-  Flags2 = passmobj | telestomp;
+  Flags2 = telestomp;
 }
 
 Thing {
@@ -5174,7 +5174,7 @@ Thing {
   Height = 56;
   Mass = 400;
   Flags = solid | shootable | countkill;
-  Flags2 = passmobj | telestomp;
+  Flags2 = telestomp;
 }
 
 Thing {
@@ -5202,7 +5202,7 @@ Thing {
   Height = 56;
   Mass = 400;
   Flags = solid | shootable | float | nogravity | countkill | spawnceiling;
-  Flags2 = passmobj | telestomp;
+  Flags2 = telestomp;
 }
 
 Thing {
@@ -5279,7 +5279,7 @@ Thing {
   Height = 64;
   Mass = 600;
   Flags = solid | shootable | countkill;
-  Flags2 = passmobj | telestomp;
+  Flags2 = telestomp;
 }
 
 Thing {
@@ -5307,7 +5307,7 @@ Thing {
   Height = 64;
   Mass = 1000;
   Flags = solid | shootable | countkill;
-  Flags2 = passmobj | telestomp;
+  Flags2 = telestomp;
 }
 
 State {

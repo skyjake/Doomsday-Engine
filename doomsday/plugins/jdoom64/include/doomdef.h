@@ -204,6 +204,8 @@ typedef enum {
     WT_NOCHANGE
 } weapontype_t;
 
+#define VALID_WEAPONTYPE(val) ((val) >= WT_FIRST && (val) < WT_FIRST + NUM_WEAPON_TYPES)
+
 #define NUMWEAPLEVELS       1 // DOOM weapons have 1 power level.
 
 // Ammunition types defined.

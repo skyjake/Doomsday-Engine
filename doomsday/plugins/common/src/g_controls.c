@@ -177,7 +177,7 @@ void G_ControlRegister(void)
     for(i = 0; controlCmds[i].name; ++i)
         Con_AddCommand(controlCmds + i);
 
-    // FIXME: Is this is the proper place, this being a console registering function?
+    /// @todo  Move the control setup to a separate function.
     P_NewPlayerControl(CTL_WALK, CTLT_NUMERIC, "walk", "game");
     P_NewPlayerControl(CTL_SIDESTEP, CTLT_NUMERIC, "sidestep", "game");
     P_NewPlayerControl(CTL_ZFLY, CTLT_NUMERIC, "zfly", "game");
@@ -185,7 +185,7 @@ void G_ControlRegister(void)
     P_NewPlayerControl(CTL_LOOK, CTLT_NUMERIC, "look", "game");
     P_NewPlayerControl(CTL_SPEED, CTLT_NUMERIC, "speed", "game");
     P_NewPlayerControl(CTL_MODIFIER_1, CTLT_NUMERIC, "strafe", "game");
-    P_NewPlayerControl(CTL_ATTACK, CTLT_NUMERIC, "attack", "game");
+    P_NewPlayerControl(CTL_ATTACK, CTLT_NUMERIC_TRIGGERED, "attack", "game");
     P_NewPlayerControl(CTL_USE, CTLT_IMPULSE, "use", "game");
     P_NewPlayerControl(CTL_LOOK_CENTER, CTLT_IMPULSE, "lookcenter", "game");
     P_NewPlayerControl(CTL_FALL_DOWN, CTLT_IMPULSE, "falldown", "game");
@@ -349,11 +349,11 @@ D_CMD(DefaultGameBinds)
         "bindcontrol walk joy-y-inverse",
 
         // Chat events:
-        "bindevent key-t beginchat",
-        "bindevent key-g {beginchat 0}",
-        "bindevent key-y {beginchat 1}",
-        "bindevent key-r {beginchat 2}",
-        "bindevent key-b {beginchat 3}",
+        "bindevent key-t+multiplayer beginchat",
+        "bindevent key-g+multiplayer {beginchat 0}",
+        "bindevent key-y+multiplayer {beginchat 1}",
+        "bindevent key-r+multiplayer {beginchat 2}",
+        "bindevent key-b+multiplayer {beginchat 3}",
         "bindevent chat:key-return chatcomplete",
         "bindevent chat:key-escape chatcancel",
         "bindevent chat:key-f1 {chatsendmacro 0}",

@@ -203,12 +203,76 @@ class FrontController
         }
     }
 
+    /**
+     * Feed item HTML generator for formatting the customised output used
+     * with feeds on the homepage.
+     */
+    static public function generateFeedItemHtml(&$item, $params=NULL)
+    {
+        $patterns     = array('/{title}/', '/{timestamp}/');
+        $replacements = array($item['title'], date("m/d/y", $item['date_timestamp']));
+
+        if(is_array($params) && isset($params['titleTemplate']))
+        {
+            $title = preg_replace($patterns, $replacements, $params['titleTemplate']);
+        }
+        else
+        {
+            $title = $item['title'];
+        }
+
+        if(is_array($params) && isset($params['labelTemplate']))
+        {
+            $label = preg_replace($patterns, $replacements, $params['labelTemplate']);
+        }
+        else
+        {
+            $label = $item['title'];
+        }
+
+        $html = '<a href="'. preg_replace('/(&)/', '&amp;', $item['link'])
+               .'" title="'. htmlspecialchars($label)
+                       .'">'. htmlspecialchars($title) .'</a>';
+
+        if(time() < strtotime('+2 days', $item['date_timestamp']))
+        {
+            $html .= '<span class="new-label">&nbsp;NEW</span>';
+        }
+
+        return $html;
+    }
+
     private function outputNewsFeed()
     {
         require_once(DIR_CLASSES.'/feed.class.php');
 
-        $NewsFeed = new Feed('http://dengine.net/forums/rss.php?mode=news');
-        $NewsFeed->generateHTML();
+        $feed = new Feed('http://dengine.net/forums/rss.php?mode=news', 3);
+        $feed->setTitle('Project News', 'projectnews-label');
+        $feed->setGenerateElementHTMLCallback('FrontController::generateFeedItemHtml');
+        $feed->generateHTML();
+    }
+
+    private function outputBuildsFeed()
+    {
+        require_once(DIR_CLASSES.'/feed.class.php');
+
+        $feed = new Feed('http://code.iki.fi/builds/events.rss', 3);
+        $feed->setTitle('Build News', 'projectnews-label');
+        $feed->setGenerateElementHTMLCallback('FrontController::generateFeedItemHtml',
+                                              array('titleTemplate'=>'{title} complete',
+                                                    'labelTemplate'=>'Read more about {title}, completed on {timestamp}'));
+        $feed->generateHTML();
+    }
+
+    private function outputDevBlogFeed()
+    {
+        require_once(DIR_CLASSES.'/feed.class.php');
+
+        $feed = new Feed('http://dengine.net/forums/rss.php?f=24', 3);
+        $feed->setTitle('Developer Blog', 'projectnews-label');
+        $feed->setGenerateElementHTMLCallback('FrontController::generateFeedItemHtml',
+                                              array('labelTemplate'=>'Read more about {title}, posted on {timestamp}'));
+        $feed->generateHTML();
     }
 
     private function outputServerStatus()
@@ -277,25 +341,25 @@ class FrontController
     private function outputMainMenu($page=NULL)
     {
         $leftTabs = array();
-        $leftTabs[] = array('page'=>'/engine',   'label'=>'Engine',   'tooltip'=>'About Doomsday Engine');
-        $leftTabs[] = array('page'=>'/games',    'label'=>'Games',    'tooltip'=>'Games playable with Doomsday Engine');
-        $leftTabs[] = array('page'=>'/addons',   'label'=>'Add-ons',  'tooltip'=>'Add-ons for games playable with Doomsday Engine');
+        $leftTabs[] = array('page'=>'/engine',  'label'=>'Engine',   'tooltip'=>'About Doomsday Engine');
+        $leftTabs[] = array('page'=>'/games',   'label'=>'Games',    'tooltip'=>'Games playable with Doomsday Engine');
+        $leftTabs[] = array('page'=>'/dew',     'label'=>'Wiki',     'tooltip'=>'Doomsday Engine Wiki');
 
         $rightTabs = array();
-        $rightTabs[] = array('page'=>'/dew',     'label'=>'Wiki',     'tooltip'=>'Doomsday Engine Wiki');
-        $rightTabs[] = array('page'=>'/forums/viewforum.php?f=24',    'label'=>'Dev Blog', 'tooltip'=>'Doomsday Engine Developer Blog');
-        $rightTabs[] = array('page'=>'/forums',  'label'=>'Forums',   'tooltip'=>'Doomsday Engine User Forums');
+        $rightTabs[] = array('page'=>'/addons',       'label'=>'Add-ons', 'tooltip'=>'Add-ons for games playable with Doomsday Engine');
+        $rightTabs[] = array('page'=>'/forums',       'label'=>'Forums',  'tooltip'=>'Doomsday Engine User Forums');
+        $rightTabs[] = array('page'=>'/masterserver', 'label'=>'Servers', 'tooltip'=>'Doomsday Engine Master Server');
 
 ?>
         <div id="menu" class="hnav">
-            <ul>
+            <ul><section class="left">
 <?php
             echo $this->buildTabs($leftTabs, $page, "paddle_left", "paddle_left_select");
-?>
-<li class="logo"><a href="/" title="<?=$this->homeURL()?>"><span class="hidden">.</span></a></li>
+?></section>
+<li class="logo"><a href="/" title="<?=$this->homeURL()?>"><span class="hidden">.</span></a></li><section class="right">
 <?php
             echo $this->buildTabs($rightTabs, $page, "paddle_right", "paddle_right_select");
-?>
+?></section>
             </ul>
         </div>
 <?php
@@ -339,6 +403,10 @@ class FrontController
 ?>              <div id="projectnews"><?php
 
         $this->outputNewsFeed();
+
+        $this->outputBuildsFeed();
+
+        $this->outputDevBlogFeed();
 
 ?>              </div><?php
 
@@ -387,7 +455,7 @@ class FrontController
     <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
     <link rel="icon" href="http://code.iki.fi/dengine.net/images/favicon.png" type="image/png" />
     <link rel="shortcut icon" href="http://code.iki.fi/dengine.net/images/favicon.png" type="image/png" />
-    <link rel="alternate" type="application/rss+xml" title="Doomsday Engine RSS News Feed" href="http://dengine.net/forums/rss.php?mode=news">
+    <link rel="alternate" type="application/rss+xml" title="Doomsday Engine RSS News Feed" href="http://dengine.net/forums/rss.php?mode=news" />
     <meta http-equiv="expires" content="0" />
     <meta name="resource-type" content="DOCUMENT" />
     <meta name="distribution" content="GLOBAL" />
@@ -415,10 +483,6 @@ class FrontController
     <meta http-equiv="content-style-type" content="text/css" />
     <link rel="stylesheet" href="/style.css" type="text/css" media="all" />
 </head>
-<script type="text/javascript">
-// Thickbox 3 loading image
-tb_pathToImage = "/external/thickbox/loading-thickbox.gif";
-</script>
 <?php
     }
 

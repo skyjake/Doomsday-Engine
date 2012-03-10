@@ -184,24 +184,6 @@ desc = 1=Disable exit buttons during map rotation.
 [server-game-cheat]
 desc = 1=Allow cheating in multiplayer games (god, noclip, give).
 
-[menu-flash-r]
-desc = Menu selection flash color, red component.
-
-[menu-flash-g]
-desc = Menu selection flash color, green component.
-
-[menu-flash-b]
-desc = Menu selection flash color, blue component.
-
-[menu-flash-speed]
-desc = Menu selection flash speed.
-
-[menu-turningskull]
-desc = 1=Menu skull turns at slider items.
-
-[menu-effect]
-desc = 3-bit bitfield. 0=Disable menu effects. 0x1= text type-in, 0x2= text shadow, 0x4= text glitter.
-
 [menu-color-r]
 desc = Menu color red component.
 
@@ -219,6 +201,24 @@ desc = Menu color B green component.
 
 [menu-colorb-b]
 desc = Menu color B blue component.
+
+[menu-cursor-rotate]
+desc = 1=Menu cursor rotates on items with a range of options.
+
+[menu-effect]
+desc = 3-bit bitfield. 0=Disable menu effects. 0x1= text type-in, 0x2= text shadow, 0x4= text glitter.
+
+[menu-flash-r]
+desc = Menu selection flash color, red component.
+
+[menu-flash-g]
+desc = Menu selection flash color, green component.
+
+[menu-flash-b]
+desc = Menu selection flash color, blue component.
+
+[menu-flash-speed]
+desc = Menu selection flash speed.
 
 [menu-glitter]
 desc = Strength of type-in glitter.
@@ -457,8 +457,11 @@ desc = Chat macro 9.
 [chat-macro9]
 desc = Chat macro 10.
 
-[map-alpha-lines]
-desc = Alpha level of automap lines.
+[map-line-opacity]
+desc = Opacity of automap lines (default: .7).
+
+[map-line-width]
+desc = Scale factor for automap lines (default: 1.1).
 
 [map-babykeys]
 desc = 1=Show keys in automap (easy skill mode only).
@@ -477,6 +480,9 @@ desc = 6-bit bitfield. Show kills, items and secret counters.
 
 [hud-cheat-counter-scale]
 desc = Size factor for the counters.
+
+[hud-cheat-counter-show-mapopen]
+desc = 1=Only show the cheat counters while the automap is open.
 
 [map-customcolors]
 desc = Custom automap coloring 0=Never, 1=Auto (enabled if unchanged), 2=Always.

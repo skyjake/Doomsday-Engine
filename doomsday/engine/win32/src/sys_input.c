@@ -139,7 +139,7 @@ static void initDIKeyToDDKeyTlat(void)
     keymap[DIK_D] = 'd';
     keymap[DIK_DECIMAL] = DDKEY_DECIMAL;
     keymap[DIK_DELETE] = DDKEY_DEL;
-    keymap[DIK_DIVIDE] = '/';
+    keymap[DIK_DIVIDE] = DDKEY_DIVIDE;
     keymap[DIK_DOWN] = DDKEY_DOWNARROW;
     keymap[DIK_E] = 'e';
     keymap[DIK_END] = DDKEY_END;
@@ -174,7 +174,7 @@ static void initDIKeyToDDKeyTlat(void)
     //keymap[DIK_KANJI] = ;
     keymap[DIK_L] = 'l';
     keymap[DIK_LBRACKET] = '[';
-    keymap[DIK_LCONTROL] = ']';
+    keymap[DIK_LCONTROL] = DDKEY_LCTRL;
     keymap[DIK_LEFT] = DDKEY_LEFTARROW;
     keymap[DIK_LMENU] = DDKEY_LALT; // Left Alt
     keymap[DIK_LSHIFT] = DDKEY_LSHIFT;
@@ -203,7 +203,7 @@ static void initDIKeyToDDKeyTlat(void)
     keymap[DIK_NUMPAD8] = DDKEY_NUMPAD8;
     keymap[DIK_NUMPAD9] = DDKEY_NUMPAD9;
     //keymap[DIK_NUMPADCOMMA] = ; // On numeric keypad of NEC PC-98 Japanese keyboard
-    //keymap[DIK_NUMPADENTER] = ;
+    keymap[DIK_NUMPADENTER] = DDKEY_ENTER;
     //keymap[DIK_NUMPADEQUALS] = ; // On numeric keypad of NEC PC-98 Japanese keyboard
     keymap[DIK_O] = 'o';
     //keymap[DIK_OEM_102] = ; // On British and German keyboards

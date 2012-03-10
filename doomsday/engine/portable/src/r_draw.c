@@ -168,10 +168,7 @@ void R_DrawPatch3(Texture* tex, int x, int y, int w, int h, boolean useOffsets)
         return;
     }
 
-    GL_BindTexture(GL_PreparePatchTexture(tex), (filterUI ? GL_LINEAR : GL_NEAREST));
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
+    GL_BindTexture(GL_PreparePatchTexture(tex));
     if(useOffsets)
     {
         patchtex_t* pTex = (patchtex_t*)Texture_UserData(tex);
@@ -194,14 +191,11 @@ void R_DrawPatch(Texture* tex, int x, int y)
     R_DrawPatch2(tex, x, y, Texture_Width(tex), Texture_Height(tex));
 }
 
-void R_DrawPatchTiled(Texture* tex, int x, int y, int w, int h, DGLint wrapS, DGLint wrapT)
+void R_DrawPatchTiled(Texture* tex, int x, int y, int w, int h, int wrapS, int wrapT)
 {
     if(!tex) return;
 
-    GL_BindTexture(GL_PreparePatchTexture(tex), (filterUI ? GL_LINEAR : GL_NEAREST));
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapS);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapT);
-
+    GL_BindTexture(GL_PreparePatchTexture2(tex, wrapS, wrapT));
     GL_DrawRectf2Tiled(x, y, w, h, Texture_Width(tex), Texture_Height(tex));
 }
 
@@ -220,6 +214,8 @@ void R_DrawViewBorder(void)
 
     if(0 == vd->window.size.width || 0 == vd->window.size.height) return;
     if(vd->window.size.width == port->geometry.size.width && vd->window.size.height == port->geometry.size.height) return;
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     glEnable(GL_TEXTURE_2D);
 
@@ -245,10 +241,10 @@ void R_DrawViewBorder(void)
     if(mat)
     {
         const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
-            MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, 0, 1, 0, false, false, false, false);
+            MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, 0, -3, 0, false, false, false, false);
         const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true);
 
-        GL_BindTexture(MSU_gltexture(ms, MTU_PRIMARY), (filterUI ? GL_LINEAR : GL_NEAREST));
+        GL_BindTexture(MST(ms, MTU_PRIMARY));
         GL_DrawCutRectf2Tiled(0, 0, port->geometry.size.width, port->geometry.size.height, ms->size.width, ms->size.height, 0, 0,
                             vd->window.origin.x - border, vd->window.origin.y - border,
                             vd->window.size.width + 2 * border, vd->window.size.height + 2 * border);

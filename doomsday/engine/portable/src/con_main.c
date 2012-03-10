@@ -120,6 +120,7 @@ D_CMD(Version);
 D_CMD(Wait);
 D_CMD(InspectMobj);
 D_CMD(DebugCrash);
+D_CMD(DebugError);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -214,6 +215,7 @@ void Con_Register(void)
     C_CMD("write",          "s",    WriteConsole);
 #ifdef _DEBUG
     C_CMD("crash",          NULL,   DebugCrash);
+    C_CMD("fatalerror",     NULL,   DebugError);
 #endif
 
     // Console
@@ -1495,8 +1497,8 @@ boolean Con_Responder(ddevent_t* ev)
 
         if(!ConsoleActive)
         {
-            // We are only interested in the activation key.
-            if(IS_TOGGLE_DOWN_ID(ev, consoleActiveKey))
+            // We are only interested in the activation key (without Shift).
+            if(IS_TOGGLE_DOWN_ID(ev, consoleActiveKey) && !shiftDown)
             {
                 Con_Open(true);
                 return true;
@@ -1533,11 +1535,16 @@ boolean Con_Responder(ddevent_t* ev)
     {
         if(ev->toggle.id == consoleActiveKey)
         {
-            if(shiftDown) // Shift-Tilde to fullscreen and halfscreen.
+            if(altDown) // Alt-Tilde to fullscreen and halfscreen.
+            {
                 Rend_ConsoleToggleFullscreen();
-            else
+                return true;
+            }
+            if(!shiftDown)
+            {
                 Con_Open(false);
-            return true;
+                return true;
+            }
         }
         else
         {
@@ -1629,6 +1636,7 @@ boolean Con_Responder(ddevent_t* ev)
         return true;
 
     case DDKEY_RETURN:
+    case DDKEY_ENTER:
         if(conInputLock)
             break;
 
@@ -2064,13 +2072,15 @@ void Con_Error(const char* error, ...)
 
     if(Con_IsBusy())
     {
-        // In busy mode, the other thread will handle this.
         Con_BusyWorkerError(buff);
-        for(;;)
+
+        if(Con_InBusyWorker())
         {
-            // We'll stop here.
-            // \todo Kill this thread?
-            Sys_Sleep(10000);
+            for(;;)
+            {
+                // We'll stop here. The main thread will shut down the process.
+                Sys_Sleep(500);
+            }
         }
     }
     else
@@ -2143,7 +2153,7 @@ D_CMD(Help)
     Con_FPrintf(CPF_YELLOW | CPF_CENTER, "-=- " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT " Console -=-\n");
     Con_Printf("Keys:\n");
     Con_Printf("Tilde          Open/close the console.\n");
-    Con_Printf("Shift-Tilde    Switch between half and full screen mode.\n");
+    Con_Printf("Alt-Tilde      Switch between half and full screen mode.\n");
     Con_Printf("F5             Clear the buffer.\n");
     Con_Printf("Alt-C          Clear the command line.\n");
     Con_Printf("Insert         Switch between replace and insert modes.\n");
@@ -2612,5 +2622,11 @@ D_CMD(DebugCrash)
 
     // Goodbye cruel world.
     *ptr = 0;
+    return true;
+}
+
+D_CMD(DebugError)
+{
+    Con_Error("Fatal error.\n");
     return true;
 }

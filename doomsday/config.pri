@@ -1,12 +1,17 @@
 # The Doomsday Engine Project
-# Copyright (c) 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
-# Copyright (c) 2011 Daniel Swanson <danij@dengine.net>
+# Copyright (c) 2011-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+# Copyright (c) 2011-2012 Daniel Swanson <danij@dengine.net>
 #
 # Do not modify this file. Custom CONFIG options can be specified on the 
 # qmake command line or in config_user.pri.
 #
 # NOTE: The PREFIX option should always be specified on the qmake command
 #       line, as it is checked before config_user.pri is read.
+#
+# User-definable variables:
+#   PREFIX          Install prefix for Unix (specify on qmake command line)
+#   SCRIPT_PYTHON   Path of the Python interpreter binary to be used in
+#                   generated scripts (python on path used for building)
 #
 # CONFIG options for Doomsday:
 # - deng_32bitonly          Only do a 32-bit build (no 64-bit)
@@ -74,11 +79,11 @@ CONFIG(debug, debug|release) {
 }
 
 win32 {
-    win32-gcc* {
+    win32-g++* {
         error("Sorry, gcc is not supported in the Windows build.")
     }
 
-    DEFINES += WIN32 _CRT_SECURE_NO_WARNINGS
+    DEFINES += WIN32 _CRT_SECURE_NO_WARNINGS _USE_MATH_DEFINES
 
     # Library location.
     DENG_EXPORT_LIB = $$OUT_PWD/../engine/doomsday.lib
@@ -109,16 +114,19 @@ unix:!macx {
     # Generic Unix build options.
     CONFIG += deng_nofixedasm deng_snowberry deng_packres
 
-    # Choose the apt repository to include in the distribution.
-    isStableRelease(): CONFIG += deng_aptstable        
-                 else: CONFIG += deng_aptunstable
+    exists(/etc/apt) {
+        # Choose the apt repository to include in the distribution.
+        isStableRelease(): CONFIG += deng_aptstable
+                     else: CONFIG += deng_aptunstable
+    }
 
     # Link against standard math library.
     LIBS += -lm
 
     # Install prefix.
     isEmpty(PREFIX) {
-        PREFIX = /usr
+        freebsd-*: PREFIX = /usr/local
+             else: PREFIX = /usr
     }
 
     # Binary location.
@@ -161,6 +169,20 @@ macx {
 # Options defined by the user (may not exist).
 exists(config_user.pri) {
     include(config_user.pri)
+}
+
+# System Tools ---------------------------------------------------------------
+
+unix:!macx {
+    # Python to be used in generated scripts.
+    isEmpty(SCRIPT_PYTHON) {
+        exists(/usr/bin/python): SCRIPT_PYTHON = /usr/bin/python
+        exists(/usr/local/bin/python): SCRIPT_PYTHON = /usr/local/bin/python
+    }
+    isEmpty(SCRIPT_PYTHON) {
+        # Check the system path.
+        SCRIPT_PYTHON = $$system(which python)
+    }
 }
 
 # Apply deng_* Configuration -------------------------------------------------

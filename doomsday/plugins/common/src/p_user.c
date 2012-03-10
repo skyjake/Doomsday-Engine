@@ -1430,16 +1430,17 @@ void P_PlayerThinkPsprites(player_t *player)
 
 void P_PlayerThinkHUD(player_t* player)
 {
-    playerbrain_t*      brain = &player->brain;
+    uint playerIdx = player - players;
+    playerbrain_t* brain = &player->brain;
 
     if(brain->hudShow)
-        ST_HUDUnHide(player - players, HUE_FORCE);
+        ST_HUDUnHide(playerIdx, HUE_FORCE);
 
     if(brain->scoreShow)
-        HU_ScoreBoardUnHide(player - players);
+        HU_ScoreBoardUnHide(playerIdx);
 
     if(brain->logRefresh)
-        ST_LogRefresh(player - players);
+        ST_LogRefresh(playerIdx);
 }
 
 void P_PlayerThinkMap(player_t* player)
@@ -1970,9 +1971,12 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
 
     if(G_GameState() != GS_MAP)
     {
-        // Just check the controls in case some UI stuff is relying on them
-        // (like intermission).
-        P_PlayerThinkUpdateControls(player);
+        if(DD_IsSharpTick())
+        {
+            // Just check the controls in case some UI stuff is relying on them
+            // (like intermission).
+            P_PlayerThinkUpdateControls(player);
+        }
         return;
     }
 
@@ -2001,7 +2005,7 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
     P_PlayerThinkUpdateControls(player);
     P_PlayerThinkCamera(player); // $democam
 
-    if(!IS_CLIENT) // Locally only.
+    if(!IS_CLIENT) // Only singleplayer.
     {
         P_PlayerThinkCheat(player);
     }
@@ -2019,7 +2023,7 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
     P_PlayerThinkView(player);
     P_PlayerThinkSpecial(player);
 
-    if(IS_CLIENT) // Locally only.
+    if(!IS_NETWORK_SERVER) // Locally only (client or singleplayer).
     {
         P_PlayerThinkSounds(player);
     }

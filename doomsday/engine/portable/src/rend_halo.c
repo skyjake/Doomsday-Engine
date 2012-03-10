@@ -107,6 +107,8 @@ void H_Register(void)
 
 void H_SetupState(boolean dosetup)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     if(dosetup)
     {
         glDepthMask(GL_FALSE);
@@ -252,6 +254,8 @@ boolean H_RenderHalo(float x, float y, float z, float size, DGLuint tex,
     if(primary)
         H_SetupState(true);
 
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     // Prepare the texture rotation matrix.
     glMatrixMode(GL_TEXTURE);
     glPushMatrix();
@@ -352,7 +356,7 @@ boolean H_RenderHalo(float x, float y, float z, float size, DGLuint tex,
                 haloPos[k] += mirror[k] * fl->offset;
         }
 
-        GL_BindTexture(renderTextures? tex : 0, GL_LINEAR);
+        GL_BindTextureUnmanaged(renderTextures? tex : 0, GL_LINEAR);
         glEnable(GL_TEXTURE_2D);
 
         // Don't wrap the texture. Evidently some drivers can't just

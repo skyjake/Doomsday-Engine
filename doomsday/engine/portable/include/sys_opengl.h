@@ -40,6 +40,7 @@
 #  include <GL/wglext.h>
 #  include <GL/glext.h>
 #  include <GL/glu.h>
+#  define GL_CALL   __stdcall
 #endif
 
 #ifdef UNIX
@@ -47,11 +48,15 @@
 #  ifdef MACOSX
 #    include <SDL.h>
 #    include <SDL_opengl.h>
+#    include <OpenGL/OpenGL.h>
 #  else
 #    include <SDL.h>
 #    include <SDL_opengl.h>
 #  endif
+#  define GL_CALL
 #endif
+
+#include "gl_deferredapi.h"
 
 #include <string.h>
 
@@ -162,6 +167,9 @@ boolean Sys_GLInitialize(void);
  */
 void Sys_GLShutdown(void);
 
+/**
+ * Configure the core features of OpenGL. Extensions are not configured here.
+ */
 void Sys_GLConfigureDefaultState(void);
 
 /**

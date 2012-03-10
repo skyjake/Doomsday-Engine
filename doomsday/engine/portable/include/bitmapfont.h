@@ -27,6 +27,8 @@
 
 #include "font.h"
 
+struct texturevariant_s;
+
 // Data for a character.
 typedef struct {
     RectRaw geometry;
@@ -75,7 +77,7 @@ void BitmapFont_CharCoords(font_t* font, unsigned char ch, Point2Raw coords[4]);
 typedef struct {
     RectRaw geometry;
     patchid_t patch;
-    DGLuint tex;
+    struct texturevariant_s* tex;
     uint8_t border;
 } bitmapcompositefont_char_t;
 
@@ -105,8 +107,8 @@ void BitmapCompositeFont_SetDefinition(font_t* font, struct ded_compositefont_s*
 patchid_t BitmapCompositeFont_CharPatch(font_t* font, unsigned char ch);
 void BitmapCompositeFont_CharSetPatch(font_t* font, unsigned char ch, const char* patchName);
 
-DGLuint BitmapCompositeFont_CharGLTexture(font_t* font, unsigned char ch);
-void BitmapCompositeFont_DeleteGLTextures(font_t* font);
+struct texturevariant_s* BitmapCompositeFont_CharTexture(font_t* font, unsigned char ch);
+void BitmapCompositeFont_ReleaseTextures(font_t* font);
 
 uint8_t BitmapCompositeFont_CharBorder(font_t* font, unsigned char chr);
 

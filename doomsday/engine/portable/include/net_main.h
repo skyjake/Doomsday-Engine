@@ -280,6 +280,7 @@ void            Net_WriteChatMessage(int from, int toMask, const char* message);
 void            Net_ShowChatMessage(int plrNum, const char* message);
 int             Net_TimeDelta(byte now, byte then);
 void            Net_Update(void);
+void            Net_ResetTimer(void);
 void            Net_Ticker(timespan_t time);
 void            Net_Drawer(void);
 

@@ -170,6 +170,7 @@ void P_NewPlayerControl(int id, controltype_t type, const char *name, const char
     pc->id = id;
     pc->type = type;
     pc->name = strdup(name);
+    pc->isTriggerable = (type == CTLT_NUMERIC_TRIGGERED || type == CTLT_IMPULSE);
     pc->bindContextName = strdup(bindContext);
     // Also allocate the impulse and double-click counters.
     controlCounts[pc - playerControls] = M_Calloc(sizeof(controlcounter_t));
@@ -333,15 +334,11 @@ void P_GetControlState(int playerNum, int control, float* pos, float* relativeOf
     struct bcontext_s* bc = 0;
     struct dbinding_s* binds = 0;
     int localNum;
+    playercontrol_t* pc = P_PlayerControlById(control);
 
-#if _DEBUG
     // Check that this is really a numeric control.
-    {
-        playercontrol_t* pc = P_PlayerControlById(control);
-        assert(pc);
-        assert(pc->type == CTLT_NUMERIC);
-    }
-#endif
+    assert(pc);
+    assert(pc->type == CTLT_NUMERIC || pc->type == CTLT_NUMERIC_TRIGGERED);
 
     // Ignore NULLs.
     if(!pos) pos = &tmp;
@@ -352,7 +349,7 @@ void P_GetControlState(int playerNum, int control, float* pos, float* relativeOf
     // P_ConsoleToLocal() is called here.
     localNum = P_ConsoleToLocal(playerNum);
     binds = B_GetControlDeviceBindings(localNum, control, &bc);
-    B_EvaluateDeviceBindingList(localNum, binds, pos, relativeOffset, bc);
+    B_EvaluateDeviceBindingList(localNum, binds, pos, relativeOffset, bc, pc->isTriggerable);
 
     // Mark for double-clicks.
     P_MaintainControlDoubleClicks(playerNum, P_PlayerControlIndexForId(control), *pos);

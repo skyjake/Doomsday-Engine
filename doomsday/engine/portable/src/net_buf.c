@@ -243,9 +243,6 @@ void N_SendPacket(int flags)
     // Figure out the destination DPNID.
     if(netServerMode)
     {
-        //player_t           *plr = &ddPlayers[netBuffer.player];
-        //ddplayer_t         *ddpl = &plr->shared;
-
         if(netBuffer.player >= 0 && netBuffer.player < DDMAXPLAYERS)
         {
             if(/*(ddpl->flags & DDPF_LOCAL) ||*/

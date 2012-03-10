@@ -1,25 +1,23 @@
-/**\file library.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file library.c
+ * Dynamic libraries implementation. @ingroup base
  *
- *\author Copyright © 2006-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2009-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2009-2012 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #include "de_base.h"
@@ -216,12 +214,26 @@ Library* Library_New(const char *fileName)
     }
 #endif
 
+#ifdef WIN32
+    Str_Clear(lastError);
+    handle = LoadLibrary(WIN_STRING(fileName));
+    if(!handle)
+    {
+        Str_Set(lastError, DD_Win32_GetLastErrorMessage());
+        printf("Library_New: Error opening \"%s\" (%s).\n", fileName, Library_LastError());
+        return 0;
+    }
+#endif
+
     // Create the Library instance.
     lib = calloc(1, sizeof(*lib));
     lib->handle = handle;
     lib->path = Str_NewStd();
 #ifdef UNIX
     Str_Set(lib->path, bundlePath);
+#endif
+#ifdef WIN32
+    Str_Set(lib->path, fileName);
 #endif
 
     addToLoaded(lib);
@@ -245,6 +257,9 @@ void Library_Delete(Library *lib)
 #ifdef UNIX
         dlclose(lib->handle);
 #endif
+#ifdef WIN32
+        FreeLibrary(lib->handle);
+#endif
     }
     Str_Delete(lib->path);
     removeFromLoaded(lib);
@@ -262,6 +277,13 @@ void* Library_Symbol(Library* lib, const char* symbolName)
     if(!ptr)
     {
         Str_Set(lastError, dlerror());
+    }
+#endif
+#ifdef WIN32
+    ptr = (void*)GetProcAddress(lib->handle, symbolName);
+    if(!ptr)
+    {
+        Str_Set(lastError, DD_Win32_GetLastErrorMessage());
     }
 #endif
     return ptr;
@@ -298,16 +320,23 @@ int Library_IterateAvailableLibraries(int (*func)(const char *, void *), void *d
 
     while((entry = readdir(dir)))
     {
+        if(!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, "..")) continue;
 #ifdef MACOSX
         // Mac plugins are bundled in a subdir.
-        if(entry->d_type != DT_REG && entry->d_type != DT_DIR) continue;
-        if(!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, "..")) continue;
+        if(entry->d_type != DT_REG && entry->d_type != DT_DIR &&
+           entry->d_type != DT_LNK) continue;
 #else
-        if(entry->d_type != DT_REG) continue;
+        // Also include symlinks.
+        if(entry->d_type != DT_REG && entry->d_type != DT_LNK) continue;
 #endif
         if(func(entry->d_name, data)) break;
     }
     closedir(dir);
 #endif
+
+#ifdef WIN32
+    printf("TODO: a similar routine should be in dd_winit.c; move the code here\n");
+#endif
+
     return 0;
 }

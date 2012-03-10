@@ -409,7 +409,8 @@ void Fonts_Shutdown(void)
         namespaces[i].directory = NULL;
 
         if(!fn->uniqueIdMap) continue;
-        free(fn->uniqueIdMap), fn->uniqueIdMap = NULL;
+        free(fn->uniqueIdMap);
+        fn->uniqueIdMap = NULL;
         fn->uniqueIdBase = 0;
         fn->uniqueIdMapSize = 0;
         fn->uniqueIdMapDirty = false;
@@ -418,11 +419,16 @@ void Fonts_Shutdown(void)
     // Clear the bindId to PathDirectoryNode LUT.
     if(fontIdMap)
     {
-        free(fontIdMap), fontIdMap = NULL;
+        free(fontIdMap);
+        fontIdMap = NULL;
     }
     fontIdMapSize = 0;
 
-    Uri_Delete(emptyUri), emptyUri = NULL;
+    if(emptyUri)
+    {
+        Uri_Delete(emptyUri);
+        emptyUri = NULL;
+    }
 }
 
 fontnamespaceid_t Fonts_ParseNamespace(const char* str)
@@ -545,7 +551,7 @@ void Fonts_Release(font_t* font)
         BitmapFont_DeleteGLTexture(font);
         break;
     case FT_BITMAPCOMPOSITE:
-        BitmapCompositeFont_DeleteGLTextures(font);
+        BitmapCompositeFont_ReleaseTextures(font);
         break;
     default:
         Con_Error("Fonts::Release: Invalid font type %i.", (int) Font_Type(font));
@@ -711,7 +717,7 @@ fontid_t Fonts_ResolveUri2(const Uri* uri, boolean quiet)
     {
 #if _DEBUG
         ddstring_t* uriStr = Uri_ToString(uri);
-        Con_Message("Warning:Fonts::ResolveUri: Uri \"%s\" failed to validate, returing NULL.\n", Str_Text(uriStr));
+        Con_Message("Warning:Fonts::ResolveUri: Uri \"%s\" failed to validate, returning NULL.\n", Str_Text(uriStr));
         Str_Delete(uriStr);
 #endif
         return NOFONTID;
@@ -1507,7 +1513,7 @@ static int releaseFontTextures(font_t* font, void* paramaters)
         BitmapFont_DeleteGLTexture(font);
         break;
     case FT_BITMAPCOMPOSITE:
-        BitmapCompositeFont_DeleteGLTextures(font);
+        BitmapCompositeFont_ReleaseTextures(font);
         break;
     default:
         Con_Error("Fonts::ReleaseFontTextures: Invalid font type %i.", (int) Font_Type(font));

@@ -55,14 +55,14 @@ abstract class BasePackage
         return $this->version;
     }
 
-    public function composeFullTitle($includeVersion=true)
+    public function composeFullTitle($includeVersion=true, $includePlatformName=true)
     {
         $includeVersion = (boolean) $includeVersion;
 
         $title = $this->title;
         if($includeVersion && !is_null($this->version))
             $title .= ' '. $this->version;
-        if($this->platformId !== PID_ANY)
+        if($includePlatformName && $this->platformId !== PID_ANY)
         {
             $plat = &BuildRepositoryPlugin::platform($this->platformId);
             $title .= ' for '. $plat['nicename'];
@@ -74,5 +74,24 @@ abstract class BasePackage
     {
         $fullTitle = $this->composeFullTitle();
         return '('.get_class($this).":$title)";
+    }
+
+    /**
+     * Add the object graph properties for this to the specified template.
+     *
+     * @param tpl  (Array) Array to be filled with graph properties.
+     */
+    public function populateGraphTemplate(&$tpl)
+    {
+        if(!is_array($tpl))
+            throw new Exception('Invalid template argument, array expected');
+
+        $plat = &BuildRepositoryPlugin::platform($this->platformId());
+
+        $tpl['platform_id']   = $this->platformId();
+        $tpl['platform_name'] = $plat['name'];
+        $tpl['version'] = $this->version();
+        $tpl['title'] = $this->title();
+        $tpl['fulltitle'] = $this->composeFullTitle();
     }
 }

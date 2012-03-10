@@ -30,11 +30,12 @@ typedef uint32_t svgid_t;
 
 #include "point.h"
 
-typedef struct SvgLine_s {
-    Point2Rawf from, to;
-} SvgLine;
+typedef struct def_svgline_s {
+    uint numPoints;
+    const Point2Rawf* points;
+} def_svgline_t;
 
-void R_NewSvg(svgid_t svgId, const SvgLine* lines, size_t numLines);
+void R_NewSvg(svgid_t svgId, const def_svgline_t* lines, uint numLines);
 
 void GL_DrawSvg(svgid_t svgId, const Point2Rawf* origin);
 void GL_DrawSvg2(svgid_t svgId, const Point2Rawf* origin, float scale);

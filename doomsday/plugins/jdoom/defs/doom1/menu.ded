@@ -1,0 +1,34 @@
+# DOOM - Menu Patch Replacements
+#
+# The "Patch Replacement" values are used to replace patches with 
+# strings of text. For further information on syntax see values.ded
+
+Header { Version = 5; }
+
+SkipIf -nodefaultfx;
+
+Values {
+  Patch Replacement {
+    M_NGAME  = "{case,tracking=-1,scalex=1.1}N{scalex=1}ew {x=5}G{scalex=1}ame";
+    M_OPTION = "{case,tracking=-1,scalex=1.1}O{scalex=1}ptions";
+    M_LOADG  = "{case,tracking=-1,scalex=1.3}L{scalex=1}oad {x=5}game";
+    M_SAVEG  = "{case,tracking=-1,scalex=1.1}S{scalex=1}ave {x=5}game";
+    M_RDTHIS = "{case,tracking=-1,scalex=1.1}R{scalex=1}ead {x=5,scalex=1.1}T{scalex=1}his{scaley=1.25,y=-3,x=7}!";
+    M_QUITG  = "{case,tracking=-1,scalex=1.1}Q{scalex=1}uit {x=5,scalex=1.1}G{scalex=1}ame";
+
+    M_NEWG   = "{case}NEW {x=5}GAME";
+    M_OPTTTL = "{case}OPTIONS";
+
+    M_SKILL  = "{case,tracking=-1,scalex=1.1}C{scalex=1}hoose {x=5}Skill {x=10,scalex=1.3}L{scalex=1}evel:";
+    M_JKILL  = "{case,tracking=-1,scalex=1.1}I{scalex=1,y=-3}'{y-0,x=-2}m {x=3}too {x=8}young {x=13}to {x=18}die.";
+    M_ROUGH  = "{case,tracking=-1,scalex=1.1}H{scalex=1}ey{x=2,y=2},{x=0,y=0} {x=5}not {x=10}too {x=15}rough.";
+    M_HURT   = "{case,tracking=-1,scalex=1.1}H{scalex=1}urt {x=5}me {x=10}plenty.";
+    M_ULTRA  = "{case,tracking=-1,scalex=1.1}U{scalex=1}ltra{tracking=1,scalex=2.8,scaley=1.4,x=2,y=-3}-{scalex=1,scaley=1,x=0,y=0}V{tracking=-1}iolence.";
+
+    M_EPISOD = "{case,tracking=-1,scalex=1.1}W{scalex=1}hich {x=5,scalex=1.1}E{scalex=1}pisode{scaley=1.25,x=7,y=-3}?";
+    M_EPI1   = "{case,tracking=-1,scalex=1.1}K{scalex=1}ne{tracking=2}e{scalex=1.2,scaley=1.8,y=-6}-{tracking=-1,scalex=1.1,scaley=1,y=0}D{scalex=1}eep {x=5}in {x=10}the {x=15,scalex=1.1}D{scalex=1}ead";
+    M_EPI2   = "{case,tracking=-1,scalex=1.3}T{scalex=1}he {x=5,scalex=1.1}S{scalex=1}hores {x=10}of {x=15,scalex=1.1}H{scalex=1}ell";
+    M_EPI3   = "{case,tracking=-1,scalex=1.1}I{scalex=1}nferno";
+    M_EPI4   = "{case,tracking=-1,scalex=1.3}T{scalex=1}hy {x=5,scalex=1.3}F{scalex=1}lesh {x=10,scalex=1.1}C{scalex=1}onsumed";
+  };
+}

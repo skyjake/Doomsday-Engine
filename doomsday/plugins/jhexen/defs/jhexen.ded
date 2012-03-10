@@ -32,4 +32,4 @@ Include "fonts.ded";
 Include "objects.ded";
 Include "sprites.ded";
 Include "text.ded";
-Include "audio.ded";
+Include "sounds.ded";

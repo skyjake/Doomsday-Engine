@@ -294,6 +294,7 @@ void X_PreInit(void)
     cfg.automapBack[2] = 1.0f;
     cfg.automapOpacity = 1.0f;
     cfg.automapLineAlpha = 1.0f;
+    cfg.automapLineWidth = 1.1f;
     cfg.automapShowDoors = true;
     cfg.automapDoorGlow = 8;
     cfg.automapHudDisplay = 2;
@@ -303,7 +304,9 @@ void X_PreInit(void)
     cfg.automapPanSpeed = .5f;
     cfg.automapPanResetOnOpen = true;
     cfg.automapOpenSeconds = AUTOMAP_OPEN_SECONDS;
-    cfg.hudCheatCounterScale = .7f; //From jHeretic
+
+    cfg.hudCheatCounterScale = .7f;
+    cfg.hudCheatCounterShowWithAutomap = true;
 
     cfg.msgCount = 4;
     cfg.msgScale = .8f;
@@ -493,7 +496,3 @@ void X_Shutdown(void)
     G_CommonShutdown();
 }
 
-void X_EndFrame(void)
-{
-    SN_UpdateActiveSequences();
-}

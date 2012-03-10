@@ -1,8 +1,7 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 764 <--
-; Other free ordinals:
-;   54, 340, 341
+; Highest ordinal is currently: --> 827 <--
+; Other free ordinals: none
 
 NAME                            "DOOMSDAY"
 
@@ -60,7 +59,8 @@ EXPORTS
     Point2_SetY                 @606 NONAME
     Point2_XY                   @607 NONAME
     Point2_SetXY                @608 NONAME
-    Point2_Translate            @609 NONAME
+    Point2_Translate            @813 NONAME
+    Point2_TranslateXY          @609 NONAME
     Point2_TranslateX           @610 NONAME
     Point2_TranslateY           @611 NONAME
     Point2_Sum                  @612 NONAME
@@ -78,7 +78,8 @@ EXPORTS
     Point2f_SetY                @623 NONAME
     Point2f_XY                  @624 NONAME
     Point2f_SetXY               @625 NONAME
-    Point2f_Translate           @626 NONAME
+    Point2f_Translate           @814 NONAME
+    Point2f_TranslateXY         @626 NONAME
     Point2f_TranslateX          @627 NONAME
     Point2f_TranslateY          @628 NONAME
     Point2f_Sum                 @629 NONAME
@@ -121,6 +122,8 @@ EXPORTS
     Rect_NewWithOriginSize2     @661 NONAME
     Rect_NewFromRaw             @662 NONAME
     Rect_Delete                 @663 NONAME
+    Rect_Copy                   @817 NONAME
+    Rect_CopyRaw                @825 NONAME
     Rect_Raw                    @664 NONAME
     Rect_IsNull                 @665 NONAME
     Rect_Width                  @666 NONAME
@@ -134,6 +137,10 @@ EXPORTS
     Rect_SetXY                  @674 NONAME
     Rect_SetX                   @731 NONAME
     Rect_SetY                   @732 NONAME
+    Rect_Translate              @815 NONAME
+    Rect_TranslateXY            @809 NONAME
+    Rect_TranslateX             @807 NONAME
+    Rect_TranslateY             @808 NONAME
     Rect_Size                   @675 NONAME
     Rect_SetSize                @676 NONAME
     Rect_SetWidthHeight         @677 NONAME
@@ -154,6 +161,8 @@ EXPORTS
     Rectf_NewWithOriginSize2    @704 NONAME
     Rectf_NewFromRaw            @705 NONAME
     Rectf_Delete                @706 NONAME
+    Rectf_Copy                  @818 NONAME
+    Rectf_CopyRaw               @826 NONAME
     Rectf_Raw                   @707 NONAME
     Rectf_IsNull                @708 NONAME
     Rectf_Width                 @709 NONAME
@@ -167,6 +176,10 @@ EXPORTS
     Rectf_SetXY                 @717 NONAME
     Rectf_SetX                  @733 NONAME
     Rectf_SetY                  @734 NONAME
+    Rectf_Translate             @816 NONAME
+    Rectf_TranslateXY           @810 NONAME
+    Rectf_TranslateX            @811 NONAME
+    Rectf_TranslateY            @812 NONAME
     Rectf_Size                  @718 NONAME
     Rectf_SetSize               @719 NONAME
     Rectf_SetWidthHeight        @720 NONAME
@@ -181,6 +194,49 @@ EXPORTS
 
     Rectf_Normalized            @729 NONAME
     Rectf_United                @730 NONAME
+
+    ; 3D space Point.
+    Point3_New                  @765 NONAME
+    Point3_NewWithCoords        @766 NONAME
+    Point3_NewFromRaw           @767 NONAME
+    Point3_Delete               @768 NONAME
+    Point3_Raw                  @769 NONAME
+    Point3_IsNull               @770 NONAME
+    Point3_X                    @771 NONAME
+    Point3_Y                    @772 NONAME
+    Point3_Z                    @773 NONAME
+    Point3_SetX                 @774 NONAME
+    Point3_SetY                 @775 NONAME
+    Point3_SetZ                 @776 NONAME
+    Point3_XYZ                  @777 NONAME
+    Point3_SetXYZ               @778 NONAME
+    Point3_Translate            @779 NONAME
+    Point3_TranslateX           @780 NONAME
+    Point3_TranslateY           @781 NONAME
+    Point3_TranslateZ           @782 NONAME
+    Point3_Sum                  @783 NONAME
+    Point3_Equality             @784 NONAME
+
+    Point3f_New                 @785 NONAME
+    Point3f_NewWithCoords       @786 NONAME
+    Point3f_NewFromRaw          @787 NONAME
+    Point3f_Delete              @788 NONAME
+    Point3f_Raw                 @789 NONAME
+    Point3f_IsNull              @790 NONAME
+    Point3f_X                   @791 NONAME
+    Point3f_Y                   @792 NONAME
+    Point3f_Z                   @793 NONAME
+    Point3f_SetX                @794 NONAME
+    Point3f_SetY                @795 NONAME
+    Point3f_SetZ                @796 NONAME
+    Point3f_XYZ                 @797 NONAME
+    Point3f_SetXYZ              @798 NONAME
+    Point3f_Translate           @799 NONAME
+    Point3f_TranslateX          @800 NONAME
+    Point3f_TranslateY          @801 NONAME
+    Point3f_TranslateZ          @802 NONAME
+    Point3f_Sum                 @803 NONAME
+    Point3f_Equality            @804 NONAME
 
     ; String.
     Str_New                     @461 NONAME
@@ -257,6 +313,9 @@ EXPORTS
     Uri_Write2                  @736 NONAME
     Uri_Read                    @737 NONAME
     Uri_ReadWithDefaultScheme   @738 NONAME
+    Uri_Print                   @821 NONAME
+    Uri_Print2                  @822 NONAME
+    Uri_Print3                  @823 NONAME
 
 ; Base: Definitions.
     Def_Get                     @11 NONAME
@@ -519,6 +578,7 @@ EXPORTS
     P_MobjSectorsIterator       @72 NONAME
     P_MobjForID                 @333 NONAME
     Mobj_OriginSmoothed         @702 NONAME
+    Mobj_AngleSmoothed          @824 NONAME
     ClMobj_IsValid              @103 NONAME
     ClMobj_Find                 @753 NONAME
     ClMobj_EnableLocalActions   @754 NONAME
@@ -526,12 +586,13 @@ EXPORTS
     ClPlayer_ClMobj             @588 NONAME
 
 ; Play: Polyobjs.
-    P_PolyobjMove               @79 NONAME
+    P_PolyobjMoveXY             @79 NONAME
     P_PolyobjRotate             @80 NONAME
     P_PolyobjLink               @82 NONAME
-    P_PolyobjUnLink             @81 NONAME
+    P_PolyobjUnlink             @81 NONAME
 
-    P_GetPolyobj                @424 NONAME
+    P_PolyobjByID               @424 NONAME
+    P_PolyobjByTag              @827 NONAME
     P_SetPolyobjCallback        @83 NONAME
 
 ; Materials.
@@ -555,7 +616,7 @@ EXPORTS
     R_SetupMap                  @89 NONAME
 
     R_PrecacheMobjNum           @427 NONAME
-    R_PrecacheSkinsForState     @240 NONAME
+    R_PrecacheModelsForState    @240 NONAME
 
     R_RenderPlayerView          @90 NONAME
 
@@ -626,7 +687,9 @@ EXPORTS
     DGL_PopMatrix               @361 NONAME
     DGL_LoadIdentity            @362 NONAME
     DGL_Ortho                   @390 NONAME
-    DGL_Scissor                 @404 NONAME
+    DGL_SetScissor              @340 NONAME
+    DGL_SetScissor2             @404 NONAME
+    DGL_Scissor                 @805 NONAME
     DGL_Bind                    @396 NONAME
     DGL_DeleteTextures          @403 NONAME
     DGL_Begin                   @363 NONAME
@@ -662,7 +725,10 @@ EXPORTS
     DGL_DrawRectf2              @133 NONAME
     DGL_DrawRectf2Color         @128 NONAME
     DGL_DrawRectf2Tiled         @129 NONAME
+    DGL_DrawCutRectfTiled       @806 NONAME
     DGL_DrawCutRectf2Tiled      @130 NONAME
+    DGL_DrawQuadOutline         @819 NONAME
+    DGL_DrawQuad2Outline        @820 NONAME
     DGL_NewTextureWithParams    @329 NONAME
 
 ; Renderer.
@@ -797,6 +863,8 @@ EXPORTS
     bamsAtan2                   @145 NONAME
 
     ; Vectors.
+    V2_Sum                      @54 NONAME
+    V2_Subtract                 @341 NONAME
     V2_Rotate                   @344 NONAME
     V2_Intersection             @349 NONAME
 

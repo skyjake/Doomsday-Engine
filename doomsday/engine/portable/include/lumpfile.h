@@ -38,62 +38,12 @@ struct lumpdirectory_s;
 typedef struct lumpfile_s {
     // Base file.
     abstractfile_t _base;
-    void** _cacheData;
 } LumpFile;
 
 LumpFile* LumpFile_New(DFile* file, const char* path, const LumpInfo* info);
 void LumpFile_Delete(LumpFile* lump);
 
-int LumpFile_PublishLumpsToDirectory(LumpFile* lump, struct lumpdirectory_s* directory);
-
-ddstring_t* LumpFile_ComposeLumpPath(LumpFile* lump, int lumpIdx, char delimiter);
-
 const LumpInfo* LumpFile_LumpInfo(LumpFile* lump, int lumpIdx);
-
-/**
- * Read the data associated with the specified lump index into @a buffer.
- *
- * @param lumpIdx  Lump index associated with the data being read.
- * @param buffer  Buffer to read into. Must be at least W_LumpLength() bytes.
- * @param tryCache  @c true = try the lump cache first.
- * @return  Number of bytes read.
- */
-size_t LumpFile_ReadLump2(LumpFile* lump, int lumpIdx, uint8_t* buffer, boolean tryCache);
-size_t LumpFile_ReadLump(LumpFile* lump, int lumpIdx, uint8_t* buffer);
-
-/**
- * Read a subsection of the data associated with the specified lump index into @a buffer.
- *
- * @param lumpIdx  Lump index associated with the data being read.
- * @param buffer  Buffer to read into. Must be at least W_LumpLength() bytes.
- * @param startOffset  Offset from the beginning of the lump to start reading.
- * @param length  Number of bytes to be read.
- * @param tryCache  @c true = try the lump cache first.
- * @return  Number of bytes read.
- */
-size_t LumpFile_ReadLumpSection2(LumpFile* lump, int lumpIdx, uint8_t* buffer,
-    size_t startOffset, size_t length, boolean tryCache);
-size_t LumpFile_ReadLumpSection(LumpFile* lump, int lumpIdx, uint8_t* buffer,
-    size_t startOffset, size_t length);
-
-/**
- * Read the data associated with the specified lump index into the cache.
- *
- * @param lumpIdx  Lump index associated with the data being read.
- * @param tag  Zone purge level/cache tag to use.
- * @return  Ptr to the cached copy of the associated data.
- */
-const uint8_t* LumpFile_CacheLump(LumpFile* lump, int lumpIdx, int tag);
-
-/**
- * Change the Zone purge level/cache tag associated with a cached data lump.
- *
- * @param lumpIdx  Lump index associated with the cached data being changed.
- * @param tag  Zone purge level/cache tag to use.
- */
-void LumpFile_ChangeLumpCacheTag(LumpFile* lump, int lumpIdx, int tag);
-
-void LumpFile_ClearLumpCache(LumpFile* lump);
 
 /**
  * Accessors:
@@ -102,4 +52,4 @@ void LumpFile_ClearLumpCache(LumpFile* lump);
 /// @return  Number of lumps contained within this file.
 int LumpFile_LumpCount(LumpFile* lump);
 
-#endif /* LIBDENG_FILESYS_LUMPFILE_H */
+#endif /// LIBDENG_FILESYS_LUMPFILE_H

@@ -72,7 +72,7 @@ a[class ="link-external"] {
 }
 
 a[class ="link-rss"] {
-    padding-left: 18px;
+    padding-left: 13px;
     background: transparent url(http://code.iki.fi/dengine.net/images/rssicon.png) no-repeat center left;
 }
 
@@ -106,25 +106,22 @@ table.directory {
     border-width: .5em;
     border-spacing: 0em;
     border-style: hidden;
-    border-color: black;
     border-collapse: separate;
-    background-color: white;
+    padding: inherit;
 }
 
 table.directory th {
-    border-width: .1em;
-    padding: .4em;
+    border-width: 1px;
+    padding: .6em;
     border-style: solid;
-    border-color: gray;
-    background-color: white;
+    border-color: lightgrey;
 }
 
 table.directory td {
-    border-width: .1em;
-    padding: .4em;
+    border-width: 1px;
+    padding: .6em;
     border-style: solid;
-    border-color: gray;
-    background-color: white;
+    border-color: lightgrey;
     font-size: small;
 }
 
@@ -138,6 +135,20 @@ img {
     border: 0;
     padding: 0;
     margin: 0;
+}
+
+fieldset {
+    border: 2px solid #EEE;
+    border-radius: 3px;
+}
+
+dl {
+    margin: 0;
+}
+
+dt.inline-term {
+    display: inline-block;
+    float: left;
 }
 
 div {
@@ -227,7 +238,7 @@ ol.jumplist {
     top: 0;
     left: 0;
     width: 100%;
-    min-width: 620px;
+    min-width: 640px;
     z-index: 0;
     overflow: hidden;
 }
@@ -254,6 +265,10 @@ ol.jumplist {
     float: right;
 }
 
+.collapsible {
+    cursor: pointer;
+}
+
 /*------------- Graphical Outer Border ------------*/
 
 .t {background: url(http://code.iki.fi/dengine.net/images/tc02.png) 0 0 repeat-x;}
@@ -271,7 +286,7 @@ ol.jumplist {
     max-width: 1280px;
     height: auto;
     clear: both;
-    min-width: 600px;
+    min-width: 624px;
     margin-top: 52px;
     margin-bottom: 0px;
     margin-left: auto;
@@ -320,6 +335,12 @@ ol.jumplist {
     margin: 0;
     border: 0;
     padding: 0;
+}
+
+#menu section {
+    display: inline-block;
+    min-width: 12em;
+    text-align: right;
 }
 
 #menu li {
@@ -437,7 +458,7 @@ ol.jumplist {
 #pageheading h1 {
     color: #ffffff;
     font-size: 280%;
-    margin-left: .3em;
+    margin-left: .4em;
 }
 
 #contentbox, #contentbox2 {
@@ -478,12 +499,6 @@ p.legal a {
 
 /*---------------------- NewsFeed ---------------------*/
 
-#projectnews-label {
-    color: #ffffff;
-    font-weight: bold;
-    min-height: 139px;
-}
-
 #projectnews {
     position: relative;
     top: -282px; /* minus image height */
@@ -495,24 +510,40 @@ p.legal a {
     color: #ff8a00;
     font-size: xx-small;
     font-family: Verdana, Arial, Helvetica, sans-serif;
+    font-weight: lighter;
     min-height: 139px;
     background: url(http://code.iki.fi/dengine.net/images/shadow.png) no-repeat;
 }
 
 #projectnews ul {
     padding: 0;
+    margin-left: 1.8em;
+    margin-top: .4em;
 }
 
 #projectnews ul li {
     list-style-type: none;
+    min-height: 1.6em;
 }
 
 #projectnews a {
     color: #ff8a00;
 }
 
+#projectnews .new-label {
+    color: white;
+    font-weight: bold;
+}
+
 #projectnews a:hover, #projectnews a:visited:hover {
     color: #ffffff;
+    font-size: x-small;
+}
+
+.projectnews-label {
+    color: #ffffff;
+    font-weight: bold;
+    min-height: 139px;
 }
 
 /*-------------------- GameServers -------------------*/
@@ -655,6 +686,76 @@ p.legal a {
     padding-left: 1.4em;
 }
 
+/*-------------------- Addons ---------------------*/
+
+#addons {
+    background: #ffffff;
+    padding:.5em 1em;
+}
+
+.addons_list {
+    vertical-align:top;
+    margin:0 3em;
+    text-align: center;
+}
+
+.addon_badge {
+    position: relative;
+    margin: 1em 2.5em;
+    display: inline-block;
+    text-align: left;
+}
+
+.addon_badge .name {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: bold;
+}
+
+.addon_badge .icon img {
+    margin-top: 8px;
+    max-width: 48px;
+    max-height: 48px;
+}
+
+.addon_badge:hover .name, .addon_badge:visited:hover .name {
+    text-decoration: underline;
+    color: #495f5f;
+}
+
+.addon_badge .description {
+    display: block;
+    color: #807970;
+}
+
+.addon_badge .icon {
+    position: absolute;
+    left: -56px;
+    z-index: 1;
+}
+
+.addon_badge div.metadata {
+    font-size: small;
+}
+
+#overview {
+    padding-top:0;
+}
+
+#notes, #instructions {
+    font-size: small;
+}
+
+#updated {
+    font-size: small;
+    font-weight: normal;
+}
+
+#notes {
+    font-weight: 700;
+    margin-top: 1em;
+}
+
 /*-------------------- Builds ---------------------*/
 
 /* Panel */
@@ -722,18 +823,16 @@ p.legal a {
     margin:0;
 }
 
-.commit_list p.collapsible {
-    cursor: pointer;
-    position: relative;
-}
-
 .commit_list p.collapsible:hover {
     color: #ff8a00;
 }
 
-.commit_list span.tag {
+.commit_list .tag {
     color:#558866;
     font-family:Verdana, Arial, Helvetica, sans-serif;
+}
+
+.commit_list span.tag {
     margin-right:.8em;
 }
 
@@ -759,8 +858,6 @@ p.legal a {
     margin-left:2em;
 }
 
-/*.commit span.title { }*/
-
 span.metadata {
     font-size:smaller;
     margin-right:1em;
@@ -768,6 +865,25 @@ span.metadata {
 
 .commit_list p.heading {
     display:inline-block;
+}
+
+.tag_list {
+    display:inline;
+    margin: 0;
+    padding: 0;
+}
+
+.tag_list .tag {
+    display:inline-block;
+    font-size: xx-small;
+    border: 1px solid;
+    border-radius: 3px;
+    -moz-border-radius: 3px;
+    padding: .25em .4em;
+    margin-left: 1em;
+    margin-right: 0;
+    background-color: #F9FFF9;
+    border-color: #BBDDBB;
 }
 
 /*----------*/
@@ -787,6 +903,129 @@ span.metadata {
 
 .buildevent table td.issue_level {
     text-align:center;
+}
+
+/*----------------- Master Server ------------------*/
+
+#masterbrowser {
+    background: #ffffff;
+    padding:.5em 1em;
+}
+
+#masterbrowser #pubDate, #summary {
+    text-align: right;
+    padding: 0;
+}
+
+#masterbrowser #serverLegend dd {
+    float: left;
+    margin-left: .5em;
+    margin-right: 2em;
+}
+
+span.port:before {
+    content:":";
+}
+
+span.port {
+    padding: .5em;
+}
+
+.server_list {
+    vertical-align:top;
+    margin-left: 1em;
+    text-align: center;
+    overflow-y: scroll;
+    max-height: 600px;
+}
+
+.server_list ul {
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-left: 56px;
+}
+
+.server_list li {
+    list-style-type: none;    
+}
+
+.server_badge {
+    position: relative;
+    text-align: left;
+    margin: 1px 0;
+}
+
+.server_badge .wrapper {
+    padding: .2em .4em;
+    border: 2px solid #eee;
+    border-radius: 3px;
+}
+
+.server_badge .game-info {
+    display: block;
+    color: #807970;
+}
+
+.server_badge .name, .game-current-map, .game-setup {
+    font-weight: bold;
+}
+
+.server_badge .player-count, .player-max {
+    font-family: monospace;
+}
+
+.server_badge .player-count {
+    margin-right: .5em;
+}
+
+.server_badge .player-max {
+    margin-left: .5em;
+}
+
+.server_badge .game-mode {
+    position: absolute;
+    left: -56px;
+    max-width: 56px;
+    max-height: 56px;
+    overflow:hidden;
+    font-size: smaller;
+    z-index: 1;
+}
+
+.server_badge .player-summary {
+    min-width: 3em;
+    display: inline-block;
+}
+
+.server_badge .name, .open .game-current-map, .game-setup {
+    padding: .6em;
+}
+
+.server_badge .game-info {
+    margin-left: 0;
+}
+
+.server_badge .server-metadata, .game-metadata {
+    font-size: small;
+    font-family: monospace;
+}
+
+.server_badge .server-metadata {
+    float: right;
+}
+
+.lock-on, .lock-off {
+    background-image: url("/images/lock.png");
+    background-size: 24px 12px;
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    position: relative;
+    top: 2px;
+}
+
+.lock-on {
+    background-position-x: 12px;
 }
 
 /*------------------ Screens Page ------------------*/
@@ -842,6 +1081,14 @@ ul.games_list li a.game_badge span {
     background: url(http://code.iki.fi/dengine.net/images/hexen_badge.png) no-repeat;
 }
 
+.game_badge_hacx {
+    background: url(http://code.iki.fi/dengine.net/images/hacx_badge.png) no-repeat;
+}
+
+.game_badge_chex {
+    background: url(http://code.iki.fi/dengine.net/images/chex_badge.png) no-repeat;
+}
+
 /*---------------- Platform Pages -----------------*/
 
 .downloads_list {
@@ -867,8 +1114,8 @@ ul.games_list li a.game_badge span {
     background-color: transparent;
     background: url(http://code.iki.fi/dengine.net/images/download_badge.png) no-repeat;
     height: 60px;
-    width: 400px;
-    padding-top: 2em;
+    width: 320px;
+    padding-top: 1.5em;
     padding-bottom: 0;
     padding-left: 0;
     padding-right: 0;
@@ -877,9 +1124,10 @@ ul.games_list li a.game_badge span {
 }
 
 .package_badge a.package_name {
-    padding-top: 2em;
+    padding-top: 1.5em;
     padding-bottom: 2em;
-    padding-left: 4em;
+    padding-left: 3em;
+    white-space:nowrap;
 }
 
 .package_badge a[class = "package_name"]:hover, .package_badge a[class = "package_name"]:visited:hover {

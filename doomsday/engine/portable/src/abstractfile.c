@@ -38,7 +38,7 @@ abstractfile_t* AbstractFile_Init(abstractfile_t* af, filetype_t type,
     af->_type = type;
     af->_file = file;
     af->_flags.startup = false;
-    af->_flags.iwad = false;
+    af->_flags.custom = true;
     Str_Init(&af->_path); Str_Set(&af->_path, path);
     F_CopyLumpInfo(&af->_info, info);
 
@@ -114,14 +114,14 @@ void AbstractFile_SetStartup(abstractfile_t* af, boolean yes)
     af->_flags.startup = yes;
 }
 
-boolean AbstractFile_HasIWAD(const abstractfile_t* af)
+boolean AbstractFile_HasCustom(const abstractfile_t* af)
 {
     assert(af);
-    return (af->_flags.iwad != 0);
+    return (af->_flags.custom != 0);
 }
 
-void AbstractFile_SetIWAD(abstractfile_t* af, boolean yes)
+void AbstractFile_SetCustom(abstractfile_t* af, boolean yes)
 {
     assert(af);
-    af->_flags.iwad = yes;
+    af->_flags.custom = yes;
 }

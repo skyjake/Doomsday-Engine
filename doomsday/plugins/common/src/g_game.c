@@ -678,152 +678,165 @@ void R_LoadColorPalettes(void)
 }
 
 /**
- * \todo Read this information from a definition (ideally with more user
- * friendly mnemonics).
+ * @todo Read this information from a definition (ideally with more user
+ *       friendly mnemonics...).
  */
 void R_LoadVectorGraphics(void)
 {
-#define R (1.0f)
-    const SvgLine keysquare[] = {
-        { {0, 0}, {R / 4, -R / 2} },
-        { {R / 4, -R / 2}, {R / 2, -R / 2} },
-        { {R / 2, -R / 2}, {R / 2, R / 2} },
-        { {R / 2, R / 2}, {R / 4, R / 2} },
-        { {R / 4, R / 2}, {0, 0} }, // Handle part type thing.
-        { {0, 0}, {-R, 0} }, // Stem.
-        { {-R, 0}, {-R, -R / 2} }, // End lockpick part.
-        { {-3 * R / 4, 0}, {-3 * R / 4, -R / 4} }
+#define R                          (1.0f)
+#define NUMITEMS(x)                (sizeof(x)/sizeof((x)[0]))
+
+    const Point2Rawf keyPoints[] = {
+        {-3 * R / 4, 0}, {-3 * R / 4, -R / 4}, // Mid tooth.
+        {    0,      0}, {   -R,      0}, {   -R, -R / 2}, // Shaft and end tooth.
+
+        {    0,      0}, {R / 4, -R / 2}, // Bow.
+        {R / 2, -R / 2}, {R / 2,  R / 2},
+        {R / 4,  R / 2}, {    0,      0},
     };
-    const SvgLine thintriangle_guy[] = {
-        { {-R / 2, R - R / 2}, {R, 0} }, // >
-        { {R, 0}, {-R / 2, -R + R / 2} },
-        { {-R / 2, -R + R / 2}, {-R / 2, R - R / 2} } // |>
+    const def_svgline_t key[] = {
+        { 2, &keyPoints[ 0] },
+        { 3, &keyPoints[ 2] },
+        { 6, &keyPoints[ 5] }
+    };
+    const Point2Rawf thintrianglePoints[] = {
+        {-R / 2,  R - R / 2},
+        {     R,          0}, // `
+        {-R / 2, -R + R / 2}, // /
+        {-R / 2,  R - R / 2} // |>
+    };
+    const def_svgline_t thintriangle[] = {
+        { 4, thintrianglePoints },
     };
 #if __JDOOM__ || __JDOOM64__
-    const SvgLine player_arrow[] = {
-        { {-R + R / 8, 0}, {R, 0} }, // -----
-        { {R, 0}, {R - R / 2, R / 4} }, // ----->
-        { {R, 0}, {R - R / 2, -R / 4} },
-        { {-R + R / 8, 0}, {-R - R / 8, R / 4} }, // >---->
-        { {-R + R / 8, 0}, {-R - R / 8, -R / 4} },
-        { {-R + 3 * R / 8, 0}, {-R + R / 8, R / 4} }, // >>--->
-        { {-R + 3 * R / 8, 0}, {-R + R / 8, -R / 4} }
+    const Point2Rawf arrowPoints[] = {
+        {    -R + R / 8, 0},  {             R, 0}, // -----
+        { R - R / 2, -R / 4}, {             R, 0}, { R - R / 2,  R / 4}, // ----->
+        {-R - R / 8, -R / 4}, {    -R + R / 8, 0}, {-R - R / 8,  R / 4}, // >---->
+        {-R + R / 8, -R / 4}, {-R + 3 * R / 8, 0}, {-R + R / 8,  R / 4}, // >>--->
     };
-    const SvgLine cheat_player_arrow[] = {
-        { {-R + R / 8, 0}, {R, 0} }, // -----
-        { {R, 0}, {R - R / 2, R / 6} }, // ----->
-        { {R, 0}, {R - R / 2, -R / 6} },
-        { {-R + R / 8, 0}, {-R - R / 8, R / 6} }, // >----->
-        { {-R + R / 8, 0}, {-R - R / 8, -R / 6} },
-        { {-R + 3 * R / 8, 0}, {-R + R / 8, R / 6} }, // >>----->
-        { {-R + 3 * R / 8, 0}, {-R + R / 8, -R / 6} },
-        { {-R / 2, 0}, {-R / 2, -R / 6} }, // >>-d--->
-        { {-R / 2, -R / 6}, {-R / 2 + R / 6, -R / 6} },
-        { {-R / 2 + R / 6, -R / 6}, {-R / 2 + R / 6, R / 4} },
-        { {-R / 6, 0}, {-R / 6, -R / 6} }, // >>-dd-->
-        { {-R / 6, -R / 6}, {0, -R / 6} },
-        { {0, -R / 6}, {0, R / 4} },
-        { {R / 6, R / 4}, {R / 6, -R / 7} }, // >>-ddt->
-        { {R / 6, -R / 7}, {R / 6 + R / 32, -R / 7 - R / 32} },
-        { {R / 6 + R / 32, -R / 7 - R / 32}, {R / 6 + R / 10, -R / 7} }
+    const def_svgline_t arrow[] = {
+        { 2, &arrowPoints[ 0] },
+        { 3, &arrowPoints[ 2] },
+        { 3, &arrowPoints[ 5] },
+        { 3, &arrowPoints[ 8] }
     };
-#elif __JHERETIC__
-    const SvgLine player_arrow[] = {
-        { {-R + R / 4, 0}, {0, 0} }, // center line.
-        { {-R + R / 4, R / 8}, {R, 0} }, // blade
-        { {-R + R / 4, -R / 8}, {R, 0} },
-        { {-R + R / 4, -R / 4}, {-R + R / 4, R / 4} }, // crosspiece
-        { {-R + R / 8, -R / 4}, {-R + R / 8, R / 4} },
-        { {-R + R / 8, -R / 4}, {-R + R / 4, -R / 4} }, //crosspiece connectors
-        { {-R + R / 8, R / 4}, {-R + R / 4, R / 4} },
-        { {-R - R / 4, R / 8}, {-R - R / 4, -R / 8} }, // pommel
-        { {-R - R / 4, R / 8}, {-R + R / 8, R / 8} },
-        { {-R - R / 4, -R / 8}, {-R + R / 8, -R / 8} }
+#elif __JHERETIC__ || __JHEXEN__
+    const Point2Rawf arrowPoints[] = {
+        {-R + R / 4,      0}, {         0,      0}, // center line.
+        {-R + R / 4,  R / 8}, {         R,      0}, {-R + R / 4, -R / 8}, // blade
+
+        {-R + R / 8, -R / 4}, {-R + R / 4, -R / 4}, // guard
+        {-R + R / 4,  R / 4}, {-R + R / 8,  R / 4},
+        {-R + R / 8, -R / 4},
+
+        {-R + R / 8, -R / 8}, {-R - R / 4, -R / 8}, // hilt
+        {-R - R / 4,  R / 8}, {-R + R / 8,  R / 8},
     };
-    const SvgLine cheat_player_arrow[] = {
-        { {-R + R / 8, 0}, {R, 0} }, // -----
-        { {R, 0}, {R - R / 2, R / 6} }, // ----->
-        { {R, 0}, {R - R / 2, -R / 6} },
-        { {-R + R / 8, 0}, {-R - R / 8, R / 6} }, // >----->
-        { {-R + R / 8, 0}, {-R - R / 8, -R / 6} },
-        { {-R + 3 * R / 8, 0}, {-R + R / 8, R / 6} }, // >>----->
-        { {-R + 3 * R / 8, 0}, {-R + R / 8, -R / 6} },
-        { {-R / 2, 0}, {-R / 2, -R / 6} }, // >>-d--->
-        { {-R / 2, -R / 6}, {-R / 2 + R / 6, -R / 6} },
-        { {-R / 2 + R / 6, -R / 6}, {-R / 2 + R / 6, R / 4} },
-        { {-R / 6, 0}, {-R / 6, -R / 6} }, // >>-dd-->
-        { {-R / 6, -R / 6}, {0, -R / 6} },
-        { {0, -R / 6}, {0, R / 4} },
-        { {R / 6, R / 4}, {R / 6, -R / 7} }, // >>-ddt->
-        { {R / 6, -R / 7}, {R / 6 + R / 32, -R / 7 - R / 32} },
-        { {R / 6 + R / 32, -R / 7 - R / 32}, {R / 6 + R / 10, -R / 7} }
-    };
-#elif __JHEXEN__
-    const SvgLine player_arrow[] = {
-        { {-R + R / 4, 0}, {0, 0} }, // center line.
-        { {-R + R / 4, R / 8}, {R, 0} }, // blade
-        { {-R + R / 4, -R / 8}, {R, 0} },
-        { {-R + R / 4, -R / 4}, {-R + R / 4, R / 4} }, // crosspiece
-        { {-R + R / 8, -R / 4}, {-R + R / 8, R / 4} },
-        { {-R + R / 8, -R / 4}, {-R + R / 4, -R / 4} }, // crosspiece connectors
-        { {-R + R / 8, R / 4}, {-R + R / 4, R / 4} },
-        { {-R - R / 4, R / 8}, {-R - R / 4, -R / 8} }, // pommel
-        { {-R - R / 4, R / 8}, {-R + R / 8, R / 8} },
-        { {-R - R / 4, -R / 8}, {-R + R / 8, -R / 8} }
+    const def_svgline_t arrow[] = {
+        { 2, &arrowPoints[ 0] },
+        { 3, &arrowPoints[ 2] },
+        { 5, &arrowPoints[ 5] },
+        { 4, &arrowPoints[10] }
     };
 #endif
-#undef R
-    const SvgLine crossHair1[] = { // + (open center)
-        { {-1,  0}, {-.4f, 0} },
-        { { 0, -1}, { 0,  -.4f} },
-        { { 1,  0}, { .4f, 0} },
-        { { 0,  1}, { 0,   .4f} }
+#if __JDOOM__
+    const Point2Rawf cheatarrowPoints[] = {
+        {    -R + R / 8, 0},  {             R, 0}, // -----
+        { R - R / 2, -R / 4}, {             R, 0}, { R - R / 2,  R / 4}, // ----->
+        {-R - R / 8, -R / 4}, {    -R + R / 8, 0}, {-R - R / 8,  R / 4}, // >---->
+        {-R + R / 8, -R / 4}, {-R + 3 * R / 8, 0}, {-R + R / 8,  R / 4}, // >>--->
+
+        {        -R / 2,      0}, {        -R / 2, -R / 6}, // >>-d--->
+        {-R / 2 + R / 6, -R / 6}, {-R / 2 + R / 6,  R / 4},
+
+        {        -R / 6,      0}, {        -R / 6, -R / 6}, // >>-dd-->
+        {             0, -R / 6}, {             0,  R / 4},
+
+        {         R / 6,  R / 4}, {         R / 6, -R / 7}, // >>-ddt->
+        {R / 6 + R / 32, -R / 7 - R / 32}, {R / 6 + R / 10, -R / 7}
     };
-    const SvgLine crossHair2[] = { // > <
-        { {-1, -.714f}, {-.286f, 0} },
-        { {-1,  .714f}, {-.286f, 0} },
-        { { 1, -.714f}, { .286f, 0} },
-        { { 1,  .714f}, { .286f, 0} }
+    const def_svgline_t cheatarrow[] = {
+        { 2, &cheatarrowPoints[ 0] },
+        { 3, &cheatarrowPoints[ 2] },
+        { 3, &cheatarrowPoints[ 5] },
+        { 3, &cheatarrowPoints[ 8] },
+        { 4, &cheatarrowPoints[11] },
+        { 4, &cheatarrowPoints[15] },
+        { 4, &cheatarrowPoints[19] }
     };
-    const SvgLine crossHair3[] = { // square
-        { {-1, -1}, {-1,  1} },
-        { {-1,  1}, { 1,  1} },
-        { { 1,  1}, { 1, -1} },
-        { { 1, -1}, {-1, -1} }
+#endif
+
+    const Point2Rawf crossPoints[] = { // + (open center)
+        {-R,  0}, {-R / 5 * 2,          0},
+        { 0, -R}, {         0, -R / 5 * 2},
+        { R,  0}, { R / 5 * 2,          0},
+        { 0,  R}, {         0,  R / 5 * 2}
     };
-    const SvgLine crossHair4[] = { // square (open center)
-        { {-1, -1}, {-1, -.5f} },
-        { {-1, .5f}, {-1, 1} },
-        { {-1, 1}, {-.5f, 1} },
-        { {.5f, 1}, {1, 1} },
-        { { 1, 1}, {1, .5f} },
-        { { 1, -.5f}, {1, -1} },
-        { { 1, -1}, {.5f, -1} },
-        { {-.5f, -1}, {-1, -1} }
+    const def_svgline_t cross[] = {
+        { 2, &crossPoints[0] },
+        { 2, &crossPoints[2] },
+        { 2, &crossPoints[4] },
+        { 2, &crossPoints[6] }
     };
-    const SvgLine crossHair5[] = { // diamond
-        { { 0, -1}, { 1,  0} },
-        { { 1,  0}, { 0,  1} },
-        { { 0,  1}, {-1,  0} },
-        { {-1,  0}, { 0, -1} }
+    const Point2Rawf dblanglePoints[] = { // > <
+        {-R, -R * 10 / 14}, {-(R - (R * 10 / 14)), 0}, {-R,  R * 10 / 14}, // >
+        { R, -R * 10 / 14}, {  R - (R * 10 / 14) , 0}, { R,  R * 10 / 14}, // <
     };
-    const SvgLine crossHair6[] = { // ^
-        { {-1, -1}, { 0,  0} },
-        { { 0,  0}, { 1, -1} }
+    const def_svgline_t dblangle[] = {
+        { 3, &dblanglePoints[0] },
+        { 3, &dblanglePoints[3] }
+    };
+    const Point2Rawf squarePoints[] = { // square
+        {-R, -R}, {-R,  R},
+        { R,  R}, { R, -R},
+        {-R, -R}
+    };
+    const def_svgline_t square[] = {
+        { 5, squarePoints },
+    };
+    const Point2Rawf squarecornersPoints[] = { // square (open center)
+        {   -R, -R / 2}, {-R, -R}, {-R / 2,      -R}, // topleft
+        {R / 2,     -R}, { R, -R}, {     R,  -R / 2}, // topright
+        {   -R,  R / 2}, {-R,  R}, {-R / 2,       R}, // bottomleft
+        {R / 2,      R}, { R,  R}, {     R,   R / 2}, // bottomright
+    };
+    const def_svgline_t squarecorners[] = {
+        { 3, &squarecornersPoints[ 0] },
+        { 3, &squarecornersPoints[ 3] },
+        { 3, &squarecornersPoints[ 6] },
+        { 3, &squarecornersPoints[ 9] }
+    };
+    const Point2Rawf diamondPoints[] = { // diamond
+        { 0, -R}, { R,  0},
+        { 0,  R}, {-R,  0},
+        { 0, -R}
+    };
+    const def_svgline_t diamond[] = {
+        { 5, diamondPoints }
+    };
+    const Point2Rawf anglePoints[] = { // v
+        {-R, -R}, { 0,  0}, { R, -R}
+    };
+    const def_svgline_t angle[] = {
+        { 3, anglePoints }
     };
 
-    R_NewSvg(VG_KEYSQUARE, keysquare, sizeof(keysquare) / sizeof(keysquare[0]));
-    R_NewSvg(VG_TRIANGLE, thintriangle_guy, sizeof(thintriangle_guy) / sizeof(thintriangle_guy[0]));
-    R_NewSvg(VG_ARROW, player_arrow, sizeof(player_arrow) / sizeof(player_arrow[0]));
-#if !__JHEXEN__
-    R_NewSvg(VG_CHEATARROW, cheat_player_arrow, sizeof(cheat_player_arrow) / sizeof(cheat_player_arrow[0]));
+    R_NewSvg(VG_KEY, key, NUMITEMS(key));
+    R_NewSvg(VG_TRIANGLE, thintriangle, NUMITEMS(thintriangle));
+    R_NewSvg(VG_ARROW, arrow, NUMITEMS(arrow));
+#if __JDOOM__
+    R_NewSvg(VG_CHEATARROW, cheatarrow, NUMITEMS(cheatarrow));
 #endif
-    R_NewSvg(VG_XHAIR1, crossHair1, sizeof(crossHair1) / sizeof(crossHair1[0]));
-    R_NewSvg(VG_XHAIR2, crossHair2, sizeof(crossHair2) / sizeof(crossHair2[0]));
-    R_NewSvg(VG_XHAIR3, crossHair3, sizeof(crossHair3) / sizeof(crossHair3[0]));
-    R_NewSvg(VG_XHAIR4, crossHair4, sizeof(crossHair4) / sizeof(crossHair4[0]));
-    R_NewSvg(VG_XHAIR5, crossHair5, sizeof(crossHair5) / sizeof(crossHair5[0]));
-    R_NewSvg(VG_XHAIR6, crossHair6, sizeof(crossHair6) / sizeof(crossHair6[0]));
+    R_NewSvg(VG_XHAIR1, cross, NUMITEMS(cross));
+    R_NewSvg(VG_XHAIR2, dblangle, NUMITEMS(dblangle));
+    R_NewSvg(VG_XHAIR3, square, NUMITEMS(square));
+    R_NewSvg(VG_XHAIR4, squarecorners, NUMITEMS(squarecorners));
+    R_NewSvg(VG_XHAIR5, diamond, NUMITEMS(diamond));
+    R_NewSvg(VG_XHAIR6, angle, NUMITEMS(angle));
+
+#undef NUMITEMS
+#undef R
 }
 
 /**
@@ -842,6 +855,8 @@ fontid_t R_MustFindFontForName(const char* name)
 
 void R_InitRefresh(void)
 {
+    if(IS_DEDICATED) return;
+
     VERBOSE( Con_Message("R_InitRefresh: Loading data for referesh.\n") );
 
     // Setup the view border.
@@ -858,18 +873,19 @@ void R_InitRefresh(void)
     R_ResizeViewWindow(RWF_FORCE|RWF_NO_LERP);
 
     // Locate our fonts.
-    fonts[GF_FONTA]   = R_MustFindFontForName("a");
-    fonts[GF_FONTB]   = R_MustFindFontForName("b");
-    fonts[GF_STATUS]  = R_MustFindFontForName("status");
+    fonts[GF_FONTA]    = R_MustFindFontForName("a");
+    fonts[GF_FONTB]    = R_MustFindFontForName("b");
+    fonts[GF_STATUS]   = R_MustFindFontForName("status");
 #if __JDOOM__
-    fonts[GF_INDEX]   = R_MustFindFontForName("index");
+    fonts[GF_INDEX]    = R_MustFindFontForName("index");
 #endif
 #if __JDOOM__ || __JDOOM64__
-    fonts[GF_SMALL]   = R_MustFindFontForName("small");
+    fonts[GF_SMALL]    = R_MustFindFontForName("small");
 #endif
 #if __JHERETIC__ || __JHEXEN__
-    fonts[GF_SMALLIN] = R_MustFindFontForName("smallin");
+    fonts[GF_SMALLIN]  = R_MustFindFontForName("smallin");
 #endif
+    fonts[GF_MAPPOINT] = R_MustFindFontForName("mappoint");
 
     { float mul = 1.4f;
     DD_SetVariable(DD_PSPRITE_LIGHTLEVEL_MULTIPLIER, &mul);
@@ -1066,7 +1082,7 @@ void G_ChangeGameState(gamestate_t state)
     DD_Executef(true, "%sactivatebcontext game", gameActive? "" : "de");
 }
 
-boolean G_StartFinale(const char* script, int flags, finale_mode_t mode)
+boolean G_StartFinale(const char* script, int flags, finale_mode_t mode, const char* defId)
 {
     assert(script && script[0]);
     { uint i;
@@ -1083,7 +1099,7 @@ boolean G_StartFinale(const char* script, int flags, finale_mode_t mode)
 #endif
     }}
     G_SetGameAction(GA_NONE);
-    FI_StackExecute(script, flags, mode);
+    FI_StackExecuteWithId(script, flags, mode, defId);
     return true;
 }
 
@@ -1101,7 +1117,7 @@ void G_StartTitle(void)
     if(!Def_Get(DD_DEF_FINALE, "title", &fin))
         Con_Error("G_StartTitle: A title script must be defined.");
 
-    G_StartFinale(fin.script, FF_LOCAL, FIMODE_NORMAL);
+    G_StartFinale(fin.script, FF_LOCAL, FIMODE_NORMAL, "title");
 }
 
 /**
@@ -1115,7 +1131,7 @@ void G_StartHelp(void)
     if(Def_Get(DD_DEF_FINALE, "help", &fin))
     {
         Hu_MenuCommand(MCMD_CLOSEFAST);
-        G_StartFinale(fin.script, FF_LOCAL, FIMODE_NORMAL);
+        G_StartFinale(fin.script, FF_LOCAL, FIMODE_NORMAL, "help");
         return;
     }
     Con_Message("Warning: InFine script 'help' not defined, ignoring.\n");
@@ -1277,7 +1293,7 @@ void G_DoLoadMap(void)
     // Start a briefing, if there is one.
     if(hasBrief)
     {
-        G_StartFinale(fin.script, 0, FIMODE_BEFORE);
+        G_StartFinale(fin.script, 0, FIMODE_BEFORE, 0);
     }
     else // No briefing, start the map.
     {
@@ -2284,7 +2300,7 @@ void G_WorldDone(void)
     FI_StackClear();
 
     if(G_DebriefingEnabled(gameEpisode, gameMap, &fin) &&
-       G_StartFinale(fin.script, 0, FIMODE_AFTER))
+       G_StartFinale(fin.script, 0, FIMODE_AFTER, 0))
     {
         return;
     }
@@ -2595,50 +2611,56 @@ void G_InitNew(skillmode_t skill, uint episode, uint map)
         respawnMonsters = cfg.respawnMonstersNightmare;
 #endif
 
-//// \kludge Doom/Heretic Fast Monters/Missiles
+#if __JDOOM__
+    // Disabled in Chex and HacX because this messes with the original games' values.
+    if(gameMode != doom2_hacx && gameMode != doom_chex)
+#endif
+    {
+        /// @kludge Doom/Heretic Fast Monters/Missiles
 #if __JDOOM__ || __JDOOM64__
-    // Fast monsters?
-    if(fastParm
-# if __JDOOM__
-        || (skill == SM_NIGHTMARE && gameSkill != SM_NIGHTMARE)
-# endif
-        )
-    {
-        for(i = S_SARG_RUN1; i <= S_SARG_RUN8; ++i)
-            STATES[i].tics = 1;
-        for(i = S_SARG_ATK1; i <= S_SARG_ATK3; ++i)
-            STATES[i].tics = 4;
-        for(i = S_SARG_PAIN; i <= S_SARG_PAIN2; ++i)
-            STATES[i].tics = 1;
-    }
-    else
-    {
-        for(i = S_SARG_RUN1; i <= S_SARG_RUN8; ++i)
-            STATES[i].tics = 2;
-        for(i = S_SARG_ATK1; i <= S_SARG_ATK3; ++i)
-            STATES[i].tics = 8;
-        for(i = S_SARG_PAIN; i <= S_SARG_PAIN2; ++i)
-            STATES[i].tics = 2;
-    }
+        // Fast monsters?
+        if(fastParm
+        # if __JDOOM__
+                || (skill == SM_NIGHTMARE && gameSkill != SM_NIGHTMARE)
+        # endif
+                )
+        {
+            for(i = S_SARG_RUN1; i <= S_SARG_RUN8; ++i)
+                STATES[i].tics = 1;
+            for(i = S_SARG_ATK1; i <= S_SARG_ATK3; ++i)
+                STATES[i].tics = 4;
+            for(i = S_SARG_PAIN; i <= S_SARG_PAIN2; ++i)
+                STATES[i].tics = 1;
+        }
+        else
+        {
+            for(i = S_SARG_RUN1; i <= S_SARG_RUN8; ++i)
+                STATES[i].tics = 2;
+            for(i = S_SARG_ATK1; i <= S_SARG_ATK3; ++i)
+                STATES[i].tics = 8;
+            for(i = S_SARG_PAIN; i <= S_SARG_PAIN2; ++i)
+                STATES[i].tics = 2;
+        }
 #endif
 
-    // Fast missiles?
+        // Fast missiles?
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
 # if __JDOOM64__
-    speed = fastParm;
+        speed = fastParm;
 # elif __JDOOM__
-    speed = (fastParm || (skill == SM_NIGHTMARE && gameSkill != SM_NIGHTMARE));
+        speed = (fastParm || (skill == SM_NIGHTMARE && gameSkill != SM_NIGHTMARE));
 # else
-    speed = skill == SM_NIGHTMARE;
+        speed = skill == SM_NIGHTMARE;
 # endif
 
-    for(i = 0; MonsterMissileInfo[i].type != -1; ++i)
-    {
-        MOBJINFO[MonsterMissileInfo[i].type].speed =
-            MonsterMissileInfo[i].speed[speed];
-    }
+        for(i = 0; MonsterMissileInfo[i].type != -1; ++i)
+        {
+            MOBJINFO[MonsterMissileInfo[i].type].speed =
+                    MonsterMissileInfo[i].speed[speed];
+        }
 #endif
-// <-- KLUDGE
+        // <-- KLUDGE
+    }
 
     if(!IS_CLIENT)
     {
@@ -3294,7 +3316,7 @@ void G_DoScreenShot(void)
 static void openLoadMenu(void)
 {
     Hu_MenuCommand(MCMD_OPEN);
-    /// \fixme This should be called automatically when opening the page
+    /// @fixme This should be called automatically when opening the page
     /// thus making this function redundant.
     Hu_MenuUpdateGameSaveWidgets();
     Hu_MenuSetActivePage(Hu_MenuFindPageByName("LoadGame"));
@@ -3303,7 +3325,7 @@ static void openLoadMenu(void)
 static void openSaveMenu(void)
 {
     Hu_MenuCommand(MCMD_OPEN);
-    /// \fixme This should be called automatically when opening the page
+    /// @fixme This should be called automatically when opening the page
     /// thus making this function redundant.
     Hu_MenuUpdateGameSaveWidgets();
     Hu_MenuSetActivePage(Hu_MenuFindPageByName("SaveGame"));

@@ -60,7 +60,7 @@ class PackageFactory
      * @param $log_pack  (Object) SimpleXMLElement node to be "parsed".
      * @return  (Object) Resultant Package object.
      */
-    public static function newFromSimpleXMLElement(&$log_pack)
+    public static function newFromSimpleXMLElement(&$log_pack, $releaseType='unstable')
     {
         if(!($log_pack instanceof SimpleXMLElement))
             throw new Exception('Received invalid log_pack');
@@ -99,14 +99,32 @@ class PackageFactory
         switch($type)
         {
         case 'plugin':
-            $pack = new UnstablePluginPackage($platformId, $name, $version, $cleanDownloadUri,
-                $compileLogUri, (integer)$log_pack->compileWarnCount,
-                (integer)$log_pack->compileErrorCount);
+            if($releaseType === RT_STABLE)
+            {
+                $pack = new PluginPackage($platformId, $name, $version, $cleanDownloadUri,
+                    $compileLogUri, (integer)$log_pack->compileWarnCount,
+                    (integer)$log_pack->compileErrorCount);
+            }
+            else
+            {
+                $pack = new UnstablePluginPackage($platformId, $name, $version, $cleanDownloadUri,
+                    $compileLogUri, (integer)$log_pack->compileWarnCount,
+                    (integer)$log_pack->compileErrorCount);
+            }
             break;
         default:
-            $pack = new UnstableDistributionPackage($platformId, $name, $version, $cleanDownloadUri,
-                $compileLogUri, (integer)$log_pack->compileWarnCount,
-                (integer)$log_pack->compileErrorCount);
+            if($releaseType === RT_STABLE)
+            {
+                $pack = new DistributionPackage($platformId, $name, $version, $cleanDownloadUri,
+                    $compileLogUri, (integer)$log_pack->compileWarnCount,
+                    (integer)$log_pack->compileErrorCount);
+            }
+            else
+            {
+                $pack = new UnstableDistributionPackage($platformId, $name, $version, $cleanDownloadUri,
+                    $compileLogUri, (integer)$log_pack->compileWarnCount,
+                    (integer)$log_pack->compileErrorCount);
+            }
             break;
         }
 

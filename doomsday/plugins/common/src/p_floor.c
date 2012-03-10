@@ -677,8 +677,7 @@ int EV_DoFloor(linedef_t *line, floortype_e floortype)
 # if __JHERETIC__
             floor->floorDestHeight += 8;
 # else
-            if(floor->floorDestHeight != P_GetFloatp(sec,
-                                                     DMU_FLOOR_HEIGHT))
+            if(!FEQUAL(floor->floorDestHeight, P_GetFloatp(sec, DMU_FLOOR_HEIGHT)))
                 floor->floorDestHeight += 8;
 # endif
             break;
@@ -689,8 +688,7 @@ int EV_DoFloor(linedef_t *line, floortype_e floortype)
             floor->sector = sec;
             floor->speed = FLOORSPEED;
             P_FindSectorSurroundingHighestFloor(sec, -500, &floor->floorDestHeight);
-            if(floor->floorDestHeight != P_GetFloatp(sec,
-                                                     DMU_FLOOR_HEIGHT))
+            if(!FEQUAL(floor->floorDestHeight, P_GetFloatp(sec, DMU_FLOOR_HEIGHT)))
                 floor->floorDestHeight += 8;
             break;
 
@@ -702,8 +700,7 @@ int EV_DoFloor(linedef_t *line, floortype_e floortype)
                 floor->speed = FLOORSPEED * bitmipL;
                 P_FindSectorSurroundingHighestFloor(sec, -500, &floor->floorDestHeight);
 
-                if(floor->floorDestHeight != P_GetFloatp(sec,
-                                                         DMU_FLOOR_HEIGHT))
+                if(!FEQUAL(floor->floorDestHeight, P_GetFloatp(sec, DMU_FLOOR_HEIGHT)))
                     floor->floorDestHeight += bitmipR;
             }
             else

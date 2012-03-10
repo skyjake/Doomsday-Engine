@@ -23,7 +23,6 @@
  *
  * \bug Not 64bit clean: In function 'DS_SFX_CreateBuffer': cast to pointer from integer of different size
  * \bug Not 64bit clean: In function 'DS_SFX_DestroyBuffer': cast to pointer from integer of different size
- * \bug Not 64bit clean: In function 'Sys_LoadAudioDriver': cast to pointer from integer of different size
  * \bug Not 64bit clean: In function 'DS_SFX_Play': cast to pointer from integer of different size
  * \bug Not 64bit clean: In function 'DS_SFX_Stop': cast to pointer from integer of different size
  * \bug Not 64bit clean: In function 'DS_SFX_Refresh': cast to pointer from integer of different size

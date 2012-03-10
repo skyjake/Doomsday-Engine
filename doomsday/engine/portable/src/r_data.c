@@ -44,6 +44,7 @@
 #include "colorpalette.h"
 #include "texture.h"
 #include "materialvariant.h"
+#include "texturevariant.h"
 #include "font.h"
 
 // MACROS ------------------------------------------------------------------
@@ -752,10 +753,9 @@ rtexcoord_t* R_AllocRendTexCoords(uint num)
  */
 void R_FreeRendVertices(rvertex_t* rvertices)
 {
-    uint                i;
+    uint i;
 
-    if(!rvertices)
-        return;
+    if(!rvertices) return;
 
     for(i = 0; i < numrendpolys; ++i)
     {
@@ -778,10 +778,9 @@ void R_FreeRendVertices(rvertex_t* rvertices)
  */
 void R_FreeRendColors(ColorRawf* rcolors)
 {
-    uint                i;
+    uint i;
 
-    if(!rcolors)
-        return;
+    if(!rcolors) return;
 
     for(i = 0; i < numrendpolys; ++i)
     {
@@ -804,10 +803,9 @@ void R_FreeRendColors(ColorRawf* rcolors)
  */
 void R_FreeRendTexCoords(rtexcoord_t* rtexcoords)
 {
-    uint                i;
+    uint i;
 
-    if(!rtexcoords)
-        return;
+    if(!rtexcoords) return;
 
     for(i = 0; i < numrendpolys; ++i)
     {
@@ -825,12 +823,20 @@ void R_FreeRendTexCoords(rtexcoord_t* rtexcoords)
 void Rtu_Init(rtexmapunit_t* rtu)
 {
     assert(rtu);
-    rtu->tex = 0;
-    rtu->magMode = GL_LINEAR;
+    rtu->texture.gl.name = 0;
+    rtu->texture.gl.magMode = GL_LINEAR;
+    rtu->texture.flags = 0;
     rtu->blendMode = BM_NORMAL;
     rtu->opacity = 1;
     rtu->scale[0] = rtu->scale[1] = 1;
     rtu->offset[0] = rtu->offset[1] = 0;
+}
+
+boolean Rtu_HasTexture(const rtexmapunit_t* rtu)
+{
+    if(rtu->texture.flags & TUF_TEXTURE_IS_MANAGED)
+        return TextureVariant_GLName(rtu->texture.variant) != 0;
+    return rtu->texture.gl.name != 0;
 }
 
 void Rtu_SetScale(rtexmapunit_t* rtu, float s, float t)
@@ -1235,13 +1241,19 @@ boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info)
         GL_PreparePatchTexture(tex);
 
         info->id = id;
-        info->isCustom = Texture_IsCustom(tex);
+        info->flags.isCustom = Texture_IsCustom(tex);
+
+        { averagealpha_analysis_t* aa = (averagealpha_analysis_t*)Texture_Analysis(tex, TA_ALPHA);
+        info->flags.isEmpty = aa && FEQUAL(aa->alpha, 0);
+        }
+
         info->geometry.size.width = Texture_Width(tex);
         info->geometry.size.height = Texture_Height(tex);
         info->geometry.origin.x = pTex->offX;
         info->geometry.origin.y = pTex->offY;
-        /// \kludge:
+        /// @kludge:
         info->extraOffset[0] = info->extraOffset[1] = (pTex->flags & PF_UPSCALE_AND_SHARPEN)? -1 : 0;
+        // Kludge end.
         return true;
     }
     if(id != 0)
@@ -2615,7 +2627,7 @@ void R_PrecacheMobjNum(int num)
             continue;
         state = &states[i];
 
-        R_PrecacheSkinsForState(i);
+        R_PrecacheModelsForState(i);
 
         if(precacheSprites)
         {
@@ -2704,7 +2716,7 @@ void R_PrecacheForMap(void)
     if(useModels && precacheSkins)
     {
         // All mobjs are public.
-        P_IterateThinkers(gx.MobjThinker, 0x1, R_PrecacheSkinsForMobj, NULL);
+        P_IterateThinkers(gx.MobjThinker, 0x1, R_PrecacheModelsForMobj, NULL);
     }
 }
 
@@ -3153,6 +3165,7 @@ font_t* R_CreateFontFromFile(const Uri* uri, const char* resourcePath)
     {
 #if _DEBUG
         Con_Message("Warning:R_CreateFontFromFile: Invalid Uri or ResourcePath reference, ignoring.\n");
+        if(resourcePath) Con_Message("  Resource path: %s\n", resourcePath);
 #endif
         return NULL;
     }
@@ -3244,6 +3257,8 @@ boolean R_DrawVLightVector(const vlight_t* light, void* context)
     if(distFromViewer < 1600-8)
     {
         float alpha = 1 - distFromViewer / 1600, scale = 100;
+
+        LIBDENG_ASSERT_IN_MAIN_THREAD();
 
         glBegin(GL_LINES);
             glColor4f(light->color[CR], light->color[CG], light->color[CB], alpha);

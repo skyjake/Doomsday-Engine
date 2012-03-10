@@ -29,7 +29,7 @@
 #define SPF_REBOUND     0x00020000 // Write only to local loopback
 #define SPF_DONT_SEND   0x00040000 // Don't really send out anything
 
-#define NETBUFFER_MAXSIZE    0xffff  // 64 KB
+#define NETBUFFER_MAXSIZE    0x7ffff  // 512 KB
 
 // Each network node is identified by a number.
 typedef unsigned int nodeid_t;

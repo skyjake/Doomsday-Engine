@@ -32,6 +32,7 @@ extern float quitDarkenOpacity;
 
 void X_DrawViewPort(int port, const RectRaw* portGeometry, const RectRaw* windowGeometry, int player, int layer);
 void X_DrawWindow(const Size2Raw* windowSize);
+void X_EndFrame(void);
 
 void R_SetAllDoomsdayFlags(void);
 boolean R_ViewFilterColor(float rgba[4], int filter);

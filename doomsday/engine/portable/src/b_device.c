@@ -55,6 +55,7 @@
 
 float       stageThreshold = 6.f/35;
 float       stageFactor = .5f;
+byte        zeroControlUponConflict = true;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -277,7 +278,8 @@ void B_DestroyDeviceBinding(dbinding_t* cb)
     }
 }
 
-void B_EvaluateDeviceBindingList(int localNum, dbinding_t* listRoot, float* pos, float* relativeOffset, bcontext_t* controlClass)
+void B_EvaluateDeviceBindingList(int localNum, dbinding_t* listRoot, float* pos, float* relativeOffset,
+                                 bcontext_t* controlClass, boolean allowTriggered)
 {
     dbinding_t* cb;
     int         i;
@@ -288,6 +290,8 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t* listRoot, float* pos,
     float       deviceOffset;
     uint        deviceTime;
     uint        nowTime = Sys_GetRealTime();
+    boolean     conflicted[NUM_CBD_TYPES] = { false, false, false };
+    boolean     appliedState[NUM_CBD_TYPES] = { false, false, false };
 
     *pos = 0;
     *relativeOffset = 0;
@@ -329,8 +333,12 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t* listRoot, float* pos,
             if(dev->keys[cb->id].assoc.flags & IDAF_EXPIRED)
                 break;
 
-            devicePos = (dev->keys[cb->id].isDown? 1.0f : 0.0f);
+            devicePos = (dev->keys[cb->id].isDown ||
+                         (allowTriggered && (dev->keys[cb->id].assoc.flags & IDAF_TRIGGERED))? 1.0f : 0.0f);
             deviceTime = dev->keys[cb->id].time;
+
+            // We've checked it, so clear the flag.
+            dev->keys[cb->id].assoc.flags &= ~IDAF_TRIGGERED;
             break;
 
         case CBD_AXIS:
@@ -397,9 +405,29 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t* listRoot, float* pos,
 
         *pos += devicePos;
         *relativeOffset += deviceOffset;
+
+        // Is this state contributing to the outcome?
+        if(!FEQUAL(devicePos, 0.f))
+        {
+            if(appliedState[cb->type])
+            {
+                // Another binding already influenced this; we have a conflict.
+                conflicted[cb->type] = true;
+            }
+
+            // We've found one effective binding that influences this control.
+            appliedState[cb->type] = true;
+        }
     }
 
-    // Clamp appropriately.
+    if(zeroControlUponConflict)
+    {
+        for(i = 0; i < NUM_CBD_TYPES; ++i)
+            if(conflicted[i])
+                *pos = 0;
+    }
+
+    // Clamp to the normalized range.
     *pos = MINMAX_OF(-1.0f, *pos, 1.0f);
 }
 

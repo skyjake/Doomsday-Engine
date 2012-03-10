@@ -298,6 +298,7 @@ void D_PreInit(void)
     cfg.automapBack[2] = 0.f;
     cfg.automapOpacity = .7f;
     cfg.automapLineAlpha = .7f;
+    cfg.automapLineWidth = 1.1f;
     cfg.automapShowDoors = true;
     cfg.automapDoorGlow = 8;
     cfg.automapHudDisplay = 2;
@@ -307,7 +308,9 @@ void D_PreInit(void)
     cfg.automapPanSpeed = .5f;
     cfg.automapPanResetOnOpen = true;
     cfg.automapOpenSeconds = AUTOMAP_OPEN_SECONDS;
-    cfg.hudCheatCounterScale = .7f; // From jHeretic.
+
+    cfg.hudCheatCounterScale = .7f;
+    cfg.hudCheatCounterShowWithAutomap = true;
 
     cfg.msgCount = 1;
     cfg.msgScale = .8f;

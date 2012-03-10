@@ -33,6 +33,15 @@
 #include "p_dmu.h"
 
 /**
+ * Update the SideDef's map space surface tangents according to the points
+ * defined by the associated LineDef's vertices. If no LineDef is presently
+ * associated this is a no-op.
+ *
+ * @param sideDef  SideDef instance.
+ */
+void SideDef_UpdateSurfaceTangents(sidedef_t* sideDef);
+
+/**
  * Get the value of a sidedef property, selected by DMU_* name.
  */
 int SideDef_GetProperty(const sidedef_t* sideDef, setargs_t* args);

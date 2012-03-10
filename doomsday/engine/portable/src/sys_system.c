@@ -45,8 +45,11 @@
 #include "de_audio.h"
 #include "de_misc.h"
 
-//int       systics = 0;    // System tics (every game tic).
 int novideo;                // if true, stay in text mode for debugging
+
+static boolean appShutdown = false; ///< Set to true when we should exit (normally).
+
+static uint mainThreadId = 0; ///< ID of the main thread.
 
 #ifdef WIN32
 /**
@@ -63,6 +66,17 @@ static void C_DECL handler(int s)
               s==SIGTERM ? "Killed\n" : "Terminated by signal\n");
 }
 #endif
+
+void Sys_MarkAsMainThread(void)
+{
+    // This is the main thread.
+    mainThreadId = Sys_CurrentThreadId();
+}
+
+boolean Sys_InMainThread(void)
+{
+    return mainThreadId == Sys_CurrentThreadId();
+}
 
 /**
  * Initialize platform level services.
@@ -124,6 +138,9 @@ boolean Sys_IsShuttingDown(void)
  */
 void Sys_Shutdown(void)
 {
+    // We are now shutting down.
+    appShutdown = true;
+
     // Time to unload *everything*.
     if(DD_GameLoaded())
         Con_Execute(CMDS_DDAY, "unload", true, false);
@@ -156,19 +173,19 @@ static int showCriticalMessage(const char* msg)
 
     if(!hWnd)
     {
-        suspendMsgPump = true;
+        DD_Win32_SuspendMessagePump(true);
         MessageBox(HWND_DESKTOP, TEXT("Sys_CriticalMessage: Main window not available."),
                    NULL, MB_ICONERROR | MB_OK);
-        suspendMsgPump = false;
+        DD_Win32_SuspendMessagePump(false);
         return false;
     }
 
     ShowCursor(TRUE);
     ShowCursor(TRUE);
-    suspendMsgPump = true;
+    DD_Win32_SuspendMessagePump(true);
     GetWindowText(hWnd, buf, 255);
     ret = (MessageBox(hWnd, WIN_STRING(msg), buf, MB_OK | MB_ICONEXCLAMATION) == IDYES);
-    suspendMsgPump = false;
+    DD_Win32_SuspendMessagePump(false);
     ShowCursor(FALSE);
     ShowCursor(FALSE);
     return ret;
@@ -222,6 +239,22 @@ void Sys_Sleep(int millisecs)
 #endif
 }
 
+void Sys_BlockUntilRealTime(uint realTimeMs)
+{
+    uint remaining = realTimeMs - Sys_GetRealTime();
+    if(remaining > 50)
+    {
+        // Target time is in the past; or the caller is attempting to wait for
+        // too long a time.
+        return;
+    }
+
+    while(Sys_GetRealTime() < realTimeMs)
+    {
+        // Do nothing; don't yield execution.
+    }
+}
+
 void Sys_ShowCursor(boolean show)
 {
 #ifdef WIN32
@@ -246,7 +279,7 @@ void Sys_HideMouse(void)
 }
 
 /**
- * Called when Doomsday should quit (will be deferred until convienent).
+ * Called when Doomsday should quit (will be deferred until convenient).
  */
 void Sys_Quit(void)
 {
@@ -265,19 +298,19 @@ void Sys_MessageBox(const char *msg, boolean iserror)
 
     if(!hWnd)
     {
-        suspendMsgPump = true;
+        DD_Win32_SuspendMessagePump(true);
         MessageBox(HWND_DESKTOP,
                    TEXT("Sys_MessageBox: Main window not available."), NULL,
                    MB_ICONERROR | MB_OK);
-        suspendMsgPump = false;
+        DD_Win32_SuspendMessagePump(false);
         return;
     }
 
-    suspendMsgPump = true;
+    DD_Win32_SuspendMessagePump(true);
     GetWindowText(hWnd, title, 300);
     MessageBox(hWnd, WIN_STRING(msg), title,
                MB_OK | (iserror ? MB_ICONERROR : MB_ICONINFORMATION));
-    suspendMsgPump = false;
+    DD_Win32_SuspendMessagePump(false);
 #endif
 #ifdef UNIX
     fprintf(stderr, "%s %s\n", iserror ? "**ERROR**" : "---", msg);
@@ -322,22 +355,27 @@ void Sys_SuspendThread(thread_t handle, boolean dopause)
 }
 
 /**
- * @return              The return value of the thread.
+ * @return  Return value of the thread.
  */
 int Sys_WaitThread(thread_t thread)
 {
-    int             result = 0;
-
+    int result = 0;
     SDL_WaitThread(thread, &result);
     return result;
 }
 
-/**
- * @return              The identifier of the current thread.
- */
-uint Sys_ThreadID(void)
+uint Sys_ThreadId(thread_t handle)
 {
+    if(handle)
+    {
+        return SDL_GetThreadID(handle);
+    }
     return SDL_ThreadID();
+}
+
+uint Sys_CurrentThreadId(void)
+{
+    return Sys_ThreadId(NULL/*this thread*/);
 }
 
 mutex_t Sys_CreateMutex(const char *name)

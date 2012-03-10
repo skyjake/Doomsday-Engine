@@ -103,6 +103,9 @@ void Con_BusyList(BusyTask* tasks, int numTasks);
 /// @return  @c true if we are currently busy.
 boolean Con_IsBusy(void);
 
+/// @return  @c true if the current thread is the busy worker.
+boolean Con_InBusyWorker(void);
+
 /**
  * To be called by the busy worker when it has finished processing, to signal
  * the end of the task.

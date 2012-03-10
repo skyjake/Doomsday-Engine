@@ -45,12 +45,12 @@ void F_ExtractFileBase(char* dest, const char* path, size_t len);
 
 /**
  * @param file  File to check existence of. Relative path directives are expanded
- *      automatically: '>' '}' (plus '~' on Unix-based platforms).
+ *              automatically: '>' '}' (plus '~' on Unix-based platforms).
  * @return  @c 0 if the path points to a readable file on the local file system.
  */
 int F_FileExists(const char* path);
 
-/// \note This only works on real files.
+/// @note This only works on real files.
 uint F_LastModified(const char* path);
 
 /**
@@ -86,7 +86,7 @@ boolean F_ToNativeSlashes(ddstring_t* dst, const ddstring_t* src);
 
 /**
  * Convert the symbolic path into a real path.
- * \todo dj: This seems rather redundant; refactor callers.
+ * @todo: This seems rather redundant; refactor callers.
  */
 void F_ResolveSymbolicPath(ddstring_t* dst, const ddstring_t* src);
 
@@ -99,27 +99,31 @@ boolean F_IsAbsolute(const ddstring_t* path);
 /**
  * @return  @c true iff the path can be made into a relative path.
  */
-boolean F_IsRelativeToBasePath(const char* path);
+boolean F_IsRelativeToBase(const char* path, const char* base);
 
 /**
  * Attempt to remove the base path if found at the beginning of the path.
  *
  * @param dst  Potential base-relative path written here.
  * @param src  Possibly absolute path.
+ * @param base  Base to attempt to remove from @a src.
  *
  * @return  @c true iff the base path was found and removed.
  */
-boolean F_RemoveBasePath(ddstring_t* dst, const ddstring_t* src);
+boolean F_RemoveBasePath2(ddstring_t* dst, const ddstring_t* src, const ddstring_t* base);
+boolean F_RemoveBasePath(ddstring_t* dst, const ddstring_t* src /*, const ddstring_t* base=ddBasePath*/);
 
 /**
  * Attempt to prepend the base path. If @a src is already absolute do nothing.
  *
  * @param dst  Absolute path written here.
  * @param src  Original path.
+ * @param base  Base to attempt to prepend to @a src.
  *
  * @return  @c true iff the path was prepended.
  */
-boolean F_PrependBasePath(ddstring_t* dst, const ddstring_t* src);
+boolean F_PrependBasePath2(ddstring_t* dst, const ddstring_t* src, const ddstring_t* base);
+boolean F_PrependBasePath(ddstring_t* dst, const ddstring_t* src /*, const ddstring_t* base=ddBasePath*/);
 
 /**
  * Attempt to prepend the current work path. If @a src is already absolute do nothing.
@@ -134,8 +138,8 @@ boolean F_PrependWorkPath(ddstring_t* dst, const ddstring_t* src);
 /**
  * Expands relative path directives like '>'.
  *
- * \note Despite appearances this function is *not* an alternative version
- * of M_TranslatePath accepting ddstring_t arguments. Key differences:
+ * @note Despite appearances this function is *not* an alternative version of
+ *       M_TranslatePath accepting ddstring_t arguments. Key differences:
  *
  * ! Handles '~' on UNIX-based platforms.
  * ! No other transform applied to @a src path.
@@ -149,11 +153,11 @@ boolean F_ExpandBasePath(ddstring_t* dst, const ddstring_t* src);
 
 boolean F_MakeAbsolute(ddstring_t* dst, const ddstring_t* src);
 
-/// \todo Refactor me away (duplication).
+/// @todo Refactor me away (duplication).
 boolean F_TranslatePath(ddstring_t* dst, const ddstring_t* src);
 
 /**
- * \important Not thread-safe!
+ * @important Not thread-safe!
  * @return  A prettier copy of the original path.
  */
 const char* F_PrettyPath(const char* path);
@@ -166,4 +170,4 @@ const char* F_PrettyPath(const char* path);
  */
 int F_MatchFileName(const char* filePath, const char* pattern);
 
-#endif /* LIBDENG_FILESYS_UTIL_H */
+#endif /// LIBDENG_FILESYS_UTIL_H

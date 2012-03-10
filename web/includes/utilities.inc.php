@@ -85,6 +85,26 @@ function fopen_recursive($path, $mode, $chmod=0755)
     return fopen($path, $mode);
 }
 
+function file_get_contents_utf8($fn, $contentType, $charset)
+{
+    $opts = array(
+        'http' => array(
+            'method'=>"GET",
+            'header'=>"Content-Type:$contentType; charset=$charset"
+        )
+    );
+
+    $context = stream_context_create($opts);
+    $result = @file_get_contents($fn,false,$context);
+    return $result;
+}
+
+function implode_keys($glue="", $pieces=array())
+{
+    $keys = array_keys($pieces);
+    return implode($glue, $keys);
+}
+
 /**
  * Case insensitive version of array_key_exists.
  * Returns the matching key on success, else false.
@@ -138,4 +158,74 @@ function safe_url($raw_url)
     }
     // parse_url failed, or the scheme was not hypertext-based.
     return false;
+}
+
+/**
+ * Given an associative array generate a textual representation
+ * using JSON markup.
+ *
+ * @note json_encode is practically useless for real world data
+ *       in PHP <= 5.3 hence this hand-rolled imitation.
+ *
+ * @param array  (Array) Array to be interpreted.
+ * @param flags  (Integer) Reserved for future use.
+ * @param indent_level  (Integer) Level of indent to add to the output.
+ * @return  (Mixed) Textual representation in JSON format, else Boolean @c FALSE
+ */
+function json_encode_clean(&$array, $flags=0, $indent_level=0)
+{
+    if(!is_array($array)) return FALSE;
+
+    $staged = NULL;
+    foreach($array as $key => $value)
+    {
+        $key = '"'. addslashes($key) .'"';
+
+        // Format the value:
+        if(is_array($value))
+        {
+            // Descend to the subobject.
+            $value = json_encode_clean($value, $flags, $indent_level+1);
+        }
+        else if(is_bool($value))
+        {
+            $value = ((boolean)$value)? 'true' : 'false';
+        }
+        else if(!is_numeric($value) || is_string($value))
+        {
+            $value = '"'. addslashes($value) .'"';
+        }
+
+        // Time to construct the staging array?
+        if(is_null($staged))
+        {
+            $staged = array();
+        }
+
+        $staged[] = "$key: $value";
+    }
+
+    if(is_null($staged)) return '';
+
+    // Collapse into JSON comma-delimited form.
+    $indent = '    ';
+    $glue = ", \n";
+    $tmp = '';
+    foreach($staged as $item)
+    {
+        $tmp .= $indent . $item . $glue;
+    }
+    $result = "{\n" . substr($tmp, 0, -strlen($glue)) . "\n}";
+
+    // Determine scope-level indent depth.
+    $indent_level = (integer)$indent_level;
+    if($indent_level < 0) $indent_level = 0;
+
+    // Apply a scope-level indent?
+    if($indent_level != 0)
+    {
+        $result = str_repeat($indent, $indent_level) . $result;
+    }
+
+    return $result;
 }

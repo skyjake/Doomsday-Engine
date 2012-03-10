@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <math.h>
 
 #if __JDOOM__
 #  include "jdoom.h"
@@ -45,7 +46,6 @@
 // @todo Remove external dependencies
 #include "hu_menu.h" // For the menu sound ids.
 extern int menuTime;
-extern int menuFlashCounter;
 void Hu_MenuDrawFocusCursor(int x, int y, int focusObjectHeight, float alpha);
 
 static boolean inited = false;
@@ -94,6 +94,30 @@ static void errorIfNotInited(const char* callerName)
     exit(1);
 }
 
+static void lerpColor(float* dst, const float* a, const float* b, float t, boolean rgbaMode)
+{
+    if(t <= 0)
+    {
+        dst[CR] = a[CR];
+        dst[CG] = a[CG];
+        dst[CB] = a[CB];
+        if(rgbaMode) dst[CA] = a[CA];
+        return;
+    }
+    if(t >= 1)
+    {
+        dst[CR] = b[CR];
+        dst[CG] = b[CG];
+        dst[CB] = b[CB];
+        if(rgbaMode) dst[CA] = b[CA];
+        return;
+    }
+    dst[CR] = (1 - t) * a[CR] + t * b[CR];
+    dst[CG] = (1 - t) * a[CG] + t * b[CG];
+    dst[CB] = (1 - t) * a[CB] + t * b[CB];
+    if(rgbaMode) dst[CA] = (1 - t) * a[CA] + t * b[CA];
+}
+
 static uiwidgetid_t nextUnusedId(void)
 {
     return (uiwidgetid_t)(numWidgets);
@@ -137,7 +161,7 @@ static uiwidget_t* allocateWidget(guiwidgettype_t type, uiwidgetid_t id, int pla
         am->maxViewPositionDelta = 128;
         am->alpha = am->targetAlpha = am->oldAlpha = 0;
         /// Set initial geometry size.
-        /// \todo Should not be necessary...
+        /// @todo Should not be necessary...
         Rect_SetWidthHeight(obj->geometry, SCREENWIDTH, SCREENHEIGHT);
         break;
       }
@@ -187,7 +211,7 @@ static void clearWidgets(void)
 
 uiwidget_t* GUI_FindObjectById(uiwidgetid_t id)
 {
-    errorIfNotInited("GUI_FindObjectById");
+    if(!inited) return NULL; // GUI not available.
     if(id >= 0)
     {
         int i;
@@ -248,9 +272,21 @@ void GUI_LoadResources(void)
 
 void GUI_ReleaseResources(void)
 {
+    int i;
+
     if(Get(DD_DEDICATED) || Get(DD_NOVIDEO)) return;
 
     UIAutomap_ReleaseResources();
+
+    for(i = 0; i < numWidgets; ++i)
+    {
+        uiwidget_t* ob = widgets + i;
+        switch(ob->type)
+        {
+        case GUI_AUTOMAP: UIAutomap_Reset(ob); break;
+        default: break;
+        }
+    }
 }
 
 uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, int alignFlags,
@@ -264,7 +300,7 @@ uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, int alignFlags,
     return obj->id;
 }
 
-uiwidgetid_t GUI_CreateGroup(int groupFlags, int player, int alignFlags, int padding)
+uiwidgetid_t GUI_CreateGroup(int groupFlags, int player, int alignFlags, order_t order, int padding)
 {
     uiwidget_t* obj;
     guidata_group_t* grp;
@@ -273,6 +309,7 @@ uiwidgetid_t GUI_CreateGroup(int groupFlags, int player, int alignFlags, int pad
     obj = createWidget(GUI_GROUP, player, alignFlags, 1, 0, UIGroup_UpdateGeometry, NULL, NULL, NULL);
     grp = (guidata_group_t*)obj->typedata;
     grp->flags = groupFlags;
+    grp->order = order;
     grp->padding = padding;
 
     return obj->id;
@@ -388,14 +425,14 @@ void UIGroup_UpdateGeometry(uiwidget_t* obj)
             childGeometry = UIWidget_Geometry(child);
             if(Rect_Width(childGeometry) > 0 && Rect_Height(childGeometry) > 0)
             {
-                if(grp->flags & UWGF_RIGHTTOLEFT)
+                if(grp->order == ORDER_RIGHTTOLEFT)
                 {
                     if(!(grp->flags & UWGF_VERTICAL))
                         x -= Rect_Width(childGeometry)  + grp->padding;
                     else
                         y -= Rect_Height(childGeometry) + grp->padding;
                 }
-                else if(grp->flags & UWGF_LEFTTORIGHT)
+                else if(grp->order == ORDER_LEFTTORIGHT)
                 {
                     if(!(grp->flags & UWGF_VERTICAL))
                         x += Rect_Width(childGeometry)  + grp->padding;
@@ -451,14 +488,17 @@ static void drawWidget2(uiwidget_t* obj, const Point2Raw* offset)
         Point2_Raw(Rect_Origin(obj->geometry), &origin);
 
         // Configure the page render state.
-        /// \todo Initial font renderer setup.
         uiRS.pageAlpha = obj->opacity;
+
+        FR_PushAttrib();
 
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_Translatef(origin.x, origin.y, 0);
 
         // Do not pass a zero length offset.
         obj->drawer(obj, ((offset && (offset->x || offset->y))? offset : NULL));
+
+        FR_PopAttrib();
 
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_Translatef(-origin.x, -origin.y, 0);
@@ -512,6 +552,13 @@ void GUI_DrawWidget(uiwidget_t* obj, const Point2Raw* offset)
     FR_SetLeading(0);
 
     updateWidgetGeometry(obj);
+
+    FR_PopAttrib();
+
+    // Draw.
+    FR_PushAttrib();
+    FR_LoadDefaultAttrib();
+    FR_SetLeading(0);
 
     // Do not pass a zero length offset.
     drawWidget(obj, ((offset && (offset->x || offset->y))? offset : NULL));
@@ -760,6 +807,7 @@ static void updatePageObjectGeometries(mn_page_t* page)
         FR_PushAttrib();
         if(obj->updateGeometry)
         {
+            Rect_SetXY(obj->_geometry, 0, 0);
             obj->updateGeometry(obj, page);
         }
         FR_PopAttrib();
@@ -767,9 +815,9 @@ static void updatePageObjectGeometries(mn_page_t* page)
 }
 
 /// @return  @c true iff this object is drawable (potentially visible).
-boolean MNObject_IsDrawable(mn_object_t* obj)
+boolean MNObject_IsDrawable(mn_object_t* ob)
 {
-    return !(MNObject_Type(obj) == MN_NONE || !obj->drawer || (MNObject_Flags(obj) & MNF_HIDDEN));
+    return !(MNObject_Type(ob) == MN_NONE || !ob->drawer || (MNObject_Flags(ob) & MNF_HIDDEN));
 }
 
 static void applyPageLayout(mn_page_t* page)
@@ -779,56 +827,75 @@ static void applyPageLayout(mn_page_t* page)
 
     if(!page) return;
 
-    // Calculate leading/line offset.
-    FR_SetFont(MNPage_PredefinedFont(page, MENU_FONT1));
-    /// \kludge We cannot yet query line height from the font.
-    lineHeight = FR_TextHeight("{case}WyQ");
-    lineOffset = MAX_OF(1, .5f + lineHeight * .34f);
-
     Rect_SetXY(page->geometry, 0, 0);
     Rect_SetWidthHeight(page->geometry, 0, 0);
 
     // Apply layout logic to this page.
+
+    if(page->flags & MPF_LAYOUT_FIXED)
+    {
+        // This page uses a fixed layout.
+        for(i = 0; i < page->objectsCount; ++i)
+        {
+            mn_object_t* ob = &page->objects[i];
+
+            if(!MNObject_IsDrawable(ob)) continue;
+
+            Rect_SetXY(ob->_geometry, ob->_origin.x, ob->_origin.y);
+            Rect_Unite(page->geometry, ob->_geometry);
+        }
+        return;
+    }
+
+    // This page uses a dynamic layout.
+
+    // Calculate leading/line offset.
+    FR_SetFont(MNPage_PredefinedFont(page, MENU_FONT1));
+    /// @kludge We cannot yet query line height from the font.
+    lineHeight = FR_TextHeight("{case}WyQ");
+    lineOffset = MAX_OF(1, .5f + lineHeight * .34f);
+    // kludge end.
+
     for(i = 0; i < page->objectsCount;)
     {
-        mn_object_t* obj = &page->objects[i];
-        mn_object_t* nextObj = i+1 < page->objectsCount? &page->objects[i+1] : NULL;
+        mn_object_t* ob = &page->objects[i];
+        mn_object_t* nextOb = i+1 < page->objectsCount? &page->objects[i+1] : NULL;
 
-        if(!MNObject_IsDrawable(obj))
+        if(!MNObject_IsDrawable(ob))
         {
             // Proceed to the next object!
             i += 1;
             continue;
         }
 
-        Rect_SetXY(obj->_geometry, origin.x, origin.y);
+        Rect_SetXY(ob->_geometry, origin.x, origin.y);
 
         // Orient label plus button/inline-list/textual-slider pairs about a
         // vertical dividing line, with the label on the left, other object
         // on the right.
-        // \todo Do not assume pairing, an object should designate it's pair.
-        if(MNObject_Type(obj) == MN_TEXT && nextObj)
+        // @todo Do not assume pairing, an object should designate it's pair.
+        if(MNObject_Type(ob) == MN_TEXT && nextOb)
         {
-            if(MNObject_IsDrawable(nextObj) &&
-               (MNObject_Type(nextObj) == MN_BUTTON ||
-                MNObject_Type(nextObj) == MN_LISTINLINE ||
-                MNObject_Type(nextObj) == MN_COLORBOX ||
-                MNObject_Type(nextObj) == MN_BINDINGS ||
-                (MNObject_Type(nextObj) == MN_SLIDER && nextObj->drawer == MNSlider_TextualValueDrawer)))
+            if(MNObject_IsDrawable(nextOb) &&
+               (MNObject_Type(nextOb) == MN_BUTTON ||
+                MNObject_Type(nextOb) == MN_LISTINLINE ||
+                MNObject_Type(nextOb) == MN_COLORBOX ||
+                MNObject_Type(nextOb) == MN_BINDINGS ||
+                (MNObject_Type(nextOb) == MN_SLIDER && nextOb->drawer == MNSlider_TextualValueDrawer)))
             {
                 const int margin = lineOffset * 2;
                 RectRaw united;
 
-                Rect_SetXY(nextObj->_geometry, margin + Rect_Width(obj->_geometry), origin.y);
+                Rect_SetXY(nextOb->_geometry, margin + Rect_Width(ob->_geometry), origin.y);
 
-                origin.y += Rect_United(obj->_geometry, nextObj->_geometry, &united)
+                origin.y += Rect_United(ob->_geometry, nextOb->_geometry, &united)
                           ->size.height + lineOffset;
 
                 Rect_UniteRaw(page->geometry, &united);
 
                 // Extra spacing between object groups.
                 if(i+2 < page->objectsCount &&
-                   nextObj->_group != page->objects[i+2]._group)
+                   nextOb->_group != page->objects[i+2]._group)
                     origin.y += lineHeight;
 
                 // Proceed to the next object!
@@ -837,12 +904,12 @@ static void applyPageLayout(mn_page_t* page)
             }
         }
 
-        Rect_Unite(page->geometry, obj->_geometry);
+        Rect_Unite(page->geometry, ob->_geometry);
 
-        origin.y += Rect_Height(obj->_geometry) + lineOffset;
+        origin.y += Rect_Height(ob->_geometry) + lineOffset;
 
         // Extra spacing between object groups.
-        if(nextObj && nextObj->_group != obj->_group)
+        if(nextOb && nextOb->_group != ob->_group)
             origin.y += lineHeight;
 
         // Proceed to the next object!
@@ -895,8 +962,9 @@ static void drawPageHeading(mn_page_t* page, const Point2Raw* offset)
 
     if(!page) return;
 
-    /// \kludge no title = no heading.
+    /// @kludge no title = no heading.
     if(Str_IsEmpty(&page->title)) return;
+    // kludge end.
 
     origin.x = SCREENWIDTH/2;
     origin.y = (SCREENHEIGHT/2) - ((SCREENHEIGHT/2-5)/cfg.menuScale);
@@ -907,8 +975,8 @@ static void drawPageHeading(mn_page_t* page, const Point2Raw* offset)
     }
 
     FR_PushAttrib();
-      Hu_MenuDrawPageTitle(Str_Text(&page->title), origin.x, origin.y); origin.y += 16;
-      drawPageNavigation(page, origin.x, origin.y);
+    Hu_MenuDrawPageTitle(Str_Text(&page->title), origin.x, origin.y); origin.y += 16;
+    drawPageNavigation(page, origin.x, origin.y);
     FR_PopAttrib();
 }
 
@@ -949,11 +1017,11 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
         focusObjHeight = Size2_Height(MNObject_Size(focusObj));
 
         // Determine the origin and dimensions of the cursor.
-        // \todo Each object should define a focus origin...
-        cursorOrigin.x = 0;
+        // @todo Each object should define a focus origin...
+        cursorOrigin.x = -1;
         cursorOrigin.y = Point2_Y(MNObject_Origin(focusObj));
 
-        /// \kludge
+        /// @kludge
         /// We cannot yet query the subobjects of the list for these values
         /// so we must calculate them ourselves, here.
         if(MN_LIST == MNObject_Type(focusObj) && (MNObject_Flags(focusObj) & MNF_ACTIVE) &&
@@ -975,7 +1043,7 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
     DGL_Translatef(page->origin.x, page->origin.y, 0);
 
     // Apply page scroll?
-    if(focusObj)
+    if(!(page->flags & MPF_NEVER_SCROLL) && focusObj)
     {
         RectRaw pageGeometry, viewRegion;
         Rect_Raw(page->geometry, &pageGeometry);
@@ -1016,7 +1084,7 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
     }
 
     // How about a focus cursor?
-    /// \todo cursor should be drawn on top of the page drawer.
+    /// @todo cursor should be drawn on top of the page drawer.
     if(showFocusCursor && focusObj)
     {
         Hu_MenuDrawFocusCursor(cursorOrigin.x, cursorOrigin.y, focusObjHeight, alpha);
@@ -1105,22 +1173,21 @@ static mn_object_t* MNPage_ObjectByIndex(mn_page_t* page, int idx)
     return page->objects + idx;
 }
 
-/// \assume @a obj is a child of @a page.
-static void MNPage_GiveChildFocus(mn_page_t* page, mn_object_t* obj, boolean allowRefocus)
+/// @assume @a ob is a child of @a page.
+static void MNPage_GiveChildFocus(mn_page_t* page, mn_object_t* ob, boolean allowRefocus)
 {
-    mn_object_t* oldFocusObj;
-    assert(page && obj);
+    assert(page && ob);
 
     if(!(0 > page->focus))
     {
-        if(obj != page->objects + page->focus)
+        if(ob != page->objects + page->focus)
         {
-            oldFocusObj = page->objects + page->focus;
-            if(MNObject_HasAction(oldFocusObj, MNA_FOCUSOUT))
+            mn_object_t* oldFocusOb = page->objects + page->focus;
+            if(MNObject_HasAction(oldFocusOb, MNA_FOCUSOUT))
             {
-                MNObject_ExecAction(oldFocusObj, MNA_FOCUSOUT, NULL);
+                MNObject_ExecAction(oldFocusOb, MNA_FOCUSOUT, NULL);
             }
-            MNObject_SetFlags(oldFocusObj, FO_CLEAR, MNF_FOCUS);
+            MNObject_SetFlags(oldFocusOb, FO_CLEAR, MNF_FOCUS);
         }
         else if(!allowRefocus)
         {
@@ -1128,11 +1195,11 @@ static void MNPage_GiveChildFocus(mn_page_t* page, mn_object_t* obj, boolean all
         }
     }
 
-    page->focus = obj - page->objects;
-    MNObject_SetFlags(obj, FO_SET, MNF_FOCUS);
-    if(MNObject_HasAction(obj, MNA_FOCUS))
+    page->focus = ob - page->objects;
+    MNObject_SetFlags(ob, FO_SET, MNF_FOCUS);
+    if(MNObject_HasAction(ob, MNA_FOCUS))
     {
-        MNObject_ExecAction(obj, MNA_FOCUS, NULL);
+        MNObject_ExecAction(ob, MNA_FOCUS, NULL);
     }
 }
 
@@ -1151,55 +1218,33 @@ void MNPage_SetFocus(mn_page_t* page, mn_object_t* obj)
 
 void MNPage_Initialize(mn_page_t* page)
 {
-    mn_object_t* obj;
+    mn_object_t* ob;
     int i;
     assert(page);
 
-    // (Re)init objects.
-    for(i = 0, obj = page->objects; i < page->objectsCount; ++i, obj++)
-    {
-        switch(MNObject_Type(obj))
-        {
-        case MN_TEXT:
-        case MN_MOBJPREVIEW:
-            MNObject_SetFlags(obj, FO_SET, MNF_NO_FOCUS);
-            break;
-        case MN_BUTTON: {
-            mndata_button_t* btn = (mndata_button_t*)obj->_typedata;
-            if(btn->text && (PTR2INT(btn->text) > 0 && PTR2INT(btn->text) < NUMTEXT))
-            {
-                btn->text = GET_TXT(PTR2INT(btn->text));
-                MNObject_SetShortcut(obj, btn->text[0]);
-            }
+    // Reset page timer.
+    page->timer = 0;
 
+    // (Re)init objects.
+    for(i = 0, ob = page->objects; i < page->objectsCount; ++i, ob++)
+    {
+        // Reset object timer.
+        ob->timer = 0;
+
+        switch(MNObject_Type(ob))
+        {
+        case MN_BUTTON: {
+            mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
             if(btn->staydownMode)
             {
-                const boolean activate = (*(char*) obj->data1);
-                MNObject_SetFlags(obj, (activate? FO_SET:FO_CLEAR), MNF_ACTIVE);
+                const boolean activate = (*(char*) ob->data1);
+                MNObject_SetFlags(ob, (activate? FO_SET:FO_CLEAR), MNF_ACTIVE);
             }
-            break;
-          }
-        case MN_EDIT: {
-            mndata_edit_t* edit = (mndata_edit_t*) obj->_typedata;
-            if(edit->emptyString && (PTR2INT(edit->emptyString) > 0 && PTR2INT(edit->emptyString) < NUMTEXT))
-            {
-                edit->emptyString = GET_TXT(PTR2INT(edit->emptyString));
-            }
+            break; }
 
-            break;
-          }
         case MN_LIST:
         case MN_LISTINLINE: {
-            mndata_list_t* list = obj->_typedata;
-            int j;
-            for(j = 0; j < list->count; ++j)
-            {
-                mndata_listitem_t* item = &((mndata_listitem_t*)list->items)[j];
-                if(item->text && (PTR2INT(item->text) > 0 && PTR2INT(item->text) < NUMTEXT))
-                {
-                    item->text = GET_TXT(PTR2INT(item->text));
-                }
-            }
+            mndata_list_t* list = ob->_typedata;
 
             // Determine number of potentially visible items.
             list->numvis = list->count;
@@ -1210,18 +1255,8 @@ void MNPage_Initialize(mn_page_t* page)
                 if(list->selection > list->first + list->numvis - 1)
                     list->first = list->selection - list->numvis + 1;
             }
-            break;
-          }
-        case MN_COLORBOX: {
-            mndata_colorbox_t* cbox = (mndata_colorbox_t*) obj->_typedata;
-            if(!cbox->rgbaMode)
-                cbox->a = 1.f;
-            if(0 >= cbox->width)
-                cbox->width = MNDATA_COLORBOX_WIDTH;
-            if(0 >= cbox->height)
-                cbox->height = MNDATA_COLORBOX_HEIGHT;
-            break;
-          }
+            break; }
+
         default: break;
         }
     }
@@ -1242,8 +1277,8 @@ void MNPage_Initialize(mn_page_t* page)
         // but find the last with this flag...
         for(i = 0; i < page->objectsCount; ++i)
         {
-            mn_object_t* obj = &page->objects[i];
-            if((MNObject_Flags(obj) & MNF_DEFAULT) && !(MNObject_Flags(obj) & (MNF_DISABLED|MNF_NO_FOCUS)))
+            mn_object_t* ob = &page->objects[i];
+            if((MNObject_Flags(ob) & MNF_DEFAULT) && !(MNObject_Flags(ob) & (MNF_DISABLED|MNF_NO_FOCUS)))
             {
                 giveFocus = i;
             }
@@ -1253,8 +1288,8 @@ void MNPage_Initialize(mn_page_t* page)
         if(-1 == giveFocus)
         for(i = 0; i < page->objectsCount; ++i)
         {
-            mn_object_t* obj = &page->objects[i];
-            if(!(MNObject_Flags(obj) & (MNF_DISABLED|MNF_NO_FOCUS)))
+            mn_object_t* ob = &page->objects[i];
+            if(!(MNObject_Flags(ob) & (MNF_DISABLED|MNF_NO_FOCUS)))
             {
                 giveFocus = i;
                 break;
@@ -1277,6 +1312,27 @@ void MNPage_Initialize(mn_page_t* page)
         // We've been here before; re-focus on the last focused object.
         MNPage_GiveChildFocus(page, page->objects + page->focus, true);
     }
+}
+
+void MNPage_Ticker(mn_page_t* page)
+{
+    mn_object_t* ob;
+    int i;
+
+    // Call the ticker of each object, unless they're hidden or paused.
+    for(i = 0, ob = page->objects; i < page->objectsCount; ++i, ob++)
+    {
+        if((MNObject_Flags(ob) & MNF_PAUSED) || (MNObject_Flags(ob) & MNF_HIDDEN))
+            continue;
+
+        if(ob->ticker)
+            ob->ticker(ob);
+
+        // Advance object timer.
+        ob->timer++;
+    }
+
+    page->timer++;
 }
 
 fontid_t MNPage_PredefinedFont(mn_page_t* page, mn_page_fontid_t id)
@@ -1335,40 +1391,89 @@ void MNPage_PredefinedColor(mn_page_t* page, mn_page_colorid_t id, float rgb[3])
     rgb[CB] = cfg.menuTextColors[colorIndex][CB];
 }
 
-mn_obtype_e MNObject_Type(const mn_object_t* obj)
+int MNPage_Timer(mn_page_t* page)
 {
-    assert(obj);
-    return obj->_type;
+    assert(page);
+    return page->timer;
 }
 
-mn_page_t* MNObject_Page(const mn_object_t* obj)
+mn_obtype_e MNObject_Type(const mn_object_t* ob)
 {
-    assert(obj);
-    return obj->_page;
+    assert(ob);
+    return ob->_type;
 }
 
-int MNObject_Flags(const mn_object_t* obj)
+mn_page_t* MNObject_Page(const mn_object_t* ob)
 {
-    assert(obj);
-    return obj->_flags;
+    assert(ob);
+    return ob->_page;
 }
 
-const Rect* MNObject_Geometry(const mn_object_t* obj)
+int MNObject_Flags(const mn_object_t* ob)
 {
-    assert(obj);
-    return obj->_geometry;
+    assert(ob);
+    return ob->_flags;
 }
 
-const Point2* MNObject_Origin(const mn_object_t* obj)
+const Rect* MNObject_Geometry(const mn_object_t* ob)
 {
-    assert(obj);
-    return Rect_Origin(obj->_geometry);
+    assert(ob);
+    return ob->_geometry;
 }
 
-const Size2* MNObject_Size(const mn_object_t* obj)
+const Point2* MNObject_Origin(const mn_object_t* ob)
 {
-    assert(obj);
-    return Rect_Size(obj->_geometry);
+    assert(ob);
+    return Rect_Origin(ob->_geometry);
+}
+
+const Size2* MNObject_Size(const mn_object_t* ob)
+{
+    assert(ob);
+    return Rect_Size(ob->_geometry);
+}
+
+const Point2Raw* MNObject_FixedOrigin(const mn_object_t* ob)
+{
+    assert(ob);
+    return &ob->_origin;
+}
+
+int MNObject_FixedX(const mn_object_t* ob)
+{
+    assert(ob);
+    return ob->_origin.x;
+}
+
+int MNObject_FixedY(const mn_object_t* ob)
+{
+    assert(ob);
+    return ob->_origin.y;
+}
+
+mn_object_t* MNObject_SetFixedOrigin(mn_object_t* ob, const Point2Raw* origin)
+{
+    assert(ob);
+    if(origin)
+    {
+        ob->_origin.x = origin->x;
+        ob->_origin.y = origin->y;
+    }
+    return ob;
+}
+
+mn_object_t* MNObject_SetFixedX(mn_object_t* ob, int x)
+{
+    assert(ob);
+    ob->_origin.x = x;
+    return ob;
+}
+
+mn_object_t* MNObject_SetFixedY(mn_object_t* ob, int y)
+{
+    assert(ob);
+    ob->_origin.y = y;
+    return ob;
 }
 
 int MNObject_SetFlags(mn_object_t* obj, flagop_t op, int flags)
@@ -1386,97 +1491,185 @@ int MNObject_SetFlags(mn_object_t* obj, flagop_t op, int flags)
     return obj->_flags;
 }
 
-int MNObject_Shortcut(mn_object_t* obj)
+int MNObject_Shortcut(mn_object_t* ob)
 {
-    assert(obj);
-    return obj->_shortcut;
+    assert(ob);
+    return ob->_shortcut;
 }
 
-void MNObject_SetShortcut(mn_object_t* obj, int ddkey)
+void MNObject_SetShortcut(mn_object_t* ob, int ddkey)
 {
-    assert(obj);
+    assert(ob);
     if(isalnum(ddkey))
     {
-        obj->_shortcut = tolower(ddkey);
+        ob->_shortcut = tolower(ddkey);
     }
 }
 
-int MNObject_Font(mn_object_t* obj)
+int MNObject_Font(mn_object_t* ob)
 {
-    assert(obj);
-    return obj->_pageFontIdx;
+    assert(ob);
+    return ob->_pageFontIdx;
 }
 
-int MNObject_Color(mn_object_t* obj)
+int MNObject_Color(mn_object_t* ob)
 {
-    assert(obj);
-    return obj->_pageColorIdx;
+    assert(ob);
+    return ob->_pageColorIdx;
 }
 
-boolean MNObject_IsGroupMember(const mn_object_t* obj, int group)
+boolean MNObject_IsGroupMember(const mn_object_t* ob, int group)
 {
-    assert(obj);
-    return (obj->_group == group);
+    assert(ob);
+    return (ob->_group == group);
 }
 
-int MNObject_DefaultCommandResponder(mn_object_t* obj, menucommand_e cmd)
+int MNObject_DefaultCommandResponder(mn_object_t* ob, menucommand_e cmd)
 {
-    assert(obj);
-    if(MCMD_SELECT == cmd && (obj->_flags & MNF_FOCUS) && !(obj->_flags & MNF_DISABLED))
+    assert(ob);
+    if(MCMD_SELECT == cmd && (ob->_flags & MNF_FOCUS) && !(ob->_flags & MNF_DISABLED))
     {
         S_LocalSound(SFX_MENU_ACCEPT, NULL);
-        if(!(obj->_flags & MNF_ACTIVE))
+        if(!(ob->_flags & MNF_ACTIVE))
         {
-            obj->_flags |= MNF_ACTIVE;
-            if(MNObject_HasAction(obj, MNA_ACTIVE))
+            ob->_flags |= MNF_ACTIVE;
+            if(MNObject_HasAction(ob, MNA_ACTIVE))
             {
-                MNObject_ExecAction(obj, MNA_ACTIVE, NULL);
+                MNObject_ExecAction(ob, MNA_ACTIVE, NULL);
             }
         }
 
-        obj->_flags &= ~MNF_ACTIVE;
-        if(MNObject_HasAction(obj, MNA_ACTIVEOUT))
+        ob->_flags &= ~MNF_ACTIVE;
+        if(MNObject_HasAction(ob, MNA_ACTIVEOUT))
         {
-            MNObject_ExecAction(obj, MNA_ACTIVEOUT, NULL);
+            MNObject_ExecAction(ob, MNA_ACTIVEOUT, NULL);
         }
         return true;
     }
     return false; // Not eaten.
 }
 
-static mn_actioninfo_t* MNObject_FindActionInfoForId(mn_object_t* obj, mn_actionid_t id)
+static mn_actioninfo_t* MNObject_FindActionInfoForId(mn_object_t* ob, mn_actionid_t id)
 {
-    assert(obj);
+    assert(ob);
     if(VALID_MNACTION(id))
     {
-        return &obj->actions[id];
+        return &ob->actions[id];
     }
     return NULL; // Not found.
 }
 
-const mn_actioninfo_t* MNObject_Action(mn_object_t* obj, mn_actionid_t id)
+const mn_actioninfo_t* MNObject_Action(mn_object_t* ob, mn_actionid_t id)
 {
-    return MNObject_FindActionInfoForId(obj, id);
+    return MNObject_FindActionInfoForId(ob, id);
 }
 
-boolean MNObject_HasAction(mn_object_t* obj, mn_actionid_t id)
+boolean MNObject_HasAction(mn_object_t* ob, mn_actionid_t id)
 {
-    mn_actioninfo_t* info = MNObject_FindActionInfoForId(obj, id);
+    mn_actioninfo_t* info = MNObject_FindActionInfoForId(ob, id);
     return (info && MNActionInfo_IsActionExecuteable(info));
 }
 
-int MNObject_ExecAction(mn_object_t* obj, mn_actionid_t id, void* paramaters)
+int MNObject_ExecAction(mn_object_t* ob, mn_actionid_t id, void* paramaters)
 {
-    mn_actioninfo_t* info = MNObject_FindActionInfoForId(obj, id);
+    mn_actioninfo_t* info = MNObject_FindActionInfoForId(ob, id);
     if(info && MNActionInfo_IsActionExecuteable(info))
     {
-        return info->callback(obj, id, paramaters);
+        return info->callback(ob, id, paramaters);
     }
 #if _DEBUG
-    Con_Error("MNObject::ExecAction: Attempt to execute non-existent action #%i on object %p.", (int) id, obj);
+    Con_Error("MNObject::ExecAction: Attempt to execute non-existent action #%i on object %p.", (int) id, ob);
 #endif
-    /// \fixme Need an error handling mechanic.
+    /// @fixme Need an error handling mechanic.
     return -1; // NOP
+}
+
+mn_object_t* MNRect_New(void)
+{
+    mn_object_t* ob = Z_Calloc(sizeof(*ob), PU_GAMESTATIC, 0);
+    if(!ob) Con_Error("MNRect::New: Failed on allocation of %lu bytes for new MNRect.", (unsigned long) sizeof(*ob));
+    ob->_typedata = Z_Calloc(sizeof(mndata_rect_t), PU_GAMESTATIC, 0);
+    if(!ob->_typedata) Con_Error("MNRect::New: Failed on allocation of %lu bytes for mndata_rect_t.", (unsigned long) sizeof(mndata_rect_t));
+
+    ob->_type = MN_RECT;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNRect_Ticker;
+    ob->drawer = MNRect_Drawer;
+    ob->updateGeometry = MNRect_UpdateGeometry;
+
+    return ob;
+}
+
+void MNRect_Delete(mn_object_t* ob)
+{
+    assert(ob && ob->_type == MN_RECT);
+    Z_Free(ob->_typedata);
+    Z_Free(ob);
+}
+
+void MNRect_Ticker(mn_object_t* ob)
+{
+    mndata_rect_t* rect = (mndata_rect_t*) ob->_typedata;
+    assert(ob && ob->_type == MN_RECT);
+
+    // Stub.
+}
+
+void MNRect_Drawer(mn_object_t* ob, const Point2Raw* origin)
+{
+    mndata_rect_t* rect = (mndata_rect_t*)ob->_typedata;
+    assert(ob->_type == MN_RECT);
+
+    if(origin)
+    {
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_Translatef(origin->x, origin->y, 0);
+    }
+
+    if(rect->patch)
+    {
+        DGL_SetPatch(rect->patch, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+        DGL_Enable(DGL_TEXTURE_2D);
+    }
+
+    DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
+    DGL_DrawRect2(0, 0, rect->dimensions.width, rect->dimensions.height);
+
+    if(rect->patch)
+    {
+        DGL_Disable(DGL_TEXTURE_2D);
+    }
+
+    if(origin)
+    {
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_Translatef(-origin->x, -origin->y, 0);
+    }
+}
+
+void MNRect_UpdateGeometry(mn_object_t* ob, mn_page_t* page)
+{
+    mndata_rect_t* rct = (mndata_rect_t*)ob->_typedata;
+    assert(ob->_type == MN_RECT);
+
+    if(rct->dimensions.width == 0 && rct->dimensions.height == 0)
+    {
+        // Inherit dimensions from the patch.
+        patchinfo_t info;
+        if(R_GetPatchInfo(rct->patch, &info))
+        {
+            memcpy(&rct->dimensions, &info.geometry.size, sizeof(rct->dimensions));
+        }
+    }
+    Rect_SetWidthHeight(ob->_geometry, rct->dimensions.width, rct->dimensions.height);
+}
+
+void MNRect_SetBackgroundPatch(mn_object_t* ob, patchid_t patch)
+{
+    mndata_rect_t* rect = (mndata_rect_t*)ob->_typedata;
+    assert(ob->_type == MN_RECT);
+    rect->patch = patch;
 }
 
 mn_object_t* MNText_New(void)
@@ -1489,6 +1682,7 @@ mn_object_t* MNText_New(void)
     ob->_type = MN_TEXT;
     ob->_pageFontIdx = MENU_FONT1;
     ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
     ob->drawer = MNText_Drawer;
     ob->updateGeometry = MNText_UpdateGeometry;
 
@@ -1502,24 +1696,30 @@ void MNText_Delete(mn_object_t* ob)
     Z_Free(ob);
 }
 
-void MNText_Drawer(mn_object_t* obj, const Point2Raw* origin)
+void MNText_Ticker(mn_object_t* ob)
 {
-    mndata_text_t* txt = (mndata_text_t*)obj->_typedata;
-    fontid_t fontId = rs.textFonts[obj->_pageFontIdx];
-    float color[4];
-    assert(obj->_type == MN_TEXT);
+    mndata_text_t* txt = (mndata_text_t*) ob->_typedata;
+    assert(ob && ob->_type == MN_TEXT);
 
-    memcpy(color, rs.textColors[obj->_pageColorIdx], sizeof(color));
+    // Stub.
+}
 
-    // Flash the focused object?
-    if(obj->_flags & MNF_FOCUS)
+void MNText_Drawer(mn_object_t* ob, const Point2Raw* origin)
+{
+    mndata_text_t* txt = (mndata_text_t*)ob->_typedata;
+    fontid_t fontId = rs.textFonts[ob->_pageFontIdx];
+    float color[4], t = (ob->_flags & MNF_FOCUS)? 1 : 0;
+    assert(ob->_type == MN_TEXT);
+
+    // Flash if focused?
+    if((ob->_flags & MNF_FOCUS) && cfg.menuTextFlashSpeed > 0)
     {
-        float t = (menuFlashCounter <= 50? menuFlashCounter / 50.0f : (100 - menuFlashCounter) / 50.0f);
-        color[CR] *= t; color[CG] *= t; color[CB] *= t;
-        color[CR] += cfg.menuTextFlashColor[CR] * (1 - t);
-        color[CG] += cfg.menuTextFlashColor[CG] * (1 - t);
-        color[CB] += cfg.menuTextFlashColor[CB] * (1 - t);
+        const float speed = cfg.menuTextFlashSpeed / 2.f;
+        t = (1 + sin(MNPage_Timer(ob->_page) / (float)TICSPERSEC * speed * PI)) / 2;
     }
+
+    lerpColor(color, rs.textColors[ob->_pageColorIdx], cfg.menuTextFlashColor, t, false/*rgb mode*/);
+    color[CA] = rs.textColors[ob->_pageColorIdx][CA];
 
     DGL_Color4f(1, 1, 1, color[CA]);
     FR_SetFont(fontId);
@@ -1528,7 +1728,7 @@ void MNText_Drawer(mn_object_t* obj, const Point2Raw* origin)
     if(txt->patch)
     {
         const char* replacement = NULL;
-        if(!(obj->_flags & MNF_NO_ALTTEXT))
+        if(!(txt->flags & MNTEXT_NO_ALTTEXT))
         {
             replacement = Hu_ChoosePatchReplacement2(cfg.menuPatchReplaceMode, *txt->patch, txt->text);
         }
@@ -1548,7 +1748,7 @@ void MNText_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
     mndata_text_t* txt = (mndata_text_t*)obj->_typedata;
     Size2Raw size;
     assert(obj->_type == MN_TEXT);
-    // @fixme What if patch replacement is disabled?
+    /// @fixme What if patch replacement is disabled?
     if(txt->patch != 0)
     {
         patchinfo_t info;
@@ -1559,6 +1759,22 @@ void MNText_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
     FR_SetFont(MNPage_PredefinedFont(page, obj->_pageFontIdx));
     FR_TextSize(&size, txt->text);
     Rect_SetWidthHeight(obj->_geometry, size.width, size.height);
+}
+
+int MNText_SetFlags(mn_object_t* ob, flagop_t op, int flags)
+{
+    mndata_text_t* txt = (mndata_text_t*)ob->_typedata;
+    assert(ob && ob->_type == MN_TEXT);
+    switch(op)
+    {
+    case FO_CLEAR:  txt->flags &= ~flags;  break;
+    case FO_SET:    txt->flags |= flags;   break;
+    case FO_TOGGLE: txt->flags ^= flags;   break;
+    default:
+        Con_Error("MNText::SetFlags: Unknown op %i\n", op);
+        exit(1); // Unreachable.
+    }
+    return ob->_flags;
 }
 
 mn_object_t* MNEdit_New(void)
@@ -1572,6 +1788,7 @@ mn_object_t* MNEdit_New(void)
     ob->_pageFontIdx = MENU_FONT1;
     ob->_pageColorIdx = MENU_COLOR1;
     ob->drawer = MNEdit_Drawer;
+    ob->ticker = MNEdit_Ticker;
     ob->updateGeometry = MNEdit_UpdateGeometry;
     ob->cmdResponder = MNEdit_CommandResponder;
     ob->responder = MNEdit_Responder;
@@ -1584,6 +1801,14 @@ void MNEdit_Delete(mn_object_t* ob)
     assert(ob && ob->_type == MN_EDIT);
     Z_Free(ob->_typedata);
     Z_Free(ob);
+}
+
+void MNEdit_Ticker(mn_object_t* ob)
+{
+    mndata_edit_t* edit = (mndata_edit_t*) ob->_typedata;
+    assert(ob && ob->_type == MN_EDIT);
+
+    // Stub.
 }
 
 static void drawEditBackground(const mn_object_t* obj, int x, int y, int width, float alpha)
@@ -1614,21 +1839,21 @@ static void drawEditBackground(const mn_object_t* obj, int x, int y, int width, 
     }
 }
 
-void MNEdit_Drawer(mn_object_t* obj, const Point2Raw* _origin)
+void MNEdit_Drawer(mn_object_t* ob, const Point2Raw* _origin)
 {
-    const mndata_edit_t* edit = (mndata_edit_t*) obj->_typedata;
-    fontid_t fontId = rs.textFonts[obj->_pageFontIdx];
+    const mndata_edit_t* edit = (mndata_edit_t*) ob->_typedata;
+    fontid_t fontId = rs.textFonts[ob->_pageFontIdx];
     char buf[MNDATA_EDIT_TEXT_MAX_LENGTH+1];
     float light = 1, textAlpha = rs.pageAlpha;
     int width, numVisCharacters;
     const char* string;
     Point2Raw origin;
-    assert(obj->_type == MN_EDIT);
+    assert(ob->_type == MN_EDIT);
 
     origin.x = _origin->x + MNDATA_EDIT_OFFSET_X;
     origin.y = _origin->y + MNDATA_EDIT_OFFSET_Y;
 
-    if((obj->_flags & MNF_ACTIVE) && (obj->_flags & MNF_FOCUS))
+    if((ob->_flags & MNF_ACTIVE) && (ob->_flags & MNF_FOCUS))
     {
         if((menuTime & 8) && strlen(edit->text) < MNDATA_EDIT_TEXT_MAX_LENGTH)
         {
@@ -1660,43 +1885,25 @@ void MNEdit_Drawer(mn_object_t* obj, const Point2Raw* _origin)
     else
         numVisCharacters = MNDATA_EDIT_TEXT_MAX_LENGTH;
     width = numVisCharacters * FR_CharWidth('_') + 20;
-    drawEditBackground(obj, origin.x + MNDATA_EDIT_BACKGROUND_OFFSET_X,
+    drawEditBackground(ob, origin.x + MNDATA_EDIT_BACKGROUND_OFFSET_X,
                             origin.y + MNDATA_EDIT_BACKGROUND_OFFSET_Y, width, rs.pageAlpha);
 
     if(string)
     {
-        float color[4];
-        color[CR] = cfg.menuTextColors[MNDATA_EDIT_TEXT_COLORIDX][CR];
-        color[CG] = cfg.menuTextColors[MNDATA_EDIT_TEXT_COLORIDX][CG];
-        color[CB] = cfg.menuTextColors[MNDATA_EDIT_TEXT_COLORIDX][CB];
+        float color[4], t = 0;
 
-        if(obj->_flags & MNF_FOCUS)
+        // Flash if focused?
+        if(!(ob->_flags & MNF_ACTIVE) && (ob->_flags & MNF_FOCUS) && cfg.menuTextFlashSpeed > 0)
         {
-            float t;
-
-            if(obj->_flags & MNF_ACTIVE)
-            {
-                t = 0;
-            }
-            else
-            {
-                t = (menuFlashCounter <= 50? (menuFlashCounter / 50.0f) :
-                                             ((100 - menuFlashCounter) / 50.0f));
-            }
-
-            color[CR] *= t;
-            color[CG] *= t;
-            color[CB] *= t;
-
-            color[CR] += cfg.menuTextFlashColor[CR] * (1 - t);
-            color[CG] += cfg.menuTextFlashColor[CG] * (1 - t);
-            color[CB] += cfg.menuTextFlashColor[CB] * (1 - t);
+            const float speed = cfg.menuTextFlashSpeed / 2.f;
+            t = (1 + sin(MNPage_Timer(ob->_page) / (float)TICSPERSEC * speed * PI)) / 2;
         }
+
+        lerpColor(color, cfg.menuTextColors[MNDATA_EDIT_TEXT_COLORIDX], cfg.menuTextFlashColor, t, false/*rgb mode*/);
         color[CA] = textAlpha;
 
-        color[CR] *= light;
-        color[CG] *= light;
-        color[CB] *= light;
+        // Light the text.
+        color[CR] *= light; color[CG] *= light; color[CB] *= light;
 
         FR_SetColorAndAlphav(color);
         FR_DrawText3(string, &origin, ALIGN_TOPLEFT, MN_MergeMenuEffectWithDrawTextFlags(0));
@@ -1717,6 +1924,7 @@ int MNEdit_CommandResponder(mn_object_t* obj, menucommand_e cmd)
         {
             S_LocalSound(SFX_MENU_CYCLE, NULL);
             obj->_flags |= MNF_ACTIVE;
+            obj->timer = 0;
             // Store a copy of the present text value so we can restore it.
             memcpy(edit->oldtext, edit->text, sizeof(edit->oldtext));
             if(MNObject_HasAction(obj, MNA_ACTIVE))
@@ -1854,6 +2062,7 @@ mn_object_t* MNList_New(void)
     ob->_type = MN_LIST;
     ob->_pageFontIdx = MENU_FONT1;
     ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNList_Ticker;
     ob->drawer = MNList_Drawer;
     ob->updateGeometry = MNList_UpdateGeometry;
     ob->cmdResponder = MNList_CommandResponder;
@@ -1868,35 +2077,43 @@ void MNList_Delete(mn_object_t* ob)
     Z_Free(ob);
 }
 
-void MNList_Drawer(mn_object_t* obj, const Point2Raw* _origin)
+void MNList_Ticker(mn_object_t* ob)
 {
-    const mndata_list_t* list = (mndata_list_t*)obj->_typedata;
-    const boolean flashSelection = ((obj->_flags & MNF_ACTIVE) && MNList_SelectionIsVisible(obj));
-    const float* color = rs.textColors[obj->_pageColorIdx];
-    float dimColor[4], flashColor[4];
-    Point2Raw origin;
-    assert(obj->_type == MN_LIST);
+    mndata_list_t* list = (mndata_list_t*) ob->_typedata;
+    assert(ob && ob->_type == MN_LIST);
 
-    if(flashSelection)
+    // Stub.
+}
+
+void MNList_Drawer(mn_object_t* ob, const Point2Raw* _origin)
+{
+    const mndata_list_t* list = (mndata_list_t*)ob->_typedata;
+    const boolean flashSelection = ((ob->_flags & MNF_ACTIVE) && MNList_SelectionIsVisible(ob));
+    const float* color = rs.textColors[ob->_pageColorIdx];
+    float dimColor[4], flashColor[4], t = flashSelection? 1 : 0;
+    Point2Raw origin;
+    assert(ob->_type == MN_LIST);
+
+    if(flashSelection && cfg.menuTextFlashSpeed > 0)
     {
-        float t = (menuFlashCounter <= 50? menuFlashCounter / 50.0f : (100 - menuFlashCounter) / 50.0f);
-        flashColor[CR] = color[CR] * t + cfg.menuTextFlashColor[CR] * (1 - t);
-        flashColor[CG] = color[CG] * t + cfg.menuTextFlashColor[CG] * (1 - t);
-        flashColor[CB] = color[CB] * t + cfg.menuTextFlashColor[CB] * (1 - t);
-        flashColor[CA] = color[CA];
+        const float speed = cfg.menuTextFlashSpeed / 2.f;
+        t = (1 + sin(MNPage_Timer(ob->_page) / (float)TICSPERSEC * speed * PI)) / 2;
     }
 
-    dimColor[CR] = color[CR] * MNDATA_LIST_NONSELECTION_LIGHT;
-    dimColor[CG] = color[CG] * MNDATA_LIST_NONSELECTION_LIGHT;
-    dimColor[CB] = color[CB] * MNDATA_LIST_NONSELECTION_LIGHT;
-    dimColor[CA] = color[CA];
+    lerpColor(flashColor, rs.textColors[ob->_pageColorIdx], cfg.menuTextFlashColor, t, false/*rgb mode*/);
+    flashColor[CA] = color[CA];
+
+    memcpy(dimColor, color, sizeof(dimColor));
+    dimColor[CR] *= MNDATA_LIST_NONSELECTION_LIGHT;
+    dimColor[CG] *= MNDATA_LIST_NONSELECTION_LIGHT;
+    dimColor[CB] *= MNDATA_LIST_NONSELECTION_LIGHT;
 
     if(list->first < list->count && list->numvis > 0)
     {
         int i = list->first;
 
         DGL_Enable(DGL_TEXTURE_2D);
-        FR_SetFont(rs.textFonts[obj->_pageFontIdx]);
+        FR_SetFont(rs.textFonts[ob->_pageFontIdx]);
 
         origin.x = _origin->x;
         origin.y = _origin->y;
@@ -2067,6 +2284,7 @@ mn_object_t* MNListInline_New(void)
     ob->_type = MN_LISTINLINE;
     ob->_pageFontIdx = MENU_FONT1;
     ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNListInline_Ticker;
     ob->drawer = MNListInline_Drawer;
     ob->updateGeometry = MNListInline_UpdateGeometry;
     ob->cmdResponder = MNListInline_CommandResponder;
@@ -2079,6 +2297,14 @@ void MNListInline_Delete(mn_object_t* ob)
     assert(ob && ob->_type == MN_LISTINLINE);
     Z_Free(ob->_typedata);
     Z_Free(ob);
+}
+
+void MNListInline_Ticker(mn_object_t* ob)
+{
+    mndata_list_t* rect = (mndata_list_t*) ob->_typedata;
+    assert(ob && ob->_type == MN_LISTINLINE);
+
+    // Stub.
 }
 
 void MNListInline_Drawer(mn_object_t* obj, const Point2Raw* origin)
@@ -2186,6 +2412,7 @@ mn_object_t* MNButton_New(void)
     ob->_type = MN_BUTTON;
     ob->_pageFontIdx = MENU_FONT2;
     ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNButton_Ticker;
     ob->drawer = MNButton_Drawer;
     ob->updateGeometry = MNButton_UpdateGeometry;
     ob->cmdResponder = MNButton_CommandResponder;
@@ -2200,28 +2427,34 @@ void MNButton_Delete(mn_object_t* ob)
     Z_Free(ob);
 }
 
-void MNButton_Drawer(mn_object_t* obj, const Point2Raw* origin)
+void MNButton_Ticker(mn_object_t* ob)
 {
-    mndata_button_t* btn = (mndata_button_t*)obj->_typedata;
+    mndata_button_t* btn = (mndata_button_t*) ob->_typedata;
+    assert(ob && ob->_type == MN_BUTTON);
+
+    // Stub.
+}
+
+void MNButton_Drawer(mn_object_t* ob, const Point2Raw* origin)
+{
+    mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
     //int dis   = (obj->_flags & MNF_DISABLED) != 0;
     //int act   = (obj->_flags & MNF_ACTIVE)   != 0;
     //int click = (obj->_flags & MNF_CLICKED)  != 0;
     //boolean down = act || click;
-    const fontid_t fontId = rs.textFonts[obj->_pageFontIdx];
-    float color[4];
-    assert(obj->_type == MN_BUTTON);
+    const fontid_t fontId = rs.textFonts[ob->_pageFontIdx];
+    float color[4], t = (ob->_flags & MNF_FOCUS)? 1 : 0;
+    assert(ob->_type == MN_BUTTON);
 
-    memcpy(color, rs.textColors[obj->_pageColorIdx], sizeof(color));
-
-    // Flash the focused object?
-    if(obj->_flags & MNF_FOCUS)
+    // Flash if focused?
+    if((ob->_flags & MNF_FOCUS) && cfg.menuTextFlashSpeed > 0)
     {
-        float t = (menuFlashCounter <= 50? menuFlashCounter / 50.0f : (100 - menuFlashCounter) / 50.0f);
-        color[CR] *= t; color[CG] *= t; color[CB] *= t;
-        color[CR] += cfg.menuTextFlashColor[CR] * (1 - t);
-        color[CG] += cfg.menuTextFlashColor[CG] * (1 - t);
-        color[CB] += cfg.menuTextFlashColor[CB] * (1 - t);
+        const float speed = cfg.menuTextFlashSpeed / 2.f;
+        t = (1 + sin(MNPage_Timer(ob->_page) / (float)TICSPERSEC * speed * PI)) / 2;
     }
+
+    lerpColor(color, rs.textColors[ob->_pageColorIdx], cfg.menuTextFlashColor, t, false/*rgb mode*/);
+    color[CA] = rs.textColors[ob->_pageColorIdx][CA];
 
     FR_SetFont(fontId);
     FR_SetColorAndAlphav(color);
@@ -2230,7 +2463,7 @@ void MNButton_Drawer(mn_object_t* obj, const Point2Raw* origin)
     if(btn->patch)
     {
         const char* replacement = NULL;
-        if(!(obj->_flags & MNF_NO_ALTTEXT))
+        if(!(btn->flags & MNBUTTON_NO_ALTTEXT))
         {
             replacement = Hu_ChoosePatchReplacement2(cfg.menuPatchReplaceMode, *btn->patch, btn->text);
         }
@@ -2250,7 +2483,7 @@ int MNButton_CommandResponder(mn_object_t* obj, menucommand_e cmd)
     mndata_button_t* btn = (mndata_button_t*)obj->_typedata;
     assert(obj->_type == MN_BUTTON);
 
-    if(MCMD_SELECT == cmd)
+    if(cmd == MCMD_SELECT)
     {
         boolean justActivated = false;
         if(!(obj->_flags & MNF_ACTIVE))
@@ -2304,8 +2537,11 @@ int MNButton_CommandResponder(mn_object_t* obj, menucommand_e cmd)
                 }
             }
         }
+
+        obj->timer = 0;
         return true;
     }
+
     return false; // Not eaten.
 }
 
@@ -2322,7 +2558,7 @@ void MNButton_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
     // @fixme What if patch replacement is disabled?
     if(btn->patch)
     {
-        if(!(obj->_flags & MNF_NO_ALTTEXT))
+        if(!(btn->flags & MNBUTTON_NO_ALTTEXT))
         {
             // Use the replacement string?
             text = Hu_ChoosePatchReplacement2(cfg.menuPatchReplaceMode, *btn->patch, btn->text);
@@ -2345,6 +2581,22 @@ void MNButton_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
     Rect_SetWidthHeight(obj->_geometry, size.width, size.height);
 }
 
+int MNButton_SetFlags(mn_object_t* ob, flagop_t op, int flags)
+{
+    mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+    assert(ob && ob->_type == MN_BUTTON);
+    switch(op)
+    {
+    case FO_CLEAR:  btn->flags &= ~flags;  break;
+    case FO_SET:    btn->flags |= flags;   break;
+    case FO_TOGGLE: btn->flags ^= flags;   break;
+    default:
+        Con_Error("MNButton::SetFlags: Unknown op %i\n", op);
+        exit(1); // Unreachable.
+    }
+    return btn->flags;
+}
+
 mn_object_t* MNColorBox_New(void)
 {
     mn_object_t* ob = Z_Calloc(sizeof(*ob), PU_GAMESTATIC, 0);
@@ -2355,6 +2607,7 @@ mn_object_t* MNColorBox_New(void)
     ob->_type = MN_COLORBOX;
     ob->_pageFontIdx = MENU_FONT1;
     ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNColorBox_Ticker;
     ob->drawer = MNColorBox_Drawer;
     ob->updateGeometry = MNColorBox_UpdateGeometry;
     ob->cmdResponder = MNColorBox_CommandResponder;
@@ -2367,6 +2620,14 @@ void MNColorBox_Delete(mn_object_t* ob)
     assert(ob && ob->_type == MN_COLORBOX);
     Z_Free(ob->_typedata);
     Z_Free(ob);
+}
+
+void MNColorBox_Ticker(mn_object_t* ob)
+{
+    mndata_colorbox_t* cbox = (mndata_colorbox_t*) ob->_typedata;
+    assert(ob && ob->_type == MN_COLORBOX);
+
+    // Stub.
 }
 
 void MNColorBox_Drawer(mn_object_t* obj, const Point2Raw* offset)
@@ -2414,7 +2675,7 @@ void MNColorBox_Drawer(mn_object_t* obj, const Point2Raw* offset)
     DGL_Color4f(1, 1, 1, rs.pageAlpha);
     DGL_Enable(DGL_TEXTURE_2D);
 
-    DGL_SetMaterialUI(P_ToPtr(DMU_MATERIAL, Materials_ResolveUriCString(borderGraphics[0])));
+    DGL_SetMaterialUI(P_ToPtr(DMU_MATERIAL, Materials_ResolveUriCString(borderGraphics[0])), DGL_REPEAT, DGL_REPEAT);
     DGL_DrawRectf2Tiled(x, y, w, h, 64, 64);
 
     // Top
@@ -2747,6 +3008,7 @@ mn_object_t* MNSlider_New(void)
     ob->_type = MN_SLIDER;
     ob->_pageFontIdx = MENU_FONT1;
     ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNSlider_Ticker;
     ob->drawer = MNSlider_Drawer;
     ob->updateGeometry = MNSlider_UpdateGeometry;
     ob->cmdResponder = MNSlider_CommandResponder;
@@ -2802,6 +3064,14 @@ int MNSlider_ThumbPos(const mn_object_t* obj)
     return useVal / range * MNDATA_SLIDER_SLOTS * WIDTH;
 
 #undef WIDTH
+}
+
+void MNSlider_Ticker(mn_object_t* ob)
+{
+    mndata_slider_t* sld = (mndata_slider_t*) ob->_typedata;
+    assert(ob && ob->_type == MN_SLIDER);
+
+    // Stub.
 }
 
 void MNSlider_Drawer(mn_object_t* obj, const Point2Raw* origin)
@@ -3016,7 +3286,7 @@ void MNSlider_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
 
     if(R_GetPatchInfo(pSliderRight, &info))
     {
-        info.geometry.origin.x = -info.geometry.size.width;
+        info.geometry.origin.x += middleWidth;
         Rect_UniteRaw(obj->_geometry, &info.geometry);
     }
 
@@ -3073,6 +3343,7 @@ mn_object_t* MNMobjPreview_New(void)
     ob->_type = MN_MOBJPREVIEW;
     ob->_pageFontIdx = MENU_FONT1;
     ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNMobjPreview_Ticker;
     ob->updateGeometry = MNMobjPreview_UpdateGeometry;
     ob->drawer = MNMobjPreview_Drawer;
 
@@ -3084,6 +3355,14 @@ void MNMobjPreview_Delete(mn_object_t* ob)
     assert(ob && ob->_type == MN_MOBJPREVIEW);
     Z_Free(ob->_typedata);
     Z_Free(ob);
+}
+
+void MNMobjPreview_Ticker(mn_object_t* ob)
+{
+    mndata_mobjpreview_t* mop = (mndata_mobjpreview_t*) ob->_typedata;
+    assert(ob && ob->_type == MN_MOBJPREVIEW);
+
+    // Stub.
 }
 
 static void findSpriteForMobjType(int mobjType, spritetype_e* sprite, int* frame)
@@ -3130,31 +3409,33 @@ void MNMobjPreview_SetTranslationMap(mn_object_t* obj, int tMap)
     mop->tMap = tMap;
 }
 
-/// \todo We can do better - the engine should be able to render this visual for us.
-void MNMobjPreview_Drawer(mn_object_t* obj, const Point2Raw* origin)
+/// @todo We can do better - the engine should be able to render this visual for us.
+void MNMobjPreview_Drawer(mn_object_t* ob, const Point2Raw* offset)
 {
-    mndata_mobjpreview_t* mop = (mndata_mobjpreview_t*)obj->_typedata;
-    float x, y, w, h, s, t, scale;
+    mndata_mobjpreview_t* mop = (mndata_mobjpreview_t*)ob->_typedata;
     int tClass, tMap, spriteFrame;
     spritetype_e sprite;
     spriteinfo_t info;
-    assert(obj->_type == MN_MOBJPREVIEW);
+    float s, t, scale;
+    Point2Raw origin;
+    Size2Raw size;
+    assert(ob->_type == MN_MOBJPREVIEW);
 
     if(MT_NONE == mop->mobjType) return;
 
     findSpriteForMobjType(mop->mobjType, &sprite, &spriteFrame);
     if(!R_GetSpriteInfo(sprite, spriteFrame, &info)) return;
 
-    x = origin->x;
-    y = origin->y;
-    w = info.geometry.size.width;
-    h = info.geometry.size.height;
-    scale = (h > w? MNDATA_MOBJPREVIEW_HEIGHT / h : MNDATA_MOBJPREVIEW_WIDTH / w);
-    w *= scale;
-    h *= scale;
+    origin.x = info.geometry.origin.x;
+    origin.y = info.geometry.origin.y;
+    size.width  = info.geometry.size.width;
+    size.height = info.geometry.size.height;
 
-    x += MNDATA_MOBJPREVIEW_WIDTH/2 - info.geometry.size.width/2 * scale;
-    y += MNDATA_MOBJPREVIEW_HEIGHT  - info.geometry.size.height  * scale;
+    scale = (size.height > size.width? (float)MNDATA_MOBJPREVIEW_HEIGHT / size.height :
+                                       (float)MNDATA_MOBJPREVIEW_WIDTH  / size.width);
+
+    s = info.texCoord[0];
+    t = info.texCoord[1];
 
     tClass = mop->tClass;
     tMap = mop->tMap;
@@ -3166,33 +3447,41 @@ void MNMobjPreview_Drawer(mn_object_t* obj, const Point2Raw* origin)
         R_GetTranslation(mop->plrClass, tMap, &tClass, &tMap);
 #endif
 
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+
+    DGL_Translatef(offset->x, offset->y, 0);
+    DGL_Scalef(scale, scale, 1);
+    // Translate origin to the top left.
+    DGL_Translatef(-origin.x, -origin.y, 0);
+
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_SetPSprite2(info.material, tClass, tMap);
-
-    s = info.texCoord[0];
-    t = info.texCoord[1];
-
     DGL_Color4f(1, 1, 1, rs.pageAlpha);
+
     DGL_Begin(DGL_QUADS);
         DGL_TexCoord2f(0, 0 * s, 0);
-        DGL_Vertex2f(x, y);
+        DGL_Vertex2f(0, 0);
 
         DGL_TexCoord2f(0, 1 * s, 0);
-        DGL_Vertex2f(x + w, y);
+        DGL_Vertex2f(size.width, 0);
 
         DGL_TexCoord2f(0, 1 * s, t);
-        DGL_Vertex2f(x + w, y + h);
+        DGL_Vertex2f(size.width, size.height);
 
         DGL_TexCoord2f(0, 0 * s, t);
-        DGL_Vertex2f(x, y + h);
+        DGL_Vertex2f(0, size.height);
     DGL_End();
+
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-void MNMobjPreview_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
+void MNMobjPreview_UpdateGeometry(mn_object_t* ob, mn_page_t* page)
 {
     // @fixme calculate visible dimensions properly!
-    assert(obj && obj->_type == MN_MOBJPREVIEW);
-    Rect_SetWidthHeight(obj->_geometry, MNDATA_MOBJPREVIEW_WIDTH, MNDATA_MOBJPREVIEW_HEIGHT);
+    assert(ob && ob->_type == MN_MOBJPREVIEW);
+    Rect_SetWidthHeight(ob->_geometry, MNDATA_MOBJPREVIEW_WIDTH, MNDATA_MOBJPREVIEW_HEIGHT);
 }

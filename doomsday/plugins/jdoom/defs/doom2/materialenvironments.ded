@@ -1,0 +1,57 @@
+# DOOM2 - Material Environments
+#
+# Additional definitions for textures present only in DOOM2
+
+Header { Version = 5; }
+
+Texture Environment {
+  ID = "Metal";
+  Material { ID = "flats:SLIME14"; };
+  Material { ID = "flats:SLIME15"; };
+  Material { ID = "flats:SLIME16"; };
+}
+
+Texture Environment {
+  ID = "Rock";
+  Material { ID = "flats:GRNLITE1"; }; 
+  Material { ID = "flats:GRNROCK"; }; 
+  Material { ID = "flats:RROCK1"; }; 
+  Material { ID = "flats:RROCK2"; }; 
+  Material { ID = "flats:RROCK3"; }; 
+  Material { ID = "flats:RROCK4"; }; 
+  Material { ID = "flats:RROCK5"; }; 
+  Material { ID = "flats:RROCK6"; }; 
+  Material { ID = "flats:RROCK7"; }; 
+  Material { ID = "flats:RROCK8"; }; 
+  Material { ID = "flats:RROCK9"; }; 
+  Material { ID = "flats:RROCK10"; }; 
+  Material { ID = "flats:RROCK11"; }; 
+  Material { ID = "flats:RROCK12"; }; 
+  Material { ID = "flats:RROCK13"; }; 
+  Material { ID = "flats:RROCK14"; }; 
+  Material { ID = "flats:RROCK15"; }; 
+  Material { ID = "flats:RROCK17"; }; 
+  Material { ID = "flats:RROCK18"; };
+  Material { ID = "flats:RROCK19"; }; # Could be rock or cloth
+  Material { ID = "flats:SLIME09"; };
+  Material { ID = "flats:SLIME10"; };
+  Material { ID = "flats:SLIME11"; };
+  Material { ID = "flats:SLIME12"; };
+  Material { ID = "flats:SLIME13"; };
+}
+
+Texture Environment {
+  ID = "Cloth";
+  Material { ID = "flats:GRASS1"; }; 
+  Material { ID = "flats:GRASS2"; }; 
+  Material { ID = "flats:RROCK16"; }; 
+  Material { ID = "flats:RROCK20"; }; 
+  Material { ID = "flats:SLIME01"; };
+  Material { ID = "flats:SLIME02"; };
+  Material { ID = "flats:SLIME03"; };
+  Material { ID = "flats:SLIME04"; };
+  Material { ID = "flats:SLIME05"; };
+  Material { ID = "flats:SLIME06"; };
+  Material { ID = "flats:SLIME07"; };
+  Material { ID = "flats:SLIME08"; };
+}

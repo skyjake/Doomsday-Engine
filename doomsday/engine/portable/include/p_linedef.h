@@ -33,6 +33,22 @@
 #include "p_dmu.h"
 
 /**
+ * Update the LineDef's slopetype and map space angle delta according to
+ * the points defined by it's vertices.
+ *
+ * @param lineDef  LineDef instance.
+ */
+void LineDef_UpdateSlope(linedef_t* lineDef);
+
+/**
+ * Update the LineDef's map space axis-aligned bounding box to encompass
+ * the points defined by it's vertices.
+ *
+ * @param lineDef  LineDef instance.
+ */
+void LineDef_UpdateAABox(linedef_t* lineDef);
+
+/**
  * @return  Minimal floor Plane which interfaces with this LineDef's face.
  *     If both front and back floor Plane interfaces exist and are equal,
  *     the front Plane is returned. May return @c NULL if no interfaces.

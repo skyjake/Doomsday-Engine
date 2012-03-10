@@ -17,6 +17,20 @@ Composite BitmapFont {
 }
 
 Composite BitmapFont {
+  ID = "game:mappoint";
+  048 { Texture = "AMMNUM0"; } # 0
+  049 { Texture = "AMMNUM1"; } # 1
+  050 { Texture = "AMMNUM2"; } # 2
+  051 { Texture = "AMMNUM3"; } # 3
+  052 { Texture = "AMMNUM4"; } # 4
+  053 { Texture = "AMMNUM5"; } # 5
+  054 { Texture = "AMMNUM6"; } # 6
+  055 { Texture = "AMMNUM7"; } # 7
+  056 { Texture = "AMMNUM8"; } # 8
+  057 { Texture = "AMMNUM9"; } # 9
+}
+
+Composite BitmapFont {
   ID = "game:small";
   037 { Texture = "WIPCNT";   } # %
   045 { Texture = "WIMINUS";  } # -
@@ -146,16 +160,16 @@ Composite BitmapFont {
 
 Composite BitmapFont {
   ID = "game:b";
-  032 { Texture = "BIGFN032"; } # ' '
+  # 032 { Texture = "BIGFN032"; } # ' '
   033 { Texture = "BIGFN033"; } # !
   034 { Texture = "BIGFN034"; } # "
   035 { Texture = "BIGFN035"; } # #
   036 { Texture = "BIGFN036"; } # $
   037 { Texture = "BIGFN037"; } # %
-  038 { Texture = "BIGFN038"; } # &
+  # 038 { Texture = "BIGFN038"; } # &
   039 { Texture = "BIGFN039"; } # '
   040 { Texture = "BIGFN040"; } # (
-  041 { Texture = "BIGFN041"; } # )
+  # 041 { Texture = "BIGFN041"; } # )
   042 { Texture = "BIGFN042"; } # *
   043 { Texture = "BIGFN043"; } # +
   044 { Texture = "BIGFN044"; } # ,
@@ -178,7 +192,7 @@ Composite BitmapFont {
   061 { Texture = "BIGFN061"; } # =
   062 { Texture = "BIGFN062"; } # >
   063 { Texture = "BIGFN063"; } # ?
-  064 { Texture = "BIGFN064"; } # @
+  # 064 { Texture = "BIGFN064"; } # @
   065 { Texture = "BIGFN065"; } # A
   066 { Texture = "BIGFN066"; } # B
   067 { Texture = "BIGFN067"; } # C

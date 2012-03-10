@@ -2434,27 +2434,25 @@ static void SV_WritePolyObj(polyobj_t* po)
 
 static int SV_ReadPolyObj(void)
 {
-    int             ver;
-    float           deltaX;
-    float           deltaY;
-    angle_t         angle;
-    polyobj_t*      po;
+    float deltaX, deltaY;
+    angle_t angle;
+    polyobj_t* po;
+    int ver;
 
     if(saveVersion >= 3)
         ver = SV_ReadByte();
 
-    po = P_GetPolyobj(SV_ReadLong()); // Get polyobj by tag.
-    if(!po)
-        Con_Error("UnarchivePolyobjs: Invalid polyobj tag");
+    po = P_PolyobjByTag(SV_ReadLong());
+    if(!po) Con_Error("UnarchivePolyobjs: Invalid polyobj tag");
 
     angle = (angle_t) SV_ReadLong();
     P_PolyobjRotate(po, angle);
     po->destAngle = angle;
     deltaX = FIX2FLT(SV_ReadLong()) - po->pos[VX];
     deltaY = FIX2FLT(SV_ReadLong()) - po->pos[VY];
-    P_PolyobjMove(po, deltaX, deltaY);
+    P_PolyobjMoveXY(po, deltaX, deltaY);
 
-    //// \fixme What about speed? It isn't saved at all?
+    /// @fixme What about speed? It isn't saved at all?
 
     return true;
 }
@@ -2480,7 +2478,7 @@ static void P_ArchiveWorld(void)
     SV_BeginSegment(ASEG_POLYOBJS);
     SV_WriteLong(numpolyobjs);
     for(i = 0; i < numpolyobjs; ++i)
-        SV_WritePolyObj(P_GetPolyobj(i | 0x80000000));
+        SV_WritePolyObj(P_PolyobjByID(i));
 #endif
 }
 
@@ -4249,10 +4247,8 @@ static void P_UnArchiveSounds(void)
         }
         else
         {
-            polyobj_t*          po;
-
-            if((po = P_GetPolyobj(secNum | 0x80000000)))
-                sndMobj = (mobj_t*) po;
+            polyobj_t* po = P_PolyobjByID(secNum);
+            if(po) sndMobj = (mobj_t*) po;
         }
 
         SN_StartSequence(sndMobj, sequence);
