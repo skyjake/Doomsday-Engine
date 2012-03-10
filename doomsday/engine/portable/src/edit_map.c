@@ -1911,7 +1911,7 @@ boolean MPE_End(void)
     finishLineDefs(gamemap);
     finishSectors(gamemap);
     updateMapBounds(gamemap);
-    S_DetermineSubsecsAffectingSectorReverb(gamemap);
+    S_DetermineBspLeafsAffectingSectorReverb(gamemap);
     prepareBspLeafs(gamemap);
 
     P_FreeBadTexList();

@@ -229,7 +229,7 @@ static void findBspLeafsAffectingSector(GameMap* map, uint secIDX)
  * two dimensions at least), they do not move and are not created/destroyed
  * once the map has been loaded; this step can be pre-processed.
  */
-void S_DetermineSubsecsAffectingSectorReverb(GameMap* map)
+void S_DetermineBspLeafsAffectingSectorReverb(GameMap* map)
 {
     uint i, startTime;
     ownernode_t* node, *p;
@@ -255,7 +255,7 @@ void S_DetermineSubsecsAffectingSectorReverb(GameMap* map)
 
     // How much time did we spend?
     VERBOSE(Con_Message
-            ("S_DetermineSubsecsAffectingSectorReverb: Done in %.2f seconds.\n",
+            ("S_DetermineBspLeafsAffectingSectorReverb: Done in %.2f seconds.\n",
              (Sys_GetRealTime() - startTime) / 1000.0f));
 }
 
