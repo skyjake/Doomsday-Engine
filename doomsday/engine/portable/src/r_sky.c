@@ -128,7 +128,7 @@ static void calculateSkyAmbientColor(void)
          */
         spec = Materials_VariantSpecificationForContext(MC_SKYSPHERE,
             TSF_NO_COMPRESSION | ((slayer->flags & SLF_MASKED)? TSF_ZEROMASK : 0),
-            0, 0, 0, GL_REPEAT, GL_CLAMP_TO_EDGE, 1, -2, -1, false, true, false, false);
+            0, 0, 0, GL_REPEAT, GL_CLAMP_TO_EDGE, 0, -1, -1, false, true, false, false);
         ms = Materials_Prepare(slayer->material, spec, false);
 
         if(MSU_texture(ms, MTU_PRIMARY))
@@ -280,7 +280,7 @@ void R_SkyPrecache(void)
         for(i = 0, sky = skyModels; i < MAX_SKY_MODELS; ++i, sky++)
         {
             if(!sky->def) continue;
-            R_PrecacheModelSkins(sky->model);
+            R_PrecacheModel(sky->model);
         }
     }
 }

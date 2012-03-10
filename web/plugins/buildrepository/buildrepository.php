@@ -30,23 +30,23 @@ require_once(DIR_CLASSES.'/outputcache.class.php');
  * @defgroup platformId  Platform Identifier
  * @ingroup builds
  */
-///{
-define('PID_ANY',             0); ///> (Enumeration). Ordinals are meaningless (can change) however must be unique.
+///@{
+define('PID_ANY',             0); ///< (Enumeration). Ordinals are meaningless (can change) however must be unique.
 define('PID_WIN_X86',         1);
 define('PID_MAC10_4_X86_PPC', 2);
 define('PID_LINUX_X86',       3);
 define('PID_LINUX_X86_64',    4);
-///}
+///@}
 
 /**
  * @defgroup releaseType  Release Type
  * @ingroup builds
  */
-///{
-define('RT_UNSTABLE',         0); ///> (Enumeration). Ordinals are meaningless (can change) however must be unique.
+///@{
+define('RT_UNSTABLE',         0); ///< (Enumeration). Ordinals are meaningless (can change) however must be unique.
 define('RT_CANDIDATE',        1);
 define('RT_STABLE',           2);
-///}
+///@}
 
 require_once('buildevent.class.php');
 require_once('packagefactory.class.php');
@@ -216,7 +216,7 @@ function make_pretty_hyperlink($matches)
     else
         $shortUri = $uri;
 
-    /// \fixme Do not assume all links are external ones.
+    /// @fixme Do not assume all links are external ones.
     return '<a class="link-external" href="'.$uri.'">'.$shortUri.'</a>';
 }
 
@@ -232,26 +232,29 @@ function outputCommitHTML(&$commit)
     $haveMessage = (bool)(strlen($message) > 0);
 
     // Compose the supplementary tag list.
-    $tagList = "";
+    $tagList = '<div class="tag_list">';
     if(is_array($commit['tags']))
     {
         $n = (integer)0;
-        foreach($commit['tags'] as $key => $value)
+        foreach($commit['tags'] as $tag => $value)
         {
             // Skip the first tag (its used for grouping).
-            if($n === 0) continue;
+            if($n++ === 0) continue;
 
             // Do not output guessed tags (mainly used for grouping).
             if(is_array($value) && isset($value['guessed']) && $value['guessed'] !== 0) continue;
 
-            $tagList .= '<span class="tag">'.$key.'</span>';
+            $tagList .= '<div class="tag"><label title="Tagged \''.$tag.'\'">'.$tag.'</label></div>';
         }
     }
+    $tagList .= '</div>';
 
     $repoLinkTitle = 'Show changes in the repository for this commit submitted on '. date(DATE_RFC2822, $commit['submitDate']) .'.';
 
     // Ouput HTML for the commit.
-?><span class="metadata"><a href="<?php echo $commit['repositoryUri']; ?>" class="link-external" title="<?php echo $repoLinkTitle; ?>"><?php echo date('Y-m-d', $commit['submitDate']); ?></a></span><p class="heading <?php if($haveMessage) echo 'collapsible'; ?>" <?php if($haveMessage) echo 'title="Toggle commit message display"'; ?>><strong><?php echo $tagList; ?><span class="title"><?php echo $commit['title']; ?></span></strong> by <em><?php echo $commit['author']; ?></em></p><?php
+?><span class="metadata"><a href="<?php echo $commit['repositoryUri']; ?>" class="link-external" title="<?php echo $repoLinkTitle; ?>"><?php echo date('Y-m-d', $commit['submitDate']); ?></a></span><?php
+
+?><p class="heading <?php if($haveMessage) echo 'collapsible'; ?>" <?php if($haveMessage) echo 'title="Toggle commit message display"'; ?>><strong><span class="title"><?php echo $commit['title']; ?></span></strong> by <em><?php echo $commit['author']; ?></em></p><?php echo $tagList;
 
     if($haveMessage)
     {
@@ -279,10 +282,12 @@ function outputCommitJumpList(&$groups)
     if(!is_array($groups))
         throw new Exception('Invalid groups argument, array expected');
 
-?><div class="jumplist_wrapper"><?php
+    $groupCount = count($groups);
+
+    // If only one list; apply the special 'hnav' class (force horizontal).
+?><div class="jumplist_wrapper <?php if($groupCount <= 5) echo 'hnav'; ?>"><?php
 
     // If the list is too long; split it into multiple sublists.
-    $groupCount = count($groups);
     if($groupCount > 5)
     {
         $numLists = ceil($groupCount / 5);
@@ -312,7 +317,8 @@ function outputCommitLogHTML(&$build)
     if(!$build instanceof BuildEvent)
         throw new Exception('Received invalid BuildEvent');
 
-    if(count($build->commits))
+    $commitCount = count($build->commits);
+    if($commitCount)
     {
         $groups = array();
         groupBuildCommits($build, &$groups);
@@ -322,8 +328,11 @@ function outputCommitLogHTML(&$build)
         {
             ksort($groups);
 
-            // Generate a jump list.
-            outputCommitJumpList($groups);
+            // Generate a jump list?
+            if($commitCount > 15)
+            {
+                outputCommitJumpList($groups);
+            }
         }
 
         // Generate the commit list itself.
@@ -335,7 +344,7 @@ function outputCommitLogHTML(&$build)
 
             if($groupCount > 1)
             {
-?><strong><span class="tag"><?php echo htmlspecialchars($groupName); ?></span></strong><a name="<?php echo $groupName; ?>"></a><a class="jump" href="#commitindex" title="Back to Commits index">index</a><br /><ol><?php
+?><strong><label title="<?php echo ("Commits with primary tag '$groupName'"); ?>"><span class="tag"><?php echo htmlspecialchars($groupName); ?></span></label></strong><a name="<?php echo $groupName; ?>"></a><a class="jump" href="#commitindex" title="Back to Commits index">index</a><br /><ol><?php
             }
 
             foreach($group as &$commit)
@@ -604,7 +613,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
     private function populateSymbolicPackages(&$packages)
     {
         /**
-         * \todo Read this information from a config file, we should not
+         * @todo Read this information from a config file, we should not
          * expect to edit this file in order to change these...
          */
 
@@ -674,19 +683,27 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
      * be found the special NullPackage is returned.
      *
      * @param platformId  (Integer) PlatformId filter.
+     * @param title  (String) Symbolic name of the package to download. Default="Doomsday".
      * @param unstable  (Boolean) @c true= Only consider 'unstable' packs.
+     * @param hasDownload  (Boolean) @c true= Only consider 'downloadable' packs.
      * @return  (Object) Chosen package.
      */
-    private function &choosePackage($platformId=PID_ANY, $unstable=FALSE)
+    private function &choosePackage($platformId=PID_ANY, $title="Doomsday",
+        $unstable=FALSE, $downloadable=TRUE)
     {
         $unstable = (boolean)$unstable;
+        $downloadable = (boolean)$downloadable;
 
         if(isset($this->packages))
         {
+            $matchTitle = (boolean)(strlen($title) > 0);
+
             foreach($this->packages as &$pack)
             {
                 if($pack->platformId() !== $platformId) continue;
+                if($matchTitle && strcmp($pack->title(), $title)) continue;
                 if($unstable != ($pack instanceof AbstractUnstablePackage)) continue;
+                if($downloadable != ($pack instanceof iDownloadable && $pack->hasDownloadUri())) continue;
 
                 // Found something suitable.
                 return $pack;
@@ -722,7 +739,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         {
             $this->initPackages();
 
-            // Are we redirecting to the download URI for a specific package?
+            // Are we redirecting to a specific package?
             $getPackage = FALSE;
             if(isset($uriArgs['platform']))
             {
@@ -730,11 +747,30 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                 $platformId = $this->parsePlatformId($uriArgs['platform']);
                 $unstable = isset($uriArgs['unstable']);
 
+                // Default to Doomsday if a pack is not specified.
+                $packTitle = "Doomsday";
+                if(isset($uriArgs['pack']))
+                    $packTitle = trim($uriArgs['pack']);
+
                 // Try to find a suitable package...
-                $pack = &$this->choosePackage($platformId, $unstable);
+                $pack = &$this->choosePackage($platformId, $packTitle, $unstable);
                 if(!($pack instanceof NullPackage))
                 {
-                    $FrontController->enqueueAction($this, array('getpackage' => $pack));
+                    $args = array();
+
+                    // Are we retrieving the object graph?
+                    if(isset($uriArgs['graph']))
+                    {
+                        // Return the object graph.
+                        $args['getgraph'] = $pack;
+                    }
+                    else
+                    {
+                        // Redirect to the package download.
+                        $args['getpackage'] = $pack;
+                    }
+
+                    $FrontController->enqueueAction($this, $args);
                     return true; // Eat the request.
                 }
             }
@@ -794,7 +830,13 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 ?></ul></div><?php
     }
 
-    private function findBuildByUniqueId($uniqueId=0)
+    /**
+     * Retrieve the BuildEvent object associated with @a uniqueId.
+     *
+     * @param uniqueId  (Integer) Unique identfier of the build event.
+     * @return  (Mixed) BuildEvent object for the build else @c NULL.
+     */
+    public function buildByUniqueId($uniqueId=0)
     {
         $uniqueId = intval($uniqueId);
         $build = NULL;
@@ -882,8 +924,8 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
     }
 
     private function outputPackageList(&$packages, $notThisPack=NULL,
-        $chosenPlatformId=NULL, $unstable=-1/*no filter*/, $maxPacks=-1/*no limit*/,
-        $listTitleHTML=NULL/*no title*/)
+        $chosenPlatformId=NULL, $unstable=-1/*no filter*/, $downloadable=-1/*no filter*/,
+        $maxPacks=-1/*no limit*/, $listTitleHTML=NULL/*no title*/)
     {
         if(!is_array($packages)) return;
 
@@ -892,10 +934,12 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         if($maxPacks < 0) $maxPacks = -1;
 
         $unstable = intval($unstable);
-        if($unstable < 0)
-            $unstable = -1; // Any.
-        else
-            $unstable = $unstable? 1 : 0;
+        if($unstable < 0) $unstable = -1; // Any.
+        else              $unstable = $unstable? 1 : 0;
+
+        $downloadable = intval($downloadable);
+        if($downloadable < 0) $downloadable = -1; // Any.
+        else                  $downloadable = $downloadable? 1 : 0;
 
         // Generate package list:
         $numPacks = (integer)0;
@@ -904,6 +948,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
             // Filtered out?
             if($pack === $notThisPack) continue;
             if($unstable != -1 && (boolean)$unstable != ($pack instanceof AbstractUnstablePackage)) continue;
+            if($downloadable != -1 && (boolean)$downloadable != ($pack instanceof iDownloadable && $pack->hasDownloadUri())) continue;
             if(!is_null($chosenPlatformId) && $pack->platformId() === $chosenPlatformId) continue;
 
             // Begin the list?
@@ -961,11 +1006,13 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 
         // Latest stable packages.
         $packageListTitle = 'Latest packages:';
-        $this->outputPackageList(&$this->packages, $pack, PID_ANY, FALSE/*stable*/, 8, $packageListTitle);
+        $this->outputPackageList(&$this->packages, $pack, PID_ANY, FALSE/*stable*/,
+                                 TRUE/*only downloadables*/, 8, $packageListTitle);
 
         // Latest unstable packages.
         $packageListTitle = 'Latest packages (<a class="link-definition" href="dew/index.php?title=Automated_build_system#Unstable" title="What does \'unstable\' mean?">unstable</a>):';
-        $this->outputPackageList(&$this->packages, $pack, PID_ANY, TRUE/*unstable*/, 8, $packageListTitle);
+        $this->outputPackageList(&$this->packages, $pack, PID_ANY, TRUE/*unstable*/,
+                                 TRUE/*only downloadables*/, 8, $packageListTitle);
 
 ?></div><?php
 
@@ -976,6 +1023,71 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 ?></div><?php
 
         $FrontController->endPage();
+    }
+
+    /**
+     * Compose the cache name for the Package's object graph.
+     * Packages produced by a build event go into that build's subdirectory.
+     * Other packages (i.e., stable or symbolic) are placed in the root.
+     */
+    private function composePackageGraphCacheName(&$pack)
+    {
+        if(!($pack instanceof BasePackage))
+            throw new Exception('Received invalid Package.');
+
+        $cacheName = 'buildrepository/';
+        if($pack instanceof iBuilderProduct)
+        {
+            $cacheName .= $pack->buildUniqueId().'/';
+        }
+        $cacheName .= md5(strtolower($pack->composeFullTitle())).'.json';
+
+        return $cacheName;
+    }
+
+    private function outputPackageGraph(&$pack)
+    {
+        global $FrontController;
+
+        if(!($pack instanceof BasePackage))
+            throw new Exception('Received invalid Package.');
+
+        $cacheName = $this->composePackageGraphCacheName($pack);
+        try
+        {
+            header('Content-type: application/json');
+            $FrontController->contentCache()->import($cacheName);
+        }
+        catch(Exception $e)
+        {
+            // Generate a graph template for this package.
+            $template = array();
+            $pack->populateGraphTemplate($template);
+            $json = json_encode_clean($template);
+
+            // Store the graph in the cache.
+            $FrontController->contentCache()->store($cacheName, $json);
+
+            // Print to the output stream.
+            print($json);
+        }
+        return TRUE;
+    }
+
+    private function countInstallablePackages(&$build)
+    {
+        $count = 0;
+        if($build instanceof BuildEvent)
+        {
+            foreach($build->packages as &$pack)
+            {
+                if($pack instanceof iDownloadable && $pack->hasDownloadUri())
+                {
+                    $count++;
+                }
+            }
+        }
+        return $count;
     }
 
     private function genBuildOverview(&$build)
@@ -991,7 +1103,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
             $html .= '<h2><a class="link-definition" href="'.$releaseTypeLink.'" title="'.$releaseTypeLinkTitle.'">'. htmlspecialchars(ucfirst($releaseTypeLabel)). '</a></h2>'
                     .'<p>The build event was started on '. date(DATE_RFC2822, $build->startDate()) .'. '
                     .'It contains '. count($build->commits) .' commits and produced '
-                    . count($build->packages) .' installable binary packages.</p>';
+                    . $this->countInstallablePackages($build) .' installable binary packages.</p>';
         }
         return $html;
     }
@@ -1003,15 +1115,22 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
     {
         global $FrontController;
 
+        date_default_timezone_set('EET');
+
         if(isset($args['getpackage']))
         {
             $this->outputPackageRedirect($args['getpackage']);
             return;
         }
+        else if(isset($args['getgraph']))
+        {
+            $this->outputPackageGraph($args['getgraph']);
+            return;
+        }
 
         // Determine whether we are detailing a single build event or listing all events.
         $uniqueId = $args['build'];
-        $build = $this->findBuildByUniqueId($uniqueId);
+        $build = $this->buildByUniqueId($uniqueId);
 
         $pageTitle = (!is_null($build)? $build->composeName() : 'Builds');
 
@@ -1024,8 +1143,6 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         if(!is_null($build))
         {
             // Detailing a single build event.
-
-            date_default_timezone_set('EET');
 
 ?><div class="buildevent"><?php
 
@@ -1043,12 +1160,21 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
             {
                 $plat = &self::platform($pack->platformId());
 
-                $errors   = $pack->compileErrorCount();
-                $warnings = $pack->compileWarnCount();
-                $issues   = $errors + $warnings;
+                if($pack instanceof iBuilderProduct)
+                {
+                    $errors   = $pack->compileErrorCount();
+                    $warnings = $pack->compileWarnCount();
+                    $issues   = $errors + $warnings;
+                }
+                else
+                {
+                    $errors = 0;
+                    $warnings = 0;
+                    $issues = 0;
+                }
 
                 // Determine issue level (think defcon).
-                if($errors > 0)
+                if($errors > 0 || !$pack->hasDownloadUri())
                     $issueLevel = 'major';
                 else if($warnings > 0)
                     $issueLevel = 'minor';
@@ -1058,9 +1184,36 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                 // Ouput HTML for the package.
 ?><tr>
 <td><?php if($pack->platformId() !== $lastPlatId) echo $plat['nicename']; ?></td>
-<td><a href="<?php echo $pack->downloadUri(); ?>" title="Download <?php echo $pack->composeFullTitle(); ?>"><?php echo $pack->composeFullTitle(true/*include version*/, false/*do not include build Id*/); ?></a></td>
-<td><a href="<?php echo $pack->compileLogUri(); ?>" title="Download build logs for <?php echo $pack->composeFullTitle(); ?>">txt.gz</a></td>
-<td class="issue_level <?php echo ($issueLevel.'_issue'); ?>"><?php echo $issues; ?></td>
+<td><?php
+
+                $packTitle = $pack->composeFullTitle(true/*include version*/, false/*do not include the platform name*/, false/*do not include build Id*/);
+                if($pack instanceof iDownloadable && $pack->hasDownloadUri())
+                {
+?><a href="<?php echo $pack->downloadUri(); ?>" title="Download <?php echo $pack->composeFullTitle(); ?>"><?php echo $packTitle; ?></a><?php
+                }
+                else
+                {
+                    echo $packTitle;
+                }
+
+
+
+
+?></td><td><?php
+
+                if($pack instanceof iBuilderProduct)
+                {
+                    $logUri = $pack->compileLogUri();
+
+?><a href="<?php echo $logUri; ?>" title="Download build logs for <?php echo $pack->composeFullTitle(); ?>">txt.gz</a><?php
+
+                }
+                else
+                {
+?>txt.gz<?php
+                }
+
+?></td><td class="issue_level <?php echo ($issueLevel.'_issue'); ?>"><?php echo $issues; ?></td>
 </tr><?php
 
                 $lastPlatId = $pack->platformId();
@@ -1080,7 +1233,7 @@ jQuery(document).ready(function() {
   jQuery(".commit").hide();
   jQuery(".collapsible").click(function()
   {
-    jQuery(this).next(".commit").slideToggle(300);
+    jQuery(this).next().next(".commit").slideToggle(300);
   });
 });
 </script><?php
@@ -1106,8 +1259,9 @@ jQuery(document).ready(function() {
             // Generate widgets for the symbolic packages.
             $packageListTitle = 'Downloads for the latest packages (<a class="link-definition" href="dew/index.php?title=Automated_build_system#Unstable" title="What does \'unstable\' mean?">unstable</a>):';
 
-            $this->outputPackageList(&$this->symbolicPackages, NULL/*no chosen pack*/,
-                PID_ANY, -1/*no stable filter*/, -1/*no result limit*/, $packageListTitle);
+            $this->outputPackageList(&$this->symbolicPackages, NULL/*no chosen pack*/, PID_ANY,
+                                     -1/*no stable filter*/, TRUE/*only downloadables*/,
+                                     -1/*no result limit*/, $packageListTitle);
 
 ?></div><?php
 

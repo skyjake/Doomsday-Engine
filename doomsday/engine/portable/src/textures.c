@@ -35,6 +35,7 @@
 #include "gl_texmanager.h"
 #include "pathdirectory.h"
 
+#include "texturevariant.h"
 #include "textures.h"
 
 /**
@@ -88,6 +89,13 @@ void Textures_Register(void)
 #if _DEBUG
     C_CMD("texturestats", NULL, PrintTextureStats)
 #endif
+}
+
+const char* TexSource_Name(TexSource source)
+{
+    if(source == TEXS_ORIGINAL) return "original";
+    if(source == TEXS_EXTERNAL) return "external";
+    return "none";
 }
 
 static __inline PathDirectory* getDirectoryForNamespaceId(texturenamespaceid_t id)
@@ -718,7 +726,7 @@ textureid_t Textures_ResolveUri2(const Uri* uri, boolean quiet)
     {
 #if _DEBUG
         ddstring_t* uriStr = Uri_ToString(uri);
-        Con_Message("Warning:Textures::ResolveUri: Uri \"%s\" failed to validate, returing NULL.\n", Str_Text(uriStr));
+        Con_Message("Warning:Textures::ResolveUri: Uri \"%s\" failed to validate, returning NULL.\n", Str_Text(uriStr));
         Str_Delete(uriStr);
 #endif
         return NOTEXTUREID;
@@ -1143,18 +1151,41 @@ int Textures_IterateDeclared(texturenamespaceid_t namespaceId,
     return Textures_IterateDeclared2(namespaceId, callback, NULL/*no paramaters*/);
 }
 
+static int printVariantInfo(TextureVariant* variant, void* paramaters)
+{
+    uint* variantIdx = (uint*)paramaters;
+    float s, t;
+    assert(variantIdx);
+
+    Con_Printf("Variant #%i: GLName:%u\n", *variantIdx,
+               TextureVariant_GLName(variant));
+
+    TextureVariant_Coords(variant, &s, &t);
+    Con_Printf("  Source:%s Masked:%s Prepared:%s Uploaded:%s\n  Coords:(s:%g t:%g)\n",
+               TexSource_Name(TextureVariant_Source(variant)),
+               TextureVariant_IsMasked(variant)  ? "yes":"no",
+               TextureVariant_IsPrepared(variant)? "yes":"no",
+               TextureVariant_IsUploaded(variant)? "yes":"no", s, t);
+
+    Con_Printf("  Specification: ");
+    GL_PrintTextureVariantSpecification(TextureVariant_Spec(variant));
+
+    ++(*variantIdx);
+    return 0; // Continue iteration.
+}
+
 static void printTextureInfo(Texture* tex)
 {
     Uri* uri = Textures_ComposeUri(Textures_Id(tex));
     ddstring_t* path = Uri_ToString(uri);
-    //int variantIdx = 0;
+    uint variantIdx = 0;
 
-    Con_Printf("Texture \"%s\" [%p] uid:%u origin:%s\nSize: %d x %d\n",
-        F_PrettyPath(Str_Text(path)), (void*) tex, (uint) Textures_Id(tex),
-        Texture_IsCustom(tex)? "addon" : "game",
+    Con_Printf("Texture \"%s\" [%p] x%u uid:%u origin:%s\nSize: %d x %d\n",
+        F_PrettyPath(Str_Text(path)), (void*) tex, Texture_VariantCount(tex),
+        (uint) Textures_Id(tex), Texture_IsCustom(tex)? "addon" : "game",
         Texture_Width(tex), Texture_Height(tex));
 
-    //Texture_IterateVariants(tex, printVariantInfo, (void*)&variantIdx);
+    Texture_IterateVariants(tex, printVariantInfo, (void*)&variantIdx);
 
     Str_Delete(path);
     Uri_Delete(uri);
@@ -1170,9 +1201,9 @@ static void printTextureOverview(PathDirectoryNode* node, boolean printNamespace
     ddstring_t* resourcePath = Uri_ToString(Textures_ResourcePath(texId));
 
     Con_FPrintf(!record->texture? CPF_LIGHT : CPF_WHITE,
-        "%-*s %*u %-6s %s\n", printNamespace? 22 : 14, F_PrettyPath(Str_Text(path)),
+        "%-*s %*u %-6s x%u %s\n", printNamespace? 22 : 14, F_PrettyPath(Str_Text(path)),
         numUidDigits, texId, !record->texture? "unknown" : Texture_IsCustom(record->texture)? "addon" : "game",
-        resourcePath? F_PrettyPath(Str_Text(resourcePath)) : "N/A");
+        Texture_VariantCount(record->texture), resourcePath? F_PrettyPath(Str_Text(resourcePath)) : "N/A");
 
     Str_Delete(resourcePath);
     Str_Delete(path);
@@ -1309,7 +1340,7 @@ static size_t printTextures3(texturenamespaceid_t namespaceId, const char* like,
     // Print the result index key.
     numFoundDigits = MAX_OF(3/*idx*/, M_NumDigits((int)count));
     numUidDigits = MAX_OF(3/*uid*/, M_NumDigits((int)Textures_Size()));
-    Con_Printf(" %*s: %-*s %*s origin path\n", numFoundDigits, "idx",
+    Con_Printf(" %*s: %-*s %*s origin x# path\n", numFoundDigits, "idx",
         printNamespace? 22 : 14, printNamespace? "namespace:name" : "name",
         numUidDigits, "uid");
     Con_PrintRuler();

@@ -159,6 +159,9 @@ int I_TranslateKeyCode(SDLKey sym)
     case SDLK_LCTRL:
         return DDKEY_RCTRL;
 
+    case SDLK_RETURN:
+        return DDKEY_RETURN;
+
     case SDLK_F1:
         return DDKEY_F1;
 
@@ -241,13 +244,13 @@ int I_TranslateKeyCode(SDLKey sym)
         return DDKEY_SUBTRACT;
 
     case SDLK_KP_DIVIDE:
-        return '/';
+        return DDKEY_DIVIDE;
 
     case SDLK_KP_MULTIPLY:
         return '*';
 
     case SDLK_KP_ENTER:
-        return DDKEY_RETURN;
+        return DDKEY_ENTER;
 
     case SDLK_INSERT:
         return DDKEY_INS;

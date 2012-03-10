@@ -305,8 +305,8 @@ static int compareVariantSpecifications(const materialvariantspecification_t* a,
     const materialvariantspecification_t* b)
 {
     assert(a && b);
-    if(a == b) return 0;
-    if(a->context != b->context) return 1;
+    if(a == b) return 1;
+    if(a->context != b->context) return 0;
     return GL_CompareTextureVariantSpecifications(a->primarySpec, b->primarySpec);
 }
 
@@ -344,7 +344,7 @@ static materialvariantspecification_t* findVariantSpecification(
     materialvariantspecificationlist_node_t* node;
     for(node = variantSpecs; node; node = node->next)
     {
-        if(!compareVariantSpecifications(node->spec, tpl))
+        if(compareVariantSpecifications(node->spec, tpl))
             return node->spec;
     }
     if(!canCreate)
@@ -404,7 +404,7 @@ static int chooseVariantWorker(materialvariant_t* variant, void* paramaters)
     const materialvariantspecification_t* cand = MaterialVariant_Spec(variant);
     assert(p);
 
-    if(!compareVariantSpecifications(cand, p->spec))
+    if(compareVariantSpecifications(cand, p->spec))
     {
         // This will do fine.
         p->chosen = variant;
@@ -874,7 +874,7 @@ materialid_t Materials_ResolveUri2(const Uri* uri, boolean quiet)
     {
 #if _DEBUG
         ddstring_t* uriStr = Uri_ToString(uri);
-        Con_Message("Warning:Materials::ResolveUri: Uri \"%s\" failed to validate, returing NULL.\n", Str_Text(uriStr));
+        Con_Message("Warning: Materials::ResolveUri: \"%s\" failed to validate, returning NOMATERIALID.\n", Str_Text(uriStr));
         Str_Delete(uriStr);
 #endif
         return NOMATERIALID;
@@ -888,7 +888,7 @@ materialid_t Materials_ResolveUri2(const Uri* uri, boolean quiet)
     if(!quiet && !ddMapSetup) // Do not announce during map setup.
     {
         ddstring_t* path = Uri_ToString(uri);
-        Con_Message("Materials::ResolveUri: \"%s\" not found!\n", Str_Text(path));
+        Con_Message("Warning: Materials::ResolveUri: \"%s\" not found, returning NOMATERIALID.\n", Str_Text(path));
         Str_Delete(path);
     }
     return NOMATERIALID;
@@ -1133,8 +1133,8 @@ static void updateMaterialTextureLinks(materialbind_t* mb)
     Material_SetShinyStrength(mat,    (refDef? refDef->shininess : 0));
 }
 
-static void setTexUnit(materialsnapshot_t* ms, byte unit, const TextureVariant* texture,
-    blendmode_t blendMode, int magMode, float sScale, float tScale, float sOffset,
+static void setTexUnit(materialsnapshot_t* ms, byte unit, TextureVariant* texture,
+    blendmode_t blendMode, float sScale, float tScale, float sOffset,
     float tOffset, float opacity)
 {
     rtexmapunit_t* tu;
@@ -1142,9 +1142,9 @@ static void setTexUnit(materialsnapshot_t* ms, byte unit, const TextureVariant* 
 
     ms->textures[unit] = texture;
     tu = &ms->units[unit];
-    tu->tex = (texture? TextureVariant_GLName(texture) : 0);
+    tu->texture.variant = texture;
+    tu->texture.flags = TUF_TEXTURE_IS_MANAGED;
     tu->blendMode = blendMode;
-    tu->magMode = magMode;
     V2_Set(tu->scale, sScale, tScale);
     V2_Set(tu->offset, sOffset, tOffset);
     tu->opacity = MINMAX_OF(0, opacity, 1);
@@ -1173,7 +1173,7 @@ const materialsnapshot_t* updateMaterialSnapshot(materialvariant_t* variant,
     materialsnapshot_t* snapshot)
 {
     static struct materialtextureunit_s {
-        const TextureVariant* tex;
+        TextureVariant* tex;
     } texUnits[NUM_MATERIAL_TEXTURE_UNITS];
     material_t* mat = MaterialVariant_GeneralCase(variant);
     const materialvariantspecification_t* spec = MaterialVariant_Spec(variant);
@@ -1261,16 +1261,11 @@ const materialsnapshot_t* updateMaterialSnapshot(materialvariant_t* variant,
     // Setup the primary texture unit.
     if(texUnits[MTU_PRIMARY].tex)
     {
-        const TextureVariant* tex = texUnits[MTU_PRIMARY].tex;
-        int magMode = glmode[texMagMode];
-        float sScale, tScale;
+        TextureVariant* tex = texUnits[MTU_PRIMARY].tex;
+        const float sScale = 1.f / snapshot->size.width;
+        const float tScale = 1.f / snapshot->size.height;
 
-        if(TN_SPRITES == Textures_Namespace(Textures_Id(TextureVariant_GeneralCase(tex))))
-            magMode = filterSprites? GL_LINEAR : GL_NEAREST;
-        sScale = 1.f / snapshot->size.width;
-        tScale = 1.f / snapshot->size.height;
-
-        setTexUnit(snapshot, MTU_PRIMARY, tex, BM_NORMAL, magMode,
+        setTexUnit(snapshot, MTU_PRIMARY, tex, BM_NORMAL,
             sScale, tScale, MaterialVariant_Layer(variant, 0)->texOrigin[0],
             MaterialVariant_Layer(variant, 0)->texOrigin[1], 1);
     }
@@ -1285,7 +1280,7 @@ const materialsnapshot_t* updateMaterialSnapshot(materialvariant_t* variant,
         // Setup the detail texture unit?
         if(texUnits[MTU_DETAIL].tex && snapshot->isOpaque)
         {
-            const TextureVariant* tex = texUnits[MTU_DETAIL].tex;
+            TextureVariant* tex = texUnits[MTU_DETAIL].tex;
             const float width  = Texture_Width(TextureVariant_GeneralCase(tex));
             const float height = Texture_Height(TextureVariant_GeneralCase(tex));
             float scale = Material_DetailScale(mat);
@@ -1295,25 +1290,24 @@ const materialsnapshot_t* updateMaterialSnapshot(materialvariant_t* variant,
                 scale *= detailScale;
 
             setTexUnit(snapshot, MTU_DETAIL, tex, BM_NORMAL,
-                texMagMode?GL_LINEAR:GL_NEAREST, 1.f / width * scale, 1.f / height * scale, 0, 0, 1);
+                       1.f / width * scale, 1.f / height * scale, 0, 0, 1);
         }
 
         // Setup the shiny texture units?
         if(texUnits[MTU_REFLECTION].tex)
         {
-            const TextureVariant* tex = texUnits[MTU_REFLECTION].tex;
+            TextureVariant* tex = texUnits[MTU_REFLECTION].tex;
             const blendmode_t blendmode = Material_ShinyBlendmode(mat);
             const float strength = Material_ShinyStrength(mat);
 
-            setTexUnit(snapshot, MTU_REFLECTION, tex, blendmode, GL_LINEAR, 1, 1, 0, 0, strength);
+            setTexUnit(snapshot, MTU_REFLECTION, tex, blendmode, 1, 1, 0, 0, strength);
         }
 
         if(texUnits[MTU_REFLECTION_MASK].tex)
         {
-            const TextureVariant* tex = texUnits[MTU_REFLECTION_MASK].tex;
+            TextureVariant* tex = texUnits[MTU_REFLECTION_MASK].tex;
 
             setTexUnit(snapshot, MTU_REFLECTION_MASK, tex, BM_NORMAL,
-                snapshot->units[MTU_PRIMARY].magMode,
                 1.f / (snapshot->size.width * Texture_Width(TextureVariant_GeneralCase(tex))),
                 1.f / (snapshot->size.height * Texture_Height(TextureVariant_GeneralCase(tex))),
                 snapshot->units[MTU_PRIMARY].offset[0], snapshot->units[MTU_PRIMARY].offset[1], 1);

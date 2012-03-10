@@ -122,7 +122,7 @@ LPCSTR ToAnsiString(const wchar_t* wstr)
  * @return              Ptr to a string containing a textual representation of
  *                      the last error thrown in the current thread else @c NULL.
  */
-static const char* getLastWINAPIErrorMessage(void)
+const char* DD_Win32_GetLastErrorMessage(void)
 {
     static char* buffer = 0; /// \fixme Never free'd!
     static size_t currentBufferSize = 0;
@@ -180,7 +180,7 @@ static int loadPlugin(application_t* app, const char* pluginPath, void* paramate
     plugin = LoadLibrary(WIN_STRING(pluginPath));
     if(!plugin)
     {
-        Con_Printf("loadPlugin: Error loading \"%s\" (%s).\n", pluginPath, getLastWINAPIErrorMessage());
+        Con_Printf("loadPlugin: Error loading \"%s\" (%s).\n", pluginPath, DD_Win32_GetLastErrorMessage());
         return 0; // Continue iteration.
     }
 
@@ -223,7 +223,7 @@ static BOOL unloadPlugin(HINSTANCE* handle)
     result = FreeLibrary(*handle);
     *handle = 0;
     if(!result)
-        Con_Printf("unloadPlugin: Error unloading plugin (%s).\n", getLastWINAPIErrorMessage());
+        Con_Printf("unloadPlugin: Error unloading plugin (%s).\n", DD_Win32_GetLastErrorMessage());
     return result;
 }
 
@@ -394,10 +394,10 @@ static void determineGlobalPaths(application_t* app)
     {
         strncpy(ddBasePath, ArgNext(), FILENAME_T_MAXLEN);
     }
-    else if(ArgCheck("-stdbasedir"))
+    else
     {
-        // The standard base directory is two levels upwards.
-        strncpy(ddBasePath, "../../", FILENAME_T_MAXLEN);
+        // The standard base directory is one level up from the bin dir.
+        dd_snprintf(ddBasePath, FILENAME_T_MAXLEN, "%s../", ddBinPath);
     }
     Dir_CleanPath(ddBasePath, FILENAME_T_MAXLEN);
     Dir_MakeAbsolutePath(ddBasePath, FILENAME_T_MAXLEN);
@@ -449,6 +449,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         // First order of business: are we running in dedicated mode?
         isDedicated = ArgCheck("-dedicated");
         novideo = ArgCheck("-novideo") || isDedicated;
+
+        Library_Init();
 
         // Determine our basedir and other global paths.
         determineGlobalPaths(&app);
@@ -526,7 +528,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     switch(msg)
     {
     case WM_SIZE:
-        if(!appShutdown)
+        if(!Sys_IsShuttingDown())
         {
             switch(wParam)
             {
@@ -563,7 +565,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
     case WM_CLOSE:
         PostQuitMessage(0);
-        ignoreInput = TRUE;
+        DD_IgnoreInput(true);
         forwardMsg = FALSE;
         break;
 
@@ -610,18 +612,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         break;
 
     case WM_ACTIVATE:
-        if(!appShutdown)
+        // Do not alter high-level engine modes state/properties while busy.
+        /// @todo The window manager should not have the authority to make such changes.
+        ///       We should simply flag the desire to enter a "suspended mode" which
+        ///       will be actioned by the core loop as necessary.
+        if(!Sys_IsShuttingDown() && !Con_IsBusy())
         {
             if(LOWORD(wParam) == WA_ACTIVE || (!HIWORD(wParam) && LOWORD(wParam) == WA_CLICKACTIVE))
             {
                 SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
                 DD_ClearEvents(); // For good measure.
-                ignoreInput = FALSE;
+                DD_IgnoreInput(false);
             }
             else
             {
                 SetPriorityClass(GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
-                ignoreInput = TRUE;
+                DD_IgnoreInput(true);
             }
         }
         forwardMsg = FALSE;
@@ -644,9 +650,27 @@ void DD_Shutdown(void)
 {
     DD_ShutdownAll(); // Stop all engine subsystems.
     unloadAllPlugins(&app);
+    Library_Shutdown();
 
 #ifdef UNICODE
     free(convBuf); convBuf = 0;
     free(utf8ConvBuf); utf8ConvBuf = 0;
 #endif
+}
+
+/**
+ * Windows implementation for the *nix strcasestr() function.
+ */
+const char* strcasestr(const char *text, const char *sub)
+{
+    int textLen = strlen(text);
+    int subLen = strlen(sub);
+    int i;
+
+    for(i = 0; i < textLen - subLen; ++i)
+    {
+        const char* start = text + i;
+        if(!strnicmp(start, sub, subLen)) return start;
+    }
+    return 0;
 }

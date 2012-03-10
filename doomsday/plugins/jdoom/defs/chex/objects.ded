@@ -4,514 +4,194 @@
 
 Header { Version = 6; }
 
-Thing {
-  ID = "POSSESSED";
-  Name = "Zombieman";
-  DoomEd number = 3004;
-  Spawn state = "POSS_STND";
-  See state = "POSS_RUN1";
-  Pain state = "POSS_PAIN";
+Thing Mods "POSSESSED" {
   Melee state = "POSS_ATK1";
   Missile state = "NULL";
-  Death state = "POSS_DIE1";
-  Xdeath state = "POSS_XDIE1";
-  Raise state = "POSS_RAISE1";
-  See sound = "posit1";
-  Attack sound = "pistol";
-  Pain sound = "popain";
-  Death sound = "podth1";
-  Active sound = "posact";
-  Reaction time = 8;
-  Pain chance = 200;
-  Spawn health = 20;
-  Speed = 8;
-  Radius = 20;
-  Height = 56;
-  Mass = 100;
-  Flags = solid | shootable | countkill;
-  Flags2 = passmobj | telestomp;
 }
 
-Thing {
-  ID = "SHOTGUY";
-  Name = "Shotgun Guy";
-  DoomEd number = 9;
-  Spawn state = "SPOS_STND";
-  See state = "SPOS_RUN1";
-  Pain state = "SPOS_PAIN";
+Thing Mods "SHOTGUY" {
   Melee state = "SPOS_ATK1";
   Missile state = "NULL";
-  Death state = "SPOS_DIE1";
-  Xdeath state = "SPOS_XDIE1";
-  Raise state = "SPOS_RAISE1";
-  See sound = "posit2";
-  Attack sound = "None";
-  Pain sound = "popain";
-  Death sound = "podth2";
-  Active sound = "posact";
-  Reaction time = 8;
-  Pain chance = 170;
-  Spawn health = 30;
-  Speed = 8;
-  Radius = 20;
-  Height = 56;
-  Mass = 100;
-  Flags = solid | shootable |countkill;
-  Flags2 = passmobj | telestomp;
 }
 
-Thing {
-  ID = "BRUISER";
-  Name = "Baron of Hell";
-  DoomEd number = 3003;
-  Spawn state = "BOSS_STND";
-  See state = "BOSS_RUN1";
-  Pain state = "BOSS_PAIN";
-  Melee state = "BOSS_ATK1";
-  Missile state = "BOSS_ATK1";
-  Death state = "BOSS_DIE1";
-  Xdeath state = "NULL";
-  Raise state = "BOSS_RAISE1";
-  See sound = "brssit";
-  Attack sound = "None";
-  Pain sound = "dmpain";
-  Death sound = "brsdth";
-  Active sound = "dmact";
-  Reaction time = 8;
-  Pain chance = 50;
-  Spawn health = 1000;
+Thing Mods "BRUISER" {
   Speed = 0;
   Radius = 44;
   Height = 100;
-  Mass = 1000;
-  Flags = solid | shootable | countkill;
-  Flags2 = passmobj | telestomp;
 }
 
-Thing {
-  ID = "SKULL";
-  Name = "Lost Soul";
-  DoomEd number = 3006;
-  Spawn state = "SKULL_STND";
-  See state = "SKULL_RUN1";
-  Pain state = "SKULL_PAIN";
-  Melee state = "NULL";
-  Missile state = "SKULL_ATK1";
-  Death state = "SKULL_DIE1";
-  Xdeath state = "NULL";
-  Raise state = "NULL";
-  See sound = "None";
-  Attack sound = "sklatk";
-  Pain sound = "dmpain";
-  Death sound = "firxpl";
-  Active sound = "dmact";
-  Reaction time = 8;
-  Pain chance = 256;
-  Spawn health = 100;
-  Speed = 8;
-  Radius = 16;
+Thing Mods "SKULL" {
   Height = 0;
-  Mass = 50;
-  Damage = 3;
-  Flags = solid | shootable | float | nogravity;
-  Flags2 = passmobj | telestomp;
 }
 
-State {
-  ID = "BOSS_ATK1";
-  Sprite = "BOSS";
-  Frame = 4;
+State Mods "BOSS_ATK1" {
   Tics = 3;
-  Action = "A_FaceTarget";
-  Next state = "BOSS_ATK2";
 }
 
-State {
-  ID = "BOSS_ATK2";
-  Sprite = "BOSS";
-  Frame = 5;
+State Mods "BOSS_ATK2" {
   Tics = 3;
-  Action = "A_FaceTarget";
-  Next state = "BOSS_ATK3";
 }
 
-State {
-  ID = "BOSS_ATK3";
-  Sprite = "BOSS";
-  Frame = 6;
+State Mods "BOSS_ATK3" {
   Tics = 0;
-  Action = "A_BruisAttack";
-  Next state = "BOSS_RUN1";
 }
 
-State {
-  ID = "BKEY2";
-  Sprite = "BKEY";
-  Frame = 1;
+State Mods "BKEY2" {
   Flags = fullbright|noautolight;
-  Tics = 10;
-  Next state = "BKEY";
 }
-State {
-  ID = "RKEY2";
-  Sprite = "RKEY";
-  Frame = 1;
+
+State Mods "RKEY2" {
   Flags = fullbright|noautolight;
-  Tics = 10;
-  Next state = "RKEY";
 }
 
-State {
-  ID = "YKEY2";
-  Sprite = "YKEY";
-  Frame = 1;
+State Mods "YKEY2" {
   Flags = fullbright|noautolight;
-  Tics = 10;
-  Next state = "YKEY";
 }
 
-State {
-  ID = "BON1";
-  Sprite = "BON1";
-  Frame = 0;
-  Tics = 6;
-  Next state = "BON1A";
+State Mods "BON1" {
+  Flags = "";
 }
 
-State {
-  ID = "BON1A";
-  Sprite = "BON1";
-  Frame = 1;
-  Tics = 6;
-  Next state = "BON1B";
+State Mods "BON1A" {
+  Flags = "";
 }
 
-State {
-  ID = "BON1B";
-  Sprite = "BON1";
-  Frame = 2;
-  Tics = 6;
-  Next state = "BON1C";
+State Mods "BON1B" {
+  Flags = "";
 }
 
-State {
-  ID = "BON1C";
-  Sprite = "BON1";
-  Frame = 3;
-  Tics = 6;
-  Next state = "BON1D";
+State Mods "BON1C" {
+  Flags = "";
 }
 
-State {
-  ID = "BON1D";
-  Sprite = "BON1";
-  Frame = 2;
-  Tics = 6;
-  Next state = "BON1E";
+State Mods "BON1D" {
+  Flags = "";
 }
 
-State {
-  ID = "BON1E";
-  Sprite = "BON1";
-  Frame = 1;
-  Tics = 6;
-  Next state = "BON1";
+State Mods "BON1E" {
+  Flags = "";
 }
 
-State {
-  ID = "SOUL";
-  Sprite = "SOUL";
-  Frame = 0;
+State Mods "SOUL" {
   Flags = fullbright|noautolight;
-  Tics = 6;
-  Next state = "SOUL2";
 }
 
-State {
-  ID = "SOUL2";
-  Sprite = "SOUL";
-  Frame = 1;
+State Mods "SOUL2" {
   Flags = fullbright|noautolight;
-  Tics = 6;
-  Next state = "SOUL3";
 }
 
-State {
-  ID = "SOUL3";
-  Sprite = "SOUL";
-  Frame = 2;
+State Mods "SOUL3" {
   Flags = fullbright|noautolight;
-  Tics = 6;
-  Next state = "SOUL4";
 }
 
-State {
-  ID = "SOUL4";
-  Sprite = "SOUL";
-  Frame = 3;
+State Mods "SOUL4" {
   Flags = fullbright|noautolight;
-  Tics = 6;
-  Next state = "SOUL5";
 }
 
-State {
-  ID = "SOUL5";
-  Sprite = "SOUL";
-  Frame = 2;
+State Mods "SOUL5" {
   Flags = fullbright|noautolight;
-  Tics = 6;
-  Next state = "SOUL6";
 }
 
-State {
-  ID = "SOUL6";
-  Sprite = "SOUL";
-  Frame = 1;
+State Mods "SOUL6" {
   Flags = fullbright|noautolight;
-  Tics = 6;
-  Next state = "SOUL";
 }
 
-State {
-  ID = "EVILEYE";
-  Sprite = "CEYE";
-  Frame = 0;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "EVILEYE2";
+State Mods "CANDLESTIK" {
+  Flags = "";
 }
 
-State {
-  ID = "EVILEYE2";
-  Sprite = "CEYE";
-  Frame = 1;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "EVILEYE3";
+State Mods "CANDELABRA" {
+  Flags = "";
 }
 
-State {
-  ID = "EVILEYE3";
-  Sprite = "CEYE";
-  Frame = 2;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "EVILEYE4";
-}
-
-State {
-  ID = "EVILEYE4";
-  Sprite = "CEYE";
-  Frame = 1;
-  Flags = fullbright;
-  Tics = 6;
-  Next state = "EVILEYE";
-}
-
-State {
-  ID = "CANDLESTIK";
-  Sprite = "CAND";
-  Frame = 0;
-  Tics = -1;
-  Next state = "NULL";
-}
-
-State {
-  ID = "CANDELABRA";
-  Sprite = "CBRA";
-  Frame = 0;
-  Tics = -1;
-  Next state = "NULL";
-}
-
-State {
-  ID = "PMAP";
-  Sprite = "PMAP";
-  Frame = 0;
+State Mods "PMAP" {
   Flags = fullbright|noautolight;
-  Tics = 6;
-  Next state = "PMAP2";
 }
 
-State {
-  ID = "PMAP2";
-  Sprite = "PMAP";
-  Frame = 1;
+State Mods "PMAP2" {
   Flags = fullbright|noautolight;
-  Tics = 6;
-  Next state = "PMAP3";
 }
 
-State {
-  ID = "PMAP3";
-  Sprite = "PMAP";
-  Frame = 2;
+State Mods "PMAP3" {
   Flags = fullbright|noautolight;
-  Tics = 6;
-  Next state = "PMAP4";
 }
 
-State {
-  ID = "PMAP4";
-  Sprite = "PMAP";
-  Frame = 3;
+State Mods "PMAP4" {
   Flags = fullbright|noautolight;
-  Tics = 6;
-  Next state = "PMAP5";
 }
 
-State {
-  ID = "PMAP5";
-  Sprite = "PMAP";
-  Frame = 2;
+State Mods "PMAP5" {
   Flags = fullbright|noautolight;
-  Tics = 6;
-  Next state = "PMAP6";
 }
 
-State {
-  ID = "PMAP6";
-  Sprite = "PMAP";
-  Frame = 1;
+State Mods "PMAP6" {
   Flags = fullbright|noautolight;
-  Tics = 6;
-  Next state = "PMAP";
 }
 
-State {
-  ID = "SUIT";
-  Sprite = "SUIT";
-  Frame = 0;
+State Mods "SUIT" {
   Flags = fullbright|noautolight;
-  Tics = -1;
-  Next state = "NULL";
 }
 
-State {
-  ID = "BLUETORCH";
-  Sprite = "TBLU";
-  Frame = 0;
-  Tics = 4;
-  Next state = "BLUETORCH2";
+State Mods "BLUETORCH" {
+  Flags = "";
 }
 
-State {
-  ID = "BLUETORCH2";
-  Sprite = "TBLU";
-  Frame = 1;
-  Tics = 4;
-  Next state = "BLUETORCH3";
+State Mods "BLUETORCH2" {
+  Flags = "";
 }
 
-State {
-  ID = "BLUETORCH3";
-  Sprite = "TBLU";
-  Frame = 2;
-  Tics = 4;
-  Next state = "BLUETORCH4";
+State Mods "BLUETORCH3" {
+  Flags = "";
 }
 
-State {
-  ID = "BLUETORCH4";
-  Sprite = "TBLU";
-  Frame = 3;
-  Tics = 4;
-  Next state = "BLUETORCH";
+State Mods "BLUETORCH4" {
+  Flags = "";
 }
 
-State {
-  ID = "GREENTORCH";
-  Sprite = "TGRN";
-  Frame = 0;
-  Tics = 4;
-  Next state = "GREENTORCH2";
+State Mods "GREENTORCH" {
+  Flags = "";
 }
 
-State {
-  ID = "GREENTORCH2";
-  Sprite = "TGRN";
-  Frame = 1;
-  Tics = 4;
-  Next state = "GREENTORCH3";
+State Mods "GREENTORCH2" {
+  Flags = "";
 }
 
-State {
-  ID = "GREENTORCH3";
-  Sprite = "TGRN";
-  Frame = 2;
-  Tics = 4;
-  Next state = "GREENTORCH4";
+State Mods "GREENTORCH3" {
+  Flags = "";
 }
 
-State {
-  ID = "GREENTORCH4";
-  Sprite = "TGRN";
-  Frame = 3;
-  Tics = 4;
-  Next state = "GREENTORCH";
+State Mods "GREENTORCH4" {
+  Flags = "";
 }
 
-State {
-  ID = "GTORCHSHRT";
-  Sprite = "SMGT";
-  Frame = 0;
-  Tics = 4;
-  Next state = "GTORCHSHRT2";
+State Mods "GTORCHSHRT" {
+  Flags = "";
 }
 
-State {
-  ID = "GTORCHSHRT2";
-  Sprite = "SMGT";
-  Frame = 1;
-  Tics = 4;
-  Next state = "GTORCHSHRT3";
+State Mods "GTORCHSHRT2" {
+  Flags = "";
 }
 
-State {
-  ID = "GTORCHSHRT3";
-  Sprite = "SMGT";
-  Frame = 2;
-  Tics = 4;
-  Next state = "GTORCHSHRT4";
+State Mods "GTORCHSHRT3" {
+  Flags = "";
 }
 
-State {
-  ID = "GTORCHSHRT4";
-  Sprite = "SMGT";
-  Frame = 3;
-  Tics = 4;
-  Next state = "GTORCHSHRT";
+State Mods "GTORCHSHRT4" {
+  Flags = "";
 }
 
-
-State {
-  ID = "RTORCHSHRT";
-  Sprite = "SMRT";
-  Frame = 0;
-  Tics = 4;
-  Next state = "RTORCHSHRT2";
+State Mods "RTORCHSHRT" {
+  Flags = "";
 }
 
-State {
-  ID = "RTORCHSHRT2";
-  Sprite = "SMRT";
-  Frame = 1;
-  Tics = 4;
-  Next state = "RTORCHSHRT3";
+State Mods "RTORCHSHRT2" {
+  Flags = "";
 }
 
-State {
-  ID = "RTORCHSHRT3";
-  Sprite = "SMRT";
-  Frame = 2;
-  Tics = 4;
-  Next state = "RTORCHSHRT4";
+State Mods "RTORCHSHRT3" {
+  Flags = "";
 }
 
-State {
-  ID = "RTORCHSHRT4";
-  Sprite = "SMRT";
-  Frame = 3;
-  Tics = 4;
-  Next state = "RTORCHSHRT";
+State Mods "RTORCHSHRT4" {
+  Flags = "";
 }

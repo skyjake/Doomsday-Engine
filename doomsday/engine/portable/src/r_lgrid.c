@@ -988,6 +988,8 @@ void LG_Debug(void)
     if(!lgInited || !lgShowDebug)
         return;
 
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     if(ddpl)
     {
         blink++;

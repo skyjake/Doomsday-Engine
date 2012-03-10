@@ -282,27 +282,28 @@ void H_PreInit(void)
     cfg.automapL0[1] = .482f;
     cfg.automapL0[2] = .439f;
 
-    cfg.automapL1[0] = .294f; // onesided lines
-    cfg.automapL1[1] = .196f;
-    cfg.automapL1[2] = .063f;
+    cfg.automapL1[0] = .292f; // onesided lines
+    cfg.automapL1[1] = .195f;
+    cfg.automapL1[2] = .062f;
 
-    cfg.automapL2[0] = .184f; // floor height change lines
-    cfg.automapL2[1] = .094f;
-    cfg.automapL2[2] = .002f;
+    cfg.automapL2[0] = .812f; // floor height change lines
+    cfg.automapL2[1] = .687f;
+    cfg.automapL2[2] = .519f;
 
-    cfg.automapL3[0] = .592f; // ceiling change lines
-    cfg.automapL3[1] = .388f;
-    cfg.automapL3[2] = .231f;
+    cfg.automapL3[0] = .402f; // ceiling change lines
+    cfg.automapL3[1] = .230f;
+    cfg.automapL3[2] = .121f;
 
-    cfg.automapMobj[0] = 1.f;
-    cfg.automapMobj[1] = 1.f;
-    cfg.automapMobj[2] = 1.f;
+    cfg.automapMobj[0] = .093f;
+    cfg.automapMobj[1] = .093f;
+    cfg.automapMobj[2] = .093f;
 
     cfg.automapBack[0] = 1.0f;
     cfg.automapBack[1] = 1.0f;
     cfg.automapBack[2] = 1.0f;
     cfg.automapOpacity = 1.0f;
     cfg.automapLineAlpha = 1.0f;
+    cfg.automapLineWidth = 1.1f;
     cfg.automapShowDoors = true;
     cfg.automapDoorGlow = 8;
     cfg.automapHudDisplay = 2;
@@ -312,7 +313,9 @@ void H_PreInit(void)
     cfg.automapPanSpeed = .5f;
     cfg.automapPanResetOnOpen = true;
     cfg.automapOpenSeconds = AUTOMAP_OPEN_SECONDS;
+
     cfg.hudCheatCounterScale = .7f;
+    cfg.hudCheatCounterShowWithAutomap = true;
 
     cfg.msgCount = 4;
     cfg.msgScale = .8f;

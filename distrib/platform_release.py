@@ -248,18 +248,6 @@ def linux_release():
     
     os.chdir(LAUNCH_DIR)
 
-    # Generate a launcher script.
-    f = file('linux/launch-doomsday', 'wt')
-    print >> f, """#!/usr/bin/python
-import os, sys
-os.chdir('/usr/share/doomsday/snowberry')
-sys.path += '.'
-
-import snowberry"""
-    f.close()
-    # Make it executable.
-    os.system('chmod a+x linux/launch-doomsday')
-
     def clean_products():
         # Remove previously built deb packages.
         os.system('rm -f ../doomsday*.deb ../doomsday*.changes ../doomsday*.tar.gz ../doomsday*.dsc')

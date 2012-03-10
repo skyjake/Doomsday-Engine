@@ -6,7 +6,7 @@
  *
  * Uses @ref memzone or standard malloc for memory allocation, chosen during
  * initialization of a string. The string itself is always allocated with
- * malloc. (The @ref memzone is not thread-safe.)
+ * malloc.
  *
  * @todo Rename to Str? (str.h)
  * @todo AutoStr for automatically garbage-collected strings (good for return values,
@@ -104,20 +104,20 @@ ddstring_t* Str_NewFromReader(Reader* reader);
  * Call this for uninitialized strings. Global variables are
  * automatically cleared, so they don't need initialization.
  */
-void Str_Init(ddstring_t* ds);
+ddstring_t* Str_Init(ddstring_t* ds);
 
 /**
  * Call this for uninitialized strings. Makes the string use standard
  * malloc for memory allocations.
  */
-void Str_InitStd(ddstring_t* ds);
+ddstring_t* Str_InitStd(ddstring_t* ds);
 
 /**
  * Initializes @a ds with a static const C string. No memory allocation
  * model is selected; use this for strings that remain constant.
  * If the string is never modified calling Str_Free() is not needed.
  */
-void Str_InitStatic(ddstring_t* ds, const char* staticConstStr);
+ddstring_t* Str_InitStatic(ddstring_t* ds, const char* staticConstStr);
 
 /**
  * Empty an existing string. After this the string is in the same
@@ -140,9 +140,33 @@ void Str_Delete(ddstring_t* ds);
 void Str_Clear(ddstring_t* ds);
 
 void Str_Reserve(ddstring_t* ds, int length);
+
+/**
+ * Reserves memory for the string. There will be at least @a length bytes
+ * allocated for the string after this. If the string needs to be resized, its
+ * contents are @em not preserved.
+ */
+void Str_ReserveNotPreserving(ddstring_t* str, int length);
+
 ddstring_t* Str_Set(ddstring_t* ds, const char* text);
 ddstring_t* Str_Append(ddstring_t* ds, const char* appendText);
 ddstring_t* Str_AppendChar(ddstring_t* ds, char ch);
+
+/**
+ * Appends the contents of another string. Enough memory must already be
+ * reserved before calling this. Use in situations where good performance is
+ * critical.
+ */
+ddstring_t* Str_AppendWithoutAllocs(ddstring_t* str, const ddstring_t* append);
+
+/**
+ * Appends a single character. Enough memory must already be reserved before
+ * calling this. Use in situations where good performance is critical.
+ *
+ * @param str  String.
+ * @param ch   Character to append. Cannot be 0.
+ */
+ddstring_t* Str_AppendCharWithoutAllocs(ddstring_t* str, char ch);
 
 /**
  * Append formated text.

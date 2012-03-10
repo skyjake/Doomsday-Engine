@@ -596,7 +596,7 @@ int Def_GetFlagValue(const char* flag)
         if(!stricmp(defs.flags[i].id, flag))
             return defs.flags[i].value;
 
-    Con_Message("Def_GetFlagValue: Undefined flag '%s'.\n", flag);
+    Con_Message("Warning: Def_GetFlagValue: Undefined flag '%s'.\n", flag);
     return 0;
 }
 
@@ -837,9 +837,10 @@ static void readAllDefinitions(void)
         for(recordIt = records; *recordIt; recordIt++)
         {
             AbstractResource* rec = *recordIt;
-            const ddstring_t* resolvedPath = AbstractResource_ResolvedPath(rec, true);
+            /// Try to locate this resource now.
+            const ddstring_t* path = AbstractResource_ResolvedPath(rec, true);
 
-            if(!resolvedPath)
+            if(!path)//!(AbstractResource_ResourceFlags(rec) & RF_FOUND))
             {
                 ddstring_t* names = AbstractResource_NameStringList(rec);
                 Con_Error("readAllDefinitions: Error, failed to locate required game definition \"%s\".", Str_Text(names));
@@ -847,9 +848,9 @@ static void readAllDefinitions(void)
                 Str_Delete(names);
             }
 
-            VERBOSE( Con_Message("  Processing '%s'...\n", F_PrettyPath(Str_Text(resolvedPath))) )
+            VERBOSE( Con_Message("  Processing '%s'...\n", F_PrettyPath(Str_Text(path))) )
 
-            readDefinitionFile(Str_Text(resolvedPath));
+            readDefinitionFile(Str_Text(path));
         }
     }
 
@@ -1195,8 +1196,7 @@ void Def_Read(void)
             // It's probably a bias light definition, then?
             if(!defs.lights[i].uniqueMapID[0])
             {
-                Con_Message("Def_Read: Lights: Undefined state '%s'.\n",
-                            defs.lights[i].state);
+                Con_Message("Warning: Def_Read: Undefined state '%s' in Light definition.\n", defs.lights[i].state);
             }
             continue;
         }

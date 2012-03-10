@@ -22,4 +22,5 @@ Include "hexen/anim.ded";
 Include "hexen/finales.ded";
 Include "hexen/lights.ded";
 Include "hexen/materials.ded";
+Include "hexen/materialenvironments.ded";
 Include "hexen/music.ded";

@@ -63,6 +63,7 @@ void        DS_Dummy_SFX_Set(sfxbuffer_t* buf, int prop, float value);
 void        DS_Dummy_SFX_Setv(sfxbuffer_t* buf, int prop, float* values);
 void        DS_Dummy_SFX_Listener(int prop, float value);
 void        DS_Dummy_SFX_Listenerv(int prop, float* values);
+int         DS_Dummy_SFX_Getv(int prop, void* values);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -88,7 +89,8 @@ audiointerface_sfx_t audiod_dummy_sfx = { {
     DS_Dummy_SFX_Set,
     DS_Dummy_SFX_Setv,
     DS_Dummy_SFX_Listener,
-    DS_Dummy_SFX_Listenerv
+    DS_Dummy_SFX_Listenerv,
+    DS_Dummy_SFX_Getv
 } };
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -306,4 +308,30 @@ void DS_DummyListenerEnvironment(float* rev)
 void DS_Dummy_SFX_Listenerv(int prop, float* values)
 {
     // Nothing to do.
+}
+
+/**
+ * Gets a driver property.
+ *
+ * @param prop    Property (SFXP_*).
+ * @param values  Pointer to return value(s).
+ */
+int DS_Dummy_SFX_Getv(int prop, void* values)
+{
+    switch(prop)
+    {
+    case SFXIP_DISABLE_CHANNEL_REFRESH: {
+        /// The return value is a single 32-bit int.
+        int* wantDisable = (int*) values;
+        if(wantDisable)
+        {
+            // We are not playing any audio.
+            *wantDisable = true;
+        }
+        break; }
+
+    default:
+        return false;
+    }
+    return true;
 }

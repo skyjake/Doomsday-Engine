@@ -232,6 +232,7 @@ game_export_t* GetGameAPI(game_import_t* imports)
     gx.FinaleResponder = FI_PrivilegedResponder;
     gx.PrivilegedResponder = G_PrivilegedResponder;
     gx.Responder = G_Responder;
+    gx.EndFrame = D_EndFrame;
     gx.MobjThinker = P_MobjThinker;
     gx.MobjFriction = (float (*)(void *)) P_MobjGetFriction;
     gx.MobjCheckPosition3f = P_CheckPosition3f;

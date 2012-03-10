@@ -101,8 +101,10 @@ static void renderSkyModels(void)
     skymodel_t* sky;
     float pos[3];
     float inter;
-
     int i, c;
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
 
@@ -114,7 +116,7 @@ static void renderSkyModels(void)
         if(!sky->def)
             continue;
 
-        if(!R_SkyLayerActive(sky->def->layer))
+        if(!R_SkyLayerActive(sky->def->layer+1))
         {
             // The model has been assigned to a layer, but the layer is
             // not visible.
@@ -240,9 +242,6 @@ typedef enum {
 
 static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t setupCap)
 {
-    int magMode = GL_LINEAR;
-    DGLuint tex = 0;
-
     // Default state is no texture and no fadeout.
     rs.texSize.width = rs.texSize.height = 0;
     if(setupCap != HC_NONE)
@@ -272,22 +271,21 @@ static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t se
 
         spec = Materials_VariantSpecificationForContext(MC_SKYSPHERE,
             TSF_NO_COMPRESSION | (R_SkyLayerMasked(layer)? TSF_ZEROMASK : 0),
-            0, 0, 0, GL_REPEAT, GL_CLAMP_TO_EDGE, 1, -2, -1, false, true, false, false);
+            0, 0, 0, GL_REPEAT, GL_CLAMP_TO_EDGE, 0, -1, -1, false, true, false, false);
         ms = Materials_Prepare(mat, spec, true);
 
-        tex     = MSU_gltexture(ms, MTU_PRIMARY);
-        magMode = MSU(ms, MTU_PRIMARY).magMode;
         rs.texSize.width = Texture_Width(MSU_texture(ms, MTU_PRIMARY));
         rs.texSize.height = Texture_Height(MSU_texture(ms, MTU_PRIMARY));
         if(rs.texSize.width && rs.texSize.height)
         {
             rs.texOffset = R_SkyLayerOffset(layer);
+            GL_BindTexture(MST(ms, MTU_PRIMARY));
         }
         else
         {
             // Disable texturing.
             rs.texSize.width = rs.texSize.height = 0;
-            tex = 0;
+            GL_SetNoTexture();
         }
 
         if(setupCap != HC_NONE)
@@ -306,14 +304,16 @@ static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t se
                           rs.capColor.blue  >= fadeoutLimit);
         }
     }
+    else
+    {
+        GL_SetNoTexture();
+    }
 
     if(setupCap != HC_NONE && !rs.fadeout)
     {
         // Default color is black.
         V3_Set(rs.capColor.rgb, 0, 0, 0);
     }
-
-    GL_BindTexture(tex, magMode);
 }
 
 /// @param flags  @see skySphereRenderFlags
@@ -392,6 +392,7 @@ void Rend_RenderSky(void)
         // We don't want anything written in the depth buffer.
         glDisable(GL_DEPTH_TEST);
         glDepthMask(GL_FALSE);
+
         // Disable culling, all triangles face the viewer.
         glDisable(GL_CULL_FACE);
 
@@ -410,6 +411,7 @@ void Rend_RenderSky(void)
 
         // Restore assumed default GL state.
         glEnable(GL_CULL_FACE);
+
         glDepthMask(GL_TRUE);
         glEnable(GL_DEPTH_TEST);
     }
@@ -417,7 +419,15 @@ void Rend_RenderSky(void)
     // How about some 3D models?
     if(skyModelsInited)
     {
+        // We don't want anything written in the depth buffer.
+        glDisable(GL_DEPTH_TEST);
+        glDepthMask(GL_FALSE);
+
         renderSkyModels();
+
+        // Restore assumed default GL state.
+        glDepthMask(GL_TRUE);
+        glEnable(GL_DEPTH_TEST);
     }
 }
 

@@ -87,14 +87,14 @@ void            GL_DeleteLists(DGLuint list, int range);
 boolean         GL_Grab(int x, int y, int width, int height,
                         dgltexformat_t format, void* buffer);
 
+void GL_SetMaterialUI2(struct material_s* mat, int wrapS, int wrapT);
 void GL_SetMaterialUI(struct material_s* mat);
+
 void GL_SetPSprite(struct material_s* mat, int tclass, int tmap);
 void GL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT);
-void GL_BindTexture(DGLuint texname, int magMode);
 
-/**
- * You should use glDisable(GL_TEXTURE_2D) instead of this.
- */
+void GL_BindTextureUnmanaged(DGLuint texname, int magMode);
+
 void GL_SetNoTexture(void);
 
 /**

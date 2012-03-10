@@ -64,14 +64,14 @@
 #define GREENS          (33*8)
 #define YELLOWS         (10*8)
 #define GRAYS           (5*8)
-#define BROWNS          (14*8)
+#define BROWNS          (14*8-2)
 #define PARCH           (13*8-1)
 
 #define WALLCOLORS      REDS
 #define TSWALLCOLORS    GRAYS
 #define CDWALLCOLORS    YELLOWS
 #define FDWALLCOLORS    BROWNS
-#define THINGCOLORS     GREENS
+#define THINGCOLORS     4
 #define BACKGROUND      PARCH
 
 // Keys for Baby Mode
@@ -89,17 +89,11 @@
 #ifdef __JHEXEN__
 // For use if I do walls with outsides/insides
 #define REDS        12*8
-#define REDRANGE    1              //16
 #define BLUES       (256-4*16+8)
-#define BLUERANGE   1              //8
 #define GREENS      (33*8)
-#define GREENRANGE  1              //16
 #define GRAYS       (5*8)
-#define GRAYSRANGE  1              //16
 #define BROWNS      (14*8)
-#define BROWNRANGE  1              //16
 #define YELLOWS     10*8
-#define YELLOWRANGE 1
 #define BLACK       0
 #define WHITE       4*8
 #define PARCH       13*8-1
@@ -107,23 +101,12 @@
 
 // Automap colors
 #define BACKGROUND  PARCH
-#define YOURCOLORS  WHITE
-#define YOURRANGE   0
 #define WALLCOLORS  83      // REDS
-#define WALLRANGE   REDRANGE
 #define TSWALLCOLORS    GRAYS
-#define TSWALLRANGE GRAYSRANGE
 #define FDWALLCOLORS    96      // BROWNS
-#define FDWALLRANGE BROWNRANGE
 #define CDWALLCOLORS    107     // YELLOWS
-#define CDWALLRANGE YELLOWRANGE
 #define THINGCOLORS GREENS
-#define THINGRANGE  GREENRANGE
 #define SECRETWALLCOLORS WALLCOLORS
-#define SECRETWALLRANGE WALLRANGE
-#define GRIDCOLORS  (GRAYS + GRAYSRANGE/2)
-#define GRIDRANGE   0
-#define XHAIRCOLORS GRAYS
 
 #define BORDEROFFSET 4
 

@@ -55,8 +55,44 @@ static linedef_t* findBlendNeighbor(const linedef_t* l, byte side, byte right,
     return R_FindLineNeighbor(l->L_sector(side), l, farVertOwner, right, diff);
 }
 
+void LineDef_UpdateSlope(linedef_t* line)
+{
+    assert(line);
+
+    line->dX = line->L_v2pos[VX] - line->L_v1pos[VX];
+    line->dY = line->L_v2pos[VY] - line->L_v1pos[VY];
+
+    if(FEQUAL(line->dX, 0))
+    {
+        line->slopeType = ST_VERTICAL;
+    }
+    else if(FEQUAL(line->dY, 0))
+    {
+        line->slopeType = ST_HORIZONTAL;
+    }
+    else if(line->dY / line->dX > 0)
+    {
+        line->slopeType = ST_POSITIVE;
+    }
+    else
+    {
+        line->slopeType = ST_NEGATIVE;
+    }
+}
+
+void LineDef_UpdateAABox(linedef_t* line)
+{
+    assert(line);
+
+    line->aaBox.minX = MIN_OF(line->L_v2pos[VX], line->L_v1pos[VX]);
+    line->aaBox.minY = MIN_OF(line->L_v2pos[VY], line->L_v1pos[VY]);
+
+    line->aaBox.maxX = MAX_OF(line->L_v2pos[VX], line->L_v1pos[VX]);
+    line->aaBox.maxY = MAX_OF(line->L_v2pos[VY], line->L_v1pos[VY]);
+}
+
 /**
- * \todo Now that we store surface tangent space normals use those rather than angles.
+ * @todo Now that we store surface tangent space normals use those rather than angles.
  */
 void LineDef_LightLevelDelta(const linedef_t* l, int side, float* deltaL, float* deltaR)
 {
@@ -198,7 +234,7 @@ int LineDef_MiddleMaterialCoords(const linedef_t* lineDef, int side,
 }
 
 /**
- * \fixme No need to do this each frame. Set a flag in sidedef_t->flags to
+ * @fixme No need to do this each frame. Set a flag in sidedef_t->flags to
  * denote this. Is sensitive to plane heights, surface properties
  * (e.g. alpha) and surface texture properties.
  */

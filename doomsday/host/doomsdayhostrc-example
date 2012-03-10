@@ -1,0 +1,78 @@
+<hostconfig>
+	<logFile>/home/jaakko/host.log</logFile>
+	<doomsday>/home/jaakko/usr/bin/doomsday</doomsday>
+	<option>-dedicated</option>
+	<option>-server</option>
+	<option>-daemon</option>
+	<option>-noinput</option>
+	<option>-parse</option>
+	<option>/home/jaakko/host.cfg</option>
+	<option>-iwad</option>
+	<option>/home/jaakko/iwads/</option>
+	<branch>master</branch>
+	<buildDir>/home/jaakko/src/deng/doomsday-build</buildDir>
+	<qmakeCommand>qmake -r ../doomsday/doomsday.pro PREFIX=/home/jaakko/usr CONFIG+='debug deng_packres'</qmakeCommand>
+	<rebuildTimes> <!--
+ 		<rebuild weekday="Mon" hour="11" minute="5" />
+		<rebuild weekday="Wed" hour="11" minute="5" />
+		<rebuild weekday="Fri" hour="11" minute="5" /> -->
+	</rebuildTimes>
+	<servers>
+		<server port="13209" game="doom1-ultimate" 
+			name="Deng Team (Co-op)" 
+			info="Public multiplayer testing; everyone is welcome to join"
+			dir="/home/jaakko/runtime/doom">
+			<option>-parse</option>
+			<option>/home/jaakko/coop.cfg</option>
+		</server>
+		<server port="13210" game="doom2" 
+			name="Deng Team (Co-op)" 
+			info="Public multiplayer testing; everyone is welcome to join"
+			dir="/home/jaakko/runtime/doom2">
+			<option>-parse</option>
+			<option>/home/jaakko/coop.cfg</option>
+		</server>
+		<server port="13211" game="heretic" 
+			name="Deng Team (Co-op)" 
+			info="Public multiplayer testing; everyone is welcome to join"
+			dir="/home/jaakko/runtime/heretic">
+			<option>-parse</option>
+			<option>/home/jaakko/coop.cfg</option>
+		</server>
+		<server port="13212" game="hexen" 
+			name="Deng Team (Co-op)" 
+			info="Public multiplayer testing; everyone is welcome to join"
+			dir="/home/jaakko/runtime/hexen">
+			<option>-parse</option>
+			<option>/home/jaakko/coop.cfg</option>
+		</server>
+		<server port="13213" game="doom1-ultimate" 
+			name="Deng Team (DM)" 
+			info="Public multiplayer testing; everyone is welcome to join"
+			dir="/home/jaakko/runtime/doom-dm">
+			<option>-parse</option>
+			<option>/home/jaakko/deathmatch.cfg</option>
+		</server>
+		<server port="13214" game="doom2" 
+			name="Deng Team (DM)" 
+			info="Public multiplayer testing; everyone is welcome to join"
+			dir="/home/jaakko/runtime/doom2-dm">
+			<option>-parse</option>
+			<option>/home/jaakko/deathmatch.cfg</option>
+		</server>
+		<server port="13215" game="heretic" 
+			name="Deng Team (DM)" 
+			info="Public multiplayer testing; everyone is welcome to join"
+			dir="/home/jaakko/runtime/heretic-dm">
+			<option>-parse</option>
+			<option>/home/jaakko/deathmatch.cfg</option>
+		</server>
+		<server port="13216" game="hexen" 
+			name="Deng Team (DM)" 
+			info="Public multiplayer testing; everyone is welcome to join"
+			dir="/home/jaakko/runtime/hexen-dm">
+			<option>-parse</option>
+			<option>/home/jaakko/deathmatch.cfg</option>
+		</server>  
+	</servers>
+</hostconfig>

@@ -49,7 +49,7 @@ abstract class AbstractUnstablePackage extends AbstractPackage implements iBuild
     }
 
     // Override implementation in AbstractPackage.
-    public function composeFullTitle($includeVersion=true, $includeBuildId=true)
+    public function composeFullTitle($includeVersion=true, $includePlatformName=true, $includeBuildId=true)
     {
         $includeVersion = (boolean) $includeVersion;
         $includeBuildId = (boolean) $includeBuildId;
@@ -59,7 +59,7 @@ abstract class AbstractUnstablePackage extends AbstractPackage implements iBuild
             $title .= ' '. $this->version;
         if($includeBuildId && $this->buildId !== 0)
             $title .= ' Build'. $this->buildId;
-        if($this->platformId !== PID_ANY)
+        if($includePlatformName && $this->platformId !== PID_ANY)
         {
             $plat = &BuildRepositoryPlugin::platform($this->platformId);
             $title .= ' for '. $plat['nicename'];
@@ -67,10 +67,36 @@ abstract class AbstractUnstablePackage extends AbstractPackage implements iBuild
         return $title;
     }
 
+    // Extends implementation in AbstractPackage.
+    public function populateGraphTemplate(&$tpl)
+    {
+        global $FrontController;
+
+        if(!is_array($tpl))
+            throw new Exception('Invalid template argument, array expected');
+
+        parent::populateGraphTemplate($tpl);
+        $tpl['is_unstable'] = true;
+
+        $build = $FrontController->findPlugin('BuildRepository')->buildByUniqueId($this->buildId);
+        $tpl['build_startdate'] = date(DATE_ATOM, $build->startDate());
+        $tpl['build_uniqueid'] = $this->buildId;
+
+        $tpl['compile_loguri'] = $this->compileLogUri;
+        $tpl['compile_errorcount'] = $this->compileErrorCount;
+        $tpl['compile_warncount'] = $this->compileWarnCount;
+    }
+
     // Implements iBuilderProduct.
     public function setBuildUniqueId($id)
     {
         $this->buildId = intval($id);
+    }
+
+    // Implements iBuilderProduct.
+    public function buildUniqueId()
+    {
+        return $this->buildId;
     }
 
     // Implements iBuilderProduct.

@@ -49,11 +49,12 @@ typedef struct mndata_bindings_s {
 mn_object_t* MNBindings_New(void);
 void MNBindings_Delete(mn_object_t* ob);
 
-const char* MNBindings_ControlName(mn_object_t* obj);
+void MNBindings_Ticker(mn_object_t* ob);
+void MNBindings_Drawer(mn_object_t* ob, const Point2Raw* origin);
+int MNBindings_CommandResponder(mn_object_t* ob, menucommand_e command);
+int MNBindings_PrivilegedResponder(mn_object_t* ob, event_t* ev);
+void MNBindings_UpdateGeometry(mn_object_t* ob, mn_page_t* page);
 
-void MNBindings_Drawer(mn_object_t* obj, const Point2Raw* origin);
-int MNBindings_CommandResponder(mn_object_t* obj, menucommand_e command);
-int MNBindings_PrivilegedResponder(mn_object_t* obj, event_t* ev);
-void MNBindings_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
+const char* MNBindings_ControlName(mn_object_t* ob);
 
-#endif /* LIBCOMMON_MENU_CONTROLS */
+#endif /// LIBCOMMON_MENU_CONTROLS

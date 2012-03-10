@@ -126,10 +126,16 @@ void P_SetPsprite(player_t* player, int position, statenum_t stnum)
 /**
  * Starts bringing the pending weapon up from the bottom of the screen.
  */
-void P_BringUpWeapon(struct player_s *player)
+void P_BringUpWeapon(player_t* player)
 {
-    weaponmodeinfo_t   *wminfo;
-    int wminfonum = player->pendingWeapon;
+#if _DEBUG
+    const weapontype_t oldPendingWeapon = player->pendingWeapon;
+#endif
+
+    weaponmodeinfo_t* wminfo = NULL;
+    weapontype_t raiseWeapon;
+
+    if(!player) return;
 
     if(player->plr->flags & DDPF_UNDEFINED_WEAPON)
     {
@@ -137,21 +143,28 @@ void P_BringUpWeapon(struct player_s *player)
         return;
     }
 
-    if(player->pendingWeapon == WT_NOCHANGE)
-        player->pendingWeapon = player->readyWeapon;
-
-    wminfo = WEAPON_INFO(player->pendingWeapon, player->class_, 0);
-
-    if(wminfo->raiseSound)
-        S_StartSoundEx(wminfo->raiseSound, player->plr->mo);
+    raiseWeapon = player->pendingWeapon;
+    if(raiseWeapon == WT_NOCHANGE)
+        raiseWeapon = player->readyWeapon;
 
     player->pendingWeapon = WT_NOCHANGE;
     player->pSprites[ps_weapon].pos[VY] = WEAPONBOTTOM;
 
-#ifdef _DEBUG
+    if(!VALID_WEAPONTYPE(raiseWeapon))
+    {
+        return;
+    }
+
+    wminfo = WEAPON_INFO(raiseWeapon, player->class_, 0);
+
+#if _DEBUG
     Con_Message("P_BringUpWeapon: Player %i, pending weapon was %i, weapon pspr to %i\n",
-                (int)(player - players), wminfonum, wminfo->states[WSN_UP]);
+                (int)(player - players), oldPendingWeapon, wminfo->states[WSN_UP]);
 #endif
+
+    if(wminfo->raiseSound)
+        S_StartSoundEx(wminfo->raiseSound, player->plr->mo);
+
     P_SetPsprite(player, ps_weapon, wminfo->states[WSN_UP]);
 }
 

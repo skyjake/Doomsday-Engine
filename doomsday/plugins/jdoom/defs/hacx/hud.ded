@@ -1,0 +1,34 @@
+# HacX - HUD Patch Replacements
+#
+# The "Patch Replacement" values are used to replace patches with 
+# strings of text. For further information on syntax see values.ded
+
+Header { Version = 5; }
+
+SkipIf -nodefaultfx;
+
+Values {
+  Patch Replacement {
+    STGNUM0  = "{font=game:index,r=0.3,g=0.62,b=0.25}0";
+    STGNUM1  = "{font=game:index,r=0.3,g=0.62,b=0.25}1";
+    STGNUM2  = "{font=game:index,r=0.3,g=0.62,b=0.25}2";
+    STGNUM3  = "{font=game:index,r=0.3,g=0.62,b=0.25}3";
+    STGNUM4  = "{font=game:index,r=0.3,g=0.62,b=0.25}4";
+    STGNUM5  = "{font=game:index,r=0.3,g=0.62,b=0.25}5";
+    STGNUM6  = "{font=game:index,r=0.3,g=0.62,b=0.25}6";
+    STGNUM7  = "{font=game:index,r=0.3,g=0.62,b=0.25}7";
+    STGNUM8  = "{font=game:index,r=0.3,g=0.62,b=0.25}8";
+    STGNUM9  = "{font=game:index,r=0.3,g=0.62,b=0.25}9";
+
+    STYSNUM0 = "{font=game:index,r=0.09,g=0.2,b=0.06}0";
+    STYSNUM1 = "{font=game:index,r=0.09,g=0.2,b=0.06}1";
+    STYSNUM2 = "{font=game:index,r=0.09,g=0.2,b=0.06}2";
+    STYSNUM3 = "{font=game:index,r=0.09,g=0.2,b=0.06}3";
+    STYSNUM4 = "{font=game:index,r=0.09,g=0.2,b=0.06}4";
+    STYSNUM5 = "{font=game:index,r=0.09,g=0.2,b=0.06}5";
+    STYSNUM6 = "{font=game:index,r=0.09,g=0.2,b=0.06}6";
+    STYSNUM7 = "{font=game:index,r=0.09,g=0.2,b=0.06}7";
+    STYSNUM8 = "{font=game:index,r=0.09,g=0.2,b=0.06}8";
+    STYSNUM9 = "{font=game:index,r=0.09,g=0.2,b=0.06}9";
+  };
+}

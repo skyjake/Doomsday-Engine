@@ -195,6 +195,7 @@ boolean FI_ScriptIsMenuTrigger(finaleid_t id)
         Con_Error("FI_ScriptIsMenuTrigger: Unknown finaleid %u.", id);
     if(f->active)
     {
+        DEBUG_Message(("IsMenuTrigger: %i\n", FinaleInterpreter_IsMenuTrigger(f->_interpreter)));
         return FinaleInterpreter_IsMenuTrigger(f->_interpreter);
     }
     return false;
@@ -222,6 +223,9 @@ void FI_Init(void)
         return; // Already been here.
     finales = 0; finalesSize = 0;
 
+    B_SetContextFallbackForDDEvents("finale", (int (*)(const ddevent_t*)) gx.FinaleResponder);
+    B_ActivateContext(B_ContextByName("finale"), true); // always on
+
     inited = true;
 }
 
@@ -241,6 +245,9 @@ void FI_Shutdown(void)
         Z_Free(finales);
     }
     finales = 0; finalesSize = 0;
+
+    B_SetContextFallbackForDDEvents("finale", NULL);
+    B_ActivateContext(B_ContextByName("finale"), false);
 
     inited = false;
 }

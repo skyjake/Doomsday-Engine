@@ -1,17 +1,183 @@
 <h2>Install Packages</h2>
-<div class="downloads_list">
-    <div class="package_badge">
-    <a class="package_name" href="http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.0-beta6.9/deng-1.9.0-beta6.9.dmg/download" title="Download Doomsday 1.9.0-beta6.9 for Mac OS X">Doomsday 1.9.0-beta6.8</a><br /><span class="metalink">MacOSX 10.4+ : <a href="http://dengine.net/dew/index.php?title=Doomsday_version_1.9.0-beta6.8" title="Release notes for Doomsday 1.9.0-beta6.8">Release notes</a>
-    </span>
-    </div>
-    <div class="package_badge">
-    <a class="package_name" href="latestbuild?platform=mac10_4-x86-ppc&unstable" title="Download latest Doomsday for Mac OS X (Unstable)">Doomsday</a><br /><span class="metalink">(Unstable) MacOSX 10.4+
-    </span>
-    </div>
+<p>Select the package you wish to install by clicking on it. You will then be directed to our primary download server and after a few moments your download should begin automatically. Once downloaded, run the install package and follow the onsreen instructions to complete the install.</p>
+<div id="downloads_list1" class="downloads_list">
 </div>
 <h3>Minimum System Requirements</h3>
 <ul>
 <li>Mac OS X version 10.4 (or later).</li>
 <li>Original game data files for each supported game that you wish to play (e.g., in the case of <strong>DOOM</strong> the only file needed is <em>doom.wad</em>).</li>
-<li>Some <a href="http://files.dengine.net" title="Doomsday Add-ons">Add-ons</a> may require a large amount of disk space (especially high quality texture and music packs).</li>
+<li>Some <a href="/addons" title="Doomsday Add-ons">Add-ons</a> may require a large amount of disk space (especially high quality texture and music packs).</li>
 </ul>
+
+<script type="text/javascript">
+
+var packages = new Array();
+
+/// @return  @c true if @a object is a string.
+function is_string(object)
+{
+    return typeof(object) == 'string';
+}
+
+/**
+ * Remove all DOM child elements of @a elementId.
+ */
+function removeAllChildren(elementId)
+{
+    if(!is_string(elementId))
+        elementId = elementId.toString();
+
+    var element = document.getElementById(elementId);
+    if(element && element.hasChildNodes())
+    {
+        while(element.childNodes.length)
+        {
+            element.removeChild(element.firstChild);
+        }
+    }
+}
+
+/**
+ * Generate a fancy HTML badge for this package.
+ */
+function genPackageBadgeHTML(json, downloadUri)
+{
+    // Compose badge title.
+    var cleanTitle = json.title + ' ' + json.version;
+
+    // Generate metadata HMTL.
+    var metaData = '<span class="metalink">';
+    if(json.hasOwnProperty('is_unstable'))
+    {
+        var isUnstable = json.is_unstable;
+        var buildId = '';
+
+        if(json.hasOwnProperty('build_uniqueid'))
+        {
+            buildId += ' build' + json.build_uniqueid;
+        }
+
+        if(isUnstable)
+        {
+            cleanTitle += ' (Unstable)';
+        }
+    }
+    metaData += /*json.platform_name + */'Mac OS X 10.4+</span>';
+
+    return $('<div class="package_badge"><a class="package_name" href="' + downloadUri + '" title="Download ' + json.fulltitle + '">' + cleanTitle + '</a><br />' + metaData + '</div>');
+}
+
+/**
+ * Called upon receipt of a new JSON package object graph to add it
+ * to the global list of packages.
+ */
+function addPackages(json, downloadUri)
+{
+    var record = new Array();
+    var json_copy = json;
+    record["json"] = json_copy;
+    record["downloadUri"] = downloadUri;
+    packages.push(record);
+}
+
+/**
+ * Sort comparator for JSON graph data.
+ */
+function recordSorter(recordA, recordB)
+{
+    var a = recordA["json"];
+    var a_is_unstable = a.hasOwnProperty('is_unstable');
+    var b = recordB["json"];
+    var b_is_unstable = b.hasOwnProperty('is_unstable');
+
+    // Order stable packages first.
+    if(a_is_unstable != b_is_unstable)
+    {
+        return a_is_unstable? 1 : -1;
+    }
+
+    // Use the lexicographical difference between titles.
+    return a.title - b.title;
+}
+
+/**
+ * Update the identified DOM element attaching new HTML for each package.
+ */
+function populatePackages(elementId)
+{
+    // Order packages
+    packages.sort(recordSorter);
+
+    // Update the named DOM element attaching new HTML for each package.
+    removeAllChildren(elementId);
+    for(var i in packages)
+    {
+        var record = packages[i];
+        genPackageBadgeHTML(record["json"], record["downloadUri"]).appendTo(elementId);
+    }
+}
+
+/**
+ * Query the latest packages, generate HTML badges and append
+ * them to the specified DOM object.
+ */
+function updateLatestPackages(requests, elementId)
+{
+    // Clear the packages staging area.
+    packages = [];
+
+    // Fire the requests and compose the deferreds collection.
+    var allDeferred = new Array();
+    for(var i in requests)
+    {
+        var task = requests[i];
+
+        // Request!
+        var deferred = $.ajax({
+            url: task["request"],
+            data: task["data"],
+            context: {
+                lt: task["downloadUri"]
+            },
+            success: function(json){
+                addPackages(json, this.lt);
+            }
+        });
+
+        // Add this Deferred to the collection.
+        allDeferred.push(deferred);
+    }
+
+    // When all requests complete populate the package list.
+    $.when.apply(null, allDeferred).then(function()
+    {
+        populatePackages(elementId);
+    });
+}
+
+// Construct the request queue.
+requests = new Array();
+
+// Latest stable packages.
+task = new Array();
+task['request'] = 'latestbuild?';
+task['data'] = {
+    graph: 'json',
+    platform: 'mac10_4-x86-ppc'
+};
+task['downloadUri'] = 'latestbuild?' + 'platform=mac10_4-x86-ppc';
+requests.push(task);
+
+// Latest unstable packages.
+task = new Array();
+task['request'] = 'latestbuild?';
+task['data'] = {
+    graph: 'json',
+    platform: 'mac10_4-x86-ppc',
+    unstable: 'yes'
+};
+task['downloadUri'] = 'latestbuild?' + 'platform=mac10_4-x86-ppc' + '&unstable';
+requests.push(task);
+
+updateLatestPackages(requests, '#downloads_list1');
+</script>

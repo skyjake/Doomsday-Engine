@@ -656,29 +656,43 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     return true;
 }
 
-float R_VisualRadius(mobj_t* mo)
+/// @return  Default sprite material specification.
+static const materialvariantspecification_t* spriteMaterialSpec(void)
 {
-    material_t* material;
+    return Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0, GL_CLAMP_TO_EDGE,
+                                                    GL_CLAMP_TO_EDGE, 1, -2, -1,
+                                                    true, true, true, false);
+}
 
+static modeldef_t* currentModelDefForMobj(mobj_t* mo)
+{
     // If models are being used, use the model's radius.
     if(useModels)
     {
         modeldef_t* mf, *nextmf;
         R_CheckModelFor(mo, &mf, &nextmf);
-        if(mf)
-        {
-            // Returns the model's radius!
-            return mf->visualRadius;
-        }
+        return mf;
+    }
+    return NULL;
+}
+
+float R_VisualRadius(mobj_t* mo)
+{
+    material_t* material;
+    modeldef_t* mf;
+
+    // If models are being used, use the model's radius.
+    mf = currentModelDefForMobj(mo);
+    if(mf)
+    {
+        return mf->visualRadius;
     }
 
     // Use the sprite frame's width?
     material = R_GetMaterialForSprite(mo->sprite, mo->frame);
     if(material)
     {
-        const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
-            MC_SPRITE, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false);
-        const materialsnapshot_t* ms = Materials_Prepare(material, spec, true);
+        const materialsnapshot_t* ms = Materials_Prepare(material, spriteMaterialSpec(), true);
         return ms->size.width / 2;
     }
 
@@ -688,7 +702,9 @@ float R_VisualRadius(mobj_t* mo)
 
 float R_ShadowStrength(mobj_t* mo)
 {
-    float ambientLightLevel;
+    const float minSpriteAlphaLimit = .1f;
+
+    float ambientLightLevel, strength = .65f; ///< Default strength factor.
     assert(mo);
 
     // Is this mobj in a valid state for shadow casting?
@@ -712,8 +728,36 @@ float R_ShadowStrength(mobj_t* mo)
         Rend_ApplyLightAdaptation(&ambientLightLevel);
     }
 
-    /// \note This equation is the same as that used for fakeradio.
-    return (0.6f - ambientLightLevel * 0.4f) * 0.65f * R_Alpha(mo);
+    // Sprites have their own shadow strength factor.
+    if(!currentModelDefForMobj(mo))
+    {
+        material_t* mat = R_GetMaterialForSprite(mo->sprite, mo->frame);
+        if(mat)
+        {
+            // Ensure we've prepared this.
+            const materialsnapshot_t* ms = Materials_Prepare(mat, spriteMaterialSpec(), true);
+            const averagealpha_analysis_t* aa = (const averagealpha_analysis_t*) Texture_Analysis(MSU_texture(ms, MTU_PRIMARY), TA_ALPHA);
+            float weightedSpriteAlpha;
+            if(!aa) Con_Error("R_ShadowStrength: Texture id:%u has no TA_ALPHA analysis.", Textures_Id(MSU_texture(ms, MTU_PRIMARY)));
+
+            // We use an average which factors in the coverage ratio
+            // of alpha:non-alpha pixels.
+            /// @todo Constant weights could stand some tweaking...
+            weightedSpriteAlpha = aa->alpha * (0.4f + (1-aa->coverage) * 0.6f);
+
+            // Almost entirely translucent sprite? => no shadow.
+            if(weightedSpriteAlpha < minSpriteAlphaLimit) return 0;
+
+            // Apply this factor.
+            strength *= MIN_OF(1, 0.2f + weightedSpriteAlpha);
+        }
+    }
+
+    // Factor in Mobj alpha.
+    strength *= R_Alpha(mo);
+
+    /// @note This equation is the same as that used for fakeradio.
+    return (0.6f - ambientLightLevel * 0.4f) * strength;
 }
 
 float R_Alpha(mobj_t* mo)
@@ -940,28 +984,13 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
                                           boolean viewAligned)
 {
     const materialvariantspecification_t* spec;
-    const materialsnapshot_t* ms;
-    patchtex_t* pTex;
-    const variantspecification_t* texSpec;
+    materialvariant_t* variant;
 
     if(!params) return; // Wha?
 
     spec = Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, tClass, tMap,
         GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false);
-    ms = Materials_Prepare(mat, spec, true);
-
-#if _DEBUG
-    if(Textures_Namespace(Textures_Id(MSU_texture(ms, MTU_PRIMARY))) != TN_SPRITES)
-        Con_Error("setupSpriteParamsForVisSprite: Internal error, material snapshot's primary texture is not a SpriteTex!");
-#endif
-
-    pTex = (patchtex_t*) Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
-    assert(pTex);
-    texSpec = TS_GENERAL(MSU_texturespec(ms, MTU_PRIMARY));
-    assert(texSpec);
-
-    params->width  = ms->size.width  + texSpec->border*2;
-    params->height = ms->size.height + texSpec->border*2;
+    variant = Materials_ChooseVariant(mat, spec, true, true);
 
     params->center[VX] = x;
     params->center[VY] = y;
@@ -970,15 +999,11 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     params->srvo[VY] = visOffY;
     params->srvo[VZ] = visOffZ;
     params->distance = distance;
-    params->viewOffX = (float) -pTex->offX - params->width/2;
-    params->viewOffY = 0;
     params->subsector = ssec;
     params->viewAligned = viewAligned;
     params->noZWrite = noSpriteZWrite;
 
-    params->mat = mat;
-    params->tMap = tMap;
-    params->tClass = tClass;
+    params->material = variant;
     params->matFlip[0] = matFlipS;
     params->matFlip[1] = matFlipT;
     params->blendMode = (useSpriteBlend? blendMode : BM_NORMAL);
@@ -1221,6 +1246,7 @@ void R_ProjectSprite(mobj_t* mo)
         align = true;
 
     // Perform visibility checking.
+    /// @fixme R_VisualRadius() does not consider sprite rotation.
     {
     float center[2], v1[2], v2[2];
     float width = R_VisualRadius(mo)*2, offset = 0;
@@ -1325,10 +1351,7 @@ void R_ProjectSprite(mobj_t* mo)
         }
         else
         {
-            if(useSRVOAngle && !netGame && !playback)
-                yaw = (mo->visAngle << 16) / (float) ANGLE_MAX * -360;
-            else
-                yaw = mo->angle / (float) ANGLE_MAX * -360;
+            yaw = Mobj_AngleSmoothed(mo) / (float) ANGLE_MAX * -360;
         }
 
         // How about a unique offset?

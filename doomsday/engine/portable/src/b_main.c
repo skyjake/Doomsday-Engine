@@ -142,11 +142,14 @@ static const keyname_t keyNames[] = {
     {DDKEY_NUMPAD7,     "pad7"},
     {DDKEY_NUMPAD8,     "pad8"},
     {DDKEY_NUMPAD9,     "pad9"},
+    {DDKEY_DECIMAL,     "decimal"},
     {DDKEY_DECIMAL,     "padcomma"},
     {DDKEY_SUBTRACT,    "padminus"}, // not really used
     {DDKEY_ADD,         "padplus"}, // not really used
     {DDKEY_PRINT,       "print"},
     {DDKEY_PRINT,       "prtsc"},
+    {DDKEY_ENTER,       "enter"},
+    {DDKEY_DIVIDE,      "divide"},
     {0, NULL} // The terminator
 };
 
@@ -154,6 +157,10 @@ static const keyname_t keyNames[] = {
 
 void B_Register(void)
 {
+    extern byte zeroControlUponConflict;
+
+    C_VAR_BYTE("input-conflict-zerocontrol", &zeroControlUponConflict, 0, 0, 1);
+
 #define PROTECTED_FLAGS     (CMDF_NO_DEDICATED|CMDF_DED|CMDF_CLIENT)
 
     C_CMD_FLAGS("bindevent",      "ss",   BindEventToCommand, PROTECTED_FLAGS);
@@ -183,12 +190,16 @@ void B_Init(void)
         return;
     }
 
+    // The contexts are defined in reverse order, with the context of lowest
+    // priority defined first.
+
     B_NewContext(DEFAULT_BINDING_CONTEXT_NAME);
 
     // Game contexts.
-    // FIXME: Obviously belong to the game, so shouldn't be here.
+    /// @todo Game binding context setup obviously belong to the game plugin, so shouldn't be here.
     B_NewContext("map");
     B_NewContext("map-freepan");
+    B_NewContext("finale"); // uses a fallback responder to handle script events
     B_AcquireAll(B_NewContext("menu"), true);
     B_NewContext("gameui");
     B_NewContext("shortcut");
@@ -1080,26 +1091,31 @@ binding_t *B_Bind(ddevent_t *ev, char *command, int control, uint bindContext)
 }
 #endif
 
-const char *B_ShortNameForKey(int ddkey)
+const char* B_ShortNameForKey2(int ddKey, boolean forceLowercase)
 {
-    uint        idx;
     static char nameBuffer[40];
+    uint idx;
 
     for(idx = 0; keyNames[idx].key; ++idx)
     {
-        if(ddkey == keyNames[idx].key)
+        if(ddKey == keyNames[idx].key)
             return keyNames[idx].name;
     }
 
-    if(isalnum(ddkey))
+    if(isalnum(ddKey))
     {
         // Printable character, fabricate a single-character name.
-        nameBuffer[0] = tolower(ddkey);
+        nameBuffer[0] = forceLowercase? tolower(ddKey) : ddKey;
         nameBuffer[1] = 0;
         return nameBuffer;
     }
 
     return NULL;
+}
+
+const char* B_ShortNameForKey(int ddKey)
+{
+    return B_ShortNameForKey2(ddKey, true/*force lowercase*/);
 }
 
 int B_KeyForShortName(const char *key)
@@ -1438,7 +1454,7 @@ static void queEventsForHeldControls(uint deviceID, uint classID)
                 // being pressed that have a binding in the context being
                 // enabled/disabled (classID)
                 if(!(com->command[EVS_DOWN] != NULL && bind->controlID >= 0 &&
-                     I_IsDeviceKeyDown(deviceID, (uint) bind->controlID)))
+                     I_IsKeyDown(dev, (uint) bind->controlID)))
                     continue;
                 break;
 

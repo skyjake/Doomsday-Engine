@@ -868,13 +868,47 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
             }
         }
 
-        if(ISTOKEN("Thing"))
+        if(ISTOKEN("Mobj") || ISTOKEN("Thing"))
         {
-            ded_mobj_t*         mo;
+            boolean bModify = false;
+            ded_mobj_t* mo, dummyMo;
 
-            // A new thing.
-            idx = DED_AddMobj(ded, "");
-            mo = &ded->mobjs[idx];
+            ReadToken();
+            if(!ISTOKEN("Mods"))
+            {
+                // A new mobj type.
+                idx = DED_AddMobj(ded, "");
+                mo = &ded->mobjs[idx];
+            }
+            else if(!bCopyNext)
+            {
+                ded_mobjid_t otherMobjId;
+
+                READSTR(otherMobjId);
+                ReadToken();
+
+                idx = Def_GetMobjNum(otherMobjId);
+                if(idx < 0)
+                {
+                    VERBOSE( Con_Message("Warning: Unknown Mobj %s in %s on line #%i, will be ignored.\n",
+                                         otherMobjId, source ? source->fileName : "?", source ? source->lineNumber : 0) )
+
+                    // We'll read into a dummy definition.
+                    memset(&dummyMo, 0, sizeof(dummyMo));
+                    mo = &dummyMo;
+                }
+                else
+                {
+                    mo = &ded->mobjs[idx];
+                    bModify = true;
+                }
+            }
+            else
+            {
+                SetError("Cannot both Copy(Previous) and Modify.");
+                retVal = false;
+                goto ded_end_read;
+            }
 
             if(prevMobjDefIdx >= 0 && bCopyNext)
             {
@@ -886,8 +920,12 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
             for(;;)
             {
                 READLABEL;
-                RV_STR("ID", mo->id)
-                RV_INT("DoomEd number", mo->doomEdNum)
+                // ID cannot be changed when modifying
+                if(!bModify && ISLABEL("ID"))
+                {
+                    READSTR(mo->id);
+                }
+                else RV_INT("DoomEd number", mo->doomEdNum)
                 RV_STR("Name", mo->name)
                 RV_STR("Spawn state", mo->states[SN_SPAWN])
                 RV_STR("See state", mo->states[SN_SEE])
@@ -921,29 +959,81 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 RV_END
                 CHECKSC;
             }
-            prevMobjDefIdx = idx;
+
+            // If we did not read into a dummy update the previous index.
+            if(idx > 0)
+            {
+                prevMobjDefIdx = idx;
+            }
         }
 
         if(ISTOKEN("State"))
         {
-            ded_state_t*        st;
+            boolean bModify = false;
+            ded_state_t* st, dummyState;
 
-            // A new state.
-            idx = DED_AddState(ded, "");
-            st = &ded->states[idx];
+            ReadToken();
+            if(!ISTOKEN("Mods"))
+            {
+                // A new state.
+                idx = DED_AddState(ded, "");
+                st = &ded->states[idx];
+            }
+            else if(!bCopyNext)
+            {
+                ded_stateid_t otherStateId;
+
+                READSTR(otherStateId);
+                ReadToken();
+
+                idx = Def_GetStateNum(otherStateId);
+                if(idx < 0)
+                {
+                    VERBOSE( Con_Message("Warning: Unknown State %s in %s on line #%i, will be ignored.\n",
+                                         otherStateId, source ? source->fileName : "?", source ? source->lineNumber : 0) )
+
+                    // We'll read into a dummy definition.
+                    memset(&dummyState, 0, sizeof(dummyState));
+                    st = &dummyState;
+                }
+                else
+                {
+                    st = &ded->states[idx];
+                    bModify = true;
+                }
+            }
+            else
+            {
+                SetError("Cannot both Copy(Previous) and Modify.");
+                retVal = false;
+                goto ded_end_read;
+            }
 
             if(prevStateDefIdx >= 0 && bCopyNext)
             {
                 // Should we copy the previous definition?
                 memcpy(st, ded->states + prevStateDefIdx, sizeof(*st));
+
+                if(st->execute)
+                {
+                    // Make a copy of the execute command string.
+                    size_t len = strlen(st->execute);
+                    char* newCmdStr = M_Malloc(len+1);
+                    memcpy(newCmdStr, st->execute, len+1);
+                    st->execute = newCmdStr;
+                }
             }
 
             FINDBEGIN;
             for(;;)
             {
                 READLABEL;
-                RV_STR("ID", st->id)
-                RV_FLAGS("Flags", st->flags, "statef_")
+                // ID cannot be changed when modifying
+                if(!bModify && ISLABEL("ID"))
+                {
+                    READSTR(st->id);
+                }
+                else RV_FLAGS("Flags", st->flags, "statef_")
                 RV_STR("Sprite", st->sprite.id)
                 RV_INT("Frame", st->frame)
                 RV_INT("Tics", st->tics)
@@ -956,7 +1046,12 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 RV_END
                 CHECKSC;
             }
-            prevStateDefIdx = idx;
+
+            // If we did not read into a dummy update the previous index.
+            if(idx > 0)
+            {
+                prevStateDefIdx = idx;
+            }
         }
 
         if(ISTOKEN("Sprite"))

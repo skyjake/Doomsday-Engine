@@ -161,6 +161,7 @@ typedef struct jdoom64_config_s {
 
     byte            hudShownCheatCounters;
     float           hudCheatCounterScale;
+    byte            hudCheatCounterShowWithAutomap; ///< Only show when the automap is open.
 
     // Automap stuff.
 /*  int             automapPos;
@@ -174,6 +175,7 @@ typedef struct jdoom64_config_s {
     float           automapBack[3];
     float           automapOpacity;
     float           automapLineAlpha;
+    float           automapLineWidth; ///< In fixed 320x200 pixels.
     byte            automapRotate;
     int             automapHudDisplay;
     int             automapCustomColors;

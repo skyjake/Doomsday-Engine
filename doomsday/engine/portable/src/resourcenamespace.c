@@ -191,13 +191,15 @@ void ResourceNamespace_Clear(resourcenamespace_t* rn)
 }
 
 boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rn, int flags,
-    const Uri* searchPath, resourcenamespace_searchpathgroup_t group)
+    const Uri* _searchPath, resourcenamespace_searchpathgroup_t group)
 {
+    Uri* searchPath;
     uint i, j;
     assert(rn);
 
     // Is this suitable?
-    if(!searchPath || Str_IsEmpty(Uri_Path(searchPath)) || !Str_CompareIgnoreCase(Uri_Path(searchPath), "/"))
+    if(!_searchPath || Str_IsEmpty(Uri_Path(_searchPath)) ||
+       !Str_CompareIgnoreCase(Uri_Path(_searchPath), "/"))
         return false;
 
     if(!VALID_RESOURCENAMESPACE_SEARCHPATHGROUP(group))
@@ -208,6 +210,16 @@ boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rn, int flags,
         return false;
     }
 
+    // Ensure this is a well formed path.
+    { ddstring_t* path = Uri_Compose(_searchPath);
+
+    // Only directories can be search paths.
+    F_AppendMissingSlash(path);
+
+    searchPath = Uri_NewWithPath2(Str_Text(path), RC_NULL);
+    Str_Delete(path);
+    }
+
     // Have we seen this path already (we don't want duplicates)?
 
     for(i = 0; i < SEARCHPATHGROUP_COUNT; ++i)
@@ -216,6 +228,7 @@ boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rn, int flags,
         if(Uri_Equality(rn->_searchPaths[i][j].uri, searchPath))
         {
             rn->_searchPaths[i][j].flags = flags;
+            Uri_Delete(searchPath);
             return true;
         }
     }
@@ -230,7 +243,7 @@ boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rn, int flags,
     if(rn->_searchPathsCount[group] > 1)
         memmove(rn->_searchPaths[group] + 1, rn->_searchPaths[group],
             sizeof(*rn->_searchPaths[group]) * (rn->_searchPathsCount[group]-1));
-    rn->_searchPaths[group][0].uri = Uri_NewCopy(searchPath);
+    rn->_searchPaths[group][0].uri = searchPath;
     rn->_searchPaths[group][0].flags = flags;
 
     return true;

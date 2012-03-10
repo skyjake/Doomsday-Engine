@@ -509,7 +509,6 @@ void Map_LinkPolyobjInBlockmap(gamemap_t* map, polyobj_t* po)
     GridmapBlock blockCoords;
     uint x, y;
 
-    P_PolyobjUpdateAABox(po);
     Blockmap_CellBlockCoords(blockmap, &blockCoords, &po->aaBox);
 
     for(y = blockCoords.minY; y <= blockCoords.maxY; ++y)
@@ -524,7 +523,6 @@ void Map_UnlinkPolyobjInBlockmap(gamemap_t* map, polyobj_t* po)
     Blockmap* blockmap = map->polyobjBlockmap;
     GridmapBlock blockCoords;
 
-    P_PolyobjUpdateAABox(po);
     Blockmap_CellBlockCoords(map->polyobjBlockmap, &blockCoords, &po->aaBox);
     Gridmap_BlockIterate2(blockmap->gridmap, &blockCoords, unlinkObjectInCell, (void*) po);
 }
@@ -655,7 +653,7 @@ typedef struct poiterparams_s {
 int PTR_PolyobjLines(polyobj_t* po, void* data)
 {
     poiterparams_t* args = (poiterparams_t*) data;
-    return P_PolyobjLinesIterator(po, args->func, args->param);
+    return Polyobj_LineDefIterator(po, args->func, args->param);
 }
 
 int Map_IterateCellPolyobjLineDefsIterator(gamemap_t* map, const uint coords[2],
@@ -888,8 +886,9 @@ static int rendSubsector(subsector_t* ssec, void* paramaters)
             normal[VX] = -unit[VY];
             normal[VY] = unit[VX];
 
-            glBindTexture(GL_TEXTURE_2D, GL_PrepareLSTexture(LST_DYNAMIC));
+            GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_DYNAMIC), GL_LINEAR);
             glEnable(GL_TEXTURE_2D);
+
             GL_BlendOp(GL_FUNC_ADD);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
@@ -1436,6 +1435,8 @@ void Rend_BlockmapDebug(void)
         cellInfoDrawer = drawPolyobjCellInfoBox;
         break;
     }
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     /**
      * Draw the blockmap.

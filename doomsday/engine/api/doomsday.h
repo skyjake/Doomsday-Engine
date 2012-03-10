@@ -497,6 +497,7 @@ void            P_SpawnDamageParticleGen(struct mobj_s* mo, struct mobj_s* infli
     int             P_MobjUnlink(struct mobj_s* mo);
     struct mobj_s*  P_MobjForID(int id);
     void            Mobj_OriginSmoothed(struct mobj_s* mobj, float origin[3]);
+    angle_t         Mobj_AngleSmoothed(struct mobj_s* mobj);
     boolean         ClMobj_IsValid(struct mobj_s* mo);
     struct mobj_s*  ClPlayer_ClMobj(int plrNum);
 
@@ -515,14 +516,16 @@ void            P_SpawnDamageParticleGen(struct mobj_s* mo, struct mobj_s* infli
  */
 ///@{
 
-    // Play: Polyobjs.
-    boolean         P_PolyobjMove(struct polyobj_s* po, float x, float y);
-    boolean         P_PolyobjRotate(struct polyobj_s* po, angle_t angle);
-    void            P_PolyobjLink(struct polyobj_s* po);
-    void            P_PolyobjUnLink(struct polyobj_s* po);
+// Play: Polyobjs.
+boolean P_PolyobjMoveXY(struct polyobj_s* po, float x, float y);
+boolean P_PolyobjRotate(struct polyobj_s* po, angle_t angle);
+void P_PolyobjLink(struct polyobj_s* po);
+void P_PolyobjUnlink(struct polyobj_s* po);
 
-    struct polyobj_s* P_GetPolyobj(uint num);
-    void            P_SetPolyobjCallback(void (*func)(struct mobj_s*, void*, void*));
+struct polyobj_s* P_PolyobjByID(uint id);
+struct polyobj_s* P_PolyobjByTag(int tag);
+void P_SetPolyobjCallback(void (*func)(struct mobj_s*, void*, void*));
+
 ///@}
 
 /// @addtogroup material
@@ -577,7 +580,7 @@ int DD_GetFrameRate(void);
 void R_SetupMap(int mode, int flags);
 
 void R_PrecacheMobjNum(int mobjtypeNum);
-void R_PrecacheSkinsForState(int stateIndex);
+void R_PrecacheModelsForState(int stateIndex);
 
 void R_RenderPlayerView(int num);
 
@@ -739,6 +742,8 @@ boolean M_IsStringValidFloat(const char* str);
     float           RNG_RandFloat(void);
 
     // Miscellaneous: Math.
+    void            V2_Sum(float dest[2], const float* srcA, const float* srcB);
+    void            V2_Subtract(float dest[2], const float* srcA, const float* srcB);
     void            V2_Rotate(float vec[2], float radians);
     float           V2_Intersection(const float* p1, const float* delta1, const float* p2, const float* delta2, float point[2]);
 

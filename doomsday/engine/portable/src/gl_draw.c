@@ -65,6 +65,8 @@ void GL_DrawRectWithCoords(const RectRaw* rect, Point2Raw coords[4])
 {
     if(!rect) return;
 
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glBegin(GL_QUADS);
         // Upper left.
         if(coords) glTexCoord2iv((GLint*)coords[0].xy);
@@ -111,6 +113,8 @@ void GL_DrawRect2(int x, int y, int w, int h)
 void GL_DrawRectfWithCoords(const RectRawf* rect, Point2Rawf coords[4])
 {
     if(!rect) return;
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     glBegin(GL_QUADS);
         // Upper left.
@@ -161,27 +165,13 @@ void GL_DrawRectf2Color(double x, double y, double w, double h, float r, float g
     GL_DrawRectf2(x, y, w, h);
 }
 
-void GL_DrawRectf2TextureColor(double x, double y, double width, double height, DGLuint tex,
+void GL_DrawRectf2TextureColor(double x, double y, double width, double height,
     int texW, int texH, const float topColor[3], float topAlpha,
     const float bottomColor[3], float bottomAlpha)
 {
-    if(!(topAlpha > 0 || bottomAlpha > 0))
-        return;
+    if(!(topAlpha > 0 || bottomAlpha > 0)) return;
 
-    if(tex)
-    {
-        glBindTexture(GL_TEXTURE_2D, tex);
-        glEnable(GL_TEXTURE_2D);
-    }
-
-    if(tex || topAlpha < 1.0 || bottomAlpha < 1.0)
-    {
-        GL_BlendMode(BM_NORMAL);
-    }
-    else
-    {
-        glDisable(GL_BLEND);
-    }
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     glBegin(GL_QUADS);
         // Top color.
@@ -198,14 +188,12 @@ void GL_DrawRectf2TextureColor(double x, double y, double width, double height, 
         glTexCoord2f(0, height / (float) texH);
         glVertex2f(x, y + height);
     glEnd();
-
-    if(tex)
-        glDisable(GL_TEXTURE_2D);
-    glEnable(GL_BLEND);
 }
 
 void GL_DrawRectf2Tiled(double x, double y, double w, double h, int tw, int th)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glBegin(GL_QUADS);
         glTexCoord2f(0, 0);
         glVertex2d(x, y);
@@ -218,32 +206,34 @@ void GL_DrawRectf2Tiled(double x, double y, double w, double h, int tw, int th)
     glEnd();
 }
 
-void GL_DrawCutRectf2Tiled(double x, double y, double w, double h, int tw, int th,
-    int txoff, int tyoff, double cx, double cy, double cw, double ch)
+void GL_DrawCutRectfTiled(const RectRawf* rect, int tw, int th, int txoff, int tyoff,
+    const RectRawf* cutRect)
 {
     float ftw = tw, fth = th;
     float txo = (1.0f / (float)tw) * (float)txoff;
     float tyo = (1.0f / (float)th) * (float)tyoff;
 
     // We'll draw at max four rectangles.
-    float toph = cy - y;
-    float bottomh = y + h - (cy + ch);
-    float sideh = h - toph - bottomh;
-    float lefth = cx - x;
-    float righth = x + w - (cx + cw);
+    float toph = cutRect->origin.y - rect->origin.y;
+    float bottomh = rect->origin.y + rect->size.height - (cutRect->origin.y + cutRect->size.height);
+    float sideh = rect->size.height - toph - bottomh;
+    float lefth = cutRect->origin.x - rect->origin.x;
+    float righth = rect->origin.x + rect->size.width - (cutRect->origin.x + cutRect->size.width);
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     glBegin(GL_QUADS);
     if(toph > 0)
     {
         // The top rectangle.
         glTexCoord2f(txo, tyo);
-        glVertex2f(x, y);
-        glTexCoord2f(txo + (w / ftw), tyo);
-        glVertex2f(x + w, y );
-        glTexCoord2f(txo + (w / ftw), tyo + (toph / fth));
-        glVertex2f(x + w, y + toph);
+        glVertex2f(rect->origin.x, rect->origin.y);
+        glTexCoord2f(txo + (rect->size.width / ftw), tyo);
+        glVertex2f(rect->origin.x + rect->size.width, rect->origin.y);
+        glTexCoord2f(txo + (rect->size.width / ftw), tyo + (toph / fth));
+        glVertex2f(rect->origin.x + rect->size.width, rect->origin.y + toph);
         glTexCoord2f(txo, tyo + (toph / fth));
-        glVertex2f(x, y + toph);
+        glVertex2f(rect->origin.x, rect->origin.y + toph);
     }
 
     if(lefth > 0 && sideh > 0)
@@ -252,47 +242,65 @@ void GL_DrawCutRectf2Tiled(double x, double y, double w, double h, int tw, int t
 
         // The left rectangle.
         glTexCoord2f(txo, yoff + tyo);
-        glVertex2f(x, y + toph);
+        glVertex2f(rect->origin.x, rect->origin.y + toph);
         glTexCoord2f(txo + (lefth / ftw), yoff + tyo);
-        glVertex2f(x + lefth, y + toph);
+        glVertex2f(rect->origin.x + lefth, rect->origin.y + toph);
         glTexCoord2f(txo + (lefth / ftw), yoff + tyo + sideh / fth);
-        glVertex2f(x + lefth, y + toph + sideh);
+        glVertex2f(rect->origin.x + lefth, rect->origin.y + toph + sideh);
         glTexCoord2f(txo, yoff + tyo + sideh / fth);
-        glVertex2f(x, y + toph + sideh);
+        glVertex2f(rect->origin.x, rect->origin.y + toph + sideh);
     }
 
     if(righth > 0 && sideh > 0)
     {
-        float ox = x + lefth + cw;
-        float xoff = (lefth + cw) / ftw;
+        float ox = rect->origin.x + lefth + cutRect->size.width;
+        float xoff = (lefth + cutRect->size.width) / ftw;
         float yoff = toph / fth;
 
         // The left rectangle.
         glTexCoord2f(xoff + txo, yoff + tyo);
-        glVertex2f(ox, y + toph);
+        glVertex2f(ox, rect->origin.y + toph);
         glTexCoord2f(xoff + txo + righth / ftw, yoff + tyo);
-        glVertex2f(ox + righth, y + toph);
+        glVertex2f(ox + righth, rect->origin.y + toph);
         glTexCoord2f(xoff + txo + righth / ftw, yoff + tyo + sideh / fth);
-        glVertex2f(ox + righth, y + toph + sideh);
+        glVertex2f(ox + righth, rect->origin.y + toph + sideh);
         glTexCoord2f(xoff + txo, yoff + tyo + sideh / fth);
-        glVertex2f(ox, y + toph + sideh);
+        glVertex2f(ox, rect->origin.y + toph + sideh);
     }
 
     if(bottomh > 0)
     {
-        float oy = y + toph + sideh;
+        float oy = rect->origin.y + toph + sideh;
         float yoff = (toph + sideh) / fth;
 
         glTexCoord2f(txo, yoff + tyo);
-        glVertex2f(x, oy);
-        glTexCoord2f(txo + w / ftw, yoff + tyo);
-        glVertex2f(x + w, oy);
-        glTexCoord2f(txo + w / ftw, yoff + tyo + bottomh / fth);
-        glVertex2f(x + w, oy + bottomh);
+        glVertex2f(rect->origin.x, oy);
+        glTexCoord2f(txo + rect->size.width / ftw, yoff + tyo);
+        glVertex2f(rect->origin.x + rect->size.width, oy);
+        glTexCoord2f(txo + rect->size.width / ftw, yoff + tyo + bottomh / fth);
+        glVertex2f(rect->origin.x + rect->size.width, oy + bottomh);
         glTexCoord2f(txo, yoff + tyo + bottomh / fth);
-        glVertex2f(x, oy + bottomh);
+        glVertex2f(rect->origin.x, oy + bottomh);
     }
     glEnd();
+}
+
+void GL_DrawCutRectf2Tiled(double x, double y, double w, double h, int tw, int th,
+    int txoff, int tyoff, double cx, double cy, double cw, double ch)
+{
+    RectRawf rect, cutRect;
+
+    rect.origin.x = x;
+    rect.origin.y = y;
+    rect.size.width  = w;
+    rect.size.height = h;
+
+    cutRect.origin.x = cx;
+    cutRect.origin.y = cy;
+    cutRect.size.width  = cw;
+    cutRect.size.height = ch;
+
+    GL_DrawCutRectfTiled(&rect, tw, th, txoff, tyoff, &cutRect);
 }
 
 /**
@@ -301,6 +309,8 @@ void GL_DrawCutRectf2Tiled(double x, double y, double w, double h, int tw, int t
 void GL_DrawLine(float x1, float y1, float x2, float y2, float r, float g,
                  float b, float a)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glColor4f(r, g, b, a);
     glBegin(GL_LINES);
         glVertex2f(x1, y1);
@@ -333,6 +343,9 @@ void GL_DrawFilter(void)
 {
     const viewdata_t* vd = R_ViewData(displayPlayer);
     assert(NULL != vd);
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glColor4fv(filterColor);
     glBegin(GL_QUADS);
         glVertex2f(vd->window.origin.x, vd->window.origin.y);
@@ -360,7 +373,9 @@ void GL_ConfigureBorderedProjection2(borderedprojectionstate_t* bp, int flags,
     bp->alignHorizontal = R_ChooseAlignModeAndScaleFactor(&bp->scaleFactor,
         bp->width, bp->height, bp->availWidth, bp->availHeight, bp->scaleMode);
 
-    memset(bp->scissorState, 0, sizeof(bp->scissorState));
+    bp->scissorState = 0;
+    bp->scissorRegion.origin.x = bp->scissorRegion.origin.y = 0;
+    bp->scissorRegion.size.width = bp->scissorRegion.size.height = 0;
 }
 
 /// \note Part of the Doomsday public API.
@@ -384,6 +399,8 @@ void GL_BeginBorderedProjection(borderedprojectionstate_t* bp)
 
     if(SCALEMODE_STRETCH == bp->scaleMode) return;
 
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     /**
      * Use an orthographic projection in screenspace, translating and
      * scaling the coordinate space using the modelview matrix producing
@@ -403,9 +420,9 @@ void GL_BeginBorderedProjection(borderedprojectionstate_t* bp)
         if(bp->flags & BPF_OVERDRAW_CLIP)
         {
             int w = .5f + (bp->availWidth - bp->width * bp->scaleFactor) / 2;
-            DGL_GetIntegerv(DGL_SCISSOR_TEST, bp->scissorState);
-            DGL_GetIntegerv(DGL_SCISSOR_BOX, bp->scissorState + 1);
-            DGL_Scissor(w, 0, bp->width * bp->scaleFactor, bp->availHeight);
+            bp->scissorState = DGL_GetInteger(DGL_SCISSOR_TEST);
+            DGL_Scissor(&bp->scissorRegion);
+            DGL_SetScissor2(w, 0, bp->width * bp->scaleFactor, bp->availHeight);
             DGL_Enable(DGL_SCISSOR_TEST);
         }
 
@@ -420,9 +437,9 @@ void GL_BeginBorderedProjection(borderedprojectionstate_t* bp)
         if(bp->flags & BPF_OVERDRAW_CLIP)
         {
             int h = .5f + (bp->availHeight - bp->height * bp->scaleFactor) / 2;
-            DGL_GetIntegerv(DGL_SCISSOR_TEST, bp->scissorState);
-            DGL_GetIntegerv(DGL_SCISSOR_BOX, bp->scissorState + 1);
-            DGL_Scissor(0, h, bp->availWidth, bp->height * bp->scaleFactor);
+            bp->scissorState = DGL_GetInteger(DGL_SCISSOR_TEST);
+            DGL_Scissor(&bp->scissorRegion);
+            DGL_SetScissor2(0, h, bp->availWidth, bp->height * bp->scaleFactor);
             DGL_Enable(DGL_SCISSOR_TEST);
         }
 
@@ -446,14 +463,16 @@ void GL_EndBorderedProjection(borderedprojectionstate_t* bp)
 
     if(SCALEMODE_STRETCH == bp->scaleMode) return;
 
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
 
     if(bp->flags & BPF_OVERDRAW_CLIP)
     {
-        if(!bp->scissorState[0])
+        if(!bp->scissorState)
             DGL_Disable(DGL_SCISSOR_TEST);
-        DGL_Scissor(bp->scissorState[1], bp->scissorState[2], bp->scissorState[3], bp->scissorState[4]);
+        DGL_SetScissor(&bp->scissorRegion);
     }
 
     if(bp->flags & BPF_OVERDRAW_MASK)

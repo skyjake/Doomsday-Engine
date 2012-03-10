@@ -55,22 +55,38 @@ struct font_s;
 #define DTLF_EXTERNAL       0x4 // Can use if from external resource.
 
 /**
+ * @defgroup textureUnitFlags  Texture Unit Flags
+ */
+///@{
+#define TUF_TEXTURE_IS_MANAGED    0x1 ///< A managed texture is bound to this unit.
+///@}
+
+typedef struct rtexmapunit_texture_s {
+    union {
+        struct {
+            DGLuint name; ///< Texture used on this layer (if any).
+            int magMode; ///< GL texture magnification filter.
+        } gl;
+        struct texturevariant_s* variant;
+    };
+    /// @ref textureUnitFlags
+    int flags;
+} rtexmapunit_texture_t;
+
+/**
  * Texture unit state. POD.
  *
  * A simple Record data structure for storing properties used for
  * configuring a GL texture unit during render.
  */
 typedef struct rtexmapuint_s {
-    /// Texture used on this layer (if any).
-    DGLuint tex;
-
-    /// GL texture magnification filter.
-    int magMode;
+    /// Info about the bound texture for this unit.
+    rtexmapunit_texture_t texture;
 
     /// Currently used only with reflection.
     blendmode_t blendMode;
 
-    /// Opacity of this layer [0...1].
+    /// Opacity of this layer [0..1].
     float opacity;
 
     /// Texture-space scale multiplier.
@@ -82,6 +98,8 @@ typedef struct rtexmapuint_s {
 
 /// Manipulators, for convenience.
 void Rtu_Init(rtexmapunit_t* rtu);
+
+boolean Rtu_HasTexture(const rtexmapunit_t* rtu);
 
 /// Change the scale property.
 void Rtu_SetScale(rtexmapunit_t* rtu, float s, float t);

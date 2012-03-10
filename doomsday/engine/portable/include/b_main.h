@@ -48,9 +48,13 @@ struct dbinding_s* B_BindControl(const char* controlDesc, const char* device);
 struct dbinding_s* B_GetControlDeviceBindings(int localNum, int control, struct bcontext_s** bContext);
 
 // Utils
-/// \todo: move to b_util.h
+/// @todo: move to b_util.h
 int B_NewIdentifier(void);
+
+const char* B_ShortNameForKey2(int ddKey, boolean forceLowercase);
 const char* B_ShortNameForKey(int ddkey);
+
 int B_KeyForShortName(const char* key);
+
 int DD_GetKeyCode(const char* key);
-#endif /* LIBDENG_BIND_MAIN_H */
+#endif /// LIBDENG_BIND_MAIN_H

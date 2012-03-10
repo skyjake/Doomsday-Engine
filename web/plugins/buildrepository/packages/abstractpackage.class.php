@@ -30,30 +30,58 @@ require_once(dirname(__FILE__) . '/../downloadable.interface.php');
 
 abstract class AbstractPackage extends BasePackage implements iDownloadable
 {
-    protected $downloadUri = '';
+    static protected $emptyString = '';
+
+    protected $downloadUri = NULL;
 
     public function __construct($platformId=PID_ANY, $title=NULL, $version=NULL, $downloadUri=NULL)
     {
         parent::__construct($platformId, $title, $version);
 
-        if(!is_null($downloadUri))
+        if(!is_null($downloadUri) && strlen($downloadUri) > 0)
             $this->downloadUri = "$downloadUri";
+    }
+
+    // Extends implementation in AbstractPackage.
+    public function populateGraphTemplate(&$tpl)
+    {
+        if(!is_array($tpl))
+            throw new Exception('Invalid template argument, array expected');
+
+        parent::populateGraphTemplate($tpl);
+        $tpl['download_uri'] = $this->downloadUri();
     }
 
     // Implements iDownloadable
     public function &downloadUri()
     {
+        if(!$this->hasDownloadUri())
+        {
+            return $emptyString;
+        }
         return $this->downloadUri;
+    }
+
+    // Implements iDownloadable
+    public function hasDownloadUri()
+    {
+        return !is_null($this->downloadUri);
     }
 
     // Implements iDownloadable
     public function genDownloadBadge()
     {
         $fullTitle = $this->composeFullTitle();
-        $downloadUriTitle = "Download $fullTitle";
-
-        $html = "<a href=\"$this->downloadUri\" title=\"$downloadUriTitle\">".
-            htmlspecialchars($fullTitle) .'</a>';
+        if($this->hasDownloadUri())
+        {
+            $html = '<a href="'. htmlspecialchars($this->downloadUri)
+                   .'" title="'. ("Download $fullTitle")
+                          .'">'. htmlspecialchars($fullTitle) .'</a>';
+        }
+        else
+        {
+            $html = htmlspecialchars($fullTitle);
+        }
         return $html;
     }
 }

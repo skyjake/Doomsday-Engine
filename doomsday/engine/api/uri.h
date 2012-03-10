@@ -118,12 +118,26 @@ Uri* Uri_Copy(Uri* uri, const Uri* other);
 /**
  * Attempt to compose a resolved copy of this Uri. Substitutes known symbolics
  * in the possibly templated path. Resulting path is a well-formed, filesys
- * compatible path (perhaps base-relative).
+ * compatible path (perhaps base-relative). Only use this if you want to keep
+ * a copy of the resolved Uri. If not, use Uri_ResolvedConst().
+ *
+ * @param uri  Uri instance.
  *
  * @return  Resolved path else @c NULL if non-resolvable. Caller should ensure
  *          to Str_Delete() when no longer needed.
  */
 ddstring_t* Uri_Resolved(const Uri* uri);
+
+/**
+ * Same as Uri_Resolved(), but the returned string is non-modifiable and must
+ * not be deleted. Always use this when you don't need to keep a copy of the
+ * resolved Uri.
+ *
+ * @param uri  Uri instance.
+ *
+ * @return  Resolved path else @c NULL if non-resolvable.
+ */
+const ddstring_t* Uri_ResolvedConst(const Uri* uri);
 
 /**
  * @param uri  Uri instance.
@@ -225,6 +239,29 @@ Uri* Uri_Read(Uri* uri, Reader* reader);
  * @param defaultScheme  Default scheme.
  */
 void Uri_ReadWithDefaultScheme(Uri* uri, Reader* reader, const char* defaultScheme);
+
+/**
+ * @defgroup printUriFlags  Print Uri Flags
+ * @ingroup base
+ */
+///{
+#define UPF_OUTPUT_RESOLVED           0x1 ///< Include the resolved path in the output.
+#define UPF_TRANSFORM_PATH_MAKEPRETTY 0x2 ///< Transform paths making them "pretty".
+
+#define DEFAULT_PRINTURIFLAGS (UPF_OUTPUT_RESOLVED|UPF_TRANSFORM_PATH_MAKEPRETTY)
+///}
+
+/**
+ * Print @a uri to the console.
+ *
+ * @param uri  Uri instance.
+ * @param indent  Number of characters to indent the print output.
+ * @param flags  @ref printUriFlags
+ * @param unresolvedText  Text string to be printed if @a uri is not resolvable.
+ */
+void Uri_Print3(const Uri* uri, int indent, int flags, const char* unresolvedText);
+void Uri_Print2(const Uri* uri, int indent, int flags); /*use the default unresolved text*/
+void Uri_Print(const Uri* uri, int indent); /*flags=DEFAULT_PRINTURIFLAGS*/
 
 #ifdef __cplusplus
 } // extern "C"

@@ -1,5 +1,22 @@
 @chapter{ Running from the command line }
 
+It is possible to launch Doomsday directly from the command line. If all data
+files can be found under the default directories, the engine should be able to
+launch itself without further aid. If not, command line options must be used
+to configure data file locations and other settings. To see which options are
+used by default, you can preview the command line in the Doomsday Frontend
+(e.g., by right-clicking the Play button).
+
+For historical reasons, Doomsday has never considered the command line the
+primary launch method. Consequently, it currently lacks convenient things like
+a @opt{--help} option for aiding command line usage. For more information
+about command line options, see the @link{Command Line Options Reference}
+{http://dengine.net/dew/index.php?title=Command_line_options}.
+
+$* TODO: Much of the following is outdated. Ringzero makes life simpler even
+   with a pure command line setup. The parts that are still relevant should 
+   be revised.
+
 @section{ File paths on the command line }
 
 There are a few things you should know about the handling of relative
@@ -36,24 +53,45 @@ Note that @opt{-game} and @opt{-gl} work a bit differently because their argumen
 
 The default place where you should put your IWADs is @file{ Data\<Game>\ }. jDoom, jHeretic and jHexen will by default look for IWADs in @file{ Data\<Game>\ }, @file{ Data\ }, the base directory and the runtime directory, in that order.
 
+*$
+
+@section{ Loading IWADs }
+
+IWAD files must be specified with the @opt{-iwad} option. You can either
+provide the path to the IWAD to use, or the path of the directory under which
+IWADs are located. Doomsday will look through the specified location and
+use all the recognized IWADs automatically. In other words, you can have the
+IWADs for all games stored in a single directory; Doomsday will use the
+appropriate one for each launched game.
+
+$ TODO: Is it allowed to use more than one -iwad option?
+
+There are alternative ways to specify IWADs: see @ref{environ}{Environment}.
 
 @section{ The @opt{-file} option }
 
-@a{fileopt}
-The @opt{-file} option is used to load WAD files and other data files
-from the command line. @opt{-file} has two aliases: the abbreviation
-@opt{-f} and @opt{-iwad}. Both of these are just aliases; they are
-treated like they were in fact @opt{-file}.
+@a{fileopt} The @opt{-file} (or @opt{-f}) option is used to load WAD files and
+other data files from the command line.
+
+@note{Paths given to @opt{-file} are relative to the runtime directory; see
+the default in @ref{files}{Files}.}
 
 In addition to normal WAD files, the @opt{-file} option can be used
 to load any type of data files, for instance PCX images. An example:
 
 @samp{@opt{-file image.pcx}}
 
-This would load the file @file{image.pcx} from the runtime directory (or the data directory). When loading files in this manner, the engine will treat the file as if it was a WAD file with a single data lump. The lump gets its name from the base of the file name, which in the example's case would be @file{IMAGE}. Anyone can then refer to the data lump using that name, just as if it was included in a WAD file.
+This would load the file @file{image.pcx} from the runtime directory (or the
+data directory). When loading files in this manner, the engine will treat the
+file as if it was a WAD file with a single data lump. The lump gets its name
+from the base of the file name, which in the example's case would be
+@file{IMAGE}. Anyone can then refer to the data lump using that name, just as
+if it was included in a WAD file.
+
+$* TODO: Document unloading.
 
 Any file loaded with the @opt{-file} option can't be unloaded from
 memory at runtime using the @cmd{unload} command. This is mainly a
 precaution, since unloading the main WAD file of the game or any
 data related to it would lead to fatal errors.
-
+*$

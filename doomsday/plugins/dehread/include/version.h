@@ -27,8 +27,8 @@
  * version.h: Version numbering, naming etc.
  */
 
-#ifndef __DEHREAD_VERSION_H__
-#define __DEHREAD_VERSION_H__
+#ifndef LIBDEHREAD_VERSION_H
+#define LIBDEHREAD_VERSION_H
 
 #ifndef DEHREAD_VER_ID
 #  ifdef _DEBUG
@@ -49,4 +49,4 @@
 #define PLUGIN_VERSION_TEXTLONG "Version " PLUGIN_VERSION_TEXT " " __DATE__ " (" DEHREAD_VER_ID ")"
 #define PLUGIN_VERSION_NUMBER 1,2,6,0 // For WIN32 version info.
 
-#endif
+#endif /// LIBDEHREAD_VERSION_H

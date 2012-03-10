@@ -146,17 +146,20 @@ static int loadPluginWorker(const char* pluginPath, void* data)
 {
     loadpluginparamaters_t* params = (loadpluginparamaters_t*) data;
     filename_t name;
+    filename_t ext;
 
     // What is the actual file name?
 #ifndef MACOSX
-    _splitpath(pluginPath, NULL, NULL, name, NULL);
-    if((params->loadingGames  && !strncmp(name, "libj", 4)) ||
-       (!params->loadingGames && !strncmp(name, "libdp", 5)))
+    _splitpath(pluginPath, NULL, NULL, name, ext);
+    if(((params->loadingGames  && !strncmp(name, "libj", 4)) ||
+        (!params->loadingGames && !strncmp(name, "libdp", 5)))
+            && !stricmp(ext, ".so")) // Only .so files
 #endif
 #ifdef MACOSX
-    _splitpath(pluginPath, NULL, NULL, name, NULL);
-    if((params->loadingGames  && !strncmp(name, "j", 1)) ||
+    _splitpath(pluginPath, NULL, NULL, name, ext);
+    if(((params->loadingGames  && !strncmp(name, "j", 1)) ||
        (!params->loadingGames && !strncmp(name, "dp", 2)))
+            && (!stricmp(ext, ".dylib") || !stricmp(ext, ".bundle")))
 #endif
     {
         loadPlugin(params->app, pluginPath, NULL/*no paramaters*/);
@@ -241,7 +244,7 @@ static void determineGlobalPaths(application_t* app)
     {
         filename_t homePath;
         directory_t* temp;
-        dd_snprintf(homePath, FILENAME_T_MAXLEN, "%s/.deng/", getenv("HOME"));
+        dd_snprintf(homePath, FILENAME_T_MAXLEN, "%s/.doomsday/runtime/", getenv("HOME"));
         temp = Dir_New(homePath);
         Dir_mkpath(Dir_Path(temp));
         app->usingHomeDir = Dir_SetCurrent(Dir_Path(temp));
@@ -356,6 +359,9 @@ int main(int argc, char** argv)
 
     // Create the deng2 legacy application core.
     de2LegacyCore = LegacyCore_New(&argc, argv);
+
+    // SDL lock key behavior: send up event when key released.
+    setenv("SDL_DISABLE_LOCK_KEYS", "1", true);
 
     /*if(!initApplication(&app))
     {

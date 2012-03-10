@@ -880,6 +880,8 @@ void CP_VideoModeInfo(ui_object_t* ob)
             (fullscreen? "fullscreen" : "windowed"));
     }
 
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glEnable(GL_TEXTURE_2D);
     FR_SetFont(fontVariable[FS_LIGHT]);
     FR_LoadDefaultAttrib();

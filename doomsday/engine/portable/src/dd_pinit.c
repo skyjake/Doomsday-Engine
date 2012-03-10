@@ -100,11 +100,11 @@ void DD_ErrorBox(boolean error, char* format, ...)
     va_end(args);
 
 #ifdef WIN32
-    suspendMsgPump = true;
+    DD_Win32_SuspendMessagePump(true);
     MessageBox(NULL, WIN_STRING(buff),
                TEXT(DOOMSDAY_NICENAME) DOOMSDAY_VERSION_TEXT_WSTR,
                (UINT) (MB_OK | (error ? MB_ICONERROR : MB_ICONWARNING)));
-    suspendMsgPump = false;
+    DD_Win32_SuspendMessagePump(false);
 #endif
 
 #ifdef UNIX

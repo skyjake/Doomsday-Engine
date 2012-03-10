@@ -32,7 +32,6 @@
 #include "hu_lib.h"
 
 #define MAX_MAP_POINTS          (10)
-#define AM_LINE_WIDTH           (1/1.6f)
 
 /// To be called to register the console commands and variables of this module.
 void UIAutomap_Register(void);
@@ -44,13 +43,19 @@ extern boolean freezeMapRLs;
  * of the current map with navigational interface.
  */
 
-// Automap flags:
+#define UIAUTOMAP_BORDER        4 ///< In fixed 320x200 pixels.
+
+/**
+ * @defgroup uiautomapFlags  UIAutomap Flags
+ */
+///@{
 #define AMF_REND_THINGS         0x01
 #define AMF_REND_KEYS           0x02
 #define AMF_REND_ALLLINES       0x04
 #define AMF_REND_SPECIALLINES   0x08
 #define AMF_REND_VERTEXES       0x10
 #define AMF_REND_LINE_NORMALS   0x20
+///@}
 
 // Mapped point of interest.
 typedef struct {
@@ -59,7 +64,8 @@ typedef struct {
 
 typedef struct {
     automapcfg_t* mcfg;
-    int scissorState[5];
+    int scissorState;
+    RectRaw scissorRegion;
 
 // DGL display lists:
     DGLuint lists[NUM_MAP_OBJECTLISTS]; // Each list contains one or more of given type of automap obj.
@@ -89,9 +95,6 @@ typedef struct {
 // Paramaters for render:
     float alpha, targetAlpha, oldAlpha;
     float alphaTimer;
-
-// Automap window border (in screen space):
-    float border;
 
 // Viewer location on the map:
     float viewTimer;
@@ -176,8 +179,10 @@ void UIAutomap_SetWorldBounds(uiwidget_t* obj, float lowX, float hiX, float lowY
 void UIAutomap_SetMinScale(uiwidget_t* obj, const float scale);
 
 void UIAutomap_CameraOrigin(uiwidget_t* obj, float* x, float* y);
-boolean UIAutomap_SetCameraOrigin(uiwidget_t* obj, float x, float y);
-boolean UIAutomap_TranslateCameraOrigin(uiwidget_t* obj, float x, float y);
+boolean UIAutomap_SetCameraOrigin(uiwidget_t* obj, float x, float y /*, boolean forceInstantly=false*/);
+boolean UIAutomap_SetCameraOrigin2(uiwidget_t* obj, float x, float y, boolean forceInstantly);
+boolean UIAutomap_TranslateCameraOrigin(uiwidget_t* obj, float x, float y /*, boolean forceInstantly=false*/);
+boolean UIAutomap_TranslateCameraOrigin2(uiwidget_t* obj, float x, float y, boolean forceInstantly);
 
 /**
  * @param max  Maximum view position delta in world units.

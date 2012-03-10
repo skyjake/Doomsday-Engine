@@ -684,6 +684,8 @@ static void SBE_InfoBox(source_t* s, int rightX, char* title, float alpha)
     color.green = s->color[CG];
     color.blue  = s->color[CB];
 
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glEnable(GL_TEXTURE_2D);
 
     SBE_DrawBox(&origin, &size, &color);
@@ -842,6 +844,8 @@ void SBE_DrawHUD(void)
     int top;
 
     if(!editActive || editHidden) return;
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     // Go into screen projection mode.
     glMatrixMode(GL_PROJECTION);

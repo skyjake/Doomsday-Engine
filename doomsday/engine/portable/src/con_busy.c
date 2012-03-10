@@ -37,6 +37,7 @@
 #include "de_misc.h"
 #include "de_network.h"
 
+#include "s_main.h"
 #include "image.h"
 #include "texturecontent.h"
 #include "cbuffer.h"
@@ -106,6 +107,7 @@ static boolean animatedTransitionActive(int busyMode)
 int Con_Busy2(BusyTask* task)
 {
     boolean willAnimateTransition;
+    boolean wasIgnoringInput;
     int result;
 
     if(!task) return 0;
@@ -126,10 +128,9 @@ int Con_Busy2(BusyTask* task)
         Con_Error("Con_Busy: Already busy.\n");
     }
 
-    // Activate the UI binding context so that any and all accumulated input
-    // events are discarded when done.
-    DD_ClearKeyRepeaters();
-    B_ActivateContext(B_ContextByName(UI_BINDING_CONTEXT_NAME), true);
+    // Discard input events so that any and all accumulated input
+    // events are ignored.
+    wasIgnoringInput = DD_IgnoreInput(true);
 
     Sys_Lock(busy_Mutex);
     busyDone = false;
@@ -166,13 +167,7 @@ int Con_Busy2(BusyTask* task)
         Con_AbnormalShutdown((const char*) busyError);
     }
 
-    if(!transitionInProgress)
-    {
-        // Clear any input events that might have accumulated whilst busy.
-        DD_ClearEvents();
-        B_ActivateContext(B_ContextByName(UI_BINDING_CONTEXT_NAME), false);
-    }
-    else
+    if(transitionInProgress)
     {
         transitionStartTime = Sys_GetTime();
         transitionPosition = 0;
@@ -191,6 +186,9 @@ int Con_Busy2(BusyTask* task)
     {
         GL_ProcessDeferredTasks(0);
     }
+
+    DD_IgnoreInput(wasIgnoringInput);
+    DD_ResetTimer();
 
     return result;
 }
@@ -290,6 +288,18 @@ void Con_BusyWorkerEnd(void)
 boolean Con_IsBusy(void)
 {
     return busyInited;
+}
+
+boolean Con_InBusyWorker(void)
+{
+    boolean result;
+    if(!Con_IsBusy()) return false;
+
+    /// @todo Is locking necessary?
+    Sys_Lock(busy_Mutex);
+    result = Sys_ThreadId(busyThread) == Sys_CurrentThreadId();
+    Sys_Unlock(busy_Mutex);
+    return result;
 }
 
 static void Con_BusyPrepareResources(void)
@@ -416,6 +426,8 @@ static void Con_BusyLoop(void)
 
     if(canDraw)
     {
+        LIBDENG_ASSERT_IN_MAIN_THREAD();
+
         glMatrixMode(GL_PROJECTION);
         glPushMatrix();
         glLoadIdentity();
@@ -432,6 +444,10 @@ static void Con_BusyLoop(void)
         Sys_Lock(busy_Mutex);
         busyDoneCopy = busyDone;
         Sys_Unlock(busy_Mutex);
+
+        // Post and discard all input events.
+        DD_ProcessEvents(0);
+        DD_ProcessSharpEvents(0);
 
         Sys_Sleep(20);
 
@@ -451,6 +467,9 @@ static void Con_BusyLoop(void)
         // Time for an update?
         if(canDraw)
             Con_BusyDrawer();
+
+        // Make sure the audio system gets regularly updated.
+        S_EndFrame();
     }
 
     if(verbose)
@@ -460,6 +479,8 @@ static void Con_BusyLoop(void)
 
     if(canDraw)
     {
+        LIBDENG_ASSERT_IN_MAIN_THREAD();
+
         glMatrixMode(GL_PROJECTION);
         glPopMatrix();
     }
@@ -473,7 +494,9 @@ static void Con_DrawScreenshotBackground(float x, float y, float width, float he
 {
     if(texScreenshot)
     {
-        glBindTexture(GL_TEXTURE_2D, texScreenshot);
+        LIBDENG_ASSERT_IN_MAIN_THREAD();
+
+        GL_BindTextureUnmanaged(texScreenshot, GL_LINEAR);
         glEnable(GL_TEXTURE_2D);
 
         glColor3ub(255, 255, 255);
@@ -510,6 +533,8 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
     pos = MINMAX_OF(0, pos, 1);
     edgeCount = MAX_OF(1, pos * 30);
 
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     // Draw a background.
     GL_BlendMode(BM_NORMAL);
 
@@ -537,7 +562,7 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
     // Draw the frame.
     glEnable(GL_TEXTURE_2D);
 
-    glBindTexture(GL_TEXTURE_2D, texLoading[0]);
+    GL_BindTextureUnmanaged(texLoading[0], GL_LINEAR);
     glColor4fv(col);
     GL_DrawRectf2(x - radius, y - radius, radius*2, radius*2);
 
@@ -551,7 +576,7 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
 
     // Draw a fan.
     glColor4f(col[0], col[1], col[2], .5f);
-    glBindTexture(GL_TEXTURE_2D, texLoading[1]);
+    GL_BindTextureUnmanaged(texLoading[1], GL_LINEAR);
     glBegin(GL_TRIANGLE_FAN);
     // Center.
     glTexCoord2f(.5f, .5f);
@@ -659,6 +684,8 @@ void Con_BusyDrawConsoleOutput(void)
         }
     }
 
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     GL_BlendMode(BM_NORMAL);
 
     // Dark gradient as background.
@@ -739,6 +766,10 @@ static void Con_BusyDrawer(void)
         Con_BusyDrawConsoleOutput();
     }
 
+#ifdef _DEBUG
+    Z_DebugDrawer();
+#endif
+
     Sys_UpdateWindow(windowIDX);
 }
 
@@ -787,22 +818,24 @@ static void sampleDoomWipe(void)
 {
     int i;
     for(i = 0; i <= SCREENWIDTH; ++i)
+    {
         doomWipeSamples[i] = MAX_OF(0, sampleDoomWipeSine((float) i / SCREENWIDTH));
+    }
 }
 
 void Con_DrawTransition(void)
 {
-    if(isDedicated)
-        return;
-    if(!Con_TransitionInProgress())
-        return;
+    if(isDedicated) return;
+    if(!Con_TransitionInProgress()) return;
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
     glOrtho(0, SCREENWIDTH, SCREENHEIGHT, 0, -1, 1);
 
-    glBindTexture(GL_TEXTURE_2D, texScreenshot);
+    GL_BindTextureUnmanaged(texScreenshot, GL_LINEAR);
     glEnable(GL_TEXTURE_2D);
 
     switch(transitionStyle)
@@ -880,7 +913,7 @@ void Con_DrawTransition(void)
         break;
     }
 
-    glDisable(GL_TEXTURE_2D);
+    GL_SetNoTexture();
 
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();

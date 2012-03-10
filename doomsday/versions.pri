@@ -1,3 +1,10 @@
+# The Doomsday Engine Project
+# Copyright (c) 2011-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+#
+# Runs a Python script that reads the current version numbers and release
+# information from the headers of the various components. Python is assumed to
+# be on the system path.
+
 defineReplace(findVersion) {
     info = $$system(python \"$$PWD/../distrib/build_version.py\" \"$$PWD/$$1\")
     # Result: versionbase buildnum reltype winver

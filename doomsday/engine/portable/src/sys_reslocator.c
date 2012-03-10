@@ -255,7 +255,7 @@ static void rebuildResourceNamespace(resourcenamespaceinfo_t* rnInfo)
 #endif*/
 
     // (Re)populate the directory and insert found paths into the resource namespace.
-    // \todo It should not be necessary for a unique directory per namespace.
+    /// @todo It should not be necessary for a unique directory per namespace.
 
     ResourceNamespace_Clear(rnInfo->rnamespace);
     FileDirectory_Clear(rnInfo->directory);
@@ -691,7 +691,7 @@ static void createPackagesResourceNamespace(void)
         Str_Delete(doomWadDir);
     }
 
-    directory = FileDirectory_New();
+    directory = FileDirectory_New(ddBasePath);
     rnamespace = F_CreateResourceNamespace(PACKAGES_RESOURCE_NAMESPACE_NAME, directory,
         F_ComposeHashNameForFilePath, F_HashKeyForFilePathHashName, 0);
 
@@ -700,7 +700,7 @@ static void createPackagesResourceNamespace(void)
         uint i;
         for(i = 0; i < searchPathsCount; ++i)
         {
-            ResourceNamespace_AddSearchPath(rnamespace, 0, searchPaths[i], SPG_DEFAULT);
+            ResourceNamespace_AddSearchPath(rnamespace, SPF_NO_DESCEND, searchPaths[i], SPG_DEFAULT);
         }
     }
 
@@ -731,25 +731,25 @@ void F_CreateNamespacesForFileResourcePaths(void)
         { MODELS_RESOURCE_NAMESPACE_NAME,       "-modeldir2",   "-modeldir",    RNF_USE_VMAP, 0,
             { "$(Game.DataPath)/models/", "$(Game.DataPath)/models/$(Game.IdentityKey)/" }
         },
-        { SOUNDS_RESOURCE_NAMESPACE_NAME,       "-sfxdir2",     "-sfxdir",      RNF_USE_VMAP, SPF_NO_DECEND,
+        { SOUNDS_RESOURCE_NAMESPACE_NAME,       "-sfxdir2",     "-sfxdir",      RNF_USE_VMAP, SPF_NO_DESCEND,
             { "$(Game.DataPath)/sfx/", "$(Game.DataPath)/sfx/$(Game.IdentityKey)/" }
         },
-        { MUSIC_RESOURCE_NAMESPACE_NAME,        "-musdir2",     "-musdir",      RNF_USE_VMAP, SPF_NO_DECEND,
+        { MUSIC_RESOURCE_NAMESPACE_NAME,        "-musdir2",     "-musdir",      RNF_USE_VMAP, SPF_NO_DESCEND,
             { "$(Game.DataPath)/music/", "$(Game.DataPath)/music/$(Game.IdentityKey)/" }
         },
-        { TEXTURES_RESOURCE_NAMESPACE_NAME,     "-texdir2",     "-texdir",      RNF_USE_VMAP, SPF_NO_DECEND,
+        { TEXTURES_RESOURCE_NAMESPACE_NAME,     "-texdir2",     "-texdir",      RNF_USE_VMAP, SPF_NO_DESCEND,
             { "$(Game.DataPath)/textures/", "$(Game.DataPath)/textures/$(Game.IdentityKey)/" }
         },
-        { FLATS_RESOURCE_NAMESPACE_NAME,        "-flatdir2",    "-flatdir",     RNF_USE_VMAP, SPF_NO_DECEND,
+        { FLATS_RESOURCE_NAMESPACE_NAME,        "-flatdir2",    "-flatdir",     RNF_USE_VMAP, SPF_NO_DESCEND,
             { "$(Game.DataPath)/flats/", "$(Game.DataPath)/flats/$(Game.IdentityKey)/" }
         },
-        { PATCHES_RESOURCE_NAMESPACE_NAME,      "-patdir2",     "-patdir",      RNF_USE_VMAP, SPF_NO_DECEND,
+        { PATCHES_RESOURCE_NAMESPACE_NAME,      "-patdir2",     "-patdir",      RNF_USE_VMAP, SPF_NO_DESCEND,
             { "$(Game.DataPath)/patches/", "$(Game.DataPath)/patches/$(Game.IdentityKey)/" }
         },
         { LIGHTMAPS_RESOURCE_NAMESPACE_NAME,    "-lmdir2",      "-lmdir",       RNF_USE_VMAP, 0,
             { "$(Game.DataPath)/lightmaps/" }
         },
-        { FONTS_RESOURCE_NAMESPACE_NAME,        "-fontdir2",    "-fontdir",     RNF_USE_VMAP, SPF_NO_DECEND,
+        { FONTS_RESOURCE_NAMESPACE_NAME,        "-fontdir2",    "-fontdir",     RNF_USE_VMAP, SPF_NO_DESCEND,
             { "$(App.DataPath)/fonts/", "$(Game.DataPath)/fonts/", "$(Game.DataPath)/fonts/$(Game.IdentityKey)/" }
         },
         { NULL }
@@ -765,7 +765,7 @@ void F_CreateNamespacesForFileResourcePaths(void)
     {
         uint j, searchPathCount;
         struct namespacedef_s* def = &defs[i];
-        FileDirectory* directory = FileDirectory_New();
+        FileDirectory* directory = FileDirectory_New(ddBasePath);
         resourcenamespace_t* rnamespace = F_CreateResourceNamespace(def->name, directory,
             F_ComposeHashNameForFilePath, F_HashKeyForFilePathHashName, def->flags);
 

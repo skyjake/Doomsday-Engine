@@ -3,5 +3,9 @@
 }
 @else {
     @toc
-    @include{intro}
+
+    @chapter{ Introduction }
+
+    @include{introbrief}
+    @include{features}
 }

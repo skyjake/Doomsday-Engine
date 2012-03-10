@@ -186,6 +186,8 @@ typedef enum {
     WT_NOCHANGE // No pending weapon change.
 } weapontype_t;
 
+#define VALID_WEAPONTYPE(val) ((val) >= WT_FIRST && (val) < WT_FIRST + NUM_WEAPON_TYPES)
+
 #define NUMWEAPLEVELS       2 // Number of weapon power levels.
 
 /**

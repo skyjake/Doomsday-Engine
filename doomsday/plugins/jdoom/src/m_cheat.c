@@ -92,15 +92,38 @@ static boolean cheatsEnabled(void)
 
 void Cht_Init(void)
 {
-    { char seq[] = { 'i', 'd', 'm', 'u', 's', 1, 0, 0 };
-    G_AddEventSequence(seq, 8, Cht_MusicFunc); }
-
-    G_AddEventSequence("idbehold", 8, Cht_PowerupMessage);
-
-    if(gameMode == doom_chex)
+    switch(gameMode)
     {
-        char seq[] = { 'l', 'e', 'e', 's', 'n', 'y', 'd', 'e', 'r', 1, 0, 0 };
-        G_AddEventSequence(seq, 12, Cht_WarpFunc);
+    case doom2_hacx:
+        { char seq[] = { 'w', 'a', 'r', 'p', 'm', 'e', 1, 0, 0 };
+        G_AddEventSequence(seq, 9, Cht_WarpFunc); }
+
+        { char seq[] = { 's', 'e', 'e', 'i', 't', 1, 0 };
+        G_AddEventSequence(seq, 7, Cht_PowerupFunc); }
+
+        { char seq[] = { 't', 'u', 'n', 'e', 's', 1, 0, 0 };
+        G_AddEventSequence(seq, 8, Cht_MusicFunc); }
+
+        G_AddEventSequence("show",          4, Cht_Reveal);
+        G_AddEventSequence("wuss",          4, Cht_GodFunc);
+        G_AddEventSequence("blast",         5, Cht_GiveWeaponsAmmoArmorKeys);
+        G_AddEventSequence("walk",          4, Cht_NoClipFunc);
+        G_AddEventSequence("zap",           3, Cht_ChoppersFunc);
+        G_AddEventSequence("wheream",       7, Cht_MyPosFunc);
+        G_AddEventSequence("superman",      8, Cht_PowerupFunc1);
+        G_AddEventSequence("whacko",        6, Cht_PowerupFunc2);
+        G_AddEventSequence("ghost",         5, Cht_PowerupFunc3);
+        G_AddEventSequence("boots",         5, Cht_PowerupFunc4);
+        // G_AddEventSequence(??,              ?, Cht_PowerupFunc5); Unknown??
+        G_AddEventSequence("bright",        6, Cht_PowerupFunc6);
+        break;
+
+    case doom_chex:
+        { char seq[] = { 'l', 'e', 'e', 's', 'n', 'y', 'd', 'e', 'r', 1, 0, 0 };
+        G_AddEventSequence(seq, 12, Cht_WarpFunc); }
+
+        { char seq[] = { 'i', 'd', 'm', 'u', 's', 1, 0, 0 };
+        G_AddEventSequence(seq, 8, Cht_MusicFunc); }
 
         G_AddEventSequence("joelkoenigs",   11, Cht_ChoppersFunc);
         G_AddEventSequence("davidbrus",     9,  Cht_GodFunc);
@@ -115,14 +138,17 @@ void Cht_Init(void)
         G_AddEventSequence("allen",         5,  Cht_PowerupFunc4);
         G_AddEventSequence("digitalcafe",   11, Cht_PowerupFunc5);
         G_AddEventSequence("joshuastorms",  12, Cht_PowerupFunc6);
-    }
-    else
-    {
+        break;
+
+    default: // Doom
         { char seq[] = { 'i', 'd', 'c', 'l', 'e', 'v', 1, 0, 0 };
         G_AddEventSequence(seq, 9, Cht_WarpFunc); }
 
         { char seq[] = { 'i', 'd', 'b', 'e', 'h', 'o', 'l', 'd', 1, 0 };
         G_AddEventSequence(seq, 10, Cht_PowerupFunc); }
+
+        { char seq[] = { 'i', 'd', 'm', 'u', 's', 1, 0, 0 };
+        G_AddEventSequence(seq, 8, Cht_MusicFunc); }
 
         G_AddEventSequence("iddt",          4,  Cht_Reveal);
         G_AddEventSequence("iddqd",         5,  Cht_GodFunc);
@@ -132,6 +158,7 @@ void Cht_Init(void)
         G_AddEventSequence("idspispopd",    10, Cht_NoClipFunc);
         G_AddEventSequence("idchoppers",    10, Cht_ChoppersFunc);
         G_AddEventSequence("idmypos",       7,  Cht_MyPosFunc);
+        break;
     }
 }
 

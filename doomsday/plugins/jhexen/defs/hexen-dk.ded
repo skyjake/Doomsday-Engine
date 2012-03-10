@@ -14,4 +14,5 @@ Include "hexen/finales.ded";
 Include "hexen-dk/finales.ded";
 Include "hexen/lights.ded";
 Include "hexen/materials.ded";
+Include "hexen/materialenvironments.ded";
 Include "hexen/music.ded";

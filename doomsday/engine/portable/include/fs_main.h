@@ -160,9 +160,9 @@ abstractfile_t* F_FindLumpFile(const char* path, int* lumpIdx);
  *              file system, or a "virtual" file in the virtual file system.
  * @param baseOffset  Offset from the start of the file in bytes to begin.
  * @param allowDuplicate  @c true = allow opening multiple copies of the same file.
- * @return  @c true, if the operation is successful.
+ * @return  Handle to the opened file if the operation is successful, else @c NULL.
  */
-boolean F_AddFile(const char* path, size_t baseOffset, boolean allowDuplicate);
+DFile* F_AddFile(const char* path, size_t baseOffset, boolean allowDuplicate);
 
 /**
  * Attempt to remove a file from the virtual file system.

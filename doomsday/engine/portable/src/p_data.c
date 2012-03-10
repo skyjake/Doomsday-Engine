@@ -118,13 +118,13 @@ static gamemapobjdef_t* gameMapObjDefs;
 
 void P_PolyobjChanged(polyobj_t* po)
 {
-    uint                i;
-    seg_t**             segPtr = po->segs;
+    seg_t** segIter = po->segs;
+    uint i;
 
-    for(i = 0; i < po->numSegs; ++i, segPtr++)
+    for(i = 0; i < po->numSegs; ++i, segIter++)
     {
-        int                 j;
-        seg_t*              seg = *segPtr;
+        seg_t* seg = *segIter;
+        int j;
 
         // Shadow bias must be told.
         for(j = 0; j < 3; ++j)

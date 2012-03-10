@@ -444,7 +444,7 @@ void Cl_PolyMoverThinker(polymover_t* mover)
         }
 
         // Do the move.
-        P_PolyobjMove(P_GetPolyobj(mover->number | 0x80000000), dx, dy);
+        P_PolyobjMoveXY(P_PolyobjByID(mover->number), dx, dy);
     }
 
     if(mover->rotate)
@@ -474,7 +474,7 @@ void Cl_PolyMoverThinker(polymover_t* mover)
         Con_Message("%f\n", dist);
 #endif*/
 
-        P_PolyobjRotate(P_GetPolyobj(mover->number | 0x80000000), dist);
+        P_PolyobjRotate(P_PolyobjByID(mover->number), dist);
     }
 
     // Can we get rid of this mover?

@@ -246,9 +246,6 @@ WadFile* WadFile_New(DFile* file, const char* path, const LumpInfo* info)
     wad->lumpDirectoryMap = NULL;
     wad->lumpCache = NULL;
 
-    if(!strncmp(hdr.identification, "IWAD", 4))
-        AbstractFile_SetIWAD((abstractfile_t*)wad, true); // Found an IWAD!
-
     return wad;
 }
 

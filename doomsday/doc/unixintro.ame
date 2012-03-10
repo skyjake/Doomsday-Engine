@@ -11,16 +11,19 @@ response file whose contents are added to the command line.
 
 @chapter{Options}
 
-@deflist{
+@deflist/thin{
 
 @item{@opt{-iwad}} Specifies a directory where to look for IWAD files.
 Searches for IWADs from all known games and automatically loads them when
 needed.
 
 @item{@opt{-game}} Sets the game to load after startup. See
-@ref{gamemode}{Game modes} for a list of available games. If @opt{-game} is
-not specified, Doomsday will start in @dquote{ringzero} mode: a plain console
-with no game loaded.
+@ref{gamemode}{Game modes} for a list of available games. For example:
+
+@samp{@opt{-game doom1-ultimate}} 
+
+If @opt{-game} is not specified, Doomsday will start in @dquote{ringzero}
+mode: a plain console with no game loaded.
 
 @item{@opt{-wnd}} Starts in windowed mode (also @opt{-window}). The default is
 to start in fullscreen mode.

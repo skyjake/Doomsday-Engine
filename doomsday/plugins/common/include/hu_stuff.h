@@ -44,16 +44,17 @@ typedef enum {
 #if __JHERETIC__ || __JHEXEN__
     GF_SMALLIN,
 #endif
+    GF_MAPPOINT, ///< Marked points on the automap
     NUM_GAME_FONTS
 } gamefontid_t;
 
 // Vector graphics.
 enum {
     VG_FIRST = 1,
-    VG_KEYSQUARE = VG_FIRST,
+    VG_KEY = VG_FIRST,
     VG_TRIANGLE,
     VG_ARROW,
-#if !__JHEXEN__
+#if __JDOOM__
     VG_CHEATARROW,
 #endif
     VG_XHAIR1,

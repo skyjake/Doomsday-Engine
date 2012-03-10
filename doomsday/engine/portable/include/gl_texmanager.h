@@ -132,6 +132,11 @@ int GL_ReleaseGLTexturesByTexture2(Texture* texture, void* paramaters);
 int GL_ReleaseGLTexturesByTexture(Texture* texture); /*paramaters=NULL*/
 
 /**
+ * Release all textures associated with the specified variant @a texture.
+ */
+void GL_ReleaseVariantTexture(struct texturevariant_s* texture);
+
+/**
  * Release all variants of @a tex which match @a spec.
  *
  * @param texture  Logical Texture to process. Can be @c NULL, in which case this is a null-op.
@@ -277,10 +282,18 @@ DGLuint GL_PrepareTexture(Texture* tex, texturevariantspecification_t* spec); /*
 
 /**
  * Same as GL_PrepareTexture(2) except for visibility of TextureVariant.
- * \todo Should not need to be public.
  */
-const struct texturevariant_s* GL_PrepareTextureVariant2(Texture* tex, texturevariantspecification_t* spec, preparetextureresult_t* returnOutcome);
-const struct texturevariant_s* GL_PrepareTextureVariant(Texture* tex, texturevariantspecification_t* spec); /* returnOutcome=NULL*/
+struct texturevariant_s* GL_PrepareTextureVariant2(Texture* tex, texturevariantspecification_t* spec, preparetextureresult_t* returnOutcome);
+struct texturevariant_s* GL_PrepareTextureVariant(Texture* tex, texturevariantspecification_t* spec); /* returnOutcome=NULL*/
+
+/**
+ * Bind this texture to the currently active texture unit.
+ * The bind process may result in modification of the GL texture state
+ * according to the specification used to define this variant.
+ *
+ * @param tex  TextureVariant object which represents the GL texture to be bound.
+ */
+void GL_BindTexture(struct texturevariant_s* tex);
 
 /**
  * Here follows miscellaneous routines currently awaiting refactoring into the
@@ -297,8 +310,10 @@ DGLuint GL_PrepareExtTexture(const char* name, gfxmode_t mode, int useMipmap,
 DGLuint GL_PrepareSysFlareTexture(flaretexid_t flare);
 DGLuint GL_PrepareLightMap(const Uri* path);
 DGLuint GL_PrepareLSTexture(lightingtexid_t which);
-DGLuint GL_PreparePatchTexture(Texture* tex);
 DGLuint GL_PrepareRawTexture(rawtex_t* rawTex);
+
+struct texturevariant_s* GL_PreparePatchTexture2(Texture* tex, int wrapS, int wrapT);
+struct texturevariant_s* GL_PreparePatchTexture(Texture* tex);
 
 /**
  * Attempt to locate and prepare a flare texture.

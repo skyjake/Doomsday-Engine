@@ -1,4 +1,8 @@
-@chapter{ Documentation }
+@ifdef{MAN}{
+    @chapter{ See also }
+}@else{
+    @chapter{ Documentation }
+}
 
 Additional documentation is available online in the
 @link{Doomsday Engine Wiki}{http://dengine.net/dew/}. Information in the wiki includes:

@@ -59,12 +59,27 @@ void FI_StackShutdown(void);
 /**
  * Push a new set of Finale commands onto the LIFO stack, suspending any
  * existing Finale on the stack until command interpretation completes.
+ * The script will have no definition ID on the stack; you can start an
+ * unlimited number of instances of the script.
  *
  * @param commands One or more Finale (script) commands to be executed.
  * @param flags  @see finaleFlags
  * @param mode  @see finaleMode
  */
 void FI_StackExecute(const char* commands, int flags, finale_mode_t mode);
+
+/**
+ * Push a new set of Finale commands onto the LIFO stack, suspending any
+ * existing Finale on the stack until command interpretation completes.
+ * If a script with the same definition ID is already on the stack, the
+ * script is not started.
+ *
+ * @param commands One or more Finale (script) commands to be executed.
+ * @param flags  @see finaleFlags
+ * @param mode  @see finaleMode
+ * @param defId  Script's definition ID.
+ */
+void FI_StackExecuteWithId(const char* scriptSrc, int flags, finale_mode_t mode, const char* defId);
 
 /**
  * Clear the LIFO Finale stack of any active scripts.

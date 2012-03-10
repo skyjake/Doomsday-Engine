@@ -57,7 +57,7 @@ else {
 
     QMAKE_LFLAGS += -rdynamic
 
-    LIBS += -ldl
+    !freebsd-*: LIBS += -ldl
 }
 
 # Build Configuration --------------------------------------------------------
@@ -124,6 +124,7 @@ DENG_API_HEADERS = \
 DENG_HEADERS = \
     portable/include/abstractfile.h \
     portable/include/abstractresource.h \
+    portable/include/audiodriver.h \
     portable/include/bitmapfont.h \
     portable/include/blockset.h \
     portable/include/bsp_edge.h \
@@ -193,6 +194,7 @@ DENG_HEADERS = \
     portable/include/fs_util.h \
     portable/include/game.h \
     portable/include/gl_defer.h \
+    portable/include/gl_deferredapi.h \
     portable/include/gl_draw.h \
     portable/include/gl_hq2x.h \
     portable/include/gl_main.h \
@@ -285,6 +287,7 @@ DENG_HEADERS = \
     portable/include/r_things.h \
     portable/include/r_util.h \
     portable/include/r_world.h \
+    portable/include/string.hh \
     portable/include/stringarray.h \
     portable/include/sv_def.h \
     portable/include/sv_frame.h \
@@ -295,7 +298,6 @@ DENG_HEADERS = \
     portable/include/svg.h \
     portable/include/sys_audio.h \
     portable/include/sys_audiod_dummy.h \
-    portable/include/sys_audiod_loader.h \
     portable/include/sys_console.h \
     portable/include/sys_direc.h \
     portable/include/sys_findfile.h \
@@ -371,7 +373,6 @@ HEADERS += \
 DENG_UNIX_SOURCES += \
     portable/src/sys_sdl_window.c \
     unix/src/dd_uinit.c \
-    unix/src/sys_audiod_loader.c \
     unix/src/sys_console.c \
     unix/src/sys_findfile.c \
     unix/src/sys_input.c \
@@ -379,7 +380,6 @@ DENG_UNIX_SOURCES += \
 
 DENG_WIN32_SOURCES += \
     win32/src/dd_winit.c \
-    win32/src/sys_audiod_loader.c \
     win32/src/sys_console.c \
     win32/src/sys_findfile.c \
     win32/src/sys_input.c \
@@ -387,6 +387,7 @@ DENG_WIN32_SOURCES += \
 
 SOURCES += \
     portable/src/abstractfile.c \
+    portable/src/audiodriver.c \
     portable/src/animator.c \
     portable/src/bitmapfont.c \
     portable/src/blockset.c \
@@ -442,6 +443,7 @@ SOURCES += \
     portable/src/fs_util.c \
     portable/src/game.c \
     portable/src/gl_defer.c \
+    portable/src/gl_deferredapi.c \
     portable/src/gl_draw.c \
     portable/src/gl_drawvectorgraphic.c \
     portable/src/gl_hq2x.c \
@@ -539,7 +541,7 @@ SOURCES += \
     portable/src/resourcenamespace.c \
     portable/src/abstractresource.c \
     portable/src/smoother.c \
-    portable/src/stringpool.c \
+    portable/src/stringpool.cpp \
     portable/src/s_cache.c \
     portable/src/s_environ.c \
     portable/src/s_logic.c \
@@ -604,9 +606,23 @@ OTHER_FILES += \
 
 data.files = $$OUT_PWD/../doomsday.pk3
 
+startupdata.files = \
+    data/cphelp.txt
+
+# These fonts may be needed during the initial startup busy mode.
 startupfonts.files = \
+    data/fonts/console11.dfn \
+    data/fonts/console14.dfn \
+    data/fonts/console18.dfn \
     data/fonts/normal12.dfn \
-    data/fonts/normal18.dfn
+    data/fonts/normal18.dfn \
+    data/fonts/normal24.dfn \
+    data/fonts/normalbold12.dfn \
+    data/fonts/normalbold18.dfn \
+    data/fonts/normalbold24.dfn \
+    data/fonts/normallight12.dfn \
+    data/fonts/normallight18.dfn \
+    data/fonts/normallight24.dfn
 
 startupgfx.files = \
     data/graphics/background.pcx \
@@ -630,12 +646,12 @@ macx {
         mac/res/Startup.nib \
         mac/res/deng.icns
 
-    data.path = $${res.path}
-
+    data.path = $$res.path
+    startupdata.path = $${res.path}/Data
     startupfonts.path = $${res.path}/Data/Fonts
     startupgfx.path = $${res.path}/Data/Graphics
 
-    QMAKE_BUNDLE_DATA += res data startupfonts startupgfx
+    QMAKE_BUNDLE_DATA += res data startupfonts startupdata startupgfx
 
     QMAKE_INFO_PLIST = ../build/mac/Info.plist
 
@@ -667,11 +683,12 @@ macx {
 
 win32 {
     # Windows installation.
-    INSTALLS += target data startupgfx startupfonts license
+    INSTALLS += target data startupdata startupgfx startupfonts license
 
     target.path = $$DENG_LIB_DIR
 
     data.path = $$DENG_DATA_DIR
+    startupdata.path = $$DENG_DATA_DIR
     startupfonts.path = $$DENG_DATA_DIR/fonts
     startupgfx.path = $$DENG_DATA_DIR/graphics
 
@@ -680,16 +697,14 @@ win32 {
 }
 else:unix:!macx {
     # Generic Unix installation.
-    INSTALLS += target data startupgfx desktop readme
+    INSTALLS += target data startupdata startupgfx startupfonts readme
 
     target.path = $$DENG_BIN_DIR
 
     data.path = $$DENG_DATA_DIR
+    startupdata.path = $$DENG_DATA_DIR
     startupfonts.path = $$DENG_DATA_DIR/fonts
     startupgfx.path = $$DENG_DATA_DIR/graphics
-
-    desktop.files = ../../distrib/linux/doomsday-engine.desktop
-    desktop.path = $$PREFIX/share/applications
 
     readme.files = ../doc/output/doomsday.6
     readme.path = $$PREFIX/share/man/man6

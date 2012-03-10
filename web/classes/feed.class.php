@@ -32,20 +32,45 @@ class Feed implements Visual, Iterator, Countable
 {
     public static $name = 'pages';
 
-    private static $_displayOptions = 0;
+    private static $displayOptions = 0;
 
-    private $_maxItems;
-    private $_feedURL;
-    private $_rss;
-    private $_position;
+    private $maxItems;
+    private $feedUri;
+    private $feed;
+    private $position;
+
+    private $title = 'Untitled';
+    private $labelSpanClass = NULL;
+
+    // Callback to make when generating Html for a feed item.
+    private $func_genElementHtml = NULL;
+    private $func_genElementHtmlParams = NULL;
 
     public function __construct($feedURL, $maxItems=5)
     {
-        $this->_feedURL = $feedURL;
+        $this->_feedUri = $feedURL;
         $this->_maxItems = intval($maxItems);
 
-        $this->_rss = fetch_rss($this->_feedURL);
+        $this->_feed = fetch_rss($this->_feedUri);
+        $this->_feedFormat = 'RSS';
         $this->_position = 0;
+    }
+
+    public function setTitle($title, $labelSpanClass=NULL)
+    {
+        $this->_title = "$title";
+        if(!is_null($labelSpanClass))
+            $this->_labelSpanClass = "$labelSpanClass";
+    }
+
+    public function setGenerateElementHtmlCallback($funcName, $params=NULL)
+    {
+        $funcName = "$funcName";
+        if(!is_callable($funcName)) return FALSE;
+
+        $this->func_genElementHtml = $funcName;
+        $this->func_genElementHtmlParams = $params;
+        return TRUE;
     }
 
     /**
@@ -56,33 +81,61 @@ class Feed implements Visual, Iterator, Countable
         return $this->_displayOptions;
     }
 
-    public function generateHTML()
+    private function generateElementHtml(&$item)
     {
-        if(count($this) > 0)
-        {
-?>
-<a href="<?php echo preg_replace('/(&)/', '&amp;', $this->_feedURL); ?>" class="link-rss" title="Project News, via RSS"><span class="hidden">RSS</span></a>&nbsp;<span id="projectnews-label">Latest Project News </span>
-<ul>
-<?php
+        if(!is_array($item))
+            throw new Exception('Received invalid item, array expected.');
 
-            $n = (integer) 0;
-            foreach($this as $item)
-            {
-?>
-<li><a href="<?php echo preg_replace('/(&)/', '&amp;', $item['link']); ?>" title="<?php echo date("m/d/y", $item['date_timestamp']); ?> - <?php echo $item['title']; ?>"><?php echo $item['title']; ?></a></li>
-<?php
-                if(++$n >= $this->_maxItems)
-                    break;
-            }
+        if(!is_null($this->func_genElementHtml))
+        {
+            return call_user_func_array($this->func_genElementHtml, array($item, $this->func_genElementHtmlParams));
         }
-?>
-</ul>
-<?php
+
+        $html = '<a href="'. preg_replace('/(&)/', '&amp;', $item['link'])
+               .'" title="'. date("m/d/y", $item['date_timestamp']) .' - '. htmlspecialchars($item['title'])
+                       .'">'. htmlspecialchars($item['title']) .'</a>';
+        return $html;
+    }
+
+    public function generateHtml()
+    {
+        if(count($this) <= 0) return;
+
+        $feedTitle = "$this->_title via $this->_feedFormat";
+
+?><a href="<?php echo preg_replace('/(&)/', '&amp;', $this->_feedUri); ?>" class="link-rss" title="<?php echo htmlspecialchars($feedTitle); ?>"><span class="hidden"><?php echo htmlspecialchars($this->_feedFormat); ?></span></a><?php
+
+        if(!is_null($this->_labelSpanClass))
+        {
+?>&nbsp;<span class="<?php echo $this->_labelSpanClass; ?>"><?php
+        }
+
+
+        echo htmlspecialchars($feedTitle);
+
+        if(!is_null($this->_labelSpanClass))
+        {
+?></span><?php
+        }
+
+?><ul><?php
+
+        $n = (integer) 0;
+        foreach($this as $item)
+        {
+            $elementHtml = $this->generateElementHtml($item);
+
+?><li><?php echo $elementHtml; ?></li><?php
+
+            if(++$n >= $this->_maxItems) break;
+        }
+
+?></ul><?php
     }
 
     public function url()
     {
-        return $this->_feedURL;
+        return $this->_feedUri;
     }
 
     /**
@@ -90,8 +143,8 @@ class Feed implements Visual, Iterator, Countable
      */
     public function count()
     {
-        if(is_object($this->_rss) && is_array($this->_rss->items))
-            return sizeof($this->_rss->items);
+        if(is_object($this->_feed) && is_array($this->_feed->items))
+            return sizeof($this->_feed->items);
         return 0;
     }
 
@@ -100,13 +153,13 @@ class Feed implements Visual, Iterator, Countable
      */
     public function rewind()
     {
-        reset($this->_rss->items);
-        $this->_position = key($this->_rss->items);
+        reset($this->_feed->items);
+        $this->_position = key($this->_feed->items);
     }
 
     public function current()
     {
-        return $this->_rss->items[$this->_position];
+        return $this->_feed->items[$this->_position];
     }
 
     public function key()
@@ -116,12 +169,12 @@ class Feed implements Visual, Iterator, Countable
 
     public function next()
     {
-        next($this->_rss->items);
-        $this->_position = key($this->_rss->items);
+        next($this->_feed->items);
+        $this->_position = key($this->_feed->items);
     }
 
     public function valid()
     {
-        return isset($this->_rss->items[$this->_position]);
+        return isset($this->_feed->items[$this->_position]);
     }
 }

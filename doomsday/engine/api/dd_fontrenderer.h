@@ -29,7 +29,7 @@
  * Font attributes are managed as a finite stack of attribute sets.
  * This value defines the maximum allowed depth of the attribute stack.
  */
-#define FR_MAX_ATTRIB_STACK_DEPTH       (4)
+#define FR_MAX_ATTRIB_STACK_DEPTH       (8)
 
 /**
  * Font attribute defaults. Used with FR_LoadDefaultAttrib.

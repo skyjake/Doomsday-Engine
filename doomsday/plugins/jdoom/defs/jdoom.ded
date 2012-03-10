@@ -34,4 +34,4 @@ Include "text.ded";
 Include "finales.ded";
 
 # todo: Split up into separate files for doom1 and doom2.
-Include "audio.ded";
+Include "sounds.ded";

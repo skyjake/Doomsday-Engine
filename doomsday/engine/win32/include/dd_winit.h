@@ -41,8 +41,6 @@ typedef struct {
 #else
     LPCSTR className;
 #endif
-    BOOL suspendMsgPump; /// @c true = do not pump the Windows message thread.
-
     /// @c true = We are using a custom user dir specified on the command line.
     BOOL usingUserDir;
 
@@ -54,6 +52,8 @@ extern uint windowIDX; // Main window.
 extern application_t app;
 
 void DD_Shutdown(void);
+
+const char* DD_Win32_GetLastErrorMessage(void);
 
 #ifdef UNICODE
 LPCWSTR ToWideString(const char* str);

@@ -217,22 +217,59 @@ void Mobj_OriginSmoothed(mobj_t* mo, float origin[3])
 {
     if(!origin) return;
 
-    origin[VX] = origin[VY] = origin[VZ] = 0;
-
+    V3_Set(origin, 0, 0, 0);
     if(!mo) return;
 
-    origin[VX] = mo->pos[VX];
-    origin[VY] = mo->pos[VY];
-    origin[VZ] = mo->pos[VZ];
+    V3_Copy(origin, mo->pos);
 
     // Apply a Short Range Visual Offset?
     if(useSRVO && mo->state && mo->tics >= 0)
     {
-        float mul = mo->tics / (float) mo->state->tics;
-        origin[VX] += mo->srvo[VX] * mul;
-        origin[VY] += mo->srvo[VY] * mul;
-        origin[VZ] += mo->srvo[VZ] * mul;
+        const float mul = mo->tics / (float) mo->state->tics;
+        vec3_t srvo;
+
+        V3_Copy(srvo, mo->srvo);
+        V3_Scale(srvo, mul);
+        V3_Sum(origin, origin, srvo);
     }
+
+    if(mo->dPlayer)
+    {
+        /// @fixme What about splitscreen? We have smoothed coords for all local players.
+        if(P_GetDDPlayerIdx(mo->dPlayer) == consolePlayer)
+        {
+            const viewdata_t* vd = R_ViewData(consolePlayer);
+            V3_Copy(origin, vd->current.pos);
+        }
+        // The client may have a Smoother for this object.
+        else if(isClient)
+        {
+            Smoother_Evaluate(clients[P_GetDDPlayerIdx(mo->dPlayer)].smoother, origin);
+        }
+    }
+}
+
+angle_t Mobj_AngleSmoothed(mobj_t* mo)
+{
+    if(!mo) return 0;
+
+    if(mo->dPlayer)
+    {
+        /// @fixme What about splitscreen? We have smoothed angles for all local players.
+        if(P_GetDDPlayerIdx(mo->dPlayer) == consolePlayer)
+        {
+            const viewdata_t* vd = R_ViewData(consolePlayer);
+            return vd->current.angle;
+        }
+    }
+
+    // Apply a Short Range Visual Offset?
+    if(useSRVOAngle && !netGame && !playback)
+    {
+        return mo->visAngle << 16;
+    }
+
+    return mo->angle;
 }
 
 D_CMD(InspectMobj)
@@ -281,6 +318,13 @@ D_CMD(InspectMobj)
                mo->angle,
                mo->pos[0], mo->pos[1], mo->pos[2],
                mo->mom[0], mo->mom[1], mo->mom[2]);
+    Con_Printf("FloorZ:%f CeilingZ:%f\n", mo->floorZ, mo->ceilingZ);
+    if(mo->subsector)
+    {
+        Con_Printf("Sector:%i (FloorZ:%f CeilingZ:%f)\n", P_ToIndex(mo->subsector->sector),
+                   mo->subsector->sector->SP_floorheight,
+                   mo->subsector->sector->SP_ceilheight);
+    }
     if(mo->onMobj)
     {
         Con_Printf("onMobj:%i\n", mo->onMobj->thinker.id);

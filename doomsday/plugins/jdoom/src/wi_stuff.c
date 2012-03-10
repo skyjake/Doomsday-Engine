@@ -315,10 +315,12 @@ static void drawEnteringTitle(void)
     ddstring_t* mapPath;
     Uri* mapUri;
 
-    if(!(gameModeBits & GM_ANY_DOOM) || wbs->nextMap == 30)
+    /// @kludge We need to properly externalize the map progression.
+    if((gameModeBits & (GM_DOOM2|GM_DOOM2_PLUT|GM_DOOM2_TNT)) && wbs->nextMap == 30)
     {
         return;
     }
+    /// kludge end.
 
     // See if there is a map name.
     mapUri = G_ComposeMapUri(wbs->episode, wbs->nextMap);

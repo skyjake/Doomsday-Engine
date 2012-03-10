@@ -52,11 +52,19 @@ typedef struct {
 } fi_state_conditions_t;
 
 typedef struct {
-    finaleid_t finaleId;
+    finaleid_t finaleId;   
     finale_mode_t mode;
     fi_state_conditions_t conditions;
+
     /// Gamestate before the finale began.
     gamestate_t initialGamestate;
+
+    /**
+     * Optionally the ID of the source script definition. A new script is
+     * not started if its definition ID matches one already on the stack.
+     * @note Maximum ID length defined in the DED Reader implementation.
+     */
+    char defId[64];
 } fi_state_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -152,12 +160,25 @@ static fi_state_t* stateForFinaleId(finaleid_t id)
     return 0;
 }
 
+static boolean stackHasDefId(const char* defId)
+{
+    uint i;
+    for(i = 0; i < finaleStackSize; ++i)
+    {
+        fi_state_t* s = &finaleStack[i];
+        if(!stricmp(s->defId, defId))
+            return true;
+    }
+    return false;
+}
+
 static __inline fi_state_t* stackTop(void)
 {
     return (finaleStackSize == 0? 0 : &finaleStack[finaleStackSize-1]);
 }
 
-static fi_state_t* stackPush(finaleid_t finaleId, finale_mode_t mode, gamestate_t prevGamestate)
+static fi_state_t* stackPush(finaleid_t finaleId, finale_mode_t mode, gamestate_t prevGamestate,
+                             const char* defId)
 {
     fi_state_t* s;
     finaleStack = Z_Realloc(finaleStack, sizeof(*finaleStack) * ++finaleStackSize, PU_GAMESTATIC);
@@ -165,6 +186,16 @@ static fi_state_t* stackPush(finaleid_t finaleId, finale_mode_t mode, gamestate_
     s->finaleId = finaleId;
     s->mode = mode;
     s->initialGamestate = prevGamestate;
+    if(defId)
+    {
+        (void) strncpy(s->defId, defId, sizeof(s->defId) - 1);
+        s->defId[sizeof(s->defId) - 1] = 0; // terminate
+    }
+    else
+    {
+        // Source ID not provided.
+        memset(s->defId, 0, sizeof(s->defId));
+    }
     initStateConditions(s);
     return s;
 }
@@ -243,6 +274,11 @@ void FI_StackShutdown(void)
 
 void FI_StackExecute(const char* scriptSrc, int flags, finale_mode_t mode)
 {
+    FI_StackExecuteWithId(scriptSrc, flags, mode, NULL);
+}
+
+void FI_StackExecuteWithId(const char* scriptSrc, int flags, finale_mode_t mode, const char* defId)
+{
     fi_state_t* s, *prevTopScript;
     gamestate_t prevGamestate;
     ddstring_t setupCmds;
@@ -250,6 +286,13 @@ void FI_StackExecute(const char* scriptSrc, int flags, finale_mode_t mode)
     int i, fontIdx;
 
     if(!finaleStackInited) Con_Error("FI_StackExecute: Not initialized yet!");
+
+    // Should we ignore this?
+    if(defId && stackHasDefId(defId))
+    {
+        Con_Message("There already is a finale running with ID \"%s\"; won't execute again.\n", defId);
+        return;
+    }
 
     prevGamestate = G_GameState();
     prevTopScript = stackTop();
@@ -315,7 +358,7 @@ void FI_StackExecute(const char* scriptSrc, int flags, finale_mode_t mode)
         FI_ScriptSuspend(prevTopScript->finaleId);
     }
 
-    s = stackPush(finaleId, mode, prevGamestate);
+    s = stackPush(finaleId, mode, prevGamestate, defId);
 
     // Do we need to transmit the state conditions to clients?
     if(IS_SERVER && !(flags & FF_LOCAL))

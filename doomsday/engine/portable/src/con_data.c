@@ -36,6 +36,7 @@
 #include "de_base.h"
 #include "de_console.h"
 
+#include "cbuffer.h"
 #include "m_args.h"
 #include "m_misc.h"
 #include "blockset.h"
@@ -53,6 +54,7 @@
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 D_CMD(HelpWhat);
+D_CMD(HelpApropos);
 D_CMD(ListAliases);
 D_CMD(ListCmds);
 D_CMD(ListVars);
@@ -97,6 +99,7 @@ static Uri* emptyUri;
 void Con_DataRegister(void)
 {
     C_CMD("help",           "s",    HelpWhat);
+    C_CMD("apropos",        "s",    HelpApropos);
     C_CMD("listaliases",    NULL,   ListAliases);
     C_CMD("listcmds",       NULL,   ListCmds);
     C_CMD("listvars",       NULL,   ListVars);
@@ -1324,6 +1327,27 @@ void Con_DeleteAlias(calias_t* cal)
     }
 }
 
+/**
+ * @return New ddstring with the text of the known word. Caller gets ownership.
+ */
+static ddstring_t* textForKnownWord(const knownword_t* word)
+{
+    ddstring_t* text = 0;
+
+    switch(word->type)
+    {
+    case WT_CALIAS:   Str_Set(text = Str_New(), ((calias_t*)word->data)->name); break;
+    case WT_CCMD:     Str_Set(text = Str_New(), ((ccmd_t*)word->data)->name); break;
+    case WT_CVAR:     text = CVar_ComposePath((cvar_t*)word->data); break;
+    case WT_GAME:     Str_Set(text = Str_New(), Str_Text(Game_IdentityKey((Game*)word->data))); break;
+    default:
+        Con_Error("textForKnownWord: Invalid type %i for word.", word->type);
+        exit(1); // Unreachable
+    }
+
+    return text;
+}
+
 int Con_IterateKnownWords(const char* pattern, knownwordtype_t type,
     int (*callback) (const knownword_t* word, void* paramaters), void* paramaters)
 {
@@ -1341,32 +1365,15 @@ int Con_IterateKnownWords(const char* pattern, knownwordtype_t type,
         const knownword_t* word = &knownWords[i];
         if(matchType != WT_ANY && word->type != type)
             continue;
-        if(0 != patternLength)
+        if(patternLength)
         {
-            ddstring_t* textString = NULL;
-            const char* text;
             int compareResult;
+            ddstring_t* textString = textForKnownWord(word);
+            compareResult = strnicmp(Str_Text(textString), pattern, patternLength);
+            Str_Delete(textString);
 
-            switch(word->type)
-            {
-            case WT_CALIAS:   text = ((calias_t*)word->data)->name; break;
-            case WT_CCMD:     text = ((ccmd_t*)word->data)->name; break;
-            case WT_CVAR:
-                textString = CVar_ComposePath((cvar_t*)word->data);
-                text = Str_Text(textString);
-                break;
-            case WT_GAME: text = Str_Text(Game_IdentityKey((Game*)word->data)); break;
-            default:
-                Con_Error("Con_IterateKnownWords: Invalid type %i for word.", word->type);
-                exit(1); // Unreachable
-            }
-
-            compareResult = strnicmp(text, pattern, patternLength);
-
-            if(NULL != textString)
-                Str_Delete(textString);
-            if(0 != compareResult)
-                continue;
+            if(compareResult)
+                continue; // Didn't match.
         }
         if(0 != (result = callback(word, paramaters)))
             break;
@@ -1475,18 +1482,72 @@ void Con_ShutdownDatabases(void)
     inited = false;
 }
 
-D_CMD(HelpWhat)
+static int aproposPrinter(const knownword_t* word, void* matching)
+{
+    ddstring_t* text = textForKnownWord(word);
+
+    // See if 'matching' is anywhere in the known word.
+    if(strcasestr(Str_Text(text), matching))
+    {
+        const int maxLen = CBuffer_MaxLineLength(Con_HistoryBuffer());
+        int avail;
+        ddstring_t buf;
+        const char* wType[KNOWNWORDTYPE_COUNT] = {
+            "[cmd]", "[var]", "[alias]", "[game]"
+        };
+        Str_Init(&buf);
+        Str_Appendf(&buf, "%7s ", wType[word->type]);
+        Str_Appendf(&buf, "%-25s", Str_Text(text));
+
+        avail = maxLen - Str_Length(&buf) - 4;
+        if(avail > 0)
+        {
+            ddstring_t tmp;
+            Str_Init(&tmp);
+            // Look for a short description.
+            if(word->type == WT_CCMD || word->type == WT_CVAR)
+            {
+                const char* desc = DH_GetString(DH_Find(Str_Text(text)), HST_DESCRIPTION);
+                if(desc)
+                {
+                    Str_Set(&tmp, desc);
+                }
+            }
+            else if(word->type == WT_GAME)
+            {
+                Str_Set(&tmp, Str_Text(Game_Title((Game*)word->data)));
+            }
+            // Truncate.
+            if(Str_Length(&tmp) > avail - 3)
+            {
+                Str_Truncate(&tmp, avail);
+                Str_Append(&tmp, "...");
+            }
+            Str_Appendf(&buf, " %s", Str_Text(&tmp));
+            Str_Free(&tmp);
+        }
+
+        Con_Printf("%s\n", Str_Text(&buf));
+        Str_Free(&buf);
+    }
+
+    Str_Delete(text);
+    return 0;
+}
+
+static void printApropos(const char* matching)
+{
+    /// @todo  Extend the search to cover the contents of all help strings (dd_help.c).
+
+    Con_IterateKnownWords(0, WT_ANY, aproposPrinter, (void*)matching);
+}
+
+static void printHelpAbout(const char* query)
 {
     uint found = 0;
 
-    if(!stricmp(argv[1], "(what)"))
-    {
-        Con_Printf("You've got to be kidding!\n");
-        return true;
-    }
-
     // Try the console commands first.
-    { ccmd_t* ccmd = Con_FindCommand(argv[1]);
+    {ccmd_t* ccmd = Con_FindCommand(query);
     if(NULL != ccmd)
     {
         void* helpRecord = DH_Find(ccmd->name);
@@ -1497,8 +1558,7 @@ D_CMD(HelpWhat)
             Con_Printf("%s\n", description);
 
         // Print usage info for each variant.
-        do
-        {
+        do {
             Con_PrintCCmdUsage(ccmd, false);
             ++found;
         } while(NULL != (ccmd = ccmd->nextOverload));
@@ -1525,7 +1585,7 @@ D_CMD(HelpWhat)
 
     if(found == 0) // Perhaps its a cvar then?
     {
-        cvar_t* var = Con_FindVariable(argv[1]);
+        cvar_t* var = Con_FindVariable(query);
         if(var)
         {
             ddstring_t* path = CVar_ComposePath(var);
@@ -1541,7 +1601,7 @@ D_CMD(HelpWhat)
 
     if(found == 0) // Maybe an alias?
     {
-        calias_t* calias = Con_FindAlias(argv[1]);
+        calias_t* calias = Con_FindAlias(query);
         if(NULL != calias)
         {
             Con_Printf("An alias for:\n%s\n", calias->command);
@@ -1551,7 +1611,7 @@ D_CMD(HelpWhat)
 
     if(found == 0) // Perhaps a game?
     {
-        Game* game = DD_GameByIdentityKey(argv[1]);
+        Game* game = DD_GameByIdentityKey(query);
         if(game)
         {
             DD_PrintGame(game, PGF_EVERYTHING);
@@ -1560,8 +1620,23 @@ D_CMD(HelpWhat)
     }
 
     if(found == 0) // Still not found?
-        Con_Printf("There is no help about '%s'.\n", argv[1]);
+        Con_Printf("There is no help about '%s'.\n", query);
+}
 
+D_CMD(HelpApropos)
+{
+    printApropos(argv[1]);
+    return true;
+}
+
+D_CMD(HelpWhat)
+{
+    if(!stricmp(argv[1], "(what)"))
+    {
+        Con_Printf("You've got to be kidding!\n");
+        return true;
+    }
+    printHelpAbout(argv[1]);
     return true;
 }
 

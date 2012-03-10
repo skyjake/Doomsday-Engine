@@ -50,8 +50,8 @@ typedef struct abstractfile_s {
     filetype_t _type;
 
     struct abstractfile_flags_s {
-        uint startup:1; // Loaded during the startup process.
-        uint iwad:1; // Owned by or is an "iwad" resource.
+        uint startup:1; ///< Loaded during the startup process.
+        uint custom:1; /// < Not an original game resource.
     } _flags;
 
     /// protected: File stream handle/wrapper.
@@ -112,11 +112,11 @@ boolean AbstractFile_HasStartup(const abstractfile_t* af);
 /// Mark this resource as "startup".
 void AbstractFile_SetStartup(abstractfile_t* af, boolean yes);
 
-/// @return  @c true if the resource is marked "IWAD".
-boolean AbstractFile_HasIWAD(const abstractfile_t* af);
+/// @return  @c true if the resource is marked "custom".
+boolean AbstractFile_HasCustom(const abstractfile_t* af);
 
-/// Mark this resource as "IWAD".
-void AbstractFile_SetIWAD(abstractfile_t* af, boolean yes);
+/// Mark this resource as "custom".
+void AbstractFile_SetCustom(abstractfile_t* af, boolean yes);
 
 size_t AbstractFile_BaseOffset(const abstractfile_t* af);
 

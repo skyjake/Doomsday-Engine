@@ -99,25 +99,33 @@ static void allocateString(ddstring_t *str, size_t for_length, int preserve)
  * automatically cleared, so they don't need initialization.
  * The string will use the memory zone.
  */
-void Str_Init(ddstring_t *str)
+ddstring_t* Str_Init(ddstring_t* str)
 {
     if(!str)
     {
         Con_Error("Attempted String::Init with invalid reference (this==0).");
-        return; // Unreachable.
+        exit(1); // Unreachable.
     }
+
+    if(!Z_IsInited())
+    {
+        // The memory zone is not available at the moment.
+        return Str_InitStd(str);
+    }
+
     memset(str, 0, sizeof(*str));
 
     // Init the memory management.
     str->memFree = Z_Free;
     str->memAlloc = zoneAlloc;
     str->memCalloc = zoneCalloc;
+    return str;
 }
 
 /**
  * The string will use standard memory allocation.
  */
-void Str_InitStd(ddstring_t *str)
+ddstring_t* Str_InitStd(ddstring_t* str)
 {
     memset(str, 0, sizeof(*str));
 
@@ -125,12 +133,15 @@ void Str_InitStd(ddstring_t *str)
     str->memFree = free;
     str->memAlloc = malloc;
     str->memCalloc = stdCalloc;
+    return str;
 }
 
-void Str_InitStatic(ddstring_t* str, const char* staticConstStr)
+ddstring_t* Str_InitStatic(ddstring_t* str, const char* staticConstStr)
 {
     memset(str, 0, sizeof(*str));
     str->str = (char*) staticConstStr;
+    str->length = (staticConstStr? strlen(staticConstStr) : 0);
+    return str;
 }
 
 void Str_Free(ddstring_t* str)
@@ -204,6 +215,18 @@ void Str_Reserve(ddstring_t* str, int length)
     allocateString(str, length, true);
 }
 
+void Str_ReserveNotPreserving(ddstring_t* str, int length)
+{
+    if(!str)
+    {
+        Con_Error("Attempted String::ReserveNotPreserving with invalid reference (this==0).");
+        return; // Unreachable.
+    }
+    if(length <= 0)
+        return;
+    allocateString(str, length, false);
+}
+
 ddstring_t* Str_Set(ddstring_t* str, const char* text)
 {
     if(!str)
@@ -222,6 +245,29 @@ ddstring_t* Str_Set(ddstring_t* str, const char* text)
     M_Free(copied);
     return str;
     }
+}
+
+ddstring_t* Str_AppendWithoutAllocs(ddstring_t* str, const ddstring_t* append)
+{
+    assert(str);
+    assert(append);
+    assert(str->length + append->length + 1 <= str->size); // including the null
+
+    memcpy(str->str + str->length, append->str, append->length);
+    str->length += append->length;
+    str->str[str->length] = 0;
+    return str;
+}
+
+ddstring_t* Str_AppendCharWithoutAllocs(ddstring_t* str, char ch)
+{
+    assert(str);
+    assert(ch); // null not accepted
+    assert(str->length + 2 <= str->size); // including a terminating null
+
+    str->str[str->length++] = ch;
+    str->str[str->length] = 0;
+    return str;
 }
 
 ddstring_t* Str_Append(ddstring_t* str, const char* append)
@@ -298,7 +344,8 @@ ddstring_t* Str_PartAppend(ddstring_t* str, const char* append, int start, int c
     if(start < 0 || count <= 0)
         return str;
 
-    copied = M_Calloc(count+1);
+    copied = M_Malloc(count + 1);
+    copied[0] = 0; // empty string
 
     strncat(copied, append + start, count);
     partLen = strlen(copied);

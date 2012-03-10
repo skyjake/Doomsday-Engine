@@ -242,6 +242,7 @@ void ST_Register(void)
     C_VAR_BYTE2(  "hud-armor", &cfg.hudShown[HUD_ARMOR], 0, 0, 1, unhideHUD )
     C_VAR_BYTE2(  "hud-cheat-counter", &cfg.hudShownCheatCounters, 0, 0, 63, unhideHUD )
     C_VAR_FLOAT2( "hud-cheat-counter-scale", &cfg.hudCheatCounterScale, 0, .1f, 1, unhideHUD )
+    C_VAR_BYTE2(  "hud-cheat-counter-show-mapopen", &cfg.hudCheatCounterShowWithAutomap, 0, 0, 1, unhideHUD )
     C_VAR_BYTE2(  "hud-face", &cfg.hudShown[HUD_FACE], 0, 0, 1, unhideHUD )
     C_VAR_BYTE(   "hud-face-ouchfix", &cfg.fixOuchFace, 0, 0, 1 )
     C_VAR_BYTE2(  "hud-frags", &cfg.hudShown[HUD_FRAGS], 0, 0, 1, unhideHUD )
@@ -297,6 +298,11 @@ void SBarBackground_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     if(!deathmatch)
     {
         haveArms = R_GetPatchInfo(pArmsBackground, &armsInfo);
+
+        // Do not cut out the arms area if the graphic is "empty" (no color info).
+        if(haveArms && armsInfo.flags.isEmpty)
+            haveArms = false;
+
         if(haveArms)
         {
             armsBGX = ST_ARMSBGX + armsInfo.geometry.origin.x;
@@ -329,21 +335,20 @@ void SBarBackground_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     else
     {
         // Alpha blended status bar, we'll need to cut it up into smaller bits...
-        DGL_Begin(DGL_QUADS);
-
         // Up to faceback or ST_ARMS.
         w = haveArms? armsBGX : ST_FX;
         h = HEIGHT;
         cw = w / WIDTH;
 
-        DGL_TexCoord2f(0, 0, 0);
-        DGL_Vertex2f(x, y);
-        DGL_TexCoord2f(0, cw, 0);
-        DGL_Vertex2f(x + w, y);
-        DGL_TexCoord2f(0, cw, 1);
-        DGL_Vertex2f(x + w, y + h);
-        DGL_TexCoord2f(0, 0, 1);
-        DGL_Vertex2f(x, y + h);
+        DGL_Begin(DGL_QUADS);
+            DGL_TexCoord2f(0, 0, 0);
+            DGL_Vertex2f(x, y);
+            DGL_TexCoord2f(0, cw, 0);
+            DGL_Vertex2f(x + w, y);
+            DGL_TexCoord2f(0, cw, 1);
+            DGL_Vertex2f(x + w, y + h);
+            DGL_TexCoord2f(0, 0, 1);
+            DGL_Vertex2f(x, y + h);
 
         if(IS_NETGAME)
         {
@@ -414,10 +419,10 @@ void SBarBackground_Drawer(uiwidget_t* obj, const Point2Raw* offset)
             cw = (float)sectionWidth / WIDTH;
             }
         }
-        else if(haveArms)
+        else
         {
             // Including area behind the face status indicator.
-            int sectionWidth = armsBGX + armsInfo.geometry.size.width;
+            int sectionWidth = (haveArms? armsBGX + armsInfo.geometry.size.width : ST_FX);
             x = ORIGINX + sectionWidth;
             y = ORIGINY;
             w = WIDTH - sectionWidth;
@@ -425,15 +430,14 @@ void SBarBackground_Drawer(uiwidget_t* obj, const Point2Raw* offset)
             cw = (float)sectionWidth / WIDTH;
         }
 
-        DGL_TexCoord2f(0, cw, 0);
-        DGL_Vertex2f(x, y);
-        DGL_TexCoord2f(0, 1, 0);
-        DGL_Vertex2f(x + w, y);
-        DGL_TexCoord2f(0, 1, 1);
-        DGL_Vertex2f(x + w, y + h);
-        DGL_TexCoord2f(0, cw, 1);
-        DGL_Vertex2f(x, y + h);
-
+            DGL_TexCoord2f(0, cw, 0);
+            DGL_Vertex2f(x, y);
+            DGL_TexCoord2f(0, 1, 0);
+            DGL_Vertex2f(x + w, y);
+            DGL_TexCoord2f(0, 1, 1);
+            DGL_Vertex2f(x + w, y + h);
+            DGL_TexCoord2f(0, cw, 1);
+            DGL_Vertex2f(x, y + h);
         DGL_End();
     }
 
@@ -881,7 +885,14 @@ void SBarReadyAmmo_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(obj->font);
-    FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
+    if(gameMode == doom_chex)
+    {
+        FR_SetColorAndAlpha(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
+    }
+    else
+    {
+        FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
+    }
     FR_DrawTextXY3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -1092,8 +1103,14 @@ void SBarHealth_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(obj->font);
-    FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
-
+    if(gameMode == doom_chex)
+    {
+        FR_SetColorAndAlpha(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
+    }
+    else
+    {
+        FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
+    }
     FR_DrawTextXY3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
     FR_DrawCharXY('%', X, Y);
 
@@ -1163,8 +1180,14 @@ void SBarArmor_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(obj->font);
-    FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
-
+    if(gameMode == doom_chex)
+    {
+        FR_SetColorAndAlpha(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
+    }
+    else
+    {
+        FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
+    }
     FR_DrawTextXY3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
     FR_DrawCharXY('%', X, Y);
 
@@ -1241,8 +1264,14 @@ void SBarFrags_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(obj->font);
-    FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
-
+    if(gameMode == doom_chex)
+    {
+        FR_SetColorAndAlpha(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
+    }
+    else
+    {
+        FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
+    }
     FR_DrawTextXY3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -1497,8 +1526,14 @@ void WeaponSlot_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     DGL_Color4f(1, 1, 1, textAlpha);
 
     FR_SetFont(obj->font);
-    FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
-
+    if(gameMode == doom_chex)
+    {
+        FR_SetColorAndAlpha(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
+    }
+    else
+    {
+        FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
+    }
     WI_DrawPatch3(wpns->patchId, Hu_ChoosePatchReplacement(cfg.hudPatchReplaceMode, wpns->patchId),
                   element, ALIGN_TOPLEFT, 0, DTF_NO_EFFECTS);
 
@@ -2194,6 +2229,7 @@ void Kills_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     if(!(cfg.hudShownCheatCounters & (CCH_KILLS | CCH_KILLS_PRCNT))) return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
+    if(cfg.hudCheatCounterShowWithAutomap && !ST_AutomapIsActive(obj->player)) return;
     if(kills->value == 1994) return;
 
     strcpy(buf, "Kills: ");
@@ -2236,6 +2272,7 @@ void Kills_UpdateGeometry(uiwidget_t* obj)
     if(!(cfg.hudShownCheatCounters & (CCH_KILLS | CCH_KILLS_PRCNT))) return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
+    if(cfg.hudCheatCounterShowWithAutomap && !ST_AutomapIsActive(obj->player)) return;
     if(kills->value == 1994) return;
 
     strcpy(buf, "Kills: ");
@@ -2276,6 +2313,7 @@ void Items_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     if(!(cfg.hudShownCheatCounters & (CCH_ITEMS | CCH_ITEMS_PRCNT))) return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
+    if(cfg.hudCheatCounterShowWithAutomap && !ST_AutomapIsActive(obj->player)) return;
     if(items->value == 1994) return;
 
     strcpy(buf, "Items: ");
@@ -2318,6 +2356,7 @@ void Items_UpdateGeometry(uiwidget_t* obj)
     if(!(cfg.hudShownCheatCounters & (CCH_ITEMS | CCH_ITEMS_PRCNT))) return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
+    if(cfg.hudCheatCounterShowWithAutomap && !ST_AutomapIsActive(obj->player)) return;
     if(items->value == 1994) return;
 
     strcpy(buf, "Items: ");
@@ -2349,6 +2388,7 @@ void Secrets_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     if(!(cfg.hudShownCheatCounters & (CCH_SECRETS | CCH_SECRETS_PRCNT))) return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
+    if(cfg.hudCheatCounterShowWithAutomap && !ST_AutomapIsActive(obj->player)) return;
     if(scrt->value == 1994) return;
 
     strcpy(buf, "Secret: ");
@@ -2400,6 +2440,7 @@ void Secrets_UpdateGeometry(uiwidget_t* obj)
     if(!(cfg.hudShownCheatCounters & (CCH_SECRETS | CCH_SECRETS_PRCNT))) return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
+    if(cfg.hudCheatCounterShowWithAutomap && !ST_AutomapIsActive(obj->player)) return;
     if(scrt->value == 1994) return;
 
     strcpy(buf, "Secret: ");
@@ -2487,21 +2528,22 @@ static void drawUIWidgetsForPlayer(player_t* plr)
     float scale;
     assert(plr);
 
-    // Scale from viewport space to fixed 320x200 space.
     R_ViewPortSize(playerNum, &portSize);
+
+    // The automap is drawn in a viewport scaled coordinate space (of viewwindow dimensions).
+    obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_AUTOMAP]);
+    UIWidget_SetOpacity(obj, ST_AutomapOpacity(playerNum));
+    UIWidget_SetMaximumSize(obj, &portSize);
+    GUI_DrawWidgetXY(obj, 0, 0);
+
+    // The rest of the UI is drawn in a fixed 320x200 coordinate space.
+    // Determine scale factors.
     R_ChooseAlignModeAndScaleFactor(&scale, SCREENWIDTH, SCREENHEIGHT,
         portSize.width, portSize.height, SCALEMODE_SMART_STRETCH);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
     DGL_Scalef(scale, scale, 1);
-
-    obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_AUTOMAP]);
-    UIWidget_SetOpacity(obj, ST_AutomapOpacity(playerNum));
-    size.width = SCREENWIDTH; size.height = SCREENHEIGHT;
-    UIWidget_SetMaximumSize(obj, &size);
-
-    GUI_DrawWidgetXY(obj, 0, 0);
 
     if(hud->statusbarActive || (displayMode < 3 || hud->alpha > 0))
     {
@@ -2789,7 +2831,9 @@ static void initAutomapForCurrentMap(uiwidget_t* obj)
         int flags = UIAutomap_Flags(obj);
         UIAutomap_SetFlags(obj, flags|AMF_REND_KEYS);
     }
+#endif
 
+#if __JDOOM__
     if(!IS_NETGAME && hud->automapCheatLevel)
         AM_SetVectorGraphic(mcfg, AMO_THINGPLAYER, VG_CHEATARROW);
 #endif
@@ -2879,6 +2923,7 @@ void ST_BuildWidgets(int player)
 typedef struct {
     int group;
     int alignFlags;
+    order_t order;
     int groupFlags;
     int padding;
 } uiwidgetgroupdef_t;
@@ -2898,13 +2943,13 @@ typedef struct {
     const uiwidgetgroupdef_t widgetGroupDefs[] = {
         { UWG_STATUSBAR,    ALIGN_BOTTOM },
         { UWG_MAPNAME,      ALIGN_BOTTOMLEFT },
-        { UWG_BOTTOMLEFT,   ALIGN_BOTTOMLEFT,  UWGF_VERTICAL|UWGF_RIGHTTOLEFT, PADDING },
-        { UWG_BOTTOMLEFT2,  ALIGN_BOTTOMLEFT,  UWGF_LEFTTORIGHT, PADDING },
-        { UWG_BOTTOMRIGHT,  ALIGN_BOTTOMRIGHT, UWGF_RIGHTTOLEFT, PADDING },
-        { UWG_BOTTOMCENTER, ALIGN_BOTTOM,      UWGF_VERTICAL|UWGF_RIGHTTOLEFT, PADDING },
-        { UWG_BOTTOM,       ALIGN_BOTTOMLEFT,  UWGF_LEFTTORIGHT },
-        { UWG_TOPCENTER,    ALIGN_TOPLEFT,     UWGF_VERTICAL|UWGF_LEFTTORIGHT, PADDING },
-        { UWG_COUNTERS,     ALIGN_LEFT,        UWGF_VERTICAL|UWGF_RIGHTTOLEFT, PADDING },
+        { UWG_BOTTOMLEFT,   ALIGN_BOTTOMLEFT,  ORDER_RIGHTTOLEFT, UWGF_VERTICAL, PADDING },
+        { UWG_BOTTOMLEFT2,  ALIGN_BOTTOMLEFT,  ORDER_LEFTTORIGHT, 0, PADDING },
+        { UWG_BOTTOMRIGHT,  ALIGN_BOTTOMRIGHT, ORDER_RIGHTTOLEFT, 0, PADDING },
+        { UWG_BOTTOMCENTER, ALIGN_BOTTOM,      ORDER_RIGHTTOLEFT, UWGF_VERTICAL, PADDING },
+        { UWG_BOTTOM,       ALIGN_BOTTOMLEFT,  ORDER_LEFTTORIGHT },
+        { UWG_TOPCENTER,    ALIGN_TOPLEFT,     ORDER_LEFTTORIGHT, UWGF_VERTICAL, PADDING },
+        { UWG_COUNTERS,     ALIGN_LEFT,        ORDER_RIGHTTOLEFT, UWGF_VERTICAL, PADDING },
         { UWG_AUTOMAP,      ALIGN_TOPLEFT }
     };
     const uiwidgetdef_t widgetDefs[] = {
@@ -2957,7 +3002,7 @@ typedef struct {
     for(i = 0; i < sizeof(widgetGroupDefs)/sizeof(widgetGroupDefs[0]); ++i)
     {
         const uiwidgetgroupdef_t* def = &widgetGroupDefs[i];
-        hud->widgetGroupIds[def->group] = GUI_CreateGroup(def->groupFlags, player, def->alignFlags, def->padding);
+        hud->widgetGroupIds[def->group] = GUI_CreateGroup(def->groupFlags, player, def->alignFlags, def->order, def->padding);
     }
 
     UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOMLEFT]),
@@ -3171,9 +3216,11 @@ boolean ST_AutomapObscures(int player, int x, int y, int width, int height)
 
 void ST_AutomapClearPoints(int player)
 {
-    uiwidget_t* obj = ST_UIAutomapForPlayer(player);
-    if(!obj) return;
-    UIAutomap_ClearPoints(obj);
+    uiwidget_t* ob = ST_UIAutomapForPlayer(player);
+    if(!ob) return;
+
+    UIAutomap_ClearPoints(ob);
+    P_SetMessage(&players[player], AMSTR_MARKSCLEARED, false);
 }
 
 /**
