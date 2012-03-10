@@ -125,6 +125,7 @@ DENG_HEADERS = \
     portable/include/bsp_map.h \
     portable/include/bsp_node.h \
     portable/include/bsp_superblock.h \
+    portable/include/bspleaf.h \
     portable/include/b_command.h \
     portable/include/b_context.h \
     portable/include/b_device.h \
@@ -245,7 +246,6 @@ DENG_HEADERS = \
     portable/include/p_seg.h \
     portable/include/p_sidedef.h \
     portable/include/p_sight.h \
-    portable/include/p_subsector.h \
     portable/include/p_surface.h \
     portable/include/p_ticker.h \
     portable/include/p_vertex.h \
@@ -396,6 +396,7 @@ SOURCES += \
     portable/src/bsp_map.c \
     portable/src/bsp_node.c \
     portable/src/bsp_superblock.c \
+    portable/src/bspleaf.c \
     portable/src/cbuffer.c \
     portable/src/cl_frame.c \
     portable/src/cl_infine.c \
@@ -495,7 +496,6 @@ SOURCES += \
     portable/src/p_seg.c \
     portable/src/p_sidedef.c \
     portable/src/p_sight.c \
-    portable/src/p_subsector.c \
     portable/src/p_surface.c \
     portable/src/p_think.c \
     portable/src/p_ticker.c \

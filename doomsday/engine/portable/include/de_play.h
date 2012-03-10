@@ -37,7 +37,7 @@
 #include "p_linedef.h"
 #include "p_plane.h"
 #include "p_seg.h"
-#include "p_subsector.h"
+#include "bspleaf.h"
 #include "p_sector.h"
 #include "p_polyobj.h"
 #include "p_dmu.h"
