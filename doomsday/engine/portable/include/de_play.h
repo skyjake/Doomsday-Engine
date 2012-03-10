@@ -33,7 +33,7 @@
 #include "p_vertex.h"
 #include "material.h"
 #include "p_surface.h"
-#include "p_sidedef.h"
+#include "sidedef.h"
 #include "linedef.h"
 #include "p_plane.h"
 #include "p_seg.h"

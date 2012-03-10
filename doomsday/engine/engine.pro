@@ -244,7 +244,6 @@ DENG_HEADERS = \
     portable/include/p_polyobj.h \
     portable/include/p_sector.h \
     portable/include/p_seg.h \
-    portable/include/p_sidedef.h \
     portable/include/p_sight.h \
     portable/include/p_surface.h \
     portable/include/p_ticker.h \
@@ -280,6 +279,7 @@ DENG_HEADERS = \
     portable/include/r_things.h \
     portable/include/r_util.h \
     portable/include/r_world.h \
+    portable/include/sidedef.h \
     portable/include/stringarray.h \
     portable/include/sv_def.h \
     portable/include/sv_frame.h \
@@ -379,6 +379,7 @@ DENG_WIN32_SOURCES += \
 
 SOURCES += \
     portable/src/abstractfile.c \
+    portable/src/abstractresource.c \
     portable/src/audiodriver.c \
     portable/src/animator.c \
     portable/src/bitmapfont.c \
@@ -494,7 +495,6 @@ SOURCES += \
     portable/src/p_polyob.c \
     portable/src/p_sector.c \
     portable/src/p_seg.c \
-    portable/src/p_sidedef.c \
     portable/src/p_sight.c \
     portable/src/p_surface.c \
     portable/src/p_think.c \
@@ -534,7 +534,7 @@ SOURCES += \
     portable/src/rend_sky.c \
     portable/src/rend_sprite.c \
     portable/src/resourcenamespace.c \
-    portable/src/abstractresource.c \
+    portable/src/sidedef.c \
     portable/src/smoother.c \
     portable/src/stringpool.c \
     portable/src/s_cache.c \
