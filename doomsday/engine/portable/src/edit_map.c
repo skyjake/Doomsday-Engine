@@ -760,76 +760,30 @@ static void finishSectors(GameMap* map)
     }
 }
 
-/**
- * Completes the linedef loading by resolving the front/back
- * sector ptrs which we couldn't do earlier as the sidedefs
- * hadn't been loaded at the time.
- */
 static void finishLineDefs(GameMap* map)
 {
     uint i;
-    LineDef* ld;
-    Vertex* v[2];
-    HEdge* startSeg, *endSeg;
 
     VERBOSE2( Con_Message("Finalizing Linedefs...\n") )
 
     for(i = 0; i < map->numLineDefs; ++i)
     {
-        ld = &map->lineDefs[i];
+        LineDef* ld = &map->lineDefs[i];
+        const HEdge* leftHEdge, *rightHEdge;
 
-        if(!ld->sideDefs[0]->hedgeCount)
-            continue;
+        if(!ld->L_frontside->hedgeCount) continue;
 
-        startSeg = ld->sideDefs[0]->hedges[0];
-        endSeg = ld->sideDefs[0]->hedges[ld->sideDefs[0]->hedgeCount - 1];
-        ld->v[0] = v[0] = startSeg->HE_v1;
-        ld->v[1] = v[1] = endSeg->HE_v2;
-        ld->dX = v[1]->V_pos[VX] - v[0]->V_pos[VX];
-        ld->dY = v[1]->V_pos[VY] - v[0]->V_pos[VY];
+        leftHEdge  = ld->L_frontside->hedges[0];
+        rightHEdge = ld->L_frontside->hedges[ld->L_frontside->hedgeCount - 1];
 
-        // Calculate the accurate length of each line.
+        ld->v[0] = leftHEdge->HE_v1;
+        ld->v[1] = rightHEdge->HE_v2;
+
+        LineDef_UpdateSlope(ld);
+        LineDef_UpdateAABox(ld);
+
         ld->length = P_AccurateDistance(ld->dX, ld->dY);
-        ld->angle = bamsAtan2((int) (ld->v[1]->V_pos[VY] - ld->v[0]->V_pos[VY]),
-                              (int) (ld->v[1]->V_pos[VX] - ld->v[0]->V_pos[VX]));
-
-        if(!ld->dX)
-        {
-            ld->slopeType = ST_VERTICAL;
-        }
-        else if(!ld->dY)
-        {
-            ld->slopeType = ST_HORIZONTAL;
-        }
-        else
-        {
-            if(ld->dY / ld->dX > 0)
-                ld->slopeType = ST_POSITIVE;
-            else
-                ld->slopeType = ST_NEGATIVE;
-        }
-
-        if(v[0]->V_pos[VX] < v[1]->V_pos[VX])
-        {
-            ld->aaBox.minX = v[0]->V_pos[VX];
-            ld->aaBox.maxX = v[1]->V_pos[VX];
-        }
-        else
-        {
-            ld->aaBox.minX = v[1]->V_pos[VX];
-            ld->aaBox.maxX = v[0]->V_pos[VX];
-        }
-
-        if(v[0]->V_pos[VY] < v[1]->V_pos[VY])
-        {
-            ld->aaBox.minY = v[0]->V_pos[VY];
-            ld->aaBox.maxY = v[1]->V_pos[VY];
-        }
-        else
-        {
-            ld->aaBox.minY = v[1]->V_pos[VY];
-            ld->aaBox.maxY = v[0]->V_pos[VY];
-        }
+        ld->angle = bamsAtan2((int) ld->dY, (int) ld->dX);
     }
 }
 
