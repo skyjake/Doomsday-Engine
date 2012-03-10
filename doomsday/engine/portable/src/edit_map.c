@@ -796,6 +796,9 @@ static void initBBoxFromAABoxf(float bBox[4], const AABoxf* aaBox)
     bBox[BOXTOP]    = aaBox->maxY;
 }
 
+/**
+ * @pre Axis-aligned bounding boxes of all Sectors must be initialized.
+ */
 static void updateMapBounds(GameMap* map)
 {
     boolean isFirst = true;
@@ -809,7 +812,7 @@ static void updateMapBounds(GameMap* map)
     {
         Sector* sec = &map->sectors[i];
 
-        if(0 == sec->lineDefCount) continue;
+        if(!sec->lineDefCount) continue;
 
         initBBoxFromAABoxf(bBox, &sec->aaBox);
         if(isFirst)
