@@ -240,7 +240,7 @@ DENG_HEADERS = \
     portable/include/p_particle.h \
     portable/include/p_plane.h \
     portable/include/p_players.h \
-    portable/include/p_polyobj.h \
+    portable/include/p_polyobjs.h \
     portable/include/p_seg.h \
     portable/include/p_sight.h \
     portable/include/p_surface.h \

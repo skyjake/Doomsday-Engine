@@ -39,7 +39,7 @@
 #include "p_seg.h"
 #include "bspleaf.h"
 #include "sector.h"
-#include "p_polyobj.h"
+#include "p_polyobjs.h"
 #include "p_dmu.h"
 #include "thinker.h"
 #include "p_object.h"
