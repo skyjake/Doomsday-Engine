@@ -1,24 +1,22 @@
-/**\file m_gridmap.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file gridmap.h
+ * Gridmap implementation. @ingroup data
  *
- *\author Copyright © 2009-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2009-2012 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #include <math.h>
@@ -31,7 +29,7 @@
 #include "de_render.h" // For debug display
 #include "m_vector.h" // For debug display
 
-#include "m_gridmap.h"
+#include "gridmap.h"
 
 /// Space dimension ordinals.
 enum { X = 0, Y };
@@ -86,10 +84,11 @@ struct gridmap_s
  * Initialize @a cell. Assumes that @a cell has not yet been initialized
  * (i.e., existing references to child cells will be overwritten).
  *
- * @param cell  TreeCell instance to be initialized.
- * @param x  X coordinate in Gridmap space.
- * @param y  Y coordinate in Gridmap space.
- * @param size  Size in Gridmap space units.
+ * @param cell        TreeCell instance to be initialized.
+ * @param x           X coordinate in Gridmap space.
+ * @param y           Y coordinate in Gridmap space.
+ * @param size        Size in Gridmap space units.
+ *
  * @return  Same as @a cell for caller convenience.
  */
 static TreeCell* initCell(TreeCell* cell, uint x, uint y, uint size)
@@ -106,10 +105,11 @@ static TreeCell* initCell(TreeCell* cell, uint x, uint y, uint size)
 /**
  * Construct and initialize a new TreeCell.
  *
- * @param x  X coordinate in Gridmap space.
- * @param y  Y coordinate in Gridmap space.
- * @param size  Size in Gridmap space units.
- * @param zoneTag  Zone memory tag to associate with the new TreeCell.
+ * @param x            X coordinate in Gridmap space.
+ * @param y            Y coordinate in Gridmap space.
+ * @param size         Size in Gridmap space units.
+ * @param zoneTag      Zone memory tag to associate with the new TreeCell.
+ *
  * @return  Newly allocated and initialized TreeCell instance.
  */
 static TreeCell* newCell(uint x, uint y, uint size, int zoneTag)
@@ -143,12 +143,13 @@ static boolean isLeaf(TreeCell* cell)
  * for each cell. Iteration ends when all selected cells have been visited
  * or a callback returns a non-zero value.
  *
- * @param cell  TreeCell to traverse.
- * @param leafOnly  Caller is only interested in leaves.
- * @param callback  Callback function.
- * @param paramaters  Passed to the callback.
- * @return  Zero iff iteration completed wholly, else the value returned
- *     by the last callback made.
+ * @param cell          TreeCell to traverse.
+ * @param leafOnly      Caller is only interested in leaves.
+ * @param callback      Callback function.
+ * @param paramaters    Passed to the callback.
+ *
+ * @return  Zero iff iteration completed wholly, else the value returned by the
+ *          last callback made.
  */
 static int iterateCell(TreeCell* cell, boolean leafOnly,
     int (C_DECL *callback) (TreeCell* cell, void* paramaters), void* paramaters)
@@ -344,8 +345,10 @@ typedef struct {
     void* callbackParamaters;
 } actioncallback_paramaters_t;
 
-// Callback actioner. Executes the callback and then returns the result
-// to the current traversal to determine if it should continue.
+/**
+ * Callback actioner. Executes the callback and then returns the result
+ * to the current iteration to determine if it should continue.
+ */
 static int actionCallback(TreeCell* cell, void* paramaters)
 {
     actioncallback_paramaters_t* p = (actioncallback_paramaters_t*) paramaters;
@@ -386,7 +389,7 @@ int Gridmap_BlockIterate2(Gridmap* gm, const GridmapBlock* block_,
     Gridmap_ClipBlock(gm, &block);
 
     // Traverse cells in the block.
-    // \optimize: We could avoid repeatedly descending the tree...
+    /// @optimize: We could avoid repeatedly descending the tree...
     for(y = block.minY; y <= block.maxY; ++y)
     for(x = block.minX; x <= block.maxX; ++x)
     {
@@ -517,3 +520,7 @@ void Gridmap_Debug(Gridmap* gm)
     // Restore GL state.
     glColor4fv(oldColor);
 }
+
+#undef UNIT_WIDTH
+#undef UNIT_HEIGHT
+
