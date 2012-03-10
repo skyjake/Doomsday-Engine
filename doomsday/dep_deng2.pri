@@ -9,7 +9,7 @@ INCLUDEPATH += $$PWD/libdeng2/include
 LIBS += -ldeng2
 
 # libdeng2 requires the following Qt modules.
-QT += core network
+QT += core network gui
 
 win32 {
     # Install the required Qt DLLs into the products dir.
@@ -18,6 +18,7 @@ win32 {
     else:       qtver = "4"
     qtlibs.files += \
         $$[QT_INSTALL_LIBS]/QtCore$${qtver}.dll \
-        $$[QT_INSTALL_LIBS]/QtNetwork$${qtver}.dll
+        $$[QT_INSTALL_LIBS]/QtNetwork$${qtver}.dll \
+        $$[QT_INSTALL_LIBS]/QtGui$${qtver}.dll
     qtlibs.path = $$DENG_LIB_DIR
 }

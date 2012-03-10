@@ -21,7 +21,7 @@
 #define LIBDENG2_LEGACYCORE_H
 
 #include "../libdeng2.h"
-#include <QObject>
+#include <QApplication>
 
 namespace de {
 
@@ -41,12 +41,9 @@ public:
     /**
      * Initializes the legacy core.
      *
-     * @param argc  Reference to the application's command line argument
-     *              count. Note that this may be modified in this method.
-     * @param argv  Command line arguments of the application. Note that
-     *              this may be modified in the this method.
+     * @param dengApp  Application instance.
      */
-    LegacyCore(int& argc, char** argv);
+    LegacyCore(QApplication* dengApp);
 
     ~LegacyCore();
 

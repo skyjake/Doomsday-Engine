@@ -96,6 +96,12 @@ CONFIG(debug, debug|release) {
     DEFINES += NDEBUG
 }
 
+# Check for a 64-bit compiler.
+contains(QMAKE_HOST.arch, x86_64) {
+    echo(64-bit architecture detected.)
+    DEFINES += HOST_IS_64BIT
+}
+
 win32 {
     win32-g++* {
         error("Sorry, gcc is not supported in the Windows build.")
@@ -154,9 +160,6 @@ unix:!macx {
     DENG_LIB_DIR = $$PREFIX/lib
 
     contains(QMAKE_HOST.arch, x86_64) {
-        echo(64-bit architecture detected.)
-        DEFINES += HOST_IS_64BIT
-
         exists($$PREFIX/lib64) {
             DENG_LIB_DIR = $$PREFIX/lib64
         }
@@ -217,32 +220,42 @@ deng_nosdlmixer {
 macx {
     # Select OS version.
     deng_nativesdk {
-        echo("Using your Mac OS version (32/64-bit Intel).")
+        echo("Using SDK for your Mac OS version.")
         QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
-        CONFIG += x86 x86_64
     }
     else:deng_snowleopard {
+        echo("Using Mac OS 10.6 SDK.")
+        QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.6.sdk
+        QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
+        CONFIG += x86 x86_64
+
         deng_32bitonly {
-            echo("Using Mac OS 10.6 SDK (32-bit Intel).")
-            QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.6.sdk
-            QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
-            CONFIG += x86
+            CONFIG -= x86_64
             QMAKE_CFLAGS_X86_64 = ""
             QMAKE_OBJECTIVE_CFLAGS_X86_64 = ""
             QMAKE_LFLAGS_X86_64 = ""
-        } else {
-            echo("Using Mac OS 10.6 SDK (32/64-bit Intel).")
-            QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.6.sdk
-            QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
-            CONFIG += x86 x86_64
         }
     }
     else {
-        echo("Using Mac OS 10.4 SDK (32-bit Intel + PowerPC).")
+        echo("Using Mac OS 10.4 SDK.")
+        echo("Architectures: 32-bit Intel + 32-bit PowerPC.")
         QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.4u.sdk
         QMAKE_CFLAGS += -mmacosx-version-min=10.4
         DEFINES += MACOS_10_4
         CONFIG += x86 ppc
+    }
+
+    # What's our arch?
+    !ppc {
+        x86_64:x86 {
+            echo("Architectures: 32-bit Intel + 64-bit Intel.")
+        }
+        else:x86_64 {
+            echo("Architectures: 64-bit Intel.")
+        }
+        else {
+            echo("Architectures: 32-bit Intel.")
+        }
     }
 
     !deng_nativesdk {

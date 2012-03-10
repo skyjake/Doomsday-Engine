@@ -266,10 +266,10 @@ const char *N_GetProtocolName(void)
     return "TCP/IP";
 }
 
-void* N_GetNodeSocket(nodeid_t id)
+int N_GetNodeSocket(nodeid_t id)
 {
     if(id >= MAX_NODES) return 0;
-    return (void*) netNodes[id].sock;
+    return netNodes[id].sock;
 }
 
 boolean N_HasNodeJoined(nodeid_t id)
@@ -848,7 +848,7 @@ void N_ServerListenJoinedNodes(void)
             if(node->hasJoined)
             {
                 if(LegacyNetwork_IsDisconnected(node->sock) ||
-                   (LegacyNetwork_BytesReady(node->sock) && !N_ReceiveReliably(i)))
+                   (LegacyNetwork_BytesReady(node->sock) && !Protocol_Receive(i)))
                 {
                     netevent_t nev;
                     nev.type = NE_TERMINATE_NODE;
@@ -871,7 +871,7 @@ void N_ClientListen(void)
     // includes the server's socket.
     while(LegacyNetwork_SocketSet_Activity(joinedSockSet))
     {
-        if(!N_ReceiveReliably(0))
+        if(!Protocol_Receive(0))
         {
             netevent_t nev;
             nev.id = 0;

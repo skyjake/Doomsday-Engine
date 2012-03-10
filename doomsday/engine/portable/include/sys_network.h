@@ -82,7 +82,7 @@ extern          "C" {
 
     void            N_TerminateNode(nodeid_t id);
 
-    void*           N_GetNodeSocket(nodeid_t id);
+    int             N_GetNodeSocket(nodeid_t id);
     boolean         N_HasNodeJoined(nodeid_t id);
     boolean         N_GetNodeName(nodeid_t id, char *name);
     const char     *N_GetProtocolName(void);

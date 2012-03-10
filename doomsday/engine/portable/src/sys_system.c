@@ -284,6 +284,9 @@ void Sys_HideMouse(void)
 void Sys_Quit(void)
 {
     appShutdown = true;
+
+    // It's time to stop the main loop.
+    LegacyCore_Stop(de2LegacyCore, DD_GameLoopExitCode());
 }
 
 void Sys_MessageBox(const char *msg, boolean iserror)

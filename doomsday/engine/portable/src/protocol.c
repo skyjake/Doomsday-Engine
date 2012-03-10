@@ -135,9 +135,9 @@ static boolean getNextByte(TCPsocket sock, byte* b)
 
 boolean Protocol_Receive(nodeid_t from)
 {
-    int     size = 0;
-    int     sock = netNodes[from].sock;
-    byte*   packet = 0;
+    int size = 0;
+    int sock = N_GetNodeSocket(from);
+    byte* packet = 0;
 
     packet = LegacyNetwork_Receive(sock, &size);
     if(!packet)
@@ -156,7 +156,7 @@ boolean Protocol_Receive(nodeid_t from)
         msg->handle = packet; // needs to be freed
 
 /*#ifdef _DEBUG
-        VERBOSE2(Con_Message("N_ReceiveReliably: Posting message, from=%i, size=%i\n", from, size));
+        VERBOSE2(Con_Message("Protocol_Receive: Posting message, from=%i, size=%i\n", from, size));
 #endif*/
 
         // The message queue will handle the message from now on.

@@ -32,6 +32,10 @@
 
 #include "dd_types.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef void* thread_t;
 typedef intptr_t mutex_t;
 typedef intptr_t sem_t;
@@ -111,5 +115,9 @@ void Sem_P(sem_t semaphore);
 void Sem_V(sem_t semaphore);
 
 uint32_t Sem_Value(sem_t semaphore);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* LIBDENG_FILESYS_SYSTEM_H */

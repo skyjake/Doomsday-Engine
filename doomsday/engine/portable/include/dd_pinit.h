@@ -46,6 +46,5 @@ void DD_InitCommandLine(const char* cmdLine);
 
 extern game_import_t gi;
 extern game_export_t gx;
-extern LegacyCore* de2LegacyCore;
 
 #endif /* LIBDENG_PORTABLE_INIT_H */

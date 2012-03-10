@@ -350,90 +350,71 @@ static int createMainWindow(void)
     return windowIDX != 0;
 }
 
-int main(int argc, char** argv)
+boolean DD_Unix_Init(int argc, char** argv)
 {
-    boolean doShutdown = true;
-    int exitCode = 0;
+    boolean failed = true;
+    //int exitCode = 0;
 
     memset(&app, 0, sizeof(app));
-
-    // Create the deng2 legacy application core.
-    de2LegacyCore = LegacyCore_New(&argc, argv);
 
     // SDL lock key behavior: send up event when key released.
     setenv("SDL_DISABLE_LOCK_KEYS", "1", true);
 
-    /*if(!initApplication(&app))
-    {
-        DD_ErrorBox(true, "Failed to initialize application.\n");
-    }
-    else*/
     {       
-        // Prepare the command line arguments.
-        char* cmdLine = buildCommandLineString(argc, argv);
-        DD_InitCommandLine(cmdLine);
-        M_Free(cmdLine);
+    // Prepare the command line arguments.
+    char* cmdLine = buildCommandLineString(argc, argv);
+    DD_InitCommandLine(cmdLine);
+    M_Free(cmdLine);
 
-        // First order of business: are we running in dedicated mode?
-        isDedicated = ArgCheck("-dedicated");
-        novideo = ArgCheck("-novideo") || isDedicated;
+    // First order of business: are we running in dedicated mode?
+    isDedicated = ArgCheck("-dedicated");
+    novideo = ArgCheck("-novideo") || isDedicated;
 
-        Library_Init();
+    Library_Init();
 
-        // Determine our basedir and other global paths.
-        determineGlobalPaths(&app);
+    // Determine our basedir and other global paths.
+    determineGlobalPaths(&app);
 
-        if(!DD_EarlyInit())
-        {
-            DD_ErrorBox(true, "Error during early init.");
-        }
-        else if(!initTimingSystem())
-        {
-            DD_ErrorBox(true, "Error initalizing timing system.");
-        }
-        else if(!initPluginSystem())
-        {
-            DD_ErrorBox(true, "Error initializing plugin system.");
-        }
-        else if(!initDGL())
-        {
-            DD_ErrorBox(true, "Error initializing DGL.");
-        }
-        else if(!loadAllPlugins(&app))
-        {
-            DD_ErrorBox(true, "Error loading plugins.");
-        }
-        else if(!createMainWindow())
-        {
-            DD_ErrorBox(true, "Error creating main window.");
-        }
-        else if(!Sys_GLInitialize())
-        {
-            DD_ErrorBox(true, "Error initializing OpenGL.");
-        }
-        else
-        {   // All initialization complete.
-            doShutdown = false;
-
-            { char buf[256];
-            DD_ComposeMainWindowTitle(buf);
-            Sys_SetWindowTitle(windowIDX, buf);
-            }
-
-           // \todo Set foreground window and focus.
-        }
+    if(!DD_EarlyInit())
+    {
+        DD_ErrorBox(true, "Error during early init.");
     }
-
-    if(!doShutdown)
-    {   // Fire up the engine. The game loop will also act as the message pump.
-        exitCode = DD_Main();
+    else if(!initTimingSystem())
+    {
+        DD_ErrorBox(true, "Error initalizing timing system.");
     }
-    DD_Shutdown();
+    else if(!initPluginSystem())
+    {
+        DD_ErrorBox(true, "Error initializing plugin system.");
+    }
+    else if(!initDGL())
+    {
+        DD_ErrorBox(true, "Error initializing DGL.");
+    }
+    else if(!loadAllPlugins(&app))
+    {
+        DD_ErrorBox(true, "Error loading plugins.");
+    }
+    else if(!createMainWindow())
+    {
+        DD_ErrorBox(true, "Error creating main window.");
+    }
+    else if(!Sys_GLInitialize())
+    {
+        DD_ErrorBox(true, "Error initializing OpenGL.");
+    }
+    else
+    {   // All initialization complete.
+        failed = false;
 
-    LegacyCore_Delete(de2LegacyCore);
+        /// @todo  This is the window manager's responsibility.
+        { char buf[256];
+        DD_ComposeMainWindowTitle(buf);
+        Sys_SetWindowTitle(windowIDX, buf);
+        }
+    }}
 
-    // Bye!
-    return exitCode;
+    return !failed;
 }
 
 /**

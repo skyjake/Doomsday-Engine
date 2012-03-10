@@ -33,24 +33,22 @@ LegacyCore* LegacyCore::_appCore;
  */
 struct LegacyCore::Instance
 {
-    QCoreApplication* app;
+    QApplication* app;
     LegacyNetwork network;
     void (*loopFunc)(void);
     LogBuffer logBuffer;
 
     Instance() : app(0), loopFunc(0) {}
-    ~Instance() {
-        delete app;
-    }
+    ~Instance() {}
 };
 
-LegacyCore::LegacyCore(int& argc, char** argv)
+LegacyCore::LegacyCore(QApplication* dengApp)
 {
     _appCore = this;
     d = new Instance;
 
     // Construct a new core application (must have one for the event loop).
-    d->app = new QCoreApplication(argc, argv);
+    d->app = dengApp;
 
     // The global log buffer will be available for the entire runtime of deng2.
     LogBuffer::setAppBuffer(d->logBuffer);

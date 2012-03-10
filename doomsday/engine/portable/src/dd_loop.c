@@ -4,8 +4,8 @@
  *
  * The engine's main loop.
  *
- * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright Â© 2003-2012 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ * @authors Copyright Â© 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -56,33 +56,7 @@
  */
 #define FRAME_DEFERRED_UPLOAD_TIMEOUT 20
 
-<<<<<<< HEAD
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-void            Net_ResetTimer(void);
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-void            DD_RunTics(void);
-void            DD_GameLoopCallback(void);
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-boolean appShutdown = false; // Set to true when we should exit (normally).
-#ifdef WIN32
-boolean suspendMsgPump = false; // Set to true to disable checking windows msgs.
-#endif
-
-int maxFrameRate = 200; // Zero means 'unlimited'.
-=======
 int maxFrameRate = 120; // Zero means 'unlimited'.
->>>>>>> master
 // Refresh frame count (independant of the viewport-specific frameCount).
 int rFrameCount = 0;
 byte devShowFrameTimeDeltas = false;
@@ -127,116 +101,54 @@ void DD_RegisterLoop(void)
 
 void DD_SetGameLoopExitCode(int code)
 {
-<<<<<<< HEAD
-=======
     gameLoopExitCode = code;
+}
+
+int DD_GameLoopExitCode(void)
+{
+    return gameLoopExitCode;
 }
 
 int DD_GameLoop(void)
 {
->>>>>>> master
     // Limit the frame rate to 35 when running in dedicated mode.
     if(isDedicated)
     {
         maxFrameRate = 35;
     }
 
-<<<<<<< HEAD
     // Start the deng2 event loop.
     return LegacyCore_RunEventLoop(de2LegacyCore, DD_GameLoopCallback);
 }
 
-/**
- * This gets called periodically from the deng2 application core.
- */
 void DD_GameLoopCallback(void)
 {
-    int exitCode = 0;
-#ifdef WIN32
-    MSG msg;
-#endif
-
-    if(appShutdown)
-    {
-        // Time to stop the loop.
-        LegacyCore_Stop(de2LegacyCore, exitCode);
-        return;
-    }
-
-#ifdef WIN32
-    /**
-     * Start by checking Windows messages.
-     * \note Must be in the same thread as that which registered the
-     *       window it is handling messages for - DJS.
-     */
-    while(!suspendMsgPump &&
-          PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) > 0)
-    {
-        if(msg.message == WM_QUIT)
-        {
-            appShutdown = true;
-            suspendMsgPump = true;
-            exitCode = msg.wParam;
-        }
-        else
-        {
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
-        }
-    }
-
-    if(appShutdown)
-    {
-        LegacyCore_Stop(de2LegacyCore, exitCode);
-        return;
-    }
-#endif
+    if(Sys_IsShuttingDown())
+        return; // Shouldn't run this while shutting down.
 
     // Frame syncronous I/O operations.
-    DD_StartFrame();
-=======
-    while(!Sys_IsShuttingDown())
-    {
-        // Frame syncronous I/O operations.
-        startFrame();
-
-        // Run at least one tic. If no tics are available (maxfps interval
-        // not reached yet), the function blocks.
-        runTics();
-
-        // We may have received a Quit message from the windowing system
-        // during events/tics processing.
-        if(Sys_IsShuttingDown())
-            continue;
->>>>>>> master
+    startFrame();
 
     // Run at least one tic. If no tics are available (maxfps interval
     // not reached yet), the function blocks.
-    DD_RunTics();
+    runTics();
 
-<<<<<<< HEAD
+    // We may have received a Quit message from the windowing system
+    // during events/tics processing.
+    if(Sys_IsShuttingDown())
+        return;
+
     // Update clients.
     Sv_TransmitFrame();
 
     // Finish the refresh frame.
-    DD_EndFrame();
-=======
-        // Finish the refresh frame.
-        endFrame();
+    endFrame();
 
-        // Draw the frame.
-        drawAndUpdate();
->>>>>>> master
+    // Draw the frame.
+    drawAndUpdate();
 
-    // Draw and show the current frame.
-    DD_DrawAndBlit();
-
-<<<<<<< HEAD
     // After the first frame, start timedemo.
     DD_CheckTimeDemo();
-=======
-    return gameLoopExitCode;
->>>>>>> master
 }
 
 /**

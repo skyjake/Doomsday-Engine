@@ -1427,15 +1427,18 @@ static int DD_LocateAllGameResourcesWorker(void* paramaters)
 }
 
 /**
- * Engine initialization. When complete, starts the "game loop".
+ * Engine initialization. After completed, the game loop is ready to be started.
+ * Called from the app entrypoint function.
+ *
+ * @return  @c true on success, @c false if an error occurred.
  */
-int DD_Main(void)
+boolean DD_Init(void)
 {
     // By default, use the resolution defined in (default).cfg.
     int winWidth = defResX, winHeight = defResY, winBPP = defBPP, winX = 0, winY = 0;
     uint winFlags = DDWF_VISIBLE | DDWF_CENTER | (defFullscreen? DDWF_FULLSCREEN : 0);
     boolean noCenter = false;
-    int i, exitCode = 0;
+    int i; //, exitCode = 0;
 
 #ifdef _DEBUG
     // Type size check.
@@ -1489,12 +1492,12 @@ int DD_Main(void)
         winFlags &= ~DDWF_FULLSCREEN;
 
     if(!Sys_SetWindow(windowIDX, winX, winY, winWidth, winHeight, winBPP, winFlags, 0))
-        return -1;
+        return false;
 
     if(!GL_EarlyInit())
     {
         Sys_CriticalMessage("GL_EarlyInit() failed.");
-        return -1;
+        return false;
     }
 
     if(!novideo)
@@ -1724,14 +1727,7 @@ int DD_Main(void)
         Con_Execute(CMDS_DDAY, "listgames", false, false);
     }
 
-    // Start the game loop.
-    exitCode = DD_GameLoop();
-
-    // Time to shutdown.
-    Sys_Shutdown();
-
-    // Bye!
-    return exitCode;
+    return true;
 }
 
 static void DD_InitResourceSystem(void)

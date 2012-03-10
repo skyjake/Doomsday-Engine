@@ -27,9 +27,9 @@
 
 #define DENG2_LEGACYNETWORK()   de::LegacyCore::instance().network()
 
-LegacyCore* LegacyCore_New(int* argc, char** argv)
+LegacyCore* LegacyCore_New(void* dengApp)
 {
-    return reinterpret_cast<LegacyCore*>(new de::LegacyCore(*argc, argv));
+    return reinterpret_cast<LegacyCore*>(new de::LegacyCore(reinterpret_cast<QApplication*>(dengApp)));
 }
 
 int LegacyCore_RunEventLoop(LegacyCore* lc, void (*loopFunc)(void))

@@ -11,7 +11,7 @@ VERSION = $$DENG2_VERSION
 DEFINES += __DENG2__
 
 # Using Qt.
-QT += core network
+QT += core network gui
 
 win32 {
     # Keep the version number out of the file name.
@@ -56,7 +56,7 @@ SOURCES += \
 # Installation ---------------------------------------------------------------
 
 macx {
-    # Update the library include the main app bundle.
+    # Update the library included in the main app bundle.
     doPostLink("cp -fRp libdeng2*dylib ../engine/doomsday.app/Contents/Frameworks")
 }
 

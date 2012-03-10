@@ -27,8 +27,6 @@ win32 {
 }
 include(../dep_deng2.pri)
 
-QT += core network
-
 # Definitions ----------------------------------------------------------------
 
 DEFINES += __DOOMSDAY__
@@ -340,15 +338,11 @@ unix:!win32 {
 }
 macx {
     DENG_PLATFORM_HEADERS += \
-        $$DENG_MAC_INCLUDE_DIR/DoomsdayRunner.h \
         $$DENG_MAC_INCLUDE_DIR/MusicPlayer.h \
-        $$DENG_MAC_INCLUDE_DIR/SDLMain.h \
         $$DENG_MAC_INCLUDE_DIR/StartupWindowController.h
 
     OBJECTIVE_SOURCES += \
-        mac/src/DoomsdayRunner.m \
         mac/src/MusicPlayer.m \
-        mac/src/SDLMain.m \
         mac/src/StartupWindowController.m
 
     INCLUDEPATH += $$DENG_MAC_INCLUDE_DIR
@@ -419,6 +413,7 @@ SOURCES += \
     portable/src/dam_file.c \
     portable/src/dam_main.c \
     portable/src/dd_help.c \
+    portable/src/dd_init.cpp \
     portable/src/dd_input.c \
     portable/src/dd_loop.c \
     portable/src/dd_main.c \
@@ -666,6 +661,7 @@ macx {
     # Bundle the Qt frameworks.
     doPostLink("cp -fRp $$[QT_INSTALL_LIBS]/QtCore.framework $$FW_DIR")
     doPostLink("cp -fRp $$[QT_INSTALL_LIBS]/QtNetwork.framework $$FW_DIR")
+    doPostLink("cp -fRp $$[QT_INSTALL_LIBS]/QtGui.framework $$FW_DIR")
 
     # libdeng2 dynamic library.
     doPostLink("cp -fRp $$OUT_PWD/../libdeng2/libdeng2*dylib $$FW_DIR")
@@ -676,6 +672,7 @@ macx {
     }
     fixInstallName("libdeng2.2.dylib")
     fixInstallName("QtCore.framework/Versions/4/QtCore")
+    fixInstallName("QtGui.framework/Versions/4/QtGui")
     fixInstallName("QtNetwork.framework/Versions/4/QtNetwork")
 }
 

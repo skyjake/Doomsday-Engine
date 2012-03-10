@@ -23,6 +23,10 @@
 #ifndef __DOOMSDAY_BASELOOP_H__
 #define __DOOMSDAY_BASELOOP_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern int rFrameCount;
 extern timespan_t sysTime, gameTime, demoTime, ddMapTime;
 extern boolean tickFrame;
@@ -33,9 +37,11 @@ extern boolean tickFrame;
 void DD_RegisterLoop(void);
 
 /**
- * This is the refresh thread (the main thread).
+ * Starts the game loop.
  */
 int DD_GameLoop(void);
+
+void DD_GameLoopCallback(void);
 
 /**
  * Waits until it's time to show the drawn frame on screen. The frame must be
@@ -72,5 +78,14 @@ boolean DD_IsFrameTimeAdvancing(void);
  * to stop; you need to call Sys_Quit() to do that.
  */
 void DD_SetGameLoopExitCode(int code);
+
+/**
+ * @return Game loop exit code.
+ */
+int DD_GameLoopExitCode(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -33,6 +33,7 @@
 #include "game.h"
 #include "sys_direc.h"
 #include "textures.h"
+#include "de/c_wrapper.h"
 
 // Verbose messages.
 #define VERBOSE(code)   { if(verbose >= 1) { code; } }
@@ -47,6 +48,8 @@
 #  define DEBUG_VERBOSE_Message(code)
 #  define DEBUG_VERBOSE2_Message(code)
 #endif
+
+extern LegacyCore* de2LegacyCore;
 
 extern int verbose;
 extern FILE* outFile; // Output file for console messages.
@@ -68,7 +71,7 @@ extern GETGAMEAPI GetGameAPI;
 extern Game* theGame;
 
 int DD_EarlyInit(void);
-int DD_Main(void);
+boolean DD_Init(void);
 
 /// @return  @c true if shutdown is in progress.
 boolean DD_IsShuttingDown(void);
