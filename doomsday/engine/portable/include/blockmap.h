@@ -117,17 +117,17 @@ boolean Blockmap_CellCoords(Blockmap* blockmap, uint coords[2], float const pos[
  */
 boolean Blockmap_CellBlockCoords(Blockmap* blockmap, GridmapBlock* blockCoords, const AABoxf* box);
 
-boolean Blockmap_CreateCellAndLinkObject(Blockmap* blockmap, uint coords[2], void* object);
+boolean Blockmap_CreateCellAndLinkObject(Blockmap* blockmap, uint const coords[2], void* object);
 
 boolean Blockmap_CreateCellAndLinkObjectXY(Blockmap* blockmap, uint x, uint y, void* object);
 
-boolean Blockmap_UnlinkObjectInCell(Blockmap* blockmap, uint coords[2], void* object);
+boolean Blockmap_UnlinkObjectInCell(Blockmap* blockmap, uint const coords[2], void* object);
 
 boolean Blockmap_UnlinkObjectInCellXY(Blockmap* blockmap, uint x, uint y, void* object);
 
-void Blockmap_UnlinkObjectInCellBlock(Blockmap* blockmap, GridmapBlock* blockCoords, void* object);
+void Blockmap_UnlinkObjectInCellBlock(Blockmap* blockmap, const GridmapBlock* blockCoords, void* object);
 
-int Blockmap_IterateCellObjects(Blockmap* blockmap, const uint coords[2],
+int Blockmap_IterateCellObjects(Blockmap* blockmap, uint const coords[2],
     int (*callback) (void* object, void* context), void* context);
 
 int Blockmap_IterateCellBlockObjects(Blockmap* blockmap, const GridmapBlock* blockCoords,

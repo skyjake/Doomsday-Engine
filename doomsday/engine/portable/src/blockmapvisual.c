@@ -338,7 +338,7 @@ static int countCellObject(void* object, void* paramaters)
     return false; // Continue iteration.
 }
 
-static void drawLineDefCellInfoBox(Blockmap* blockmap, const Point2Raw* origin, uint coords[2])
+static void drawLineDefCellInfoBox(Blockmap* blockmap, const Point2Raw* origin, uint const coords[2])
 {
     uint count = 0;
     char info[160];
@@ -350,7 +350,7 @@ static void drawLineDefCellInfoBox(Blockmap* blockmap, const Point2Raw* origin, 
     drawCellInfo(origin, info);
 }
 
-static void drawMobjCellInfoBox(Blockmap* blockmap, const Point2Raw* origin, uint coords[2])
+static void drawMobjCellInfoBox(Blockmap* blockmap, const Point2Raw* origin, uint const coords[2])
 {
     uint count = 0;
     char info[160];
@@ -362,7 +362,7 @@ static void drawMobjCellInfoBox(Blockmap* blockmap, const Point2Raw* origin, uin
     drawCellInfo(origin, info);
 }
 
-static void drawPolyobjCellInfoBox(Blockmap* blockmap, const Point2Raw* origin, uint coords[2])
+static void drawPolyobjCellInfoBox(Blockmap* blockmap, const Point2Raw* origin, uint const coords[2])
 {
     uint count = 0;
     char info[160];
@@ -374,7 +374,7 @@ static void drawPolyobjCellInfoBox(Blockmap* blockmap, const Point2Raw* origin, 
     drawCellInfo(origin, info);
 }
 
-static void drawBspLeafCellInfoBox(Blockmap* blockmap, const Point2Raw* origin, uint coords[2])
+static void drawBspLeafCellInfoBox(Blockmap* blockmap, const Point2Raw* origin, uint const coords[2])
 {
     uint count = 0;
     char info[160];
@@ -392,7 +392,7 @@ static void drawBspLeafCellInfoBox(Blockmap* blockmap, const Point2Raw* origin, 
  * @param cellDrawer  Blockmap cell content drawing callback. Can be @a NULL.
  */
 static void rendBlockmap(Blockmap* blockmap, mobj_t* followMobj,
-    int (*cellDrawer) (void* cellPtr, void* paramaters))
+    int (*cellDrawer) (Blockmap* blockmap, uint const coords[2], void* paramaters))
 {
     uint x, y, vCoords[2];
     GridmapBlock vBlockCoords;
@@ -573,7 +573,7 @@ void Rend_BlockmapDebug(void)
 {
 #if 0
     int (*cellDrawer) (void* cellPtr, void* paramaters);
-    void (*cellInfoDrawer) (Blockmap* blockmap, const Point2Raw* origin, uint coords[2]);
+    void (*cellInfoDrawer) (Blockmap* blockmap, const Point2Raw* origin, uint const coords[2]);
     mobj_t* followMobj = NULL;
     Blockmap* blockmap;
     Point2Raw origin;

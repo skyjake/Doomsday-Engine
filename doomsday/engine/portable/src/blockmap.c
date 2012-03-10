@@ -51,6 +51,25 @@ struct blockmap_s
     Gridmap* gridmap;
 };
 
+Blockmap* Blockmap_New(const pvec2_t min, const pvec2_t max, uint cellWidth, uint cellHeight)
+{
+    Blockmap* bm = Z_Calloc(sizeof *bm, PU_MAPSTATIC, 0);
+    uint width, height;
+    if(!bm) Con_Error("Blockmap::New: Failed on allocation of %lu bytes for new Blockmap.", (unsigned long) sizeof *bm);
+
+    V2_Copy(bm->bounds.min, min);
+    V2_Copy(bm->bounds.max, max);
+    bm->cellSize[VX] = cellWidth;
+    bm->cellSize[VY] = cellHeight;
+
+    width  = (uint)ceil((max[0] - min[0]) / (float)cellWidth);
+    height = (uint)ceil((max[1] - min[1]) / (float)cellHeight);
+    bm->gridmap = Gridmap_New(width, height, sizeof(BlockmapCell), PU_MAPSTATIC);
+
+    VERBOSE( Con_Message("Blockmap::New: Width:%u Height:%u\n", width, height) )
+    return bm;
+}
+
 uint Blockmap_CellX(Blockmap* bm, float x)
 {
     uint result;
@@ -131,25 +150,6 @@ boolean Blockmap_CellBlockCoords(Blockmap* bm, GridmapBlock* blockCoords, const 
                Blockmap_CellCoords(bm, blockCoords->max, box->max);
     }
     return false;
-}
-
-Blockmap* Blockmap_New(const pvec2_t min, const pvec2_t max, uint cellWidth, uint cellHeight)
-{
-    Blockmap* bm = Z_Calloc(sizeof *bm, PU_MAPSTATIC, 0);
-    uint width, height;
-    if(!bm) Con_Error("Blockmap::New: Failed on allocation of %lu bytes for new Blockmap.", (unsigned long) sizeof *bm);
-
-    V2_Copy(bm->bounds.min, min);
-    V2_Copy(bm->bounds.max, max);
-    bm->cellSize[VX] = cellWidth;
-    bm->cellSize[VY] = cellHeight;
-
-    width  = (uint)ceil((max[0] - min[0]) / (float)cellWidth);
-    height = (uint)ceil((max[1] - min[1]) / (float)cellHeight);
-    bm->gridmap = Gridmap_New(width, height, sizeof(BlockmapCell), PU_MAPSTATIC);
-
-    VERBOSE( Con_Message("Blockmap::New: Width:%u Height:%u\n", width, height) )
-    return bm;
 }
 
 const pvec2_t Blockmap_Origin(Blockmap* bm)
@@ -282,13 +282,13 @@ boolean Blockmap_CreateCellAndLinkObjectXY(Blockmap* blockmap, uint x, uint y, v
     return true; // Link added.
 }
 
-boolean Blockmap_CreateCellAndLinkObject(Blockmap* blockmap, uint coords[2], void* object)
+boolean Blockmap_CreateCellAndLinkObject(Blockmap* blockmap, uint const coords[2], void* object)
 {
     assert(coords);
     return Blockmap_CreateCellAndLinkObjectXY(blockmap, coords[VX], coords[VY], object);
 }
 
-boolean Blockmap_UnlinkObjectInCell(Blockmap* blockmap, uint coords[2], void* object)
+boolean Blockmap_UnlinkObjectInCell(Blockmap* blockmap, uint const coords[2], void* object)
 {
     boolean unlinked = false;
     BlockmapCell* cell;
@@ -310,7 +310,7 @@ boolean Blockmap_UnlinkObjectInCellXY(Blockmap* blockmap, uint x, uint y, void* 
     return Blockmap_UnlinkObjectInCell(blockmap, coords, object);
 }
 
-void Blockmap_UnlinkObjectInCellBlock(Blockmap* blockmap, GridmapBlock* blockCoords, void* object)
+void Blockmap_UnlinkObjectInCellBlock(Blockmap* blockmap, const GridmapBlock* blockCoords, void* object)
 {
     assert(blockmap);
     if(!blockCoords) return;
@@ -340,7 +340,7 @@ int BlockmapCell_IterateObjects(BlockmapCell* cell,
     return false; // Continue iteration.
 }
 
-int Blockmap_IterateCellObjects(Blockmap* blockmap, const uint coords[2],
+int Blockmap_IterateCellObjects(Blockmap* blockmap, uint const coords[2],
     int (*callback) (void* object, void* context), void* context)
 {
     BlockmapCell* cell;
