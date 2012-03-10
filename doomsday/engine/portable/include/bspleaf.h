@@ -27,6 +27,32 @@
 #include "p_dmu.h"
 
 /**
+ * Update the BspLeaf's map space axis-aligned bounding box to encompass
+ * the points defined by it's vertices.
+ *
+ * @param bspLeaf  BspLeaf instance.
+ */
+void BspLeaf_UpdateAABox(BspLeaf* bspLeaf);
+
+/**
+ * Update the center point in the map coordinate space.
+ *
+ * @pre Axis-aligned bounding box must have been initialized.
+ *
+ * @param bspLeaf  BspLeaf instance.
+ */
+void BspLeaf_UpdateMidPoint(BspLeaf* bspLeaf);
+
+/**
+ * Update the world grid offset.
+ *
+ * @pre Axis-aligned bounding box must have been initialized.
+ *
+ * @param bspLeaf  BspLeaf instance.
+ */
+void BspLeaf_UpdateWorldGridOffset(BspLeaf* bspLeaf);
+
+/**
  * Get a property value, selected by DMU_* name.
  *
  * @param bspLeaf  BspLeaf instance.

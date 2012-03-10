@@ -20,10 +20,54 @@
  * 02110-1301 USA</small>
  */
 
+#include <math.h>
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_refresh.h"
 #include "de_play.h"
+
+void BspLeaf_UpdateAABox(BspLeaf* leaf)
+{
+    HEdge** hedgeIter;
+    HEdge* hedge;
+    assert(leaf);
+
+    V2_Set(leaf->aaBox.min, DDMAXFLOAT, DDMAXFLOAT);
+    V2_Set(leaf->aaBox.max, DDMINFLOAT, DDMINFLOAT);
+
+    memset(&leaf->aaBox, 0, sizeof(leaf->aaBox));
+
+    hedgeIter = leaf->hedges;
+    if(!*hedgeIter) return; // Very odd...
+
+    hedge = *hedgeIter;
+    V2_InitBox(leaf->aaBox.arvec2, hedge->HE_v1pos);
+    hedgeIter++;
+
+    while(*hedgeIter)
+    {
+        hedge = *hedgeIter;
+        V2_AddToBox(leaf->aaBox.arvec2, hedge->HE_v1pos);
+        hedgeIter++;
+    }
+}
+
+void BspLeaf_UpdateMidPoint(BspLeaf* leaf)
+{
+    assert(leaf);
+    // The middle is the center of our AABox.
+    leaf->midPoint.pos[VX] = leaf->aaBox.minX + (leaf->aaBox.maxX - leaf->aaBox.minX) / 2;
+    leaf->midPoint.pos[VY] = leaf->aaBox.minY + (leaf->aaBox.maxY - leaf->aaBox.minY) / 2;
+}
+
+void BspLeaf_UpdateWorldGridOffset(BspLeaf* leaf)
+{
+    assert(leaf);
+
+    leaf->worldGridOffset[VX] = fmod(leaf->aaBox.minX, 64);
+    leaf->worldGridOffset[VY] = fmod(leaf->aaBox.maxY, 64);
+}
 
 int BspLeaf_SetProperty(BspLeaf* leaf, const setargs_t* args)
 {

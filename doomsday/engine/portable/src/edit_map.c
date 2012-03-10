@@ -1,30 +1,26 @@
-/**\file edit_map.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file edit_map.c
+ * Map Editor interface. @ingroup map
  *
- *\author Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
- *\author Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
- *\author Copyright © 1998-2000 Lee Killough <killough@rsn.hp.com>
+ * @authors Copyright &copy; 2007-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2000-2007 Andrew Apted <ajapted@gmail.com>
+ * @authors Copyright &copy; 1998-2000 Colin Reed <cph@moria.org.uk>
+ * @authors Copyright &copy; 1998-2000 Lee Killough <killough@rsn.hp.com>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
 
@@ -40,30 +36,14 @@
 
 #include "s_environ.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
 typedef struct usecrecord_s {
-    Sector             *sec;
-    double              nearPos[2];
+    Sector* sec;
+    double nearPos[2];
 } usecrecord_t;
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 void MPE_PrintMapErrors(void);
 
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
 editmap_t editMap;
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean editMapInited = false;
 static editmap_t* map = &editMap;
@@ -75,17 +55,14 @@ static usecrecord_t *unclosedSectors;
 
 static Vertex *rootVtx; // Used when sorting vertex line owners.
 
-// CODE --------------------------------------------------------------------
-
 Vertex* createVertex(void)
 {
-    Vertex*                 vtx;
+    Vertex* vtx;
 
     vtx = M_Calloc(sizeof(*vtx));
     vtx->header.type = DMU_VERTEX;
 
-    map->vertexes =
-        M_Realloc(map->vertexes, sizeof(vtx) * (++map->numVertexes + 1));
+    map->vertexes = M_Realloc(map->vertexes, sizeof(vtx) * (++map->numVertexes + 1));
     map->vertexes[map->numVertexes-1] = vtx;
     map->vertexes[map->numVertexes] = NULL;
 
@@ -95,13 +72,12 @@ Vertex* createVertex(void)
 
 static LineDef* createLine(void)
 {
-    LineDef*              line;
+    LineDef* line;
 
     line = M_Calloc(sizeof(*line));
     line->header.type = DMU_LINEDEF;
 
-    map->lineDefs =
-        M_Realloc(map->lineDefs, sizeof(line) * (++map->numLineDefs + 1));
+    map->lineDefs = M_Realloc(map->lineDefs, sizeof(line) * (++map->numLineDefs + 1));
     map->lineDefs[map->numLineDefs-1] = line;
     map->lineDefs[map->numLineDefs] = NULL;
 
@@ -111,13 +87,12 @@ static LineDef* createLine(void)
 
 static SideDef* createSide(void)
 {
-    SideDef*                side;
+    SideDef* side;
 
     side = M_Calloc(sizeof(*side));
     side->header.type = DMU_SIDEDEF;
 
-    map->sideDefs =
-        M_Realloc(map->sideDefs, sizeof(side) * (++map->numSideDefs + 1));
+    map->sideDefs = M_Realloc(map->sideDefs, sizeof(side) * (++map->numSideDefs + 1));
     map->sideDefs[map->numSideDefs-1] = side;
     map->sideDefs[map->numSideDefs] = NULL;
 
@@ -130,7 +105,7 @@ static SideDef* createSide(void)
 
 static Sector* createSector(void)
 {
-    Sector*             sec;
+    Sector* sec;
 
     sec = M_Calloc(sizeof(*sec));
     sec->header.type = DMU_SECTOR;
@@ -145,7 +120,7 @@ static Sector* createSector(void)
 
 static Polyobj* createPolyobj(void)
 {
-    Polyobj*            po;
+    Polyobj* po;
 
     po = M_Calloc(sizeof(*po));
 
@@ -191,14 +166,14 @@ static void destroyEditableLineDefs(editmap_t* map)
     map->numLineDefs = 0;
 }
 
-static void destroyEditableSideDefs(editmap_t *map)
+static void destroyEditableSideDefs(editmap_t* map)
 {
     if(map->sideDefs)
     {
-        uint                i;
+        uint i;
         for(i = 0; i < map->numSideDefs; ++i)
         {
-            SideDef               *side = map->sideDefs[i];
+            SideDef* side = map->sideDefs[i];
             M_Free(side);
         }
 
@@ -208,15 +183,15 @@ static void destroyEditableSideDefs(editmap_t *map)
     map->numSideDefs = 0;
 }
 
-static void destroyEditableSectors(editmap_t *map)
+static void destroyEditableSectors(editmap_t* map)
 {
     if(map->sectors)
     {
-        uint                i;
+        uint i;
         for(i = 0; i < map->numSectors; ++i)
         {
-            uint                j;
-            Sector             *s = map->sectors[i];
+            uint j;
+            Sector* s = map->sectors[i];
 
             if(s->planes)
             {
@@ -236,15 +211,15 @@ static void destroyEditableSectors(editmap_t *map)
     map->numSectors = 0;
 }
 
-static void destroyEditableVertexes(editmap_t *map)
+static void destroyEditableVertexes(editmap_t* map)
 {
     if(map->vertexes)
     {
-        uint                i;
+        uint i;
         for(i = 0; i < map->numVertexes; ++i)
         {
-            Vertex             *vtx = map->vertexes[i];
-            edgetip_t          *tip, *n;
+            Vertex* vtx = map->vertexes[i];
+            edgetip_t* tip, *n;
 
             tip = vtx->buildData.tipSet;
             while(tip)
@@ -287,10 +262,10 @@ static int C_DECL vertexCompare(const void* p1, const void* p2)
     return (int) a->buildData.pos[VY] - (int) b->buildData.pos[VY];
 }
 
-void MPE_DetectDuplicateVertices(editmap_t *map)
+void MPE_DetectDuplicateVertices(editmap_t* map)
 {
-    size_t              i;
-    Vertex            **hits;
+    size_t i;
+    Vertex** hits;
 
     hits = M_Malloc(map->numVertexes * sizeof(Vertex*));
 
@@ -304,12 +279,12 @@ void MPE_DetectDuplicateVertices(editmap_t *map)
     {
         // A duplicate?
         if(vertexCompare(hits + i, hits + i + 1) == 0)
-        {   // Yes.
-            Vertex             *a = hits[i];
-            Vertex             *b = hits[i + 1];
+        {
+            // Yes.
+            Vertex* a = hits[i];
+            Vertex* b = hits[i + 1];
 
-            b->buildData.equiv =
-                (a->buildData.equiv ? a->buildData.equiv : a);
+            b->buildData.equiv = (a->buildData.equiv ? a->buildData.equiv : a);
         }
     }
 
@@ -317,14 +292,14 @@ void MPE_DetectDuplicateVertices(editmap_t *map)
 }
 
 #if 0
-static void findEquivalentVertexes(editmap_t *src)
+static void findEquivalentVertexes(editmap_t* src)
 {
-    uint            i, newNum;
+    uint i, newNum;
 
     // Scan all linedefs.
     for(i = 0, newNum = 0; i < src->numLineDefs; ++i)
     {
-        LineDef         *l = src->lineDefs[i];
+        LineDef* l = src->lineDefs[i];
 
         // Handle duplicated vertices.
         while(l->v[0]->buildData.equiv)
@@ -348,11 +323,11 @@ static void findEquivalentVertexes(editmap_t *src)
 
 static void pruneLinedefs(editmap_t* map)
 {
-    uint                i, newNum, unused = 0;
+    uint i, newNum, unused = 0;
 
     for(i = 0, newNum = 0; i < map->numLineDefs; ++i)
     {
-        LineDef*          l = map->lineDefs[i];
+        LineDef* l = map->lineDefs[i];
 
         if(!l->L_frontside && !l->L_backside)
         {
@@ -377,12 +352,12 @@ static void pruneLinedefs(editmap_t* map)
 
 static void pruneVertices(editmap_t* map)
 {
-    uint                i, newNum, unused = 0;
+    uint i, newNum, unused = 0;
 
     // Scan all vertices.
     for(i = 0, newNum = 0; i < map->numVertexes; ++i)
     {
-        Vertex             *v = map->vertexes[i];
+        Vertex* v = map->vertexes[i];
 
         if(v->buildData.refCount < 0)
             Con_Error("Vertex %d ref_count is %d", i, v->buildData.refCount);
@@ -402,7 +377,7 @@ static void pruneVertices(editmap_t* map)
 
     if(newNum < map->numVertexes)
     {
-        int         dupNum = map->numVertexes - newNum - unused;
+        int dupNum = map->numVertexes - newNum - unused;
 
         if(unused > 0)
             Con_Message("  Pruned %d unused vertices.\n", unused);
@@ -416,11 +391,11 @@ static void pruneVertices(editmap_t* map)
 
 static void pruneUnusedSidedefs(editmap_t* map)
 {
-    uint                i, newNum, unused = 0;
+    uint i, newNum, unused = 0;
 
     for(i = 0, newNum = 0; i < map->numSideDefs; ++i)
     {
-        SideDef*            s = map->sideDefs[i];
+        SideDef* s = map->sideDefs[i];
 
         if(s->buildData.refCount == 0)
         {
@@ -436,7 +411,7 @@ static void pruneUnusedSidedefs(editmap_t* map)
 
     if(newNum < map->numSideDefs)
     {
-        int                 dupNum = map->numSideDefs - newNum - unused;
+        int dupNum = map->numSideDefs - newNum - unused;
 
         if(unused > 0)
             Con_Message("  Pruned %d unused sidedefs\n", unused);
@@ -450,11 +425,11 @@ static void pruneUnusedSidedefs(editmap_t* map)
 
 static void pruneUnusedSectors(editmap_t* map)
 {
-    uint                i, newNum;
+    uint i, newNum;
 
     for(i = 0; i < map->numSideDefs; ++i)
     {
-        SideDef*            s = map->sideDefs[i];
+        SideDef* s = map->sideDefs[i];
 
         if(s->sector)
             s->sector->buildData.refCount++;
@@ -463,7 +438,7 @@ static void pruneUnusedSectors(editmap_t* map)
     // Scan all sectors.
     for(i = 0, newNum = 0; i < map->numSectors; ++i)
     {
-        Sector*             s = map->sectors[i];
+        Sector* s = map->sectors[i];
 
         if(s->buildData.refCount == 0)
         {
@@ -484,9 +459,9 @@ static void pruneUnusedSectors(editmap_t* map)
 #endif
 
 /**
- * \note Order here is critical!
+ * @important Order here is critical!
  */
-void MPE_PruneRedundantMapData(editmap_t *map, int flags)
+void MPE_PruneRedundantMapData(editmap_t* map, int flags)
 {
 #if 0
     /**
@@ -495,8 +470,7 @@ void MPE_PruneRedundantMapData(editmap_t *map, int flags)
      * position in the map data. The same problem occurs within ACS scripts
      * and XG line/sector references.
      */
-    if(!editMapInited)
-        return;
+    if(!editMapInited) return;
 
     findEquivalentVertexes(map);
 
@@ -523,13 +497,12 @@ void MPE_PruneRedundantMapData(editmap_t *map, int flags)
  *
  * @return              @c true, if sector was registered.
  */
-boolean MPE_RegisterUnclosedSectorNear(Sector *sec, double x, double y)
+boolean MPE_RegisterUnclosedSectorNear(Sector* sec, double x, double y)
 {
-    uint                i;
-    usecrecord_t       *usec;
+    usecrecord_t* usec;
+    uint i;
 
-    if(!sec)
-        return false; // Wha?
+    if(!sec) return false; // Wha?
 
     // Has this sector already been registered as unclosed?
     for(i = 0; i < numUnclosedSectors; ++i)
@@ -539,8 +512,7 @@ boolean MPE_RegisterUnclosedSectorNear(Sector *sec, double x, double y)
     }
 
     // A new one.
-    unclosedSectors = M_Realloc(unclosedSectors,
-                                ++numUnclosedSectors * sizeof(usecrecord_t));
+    unclosedSectors = M_Realloc(unclosedSectors, ++numUnclosedSectors * sizeof(usecrecord_t));
     usec = &unclosedSectors[numUnclosedSectors-1];
     usec->sec = sec;
     usec->nearPos[VX] = x;
@@ -557,14 +529,13 @@ boolean MPE_RegisterUnclosedSectorNear(Sector *sec, double x, double y)
  */
 void MPE_PrintUnclosedSectorList(void)
 {
-    uint                i;
+    uint i;
 
-    if(!editMapInited)
-        return;
+    if(!editMapInited) return;
 
     for(i = 0; i < numUnclosedSectors; ++i)
     {
-        usecrecord_t       *usec = &unclosedSectors[i];
+        usecrecord_t* usec = &unclosedSectors[i];
 
         Con_Message("Sector #%d is unclosed near (%1.1f,%1.1f)\n",
                     usec->sec->buildData.index - 1, usec->nearPos[VX],
@@ -588,8 +559,7 @@ void MPE_FreeUnclosedSectorList(void)
  */
 boolean MPE_Begin(const char* mapUri)
 {
-    if(editMapInited)
-        return true; // Already been here.
+    if(editMapInited) return true; // Already been here.
 
     MPE_FreeUnclosedSectorList();
 
@@ -606,10 +576,9 @@ boolean MPE_Begin(const char* mapUri)
 
 static void hardenSectorBspLeafList(GameMap* map, uint secIDX)
 {
-    assert(map && secIDX < map->numSectors);
-    {
     Sector* sec = &map->sectors[secIDX];
     uint i, n, count;
+    assert(secIDX < map->numSectors);
 
     count = 0;
     for(i = 0; i < map->numBspLeafs; ++i)
@@ -619,8 +588,7 @@ static void hardenSectorBspLeafList(GameMap* map, uint secIDX)
             ++count;
     }
 
-    if(0 == count)
-        return;
+    if(0 == count) return;
 
     sec->bspLeafs = Z_Malloc((count + 1) * sizeof(BspLeaf*), PU_MAPSTATIC, NULL);
 
@@ -636,20 +604,20 @@ static void hardenSectorBspLeafList(GameMap* map, uint secIDX)
     }
     sec->bspLeafs[n] = NULL; // Terminate.
     sec->bspLeafCount = count;
-    }
 }
 
 /**
  * Build BspLeaf tables for all sectors.
  */
-static void buildSectorBspLeafLists(GameMap *map)
+static void buildSectorBspLeafLists(GameMap* map)
 {
+    uint i;
     VERBOSE( Con_Message(" Build BSP leaf tables...\n") )
-    { uint i;
+
     for(i = 0; i < map->numSectors; ++i)
     {
         hardenSectorBspLeafList(map, i);
-    }}
+    }
 }
 
 static void buildSectorLineLists(GameMap* map)
@@ -710,8 +678,7 @@ static void buildSectorLineLists(GameMap* map)
     LineDef** linebuffer;
     LineDef** linebptr;
 
-    linebuffer = Z_Malloc((totallinks + map->numSectors) * sizeof(LineDef*),
-                          PU_MAPSTATIC, 0);
+    linebuffer = Z_Malloc((totallinks + map->numSectors) * sizeof(LineDef*), PU_MAPSTATIC, 0);
     linebptr = linebuffer;
 
     for(i = 0, sec = map->sectors; i < map->numSectors; ++i, sec++)
@@ -762,16 +729,15 @@ static void buildSectorLineLists(GameMap* map)
 }
 
 /**
- * \pre Lines in sector must be setup before this is called!
+ * @pre Lines in sector must be setup before this is called!
  */
 static void updateSectorBounds(Sector* sec)
 {
-    uint                i;
-    float*              bbox;
-    Vertex*             vtx;
+    uint i;
+    float* bbox;
+    Vertex* vtx;
 
-    if(!sec)
-        return;
+    if(!sec) return;
 
     bbox = sec->bBox;
 
@@ -805,9 +771,9 @@ static void updateSectorBounds(Sector* sec)
 }
 
 /**
- * \pre Sector bounds must be setup before this is called!
+ * @pre Sector bounds must be setup before this is called!
  */
-void P_GetSectorBounds(Sector *sec, float *min, float *max)
+void P_GetSectorBounds(Sector* sec, float* min, float* max)
 {
     min[VX] = sec->bBox[BOXLEFT];
     min[VY] = sec->bBox[BOXBOTTOM];
@@ -856,10 +822,10 @@ static void finishSectors(GameMap* map)
  */
 static void finishLineDefs(GameMap* map)
 {
-    uint                i;
-    LineDef            *ld;
-    Vertex             *v[2];
-    HEdge              *startSeg, *endSeg;
+    uint i;
+    LineDef* ld;
+    Vertex* v[2];
+    HEdge* startSeg, *endSeg;
 
     VERBOSE2( Con_Message("Finalizing Linedefs...\n") )
 
@@ -880,12 +846,16 @@ static void finishLineDefs(GameMap* map)
         // Calculate the accurate length of each line.
         ld->length = P_AccurateDistance(ld->dX, ld->dY);
         ld->angle = bamsAtan2((int) (ld->v[1]->V_pos[VY] - ld->v[0]->V_pos[VY]),
-                      (int) (ld->v[1]->V_pos[VX] - ld->v[0]->V_pos[VX]));
+                              (int) (ld->v[1]->V_pos[VX] - ld->v[0]->V_pos[VX]));
 
         if(!ld->dX)
+        {
             ld->slopeType = ST_VERTICAL;
+        }
         else if(!ld->dY)
+        {
             ld->slopeType = ST_HORIZONTAL;
+        }
         else
         {
             if(ld->dY / ld->dX > 0)
@@ -920,64 +890,30 @@ static void finishLineDefs(GameMap* map)
 
 static void updateMapBounds(GameMap* map)
 {
-    assert(map);
-    {
     boolean isFirst = true;
+    uint i;
+    assert(map);
+
     memset(map->bBox, 0, sizeof(map->bBox));
-    { uint i;
+
     for(i = 0; i < map->numSectors; ++i)
     {
         Sector* sec = &map->sectors[i];
-        if(0 == sec->lineDefCount)
-            continue;
+
+        if(0 == sec->lineDefCount) continue;
+
         if(isFirst)
-        {   // The first sector is used as is.
+        {
+            // The first sector is used as is.
             memcpy(map->bBox, sec->bBox, sizeof(map->bBox));
         }
         else
-        {   // Expand the bounding box.
+        {
+            // Expand the bounding box.
             M_JoinBoxes(map->bBox, sec->bBox);
         }
         isFirst = false;
-    }}
     }
-}
-
-static void updateSSecMidPoint(BspLeaf *sub)
-{
-    HEdge             **ptr;
-    fvertex_t          *vtx;
-
-    // Find the center point. First calculate the bounding box.
-    ptr = sub->hedges;
-    vtx = &((*ptr)->HE_v1->v);
-    sub->aaBox.minX = sub->aaBox.maxX = sub->midPoint.pos[VX] = vtx->pos[VX];
-    sub->aaBox.minY = sub->aaBox.maxY = sub->midPoint.pos[VY] = vtx->pos[VY];
-
-    ptr++;
-    while(*ptr)
-    {
-        vtx = &((*ptr)->HE_v1->v);
-        if(vtx->pos[VX] < sub->aaBox.minX)
-            sub->aaBox.minX = vtx->pos[VX];
-        if(vtx->pos[VY] < sub->aaBox.minY)
-            sub->aaBox.minY = vtx->pos[VY];
-        if(vtx->pos[VX] > sub->aaBox.maxX)
-            sub->aaBox.maxX = vtx->pos[VX];
-        if(vtx->pos[VY] > sub->aaBox.maxY)
-            sub->aaBox.maxY = vtx->pos[VY];
-
-        sub->midPoint.pos[VX] += vtx->pos[VX];
-        sub->midPoint.pos[VY] += vtx->pos[VY];
-        ptr++;
-    }
-
-    sub->midPoint.pos[VX] /= sub->hedgeCount; // num vertices.
-    sub->midPoint.pos[VY] /= sub->hedgeCount;
-
-    // Calculate the worldwide grid offset.
-    sub->worldGridOffset[VX] = fmod(sub->aaBox.minX, 64);
-    sub->worldGridOffset[VY] = fmod(sub->aaBox.maxY, 64);
 }
 
 static void prepareBspLeafs(GameMap* map)
@@ -988,7 +924,9 @@ static void prepareBspLeafs(GameMap* map)
     {
         BspLeaf* bspLeaf = &map->bspLeafs[i];
 
-        updateSSecMidPoint(bspLeaf);
+        BspLeaf_UpdateAABox(bspLeaf);
+        BspLeaf_UpdateMidPoint(bspLeaf);
+        BspLeaf_UpdateWorldGridOffset(bspLeaf);
     }
 }
 
