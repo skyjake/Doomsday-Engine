@@ -823,7 +823,7 @@ Sound {
   Lump = "DSBAREXP";
   Link pitch = -1;
   Link volume = -1;
-  Priority = 60;
+  Priority = 64;
   Max channels = -1;
 }
 
