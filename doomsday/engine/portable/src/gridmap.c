@@ -146,13 +146,13 @@ static boolean isLeaf(TreeCell* cell)
  * @param cell          TreeCell to traverse.
  * @param leafOnly      Caller is only interested in leaves.
  * @param callback      Callback function.
- * @param paramaters    Passed to the callback.
+ * @param parameters    Passed to the callback.
  *
  * @return  Zero iff iteration completed wholly, else the value returned by the
  *          last callback made.
  */
 static int iterateCell(TreeCell* cell, boolean leafOnly,
-    int (C_DECL *callback) (TreeCell* cell, void* paramaters), void* paramaters)
+    int (C_DECL *callback) (TreeCell* cell, void* parameters), void* parameters)
 {
     int result = false; // Continue traversal.
     assert(cell && callback);
@@ -161,28 +161,28 @@ static int iterateCell(TreeCell* cell, boolean leafOnly,
     {
         if(cell->children[TOPLEFT])
         {
-            result = iterateCell(cell->children[TOPLEFT], leafOnly, callback, paramaters);
+            result = iterateCell(cell->children[TOPLEFT], leafOnly, callback, parameters);
             if(result) return result;
         }
         if(cell->children[TOPRIGHT])
         {
-            result = iterateCell(cell->children[TOPRIGHT], leafOnly, callback, paramaters);
+            result = iterateCell(cell->children[TOPRIGHT], leafOnly, callback, parameters);
             if(result) return result;
         }
         if(cell->children[BOTTOMLEFT])
         {
-            result = iterateCell(cell->children[BOTTOMLEFT], leafOnly, callback, paramaters);
+            result = iterateCell(cell->children[BOTTOMLEFT], leafOnly, callback, parameters);
             if(result) return result;
         }
         if(cell->children[BOTTOMRIGHT])
         {
-            result = iterateCell(cell->children[BOTTOMRIGHT], leafOnly, callback, paramaters);
+            result = iterateCell(cell->children[BOTTOMRIGHT], leafOnly, callback, parameters);
             if(result) return result;
         }
     }
     if(!leafOnly || isLeaf(cell))
     {
-        result = callback(cell, paramaters);
+        result = callback(cell, parameters);
     }
     return result;
 }
@@ -349,9 +349,9 @@ typedef struct {
  * Callback actioner. Executes the callback and then returns the result
  * to the current iteration to determine if it should continue.
  */
-static int actionCallback(TreeCell* cell, void* paramaters)
+static int actionCallback(TreeCell* cell, void* parameters)
 {
-    actioncallback_paramaters_t* p = (actioncallback_paramaters_t*) paramaters;
+    actioncallback_paramaters_t* p = (actioncallback_paramaters_t*) parameters;
     assert(cell && p);
     if(cell->userData)
         return p->callback(cell->userData, p->callbackParamaters);
@@ -359,12 +359,12 @@ static int actionCallback(TreeCell* cell, void* paramaters)
 }
 
 int Gridmap_Iterate2(Gridmap* gm, Gridmap_IterateCallback callback,
-    void* paramaters)
+    void* parameters)
 {
     actioncallback_paramaters_t p;
     assert(gm);
     p.callback = callback;
-    p.callbackParamaters = paramaters;
+    p.callbackParamaters = parameters;
     return iterateCell(&gm->root, true/*only leaves*/, actionCallback, (void*)&p);
 }
 
@@ -374,7 +374,7 @@ int Gridmap_Iterate(Gridmap* gm, Gridmap_IterateCallback callback)
 }
 
 int Gridmap_BlockIterate2(Gridmap* gm, const GridmapBlock* block_,
-    Gridmap_IterateCallback callback, void* paramaters)
+    Gridmap_IterateCallback callback, void* parameters)
 {
     GridmapBlock block;
     TreeCell* cell;
@@ -396,7 +396,7 @@ int Gridmap_BlockIterate2(Gridmap* gm, const GridmapBlock* block_,
         cell = findLeaf(gm, x, y, false);
         if(!cell || !cell->userData) continue;
 
-        result = callback(cell->userData, paramaters);
+        result = callback(cell->userData, parameters);
         if(result) return result;
     }
     return false;
@@ -409,11 +409,11 @@ int Gridmap_BlockIterate(Gridmap* gm, const GridmapBlock* block,
 }
 
 int Gridmap_BlockXYIterate2(Gridmap* gm, uint minX, uint minY, uint maxX, uint maxY,
-    Gridmap_IterateCallback callback, void* paramaters)
+    Gridmap_IterateCallback callback, void* parameters)
 {
     GridmapBlock block;
-    Gridmap_InitBlock(&block, minX, maxX, minY, maxY);
-    return Gridmap_BlockIterate2(gm, &block, callback, paramaters);
+    GridmapBlock_SetCoordsXY(&block, minX, maxX, minY, maxY);
+    return Gridmap_BlockIterate2(gm, &block, callback, parameters);
 }
 
 int Gridmap_BlockXYIterate(Gridmap* gm, uint minX, uint minY, uint maxX, uint maxY,
@@ -452,19 +452,35 @@ boolean Gridmap_ClipBlock(Gridmap* gm, GridmapBlock* block)
     return adjusted;
 }
 
-void Gridmap_InitBlock(GridmapBlock* block, uint minX, uint minY, uint maxX, uint maxY)
+void GridmapBlock_SetCoords(GridmapBlock* block, uint const min[2], uint const max[2])
 {
     assert(block);
-    block->minX = minX;
-    block->minY = minY;
-    block->maxX = maxX;
-    block->maxY = maxY;
+    if(min)
+    {
+        block->minX = min[0];
+        block->minY = min[1];
+    }
+    if(max)
+    {
+        block->maxX = max[0];
+        block->maxY = max[1];
+    }
+}
+
+void GridmapBlock_SetCoordsXY(GridmapBlock* block, uint minX, uint minY, uint maxX, uint maxY)
+{
+    uint min[2], max[2];
+    min[0] = minX;
+    min[1] = minY;
+    max[0] = maxX;
+    max[1] = maxY;
+    GridmapBlock_SetCoords(block, min, max);
 }
 
 #define UNIT_WIDTH                     1
 #define UNIT_HEIGHT                    1
 
-static int drawCell(TreeCell* cell, void* paramaters)
+static int drawCell(TreeCell* cell, void* parameters)
 {
     vec2_t topLeft, bottomRight;
 
@@ -481,7 +497,7 @@ static int drawCell(TreeCell* cell, void* paramaters)
     return 0; // Continue iteration.
 }
 
-void Gridmap_Debug(Gridmap* gm)
+void Gridmap_DebugDrawer(Gridmap* gm)
 {
     GLfloat oldColor[4];
     vec2_t start, end;
@@ -494,7 +510,7 @@ void Gridmap_Debug(Gridmap* gm)
      * Draw our Quadtree.
      */
     glColor4f(1.f, 1.f, 1.f, 1.f / gm->root.size);
-    iterateCell(&gm->root, false/*all cells*/, drawCell, NULL/*no paramaters*/);
+    iterateCell(&gm->root, false/*all cells*/, drawCell, NULL/*no parameters*/);
 
     /**
      * Draw our bounds.
@@ -521,6 +537,5 @@ void Gridmap_Debug(Gridmap* gm)
     glColor4fv(oldColor);
 }
 
-#undef UNIT_WIDTH
 #undef UNIT_HEIGHT
-
+#undef UNIT_WIDTH

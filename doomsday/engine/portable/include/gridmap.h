@@ -33,8 +33,8 @@
 #include "dd_types.h"
 
 /**
- * GridmapBlock. Handy POD structure for defining a rectangular range
- * of cells, i.e., a "cell block".
+ * GridmapBlock. Handy POD structure for representing a rectangular range of cells
+ * (a "cell block").
  */
 typedef struct gridmapblock_s {
     union {
@@ -54,38 +54,64 @@ typedef struct gridmapblock_s {
     };
 } GridmapBlock;
 
+/**
+ * Initialize @a block using the specified coordinates.
+ */
+void GridmapBlock_SetCoords(GridmapBlock* block, uint const min[2], uint const max[2]);
+void GridmapBlock_SetCoordsXY(GridmapBlock* block, uint minX, uint minY, uint maxX, uint maxY);
+
 struct gridmap_s; // The Gridmap instance (opaque).
+
+/**
+ * Gridmap instance. Constructed with Gridmap_New()
+ */
 typedef struct gridmap_s Gridmap;
 
 /**
- * Create a new initial Gridmap (empty).
+ * Create a new (empty) Gridmap. Must be destroyed with Gridmap_Delete().
  *
- * @param width        X dimension in cells.
- * @param height       Y dimension in cells.
- * @param sizeOfCell   Amount of memory to be allocated for the user data associated with each cell.
+ * @param width          X dimension in cells.
+ * @param height         Y dimension in cells.
+ * @param sizeOfCell     Amount of memory to be allocated for the user data associated with each cell.
+ * @param zoneTag        Zone memory tag for the allocated user data.
  */
 Gridmap* Gridmap_New(uint width, uint height, size_t sizeOfCell, int zoneTag);
 
 void Gridmap_Delete(Gridmap* gridmap);
 
-/// @return  Width of the Gridmap in cells.
+/**
+ * Retrieve the width of the Gridmap in cells.
+ *
+ * @param gridmap        Gridmap instance.
+ *
+ * @return  Width of the Gridmap in cells.
+ */
 uint Gridmap_Width(const Gridmap* gridmap);
 
-/// @return  Height of the Gridmap in cells.
+/**
+ * Retrieve the height of the Gridmap in cells.
+ *
+ * @param gridmap        Gridmap instance.
+ *
+ * @return  Height of the Gridmap in cells.
+ */
 uint Gridmap_Height(const Gridmap* gridmap);
 
 /**
  * Retrieve the dimensions of the Gridmap in cells.
- * @param widthHeight   Dimensions written here.
+ *
+ * @param gridmap        Gridmap instance.
+ * @param widthHeight    Dimensions will be written here.
  */
 void Gridmap_Size(const Gridmap* gridmap, uint widthHeight[2]);
 
 /**
  * Retrieve the user data associated with the identified cell.
  *
- * @param coords        XY coordinates of the cell whose data to retrieve.
- * @param alloc         @c true= we should allocate new user data if not already present
- *                      for the selected cell.
+ * @param gridmap        Gridmap instance.
+ * @param coords         XY coordinates of the cell whose data to retrieve.
+ * @param alloc          @c true= we should allocate new user data if not already present
+ *                       for the selected cell.
  *
  * @return  User data for the identified cell else @c NULL if an invalid reference or no
  *          there is no data present (and not allocating).
@@ -101,63 +127,57 @@ void* Gridmap_CellXY(Gridmap* gridmap, uint x, uint y, boolean alloc);
  * Iteration.
  */
 
-typedef int (C_DECL *Gridmap_IterateCallback) (void* cellData, void* paramaters);
+typedef int (C_DECL *Gridmap_IterateCallback) (void* cellData, void* parameters);
 
 /**
  * Iterate over populated cells in the Gridmap making a callback for each. Iteration ends
  * when all cells have been visited or @a callback returns non-zero.
  *
+ * @param gridmap        Gridmap instance.
  * @param callback       Callback function ptr.
- * @param paramaters     Passed to the callback.
+ * @param parameters     Passed to the callback.
  *
  * @return  @c 0 iff iteration completed wholly.
  */
-int Gridmap_Iterate2(Gridmap* gridmap, Gridmap_IterateCallback callback, void* paramaters);
-int Gridmap_Iterate(Gridmap* gridmap, Gridmap_IterateCallback callback); /*paramaters=NULL*/
+int Gridmap_Iterate2(Gridmap* gridmap, Gridmap_IterateCallback callback, void* parameters);
+int Gridmap_Iterate(Gridmap* gridmap, Gridmap_IterateCallback callback); /*parameters=NULL*/
 
 /**
  * Iterate over a block of populated cells in the Gridmap making a callback for each.
  * Iteration ends when all selected cells have been visited or @a callback returns non-zero.
  *
+ * @param gridmap        Gridmap instance.
  * @param min            Minimal coordinates for the top left cell.
  * @param max            Maximal coordinates for the bottom right cell.
  * @param callback       Callback function ptr.
- * @param paramaters     Passed to the callback.
+ * @param parameters     Passed to the callback.
  *
  * @return  @c 0 iff iteration completed wholly.
  */
 int Gridmap_BlockIterate2(Gridmap* gridmap, const GridmapBlock* block,
     Gridmap_IterateCallback callback, void* paramates);
 int Gridmap_BlockIterate(Gridmap* gridmap, const GridmapBlock* block,
-    Gridmap_IterateCallback callback); /*paramaters=NULL*/
+    Gridmap_IterateCallback callback); /*parameters=NULL*/
 
 /**
  * Same as Gridmap::BlockIterate except cell block coordinates are expressed with
  * independent X and Y coordinate arguments. For convenience.
  */
 int Gridmap_BlockXYIterate2(Gridmap* gridmap, uint minX, uint minY, uint maxX, uint maxY,
-    Gridmap_IterateCallback callback, void* paramaters);
+    Gridmap_IterateCallback callback, void* parameters);
 int Gridmap_BlockXYIterate(Gridmap* gridmap, uint minX, uint minY, uint maxX, uint maxY,
-    Gridmap_IterateCallback callback); /*paramaters=NULL*/
+    Gridmap_IterateCallback callback); /*parameters=NULL*/
 
 /**
  * Clip the cell coordinates in @a block vs the dimensions of this Gridmap so that they
  * are inside the boundary this defines.
  *
+ * @param gridmap         Gridmap instance.
  * @param block           Block coordinates to be clipped.
  *
  * @return  @c true iff the block coordinates were changed.
  */
-boolean Gridmap_ClipBlock(Gridmap* gm, GridmapBlock* block);
-
-/**
- * Static utility methods:
- */
-
-/**
- * Initialize @a block using the specified coordinates.
- */
-void Gridmap_InitBlock(GridmapBlock* block, uint minX, uint minY, uint maxX, uint maxY);
+boolean Gridmap_ClipBlock(Gridmap* gridmap, GridmapBlock* block);
 
 /**
  * Render a visual for this Gridmap to assist in debugging (etc...).
@@ -168,7 +188,9 @@ void Gridmap_InitBlock(GridmapBlock* block, uint minX, uint minY, uint maxX, uin
  *
  * @note Internally this visual uses fixed unit dimensions [1x1] for cells, therefore
  *       the caller should scale the appropriate matrix to scale this visual as desired.
+ *
+ * @param gridmap         Gridmap instance.
  */
-void Gridmap_Debug(Gridmap* gridmap);
+void Gridmap_DebugDrawer(Gridmap* gridmap);
 
 #endif /// LIBDENG_DATA_GRIDMAP_H
