@@ -8,6 +8,9 @@ TEMPLATE = subdirs
 
 include(../config.pri)
 
+# We are not building any binaries here; disable stripping.
+QMAKE_STRIP = true
+
 # Update the PK3 files.
 deng_packres {
     system(cd $$PWD/scripts/ && python packres.py --quiet \"$$OUT_PWD/..\")
