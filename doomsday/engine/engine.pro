@@ -242,7 +242,6 @@ DENG_HEADERS = \
     portable/include/p_players.h \
     portable/include/p_polyobjs.h \
     portable/include/p_sight.h \
-    portable/include/p_surface.h \
     portable/include/p_ticker.h \
     portable/include/pathdirectory.h \
     portable/include/pathmap.h \
@@ -280,6 +279,7 @@ DENG_HEADERS = \
     portable/include/sector.h \
     portable/include/sidedef.h \
     portable/include/stringarray.h \
+    portable/include/surface.h \
     portable/include/sv_def.h \
     portable/include/sv_frame.h \
     portable/include/sv_infine.h \
@@ -494,7 +494,6 @@ SOURCES += \
     portable/src/p_players.c \
     portable/src/p_polyobjs.c \
     portable/src/p_sight.c \
-    portable/src/p_surface.c \
     portable/src/p_think.c \
     portable/src/p_ticker.c \
     portable/src/pathdirectory.c \
@@ -546,6 +545,7 @@ SOURCES += \
     portable/src/s_wav.c \
     portable/src/size.c \
     portable/src/stringarray.cpp \
+    portable/src/surface.c \
     portable/src/sv_frame.c \
     portable/src/sv_infine.c \
     portable/src/sv_main.c \

@@ -32,7 +32,7 @@
 #include "p_mapdata.h"
 #include "vertex.h"
 #include "material.h"
-#include "p_surface.h"
+#include "surface.h"
 #include "sidedef.h"
 #include "linedef.h"
 #include "plane.h"
