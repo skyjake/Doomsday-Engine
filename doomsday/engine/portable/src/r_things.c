@@ -1578,6 +1578,7 @@ int RIT_AddSprite(void* ptr, void* paramaters)
     mobj_t* mo = (mobj_t*) ptr;
     addspriteparams_t* params = (addspriteparams_t*)paramaters;
     Sector* sec = params->bspLeaf->sector;
+    GameMap* map = theMap; /// @fixme Do not assume mobj is from the CURRENT map.
 
     if(mo->addFrameCount != frameCount)
     {
@@ -1596,10 +1597,10 @@ int RIT_AddSprite(void* ptr, void* paramaters)
                mo->pos[VZ] >= sec->SP_floorheight)
             {
                 float visibleTop = mo->pos[VZ] + Material_Height(mat);
-                if(visibleTop > skyFix[PLN_CEILING].height)
+                if(visibleTop > GameMap_SkyFixCeiling(map))
                 {
                     // Raise skyfix ceiling.
-                    skyFix[PLN_CEILING].height = visibleTop + 16; // Add some leeway.
+                    GameMap_SetSkyFixCeiling(map, visibleTop + 16/*leeway*/);
                 }
             }
         }

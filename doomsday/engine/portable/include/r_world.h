@@ -42,16 +42,11 @@ typedef struct {
     uint            count;
 } ownerlist_t;
 
-typedef struct skyfix_s {
-    float           height;
-} skyfix_t;
-
 extern float rendSkyLight; // cvar
 extern byte rendSkyLightAuto; // cvar
 extern float rendLightWallAngle;
 extern byte rendLightWallAngleSmooth;
 extern boolean ddMapSetup;
-extern skyfix_t skyFix[2]; // [floor, ceiling]
 
 // Sky flags.
 #define SIF_DRAW_SPHERE     0x1 // Always draw the sky sphere.
@@ -101,10 +96,8 @@ boolean R_SectorContainsSkySurfaces(const Sector* sec);
 
 void R_UpdatePlanes(void);
 void R_ClearSectorFlags(void);
-void R_InitSkyFix(void);
 void R_MapInitSurfaceLists(void);
 
-void            R_UpdateSkyFixForSec(const Sector* sec);
 void            R_OrderVertices(const LineDef* line, const Sector* sector,
                                 Vertex* verts[2]);
 boolean         R_FindBottomTop(LineDef* lineDef, int side, sidedefsection_t section,

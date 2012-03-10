@@ -2408,7 +2408,7 @@ static __inline float skyCapZ(BspLeaf* bspLeaf, int skyCap)
 {
     const planetype_t plane = (skyCap & SKYCAP_UPPER)? PLN_CEILING : PLN_FLOOR;
     if(!bspLeaf) Con_Error("skyCapZ: Invalid bspLeaf argument (=NULL).");
-    if(!bspLeaf->sector || !P_IsInVoid(viewPlayer)) return skyFix[plane].height;
+    if(!bspLeaf->sector || !P_IsInVoid(viewPlayer)) return GameMap_SkyFix(theMap, plane == PLN_CEILING);
     return bspLeaf->sector->SP_planevisheight(plane);
 }
 
@@ -2416,14 +2416,14 @@ static __inline float skyFixFloorZ(const Plane* frontFloor, const Plane* backFlo
 {
     if(P_IsInVoid(viewPlayer))
         return frontFloor->visHeight;
-    return skyFix[PLN_FLOOR].height;
+    return GameMap_SkyFixFloor(theMap);
 }
 
 static __inline float skyFixCeilZ(const Plane* frontCeil, const Plane* backCeil)
 {
     if(P_IsInVoid(viewPlayer))
         return frontCeil->visHeight;
-    return skyFix[PLN_CEILING].height;
+    return GameMap_SkyFixCeiling(theMap);
 }
 
 /**
@@ -3051,7 +3051,7 @@ void Rend_RenderSurfaceVectors(void)
 
             V3_Set(origin, bspLeaf->midPoint.pos[VX], bspLeaf->midPoint.pos[VY], pln->visHeight);
             if(pln->type != PLN_MID && R_IsSkySurface(&pln->surface))
-                origin[VZ] = skyFix[pln->type].height;
+                origin[VZ] = GameMap_SkyFix(theMap, pln->type == PLN_CEILING);
 
             drawSurfaceTangentSpaceVectors(&pln->surface, origin);
         }

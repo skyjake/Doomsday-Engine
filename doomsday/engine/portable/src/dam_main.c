@@ -609,8 +609,8 @@ boolean DAM_AttemptMapLoad(const Uri* uri)
             R_InitFakeRadioForMap();
 
             { uint startTime = Sys_GetRealTime();
-            R_InitSkyFix();
-            VERBOSE2( Con_Message("R_InitSkyFix: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
+            GameMap_InitSkyFix(map);
+            VERBOSE2( Con_Message("Initial sky fix done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
             }
         }
     }

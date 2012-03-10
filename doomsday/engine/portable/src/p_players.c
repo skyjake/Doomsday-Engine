@@ -169,15 +169,17 @@ boolean P_IsInVoid(player_t* player)
 
             if(R_IsSkySurface(&sec->SP_ceilsurface))
             {
-               if(skyFix[PLN_CEILING].height < DDMAXFLOAT && ddpl->mo->pos[VZ] > skyFix[PLN_CEILING].height - 4)
-                   return true;
+                const float skyCeil = GameMap_SkyFixCeiling(theMap);
+                if(skyCeil < DDMAXFLOAT && ddpl->mo->pos[VZ] > skyCeil - 4)
+                    return true;
             }
             else if(ddpl->mo->pos[VZ] > sec->SP_ceilvisheight - 4)
                 return true;
 
             if(R_IsSkySurface(&sec->SP_floorsurface))
             {
-                if(skyFix[PLN_FLOOR].height > DDMINFLOAT && ddpl->mo->pos[VZ] < skyFix[PLN_FLOOR].height + 4)
+                const float skyFloor = GameMap_SkyFixFloor(theMap);
+                if(skyFloor > DDMINFLOAT && ddpl->mo->pos[VZ] < skyFloor + 4)
                     return true;
             }
             else if(ddpl->mo->pos[VZ] < sec->SP_floorvisheight + 4)

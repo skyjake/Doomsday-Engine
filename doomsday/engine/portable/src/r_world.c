@@ -74,8 +74,6 @@ byte rendSkyLightAuto = true;
 boolean firstFrameAfterLoad;
 boolean ddMapSetup;
 
-skyfix_t skyFix[2];
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static surfacelistnode_t* unusedSurfaceListNodes = 0;
@@ -771,27 +769,27 @@ void R_ClearSurfaceDecorations(Surface* suf)
     suf->numDecorations = 0;
 }
 
-void R_UpdateSkyFixForSec(const Sector* sec)
+void GameMap_UpdateSkyFixForSector(GameMap* map, Sector* sec)
 {
     boolean skyFloor, skyCeil;
+    assert(map);
 
-    if(!sec || 0 == sec->lineDefCount)
-        return;
+    if(!sec || 0 == sec->lineDefCount) return;
 
     skyFloor = R_IsSkySurface(&sec->SP_floorsurface);
-    skyCeil = R_IsSkySurface(&sec->SP_ceilsurface);
+    skyCeil  = R_IsSkySurface(&sec->SP_ceilsurface);
 
-    if(!skyFloor && !skyCeil)
-        return;
+    if(!skyFloor && !skyCeil) return;
 
     if(skyCeil)
     {
         mobj_t* mo;
 
         // Adjust for the plane height.
-        if(sec->SP_ceilvisheight > skyFix[PLN_CEILING].height)
-        {   // Must raise the skyfix ceiling.
-            skyFix[PLN_CEILING].height = sec->SP_ceilvisheight;
+        if(sec->SP_ceilvisheight > map->skyFix[PLN_CEILING].height)
+        {
+            // Must raise the skyfix ceiling.
+            map->skyFix[PLN_CEILING].height = sec->SP_ceilvisheight;
         }
 
         // Check that all the mobjs in the sector fit in.
@@ -799,9 +797,10 @@ void R_UpdateSkyFixForSec(const Sector* sec)
         {
             float extent = mo->pos[VZ] + mo->height;
 
-            if(extent > skyFix[PLN_CEILING].height)
-            {   // Must raise the skyfix ceiling.
-                skyFix[PLN_CEILING].height = extent;
+            if(extent > map->skyFix[PLN_CEILING].height)
+            {
+                // Must raise the skyfix ceiling.
+                map->skyFix[PLN_CEILING].height = extent;
             }
         }
     }
@@ -809,9 +808,10 @@ void R_UpdateSkyFixForSec(const Sector* sec)
     if(skyFloor)
     {
         // Adjust for the plane height.
-        if(sec->SP_floorvisheight < skyFix[PLN_FLOOR].height)
-        {   // Must lower the skyfix floor.
-            skyFix[PLN_FLOOR].height = sec->SP_floorvisheight;
+        if(sec->SP_floorvisheight < map->skyFix[PLN_FLOOR].height)
+        {
+            // Must lower the skyfix floor.
+            map->skyFix[PLN_FLOOR].height = sec->SP_floorvisheight;
         }
     }
 
@@ -835,9 +835,10 @@ void R_UpdateSkyFixForSec(const Sector* sec)
                     {
                         float top = sec->SP_ceilvisheight + si->SW_middlevisoffset[VY];
 
-                        if(top > skyFix[PLN_CEILING].height)
-                        {   // Must raise the skyfix ceiling.
-                            skyFix[PLN_CEILING].height = top;
+                        if(top > map->skyFix[PLN_CEILING].height)
+                        {
+                            // Must raise the skyfix ceiling.
+                            map->skyFix[PLN_CEILING].height = top;
                         }
                     }
 
@@ -846,9 +847,10 @@ void R_UpdateSkyFixForSec(const Sector* sec)
                         float bottom = sec->SP_floorvisheight +
                                 si->SW_middlevisoffset[VY] - Material_Height(si->SW_middlematerial);
 
-                        if(bottom < skyFix[PLN_FLOOR].height)
-                        {   // Must lower the skyfix floor.
-                            skyFix[PLN_FLOOR].height = bottom;
+                        if(bottom < map->skyFix[PLN_FLOOR].height)
+                        {
+                            // Must lower the skyfix floor.
+                            map->skyFix[PLN_FLOOR].height = bottom;
                         }
                     }
                 }
@@ -858,22 +860,19 @@ void R_UpdateSkyFixForSec(const Sector* sec)
     }
 }
 
-/**
- * Fixing the sky means that for adjacent sky sectors the lower sky
- * ceiling is lifted to match the upper sky. The raising only affects
- * rendering, it has no bearing on gameplay.
- */
-void R_InitSkyFix(void)
+void GameMap_InitSkyFix(GameMap* map)
 {
-    skyFix[PLN_FLOOR].height = DDMAXFLOAT;
-    skyFix[PLN_CEILING].height = DDMINFLOAT;
+    uint i;
+    assert(map);
+
+    map->skyFix[PLN_FLOOR].height = DDMAXFLOAT;
+    map->skyFix[PLN_CEILING].height = DDMINFLOAT;
 
     // Update for sector plane heights and mobjs which intersect the ceiling.
-    { uint i;
-    for(i = 0; i < NUM_SECTORS; ++i)
+    for(i = 0; i < map->numSectors; ++i)
     {
-        R_UpdateSkyFixForSec(SECTOR_PTR(i));
-    }}
+        GameMap_UpdateSkyFixForSector(map, map->sectors + i);
+    }
 }
 
 /**
@@ -1389,7 +1388,7 @@ void R_SetupMap(int mode, int flags)
 
         // Update everything again. Its possible that after loading we
         // now have more HOMs to fix, etc..
-        R_InitSkyFix();
+        GameMap_InitSkyFix(theMap);
         R_MapInitSurfaces(false);
         GameMap_InitPolyobjs(theMap);
         DD_ResetTimer();

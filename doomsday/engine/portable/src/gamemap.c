@@ -102,6 +102,21 @@ int GameMap_AmbientLightLevel(GameMap* map)
     return map->ambientLightLevel;
 }
 
+float GameMap_SkyFix(GameMap* map, boolean ceiling)
+{
+    planetype_t plane = ceiling? PLN_CEILING : PLN_FLOOR;
+    assert(map);
+    return map->skyFix[plane].height;
+}
+
+GameMap* GameMap_SetSkyFix(GameMap* map, boolean ceiling, float height)
+{
+    planetype_t plane = ceiling? PLN_CEILING : PLN_FLOOR;
+    assert(map);
+    map->skyFix[plane].height = height;
+    return map;
+}
+
 Vertex* GameMap_Vertex(GameMap* map, uint idx)
 {
     assert(map);

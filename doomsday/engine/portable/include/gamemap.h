@@ -54,6 +54,10 @@ typedef enum {
 struct clplane_s;
 struct clpolyobj_s;
 
+typedef struct skyfix_s {
+    float height;
+} skyfix_t;
+
 typedef struct gamemap_s {
     Uri* uri;
     char uniqueId[256];
@@ -121,6 +125,8 @@ typedef struct gamemap_s {
     float effectiveGravity; // The effective gravity for this map.
 
     int ambientLightLevel; // Ambient lightlevel for the current map.
+
+    skyfix_t skyFix[2]; // [floor, ceiling]
 
     /// Current LOS trace state.
     /// @todo Refactor to support concurrent traces.
@@ -196,6 +202,25 @@ void GameMap_SetTraceOpening(GameMap* map, LineDef* lineDef);
  * @return  Ambient light level.
  */
 int GameMap_AmbientLightLevel(GameMap* map);
+
+float GameMap_SkyFix(GameMap* map, boolean ceiling);
+
+#define GameMap_SkyFixCeiling(m)       GameMap_SkyFix((m), true)
+#define GameMap_SkyFixFloor(m)         GameMap_SkyFix((m), false)
+
+GameMap* GameMap_SetSkyFix(GameMap* map, boolean ceiling, float height);
+
+#define GameMap_SetSkyFixCeiling(m, h) GameMap_SetSkyFix((m), true, (h))
+#define GameMap_SetSkyFixFloor(m, h)   GameMap_SetSkyFix((m), false, (h))
+
+/**
+ * Fixing the sky means that for adjacent sky sectors the lower sky
+ * ceiling is lifted to match the upper sky. The raising only affects
+ * rendering, it has no bearing on gameplay.
+ */
+void GameMap_InitSkyFix(GameMap* map);
+
+void GameMap_UpdateSkyFixForSector(GameMap* map, Sector* sec);
 
 /**
  * Lookup a Vertex by its unique index.
