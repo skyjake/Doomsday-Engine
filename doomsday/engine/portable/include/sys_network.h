@@ -45,7 +45,6 @@ extern          "C" {
         MAC_LIST // Print the server list in the console.
     } masteraction_t;
 
-    extern size_t   maxDatagramSize;
     extern boolean  allowSending;
     extern int      maxQueuePackets;
 

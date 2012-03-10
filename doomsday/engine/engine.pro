@@ -658,11 +658,6 @@ macx {
     doPostLink("cp -fRp $${SDL_FRAMEWORK_DIR}/SDL.framework $$FW_DIR")
     doPostLink("cp -fRp $${SDL_FRAMEWORK_DIR}/SDL_mixer.framework $$FW_DIR")
 
-    # Bundle the Qt frameworks.
-    doPostLink("cp -fRp $$[QT_INSTALL_LIBS]/QtCore.framework $$FW_DIR")
-    doPostLink("cp -fRp $$[QT_INSTALL_LIBS]/QtNetwork.framework $$FW_DIR")
-    doPostLink("cp -fRp $$[QT_INSTALL_LIBS]/QtGui.framework $$FW_DIR")
-
     # libdeng2 dynamic library.
     doPostLink("cp -fRp $$OUT_PWD/../libdeng2/libdeng2*dylib $$FW_DIR")
 
@@ -671,9 +666,8 @@ macx {
         doPostLink("install_name_tool -change $$1 @executable_path/../Frameworks/$$1 doomsday.app/Contents/MacOS/doomsday")
     }
     fixInstallName("libdeng2.2.dylib")
-    fixInstallName("QtCore.framework/Versions/4/QtCore")
-    fixInstallName("QtGui.framework/Versions/4/QtGui")
-    fixInstallName("QtNetwork.framework/Versions/4/QtNetwork")
+
+    doPostLink("macdeployqt Doomsday.app")
 }
 
 # Installation ---------------------------------------------------------------
