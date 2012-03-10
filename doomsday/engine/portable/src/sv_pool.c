@@ -489,7 +489,7 @@ void Sv_RegisterSide(dt_side_t* reg, uint number)
  */
 void Sv_RegisterPoly(dt_poly_t* reg, uint number)
 {
-    polyobj_t*          poly = polyObjs[number];
+    Polyobj*            poly = polyObjs[number];
 
     reg->dest.pos[VX] = poly->dest[VX];
     reg->dest.pos[VY] = poly->dest[VY];
@@ -1577,7 +1577,7 @@ float Sv_DeltaDistance(const void* deltaPtr, const ownerinfo_t* info)
 
     if(delta->type == DT_POLY)
     {
-        polyobj_t* po = polyObjs[delta->id];
+        Polyobj* po = polyObjs[delta->id];
         return P_ApproxDistance(info->pos[VX] - po->pos[VX],
                                 info->pos[VY] - po->pos[VY]);
     }
@@ -1596,7 +1596,7 @@ float Sv_DeltaDistance(const void* deltaPtr, const ownerinfo_t* info)
 
     if(delta->type == DT_POLY_SOUND)
     {
-        polyobj_t*          po = polyObjs[delta->id];
+        Polyobj*            po = polyObjs[delta->id];
 
         return P_ApproxDistance(info->pos[VX] - po->pos[VX],
                                 info->pos[VY] - po->pos[VY]);
@@ -2310,7 +2310,7 @@ void Sv_NewPolyDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
  *          same origin.
  */
 void Sv_NewSoundDelta(int soundId, mobj_t* emitter, Sector* sourceSector,
-                      polyobj_t* sourcePoly, float volume,
+                      Polyobj* sourcePoly, float volume,
                       boolean isRepeating, int clientsMask)
 {
     pool_t*             targets[DDMAXPLAYERS + 1];

@@ -169,7 +169,7 @@ int P_LinesBoxIterator(const AABoxf* box, int (*callback) (LineDef*, void*), voi
  * multiple mapblocks, so increment validCount before the first call, then
  * make one or more calls to it.
  */
-int P_PolyobjsBoxIterator(const AABoxf* box, int (*callback) (polyobj_t*, void*), void* parameters);
+int P_PolyobjsBoxIterator(const AABoxf* box, int (*callback) (Polyobj*, void*), void* parameters);
 
 int P_PolyobjLinesBoxIterator(const AABoxf* box, int (*callback) (LineDef*, void*), void* parameters);
 

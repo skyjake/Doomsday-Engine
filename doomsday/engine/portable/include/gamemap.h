@@ -100,7 +100,7 @@ typedef struct gamemap_s {
     SideDef* sideDefs;
 
     uint numPolyObjs;
-    polyobj_t** polyObjs;
+    Polyobj** polyObjs;
 
     gameobjdata_t gameObjData;
 
@@ -394,7 +394,7 @@ uint GameMap_PolyobjCount(GameMap* map);
  * @param id  Unique identifier of the Polyobj to be found.
  * @return  Found Polyobj instance else @c NULL.
  */
-polyobj_t* GameMap_PolyobjByID(GameMap* map, uint id);
+Polyobj* GameMap_PolyobjByID(GameMap* map, uint id);
 
 /**
  * Lookup a Polyobj in the map by tag.
@@ -403,7 +403,7 @@ polyobj_t* GameMap_PolyobjByID(GameMap* map, uint id);
  * @param tag  Tag associated with the Polyobj to be found.
  * @return  Found Polyobj instance else @c NULL.
  */
-polyobj_t* GameMap_PolyobjByTag(GameMap* map, int tag);
+Polyobj* GameMap_PolyobjByTag(GameMap* map, int tag);
 
 /**
  * Lookup a Polyobj in the map by origin.
@@ -412,7 +412,7 @@ polyobj_t* GameMap_PolyobjByTag(GameMap* map, int tag);
  * @param tag  Tag associated with the Polyobj to be found.
  * @return  Found Polyobj instance else @c NULL.
  */
-polyobj_t* GameMap_PolyobjByOrigin(GameMap* map, void* ddMobjBase);
+Polyobj* GameMap_PolyobjByOrigin(GameMap* map, void* ddMobjBase);
 
 /**
  * Have the thinker lists been initialized yet?
@@ -662,13 +662,13 @@ int GameMap_BspLeafIterator(GameMap* map, int (*callback) (BspLeaf*, void*), voi
  */
 void GameMap_InitPolyobjBlockmap(GameMap* map, const_pvec2_t min, const_pvec2_t max);
 
-void GameMap_LinkPolyobjInBlockmap(GameMap* map, polyobj_t* po);
-void  GameMap_UnlinkPolyobjInBlockmap(GameMap* map, polyobj_t* po);
+void GameMap_LinkPolyobjInBlockmap(GameMap* map, Polyobj* po);
+void  GameMap_UnlinkPolyobjInBlockmap(GameMap* map, Polyobj* po);
 
 int GameMap_IterateCellPolyobjs(GameMap* map, const uint coords[2],
-    int (*callback) (polyobj_t*, void*), void* parameters);
+    int (*callback) (Polyobj*, void*), void* parameters);
 int GameMap_IterateCellBlockPolyobjs(GameMap* map, const struct gridmapblock_s* blockCoords,
-    int (*callback) (polyobj_t*, void*), void* parameters);
+    int (*callback) (Polyobj*, void*), void* parameters);
 
 /**
  * The validCount flags are used to avoid checking polys that are marked in
@@ -678,7 +678,7 @@ int GameMap_IterateCellBlockPolyobjs(GameMap* map, const struct gridmapblock_s* 
 int GameMap_PolyobjsBoxIterator(GameMap* map, const AABoxf* box,
     int (*callback) (struct polyobj_s*, void*), void* parameters);
 
-int GameMap_PolyobjIterator(GameMap* map, int (*callback) (polyobj_t*, void*), void* parameters);
+int GameMap_PolyobjIterator(GameMap* map, int (*callback) (Polyobj*, void*), void* parameters);
 
 int GameMap_VertexIterator(GameMap* map, int (*callback) (vertex_t*, void*), void* parameters);
 

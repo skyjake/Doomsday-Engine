@@ -857,7 +857,7 @@ static void archiveReject(GameMap *map, boolean write)
 
 static void writePolyobj(const GameMap* map, uint idx)
 {
-    polyobj_t* p = map->polyObjs[idx];
+    Polyobj* p = map->polyObjs[idx];
     uint i;
 
     writeLong((long) p->idx);
@@ -898,7 +898,7 @@ static void writePolyobj(const GameMap* map, uint idx)
 
 static void readPolyobj(const GameMap* map, uint idx)
 {
-    polyobj_t* p = map->polyObjs[idx];
+    Polyobj* p = map->polyObjs[idx];
     long obIdx;
     HEdge* hedges;
     uint i;

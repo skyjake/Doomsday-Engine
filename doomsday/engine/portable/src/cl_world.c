@@ -53,7 +53,7 @@ typedef struct clplane_s {
 typedef struct clpolyobj_s {
     thinker_t   thinker;
     uint        number;
-    polyobj_t*  polyobj;
+    Polyobj*    polyobj;
     boolean     move;
     boolean     rotate;
 } clpolyobj_t;
@@ -460,7 +460,7 @@ clplane_t* GameMap_NewClPlane(GameMap* map, uint sectorIndex, clplanetype_t type
 
 void Cl_PolyMoverThinker(clpolyobj_t* mover)
 {
-    polyobj_t* po;
+    Polyobj* po;
     float dx, dy, dist;
     assert(mover);
 
@@ -860,7 +860,7 @@ void Cl_ReadPolyDelta2(boolean skip)
 {
     int                 df;
     unsigned short      num;
-    polyobj_t          *po;
+    Polyobj            *po;
     float               destX = 0, destY = 0;
     float               speed = 0;
     int                 destAngle = 0, angleSpeed = 0;

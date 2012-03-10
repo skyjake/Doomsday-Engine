@@ -817,7 +817,7 @@ int rendPolyobjLine(void* linePtr, void* context)
     return false; // Continue iteration.
 }
 
-int rendLinesOfPolyobj(polyobj_t* po, void* context)
+int rendLinesOfPolyobj(Polyobj* po, void* context)
 {
     int result = false; // Continue iteration.
     LineDef** lineIter = po->lines;

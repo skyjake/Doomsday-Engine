@@ -180,7 +180,7 @@ extern BspLeaf* bspLeafs;
 extern BspNode* bspNodes;
 extern LineDef* lineDefs;
 extern SideDef* sideDefs;
-extern polyobj_t** polyObjs; ///< List of all polyobjs on the current map.
+extern Polyobj** polyObjs; ///< List of all polyobjs on the current map.
 
 #include "gamemap.h"
 
@@ -226,7 +226,7 @@ const char* P_MapSourceFile(const char* uri);
  */
 boolean P_LoadMap(const char* uri);
 
-void P_PolyobjChanged(polyobj_t* po);
+void P_PolyobjChanged(Polyobj* po);
 
 void P_RegisterUnknownTexture(const char* name, boolean planeTex);
 

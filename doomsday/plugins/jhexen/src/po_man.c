@@ -54,7 +54,7 @@ static void thrustMobj(struct mobj_s* mo, void* linep, void* pop);
 
 // CODE --------------------------------------------------------------------
 
-polyobj_t* P_GetPolyobj(uint num)
+Polyobj* P_GetPolyobj(uint num)
 {
     // By unique ID?
     if(num & 0x80000000)
@@ -66,17 +66,17 @@ polyobj_t* P_GetPolyobj(uint num)
     return P_PolyobjByTag((int)num);
 }
 
-void PO_StartSequence(polyobj_t* po, int seqBase)
+void PO_StartSequence(Polyobj* po, int seqBase)
 {
     SN_StartSequence((mobj_t*) po, seqBase + po->seqType);
 }
 
-void PO_StopSequence(polyobj_t* po)
+void PO_StopSequence(Polyobj* po)
 {
     SN_StopSequence((mobj_t*) po);
 }
 
-void PO_SetDestination(polyobj_t* po, float dist, uint an, float speed)
+void PO_SetDestination(Polyobj* po, float dist, uint an, float speed)
 {
     po->dest[VX] = po->pos[VX] + dist * FIX2FLT(finecosine[an]);
     po->dest[VY] = po->pos[VY] + dist * FIX2FLT(finesine[an]);
@@ -88,7 +88,7 @@ void PO_SetDestination(polyobj_t* po, float dist, uint an, float speed)
 void T_RotatePoly(polyevent_t* pe)
 {
     unsigned int absSpeed;
-    polyobj_t* po = P_GetPolyobj(pe->polyobj);
+    Polyobj* po = P_GetPolyobj(pe->polyobj);
 
     if(P_PolyobjRotate(po, pe->intSpeed))
     {
@@ -123,7 +123,7 @@ boolean EV_RotatePoly(LineDef *line, byte *args, int direction,
 {
     int                 mirror, polyNum;
     polyevent_t*        pe;
-    polyobj_t*          po;
+    Polyobj*            po;
 
     polyNum = args[0];
     po = P_GetPolyobj(polyNum);
@@ -225,7 +225,7 @@ boolean EV_RotatePoly(LineDef *line, byte *args, int direction,
 void T_MovePoly(polyevent_t* pe)
 {
     unsigned int        absSpeed;
-    polyobj_t*          po = P_GetPolyobj(pe->polyobj);
+    Polyobj*            po = P_GetPolyobj(pe->polyobj);
 
     if(P_PolyobjMoveXY(po, pe->speed[MX], pe->speed[MY]))
     {
@@ -256,7 +256,7 @@ boolean EV_MovePoly(LineDef* line, byte* args, boolean timesEight,
 {
     int                 mirror, polyNum;
     polyevent_t*        pe;
-    polyobj_t*          po;
+    Polyobj*            po;
     angle_t             angle;
 
     polyNum = args[0];
@@ -336,7 +336,7 @@ boolean EV_MovePoly(LineDef* line, byte* args, boolean timesEight,
 void T_PolyDoor(polydoor_t* pd)
 {
     int                 absSpeed;
-    polyobj_t*          po = P_GetPolyobj(pd->polyobj);
+    Polyobj*            po = P_GetPolyobj(pd->polyobj);
 
     if(pd->tics)
     {
@@ -458,7 +458,7 @@ boolean EV_OpenPolyDoor(LineDef* line, byte* args, podoortype_t type)
 {
     int                 mirror, polyNum;
     polydoor_t*         pd;
-    polyobj_t*          po;
+    Polyobj*            po;
     angle_t             angle = 0;
 
     polyNum = args[0];
@@ -557,7 +557,7 @@ static int getPolyobjMirror(uint poly)
 
     for(i = 0; i < numpolyobjs; ++i)
     {
-        polyobj_t* po = P_GetPolyobj(i | 0x80000000);
+        Polyobj* po = P_GetPolyobj(i | 0x80000000);
 
         if(po->tag == poly)
         {
@@ -572,7 +572,7 @@ static int getPolyobjMirror(uint poly)
 static void thrustMobj(struct mobj_s* mo, void* linep, void* pop)
 {
     LineDef* line = (LineDef*) linep;
-    polyobj_t* po = (polyobj_t*) pop;
+    Polyobj* po = (Polyobj*) pop;
     float thrust[2], force;
     polyevent_t* pe;
     uint thrustAn;
@@ -635,7 +635,7 @@ void PO_InitForMap(void)
     {
         uint                j;
         const mapspot_t*    spot;
-        polyobj_t*          po;
+        Polyobj*            po;
 
         po = P_GetPolyobj(i | 0x80000000);
 
@@ -674,7 +674,7 @@ void PO_InitForMap(void)
 
 boolean PO_Busy(int polyobj)
 {
-    polyobj_t*          po = P_GetPolyobj(polyobj);
+    Polyobj*            po = P_GetPolyobj(polyobj);
 
     if(po && po->specialData != NULL)
         return true;

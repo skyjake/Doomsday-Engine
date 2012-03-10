@@ -1,4 +1,4 @@
-/**\file
+/**\file p_polyobj.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -22,17 +22,13 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * r_polyobj.h: World polyobj.
- */
-
-#ifndef __DOOMSDAY_WORLD_POLYOBJ_H__
-#define __DOOMSDAY_WORLD_POLYOBJ_H__
+#ifndef LIBDENG_P_POLYOBJ_H
+#define LIBDENG_P_POLYOBJ_H
 
 #include "r_data.h"
 #include "p_dmu.h"
 
-boolean         Polyobj_GetProperty(const polyobj_t *po, setargs_t *args);
-boolean         Polyobj_SetProperty(polyobj_t *po, const setargs_t *args);
+boolean Polyobj_GetProperty(const Polyobj* po, setargs_t* args);
+boolean Polyobj_SetProperty(Polyobj* po, const setargs_t* args);
 
-#endif
+#endif /// LIBDENG_P_POLYOBJ_H

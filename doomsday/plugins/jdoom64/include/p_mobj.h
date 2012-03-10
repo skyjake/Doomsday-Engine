@@ -310,7 +310,7 @@ typedef struct polyobj_s {
     DD_BASE_POLYOBJ_ELEMENTS()
 
     // Doom64-specific data:
-} polyobj_t;
+} Polyobj;
 
 void            P_ExplodeMissile(mobj_t* mo);
 float           P_MobjGetFriction(mobj_t* mo);

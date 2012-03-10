@@ -57,7 +57,7 @@ BspLeaf* bspLeafs = NULL;
 BspNode* bspNodes = NULL;
 LineDef* lineDefs = NULL;
 SideDef* sideDefs = NULL;
-polyobj_t** polyObjs = NULL; // List of all poly-objects in the map.
+Polyobj** polyObjs = NULL; // List of all poly-objects in the map.
 
 GameMap* theMap = NULL;
 
@@ -70,7 +70,7 @@ static badtex_t* badTexNames = NULL;
 static uint numGameMapObjDefs;
 static gamemapobjdef_t* gameMapObjDefs;
 
-void P_PolyobjChanged(polyobj_t* po)
+void P_PolyobjChanged(Polyobj* po)
 {
     LineDef** lineIter;
     for(lineIter = po->lines; *lineIter; lineIter++)

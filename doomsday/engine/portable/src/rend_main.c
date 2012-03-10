@@ -3059,7 +3059,7 @@ void Rend_RenderSurfaceVectors(void)
 
     for(i = 0; i < NUM_POLYOBJS; ++i)
     {
-        const polyobj_t* po = polyObjs[i];
+        const Polyobj* po = polyObjs[i];
         const Sector* sec = po->bspLeaf->sector;
         float zPos = sec->SP_floorheight + (sec->SP_ceilheight - sec->SP_floorheight)/2;
         vec3_t origin;
@@ -3175,7 +3175,7 @@ static void drawVertexIndex(const vertex_t* vtx, float z, float scale, float alp
 static int drawVertex1(LineDef* li, void* context)
 {
     vertex_t* vtx = li->L_v1;
-    polyobj_t* po = context;
+    Polyobj* po = context;
     float dist2D = M_ApproxDistancef(vx - vtx->V_pos[VX], vz - vtx->V_pos[VY]);
 
     if(dist2D < MAX_VERTEX_POINT_DIST)
@@ -3218,7 +3218,7 @@ static int drawVertex1(LineDef* li, void* context)
     return false; // Continue iteration.
 }
 
-int drawPolyObjVertexes(polyobj_t* po, void* context)
+int drawPolyObjVertexes(Polyobj* po, void* context)
 {
     return Polyobj_LineIterator(po, drawVertex1, po);
 }
@@ -3799,7 +3799,7 @@ static void Rend_RenderBoundingBoxes(void)
     if(devPolyobjBBox)
     for(i = 0; i < NUM_POLYOBJS; ++i)
     {
-        const polyobj_t* po = polyObjs[i];
+        const Polyobj* po = polyObjs[i];
         const Sector* sec = po->bspLeaf->sector;
         float width  = (po->aaBox.maxX - po->aaBox.minX)/2;
         float length = (po->aaBox.maxY - po->aaBox.minY)/2;

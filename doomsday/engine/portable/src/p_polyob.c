@@ -1,5 +1,5 @@
 /**
- * @file p_polyob.c
+ * @file polyobj.c
  * Polyobj implementation. @ingroup map
  *
  * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -27,7 +27,7 @@
 #include "de_misc.h"
 
 static void rotatePoint(int an, float* x, float* y, float startSpotX, float startSpotY);
-static boolean checkMobjBlocking(LineDef* line, polyobj_t* po);
+static boolean checkMobjBlocking(LineDef* line, Polyobj* po);
 
 // Called when the polyobj hits a mobj.
 static void (*po_callback) (mobj_t* mobj, void* line, void* polyobj);
@@ -38,7 +38,7 @@ void P_SetPolyobjCallback(void (*func) (struct mobj_s*, void*, void*))
 }
 
 /// @note Part of the Doomsday public API
-polyobj_t* P_PolyobjByID(uint id)
+Polyobj* P_PolyobjByID(uint id)
 {
     if(theMap)
     {
@@ -48,7 +48,7 @@ polyobj_t* P_PolyobjByID(uint id)
 }
 
 /// @note Part of the Doomsday public API
-polyobj_t* P_PolyobjByTag(int tag)
+Polyobj* P_PolyobjByTag(int tag)
 {
     if(theMap)
     {
@@ -58,7 +58,7 @@ polyobj_t* P_PolyobjByTag(int tag)
 }
 
 /// @note Part of the Doomsday public API
-polyobj_t* P_PolyobjByOrigin(void* ddMobjBase)
+Polyobj* P_PolyobjByOrigin(void* ddMobjBase)
 {
     if(theMap)
     {
@@ -67,7 +67,7 @@ polyobj_t* P_PolyobjByOrigin(void* ddMobjBase)
     return NULL;
 }
 
-void Polyobj_UpdateAABox(polyobj_t* po)
+void Polyobj_UpdateAABox(Polyobj* po)
 {
     LineDef** lineIter;
     LineDef* line;
@@ -88,7 +88,7 @@ void Polyobj_UpdateAABox(polyobj_t* po)
     }
 }
 
-void Polyobj_UpdateSurfaceTangents(polyobj_t* po)
+void Polyobj_UpdateSurfaceTangents(Polyobj* po)
 {
     LineDef** lineIter;
     assert(po);
@@ -105,7 +105,7 @@ void Polyobj_UpdateSurfaceTangents(polyobj_t* po)
     }
 }
 
-void Polyobj_UpdateSideDefOrigins(polyobj_t* po)
+void Polyobj_UpdateSideDefOrigins(Polyobj* po)
 {
     LineDef** lineIter;
     assert(po);
@@ -122,7 +122,7 @@ void Polyobj_UpdateSideDefOrigins(polyobj_t* po)
     }
 }
 
-static boolean mobjIsBlockingPolyobj(polyobj_t* po)
+static boolean mobjIsBlockingPolyobj(Polyobj* po)
 {
     LineDef** lineIter;
     if(!po) return false;
@@ -139,7 +139,7 @@ static boolean mobjIsBlockingPolyobj(polyobj_t* po)
     return false;
 }
 
-boolean P_PolyobjMove(polyobj_t* po, float delta[2])
+boolean P_PolyobjMove(Polyobj* po, float delta[2])
 {
     fvertex_t* prevPts;
     LineDef** lineIter;
@@ -239,7 +239,7 @@ boolean P_PolyobjMove(polyobj_t* po, float delta[2])
     return true;
 }
 
-boolean P_PolyobjMoveXY(polyobj_t* po, float x, float y)
+boolean P_PolyobjMoveXY(Polyobj* po, float x, float y)
 {
     float delta[2];
     delta[VX] = x;
@@ -263,7 +263,7 @@ static void rotatePoint2d(float point[2], const float origin[2], uint fineAngle)
     point[VY] = rotated[VY] + rotated[VX] + origin[VY];
 }
 
-boolean P_PolyobjRotate(polyobj_t* po, angle_t angle)
+boolean P_PolyobjRotate(Polyobj* po, angle_t angle)
 {
     fvertex_t* originalPts, *prevPts;
     uint i, fineAngle;
@@ -350,13 +350,13 @@ boolean P_PolyobjRotate(polyobj_t* po, angle_t angle)
     return true;
 }
 
-void P_PolyobjUnlink(polyobj_t* po)
+void P_PolyobjUnlink(Polyobj* po)
 {
     GameMap* map = theMap;
     GameMap_UnlinkPolyobjInBlockmap(map, po);
 }
 
-void P_PolyobjLink(polyobj_t* po)
+void P_PolyobjLink(Polyobj* po)
 {
     GameMap* map = theMap;
     GameMap_LinkPolyobjInBlockmap(map, po);
@@ -365,7 +365,7 @@ void P_PolyobjLink(polyobj_t* po)
 typedef struct ptrmobjblockingparams_s {
     boolean isBlocked;
     LineDef* line;
-    polyobj_t* polyobj;
+    Polyobj* polyobj;
 } ptrmobjblockingparams_t;
 
 int PTR_checkMobjBlocking(mobj_t* mo, void* data)
@@ -399,7 +399,7 @@ int PTR_checkMobjBlocking(mobj_t* mo, void* data)
     return false; // Continue iteration.
 }
 
-static boolean checkMobjBlocking(LineDef* line, polyobj_t* po)
+static boolean checkMobjBlocking(LineDef* line, Polyobj* po)
 {
     ptrmobjblockingparams_t params;
     AABoxf aaBox;
@@ -419,7 +419,7 @@ static boolean checkMobjBlocking(LineDef* line, polyobj_t* po)
     return params.isBlocked;
 }
 
-int Polyobj_LineIterator(polyobj_t* po, int (*callback) (struct linedef_s*, void*),
+int Polyobj_LineIterator(Polyobj* po, int (*callback) (struct linedef_s*, void*),
     void* paramaters)
 {
     int result = false; // Continue iteration.

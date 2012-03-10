@@ -781,7 +781,7 @@ enum { /* Do NOT change the numerical values of the constants. */
 
 /**
  * All map think-able objects must use this as a base. Also used for sound
- * origin purposes for all of: mobj_t, polyobj_t, Sector/plane_t
+ * origin purposes for all of: mobj_t, Polyobj, Sector/plane_t
  * @ingroup mobj
  */
 typedef struct ddmobj_base_s {
@@ -1065,7 +1065,7 @@ typedef struct aaboxf_s {
     int             health;\
     mobjinfo_t     *info; /* &mobjinfo[mobj->type] */
 
-/// Base polyobj_t elements. Games MUST use this as the basis for polyobj_t. @ingroup map
+/// Base Polyobj elements. Games MUST use this as the basis for Polyobj. @ingroup map
 #define DD_BASE_POLYOBJ_ELEMENTS() \
     DD_BASE_DDMOBJ_ELEMENTS() \
 \

@@ -2422,7 +2422,7 @@ static void SV_ReadLine(LineDef* li)
 }
 
 #if __JHEXEN__
-static void SV_WritePolyObj(polyobj_t* po)
+static void SV_WritePolyObj(Polyobj* po)
 {
     SV_WriteByte(1); // write a version byte.
 
@@ -2436,7 +2436,7 @@ static int SV_ReadPolyObj(void)
 {
     float deltaX, deltaY;
     angle_t angle;
-    polyobj_t* po;
+    Polyobj* po;
     int ver;
 
     if(saveVersion >= 3)
@@ -4247,7 +4247,7 @@ static void P_UnArchiveSounds(void)
         }
         else
         {
-            polyobj_t* po = P_PolyobjByID(secNum);
+            Polyobj* po = P_PolyobjByID(secNum);
             if(po) sndMobj = (mobj_t*) po;
         }
 

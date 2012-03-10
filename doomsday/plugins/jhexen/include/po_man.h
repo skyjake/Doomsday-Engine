@@ -40,7 +40,7 @@ typedef struct polyobj_s {
 
     // Hexen-specific data:
     void* specialData; /* Pointer a thinker, if the poly is moving. */
-} polyobj_t;
+} Polyobj;
 
 typedef enum {
     PODOOR_NONE,
@@ -91,7 +91,7 @@ boolean PO_FindAndCreatePolyobj(int tag, boolean crush, float startX, float star
  *             Otherwise this value is interpreted as a tag that *should*
  *             match one polyobj.
  */
-polyobj_t* P_GetPolyobj(uint num);
+Polyobj* P_GetPolyobj(uint num);
 
 void T_PolyDoor(polydoor_t* pd);
 void T_RotatePoly(polyevent_t* pe);

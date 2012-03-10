@@ -403,7 +403,7 @@ void            Sv_AckDeltaSet(uint clientNumber, int set, byte resent);
 uint            Sv_CountUnackedDeltas(uint clientNumber);
 
 void            Sv_NewSoundDelta(int soundId, mobj_t* emitter,
-                                 Sector* sourceSector, polyobj_t* sourcePoly,
+                                 Sector* sourceSector, Polyobj* sourcePoly,
                                  float volume, boolean isRepeating,
                                  int clientsMask);
 

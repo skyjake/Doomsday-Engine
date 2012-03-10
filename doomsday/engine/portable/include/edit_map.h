@@ -43,7 +43,7 @@ typedef struct editmap_s {
     uint numSectors;
     Sector** sectors;
     uint numPolyObjs;
-    polyobj_t** polyObjs;
+    Polyobj** polyObjs;
 
     // The following is for game-specific map object data.
     gameobjdata_t gameObjData;

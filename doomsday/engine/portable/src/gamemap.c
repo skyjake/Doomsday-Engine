@@ -276,7 +276,7 @@ uint GameMap_PolyobjCount(GameMap* map)
     return map->numPolyObjs;
 }
 
-polyobj_t* GameMap_PolyobjByID(GameMap* map, uint id)
+Polyobj* GameMap_PolyobjByID(GameMap* map, uint id)
 {
     assert(map);
     if(id < map->numPolyObjs)
@@ -284,13 +284,13 @@ polyobj_t* GameMap_PolyobjByID(GameMap* map, uint id)
     return NULL;
 }
 
-polyobj_t* GameMap_PolyobjByTag(GameMap* map, int tag)
+Polyobj* GameMap_PolyobjByTag(GameMap* map, int tag)
 {
     uint i;
     assert(map);
     for(i = 0; i < map->numPolyObjs; ++i)
     {
-        polyobj_t* po = map->polyObjs[i];
+        Polyobj* po = map->polyObjs[i];
         if(po->tag == tag)
         {
             return po;
@@ -299,13 +299,13 @@ polyobj_t* GameMap_PolyobjByTag(GameMap* map, int tag)
     return NULL;
 }
 
-polyobj_t* GameMap_PolyobjByOrigin(GameMap* map, void* ddMobjBase)
+Polyobj* GameMap_PolyobjByOrigin(GameMap* map, void* ddMobjBase)
 {
     uint i;
     assert(map);
     for(i = 0; i < map->numPolyObjs; ++i)
     {
-        polyobj_t* po = map->polyObjs[i];
+        Polyobj* po = map->polyObjs[i];
         if(po == ddMobjBase)
         {
             return po;
@@ -314,7 +314,7 @@ polyobj_t* GameMap_PolyobjByOrigin(GameMap* map, void* ddMobjBase)
     return NULL;
 }
 
-static void initPolyobj(polyobj_t* po)
+static void initPolyobj(Polyobj* po)
 {
     LineDef** lineIter;
     BspLeaf* bspLeaf;
@@ -873,7 +873,7 @@ int GameMap_BspLeafIterator(GameMap* map, int (*callback) (BspLeaf*, void*), voi
     return false; // Continue iteration.
 }
 
-void GameMap_LinkPolyobjInBlockmap(GameMap* map, polyobj_t* po)
+void GameMap_LinkPolyobjInBlockmap(GameMap* map, Polyobj* po)
 {
     Blockmap* blockmap;
     GridmapBlock blockCoords;
@@ -897,7 +897,7 @@ void GameMap_LinkPolyobjInBlockmap(GameMap* map, polyobj_t* po)
     }
 }
 
-void GameMap_UnlinkPolyobjInBlockmap(GameMap* map, polyobj_t* po)
+void GameMap_UnlinkPolyobjInBlockmap(GameMap* map, Polyobj* po)
 {
     Blockmap* blockmap;
     GridmapBlock blockCoords;
@@ -912,13 +912,13 @@ void GameMap_UnlinkPolyobjInBlockmap(GameMap* map, polyobj_t* po)
 
 typedef struct bmappoiterparams_s {
     int localValidCount;
-    int (*func) (polyobj_t*, void *);
+    int (*func) (Polyobj*, void *);
     void* param;
 } bmappoiterparams_t;
 
 static int blockmapCellPolyobjsIterator(void* object, void* context)
 {
-    polyobj_t* polyobj = (polyobj_t*)object;
+    Polyobj* polyobj = (Polyobj*)object;
     bmappoiterparams_t* args = (bmappoiterparams_t*) context;
     if(polyobj->validCount != args->localValidCount)
     {
@@ -935,7 +935,7 @@ static int blockmapCellPolyobjsIterator(void* object, void* context)
 }
 
 int GameMap_IterateCellPolyobjs(GameMap* map, const uint coords[2],
-    int (*callback) (polyobj_t*, void*), void* context)
+    int (*callback) (Polyobj*, void*), void* context)
 {
     bmappoiterparams_t args;
     assert(map);
@@ -949,7 +949,7 @@ int GameMap_IterateCellPolyobjs(GameMap* map, const uint coords[2],
 }
 
 int GameMap_IterateCellBlockPolyobjs(GameMap* map, const GridmapBlock* blockCoords,
-    int (*callback) (polyobj_t*, void*), void* context)
+    int (*callback) (Polyobj*, void*), void* context)
 {
     bmappoiterparams_t args;
     assert(map);
@@ -971,7 +971,7 @@ int GameMap_PolyobjsBoxIterator(GameMap* map, const AABoxf* box,
     return GameMap_IterateCellBlockPolyobjs(map, &blockCoords, callback, parameters);
 }
 
-int GameMap_PolyobjIterator(GameMap* map, int (*callback) (polyobj_t*, void*), void* parameters)
+int GameMap_PolyobjIterator(GameMap* map, int (*callback) (Polyobj*, void*), void* parameters)
 {
     uint i;
     assert(map);
@@ -990,7 +990,7 @@ typedef struct poiterparams_s {
 
 int PTR_PolyobjLines(void* object, void* context)
 {
-    polyobj_t* po = (polyobj_t*)object;
+    Polyobj* po = (Polyobj*)object;
     poiterparams_t* args = (poiterparams_t*) context;
 
     return Polyobj_LineIterator(po, args->func, args->param);
@@ -1313,7 +1313,7 @@ typedef struct {
     void* parameters;
 } iteratepolyobjlinedefs_params_t;
 
-static int iteratePolyobjLineDefs(polyobj_t* po, void* parameters)
+static int iteratePolyobjLineDefs(Polyobj* po, void* parameters)
 {
     const iteratepolyobjlinedefs_params_t* p = (iteratepolyobjlinedefs_params_t*)parameters;
     return Polyobj_LineIterator(po, p->callback, p->parameters);

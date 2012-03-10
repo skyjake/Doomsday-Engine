@@ -143,9 +143,9 @@ static Sector* createSector(void)
     return sec;
 }
 
-static polyobj_t* createPolyobj(void)
+static Polyobj* createPolyobj(void)
 {
-    polyobj_t*          po;
+    Polyobj*            po;
 
     po = M_Calloc(sizeof(*po));
 
@@ -164,7 +164,7 @@ static void destroyEditablePolyObjs(editmap_t* map)
         uint i;
         for(i = 0; i < map->numPolyObjs; ++i)
         {
-            polyobj_t* po = map->polyObjs[i];
+            Polyobj* po = map->polyObjs[i];
             M_Free(po->lines);
             M_Free(po);
         }
@@ -1385,11 +1385,11 @@ static void hardenPolyobjs(GameMap* dest, editmap_t* src)
     }
 
     dest->numPolyObjs = src->numPolyObjs;
-    dest->polyObjs = Z_Malloc((dest->numPolyObjs+1) * sizeof(polyobj_t*), PU_MAP, 0);
+    dest->polyObjs = Z_Malloc((dest->numPolyObjs+1) * sizeof(Polyobj*), PU_MAP, 0);
 
     for(i = 0; i < dest->numPolyObjs; ++i)
     {
-        polyobj_t* destP, *srcP = src->polyObjs[i];
+        Polyobj* destP, *srcP = src->polyObjs[i];
         HEdge* hedges;
         uint j;
 
@@ -1864,7 +1864,7 @@ boolean MPE_End(void)
     // Finish the polyobjs (after the vertexes are hardened).
     for(i = 0; i < gamemap->numPolyObjs; ++i)
     {
-        polyobj_t* po = gamemap->polyObjs[i];
+        Polyobj* po = gamemap->polyObjs[i];
         LineDef** lineIter;
         uint n = 0;
 
@@ -2272,7 +2272,7 @@ uint MPE_SectorCreate(float lightlevel, float red, float green, float blue)
 uint MPE_PolyobjCreate(uint* lines, uint lineCount, int tag, int sequenceType,
     float anchorX, float anchorY)
 {
-    polyobj_t* po;
+    Polyobj* po;
     uint i;
 
     if(!editMapInited || !lineCount || !lines) return 0;

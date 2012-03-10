@@ -224,7 +224,7 @@ typedef struct polyobj_s {
     DD_BASE_POLYOBJ_ELEMENTS()
 
     // Heretic-specific data:
-} polyobj_t;
+} Polyobj;
 
 mobj_t*     P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
                           angle_t angle, int spawnFlags);

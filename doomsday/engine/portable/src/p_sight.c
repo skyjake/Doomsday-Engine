@@ -171,7 +171,7 @@ static boolean crossBspLeaf(GameMap* map, uint bspLeafIdx, losdata_t* los)
     if(bspLeaf->polyObj)
     {
         // Check polyobj lines.
-        polyobj_t* po = bspLeaf->polyObj;
+        Polyobj* po = bspLeaf->polyObj;
         LineDef** lineIter = po->lines;
         while(*lineIter)
         {

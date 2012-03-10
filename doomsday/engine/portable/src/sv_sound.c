@@ -65,7 +65,7 @@ void Sv_Sound(int sound_id, mobj_t *origin, int toPlr)
  * Finds the sector/polyobj to whom the origin mobj belong.
  */
 static void Sv_IdentifySoundOrigin(mobj_t **origin, Sector **sector,
-                                   polyobj_t **poly)
+                                   Polyobj **poly)
 {
     *sector = NULL;
     *poly = NULL;
@@ -100,7 +100,7 @@ void Sv_SoundAtVolume(int soundIDAndFlags, mobj_t *origin, float volume,
 {
     int                 soundID = (soundIDAndFlags & ~DDSF_FLAG_MASK);
     Sector             *sector;
-    polyobj_t          *poly;
+    Polyobj            *poly;
     int                 targetPlayers = 0;
 
     if(isClient || !soundID)
@@ -143,7 +143,7 @@ void Sv_SoundAtVolume(int soundIDAndFlags, mobj_t *origin, float volume,
 void Sv_StopSound(int sound_id, mobj_t *origin)
 {
     Sector     *sector;
-    polyobj_t  *poly;
+    Polyobj    *poly;
 
     if(isClient)
         return;
