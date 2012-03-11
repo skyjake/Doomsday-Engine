@@ -1003,9 +1003,8 @@ typedef struct poiterparams_s {
     void* param;
 } poiterparams_t;
 
-int PTR_PolyobjLines(void* object, void* context)
+int PTR_PolyobjLines(Polyobj* po, void* context)
 {
-    Polyobj* po = (Polyobj*)object;
     poiterparams_t* args = (poiterparams_t*) context;
 
     return Polyobj_LineIterator(po, args->func, args->param);

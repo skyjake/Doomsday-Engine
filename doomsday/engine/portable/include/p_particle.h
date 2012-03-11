@@ -179,7 +179,7 @@ void P_UpdateParticleGens(void);
  * Currently only used visually, collisions use the constant radius.
  * The variance can be negative (results will be larger).
  */
-float P_GetParticleRadius(const struct ded_ptcstage_s* stageDef, int ptcIndex);
+float P_GetParticleRadius(const ded_ptcstage_t* stageDef, int ptcIndex);
 
 /**
  * A particle may be attached to the floor or ceiling of the sector.

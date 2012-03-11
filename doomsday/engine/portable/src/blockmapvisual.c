@@ -143,7 +143,7 @@ static int rendBspLeaf(BspLeaf* bspLeaf, void* parameters)
 int rendCellLineDefs(Blockmap* blockmap, uint const coords[2], void* parameters)
 {
     glBegin(GL_LINES);
-        Blockmap_IterateCellObjects(blockmap, coords, rendLineDef, parameters);
+        Blockmap_IterateCellObjects(blockmap, coords, (int (*)(void*,void*)) rendLineDef, parameters);
     glEnd();
     return false; // Continue iteration.
 }
@@ -156,7 +156,7 @@ int rendCellPolyobjLineDefs(void* object, void* parameters)
 int rendCellPolyobjs(Blockmap* blockmap, uint const coords[2], void* parameters)
 {
     glBegin(GL_LINES);
-        Blockmap_IterateCellObjects(blockmap, coords, rendCellPolyobjLineDefs, parameters);
+        Blockmap_IterateCellObjects(blockmap, coords, (int (*)(void*,void*)) rendCellPolyobjLineDefs, parameters);
     glEnd();
     return false; // Continue iteration.
 }
@@ -164,14 +164,14 @@ int rendCellPolyobjs(Blockmap* blockmap, uint const coords[2], void* parameters)
 int rendCellMobjs(Blockmap* blockmap, uint const coords[2], void* parameters)
 {
     glBegin(GL_QUADS);
-        Blockmap_IterateCellObjects(blockmap, coords, rendMobj, parameters);
+        Blockmap_IterateCellObjects(blockmap, coords, (int (*)(void*,void*)) rendMobj, parameters);
     glEnd();
     return false; // Continue iteration.
 }
 
 int rendCellBspLeafs(Blockmap* blockmap, uint const coords[2], void* parameters)
 {
-    Blockmap_IterateCellObjects(blockmap, coords, rendBspLeaf, parameters);
+    Blockmap_IterateCellObjects(blockmap, coords, (int (*)(void*,void*)) rendBspLeaf, parameters);
     return false; // Continue iteration.
 }
 
