@@ -416,14 +416,15 @@ static BOOL createMainWindow(int lnCmdShow)
     return windowIDX != 0;
 }
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+//int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+
+boolean DD_Win32_Init(void)
 {
-    BOOL doShutdown = TRUE;
-    int exitCode = 0;
-    int lnCmdShow = nCmdShow;
+    BOOL failed = TRUE;
+    int lnCmdShow = SW_SHOWNORMAL; // nCmdShow;
 
     memset(&app, 0, sizeof(app));
-    app.hInstance = hInstance;
+    app.hInstance = GetModuleHandle(NULL);
     app.className = TEXT(MAINWCLASS);
 
     if(!initApplication(&app))
@@ -432,19 +433,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     }
     else
     {
-        int legacyArgc = 0;
-        char* legacyArgs[1] = { 0 };
-
         // Initialize COM.
         CoInitialize(NULL);
 
         // Prepare the command line arguments.
         DD_InitCommandLine(UTF_STRING(GetCommandLine()));
-
-        // Prepare arguments for LegacyCore.
-        legacyArgc = 1;
-        legacyArgs[0] = (char*) Argv(0);
-        de2LegacyCore = LegacyCore_New(&legacyArgc, legacyArgs);
 
         // First order of business: are we running in dedicated mode?
         isDedicated = ArgCheck("-dedicated");
@@ -485,7 +478,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         }
         else
         {   // All initialization complete.
-            doShutdown = FALSE;
+            failed = FALSE;
 
             { char buf[256];
             DD_ComposeMainWindowTitle(buf);
@@ -497,23 +490,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         }
     }
 
-    if(!doShutdown)
-    {   // Fire up the engine. The game loop will also act as the message pump.
-        exitCode = DD_Main();
-    }
-    DD_Shutdown();
-
-    LegacyCore_Delete(de2LegacyCore);
-    de2LegacyCore = 0;
-
-    // No more use of COM beyond this point.
-    CoUninitialize();
-
-    // Unregister our window class.
-    UnregisterClass(app.className, app.hInstance);
-
-    // Bye!
-    return exitCode;
+    return !failed;
 }
 
 /**
@@ -656,6 +633,12 @@ void DD_Shutdown(void)
     free(convBuf); convBuf = 0;
     free(utf8ConvBuf); utf8ConvBuf = 0;
 #endif
+
+    // No more use of COM beyond, this point.
+    CoUninitialize();
+
+    // Unregister our window class.
+    UnregisterClass(app.className, app.hInstance);
 }
 
 /**

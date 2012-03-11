@@ -18,9 +18,12 @@ win32 {
     TARGET_EXT = .dll
 }
 
+# Enable strict warnings for C++ code.
 *-g++ {
-    # Enable strict warnings.
     QMAKE_CXXFLAGS_WARN_ON *= -Wall -Wextra -pedantic -Wno-long-long
+}
+win32-msvc* {
+    QMAKE_CXXFLAGS_WARN_ON ~= s/-W3/-W4/
 }
 
 INCLUDEPATH += include

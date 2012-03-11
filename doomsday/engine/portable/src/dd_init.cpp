@@ -31,8 +31,10 @@ extern "C" {
 
 boolean DD_Init(void);
 
-#ifdef UNIX
-boolean DD_Unix_Init(int argc, char** argv);
+#if WIN32
+#  include "dd_winit.h"
+#elif UNIX
+#  include "dd_uinit.h"
 #endif
 
 /**
@@ -69,7 +71,9 @@ int main(int argc, char** argv)
     de2LegacyCore = LegacyCore_New(&dengApp); // C interface
 
     // Initialize.
-#ifdef UNIX
+#if WIN32
+    if(!DD_Win32_Init()) return 1;
+#elif UNIX
     if(!DD_Unix_Init(argc, argv)) return 1;
 #endif   
     if(!DD_Init()) return 2;
