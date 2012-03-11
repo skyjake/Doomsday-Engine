@@ -111,6 +111,7 @@ void Canvas::paintGL()
     else
     {
         qDebug() << "Canvas: drawing with default";
+
         // If we don't know what else to draw, just draw a black screen.
         glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT);

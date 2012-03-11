@@ -21,6 +21,8 @@
  */
 
 #include <QWidget>
+#include <QApplication>
+#include <QDesktopWidget>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -484,15 +486,26 @@ static Window* createDDWindow(application_t*, const Point2Raw* origin, const Siz
             return 0;
         }
 
-        if(flags & DDWF_FULLSCREEN)
+        /*if(flags & DDWF_FULLSCREEN)
         {
             // Need to change mode?
+        }*/
+
+        QRect geom(origin->x, origin->y, size->width, size->height);
+
+        if(!(flags & DDSW_NOCENTER))
+        {
+            // Center the window.
+            QSize screenSize = QApplication::desktop()->screenGeometry().size();
+            geom = QRect((screenSize.width() - size->width)/2,
+                         (screenSize.height() - size->height)/2,
+                         size->width, size->height);
         }
 
         // Create the main window.
         mainWindow.widget = new CanvasWindow;
-        mainWindow.widget->setGeometry(QRect(origin->x, origin->y, size->width, size->height));
-        mainWindow.widget->setMinimumSize(QSize(320, 240));
+        mainWindow.widget->setGeometry(geom);
+        mainWindow.widget->setMinimumSize(QSize(320, 240)); // minimum possible size
         mainWindow.geometry.origin.x = origin->x;
         mainWindow.geometry.origin.y = origin->y;
         mainWindow.geometry.size.width = size->width;
@@ -504,10 +517,6 @@ static Window* createDDWindow(application_t*, const Point2Raw* origin, const Siz
         // After the main window is created, we can finish with the engine init.
         mainWindow.widget->canvas().setInitCallback(finishMainWindowInit);
 
-        if(flags & DDWF_CENTER)
-        {
-            // Center the window.
-        }
         //mainWindow.widget->show();
 
 #if 0
