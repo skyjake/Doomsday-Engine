@@ -51,6 +51,7 @@ typedef struct {
 extern uint windowIDX; // Main window.
 extern application_t app;
 
+boolean DD_Unix_Init(int argc, char** argv);
 void DD_Shutdown(void);
 
 #ifdef __cplusplus

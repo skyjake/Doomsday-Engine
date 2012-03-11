@@ -17,8 +17,8 @@ win32 {
     deng_debug: qtver = "d4"
     else:       qtver = "4"
     qtlibs.files += \
-        $$[QT_INSTALL_LIBS]/QtCore$${qtver}.dll \
-        $$[QT_INSTALL_LIBS]/QtNetwork$${qtver}.dll \
-        $$[QT_INSTALL_LIBS]/QtGui$${qtver}.dll
+        $$[QT_INSTALL_BINS]/QtCore$${qtver}.dll \
+        $$[QT_INSTALL_BINS]/QtNetwork$${qtver}.dll \
+        $$[QT_INSTALL_BINS]/QtGui$${qtver}.dll
     qtlibs.path = $$DENG_LIB_DIR
 }
