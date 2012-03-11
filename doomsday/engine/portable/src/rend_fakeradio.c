@@ -1211,9 +1211,9 @@ static uint radioEdgeHackType(const LineDef* line, const Sector* front, const Se
     // Is the back sector closed?
     if(front->SP_floorvisheight >= back->SP_ceilvisheight)
     {
-        if(R_IsSkySurface(&front->planes[isCeiling? PLN_FLOOR:PLN_CEILING]->surface))
+        if(Surface_IsSkyMasked(&front->planes[isCeiling? PLN_FLOOR:PLN_CEILING]->surface))
         {
-            if(R_IsSkySurface(&back->planes[isCeiling? PLN_FLOOR:PLN_CEILING]->surface))
+            if(Surface_IsSkyMasked(&back->planes[isCeiling? PLN_FLOOR:PLN_CEILING]->surface))
                 return 3; // Consider it fully open.
         }
         else
@@ -1326,7 +1326,7 @@ static void processEdgeShadow(const BspLeaf* bspLeaf, const LineDef* lineDef,
     plnHeight = pln->visHeight;
 
     // Glowing surfaces or missing textures shouldn't have shadows.
-    if((suf->inFlags & SUIF_NO_RADIO) || !suf->material || R_IsSkySurface(suf)) return;
+    if((suf->inFlags & SUIF_NO_RADIO) || !suf->material || Surface_IsSkyMasked(suf)) return;
 
     spec = Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
         -1, -1, -1, true, true, false, false);

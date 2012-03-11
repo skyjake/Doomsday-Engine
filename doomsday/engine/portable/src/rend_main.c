@@ -407,14 +407,14 @@ static void markSideDefSectionsPVisible(HEdge* hedge)
         side->SW_middlesurface.inFlags &= ~SUIF_PVIS;
 
     // Top.
-    if((!devRendSkyMode && R_IsSkySurface(&fceil->surface) && R_IsSkySurface(&bceil->surface)) ||
-       (!devRendSkyMode && R_IsSkySurface(&bceil->surface) && (side->SW_topsurface.inFlags & SUIF_FIX_MISSING_MATERIAL)) ||
+    if((!devRendSkyMode && Surface_IsSkyMasked(&fceil->surface) && Surface_IsSkyMasked(&bceil->surface)) ||
+       (!devRendSkyMode && Surface_IsSkyMasked(&bceil->surface) && (side->SW_topsurface.inFlags & SUIF_FIX_MISSING_MATERIAL)) ||
        (fceil->visHeight <= bceil->visHeight))
         side->SW_topsurface   .inFlags &= ~SUIF_PVIS;
 
     // Bottom.
-    if((!devRendSkyMode && R_IsSkySurface(&ffloor->surface) && R_IsSkySurface(&bfloor->surface)) ||
-       (!devRendSkyMode && R_IsSkySurface(&bfloor->surface) && (side->SW_bottomsurface.inFlags & SUIF_FIX_MISSING_MATERIAL)) ||
+    if((!devRendSkyMode && Surface_IsSkyMasked(&ffloor->surface) && Surface_IsSkyMasked(&bfloor->surface)) ||
+       (!devRendSkyMode && Surface_IsSkyMasked(&bfloor->surface) && (side->SW_bottomsurface.inFlags & SUIF_FIX_MISSING_MATERIAL)) ||
        (ffloor->visHeight >= bfloor->visHeight))
         side->SW_bottomsurface.inFlags &= ~SUIF_PVIS;
 }
@@ -1825,10 +1825,10 @@ static boolean rendSegSection(BspLeaf* bspLeaf, HEdge* hedge,
 
         // Determine which Material to use.
         if(devRendSkyMode && hedge->HE_backsector &&
-           ((section == SS_BOTTOM && R_IsSkySurface(&hedge->HE_frontsector->SP_floorsurface) &&
-                                      R_IsSkySurface(&hedge->HE_backsector->SP_floorsurface)) ||
-            (section == SS_TOP    && R_IsSkySurface(&hedge->HE_frontsector->SP_ceilsurface) &&
-                                      R_IsSkySurface(&hedge->HE_backsector->SP_ceilsurface))))
+           ((section == SS_BOTTOM && Surface_IsSkyMasked(&hedge->HE_frontsector->SP_floorsurface) &&
+                                      Surface_IsSkyMasked(&hedge->HE_backsector->SP_floorsurface)) ||
+            (section == SS_TOP    && Surface_IsSkyMasked(&hedge->HE_frontsector->SP_ceilsurface) &&
+                                      Surface_IsSkyMasked(&hedge->HE_backsector->SP_ceilsurface))))
         {
             // Geometry not normally rendered however we do so in dev sky mode.
             mat = hedge->HE_frontsector->SP_planematerial(section == SS_TOP? PLN_CEILING : PLN_FLOOR);
@@ -2118,9 +2118,9 @@ boolean R_FindBottomTop(LineDef* lineDef, int side, sidedefsection_t section,
 
             if(!P_IsInVoid(viewPlayer))
             {
-                if(R_IsSkySurface(&ffloor->surface) && R_IsSkySurface(&bfloor->surface))
+                if(Surface_IsSkyMasked(&ffloor->surface) && Surface_IsSkyMasked(&bfloor->surface))
                     clipBottom = false;
-                if(R_IsSkySurface(&fceil->surface)  && R_IsSkySurface(&bceil->surface))
+                if(Surface_IsSkyMasked(&fceil->surface)  && Surface_IsSkyMasked(&bceil->surface))
                     clipTop = false;
             }
 
@@ -2441,8 +2441,8 @@ static int segSkyFixes(HEdge* hedge)
 
         if(!backSec || backSec != hedge->HE_frontsector)
         {
-            const boolean hasSkyFloor   = R_IsSkySurface(&frontSec->SP_floorsurface);
-            const boolean hasSkyCeiling = R_IsSkySurface(&frontSec->SP_ceilsurface);
+            const boolean hasSkyFloor   = Surface_IsSkyMasked(&frontSec->SP_floorsurface);
+            const boolean hasSkyCeiling = Surface_IsSkyMasked(&frontSec->SP_ceilsurface);
 
             if(hasSkyFloor || hasSkyCeiling)
             {
@@ -2455,9 +2455,9 @@ static int segSkyFixes(HEdge* hedge)
                     const Plane* bfloor = backSec? backSec->SP_plane(PLN_FLOOR) : NULL;
                     const float skyZ = skyFixFloorZ(ffloor, bfloor);
 
-                    if(hasClosedBack || (!R_IsSkySurface(&bfloor->surface) || P_IsInVoid(viewPlayer)))
+                    if(hasClosedBack || (!Surface_IsSkyMasked(&bfloor->surface) || P_IsInVoid(viewPlayer)))
                     {
-                        const Plane* floor = (bfloor && R_IsSkySurface(&bfloor->surface)? bfloor : ffloor);
+                        const Plane* floor = (bfloor && Surface_IsSkyMasked(&bfloor->surface)? bfloor : ffloor);
                         if(floor->visHeight > skyZ)
                             fixes |= SKYCAP_LOWER;
                     }
@@ -2470,9 +2470,9 @@ static int segSkyFixes(HEdge* hedge)
                     const Plane* bceil = backSec? backSec->SP_plane(PLN_CEILING) : NULL;
                     const float skyZ = skyFixCeilZ(fceil, bceil);
 
-                    if(hasClosedBack || (!R_IsSkySurface(&bceil->surface) || P_IsInVoid(viewPlayer)))
+                    if(hasClosedBack || (!Surface_IsSkyMasked(&bceil->surface) || P_IsInVoid(viewPlayer)))
                     {
-                        const Plane* ceil = (bceil && R_IsSkySurface(&bceil->surface)? bceil : fceil);
+                        const Plane* ceil = (bceil && Surface_IsSkyMasked(&bceil->surface)? bceil : fceil);
                         if(ceil->visHeight < skyZ)
                             fixes |= SKYCAP_UPPER;
                     }
@@ -2505,11 +2505,11 @@ static void skyFixZCoords(HEdge* hedge, int skyCap, float* bottom, float* top)
     if(skyCap & SKYCAP_UPPER)
     {
         if(top)    *top    = skyFixCeilZ(fceil, bceil);
-        if(bottom) *bottom = MAX_OF((backSec && R_IsSkySurface(&bceil->surface))? bceil->visHeight : fceil->visHeight, ffloor->visHeight);
+        if(bottom) *bottom = MAX_OF((backSec && Surface_IsSkyMasked(&bceil->surface))? bceil->visHeight : fceil->visHeight, ffloor->visHeight);
     }
     else
     {
-        if(top)    *top    = MIN_OF((backSec && R_IsSkySurface(&bfloor->surface)? bfloor->visHeight : ffloor->visHeight), fceil->visHeight);
+        if(top)    *top    = MIN_OF((backSec && Surface_IsSkyMasked(&bfloor->surface)? bfloor->visHeight : ffloor->visHeight), fceil->visHeight);
         if(bottom) *bottom = skyFixFloorZ(ffloor, bfloor);
     }
 }
@@ -2581,9 +2581,9 @@ static void rendBspLeafSky(BspLeaf* bspLeaf, int skyCap)
     if(!bspLeaf || !bspLeaf->hedgeCount || !bspLeaf->sector) return;
 
     // Sky caps are only necessary in sectors with skymasked planes.
-    if((skyCap & SKYCAP_LOWER) && !R_IsSkySurface(&bspLeaf->sector->SP_floorsurface))
+    if((skyCap & SKYCAP_LOWER) && !Surface_IsSkyMasked(&bspLeaf->sector->SP_floorsurface))
         skyCap &= ~SKYCAP_LOWER;
-    if((skyCap & SKYCAP_UPPER) && !R_IsSkySurface(&bspLeaf->sector->SP_ceilsurface))
+    if((skyCap & SKYCAP_UPPER) && !Surface_IsSkyMasked(&bspLeaf->sector->SP_ceilsurface))
         skyCap &= ~SKYCAP_UPPER;
 
     // Sky fixes:
@@ -2697,8 +2697,8 @@ static void occludeBspLeaf(const BspLeaf* bspLeaf, boolean forwardFacing)
             }
 
             // Do not create an occlusion for sky floors.
-            if(!R_IsSkySurface(&back->SP_floorsurface) ||
-               !R_IsSkySurface(&front->SP_floorsurface))
+            if(!Surface_IsSkyMasked(&back->SP_floorsurface) ||
+               !Surface_IsSkyMasked(&front->SP_floorsurface))
             {
                 // Do the floors create an occlusion?
                 if((backh[0] > fronth[0] && vy <= backh[0]) ||
@@ -2710,8 +2710,8 @@ static void occludeBspLeaf(const BspLeaf* bspLeaf, boolean forwardFacing)
             }
 
             // Do not create an occlusion for sky ceilings.
-            if(!R_IsSkySurface(&back->SP_ceilsurface) ||
-               !R_IsSkySurface(&front->SP_ceilsurface))
+            if(!Surface_IsSkyMasked(&back->SP_ceilsurface) ||
+               !Surface_IsSkyMasked(&front->SP_ceilsurface))
             {
                 // Do the ceilings create an occlusion?
                 if((backh[1] < fronth[1] && vy >= backh[1]) ||
@@ -2851,7 +2851,7 @@ static void Rend_RenderBspLeaf(uint bspLeafIdx)
         material_t* mat;
         int texMode;
 
-        isSkyMasked = R_IsSkySurface(suf);
+        isSkyMasked = Surface_IsSkyMasked(suf);
         if(isSkyMasked && plane->type != PLN_MID)
         {
             if(!devRendSkyMode) continue; // Not handled here.
@@ -3011,8 +3011,8 @@ void Rend_RenderSurfaceVectors(void)
 
             if(hedge->HE_backsector->SP_ceilvisheight <
                hedge->HE_frontsector->SP_ceilvisheight &&
-               !(R_IsSkySurface(&hedge->HE_frontsector->SP_ceilsurface) &&
-                 R_IsSkySurface(&hedge->HE_backsector->SP_ceilsurface)))
+               !(Surface_IsSkyMasked(&hedge->HE_frontsector->SP_ceilsurface) &&
+                 Surface_IsSkyMasked(&hedge->HE_backsector->SP_ceilsurface)))
             {
                 bottom = hedge->HE_backsector->SP_ceilvisheight;
                 top = hedge->HE_frontsector->SP_ceilvisheight;
@@ -3024,8 +3024,8 @@ void Rend_RenderSurfaceVectors(void)
 
             if(hedge->HE_backsector->SP_floorvisheight >
                hedge->HE_frontsector->SP_floorvisheight &&
-               !(R_IsSkySurface(&hedge->HE_frontsector->SP_floorsurface) &&
-                 R_IsSkySurface(&hedge->HE_backsector->SP_floorsurface)))
+               !(Surface_IsSkyMasked(&hedge->HE_frontsector->SP_floorsurface) &&
+                 Surface_IsSkyMasked(&hedge->HE_backsector->SP_floorsurface)))
             {
                 bottom = hedge->HE_frontsector->SP_floorvisheight;
                 top = hedge->HE_backsector->SP_floorvisheight;
@@ -3050,7 +3050,7 @@ void Rend_RenderSurfaceVectors(void)
             vec3_t origin;
 
             V3_Set(origin, bspLeaf->midPoint.pos[VX], bspLeaf->midPoint.pos[VY], pln->visHeight);
-            if(pln->type != PLN_MID && R_IsSkySurface(&pln->surface))
+            if(pln->type != PLN_MID && Surface_IsSkyMasked(&pln->surface))
                 origin[VZ] = GameMap_SkyFix(theMap, pln->type == PLN_CEILING);
 
             drawSurfaceTangentSpaceVectors(&pln->surface, origin);

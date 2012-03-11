@@ -776,8 +776,8 @@ void GameMap_UpdateSkyFixForSector(GameMap* map, Sector* sec)
 
     if(!sec || 0 == sec->lineDefCount) return;
 
-    skyFloor = R_IsSkySurface(&sec->SP_floorsurface);
-    skyCeil  = R_IsSkySurface(&sec->SP_ceilsurface);
+    skyFloor = Surface_IsSkyMasked(&sec->SP_floorsurface);
+    skyCeil  = Surface_IsSkyMasked(&sec->SP_ceilsurface);
 
     if(!skyFloor && !skyCeil) return;
 
@@ -1534,7 +1534,7 @@ boolean R_IsGlowingPlane(const Plane* pln)
         MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
     const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true);
 
-    return ((mat && !Material_IsDrawable(mat)) || ms->glowing > 0 || R_IsSkySurface(&pln->surface));
+    return ((mat && !Material_IsDrawable(mat)) || ms->glowing > 0 || Surface_IsSkyMasked(&pln->surface));
 }
 
 float R_GlowStrength(const Plane* pln)
@@ -1542,7 +1542,7 @@ float R_GlowStrength(const Plane* pln)
     material_t* mat = pln->surface.material;
     if(mat)
     {
-        if(Material_IsDrawable(mat) && !R_IsSkySurface(&pln->surface))
+        if(Material_IsDrawable(mat) && !Surface_IsSkyMasked(&pln->surface))
         {
             /// \fixme We should not need to prepare to determine this.
             const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
@@ -1567,7 +1567,7 @@ boolean R_SectorContainsSkySurfaces(const Sector* sec)
     uint n = 0;
     do
     {
-        if(R_IsSkySurface(&sec->SP_planesurface(n)))
+        if(Surface_IsSkyMasked(&sec->SP_planesurface(n)))
             sectorContainsSkySurfaces = true;
         else
             n++;
@@ -1599,12 +1599,12 @@ static material_t* chooseFixMaterial(SideDef* s, sidedefsection_t section)
                        (section == SS_TOP    && frontSec->SP_ceilheight  > backSec->SP_ceilheight  && frontSec->SP_floorheight < backSec->SP_ceilheight)))
         {
             suf = &backSec->SP_plane(section == SS_BOTTOM? PLN_FLOOR : PLN_CEILING)->surface;
-            if(suf->material && !R_IsSkySurface(suf))
+            if(suf->material && !Surface_IsSkyMasked(suf))
                 choice1 = suf->material;
         }
 
         suf = &frontSec->SP_plane(section == SS_BOTTOM? PLN_FLOOR : PLN_CEILING)->surface;
-        if(suf->material && !R_IsSkySurface(suf))
+        if(suf->material && !Surface_IsSkyMasked(suf))
             choice2 = suf->material;
     }
 
@@ -1628,7 +1628,7 @@ static void updateSidedefSection(SideDef* s, sidedefsection_t section)
 
     suf = &s->sections[section];
     if(!suf->material /*&&
-       !R_IsSkySurface(&s->sector->
+       !Surface_IsSkyMasked(&s->sector->
             SP_plane(section == SS_BOTTOM? PLN_FLOOR : PLN_CEILING)->
                 surface)*/)
     {

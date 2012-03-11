@@ -214,11 +214,6 @@ void R_LoadSystemFonts(void)
     Con_SetFont(fontFixed);
 }
 
-boolean R_IsSkySurface(const Surface* suf)
-{
-    return (suf && suf->material && Material_IsSkyMasked(suf->material));
-}
-
 /**
  * Update the view origin position for player @a consoleNum.
  *

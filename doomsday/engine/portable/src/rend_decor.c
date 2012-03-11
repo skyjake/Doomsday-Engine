@@ -632,7 +632,7 @@ static void updateSideSectionDecorations(SideDef* side, sidedefsection_t section
         suf = &side->SW_topsurface;
         if(suf->material)
             if(line->L_backside && backCeil->visHeight < frontCeil->visHeight &&
-               (!R_IsSkySurface(&backCeil->surface) || !R_IsSkySurface(&frontCeil->surface)))
+               (!Surface_IsSkyMasked(&backCeil->surface) || !Surface_IsSkyMasked(&frontCeil->surface)))
             {
                 top = frontCeil->visHeight;
                 bottom  = backCeil->visHeight;
@@ -646,7 +646,7 @@ static void updateSideSectionDecorations(SideDef* side, sidedefsection_t section
         suf = &side->SW_bottomsurface;
         if(suf->material)
             if(line->L_backside && backFloor->visHeight > frontFloor->visHeight &&
-               (!R_IsSkySurface(&backFloor->surface) || !R_IsSkySurface(&frontFloor->surface)))
+               (!Surface_IsSkyMasked(&backFloor->surface) || !Surface_IsSkyMasked(&frontFloor->surface)))
             {
                 top = backFloor->visHeight;
                 bottom  = frontFloor->visHeight;
