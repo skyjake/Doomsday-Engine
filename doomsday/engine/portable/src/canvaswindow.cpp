@@ -32,10 +32,10 @@ CanvasWindow::CanvasWindow(QWidget *parent)
     setCentralWidget(_canvas = new Canvas); // takes ownership
 }
 
-Canvas *CanvasWindow::canvas()
+Canvas& CanvasWindow::canvas()
 {
     assert(_canvas != 0);
-    return _canvas;
+    return *_canvas;
 }
 
 void CanvasWindow::setDefaultGLFormat()

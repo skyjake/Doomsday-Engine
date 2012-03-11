@@ -118,7 +118,7 @@ int DD_GameLoop(void)
     }
 
     // Start the deng2 event loop.
-    return LegacyCore_RunEventLoop(de2LegacyCore, DD_GameLoopCallback);
+    return LegacyCore_RunEventLoop(de2LegacyCore);
 }
 
 void DD_GameLoopCallback(void)

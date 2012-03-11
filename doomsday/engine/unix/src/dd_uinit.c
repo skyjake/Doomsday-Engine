@@ -399,7 +399,13 @@ boolean DD_Unix_Init(int argc, char** argv)
     {
         DD_ErrorBox(true, "Error creating main window.");
     }
-    else if(!Sys_GLInitialize())
+    else
+    {
+        // Everything okay so far.
+        failed = false;
+    }}
+
+        /*if(!Sys_GLInitialize())
     {
         DD_ErrorBox(true, "Error initializing OpenGL.");
     }
@@ -412,7 +418,7 @@ boolean DD_Unix_Init(int argc, char** argv)
         DD_ComposeMainWindowTitle(buf);
         Sys_SetWindowTitle(windowIDX, buf);
         }
-    }}
+    }}*/
 
     return !failed;
 }

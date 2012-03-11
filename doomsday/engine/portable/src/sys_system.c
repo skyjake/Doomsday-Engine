@@ -260,9 +260,9 @@ void Sys_ShowCursor(boolean show)
 #ifdef WIN32
     ShowCursor(show);
 #endif
-#ifdef UNIX
+/*#ifdef UNIX
     SDL_ShowCursor(show ? SDL_ENABLE : SDL_DISABLE);
-#endif
+#endif*/
 }
 
 void Sys_HideMouse(void)

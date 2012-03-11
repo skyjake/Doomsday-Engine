@@ -463,6 +463,8 @@ boolean Sys_GLInitialize(void)
     assert(doneEarlyInit);
     LIBDENG_ASSERT_IN_MAIN_THREAD();
 
+    assert(!Sys_GLCheckError());
+
     if(firstTimeInit)
     {
         double version = strtod((const char*) glGetString(GL_VERSION), NULL);
@@ -509,6 +511,8 @@ boolean Sys_GLInitialize(void)
     // Always use vsync if available.
     /// @fixme Should be determined by cvar.
     GL_SetVSync(true);
+
+    assert(!Sys_GLCheckError());
 
     return true;
 }

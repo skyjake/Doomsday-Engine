@@ -19,12 +19,19 @@
  * 02110-1301 USA</small>
  */
 
+#include <QShowEvent>
+#include <QTimer>
+
 #include "canvas.h"
 #include "sys_opengl.h"
 
 struct Canvas::Instance
 {
-    // members
+    bool initNotified;
+    void (*initCallback)(Canvas&);
+
+    Instance() : initNotified(false), initCallback(0)
+    {}
 };
 
 Canvas::Canvas(QWidget *parent) : QGLWidget(parent)
@@ -37,9 +44,13 @@ Canvas::~Canvas()
     delete d;
 }
 
+void Canvas::setInitCallback(void (*canvasInitializeFunc)(Canvas&))
+{
+    d->initCallback = canvasInitializeFunc;
+}
+
 void Canvas::initializeGL()
 {
-
 }
 
 void Canvas::resizeGL(int w, int h)
@@ -48,9 +59,32 @@ void Canvas::resizeGL(int w, int h)
     Q_UNUSED(h);
 }
 
+void Canvas::showEvent(QShowEvent* ev)
+{
+    QGLWidget::showEvent(ev);
+
+    // The first time the window is shown, run the initialization callback. On
+    // some platforms, OpenGL is not fully ready to be used before the window
+    // actually appears on screen.
+    if(isVisible() && !d->initNotified)
+    {
+        QTimer::singleShot(1, this, SLOT(notifyInit()));
+    }
+}
+
+void Canvas::notifyInit()
+{
+    if(!d->initNotified && d->initCallback)
+    {
+        d->initNotified = true;
+        d->initCallback(*this);
+    }
+}
+
 void Canvas::paintGL()
 {
-    glClearColor(1, 0, 1, 1);
+    // If we don't know what else to draw, just draw a black screen.
+    glClearColor(0, 0, 0, 1);
     glClear(GL_COLOR_BUFFER_BIT);
 
     // GL buffer swap will be performed after this function exits.

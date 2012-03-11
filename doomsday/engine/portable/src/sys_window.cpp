@@ -20,9 +20,17 @@
  * 02110-1301 USA</small>
  */
 
+#include <QWidget>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#ifdef UNIX
+#  include "m_args.h"
+#  include <SDL.h>
+#endif
+
+#include "canvaswindow.h"
+
 #include "de_platform.h"
 #include "sys_window.h"
 #include "sys_system.h"
@@ -33,15 +41,18 @@
 
 struct ddwindow_s
 {
-    ddwindowtype_t  type;
-    boolean         inited;
-    RectRaw         geometry;
-    int             bpp;
-    int             flags;
+    CanvasWindow* widget; ///< The widget this window represents.
+
+    ddwindowtype_t type;
+    boolean inited;
+    RectRaw geometry;
+    int bpp;
+    int flags;
     consolewindow_t console; ///< Only used for WT_CONSOLE windows.
+
 #if defined(WIN32)
-    HWND            hWnd; // Needed for input (among other things).
-    HGLRC           glContext;
+    HWND hWnd; ///< Needed for input (among other things).
+    HGLRC glContext;
 #endif
 };
 
@@ -68,15 +79,16 @@ static __inline Window *getWindow(uint idx)
     if(!winManagerInited)
         return NULL; // Window manager is not initialized.
 
-    if(idx != 0)
-        return NULL;
+    if(idx == 1)
+        return &mainWindow;
 
-    return &mainWindow;
+    assert(false); // We can only have window 1 (main window).
+    return NULL;
 }
 
-Window* Sys_Window(uint idx)
+Window* Sys_Window(uint id)
 {
-    return getWindow(idx);
+    return getWindow(id);
 }
 
 boolean Sys_ChangeVideoMode(int width, int height, int bpp)
@@ -327,6 +339,17 @@ boolean Sys_InitWindowManager(void)
 
     Con_Message("Sys_InitWindowManager: Using Qt window management.\n");
 
+    CanvasWindow::setDefaultGLFormat();
+
+#ifdef UNIX
+    // Initialize the SDL video subsystem, unless we're going to run in
+    // dedicated mode.
+    if(!ArgExists("-dedicated"))
+    {
+        SDL_InitSubSystem(SDL_INIT_VIDEO);
+    }
+#endif
+
 #if 0
     // Initialize the SDL video subsystem, unless we're going to run in
     // dedicated mode.
@@ -443,8 +466,14 @@ boolean Sys_GetWindowManagerInfo(wminfo_t *info)
     return true;
 }
 
-static Window* createDDWindow(application_t*, const Size2Raw* size, int bpp, int flags,
-                                  ddwindowtype_t type, const char* title)
+static void finishMainWindowInit(Canvas& canvas)
+{
+    assert(&mainWindow.widget->canvas() == &canvas);
+    DD_FinishInitializationAfterWindowReady();
+}
+
+static Window* createDDWindow(application_t*, const Point2Raw* origin, const Size2Raw* size,
+                              int bpp, int flags, ddwindowtype_t type, const char* title)
 {
     // SDL only supports one window.
     if(mainWindowInited) return NULL;
@@ -463,8 +492,23 @@ static Window* createDDWindow(application_t*, const Size2Raw* size, int bpp, int
             return 0;
         }
 
-        // Create a window.
+        if(flags & DDWF_FULLSCREEN)
+        {
+            // Need to change mode?
+        }
 
+        // Create the main window.
+        mainWindow.widget = new CanvasWindow;
+        mainWindow.widget->setGeometry(QRect(origin->x, origin->y, size->width, size->height));
+        mainWindow.widget->setMinimumSize(QSize(320, 240));
+
+        // After the main window is created, we can finish with the engine init.
+        mainWindow.widget->canvas().setInitCallback(finishMainWindowInit);
+
+        if(flags & DDWF_CENTER)
+        {
+        }
+        //mainWindow.widget->show();
 
 #if 0
 #if defined(WIN32)
@@ -493,7 +537,7 @@ uint Sys_CreateWindow(application_t* app, const Point2Raw* origin,
 {
     if(!winManagerInited) return 0;
 
-    Window* win = createDDWindow(app, size, bpp, flags, type, title);
+    Window* win = createDDWindow(app, origin, size, bpp, flags, type, title);
     if(win) return 1; // Success.
     return 0;
 }
@@ -582,7 +626,7 @@ boolean Sys_SetActiveWindow(uint idx)
 boolean Sys_SetWindow(uint idx, int newX, int newY, int newWidth, int newHeight,
                       int newBPP, uint wFlags, uint uFlags)
 {
-    Window *window = getWindow(idx - 1);
+    Window *window = getWindow(idx);
 
     if(window)
         return setDDWindow(window, newWidth, newHeight, newBPP,
@@ -598,9 +642,12 @@ void Sys_UpdateWindow(uint idx)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
 
-#if 0
-    SDL_GL_SwapBuffers();
-#endif
+    Window* win = getWindow(idx);
+    assert(win);
+    if(!win->widget) return;
+
+    // Force a swapbuffers right now.
+    win->widget->canvas().swapBuffers();
 }
 
 /**
@@ -613,7 +660,7 @@ void Sys_UpdateWindow(uint idx)
  */
 boolean Sys_SetWindowTitle(uint idx, const char *title)
 {
-    Window *window = getWindow(idx - 1);
+    Window *window = getWindow(idx);
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
 
@@ -731,6 +778,34 @@ HWND Sys_GetWindowHandle(uint idx)
 #endif
 
 #endif
+
+void Window_Show(Window *wnd, boolean show)
+{
+    /// Assumption: This is only called once, during startup.
+
+    assert(wnd);
+
+    if(wnd->type == WT_CONSOLE)
+    {
+        // Not really applicable.
+        if(show)
+        {
+            /// @todo  Kludge: finish init in dedicated mode.
+            DD_FinishInitializationAfterWindowReady();
+            return;
+        }
+    }
+
+    assert(wnd->widget);
+    if(show)
+    {
+        wnd->widget->show();
+    }
+    else
+    {
+        wnd->widget->hide();
+    }
+}
 
 ddwindowtype_t Window_Type(const Window* wnd)
 {

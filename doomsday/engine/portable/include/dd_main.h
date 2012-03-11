@@ -78,6 +78,7 @@ extern GETGAMEAPI GetGameAPI;
 extern struct Game_s* theGame;
 
 int DD_EarlyInit(void);
+void DD_FinishInitializationAfterWindowReady(void);
 boolean DD_Init(void);
 
 /// @return  @c true if shutdown is in progress.

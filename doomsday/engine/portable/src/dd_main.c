@@ -1437,6 +1437,34 @@ static int DD_LocateAllGameResourcesWorker(void* paramaters)
 }
 
 /**
+ * This gets called when the main window is ready for GL init. The application
+ * event loop is already running.
+ */
+void DD_FinishInitializationAfterWindowReady(void)
+{    
+    if(!Sys_GLInitialize())
+    {
+        DD_ErrorBox(true, "Error initializing OpenGL.");
+    }
+    else
+    {
+        char buf[256];
+        DD_ComposeMainWindowTitle(buf);
+        Sys_SetWindowTitle(windowIDX, buf);
+    }
+
+    // Initialize engine subsystems and initial state.
+    if(!DD_Init())
+    {
+        exit(2); // Cannot continue...
+        return;
+    }
+
+    // Now we can start executing the engine's main loop.
+    LegacyCore_SetLoopFunc(de2LegacyCore, DD_GameLoopCallback);
+}
+
+/**
  * Engine initialization. After completed, the game loop is ready to be started.
  * Called from the app entrypoint function.
  *
@@ -1510,6 +1538,9 @@ boolean DD_Init(void)
         return false;
     }
 
+    assert(!Sys_GLCheckError());
+
+    /*
     if(!novideo)
     {
         // Render a few black frames before we continue. This will help to
@@ -1521,7 +1552,9 @@ boolean DD_Init(void)
             glClear(GL_COLOR_BUFFER_BIT);
             GL_DoUpdate();
         }
-    }
+    }*/
+
+    assert(!Sys_GLCheckError());
 
     // Initialize the subsystems needed prior to entering busy mode for the first time.
     Sys_Init();
@@ -1530,6 +1563,7 @@ boolean DD_Init(void)
 
     Fonts_Init();
     FR_Init();
+    DD_InitInput();
 
     // Enter busy mode until startup complete.
     Con_InitProgress2(200, 0, .25f); // First half.
@@ -1579,6 +1613,7 @@ boolean DD_Init(void)
     Con_Busy(BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
              "Locating game resources...", DD_LocateAllGameResourcesWorker, 0);
 
+    /*
     // Unless we reenter busy-mode due to automatic game selection, we won't be
     // drawing anything further until DD_GameLoop; so lets clean up.
     if(!novideo)
@@ -1586,6 +1621,7 @@ boolean DD_Init(void)
         glClear(GL_COLOR_BUFFER_BIT);
         GL_DoUpdate();
     }
+    */
 
     // Attempt automatic game selection.
     if(!ArgExists("-noautoselect"))
@@ -1759,9 +1795,6 @@ static int DD_StartupWorker(void* parm)
     // Initialize COM for this thread (needed for DirectInput).
     CoInitialize(NULL);
 #endif
-
-    // Initialize the key mappings.
-    DD_InitInput();
 
     Con_SetProgress(10);
 

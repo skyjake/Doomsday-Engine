@@ -48,6 +48,10 @@
 
 #include "con_busy.h"
 
+#ifndef SOLARIS
+#  include <SDL.h>
+#endif
+
 // MACROS ------------------------------------------------------------------
 
 #define DEFAULT_JOYSTICK_DEADZONE .05f // 5%
@@ -715,6 +719,24 @@ int DD_KeyOrCode(char* token)
 void DD_InitInput(void)
 {
     int i;
+
+    if(!isDedicated)
+    {
+        /**
+         * @note  Solaris has no Joystick support according to
+         * https://sourceforge.net/tracker/?func=detail&atid=542099&aid=1732554&group_id=74815
+         */
+#ifndef SOLARIS
+        if(!ArgExists("-nojoy"))
+        {
+            if(SDL_InitSubSystem(SDL_INIT_JOYSTICK))
+            {
+                Con_Message("SDL init failed for joystick: %s\n", SDL_GetError());
+            }
+        }
+#endif
+    }
+
     for(i = 0; i < 256; ++i)
     {
         if(i >= 32 && i <= 127)

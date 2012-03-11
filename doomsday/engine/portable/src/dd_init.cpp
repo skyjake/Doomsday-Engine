@@ -25,6 +25,7 @@
 #include <de/c_wrapper.h>
 #include "de_platform.h"
 #include "dd_loop.h"
+#include "sys_window.h"
 #include "sys_system.h"
 
 extern "C" {
@@ -75,8 +76,10 @@ int main(int argc, char** argv)
     if(!DD_Win32_Init()) return 1;
 #elif UNIX
     if(!DD_Unix_Init(argc, argv)) return 1;
-#endif   
-    if(!DD_Init()) return 2;
+#endif
+
+    // Show the main window. This also completes the initialization.
+    Window_Show(Sys_MainWindow(), true);
 
     // Run the main loop.
     int result = DD_GameLoop();

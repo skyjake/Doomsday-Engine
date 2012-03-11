@@ -37,7 +37,7 @@ class CanvasWindow : public QMainWindow
 public:
     explicit CanvasWindow(QWidget *parent = 0);
     
-    Canvas* canvas();
+    Canvas& canvas();
 
     /**
      * Must be called before any canvas windows are created. Defines the

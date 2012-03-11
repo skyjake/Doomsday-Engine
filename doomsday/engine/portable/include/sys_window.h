@@ -128,6 +128,8 @@ uint Sys_CreateWindow(application_t* app, const Point2Raw* origin,
     const Size2Raw* size, int bpp, int flags, ddwindowtype_t type, const char* title, void* data);
 boolean Sys_DestroyWindow(uint idx);
 
+void Window_Show(Window* wnd, boolean show);
+
 ddwindowtype_t Window_Type(const Window* wnd);
 
 struct consolewindow_s* Window_Console(Window* wnd);
@@ -155,7 +157,7 @@ int Window_BitsPerPixel(const Window* wnd);
  */
 const Size2Raw* Window_Size(const Window* wnd);
 
-void Sys_UpdateWindow(uint idx);
+void Sys_UpdateWindow(uint id);
 
 /**
  * Attempt to get the dimensions (and position) of the given window

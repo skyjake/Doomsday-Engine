@@ -37,10 +37,24 @@ public:
     explicit Canvas(QWidget *parent = 0);
     ~Canvas();
     
+    /**
+     * Sets a callback function that will be called when the canvas is ready
+     * for GL initialization. The OpenGL context and drawing surface are not
+     * ready to be used before that.
+     *
+     * @param canvasInitializeFunc  Callback.
+     */
+    void setInitCallback(void (*canvasInitializeFunc)(Canvas&));
+
 protected:
     void initializeGL();
     void resizeGL(int w, int h);
     void paintGL();
+
+    void showEvent(QShowEvent*);
+
+protected slots:
+    void notifyInit();
 
 private:
     struct Instance;
