@@ -488,14 +488,12 @@ static Window* createDDWindow(application_t*, const Size2Raw* size, int bpp, int
     return &mainWindow;
 }
 
-uint Sys_CreateWindow(application_t* app, uint parentIdx, const Point2Raw* origin,
-    const Size2Raw* size, int bpp, int flags, ddwindowtype_t type, const char* title,
-    void* userData)
+uint Sys_CreateWindow(application_t* app, const Point2Raw* origin,
+    const Size2Raw* size, int bpp, int flags, ddwindowtype_t type, const char* title, void*)
 {
-    Window* win;
     if(!winManagerInited) return 0;
 
-    win = createDDWindow(app, size, bpp, flags, type, title);
+    Window* win = createDDWindow(app, size, bpp, flags, type, title);
     if(win) return 1; // Success.
     return 0;
 }

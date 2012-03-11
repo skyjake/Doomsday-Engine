@@ -113,8 +113,6 @@ boolean Sys_GetDesktopBPP(int* bpp);
  * Create a new window.
  *
  * @param app           Ptr to the application structure holding our globals.
- * @param parentIdx     Index number of the window that is to be the parent
- *                      of the new window. If @c 0, window has no parent.
  * @param origin        Origin of the window in desktop-space.
  * @param size          Size of the window (client area) in desktop-space.
  * @param bpp           BPP (bits-per-pixel)
@@ -126,7 +124,7 @@ boolean Sys_GetDesktopBPP(int* bpp);
  * @return              If @c 0, window creation was unsuccessful,
  *                      ELSE 1-based index identifier of the new window.
  */
-uint Sys_CreateWindow(application_t* app, uint parentIDX, const Point2Raw* origin,
+uint Sys_CreateWindow(application_t* app, const Point2Raw* origin,
     const Size2Raw* size, int bpp, int flags, ddwindowtype_t type, const char* title, void* data);
 boolean Sys_DestroyWindow(uint idx);
 

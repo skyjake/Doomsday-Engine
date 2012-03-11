@@ -411,7 +411,7 @@ static BOOL createMainWindow(int lnCmdShow)
     Point2Raw origin = { 0, 0 };
     Size2Raw size = { 640, 480 };
     DD_ComposeMainWindowTitle(buf);
-    windowIDX = Sys_CreateWindow(&app, 0, &origin, &size, 32, 0,
+    windowIDX = Sys_CreateWindow(&app, &origin, &size, 32, 0,
         (isDedicated ? WT_CONSOLE : WT_NORMAL), buf, &lnCmdShow);
     return windowIDX != 0;
 }
