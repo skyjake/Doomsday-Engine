@@ -68,10 +68,16 @@ protected:
     void resizeGL(int w, int h);
     void paintGL();
 
+    // Events.
+    void focusInEvent(QFocusEvent*);
+    void focusOutEvent(QFocusEvent*);
+    void mousePressEvent(QMouseEvent*);
+    void mouseReleaseEvent(QMouseEvent*);
     void showEvent(QShowEvent*);
 
 protected slots:
     void notifyInit();
+    void checkMousePosition();
 
 private:
     struct Instance;

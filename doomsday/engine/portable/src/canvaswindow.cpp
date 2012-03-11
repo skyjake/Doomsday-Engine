@@ -37,6 +37,9 @@ CanvasWindow::CanvasWindow(QWidget *parent)
 
     // Create the drawing canvas for this window.
     setCentralWidget(d->canvas = new Canvas); // takes ownership
+
+    // All input goes to the canvas.
+    d->canvas->setFocus();
 }
 
 CanvasWindow::~CanvasWindow()

@@ -19,8 +19,11 @@
  * 02110-1301 USA</small>
  */
 
+#include <QApplication>
+#include <QMouseEvent>
 #include <QShowEvent>
 #include <QPaintEvent>
+#include <QCursor>
 #include <QTimer>
 #include <QDebug>
 
@@ -29,17 +32,46 @@
 
 struct Canvas::Instance
 {
+    Canvas* self;
     bool initNotified;
     void (*initCallback)(Canvas&);
     void (*drawCallback)(Canvas&);
+    bool mouseGrabbed;
+    QPoint prevMousePos;
 
-    Instance() : initNotified(false), initCallback(0), drawCallback(0)
+    Instance(Canvas* c)
+        : self(c),
+          initNotified(false), initCallback(0),
+          drawCallback(0),
+          mouseGrabbed(false)
     {}
+
+    void grabMouse()
+    {
+        mouseGrabbed = true;
+
+        // Start grabbing the mouse now.
+        QCursor::setPos(self->mapToGlobal(self->rect().center()));
+        self->grabMouse();
+        qApp->setOverrideCursor(QCursor(Qt::BlankCursor));
+
+        QTimer::singleShot(1, self, SLOT(checkMousePosition()));
+    }
+
+    void ungrabMouse()
+    {
+        mouseGrabbed = false;
+        self->releaseMouse();
+        qApp->restoreOverrideCursor();
+    }
 };
 
 Canvas::Canvas(QWidget *parent) : QGLWidget(parent)
 {
-    d = new Instance;
+    d = new Instance(this);
+
+    setFocusPolicy(Qt::StrongFocus);
+    setMouseTracking(true); // receive moves always
 
     // We will be doing buffer swaps manually (for timing purposes).
     setAutoBufferSwap(false);
@@ -118,4 +150,74 @@ void Canvas::paintGL()
 
         swapBuffers();
     }
+}
+
+void Canvas::focusInEvent(QFocusEvent*)
+{
+    qDebug() << "Canvas: focus in";
+}
+
+void Canvas::focusOutEvent(QFocusEvent*)
+{
+    qDebug() << "Canvas: focus out";
+
+    d->ungrabMouse();
+}
+
+void Canvas::mousePressEvent(QMouseEvent* ev)
+{
+    if(!d->mouseGrabbed)
+    {
+        ev->ignore();
+        return;
+    }
+
+    ev->accept();
+
+    qDebug() << "Canvas: mouse press at" << ev->pos();
+}
+
+void Canvas::checkMousePosition()
+{
+    if(d->mouseGrabbed)
+    {
+        QPoint curPos = mapFromGlobal(QCursor::pos());
+        if(!d->prevMousePos.isNull())
+        {
+            QPoint delta = curPos - d->prevMousePos;
+            if(!delta.isNull())
+            {
+                qDebug() << "Canvas: mouse delta" << delta;
+
+                // Keep the cursor centered.
+                QPoint mid = rect().center();
+                QCursor::setPos(mapToGlobal(mid));
+                d->prevMousePos = mid;
+            }
+        }
+        else
+        {
+            d->prevMousePos = curPos;
+        }
+        QTimer::singleShot(1, this, SLOT(checkMousePosition()));
+    }
+    else
+    {
+        // Mouse was ungrabbed; reset the tracking.
+        d->prevMousePos = QPoint();
+    }
+}
+
+void Canvas::mouseReleaseEvent(QMouseEvent* ev)
+{
+    ev->accept();
+
+    if(!d->mouseGrabbed)
+    {
+        // Start grabbing after a click.
+        d->grabMouse();
+        return;
+    }
+
+    qDebug() << "Canvas: mouse release at" << ev->pos();
 }
