@@ -1304,8 +1304,11 @@ void R_ShutdownModels(void)
 
     clearModelList();
 
-    StringPool_Delete(modelRepository);
-    modelRepository = 0;
+    if(modelRepository)
+    {
+        StringPool_Delete(modelRepository);
+        modelRepository = 0;
+    }
 }
 
 void R_SetModelFrame(modeldef_t* modef, int frame)
