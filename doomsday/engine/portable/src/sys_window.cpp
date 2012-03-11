@@ -1,44 +1,37 @@
-/**\file sys_sdl_window.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file sys_window.cpp
+ * Qt-based window management. @ingroup base
  *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-/**
- * Cross-platform, SDL-based window management.
- *
- * This code wraps SDL window management routines in order to provide
- * common behavior. The availabilty of features and behavioral traits can
- * be queried for.
- */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <SDL.h>
-#include <SDL_syswm.h>
+#include "de_platform.h"
+#include "sys_window.h"
+#include "sys_system.h"
+#include "dd_main.h"
+#include "con_main.h"
+#include "gl_main.h"
+#include "ui_main.h"
 
+/*
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
@@ -47,33 +40,11 @@
 #include "de_ui.h"
 
 #include "gl_texmanager.h"
-#include "rend_particle.h" // \todo Should not be necessary at this level.
+#include "rend_particle.h" /// @todo Should not be necessary to include rend_particle.h at this level.
+*/
 
-// MACROS ------------------------------------------------------------------
-
-#define LINELEN                 (1024)
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-static boolean setDDWindow(ddwindow_t *win, int newWidth, int newHeight,
-                           int newBPP, uint wFlags, uint uFlags);
-static void setConWindowCmdLine(uint idx, const char *text,
-                                unsigned int cursorPos, int flags);
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// Currently active window where all drawing operations are directed at.
+/// Currently active window where all drawing operations are directed at.
 const ddwindow_t* theWindow;
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean winManagerInited = false;
 
@@ -82,8 +53,6 @@ static boolean mainWindowInited = false;
 
 static int screenWidth, screenHeight, screenBPP;
 static boolean screenIsWindow;
-
-// CODE --------------------------------------------------------------------
 
 ddwindow_t* Sys_MainWindow(void)
 {
@@ -108,6 +77,31 @@ ddwindow_t* Sys_Window(uint idx)
 
 boolean Sys_ChangeVideoMode(int width, int height, int bpp)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
+    // Do we need to change it?
+    if(width == screenWidth && height == screenHeight && bpp == screenBPP &&
+       screenIsWindow == !(theWindow->flags & DDWF_FULLSCREEN))
+    {
+        // Got it already.
+        DEBUG_Message(("Sys_ChangeVideoMode: Ignoring because already using %ix%i bpp:%i window:%i\n",
+                       width, height, bpp, screenIsWindow));
+        return true;
+    }
+
+    DEBUG_Message(("Sys_ChangeVideoMode: Setting %ix%i bpp:%i window:%i\n",
+                   width, height, bpp, screenIsWindow));
+
+    // TODO: Attempt to change mode.
+
+    // Update current mode.
+    screenWidth = width; //info->current_w;
+    screenHeight = height; //info->current_h;
+    screenBPP = bpp; //info->vfmt->BitsPerPixel;
+    screenIsWindow = (theWindow->flags & DDWF_FULLSCREEN? false : true);
+    return true;
+
+#if 0
     int flags = SDL_OPENGL;
     const SDL_VideoInfo *info = NULL;
 
@@ -145,225 +139,7 @@ boolean Sys_ChangeVideoMode(int width, int height, int bpp)
     screenIsWindow = (theWindow->flags & DDWF_FULLSCREEN? false : true);
 
     return true;
-}
-
-/**
- * Initialize the window manager.
- * Tasks include; checking the system environment for feature enumeration.
- *
- * @return              @c true, if initialization was successful.
- */
-boolean Sys_InitWindowManager(void)
-{
-    if(winManagerInited)
-        return true; // Already been here.
-
-    Con_Message("Sys_InitWindowManager: Using SDL window management.\n");
-
-    // Initialize the SDL video subsystem, unless we're going to run in
-    // dedicated mode.
-    if(!ArgExists("-dedicated"))
-    {
-/**
- * @attention Solaris has no Joystick support according to
- * https://sourceforge.net/tracker/?func=detail&atid=542099&aid=1732554&group_id=74815
- */
-#ifdef SOLARIS
-        if(SDL_InitSubSystem(SDL_INIT_VIDEO))
-#else
-        if(SDL_InitSubSystem(SDL_INIT_VIDEO | (!ArgExists("-nojoy")?SDL_INIT_JOYSTICK : 0)))
 #endif
-        {
-            Con_Message("SDL Init Failed: %s\n", SDL_GetError());
-            return false;
-        }
-    }
-
-    memset(&mainWindow, 0, sizeof(mainWindow));
-    winManagerInited = true;
-    theWindow = &mainWindow;
-    return true;
-}
-
-/**
- * Shutdown the window manager.
- *
- * @return              @c true, if shutdown was successful.
- */
-boolean Sys_ShutdownWindowManager(void)
-{
-    if(!winManagerInited)
-        return false; // Window manager is not initialized.
-
-    if(mainWindow.type == WT_CONSOLE)
-        Sys_DestroyWindow(1);
-
-    // Now off-line, no more window management will be possible.
-    winManagerInited = false;
-
-    return true;
-}
-
-static boolean initOpenGL(void)
-{
-    // Attempt to set the video mode.
-    if(!Sys_ChangeVideoMode(theWindow->geometry.size.width,
-            theWindow->geometry.size.height, theWindow->normal.bpp))
-        return false;
-
-    Sys_GLConfigureDefaultState();
-    return true;
-}
-
-/**
- * Attempt to acquire a device context for OGL rendering and then init.
- *
- * @param width         Width of the OGL window.
- * @param height        Height of the OGL window.
- * @param bpp           0= the current display color depth is used.
- * @param windowed      @c true = windowed mode ELSE fullscreen.
- * @param data          Ptr to system-specific data, e.g a window handle
- *                      or similar.
- *
- * @return              @c true if successful.
- */
-static boolean createContext(int width, int height, int bpp, boolean windowed, void *data)
-{
-    Con_Message("createContext: OpenGL.\n");
-
-    // Set GL attributes.  We want at least 5 bits per color and a 16
-    // bit depth buffer.  Plus double buffering, of course.
-    SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 5);
-    SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 5);
-    SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 5);
-    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
-    SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-
-    if(!initOpenGL())
-    {
-        Con_Error("createContext: OpenGL init failed.\n");
-    }
-
-#ifdef MACOSX
-    // Vertical sync is a GL context property.
-    GL_SetVSync(true);
-#endif
-
-    return true;
-}
-
-/**
- * Complete the given wminfo_t, detailing what features are supported by
- * this window manager implementation.
- *
- * @param info          Ptr to the wminfo_t structure to complete.
- *
- * @return              @c true, if successful.
- */
-boolean Sys_GetWindowManagerInfo(wminfo_t *info)
-{
-    if(!winManagerInited)
-        return false; // Window manager is not initialized.
-
-    if(!info)
-        return false; // Wha?
-
-    // Complete the structure detailing what features are available.
-    info->canMoveWindow = false;
-    info->maxWindows = 1;
-    info->maxConsoles = 1;
-
-    return true;
-}
-
-static ddwindow_t* createDDWindow(application_t* app, const Size2Raw* size,
-    int bpp, int flags, ddwindowtype_t type, const char* title)
-{
-    // SDL only supports one window.
-    if(mainWindowInited) return NULL;
-
-    if(type == WT_CONSOLE)
-    {
-        Sys_ConInit(title);
-    }
-    else
-    {
-        if(!(bpp == 32 || bpp == 16))
-        {
-            Con_Message("createWindow: Unsupported BPP %i.", bpp);
-            return 0;
-        }
-
-#if defined(WIN32)
-        // We need to grab a handle from SDL so we can link other subsystems
-        // (e.g. DX-based input).
-        {
-        struct SDL_SysWMinfo wmInfo;
-        if(!SDL_GetWMInfo(&wmInfo))
-            return NULL;
-
-        mainWindow.hWnd = wmInfo.window;
-        }
-#endif
-    }
-
-    setDDWindow(&mainWindow, size->width, size->height, bpp, flags,
-                DDSW_NOVISIBLE | DDSW_NOCENTER | DDSW_NOFULLSCREEN);
-
-    mainWindowInited = true;
-    return &mainWindow;
-}
-
-uint Sys_CreateWindow(application_t* app, uint parentIdx, const Point2Raw* origin,
-    const Size2Raw* size, int bpp, int flags, ddwindowtype_t type, const char* title,
-    void* userData)
-{
-    ddwindow_t* win;
-    if(!winManagerInited) return 0;
-
-    win = createDDWindow(app, size, bpp, flags, type, title);
-    if(win) return 1; // Success.
-    return 0;
-}
-
-/**
- * Destroy the specified window.
- *
- * Side-effects: If the window is fullscreen and the current video mode is
- * not that set as the desktop default: an attempt will be made to change
- * back to the desktop default video mode.
- *
- * @param idx           Index of the window to destroy (1-based).
- *
- * @return              @c true, if successful.
- */
-boolean Sys_DestroyWindow(uint idx)
-{
-    ddwindow_t* window = getWindow(idx - 1);
-
-    if(!window)
-        return false;
-
-    if(window->type == WT_CONSOLE)
-    {
-        Sys_ConShutdown(idx);
-    }
-
-    return true;
-}
-
-/**
- * Change the currently active window.
- *
- * @param idx           Index of the window to make active (1-based).
- *
- * @return              @c true, if successful.
- */
-boolean Sys_SetActiveWindow(uint idx)
-{
-    // We only support one window, so yes its active.
-    return true;
 }
 
 static boolean setDDWindow(ddwindow_t *window, int newWidth, int newHeight,
@@ -470,8 +246,10 @@ static boolean setDDWindow(ddwindow_t *window, int newWidth, int newHeight,
 
     // Do we need a new GL context due to changes to the window?
     if(newGLContext)
-    {   // Maybe requires a renderer restart.
-extern boolean usingFog;
+    {
+#if 0
+        // Maybe requires a renderer restart.
+        extern boolean usingFog;
 
         boolean         glIsInited = GL_IsInited();
 #if defined(WIN32)
@@ -513,12 +291,8 @@ extern boolean usingFog;
             if(DD_GameLoaded() && gx.UpdateState)
                 gx.UpdateState(DD_RENDER_RESTART_POST);
         }
+#endif
     }
-    /*else
-    {
-        Sys_ChangeVideoMode(window->geometry.size.width,
-            window->geometry.size.height, window->normal.bpp);
-    }*/
 
     // If the window dimensions have changed, update any sub-systems
     // which need to respond.
@@ -531,6 +305,226 @@ extern boolean usingFog;
             Con_Execute(CMDS_DDAY, "panel", true, false);
     }
 
+    return true;
+}
+
+/**
+ * Initialize the window manager.
+ * Tasks include; checking the system environment for feature enumeration.
+ *
+ * @return              @c true, if initialization was successful.
+ */
+boolean Sys_InitWindowManager(void)
+{
+    if(winManagerInited)
+        return true; // Already been here.
+
+    Con_Message("Sys_InitWindowManager: Using Qt window management.\n");
+
+#if 0
+    // Initialize the SDL video subsystem, unless we're going to run in
+    // dedicated mode.
+    if(!ArgExists("-dedicated"))
+    {
+/**
+ * @attention Solaris has no Joystick support according to
+ * https://sourceforge.net/tracker/?func=detail&atid=542099&aid=1732554&group_id=74815
+ */
+#ifdef SOLARIS
+        if(SDL_InitSubSystem(SDL_INIT_VIDEO))
+#else
+        if(SDL_InitSubSystem(SDL_INIT_VIDEO | (!ArgExists("-nojoy")?SDL_INIT_JOYSTICK : 0)))
+#endif
+        {
+            Con_Message("SDL Init Failed: %s\n", SDL_GetError());
+            return false;
+        }
+    }
+#endif
+
+    memset(&mainWindow, 0, sizeof(mainWindow));
+    winManagerInited = true;
+    theWindow = &mainWindow;
+    return true;
+}
+
+/**
+ * Shutdown the window manager.
+ *
+ * @return              @c true, if shutdown was successful.
+ */
+boolean Sys_ShutdownWindowManager(void)
+{
+    if(!winManagerInited)
+        return false; // Window manager is not initialized.
+
+    if(mainWindow.type == WT_CONSOLE)
+        Sys_DestroyWindow(1);
+
+    // Now off-line, no more window management will be possible.
+    winManagerInited = false;
+
+    return true;
+}
+
+/**
+ * Attempt to acquire a device context for OpenGL rendering and then init.
+ *
+ * @param width         Width of the OGL window.
+ * @param height        Height of the OGL window.
+ * @param bpp           0= the current display color depth is used.
+ * @param windowed      @c true = windowed mode ELSE fullscreen.
+ * @param data          Ptr to system-specific data, e.g a window handle
+ *                      or similar.
+ *
+ * @return              @c true if successful.
+ */
+static boolean createContext(void)
+{
+    Con_Message("createContext: OpenGL.\n");
+
+#if 0
+    // Set GL attributes.  We want at least 5 bits per color and a 16
+    // bit depth buffer.  Plus double buffering, of course.
+    SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 5);
+    SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 5);
+    SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 5);
+    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
+    SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+#endif
+
+    // Attempt to set the video mode.
+    if(!Sys_ChangeVideoMode(theWindow->geometry.size.width,
+                            theWindow->geometry.size.height,
+                            theWindow->normal.bpp))
+    {
+        Con_Error("createContext: Video mode change failed.\n");
+        return false;
+    }
+
+    Sys_GLConfigureDefaultState();
+
+#ifdef MACOSX
+    // Vertical sync is a GL context property.
+    GL_SetVSync(true);
+#endif
+
+    return true;
+}
+
+/**
+ * Complete the given wminfo_t, detailing what features are supported by
+ * this window manager implementation.
+ *
+ * @param info          Ptr to the wminfo_t structure to complete.
+ *
+ * @return              @c true, if successful.
+ */
+boolean Sys_GetWindowManagerInfo(wminfo_t *info)
+{
+    if(!winManagerInited)
+        return false; // Window manager is not initialized.
+
+    if(!info)
+        return false; // Wha?
+
+    // Complete the structure detailing what features are available.
+    info->canMoveWindow = false;
+    info->maxWindows = 1;
+    info->maxConsoles = 1;
+
+    return true;
+}
+
+static ddwindow_t* createDDWindow(application_t*, const Size2Raw* size, int bpp, int flags,
+                                  ddwindowtype_t type, const char* title)
+{
+    // SDL only supports one window.
+    if(mainWindowInited) return NULL;
+
+    if(type == WT_CONSOLE)
+    {
+        Sys_ConInit(title);
+    }
+    else
+    {
+        if(!(bpp == 32 || bpp == 16))
+        {
+            Con_Message("createWindow: Unsupported BPP %i.", bpp);
+            return 0;
+        }
+
+#if 0
+#if defined(WIN32)
+        // We need to grab a handle from SDL so we can link other subsystems
+        // (e.g. DX-based input).
+        {
+        struct SDL_SysWMinfo wmInfo;
+        if(!SDL_GetWMInfo(&wmInfo))
+            return NULL;
+
+        mainWindow.hWnd = wmInfo.window;
+        }
+#endif
+#endif
+    }
+
+    setDDWindow(&mainWindow, size->width, size->height, bpp, flags,
+                DDSW_NOVISIBLE | DDSW_NOCENTER | DDSW_NOFULLSCREEN);
+
+    mainWindowInited = true;
+    return &mainWindow;
+}
+
+uint Sys_CreateWindow(application_t* app, uint parentIdx, const Point2Raw* origin,
+    const Size2Raw* size, int bpp, int flags, ddwindowtype_t type, const char* title,
+    void* userData)
+{
+    ddwindow_t* win;
+    if(!winManagerInited) return 0;
+
+    win = createDDWindow(app, size, bpp, flags, type, title);
+    if(win) return 1; // Success.
+    return 0;
+}
+
+/**
+ * Destroy the specified window.
+ *
+ * Side-effects: If the window is fullscreen and the current video mode is
+ * not that set as the desktop default: an attempt will be made to change
+ * back to the desktop default video mode.
+ *
+ * @param idx           Index of the window to destroy (1-based).
+ *
+ * @return              @c true, if successful.
+ */
+boolean Sys_DestroyWindow(uint idx)
+{
+    ddwindow_t* window = getWindow(idx - 1);
+
+    if(!window)
+        return false;
+
+    if(window->type == WT_CONSOLE)
+    {
+        Sys_ConShutdown(idx);
+    }
+
+    return true;
+}
+
+/**
+ * Change the currently active window.
+ *
+ * @param idx           Index of the window to make active (1-based).
+ *
+ * @return              @c true, if successful.
+ */
+boolean Sys_SetActiveWindow(uint idx)
+{
+    // We only support one window, so yes its active.
     return true;
 }
 
@@ -595,7 +589,9 @@ void Sys_UpdateWindow(uint idx)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
 
+#if 0
     SDL_GL_SwapBuffers();
+#endif
 }
 
 /**
@@ -616,7 +612,9 @@ boolean Sys_SetWindowTitle(uint idx, const char *title)
     {
         if(window->type == WT_NORMAL)
         {
+#if 0
             SDL_WM_SetCaption(title, NULL);
+#endif
         }
         else // It's a terminal window.
         {
@@ -699,6 +697,8 @@ boolean Sys_GetWindowFullscreen(uint idx, boolean *fullscreen)
     return true;
 }
 
+#if 0
+
 /**
  * Attempt to get a HWND handle to the given window.
  *
@@ -719,4 +719,6 @@ HWND Sys_GetWindowHandle(uint idx)
 
     return window->hWnd;
 }
+#endif
+
 #endif

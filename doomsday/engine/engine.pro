@@ -368,7 +368,6 @@ HEADERS += \
     $$DENG_HEADERS
 
 DENG_UNIX_SOURCES += \
-    portable/src/sys_sdl_window.c \
     unix/src/dd_uinit.c \
     unix/src/sys_console.c \
     unix/src/sys_findfile.c \
@@ -379,8 +378,7 @@ DENG_WIN32_SOURCES += \
     win32/src/dd_winit.c \
     win32/src/sys_console.c \
     win32/src/sys_findfile.c \
-    win32/src/sys_input.c \
-    win32/src/sys_window.c
+    win32/src/sys_input.c
 
 SOURCES += \
     portable/src/abstractfile.c \
@@ -568,6 +566,7 @@ SOURCES += \
     portable/src/sys_sock.c \
     portable/src/sys_system.c \
     portable/src/sys_timer.c \
+    portable/src/sys_window.cpp \
     portable/src/tab_tables.c \
     portable/src/texture.c \
     portable/src/textures.c \

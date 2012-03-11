@@ -29,14 +29,21 @@
 #ifndef LIBDENG_SYS_WINDOW_H
 #define LIBDENG_SYS_WINDOW_H
 
-#include "de_base.h"
+#include "dd_types.h"
+#include "rect.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #if defined(UNIX)
 #  include <curses.h>
+#  include "dd_uinit.h"
 #endif
 
 #if defined(WIN32)
 #  include <windows.h>
+#  include "dd_winit.h"
 #endif
 
 // Structure used to describe what features are available in a window
@@ -184,6 +191,10 @@ ddwindow_t* Sys_MainWindow(void);
  */
 #if defined(WIN32)
 HWND Sys_GetWindowHandle(uint idx);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* LIBDENG_SYS_WINDOW_H */
