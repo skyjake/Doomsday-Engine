@@ -29,14 +29,14 @@
  * is that the corners of a room are slightly dimmer than the rest of
  * the surfaces.  (It's not the only characteristic, however.)  We
  * will fake these shadowed areas by generating shadow polygons for
- * wall segments and determining, which subsector vertices will be
+ * wall segments and determining, which BSP leaf vertices will be
  * shadowed.
  *
- * In other words, walls use shadow polygons (over entire segs), while
+ * In other words, walls use shadow polygons (over entire hedges), while
  * planes use vertex lighting.  Since planes are usually tesselated
- * into a great deal of subsectors (and triangles), they are better
+ * into a great deal of BSP leafs (and triangles), they are better
  * suited for vertex lighting.  In some cases we will be forced to
- * split a subsector into smaller pieces than strictly necessary in
+ * split a BSP leaf into smaller pieces than strictly necessary in
  * order to achieve better accuracy in the shadow effect.
  */
 
@@ -49,6 +49,6 @@
 void R_InitFakeRadioForMap(void);
 
 /// @return  @c true if @a lineDef qualifies as a (edge) shadow caster.
-boolean R_IsShadowingLinedef(linedef_t* lineDef);
+boolean R_IsShadowingLinedef(LineDef* lineDef);
 
 #endif /* LIBDENG_REFRESH_FAKERADIO_H */

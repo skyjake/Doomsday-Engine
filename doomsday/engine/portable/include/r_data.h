@@ -183,7 +183,7 @@ typedef struct rtexcoord_s {
 
 typedef struct shadowlink_s {
     struct shadowlink_s* next;
-    linedef_t*      lineDef;
+    LineDef*        lineDef;
     byte            side;
 } shadowlink_t;
 
@@ -276,10 +276,8 @@ typedef struct {
 
 extern colorpaletteid_t defaultColorPalette;
 
-extern nodeindex_t* linelinks;
-extern nodepile_t* mobjNodes, *lineNodes;
-
 extern int levelFullBright;
+
 extern byte rendInfoRPolys;
 extern byte precacheMapMaterials, precacheSprites, precacheSkins;
 
@@ -452,7 +450,7 @@ void R_GetColorPaletteRGBf(colorpaletteid_t id, int colorIdx, float rgb[3], bool
  */
 boolean R_SetDefaultColorPalette(colorpaletteid_t id);
 
-//boolean         R_UpdateSubSector(struct subsector_t* ssec, boolean forceUpdate);
+//boolean         R_UpdateBspLeaf(struct BspLeaf* bspLeaf, boolean forceUpdate);
 boolean         R_UpdateSector(struct sector_s* sec, boolean forceUpdate);
 boolean         R_UpdateLinedef(struct linedef_s* line, boolean forceUpdate);
 boolean         R_UpdateSidedef(struct sidedef_s* side, boolean forceUpdate);

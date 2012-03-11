@@ -333,7 +333,7 @@ void T_MaterialChanger(materialchanger_t* mchanger)
     }
 }
 
-void P_SpawnMaterialChanger(sidedef_t* side, sidedefsurfaceid_t ssurfaceID,
+void P_SpawnMaterialChanger(SideDef* side, sidedefsurfaceid_t ssurfaceID,
                             material_t* mat, int tics)
 {
     materialchanger_t*  mchanger;
@@ -349,7 +349,7 @@ void P_SpawnMaterialChanger(sidedef_t* side, sidedefsurfaceid_t ssurfaceID,
 }
 
 typedef struct {
-    sidedef_t*          side;
+    SideDef*            side;
     sidedefsurfaceid_t  ssurfaceID;
 } findmaterialchangerparams_t;
 
@@ -366,7 +366,7 @@ int findMaterialChanger(thinker_t* th, void* data)
     return false; // Keep looking.
 }
 
-void P_StartButton(sidedef_t* side, sidedefsurfaceid_t ssurfaceID,
+void P_StartButton(SideDef* side, sidedefsurfaceid_t ssurfaceID,
                    material_t* mat, int tics)
 {
     findmaterialchangerparams_t params;
@@ -392,7 +392,7 @@ void P_StartButton(sidedef_t* side, sidedefsurfaceid_t ssurfaceID,
  * @param tics          @c <= 0 = A permanent change.
  *                      @c  > 0 = Change back after this many tics.
  */
-boolean P_ToggleSwitch2(sidedef_t* side, sidedefsurfaceid_t ssurfaceID,
+boolean P_ToggleSwitch2(SideDef* side, sidedefsurfaceid_t ssurfaceID,
                         int sound, boolean silent, int tics)
 {
     material_t*         mat, *current;
@@ -445,7 +445,7 @@ boolean P_ToggleSwitch2(sidedef_t* side, sidedefsurfaceid_t ssurfaceID,
  * @param tics          @c <= 0 = A permanent change.
  *                      @c  > 0 = Change back after this many tics.
  */
-boolean P_ToggleSwitch(sidedef_t* side, int sound, boolean silent, int tics)
+boolean P_ToggleSwitch(SideDef* side, int sound, boolean silent, int tics)
 {
     if(P_ToggleSwitch2(side, SID_TOP, sound, silent, tics))
         return true;
@@ -463,7 +463,7 @@ boolean P_ToggleSwitch(sidedef_t* side, int sound, boolean silent, int tics)
 /**
  * Called when a mobj "uses" a linedef.
  */
-boolean P_UseSpecialLine(mobj_t* mo, linedef_t* line, int side)
+boolean P_UseSpecialLine(mobj_t* mo, LineDef* line, int side)
 {
     // Extended functionality overrides old.
     if(XL_UseLine(line, side, mo))

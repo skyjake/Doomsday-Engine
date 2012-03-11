@@ -78,7 +78,7 @@ typedef enum lumptype_e {
     ML_SIDEDEFS,                // SideDefs, from editing
     ML_VERTEXES,                // Vertices, edited and BSP splits generated
     ML_SEGS,                    // LineSegs, from LineDefs split by BSP
-    ML_SSECTORS,                // SubSectors, list of LineSegs
+    ML_SSECTORS,                // Subsectors, list of LineSegs
     ML_NODES,                   // BSP nodes
     ML_SECTORS,                 // Sectors, from editing
     ML_REJECT,                  // LUT, sector-sector visibility

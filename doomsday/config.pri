@@ -21,6 +21,7 @@
 # - deng_nativesdk          (Mac OS X) Use the current OS's SDK
 # - deng_nofixedasm         Disable assembler fixed-point math
 # - deng_nosdlmixer         Disable SDL_mixer; use dummy driver as default
+# - deng_nosnowberry        (Unix) Exclude Snowberry from installation
 # - deng_openal             Build the OpenAL sound driver
 # - deng_nopackres          Do not package the Doomsday resources
 # - deng_rangecheck         Parameter range checking/value assertions
@@ -136,7 +137,10 @@ unix {
 }
 unix:!macx {
     # Generic Unix build options.
-    CONFIG += deng_nofixedasm deng_snowberry
+    CONFIG += deng_nofixedasm
+    !deng_nosnowberry {
+        CONFIG += deng_snowberry
+    }
 
     exists(/etc/apt) {
         # Choose the apt repository to include in the distribution.

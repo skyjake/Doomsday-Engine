@@ -374,7 +374,7 @@ static void printDebugInfo(int player)
 {
     player_t* plr = &players[player];
     char textBuffer[256];
-    subsector_t* sub;
+    BspLeaf* sub;
     ddstring_t* path, *mapPath;
     Uri* uri, *mapUri;
 
@@ -391,8 +391,8 @@ static void printDebugInfo(int player)
 
     // Also print some information to the console.
     Con_Message("%s", textBuffer);
-    sub = plr->plr->mo->subsector;
-    Con_Message("\nSubsector %i:\n", P_ToIndex(sub));
+    sub = plr->plr->mo->bspLeaf;
+    Con_Message("\nBspLeaf %i:\n", P_ToIndex(sub));
 
     uri = Materials_ComposeUri(P_GetIntp(sub, DMU_FLOOR_MATERIAL));
     path = Uri_ToString(uri);

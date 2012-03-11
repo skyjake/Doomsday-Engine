@@ -176,11 +176,11 @@ void LG_InitForMap(void)
     float       off[2];
     lgsamplepoint_t *samplePoints = 0, sample;
 
-    sector_t  **ssamples;
-    sector_t  **blkSampleSectors;
-    gamemap_t  *map = P_GetCurrentMap();
+    Sector    **ssamples;
+    Sector    **blkSampleSectors;
+    GameMap    *map = theMap;
 
-    if(!lgEnabled)
+    if(!lgEnabled || !map)
     {
         lgInited = false;
         return;
@@ -189,7 +189,7 @@ void LG_InitForMap(void)
     lgInited = true;
 
     // Allocate the grid.
-    P_GetMapBounds(map, &lgOrigin[0], &max[0]);
+    GameMap_Bounds(map, &lgOrigin[0], &max[0]);
 
     width  = max[VX] - lgOrigin[VX];
     height = max[VY] - lgOrigin[VY];
@@ -229,7 +229,7 @@ void LG_InitForMap(void)
      */
 
     // Allocate memory for all the sample results.
-    ssamples = M_Malloc(sizeof(sector_t*) *
+    ssamples = M_Malloc(sizeof(Sector*) *
                         ((lgBlockWidth * lgBlockHeight) * numSamples));
 
     // Determine the size^2 of the samplePoint array plus its center.
@@ -309,8 +309,8 @@ void LG_InitForMap(void)
                 sample.pos[VY] = lgOrigin[VY] + off[VY] + samplePoints[0].pos[VY];
 
                 ssamples[idx] =
-                    R_PointInSubsector(sample.pos[VX], sample.pos[VY])->sector;
-                if(!R_IsPointInSector2(sample.pos[VX], sample.pos[VY], ssamples[idx]))
+                    P_BspLeafAtPointXY(sample.pos[VX], sample.pos[VY])->sector;
+                if(!P_IsPointXYInSector(sample.pos[VX], sample.pos[VY], ssamples[idx]))
                    ssamples[idx] = NULL;
 
                 n++; // Offset the index in the samplePoints array bellow.
@@ -358,8 +358,8 @@ void LG_InitForMap(void)
                         sample.pos[VY] = lgOrigin[VY] + off[VY] + samplePoints[n].pos[VY];
 
                         ssamples[idx] =
-                            R_PointInSubsector(sample.pos[VX], sample.pos[VY])->sector;
-                        if(!R_IsPointInSector2(sample.pos[VX], sample.pos[VY], ssamples[idx]))
+                            P_BspLeafAtPointXY(sample.pos[VX], sample.pos[VY])->sector;
+                        if(!P_IsPointXYInSector(sample.pos[VX], sample.pos[VY], ssamples[idx]))
                            ssamples[idx] = NULL;
                     }
                 }
@@ -386,7 +386,7 @@ void LG_InitForMap(void)
                 (unsigned long) (sizeof(gridblock_t) * lgBlockWidth * lgBlockHeight));
 
     // Allocate memory used for the collection of the sample results.
-    blkSampleSectors = M_Malloc(sizeof(sector_t*) * numSamples);
+    blkSampleSectors = M_Malloc(sizeof(Sector*) * numSamples);
     if(numSamples > 1)
         sampleResults = M_Calloc(sizeof(int) * numSamples);
 
@@ -451,9 +451,9 @@ void LG_InitForMap(void)
         M_Free(sampleResults);
 
     // Find the blocks of all sectors.
-    for(s = 0; s < numSectors; ++s)
+    for(s = 0; s < NUM_SECTORS; ++s)
     {
-        sector_t* sector = SECTOR_PTR(s);
+        Sector* sector = SECTOR_PTR(s);
 
         count = changedCount = 0;
 
@@ -596,7 +596,7 @@ static void LG_ApplySector(gridblock_t *block, const float *color, float level,
 /**
  * Called when a sector has changed its light level.
  */
-void LG_SectorChanged(sector_t* sector)
+void LG_SectorChanged(Sector* sector)
 {
     if(!lgInited)
         return;
@@ -637,7 +637,7 @@ void LG_MarkAllForUpdate(void)
 
     // Mark all blocks and contributors.
     { uint i;
-    for(i = 0; i < numSectors; ++i)
+    for(i = 0; i < NUM_SECTORS; ++i)
     {
         LG_SectorChanged(&sectors[i]);
     }}
@@ -653,7 +653,7 @@ static boolean LG_BlockNeedsUpdate(int x, int y)
 {
     // First check the block itself.
     gridblock_t *block = GRID_BLOCK(x, y);
-    sector_t *blockSector;
+    Sector *blockSector;
     int     a, b;
     int     limitA[2];
     int     limitB;
@@ -748,7 +748,7 @@ void LG_Update(void)
 
     gridblock_t        *block, *lastBlock, *other;
     int                 x, y, a, b;
-    sector_t           *sector;
+    Sector             *sector;
     const float        *color;
     int                 bias;
     int                 height;
@@ -897,7 +897,7 @@ void LG_Evaluate(const vectorcomp_t point[3], float color[3])
      * lighting.
      *
      * Biasing the dimming is a good idea but the heights must be taken
-     * from the subsector which contains the surface and not the block.
+     * from the BSP Leaf which contains the surface and not the block.
      */
     if(block->sector)
     {

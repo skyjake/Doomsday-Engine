@@ -31,21 +31,14 @@
 
 #include "m_vector.h"
 
-int             R_PointOnSide(const float x, const float y,
+int             P_PointOnPartitionSide(const float x, const float y,
                               const partition_t* par);
 angle_t         R_PointToAngle(float x, float y);
 angle_t         R_PointToAngle2(float x1, float y1,
                                 float x2, float y2);
 float           R_PointToDist(const float x, const float y);
-linedef_t*      R_GetLineForSide(const uint sideIDX);
-subsector_t*    R_PointInSubsector(const float x, const float y);
-boolean         R_IsPointInSector(const float x, const float y,
-                                  const sector_t* sector);
-boolean         R_IsPointInSector2(const float x, const float y,
-                                   const sector_t* sector);
-boolean         R_IsPointInSubsector(const float x, const float y,
-                                     const subsector_t* ssec);
-sector_t*       R_GetSectorForOrigin(const void* ddMobjBase);
+
+Sector*         R_GetSectorForOrigin(const void* ddMobjBase);
 
 /**
  * Scale @a color uniformly so that the highest component becomes one.

@@ -143,7 +143,7 @@ boolean P_Teleport(mobj_t* mo, float x, float y, angle_t angle, boolean spawnFog
         mo->floorClip = 0;
 
         if(mo->pos[VZ] ==
-           P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT))
+           P_GetFloatp(mo->bspLeaf, DMU_FLOOR_HEIGHT))
         {
             const terraintype_t* tt = P_MobjGetFloorTerrainType(mo);
 
@@ -170,7 +170,7 @@ boolean P_Teleport(mobj_t* mo, float x, float y, angle_t angle, boolean spawnFog
 }
 
 typedef struct {
-    sector_t*           sec;
+    Sector*             sec;
     mobjtype_t          type;
     mobj_t*             foundMobj;
 } findmobjparams_t;
@@ -186,7 +186,7 @@ static int findMobj(thinker_t* th, void* context)
 
     // Must be in the specified sector?
     if(params->sec &&
-       params->sec != P_GetPtrp(mo->subsector, DMU_SECTOR))
+       params->sec != P_GetPtrp(mo->bspLeaf, DMU_SECTOR))
         return false; // Continue iteration.
 
     // Found it!
@@ -201,7 +201,7 @@ static mobj_t* getTeleportDestination(short tag)
     list = P_GetSectorIterListForTag(tag, false);
     if(list)
     {
-        sector_t*           sec = NULL;
+        Sector*             sec = NULL;
         findmobjparams_t    params;
 
         params.type = MT_TELEPORTMAN;
@@ -223,7 +223,7 @@ static mobj_t* getTeleportDestination(short tag)
     return NULL;
 }
 
-boolean EV_Teleport(linedef_t* line, int side, mobj_t* mo, boolean spawnFog)
+boolean EV_Teleport(LineDef* line, int side, mobj_t* mo, boolean spawnFog)
 {
     mobj_t*             dest;
 

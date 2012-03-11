@@ -174,24 +174,8 @@ boolean Sys_SetActiveWindow(uint idx);
 boolean Sys_SetWindow(uint idx, int x, int y, int w, int h, int bpp, uint wflags, uint uflags);
 boolean Sys_SetWindowTitle(uint idx, const char* title);
 
-/**
- * Console window routines.
- */
-
-/**
- * @param flags  @see consolePrintFlags
- */
-void Sys_ConPrint(uint idx, const char* text, int flags);
-
-/**
- * Set the command line display of the specified console window.
- *
- * @param idx  Console window identifier.
- * @param text  Text string to copy.
- * @param cursorPos  Position to set the cursor on the command line.
- * @param flags  @see consoleCommandlineFlags
- */
-void Sys_SetConWindowCmdLine(uint idx, const char* text, unsigned int cursorPos, int flags);
+ddwindow_t* Sys_Window(uint idx);
+ddwindow_t* Sys_MainWindow(void);
 
 /**
  *\todo This is a compromise to prevent having to refactor half the

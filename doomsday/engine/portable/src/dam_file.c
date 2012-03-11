@@ -25,8 +25,6 @@
  * Doomsday Archived Map (DAM) reader/writer.
  */
 
-// HEADER FILES ------------------------------------------------------------
-
 #include <lzss.h>
 #include <stdlib.h>
 
@@ -40,17 +38,9 @@
 
 #include "p_mapdata.h"
 
-// MACROS ------------------------------------------------------------------
-
 // Global archived map format version identifier. Increment when making
 // changes to the structure of the format.
 #define DAM_VERSION             1
-
-#define MAX_ARCHIVED_MATERIALS  2048
-#define BADTEXNAME  "DD_BADTX"  // string that will be written in the texture
-                                // archives to denote a missing texture.
-
-// TYPES -------------------------------------------------------------------
 
 // Segments of a doomsday archived map file.
 typedef enum damsegment_e {
@@ -65,123 +55,15 @@ typedef enum damsegment_e {
     DAMSEG_LINES,
     DAMSEG_SIDES,
     DAMSEG_SECTORS,
-    DAMSEG_SSECTORS,
-    DAMSEG_SEGS,
-    DAMSEG_NODES,
+    DAMSEG_BSPLEAFS,
+    DAMSEG_HEDGES,
+    DAMSEG_BSPNODES,
     DAMSEG_BLOCKMAP,
     DAMSEG_REJECT
 } damsegment_t;
 
-typedef struct {
-    ddstring_t path;
-} dictentry_t;
-
-typedef struct {
-    //// \todo Remove fixed limit.
-    dictentry_t     table[MAX_ARCHIVED_MATERIALS];
-    int             count;
-} materialdict_t;
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static LZFILE *mapFile;
+static LZFILE* mapFile;
 static int mapFileVersion;
-
-static materialdict_t *materialDict;
-
-// CODE --------------------------------------------------------------------
-
-/**
- * Called for every material in the map before saving by
- * initMaterialArchives.
- */
-static void addMaterialToDict(materialdict_t* dict, material_t* mat)
-{
-#if 0
-    dictentry_t* e;
-
-    // Has this already been registered?
-    { int c;
-    for(c = 0; c < dict->count; c++)
-    {
-        if(dict->table[c].mnamespace == mat->mnamespace &&
-           !stricmp(Str_Text(&dict->table[c].path), mat->name))
-        {   // Yes. skip it...
-            return;
-        }
-    }}
-
-    e = &dict->table[dict->count]; dict->count++;
-
-    Str_Init(&e->path); Str_Set(&e->path, mat->name);
-#endif
-}
-
-/**
- * Initializes the material archives (translation tables).
- * Must be called before writing the tables!
- */
-static void initMaterialDict(const gamemap_t* map, materialdict_t* dict)
-{
-    uint                i, j;
-
-    for(i = 0; i < map->numSectors; ++i)
-    {
-        sector_t           *sec = &map->sectors[i];
-
-        for(j = 0; j < sec->planeCount; ++j)
-            addMaterialToDict(dict, sec->SP_planematerial(j));
-    }
-
-    for(i = 0; i < map->numSideDefs; ++i)
-    {
-        sidedef_t             *side = &map->sideDefs[i];
-
-        addMaterialToDict(dict, side->SW_middlematerial);
-        addMaterialToDict(dict, side->SW_topmaterial);
-        addMaterialToDict(dict, side->SW_bottommaterial);
-    }
-}
-
-static uint searchMaterialDict(materialdict_t *dict, const material_t* mat)
-{
-#if 0
-    int                 i;
-
-    for(i = 0; i < dict->count; i++)
-        if(dict->table[i].mnamespace == mat->mnamespace &&
-           !stricmp(dict->table[i].name, mat->name))
-            return i;
-#endif
-    // Not found?!!!
-    return 0;
-}
-
-/**
- * @return              The archive number of the given texture.
- */
-static uint getMaterialDictID(materialdict_t* dict, const material_t* mat)
-{
-    return searchMaterialDict(dict, mat);
-}
-
-static material_t* lookupMaterialFromDict(materialdict_t* dict, int idx)
-{
-//    dictentry_t*e = &dict->table[idx];
-//    if(!strncmp(Str_Text(&e->path), BADTEXNAME, 8))
-        return NULL;
-//    return Materials_ResolveUriCString(Str_Text(&e->path), e->mnamespace);
-}
 
 static boolean openMapFile(const char* path, boolean write)
 {
@@ -278,9 +160,9 @@ static void endSegment(void)
     writeLong(DAMSEG_END);
 }
 
-static void writeVertex(const gamemap_t *map, uint idx)
+static void writeVertex(const GameMap *map, uint idx)
 {
-    vertex_t           *v = &map->vertexes[idx];
+    Vertex             *v = &map->vertexes[idx];
 
     writeFloat(v->V_pos[VX]);
     writeFloat(v->V_pos[VY]);
@@ -300,10 +182,10 @@ static void writeVertex(const gamemap_t *map, uint idx)
     }
 }
 
-static void readVertex(const gamemap_t *map, uint idx)
+static void readVertex(const GameMap *map, uint idx)
 {
     uint                i;
-    vertex_t           *v = &map->vertexes[idx];
+    Vertex             *v = &map->vertexes[idx];
 
     v->V_pos[VX] = readFloat();
     v->V_pos[VY] = readFloat();
@@ -334,7 +216,7 @@ static void readVertex(const gamemap_t *map, uint idx)
     }
 }
 
-static void archiveVertexes(gamemap_t *map, boolean write)
+static void archiveVertexes(GameMap *map, boolean write)
 {
     uint                i;
 
@@ -362,10 +244,10 @@ static void archiveVertexes(gamemap_t *map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
-static void writeLine(const gamemap_t *map, uint idx)
+static void writeLine(const GameMap *map, uint idx)
 {
     int                 i;
-    linedef_t             *l = &map->lineDefs[idx];
+    LineDef            *l = &map->lineDefs[idx];
 
     writeLong((long) ((l->v[0] - map->vertexes) + 1));
     writeLong((long) ((l->v[1] - map->vertexes) + 1));
@@ -386,11 +268,11 @@ static void writeLine(const gamemap_t *map, uint idx)
         writeByte(l->mapped[i]? 1 : 0);
 }
 
-static void readLine(const gamemap_t *map, uint idx)
+static void readLine(const GameMap *map, uint idx)
 {
     int                 i;
     long                sideIdx;
-    linedef_t             *l = &map->lineDefs[idx];
+    LineDef            *l = &map->lineDefs[idx];
 
     l->v[0] = &map->vertexes[(unsigned) (readLong() - 1)];
     l->v[1] = &map->vertexes[(unsigned) (readLong() - 1)];
@@ -413,7 +295,7 @@ static void readLine(const gamemap_t *map, uint idx)
         l->mapped[i] = (readByte()? true : false);
 }
 
-static void archiveLines(gamemap_t *map, boolean write)
+static void archiveLines(GameMap *map, boolean write)
 {
     uint                i;
 
@@ -441,17 +323,17 @@ static void archiveLines(gamemap_t *map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
-static void writeSide(const gamemap_t *map, uint idx)
+static void writeSide(const GameMap *map, uint idx)
 {
     uint                i;
-    sidedef_t             *s = &map->sideDefs[idx];
+    SideDef            *s = &map->sideDefs[idx];
 
     for(i = 0; i < 3; ++i)
     {
-        surface_t          *suf = &s->sections[3];
+        Surface            *suf = &s->sections[3];
 
         writeLong(suf->flags);
-        writeLong(getMaterialDictID(materialDict, suf->material));
+        //writeLong(getMaterialDictID(materialDict, suf->material));
         writeLong((long) suf->blendMode);
         writeFloat(suf->normal[VX]);
         writeFloat(suf->normal[VY]);
@@ -465,24 +347,24 @@ static void writeSide(const gamemap_t *map, uint idx)
     }
     writeLong(s->sector? ((s->sector - map->sectors) + 1) : 0);
     writeShort(s->flags);
-    writeLong((long) s->segCount);
-    for(i = 0; i < s->segCount; ++i)
-        writeLong((s->segs[i] - map->segs) + 1);
+    writeLong((long) s->hedgeCount);
+    for(i = 0; i < s->hedgeCount; ++i)
+        writeLong((s->hedges[i] - map->hedges) + 1);
 }
 
-static void readSide(const gamemap_t *map, uint idx)
+static void readSide(const GameMap *map, uint idx)
 {
     uint                i;
     long                secIdx;
     float               offset[2], rgba[4];
-    sidedef_t          *s = &map->sideDefs[idx];
+    SideDef            *s = &map->sideDefs[idx];
 
     for(i = 0; i < 3; ++i)
     {
-        surface_t          *suf = &s->sections[3];
+        Surface            *suf = &s->sections[3];
 
         suf->flags = (int) readLong();
-        Surface_SetMaterial(suf, lookupMaterialFromDict(materialDict, readLong()));
+        //Surface_SetMaterial(suf, lookupMaterialFromDict(materialDict, readLong()));
         Surface_SetBlendMode(suf, (blendmode_t) readLong());
         suf->normal[VX] = readFloat();
         suf->normal[VY] = readFloat();
@@ -501,14 +383,14 @@ static void readSide(const gamemap_t *map, uint idx)
     secIdx = readLong();
     s->sector = (secIdx == 0? NULL : &map->sectors[secIdx -1]);
     s->flags = readShort();
-    s->segCount = (uint) readLong();
-    s->segs = Z_Malloc(sizeof(seg_t*) * (s->segCount + 1), PU_MAP, 0);
-    for(i = 0; i < s->segCount; ++i)
-        s->segs[i] = &map->segs[(unsigned) readLong() - 1];
-    s->segs[i] = NULL; // Terminate.
+    s->hedgeCount = (uint) readLong();
+    s->hedges = Z_Malloc(sizeof(HEdge*) * (s->hedgeCount + 1), PU_MAP, 0);
+    for(i = 0; i < s->hedgeCount; ++i)
+        s->hedges[i] = &map->hedges[(unsigned) readLong() - 1];
+    s->hedges[i] = NULL; // Terminate.
 }
 
-static void archiveSides(gamemap_t *map, boolean write)
+static void archiveSides(GameMap *map, boolean write)
 {
     uint                i;
 
@@ -536,10 +418,10 @@ static void archiveSides(gamemap_t *map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
-static void writeSector(const gamemap_t *map, uint idx)
+static void writeSector(const GameMap *map, uint idx)
 {
     uint                i;
-    sector_t           *s = &map->sectors[idx];
+    Sector             *s = &map->sectors[idx];
 
     writeFloat(s->lightLevel);
     writeFloat(s->rgb[CR]);
@@ -548,7 +430,7 @@ static void writeSector(const gamemap_t *map, uint idx)
     writeLong(s->planeCount);
     for(i = 0; i < s->planeCount; ++i)
     {
-        plane_t            *p = s->planes[i];
+        Plane              *p = s->planes[i];
 
         writeFloat(p->height);
         writeFloat(p->target);
@@ -557,7 +439,7 @@ static void writeSector(const gamemap_t *map, uint idx)
         writeFloat(p->visHeightDelta);
 
         writeLong((long) p->surface.flags);
-        writeLong(getMaterialDictID(materialDict, p->surface.material));
+        //writeLong(getMaterialDictID(materialDict, p->surface.material));
         writeLong((long) p->surface.blendMode);
         writeFloat(p->surface.normal[VX]);
         writeFloat(p->surface.normal[VY]);
@@ -575,10 +457,10 @@ static void writeSector(const gamemap_t *map, uint idx)
     }
 
     writeLong(s->flags);
-    writeFloat(s->bBox[BOXLEFT]);
-    writeFloat(s->bBox[BOXRIGHT]);
-    writeFloat(s->bBox[BOXBOTTOM]);
-    writeFloat(s->bBox[BOXTOP]);
+    writeFloat(s->aaBox.minX);
+    writeFloat(s->aaBox.minY);
+    writeFloat(s->aaBox.maxX);
+    writeFloat(s->aaBox.maxY);
     writeFloat(s->soundOrg.pos[VX]);
     writeFloat(s->soundOrg.pos[VY]);
     writeFloat(s->soundOrg.pos[VZ]);
@@ -597,23 +479,23 @@ static void writeSector(const gamemap_t *map, uint idx)
     for(i = 0; i < s->lineDefCount; ++i)
         writeLong((s->lineDefs[i] - map->lineDefs) + 1);
 
-    // Subsector list.
-    writeLong((long) s->ssectorCount);
-    for(i = 0; i < s->ssectorCount; ++i)
-        writeLong((s->ssectors[i] - map->ssectors) + 1);
+    // BspLeaf list.
+    writeLong((long) s->bspLeafCount);
+    for(i = 0; i < s->bspLeafCount; ++i)
+        writeLong((s->bspLeafs[i] - map->bspLeafs) + 1);
 
-    // Reverb subsector attributors.
-    writeLong((long) s->numReverbSSecAttributors);
-    for(i = 0; i < s->numReverbSSecAttributors; ++i)
-        writeLong((s->reverbSSecs[i] - map->ssectors) + 1);
+    // Reverb BSP leaf attributors.
+    writeLong((long) s->numReverbBspLeafAttributors);
+    for(i = 0; i < s->numReverbBspLeafAttributors; ++i)
+        writeLong((s->reverbBspLeafs[i] - map->bspLeafs) + 1);
 }
 
-static void readSector(const gamemap_t *map, uint idx)
+static void readSector(const GameMap *map, uint idx)
 {
     uint                i, numPlanes;
     long                secIdx;
     float               offset[2], rgba[4];
-    sector_t           *s = &map->sectors[idx];
+    Sector             *s = &map->sectors[idx];
 
     s->lightLevel = readFloat();
     s->rgb[CR] = readFloat();
@@ -622,7 +504,7 @@ static void readSector(const gamemap_t *map, uint idx)
     numPlanes = (uint) readLong();
     for(i = 0; i < numPlanes; ++i)
     {
-        plane_t            *p = R_NewPlaneForSector(s);
+        Plane              *p = R_NewPlaneForSector(s);
 
         p->height = readFloat();
         p->target = readFloat();
@@ -631,7 +513,7 @@ static void readSector(const gamemap_t *map, uint idx)
         p->visHeightDelta = readFloat();
 
         p->surface.flags = (int) readLong();
-        Surface_SetMaterial(&p->surface, lookupMaterialFromDict(materialDict, readLong()));
+        //Surface_SetMaterial(&p->surface, lookupMaterialFromDict(materialDict, readLong()));
         Surface_SetBlendMode(&p->surface, (blendmode_t) readLong());
         p->surface.normal[VX] = readFloat();
         p->surface.normal[VY] = readFloat();
@@ -655,10 +537,10 @@ static void readSector(const gamemap_t *map, uint idx)
 
     secIdx = readLong();
     s->flags = readLong();
-    s->bBox[BOXLEFT] = readFloat();
-    s->bBox[BOXRIGHT] = readFloat();
-    s->bBox[BOXBOTTOM] = readFloat();
-    s->bBox[BOXTOP] = readFloat();
+    s->aaBox.minX = readFloat();
+    s->aaBox.minY = readFloat();
+    s->aaBox.maxX = readFloat();
+    s->aaBox.maxY = readFloat();
     secIdx = readLong();
     s->soundOrg.pos[VX] = readFloat();
     s->soundOrg.pos[VY] = readFloat();
@@ -676,29 +558,29 @@ static void readSector(const gamemap_t *map, uint idx)
 
     // Line list.
     s->lineDefCount = (uint) readLong();
-    s->lineDefs = Z_Malloc(sizeof(linedef_t*) * (s->lineDefCount + 1), PU_MAP, 0);
+    s->lineDefs = Z_Malloc(sizeof(LineDef*) * (s->lineDefCount + 1), PU_MAP, 0);
     for(i = 0; i < s->lineDefCount; ++i)
         s->lineDefs[i] = &map->lineDefs[(unsigned) readLong() - 1];
     s->lineDefs[i] = NULL; // Terminate.
 
-    // Subsector list.
-    s->ssectorCount = (uint) readLong();
-    s->ssectors =
-        Z_Malloc(sizeof(subsector_t*) * (s->ssectorCount + 1), PU_MAP, 0);
-    for(i = 0; i < s->ssectorCount; ++i)
-        s->ssectors[i] = &map->ssectors[(unsigned) readLong() - 1];
-    s->ssectors[i] = NULL; // Terminate.
+    // BspLeaf list.
+    s->bspLeafCount = (uint) readLong();
+    s->bspLeafs =
+        Z_Malloc(sizeof(BspLeaf*) * (s->bspLeafCount + 1), PU_MAP, 0);
+    for(i = 0; i < s->bspLeafCount; ++i)
+        s->bspLeafs[i] = &map->bspLeafs[(unsigned) readLong() - 1];
+    s->bspLeafs[i] = NULL; // Terminate.
 
-    // Reverb subsector attributors.
-    s->numReverbSSecAttributors = (uint) readLong();
-    s->reverbSSecs =
-        Z_Malloc(sizeof(subsector_t*) * (s->numReverbSSecAttributors + 1), PU_MAP, 0);
-    for(i = 0; i < s->numReverbSSecAttributors; ++i)
-        s->reverbSSecs[i] = &map->ssectors[(unsigned) readLong() - 1];
-    s->reverbSSecs[i] = NULL; // Terminate.
+    // Reverb BSP leaf attributors.
+    s->numReverbBspLeafAttributors = (uint) readLong();
+    s->reverbBspLeafs =
+        Z_Malloc(sizeof(BspLeaf*) * (s->numReverbBspLeafAttributors + 1), PU_MAP, 0);
+    for(i = 0; i < s->numReverbBspLeafAttributors; ++i)
+        s->reverbBspLeafs[i] = &map->bspLeafs[(unsigned) readLong() - 1];
+    s->reverbBspLeafs[i] = NULL; // Terminate.
 }
 
-static void archiveSectors(gamemap_t *map, boolean write)
+static void archiveSectors(GameMap *map, boolean write)
 {
     uint                i;
 
@@ -726,10 +608,10 @@ static void archiveSectors(gamemap_t *map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
-static void writeSubsector(const gamemap_t *map, uint idx)
+static void writeBspLeaf(const GameMap *map, uint idx)
 {
     uint                i;
-    subsector_t        *s = &map->ssectors[idx];
+    BspLeaf        *s = &map->bspLeafs[idx];
 
     writeLong((long) s->flags);
     writeFloat(s->aaBox.minX);
@@ -741,21 +623,21 @@ static void writeSubsector(const gamemap_t *map, uint idx)
     writeLong(s->sector? ((s->sector - map->sectors) + 1) : 0);
     writeLong(s->polyObj? (s->polyObj->idx + 1) : 0);
 
-    // Subsector reverb.
+    // BspLeaf reverb.
     for(i = 0; i < NUM_REVERB_DATA; ++i)
         writeLong((long) s->reverb[i]);
 
-    // Subsector segs list.
-    writeLong((long) s->segCount);
-    for(i = 0; i < s->segCount; ++i)
-        writeLong((s->segs[i] - map->segs) + 1);
+    // BspLeaf hedges list.
+    writeLong((long) s->hedgeCount);
+    for(i = 0; i < s->hedgeCount; ++i)
+        writeLong((s->hedges[i] - map->hedges) + 1);
 }
 
-static void readSubsector(const gamemap_t *map, uint idx)
+static void readBspLeaf(const GameMap *map, uint idx)
 {
     uint                i;
     long                obIdx;
-    subsector_t        *s = &map->ssectors[idx];
+    BspLeaf        *s = &map->bspLeafs[idx];
 
     s->flags = (int) readLong();
     s->aaBox.minX = readFloat();
@@ -769,38 +651,38 @@ static void readSubsector(const gamemap_t *map, uint idx)
     obIdx = readLong();
     s->polyObj = (obIdx == 0? NULL : map->polyObjs[(unsigned) obIdx - 1]);
 
-    // Subsector reverb.
+    // BspLeaf reverb.
     for(i = 0; i < NUM_REVERB_DATA; ++i)
         s->reverb[i] = (uint) readLong();
 
-    // Subsector segs list.
-    s->segCount = (uint) readLong();
-    s->segs = Z_Malloc(sizeof(seg_t*) * (s->segCount + 1), PU_MAP, 0);
-    for(i = 0; i < s->segCount; ++i)
-        s->segs[i] = &map->segs[(unsigned) readLong() - 1];
-    s->segs[i] = NULL; // Terminate.
+    // BspLeaf hedges list.
+    s->hedgeCount = (uint) readLong();
+    s->hedges = Z_Malloc(sizeof(HEdge*) * (s->hedgeCount + 1), PU_MAP, 0);
+    for(i = 0; i < s->hedgeCount; ++i)
+        s->hedges[i] = &map->hedges[(unsigned) readLong() - 1];
+    s->hedges[i] = NULL; // Terminate.
 }
 
-static void archiveSubsectors(gamemap_t *map, boolean write)
+static void archiveBspLeafs(GameMap *map, boolean write)
 {
     uint                i;
 
     if(write)
-        beginSegment(DAMSEG_SSECTORS);
+        beginSegment(DAMSEG_BSPLEAFS);
     else
-        assertSegment(DAMSEG_SSECTORS);
+        assertSegment(DAMSEG_BSPLEAFS);
 
     if(write)
     {
-        writeLong(map->numSSectors);
-        for(i = 0; i < map->numSSectors; ++i)
-            writeSubsector(map, i);
+        writeLong(map->numBspLeafs);
+        for(i = 0; i < map->numBspLeafs; ++i)
+            writeBspLeaf(map, i);
     }
     else
     {
-        map->numSSectors = readLong();
-        for(i = 0; i < map->numSSectors; ++i)
-            readSubsector(map, i);
+        map->numBspLeafs = readLong();
+        for(i = 0; i < map->numBspLeafs; ++i)
+            readBspLeaf(map, i);
     }
 
     if(write)
@@ -809,9 +691,9 @@ static void archiveSubsectors(gamemap_t *map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
-static void writeSeg(const gamemap_t *map, uint idx)
+static void writeSeg(const GameMap *map, uint idx)
 {
-    seg_t              *s = &map->segs[idx];
+    HEdge              *s = &map->hedges[idx];
 
     writeLong((s->v[0] - map->vertexes) + 1);
     writeLong((s->v[1] - map->vertexes) + 1);
@@ -820,17 +702,17 @@ static void writeSeg(const gamemap_t *map, uint idx)
     writeLong(s->lineDef? ((s->lineDef - map->lineDefs) + 1) : 0);
     writeLong(s->sec[FRONT]? ((s->sec[FRONT] - map->sectors) + 1) : 0);
     writeLong(s->sec[BACK]? ((s->sec[BACK] - map->sectors) + 1) : 0);
-    writeLong(s->subsector? ((s->subsector - map->ssectors) + 1) : 0);
-    writeLong(s->backSeg? ((s->backSeg - map->segs) + 1) : 0);
+    writeLong(s->bspLeaf? ((s->bspLeaf - map->bspLeafs) + 1) : 0);
+    writeLong(s->twin? ((s->twin - map->hedges) + 1) : 0);
     writeLong((long) s->angle);
     writeByte(s->side);
     writeByte(s->flags);
 }
 
-static void readSeg(const gamemap_t *map, uint idx)
+static void readSeg(const GameMap *map, uint idx)
 {
     long                obIdx;
-    seg_t              *s = &map->segs[idx];
+    HEdge              *s = &map->hedges[idx];
 
     s->v[0] = &map->vertexes[(unsigned) readLong() - 1];
     s->v[1] = &map->vertexes[(unsigned) readLong() - 1];
@@ -843,33 +725,33 @@ static void readSeg(const gamemap_t *map, uint idx)
     obIdx = readLong();
     s->sec[BACK] = (obIdx == 0? NULL : &map->sectors[(unsigned) obIdx - 1]);
     obIdx = readLong();
-    s->subsector = (obIdx == 0? NULL : &map->ssectors[(unsigned) obIdx - 1]);
+    s->bspLeaf = (obIdx == 0? NULL : &map->bspLeafs[(unsigned) obIdx - 1]);
     obIdx = readLong();
-    s->backSeg = (obIdx == 0? NULL : &map->segs[(unsigned) obIdx - 1]);
+    s->twin = (obIdx == 0? NULL : &map->hedges[(unsigned) obIdx - 1]);
     s->angle = (angle_t) readLong();
     s->side = readByte();
     s->flags = readByte();
 }
 
-static void archiveSegs(gamemap_t *map, boolean write)
+static void archiveSegs(GameMap *map, boolean write)
 {
     uint                i;
 
     if(write)
-        beginSegment(DAMSEG_SEGS);
+        beginSegment(DAMSEG_HEDGES);
     else
-        assertSegment(DAMSEG_SEGS);
+        assertSegment(DAMSEG_HEDGES);
 
     if(write)
     {
-        writeLong(map->numSegs);
-        for(i = 0; i < map->numSegs; ++i)
+        writeLong(map->numHEdges);
+        for(i = 0; i < map->numHEdges; ++i)
             writeSeg(map, i);
     }
     else
     {
-        map->numSegs = readLong();
-        for(i = 0; i < map->numSegs; ++i)
+        map->numHEdges = readLong();
+        for(i = 0; i < map->numHEdges; ++i)
             readSeg(map, i);
     }
 
@@ -879,9 +761,9 @@ static void archiveSegs(gamemap_t *map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
-static void writeNode(const gamemap_t *map, uint idx)
+static void writeNode(const GameMap *map, uint idx)
 {
-    node_t             *n = &map->nodes[idx];
+    BspNode             *n = &map->bspNodes[idx];
 
     writeFloat(n->partition.x);
     writeFloat(n->partition.y);
@@ -899,9 +781,9 @@ static void writeNode(const gamemap_t *map, uint idx)
     writeLong((long) n->children[LEFT]);
 }
 
-static void readNode(const gamemap_t *map, uint idx)
+static void readNode(const GameMap *map, uint idx)
 {
-    node_t             *n = &map->nodes[idx];
+    BspNode             *n = &map->bspNodes[idx];
 
     n->partition.x = readFloat();
     n->partition.y = readFloat();
@@ -919,25 +801,25 @@ static void readNode(const gamemap_t *map, uint idx)
     n->children[LEFT] = (uint) readLong();
 }
 
-static void archiveNodes(gamemap_t *map, boolean write)
+static void archiveNodes(GameMap *map, boolean write)
 {
     uint                i;
 
     if(write)
-        beginSegment(DAMSEG_NODES);
+        beginSegment(DAMSEG_BSPNODES);
     else
-        assertSegment(DAMSEG_NODES);
+        assertSegment(DAMSEG_BSPNODES);
 
     if(write)
     {
-        writeLong(map->numNodes);
-        for(i = 0; i < map->numNodes; ++i)
+        writeLong(map->numBspNodes);
+        for(i = 0; i < map->numBspNodes; ++i)
             writeNode(map, i);
     }
     else
     {
-        map->numNodes = readLong();
-        for(i = 0; i < map->numNodes; ++i)
+        map->numBspNodes = readLong();
+        for(i = 0; i < map->numBspNodes; ++i)
             readNode(map, i);
     }
 
@@ -947,7 +829,7 @@ static void archiveNodes(gamemap_t *map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
-static void archiveBlockmap(gamemap_t *map, boolean write)
+static void archiveBlockmap(GameMap *map, boolean write)
 {
     if(write)
         beginSegment(DAMSEG_BLOCKMAP);
@@ -960,7 +842,7 @@ static void archiveBlockmap(gamemap_t *map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
-static void archiveReject(gamemap_t *map, boolean write)
+static void archiveReject(GameMap *map, boolean write)
 {
     if(write)
         beginSegment(DAMSEG_REJECT);
@@ -973,10 +855,10 @@ static void archiveReject(gamemap_t *map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
-static void writePolyobj(const gamemap_t *map, uint idx)
+static void writePolyobj(const GameMap* map, uint idx)
 {
-    uint                i;
-    polyobj_t          *p = map->polyObjs[idx];
+    Polyobj* p = map->polyObjs[idx];
+    uint i;
 
     writeLong((long) p->idx);
     writeFloat(p->pos[VX]);
@@ -996,28 +878,30 @@ static void writePolyobj(const gamemap_t *map, uint idx)
     writeByte(p->crush? 1 : 0);
     writeLong((long) p->seqType);
 
-    writeLong((long) p->numSegs);
-    for(i = 0; i < p->numSegs; ++i)
+    writeLong((long) p->lineCount);
+    for(i = 0; i < p->lineCount; ++i)
     {
-        seg_t              *s = p->segs[i];
+        LineDef* line = p->lines[i];
+        HEdge* he = line->L_frontside->hedges[0];
 
-        writeLong((s->v[0] - map->vertexes) + 1);
-        writeLong((s->v[1] - map->vertexes) + 1);
-        writeFloat(s->length);
-        writeFloat(s->offset);
-        writeLong(s->lineDef? ((s->lineDef - map->lineDefs) + 1) : 0);
-        writeLong(s->sec[FRONT]? ((s->sec[FRONT] - map->sectors) + 1) : 0);
-        writeLong((long) s->angle);
-        writeByte(s->side);
-        writeByte(s->flags);
+        writeLong((he->v[0] - map->vertexes) + 1);
+        writeLong((he->v[1] - map->vertexes) + 1);
+        writeFloat(he->length);
+        writeFloat(he->offset);
+        writeLong(he->lineDef? ((he->lineDef - map->lineDefs) + 1) : 0);
+        writeLong(he->sec[FRONT]? ((he->sec[FRONT] - map->sectors) + 1) : 0);
+        writeLong((long) he->angle);
+        writeByte(he->side);
+        writeByte(he->flags);
     }
 }
 
-static void readPolyobj(const gamemap_t *map, uint idx)
+static void readPolyobj(const GameMap* map, uint idx)
 {
-    uint                i;
-    long                obIdx;
-    polyobj_t          *p = map->polyObjs[idx];
+    Polyobj* p = map->polyObjs[idx];
+    long obIdx;
+    HEdge* hedges;
+    uint i;
 
     p->idx = (uint) readLong();
     p->pos[VX] = readFloat();
@@ -1037,34 +921,40 @@ static void readPolyobj(const gamemap_t *map, uint idx)
     p->crush = (readByte()? true : false);
     p->seqType = (int) readLong();
 
-    // Polyobj seg list.
-    p->numSegs = (uint) readLong();
-    p->segs = Z_Malloc(sizeof(seg_t*) * (p->numSegs + 1), PU_MAP, 0);
-    for(i = 0; i < p->numSegs; ++i)
+    // Polyobj line list.
+    p->lineCount = (uint) readLong();
+
+    hedges = Z_Calloc(sizeof(HEdge) * p->lineCount, PU_MAP, 0);
+    p->lines = Z_Malloc(sizeof(HEdge*) * (p->lineCount + 1), PU_MAP, 0);
+    for(i = 0; i < p->lineCount; ++i)
     {
-        seg_t              *s =
-            Z_Calloc(sizeof(*s), PU_MAP, 0);
+        HEdge* he = hedges + i;
+        LineDef* line;
 
-        s->v[0] = &map->vertexes[(unsigned) readLong() - 1];
-        s->v[1] = &map->vertexes[(unsigned) readLong() - 1];
-        s->length = readFloat();
-        s->offset = readFloat();
+        he->v[0] = &map->vertexes[(unsigned) readLong() - 1];
+        he->v[1] = &map->vertexes[(unsigned) readLong() - 1];
+        he->length = readFloat();
+        he->offset = readFloat();
         obIdx = readLong();
-        s->lineDef = (obIdx == 0? NULL : &map->lineDefs[(unsigned) obIdx - 1]);
+        he->lineDef = (obIdx == 0? NULL : &map->lineDefs[(unsigned) obIdx - 1]);
         obIdx = readLong();
-        s->sec[FRONT] = (obIdx == 0? NULL : &map->sectors[(unsigned) obIdx - 1]);
-        s->angle = (angle_t) readLong();
-        s->side = (readByte()? 1 : 0);
-        s->flags = readByte();
+        he->sec[FRONT] = (obIdx == 0? NULL : &map->sectors[(unsigned) obIdx - 1]);
+        he->angle = (angle_t) readLong();
+        he->side = (readByte()? 1 : 0);
+        he->flags = readByte();
 
-        p->segs[i] = s;
+        line = he->lineDef;
+        line->L_frontside->hedges = Z_Malloc(sizeof(*line->L_frontside->hedges), PU_MAP, 0);
+        line->L_frontside->hedges[0] = he;
+
+        p->lines[i] = line;
     }
-    p->segs[i] = NULL; // Terminate.
+    p->lines[i] = NULL; // Terminate.
 }
 
-static void archivePolyobjs(gamemap_t *map, boolean write)
+static void archivePolyobjs(GameMap* map, boolean write)
 {
-    uint                i;
+    uint i;
 
     if(write)
         beginSegment(DAMSEG_POLYOBJS);
@@ -1091,18 +981,18 @@ static void archivePolyobjs(gamemap_t *map, boolean write)
 }
 
 /*
-static void writeThing(const gamemap_t *map, uint idx)
+static void writeThing(const GameMap *map, uint idx)
 {
 
 }
 
-static void readThing(const gamemap_t *map, uint idx)
+static void readThing(const GameMap *map, uint idx)
 {
 
 }
 */
 
-static void archiveMap(gamemap_t *map, boolean write)
+static void archiveMap(GameMap *map, boolean write)
 {
     if(write)
         beginSegment(DAMSEG_MAP);
@@ -1125,7 +1015,7 @@ static void archiveMap(gamemap_t *map, boolean write)
     archiveLines(map, write); // Must follow vertexes (lineowner nodes).
     archiveSides(map, write);
     archiveSectors(map, write);
-    archiveSubsectors(map, write);
+    archiveBspLeafs(map, write);
     archiveSegs(map, write);
     archiveNodes(map, write);
     archiveBlockmap(map, write);
@@ -1137,31 +1027,6 @@ static void archiveMap(gamemap_t *map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
-static void archiveMaterialDict(materialdict_t *dict, boolean write)
-{
-    int i;
-
-    if(write)
-    {
-        writeLong((long) dict->count);
-        for(i = 0; i < dict->count; ++i)
-        {
-            writeLong(Str_Length(&dict->table[i].path));
-            writeNBytes(Str_Text(&dict->table[i].path), Str_Length(&dict->table[i].path));
-        }
-    }
-    else
-    {
-        dict->count = readLong();
-        for(i = 0; i < dict->count; ++i)
-        {
-            int len = readLong();
-            Str_Clear(&dict->table[i].path);
-            Str_Reserve(&dict->table[i].path, len);
-            readNBytes(Str_Text(&dict->table[i].path), len);
-        }
-    }
-}
 static void archiveSymbolTables(boolean write)
 {
     if(write)
@@ -1169,7 +1034,7 @@ static void archiveSymbolTables(boolean write)
     else
         assertSegment(DAMSEG_SYMBOLTABLES);
 
-    archiveMaterialDict(materialDict, write);
+    //archiveMaterialDict(materialDict, write);
 
     if(write)
         endSegment();
@@ -1212,7 +1077,7 @@ static void archiveHeader(boolean write)
         assertSegment(DAMSEG_END);
 }
 
-static boolean doArchiveMap(gamemap_t* map, const char* path, boolean write)
+static boolean doArchiveMap(GameMap* map, const char* path, boolean write)
 {
     if(NULL == path || !path[0])
         return false;
@@ -1223,9 +1088,9 @@ static boolean doArchiveMap(gamemap_t* map, const char* path, boolean write)
 
     Con_Message("DAM_MapRead: %s cached map %s.\n", write? "Saving" : "Loading", path);
 
-    materialDict = M_Calloc(sizeof(*materialDict));
+    /*materialDict = M_Calloc(sizeof(*materialDict));
     if(write)
-        initMaterialDict(map, materialDict);
+        initMaterialDict(map, materialDict);*/
 
     archiveHeader(write);
     archiveRelocationTables(write);
@@ -1235,17 +1100,17 @@ static boolean doArchiveMap(gamemap_t* map, const char* path, boolean write)
     // Close the file.
     closeMapFile();
 
-    M_Free(materialDict);
+    //M_Free(materialDict);
 
     return true;
 }
 
-boolean DAM_MapWrite(gamemap_t* map, const char* path)
+boolean DAM_MapWrite(GameMap* map, const char* path)
 {
     return doArchiveMap(map, path, true);
 }
 
-boolean DAM_MapRead(gamemap_t* map, const char* path)
+boolean DAM_MapRead(GameMap* map, const char* path)
 {
     return doArchiveMap(map, path, false);
 }
@@ -1258,7 +1123,8 @@ boolean DAM_MapIsValid(const char* cachedMapPath, lumpnum_t markerLumpNum)
         uint buildTime = F_GetLastModified(cachedMapPath);
 
         if(F_Access(cachedMapPath) && !(buildTime < sourceTime))
-        {   // Ok, lets check the header.
+        {
+            // Ok, lets check the header.
             if(openMapFile(cachedMapPath, false))
             {
                 archiveHeader(false);

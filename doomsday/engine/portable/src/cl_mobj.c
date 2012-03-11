@@ -30,9 +30,6 @@
 #include "de_play.h"
 #include "de_audio.h"
 
-/// The client mobjs are stored into a hash to speed up the searching.
-#define HASH_SIZE       256
-
 /// Convert 8.8/10.6 fixed point to 16.16.
 #define UNFIXED8_8(x)   (((x) << 16) / 256)
 #define UNFIXED10_6(x)  (((x) << 16) / 64)
@@ -49,30 +46,29 @@
 extern int gotFrame; ///< @todo Remove this...
 
 /**
- * The client mobj hash is used for quickly finding a client mobj by
- * on its identifier.
- */
-typedef struct cmhash_s {
-    clmoinfo_t *first, *last;
-} cmhash_t;
-
-static cmhash_t cmHash[HASH_SIZE];
-
-/**
  * @return  Pointer to the hash chain with the specified id.
  */
-static cmhash_t *ClMobj_Hash(thid_t id)
+static cmhash_t* GameMap_ClMobjHash(GameMap* map, thid_t id)
 {
-    return &cmHash[(uint) id % HASH_SIZE];
+    assert(map);
+    return &map->clMobjHash[(uint) id % CLIENT_MOBJ_HASH_SIZE];
+}
+
+/// @note Part of the Doomsday public API.
+static cmhash_t* ClMobj_Hash(thid_t id)
+{
+    if(!theMap) return NULL;
+    return GameMap_ClMobjHash(theMap, id);
 }
 
 /**
  * Links the clmobj into the client mobj hash table.
  */
-static void ClMobj_Link(mobj_t *mo, thid_t id)
+static void ClMobj_Link(mobj_t* mo, thid_t id)
 {
-    cmhash_t   *hash = ClMobj_Hash(id);
-    clmoinfo_t *info = ClMobj_GetInfo(mo);
+    /// @fixme Do not assume the CURRENT map.
+    cmhash_t* hash = GameMap_ClMobjHash(theMap, id);
+    clmoinfo_t* info = ClMobj_GetInfo(mo);
 
     CL_ASSERT_CLMOBJ(mo);
 
@@ -123,8 +119,8 @@ mobj_t* ClMobj_MobjForInfo(clmoinfo_t* info)
 
 struct mobj_s* ClMobj_Find(thid_t id)
 {
-    cmhash_t   *hash = ClMobj_Hash(id);
-    clmoinfo_t *info;
+    cmhash_t* hash = ClMobj_Hash(id);
+    clmoinfo_t* info;
 
     if(!id) return NULL;
 
@@ -140,20 +136,15 @@ struct mobj_s* ClMobj_Find(thid_t id)
     return NULL;
 }
 
-/**
- * Iterate the client mobj hash, exec the callback on each. Abort if callback
- * returns @c false.
- *
- * @return  If the callback returns @c false.
- */
-boolean ClMobj_Iterator(boolean (*callback) (mobj_t *, void *), void *parm)
+boolean GameMap_ClMobjIterator(GameMap* map, boolean (*callback) (mobj_t*, void*), void* parm)
 {
-    clmoinfo_t *info;
-    int         i;
+    clmoinfo_t* info;
+    int i;
+    assert(map);
 
-    for(i = 0; i < HASH_SIZE; ++i)
+    for(i = 0; i < CLIENT_MOBJ_HASH_SIZE; ++i)
     {
-        for(info = cmHash[i].first; info; info = info->next)
+        for(info = map->clMobjHash[i].first; info; info = info->next)
         {
             if(!callback(ClMobj_MobjForInfo(info), parm))
                 return false;
@@ -326,31 +317,21 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int fl
     }
 }
 
-/**
- * Initialize clientside data.
- */
-void Cl_InitClientMobjs(void)
+void GameMap_InitClMobjs(GameMap* map)
 {
-    //previousTime = gameTime;
-
-    // List of client mobjs.
-    memset(cmHash, 0, sizeof(cmHash));
-
-    Cl_InitPlayers();
+    assert(map);
+    memset(map->clMobjHash, 0, sizeof(map->clMobjHash));
 }
 
-/**
- * Called when the client is shut down. Unlinks everything from the
- * sectors and the blockmap and clears the clmobj list.
- */
-void Cl_DestroyClientMobjs(void)
+void GameMap_DestroyClMobjs(GameMap* map)
 {
-    int                 i;
-    clmoinfo_t*         info;
+    clmoinfo_t* info;
+    int i;
+    assert(map);
 
-    for(i = 0; i < HASH_SIZE; ++i)
+    for(i = 0; i < CLIENT_MOBJ_HASH_SIZE; ++i)
     {
-        for(info = cmHash[i].first; info; info = info->next)
+        for(info = map->clMobjHash[i].first; info; info = info->next)
         {
             mobj_t* mo = ClMobj_MobjForInfo(info);
             // Players' clmobjs are not linked anywhere.
@@ -359,39 +340,32 @@ void Cl_DestroyClientMobjs(void)
         }
     }
 
-    Cl_Reset();
+    GameMap_ClMobjReset(map);
 }
 
-/**
- * Reset the client status. Called when the map changes.
- */
-void Cl_Reset(void)
+void GameMap_ClMobjReset(GameMap* map)
 {
+    assert(map);
+
     Cl_ResetFrame();
 
     // The PU_MAP memory was freed, so just clear the hash.
-    memset(cmHash, 0, sizeof(cmHash));
-
-    // Clear player data, too, since we just lost all clmobjs.
-    Cl_InitPlayers();
+    memset(map->clMobjHash, 0, sizeof(map->clMobjHash));
 }
 
-/**
- * Deletes hidden, unpredictable or nulled mobjs for which we have not received
- * updates in a while.
- */
-void Cl_ExpireMobjs(void)
+void GameMap_ExpireClMobjs(GameMap* map)
 {
+    uint nowTime = Sys_GetRealTime();
     clmoinfo_t* info;
     clmoinfo_t* next = 0;
     mobj_t* mo;
     int i;
-    uint nowTime = Sys_GetRealTime();
+    assert(map);
 
     // Move all client mobjs.
-    for(i = 0; i < HASH_SIZE; ++i)
+    for(i = 0; i < CLIENT_MOBJ_HASH_SIZE; ++i)
     {
-        for(info = cmHash[i].first; info; info = next)
+        for(info = map->clMobjHash[i].first; info; info = next)
         {
             next = info->next;
             mo = ClMobj_MobjForInfo(info);
@@ -408,7 +382,7 @@ void Cl_ExpireMobjs(void)
                 if(nowTime - info->time > CLMOBJ_TIMEOUT)
                 {
 #ifdef _DEBUG
-                    Con_Message("Cl_ExpireMobjs: Mobj %i has expired (%i << %i), in state %s [%c%c%c].\n",
+                    Con_Message("GameMap_ExpireClMobjs: Mobj %i has expired (%i << %i), in state %s [%c%c%c].\n",
                                 mo->thinker.id,
                                 info->time, nowTime,
                                 Def_GetStateName(mo->state),
@@ -440,7 +414,7 @@ void Cl_PredictMovement(void)
     predicted_tics++;
 
     // Move all client mobjs.
-    for(i = 0; i < HASH_SIZE; ++i)
+    for(i = 0; i < CLIENT_MOBJ_HASH_SIZE; ++i)
     {
         for(cmo = cmHash[i].first; cmo; cmo = next)
         {
@@ -540,26 +514,24 @@ mobj_t* ClMobj_Create(thid_t id)
     mo->ddFlags = DDMF_REMOTE;
 
     ClMobj_Link(mo, id);
-    P_SetMobjID(id, true);      // Mark this ID as used.
+    GameMap_SetMobjID(theMap, id, true); // Mark this ID as used.
 
     // Client mobjs are full-fludged game mobjs as well.
     mo->thinker.function = gx.MobjThinker;
-    P_ThinkerAdd((thinker_t*) mo, true);
+    GameMap_ThinkerAdd(theMap, (thinker_t*) mo, true);
 
     return mo;
 }
 
 /**
  * Destroys the client mobj. Before this is called, the client mobj should be
- * unlinked from the thinker list (P_ThinkerRemove).
+ * unlinked from the thinker list (GameMap_ThinkerRemove).
  */
-void ClMobj_Destroy(mobj_t *mo)
+void ClMobj_Destroy(mobj_t* mo)
 {
     clmoinfo_t* info = 0;
 
-#ifdef _DEBUG
-    VERBOSE2( Con_Message("ClMobj_Destroy: mobj %i being destroyed.\n", mo->thinker.id) );
-#endif
+    DEBUG_VERBOSE2_Message(("ClMobj_Destroy: mobj %i being destroyed.\n", mo->thinker.id));
 
     CL_ASSERT_CLMOBJ(mo);
     info = ClMobj_GetInfo(mo);
@@ -568,7 +540,7 @@ void ClMobj_Destroy(mobj_t *mo)
     S_StopSound(0, mo);
 
     // The ID is free once again.
-    P_SetMobjID(mo->thinker.id, false);
+    GameMap_SetMobjID(theMap, mo->thinker.id, false);
     ClMobj_UnsetPosition(mo);
     ClMobj_Unlink(mo);
 

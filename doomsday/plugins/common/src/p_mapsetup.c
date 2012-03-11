@@ -95,7 +95,7 @@ boolean mapSetup;
 /**
  * Converts a line to an xline.
  */
-xline_t* P_ToXLine(linedef_t* line)
+xline_t* P_ToXLine(LineDef* line)
 {
     if(!line)
         return NULL;
@@ -119,7 +119,7 @@ xline_t* P_GetXLine(uint idx)
 
 void P_SetLinedefAutomapVisibility(int player, uint lineIdx, boolean visible)
 {
-    linedef_t* line = P_ToPtr(DMU_LINEDEF, lineIdx);
+    LineDef* line = P_ToPtr(DMU_LINEDEF, lineIdx);
     xline_t* xline;
     if(NULL == line || P_IsDummy(line)) return;
 
@@ -133,7 +133,7 @@ void P_SetLinedefAutomapVisibility(int player, uint lineIdx, boolean visible)
 /**
  * Converts a sector to an xsector.
  */
-xsector_t* P_ToXSector(sector_t* sector)
+xsector_t* P_ToXSector(Sector* sector)
 {
     if(!sector)
         return NULL;
@@ -150,16 +150,15 @@ xsector_t* P_ToXSector(sector_t* sector)
 }
 
 /**
- * Given a subsector - find its parent xsector.
+ * Given a BSP leaf - find its parent xsector.
  */
-xsector_t* P_ToXSectorOfSubsector(subsector_t* sub)
+xsector_t* P_ToXSectorOfBspLeaf(BspLeaf* bspLeaf)
 {
-    sector_t*           sec;
+    Sector* sec;
 
-    if(!sub)
-        return NULL;
+    if(!bspLeaf) return NULL;
 
-    sec = P_GetPtrp(sub, DMU_SECTOR);
+    sec = P_GetPtrp(bspLeaf, DMU_SECTOR);
 
     // Is it a dummy?
     if(P_IsDummy(sec))
@@ -229,7 +228,7 @@ static void getSurfaceColor(uint idx, float rgba[4])
 }
 
 typedef struct applysurfacecolorparams_s {
-    sector_t*       frontSec;
+    Sector*         frontSec;
     float           topColor[4];
     float           bottomColor[4];
 } applysurfacecolorparams_t;
@@ -242,7 +241,7 @@ int applySurfaceColor(void* obj, void* context)
 
 #define LTF_SWAPCOLORS      4
 
-    linedef_t*          li = (linedef_t*) obj;
+    LineDef*            li = (LineDef*) obj;
     applysurfacecolorparams_t* params =
         (applysurfacecolorparams_t*) context;
     byte                dFlags =
@@ -253,7 +252,7 @@ int applySurfaceColor(void* obj, void* context)
     if((dFlags & LDF_BLEND) &&
        params->frontSec == P_GetPtrp(li, DMU_FRONT_SECTOR))
     {
-        sidedef_t*          side = P_GetPtrp(li, DMU_SIDEDEF0);
+        SideDef*            side = P_GetPtrp(li, DMU_SIDEDEF0);
 
         if(side)
         {
@@ -281,7 +280,7 @@ int applySurfaceColor(void* obj, void* context)
     if((dFlags & LDF_BLEND) &&
        params->frontSec == P_GetPtrp(li, DMU_BACK_SECTOR))
     {
-        sidedef_t*          side = P_GetPtrp(li, DMU_SIDEDEF1);
+        SideDef*            side = P_GetPtrp(li, DMU_SIDEDEF1);
 
         if(side)
         {
@@ -487,7 +486,7 @@ static void initXSectors(void)
         {
         applysurfacecolorparams_t params;
         float rgba[4];
-        sector_t* sec = P_ToPtr(DMU_SECTOR, i);
+        Sector* sec = P_ToPtr(DMU_SECTOR, i);
 
         getSurfaceColor(TOLIGHTIDX(
             P_GetGMOShort(MO_XSECTOR, i, MO_FLOORCOLOR)), rgba);
@@ -556,8 +555,8 @@ static void loadMapSpots(void)
         // Sound sequence origin?
         if(spot->doomEdNum >= 1400 && spot->doomEdNum < 1410)
         {
-            subsector_t* ssec = R_PointInSubsector(spot->pos[VX], spot->pos[VY]);
-            xsector_t* xsector = P_ToXSector(P_GetPtrp(ssec, DMU_SECTOR));
+            BspLeaf* bspLeaf = P_BspLeafAtPointXY(spot->pos[VX], spot->pos[VY]);
+            xsector_t* xsector = P_ToXSector(P_GetPtrp(bspLeaf, DMU_SECTOR));
 
             xsector->seqType = spot->doomEdNum - 1400;
             continue;
@@ -754,8 +753,6 @@ int P_SetupMapWorker(void* paramaters)
 
     // Initialize The Logical Sound Manager.
     S_MapChange();
-
-    Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
 
 #if __JHERETIC__ || __JHEXEN__
     // The pointers in the body queue just became invalid.
@@ -994,8 +991,8 @@ static void P_FinalizeMap(void)
         material_t* mat = P_ToPtr(DMU_MATERIAL, Materials_ResolveUriCString(MN_TEXTURES_NAME":NUKE24"));
         material_t* bottomMat, *midMat;
         float yoff;
-        sidedef_t* sidedef;
-        linedef_t* line;
+        SideDef* sidedef;
+        LineDef* line;
 
         for(i = 0; i < numlines; ++i)
         {

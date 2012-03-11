@@ -94,7 +94,7 @@
  * A walking creature will have its z equal to the floor
  * it is standing on.
  *
- * The sound code uses the x,y, and subsector fields
+ * The sound code uses the x,y, and BSP leaf fields
  * to do stereo positioning of any sound effited by the mobj_t.
  *
  * The play simulation uses the blocklinks, x,y,z, radius, height
@@ -106,8 +106,8 @@
  *
  * Every mobj_t is linked into a single sector
  * based on its origin coordinates.
- * The subsector_t is found with R_PointInSubsector(x,y),
- * and the sector_t can be found with subsector->sector.
+ * The BspLeaf is found with P_BspLeafAtPointXY(x,y),
+ * and the Sector can be found with bspLeaf->sector.
  * The sector links are only used by the rendering code,
  * the play simulation does not care about them at all.
  *
@@ -119,13 +119,13 @@
  * but only as the instigator (missiles will run into other
  * things, but nothing can run into a missile).
  * Each block in the grid is 128*128 units, and knows about
- * every linedef_t that it contains a piece of, and every
+ * every LineDef that it contains a piece of, and every
  * interactable mobj_t that has its origin contained.
  *
- * A valid mobj_t is a mobj_t that has the proper subsector_t
+ * A valid mobj_t is a mobj_t that has the proper BspLeaf
  * filled in for its xy coordinates and is linked into the
- * sector from which the subsector was made, or has the
- * MF_NOSECTOR flag set (the subsector_t needs to be valid
+ * sector from which the BSP leaf was made, or has the
+ * MF_NOSECTOR flag set (the BspLeaf needs to be valid
  * even if MF_NOSECTOR is set).
  * Links should only be modified by the P_[Un]SetThingPosition()
  * functions.
@@ -310,7 +310,7 @@ typedef struct polyobj_s {
     DD_BASE_POLYOBJ_ELEMENTS()
 
     // Doom64-specific data:
-} polyobj_t;
+} Polyobj;
 
 void            P_ExplodeMissile(mobj_t* mo);
 float           P_MobjGetFriction(mobj_t* mo);

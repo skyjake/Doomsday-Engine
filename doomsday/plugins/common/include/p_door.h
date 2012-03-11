@@ -63,7 +63,7 @@ typedef enum {
 typedef struct {
     thinker_t       thinker;
     doortype_e      type;
-    sector_t*       sector;
+    Sector*         sector;
     float           topHeight;
     float           speed;
     doorstate_e     state;
@@ -76,21 +76,21 @@ typedef struct {
 
 void        T_Door(door_t* door);
 
-boolean     EV_VerticalDoor(linedef_t* li, mobj_t* mo);
+boolean     EV_VerticalDoor(LineDef* li, mobj_t* mo);
 #if __JHEXEN__
-int         EV_DoDoor(linedef_t* li, byte* args, doortype_e type);
+int         EV_DoDoor(LineDef* li, byte* args, doortype_e type);
 #else
-int         EV_DoDoor(linedef_t* li, doortype_e type);
+int         EV_DoDoor(LineDef* li, doortype_e type);
 #endif
 #if __JDOOM__ || __JDOOM64__
-int         EV_DoLockedDoor(linedef_t* li, doortype_e type, mobj_t* mo);
+int         EV_DoLockedDoor(LineDef* li, doortype_e type, mobj_t* mo);
 #endif
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-void        P_SpawnDoorCloseIn30(sector_t* sec);
-void        P_SpawnDoorRaiseIn5Mins(sector_t* sec);
+void        P_SpawnDoorCloseIn30(Sector* sec);
+void        P_SpawnDoorRaiseIn5Mins(Sector* sec);
 #endif
 #if __JDOOM64__
-int         EV_AnimateDoor(linedef_t* li, mobj_t* mo);
+int         EV_AnimateDoor(LineDef* li, mobj_t* mo);
 #endif
 
 #endif

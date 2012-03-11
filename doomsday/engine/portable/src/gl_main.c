@@ -753,7 +753,7 @@ void GL_TotalReset(void)
 void GL_TotalRestore(void)
 {
     ded_mapinfo_t* mapInfo = NULL;
-    gamemap_t* map;
+    GameMap* map;
 
     if(isDedicated) return;
 
@@ -765,10 +765,10 @@ void GL_TotalRestore(void)
     R_LoadSystemFonts();
     Con_Resize();
 
-    map = P_GetCurrentMap();
+    map = theMap;
     if(map)
     {
-        mapInfo = Def_GetMapInfo(P_MapUri(map));
+        mapInfo = Def_GetMapInfo(GameMap_Uri(map));
     }
 
     // Restore map's fog settings.

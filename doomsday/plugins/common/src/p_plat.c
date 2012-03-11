@@ -239,18 +239,18 @@ void T_PlatRaise(plat_t* plat)
 }
 
 #if __JHEXEN__
-static int doPlat(linedef_t *line, int tag, byte *args, plattype_e type,
+static int doPlat(LineDef *line, int tag, byte *args, plattype_e type,
                       int amount)
 #else
-static int doPlat(linedef_t *line, int tag, plattype_e type, int amount)
+static int doPlat(LineDef *line, int tag, plattype_e type, int amount)
 #endif
 {
     int                 rtn = 0;
     float               floorHeight;
     plat_t             *plat;
-    sector_t           *sec = NULL;
+    Sector             *sec = NULL;
 #if !__JHEXEN__
-    sector_t           *frontSector = P_GetPtrp(line, DMU_FRONT_SECTOR);
+    Sector             *frontSector = P_GetPtrp(line, DMU_FRONT_SECTOR);
 #endif
     xsector_t          *xsec;
     iterlist_t         *list;
@@ -460,9 +460,9 @@ static int doPlat(linedef_t *line, int tag, plattype_e type, int amount)
  * @param amount: is only used for SOME platforms.
  */
 #if __JHEXEN__
-int EV_DoPlat(linedef_t *line, byte *args, plattype_e type, int amount)
+int EV_DoPlat(LineDef *line, byte *args, plattype_e type, int amount)
 #else
-int EV_DoPlat(linedef_t *line, plattype_e type, int amount)
+int EV_DoPlat(LineDef *line, plattype_e type, int amount)
 #endif
 {
 #if __JHEXEN__

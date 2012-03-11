@@ -115,7 +115,7 @@ static const float dirSpeed[8][2] =
 void P_NoiseAlert(mobj_t *target, mobj_t *emitter)
 {
     VALIDCOUNT++;
-    P_RecursiveSound(target, P_GetPtrp(emitter->subsector, DMU_SECTOR), 0);
+    P_RecursiveSound(target, P_GetPtrp(emitter->bspLeaf, DMU_SECTOR), 0);
 }
 
 static boolean checkMeleeRange(mobj_t *actor)
@@ -196,7 +196,7 @@ static boolean checkMissileRange(mobj_t *actor)
 static boolean moveMobj(mobj_t* actor, boolean dropoff)
 {
     float pos[3], step[3];
-    linedef_t* ld;
+    LineDef* ld;
     boolean good;
 
     if(actor->moveDir == DI_NODIR)
@@ -366,9 +366,9 @@ static void doNewChaseDir(mobj_t *actor, float deltaX, float deltaY)
  * p_map.c::P_TryMove(), allows monsters to free themselves without making
  * them tend to hang over dropoffs.
  */
-static int PIT_AvoidDropoff(linedef_t* line, void* data)
+static int PIT_AvoidDropoff(LineDef* line, void* data)
 {
-    sector_t* backsector = P_GetPtrp(line, DMU_BACK_SECTOR);
+    Sector* backsector = P_GetPtrp(line, DMU_BACK_SECTOR);
     AABoxf* aaBox = P_GetPtrp(line, DMU_BOUNDING_BOX);
 
     if(backsector &&
@@ -379,7 +379,7 @@ static int PIT_AvoidDropoff(linedef_t* line, void* data)
        tmBox.maxY > aaBox->minY &&
        P_BoxOnLineSide(&tmBox, line) == -1)
     {
-        sector_t*           frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
+        Sector*             frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
         float               front = P_GetFloatp(frontsector, DMU_FLOOR_HEIGHT);
         float               back = P_GetFloatp(backsector, DMU_FLOOR_HEIGHT);
         float               d1[2];
@@ -571,7 +571,7 @@ void C_DECL A_RectSpecial(mobj_t* actor)
 
     if(!params.count)
     {   // No Bitches left alive.
-        linedef_t*          dummyLine = P_AllocDummyLine();
+        LineDef*            dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4459; // jd64 was 666.
         EV_DoDoor(dummyLine, FT_LOWERTOLOWEST); // jd64 was open.
@@ -594,7 +594,7 @@ void C_DECL A_PossSpecial(mobj_t* mo)
 
     if(!params.count)
     {
-        linedef_t*          dummyLine = P_AllocDummyLine();
+        LineDef*            dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4444;
         EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
@@ -617,7 +617,7 @@ void C_DECL A_SposSpecial(mobj_t* mo)
 
     if(!params.count)
     {
-        linedef_t*          dummyLine = P_AllocDummyLine();
+        LineDef*            dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4445;
         EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
@@ -640,7 +640,7 @@ void C_DECL A_TrooSpecial(mobj_t* mo)
 
     if(!params.count)
     {
-        linedef_t*          dummyLine = P_AllocDummyLine();
+        LineDef*            dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = (mo->type == MT_TROOP? 4446 : 4447);
         EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
@@ -663,7 +663,7 @@ void C_DECL A_SargSpecial(mobj_t* mo)
 
     if(!params.count)
     {
-        linedef_t*          dummyLine = P_AllocDummyLine();
+        LineDef*            dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4448;
         EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
@@ -686,7 +686,7 @@ void C_DECL A_HeadSpecial(mobj_t* mo)
 
     if(!params.count)
     {
-        linedef_t*          dummyLine = P_AllocDummyLine();
+        LineDef*            dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4450;
         EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
@@ -709,7 +709,7 @@ void C_DECL A_SkulSpecial(mobj_t* mo)
 
     if(!params.count)
     {
-        linedef_t*          dummyLine = P_AllocDummyLine();
+        LineDef*            dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4452;
         EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
@@ -732,7 +732,7 @@ void C_DECL A_Bos2Special(mobj_t* mo)
 
     if(!params.count)
     {
-        linedef_t*          dummyLine = P_AllocDummyLine();
+        LineDef*            dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4453;
         EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
@@ -755,7 +755,7 @@ void C_DECL A_BossSpecial(mobj_t* mo)
 
     if(!params.count)
     {
-        linedef_t*          dummyLine = P_AllocDummyLine();
+        LineDef*            dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4454;
         EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
@@ -778,7 +778,7 @@ void C_DECL A_PainSpecial(mobj_t* mo)
 
     if(!params.count)
     {
-        linedef_t*          dummyLine = P_AllocDummyLine();
+        LineDef*            dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4455;
         EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
@@ -801,7 +801,7 @@ void C_DECL A_FattSpecial(mobj_t* mo)
 
     if(!params.count)
     {
-        linedef_t*          dummyLine = P_AllocDummyLine();
+        LineDef*            dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4456;
         EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
@@ -824,7 +824,7 @@ void C_DECL A_BabySpecial(mobj_t* mo)
 
     if(!params.count)
     {
-        linedef_t*          dummyLine = P_AllocDummyLine();
+        LineDef*            dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4457;
         EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
@@ -847,7 +847,7 @@ void C_DECL A_CybrSpecial(mobj_t* mo)
 
     if(!params.count)
     {
-        linedef_t*          dummyLine = P_AllocDummyLine();
+        LineDef*            dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 4458;
         EV_DoDoor(dummyLine, FT_LOWERTOLOWEST);
@@ -860,10 +860,10 @@ void C_DECL A_CybrSpecial(mobj_t* mo)
  */
 void C_DECL A_Look(mobj_t *actor)
 {
-    sector_t           *sec = NULL;
+    Sector             *sec = NULL;
     mobj_t             *targ;
 
-    sec = P_GetPtrp(actor->subsector, DMU_SECTOR);
+    sec = P_GetPtrp(actor->bspLeaf, DMU_SECTOR);
 
     if(!sec)
         return;
@@ -1701,7 +1701,7 @@ void C_DECL A_PainShootSkull(mobj_t *actor, angle_t angle)
     mobj_t*             newmobj;
     uint                an;
     float               prestep;
-    sector_t*           sec;
+    Sector*             sec;
 
     if(cfg.maxSkulls)
     {   // Limit the number of MT_SKULL's we should spawn.
@@ -1741,7 +1741,7 @@ void C_DECL A_PainShootSkull(mobj_t *actor, angle_t angle)
         if(!(newmobj = P_SpawnMobj3fv(MT_SKULL, pos, angle, 0)))
             return;
 
-        sec = P_GetPtrp(newmobj->subsector, DMU_SECTOR);
+        sec = P_GetPtrp(newmobj->bspLeaf, DMU_SECTOR);
 
         // Check to see if the new Lost Soul's z value is above the
         // ceiling of its new sector, or below the floor. If so, kill it.
@@ -1898,7 +1898,7 @@ void C_DECL A_CyberDeath(mobj_t* actor)
     int                 i;
     mobj_t*             mo;
     float               pos[3];
-    linedef_t*          dummyLine;
+    LineDef*            dummyLine;
     countmobjoftypeparams_t params;
 
     memcpy(pos, actor->pos, sizeof(pos));
@@ -2009,7 +2009,7 @@ void C_DECL A_Explode(mobj_t *mo)
 void C_DECL A_BarrelExplode(mobj_t* actor)
 {
     int                 i;
-    linedef_t*          dummyLine;
+    LineDef*            dummyLine;
     countmobjoftypeparams_t params;
 
     S_StartSound(actor->info->deathSound, actor);

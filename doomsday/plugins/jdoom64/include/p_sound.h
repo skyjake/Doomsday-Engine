@@ -41,6 +41,6 @@ enum {
 };
 
 void            S_MapMusic(uint episode, uint map);
-void            S_SectorSound(sector_t* sec, int origin, int id);
+void            S_SectorSound(Sector* sec, int origin, int id);
 
 #endif

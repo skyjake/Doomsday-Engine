@@ -75,7 +75,7 @@ void S_MapMusic(uint episode, uint map)
  * @param origin        Origin of the sound (center/floor/ceiling).
  * @param id            ID number of the sound to be played.
  */
-void S_SectorSound(sector_t* sec, int origin, int id)
+void S_SectorSound(Sector* sec, int origin, int id)
 {
     mobj_t*             centerOrigin, *floorOrigin, *ceilingOrigin;
 

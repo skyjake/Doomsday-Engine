@@ -46,6 +46,7 @@
 #include "rend_bias.h"
 #include "rend_console.h"
 #include "r_lgrid.h"
+#include "blockmapvisual.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1094,7 +1095,7 @@ D_CMD(MakeCamera)
        mo->pos[VX] = conp->mo->pos[VX];
        mo->pos[VY] = conp->mo->pos[VY];
        mo->pos[VZ] = conp->mo->pos[VZ];
-       mo->subsector = conp->mo->subsector;
+       mo->bspLeaf = conp->mo->bspLeaf;
        ddPlayers[cp].mo = mo;
        displayPlayer = cp; */
 

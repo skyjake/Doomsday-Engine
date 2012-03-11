@@ -89,13 +89,6 @@ typedef struct cregister_s {
     dt_poly_t*          polyObjs;
 } cregister_t;
 
-/**
- * Each entity (mobj, sector, side, etc.) has an origin the world.
- */
-typedef struct origin_s {
-    float               pos[2];
-} origin_t;
-
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -130,12 +123,6 @@ static float deltaBaseScores[NUM_DELTA_TYPES];
 // the mobj being compared.
 static dt_mobj_t dummyZeroMobj;
 
-// Origins of stuff. Calculated at the beginning of a map.
-static origin_t* sectorOrigins, *sideOrigins;
-
-// Pointer to the owner line for each side.
-static linedef_t** sideOwners;
-
 // CODE --------------------------------------------------------------------
 
 /**
@@ -145,12 +132,10 @@ static linedef_t** sideOwners;
 void Sv_InitPools(void)
 {
     uint                i;
-    sector_t*           sec;
     uint                startTime;
 
     // Clients don't register anything.
-    if(isClient)
-        return;
+    if(isClient) return;
 
     startTime = Sys_GetRealTime();
 
@@ -189,51 +174,13 @@ void Sv_InitPools(void)
         pools[i].isFirst = true;
     }
 
-    // Find the owners of all sides.
-    sideOwners = Z_Malloc(sizeof(linedef_t *) * numSideDefs, PU_MAP, 0);
-    for(i = 0; i < numSideDefs; ++i)
-    {
-        sideOwners[i] = R_GetLineForSide(i);
-    }
-
-    // Origins of sectors.
-    sectorOrigins = Z_Malloc(sizeof(origin_t) * numSectors, PU_MAP, 0);
-    for(i = 0; i < numSectors; ++i)
-    {
-        sec = SECTOR_PTR(i);
-
-        sectorOrigins[i].pos[VX] =
-            (sec->bBox[BOXRIGHT] + sec->bBox[BOXLEFT]) / 2;
-        sectorOrigins[i].pos[VY] =
-            (sec->bBox[BOXBOTTOM] + sec->bBox[BOXTOP]) / 2;
-    }
-
-    // Origins of sides.
-    sideOrigins = Z_Malloc(sizeof(origin_t) * numSideDefs, PU_MAP, 0);
-    for(i = 0; i < numSideDefs; ++i)
-    {
-        vertex_t*           vtx;
-
-        // The side must be owned by a line.
-        if(sideOwners[i] == NULL)
-            continue;
-
-        vtx = sideOwners[i]->L_v1;
-        sideOrigins[i].pos[VX] =
-            vtx->V_pos[VX] + sideOwners[i]->dX / 2;
-        sideOrigins[i].pos[VY] =
-            vtx->V_pos[VY] + sideOwners[i]->dY / 2;
-    }
-
     // Store the current state of the world into both the registers.
     Sv_RegisterWorld(&worldRegister, false);
     Sv_RegisterWorld(&initialRegister, true);
 
-#ifdef _DEBUG
     // How much time did we spend?
-    Con_Message("Sv_InitPools: World registered, done in %.2f seconds.\n",
-                (Sys_GetRealTime() - startTime) / 1000.0f);
-#endif
+    DEBUG_Message(("Sv_InitPools: World registered, done in %.2f seconds.\n",
+                   (Sys_GetRealTime() - startTime) / 1000.0f));
 }
 
 /**
@@ -241,6 +188,7 @@ void Sv_InitPools(void)
  */
 void Sv_ShutdownPools(void)
 {
+    // Nothing to do.
 }
 
 /**
@@ -395,7 +343,7 @@ void Sv_RegisterMobj(dt_mobj_t* reg, const mobj_t* mo)
     reg->thinker.id = mo->thinker.id;
     reg->type = mo->type;
     reg->dPlayer = mo->dPlayer;
-    reg->subsector = mo->subsector;
+    reg->bspLeaf = mo->bspLeaf;
     reg->pos[VX] = mo->pos[VX];
     reg->pos[VY] = mo->pos[VY];
     reg->pos[VZ] = Sv_GetMaxedMobjZ(mo);
@@ -493,7 +441,7 @@ void Sv_RegisterPlayer(dt_player_t* reg, uint number)
 void Sv_RegisterSector(dt_sector_t* reg, uint number)
 {
     uint                i;
-    sector_t*           sec = SECTOR_PTR(number);
+    Sector*             sec = SECTOR_PTR(number);
 
     reg->lightLevel = sec->lightLevel;
     memcpy(reg->rgb, sec->rgb, sizeof(reg->rgb));
@@ -520,8 +468,8 @@ void Sv_RegisterSector(dt_sector_t* reg, uint number)
  */
 void Sv_RegisterSide(dt_side_t* reg, uint number)
 {
-    sidedef_t*          side = SIDE_PTR(number);
-    linedef_t*          line = sideOwners[number];
+    SideDef* side = SIDE_PTR(number);
+    LineDef* line = side->line;
 
     reg->top.material = side->SW_topmaterial;
     reg->middle.material = side->SW_middlematerial;
@@ -541,7 +489,7 @@ void Sv_RegisterSide(dt_side_t* reg, uint number)
  */
 void Sv_RegisterPoly(dt_poly_t* reg, uint number)
 {
-    polyobj_t*          poly = polyObjs[number];
+    Polyobj*            poly = polyObjs[number];
 
     reg->dest.pos[VX] = poly->dest[VX];
     reg->dest.pos[VY] = poly->dest[VY];
@@ -684,7 +632,7 @@ boolean Sv_RegisterCompareSector(cregister_t* reg, uint number,
                                  sectordelta_t* d, byte doUpdate)
 {
     dt_sector_t*        r = &reg->sectors[number];
-    const sector_t*     s = SECTOR_PTR(number);
+    const Sector*       s = SECTOR_PTR(number);
     int                 df = 0;
 
     // Determine which data is different.
@@ -805,12 +753,12 @@ boolean Sv_RegisterCompareSector(cregister_t* reg, uint number,
 boolean Sv_RegisterCompareSide(cregister_t* reg, uint number, sidedelta_t* d,
                                byte doUpdate)
 {
-    const sidedef_t*    s = SIDE_PTR(number);
-    const linedef_t*    line = sideOwners[number];
-    dt_side_t*          r = &reg->sideDefs[number];
-    int                 df = 0;
-    byte                lineFlags = (line ? line->flags & 0xff : 0);
-    byte                sideFlags = s->flags & 0xff;
+    const SideDef* s = SIDE_PTR(number);
+    const LineDef* line = s->line;
+    dt_side_t* r = &reg->sideDefs[number];
+    byte lineFlags = (line ? line->flags & 0xff : 0);
+    byte sideFlags = s->flags & 0xff;
+    int df = 0;
 
     if(r->top.material != s->SW_topmaterial &&
        !(s->SW_topinflags & SUIF_FIX_MISSING_MATERIAL))
@@ -999,7 +947,7 @@ boolean Sv_IsPlayerIgnored(int plrNum)
  */
 void Sv_RegisterWorld(cregister_t* reg, boolean isInitial)
 {
-    uint                i;
+    uint i, numPolyobjs;
 
     memset(reg, 0, sizeof(*reg));
     reg->gametic = SECONDS_TO_TICKS(gameTime);
@@ -1008,26 +956,32 @@ void Sv_RegisterWorld(cregister_t* reg, boolean isInitial)
     reg->isInitial = isInitial;
 
     // Init sectors.
-    reg->sectors = Z_Calloc(sizeof(dt_sector_t) * numSectors, PU_MAP, 0);
-    for(i = 0; i < numSectors; ++i)
+    reg->sectors = Z_Calloc(sizeof(dt_sector_t) * NUM_SECTORS, PU_MAP, 0);
+    for(i = 0; i < NUM_SECTORS; ++i)
     {
         Sv_RegisterSector(&reg->sectors[i], i);
     }
 
     // Init sides.
-    reg->sideDefs = Z_Calloc(sizeof(dt_side_t) * numSideDefs, PU_MAP, 0);
-    for(i = 0; i < numSideDefs; ++i)
+    reg->sideDefs = Z_Calloc(sizeof(dt_side_t) * NUM_SIDEDEFS, PU_MAP, 0);
+    for(i = 0; i < NUM_SIDEDEFS; ++i)
     {
         Sv_RegisterSide(&reg->sideDefs[i], i);
     }
 
     // Init polyobjs.
-    reg->polyObjs =
-        (numPolyObjs ?
-         Z_Calloc(sizeof(dt_poly_t) * numPolyObjs, PU_MAP, 0) : NULL);
-    for(i = 0; i < numPolyObjs; ++i)
+    numPolyobjs = NUM_POLYOBJS;
+    if(numPolyobjs)
     {
-        Sv_RegisterPoly(&reg->polyObjs[i], i);
+        reg->polyObjs = Z_Calloc(sizeof(dt_poly_t) * NUM_POLYOBJS, PU_MAP, 0);
+        for(i = 0; i < numPolyobjs; ++i)
+        {
+            Sv_RegisterPoly(&reg->polyObjs[i], i);
+        }
+    }
+    else
+    {
+        reg->polyObjs = NULL;
     }
 }
 
@@ -1235,7 +1189,7 @@ void Sv_ApplyDeltaData(void* destDelta, const void* srcDelta)
         d->dPlayer = s->dPlayer;
 
         if(sf & (MDF_POS_X | MDF_POS_Y))
-            d->subsector = s->subsector;
+            d->bspLeaf = s->bspLeaf;
         if(sf & MDF_POS_X)
             d->pos[VX] = s->pos[VX];
         if(sf & MDF_POS_Y)
@@ -1537,12 +1491,12 @@ uint Sv_DeltaAge(const delta_t* delta)
  * Approximate the distance to the given sector. Set 'mayBeGone' to true
  * if the mobj may have been destroyed and should not be processed.
  */
-float Sv_MobjDistance(const mobj_t* mo, const ownerinfo_t* info,
-                      boolean isReal)
+float Sv_MobjDistance(const mobj_t* mo, const ownerinfo_t* info, boolean isReal)
 {
-    float               z;
+    float z;
 
-    if(isReal && !P_IsUsedMobjID(mo->thinker.id))
+    /// @fixme Do not assume mobj is from the CURRENT map.
+    if(isReal && !GameMap_IsUsedMobjID(theMap, mo->thinker.id))
     {
         // This mobj does not exist any more!
         return DDMAXFLOAT;
@@ -1569,10 +1523,10 @@ float Sv_MobjDistance(const mobj_t* mo, const ownerinfo_t* info,
  */
 float Sv_SectorDistance(int index, const ownerinfo_t* info)
 {
-    sector_t*           sector = SECTOR_PTR(index);
+    Sector* sector = SECTOR_PTR(index);
 
-    return P_ApproxDistance3(info->pos[VX] - sectorOrigins[index].pos[VX],
-                             info->pos[VY] - sectorOrigins[index].pos[VY],
+    return P_ApproxDistance3(info->pos[VX] - sector->origin.pos[VX],
+                             info->pos[VY] - sector->origin.pos[VY],
                              info->pos[VZ] -
                              ((sector->planes[PLN_CEILING]->height +
                                       sector->planes[PLN_FLOOR]->height) / 2));
@@ -1616,14 +1570,14 @@ float Sv_DeltaDistance(const void* deltaPtr, const ownerinfo_t* info)
 
     if(delta->type == DT_SIDE)
     {
-        return P_ApproxDistance(info->pos[VX] - sideOrigins[delta->id].pos[VX],
-                                info->pos[VY] - sideOrigins[delta->id].pos[VY]);
+        SideDef* sideDef = &sideDefs[delta->id];
+        return P_ApproxDistance(info->pos[VX] - sideDef->origin.pos[VX],
+                                info->pos[VY] - sideDef->origin.pos[VY]);
     }
 
     if(delta->type == DT_POLY)
     {
-        polyobj_t*          po = polyObjs[delta->id];
-
+        Polyobj* po = polyObjs[delta->id];
         return P_ApproxDistance(info->pos[VX] - po->pos[VX],
                                 info->pos[VY] - po->pos[VY]);
     }
@@ -1642,7 +1596,7 @@ float Sv_DeltaDistance(const void* deltaPtr, const ownerinfo_t* info)
 
     if(delta->type == DT_POLY_SOUND)
     {
-        polyobj_t*          po = polyObjs[delta->id];
+        Polyobj*            po = polyObjs[delta->id];
 
         return P_ApproxDistance(info->pos[VX] - po->pos[VX],
                                 info->pos[VY] - po->pos[VY]);
@@ -2106,7 +2060,8 @@ void Sv_NewNullDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
             // This reg_mobj_t might be removed.
             next = obj->next;
 
-            if(!P_IsUsedMobjID(obj->mo.thinker.id))
+            /// @fixme Do not assume mobj is from the CURRENT map.
+            if(!GameMap_IsUsedMobjID(theMap, obj->mo.thinker.id))
             {
                 // This object no longer exists!
                 Sv_NewDelta(&null, DT_MOBJ, obj->mo.thinker.id);
@@ -2179,8 +2134,7 @@ void Sv_NewMobjDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
     params.doUpdate = doUpdate;
     params.targets = targets;
 
-    // Mobjs are always public.
-    P_IterateThinkers(gx.MobjThinker, 0x1, newMobjDelta, &params);
+    GameMap_IterateThinkers(theMap, gx.MobjThinker, 0x1 /*mobjs are public*/, newMobjDelta, &params);
 }
 
 /**
@@ -2188,13 +2142,12 @@ void Sv_NewMobjDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
  */
 void Sv_NewPlayerDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
 {
-    uint                i;
-    playerdelta_t       player;
+    playerdelta_t player;
+    uint i;
 
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
-        if(Sv_IsPlayerIgnored(i))
-            continue;
+        if(Sv_IsPlayerIgnored(i)) continue;
 
         // Compare to produce a delta.
         if(Sv_RegisterComparePlayer(reg, i, &player))
@@ -2205,8 +2158,7 @@ void Sv_NewPlayerDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
             // flags).
             if(doUpdate && (player.delta.flags & PDF_MOBJ))
             {
-                reg_mobj_t*         registered =
-                    Sv_RegisterFindMobj(reg, reg->ddPlayers[i].mobj);
+                reg_mobj_t* registered = Sv_RegisterFindMobj(reg, reg->ddPlayers[i].mobj);
 
                 if(registered)
                 {
@@ -2274,7 +2226,7 @@ void Sv_NewSectorDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
     uint                i;
     sectordelta_t       delta;
 
-    for(i = 0; i < numSectors; ++i)
+    for(i = 0; i < NUM_SECTORS; ++i)
     {
         if(Sv_RegisterCompareSector(reg, i, &delta, doUpdate))
         {
@@ -2299,23 +2251,22 @@ void Sv_NewSideDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
     if(reg->isInitial)
     {
         start = 0;
-        end = numSideDefs;
+        end = NUM_SIDEDEFS;
     }
     else
     {
         // Because there are so many sides in a typical map, the number
         // of compared sides soon accumulates to millions. To reduce the
         // load, we'll check only a portion of all sides for a frame.
-        start = shift * numSideDefs / numShifts;
-        end = ++shift * numSideDefs / numShifts;
+        start = shift * NUM_SIDEDEFS / numShifts;
+        end = ++shift * NUM_SIDEDEFS / numShifts;
         shift %= numShifts;
     }
 
     for(i = start; i < end; ++i)
     {
         // The side must be owned by a line.
-        if(sideOwners[i] == NULL)
-            continue;
+        if(sideDefs[i].line == NULL) continue;
 
         if(Sv_RegisterCompareSide(reg, i, &delta, doUpdate))
         {
@@ -2332,7 +2283,7 @@ void Sv_NewPolyDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
     uint                i;
     polydelta_t         delta;
 
-    for(i = 0; i < numPolyObjs; ++i)
+    for(i = 0; i < NUM_POLYOBJS; ++i)
     {
         if(Sv_RegisterComparePoly(reg, i, &delta))
         {
@@ -2358,8 +2309,8 @@ void Sv_NewPolyDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
  * \assume: No two sounds with the same ID play at the same time from the
  *          same origin.
  */
-void Sv_NewSoundDelta(int soundId, mobj_t* emitter, sector_t* sourceSector,
-                      polyobj_t* sourcePoly, float volume,
+void Sv_NewSoundDelta(int soundId, mobj_t* emitter, Sector* sourceSector,
+                      Polyobj* sourcePoly, float volume,
                       boolean isRepeating, int clientsMask)
 {
     pool_t*             targets[DDMAXPLAYERS + 1];

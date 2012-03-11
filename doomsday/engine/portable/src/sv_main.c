@@ -71,9 +71,10 @@ static MaterialArchive* materialDict;
  */
 void Sv_GetInfo(serverinfo_t* info)
 {
-    gamemap_t* currentMap = P_GetCurrentMap();
     ddstring_t* mapPath;
     int i;
+
+    assert(theMap);
 
     memset(info, 0, sizeof(*info));
 
@@ -96,7 +97,7 @@ void Sv_GetInfo(serverinfo_t* info)
     info->canJoin = (isServer != 0 && Sv_GetNumPlayers() < svMaxPlayers);
 
     // Identifier of the current map.
-    mapPath = Uri_Resolved(P_MapUri(currentMap));
+    mapPath = Uri_Resolved(GameMap_Uri(theMap));
     strncpy(info->map, Str_Text(mapPath), sizeof(info->map) - 1);
     Str_Delete(mapPath);
 

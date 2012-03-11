@@ -29,11 +29,29 @@
 #ifndef __DOOMSDAY_WINCONSOLE_H__
 #define __DOOMSDAY_WINCONSOLE_H__
 
+#include "sys_window.h"
 #include "sys_input.h"
 
-void            Sys_ConInputInit(void);
-void            Sys_ConInputShutdown(void);
+ddwindow_t* Sys_ConInit(const char* title);
+void Sys_ConShutdown(uint idx);
 
-size_t          I_GetConsoleKeyEvents(keyevent_t *evbuf, size_t bufsize);
+void Sys_ConSetTitle(uint idx, const char* title);
+
+/**
+ * @param flags  @see consolePrintFlags
+ */
+void Sys_ConPrint(uint idx, const char* text, int flags);
+
+/**
+ * Set the command line display of the specified console window.
+ *
+ * @param idx  Console window identifier.
+ * @param text  Text string to copy.
+ * @param cursorPos  Position to set the cursor on the command line.
+ * @param flags  @see consoleCommandlineFlags
+ */
+void Sys_SetConWindowCmdLine(uint idx, const char* text, unsigned int cursorPos, int flags);
+
+size_t I_GetConsoleKeyEvents(keyevent_t *evbuf, size_t bufsize);
 
 #endif

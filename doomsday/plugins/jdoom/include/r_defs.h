@@ -86,9 +86,9 @@ typedef struct xline_s {
 extern xsector_t* xsectors;
 extern xline_t* xlines;
 
-xline_t*        P_ToXLine(linedef_t* line);
-xsector_t*      P_ToXSector(sector_t* sector);
-xsector_t*      P_ToXSectorOfSubsector(subsector_t* sub);
+xline_t*        P_ToXLine(LineDef* line);
+xsector_t*      P_ToXSector(Sector* sector);
+xsector_t*      P_ToXSectorOfBspLeaf(BspLeaf* sub);
 
 /**
  * Update the specified player's automap.
