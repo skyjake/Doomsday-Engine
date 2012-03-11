@@ -343,12 +343,10 @@ unix:!win32 {
 }
 macx {
     DENG_PLATFORM_HEADERS += \
-        $$DENG_MAC_INCLUDE_DIR/MusicPlayer.h \
-        $$DENG_MAC_INCLUDE_DIR/StartupWindowController.h
+        $$DENG_MAC_INCLUDE_DIR/MusicPlayer.h
 
     OBJECTIVE_SOURCES += \
-        mac/src/MusicPlayer.m \
-        mac/src/StartupWindowController.m
+        mac/src/MusicPlayer.m
 
     INCLUDEPATH += $$DENG_MAC_INCLUDE_DIR
 }
@@ -649,7 +647,6 @@ macx {
     res.path = Contents/Resources
     res.files = \
         mac/res/English.lproj \
-        mac/res/Startup.nib \
         mac/res/deng.icns
 
     data.path = $$res.path
