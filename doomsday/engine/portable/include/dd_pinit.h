@@ -33,6 +33,10 @@
 #include "dd_api.h"
 #include <de/c_wrapper.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Maximum allowed number of plugins.
 #define MAX_PLUGS   32
 
@@ -46,5 +50,9 @@ void DD_InitCommandLine(const char* cmdLine);
 
 extern game_import_t gi;
 extern game_export_t gx;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* LIBDENG_PORTABLE_INIT_H */

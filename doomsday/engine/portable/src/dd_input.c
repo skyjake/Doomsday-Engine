@@ -1026,6 +1026,10 @@ static void postEvents(timespan_t ticLength)
     }
 #endif
 
+#ifdef UNIX
+    SDL_PumpEvents();
+#endif
+
     if(ArgExists("-noinput")) return;
 
     DD_ReadKeyboard();

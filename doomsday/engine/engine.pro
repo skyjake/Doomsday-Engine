@@ -667,7 +667,11 @@ macx {
     }
     fixInstallName("libdeng2.2.dylib")
 
-    doPostLink("macdeployqt Doomsday.app")
+    # Clean up previous deployment.
+    doPostLink("rm -rf Doomsday.app/Contents/PlugIns/")
+    doPostLink("rm -f Doomsday.app/Contents/Resources/qt.conf")
+
+    doPostLink("macdeployqt Doomsday.app -no-plugins")
 }
 
 # Installation ---------------------------------------------------------------
