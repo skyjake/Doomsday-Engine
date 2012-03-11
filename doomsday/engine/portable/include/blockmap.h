@@ -115,13 +115,13 @@ BlockmapCoord Blockmap_CellX(Blockmap* blockmap, float x);
 BlockmapCoord Blockmap_CellY(Blockmap* blockmap, float y);
 
 /**
- * Same as @a Blockmap::CellX with alternative semantics for when the caller
+ * Same as @a Blockmap_CellX() with alternative semantics for when the caller
  * needs to know if the coordinate specified was inside/outside the Blockmap.
  */
 boolean Blockmap_ClipCellX(Blockmap* blockmap, BlockmapCoord* outX, float x);
 
 /**
- * Same as @a Blockmap::CellY with alternative semantics for when the caller
+ * Same as @ref Blockmap_CellY() with alternative semantics for when the caller
  * needs to know if the coordinate specified was inside/outside the Blockmap.
  *
  * @param blockmap      Blockmap instance.
@@ -158,6 +158,17 @@ boolean Blockmap_Cell(Blockmap* blockmap, BlockmapCell cell, float const pos[2])
  */
 boolean Blockmap_CellBlock(Blockmap* blockmap, BlockmapCellBlock* cellBlock, const AABoxf* box);
 
+/**
+ * Retrieve the number objects linked in the specified @a cell.
+ *
+ * @param blockmap      Blockmap instance.
+ * @param cell          Blockmap cell to lookup.
+ *
+ * @return  Number of unique objects linked into the cell, or @c 0 if invalid.
+ */
+uint Blockmap_CellObjectCount(Blockmap* blockmap, const_BlockmapCell cell);
+uint Blockmap_CellXYObjectCount(Blockmap* blockmap, BlockmapCoord x, BlockmapCoord y);
+
 boolean Blockmap_CreateCellAndLinkObject(Blockmap* blockmap, const_BlockmapCell cell, void* object);
 
 boolean Blockmap_CreateCellAndLinkObjectXY(Blockmap* blockmap, BlockmapCoord x, BlockmapCoord y, void* object);
@@ -173,5 +184,11 @@ int Blockmap_IterateCellObjects(Blockmap* blockmap, const_BlockmapCell cell,
 
 int Blockmap_IterateCellBlockObjects(Blockmap* blockmap, const BlockmapCellBlock* blockCoords,
     int (*callback) (void* object, void* context), void* context);
+
+/**
+ * Retrieve an immutable pointer to the underlying Gridmap instance (mainly for
+ * for debug purposes).
+ */
+const Gridmap* Blockmap_Gridmap(Blockmap* blockmap);
 
 #endif /// LIBDENG_MAP_BLOCKMAP_H

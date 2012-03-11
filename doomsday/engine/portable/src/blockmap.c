@@ -37,10 +37,12 @@ typedef struct blockmap_ringnode_s {
 
 typedef struct {
     BlockmapRingNode* ringNodes;
+
+    /// Running total of the number of objects linked in this cell.
+    uint objectCount;
 } BlockmapCellData;
 
-struct blockmap_s
-{
+struct blockmap_s {
     /// Minimal and Maximal points in map space coordinates.
     AABoxf bounds;
 
@@ -200,37 +202,53 @@ const pvec2_t Blockmap_CellSize(Blockmap* bm)
     return bm->cellSize;
 }
 
-static void linkObjectToRing(void* object, BlockmapRingNode** link)
+static void linkObjectToRing(void* object, BlockmapCellData* data)
 {
-    BlockmapRingNode* tempLink;
-    assert(object && link);
+    BlockmapRingNode* node;
+    assert(object && data);
 
-    if(!(*link))
+    if(!data->ringNodes)
     {
-        // Create a new link at the current cell.
-        *link = Z_Malloc(sizeof(BlockmapRingNode), PU_MAP, 0);
-        (*link)->next = NULL;
-        (*link)->prev = NULL;
-        (*link)->object = object;
+        // Create a new root node.
+        node = Z_Malloc(sizeof(*node), PU_MAP, 0);
+        node->next = NULL;
+        node->prev = NULL;
+        node->object = object;
+        data->ringNodes = node;
         return;
     }
 
-    tempLink = *link;
-    while(tempLink->next && tempLink->object)
-    {
-        tempLink = tempLink->next;
-    }
+    // Is there an available node in the ring we can reuse?
+    for(node = data->ringNodes; node->next && node->object; node = node->next)
+    {}
 
-    if(!tempLink->object)
+    if(!node->object)
     {
-        tempLink->object = object;
+        // This will do nicely.
+        node->object = object;
         return;
     }
 
-    tempLink->next = Z_Malloc(sizeof(BlockmapRingNode), PU_MAP, 0);
-    tempLink->next->next = NULL;
-    tempLink->next->prev = tempLink;
-    tempLink->next->object = object;
+    // Add a new node to the ring.
+    node->next = Z_Malloc(sizeof(*node), PU_MAP, 0);
+    node->next->next = NULL;
+    node->next->prev = node;
+    node->next->object = object;
+}
+
+/**
+ * Lookup an object in this cell by memory address.
+ */
+static BlockmapRingNode* BlockmapCellData_Node(BlockmapCellData* data, void* object)
+{
+    BlockmapRingNode* node;
+    assert(data);
+    if(!object) return NULL;
+    for(node = data->ringNodes; node; node = node->next)
+    {
+        if(node->object == object) return node;
+    }
+    return NULL;
 }
 
 /**
@@ -239,62 +257,60 @@ static void linkObjectToRing(void* object, BlockmapRingNode** link)
  * @param object  Object to be unlinked.
  * @return  @c true iff the object was linked to the ring and was unlinked.
  */
-static boolean unlinkObjectFromRing(void* object, BlockmapRingNode** list)
+static boolean unlinkObjectFromRing(void* object, BlockmapCellData* data)
 {
-    BlockmapRingNode* iter;
-    assert(object && list);
+    BlockmapRingNode* node = BlockmapCellData_Node(data, object);
+    if(!node) return false; // Object was not linked.
 
-    iter = *list;
-    while(iter && iter->object != object)
-    {
-        iter = iter->next;
-    }
-
-    if(iter)
-    {
-        iter->object = NULL;
-        return true; // Object was unlinked.
-    }
-    return false; // object was not linked.
+    // Unlink from the ring (the node will be reused).
+    node->object = NULL;
+    return true; // Object was unlinked.
 }
 
-static int unlinkObjectInCell(void* ptr, void* paramaters)
-{
-    BlockmapCellData* cell = (BlockmapCellData*) ptr;
-    unlinkObjectFromRing(paramaters/*object ptr*/, &cell->ringNodes);
-    return false; // Continue iteration.
-}
-
-static int linkObjectInCell(void* ptr, void* paramaters)
+static int unlinkObjectInCell(void* ptr, void* parameters)
 {
     BlockmapCellData* data = (BlockmapCellData*) ptr;
-    linkObjectToRing(paramaters/*object ptr*/, &data->ringNodes);
+    if(unlinkObjectFromRing(parameters/*object ptr*/, data))
+    {
+        // There is now one fewer object in the cell.
+        data->objectCount--;
+    }
     return false; // Continue iteration.
 }
 
-boolean Blockmap_CreateCellAndLinkObjectXY(Blockmap* blockmap, BlockmapCoord x, BlockmapCoord y, void* object)
+static int linkObjectInCell(void* ptr, void* parameters)
+{
+    BlockmapCellData* data = (BlockmapCellData*) ptr;
+    linkObjectToRing(parameters/*object ptr*/, data);
+
+    // There is now one more object in the cell.
+    data->objectCount++;
+    return false; // Continue iteration.
+}
+
+boolean Blockmap_CreateCellAndLinkObjectXY(Blockmap* bm, BlockmapCoord x, BlockmapCoord y, void* object)
 {
     BlockmapCellData* data;
-    assert(blockmap && object);
-    data = (BlockmapCellData*) Gridmap_CellXY(blockmap->gridmap, x, y, true);
+    assert(bm && object);
+    data = (BlockmapCellData*) Gridmap_CellXY(bm->gridmap, x, y, true);
     if(!data) return false; // Outside the blockmap?
     linkObjectInCell((void*)data, object);
     return true; // Link added.
 }
 
-boolean Blockmap_CreateCellAndLinkObject(Blockmap* blockmap, const_BlockmapCell cell, void* object)
+boolean Blockmap_CreateCellAndLinkObject(Blockmap* bm, const_BlockmapCell cell, void* object)
 {
     assert(cell);
-    return Blockmap_CreateCellAndLinkObjectXY(blockmap, cell[VX], cell[VY], object);
+    return Blockmap_CreateCellAndLinkObjectXY(bm, cell[VX], cell[VY], object);
 }
 
-boolean Blockmap_UnlinkObjectInCell(Blockmap* blockmap, const_BlockmapCell cell, void* object)
+boolean Blockmap_UnlinkObjectInCell(Blockmap* bm, const_BlockmapCell cell, void* object)
 {
     boolean unlinked = false;
     BlockmapCellData* data;
-    assert(blockmap);
+    assert(bm);
 
-    data = (BlockmapCellData*) Gridmap_Cell(blockmap->gridmap, cell, false);
+    data = (BlockmapCellData*) Gridmap_Cell(bm->gridmap, cell, false);
     if(data)
     {
         unlinked = unlinkObjectInCell((void*)data, (void*)object);
@@ -302,20 +318,38 @@ boolean Blockmap_UnlinkObjectInCell(Blockmap* blockmap, const_BlockmapCell cell,
     return unlinked;
 }
 
-boolean Blockmap_UnlinkObjectInCellXY(Blockmap* blockmap, BlockmapCoord x, BlockmapCoord y, void* object)
+boolean Blockmap_UnlinkObjectInCellXY(Blockmap* bm, BlockmapCoord x, BlockmapCoord y, void* object)
 {
     BlockmapCell cell;
     cell[VX] = x;
     cell[VY] = y;
-    return Blockmap_UnlinkObjectInCell(blockmap, cell, object);
+    return Blockmap_UnlinkObjectInCell(bm, cell, object);
 }
 
-void Blockmap_UnlinkObjectInCellBlock(Blockmap* blockmap, const BlockmapCellBlock* cellBlock, void* object)
+void Blockmap_UnlinkObjectInCellBlock(Blockmap* bm, const BlockmapCellBlock* cellBlock, void* object)
 {
-    assert(blockmap);
+    assert(bm);
     if(!cellBlock) return;
 
-    Gridmap_BlockIterate2(blockmap->gridmap, cellBlock, unlinkObjectInCell, object);
+    Gridmap_BlockIterate2(bm->gridmap, cellBlock, unlinkObjectInCell, object);
+}
+
+uint Blockmap_CellObjectCount(Blockmap* bm, const_BlockmapCell cell)
+{
+    BlockmapCellData* data;
+    assert(bm);
+
+    data = (BlockmapCellData*) Gridmap_Cell(bm->gridmap, cell, false);
+    if(!data) return 0;
+    return data->objectCount;
+}
+
+uint Blockmap_CellXYObjectCount(Blockmap* bm, BlockmapCoord x, BlockmapCoord y)
+{
+    BlockmapCell cell;
+    cell[VX] = x;
+    cell[VY] = y;
+    return Blockmap_CellObjectCount(bm, cell);
 }
 
 int BlockmapCellData_IterateObjects(BlockmapCellData* data,
@@ -340,13 +374,13 @@ int BlockmapCellData_IterateObjects(BlockmapCellData* data,
     return false; // Continue iteration.
 }
 
-int Blockmap_IterateCellObjects(Blockmap* blockmap, const_BlockmapCell cell,
+int Blockmap_IterateCellObjects(Blockmap* bm, const_BlockmapCell cell,
     int (*callback) (void* object, void* context), void* context)
 {
     BlockmapCellData* data;
-    assert(blockmap);
+    assert(bm);
 
-    data = Gridmap_Cell(blockmap->gridmap, cell, false);
+    data = Gridmap_Cell(bm->gridmap, cell, false);
     if(data)
     {
         return BlockmapCellData_IterateObjects(data, callback, context);
@@ -368,14 +402,20 @@ static int cellObjectIterator(void* userData, void* context)
     return BlockmapCellData_IterateObjects(data, args->callback, args->context);
 }
 
-int Blockmap_IterateCellBlockObjects(Blockmap* blockmap, const BlockmapCellBlock* cellBlock,
+int Blockmap_IterateCellBlockObjects(Blockmap* bm, const BlockmapCellBlock* cellBlock,
     int (*callback) (void* object, void* context), void* context)
 {
     cellobjectiterator_params_t args;
-    assert(blockmap);
+    assert(bm);
 
     args.callback = callback;
     args.context = context;
 
-    return Gridmap_BlockIterate2(blockmap->gridmap, cellBlock, cellObjectIterator, (void*)&args);
+    return Gridmap_BlockIterate2(bm->gridmap, cellBlock, cellObjectIterator, (void*)&args);
+}
+
+const Gridmap* Blockmap_Gridmap(Blockmap* bm)
+{
+    assert(bm);
+    return bm->gridmap;
 }

@@ -501,7 +501,7 @@ static int drawCell(TreeCell* tree, void* parameters)
     return 0; // Continue iteration.
 }
 
-void Gridmap_DebugDrawer(Gridmap* gm)
+void Gridmap_DebugDrawer(const Gridmap* gm)
 {
     GLfloat oldColor[4];
     vec2_t start, end;
@@ -514,7 +514,7 @@ void Gridmap_DebugDrawer(Gridmap* gm)
      * Draw our Quadtree.
      */
     glColor4f(1.f, 1.f, 1.f, 1.f / gm->root.size);
-    iterateCell(&gm->root, false/*all cells*/, drawCell, NULL/*no parameters*/);
+    iterateCell(&((Gridmap*)gm)->root, false/*all cells*/, drawCell, NULL/*no parameters*/);
 
     /**
      * Draw our bounds.

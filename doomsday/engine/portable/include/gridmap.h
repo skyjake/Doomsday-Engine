@@ -196,6 +196,6 @@ boolean Gridmap_ClipBlock(Gridmap* gridmap, GridmapCellBlock* block);
  *
  * @param gridmap         Gridmap instance.
  */
-void Gridmap_DebugDrawer(Gridmap* gridmap);
+void Gridmap_DebugDrawer(const Gridmap* gridmap);
 
 #endif /// LIBDENG_DATA_GRIDMAP_H
