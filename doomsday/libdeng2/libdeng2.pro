@@ -65,6 +65,7 @@ macx {
     fixInstallName("QtCore.framework/Versions/4/QtCore")
     fixInstallName("QtNetwork.framework/Versions/4/QtNetwork")
     fixInstallName("QtGui.framework/Versions/4/QtGui")
+    fixInstallName("QtOpenGL.framework/Versions/4/QtOpenGL")
 
     # Update the library included in the main app bundle.
     doPostLink("cp -fRp libdeng2*dylib ../engine/doomsday.app/Contents/Frameworks")

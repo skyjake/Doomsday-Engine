@@ -74,13 +74,21 @@ LegacyNetwork& LegacyCore::network()
     return instance().d->network;
 }
 
-int LegacyCore::runEventLoop(void (*func)(void))
+void LegacyCore::setLoopFunc(void (*func)(void))
 {
-    LOG_MSG("Starting LegacyCore event loop...");
-
     // Set up a timer to periodically call the provided callback function.
     d->loopFunc = func;
-    QTimer::singleShot(1, this, SLOT(callback()));
+
+    if(func)
+    {
+        // Start the periodic callback calls.
+        QTimer::singleShot(1, this, SLOT(callback()));
+    }
+}
+
+int LegacyCore::runEventLoop()
+{
+    LOG_MSG("Starting LegacyCore event loop...");
 
     // Run the Qt event loop. In the future this will be replaced by the
     // application's main Qt event loop, where deng2 will hook into.
@@ -100,6 +108,6 @@ void LegacyCore::callback()
     if(d->loopFunc)
     {
         d->loopFunc();
+        QTimer::singleShot(1, this, SLOT(callback()));
     }
-    QTimer::singleShot(1, this, SLOT(callback()));
 }

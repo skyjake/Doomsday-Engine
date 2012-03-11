@@ -32,10 +32,16 @@ LegacyCore* LegacyCore_New(void* dengApp)
     return reinterpret_cast<LegacyCore*>(new de::LegacyCore(reinterpret_cast<QApplication*>(dengApp)));
 }
 
-int LegacyCore_RunEventLoop(LegacyCore* lc, void (*loopFunc)(void))
+int LegacyCore_RunEventLoop(LegacyCore* lc)
 {
     DENG2_SELF(LegacyCore, lc);
-    return self->runEventLoop(loopFunc);
+    return self->runEventLoop();
+}
+
+void LegacyCore_SetLoopFunc(LegacyCore* lc, void (*callback)(void))
+{
+    DENG2_SELF(LegacyCore, lc);
+    return self->setLoopFunc(callback);
 }
 
 void LegacyCore_Stop(LegacyCore *lc, int exitCode)

@@ -51,12 +51,17 @@ public:
      * Starts the deng2 event loop in the current thread. Does not return until
      * the loop is stopped.
      *
-     * @param callback  Function to call periodically from the loop, as
-     *                  often as possible.
-     *
      * @return  Exit code.
      */
-    int runEventLoop(void (*callback)(void));
+    int runEventLoop();
+
+    /**
+     * Sets the callback function that gets called periodically from the main
+     * loop. The calls are made as often as possible without blocking the loop.
+     *
+     * @param callback  Loop callback function.
+     */
+    void setLoopFunc(void (*callback)(void));
 
     /**
      * Stops the event loop. This is automatically called when the core is
