@@ -176,6 +176,31 @@ Sector* GameMap_Sector(GameMap* map, uint idx)
     return &map->sectors[idx];
 }
 
+Sector* GameMap_SectorByOrigin(GameMap* map, const void* ddMobjBase)
+{
+    uint i, k;
+    assert(map);
+    for(i = 0; i < map->numSectors; ++i)
+    {
+        Sector* sec = &map->sectors[i];
+
+        if(ddMobjBase == &sec->soundOrg)
+        {
+            return sec;
+        }
+
+        // Check the planes of this sector
+        for(k = 0; k < sec->planeCount; ++k)
+        {
+            if(ddMobjBase == &sec->planes[k]->soundOrg)
+            {
+                return sec;
+            }
+        }
+    }
+    return NULL;
+}
+
 int GameMap_BspLeafIndex(GameMap* map, BspLeaf* bspLeaf)
 {
     assert(map);

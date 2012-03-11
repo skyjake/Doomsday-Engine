@@ -64,8 +64,7 @@ void Sv_Sound(int sound_id, mobj_t *origin, int toPlr)
 /**
  * Finds the sector/polyobj to whom the origin mobj belong.
  */
-static void Sv_IdentifySoundOrigin(mobj_t **origin, Sector **sector,
-                                   Polyobj **poly)
+static void Sv_IdentifySoundOrigin(mobj_t** origin, Sector** sector, Polyobj** poly)
 {
     *sector = NULL;
     *poly = NULL;
@@ -79,11 +78,11 @@ static void Sv_IdentifySoundOrigin(mobj_t **origin, Sector **sector,
         {
             // It wasn't a polyobj.
             // Try the sectors instead.
-            *sector = R_GetSectorForOrigin(*origin);
+            *sector = GameMap_SectorByOrigin(theMap, *origin);
         }
 
 #ifdef _DEBUG
-        if(*poly == NULL && *sector == NULL)
+        if(!*poly && !*sector)
         {
             Con_Error("Sv_IdentifySoundOrigin: Bad mobj.\n");
         }
