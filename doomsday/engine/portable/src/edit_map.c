@@ -849,13 +849,13 @@ static void prepareBspLeafs(GameMap* map)
  * pre: rootVtx must point to the vertex common between a and b
  *      which are (lineowner_t*) ptrs.
  */
-static int C_DECL lineAngleSorter(const void *a, const void *b)
+static int C_DECL lineAngleSorter(const void* a, const void* b)
 {
-    uint                i;
-    fixed_t             dx, dy;
-    binangle_t          angles[2];
-    lineowner_t        *own[2];
-    LineDef            *line;
+    uint i;
+    fixed_t dx, dy;
+    binangle_t angles[2];
+    lineowner_t* own[2];
+    LineDef* line;
 
     own[0] = (lineowner_t *)a;
     own[1] = (lineowner_t *)b;
@@ -867,7 +867,7 @@ static int C_DECL lineAngleSorter(const void *a, const void *b)
         }
         else
         {
-            Vertex      *otherVtx;
+            Vertex* otherVtx;
 
             line = own[i]->lineDef;
             otherVtx = line->L_v(line->L_v1 == rootVtx? 1:0);
@@ -890,15 +890,14 @@ static int C_DECL lineAngleSorter(const void *a, const void *b)
  *
  * @return              Ptr to the newly merged list.
  */
-static lineowner_t *mergeLineOwners(lineowner_t *left, lineowner_t *right,
-                                    int (C_DECL *compare) (const void *a,
-                                                           const void *b))
+static lineowner_t* mergeLineOwners(lineowner_t* left, lineowner_t* right,
+    int (C_DECL *compare) (const void* a, const void* b))
 {
-    lineowner_t         tmp, *np;
+    lineowner_t tmp, *np;
 
     np = &tmp;
     tmp.LO_next = np;
-    while(left != NULL && right != NULL)
+    while(left && right)
     {
         if(compare(left, right) <= 0)
         {
@@ -918,9 +917,13 @@ static lineowner_t *mergeLineOwners(lineowner_t *left, lineowner_t *right,
 
     // At least one of these lists is now empty.
     if(left)
+    {
         np->LO_next = left;
+    }
     if(right)
+    {
         np->LO_next = right;
+    }
 
     // Is the list empty?
     if(tmp.LO_next == &tmp)
@@ -929,12 +932,11 @@ static lineowner_t *mergeLineOwners(lineowner_t *left, lineowner_t *right,
     return tmp.LO_next;
 }
 
-static lineowner_t *splitLineOwners(lineowner_t *list)
+static lineowner_t* splitLineOwners(lineowner_t* list)
 {
-    lineowner_t        *lista, *listb, *listc;
+    lineowner_t* lista, *listb, *listc;
 
-    if(!list)
-        return NULL;
+    if(!list) return NULL;
 
     lista = listb = listc = list;
     do
@@ -942,8 +944,10 @@ static lineowner_t *splitLineOwners(lineowner_t *list)
         listc = listb;
         listb = listb->LO_next;
         lista = lista->LO_next;
-        if(lista != NULL)
+        if(lista)
+        {
             lista = lista->LO_next;
+        }
     } while(lista);
 
     listc->LO_next = NULL;
@@ -953,11 +957,10 @@ static lineowner_t *splitLineOwners(lineowner_t *list)
 /**
  * This routine uses a recursive mergesort algorithm; O(NlogN)
  */
-static lineowner_t *sortLineOwners(lineowner_t *list,
-                                   int (C_DECL *compare) (const void *a,
-                                                          const void *b))
+static lineowner_t* sortLineOwners(lineowner_t* list,
+    int (C_DECL *compare) (const void* a, const void* b))
 {
-    lineowner_t        *p;
+    lineowner_t* p;
 
     if(list && list->LO_next)
     {
@@ -970,13 +973,11 @@ static lineowner_t *sortLineOwners(lineowner_t *list,
     return list;
 }
 
-static void setVertexLineOwner(Vertex *vtx, LineDef *lineptr,
-                               lineowner_t **storage)
+static void setVertexLineOwner(Vertex* vtx, LineDef* lineptr, lineowner_t** storage)
 {
-    lineowner_t        *p, *newOwner;
+    lineowner_t* p, *newOwner;
 
-    if(!lineptr)
-        return;
+    if(!lineptr) return;
 
     // Has this line already been registered with this vertex?
     if(vtx->numLineOwners != 0)
@@ -985,7 +986,7 @@ static void setVertexLineOwner(Vertex *vtx, LineDef *lineptr,
         while(p)
         {
             if(p->lineDef == lineptr)
-                return;             // Yes, we can exit.
+                return; // Yes, we can exit.
 
             p = p->LO_next;
         }
@@ -1020,22 +1021,21 @@ static void setVertexLineOwner(Vertex *vtx, LineDef *lineptr,
  */
 static void buildVertexOwnerRings(editmap_t* map)
 {
-    uint                i;
-    lineowner_t*        lineOwners, *allocator;
+    lineowner_t* lineOwners, *allocator;
+    uint i;
 
     // We know how many vertex line owners we need (numLineDefs * 2).
-    lineOwners =
-        Z_Malloc(sizeof(lineowner_t) * map->numLineDefs * 2, PU_MAPSTATIC, 0);
+    lineOwners = Z_Malloc(sizeof(lineowner_t) * map->numLineDefs * 2, PU_MAPSTATIC, 0);
     allocator = lineOwners;
 
     for(i = 0; i < map->numLineDefs; ++i)
     {
-        uint                p;
-        LineDef*            line = map->lineDefs[i];
+        LineDef* line = map->lineDefs[i];
+        uint p;
 
         for(p = 0; p < 2; ++p)
         {
-            Vertex*             vtx = line->L_v(p);
+            Vertex* vtx = line->L_v(p);
 
             setVertexLineOwner(vtx, line, &allocator);
         }
@@ -1044,32 +1044,30 @@ static void buildVertexOwnerRings(editmap_t* map)
 
 static void hardenVertexOwnerRings(GameMap* dest, editmap_t* src)
 {
-    uint                i;
+    uint i;
 
     // Sort line owners and then finish the rings.
     for(i = 0; i < src->numVertexes; ++i)
     {
-        Vertex*             v = src->vertexes[i];
+        Vertex* v = src->vertexes[i];
 
         // Line owners:
         if(v->numLineOwners != 0)
         {
-            lineowner_t*        p, *last;
-            binangle_t          firstAngle;
+            lineowner_t* p, *last;
+            binangle_t firstAngle;
 
             // Redirect the linedef links to the hardened map.
             p = v->lineOwners;
             while(p)
             {
-                p->lineDef =
-                    &dest->lineDefs[p->lineDef->buildData.index - 1];
+                p->lineDef = &dest->lineDefs[p->lineDef->buildData.index - 1];
                 p = p->LO_next;
             }
 
             // Sort them; ordered clockwise by angle.
             rootVtx = v;
-            v->lineOwners =
-                sortLineOwners(v->lineOwners, lineAngleSorter);
+            v->lineOwners = sortLineOwners(v->lineOwners, lineAngleSorter);
 
             // Finish the linking job and convert to relative angles.
             // They are only singly linked atm, we need them to be doubly
@@ -1096,8 +1094,8 @@ static void hardenVertexOwnerRings(GameMap* dest, editmap_t* src)
 #if _DEBUG
 {
 // For checking the line owner link rings are formed correctly.
-lineowner_t *base;
-uint        idx;
+lineowner_t* base;
+uint idx;
 
 if(verbose >= 2)
     Con_Message("Vertex #%i: line owners #%i\n", i, v->numLineOwners);
@@ -1125,25 +1123,26 @@ do
     }
 }
 
-static void hardenLinedefs(GameMap *dest, editmap_t *src)
+static void hardenLinedefs(GameMap* dest, editmap_t* src)
 {
-    uint                i;
+    uint i;
 
     dest->numLineDefs = src->numLineDefs;
     dest->lineDefs = Z_Calloc(dest->numLineDefs * sizeof(LineDef), PU_MAPSTATIC, 0);
 
     for(i = 0; i < dest->numLineDefs; ++i)
     {
-        LineDef            *destL = &dest->lineDefs[i];
-        LineDef            *srcL = src->lineDefs[i];
+        LineDef* destL = &dest->lineDefs[i];
+        LineDef* srcL = src->lineDefs[i];
 
         memcpy(destL, srcL, sizeof(*destL));
 
-        //// \todo We shouldn't still have lines with missing fronts but...
+        /// @todo We shouldn't still have lines with missing fronts but...
         destL->L_frontside = (srcL->L_frontside?
             &dest->sideDefs[srcL->L_frontside->buildData.index - 1] : NULL);
         destL->L_backside = (srcL->L_backside?
             &dest->sideDefs[srcL->L_backside->buildData.index - 1] : NULL);
+
         if(destL->L_frontside)
             destL->L_frontside->line = destL;
         if(destL->L_backside)
@@ -1199,17 +1198,17 @@ static void hardenSectors(GameMap* dest, editmap_t* src)
 
 static void hardenPlanes(GameMap* dest, editmap_t* src)
 {
-    uint                i, j;
+    uint i, j;
 
     for(i = 0; i < dest->numSectors; ++i)
     {
-        Sector             *destS = &dest->sectors[i];
-        Sector             *srcS = src->sectors[i];
+        Sector* destS = &dest->sectors[i];
+        Sector* srcS = src->sectors[i];
 
         for(j = 0; j < srcS->planeCount; ++j)
         {
-            Plane*              destP = R_NewPlaneForSector(destS);
-            Plane*              srcP = srcS->planes[j];
+            Plane* destP = R_NewPlaneForSector(destS);
+            Plane* srcP = srcS->planes[j];
 
             destP->height = destP->oldHeight[0] = destP->oldHeight[1] =
                 destP->visHeight = srcP->height;
@@ -1293,23 +1292,22 @@ static void hardenPolyobjs(GameMap* dest, editmap_t* src)
 }
 
 /**
- * \note Algorithm:
- * Cast a line horizontally or vertically and see what we hit (OUCH, we
- * have to iterate over all linedefs!).
+ * @algorithm Cast a line horizontally or vertically and see what we hit.
+ *           (OUCH, we have to iterate over all linedefs!).
  */
 static void testForWindowEffect(editmap_t* map, LineDef* l)
 {
 // Smallest distance between two points before being considered equal.
 #define DIST_EPSILON        (1.0 / 128.0)
 
-    uint                i;
-    double              mX, mY, dX, dY;
-    boolean             castHoriz;
-    double              backDist = DDMAXFLOAT;
-    Sector*             backOpen = NULL;
-    double              frontDist = DDMAXFLOAT;
-    Sector*             frontOpen = NULL;
-    LineDef*            frontLine = NULL, *backLine = NULL;
+    uint i;
+    double mX, mY, dX, dY;
+    boolean castHoriz;
+    double backDist = DDMAXFLOAT;
+    Sector* backOpen = NULL;
+    double frontDist = DDMAXFLOAT;
+    Sector* frontOpen = NULL;
+    LineDef* frontLine = NULL, *backLine = NULL;
 
     mX = (l->v[0]->buildData.pos[VX] + l->v[1]->buildData.pos[VX]) / 2.0;
     mY = (l->v[0]->buildData.pos[VY] + l->v[1]->buildData.pos[VY]) / 2.0;
@@ -1321,11 +1319,11 @@ static void testForWindowEffect(editmap_t* map, LineDef* l)
 
     for(i = 0; i < map->numLineDefs; ++i)
     {
-        LineDef*            n = map->lineDefs[i];
-        double              dist;
-        boolean             isFront;
-        SideDef*            hitSide;
-        double              dX2, dY2;
+        LineDef* n = map->lineDefs[i];
+        double dist;
+        boolean isFront;
+        SideDef* hitSide;
+        double dX2, dY2;
 
         if(n == l || LINE_SELFREF(n) /*|| n->buildData.overlap ||
            (n->buildData.mlFlags & MLF_ZEROLENGTH)*/)
@@ -1406,14 +1404,14 @@ static void testForWindowEffect(editmap_t* map, LineDef* l)
         }
     }
 
-/*#if _DEBUG
-Con_Message("back line: %d  back dist: %1.1f  back_open: %s\n",
-            (backLine? backLine->buildData.index : -1), backDist,
-            (backOpen? "OPEN" : "CLOSED"));
-Con_Message("front line: %d  front dist: %1.1f  front_open: %s\n",
-            (frontLine? frontLine->buildData.index : -1), frontDist,
-            (frontOpen? "OPEN" : "CLOSED"));
-#endif*/
+    /*
+    DEBUG_Message(("back line: %d  back dist: %1.1f  back_open: %s\n",
+                   (backLine? backLine->buildData.index : -1), backDist,
+                   (backOpen? "OPEN" : "CLOSED")));
+    DEBUG_Message(("front line: %d  front dist: %1.1f  front_open: %s\n",
+                   (frontLine? frontLine->buildData.index : -1), frontDist,
+                   (frontOpen? "OPEN" : "CLOSED")));
+    */
 
     if(backOpen && frontOpen && l->sideDefs[FRONT]->sector == backOpen)
     {
@@ -1427,10 +1425,9 @@ Con_Message("front line: %d  front dist: %1.1f  front_open: %s\n",
 #undef DIST_EPSILON
 }
 
-static void countVertexLineOwners(Vertex* vtx, uint* oneSided,
-                                  uint* twoSided)
+static void countVertexLineOwners(Vertex* vtx, uint* oneSided, uint* twoSided)
 {
-    lineowner_t*        p;
+    lineowner_t* p;
 
     p = vtx->lineOwners;
     while(p)
@@ -1445,18 +1442,17 @@ static void countVertexLineOwners(Vertex* vtx, uint* oneSided,
 }
 
 /**
- * \note Algorithm:
- * Scan the linedef list looking for possible candidates, checking for an
- * odd number of one-sided linedefs connected to a single vertex.
- * This idea courtesy of Graham Jackson.
+ * @algorithm Scan the linedef list looking for possible candidates, checking for
+ * an odd number of one-sided linedefs connected to a single vertex. This idea
+ * courtesy of Graham Jackson.
  */
 void MPE_DetectWindowEffects(editmap_t* map)
 {
-    uint                i, oneSiders, twoSiders;
+    uint i, oneSiders, twoSiders;
 
     for(i = 0; i < map->numLineDefs; ++i)
     {
-        LineDef*            l = map->lineDefs[i];
+        LineDef* l = map->lineDefs[i];
 
         if((l->L_frontside && l->L_backside) || !l->L_frontside /*||
            (l->buildData.mlFlags & MLF_ZEROLENGTH) ||
@@ -1470,10 +1466,9 @@ void MPE_DetectWindowEffects(editmap_t* map)
 
         if((oneSiders % 2) == 1 && (oneSiders + twoSiders) > 1)
         {
-/*#if _DEBUG
-Con_Message("FUNNY LINE %d : start vertex %d has odd number of one-siders\n",
-            i, l->buildData.v[0]->index);
-#endif*/
+            //DEBUG_Message(("Warning: LineDef #%d start vertex %d has odd number of one-siders\n",
+            //               i, l->buildData.v[0]->index));
+
             testForWindowEffect(map, l);
             continue;
         }
@@ -1483,10 +1478,9 @@ Con_Message("FUNNY LINE %d : start vertex %d has odd number of one-siders\n",
 
         if((oneSiders % 2) == 1 && (oneSiders + twoSiders) > 1)
         {
-/*#if _DEBUG
-Con_Message("FUNNY LINE %d : end vertex %d has odd number of one-siders\n",
-            i, l->buildData.v[1]->index));
-#endif*/
+            //DEBUG_Message(("Warning: LineDef #%d end vertex %d has odd number of one-siders\n",
+            //               i, l->buildData.v[1]->index));
+
             testForWindowEffect(map, l);
         }
     }
@@ -1494,9 +1488,8 @@ Con_Message("FUNNY LINE %d : end vertex %d has odd number of one-siders\n",
 
 #if 0 /* Currently unused. */
 /**
- * @return              The "lowest" vertex (normally the left-most, but if
- *                      the line is vertical, then the bottom-most).
- *                      @c => 0 for start, 1 for end.
+ * @return  The "lowest" vertex (normally the left-most, but if the line is vertical,
+ *          then the bottom-most). @c => 0 for start, 1 for end.
  */
 static __inline int lineVertexLowest(const LineDef* l)
 {
@@ -1507,9 +1500,9 @@ static __inline int lineVertexLowest(const LineDef* l)
 
 static int C_DECL lineStartCompare(const void* p1, const void* p2)
 {
-    const LineDef*      a = (const LineDef*) p1;
-    const LineDef*      b = (const LineDef*) p2;
-    Vertex*             c, *d;
+    const LineDef* a = (const LineDef*) p1;
+    const LineDef* b = (const LineDef*) p2;
+    Vertex* c, *d;
 
     // Determine left-most vertex of each line.
     c = (lineVertexLowest(a)? a->v[1] : a->v[0]);
@@ -1523,9 +1516,9 @@ static int C_DECL lineStartCompare(const void* p1, const void* p2)
 
 static int C_DECL lineEndCompare(const void* p1, const void* p2)
 {
-    const LineDef*      a = (const LineDef*) p1;
-    const LineDef*      b = (const LineDef*) p2;
-    Vertex*             c, *d;
+    const LineDef* a = (const LineDef*) p1;
+    const LineDef* b = (const LineDef*) p2;
+    Vertex* c, *d;
 
     // Determine right-most vertex of each line.
     c = (lineVertexLowest(a)? a->v[0] : a->v[1]);
@@ -1541,15 +1534,15 @@ size_t numOverlaps;
 
 int testOverlaps(LineDef* b, void* data)
 {
-    LineDef*            a = (LineDef*) data;
+    LineDef* a = (LineDef*) data;
 
     if(a != b)
     {
         if(lineStartCompare(a, b) == 0)
             if(lineEndCompare(a, b) == 0)
-            {   // Found an overlap!
-                b->buildData.overlap =
-                    (a->buildData.overlap ? a->buildData.overlap : a);
+            {
+                // Found an overlap!
+                b->buildData.overlap = (a->buildData.overlap ? a->buildData.overlap : a);
                 numOverlaps++;
             }
     }
@@ -1570,7 +1563,7 @@ int findOverlapsForLinedef(LineDef* l, void* data)
 }
 
 /**
- * \note Does not detect partially overlapping lines!
+ * @note Does not detect partially overlapping lines!
  */
 void MPE_DetectOverlappingLines(GameMap* map)
 {
@@ -1675,8 +1668,8 @@ boolean MPE_End(void)
      * intricate data structures early on (and thus make use of them during
      * the BSP generation).
      *
-     * \todo I'm sure this can be reworked further so that we destroy as we
-     * go and reduce the current working memory surcharge.
+     * @todo I'm sure this can be reworked further so that we destroy as we
+     *       go and reduce the current working memory surcharge.
      */
     hardenSectors(gamemap, map);
     hardenSidedefs(gamemap, map);
@@ -1837,10 +1830,9 @@ void MPE_PrintMapErrors(void)
  */
 uint MPE_VertexCreate(float x, float y)
 {
-    Vertex*             v;
+    Vertex* v;
 
-    if(!editMapInited)
-        return 0;
+    if(!editMapInited) return 0;
 
     v = createVertex();
     v->V_pos[VX] = x;
@@ -1862,7 +1854,7 @@ uint MPE_VertexCreate(float x, float y)
  */
 boolean MPE_VertexCreatev(size_t num, float* values, uint* indices)
 {
-    uint                n;
+    uint n;
 
     if(!editMapInited || !num || !values)
         return false;
@@ -1870,7 +1862,7 @@ boolean MPE_VertexCreatev(size_t num, float* values, uint* indices)
     // Create many vertexes.
     for(n = 0; n < num; ++n)
     {
-        Vertex*             v;
+        Vertex* v;
 
         v = createVertex();
         v->V_pos[VX] = values[n * 2];
@@ -1885,26 +1877,17 @@ boolean MPE_VertexCreatev(size_t num, float* values, uint* indices)
     return true;
 }
 
-uint MPE_SidedefCreate(uint sector, short flags,
-                       materialid_t topMaterial,
-                       float topOffsetX, float topOffsetY, float topRed,
-                       float topGreen, float topBlue,
-                       materialid_t middleMaterial,
-                       float middleOffsetX, float middleOffsetY,
-                       float middleRed, float middleGreen,
-                       float middleBlue, float middleAlpha,
-                       materialid_t bottomMaterial,
-                       float bottomOffsetX, float bottomOffsetY,
-                       float bottomRed, float bottomGreen,
-                       float bottomBlue)
+uint MPE_SidedefCreate(uint sector, short flags, materialid_t topMaterial,
+    float topOffsetX, float topOffsetY, float topRed, float topGreen, float topBlue,
+    materialid_t middleMaterial, float middleOffsetX, float middleOffsetY, float middleRed,
+    float middleGreen, float middleBlue, float middleAlpha, materialid_t bottomMaterial,
+    float bottomOffsetX, float bottomOffsetY, float bottomRed, float bottomGreen,
+    float bottomBlue)
 {
-    SideDef*            s;
+    SideDef* s;
 
-    if(!editMapInited)
-        return 0;
-
-    if(sector > map->numSectors)
-        return 0;
+    if(!editMapInited) return 0;
+    if(sector > map->numSectors) return 0;
 
     s = createSide();
     s->flags = flags;
@@ -1937,47 +1920,41 @@ uint MPE_SidedefCreate(uint sector, short flags,
  * @return              Idx of the newly created linedef else @c 0 if there
  *                      was an error.
  */
-uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide,
-                       int flags)
+uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide, int flags)
 {
-    LineDef*            l;
-    SideDef*            front = NULL, *back = NULL;
-    Vertex*             vtx1, *vtx2;
-    float               length, dx, dy;
+    LineDef* l;
+    SideDef* front = NULL, *back = NULL;
+    Vertex* vtx1, *vtx2;
+    float length;
 
-    if(!editMapInited)
-        return 0;
+    if(!editMapInited) return 0;
+    if(frontSide > map->numSideDefs) return 0;
+    if(backSide > map->numSideDefs) return 0;
+    if(v1 == 0 || v1 > map->numVertexes) return 0;
+    if(v2 == 0 || v2 > map->numVertexes) return 0;
+    if(v1 == v2) return 0;
 
-    if(frontSide > map->numSideDefs)
-        return 0;
-    if(backSide > map->numSideDefs)
-        return 0;
-    if(v1 == 0 || v1 > map->numVertexes)
-        return 0;
-    if(v2 == 0 || v2 > map->numVertexes)
-        return 0;
-    if(v1 == v2)
-        return 0;
-
-    // First, ensure that the side indices are unique.
+    // Ensure that the side indices are unique.
     if(frontSide && map->sideDefs[frontSide - 1]->buildData.refCount)
-        return 0; // Already in use.
+        return 0;
     if(backSide && map->sideDefs[backSide - 1]->buildData.refCount)
-        return 0; // Already in use.
+        return 0;
 
     // Next, check the length is not zero.
     vtx1 = map->vertexes[v1 - 1];
     vtx2 = map->vertexes[v2 - 1];
-    dx = vtx2->V_pos[VX] - vtx1->V_pos[VX];
-    dy = vtx2->V_pos[VY] - vtx1->V_pos[VY];
-    length = P_AccurateDistance(dx, dy);
-    if(!(length > 0))
-        return 0;
+    length = P_AccurateDistance(vtx2->V_pos[VX] - vtx1->V_pos[VX],
+                                vtx2->V_pos[VY] - vtx1->V_pos[VY]);
+    if(!(length > 0)) return 0;
 
     if(frontSide > 0)
+    {
         front = map->sideDefs[frontSide - 1];
+    }
     if(backSide > 0)
+    {
         back = map->sideDefs[backSide - 1];
+    }
 
     l = createLine();
     l->L_v1 = vtx1;
@@ -1986,50 +1963,15 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide,
     l->L_v1->buildData.refCount++;
     l->L_v2->buildData.refCount++;
 
-    l->dX = dx;
-    l->dY = dy;
-    l->length = length;
-
-    l->angle =
-        bamsAtan2((int) (l->L_v2pos[VY] - l->L_v1pos[VY]),
-                  (int) (l->L_v2pos[VX] - l->L_v1pos[VX]));
-
-    if(l->dX == 0)
-        l->slopeType = ST_VERTICAL;
-    else if(l->dY == 0)
-        l->slopeType = ST_HORIZONTAL;
-    else
-    {
-        if(l->dY / l->dX > 0)
-            l->slopeType = ST_POSITIVE;
-        else
-            l->slopeType = ST_NEGATIVE;
-    }
-
-    if(l->L_v1pos[VX] < l->L_v2pos[VX])
-    {
-        l->aaBox.minX = l->L_v1pos[VX];
-        l->aaBox.maxX = l->L_v2pos[VX];
-    }
-    else
-    {
-        l->aaBox.minX = l->L_v2pos[VX];
-        l->aaBox.maxX = l->L_v1pos[VX];
-    }
-
-    if(l->L_v1pos[VY] < l->L_v2pos[VY])
-    {
-        l->aaBox.minY = l->L_v1pos[VY];
-        l->aaBox.maxY = l->L_v2pos[VY];
-    }
-    else
-    {
-        l->aaBox.minY = l->L_v2pos[VY];
-        l->aaBox.maxY = l->L_v1pos[VY];
-    }
-
     l->L_frontside = front;
     l->L_backside = back;
+
+    l->length = length;
+
+    LineDef_UpdateSlope(l);
+    LineDef_UpdateAABox(l);
+
+    l->angle = bamsAtan2((int) l->dY, (int) l->dX);
 
     // Remember the number of unique references.
     if(l->L_frontside)
@@ -2054,29 +1996,26 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide,
     return l->buildData.index;
 }
 
-uint MPE_PlaneCreate(uint sector, float height, materialid_t material,
-                     float matOffsetX, float matOffsetY,
-                     float r, float g, float b, float a,
-                     float normalX, float normalY, float normalZ)
+uint MPE_PlaneCreate(uint sector, float height, materialid_t material, float matOffsetX,
+    float matOffsetY, float r, float g, float b, float a, float normalX, float normalY, float normalZ)
 {
-    uint                i;
-    Sector*             s;
-    Plane**             newList, *pln;
+    Plane** newList, *pln;
+    Sector* s;
+    uint i;
 
-    if(!editMapInited)
-        return 0;
-
-    if(sector == 0 || sector > map->numSectors)
-        return 0;
+    if(!editMapInited) return 0;
+    if(sector == 0 || sector > map->numSectors) return 0;
 
     s = map->sectors[sector - 1];
 
     pln = M_Calloc(sizeof(Plane));
     pln->surface.owner = (void*) pln;
     pln->height = height;
+
     Surface_SetMaterial(&pln->surface, Materials_ToMaterial(material));
     Surface_SetColorAndAlpha(&pln->surface, r, g, b, a);
     Surface_SetMaterialOrigin(&pln->surface, matOffsetX, matOffsetY);
+
     V3_Set(pln->PS_normal, normalX, normalY, normalZ);
     V3_Normalize(pln->PS_normal);
     V3_BuildTangents(pln->PS_tangent, pln->PS_bitangent, pln->PS_normal);
@@ -2101,10 +2040,9 @@ uint MPE_PlaneCreate(uint sector, float height, materialid_t material,
 
 uint MPE_SectorCreate(float lightlevel, float red, float green, float blue)
 {
-    Sector             *s;
+    Sector* s;
 
-    if(!editMapInited)
-        return 0;
+    if(!editMapInited) return 0;
 
     s = createSector();
 
@@ -2159,27 +2097,26 @@ uint MPE_PolyobjCreate(uint* lines, uint lineCount, int tag, int sequenceType,
     return po->buildData.index;
 }
 
-boolean MPE_GameObjProperty(const char *objName, uint idx,
-                            const char *propName, valuetype_t type,
-                            void *data)
+boolean MPE_GameObjProperty(const char* objName, uint idx, const char* propName,
+    valuetype_t type, void* data)
 {
-    uint                i;
-    size_t              len;
-    gamemapobjdef_t    *def;
+    gamemapobjdef_t* def;
+    size_t len;
+    uint i;
 
     if(!objName || !propName || !data)
         return false; // Hmm...
 
     // Is this a known object?
-    if((def = P_GetGameMapObjDef(0, objName, false)) == NULL)
-        return false; // Nope.
+    def = P_GetGameMapObjDef(0, objName, false);
+    if(!def) return false; // No.
 
     // Is this a known property?
     len = strlen(propName);
     for(i = 0; i < def->numProps; ++i)
     {
         if(!strnicmp(propName, def->props[i].name, len))
-        {   // Found a match!
+        {
             // Create a record of this so that the game can query it later.
             P_AddGameMapObjValue(&map->gameObjData, def, i, idx, type, data);
             return true; // We're done.
@@ -2187,8 +2124,8 @@ boolean MPE_GameObjProperty(const char *objName, uint idx,
     }
 
     // An unknown property.
-    VERBOSE(Con_Message("MPE_GameObjProperty: %s has no property \"%s\".\n",
-                        def->name, propName));
+    VERBOSE( Con_Message("MPE_GameObjProperty: %s has no property \"%s\".\n",
+                         def->name, propName) );
 
     return false;
 }
