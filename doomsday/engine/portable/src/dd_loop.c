@@ -145,17 +145,19 @@ void DD_GameLoopCallback(void)
     endFrame();
 
     // Draw the frame.
-    //drawAndUpdate();
+    Window_Draw(Sys_MainWindow());
 
     // After the first frame, start timedemo.
     DD_CheckTimeDemo();
 }
 
 /**
+ * Window drawing callback.
+ *
  * Drawing anything outside this routine is frowned upon.
  * Seriously frowned! (Don't do it.)
  */
-static void drawAndUpdate(void)
+void DD_GameLoopDrawer(void)
 {
     if(novideo)
     {

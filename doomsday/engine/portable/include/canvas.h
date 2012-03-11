@@ -46,6 +46,10 @@ public:
      */
     void setInitCallback(void (*canvasInitializeFunc)(Canvas&));
 
+    void setDrawCallback(void (*canvasDrawFunc)(Canvas&));
+
+    void forcePaint();
+
 protected:
     void initializeGL();
     void resizeGL(int w, int h);

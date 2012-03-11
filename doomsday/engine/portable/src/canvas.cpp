@@ -20,7 +20,9 @@
  */
 
 #include <QShowEvent>
+#include <QPaintEvent>
 #include <QTimer>
+#include <QDebug>
 
 #include "canvas.h"
 #include "sys_opengl.h"
@@ -29,14 +31,18 @@ struct Canvas::Instance
 {
     bool initNotified;
     void (*initCallback)(Canvas&);
+    void (*drawCallback)(Canvas&);
 
-    Instance() : initNotified(false), initCallback(0)
+    Instance() : initNotified(false), initCallback(0), drawCallback(0)
     {}
 };
 
 Canvas::Canvas(QWidget *parent) : QGLWidget(parent)
 {
     d = new Instance;
+
+    // We will be doing buffer swaps manually (for timing purposes).
+    setAutoBufferSwap(false);
 }
 
 Canvas::~Canvas()
@@ -47,6 +53,20 @@ Canvas::~Canvas()
 void Canvas::setInitCallback(void (*canvasInitializeFunc)(Canvas&))
 {
     d->initCallback = canvasInitializeFunc;
+}
+
+void Canvas::setDrawCallback(void (*canvasDrawFunc)(Canvas&))
+{
+    d->drawCallback = canvasDrawFunc;
+}
+
+void Canvas::forcePaint()
+{
+    if(isVisible())
+    {
+        QPaintEvent ev(QRect(0, 0, width(), height()));
+        paintEvent(&ev);
+    }
 }
 
 void Canvas::initializeGL()
@@ -84,9 +104,17 @@ void Canvas::notifyInit()
 
 void Canvas::paintGL()
 {
-    // If we don't know what else to draw, just draw a black screen.
-    glClearColor(0, 0, 0, 1);
-    glClear(GL_COLOR_BUFFER_BIT);
+    if(d->drawCallback)
+    {
+        d->drawCallback(*this);
+    }
+    else
+    {
+        qDebug() << "Canvas: drawing with default";
+        // If we don't know what else to draw, just draw a black screen.
+        glClearColor(0, 0, 0, 1);
+        glClear(GL_COLOR_BUFFER_BIT);
 
-    // GL buffer swap will be performed after this function exits.
+        swapBuffers();
+    }
 }

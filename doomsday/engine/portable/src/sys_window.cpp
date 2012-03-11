@@ -42,6 +42,7 @@
 struct ddwindow_s
 {
     CanvasWindow* widget; ///< The widget this window represents.
+    void (*drawFunc)(void); ///< Draws the contents of the canvas.
 
     ddwindowtype_t type;
     boolean inited;
@@ -445,28 +446,37 @@ static boolean createContext(void)
 }
 #endif
 
-/**
- * Complete the given wminfo_t, detailing what features are supported by
- * this window manager implementation.
- *
- * @param info          Ptr to the wminfo_t structure to complete.
- *
- * @return              @c true, if successful.
- */
-boolean Sys_GetWindowManagerInfo(wminfo_t *info)
+static void drawCanvasWithCallback(Canvas& canvas)
 {
-    if(!winManagerInited)
-        return false; // Window manager is not initialized.
+    // Look up the correct window.
+    assert(&canvas == &mainWindow.widget->canvas());
 
-    if(!info)
-        return false; // Wha?
+    Window* win = &mainWindow;
+    if(win->drawFunc)
+    {
+        win->drawFunc();
+    }
+}
 
-    // Complete the structure detailing what features are available.
-    info->canMoveWindow = false;
-    info->maxWindows = 1;
-    info->maxConsoles = 1;
+void Window_SetDrawFunction(Window* win, void (*drawFunc)(void))
+{
+    if(win->type == WT_CONSOLE) return;
 
-    return true;
+    assert(win);
+    assert(win->widget);
+
+    win->drawFunc = drawFunc;
+    win->widget->canvas().setDrawCallback(drawFunc? drawCanvasWithCallback : 0);
+}
+
+void Window_Draw(Window* win)
+{
+    if(win->type == WT_CONSOLE) return;
+
+    assert(win);
+    assert(win->widget);
+
+    win->widget->canvas().forcePaint();
 }
 
 static void finishMainWindowInit(Canvas& canvas)
@@ -509,7 +519,7 @@ static Window* createDDWindow(application_t*, const Point2Raw* origin, const Siz
         mainWindow.geometry.size.width = size->width;
         mainWindow.geometry.size.height = size->height;
         mainWindow.bpp = bpp;
-        //mainWindow.flags = flags;
+        mainWindow.flags = flags;
         mainWindow.inited = true;
 
         // After the main window is created, we can finish with the engine init.
@@ -517,6 +527,7 @@ static Window* createDDWindow(application_t*, const Point2Raw* origin, const Siz
 
         if(flags & DDWF_CENTER)
         {
+            // Center the window.
         }
         //mainWindow.widget->show();
 

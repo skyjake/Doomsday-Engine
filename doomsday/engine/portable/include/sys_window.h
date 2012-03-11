@@ -46,16 +46,6 @@ extern "C" {
 #  include "dd_winit.h"
 #endif
 
-// Structure used to describe what features are available in a window
-// manager implementation.
-typedef struct wminfo_s {
-    uint        maxWindows; /* Max number of simultaneous windows of all
-                               supported types
-                               0 = Unlimited. */
-    uint        maxConsoles;
-    boolean     canMoveWindow; // Windows can be moved.
-} wminfo_t;
-
 typedef enum {
     WT_NORMAL,
     WT_CONSOLE
@@ -100,7 +90,6 @@ extern const Window* theWindow;
 
 boolean Sys_InitWindowManager(void);
 boolean Sys_ShutdownWindowManager(void);
-boolean Sys_GetWindowManagerInfo(wminfo_t* info);
 
 boolean Sys_ChangeVideoMode(int width, int height, int bpp);
 boolean Sys_GetDesktopBPP(int* bpp);
@@ -166,6 +155,21 @@ boolean Sys_GetWindowVisibility(uint idx, boolean* show);
 boolean Sys_SetActiveWindow(uint idx);
 boolean Sys_SetWindow(uint idx, int x, int y, int w, int h, int bpp, uint wflags, uint uflags);
 boolean Sys_SetWindowTitle(uint idx, const char* title);
+
+/**
+ * Sets the function who will draw the contents of the window when needed.
+ *
+ * @param win       Window instance.
+ * @param drawFunc  Callback function.
+ */
+void Window_SetDrawFunction(Window* win, void (*drawFunc)(void));
+
+/**
+ * Request drawing the contents of the window as soon as possible.
+ *
+ * @param win  Window instance.
+ */
+void Window_Draw(Window* win);
 
 Window* Sys_Window(uint idx);
 Window* Sys_MainWindow(void);

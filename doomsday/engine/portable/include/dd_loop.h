@@ -43,6 +43,8 @@ int DD_GameLoop(void);
 
 void DD_GameLoopCallback(void);
 
+void DD_GameLoopDrawer(void);
+
 /**
  * Waits until it's time to show the drawn frame on screen. The frame must be
  * ready before this is called. Ideally the updates would appear at a fixed

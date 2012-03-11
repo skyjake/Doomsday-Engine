@@ -1462,6 +1462,9 @@ void DD_FinishInitializationAfterWindowReady(void)
 
     // Now we can start executing the engine's main loop.
     LegacyCore_SetLoopFunc(de2LegacyCore, DD_GameLoopCallback);
+
+    // Start drawing with the game loop drawer.
+    Window_SetDrawFunction(Sys_MainWindow(), DD_GameLoopDrawer);
 }
 
 /**
