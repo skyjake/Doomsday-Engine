@@ -56,6 +56,13 @@ SOURCES += \
 # Installation ---------------------------------------------------------------
 
 macx {
+    defineTest(fixInstallName) {
+        doPostLink("install_name_tool -change $$1 @executable_path/../Frameworks/$$1 libdeng2.2.dylib")
+    }
+    fixInstallName("QtCore.framework/Versions/4/QtCore")
+    fixInstallName("QtNetwork.framework/Versions/4/QtNetwork")
+    fixInstallName("QtGui.framework/Versions/4/QtGui")
+
     # Update the library included in the main app bundle.
     doPostLink("cp -fRp libdeng2*dylib ../engine/doomsday.app/Contents/Frameworks")
 }

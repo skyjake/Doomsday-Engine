@@ -1446,7 +1446,7 @@ void DD_ReadJoystick(void)
             else
             {
                 // The new angle becomes active.
-                ev.angle.pos = (int) (state.hatAngle[0] / 45 + .5); // Round off correctly w/.5.
+                ev.angle.pos = ROUND(state.hatAngle[0] / 45);
             }
             DD_PostEvent(&ev);
 
