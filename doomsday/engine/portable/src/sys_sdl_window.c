@@ -83,11 +83,12 @@ static boolean mainWindowInited = false;
 static int screenWidth, screenHeight, screenBPP;
 static boolean screenIsWindow;
 
-#if defined(UNIX)
-static WINDOW* cursesRootWin;
-#endif
-
 // CODE --------------------------------------------------------------------
+
+ddwindow_t* Sys_MainWindow(void)
+{
+    return &mainWindow;
+}
 
 static __inline ddwindow_t *getWindow(uint idx)
 {
@@ -100,200 +101,10 @@ static __inline ddwindow_t *getWindow(uint idx)
     return &mainWindow;
 }
 
-#if defined(UNIX)
-static boolean isValidWindow(ddwindow_t* win)
+ddwindow_t* Sys_Window(uint idx)
 {
-    if(win->type == WT_CONSOLE)
-    {
-        return win->console.winText && win->console.winTitle &&
-                win->console.winCommand;
-    }
-    return true;
+    return getWindow(idx);
 }
-
-static void setAttrib(int flags)
-{
-    if(!mainWindowInited || !isValidWindow(&mainWindow))
-        return;
-
-    if(flags & (CPF_YELLOW | CPF_LIGHT))
-        wattrset(mainWindow.console.winText, A_BOLD);
-    else
-        wattrset(mainWindow.console.winText, A_NORMAL);
-}
-
-/**
- * Writes the text in winText at (cx,cy).
- */
-static void writeText(const char *line, int len)
-{
-    if(!isValidWindow(&mainWindow)) return;
-
-    wmove(mainWindow.console.winText, mainWindow.console.cy, mainWindow.console.cx);
-    waddnstr(mainWindow.console.winText, line, len);
-    wclrtoeol(mainWindow.console.winText);
-}
-
-static int getScreenSize(int axis)
-{
-    int                 x, y;
-
-    if(!isValidWindow(&mainWindow)) return;
-
-    getmaxyx(mainWindow.console.winText, y, x);
-    return axis == VX ? x : y;
-}
-
-void Sys_ConPrint(uint idx, const char *text, int clflags)
-{
-    ddwindow_t         *win;
-    char                line[LINELEN];
-    int                 count = strlen(text), lineStart, bPos;
-    const char         *ptr = text;
-    char                ch;
-    int                 maxPos[2];
-
-    if(!winManagerInited || !text)
-        return;
-
-    if(!novideo && idx != 1)
-    {
-        // We only support one terminal window (this isn't for us).
-        return;
-    }
-
-    win = &mainWindow;
-    if(!isValidWindow(win)) return;
-
-    // Determine the size of the text window.
-    getmaxyx(win->console.winText, maxPos[VY], maxPos[VX]);
-
-    if(win->console.needNewLine)
-    {
-        // Need to make some room.
-        win->console.cx = 0;
-        win->console.cy++;
-        while(win->console.cy >= maxPos[VY])
-        {
-            win->console.cy--;
-            scroll(win->console.winText);
-        }
-        win->console.needNewLine = false;
-    }
-    bPos = lineStart = win->console.cx;
-
-    setAttrib(clflags);
-
-    for(; count > 0; count--, ptr++)
-    {
-        ch = *ptr;
-        // Ignore carriage returns.
-        if(ch == '\r')
-            continue;
-        if(ch != '\n' && bPos < maxPos[VX])
-        {
-            line[bPos] = ch;
-            bPos++;
-        }
-        // Time for newline?
-        if(ch == '\n' || bPos >= maxPos[VX])
-        {
-            writeText(line + lineStart, bPos - lineStart);
-            win->console.cx += bPos - lineStart;
-            bPos = 0;
-            lineStart = 0;
-            if(count > 1)       // Not the last character?
-            {
-                win->console.needNewLine = false;
-                win->console.cx = 0;
-                win->console.cy++;
-                while(win->console.cy >= maxPos[VY])
-                {
-                    scroll(win->console.winText);
-                    win->console.cy--;
-                }
-            }
-            else
-                win->console.needNewLine = true;
-        }
-    }
-
-    // Something in the buffer?
-    if(bPos - lineStart)
-    {
-        writeText(line + lineStart, bPos - lineStart);
-        win->console.cx += bPos - lineStart;
-    }
-
-    wrefresh(win->console.winText);
-
-    // Move the cursor back onto the command line.
-    setConWindowCmdLine(1, NULL, 0, 0);
-}
-
-void Sys_SetConWindowCmdLine(uint idx, const char* text, uint cursorPos, int flags)
-{
-    ddwindow_t* win;
-
-    if(!winManagerInited)
-        return;
-
-    win = getWindow(idx - 1);
-
-    if(!win || win->type != WT_CONSOLE)
-        return;
-
-    setConWindowCmdLine(idx, text, cursorPos, flags);
-}
-
-static void setConWindowCmdLine(uint idx, const char *text,
-                                unsigned int cursorPos, int flags)
-{
-    ddwindow_t  *win;
-    unsigned int i;
-    char        line[LINELEN], *ch;
-    int         maxX;
-    int         length;
-
-    if(idx != 1)
-    {
-        // We only support one console window; (this isn't for us).
-        return;
-    }
-    win = &mainWindow;
-    if(!isValidWindow(win)) return;
-
-    maxX = getScreenSize(VX);
-
-    if(!text)
-    {
-        int         y, x;
-
-        // Just move the cursor into the command line window.
-        getyx(win->console.winCommand, y, x);
-        wmove(win->console.winCommand, y, x);
-    }
-    else
-    {
-        memset(line, 0, sizeof(line));
-        line[0] = '>';
-        for(i = 0, ch = line + 1; i < LINELEN - 1; ++i, ch++)
-        {
-            if(i < strlen(text))
-                *ch = text[i];
-            else
-                *ch = 0;
-        }
-        wmove(win->console.winCommand, 0, 0);
-
-        // Can't print longer than the window.
-        length = strlen(text);
-        waddnstr(win->console.winCommand, line, MIN_OF(maxX, length + 1));
-        wclrtoeol(win->console.winCommand);
-    }
-    wrefresh(win->console.winCommand);
-}
-#endif
 
 boolean Sys_ChangeVideoMode(int width, int height, int bpp)
 {
@@ -390,9 +201,6 @@ boolean Sys_ShutdownWindowManager(void)
     // Now off-line, no more window management will be possible.
     winManagerInited = false;
 
-    //if(isDedicated)
-    //    Sys_ConShutdown();
-
     return true;
 }
 
@@ -477,67 +285,7 @@ static ddwindow_t* createDDWindow(application_t* app, const Size2Raw* size,
 
     if(type == WT_CONSOLE)
     {
-#if defined(UNIX)
-        if(ArgExists("-daemon"))
-        {
-            // Create a blank dummy window.
-            memset(&mainWindow, 0, sizeof(mainWindow));
-            mainWindow.type = type;
-        }
-        else
-        {
-            int maxPos[2];
-
-            // Initialize curses.
-            if(!(cursesRootWin = initscr()))
-            {
-                Sys_CriticalMessage("createDDWindow: Failed creating terminal.");
-                return NULL;
-            }
-
-            cbreak();
-            noecho();
-            nonl();
-
-            mainWindow.type = type;
-
-            // The current size of the screen.
-            getmaxyx(stdscr, maxPos[VY], maxPos[VX]);
-
-            // Create the three windows we will be using.
-            mainWindow.console.winTitle = newwin(1, maxPos[VX], 0, 0);
-            mainWindow.console.winText = newwin(maxPos[VY] - 2, maxPos[VX], 1, 0);
-            mainWindow.console.winCommand = newwin(1, maxPos[VX], maxPos[VY] - 1, 0);
-
-            // Set attributes.
-            wattrset(mainWindow.console.winTitle, A_REVERSE);
-            wattrset(mainWindow.console.winText, A_NORMAL);
-            wattrset(mainWindow.console.winCommand, A_BOLD);
-
-            scrollok(mainWindow.console.winText, TRUE);
-            wclear(mainWindow.console.winText);
-            wrefresh(mainWindow.console.winText);
-
-            keypad(mainWindow.console.winCommand, TRUE);
-            nodelay(mainWindow.console.winCommand, TRUE);
-            setConWindowCmdLine(1, "", 1, 0);
-
-            // The background will also be in reverse.
-            wbkgdset(mainWindow.console.winTitle, ' ' | A_REVERSE);
-
-            // First clear the whole line.
-            wmove(mainWindow.console.winTitle, 0, 0);
-            wclrtoeol(mainWindow.console.winTitle);
-
-            // Center the title.
-            wmove(mainWindow.console.winTitle, 0, getmaxx(mainWindow.console.winTitle) / 2 - strlen(title) / 2);
-            waddstr(mainWindow.console.winTitle, title);
-            wrefresh(mainWindow.console.winTitle);
-
-            // We'll need the input event handler.
-            Sys_ConInputInit();
-        }
-#endif
+        Sys_ConInit(title);
     }
     else
     {
@@ -592,31 +340,14 @@ uint Sys_CreateWindow(application_t* app, uint parentIdx, const Point2Raw* origi
  */
 boolean Sys_DestroyWindow(uint idx)
 {
-    ddwindow_t         *window = getWindow(idx - 1);
+    ddwindow_t* window = getWindow(idx - 1);
 
     if(!window)
         return false;
 
     if(window->type == WT_CONSOLE)
     {
-#ifdef UNIX
-        if(!isValidWindow(window)) return true;
-#endif
-        // Delete windows and shut down curses.
-        delwin(window->console.winTitle);
-        delwin(window->console.winText);
-        delwin(window->console.winCommand);
-
-        window->console.winTitle = window->console.winText =
-            window->console.winCommand = NULL;
-
-        delwin(cursesRootWin);
-        cursesRootWin = 0;
-
-        endwin();
-        refresh();
-
-        Sys_ConInputShutdown();
+        Sys_ConShutdown(idx);
     }
 
     return true;
@@ -864,13 +595,6 @@ void Sys_UpdateWindow(uint idx)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
 
-    /*
-    if(GL_state.forceFinishBeforeSwap)
-    {
-        glFinish();
-    }
-    */
-
     SDL_GL_SwapBuffers();
 }
 
@@ -894,25 +618,10 @@ boolean Sys_SetWindowTitle(uint idx, const char *title)
         {
             SDL_WM_SetCaption(title, NULL);
         }
-        else // Its a terminal window.
+        else // It's a terminal window.
         {
-#if defined(UNIX)
-            if(!isValidWindow(window)) return true;
-
-            // The background will also be in reverse.
-            wbkgdset(window->console.winTitle, ' ' | A_REVERSE);
-
-            // First clear the whole line.
-            wmove(window->console.winTitle, 0, 0);
-            wclrtoeol(window->console.winTitle);
-
-            // Center the title.
-            wmove(window->console.winTitle, 0, getmaxx(window->console.winTitle) / 2 - strlen(title) / 2);
-            waddstr(window->console.winTitle, title);
-            wrefresh(window->console.winTitle);
-#endif
+            Sys_ConSetTitle(idx, title);
         }
-
         return true;
     }
 
