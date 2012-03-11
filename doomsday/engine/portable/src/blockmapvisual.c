@@ -23,180 +23,155 @@
 #include <math.h>
 
 #include "de_base.h"
-#include "de_system.h"
 #include "de_console.h"
 #include "de_graphics.h"
 #include "de_refresh.h"
 #include "de_render.h"
 #include "de_play.h"
-#include "de_misc.h"
 #include "de_ui.h"
+
+#include "blockmap.h"
 
 byte bmapShowDebug = 0; // 1 = mobjs, 2 = linedefs, 3 = BSP leafs, 4 = polyobjs.
 float bmapDebugSize = 1.5f;
 
-#if 0
-
-static int rendMobj(mobj_t* mo, void* paramaters)
+static int rendMobj(mobj_t* mo, void* parameters)
 {
-    vec2_t start, end;
-    V2_Set(start, mo->pos[VX] - mo->radius, mo->pos[VY] - mo->radius);
-    V2_Set(end,   mo->pos[VX] + mo->radius, mo->pos[VY] + mo->radius);
-    glVertex2f(start[VX], start[VY]);
-    glVertex2f(  end[VX], start[VY]);
-    glVertex2f(  end[VX],   end[VY]);
-    glVertex2f(start[VX],   end[VY]);
-    return false; // Continue iteration.
-}
-
-static int rendLineDef(LineDef* line, void* paramaters)
-{
-    glVertex2f(line->L_v1pos[VX], line->L_v1pos[VY]);
-    glVertex2f(line->L_v2pos[VX], line->L_v2pos[VY]);
-    return false; // Continue iteration.
-}
-
-static int rendBspLeaf(BspLeaf* bspLeaf, void* paramaters)
-{
-    const float scale = MAX_OF(bmapDebugSize, 1);
-    const float width = (theWindow->geometry.size.width / 16) / scale;
-    float length, dx, dy, normal[2], unit[2];
-    HEdge** hedgeIter, *hedge;
-    vec2_t start, end;
-
-    for(hedgeIter = bspLeaf->hedges; *hedgeIter; hedgeIter++)
+    if(mo->validCount != validCount)
     {
-        hedge = *hedgeIter;
+        vec2_t start, end;
+        V2_Set(start, mo->pos[VX] - mo->radius, mo->pos[VY] - mo->radius);
+        V2_Set(end,   mo->pos[VX] + mo->radius, mo->pos[VY] + mo->radius);
+        glVertex2f(start[VX], start[VY]);
+        glVertex2f(  end[VX], start[VY]);
+        glVertex2f(  end[VX],   end[VY]);
+        glVertex2f(start[VX],   end[VY]);
 
-        V2_Set(start, hedge->HE_v1pos[VX], hedge->HE_v1pos[VY]);
-        V2_Set(end,   hedge->HE_v2pos[VX], hedge->HE_v2pos[VY]);
+        mo->validCount = validCount;
+    }
+    return false; // Continue iteration.
+}
 
-        glBegin(GL_LINES);
-            glVertex2fv(start);
-            glVertex2fv(end);
-        glEnd();
+static int rendLineDef(LineDef* line, void* parameters)
+{
+    if(line->validCount != validCount)
+    {
+        glVertex2f(line->L_v1pos[VX], line->L_v1pos[VY]);
+        glVertex2f(line->L_v2pos[VX], line->L_v2pos[VY]);
 
-        dx = end[VX] - start[VX];
-        dy = end[VY] - start[VY];
-        length = sqrt(dx * dx + dy * dy);
-        if(length > 0)
+        line->validCount = validCount;
+    }
+    return false; // Continue iteration.
+}
+
+static int rendBspLeaf(BspLeaf* bspLeaf, void* parameters)
+{
+    if(bspLeaf->validCount != validCount)
+    {
+        const float scale = MAX_OF(bmapDebugSize, 1);
+        const float width = (theWindow->geometry.size.width / 16) / scale;
+        float length, dx, dy, normal[2], unit[2];
+        HEdge** hedgeIter, *hedge;
+        vec2_t start, end;
+
+        for(hedgeIter = bspLeaf->hedges; *hedgeIter; hedgeIter++)
         {
-            unit[VX] = dx / length;
-            unit[VY] = dy / length;
-            normal[VX] = -unit[VY];
-            normal[VY] = unit[VX];
+            hedge = *hedgeIter;
 
-            GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_DYNAMIC), GL_LINEAR);
-            glEnable(GL_TEXTURE_2D);
+            V2_Set(start, hedge->HE_v1pos[VX], hedge->HE_v1pos[VY]);
+            V2_Set(end,   hedge->HE_v2pos[VX], hedge->HE_v2pos[VY]);
 
-            GL_BlendOp(GL_FUNC_ADD);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-
-            glBegin(GL_QUADS);
-                glTexCoord2f(0.75f, 0.5f);
+            glBegin(GL_LINES);
                 glVertex2fv(start);
-                glTexCoord2f(0.75f, 0.5f);
                 glVertex2fv(end);
-                glTexCoord2f(0.75f, 1);
-                glVertex2f(end[VX] - normal[VX] * width,
-                           end[VY] - normal[VY] * width);
-                glTexCoord2f(0.75f, 1);
-                glVertex2f(start[VX] - normal[VX] * width,
-                           start[VY] - normal[VY] * width);
             glEnd();
 
-            glDisable(GL_TEXTURE_2D);
-            GL_BlendMode(BM_NORMAL);
+            dx = end[VX] - start[VX];
+            dy = end[VY] - start[VY];
+            length = sqrt(dx * dx + dy * dy);
+            if(length > 0)
+            {
+                unit[VX] = dx / length;
+                unit[VY] = dy / length;
+                normal[VX] = -unit[VY];
+                normal[VY] = unit[VX];
+
+                GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_DYNAMIC), GL_LINEAR);
+                glEnable(GL_TEXTURE_2D);
+
+                GL_BlendOp(GL_FUNC_ADD);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+
+                glBegin(GL_QUADS);
+                    glTexCoord2f(0.75f, 0.5f);
+                    glVertex2fv(start);
+                    glTexCoord2f(0.75f, 0.5f);
+                    glVertex2fv(end);
+                    glTexCoord2f(0.75f, 1);
+                    glVertex2f(end[VX] - normal[VX] * width,
+                               end[VY] - normal[VY] * width);
+                    glTexCoord2f(0.75f, 1);
+                    glVertex2f(start[VX] - normal[VX] * width,
+                               start[VY] - normal[VY] * width);
+                glEnd();
+
+                glDisable(GL_TEXTURE_2D);
+                GL_BlendMode(BM_NORMAL);
+            }
+
+            // Draw the bounding box.
+            V2_Set(start, bspLeaf->aaBox.minX, bspLeaf->aaBox.minY);
+            V2_Set(end,   bspLeaf->aaBox.maxX, bspLeaf->aaBox.maxY);
+
+            glBegin(GL_LINES);
+                glVertex2f(start[VX], start[VY]);
+                glVertex2f(  end[VX], start[VY]);
+                glVertex2f(  end[VX], start[VY]);
+                glVertex2f(  end[VX],   end[VY]);
+                glVertex2f(  end[VX],   end[VY]);
+                glVertex2f(start[VX],   end[VY]);
+                glVertex2f(start[VX],   end[VY]);
+                glVertex2f(start[VX], start[VY]);
+            glEnd();
         }
 
-        // Draw the bounding box.
-        V2_Set(start, bspLeaf->aaBox.minX, bspLeaf->aaBox.minY);
-        V2_Set(end,   bspLeaf->aaBox.maxX, bspLeaf->aaBox.maxY);
-
-        glBegin(GL_LINES);
-            glVertex2f(start[VX], start[VY]);
-            glVertex2f(  end[VX], start[VY]);
-            glVertex2f(  end[VX], start[VY]);
-            glVertex2f(  end[VX],   end[VY]);
-            glVertex2f(  end[VX],   end[VY]);
-            glVertex2f(start[VX],   end[VY]);
-            glVertex2f(start[VX],   end[VY]);
-            glVertex2f(start[VX], start[VY]);
-        glEnd();
+        bspLeaf->validCount = validCount;
     }
     return false; // Continue iteration.
 }
 
-int rendCellLineDefs(void* cellPtr, void* paramaters)
+int rendCellLineDefs(Blockmap* blockmap, uint const coords[2], void* parameters)
 {
-    BlockmapCell* cell = (BlockmapCell*)cellPtr;
-    if(cell && cell->ringNodes)
-    {
-        bmapiterparams_t biParams;
-        biParams.localValidCount = validCount;
-        biParams.func = rendLineDef;
-        biParams.param = paramaters;
-
-        glBegin(GL_LINES);
-            BlockmapCell_IterateObjects(cell, blockmapCellLinesIterator, (void*)&biParams);
-        glEnd();
-    }
+    glBegin(GL_LINES);
+        Blockmap_IterateCellObjects(blockmap, coords, rendLineDef, parameters);
+    glEnd();
     return false; // Continue iteration.
 }
 
-int rendCellPolyobjs(void* cellPtr, void* paramaters)
+int rendCellPolyobjLineDefs(void* object, void* parameters)
 {
-    BlockmapCell* cell = (BlockmapCell*)cellPtr;
-    if(cell && cell->ringNodes)
-    {
-        bmappoiterparams_t bpiParams;
-        poiterparams_t piParams;
+    return Polyobj_LineIterator((Polyobj*)object, rendLineDef, parameters);
+}
 
-        piParams.func = rendLineDef;
-        piParams.param = paramaters;
-
-        bpiParams.localValidCount = validCount;
-        bpiParams.func = PTR_PolyobjLines;
-        bpiParams.param = &piParams;
-
-        glBegin(GL_LINES);
-            BlockmapCell_IterateObjects(cell, blockmapCellPolyobjsIterator, (void*)&bpiParams);
-        glEnd();
-    }
+int rendCellPolyobjs(Blockmap* blockmap, uint const coords[2], void* parameters)
+{
+    glBegin(GL_LINES);
+        Blockmap_IterateCellObjects(blockmap, coords, rendCellPolyobjLineDefs, parameters);
+    glEnd();
     return false; // Continue iteration.
 }
 
-int rendCellMobjs(void* cellPtr, void* paramaters)
+int rendCellMobjs(Blockmap* blockmap, uint const coords[2], void* parameters)
 {
-    BlockmapCell* cell = (BlockmapCell*)cellPtr;
-    if(cell && cell->ringNodes)
-    {
-        bmapmoiterparams_t bmiParams;
-        bmiParams.localValidCount = validCount;
-        bmiParams.func = rendMobj;
-        bmiParams.param = paramaters;
-
-        glBegin(GL_QUADS);
-            BlockmapCell_IterateObjects(cell, blockmapCellMobjsIterator, (void*)&bmiParams);
-        glEnd();
-    }
+    glBegin(GL_QUADS);
+        Blockmap_IterateCellObjects(blockmap, coords, rendMobj, parameters);
+    glEnd();
     return false; // Continue iteration.
 }
 
-int rendCellBspLeafs(void* cellPtr, void* paramaters)
+int rendCellBspLeafs(Blockmap* blockmap, uint const coords[2], void* parameters)
 {
-    BlockmapCell* cell = (BlockmapCell*)cellPtr;
-    if(cell && cell->ringNodes)
-    {
-        bmapbspleafiterateparams_t bsiParams;
-        bsiParams.localValidCount = validCount;
-        bsiParams.func = rendBspLeaf;
-        bsiParams.param = paramaters;
-        bsiParams.sector = NULL;
-        bsiParams.box = NULL;
-
-        BlockmapCell_IterateObjects(cell, blockmapCellBspLeafsIterator, (void*)&bsiParams);
-    }
+    Blockmap_IterateCellObjects(blockmap, coords, rendBspLeaf, parameters);
     return false; // Continue iteration.
 }
 
@@ -206,13 +181,13 @@ void rendBlockmapBackground(Blockmap* blockmap)
     uint x, y, bmapSize[2];
     assert(blockmap);
 
-    Gridmap_Size(blockmap->gridmap, bmapSize);
+    Blockmap_Size(blockmap, bmapSize);
 
     // Scale modelview matrix so we can express cell geometry
     // using a cell-sized unit coordinate space.
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-    glScalef(blockmap->cellSize[VX], blockmap->cellSize[VY], 1);
+    glScalef(Blockmap_CellWidth(blockmap), Blockmap_CellHeight(blockmap), 1);
 
     /**
      * Draw the translucent quad which represents the "used" cells.
@@ -234,8 +209,7 @@ void rendBlockmapBackground(Blockmap* blockmap)
     for(y = 0; y < bmapSize[VY]; ++y)
     for(x = 0; x < bmapSize[VX]; ++x)
     {
-        // If this cell has user data its not null.
-        if(Gridmap_CellXY(blockmap->gridmap, x, y, false)) continue;
+        if(Blockmap_CellXYObjectCount(blockmap, x, y)) continue;
 
         glBegin(GL_QUADS);
             glVertex2f(x,   y);
@@ -331,58 +305,13 @@ static void drawBlockmapInfo(const Point2Raw* _origin, Blockmap* blockmap)
     glDisable(GL_TEXTURE_2D);
 }
 
-static int countCellObject(void* object, void* paramaters)
+static void drawCellInfoBox(Blockmap* blockmap, const Point2Raw* origin,
+    const char* objectTypeName, const_BlockmapCell cell)
 {
-    uint* count = (uint*)paramaters;
-    *count += 1;
-    return false; // Continue iteration.
-}
-
-static void drawLineDefCellInfoBox(Blockmap* blockmap, const Point2Raw* origin, uint const coords[2])
-{
-    uint count = 0;
+    uint count = Blockmap_CellObjectCount(blockmap, cell);
     char info[160];
 
-    validCount++;
-    Blockmap_IterateCellObjects(blockmap, coords, countCellObject, (void*)&count);
-
-    dd_snprintf(info, 160, "Cell:[%u,%u] LineDefs:#%u", coords[VX], coords[VY], count);
-    drawCellInfo(origin, info);
-}
-
-static void drawMobjCellInfoBox(Blockmap* blockmap, const Point2Raw* origin, uint const coords[2])
-{
-    uint count = 0;
-    char info[160];
-
-    validCount++;
-    Blockmap_IterateCellObjects(blockmap, coords, countCellObject, (void*)&count);
-
-    dd_snprintf(info, 160, "Cell:[%u,%u] Mobjs:#%u", coords[VX], coords[VY], count);
-    drawCellInfo(origin, info);
-}
-
-static void drawPolyobjCellInfoBox(Blockmap* blockmap, const Point2Raw* origin, uint const coords[2])
-{
-    uint count = 0;
-    char info[160];
-
-    validCount++;
-    Blockmap_IterateCellObjects(blockmap, coords, countCellObject, (void*)&count);
-
-    dd_snprintf(info, 160, "Cell:[%u,%u] Polyobjs:#%u", coords[VX], coords[VY], count);
-    drawCellInfo(origin, info);
-}
-
-static void drawBspLeafCellInfoBox(Blockmap* blockmap, const Point2Raw* origin, uint const coords[2])
-{
-    uint count = 0;
-    char info[160];
-
-    validCount++;
-    Blockmap_IterateCellObjects(blockmap, coords, countCellObject, (void*)&count);
-
-    dd_snprintf(info, 160, "Cell:[%u,%u] BspLeafs:#%u", coords[VX], coords[VY], count);
+    dd_snprintf(info, 160, "Cell:[%u,%u] %s:#%u", cell[VX], cell[VY], objectTypeName, count);
     drawCellInfo(origin, info);
 }
 
@@ -392,19 +321,20 @@ static void drawBspLeafCellInfoBox(Blockmap* blockmap, const Point2Raw* origin, 
  * @param cellDrawer  Blockmap cell content drawing callback. Can be @a NULL.
  */
 static void rendBlockmap(Blockmap* blockmap, mobj_t* followMobj,
-    int (*cellDrawer) (Blockmap* blockmap, uint const coords[2], void* paramaters))
+    int (*cellDrawer) (Blockmap* blockmap, const_BlockmapCell cell, void* parameters))
 {
-    uint x, y, vCoords[2];
-    GridmapCellBlock vBlockCoords;
+    BlockmapCellBlock vCellBlock;
+    BlockmapCell vCell, cell;
+    BlockmapCoord dimensions[2];
     vec2_t start, end, cellSize;
-    void* cell;
 
+    Blockmap_Size(blockmap, dimensions);
     V2_Copy(cellSize, Blockmap_CellSize(blockmap));
 
     if(followMobj)
     {
         // Determine the followed Mobj's blockmap coords.
-        if(Blockmap_Cell(blockmap, vCoords, followMobj->pos))
+        if(Blockmap_Cell(blockmap, vCell, followMobj->pos))
             followMobj = NULL; // Outside the blockmap.
 
         if(followMobj)
@@ -417,22 +347,22 @@ static void rendBlockmap(Blockmap* blockmap, mobj_t* followMobj,
             V2_Set(end,   followMobj->pos[VX] + radius, followMobj->pos[VY] + radius);
             V2_InitBox(aaBox.arvec2, start);
             V2_AddToBox(aaBox.arvec2, end);
-            Blockmap_CellBlock(blockmap, &vBlockCoords, &aaBox);
+            Blockmap_CellBlock(blockmap, &vCellBlock, &aaBox);
         }
     }
 
     if(followMobj)
     {
         // Orient on the center of the followed Mobj.
-        V2_Set(start, vCoords[VX] * cellSize[VX],
-                      vCoords[VY] * cellSize[VY]);
+        V2_Set(start, vCell[VX] * cellSize[VX],
+                      vCell[VY] * cellSize[VY]);
         glTranslatef(-start[VX], -start[VY], 0);
     }
     else
     {
         // Orient on center of the Blockmap.
-        glTranslatef(-(cellSize[VX] * Blockmap_Width(blockmap))/2,
-                     -(cellSize[VY] * Blockmap_Height(blockmap))/2, 0);
+        glTranslatef(-(cellSize[VX] * dimensions[VX])/2,
+                     -(cellSize[VY] * dimensions[VY])/2, 0);
     }
 
     // First we'll draw a background showing the "null" cells.
@@ -440,11 +370,12 @@ static void rendBlockmap(Blockmap* blockmap, mobj_t* followMobj,
     if(followMobj)
     {
         // Highlight cells the followed Mobj "touches".
+        glBegin(GL_QUADS);
 
-        for(y = vBlockCoords.minY; y <= vBlockCoords.maxY; ++y)
-        for(x = vBlockCoords.minX; x <= vBlockCoords.maxX; ++x)
+        for(cell[VY] = vCellBlock.minY; cell[VY] <= vCellBlock.maxY; ++cell[VY])
+        for(cell[VX] = vCellBlock.minX; cell[VX] <= vCellBlock.maxX; ++cell[VX])
         {
-            if(x == vCoords[VX] && y == vCoords[VY])
+            if(cell[VX] == vCell[VX] && cell[VY] == vCell[VY])
             {
                 // The cell the followed Mobj is actually in.
                 glColor4f(.66f, .66f, 1, .66f);
@@ -455,30 +386,29 @@ static void rendBlockmap(Blockmap* blockmap, mobj_t* followMobj,
                 glColor4f(.33f, .33f, .66f, .33f);
             }
 
-            V2_Set(start, x * cellSize[VX], y * cellSize[VY]);
+            V2_Set(start, cell[VX] * cellSize[VX], cell[VY] * cellSize[VY]);
             V2_Set(end, cellSize[VX], cellSize[VY]);
             V2_Sum(end, end, start);
 
-            glBegin(GL_QUADS);
-                glVertex2f(start[VX], start[VY]);
-                glVertex2f(  end[VX], start[VY]);
-                glVertex2f(  end[VX],   end[VY]);
-                glVertex2f(start[VX],   end[VY]);
-            glEnd();
+            glVertex2f(start[VX], start[VY]);
+            glVertex2f(  end[VX], start[VY]);
+            glVertex2f(  end[VX],   end[VY]);
+            glVertex2f(start[VX],   end[VY]);
         }
 
+        glEnd();
     }
 
     /**
      * Draw the Gridmap visual.
-     * \note Gridmap uses a cell unit size of [width:1,height:1], so we
-     * need to scale it up so it aligns correctly.
+     * @note Gridmap uses a cell unit size of [width:1,height:1], so we need to
+     *       scale it up so it aligns correctly.
      */
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glScalef(cellSize[VX], cellSize[VY], 1);
 
-    Gridmap_DebugDrawer(blockmap->gridmap);
+    Gridmap_DebugDrawer(Blockmap_Gridmap(blockmap));
 
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
@@ -497,49 +427,41 @@ static void rendBlockmap(Blockmap* blockmap, mobj_t* followMobj,
         if(followMobj)
         {
             /**
-             * Draw cell contents color coded according to their range
-             * from the followed Mobj.
+             * Draw cell contents color coded according to their range from the
+             * followed Mobj.
              */
 
             // First, the cells outside the "touch" range (crimson).
             validCount++;
             glColor4f(.33f, 0, 0, .75f);
-            for(y = 0; y < Blockmap_Height(blockmap); ++y)
-            for(x = 0; x < Blockmap_Width(blockmap); ++x)
+            for(cell[VY] = 0; cell[VY] < dimensions[VY]; ++cell[VY])
+            for(cell[VX] = 0; cell[VX] < dimensions[VX]; ++cell[VX])
             {
-                if(x >= vBlockCoords.minX && x <= vBlockCoords.maxX &&
-                   y >= vBlockCoords.minY && y <= vBlockCoords.maxY)
-                    continue;
+                if(cell[VX] >= vCellBlock.minX && cell[VX] <= vCellBlock.maxX &&
+                   cell[VY] >= vCellBlock.minY && cell[VY] <= vCellBlock.maxY) continue;
+                if(!Blockmap_CellObjectCount(blockmap, cell)) continue;
 
-                cell = Gridmap_CellXY(blockmap->gridmap, x, y, false);
-                if(cell)
-                {
-                    cellDrawer(cell, NULL/*no params*/);
-                }
+                cellDrawer(blockmap, cell, NULL/*no params*/);
             }
 
             // Next, the cells within the "touch" range (orange).
             validCount++;
             glColor3f(1, .5f, 0);
-            for(y = vBlockCoords.minY; y <= vBlockCoords.maxY; ++y)
-            for(x = vBlockCoords.minX; x <= vBlockCoords.maxX; ++x)
+            for(cell[VY] = vCellBlock.minY; cell[VY] <= vCellBlock.maxY; ++cell[VY])
+            for(cell[VX] = vCellBlock.minX; cell[VX] <= vCellBlock.maxX; ++cell[VX])
             {
-                if(x == vCoords[VX] && y == vCoords[VY]) continue;
+                if(cell[VX] == vCell[VX] && cell[VY] == vCell[VY]) continue;
+                if(!Blockmap_CellObjectCount(blockmap, cell)) continue;
 
-                cell = Gridmap_CellXY(blockmap->gridmap, x, y, false);
-                if(cell)
-                {
-                    cellDrawer(cell, NULL/*no params*/);
-                }
+                cellDrawer(blockmap, cell, NULL/*no params*/);
             }
 
             // Lastly, the cell the followed Mobj is in (yellow).
             validCount++;
             glColor3f(1, 1, 0);
-            cell = Gridmap_Cell(blockmap->gridmap, vCoords, false);
-            if(cell)
+            if(Blockmap_CellObjectCount(blockmap, vCell))
             {
-                cellDrawer(cell, NULL/*no params*/);
+                cellDrawer(blockmap, vCell, NULL/*no params*/);
             }
         }
         else
@@ -547,7 +469,13 @@ static void rendBlockmap(Blockmap* blockmap, mobj_t* followMobj,
             // Draw all cells without color coding.
             validCount++;
             glColor4f(.33f, 0, 0, .75f);
-            Gridmap_Iterate(blockmap->gridmap, cellDrawer);
+            for(cell[VY] = 0; cell[VY] < dimensions[VY]; ++cell[VY])
+            for(cell[VX] = 0; cell[VX] < dimensions[VX]; ++cell[VX])
+            {
+                if(!Blockmap_CellObjectCount(blockmap, cell)) continue;
+
+                cellDrawer(blockmap, cell, NULL/*no params*/);
+            }
         }
     }
 
@@ -556,6 +484,7 @@ static void rendBlockmap(Blockmap* blockmap, mobj_t* followMobj,
      */
     if(followMobj)
     {
+        validCount++;
         glColor3f(0, 1, 0);
         glBegin(GL_QUADS);
             rendMobj(followMobj, NULL/*no params*/);
@@ -567,13 +496,10 @@ static void rendBlockmap(Blockmap* blockmap, mobj_t* followMobj,
     glPopMatrix();
 }
 
-#endif
-
 void Rend_BlockmapDebug(void)
 {
-#if 0
-    int (*cellDrawer) (void* cellPtr, void* paramaters);
-    void (*cellInfoDrawer) (Blockmap* blockmap, const Point2Raw* origin, uint const coords[2]);
+    int (*cellDrawer) (Blockmap* blockmap, uint const coords[2], void* parameters);
+    const char* objectTypeName;
     mobj_t* followMobj = NULL;
     Blockmap* blockmap;
     Point2Raw origin;
@@ -593,7 +519,7 @@ void Rend_BlockmapDebug(void)
 
         blockmap = map->mobjBlockmap;
         cellDrawer = rendCellMobjs;
-        cellInfoDrawer = drawMobjCellInfoBox;
+        objectTypeName = "Mobj";
         break;
 
     case 2: // LineDefs.
@@ -601,7 +527,7 @@ void Rend_BlockmapDebug(void)
 
         blockmap = map->lineDefBlockmap;
         cellDrawer = rendCellLineDefs;
-        cellInfoDrawer = drawLineDefCellInfoBox;
+        objectTypeName = "LineDef";
         break;
 
     case 3: // BspLeafs.
@@ -609,7 +535,7 @@ void Rend_BlockmapDebug(void)
 
         blockmap = map->bspLeafBlockmap;
         cellDrawer = rendCellBspLeafs;
-        cellInfoDrawer = drawBspLeafCellInfoBox;
+        objectTypeName = "BspLeaf";
         break;
 
     case 4: // PolyobjLinks.
@@ -617,7 +543,7 @@ void Rend_BlockmapDebug(void)
 
         blockmap = map->polyobjBlockmap;
         cellDrawer = rendCellPolyobjs;
-        cellInfoDrawer = drawPolyobjCellInfoBox;
+        objectTypeName = "Polyobj";
         break;
     }
 
@@ -658,12 +584,12 @@ void Rend_BlockmapDebug(void)
     if(followMobj)
     {
         // About the cell the followed Mobj is in.
-        uint coords[2];
-        if(!Blockmap_Cell(blockmap, coords, followMobj->pos))
+        BlockmapCell cell;
+        if(!Blockmap_Cell(blockmap, cell, followMobj->pos))
         {
             origin.x = theWindow->geometry.size.width / 2;
             origin.y = 30;
-            cellInfoDrawer(blockmap, &origin, coords);
+            drawCellInfoBox(blockmap, &origin, objectTypeName, cell);
         }
     }
 
@@ -674,6 +600,4 @@ void Rend_BlockmapDebug(void)
 
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
-
-#endif
 }
