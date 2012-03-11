@@ -289,6 +289,7 @@ int I_TranslateKeyCode(SDLKey sym)
  */
 void I_PollEvents(void)
 {
+#if 0
     SDL_Event   event;
     keyevent_t *e;
 
@@ -330,6 +331,7 @@ void I_PollEvents(void)
             break;
         }
     }
+#endif
 }
 
 void I_InitMouse(void)

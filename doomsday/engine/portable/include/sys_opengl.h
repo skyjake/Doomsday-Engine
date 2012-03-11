@@ -56,6 +56,10 @@
 #  define GL_CALL
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "gl_deferredapi.h"
 
 #include <string.h>
@@ -183,5 +187,9 @@ void Sys_GLPrintExtensions(void);
 boolean Sys_GLQueryExtension(const char* name, const GLubyte* extensions);
 
 boolean Sys_GLCheckError(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* LIBDENG_SYSTEM_OPENGL_H */

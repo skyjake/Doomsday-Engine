@@ -67,8 +67,6 @@ static boolean mainWindowInited = false;
 static int screenWidth, screenHeight, screenBPP;
 static boolean screenIsWindow;
 
-static boolean createContext(void);
-
 Window* Sys_MainWindow(void)
 {
     return &mainWindow;
@@ -110,7 +108,6 @@ boolean Sys_ChangeVideoMode(int width, int height, int bpp)
 
     // TODO: Attempt to change mode.
 
-    createContext();
 
     // Update current mode.
     screenWidth = width; //info->current_w;
@@ -160,6 +157,7 @@ boolean Sys_ChangeVideoMode(int width, int height, int bpp)
 #endif
 }
 
+#if 0
 static boolean setDDWindow(Window *window, int newWidth, int newHeight,
                            int newBPP, uint wFlags, uint uFlags)
 {
@@ -325,6 +323,7 @@ static boolean setDDWindow(Window *window, int newWidth, int newHeight,
 
     return true;
 }
+#endif
 
 /**
  * Initialize the window manager.
@@ -396,6 +395,7 @@ boolean Sys_ShutdownWindowManager(void)
     return true;
 }
 
+#if 0
 /**
  * Attempt to acquire a device context for OpenGL rendering and then init.
  *
@@ -423,6 +423,7 @@ static boolean createContext(void)
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 #endif
 
+    /*
     // Attempt to set the video mode.
     if(!Sys_ChangeVideoMode(Window_Width(theWindow),
                             Window_Height(theWindow),
@@ -431,6 +432,7 @@ static boolean createContext(void)
         Con_Error("createContext: Video mode change failed.\n");
         return false;
     }
+    */
 
     Sys_GLConfigureDefaultState();
 
@@ -441,6 +443,7 @@ static boolean createContext(void)
 
     return true;
 }
+#endif
 
 /**
  * Complete the given wminfo_t, detailing what features are supported by
@@ -501,6 +504,13 @@ static Window* createDDWindow(application_t*, const Point2Raw* origin, const Siz
         mainWindow.widget = new CanvasWindow;
         mainWindow.widget->setGeometry(QRect(origin->x, origin->y, size->width, size->height));
         mainWindow.widget->setMinimumSize(QSize(320, 240));
+        mainWindow.geometry.origin.x = origin->x;
+        mainWindow.geometry.origin.y = origin->y;
+        mainWindow.geometry.size.width = size->width;
+        mainWindow.geometry.size.height = size->height;
+        mainWindow.bpp = bpp;
+        //mainWindow.flags = flags;
+        mainWindow.inited = true;
 
         // After the main window is created, we can finish with the engine init.
         mainWindow.widget->canvas().setInitCallback(finishMainWindowInit);
@@ -525,8 +535,10 @@ static Window* createDDWindow(application_t*, const Point2Raw* origin, const Siz
 #endif
     }
 
+    /*
     setDDWindow(&mainWindow, size->width, size->height, bpp, flags,
                 DDSW_NOVISIBLE | DDSW_NOCENTER | DDSW_NOFULLSCREEN);
+                */
 
     mainWindowInited = true;
     return &mainWindow;
@@ -629,9 +641,15 @@ boolean Sys_SetWindow(uint idx, int newX, int newY, int newWidth, int newHeight,
     Window *window = getWindow(idx);
 
     if(window)
+    {
+        // TODO: Update if necessary.
+        return true;
+    }
+    /*
+    if(window)
         return setDDWindow(window, newWidth, newHeight, newBPP,
                            wFlags, uFlags);
-
+    */
     return false;
 }
 

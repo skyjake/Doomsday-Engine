@@ -603,7 +603,7 @@ void Sys_GLConfigureDefaultState(void)
     glHint(GL_TEXTURE_COMPRESSION_HINT, GL_NICEST);
 
     // Clear the buffers.
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 /**

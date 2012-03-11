@@ -346,7 +346,7 @@ static int createMainWindow(void)
     char buf[256];
     DD_ComposeMainWindowTitle(buf);
     mainWindowIdx = Sys_CreateWindow(&app, &origin, &size, 32, 0,
-                                 isDedicated? WT_CONSOLE : WT_NORMAL, buf, 0);
+                                     isDedicated? WT_CONSOLE : WT_NORMAL, buf, 0);
     return mainWindowIdx != 0;
 }
 

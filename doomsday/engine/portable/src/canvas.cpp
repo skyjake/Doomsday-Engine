@@ -51,6 +51,7 @@ void Canvas::setInitCallback(void (*canvasInitializeFunc)(Canvas&))
 
 void Canvas::initializeGL()
 {
+    Sys_GLConfigureDefaultState();
 }
 
 void Canvas::resizeGL(int w, int h)
