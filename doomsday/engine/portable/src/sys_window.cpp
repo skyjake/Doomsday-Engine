@@ -31,35 +31,39 @@
 #include "gl_main.h"
 #include "ui_main.h"
 
-/*
-#include "de_base.h"
-#include "de_console.h"
-#include "de_system.h"
-#include "de_refresh.h"
-#include "de_misc.h"
-#include "de_ui.h"
-
-#include "gl_texmanager.h"
-#include "rend_particle.h" /// @todo Should not be necessary to include rend_particle.h at this level.
-*/
+struct ddwindow_s
+{
+    ddwindowtype_t  type;
+    boolean         inited;
+    RectRaw         geometry;
+    int             bpp;
+    int             flags;
+    consolewindow_t console; ///< Only used for WT_CONSOLE windows.
+#if defined(WIN32)
+    HWND            hWnd; // Needed for input (among other things).
+    HGLRC           glContext;
+#endif
+};
 
 /// Currently active window where all drawing operations are directed at.
-const ddwindow_t* theWindow;
+const Window* theWindow;
 
 static boolean winManagerInited = false;
 
-static ddwindow_t mainWindow;
+static Window mainWindow;
 static boolean mainWindowInited = false;
 
 static int screenWidth, screenHeight, screenBPP;
 static boolean screenIsWindow;
 
-ddwindow_t* Sys_MainWindow(void)
+static boolean createContext(void);
+
+Window* Sys_MainWindow(void)
 {
     return &mainWindow;
 }
 
-static __inline ddwindow_t *getWindow(uint idx)
+static __inline Window *getWindow(uint idx)
 {
     if(!winManagerInited)
         return NULL; // Window manager is not initialized.
@@ -70,7 +74,7 @@ static __inline ddwindow_t *getWindow(uint idx)
     return &mainWindow;
 }
 
-ddwindow_t* Sys_Window(uint idx)
+Window* Sys_Window(uint idx)
 {
     return getWindow(idx);
 }
@@ -93,6 +97,8 @@ boolean Sys_ChangeVideoMode(int width, int height, int bpp)
                    width, height, bpp, screenIsWindow));
 
     // TODO: Attempt to change mode.
+
+    createContext();
 
     // Update current mode.
     screenWidth = width; //info->current_w;
@@ -142,7 +148,7 @@ boolean Sys_ChangeVideoMode(int width, int height, int bpp)
 #endif
 }
 
-static boolean setDDWindow(ddwindow_t *window, int newWidth, int newHeight,
+static boolean setDDWindow(Window *window, int newWidth, int newHeight,
                            int newBPP, uint wFlags, uint uFlags)
 {
     int             width, height, bpp, flags;
@@ -159,7 +165,7 @@ static boolean setDDWindow(ddwindow_t *window, int newWidth, int newHeight,
     // Grab the current values.
     width = window->geometry.size.width;
     height = window->geometry.size.height;
-    bpp = window->normal.bpp;
+    bpp = window->bpp;
     flags = window->flags;
     // Force update on init?
     if(!window->inited && window->type == WT_NORMAL)
@@ -237,12 +243,12 @@ static boolean setDDWindow(ddwindow_t *window, int newWidth, int newHeight,
     // Update the current values.
     window->geometry.size.width = width;
     window->geometry.size.height = height;
-    window->normal.bpp = bpp;
+    window->bpp = bpp;
     window->flags = flags;
     if(!window->inited)
         window->inited = true;
 
-    // Do NOT modify ddwindow_t properties after this point.
+    // Do NOT modify Window properties after this point.
 
     // Do we need a new GL context due to changes to the window?
     if(newGLContext)
@@ -395,9 +401,9 @@ static boolean createContext(void)
 #endif
 
     // Attempt to set the video mode.
-    if(!Sys_ChangeVideoMode(theWindow->geometry.size.width,
-                            theWindow->geometry.size.height,
-                            theWindow->normal.bpp))
+    if(!Sys_ChangeVideoMode(Window_Width(theWindow),
+                            Window_Height(theWindow),
+                            Window_BitsPerPixel(theWindow)))
     {
         Con_Error("createContext: Video mode change failed.\n");
         return false;
@@ -437,7 +443,7 @@ boolean Sys_GetWindowManagerInfo(wminfo_t *info)
     return true;
 }
 
-static ddwindow_t* createDDWindow(application_t*, const Size2Raw* size, int bpp, int flags,
+static Window* createDDWindow(application_t*, const Size2Raw* size, int bpp, int flags,
                                   ddwindowtype_t type, const char* title)
 {
     // SDL only supports one window.
@@ -445,6 +451,8 @@ static ddwindow_t* createDDWindow(application_t*, const Size2Raw* size, int bpp,
 
     if(type == WT_CONSOLE)
     {
+        memset(&mainWindow, 0, sizeof(mainWindow));
+        mainWindow.type = WT_CONSOLE;
         Sys_ConInit(title);
     }
     else
@@ -484,7 +492,7 @@ uint Sys_CreateWindow(application_t* app, uint parentIdx, const Point2Raw* origi
     const Size2Raw* size, int bpp, int flags, ddwindowtype_t type, const char* title,
     void* userData)
 {
-    ddwindow_t* win;
+    Window* win;
     if(!winManagerInited) return 0;
 
     win = createDDWindow(app, size, bpp, flags, type, title);
@@ -505,7 +513,7 @@ uint Sys_CreateWindow(application_t* app, uint parentIdx, const Point2Raw* origi
  */
 boolean Sys_DestroyWindow(uint idx)
 {
-    ddwindow_t* window = getWindow(idx - 1);
+    Window* window = getWindow(idx - 1);
 
     if(!window)
         return false;
@@ -576,7 +584,7 @@ boolean Sys_SetActiveWindow(uint idx)
 boolean Sys_SetWindow(uint idx, int newX, int newY, int newWidth, int newHeight,
                       int newBPP, uint wFlags, uint uFlags)
 {
-    ddwindow_t *window = getWindow(idx - 1);
+    Window *window = getWindow(idx - 1);
 
     if(window)
         return setDDWindow(window, newWidth, newHeight, newBPP,
@@ -607,7 +615,7 @@ void Sys_UpdateWindow(uint idx)
  */
 boolean Sys_SetWindowTitle(uint idx, const char *title)
 {
-    ddwindow_t *window = getWindow(idx - 1);
+    Window *window = getWindow(idx - 1);
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
 
@@ -631,7 +639,7 @@ boolean Sys_SetWindowTitle(uint idx, const char *title)
 
 const RectRaw* Sys_GetWindowGeometry(uint idx)
 {
-    ddwindow_t* window = getWindow(idx - 1);
+    Window* window = getWindow(idx - 1);
     if(!window) return NULL;
     // Moving does not work in dedicated mode.
     if(isDedicated) return NULL;
@@ -640,7 +648,7 @@ const RectRaw* Sys_GetWindowGeometry(uint idx)
 
 const Point2Raw* Sys_GetWindowOrigin(uint idx)
 {
-    ddwindow_t* window = getWindow(idx - 1);
+    Window* window = getWindow(idx - 1);
     if(!window) return NULL;
     // Moving does not work in dedicated mode.
     if(isDedicated) return NULL;
@@ -649,7 +657,7 @@ const Point2Raw* Sys_GetWindowOrigin(uint idx)
 
 const Size2Raw* Sys_GetWindowSize(uint idx)
 {
-    ddwindow_t* window = getWindow(idx - 1);
+    Window* window = getWindow(idx - 1);
     if(!window) return NULL;
     // Moving does not work in dedicated mode.
     if(isDedicated) return NULL;
@@ -666,7 +674,7 @@ const Size2Raw* Sys_GetWindowSize(uint idx)
  */
 boolean Sys_GetWindowBPP(uint idx, int *bpp)
 {
-    ddwindow_t* window = getWindow(idx - 1);
+    Window* window = getWindow(idx - 1);
 
     if(!window || !bpp)
         return false;
@@ -675,7 +683,7 @@ boolean Sys_GetWindowBPP(uint idx, int *bpp)
     if(isDedicated)
         return false;
 
-    *bpp = window->normal.bpp;
+    *bpp = window->bpp;
 
     return true;
 }
@@ -690,7 +698,7 @@ boolean Sys_GetWindowBPP(uint idx, int *bpp)
  */
 boolean Sys_GetWindowFullscreen(uint idx, boolean *fullscreen)
 {
-    ddwindow_t *window = getWindow(idx - 1);
+    Window *window = getWindow(idx - 1);
 
     if(!window || !fullscreen)
         return false;
@@ -715,7 +723,7 @@ boolean Sys_GetWindowFullscreen(uint idx, boolean *fullscreen)
 #if defined(WIN32)
 HWND Sys_GetWindowHandle(uint idx)
 {
-    ddwindow_t *window = getWindow(idx - 1);
+    Window *window = getWindow(idx - 1);
 
     if(!window)
         return NULL;
@@ -725,3 +733,45 @@ HWND Sys_GetWindowHandle(uint idx)
 #endif
 
 #endif
+
+ddwindowtype_t Window_Type(const Window* wnd)
+{
+    assert(wnd);
+    return wnd->type;
+}
+
+struct consolewindow_s* Window_Console(Window* wnd)
+{
+    assert(wnd);
+    return &wnd->console;
+}
+
+const struct consolewindow_s* Window_ConsoleConst(const Window* wnd)
+{
+    assert(wnd);
+    return &wnd->console;
+}
+
+int Window_Width(const Window* wnd)
+{
+    assert(wnd);
+    return wnd->geometry.size.width;
+}
+
+int Window_Height(const Window *wnd)
+{
+    assert(wnd);
+    return wnd->geometry.size.height;
+}
+
+int Window_BitsPerPixel(const Window* wnd)
+{
+    assert(wnd);
+    return wnd->bpp;
+}
+
+const Size2Raw* Window_Size(const Window* wnd)
+{
+    assert(wnd);
+    return &wnd->geometry.size;
+}

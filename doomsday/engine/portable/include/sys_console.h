@@ -29,10 +29,28 @@
 #ifndef __DOOMSDAY_WINCONSOLE_H__
 #define __DOOMSDAY_WINCONSOLE_H__
 
+struct consolewindow_s;
+
 #include "sys_window.h"
 #include "sys_input.h"
 
-ddwindow_t* Sys_ConInit(const char* title);
+// Console window state.
+typedef struct consolewindow_s {
+#if defined(WIN32)
+    HANDLE      hcScreen;
+    CONSOLE_SCREEN_BUFFER_INFO cbInfo;
+    WORD        attrib;
+#elif defined(UNIX)
+    WINDOW     *winTitle, *winText, *winCommand;
+#endif
+    int         cx, cy;
+    int         needNewLine;
+    struct {
+        int         flags;
+    } cmdline;
+} consolewindow_t;
+
+Window* Sys_ConInit(const char* title);
 void Sys_ConShutdown(uint idx);
 
 void Sys_ConSetTitle(uint idx, const char* title);

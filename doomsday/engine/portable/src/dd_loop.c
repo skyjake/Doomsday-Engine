@@ -209,7 +209,7 @@ static void drawAndUpdate(void)
 
             // Draw any full window game graphics.
             if(DD_GameLoaded() && gx.DrawWindow)
-                gx.DrawWindow(&theWindow->geometry.size);
+                gx.DrawWindow(Window_Size(theWindow));
         }
     }
 

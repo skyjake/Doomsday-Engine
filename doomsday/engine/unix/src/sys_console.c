@@ -31,31 +31,32 @@
 
 #include <curses.h>
 
-#define mainWindow  (*Sys_MainWindow())
+#define mainConsole (*Window_Console(Sys_MainWindow()))
 
 #define LINELEN 256  // @todo Lazy: This is the max acceptable window width.
 
 static WINDOW* cursesRootWin;
 static boolean conInputInited = false;
 
-static boolean isValidWindow(ddwindow_t* win)
+static boolean isValidWindow(Window* win)
 {
-    if(win->type == WT_CONSOLE)
+    if(Window_Type(win) == WT_CONSOLE)
     {
-        return win->console.winText && win->console.winTitle && win->console.winCommand;
+        consolewindow_t* console = Window_Console(win);
+        return console->winText && console->winTitle && console->winCommand;
     }
     return true;
 }
 
 static void setAttrib(int flags)
 {
-    if(!isValidWindow(&mainWindow))
+    if(!isValidWindow(Sys_MainWindow()))
         return;
 
     if(flags & (CPF_YELLOW | CPF_LIGHT))
-        wattrset(mainWindow.console.winText, A_BOLD);
+        wattrset(mainConsole.winText, A_BOLD);
     else
-        wattrset(mainWindow.console.winText, A_NORMAL);
+        wattrset(mainConsole.winText, A_NORMAL);
 }
 
 /**
@@ -63,39 +64,41 @@ static void setAttrib(int flags)
  */
 static void writeText(const char *line, int len)
 {
-    if(!isValidWindow(&mainWindow)) return;
+    if(!isValidWindow(Sys_MainWindow())) return;
 
-    wmove(mainWindow.console.winText, mainWindow.console.cy, mainWindow.console.cx);
-    waddnstr(mainWindow.console.winText, line, len);
-    wclrtoeol(mainWindow.console.winText);
+    wmove(mainConsole.winText, mainConsole.cy, mainConsole.cx);
+    waddnstr(mainConsole.winText, line, len);
+    wclrtoeol(mainConsole.winText);
 }
 
 static int getScreenSize(int axis)
 {
     int                 x, y;
 
-    if(!isValidWindow(&mainWindow)) return;
+    if(!isValidWindow(Sys_MainWindow())) return;
 
-    getmaxyx(mainWindow.console.winText, y, x);
+    getmaxyx(mainConsole.winText, y, x);
     return axis == VX ? x : y;
 }
 
 static void setConWindowCmdLine(uint idx, const char *text,
                                 unsigned int cursorPos, int flags)
 {
-    ddwindow_t  *win;
+    Window  *win;
     unsigned int i;
     char        line[LINELEN], *ch;
     int         maxX;
     int         length;
+    consolewindow_t* console;
 
     if(idx != 1)
     {
         // We only support one console window; (this isn't for us).
         return;
     }
-    win = &mainWindow;
+    win = Sys_MainWindow();
     if(!isValidWindow(win)) return;
+    console = Window_Console(win);
 
     maxX = getScreenSize(VX);
 
@@ -104,8 +107,8 @@ static void setConWindowCmdLine(uint idx, const char *text,
         int         y, x;
 
         // Just move the cursor into the command line window.
-        getyx(win->console.winCommand, y, x);
-        wmove(win->console.winCommand, y, x);
+        getyx(console->winCommand, y, x);
+        wmove(console->winCommand, y, x);
     }
     else
     {
@@ -118,24 +121,25 @@ static void setConWindowCmdLine(uint idx, const char *text,
             else
                 *ch = 0;
         }
-        wmove(win->console.winCommand, 0, 0);
+        wmove(console->winCommand, 0, 0);
 
         // Can't print longer than the window.
         length = strlen(text);
-        waddnstr(win->console.winCommand, line, MIN_OF(maxX, length + 1));
-        wclrtoeol(win->console.winCommand);
+        waddnstr(console->winCommand, line, MIN_OF(maxX, length + 1));
+        wclrtoeol(console->winCommand);
     }
-    wrefresh(win->console.winCommand);
+    wrefresh(console->winCommand);
 }
 
 void Sys_ConPrint(uint idx, const char *text, int clflags)
 {
-    ddwindow_t         *win;
+    Window         *win;
     char                line[LINELEN];
     int                 count = strlen(text), lineStart, bPos;
     const char         *ptr = text;
     char                ch;
     int                 maxPos[2];
+    consolewindow_t    *console;
 
     if(!text)
         return;
@@ -146,25 +150,26 @@ void Sys_ConPrint(uint idx, const char *text, int clflags)
         return;
     }
 
-    win = &mainWindow;
+    win = Sys_MainWindow();
     if(!isValidWindow(win)) return;
+    console = Window_Console(win);
 
     // Determine the size of the text window.
-    getmaxyx(win->console.winText, maxPos[VY], maxPos[VX]);
+    getmaxyx(console->winText, maxPos[VY], maxPos[VX]);
 
-    if(win->console.needNewLine)
+    if(console->needNewLine)
     {
         // Need to make some room.
-        win->console.cx = 0;
-        win->console.cy++;
-        while(win->console.cy >= maxPos[VY])
+        console->cx = 0;
+        console->cy++;
+        while(console->cy >= maxPos[VY])
         {
-            win->console.cy--;
-            scroll(win->console.winText);
+            console->cy--;
+            scroll(console->winText);
         }
-        win->console.needNewLine = false;
+        console->needNewLine = false;
     }
-    bPos = lineStart = win->console.cx;
+    bPos = lineStart = console->cx;
 
     setAttrib(clflags);
 
@@ -183,22 +188,22 @@ void Sys_ConPrint(uint idx, const char *text, int clflags)
         if(ch == '\n' || bPos >= maxPos[VX])
         {
             writeText(line + lineStart, bPos - lineStart);
-            win->console.cx += bPos - lineStart;
+            console->cx += bPos - lineStart;
             bPos = 0;
             lineStart = 0;
             if(count > 1)       // Not the last character?
             {
-                win->console.needNewLine = false;
-                win->console.cx = 0;
-                win->console.cy++;
-                while(win->console.cy >= maxPos[VY])
+                console->needNewLine = false;
+                console->cx = 0;
+                console->cy++;
+                while(console->cy >= maxPos[VY])
                 {
-                    scroll(win->console.winText);
-                    win->console.cy--;
+                    scroll(console->winText);
+                    console->cy--;
                 }
             }
             else
-                win->console.needNewLine = true;
+                console->needNewLine = true;
         }
     }
 
@@ -206,10 +211,10 @@ void Sys_ConPrint(uint idx, const char *text, int clflags)
     if(bPos - lineStart)
     {
         writeText(line + lineStart, bPos - lineStart);
-        win->console.cx += bPos - lineStart;
+        console->cx += bPos - lineStart;
     }
 
-    wrefresh(win->console.winText);
+    wrefresh(console->winText);
 
     // Move the cursor back onto the command line.
     setConWindowCmdLine(1, NULL, 0, 0);
@@ -217,35 +222,37 @@ void Sys_ConPrint(uint idx, const char *text, int clflags)
 
 void Sys_SetConWindowCmdLine(uint idx, const char* text, uint cursorPos, int flags)
 {
-    ddwindow_t* win;
+    Window* win;
 
     win = Sys_Window(idx - 1);
 
-    if(!win || win->type != WT_CONSOLE || !isValidWindow(win))
+    if(!win || Window_Type(win) != WT_CONSOLE || !isValidWindow(win))
         return;
 
-    assert(win == &mainWindow);
+    assert(win == Sys_MainWindow());
 
     setConWindowCmdLine(idx, text, cursorPos, flags);
 }
 
 void Sys_ConSetTitle(uint idx, const char* title)
 {
-    ddwindow_t* window = Sys_Window(idx);
+    Window* window = Sys_Window(idx);
+    consolewindow_t* console;
 
     if(!isValidWindow(window)) return;
+    console = Window_Console(window);
 
     // The background will also be in reverse.
-    wbkgdset(window->console.winTitle, ' ' | A_REVERSE);
+    wbkgdset(console->winTitle, ' ' | A_REVERSE);
 
     // First clear the whole line.
-    wmove(window->console.winTitle, 0, 0);
-    wclrtoeol(window->console.winTitle);
+    wmove(console->winTitle, 0, 0);
+    wclrtoeol(console->winTitle);
 
     // Center the title.
-    wmove(window->console.winTitle, 0, getmaxx(window->console.winTitle) / 2 - strlen(title) / 2);
-    waddstr(window->console.winTitle, title);
-    wrefresh(window->console.winTitle);
+    wmove(console->winTitle, 0, getmaxx(console->winTitle) / 2 - strlen(title) / 2);
+    waddstr(console->winTitle, title);
+    wrefresh(console->winTitle);
 }
 
 static void Sys_ConInputInit(void)
@@ -256,15 +263,9 @@ static void Sys_ConInputInit(void)
     conInputInited = true;
 }
 
-ddwindow_t* Sys_ConInit(const char* title)
+Window* Sys_ConInit(const char* title)
 {
-    if(ArgExists("-daemon"))
-    {
-        // Create a blank dummy window.
-        memset(&mainWindow, 0, sizeof(mainWindow));
-        mainWindow.type = WT_CONSOLE;
-    }
-    else
+    if(!ArgExists("-daemon"))
     {
         int maxPos[2];
 
@@ -279,45 +280,44 @@ ddwindow_t* Sys_ConInit(const char* title)
         noecho();
         nonl();
 
-        mainWindow.type = WT_CONSOLE;
-
         // The current size of the screen.
         getmaxyx(stdscr, maxPos[VY], maxPos[VX]);
 
         // Create the three windows we will be using.
-        mainWindow.console.winTitle = newwin(1, maxPos[VX], 0, 0);
-        mainWindow.console.winText = newwin(maxPos[VY] - 2, maxPos[VX], 1, 0);
-        mainWindow.console.winCommand = newwin(1, maxPos[VX], maxPos[VY] - 1, 0);
+        mainConsole.winTitle = newwin(1, maxPos[VX], 0, 0);
+        mainConsole.winText = newwin(maxPos[VY] - 2, maxPos[VX], 1, 0);
+        mainConsole.winCommand = newwin(1, maxPos[VX], maxPos[VY] - 1, 0);
 
         // Set attributes.
-        wattrset(mainWindow.console.winTitle, A_REVERSE);
-        wattrset(mainWindow.console.winText, A_NORMAL);
-        wattrset(mainWindow.console.winCommand, A_BOLD);
+        wattrset(mainConsole.winTitle, A_REVERSE);
+        wattrset(mainConsole.winText, A_NORMAL);
+        wattrset(mainConsole.winCommand, A_BOLD);
 
-        scrollok(mainWindow.console.winText, TRUE);
-        wclear(mainWindow.console.winText);
-        wrefresh(mainWindow.console.winText);
+        scrollok(mainConsole.winText, TRUE);
+        wclear(mainConsole.winText);
+        wrefresh(mainConsole.winText);
 
-        keypad(mainWindow.console.winCommand, TRUE);
-        nodelay(mainWindow.console.winCommand, TRUE);
+        keypad(mainConsole.winCommand, TRUE);
+        nodelay(mainConsole.winCommand, TRUE);
         setConWindowCmdLine(1, "", 1, 0);
 
         // The background will also be in reverse.
-        wbkgdset(mainWindow.console.winTitle, ' ' | A_REVERSE);
+        wbkgdset(mainConsole.winTitle, ' ' | A_REVERSE);
 
         // First clear the whole line.
-        wmove(mainWindow.console.winTitle, 0, 0);
-        wclrtoeol(mainWindow.console.winTitle);
+        wmove(mainConsole.winTitle, 0, 0);
+        wclrtoeol(mainConsole.winTitle);
 
         // Center the title.
-        wmove(mainWindow.console.winTitle, 0, getmaxx(mainWindow.console.winTitle) / 2 - strlen(title) / 2);
-        waddstr(mainWindow.console.winTitle, title);
-        wrefresh(mainWindow.console.winTitle);
+        wmove(mainConsole.winTitle, 0, getmaxx(mainConsole.winTitle) / 2 - strlen(title) / 2);
+        waddstr(mainConsole.winTitle, title);
+        wrefresh(mainConsole.winTitle);
 
         // We'll need the input event handler.
         Sys_ConInputInit();
     }
-    return &mainWindow;
+
+    return Sys_MainWindow();
 }
 
 static void Sys_ConInputShutdown(void)
@@ -330,19 +330,21 @@ static void Sys_ConInputShutdown(void)
 
 void Sys_ConShutdown(uint idx)
 {
-    ddwindow_t* window = Sys_Window(idx);
+    Window* window = Sys_Window(idx);
+    consolewindow_t* console;
 
     if(!isValidWindow(window)) return;
+    console = Window_Console(window);
 
     // We should only have one window.
-    assert(window == &mainWindow);
+    assert(window == Sys_MainWindow());
 
     // Delete windows and shut down curses.
-    delwin(window->console.winTitle);
-    delwin(window->console.winText);
-    delwin(window->console.winCommand);
+    delwin(console->winTitle);
+    delwin(console->winText);
+    delwin(console->winCommand);
 
-    window->console.winTitle = window->console.winText = window->console.winCommand = NULL;
+    console->winTitle = console->winText = console->winCommand = NULL;
 
     delwin(cursesRootWin);
     cursesRootWin = 0;
@@ -403,8 +405,8 @@ size_t I_GetConsoleKeyEvents(keyevent_t *evbuf, size_t bufsize)
     if(!conInputInited)
         return 0;
 
-    for(n = 0, key = wgetch(theWindow->console.winCommand); key != ERR && n < bufsize;
-        key = wgetch(theWindow->console.winCommand))
+    for(n = 0, key = wgetch(Window_ConsoleConst(theWindow)->winCommand); key != ERR && n < bufsize;
+        key = wgetch(Window_ConsoleConst(theWindow)->winCommand))
     {
         // Use the table to translate the vKey to a DDKEY.
         ddkey = translateKey(key);

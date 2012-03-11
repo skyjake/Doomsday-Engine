@@ -139,7 +139,7 @@ static int drawThinkerId(thinker_t* thinker, void* context)
 
     if(alpha > 0)
     {
-        float scale = dist / (theWindow->geometry.size.width / 2);
+        float scale = dist / (Window_Width(theWindow) / 2);
 
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();

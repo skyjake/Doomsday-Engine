@@ -3210,7 +3210,7 @@ static int drawVertex1(LineDef* li, void* context)
 
         if(dist3D < MAX_VERTEX_POINT_DIST)
         {
-            drawVertexIndex(vtx, pos[VZ], dist3D / (theWindow->geometry.size.width / 2),
+            drawVertexIndex(vtx, pos[VZ], dist3D / (Window_Width(theWindow) / 2),
                             1 - dist3D / MAX_VERTEX_POINT_DIST);
         }
     }
@@ -3326,7 +3326,7 @@ void Rend_Vertexes(void)
                 float alpha, scale;
 
                 alpha = 1 - dist / MAX_VERTEX_POINT_DIST;
-                scale = dist / (theWindow->geometry.size.width / 2);
+                scale = dist / (Window_Width(theWindow) / 2);
 
                 drawVertexIndex(vtx, pos[VZ], scale, alpha);
             }
@@ -3538,7 +3538,7 @@ void R_DrawLightRange(void)
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, theWindow->geometry.size.width, theWindow->geometry.size.height, 0, -1, 1);
+    glOrtho(0, Window_Width(theWindow), Window_Height(theWindow), 0, -1, 1);
 
     glTranslatef(BORDER, BORDER, 0);
 
@@ -3730,7 +3730,7 @@ static int drawMobjBBox(thinker_t* th, void* context)
     eye[VY] = vz;
     eye[VZ] = vy;
 
-    alpha = 1 - ((M_Distance(mo->pos, eye)/(theWindow->geometry.size.width/2))/4);
+    alpha = 1 - ((M_Distance(mo->pos, eye)/(Window_Width(theWindow)/2))/4);
     if(alpha < .25f)
         alpha = .25f; // Don't make them totally invisible.
 
@@ -3810,7 +3810,7 @@ static void Rend_RenderBoundingBoxes(void)
         pos[VY] = po->aaBox.minY + length;
         pos[VZ] = sec->SP_floorheight;
 
-        alpha = 1 - ((M_Distance(pos, eye)/(theWindow->geometry.size.width/2))/4);
+        alpha = 1 - ((M_Distance(pos, eye)/(Window_Width(theWindow)/2))/4);
         if(alpha < .25f)
             alpha = .25f; // Don't make them totally invisible.
 

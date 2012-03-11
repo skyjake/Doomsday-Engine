@@ -47,6 +47,7 @@
 #  define GL_GLEXT_PROTOTYPES
 #  ifdef MACOSX
 #    include <GL/gl.h>
+#    include <GL/glu.h>
 #    include <OpenGL/OpenGL.h>
 #  else
 #    include <SDL.h>

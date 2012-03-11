@@ -793,8 +793,8 @@ unsigned char* GL_GrabScreen(void)
 
     if(!isDedicated && !novideo)
     {
-        const int width  = theWindow->geometry.size.width;
-        const int height = theWindow->geometry.size.height;
+        const int width  = Window_Width(theWindow);
+        const int height = Window_Height(theWindow);
 
         buffer = (unsigned char*) malloc(width * height * 3);
         if(!buffer)

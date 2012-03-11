@@ -68,38 +68,8 @@ typedef enum {
 #define CLF_CURSOR_LARGE        0x1 // Use the large command line cursor.
 /**@}*/
 
-typedef struct {
-    ddwindowtype_t  type;
-    boolean         inited;
-    /// \note SDL cannot move windows; thus origin is ignored.
-    RectRaw        geometry;
-    int             flags;
-#if defined(WIN32)
-    HWND            hWnd; // Needed for input (among other things).
-#endif
-    union {
-        struct {
-#if defined(WIN32)
-            HGLRC           glContext;
-#endif
-            int             bpp;
-        } normal;
-        struct {
-#if defined(WIN32)
-            HANDLE      hcScreen;
-            CONSOLE_SCREEN_BUFFER_INFO cbInfo;
-            WORD        attrib;
-#elif defined(UNIX)
-            WINDOW     *winTitle, *winText, *winCommand;
-#endif
-            int         cx, cy;
-            int         needNewLine;
-            struct {
-                int         flags;
-            } cmdline;
-        } console;
-    };
-} ddwindow_t;
+struct ddwindow_s; // opaque
+typedef struct ddwindow_s Window;
 
 // Doomsday window flags.
 #define DDWF_VISIBLE            0x01
@@ -122,11 +92,11 @@ typedef struct {
  * to worry about NULLs. The easiest way to get information about the
  * window where drawing is being is done.
  */
-extern const ddwindow_t* theWindow;
+extern const Window* theWindow;
 
 // A helpful macro that changes the origin of the screen
 // coordinate system.
-#define FLIP(y) (theWindow->geometry.size.height - (y+1))
+#define FLIP(y) (Window_Height(theWindow) - (y+1))
 
 boolean Sys_InitWindowManager(void);
 boolean Sys_ShutdownWindowManager(void);
@@ -160,6 +130,33 @@ uint Sys_CreateWindow(application_t* app, uint parentIDX, const Point2Raw* origi
     const Size2Raw* size, int bpp, int flags, ddwindowtype_t type, const char* title, void* data);
 boolean Sys_DestroyWindow(uint idx);
 
+ddwindowtype_t Window_Type(const Window* wnd);
+
+struct consolewindow_s* Window_Console(Window* wnd);
+
+const struct consolewindow_s* Window_ConsoleConst(const Window* wnd);
+
+/**
+ * Returns the current width of the window.
+ * @param wnd  Window instance.
+ */
+int Window_Width(const Window* wnd);
+
+/**
+ * Returns the current height of the window.
+ * @param wnd  Window instance.
+ */
+int Window_Height(const Window* wnd);
+
+int Window_BitsPerPixel(const Window* wnd);
+
+/**
+ * Determines the size of the window.
+ * @param wnd  Window instance.
+ * @return Window size.
+ */
+const Size2Raw* Window_Size(const Window* wnd);
+
 void Sys_UpdateWindow(uint idx);
 
 /**
@@ -181,8 +178,8 @@ boolean Sys_SetActiveWindow(uint idx);
 boolean Sys_SetWindow(uint idx, int x, int y, int w, int h, int bpp, uint wflags, uint uflags);
 boolean Sys_SetWindowTitle(uint idx, const char* title);
 
-ddwindow_t* Sys_Window(uint idx);
-ddwindow_t* Sys_MainWindow(void);
+Window* Sys_Window(uint idx);
+Window* Sys_MainWindow(void);
 
 /**
  *\todo This is a compromise to prevent having to refactor half the

@@ -1010,9 +1010,9 @@ int M_ScreenShot(const char* name, int bits)
 
     bits = (bits == 24? 24 : 16);
     if(bits == 16)
-        TGA_Save16_rgb888(file, theWindow->geometry.size.width, theWindow->geometry.size.height, screen);
+        TGA_Save16_rgb888(file, Window_Width(theWindow), Window_Height(theWindow), screen);
     else
-        TGA_Save24_rgb888(file, theWindow->geometry.size.width, theWindow->geometry.size.height, screen);
+        TGA_Save24_rgb888(file, Window_Width(theWindow), Window_Height(theWindow), screen);
 
     fclose(file);
     Str_Free(&fullName);

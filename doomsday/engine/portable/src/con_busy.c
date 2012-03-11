@@ -344,7 +344,7 @@ static void Con_BusyPrepareResources(void)
             { FN_SYSTEM_NAME":normal12", "}data/fonts/normal12.dfn" },
             { FN_SYSTEM_NAME":normal18", "}data/fonts/normal18.dfn" }
         };
-        int fontIdx = !(theWindow->geometry.size.width > 640)? 0 : 1;
+        int fontIdx = !(Window_Width(theWindow) > 640)? 0 : 1;
         Uri* uri = Uri_NewWithPath2(fonts[fontIdx].name, RC_NULL);
         font_t* font = R_CreateFontFromFile(uri, fonts[fontIdx].path);
         Uri_Delete(uri);
@@ -393,10 +393,10 @@ void Con_AcquireScreenshotTexture(void)
     startTime = Sys_GetRealSeconds();
 #endif
 
-    frame = malloc(theWindow->geometry.size.width * theWindow->geometry.size.height * 3);
-    GL_Grab(0, 0, theWindow->geometry.size.width, theWindow->geometry.size.height, DGL_RGB, frame);
+    frame = malloc(Window_Width(theWindow) * Window_Height(theWindow) * 3);
+    GL_Grab(0, 0, Window_Width(theWindow), Window_Height(theWindow), DGL_RGB, frame);
     GL_state.maxTexSize = SCREENSHOT_TEXTURE_SIZE; // A bit of a hack, but don't use too large a texture.
-    texScreenshot = GL_NewTextureWithParams2(DGL_RGB, theWindow->geometry.size.width, theWindow->geometry.size.height,
+    texScreenshot = GL_NewTextureWithParams2(DGL_RGB, Window_Width(theWindow), Window_Height(theWindow),
         frame, TXCF_NEVER_DEFER|TXCF_NO_COMPRESSION|TXCF_UPLOAD_ARG_NOSMARTFILTER, 0, GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/,
         GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
     GL_state.maxTexSize = oldMaxTexSize;
@@ -431,7 +431,7 @@ static void Con_BusyLoop(void)
         glMatrixMode(GL_PROJECTION);
         glPushMatrix();
         glLoadIdentity();
-        glOrtho(0, theWindow->geometry.size.width, theWindow->geometry.size.height, 0, -1, 1);
+        glOrtho(0, Window_Width(theWindow), Window_Height(theWindow), 0, -1, 1);
     }
 
     Sys_Lock(busy_Mutex);
@@ -691,18 +691,18 @@ void Con_BusyDrawConsoleOutput(void)
     // Dark gradient as background.
     glBegin(GL_QUADS);
     glColor4ub(0, 0, 0, 0);
-    y = theWindow->geometry.size.height - (LINE_COUNT + 3) * busyFontHgt;
+    y = Window_Height(theWindow) - (LINE_COUNT + 3) * busyFontHgt;
     glVertex2f(0, y);
-    glVertex2f(theWindow->geometry.size.width, y);
+    glVertex2f(Window_Width(theWindow), y);
     glColor4ub(0, 0, 0, 128);
-    glVertex2f(theWindow->geometry.size.width, theWindow->geometry.size.height);
-    glVertex2f(0, theWindow->geometry.size.height);
+    glVertex2f(Window_Width(theWindow), Window_Height(theWindow));
+    glVertex2f(0, Window_Height(theWindow));
     glEnd();
 
     glEnable(GL_TEXTURE_2D);
 
     // The text lines.
-    topY = y = theWindow->geometry.size.height - busyFontHgt * (2 * LINE_COUNT + .5f);
+    topY = y = Window_Height(theWindow) - busyFontHgt * (2 * LINE_COUNT + .5f);
     if(newCount > 0 ||
        (nowTime >= scrollStartTime && nowTime < scrollEndTime && scrollEndTime > scrollStartTime))
     {
@@ -730,7 +730,7 @@ void Con_BusyDrawConsoleOutput(void)
             alpha = 1 - (alpha - LINE_COUNT);
 
         FR_SetAlpha(alpha);
-        FR_DrawTextXY3(line->text, theWindow->geometry.size.width/2, y, ALIGN_TOP, DTF_ONLY_SHADOW);
+        FR_DrawTextXY3(line->text, Window_Width(theWindow)/2, y, ALIGN_TOP, DTF_ONLY_SHADOW);
     }
 
     glDisable(GL_TEXTURE_2D);
@@ -745,7 +745,7 @@ static void Con_BusyDrawer(void)
 {
     float pos = 0;
 
-    Con_DrawScreenshotBackground(0, 0, theWindow->geometry.size.width, theWindow->geometry.size.height);
+    Con_DrawScreenshotBackground(0, 0, Window_Width(theWindow), Window_Height(theWindow));
 
     // Indefinite activity?
     if((busyTask->mode & BUSYF_ACTIVITY) || (busyTask->mode & BUSYF_PROGRESS_BAR))
@@ -755,9 +755,9 @@ static void Con_BusyDrawer(void)
         else // The progress is animated elsewhere.
             pos = Con_GetProgress();
 
-        Con_BusyDrawIndicator(theWindow->geometry.size.width/2,
-                              theWindow->geometry.size.height/2,
-                              theWindow->geometry.size.height/12, pos);
+        Con_BusyDrawIndicator(Window_Width(theWindow)/2,
+                              Window_Height(theWindow)/2,
+                              Window_Height(theWindow)/12, pos);
     }
 
     // Output from the console?

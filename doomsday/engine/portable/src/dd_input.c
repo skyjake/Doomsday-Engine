@@ -1026,10 +1026,6 @@ static void postEvents(timespan_t ticLength)
     }
 #endif
 
-#ifdef UNIX
-    SDL_PumpEvents();
-#endif
-
     if(ArgExists("-noinput")) return;
 
     DD_ReadKeyboard();
@@ -1254,17 +1250,22 @@ void I_SetUIMouseMode(boolean on)
 {
     uiMouseMode = on;
 
+    /// @todo  Update this after the Qt window management is working.
+
+#if 0
 #ifdef UNIX
     if(I_MousePresent())
     {
         // Release mouse grab when in windowed mode.
         boolean isFullScreen = true;
+
         Sys_GetWindowFullscreen(1, &isFullScreen);
         if(!isFullScreen)
         {
             SDL_WM_GrabInput(on? SDL_GRAB_OFF : SDL_GRAB_ON);
         }
     }
+#endif
 #endif
 }
 
@@ -1334,8 +1335,8 @@ void DD_ReadMouse(timespan_t ticLength)
     if(uiMouseMode)
     {
         // Scale the movement depending on screen resolution.
-        xpos *= MAX_OF(1, theWindow->geometry.size.width / 800.0f);
-        ypos *= MAX_OF(1, theWindow->geometry.size.height / 600.0f);
+        xpos *= MAX_OF(1, Window_Width(theWindow) / 800.0f);
+        ypos *= MAX_OF(1, Window_Height(theWindow) / 600.0f);
     }
     else
     {
@@ -2114,7 +2115,7 @@ void Rend_AllInputDeviceStateVisuals(void)
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, theWindow->geometry.size.width, theWindow->geometry.size.height, 0, -1, 1);
+    glOrtho(0, Window_Width(theWindow), Window_Height(theWindow), 0, -1, 1);
 
     if(devRendKeyState)
     {
