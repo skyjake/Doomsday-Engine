@@ -1,38 +1,30 @@
-/**\file bsp_edge.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
- *\author Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
- *\author Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
- *\author Copyright © 1998-2000 Lee Killough <killough@rsn.hp.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * GL-friendly BSP node builder, half-edges.
+ * @file bsp_edge.c
+ * BSP Builder Half-edges. @ingroup map
  *
  * Based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted on
  * SourceForge: http://sourceforge.net/projects/glbsp/
+ *
+ * @authors Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ * @authors Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
+ * @authors Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
+ * @authors Copyright © 1998-2000 Lee Killough <killough@rsn.hp.com>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <stdlib.h>
 #include <ctype.h>
@@ -44,31 +36,14 @@
 #include "de_bsp.h"
 #include "de_misc.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static zblockset_t *hEdgeBlockSet;
+static zblockset_t* hEdgeBlockSet;
 static boolean hEdgeAllocatorInited = false;
 
-// CODE --------------------------------------------------------------------
-
-static __inline bsp_hedge_t *allocHEdge(void)
+static __inline bsp_hedge_t* allocHEdge(void)
 {
     if(hEdgeAllocatorInited)
-    {   // Use the block allocator.
+    {
+        // Use the block allocator.
         bsp_hedge_t* hEdge = ZBlockSet_Allocate(hEdgeBlockSet);
         memset(hEdge, 0, sizeof(bsp_hedge_t));
         return hEdge;
@@ -77,41 +52,35 @@ static __inline bsp_hedge_t *allocHEdge(void)
     return M_Calloc(sizeof(bsp_hedge_t));
 }
 
-static __inline void freeHEdge(bsp_hedge_t *hEdge)
+static __inline void freeHEdge(bsp_hedge_t* hEdge)
 {
     if(hEdgeAllocatorInited)
-    {   // Ignore, it'll be free'd along with the block allocator.
+    {
+        // Ignore, it'll be free'd along with the block allocator.
         return;
     }
 
     M_Free(hEdge);
 }
 
-static __inline edgetip_t *allocEdgeTip(void)
+static __inline edgetip_t* allocEdgeTip(void)
 {
     return M_Calloc(sizeof(edgetip_t));
 }
 
-static __inline void freeEdgeTip(edgetip_t *tip)
+static __inline void freeEdgeTip(edgetip_t* tip)
 {
     M_Free(tip);
 }
 
-/**
- * Init the half-edge block allocator.
- */
 void BSP_InitHEdgeAllocator(void)
 {
-    if(hEdgeAllocatorInited)
-        return; // Already been here.
+    if(hEdgeAllocatorInited) return; // Already been here.
 
     hEdgeBlockSet = ZBlockSet_New(sizeof(bsp_hedge_t), 512, PU_APPSTATIC);
     hEdgeAllocatorInited = true;
 }
 
-/**
- * Shutdown the half-edge block allocator. All elements will be free'd!
- */
 void BSP_ShutdownHEdgeAllocator(void)
 {
     if(hEdgeAllocatorInited)
@@ -145,9 +114,6 @@ static void updateHEdge(bsp_hedge_t *hedge)
     hedge->pPara = -hedge->pSX * hedge->pDX - hedge->pSY * hedge->pDY;
 }
 
-/**
- * Create a new half-edge.
- */
 bsp_hedge_t* BSP_HEdge_Create(LineDef* lineDef, LineDef* sourceLineDef,
     Vertex* start, Vertex* end, Sector* sec, boolean back)
 {
@@ -169,12 +135,7 @@ bsp_hedge_t* BSP_HEdge_Create(LineDef* lineDef, LineDef* sourceLineDef,
     return hEdge;
 }
 
-/**
- * Destroys the given half-edge.
- *
- * @param hEdge         Ptr to the half-edge to be destroyed.
- */
-void BSP_HEdge_Destroy(bsp_hedge_t *hEdge)
+void BSP_HEdge_Destroy(bsp_hedge_t* hEdge)
 {
     if(hEdge)
     {
@@ -182,40 +143,22 @@ void BSP_HEdge_Destroy(bsp_hedge_t *hEdge)
     }
 }
 
-/**
- * Splits the given half-edge at the point (x,y). The new half-edge is
- * returned. The old half-edge is shortened (the original start vertex is
- * unchanged), the new half-edge becomes the cut-off tail (keeping the
- * original end vertex).
- *
- * \note
- * If the half-edge has a twin, it is also split and is inserted into the
- * same list as the original (and after it), thus all half-edges (except the
- * one we are currently splitting) must exist on a singly-linked list
- * somewhere.
- *
- * \note
- * We must update the count values of any superblock that contains the
- * half-edge (and/or backseg), so that future processing is not messed up by
- * incorrect counts.
- */
-bsp_hedge_t *BSP_HEdge_Split(bsp_hedge_t* oldHEdge, double x, double y)
+bsp_hedge_t* BSP_HEdge_Split(bsp_hedge_t* oldHEdge, double x, double y)
 {
     bsp_hedge_t* newHEdge;
     Vertex* newVert;
 
 /*#if _DEBUG
-if(oldHEdge->lineDef)
-    Con_Message("Splitting Linedef %d (%p) at (%1.1f,%1.1f)\n",
-                oldHEdge->lineDef->index, oldHEdge, x, y);
-else
-    Con_Message("Splitting MiniHEdge %p at (%1.1f,%1.1f)\n", oldHEdge, x, y);
+    if(oldHEdge->lineDef)
+        Con_Message("Splitting Linedef %d (%p) at (%1.1f,%1.1f)\n", oldHEdge->lineDef->index, oldHEdge, x, y);
+    else
+        Con_Message("Splitting MiniHEdge %p at (%1.1f,%1.1f)\n", oldHEdge, x, y);
 #endif*/
 
     // Update superblock, if needed.
     if(oldHEdge->block)
-        BSP_IncSuperBlockHEdgeCounts(oldHEdge->block,
-                                     (oldHEdge->lineDef != NULL));
+        BSP_IncSuperBlockHEdgeCounts(oldHEdge->block, (oldHEdge->lineDef != NULL));
+
     /**
      * Create a new vertex (with correct wall_tip info) for the split that
      * happens along the given half-edge at the given location.
@@ -246,22 +189,17 @@ else
     newHEdge->v[0] = newVert;
     updateHEdge(newHEdge);
 
-/*#if _DEBUG
-Con_Message("Splitting Vertex is %04X at (%1.1f,%1.1f)\n",
-            newVert->index, newVert->V_pos[VX], newVert->V_pos[VY]);
-#endif*/
+    //DEBUG_Message(("Splitting Vertex is %04X at (%1.1f,%1.1f)\n",
+    //               newVert->index, newVert->V_pos[VX], newVert->V_pos[VY]));
 
     // Handle the twin.
     if(oldHEdge->twin)
     {
-/*#if _DEBUG
-Con_Message("Splitting hEdge->twin %p\n", oldHEdge->twin);
-#endif*/
+        //DEBUG_Message(("Splitting hEdge->twin %p\n", oldHEdge->twin));
 
         // Update superblock, if needed.
         if(oldHEdge->twin->block)
-            BSP_IncSuperBlockHEdgeCounts(oldHEdge->twin->block,
-                                         (oldHEdge->twin != NULL));
+            BSP_IncSuperBlockHEdgeCounts(oldHEdge->twin->block, (oldHEdge->twin != NULL));
 
         newHEdge->twin = allocHEdge();
 
@@ -287,11 +225,11 @@ Con_Message("Splitting hEdge->twin %p\n", oldHEdge->twin);
     return newHEdge;
 }
 
-void BSP_CreateVertexEdgeTip(Vertex *vert, double dx, double dy,
-                             bsp_hedge_t *back, bsp_hedge_t *front)
+void BSP_CreateVertexEdgeTip(Vertex* vert, double dx, double dy, bsp_hedge_t* back,
+    bsp_hedge_t* front)
 {
-    edgetip_t          *tip = allocEdgeTip();
-    edgetip_t          *after;
+    edgetip_t* tip = allocEdgeTip();
+    edgetip_t* after;
 
     tip->angle = M_SlopeToAngle(dx, dy);
     tip->ET_edge[BACK]  = back;
@@ -327,7 +265,7 @@ void BSP_CreateVertexEdgeTip(Vertex *vert, double dx, double dy,
     }
 }
 
-void BSP_DestroyVertexEdgeTip(edgetip_t *tip)
+void BSP_DestroyVertexEdgeTip(edgetip_t* tip)
 {
     if(tip)
     {
@@ -335,22 +273,16 @@ void BSP_DestroyVertexEdgeTip(edgetip_t *tip)
     }
 }
 
-/**
- * Check whether a line with the given delta coordinates and beginning
- * at this vertex is open. Returns a sector reference if it's open,
- * or NULL if closed (void space or directly along a linedef).
- */
-Sector* BSP_VertexCheckOpen(Vertex *vert, double dX, double dY)
+Sector* BSP_VertexCheckOpen(Vertex* vert, double dX, double dY)
 {
-    edgetip_t          *tip;
-    angle_g             angle = M_SlopeToAngle(dX, dY);
+    edgetip_t* tip;
+    angle_g angle = M_SlopeToAngle(dX, dY);
 
-    // First check whether there's a wall_tip that lies in the exact
-    // direction of the given direction (which is relative to the
-    // vertex).
+    // First check whether there's a wall_tip that lies in the exact direction of
+    // the given direction (which is relative to the vertex).
     for(tip = vert->buildData.tipSet; tip; tip = tip->ET_next)
     {
-        angle_g     diff = fabs(tip->angle - angle);
+        angle_g diff = fabs(tip->angle - angle);
 
         if(diff < ANG_EPSILON || diff > (360.0 - ANG_EPSILON))
         {   // Yes, found one.
@@ -358,24 +290,23 @@ Sector* BSP_VertexCheckOpen(Vertex *vert, double dX, double dY)
         }
     }
 
-    // OK, now just find the first wall_tip whose angle is greater than
-    // the angle we're interested in. Therefore we'll be on the FRONT
-    // side of that tip edge.
+    // OK, now just find the first wall_tip whose angle is greater than the angle
+    // we're interested in. Therefore we'll be on the FRONT side of that tip edge.
     for(tip = vert->buildData.tipSet; tip; tip = tip->ET_next)
     {
         if(angle + ANG_EPSILON < tip->angle)
-        {   // Found it.
+        {
+            // Found it.
             return (tip->ET_edge[FRONT]? tip->ET_edge[FRONT]->sector : NULL);
         }
 
         if(!tip->ET_next)
         {
-            // No more tips, thus we must be on the BACK side of the tip
-            // with the largest angle.
+            // No more tips, therefore this is the BACK of the tip with the largest angle.
             return (tip->ET_edge[BACK]? tip->ET_edge[BACK]->sector : NULL);
         }
     }
 
     Con_Error("Vertex %d has no tips !", vert->buildData.index);
-    return NULL;
+    exit(1); // Unreachable.
 }
