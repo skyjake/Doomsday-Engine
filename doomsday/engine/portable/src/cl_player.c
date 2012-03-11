@@ -144,7 +144,7 @@ void ClPlayer_UpdatePos(int plrNum)
     // The player's client mobj is not linked to any lists, so position
     // can be updated without any hassles.
     memcpy(remoteClientMobj->pos, localMobj->pos, sizeof(localMobj->pos));
-    P_MobjLink(remoteClientMobj, 0); // Update subsector pointer.
+    P_MobjLink(remoteClientMobj, 0); // Update bspLeaf pointer.
     remoteClientMobj->floorZ = localMobj->floorZ;
     remoteClientMobj->ceilingZ = localMobj->ceilingZ;
     remoteClientMobj->mom[MX] = localMobj->mom[MX];
@@ -356,9 +356,9 @@ void ClPlayer_MoveLocal(float dx, float dy, float z, boolean onground)
         P_MobjLink(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
     }
 
-    mo->subsector = R_PointInSubsector(mo->pos[VX], mo->pos[VY]);
-    mo->floorZ = mo->subsector->sector->SP_floorheight;
-    mo->ceilingZ = mo->subsector->sector->SP_ceilheight;
+    mo->bspLeaf = P_BspLeafAtPointXY(mo->pos[VX], mo->pos[VY]);
+    mo->floorZ = mo->bspLeaf->sector->SP_floorheight;
+    mo->ceilingZ = mo->bspLeaf->sector->SP_ceilheight;
 
     if(onground)
     {

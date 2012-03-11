@@ -185,7 +185,7 @@ boolean P_Teleport(mobj_t* mo, float x, float y, angle_t angle, boolean useFog)
     {
         mo->floorClip = 0;
 
-        if(mo->pos[VZ] == P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT))
+        if(mo->pos[VZ] == P_GetFloatp(mo->bspLeaf, DMU_FLOOR_HEIGHT))
         {
             const terraintype_t* tt = P_MobjGetFloorTerrainType(mo);
 

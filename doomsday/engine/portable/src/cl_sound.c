@@ -62,8 +62,8 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
     byte                flags = 0;
     mobj_t             *cmo = NULL;
     thid_t              mobjId = 0;
-    sector_t           *sector = NULL;
-    polyobj_t          *poly = NULL;
+    Sector             *sector = NULL;
+    Polyobj            *poly = NULL;
     mobj_t             *emitter = NULL;
     float               volume = 1;
 
@@ -93,7 +93,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
     {
         uint index = Reader_ReadUInt16(msgReader);
 
-        if(index < numSectors)
+        if(index < NUM_SECTORS)
         {
             sector = SECTOR_PTR(index);
         }
@@ -108,7 +108,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
     {
         uint index = Reader_ReadUInt16(msgReader);
 
-        if(index < numPolyObjs)
+        if(index < NUM_POLYOBJS)
         {
             poly = polyObjs[index];
             emitter = (mobj_t *) poly;
@@ -302,7 +302,7 @@ void Cl_Sound(void)
     else if(flags & SNDF_SECTOR)
     {
         num = Reader_ReadPackedUInt16(msgReader);
-        if(num >= numSectors)
+        if(num >= NUM_SECTORS)
         {
             Con_Message("Cl_Sound: Invalid sector number %i.\n", num);
             return;

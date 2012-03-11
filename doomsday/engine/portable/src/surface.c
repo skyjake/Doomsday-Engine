@@ -1,25 +1,23 @@
-/**\file p_surface.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file surface.c
+ * Logical map surface. @ingroup map
  *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #include "de_base.h"
@@ -29,25 +27,25 @@
 
 #include "materialvariant.h"
 
-boolean Surface_IsDrawable(surface_t* surface)
+boolean Surface_IsDrawable(Surface* surface)
 {
     return surface->material && Material_IsDrawable(surface->material);
 }
 
-boolean Surface_AttachedToMap(surface_t* suf)
+boolean Surface_AttachedToMap(Surface* suf)
 {
     assert(suf);
     if(!suf->owner) return false;
     if(DMU_GetType(suf->owner) == DMU_PLANE)
     {
-        sector_t* sec = ((plane_t*)suf->owner)->sector;
-        if(0 == sec->ssectorCount)
+        Sector* sec = ((Plane*)suf->owner)->sector;
+        if(0 == sec->bspLeafCount)
             return false;
     }
     return true;
 }
 
-boolean Surface_SetMaterial(surface_t* suf, material_t* mat)
+boolean Surface_SetMaterial(Surface* suf, material_t* mat)
 {
     assert(suf);
     if(suf->material != mat)
@@ -60,22 +58,24 @@ boolean Surface_SetMaterial(surface_t* suf, material_t* mat)
 
             if(!ddMapSetup)
             {
+                GameMap* map = theMap; /// @fixme Do not assume surface is from the CURRENT map.
+
                 // If this plane's surface is in the decorated list, remove it.
-                R_SurfaceListRemove(decoratedSurfaceList, suf);
+                R_SurfaceListRemove(GameMap_DecoratedSurfaces(map), suf);
                 // If this plane's surface is in the glowing list, remove it.
-                R_SurfaceListRemove(glowingSurfaceList, suf);
+                R_SurfaceListRemove(GameMap_GlowingSurfaces(map), suf);
 
                 if(mat)
                 {
                     if(Material_HasGlow(mat))
-                        R_SurfaceListAdd(glowingSurfaceList, suf);
+                        R_SurfaceListAdd(GameMap_GlowingSurfaces(map), suf);
                     if(Materials_HasDecorations(mat))
-                        R_SurfaceListAdd(decoratedSurfaceList, suf);
+                        R_SurfaceListAdd(GameMap_DecoratedSurfaces(map), suf);
 
                     if(DMU_GetType(suf->owner) == DMU_PLANE)
                     {
                         const ded_ptcgen_t* def = Materials_PtcGenDef(mat);
-                        P_SpawnPlaneParticleGen(def, (plane_t*)suf->owner);
+                        P_SpawnPlaneParticleGen(def, (Plane*)suf->owner);
                     }
                 }
             }
@@ -89,7 +89,7 @@ boolean Surface_SetMaterial(surface_t* suf, material_t* mat)
     return true;
 }
 
-boolean Surface_SetMaterialOriginX(surface_t* suf, float x)
+boolean Surface_SetMaterialOriginX(Surface* suf, float x)
 {
     assert(suf);
     if(suf->offset[VX] != x)
@@ -99,13 +99,16 @@ boolean Surface_SetMaterialOriginX(surface_t* suf, float x)
         {
             suf->inFlags |= SUIF_UPDATE_DECORATIONS;
             if(!ddMapSetup)
-                R_SurfaceListAdd(movingSurfaceList, suf);
+            {
+                /// @fixme Do not assume surface is from the CURRENT map.
+                R_SurfaceListAdd(GameMap_ScrollingSurfaces(theMap), suf);
+            }
         }
     }
     return true;
 }
 
-boolean Surface_SetMaterialOriginY(surface_t* suf, float y)
+boolean Surface_SetMaterialOriginY(Surface* suf, float y)
 {
     assert(suf);
     if(suf->offset[VY] != y)
@@ -115,13 +118,16 @@ boolean Surface_SetMaterialOriginY(surface_t* suf, float y)
         {
             suf->inFlags |= SUIF_UPDATE_DECORATIONS;
             if(!ddMapSetup)
-                R_SurfaceListAdd(movingSurfaceList, suf);
+            {
+                /// @fixme Do not assume surface is from the CURRENT map.
+                R_SurfaceListAdd(GameMap_ScrollingSurfaces(theMap), suf);
+            }
         }
     }
     return true;
 }
 
-boolean Surface_SetMaterialOrigin(surface_t* suf, float x, float y)
+boolean Surface_SetMaterialOrigin(Surface* suf, float x, float y)
 {
     assert(suf);
     if(suf->offset[VX] != x || suf->offset[VY] != y)
@@ -132,19 +138,22 @@ boolean Surface_SetMaterialOrigin(surface_t* suf, float x, float y)
         {
             suf->inFlags |= SUIF_UPDATE_DECORATIONS;
             if(!ddMapSetup)
-                R_SurfaceListAdd(movingSurfaceList, suf);
+            {
+                /// @fixme Do not assume surface is from the CURRENT map.
+                R_SurfaceListAdd(GameMap_ScrollingSurfaces(theMap), suf);
+            }
         }
     }
     return true;
 }
 
-boolean Surface_SetColorRed(surface_t* suf, float r)
+boolean Surface_SetColorRed(Surface* suf, float r)
 {
     assert(suf);
     r = MINMAX_OF(0, r, 1);
     if(suf->rgba[CR] != r)
     {
-        // \todo when surface colours are intergrated with the
+        // @todo when surface colours are intergrated with the
         // bias lighting model we will need to recalculate the
         // vertex colours when they are changed.
         suf->rgba[CR] = r;
@@ -152,13 +161,13 @@ boolean Surface_SetColorRed(surface_t* suf, float r)
     return true;
 }
 
-boolean Surface_SetColorGreen(surface_t* suf, float g)
+boolean Surface_SetColorGreen(Surface* suf, float g)
 {
     assert(suf);
     g = MINMAX_OF(0, g, 1);
     if(suf->rgba[CG] != g)
     {
-        // \todo when surface colours are intergrated with the
+        // @todo when surface colours are intergrated with the
         // bias lighting model we will need to recalculate the
         // vertex colours when they are changed.
         suf->rgba[CG] = g;
@@ -166,13 +175,13 @@ boolean Surface_SetColorGreen(surface_t* suf, float g)
     return true;
 }
 
-boolean Surface_SetColorBlue(surface_t* suf, float b)
+boolean Surface_SetColorBlue(Surface* suf, float b)
 {
     assert(suf);
     b = MINMAX_OF(0, b, 1);
     if(suf->rgba[CB] != b)
     {
-        // \todo when surface colours are intergrated with the
+        // @todo when surface colours are intergrated with the
         // bias lighting model we will need to recalculate the
         // vertex colours when they are changed.
         suf->rgba[CB] = b;
@@ -180,13 +189,13 @@ boolean Surface_SetColorBlue(surface_t* suf, float b)
     return true;
 }
 
-boolean Surface_SetAlpha(surface_t* suf, float a)
+boolean Surface_SetAlpha(Surface* suf, float a)
 {
     assert(suf);
     a = MINMAX_OF(0, a, 1);
     if(suf->rgba[CA] != a)
     {
-        // \todo when surface colours are intergrated with the
+        // @todo when surface colours are intergrated with the
         // bias lighting model we will need to recalculate the
         // vertex colours when they are changed.
         suf->rgba[CA] = a;
@@ -194,7 +203,7 @@ boolean Surface_SetAlpha(surface_t* suf, float a)
     return true;
 }
 
-boolean Surface_SetColorAndAlpha(surface_t* suf, float r, float g, float b, float a)
+boolean Surface_SetColorAndAlpha(Surface* suf, float r, float g, float b, float a)
 {
     assert(suf);
 
@@ -207,7 +216,7 @@ boolean Surface_SetColorAndAlpha(surface_t* suf, float r, float g, float b, floa
        suf->rgba[CA] == a)
         return true;
 
-    // \todo when surface colours are intergrated with the
+    // @todo when surface colours are intergrated with the
     // bias lighting model we will need to recalculate the
     // vertex colours when they are changed.
     suf->rgba[CR] = r;
@@ -218,7 +227,7 @@ boolean Surface_SetColorAndAlpha(surface_t* suf, float r, float g, float b, floa
     return true;
 }
 
-boolean Surface_SetBlendMode(surface_t* suf, blendmode_t blendMode)
+boolean Surface_SetBlendMode(Surface* suf, blendmode_t blendMode)
 {
     assert(suf);
     if(suf->blendMode != blendMode)
@@ -228,14 +237,14 @@ boolean Surface_SetBlendMode(surface_t* suf, blendmode_t blendMode)
     return true;
 }
 
-void Surface_Update(surface_t* suf)
+void Surface_Update(Surface* suf)
 {
     assert(suf);
     if(!Surface_AttachedToMap(suf)) return;
     suf->inFlags |= SUIF_UPDATE_DECORATIONS;
 }
 
-int Surface_SetProperty(surface_t* suf, const setargs_t* args)
+int Surface_SetProperty(Surface* suf, const setargs_t* args)
 {
     switch(args->prop)
     {
@@ -314,7 +323,7 @@ int Surface_SetProperty(surface_t* suf, const setargs_t* args)
     return false; // Continue iteration.
 }
 
-int Surface_GetProperty(const surface_t* suf, setargs_t* args)
+int Surface_GetProperty(const Surface* suf, setargs_t* args)
 {
     switch(args->prop)
     {

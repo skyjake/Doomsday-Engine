@@ -146,7 +146,7 @@ void P_ClearBodyQueue(void)
 void P_NoiseAlert(mobj_t *target, mobj_t *emitter)
 {
     VALIDCOUNT++;
-    P_RecursiveSound(target, P_GetPtrp(emitter->subsector, DMU_SECTOR), 0);
+    P_RecursiveSound(target, P_GetPtrp(emitter->bspLeaf, DMU_SECTOR), 0);
 }
 
 boolean P_CheckMeleeRange(mobj_t *actor, boolean midrange)
@@ -231,7 +231,7 @@ boolean P_CheckMissileRange(mobj_t *mo)
 boolean P_Move(mobj_t* mo)
 {
     float tryPos[2], step[2];
-    linedef_t* ld;
+    LineDef* ld;
     boolean good;
 
     if(mo->flags2 & MF2_BLASTED)
@@ -504,7 +504,7 @@ void C_DECL A_Look(mobj_t* actor)
     mobj_t         *targ;
 
     actor->threshold = 0; // Any shot will wake up.
-    targ = P_ToXSectorOfSubsector(actor->subsector)->soundTarget;
+    targ = P_ToXSectorOfBspLeaf(actor->bspLeaf)->soundTarget;
     if(targ && (targ->flags & MF_SHOOTABLE))
     {
         actor->target = targ;
@@ -1808,13 +1808,13 @@ void C_DECL A_SerpentChase(mobj_t* actor)
     // Chase towards player.
     memcpy(oldpos, actor->pos, sizeof(oldpos));
 
-    oldMaterial = P_GetPtrp(actor->subsector, DMU_FLOOR_MATERIAL);
+    oldMaterial = P_GetPtrp(actor->bspLeaf, DMU_FLOOR_MATERIAL);
     if(--actor->moveCount < 0 || !P_Move(actor))
     {
         P_NewChaseDir(actor);
     }
 
-    if(P_GetPtrp(actor->subsector, DMU_FLOOR_MATERIAL) != oldMaterial)
+    if(P_GetPtrp(actor->bspLeaf, DMU_FLOOR_MATERIAL) != oldMaterial)
     {
         P_TryMove(actor, oldpos[VX], oldpos[VY]);
         P_NewChaseDir(actor);

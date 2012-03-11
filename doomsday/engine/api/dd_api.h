@@ -146,7 +146,7 @@ typedef struct {
 
     // Main structure sizes.
     size_t          mobjSize; // sizeof(mobj_t)
-    size_t          polyobjSize; // sizeof(polyobj_t)
+    size_t          polyobjSize; // sizeof(Polyobj)
 
     // Map data setup
     /**

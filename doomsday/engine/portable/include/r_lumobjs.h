@@ -31,8 +31,8 @@
 
 // Lumobject types.
 typedef enum {
-    LT_OMNI, // Omni (spherical) light.
-    LT_PLANE, // Planar light.
+    LT_OMNI, ///< Omni (spherical) light.
+    LT_PLANE  ///< Planar light.
 } lumtype_t;
 
 // Helper macros for accessing lum data.
@@ -42,7 +42,7 @@ typedef enum {
 typedef struct lumobj_s {
     lumtype_t type;
     float pos[3]; // Center of the obj.
-    subsector_t* subsector;
+    BspLeaf* bspLeaf;
     float maxDistance;
     void* decorSource; // decorsource_t ptr, else @c NULL.
 
@@ -115,10 +115,10 @@ void LO_UnlinkMobjLumobjs(void);
 uint LO_GetNumLuminous(void);
 
 /**
- * Construct a new lumobj and link it into subsector @a ssec.
+ * Construct a new lumobj and link it into @a bspLeaf.
  * @return  Logical index (name) for referencing the new lumobj.
  */
-uint LO_NewLuminous(lumtype_t type, subsector_t* ssec);
+uint LO_NewLuminous(lumtype_t type, BspLeaf* bspLeaf);
 
 /// @return  Lumobj associated with logical index @a idx else @c NULL.
 lumobj_t* LO_GetLuminous(uint idx);
@@ -146,60 +146,60 @@ float LO_DistanceToViewer(uint idx, int i);
 float LO_AttenuationFactor(uint idx, float distance);
 
 /**
- * Clip lumobj, omni lights in the given subsector.
+ * Clip lumobj, omni lights in the given BspLeaf.
  *
- * @param ssecidx  Subsector index in which lights will be clipped.
+ * @param bspLeafIdx  BspLeaf index in which lights will be clipped.
  */
-void LO_ClipInSubsector(uint ssecidx);
+void LO_ClipInBspLeaf(uint bspLeafIdx);
 
 /**
- * In the situation where a subsector contains both lumobjs and a polyobj,
+ * In the situation where a BSP leaf contains both lumobjs and a polyobj,
  * the lumobjs must be clipped more carefully. Here we check if the line of
- * sight intersects any of the polyobj segs that face the camera.
+ * sight intersects any of the polyobj hedges that face the camera.
  *
- * @param ssecidx  Subsector index in which lumobjs will be clipped.
+ * @param bspLeafIdx  BspLeaf index in which lumobjs will be clipped.
  */
-void LO_ClipInSubsectorBySight(uint ssecidx);
+void LO_ClipInBspLeafBySight(uint bspLeafIdx);
 
 /**
  * Iterate over all luminous objects within the specified origin range, making
  * a callback for each visited. Iteration ends when all selected luminous objects
  * have been visited or a callback returns non-zero.
  *
- * @param subsector  The subsector in which the origin resides.
- * @param x  X coordinate of the origin (must be within @a subsector).
- * @param y  Y coordinate of the origin (must be within @a subsector).
+ * @param bspLeaf  BspLeaf in which the origin resides.
+ * @param x  X coordinate of the origin (must be within @a bspLeaf).
+ * @param y  Y coordinate of the origin (must be within @a bspLeaf).
  * @param radius  Radius of the range around the origin point.
  * @param callback  Callback to make for each object.
  * @param paramaters  Data to pass to the callback.
  *
  * @return  @c 0 iff iteration completed wholly.
  */
-int LO_LumobjsRadiusIterator2(subsector_t* subsector, float x, float y, float radius,
+int LO_LumobjsRadiusIterator2(BspLeaf* bspLeaf, float x, float y, float radius,
     int (*callback) (const lumobj_t* lum, float distance, void* paramaters), void* paramaters);
-int LO_LumobjsRadiusIterator(subsector_t* subsector, float x, float y, float radius,
+int LO_LumobjsRadiusIterator(BspLeaf* bspLeaf, float x, float y, float radius,
     int (*callback) (const lumobj_t* lum, float distance, void* paramaters)); /* paramaters = NULL */
 
 /**
  * @defgroup projectLightFlags  Flags for LO_ProjectToSurface.
- * @{
  */
-#define PLF_SORT_LUMINOSITY_DESC    0x1 /// Sort by descending luminosity, brightest to dullest.
-#define PLF_NO_PLANE                0x2 /// Surface is not lit by planar lights.
-#define PLF_TEX_FLOOR               0x4 /// Prefer the "floor" slot when picking textures.
-#define PLF_TEX_CEILING             0x8 /// Prefer the "ceiling" slot when picking textures.
-/**@}*/
+///@{
+#define PLF_SORT_LUMINOSITY_DESC    0x1 ///< Sort by descending luminosity, brightest to dullest.
+#define PLF_NO_PLANE                0x2 ///< Surface is not lit by planar lights.
+#define PLF_TEX_FLOOR               0x4 ///< Prefer the "floor" slot when picking textures.
+#define PLF_TEX_CEILING             0x8 ///< Prefer the "ceiling" slot when picking textures.
+///@}
 
 /**
  * Project all lights affecting the given quad (world space), calculate
  * coordinates (in texture space) then store into a new list of projections.
  *
- * \assume The coordinates of the given quad must be contained wholly within
- * the subsector specified. This is due to an optimization within the lumobj
+ * @assume The coordinates of the given quad must be contained wholly within
+ * the BSP leaf specified. This is due to an optimization within the lumobj
  * management which separates them according to their position in the BSP.
  *
  * @param flags  @see projectLightFlags
- * @param ssec  Subsector within which the quad wholly resides.
+ * @param bspLeaf  BspLeaf within which the quad wholly resides.
  * @param blendFactor  Multiplied with projection alpha.
  * @param topLeft  Top left coordinates of the surface being projected to.
  * @param bottomRight  Bottom right coordinates of the surface being projected to.
@@ -211,7 +211,7 @@ int LO_LumobjsRadiusIterator(subsector_t* subsector, float x, float y, float rad
  *
  * @return  Projection list identifier if surface is lit else @c 0.
  */
-uint LO_ProjectToSurface(int flags, subsector_t* ssec, float blendFactor,
+uint LO_ProjectToSurface(int flags, BspLeaf* bspLeaf, float blendFactor,
     vec3_t topLeft, vec3_t bottomRight, vec3_t tangent, vec3_t bitangent, vec3_t normal);
 
 /**

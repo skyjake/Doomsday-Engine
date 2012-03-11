@@ -124,6 +124,8 @@ DENG_HEADERS = \
     portable/include/abstractresource.h \
     portable/include/audiodriver.h \
     portable/include/bitmapfont.h \
+    portable/include/blockmap.h \
+    portable/include/blockmapvisual.h \
     portable/include/blockset.h \
     portable/include/bsp_edge.h \
     portable/include/bsp_intersection.h \
@@ -131,6 +133,7 @@ DENG_HEADERS = \
     portable/include/bsp_map.h \
     portable/include/bsp_node.h \
     portable/include/bsp_superblock.h \
+    portable/include/bspleaf.h \
     portable/include/b_command.h \
     portable/include/b_context.h \
     portable/include/b_device.h \
@@ -191,6 +194,8 @@ DENG_HEADERS = \
     portable/include/fs_main.h \
     portable/include/fs_util.h \
     portable/include/game.h \
+    portable/include/gamemap.h \
+    portable/include/generators.h \
     portable/include/gl_defer.h \
     portable/include/gl_deferredapi.h \
     portable/include/gl_draw.h \
@@ -202,9 +207,12 @@ DENG_HEADERS = \
     portable/include/gl_tex.h \
     portable/include/gl_texmanager.h \
     portable/include/gl_tga.h \
+    portable/include/gridmap.h \
+    portable/include/hedge.h \
     portable/include/huffman.h \
     portable/include/image.h \
     portable/include/library.h \
+    portable/include/linedef.h \
     portable/include/lumpdirectory.h \
     portable/include/lumpfile.h \
     portable/include/lumpinfo.h \
@@ -216,7 +224,6 @@ DENG_HEADERS = \
     portable/include/m_bams.h \
     portable/include/m_binarytree.h \
     portable/include/m_decomp64.h \
-    portable/include/m_gridmap.h \
     portable/include/m_linkedlist.h \
     portable/include/m_md5.h \
     portable/include/m_misc.h \
@@ -230,32 +237,24 @@ DENG_HEADERS = \
     portable/include/net_event.h \
     portable/include/net_main.h \
     portable/include/net_msg.h \
-    portable/include/p_bmap.h \
     portable/include/p_cmd.h \
     portable/include/p_control.h \
     portable/include/p_dmu.h \
     portable/include/p_intercept.h \
-    portable/include/p_linedef.h \
     portable/include/p_mapdata.h \
     portable/include/p_maptypes.h \
     portable/include/p_maputil.h \
     portable/include/p_object.h \
     portable/include/p_objlink.h \
     portable/include/p_particle.h \
-    portable/include/p_plane.h \
     portable/include/p_players.h \
-    portable/include/p_polyob.h \
-    portable/include/p_polyobj.h \
-    portable/include/p_sector.h \
-    portable/include/p_seg.h \
-    portable/include/p_sidedef.h \
+    portable/include/p_polyobjs.h \
     portable/include/p_sight.h \
-    portable/include/p_subsector.h \
-    portable/include/p_surface.h \
     portable/include/p_ticker.h \
-    portable/include/p_vertex.h \
     portable/include/pathdirectory.h \
     portable/include/pathmap.h \
+    portable/include/plane.h \
+    portable/include/polyobj.h \
     portable/include/protocol.h \
     portable/include/rend_bias.h \
     portable/include/rend_clip.h \
@@ -285,8 +284,11 @@ DENG_HEADERS = \
     portable/include/r_things.h \
     portable/include/r_util.h \
     portable/include/r_world.h \
+    portable/include/sector.h \
+    portable/include/sidedef.h \
     portable/include/string.hh \
     portable/include/stringarray.h \
+    portable/include/surface.h \
     portable/include/sv_def.h \
     portable/include/sv_frame.h \
     portable/include/sv_infine.h \
@@ -325,6 +327,7 @@ DENG_HEADERS = \
     portable/include/ui_main.h \
     portable/include/ui_mpi.h \
     portable/include/ui_panel.h \
+    portable/include/vertex.h \
     portable/include/wadfile.h \
     portable/include/zipfile.h
 
@@ -381,6 +384,7 @@ DENG_WIN32_SOURCES += \
 
 SOURCES += \
     portable/src/abstractfile.c \
+    portable/src/abstractresource.c \
     portable/src/audiodriver.c \
     portable/src/animator.c \
     portable/src/bitmapfont.c \
@@ -390,12 +394,15 @@ SOURCES += \
     portable/src/b_device.c \
     portable/src/b_main.c \
     portable/src/b_util.c \
+    portable/src/blockmap.c \
+    portable/src/blockmapvisual.c \
     portable/src/bsp_edge.c \
     portable/src/bsp_intersection.c \
     portable/src/bsp_main.c \
     portable/src/bsp_map.c \
     portable/src/bsp_node.c \
     portable/src/bsp_superblock.c \
+    portable/src/bspleaf.c \
     portable/src/cbuffer.c \
     portable/src/cl_frame.c \
     portable/src/cl_infine.c \
@@ -437,6 +444,8 @@ SOURCES += \
     portable/src/fs_main.c \
     portable/src/fs_util.c \
     portable/src/game.c \
+    portable/src/gamemap.c \
+    portable/src/generators.c \
     portable/src/gl_defer.c \
     portable/src/gl_deferredapi.c \
     portable/src/gl_draw.c \
@@ -448,9 +457,12 @@ SOURCES += \
     portable/src/gl_tex.c \
     portable/src/gl_texmanager.c \
     portable/src/gl_tga.c \
+    portable/src/gridmap.c \
+    portable/src/hedge.c \
     portable/src/huffman.c \
     portable/src/image.c \
     portable/src/library.c \
+    portable/src/linedef.c \
     portable/src/lumpdirectory.c \
     portable/src/lumpfile.c \
     portable/src/material.c \
@@ -462,7 +474,6 @@ SOURCES += \
     portable/src/m_bams.c \
     portable/src/m_binarytree.c \
     portable/src/m_decomp64.c \
-    portable/src/m_gridmap.c \
     portable/src/m_linkedlist.c \
     portable/src/m_md5.c \
     portable/src/m_misc.c \
@@ -477,33 +488,26 @@ SOURCES += \
     portable/src/net_main.c \
     portable/src/net_msg.c \
     portable/src/net_ping.c \
-    portable/src/p_bmap.c \
     portable/src/p_cmd.c \
     portable/src/p_control.c \
     portable/src/p_data.c \
     portable/src/p_dmu.c \
     portable/src/p_intercept.c \
-    portable/src/p_linedef.c \
     portable/src/p_maputil.c \
     portable/src/p_mobj.c \
     portable/src/p_objlink.c \
     portable/src/p_particle.c \
-    portable/src/p_plane.c \
     portable/src/p_players.c \
-    portable/src/p_polyob.c \
-    portable/src/p_sector.c \
-    portable/src/p_seg.c \
-    portable/src/p_sidedef.c \
+    portable/src/p_polyobjs.c \
     portable/src/p_sight.c \
-    portable/src/p_subsector.c \
-    portable/src/p_surface.c \
     portable/src/p_think.c \
     portable/src/p_ticker.c \
-    portable/src/p_vertex.c \
     portable/src/pathdirectory.c \
     portable/src/pathmap.c \
-    portable/src/protocol.c \
+    portable/src/plane.c \
     portable/src/point.c \
+    portable/src/polyobj.c \
+    portable/src/protocol.c \
     portable/src/r_data.c \
     portable/src/r_draw.c \
     portable/src/r_fakeradio.c \
@@ -534,7 +538,8 @@ SOURCES += \
     portable/src/rend_sky.c \
     portable/src/rend_sprite.c \
     portable/src/resourcenamespace.c \
-    portable/src/abstractresource.c \
+    portable/src/sector.c \
+    portable/src/sidedef.c \
     portable/src/smoother.c \
     portable/src/stringpool.cpp \
     portable/src/s_cache.c \
@@ -546,6 +551,7 @@ SOURCES += \
     portable/src/s_wav.c \
     portable/src/size.c \
     portable/src/stringarray.cpp \
+    portable/src/surface.c \
     portable/src/sv_frame.c \
     portable/src/sv_infine.c \
     portable/src/sv_main.c \
@@ -571,6 +577,7 @@ SOURCES += \
     portable/src/ui_mpi.c \
     portable/src/ui_panel.c \
     portable/src/uri.c \
+    portable/src/vertex.c \
     portable/src/wadfile.c \
     portable/src/writer.c \
     portable/src/zipfile.c
@@ -594,6 +601,7 @@ SOURCES += ../plugins/common/src/m_fixed.c
 
 OTHER_FILES += \
     data/cphelp.txt \
+	portable/include/mapdata.hs \
     portable/include/template.h.template \
     portable/src/template.c.template
 

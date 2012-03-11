@@ -183,7 +183,10 @@ static void drawAndUpdate(void)
         if(DD_GameLoaded())
         {
             // Interpolate the world ready for drawing view(s) of it.
-            R_BeginWorldFrame();
+            if(theMap)
+            {
+                R_BeginWorldFrame();
+            }
             R_RenderViewPorts();
         }
         else if(titleFinale == 0)

@@ -1115,7 +1115,7 @@ void G_DeathMatchSpawnPlayer(int playerNum)
 /**
  * @param offset  Returns the position of the nearest point along the line (0..1).
  */
-float P_PointLineDistance(linedef_t *line, float x, float y, float *offset)
+float P_PointLineDistance(LineDef *line, float x, float y, float *offset)
 {
     float   a[2], b[2], c[2], d[2], len;
 
@@ -1144,7 +1144,7 @@ typedef struct {
     float               pos[2], minDist;
 } unstuckmobjinlinedefparams_t;
 
-int unstuckMobjInLinedef(linedef_t* li, void* context)
+int unstuckMobjInLinedef(LineDef* li, void* context)
 {
     unstuckmobjinlinedefparams_t *params =
         (unstuckmobjinlinedefparams_t*) context;
@@ -1202,10 +1202,10 @@ int unstuckMobjInLinedef(linedef_t* li, void* context)
 typedef struct nearestfacinglineparams_s {
     mobj_t* mo;
     float dist;
-    linedef_t* line;
+    LineDef* line;
 } nearestfacinglineparams_t;
 
-static int PIT_FindNearestFacingLine(linedef_t* line, void* ptr)
+static int PIT_FindNearestFacingLine(LineDef* line, void* ptr)
 {
     nearestfacinglineparams_t* params = (nearestfacinglineparams_t*) ptr;
     float dist;
@@ -1339,11 +1339,11 @@ void P_TurnGizmosAwayFromDoors(void)
 {
 #define MAXLIST 200
 
-    sector_t   *sec;
+    Sector     *sec;
     mobj_t     *iter;
     uint        i, l;
     int         k, t;
-    linedef_t  *closestline = NULL, *li;
+    LineDef    *closestline = NULL, *li;
     xline_t    *xli;
     float       closestdist = 0, dist, off, linelen;    //, minrad;
     mobj_t     *tlist[MAXLIST];
@@ -1397,7 +1397,7 @@ void P_TurnGizmosAwayFromDoors(void)
 
             if(closestline)
             {
-                vertex_t*       v0, *v1;
+                Vertex*         v0, *v1;
                 float           v0p[2], v1p[2];
 
                 v0 = P_GetPtrp(closestline, DMU_VERTEX0);

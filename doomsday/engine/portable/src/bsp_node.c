@@ -39,9 +39,9 @@
  * does the least splitting and has the least difference in numbers of
  * half-edges on either side.
  *
- * If the ones on the left side make a SSector, then create another SSector
+ * If the ones on the left side make a BspLeaf, then create another BspLeaf
  * else put the half-edges into the left list.
- * If the ones on the right side make a SSector, then create another SSector
+ * If the ones on the right side make a BspLeaf, then create another BspLeaf
  * else put the half-edges into the right list.
  *
  * Rewritten by Andrew Apted (-AJA-), 1999-2000.
@@ -73,13 +73,13 @@
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-// Used when sorting subsector hEdges by angle around midpoint.
+// Used when sorting BSP leaf half-edges by angle around midpoint.
 static size_t hEdgeSortBufSize;
-static hedge_t **hEdgeSortBuf;
+static bsp_hedge_t **hEdgeSortBuf;
 
 // CODE --------------------------------------------------------------------
 
-static __inline int pointOnHEdgeSide(double x, double y, const hedge_t *part)
+static __inline int pointOnHEdgeSide(double x, double y, const bsp_hedge_t *part)
 {
     return P_PointOnLinedefSide2(x, y, part->pDX, part->pDY, part->pPerp,
                               part->pLength, DIST_EPSILON);
@@ -88,7 +88,7 @@ static __inline int pointOnHEdgeSide(double x, double y, const hedge_t *part)
 /**
  * Add the given half-edge to the specified list.
  */
-void BSP_AddHEdgeToSuperBlock(superblock_t *block, hedge_t *hEdge)
+void BSP_AddHEdgeToSuperBlock(superblock_t *block, bsp_hedge_t *hEdge)
 {
 #define SUPER_IS_LEAF(s)  \
     ((s)->bbox[BOXRIGHT] - (s)->bbox[BOXLEFT] <= 256 && \
@@ -138,8 +138,8 @@ void BSP_AddHEdgeToSuperBlock(superblock_t *block, hedge_t *hEdge)
             return;
         }
 
-        // The seg lies in one half of this block. Create the block if it
-        // doesn't already exist, and loop back to add the seg.
+        // The hedge lies in one half of this block. Create the block if it
+        // doesn't already exist, and loop back to add the hedge.
         if(!block->subs[child])
         {
             block->subs[child] = sub = BSP_SuperBlockCreate();
@@ -174,11 +174,11 @@ void BSP_AddHEdgeToSuperBlock(superblock_t *block, hedge_t *hEdge)
 #undef SUPER_IS_LEAF
 }
 
-static boolean getAveragedCoords(hedge_t *headPtr, double *x, double *y)
+static boolean getAveragedCoords(bsp_hedge_t *headPtr, double *x, double *y)
 {
     size_t      total = 0;
     double      avg[2];
-    hedge_t    *cur;
+    bsp_hedge_t* cur;
 
     if(!x || !y)
         return false;
@@ -213,7 +213,7 @@ static boolean getAveragedCoords(hedge_t *headPtr, double *x, double *y)
  * \note Algorithm:
  * Uses the now famous "double bubble" sorter :).
  */
-static void sortHEdgesByAngleAroundPoint(hedge_t **hEdges, size_t total,
+static void sortHEdgesByAngleAroundPoint(bsp_hedge_t** hEdges, size_t total,
                                          double x, double y)
 {
     size_t              i;
@@ -221,9 +221,9 @@ static void sortHEdgesByAngleAroundPoint(hedge_t **hEdges, size_t total,
     i = 0;
     while(i + 1 < total)
     {
-        hedge_t    *a = hEdges[i];
-        hedge_t    *b = hEdges[i+1];
-        angle_g     angle1, angle2;
+        bsp_hedge_t* a = hEdges[i];
+        bsp_hedge_t* b = hEdges[i+1];
+        angle_g angle1, angle2;
 
         angle1 = M_SlopeToAngle(a->v[0]->buildData.pos[VX] - x,
                                 a->v[0]->buildData.pos[VY] - y);
@@ -258,11 +258,11 @@ static void sortHEdgesByAngleAroundPoint(hedge_t **hEdges, size_t total,
  * @param x             X coordinate of the point to order around.
  * @param y             Y coordinate of the point to order around.
  */
-static void clockwiseOrder(hedge_t **headPtr, size_t num, double x,
+static void clockwiseOrder(bsp_hedge_t** headPtr, size_t num, double x,
                            double y)
 {
-    size_t              i;
-    hedge_t            *hEdge;
+    size_t i;
+    bsp_hedge_t* hEdge;
 
     // Insert ptrs to the hEdges into the sort buffer.
     for(hEdge = *headPtr, i = 0; hEdge; hEdge = hEdge->next, ++i)
@@ -301,10 +301,10 @@ for(hEdge = sub->hEdges; hEdge; hEdge = hEdge->next)
 #endif*/
 }
 
-static void sanityCheckClosed(const bspleafdata_t *leaf)
+static void sanityCheckClosed(const bspleafdata_t* leaf)
 {
-    int                 total = 0, gaps = 0;
-    hedge_t            *cur, *next;
+    int total = 0, gaps = 0;
+    bsp_hedge_t* cur, *next;
 
     for(cur = leaf->hEdges; cur; cur = cur->next)
     {
@@ -335,7 +335,7 @@ for(cur = leaf->hEdges; cur; cur = cur->next)
 
 static void sanityCheckSameSector(const bspleafdata_t *leaf)
 {
-    hedge_t            *cur, *compare;
+    bsp_hedge_t* cur, *compare;
 
     // Find a suitable half-edge for comparison.
     for(compare = leaf->hEdges; compare; compare = compare->next)
@@ -379,9 +379,9 @@ static void sanityCheckSameSector(const bspleafdata_t *leaf)
     }
 }
 
-static boolean sanityCheckHasRealHEdge(const bspleafdata_t *leaf)
+static boolean sanityCheckHasRealHEdge(const bspleafdata_t* leaf)
 {
-    hedge_t            *cur;
+    bsp_hedge_t* cur;
 
     for(cur = leaf->hEdges; cur; cur = cur->next)
     {
@@ -392,10 +392,10 @@ static boolean sanityCheckHasRealHEdge(const bspleafdata_t *leaf)
     return false;
 }
 
-static void renumberLeafHEdges(bspleafdata_t *leaf, uint *curIndex)
+static void renumberLeafHEdges(bspleafdata_t* leaf, uint* curIndex)
 {
-    uint                n;
-    hedge_t            *cur;
+    uint n;
+    bsp_hedge_t* cur;
 
     n = 0;
     for(cur = leaf->hEdges; cur; cur = cur->next)
@@ -413,7 +413,7 @@ static void prepareHEdgeSortBuffer(size_t numHEdges)
     {
         hEdgeSortBufSize = numHEdges + 1;
         hEdgeSortBuf =
-            M_Realloc(hEdgeSortBuf, hEdgeSortBufSize * sizeof(hedge_t *));
+            M_Realloc(hEdgeSortBuf, hEdgeSortBufSize * sizeof(bsp_hedge_t *));
     }
 }
 
@@ -423,7 +423,7 @@ static boolean C_DECL clockwiseLeaf(binarytree_t *tree, void *data)
     {   // obj is a leaf.
         bspleafdata_t* leaf = (bspleafdata_t*) BinaryTree_GetData(tree);
         double midPoint[2] = { 0, 0 };
-        hedge_t* hEdge;
+        bsp_hedge_t* hEdge;
         size_t total;
 
         getAveragedCoords(leaf->hEdges, &midPoint[VX], &midPoint[VY]);
@@ -452,10 +452,10 @@ static boolean C_DECL clockwiseLeaf(binarytree_t *tree, void *data)
 }
 
 /**
- * Traverse the BSP tree and put all the half-edges in each subsector into
+ * Traverse the BSP tree and put all the half-edges in each BSP leaf into
  * clockwise order, and renumber their indices.
  *
- * \important This cannot be done during BuildNodes() since splitting a
+ * @important This cannot be done during BuildNodes() since splitting a
  * half-edge with a twin may insert another half-edge into that twin's list,
  * usually in the wrong place order-wise.
  */
@@ -483,12 +483,12 @@ static void createBSPLeafWorker(bspleafdata_t *leaf, superblock_t *block)
 
     while(block->hEdges)
     {
-        hedge_t            *cur = block->hEdges;
+        bsp_hedge_t* cur = block->hEdges;
 
         // Un-link first half-edge from the block.
         block->hEdges = cur->next;
 
-        // Link it into head of the subsector's list.
+        // Link it into head of the leaf's list.
         cur->next = leaf->hEdges;
         cur->block = NULL;
 
@@ -505,7 +505,7 @@ static void createBSPLeafWorker(bspleafdata_t *leaf, superblock_t *block)
             createBSPLeafWorker(leaf, a);
 
             if(a->realNum + a->miniNum > 0)
-                Con_Error("createSubSectorWorker: child %d not empty!", num);
+                Con_Error("createBspLeafWorker: child %d not empty!", num);
 
             BSP_SuperBlockDestroy(a);
             block->subs[num] = NULL;
@@ -536,7 +536,7 @@ bspleafdata_t *BSPLeaf_Create(void)
 
 void BSPLeaf_Destroy(bspleafdata_t *leaf)
 {
-    hedge_t            *cur, *np;
+    bsp_hedge_t* cur, *np;
 
     if(!leaf)
         return;
@@ -545,7 +545,7 @@ void BSPLeaf_Destroy(bspleafdata_t *leaf)
     while(cur)
     {
         np = cur->next;
-        HEdge_Destroy(cur);
+        BSP_HEdge_Destroy(cur);
         cur = np;
     }
 
@@ -567,7 +567,7 @@ static bspleafdata_t *createBSPLeaf(superblock_t *hEdgeList)
 
 /**
  * Takes the half-edge list and determines if it is convex, possibly
- * converting it into a subsector. Otherwise, the list is divided into two
+ * converting it into a BSP leaf. Otherwise, the list is divided into two
  * halves and recursion will continue on the new sub list.
  *
  * @param hEdgeList     Ptr to the list of half edges at the current node.
@@ -685,7 +685,7 @@ Con_Message("BuildNodes: Partition %p (%1.0f,%1.0f) -> (%1.0f,%1.0f).\n",
 //       "second" SideDef, then create a flipped Seg.
 //   2 - Call CreateNodes with the current list of Segs.  The list of Segs is
 //       the only argument to CreateNodes.
-//   3 - Save the Nodes, Segs and SSectors to disk.  Start with the leaves of
+//   3 - Save the Nodes, Segs and BspLeafs to disk.  Start with the leaves of
 //       the Nodes tree and continue up to the root (last Node).
 //
 // CreateNodes does the following:
@@ -696,11 +696,11 @@ Con_Message("BuildNodes: Partition %p (%1.0f,%1.0f) -> (%1.0f,%1.0f).\n",
 //   3 - If the first list (segs1) contains references to more than one
 //       Sector or if the angle between two adjacent Segs is greater than
 //       180 degrees, then call CreateNodes with this (smaller) list.
-//       Else, create a SubSector with all these Segs.
+//       Else, create a BspLeaf with all these Segs.
 //   4 - Do the same for the second list (segs2).
 //   5 - Return the new node (its two children are already OK).
 //
-// Each time CreateSSector is called, the Segs are put in a global list.
+// Each time CreateBspLeaf is called, the Segs are put in a global list.
 // When there is no more Seg in CreateNodes' list, then they are all in the
 // global list and ready to be saved to disk.
 //

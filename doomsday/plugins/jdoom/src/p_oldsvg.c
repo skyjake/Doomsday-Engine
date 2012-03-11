@@ -338,8 +338,8 @@ static void SV_ReadMobj(void)
         mo->dPlayer->lookDir = 0; /* $unifiedangles */
     }
     P_MobjSetPosition(mo);
-    mo->floorZ   = P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT);
-    mo->ceilingZ = P_GetFloatp(mo->subsector, DMU_CEILING_HEIGHT);
+    mo->floorZ   = P_GetFloatp(mo->bspLeaf, DMU_FLOOR_HEIGHT);
+    mo->ceilingZ = P_GetFloatp(mo->bspLeaf, DMU_CEILING_HEIGHT);
 }
 
 void P_v19_UnArchivePlayers(void)
@@ -375,9 +375,9 @@ void P_v19_UnArchiveWorld(void)
     uint                i, j;
     float               matOffset[2];
     short              *get;
-    sector_t           *sec;
+    Sector             *sec;
     xsector_t          *xsec;
-    linedef_t          *line;
+    LineDef            *line;
     xline_t            *xline;
 
     get = (short *) savePtr;
@@ -412,7 +412,7 @@ void P_v19_UnArchiveWorld(void)
 
         for(j = 0; j < 2; ++j)
         {
-            sidedef_t* sdef = P_GetPtrp(line, (j? DMU_SIDEDEF1:DMU_SIDEDEF0));
+            SideDef* sdef = P_GetPtrp(line, (j? DMU_SIDEDEF1:DMU_SIDEDEF0));
 
             if(!sdef)
                 continue;
@@ -481,7 +481,7 @@ static int SV_ReadCeiling(ceiling_t *ceiling)
 typedef struct {
     thinker_t thinker; // was 12 bytes
     ceilingtype_e type; // was 32bit int
-    sector_t *sector;
+    Sector *sector;
     fixed_t bottomheight;
     fixed_t topheight;
     fixed_t speed;
@@ -526,7 +526,7 @@ static int SV_ReadDoor(door_t *door)
 typedef struct {
     thinker_t thinker; // was 12 bytes
     doortype_e type; // was 32bit int
-    sector_t *sector;
+    Sector *sector;
     fixed_t topheight;
     fixed_t speed;
     int     direction;
@@ -564,7 +564,7 @@ typedef struct {
     thinker_t thinker; // was 12 bytes
     floortype_e type; // was 32bit int
     boolean crush;
-    sector_t *sector;
+    Sector *sector;
     int     direction;
     int     newspecial;
     short   texture;
@@ -601,7 +601,7 @@ static int SV_ReadPlat(plat_t *plat)
 /* Original DOOM format:
 typedef struct {
     thinker_t thinker; // was 12 bytes
-    sector_t *sector;
+    Sector *sector;
     fixed_t speed;
     fixed_t low;
     fixed_t high;
@@ -649,7 +649,7 @@ static int SV_ReadFlash(lightflash_t *flash)
 /* Original DOOM format:
 typedef struct {
     thinker_t thinker; // was 12 bytes
-    sector_t *sector;
+    Sector *sector;
     int     count;
     int     maxlight;
     int     minlight;
@@ -681,7 +681,7 @@ static int SV_ReadStrobe(strobe_t *strobe)
 /* Original DOOM format:
 typedef struct {
     thinker_t thinker; // was 12 bytes
-    sector_t *sector;
+    Sector *sector;
     int     count;
     int     minlight;
     int     maxlight;
@@ -713,7 +713,7 @@ static int SV_ReadGlow(glow_t *glow)
 /* Original DOOM format:
 typedef struct {
     thinker_t thinker; // was 12 bytes
-    sector_t *sector;
+    Sector *sector;
     int     minlight;
     int     maxlight;
     int     direction;
@@ -739,13 +739,13 @@ typedef struct {
 /*
  * Things to handle:
  *
- * T_MoveCeiling, (ceiling_t: sector_t * swizzle), - active list
- * T_Door, (door_t: sector_t * swizzle),
- * T_MoveFloor, (floor_t: sector_t * swizzle),
- * T_LightFlash, (lightflash_t: sector_t * swizzle),
- * T_StrobeFlash, (strobe_t: sector_t *),
- * T_Glow, (glow_t: sector_t *),
- * T_PlatRaise, (plat_t: sector_t *), - active list
+ * T_MoveCeiling, (ceiling_t: Sector * swizzle), - active list
+ * T_Door, (door_t: Sector * swizzle),
+ * T_MoveFloor, (floor_t: Sector * swizzle),
+ * T_LightFlash, (lightflash_t: Sector * swizzle),
+ * T_StrobeFlash, (strobe_t: Sector *),
+ * T_Glow, (glow_t: Sector *),
+ * T_PlatRaise, (plat_t: Sector *), - active list
  */
 void P_v19_UnArchiveSpecials(void)
 {

@@ -6,23 +6,23 @@
 #define DMT_VERTEX_POS  DDVT_FLOAT
 
 
-#define DMT_SEG_SIDEDEF         DDVT_PTR
+#define DMT_HEDGE_SIDEDEF         DDVT_PTR
 
-#define DMT_SEG_V DDVT_PTR             // [Start, End] of the segment.
-#define DMT_SEG_LINEDEF DDVT_PTR
-#define DMT_SEG_SEC DDVT_PTR
-#define DMT_SEG_SUBSECTOR DDVT_PTR
-#define DMT_SEG_BACKSEG DDVT_PTR
-#define DMT_SEG_ANGLE DDVT_ANGLE
-#define DMT_SEG_SIDE DDVT_BYTE         // 0=front, 1=back
-#define DMT_SEG_FLAGS DDVT_BYTE
-#define DMT_SEG_LENGTH DDVT_FLOAT      // Accurate length of the segment (v1 -> v2).
-#define DMT_SEG_OFFSET DDVT_FLOAT
+#define DMT_HEDGE_V DDVT_PTR             // [Start, End] of the segment.
+#define DMT_HEDGE_LINEDEF DDVT_PTR
+#define DMT_HEDGE_SEC DDVT_PTR
+#define DMT_HEDGE_BSPLEAF DDVT_PTR
+#define DMT_HEDGE_TWIN DDVT_PTR
+#define DMT_HEDGE_ANGLE DDVT_ANGLE
+#define DMT_HEDGE_SIDE DDVT_BYTE         // 0=front, 1=back
+#define DMT_HEDGE_FLAGS DDVT_BYTE
+#define DMT_HEDGE_LENGTH DDVT_FLOAT      // Accurate length of the segment (v1 -> v2).
+#define DMT_HEDGE_OFFSET DDVT_FLOAT
 
-#define DMT_SUBSECTOR_SEGCOUNT DDVT_UINT
-#define DMT_SUBSECTOR_SEGS DDVT_PTR    // [segcount] size.
-#define DMT_SUBSECTOR_POLYOBJ DDVT_PTR // NULL, if there is no polyobj.
-#define DMT_SUBSECTOR_SECTOR DDVT_PTR
+#define DMT_BSPLEAF_HEDGECOUNT DDVT_UINT
+#define DMT_BSPLEAF_HEDGES DDVT_PTR    // [hedgeCount] size.
+#define DMT_BSPLEAF_POLYOBJ DDVT_PTR // NULL, if there is no polyobj.
+#define DMT_BSPLEAF_SECTOR DDVT_PTR
 
 #define DMT_MATERIAL_FLAGS DDVT_SHORT
 #define DMT_MATERIAL_WIDTH DDVT_INT
@@ -51,14 +51,14 @@
 #define DMT_SECTOR_MOBJLIST DDVT_PTR   // List of mobjs in the sector.
 #define DMT_SECTOR_LINEDEFCOUNT DDVT_UINT
 #define DMT_SECTOR_LINEDEFS DDVT_PTR   // [lineDefCount+1] size.
-#define DMT_SECTOR_SSECTORCOUNT DDVT_UINT
-#define DMT_SECTOR_SSECTORS DDVT_PTR   // [ssectorCount+1] size.
+#define DMT_SECTOR_BSPLEAFCOUNT DDVT_UINT
+#define DMT_SECTOR_BSPLEAFS DDVT_PTR   // [bspLeafCount+1] size.
 #define DMT_SECTOR_SOUNDORG DDVT_PTR
 #define DMT_SECTOR_PLANECOUNT DDVT_UINT
 #define DMT_SECTOR_REVERB DDVT_FLOAT
 
-#define DMT_SIDEDEF_SEGCOUNT DDVT_UINT
-#define DMT_SIDEDEF_SEGS DDVT_PTR      // [segcount] size, segs arranged left>right
+#define DMT_SIDEDEF_HEDGECOUNT DDVT_UINT
+#define DMT_SIDEDEF_HEDGES DDVT_PTR      // [hedgeCount] size, hedges arranged left>right
 #define DMT_SIDEDEF_LINE DDVT_PTR
 #define DMT_SIDEDEF_SECTOR DDVT_PTR
 #define DMT_SIDEDEF_FLAGS DDVT_SHORT
@@ -74,7 +74,7 @@
 #define DMT_LINEDEF_DX DDVT_FLOAT
 #define DMT_LINEDEF_DY DDVT_FLOAT
 
-#define DMT_NODE_BBOX DDVT_FLOAT       // Bounding box for each child.
-#define DMT_NODE_CHILDREN DDVT_UINT    // If NF_SUBSECTOR it's a subsector.
+#define DMT_BSPNODE_BBOX DDVT_FLOAT       // Bounding box for each child.
+#define DMT_BSPNODE_CHILDREN DDVT_UINT    // If NF_LEAF it's a BspLeaf.
 
 #endif

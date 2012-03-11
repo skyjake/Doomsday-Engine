@@ -38,7 +38,7 @@ void LG_Update(void);
  */
 void LG_MarkAllForUpdate(void);
 
-void LG_SectorChanged(sector_t* sector);
+void LG_SectorChanged(Sector* sector);
 
 /**
  * Calculate the light color for a 3D point in the world.

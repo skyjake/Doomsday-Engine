@@ -95,7 +95,7 @@ const automapcfg_lineinfo_t* AM_GetInfoForLine(automapcfg_t* mcfg, automapcfg_ob
 }
 
 const automapcfg_lineinfo_t* AM_GetInfoForSpecialLine(automapcfg_t* mcfg, int special,
-    const sector_t* frontsector, const sector_t* backsector, int automapFlags)
+    const Sector* frontsector, const Sector* backsector, int automapFlags)
 {
     assert(NULL != mcfg);
     {

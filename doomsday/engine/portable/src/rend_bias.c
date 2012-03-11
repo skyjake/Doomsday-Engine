@@ -41,8 +41,7 @@
 #include "de_refresh.h"
 #include "de_defs.h"
 #include "de_misc.h"
-
-#include "p_sight.h"
+#include "de_play.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -360,31 +359,31 @@ void SB_InitForMap(const char* uniqueID)
     uint i;
 
     // First, determine the total number of vertexillum_ts we need.
-    for(i = 0; i < numSegs; ++i)
-        if(segs[i].lineDef)
+    for(i = 0; i < NUM_HEDGES; ++i)
+        if(hedges[i].lineDef)
             numVertIllums++;
 
     numVertIllums *= 3 * 4;
 
-    for(i = 0; i < numSectors; ++i)
+    for(i = 0; i < NUM_SECTORS; ++i)
     {
-        sector_t* sec = &sectors[i];
-        if(sec->ssectors && *sec->ssectors)
+        Sector* sec = &sectors[i];
+        if(sec->bspLeafs && *sec->bspLeafs)
         {
-            subsector_t** ssecPtr = sec->ssectors;
+            BspLeaf** ssecIter = sec->bspLeafs;
             do
             {
-                subsector_t* ssec = *ssecPtr;
-                numVertIllums += ssec->numVertices * sec->planeCount;
-                ssecPtr++;
-            } while(*ssecPtr);
+                BspLeaf* bspLeaf = *ssecIter;
+                numVertIllums += bspLeaf->numVertices * sec->planeCount;
+                ssecIter++;
+            } while(*ssecIter);
         }
     }
 
-    for(i = 0; i < numPolyObjs; ++i)
+    for(i = 0; i < NUM_POLYOBJS; ++i)
     {
-        polyobj_t* po = polyObjs[i];
-        numVertIllums += po->numSegs * 3 * 4;
+        Polyobj* po = polyObjs[i];
+        numVertIllums += po->lineCount * 3 * 4;
     }
 
     // Allocate and initialize the vertexillum_ts.
@@ -393,12 +392,12 @@ void SB_InitForMap(const char* uniqueID)
         SB_InitVertexIllum(&illums[i]);
 
     // Allocate bias surfaces and attach vertexillum_ts.
-    for(i = 0; i < numSegs; ++i)
+    for(i = 0; i < NUM_HEDGES; ++i)
     {
-        seg_t* seg = &segs[i];
+        HEdge* hedge = &hedges[i];
         int j;
 
-        if(!seg->lineDef)
+        if(!hedge->lineDef)
             continue;
 
         for(j = 0; j < 3; ++j)
@@ -409,44 +408,45 @@ void SB_InitForMap(const char* uniqueID)
             bsuf->illum = illums;
             illums += 4;
 
-            seg->bsuf[j] = bsuf;
+            hedge->bsuf[j] = bsuf;
         }
     }
 
-    for(i = 0; i < numSectors; ++i)
+    for(i = 0; i < NUM_SECTORS; ++i)
     {
-        sector_t* sec = &sectors[i];
-        if(sec->ssectors && *sec->ssectors)
+        Sector* sec = &sectors[i];
+        if(sec->bspLeafs && *sec->bspLeafs)
         {
-            subsector_t** ssecPtr = sec->ssectors;
+            BspLeaf** ssecIter = sec->bspLeafs;
             do
             {
-                subsector_t* ssec = *ssecPtr;
+                BspLeaf* bspLeaf = *ssecIter;
                 uint j;
 
                 for(j = 0; j < sec->planeCount; ++j)
                 {
                     biassurface_t* bsuf = SB_CreateSurface();
 
-                    bsuf->size = ssec->numVertices;
+                    bsuf->size = bspLeaf->numVertices;
                     bsuf->illum = illums;
-                    illums += ssec->numVertices;
+                    illums += bspLeaf->numVertices;
 
-                    ssec->bsuf[j] = bsuf;
+                    bspLeaf->bsuf[j] = bsuf;
                 }
-                ssecPtr++;
-            } while(*ssecPtr);
+                ssecIter++;
+            } while(*ssecIter);
         }
     }
 
-    for(i = 0; i < numPolyObjs; ++i)
+    for(i = 0; i < NUM_POLYOBJS; ++i)
     {
-        polyobj_t* po = polyObjs[i];
+        Polyobj* po = polyObjs[i];
         uint j;
 
-        for(j = 0; j < po->numSegs; ++j)
+        for(j = 0; j < po->lineCount; ++j)
         {
-            seg_t* seg = po->segs[j];
+            LineDef* line = po->lines[j];
+            HEdge* hedge = line->L_frontside->hedges[0];
             int k;
 
             for(k = 0; k < 3; ++k)
@@ -457,7 +457,7 @@ void SB_InitForMap(const char* uniqueID)
                 bsuf->illum = illums;
                 illums += 4;
 
-                seg->bsuf[k] = bsuf;
+                hedge->bsuf[k] = bsuf;
             }
         }
     }
@@ -584,7 +584,7 @@ static void updateAffected(biassurface_t* bsuf, const fvertex_t* from,
         if(src->intensity <= 0)
             continue;
 
-        // Calculate minimum 2D distance to the seg.
+        // Calculate minimum 2D distance to the hedge.
         for(i = 0; i < 2; ++i)
         {
             if(!i)
@@ -641,8 +641,8 @@ static void updateAffected2(biassurface_t* bsuf, const struct rvertex_s* rvertic
         if(src->intensity <= 0)
             continue;
 
-        // Calculate minimum 2D distance to the ssec.
-        // \fixme This is probably too accurate an estimate.
+        // Calculate minimum 2D distance to the BSP leaf.
+        /// @fixme This is probably too accurate an estimate.
         for(k = 0; k < bsuf->size; ++k)
         {
             V2_Set(delta,
@@ -744,7 +744,7 @@ static boolean SB_ChangeInAffected(biasaffection_t* affected,
 /**
  * Do initial processing that needs to be done before rendering a
  * frame.  Changed lights cause the tracker bits to the set for all
- * segs and planes.
+ * hedges and planes.
  */
 void SB_BeginFrame(void)
 {
@@ -778,11 +778,10 @@ BEGIN_PROF( PROF_BIAS_UPDATE );
         {
             float               minLevel = s->sectorLevel[0];
             float               maxLevel = s->sectorLevel[1];
-            sector_t*           sector;
+            Sector*             sector;
             float               oldIntensity = s->intensity;
 
-            sector =
-                R_PointInSubsector(s->pos[VX], s->pos[VY])->sector;
+            sector = P_BspLeafAtPointXY(s->pos[VX], s->pos[VY])->sector;
 
             // The lower intensities are useless for light emission.
             if(sector->lightLevel >= maxLevel)
@@ -924,15 +923,15 @@ static boolean SB_CheckColorOverride(biasaffection_t *affected)
  * @param numVertices   Number of vertices (in the array) to be lit.
  * @param normal        Surface normal.
  * @param sectorLightLevel Sector light level.
- * @param mapObject     Ptr to either a seg or subsector.
- * @param elmIdx        Used with subsectors to select a specific plane.
- * @param isSeg         @c true, if surface is to a seg ELSE a subsector.
+ * @param mapObject     Ptr to either a HEdge or BspLeaf.
+ * @param elmIdx        Used with BspLeafs to select a specific plane.
+ * @param isHEdge       @c true, if @a mapObject is a HEdge ELSE a BspLeaf.
  */
 void SB_RendPoly(struct ColorRawf_s* rcolors, biassurface_t* bsuf,
                  const struct rvertex_s* rvertices,
                  size_t numVertices, const vectorcomp_t* normal,
                  float sectorLightLevel,
-                 void* mapObject, uint elmIdx, boolean isSeg)
+                 void* mapObject, uint elmIdx, boolean isHEdge)
 {
     uint                i;
     boolean             forced;
@@ -960,30 +959,30 @@ void SB_RendPoly(struct ColorRawf_s* rcolors, biassurface_t* bsuf,
     if(doUpdateAffected)
     {
         /**
-         * \todo This could be enhanced so that only the lights on the
+         * @todo This could be enhanced so that only the lights on the
          * right side of the surface are taken into consideration.
          */
-        if(isSeg)
+        if(isHEdge)
         {
-            seg_t*          seg = (seg_t*) mapObject;
+            HEdge* hedge = (HEdge*) mapObject;
 
-            updateAffected(bsuf, &seg->SG_v1->v, &seg->SG_v2->v, normal);
+            updateAffected(bsuf, &hedge->HE_v1->v, &hedge->HE_v2->v, normal);
         }
         else
         {
-            subsector_t*    ssec = (subsector_t*) mapObject;
-            vec3_t          point;
+            BspLeaf* bspLeaf = (BspLeaf*) mapObject;
+            vec3_t point;
 
-            V3_Set(point, ssec->midPoint.pos[VX], ssec->midPoint.pos[VY],
-                   ssec->sector->planes[elmIdx]->height);
+            V3_Set(point, bspLeaf->midPoint.pos[VX], bspLeaf->midPoint.pos[VY],
+                   bspLeaf->sector->planes[elmIdx]->height);
 
             updateAffected2(bsuf, rvertices, numVertices, point, normal);
         }
     }
 
 /*#if _DEBUG
-// Assign primary colors rather than the real values.
-    if(isSeg)
+    // Assign primary colors rather than the real values.
+    if(isHEdge)
     {
         rcolors[0].rgba[CR] = 1; rcolors[0].rgba[CG] = 0; rcolors[0].rgba[CB] = 0; rcolors[0].rgba[CA] = 1;
         rcolors[1].rgba[CR] = 0; rcolors[1].rgba[CG] = 1; rcolors[1].rgba[CB] = 0; rcolors[1].rgba[CA] = 1;

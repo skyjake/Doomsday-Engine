@@ -115,7 +115,11 @@ void Cl_CleanUp(void)
     clientPaused = false;
     handshakeReceived = false;
 
-    Cl_DestroyClientMobjs();
+    if(theMap)
+    {
+        GameMap_DestroyClMobjs(theMap);
+    }
+
     Cl_InitPlayers();
     Cl_WorldReset();
     GL_SetFilter(false);
@@ -206,7 +210,7 @@ void Cl_AnswerHandshake(void)
     gx.NetPlayerEvent(consolePlayer, DDPE_ARRIVAL, 0);
 
     // Prepare the client-side data.
-    Cl_InitClientMobjs();
+    Cl_InitPlayers();
     Cl_WorldInit();
 
     // Get ready for ticking.
@@ -490,7 +494,10 @@ void Cl_Ticker(timespan_t ticLength)
 #endif
     }
 
-    Cl_ExpireMobjs();
+    if(theMap)
+    {
+        GameMap_ExpireClMobjs(theMap);
+    }
 }
 
 /**

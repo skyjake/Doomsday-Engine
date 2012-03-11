@@ -69,7 +69,7 @@ boolean P_TestMobjLocation(mobj_t *mobj);
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern boolean fellDown; //$dropoff_fix: used to flag pushed off ledge
-extern linedef_t *blockLine; // $unstuck: blocking linedef
+extern LineDef *blockLine; // $unstuck: blocking linedef
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -110,7 +110,7 @@ void P_ClearBodyQueue(void)
 void P_NoiseAlert(mobj_t *target, mobj_t *emitter)
 {
     VALIDCOUNT++;
-    P_RecursiveSound(target, P_GetPtrp(emitter->subsector, DMU_SECTOR), 0);
+    P_RecursiveSound(target, P_GetPtrp(emitter->bspLeaf, DMU_SECTOR), 0);
 }
 
 boolean P_CheckMeleeRange(mobj_t *actor)
@@ -186,7 +186,7 @@ boolean P_CheckMissileRange(mobj_t *actor)
 boolean P_Move(mobj_t *actor, boolean dropoff)
 {
     float       pos[2], step[2];
-    linedef_t     *ld;
+    LineDef    *ld;
     boolean     good;
 
     if(actor->moveDir == DI_NODIR)
@@ -356,9 +356,9 @@ static void newChaseDir(mobj_t *actor, float deltaX, float deltaY)
  * p_map.c::P_TryMove(), allows monsters to free themselves without making
  * them tend to hang over dropoffs.
  */
-static int PIT_AvoidDropoff(linedef_t* line, void* data)
+static int PIT_AvoidDropoff(LineDef* line, void* data)
 {
-    sector_t* backsector = P_GetPtrp(line, DMU_BACK_SECTOR);
+    Sector* backsector = P_GetPtrp(line, DMU_BACK_SECTOR);
     AABoxf* aaBox = P_GetPtrp(line, DMU_BOUNDING_BOX);
 
     if(backsector &&
@@ -369,7 +369,7 @@ static int PIT_AvoidDropoff(linedef_t* line, void* data)
        tmBox.maxY > aaBox->minY &&
        P_BoxOnLineSide(&tmBox, line) == -1)
     {
-        sector_t*           frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
+        Sector*             frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
         float               front = P_GetFloatp(frontsector, DMU_FLOOR_HEIGHT);
         float               back = P_GetFloatp(backsector, DMU_FLOOR_HEIGHT);
         float               d1[2];
@@ -548,11 +548,11 @@ boolean P_LookForPlayers(mobj_t* actor, boolean allAround)
 void C_DECL A_Look(mobj_t *actor)
 {
     mobj_t     *targ;
-    sector_t   *sec;
+    Sector     *sec;
 
     // Any shot will wake up
     actor->threshold = 0;
-    sec = P_GetPtrp(actor->subsector, DMU_SECTOR);
+    sec = P_GetPtrp(actor->bspLeaf, DMU_SECTOR);
     targ = P_ToXSector(sec)->soundTarget;
     if(targ && (targ->flags & MF_SHOOTABLE))
     {
@@ -2074,7 +2074,7 @@ void C_DECL A_BossDeath(mobj_t* actor)
         -1
     };
 
-    linedef_t*          dummyLine;
+    LineDef*            dummyLine;
     countmobjoftypeparams_t params;
 
     // Not a boss level?
@@ -2136,7 +2136,7 @@ void C_DECL A_SpawnTeleGlitter(mobj_t* actor)
     if((mo = P_SpawnMobj3f(MT_TELEGLITTER,
                            actor->pos[VX] + ((P_Random() & 31) - 16),
                            actor->pos[VY] + ((P_Random() & 31) - 16),
-                           P_GetFloatp(actor->subsector, DMU_FLOOR_HEIGHT),
+                           P_GetFloatp(actor->bspLeaf, DMU_FLOOR_HEIGHT),
                            P_Random() << 24, 0)))
     {
         mo->mom[MZ] = 1.0f / 4;
@@ -2154,7 +2154,7 @@ void C_DECL A_SpawnTeleGlitter2(mobj_t* actor)
     if((mo = P_SpawnMobj3f(MT_TELEGLITTER2,
                            actor->pos[VX] + ((P_Random() & 31) - 16),
                            actor->pos[VY] + ((P_Random() & 31) - 16),
-                           P_GetFloatp(actor->subsector, DMU_FLOOR_HEIGHT),
+                           P_GetFloatp(actor->bspLeaf, DMU_FLOOR_HEIGHT),
                            P_Random() << 24, 0)))
     {
         mo->mom[MZ] = 1.0f / 4;

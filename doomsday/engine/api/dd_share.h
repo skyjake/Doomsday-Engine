@@ -257,7 +257,7 @@ enum {
 
     // Non-integer/special values for Set/Get
     DD_TRANSLATIONTABLES_ADDRESS,
-    DD_TRACE_ADDRESS, ///< divline 'trace' used by PathTraverse.
+    DD_TRACE_ADDRESS, ///< obsolete divline 'trace' used by PathTraverse.
     DD_SPRITE_REPLACEMENT, ///< Sprite <-> model replacement.
     DD_ACTION_LINK, ///< State action routine addresses.
     DD_MAP_NAME,
@@ -276,18 +276,17 @@ enum {
     DD_LINE_COUNT,
     DD_SIDE_COUNT,
     DD_VERTEX_COUNT,
-    DD_SEG_COUNT,
-    DD_SUBSECTOR_COUNT,
-    DD_NODE_COUNT,
+    DD_HEDGE_COUNT,
+    DD_BSPLEAF_COUNT,
+    DD_BSPNODE_COUNT,
     DD_POLYOBJ_COUNT,
-    DD_MATERIAL_COUNT,
     DD_XGFUNC_LINK, ///< XG line classes
     DD_SHARED_FIXED_TRIGGER_OBSOLETE, ///< obsolete
     DD_GAMETIC,
-    DD_OPENRANGE,
-    DD_OPENTOP,
-    DD_OPENBOTTOM,
-    DD_LOWFLOOR,
+    DD_OPENRANGE, ///< obsolete
+    DD_OPENTOP, ///< obsolete
+    DD_OPENBOTTOM, ///< obsolete
+    DD_LOWFLOOR, ///< obsolete
     DD_CPLAYER_THRUST_MUL_OBSOLETE, ///< obsolete
     DD_GRAVITY,
     DD_PSPRITE_OFFSET_X, ///< 10x
@@ -653,11 +652,11 @@ enum {
     DMU_NONE = 0,
 
     DMU_VERTEX = 1,
-    DMU_SEG,
+    DMU_HEDGE,
     DMU_LINEDEF,
     DMU_SIDEDEF,
-    DMU_NODE,
-    DMU_SUBSECTOR,
+    DMU_BSPNODE,
+    DMU_BSPLEAF,
     DMU_SECTOR,
     DMU_PLANE,
     DMU_SURFACE,
@@ -724,7 +723,7 @@ enum {
     DMU_HEIGHT,
     DMU_TARGET_HEIGHT,
     DMU_SPEED,
-    DMU_SEG_COUNT
+    DMU_HEDGE_COUNT
 };
 
 /**
@@ -782,7 +781,7 @@ enum { /* Do NOT change the numerical values of the constants. */
 
 /**
  * All map think-able objects must use this as a base. Also used for sound
- * origin purposes for all of: mobj_t, polyobj_t, sector_t/plane_t
+ * origin purposes for all of: mobj_t, Polyobj, Sector/Plane
  * @ingroup mobj
  */
 typedef struct ddmobj_base_s {
@@ -874,7 +873,20 @@ typedef struct intercept_s {
 
 typedef int (*traverser_t) (const intercept_t* intercept, void* paramaters);
 
-#define NO_INDEX            0xffffffff
+/**
+ * A simple POD data structure for representing line trace openings.
+ */
+typedef struct {
+    /// Top and bottom z of the opening.
+    float top, bottom;
+
+    /// Distance from top to bottom.
+    float range;
+
+    /// Z height of the lowest Plane at the opening on the X|Y axis.
+    /// @todo Does not belong here?
+    float lowFloor;
+} TraceOpening;
 
 //------------------------------------------------------------------------
 //
@@ -1017,7 +1029,7 @@ typedef struct aaboxf_s {
     nodeindex_t     lineRoot; /* lines to which this is linked */ \
     struct mobj_s*  sNext, **sPrev; /* links in sector (if needed) */ \
 \
-    struct subsector_s* subsector; /* subsector in which this resides */ \
+    struct bspleaf_s* bspLeaf; /* bspLeaf in which this resides */ \
     float           mom[3]; \
     angle_t         angle; \
     spritenum_t     sprite; /* used to find patch_t and flip value */ \
@@ -1053,21 +1065,21 @@ typedef struct aaboxf_s {
     int             health;\
     mobjinfo_t     *info; /* &mobjinfo[mobj->type] */
 
-/// Base polyobj_t elements. Games MUST use this as the basis for polyobj_t. @ingroup map
+/// Base Polyobj elements. Games MUST use this as the basis for Polyobj. @ingroup map
 #define DD_BASE_POLYOBJ_ELEMENTS() \
     DD_BASE_DDMOBJ_ELEMENTS() \
 \
-    struct subsector_s* subsector; /* subsector in which this resides */ \
+    struct bspleaf_s* bspLeaf; /* bspLeaf in which this resides */ \
     unsigned int    idx; /* Idx of polyobject. */ \
     int             tag; /* Reference tag. */ \
     int             validCount; \
-    AABoxf           aaBox; \
+    AABoxf          aaBox; \
     float           dest[2]; /* Destination XY. */ \
     angle_t         angle; \
     angle_t         destAngle; /* Destination angle. */ \
     angle_t         angleSpeed; /* Rotation speed. */ \
-    unsigned int    numSegs; \
-    struct seg_s**  segs; \
+    struct linedef_s** lines; \
+    unsigned int    lineCount; \
     struct fvertex_s* originalPts; /* Used as the base for the rotations. */ \
     struct fvertex_s* prevPts; /* Use to restore the old point values. */ \
     float           speed; /* Movement speed. */ \
@@ -1075,8 +1087,6 @@ typedef struct aaboxf_s {
     int             seqType; \
     struct { \
         int         index; \
-        unsigned int lineCount; \
-        struct linedef_s** lineDefs; \
     } buildData;
 
 //------------------------------------------------------------------------

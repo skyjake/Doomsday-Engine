@@ -57,20 +57,20 @@ typedef struct edgetip_s {
     // Half-edge on each side of the edge. Left is the side of increasing
     // angles, right is the side of decreasing angles. Either can be NULL
     // for one sided edges.
-    struct hedge_s*     hEdges[2];
+    struct bsp_hedge_s* hEdges[2];
 } edgetip_t;
 
-typedef struct hedge_s {
-    vertex_t*           v[2]; // [Start, End] of the half-edge..
+typedef struct bsp_hedge_s {
+    Vertex*             v[2]; // [Start, End] of the half-edge..
 
     // Half-edge on the other side, or NULL if one-sided. This relationship
     // is always one-to-one -- if one of the half-edges is split, the twin
     // must also be split.
-    struct hedge_s*     twin;
+    struct bsp_hedge_s* twin;
 
-    struct hedge_s*     next;
-    struct hedge_s*     nextOnSide;
-    struct hedge_s*     prevOnSide;
+    struct bsp_hedge_s* next;
+    struct bsp_hedge_s* nextOnSide;
+    struct bsp_hedge_s* prevOnSide;
 
     // Index of the half-edge. Only valid once the half-edge has been added
     // to a polygon. A negative value means it is invalid -- there
@@ -78,7 +78,7 @@ typedef struct hedge_s {
     int                 index;
 
     // The superblock that contains this half-edge, or NULL if the half-edge
-    // is no longer in any superblock (e.g. now in a subsector).
+    // is no longer in any superblock (e.g. now in a leaf).
     struct superblock_s* block;
 
     // Precomputed data for faster calculations.
@@ -92,30 +92,30 @@ typedef struct hedge_s {
     double              pPerp;
 
     // Linedef that this half-edge goes along, or NULL if miniseg.
-    linedef_t*          lineDef;
+    LineDef*            lineDef;
 
     // Linedef that this half-edge initially comes from.
     // For "real" half-edges, this is just the same as the 'linedef' field
     // above. For "miniedges", this is the linedef of the partition line.
-    linedef_t*          sourceLine;
+    LineDef*            sourceLineDef;
 
-    sector_t*           sector; // Adjacent sector, or NULL if invalid sidedef or minihedge.
+    Sector*             sector; // Adjacent sector, or NULL if invalid sidedef or minihedge.
     byte                side; // 0 for right, 1 for left.
-} hedge_t;
+} bsp_hedge_t;
 
 void        BSP_InitHEdgeAllocator(void);
 void        BSP_ShutdownHEdgeAllocator(void);
 
-hedge_t*    HEdge_Create(linedef_t* line, linedef_t* sourceLine,
-                         vertex_t* start, vertex_t* end,
-                         sector_t* sec, boolean back);
-void        HEdge_Destroy(hedge_t* hEdge);
+bsp_hedge_t* BSP_HEdge_Create(LineDef* line, LineDef* sourceLine,
+                              Vertex* start, Vertex* end,
+                              Sector* sec, boolean back);
+void        BSP_HEdge_Destroy(bsp_hedge_t* hEdge);
 
-hedge_t*    HEdge_Split(hedge_t* oldHEdge, double x, double y);
+bsp_hedge_t* BSP_HEdge_Split(bsp_hedge_t* oldHEdge, double x, double y);
 
 // Edge tip functions:
-void        BSP_CreateVertexEdgeTip(vertex_t* vert, double dx, double dy,
-                                    hedge_t* back, hedge_t* front);
+void        BSP_CreateVertexEdgeTip(Vertex* vert, double dx, double dy,
+                                    bsp_hedge_t* back, bsp_hedge_t* front);
 void        BSP_DestroyVertexEdgeTip(struct edgetip_s* tip);
-sector_t*   BSP_VertexCheckOpen(vertex_t* vert, double dx, double dy);
+Sector*     BSP_VertexCheckOpen(Vertex* vert, double dx, double dy);
 #endif

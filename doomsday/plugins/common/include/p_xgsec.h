@@ -113,7 +113,7 @@ enum {
 
 typedef struct {
     thinker_t       thinker;
-    sector_t*       sector;
+    Sector*         sector;
 } xsthinker_t;
 
 typedef struct {

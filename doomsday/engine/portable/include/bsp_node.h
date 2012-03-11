@@ -43,8 +43,8 @@ typedef struct bspartition_s {
     double              x, y;
     double              dX, dY;
     double              length;
-    linedef_t*          lineDef; // Not NULL if partition originated from a linedef.
-    linedef_t*          sourceLine;
+    LineDef*            lineDef; // Not NULL if partition originated from a linedef.
+    LineDef*            sourceLineDef;
 
     double              pSX, pSY;
     double              pDX, pDY;
@@ -62,15 +62,15 @@ typedef struct bspnodedata_s {
 boolean     BuildNodes(struct superblock_s *hEdgeList, binarytree_t **parent,
                        size_t depth, cutlist_t *cutList);
 void        BSP_AddHEdgeToSuperBlock(struct superblock_s *block,
-                                     hedge_t *hEdge);
+                                     bsp_hedge_t *hEdge);
 
 void        ClockwiseBspTree(binarytree_t *rootNode);
 
-void        SaveMap(gamemap_t *dest, void *rootNode, vertex_t ***vertexes,
+void        SaveMap(GameMap *dest, void *rootNode, Vertex ***vertexes,
                     uint *numVertexes);
 
 typedef struct bspleafdata_s {
-    struct hedge_s*     hEdges; // Head ptr to a list of half-edges at this leaf.
+    struct bsp_hedge_s* hEdges; // Head ptr to a list of half-edges at this leaf.
 } bspleafdata_t;
 
 bspleafdata_t *BSPLeaf_Create(void);

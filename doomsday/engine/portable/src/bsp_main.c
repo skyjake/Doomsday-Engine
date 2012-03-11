@@ -73,7 +73,7 @@ void BSP_Register(void)
     C_VAR_INT("bsp-factor", &bspFactor, CVF_NO_MAX, 0, 0);
 }
 
-static void findMapLimits(gamemap_t* src, int* bbox)
+static void findMapLimits(GameMap* src, int* bbox)
 {
     uint                i;
 
@@ -81,7 +81,7 @@ static void findMapLimits(gamemap_t* src, int* bbox)
 
     for(i = 0; i < src->numLineDefs; ++i)
     {
-        linedef_t*          l = &src->lineDefs[i];
+        LineDef*          l = &src->lineDefs[i];
 
         if(!(l->buildData.mlFlags & MLF_ZEROLENGTH))
         {
@@ -105,13 +105,13 @@ static void findMapLimits(gamemap_t* src, int* bbox)
  *
  * @return              The list of created half-edges.
  */
-static superblock_t* createInitialHEdges(gamemap_t* map)
+static superblock_t* createInitialHEdges(GameMap* map)
 {
     uint                startTime = Sys_GetRealTime();
 
     uint                i;
     int                 bw, bh;
-    hedge_t*            back, *front;
+    bsp_hedge_t* back, *front;
     superblock_t*       block;
     int                 mapBounds[4];
 
@@ -134,7 +134,7 @@ static superblock_t* createInitialHEdges(gamemap_t* map)
 
     for(i = 0; i < map->numLineDefs; ++i)
     {
-        linedef_t*          line = &map->lineDefs[i];
+        LineDef*          line = &map->lineDefs[i];
 
         if(line->buildData.mlFlags & MLF_POLYOBJ)
             continue;
@@ -160,13 +160,13 @@ static superblock_t* createInitialHEdges(gamemap_t* map)
 
             if(line->sideDefs[FRONT])
             {
-                sidedef_t     *side = line->sideDefs[FRONT];
+                SideDef* side = line->sideDefs[FRONT];
 
                 if(!side->sector)
                     Con_Message("Warning: Bad sidedef on linedef #%d\n", line->buildData.index);
 
-                front = HEdge_Create(line, line, line->v[0], line->v[1],
-                                     side->sector, false);
+                front = BSP_HEdge_Create(line, line, line->v[0], line->v[1],
+                                         side->sector, false);
                 BSP_AddHEdgeToSuperBlock(block, front);
             }
             else
@@ -174,13 +174,13 @@ static superblock_t* createInitialHEdges(gamemap_t* map)
 
             if(line->sideDefs[BACK])
             {
-                sidedef_t     *side = line->sideDefs[BACK];
+                SideDef* side = line->sideDefs[BACK];
 
                 if(!side->sector)
                     Con_Message("Warning: Bad sidedef on linedef #%d\n", line->buildData.index);
 
-                back = HEdge_Create(line, line, line->v[1], line->v[0],
-                                    side->sector, true);
+                back = BSP_HEdge_Create(line, line, line->v[1], line->v[0],
+                                        side->sector, true);
                 BSP_AddHEdgeToSuperBlock(block, back);
 
                 if(front)
@@ -203,11 +203,11 @@ static superblock_t* createInitialHEdges(gamemap_t* map)
                 // Handle the 'One-Sided Window' trick.
                 if(line->buildData.windowEffect && front)
                 {
-                    hedge_t    *other;
+                    bsp_hedge_t* other;
 
-                    other = HEdge_Create(front->lineDef, line,
-                                         line->v[1], line->v[0],
-                                         line->buildData.windowEffect, true);
+                    other = BSP_HEdge_Create(front->lineDef, line,
+                                             line->v[1], line->v[0],
+                                             line->buildData.windowEffect, true);
 
                     BSP_AddHEdgeToSuperBlock(block, other);
 
@@ -262,7 +262,7 @@ static boolean C_DECL freeBSPData(binarytree_t *tree, void *data)
  * @param numVertexes   Number of vertexes in the array.
  * @return              @c true, if completed successfully.
  */
-boolean BSP_Build(gamemap_t* map, vertex_t*** vertexes, uint* numVertexes)
+boolean BSP_Build(GameMap* map, Vertex*** vertexes, uint* numVertexes)
 {
     boolean             builtOK;
     uint                startTime;
@@ -319,9 +319,9 @@ boolean BSP_Build(gamemap_t* map, vertex_t*** vertexes, uint* numVertexes)
         else
             rHeight = lHeight = 0;
 
-        VERBOSE( Con_Printf("BSP built: %d Nodes, %d Subsectors, %d Segs, %d Vertexes\n"
+        VERBOSE( Con_Printf("BSP built: %d Nodes, %d BspLeafs, %d HEdges, %d Vertexes\n"
                    "  Balance %+ld (l%ld - r%ld).\n",
-                   map->numNodes, map->numSSectors, map->numSegs, map->numVertexes,
+                   map->numBspNodes, map->numBspLeafs, map->numHEdges, map->numVertexes,
                    lHeight - rHeight, lHeight, rHeight) )
     }
 

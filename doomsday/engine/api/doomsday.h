@@ -58,21 +58,21 @@ extern "C" {
 /**
  * Public definitions of the internal map data pointers.  These can be
  * accessed externally, but only as identifiers to data instances.
- * For example, a game could use sector_t to identify to sector to
+ * For example, a game could use Sector to identify to sector to
  * change with the Map Update API.
  *
  * Define @c __INTERNAL_MAP_DATA_ACCESS__ if access to the internal map data
  * structures is needed.
  */
 #ifndef __INTERNAL_MAP_DATA_ACCESS__
-    typedef struct node_s { int type; } node_t;
-    typedef struct vertex_s {int type; } vertex_t;
-    typedef struct linedef_s { int type; } linedef_t;
-    typedef struct sidedef_s { int type; } sidedef_t;
-    typedef struct seg_s { int type; } seg_t;
-    typedef struct subsector_s { int type; } subsector_t;
-    typedef struct sector_s { int type; } sector_t;
-    typedef struct plane_s { int type; } plane_t;
+    typedef struct bspnode_s { int type; } BspNode;
+    typedef struct vertex_s {int type; } Vertex;
+    typedef struct linedef_s { int type; } LineDef;
+    typedef struct sidedef_s { int type; } SideDef;
+    typedef struct hedge_s { int type; } HEdge;
+    typedef struct bspleaf_s { int type; } BspLeaf;
+    typedef struct sector_s { int type; } Sector;
+    typedef struct plane_s { int type; } Plane;
     typedef struct material_s { int type; } material_t;
 #endif
 
@@ -371,9 +371,9 @@ Smoother* Net_PlayerSmoother(int player);
 boolean Sv_CanTrustClientPos(int player);
 
 /**
- * Searches through the client mobj hash table and returns the clmobj
- * with the specified ID, if that exists. Note that client mobjs
- * are also linked to the thinkers list.
+ * Searches through the client mobj hash table for the CURRENT map and
+ * returns the clmobj with the specified ID, if that exists. Note that
+ * client mobjs are also linked to the thinkers list.
  *
  * @param id  Mobj identifier.
  *
@@ -415,13 +415,19 @@ boolean ClMobj_LocalActionsEnabled(struct mobj_s* mo);
  */
 ///@{
 
-    int             P_PointOnLinedefSide(float xy[2], const struct linedef_s* lineDef);
-    int             P_PointOnLinedefSideXY(float x, float y, const struct linedef_s* lineDef);
+    int             P_PointOnLineDefSide(float const xy[2], const struct linedef_s* lineDef);
+    int             P_PointXYOnLineDefSide(float x, float y, const struct linedef_s* lineDef);
+
     int             P_BoxOnLineSide(const AABoxf* box, const struct linedef_s* ld);
     void            P_MakeDivline(struct linedef_s* li, divline_t* dl);
     int             P_PointOnDivlineSide(float x, float y, const divline_t* line);
     float           P_InterceptVector(divline_t* v2, divline_t* v1);
-    void            P_LineOpening(struct linedef_s* linedef);
+
+    const divline_t* P_TraceLOS(void);
+    TraceOpening*   P_TraceOpening(void);
+    void            P_SetTraceOpening(struct linedef_s* linedef);
+
+    struct bspleaf_s* P_BspLeafAtPointXY(float x, float y);
 
     // Object in bounding box iterators.
     int             P_MobjsBoxIterator(const AABoxf* box,
@@ -433,8 +439,8 @@ boolean ClMobj_LocalActionsEnabled(struct mobj_s* mo);
     int             P_AllLinesBoxIterator(const AABoxf* box,
                                           int (*func) (struct linedef_s*, void*),
                                           void* data);
-    int             P_SubsectorsBoxIterator(const AABoxf* box, sector_t* sector,
-                                           int (*func) (subsector_t*, void*),
+    int             P_BspLeafsBoxIterator(const AABoxf* box, Sector* sector,
+                                           int (*func) (BspLeaf*, void*),
                                            void* data);
     int             P_PolyobjsBoxIterator(const AABoxf* box,
                                           int (*func) (struct polyobj_s*, void*),
@@ -444,14 +450,14 @@ boolean ClMobj_LocalActionsEnabled(struct mobj_s* mo);
     int             P_LineMobjsIterator(struct linedef_s* line,
                                         int (*func) (struct mobj_s*, void *), void* data);
     int             P_SectorTouchingMobjsIterator
-                        (sector_t* sector, int (*func) (struct mobj_s*, void*),
+                        (Sector* sector, int (*func) (struct mobj_s*, void*),
                          void* data);
 
     int             P_PathTraverse(float const from[2], float const to[2], int flags, traverser_t callback); /*paramaters=NULL*/
     int             P_PathTraverse2(float const from[2], float const to[2], int flags, traverser_t callback, void* paramaters);
 
-    int             P_PathTraverseXY(float fromX, float fromY, float toX, float toY, int flags, traverser_t callback); /*paramaters=NULL*/
-    int             P_PathTraverseXY2(float fromX, float fromY, float toX, float toY, int flags, traverser_t callback, void* paramaters);
+    int             P_PathXYTraverse(float fromX, float fromY, float toX, float toY, int flags, traverser_t callback); /*paramaters=NULL*/
+    int             P_PathXYTraverse2(float fromX, float fromY, float toX, float toY, int flags, traverser_t callback, void* paramaters);
 
     boolean         P_CheckLineSight(const float from[3], const float to[3], float bottomSlope, float topSlope, int flags);
 ///@}
@@ -506,7 +512,7 @@ void            P_SpawnDamageParticleGen(struct mobj_s* mo, struct mobj_s* infli
                                         int (*func) (struct linedef_s*,
                                                           void*), void*);
     int             P_MobjSectorsIterator(struct mobj_s* mo,
-                                          int (*func) (sector_t*, void*),
+                                          int (*func) (Sector*, void*),
                                           void* data);
 ///@}
 
@@ -640,7 +646,6 @@ void R_GetColorPaletteRGBf(colorpaletteid_t id, int colorIdx, float rgb[3], bool
 void R_HSVToRGB(float* rgb, float h, float s, float v);
 
 angle_t R_PointToAngle2(float x1, float y1, float x2, float y2);
-struct subsector_s* R_PointInSubsector(float x, float y);
 
 ///@}
 

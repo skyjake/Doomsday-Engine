@@ -42,7 +42,7 @@ typedef enum {
 
 typedef struct {
     thinker_t       thinker;
-    sector_t*       sector;
+    Sector*         sector;
     float           originalHeight;
     float           accumulator;
     float           accDelta;

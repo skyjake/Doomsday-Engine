@@ -139,6 +139,7 @@ void NetCl_UpdateGameState(Reader* msg)
     }
 
     // Set gravity.
+    /// @fixme This is a map-property, not a global property.
     DD_SetVariable(DD_GRAVITY, &gsGravity);
 
     // Camera init included?

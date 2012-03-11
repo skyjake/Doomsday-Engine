@@ -1,25 +1,23 @@
-/**\file p_linedef.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file linedef.h
+ * Map LineDef implementation. @ingroup map
  *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #include "de_base.h"
@@ -28,12 +26,13 @@
 #include "de_play.h"
 
 #include "m_bams.h"
+#include "m_misc.h"
 #include "materialvariant.h"
 #include "materials.h"
 
-#include "p_linedef.h"
+#include "linedef.h"
 
-static void calcNormal(const linedef_t* l, byte side, pvec2_t normal)
+static void calcNormal(const LineDef* l, byte side, pvec2_t normal)
 {
     V2_Set(normal, (l->L_vpos(side^1)[VY] - l->L_vpos(side)  [VY]) / l->length,
                    (l->L_vpos(side)  [VX] - l->L_vpos(side^1)[VX]) / l->length);
@@ -44,7 +43,7 @@ static float lightLevelDelta(const pvec2_t normal)
     return (1.0f / 255) * (normal[VX] * 18) * rendLightWallAngle;
 }
 
-static linedef_t* findBlendNeighbor(const linedef_t* l, byte side, byte right,
+static LineDef* findBlendNeighbor(const LineDef* l, byte side, byte right,
     binangle_t* diff)
 {
     const lineowner_t* farVertOwner = l->L_vo(right^side);
@@ -55,7 +54,73 @@ static linedef_t* findBlendNeighbor(const linedef_t* l, byte side, byte right,
     return R_FindLineNeighbor(l->L_sector(side), l, farVertOwner, right, diff);
 }
 
-void LineDef_UpdateSlope(linedef_t* line)
+int LineDef_PointOnSide(const LineDef* line, float const xy[2])
+{
+    assert(line);
+    if(!xy)
+    {
+        DEBUG_Message(("LineDef_PointOnSide: Invalid arguments, returning zero.\n"));
+        return 0;
+    }
+    return !P_PointOnLineSide(xy[0], xy[1], line->L_v1pos[VX], line->L_v1pos[VY], line->dX, line->dY);
+}
+
+int LineDef_PointXYOnSide(const LineDef* line, float x, float y)
+{
+    float point[2];
+    point[0] = x;
+    point[1] = y;
+    return LineDef_PointOnSide(line, point);
+}
+
+void LineDef_SetDivline(const LineDef* line, divline_t* dl)
+{
+    assert(line);
+
+    if(!dl) return;
+
+    dl->pos[VX] = FLT2FIX(line->L_v1pos[VX]);
+    dl->pos[VY] = FLT2FIX(line->L_v1pos[VY]);
+    dl->dX = FLT2FIX(line->dX);
+    dl->dY = FLT2FIX(line->dY);
+}
+
+void LineDef_SetTraceOpening(const LineDef* line, TraceOpening* opening)
+{
+    Sector* front, *back;
+    assert(line);
+
+    if(!opening) return;
+
+    if(!line->L_backside)
+    {
+        opening->range = 0;
+        return;
+    }
+
+    front = line->L_frontsector;
+    back  = line->L_backsector;
+
+    if(front->SP_ceilheight < back->SP_ceilheight)
+        opening->top = front->SP_ceilheight;
+    else
+        opening->top = back->SP_ceilheight;
+
+    if(front->SP_floorheight > back->SP_floorheight)
+    {
+        opening->bottom   = front->SP_floorheight;
+        opening->lowFloor = back->SP_floorheight;
+    }
+    else
+    {
+        opening->bottom   = back->SP_floorheight;
+        opening->lowFloor = front->SP_floorheight;
+    }
+
+    opening->range = opening->top - opening->bottom;
+}
+
+void LineDef_UpdateSlope(LineDef* line)
 {
     assert(line);
 
@@ -80,7 +145,27 @@ void LineDef_UpdateSlope(linedef_t* line)
     }
 }
 
-void LineDef_UpdateAABox(linedef_t* line)
+/**
+ * Returns a two-component float unit vector parallel to the line.
+ */
+void LineDef_UnitVector(LineDef* line, float* unitvec)
+{
+    float len;
+    assert(line);
+
+    len = M_ApproxDistancef(line->dX, line->dY);
+    if(len)
+    {
+        unitvec[VX] = line->dX / len;
+        unitvec[VY] = line->dY / len;
+    }
+    else
+    {
+        unitvec[VX] = unitvec[VY] = 0;
+    }
+}
+
+void LineDef_UpdateAABox(LineDef* line)
 {
     assert(line);
 
@@ -94,10 +179,10 @@ void LineDef_UpdateAABox(linedef_t* line)
 /**
  * @todo Now that we store surface tangent space normals use those rather than angles.
  */
-void LineDef_LightLevelDelta(const linedef_t* l, int side, float* deltaL, float* deltaR)
+void LineDef_LightLevelDelta(const LineDef* l, int side, float* deltaL, float* deltaR)
 {
     binangle_t diff;
-    linedef_t* other;
+    LineDef* other;
     vec2_t normal;
     float delta;
 
@@ -162,13 +247,13 @@ void LineDef_LightLevelDelta(const linedef_t* l, int side, float* deltaL, float*
     }
 }
 
-int LineDef_MiddleMaterialCoords(const linedef_t* lineDef, int side,
+int LineDef_MiddleMaterialCoords(const LineDef* lineDef, int side,
     float* bottomLeft, float* bottomRight, float* topLeft, float* topRight,
     float* texOffY, boolean lowerUnpeg, boolean clipTop, boolean clipBottom)
 {
     float* top[2], *bottom[2], openingTop[2], openingBottom[2]; // {left, right}
     float tcYOff;
-    sidedef_t* sideDef;
+    SideDef* sideDef;
     int i, texHeight;
     assert(lineDef && bottomLeft && bottomRight && topLeft && topRight);
 
@@ -234,19 +319,19 @@ int LineDef_MiddleMaterialCoords(const linedef_t* lineDef, int side,
 }
 
 /**
- * @fixme No need to do this each frame. Set a flag in sidedef_t->flags to
+ * @fixme No need to do this each frame. Set a flag in SideDef->flags to
  * denote this. Is sensitive to plane heights, surface properties
  * (e.g. alpha) and surface texture properties.
  */
-boolean LineDef_MiddleMaterialCoversOpening(const linedef_t *line, int side,
+boolean LineDef_MiddleMaterialCoversOpening(const LineDef *line, int side,
     boolean ignoreOpacity)
 {
     assert(line);
     if(line->L_backside)
     {
-        sidedef_t* sideDef = line->L_side(side);
-        sector_t* frontSec = line->L_sector(side);
-        sector_t*  backSec = line->L_sector(side^1);
+        SideDef* sideDef = line->L_side(side);
+        Sector* frontSec = line->L_sector(side);
+        Sector*  backSec = line->L_sector(side^1);
 
         if(sideDef->SW_middlematerial)
         {
@@ -296,7 +381,7 @@ boolean LineDef_MiddleMaterialCoversOpening(const linedef_t *line, int side,
     return false;
 }
 
-plane_t* LineDef_FloorMin(const linedef_t* lineDef)
+Plane* LineDef_FloorMin(const LineDef* lineDef)
 {
     assert(lineDef);
     if(!lineDef->L_frontsector) return NULL; // No interfaces.
@@ -306,7 +391,7 @@ plane_t* LineDef_FloorMin(const linedef_t* lineDef)
                lineDef->L_backsector->SP_plane(PLN_FLOOR) : lineDef->L_frontsector->SP_plane(PLN_FLOOR);
 }
 
-plane_t* LineDef_FloorMax(const linedef_t* lineDef)
+Plane* LineDef_FloorMax(const LineDef* lineDef)
 {
     assert(lineDef);
     if(!lineDef->L_frontsector) return NULL; // No interfaces.
@@ -316,7 +401,7 @@ plane_t* LineDef_FloorMax(const linedef_t* lineDef)
                lineDef->L_backsector->SP_plane(PLN_FLOOR) : lineDef->L_frontsector->SP_plane(PLN_FLOOR);
 }
 
-plane_t* LineDef_CeilingMin(const linedef_t* lineDef)
+Plane* LineDef_CeilingMin(const LineDef* lineDef)
 {
     assert(lineDef);
     if(!lineDef->L_frontsector) return NULL; // No interfaces.
@@ -326,7 +411,7 @@ plane_t* LineDef_CeilingMin(const linedef_t* lineDef)
                lineDef->L_backsector->SP_plane(PLN_CEILING) : lineDef->L_frontsector->SP_plane(PLN_CEILING);
 }
 
-plane_t* LineDef_CeilingMax(const linedef_t* lineDef)
+Plane* LineDef_CeilingMax(const LineDef* lineDef)
 {
     assert(lineDef);
     if(!lineDef->L_frontsector) return NULL; // No interfaces.
@@ -336,10 +421,10 @@ plane_t* LineDef_CeilingMax(const linedef_t* lineDef)
                lineDef->L_backsector->SP_plane(PLN_CEILING) : lineDef->L_frontsector->SP_plane(PLN_CEILING);
 }
 
-boolean LineDef_BackClosed(const linedef_t* lineDef, int side, boolean ignoreOpacity)
+boolean LineDef_BackClosed(const LineDef* lineDef, int side, boolean ignoreOpacity)
 {
-    sector_t* frontSec;
-    sector_t* backSec;
+    Sector* frontSec;
+    Sector* backSec;
     assert(lineDef);
 
     if(!lineDef->L_side(side^1)) return true;
@@ -354,7 +439,7 @@ boolean LineDef_BackClosed(const linedef_t* lineDef, int side, boolean ignoreOpa
     return LineDef_MiddleMaterialCoversOpening(lineDef, side, ignoreOpacity);
 }
 
-int LineDef_SetProperty(linedef_t* lin, const setargs_t* args)
+int LineDef_SetProperty(LineDef* lin, const setargs_t* args)
 {
     switch(args->prop)
     {
@@ -374,7 +459,7 @@ int LineDef_SetProperty(linedef_t* lin, const setargs_t* args)
         DMU_SetValue(DMT_LINEDEF_VALIDCOUNT, &lin->validCount, args, 0);
         break;
     case DMU_FLAGS: {
-        sidedef_t* s;
+        SideDef* s;
 
         DMU_SetValue(DMT_LINEDEF_FLAGS, &lin->flags, args, 0);
 
@@ -398,7 +483,7 @@ int LineDef_SetProperty(linedef_t* lin, const setargs_t* args)
     return false; // Continue iteration.
 }
 
-int LineDef_GetProperty(const linedef_t* lin, setargs_t* args)
+int LineDef_GetProperty(const LineDef* lin, setargs_t* args)
 {
     switch(args->prop)
     {
@@ -430,12 +515,12 @@ int LineDef_GetProperty(const linedef_t* lin, setargs_t* args)
         DMU_GetValue(DMT_LINEDEF_SLOPETYPE, &lin->slopeType, args, 0);
         break;
     case DMU_FRONT_SECTOR: {
-        sector_t *sec = (lin->L_frontside? lin->L_frontsector : NULL);
+        Sector* sec = (lin->L_frontside? lin->L_frontsector : NULL);
         DMU_GetValue(DMT_LINEDEF_SEC, &sec, args, 0);
         break;
       }
     case DMU_BACK_SECTOR: {
-        sector_t *sec = (lin->L_backside? lin->L_backsector : NULL);
+        Sector* sec = (lin->L_backside? lin->L_backsector : NULL);
         DMU_GetValue(DMT_LINEDEF_SEC, &sec, args, 0);
         break;
       }

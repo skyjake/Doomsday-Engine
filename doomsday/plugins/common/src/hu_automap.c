@@ -579,21 +579,21 @@ static void rendLine2(uiwidget_t* obj, float x1, float y1, float x2, float y2,
     }
 }
 
-static int rendSeg(void* seg_, void* data)
+static int rendSeg(void* hedge_, void* data)
 {
-    assert(NULL != seg_ && NULL != data && ((uiwidget_t*)data)->type == GUI_AUTOMAP);
+    assert(NULL != hedge_ && NULL != data && ((uiwidget_t*)data)->type == GUI_AUTOMAP);
     {
-    seg_t* seg = (seg_t*) seg_;
+    HEdge* hedge = (HEdge*) hedge_;
     uiwidget_t* obj = (uiwidget_t*)data;
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    sector_t* frontSector, *backSector;
+    Sector* frontSector, *backSector;
     const automapcfg_lineinfo_t* info;
     player_t* plr = rs.plr;
     float v1[2], v2[2];
-    linedef_t* line;
+    LineDef* line;
     xline_t* xLine;
 
-    line = P_GetPtrp(seg, DMU_LINEDEF);
+    line = P_GetPtrp(hedge, DMU_LINEDEF);
     if(!line) return false;
 
     xLine = P_ToXLine(line);
@@ -675,9 +675,9 @@ static int rendSeg(void* seg_, void* data)
     }
 }
 
-static int rendSegsOfSubsector(subsector_t* ssec, void* context)
+static int rendBspLeafHEdges(BspLeaf* bspLeaf, void* context)
 {
-    return P_Iteratep(ssec, DMU_SEG, context, rendSeg);
+    return P_Iteratep(bspLeaf, DMU_HEDGE, context, rendSeg);
 }
 
 /**
@@ -703,19 +703,19 @@ static void renderWalls(uiwidget_t* obj, int objType, boolean addToLists)
     {
         AABoxf aaBox;
         UIAutomap_PVisibleAABounds(obj, &aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
-        P_SubsectorsBoxIterator(&aaBox, NULL, rendSegsOfSubsector, obj);
+        P_BspLeafsBoxIterator(&aaBox, NULL, rendBspLeafHEdges, obj);
     }
     else
     {   // No. As the map lists are considered static we want them to contain all
         // walls, not just those visible *now* (note rotation).
-        for(i = 0; i < numsubsectors; ++i)
+        for(i = 0; i < numbspleafs; ++i)
         {
-            P_Iteratep(P_ToPtr(DMU_SUBSECTOR, i), DMU_SEG, obj, rendSeg);
+            P_Iteratep(P_ToPtr(DMU_BSPLEAF, i), DMU_HEDGE, obj, rendSeg);
         }
     }
 }
 
-static void rendLinedef(linedef_t* line, float r, float g, float b, float a,
+static void rendLinedef(LineDef* line, float r, float g, float b, float a,
     blendmode_t blendMode, boolean drawNormal)
 {
     float length = P_GetFloatp(line, DMU_LENGTH);
@@ -774,21 +774,20 @@ static void rendLinedef(linedef_t* line, float r, float g, float b, float a,
 }
 
 /**
- * Rather than draw the segs instead this will draw the linedef of which
- * the seg is a part.
+ * Rather than draw the instead this will draw the linedef of which
+ * the hedge is a part.
  */
-int rendPolyobjSeg(void* segPtr, void* context)
+int rendPolyobjLine(void* linePtr, void* context)
 {
-    seg_t* seg = (seg_t*)segPtr;
+    LineDef* line = (LineDef*)linePtr;
     uiwidget_t* obj = (uiwidget_t*)context;
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     const float alpha = uiRendState->pageAlpha;
     const automapcfg_lineinfo_t* info;
     automapcfg_objectname_t amo;
-    linedef_t* line;
     xline_t* xLine;
 
-    if(!(line = P_GetPtrp(seg, DMU_LINEDEF)) || !(xLine = P_ToXLine(line))) return false;
+    if(!(xLine = P_ToXLine(line))) return false;
 
     // Already processed this frame?
     if(xLine->validCount == VALIDCOUNT) return false;
@@ -809,8 +808,8 @@ int rendPolyobjSeg(void* segPtr, void* context)
     if(info)
     {
         rendLinedef(line, info->rgba[0], info->rgba[1], info->rgba[2],
-                      info->rgba[3] * cfg.automapLineAlpha * alpha, info->blendMode,
-                      (am->flags & AMF_REND_LINE_NORMALS)? true : false);
+                    info->rgba[3] * cfg.automapLineAlpha * alpha, info->blendMode,
+                    (am->flags & AMF_REND_LINE_NORMALS)? true : false);
     }
 
     xLine->validCount = VALIDCOUNT; // Mark as processed this frame.
@@ -818,20 +817,20 @@ int rendPolyobjSeg(void* segPtr, void* context)
     return false; // Continue iteration.
 }
 
-int rendSegsOfPolyobj(polyobj_t* po, void* context)
+int rendLinesOfPolyobj(Polyobj* po, void* context)
 {
     int result = false; // Continue iteration.
-    seg_t** segPtr = po->segs;
-    while(*segPtr && !(result = rendPolyobjSeg(*segPtr, context)))
-        segPtr++;
+    LineDef** lineIter = po->lines;
+    while(*lineIter && !(result = rendPolyobjLine(*lineIter, context)))
+        lineIter++;
     return result;
 }
 
-static void rendPolyobjs(uiwidget_t* obj)
+static void rendPolyobjs(uiwidget_t* ob)
 {
-    //guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
+    //guidata_automap_t* am = (guidata_automap_t*)ob->typedata;
     AABoxf aaBox;
-    assert(obj && obj->type == GUI_AUTOMAP);
+    assert(ob && ob->type == GUI_AUTOMAP);
 
     // VALIDCOUNT is used to track which lines have been drawn this frame.
     VALIDCOUNT++;
@@ -840,12 +839,12 @@ static void rendPolyobjs(uiwidget_t* obj)
     rs.objType = MOL_LINEDEF;
 
     // Draw any polyobjects in view.
-    UIAutomap_PVisibleAABounds(obj, &aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
-    P_PolyobjsBoxIterator(&aaBox, rendSegsOfPolyobj, obj);
+    UIAutomap_PVisibleAABounds(ob, &aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
+    P_PolyobjsBoxIterator(&aaBox, rendLinesOfPolyobj, ob);
 }
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-int rendXGLinedef(linedef_t* line, void* context)
+int rendXGLinedef(LineDef* line, void* context)
 {
     assert(line && context && ((uiwidget_t*)context)->type == GUI_AUTOMAP);
     {

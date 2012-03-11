@@ -214,7 +214,7 @@ void R_LoadSystemFonts(void)
     Con_SetFont(fontFixed);
 }
 
-boolean R_IsSkySurface(const surface_t* suf)
+boolean R_IsSkySurface(const Surface* suf)
 {
     return (suf && suf->material && Material_IsSkyMasked(suf->material));
 }
@@ -537,7 +537,6 @@ void R_Init(void)
     R_SkyInit();
     Rend_Init();
     frameCount = 0;
-    P_PtcInit();
 }
 
 /**
@@ -573,33 +572,33 @@ void R_Update(void)
 
     // Update all world surfaces.
     { uint i;
-    for(i = 0; i < numSectors; ++i)
+    for(i = 0; i < NUM_SECTORS; ++i)
     {
-        sector_t* sec = &sectors[i];
+        Sector* sec = &sectors[i];
         uint j;
         for(j = 0; j < sec->planeCount; ++j)
             Surface_Update(&sec->SP_planesurface(j));
     }}
 
     { uint i;
-    for(i = 0; i < numSideDefs; ++i)
+    for(i = 0; i < NUM_SIDEDEFS; ++i)
     {
-        sidedef_t* side = &sideDefs[i];
+        SideDef* side = &sideDefs[i];
         Surface_Update(&side->SW_topsurface);
         Surface_Update(&side->SW_middlesurface);
         Surface_Update(&side->SW_bottomsurface);
     }}
 
     { uint i;
-    for(i = 0; i < numPolyObjs; ++i)
+    for(i = 0; i < NUM_POLYOBJS; ++i)
     {
-        polyobj_t* po = polyObjs[i];
-        seg_t** segPtr = po->segs;
-        while(*segPtr)
+        Polyobj* po = polyObjs[i];
+        LineDef** lineIter;
+        for(lineIter = po->lines; *lineIter; lineIter++)
         {
-            sidedef_t* side = SEG_SIDEDEF(*segPtr);
+            LineDef* line = *lineIter;
+            SideDef* side = line->L_frontside;
             Surface_Update(&side->SW_middlesurface);
-            segPtr++;
         }
     }}
 
@@ -781,14 +780,14 @@ void R_NewSharpWorld(void)
         R_CheckViewerLimits(vd->lastSharp, &sharpView);
     }
 
-    R_UpdateWatchedPlanes(watchedPlaneList);
-    R_UpdateMovingSurfaces();
+    R_UpdateTrackedPlanes();
+    R_UpdateSurfaceScroll();
 }
 
 void R_CreateMobjLinks(void)
 {
     uint                i;
-    sector_t*           seciter;
+    Sector*             seciter;
 #ifdef DD_PROFILE
     static int          p;
 
@@ -801,7 +800,7 @@ void R_CreateMobjLinks(void)
 
 BEGIN_PROF( PROF_MOBJ_INIT_ADD );
 
-    for(i = 0, seciter = sectors; i < numSectors; seciter++, ++i)
+    for(i = 0, seciter = sectors; i < NUM_SECTORS; seciter++, ++i)
     {
         mobj_t*             iter;
 
@@ -821,8 +820,8 @@ void R_BeginWorldFrame(void)
 {
     R_ClearSectorFlags();
 
-    R_InterpolateWatchedPlanes(watchedPlaneList, resetNextViewer);
-    R_InterpolateMovingSurfaces(resetNextViewer);
+    R_InterpolateTrackedPlanes(resetNextViewer);
+    R_InterpolateSurfaceScroll(resetNextViewer);
 
     if(!freezeRLs)
     {

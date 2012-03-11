@@ -37,8 +37,8 @@ extern float tmFloorZ;
 extern float tmCeilingZ;
 extern material_t* tmFloorMaterial;
 
-extern linedef_t* ceilingLine, *floorLine;
-extern linedef_t* blockLine;
+extern LineDef* ceilingLine, *floorLine;
+extern LineDef* blockLine;
 extern mobj_t* lineTarget; // Who got hit (or NULL).
 extern mobj_t* tmThing;
 
@@ -78,7 +78,7 @@ void            P_SlideMove(mobj_t* mo);
 
 void            P_UseLines(player_t* player);
 
-boolean         P_ChangeSector(sector_t* sector, boolean crunch);
+boolean         P_ChangeSector(Sector* sector, boolean crunch);
 void            P_HandleSectorHeightChange(int sectorIdx);
 
 float           P_AimLineAttack(mobj_t* t1, angle_t angle, float distance);

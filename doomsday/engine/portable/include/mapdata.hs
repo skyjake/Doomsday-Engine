@@ -6,6 +6,11 @@ public
 end
 
 internal
+// Each Sector and SideDef has an origin in the world (used for distance based delta queuing)
+typedef struct origin_s {
+    float               pos[2];
+} origin_t;
+
 #define LO_prev     link[0]
 #define LO_next     link[1]
 
@@ -43,7 +48,7 @@ typedef struct mvertex_s {
 } mvertex_t;
 end
 
-struct vertex
+struct Vertex
     -       uint        numLineOwners // Number of line owners.
     -       lineowner_t* lineOwners // Lineowner base ptr [numlineowners] size. A doubly, circularly linked list. The base is the line with the lowest angle and the next-most with the largest angle.
     -       fvertex_t   v
@@ -55,38 +60,38 @@ internal
 #define FRONT 0
 #define BACK  1
 
-#define SG_v(n)                 v[(n)? 1:0]
-#define SG_vpos(n)              SG_v(n)->V_pos
+#define HE_v(n)                 v[(n)? 1:0]
+#define HE_vpos(n)              HE_v(n)->V_pos
 
-#define SG_v1                   SG_v(0)
-#define SG_v1pos                SG_v(0)->V_pos
+#define HE_v1                   HE_v(0)
+#define HE_v1pos                HE_v(0)->V_pos
 
-#define SG_v2                   SG_v(1)
-#define SG_v2pos                SG_v(1)->V_pos
+#define HE_v2                   HE_v(1)
+#define HE_v2pos                HE_v(1)->V_pos
 
-#define SG_sector(n)            sec[(n)? 1:0]
-#define SG_frontsector          SG_sector(FRONT)
-#define SG_backsector           SG_sector(BACK)
+#define HE_sector(n)            sec[(n)? 1:0]
+#define HE_frontsector          HE_sector(FRONT)
+#define HE_backsector           HE_sector(BACK)
 
-#define SEG_SIDEDEF(s)          ((s)->lineDef->sideDefs[(s)->side])
+#define HEDGE_SIDEDEF(he)       ((he)->lineDef->sideDefs[(he)->side])
 
-// Seg flags
-#define SEGF_POLYOBJ            0x1 // Seg is part of a poly object.
+// HEdge flags
+#define HEDGEF_POLYOBJ          0x1 /// < Half-edge is part of a poly object.
 
-// Seg frame flags
-#define SEGINF_FACINGFRONT      0x0001
+// HEdge frame flags
+#define HEDGEINF_FACINGFRONT    0x0001
 end
 
 public
-#define DMT_SEG_SIDEDEF         DDVT_PTR
+#define DMT_HEDGE_SIDEDEF       DDVT_PTR
 end
 
-struct seg
+struct HEdge
     PTR     vertex_s*[2] v          // [Start, End] of the segment.
     PTR     linedef_s*  lineDef
     PTR     sector_s*[2] sec
-    PTR     subsector_s* subsector
-    PTR     seg_s*      backSeg
+    PTR     bspleaf_s*  bspLeaf
+    PTR     hedge_s*    twin
     ANGLE   angle_t     angle
     BYTE    byte        side        // 0=front, 1=back
     BYTE    byte        flags
@@ -97,12 +102,12 @@ struct seg
 end
 
 internal
-#define SUBF_MIDPOINT         0x80    // Midpoint is tri-fan centre.
+#define BLF_MIDPOINT             0x80 ///< Midpoint is tri-fan centre.
 end
 
-struct subsector
-    UINT    uint        segCount
-    PTR     seg_s**     segs // [segcount] size.
+struct BspLeaf
+    UINT    uint        hedgeCount
+    PTR     hedge_s**   hedges // [hedgeCount] size.
     PTR     polyobj_s*  polyObj // NULL, if there is no polyobj.
     PTR     sector_s*   sector
     -       int         addSpriteCount // frame number of last R_AddSprites
@@ -174,12 +179,12 @@ internal
 
 typedef struct surfacedecor_s {
     float               pos[3]; // World coordinates of the decoration.
-    subsector_t*		subsector;
+    BspLeaf*		bspLeaf;
     const struct ded_decorlight_s* def;
 } surfacedecor_t;
 end
 
-struct surface
+struct Surface
     -       void*       owner // Either @c DMU_SIDEDEF, or @c DMU_PLANE
     INT     int         flags // SUF_ flags
     -       int         oldFlags
@@ -215,14 +220,14 @@ internal
 #define PS_offset               surface.offset
 #define PS_visoffset            surface.visOffset
 #define PS_rgba                 surface.rgba
-#define	PS_flags				surface.flags
-#define	PS_inflags				surface.inFlags
+#define PS_flags                surface.flags
+#define PS_inflags              surface.inFlags
 end
 
-struct plane
+struct Plane
     PTR     ddmobj_base_t soundOrg // Sound origin for plane
     PTR     sector_s*   sector // Owner of the plane (temp)
-    -       surface_t   surface
+    -       Surface     surface
     FLOAT   float       height // Current height
     -       float[2]    oldHeight
     FLOAT   float       target // Target height
@@ -296,16 +301,16 @@ typedef struct msector_s {
 
     // Suppress superfluous mini warnings.
     int         warnedFacing;
-    int			refCount;
+    int         refCount;
 } msector_t;
 end
 
-struct sector
+struct Sector
     -       int         frameFlags
     INT     int         validCount // if == validCount, already checked.
     -       int         flags
-    -       float[4]    bBox // Bounding box for the sector.
-    -		float		approxArea // Rough approximation of sector area.
+    -       AABox       aaBox // Bounding box for the sector.
+    -       float       roughArea // Rough approximation of sector area.
     FLOAT   float       lightLevel
     -       float       oldLightLevel
     FLOAT   float[3]    rgb
@@ -313,10 +318,10 @@ struct sector
     PTR     mobj_s*     mobjList // List of mobjs in the sector.
     UINT    uint        lineDefCount
     PTR     linedef_s** lineDefs // [lineDefCount+1] size.
-    UINT    uint        ssectorCount
-    PTR     subsector_s** ssectors // [ssectorCount+1] size.
-    -       uint        numReverbSSecAttributors
-    -       subsector_s** reverbSSecs // [numReverbSSecAttributors] size.
+    UINT    uint        bspLeafCount
+    PTR     bspleaf_s** bspLeafs // [bspLeafCount+1] size.
+    -       uint        numReverbBspLeafAttributors
+    -       bspleaf_s** reverbBspLeafs // [numReverbBspLeafAttributors] size.
     PTR     ddmobj_base_t soundOrg
     UINT    uint        planeCount
     -       plane_s**   planes // [planeCount+1] size.
@@ -324,16 +329,17 @@ struct sector
     -       uint        changedBlockCount // Number of blocks to mark changed.
     -       ushort*     blocks // Light grid block indices.
     FLOAT   float[NUM_REVERB_DATA] reverb
+    -       origin_t    origin
     -       msector_t   buildData
 end
 
 internal
-// Parts of a wall segment.
-typedef enum segsection_e {
-    SEG_MIDDLE,
-    SEG_TOP,
-    SEG_BOTTOM
-} segsection_t;
+// Sections of a sidedef
+typedef enum sidedefsection_e {
+    SS_MIDDLE,
+    SS_TOP,
+    SS_BOTTOM
+} sidedefsection_t;
 
 // Helper macros for accessing sidedef top/middle/bottom section data elements.
 #define SW_surface(n)           sections[(n)]
@@ -348,42 +354,42 @@ typedef enum segsection_e {
 #define SW_surfacergba(n)       SW_surface(n).rgba
 #define SW_surfaceblendmode(n)  SW_surface(n).blendMode
 
-#define SW_middlesurface        SW_surface(SEG_MIDDLE)
-#define SW_middleflags          SW_surfaceflags(SEG_MIDDLE)
-#define SW_middleinflags        SW_surfaceinflags(SEG_MIDDLE)
-#define SW_middlematerial       SW_surfacematerial(SEG_MIDDLE)
-#define SW_middletangent        SW_surfacetangent(SEG_MIDDLE)
-#define SW_middlebitangent      SW_surfacebitangent(SEG_MIDDLE)
-#define SW_middlenormal         SW_surfacenormal(SEG_MIDDLE)
-#define SW_middletexmove        SW_surfacetexmove(SEG_MIDDLE)
-#define SW_middleoffset         SW_surfaceoffset(SEG_MIDDLE)
-#define SW_middlevisoffset      SW_surfacevisoffset(SEG_MIDDLE)
-#define SW_middlergba           SW_surfacergba(SEG_MIDDLE)
-#define SW_middleblendmode      SW_surfaceblendmode(SEG_MIDDLE)
+#define SW_middlesurface        SW_surface(SS_MIDDLE)
+#define SW_middleflags          SW_surfaceflags(SS_MIDDLE)
+#define SW_middleinflags        SW_surfaceinflags(SS_MIDDLE)
+#define SW_middlematerial       SW_surfacematerial(SS_MIDDLE)
+#define SW_middletangent        SW_surfacetangent(SS_MIDDLE)
+#define SW_middlebitangent      SW_surfacebitangent(SS_MIDDLE)
+#define SW_middlenormal         SW_surfacenormal(SS_MIDDLE)
+#define SW_middletexmove        SW_surfacetexmove(SS_MIDDLE)
+#define SW_middleoffset         SW_surfaceoffset(SS_MIDDLE)
+#define SW_middlevisoffset      SW_surfacevisoffset(SS_MIDDLE)
+#define SW_middlergba           SW_surfacergba(SS_MIDDLE)
+#define SW_middleblendmode      SW_surfaceblendmode(SS_MIDDLE)
 
-#define SW_topsurface           SW_surface(SEG_TOP)
-#define SW_topflags             SW_surfaceflags(SEG_TOP)
-#define SW_topinflags           SW_surfaceinflags(SEG_TOP)
-#define SW_topmaterial          SW_surfacematerial(SEG_TOP)
-#define SW_toptangent           SW_surfacetangent(SEG_TOP)
-#define SW_topbitangent         SW_surfacebitangent(SEG_TOP)
-#define SW_topnormal            SW_surfacenormal(SEG_TOP)
-#define SW_toptexmove           SW_surfacetexmove(SEG_TOP)
-#define SW_topoffset            SW_surfaceoffset(SEG_TOP)
-#define SW_topvisoffset         SW_surfacevisoffset(SEG_TOP)
-#define SW_toprgba              SW_surfacergba(SEG_TOP)
+#define SW_topsurface           SW_surface(SS_TOP)
+#define SW_topflags             SW_surfaceflags(SS_TOP)
+#define SW_topinflags           SW_surfaceinflags(SS_TOP)
+#define SW_topmaterial          SW_surfacematerial(SS_TOP)
+#define SW_toptangent           SW_surfacetangent(SS_TOP)
+#define SW_topbitangent         SW_surfacebitangent(SS_TOP)
+#define SW_topnormal            SW_surfacenormal(SS_TOP)
+#define SW_toptexmove           SW_surfacetexmove(SS_TOP)
+#define SW_topoffset            SW_surfaceoffset(SS_TOP)
+#define SW_topvisoffset         SW_surfacevisoffset(SS_TOP)
+#define SW_toprgba              SW_surfacergba(SS_TOP)
 
-#define SW_bottomsurface        SW_surface(SEG_BOTTOM)
-#define SW_bottomflags          SW_surfaceflags(SEG_BOTTOM)
-#define SW_bottominflags        SW_surfaceinflags(SEG_BOTTOM)
-#define SW_bottommaterial       SW_surfacematerial(SEG_BOTTOM)
-#define SW_bottomtangent        SW_surfacetangent(SEG_BOTTOM)
-#define SW_bottombitangent      SW_surfacebitangent(SEG_BOTTOM)
-#define SW_bottomnormal         SW_surfacenormal(SEG_BOTTOM)
-#define SW_bottomtexmove        SW_surfacetexmove(SEG_BOTTOM)
-#define SW_bottomoffset         SW_surfaceoffset(SEG_BOTTOM)
-#define SW_bottomvisoffset      SW_surfacevisoffset(SEG_BOTTOM)
-#define SW_bottomrgba           SW_surfacergba(SEG_BOTTOM)
+#define SW_bottomsurface        SW_surface(SS_BOTTOM)
+#define SW_bottomflags          SW_surfaceflags(SS_BOTTOM)
+#define SW_bottominflags        SW_surfaceinflags(SS_BOTTOM)
+#define SW_bottommaterial       SW_surfacematerial(SS_BOTTOM)
+#define SW_bottomtangent        SW_surfacetangent(SS_BOTTOM)
+#define SW_bottombitangent      SW_surfacebitangent(SS_BOTTOM)
+#define SW_bottomnormal         SW_surfacenormal(SS_BOTTOM)
+#define SW_bottomtexmove        SW_surfacetexmove(SS_BOTTOM)
+#define SW_bottomoffset         SW_surfaceoffset(SS_BOTTOM)
+#define SW_bottomvisoffset      SW_surfacevisoffset(SS_BOTTOM)
+#define SW_bottomrgba           SW_surfacergba(SS_BOTTOM)
 end
 
 internal
@@ -393,17 +399,18 @@ internal
 typedef struct msidedef_s {
     // Sidedef index. Always valid after loading & pruning.
     int         index;
-    int			refCount;
+    int         refCount;
 } msidedef_t;
 end
 
-struct sidedef
-    -       surface_t[3] sections
-    UINT    uint        segCount
-    PTR     seg_s**     segs        // [segcount] size, segs arranged left>right
-    PTR		linedef_s*	line
+struct SideDef
+    -       Surface[3]  sections
+    UINT    uint        hedgeCount
+    PTR     hedge_s**   hedges      // [hedgeCount] size, segs arranged left>right
+    PTR     linedef_s*  line
     PTR     sector_s*   sector
     SHORT   short       flags
+    -       origin_t    origin
     -       msidedef_t  buildData
 
 # The following is used with FakeRadio.
@@ -437,11 +444,11 @@ internal
 #define L_backsector            L_sector(BACK)
 
 // Is this line self-referencing (front sec == back sec)? 
-#define LINE_SELFREF(l)			((l)->L_frontside && (l)->L_backside && \
-								 (l)->L_frontsector == (l)->L_backsector)
+#define LINE_SELFREF(l)         ((l)->L_frontside && (l)->L_backside && \
+                                 (l)->L_frontsector == (l)->L_backsector)
 
 // Internal flags:
-#define LF_POLYOBJ				0x1 // Line is part of a polyobject.
+#define LF_POLYOBJ              0x1 // Line is part of a polyobject.
 end
 
 internal
@@ -472,7 +479,7 @@ public
 #define DMT_LINEDEF_AABOX  DDVT_FLOAT
 end
 
-struct linedef
+struct LineDef
     PTR     vertex_s*[2] v
     -       lineowner_s*[2] vo      // Links to vertex line owner nodes [left, right]
     PTR     sidedef_s*[2] sideDefs
@@ -498,13 +505,13 @@ internal
  * An infinite line of the form point + direction vectors. 
  */
 typedef struct partition_s {
-	float				x, y;
-	float				dX, dY;
+    float x, y;
+    float dX, dY;
 } partition_t;
 end
 
-struct node
+struct BspNode
     -       partition_t partition
     FLOAT   float[2][4] bBox // Bounding box for each child.
-    UINT    uint[2]     children // If NF_SUBSECTOR it's a subsector.
+    UINT    uint[2]     children // If NF_LEAF it's a BspLeaf.
 end

@@ -90,10 +90,10 @@ extern seqnode_t* SequenceListHead;
 
 void            SN_InitSequenceScript(void);
 void            SN_StartSequence(mobj_t* mobj, int sequence);
-void            SN_StartSequenceInSec(sector_t* sector, int seqBase);
+void            SN_StartSequenceInSec(Sector* sector, int seqBase);
 void            SN_StartSequenceName(mobj_t* mobj, const char* name);
 void            SN_StopSequence(mobj_t* mobj);
-void            SN_StopSequenceInSec(sector_t* sector);
+void            SN_StopSequenceInSec(Sector* sector);
 void            SN_UpdateActiveSequences(void);
 void            SN_StopAllSequences(void);
 int             SN_GetSequenceOffset(int sequence, int* sequencePtr);

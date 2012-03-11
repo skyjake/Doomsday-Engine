@@ -45,14 +45,14 @@
 
 typedef struct edge_s {
     boolean done;
-    linedef_t* line;
-    sector_t* sector;
+    LineDef* line;
+    Sector* sector;
     float length;
     binangle_t diff;
 } edge_t;
 
 static void scanEdges(shadowcorner_t topCorners[2], shadowcorner_t bottomCorners[2],
-    shadowcorner_t sideCorners[2], edgespan_t spans[2], const linedef_t* line, boolean backSide);
+    shadowcorner_t sideCorners[2], edgespan_t spans[2], const LineDef* line, boolean backSide);
 
 int rendFakeRadio = true; ///< cvar
 float rendFakeRadioDarkness = 1.2f; ///< cvar
@@ -72,16 +72,16 @@ float Rend_RadioCalcShadowDarkness(float lightLevel)
     return (0.6f - lightLevel * 0.4f) * 0.65f * rendFakeRadioDarkness;
 }
 
-void Rend_RadioUpdateLinedef(linedef_t* line, boolean backSide)
+void Rend_RadioUpdateLinedef(LineDef* line, boolean backSide)
 {
-    sidedef_t* s;
+    SideDef* s;
 
     if(!rendFakeRadio || levelFullBright || !line) return;
 
     // Update disabled?
     if(!devFakeRadioUpdate) return;
 
-    // Have we yet determined the shadow properties to be used with segs
+    // Have we yet determined the shadow properties to be used with hedges
     // on this sidedef?
     s = line->sideDefs[backSide? BACK : FRONT];
     if(s->fakeRadioUpdateCount != frameCount)
@@ -116,7 +116,7 @@ static void setRendpolyColor(ColorRawf* rcolors, uint num, const float shadowRGB
 }
 
 /// @return  @c true, if there is open space in the sector.
-static __inline boolean isSectorOpen(sector_t* sector)
+static __inline boolean isSectorOpen(Sector* sector)
 {
     return (sector && sector->SP_ceilheight > sector->SP_floorheight);
 }
@@ -143,20 +143,20 @@ static __inline float calcTexCoordY(float z, float bottom, float top, float texH
     return bottom - z;
 }
 
-static void scanNeighbor(boolean scanTop, const linedef_t* line, uint side,
+static void scanNeighbor(boolean scanTop, const LineDef* line, uint side,
     edge_t* edge, boolean toLeft)
 {
 #define SEP             (10)
 
-    linedef_t*          iter;
+    LineDef*            iter;
     lineowner_t*        own;
     binangle_t          diff = 0;
     float               lengthDelta = 0, gap = 0;
     float               iFFloor, iFCeil;
     float               iBFloor, iBCeil;
     int                 scanSecSide = side;
-    sector_t*           startSector = line->L_sector(side);
-    sector_t*           scanSector;
+    Sector*             startSector = line->L_sector(side);
+    Sector*             scanSector;
     boolean             clockwise = toLeft;
     boolean             stopScan = false;
     boolean             closed;
@@ -210,7 +210,7 @@ static void scanNeighbor(boolean scanTop, const linedef_t* line, uint side,
         lengthDelta = 0;
         if(!stopScan)
         {
-            // This line will attribute to this seg's shadow edge.
+            // This line will attribute to this hedge's shadow edge.
             // Store identity for later use.
             edge->diff = diff;
             edge->line = iter;
@@ -232,7 +232,7 @@ static void scanNeighbor(boolean scanTop, const linedef_t* line, uint side,
             }
 
             // Does this line's length contribute to the alignment of the
-            // texture on the seg shadow edge being rendered?
+            // texture on the hedge shadow edge being rendered?
             if(scanTop)
             {
                 if(iter->L_backside &&
@@ -333,7 +333,7 @@ static void scanNeighbor(boolean scanTop, const linedef_t* line, uint side,
                 // neighbor attached to this line. However, if this is not
                 // the case and a line which SHOULD be two sided isn't, we
                 // need to check whether there is a valid neighbor.
-                linedef_t *backNeighbor =
+                LineDef *backNeighbor =
                     R_FindLineNeighbor(startSector, iter, own, !toLeft, NULL);
 
                 if(backNeighbor && backNeighbor != iter)
@@ -365,7 +365,7 @@ static void scanNeighbor(boolean scanTop, const linedef_t* line, uint side,
 }
 
 static void scanNeighbors(shadowcorner_t top[2], shadowcorner_t bottom[2],
-                          const linedef_t* line, uint side,
+                          const LineDef* line, uint side,
                           edgespan_t spans[2], boolean toLeft)
 {
     uint                i;
@@ -466,11 +466,11 @@ static void scanNeighbors(shadowcorner_t top[2], shadowcorner_t bottom[2],
 static void scanEdges(shadowcorner_t topCorners[2],
                       shadowcorner_t bottomCorners[2],
                       shadowcorner_t sideCorners[2], edgespan_t spans[2],
-                      const linedef_t* line, boolean backSide)
+                      const LineDef* line, boolean backSide)
 {
     uint                i, sid = (backSide? BACK : FRONT);
-    sidedef_t*          side;
-    linedef_t*          other;
+    SideDef*            side;
+    LineDef*            other;
 
     side = line->L_side(sid);
 
@@ -1176,7 +1176,7 @@ static float radioEdgeOpenness(float fz, float bz, float bhz)
     return 2;
 }
 
-static void setRelativeHeights(const sector_t* front, const sector_t* back, boolean isCeiling,
+static void setRelativeHeights(const Sector* front, const Sector* back, boolean isCeiling,
     float* fz, float* bz, float* bhz)
 {
     if(fz)
@@ -1199,10 +1199,10 @@ static void setRelativeHeights(const sector_t* front, const sector_t* back, bool
     }
 }
 
-static uint radioEdgeHackType(const linedef_t* line, const sector_t* front, const sector_t* back,
+static uint radioEdgeHackType(const LineDef* line, const Sector* front, const Sector* back,
     int backside, boolean isCeiling, float fz, float bz)
 {
-    surface_t* surface = &line->L_side(backside)->sections[isCeiling? SEG_TOP:SEG_BOTTOM];
+    Surface* surface = &line->L_side(backside)->sections[isCeiling? SS_TOP:SS_BOTTOM];
 
     if(fz < bz && !surface->material &&
        !(surface->inFlags & SUIF_FIX_MISSING_MATERIAL))
@@ -1223,7 +1223,7 @@ static uint radioEdgeHackType(const linedef_t* line, const sector_t* front, cons
     // Check for unmasked midtextures on twosided lines that completely
     // fill the gap between floor and ceiling (we don't want to give away
     // the location of any secret areas (false walls)).
-    if(LineDef_MiddleMaterialCoversOpening((linedef_t*)line, backside, false))
+    if(LineDef_MiddleMaterialCoversOpening((LineDef*)line, backside, false))
         return 1; // Consider it fully closed.
 
     return 0;
@@ -1305,20 +1305,20 @@ static void addShadowEdge(vec2_t inner[2], vec2_t outer[2], float innerLeftZ,
     RL_AddPoly(PT_FAN, RPF_DEFAULT | (!renderWireframe? RPF_SHADOW : 0), 4, rvertices, rcolors);
 }
 
-static void processEdgeShadow(const subsector_t* ssec, const linedef_t* lineDef,
+static void processEdgeShadow(const BspLeaf* bspLeaf, const LineDef* lineDef,
     uint side, uint planeId, float shadowDark)
 {
-    const sidedef_t* sideDef = lineDef->L_side(side? BACK : FRONT);
-    const plane_t* pln = sideDef->sector->SP_plane(planeId);
+    const SideDef* sideDef = lineDef->L_side(side? BACK : FRONT);
+    const Plane* pln = sideDef->sector->SP_plane(planeId);
     vec2_t inner[2], outer[2], edgeOpen, sideOpen;
     const materialvariantspecification_t* spec;
     const materialsnapshot_t* ms;
     float plnHeight, fz, bz, bhz;
-    sector_t* front, *back;
-    const surface_t* suf;
+    Sector* front, *back;
+    const Surface* suf;
     vec3_t shadowRGB;
     int i;
-    assert(ssec && lineDef && (side == FRONT || side == BACK) && lineDef->L_side(side) && planeId <= lineDef->L_sector(side)->planeCount);
+    assert(bspLeaf && lineDef && (side == FRONT || side == BACK) && lineDef->L_side(side) && planeId <= lineDef->L_sector(side)->planeCount);
 
     if(!(shadowDark > .0001)) return;
 
@@ -1367,20 +1367,20 @@ static void processEdgeShadow(const subsector_t* ssec, const linedef_t* lineDef,
     for(i = 0; i < 2; ++i)
     {
         lineowner_t* vo;
-        linedef_t* neighbor;
+        LineDef* neighbor;
 
         vo = lineDef->L_vo(side^i)->link[i^1];
         neighbor = vo->lineDef;
 
         if(neighbor != lineDef && !neighbor->L_backside &&
            neighbor->buildData.windowEffect &&
-           neighbor->L_frontsector != ssec->sector)
+           neighbor->L_frontsector != bspLeaf->sector)
         {   // A one-way window, edgeOpen side.
             sideOpen[i] = 1;
         }
         else if(!(neighbor == lineDef || !neighbor->L_backside))
         {
-            sector_t* othersec;
+            Sector* othersec;
             byte otherSide;
 
             otherSide = (lineDef->L_v(i^side) == neighbor->L_v1? i : i^1);
@@ -1431,22 +1431,22 @@ static void processEdgeShadow(const subsector_t* ssec, const linedef_t* lineDef,
     addShadowEdge(inner, outer, plnHeight, plnHeight, plnHeight, plnHeight, sideOpen, edgeOpen, suf->normal[VZ] > 0, shadowRGB, shadowDark);
 }
 
-static void drawLinkedEdgeShadows(const subsector_t* ssec, shadowlink_t* link,
+static void drawLinkedEdgeShadows(const BspLeaf* bspLeaf, shadowlink_t* link,
     const byte* doPlanes, float shadowDark)
 {
     uint pln;
-    assert(ssec && link && doPlanes);
+    assert(bspLeaf && link && doPlanes);
 
     if(!(shadowDark > .0001f)) return;
 
     if(doPlanes[PLN_FLOOR])
-        processEdgeShadow(ssec, link->lineDef, link->side, PLN_FLOOR, shadowDark);
+        processEdgeShadow(bspLeaf, link->lineDef, link->side, PLN_FLOOR, shadowDark);
     if(doPlanes[PLN_CEILING])
-        processEdgeShadow(ssec, link->lineDef, link->side, PLN_CEILING, shadowDark);
+        processEdgeShadow(bspLeaf, link->lineDef, link->side, PLN_CEILING, shadowDark);
 
-    for(pln = PLN_MID; pln < ssec->sector->planeCount; ++pln)
+    for(pln = PLN_MID; pln < bspLeaf->sector->planeCount; ++pln)
     {
-        processEdgeShadow(ssec, link->lineDef, link->side, pln, shadowDark);
+        processEdgeShadow(bspLeaf, link->lineDef, link->side, pln, shadowDark);
     }
 
     // Mark it rendered for this frame.
@@ -1454,18 +1454,18 @@ static void drawLinkedEdgeShadows(const subsector_t* ssec, shadowlink_t* link,
 }
 
 /**
- * Render the shadowpolygons linked to the subsector, if they haven't
+ * Render the shadowpolygons linked to the BspLeaf, if they haven't
  * already been rendered.
  *
- * Don't use the global radio state in here, the subsector can be part of
+ * Don't use the global radio state in here, the BSP leaf can be part of
  * any sector, not the one chosen for wall rendering.
  */
-static void radioSubsectorEdges(const subsector_t* subsector)
+static void radioBspLeafEdges(const BspLeaf* bspLeaf)
 {
     static size_t doPlaneSize = 0;
     static byte* doPlanes = NULL;
 
-    float sectorlight = subsector->sector->lightLevel;
+    float sectorlight = bspLeaf->sector->lightLevel;
     float shadowWallSize, shadowDark;
     boolean workToDo = false;
     float vec[3];
@@ -1483,12 +1483,12 @@ static void radioSubsectorEdges(const subsector_t* subsector)
     // Any need to continue?
     if(!(shadowDark > .0001f)) return;
 
-    vec[VX] = vx - subsector->midPoint.pos[VX];
-    vec[VY] = vz - subsector->midPoint.pos[VY];
+    vec[VX] = vx - bspLeaf->midPoint.pos[VX];
+    vec[VY] = vz - bspLeaf->midPoint.pos[VY];
     vec[VZ] = 0;
 
     // Do we need to enlarge the size of the doPlanes array?
-    if(subsector->sector->planeCount > doPlaneSize)
+    if(bspLeaf->sector->planeCount > doPlaneSize)
     {
         if(!doPlaneSize)
             doPlaneSize = 2;
@@ -1500,11 +1500,11 @@ static void radioSubsectorEdges(const subsector_t* subsector)
 
     memset(doPlanes, 0, doPlaneSize);
 
-    // See if any of this subsector's planes will get shadows.
+    // See if any of this BspLeaf's planes will get shadows.
     { uint pln;
-    for(pln = 0; pln < subsector->sector->planeCount; ++pln)
+    for(pln = 0; pln < bspLeaf->sector->planeCount; ++pln)
     {
-        const plane_t* plane = subsector->sector->planes[pln];
+        const Plane* plane = bspLeaf->sector->planes[pln];
 
         vec[VZ] = vy - plane->visHeight;
 
@@ -1519,24 +1519,23 @@ static void radioSubsectorEdges(const subsector_t* subsector)
     if(!workToDo)
         return;
 
-    // We need to check all the shadow lines linked to this subsector for
+    // We need to check all the shadow lines linked to this BspLeaf for
     // the purpose of fakeradio shadowing.
     { shadowlink_t* link;
-    for(link = subsector->shadows; link != NULL; link = link->next)
+    for(link = bspLeaf->shadows; link != NULL; link = link->next)
     {
         // Already rendered during the current frame? We only want to
         // render each shadow once per frame.
         if(link->lineDef->shadowVisFrame[link->side] == (ushort) frameCount) continue;
-        drawLinkedEdgeShadows(subsector, link, doPlanes, shadowDark);
+        drawLinkedEdgeShadows(bspLeaf, link, doPlanes, shadowDark);
     }}
 }
 
-void Rend_RadioSubsectorEdges(subsector_t* subsector)
+void Rend_RadioBspLeafEdges(BspLeaf* bspLeaf)
 {
-    if(!rendFakeRadio || levelFullBright)
-        return;
+    if(!rendFakeRadio || levelFullBright) return;
 
-    radioSubsectorEdges(subsector);
+    radioBspLeafEdges(bspLeaf);
 }
 
 #if _DEBUG
@@ -1611,13 +1610,13 @@ void Rend_DrawShadowOffsetVerts(void)
     GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_DYNAMIC), GL_LINEAR);
     glEnable(GL_TEXTURE_2D);
 
-    for(i = 0; i < numLineDefs; ++i)
+    for(i = 0; i < NUM_LINEDEFS; ++i)
     {
-        linedef_t* line = &lineDefs[i];
+        LineDef* line = &lineDefs[i];
 
         for(k = 0; k < 2; ++k)
         {
-            vertex_t* vtx = line->L_v(k);
+            Vertex* vtx = line->L_v(k);
             lineowner_t* vo = vtx->lineOwners;
 
             for(j = 0; j < vtx->numLineOwners; ++j)

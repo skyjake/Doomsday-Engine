@@ -1,25 +1,23 @@
-/**\file p_sector.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file sector.h
+ * Sector implementation. @ingroup map
  *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #include "de_base.h"
@@ -27,7 +25,47 @@
 #include "de_refresh.h"
 #include "de_play.h"
 
-int Sector_SetProperty(sector_t* sec, const setargs_t* args)
+void Sector_UpdateAABox(Sector* sec)
+{
+    LineDef** lineIter;
+    LineDef* line;
+    assert(sec);
+
+    V2_Set(sec->aaBox.min, DDMAXFLOAT, DDMAXFLOAT);
+    V2_Set(sec->aaBox.max, DDMINFLOAT, DDMINFLOAT);
+
+    lineIter = sec->lineDefs;
+    if(!lineIter) return;
+
+    line = *lineIter;
+    V2_InitBox(sec->aaBox.arvec2, line->aaBox.min);
+    V2_AddToBox(sec->aaBox.arvec2, line->aaBox.max);
+    lineIter++;
+
+    for(; *lineIter; lineIter++)
+    {
+        line = *lineIter;
+        V2_AddToBox(sec->aaBox.arvec2, line->aaBox.min);
+        V2_AddToBox(sec->aaBox.arvec2, line->aaBox.max);
+    }
+}
+
+void Sector_UpdateArea(Sector* sec)
+{
+    assert(sec);
+    // Only a very rough estimate is required.
+    sec->roughArea = ((sec->aaBox.maxX - sec->aaBox.minX) / 128) *
+                     ((sec->aaBox.maxY - sec->aaBox.minY) / 128);
+}
+
+void Sector_UpdateOrigin(Sector* sec)
+{
+    assert(sec);
+    sec->origin.pos[VX] = (sec->aaBox.minX + sec->aaBox.maxX) / 2;
+    sec->origin.pos[VY] = (sec->aaBox.minY + sec->aaBox.maxY) / 2;
+}
+
+int Sector_SetProperty(Sector* sec, const setargs_t* args)
 {
     switch(args->prop)
     {
@@ -58,7 +96,7 @@ int Sector_SetProperty(sector_t* sec, const setargs_t* args)
     return false; // Continue iteration.
 }
 
-int Sector_GetProperty(const sector_t* sec, setargs_t* args)
+int Sector_GetProperty(const Sector* sec, setargs_t* args)
 {
     switch(args->prop)
     {

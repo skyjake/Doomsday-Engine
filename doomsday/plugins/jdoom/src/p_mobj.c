@@ -71,7 +71,7 @@
 
 const terraintype_t* P_MobjGetFloorTerrainType(mobj_t* mo)
 {
-    sector_t*           sec = P_GetPtrp(mo->subsector, DMU_SECTOR);
+    Sector*             sec = P_GetPtrp(mo->bspLeaf, DMU_SECTOR);
 
     return P_PlaneMaterialTerrainType(sec, PLN_FLOOR);
 }
@@ -150,7 +150,7 @@ float P_MobjGetFriction(mobj_t *mo)
         return FRICTION_FLY;
     }
 
-    return XS_Friction(P_GetPtrp(mo->subsector, DMU_SECTOR));
+    return XS_Friction(P_GetPtrp(mo->bspLeaf, DMU_SECTOR));
 }
 
 static __inline boolean isInWalkState(player_t* pl)
@@ -167,7 +167,7 @@ static float getFriction(mobj_t* mo)
     }
 
 #if __JHERETIC__
-    if(P_ToXSector(P_GetPtrp(mo->subsector, DMU_SECTOR))->special == 15)
+    if(P_ToXSector(P_GetPtrp(mo->bspLeaf, DMU_SECTOR))->special == 15)
     {   // Friction_Low
         return FRICTION_LOW;
     }
@@ -250,7 +250,7 @@ void P_MobjMoveXY(mobj_t* mo)
             }
             else if(mo->flags & MF_MISSILE)
             {
-                sector_t* backSec;
+                Sector* backSec;
 
                 //// kludge: Prevent missiles exploding against the sky.
                 if(ceilingLine &&
@@ -295,7 +295,7 @@ void P_MobjMoveXY(mobj_t* mo)
 }
 
 /*
-static int PIT_Splash(sector_t *sector, void *data)
+static int PIT_Splash(Sector *sector, void *data)
 {
     mobj_t             *mo = data;
     float               floorHeight;
@@ -330,7 +330,7 @@ void P_MobjMoveZ(mobj_t* mo)
     targetZ = mo->pos[VZ] + mo->mom[MZ];
     floorZ = (mo->onMobj? mo->onMobj->pos[VZ] + mo->onMobj->height : mo->floorZ);
     ceilingZ = mo->ceilingZ;
-    gravity = XS_Gravity(P_GetPtrp(mo->subsector, DMU_SECTOR));
+    gravity = XS_Gravity(P_GetPtrp(mo->bspLeaf, DMU_SECTOR));
 
     if((mo->flags2 & MF2_FLY) && mo->player &&
        mo->onMobj && mo->pos[VZ] > mo->onMobj->pos[VZ] + mo->onMobj->height)
@@ -478,7 +478,7 @@ void P_MobjMoveZ(mobj_t* mo)
         if(!((mo->flags ^ MF_MISSILE) & (MF_MISSILE | MF_NOCLIP)))
         {
             material_t*         mat =
-                P_GetPtrp(mo->subsector, DMU_FLOOR_MATERIAL);
+                P_GetPtrp(mo->bspLeaf, DMU_FLOOR_MATERIAL);
 
             // Don't explode against sky.
             if(P_GetIntp(mat, DMU_FLAGS) & MATF_SKYMASK)
@@ -508,7 +508,7 @@ void P_MobjMoveZ(mobj_t* mo)
             if(!((mo->flags ^ MF_MISSILE) & (MF_MISSILE | MF_NOCLIP)))
             {
                 material_t*         mat =
-                    P_GetPtrp(mo->subsector, DMU_CEILING_MATERIAL);
+                    P_GetPtrp(mo->bspLeaf, DMU_CEILING_MATERIAL);
 
                 // Don't explode against sky.
                 if(P_GetIntp(mat, DMU_FLAGS) & MATF_SKYMASK)
@@ -597,10 +597,10 @@ void P_MobjThinker(mobj_t* mo)
     {
         if(mo->moveDir > 0)
             mo->pos[VZ] =
-                P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT);
+                P_GetFloatp(mo->bspLeaf, DMU_FLOOR_HEIGHT);
         else
             mo->pos[VZ] =
-                P_GetFloatp(mo->subsector, DMU_CEILING_HEIGHT);
+                P_GetFloatp(mo->bspLeaf, DMU_CEILING_HEIGHT);
 
         mo->pos[VZ] += FIX2FLT(mo->moveDir);
         return;
@@ -828,9 +828,9 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
     P_MobjSetState(mo, P_GetState(mo->type, SN_SPAWN));
     P_MobjSetPosition(mo);
 
-    mo->floorZ   = P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT);
+    mo->floorZ   = P_GetFloatp(mo->bspLeaf, DMU_FLOOR_HEIGHT);
     mo->dropOffZ = mo->floorZ;
-    mo->ceilingZ = P_GetFloatp(mo->subsector, DMU_CEILING_HEIGHT);
+    mo->ceilingZ = P_GetFloatp(mo->bspLeaf, DMU_CEILING_HEIGHT);
 
     if((spawnFlags & MSF_Z_CEIL) || (info->flags & MF_SPAWNCEILING))
     {
@@ -859,7 +859,7 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
 
     mo->floorClip = 0;
     if((mo->flags2 & MF2_FLOORCLIP) &&
-       mo->pos[VZ] == P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT))
+       mo->pos[VZ] == P_GetFloatp(mo->bspLeaf, DMU_FLOOR_HEIGHT))
     {
         const terraintype_t* tt = P_MobjGetFloorTerrainType(mo);
 

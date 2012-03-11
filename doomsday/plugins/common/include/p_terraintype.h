@@ -56,6 +56,6 @@ void P_ShutdownTerrainTypes(void);
 void P_ClearTerrainTypes(void);
 
 const terraintype_t* P_TerrainTypeForMaterial(material_t* mat);
-const terraintype_t* P_PlaneMaterialTerrainType(sector_t* sec, int plane);
+const terraintype_t* P_PlaneMaterialTerrainType(Sector* sec, int plane);
 
 #endif /* LIBCOMMON_TERRAINTYPE_H */

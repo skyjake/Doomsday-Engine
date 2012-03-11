@@ -80,7 +80,7 @@ static void processMobjShadow(mobj_t* mo)
 {
     float moz, moh, halfmoh, heightFromSurface, distanceFromViewer = 0;
     float mobjOrigin[3], shadowRadius, shadowStrength;
-    plane_t* plane;
+    Plane* plane;
 
     Mobj_OriginSmoothed(mo, mobjOrigin);
 
@@ -165,7 +165,7 @@ static void initShadowPrimitive(void)
 
 void Rend_RenderMobjShadows(void)
 {
-    const sector_t* sec;
+    const Sector* sec;
     mobj_t* mo;
     uint i;
 
@@ -180,7 +180,7 @@ void Rend_RenderMobjShadows(void)
     initShadowPrimitive();
 
     // Process all sectors:
-    for(i = 0; i < numSectors; ++i)
+    for(i = 0; i < NUM_SECTORS; ++i)
     {
         sec = sectors + i;
 

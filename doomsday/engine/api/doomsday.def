@@ -1,6 +1,6 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 827 <--
+; Highest ordinal is currently: --> 829 <--
 ; Other free ordinals: none
 
 NAME                            "DOOMSDAY"
@@ -440,24 +440,27 @@ EXPORTS
     P_AccurateDistance          @57 NONAME
     P_ApproxDistance            @58 NONAME
     P_ApproxDistance3           @243 NONAME
-    P_PointOnLinedefSide        @695 NONAME
-    P_PointOnLinedefSideXY      @59 NONAME
+    P_PointOnLineDefSide        @695 NONAME
+    P_PointXYOnLineDefSide      @59 NONAME
     P_BoxOnLineSide             @60 NONAME
     P_MakeDivline               @61 NONAME
     P_PointOnDivlineSide        @62 NONAME
     P_InterceptVector           @63 NONAME
-    P_LineOpening               @64 NONAME
+    P_TraceLOS                  @829 NONAME
+    P_TraceOpening              @828 NONAME
+    P_SetTraceOpening           @64 NONAME
+    P_BspLeafAtPointXY          @102 NONAME
     P_MobjsBoxIterator          @346 NONAME
     P_LinesBoxIterator          @435 NONAME
     P_AllLinesBoxIterator       @347 NONAME
     P_PolyobjsBoxIterator       @348 NONAME
-    P_SubsectorsBoxIterator     @345 NONAME
+    P_BspLeafsBoxIterator       @345 NONAME
     P_LineMobjsIterator         @73 NONAME
     P_SectorTouchingMobjsIterator @74 NONAME
     P_PathTraverse              @692 NONAME
     P_PathTraverse2             @693 NONAME
-    P_PathTraverseXY            @75 NONAME
-    P_PathTraverseXY2           @694 NONAME
+    P_PathXYTraverse            @75 NONAME
+    P_PathXYTraverse2           @694 NONAME
     P_CheckLineSight            @76 NONAME
     P_MobjSetState              @207 NONAME
     P_SpawnDamageParticleGen    @233 NONAME
@@ -649,7 +652,6 @@ EXPORTS
     R_AddAnimGroupFrame         @242 NONAME
 
     R_PointToAngle2             @101 NONAME
-    R_PointInSubsector          @102 NONAME
     R_HSVToRGB                  @439 NONAME
 
     R_CreateColorPalette        @444 NONAME

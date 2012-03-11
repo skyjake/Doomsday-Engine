@@ -35,12 +35,12 @@
 extern iterlist_t* spechit;
 
 typedef struct spreadsoundtoneighborsparams_s {
-    sector_t* baseSec;
+    Sector* baseSec;
     int soundBlocks;
     mobj_t* soundTarget;
 } spreadsoundtoneighborsparams_t;
 
 /// Recursively traverse adjacent sectors, sound blocking lines cut off traversal.
-void P_RecursiveSound(struct mobj_s* soundTarget, sector_t* sec, int soundBlocks);
+void P_RecursiveSound(struct mobj_s* soundTarget, Sector* sec, int soundBlocks);
 
 #endif /* LIBCOMMON_MAP_SPEC_H */

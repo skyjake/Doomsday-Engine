@@ -101,7 +101,7 @@ static const float dirSpeed[8][2] =
 void P_NoiseAlert(mobj_t *target, mobj_t *emitter)
 {
     VALIDCOUNT++;
-    P_RecursiveSound(target, P_GetPtrp(emitter->subsector, DMU_SECTOR), 0);
+    P_RecursiveSound(target, P_GetPtrp(emitter->bspLeaf, DMU_SECTOR), 0);
 }
 
 static boolean checkMeleeRange(mobj_t *actor)
@@ -195,7 +195,7 @@ static boolean checkMissileRange(mobj_t *actor)
 static boolean moveMobj(mobj_t* actor, boolean dropoff)
 {
     float pos[3], step[3];
-    linedef_t* ld;
+    LineDef* ld;
     boolean good;
 
     if(actor->moveDir == DI_NODIR)
@@ -366,9 +366,9 @@ static void doNewChaseDir(mobj_t *actor, float deltaX, float deltaY)
  * p_map.c::P_TryMove(), allows monsters to free themselves without making
  * them tend to hang over dropoffs.
  */
-static int PIT_AvoidDropoff(linedef_t* line, void* data)
+static int PIT_AvoidDropoff(LineDef* line, void* data)
 {
-    sector_t* backsector = P_GetPtrp(line, DMU_BACK_SECTOR);
+    Sector* backsector = P_GetPtrp(line, DMU_BACK_SECTOR);
     AABoxf* aaBox = P_GetPtrp(line, DMU_BOUNDING_BOX);
 
     if(backsector &&
@@ -379,7 +379,7 @@ static int PIT_AvoidDropoff(linedef_t* line, void* data)
        tmBox.maxY > aaBox->minY &&
        P_BoxOnLineSide(&tmBox, line) == -1)
     {
-        sector_t*           frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
+        Sector*             frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
         float               front = P_GetFloatp(frontsector, DMU_FLOOR_HEIGHT);
         float               back = P_GetFloatp(backsector, DMU_FLOOR_HEIGHT);
         float               d1[2];
@@ -515,7 +515,7 @@ void C_DECL A_KeenDie(mobj_t* mo)
 
     if(!params.count)
     {   // No Keens left alive.
-        linedef_t*          dummyLine = P_AllocDummyLine();
+        LineDef*            dummyLine = P_AllocDummyLine();
 
         P_ToXLine(dummyLine)->tag = 666;
         EV_DoDoor(dummyLine, DT_OPEN);
@@ -528,10 +528,10 @@ void C_DECL A_KeenDie(mobj_t* mo)
  */
 void C_DECL A_Look(mobj_t* actor)
 {
-    sector_t*           sec = NULL;
+    Sector*             sec = NULL;
     mobj_t*             targ;
 
-    sec = P_GetPtrp(actor->subsector, DMU_SECTOR);
+    sec = P_GetPtrp(actor->bspLeaf, DMU_SECTOR);
 
     if(!sec)
         return;
@@ -1339,7 +1339,7 @@ void C_DECL A_PainShootSkull(mobj_t* actor, angle_t angle)
     mobj_t*             newmobj;
     uint                an;
     float               prestep;
-    sector_t*           sec;
+    Sector*             sec;
 
     if(cfg.maxSkulls)
     {   // Limit the number of MT_SKULL's we should spawn.
@@ -1379,7 +1379,7 @@ void C_DECL A_PainShootSkull(mobj_t* actor, angle_t angle)
         if(!(newmobj = P_SpawnMobj3fv(MT_SKULL, pos, angle, 0)))
             return;
 
-        sec = P_GetPtrp(newmobj->subsector, DMU_SECTOR);
+        sec = P_GetPtrp(newmobj->bspLeaf, DMU_SECTOR);
 
         // Check to see if the new Lost Soul's z value is above the
         // ceiling of its new sector, or below the floor. If so, kill it.
@@ -1494,7 +1494,7 @@ void C_DECL A_Explode(mobj_t* mo)
 void C_DECL A_BossDeath(mobj_t* mo)
 {
     int                 i;
-    linedef_t*          dummyLine;
+    LineDef*            dummyLine;
     countmobjoftypeparams_t params;
 
     // Has the boss already been killed?

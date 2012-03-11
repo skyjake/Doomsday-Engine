@@ -57,8 +57,8 @@ END_PROF_TIMERS()
 typedef struct decorsource_s {
     float           pos[3];
     float           maxDistance;
-    const surface_t* surface;
-    subsector_t*    subsector;
+    const Surface*  surface;
+    BspLeaf*        bspLeaf;
     unsigned int    lumIdx; // index+1 of linked lumobj, or 0.
     float           fadeMul;
     const ded_decorlight_t* def;
@@ -72,8 +72,8 @@ typedef struct decorsource_s {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void updateSideSectionDecorations(sidedef_t* side, segsection_t section);
-static void updatePlaneDecorations(plane_t* pln);
+static void updateSideSectionDecorations(SideDef* side, sidedefsection_t section);
+static void updatePlaneDecorations(Plane* pln);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -109,7 +109,7 @@ static void clearDecorations(void)
     sourceCursor = sourceFirst;
 }
 
-extern void getLightingParams(float x, float y, float z, subsector_t* ssec,
+extern void getLightingParams(float x, float y, float z, BspLeaf* bspLeaf,
                               float distance, boolean fullBright,
                               float ambientColor[3], uint* lightListIdx);
 
@@ -124,7 +124,7 @@ static void projectDecoration(decorsource_t* src)
     min = src->def->lightLevels[0];
     max = src->def->lightLevels[1];
 
-    if(!((brightness = R_CheckSectorLight(src->subsector->sector->lightLevel, min, max)) > 0))
+    if(!((brightness = R_CheckSectorLight(src->bspLeaf->sector->lightLevel, min, max)) > 0))
         return;
 
     if(src->fadeMul <= 0)
@@ -236,7 +236,7 @@ static void addLuminousDecoration(decorsource_t* src)
     min = def->lightLevels[0];
     max = def->lightLevels[1];
 
-    if(!((brightness = R_CheckSectorLight(src->subsector->sector->lightLevel, min, max)) > 0))
+    if(!((brightness = R_CheckSectorLight(src->bspLeaf->sector->lightLevel, min, max)) > 0))
         return;
 
     // Apply the brightness factor (was calculated using sector lightlevel).
@@ -247,11 +247,11 @@ static void addLuminousDecoration(decorsource_t* src)
         return;
 
     /**
-     * \todo From here on is pretty much the same as LO_AddLuminous,
-     * reconcile the two.
+     * @todo From here on is pretty much the same as LO_AddLuminous,
+     *       reconcile the two.
      */
 
-    lumIdx = LO_NewLuminous(LT_OMNI, src->subsector);
+    lumIdx = LO_NewLuminous(LT_OMNI, src->bspLeaf);
     l = LO_GetLuminous(lumIdx);
 
     l->pos[VX] = src->pos[VX];
@@ -329,7 +329,7 @@ static decorsource_t* addDecoration(void)
         src->lumIdx = 0;
         src->maxDistance = 0;
         src->pos[VX] = src->pos[VY] = src->pos[VZ] = 0;
-        src->subsector = 0;
+        src->bspLeaf = 0;
         src->surface = 0;
         src->def = NULL;
         src->flareTex = 0;
@@ -344,7 +344,7 @@ static decorsource_t* addDecoration(void)
 /**
  * A decorsource is created from the specified surface decoration.
  */
-static void createDecorSource(const surface_t* suf, const surfacedecor_t* dec, const float maxDistance)
+static void createDecorSource(const Surface* suf, const surfacedecor_t* dec, const float maxDistance)
 {
     decorsource_t* src;
 
@@ -358,11 +358,11 @@ static void createDecorSource(const surface_t* suf, const surfacedecor_t* dec, c
     src->pos[VY] = dec->pos[VY];
     src->pos[VZ] = dec->pos[VZ];
     src->maxDistance = maxDistance;
-    src->subsector = dec->subsector;
+    src->bspLeaf = dec->bspLeaf;
     src->surface = suf;
     src->fadeMul = 1;
     src->def = dec->def;
-    if(NULL != src->def)
+    if(src->def)
     {
         const ded_decorlight_t* def = src->def;
         if(!def->flare || Str_CompareIgnoreCase(Uri_Path(def->flare), "-"))
@@ -376,7 +376,7 @@ static void createDecorSource(const surface_t* suf, const surfacedecor_t* dec, c
  * @return              As this can also be used with iterators, will always
  *                      return @c true.
  */
-boolean R_ProjectSurfaceDecorations(surface_t* suf, void* context)
+boolean R_ProjectSurfaceDecorations(Surface* suf, void* context)
 {
     float maxDist = *((float*) context);
     uint i;
@@ -389,12 +389,12 @@ boolean R_ProjectSurfaceDecorations(surface_t* suf, void* context)
         {
         case DMU_SIDEDEF:
             {
-            sidedef_t* side = (sidedef_t*)suf->owner;
-            updateSideSectionDecorations(side, &side->SW_middlesurface == suf? SEG_MIDDLE : &side->SW_bottomsurface == suf? SEG_BOTTOM : SEG_TOP);
+            SideDef* side = (SideDef*)suf->owner;
+            updateSideSectionDecorations(side, &side->SW_middlesurface == suf? SS_MIDDLE : &side->SW_bottomsurface == suf? SS_BOTTOM : SS_TOP);
             break;
             }
         case DMU_PLANE:
-            updatePlaneDecorations((plane_t*)suf->owner);
+            updatePlaneDecorations((Plane*)suf->owner);
             break;
         default:
             Con_Error("R_ProjectSurfaceDecorations: Internal Error, unknown type %s.", DMU_Str(DMU_GetType(suf->owner)));
@@ -427,9 +427,9 @@ static void getDecorationSkipPattern(const int patternSkip[2], int* skip)
     }
 }
 
-static uint generateDecorLights(const ded_decorlight_t* def, surface_t* suf,
+static uint generateDecorLights(const ded_decorlight_t* def, Surface* suf,
     material_t* mat, const pvec3_t v1, const pvec3_t v2, float width, float height,
-    const pvec3_t delta, int axis, float offsetS, float offsetT, sector_t* sec)
+    const pvec3_t delta, int axis, float offsetS, float offsetT, Sector* sec)
 {
     vec3_t posBase, pos;
     float patternW, patternH;
@@ -476,7 +476,7 @@ static uint generateDecorLights(const ded_decorlight_t* def, surface_t* suf,
             if(sec)
             {
                 // The point must be inside the correct sector.
-                if(!R_IsPointInSector(pos[VX], pos[VY], sec))
+                if(!P_IsPointXYInSector(pos[VX], pos[VY], sec))
                     continue;
             }
 
@@ -484,7 +484,7 @@ static uint generateDecorLights(const ded_decorlight_t* def, surface_t* suf,
             if(d)
             {
                 V3_Copy(d->pos, pos);
-                d->subsector = R_PointInSubsector(d->pos[VX], d->pos[VY]);
+                d->bspLeaf = P_BspLeafAtPointXY(d->pos[VX], d->pos[VY]);
                 d->def = def;
                 num++;
             }
@@ -497,8 +497,8 @@ static uint generateDecorLights(const ded_decorlight_t* def, surface_t* suf,
 /**
  * Generate decorations for the specified surface.
  */
-static void updateSurfaceDecorations2(surface_t* suf, float offsetS, float offsetT,
-    vec3_t v1, vec3_t v2, sector_t* sec, boolean visible)
+static void updateSurfaceDecorations2(Surface* suf, float offsetS, float offsetT,
+    vec3_t v1, vec3_t v2, Sector* sec, boolean visible)
 {
     vec3_t delta;
 
@@ -545,45 +545,45 @@ static void updateSurfaceDecorations2(surface_t* suf, float offsetS, float offse
 /**
  * Generate decorations for a plane.
  */
-static void updatePlaneDecorations(plane_t* pln)
+static void updatePlaneDecorations(Plane* pln)
 {
-    sector_t*           sec = pln->sector;
-    surface_t*          suf = &pln->surface;
-    vec3_t              v1, v2;
-    float               offsetS, offsetT;
+    Sector*  sec = pln->sector;
+    Surface* suf = &pln->surface;
+    vec3_t v1, v2;
+    float offsetS, offsetT;
 
     if(pln->type == PLN_FLOOR)
     {
-        V3_Set(v1, sec->bBox[BOXLEFT], sec->bBox[BOXTOP], pln->visHeight);
-        V3_Set(v2, sec->bBox[BOXRIGHT], sec->bBox[BOXBOTTOM], pln->visHeight);
+        V3_Set(v1, sec->aaBox.minX, sec->aaBox.maxY, pln->visHeight);
+        V3_Set(v2, sec->aaBox.maxX, sec->aaBox.minY, pln->visHeight);
     }
     else
     {
-        V3_Set(v1, sec->bBox[BOXLEFT], sec->bBox[BOXBOTTOM], pln->visHeight);
-        V3_Set(v2, sec->bBox[BOXRIGHT], sec->bBox[BOXTOP], pln->visHeight);
+        V3_Set(v1, sec->aaBox.minX, sec->aaBox.minY, pln->visHeight);
+        V3_Set(v2, sec->aaBox.maxX, sec->aaBox.maxY, pln->visHeight);
     }
 
-    offsetS = -fmod(sec->bBox[BOXLEFT], 64);
-    offsetT = -fmod(sec->bBox[BOXBOTTOM], 64);
+    offsetS = -fmod(sec->aaBox.minX, 64);
+    offsetT = -fmod(sec->aaBox.minY, 64);
 
     updateSurfaceDecorations2(suf, offsetS, offsetT, v1, v2, sec, suf->material? true : false);
 }
 
-static void updateSideSectionDecorations(sidedef_t* side, segsection_t section)
+static void updateSideSectionDecorations(SideDef* side, sidedefsection_t section)
 {
-    linedef_t*          line;
-    surface_t*          suf;
+    LineDef*            line;
+    Surface*            suf;
     vec3_t              v1, v2;
     int                 sid;
     float               offsetS = 0, offsetT = 0;
     boolean             visible = false;
-    const plane_t*      frontCeil, *frontFloor, *backCeil = NULL, *backFloor = NULL;
+    const Plane*        frontCeil, *frontFloor, *backCeil = NULL, *backFloor = NULL;
     float               bottom, top;
 
-    if(!side->segs || !side->segs[0])
+    if(!side->hedges || !side->hedges[0])
         return;
 
-    line = side->segs[0]->lineDef;
+    line = side->hedges[0]->lineDef;
     sid = (line->L_backside && line->L_backside == side)? 1 : 0;
     frontCeil  = line->L_sector(sid)->SP_plane(PLN_CEILING);
     frontFloor = line->L_sector(sid)->SP_plane(PLN_FLOOR);
@@ -596,7 +596,7 @@ static void updateSideSectionDecorations(sidedef_t* side, segsection_t section)
 
     switch(section)
     {
-    case SEG_MIDDLE:
+    case SS_MIDDLE:
         suf = &side->SW_middlesurface;
         if(suf->material)
         {
@@ -611,7 +611,7 @@ static void updateSideSectionDecorations(sidedef_t* side, segsection_t section)
             else
             {
                 float texOffset[2];
-                if(R_FindBottomTop(line, sid, SEG_MIDDLE, suf->visOffset[VX], suf->visOffset[VY],
+                if(R_FindBottomTop(line, sid, SS_MIDDLE, suf->visOffset[VX], suf->visOffset[VY],
                              frontFloor, frontCeil, backFloor, backCeil,
                              (line->flags & DDLF_DONTPEGBOTTOM)? true : false,
                              (line->flags & DDLF_DONTPEGTOP)? true : false,
@@ -628,7 +628,7 @@ static void updateSideSectionDecorations(sidedef_t* side, segsection_t section)
         }
         break;
 
-    case SEG_TOP:
+    case SS_TOP:
         suf = &side->SW_topsurface;
         if(suf->material)
             if(line->L_backside && backCeil->visHeight < frontCeil->visHeight &&
@@ -642,7 +642,7 @@ static void updateSideSectionDecorations(sidedef_t* side, segsection_t section)
             }
         break;
 
-    case SEG_BOTTOM:
+    case SS_BOTTOM:
         suf = &side->SW_bottomsurface;
         if(suf->material)
             if(line->L_backside && backFloor->visHeight > frontFloor->visHeight &&
@@ -671,6 +671,7 @@ static void updateSideSectionDecorations(sidedef_t* side, segsection_t section)
  */
 void Rend_InitDecorationsForFrame(void)
 {
+    surfacelist_t* slist;
 #ifdef DD_PROFILE
     static int          i;
 
@@ -684,13 +685,17 @@ void Rend_InitDecorationsForFrame(void)
 #endif
 
     // This only needs to be done if decorations have been enabled.
-    if(0 != useLightDecorations)
-    {
+    if(!useLightDecorations) return;
+
 BEGIN_PROF( PROF_DECOR_PROJECT );
 
-        clearDecorations();
-        R_SurfaceListIterate(decoratedSurfaceList, R_ProjectSurfaceDecorations, &decorMaxDist);
+    clearDecorations();
+
+    slist = GameMap_DecoratedSurfaces(theMap);
+    if(slist)
+    {
+        R_SurfaceListIterate(slist, R_ProjectSurfaceDecorations, &decorMaxDist);
+    }
 
 END_PROF( PROF_DECOR_PROJECT );
-    }
 }

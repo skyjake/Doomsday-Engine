@@ -206,7 +206,7 @@ game_export_t* GetGameAPI(game_import_t* imports)
 
     // Data structure sizes.
     gx.mobjSize = sizeof(mobj_t);
-    gx.polyobjSize = sizeof(polyobj_t);
+    gx.polyobjSize = sizeof(Polyobj);
 
     gx.SetupForMapData = P_SetupForMapData;
 

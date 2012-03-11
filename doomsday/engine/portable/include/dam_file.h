@@ -40,11 +40,11 @@ boolean DAM_MapIsValid(const char* cachedMapPath, lumpnum_t markerLumpNum);
 /**
  * Write the current state of the map into a Doomsday Archived Map.
  */
-boolean DAM_MapWrite(gamemap_t* map, const char* path);
+boolean DAM_MapWrite(GameMap* map, const char* path);
 
 /**
  * Load a map from a Doomsday Archived Map.
  */
-boolean DAM_MapRead(gamemap_t* map, const char* path);
+boolean DAM_MapRead(GameMap* map, const char* path);
 
 #endif /* LIBDENG_ARCHIVED_MAP_FILE_H */

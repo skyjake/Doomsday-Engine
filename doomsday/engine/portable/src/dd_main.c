@@ -1102,7 +1102,6 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
         R_DestroyObjlinkBlockmap();
         R_ClearAnimGroups();
 
-        P_PtcShutdown();
         P_ControlShutdown();
         Con_Execute(CMDS_DDAY, "clearbindings", true, false);
 
@@ -1123,11 +1122,18 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
             ddpl->extraLight = 0;
         }
 
-        Z_FreeTags(PU_GAMESTATIC, PU_PURGELEVEL - 1);
         // If a map was loaded; unload it.
+        if(theMap)
+        {
+            GameMap_ClMobjReset(theMap);
+        }
+        // Clear player data, too, since we just lost all clmobjs.
+        Cl_InitPlayers();
+
         P_SetCurrentMap(0);
+        Z_FreeTags(PU_GAMESTATIC, PU_PURGELEVEL - 1);
+
         P_ShutdownGameMapObjDefs();
-        Cl_Reset();
 
         R_ShutdownSvgs();
         R_DestroyColorPalettes();
@@ -1136,7 +1142,12 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
         Textures_ClearRuntime();
 
         Sfx_InitLogical();
-        P_InitThinkerLists(0x1|0x2);
+
+        /// @fixme Why is this being done here?
+        if(theMap)
+        {
+            GameMap_InitThinkerLists(theMap, 0x1|0x2);
+        }
 
         Con_ClearDatabases();
 
@@ -1196,7 +1207,6 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
 
         Materials_Init();
         FI_Init();
-        P_PtcInit(); /// @todo not needed in this mode.
     }
 
     // This is now the current game.
@@ -2033,10 +2043,16 @@ int DD_GetInteger(int ddvalue)
         return Cl_CurrentFinale();
 
     case DD_MAP_MUSIC: {
-        gamemap_t* map = P_GetCurrentMap();
-        ded_mapinfo_t* mapInfo = Def_GetMapInfo(P_MapUri(map));
-        if(!mapInfo) return -1;
-        return Def_GetMusicNum(mapInfo->music);
+        GameMap* map = theMap;
+        if(map)
+        {
+            ded_mapinfo_t* mapInfo = Def_GetMapInfo(GameMap_Uri(map));
+            if(mapInfo)
+            {
+                return Def_GetMusicNum(mapInfo->music);
+            }
+        }
+        return -1;
       }
     default: break;
     }
@@ -2065,96 +2081,108 @@ void DD_SetInteger(int ddvalue, int parm)
  */
 void* DD_GetVariable(int ddvalue)
 {
+    static uint valueU;
+    static float valueF;
+
     switch(ddvalue)
     {
     case DD_GAME_EXPORTS:
         return &gx;
 
     case DD_SECTOR_COUNT:
-        return &numSectors;
+        valueU = theMap? GameMap_SectorCount(theMap) : 0;
+        return &valueU;
 
     case DD_LINE_COUNT:
-        return &numLineDefs;
+        valueU = theMap? GameMap_LineDefCount(theMap) : 0;
+        return &valueU;
 
     case DD_SIDE_COUNT:
-        return &numSideDefs;
+        valueU = theMap? GameMap_SideDefCount(theMap) : 0;
+        return &valueU;
 
     case DD_VERTEX_COUNT:
-        return &numVertexes;
+        valueU = theMap? GameMap_VertexCount(theMap) : 0;
+        return &valueU;
 
     case DD_POLYOBJ_COUNT:
-        return &numPolyObjs;
+        valueU = theMap? GameMap_PolyobjCount(theMap) : 0;
+        return &valueU;
 
-    case DD_SEG_COUNT:
-        return &numSegs;
+    case DD_HEDGE_COUNT:
+        valueU = theMap? GameMap_HEdgeCount(theMap) : 0;
+        return &valueU;
 
-    case DD_SUBSECTOR_COUNT:
-        return &numSSectors;
+    case DD_BSPLEAF_COUNT:
+        valueU = theMap? GameMap_BspLeafCount(theMap) : 0;
+        return &valueU;
 
-    case DD_NODE_COUNT:
-        return &numNodes;
+    case DD_BSPNODE_COUNT:
+        valueU = theMap? GameMap_BspNodeCount(theMap) : 0;
+        return &valueU;
 
-    case DD_MATERIAL_COUNT: {
-        static uint value;
-        value = Materials_Size();
-        return &value;
-      }
     case DD_TRACE_ADDRESS:
-        return &traceLOS;
+        /// @fixme Do not cast away const.
+        return (void*)P_TraceLOS();
 
     case DD_TRANSLATIONTABLES_ADDRESS:
         return translationTables;
 
-    case DD_MAP_NAME: {
-        gamemap_t* map = P_GetCurrentMap();
-        ded_mapinfo_t* mapInfo = Def_GetMapInfo(P_MapUri(map));
-        if(mapInfo && mapInfo->name[0])
+    case DD_MAP_NAME:
+        if(theMap)
         {
-            int id = Def_Get(DD_DEF_TEXT, mapInfo->name, NULL);
-            if(id != -1)
+            ded_mapinfo_t* mapInfo = Def_GetMapInfo(GameMap_Uri(theMap));
+            if(mapInfo && mapInfo->name[0])
             {
-                return defs.text[id].text;
+                int id = Def_Get(DD_DEF_TEXT, mapInfo->name, NULL);
+                if(id != -1)
+                {
+                    return defs.text[id].text;
+                }
+                return mapInfo->name;
             }
-            return mapInfo->name;
         }
-        break;
-      }
-    case DD_MAP_AUTHOR: {
-        gamemap_t* map = P_GetCurrentMap();
-        ded_mapinfo_t* mapInfo = Def_GetMapInfo(P_MapUri(map));
+        return NULL;
 
-        if(mapInfo && mapInfo->author[0])
-            return mapInfo->author;
-        break;
-      }
-    case DD_MAP_MIN_X: {
-        gamemap_t* map = P_GetCurrentMap();
-        if(map)
-            return &map->bBox[BOXLEFT];
-        else
-            return NULL;
-      }
-    case DD_MAP_MIN_Y: {
-        gamemap_t* map = P_GetCurrentMap();
-        if(map)
-            return &map->bBox[BOXBOTTOM];
-        else
-            return NULL;
-      }
-    case DD_MAP_MAX_X: {
-        gamemap_t* map = P_GetCurrentMap();
-        if(map)
-            return &map->bBox[BOXRIGHT];
-        else
-            return NULL;
-      }
-    case DD_MAP_MAX_Y: {
-        gamemap_t* map = P_GetCurrentMap();
-        if(map)
-            return &map->bBox[BOXTOP];
-        else
-            return NULL;
-      }
+    case DD_MAP_AUTHOR:
+        if(theMap)
+        {
+            ded_mapinfo_t* mapInfo = Def_GetMapInfo(GameMap_Uri(theMap));
+            if(mapInfo && mapInfo->author[0])
+            {
+                return mapInfo->author;
+            }
+        }
+        return NULL;
+
+    case DD_MAP_MIN_X:
+        if(theMap)
+        {
+            return &theMap->bBox[BOXLEFT];
+        }
+        return NULL;
+
+    case DD_MAP_MIN_Y:
+        if(theMap)
+        {
+            return &theMap->bBox[BOXBOTTOM];
+        }
+        return NULL;
+
+    case DD_MAP_MAX_X:
+        if(theMap)
+        {
+            return &theMap->bBox[BOXRIGHT];
+        }
+        return NULL;
+
+    case DD_MAP_MAX_Y:
+        if(theMap)
+        {
+            return &theMap->bBox[BOXTOP];
+        }
+        return NULL;
+
     case DD_PSPRITE_OFFSET_X:
         return &pspOffset[VX];
 
@@ -2168,7 +2196,8 @@ void* DD_GetVariable(int ddvalue)
         return &cplrThrustMul;*/
 
     case DD_GRAVITY:
-        return &mapGravity;
+        valueF = theMap? GameMap_Gravity(theMap) : 0;
+        return &valueF;
 
     case DD_TORCH_RED:
         return &torchColor[CR];
@@ -2190,25 +2219,33 @@ void* DD_GetVariable(int ddvalue)
     case DD_GAMETIC: {
         static timespan_t       fracTic;
         fracTic = gameTime * TICSPERSEC;
-        return &fracTic;
-      }
-    case DD_OPENRANGE:
-        return &openrange;
+        return &fracTic; }
 
-    case DD_OPENTOP:
-        return &opentop;
+    case DD_OPENRANGE: {
+        const TraceOpening* open = P_TraceOpening();
+        valueF = open->range;
+        return &valueF; }
 
-    case DD_OPENBOTTOM:
-        return &openbottom;
+    case DD_OPENTOP: {
+        const TraceOpening* open = P_TraceOpening();
+        valueF = open->top;
+        return &valueF; }
 
-    case DD_LOWFLOOR:
-        return &lowfloor;
+    case DD_OPENBOTTOM: {
+        const TraceOpening* open = P_TraceOpening();
+        valueF = open->bottom;
+        return &valueF; }
+
+    case DD_LOWFLOOR: {
+        const TraceOpening* open = P_TraceOpening();
+        valueF = open->lowFloor;
+        return &valueF; }
 
     case DD_NUMLUMPS: {
         static int count;
         count = F_LumpCount();
-        return &count;
-      }
+        return &count; }
+
     default: break;
     }
 
@@ -2234,7 +2271,7 @@ void DD_SetVariable(int ddvalue, void *parm)
             return;*/
 
         case DD_GRAVITY:
-            mapGravity = *(float*) parm;
+            if(theMap) GameMap_SetGravity(theMap, *(float*) parm);
             return;
 
         case DD_PSPRITE_OFFSET_X:
