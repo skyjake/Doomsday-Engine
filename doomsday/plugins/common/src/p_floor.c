@@ -370,7 +370,7 @@ void T_MoveFloor(floor_t* floor)
         P_SetFloatp(floor->sector, DMU_FLOOR_SPEED, 0);
 
 #if __JHEXEN__
-        SN_StopSequence(P_GetPtrp(floor->sector, DMU_SOUND_ORIGIN));
+        SN_StopSequence(P_GetPtrp(floor->sector, DMU_ORIGIN));
 #else
 #  if __JHERETIC__
         if(floor->type == FT_RAISEBUILDSTEP)
@@ -934,7 +934,7 @@ int EV_DoFloor(LineDef *line, floortype_e floortype)
 #if __JHEXEN__
     if(rtn && floor)
     {
-        SN_StartSequence(P_GetPtrp(floor->sector, DMU_SOUND_ORIGIN),
+        SN_StartSequence(P_GetPtrp(floor->sector, DMU_ORIGIN),
                          SEQ_PLATFORM + P_ToXSector(floor->sector)->seqType);
     }
 #endif
@@ -1215,7 +1215,7 @@ static void processStairSector(Sector *sec, int type, float height,
         break;
     }
 
-    SN_StartSequence(P_GetPtrp(sec, DMU_SOUND_ORIGIN),
+    SN_StartSequence(P_GetPtrp(sec, DMU_ORIGIN),
                      SEQ_PLATFORM + P_ToXSector(sec)->seqType);
 
     params.type = type;
@@ -1397,7 +1397,7 @@ static int stopFloorCrush(thinker_t* th, void* context)
     if(floor->type == FT_RAISEFLOORCRUSH)
     {
         // Completely remove the crushing floor
-        SN_StopSequence(P_GetPtrp(floor->sector, DMU_SOUND_ORIGIN));
+        SN_StopSequence(P_GetPtrp(floor->sector, DMU_ORIGIN));
         P_ToXSector(floor->sector)->specialData = NULL;
         P_TagFinished(P_ToXSector(floor->sector)->tag);
         DD_ThinkerRemove(&floor->thinker);

@@ -152,7 +152,7 @@ const char* DMU_Str(uint prop)
         { DMU_LIGHT_LEVEL, "DMU_LIGHT_LEVEL" },
         { DMT_MOBJS, "DMT_MOBJS" },
         { DMU_BOUNDING_BOX, "DMU_BOUNDING_BOX" },
-        { DMU_SOUND_ORIGIN, "DMU_SOUND_ORIGIN" },
+        { DMU_ORIGIN, "DMU_ORIGIN" },
         { DMU_WIDTH, "DMU_WIDTH" },
         { DMU_HEIGHT, "DMU_HEIGHT" },
         { DMU_TARGET_HEIGHT, "DMU_TARGET_HEIGHT" },

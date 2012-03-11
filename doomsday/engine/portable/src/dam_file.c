@@ -450,10 +450,6 @@ static void writeSector(const GameMap *map, uint idx)
         writeFloat(p->surface.rgba[CG]);
         writeFloat(p->surface.rgba[CB]);
         writeFloat(p->surface.rgba[CA]);
-
-        writeFloat(p->soundOrg.pos[VX]);
-        writeFloat(p->soundOrg.pos[VY]);
-        writeFloat(p->soundOrg.pos[VZ]);
     }
 
     writeLong(s->flags);
@@ -461,9 +457,6 @@ static void writeSector(const GameMap *map, uint idx)
     writeFloat(s->aaBox.minY);
     writeFloat(s->aaBox.maxX);
     writeFloat(s->aaBox.maxY);
-    writeFloat(s->soundOrg.pos[VX]);
-    writeFloat(s->soundOrg.pos[VY]);
-    writeFloat(s->soundOrg.pos[VZ]);
 
     for(i = 0; i < NUM_REVERB_DATA; ++i)
         writeFloat(s->reverb[i]);
@@ -493,7 +486,6 @@ static void writeSector(const GameMap *map, uint idx)
 static void readSector(const GameMap *map, uint idx)
 {
     uint                i, numPlanes;
-    long                secIdx;
     float               offset[2], rgba[4];
     Sector             *s = &map->sectors[idx];
 
@@ -527,24 +519,25 @@ static void readSector(const GameMap *map, uint idx)
         rgba[CA] = readFloat();
         Surface_SetColorAndAlpha(&p->surface, rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
 
-        p->soundOrg.pos[VX] = readFloat();
-        p->soundOrg.pos[VY] = readFloat();
-        p->soundOrg.pos[VZ] = readFloat();
-
         p->surface.decorations = NULL;
         p->surface.numDecorations = 0;
     }
 
-    secIdx = readLong();
     s->flags = readLong();
     s->aaBox.minX = readFloat();
     s->aaBox.minY = readFloat();
     s->aaBox.maxX = readFloat();
     s->aaBox.maxY = readFloat();
-    secIdx = readLong();
-    s->soundOrg.pos[VX] = readFloat();
-    s->soundOrg.pos[VY] = readFloat();
-    s->soundOrg.pos[VZ] = readFloat();
+
+    Sector_UpdateOrigin(s);
+
+    for(i = 0; i < numPlanes; ++i)
+    {
+        Plane* p = s->planes[i];
+        p->origin.pos[VX] = s->origin.pos[VX];
+        p->origin.pos[VY] = s->origin.pos[VY];
+        p->origin.pos[VZ] = p->height;
+    }
 
     for(i = 0; i < NUM_REVERB_DATA; ++i)
         s->reverb[i] = readFloat();

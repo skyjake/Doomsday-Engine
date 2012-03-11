@@ -130,7 +130,7 @@ void T_MoveCeiling(ceiling_t* ceiling)
         if(res == pastdest)
         {
 #if __JHEXEN__
-            SN_StopSequence(P_SectorSoundOrigin(ceiling->sector));
+            SN_StopSequence(P_SectorOrigin(ceiling->sector));
 #endif
             switch(ceiling->type)
             {
@@ -190,7 +190,7 @@ void T_MoveCeiling(ceiling_t* ceiling)
         if(res == pastdest)
         {
 #if __JHEXEN__
-            SN_StopSequence(P_SectorSoundOrigin(ceiling->sector));
+            SN_StopSequence(P_SectorOrigin(ceiling->sector));
 #endif
             switch(ceiling->type)
             {
@@ -430,7 +430,7 @@ static int EV_DoCeiling2(int tag, float basespeed, ceilingtype_e type)
 #if __JHEXEN__
         if(rtn)
         {
-            SN_StartSequence(P_SectorSoundOrigin(ceiling->sector),
+            SN_StartSequence(P_SectorOrigin(ceiling->sector),
                              SEQ_PLATFORM + P_ToXSector(ceiling->sector)->seqType);
         }
 #endif
@@ -528,7 +528,7 @@ static int deactivateCeiling(thinker_t* th, void* context)
 #if __JHEXEN__
     if(ceiling->tag == (int) params->tag)
     {   // Destroy it.
-        SN_StopSequence(P_SectorSoundOrigin(ceiling->sector));
+        SN_StopSequence(P_SectorOrigin(ceiling->sector));
         stopCeiling(ceiling);
         params->count++;
         return true; // Stop iteration.

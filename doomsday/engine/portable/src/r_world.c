@@ -579,10 +579,10 @@ Plane* R_NewPlaneForSector(Sector* sec)
     plane->sector = sec;
     plane->height = plane->oldHeight[0] = plane->oldHeight[1] = 0;
     plane->visHeight = plane->visHeightDelta = 0;
-    plane->soundOrg.pos[VX] = sec->soundOrg.pos[VX];
-    plane->soundOrg.pos[VY] = sec->soundOrg.pos[VY];
-    plane->soundOrg.pos[VZ] = sec->soundOrg.pos[VZ];
-    memset(&plane->soundOrg.thinker, 0, sizeof(plane->soundOrg.thinker));
+    plane->origin.pos[VX] = sec->origin.pos[VX];
+    plane->origin.pos[VY] = sec->origin.pos[VY];
+    plane->origin.pos[VZ] = sec->origin.pos[VZ];
+    memset(&plane->origin.thinker, 0, sizeof(plane->origin.thinker));
     plane->speed = 0;
     plane->target = 0;
     plane->type = PLN_MID;
@@ -1708,7 +1708,7 @@ boolean R_UpdatePlane(Plane* pln, boolean forceUpdate)
         }}
 
         // Update the z position of the degenmobj for this plane.
-        pln->soundOrg.pos[VZ] = pln->height;
+        pln->origin.pos[VZ] = pln->height;
 
         // Inform the shadow bias of changed geometry.
         if(sec->bspLeafs && *sec->bspLeafs)
@@ -1790,7 +1790,7 @@ boolean R_UpdateSector(Sector* sec, boolean forceUpdate)
 
     if(planeChanged)
     {
-        sec->soundOrg.pos[VZ] = (sec->SP_ceilheight - sec->SP_floorheight) / 2;
+        sec->origin.pos[VZ] = (sec->SP_ceilheight - sec->SP_floorheight) / 2;
         R_UpdateLinedefsOfSector(sec);
         S_CalcSectorReverb(sec);
 

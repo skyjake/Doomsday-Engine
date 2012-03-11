@@ -1086,7 +1086,7 @@ void P_ThunderSector(void)
         if(!(mapTime & 32))
         {
             P_SetFloatp(sec, DMU_LIGHT_LEVEL, 1);
-            S_StartSound(SFX_SSSIT, P_GetPtrp(sec, DMU_SOUND_ORIGIN));
+            S_StartSound(SFX_SSSIT, P_GetPtrp(sec, DMU_ORIGIN));
         }
     }
 }

@@ -133,7 +133,7 @@ void T_Door(door_t* door)
             case DT_NORMAL:
                 door->state = DS_DOWN; // Time to go back down.
 #if __JHEXEN__
-                SN_StartSequence(P_SectorSoundOrigin(door->sector),
+                SN_StartSequence(P_SectorOrigin(door->sector),
                                  SEQ_DOOR_STONE + xsec->seqType);
 #else
                 S_SectorSound(door->sector, SORG_CEILING, SFX_DOORCLOSE);
@@ -181,7 +181,7 @@ void T_Door(door_t* door)
         if(res == pastdest)
         {
 #if __JHEXEN__
-            SN_StopSequence(P_SectorSoundOrigin(door->sector));
+            SN_StopSequence(P_SectorOrigin(door->sector));
 #endif
             switch(door->type)
             {
@@ -261,7 +261,7 @@ void T_Door(door_t* door)
         if(res == pastdest)
         {
 #if __JHEXEN__
-            SN_StopSequence(P_SectorSoundOrigin(door->sector));
+            SN_StopSequence(P_SectorOrigin(door->sector));
 #endif
             switch(door->type)
             {
@@ -298,8 +298,7 @@ void T_Door(door_t* door)
 #endif
                 DD_ThinkerRemove(&door->thinker); // Unlink and free.
 #if __JHERETIC__
-                S_StopSound(0, (mobj_t *) P_GetPtrp(door->sector,
-                                                    DMU_CEILING_SOUND_ORIGIN));
+                S_StopSound(0, (mobj_t*) P_GetPtrp(door->sector, DMU_CEILING_ORIGIN));
 #endif
                 break;
 
@@ -417,7 +416,7 @@ static int EV_DoDoor2(int tag, float speed, int topwait, doortype_e type)
 
         // Play a sound?
 #if __JHEXEN__
-        SN_StartSequence(P_SectorSoundOrigin(door->sector), sound);
+        SN_StartSequence(P_SectorOrigin(door->sector), sound);
 #else
         if(sound)
             S_SectorSound(door->sector, SORG_CEILING, sound);
@@ -756,7 +755,7 @@ boolean EV_VerticalDoor(LineDef* line, mobj_t* mo)
 
     // Play a sound?
 #if __JHEXEN__
-    SN_StartSequence(P_SectorSoundOrigin(door->sector),
+    SN_StartSequence(P_SectorOrigin(door->sector),
                      SEQ_DOOR_STONE + P_ToXSector(door->sector)->seqType);
 #else
     switch(xline->special)

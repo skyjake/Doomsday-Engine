@@ -184,7 +184,7 @@ Sector* GameMap_SectorByOrigin(GameMap* map, const void* ddMobjBase)
     {
         Sector* sec = &map->sectors[i];
 
-        if(ddMobjBase == &sec->soundOrg)
+        if(ddMobjBase == &sec->origin)
         {
             return sec;
         }
@@ -192,7 +192,7 @@ Sector* GameMap_SectorByOrigin(GameMap* map, const void* ddMobjBase)
         // Check the planes of this sector
         for(k = 0; k < sec->planeCount; ++k)
         {
-            if(ddMobjBase == &sec->planes[k]->soundOrg)
+            if(ddMobjBase == &sec->planes[k]->origin)
             {
                 return sec;
             }

@@ -718,7 +718,7 @@ enum {
     DMU_LIGHT_LEVEL,
     DMT_MOBJS, ///< pointer to start of sector mobjList
     DMU_BOUNDING_BOX, ///< float[4]
-    DMU_SOUND_ORIGIN,
+    DMU_ORIGIN,
     DMU_WIDTH,
     DMU_HEIGHT,
     DMU_TARGET_HEIGHT,

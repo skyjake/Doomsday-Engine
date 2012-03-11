@@ -80,11 +80,11 @@ void S_MapMusic(uint episode, uint map)
  */
 void S_SectorSound(Sector *sec, int origin, int id)
 {
-    mobj_t             *centerorigin, *floororigin, *ceilingorigin;
+    mobj_t* centerorigin, *floororigin, *ceilingorigin;
 
-    centerorigin = (mobj_t *) P_GetPtrp(sec, DMU_SOUND_ORIGIN);
-    floororigin = (mobj_t *) P_GetPtrp(sec, DMU_FLOOR_SOUND_ORIGIN);
-    ceilingorigin = (mobj_t *) P_GetPtrp(sec, DMU_CEILING_SOUND_ORIGIN);
+    centerorigin  = (mobj_t*) P_GetPtrp(sec, DMU_ORIGIN);
+    floororigin   = (mobj_t*) P_GetPtrp(sec, DMU_FLOOR_ORIGIN);
+    ceilingorigin = (mobj_t*) P_GetPtrp(sec, DMU_CEILING_ORIGIN);
 
     S_StopSound(0, centerorigin);
     S_StopSound(0, floororigin);

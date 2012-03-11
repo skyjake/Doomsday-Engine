@@ -37,7 +37,7 @@
 #define DMT_SURFACE_OFFSET DDVT_FLOAT  // [X, Y] Planar offset to surface material origin.
 #define DMT_SURFACE_RGBA DDVT_FLOAT    // Surface color tint
 
-#define DMT_PLANE_SOUNDORG DDVT_PTR    // Sound origin for plane
+#define DMT_PLANE_ORIGIN DDVT_PTR
 #define DMT_PLANE_SECTOR DDVT_PTR      // Owner of the plane (temp)
 #define DMT_PLANE_HEIGHT DDVT_FLOAT    // Current height
 #define DMT_PLANE_GLOW DDVT_FLOAT      // Glow amount
@@ -53,7 +53,7 @@
 #define DMT_SECTOR_LINEDEFS DDVT_PTR   // [lineDefCount+1] size.
 #define DMT_SECTOR_BSPLEAFCOUNT DDVT_UINT
 #define DMT_SECTOR_BSPLEAFS DDVT_PTR   // [bspLeafCount+1] size.
-#define DMT_SECTOR_SOUNDORG DDVT_PTR
+#define DMT_SECTOR_ORIGIN DDVT_PTR
 #define DMT_SECTOR_PLANECOUNT DDVT_UINT
 #define DMT_SECTOR_REVERB DDVT_FLOAT
 

@@ -740,22 +740,17 @@ static void finishSectors(GameMap* map)
         Sector_UpdateArea(sec);
         Sector_UpdateOrigin(sec);
 
-        // Set the degenmobj_t to the middle of the bounding box.
-        sec->soundOrg.pos[VX] = (sec->aaBox.minX + sec->aaBox.maxX) / 2;
-        sec->soundOrg.pos[VY] = (sec->aaBox.minY + sec->aaBox.maxY) / 2;
-
-        // Set the z height of the sector sound origin.
-        sec->soundOrg.pos[VZ] = (sec->SP_ceilheight - sec->SP_floorheight) / 2;
-
         // Set the position of the sound origin for all plane sound origins.
         // Set target heights for all planes.
         for(k = 0; k < sec->planeCount; ++k)
         {
-            sec->planes[k]->soundOrg.pos[VX] = sec->soundOrg.pos[VX];
-            sec->planes[k]->soundOrg.pos[VY] = sec->soundOrg.pos[VY];
-            sec->planes[k]->soundOrg.pos[VZ] = sec->planes[k]->height;
+            Plane* plane = sec->planes[k];
 
-            sec->planes[k]->target = sec->planes[k]->height;
+            plane->origin.pos[VX] = sec->origin.pos[VX];
+            plane->origin.pos[VY] = sec->origin.pos[VY];
+            plane->origin.pos[VZ] = plane->height;
+
+            plane->target = plane->height;
         }
     }
 }

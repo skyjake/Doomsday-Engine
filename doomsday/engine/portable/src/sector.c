@@ -63,6 +63,7 @@ void Sector_UpdateOrigin(Sector* sec)
     assert(sec);
     sec->origin.pos[VX] = (sec->aaBox.minX + sec->aaBox.maxX) / 2;
     sec->origin.pos[VY] = (sec->aaBox.minY + sec->aaBox.maxY) / 2;
+    sec->origin.pos[VZ] = (sec->SP_floorheight + sec->SP_ceilheight) / 2;
 }
 
 int Sector_SetProperty(Sector* sec, const setargs_t* args)
@@ -117,16 +118,14 @@ int Sector_GetProperty(const Sector* sec, setargs_t* args)
     case DMU_COLOR_BLUE:
         DMU_GetValue(DMT_SECTOR_RGB, &sec->rgb[2], args, 0);
         break;
-    case DMU_SOUND_ORIGIN: {
-        const ddmobj_base_t* dmo = &sec->soundOrg;
-        DMU_GetValue(DMT_SECTOR_SOUNDORG, &dmo, args, 0);
-        break;
-      }
+    case DMU_ORIGIN: {
+        const ddmobj_base_t* dmo = &sec->origin;
+        DMU_GetValue(DMT_SECTOR_ORIGIN, &dmo, args, 0);
+        break; }
     case DMU_LINEDEF_COUNT: {
         int val = (int) sec->lineDefCount;
         DMU_GetValue(DDVT_INT, &val, args, 0);
-        break;
-      }
+        break; }
     case DMT_MOBJS:
         DMU_GetValue(DMT_SECTOR_MOBJLIST, &sec->mobjList, args, 0);
         break;

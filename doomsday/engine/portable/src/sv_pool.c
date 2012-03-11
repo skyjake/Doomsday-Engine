@@ -1527,9 +1527,7 @@ float Sv_SectorDistance(int index, const ownerinfo_t* info)
 
     return P_ApproxDistance3(info->pos[VX] - sector->origin.pos[VX],
                              info->pos[VY] - sector->origin.pos[VY],
-                             info->pos[VZ] -
-                             ((sector->planes[PLN_CEILING]->height +
-                                      sector->planes[PLN_FLOOR]->height) / 2));
+                             info->pos[VZ] - sector->origin.pos[VZ]);
 }
 
 /**
@@ -2329,9 +2327,9 @@ void Sv_NewSoundDelta(int soundId, mobj_t* emitter, Sector* sourceSector,
         // Clients need to know which emitter to use.
         if(emitter)
         {
-            if(emitter == (mobj_t*) &sourceSector->planes[PLN_FLOOR]->soundOrg)
+            if(emitter == (mobj_t*) &sourceSector->planes[PLN_FLOOR]->origin)
                 df |= SNDDF_FLOOR;
-            else if(emitter == (mobj_t*) &sourceSector->planes[PLN_CEILING]->soundOrg)
+            else if(emitter == (mobj_t*) &sourceSector->planes[PLN_CEILING]->origin)
                 df |= SNDDF_CEILING;
             // else client assumes sector->soundOrg
         }
