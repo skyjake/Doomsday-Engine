@@ -1000,14 +1000,14 @@ void P_LinkMobjInBlockmap(mobj_t* mo)
 {
     /// @fixme Do not assume mobj is from the current map.
     if(!theMap) return;
-    GameMap_LinkMobjInBlockmap(theMap, mo);
+    GameMap_LinkMobj(theMap, mo);
 }
 
 boolean P_UnlinkMobjFromBlockmap(mobj_t* mo)
 {
     /// @fixme Do not assume mobj is from the current map.
     if(!theMap) return false;
-    return GameMap_UnlinkMobjInBlockmap(theMap, mo);
+    return GameMap_UnlinkMobj(theMap, mo);
 }
 
 void P_LinkMobjToLineDefs(mobj_t* mo)

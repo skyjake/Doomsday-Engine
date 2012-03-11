@@ -59,13 +59,13 @@ void P_PolyobjChanged(Polyobj* po)
 void P_PolyobjUnlink(Polyobj* po)
 {
     GameMap* map = theMap; /// @fixme Do not assume polyobj is from the CURRENT map.
-    GameMap_UnlinkPolyobjInBlockmap(map, po);
+    GameMap_UnlinkPolyobj(map, po);
 }
 
 void P_PolyobjLink(Polyobj* po)
 {
     GameMap* map = theMap; /// @fixme Do not assume polyobj is from the CURRENT map.
-    GameMap_LinkPolyobjInBlockmap(map, po);
+    GameMap_LinkPolyobj(map, po);
 }
 
 /// @note Part of the Doomsday public API

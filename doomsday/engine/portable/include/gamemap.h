@@ -29,11 +29,8 @@ struct thinkerlist_s;
 struct clmoinfo_s;
 struct generators_s;
 
-/// Size of Blockmap blocks in map units. Must be an integer power of two.
-#define MAPBLOCKUNITS               (128)
-
+/// @todo Remove me.
 struct blockmap_s;
-struct gridmapblock_s;
 
 /**
  * The client mobjs are stored into a hash for quickly locating a ClMobj by its identifier.
@@ -506,8 +503,7 @@ void GameMap_SetMobjID(GameMap* map, thid_t id, boolean state);
 void GameMap_InitClMobjs(GameMap* map);
 
 /**
- * Called when the client is shut down. Unlinks everything from the
- * sectors and the blockmap and clears the clmobj list.
+ * To be called when the client is shut down.
  */
 void GameMap_DestroyClMobjs(GameMap* map);
 
@@ -601,45 +597,35 @@ void GameMap_InitPolyobjs(GameMap* map);
 void GameMap_InitNodePiles(GameMap* map);
 
 /**
- * Construct an initial (empty) Mobj Blockmap for this map.
+ * Link the specified @a mobj in any internal data structures for bookkeeping purposes.
+ * Should be called AFTER mobj translation to (re-)insert the mobj.
  *
- * @param min  Minimal coordinates for the map.
- * @param max  Maximal coordinates for the map.
+ * @param map  GameMap instance.
+ * @param mobj  Mobj to be linked.
  */
-void GameMap_InitMobjBlockmap(GameMap* map, const_pvec2_t min, const_pvec2_t max);
+void GameMap_LinkMobj(GameMap* map, struct mobj_s* mobj);
 
-void GameMap_LinkMobjInBlockmap(GameMap* map, struct mobj_s* mo);
-boolean GameMap_UnlinkMobjInBlockmap(GameMap* map, struct mobj_s* mo);
-
-int GameMap_IterateCellMobjs(GameMap* map, const uint coords[2],
-    int (*callback) (struct mobj_s*, void*), void* parameters);
-int GameMap_IterateCellBlockMobjs(GameMap* map, const struct gridmapblock_s* blockCoords,
-    int (*callback) (struct mobj_s*, void*), void* parameters);
+/**
+ * Unlink the specified @a mobj from any internal data structures for bookkeeping purposes.
+ * Should be called BEFORE mobj translation to extract the mobj.
+ *
+ * @param map  GameMap instance.
+ * @param mobj  Mobj to be unlinked.
+ */
+boolean GameMap_UnlinkMobj(GameMap* map, struct mobj_s* mobj);
 
 int GameMap_MobjsBoxIterator(GameMap* map, const AABoxf* box,
     int (*callback) (struct mobj_s*, void*), void* parameters);
 
 /**
- * Construct an initial (empty) LineDef Blockmap for this map.
+ * Link the specified @a lineDef in any internal data structures for bookkeeping purposes.
  *
- * @param min  Minimal coordinates for the map.
- * @param max  Maximal coordinates for the map.
+ * @param map  GameMap instance.
+ * @param lineDef  LineDef to be linked.
  */
-void GameMap_InitLineDefBlockmap(GameMap* map, const_pvec2_t min, const_pvec2_t max);
-
-void GameMap_LinkLineDefInBlockmap(GameMap* map, LineDef* lineDef);
-
-int GameMap_IterateCellLineDefs(GameMap* map, const uint coords[2],
-    int (*callback) (LineDef*, void*), void* parameters);
-int GameMap_IterateCellBlockLineDefs(GameMap* map, const struct gridmapblock_s* blockCoords,
-    int (*callback) (LineDef*, void*), void* parameters);
+void GameMap_LinkLineDef(GameMap* map, LineDef* lineDef);
 
 int GameMap_LineDefIterator(GameMap* map, int (*callback) (LineDef*, void*), void* parameters);
-
-int GameMap_IterateCellPolyobjLineDefs(GameMap* map, const uint coords[2],
-    int (*callback) (LineDef*, void*), void* parameters);
-int GameMap_IterateCellBlockPolyobjLineDefs(GameMap* map, const struct gridmapblock_s* blockCoords,
-    int (*callback) (LineDef*, void*), void* parameters);
 
 int GameMap_LineDefsBoxIterator(GameMap* map, const AABoxf* box,
     int (*callback) (LineDef*, void*), void* parameters);
@@ -650,29 +636,20 @@ int GameMap_PolyobjLinesBoxIterator(GameMap* map, const AABoxf* box,
 /**
  * LineDefs and Polyobj LineDefs (note Polyobj LineDefs are iterated first).
  *
- * The validCount flags are used to avoid checking lines that are marked
- * in multiple mapblocks, so increment validCount before the first call
- * to GameMap_IterateCellLineDefs(), then make one or more calls to it.
+ * @note validCount should be incremented before calling this to begin a new logical traversal.
+ *       Otherwise LineDefs marked with a validCount equal to this will be skipped over (can
+ *       be used to avoid processing a LineDef multiple times during complex / non-linear traversals.
  */
 int GameMap_AllLineDefsBoxIterator(GameMap* map, const AABoxf* box,
     int (*callback) (LineDef*, void*), void* parameters);
 
 /**
- * Construct an initial (empty) BspLeaf Blockmap for this map.
+ * Link the specified @a bspLeaf in internal data structures for bookkeeping purposes.
  *
- * @param min  Minimal coordinates for the map.
- * @param max  Maximal coordinates for the map.
+ * @param map  GameMap instance.
+ * @param bspLeaf  BspLeaf to be linked.
  */
-void GameMap_InitBspLeafBlockmap(GameMap* map, const_pvec2_t min, const_pvec2_t max);
-
-void GameMap_LinkBspLeafInBlockmap(GameMap* map, BspLeaf* bspLeaf);
-
-int GameMap_IterateCellBspLeafs(GameMap* map, const uint coords[2],
-    Sector* sector, const AABoxf* box, int localValidCount,
-    int (*callback) (BspLeaf*, void*), void* parameters);
-int GameMap_IterateCellBlockBspLeafs(GameMap* map, const struct gridmapblock_s* blockCoords,
-    Sector* sector, const AABoxf* box, int localValidCount,
-    int (*callback) (BspLeaf*, void*), void* parameters);
+void GameMap_LinkBspLeaf(GameMap* map, BspLeaf* bspLeaf);
 
 int GameMap_BspLeafsBoxIterator(GameMap* map, const AABoxf* box, Sector* sector,
     int (*callback) (BspLeaf*, void*), void* parameters);
@@ -680,25 +657,27 @@ int GameMap_BspLeafsBoxIterator(GameMap* map, const AABoxf* box, Sector* sector,
 int GameMap_BspLeafIterator(GameMap* map, int (*callback) (BspLeaf*, void*), void* parameters);
 
 /**
- * Construct an initial (empty) Polyobj Blockmap for this map.
+ * Link the specified @a polyobj in any internal data structures for bookkeeping purposes.
+ * Should be called AFTER Polyobj rotation and/or translation to (re-)insert the polyobj.
  *
- * @param min  Minimal coordinates for the map.
- * @param max  Maximal coordinates for the map.
+ * @param map  GameMap instance.
+ * @param polyobj  Polyobj to be linked.
  */
-void GameMap_InitPolyobjBlockmap(GameMap* map, const_pvec2_t min, const_pvec2_t max);
-
-void GameMap_LinkPolyobjInBlockmap(GameMap* map, Polyobj* po);
-void  GameMap_UnlinkPolyobjInBlockmap(GameMap* map, Polyobj* po);
-
-int GameMap_IterateCellPolyobjs(GameMap* map, const uint coords[2],
-    int (*callback) (Polyobj*, void*), void* parameters);
-int GameMap_IterateCellBlockPolyobjs(GameMap* map, const struct gridmapblock_s* blockCoords,
-    int (*callback) (Polyobj*, void*), void* parameters);
+void GameMap_LinkPolyobj(GameMap* map, Polyobj* polyobj);
 
 /**
- * The validCount flags are used to avoid checking polys that are marked in
- * multiple mapblocks, so increment validCount before the first call, then
- * make one or more calls to it.
+ * Unlink the specified @a polyobj from any internal data structures for bookkeeping purposes.
+ * Should be called BEFORE Polyobj rotation and/or translation to extract the polyobj.
+ *
+ * @param map  GameMap instance.
+ * @param polyobj  Polyobj to be unlinked.
+ */
+void  GameMap_UnlinkPolyobj(GameMap* map, Polyobj* polyobj);
+
+/**
+ * @note validCount should be incremented before calling this to begin a new logical traversal.
+ *       Otherwise LineDefs marked with a validCount equal to this will be skipped over (can
+ *       be used to avoid processing a LineDef multiple times during complex / non-linear traversals.
  */
 int GameMap_PolyobjsBoxIterator(GameMap* map, const AABoxf* box,
     int (*callback) (struct polyobj_s*, void*), void* parameters);
@@ -744,5 +723,41 @@ int GameMap_PathXYTraverse(GameMap* map, float fromX, float fromY, float toX, fl
  */
 BspLeaf* GameMap_BspLeafAtPoint(GameMap* map, float point[2]);
 BspLeaf* GameMap_BspLeafAtPointXY(GameMap* map, float x, float y);
+
+/**
+ * Private member functions:
+ */
+
+/**
+ * Construct an initial (empty) Mobj Blockmap for this map.
+ *
+ * @param min  Minimal coordinates for the map.
+ * @param max  Maximal coordinates for the map.
+ */
+void GameMap_InitMobjBlockmap(GameMap* map, const_pvec2_t min, const_pvec2_t max);
+
+/**
+ * Construct an initial (empty) LineDef Blockmap for this map.
+ *
+ * @param min  Minimal coordinates for the map.
+ * @param max  Maximal coordinates for the map.
+ */
+void GameMap_InitLineDefBlockmap(GameMap* map, const_pvec2_t min, const_pvec2_t max);
+
+/**
+ * Construct an initial (empty) BspLeaf Blockmap for this map.
+ *
+ * @param min  Minimal coordinates for the map.
+ * @param max  Maximal coordinates for the map.
+ */
+void GameMap_InitBspLeafBlockmap(GameMap* map, const_pvec2_t min, const_pvec2_t max);
+
+/**
+ * Construct an initial (empty) Polyobj Blockmap for this map.
+ *
+ * @param min  Minimal coordinates for the map.
+ * @param max  Maximal coordinates for the map.
+ */
+void GameMap_InitPolyobjBlockmap(GameMap* map, const_pvec2_t min, const_pvec2_t max);
 
 #endif /// LIBDENG_GAMEMAP_H

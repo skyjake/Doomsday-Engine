@@ -32,6 +32,9 @@
 #include "generators.h"
 #include "gamemap.h"
 
+/// Size of Blockmap blocks in map units. Must be an integer power of two.
+#define MAPBLOCKUNITS               (128)
+
 const Uri* GameMap_Uri(GameMap* map)
 {
     assert(map);
@@ -507,10 +510,10 @@ void GameMap_InitBspLeafBlockmap(GameMap* map, const_pvec2_t min_, const_pvec2_t
 #undef BLOCKMAP_MARGIN
 }
 
-void GameMap_LinkMobjInBlockmap(GameMap* map, mobj_t* mo)
+void GameMap_LinkMobj(GameMap* map, mobj_t* mo)
 {
     Blockmap* blockmap;
-    uint coords[2];
+    BlockmapCell cell;
     assert(map);
 
     // Do not link NULL mobjs.
@@ -521,11 +524,11 @@ void GameMap_LinkMobjInBlockmap(GameMap* map, mobj_t* mo)
     }
 
     blockmap = map->mobjBlockmap;
-    Blockmap_CellCoords(blockmap, coords, mo->pos);
-    Blockmap_CreateCellAndLinkObject(blockmap, coords, mo);
+    Blockmap_Cell(blockmap, cell, mo->pos);
+    Blockmap_CreateCellAndLinkObject(blockmap, cell, mo);
 }
 
-boolean GameMap_UnlinkMobjInBlockmap(GameMap* map, mobj_t* mo)
+boolean GameMap_UnlinkMobj(GameMap* map, mobj_t* mo)
 {
     boolean unlinked = false;
     assert(map);
@@ -533,9 +536,9 @@ boolean GameMap_UnlinkMobjInBlockmap(GameMap* map, mobj_t* mo)
     if(mo)
     {
         Blockmap* blockmap = map->mobjBlockmap;
-        uint coords[2];
-        Blockmap_CellCoords(blockmap, coords, mo->pos);
-        return Blockmap_UnlinkObjectInCell(blockmap, coords, mo);
+        BlockmapCell cell;
+        Blockmap_Cell(blockmap, cell, mo->pos);
+        return Blockmap_UnlinkObjectInCell(blockmap, cell, mo);
     }
     return unlinked;
 }
@@ -564,7 +567,7 @@ static int blockmapCellMobjsIterator(void* object, void* context)
     return false; // Continue iteration.
 }
 
-int GameMap_IterateCellMobjs(GameMap* map, const uint coords[2],
+static int GameMap_IterateCellMobjs(GameMap* map, const_BlockmapCell cell,
     int (*callback) (mobj_t*, void*), void* context)
 {
     bmapmoiterparams_t args;
@@ -574,11 +577,11 @@ int GameMap_IterateCellMobjs(GameMap* map, const uint coords[2],
     args.func = callback;
     args.param = context;
 
-    return Blockmap_IterateCellObjects(map->mobjBlockmap, coords,
+    return Blockmap_IterateCellObjects(map->mobjBlockmap, cell,
                                        blockmapCellMobjsIterator, (void*)&args);
 }
 
-int GameMap_IterateCellBlockMobjs(GameMap* map, const GridmapBlock* blockCoords,
+static int GameMap_IterateCellBlockMobjs(GameMap* map, const BlockmapCellBlock* cellBlock,
     int (*callback) (mobj_t*, void*), void* context)
 {
     bmapmoiterparams_t args;
@@ -588,23 +591,23 @@ int GameMap_IterateCellBlockMobjs(GameMap* map, const GridmapBlock* blockCoords,
     args.func = callback;
     args.param = context;
 
-    return Blockmap_IterateCellBlockObjects(map->mobjBlockmap, blockCoords,
+    return Blockmap_IterateCellBlockObjects(map->mobjBlockmap, cellBlock,
                                             blockmapCellMobjsIterator, (void*) &args);
 }
 
 int GameMap_MobjsBoxIterator(GameMap* map, const AABoxf* box,
     int (*callback) (mobj_t*, void*), void* parameters)
 {
-    GridmapBlock blockCoords;
+    BlockmapCellBlock cellBlock;
     assert(map);
-    Blockmap_CellBlockCoords(map->mobjBlockmap, &blockCoords, box);
-    return GameMap_IterateCellBlockMobjs(map, &blockCoords, callback, parameters);
+    Blockmap_CellBlock(map->mobjBlockmap, &cellBlock, box);
+    return GameMap_IterateCellBlockMobjs(map, &cellBlock, callback, parameters);
 }
 
-void GameMap_LinkLineDefInBlockmap(GameMap* map, LineDef* lineDef)
+void GameMap_LinkLineDef(GameMap* map, LineDef* lineDef)
 {
     vec2_t origin, cellSize, cell, from, to;
-    GridmapBlock blockCoords;
+    BlockmapCellBlock cellBlock;
     Blockmap* blockmap;
     uint x, y;
     assert(map);
@@ -624,10 +627,10 @@ void GameMap_LinkLineDefInBlockmap(GameMap* map, LineDef* lineDef)
     V2_Copy(cellSize, Blockmap_CellSize(blockmap));
 
     // Determine the block of cells we'll be working within.
-    Blockmap_CellBlockCoords(blockmap, &blockCoords, &lineDef->aaBox);
+    Blockmap_CellBlock(blockmap, &cellBlock, &lineDef->aaBox);
 
-    for(y = blockCoords.minY; y <= blockCoords.maxY; ++y)
-    for(x = blockCoords.minX; x <= blockCoords.maxX; ++x)
+    for(y = cellBlock.minY; y <= cellBlock.maxY; ++y)
+    for(x = cellBlock.minX; x <= cellBlock.maxX; ++x)
     {
         if(lineDef->slopeType == ST_VERTICAL || lineDef->slopeType == ST_HORIZONTAL)
         {
@@ -686,7 +689,7 @@ static int blockmapCellLinesIterator(void* object, void* context)
     return false; // Continue iteration.
 }
 
-int GameMap_IterateCellLineDefs(GameMap* map, const uint coords[2],
+static int GameMap_IterateCellLineDefs(GameMap* map, const_BlockmapCell cell,
     int (*callback) (LineDef*, void*), void* context)
 {
     bmapiterparams_t args;
@@ -696,11 +699,11 @@ int GameMap_IterateCellLineDefs(GameMap* map, const uint coords[2],
     args.func = callback;
     args.param = context;
 
-    return Blockmap_IterateCellObjects(map->lineDefBlockmap, coords,
+    return Blockmap_IterateCellObjects(map->lineDefBlockmap, cell,
                                        blockmapCellLinesIterator, (void*)&args);
 }
 
-int GameMap_IterateCellBlockLineDefs(GameMap* map, const GridmapBlock* blockCoords,
+static int GameMap_IterateCellBlockLineDefs(GameMap* map, const BlockmapCellBlock* cellBlock,
     int (*callback) (LineDef*, void*), void* context)
 {
     bmapiterparams_t args;
@@ -710,7 +713,7 @@ int GameMap_IterateCellBlockLineDefs(GameMap* map, const GridmapBlock* blockCoor
     args.func = callback;
     args.param = context;
 
-    return Blockmap_IterateCellBlockObjects(map->lineDefBlockmap, blockCoords,
+    return Blockmap_IterateCellBlockObjects(map->lineDefBlockmap, cellBlock,
                                             blockmapCellLinesIterator, (void*) &args);
 }
 
@@ -726,10 +729,10 @@ int GameMap_LineDefIterator(GameMap* map, int (*callback) (LineDef*, void*), voi
     return false; // Continue iteration.
 }
 
-void GameMap_LinkBspLeafInBlockmap(GameMap* map, BspLeaf* bspLeaf)
+void GameMap_LinkBspLeaf(GameMap* map, BspLeaf* bspLeaf)
 {
     Blockmap* blockmap;
-    GridmapBlock blockCoords;
+    BlockmapCellBlock cellBlock;
     AABoxf aaBox;
     uint x, y;
     assert(map);
@@ -749,10 +752,10 @@ void GameMap_LinkBspLeafInBlockmap(GameMap* map, BspLeaf* bspLeaf)
     aaBox.minY = bspLeaf->aaBox.minY;
     aaBox.maxX = bspLeaf->aaBox.maxX;
     aaBox.maxY = bspLeaf->aaBox.maxY;
-    Blockmap_CellBlockCoords(blockmap, &blockCoords, &aaBox);
+    Blockmap_CellBlock(blockmap, &cellBlock, &aaBox);
 
-    for(y = blockCoords.minY; y <= blockCoords.maxY; ++y)
-    for(x = blockCoords.minX; x <= blockCoords.maxX; ++x)
+    for(y = cellBlock.minY; y <= cellBlock.maxY; ++y)
+    for(x = cellBlock.minX; x <= cellBlock.maxX; ++x)
     {
         Blockmap_CreateCellAndLinkObjectXY(blockmap, x, y, bspLeaf);
     }
@@ -799,7 +802,7 @@ static int blockmapCellBspLeafsIterator(void* object, void* context)
     return false; // Continue iteration.
 }
 
-int GameMap_IterateCellBspLeafs(GameMap* map, const uint coords[2],
+static int GameMap_IterateCellBspLeafs(GameMap* map, const_BlockmapCell cell,
     Sector* sector, const AABoxf* box, int localValidCount,
     int (*callback) (BspLeaf*, void*), void* context)
 {
@@ -812,11 +815,11 @@ int GameMap_IterateCellBspLeafs(GameMap* map, const uint coords[2],
     args.sector = sector;
     args.box = box;
 
-    return Blockmap_IterateCellObjects(map->bspLeafBlockmap, coords,
+    return Blockmap_IterateCellObjects(map->bspLeafBlockmap, cell,
                                        blockmapCellBspLeafsIterator, (void*)&args);
 }
 
-int GameMap_IterateCellBlockBspLeafs(GameMap* map, const GridmapBlock* blockCoords,
+static int GameMap_IterateCellBlockBspLeafs(GameMap* map, const BlockmapCellBlock* cellBlock,
     Sector* sector,  const AABoxf* box, int localValidCount,
     int (*callback) (BspLeaf*, void*), void* context)
 {
@@ -829,7 +832,7 @@ int GameMap_IterateCellBlockBspLeafs(GameMap* map, const GridmapBlock* blockCoor
     args.sector = sector;
     args.box = box;
 
-    return Blockmap_IterateCellBlockObjects(map->bspLeafBlockmap, blockCoords,
+    return Blockmap_IterateCellBlockObjects(map->bspLeafBlockmap, cellBlock,
                                             blockmapCellBspLeafsIterator, (void*) &args);
 }
 
@@ -837,14 +840,14 @@ int GameMap_BspLeafsBoxIterator(GameMap* map, const AABoxf* box, Sector* sector,
     int (*callback) (BspLeaf*, void*), void* parameters)
 {
     static int localValidCount = 0;
-    GridmapBlock blockCoords;
+    BlockmapCellBlock cellBlock;
     assert(map);
 
     // This is only used here.
     localValidCount++;
 
-    Blockmap_CellBlockCoords(map->bspLeafBlockmap, &blockCoords, box);
-    return GameMap_IterateCellBlockBspLeafs(map, &blockCoords, sector, box,
+    Blockmap_CellBlock(map->bspLeafBlockmap, &cellBlock, box);
+    return GameMap_IterateCellBlockBspLeafs(map, &cellBlock, sector, box,
                                               localValidCount, callback, parameters);
 }
 
@@ -860,10 +863,10 @@ int GameMap_BspLeafIterator(GameMap* map, int (*callback) (BspLeaf*, void*), voi
     return false; // Continue iteration.
 }
 
-void GameMap_LinkPolyobjInBlockmap(GameMap* map, Polyobj* po)
+void GameMap_LinkPolyobj(GameMap* map, Polyobj* po)
 {
     Blockmap* blockmap;
-    GridmapBlock blockCoords;
+    BlockmapCellBlock cellBlock;
     uint x, y;
     assert(map);
 
@@ -875,26 +878,26 @@ void GameMap_LinkPolyobjInBlockmap(GameMap* map, Polyobj* po)
     }
 
     blockmap = map->polyobjBlockmap;
-    Blockmap_CellBlockCoords(blockmap, &blockCoords, &po->aaBox);
+    Blockmap_CellBlock(blockmap, &cellBlock, &po->aaBox);
 
-    for(y = blockCoords.minY; y <= blockCoords.maxY; ++y)
-    for(x = blockCoords.minX; x <= blockCoords.maxX; ++x)
+    for(y = cellBlock.minY; y <= cellBlock.maxY; ++y)
+    for(x = cellBlock.minX; x <= cellBlock.maxX; ++x)
     {
         Blockmap_CreateCellAndLinkObjectXY(blockmap, x, y, po);
     }
 }
 
-void GameMap_UnlinkPolyobjInBlockmap(GameMap* map, Polyobj* po)
+void GameMap_UnlinkPolyobj(GameMap* map, Polyobj* po)
 {
     Blockmap* blockmap;
-    GridmapBlock blockCoords;
+    BlockmapCellBlock cellBlock;
     assert(map);
 
     if(!po) return;
 
     blockmap = map->polyobjBlockmap;
-    Blockmap_CellBlockCoords(map->polyobjBlockmap, &blockCoords, &po->aaBox);
-    Blockmap_UnlinkObjectInCellBlock(blockmap, &blockCoords, po);
+    Blockmap_CellBlock(map->polyobjBlockmap, &cellBlock, &po->aaBox);
+    Blockmap_UnlinkObjectInCellBlock(blockmap, &cellBlock, po);
 }
 
 typedef struct bmappoiterparams_s {
@@ -921,7 +924,7 @@ static int blockmapCellPolyobjsIterator(void* object, void* context)
     return false; // Continue iteration.
 }
 
-int GameMap_IterateCellPolyobjs(GameMap* map, const uint coords[2],
+static int GameMap_IterateCellPolyobjs(GameMap* map, const_BlockmapCell cell,
     int (*callback) (Polyobj*, void*), void* context)
 {
     bmappoiterparams_t args;
@@ -931,11 +934,11 @@ int GameMap_IterateCellPolyobjs(GameMap* map, const uint coords[2],
     args.func = callback;
     args.param = context;
 
-    return Blockmap_IterateCellObjects(map->polyobjBlockmap, coords,
+    return Blockmap_IterateCellObjects(map->polyobjBlockmap, cell,
                                        blockmapCellPolyobjsIterator, (void*)&args);
 }
 
-int GameMap_IterateCellBlockPolyobjs(GameMap* map, const GridmapBlock* blockCoords,
+static int GameMap_IterateCellBlockPolyobjs(GameMap* map, const BlockmapCellBlock* cellBlock,
     int (*callback) (Polyobj*, void*), void* context)
 {
     bmappoiterparams_t args;
@@ -945,17 +948,17 @@ int GameMap_IterateCellBlockPolyobjs(GameMap* map, const GridmapBlock* blockCoor
     args.func = callback;
     args.param = context;
 
-    return Blockmap_IterateCellBlockObjects(map->polyobjBlockmap, blockCoords,
+    return Blockmap_IterateCellBlockObjects(map->polyobjBlockmap, cellBlock,
                                             blockmapCellPolyobjsIterator, (void*) &args);
 }
 
 int GameMap_PolyobjsBoxIterator(GameMap* map, const AABoxf* box,
     int (*callback) (struct polyobj_s*, void*), void* parameters)
 {
-    GridmapBlock blockCoords;
+    BlockmapCellBlock cellBlock;
     assert(map);
-    Blockmap_CellBlockCoords(map->polyobjBlockmap, &blockCoords, box);
-    return GameMap_IterateCellBlockPolyobjs(map, &blockCoords, callback, parameters);
+    Blockmap_CellBlock(map->polyobjBlockmap, &cellBlock, box);
+    return GameMap_IterateCellBlockPolyobjs(map, &cellBlock, callback, parameters);
 }
 
 int GameMap_PolyobjIterator(GameMap* map, int (*callback) (Polyobj*, void*), void* parameters)
@@ -983,7 +986,7 @@ int PTR_PolyobjLines(void* object, void* context)
     return Polyobj_LineIterator(po, args->func, args->param);
 }
 
-int GameMap_IterateCellPolyobjLineDefsIterator(GameMap* map, const uint coords[2],
+static int GameMap_IterateCellPolyobjLineDefsIterator(GameMap* map, const_BlockmapCell cell,
     int (*callback) (LineDef*, void*), void* context)
 {
     bmappoiterparams_t args;
@@ -997,11 +1000,11 @@ int GameMap_IterateCellPolyobjLineDefsIterator(GameMap* map, const uint coords[2
     args.func = PTR_PolyobjLines;
     args.param = &poargs;
 
-    return Blockmap_IterateCellObjects(map->polyobjBlockmap, coords,
+    return Blockmap_IterateCellObjects(map->polyobjBlockmap, cell,
                                        blockmapCellPolyobjsIterator, &args);
 }
 
-int GameMap_IterateCellBlockPolyobjLineDefs(GameMap* map, const GridmapBlock* blockCoords,
+static int GameMap_IterateCellBlockPolyobjLineDefs(GameMap* map, const BlockmapCellBlock* cellBlock,
     int (*callback) (LineDef*, void*), void* context)
 {
     bmappoiterparams_t args;
@@ -1015,26 +1018,26 @@ int GameMap_IterateCellBlockPolyobjLineDefs(GameMap* map, const GridmapBlock* bl
     args.func = PTR_PolyobjLines;
     args.param = &poargs;
 
-    return Blockmap_IterateCellBlockObjects(map->polyobjBlockmap, blockCoords,
+    return Blockmap_IterateCellBlockObjects(map->polyobjBlockmap, cellBlock,
                                             blockmapCellPolyobjsIterator, (void*) &args);
 }
 
 int GameMap_LineDefsBoxIterator(GameMap* map, const AABoxf* box,
     int (*callback) (LineDef*, void*), void* parameters)
 {
-    GridmapBlock blockCoords;
+    BlockmapCellBlock cellBlock;
     assert(map);
-    Blockmap_CellBlockCoords(map->lineDefBlockmap, &blockCoords, box);
-    return GameMap_IterateCellBlockLineDefs(map, &blockCoords, callback, parameters);
+    Blockmap_CellBlock(map->lineDefBlockmap, &cellBlock, box);
+    return GameMap_IterateCellBlockLineDefs(map, &cellBlock, callback, parameters);
 }
 
 int GameMap_PolyobjLinesBoxIterator(GameMap* map, const AABoxf* box,
     int (*callback) (LineDef*, void*), void* parameters)
 {
-    GridmapBlock blockCoords;
+    BlockmapCellBlock cellBlock;
     assert(map);
-    Blockmap_CellBlockCoords(map->polyobjBlockmap, &blockCoords, box);
-    return GameMap_IterateCellBlockPolyobjLineDefs(map, &blockCoords, callback, parameters);
+    Blockmap_CellBlock(map->polyobjBlockmap, &cellBlock, box);
+    return GameMap_IterateCellBlockPolyobjLineDefs(map, &cellBlock, callback, parameters);
 }
 
 /**
@@ -1287,8 +1290,8 @@ static int traverseCellPath(GameMap* map, Blockmap* bmap, float const from_[2],
     }
 
     // Clipping already applied above, so we don't need to check it again...
-    Blockmap_CellCoords(bmap, fromBlock, from);
-    Blockmap_CellCoords(bmap, toBlock, to);
+    Blockmap_Cell(bmap, fromBlock, from);
+    Blockmap_Cell(bmap, toBlock, to);
 
     V2_Subtract(from, from, min);
     V2_Subtract(to, to, min);

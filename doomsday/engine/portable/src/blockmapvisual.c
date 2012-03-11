@@ -395,7 +395,7 @@ static void rendBlockmap(Blockmap* blockmap, mobj_t* followMobj,
     int (*cellDrawer) (Blockmap* blockmap, uint const coords[2], void* paramaters))
 {
     uint x, y, vCoords[2];
-    GridmapBlock vBlockCoords;
+    GridmapCellBlock vBlockCoords;
     vec2_t start, end, cellSize;
     void* cell;
 
@@ -404,7 +404,7 @@ static void rendBlockmap(Blockmap* blockmap, mobj_t* followMobj,
     if(followMobj)
     {
         // Determine the followed Mobj's blockmap coords.
-        if(Blockmap_CellCoords(blockmap, vCoords, followMobj->pos))
+        if(Blockmap_Cell(blockmap, vCoords, followMobj->pos))
             followMobj = NULL; // Outside the blockmap.
 
         if(followMobj)
@@ -417,7 +417,7 @@ static void rendBlockmap(Blockmap* blockmap, mobj_t* followMobj,
             V2_Set(end,   followMobj->pos[VX] + radius, followMobj->pos[VY] + radius);
             V2_InitBox(aaBox.arvec2, start);
             V2_AddToBox(aaBox.arvec2, end);
-            Blockmap_CellBlockCoords(blockmap, &vBlockCoords, &aaBox);
+            Blockmap_CellBlock(blockmap, &vBlockCoords, &aaBox);
         }
     }
 
@@ -659,7 +659,7 @@ void Rend_BlockmapDebug(void)
     {
         // About the cell the followed Mobj is in.
         uint coords[2];
-        if(!Blockmap_CellCoords(blockmap, coords, followMobj->pos))
+        if(!Blockmap_Cell(blockmap, coords, followMobj->pos))
         {
             origin.x = theWindow->geometry.size.width / 2;
             origin.y = 30;

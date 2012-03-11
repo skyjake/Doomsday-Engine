@@ -25,112 +25,153 @@
 
 #include "dd_types.h"
 #include "m_vector.h"
-#include "p_mapdata.h"
+
+/// @todo It should not be necessary to expose the Gridmap implementation.
 #include "gridmap.h"
 
 struct blockmap_s; // The Blockmap instance (opaque).
 typedef struct blockmap_s Blockmap;
 
+typedef GridmapCoord BlockmapCoord;
+typedef GridmapCell BlockmapCell;
+typedef const_GridmapCell const_BlockmapCell;
+
+typedef GridmapCellBlock BlockmapCellBlock;
+
 Blockmap* Blockmap_New(const pvec2_t min, const pvec2_t max, uint cellWidth, uint cellHeight);
 
 /**
+ * @param blockmap      Blockmap instance.
  * @return  "Origin" map space point for the Blockmap (minimal [x,y]).
  */
 const pvec2_t Blockmap_Origin(Blockmap* blockmap);
 
 /**
  * Retrieve the extremal map space points covered by the Blockmap.
+ *
+ * @param blockmap      Blockmap instance.
  */
 const AABoxf* Blockmap_Bounds(Blockmap* blockmap);
 
-/// @return  Width of the Blockmap in cells.
-uint Blockmap_Width(Blockmap* blockmap);
+/**
+ * @param blockmap      Blockmap instance.
+ * @return  Width of the Blockmap in cells.
+ */
+BlockmapCoord Blockmap_Width(Blockmap* blockmap);
 
-/// @return  Height of the Blockmap in cells.
-uint Blockmap_Height(Blockmap* blockmap);
+/**
+ * @param blockmap      Blockmap instance.
+ * @return  Height of the Blockmap in cells.
+ */
+BlockmapCoord Blockmap_Height(Blockmap* blockmap);
 
 /**
  * Retrieve the size of the Blockmap in cells.
  *
  * @param widthHeight  Size of the Blockmap [width,height] written here.
  */
-void Blockmap_Size(Blockmap* blockmap, uint widthHeight[2]);
+void Blockmap_Size(Blockmap* blockmap, BlockmapCoord widthHeight[2]);
 
-/// @return  Width of a Blockmap cell in map space units.
+/**
+ * @param blockmap      Blockmap instance.
+ * @return  Width of a Blockmap cell in map space units.
+ */
 float Blockmap_CellWidth(Blockmap* blockmap);
 
-/// @return  Height of a Blockmap cell in map space units.
+/**
+ * @param blockmap      Blockmap instance.
+ * @return  Height of a Blockmap cell in map space units.
+ */
 float Blockmap_CellHeight(Blockmap* blockmap);
 
-/// @return  Size [width,height] of a Blockmap cell in map space units.
+/**
+ * @param blockmap      Blockmap instance.
+ * @return  Size [width,height] of a Blockmap cell in map space units.
+ */
 const pvec2_t Blockmap_CellSize(Blockmap* blockmap);
 
 /**
  * Given map space X coordinate @a x, return the corresponding cell coordinate.
  * If @a x is outside the Blockmap it will be clamped to the nearest edge on
  * the X axis.
+ *
+ * @param blockmap      Blockmap instance.
+ * @param x             Map space X coordinate to be translated.
+ *
+ * @return  Translated Blockmap cell X coordinate.
  */
-uint Blockmap_CellX(Blockmap* blockmap, float x);
+BlockmapCoord Blockmap_CellX(Blockmap* blockmap, float x);
 
 /**
  * Given map space Y coordinate @a y, return the corresponding cell coordinate.
  * If @a y is outside the Blockmap it will be clamped to the nearest edge on
  * the Y axis.
  *
- * @param outY  Blockmap cell X coordinate written here.
- * @param y  Map space X coordinate to be translated.
- * @return  @c true iff clamping was necessary.
+ * @param blockmap      Blockmap instance.
+ * @param y             Map space Y coordinate to be translated.
+ *
+ * @return  Translated Blockmap cell Y coordinate.
  */
-uint Blockmap_CellY(Blockmap* blockmap, float y);
+BlockmapCoord Blockmap_CellY(Blockmap* blockmap, float y);
 
 /**
  * Same as @a Blockmap::CellX with alternative semantics for when the caller
  * needs to know if the coordinate specified was inside/outside the Blockmap.
  */
-boolean Blockmap_ClipCellX(Blockmap* bm, uint* outX, float x);
+boolean Blockmap_ClipCellX(Blockmap* blockmap, BlockmapCoord* outX, float x);
 
 /**
  * Same as @a Blockmap::CellY with alternative semantics for when the caller
  * needs to know if the coordinate specified was inside/outside the Blockmap.
  *
- * @param outY  Blockmap cell Y coordinate written here.
- * @param y  Map space Y coordinate to be translated.
+ * @param blockmap      Blockmap instance.
+ * @param outY          Blockmap cell Y coordinate written here.
+ * @param y             Map space Y coordinate to be translated.
+ *
  * @return  @c true iff clamping was necessary.
  */
-boolean Blockmap_ClipCellY(Blockmap* bm, uint* outY, float y);
+boolean Blockmap_ClipCellY(Blockmap* blockmap, BlockmapCoord* outY, float y);
 
 /**
  * Given map space XY coordinates @a pos, output the Blockmap cell[x, y] it
  * resides in. If @a pos is outside the Blockmap it will be clamped to the
  * nearest edge on one or more axes as necessary.
  *
+ * @param blockmap      Blockmap instance.
+ * @param cell          Blockmap cell coordinates will be written here.
+ * @param pos           Map space coordinates to translate.
+ *
  * @return  @c true iff clamping was necessary.
  */
-boolean Blockmap_CellCoords(Blockmap* blockmap, uint coords[2], float const pos[2]);
+boolean Blockmap_Cell(Blockmap* blockmap, BlockmapCell cell, float const pos[2]);
 
 /**
  * Given map space box XY coordinates @a box, output the blockmap cells[x, y]
  * they reside in. If any point defined by @a box lies outside the blockmap
  * it will be clamped to the nearest edge on one or more axes as necessary.
  *
+ * @param blockmap      Blockmap instance.
+ * @param cellBlock     Blockmap cell coordinates will be written here.
+ * @param box           Map space coordinates to translate.
+ *
  * @return  @c true iff Clamping was necessary.
  */
-boolean Blockmap_CellBlockCoords(Blockmap* blockmap, GridmapBlock* blockCoords, const AABoxf* box);
+boolean Blockmap_CellBlock(Blockmap* blockmap, BlockmapCellBlock* cellBlock, const AABoxf* box);
 
-boolean Blockmap_CreateCellAndLinkObject(Blockmap* blockmap, uint const coords[2], void* object);
+boolean Blockmap_CreateCellAndLinkObject(Blockmap* blockmap, const_BlockmapCell cell, void* object);
 
-boolean Blockmap_CreateCellAndLinkObjectXY(Blockmap* blockmap, uint x, uint y, void* object);
+boolean Blockmap_CreateCellAndLinkObjectXY(Blockmap* blockmap, BlockmapCoord x, BlockmapCoord y, void* object);
 
-boolean Blockmap_UnlinkObjectInCell(Blockmap* blockmap, uint const coords[2], void* object);
+boolean Blockmap_UnlinkObjectInCell(Blockmap* blockmap, const_BlockmapCell cell, void* object);
 
-boolean Blockmap_UnlinkObjectInCellXY(Blockmap* blockmap, uint x, uint y, void* object);
+boolean Blockmap_UnlinkObjectInCellXY(Blockmap* blockmap, BlockmapCoord x, BlockmapCoord y, void* object);
 
-void Blockmap_UnlinkObjectInCellBlock(Blockmap* blockmap, const GridmapBlock* blockCoords, void* object);
+void Blockmap_UnlinkObjectInCellBlock(Blockmap* blockmap, const BlockmapCellBlock* blockCoords, void* object);
 
-int Blockmap_IterateCellObjects(Blockmap* blockmap, uint const coords[2],
+int Blockmap_IterateCellObjects(Blockmap* blockmap, const_BlockmapCell cell,
     int (*callback) (void* object, void* context), void* context);
 
-int Blockmap_IterateCellBlockObjects(Blockmap* blockmap, const GridmapBlock* blockCoords,
+int Blockmap_IterateCellBlockObjects(Blockmap* blockmap, const BlockmapCellBlock* blockCoords,
     int (*callback) (void* object, void* context), void* context);
 
 #endif /// LIBDENG_MAP_BLOCKMAP_H

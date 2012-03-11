@@ -32,33 +32,38 @@
 
 #include "dd_types.h"
 
+typedef uint GridmapCoord;
+typedef GridmapCoord GridmapCell[2];
+typedef const GridmapCoord const_GridmapCell[2];
+
 /**
- * GridmapBlock. Handy POD structure for representing a rectangular range of cells
+ * GridmapCellBlock. Handy POD structure for representing a rectangular range of cells
  * (a "cell block").
  */
-typedef struct gridmapblock_s {
+typedef struct gridmapcellblock_s {
     union {
         struct {
-            uint minX;
-            uint minY;
-            uint maxX;
-            uint maxY;
+            GridmapCoord minX;
+            GridmapCoord minY;
+            GridmapCoord maxX;
+            GridmapCoord maxY;
         };
         struct {
-            uint min[2];
-            uint max[2];
+            GridmapCell min;
+            GridmapCell max;
         };
         struct {
-            uint box[4];
+            GridmapCell box[2];
         };
     };
-} GridmapBlock;
+} GridmapCellBlock;
 
 /**
  * Initialize @a block using the specified coordinates.
  */
-void GridmapBlock_SetCoords(GridmapBlock* block, uint const min[2], uint const max[2]);
-void GridmapBlock_SetCoordsXY(GridmapBlock* block, uint minX, uint minY, uint maxX, uint maxY);
+void GridmapBlock_SetCoords(GridmapCellBlock* block, const_GridmapCell min, const_GridmapCell max);
+void GridmapBlock_SetCoordsXY(GridmapCellBlock* block, GridmapCoord minX, GridmapCoord minY,
+    GridmapCoord maxX, GridmapCoord maxY);
 
 struct gridmap_s; // The Gridmap instance (opaque).
 
@@ -75,7 +80,7 @@ typedef struct gridmap_s Gridmap;
  * @param sizeOfCell     Amount of memory to be allocated for the user data associated with each cell.
  * @param zoneTag        Zone memory tag for the allocated user data.
  */
-Gridmap* Gridmap_New(uint width, uint height, size_t sizeOfCell, int zoneTag);
+Gridmap* Gridmap_New(GridmapCoord width, GridmapCoord height, size_t sizeOfCell, int zoneTag);
 
 void Gridmap_Delete(Gridmap* gridmap);
 
@@ -86,7 +91,7 @@ void Gridmap_Delete(Gridmap* gridmap);
  *
  * @return  Width of the Gridmap in cells.
  */
-uint Gridmap_Width(const Gridmap* gridmap);
+GridmapCoord Gridmap_Width(const Gridmap* gridmap);
 
 /**
  * Retrieve the height of the Gridmap in cells.
@@ -95,7 +100,7 @@ uint Gridmap_Width(const Gridmap* gridmap);
  *
  * @return  Height of the Gridmap in cells.
  */
-uint Gridmap_Height(const Gridmap* gridmap);
+GridmapCoord Gridmap_Height(const Gridmap* gridmap);
 
 /**
  * Retrieve the dimensions of the Gridmap in cells.
@@ -103,7 +108,7 @@ uint Gridmap_Height(const Gridmap* gridmap);
  * @param gridmap        Gridmap instance.
  * @param widthHeight    Dimensions will be written here.
  */
-void Gridmap_Size(const Gridmap* gridmap, uint widthHeight[2]);
+void Gridmap_Size(const Gridmap* gridmap, GridmapCoord widthHeight[2]);
 
 /**
  * Retrieve the user data associated with the identified cell.
@@ -116,12 +121,12 @@ void Gridmap_Size(const Gridmap* gridmap, uint widthHeight[2]);
  * @return  User data for the identified cell else @c NULL if an invalid reference or no
  *          there is no data present (and not allocating).
  */
-void* Gridmap_Cell(Gridmap* gridmap, uint const coords[2], boolean alloc);
+void* Gridmap_Cell(Gridmap* gridmap, const_GridmapCell cell, boolean alloc);
 
 /**
  * Same as Gridmap::Cell except cell coordinates are expressed with @a x and @a y arguments.
  */
-void* Gridmap_CellXY(Gridmap* gridmap, uint x, uint y, boolean alloc);
+void* Gridmap_CellXY(Gridmap* gridmap, GridmapCoord x, GridmapCoord y, boolean alloc);
 
 /**
  * Iteration.
@@ -154,19 +159,19 @@ int Gridmap_Iterate(Gridmap* gridmap, Gridmap_IterateCallback callback); /*param
  *
  * @return  @c 0 iff iteration completed wholly.
  */
-int Gridmap_BlockIterate2(Gridmap* gridmap, const GridmapBlock* block,
+int Gridmap_BlockIterate2(Gridmap* gridmap, const GridmapCellBlock* block,
     Gridmap_IterateCallback callback, void* paramates);
-int Gridmap_BlockIterate(Gridmap* gridmap, const GridmapBlock* block,
+int Gridmap_BlockIterate(Gridmap* gridmap, const GridmapCellBlock* block,
     Gridmap_IterateCallback callback); /*parameters=NULL*/
 
 /**
  * Same as Gridmap::BlockIterate except cell block coordinates are expressed with
  * independent X and Y coordinate arguments. For convenience.
  */
-int Gridmap_BlockXYIterate2(Gridmap* gridmap, uint minX, uint minY, uint maxX, uint maxY,
-    Gridmap_IterateCallback callback, void* parameters);
-int Gridmap_BlockXYIterate(Gridmap* gridmap, uint minX, uint minY, uint maxX, uint maxY,
-    Gridmap_IterateCallback callback); /*parameters=NULL*/
+int Gridmap_BlockXYIterate2(Gridmap* gridmap, GridmapCoord minX, GridmapCoord minY,
+    GridmapCoord maxX, GridmapCoord maxY, Gridmap_IterateCallback callback, void* parameters);
+int Gridmap_BlockXYIterate(Gridmap* gridmap, GridmapCoord minX, GridmapCoord minY,
+    GridmapCoord maxX, GridmapCoord maxY, Gridmap_IterateCallback callback/*, parameters=NULL*/);
 
 /**
  * Clip the cell coordinates in @a block vs the dimensions of this Gridmap so that they
@@ -177,7 +182,7 @@ int Gridmap_BlockXYIterate(Gridmap* gridmap, uint minX, uint minY, uint maxX, ui
  *
  * @return  @c true iff the block coordinates were changed.
  */
-boolean Gridmap_ClipBlock(Gridmap* gridmap, GridmapBlock* block);
+boolean Gridmap_ClipBlock(Gridmap* gridmap, GridmapCellBlock* block);
 
 /**
  * Render a visual for this Gridmap to assist in debugging (etc...).

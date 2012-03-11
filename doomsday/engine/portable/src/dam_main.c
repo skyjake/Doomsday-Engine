@@ -563,7 +563,7 @@ boolean DAM_AttemptMapLoad(const Uri* uri)
             GameMap_InitBspLeafBlockmap(map, min, max);
             for(i = 0; i < map->numBspLeafs; ++i)
             {
-                GameMap_LinkBspLeafInBlockmap(map, map->bspLeafs + i);
+                GameMap_LinkBspLeaf(map, map->bspLeafs + i);
             }
 
             map->uri = Uri_NewCopy(dam->uri);
