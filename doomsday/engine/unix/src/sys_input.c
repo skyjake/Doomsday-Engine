@@ -343,8 +343,10 @@ void I_InitMouse(void)
     useMouse = true;
     gotFirstMouseMove = false;
 
+#if 0
     // Grab all input.
     SDL_WM_GrabInput(SDL_GRAB_ON);
+#endif
 }
 
 void I_InitJoystick(void)
