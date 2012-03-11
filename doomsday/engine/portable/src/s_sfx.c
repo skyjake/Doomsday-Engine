@@ -33,6 +33,7 @@
 #include "de_console.h"
 #include "de_system.h"
 #include "de_play.h"
+#include "de_defs.h"
 #include "de_refresh.h"
 #include "de_graphics.h"
 #include "de_audio.h"
@@ -195,16 +196,25 @@ void Sfx_StopSoundGroup(int group, mobj_t* emitter)
     }
 }
 
+int Sfx_StopSound(int id, mobj_t* emitter)
+{
+    return Sfx_StopSoundWithLowerPriority(id, emitter, -1);
+}
+
 /**
  * Stops all channels that are playing the specified sound.
  *
  * @param id            @c 0 = all sounds are stopped.
  * @param emitter       If not @c NULL, then the channel's emitter mobj
  *                      must match it.
+ * @param defPriority   If >= 0, the currently playing sound must have
+ *                      a lower priority than this to be stopped. Returns -1
+ *                      if the sound @a id has a lower priority than a
+ *                      currently playing sound.
  *
  * @return              The number of samples stopped.
  */
-int Sfx_StopSound(int id, mobj_t* emitter)
+int Sfx_StopSoundWithLowerPriority(int id, mobj_t* emitter, int defPriority)
 {
     int                 i, stopCount = 0;
     sfxchannel_t*       ch;
@@ -215,8 +225,7 @@ int Sfx_StopSound(int id, mobj_t* emitter)
     for(i = 0, ch = channels; i < numChannels; ++i, ch++)
     {
         if(!ch->buffer || !(ch->buffer->flags & SFXBF_PLAYING) ||
-           (id && ch->buffer->sample->id != id) || (emitter &&
-                                                    ch->emitter != emitter))
+           (id && ch->buffer->sample->id != id) || (emitter && ch->emitter != emitter))
             continue;
 
         // Can it be stopped?
@@ -226,6 +235,14 @@ int Sfx_StopSound(int id, mobj_t* emitter)
             ch->emitter = NULL;
             ch->flags |= SFXCF_NO_UPDATE | SFXCF_NO_ORIGIN;
             continue;
+        }
+
+        // Check the priority.
+        if(defPriority >= 0)
+        {
+            int oldPrio = defs.sounds[ch->buffer->sample->id].priority;
+            if(oldPrio > defPriority)
+                return -1;
         }
 
         // This channel must be stopped!
@@ -659,7 +676,13 @@ int Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
     {
         // Stop any other sounds from the same origin. Only one sound is
         // allowed per emitter.
-        Sfx_StopSound(0, emitter);
+        if(Sfx_StopSoundWithLowerPriority(0, emitter, defs.sounds[sample->id].priority) < 0)
+        {
+            DEBUG_Message(("Sfx_StartSound: cannot start ID %i (prio%i), overriden (emitter %i)\n",
+                           sample->id, defs.sounds[sample->id].priority, emitter->thinker.id));
+            // Something with a higher priority is playing, can't start now.
+            return false;
+        }
     }
 
     // Calculate the new sound's priority.

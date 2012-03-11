@@ -8,6 +8,9 @@ TEMPLATE = subdirs
 
 include(../config.pri)
 
+# We are not building any binaries here; disable stripping.
+QMAKE_STRIP = true
+
 # Update the PK3 files.
 deng_packres {
     system(cd $$PWD/scripts/ && python packres.py --quiet \"$$OUT_PWD/..\")
@@ -53,6 +56,10 @@ deng_snowberry {
 
     # Make may not have yet created the output directory at this point.
     system(mkdir -p \"$$OUT_PWD\")
+
+    isEmpty(SCRIPT_PYTHON) {
+        error("Variable SCRIPT_PYTHON not set (path of Python interpreter to be used in generated scripts)")
+    }
 
     # Generate a script for starting the laucher.
     LAUNCH_FILE = launch-doomsday

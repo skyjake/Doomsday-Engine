@@ -793,5 +793,14 @@ int MNBindings_PrivilegedResponder(mn_object_t* obj, event_t* ev)
 const char* MNBindings_ControlName(mn_object_t* obj)
 {
     mndata_bindings_t* binds = (mndata_bindings_t*) obj->_typedata;
+    assert(obj);
+    assert(binds);
+
+    // Map to a text definition?
+    if(PTR2INT(binds->text) > 0 && PTR2INT(binds->text) < NUMTEXT)
+    {
+        return GET_TXT(PTR2INT(binds->text));
+    }
+
     return binds->text;
 }
