@@ -1445,7 +1445,7 @@ static void updateDedicatedConsoleCmdLine(void)
     if(cmdInsMode)
         flags |= CLF_CURSOR_LARGE;
 
-    Sys_SetConWindowCmdLine(windowIDX, cmdLine, cmdCursor+1, flags);
+    Sys_SetConWindowCmdLine(mainWindowIdx, cmdLine, cmdCursor+1, flags);
 }
 
 void Con_Open(int yes)
@@ -1845,11 +1845,11 @@ void Con_PrintRuler(void)
         {
             fprintf(outFile, "----------");
             if(isDedicated)
-                Sys_ConPrint(windowIDX, "----------", 0);
+                Sys_ConPrint(mainWindowIdx, "----------", 0);
         }
         fprintf(outFile, "\n");
         if(isDedicated)
-            Sys_ConPrint(windowIDX, "\n", 0);
+            Sys_ConPrint(mainWindowIdx, "\n", 0);
     }
 }
 
@@ -1886,7 +1886,7 @@ static void conPrintf(int flags, const char* format, va_list args)
 
     if(isDedicated)
     {
-        Sys_ConPrint(windowIDX, text, flags);
+        Sys_ConPrint(mainWindowIdx, text, flags);
     }
     else
     {

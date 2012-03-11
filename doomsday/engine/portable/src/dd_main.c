@@ -1194,7 +1194,7 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
     Library_ReleaseGames();
 
     DD_ComposeMainWindowTitle(buf);
-    Sys_SetWindowTitle(windowIDX, buf);
+    Sys_SetWindowTitle(mainWindowIdx, buf);
 
     if(!DD_IsShuttingDown())
     {
@@ -1213,7 +1213,7 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
     theGame = game;
 
     DD_ComposeMainWindowTitle(buf);
-    Sys_SetWindowTitle(windowIDX, buf);
+    Sys_SetWindowTitle(mainWindowIdx, buf);
 
     /**
      * If we aren't shutting down then we are either loading a game or switching
@@ -1450,7 +1450,7 @@ void DD_FinishInitializationAfterWindowReady(void)
     {
         char buf[256];
         DD_ComposeMainWindowTitle(buf);
-        Sys_SetWindowTitle(windowIDX, buf);
+        Sys_SetWindowTitle(mainWindowIdx, buf);
     }
 
     // Initialize engine subsystems and initial state.
@@ -1529,7 +1529,7 @@ boolean DD_Init(void)
     if(ArgExists("-nofullscreen") || ArgExists("-window"))
         winFlags &= ~DDWF_FULLSCREEN;
 
-    if(!Sys_SetWindow(windowIDX, winX, winY, winWidth, winHeight, winBPP, winFlags, 0))
+    if(!Sys_SetWindow(mainWindowIdx, winX, winY, winWidth, winHeight, winBPP, winFlags, 0))
         return false;
 
     if(!GL_EarlyInit())
@@ -2245,7 +2245,7 @@ void* DD_GetVariable(int ddvalue)
         return &torchAdditive;
 #ifdef WIN32
     case DD_WINDOW_HANDLE:
-        return Sys_GetWindowHandle(windowIDX);
+        return Sys_GetWindowHandle(mainWindowIdx);
 #endif
 
     // We have to separately calculate the 35 Hz ticks.

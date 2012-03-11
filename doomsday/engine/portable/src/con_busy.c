@@ -770,7 +770,7 @@ static void Con_BusyDrawer(void)
     Z_DebugDrawer();
 #endif
 
-    Sys_UpdateWindow(windowIDX);
+    Sys_UpdateWindow(mainWindowIdx);
 }
 
 boolean Con_TransitionInProgress(void)

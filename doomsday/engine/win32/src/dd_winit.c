@@ -73,7 +73,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-uint windowIDX = 0; // Main window.
+uint mainWindowIdx = 0; // Main window.
 application_t app;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -411,9 +411,9 @@ static BOOL createMainWindow(int lnCmdShow)
     Point2Raw origin = { 0, 0 };
     Size2Raw size = { 640, 480 };
     DD_ComposeMainWindowTitle(buf);
-    windowIDX = Sys_CreateWindow(&app, &origin, &size, 32, 0,
+    mainWindowIdx = Sys_CreateWindow(&app, &origin, &size, 32, 0,
         (isDedicated ? WT_CONSOLE : WT_NORMAL), buf, &lnCmdShow);
-    return windowIDX != 0;
+    return mainWindowIdx != 0;
 }
 
 //int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
@@ -482,7 +482,7 @@ boolean DD_Win32_Init(void)
 
             { char buf[256];
             DD_ComposeMainWindowTitle(buf);
-            Sys_SetWindowTitle(windowIDX, buf);
+            Sys_SetWindowTitle(mainWindowIdx, buf);
             }
 
            // SetForegroundWindow(win->hWnd);
@@ -510,7 +510,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             switch(wParam)
             {
             case SIZE_MAXIMIZED:
-                Sys_SetWindow(windowIDX, 0, 0, 0, 0, 0, DDWF_FULLSCREEN, DDSW_NOBPP|DDSW_NOSIZE|DDSW_NOMOVE|DDSW_NOCENTER);
+                Sys_SetWindow(mainWindowIdx, 0, 0, 0, 0, 0, DDWF_FULLSCREEN, DDSW_NOBPP|DDSW_NOSIZE|DDSW_NOMOVE|DDSW_NOCENTER);
                 forwardMsg = FALSE;
                 break;
 

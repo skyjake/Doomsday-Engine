@@ -71,7 +71,7 @@ typedef Library* PluginHandle;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-uint windowIDX;   // Main window.
+uint mainWindowIdx;   // Main window.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -345,9 +345,9 @@ static int createMainWindow(void)
     Size2Raw size = { 640, 480 };
     char buf[256];
     DD_ComposeMainWindowTitle(buf);
-    windowIDX = Sys_CreateWindow(&app, &origin, &size, 32, 0,
+    mainWindowIdx = Sys_CreateWindow(&app, &origin, &size, 32, 0,
                                  isDedicated? WT_CONSOLE : WT_NORMAL, buf, 0);
-    return windowIDX != 0;
+    return mainWindowIdx != 0;
 }
 
 boolean DD_Unix_Init(int argc, char** argv)
@@ -416,7 +416,7 @@ boolean DD_Unix_Init(int argc, char** argv)
         /// @todo  This is the window manager's responsibility.
         { char buf[256];
         DD_ComposeMainWindowTitle(buf);
-        Sys_SetWindowTitle(windowIDX, buf);
+        Sys_SetWindowTitle(mainWindowIdx, buf);
         }
     }}*/
 

@@ -872,7 +872,7 @@ void CP_VideoModeInfo(ui_object_t* ob)
     else
     {
         boolean fullscreen;
-        if(!Sys_GetWindowFullscreen(windowIDX, &fullscreen))
+        if(!Sys_GetWindowFullscreen(mainWindowIdx, &fullscreen))
             return;
 
         sprintf(buf, "%i x %i x %i (%s)", Window_Width(theWindow),
@@ -900,7 +900,7 @@ void CP_UpdateSetVidModeButton(int w, int h, int bpp, boolean fullscreen)
     boolean cFullscreen;
     ui_object_t* ob;
 
-    if(!Sys_GetWindowFullscreen(windowIDX, &cFullscreen)) return;
+    if(!Sys_GetWindowFullscreen(mainWindowIdx, &cFullscreen)) return;
 
     ob = UI_FindObject(ob_panel, CPG_VIDEO, CPID_SET_RES);
 
@@ -950,7 +950,7 @@ void CP_SetVidMode(ui_object_t* ob)
 
     ob->flags |= UIF_DISABLED;
 
-    Sys_SetWindow(windowIDX, 0, 0, x, y, bpp,
+    Sys_SetWindow(mainWindowIdx, 0, 0, x, y, bpp,
                  (panel_fullscreen? DDWF_FULLSCREEN : 0),
                  DDSW_NOVISIBLE|DDSW_NOCENTER);
 }
@@ -1278,7 +1278,7 @@ D_CMD(OpenPanel)
     // Update width the current resolution.
     {
         boolean cFullscreen = true;
-        Sys_GetWindowFullscreen(windowIDX, &cFullscreen);
+        Sys_GetWindowFullscreen(mainWindowIdx, &cFullscreen);
 
         ob = UI_FindObject(ob_panel, CPG_VIDEO, CPID_RES_LIST);
         list = ob->data;

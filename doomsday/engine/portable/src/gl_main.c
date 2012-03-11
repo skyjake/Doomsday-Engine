@@ -179,7 +179,7 @@ void GL_DoUpdate(void)
     DD_WaitForOptimalUpdateTime();
 
     // Blit screen to video.
-    Sys_UpdateWindow(windowIDX);
+    Sys_UpdateWindow(mainWindowIdx);
 
     // Increment frame counter.
     r_framecounter++;
@@ -207,7 +207,7 @@ void GL_GetGammaRamp(unsigned short *ramp)
 
 #if defined(WIN32) && defined(WIN32_GAMMA)
     {
-        HWND    hWnd = Sys_GetWindowHandle(windowIDX);
+        HWND    hWnd = Sys_GetWindowHandle(mainWindowIdx);
         HDC     hDC;
 
         if(!hWnd)
@@ -288,7 +288,7 @@ void GL_SetGammaRamp(unsigned short* ramp)
 
 #if defined(WIN32) && defined(WIN32_GAMMA)
     { HWND hWnd;
-    if((hWnd = Sys_GetWindowHandle(windowIDX)))
+    if((hWnd = Sys_GetWindowHandle(mainWindowIdx)))
     {
         HDC hDC;
         if((hDC = GetDC(hWnd)))
@@ -448,7 +448,7 @@ boolean GL_EarlyInit(void)
 
         Con_Message("Using restricted texture w/h ratio (1:8).\n");
         ratioLimit = 8;
-        Sys_GetWindowBPP(windowIDX, &bpp);
+        Sys_GetWindowBPP(mainWindowIdx, &bpp);
         if(bpp == 32)
         {
             Con_Message("Warning: Are you sure your video card accelerates a 32 bit mode?\n");
@@ -1287,7 +1287,7 @@ D_CMD(SetRes)
 {
     int                 width = atoi(argv[1]), height = atoi(argv[2]);
 
-    return Sys_SetWindow(windowIDX, 0, 0, width, height, 0, 0,
+    return Sys_SetWindow(mainWindowIdx, 0, 0, width, height, 0, 0,
                          DDSW_NOVISIBLE|DDSW_NOCENTER|DDSW_NOFULLSCREEN|
                          DDSW_NOBPP);
 }
@@ -1296,11 +1296,11 @@ D_CMD(ToggleFullscreen)
 {
     boolean             fullscreen;
 
-    if(!Sys_GetWindowFullscreen(windowIDX, &fullscreen))
+    if(!Sys_GetWindowFullscreen(mainWindowIdx, &fullscreen))
         Con_Message("CCmd 'ToggleFullscreen': Failed acquiring window "
                     "fullscreen");
     else
-        Sys_SetWindow(windowIDX, 0, 0, 0, 0, 0,
+        Sys_SetWindow(mainWindowIdx, 0, 0, 0, 0, 0,
                       (!fullscreen? DDWF_FULLSCREEN : 0),
                       DDSW_NOCENTER|DDSW_NOSIZE|DDSW_NOBPP|DDSW_NOVISIBLE);
     return true;
@@ -1323,7 +1323,7 @@ D_CMD(SetBPP)
         Con_Printf("%d not valid for bits per pixel, setting to 32.\n", bpp);
     }
 
-    return Sys_SetWindow(windowIDX, 0, 0, 0, 0, bpp, 0,
+    return Sys_SetWindow(mainWindowIdx, 0, 0, 0, 0, bpp, 0,
                         DDSW_NOCENTER|DDSW_NOSIZE|DDSW_NOFULLSCREEN|
                         DDSW_NOVISIBLE);
 }

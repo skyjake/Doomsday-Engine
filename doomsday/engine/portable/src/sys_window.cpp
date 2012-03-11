@@ -555,7 +555,7 @@ uint Sys_CreateWindow(application_t* app, const Point2Raw* origin,
  */
 boolean Sys_DestroyWindow(uint idx)
 {
-    Window* window = getWindow(idx - 1);
+    Window* window = getWindow(idx);
 
     if(!window)
         return false;
@@ -682,33 +682,6 @@ boolean Sys_SetWindowTitle(uint idx, const char *title)
     return false;
 }
 
-const RectRaw* Sys_GetWindowGeometry(uint idx)
-{
-    Window* window = getWindow(idx - 1);
-    if(!window) return NULL;
-    // Moving does not work in dedicated mode.
-    if(isDedicated) return NULL;
-    return &window->geometry;
-}
-
-const Point2Raw* Sys_GetWindowOrigin(uint idx)
-{
-    Window* window = getWindow(idx - 1);
-    if(!window) return NULL;
-    // Moving does not work in dedicated mode.
-    if(isDedicated) return NULL;
-    return &window->geometry.origin;
-}
-
-const Size2Raw* Sys_GetWindowSize(uint idx)
-{
-    Window* window = getWindow(idx - 1);
-    if(!window) return NULL;
-    // Moving does not work in dedicated mode.
-    if(isDedicated) return NULL;
-    return &window->geometry.size;
-}
-
 /**
  * Attempt to get the BPP (bits-per-pixel) of the given window.
  *
@@ -719,7 +692,7 @@ const Size2Raw* Sys_GetWindowSize(uint idx)
  */
 boolean Sys_GetWindowBPP(uint idx, int *bpp)
 {
-    Window* window = getWindow(idx - 1);
+    Window* window = getWindow(idx);
 
     if(!window || !bpp)
         return false;
@@ -743,7 +716,7 @@ boolean Sys_GetWindowBPP(uint idx, int *bpp)
  */
 boolean Sys_GetWindowFullscreen(uint idx, boolean *fullscreen)
 {
-    Window *window = getWindow(idx - 1);
+    Window *window = getWindow(idx);
 
     if(!window || !fullscreen)
         return false;
@@ -768,7 +741,7 @@ boolean Sys_GetWindowFullscreen(uint idx, boolean *fullscreen)
 #if defined(WIN32)
 HWND Sys_GetWindowHandle(uint idx)
 {
-    Window *window = getWindow(idx - 1);
+    Window *window = getWindow(idx);
 
     if(!window)
         return NULL;

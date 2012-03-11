@@ -157,18 +157,7 @@ int Window_BitsPerPixel(const Window* wnd);
  */
 const Size2Raw* Window_Size(const Window* wnd);
 
-void Sys_UpdateWindow(uint id);
-
-/**
- * Attempt to get the dimensions (and position) of the given window
- * (client area) in screen-space.
- *
- * @param idx  Unique identifier (1-based) to the window.
- * @return  Geometry of the window else @c NULL if @a idx is not valid.
- */
-const RectRaw* Sys_GetWindowGeometry(uint idx);
-const Point2Raw* Sys_GetWindowOrigin(uint idx);
-const Size2Raw* Sys_GetWindowSize(uint idx);
+void Sys_UpdateWindow(uint idx);
 
 boolean Sys_GetWindowBPP(uint idx, int* bpp);
 boolean Sys_GetWindowFullscreen(uint idx, boolean* fullscreen);
