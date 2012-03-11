@@ -179,7 +179,7 @@ void GL_DoUpdate(void)
     DD_WaitForOptimalUpdateTime();
 
     // Blit screen to video.
-    Sys_UpdateWindow(mainWindowIdx);
+    Window_SwapBuffers(theWindow);
 
     // Increment frame counter.
     r_framecounter++;
@@ -448,11 +448,6 @@ boolean GL_EarlyInit(void)
 
         Con_Message("Using restricted texture w/h ratio (1:8).\n");
         ratioLimit = 8;
-        Sys_GetWindowBPP(mainWindowIdx, &bpp);
-        if(bpp == 32)
-        {
-            Con_Message("Warning: Are you sure your video card accelerates a 32 bit mode?\n");
-        }
     }
     // Set a custom maximum size?
     if(ArgCheckWith("-maxtex", 1))

@@ -191,7 +191,7 @@ int Con_Busy2(BusyTask* task)
     DD_ResetTimer();
 
     // Resume drawing with the game loop drawer.
-    Window_SetDrawFunction(Sys_MainWindow(), !Sys_IsShuttingDown()? DD_GameLoopDrawer : 0);
+    Window_SetDrawFunction(Window_Main(), !Sys_IsShuttingDown()? DD_GameLoopDrawer : 0);
 
     return result;
 }
@@ -436,7 +436,7 @@ static void Con_BusyLoop(void)
         glLoadIdentity();
         glOrtho(0, Window_Width(theWindow), Window_Height(theWindow), 0, -1, 1);
 
-        Window_SetDrawFunction(Sys_MainWindow(), Con_BusyDrawer);
+        Window_SetDrawFunction(Window_Main(), Con_BusyDrawer);
     }
 
     Sys_Lock(busy_Mutex);
@@ -472,7 +472,7 @@ static void Con_BusyLoop(void)
         // Time for an update?
         if(canDraw)
         {
-            Window_Draw(Sys_MainWindow());
+            Window_Draw(Window_Main());
         }
 
         // Make sure the audio system gets regularly updated.
@@ -492,7 +492,7 @@ static void Con_BusyLoop(void)
         glPopMatrix();
 
         // Must not call the busy drawer outside of this loop.
-        Window_SetDrawFunction(Sys_MainWindow(), 0);
+        Window_SetDrawFunction(Window_Main(), 0);
     }
 }
 
@@ -780,7 +780,7 @@ static void Con_BusyDrawer(void)
     Z_DebugDrawer();
 #endif
 
-    Sys_UpdateWindow(mainWindowIdx);
+    Window_SwapBuffers(theWindow);
 }
 
 boolean Con_TransitionInProgress(void)

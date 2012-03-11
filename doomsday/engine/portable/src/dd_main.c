@@ -1194,7 +1194,7 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
     Library_ReleaseGames();
 
     DD_ComposeMainWindowTitle(buf);
-    Sys_SetWindowTitle(mainWindowIdx, buf);
+    Window_SetTitle(theWindow, buf);
 
     if(!DD_IsShuttingDown())
     {
@@ -1213,7 +1213,7 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
     theGame = game;
 
     DD_ComposeMainWindowTitle(buf);
-    Sys_SetWindowTitle(mainWindowIdx, buf);
+    Window_SetTitle(theWindow, buf);
 
     /**
      * If we aren't shutting down then we are either loading a game or switching
@@ -1450,7 +1450,7 @@ void DD_FinishInitializationAfterWindowReady(void)
     {
         char buf[256];
         DD_ComposeMainWindowTitle(buf);
-        Sys_SetWindowTitle(mainWindowIdx, buf);
+        Window_SetTitle(theWindow, buf);
     }
 
     // Initialize engine subsystems and initial state.
@@ -1464,7 +1464,7 @@ void DD_FinishInitializationAfterWindowReady(void)
     LegacyCore_SetLoopFunc(de2LegacyCore, DD_GameLoopCallback);
 
     // Start drawing with the game loop drawer.
-    Window_SetDrawFunction(Sys_MainWindow(), DD_GameLoopDrawer);
+    Window_SetDrawFunction(Window_Main(), DD_GameLoopDrawer);
 }
 
 /**

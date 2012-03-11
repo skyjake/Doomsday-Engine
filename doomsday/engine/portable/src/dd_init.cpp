@@ -79,7 +79,7 @@ int main(int argc, char** argv)
 #endif
 
     // Show the main window. This also completes the initialization.
-    Window_Show(Sys_MainWindow(), true);
+    Window_Show(Window_Main(), true);
 
     // Run the main loop.
     int result = DD_GameLoop();

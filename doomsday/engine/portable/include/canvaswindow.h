@@ -36,6 +36,7 @@ class CanvasWindow : public QMainWindow
 
 public:
     explicit CanvasWindow(QWidget *parent = 0);
+    ~CanvasWindow();
     
     Canvas& canvas();
 
@@ -50,7 +51,8 @@ signals:
 public slots:
 
 private:
-    Canvas* _canvas;
+    struct Instance;
+    Instance* d;
 };
 
 #endif // CANVASWINDOW_H

@@ -41,8 +41,17 @@ void DD_RegisterLoop(void);
  */
 int DD_GameLoop(void);
 
+/**
+ * Called periodically while the game loop is running.
+ */
 void DD_GameLoopCallback(void);
 
+/**
+ * Window drawing callback.
+ *
+ * Drawing anything outside this routine is frowned upon.
+ * Seriously frowned! (Don't do it.)
+ */
 void DD_GameLoopDrawer(void);
 
 /**

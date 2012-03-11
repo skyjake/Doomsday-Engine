@@ -31,18 +31,18 @@
 
 #include <curses.h>
 
-#define mainConsole (*Window_Console(Sys_MainWindow()))
+#define mainConsole (*Window_Console(Window_Main()))
 
 #define LINELEN 256  // @todo Lazy: This is the max acceptable window width.
 
 static WINDOW* cursesRootWin;
 static boolean conInputInited = false;
 
-static boolean isValidWindow(Window* win)
+static boolean isValidWindow(const Window* win)
 {
     if(Window_Type(win) == WT_CONSOLE)
     {
-        consolewindow_t* console = Window_Console(win);
+        const consolewindow_t* console = Window_ConsoleConst(win);
         return console->winText && console->winTitle && console->winCommand;
     }
     return true;
@@ -50,7 +50,7 @@ static boolean isValidWindow(Window* win)
 
 static void setAttrib(int flags)
 {
-    if(!isValidWindow(Sys_MainWindow()))
+    if(!isValidWindow(Window_Main()))
         return;
 
     if(flags & (CPF_YELLOW | CPF_LIGHT))
@@ -64,7 +64,7 @@ static void setAttrib(int flags)
  */
 static void writeText(const char *line, int len)
 {
-    if(!isValidWindow(Sys_MainWindow())) return;
+    if(!isValidWindow(Window_Main())) return;
 
     wmove(mainConsole.winText, mainConsole.cy, mainConsole.cx);
     waddnstr(mainConsole.winText, line, len);
@@ -75,7 +75,7 @@ static int getScreenSize(int axis)
 {
     int                 x, y;
 
-    if(!isValidWindow(Sys_MainWindow())) return;
+    if(!isValidWindow(Window_Main())) return;
 
     getmaxyx(mainConsole.winText, y, x);
     return axis == VX ? x : y;
@@ -96,7 +96,7 @@ static void setConWindowCmdLine(uint idx, const char *text,
         // We only support one console window; (this isn't for us).
         return;
     }
-    win = Sys_MainWindow();
+    win = Window_Main();
     if(!isValidWindow(win)) return;
     console = Window_Console(win);
 
@@ -150,7 +150,7 @@ void Sys_ConPrint(uint idx, const char *text, int clflags)
         return;
     }
 
-    win = Sys_MainWindow();
+    win = Window_Main();
     if(!isValidWindow(win)) return;
     console = Window_Console(win);
 
@@ -222,25 +222,22 @@ void Sys_ConPrint(uint idx, const char *text, int clflags)
 
 void Sys_SetConWindowCmdLine(uint idx, const char* text, uint cursorPos, int flags)
 {
-    Window* win;
-
-    win = Sys_Window(idx - 1);
+    Window* win = Window_ByIndex(idx);
 
     if(!win || Window_Type(win) != WT_CONSOLE || !isValidWindow(win))
         return;
 
-    assert(win == Sys_MainWindow());
+    assert(win == Window_Main());
 
     setConWindowCmdLine(idx, text, cursorPos, flags);
 }
 
-void Sys_ConSetTitle(uint idx, const char* title)
+void ConsoleWindow_SetTitle(const Window* window, const char* title)
 {
-    Window* window = Sys_Window(idx);
-    consolewindow_t* console;
+    const consolewindow_t* console;
 
     if(!isValidWindow(window)) return;
-    console = Window_Console(window);
+    console = Window_ConsoleConst(window);
 
     // The background will also be in reverse.
     wbkgdset(console->winTitle, ' ' | A_REVERSE);
@@ -317,7 +314,7 @@ Window* Sys_ConInit(const char* title)
         Sys_ConInputInit();
     }
 
-    return Sys_MainWindow();
+    return Window_Main();
 }
 
 static void Sys_ConInputShutdown(void)
@@ -330,14 +327,14 @@ static void Sys_ConInputShutdown(void)
 
 void Sys_ConShutdown(uint idx)
 {
-    Window* window = Sys_Window(idx);
+    Window* window = Window_ByIndex(idx);
     consolewindow_t* console;
 
     if(!isValidWindow(window)) return;
     console = Window_Console(window);
 
     // We should only have one window.
-    assert(window == Sys_MainWindow());
+    assert(window == Window_Main());
 
     // Delete windows and shut down curses.
     delwin(console->winTitle);

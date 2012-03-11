@@ -68,7 +68,7 @@ static boolean mainWindowInited = false;
 static int screenWidth, screenHeight, screenBPP;
 static boolean screenIsWindow;
 
-Window* Sys_MainWindow(void)
+Window* Window_Main(void)
 {
     return &mainWindow;
 }
@@ -85,7 +85,7 @@ static __inline Window *getWindow(uint idx)
     return NULL;
 }
 
-Window* Sys_Window(uint id)
+Window* Window_ByIndex(uint id)
 {
     return getWindow(id);
 }
@@ -388,7 +388,7 @@ boolean Sys_ShutdownWindowManager(void)
         return false; // Window manager is not initialized.
 
     if(mainWindow.type == WT_CONSOLE)
-        Sys_DestroyWindow(1);
+        Window_Destroy(1);
 
     // Now off-line, no more window management will be possible.
     winManagerInited = false;
@@ -456,27 +456,6 @@ static void drawCanvasWithCallback(Canvas& canvas)
     {
         win->drawFunc();
     }
-}
-
-void Window_SetDrawFunction(Window* win, void (*drawFunc)(void))
-{
-    if(win->type == WT_CONSOLE) return;
-
-    assert(win);
-    assert(win->widget);
-
-    win->drawFunc = drawFunc;
-    win->widget->canvas().setDrawCallback(drawFunc? drawCanvasWithCallback : 0);
-}
-
-void Window_Draw(Window* win)
-{
-    if(win->type == WT_CONSOLE) return;
-
-    assert(win);
-    assert(win->widget);
-
-    win->widget->canvas().forcePaint();
 }
 
 static void finishMainWindowInit(Canvas& canvas)
@@ -555,8 +534,9 @@ static Window* createDDWindow(application_t*, const Point2Raw* origin, const Siz
     return &mainWindow;
 }
 
-uint Sys_CreateWindow(application_t* app, const Point2Raw* origin,
-    const Size2Raw* size, int bpp, int flags, ddwindowtype_t type, const char* title, void*)
+uint Window_Create(application_t* app, const Point2Raw* origin,
+                   const Size2Raw* size, int bpp, int flags, ddwindowtype_t type,
+                   const char* title, void*)
 {
     if(!winManagerInited) return 0;
 
@@ -576,7 +556,7 @@ uint Sys_CreateWindow(application_t* app, const Point2Raw* origin,
  *
  * @return              @c true, if successful.
  */
-boolean Sys_DestroyWindow(uint idx)
+boolean Window_Destroy(uint idx)
 {
     Window* window = getWindow(idx);
 
@@ -588,19 +568,6 @@ boolean Sys_DestroyWindow(uint idx)
         Sys_ConShutdown(idx);
     }
 
-    return true;
-}
-
-/**
- * Change the currently active window.
- *
- * @param idx           Index of the window to make active (1-based).
- *
- * @return              @c true, if successful.
- */
-boolean Sys_SetActiveWindow(uint idx)
-{
-    // We only support one window, so yes its active.
     return true;
 }
 
@@ -667,11 +634,10 @@ boolean Sys_SetWindow(uint idx, int newX, int newY, int newWidth, int newHeight,
 /**
  * Make the content of the framebuffer visible.
  */
-void Sys_UpdateWindow(uint idx)
+void Window_SwapBuffers(const Window* win)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
 
-    Window* win = getWindow(idx);
     assert(win);
     if(!win->widget) return;
 
@@ -687,52 +653,26 @@ void Sys_UpdateWindow(uint idx)
  *
  * @return              @c true, if successful.
  */
-boolean Sys_SetWindowTitle(uint idx, const char *title)
+void Window_SetTitle(const Window* win, const char *title)
 {
-    Window *window = getWindow(idx);
+    assert(win);
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
 
-    if(window)
+    switch(win->type)
     {
-        if(window->type == WT_NORMAL)
-        {
-#if 0
-            SDL_WM_SetCaption(title, NULL);
-#endif
-        }
-        else // It's a terminal window.
-        {
-            Sys_ConSetTitle(idx, title);
-        }
-        return true;
+    case WT_NORMAL:
+        assert(win->widget);
+        win->widget->setWindowTitle(QString::fromLatin1(title));
+        break;
+
+    case WT_CONSOLE:
+        ConsoleWindow_SetTitle(win, title);
+        break;
+
+    default:
+        break;
     }
-
-    return false;
-}
-
-/**
- * Attempt to get the BPP (bits-per-pixel) of the given window.
- *
- * @param idx           Index identifier (1-based) to the window.
- * @param bpp           Address to write the BPP back to (if any).
- *
- * @return              @c true, if successful.
- */
-boolean Sys_GetWindowBPP(uint idx, int *bpp)
-{
-    Window* window = getWindow(idx);
-
-    if(!window || !bpp)
-        return false;
-
-    // Not in dedicated mode.
-    if(isDedicated)
-        return false;
-
-    *bpp = window->bpp;
-
-    return true;
 }
 
 /**
@@ -780,6 +720,28 @@ HWND Sys_GetWindowHandle(uint idx)
 #endif
 
 #endif
+
+void Window_SetDrawFunction(Window* win, void (*drawFunc)(void))
+{
+    if(win->type == WT_CONSOLE) return;
+
+    assert(win);
+    assert(win->widget);
+
+    win->drawFunc = drawFunc;
+    win->widget->canvas().setDrawCallback(drawFunc? drawCanvasWithCallback : 0);
+}
+
+void Window_Draw(Window* win)
+{
+    if(win->type == WT_CONSOLE) return;
+
+    assert(win);
+    assert(win->widget);
+
+    // Repaint right now.
+    win->widget->canvas().forcePaint();
+}
 
 void Window_Show(Window *wnd, boolean show)
 {

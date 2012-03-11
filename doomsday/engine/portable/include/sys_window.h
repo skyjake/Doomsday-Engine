@@ -112,10 +112,14 @@ boolean Sys_GetDesktopBPP(int* bpp);
  *
  * @return              If @c 0, window creation was unsuccessful,
  *                      ELSE 1-based index identifier of the new window.
+ *
+ * @todo Refactor for New/Delete convention.
  */
-uint Sys_CreateWindow(application_t* app, const Point2Raw* origin,
-    const Size2Raw* size, int bpp, int flags, ddwindowtype_t type, const char* title, void* data);
-boolean Sys_DestroyWindow(uint idx);
+uint Window_Create(application_t* app, const Point2Raw* origin,
+                   const Size2Raw* size, int bpp, int flags, ddwindowtype_t type,
+                   const char* title, void* data);
+
+boolean Window_Destroy(uint idx);
 
 void Window_Show(Window* wnd, boolean show);
 
@@ -146,15 +150,13 @@ int Window_BitsPerPixel(const Window* wnd);
  */
 const Size2Raw* Window_Size(const Window* wnd);
 
-void Sys_UpdateWindow(uint idx);
+void Window_SwapBuffers(const Window* win);
 
-boolean Sys_GetWindowBPP(uint idx, int* bpp);
-boolean Sys_GetWindowFullscreen(uint idx, boolean* fullscreen);
-boolean Sys_GetWindowVisibility(uint idx, boolean* show);
+boolean Sys_GetWindowFullscreen(uint idx, boolean* fullscreen); /// @todo refactor
 
-boolean Sys_SetActiveWindow(uint idx);
 boolean Sys_SetWindow(uint idx, int x, int y, int w, int h, int bpp, uint wflags, uint uflags);
-boolean Sys_SetWindowTitle(uint idx, const char* title);
+
+void Window_SetTitle(const Window *win, const char* title);
 
 /**
  * Sets the function who will draw the contents of the window when needed.
@@ -171,8 +173,8 @@ void Window_SetDrawFunction(Window* win, void (*drawFunc)(void));
  */
 void Window_Draw(Window* win);
 
-Window* Sys_Window(uint idx);
-Window* Sys_MainWindow(void);
+Window* Window_ByIndex(uint idx);
+Window* Window_Main(void);
 
 /**
  *\todo This is a compromise to prevent having to refactor half the

@@ -411,12 +411,10 @@ static BOOL createMainWindow(int lnCmdShow)
     Point2Raw origin = { 0, 0 };
     Size2Raw size = { 640, 480 };
     DD_ComposeMainWindowTitle(buf);
-    mainWindowIdx = Sys_CreateWindow(&app, &origin, &size, 32, 0,
-        (isDedicated ? WT_CONSOLE : WT_NORMAL), buf, &lnCmdShow);
+    mainWindowIdx = Window_Create(&app, &origin, &size, 32, 0,
+                                  (isDedicated ? WT_CONSOLE : WT_NORMAL), buf, &lnCmdShow);
     return mainWindowIdx != 0;
 }
-
-//int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 
 boolean DD_Win32_Init(void)
 {

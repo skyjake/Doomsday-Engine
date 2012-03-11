@@ -345,8 +345,8 @@ static int createMainWindow(void)
     Size2Raw size = { 640, 480 };
     char buf[256];
     DD_ComposeMainWindowTitle(buf);
-    mainWindowIdx = Sys_CreateWindow(&app, &origin, &size, 32, 0,
-                                     isDedicated? WT_CONSOLE : WT_NORMAL, buf, 0);
+    mainWindowIdx = Window_Create(&app, &origin, &size, 32, 0,
+                                  isDedicated? WT_CONSOLE : WT_NORMAL, buf, 0);
     return mainWindowIdx != 0;
 }
 
@@ -404,21 +404,6 @@ boolean DD_Unix_Init(int argc, char** argv)
         // Everything okay so far.
         failed = false;
     }}
-
-        /*if(!Sys_GLInitialize())
-    {
-        DD_ErrorBox(true, "Error initializing OpenGL.");
-    }
-    else
-    {   // All initialization complete.
-        failed = false;
-
-        /// @todo  This is the window manager's responsibility.
-        { char buf[256];
-        DD_ComposeMainWindowTitle(buf);
-        Sys_SetWindowTitle(mainWindowIdx, buf);
-        }
-    }}*/
 
     return !failed;
 }

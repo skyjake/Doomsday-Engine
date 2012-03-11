@@ -25,20 +25,32 @@
 
 #include <QGLFormat>
 
+struct CanvasWindow::Instance
+{
+    Canvas* canvas;
+};
+
 CanvasWindow::CanvasWindow(QWidget *parent)
     : QMainWindow(parent)
 {
+    d = new Instance;
+
     // Create the drawing canvas for this window.
-    setCentralWidget(_canvas = new Canvas); // takes ownership
+    setCentralWidget(d->canvas = new Canvas); // takes ownership
+}
+
+CanvasWindow::~CanvasWindow()
+{
+    delete d;
 }
 
 Canvas& CanvasWindow::canvas()
 {
-    assert(_canvas != 0);
-    return *_canvas;
+    assert(d->canvas != 0);
+    return *d->canvas;
 }
 
-void CanvasWindow::setDefaultGLFormat()
+void CanvasWindow::setDefaultGLFormat() // static
 {
     // Configure the GL settings for all subsequently created canvases.
     QGLFormat fmt;
