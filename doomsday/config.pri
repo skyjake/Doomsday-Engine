@@ -138,9 +138,7 @@ unix {
 unix:!macx {
     # Generic Unix build options.
     CONFIG += deng_nofixedasm
-    !deng_nosnowberry {
-        CONFIG += deng_snowberry
-    }
+    !deng_nosnowberry: CONFIG += deng_snowberry
 
     exists(/etc/apt) {
         # Choose the apt repository to include in the distribution.
