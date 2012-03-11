@@ -26,7 +26,9 @@
 
 /**
  * Drawing canvas with an OpenGL context and window surface. Each CanvasWindow
- * creates one Canvas instance on which to draw.
+ * creates one Canvas instance on which to draw. Buffer swapping must be done
+ * manually when appropriate.
+ *
  * @ingroup gl
  */
 class Canvas : public QGLWidget
@@ -40,14 +42,25 @@ public:
     /**
      * Sets a callback function that will be called when the canvas is ready
      * for GL initialization. The OpenGL context and drawing surface are not
-     * ready to be used before that.
+     * ready to be used before that. The callback will only be called once
+     * during the lifetime of the Canvas.
      *
      * @param canvasInitializeFunc  Callback.
      */
     void setInitCallback(void (*canvasInitializeFunc)(Canvas&));
 
+    /**
+     * Sets a callback function that is responsible for drawing the canvas
+     * contents when it gets painted. Setting a @c NULL callback will cause the
+     * canvas to be filled with black.
+     *
+     * @param canvasDrawFunc  Callback.
+     */
     void setDrawCallback(void (*canvasDrawFunc)(Canvas&));
 
+    /**
+     * Forces immediate repainting of the canvas. The draw callback gets called.
+     */
     void forcePaint();
 
 protected:
