@@ -139,6 +139,8 @@ DENG_HEADERS = \
     portable/include/b_device.h \
     portable/include/b_main.h \
     portable/include/b_util.h \
+    portable/include/canvas.h \
+    portable/include/canvaswindow.h \
     portable/include/cbuffer.h \
     portable/include/cl_def.h \
     portable/include/cl_frame.h \
@@ -401,6 +403,8 @@ SOURCES += \
     portable/src/bsp_node.c \
     portable/src/bsp_superblock.c \
     portable/src/bspleaf.c \
+    portable/src/canvas.cpp \
+    portable/src/canvaswindow.cpp \
     portable/src/cbuffer.c \
     portable/src/cl_frame.c \
     portable/src/cl_infine.c \

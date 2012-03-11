@@ -451,9 +451,12 @@ static ddwindow_t* createDDWindow(application_t*, const Size2Raw* size, int bpp,
     {
         if(!(bpp == 32 || bpp == 16))
         {
-            Con_Message("createWindow: Unsupported BPP %i.", bpp);
+            Con_Message("createDDWindow: Unsupported BPP %i.", bpp);
             return 0;
         }
+
+        // Create a window.
+
 
 #if 0
 #if defined(WIN32)

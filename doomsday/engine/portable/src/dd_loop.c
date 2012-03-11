@@ -145,7 +145,7 @@ void DD_GameLoopCallback(void)
     endFrame();
 
     // Draw the frame.
-    drawAndUpdate();
+    //drawAndUpdate();
 
     // After the first frame, start timedemo.
     DD_CheckTimeDemo();

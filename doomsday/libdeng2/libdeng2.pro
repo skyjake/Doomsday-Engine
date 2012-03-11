@@ -11,7 +11,7 @@ VERSION = $$DENG2_VERSION
 DEFINES += __DENG2__
 
 # Using Qt.
-QT += core network gui
+QT += core network gui opengl
 
 win32 {
     # Keep the version number out of the file name.
