@@ -43,31 +43,63 @@ void BSP_Register(void)
     C_VAR_INT("bsp-factor", &bspFactor, CVF_NO_MAX, 0, 0);
 }
 
-static void findMapLimits(GameMap* src, int* bbox)
+static void initAABoxFromEditableLineDefVertexes(AABoxf* aaBox, const LineDef* line)
 {
-    uint i;
+    const double* from = line->L_v1->buildData.pos;
+    const double* to   = line->L_v2->buildData.pos;
+    aaBox->minX = MIN_OF(from[VX], to[VX]);
+    aaBox->minY = MIN_OF(from[VY], to[VY]);
+    aaBox->maxX = MAX_OF(from[VX], to[VX]);
+    aaBox->maxY = MAX_OF(from[VY], to[VY]);
+}
 
-    M_ClearBox(bbox);
+typedef struct {
+    AABoxf bounds;
+    boolean initialized;
+} findmapboundsparams_t;
 
-    for(i = 0; i < src->numLineDefs; ++i)
+static int findMapBoundsIterator(LineDef* line, void* parameters)
+{
+    findmapboundsparams_t* p = (findmapboundsparams_t*) parameters;
+    AABoxf lineAABox;
+    assert(p);
+
+    // Do not consider zero-length LineDefs.
+    if(line->buildData.mlFlags & MLF_ZEROLENGTH) return false; // Continue iteration.
+
+    initAABoxFromEditableLineDefVertexes(&lineAABox, line);
+    if(p->initialized)
     {
-        LineDef* l = &src->lineDefs[i];
+        V2_AddToBox(p->bounds.arvec2, lineAABox.min);
+    }
+    else
+    {
+        V2_InitBox(p->bounds.arvec2, lineAABox.min);
+        p->initialized = true;
+    }
+    V2_AddToBox(p->bounds.arvec2, lineAABox.max);
+    return false; // Continue iteration.
+}
 
-        if(!(l->buildData.mlFlags & MLF_ZEROLENGTH))
+static void findMapBounds(GameMap* map, AABoxf* aaBox)
+{
+    assert(map && aaBox);
+
+    if(GameMap_LineDefCount(map))
+    {
+        findmapboundsparams_t parm;
+        parm.initialized = false;
+        GameMap_LineDefIterator(map, findMapBoundsIterator, (void*)&parm);
+        if(parm.initialized)
         {
-            double x1 = l->v[0]->buildData.pos[VX];
-            double y1 = l->v[0]->buildData.pos[VY];
-            double x2 = l->v[1]->buildData.pos[VX];
-            double y2 = l->v[1]->buildData.pos[VY];
-            int lX = (int) floor(MIN_OF(x1, x2));
-            int lY = (int) floor(MIN_OF(y1, y2));
-            int hX = (int) ceil(MAX_OF(x1, x2));
-            int hY = (int) ceil(MAX_OF(y1, y2));
-
-            M_AddToBox(bbox, lX, lY);
-            M_AddToBox(bbox, hX, hY);
+            V2_CopyBox(aaBox->arvec2, parm.bounds.arvec2);
+            return;
         }
     }
+
+    // Clear.
+    V2_Set(aaBox->min, DDMAXFLOAT, DDMAXFLOAT);
+    V2_Set(aaBox->max, DDMINFLOAT, DDMINFLOAT);
 }
 
 /**
@@ -79,29 +111,33 @@ static superblock_t* createInitialHEdges(GameMap* map)
 {
     uint startTime = Sys_GetRealTime();
 
-    uint i;
-    int bw, bh;
     bsp_hedge_t* back, *front;
     superblock_t* block;
-    int mapBounds[4];
+    AABoxf mapBoundsf;
+    AABox mapBounds;
+    int bw, bh;
+    uint i;
 
     // Find maximal vertexes.
-    findMapLimits(map, mapBounds);
+    findMapBounds(map, &mapBoundsf);
+
+    mapBounds.minX = (int) floor(mapBoundsf.minX);
+    mapBounds.minY = (int) floor(mapBoundsf.minY);
+    mapBounds.maxX = (int)  ceil(mapBoundsf.maxX);
+    mapBounds.maxY = (int)  ceil(mapBoundsf.maxY);
 
     VERBOSE2(
-    Con_Message("Map goes from (%d,%d) to (%d,%d)\n",
-                mapBounds[BOXLEFT], mapBounds[BOXBOTTOM],
-                mapBounds[BOXRIGHT], mapBounds[BOXTOP]) );
+    Con_Message("Map goes from [x:%f, y:%f] -> [x:%f, y:%f]\n",
+                mapBoundsf.minX,  mapBoundsf.minY, mapBoundsf.maxX, mapBoundsf.maxY) );
 
     block = BSP_SuperBlockCreate();
+    block->aaBox.minX = mapBounds.minX - (mapBounds.minX & 0x7);
+    block->aaBox.minY = mapBounds.minY - (mapBounds.minY & 0x7);
+    bw = ((mapBounds.maxX - block->aaBox.minX) / 128) + 1;
+    bh = ((mapBounds.maxY - block->aaBox.minY) / 128) + 1;
 
-    block->bbox[BOXLEFT]   = mapBounds[BOXLEFT]   - (mapBounds[BOXLEFT]   & 0x7);
-    block->bbox[BOXBOTTOM] = mapBounds[BOXBOTTOM] - (mapBounds[BOXBOTTOM] & 0x7);
-    bw = ((mapBounds[BOXRIGHT] - block->bbox[BOXLEFT])   / 128) + 1;
-    bh = ((mapBounds[BOXTOP]   - block->bbox[BOXBOTTOM]) / 128) + 1;
-
-    block->bbox[BOXRIGHT] = block->bbox[BOXLEFT]   + 128 * M_CeilPow2(bw);
-    block->bbox[BOXTOP]   = block->bbox[BOXBOTTOM] + 128 * M_CeilPow2(bh);
+    block->aaBox.maxX = block->aaBox.minX + 128 * M_CeilPow2(bw);
+    block->aaBox.maxY = block->aaBox.minY + 128 * M_CeilPow2(bh);
 
     for(i = 0; i < map->numLineDefs; ++i)
     {

@@ -51,18 +51,16 @@ static __inline int pointOnHEdgeSide(double x, double y, const bsp_hedge_t* part
 void BSP_AddHEdgeToSuperBlock(superblock_t* block, bsp_hedge_t* hEdge)
 {
 #define SUPER_IS_LEAF(s)  \
-    ((s)->bbox[BOXRIGHT] - (s)->bbox[BOXLEFT] <= 256 && \
-     (s)->bbox[BOXTOP] - (s)->bbox[BOXBOTTOM] <= 256)
+    ((s)->aaBox.maxX - (s)->aaBox.minX <= 256 && \
+     (s)->aaBox.maxY - (s)->aaBox.minY <= 256)
 
     for(;;)
     {
-        int p1, p2;
-        int child;
-        int midPoint[2];
+        int p1, p2, child, midPoint[2];
         superblock_t* sub;
 
-        midPoint[VX] = (block->bbox[BOXLEFT]   + block->bbox[BOXRIGHT]) / 2;
-        midPoint[VY] = (block->bbox[BOXBOTTOM] + block->bbox[BOXTOP])   / 2;
+        midPoint[VX] = (block->aaBox.minX + block->aaBox.maxX) / 2;
+        midPoint[VY] = (block->aaBox.minY + block->aaBox.maxY) / 2;
 
         // Update half-edge counts.
         if(hEdge->lineDef)
@@ -77,8 +75,8 @@ void BSP_AddHEdgeToSuperBlock(superblock_t* block, bsp_hedge_t* hEdge)
             return;
         }
 
-        if(block->bbox[BOXRIGHT] - block->bbox[BOXLEFT] >=
-           block->bbox[BOXTOP]   - block->bbox[BOXBOTTOM])
+        if(block->aaBox.maxX - block->aaBox.minX >=
+           block->aaBox.maxY - block->aaBox.minY)
         {
             // Block is wider than it is high, or square.
             p1 = hEdge->v[0]->buildData.pos[VX] >= midPoint[VX];
@@ -113,22 +111,22 @@ void BSP_AddHEdgeToSuperBlock(superblock_t* block, bsp_hedge_t* hEdge)
             block->subs[child] = sub = BSP_SuperBlockCreate();
             sub->parent = block;
 
-            if(block->bbox[BOXRIGHT] - block->bbox[BOXLEFT] >=
-               block->bbox[BOXTOP]   - block->bbox[BOXBOTTOM])
+            if(block->aaBox.maxX - block->aaBox.minX >=
+               block->aaBox.maxY - block->aaBox.minY)
             {
-                sub->bbox[BOXLEFT]   = (child? midPoint[VX] : block->bbox[BOXLEFT]);
-                sub->bbox[BOXBOTTOM] = block->bbox[BOXBOTTOM];
+                sub->aaBox.minX = (child? midPoint[VX] : block->aaBox.minX);
+                sub->aaBox.minY = block->aaBox.minY;
 
-                sub->bbox[BOXRIGHT]  = (child? block->bbox[BOXRIGHT] : midPoint[VX]);
-                sub->bbox[BOXTOP]    = block->bbox[BOXTOP];
+                sub->aaBox.maxX = (child? block->aaBox.maxX : midPoint[VX]);
+                sub->aaBox.maxY = block->aaBox.maxY;
             }
             else
             {
-                sub->bbox[BOXLEFT]   = block->bbox[BOXLEFT];
-                sub->bbox[BOXBOTTOM] = (child? midPoint[VY] : block->bbox[BOXBOTTOM]);
+                sub->aaBox.minX = block->aaBox.minX;
+                sub->aaBox.minY = (child? midPoint[VY] : block->aaBox.minY);
 
-                sub->bbox[BOXRIGHT]  = block->bbox[BOXRIGHT];
-                sub->bbox[BOXTOP]    = (child? block->bbox[BOXTOP] : midPoint[VY]);
+                sub->aaBox.maxX = block->aaBox.maxX;
+                sub->aaBox.maxY = (child? block->aaBox.maxY : midPoint[VY]);
             }
         }
 
@@ -546,8 +544,8 @@ boolean BuildNodes(superblock_t* hEdgeList, binarytree_t** parent, size_t depth,
     hEdgeSet[LEFT]  = (superblock_t *) BSP_SuperBlockCreate();
 
     // Copy the bounding box of the edge list to the superblocks.
-    M_CopyBox(hEdgeSet[LEFT]->bbox, hEdgeList->bbox);
-    M_CopyBox(hEdgeSet[RIGHT]->bbox, hEdgeList->bbox);
+    memcpy(&hEdgeSet[LEFT]->aaBox,  &hEdgeList->aaBox, sizeof(hEdgeSet[LEFT]->aaBox));
+    memcpy(&hEdgeSet[RIGHT]->aaBox, &hEdgeList->aaBox, sizeof(hEdgeSet[RIGHT]->aaBox));
 
     // Divide the half-edges into two lists: left & right.
     BSP_PartitionHEdges(hEdgeList, &partition, hEdgeSet[RIGHT], hEdgeSet[LEFT], cutList);

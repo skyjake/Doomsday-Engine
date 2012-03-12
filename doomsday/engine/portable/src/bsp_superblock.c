@@ -315,8 +315,8 @@ static int evalPartitionWorker(const superblock_t* hEdgeList, bsp_hedge_t* part,
      * half-edges within it at once. Only when the partition line intercepts the
      * box do we need to go deeper into it.
      */
-    num = P_BoxOnLineSide3(hEdgeList->bbox, part->pSX, part->pSY, part->pDX, part->pDY,
-                           part->pPerp, part->pLength, DIST_EPSILON);
+    num = P_BoxOnLineSide3(&hEdgeList->aaBox, part->pSX, part->pSY, part->pDX,
+                           part->pDY, part->pPerp, part->pLength, DIST_EPSILON);
 
     if(num < 0)
     {

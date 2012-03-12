@@ -62,10 +62,25 @@ int             P_PointOnLinedefSide2(double pointX, double pointY,
 int             P_BoxOnLineSide(const AABoxf* box, const LineDef* ld);
 int             P_BoxOnLineSide2(float xl, float xh, float yl, float yh,
                                  const LineDef *ld);
-int             P_BoxOnLineSide3(const int bbox[4], double lineSX,
-                                 double lineSY, double lineDX, double lineDY,
-                                 double linePerp, double lineLength,
-                                 double epsilon);
+
+/**
+ * Check the spatial relationship between the given box and a partitioning line.
+ *
+ * @param bbox          Ptr to the box being tested.
+ * @param lineSX        X coordinate of the start of the line.
+ * @param lineSY        Y coordinate of the end of the line.
+ * @param lineDX        X delta of the line (slope).
+ * @param lineDY        Y delta of the line (slope).
+ * @param linePerp      Perpendicular d of the line.
+ * @param lineLength    Length of the line.
+ * @param epsilon       Points within this distance will be considered equal.
+ *
+ * @return  @c <0= bbox is wholly on the left side.
+ *          @c  0= line intersects bbox.
+ *          @c >0= bbox wholly on the right side.
+ */
+int P_BoxOnLineSide3(const AABox* aaBox, double lineSX, double lineSY, double lineDX,
+    double lineDY, double linePerp, double lineLength, double epsilon);
 
 void P_MakeDivline(const LineDef* lineDef, divline_t* divline);
 

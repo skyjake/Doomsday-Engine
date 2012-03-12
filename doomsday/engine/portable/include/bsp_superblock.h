@@ -30,6 +30,7 @@
 #ifndef LIBDENG_MAP_BSP_SUPERBLOCK
 #define LIBDENG_MAP_BSP_SUPERBLOCK
 
+#include "de_platform.h"
 #include "bsp_intersection.h"
 
 typedef struct superblock_s {
@@ -38,8 +39,8 @@ typedef struct superblock_s {
 
     // Coordinates on map for this block, from lower-left corner to
     // upper-right corner. Pseudo-inclusive, i.e (x,y) is inside block
-    // if and only if BOXLEFT <= x < BOXRIGHT and BOXBOTTOM <= y < BOXTOP.
-    int bbox[4];
+    // if and only if minX <= x < maxX and minY <= y < maxY.
+    AABox aaBox;
 
     // Sub-blocks. NULL when empty. [0] has the lower coordinates, and
     // [1] has the higher coordinates. Division of a square always
