@@ -180,7 +180,7 @@ static fontid_t loadSystemFont(const char* name)
     // Compose the resource data path.
     // \todo This is currently rather awkward due
     Str_Init(&resourcePath);
-    Str_Appendf(&resourcePath, "}data/"FONTS_RESOURCE_NAMESPACE_NAME"/%s.dfn", name);    
+    Str_Appendf(&resourcePath, "}data/"FONTS_RESOURCE_NAMESPACE_NAME"/%s.dfn", name);
 #if defined(UNIX) && !defined(MACOSX)
     // Case-sensitive file system.
     /// @todo Unkludge this: handle in a more generic manner.
@@ -254,7 +254,7 @@ void R_SetViewPitch(int consoleNum, float pitch)
 }
 
 void R_SetupDefaultViewWindow(int consoleNum)
-{    
+{
     viewdata_t* vd = &viewDataOfConsole[consoleNum];
     if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
 
@@ -565,39 +565,41 @@ void R_Update(void)
         ddpl->pSprites[0].statePtr = ddpl->pSprites[1].statePtr = NULL;
     }}
 
-    // Update all world surfaces.
-    { uint i;
-    for(i = 0; i < NUM_SECTORS; ++i)
+    if(theMap)
     {
-        Sector* sec = &sectors[i];
-        uint j;
-        for(j = 0; j < sec->planeCount; ++j)
-            Surface_Update(&sec->SP_planesurface(j));
-    }}
+        uint i;
 
-    { uint i;
-    for(i = 0; i < NUM_SIDEDEFS; ++i)
-    {
-        SideDef* side = &sideDefs[i];
-        Surface_Update(&side->SW_topsurface);
-        Surface_Update(&side->SW_middlesurface);
-        Surface_Update(&side->SW_bottomsurface);
-    }}
-
-    { uint i;
-    for(i = 0; i < NUM_POLYOBJS; ++i)
-    {
-        Polyobj* po = polyObjs[i];
-        LineDef** lineIter;
-        for(lineIter = po->lines; *lineIter; lineIter++)
+        // Update all world surfaces.
+        for(i = 0; i < NUM_SECTORS; ++i)
         {
-            LineDef* line = *lineIter;
-            SideDef* side = line->L_frontside;
-            Surface_Update(&side->SW_middlesurface);
+            Sector* sec = &sectors[i];
+            uint j;
+            for(j = 0; j < sec->planeCount; ++j)
+                Surface_Update(&sec->SP_planesurface(j));
         }
-    }}
 
-    R_MapInitSurfaceLists();
+        for(i = 0; i < NUM_SIDEDEFS; ++i)
+        {
+            SideDef* side = &sideDefs[i];
+            Surface_Update(&side->SW_topsurface);
+            Surface_Update(&side->SW_middlesurface);
+            Surface_Update(&side->SW_bottomsurface);
+        }
+
+        for(i = 0; i < NUM_POLYOBJS; ++i)
+        {
+            Polyobj* po = polyObjs[i];
+            LineDef** lineIter;
+            for(lineIter = po->lines; *lineIter; lineIter++)
+            {
+                LineDef* line = *lineIter;
+                SideDef* side = line->L_frontside;
+                Surface_Update(&side->SW_middlesurface);
+            }
+        }
+
+        R_MapInitSurfaceLists();
+    }
 
     // The rendering lists have persistent data that has changed during
     // the re-initialization.
