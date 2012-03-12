@@ -79,7 +79,7 @@ static keyevent_t keyEvents[EVBUFSIZE];
 static int evHead, evTail;
 
 static clicker_t mouseClickers[IMB_MAXBUTTONS];
-static clicker_t joyClickers[IJOY_MAXBUTTONS];
+static boolean joyButtonWasDown[IJOY_MAXBUTTONS];
 static boolean gotFirstMouseMove = false;
 
 static SDL_Joystick *joy;
@@ -353,8 +353,21 @@ void I_InitJoystick(void)
 {
     int         joycount;
 
-    if(ArgCheck("-nojoy"))
+    if(isDedicated || ArgCheck("-nojoy"))
         return;
+
+#ifdef SOLARIS
+    /**
+     * @note  Solaris has no Joystick support according to
+     * https://sourceforge.net/tracker/?func=detail&atid=542099&aid=1732554&group_id=74815
+     */
+    return;
+#endif
+
+    if(SDL_InitSubSystem(SDL_INIT_JOYSTICK))
+    {
+        Con_Message("SDL init failed for joystick: %s\n", SDL_GetError());
+    }
 
     if((joycount = SDL_NumJoysticks()) > 0)
     {
@@ -510,45 +523,24 @@ void I_GetJoystickState(joystate_t *state)
     }
     for(i = 0; i < state->numButtons; ++i)
     {
-        state->buttonDowns[i] = joyClickers[i].down;
-        state->buttonUps[i] = joyClickers[i].up;
+        int isDown = SDL_JoystickGetButton(joy, i);
 
-        // Reset counters.
-        joyClickers[i].down = joyClickers[i].up = 0;
+        if(isDown && !joyButtonWasDown[i])
+        {
+            state->buttonDowns[i] = 1;
+            state->buttonUps[i] = 0;
+        }
+        else if(!isDown && joyButtonWasDown[i])
+        {
+            state->buttonDowns[i] = 0;
+            state->buttonUps[i] = 1;
+        }
+
+        joyButtonWasDown[i] = isDown;
     }
     for(i = 0; i < state->numHats; ++i)
     {
         pov = SDL_JoystickGetHat(joy, i);
-
-        /*
-        {
-            // Debug: Simulating the hat with buttons 1-4.
-            int buts[4] = {
-                SDL_JoystickGetButton(joy, 0),
-                SDL_JoystickGetButton(joy, 1),
-                SDL_JoystickGetButton(joy, 2),
-                SDL_JoystickGetButton(joy, 3)
-            };
-            pov = SDL_HAT_CENTERED;
-            if(buts[0] && !buts[1] && !buts[3])
-                pov = SDL_HAT_UP;
-            else if(buts[0] && buts[1])
-                pov = SDL_HAT_RIGHTUP;
-            else if(buts[1] && !buts[2])
-                pov = SDL_HAT_RIGHT;
-            else if(buts[1] && buts[2])
-                pov = SDL_HAT_RIGHTDOWN;
-            else if(buts[2] && !buts[3])
-                pov = SDL_HAT_DOWN;
-            else if(buts[2] && buts[3])
-                pov = SDL_HAT_LEFTDOWN;
-            else if(buts[3] && !buts[0])
-                pov = SDL_HAT_LEFT;
-            else if(buts[3] && buts[0])
-                pov = SDL_HAT_LEFTUP;
-        }
-         */
-
         switch(pov)
         {
             case SDL_HAT_UP:
