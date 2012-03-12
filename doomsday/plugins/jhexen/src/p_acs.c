@@ -1667,7 +1667,7 @@ static int CmdSectorSound(void)
         Sector*             front =
             P_GetPtrp(ACScript->line, DMU_FRONT_SECTOR);
 
-        mobj = P_GetPtrp(front, DMU_SOUND_ORIGIN);
+        mobj = P_GetPtrp(front, DMU_ORIGIN);
     }
     volume = Pop();
 
@@ -1734,7 +1734,7 @@ static int CmdSoundSequence(void)
         Sector*             front =
             P_GetPtrp(ACScript->line, DMU_FRONT_SECTOR);
 
-        mobj = P_GetPtrp(front, DMU_SOUND_ORIGIN);
+        mobj = P_GetPtrp(front, DMU_ORIGIN);
     }
     SN_StartSequenceName(mobj, GetACString(Pop()));
 

@@ -4243,7 +4243,7 @@ static void P_UnArchiveSounds(void)
         secNum = SV_ReadLong();
         if(!polySnd)
         {
-            sndMobj = P_GetPtr(DMU_SECTOR, secNum, DMU_SOUND_ORIGIN);
+            sndMobj = P_GetPtr(DMU_SECTOR, secNum, DMU_ORIGIN);
         }
         else
         {

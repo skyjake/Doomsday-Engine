@@ -384,10 +384,9 @@ int D_NetWorldEvent(int type, int parm, void* data)
     case DDWE_SECTOR_SOUND:
         // High word: sector number, low word: sound id.
         if(parm & 0xffff)
-            S_StartSound(parm & 0xffff, (mobj_t*) P_GetPtr(DMU_SECTOR, parm >> 16, DMU_SOUND_ORIGIN));
+            S_StartSound(parm & 0xffff, (mobj_t*) P_GetPtr(DMU_SECTOR, parm >> 16, DMU_ORIGIN));
         else
-            S_StopSound(0, (mobj_t *) P_GetPtr(DMU_SECTOR, parm >> 16,
-                                               DMU_SOUND_ORIGIN));
+            S_StopSound(0, (mobj_t*) P_GetPtr(DMU_SECTOR, parm >> 16, DMU_ORIGIN));
 
         break;
 

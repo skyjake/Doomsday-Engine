@@ -362,10 +362,10 @@ boolean LineDef_MiddleMaterialCoversOpening(const LineDef *line, int side,
                     // Possibly. Check the placement of the mid texture.
                     if(LineDef_MiddleMaterialCoords(line, side, &matBottom[0], &matBottom[1],
                         &matTop[0], &matTop[1], NULL, 0 != (line->flags & DDLF_DONTPEGBOTTOM),
-                        !(R_IsSkySurface(&frontSec->SP_ceilsurface) &&
-                          R_IsSkySurface(&backSec->SP_ceilsurface)),
-                        !(R_IsSkySurface(&frontSec->SP_floorsurface) &&
-                          R_IsSkySurface(&backSec->SP_floorsurface))))
+                        !(Surface_IsSkyMasked(&frontSec->SP_ceilsurface) &&
+                          Surface_IsSkyMasked(&backSec->SP_ceilsurface)),
+                        !(Surface_IsSkyMasked(&frontSec->SP_floorsurface) &&
+                          Surface_IsSkyMasked(&backSec->SP_floorsurface))))
                     {
                         if(matTop[0] >= openTop[0] &&
                            matTop[1] >= openTop[1] &&

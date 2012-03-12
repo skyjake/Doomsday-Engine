@@ -98,14 +98,11 @@ static int findOldestGenerator(ptcgen_t* gen, void* parameters)
     return false; // Continue iteration.
 }
 
-static ptcgenid_t GameMap_FindIdForNewGenerator(GameMap* map)
+static ptcgenid_t findIdForNewGenerator(Generators* gens)
 {
-    Generators* gens;
     ptcgen_t* oldest;
     ptcgenid_t id;
-    assert(map);
 
-    gens = GameMap_Generators(map);
     if(!gens) return 0; // None found.
 
     // Prefer allocating a new generator if we've a spare id.
@@ -124,12 +121,13 @@ static ptcgenid_t GameMap_FindIdForNewGenerator(GameMap* map)
 /**
  * Allocates a new active ptcgen and adds it to the list of active ptcgens.
  */
-static ptcgen_t* GameMap_NewGenerator(GameMap* map)
+static ptcgen_t* P_NewGenerator(void)
 {
-    ptcgenid_t id = GameMap_FindIdForNewGenerator(map);
+    GameMap* map = theMap;
+    Generators* gens = GameMap_Generators(map);
+    ptcgenid_t id = findIdForNewGenerator(gens);
     if(id)
     {
-        Generators* gens = GameMap_Generators(map);
         ptcgen_t* gen;
 
         // If there is already a generator with that id - remove it.
@@ -303,12 +301,12 @@ void P_SpawnMobjParticleGen(const ded_ptcgen_t* def, mobj_t* source)
     if(isDedicated || !useParticles)return;
 
     /// @fixme Do not assume the source mobj is from the CURRENT map.
-    gen = GameMap_NewGenerator(theMap);
+    gen = P_NewGenerator();
     if(!gen) return;
 
     /*DEBUG_Message(("SpawnPtcGen: %s/%i (src:%s typ:%s mo:%p)\n",
-                   def->state, def - defs.ptcgens, defs.states[source->state-states].id,
-                   defs.mobjs[source->type].id, source));*/
+                     def->state, def - defs.ptcgens, defs.states[source->state-states].id,
+                     defs.mobjs[source->type].id, source));*/
 
     // Initialize the particle generator.
     gen->count = def->particles;
@@ -330,23 +328,35 @@ void P_SpawnMobjParticleGen(const ded_ptcgen_t* def, mobj_t* source)
     P_PresimParticleGen(gen, def->preSim);
 }
 
-static int findGeneratorForPlane(ptcgen_t* gen, void* parameters)
+typedef struct {
+    Plane* plane;
+    ptcgen_t* found;
+} generatorbyplaneiterator_params_t;
+
+static int generatorByPlaneIterator(ptcgen_t* gen, void* parameters)
 {
-    Plane* plane = (Plane*)parameters;
-    if(gen->plane == plane) return true; // Stop iteration.
+    generatorbyplaneiterator_params_t* p = (generatorbyplaneiterator_params_t*)parameters;
+    if(gen->plane == p->plane)
+    {
+        p->found = gen;
+        return true; // Stop iteration.
+    }
     return false; // Continue iteration.
 }
 
-/// @return  @c true iff there is an active ptcgen for the given plane.
-static boolean GameMap_HasGeneratorForPlane(GameMap* map, Plane* plane)
+static ptcgen_t* generatorByPlane(Plane* plane)
 {
-    assert(map);
-    return 0 != Generators_Iterate(GameMap_Generators(map), findGeneratorForPlane, (void*)plane);
+    GameMap* map = theMap; /// @fixme Do not assume plane is from the CURRENT map.
+    Generators* gens = GameMap_Generators(map);
+    generatorbyplaneiterator_params_t parm;
+    parm.plane = plane;
+    parm.found = NULL;
+    Generators_Iterate(gens, generatorByPlaneIterator, (void*)&parm);
+    return parm.found;
 }
 
 void P_SpawnPlaneParticleGen(const ded_ptcgen_t* def, Plane* plane)
 {
-    GameMap* map = theMap; /// @fixme Do not assume plane is from the CURRENT map.
     planetype_t relPlane;
     ptcgen_t* gen;
 
@@ -364,10 +374,10 @@ void P_SpawnPlaneParticleGen(const ded_ptcgen_t* def, Plane* plane)
     plane = plane->sector->SP_plane(relPlane);
 
     // Only one generator per plane.
-    if(GameMap_HasGeneratorForPlane(map, plane)) return;
+    if(generatorByPlane(plane)) return;
 
     // Are we out of generators?
-    gen = GameMap_NewGenerator(map);
+    gen = P_NewGenerator();
     if(!gen) return;
 
     gen->count = def->particles;
@@ -1000,7 +1010,7 @@ static void P_MoveParticle(ptcgen_t* gen, particle_t* pt)
         if(z > FLT2FIX(pt->sector->SP_ceilheight) - hardRadius)
         {
             // The Z is through the roof!
-            if(R_IsSkySurface(&pt->sector->SP_ceilsurface))
+            if(Surface_IsSkyMasked(&pt->sector->SP_ceilsurface))
             {
                 // Special case: particle gets lost in the sky.
                 pt->stage = -1;
@@ -1018,7 +1028,7 @@ static void P_MoveParticle(ptcgen_t* gen, particle_t* pt)
         // Also check the floor.
         if(z < FLT2FIX(pt->sector->SP_floorheight) + hardRadius)
         {
-            if(R_IsSkySurface(&pt->sector->SP_floorsurface))
+            if(Surface_IsSkyMasked(&pt->sector->SP_floorsurface))
             {
                 pt->stage = -1;
                 return;
@@ -1270,18 +1280,17 @@ void P_PtcGenThinker(ptcgen_t* gen)
 
 void P_SpawnTypeParticleGens(void)
 {
-    GameMap* map = theMap;
     ded_ptcgen_t* def;
     ptcgen_t* gen;
     int i;
 
-    if(isDedicated || !useParticles || !map) return;
+    if(isDedicated || !useParticles) return;
 
     for(i = 0, def = defs.ptcGens; i < defs.count.ptcGens.num; ++i, def++)
     {
         if(def->typeNum < 0) continue;
 
-        gen = GameMap_NewGenerator(map);
+        gen = P_NewGenerator();
         if(!gen) return; // No more generators.
 
         // Initialize the particle generator.
@@ -1313,7 +1322,7 @@ void P_SpawnMapParticleGens(void)
         // Are we still spawning using this generator?
         if(def->spawnAge > 0 && ddMapTime > def->spawnAge) continue;
 
-        gen = GameMap_NewGenerator(map);
+        gen = P_NewGenerator();
         if(!gen) return; // No more generators.
 
         // Initialize the particle generator.
@@ -1340,8 +1349,7 @@ void P_SpawnDamageParticleGen(mobj_t* mo, mobj_t* inflictor, int amount)
     def = Def_GetDamageGenerator(mo->type);
     if(def)
     {
-        GameMap* map = theMap; /// @fixme Do not assume mobj is from the CURRENT map.
-        ptcgen_t* gen = GameMap_NewGenerator(map);
+        ptcgen_t* gen = P_NewGenerator();
         vec3_t vector, vecDelta;
 
         if(!gen) return; // No more generators.

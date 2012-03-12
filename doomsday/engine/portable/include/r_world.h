@@ -84,14 +84,6 @@ float R_ExtraLightDelta(void);
  */
 float R_CheckSectorLight(float lightlevel, float min, float max);
 
-/**
- * Will the specified surface be added to the sky mask?
- *
- * @param suf  Ptr to the surface to test.
- * @return boolean  @c true, iff the surface will be masked.
- */
-boolean R_IsSkySurface(const Surface* suf);
-
 boolean R_SectorContainsSkySurfaces(const Sector* sec);
 
 void R_UpdatePlanes(void);

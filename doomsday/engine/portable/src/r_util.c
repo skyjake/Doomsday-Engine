@@ -385,38 +385,6 @@ boolean R_GenerateTexCoords(pvec2_t s, pvec2_t t, const_pvec3_t point, float xSc
     return true;
 }
 
-/**
- * Returns a ptr to the sector which owns the given ddmobj_base_t.
- *
- * @param ddMobjBase    ddmobj_base_t to search for.
- *
- * @return              Ptr to the Sector where the ddmobj_base_t resides,
- *                      else @c NULL.
- */
-Sector* R_GetSectorForOrigin(const void* ddMobjBase)
-{
-    uint                i, k;
-    Sector*             sec;
-
-    // Check all sectors; find where the sound is coming from.
-    for(i = 0; i < NUM_SECTORS; ++i)
-    {
-        sec = SECTOR_PTR(i);
-
-        if(ddMobjBase == &sec->soundOrg)
-            return sec;
-        else
-        {   // Check the planes of this sector
-            for(k = 0; k < sec->planeCount; ++k)
-                if(ddMobjBase == &sec->planes[k]->soundOrg)
-                {
-                    return sec;
-                }
-        }
-    }
-    return NULL;
-}
-
 /// \note Part of the Doomsday public API.
 boolean R_ChooseAlignModeAndScaleFactor(float* scale, int width, int height,
     int availWidth, int availHeight, scalemode_t scaleMode)

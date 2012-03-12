@@ -990,7 +990,7 @@ static boolean createGlowLightForSurface(Surface* suf, void* paramaters)
 
         // @note Plane lights do not spread so simply link to all BspLeafs of this sector.
         lum = createLuminous(LT_PLANE, sec->bspLeafs[0]);
-        V3_Set(lum->pos, pln->soundOrg.pos[VX], pln->soundOrg.pos[VY], pln->visHeight);
+        V3_Set(lum->pos, pln->origin.pos[VX], pln->origin.pos[VY], pln->visHeight);
 
         V3_Copy(LUM_PLANE(lum)->normal, pln->PS_normal);
         V3_Copy(LUM_PLANE(lum)->color, avgColorAmplified->color.rgb);

@@ -2058,7 +2058,7 @@ void XL_ActivateLine(boolean activating, linetype_t* info, LineDef* line,
     // Activation should happen on the front side.
     frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
     if(frontsector)
-        soundOrg = P_GetPtrp(frontsector, DMU_SOUND_ORIGIN);
+        soundOrg = P_GetPtrp(frontsector, DMU_ORIGIN);
 
     // Let the line know who's activating it.
     xg->activator = data;

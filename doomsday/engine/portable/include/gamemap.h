@@ -256,6 +256,16 @@ SideDef* GameMap_SideDef(GameMap* map, uint idx);
 Sector* GameMap_Sector(GameMap* map, uint idx);
 
 /**
+ * Lookup a Sector in the map by origin.
+ *
+ * @param map  GameMap instance.
+ * @param ddMobjBase  ddmobj_base_t to search for.
+ *
+ * @return  Found Sector instance else @c NULL.
+ */
+Sector* GameMap_SectorByOrigin(GameMap* map, const void* ddMobjBase);
+
+/**
  * Lookup a BspLeaf by its unique index.
  *
  * @param map  GameMap instance.
@@ -431,7 +441,8 @@ Polyobj* GameMap_PolyobjByTag(GameMap* map, int tag);
  * Lookup a Polyobj in the map by origin.
  *
  * @param map  GameMap instance.
- * @param tag  Tag associated with the Polyobj to be found.
+ * @param ddMobjBase  ddmobj_base_t to search for.
+ *
  * @return  Found Polyobj instance else @c NULL.
  */
 Polyobj* GameMap_PolyobjByOrigin(GameMap* map, void* ddMobjBase);

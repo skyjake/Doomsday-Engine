@@ -207,7 +207,7 @@ typedef enum {
 
 typedef struct plane_s {
     runtime_mapdata_header_t header;
-    ddmobj_base_t       soundOrg;      // Sound origin for plane
+    ddmobj_base_t       origin;
     struct sector_s*    sector;        // Owner of the plane (temp)
     Surface             surface;
     float               height;        // Current height
@@ -233,7 +233,7 @@ typedef struct plane_s {
 #define SP_planergb(n)          SP_plane(n)->surface.rgba
 #define SP_planetarget(n)       SP_plane(n)->target
 #define SP_planespeed(n)        SP_plane(n)->speed
-#define SP_planesoundorg(n)     SP_plane(n)->soundOrg
+#define SP_planeorigin(n)       SP_plane(n)->origin
 #define SP_planevisheight(n)    SP_plane(n)->visHeight
 
 #define SP_ceilsurface          SP_planesurface(PLN_CEILING)
@@ -246,7 +246,7 @@ typedef struct plane_s {
 #define SP_ceilrgb              SP_planergb(PLN_CEILING)
 #define SP_ceiltarget           SP_planetarget(PLN_CEILING)
 #define SP_ceilspeed            SP_planespeed(PLN_CEILING)
-#define SP_ceilsoundorg         SP_planesoundorg(PLN_CEILING)
+#define SP_ceilorigin           SP_planeorigin(PLN_CEILING)
 #define SP_ceilvisheight        SP_planevisheight(PLN_CEILING)
 
 #define SP_floorsurface         SP_planesurface(PLN_FLOOR)
@@ -259,7 +259,7 @@ typedef struct plane_s {
 #define SP_floorrgb             SP_planergb(PLN_FLOOR)
 #define SP_floortarget          SP_planetarget(PLN_FLOOR)
 #define SP_floorspeed           SP_planespeed(PLN_FLOOR)
-#define SP_floorsoundorg        SP_planesoundorg(PLN_FLOOR)
+#define SP_floororigin          SP_planeorigin(PLN_FLOOR)
 #define SP_floorvisheight       SP_planevisheight(PLN_FLOOR)
 
 #define S_skyfix(n)             skyFix[(n)]
@@ -301,14 +301,13 @@ typedef struct sector_s {
     struct bspleaf_s**  bspLeafs;     // [bspLeafCount+1] size.
     unsigned int        numReverbBspLeafAttributors;
     struct bspleaf_s**  reverbBspLeafs;  // [numReverbBspLeafAttributors] size.
-    ddmobj_base_t       soundOrg;
+    ddmobj_base_t       origin;
     unsigned int        planeCount;
     struct plane_s**    planes;        // [planeCount+1] size.
     unsigned int        blockCount;    // Number of gridblocks in the sector.
     unsigned int        changedBlockCount; // Number of blocks to mark changed.
     unsigned short*     blocks;        // Light grid block indices.
     float               reverb[NUM_REVERB_DATA];
-    origin_t            origin;
     msector_t           buildData;
 } Sector;
 

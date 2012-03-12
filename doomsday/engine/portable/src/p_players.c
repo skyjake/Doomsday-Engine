@@ -167,7 +167,7 @@ boolean P_IsInVoid(player_t* player)
         {
             Sector* sec = ddpl->mo->bspLeaf->sector;
 
-            if(R_IsSkySurface(&sec->SP_ceilsurface))
+            if(Surface_IsSkyMasked(&sec->SP_ceilsurface))
             {
                 const float skyCeil = GameMap_SkyFixCeiling(theMap);
                 if(skyCeil < DDMAXFLOAT && ddpl->mo->pos[VZ] > skyCeil - 4)
@@ -176,7 +176,7 @@ boolean P_IsInVoid(player_t* player)
             else if(ddpl->mo->pos[VZ] > sec->SP_ceilvisheight - 4)
                 return true;
 
-            if(R_IsSkySurface(&sec->SP_floorsurface))
+            if(Surface_IsSkyMasked(&sec->SP_floorsurface))
             {
                 const float skyFloor = GameMap_SkyFixFloor(theMap);
                 if(skyFloor > DDMINFLOAT && ddpl->mo->pos[VZ] < skyFloor + 4)

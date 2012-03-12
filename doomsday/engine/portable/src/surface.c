@@ -27,9 +27,16 @@
 
 #include "materialvariant.h"
 
-boolean Surface_IsDrawable(Surface* surface)
+boolean Surface_IsDrawable(Surface* suf)
 {
-    return surface->material && Material_IsDrawable(surface->material);
+    assert(suf);
+    return suf->material && Material_IsDrawable(suf->material);
+}
+
+boolean Surface_IsSkyMasked(const Surface* suf)
+{
+    assert(suf);
+    return suf->material && Material_IsSkyMasked(suf->material);
 }
 
 boolean Surface_AttachedToMap(Surface* suf)

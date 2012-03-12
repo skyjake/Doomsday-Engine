@@ -35,6 +35,9 @@ void Surface_Update(Surface* surface);
 /// @return @c true= is drawable (i.e., a drawable Material is bound).
 boolean Surface_IsDrawable(Surface* surface);
 
+/// @return @c true= is sky-masked (i.e., a sky-masked Material is bound).
+boolean Surface_IsSkyMasked(const Surface* suf);
+
 /// @return @c true= is owned by some element of the Map geometry.
 boolean Surface_AttachedToMap(Surface* surface);
 

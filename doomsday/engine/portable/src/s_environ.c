@@ -414,8 +414,8 @@ void S_CalcSectorReverb(Sector* sec)
     if(sec->reverb[SRD_SPACE] > .99)
         sec->reverb[SRD_SPACE] = .99f;
 
-    if(R_IsSkySurface(&sec->SP_ceilsurface) ||
-       R_IsSkySurface(&sec->SP_floorsurface))
+    if(Surface_IsSkyMasked(&sec->SP_ceilsurface) ||
+       Surface_IsSkyMasked(&sec->SP_floorsurface))
     {   // An "open" sector.
         // It can still be small, in which case; reverb is diminished a bit.
         if(sec->reverb[SRD_SPACE] > .5)
