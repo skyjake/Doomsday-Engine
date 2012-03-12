@@ -1,6 +1,6 @@
 /**
  * @file bsp_superblock.h
- * BSP Builder Superblock. @ingroup map
+ * BSP Builder SuperBlock. @ingroup map
  *
  * Design is effectively that of a 2-dimensional kd-tree.
  *
@@ -31,53 +31,120 @@
 #define LIBDENG_MAP_BSP_SUPERBLOCK
 
 #include "de_platform.h"
-#include "bsp_intersection.h"
-
-struct bspartition_s;
+#include "bsp_edge.h"
 
 struct superblock_s; // The SuperBlock instance (opaque).
 
 /**
- * SuperBlock instance. Created with Uri_New() or one of the other constructors.
+ * SuperBlock instance. Created with SuperBlock_New().
  */
 typedef struct superblock_s SuperBlock;
 
+/**
+ * Constructs a new superblock. The superblock must be destroyed with
+ * SuperBlock_Delete() when no longer needed.
+ */
 SuperBlock* SuperBlock_New(const AABox* bounds);
 
+/**
+ * Destroys the superblock.
+ */
 void SuperBlock_Delete(SuperBlock* superblock);
 
+/**
+ * Retrieve the axis-aligned bounding box defined for this superblock
+ * during instantiation. Note that this is NOT the bounds defined by
+ * the linked HEdges' vertices (@see SuperBlock_FindHEdgeListBounds()).
+ *
+ * @param superblock    SuperBlock instance.
+ * @return  Axis-aligned bounding box.
+ */
 const AABox* SuperBlock_Bounds(SuperBlock* superblock);
 
+/**
+ * Push (link) the given HEdge onto the FIFO list of half-edges linked
+ * to this superblock.
+ *
+ * @param superblock    SuperBlock instance.
+ * @param hEdge  HEdge instance to add.
+ */
 void SuperBlock_HEdgePush(SuperBlock* superblock, bsp_hedge_t* hEdge);
 
+/**
+ * Pop (unlink) the next HEdge from the FIFO list of half-edges linked
+ * to this superblock.
+ *
+ * @param superblock    SuperBlock instance.
+ *
+ * @return  Previous top-most HEdge instance or @c NULL if empty.
+ */
 bsp_hedge_t* SuperBlock_HEdgePop(SuperBlock* superblock);
 
 /**
  * Increase the counts within the superblock, to account for the given
  * half-edge being split.
+ *
+ * @todo Refactor: Redesign so counts are incremented automatically
+ *       upon the call to SuperBlock_HEdgePush().
  */
-void SuperBlock_IncrementHEdgeCounts(SuperBlock* block, boolean lineLinked);
+void SuperBlock_IncrementHEdgeCounts(SuperBlock* superblock, boolean lineLinked);
 
+/**
+ * Retrieve the total number of HEdges linked in this superblock (including
+ * any within child superblocks).
+ *
+ * @param superblock    SuperBlock instance.
+ * @param addReal       Include the "real" half-edges in the total.
+ * @param addMini       Include the "mini" half-edges in the total.
+ *
+ * @return  Total HEdge count.
+ */
 uint SuperBlock_HEdgeCount(SuperBlock* superblock, boolean addReal, boolean addMini);
 
+/// Convenience macros for retrieving the HEdge totals:
 #define SuperBlock_MiniHEdgeCount(sb)  SuperBlock_HEdgeCount((sb), false, true)
 #define SuperBlock_RealHEdgeCount(sb)  SuperBlock_HEdgeCount((sb), true, false)
 #define SuperBlock_TotalHEdgeCount(sb) SuperBlock_HEdgeCount((sb), true, true)
 
-int SuperBlock_IterateHEdges(SuperBlock* superblock, int (*callback)(bsp_hedge_t*, void*), void* parameters);
-
-#if _DEBUG
-void SuperBlock_PrintHEdges(SuperBlock* superblock);
-#endif
-
-SuperBlock* SuperBlock_Child(SuperBlock* superblock, boolean left);
-
-int SuperBlock_Traverse(SuperBlock* superblock, int (*callback)(SuperBlock*, void*), void* parameters);
+/**
+ * Iterate over all HEdges linked in this superblock. Iteration ends
+ * when all HEdges have been visited or a callback returns non-zero.
+ *
+ * @param superblock    SuperBlock instance.
+ * @param callback      Callback function ptr.
+ * @param parameters    Passed to the callback.
+ *
+ * @return  @c 0 iff iteration completed wholly.
+ */
+int SuperBlock_IterateHEdges2(SuperBlock* superblock, int (*callback)(bsp_hedge_t*, void*), void* parameters);
+int SuperBlock_IterateHEdges(SuperBlock* superblock, int (*callback)(bsp_hedge_t*, void*)/*, parameters=NULL*/);
 
 /**
- * Find the extremes of a box containing all half-edges.
+ * Retrieve a pointer to a sub-block of this superblock.
+ *
+ * @param superblock    SuperBlock instance.
+ * @param left          @c true= pick the "left" child.
+ *
+ * @return  Selected child superblock else @c NULL if none.
+ */
+SuperBlock* SuperBlock_Child(SuperBlock* superblock, boolean left);
+
+int SuperBlock_Traverse2(SuperBlock* superblock, int (*callback)(SuperBlock*, void*), void* parameters);
+int SuperBlock_Traverse(SuperBlock* superblock, int (*callback)(SuperBlock*, void*)/*, parameters=NULL*/);
+
+/**
+ * Find the axis-aligned bounding box defined by the vertices of all
+ * HEdges within this superblock. If no HEdges are linked then @a bounds
+ * will be set to the "cleared" state (i.e., min[x,y] > max[x,y]).
+ *
+ * @param superblock    SuperBlock instance.
+ * @param bounds        Determined bounds are written here.
  */
 void SuperBlock_FindHEdgeListBounds(SuperBlock* superblock, AABoxf* bounds);
+
+/**
+ * @todo The following functions do not belong in this module.
+ */
 
 /**
  * Init the superblock allocator.
