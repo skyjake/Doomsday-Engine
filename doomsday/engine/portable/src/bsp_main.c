@@ -107,14 +107,14 @@ static void findMapBounds(GameMap* map, AABoxf* aaBox)
  *
  * @return  The list of created half-edges.
  */
-static superblock_t* createInitialHEdges(GameMap* map)
+static SuperBlock* createInitialHEdges(GameMap* map)
 {
     uint startTime = Sys_GetRealTime();
 
     bsp_hedge_t* back, *front;
-    superblock_t* block;
+    SuperBlock* block;
     AABoxf mapBoundsf;
-    AABox mapBounds;
+    AABox mapBounds, blockBounds;
     int bw, bh;
     uint i;
 
@@ -130,14 +130,15 @@ static superblock_t* createInitialHEdges(GameMap* map)
     Con_Message("Map goes from [x:%f, y:%f] -> [x:%f, y:%f]\n",
                 mapBoundsf.minX,  mapBoundsf.minY, mapBoundsf.maxX, mapBoundsf.maxY) );
 
-    block = BSP_SuperBlockCreate();
-    block->aaBox.minX = mapBounds.minX - (mapBounds.minX & 0x7);
-    block->aaBox.minY = mapBounds.minY - (mapBounds.minY & 0x7);
-    bw = ((mapBounds.maxX - block->aaBox.minX) / 128) + 1;
-    bh = ((mapBounds.maxY - block->aaBox.minY) / 128) + 1;
+    blockBounds.minX = mapBounds.minX - (mapBounds.minX & 0x7);
+    blockBounds.minY = mapBounds.minY - (mapBounds.minY & 0x7);
+    bw = ((mapBounds.maxX - blockBounds.minX) / 128) + 1;
+    bh = ((mapBounds.maxY - blockBounds.minY) / 128) + 1;
 
-    block->aaBox.maxX = block->aaBox.minX + 128 * M_CeilPow2(bw);
-    block->aaBox.maxY = block->aaBox.minY + 128 * M_CeilPow2(bh);
+    blockBounds.maxX = blockBounds.minX + 128 * M_CeilPow2(bw);
+    blockBounds.maxY = blockBounds.minY + 128 * M_CeilPow2(bh);
+
+    block = BSP_NewSuperBlock(&blockBounds);
 
     for(i = 0; i < map->numLineDefs; ++i)
     {
@@ -172,7 +173,7 @@ static superblock_t* createInitialHEdges(GameMap* map)
                     Con_Message("Warning: Bad sidedef on linedef #%d\n", line->buildData.index);
 
                 front = BSP_HEdge_Create(line, line, line->v[0], line->v[1], side->sector, false);
-                BSP_AddHEdgeToSuperBlock(block, front);
+                SuperBlock_HEdgePush(block, front);
             }
             else
                 Con_Message("Warning: Linedef #%d has no front sidedef!\n", line->buildData.index);
@@ -185,7 +186,7 @@ static superblock_t* createInitialHEdges(GameMap* map)
                     Con_Message("Warning: Bad sidedef on linedef #%d\n", line->buildData.index);
 
                 back = BSP_HEdge_Create(line, line, line->v[1], line->v[0], side->sector, true);
-                BSP_AddHEdgeToSuperBlock(block, back);
+                SuperBlock_HEdgePush(block, back);
 
                 if(front)
                 {
@@ -211,7 +212,7 @@ static superblock_t* createInitialHEdges(GameMap* map)
                     other = BSP_HEdge_Create(front->lineDef, line, line->v[1], line->v[0],
                                              line->buildData.windowEffect, true);
 
-                    BSP_AddHEdgeToSuperBlock(block, other);
+                    SuperBlock_HEdgePush(block, other);
 
                     // Setup the twin-ing (it's very strange to have a mini
                     // and a normal partnered together).
@@ -260,7 +261,7 @@ boolean BSP_Build(GameMap* map, Vertex*** vertexes, uint* numVertexes)
 {
     boolean builtOK;
     uint startTime;
-    superblock_t* hEdgeList;
+    SuperBlock* hEdgeList;
     binarytree_t* rootNode;
 
     VERBOSE( Con_Message("BSP_Build: Processing map using tunable factor of %d...\n", bspFactor) )
@@ -295,7 +296,7 @@ boolean BSP_Build(GameMap* map, Vertex*** vertexes, uint* numVertexes)
     VERBOSE2( Con_Message("BuildNodes: Done in %.2f seconds.\n", (Sys_GetRealTime() - buildStartTime) / 1000.0f));
     }
 
-    BSP_SuperBlockDestroy(hEdgeList);
+    BSP_RecycleSuperBlock(hEdgeList);
 
     if(builtOK)
     {

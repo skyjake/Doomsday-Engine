@@ -157,7 +157,7 @@ bsp_hedge_t* BSP_HEdge_Split(bsp_hedge_t* oldHEdge, double x, double y)
 
     // Update superblock, if needed.
     if(oldHEdge->block)
-        BSP_IncSuperBlockHEdgeCounts(oldHEdge->block, (oldHEdge->lineDef != NULL));
+        SuperBlock_IncrementHEdgeCounts(oldHEdge->block, (oldHEdge->lineDef != NULL));
 
     /**
      * Create a new vertex (with correct wall_tip info) for the split that
@@ -199,7 +199,7 @@ bsp_hedge_t* BSP_HEdge_Split(bsp_hedge_t* oldHEdge, double x, double y)
 
         // Update superblock, if needed.
         if(oldHEdge->twin->block)
-            BSP_IncSuperBlockHEdgeCounts(oldHEdge->twin->block, (oldHEdge->twin != NULL));
+            SuperBlock_IncrementHEdgeCounts(oldHEdge->twin->block, (oldHEdge->twin != NULL));
 
         newHEdge->twin = allocHEdge();
 

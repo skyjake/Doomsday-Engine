@@ -372,8 +372,8 @@ static void buildEdgeBetweenIntersections(const bspartition_t* part, intersectio
     */
 }
 
-void BSP_AddMiniHEdges(const bspartition_t* part, superblock_t* rightList,
-    superblock_t* leftList, cutlist_t* cutList)
+void BSP_AddMiniHEdges(const bspartition_t* part, SuperBlock* rightList,
+    SuperBlock* leftList, cutlist_t* cutList)
 {
     clist_t* list;
     cnode_t* node, *np;
@@ -521,8 +521,8 @@ void BSP_AddMiniHEdges(const bspartition_t* part, superblock_t* rightList,
                 buildEdgeBetweenIntersections(part, cur, next, &right, &left);
 
                 // Add the new half-edges to the appropriate lists.
-                BSP_AddHEdgeToSuperBlock(rightList, right);
-                BSP_AddHEdgeToSuperBlock(leftList, left);
+                SuperBlock_HEdgePush(rightList, right);
+                SuperBlock_HEdgePush(leftList, left);
             }
         }
 

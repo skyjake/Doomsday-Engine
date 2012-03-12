@@ -33,6 +33,7 @@
 typedef void* cutlist_t;
 
 struct bspartition_s;
+struct superblock_s;
 
 /**
  * An "intersection" remembers the vertex that touches a BSP divider
@@ -107,5 +108,14 @@ boolean BSP_CutListInsertIntersection(cutlist_t* cutList, intersection_t* cut);
  * @return              Ptr to the found intersection, else @c NULL;
  */
 intersection_t* BSP_CutListFindIntersection(cutlist_t* cutList, Vertex* v);
+
+/**
+ * Analyze the intersection list, and add any needed minihedges to the given half-edge lists
+ * (one minihedge on each side).
+ *
+ * @note All the intersections in the cutList will be free'd back into the quick-alloc list.
+ */
+void BSP_AddMiniHEdges(const struct bspartition_s* part, struct superblock_s* rightList,
+    struct superblock_s* leftList, cutlist_t* cutList);
 
 #endif /// LIBDENG_MAP_BSP_INTERSECTION

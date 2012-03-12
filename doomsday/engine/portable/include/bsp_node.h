@@ -31,6 +31,7 @@
 #include "de_platform.h"
 #include "bsp_edge.h"
 #include "bsp_intersection.h"
+#include "bsp_superblock.h"
 #include "m_binarytree.h"
 #include "p_mapdata.h"
 
@@ -54,13 +55,47 @@ typedef struct bspnodedata_s {
 } bspnodedata_t;
 
 /**
- * Takes the half-edge list and determines if it is convex, possibly converting
- * it into a BSP leaf. Otherwise, the list is divided into two halves and recursion
- * will continue on the new sub list.
+ * Partition the given edge and perform any further necessary action (moving it into
+ * either the left list, right list, or splitting it).
  *
- * This is done by scanning all of the half-edges and finding the one that does
- * the least splitting and has the least difference in numbers of half-edges on
- * either side.
+ * Take the given half-edge 'cur', compare it with the partition line, and determine
+ * it's fate: moving it into either the left or right lists (perhaps both, when
+ * splitting it in two). Handles the twin as well. Updates the intersection list if
+ * the half-edge lies on or crosses the partition line.
+ *
+ * @note AJA: I have rewritten this routine based on evalPartition() (which I've also
+ *       reworked, heavily). I think it is important that both these routines follow
+ *       the exact same logic.
+ */
+void BSP_DivideOneHEdge(bsp_hedge_t* hEdge, const struct bspartition_s* part, SuperBlock* rightList,
+    SuperBlock* leftList, cutlist_t* cutList);
+
+/**
+ * Find the best half-edge in the list to use as a partition.
+ *
+ * @param hEdgeList     List of half-edges to choose from.
+ * @param depth         Current node depth.
+ * @param partition     Ptr to partition to be updated with the results.
+ *
+ * @return  @c true= A suitable partition was found.
+ */
+boolean BSP_PickPartition(SuperBlock* hEdgeList, size_t depth, struct bspartition_s* partition);
+
+/**
+ * Remove all the half-edges from the list, partitioning them into the left or right
+ * lists based on the given partition line. Adds any intersections onto the
+ * intersection list as it goes.
+ */
+void BSP_PartitionHEdges(SuperBlock* hEdgeList, const bspartition_t* part,
+    SuperBlock* rightList, SuperBlock* leftList, cutlist_t* cutList);
+
+/**
+ * Takes the half-edge list and determines if it is convex, possibly converting it
+ * into a BSP leaf. Otherwise, the list is divided into two halves and recursion will
+ * continue on the new sub list.
+ *
+ * This is done by scanning all of the half-edges and finding the one that does the
+ * least splitting and has the least difference in numbers of half-edges on either side.
  *
  * If the ones on the left side make a BspLeaf, then create another BspLeaf
  * else put the half-edges into the left list.
@@ -77,15 +112,13 @@ typedef struct bspnodedata_s {
 boolean BuildNodes(struct superblock_s* hEdgeList, binarytree_t** parent, size_t depth,
     cutlist_t* cutList);
 
-void BSP_AddHEdgeToSuperBlock(struct superblock_s* block, bsp_hedge_t* hEdge);
-
 /**
- * Traverse the BSP tree and put all the half-edges in each BSP leaf into
- * clockwise order, and renumber their indices.
+ * Traverse the BSP tree and put all the half-edges in each BSP leaf into clockwise
+ * order, and renumber their indices.
  *
- * @important This cannot be done during BuildNodes() since splitting a half-edge
- * with a twin may insert another half-edge into that twin's list, usually in the
- * wrong place order-wise.
+ * @important This cannot be done during BuildNodes() since splitting a half-edge with
+ * a twin may insert another half-edge into that twin's list, usually in the wrong
+ * place order-wise.
  */
 void ClockwiseBspTree(binarytree_t* rootNode);
 
