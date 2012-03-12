@@ -132,6 +132,9 @@ static void setPathFromPathDir(directory_t* dir, const char* path)
     assert(dir && path && path[0]);
 
     resolveAppRelativeDirectives(transPath, path, FILENAME_T_MAXLEN);
+#ifdef UNIX
+    resolveHomeRelativeDirectives(transPath, FILENAME_T_MAXLEN);
+#endif
     Dir_ToNativeSeparators(transPath, FILENAME_T_MAXLEN);
 
     _fullpath(temp, transPath, FILENAME_T_MAXLEN);
