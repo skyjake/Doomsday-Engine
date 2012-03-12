@@ -1,8 +1,6 @@
 /**
  * @file con_busy.h
- * Console Busy Mode
- *
- * @ingroup console
+ * Console Busy Mode @ingroup console
  *
  * The Busy Mode is intended for long-running tasks that would otherwise block
  * the main engine (UI) thread. During busy mode, a progress screen is shown by
@@ -10,6 +8,11 @@
  * normal Doomsday UI cannot be interacted with while the task is running. The
  * busy mode can be configured to show a progress bar, the console output,
  * and/or a description of the task being carried out.
+ *
+ * @todo Refactor: Remove the busy mode loop to prevent the app UI from
+ * freezing while busy mode is running. Instead, busy mode should run in the
+ * regular application event loop. During busy mode, the game loop callback
+ * should not be called.
  *
  * @authors Copyright &copy; 2009-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2009-2012 Daniel Swanson <danij@dengine.net>
@@ -31,6 +34,8 @@
 
 #ifndef LIBDENG_CONSOLE_BUSY_H
 #define LIBDENG_CONSOLE_BUSY_H
+
+#include "dd_share.h"
 
 /// Busy mode worker function.
 typedef int (C_DECL *busyworkerfunc_t) (void* parm);
