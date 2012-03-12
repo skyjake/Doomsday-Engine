@@ -50,6 +50,10 @@ typedef struct evalinfo_s {
 static size_t hEdgeSortBufSize;
 static bsp_hedge_t** hEdgeSortBuf;
 
+#if _DEBUG
+void BSP_PrintSuperBlockHEdges(SuperBlock* superblock);
+#endif
+
 static __inline int pointOnHEdgeSide(double x, double y, const bsp_hedge_t* part)
 {
     return P_PointOnLinedefSide2(x, y, part->pDX, part->pDY, part->pPerp,
@@ -557,7 +561,7 @@ static int evalPartitionWorker(SuperBlock* hEdgeList, bsp_hedge_t* part,
     parm.part = part;
     parm.bestCost = bestCost;
     parm.info = info;
-    result = SuperBlock_IterateHEdges(hEdgeList, evalPartitionWorker2, (void*)&parm);
+    result = SuperBlock_IterateHEdges2(hEdgeList, evalPartitionWorker2, (void*)&parm);
     if(result) return true;
 
     // Handle sub-blocks recursively.
@@ -673,7 +677,7 @@ static int pickHEdgeWorker2(bsp_hedge_t* part, void* parameters)
 static int pickHEdgeWorker(SuperBlock* partList, void* parameters)
 {
     // Test each half-edge as a potential partition.
-    return SuperBlock_IterateHEdges(partList, pickHEdgeWorker2, parameters);
+    return SuperBlock_IterateHEdges2(partList, pickHEdgeWorker2, parameters);
 }
 
 boolean BSP_PickPartition(SuperBlock* hEdgeList, size_t depth, bspartition_t* partition)
@@ -689,7 +693,7 @@ boolean BSP_PickPartition(SuperBlock* hEdgeList, size_t depth, bspartition_t* pa
     parm.bestCost = &bestCost;
 
     validCount++;
-    if(SuperBlock_Traverse(hEdgeList, pickHEdgeWorker, (void*)&parm))
+    if(SuperBlock_Traverse2(hEdgeList, pickHEdgeWorker, (void*)&parm))
     {
         /// @kludge BuildNodes() will detect the cancellation.
         return false;
@@ -888,7 +892,7 @@ void BSP_PartitionHEdges(SuperBlock* hEdgeList, const bspartition_t* part,
     parm.rights = rights;
     parm.lefts = lefts;
     parm.cutList = cutList;
-    SuperBlock_Traverse(hEdgeList, partitionHEdgeWorker, (void*)&parm);
+    SuperBlock_Traverse2(hEdgeList, partitionHEdgeWorker, (void*)&parm);
 
     // Sanity checks...
     if(!SuperBlock_TotalHEdgeCount(rights))
@@ -926,7 +930,7 @@ static bspleafdata_t* createBSPLeaf(SuperBlock* hEdgeList)
     bspleafdata_t* leaf = BSPLeaf_Create();
 
     // Link the half-edges into the new leaf.
-    SuperBlock_Traverse(hEdgeList, createBSPLeafWorker, leaf);
+    SuperBlock_Traverse2(hEdgeList, createBSPLeafWorker, leaf);
 
     return leaf;
 }
@@ -945,7 +949,7 @@ boolean BuildNodes(SuperBlock* hEdgeList, binarytree_t** parent, size_t depth,
 
     /*DEBUG_Message(("Build: Begun @ %lu\n", (unsigned long) depth));
 #if _DEBUG
-    BSP_PrintSuperblockHEdges(hEdgeList);
+    BSP_PrintSuperBlockHEdges(hEdgeList);
 #endif*/
 
     // Pick the next partition to use.
@@ -997,3 +1001,26 @@ boolean BuildNodes(SuperBlock* hEdgeList, binarytree_t** parent, size_t depth,
 
     return builtOK;
 }
+
+#if _DEBUG
+static int printSuperBlockHEdgesWorker2(bsp_hedge_t* hEdge, void* parameters)
+{
+    Con_Message("Build: %s %p sector=%d (%1.1f,%1.1f) -> (%1.1f,%1.1f)\n",
+                (hEdge->lineDef? "NORM" : "MINI"), hEdge,
+                hEdge->sector->buildData.index,
+                hEdge->v[0]->buildData.pos[VX], hEdge->v[0]->buildData.pos[VY],
+                hEdge->v[1]->buildData.pos[VX], hEdge->v[1]->buildData.pos[VY]);
+    return false; // Continue iteration.
+}
+
+static int printSuperBlockHEdgesWorker(SuperBlock* superblock, void* parameters)
+{
+    return SuperBlock_IterateHEdges2(superblock, printSuperBlockHEdgesWorker2, parameters);
+}
+
+void BSP_PrintSuperBlockHEdges(SuperBlock* superblock)
+{
+    if(!superblock) return;
+    SuperBlock_Traverse(superblock, printSuperBlockHEdgesWorker);
+}
+#endif

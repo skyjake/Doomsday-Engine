@@ -57,55 +57,20 @@ struct superblock_s {
     struct bsp_hedge_s* hEdges;
 };
 
-static SuperBlock* quickAllocSupers;
-
-void BSP_InitSuperBlockAllocator(void)
+static __inline boolean isLeaf(SuperBlock* sb)
 {
-    quickAllocSupers = NULL;
+    assert(sb);
+    return (sb->aaBox.maxX - sb->aaBox.minX <= 256 &&
+            sb->aaBox.maxY - sb->aaBox.minY <= 256);
 }
 
-void BSP_ShutdownSuperBlockAllocator(void)
+static void linkHEdge(SuperBlock* sb, bsp_hedge_t* hEdge)
 {
-    while(quickAllocSupers)
-    {
-        SuperBlock* block = quickAllocSupers;
+    assert(sb && hEdge);
+    hEdge->next = sb->hEdges;
+    hEdge->block = sb;
 
-        quickAllocSupers = block->subs[0];
-        M_Free(block);
-    }
-}
-
-/**
- * Acquire memory for a new superblock.
- */
-SuperBlock* BSP_NewSuperBlock(const AABox* bounds)
-{
-    SuperBlock* sb;
-
-    if(quickAllocSupers == NULL)
-        return SuperBlock_New(bounds);
-
-    sb = quickAllocSupers;
-    quickAllocSupers = sb->subs[0];
-
-    // Clear out any old rubbish.
-    memset(sb, 0, sizeof(*sb));
-    memcpy(&sb->aaBox, bounds, sizeof(sb->aaBox));
-
-    return sb;
-}
-
-/**
- * Free all memory allocated for the specified superblock.
- */
-void BSP_RecycleSuperBlock(SuperBlock* sb)
-{
-    if(!sb) return;
-
-    // Add block to quick-alloc list. Note that subs[0] is used for
-    // linking the blocks together.
-    sb->subs[0] = quickAllocSupers;
-    quickAllocSupers = sb;
+    sb->hEdges = hEdge;
 }
 
 SuperBlock* SuperBlock_New(const AABox* bounds)
@@ -120,15 +85,6 @@ void SuperBlock_Delete(SuperBlock* sb)
     uint num;
     assert(sb);
 
-    if(sb->hEdges)
-    {
-        // This can happen, but only under abnormal circumstances.
-#if _DEBUG
-        Con_Error("FreeSuper: Superblock contains half-edges!");
-#endif
-        sb->hEdges = NULL;
-    }
-
     // Recursively handle sub-blocks.
     for(num = 0; num < 2; ++num)
     {
@@ -137,120 +93,6 @@ void SuperBlock_Delete(SuperBlock* sb)
     }
 
     BSP_RecycleSuperBlock(sb);
-}
-
-static void linkHEdge(SuperBlock* superblock, bsp_hedge_t* hEdge)
-{
-    hEdge->next = superblock->hEdges;
-    hEdge->block = superblock;
-
-    superblock->hEdges = hEdge;
-}
-
-void SuperBlock_IncrementHEdgeCounts(SuperBlock* superblock, boolean lineLinked)
-{
-    do
-    {
-        if(lineLinked)
-            superblock->realNum++;
-        else
-            superblock->miniNum++;
-
-        superblock = superblock->parent;
-    } while(superblock != NULL);
-}
-
-/**
- * Add the given half-edge to the specified list.
- */
-void SuperBlock_HEdgePush(SuperBlock* block, bsp_hedge_t* hEdge)
-{
-#define SUPER_IS_LEAF(s)  \
-    ((s)->aaBox.maxX - (s)->aaBox.minX <= 256 && \
-     (s)->aaBox.maxY - (s)->aaBox.minY <= 256)
-
-    for(;;)
-    {
-        int p1, p2, half, midPoint[2];
-        SuperBlock* child;
-
-        midPoint[VX] = (block->aaBox.minX + block->aaBox.maxX) / 2;
-        midPoint[VY] = (block->aaBox.minY + block->aaBox.maxY) / 2;
-
-        // Update half-edge counts.
-        if(hEdge->lineDef)
-            block->realNum++;
-        else
-            block->miniNum++;
-
-        if(SUPER_IS_LEAF(block))
-        {
-            // Block is a leaf -- no subdivision possible.
-            linkHEdge(block, hEdge);
-            return;
-        }
-
-        if(block->aaBox.maxX - block->aaBox.minX >=
-           block->aaBox.maxY - block->aaBox.minY)
-        {
-            // Block is wider than it is high, or square.
-            p1 = hEdge->v[0]->buildData.pos[VX] >= midPoint[VX];
-            p2 = hEdge->v[1]->buildData.pos[VX] >= midPoint[VX];
-        }
-        else
-        {
-            // Block is higher than it is wide.
-            p1 = hEdge->v[0]->buildData.pos[VY] >= midPoint[VY];
-            p2 = hEdge->v[1]->buildData.pos[VY] >= midPoint[VY];
-        }
-
-        if(p1 && p2)
-        {
-            half = 1;
-        }
-        else if(!p1 && !p2)
-        {
-            half = 0;
-        }
-        else
-        {
-            // Line crosses midpoint -- link it in and return.
-            linkHEdge(block, hEdge);
-            return;
-        }
-
-        // The hedge lies in one half of this block. Create the block if it
-        // doesn't already exist, and loop back to add the hedge.
-        if(!block->subs[half])
-        {
-            AABox sub;
-
-            if(block->aaBox.maxX - block->aaBox.minX >=
-               block->aaBox.maxY - block->aaBox.minY)
-            {
-                sub.minX = (half? midPoint[VX] : block->aaBox.minX);
-                sub.minY = block->aaBox.minY;
-
-                sub.maxX = (half? block->aaBox.maxX : midPoint[VX]);
-                sub.maxY = block->aaBox.maxY;
-            }
-            else
-            {
-                sub.minX = block->aaBox.minX;
-                sub.minY = (half? midPoint[VY] : block->aaBox.minY);
-
-                sub.maxX = block->aaBox.maxX;
-                sub.maxY = (half? block->aaBox.maxY : midPoint[VY]);
-            }
-
-            block->subs[half] = child = BSP_NewSuperBlock(&sub);
-            child->parent = block;
-        }
-
-        block = block->subs[half];
-    }
-
-#undef SUPER_IS_LEAF
 }
 
 const AABox* SuperBlock_Bounds(SuperBlock* sb)
@@ -266,6 +108,108 @@ uint SuperBlock_HEdgeCount(SuperBlock* sb, boolean addReal, boolean addMini)
     if(addReal) total += sb->realNum;
     if(addMini) total += sb->miniNum;
     return total;
+}
+
+void SuperBlock_IncrementHEdgeCounts(SuperBlock* sb, boolean lineLinked)
+{
+    assert(sb);
+    if(lineLinked)
+        sb->realNum++;
+    else
+        sb->miniNum++;
+
+    // Recursively handle parents.
+    if(sb->parent)
+    {
+        SuperBlock_IncrementHEdgeCounts(sb->parent, lineLinked);
+    }
+}
+
+void SuperBlock_HEdgePush(SuperBlock* sb, bsp_hedge_t* hEdge)
+{
+    assert(sb);
+    if(!hEdge) return;
+
+    for(;;)
+    {
+        int p1, p2, half, midPoint[2];
+        SuperBlock* child;
+
+        // Update half-edge counts.
+        if(hEdge->lineDef)
+            sb->realNum++;
+        else
+            sb->miniNum++;
+
+        if(isLeaf(sb))
+        {
+            // No further subdivision possible.
+            linkHEdge(sb, hEdge);
+            return;
+        }
+
+        midPoint[VX] = (sb->aaBox.minX + sb->aaBox.maxX) / 2;
+        midPoint[VY] = (sb->aaBox.minY + sb->aaBox.maxY) / 2;
+
+        if(sb->aaBox.maxX - sb->aaBox.minX >=
+           sb->aaBox.maxY - sb->aaBox.minY)
+        {
+            // Wider than tall.
+            p1 = hEdge->v[0]->buildData.pos[VX] >= midPoint[VX];
+            p2 = hEdge->v[1]->buildData.pos[VX] >= midPoint[VX];
+        }
+        else
+        {
+            // Taller than wide.
+            p1 = hEdge->v[0]->buildData.pos[VY] >= midPoint[VY];
+            p2 = hEdge->v[1]->buildData.pos[VY] >= midPoint[VY];
+        }
+
+        if(p1 && p2)
+        {
+            half = 1;
+        }
+        else if(!p1 && !p2)
+        {
+            half = 0;
+        }
+        else
+        {
+            // Line crosses midpoint -- link it in and return.
+            linkHEdge(sb, hEdge);
+            return;
+        }
+
+        // The hedge lies in one half of this block. Create the sub-block
+        // if it doesn't already exist, and loop back to add the hedge.
+        if(!sb->subs[half])
+        {
+            AABox sub;
+
+            if(sb->aaBox.maxX - sb->aaBox.minX >=
+               sb->aaBox.maxY - sb->aaBox.minY)
+            {
+                sub.minX = (half? midPoint[VX] : sb->aaBox.minX);
+                sub.minY = sb->aaBox.minY;
+
+                sub.maxX = (half? sb->aaBox.maxX : midPoint[VX]);
+                sub.maxY = sb->aaBox.maxY;
+            }
+            else
+            {
+                sub.minX = sb->aaBox.minX;
+                sub.minY = (half? midPoint[VY] : sb->aaBox.minY);
+
+                sub.maxX = sb->aaBox.maxX;
+                sub.maxY = (half? sb->aaBox.maxY : midPoint[VY]);
+            }
+
+            sb->subs[half] = child = BSP_NewSuperBlock(&sub);
+            child->parent = sb;
+        }
+
+        sb = sb->subs[half];
+    }
 }
 
 bsp_hedge_t* SuperBlock_HEdgePop(SuperBlock* sb)
@@ -287,7 +231,8 @@ bsp_hedge_t* SuperBlock_HEdgePop(SuperBlock* sb)
     return hEdge;
 }
 
-int SuperBlock_IterateHEdges(SuperBlock* sp, int (*callback)(bsp_hedge_t*, void*), void* parameters)
+int SuperBlock_IterateHEdges2(SuperBlock* sp, int (*callback)(bsp_hedge_t*, void*),
+    void* parameters)
 {
     assert(sp);
     if(callback)
@@ -302,13 +247,19 @@ int SuperBlock_IterateHEdges(SuperBlock* sp, int (*callback)(bsp_hedge_t*, void*
     return false; // Continue iteration.
 }
 
+int SuperBlock_IterateHEdges(SuperBlock* sp, int (*callback)(bsp_hedge_t*, void*))
+{
+    return SuperBlock_IterateHEdges2(sp, callback, NULL/*no parameters*/);
+}
+
 SuperBlock* SuperBlock_Child(SuperBlock* sb, boolean left)
 {
     assert(sb);
     return sb->subs[left?1:0];
 }
 
-int SuperBlock_Traverse(SuperBlock* sb, int (*callback)(SuperBlock*, void*), void* parameters)
+int SuperBlock_Traverse2(SuperBlock* sb, int (*callback)(SuperBlock*, void*),
+    void* parameters)
 {
     int num, result;
     assert(sb);
@@ -324,11 +275,16 @@ int SuperBlock_Traverse(SuperBlock* sb, int (*callback)(SuperBlock*, void*), voi
         SuperBlock* child = sb->subs[num];
         if(!child) continue;
 
-        result = SuperBlock_Traverse(child, callback, parameters);
+        result = SuperBlock_Traverse2(child, callback, parameters);
         if(result) return result;
     }
 
     return false; // Continue iteration.
+}
+
+int SuperBlock_Traverse(SuperBlock* sb, int (*callback)(SuperBlock*, void*))
+{
+    return SuperBlock_Traverse2(sb, callback, NULL/*no parameters*/);
 }
 
 static void initAABoxFromHEdgeVertexes(AABoxf* aaBox, const bsp_hedge_t* hEdge)
@@ -346,14 +302,14 @@ typedef struct {
     boolean initialized;
 } findhedgelistboundsparams_t;
 
-static void findHEdgeListBoundsWorker(SuperBlock* block, void* parameters)
+static void findHEdgeListBoundsWorker(SuperBlock* sb, void* parameters)
 {
     findhedgelistboundsparams_t* p = (findhedgelistboundsparams_t*)parameters;
     AABoxf hEdgeAABox;
     bsp_hedge_t* hEdge;
     uint i;
 
-    for(hEdge = block->hEdges; hEdge; hEdge = hEdge->next)
+    for(hEdge = sb->hEdges; hEdge; hEdge = hEdge->next)
     {
         initAABoxFromHEdgeVertexes(&hEdgeAABox, hEdge);
         if(p->initialized)
@@ -371,20 +327,20 @@ static void findHEdgeListBoundsWorker(SuperBlock* block, void* parameters)
     // Recursively handle sub-blocks.
     for(i = 0; i < 2; ++i)
     {
-        if(block->subs[i])
+        if(sb->subs[i])
         {
-            findHEdgeListBoundsWorker(block->subs[i], parameters);
+            findHEdgeListBoundsWorker(sb->subs[i], parameters);
         }
     }
 }
 
-void SuperBlock_FindHEdgeListBounds(SuperBlock* hEdgeList, AABoxf* aaBox)
+void SuperBlock_FindHEdgeListBounds(SuperBlock* sb, AABoxf* aaBox)
 {
     findhedgelistboundsparams_t parm;
-    assert(hEdgeList && aaBox);
+    assert(sb && aaBox);
 
     parm.initialized = false;
-    findHEdgeListBoundsWorker(hEdgeList, (void*)&parm);
+    findHEdgeListBoundsWorker(sb, (void*)&parm);
     if(parm.initialized)
     {
         V2_CopyBox(aaBox->arvec2, parm.bounds.arvec2);
@@ -396,60 +352,60 @@ void SuperBlock_FindHEdgeListBounds(SuperBlock* hEdgeList, AABoxf* aaBox)
     V2_Set(aaBox->max, DDMINFLOAT, DDMINFLOAT);
 }
 
-#if _DEBUG
-void BSP_PrintSuperblockHEdges(SuperBlock* superblock)
-{
-    bsp_hedge_t* hEdge;
-    int num;
-
-    for(hEdge = superblock->hEdges; hEdge; hEdge = hEdge->next)
-    {
-        Con_Message("Build: %s %p sector=%d (%1.1f,%1.1f) -> (%1.1f,%1.1f)\n",
-                    (hEdge->lineDef? "NORM" : "MINI"), hEdge,
-                    hEdge->sector->buildData.index,
-                    hEdge->v[0]->buildData.pos[VX], hEdge->v[0]->buildData.pos[VY],
-                    hEdge->v[1]->buildData.pos[VX], hEdge->v[1]->buildData.pos[VY]);
-    }
-
-    for(num = 0; num < 2; ++num)
-    {
-        if(superblock->subs[num])
-            BSP_PrintSuperblockHEdges(superblock->subs[num]);
-    }
-}
-
-static void testSuperWorker(SuperBlock* block, int* real, int* mini)
-{
-    int num;
-    bsp_hedge_t* cur;
-
-    for(cur = block->hEdges; cur; cur = cur->next)
-    {
-        if(cur->lineDef)
-            (*real) += 1;
-        else
-            (*mini) += 1;
-    }
-
-    for(num = 0; num < 2; ++num)
-    {
-        if(block->subs[num])
-            testSuperWorker(block->subs[num], real, mini);
-    }
-}
-
 /**
- * For debugging.
+ * @todo The following does not belong in this module.
  */
-void testSuper(SuperBlock* block)
+
+static SuperBlock* quickAllocSupers;
+
+void BSP_InitSuperBlockAllocator(void)
 {
-    int realNum = 0;
-    int miniNum = 0;
-
-    testSuperWorker(block, &realNum, &miniNum);
-
-    if(realNum != block->realNum || miniNum != block->miniNum)
-        Con_Error("testSuper: Failed, block=%p %d/%d != %d/%d", block, block->realNum,
-                  block->miniNum, realNum, miniNum);
+    quickAllocSupers = NULL;
 }
+
+void BSP_ShutdownSuperBlockAllocator(void)
+{
+    while(quickAllocSupers)
+    {
+        SuperBlock* block = quickAllocSupers;
+
+        quickAllocSupers = block->subs[0];
+        M_Free(block);
+    }
+}
+
+SuperBlock* BSP_NewSuperBlock(const AABox* bounds)
+{
+    SuperBlock* sb;
+
+    if(quickAllocSupers == NULL)
+        return SuperBlock_New(bounds);
+
+    sb = quickAllocSupers;
+    quickAllocSupers = sb->subs[0];
+
+    // Clear out any old rubbish.
+    memset(sb, 0, sizeof(*sb));
+    memcpy(&sb->aaBox, bounds, sizeof(sb->aaBox));
+
+    return sb;
+}
+
+void BSP_RecycleSuperBlock(SuperBlock* sb)
+{
+    if(!sb) return;
+
+    if(sb->hEdges)
+    {
+        // This can happen, but only under abnormal circumstances.
+#if _DEBUG
+        Con_Error("BSP_RecycleSuperBlock: Superblock contains half-edges!");
 #endif
+        sb->hEdges = NULL;
+    }
+
+    // Add block to quick-alloc list. Note that subs[0] is used for
+    // linking the blocks together.
+    sb->subs[0] = quickAllocSupers;
+    quickAllocSupers = sb;
+}
