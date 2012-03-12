@@ -28,6 +28,7 @@
 #ifndef LIBDENG_MAP_BSP_NODE
 #define LIBDENG_MAP_BSP_NODE
 
+#include "de_platform.h"
 #include "bsp_edge.h"
 #include "bsp_intersection.h"
 #include "m_binarytree.h"
@@ -47,9 +48,8 @@ typedef struct bspartition_s {
 
 typedef struct bspnodedata_s {
     partition_t partition;
-    float bBox[2][4]; // Bounding box for each child.
-    // Node index. Only valid once the NODES or GL_NODES lump has been
-    // created.
+    AABoxf aaBox[2]; // Bounding box for each child.
+    // Node index. Only valid once the nodes have been hardened.
     int index;
 } bspnodedata_t;
 

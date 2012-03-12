@@ -616,60 +616,76 @@ boolean BSP_PickPartition(const superblock_t* hEdgeList, size_t depth, bspartiti
     return false;
 }
 
-static void findLimitWorker(superblock_t* block, float* bbox)
+static void initAABoxFromHEdgeVertexes(AABoxf* aaBox, const bsp_hedge_t* hEdge)
 {
-    bsp_hedge_t* cur;
-    uint num;
+    const double* from = hEdge->HE_v1->buildData.pos;
+    const double* to   = hEdge->HE_v2->buildData.pos;
+    aaBox->minX = MIN_OF(from[VX], to[VX]);
+    aaBox->minY = MIN_OF(from[VY], to[VY]);
+    aaBox->maxX = MAX_OF(from[VX], to[VX]);
+    aaBox->maxY = MAX_OF(from[VY], to[VY]);
+}
 
-    for(cur = block->hEdges; cur; cur = cur->next)
+typedef struct {
+    AABoxf bounds;
+    boolean initialized;
+} findhedgelistboundsparams_t;
+
+static void findHEdgeListBoundsWorker(superblock_t* block, void* parameters)
+{
+    findhedgelistboundsparams_t* p = (findhedgelistboundsparams_t*)parameters;
+    AABoxf hEdgeAABox;
+    bsp_hedge_t* hEdge;
+    uint i;
+
+    for(hEdge = block->hEdges; hEdge; hEdge = hEdge->next)
     {
-        double x1 = cur->v[0]->buildData.pos[VX];
-        double y1 = cur->v[0]->buildData.pos[VY];
-        double x2 = cur->v[1]->buildData.pos[VX];
-        double y2 = cur->v[1]->buildData.pos[VY];
-        float lx = (float) MIN_OF(x1, x2);
-        float ly = (float) MIN_OF(y1, y2);
-        float hx = (float) MAX_OF(x1, x2);
-        float hy = (float) MAX_OF(y1, y2);
-
-        if(lx < bbox[BOXLEFT])
-            bbox[BOXLEFT] = lx;
-        else if(lx > bbox[BOXRIGHT])
-            bbox[BOXRIGHT] = lx;
-        if(ly < bbox[BOXBOTTOM])
-            bbox[BOXBOTTOM] = ly;
-        else if(ly > bbox[BOXTOP])
-            bbox[BOXTOP] = ly;
-
-        if(hx < bbox[BOXLEFT])
-            bbox[BOXLEFT] = hx;
-        else if(hx > bbox[BOXRIGHT])
-            bbox[BOXRIGHT] = hx;
-        if(hy < bbox[BOXBOTTOM])
-            bbox[BOXBOTTOM] = hy;
-        else if(hy > bbox[BOXTOP])
-            bbox[BOXTOP] = hy;
+        initAABoxFromHEdgeVertexes(&hEdgeAABox, hEdge);
+        if(p->initialized)
+        {
+            V2_AddToBox(p->bounds.arvec2, hEdgeAABox.min);
+        }
+        else
+        {
+            V2_InitBox(p->bounds.arvec2, hEdgeAABox.min);
+            p->initialized = true;
+        }
+        V2_AddToBox(p->bounds.arvec2, hEdgeAABox.max);
     }
 
     // Recursively handle sub-blocks.
-    for(num = 0; num < 2; ++num)
+    for(i = 0; i < 2; ++i)
     {
-        if(block->subs[num])
-            findLimitWorker(block->subs[num], bbox);
+        if(block->subs[i])
+        {
+            findHEdgeListBoundsWorker(block->subs[i], parameters);
+        }
     }
 }
 
-static void findLimits(superblock_t* hEdgeList, float* bbox)
+static void findHEdgeListBounds(superblock_t* hEdgeList, AABoxf* aaBox)
 {
-    bbox[BOXTOP] = bbox[BOXRIGHT] = DDMINFLOAT;
-    bbox[BOXBOTTOM] = bbox[BOXLEFT] = DDMAXFLOAT;
-    findLimitWorker(hEdgeList, bbox);
+    findhedgelistboundsparams_t parm;
+    assert(hEdgeList && aaBox);
+
+    parm.initialized = false;
+    findHEdgeListBoundsWorker(hEdgeList, (void*)&parm);
+    if(parm.initialized)
+    {
+        V2_CopyBox(aaBox->arvec2, parm.bounds.arvec2);
+        return;
+    }
+
+    // Clear.
+    V2_Set(aaBox->min, DDMAXFLOAT, DDMAXFLOAT);
+    V2_Set(aaBox->max, DDMINFLOAT, DDMINFLOAT);
 }
 
-void BSP_FindNodeBounds(bspnodedata_t* node, superblock_t* hEdgesRightList,superblock_t* hEdgesLeftList)
+void BSP_FindNodeBounds(bspnodedata_t* node, superblock_t* hEdgesRightList,
+    superblock_t* hEdgesLeftList)
 {
-    findLimits(hEdgesLeftList, &node->bBox[LEFT][0]);
-    findLimits(hEdgesRightList, &node->bBox[RIGHT][0]);
+    findHEdgeListBounds(hEdgesLeftList,  &node->aaBox[LEFT]);
+    findHEdgeListBounds(hEdgesRightList, &node->aaBox[RIGHT]);
 }
 
 /**

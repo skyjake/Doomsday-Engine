@@ -70,8 +70,10 @@ boolean         V2_Intercept2(const pvec2_t a, const pvec2_t b,
                               float *abFrac, float *cdFrac);
 void            V2_Lerp(pvec2_t dest, const pvec2_t a, const pvec2_t b,
                         float c);
+
 void            V2_InitBox(arvec2_t box, const pvec2_t point);
 void            V2_AddToBox(arvec2_t box, const pvec2_t point);
+void            V2_CopyBox(arvec2_t dest, const arvec2_t src);
 
 // 3-dimensions:
 void            V3_Set(pvec3_t vec, vectorcomp_t x, vectorcomp_t y, vectorcomp_t z);

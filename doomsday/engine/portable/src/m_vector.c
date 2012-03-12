@@ -341,6 +341,12 @@ void V2_AddToBox(arvec2_t box, const pvec2_t point)
         box[1][VY] = point[VY];
 }
 
+void V2_CopyBox(arvec2_t dest, const arvec2_t src)
+{
+    V2_Copy(dest[0], src[0]);
+    V2_Copy(dest[1], src[1]);
+}
+
 /**
  * Set the vector's x, y and z components.
  */

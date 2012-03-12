@@ -317,15 +317,15 @@ static boolean C_DECL hardenNode(binarytree_t* tree, void* data)
     node->partition.dX = nodeData->partition.dX;
     node->partition.dY = nodeData->partition.dY;
 
-    node->bBox[RIGHT][BOXTOP]    = nodeData->bBox[RIGHT][BOXTOP];
-    node->bBox[RIGHT][BOXBOTTOM] = nodeData->bBox[RIGHT][BOXBOTTOM];
-    node->bBox[RIGHT][BOXLEFT]   = nodeData->bBox[RIGHT][BOXLEFT];
-    node->bBox[RIGHT][BOXRIGHT]  = nodeData->bBox[RIGHT][BOXRIGHT];
+    node->bBox[RIGHT][BOXTOP]    = nodeData->aaBox[RIGHT].maxY;
+    node->bBox[RIGHT][BOXBOTTOM] = nodeData->aaBox[RIGHT].minY;
+    node->bBox[RIGHT][BOXLEFT]   = nodeData->aaBox[RIGHT].minX;
+    node->bBox[RIGHT][BOXRIGHT]  = nodeData->aaBox[RIGHT].maxX;
 
-    node->bBox[LEFT][BOXTOP]     = nodeData->bBox[LEFT][BOXTOP];
-    node->bBox[LEFT][BOXBOTTOM]  = nodeData->bBox[LEFT][BOXBOTTOM];
-    node->bBox[LEFT][BOXLEFT]    = nodeData->bBox[LEFT][BOXLEFT];
-    node->bBox[LEFT][BOXRIGHT]   = nodeData->bBox[LEFT][BOXRIGHT];
+    node->bBox[LEFT][BOXTOP]     = nodeData->aaBox[LEFT].maxY;
+    node->bBox[LEFT][BOXBOTTOM]  = nodeData->aaBox[LEFT].minY;
+    node->bBox[LEFT][BOXLEFT]    = nodeData->aaBox[LEFT].minX;
+    node->bBox[LEFT][BOXRIGHT]   = nodeData->aaBox[LEFT].maxX;
 
     right = BinaryTree_GetChild(tree, RIGHT);
     if(right)
