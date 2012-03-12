@@ -21,6 +21,7 @@
 
 #include <QApplication>
 #include <QMouseEvent>
+#include <QWheelEvent>
 #include <QShowEvent>
 #include <QPaintEvent>
 #include <QCursor>
@@ -134,6 +135,37 @@ void Canvas::notifyInit()
     }
 }
 
+void Canvas::checkMousePosition()
+{
+    if(d->mouseGrabbed)
+    {
+        QPoint curPos = mapFromGlobal(QCursor::pos());
+        if(!d->prevMousePos.isNull())
+        {
+            QPoint delta = curPos - d->prevMousePos;
+            if(!delta.isNull())
+            {
+                qDebug() << "Canvas: mouse delta" << delta;
+
+                // Keep the cursor centered.
+                QPoint mid = rect().center();
+                QCursor::setPos(mapToGlobal(mid));
+                d->prevMousePos = mid;
+            }
+        }
+        else
+        {
+            d->prevMousePos = curPos;
+        }
+        QTimer::singleShot(1, this, SLOT(checkMousePosition()));
+    }
+    else
+    {
+        // Mouse was ungrabbed; reset the tracking.
+        d->prevMousePos = QPoint();
+    }
+}
+
 void Canvas::paintGL()
 {
     if(d->drawCallback)
@@ -168,6 +200,7 @@ void Canvas::mousePressEvent(QMouseEvent* ev)
 {
     if(!d->mouseGrabbed)
     {
+        // The mouse will be grabbed when the button is released.
         ev->ignore();
         return;
     }
@@ -175,37 +208,6 @@ void Canvas::mousePressEvent(QMouseEvent* ev)
     ev->accept();
 
     qDebug() << "Canvas: mouse press at" << ev->pos();
-}
-
-void Canvas::checkMousePosition()
-{
-    if(d->mouseGrabbed)
-    {
-        QPoint curPos = mapFromGlobal(QCursor::pos());
-        if(!d->prevMousePos.isNull())
-        {
-            QPoint delta = curPos - d->prevMousePos;
-            if(!delta.isNull())
-            {
-                qDebug() << "Canvas: mouse delta" << delta;
-
-                // Keep the cursor centered.
-                QPoint mid = rect().center();
-                QCursor::setPos(mapToGlobal(mid));
-                d->prevMousePos = mid;
-            }
-        }
-        else
-        {
-            d->prevMousePos = curPos;
-        }
-        QTimer::singleShot(1, this, SLOT(checkMousePosition()));
-    }
-    else
-    {
-        // Mouse was ungrabbed; reset the tracking.
-        d->prevMousePos = QPoint();
-    }
 }
 
 void Canvas::mouseReleaseEvent(QMouseEvent* ev)
@@ -220,4 +222,20 @@ void Canvas::mouseReleaseEvent(QMouseEvent* ev)
     }
 
     qDebug() << "Canvas: mouse release at" << ev->pos();
+}
+
+void Canvas::wheelEvent(QWheelEvent *ev)
+{
+    ev->accept();
+
+    /// @todo  What to do about inertial wheel movement?
+
+    if(ev->orientation() == Qt::Vertical)
+    {
+        qDebug() << "Canvas: vertical mouse wheel" << ev->delta()/8.f;
+    }
+    else
+    {
+        qDebug() << "Canvas: horizontal mouse wheel" << ev->delta()/8.f;
+    }
 }

@@ -69,11 +69,12 @@ protected:
     void paintGL();
 
     // Events.
-    void focusInEvent(QFocusEvent*);
-    void focusOutEvent(QFocusEvent*);
-    void mousePressEvent(QMouseEvent*);
-    void mouseReleaseEvent(QMouseEvent*);
-    void showEvent(QShowEvent*);
+    void focusInEvent(QFocusEvent* ev);
+    void focusOutEvent(QFocusEvent* ev);
+    void mousePressEvent(QMouseEvent* ev);
+    void mouseReleaseEvent(QMouseEvent* ev);
+    void wheelEvent(QWheelEvent* ev);
+    void showEvent(QShowEvent* ev);
 
 protected slots:
     void notifyInit();
