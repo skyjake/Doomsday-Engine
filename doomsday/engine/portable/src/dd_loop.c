@@ -472,6 +472,8 @@ static void timeDeltaStatistics(int deltaMs)
 
 void DD_WaitForOptimalUpdateTime(void)
 {
+    if(Sys_IsShuttingDown()) return; // No need for finesse.
+
     /// @todo This would benefit from microsecond-accurate timing.
 
     // All times are in milliseconds.
