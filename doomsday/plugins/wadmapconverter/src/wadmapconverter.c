@@ -38,8 +38,9 @@
 
 #include "wadmapconverter.h"
 
-map_t theMap, *map = &theMap;
-boolean verbose;
+map_t DENG_PLUGIN_GLOBAL(theMap);
+map_t* DENG_PLUGIN_GLOBAL(map) = &DENG_PLUGIN_GLOBAL(theMap);
+boolean DENG_PLUGIN_GLOBAL(verbose);
 
 /**
  * This function will be called when Doomsday is asked to load a map that is
@@ -52,9 +53,9 @@ int ConvertMapHook(int hookType, int param, void *data)
 {
     lumpnum_t* lumpList = (int*) data;
 
-    verbose = ArgExists("-verbose");
+    DENG_PLUGIN_GLOBAL(verbose) = ArgExists("-verbose");
 
-    memset(map, 0, sizeof(*map));
+    memset(DENG_PLUGIN_GLOBAL(map), 0, sizeof(*DENG_PLUGIN_GLOBAL(map)));
 
     if(!IsSupportedFormat(lumpList, param))
     {
@@ -63,8 +64,8 @@ int ConvertMapHook(int hookType, int param, void *data)
     }
 
     VERBOSE( Con_Message("WadMapConverter: Recognised a %s format map.\n",
-                         (map->format == MF_DOOM64? "DOOM64" :
-                          map->format == MF_HEXEN?  "Hexen"  : "DOOM")) )
+                         (DENG_PLUGIN_GLOBAL(map)->format == MF_DOOM64? "DOOM64" :
+                          DENG_PLUGIN_GLOBAL(map)->format == MF_HEXEN?  "Hexen"  : "DOOM")) )
 
     if(!LoadMap(lumpList, param))
     {

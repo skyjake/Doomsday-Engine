@@ -31,6 +31,7 @@
 #ifndef __MAPCONVERTER_H__
 #define __MAPCONVERTER_H__
 
+#include "dd_plugin.h"
 #include "dd_types.h"
 
 // Vertex indices.
@@ -40,8 +41,8 @@ enum { VX, VY, VZ };
 #define RIGHT                   0
 #define LEFT                    1
 
-#define VERBOSE(code)   { if(verbose >= 1) { code; } }
-#define VERBOSE2(code)  { if(verbose >= 2) { code; } }
+#define VERBOSE(code)   { if(DENG_PLUGIN_GLOBAL(verbose) >= 1) { code; } }
+#define VERBOSE2(code)  { if(DENG_PLUGIN_GLOBAL(verbose) >= 2) { code; } }
 
 typedef struct materialref_s {
     char            name[9];
@@ -170,8 +171,8 @@ typedef struct map_s {
     void*           blockMap;
 } map_t;
 
-extern map_t* map;
-extern boolean verbose;
+extern map_t* DENG_PLUGIN_GLOBAL(map);
+extern boolean DENG_PLUGIN_GLOBAL(verbose);
 
 boolean IsSupportedFormat(const lumpnum_t* lumpList, int numLumps);
 
