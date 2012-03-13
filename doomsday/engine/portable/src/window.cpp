@@ -704,12 +704,16 @@ static boolean createContext(void)
 }
 #endif
 
+static Window* canvasToWindow(Canvas& canvas)
+{
+    assert(&mainWindow.widget->canvas() == &canvas); /// @todo multiwindow
+
+    return &mainWindow;
+}
+
 static void drawCanvasWithCallback(Canvas& canvas)
 {
-    // Look up the correct window.
-    assert(&canvas == &mainWindow.widget->canvas());
-
-    Window* win = &mainWindow;
+    Window* win = canvasToWindow(canvas);
     if(win->drawFunc)
     {
         win->drawFunc();
@@ -718,8 +722,29 @@ static void drawCanvasWithCallback(Canvas& canvas)
 
 static void finishMainWindowInit(Canvas& canvas)
 {
+    // This is only for the main window.
     assert(&mainWindow.widget->canvas() == &canvas);
     DD_FinishInitializationAfterWindowReady();
+}
+
+static void windowWasResized(Canvas& canvas)
+{
+    Window* win = canvasToWindow(canvas);
+
+    /*if(Con_IsBusy())
+    {
+        /// @todo Handle busy mode resizing.
+    }
+    else*/
+    {
+        DEBUG_Message(("Updating view geometry.\n"));
+
+        win->geometry.size.width = win->widget->width();
+        win->geometry.size.height = win->widget->height();
+
+        // Update viewports.
+        R_SetViewGrid(0, 0);
+    }
 }
 
 static Window* createWindow(ddwindowtype_t type, const char* title)
@@ -747,6 +772,8 @@ static Window* createWindow(ddwindowtype_t type, const char* title)
 
         // After the main window is created, we can finish with the engine init.
         mainWindow.widget->canvas().setInitCallback(finishMainWindowInit);
+
+        mainWindow.widget->canvas().setResizedCallback(windowWasResized);
 
         // Let's see if there are command line options overriding the previous state.
         mainWindow.modifyAccordingToOptions();

@@ -1133,7 +1133,7 @@ void DD_ClearKeyRepeaterForKey(int ddkey, int native)
     for(k = 0; k < MAX_DOWNKEYS; ++k)
     {
         // Check the native code first, if provided.
-        if(native > 0)
+        if(native >= 0)
         {
             if(native != keyReps[k].native)
                 continue;
@@ -1144,7 +1144,7 @@ void DD_ClearKeyRepeaterForKey(int ddkey, int native)
         }
 
         // Clear this.
-        keyReps[k].native = 0;
+        keyReps[k].native = -1;
         keyReps[k].key = 0;
         memset(keyReps[k].text, 0, sizeof(keyReps[k].text));
     }
@@ -1218,9 +1218,6 @@ void DD_ReadKeyboard(void)
         }
 
         ev.toggle.id = ke->ddkey;
-
-        // The engine expects lowercase alphabet.
-        if(isalpha(ev.toggle.id)) ev.toggle.id = tolower(ev.toggle.id);
 
         // Text content to insert?
         assert(sizeof(ev.toggle.text) == sizeof(ke->text));

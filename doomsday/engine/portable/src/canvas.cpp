@@ -24,6 +24,7 @@
 #include <QMouseEvent>
 #include <QWheelEvent>
 #include <QShowEvent>
+#include <QResizeEvent>
 #include <QPaintEvent>
 #include <QCursor>
 #include <QTimer>
@@ -40,6 +41,7 @@ struct Canvas::Instance
     bool initNotified;
     void (*initCallback)(Canvas&);
     void (*drawCallback)(Canvas&);
+    void (*resizedCallback)(Canvas&);
     bool mouseGrabbed;
     QPoint prevMousePos;
 
@@ -47,6 +49,7 @@ struct Canvas::Instance
         : self(c),
           initNotified(false), initCallback(0),
           drawCallback(0),
+          resizedCallback(0),
           mouseGrabbed(false)
     {}
 
@@ -96,6 +99,11 @@ void Canvas::setDrawCallback(void (*canvasDrawFunc)(Canvas&))
     d->drawCallback = canvasDrawFunc;
 }
 
+void Canvas::setResizedCallback(void (*canvasResizedFunc)(Canvas&))
+{
+    d->resizedCallback = canvasResizedFunc;
+}
+
 void Canvas::forcePaint()
 {
     if(isVisible())
@@ -112,8 +120,12 @@ void Canvas::initializeGL()
 
 void Canvas::resizeGL(int w, int h)
 {
-    Q_UNUSED(w);
-    Q_UNUSED(h);
+    qDebug() << "Canvas: resized" << w << "x" << h;
+
+    if(d->resizedCallback)
+    {
+        d->resizedCallback(*this);
+    }
 }
 
 void Canvas::showEvent(QShowEvent* ev)
@@ -210,7 +222,9 @@ void Canvas::keyPressEvent(QKeyEvent *ev)
 
     /// @todo Use the Unicode text instead.
 
-    Keyboard_Submit(IKE_DOWN, Keycode_TranslateFromQt(ev->key(), ev->nativeVirtualKey()),
+    Keyboard_Submit(IKE_DOWN,
+                    Keycode_TranslateFromQt(ev->key(), ev->nativeVirtualKey()),
+                    ev->nativeVirtualKey(),
                     ev->text().isEmpty()? 0 : ev->text().toLatin1().constData());
 }
 
@@ -221,7 +235,10 @@ void Canvas::keyReleaseEvent(QKeyEvent *ev)
     qDebug() << "Canvas: key release" << ev->key() << "text:" << ev->text() << "native:"
                 << ev->nativeVirtualKey();
 
-    Keyboard_Submit(IKE_UP, Keycode_TranslateFromQt(ev->key(), ev->nativeVirtualKey()), 0);
+    Keyboard_Submit(IKE_UP,
+                    Keycode_TranslateFromQt(ev->key(), ev->nativeVirtualKey()),
+                    ev->nativeVirtualKey(),
+                    ev->text().isEmpty()? 0 : ev->text().toLatin1().constData());
 }
 
 static int translateButton(Qt::MouseButton btn)

@@ -59,6 +59,13 @@ public:
     void setDrawCallback(void (*canvasDrawFunc)(Canvas&));
 
     /**
+     * Sets a callback function that gets called after the size of the canvas changes.
+     *
+     * @param canvasResizedFunc  Callback.
+     */
+    void setResizedCallback(void (*canvasResizedFunc)(Canvas&));
+
+    /**
      * Forces immediate repainting of the canvas. The draw callback gets called.
      */
     void forcePaint();
