@@ -3049,10 +3049,9 @@ static void performImageAnalyses(Texture* tex, const image_t* image,
     }
 
     // Average alpha?
-    if((spec->type == TST_GENERAL &&
-        (TS_GENERAL(spec)->context == TC_SPRITE_DIFFUSE) ||
-        (TS_GENERAL(spec)->context == TC_UI))
-            && (!image->paletteId || (image->flags & IMGF_IS_MASKED))) // must have alpha channel included
+    if(spec->type == TST_GENERAL &&
+       (TS_GENERAL(spec)->context == TC_SPRITE_DIFFUSE) ||
+       (TS_GENERAL(spec)->context == TC_UI))
     {
         averagealpha_analysis_t* aa = (averagealpha_analysis_t*) Texture_Analysis(tex, TA_ALPHA);
         boolean firstInit = (!aa);
@@ -3074,9 +3073,17 @@ static void performImageAnalyses(Texture* tex, const image_t* image,
             }
             else
             {
-                assert(image->flags & IMGF_IS_MASKED);
-                FindAverageAlphaIdx(image->pixels, image->size.width, image->size.height,
-                                    R_ToColorPalette(image->paletteId), &aa->alpha, &aa->coverage);
+                if(image->flags & IMGF_IS_MASKED)
+                {
+                    FindAverageAlphaIdx(image->pixels, image->size.width, image->size.height,
+                                        R_ToColorPalette(image->paletteId), &aa->alpha, &aa->coverage);
+                }
+                else
+                {
+                    // It has no mask, so it must be opaque.
+                    aa->alpha = 1;
+                    aa->coverage = 0;
+                }
             }
         }
     }
