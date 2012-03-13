@@ -46,6 +46,7 @@ struct ddwindow_s
 {
     CanvasWindow* widget; ///< The widget this window represents.
     void (*drawFunc)(void); ///< Draws the contents of the canvas.
+    QRect appliedGeometry; ///< Saved for detecting when changes have occurred.
 
     ddwindowtype_t type;
     boolean inited;
@@ -489,7 +490,27 @@ static void applyWindowGeometry(Window* wnd)
         /// @todo fullscreen mode
     }
 
+    wnd->appliedGeometry = geom; // Saved for detecting changes.
     wnd->widget->setGeometry(geom);
+}
+
+static void fetchWindowGeometry(Window* wnd)
+{
+    assert(wnd);
+    assert(wnd->widget);
+
+    QRect rect = wnd->widget->geometry();
+    wnd->geometry.origin.x = rect.x();
+    wnd->geometry.origin.y = rect.y();
+    wnd->geometry.size.width = rect.width();
+    wnd->geometry.size.height = rect.height();
+
+    if(rect != wnd->appliedGeometry)
+    {
+        // The user has moved or resized the window.
+        // Let's not recenter it any more.
+        wnd->flags &= ~DDWF_CENTER;
+    }
 }
 
 static void modifyAccordingToOptions(Window* wnd)
@@ -559,8 +580,6 @@ static Window* createWindow(ddwindowtype_t type, const char* title)
     if(mainWindowInited) return NULL; /// @todo  Allow multiple.
 
     Window* wnd = &mainWindow;
-    mainWindowIdx = 1;
-
     memset(wnd, 0, sizeof(*wnd));
     mainWindowIdx = 1;
 
@@ -892,10 +911,10 @@ const Size2Raw* Window_Size(const Window* wnd)
 
 static QString windowSettingsKey(uint idx, const char* name)
 {
-    return QString("window/%1/").arg(idx);
+    return QString("window/%1/").arg(idx) + name;
 }
 
-void Window_SaveState(const Window* wnd)
+void Window_SaveState(Window* wnd)
 {
     assert(wnd);
 
@@ -905,6 +924,8 @@ void Window_SaveState(const Window* wnd)
     assert(wnd == &mainWindow); /// @todo  Figure out the window index if there are many.
     uint idx = mainWindowIdx;
     assert(idx == 1);
+
+    fetchWindowGeometry(wnd);
 
     QSettings st;
     st.setValue(windowSettingsKey(idx, "rect"), QRect(Window_X(wnd), Window_Y(wnd), Window_Width(wnd), Window_Height(wnd)));

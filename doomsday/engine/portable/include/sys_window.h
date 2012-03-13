@@ -208,7 +208,7 @@ void Window_Draw(Window* win);
  *
  * @param win  Window instance.
  */
-void Window_SaveState(const Window* wnd);
+void Window_SaveState(Window *wnd);
 
 /**
  * Restores the window's state from persistent storage. Used at engine startup
