@@ -93,18 +93,24 @@ class ContentCache
      * Attempt to retrieve a content element from the cache, copying
      * its contents into a string.
      *
-     * @param file  (String) File name to retrieve.
+     * @param relPath  (String) File name to retrieve.
      * @return  (Boolean) FALSE if the content element could not be
      *     found, else the content as a string.
      */
-    public function retrieve($file)
+    public function retrieve($relPath)
     {
-        $file = FrontController::nativePath($this->_docRoot."/$file");
+        $path = FrontController::nativePath($this->_docRoot."/$relPath");
 
-        if(!file_exists($file))
-            throw new Exception(sprintf('file %s not present in content cache.', $file));
+        if(!file_exists($path))
+            throw new Exception(sprintf('file %s not present in content cache.', $relPath));
 
-        return file_get_contents($file);
+        if($stream = fopen($path, 'r'))
+        {
+            $contents = stream_get_contents($stream);
+            fclose($stream);
+            return $contents;
+        }
+        return "";
     }
 
     /**
