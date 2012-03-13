@@ -1,4 +1,4 @@
-/** @file sys_window.cpp
+/** @file window.cpp
  * Qt-based window management implementation. @ingroup base
  *
  * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -35,7 +35,7 @@
 #include "canvaswindow.h"
 
 #include "de_platform.h"
-#include "sys_window.h"
+#include "window.h"
 #include "sys_system.h"
 #include "dd_main.h"
 #include "con_main.h"

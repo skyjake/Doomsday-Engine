@@ -311,7 +311,6 @@ DENG_HEADERS = \
     portable/include/sys_sock.h \
     portable/include/sys_system.h \
     portable/include/sys_timer.h \
-    portable/include/sys_window.h \
     portable/include/s_cache.h \
     portable/include/s_environ.h \
     portable/include/s_logic.h \
@@ -331,6 +330,7 @@ DENG_HEADERS = \
     portable/include/ui_panel.h \
     portable/include/vertex.h \
     portable/include/wadfile.h \
+    portable/include/window.h \
     portable/include/zipfile.h
 
 # Platform-specific configuration.
@@ -568,7 +568,6 @@ SOURCES += \
     portable/src/sys_sock.c \
     portable/src/sys_system.c \
     portable/src/sys_timer.c \
-    portable/src/sys_window.cpp \
     portable/src/tab_tables.c \
     portable/src/texture.c \
     portable/src/textures.c \
@@ -580,6 +579,7 @@ SOURCES += \
     portable/src/uri.c \
     portable/src/vertex.c \
     portable/src/wadfile.c \
+    portable/src/window.cpp \
     portable/src/writer.c \
     portable/src/zipfile.c
 

@@ -31,7 +31,7 @@
 
 struct consolewindow_s;
 
-#include "sys_window.h"
+#include "window.h"
 #include "sys_input.h"
 
 #if defined(UNIX)

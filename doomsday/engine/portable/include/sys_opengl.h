@@ -64,7 +64,7 @@ extern "C" {
 
 #include <string.h>
 
-#include "sys_window.h"
+#include "window.h"
 
 /**
  * Configure available features

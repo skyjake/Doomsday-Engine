@@ -26,7 +26,7 @@
 #include <de/c_wrapper.h>
 #include "de_platform.h"
 #include "dd_loop.h"
-#include "sys_window.h"
+#include "window.h"
 #include "sys_system.h"
 
 extern "C" {

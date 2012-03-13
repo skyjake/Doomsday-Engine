@@ -40,6 +40,6 @@
 #  include "../../unix/include/sys_path.h"
 #endif
 
-#include "sys_window.h"
+#include "window.h"
 
 #endif /* LIBDENG_SYSTEM_H */
