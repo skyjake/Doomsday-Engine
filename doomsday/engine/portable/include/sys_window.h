@@ -47,9 +47,31 @@ typedef struct ddwindow_s Window;
 
 // Doomsday window flags.
 #define DDWF_VISIBLE            0x01
-#define DDWF_FULLSCREEN         0x02
-#define DDWF_CENTER             0x04
+#define DDWF_CENTER             0x02
+#define DDWF_MAXIMIZE           0x04
+#define DDWF_FULLSCREEN         0x08
 
+/**
+ * Attributes for a window.
+ */
+enum windowattribute_e {
+    DDWA_END = 0,           ///< Marks the end of an attribute list (not a valid attribute by itself)
+
+    DDWA_X = 1,
+    DDWA_Y,
+    DDWA_WIDTH,
+    DDWA_HEIGHT,
+    DDWA_CENTER,
+    DDWA_MAXIMIZE,
+    DDWA_FULLSCREEN,
+    DDWA_BITS_PER_PIXEL,
+    DDWA_VISIBLE
+};
+
+/// Determines whether @a x is a valid window attribute id.
+#define VALID_WINDOW_ATTRIBUTE(x)   ((x) >= DDWA_X && (x) <= DDWA_VISIBLE)
+
+#if 0
 // Flags for Sys_SetWindow()
 #define DDSW_NOSIZE             0x01
 #define DDSW_NOMOVE             0x02
@@ -60,6 +82,7 @@ typedef struct ddwindow_s Window;
 #define DDSW_NOCHANGES          (DDSW_NOSIZE & DDSW_NOMOVE & DDSW_NOBPP & \
                                  DDSW_NOFULLSCREEN & DDSW_NOVISIBLE & \
                                  DDSW_NOCENTER)
+#endif
 
 /**
  * Currently active window. There is always one active window, so no need
@@ -130,9 +153,13 @@ uint Window_Create(application_t* app, const Point2Raw* origin,
  */
 void Window_Delete(Window* wnd);
 
-void Window_Show(Window* wnd, boolean show);
+Window* Window_Main(void);
+
+Window* Window_ByIndex(uint idx);
 
 ddwindowtype_t Window_Type(const Window* wnd);
+
+boolean Window_IsFullscreen(const Window* wnd);
 
 struct consolewindow_s* Window_Console(Window* wnd);
 
@@ -154,8 +181,6 @@ int Window_Width(const Window* wnd);
  */
 int Window_Height(const Window* wnd);
 
-int Window_BitsPerPixel(const Window* wnd);
-
 /**
  * Determines the size of the window.
  * @param wnd  Window instance.
@@ -163,13 +188,25 @@ int Window_BitsPerPixel(const Window* wnd);
  */
 const Size2Raw* Window_Size(const Window* wnd);
 
-void Window_SwapBuffers(const Window* win);
-
-boolean Sys_GetWindowFullscreen(uint idx, boolean* fullscreen); /// @todo refactor
-
-boolean Sys_SetWindow(uint idx, int x, int y, int w, int h, int bpp, uint wflags, uint uflags);
+int Window_BitsPerPixel(const Window* wnd);
 
 void Window_SetTitle(const Window *win, const char* title);
+
+void Window_Show(Window* wnd, boolean show);
+
+/**
+ * Sets or changes one or more window attributes.
+ *
+ * @param attribs  Array of values:
+ *      <pre>[ attribId, value, attribId, value, ..., 0 ]</pre>
+ *      The array must be zero-terminated, as that indicates where the array
+ *      ends (see windowattribute_e).
+ *
+ * @return @c true, if the attributes were set and the window was successfully
+ * updated. @c false, if there was an error with the values -- in this case all
+ * the window's attributes remain unchanged.
+ */
+boolean Window_ChangeAttributes(Window* wnd, int* attribs);
 
 /**
  * Sets the function who will draw the contents of the window when needed.
@@ -186,6 +223,8 @@ void Window_SetDrawFunction(Window* win, void (*drawFunc)(void));
  */
 void Window_Draw(Window* win);
 
+void Window_SwapBuffers(const Window* win);
+
 /**
  * Saves the window's state into a persistent storage so that it can be later
  * on restored. Used at shutdown time to save window geometry.
@@ -199,9 +238,6 @@ void Window_SaveState(Window *wnd);
  * to determine the default window geometry.
  */
 void Window_RestoreState(Window* wnd);
-
-Window* Window_ByIndex(uint idx);
-Window* Window_Main(void);
 
 /**
  *\todo This is a compromise to prevent having to refactor half the

@@ -149,7 +149,7 @@ void GL_Register(void)
     C_CMD_FLAGS("setbpp", "i", SetBPP, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("setres", "ii", SetRes, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("setvidramp", "", UpdateGammaRamp, CMDF_NO_DEDICATED);
-    C_CMD("togglefullscreen", "", ToggleFullscreen);
+    C_CMD_FLAGS("togglefullscreen", "", ToggleFullscreen, CMDF_NO_DEDICATED);
 
     GL_TexRegister();
 }
@@ -1280,25 +1280,30 @@ void GL_CalcLuminance(const uint8_t* buffer, int width, int height, int pixelSiz
  */
 D_CMD(SetRes)
 {
-    int                 width = atoi(argv[1]), height = atoi(argv[2]);
-
-    return Sys_SetWindow(mainWindowIdx, 0, 0, width, height, 0, 0,
-                         DDSW_NOVISIBLE|DDSW_NOCENTER|DDSW_NOFULLSCREEN|
-                         DDSW_NOBPP);
+    int attribs[] = {
+        DDWA_WIDTH, atoi(argv[1]),
+        DDWA_HEIGHT, atoi(argv[2]),
+        DDWA_END
+    };
+    return Window_ChangeAttributes(Window_Main(), attribs);
 }
 
 D_CMD(ToggleFullscreen)
 {
-    boolean             fullscreen;
+    int attribs[] = {
+        DDWA_FULLSCREEN, !Window_IsFullscreen(Window_Main()),
+        DDWA_END
+    };
+    return Window_ChangeAttributes(Window_Main(), attribs);
+}
 
-    if(!Sys_GetWindowFullscreen(mainWindowIdx, &fullscreen))
-        Con_Message("CCmd 'ToggleFullscreen': Failed acquiring window "
-                    "fullscreen");
-    else
-        Sys_SetWindow(mainWindowIdx, 0, 0, 0, 0, 0,
-                      (!fullscreen? DDWF_FULLSCREEN : 0),
-                      DDSW_NOCENTER|DDSW_NOSIZE|DDSW_NOBPP|DDSW_NOVISIBLE);
-    return true;
+D_CMD(SetBPP)
+{
+    int attribs[] = {
+        DDWA_BITS_PER_PIXEL, atoi(argv[1]),
+        DDWA_END
+    };
+    return Window_ChangeAttributes(Window_Main(), attribs);
 }
 
 D_CMD(UpdateGammaRamp)
@@ -1306,21 +1311,6 @@ D_CMD(UpdateGammaRamp)
     GL_SetGamma();
     Con_Printf("Gamma ramp set.\n");
     return true;
-}
-
-D_CMD(SetBPP)
-{
-    int                 bpp = atoi(argv[1]);
-
-    if(bpp != 16 && bpp != 32)
-    {
-        bpp = 32;
-        Con_Printf("%d not valid for bits per pixel, setting to 32.\n", bpp);
-    }
-
-    return Sys_SetWindow(mainWindowIdx, 0, 0, 0, 0, bpp, 0,
-                        DDSW_NOCENTER|DDSW_NOSIZE|DDSW_NOFULLSCREEN|
-                        DDSW_NOVISIBLE);
 }
 
 D_CMD(Fog)

@@ -1500,43 +1500,6 @@ boolean DD_Init(void)
     }
 #endif
 
-#if 0 // moved to window manager (sys_window.cpp)
-    // Check for command line options modifying the defaults.
-    if(ArgCheckWith("-width", 1))
-        winWidth = atoi(ArgNext());
-    if(ArgCheckWith("-height", 1))
-        winHeight = atoi(ArgNext());
-    if(ArgCheckWith("-winsize", 2))
-    {
-        winWidth = atoi(ArgNext());
-        winHeight = atoi(ArgNext());
-    }
-    if(ArgCheckWith("-bpp", 1))
-        winBPP = atoi(ArgNext());
-    if(winBPP != 16 && winBPP != 32)
-        winBPP = 32;
-    if(ArgCheck("-nocenter"))
-        noCenter = true;
-    if(ArgCheckWith("-xpos", 1))
-    {
-        winX = atoi(ArgNext());
-        noCenter = true;
-    }
-    if(ArgCheckWith("-ypos", 1))
-    {
-        winY = atoi(ArgNext());
-        noCenter = true;
-    }
-    if(noCenter)
-        winFlags &= ~DDWF_CENTER;
-
-    if(ArgExists("-nofullscreen") || ArgExists("-window"))
-        winFlags &= ~DDWF_FULLSCREEN;
-
-    if(!Sys_SetWindow(mainWindowIdx, winX, winY, winWidth, winHeight, winBPP, winFlags, 0))
-        return false;
-#endif
-
     if(!GL_EarlyInit())
     {
         Sys_CriticalMessage("GL_EarlyInit() failed.");

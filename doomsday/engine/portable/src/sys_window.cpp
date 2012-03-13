@@ -204,7 +204,7 @@ struct ddwindow_s
     }
 };
 
-/// Currently active window where all drawing operations are directed at.
+/// Current active window where all drawing operations occur.
 const Window* theWindow;
 
 static boolean winManagerInited = false;
@@ -493,7 +493,7 @@ boolean Sys_InitWindowManager(void)
     // dedicated mode.
     if(!ArgExists("-dedicated"))
     {
-        SDL_InitSubSystem(SDL_INIT_VIDEO);
+        SDL_InitSubSystem(SDL_INIT_VIDEO); // used for gamma
     }
 #endif
 
@@ -691,6 +691,7 @@ void Window_Delete(Window* wnd)
     }
 }
 
+#if 0
 /**
  * Attempt to set the appearance/behavioral properties of the given window.
  *
@@ -750,6 +751,15 @@ boolean Sys_SetWindow(uint idx, int newX, int newY, int newWidth, int newHeight,
     */
     return false;
 }
+#endif
+
+boolean Window_ChangeAttributes(Window* wnd, int* attribs)
+{
+
+
+    // Everything ok!
+    return true;
+}
 
 /**
  * Make the content of the framebuffer visible.
@@ -795,24 +805,12 @@ void Window_SetTitle(const Window* win, const char *title)
     }
 }
 
-/**
- * Attempt to get the fullscreen-state of the given window.
- *
- * @param idx           Index identifier (1-based) to the window.
- * @param fullscreen    Address to write the fullscreen state back to (if any).
- *
- * @return              @c true, if successful.
- */
-boolean Sys_GetWindowFullscreen(uint idx, boolean *fullscreen)
+boolean Window_IsFullscreen(const Window* wnd)
 {
-    Window *window = getWindow(idx);
+    assert(wnd);
+    if(wnd->type == WT_CONSOLE) return false;
 
-    if(!window || !fullscreen)
-        return false;
-
-    *fullscreen = ((window->flags & DDWF_FULLSCREEN)? true : false);
-
-    return true;
+    return (wnd->flags & DDWF_FULLSCREEN) != 0;
 }
 
 #if 0
@@ -964,7 +962,7 @@ void Window_SaveState(Window* wnd)
     wnd->fetchWindowGeometry();
 
     QSettings st;
-    st.setValue(windowSettingsKey(idx, "rect"), QRect(Window_X(wnd), Window_Y(wnd), Window_Width(wnd), Window_Height(wnd)));
+    st.setValue(windowSettingsKey(idx, "rect"), QRect(wnd->x(), wnd->y(), wnd->width(), wnd->height()));
     st.setValue(windowSettingsKey(idx, "center"), (wnd->flags & DDWF_CENTER) != 0);
     st.setValue(windowSettingsKey(idx, "fullscreen"), (wnd->flags & DDWF_FULLSCREEN) != 0);
     st.setValue(windowSettingsKey(idx, "bpp"), Window_BitsPerPixel(wnd));
