@@ -52,7 +52,6 @@ typedef struct {
     GETGAMEAPI GetGameAPI;
 } application_t;
 
-extern uint mainWindowIdx; // Main window.
 extern application_t app;
 
 boolean DD_Win32_Init(void);

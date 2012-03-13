@@ -21,6 +21,7 @@
  */
 
 #include <QApplication>
+#include <QSettings>
 #include <stdlib.h>
 #include <de/c_wrapper.h>
 #include "de_platform.h"
@@ -29,6 +30,9 @@
 #include "sys_system.h"
 
 extern "C" {
+
+/// @todo  Refactor this away.
+uint mainWindowIdx;   // Main window index.
 
 boolean DD_Init(void);
 
@@ -69,7 +73,15 @@ int main(int argc, char** argv)
 
     // Application core.
     QApplication dengApp(argc, argv, useGUI);
-    de2LegacyCore = LegacyCore_New(&dengApp); // C interface
+
+    // Metadata.
+    QApplication::setOrganizationDomain("dengine.net");
+    QApplication::setOrganizationName("Deng Team");
+    QApplication::setApplicationName("Doomsday Engine");
+    QApplication::setApplicationVersion(DOOMSDAY_VERSION_BASE);
+
+    // C interface to the app.
+    de2LegacyCore = LegacyCore_New(&dengApp);
 
     // Initialize.
 #if WIN32
@@ -78,8 +90,13 @@ int main(int argc, char** argv)
     if(!DD_Unix_Init(argc, argv)) return 1;
 #endif
 
-    // Show the main window. This also completes the initialization.
-    Window_Show(Window_Main(), true);
+    // Create the main window.
+    char title[256];
+    DD_ComposeMainWindowTitle(title);
+    Window* win = Window_New(novideo? WT_CONSOLE : WT_NORMAL, title);
+
+    // Show the main window. This also causes initialization to finish.
+    Window_Show(win, true);
 
     // Run the main loop.
     int result = DD_GameLoop();

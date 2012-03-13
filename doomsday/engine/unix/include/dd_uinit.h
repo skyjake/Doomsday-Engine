@@ -48,7 +48,6 @@ typedef struct {
 #endif
 } application_t;
 
-extern uint mainWindowIdx; // Main window.
 extern application_t app;
 
 boolean DD_Unix_Init(int argc, char** argv);

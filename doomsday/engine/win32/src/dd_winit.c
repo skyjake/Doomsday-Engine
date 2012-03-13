@@ -65,7 +65,7 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+//LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -73,7 +73,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-uint mainWindowIdx = 0; // Main window.
 application_t app;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -405,6 +404,7 @@ static void determineGlobalPaths(application_t* app)
     F_AppendMissingSlashCString(ddBasePath, FILENAME_T_MAXLEN);
 }
 
+/*
 static BOOL createMainWindow(int lnCmdShow)
 {
     char buf[256];
@@ -415,6 +415,7 @@ static BOOL createMainWindow(int lnCmdShow)
                                   (isDedicated ? WT_CONSOLE : WT_NORMAL), buf, &lnCmdShow);
     return mainWindowIdx != 0;
 }
+*/
 
 boolean DD_Win32_Init(void)
 {
@@ -466,6 +467,7 @@ boolean DD_Win32_Init(void)
         {
             DD_ErrorBox(true, "Error loading plugins.");
         }
+        /*
         else if(!createMainWindow(lnCmdShow))
         {
             DD_ErrorBox(true, "Error creating main window.");
@@ -473,24 +475,17 @@ boolean DD_Win32_Init(void)
         else if(!Sys_GLInitialize())
         {
             DD_ErrorBox(true, "Error initializing OpenGL.");
-        }
+        }*/
         else
         {   // All initialization complete.
             failed = FALSE;
-
-            { char buf[256];
-            DD_ComposeMainWindowTitle(buf);
-            Sys_SetWindowTitle(mainWindowIdx, buf);
-            }
-
-           // SetForegroundWindow(win->hWnd);
-           // SetFocus(win->hWnd);
         }
     }
 
     return !failed;
 }
 
+#if 0
 /**
  * All messages go to the default window message processor.
  */
@@ -617,6 +612,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
     return result;
 }
+#endif
 
 /**
  * Shuts down the engine.

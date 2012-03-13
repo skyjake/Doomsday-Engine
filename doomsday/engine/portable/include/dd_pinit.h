@@ -37,6 +37,8 @@
 extern "C" {
 #endif
 
+extern uint mainWindowIdx;
+
 // Maximum allowed number of plugins.
 #define MAX_PLUGS   32
 

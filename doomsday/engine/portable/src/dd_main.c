@@ -1476,10 +1476,10 @@ void DD_FinishInitializationAfterWindowReady(void)
 boolean DD_Init(void)
 {
     // By default, use the resolution defined in (default).cfg.
-    int winWidth = defResX, winHeight = defResY, winBPP = defBPP, winX = 0, winY = 0;
-    uint winFlags = DDWF_VISIBLE | DDWF_CENTER | (defFullscreen? DDWF_FULLSCREEN : 0);
-    boolean noCenter = false;
-    int i; //, exitCode = 0;
+    //int winWidth = defResX, winHeight = defResY, winBPP = defBPP, winX = 0, winY = 0;
+    //uint winFlags = DDWF_VISIBLE | DDWF_CENTER | (defFullscreen? DDWF_FULLSCREEN : 0);
+    //boolean noCenter = false;
+    //int i; //, exitCode = 0;
 
 #ifdef _DEBUG
     // Type size check.
@@ -1500,6 +1500,7 @@ boolean DD_Init(void)
     }
 #endif
 
+#if 0 // moved to window manager (sys_window.cpp)
     // Check for command line options modifying the defaults.
     if(ArgCheckWith("-width", 1))
         winWidth = atoi(ArgNext());
@@ -1534,6 +1535,7 @@ boolean DD_Init(void)
 
     if(!Sys_SetWindow(mainWindowIdx, winX, winY, winWidth, winHeight, winBPP, winFlags, 0))
         return false;
+#endif
 
     if(!GL_EarlyInit())
     {

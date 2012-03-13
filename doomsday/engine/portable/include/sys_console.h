@@ -51,7 +51,7 @@ typedef struct consolewindow_s {
 } consolewindow_t;
 
 Window* Sys_ConInit(const char* title);
-void Sys_ConShutdown(uint idx);
+void Sys_ConShutdown(Window *window);
 
 void ConsoleWindow_SetTitle(const Window *window, const char* title);
 

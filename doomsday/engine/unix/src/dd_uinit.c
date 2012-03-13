@@ -71,8 +71,6 @@ typedef Library* PluginHandle;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-uint mainWindowIdx;   // Main window.
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 application_t app;
@@ -339,6 +337,7 @@ static char* buildCommandLineString(int argc, char** argv)
     return cmdLine;
 }
 
+/*
 static int createMainWindow(void)
 {
     Point2Raw origin = { 0, 0 };
@@ -349,6 +348,7 @@ static int createMainWindow(void)
                                   isDedicated? WT_CONSOLE : WT_NORMAL, buf, 0);
     return mainWindowIdx != 0;
 }
+*/
 
 boolean DD_Unix_Init(int argc, char** argv)
 {
@@ -395,11 +395,11 @@ boolean DD_Unix_Init(int argc, char** argv)
     {
         DD_ErrorBox(true, "Error loading plugins.");
     }
-    else if(!createMainWindow())
+    else /*if(!createMainWindow())
     {
         DD_ErrorBox(true, "Error creating main window.");
     }
-    else
+    else*/
     {
         // Everything okay so far.
         failed = false;

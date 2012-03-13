@@ -99,6 +99,24 @@ boolean Sys_GetDesktopBPP(int* bpp);
  */
 
 /**
+ * Constructs a new window using the default configuration. Note that the
+ * default configuration is saved persistently when the engine shuts down and
+ * is restored when the engine is restarted.
+ *
+ * Command line options (e.g., -xpos) can be used to modify the window
+ * configuration.
+ *
+ * @note  Presently it is not possible to create more than one window.
+ *
+ * @param type   Type of the window to create.
+ * @param title  Text for the window title.
+ *
+ * @return  Window instance. Caller does not get ownership.
+ */
+Window* Window_New(ddwindowtype_t type, const char* title);
+
+#if 0
+/**
  * Create a new window.
  *
  * @param app           Ptr to the application structure holding our globals.
@@ -118,8 +136,15 @@ boolean Sys_GetDesktopBPP(int* bpp);
 uint Window_Create(application_t* app, const Point2Raw* origin,
                    const Size2Raw* size, int bpp, int flags, ddwindowtype_t type,
                    const char* title, void* data);
+#endif
 
-boolean Window_Destroy(uint idx);
+/**
+ * Close and destroy the window. Its state is saved persistently and used as
+ * the default configuration the next time the same window is created.
+ *
+ * @param wnd  Window instance.
+ */
+void Window_Delete(Window* wnd);
 
 void Window_Show(Window* wnd, boolean show);
 
@@ -128,6 +153,10 @@ ddwindowtype_t Window_Type(const Window* wnd);
 struct consolewindow_s* Window_Console(Window* wnd);
 
 const struct consolewindow_s* Window_ConsoleConst(const Window* wnd);
+
+int Window_X(const Window* wnd);
+
+int Window_Y(const Window* wnd);
 
 /**
  * Returns the current width of the window.
@@ -172,6 +201,20 @@ void Window_SetDrawFunction(Window* win, void (*drawFunc)(void));
  * @param win  Window instance.
  */
 void Window_Draw(Window* win);
+
+/**
+ * Saves the window's state into a persistent storage so that it can be later
+ * on restored. Used at shutdown time to save window geometry.
+ *
+ * @param win  Window instance.
+ */
+void Window_SaveState(const Window* wnd);
+
+/**
+ * Restores the window's state from persistent storage. Used at engine startup
+ * to determine the default window geometry.
+ */
+void Window_RestoreState(Window* wnd);
 
 Window* Window_ByIndex(uint idx);
 Window* Window_Main(void);

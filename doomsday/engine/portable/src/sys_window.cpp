@@ -23,6 +23,7 @@
 #include <QWidget>
 #include <QApplication>
 #include <QDesktopWidget>
+#include <QSettings>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -389,8 +390,8 @@ boolean Sys_ShutdownWindowManager(void)
     if(!winManagerInited)
         return false; // Window manager is not initialized.
 
-    if(mainWindow.type == WT_CONSOLE)
-        Window_Destroy(1);
+    // Get rid of the windows.
+    Window_Delete(Window_Main());
 
     // Now off-line, no more window management will be possible.
     winManagerInited = false;
@@ -466,58 +467,126 @@ static void finishMainWindowInit(Canvas& canvas)
     DD_FinishInitializationAfterWindowReady();
 }
 
-static Window* createDDWindow(application_t*, const Point2Raw* origin, const Size2Raw* size,
-                              int bpp, int flags, ddwindowtype_t type, const char* title)
+static void applyWindowGeometry(Window* wnd)
 {
-    // SDL only supports one window.
-    if(mainWindowInited) return NULL;
+    assert(wnd);
+    assert(wnd->widget);
+
+    QSize size(Window_Width(wnd), Window_Height(wnd));
+    QRect geom(Window_X(wnd), Window_Y(wnd), size.width(), size.height());
+
+    if(wnd->flags & DDWF_CENTER)
+    {
+        // Center the window.
+        QSize screenSize = QApplication::desktop()->screenGeometry().size();
+        geom = QRect((screenSize.width() - size.width())/2,
+                     (screenSize.height() - size.height())/2,
+                     size.width(), size.height());
+    }
+
+    if(wnd->flags & DDWF_FULLSCREEN)
+    {
+        /// @todo fullscreen mode
+    }
+
+    wnd->widget->setGeometry(geom);
+}
+
+static void modifyAccordingToOptions(Window* wnd)
+{
+    if(ArgCheckWith("-width", 1))
+    {
+        wnd->geometry.size.width = atoi(ArgNext());
+    }
+
+    if(ArgCheckWith("-height", 1))
+    {
+        wnd->geometry.size.height = atoi(ArgNext());
+    }
+
+    if(ArgCheckWith("-winsize", 2))
+    {
+        wnd->geometry.size.width = atoi(ArgNext());
+        wnd->geometry.size.height = atoi(ArgNext());
+    }
+
+    if(ArgCheckWith("-bpp", 1))
+    {
+        wnd->bpp = atoi(ArgNext());
+    }
+
+    bool noCenter = false;
+    if(ArgCheck("-nocenter"))
+    {
+        noCenter = true;
+    }
+
+    if(ArgCheckWith("-xpos", 1))
+    {
+        wnd->geometry.origin.x = atoi(ArgNext());
+        noCenter = true;
+    }
+
+    if(ArgCheckWith("-ypos", 1))
+    {
+        wnd->geometry.origin.y = atoi(ArgNext());
+        noCenter = true;
+    }
+
+    if(noCenter)
+    {
+        wnd->flags &= ~DDWF_CENTER;
+    }
+
+    if(ArgCheck("-center"))
+    {
+        wnd->flags |= DDWF_CENTER;
+    }
+
+    if(ArgExists("-nofullscreen") || ArgExists("-window"))
+    {
+        wnd->flags &= ~DDWF_FULLSCREEN;
+    }
+
+    if(ArgExists("-fullscreen") || ArgExists("-nowindow"))
+    {
+        wnd->flags |= DDWF_FULLSCREEN;
+    }
+}
+
+static Window* createWindow(ddwindowtype_t type, const char* title)
+{
+    if(mainWindowInited) return NULL; /// @todo  Allow multiple.
+
+    Window* wnd = &mainWindow;
+    mainWindowIdx = 1;
+
+    memset(wnd, 0, sizeof(*wnd));
+    mainWindowIdx = 1;
 
     if(type == WT_CONSOLE)
     {
-        memset(&mainWindow, 0, sizeof(mainWindow));
         mainWindow.type = WT_CONSOLE;
         Sys_ConInit(title);
     }
     else
     {
-        if(!(bpp == 32 || bpp == 16))
-        {
-            Con_Message("createDDWindow: Unsupported BPP %i.", bpp);
-            return 0;
-        }
-
-        /*if(flags & DDWF_FULLSCREEN)
-        {
-            // Need to change mode?
-        }*/
-
-        QRect geom(origin->x, origin->y, size->width, size->height);
-
-        if(!(flags & DDSW_NOCENTER))
-        {
-            // Center the window.
-            QSize screenSize = QApplication::desktop()->screenGeometry().size();
-            geom = QRect((screenSize.width() - size->width)/2,
-                         (screenSize.height() - size->height)/2,
-                         size->width, size->height);
-        }
-
-        // Create the main window.
+        // Create the main window (hidden).
         mainWindow.widget = new CanvasWindow;
-        mainWindow.widget->setGeometry(geom);
-        mainWindow.widget->setMinimumSize(QSize(320, 240)); // minimum possible size
-        mainWindow.geometry.origin.x = origin->x;
-        mainWindow.geometry.origin.y = origin->y;
-        mainWindow.geometry.size.width = size->width;
-        mainWindow.geometry.size.height = size->height;
-        mainWindow.bpp = bpp;
-        mainWindow.flags = flags;
-        mainWindow.inited = true;
+        Window_SetTitle(&mainWindow, title);
+        Window_RestoreState(&mainWindow);
+        mainWindow.widget->setMinimumSize(QSize(320, 240)); // Minimum possible size when resizing.
 
         // After the main window is created, we can finish with the engine init.
         mainWindow.widget->canvas().setInitCallback(finishMainWindowInit);
 
-        //mainWindow.widget->show();
+        // Let's see if there are command line options overriding the previous state.
+        modifyAccordingToOptions(&mainWindow);
+
+        // Make it so. (Not shown yet.)
+        applyWindowGeometry(&mainWindow);
+
+        mainWindow.inited = true;
 
 #if 0
 #if defined(WIN32)
@@ -534,50 +603,37 @@ static Window* createDDWindow(application_t*, const Point2Raw* origin, const Siz
 #endif
     }
 
-    /*
-    setDDWindow(&mainWindow, size->width, size->height, bpp, flags,
-                DDSW_NOVISIBLE | DDSW_NOCENTER | DDSW_NOFULLSCREEN);
-                */
-
+    /// @todo Refactor for multiwindow support.
     mainWindowInited = true;
     return &mainWindow;
 }
 
-uint Window_Create(application_t* app, const Point2Raw* origin,
-                   const Size2Raw* size, int bpp, int flags, ddwindowtype_t type,
-                   const char* title, void*)
+Window* Window_New(ddwindowtype_t type, const char* title)
 {
     if(!winManagerInited) return 0;
-
-    Window* win = createDDWindow(app, origin, size, bpp, flags, type, title);
-    if(win) return 1; // Success.
-    return 0;
+    return createWindow(type, title);
 }
 
-/**
- * Destroy the specified window.
- *
- * Side-effects: If the window is fullscreen and the current video mode is
- * not that set as the desktop default: an attempt will be made to change
- * back to the desktop default video mode.
- *
- * @param idx           Index of the window to destroy (1-based).
- *
- * @return              @c true, if successful.
- */
-boolean Window_Destroy(uint idx)
+void Window_Delete(Window* wnd)
 {
-    Window* window = getWindow(idx);
+    assert(wnd);
 
-    if(!window)
-        return false;
-
-    if(window->type == WT_CONSOLE)
+    if(wnd->type == WT_CONSOLE)
     {
-        Sys_ConShutdown(idx);
+        Sys_ConShutdown(wnd);
     }
+    else
+    {
+        assert(wnd->widget);
 
-    return true;
+        // Make sure we'll remember the config.
+        Window_SaveState(wnd);
+
+        // Delete the CanvasWindow.
+        delete wnd->widget;
+
+        memset(wnd, 0, sizeof(*wnd));
+    }
 }
 
 /**
@@ -798,6 +854,18 @@ const struct consolewindow_s* Window_ConsoleConst(const Window* wnd)
     return &wnd->console;
 }
 
+int Window_X(const Window* wnd)
+{
+    assert(wnd);
+    return wnd->geometry.origin.x;
+}
+
+int Window_Y(const Window* wnd)
+{
+    assert(wnd);
+    return wnd->geometry.origin.y;
+}
+
 int Window_Width(const Window* wnd)
 {
     assert(wnd);
@@ -820,4 +888,58 @@ const Size2Raw* Window_Size(const Window* wnd)
 {
     assert(wnd);
     return &wnd->geometry.size;
+}
+
+static QString windowSettingsKey(uint idx, const char* name)
+{
+    return QString("window/%1/").arg(idx);
+}
+
+void Window_SaveState(const Window* wnd)
+{
+    assert(wnd);
+
+    // Console windows are not saved.
+    if(wnd->type == WT_CONSOLE) return;
+
+    assert(wnd == &mainWindow); /// @todo  Figure out the window index if there are many.
+    uint idx = mainWindowIdx;
+    assert(idx == 1);
+
+    QSettings st;
+    st.setValue(windowSettingsKey(idx, "rect"), QRect(Window_X(wnd), Window_Y(wnd), Window_Width(wnd), Window_Height(wnd)));
+    st.setValue(windowSettingsKey(idx, "center"), (wnd->flags & DDWF_CENTER) != 0);
+    st.setValue(windowSettingsKey(idx, "fullscreen"), (wnd->flags & DDWF_FULLSCREEN) != 0);
+    st.setValue(windowSettingsKey(idx, "bpp"), Window_BitsPerPixel(wnd));
+}
+
+void Window_RestoreState(Window* wnd)
+{
+    assert(wnd);
+
+    // Console windows can not be restored.
+    if(wnd->type == WT_CONSOLE) return;
+
+    assert(wnd == &mainWindow);  /// @todo  Figure out the window index if there are many.
+    uint idx = mainWindowIdx;
+    assert(idx == 1);
+
+    // The default state of the window is determined by these values.
+    QSettings st;
+    QRect geom = st.value(windowSettingsKey(idx, "rect"), QRect(0, 0, 640, 480)).toRect();
+    wnd->geometry.origin.x = geom.x();
+    wnd->geometry.origin.y = geom.y();
+    wnd->geometry.size.width = geom.width();
+    wnd->geometry.size.height = geom.height();
+    wnd->bpp = st.value(windowSettingsKey(idx, "bpp"), 32).toInt();
+
+    if(st.value(windowSettingsKey(idx, "center"), true).toBool())
+        wnd->flags |= DDWF_CENTER;
+    else
+        wnd->flags &= ~DDWF_CENTER;
+
+    if(st.value(windowSettingsKey(idx, "fullscreen"), true).toBool())
+        wnd->flags |= DDWF_FULLSCREEN;
+    else
+        wnd->flags &= ~DDWF_FULLSCREEN;
 }

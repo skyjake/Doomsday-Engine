@@ -325,9 +325,8 @@ static void Sys_ConInputShutdown(void)
     conInputInited = false;
 }
 
-void Sys_ConShutdown(uint idx)
+void Sys_ConShutdown(Window* window)
 {
-    Window* window = Window_ByIndex(idx);
     consolewindow_t* console;
 
     if(!isValidWindow(window)) return;

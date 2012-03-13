@@ -136,10 +136,10 @@ void GL_Register(void)
     C_VAR_INT("rend-mobj-smooth-turn", &useSRVOAngle, 0, 0, 1);
 
     // * video
-    C_VAR_INT("vid-res-x", &defResX, CVF_NO_MAX, 320, 0);
-    C_VAR_INT("vid-res-y", &defResY, CVF_NO_MAX, 240, 0);
-    C_VAR_INT("vid-bpp", &defBPP, 0, 16, 32);
-    C_VAR_INT("vid-fullscreen", &defFullscreen, 0, 0, 1);
+    C_VAR_INT("vid-res-x", &defResX, CVF_NO_MAX|CVF_READ_ONLY|CVF_NO_ARCHIVE, 320, 0);
+    C_VAR_INT("vid-res-y", &defResY, CVF_NO_MAX|CVF_READ_ONLY|CVF_NO_ARCHIVE, 240, 0);
+    C_VAR_INT("vid-bpp", &defBPP, CVF_READ_ONLY|CVF_NO_ARCHIVE, 16, 32);
+    C_VAR_INT("vid-fullscreen", &defFullscreen, CVF_READ_ONLY|CVF_NO_ARCHIVE, 0, 1);
     C_VAR_FLOAT("vid-gamma", &vid_gamma, 0, 0.1f, 6);
     C_VAR_FLOAT("vid-contrast", &vid_contrast, 0, 0, 10);
     C_VAR_FLOAT("vid-bright", &vid_bright, 0, -2, 2);
