@@ -37,6 +37,7 @@ int Keycode_TranslateFromQt(int qtKey, int nativeVirtualKey)
     switch(qtKey)
     {
     case Qt::Key_Meta:          return DDKEY_RCTRL;
+    case Qt::Key_Control:       return 0; // Don't map the Command key.
     case Qt::Key_F14:           return DDKEY_PAUSE; // No pause key on the Mac.
     case Qt::Key_F15:           return DDKEY_PRINT;
 
