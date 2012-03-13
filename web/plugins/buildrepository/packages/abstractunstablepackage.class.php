@@ -79,8 +79,11 @@ abstract class AbstractUnstablePackage extends AbstractPackage implements iBuild
         $tpl['is_unstable'] = true;
 
         $build = $FrontController->findPlugin('BuildRepository')->buildByUniqueId($this->buildId);
-        $tpl['build_startdate'] = date(DATE_ATOM, $build->startDate());
-        $tpl['build_uniqueid'] = $this->buildId;
+        if($build instanceof BuildEvent)
+        {
+            $tpl['build_startdate'] = date(DATE_ATOM, $build->startDate());
+            $tpl['build_uniqueid'] = $this->buildId;
+        }
 
         $tpl['compile_loguri'] = $this->compileLogUri;
         $tpl['compile_errorcount'] = $this->compileErrorCount;

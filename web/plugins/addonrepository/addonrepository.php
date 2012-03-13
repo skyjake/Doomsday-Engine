@@ -188,10 +188,6 @@ class AddonRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 <?php
 
         $this->outputAddonList(self::$hexenGameModes);
-
-?><hr /><?php
-
-        includeHTML('instructions', self::$name);
     }
 
     public static function packageSorter($packA, $packB)

@@ -549,14 +549,18 @@ p.legal a {
 /*-------------------- GameServers -------------------*/
 
 #servers-label {
-    color: #ffffff;
+    color: white;
     font-weight: bold;
+}
+
+#servers-timestamp {
+    color: white;
 }
 
 #servers {
     position: relative;
-    min-width: 201px;
     top: -282px; /* minus image height */
+    min-width: 201px;
     padding-right: .5em;
     padding-top: .5em;
     float: right;
@@ -569,12 +573,30 @@ p.legal a {
     background-position: top right;
 }
 
-.server {
-    margin-right: .7em;
+#servers ul {
+    padding: 0;
+    margin-top: .4em;
 }
 
-.server img {
-    margin-top: .5em;
+#servers ul li {
+    list-style-type: none;
+    min-height: 1.6em;
+}
+
+#servers .name {
+    font-weight: bold;
+}
+
+#servers a {
+    color: #ff8a00;
+}
+
+#servers a:hover, #servers a:visited:hover {
+    color: white;
+}
+
+#servers .player-summary, #servers .game-mode {
+    color: white;
 }
 
 #servers ul li {

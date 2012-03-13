@@ -32,14 +32,14 @@ abstract class AbstractPackage extends BasePackage implements iDownloadable
 {
     static protected $emptyString = '';
 
-    protected $downloadUri = NULL;
+    protected $directDownloadUri = NULL;
 
-    public function __construct($platformId=PID_ANY, $title=NULL, $version=NULL, $downloadUri=NULL)
+    public function __construct($platformId=PID_ANY, $title=NULL, $version=NULL, $directDownloadUri=NULL)
     {
         parent::__construct($platformId, $title, $version);
 
-        if(!is_null($downloadUri) && strlen($downloadUri) > 0)
-            $this->downloadUri = "$downloadUri";
+        if(!is_null($directDownloadUri) && strlen($directDownloadUri) > 0)
+            $this->directDownloadUri = "$directDownloadUri";
     }
 
     // Extends implementation in AbstractPackage.
@@ -49,32 +49,32 @@ abstract class AbstractPackage extends BasePackage implements iDownloadable
             throw new Exception('Invalid template argument, array expected');
 
         parent::populateGraphTemplate($tpl);
-        $tpl['download_uri'] = $this->downloadUri();
+        $tpl['direct_download_uri'] = $this->directDownloadUri();
     }
 
     // Implements iDownloadable
-    public function &downloadUri()
+    public function &directDownloadUri()
     {
-        if(!$this->hasDownloadUri())
+        if(!$this->hasDirectDownloadUri())
         {
             return $emptyString;
         }
-        return $this->downloadUri;
+        return $this->directDownloadUri;
     }
 
     // Implements iDownloadable
-    public function hasDownloadUri()
+    public function hasDirectDownloadUri()
     {
-        return !is_null($this->downloadUri);
+        return !is_null($this->directDownloadUri);
     }
 
     // Implements iDownloadable
     public function genDownloadBadge()
     {
         $fullTitle = $this->composeFullTitle();
-        if($this->hasDownloadUri())
+        if($this->hasDirectDownloadUri())
         {
-            $html = '<a href="'. htmlspecialchars($this->downloadUri)
+            $html = '<a href="'. htmlspecialchars($this->directDownloadUri)
                    .'" title="'. ("Download $fullTitle")
                           .'">'. htmlspecialchars($fullTitle) .'</a>';
         }
