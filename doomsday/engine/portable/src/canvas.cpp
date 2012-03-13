@@ -59,7 +59,7 @@ struct Canvas::Instance
         self->grabMouse();
         qApp->setOverrideCursor(QCursor(Qt::BlankCursor));
 
-        QTimer::singleShot(1, self, SLOT(checkMousePosition()));
+        QTimer::singleShot(1, self, SLOT(trackMousePosition()));
     }
 
     void ungrabMouse()
@@ -138,7 +138,7 @@ void Canvas::notifyInit()
     }
 }
 
-void Canvas::checkMousePosition()
+void Canvas::trackMousePosition()
 {
     if(d->mouseGrabbed)
     {
@@ -148,7 +148,7 @@ void Canvas::checkMousePosition()
             QPoint delta = curPos - d->prevMousePos;
             if(!delta.isNull())
             {
-                qDebug() << "Canvas: mouse delta" << delta;
+                Mouse_SubmitMotion(IMA_POINTER, delta.x(), delta.y());
 
                 // Keep the cursor centered.
                 QPoint mid = rect().center();
@@ -160,7 +160,7 @@ void Canvas::checkMousePosition()
         {
             d->prevMousePos = curPos;
         }
-        QTimer::singleShot(1, this, SLOT(checkMousePosition()));
+        QTimer::singleShot(1, this, SLOT(trackMousePosition()));
     }
     else
     {
@@ -224,6 +224,14 @@ void Canvas::keyReleaseEvent(QKeyEvent *ev)
     Keyboard_Submit(IKE_UP, Keycode_TranslateFromQt(ev->key(), ev->nativeVirtualKey()), 0);
 }
 
+static int translateButton(Qt::MouseButton btn)
+{
+    if(btn == Qt::LeftButton) return IMB_LEFT;
+    if(btn == Qt::MiddleButton) return IMB_MIDDLE;
+    if(btn == Qt::RightButton) return IMB_RIGHT;
+    return -1;
+}
+
 void Canvas::mousePressEvent(QMouseEvent* ev)
 {
     if(!d->mouseGrabbed)
@@ -234,6 +242,8 @@ void Canvas::mousePressEvent(QMouseEvent* ev)
     }
 
     ev->accept();
+
+    Mouse_SubmitButton(translateButton(ev->button()), true);
 
     qDebug() << "Canvas: mouse press at" << ev->pos();
 }
@@ -248,6 +258,8 @@ void Canvas::mouseReleaseEvent(QMouseEvent* ev)
         d->grabMouse();
         return;
     }
+
+    Mouse_SubmitButton(translateButton(ev->button()), false);
 
     qDebug() << "Canvas: mouse release at" << ev->pos();
 }

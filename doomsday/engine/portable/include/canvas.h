@@ -80,7 +80,7 @@ protected:
 
 protected slots:
     void notifyInit();
-    void checkMousePosition();
+    void trackMousePosition();
 
 private:
     struct Instance;

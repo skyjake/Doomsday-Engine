@@ -819,6 +819,12 @@ void DD_PostEvent(ddevent_t *ev)
         q = &sharpQueue;
     }
 
+    // Cleanup: make sure only keyboard toggles can have a text insert.
+    if(ev->type == E_TOGGLE && ev->device != IDEV_KEYBOARD)
+    {
+        memset(ev->toggle.text, 0, sizeof(ev->toggle.text));
+    }
+
     postToQueue(q, ev);
 
 #ifdef LIBDENG_CAMERA_MOVEMENT_ANALYSIS
@@ -1329,38 +1335,26 @@ void DD_ReadMouse(timespan_t ticLength)
 
     ev.device = IDEV_MOUSE;
     ev.type = E_AXIS;
-    ev.axis.type = EAXIS_RELATIVE;
-    xpos = mouse.x;
-    ypos = mouse.y;
 
-    if(ticLength > 0 && mouseFilter > 0)
-    {
-        // Filtering ensures that events are sent more evenly on each frame.
-        static float accumulation[2] = { 0, 0 };
-        xpos = I_FilterMouse(xpos, &accumulation[0], ticLength);
-        ypos = I_FilterMouse(ypos, &accumulation[1], ticLength);
-    }
+    xpos = mouse.axis[IMA_POINTER].x;
+    ypos = mouse.axis[IMA_POINTER].y;
 
-    // Mouse axis data may be modified if not in UI mode.
-/*
     if(uiMouseMode)
     {
-        if(mouseDisableX)
-            xpos = 0;
-        if(mouseDisableY)
-            ypos = 0;
-        if(!mouseInverseY)
-            ypos = -ypos;
-    }
-    */
-    if(uiMouseMode)
-    {
-        // Scale the movement depending on screen resolution.
-        xpos *= MAX_OF(1, Window_Width(theWindow) / 800.0f);
-        ypos *= MAX_OF(1, Window_Height(theWindow) / 600.0f);
+        ev.axis.type = EAXIS_ABSOLUTE;
     }
     else
     {
+        ev.axis.type = EAXIS_RELATIVE;
+
+        if(ticLength > 0 && mouseFilter > 0)
+        {
+            // Filtering ensures that events are sent more evenly on each frame.
+            static float accumulation[2] = { 0, 0 };
+            xpos = I_FilterMouse(xpos, &accumulation[0], ticLength);
+            ypos = I_FilterMouse(ypos, &accumulation[1], ticLength);
+        }
+
         ypos = -ypos;
     }
 
@@ -1403,11 +1397,13 @@ void DD_ReadMouse(timespan_t ticLength)
             if(mouse.buttonDowns[i]-- > 0)
             {
                 ev.toggle.state = ETOG_DOWN;
+                DEBUG_Message(("mb %i down\n", i));
                 DD_PostEvent(&ev);
             }
             if(mouse.buttonUps[i]-- > 0)
             {
                 ev.toggle.state = ETOG_UP;
+                DEBUG_Message(("mb %i up\n", i));
                 DD_PostEvent(&ev);
             }
         }

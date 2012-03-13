@@ -39,29 +39,37 @@ enum {
     IKE_UP
 };
 
-// Mouse buttons. (1=left, 2=middle, 3=right, ...)
-#define IMB_MAXBUTTONS  16
-
-// Mouse wheel axes.
+// Mouse buttons.
 enum {
-    IMW_UP,
-    IMW_DOWN,
-    IMW_LEFT,
-    IMW_RIGHT,
-    IMW_NUM_AXES
+    IMB_LEFT,
+    IMB_MIDDLE,
+    IMB_RIGHT,
+    IMB_MWHEELUP, // virtual button
+    IMB_MWHEELDOWN, // virtual button
+
+    IMB_MAXBUTTONS = 16
+};
+
+// Mouse axes.
+enum {
+    IMA_POINTER,
+    IMA_WHEEL,
+    IMA_MAXAXES
 };
 
 typedef struct keyevent_s {
-    byte        type;       ///< Type of the event.
-    int         ddkey;      ///< DDKEY code.
-    char        text[8];    ///< For characters, latin1-encoded text to insert. /// @todo Unicode
+    byte type;          ///< Type of the event.
+    int ddkey;          ///< DDKEY code.
+    char text[8];       ///< For characters, latin1-encoded text to insert. /// @todo Unicode
 } keyevent_t;
 
 typedef struct mousestate_s {
-    int         x, y; // Relative X and Y mickeys since last call.
-    int         buttonDowns[IMB_MAXBUTTONS]; // Button down count.
-    int         buttonUps[IMB_MAXBUTTONS]; // Button up count.
-    int         wheel[IMW_NUM_AXES]; // Mouse wheel.
+    struct {
+        int x;
+        int y;
+    } axis[IMA_MAXAXES];                ///< Relative X and Y.
+    int buttonDowns[IMB_MAXBUTTONS];    ///< Button down count.
+    int buttonUps[IMB_MAXBUTTONS];      ///< Button up count.
 } mousestate_t;
 
 void I_Register(void);
@@ -81,6 +89,33 @@ void Keyboard_Submit(int type, int ddKey, const char* text);
 size_t Keyboard_GetEvents(keyevent_t *evbuf, size_t bufsize);
 
 boolean Mouse_IsPresent(void);
+
+/**
+ * Submits a new mouse event for preprocessing. The event has likely just been
+ * received from the windowing system.
+ *
+ * @param button  Which button.
+ * @param isDown  Is the button pressed or released.
+ */
+void Mouse_SubmitButton(int button, boolean isDown);
+
+/**
+ * Submits a new motion event for preprocessing.
+ *
+ * @param axis    Which axis.
+ * @param deltaX  Horizontal delta.
+ * @param deltaY  Vertical delta.
+ */
+void Mouse_SubmitMotion(int axis, int deltaX, int deltaY);
+
+/**
+ * Submits an absolute mouse position for the UI mouse mode.
+ *
+ * @param x  X coordinate. 0 is at the left edge of the window.
+ * @param y  Y coordinate. 0 is at the top edge of the window.
+ */
+void Mouse_SubmitWindowPosition(int x, int y);
+
 void Mouse_GetState(mousestate_t *state);
 
 #ifdef __cplusplus
