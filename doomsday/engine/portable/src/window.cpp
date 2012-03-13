@@ -42,10 +42,20 @@
 #include "gl_main.h"
 #include "ui_main.h"
 
+/// Used to determine the valid region for windows on the desktop.
+/// A window should never go fully (or nearly fully) outside the desktop.
+static const int DESKTOP_EDGE_GRACE = 30; // pixels
+
 static QRect desktopRect()
 {
     /// @todo Multimonitor? This checks the default screen.
     return QApplication::desktop()->screenGeometry();
+}
+
+static QRect desktopValidRect()
+{
+    return desktopRect().adjusted(DESKTOP_EDGE_GRACE, DESKTOP_EDGE_GRACE,
+                                  -DESKTOP_EDGE_GRACE, -DESKTOP_EDGE_GRACE);
 }
 
 struct ddwindow_s
@@ -92,6 +102,10 @@ struct ddwindow_s
         return geometry.size.height;
     }
 
+    QRect rect() const {
+        return QRect(x(), y(), width(), height());
+    }
+
     /**
      * Checks all command line options that affect window geometry and applies
      * them to this Window.
@@ -100,23 +114,23 @@ struct ddwindow_s
     {
         if(ArgCheckWith("-width", 1))
         {
-            geometry.size.width = atoi(ArgNext());
+            geometry.size.width = qMax(WINDOW_MIN_WIDTH, atoi(ArgNext()));
         }
 
         if(ArgCheckWith("-height", 1))
         {
-            geometry.size.height = atoi(ArgNext());
+            geometry.size.height = qMax(WINDOW_MIN_HEIGHT, atoi(ArgNext()));
         }
 
         if(ArgCheckWith("-winsize", 2))
         {
-            geometry.size.width = atoi(ArgNext());
-            geometry.size.height = atoi(ArgNext());
+            geometry.size.width = qMax(WINDOW_MIN_WIDTH, atoi(ArgNext()));
+            geometry.size.height = qMax(WINDOW_MIN_HEIGHT, atoi(ArgNext()));
         }
 
         if(ArgCheckWith("-colordepth", 1) || ArgCheckWith("-bpp", 1))
         {
-            colorDepthBits = atoi(ArgNext());
+            colorDepthBits = qBound(8, atoi(ArgNext()), 32);
         }
 
         if(ArgCheck("-nocenter"))
@@ -171,7 +185,7 @@ struct ddwindow_s
     {
         assertWindow();
 
-        QRect geom(x(), y(), width(), height());
+        QRect geom = rect();
 
         if(flags & DDWF_CENTER)
         {
@@ -183,13 +197,21 @@ struct ddwindow_s
                          screenSize);
         }
 
+        if(flags & DDWF_MAXIMIZE)
+        {
+            if(widget->isVisible()) widget->showMaximized();
+        }
+        else
+        {
+            if(widget->isVisible() && widget->isMaximized()) widget->showNormal();
+            widget->setGeometry(geom);
+            appliedGeometry = geom; // Saved for detecting changes.
+        }
+
         if(flags & DDWF_FULLSCREEN)
         {
             /// @todo fullscreen mode
         }
-
-        appliedGeometry = geom; // Saved for detecting changes.
-        widget->setGeometry(geom);
     }
 
     /**
@@ -206,11 +228,13 @@ struct ddwindow_s
         geometry.size.width = rect.width();
         geometry.size.height = rect.height();
 
+        setFlag(DDWF_MAXIMIZE, widget->isMaximized());
+
         if(rect != appliedGeometry)
         {
             // The user has moved or resized the window.
             // Let's not recenter it any more.
-            flags &= ~DDWF_CENTER;
+            setFlag(DDWF_CENTER, false);
         }
     }
 
@@ -226,10 +250,15 @@ struct ddwindow_s
         }
     }
 
+    bool isGeometryValid() const
+    {
+        if(width() < WINDOW_MIN_WIDTH) return false;
+        if(height() < WINDOW_MIN_HEIGHT) return false;
+        return desktopValidRect().contains(rect());
+    }
+
     bool applyAttributes(int* attribs)
     {
-        QRect desktop = desktopRect();
-
         // Parse the attributes array and check the values.
         assert(attribs);
         for(int i = 0; attribs[i]; ++i)
@@ -264,7 +293,7 @@ struct ddwindow_s
                 break;
             case DDWA_COLOR_DEPTH_BITS:
                 colorDepthBits = attribs[i];
-                if(colorDepthBits < 8 || colorDepthBits > 64) return false; // Illegal value.
+                if(colorDepthBits < 8 || colorDepthBits > 32) return false; // Illegal value.
                 break;
             default:
                 // Unknown attribute.
@@ -274,9 +303,14 @@ struct ddwindow_s
 
         // Check geometry for validity (window must be on the desktop
         // at least partially).
+        if(!isGeometryValid())
+        {
+            // We can't place the window completely outside the desktop.
+            return false;
+        }
 
         // Seems ok, apply them.
-
+        applyWindowGeometry();
         return true;
     }
 };
@@ -949,16 +983,14 @@ void Window_Draw(Window* win)
 
 void Window_Show(Window *wnd, boolean show)
 {
-    /// Assumption: This is only called once, during startup.
-
     assert(wnd);
 
     if(wnd->type == WT_CONSOLE)
     {
-        // Not really applicable.
         if(show)
         {
             /// @todo  Kludge: finish init in dedicated mode.
+            /// This should only be done once, at startup.
             DD_FinishInitializationAfterWindowReady();
             return;
         }
@@ -967,7 +999,10 @@ void Window_Show(Window *wnd, boolean show)
     assert(wnd->widget);
     if(show)
     {
-        wnd->widget->show();
+        if(wnd->flags & DDWF_MAXIMIZE)
+            wnd->widget->showMaximized();
+        else
+            wnd->widget->showNormal();
     }
     else
     {
