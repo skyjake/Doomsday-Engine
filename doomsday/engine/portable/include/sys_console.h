@@ -34,6 +34,16 @@ struct consolewindow_s;
 #include "sys_window.h"
 #include "sys_input.h"
 
+#if defined(UNIX)
+#  include <curses.h>
+#  include "dd_uinit.h"
+#endif
+
+#if defined(WIN32)
+#  include <windows.h>
+#  include "dd_winit.h"
+#endif
+
 // Console window state.
 typedef struct consolewindow_s {
 #if defined(WIN32)

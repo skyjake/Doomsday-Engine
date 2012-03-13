@@ -1,5 +1,5 @@
 /** @file sys_window.cpp
- * Qt-based window management. @ingroup base
+ * Qt-based window management implementation. @ingroup base
  *
  * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
@@ -59,6 +59,149 @@ struct ddwindow_s
     HWND hWnd; ///< Needed for input (among other things).
     HGLRC glContext;
 #endif
+
+    void __inline assertWindow() const
+    {
+        assert(this);
+        assert(widget);
+    }
+
+    int x() const
+    {
+        return geometry.origin.x;
+    }
+
+    int y() const
+    {
+        return geometry.origin.y;
+    }
+
+    int width() const
+    {
+        return geometry.size.width;
+    }
+
+    int height() const
+    {
+        return geometry.size.height;
+    }
+
+    /**
+     * Checks all command line options that affect window geometry and applies
+     * them to this Window.
+     */
+    void modifyAccordingToOptions()
+    {
+        if(ArgCheckWith("-width", 1))
+        {
+            geometry.size.width = atoi(ArgNext());
+        }
+
+        if(ArgCheckWith("-height", 1))
+        {
+            geometry.size.height = atoi(ArgNext());
+        }
+
+        if(ArgCheckWith("-winsize", 2))
+        {
+            geometry.size.width = atoi(ArgNext());
+            geometry.size.height = atoi(ArgNext());
+        }
+
+        if(ArgCheckWith("-bpp", 1))
+        {
+            bpp = atoi(ArgNext());
+        }
+
+        bool noCenter = false;
+        if(ArgCheck("-nocenter"))
+        {
+            noCenter = true;
+        }
+
+        if(ArgCheckWith("-xpos", 1))
+        {
+            geometry.origin.x = atoi(ArgNext());
+            noCenter = true;
+        }
+
+        if(ArgCheckWith("-ypos", 1))
+        {
+            geometry.origin.y = atoi(ArgNext());
+            noCenter = true;
+        }
+
+        if(noCenter)
+        {
+            flags &= ~DDWF_CENTER;
+        }
+
+        if(ArgCheck("-center"))
+        {
+            flags |= DDWF_CENTER;
+        }
+
+        if(ArgExists("-nofullscreen") || ArgExists("-window"))
+        {
+            flags &= ~DDWF_FULLSCREEN;
+        }
+
+        if(ArgExists("-fullscreen") || ArgExists("-nowindow"))
+        {
+            flags |= DDWF_FULLSCREEN;
+        }
+    }
+
+    /**
+     * Applies the information stored in the Window instance to the actual
+     * widget geometry. Centering is applied in this stage (it only affects the
+     * widget's geometry).
+     */
+    void applyWindowGeometry()
+    {
+        assertWindow();
+
+        QRect geom(x(), y(), width(), height());
+
+        if(flags & DDWF_CENTER)
+        {
+            // Center the window.
+            QSize screenSize = QApplication::desktop()->screenGeometry().size();
+            geom = QRect((screenSize.width() - width())/2,
+                         (screenSize.height() - height())/2,
+                         width(), height());
+        }
+
+        if(flags & DDWF_FULLSCREEN)
+        {
+            /// @todo fullscreen mode
+        }
+
+        appliedGeometry = geom; // Saved for detecting changes.
+        widget->setGeometry(geom);
+    }
+
+    /**
+     * Retrieves the actual widget geometry and updates the information stored
+     * in the Window instance.
+     */
+    void fetchWindowGeometry()
+    {
+        assertWindow();
+
+        QRect rect = widget->geometry();
+        geometry.origin.x = rect.x();
+        geometry.origin.y = rect.y();
+        geometry.size.width = rect.width();
+        geometry.size.height = rect.height();
+
+        if(rect != appliedGeometry)
+        {
+            // The user has moved or resized the window.
+            // Let's not recenter it any more.
+            flags &= ~DDWF_CENTER;
+        }
+    }
 };
 
 /// Currently active window where all drawing operations are directed at.
@@ -468,113 +611,6 @@ static void finishMainWindowInit(Canvas& canvas)
     DD_FinishInitializationAfterWindowReady();
 }
 
-static void applyWindowGeometry(Window* wnd)
-{
-    assert(wnd);
-    assert(wnd->widget);
-
-    QSize size(Window_Width(wnd), Window_Height(wnd));
-    QRect geom(Window_X(wnd), Window_Y(wnd), size.width(), size.height());
-
-    if(wnd->flags & DDWF_CENTER)
-    {
-        // Center the window.
-        QSize screenSize = QApplication::desktop()->screenGeometry().size();
-        geom = QRect((screenSize.width() - size.width())/2,
-                     (screenSize.height() - size.height())/2,
-                     size.width(), size.height());
-    }
-
-    if(wnd->flags & DDWF_FULLSCREEN)
-    {
-        /// @todo fullscreen mode
-    }
-
-    wnd->appliedGeometry = geom; // Saved for detecting changes.
-    wnd->widget->setGeometry(geom);
-}
-
-static void fetchWindowGeometry(Window* wnd)
-{
-    assert(wnd);
-    assert(wnd->widget);
-
-    QRect rect = wnd->widget->geometry();
-    wnd->geometry.origin.x = rect.x();
-    wnd->geometry.origin.y = rect.y();
-    wnd->geometry.size.width = rect.width();
-    wnd->geometry.size.height = rect.height();
-
-    if(rect != wnd->appliedGeometry)
-    {
-        // The user has moved or resized the window.
-        // Let's not recenter it any more.
-        wnd->flags &= ~DDWF_CENTER;
-    }
-}
-
-static void modifyAccordingToOptions(Window* wnd)
-{
-    if(ArgCheckWith("-width", 1))
-    {
-        wnd->geometry.size.width = atoi(ArgNext());
-    }
-
-    if(ArgCheckWith("-height", 1))
-    {
-        wnd->geometry.size.height = atoi(ArgNext());
-    }
-
-    if(ArgCheckWith("-winsize", 2))
-    {
-        wnd->geometry.size.width = atoi(ArgNext());
-        wnd->geometry.size.height = atoi(ArgNext());
-    }
-
-    if(ArgCheckWith("-bpp", 1))
-    {
-        wnd->bpp = atoi(ArgNext());
-    }
-
-    bool noCenter = false;
-    if(ArgCheck("-nocenter"))
-    {
-        noCenter = true;
-    }
-
-    if(ArgCheckWith("-xpos", 1))
-    {
-        wnd->geometry.origin.x = atoi(ArgNext());
-        noCenter = true;
-    }
-
-    if(ArgCheckWith("-ypos", 1))
-    {
-        wnd->geometry.origin.y = atoi(ArgNext());
-        noCenter = true;
-    }
-
-    if(noCenter)
-    {
-        wnd->flags &= ~DDWF_CENTER;
-    }
-
-    if(ArgCheck("-center"))
-    {
-        wnd->flags |= DDWF_CENTER;
-    }
-
-    if(ArgExists("-nofullscreen") || ArgExists("-window"))
-    {
-        wnd->flags &= ~DDWF_FULLSCREEN;
-    }
-
-    if(ArgExists("-fullscreen") || ArgExists("-nowindow"))
-    {
-        wnd->flags |= DDWF_FULLSCREEN;
-    }
-}
-
 static Window* createWindow(ddwindowtype_t type, const char* title)
 {
     if(mainWindowInited) return NULL; /// @todo  Allow multiple.
@@ -600,10 +636,10 @@ static Window* createWindow(ddwindowtype_t type, const char* title)
         mainWindow.widget->canvas().setInitCallback(finishMainWindowInit);
 
         // Let's see if there are command line options overriding the previous state.
-        modifyAccordingToOptions(&mainWindow);
+        mainWindow.modifyAccordingToOptions();
 
         // Make it so. (Not shown yet.)
-        applyWindowGeometry(&mainWindow);
+        mainWindow.applyWindowGeometry();
 
         mainWindow.inited = true;
 
@@ -876,25 +912,25 @@ const struct consolewindow_s* Window_ConsoleConst(const Window* wnd)
 int Window_X(const Window* wnd)
 {
     assert(wnd);
-    return wnd->geometry.origin.x;
+    return wnd->x();
 }
 
 int Window_Y(const Window* wnd)
 {
     assert(wnd);
-    return wnd->geometry.origin.y;
+    return wnd->y();
 }
 
 int Window_Width(const Window* wnd)
 {
     assert(wnd);
-    return wnd->geometry.size.width;
+    return wnd->width();
 }
 
 int Window_Height(const Window *wnd)
 {
     assert(wnd);
-    return wnd->geometry.size.height;
+    return wnd->height();
 }
 
 int Window_BitsPerPixel(const Window* wnd)
@@ -925,7 +961,7 @@ void Window_SaveState(Window* wnd)
     uint idx = mainWindowIdx;
     assert(idx == 1);
 
-    fetchWindowGeometry(wnd);
+    wnd->fetchWindowGeometry();
 
     QSettings st;
     st.setValue(windowSettingsKey(idx, "rect"), QRect(Window_X(wnd), Window_Y(wnd), Window_Width(wnd), Window_Height(wnd)));
