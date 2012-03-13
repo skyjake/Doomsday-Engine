@@ -209,7 +209,7 @@ void        DD_ProcessEvents(timespan_t ticLength);
 void        DD_ProcessSharpEvents(timespan_t ticLength);
 void        DD_ClearEvents(void);
 void        DD_ClearKeyRepeaters(void);
-void        DD_ClearKeyRepeaterForKey(int key);
+void        DD_ClearKeyRepeaterForKey(int ddkey, int native);
 byte        DD_ModKey(byte key);
 void        DD_ConvertEvent(const ddevent_t* ddEvent, event_t* ev);
 

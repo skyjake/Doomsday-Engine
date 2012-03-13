@@ -238,7 +238,7 @@ void B_UpdateDeviceStateAssociations(void)
                 // No longer valid.
                 dev->keys[j].assoc.flags |= IDAF_EXPIRED;
                 dev->keys[j].assoc.flags &= ~IDAF_TRIGGERED; // Not any more.
-                DD_ClearKeyRepeaterForKey(j);
+                DD_ClearKeyRepeaterForKey(j, 0);
             }
         }
 

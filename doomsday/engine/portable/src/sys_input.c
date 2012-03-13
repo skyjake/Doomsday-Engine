@@ -165,13 +165,14 @@ void I_Shutdown(void)
     initOk = false;
 }
 
-void Keyboard_Submit(int type, int ddKey, const char* text)
+void Keyboard_Submit(int type, int ddKey, int native, const char* text)
 {
     if(ddKey != 0)
     {
         keyevent_t* e = newKeyEvent();
         e->type = type;
         e->ddkey = ddKey;
+        e->native = native;
         if(text)
         {
             strncpy(e->text, text, sizeof(e->text) - 1);

@@ -61,6 +61,7 @@
 
 typedef struct repeater_s {
     int key;                // The DDKEY code (0 if not in use).
+    int native;             // Used to determine which key is repeating.
     char text[8];           // Text to insert.
     timespan_t timer;       // How's the time?
     int count;              // How many times has been repeated?
@@ -1124,14 +1125,29 @@ void DD_ClearKeyRepeaters(void)
     memset(keyReps, 0, sizeof(keyReps));
 }
 
-void DD_ClearKeyRepeaterForKey(int key)
+void DD_ClearKeyRepeaterForKey(int ddkey, int native)
 {
     int k;
 
     // Clear any repeaters with this key.
     for(k = 0; k < MAX_DOWNKEYS; ++k)
-        if(keyReps[k].key == key)
-            keyReps[k].key = 0;
+    {
+        // Check the native code first, if provided.
+        if(native > 0)
+        {
+            if(native != keyReps[k].native)
+                continue;
+        }
+        else
+        {
+            if(keyReps[k].key != ddkey) continue;
+        }
+
+        // Clear this.
+        keyReps[k].native = 0;
+        keyReps[k].key = 0;
+        memset(keyReps[k].text, 0, sizeof(keyReps[k].text));
+    }
 }
 
 /**
@@ -1150,6 +1166,8 @@ void DD_ReadKeyboard(void)
     ev.type = E_TOGGLE;
     ev.toggle.state = ETOG_REPEAT;
 
+    // Post key repeat events.
+    /// @todo Move this to a ticker function?
     for(i = 0; i < MAX_DOWNKEYS; ++i)
     {
         repeater_t *rep = keyReps + i;
@@ -1218,6 +1236,7 @@ void DD_ReadKeyboard(void)
                 if(!keyReps[k].key)
                 {
                     keyReps[k].key = ev.toggle.id;
+                    keyReps[k].native = ke->native;
                     memcpy(keyReps[k].text, ev.toggle.text, sizeof(ev.toggle.text));
                     keyReps[k].timer = sysTime;
                     keyReps[k].count = 0;
@@ -1226,7 +1245,7 @@ void DD_ReadKeyboard(void)
         }
         else if(ev.toggle.state == ETOG_UP)
         {
-            DD_ClearKeyRepeaterForKey(ev.toggle.id);
+            DD_ClearKeyRepeaterForKey(ev.toggle.id, ke->native);
         }
 
         // Post the event.

@@ -60,6 +60,7 @@ enum {
 typedef struct keyevent_s {
     byte type;          ///< Type of the event.
     int ddkey;          ///< DDKEY code.
+    int native;         ///< Native code (use this to check for physically equivalent keys).
     char text[8];       ///< For characters, latin1-encoded text to insert. /// @todo Unicode
 } keyevent_t;
 
@@ -80,11 +81,12 @@ void I_Shutdown(void);
  * Submits a new key event for preprocessing. The event has likely just been
  * received from the windowing system.
  *
- * @param type   Type of the event (IKE_*).
- * @param ddKey  DDKEY code.
- * @param text   For characters, latin1-encoded text to insert. Otherwise @c NULL.
+ * @param type    Type of the event (IKE_*).
+ * @param ddKey   DDKEY code.
+ * @param native  Native code. Identifies the physical key.
+ * @param text    For characters, latin1-encoded text to insert. Otherwise @c NULL.
  */
-void Keyboard_Submit(int type, int ddKey, const char* text);
+void Keyboard_Submit(int type, int ddKey, int native, const char* text);
 
 size_t Keyboard_GetEvents(keyevent_t *evbuf, size_t bufsize);
 
