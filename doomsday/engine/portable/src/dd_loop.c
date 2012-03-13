@@ -475,8 +475,6 @@ static void timeDeltaStatistics(int deltaMs)
 
 void DD_WaitForOptimalUpdateTime(void)
 {
-    if(Sys_IsShuttingDown()) return; // No need for finesse.
-
     /// @todo This would benefit from microsecond-accurate timing.
 
     // All times are in milliseconds.
@@ -487,6 +485,8 @@ void DD_WaitForOptimalUpdateTime(void)
     // optimalDelta is integer on purpose: we're measuring time at a 1 ms
     // accuracy, so we can't use fractions of a millisecond.
     const uint optimalDelta = (maxFrameRate > 0? 1000/maxFrameRate : 1);
+
+    if(Sys_IsShuttingDown()) return; // No need for finesse.
 
     // This is when we would ideally like to make the update.
     targetUpdateTime = prevUpdateTime + optimalDelta;
