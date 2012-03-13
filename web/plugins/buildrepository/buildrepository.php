@@ -1053,12 +1053,21 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
             throw new Exception('Received invalid Package.');
 
         $cacheName = $this->composePackageGraphCacheName($pack);
-        try
+
+        if($FrontController->contentCache()->isPresent($cacheName))
         {
-            header('Content-type: application/json');
+            $cacheInfo = new ContentInfo();
+            $FrontController->contentCache()->getInfo($cacheName, &$contentInfo);
+
+            header('Pragma: public');
+            header('Cache-Control: public');
+            header('Content-Type: application/json');
+            header('Last-Modified: '. date(DATE_RFC1123, $contentInfo->modifiedTime));
+            header('Expires: '. date(DATE_RFC1123, strtotime('+5 days')));
+
             $FrontController->contentCache()->import($cacheName);
         }
-        catch(Exception $e)
+        else
         {
             // Generate a graph template for this package.
             $template = array();
