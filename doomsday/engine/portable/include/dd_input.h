@@ -86,6 +86,7 @@ typedef struct ddevent_s {
         struct {
             int             id;         // Button/key index number
             ddevent_togglestate_t state;// State of the toggle
+            char            text[8];    // For characters, latin1-encoded text to insert (or empty).
         } toggle;
         struct {
             int             id;         // Axis index number

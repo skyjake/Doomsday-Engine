@@ -48,7 +48,7 @@ void Joystick_Register(void)
     C_VAR_BYTE("input-joy", &usejoystick, 0, 0, 1);
 }
 
-void Joystick_Init(void)
+static void initialize(void)
 {
     int joycount;
 
@@ -111,7 +111,7 @@ boolean Joystick_Init(void)
 {
     if(joyInited) return true; // Already initialized.
 
-    I_InitJoystick();
+    initialize();
     joyInited = true;
     return true;
 }
@@ -141,7 +141,7 @@ void Joystick_GetState(joystate_t *state)
     memset(state, 0, sizeof(*state));
 
     // Initialization has not been done.
-    if(!I_JoystickPresent() || !usejoystick || !joyInited)
+    if(!Joystick_IsPresent() || !usejoystick || !joyInited)
         return;
 
     // Update joysticks

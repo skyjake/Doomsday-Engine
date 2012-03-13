@@ -32,6 +32,7 @@
 #include "canvas.h"
 #include "sys_opengl.h"
 #include "sys_input.h"
+#include "keycode.h"
 
 struct Canvas::Instance
 {
@@ -204,13 +205,13 @@ void Canvas::keyPressEvent(QKeyEvent *ev)
 
     if(ev->isAutoRepeat()) return; // Ignore repeats, we do our own (should we really?).
 
-    qDebug() << "Canvas: key press" << ev->key() << "text:" << ev->text() << "native:"
-                << ev->nativeVirtualKey();
+    qDebug() << "Canvas: key press" << ev->key() << QString("0x%1").arg(ev->key(), 0, 16)
+             << "text:" << ev->text() << "native:" << ev->nativeVirtualKey();
 
     /// @todo Use the Unicode text instead.
 
-    // ev->nativeScanCode()
-
+    Keyboard_Submit(IKE_DOWN, Keycode_TranslateFromQt(ev->key(), ev->nativeVirtualKey()),
+                    ev->text().isEmpty()? 0 : ev->text().toLatin1().constData());
 }
 
 void Canvas::keyReleaseEvent(QKeyEvent *ev)
@@ -220,6 +221,7 @@ void Canvas::keyReleaseEvent(QKeyEvent *ev)
     qDebug() << "Canvas: key release" << ev->key() << "text:" << ev->text() << "native:"
                 << ev->nativeVirtualKey();
 
+    Keyboard_Submit(IKE_UP, Keycode_TranslateFromQt(ev->key(), ev->nativeVirtualKey()), 0);
 }
 
 void Canvas::mousePressEvent(QMouseEvent* ev)
@@ -255,6 +257,7 @@ void Canvas::wheelEvent(QWheelEvent *ev)
     ev->accept();
 
     /// @todo  What to do about inertial wheel movement?
+    /// Look for increases and decreases rather than absolute values.
 
     if(ev->orientation() == Qt::Vertical)
     {

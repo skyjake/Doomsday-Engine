@@ -48,10 +48,6 @@
 
 #include "con_busy.h"
 
-#ifndef SOLARIS
-#  include <SDL.h>
-#endif
-
 // MACROS ------------------------------------------------------------------
 
 #define DEFAULT_JOYSTICK_DEADZONE .05f // 5%
@@ -64,9 +60,10 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct repeater_s {
-    int     key;                // The DDKEY code (0 if not in use).
-    timespan_t timer;           // How's the time?
-    int     count;              // How many times has been repeated?
+    int key;                // The DDKEY code (0 if not in use).
+    char text[8];           // Text to insert.
+    timespan_t timer;       // How's the time?
+    int count;              // How many times has been repeated?
 } repeater_t;
 
 typedef struct {
@@ -730,6 +727,14 @@ void DD_InitInput(void)
     }
 }
 
+/**
+ * Returns a copy of the string @a str. The caller does not get ownership of
+ * the string. The string is valid until it gets overwritten by a new
+ * allocation. There are at most MAXEVENTS strings allocated at a time.
+ *
+ * These are intended for strings in ddevent_t that are valid during the
+ * processing of an event.
+ */
 const char* DD_AllocEventString(const char* str)
 {
     static int eventStringRover = 0;
@@ -1146,6 +1151,7 @@ void DD_ReadKeyboard(void)
             continue;
 
         ev.toggle.id = rep->key;
+        memcpy(ev.toggle.text, rep->text, sizeof(ev.toggle.text));
 
         if(!rep->count && sysTime - rep->timer >= keyRepeatDelay1 / 1000.0)
         {
@@ -1178,16 +1184,25 @@ void DD_ReadKeyboard(void)
         keyevent_t *ke = &keyevs[n];
 
         // Check the type of the event.
-        if(ke->type == IKE_KEY_DOWN)   // Key pressed?
+        if(ke->type == IKE_DOWN)   // Key pressed?
         {
             ev.toggle.state = ETOG_DOWN;
         }
-        else if(ke->type == IKE_KEY_UP) // Key released?
+        else if(ke->type == IKE_UP) // Key released?
         {
             ev.toggle.state = ETOG_UP;
         }
 
         ev.toggle.id = ke->ddkey;
+
+        // The engine expects lowercase alphabet.
+        if(isalpha(ev.toggle.id)) ev.toggle.id = tolower(ev.toggle.id);
+
+        // Text content to insert?
+        assert(sizeof(ev.toggle.text) == sizeof(ke->text));
+        memcpy(ev.toggle.text, ke->text, sizeof(ev.toggle.text));
+
+        DEBUG_Message(("toggle.id: %i/%c [%s:%u]\n", ev.toggle.id, ev.toggle.id, ev.toggle.text, (uint)strlen(ev.toggle.text)));
 
         // Maintain the repeater table.
         if(ev.toggle.state == ETOG_DOWN)
@@ -1197,6 +1212,7 @@ void DD_ReadKeyboard(void)
                 if(!keyReps[k].key)
                 {
                     keyReps[k].key = ev.toggle.id;
+                    memcpy(keyReps[k].text, ev.toggle.text, sizeof(ev.toggle.text));
                     keyReps[k].timer = sysTime;
                     keyReps[k].count = 0;
                     break;

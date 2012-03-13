@@ -1480,6 +1480,37 @@ void Con_Resize(void)
     Rend_ConsoleResize(true/*force*/);
 }
 
+static void insertOnCommandLine(byte ch)
+{
+    size_t len = strlen(cmdLine);
+
+    // If not in insert mode, push the rest of the command-line forward.
+    if(!cmdInsMode)
+    {
+        assert(len <= CMDLINE_SIZE);
+        if(len == CMDLINE_SIZE)
+            return; // Can't place character.
+
+        if(cmdCursor < len)
+        {
+            memmove(cmdLine + cmdCursor + 1, cmdLine + cmdCursor, CMDLINE_SIZE - cmdCursor);
+
+            // The last char is always zero, though.
+            cmdLine[CMDLINE_SIZE] = 0;
+        }
+    }
+
+    cmdLine[cmdCursor] = ch;
+    if(cmdCursor < CMDLINE_SIZE)
+    {
+        ++cmdCursor;
+        // Do we need to replace the terminator?
+        if(cmdCursor == len + 1)
+            cmdLine[cmdCursor] = 0;
+    }
+    complPos = cmdCursor;
+}
+
 boolean Con_Responder(ddevent_t* ev)
 {
     // The console is only interested in keyboard toggle events.
@@ -1773,19 +1804,14 @@ boolean Con_Responder(ddevent_t* ev)
         break;
 
     default: { // Check for a character.
-        byte ch;
-        size_t len;
+        int i;
 
         if(conInputLock)
             break;
 
-        ch = ev->toggle.id;
-        ch = DD_ModKey(ch);
-        if(ch < 32 || (ch > 127 && ch < DD_HIGHEST_KEYCODE))
-            return true;
-
-        if(ch == 'c' && altDown) // if alt + c clear the current cmdline
+        if(ev->toggle.id == 'c' && altDown) // Alt+C: clear the current cmdline
         {
+            /// @todo  Make this a binding?
             memset(cmdLine, 0, sizeof(cmdLine));
             cmdCursor = 0;
             complPos = 0;
@@ -1794,38 +1820,26 @@ boolean Con_Responder(ddevent_t* ev)
             return true;
         }
 
-        len = strlen(cmdLine);
-
-        // If not in insert mode, push the rest of the command-line forward.
-        if(!cmdInsMode)
+        if(ev->toggle.text[0])
         {
-            if(!(len < CMDLINE_SIZE))
-                return true; // Can't place character.
-
-            if(cmdCursor < len)
+            // Insert any text specified in the event.
+            for(i = 0; ev->toggle.text[i]; ++i)
             {
-                memmove(cmdLine + cmdCursor + 1, cmdLine + cmdCursor,
-                        CMDLINE_SIZE - cmdCursor);
-
-                // The last char is always zero, though.
-                cmdLine[CMDLINE_SIZE] = 0;
+                insertOnCommandLine(ev->toggle.text[i]);
             }
-        }
 
-        cmdLine[cmdCursor] = ch;
-        if(cmdCursor < CMDLINE_SIZE)
-        {
-            ++cmdCursor;
-            // Do we need to replace the terminator?
-            if(cmdCursor == len+1)
-                cmdLine[cmdCursor] = 0;
+            Rend_ConsoleCursorResetBlink();
+            updateDedicatedConsoleCmdLine();
         }
-        complPos = cmdCursor;
-        Rend_ConsoleCursorResetBlink();
-        updateDedicatedConsoleCmdLine();
         return true;
-      }
-    }
+
+#if 0 // old mapping
+        ch = ev->toggle.id;
+        ch = DD_ModKey(ch);
+        if(ch < 32 || (ch > 127 && ch < DD_HIGHEST_KEYCODE))
+            return true;
+#endif
+    }}
     // The console is very hungry for keys...
     return true;
 }

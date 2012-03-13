@@ -33,9 +33,11 @@ extern "C" {
 #endif
 
 // Key event types.
-#define IKE_NONE        0
-#define IKE_KEY_DOWN    0x1
-#define IKE_KEY_UP      0x2
+enum {
+    IKE_NONE,
+    IKE_DOWN,
+    IKE_UP
+};
 
 // Mouse buttons. (1=left, 2=middle, 3=right, ...)
 #define IMB_MAXBUTTONS  16

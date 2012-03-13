@@ -214,6 +214,7 @@ DENG_HEADERS = \
     portable/include/huffman.h \
     portable/include/image.h \
     portable/include/joystick.h \
+    portable/include/keycode.h \
     portable/include/library.h \
     portable/include/linedef.h \
     portable/include/lumpdirectory.h \
@@ -370,6 +371,7 @@ HEADERS += \
 
 DENG_UNIX_SOURCES += \
     unix/src/dd_uinit.c \
+    unix/src/joystick.c \
     unix/src/sys_console.c \
     unix/src/sys_findfile.c \
     unix/src/sys_path.c
@@ -461,6 +463,7 @@ SOURCES += \
     portable/src/hedge.c \
     portable/src/huffman.c \
     portable/src/image.c \
+    portable/src/keycode.cpp \
     portable/src/library.c \
     portable/src/linedef.c \
     portable/src/lumpdirectory.c \

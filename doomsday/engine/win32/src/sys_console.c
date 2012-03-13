@@ -297,7 +297,7 @@ size_t I_GetConsoleKeyEvents(keyevent_t *evbuf, size_t bufsize)
                 // Use the table to translate the vKey to a DDKEY.
                 evbuf[n].ddkey = vKeyToDDKey(key->wVirtualKeyCode);
                 evbuf[n].type =
-                    (key->bKeyDown? IKE_KEY_DOWN : IKE_KEY_UP);
+                    (key->bKeyDown? IKE_DOWN : IKE_UP);
 
                 // Record the new state of this vKey.
                 vKeyDown[key->wVirtualKeyCode] =
