@@ -264,7 +264,7 @@ struct ddwindow_s
                 break;
             case DDWA_COLOR_DEPTH_BITS:
                 colorDepthBits = attribs[i];
-                if(colorDepthBits < 1 || colorDepthBits > 64) return false; // Illegal value.
+                if(colorDepthBits < 8 || colorDepthBits > 64) return false; // Illegal value.
                 break;
             default:
                 // Unknown attribute.
