@@ -20,6 +20,7 @@
  */
 
 #include <QApplication>
+#include <QKeyEvent>
 #include <QMouseEvent>
 #include <QWheelEvent>
 #include <QShowEvent>
@@ -194,6 +195,28 @@ void Canvas::focusOutEvent(QFocusEvent*)
     qDebug() << "Canvas: focus out";
 
     d->ungrabMouse();
+}
+
+void Canvas::keyPressEvent(QKeyEvent *ev)
+{
+    ev->accept();
+
+    if(ev->isAutoRepeat()) return; // Ignore repeats, we do our own (should we really?).
+
+    qDebug() << "Canvas: key press" << ev->key() << "text:" << ev->text() << "native:"
+                << ev->nativeVirtualKey();
+
+    // ev->nativeScanCode()
+
+}
+
+void Canvas::keyReleaseEvent(QKeyEvent *ev)
+{
+    ev->accept();
+
+    qDebug() << "Canvas: key release" << ev->key() << "text:" << ev->text() << "native:"
+                << ev->nativeVirtualKey();
+
 }
 
 void Canvas::mousePressEvent(QMouseEvent* ev)

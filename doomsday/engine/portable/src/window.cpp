@@ -1064,7 +1064,7 @@ const Size2Raw* Window_Size(const Window* wnd)
     return &wnd->geometry.size;
 }
 
-static QString windowSettingsKey(uint idx, const char* name)
+static QString settingsKey(uint idx, const char* name)
 {
     return QString("window/%1/").arg(idx) + name;
 }
@@ -1083,11 +1083,11 @@ void Window_SaveState(Window* wnd)
     wnd->fetchWindowGeometry();
 
     QSettings st;
-    st.setValue(windowSettingsKey(idx, "rect"), QRect(wnd->x(), wnd->y(), wnd->width(), wnd->height()));
-    st.setValue(windowSettingsKey(idx, "center"), (wnd->flags & DDWF_CENTER) != 0);
-    st.setValue(windowSettingsKey(idx, "maximize"), (wnd->flags & DDWF_MAXIMIZE) != 0);
-    st.setValue(windowSettingsKey(idx, "fullscreen"), (wnd->flags & DDWF_FULLSCREEN) != 0);
-    st.setValue(windowSettingsKey(idx, "colorDepth"), Window_ColorDepthBits(wnd));
+    st.setValue(settingsKey(idx, "rect"), QRect(wnd->x(), wnd->y(), wnd->width(), wnd->height()));
+    st.setValue(settingsKey(idx, "center"), (wnd->flags & DDWF_CENTER) != 0);
+    st.setValue(settingsKey(idx, "maximize"), (wnd->flags & DDWF_MAXIMIZE) != 0);
+    st.setValue(settingsKey(idx, "fullscreen"), (wnd->flags & DDWF_FULLSCREEN) != 0);
+    st.setValue(settingsKey(idx, "colorDepth"), Window_ColorDepthBits(wnd));
 }
 
 void Window_RestoreState(Window* wnd)
@@ -1103,13 +1103,13 @@ void Window_RestoreState(Window* wnd)
 
     // The default state of the window is determined by these values.
     QSettings st;
-    QRect geom = st.value(windowSettingsKey(idx, "rect"), QRect(0, 0, 640, 480)).toRect();
+    QRect geom = st.value(settingsKey(idx, "rect"), QRect(0, 0, 640, 480)).toRect();
     wnd->geometry.origin.x = geom.x();
     wnd->geometry.origin.y = geom.y();
     wnd->geometry.size.width = geom.width();
     wnd->geometry.size.height = geom.height();
-    wnd->colorDepthBits = st.value(windowSettingsKey(idx, "colorDepth"), 32).toInt();
-    wnd->setFlag(DDWF_CENTER, st.value(windowSettingsKey(idx, "center"), true).toBool());
-    wnd->setFlag(DDWF_MAXIMIZE, st.value(windowSettingsKey(idx, "maximize"), false).toBool());
-    wnd->setFlag(DDWF_FULLSCREEN, st.value(windowSettingsKey(idx, "fullscreen"), true).toBool());
+    wnd->colorDepthBits = st.value(settingsKey(idx, "colorDepth"), 32).toInt();
+    wnd->setFlag(DDWF_CENTER, st.value(settingsKey(idx, "center"), true).toBool());
+    wnd->setFlag(DDWF_MAXIMIZE, st.value(settingsKey(idx, "maximize"), false).toBool());
+    wnd->setFlag(DDWF_FULLSCREEN, st.value(settingsKey(idx, "fullscreen"), true).toBool());
 }

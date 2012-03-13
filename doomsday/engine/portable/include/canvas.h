@@ -71,6 +71,8 @@ protected:
     // Events.
     void focusInEvent(QFocusEvent* ev);
     void focusOutEvent(QFocusEvent* ev);
+    void keyPressEvent(QKeyEvent* ev);
+    void keyReleaseEvent(QKeyEvent* ev);
     void mousePressEvent(QMouseEvent* ev);
     void mouseReleaseEvent(QMouseEvent* ev);
     void wheelEvent(QWheelEvent* ev);
