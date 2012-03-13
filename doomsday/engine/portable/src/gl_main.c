@@ -1300,7 +1300,7 @@ D_CMD(ToggleFullscreen)
 D_CMD(SetBPP)
 {
     int attribs[] = {
-        DDWA_BITS_PER_PIXEL, atoi(argv[1]),
+        DDWA_COLOR_DEPTH_BITS, atoi(argv[1]),
         DDWA_END
     };
     return Window_ChangeAttributes(Window_Main(), attribs);

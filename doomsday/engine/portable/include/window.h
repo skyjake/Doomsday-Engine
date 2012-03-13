@@ -35,6 +35,9 @@ typedef enum {
     WT_CONSOLE
 } ddwindowtype_t;
 
+#define WINDOW_MIN_WIDTH        320
+#define WINDOW_MIN_HEIGHT       240
+
 /**
  * @defgroup consoleCommandlineFlags Console Commandline flags
  * @{
@@ -64,8 +67,8 @@ enum windowattribute_e {
     DDWA_CENTER,
     DDWA_MAXIMIZE,
     DDWA_FULLSCREEN,
-    DDWA_BITS_PER_PIXEL,
-    DDWA_VISIBLE
+    DDWA_VISIBLE,
+    DDWA_COLOR_DEPTH_BITS
 };
 
 /// Determines whether @a x is a valid window attribute id.
@@ -188,7 +191,7 @@ int Window_Height(const Window* wnd);
  */
 const Size2Raw* Window_Size(const Window* wnd);
 
-int Window_BitsPerPixel(const Window* wnd);
+int Window_ColorDepthBits(const Window* wnd);
 
 void Window_SetTitle(const Window *win, const char* title);
 

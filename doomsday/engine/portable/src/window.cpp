@@ -42,6 +42,12 @@
 #include "gl_main.h"
 #include "ui_main.h"
 
+static QRect desktopRect()
+{
+    /// @todo Multimonitor? This checks the default screen.
+    return QApplication::desktop()->screenGeometry();
+}
+
 struct ddwindow_s
 {
     CanvasWindow* widget; ///< The widget this window represents.
@@ -51,7 +57,7 @@ struct ddwindow_s
     ddwindowtype_t type;
     boolean inited;
     RectRaw geometry;
-    int bpp;
+    int colorDepthBits;
     int flags;
     consolewindow_t console; ///< Only used for WT_CONSOLE windows.
 
@@ -108,47 +114,51 @@ struct ddwindow_s
             geometry.size.height = atoi(ArgNext());
         }
 
-        if(ArgCheckWith("-bpp", 1))
+        if(ArgCheckWith("-colordepth", 1) || ArgCheckWith("-bpp", 1))
         {
-            bpp = atoi(ArgNext());
+            colorDepthBits = atoi(ArgNext());
         }
 
-        bool noCenter = false;
         if(ArgCheck("-nocenter"))
         {
-            noCenter = true;
+            setFlag(DDWF_CENTER, false);
         }
 
         if(ArgCheckWith("-xpos", 1))
         {
             geometry.origin.x = atoi(ArgNext());
-            noCenter = true;
+            setFlag(DDWF_CENTER | DDWF_MAXIMIZE, false);
         }
 
         if(ArgCheckWith("-ypos", 1))
         {
             geometry.origin.y = atoi(ArgNext());
-            noCenter = true;
-        }
-
-        if(noCenter)
-        {
-            flags &= ~DDWF_CENTER;
+            setFlag(DDWF_CENTER | DDWF_MAXIMIZE, false);
         }
 
         if(ArgCheck("-center"))
         {
-            flags |= DDWF_CENTER;
+            setFlag(DDWF_CENTER);
+        }
+
+        if(ArgCheck("-maximize"))
+        {
+            setFlag(DDWF_MAXIMIZE);
+        }
+
+        if(ArgCheck("-nomaximize"))
+        {
+            setFlag(DDWF_MAXIMIZE, false);
         }
 
         if(ArgExists("-nofullscreen") || ArgExists("-window"))
         {
-            flags &= ~DDWF_FULLSCREEN;
+            setFlag(DDWF_FULLSCREEN, false);
         }
 
         if(ArgExists("-fullscreen") || ArgExists("-nowindow"))
         {
-            flags |= DDWF_FULLSCREEN;
+            setFlag(DDWF_FULLSCREEN);
         }
     }
 
@@ -166,10 +176,11 @@ struct ddwindow_s
         if(flags & DDWF_CENTER)
         {
             // Center the window.
-            QSize screenSize = QApplication::desktop()->screenGeometry().size();
-            geom = QRect((screenSize.width() - width())/2,
-                         (screenSize.height() - height())/2,
-                         width(), height());
+            QSize screenSize = desktopRect().size();
+            geom = QRect(desktopRect().topLeft() +
+                         QPoint((screenSize.width() - width())/2,
+                                (screenSize.height() - height())/2),
+                         screenSize);
         }
 
         if(flags & DDWF_FULLSCREEN)
@@ -201,6 +212,72 @@ struct ddwindow_s
             // Let's not recenter it any more.
             flags &= ~DDWF_CENTER;
         }
+    }
+
+    void setFlag(int flag, bool set = true)
+    {
+        if(set)
+        {
+            flags |= flag;
+        }
+        else
+        {
+            flags &= ~flag;
+        }
+    }
+
+    bool applyAttributes(int* attribs)
+    {
+        QRect desktop = desktopRect();
+
+        // Parse the attributes array and check the values.
+        assert(attribs);
+        for(int i = 0; attribs[i]; ++i)
+        {
+            switch(attribs[i++])
+            {
+            case DDWA_X:
+                geometry.origin.x = attribs[i];
+                break;
+            case DDWA_Y:
+                geometry.origin.y = attribs[i];
+                break;
+            case DDWA_WIDTH:
+                geometry.size.width = attribs[i];
+                if(geometry.size.width < WINDOW_MIN_WIDTH) return false;
+                break;
+            case DDWA_HEIGHT:
+                geometry.size.height = attribs[i];
+                if(geometry.size.height < WINDOW_MIN_HEIGHT) return false;
+                break;
+            case DDWA_CENTER:
+                setFlag(DDWF_CENTER, attribs[i]);
+                break;
+            case DDWA_MAXIMIZE:
+                setFlag(DDWF_MAXIMIZE, attribs[i]);
+                break;
+            case DDWA_FULLSCREEN:
+                setFlag(DDWF_FULLSCREEN, attribs[i]);
+                break;
+            case DDWA_VISIBLE:
+                setFlag(DDWF_VISIBLE, attribs[i]);
+                break;
+            case DDWA_COLOR_DEPTH_BITS:
+                colorDepthBits = attribs[i];
+                if(colorDepthBits < 1 || colorDepthBits > 64) return false; // Illegal value.
+                break;
+            default:
+                // Unknown attribute.
+                return false;
+            }
+        }
+
+        // Check geometry for validity (window must be on the desktop
+        // at least partially).
+
+        // Seems ok, apply them.
+
+        return true;
     }
 };
 
@@ -575,7 +652,7 @@ static boolean createContext(void)
     // Attempt to set the video mode.
     if(!Sys_ChangeVideoMode(Window_Width(theWindow),
                             Window_Height(theWindow),
-                            Window_BitsPerPixel(theWindow)))
+                            Window_ColorDepthBits(theWindow)))
     {
         Con_Error("createContext: Video mode change failed.\n");
         return false;
@@ -630,7 +707,9 @@ static Window* createWindow(ddwindowtype_t type, const char* title)
         mainWindow.widget = new CanvasWindow;
         Window_SetTitle(&mainWindow, title);
         Window_RestoreState(&mainWindow);
-        mainWindow.widget->setMinimumSize(QSize(320, 240)); // Minimum possible size when resizing.
+
+        // Minimum possible size when resizing.
+        mainWindow.widget->setMinimumSize(QSize(WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT));
 
         // After the main window is created, we can finish with the engine init.
         mainWindow.widget->canvas().setInitCallback(finishMainWindowInit);
@@ -755,7 +834,14 @@ boolean Sys_SetWindow(uint idx, int newX, int newY, int newWidth, int newHeight,
 
 boolean Window_ChangeAttributes(Window* wnd, int* attribs)
 {
+    Window oldState = *wnd;
 
+    if(!wnd->applyAttributes(attribs))
+    {
+        // These weren't good!
+        *wnd = oldState;
+        return false;
+    }
 
     // Everything ok!
     return true;
@@ -931,10 +1017,10 @@ int Window_Height(const Window *wnd)
     return wnd->height();
 }
 
-int Window_BitsPerPixel(const Window* wnd)
+int Window_ColorDepthBits(const Window* wnd)
 {
     assert(wnd);
-    return wnd->bpp;
+    return wnd->colorDepthBits;
 }
 
 const Size2Raw* Window_Size(const Window* wnd)
@@ -964,8 +1050,9 @@ void Window_SaveState(Window* wnd)
     QSettings st;
     st.setValue(windowSettingsKey(idx, "rect"), QRect(wnd->x(), wnd->y(), wnd->width(), wnd->height()));
     st.setValue(windowSettingsKey(idx, "center"), (wnd->flags & DDWF_CENTER) != 0);
+    st.setValue(windowSettingsKey(idx, "maximize"), (wnd->flags & DDWF_MAXIMIZE) != 0);
     st.setValue(windowSettingsKey(idx, "fullscreen"), (wnd->flags & DDWF_FULLSCREEN) != 0);
-    st.setValue(windowSettingsKey(idx, "bpp"), Window_BitsPerPixel(wnd));
+    st.setValue(windowSettingsKey(idx, "colorDepth"), Window_ColorDepthBits(wnd));
 }
 
 void Window_RestoreState(Window* wnd)
@@ -986,15 +1073,8 @@ void Window_RestoreState(Window* wnd)
     wnd->geometry.origin.y = geom.y();
     wnd->geometry.size.width = geom.width();
     wnd->geometry.size.height = geom.height();
-    wnd->bpp = st.value(windowSettingsKey(idx, "bpp"), 32).toInt();
-
-    if(st.value(windowSettingsKey(idx, "center"), true).toBool())
-        wnd->flags |= DDWF_CENTER;
-    else
-        wnd->flags &= ~DDWF_CENTER;
-
-    if(st.value(windowSettingsKey(idx, "fullscreen"), true).toBool())
-        wnd->flags |= DDWF_FULLSCREEN;
-    else
-        wnd->flags &= ~DDWF_FULLSCREEN;
+    wnd->colorDepthBits = st.value(windowSettingsKey(idx, "colorDepth"), 32).toInt();
+    wnd->setFlag(DDWF_CENTER, st.value(windowSettingsKey(idx, "center"), true).toBool());
+    wnd->setFlag(DDWF_MAXIMIZE, st.value(windowSettingsKey(idx, "maximize"), false).toBool());
+    wnd->setFlag(DDWF_FULLSCREEN, st.value(windowSettingsKey(idx, "fullscreen"), true).toBool());
 }

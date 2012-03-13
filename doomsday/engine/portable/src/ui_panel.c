@@ -874,7 +874,7 @@ void CP_VideoModeInfo(ui_object_t* ob)
         boolean fullscreen = Window_IsFullscreen(Window_Main());
 
         sprintf(buf, "%i x %i x %i (%s)", Window_Width(theWindow),
-            Window_Height(theWindow), Window_BitsPerPixel(theWindow),
+            Window_Height(theWindow), Window_ColorDepthBits(theWindow),
             (fullscreen? "fullscreen" : "windowed"));
     }
 
@@ -905,7 +905,7 @@ void CP_UpdateSetVidModeButton(int w, int h, int bpp, boolean fullscreen)
             fullscreen? "fullscreen" : "windowed");
 
     if(w == Window_Width(theWindow) && h == Window_Height(theWindow) &&
-       bpp == Window_BitsPerPixel(theWindow) && fullscreen == cFullscreen)
+       bpp == Window_ColorDepthBits(theWindow) && fullscreen == cFullscreen)
         ob->flags |= UIF_DISABLED;
     else
         ob->flags &= ~UIF_DISABLED;
@@ -950,7 +950,7 @@ void CP_SetVidMode(ui_object_t* ob)
         int attribs[] = {
             DDWA_WIDTH, x,
             DDWA_HEIGHT, y,
-            DDWA_BITS_PER_PIXEL, bpp,
+            DDWA_COLOR_DEPTH_BITS, bpp,
             DDWA_FULLSCREEN, panel_fullscreen != 0,
             DDWA_END
         };
@@ -1292,7 +1292,7 @@ D_CMD(OpenPanel)
             list->selection = UI_ListFindItem(ob, RES(640, 480));
         }
         panel_fullscreen = cFullscreen;
-        panel_bpp = (Window_BitsPerPixel(theWindow) == 32? 1 : 0);
+        panel_bpp = (Window_ColorDepthBits(theWindow) == 32? 1 : 0);
         CP_ResolutionList(ob);
     }
 
