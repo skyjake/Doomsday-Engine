@@ -703,7 +703,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                 if($pack->platformId() !== $platformId) continue;
                 if($matchTitle && strcmp($pack->title(), $title)) continue;
                 if($unstable != ($pack instanceof AbstractUnstablePackage)) continue;
-                if($downloadable != ($pack instanceof iDownloadable && $pack->hasDownloadUri())) continue;
+                if($downloadable != ($pack instanceof iDownloadable && $pack->hasDirectDownloadUri())) continue;
 
                 // Found something suitable.
                 return $pack;
@@ -948,7 +948,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
             // Filtered out?
             if($pack === $notThisPack) continue;
             if($unstable != -1 && (boolean)$unstable != ($pack instanceof AbstractUnstablePackage)) continue;
-            if($downloadable != -1 && (boolean)$downloadable != ($pack instanceof iDownloadable && $pack->hasDownloadUri())) continue;
+            if($downloadable != -1 && (boolean)$downloadable != ($pack instanceof iDownloadable && $pack->hasDirectDownloadUri())) continue;
             if(!is_null($chosenPlatformId) && $pack->platformId() === $chosenPlatformId) continue;
 
             // Begin the list?
@@ -992,12 +992,12 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         $FrontController->beginPage($pageTitle);
 
         // Output the redirect directive.
-?><meta http-equiv="REFRESH" content="2;url=<?php echo $pack->downloadUri(); ?>"><?php
+?><meta http-equiv="REFRESH" content="2;url=<?php echo $pack->directDownloadUri(); ?>"><?php
 
         // Generate page content.
 ?><div id="builds"><?php
 
-?><p>Redirecting to the download for <em><?php echo htmlspecialchars($pack->composeFullTitle()); ?></em>. Your package should begin to download automatically within a few seconds, if not please use this <a href="<?php echo $pack->downloadUri(); ?>" title="<?php echo ('Download '. $pack->composeFullTitle()); ?>">direct link</a> instead.</p><?php
+?><p>Redirecting to the download for <em><?php echo htmlspecialchars($pack->composeFullTitle()); ?></em>. Your package should begin to download automatically within a few seconds, if not please use this <a href="<?php echo $pack->directDownloadUri(); ?>" title="<?php echo ('Download '. $pack->composeFullTitle()); ?>">direct link</a> instead.</p><?php
 
 ?><p>Not what you wanted? Here are some alternatives:</p><?php
 
@@ -1081,7 +1081,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         {
             foreach($build->packages as &$pack)
             {
-                if($pack instanceof iDownloadable && $pack->hasDownloadUri())
+                if($pack instanceof iDownloadable && $pack->hasDirectDownloadUri())
                 {
                     $count++;
                 }
@@ -1174,7 +1174,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                 }
 
                 // Determine issue level (think defcon).
-                if($errors > 0 || !$pack->hasDownloadUri())
+                if($errors > 0 || !$pack->hasDirectDownloadUri())
                     $issueLevel = 'major';
                 else if($warnings > 0)
                     $issueLevel = 'minor';
@@ -1187,9 +1187,9 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 <td><?php
 
                 $packTitle = $pack->composeFullTitle(true/*include version*/, false/*do not include the platform name*/, false/*do not include build Id*/);
-                if($pack instanceof iDownloadable && $pack->hasDownloadUri())
+                if($pack instanceof iDownloadable && $pack->hasDirectDownloadUri())
                 {
-?><a href="<?php echo $pack->downloadUri(); ?>" title="Download <?php echo $pack->composeFullTitle(); ?>"><?php echo $packTitle; ?></a><?php
+?><a href="<?php echo $pack->directDownloadUri(); ?>" title="Download <?php echo $pack->composeFullTitle(); ?>"><?php echo $packTitle; ?></a><?php
                 }
                 else
                 {

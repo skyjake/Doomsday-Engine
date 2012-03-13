@@ -44,14 +44,14 @@ class PackageFactory
         return self::$nullPackage;
     }
 
-    public static function newDistribution($platformId, $name, $version, $downloadUrl)
+    public static function newDistribution($platformId, $name, $version, $directDownloadUrl)
     {
-        return new DistributionPackage($platformId, $name, $version, $downloadUrl);
+        return new DistributionPackage($platformId, $name, $version, $directDownloadUrl);
     }
 
-    public static function newUnstableDistribution($platformId, $name, $version, $downloadUrl)
+    public static function newUnstableDistribution($platformId, $name, $version, $directDownloadUrl)
     {
-        return new UnstableDistributionPackage($platformId, $name, $version, $downloadUrl);
+        return new UnstableDistributionPackage($platformId, $name, $version, $directDownloadUrl);
     }
 
     /**
@@ -66,7 +66,7 @@ class PackageFactory
             throw new Exception('Received invalid log_pack');
 
         $platformId = BuildRepositoryPlugin::parsePlatformId(clean_text($log_pack->platform));
-        $cleanDownloadUri = safe_url($log_pack->downloadUri);
+        $cleanDirectDownloadUri = safe_url($log_pack->downloadUri);
         $compileLogUri    = safe_url($log_pack->compileLogUri);
 
         if(!empty($log_pack->name))
@@ -76,7 +76,7 @@ class PackageFactory
         else
         {
             // We must resort to extracting the name from download Uri.
-            $filename = basename(substr($cleanDownloadUri, 0, -9/*/download*/));
+            $filename = basename(substr($cleanDirectDownloadUri, 0, -9/*/download*/));
             $filename = preg_replace(array('/-/','/_/'), ' ', $filename);
 
             $words = explode(' ', substr($filename, 0, strrpos($filename, '.')));
@@ -101,13 +101,13 @@ class PackageFactory
         case 'plugin':
             if($releaseType === RT_STABLE)
             {
-                $pack = new PluginPackage($platformId, $name, $version, $cleanDownloadUri,
+                $pack = new PluginPackage($platformId, $name, $version, $cleanDirectDownloadUri,
                     $compileLogUri, (integer)$log_pack->compileWarnCount,
                     (integer)$log_pack->compileErrorCount);
             }
             else
             {
-                $pack = new UnstablePluginPackage($platformId, $name, $version, $cleanDownloadUri,
+                $pack = new UnstablePluginPackage($platformId, $name, $version, $cleanDirectDownloadUri,
                     $compileLogUri, (integer)$log_pack->compileWarnCount,
                     (integer)$log_pack->compileErrorCount);
             }
@@ -115,13 +115,13 @@ class PackageFactory
         default:
             if($releaseType === RT_STABLE)
             {
-                $pack = new DistributionPackage($platformId, $name, $version, $cleanDownloadUri,
+                $pack = new DistributionPackage($platformId, $name, $version, $cleanDirectDownloadUri,
                     $compileLogUri, (integer)$log_pack->compileWarnCount,
                     (integer)$log_pack->compileErrorCount);
             }
             else
             {
-                $pack = new UnstableDistributionPackage($platformId, $name, $version, $cleanDownloadUri,
+                $pack = new UnstableDistributionPackage($platformId, $name, $version, $cleanDirectDownloadUri,
                     $compileLogUri, (integer)$log_pack->compileWarnCount,
                     (integer)$log_pack->compileErrorCount);
             }
