@@ -268,7 +268,7 @@ void I_InitVirtualInputDevices(void)
     C_VAR_FLOAT("input-mouse-y-scale", &dev->axes[1].scale, CVF_NO_MAX, 0, 0);
     C_VAR_INT("input-mouse-y-flags", &dev->axes[1].flags, 0, 0, 3);
 
-    if(I_MousePresent())
+    if(Mouse_IsPresent())
         dev->flags = ID_ACTIVE;
 
     // TODO: Add support for several joysticks.
@@ -316,7 +316,7 @@ void I_InitVirtualInputDevices(void)
     }
 
     // The joystick may not be active.
-    if(I_JoystickPresent())
+    if(Joystick_IsPresent())
         dev->flags = ID_ACTIVE;
 }
 
@@ -1170,19 +1170,19 @@ void DD_ReadKeyboard(void)
     if(isDedicated)
         numkeyevs = I_GetConsoleKeyEvents(keyevs, KBDQUESIZE);
     else
-        numkeyevs = I_GetKeyEvents(keyevs, KBDQUESIZE);
+        numkeyevs = Keyboard_GetEvents(keyevs, KBDQUESIZE);
 
     // Convert to ddevents and post them.
     for(n = 0; n < numkeyevs; ++n)
     {
-        keyevent_t     *ke = &keyevs[n];
+        keyevent_t *ke = &keyevs[n];
 
         // Check the type of the event.
-        if(ke->event == IKE_KEY_DOWN)   // Key pressed?
+        if(ke->type == IKE_KEY_DOWN)   // Key pressed?
         {
             ev.toggle.state = ETOG_DOWN;
         }
-        else if(ke->event == IKE_KEY_UP) // Key released?
+        else if(ke->type == IKE_KEY_UP) // Key released?
         {
             ev.toggle.state = ETOG_UP;
         }
@@ -1259,7 +1259,7 @@ void I_SetUIMouseMode(boolean on)
 
 #if 0
 #ifdef UNIX
-    if(I_MousePresent())
+    if(Mouse_IsPresent())
     {
         // Release mouse grab when in windowed mode.
         boolean isFullScreen = true;
@@ -1285,7 +1285,7 @@ void DD_ReadMouse(timespan_t ticLength)
     float           xpos, ypos;
     int             i;
 
-    if(!I_MousePresent())
+    if(!Mouse_IsPresent())
         return;
 
     // Should we test the mouse input frequency?
@@ -1302,13 +1302,13 @@ void DD_ReadMouse(timespan_t ticLength)
         else
         {
             lastTime = nowTime;
-            I_GetMouseState(&mouse);
+            Mouse_GetState(&mouse);
         }
     }
     else
     {
         // Get the mouse state.
-        I_GetMouseState(&mouse);
+        Mouse_GetState(&mouse);
     }
 
     ev.device = IDEV_MOUSE;
@@ -1409,10 +1409,10 @@ void DD_ReadJoystick(void)
     ddevent_t       ev;
     joystate_t      state;
 
-    if(!I_JoystickPresent())
+    if(!Joystick_IsPresent())
         return;
 
-    I_GetJoystickState(&state);
+    Joystick_GetState(&state);
 
     // Joystick buttons.
     ev.device = IDEV_JOY1;

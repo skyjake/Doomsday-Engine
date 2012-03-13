@@ -28,6 +28,10 @@
 
 #include "joystick.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Key event types.
 #define IKE_NONE        0
 #define IKE_KEY_DOWN    0x1
@@ -46,24 +50,39 @@ enum {
 };
 
 typedef struct keyevent_s {
-    char            event; // Type of the event.
-    byte            ddkey; // The scancode (extended, corresponds DD_KEYs).
+    byte        type;       ///< Type of the event.
+    int         ddkey;      ///< DDKEY code.
+    char        text[8];    ///< For characters, latin1-encoded text to insert. /// @todo Unicode
 } keyevent_t;
 
 typedef struct mousestate_s {
-    int             x, y; // Relative X and Y mickeys since last call.
-    int             buttonDowns[IMB_MAXBUTTONS]; // Button down count.
-    int             buttonUps[IMB_MAXBUTTONS]; // Button up count.
-    int             wheel[IMW_NUM_AXES]; // Mouse wheel.
+    int         x, y; // Relative X and Y mickeys since last call.
+    int         buttonDowns[IMB_MAXBUTTONS]; // Button down count.
+    int         buttonUps[IMB_MAXBUTTONS]; // Button up count.
+    int         wheel[IMW_NUM_AXES]; // Mouse wheel.
 } mousestate_t;
 
-void            I_Register(void);
-boolean         I_Init(void);
-void            I_Shutdown(void);
+void I_Register(void);
+boolean I_Init(void);
+void I_Shutdown(void);
 
-size_t          Keyboard_GetEvents(keyevent_t *evbuf, size_t bufsize);
+/**
+ * Submits a new key event for preprocessing. The event has likely just been
+ * received from the windowing system.
+ *
+ * @param type   Type of the event (IKE_*).
+ * @param ddKey  DDKEY code.
+ * @param text   For characters, latin1-encoded text to insert. Otherwise @c NULL.
+ */
+void Keyboard_Submit(int type, int ddKey, const char* text);
 
-boolean         Mouse_IsPresent(void);
-void            Mouse_GetState(mousestate_t *state);
+size_t Keyboard_GetEvents(keyevent_t *evbuf, size_t bufsize);
+
+boolean Mouse_IsPresent(void);
+void Mouse_GetState(mousestate_t *state);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

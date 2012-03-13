@@ -26,6 +26,10 @@
 #ifndef LIBDENG_SYSTEM_JOYSTICK_H
 #define LIBDENG_SYSTEM_JOYSTICK_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define IJOY_AXISMIN    -10000
 #define IJOY_AXISMAX    10000
 #define IJOY_MAXAXES    32
@@ -52,5 +56,9 @@ void Joystick_Shutdown(void);
 boolean Joystick_IsPresent(void);
 
 void Joystick_GetState(joystate_t* state);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // LIBDENG_SYSTEM_JOYSTICK_H

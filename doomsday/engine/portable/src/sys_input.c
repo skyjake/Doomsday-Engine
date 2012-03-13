@@ -40,6 +40,9 @@ typedef struct clicker_s {
 static boolean initIOk;
 static byte useMouse; // Input enabled from a source?
 
+static keyevent_t keyEvents[EVBUFSIZE];
+static int evHead, evTail;
+
 static clicker_t mouseClickers[IMB_MAXBUTTONS];
 
 void I_Register(void)
@@ -322,6 +325,17 @@ void I_Shutdown(void)
     initIOk = false;
 }
 
+void Keyboard_Submit(int type, int ddKey, const char* text)
+{
+    keyevent_t* e = newKeyEvent();
+    e->type = type;
+    e->ddkey = ddKey;
+    if(text)
+    {
+        strncpy(e->text, text, sizeof(e->text) - 1);
+    }
+}
+
 size_t Keyboard_GetEvents(keyevent_t *evbuf, size_t bufsize)
 {
     keyevent_t *e;
@@ -348,7 +362,7 @@ boolean Mouse_IsPresent(void)
 
 void Mouse_GetState(mousestate_t *state)
 {
-    Uint8       buttons;
+    //byte        buttons;
     int         i;
 
     memset(state, 0, sizeof(*state));

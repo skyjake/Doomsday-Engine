@@ -31,6 +31,7 @@
 
 #include "canvas.h"
 #include "sys_opengl.h"
+#include "sys_input.h"
 
 struct Canvas::Instance
 {
@@ -205,6 +206,8 @@ void Canvas::keyPressEvent(QKeyEvent *ev)
 
     qDebug() << "Canvas: key press" << ev->key() << "text:" << ev->text() << "native:"
                 << ev->nativeVirtualKey();
+
+    /// @todo Use the Unicode text instead.
 
     // ev->nativeScanCode()
 

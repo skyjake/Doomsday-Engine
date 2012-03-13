@@ -29,6 +29,10 @@
 #ifndef LIBDENG_CORE_INPUT_H
 #define LIBDENG_CORE_INPUT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define NUMKKEYS            256
 
 #if _DEBUG
@@ -291,6 +295,10 @@ void        I_TrackInput(ddevent_t *ev, timespan_t ticLength);
 void Rend_AllInputDeviceStateVisuals(void);
 #else
 #  define Rend_AllInputDeviceStateVisuals()
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* LIBDENG_CORE_INPUT_H */

@@ -408,12 +408,12 @@ size_t I_GetConsoleKeyEvents(keyevent_t *evbuf, size_t bufsize)
         ddkey = translateKey(key);
 
         evbuf[n].ddkey = ddkey;
-        evbuf[n].event = IKE_KEY_DOWN;
+        evbuf[n].type = IKE_KEY_DOWN;
         n++;
 
         // Release immediately.
         evbuf[n].ddkey = ddkey;
-        evbuf[n].event = IKE_KEY_UP;
+        evbuf[n].type = IKE_KEY_UP;
         n++;
     }
 
