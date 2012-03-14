@@ -62,11 +62,15 @@ typedef double angle_g;
 struct hplane_s;
 struct superblock_s;
 struct hplanepartition_s;
+struct hplaneintercept_s;
 struct bsp_hedge_s;
 
 /**
- * An "intercept" remembers the vertex that touches a BS partition line (especially
- * a new vertex that is created at a twin-edge split).
+ * Plain-old-data structure containing additional information for a half-edge
+ * half-plane intercept point where the geometry intersects (an incident vertex
+ * can be found here (or at there will be upon insertion.)).
+ *
+ * There is always a corresponding HPlaneIntercept in the owning HPlane.
  */
 typedef struct hedgeintercept_s {
     // Vertex in question.
@@ -99,14 +103,16 @@ void Bsp_PrintHEdgeIntercept(HEdgeIntercept* intercept);
 #endif
 
 /**
- * Search the given list for an intersection, if found; return it.
+ * Search the given list for an intercept, if found; return it.
  *
  * @param list  The list to be searched.
- * @param vert  Ptr to the intersection vertex to look for.
+ * @param vert  Ptr to the vertex to look for.
  *
- * @return  Ptr to the found intersection, else @c NULL;
+ * @return  Ptr to the found intercept, else @c NULL;
  */
-HEdgeIntercept* Bsp_HEdgeInterceptByVertex(struct hplane_s* hPlane, Vertex* v);
+struct hplaneintercept_s* Bsp_HPlaneInterceptByVertex(struct hplane_s* hPlane, Vertex* vertex);
+
+HEdgeIntercept* Bsp_HEdgeInterceptByVertex(struct hplane_s* hPlane, Vertex* vertex);
 
 /**
  * Analyze the intersection list, and add any needed minihedges to the given half-edge lists

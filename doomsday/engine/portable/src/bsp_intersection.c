@@ -394,7 +394,7 @@ void BSP_InitHPlaneInterceptAllocator(void)
     }
 }
 
-void BSP_ShutdownIntersectionAllocator(void)
+void BSP_ShutdownHPlaneInterceptAllocator(void)
 {
     if(usedIntercepts)
     {

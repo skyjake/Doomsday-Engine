@@ -724,7 +724,7 @@ boolean Bsp_ChoosePartition(SuperBlock* hEdgeList, size_t depth, HPlane* partiti
         part->pSY = best->pSY;
         part->pPara = best->pPara;
         part->pPerp = best->pPerp;
-        part->length = best->pLength;
+        part->pLength = best->pLength;
         return true;
     }
 
@@ -732,19 +732,38 @@ boolean Bsp_ChoosePartition(SuperBlock* hEdgeList, size_t depth, HPlane* partiti
     return false;
 }
 
-static void makeIntersection(HPlane* hPlane, Vertex* vert, boolean selfRef)
+static boolean lineDefHasSelfRef(LineDef* lineDef)
 {
-    HEdgeIntercept* inter = Bsp_HEdgeInterceptByVertex(hPlane, vert);
+    return !!(lineDef->buildData.mlFlags & MLF_SELFREF);
+}
 
-    if(!inter)
-    {
-        const HPlanePartition* part = HPlane_Partition(hPlane);
-        double distance = M_ParallelDist(part->pDX, part->pDY, part->pPara, part->length,
-                                         vert->buildData.pos[VX], vert->buildData.pos[VY]);
+static HPlaneIntercept* Bsp_MakeHPlaneIntersection(HPlane* hPlane, bsp_hedge_t* hEdge, int leftSide)
+{
+    HEdgeIntercept* hEdgeIntercept;
+    const HPlanePartition* part;
+    HPlaneIntercept* inter;
+    Vertex* vertex;
+    double distance;
+    assert(hPlane && hEdge);
 
-        inter = Bsp_NewHEdgeIntercept(vert, part, selfRef);
-        HPlane_NewIntercept2(hPlane, distance, inter);
-    }
+    // Already present on this edge?
+    vertex = hEdge->v[leftSide?1:0];
+    inter = Bsp_HPlaneInterceptByVertex(hPlane, vertex);
+    if(inter) return inter;
+
+    part = HPlane_Partition(hPlane);
+    distance = M_ParallelDist(part->pDX, part->pDY, part->pPara, part->pLength,
+                              vertex->buildData.pos[VX], vertex->buildData.pos[VY]);
+
+    hEdgeIntercept = Bsp_NewHEdgeIntercept(vertex, part, (hEdge->lineDef && lineDefHasSelfRef(hEdge->lineDef)));
+    return HPlane_NewIntercept2(hPlane, distance, hEdgeIntercept);
+}
+
+static HPlaneIntercept* makeIntersection(HPlane* hPlane, bsp_hedge_t* hEdge, int leftSide)
+{
+    if(!hPlane || !hEdge)
+        Con_Error("Bsp_MakeHPlaneIntersection: Invalid arguments.");
+    return Bsp_MakeHPlaneIntersection(hPlane, hEdge, leftSide);
 }
 
 /**
@@ -752,72 +771,71 @@ static void makeIntersection(HPlane* hPlane, Vertex* vert, boolean selfRef)
  * Takes advantage of some common situations like horizontal and vertical lines to
  * choose a 'nicer' intersection point.
  */
-static __inline void calcIntersection(bsp_hedge_t* cur, const HPlanePartition* part,
+static __inline void calcIntersection(bsp_hedge_t* hEdge, const HPlanePartition* part,
     double perpC, double perpD, double* x, double* y)
 {
     double ds;
 
     // Horizontal partition against vertical half-edge.
-    if(part->pDY == 0 && cur->pDX == 0)
+    if(part->pDY == 0 && hEdge->pDX == 0)
     {
-        *x = cur->pSX;
+        *x = hEdge->pSX;
         *y = part->pSY;
         return;
     }
 
     // Vertical partition against horizontal half-edge.
-    if(part->pDX == 0 && cur->pDY == 0)
+    if(part->pDX == 0 && hEdge->pDY == 0)
     {
         *x = part->pSX;
-        *y = cur->pSY;
+        *y = hEdge->pSY;
         return;
     }
 
     // 0 = start, 1 = end.
     ds = perpC / (perpC - perpD);
 
-    if(cur->pDX == 0)
-        *x = cur->pSX;
+    if(hEdge->pDX == 0)
+        *x = hEdge->pSX;
     else
-        *x = cur->pSX + (cur->pDX * ds);
+        *x = hEdge->pSX + (hEdge->pDX * ds);
 
-    if(cur->pDY == 0)
-        *y = cur->pSY;
+    if(hEdge->pDY == 0)
+        *y = hEdge->pSY;
     else
-        *y = cur->pSY + (cur->pDY * ds);
+        *y = hEdge->pSY + (hEdge->pDY * ds);
 }
 
-void BSP_DivideOneHEdge(bsp_hedge_t* cur, HPlane* hPlane, SuperBlock* rightList,
+void BSP_DivideOneHEdge(bsp_hedge_t* hEdge, HPlane* hPlane, SuperBlock* rightList,
     SuperBlock* leftList)
 {
     const HPlanePartition* part = HPlane_Partition(hPlane);
     bsp_hedge_t* newHEdge;
     double x, y;
     double a, b;
-    boolean selfRef = (cur->lineDef? (cur->lineDef->buildData.mlFlags & MLF_SELFREF) : false);
 
     // Get state of lines' relation to each other.
-    a = M_PerpDist(part->pDX, part->pDY, part->pPerp, part->length, cur->pSX, cur->pSY);
-    b = M_PerpDist(part->pDX, part->pDY, part->pPerp, part->length, cur->pEX, cur->pEY);
+    a = M_PerpDist(part->pDX, part->pDY, part->pPerp, part->pLength, hEdge->pSX, hEdge->pSY);
+    b = M_PerpDist(part->pDX, part->pDY, part->pPerp, part->pLength, hEdge->pEX, hEdge->pEY);
 
-    if(cur->sourceLineDef == part->sourceLineDef)
+    if(hEdge->sourceLineDef == part->sourceLineDef)
         a = b = 0;
 
     // Check for being on the same line.
     if(fabs(a) <= DIST_EPSILON && fabs(b) <= DIST_EPSILON)
     {
-        makeIntersection(hPlane, cur->v[0], selfRef);
-        makeIntersection(hPlane, cur->v[1], selfRef);
+        makeIntersection(hPlane, hEdge, RIGHT);
+        makeIntersection(hPlane, hEdge, LEFT);
 
         // This hedge runs along the same line as the partition. Check whether it goes in
         // the same direction or the opposite.
-        if(cur->pDX * part->pDX + cur->pDY * part->pDY < 0)
+        if(hEdge->pDX * part->pDX + hEdge->pDY * part->pDY < 0)
         {
-            SuperBlock_HEdgePush(leftList, cur);
+            SuperBlock_HEdgePush(leftList, hEdge);
         }
         else
         {
-            SuperBlock_HEdgePush(rightList, cur);
+            SuperBlock_HEdgePush(rightList, hEdge);
         }
 
         return;
@@ -827,11 +845,11 @@ void BSP_DivideOneHEdge(bsp_hedge_t* cur, HPlane* hPlane, SuperBlock* rightList,
     if(a > -DIST_EPSILON && b > -DIST_EPSILON)
     {
         if(a < DIST_EPSILON)
-            makeIntersection(hPlane, cur->v[0], selfRef);
+            makeIntersection(hPlane, hEdge, RIGHT);
         else if(b < DIST_EPSILON)
-            makeIntersection(hPlane, cur->v[1], selfRef);
+            makeIntersection(hPlane, hEdge, LEFT);
 
-        SuperBlock_HEdgePush(rightList, cur);
+        SuperBlock_HEdgePush(rightList, hEdge);
         return;
     }
 
@@ -839,29 +857,29 @@ void BSP_DivideOneHEdge(bsp_hedge_t* cur, HPlane* hPlane, SuperBlock* rightList,
     if(a < DIST_EPSILON && b < DIST_EPSILON)
     {
         if(a > -DIST_EPSILON)
-            makeIntersection(hPlane, cur->v[0], selfRef);
+            makeIntersection(hPlane, hEdge, RIGHT);
         else if(b > -DIST_EPSILON)
-            makeIntersection(hPlane, cur->v[1], selfRef);
+            makeIntersection(hPlane, hEdge, LEFT);
 
-        SuperBlock_HEdgePush(leftList, cur);
+        SuperBlock_HEdgePush(leftList, hEdge);
         return;
     }
 
     // When we reach here, we have a and b non-zero and opposite sign, hence this edge
     // will be split by the partition line.
 
-    calcIntersection(cur, part, a, b, &x, &y);
-    newHEdge = BSP_HEdge_Split(cur, x, y);
-    makeIntersection(hPlane, cur->v[1], selfRef);
+    calcIntersection(hEdge, part, a, b, &x, &y);
+    newHEdge = BSP_HEdge_Split(hEdge, x, y);
+    makeIntersection(hPlane, hEdge, LEFT);
 
     if(a < 0)
     {
-        SuperBlock_HEdgePush(leftList,  cur);
+        SuperBlock_HEdgePush(leftList,  hEdge);
         SuperBlock_HEdgePush(rightList, newHEdge);
     }
     else
     {
-        SuperBlock_HEdgePush(rightList, cur);
+        SuperBlock_HEdgePush(rightList, hEdge);
         SuperBlock_HEdgePush(leftList,  newHEdge);
     }
 }

@@ -333,7 +333,7 @@ boolean BSP_Build(GameMap* map, Vertex*** vertexes, uint* numVertexes)
 
     // Free temporary storage.
     BSP_ShutdownHEdgeAllocator();
-    BSP_ShutdownIntersectionAllocator();
+    BSP_ShutdownHPlaneInterceptAllocator();
     BSP_ShutdownSuperBlockAllocator();
 
     // How much time did we spend?
@@ -344,23 +344,23 @@ boolean BSP_Build(GameMap* map, Vertex*** vertexes, uint* numVertexes)
 
 typedef struct {
     Vertex* vertex;
-    HEdgeIntercept* found;
+    HPlaneIntercept* found;
 } findintersectionforvertexworkerparams_t;
 
-static int findIntersectionForVertexWorker(HPlaneIntercept* bi, void* parameters)
+static int findIntersectionForVertexWorker(HPlaneIntercept* hpi, void* parameters)
 {
-    HEdgeIntercept* inter = (HEdgeIntercept*) HPlaneIntercept_UserData(bi);
+    HEdgeIntercept* inter = (HEdgeIntercept*) HPlaneIntercept_UserData(hpi);
     findintersectionforvertexworkerparams_t* p = (findintersectionforvertexworkerparams_t*) parameters;
     assert(p);
     if(inter->vertex == p->vertex)
     {
-        p->found = inter;
+        p->found = hpi;
         return true; // Stop iteration.
     }
     return false; // Continue iteration.
 }
 
-HEdgeIntercept* Bsp_HEdgeInterceptByVertex(HPlane* intersections, Vertex* vertex)
+HPlaneIntercept* Bsp_HPlaneInterceptByVertex(HPlane* intersections, Vertex* vertex)
 {
     findintersectionforvertexworkerparams_t parm;
 
@@ -370,6 +370,13 @@ HEdgeIntercept* Bsp_HEdgeInterceptByVertex(HPlane* intersections, Vertex* vertex
     parm.found = NULL;
     HPlane_IterateIntercepts2(intersections, findIntersectionForVertexWorker, (void*)&parm);
     return parm.found;
+}
+
+HEdgeIntercept* Bsp_HEdgeInterceptByVertex(struct hplane_s* hPlane, Vertex* vertex)
+{
+    HPlaneIntercept* hpi = Bsp_HPlaneInterceptByVertex(hPlane, vertex);
+    if(!hpi) return NULL; // Not found.
+    return (HEdgeIntercept*) HPlaneIntercept_UserData(hpi);
 }
 
 void Bsp_BuildHEdgesBetweenIntersections(HPlane* hPlane,

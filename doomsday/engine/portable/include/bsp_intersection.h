@@ -36,13 +36,14 @@ struct superblock_s;
 typedef struct hplanepartition_s {
     double x, y;
     double dX, dY;
-    double length;
+
     LineDef* lineDef; // Not NULL if partition originated from a linedef.
     LineDef* sourceLineDef;
 
     double pSX, pSY;
     double pDX, pDY;
     double pPara, pPerp;
+    double pLength;
 } HPlanePartition;
 
 typedef struct hplaneintercept_s HPlaneIntercept;
@@ -89,7 +90,7 @@ void HPlaneIntercept_Print(HPlane* hPlane);
 #endif
 
 void BSP_InitHPlaneInterceptAllocator(void);
-void BSP_ShutdownIntersectionAllocator(void);
+void BSP_ShutdownHPlaneInterceptAllocator(void);
 
 /**
  * @todo the following functions do not belong in this module.
