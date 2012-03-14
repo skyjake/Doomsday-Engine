@@ -101,7 +101,7 @@ def branchFileName():
 def currentBranch():
     if not os.path.exists(branchFileName()):
         return 'master' # default branch
-    return file(branchFileName(), 'rt').strip()
+    return file(branchFileName(), 'rt').read().strip()
 
 
 def switchToBranch(branch):
