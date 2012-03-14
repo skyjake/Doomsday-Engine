@@ -30,10 +30,10 @@
 
 #include "bsp_edge.h"
 
-struct bspartitioninfo_s;
+struct hplanepartition_s;
 struct superblock_s;
 
-typedef struct bspartitioninfo_s {
+typedef struct hplanepartition_s {
     double x, y;
     double dX, dY;
     double length;
@@ -43,60 +43,60 @@ typedef struct bspartitioninfo_s {
     double pSX, pSY;
     double pDX, pDY;
     double pPara, pPerp;
-} BsPartitionInfo;
+} HPlanePartition;
 
-typedef struct bspintersection_s BspIntersection;
+typedef struct hplaneintercept_s HPlaneIntercept;
 
-BspIntersection* BspIntersection_Next(BspIntersection* intersection);
+HPlaneIntercept* HPlaneIntercept_Next(HPlaneIntercept* intersection);
 
-BspIntersection* BspIntersection_Prev(BspIntersection* intersection);
+HPlaneIntercept* HPlaneIntercept_Prev(HPlaneIntercept* intersection);
 
-void* BspIntersection_UserData(BspIntersection* intersection);
-
-/**
- * BspIntersections instance. Created with BspIntersections_New().
- */
-typedef struct bspintersections_s BspIntersections;
+void* HPlaneIntercept_UserData(HPlaneIntercept* intersection);
 
 /**
- * Create a new BspIntersections.
+ * HPlane instance. Created with HPlane_New().
  */
-BspIntersections* BspIntersections_New(void);
-
-BsPartitionInfo* BspIntersections_Info(BspIntersections* bspIntersections);
+typedef struct hplane_s HPlane;
 
 /**
- * Destroy a BspIntersections.
+ * Create a new HPlane.
  */
-void BspIntersections_Delete(BspIntersections* bspIntersections);
+HPlane* HPlane_New(void);
+
+HPlanePartition* HPlane_Partition(HPlane* hPlane);
 
 /**
- * Empty all intersections from the specified BspIntersections.
+ * Destroy a HPlane.
  */
-void BspIntersections_Clear(BspIntersections* bspIntersections);
+void HPlane_Delete(HPlane* hPlane);
+
+/**
+ * Empty all intersections from the specified HPlane.
+ */
+void HPlane_Clear(HPlane* hPlane);
 
 /**
  * Insert a point at the given intersection into the intersection list.
  */
-BspIntersection* BspIntersections_Insert2(BspIntersections* bspIntersections, double distance, void* userData);
-BspIntersection* BspIntersections_Insert(BspIntersections* bspIntersections, double distance/*, userData=NULL*/);
+HPlaneIntercept* HPlane_NewIntercept2(HPlane* hPlane, double distance, void* userData);
+HPlaneIntercept* HPlane_NewIntercept(HPlane* hPlane, double distance/*, userData=NULL*/);
 
-int BspIntersections_Iterate2(BspIntersections* bi, int (*callback)(BspIntersection*, void*), void* parameters);
-int BspIntersections_Iterate(BspIntersections* bi, int (*callback)(BspIntersection*, void*)/*, parameters=NULL*/);
+int HPlane_IterateIntercepts2(HPlane* bi, int (*callback)(HPlaneIntercept*, void*), void* parameters);
+int HPlane_IterateIntercepts(HPlane* bi, int (*callback)(HPlaneIntercept*, void*)/*, parameters=NULL*/);
 
 #if _DEBUG
-void BspIntersection_Print(BspIntersections* bspIntersections);
+void HPlaneIntercept_Print(HPlane* hPlane);
 #endif
 
-void BSP_InitIntersectionAllocator(void);
+void BSP_InitHPlaneInterceptAllocator(void);
 void BSP_ShutdownIntersectionAllocator(void);
 
 /**
  * @todo the following functions do not belong in this module.
  */
 
-void Bsp_MergeIntersections(BspIntersections* intersections);
-void Bsp_BuildHEdgesAtIntersectionGaps(BspIntersections* bspIntersections,
+void Bsp_MergeIntersections(HPlane* intersections);
+void Bsp_BuildHEdgesAtIntersectionGaps(HPlane* hPlane,
     struct superblock_s* rightList, struct superblock_s* leftList);
 
 #endif /// LIBDENG_MAP_BSP_INTERSECTION

@@ -270,7 +270,7 @@ boolean BSP_Build(GameMap* map, Vertex*** vertexes, uint* numVertexes)
     startTime = Sys_GetRealTime();
 
     BSP_InitSuperBlockAllocator();
-    BSP_InitIntersectionAllocator();
+    BSP_InitHPlaneInterceptAllocator();
     BSP_InitHEdgeAllocator();
 
     BSP_InitForNodeBuild(map);
@@ -281,16 +281,16 @@ boolean BSP_Build(GameMap* map, Vertex*** vertexes, uint* numVertexes)
     // Build the BSP.
     {
     uint buildStartTime = Sys_GetRealTime();
-    BspIntersections* bspIntersections;
+    HPlane* hPlane;
 
-    bspIntersections = BspIntersections_New();
+    hPlane = HPlane_New();
 
     // Recursively create nodes.
     rootNode = NULL;
-    builtOK = BuildNodes(hEdgeList, &rootNode, 0, bspIntersections);
+    builtOK = BuildNodes(hEdgeList, &rootNode, 0, hPlane);
 
     // The intersection list is no longer needed.
-    BspIntersections_Delete(bspIntersections);
+    HPlane_Delete(hPlane);
 
     // How much time did we spend?
     VERBOSE2( Con_Message("BuildNodes: Done in %.2f seconds.\n", (Sys_GetRealTime() - buildStartTime) / 1000.0f));
@@ -347,9 +347,9 @@ typedef struct {
     HEdgeIntercept* found;
 } findintersectionforvertexworkerparams_t;
 
-static int findIntersectionForVertexWorker(BspIntersection* bi, void* parameters)
+static int findIntersectionForVertexWorker(HPlaneIntercept* bi, void* parameters)
 {
-    HEdgeIntercept* inter = (HEdgeIntercept*) BspIntersection_UserData(bi);
+    HEdgeIntercept* inter = (HEdgeIntercept*) HPlaneIntercept_UserData(bi);
     findintersectionforvertexworkerparams_t* p = (findintersectionforvertexworkerparams_t*) parameters;
     assert(p);
     if(inter->vertex == p->vertex)
@@ -360,7 +360,7 @@ static int findIntersectionForVertexWorker(BspIntersection* bi, void* parameters
     return false; // Continue iteration.
 }
 
-HEdgeIntercept* Bsp_HEdgeInterceptByVertex(BspIntersections* intersections, Vertex* vertex)
+HEdgeIntercept* Bsp_HEdgeInterceptByVertex(HPlane* intersections, Vertex* vertex)
 {
     findintersectionforvertexworkerparams_t parm;
 
@@ -368,19 +368,19 @@ HEdgeIntercept* Bsp_HEdgeInterceptByVertex(BspIntersections* intersections, Vert
 
     parm.vertex = vertex;
     parm.found = NULL;
-    BspIntersections_Iterate2(intersections, findIntersectionForVertexWorker, (void*)&parm);
+    HPlane_IterateIntercepts2(intersections, findIntersectionForVertexWorker, (void*)&parm);
     return parm.found;
 }
 
-void Bsp_BuildHEdgesBetweenIntersections(BspIntersections* bspIntersections,
+void Bsp_BuildHEdgesBetweenIntersections(HPlane* hPlane,
     HEdgeIntercept* start, HEdgeIntercept* end, bsp_hedge_t** right, bsp_hedge_t** left)
 {
-    BsPartitionInfo* part;
+    HPlanePartition* part;
 
-    if(!bspIntersections || !start || !end)
+    if(!hPlane || !start || !end)
         Con_Error("Bsp_BuildHEdgesBetweenIntersections: Invalid arguments.");
 
-    part = BspIntersections_Info(bspIntersections);
+    part = HPlane_Partition(hPlane);
 
     // Create the half-edge pair.
     // Leave 'linedef' field as NULL as these are not linedef-linked.
@@ -407,29 +407,29 @@ void Bsp_BuildHEdgesBetweenIntersections(BspIntersections* bspIntersections,
     */
 }
 
-void BSP_AddMiniHEdges(BspIntersections* bspIntersections, SuperBlock* rightList,
+void BSP_AddMiniHEdges(HPlane* hPlane, SuperBlock* rightList,
     SuperBlock* leftList)
 {
-    if(!bspIntersections) return;
+    if(!hPlane) return;
 
 /*#if _DEBUG
-    BspIntersections_Print(bspIntersections);
+    HPlane_Print(hPlane);
 #endif*/
 
     // Fix any issues with the current intersections.
-    Bsp_MergeIntersections(bspIntersections);
+    Bsp_MergeIntersections(hPlane);
 
     /*{
-    const BsPartitionInfo* part = BspIntersections_Info(bspIntersections);
+    const HPlanePartition* part = HPlane_Partition(hPlane);
     DEBUG_Message(("BSP_AddMiniHEdges: Partition (%1.1f,%1.1f) += (%1.1f,%1.1f)\n",
                    part->pSX, part->pSY, part->pDX, part->pDY));
     }*/
 
     // Find connections in the intersections.
-    Bsp_BuildHEdgesAtIntersectionGaps(bspIntersections, rightList, leftList);
+    Bsp_BuildHEdgesAtIntersectionGaps(hPlane, rightList, leftList);
 }
 
-HEdgeIntercept* Bsp_NewHEdgeIntercept(Vertex* vert, const struct bspartitioninfo_s* part,
+HEdgeIntercept* Bsp_NewHEdgeIntercept(Vertex* vert, const struct hplanepartition_s* part,
     boolean selfRef)
 {
     HEdgeIntercept* inter = M_Calloc(sizeof(*inter));

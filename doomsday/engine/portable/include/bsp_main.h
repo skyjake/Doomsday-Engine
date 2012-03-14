@@ -59,9 +59,9 @@
 // Degrees, 0 is E, 90 is N
 typedef double angle_g;
 
-struct bspintersections_s;
+struct hplane_s;
 struct superblock_s;
-struct bspartitioninfo_s;
+struct hplanepartition_s;
 struct bsp_hedge_s;
 
 /**
@@ -84,7 +84,7 @@ typedef struct hedgeintercept_s {
 /**
  * Create a new intersection.
  */
-HEdgeIntercept* Bsp_NewHEdgeIntercept(Vertex* vertex, const struct bspartitioninfo_s* partition,
+HEdgeIntercept* Bsp_NewHEdgeIntercept(Vertex* vertex, const struct hplanepartition_s* partition,
     boolean lineDefIsSelfReferencing);
 
 /**
@@ -106,18 +106,18 @@ void Bsp_PrintHEdgeIntercept(HEdgeIntercept* intercept);
  *
  * @return  Ptr to the found intersection, else @c NULL;
  */
-HEdgeIntercept* Bsp_HEdgeInterceptByVertex(struct bspintersections_s* bspIntersections, Vertex* v);
+HEdgeIntercept* Bsp_HEdgeInterceptByVertex(struct hplane_s* hPlane, Vertex* v);
 
 /**
  * Analyze the intersection list, and add any needed minihedges to the given half-edge lists
  * (one minihedge on each side).
  *
- * @note All the intersections in the bspIntersections will be free'd back into the quick-alloc list.
+ * @note All the intersections in the hPlane will be free'd back into the quick-alloc list.
  */
-void BSP_AddMiniHEdges(struct bspintersections_s* bspIntersections,
+void BSP_AddMiniHEdges(struct hplane_s* hPlane,
     struct superblock_s* rightList, struct superblock_s* leftList);
 
-void Bsp_BuildHEdgesBetweenIntersections(struct bspintersections_s* bspIntersections,
+void Bsp_BuildHEdgesBetweenIntersections(struct hplane_s* hPlane,
     HEdgeIntercept* start, HEdgeIntercept* end, struct bsp_hedge_s** right, struct bsp_hedge_s** left);
 
 // CVar for tuning the BSP edge split cost factor.

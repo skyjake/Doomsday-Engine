@@ -55,7 +55,7 @@ typedef struct bspnodedata_s {
  *       reworked, heavily). I think it is important that both these routines follow
  *       the exact same logic.
  */
-void BSP_DivideOneHEdge(bsp_hedge_t* hEdge, BspIntersections* bspIntersections,
+void BSP_DivideOneHEdge(bsp_hedge_t* hEdge, HPlane* hPlane,
     SuperBlock* rightList, SuperBlock* leftList);
 
 /**
@@ -67,7 +67,7 @@ void BSP_DivideOneHEdge(bsp_hedge_t* hEdge, BspIntersections* bspIntersections,
  *
  * @return  @c true= A suitable partition was found.
  */
-boolean BSP_PickPartition(SuperBlock* hEdgeList, size_t depth, BspIntersections* bspIntersections);
+boolean Bsp_ChoosePartition(SuperBlock* hEdgeList, size_t depth, HPlane* hPlane);
 
 /**
  * Remove all the half-edges from the list, partitioning them into the left or right
@@ -75,7 +75,7 @@ boolean BSP_PickPartition(SuperBlock* hEdgeList, size_t depth, BspIntersections*
  * intersection list as it goes.
  */
 void BSP_PartitionHEdges(SuperBlock* hEdgeList, SuperBlock* rightList, SuperBlock* leftList,
-    BspIntersections* bspIntersections);
+    HPlane* hPlane);
 
 /**
  * Takes the half-edge list and determines if it is convex, possibly converting it
@@ -94,11 +94,11 @@ void BSP_PartitionHEdges(SuperBlock* hEdgeList, SuperBlock* rightList, SuperBloc
  * @param hEdgeList     Ptr to the list of half edges at the current node.
  * @param parent        Ptr to write back the address of any newly created subtree.
  * @param depth         Current tree depth.
- * @param bspIntersections  BspIntersection list for storing any new intersections.
+ * @param hPlane  HPlaneIntercept list for storing any new intersections.
  * @return  @c true iff successfull.
  */
 boolean BuildNodes(struct superblock_s* hEdgeList, binarytree_t** parent, size_t depth,
-    BspIntersections* bspIntersections);
+    HPlane* hPlane);
 
 /**
  * Traverse the BSP tree and put all the half-edges in each BSP leaf into clockwise

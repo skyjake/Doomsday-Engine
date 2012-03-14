@@ -35,9 +35,9 @@
 #include "de_bsp.h"
 #include "de_misc.h"
 
-struct bspintersection_s {
-    struct bspintersection_s* next;
-    struct bspintersection_s* prev;
+struct hplaneintercept_s {
+    struct hplaneintercept_s* next;
+    struct hplaneintercept_s* prev;
 
     // How far along the partition line the vertex is. Zero is at the
     // partition half-edge's start point, positive values move in the same
@@ -48,46 +48,46 @@ struct bspintersection_s {
     void* userData;
 };
 
-BspIntersection* BspIntersection_Next(BspIntersection* bi)
+HPlaneIntercept* HPlaneIntercept_Next(HPlaneIntercept* bi)
 {
     assert(bi);
     return bi->next;
 }
 
-BspIntersection* BspIntersection_Prev(BspIntersection* bi)
+HPlaneIntercept* HPlaneIntercept_Prev(HPlaneIntercept* bi)
 {
     assert(bi);
     return bi->prev;
 }
 
-void* BspIntersection_UserData(BspIntersection* bi)
+void* HPlaneIntercept_UserData(HPlaneIntercept* bi)
 {
     assert(bi);
     return bi->userData;
 }
 
-struct bspintersections_s {
-    // The intersection list. Kept sorted by along_dist, in ascending order.
-    BspIntersection* headPtr;
-    BsPartitionInfo info;
+struct hplane_s {
+    // The intercept list. Kept sorted by along_dist, in ascending order.
+    HPlaneIntercept* headPtr;
+    HPlanePartition info;
 };
 
 static boolean initedOK = false;
-static BspIntersection* usedIntersections;
+static HPlaneIntercept* usedIntercepts;
 
-static BspIntersection* newIntersection(void)
+static HPlaneIntercept* newIntercept(void)
 {
-    BspIntersection* node;
+    HPlaneIntercept* node;
 
-    if(initedOK && usedIntersections)
+    if(initedOK && usedIntercepts)
     {
-        node = usedIntersections;
-        usedIntersections = usedIntersections->next;
+        node = usedIntercepts;
+        usedIntercepts = usedIntercepts->next;
     }
     else
     {
         // Need to allocate another.
-        node = M_Malloc(sizeof(BspIntersection));
+        node = M_Malloc(sizeof(HPlaneIntercept));
     }
 
     node->userData = NULL;
@@ -96,35 +96,35 @@ static BspIntersection* newIntersection(void)
     return node;
 }
 
-BspIntersections* BspIntersections_New(void)
+HPlane* HPlane_New(void)
 {
-    BspIntersections* bi = M_Malloc(sizeof(BspIntersections));
+    HPlane* bi = M_Malloc(sizeof(HPlane));
     bi->headPtr = NULL;
     return bi;
 }
 
-void BspIntersections_Delete(BspIntersections* bi)
+void HPlane_Delete(HPlane* bi)
 {
     assert(bi);
-    BspIntersections_Clear(bi);
+    HPlane_Clear(bi);
     M_Free(bi);
 }
 
-void BspIntersections_Clear(BspIntersections* bi)
+void HPlane_Clear(HPlane* bi)
 {
-    BspIntersection* node;
+    HPlaneIntercept* node;
     assert(bi);
 
     node = bi->headPtr;
     while(node)
     {
-        BspIntersection* p = node->next;
+        HPlaneIntercept* p = node->next;
 
         Bsp_DeleteHEdgeIntercept(node->userData);
 
         // Move the bi node to the unused node bi.
-        node->next = usedIntersections;
-        usedIntersections = node;
+        node->next = usedIntercepts;
+        usedIntercepts = node;
 
         node = p;
     }
@@ -132,18 +132,18 @@ void BspIntersections_Clear(BspIntersections* bi)
     bi->headPtr = NULL;
 }
 
-BsPartitionInfo* BspIntersections_Info(BspIntersections* bi)
+HPlanePartition* HPlane_Partition(HPlane* bi)
 {
     assert(bi);
     return &bi->info;
 }
 
-int BspIntersections_Iterate2(BspIntersections* bi, int (*callback)(BspIntersection*, void*), void* parameters)
+int HPlane_IterateIntercepts2(HPlane* bi, int (*callback)(HPlaneIntercept*, void*), void* parameters)
 {
     assert(bi);
     if(callback)
     {
-        BspIntersection* node;
+        HPlaneIntercept* node;
         for(node = bi->headPtr; node; node = node->next)
         {
             int result = callback(node, parameters);
@@ -153,9 +153,9 @@ int BspIntersections_Iterate2(BspIntersections* bi, int (*callback)(BspIntersect
     return false; // Continue iteration.
 }
 
-int BspIntersections_Iterate(BspIntersections* bi, int (*callback)(BspIntersection*, void*))
+int HPlane_IterateIntercepts(HPlane* bi, int (*callback)(HPlaneIntercept*, void*))
 {
-    return BspIntersections_Iterate2(bi, callback, NULL/*no parameters*/);
+    return HPlane_IterateIntercepts2(bi, callback, NULL/*no parameters*/);
 }
 
 void Bsp_MergeHEdgeIntercepts(HEdgeIntercept* final, const HEdgeIntercept* other)
@@ -192,13 +192,13 @@ void Bsp_MergeHEdgeIntercepts(HEdgeIntercept* final, const HEdgeIntercept* other
 #endif*/
 }
 
-void Bsp_MergeIntersections(BspIntersections* bspIntersections)
+void Bsp_MergeIntersections(HPlane* hPlane)
 {
-    BspIntersection* node, *np;
+    HPlaneIntercept* node, *np;
 
-    if(!bspIntersections) return;
+    if(!hPlane) return;
 
-    node = bspIntersections->headPtr;
+    node = hPlane->headPtr;
     np = node->next;
     while(node && np)
     {
@@ -208,7 +208,7 @@ void Bsp_MergeIntersections(BspIntersections* bspIntersections)
 
         if(len < -0.1)
         {
-            Con_Error("Bsp_MergeIntersections: Invalid intersection order - %1.3f > %1.3f\n",
+            Con_Error("Bsp_MergeIntersections: Invalid intercept order - %1.3f > %1.3f\n",
                       node->distance, np->distance);
         }
         else if(len > 0.2)
@@ -223,7 +223,7 @@ void Bsp_MergeIntersections(BspIntersections* bspIntersections)
                            len, cur->vertex->V_pos[VX], cur->vertex->V_pos[VY]));
         }*/
 
-        // Unlink this intersection.
+        // Unlink this intercept.
         node->next = np->next;
 
         // Merge info for the two intersections into one.
@@ -236,16 +236,16 @@ void Bsp_MergeIntersections(BspIntersections* bspIntersections)
     }
 }
 
-void Bsp_BuildHEdgesAtIntersectionGaps(BspIntersections* bspIntersections,
+void Bsp_BuildHEdgesAtIntersectionGaps(HPlane* hPlane,
     SuperBlock* rightList, SuperBlock* leftList)
 {
-    BspIntersection* node;
-    const BsPartitionInfo* part;
+    HPlaneIntercept* node;
+    const HPlanePartition* part;
 
-    if(!bspIntersections) return;
+    if(!hPlane) return;
 
-    part = BspIntersections_Info(bspIntersections);
-    node = bspIntersections->headPtr;
+    part = HPlane_Partition(hPlane);
+    node = hPlane->headPtr;
     while(node && node->next)
     {
         HEdgeIntercept* cur = node->userData;
@@ -307,7 +307,7 @@ void Bsp_BuildHEdgesAtIntersectionGaps(BspIntersections* bspIntersections,
                     }
                 }
 
-                Bsp_BuildHEdgesBetweenIntersections(bspIntersections, cur, next, &right, &left);
+                Bsp_BuildHEdgesBetweenIntersections(hPlane, cur, next, &right, &left);
 
                 // Add the new half-edges to the appropriate lists.
                 SuperBlock_HEdgePush(rightList, right);
@@ -319,13 +319,13 @@ void Bsp_BuildHEdgesAtIntersectionGaps(BspIntersections* bspIntersections,
     }
 }
 
-BspIntersection* BspIntersections_Insert2(BspIntersections* bi, double distance, void* userData)
+HPlaneIntercept* HPlane_NewIntercept2(HPlane* bi, double distance, void* userData)
 {
-    BspIntersection* after, *newNode;
+    HPlaneIntercept* after, *newNode;
     assert(bi);
 
     /**
-     * Enqueue the new intersection into the bi.
+     * Enqueue the new intercept into the bi.
      */
     after = bi->headPtr;
     while(after && after->next)
@@ -334,7 +334,7 @@ BspIntersection* BspIntersections_Insert2(BspIntersections* bi, double distance,
     while(after && distance < after->distance)
         after = after->prev;
 
-    newNode = newIntersection();
+    newNode = newIntercept();
     newNode->distance = distance;
     newNode->userData = userData;
 
@@ -360,19 +360,19 @@ BspIntersection* BspIntersections_Insert2(BspIntersections* bi, double distance,
     return newNode;
 }
 
-BspIntersection* BspIntersections_Insert(BspIntersections* bi, double distance)
+HPlaneIntercept* HPlane_NewIntercept(HPlane* bi, double distance)
 {
-    return BspIntersections_Insert2(bi, distance, NULL/*no user data*/);
+    return HPlane_NewIntercept2(bi, distance, NULL/*no user data*/);
 }
 
 #if _DEBUG
-void BspIntersections_Print(BspIntersections* bi)
+void HPlane_Print(HPlane* bi)
 {
     if(bi)
     {
-        BspIntersection* node;
+        HPlaneIntercept* node;
 
-        Con_Message("BspIntersections %p:\n", bi);
+        Con_Message("HPlane %p:\n", bi);
         node = bi->headPtr;
         while(node)
         {
@@ -385,31 +385,31 @@ void BspIntersections_Print(BspIntersections* bi)
 }
 #endif
 
-void BSP_InitIntersectionAllocator(void)
+void BSP_InitHPlaneInterceptAllocator(void)
 {
     if(!initedOK)
     {
-        usedIntersections = NULL;
+        usedIntercepts = NULL;
         initedOK = true;
     }
 }
 
 void BSP_ShutdownIntersectionAllocator(void)
 {
-    if(usedIntersections)
+    if(usedIntercepts)
     {
-        BspIntersection* node;
+        HPlaneIntercept* node;
 
-        node = usedIntersections;
+        node = usedIntercepts;
         while(node)
         {
-            BspIntersection* np = node->next;
+            HPlaneIntercept* np = node->next;
 
             M_Free(node);
             node = np;
         }
 
-        usedIntersections = NULL;
+        usedIntercepts = NULL;
     }
 
     initedOK = false;
