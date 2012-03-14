@@ -14,6 +14,7 @@ def encodedText(logText):
     logText = logText.encode('utf-8')
     logText = logText.replace('<', '&lt;')
     logText = logText.replace('>', '&gt;')
+    logText = filter(lambda c: c in string.whitespace or c > ' ', logText)
     return logText
 
 
