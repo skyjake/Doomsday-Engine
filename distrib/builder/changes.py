@@ -74,8 +74,8 @@ class Changes:
         self.parse()
         
     def should_ignore(self, subject):
-        if subject.startswith("Merge branch 'master' of"):
-            # master->master merges are not listed.
+        if subject.startswith("Merge branch '%s' of" % config.BRANCH):
+            # Same-branch merges are not listed.
             return True
         return False
         
@@ -144,7 +144,7 @@ class Changes:
                 
     def all_tags(self):
         # These words are always considered to be valid tags.
-        tags = ['Cleanup', 'Fixed', 'Added', 'Refactor', 'Performance', 'Optimize', 'merge branch']
+        tags = ['Cleanup', 'Fixed', 'Added', 'Refactor', 'Performance', 'Optimize', 'Merge branch']
         for e in self.entries:
             for t in e.tags + e.guessedTags:
                 if t not in tags: 

@@ -84,7 +84,7 @@ def todays_platform_release():
         remote_copy('dsfmod/fmod-out-%s.txt' % sys_id(), ev.file_path('fmod-out-%s.txt' % sys_id()))
         remote_copy('dsfmod/fmod-err-%s.txt' % sys_id(), ev.file_path('fmod-err-%s.txt' % sys_id()))
                                              
-    git_checkout('master')
+    git_checkout(builder.config.BRANCH)
 
 
 def update_changes(fromTag=None, toTag=None, debChanges=False):
@@ -94,7 +94,7 @@ def update_changes(fromTag=None, toTag=None, debChanges=False):
         # Make sure we have the latest changes.
         git_pull()
         fromTag = aptrepo_find_latest_tag()
-        toTag = 'master' # Everything up to now.
+        toTag = builder.config.BRANCH # Everything up to now.
     else:
         # Use the two most recent builds by default.
         if fromTag is None or toTag is None:
