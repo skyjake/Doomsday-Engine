@@ -21,6 +21,11 @@ from builder.git import *
 from builder.utils import * 
     
     
+def pull_from_branch():
+    """Pulls commits from the repository."""
+    git_pull()
+    
+    
 def create_build_event():
     """Creates and tags a new build for with today's number."""
     print 'Creating a new build event.'
@@ -375,6 +380,7 @@ def sorted_commands():
 
 
 commands = {
+    'pull': pull_from_branch,
     'create': create_build_event,
     'platform_release': todays_platform_release,
     'changes': update_changes,
@@ -396,6 +402,7 @@ if __name__ == '__main__':
         print 'The arguments must be: (command) [args]'
         print 'Commands:', string.join(sorted_commands())
         print 'Arguments:'
+        print '--branch   Branch to use (default: master)'
         print '--distrib  Doomsday distrib directory'
         print '--events   Event directory (builds are stored here in subdirs)'
         print '--apt      Apt repository'
