@@ -113,7 +113,7 @@ class FrontController
         error_reporting(E_ALL);
         ini_set('display_errors', (bool) $this->_visibleErrors);
         ini_set('display_startup_errors', (bool) $this->_visibleErrors);
-        set_error_handler(array(&$this,'ErrorHandler'));
+        set_error_handler(array(&$this,"ErrorHandler"));
 
         // Locate plugins.
         $this->_plugins = new Plugins(DIR_PLUGINS);
@@ -700,6 +700,7 @@ class FrontController
         {
         case E_NOTICE:
         case E_USER_NOTICE:
+        case E_USER_WARNING:
         case E_STRICT:
             return true;
 
