@@ -526,6 +526,10 @@ p.legal a {
     min-height: 1.6em;
 }
 
+#projectnews ul li.feed-error {
+    color: grey;
+}
+
 #projectnews a {
     color: #ff8a00;
 }
@@ -541,7 +545,7 @@ p.legal a {
 }
 
 .projectnews-label {
-    color: #ffffff;
+    color: white;
     font-weight: bold;
     min-height: 139px;
 }

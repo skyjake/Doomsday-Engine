@@ -101,7 +101,7 @@ class ContentCache
     {
         $path = FrontController::nativePath($this->_docRoot."/$relPath");
 
-        if(!file_exists($path))
+        if(!$path || !file_exists($path))
             throw new Exception(sprintf('file %s not present in content cache.', $relPath));
 
         if($stream = fopen($path, 'r'))
@@ -122,7 +122,7 @@ class ContentCache
     public function getInfo($file, &$ContentInfo)
     {
         $file = FrontController::nativePath($this->_docRoot."/$file");
-        if(!file_exists($file)) return FALSE;
+        if(!$file || !file_exists($file)) return FALSE;
 
         $ContentInfo->modifiedTime = filemtime($file);
         return TRUE;
@@ -137,7 +137,7 @@ class ContentCache
     public function touch($file)
     {
         $file = FrontController::nativePath($this->_docRoot."/$file");
-        if(!file_exists($file)) return FALSE;
+        if(!$file || !file_exists($file)) return FALSE;
 
         touch($file);
         return TRUE;
@@ -154,7 +154,7 @@ class ContentCache
     {
         $file = FrontController::nativePath($this->_docRoot."/$file");
 
-        if(!file_exists($file))
+        if(!$file || !file_exists($file))
             throw new Exception(sprintf('file %s not present in content cache.', $file));
 
         return @readfile($file);
