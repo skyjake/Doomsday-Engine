@@ -59,6 +59,67 @@
 // Degrees, 0 is E, 90 is N
 typedef double angle_g;
 
+struct bspintersections_s;
+struct superblock_s;
+struct bspartition_s;
+struct bsp_hedge_s;
+
+/**
+ * An "intercept" remembers the vertex that touches a BS partition line (especially
+ * a new vertex that is created at a twin-edge split).
+ */
+typedef struct hedgeintercept_s {
+    // Vertex in question.
+    Vertex* vertex;
+
+    // True if this intersection was on a self-referencing linedef.
+    boolean selfRef;
+
+    // Sector on each side of the vertex (along the partition),
+    // or NULL when that direction isn't OPEN.
+    Sector* before;
+    Sector* after;
+} HEdgeIntercept;
+
+/**
+ * Create a new intersection.
+ */
+HEdgeIntercept* Bsp_NewHEdgeIntercept(Vertex* vertex, const struct bspartition_s* partition,
+    boolean lineDefIsSelfReferencing);
+
+/**
+ * Destroy the specified intersection.
+ *
+ * @param inter  Ptr to the intersection to be destroyed.
+ */
+void Bsp_DeleteHEdgeIntercept(HEdgeIntercept* intercept);
+
+#if _DEBUG
+void Bsp_PrintHEdgeIntercept(HEdgeIntercept* intercept);
+#endif
+
+/**
+ * Search the given list for an intersection, if found; return it.
+ *
+ * @param list  The list to be searched.
+ * @param vert  Ptr to the intersection vertex to look for.
+ *
+ * @return  Ptr to the found intersection, else @c NULL;
+ */
+HEdgeIntercept* Bsp_HEdgeInterceptByVertex(struct bspintersections_s* bspIntersections, Vertex* v);
+
+/**
+ * Analyze the intersection list, and add any needed minihedges to the given half-edge lists
+ * (one minihedge on each side).
+ *
+ * @note All the intersections in the bspIntersections will be free'd back into the quick-alloc list.
+ */
+void BSP_AddMiniHEdges(const struct bspartition_s* part, struct superblock_s* rightList,
+    struct superblock_s* leftList, struct bspintersections_s* bspIntersections);
+
+void Bsp_BuildHEdgesBetweenIntersections(const struct bspartition_s* part, HEdgeIntercept* start,
+    HEdgeIntercept* end, struct bsp_hedge_s** right, struct bsp_hedge_s** left);
+
 // CVar for tuning the BSP edge split cost factor.
 extern int bspFactor;
 

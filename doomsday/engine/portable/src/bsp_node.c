@@ -730,15 +730,18 @@ boolean BSP_PickPartition(SuperBlock* hEdgeList, size_t depth, bspartition_t* pa
     return false;
 }
 
-static void makeIntersection(cutlist_t* cutList, Vertex* vert, const bspartition_t* part,
+static void makeIntersection(BspIntersections* bspIntersections, Vertex* vert, const bspartition_t* part,
     boolean selfRef)
 {
-    intersection_t* cut = BSP_CutListFindIntersection(cutList, vert);
+    HEdgeIntercept* inter = Bsp_HEdgeInterceptByVertex(bspIntersections, vert);
 
-    if(!cut)
+    if(!inter)
     {
-        cut = BSP_IntersectionCreate(vert, part, selfRef);
-        BSP_CutListInsertIntersection(cutList, cut);
+        double distance = M_ParallelDist(part->pDX, part->pDY, part->pPara, part->length,
+                                         vert->buildData.pos[VX], vert->buildData.pos[VY]);
+
+        inter = Bsp_NewHEdgeIntercept(vert, part, selfRef);
+        BspIntersections_Insert2(bspIntersections, distance, inter);
     }
 }
 
@@ -783,7 +786,7 @@ static __inline void calcIntersection(bsp_hedge_t* cur, const bspartition_t* par
 }
 
 void BSP_DivideOneHEdge(bsp_hedge_t* cur, const bspartition_t* part, SuperBlock* rightList,
-    SuperBlock* leftList, cutlist_t* cutList)
+    SuperBlock* leftList, BspIntersections* bspIntersections)
 {
     bsp_hedge_t* newHEdge;
     double x, y;
@@ -800,8 +803,8 @@ void BSP_DivideOneHEdge(bsp_hedge_t* cur, const bspartition_t* part, SuperBlock*
     // Check for being on the same line.
     if(fabs(a) <= DIST_EPSILON && fabs(b) <= DIST_EPSILON)
     {
-        makeIntersection(cutList, cur->v[0], part, selfRef);
-        makeIntersection(cutList, cur->v[1], part, selfRef);
+        makeIntersection(bspIntersections, cur->v[0], part, selfRef);
+        makeIntersection(bspIntersections, cur->v[1], part, selfRef);
 
         // This hedge runs along the same line as the partition. Check whether it goes in
         // the same direction or the opposite.
@@ -821,9 +824,9 @@ void BSP_DivideOneHEdge(bsp_hedge_t* cur, const bspartition_t* part, SuperBlock*
     if(a > -DIST_EPSILON && b > -DIST_EPSILON)
     {
         if(a < DIST_EPSILON)
-            makeIntersection(cutList, cur->v[0], part, selfRef);
+            makeIntersection(bspIntersections, cur->v[0], part, selfRef);
         else if(b < DIST_EPSILON)
-            makeIntersection(cutList, cur->v[1], part, selfRef);
+            makeIntersection(bspIntersections, cur->v[1], part, selfRef);
 
         SuperBlock_HEdgePush(rightList, cur);
         return;
@@ -833,9 +836,9 @@ void BSP_DivideOneHEdge(bsp_hedge_t* cur, const bspartition_t* part, SuperBlock*
     if(a < DIST_EPSILON && b < DIST_EPSILON)
     {
         if(a > -DIST_EPSILON)
-            makeIntersection(cutList, cur->v[0], part, selfRef);
+            makeIntersection(bspIntersections, cur->v[0], part, selfRef);
         else if(b > -DIST_EPSILON)
-            makeIntersection(cutList, cur->v[1], part, selfRef);
+            makeIntersection(bspIntersections, cur->v[1], part, selfRef);
 
         SuperBlock_HEdgePush(leftList, cur);
         return;
@@ -846,7 +849,7 @@ void BSP_DivideOneHEdge(bsp_hedge_t* cur, const bspartition_t* part, SuperBlock*
 
     calcIntersection(cur, part, a, b, &x, &y);
     newHEdge = BSP_HEdge_Split(cur, x, y);
-    makeIntersection(cutList, cur->v[1], part, selfRef);
+    makeIntersection(bspIntersections, cur->v[1], part, selfRef);
 
     if(a < 0)
     {
@@ -864,7 +867,7 @@ typedef struct {
     const bspartition_t* part;
     SuperBlock* rights;
     SuperBlock* lefts;
-    cutlist_t* cutList;
+    BspIntersections* bspIntersections;
 } partitionhedgeworkerparams_t;
 
 static int partitionHEdgeWorker(SuperBlock* superblock, void* parameters)
@@ -877,21 +880,21 @@ static int partitionHEdgeWorker(SuperBlock* superblock, void* parameters)
     {
         hEdge->block = NULL;
 
-        BSP_DivideOneHEdge(hEdge, p->part, p->rights, p->lefts, p->cutList);
+        BSP_DivideOneHEdge(hEdge, p->part, p->rights, p->lefts, p->bspIntersections);
     }
 
     return false; // Continue iteration.
 }
 
 void BSP_PartitionHEdges(SuperBlock* hEdgeList, const bspartition_t* part,
-    SuperBlock* rights, SuperBlock* lefts, cutlist_t* cutList)
+    SuperBlock* rights, SuperBlock* lefts, BspIntersections* bspIntersections)
 {
     partitionhedgeworkerparams_t parm;
 
     parm.part = part;
     parm.rights = rights;
     parm.lefts = lefts;
-    parm.cutList = cutList;
+    parm.bspIntersections = bspIntersections;
     SuperBlock_Traverse2(hEdgeList, partitionHEdgeWorker, (void*)&parm);
 
     // Sanity checks...
@@ -901,7 +904,7 @@ void BSP_PartitionHEdges(SuperBlock* hEdgeList, const bspartition_t* part,
     if(!SuperBlock_TotalHEdgeCount(lefts))
         Con_Error("BSP_PartitionHEdges: Separated half-edge has no left side.");
 
-    BSP_AddMiniHEdges(part, rights, lefts, cutList);
+    BSP_AddMiniHEdges(part, rights, lefts, bspIntersections);
 }
 
 static int createBSPLeafWorker(SuperBlock* superblock, void* parameters)
@@ -936,7 +939,7 @@ static bspleafdata_t* createBSPLeaf(SuperBlock* hEdgeList)
 }
 
 boolean BuildNodes(SuperBlock* hEdgeList, binarytree_t** parent, size_t depth,
-    cutlist_t* cutList)
+    BspIntersections* bspIntersections)
 {
     binarytree_t* subTree;
     bspnodedata_t* node;
@@ -973,8 +976,8 @@ boolean BuildNodes(SuperBlock* hEdgeList, binarytree_t** parent, size_t depth,
     hEdgeSet[LEFT]  = BSP_NewSuperBlock(SuperBlock_Bounds(hEdgeList));
 
     // Divide the half-edges into two lists: left & right.
-    BSP_PartitionHEdges(hEdgeList, &partition, hEdgeSet[RIGHT], hEdgeSet[LEFT], cutList);
-    BSP_CutListEmpty(cutList);
+    BSP_PartitionHEdges(hEdgeList, &partition, hEdgeSet[RIGHT], hEdgeSet[LEFT], bspIntersections);
+    BspIntersections_Clear(bspIntersections);
 
     node = M_Calloc(sizeof(bspnodedata_t));
     *parent = BinaryTree_Create(node);
@@ -987,13 +990,13 @@ boolean BuildNodes(SuperBlock* hEdgeList, binarytree_t** parent, size_t depth,
     node->partition.dX = partition.dX;
     node->partition.dY = partition.dY;
 
-    builtOK = BuildNodes(hEdgeSet[RIGHT], &subTree, depth + 1, cutList);
+    builtOK = BuildNodes(hEdgeSet[RIGHT], &subTree, depth + 1, bspIntersections);
     BinaryTree_SetChild(*parent, RIGHT, subTree);
     BSP_RecycleSuperBlock(hEdgeSet[RIGHT]);
 
     if(builtOK)
     {
-        builtOK = BuildNodes(hEdgeSet[LEFT], &subTree, depth + 1, cutList);
+        builtOK = BuildNodes(hEdgeSet[LEFT], &subTree, depth + 1, bspIntersections);
         BinaryTree_SetChild(*parent, LEFT, subTree);
     }
 

@@ -30,92 +30,59 @@
 
 #include "bsp_edge.h"
 
-typedef void* cutlist_t;
-
 struct bspartition_s;
 struct superblock_s;
 
+typedef struct bspintersection_s BspIntersection;
+
+BspIntersection* BspIntersection_Next(BspIntersection* intersection);
+
+BspIntersection* BspIntersection_Prev(BspIntersection* intersection);
+
+void* BspIntersection_UserData(BspIntersection* intersection);
+
 /**
- * An "intersection" remembers the vertex that touches a BSP divider
- * line (especially a new vertex that is created at a twin-edge split).
+ * BspIntersections instance. Created with BspIntersections_New().
  */
-typedef struct intersection_s {
-    // Vertex in question.
-    Vertex* vertex;
+typedef struct bspintersections_s BspIntersections;
 
-    // How far along the partition line the vertex is. Zero is at the
-    // partition half-edge's start point, positive values move in the same
-    // direction as the partition's direction, and negative values move
-    // in the opposite direction.
-    double alongDist;
+/**
+ * Create a new BspIntersections.
+ */
+BspIntersections* BspIntersections_New(void);
 
-    // True if this intersection was on a self-referencing linedef.
-    boolean selfRef;
+/**
+ * Destroy a BspIntersections.
+ */
+void BspIntersections_Delete(BspIntersections* bspIntersections);
 
-    // Sector on each side of the vertex (along the partition),
-    // or NULL when that direction isn't OPEN.
-    Sector* before;
-    Sector* after;
-} intersection_t;
+/**
+ * Empty all intersections from the specified BspIntersections.
+ */
+void BspIntersections_Clear(BspIntersections* bspIntersections);
+
+/**
+ * Insert a point at the given intersection into the intersection list.
+ */
+BspIntersection* BspIntersections_Insert2(BspIntersections* bspIntersections, double distance, void* userData);
+BspIntersection* BspIntersections_Insert(BspIntersections* bspIntersections, double distance/*, userData=NULL*/);
+
+int BspIntersections_Iterate2(BspIntersections* bi, int (*callback)(BspIntersection*, void*), void* parameters);
+int BspIntersections_Iterate(BspIntersections* bi, int (*callback)(BspIntersection*, void*)/*, parameters=NULL*/);
+
+#if _DEBUG
+void BspIntersection_Print(BspIntersections* bspIntersections);
+#endif
 
 void BSP_InitIntersectionAllocator(void);
 void BSP_ShutdownIntersectionAllocator(void);
 
-intersection_t* BSP_IntersectionCreate(Vertex* vert, const struct bspartition_s* part,
-    boolean selfRef);
-
 /**
- * Destroy the specified intersection.
- *
- * @param cut  Ptr to the intersection to be destroyed.
+ * @todo the following functions do not belong in this module.
  */
-void BSP_IntersectionDestroy(intersection_t* cut);
 
-#if _DEBUG
-void BSP_IntersectionPrint(intersection_t* cut);
-#endif
-
-/**
- * Create a new cutlist.
- */
-cutlist_t* BSP_CutListCreate(void);
-
-/**
- * Destroy a cutlist.
- */
-void BSP_CutListDestroy(cutlist_t* cutList);
-
-/**
- * Empty all intersections from the specified cutlist.
- */
-void BSP_CutListEmpty(cutlist_t* cutList);
-
-void BSP_CutListPrint(cutlist_t* cutList);
-
-/**
- * Insert the given intersection into the specified cutlist.
- *
- * @return              @c true, if successful.
- */
-boolean BSP_CutListInsertIntersection(cutlist_t* cutList, intersection_t* cut);
-
-/**
- * Search the given list for an intersection, if found; return it.
- *
- * @param list          The list to be searched.
- * @param vert          Ptr to the intersection vertex to look for.
- *
- * @return              Ptr to the found intersection, else @c NULL;
- */
-intersection_t* BSP_CutListFindIntersection(cutlist_t* cutList, Vertex* v);
-
-/**
- * Analyze the intersection list, and add any needed minihedges to the given half-edge lists
- * (one minihedge on each side).
- *
- * @note All the intersections in the cutList will be free'd back into the quick-alloc list.
- */
-void BSP_AddMiniHEdges(const struct bspartition_s* part, struct superblock_s* rightList,
-    struct superblock_s* leftList, cutlist_t* cutList);
+void Bsp_MergeIntersections(BspIntersections* intersections);
+void Bsp_BuildHEdgesAtIntersectionGaps(BspIntersections* bspIntersections,
+    const struct bspartition_s* part, struct superblock_s* rightList, struct superblock_s* leftList);
 
 #endif /// LIBDENG_MAP_BSP_INTERSECTION

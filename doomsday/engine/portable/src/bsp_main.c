@@ -281,16 +281,16 @@ boolean BSP_Build(GameMap* map, Vertex*** vertexes, uint* numVertexes)
     // Build the BSP.
     {
     uint buildStartTime = Sys_GetRealTime();
-    cutlist_t* cutList;
+    BspIntersections* bspIntersections;
 
-    cutList = BSP_CutListCreate();
+    bspIntersections = BspIntersections_New();
 
     // Recursively create nodes.
     rootNode = NULL;
-    builtOK = BuildNodes(hEdgeList, &rootNode, 0, cutList);
+    builtOK = BuildNodes(hEdgeList, &rootNode, 0, bspIntersections);
 
-    // The cutlist data is no longer needed.
-    BSP_CutListDestroy(cutList);
+    // The intersection list is no longer needed.
+    BspIntersections_Delete(bspIntersections);
 
     // How much time did we spend?
     VERBOSE2( Con_Message("BuildNodes: Done in %.2f seconds.\n", (Sys_GetRealTime() - buildStartTime) / 1000.0f));
@@ -341,3 +341,116 @@ boolean BSP_Build(GameMap* map, Vertex*** vertexes, uint* numVertexes)
 
     return builtOK;
 }
+
+typedef struct {
+    Vertex* vertex;
+    HEdgeIntercept* found;
+} findintersectionforvertexworkerparams_t;
+
+static int findIntersectionForVertexWorker(BspIntersection* bi, void* parameters)
+{
+    HEdgeIntercept* inter = (HEdgeIntercept*) BspIntersection_UserData(bi);
+    findintersectionforvertexworkerparams_t* p = (findintersectionforvertexworkerparams_t*) parameters;
+    assert(p);
+    if(inter->vertex == p->vertex)
+    {
+        p->found = inter;
+        return true; // Stop iteration.
+    }
+    return false; // Continue iteration.
+}
+
+HEdgeIntercept* Bsp_HEdgeInterceptByVertex(BspIntersections* intersections, Vertex* vertex)
+{
+    findintersectionforvertexworkerparams_t parm;
+
+    if(!intersections || !vertex) return NULL; // Hmm...
+
+    parm.vertex = vertex;
+    parm.found = NULL;
+    BspIntersections_Iterate2(intersections, findIntersectionForVertexWorker, (void*)&parm);
+    return parm.found;
+}
+
+void Bsp_BuildHEdgesBetweenIntersections(const bspartition_t* part, HEdgeIntercept* start,
+    HEdgeIntercept* end, bsp_hedge_t** right, bsp_hedge_t** left)
+{
+    if(!part || !start || !end)
+        Con_Error("Bsp_BuildHEdgesBetweenIntersections: Invalid arguments.");
+
+    // Create the half-edge pair.
+    // Leave 'linedef' field as NULL as these are not linedef-linked.
+    // Leave 'side' as zero too.
+    (*right) = BSP_HEdge_Create(NULL, part->lineDef, start->vertex,
+                                end->vertex, start->after, false);
+    (*left)  = BSP_HEdge_Create(NULL, part->lineDef, end->vertex,
+                                start->vertex, start->after, false);
+
+    // Twin the half-edges together.
+    (*right)->twin = *left;
+    (*left)->twin = *right;
+
+    /*
+    DEBUG_Message(("buildHEdgesBetweenIntersections: Capped intersection:\n"));
+    DEBUG_Message(("  %p RIGHT sector %d (%1.1f,%1.1f) -> (%1.1f,%1.1f)\n",
+                   (*right), ((*right)->sector? (*right)->sector->index : -1),
+                   (*right)->v[0]->V_pos[VX], (*right)->v[0]->V_pos[VY],
+                   (*right)->v[1]->V_pos[VX], (*right)->v[1]->V_pos[VY]));
+    DEBUG_Message(("  %p LEFT  sector %d (%1.1f,%1.1f) -> (%1.1f,%1.1f)\n",
+                   (*left), ((*left)->sector? (*left)->sector->index : -1),
+                   (*left)->v[0]->V_pos[VX], (*left)->v[0]->V_pos[VY],
+                   (*left)->v[1]->V_pos[VX], (*left)->v[1]->V_pos[VY]));
+    */
+}
+
+void BSP_AddMiniHEdges(const bspartition_t* part, SuperBlock* rightList,
+    SuperBlock* leftList, BspIntersections* bspIntersections)
+{
+    if(!bspIntersections) return;
+
+/*#if _DEBUG
+    BspIntersections_Print(bspIntersections);
+#endif*/
+
+    // Fix any issues with the current intersections.
+    Bsp_MergeIntersections(bspIntersections);
+
+    //DEBUG_Message(("BSP_AddMiniHEdges: Partition (%1.1f,%1.1f) += (%1.1f,%1.1f)\n",
+    //               part->pSX, part->pSY, part->pDX, part->pDY));
+
+    // Find connections in the intersections.
+    Bsp_BuildHEdgesAtIntersectionGaps(bspIntersections, part, rightList, leftList);
+}
+
+HEdgeIntercept* Bsp_NewHEdgeIntercept(Vertex* vert, const struct bspartition_s* part,
+    boolean selfRef)
+{
+    HEdgeIntercept* inter = M_Calloc(sizeof(*inter));
+
+    inter->vertex = vert;
+    inter->selfRef = selfRef;
+
+    inter->before = BSP_VertexCheckOpen(vert, -part->pDX, -part->pDY);
+    inter->after  = BSP_VertexCheckOpen(vert,  part->pDX,  part->pDY);
+
+    return inter;
+}
+
+void Bsp_DeleteHEdgeIntercept(HEdgeIntercept* inter)
+{
+    assert(inter);
+    M_Free(inter);
+}
+
+#if _DEBUG
+void Bsp_PrintHEdgeIntercept(HEdgeIntercept* inter)
+{
+    assert(inter);
+    Con_Message("  Vertex %8X (%1.1f,%1.1f) beforeSector: %d afterSector:%d %s\n",
+                inter->vertex->buildData.index, inter->vertex->buildData.pos[VX],
+                inter->vertex->buildData.pos[VY],
+                (inter->before? inter->before->buildData.index : -1),
+                (inter->after? inter->after->buildData.index : -1),
+                (inter->selfRef? "SELFREF" : ""));
+}
+#endif

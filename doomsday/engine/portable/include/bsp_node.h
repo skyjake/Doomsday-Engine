@@ -68,7 +68,7 @@ typedef struct bspnodedata_s {
  *       the exact same logic.
  */
 void BSP_DivideOneHEdge(bsp_hedge_t* hEdge, const struct bspartition_s* part, SuperBlock* rightList,
-    SuperBlock* leftList, cutlist_t* cutList);
+    SuperBlock* leftList, BspIntersections* bspIntersections);
 
 /**
  * Find the best half-edge in the list to use as a partition.
@@ -87,7 +87,7 @@ boolean BSP_PickPartition(SuperBlock* hEdgeList, size_t depth, struct bspartitio
  * intersection list as it goes.
  */
 void BSP_PartitionHEdges(SuperBlock* hEdgeList, const bspartition_t* part,
-    SuperBlock* rightList, SuperBlock* leftList, cutlist_t* cutList);
+    SuperBlock* rightList, SuperBlock* leftList, BspIntersections* bspIntersections);
 
 /**
  * Takes the half-edge list and determines if it is convex, possibly converting it
@@ -106,11 +106,11 @@ void BSP_PartitionHEdges(SuperBlock* hEdgeList, const bspartition_t* part,
  * @param hEdgeList     Ptr to the list of half edges at the current node.
  * @param parent        Ptr to write back the address of any newly created subtree.
  * @param depth         Current tree depth.
- * @param cutList       Ptr to the cutlist to use for storing new intersections (cuts).
+ * @param bspIntersections  BspIntersection list for storing any new intersections.
  * @return  @c true iff successfull.
  */
 boolean BuildNodes(struct superblock_s* hEdgeList, binarytree_t** parent, size_t depth,
-    cutlist_t* cutList);
+    BspIntersections* bspIntersections);
 
 /**
  * Traverse the BSP tree and put all the half-edges in each BSP leaf into clockwise
