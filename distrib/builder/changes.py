@@ -275,7 +275,7 @@ class Changes:
             print 'Marking new version...'
             msg = 'New release: %s build %i.' % (build_version.DOOMSDAY_RELEASE_TYPE,
                                                  Event().number())
-            os.system("dch --check-dirname-level 0 -v %s \"%s\"" % (debVersion, msg))       
+            os.system("dch -b --check-dirname-level 0 -v %s \"%s\"" % (debVersion, msg))       
 
             for entry in self.debChangeEntries:
                 # Quote it for the command line.
