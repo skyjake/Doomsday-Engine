@@ -30,8 +30,20 @@
 
 #include "bsp_edge.h"
 
-struct bspartition_s;
+struct bspartitioninfo_s;
 struct superblock_s;
+
+typedef struct bspartitioninfo_s {
+    double x, y;
+    double dX, dY;
+    double length;
+    LineDef* lineDef; // Not NULL if partition originated from a linedef.
+    LineDef* sourceLineDef;
+
+    double pSX, pSY;
+    double pDX, pDY;
+    double pPara, pPerp;
+} BsPartitionInfo;
 
 typedef struct bspintersection_s BspIntersection;
 
@@ -50,6 +62,8 @@ typedef struct bspintersections_s BspIntersections;
  * Create a new BspIntersections.
  */
 BspIntersections* BspIntersections_New(void);
+
+BsPartitionInfo* BspIntersections_Info(BspIntersections* bspIntersections);
 
 /**
  * Destroy a BspIntersections.
@@ -83,6 +97,6 @@ void BSP_ShutdownIntersectionAllocator(void);
 
 void Bsp_MergeIntersections(BspIntersections* intersections);
 void Bsp_BuildHEdgesAtIntersectionGaps(BspIntersections* bspIntersections,
-    const struct bspartition_s* part, struct superblock_s* rightList, struct superblock_s* leftList);
+    struct superblock_s* rightList, struct superblock_s* leftList);
 
 #endif /// LIBDENG_MAP_BSP_INTERSECTION

@@ -35,18 +35,6 @@
 #include "m_binarytree.h"
 #include "p_mapdata.h"
 
-typedef struct bspartition_s {
-    double x, y;
-    double dX, dY;
-    double length;
-    LineDef* lineDef; // Not NULL if partition originated from a linedef.
-    LineDef* sourceLineDef;
-
-    double pSX, pSY;
-    double pDX, pDY;
-    double pPara, pPerp;
-} bspartition_t;
-
 typedef struct bspnodedata_s {
     partition_t partition;
     AABoxf aaBox[2]; // Bounding box for each child.
@@ -67,8 +55,8 @@ typedef struct bspnodedata_s {
  *       reworked, heavily). I think it is important that both these routines follow
  *       the exact same logic.
  */
-void BSP_DivideOneHEdge(bsp_hedge_t* hEdge, const struct bspartition_s* part, SuperBlock* rightList,
-    SuperBlock* leftList, BspIntersections* bspIntersections);
+void BSP_DivideOneHEdge(bsp_hedge_t* hEdge, BspIntersections* bspIntersections,
+    SuperBlock* rightList, SuperBlock* leftList);
 
 /**
  * Find the best half-edge in the list to use as a partition.
@@ -79,15 +67,15 @@ void BSP_DivideOneHEdge(bsp_hedge_t* hEdge, const struct bspartition_s* part, Su
  *
  * @return  @c true= A suitable partition was found.
  */
-boolean BSP_PickPartition(SuperBlock* hEdgeList, size_t depth, struct bspartition_s* partition);
+boolean BSP_PickPartition(SuperBlock* hEdgeList, size_t depth, BspIntersections* bspIntersections);
 
 /**
  * Remove all the half-edges from the list, partitioning them into the left or right
  * lists based on the given partition line. Adds any intersections onto the
  * intersection list as it goes.
  */
-void BSP_PartitionHEdges(SuperBlock* hEdgeList, const bspartition_t* part,
-    SuperBlock* rightList, SuperBlock* leftList, BspIntersections* bspIntersections);
+void BSP_PartitionHEdges(SuperBlock* hEdgeList, SuperBlock* rightList, SuperBlock* leftList,
+    BspIntersections* bspIntersections);
 
 /**
  * Takes the half-edge list and determines if it is convex, possibly converting it

@@ -372,11 +372,15 @@ HEdgeIntercept* Bsp_HEdgeInterceptByVertex(BspIntersections* intersections, Vert
     return parm.found;
 }
 
-void Bsp_BuildHEdgesBetweenIntersections(const bspartition_t* part, HEdgeIntercept* start,
-    HEdgeIntercept* end, bsp_hedge_t** right, bsp_hedge_t** left)
+void Bsp_BuildHEdgesBetweenIntersections(BspIntersections* bspIntersections,
+    HEdgeIntercept* start, HEdgeIntercept* end, bsp_hedge_t** right, bsp_hedge_t** left)
 {
-    if(!part || !start || !end)
+    BsPartitionInfo* part;
+
+    if(!bspIntersections || !start || !end)
         Con_Error("Bsp_BuildHEdgesBetweenIntersections: Invalid arguments.");
+
+    part = BspIntersections_Info(bspIntersections);
 
     // Create the half-edge pair.
     // Leave 'linedef' field as NULL as these are not linedef-linked.
@@ -403,8 +407,8 @@ void Bsp_BuildHEdgesBetweenIntersections(const bspartition_t* part, HEdgeInterce
     */
 }
 
-void BSP_AddMiniHEdges(const bspartition_t* part, SuperBlock* rightList,
-    SuperBlock* leftList, BspIntersections* bspIntersections)
+void BSP_AddMiniHEdges(BspIntersections* bspIntersections, SuperBlock* rightList,
+    SuperBlock* leftList)
 {
     if(!bspIntersections) return;
 
@@ -415,14 +419,17 @@ void BSP_AddMiniHEdges(const bspartition_t* part, SuperBlock* rightList,
     // Fix any issues with the current intersections.
     Bsp_MergeIntersections(bspIntersections);
 
-    //DEBUG_Message(("BSP_AddMiniHEdges: Partition (%1.1f,%1.1f) += (%1.1f,%1.1f)\n",
-    //               part->pSX, part->pSY, part->pDX, part->pDY));
+    /*{
+    const BsPartitionInfo* part = BspIntersections_Info(bspIntersections);
+    DEBUG_Message(("BSP_AddMiniHEdges: Partition (%1.1f,%1.1f) += (%1.1f,%1.1f)\n",
+                   part->pSX, part->pSY, part->pDX, part->pDY));
+    }*/
 
     // Find connections in the intersections.
-    Bsp_BuildHEdgesAtIntersectionGaps(bspIntersections, part, rightList, leftList);
+    Bsp_BuildHEdgesAtIntersectionGaps(bspIntersections, rightList, leftList);
 }
 
-HEdgeIntercept* Bsp_NewHEdgeIntercept(Vertex* vert, const struct bspartition_s* part,
+HEdgeIntercept* Bsp_NewHEdgeIntercept(Vertex* vert, const struct bspartitioninfo_s* part,
     boolean selfRef)
 {
     HEdgeIntercept* inter = M_Calloc(sizeof(*inter));

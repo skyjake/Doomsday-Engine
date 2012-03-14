@@ -61,7 +61,7 @@ typedef double angle_g;
 
 struct bspintersections_s;
 struct superblock_s;
-struct bspartition_s;
+struct bspartitioninfo_s;
 struct bsp_hedge_s;
 
 /**
@@ -84,7 +84,7 @@ typedef struct hedgeintercept_s {
 /**
  * Create a new intersection.
  */
-HEdgeIntercept* Bsp_NewHEdgeIntercept(Vertex* vertex, const struct bspartition_s* partition,
+HEdgeIntercept* Bsp_NewHEdgeIntercept(Vertex* vertex, const struct bspartitioninfo_s* partition,
     boolean lineDefIsSelfReferencing);
 
 /**
@@ -114,11 +114,11 @@ HEdgeIntercept* Bsp_HEdgeInterceptByVertex(struct bspintersections_s* bspInterse
  *
  * @note All the intersections in the bspIntersections will be free'd back into the quick-alloc list.
  */
-void BSP_AddMiniHEdges(const struct bspartition_s* part, struct superblock_s* rightList,
-    struct superblock_s* leftList, struct bspintersections_s* bspIntersections);
+void BSP_AddMiniHEdges(struct bspintersections_s* bspIntersections,
+    struct superblock_s* rightList, struct superblock_s* leftList);
 
-void Bsp_BuildHEdgesBetweenIntersections(const struct bspartition_s* part, HEdgeIntercept* start,
-    HEdgeIntercept* end, struct bsp_hedge_s** right, struct bsp_hedge_s** left);
+void Bsp_BuildHEdgesBetweenIntersections(struct bspintersections_s* bspIntersections,
+    HEdgeIntercept* start, HEdgeIntercept* end, struct bsp_hedge_s** right, struct bsp_hedge_s** left);
 
 // CVar for tuning the BSP edge split cost factor.
 extern int bspFactor;

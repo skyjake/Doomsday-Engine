@@ -69,6 +69,7 @@ void* BspIntersection_UserData(BspIntersection* bi)
 struct bspintersections_s {
     // The intersection list. Kept sorted by along_dist, in ascending order.
     BspIntersection* headPtr;
+    BsPartitionInfo info;
 };
 
 static boolean initedOK = false;
@@ -129,6 +130,12 @@ void BspIntersections_Clear(BspIntersections* bi)
     }
 
     bi->headPtr = NULL;
+}
+
+BsPartitionInfo* BspIntersections_Info(BspIntersections* bi)
+{
+    assert(bi);
+    return &bi->info;
 }
 
 int BspIntersections_Iterate2(BspIntersections* bi, int (*callback)(BspIntersection*, void*), void* parameters)
@@ -230,12 +237,14 @@ void Bsp_MergeIntersections(BspIntersections* bspIntersections)
 }
 
 void Bsp_BuildHEdgesAtIntersectionGaps(BspIntersections* bspIntersections,
-    const bspartition_t* part, SuperBlock* rightList, SuperBlock* leftList)
+    SuperBlock* rightList, SuperBlock* leftList)
 {
     BspIntersection* node;
+    const BsPartitionInfo* part;
 
     if(!bspIntersections) return;
 
+    part = BspIntersections_Info(bspIntersections);
     node = bspIntersections->headPtr;
     while(node && node->next)
     {
@@ -298,7 +307,7 @@ void Bsp_BuildHEdgesAtIntersectionGaps(BspIntersections* bspIntersections,
                     }
                 }
 
-                Bsp_BuildHEdgesBetweenIntersections(part, cur, next, &right, &left);
+                Bsp_BuildHEdgesBetweenIntersections(bspIntersections, cur, next, &right, &left);
 
                 // Add the new half-edges to the appropriate lists.
                 SuperBlock_HEdgePush(rightList, right);
