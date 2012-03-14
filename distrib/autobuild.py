@@ -122,7 +122,7 @@ def update_changes(fromTag=None, toTag=None, debChanges=False):
         debVer = "%s.%s.%s-%s" % (fmodVer[0], fmodVer[1], fmodVer[2], todays_build_tag())
         print "Marking new FMOD version:", debVer
         msg = 'New release: Doomsday Engine build %i.' % builder.Event().number()
-        os.system('dch -b --check-dirname-level 0 -v %s "%s"' % (debVer, msg))
+        os.system('dch --check-dirname-level 0 -v %s -b "%s"' % (debVer, msg))
     else:
         # Save the release type.
         build_version.find_version(quiet=True)
