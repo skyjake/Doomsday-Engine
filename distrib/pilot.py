@@ -306,10 +306,12 @@ def doTask(task):
     elif task == 'branch_stable':
         msg("SWITCH TO STABLE BRANCH")
         switchToBranch('stable')
+        return autobuild('pull')
         
     elif task == 'branch_master':
         msg("SWITCH TO MASTER BRANCH")
         switchToBranch('master')
+        return autobuild('pull')
 
     elif task == 'tag_build':
         msg("TAG MASTER BRANCH")
