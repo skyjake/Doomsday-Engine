@@ -21,6 +21,11 @@ from builder.git import *
 from builder.utils import * 
     
     
+def pull_from_branch():
+    """Pulls commits from the repository."""
+    git_pull()
+    
+    
 def create_build_event():
     """Creates and tags a new build for with today's number."""
     print 'Creating a new build event.'
@@ -84,7 +89,7 @@ def todays_platform_release():
         remote_copy('dsfmod/fmod-out-%s.txt' % sys_id(), ev.file_path('fmod-out-%s.txt' % sys_id()))
         remote_copy('dsfmod/fmod-err-%s.txt' % sys_id(), ev.file_path('fmod-err-%s.txt' % sys_id()))
                                              
-    git_checkout('master')
+    git_checkout(builder.config.BRANCH)
 
 
 def update_changes(fromTag=None, toTag=None, debChanges=False):
@@ -94,7 +99,7 @@ def update_changes(fromTag=None, toTag=None, debChanges=False):
         # Make sure we have the latest changes.
         git_pull()
         fromTag = aptrepo_find_latest_tag()
-        toTag = 'master' # Everything up to now.
+        toTag = builder.config.BRANCH # Everything up to now.
     else:
         # Use the two most recent builds by default.
         if fromTag is None or toTag is None:
@@ -117,7 +122,7 @@ def update_changes(fromTag=None, toTag=None, debChanges=False):
         debVer = "%s.%s.%s-%s" % (fmodVer[0], fmodVer[1], fmodVer[2], todays_build_tag())
         print "Marking new FMOD version:", debVer
         msg = 'New release: Doomsday Engine build %i.' % builder.Event().number()
-        os.system('dch --check-dirname-level 0 -v %s "%s"' % (debVer, msg))
+        os.system('dch --check-dirname-level 0 -v %s -b "%s"' % (debVer, msg))
     else:
         # Save the release type.
         build_version.find_version(quiet=True)
@@ -375,6 +380,7 @@ def sorted_commands():
 
 
 commands = {
+    'pull': pull_from_branch,
     'create': create_build_event,
     'platform_release': todays_platform_release,
     'changes': update_changes,
@@ -396,6 +402,7 @@ if __name__ == '__main__':
         print 'The arguments must be: (command) [args]'
         print 'Commands:', string.join(sorted_commands())
         print 'Arguments:'
+        print '--branch   Branch to use (default: master)'
         print '--distrib  Doomsday distrib directory'
         print '--events   Event directory (builds are stored here in subdirs)'
         print '--apt      Apt repository'

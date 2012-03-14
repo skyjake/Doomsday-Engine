@@ -101,7 +101,7 @@ def aptrepo_by_time():
 
 def aptrepo_find_latest_tag():    
     debs = aptrepo_by_time()
-    if not debs: return 'master'
+    if not debs: return config.BRANCH
     arch = deb_arch()
     biggest = 0
     for deb in debs:
