@@ -734,7 +734,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
             foreach($this->packages as &$pack)
             {
                 if($pack->platformId() !== $platformId) continue;
-                if($matchTitle && strcmp($pack->title(), $title)) continue;
+                if($matchTitle && strcasecmp($pack->title(), $title)) continue;
                 if($unstable != ($pack instanceof AbstractUnstablePackage)) continue;
                 if($downloadable != ($pack instanceof iDownloadable && $pack->hasDirectDownloadUri())) continue;
 
@@ -783,7 +783,9 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                 // Default to Doomsday if a pack is not specified.
                 $packTitle = "Doomsday";
                 if(isset($uriArgs['pack']))
+                {
                     $packTitle = trim($uriArgs['pack']);
+                }
 
                 // Try to find a suitable package...
                 $pack = &$this->choosePackage($platformId, $packTitle, $unstable);
