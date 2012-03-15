@@ -1,6 +1,6 @@
 /**
  * @file audiodriver.c
- * Audio driver loading and interface management implementation. @ingroup audio
+ * Audio driver loading and interface management. @ingroup audio
  *
  * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2012 Daniel Swanson <danij@dengine.net>
