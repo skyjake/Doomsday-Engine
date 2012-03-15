@@ -41,6 +41,7 @@ extern "C" {
 DENG2_OPAQUE(LegacyCore)
 
 DENG2_PUBLIC LegacyCore* LegacyCore_New(void* dengApp);
+DENG2_PUBLIC void LegacyCore_SetLoopRate(LegacyCore* lc, int freqHz);
 DENG2_PUBLIC void LegacyCore_SetLoopFunc(LegacyCore* lc, void (*callback)(void));
 DENG2_PUBLIC int LegacyCore_RunEventLoop(LegacyCore* lc);
 DENG2_PUBLIC void LegacyCore_Stop(LegacyCore* lc, int exitCode);

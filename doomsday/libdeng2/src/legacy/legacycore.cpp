@@ -37,8 +37,9 @@ struct LegacyCore::Instance
     LegacyNetwork network;
     void (*loopFunc)(void);
     LogBuffer logBuffer;
+    int loopInterval;
 
-    Instance() : app(0), loopFunc(0) {}
+    Instance() : app(0), loopFunc(0), loopInterval(1) {}
     ~Instance() {}
 };
 
@@ -82,7 +83,7 @@ void LegacyCore::setLoopFunc(void (*func)(void))
     if(func)
     {
         // Start the periodic callback calls.
-        QTimer::singleShot(1, this, SLOT(callback()));
+        QTimer::singleShot(d->loopInterval, this, SLOT(callback()));
     }
 }
 
@@ -98,6 +99,11 @@ int LegacyCore::runEventLoop()
     return code;
 }
 
+void LegacyCore::setLoopRate(int freqHz)
+{
+    d->loopInterval = qMax(1, 1000/freqHz);
+}
+
 void LegacyCore::stop(int exitCode)
 {
     d->app->exit(exitCode);
@@ -108,6 +114,6 @@ void LegacyCore::callback()
     if(d->loopFunc)
     {
         d->loopFunc();
-        QTimer::singleShot(1, this, SLOT(callback()));
+        QTimer::singleShot(d->loopInterval, this, SLOT(callback()));
     }
 }

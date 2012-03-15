@@ -111,12 +111,6 @@ int DD_GameLoopExitCode(void)
 
 int DD_GameLoop(void)
 {
-    // Limit the frame rate to 35 when running in dedicated mode.
-    if(isDedicated)
-    {
-        maxFrameRate = 35;
-    }
-
     // Start the deng2 event loop.
     return LegacyCore_RunEventLoop(de2LegacyCore);
 }
@@ -129,8 +123,7 @@ void DD_GameLoopCallback(void)
     // Frame syncronous I/O operations.
     startFrame();
 
-    // Run at least one tic. If no tics are available (maxfps interval
-    // not reached yet), the function blocks.
+    // Run at least one (fractional) tic.
     runTics();
 
     // We may have received a Quit message from the windowing system

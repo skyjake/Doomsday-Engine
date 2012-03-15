@@ -771,9 +771,9 @@ static Window* createWindow(ddwindowtype_t type, const char* title)
         mainWindow.widget->setMinimumSize(QSize(WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT));
 
         // After the main window is created, we can finish with the engine init.
-        mainWindow.widget->canvas().setInitCallback(finishMainWindowInit);
+        mainWindow.widget->canvas().setInitFunc(finishMainWindowInit);
 
-        mainWindow.widget->canvas().setResizedCallback(windowWasResized);
+        mainWindow.widget->canvas().setResizedFunc(windowWasResized);
 
         // Let's see if there are command line options overriding the previous state.
         mainWindow.modifyAccordingToOptions();
@@ -986,7 +986,7 @@ HWND Sys_GetWindowHandle(uint idx)
 
 #endif
 
-void Window_SetDrawFunction(Window* win, void (*drawFunc)(void))
+void Window_SetDrawFunc(Window* win, void (*drawFunc)(void))
 {
     if(win->type == WT_CONSOLE) return;
 
@@ -994,7 +994,7 @@ void Window_SetDrawFunction(Window* win, void (*drawFunc)(void))
     assert(win->widget);
 
     win->drawFunc = drawFunc;
-    win->widget->canvas().setDrawCallback(drawFunc? drawCanvasWithCallback : 0);
+    win->widget->canvas().setDrawFunc(drawFunc? drawCanvasWithCallback : 0);
 }
 
 void Window_Draw(Window* win)

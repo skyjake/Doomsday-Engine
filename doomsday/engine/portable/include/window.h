@@ -217,7 +217,7 @@ boolean Window_ChangeAttributes(Window* wnd, int* attribs);
  * @param win       Window instance.
  * @param drawFunc  Callback function.
  */
-void Window_SetDrawFunction(Window* win, void (*drawFunc)(void));
+void Window_SetDrawFunc(Window* win, void (*drawFunc)(void));
 
 /**
  * Request drawing the contents of the window as soon as possible.

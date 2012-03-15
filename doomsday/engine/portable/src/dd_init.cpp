@@ -49,6 +49,16 @@ LegacyCore* de2LegacyCore;
 
 }
 
+static void continueInitWithEventLoopRunning(void)
+{
+    // This function only needs to be called once, so clear the callback.
+    LegacyCore_SetLoopFunc(de2LegacyCore, 0);
+
+    // Show the main window. This causes initialization to finish (in busy mode)
+    // as the canvas is visible and ready for initialization.
+    Window_Show(Window_Main(), true);
+}
+
 /**
  * Application entry point.
  */
@@ -93,10 +103,9 @@ int main(int argc, char** argv)
     // Create the main window.
     char title[256];
     DD_ComposeMainWindowTitle(title);
-    Window* win = Window_New(novideo? WT_CONSOLE : WT_NORMAL, title);
+    Window_New(novideo? WT_CONSOLE : WT_NORMAL, title);
 
-    // Show the main window. This also causes initialization to finish.
-    Window_Show(win, true);
+    LegacyCore_SetLoopFunc(de2LegacyCore, continueInitWithEventLoopRunning);
 
     // Run the main loop.
     int result = DD_GameLoop();
