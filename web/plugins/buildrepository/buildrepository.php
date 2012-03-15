@@ -1132,21 +1132,6 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         return $count;
     }
 
-    private function outputBuildSummary(&$build)
-    {
-        if(!$build instanceof BuildEvent) return;
-
-        $packageCount = $this->countInstallablePackages($build);
-
-        if($packageCount > 0)
-        {
-            $packages = '<em>'. htmlspecialchars($packageCount) .'</em>';
-
-?><p><?php echo $packages; ?> installable binary packages were produced by this build are listed in the table above.</p><?php
-
-        }
-    }
-
     private function outputBuildEventMetadata(&$build)
     {
         if(!$build instanceof BuildEvent) return;
@@ -1166,10 +1151,18 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 <tr><th colspan="2">Event</th></tr>
 <tr><td>Start date </td><td><?php echo htmlspecialchars(date(/*DATE_RFC850*/ "d-M-Y", $build->startDate())); ?></td></tr>
 <tr><td>Start time </td><td><?php echo htmlspecialchars(date(/*DATE_RFC850*/ "H:i:s T", $build->startDate())); ?></td></tr>
-<tr><td>Build number </td><td><a class="link-definition" href="<?php echo $buildNumberLink; ?>" title="<?php echo $buildNumberLinkTitle; ?>"><?php echo htmlspecialchars(ucfirst($buildNumberLabel)); ?></a></td></tr>
-<tr><td>Type </td><td><a class="link-definition" href="<?php echo $releaseTypeLink; ?>" title="<?php echo $releaseTypeLinkTitle; ?>"><?php echo htmlspecialchars($releaseTypeLabel); ?></a></td></tr>
-</tbody>
-</table><?php
+<tr><td>Release type </td><td><a class="link-definition" href="<?php echo $releaseTypeLink; ?>" title="<?php echo $releaseTypeLinkTitle; ?>"><?php echo htmlspecialchars($releaseTypeLabel); ?></a></td></tr>
+<tr><td>Build number </td><td><a class="link-definition" href="<?php echo $buildNumberLink; ?>" title="<?php echo $buildNumberLinkTitle; ?>"><?php echo htmlspecialchars(ucfirst($buildNumberLabel)); ?></a></td></tr><?php
+
+        $installablesCount = $this->countInstallablePackages($build);
+        if($installablesCount > 0)
+        {
+
+?><tr><td>Packages </td><td><?php echo htmlspecialchars($installablesCount); ?></td></tr><?php
+
+        }
+
+?></tbody></table><?php
     }
 
     private function outputBuildPackageList(&$build)
@@ -1317,8 +1310,6 @@ jQuery(document).ready(function() {
             $this->outputBuildPackageList($build);
 
 ?></div><?php
-
-            $this->outputBuildSummary($build);
 
             $this->outputBuildCommitLog($build);
 
