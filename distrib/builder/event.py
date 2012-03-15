@@ -293,6 +293,9 @@ class Event:
         msg += '<compileWarnCount>%i</compileWarnCount>' % warnings
         msg += '<compileErrorCount>%i</compileErrorCount>' % errors
         return msg
+    
+    def release_notes_uri(self, version):
+        return "http://dengine.net/dew/index.php?title=Doomsday_version_" + version
         
     def xml_description(self):
         msg = '<build>'
@@ -307,6 +310,8 @@ class Event:
         # These logs were already linked to.
         includedLogs = []
         
+        distribVersion = None
+        
         # Packages.
         for fn in files:
             msg += '<package type="%s">' % self.package_type(fn)
@@ -319,6 +324,9 @@ class Event:
                 msg += self.xml_log(logName)
                 includedLogs.append(logName)
             msg += '</package>'
+            
+            if distribVersion is None:
+                distribVersion = self.version_from_filename(fn)
 
         # Any other logs we might want to include?
         for osName, osExt, osIdent in self.oses:
@@ -330,9 +338,14 @@ class Event:
                     msg += '<name>%s</name>' % self.packageName[pkg]
                     if self.version_from_filename(logName):
                         msg += '<version>%s</version>' % self.version_from_filename(logName)
+                        if distribVersion is None:
+                            distribVersion = self.version_from_filename(logName)
                     msg += '<platform>%s</platform>' % self.platId[osIdent]
                     msg += self.xml_log(logName)
                     msg += '</package>'
+                            
+        if distribVersion:
+            msg += '<releaseNotes>%s</releaseNotes>' % self.release_notes_uri(distribVersion)
         
         # Commits.
         chgFn = self.file_path('changes.xml')
