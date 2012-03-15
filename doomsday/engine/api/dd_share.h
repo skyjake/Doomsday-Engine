@@ -418,7 +418,7 @@ typedef struct gameinfo_s {
 #define Q_FIX2FLT(x)    ( (float)((x)>>FRACBITS) )
 #define FLT2FIX(x)      ( (fixed_t) ((x)*FRACUNIT) )
 
-#if !defined( NO_FIXED_ASM ) && !defined( GNU_X86_FIXED_ASM )
+#if !defined( DENG_NO_FIXED_ASM ) && !defined( GNU_X86_FIXED_ASM )
 
     __inline fixed_t FixedMul(fixed_t a, fixed_t b) {
         __asm {
