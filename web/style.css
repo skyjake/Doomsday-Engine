@@ -793,11 +793,9 @@ p.legal a {
 /* Stream navigation widget */
 #buildsnav {
     font-family: Verdana, Arial, Helvetica, sans-serif;
-    margin:1em 0;
 }
 
 #buildsnav span.title {
-    font-size:small;
 }
 
 #buildsnav ul {
@@ -806,6 +804,69 @@ p.legal a {
 
 #buildsnav ul li {
     padding:.25em 3em;
+}
+
+#buildoverview {
+    text-align:center;
+    margin-top:1em;
+    margin-left:auto;
+    margin-right:auto;
+}
+
+#buildpackagelist {
+}
+
+#buildpackagelist table tr.platform {
+    padding-bottom:1em;
+}
+
+#buildmetadata {
+    vertical-align:top;
+    position:relative;
+    margin-top:1.8em;
+    margin-right:2em;
+}
+
+#buildcommits {
+}
+
+#buildcommits hr {
+    visibility:hidden;
+    margin:0;
+}
+
+#buildcommits ul li {
+    list-style-type:none;
+}
+
+#buildcommits ul {
+    padding-left:0;
+}
+
+#buildcommits ol {
+    padding-top: 1em;
+    padding-bottom: 1em;
+}
+
+#buildcommits ol li {
+    list-style-type:circle;
+}
+
+#buildcommits ol li.more {
+    list-style-type:disc;
+}
+
+#buildcommits ol.jumplist li {
+    list-style-type:none;
+}
+
+#buildcommits ol.jumplist a {
+    color:#558866;
+}
+
+#buildcommits ol.jumplist a:hover {
+    text-decoration: underline;
+    color: #ff8a00;
 }
 
 .buildnews_list {
@@ -823,30 +884,7 @@ p.legal a {
     padding-left:.5em;
 }
 
-.commit_list ul {
-    padding-left:0;
-}
-
-.commit_list ul li {
-    list-style-type:none;
-}
-
-.commit_list ol {
-    padding-top: 1em;
-    padding-bottom: 1em;
-}
-
-.commit_list ol li {
-    list-style-type:circle;
-}
-
-.commit_list ol li.more {
-    list-style-type:disc;
-}
-
-.commit_list hr {
-    visibility:hidden;
-    margin:0;
+.commit_list {
 }
 
 .commit_list p.collapsible:hover {
@@ -860,19 +898,6 @@ p.legal a {
 
 .commit_list span.tag {
     margin-right:.8em;
-}
-
-.commit_list ol.jumplist li {
-    list-style-type:none;
-}
-
-.commit_list ol.jumplist a {
-    color:#558866;
-}
-
-.commit_list ol.jumplist a:hover {
-    text-decoration: underline;
-    color: #ff8a00;
 }
 
 .commit span.heading,
@@ -917,9 +942,8 @@ span.metadata {
 .buildevent table {
     border-collapse:separate;
     border-spacing:.5em;
-    margin-top:1em;
-    margin-left:auto;
-    margin-right:auto;
+    display:inline-block;
+    text-align:left;
 }
 
 .buildevent table tr th {
