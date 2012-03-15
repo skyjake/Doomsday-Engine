@@ -49,7 +49,7 @@
 
 // if rangecheck is undefined, most parameter validation debugging code
 // will not be compiled
-#ifndef NORANGECHECKING
+#ifndef DENG_NO_RANGECHECKING
 #   define RANGECHECK
 #endif
 

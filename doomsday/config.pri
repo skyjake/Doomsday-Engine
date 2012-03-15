@@ -191,11 +191,13 @@ unix:!macx {
 
 # Apply deng_* Configuration -------------------------------------------------
 
+isStableRelease(): DEFINES += DENG_STABLE
+
 deng_nofixedasm {
-    DEFINES += NO_FIXED_ASM
+    DEFINES += DENG_NO_FIXED_ASM
 }
 !deng_rangecheck {
-    DEFINES += NORANGECHECKING
+    DEFINES += DENG_NO_RANGECHECKING
 }
 deng_nosdlmixer {
     DEFINES += DENG_DISABLE_SDLMIXER
