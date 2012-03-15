@@ -1147,7 +1147,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         }
     }
 
-    private function outputBuildMetadata(&$build)
+    private function outputBuildEventMetadata(&$build)
     {
         if(!$build instanceof BuildEvent) return;
 
@@ -1161,8 +1161,9 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         $buildNumberLink = 'dew/index.php?title=Build_number#Build_numbers';
         $buildNumberLinkTitle = "What does 'Build$buildNumberLabel' mean?";
 
-?><table id="buildmetadata">
+?><table id="buildeventmetadata">
 <tbody>
+<tr><th colspan="2">Event</th></tr>
 <tr><td>Start date </td><td><?php echo htmlspecialchars(date(/*DATE_RFC850*/ "d-M-Y", $build->startDate())); ?></td></tr>
 <tr><td>Start time </td><td><?php echo htmlspecialchars(date(/*DATE_RFC850*/ "H:i:s T", $build->startDate())); ?></td></tr>
 <tr><td>Build number </td><td><a class="link-definition" href="<?php echo $buildNumberLink; ?>" title="<?php echo $buildNumberLinkTitle; ?>"><?php echo htmlspecialchars(ucfirst($buildNumberLabel)); ?></a></td></tr>
@@ -1312,7 +1313,7 @@ jQuery(document).ready(function() {
 
 ?><div id="buildoverview"><?php
 
-            $this->outputBuildMetadata($build);
+            $this->outputBuildEventMetadata($build);
             $this->outputBuildPackageList($build);
 
 ?></div><?php

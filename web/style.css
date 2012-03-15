@@ -820,10 +820,9 @@ p.legal a {
     padding-bottom:1em;
 }
 
-#buildmetadata {
+#buildeventmetadata {
     vertical-align:top;
     position:relative;
-    margin-top:1.8em;
     margin-right:2em;
 }
 
