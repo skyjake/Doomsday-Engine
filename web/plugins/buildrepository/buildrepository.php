@@ -1059,7 +1059,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 
         if($FrontController->contentCache()->isPresent($cacheName))
         {
-            $cacheInfo = new ContentInfo();
+            $contentInfo = new ContentInfo();
             $FrontController->contentCache()->getInfo($cacheName, $contentInfo);
 
             header('Pragma: public');
