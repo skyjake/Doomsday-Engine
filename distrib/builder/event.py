@@ -67,8 +67,18 @@ class Event:
             if name.endswith(ext) or ident in name:
                 return (n, ext, ident)
         return None
-        
+                
     def version_from_filename(self, name):
+        ver = self.extract_version_from_filename(name)
+        if not ver and self.package_from_filename(name) == 'doomsday':
+            # Fall back to the event version, if it exists.
+            fn = self.file_path('version.txt')
+            if os.path.exists(fn):
+                return file(fn).read().strip()
+        # Could not be determined.
+        return None    
+
+    def extract_version_from_filename(self, name):
         pos = name.find('_')
         if pos < 0: return None
         dash = name.find('-', pos + 1)
@@ -318,6 +328,8 @@ class Event:
                     # Add an entry for this.
                     msg += '<package type="%s">' % self.package_type(logName)
                     msg += '<name>%s</name>' % self.packageName[pkg]
+                    if self.version_from_filename(logName):
+                        msg += '<version>%s</version>' % self.version_from_filename(logName)
                     msg += '<platform>%s</platform>' % self.platId[osIdent]
                     msg += self.xml_log(logName)
                     msg += '</package>'
