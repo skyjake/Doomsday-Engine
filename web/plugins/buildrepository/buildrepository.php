@@ -464,11 +464,11 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         'id'=>PID_ANY, 'name'=>'unknown', 'nicename'=>'Unknown');
 
     /**
-     * Plaform (Record):
+     * ReleaseType (Record):
      *
-     * 'id': @see platformId
-     * 'name': Symbolic name used to identify this platform.
-     * 'nicename': User facing/friendly name for this platform.
+     * 'id': @see releaseTypeId
+     * 'name': Symbolic name used to identify this release type.
+     * 'nicename': User facing/friendly name for this release type.
      */
     private static $releaseTypes = array(
         RT_UNSTABLE  => array('id'=>RT_UNSTABLE,    'name'=>'unstable',     'nicename'=>'Unstable'),
