@@ -76,7 +76,7 @@ class Event:
             if os.path.exists(fn):
                 return file(fn).read().strip()
         # Could not be determined.
-        return None    
+        return ver
 
     def extract_version_from_filename(self, name):
         pos = name.find('_')
