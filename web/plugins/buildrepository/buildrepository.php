@@ -1151,7 +1151,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
     {
         if(!$build instanceof BuildEvent) return;
 
-        $releaseType = self::releaseType($build->releaseType());
+        $releaseType = self::releaseType($build->releaseTypeId());
 
         $releaseTypeLabel = $releaseType['nicename'];
         $releaseTypeLink = 'dew/index.php?title=Automated_build_system#'. $releaseTypeLabel;
@@ -1292,7 +1292,7 @@ jQuery(document).ready(function() {
         $uniqueId = $args['build'];
         $build = $this->buildByUniqueId($uniqueId);
 
-        $pageTitle = (!is_null($build)? $build->composeName() : 'Builds');
+        $pageTitle = (!is_null($build)? $build->composeName(true/*add release type*/) : 'Builds');
 
         // Output this page.
         $FrontController->outputHeader($pageTitle);

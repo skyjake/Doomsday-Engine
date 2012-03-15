@@ -31,9 +31,9 @@ class BuildEvent
     private $startDate;
     private $authorName;
     private $authorEmail;
-    private $releaseType;
+    private $releaseTypeId;
 
-    /// \todo Collections should be private but allow public iteration.
+    /// @todo Collections should be private but allow public iteration.
     public $packages = array();
     public $commits = array();
 
@@ -42,16 +42,16 @@ class BuildEvent
      * @param startDate  (string) Unix timestamp when build commenced.
      * @param authorName (string)
      * @param authorEmail (string)
-     * @param releaseType (integer)
+     * @param releaseTypeId (integer)
      */
     public function __construct($uniqueId, $startDate, $authorName, $authorEmail,
-        $releaseType=RT_UNSTABLE)
+        $releaseTypeId=RT_UNKNOWN)
     {
         $this->uniqueId = $uniqueId;
         $this->startDate = $startDate;
         $this->authorName = $authorName;
         $this->authorEmail = $authorEmail;
-        $this->releaseType = $releaseType;
+        $this->releaseTypeId = $releaseTypeId;
     }
 
     public function uniqueId()
@@ -59,9 +59,15 @@ class BuildEvent
         return $this->uniqueId;
     }
 
-    public function composeName()
+    public function composeName($includeReleaseType=false)
     {
-        return "Build$this->uniqueId";
+        $name = "Build$this->uniqueId";
+        if($includeReleaseType && $this->releaseTypeId !== RT_UNKNOWN)
+        {
+            $releaseType = BuildRepositoryPlugin::releaseType($this->releaseTypeId);
+            $name .= ' ('. $releaseType['nicename'] .')';
+        }
+        return $name;
     }
 
     public function &startDate()
@@ -74,9 +80,9 @@ class BuildEvent
         return "build$this->uniqueId";
     }
 
-    public function releaseType()
+    public function releaseTypeId()
     {
-        return $this->releaseType;
+        return $this->releaseTypeId;
     }
 
     public function addPackage(&$package)
