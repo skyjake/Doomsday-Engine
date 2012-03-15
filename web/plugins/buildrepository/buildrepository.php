@@ -807,7 +807,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         $prevBuildUri = isset($prevEvent)? $prevEvent->composeBuildUri() : '';
         $nextBuildUri = isset($nextEvent)? $nextEvent->composeBuildUri() : '';
 
-?><div class="hnav" id="buildsnav"><span class="title">Build stream navigation:</span><ul><?php
+?><div class="hnav" id="buildsnav"><span class="title">Build stream navigation</span><ul><?php
 
         // Older event link.
         echo '<li>';
