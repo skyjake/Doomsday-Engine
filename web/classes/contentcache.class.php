@@ -27,7 +27,7 @@ includeGuard('ContentCache');
 
 class ContentInfo
 {
-    public $modifiedTime; // Unix timestamp.
+    public $modifiedTime = NULL; // Unix timestamp.
 }
 
 class ContentCache
