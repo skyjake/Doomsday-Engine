@@ -31,9 +31,16 @@ boolean AudioDriver_Init(void);
 void AudioDriver_Shutdown(void);
 
 /**
- * Retrieves the main interface of the audio driver to which @a sfxMusicOrCd belongs to.
+ * Retrieves the main interface of the audio driver to which @a audioInterface
+ * belongs.
+ *
+ * @param audioInterface  Pointer to a SFX, Music, or CD interface. See
+ * AudioDriver_SFX(), AudioDriver_Music() and AudioDriver_CD().
+ *
+ * @return Audio driver interface, or @c NULL if the none of the loaded drivers
+ * match.
  */
-audiodriver_t* AudioDriver_Interface(void* sfxMusicOrCd);
+audiodriver_t* AudioDriver_Interface(void* audioInterface);
 
 /**
  * Returns the current active SFX interface. @c NULL is returned is no SFX
