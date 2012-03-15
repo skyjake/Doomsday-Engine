@@ -43,9 +43,10 @@ define('PID_LINUX_X86_64',    4);
  * @ingroup builds
  */
 ///@{
-define('RT_UNSTABLE',         0); ///< (Enumeration). Ordinals are meaningless (can change) however must be unique.
-define('RT_CANDIDATE',        1);
-define('RT_STABLE',           2);
+define('RT_UNKNOWN',          0); ///< (Enumeration). Ordinals are meaningless (can change) however must be unique.
+define('RT_UNSTABLE',         1);
+define('RT_CANDIDATE',        2);
+define('RT_STABLE',           3);
 ///@}
 
 require_once('buildevent.class.php');
@@ -457,10 +458,25 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         PID_WIN_X86         => array('id'=>PID_WIN_X86,         'name'=>'win-x86',         'nicename'=>'Windows'),
         PID_MAC10_4_X86_PPC => array('id'=>PID_MAC10_4_X86_PPC, 'name'=>'mac10_4-x86-ppc', 'nicename'=>'Mac OS (10.4+)'),
         PID_LINUX_X86       => array('id'=>PID_LINUX_X86,       'name'=>'linux-x86',       'nicename'=>'Ubuntu (32bit)'),
-        PID_LINUX_X86_64    => array('id'=>PID_LINUX_X86_64,    'name'=>'linux-x86_64',    'nicename'=>'Ubuntu (64bit)'),
-        );
+        PID_LINUX_X86_64    => array('id'=>PID_LINUX_X86_64,    'name'=>'linux-x86_64',    'nicename'=>'Ubuntu (64bit)')
+    );
     private static $unknownPlatform = array(
         'id'=>PID_ANY, 'name'=>'unknown', 'nicename'=>'Unknown');
+
+    /**
+     * Plaform (Record):
+     *
+     * 'id': @see platformId
+     * 'name': Symbolic name used to identify this platform.
+     * 'nicename': User facing/friendly name for this platform.
+     */
+    private static $releaseTypes = array(
+        RT_UNSTABLE  => array('id'=>RT_UNSTABLE,    'name'=>'unstable',     'nicename'=>'Unstable'),
+        RT_CANDIDATE => array('id'=>RT_CANDIDATE,   'name'=>'candidate',    'nicename'=>'Candidate'),
+        RT_STABLE    => array('id'=>RT_STABLE,      'name'=>'stable',       'nicename'=>'Stable')
+    );
+    private static $unknownReleaseType = array(
+        'id'=>RT_UNKNOWN, 'name'=>'unknown', 'nicename'=>'Unknown');
 
     /// Special 'null' package.
     private static $nullPack = NULL;
@@ -484,23 +500,6 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
     public function title()
     {
         return self::$name;
-    }
-
-    /**
-     * Attempt to parse a 'release type' symbolic name/identifier from @a str
-     * if it does not match a known type then RT_UNSTABLE is returned.
-     * @return  (integer) Unique identifier associated the determined release type.
-     */
-    public static function parseReleaseType($str)
-    {
-        if(is_string($str))
-        {
-            if(!strcasecmp($str, 'unstable')) return RT_UNSTABLE;
-            if(!strcasecmp($str, 'candidate')) return RT_CANDIDATE;
-            if(!strcasecmp($str, 'stable')) return RT_STABLE;
-        }
-        // Unknown. Assume 'unstable'.
-        return RT_UNSTABLE;
     }
 
     /**
@@ -534,6 +533,37 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         $platformId = intval($platformId);
         if(isset(self::$platforms[$platformId])) return self::$platforms[$platformId];
         return self::$unknownPlatform;
+    }
+
+    /**
+     * Attempt to parse a 'release type' symbolic name/identifier from @a str
+     * if it does not match a known type then RT_UNSTABLE is returned.
+     * @return  (integer) Unique identifier associated the determined release type.
+     */
+    public static function parseReleaseType($str)
+    {
+        if(is_string($str))
+        {
+            if(!strcasecmp($str, 'unstable')) return RT_UNSTABLE;
+            if(!strcasecmp($str, 'candidate')) return RT_CANDIDATE;
+            if(!strcasecmp($str, 'stable')) return RT_STABLE;
+        }
+        // Unknown.
+        return RT_UNKNOWN;
+    }
+
+    /**
+     * Retrieve the ReleaseType record associated with @a releaseTypeId.
+     * If no match is found then the special 'unknown' release is returned.
+     *
+     * @param releaseTypeId  (Integer) Unique identfier of the release type.
+     * @return  (Object) Determined ReleaseType.
+     */
+    public static function &releaseType($releaseTypeId=RT_UNKNOWN)
+    {
+        $releaseTypeId = intval($releaseTypeId);
+        if(isset(self::$releaseTypes[$releaseTypeId])) return self::$releaseTypes[$releaseTypeId];
+        return self::$unknownReleaseType;
     }
 
     public static function packageWeight(&$pack)
@@ -1121,9 +1151,10 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
     {
         if(!$build instanceof BuildEvent) return;
 
-        $releaseTypeTexts = array(RT_UNSTABLE=>'unstable', RT_CANDIDATE=>'candidate', RT_STABLE=>'stable');
-        $releaseTypeLabel = $releaseTypeTexts[$build->releaseType()];
-        $releaseTypeLink = 'dew/index.php?title=Automated_build_system#'.ucfirst($releaseTypeLabel);
+        $releaseType = self::releaseType($build->releaseType());
+
+        $releaseTypeLabel = $releaseType['nicename'];
+        $releaseTypeLink = 'dew/index.php?title=Automated_build_system#'. $releaseTypeLabel;
         $releaseTypeLinkTitle = "What does '$releaseTypeLabel' mean?";
 
         $buildNumberLabel = $build->uniqueId();
@@ -1135,7 +1166,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 <tr><td>Start date </td><td><?php echo htmlspecialchars(date(/*DATE_RFC850*/ "d-M-Y", $build->startDate())); ?></td></tr>
 <tr><td>Start time </td><td><?php echo htmlspecialchars(date(/*DATE_RFC850*/ "H:i:s T", $build->startDate())); ?></td></tr>
 <tr><td>Build number </td><td><a class="link-definition" href="<?php echo $buildNumberLink; ?>" title="<?php echo $buildNumberLinkTitle; ?>"><?php echo htmlspecialchars(ucfirst($buildNumberLabel)); ?></a></td></tr>
-<tr><td>Type </td><td><a class="link-definition" href="<?php echo $releaseTypeLink; ?>" title="<?php echo $releaseTypeLinkTitle; ?>"><?php echo htmlspecialchars(ucfirst($releaseTypeLabel)); ?></a></td></tr>
+<tr><td>Type </td><td><a class="link-definition" href="<?php echo $releaseTypeLink; ?>" title="<?php echo $releaseTypeLinkTitle; ?>"><?php echo htmlspecialchars($releaseTypeLabel); ?></a></td></tr>
 </tbody>
 </table><?php
     }
