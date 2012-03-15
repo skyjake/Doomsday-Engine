@@ -27,7 +27,7 @@ includeGuard('ContentCache');
 
 class ContentInfo
 {
-    public $modifiedTime; // Unix timestamp.
+    public $modifiedTime = NULL; // Unix timestamp.
 }
 
 class ContentCache
@@ -81,12 +81,12 @@ class ContentCache
     /**
      * Is the specified content element present in the cache?
      *
-     * @param file  (String) File name to look up.
+     * @param relPath  (String) File name to look up.
      * @return  (Boolean) TRUE iff the content element is available.
      */
-    public function isPresent($file)
+    public function isPresent($relPath)
     {
-        return (bool) file_exists(FrontController::nativePath($this->_docRoot."/$file"));
+        return (bool) file_exists(FrontController::nativePath($this->_docRoot."/$relPath"));
     }
 
     /**
@@ -116,30 +116,33 @@ class ContentCache
     /**
      * Retrieve info about a file in the cache.
      *
-     * @param file  (String) Name of the file to get info for.
+     * @param relPath  (String) Name of the file to get info for.
+     * @param info  (ContentInfo) Info record to be populated.
      * @return  (Boolean) FALSE if the specified file does not exist.
      */
-    public function getInfo($file, &$ContentInfo)
+    public function getInfo($relPath, &$info)
     {
-        $file = FrontController::nativePath($this->_docRoot."/$file");
-        if(!$file || !file_exists($file)) return FALSE;
+        if(!$info instanceof ContentInfo) return FALSE;
 
-        $ContentInfo->modifiedTime = filemtime($file);
+        $path = FrontController::nativePath($this->_docRoot."/$relPath");
+        if(!$path || !file_exists($path)) return FALSE;
+
+        $info->modifiedTime = filemtime($path);
         return TRUE;
     }
 
     /**
      * Touch a file in the cache (update modified time).
      *
-     * @param file  (String) Name of the file to touch.
+     * @param relPath  (String) Name of the file to touch.
      * @return  (Boolean) FALSE if the specified file does not exist.
      */
-    public function touch($file)
+    public function touch($relPath)
     {
-        $file = FrontController::nativePath($this->_docRoot."/$file");
-        if(!$file || !file_exists($file)) return FALSE;
+        $path = FrontController::nativePath($this->_docRoot."/$relPath");
+        if(!$path || !file_exists($path)) return FALSE;
 
-        touch($file);
+        touch($path);
         return TRUE;
     }
 
@@ -147,16 +150,16 @@ class ContentCache
      * Attempt to import a content element from the cache, outputting
      * its contents straight to the output buffer.
      *
-     * @param file  (String) File name to retrieve.
+     * @param relPath  (String) File name to retrieve.
      * @return  (Boolean) TRUE iff the content element was imported.
      */
-    public function import($file)
+    public function import($relPath)
     {
-        $file = FrontController::nativePath($this->_docRoot."/$file");
+        $path = FrontController::nativePath($this->_docRoot."/$relPath");
 
-        if(!$file || !file_exists($file))
-            throw new Exception(sprintf('file %s not present in content cache.', $file));
+        if(!$path || !file_exists($path))
+            throw new Exception(sprintf('file %s not present in content cache.', $relPath));
 
-        return @readfile($file);
+        return @readfile($path);
     }
 }

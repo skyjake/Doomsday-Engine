@@ -43,9 +43,10 @@ define('PID_LINUX_X86_64',    4);
  * @ingroup builds
  */
 ///@{
-define('RT_UNSTABLE',         0); ///< (Enumeration). Ordinals are meaningless (can change) however must be unique.
-define('RT_CANDIDATE',        1);
-define('RT_STABLE',           2);
+define('RT_UNKNOWN',          0); ///< (Enumeration). Ordinals are meaningless (can change) however must be unique.
+define('RT_UNSTABLE',         1);
+define('RT_CANDIDATE',        2);
+define('RT_STABLE',           3);
 ///@}
 
 require_once('buildevent.class.php');
@@ -103,7 +104,7 @@ function mustUpdateCachedBuildLog(&$buildLogUri, &$cacheName)
     // to determine when it is time to query (we touch the cached copy after
     // each query attempt).
     $cacheInfo = new ContentInfo();
-    $FrontController->contentCache()->getInfo($cacheName, &$cacheInfo);
+    $FrontController->contentCache()->getInfo($cacheName, $cacheInfo);
     if(time() < strtotime('+5 minutes', $cacheInfo->modifiedTime))
         return FALSE;
 
@@ -336,7 +337,10 @@ function outputCommitLogHTML(&$build)
         }
 
         // Generate the commit list itself.
-?><hr /><ul><?php
+?><hr />
+<div class="commit_list">
+<p><em><?php echo htmlspecialchars(count($build->commits));?></em> commits contributed to this build:</p>
+<ul><?php
 
         foreach($groups as $groupName => $group)
         {
@@ -359,7 +363,7 @@ function outputCommitLogHTML(&$build)
 ?></ol></li><?php
         }
 
-?></ul><?php
+?></ul></div><?php
     }
 }
 
@@ -454,10 +458,25 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         PID_WIN_X86         => array('id'=>PID_WIN_X86,         'name'=>'win-x86',         'nicename'=>'Windows'),
         PID_MAC10_4_X86_PPC => array('id'=>PID_MAC10_4_X86_PPC, 'name'=>'mac10_4-x86-ppc', 'nicename'=>'Mac OS (10.4+)'),
         PID_LINUX_X86       => array('id'=>PID_LINUX_X86,       'name'=>'linux-x86',       'nicename'=>'Ubuntu (32bit)'),
-        PID_LINUX_X86_64    => array('id'=>PID_LINUX_X86_64,    'name'=>'linux-x86_64',    'nicename'=>'Ubuntu (64bit)'),
-        );
+        PID_LINUX_X86_64    => array('id'=>PID_LINUX_X86_64,    'name'=>'linux-x86_64',    'nicename'=>'Ubuntu (64bit)')
+    );
     private static $unknownPlatform = array(
         'id'=>PID_ANY, 'name'=>'unknown', 'nicename'=>'Unknown');
+
+    /**
+     * ReleaseType (Record):
+     *
+     * 'id': @see releaseTypeId
+     * 'name': Symbolic name used to identify this release type.
+     * 'nicename': User facing/friendly name for this release type.
+     */
+    private static $releaseTypes = array(
+        RT_UNSTABLE  => array('id'=>RT_UNSTABLE,    'name'=>'unstable',     'nicename'=>'Unstable'),
+        RT_CANDIDATE => array('id'=>RT_CANDIDATE,   'name'=>'candidate',    'nicename'=>'Candidate'),
+        RT_STABLE    => array('id'=>RT_STABLE,      'name'=>'stable',       'nicename'=>'Stable')
+    );
+    private static $unknownReleaseType = array(
+        'id'=>RT_UNKNOWN, 'name'=>'unknown', 'nicename'=>'Unknown');
 
     /// Special 'null' package.
     private static $nullPack = NULL;
@@ -481,23 +500,6 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
     public function title()
     {
         return self::$name;
-    }
-
-    /**
-     * Attempt to parse a 'release type' symbolic name/identifier from @a str
-     * if it does not match a known type then RT_UNSTABLE is returned.
-     * @return  (integer) Unique identifier associated the determined release type.
-     */
-    public static function parseReleaseType($str)
-    {
-        if(is_string($str))
-        {
-            if(!strcasecmp($str, 'unstable')) return RT_UNSTABLE;
-            if(!strcasecmp($str, 'candidate')) return RT_CANDIDATE;
-            if(!strcasecmp($str, 'stable')) return RT_STABLE;
-        }
-        // Unknown. Assume 'unstable'.
-        return RT_UNSTABLE;
     }
 
     /**
@@ -531,6 +533,37 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         $platformId = intval($platformId);
         if(isset(self::$platforms[$platformId])) return self::$platforms[$platformId];
         return self::$unknownPlatform;
+    }
+
+    /**
+     * Attempt to parse a 'release type' symbolic name/identifier from @a str
+     * if it does not match a known type then RT_UNSTABLE is returned.
+     * @return  (integer) Unique identifier associated the determined release type.
+     */
+    public static function parseReleaseType($str)
+    {
+        if(is_string($str))
+        {
+            if(!strcasecmp($str, 'unstable')) return RT_UNSTABLE;
+            if(!strcasecmp($str, 'candidate')) return RT_CANDIDATE;
+            if(!strcasecmp($str, 'stable')) return RT_STABLE;
+        }
+        // Unknown.
+        return RT_UNKNOWN;
+    }
+
+    /**
+     * Retrieve the ReleaseType record associated with @a releaseTypeId.
+     * If no match is found then the special 'unknown' release is returned.
+     *
+     * @param releaseTypeId  (Integer) Unique identfier of the release type.
+     * @return  (Object) Determined ReleaseType.
+     */
+    public static function &releaseType($releaseTypeId=RT_UNKNOWN)
+    {
+        $releaseTypeId = intval($releaseTypeId);
+        if(isset(self::$releaseTypes[$releaseTypeId])) return self::$releaseTypes[$releaseTypeId];
+        return self::$unknownReleaseType;
     }
 
     public static function packageWeight(&$pack)
@@ -804,7 +837,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         $prevBuildUri = isset($prevEvent)? $prevEvent->composeBuildUri() : '';
         $nextBuildUri = isset($nextEvent)? $nextEvent->composeBuildUri() : '';
 
-?><div class="hnav" id="buildsnav"><span class="title">Build stream navigation:</span><ul><?php
+?><div class="hnav" id="buildsnav"><span class="title">Build stream navigation</span><ul><?php
 
         // Older event link.
         echo '<li>';
@@ -1056,8 +1089,8 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 
         if($FrontController->contentCache()->isPresent($cacheName))
         {
-            $cacheInfo = new ContentInfo();
-            $FrontController->contentCache()->getInfo($cacheName, &$contentInfo);
+            $contentInfo = new ContentInfo();
+            $FrontController->contentCache()->getInfo($cacheName, $contentInfo);
 
             header('Pragma: public');
             header('Cache-Control: public');
@@ -1099,22 +1132,134 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         return $count;
     }
 
-    private function genBuildOverview(&$build)
+    private function outputBuildEventMetadata(&$build)
     {
-        $html = '';
-        if($build instanceof BuildEvent)
-        {
-            $releaseTypeTexts = array(RT_UNSTABLE=>'unstable', RT_CANDIDATE=>'candidate', RT_STABLE=>'stable');
-            $releaseTypeLabel = $releaseTypeTexts[$build->releaseType()];
-            $releaseTypeLink = 'dew/index.php?title=Automated_build_system#'.ucfirst($releaseTypeLabel);
-            $releaseTypeLinkTitle = "What does '$releaseTypeLabel' mean?";
+        if(!$build instanceof BuildEvent) return;
 
-            $html .= '<h2><a class="link-definition" href="'.$releaseTypeLink.'" title="'.$releaseTypeLinkTitle.'">'. htmlspecialchars(ucfirst($releaseTypeLabel)). '</a></h2>'
-                    .'<p>The build event was started on '. date(DATE_RFC2822, $build->startDate()) .'. '
-                    .'It contains '. count($build->commits) .' commits and produced '
-                    . $this->countInstallablePackages($build) .' installable binary packages.</p>';
+        $releaseType = self::releaseType($build->releaseTypeId());
+
+        $releaseTypeLabel = $releaseType['nicename'];
+        $releaseTypeLink = 'dew/index.php?title=Automated_build_system#'. $releaseTypeLabel;
+        $releaseTypeLinkTitle = "What does '$releaseTypeLabel' mean?";
+
+        $buildNumberLabel = $build->uniqueId();
+        $buildNumberLink = 'dew/index.php?title=Build_number#Build_numbers';
+        $buildNumberLinkTitle = "What does 'Build$buildNumberLabel' mean?";
+
+?><table id="buildeventmetadata">
+<tbody>
+<tr><th colspan="2">Event</th></tr>
+<tr><td>Start date </td><td><?php echo htmlspecialchars(date(/*DATE_RFC850*/ "d-M-Y", $build->startDate())); ?></td></tr>
+<tr><td>Start time </td><td><?php echo htmlspecialchars(date(/*DATE_RFC850*/ "H:i:s T", $build->startDate())); ?></td></tr>
+<tr><td>Release type </td><td><a class="link-definition" href="<?php echo $releaseTypeLink; ?>" title="<?php echo $releaseTypeLinkTitle; ?>"><?php echo htmlspecialchars($releaseTypeLabel); ?></a></td></tr>
+<tr><td>Build number </td><td><a class="link-definition" href="<?php echo $buildNumberLink; ?>" title="<?php echo $buildNumberLinkTitle; ?>"><?php echo htmlspecialchars(ucfirst($buildNumberLabel)); ?></a></td></tr><?php
+
+        $installablesCount = $this->countInstallablePackages($build);
+        if($installablesCount > 0)
+        {
+
+?><tr><td>Packages </td><td><?php echo htmlspecialchars($installablesCount); ?></td></tr><?php
+
         }
-        return $html;
+
+?></tbody></table><?php
+    }
+
+    private function outputBuildPackageList(&$build)
+    {
+        if(!$build instanceof BuildEvent) return;
+
+        // Use a table.
+?><table><tbody><tr><th>OS</th><th>Package</th><th>Logs</th><th>Issues</th></tr><?php
+
+        $packs = $build->packages;
+        uasort($packs, array('self', 'packageSorter'));
+
+        $lastPlatId = -1;
+        foreach($packs as &$pack)
+        {
+            $plat = &self::platform($pack->platformId());
+
+            if($pack instanceof iBuilderProduct)
+            {
+                $errors   = $pack->compileErrorCount();
+                $warnings = $pack->compileWarnCount();
+                $issues   = $errors + $warnings;
+            }
+            else
+            {
+                $errors = 0;
+                $warnings = 0;
+                $issues = 0;
+            }
+
+            // Determine issue level (think defcon).
+            if($errors > 0 || !$pack->hasDirectDownloadUri())
+                $issueLevel = 'major';
+            else if($warnings > 0)
+                $issueLevel = 'minor';
+            else
+                $issueLevel = 'no';
+
+            // Ouput HTML for the package.
+?><tr>
+<td><?php if($pack->platformId() !== $lastPlatId) echo $plat['nicename']; ?></td>
+<td><?php
+
+            $packTitle = $pack->composeFullTitle(true/*include version*/, false/*do not include the platform name*/, false/*do not include build Id*/);
+            if($pack instanceof iDownloadable && $pack->hasDirectDownloadUri())
+            {
+?><a href="<?php echo $pack->directDownloadUri(); ?>" title="Download <?php echo $pack->composeFullTitle(); ?>"><?php echo $packTitle; ?></a><?php
+            }
+            else
+            {
+                echo $packTitle;
+            }
+
+?></td><td><?php
+
+            if($pack instanceof iBuilderProduct)
+            {
+                $logUri = $pack->compileLogUri();
+
+?><a href="<?php echo $logUri; ?>" title="Download build logs for <?php echo $pack->composeFullTitle(); ?>">txt.gz</a><?php
+
+            }
+            else
+            {
+?>txt.gz<?php
+            }
+
+?></td><td class="issue_level <?php echo ($issueLevel.'_issue'); ?>"><?php echo $issues; ?></td>
+</tr><?php
+
+            $lastPlatId = $pack->platformId();
+        }
+
+?></table><?php
+    }
+
+    private function outputBuildCommitLog(&$build)
+    {
+        if(!$build instanceof BuildEvent) return;
+
+        if(count($build->commits))
+        {
+?><div id="buildcommits"><a name="commitindex"></a><h3>Commits</h3>
+<script type="text/javascript">
+jQuery(document).ready(function() {
+  jQuery(".commit").hide();
+  jQuery(".collapsible").click(function()
+  {
+    jQuery(this).next().next(".commit").slideToggle(300);
+  });
+});
+</script><?php
+
+                outputCommitLog($build);
+
+?></div><?php
+        }
     }
 
     /**
@@ -1141,7 +1286,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         $uniqueId = $args['build'];
         $build = $this->buildByUniqueId($uniqueId);
 
-        $pageTitle = (!is_null($build)? $build->composeName() : 'Builds');
+        $pageTitle = (!is_null($build)? $build->composeName(true/*add release type*/) : 'Builds');
 
         // Output this page.
         $FrontController->outputHeader($pageTitle);
@@ -1155,102 +1300,18 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 
 ?><div class="buildevent"><?php
 
-            $buildOverview = $this->genBuildOverview($build);
-            echo $buildOverview;
-
-            // Use a table.
-?><table><tbody><tr><th>OS</th><th>Package</th><th>Logs</th><th>Issues</th></tr><?php
-
-            $packs = $build->packages;
-            uasort($packs, array('self', 'packageSorter'));
-
-            $lastPlatId = -1;
-            foreach($packs as &$pack)
-            {
-                $plat = &self::platform($pack->platformId());
-
-                if($pack instanceof iBuilderProduct)
-                {
-                    $errors   = $pack->compileErrorCount();
-                    $warnings = $pack->compileWarnCount();
-                    $issues   = $errors + $warnings;
-                }
-                else
-                {
-                    $errors = 0;
-                    $warnings = 0;
-                    $issues = 0;
-                }
-
-                // Determine issue level (think defcon).
-                if($errors > 0 || !$pack->hasDirectDownloadUri())
-                    $issueLevel = 'major';
-                else if($warnings > 0)
-                    $issueLevel = 'minor';
-                else
-                    $issueLevel = 'no';
-
-                // Ouput HTML for the package.
-?><tr>
-<td><?php if($pack->platformId() !== $lastPlatId) echo $plat['nicename']; ?></td>
-<td><?php
-
-                $packTitle = $pack->composeFullTitle(true/*include version*/, false/*do not include the platform name*/, false/*do not include build Id*/);
-                if($pack instanceof iDownloadable && $pack->hasDirectDownloadUri())
-                {
-?><a href="<?php echo $pack->directDownloadUri(); ?>" title="Download <?php echo $pack->composeFullTitle(); ?>"><?php echo $packTitle; ?></a><?php
-                }
-                else
-                {
-                    echo $packTitle;
-                }
-
-
-
-
-?></td><td><?php
-
-                if($pack instanceof iBuilderProduct)
-                {
-                    $logUri = $pack->compileLogUri();
-
-?><a href="<?php echo $logUri; ?>" title="Download build logs for <?php echo $pack->composeFullTitle(); ?>">txt.gz</a><?php
-
-                }
-                else
-                {
-?>txt.gz<?php
-                }
-
-?></td><td class="issue_level <?php echo ($issueLevel.'_issue'); ?>"><?php echo $issues; ?></td>
-</tr><?php
-
-                $lastPlatId = $pack->platformId();
-            }
-
-?></table><?php
-
             $olderBuild = $this->findOlderBuild($build);
             $newerBuild = $this->findNewerBuild($build);
             $this->outputBuildStreamNavigation($olderBuild, $newerBuild);
 
-            if(count($build->commits))
-            {
-?><div class="commit_list"><a name="commitindex"></a><h3>Commits</h3>
-<script type="text/javascript">
-jQuery(document).ready(function() {
-  jQuery(".commit").hide();
-  jQuery(".collapsible").click(function()
-  {
-    jQuery(this).next().next(".commit").slideToggle(300);
-  });
-});
-</script><?php
+?><div id="buildoverview"><?php
 
-                outputCommitLog($build);
+            $this->outputBuildEventMetadata($build);
+            $this->outputBuildPackageList($build);
 
 ?></div><?php
-            }
+
+            $this->outputBuildCommitLog($build);
 
 ?></div><?php
 
