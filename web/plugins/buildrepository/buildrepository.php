@@ -103,7 +103,7 @@ function mustUpdateCachedBuildLog(&$buildLogUri, &$cacheName)
     // to determine when it is time to query (we touch the cached copy after
     // each query attempt).
     $cacheInfo = new ContentInfo();
-    $FrontController->contentCache()->getInfo($cacheName, &$cacheInfo);
+    $FrontController->contentCache()->getInfo($cacheName, $cacheInfo);
     if(time() < strtotime('+5 minutes', $cacheInfo->modifiedTime))
         return FALSE;
 
@@ -1060,7 +1060,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         if($FrontController->contentCache()->isPresent($cacheName))
         {
             $cacheInfo = new ContentInfo();
-            $FrontController->contentCache()->getInfo($cacheName, &$contentInfo);
+            $FrontController->contentCache()->getInfo($cacheName, $contentInfo);
 
             header('Pragma: public');
             header('Cache-Control: public');
