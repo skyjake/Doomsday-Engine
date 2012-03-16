@@ -81,7 +81,7 @@ LegacyNetwork& LegacyCore::network()
 
 void LegacyCore::setLoopFunc(void (*func)(void))
 {
-    LOG_DEBUG("Loop function changed from %p set to %p.") << (dintptr)d->loopFunc << (dintptr)func;
+    LOG_DEBUG("Loop function changed from %p set to %p.") << dintptr(d->loopFunc) << dintptr(func);
 
     // Set up a timer to periodically call the provided callback function.
     d->loopFunc = func;
