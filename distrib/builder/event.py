@@ -72,10 +72,8 @@ class Event:
         ver = self.extract_version_from_filename(name)
         if not ver and self.package_from_filename(name) == 'doomsday':
             # Fall back to the event version, if it exists.
-            fn = self.file_path('version.txt')
-            if os.path.exists(fn):
-                return file(fn).read().strip()
-        # Could not be determined.
+            ev = self.version()
+            if ev: return ev
         return ver
 
     def extract_version_from_filename(self, name):
@@ -93,6 +91,11 @@ class Event:
         
     def tag(self):
         return self.name
+        
+    def version(self):
+        fn = self.file_path('version.txt')
+        if os.path.exists(fn): return file(fn).read().strip()
+        return None
         
     def name(self):
         return self.name
