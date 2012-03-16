@@ -67,8 +67,18 @@ class Event:
             if name.endswith(ext) or ident in name:
                 return (n, ext, ident)
         return None
-        
+                
     def version_from_filename(self, name):
+        ver = self.extract_version_from_filename(name)
+        if not ver and self.package_from_filename(name) == 'doomsday':
+            # Fall back to the event version, if it exists.
+            fn = self.file_path('version.txt')
+            if os.path.exists(fn):
+                return file(fn).read().strip()
+        # Could not be determined.
+        return ver
+
+    def extract_version_from_filename(self, name):
         pos = name.find('_')
         if pos < 0: return None
         dash = name.find('-', pos + 1)
@@ -283,6 +293,9 @@ class Event:
         msg += '<compileWarnCount>%i</compileWarnCount>' % warnings
         msg += '<compileErrorCount>%i</compileErrorCount>' % errors
         return msg
+    
+    def release_notes_uri(self, version):
+        return "http://dengine.net/dew/index.php?title=Doomsday_version_" + version
         
     def xml_description(self):
         msg = '<build>'
@@ -297,6 +310,8 @@ class Event:
         # These logs were already linked to.
         includedLogs = []
         
+        distribVersion = None
+        
         # Packages.
         for fn in files:
             msg += '<package type="%s">' % self.package_type(fn)
@@ -309,6 +324,9 @@ class Event:
                 msg += self.xml_log(logName)
                 includedLogs.append(logName)
             msg += '</package>'
+            
+            if distribVersion is None:
+                distribVersion = self.version_from_filename(fn)
 
         # Any other logs we might want to include?
         for osName, osExt, osIdent in self.oses:
@@ -318,9 +336,16 @@ class Event:
                     # Add an entry for this.
                     msg += '<package type="%s">' % self.package_type(logName)
                     msg += '<name>%s</name>' % self.packageName[pkg]
+                    if self.version_from_filename(logName):
+                        msg += '<version>%s</version>' % self.version_from_filename(logName)
+                        if distribVersion is None:
+                            distribVersion = self.version_from_filename(logName)
                     msg += '<platform>%s</platform>' % self.platId[osIdent]
                     msg += self.xml_log(logName)
                     msg += '</package>'
+                            
+        if distribVersion:
+            msg += '<releaseNotes>%s</releaseNotes>' % self.release_notes_uri(distribVersion)
         
         # Commits.
         chgFn = self.file_path('changes.xml')

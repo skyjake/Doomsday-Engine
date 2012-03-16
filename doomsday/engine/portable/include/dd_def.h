@@ -49,7 +49,7 @@
 
 // if rangecheck is undefined, most parameter validation debugging code
 // will not be compiled
-#ifndef NORANGECHECKING
+#ifndef DENG_NO_RANGECHECKING
 #   define RANGECHECK
 #endif
 
@@ -71,9 +71,15 @@
 #   define DOOMSDAY_VER_ID_64BIT " 32-bit"
 #endif
 
-#define DOOMSDAY_VER_ID DOOMSDAY_RELEASE_TYPE DOOMSDAY_VER_ID_64BIT DOOMSDAY_VER_ID_DEBUG DOOMSDAY_VER_ID_RANGECHECK
+#if defined(DENG_STABLE) && defined(DOOMSDAY_BUILD_TEXT)
+#  define DOOMSDAY_VER_ID_BUILD " #" DOOMSDAY_BUILD_TEXT
+#else
+#  define DOOMSDAY_VER_ID_BUILD ""
+#endif
 
-#define DOOMSDAY_VERSION_FULLTEXT DOOMSDAY_VERSION_TEXT" ("DOOMSDAY_VER_ID") "__DATE__" "__TIME__
+#define DOOMSDAY_VER_ID     DOOMSDAY_RELEASE_TYPE DOOMSDAY_VER_ID_64BIT DOOMSDAY_VER_ID_DEBUG DOOMSDAY_VER_ID_RANGECHECK DOOMSDAY_VER_ID_BUILD
+
+#define DOOMSDAY_VERSION_FULLTEXT     DOOMSDAY_VERSION_TEXT" ("DOOMSDAY_VER_ID") "__DATE__" "__TIME__
 
 #define SAFEDIV(x,y)    (!(y) || !((x)/(y))? 1 : (x)/(y))
 #define ORDER(x,y,a,b)  ( (x)<(y)? ((a)=(x),(b)=(y)) : ((b)=(x),(a)=(y)) )

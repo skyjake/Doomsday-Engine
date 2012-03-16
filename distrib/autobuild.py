@@ -124,8 +124,10 @@ def update_changes(fromTag=None, toTag=None, debChanges=False):
         msg = 'New release: Doomsday Engine build %i.' % builder.Event().number()
         os.system('dch --check-dirname-level 0 -v %s -b "%s"' % (debVer, msg))
     else:
-        # Save the release type.
+        # Save version information.
         build_version.find_version(quiet=True)
+        print >> file(builder.Event(toTag).file_path('version.txt'), 'wt'), \
+            build_version.DOOMSDAY_VERSION_FULL        
         print >> file(builder.Event(toTag).file_path('releaseType.txt'), 'wt'), \
             build_version.DOOMSDAY_RELEASE_TYPE
         
