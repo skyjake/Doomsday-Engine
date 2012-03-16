@@ -439,7 +439,7 @@ Sound {
 
 Sound {
   ID = "cybsit";
-  Flags = "sf_shift2";
+  Flags = shift2 | dontstop;
   Lump = "DSCYBSIT";
   Link pitch = -1;
   Link volume = -1;
@@ -449,7 +449,7 @@ Sound {
 
 Sound {
   ID = "spisit";
-  Flags = "sf_shift2";
+  Flags = shift2 | dontstop;
   Lump = "DSSPISIT";
   Link pitch = -1;
   Link volume = -1;
@@ -823,7 +823,7 @@ Sound {
   Lump = "DSBAREXP";
   Link pitch = -1;
   Link volume = -1;
-  Priority = 64;
+  Priority = 60;
   Max channels = -1;
 }
 
