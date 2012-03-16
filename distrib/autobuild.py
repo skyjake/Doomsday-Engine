@@ -94,9 +94,11 @@ def todays_platform_release():
 
 def find_previous_tag(toTag, version):
     builds = builder.events_by_time()
+    #print [(e[1].number(), e[1].timestamp()) for e in builds]
     i = 0
     while i < len(builds):
         ev = builds[i][1]
+        print ev.tag(), ev.version(), ev.timestamp()
         if ev.tag() != toTag and (ev.version() is None or version is None or
                                   ev.version().startswith(version)):
             # This is good.

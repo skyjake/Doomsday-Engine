@@ -130,8 +130,8 @@ class Event:
 
         for fn in os.listdir(self.buildDir):
             t = os.stat(os.path.join(self.buildDir, fn))
-            if int(t.st_ctime) < oldest:
-                oldest = int(t.st_ctime)
+            if int(t.st_mtime) < oldest:
+                oldest = int(t.st_mtime)
 
         return oldest        
         
