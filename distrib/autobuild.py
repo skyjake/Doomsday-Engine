@@ -131,6 +131,8 @@ def update_changes(debChanges=False):
         # Range not defined.
         return
 
+    print 'Changes for range', fromTag, '..', toTag
+
     changes = builder.Changes(fromTag, toTag)
 
     if debChanges:
