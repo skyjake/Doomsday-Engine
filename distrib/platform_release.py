@@ -99,10 +99,10 @@ def mac_os_version():
 
 
 def output_filename(ext=''):
-	if DOOMSDAY_RELEASE_TYPE == "Stable":
-    	return 'doomsday_' + DOOMSDAY_VERSION_FULL + ext
-	else:
-    	return 'doomsday_' + DOOMSDAY_VERSION_FULL + "_" + DOOMSDAY_BUILD + ext
+    if DOOMSDAY_RELEASE_TYPE == "Stable":
+        return 'doomsday_' + DOOMSDAY_VERSION_FULL + ext
+    else:
+        return 'doomsday_' + DOOMSDAY_VERSION_FULL + "_" + DOOMSDAY_BUILD + ext
 
 
 def mac_release():
@@ -130,7 +130,7 @@ def mac_release():
         raise Exception("Failed to build from source.")
 
     # Now we can proceed to packaging.
-	target = os.path.join(OUTPUT_DIR, output_filename('.dmg'))
+    target = os.path.join(OUTPUT_DIR, output_filename('.dmg'))
     try:
         os.remove(target)
         print 'Removed existing target file', target
@@ -243,7 +243,7 @@ def win_release():
         .replace('${BUILD}', DOOMSDAY_BUILD)
         .replace('${VERSION}', DOOMSDAY_VERSION_FULL)
         .replace('${VERSION_PLAIN}', DOOMSDAY_VERSION_FULL_PLAIN)
-		.replace('${OUTPUT_FILENAME}', output_filename()))
+        .replace('${OUTPUT_FILENAME}', output_filename()))
 
     # Execute the win32 release script.
     os.chdir('win32')
