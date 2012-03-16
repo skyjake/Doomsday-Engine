@@ -37,6 +37,10 @@
 
 #include "dd_share.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /// Busy mode worker function.
 typedef int (C_DECL *busyworkerfunc_t) (void* parm);
 
@@ -132,5 +136,9 @@ boolean Con_TransitionInProgress(void);
 
 void Con_TransitionTicker(timespan_t ticLength);
 void Con_DrawTransition(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /// LIBDENG_CONSOLE_BUSY
