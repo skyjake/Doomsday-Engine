@@ -38,6 +38,12 @@ int LegacyCore_RunEventLoop(LegacyCore* lc)
     return self->runEventLoop();
 }
 
+void LegacyCore_SetLoopRate(LegacyCore* lc, int freqHz)
+{
+    DENG2_SELF(LegacyCore, lc);
+    self->setLoopRate(freqHz);
+}
+
 void LegacyCore_SetLoopFunc(LegacyCore* lc, void (*callback)(void))
 {
     DENG2_SELF(LegacyCore, lc);

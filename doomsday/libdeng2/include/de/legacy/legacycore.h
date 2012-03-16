@@ -56,6 +56,15 @@ public:
     int runEventLoop();
 
     /**
+     * Sets the frequency for calling the loop function (e.g., 35 Hz for a
+     * dedicated server). Not very accurate: the actual rate at which the
+     * function is called is probably less.
+     *
+     * @param freqHz  Frequency in Hz.
+     */
+    void setLoopRate(int freqHz);
+
+    /**
      * Sets the callback function that gets called periodically from the main
      * loop. The calls are made as often as possible without blocking the loop.
      *

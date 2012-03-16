@@ -89,17 +89,17 @@ Canvas::~Canvas()
     delete d;
 }
 
-void Canvas::setInitCallback(void (*canvasInitializeFunc)(Canvas&))
+void Canvas::setInitFunc(void (*canvasInitializeFunc)(Canvas&))
 {
     d->initCallback = canvasInitializeFunc;
 }
 
-void Canvas::setDrawCallback(void (*canvasDrawFunc)(Canvas&))
+void Canvas::setDrawFunc(void (*canvasDrawFunc)(Canvas&))
 {
     d->drawCallback = canvasDrawFunc;
 }
 
-void Canvas::setResizedCallback(void (*canvasResizedFunc)(Canvas&))
+void Canvas::setResizedFunc(void (*canvasResizedFunc)(Canvas&))
 {
     d->resizedCallback = canvasResizedFunc;
 }

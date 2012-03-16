@@ -47,7 +47,7 @@ public:
      *
      * @param canvasInitializeFunc  Callback.
      */
-    void setInitCallback(void (*canvasInitializeFunc)(Canvas&));
+    void setInitFunc(void (*canvasInitializeFunc)(Canvas&));
 
     /**
      * Sets a callback function that is responsible for drawing the canvas
@@ -56,14 +56,14 @@ public:
      *
      * @param canvasDrawFunc  Callback.
      */
-    void setDrawCallback(void (*canvasDrawFunc)(Canvas&));
+    void setDrawFunc(void (*canvasDrawFunc)(Canvas&));
 
     /**
      * Sets a callback function that gets called after the size of the canvas changes.
      *
      * @param canvasResizedFunc  Callback.
      */
-    void setResizedCallback(void (*canvasResizedFunc)(Canvas&));
+    void setResizedFunc(void (*canvasResizedFunc)(Canvas&));
 
     /**
      * Forces immediate repainting of the canvas. The draw callback gets called.

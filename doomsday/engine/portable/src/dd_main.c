@@ -1453,6 +1453,9 @@ void DD_FinishInitializationAfterWindowReady(void)
         Window_SetTitle(theWindow, buf);
     }
 
+    // Now we can start executing the engine's main loop.
+    LegacyCore_SetLoopFunc(de2LegacyCore, DD_GameLoopCallback);
+
     // Initialize engine subsystems and initial state.
     if(!DD_Init())
     {
@@ -1460,11 +1463,8 @@ void DD_FinishInitializationAfterWindowReady(void)
         return;
     }
 
-    // Now we can start executing the engine's main loop.
-    LegacyCore_SetLoopFunc(de2LegacyCore, DD_GameLoopCallback);
-
     // Start drawing with the game loop drawer.
-    Window_SetDrawFunction(Window_Main(), DD_GameLoopDrawer);
+    Window_SetDrawFunc(Window_Main(), DD_GameLoopDrawer);
 }
 
 /**
@@ -1850,7 +1850,12 @@ static int DD_StartupWorker(void* parm)
     // In dedicated mode the console must be opened, so all input events
     // will be handled by it.
     if(isDedicated)
+    {
         Con_Open(true);
+
+        // Also make sure the game loop isn't running needlessly often.
+        LegacyCore_SetLoopRate(de2LegacyCore, 35);
+    }
 
     Con_SetProgress(199);
 
