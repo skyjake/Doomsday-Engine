@@ -403,6 +403,7 @@ SOURCES += \
     portable/src/bsp_node.c \
     portable/src/bsp_superblock.c \
     portable/src/bspleaf.c \
+    portable/src/busytask.cpp \
     portable/src/canvas.cpp \
     portable/src/canvaswindow.cpp \
     portable/src/cbuffer.c \

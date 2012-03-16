@@ -57,7 +57,10 @@ typedef struct {
     float progressStart;
     float progressEnd;
 
-    int retVal; ///< Worker return value.
+    // Internal state:
+    timespan_t _startTime;
+    boolean _willAnimateTransition;
+    boolean _wasIgnoringInput;
 } BusyTask;
 
 /// Busy mode transition style.
@@ -71,18 +74,6 @@ typedef enum {
 
 extern int rTransition;
 extern int rTransitionTics;
-
-/**
- * Process a single work task in Busy Mode.
- *
- * Caller relinquishes ownership of the task until busy mode completes,
- * (therefore it should NOT be accessed in the worker).
- *
- * @param task          Task to be performed.
- *
- * @return  Return value of the worker.
- */
-int Con_Busy2(BusyTask* task);
 
 /**
  * Process a single work task in Busy Mode.
@@ -136,6 +127,10 @@ boolean Con_TransitionInProgress(void);
 
 void Con_TransitionTicker(timespan_t ticLength);
 void Con_DrawTransition(void);
+
+int BusyTask_Begin(BusyTask* task);
+int BusyTask_Run(int mode, const char* taskName, busyworkerfunc_t worker, void* workerData);
+void BusyTask_ReturnValue(int result);
 
 #ifdef __cplusplus
 }

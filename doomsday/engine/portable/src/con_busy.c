@@ -57,8 +57,8 @@
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void Con_BusyLoop(void);
-static void Con_BusyDrawer(void);
+static void BusyTask_Loop(void);
+static void BusyTask_Drawer(void);
 static void Con_BusyPrepareResources(void);
 static void Con_BusyDeleteTextures(void);
 
@@ -104,25 +104,24 @@ static boolean animatedTransitionActive(int busyMode)
             rTransitionTics > 0 && (busyMode & BUSYF_TRANSITION));
 }
 
-int Con_Busy2(BusyTask* task)
+/**
+ * Process a single work task in Busy Mode.
+ *
+ * Caller relinquishes ownership of the task until busy mode completes,
+ * (therefore it should NOT be accessed in the worker).
+ *
+ * @param task          Task to be performed.
+ *
+ * @return  Return value of the worker.
+ */
+int BusyTask_Begin(BusyTask* task)
 {
-    boolean willAnimateTransition;
-    boolean wasIgnoringInput;
-    int result;
-
     if(!task) return 0;
-
-    if(novideo)
-    {
-        // Don't bother to go into busy mode.
-        return task->retVal = task->worker(task->workerData);
-    }
 
     if(!busyInited)
     {
         busy_Mutex = Sys_CreateMutex("BUSY_MUTEX");
     }
-
     if(busyInited)
     {
         Con_Error("Con_Busy: Already busy.\n");
@@ -130,12 +129,12 @@ int Con_Busy2(BusyTask* task)
 
     // Discard input events so that any and all accumulated input
     // events are ignored.
-    wasIgnoringInput = DD_IgnoreInput(true);
+    task->_wasIgnoringInput = DD_IgnoreInput(true);
 
     Sys_Lock(busy_Mutex);
     busyDone = false;
     busyTask = task;
-    willAnimateTransition = animatedTransitionActive(busyTask->mode);
+    task->_willAnimateTransition = animatedTransitionActive(busyTask->mode);
     Sys_Unlock(busy_Mutex);
 
     // Load any textures needed in this mode.
@@ -148,7 +147,7 @@ int Con_Busy2(BusyTask* task)
     busyThread = Sys_StartThread(busyTask->worker, busyTask->workerData);
 
     // Are we doing a transition effect?
-    if(willAnimateTransition)
+    if(task->_willAnimateTransition)
     {
         transitionStyle = rTransition;
         if(transitionStyle == TS_DOOM || transitionStyle == TS_DOOMSMOOTH)
@@ -156,8 +155,24 @@ int Con_Busy2(BusyTask* task)
         transitionInProgress = true;
     }
 
-    // Wait for the busy thread to stop.
-    Con_BusyLoop();
+    // Switch the engine loop and window to the busy mode.
+    LegacyCore_PushLoop(de2LegacyCore); // save previous loop
+    LegacyCore_SetLoopRate(de2LegacyCore, 30);
+    LegacyCore_SetLoopFunc(de2LegacyCore, BusyTask_Loop);
+
+    Window_SetDrawFunc(Window_Main(), BusyTask_Drawer);
+
+    task->_startTime = Sys_GetRealSeconds();
+}
+
+static void BusyTask_End(BusyTask* task)
+{
+    int result;
+
+    if(verbose)
+    {
+        Con_Message("Con_Busy: Was busy for %.2lf seconds.\n", busyTime);
+    }
 
     // Free resources.
     Con_BusyDeleteTextures();
@@ -179,98 +194,16 @@ int Con_Busy2(BusyTask* task)
     Sys_DestroyMutex(busy_Mutex);
     busyInited = false;
 
-    task->retVal = result;
-
     // Make sure that any remaining deferred content gets uploaded.
-    if(!(isDedicated || (task->mode & BUSYF_NO_UPLOADS)))
+    if(!(task->mode & BUSYF_NO_UPLOADS))
     {
         GL_ProcessDeferredTasks(0);
     }
 
-    DD_IgnoreInput(wasIgnoringInput);
+    DD_IgnoreInput(task->_wasIgnoringInput);
     DD_ResetTimer();
 
-    // Resume drawing with the game loop drawer.
-    Window_SetDrawFunc(Window_Main(), !Sys_IsShuttingDown()? DD_GameLoopDrawer : 0);
-
-    return result;
-}
-
-int Con_Busy(int mode, const char* _taskName, busyworkerfunc_t worker, void* workerData)
-{
-    char* taskName = NULL;
-    BusyTask task;
-
-    // Take a copy of the task name.
-    if(_taskName && _taskName[0])
-    {
-        size_t len = strlen(_taskName);
-        taskName = calloc(1, len + 1);
-        dd_snprintf(taskName, len+1, "%s", _taskName);
-    }
-
-    // Initialize the task.
-    memset(&task, 0, sizeof(task));
-    task.worker = worker;
-    task.workerData = workerData;
-    task.name = taskName;
-    task.mode = mode;
-
-    // Lets get busy!
-    Con_Busy2(&task);
-
-    if(taskName)
-    {
-        free(taskName);
-        taskName = NULL;
-    }
-
-    return task.retVal;
-}
-
-void Con_BusyList(BusyTask* tasks, int numTasks)
-{
-    const char* currentTaskName = NULL;
-    BusyTask* task;
-    int i, mode;
-
-    if(!tasks) return; // Hmm, no work?
-
-    // Process tasks.
-    task = tasks;
-    for(i = 0; i < numTasks; ++i, task++)
-    {
-        // If no name is specified for this task, continue using the name of the
-        // the previous task.
-        if(task->name)
-        {
-            if(task->name[0])
-                currentTaskName = task->name;
-            else // Clear the name.
-                currentTaskName = NULL;
-        }
-
-        if(!task->worker)
-        {
-            // Null tasks are not processed; so signal success.
-            task->retVal = 0;
-            continue;
-        }
-
-        // Process the work.
-
-        // Is the worker updating its progress?
-        if(task->maxProgress > 0)
-            Con_InitProgress2(task->maxProgress, task->progressStart, task->progressEnd);
-
-        /// @kludge Force BUSYF_STARTUP here so that the animation of one task is
-        ///         not drawn on top of the last frame of the previous.
-        mode = task->mode | BUSYF_STARTUP;
-        // kludge end
-
-        // Busy mode invokes the worker on our behalf in a new thread.
-        task->retVal = Con_Busy(mode, currentTaskName, task->worker, task->workerData);
-    }
+    BusyTask_ReturnValue(result);
 }
 
 void Con_BusyWorkerError(const char* message)
@@ -417,83 +350,127 @@ void Con_ReleaseScreenshotTexture(void)
     texScreenshot = 0;
 }
 
-/**
- * The busy thread main function. Runs until busyDone set to true.
- */
-static void Con_BusyLoop(void)
+static void postBusyCleanup(void)
 {
-    boolean canDraw = !(isDedicated || novideo);
-    boolean canUpload = (canDraw && !(busyTask->mode & BUSYF_NO_UPLOADS));
-    timespan_t startTime = Sys_GetRealSeconds();
+    /// @see BusyTask_Begin(): loop pushed, window drawer changed
+
+    // Switch back to main loop.
+    LegacyCore_PopLoop(de2LegacyCore);
+
+    // Resume drawing with the game loop drawer.
+    Window_SetDrawFunc(Window_Main(), !Sys_IsShuttingDown()? DD_GameLoopDrawer : 0);
+}
+
+static int doBusy(int mode, const char* taskName, busyworkerfunc_t worker, void* workerData)
+{
+    if(novideo)
+    {
+        // Don't bother to go into busy mode.
+        return worker(workerData);
+    }
+    return BusyTask_Run(mode, taskName, worker, workerData);
+}
+
+int Con_Busy(int mode, const char* taskName, busyworkerfunc_t worker, void* workerData)
+{
+    int result = doBusy(mode, taskName, worker, workerData);
+    postBusyCleanup();
+    return result;
+}
+
+void Con_BusyList(BusyTask* tasks, int numTasks)
+{
+    const char* currentTaskName = NULL;
+    BusyTask* task;
+    int i, mode;
+
+    if(!tasks) return; // Hmm, no work?
+
+    // Process tasks.
+    task = tasks;
+    for(i = 0; i < numTasks; ++i, task++)
+    {
+        // If no name is specified for this task, continue using the name of the
+        // the previous task.
+        if(task->name)
+        {
+            if(task->name[0])
+                currentTaskName = task->name;
+            else // Clear the name.
+                currentTaskName = NULL;
+        }
+
+        if(!task->worker)
+        {
+            // Null tasks are not processed; so signal success.
+            //task->retVal = 0;
+            continue;
+        }
+
+        // Process the work.
+
+        // Is the worker updating its progress?
+        if(task->maxProgress > 0)
+            Con_InitProgress2(task->maxProgress, task->progressStart, task->progressEnd);
+
+        /// @kludge Force BUSYF_STARTUP here so that the animation of one task is
+        ///         not drawn on top of the last frame of the previous.
+        mode = task->mode | BUSYF_STARTUP;
+        // kludge end
+
+        // Busy mode invokes the worker on our behalf in a new thread.
+        doBusy(mode, currentTaskName, task->worker, task->workerData);
+    }
+
+    postBusyCleanup();
+}
+
+/**
+ * The busy loop callback function. Called periodically in the main (UI) thread
+ * while the busy worker is running.
+ */
+static void BusyTask_Loop(void)
+{
+    boolean canUpload = !(busyTask->mode & BUSYF_NO_UPLOADS);
     timespan_t oldTime;
 
-    if(canDraw)
+    // Post and discard all input events.
+    DD_ProcessEvents(0);
+    DD_ProcessSharpEvents(0);
+
+    if(canUpload)
     {
-        LIBDENG_ASSERT_IN_MAIN_THREAD();
-
-        glMatrixMode(GL_PROJECTION);
-        glPushMatrix();
-        glLoadIdentity();
-        glOrtho(0, Window_Width(theWindow), Window_Height(theWindow), 0, -1, 1);
-
-        Window_SetDrawFunc(Window_Main(), Con_BusyDrawer);
+        // Any deferred content needs to get uploaded.
+        GL_ProcessDeferredTasks(15);
     }
+
+    // Make sure the audio system gets regularly updated.
+    S_EndFrame();
+
+    // We accumulate time in the busy loop so that the animation of a task
+    // sequence doesn't jump around but remains continuous.
+    oldTime = busyTime;
+    busyTime = Sys_GetRealSeconds() - busyTask->_startTime;
+    if(busyTime > oldTime)
+    {
+        accumulatedBusyTime += busyTime - oldTime;
+    }
+
+    Window_Draw(Window_Main());
 
     Sys_Lock(busy_Mutex);
     busyDoneCopy = busyDone;
     Sys_Unlock(busy_Mutex);
 
-    while(!busyDoneCopy || (canUpload && GL_DeferredTaskCount() > 0) ||
-          !Con_IsProgressAnimationCompleted())
+    if(!busyDoneCopy || (canUpload && GL_DeferredTaskCount() > 0) ||
+       !Con_IsProgressAnimationCompleted())
     {
-        Sys_Lock(busy_Mutex);
-        busyDoneCopy = busyDone;
-        Sys_Unlock(busy_Mutex);
-
-        // Post and discard all input events.
-        DD_ProcessEvents(0);
-        DD_ProcessSharpEvents(0);
-
-        Sys_Sleep(20);
-
-        if(canUpload)
-        {   // Make sure that any deferred content gets uploaded.
-            GL_ProcessDeferredTasks(15);
-        }
-
-        // Update the time.
-        oldTime = busyTime;
-        busyTime = Sys_GetRealSeconds() - startTime;
-        if(busyTime > oldTime)
-        {
-            accumulatedBusyTime += busyTime - oldTime;
-        }
-
-        // Time for an update?
-        if(canDraw)
-        {
-            Window_Draw(Window_Main());
-        }
-
-        // Make sure the audio system gets regularly updated.
-        S_EndFrame();
+        // Let's keep running the busy loop.
+        return;
     }
 
-    if(verbose)
-    {
-        Con_Message("Con_Busy: Was busy for %.2lf seconds.\n", busyTime);
-    }
-
-    if(canDraw)
-    {
-        LIBDENG_ASSERT_IN_MAIN_THREAD();
-
-        glMatrixMode(GL_PROJECTION);
-        glPopMatrix();
-
-        // Must not call the busy drawer outside of this loop.
-        Window_SetDrawFunc(Window_Main(), 0);
-    }
+    // Stop the loop.
+    BusyTask_End(busyTask);
 }
 
 /**
@@ -751,9 +728,16 @@ void Con_BusyDrawConsoleOutput(void)
 /**
  * Busy drawer function. The entire frame is drawn here.
  */
-static void Con_BusyDrawer(void)
+static void BusyTask_Drawer(void)
 {
     float pos = 0;
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, Window_Width(theWindow), Window_Height(theWindow), 0, -1, 1);
 
     Con_DrawScreenshotBackground(0, 0, Window_Width(theWindow), Window_Height(theWindow));
 
@@ -780,7 +764,11 @@ static void Con_BusyDrawer(void)
     Z_DebugDrawer();
 #endif
 
-    Window_SwapBuffers(theWindow);
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+
+    // The frame is ready to be shown.
+    Window_SwapBuffers(Window_Main());
 }
 
 boolean Con_TransitionInProgress(void)
