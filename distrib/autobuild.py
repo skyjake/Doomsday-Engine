@@ -111,6 +111,7 @@ def find_previous_tag(toTag, version):
 def update_changes(debChanges=False):
     """Generates the list of commits for the latest build."""
 
+    git_pull()
     toTag = todays_build_tag()
 
     import build_version
