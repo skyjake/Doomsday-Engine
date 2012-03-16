@@ -443,7 +443,7 @@ Sound {
   Lump = "DSCYBSIT";
   Link pitch = -1;
   Link volume = -1;
-  Priority = 92;
+  Priority = 65; #92;
   Max channels = 1;
 }
 
@@ -453,7 +453,7 @@ Sound {
   Lump = "DSSPISIT";
   Link pitch = -1;
   Link volume = -1;
-  Priority = 90;
+  Priority = 65; #90;
   Max channels = 1;
 }
 
@@ -823,7 +823,7 @@ Sound {
   Lump = "DSBAREXP";
   Link pitch = -1;
   Link volume = -1;
-  Priority = 64;
+  Priority = 60;
   Max channels = -1;
 }
 
