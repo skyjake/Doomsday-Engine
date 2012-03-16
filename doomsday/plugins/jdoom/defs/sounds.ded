@@ -439,21 +439,21 @@ Sound {
 
 Sound {
   ID = "cybsit";
-  Flags = "sf_shift2";
+  Flags = shift2 | dontstop;
   Lump = "DSCYBSIT";
   Link pitch = -1;
   Link volume = -1;
-  Priority = 65; #92;
+  Priority = 92;
   Max channels = 1;
 }
 
 Sound {
   ID = "spisit";
-  Flags = "sf_shift2";
+  Flags = shift2 | dontstop;
   Lump = "DSSPISIT";
   Link pitch = -1;
   Link volume = -1;
-  Priority = 65; #90;
+  Priority = 90;
   Max channels = 1;
 }
 
