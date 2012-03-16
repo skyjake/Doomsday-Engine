@@ -73,6 +73,17 @@ public:
     void setLoopFunc(void (*callback)(void));
 
     /**
+     * Saves the current loop rate and function and pushes them on a stack.
+     */
+    void pushLoop();
+
+    /**
+     * Pops the loop rate and function from the stack and replaces the current
+     * with the popped ones.
+     */
+    void popLoop();
+
+    /**
      * Stops the event loop. This is automatically called when the core is
      * destroyed.
      */

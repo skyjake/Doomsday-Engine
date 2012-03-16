@@ -50,6 +50,18 @@ void LegacyCore_SetLoopFunc(LegacyCore* lc, void (*callback)(void))
     return self->setLoopFunc(callback);
 }
 
+void LegacyCore_PushLoop(LegacyCore* lc)
+{
+    DENG2_SELF(LegacyCore, lc);
+    self->pushLoop();
+}
+
+void LegacyCore_PopLoop(LegacyCore* lc)
+{
+    DENG2_SELF(LegacyCore, lc);
+    self->popLoop();
+}
+
 void LegacyCore_Stop(LegacyCore *lc, int exitCode)
 {
     DENG2_SELF(LegacyCore, lc);

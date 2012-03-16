@@ -22,6 +22,7 @@
 #include "de/LogBuffer"
 
 #include <QCoreApplication>
+#include <QList>
 #include <QTimer>
 #include <QDebug>
 
@@ -34,13 +35,19 @@ LegacyCore* LegacyCore::_appCore;
  */
 struct LegacyCore::Instance
 {
+    struct Loop {
+        int interval;
+        void (*func)(void);
+        Loop() : interval(1), func(0) {}
+    };
+    QList<Loop> loopStack;
+
     App* app;
     LegacyNetwork network;
-    void (*loopFunc)(void);
+    Loop loop;
     LogBuffer logBuffer;
-    int loopInterval;
 
-    Instance() : app(0), loopFunc(0), loopInterval(1) {}
+    Instance() : app(0) {}
     ~Instance() {}
 };
 
@@ -81,16 +88,33 @@ LegacyNetwork& LegacyCore::network()
 
 void LegacyCore::setLoopFunc(void (*func)(void))
 {
-    LOG_DEBUG("Loop function changed from %p set to %p.") << dintptr(d->loopFunc) << dintptr(func);
+    LOG_DEBUG("Loop function changed from %p set to %p.") << dintptr(d->loop.func) << dintptr(func);
 
     // Set up a timer to periodically call the provided callback function.
-    d->loopFunc = func;
+    d->loop.func = func;
 
     if(func)
     {
         // Start the periodic callback calls.
-        QTimer::singleShot(d->loopInterval, this, SLOT(callback()));
+        QTimer::singleShot(d->loop.interval, this, SLOT(callback()));
     }
+}
+
+void LegacyCore::pushLoop()
+{
+    d->loopStack.append(d->loop);
+}
+
+void LegacyCore::popLoop()
+{
+    if(d->loopStack.isEmpty())
+    {
+        LOG_CRITICAL("Pop from empty loop stack.");
+        return;
+    }
+
+    d->loop = d->loopStack.last();
+    d->loopStack.removeLast();
 }
 
 int LegacyCore::runEventLoop()
@@ -107,7 +131,7 @@ int LegacyCore::runEventLoop()
 
 void LegacyCore::setLoopRate(int freqHz)
 {
-    d->loopInterval = qMax(1, 1000/freqHz);
+    d->loop.interval = qMax(1, 1000/freqHz);
 }
 
 void LegacyCore::stop(int exitCode)
@@ -117,9 +141,9 @@ void LegacyCore::stop(int exitCode)
 
 void LegacyCore::callback()
 {
-    if(d->loopFunc)
+    if(d->loop.func)
     {
-        d->loopFunc();
-        QTimer::singleShot(d->loopInterval, this, SLOT(callback()));
+        d->loop.func();
+        QTimer::singleShot(d->loop.interval, this, SLOT(callback()));
     }
 }
