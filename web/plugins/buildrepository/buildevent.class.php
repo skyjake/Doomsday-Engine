@@ -32,6 +32,7 @@ class BuildEvent
     private $authorName;
     private $authorEmail;
     private $releaseTypeId;
+    private $releaseNotesUri = NULL;
 
     /// @todo Collections should be private but allow public iteration.
     public $packages = array();
@@ -83,6 +84,21 @@ class BuildEvent
     public function releaseTypeId()
     {
         return $this->releaseTypeId;
+    }
+
+    public function hasReleaseNotesUri()
+    {
+        return !is_null($this->releaseNotesUri);
+    }
+
+    public function releaseNotesUri()
+    {
+        return $this->releaseNotesUri;
+    }
+
+    public function setReleaseNotesUri($newUri)
+    {
+        $this->releaseNotesUri = "$newUri";
     }
 
     public function addPackage(&$package)

@@ -223,6 +223,11 @@ class BuildLogParser
             $releaseType = RT_UNSTABLE;
 
         $event = new BuildEvent($uniqueId, $startDate, $authorName, $authorEmail, $releaseType);
+        if(!empty($log_event->releaseNotes))
+        {
+            $event->setReleaseNotesUri(clean_text($log_event->releaseNotes));
+        }
+
         return $event;
     }
 }
