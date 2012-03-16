@@ -104,11 +104,7 @@ class BuildLogParser
                         try
                         {
                             $pack = PackageFactory::newFromSimpleXMLElement($child, $build->releaseTypeId());
-
-                            if($build->releaseTypeId() !== RT_STABLE)
-                            {
-                                $pack->setBuildUniqueId($build->uniqueId());
-                            }
+                            $pack->setBuildUniqueId($build->uniqueId());
 
                             $build->addPackage($pack);
                         }
