@@ -77,7 +77,7 @@ function retrieveBuildLogXml(&$buildLogUri)
     }
     catch(Exception $e)
     {
-        /// \todo Store error so users can query.
+        /// @todo Store error so users can query.
         //setError($e->getMessage());
         return FALSE;
     }
@@ -608,7 +608,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
     private function populateStaticPackages(&$packages)
     {
         /**
-         * \todo Read this information from a config file, we should not
+         * @todo Read this information from a config file, we should not
          * expect to edit this file in order to change these...
          */
 
@@ -617,7 +617,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
             'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.8.6/deng-inst-1.8.6.exe/download');
         $packages[] = $pack;
 
-        $pack = PackageFactory::newUnstableDistribution(PID_WIN_X86, 'Doomsday', '1.9.0-beta6.9',
+        /*$pack = PackageFactory::newUnstableDistribution(PID_WIN_X86, 'Doomsday', '1.9.0-beta6.9',
             'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.0-beta6.9/deng-1.9.0-beta6.9-setup.exe/download');
         $packages[] = $pack;
 
@@ -627,7 +627,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         $packages[] = $pack;
 
         // Ubuntu:
-        /*$pack = PackageFactory::newUnstableDistribution(PID_LINUX_X86_64, 'Doomsday', '1.9.0-beta6.9',
+        $pack = PackageFactory::newUnstableDistribution(PID_LINUX_X86_64, 'Doomsday', '1.9.0-beta6.9',
             'http://sourceforge.net/projects/deng/files/');
         $packages[] = $pack;*/
 
@@ -652,11 +652,21 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 
         // Windows:
         $plat = $this->platform(PID_WIN_X86);
+        $pack = PackageFactory::newDistribution($plat['id'], 'Latest Doomsday',
+            NULL/*no version*/, 'latestbuild?platform='. $plat['name']);
+        $packages[] = $pack;
+
+        $plat = $this->platform(PID_WIN_X86);
         $pack = PackageFactory::newUnstableDistribution($plat['id'], 'Latest Doomsday',
             NULL/*no version*/, 'latestbuild?platform='. $plat['name']. '&unstable');
         $packages[] = $pack;
 
         // Mac OS:
+        $plat = $this->platform(PID_MAC10_4_X86_PPC);
+        $pack = PackageFactory::newDistribution($plat['id'], 'Latest Doomsday',
+            NULL/*no version*/, 'latestbuild?platform='. $plat['name']);
+        $packages[] = $pack;
+
         $plat = $this->platform(PID_MAC10_4_X86_PPC);
         $pack = PackageFactory::newUnstableDistribution($plat['id'], 'Latest Doomsday',
             NULL/*no version*/, 'latestbuild?platform='. $plat['name']. '&unstable');
@@ -664,8 +674,18 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 
         // Ubuntu:
         $plat = $this->platform(PID_LINUX_X86);
+        $pack = PackageFactory::newDistribution($plat['id'], 'Latest Doomsday',
+            NULL/*no version*/, 'latestbuild?platform='. $plat['name']);
+        $packages[] = $pack;
+
+        $plat = $this->platform(PID_LINUX_X86);
         $pack = PackageFactory::newUnstableDistribution($plat['id'], 'Latest Doomsday',
             NULL/*no version*/, 'latestbuild?platform='. $plat['name']. '&unstable');
+        $packages[] = $pack;
+
+        $plat = $this->platform(PID_LINUX_X86_64);
+        $pack = PackageFactory::newDistribution($plat['id'], 'Latest Doomsday',
+            NULL/*no version*/, 'latestbuild?platform='. $plat['name']);
         $packages[] = $pack;
 
         $plat = $this->platform(PID_LINUX_X86_64);
@@ -1285,10 +1305,9 @@ jQuery(document).ready(function() {
         }
 
         // Determine whether we are detailing a single build event or listing all events.
-        $uniqueId = $args['build'];
-        $build = $this->buildByUniqueId($uniqueId);
+        $build = isset($args['build'])? $this->buildByUniqueId($args['build']) : NULL;
 
-        $pageTitle = (!is_null($build)? $build->composeName(true/*add release type*/) : 'Builds');
+        $pageTitle = (!is_null($build)? $build->composeName(true/*add release type*/) : 'Build Repository');
 
         // Output this page.
         $FrontController->outputHeader($pageTitle);
@@ -1320,25 +1339,211 @@ jQuery(document).ready(function() {
         }
         else
         {
+
+            $eventMatrix = array();
+            foreach($this->packages as &$pack)
+            {
+                if($pack->title() !== 'Doomsday') continue;
+
+                $version = $pack->version();
+                //if(empty($version)) continue;
+
+                $key = array_casekey_exists($version, $eventMatrix);
+                if($key === false)
+                {
+                    $key = ucwords($version);
+                    $eventMatrix[$key] = array();
+                    $releaseInfo = &$eventMatrix[$key];
+                    $releaseInfo['releaseTypeId'] = RT_UNKNOWN;
+                }
+                else
+                {
+                    $releaseInfo = &$eventMatrix[$version];
+                }
+
+                if($pack->buildUniqueId() > 0)
+                {
+                    $buildUniqueId = $pack->buildUniqueId();
+                    $build = $this->buildByUniqueId($buildUniqueId);
+                    $buildKey = "$buildUniqueId";
+                }
+                else
+                {
+                    $build = new BuildEvent(0, 'Unknown', 'skyjake', 'jaakko.keranen@iki.fi');
+                    //$build->setReleaseNotesUri();
+                    $build->addPackage($pack);
+                    $buildKey = -1;
+                }
+
+                $releaseTypeId = RT_UNKNOWN;
+
+                if($build instanceof BuildEvent && !empty($buildKey))
+                {
+                    if(!isset($releaseInfo['buildIndex']))
+                    {
+                        $releaseInfo['buildIndex'] = array();
+                    }
+                    $index = &$releaseInfo['buildIndex'];
+
+                    if(array_search($buildKey, $index) === FALSE)
+                    {
+                        $index[] = $buildKey;
+                    }
+
+                    $releaseTypeId = $build->releaseTypeId();
+                }
+
+                if($releaseTypeId > $releaseInfo['releaseTypeId'])
+                {
+                    $releaseInfo['releaseTypeId'] = $releaseTypeId;
+                }
+
+                unset($releaseTypeId);
+            }
+
+            ksort($eventMatrix);
+            //print_r($eventMatrix);
+
+            $maxRows = 0;
+            foreach($eventMatrix as &$releaseInfo)
+            {
+                if(isset($releaseInfo['buildIndex']))
+                {
+                    $index = &$releaseInfo['buildIndex'];
+                    $rowCount = count($index);
+                }
+                else
+                {
+                    $rowCount = 0;
+                }
+
+                if($rowCount > $maxRows)
+                {
+                    $maxRows = $rowCount;
+                }
+            }
+
+?><div class="buildevents_outer"><table><thead><tr><th></th><th><?php
+
+?>Version<?php
+
+?></th></tr></thead><?php
+
+?><tbody><tr><td><?php
+
+            // Output stream info
+            includeHTML('streaminfo', self::$name);
+
+?></td><td><?php
+
+?><table class="buildevents"><thead><tr><?php
+
+            foreach($eventMatrix as $version => &$releaseInfo)
+            {
+                $releaseTypeId = $releaseInfo['releaseTypeId'];
+                $releaseType = $this->releaseType($releaseTypeId);
+                $releaseLabel = htmlspecialchars($version);
+
+?><th><?php
+
+                if(isset($releaseInfo['buildIndex']))
+                {
+                    $index = &$releaseInfo['buildIndex'];
+                    $latestBuildUniqueId = $index[0];
+                    if($latestBuildUniqueId >= 0)
+                    {
+                        $latestBuild = $this->buildByUniqueId($latestBuildUniqueId);
+
+                        if($latestBuild && $latestBuild->hasReleaseNotesUri())
+                        {
+                            $releaseTypeLink = $latestBuild->releaseNotesUri();
+                            $releaseTypeLinkTitle = "Read the release notes for $version";
+
+                            $releaseLabel = '<a href="'. $releaseTypeLink .'" title="'. $releaseTypeLinkTitle .'">'.$releaseLabel .'</a>';
+                        }
+                    }
+                    /*else
+                    {
+                        // Add release notes for the symbolic event.
+                        $releaseTypeLink = '';//$latestBuild->releaseNotesUri();
+                        $releaseTypeLinkTitle = "Read the release notes for $version";
+
+                        $releaseLabel = '<a href="'. $releaseTypeLink .'" title="'. $releaseTypeLinkTitle .'">'.$releaseLabel .'</a>';
+                    }*/
+                }
+
+echo $releaseLabel; ?></th><?php
+
+            }
+
+?></tr></thead><?php
+
+?><tbody><?php
+
+            for($row = (integer)0; $row < $maxRows; $row++)
+            {
+
+?><tr><?php
+
+                foreach($eventMatrix as $version => &$releaseInfo)
+                {
+
+?><td><?php
+
+                    if(isset($releaseInfo['buildIndex']) && count($releaseInfo['buildIndex']) > 0)
+                    {
+                        $index = &$releaseInfo['buildIndex'];
+                        if(isset($index[$row]))
+                        {
+                            $key = (integer)$index[$row];
+                            if($key >= 0)
+                            {
+                                $build = $this->buildByUniqueId($key);
+
+                                $releaseTypeId = $build->releaseTypeId();
+                                $releaseType = $this->releaseType($releaseTypeId);
+
+                                $inspectBuildUri = $build->composeName();
+                                $inspectBuildLabel = "Read more about {$releaseType['nicename']} {$build->composeName()}";
+
+?><a href="<?php echo $inspectBuildUri; ?>" title="<?php echo $inspectBuildLabel; ?>"><div class="buildevent_badge<?php if($releaseTypeId !== RT_UNKNOWN) echo (' '. $releaseType['name']) ?>"><?php echo htmlspecialchars($build->uniqueId()); ?><span class="startdate"><?php echo htmlspecialchars(date('d M', $build->startDate())); ?></span></div></a><?php
+
+                            }
+                        }
+                    }
+
+?></td><?php
+
+                }
+
+?></tr><?php
+
+            }
+
+?></tbody></table><?php
+
+?></td></tr></tbody></table></div><?php
+
+?><div class="buildsoverview"><span id="roadmap_badge"><a href="dew/index.php?title=Roadmap" title="Read the Roadmap at the Wiki">Roadmap</a></span><?php
+
             // Output an overview of the build system.
             includeHTML('overview', self::$name);
 
-?><div class="centered"><?php
-
-            // Generate a navigation widget for the recent build events.
-            $this->outputEventList(10/*max events*/);
-
             // Generate widgets for the symbolic packages.
-            $packageListTitle = 'Downloads for the latest packages (<a class="link-definition" href="dew/index.php?title=Automated_build_system#Unstable" title="What does \'unstable\' mean?">unstable</a>):';
+            $packageListTitle = '<h3>Downloads for the latest packages</h3>';
 
             $this->outputPackageList(&$this->symbolicPackages, NULL/*no chosen pack*/, PID_ANY,
-                                     -1/*no stable filter*/, TRUE/*only downloadables*/,
+                                     TRUE/*stable filter*/, TRUE/*only downloadables*/,
+                                     -1/*no result limit*/, $packageListTitle);
+
+            $packageListTitle = '<h3>Downloads for the latest packages (<a class="link-definition" href="dew/index.php?title=Automated_build_system#Unstable" title="What does \'unstable\' mean?">unstable</a>)</h3>';
+
+            $this->outputPackageList(&$this->symbolicPackages, NULL/*no chosen pack*/, PID_ANY,
+                                     FALSE/*no stable filter*/, TRUE/*only downloadables*/,
                                      -1/*no result limit*/, $packageListTitle);
 
 ?></div><?php
 
-            // Output footnotes for the build system.
-            includeHTML('footnotes', self::$name);
         }
 
 ?></div><?php
