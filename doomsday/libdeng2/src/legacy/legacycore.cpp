@@ -23,6 +23,7 @@
 
 #include <QCoreApplication>
 #include <QTimer>
+#include <QDebug>
 
 using namespace de;
 
@@ -33,7 +34,7 @@ LegacyCore* LegacyCore::_appCore;
  */
 struct LegacyCore::Instance
 {
-    QApplication* app;
+    App* app;
     LegacyNetwork network;
     void (*loopFunc)(void);
     LogBuffer logBuffer;
@@ -43,7 +44,7 @@ struct LegacyCore::Instance
     ~Instance() {}
 };
 
-LegacyCore::LegacyCore(QApplication* dengApp)
+LegacyCore::LegacyCore(App* dengApp)
 {
     _appCore = this;
     d = new Instance;
@@ -53,6 +54,9 @@ LegacyCore::LegacyCore(QApplication* dengApp)
 
     // The global log buffer will be available for the entire runtime of deng2.
     LogBuffer::setAppBuffer(d->logBuffer);
+#ifdef DENG2_DEBUG
+    d->logBuffer.enable(Log::DEBUG);
+#endif
 }
 
 LegacyCore::~LegacyCore()
@@ -77,6 +81,8 @@ LegacyNetwork& LegacyCore::network()
 
 void LegacyCore::setLoopFunc(void (*func)(void))
 {
+    LOG_DEBUG("Loop function changed from %p set to %p.") << (dintptr)d->loopFunc << (dintptr)func;
+
     // Set up a timer to periodically call the provided callback function.
     d->loopFunc = func;
 

@@ -36,6 +36,7 @@ include(network.pri)
 
 # Convenience headers.
 HEADERS += \
+    include/de/App \
     include/de/Error \
     include/de/Log \
     include/de/LogBuffer \
@@ -44,6 +45,7 @@ HEADERS += \
     include/de/c_wrapper.h \
     include/de/error.h \
     include/de/libdeng2.h \
+    include/de/core/app.h \
     include/de/core/log.h \
     include/de/core/logbuffer.h
 
@@ -53,6 +55,7 @@ HEADERS += \
 
 SOURCES += \
     src/c_wrapper.cpp \
+    src/core/app.cpp \
     src/core/log.cpp \
     src/core/logbuffer.cpp
 

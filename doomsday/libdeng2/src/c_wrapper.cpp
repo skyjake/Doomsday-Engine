@@ -29,7 +29,7 @@
 
 LegacyCore* LegacyCore_New(void* dengApp)
 {
-    return reinterpret_cast<LegacyCore*>(new de::LegacyCore(reinterpret_cast<QApplication*>(dengApp)));
+    return reinterpret_cast<LegacyCore*>(new de::LegacyCore(reinterpret_cast<de::App*>(dengApp)));
 }
 
 int LegacyCore_RunEventLoop(LegacyCore* lc)

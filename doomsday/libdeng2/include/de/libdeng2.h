@@ -28,6 +28,10 @@
 #  define DENG2_USE_QT
 #endif
 
+#if defined(__x86_64__) || defined(__x86_64) || defined(_LP64)
+#  define DENG2_64BIT
+#endif
+
 #ifdef DENG2_USE_QT
 #include <QtCore/qglobal.h>
 #endif
@@ -52,12 +56,14 @@
 #endif
 
 #ifndef NDEBUG
+#  define DENG2_DEBUG
 #  ifdef DENG2_USE_QT
 #    define DENG2_ASSERT(x) Q_ASSERT(x)
 #  else
 #    define DENG2_ASSERT(x) assert(x)
 #  endif
 #else
+#  define DENG2_NO_DEBUG
 #  define DENG2_ASSERT(x)
 #endif
 
@@ -114,6 +120,13 @@ typedef quint64 duint64;    ///< 64-bit unsigned integer.
 typedef float   dfloat;     ///< 32-bit floating point number.
 typedef qreal   ddouble;    ///< 64-bit floating point number.
 typedef quint64 dsize;
+
+// Pointer-integer conversion (used for legacy code).
+#ifdef DENG2_64BIT
+typedef duint64 dintptr;
+#else
+typedef duint32 dintptr;
+#endif
 //@}
 
 } // namespace de

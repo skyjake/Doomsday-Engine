@@ -23,6 +23,8 @@
 #include <QApplication>
 #include <QSettings>
 #include <stdlib.h>
+#include <de/App>
+#include <de/Log>
 #include <de/c_wrapper.h>
 #include "de_platform.h"
 #include "dd_loop.h"
@@ -82,7 +84,7 @@ int main(int argc, char** argv)
     }
 
     // Application core.
-    QApplication dengApp(argc, argv, useGUI);
+    de::App dengApp(argc, argv, useGUI);
 
     // Metadata.
     QApplication::setOrganizationDomain("dengine.net");

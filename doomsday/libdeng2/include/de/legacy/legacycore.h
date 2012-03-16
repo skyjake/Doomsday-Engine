@@ -21,7 +21,7 @@
 #define LIBDENG2_LEGACYCORE_H
 
 #include "../libdeng2.h"
-#include <QApplication>
+#include "../App"
 
 namespace de {
 
@@ -43,7 +43,7 @@ public:
      *
      * @param dengApp  Application instance.
      */
-    LegacyCore(QApplication* dengApp);
+    LegacyCore(App* dengApp);
 
     ~LegacyCore();
 
