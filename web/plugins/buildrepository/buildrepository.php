@@ -1285,6 +1285,314 @@ jQuery(document).ready(function() {
     }
 
     /**
+     * Print an HTML representation of the detailed information we have for
+     * the specified build @a event to the output stream.
+     *
+     * @param buildEvent  (object) BuildEvent to be detailed.
+     */
+    private function outputEventDetail(&$build)
+    {
+        if(!$build instanceof BuildEvent) throw new Exception('outputEventDetail: Invalid build argument, BuildEvent expected');
+
+?><div class="buildevent"><?php
+
+        $olderBuild = $this->findOlderBuild($build);
+        $newerBuild = $this->findNewerBuild($build);
+        $this->outputBuildStreamNavigation($olderBuild, $newerBuild);
+
+?><div id="buildoverview"><?php
+
+        $this->outputBuildEventMetadata($build);
+        $this->outputBuildPackageList($build);
+
+?></div><?php
+
+        $this->outputBuildCommitLog($build);
+
+?></div><?php
+    }
+
+    /**
+     * Construct a new ReleaseInfo record (array).
+     *
+     * Properties:
+     *
+     *   releaseTypeId < (integer) @ref releaseType
+     *   buildIndex    < (array) Array of unique identifiers which reference
+     *                   logical BuildEvents in the builds collection.
+     */
+    private function newReleaseInfo()
+    {
+        $record = array();
+        $record['releaseTypeId'] = RT_UNKNOWN; // Default.
+        $record['buildIndex'] = array();
+        return $record;
+    }
+
+    private function ReleaseInfo_BuildUniqueIdByIndex(&$info, $index)
+    {
+        if(!is_array($info)) throw new Exception('ReleaseInfo_BuildUniqueIdByIndex: Invalid info argument, array expected.');
+
+        $index = (integer)$index;
+        if($index < 0 || count($info['buildIndex']) <= 0) return -1;
+
+        $uniqueIds = &$info['buildIndex'];
+        if(!isset($uniqueIds[$index])) return -1;
+
+        return (integer)$uniqueIds[$index];
+    }
+
+    /**
+     * Produce a indexable directory of BuildEvents from the Packages
+     * collection, grouping them according to the version number of the
+     * 'Doomsday' packages those events produced.
+     *
+     * The version number (string) is used as key to each record.
+     *
+     * @param matrix  (Array) will be populated with new records.
+     * @return  (Mixed) FALSE if no packages were added to the matrix
+     *          otherwise the number of added packages (integer).
+     */
+    private function populateEventMatrix(&$matrix)
+    {
+        if(!is_array($matrix)) throw new Exception('populateEventMatrix: Invalid matrix argument, array expected.');
+        if(!isset($this->packages)) return FALSE;
+
+        // Running total of the number of events we add to the matrix.
+        $numEventsAdded = (integer)0;
+
+        foreach($this->packages as &$pack)
+        {
+            // We are only interested in the 'Doomsday' packages.
+            if($pack->title() !== 'Doomsday') continue;
+
+            // Have we encountered this version before?.
+            $version = $pack->version();
+            $key = array_casekey_exists($version, $matrix);
+            if($key === false)
+            {
+                // Not yet construct a new record and associate it
+                // in the matrix using the version number as the key.
+                $key = ucwords($version);
+                $matrix[$key] = $this->newReleaseInfo();
+
+                $releaseInfo = &$matrix[$key];
+            }
+            else
+            {
+                $releaseInfo = &$matrix[$version];
+            }
+
+            // Is this package a product of the autobuilder?
+            if($pack instanceof iBuilderProduct) //$pack->buildUniqueId() > 0)
+            {
+                // Yes; we have "real" BuildEvent we can link with this.
+                $buildUniqueId = $pack->buildUniqueId();
+                $build = $this->buildByUniqueId($buildUniqueId);
+                $buildKey = "$buildUniqueId";
+            }
+            else
+            {
+                // No - this must be a symbolic package.
+                // We'll instantiate a symbolic BuildEvent for this.
+                $build = new BuildEvent(0, 'Unknown', 'skyjake', 'jaakko.keranen@iki.fi');
+                //$build->setReleaseNotesUri();
+                $build->addPackage($pack);
+
+                // Symbolic events do not have a build id and therefore
+                // do not have a key; use an out-of-valid-range value.
+                $buildKey = "-1";
+            }
+
+            if(!$build instanceof BuildEvent) continue; // Odd...
+
+            // Is a build event already present in the index for this release version?
+            $index = &$releaseInfo['buildIndex'];
+            if(array_search($buildKey, $index) !== FALSE) continue;
+
+            // Add this build to the matrix.
+            $index[] = $buildKey;
+
+            // One more event was added to the matrix.
+            $numEventsAdded++;
+
+            // Promote the status of the release due to this package?
+            $releaseTypeId = $build->releaseTypeId();
+            if($releaseTypeId > $releaseInfo['releaseTypeId'])
+            {
+                $releaseInfo['releaseTypeId'] = $releaseTypeId;
+            }
+        }
+
+        return $numEventsAdded;
+    }
+
+    private function findMaxBuildEventCountInEventMatrix(&$matrix)
+    {
+        if(!is_array($matrix)) throw new Exception('findMaxBuildEventCountInEventMatrix: Invalid matrix argument, array expected.');
+
+        $max = 0;
+        foreach($matrix as &$releaseInfo)
+        {
+            if(!is_array($releaseInfo) || !isset($releaseInfo['buildIndex'])) continue;
+
+            $index = &$releaseInfo['buildIndex'];
+            $count = count($index);
+            if($count > $max) $max = $count;
+        }
+        return $max;
+    }
+
+    /**
+     * Print an HTML representation of the supplied build event matrix
+     * to the output stream.
+     */
+    private function outputEventMatrix(&$matrix)
+    {
+        if(!is_array($matrix)) throw new Exception('outputEventMatrix: Invalid matrix argument, array expected.');
+
+        // The total number of rows in the table is determined by the
+        // maximum number of events associated with a single release.
+        $maxRows = $this->findMaxBuildEventCountInEventMatrix($matrix);
+
+        // Begin table header.
+?><table class="buildevents"><thead><tr><?php
+
+        foreach($matrix as $version => &$releaseInfo)
+        {
+            $releaseTypeId = $releaseInfo['releaseTypeId'];
+            $releaseType = $this->releaseType($releaseTypeId);
+            $releaseLabel = htmlspecialchars($version);
+
+?><th><?php
+
+            if(count($releaseInfo['buildIndex']) > 0)
+            {
+                $index = &$releaseInfo['buildIndex'];
+                $latestBuildUniqueId = $index[0];
+                if($latestBuildUniqueId >= 0)
+                {
+                    $latestBuild = $this->buildByUniqueId($latestBuildUniqueId);
+
+                    if($latestBuild && $latestBuild->hasReleaseNotesUri())
+                    {
+                        $releaseTypeLink = $latestBuild->releaseNotesUri();
+                        $releaseTypeLinkTitle = "Read the release notes for $version";
+
+                        $releaseLabel = '<a href="'. $releaseTypeLink .'" title="'. $releaseTypeLinkTitle .'">'.$releaseLabel .'</a>';
+                    }
+                }
+                /*else
+                {
+                    // Add release notes for the symbolic event.
+                    $releaseTypeLink = '';//$latestBuild->releaseNotesUri();
+                    $releaseTypeLinkTitle = "Read the release notes for $version";
+
+                    $releaseLabel = '<a href="'. $releaseTypeLink .'" title="'. $releaseTypeLinkTitle .'">'.$releaseLabel .'</a>';
+                }*/
+            }
+
+echo $releaseLabel; ?></th><?php
+
+        }
+
+?></tr></thead><?php
+
+        // Begin table body.
+?><tbody><?php
+
+        for($row = (integer)0; $row < $maxRows; $row++)
+        {
+
+?><tr><?php
+
+            foreach($matrix as $version => &$releaseInfo)
+            {
+
+?><td><?php
+
+                $uniqueId = $this->ReleaseInfo_BuildUniqueIdByIndex($releaseInfo, $row);
+                if($uniqueId >= 0)
+                {
+                    $build = $this->buildByUniqueId($uniqueId);
+                    // Sanity check:
+                    if(!$build instanceof BuildEvent) throw new Exception("outputEventMatrix: Failed to locate a BuildEvent for uniqueId:'$uniqueId'.");
+
+                    echo $build->genFancyBadge();
+                }
+
+?></td><?php
+
+            }
+
+?></tr><?php
+
+        }
+
+?></tbody></table><?php
+    }
+
+    /**
+     * Merge the BuildEvent matrix to the output stream.
+     */
+    private function includeEventMatrix()
+    {
+        // Construct the event matrix.
+        $matrix = array();
+        $this->populateEventMatrix($matrix);
+
+        // Sort by key to achieve the version-number-ascending order.
+        ksort($matrix);
+        //print_r($matrix);
+
+        $this->outputEventMatrix($matrix);
+    }
+
+    /**
+     * Print an HTML representation of the entire builds collection to
+     * the output stream.
+     */
+    private function outputEventIndex()
+    {
+?><div class="buildevents_outer"><table><thead><tr><th></th><th><?php
+
+?>Version<?php
+
+?></th></tr></thead><?php
+
+?><tbody><tr><td><?php
+
+        // Output stream info
+        includeHTML('streaminfo', self::$name);
+
+?></td><td><?php
+
+        $this->includeEventMatrix();
+
+?></td></tr></tbody></table></div><?php
+
+?><div class="buildsoverview"><span id="roadmap_badge"><a href="dew/index.php?title=Roadmap" title="Read the Roadmap at the Wiki">Roadmap</a></span><?php
+
+        // Output an overview of the build system.
+        includeHTML('overview', self::$name);
+
+        // Generate widgets for the symbolic packages.
+        $packageListTitle = '<h3>Downloads for the latest packages</h3>';
+
+        $this->outputPackageList(&$this->symbolicPackages, NULL/*no chosen pack*/, PID_ANY,
+                                 TRUE/*stable filter*/, TRUE/*only downloadables*/,
+                                 -1/*no result limit*/, $packageListTitle);
+
+        $packageListTitle = '<h3>Downloads for the latest packages (<a class="link-definition" href="dew/index.php?title=Automated_build_system#Unstable" title="What does \'unstable\' mean?">unstable</a>)</h3>';
+
+        $this->outputPackageList(&$this->symbolicPackages, NULL/*no chosen pack*/, PID_ANY,
+                                 FALSE/*no stable filter*/, TRUE/*only downloadables*/,
+                                 -1/*no result limit*/, $packageListTitle);
+
+?></div><?php
+    }
+
+    /**
      * Implements Actioner.
      */
     public function execute($args=NULL)
@@ -1318,232 +1626,12 @@ jQuery(document).ready(function() {
         if(!is_null($build))
         {
             // Detailing a single build event.
-
-?><div class="buildevent"><?php
-
-            $olderBuild = $this->findOlderBuild($build);
-            $newerBuild = $this->findNewerBuild($build);
-            $this->outputBuildStreamNavigation($olderBuild, $newerBuild);
-
-?><div id="buildoverview"><?php
-
-            $this->outputBuildEventMetadata($build);
-            $this->outputBuildPackageList($build);
-
-?></div><?php
-
-            $this->outputBuildCommitLog($build);
-
-?></div><?php
-
+            $this->outputEventDetail($build);
         }
         else
         {
-
-            $eventMatrix = array();
-            foreach($this->packages as &$pack)
-            {
-                if($pack->title() !== 'Doomsday') continue;
-
-                $version = $pack->version();
-                //if(empty($version)) continue;
-
-                $key = array_casekey_exists($version, $eventMatrix);
-                if($key === false)
-                {
-                    $key = ucwords($version);
-                    $eventMatrix[$key] = array();
-                    $releaseInfo = &$eventMatrix[$key];
-                    $releaseInfo['releaseTypeId'] = RT_UNKNOWN;
-                }
-                else
-                {
-                    $releaseInfo = &$eventMatrix[$version];
-                }
-
-                if($pack->buildUniqueId() > 0)
-                {
-                    $buildUniqueId = $pack->buildUniqueId();
-                    $build = $this->buildByUniqueId($buildUniqueId);
-                    $buildKey = "$buildUniqueId";
-                }
-                else
-                {
-                    $build = new BuildEvent(0, 'Unknown', 'skyjake', 'jaakko.keranen@iki.fi');
-                    //$build->setReleaseNotesUri();
-                    $build->addPackage($pack);
-                    $buildKey = -1;
-                }
-
-                $releaseTypeId = RT_UNKNOWN;
-
-                if($build instanceof BuildEvent && !empty($buildKey))
-                {
-                    if(!isset($releaseInfo['buildIndex']))
-                    {
-                        $releaseInfo['buildIndex'] = array();
-                    }
-                    $index = &$releaseInfo['buildIndex'];
-
-                    if(array_search($buildKey, $index) === FALSE)
-                    {
-                        $index[] = $buildKey;
-                    }
-
-                    $releaseTypeId = $build->releaseTypeId();
-                }
-
-                if($releaseTypeId > $releaseInfo['releaseTypeId'])
-                {
-                    $releaseInfo['releaseTypeId'] = $releaseTypeId;
-                }
-
-                unset($releaseTypeId);
-            }
-
-            ksort($eventMatrix);
-            //print_r($eventMatrix);
-
-            $maxRows = 0;
-            foreach($eventMatrix as &$releaseInfo)
-            {
-                if(isset($releaseInfo['buildIndex']))
-                {
-                    $index = &$releaseInfo['buildIndex'];
-                    $rowCount = count($index);
-                }
-                else
-                {
-                    $rowCount = 0;
-                }
-
-                if($rowCount > $maxRows)
-                {
-                    $maxRows = $rowCount;
-                }
-            }
-
-?><div class="buildevents_outer"><table><thead><tr><th></th><th><?php
-
-?>Version<?php
-
-?></th></tr></thead><?php
-
-?><tbody><tr><td><?php
-
-            // Output stream info
-            includeHTML('streaminfo', self::$name);
-
-?></td><td><?php
-
-?><table class="buildevents"><thead><tr><?php
-
-            foreach($eventMatrix as $version => &$releaseInfo)
-            {
-                $releaseTypeId = $releaseInfo['releaseTypeId'];
-                $releaseType = $this->releaseType($releaseTypeId);
-                $releaseLabel = htmlspecialchars($version);
-
-?><th><?php
-
-                if(isset($releaseInfo['buildIndex']))
-                {
-                    $index = &$releaseInfo['buildIndex'];
-                    $latestBuildUniqueId = $index[0];
-                    if($latestBuildUniqueId >= 0)
-                    {
-                        $latestBuild = $this->buildByUniqueId($latestBuildUniqueId);
-
-                        if($latestBuild && $latestBuild->hasReleaseNotesUri())
-                        {
-                            $releaseTypeLink = $latestBuild->releaseNotesUri();
-                            $releaseTypeLinkTitle = "Read the release notes for $version";
-
-                            $releaseLabel = '<a href="'. $releaseTypeLink .'" title="'. $releaseTypeLinkTitle .'">'.$releaseLabel .'</a>';
-                        }
-                    }
-                    /*else
-                    {
-                        // Add release notes for the symbolic event.
-                        $releaseTypeLink = '';//$latestBuild->releaseNotesUri();
-                        $releaseTypeLinkTitle = "Read the release notes for $version";
-
-                        $releaseLabel = '<a href="'. $releaseTypeLink .'" title="'. $releaseTypeLinkTitle .'">'.$releaseLabel .'</a>';
-                    }*/
-                }
-
-echo $releaseLabel; ?></th><?php
-
-            }
-
-?></tr></thead><?php
-
-?><tbody><?php
-
-            for($row = (integer)0; $row < $maxRows; $row++)
-            {
-
-?><tr><?php
-
-                foreach($eventMatrix as $version => &$releaseInfo)
-                {
-
-?><td><?php
-
-                    if(isset($releaseInfo['buildIndex']) && count($releaseInfo['buildIndex']) > 0)
-                    {
-                        $index = &$releaseInfo['buildIndex'];
-                        if(isset($index[$row]))
-                        {
-                            $key = (integer)$index[$row];
-                            if($key >= 0)
-                            {
-                                $build = $this->buildByUniqueId($key);
-
-                                $releaseTypeId = $build->releaseTypeId();
-                                $releaseType = $this->releaseType($releaseTypeId);
-
-                                $inspectBuildUri = $build->composeName();
-                                $inspectBuildLabel = "Read more about {$releaseType['nicename']} {$build->composeName()}";
-
-?><a href="<?php echo $inspectBuildUri; ?>" title="<?php echo $inspectBuildLabel; ?>"><div class="buildevent_badge<?php if($releaseTypeId !== RT_UNKNOWN) echo (' '. $releaseType['name']) ?>"><?php echo htmlspecialchars($build->uniqueId()); ?><span class="startdate"><?php echo htmlspecialchars(date('d M', $build->startDate())); ?></span></div></a><?php
-
-                            }
-                        }
-                    }
-
-?></td><?php
-
-                }
-
-?></tr><?php
-
-            }
-
-?></tbody></table><?php
-
-?></td></tr></tbody></table></div><?php
-
-?><div class="buildsoverview"><span id="roadmap_badge"><a href="dew/index.php?title=Roadmap" title="Read the Roadmap at the Wiki">Roadmap</a></span><?php
-
-            // Output an overview of the build system.
-            includeHTML('overview', self::$name);
-
-            // Generate widgets for the symbolic packages.
-            $packageListTitle = '<h3>Downloads for the latest packages</h3>';
-
-            $this->outputPackageList(&$this->symbolicPackages, NULL/*no chosen pack*/, PID_ANY,
-                                     TRUE/*stable filter*/, TRUE/*only downloadables*/,
-                                     -1/*no result limit*/, $packageListTitle);
-
-            $packageListTitle = '<h3>Downloads for the latest packages (<a class="link-definition" href="dew/index.php?title=Automated_build_system#Unstable" title="What does \'unstable\' mean?">unstable</a>)</h3>';
-
-            $this->outputPackageList(&$this->symbolicPackages, NULL/*no chosen pack*/, PID_ANY,
-                                     FALSE/*no stable filter*/, TRUE/*only downloadables*/,
-                                     -1/*no result limit*/, $packageListTitle);
-
-?></div><?php
-
+            // Show the entire build event index.
+            $this->outputEventIndex();
         }
 
 ?></div><?php
