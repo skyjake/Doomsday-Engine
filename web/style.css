@@ -975,28 +975,11 @@ span.metadata {
     padding:1.2em 0;
 }
 
-.buildevents, .buildevents_inner {
+.buildevents {
     border-spacing:0;
     display:inline-block;
     vertical-align:top;
     border-collapse: collapse;
-}
-
-.buildevents_inner div.downloads_list {
-    display:block;
-}
-
-.buildevents_inner {
-    padding:0 1em;
-}
-
-.buildevents_inner h1,
-.buildevents_inner h2,
-.buildevents_inner h3,
-.buildevents_inner h4,
-.buildevents_inner h5,
-.buildevents_inner h6 {
-    clear:none;
 }
 
 .buildevents {
@@ -1010,7 +993,7 @@ span.metadata {
     min-width: 3.2em;
 }
 
-.buildevents thead tr th, .buildevents_inner thead tr th,
+.buildevents thead tr th,
 #roadmap_badge {
     padding-bottom:.5em;
     font-size:large;
