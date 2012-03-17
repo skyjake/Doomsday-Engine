@@ -20,6 +20,42 @@
  * 02110-1301 USA</small>
  */
 
+/**
+ * @page mainFlow Engine Control Flow
+ *
+ * The main Qt application instance is de::App, which is a slightly modified
+ * version of the normal QApplication: it catches stray exceptions and forces a
+ * clean shutdown of the application.
+ *
+ * LegacyCore is a thin wrapper around de::App that manages the event loop in a
+ * way that is compatible with the legacy C implementation. The LegacyCore
+ * instance is created in the main() function and is globally available
+ * throughout the libdeng implementation as de2LegacyCore.
+ *
+ * The application's event loop is started as soon as the main window has been
+ * created (but not shown yet). After the window appears with a fully
+ * functional OpenGL drawing surface, the rest of the engine initialization is
+ * completed. This is done via a callback in the Canvas class that gets called
+ * when the window actually appears on screen (with empty contents).
+ *
+ * While the event loop is running, it periodically calls the loop callback
+ * function that has been set via LegacyCore. Initially it is used for showing
+ * the main window while the loop is already running
+ * (continueInitWithEventLoopRunning()) after which it switches to the engine's
+ * main loop callback (DD_GameLoopCallback()).
+ *
+ * During startup the engine goes through a series of busy tasks. While a busy
+ * task is running, the event loop started in LegacyCore is blocked. However,
+ * BusyTask starts another loop that continues to handle events received by the
+ * application, including making calls to the loop callback function. Busy mode
+ * uses its own loop callback function that monitors the progress of the busy
+ * worker and keeps updating the busy mode progress indicator on screen. After
+ * busy mode ends, the main loop callback is restored.
+ *
+ * The rate at which the main loop calls the loop callback can be configured
+ * via LegacyCore.
+ */
+
 #include <QApplication>
 #include <QSettings>
 #include <stdlib.h>
