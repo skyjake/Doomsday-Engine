@@ -140,7 +140,7 @@ class BuildEvent
 
         $name = "Build$this->uniqueId";
         $inspectBuildUri = $name;
-        $inspectBuildLabel = "Read more about {$releaseType['nicename']} {$name}";
+        $inspectBuildLabel = htmlspecialchars("Read more about {$releaseType['nicename']} {$name}");
 
         $cssClass = 'buildevent_badge';
         if($this->releaseTypeId !== RT_UNKNOWN)

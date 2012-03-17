@@ -103,7 +103,7 @@ abstract class AbstractPackage extends BasePackage implements iDownloadable, iBu
         if($this->hasDirectDownloadUri())
         {
             $html = '<a href="'. htmlspecialchars($this->directDownloadUri)
-                   .'" title="'. ("Download $fullTitle")
+                   .'" title="'. htmlspecialchars("Download $fullTitle")
                           .'">'. htmlspecialchars($fullTitle) .'</a>';
         }
         else

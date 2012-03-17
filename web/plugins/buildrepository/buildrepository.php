@@ -152,7 +152,7 @@ function mustUpdateCachedBuildLog(&$buildLogUri, &$cacheName)
     }
     catch(Exception $e)
     {
-        /// \todo Store error so users can query.
+        /// @todo Store error so users can query.
         //setError($e->getMessage());
         return FALSE;
     }
@@ -202,14 +202,19 @@ function groupBuildCommits(&$build, &$groups)
 function make_pretty_hyperlink($matches)
 {
     $uri = implode('', array_slice($matches, 1));
+    return genHyperlinkHTML($uri, 40, 'link-external');
+}
 
-    if(strlen($uri) > 40)
-        $shortUri = substr($uri, 0, 40).'...';
-    else
-        $shortUri = $uri;
+function formatCommitMessageHTML($msg)
+{
+    if(strcasecmp(gettype($msg), 'string')) return $msg;
 
-    /// @fixme Do not assume all links are external ones.
-    return '<a class="link-external" href="'.$uri.'">'.$shortUri.'</a>';
+    // Process the commit message, replacing web URIs with clickable links.
+    htmlspecialchars($msg);
+    $msg =  preg_replace_callback("/([^A-z0-9])(http|ftp|https)([\:\/\/])([^\\s]+)/",
+        "make_pretty_hyperlink", $msg);
+    $msg = nl2br($msg);
+    return $msg;
 }
 
 function outputCommitHTML(&$commit)
@@ -217,10 +222,8 @@ function outputCommitHTML(&$commit)
     if(!is_array($commit))
         throw new Exception('Invalid commit argument, array expected');
 
-    // Process the commit message, replacing web URIs with clickable links.
-    $message =  preg_replace_callback("/([^A-z0-9])(http|ftp|https)([\:\/\/])([^\\s]+)/",
-        "make_pretty_hyperlink", $commit['message']);
-    $message = nl2br($message);
+    // Format the commit message for HTML output.
+    $message = $commit['message'];
     $haveMessage = (bool)(strlen($message) > 0);
 
     // Compose the supplementary tag list.
@@ -236,7 +239,8 @@ function outputCommitHTML(&$commit)
             // Do not output guessed tags (mainly used for grouping).
             if(is_array($value) && isset($value['guessed']) && $value['guessed'] !== 0) continue;
 
-            $tagList .= '<div class="tag"><label title="Tagged \''.$tag.'\'">'.$tag.'</label></div>';
+            $cleanTag = htmlspecialchars($tag);
+            $tagList .= '<div class="tag"><label title="Tagged \''.$cleanTag.'\'">'.$cleanTag.'</label></div>';
         }
     }
     $tagList .= '</div>';
@@ -244,9 +248,9 @@ function outputCommitHTML(&$commit)
     $repoLinkTitle = 'Show changes in the repository for this commit submitted on '. date(DATE_RFC2822, $commit['submitDate']) .'.';
 
     // Ouput HTML for the commit.
-?><span class="metadata"><a href="<?php echo $commit['repositoryUri']; ?>" class="link-external" title="<?php echo $repoLinkTitle; ?>"><?php echo date('Y-m-d', $commit['submitDate']); ?></a></span><?php
+?><span class="metadata"><a href="<?php echo $commit['repositoryUri']; ?>" class="link-external" title="<?php echo htmlspecialchars($repoLinkTitle); ?>"><?php echo htmlspecialchars(date('Y-m-d', $commit['submitDate'])); ?></a></span><?php
 
-?><p class="heading <?php if($haveMessage) echo 'collapsible'; ?>" <?php if($haveMessage) echo 'title="Toggle commit message display"'; ?>><strong><span class="title"><?php echo $commit['title']; ?></span></strong> by <em><?php echo $commit['author']; ?></em></p><?php echo $tagList;
+?><p class="heading <?php if($haveMessage) echo 'collapsible'; ?>" <?php if($haveMessage) echo 'title="Toggle commit message display"'; ?>><strong><span class="title"><?php echo htmlspecialchars($commit['title']); ?></span></strong> by <em><?php echo htmlspecialchars($commit['author']); ?></em></p><?php echo $tagList;
 
     if($haveMessage)
     {
@@ -264,7 +268,7 @@ function outputCommitJumpList2(&$groups)
     {
         $tagLinkTitle = "Jump to commits tagged '$groupName'";
 
-?><li><a href="#<?php echo $groupName; ?>" title="<?php echo $tagLinkTitle; ?>"><?php echo htmlspecialchars($groupName); ?></a></li><?php
+?><li><a href="#<?php echo $groupName; ?>" title="<?php echo htmlspecialchars($tagLinkTitle); ?>"><?php echo htmlspecialchars($groupName); ?></a></li><?php
     }
 ?></ol><?php
 }
@@ -339,7 +343,7 @@ function outputCommitLogHTML(&$build)
 
             if($groupCount > 1)
             {
-?><strong><label title="<?php echo ("Commits with primary tag '$groupName'"); ?>"><span class="tag"><?php echo htmlspecialchars($groupName); ?></span></label></strong><a name="<?php echo $groupName; ?>"></a><a class="jump" href="#commitindex" title="Back to Commits index">index</a><br /><ol><?php
+?><strong><label title="<?php echo htmlspecialchars("Commits with primary tag '$groupName'"); ?>"><span class="tag"><?php echo htmlspecialchars($groupName); ?></span></label></strong><a name="<?php echo htmlspecialchars($groupName); ?>"></a><a class="jump" href="#commitindex" title="Back to Commits index">index</a><br /><ol><?php
             }
 
             foreach($group as &$commit)
@@ -880,7 +884,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         // Older event link.
         echo '<li>';
         if(!is_null($prevEvent))
-            echo "<a href=\"$prevBuildUri\" title=\"View older ".$prevEvent->composeName()."\">";
+            echo "<a href=\"$prevBuildUri\" title=\"View older ".htmlspecialchars($prevEvent->composeName())."\">";
         echo '&lt; Older';
         if(!is_null($prevEvent))
             echo '</a>';
@@ -892,7 +896,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         // Newer event link.
         echo '<li>';
         if(!is_null($nextEvent))
-            echo "<a href=\"$nextBuildUri\" title=\"View newer ".$nextEvent->composeName()."\">";
+            echo "<a href=\"$nextBuildUri\" title=\"View newer ".htmlspecialchars($nextEvent->composeName())."\">";
         echo 'Newer &gt;';
         if(!is_null($nextEvent))
             echo '</a>';
@@ -980,7 +984,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                 $eventHTML = $event->genBadge();
 
                 // Wrap the event in a div which has all if our stylings.
-?><tr><td><?php echo $shortDate; ?></td><td><?php echo $eventHTML; ?></td></tr><?php
+?><tr><td><?php echo htmlspecialchars($shortDate); ?></td><td><?php echo $eventHTML; ?></td></tr><?php
 
                 if(++$n >= $maxEvents)
                     break;
@@ -1068,7 +1072,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         // Generate page content.
 ?><div id="builds"><?php
 
-?><p>Redirecting to the download for <em><?php echo htmlspecialchars($pack->composeFullTitle()); ?></em>. Your package should begin to download automatically within a few seconds, if not please use this <a href="<?php echo $pack->directDownloadUri(); ?>" title="<?php echo ('Download '. $pack->composeFullTitle()); ?>">direct link</a> instead.</p><?php
+?><p>Redirecting to the download for <em><?php echo htmlspecialchars($pack->composeFullTitle()); ?></em>. Your package should begin to download automatically within a few seconds, if not please use this <a href="<?php echo $pack->directDownloadUri(); ?>" title="<?php echo htmlspecialchars('Download '. $pack->composeFullTitle()); ?>">direct link</a> instead.</p><?php
 
 ?><p>Not what you wanted? Here are some alternatives:</p><?php
 
@@ -1189,8 +1193,8 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 <tr><th colspan="2">Event</th></tr>
 <tr><td>Start date </td><td><?php echo htmlspecialchars(date(/*DATE_RFC850*/ "d-M-Y", $build->startDate())); ?></td></tr>
 <tr><td>Start time </td><td><?php echo htmlspecialchars(date(/*DATE_RFC850*/ "H:i:s T", $build->startDate())); ?></td></tr>
-<tr><td>Release type </td><td><a class="link-definition" href="<?php echo $releaseTypeLink; ?>" title="<?php echo $releaseTypeLinkTitle; ?>"><?php echo htmlspecialchars($releaseTypeLabel); ?></a></td></tr>
-<tr><td>Build number </td><td><a class="link-definition" href="<?php echo $buildNumberLink; ?>" title="<?php echo $buildNumberLinkTitle; ?>"><?php echo htmlspecialchars(ucfirst($buildNumberLabel)); ?></a></td></tr><?php
+<tr><td>Release type </td><td><a class="link-definition" href="<?php echo $releaseTypeLink; ?>" title="<?php echo htmlspecialchars($releaseTypeLinkTitle); ?>"><?php echo htmlspecialchars($releaseTypeLabel); ?></a></td></tr>
+<tr><td>Build number </td><td><a class="link-definition" href="<?php echo $buildNumberLink; ?>" title="<?php echo htmlspecialchars($buildNumberLinkTitle); ?>"><?php echo htmlspecialchars(ucfirst($buildNumberLabel)); ?></a></td></tr><?php
 
         $installablesCount = $this->countInstallablePackages($build);
         if($installablesCount > 0)
@@ -1241,17 +1245,17 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 
             // Ouput HTML for the package.
 ?><tr>
-<td><?php if($pack->platformId() !== $lastPlatId) echo $plat['nicename']; ?></td>
+<td><?php if($pack->platformId() !== $lastPlatId) echo htmlspecialchars($plat['nicename']); ?></td>
 <td><?php
 
             $packTitle = $pack->composeFullTitle(true/*include version*/, false/*do not include the platform name*/, false/*do not include build Id*/);
             if($pack instanceof iDownloadable && $pack->hasDirectDownloadUri())
             {
-?><a href="<?php echo $pack->directDownloadUri(); ?>" title="Download <?php echo $pack->composeFullTitle(); ?>"><?php echo $packTitle; ?></a><?php
+?><a href="<?php echo $pack->directDownloadUri(); ?>" title="Download <?php echo htmlspecialchars($pack->composeFullTitle()); ?>"><?php echo htmlspecialchars($packTitle); ?></a><?php
             }
             else
             {
-                echo $packTitle;
+                echo htmlspecialchars($packTitle);
             }
 
 ?></td><td><?php
@@ -1260,7 +1264,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
             {
                 $logUri = $pack->compileLogUri();
 
-?><a href="<?php echo $logUri; ?>" title="Download build logs for <?php echo $pack->composeFullTitle(); ?>">txt.gz</a><?php
+?><a href="<?php echo $logUri; ?>" title="Download build logs for <?php echo htmlspecialchars($pack->composeFullTitle()); ?>">txt.gz</a><?php
 
             }
             else
@@ -1268,7 +1272,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 ?>txt.gz<?php
             }
 
-?></td><td class="issue_level <?php echo ($issueLevel.'_issue'); ?>"><?php echo $issues; ?></td>
+?></td><td class="issue_level <?php echo htmlspecialchars($issueLevel.'_issue'); ?>"><?php echo htmlspecialchars($issues); ?></td>
 </tr><?php
 
             $lastPlatId = $pack->platformId();
@@ -1490,7 +1494,7 @@ jQuery(document).ready(function() {
                 if($latestBuild && $latestBuild->hasReleaseNotesUri())
                 {
                     $releaseTypeLink = $latestBuild->releaseNotesUri();
-                    $releaseTypeLinkTitle = "Read the release notes for {$version}";
+                    $releaseTypeLinkTitle = htmlspecialchars("Read the release notes for {$version}");
 
                     $releaseLabel = "<a href=\"{$releaseTypeLink}\" title=\"{$releaseTypeLinkTitle}\">{$releaseLabel}</a>";
                 }
@@ -1499,7 +1503,7 @@ jQuery(document).ready(function() {
             {
                 // Add release notes for the symbolic event.
                 $releaseTypeLink = '';//$latestBuild->releaseNotesUri();
-                $releaseTypeLinkTitle = "Read the release notes for $version";
+                $releaseTypeLinkTitle = htmlspecialchars("Read the release notes for $version");
 
                 $releaseLabel = "<a href=\"{$releaseTypeLink}\" title=\"{$releaseTypeLinkTitle}\">{$releaseLabel}</a>";
             }*/
