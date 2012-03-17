@@ -3289,7 +3289,7 @@ static ddstring_t* composeScreenshotFileName(void)
     { int i;
     for(i = 0; i < 1e6; ++i) // Stop eventually...
     {
-        Str_Appendf(name, "%03i.tga", i);
+        Str_Appendf(name, "%03i.png", i);
         if(!F_FileExists(Str_Text(name)))
             break;
         Str_Truncate(name, numPos);
@@ -3306,9 +3306,13 @@ void G_DoScreenShot(void)
         return;
     }
 
-    if(0 != M_ScreenShot(Str_Text(name), 24))
+    if(M_ScreenShot(Str_Text(name), 24))
     {
         Con_Message("Wrote screenshot \"%s\"\n", F_PrettyPath(Str_Text(name)));
+    }
+    else
+    {
+        Con_Message("Failed to write screenshot \"%s\"\n", F_PrettyPath(Str_Text(name)));
     }
     Str_Delete(name);
 }

@@ -118,13 +118,25 @@ void Canvas::forcePaint()
     repaint();
 }
 
-void Canvas::grab(image_t* img, const QSize& outputSize)
+QImage Canvas::grabImage(const QSize& outputSize)
 {
     QImage grabbed = grabFrameBuffer(); // no alpha
     if(outputSize.isValid())
     {
         grabbed = grabbed.scaled(outputSize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
     }
+    return grabbed;
+}
+
+GLuint Canvas::grabAsTexture(const QSize& outputSize)
+{
+    return bindTexture(grabImage(outputSize), GL_TEXTURE_2D, GL_RGB,
+                       QGLContext::LinearFilteringBindOption);
+}
+
+void Canvas::grab(image_t* img, const QSize& outputSize)
+{
+    QImage grabbed = grabImage(outputSize);
 
     GL_InitImage(img);
     img->size.width = grabbed.width();

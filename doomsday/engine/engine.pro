@@ -684,7 +684,7 @@ macx {
     doPostLink("rm -rf Doomsday.app/Contents/PlugIns/")
     doPostLink("rm -f Doomsday.app/Contents/Resources/qt.conf")
 
-    doPostLink("macdeployqt Doomsday.app -no-plugins")
+    doPostLink("macdeployqt Doomsday.app")
 }
 
 # Installation ---------------------------------------------------------------

@@ -232,6 +232,10 @@ void Window_Draw(Window* win);
  */
 void Window_SwapBuffers(const Window* win);
 
+DGLuint Window_GrabAsTexture(const Window* win, boolean halfSized);
+
+boolean Window_GrabToFile(const Window* win, const char* fileName);
+
 /**
  * Grab the contents of the window into an image.
  *
@@ -240,7 +244,7 @@ void Window_SwapBuffers(const Window* win);
  */
 void Window_Grab(const Window* win, image_t* image);
 
-void Window_Grab2(const Window* win, image_t* image, boolean halfSize);
+void Window_Grab2(const Window* win, image_t* image, boolean halfSized);
 
 /**
  * Saves the window's state into a persistent storage so that it can be later

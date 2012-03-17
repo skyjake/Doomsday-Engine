@@ -72,6 +72,10 @@ public:
      */
     void forcePaint();
 
+    QImage grabImage(const QSize& outputSize = QSize());
+
+    GLuint grabAsTexture(const QSize& outputSize = QSize());
+
     /**
      * Grabs the contents of the canvas framebuffer into a raw RGB image.
      *

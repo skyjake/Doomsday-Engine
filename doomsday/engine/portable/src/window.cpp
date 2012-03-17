@@ -928,17 +928,30 @@ void Window_SwapBuffers(const Window* win)
     win->widget->canvas().swapBuffers();
 }
 
+DGLuint Window_GrabAsTexture(const Window* win, boolean halfSized)
+{
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+    win->assertWindow();
+    return win->widget->canvas().grabAsTexture(halfSized? QSize(win->width()/2, win->height()/2) : QSize());
+}
+
+boolean Window_GrabToFile(const Window* win, const char* fileName)
+{
+    win->assertWindow();
+    return win->widget->canvas().grabImage().save(fileName);
+}
+
 void Window_Grab(const Window* win, image_t* image)
 {
     Window_Grab2(win, image, false /* fullsize */);
 }
 
-void Window_Grab2(const Window* win, image_t* image, boolean halfSize)
+void Window_Grab2(const Window* win, image_t* image, boolean halfSized)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     win->assertWindow();
 
-    win->widget->canvas().grab(image, halfSize? QSize(win->width()/2, win->height()/2) : QSize());
+    win->widget->canvas().grab(image, halfSized? QSize(win->width()/2, win->height()/2) : QSize());
 }
 
 /**

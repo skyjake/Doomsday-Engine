@@ -328,19 +328,15 @@ void Con_AcquireScreenshotTexture(void)
     timespan_t startTime;
 #endif
 #endif
-
-    image_t img;
+    //timespan_t startTime = Sys_GetRealSeconds();
 
     if(texScreenshot)
     {
         Con_ReleaseScreenshotTexture();
     }
+    texScreenshot = Window_GrabAsTexture(Window_Main(), true /*halfsized*/);
 
-    Window_Grab(Window_Main(), &img);
-
-
-
-    GL_DestroyImage(&img);
+    //Con_Message("Acquired screenshot texture %i in %f seconds.", texScreenshot, Sys_GetRealSeconds() - startTime));
 
 #if 0
 #ifdef _DEBUG
@@ -515,18 +511,19 @@ static void Con_DrawScreenshotBackground(float x, float y, float width, float he
     {
         LIBDENG_ASSERT_IN_MAIN_THREAD();
 
-        GL_BindTextureUnmanaged(texScreenshot, GL_LINEAR);
+        //GL_BindTextureUnmanaged(texScreenshot, GL_LINEAR);
+        glBindTexture(GL_TEXTURE_2D, texScreenshot);
         glEnable(GL_TEXTURE_2D);
 
         glColor3ub(255, 255, 255);
         glBegin(GL_QUADS);
-            glTexCoord2f(0, 1);
-            glVertex2f(x, y);
-            glTexCoord2f(1, 1);
-            glVertex2f(x + width, y);
-            glTexCoord2f(1, 0);
-            glVertex2f(x + width, y + height);
             glTexCoord2f(0, 0);
+            glVertex2f(x, y);
+            glTexCoord2f(1, 0);
+            glVertex2f(x + width, y);
+            glTexCoord2f(1, 1);
+            glVertex2f(x + width, y + height);
+            glTexCoord2f(0, 1);
             glVertex2f(x, y + height);
         glEnd();
 
@@ -889,9 +886,9 @@ void Con_DrawTransition(void)
             y = doomWipeSamples[i];
 
             glColor4f(1, 1, 1, topAlpha);
-            glTexCoord2f(s, 1); glVertex2i(x, y);
+            glTexCoord2f(s, 0); glVertex2i(x, y);
             glColor4f(1, 1, 1, 1);
-            glTexCoord2f(s, div); glVertex2i(x, y + h);
+            glTexCoord2f(s, 1-div); glVertex2i(x, y + h);
         }
         glEnd();
 
@@ -904,8 +901,8 @@ void Con_DrawTransition(void)
         {
             y = doomWipeSamples[i] + h;
 
-            glTexCoord2f(s, div); glVertex2i(x, y);
-            glTexCoord2f(s, 0); glVertex2i(x, y + (SCREENHEIGHT - h));
+            glTexCoord2f(s, 1-div); glVertex2i(x, y);
+            glTexCoord2f(s, 1); glVertex2i(x, y + (SCREENHEIGHT - h));
         }
         glEnd();
         break;
@@ -923,10 +920,10 @@ void Con_DrawTransition(void)
         {
             y = doomWipeSamples[i];
 
-            glTexCoord2f(s, 1); glVertex2i(x, y);
-            glTexCoord2f(s+colWidth, 1); glVertex2i(x+1, y);
-            glTexCoord2f(s+colWidth, 0); glVertex2i(x+1, y+SCREENHEIGHT);
-            glTexCoord2f(s, 0); glVertex2i(x, y+SCREENHEIGHT);
+            glTexCoord2f(s, 0); glVertex2i(x, y);
+            glTexCoord2f(s+colWidth, 0); glVertex2i(x+1, y);
+            glTexCoord2f(s+colWidth, 1); glVertex2i(x+1, y+SCREENHEIGHT);
+            glTexCoord2f(s, 1); glVertex2i(x, y+SCREENHEIGHT);
         }
         glEnd();
         break;
@@ -935,10 +932,10 @@ void Con_DrawTransition(void)
         glColor4f(1, 1, 1, 1 - transitionPosition);
 
         glBegin(GL_QUADS);
-            glTexCoord2f(0, 1); glVertex2f(0, 0);
-            glTexCoord2f(0, 0); glVertex2f(0, SCREENHEIGHT);
-            glTexCoord2f(1, 0); glVertex2f(SCREENWIDTH, SCREENHEIGHT);
-            glTexCoord2f(1, 1); glVertex2f(SCREENWIDTH, 0);
+            glTexCoord2f(0, 0); glVertex2f(0, 0);
+            glTexCoord2f(0, 1); glVertex2f(0, SCREENHEIGHT);
+            glTexCoord2f(1, 1); glVertex2f(SCREENWIDTH, SCREENHEIGHT);
+            glTexCoord2f(1, 0); glVertex2f(SCREENWIDTH, 0);
         glEnd();
         break;
     }
