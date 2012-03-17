@@ -412,6 +412,7 @@ int UI_ScreenH(int relh)
 void UI_UpdatePageLayout(void)
 {
     if(!uiCurrentPage) return;
+    uiFontHgt = FR_SingleLineHeight("UI");
     UI_SetPage(uiCurrentPage);
 }
 

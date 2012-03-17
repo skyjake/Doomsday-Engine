@@ -36,6 +36,8 @@
 #include "sys_input.h"
 #include "keycode.h"
 
+static const int MOUSE_WHEEL_CONTINUOUS_THRESHOLD_MS = 100;
+
 struct Canvas::Instance
 {
     Canvas* self;
@@ -45,6 +47,8 @@ struct Canvas::Instance
     void (*resizedCallback)(Canvas&);
     bool mouseGrabbed;
     QPoint prevMousePos;
+    QTime prevWheelAt;
+    int wheelDir[2];
 
     Instance(Canvas* c)
         : self(c),
@@ -52,7 +56,9 @@ struct Canvas::Instance
           drawCallback(0),
           resizedCallback(0),
           mouseGrabbed(false)
-    {}
+    {
+        wheelDir[0] = wheelDir[1] = 0;
+    }
 
     void grabMouse()
     {
@@ -282,15 +288,27 @@ void Canvas::wheelEvent(QWheelEvent *ev)
 {
     ev->accept();
 
-    /// @todo  What to do about inertial wheel movement?
-    /// Look for increases and decreases rather than absolute values.
+    bool continuum = (d->prevWheelAt.elapsed() < MOUSE_WHEEL_CONTINUOUS_THRESHOLD_MS);
+    int axis = (ev->orientation() == Qt::Horizontal? 0 : 1);
+    int dir = (ev->delta() < 0? -1 : 1);
 
+    /// TODO check previous delta: if grows significantly, also signal
+
+    if(!continuum || d->wheelDir[axis] != dir)
+    {
+        d->wheelDir[axis] = dir;
+        qDebug() << "Canvas: signal wheel axis" << axis << "dir" << dir;
+    }
+
+        /*
     if(ev->orientation() == Qt::Vertical)
     {
-        qDebug() << "Canvas: vertical mouse wheel" << ev->delta()/8.f;
+        qDebug() << "Canvas: vertical mouse wheel" << ev->delta()/8.f << "continous" << continuum;
     }
     else
     {
-        qDebug() << "Canvas: horizontal mouse wheel" << ev->delta()/8.f;
-    }
+        qDebug() << "Canvas: horizontal mouse wheel" << ev->delta()/8.f << "continous" << continuum;
+    }*/
+
+    d->prevWheelAt.start();
 }

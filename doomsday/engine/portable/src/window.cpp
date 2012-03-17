@@ -753,6 +753,7 @@ static void windowWasResized(Canvas& canvas)
     {
         UI_UpdatePageLayout();
     }
+    R_LoadSystemFonts();
 }
 
 static Window* createWindow(ddwindowtype_t type, const char* title)

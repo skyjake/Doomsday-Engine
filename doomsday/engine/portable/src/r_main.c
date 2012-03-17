@@ -202,14 +202,23 @@ static fontid_t loadSystemFont(const char* name)
     return Fonts_Id(font);
 }
 
+static void loadFontIfNeeded(const char* uri, fontid_t* fid)
+{
+    *fid = Fonts_ResolveUriCString(uri);
+    if(*fid == NOFONTID)
+    {
+        *fid = loadSystemFont(uri);
+    }
+}
+
 void R_LoadSystemFonts(void)
 {
-    if(isDedicated) return;
+    if(!Fonts_IsInitialized() || isDedicated) return;
 
-    fontFixed = loadSystemFont(R_ChooseFixedFont());
-    fontVariable[FS_NORMAL] = loadSystemFont(R_ChooseVariableFont(FS_NORMAL, Window_Width(theWindow), Window_Height(theWindow)));
-    fontVariable[FS_BOLD]   = loadSystemFont(R_ChooseVariableFont(FS_BOLD,   Window_Width(theWindow), Window_Height(theWindow)));
-    fontVariable[FS_LIGHT]  = loadSystemFont(R_ChooseVariableFont(FS_LIGHT,  Window_Width(theWindow), Window_Height(theWindow)));
+    loadFontIfNeeded(R_ChooseFixedFont(), &fontFixed);
+    loadFontIfNeeded(R_ChooseVariableFont(FS_NORMAL, Window_Width(theWindow), Window_Height(theWindow)), &fontVariable[FS_NORMAL]);
+    loadFontIfNeeded(R_ChooseVariableFont(FS_BOLD,   Window_Width(theWindow), Window_Height(theWindow)), &fontVariable[FS_BOLD]);
+    loadFontIfNeeded(R_ChooseVariableFont(FS_LIGHT,  Window_Width(theWindow), Window_Height(theWindow)), &fontVariable[FS_LIGHT]);
 
     Con_SetFont(fontFixed);
 }
