@@ -74,7 +74,7 @@ int sfxRate = 11025;
 int sfx3D = false;
 int sfx16Bit = false;
 int sfxSampleRate = 11025;
-byte sfxOneSoundPerEmitter = true;
+byte sfxOneSoundPerEmitter = false; // Traditional Doomsday behavior: allows sounds to overlap.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -241,7 +241,7 @@ int Sfx_StopSoundWithLowerPriority(int id, mobj_t* emitter, int defPriority)
         if(defPriority >= 0)
         {
             int oldPrio = defs.sounds[ch->buffer->sample->id].priority;
-            if(oldPrio > defPriority)
+            if(oldPrio < defPriority) // Old is more important.
                 return -1;
         }
 

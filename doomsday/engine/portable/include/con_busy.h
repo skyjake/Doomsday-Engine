@@ -37,6 +37,10 @@
 
 #include "dd_share.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /// Busy mode worker function.
 typedef int (C_DECL *busyworkerfunc_t) (void* parm);
 
@@ -53,7 +57,10 @@ typedef struct {
     float progressStart;
     float progressEnd;
 
-    int retVal; ///< Worker return value.
+    // Internal state:
+    timespan_t _startTime;
+    boolean _willAnimateTransition;
+    boolean _wasIgnoringInput;
 } BusyTask;
 
 /// Busy mode transition style.
@@ -71,22 +78,10 @@ extern int rTransitionTics;
 /**
  * Process a single work task in Busy Mode.
  *
- * Caller relinquishes ownership of the task until busy mode completes,
- * (therefore it should NOT be accessed in the worker).
- *
- * @param task          Task to be performed.
- *
- * @return  Return value of the worker.
- */
-int Con_Busy2(BusyTask* task);
-
-/**
- * Process a single work task in Busy Mode.
- *
  * @param mode          Busy mode flags @ref busyModeFlags
+ * @param taskName      Optional task name (drawn with the progress bar).
  * @param worker        Worker thread that does processing while in busy mode.
  * @param workerData    Data context for the worker thread.
- * @param taskName      Optional task name (drawn with the progress bar).
  *
  * @return  Return value of the worker.
  */
@@ -132,5 +127,15 @@ boolean Con_TransitionInProgress(void);
 
 void Con_TransitionTicker(timespan_t ticLength);
 void Con_DrawTransition(void);
+
+// Private methods:
+int BusyTask_Run(int mode, const char* taskName, busyworkerfunc_t worker, void* workerData);
+void BusyTask_Begin(BusyTask* task);
+void BusyTask_End(BusyTask* task);
+void BusyTask_ExitWithValue(int result);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /// LIBDENG_CONSOLE_BUSY

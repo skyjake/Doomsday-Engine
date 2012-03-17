@@ -434,6 +434,10 @@ String String::patternFormat(String::const_iterator& formatIter,
     case 'x':
         output << "0x" << hex << dint64(arg.asNumber()) << dec << lowercasedigits;
         break;
+
+    case 'p':
+        output << "0x" << hex << dintptr(arg.asNumber()) << dec;
+        break;
         
     case 'f':
         // Max width is interpreted as the number of decimal places.

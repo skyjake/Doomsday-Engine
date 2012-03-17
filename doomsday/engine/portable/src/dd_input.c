@@ -1223,7 +1223,7 @@ void DD_ReadKeyboard(void)
         assert(sizeof(ev.toggle.text) == sizeof(ke->text));
         memcpy(ev.toggle.text, ke->text, sizeof(ev.toggle.text));
 
-        DEBUG_Message(("toggle.id: %i/%c [%s:%u]\n", ev.toggle.id, ev.toggle.id, ev.toggle.text, (uint)strlen(ev.toggle.text)));
+        DEBUG_VERBOSE2_Message(("toggle.id: %i/%c [%s:%u]\n", ev.toggle.id, ev.toggle.id, ev.toggle.text, (uint)strlen(ev.toggle.text)));
 
         // Maintain the repeater table.
         if(ev.toggle.state == ETOG_DOWN)

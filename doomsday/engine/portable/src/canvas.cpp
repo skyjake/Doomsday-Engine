@@ -28,6 +28,7 @@
 #include <QPaintEvent>
 #include <QCursor>
 #include <QTimer>
+#include <QTime>
 #include <QDebug>
 
 #include "canvas.h"
@@ -106,11 +107,7 @@ void Canvas::setResizedFunc(void (*canvasResizedFunc)(Canvas&))
 
 void Canvas::forcePaint()
 {
-    if(isVisible())
-    {
-        QPaintEvent ev(QRect(0, 0, width(), height()));
-        paintEvent(&ev);
-    }
+    repaint();
 }
 
 void Canvas::initializeGL()

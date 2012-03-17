@@ -27,29 +27,57 @@ includeGuard('AbstractPackage');
 
 require_once('basepackage.class.php');
 require_once(dirname(__FILE__) . '/../downloadable.interface.php');
+require_once(dirname(__FILE__) . '/../builderproduct.interface.php');
 
-abstract class AbstractPackage extends BasePackage implements iDownloadable
+abstract class AbstractPackage extends BasePackage implements iDownloadable, iBuilderProduct
 {
     static protected $emptyString = '';
 
     protected $directDownloadUri = NULL;
 
-    public function __construct($platformId=PID_ANY, $title=NULL, $version=NULL, $directDownloadUri=NULL)
+    protected $buildId = 0; /// Unique.
+
+    protected $compileLogUri;
+    protected $compileWarnCount;
+    protected $compileErrorCount;
+
+    public function __construct($platformId=PID_ANY, $title=NULL, $version=NULL, $directDownloadUri=NULL,
+        $compileLogUri=NULL, $compileWarnCount=0, $compileErrorCount=0)
     {
         parent::__construct($platformId, $title, $version);
 
         if(!is_null($directDownloadUri) && strlen($directDownloadUri) > 0)
             $this->directDownloadUri = "$directDownloadUri";
+
+        if(!is_null($compileLogUri))
+            $this->compileLogUri = "$compileLogUri";
+
+        $this->compileWarnCount  = intval($compileWarnCount);
+        $this->compileErrorCount = intval($compileErrorCount);
     }
 
     // Extends implementation in AbstractPackage.
     public function populateGraphTemplate(&$tpl)
     {
+        global $FrontController;
+
         if(!is_array($tpl))
             throw new Exception('Invalid template argument, array expected');
 
         parent::populateGraphTemplate($tpl);
+
         $tpl['direct_download_uri'] = $this->directDownloadUri();
+
+        $build = $FrontController->findPlugin('BuildRepository')->buildByUniqueId($this->buildId);
+        if($build instanceof BuildEvent)
+        {
+            $tpl['build_startdate'] = date(DATE_ATOM, $build->startDate());
+            $tpl['build_uniqueid'] = $this->buildId;
+        }
+
+        $tpl['compile_loguri'] = $this->compileLogUri;
+        $tpl['compile_errorcount'] = $this->compileErrorCount;
+        $tpl['compile_warncount'] = $this->compileWarnCount;
     }
 
     // Implements iDownloadable
@@ -83,5 +111,35 @@ abstract class AbstractPackage extends BasePackage implements iDownloadable
             $html = htmlspecialchars($fullTitle);
         }
         return $html;
+    }
+
+    // Implements iBuilderProduct.
+    public function setBuildUniqueId($id)
+    {
+        $this->buildId = intval($id);
+    }
+
+    // Implements iBuilderProduct.
+    public function buildUniqueId()
+    {
+        return $this->buildId;
+    }
+
+    // Implements iBuilderProduct.
+    public function &compileLogUri()
+    {
+        return $this->compileLogUri;
+    }
+
+    // Implements iBuilderProduct.
+    public function compileWarnCount()
+    {
+        return $this->compileWarnCount;
+    }
+
+    // Implements iBuilderProduct.
+    public function compileErrorCount()
+    {
+        return $this->compileErrorCount;
     }
 }

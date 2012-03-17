@@ -22,7 +22,9 @@
 #include "de/LogBuffer"
 
 #include <QCoreApplication>
+#include <QList>
 #include <QTimer>
+#include <QDebug>
 
 using namespace de;
 
@@ -33,17 +35,23 @@ LegacyCore* LegacyCore::_appCore;
  */
 struct LegacyCore::Instance
 {
-    QApplication* app;
-    LegacyNetwork network;
-    void (*loopFunc)(void);
-    LogBuffer logBuffer;
-    int loopInterval;
+    struct Loop {
+        int interval;
+        void (*func)(void);
+        Loop() : interval(1), func(0) {}
+    };
+    QList<Loop> loopStack;
 
-    Instance() : app(0), loopFunc(0), loopInterval(1) {}
+    App* app;
+    LegacyNetwork network;
+    Loop loop;
+    LogBuffer logBuffer;
+
+    Instance() : app(0) {}
     ~Instance() {}
 };
 
-LegacyCore::LegacyCore(QApplication* dengApp)
+LegacyCore::LegacyCore(App* dengApp)
 {
     _appCore = this;
     d = new Instance;
@@ -53,6 +61,9 @@ LegacyCore::LegacyCore(QApplication* dengApp)
 
     // The global log buffer will be available for the entire runtime of deng2.
     LogBuffer::setAppBuffer(d->logBuffer);
+#ifdef DENG2_DEBUG
+    d->logBuffer.enable(Log::DEBUG);
+#endif
 }
 
 LegacyCore::~LegacyCore()
@@ -77,14 +88,35 @@ LegacyNetwork& LegacyCore::network()
 
 void LegacyCore::setLoopFunc(void (*func)(void))
 {
+    LOG_DEBUG("Loop function changed from %p set to %p.") << dintptr(d->loop.func) << dintptr(func);
+
     // Set up a timer to periodically call the provided callback function.
-    d->loopFunc = func;
+    d->loop.func = func;
 
     if(func)
     {
         // Start the periodic callback calls.
-        QTimer::singleShot(d->loopInterval, this, SLOT(callback()));
+        QTimer::singleShot(d->loop.interval, this, SLOT(callback()));
     }
+}
+
+void LegacyCore::pushLoop()
+{
+    d->loopStack.append(d->loop);
+}
+
+void LegacyCore::popLoop()
+{
+    if(d->loopStack.isEmpty())
+    {
+        LOG_CRITICAL("Pop from empty loop stack.");
+        return;
+    }
+
+    d->loop = d->loopStack.last();
+    d->loopStack.removeLast();
+
+    LOG_DEBUG("Loop function popped, now %p.") << dintptr(d->loop.func);
 }
 
 int LegacyCore::runEventLoop()
@@ -101,7 +133,7 @@ int LegacyCore::runEventLoop()
 
 void LegacyCore::setLoopRate(int freqHz)
 {
-    d->loopInterval = qMax(1, 1000/freqHz);
+    d->loop.interval = qMax(1, 1000/freqHz);
 }
 
 void LegacyCore::stop(int exitCode)
@@ -111,9 +143,11 @@ void LegacyCore::stop(int exitCode)
 
 void LegacyCore::callback()
 {
-    if(d->loopFunc)
+    if(d->loop.func)
     {
-        d->loopFunc();
-        QTimer::singleShot(d->loopInterval, this, SLOT(callback()));
+        //LOG_TRACE("Loop callback.");
+
+        d->loop.func();
+        QTimer::singleShot(d->loop.interval, this, SLOT(callback()));
     }
 }
