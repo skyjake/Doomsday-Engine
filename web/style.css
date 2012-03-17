@@ -905,8 +905,10 @@ p.legal a {
 }
 
 span.commit-count {
-    padding-left:.5em;
-}
+    padding-right:.5em;
+    float: left;
+    color: #aaa;
+}}
 
 .commit span.heading,
 .commit blockquote {
