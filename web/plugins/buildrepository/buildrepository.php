@@ -1464,35 +1464,31 @@ jQuery(document).ready(function() {
             $releaseType = $this->releaseType($releaseTypeId);
             $releaseLabel = htmlspecialchars($version);
 
-?><th><?php
-
-            if(count($releaseInfo['buildIndex']) > 0)
+            // See if the latest package includes a release notes URI
+            // if it does we'll add a link to it to the column title.
+            $latestBuildUniqueId = $this->ReleaseInfo_BuildUniqueIdByIndex($releaseInfo, 0);
+            if($latestBuildUniqueId >= 0)
             {
-                $index = &$releaseInfo['buildIndex'];
-                $latestBuildUniqueId = $index[0];
-                if($latestBuildUniqueId >= 0)
+                $latestBuild = $this->buildByUniqueId($latestBuildUniqueId);
+
+                if($latestBuild && $latestBuild->hasReleaseNotesUri())
                 {
-                    $latestBuild = $this->buildByUniqueId($latestBuildUniqueId);
+                    $releaseTypeLink = $latestBuild->releaseNotesUri();
+                    $releaseTypeLinkTitle = "Read the release notes for {$version}";
 
-                    if($latestBuild && $latestBuild->hasReleaseNotesUri())
-                    {
-                        $releaseTypeLink = $latestBuild->releaseNotesUri();
-                        $releaseTypeLinkTitle = "Read the release notes for $version";
-
-                        $releaseLabel = '<a href="'. $releaseTypeLink .'" title="'. $releaseTypeLinkTitle .'">'.$releaseLabel .'</a>';
-                    }
+                    $releaseLabel = "<a href=\"{$releaseTypeLink}\" title=\"{$releaseTypeLinkTitle}\">{$releaseLabel}</a>";
                 }
-                /*else
-                {
-                    // Add release notes for the symbolic event.
-                    $releaseTypeLink = '';//$latestBuild->releaseNotesUri();
-                    $releaseTypeLinkTitle = "Read the release notes for $version";
-
-                    $releaseLabel = '<a href="'. $releaseTypeLink .'" title="'. $releaseTypeLinkTitle .'">'.$releaseLabel .'</a>';
-                }*/
             }
+            /*else
+            {
+                // Add release notes for the symbolic event.
+                $releaseTypeLink = '';//$latestBuild->releaseNotesUri();
+                $releaseTypeLinkTitle = "Read the release notes for $version";
 
-echo $releaseLabel; ?></th><?php
+                $releaseLabel = "<a href=\"{$releaseTypeLink}\" title=\"{$releaseTypeLinkTitle}\">{$releaseLabel}</a>";
+            }*/
+
+?><th><?php echo $releaseLabel; ?></th><?php
 
         }
 
@@ -1599,6 +1595,7 @@ echo $releaseLabel; ?></th><?php
     {
         global $FrontController;
 
+        // The autobuilder operates in Eastern European Time.
         date_default_timezone_set('EET');
 
         if(isset($args['getpackage']))
@@ -1615,7 +1612,7 @@ echo $releaseLabel; ?></th><?php
         // Determine whether we are detailing a single build event or listing all events.
         $build = isset($args['build'])? $this->buildByUniqueId($args['build']) : NULL;
 
-        $pageTitle = (!is_null($build)? $build->composeName(true/*add release type*/) : 'Build Repository');
+        $pageTitle = (($build instanceof BuildEvent)? $build->composeName(true/*add release type*/) : 'Build Repository');
 
         // Output this page.
         $FrontController->outputHeader($pageTitle);
@@ -1623,7 +1620,7 @@ echo $releaseLabel; ?></th><?php
 
 ?><div id="builds"><?php
 
-        if(!is_null($build))
+        if($build instanceof BuildEvent)
         {
             // Detailing a single build event.
             $this->outputEventDetail($build);
