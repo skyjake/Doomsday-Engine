@@ -26,6 +26,11 @@
 #define LIBDENG_IMAGE_H
 
 #include "dfile.h"
+#include "dd_share.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * @defgroup imageConversionFlags Image Conversion Flags.
@@ -89,5 +94,9 @@ void GL_ConvertToAlpha(image_t* image, boolean makeWhite);
  * Converts the image data to grayscale luminance in-place.
  */
 void GL_ConvertToLuminance(image_t* image, boolean retainAlpha);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* LIBDENG_IMAGE_H */

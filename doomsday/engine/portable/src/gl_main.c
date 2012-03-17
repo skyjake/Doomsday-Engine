@@ -789,6 +789,7 @@ unsigned char* GL_GrabScreen(void)
 
     if(!isDedicated && !novideo)
     {
+        /*
         const int width  = Window_Width(theWindow);
         const int height = Window_Height(theWindow);
 
@@ -803,7 +804,7 @@ unsigned char* GL_GrabScreen(void)
 #if _DEBUG
             Con_Message("Warning:GL_GrabScreen: Failed copying frame buffer content.\n");
 #endif
-        }
+        }*/
     }
     return buffer;
 }

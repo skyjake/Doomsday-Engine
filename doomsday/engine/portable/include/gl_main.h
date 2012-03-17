@@ -88,8 +88,8 @@ boolean         GL_NewList(DGLuint list, int mode);
 DGLuint         GL_EndList(void);
 void            GL_CallList(DGLuint list);
 void            GL_DeleteLists(DGLuint list, int range);
-boolean         GL_Grab(int x, int y, int width, int height,
-                        dgltexformat_t format, void* buffer);
+/*boolean         GL_Grab(int x, int y, int width, int height,
+                        dgltexformat_t format, void* buffer);*/
 
 void GL_SetMaterialUI2(struct material_s* mat, int wrapS, int wrapT);
 void GL_SetMaterialUI(struct material_s* mat);

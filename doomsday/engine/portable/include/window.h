@@ -25,6 +25,7 @@
 
 #include "dd_types.h"
 #include "rect.h"
+#include "image.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -226,7 +227,20 @@ void Window_SetDrawFunc(Window* win, void (*drawFunc)(void));
  */
 void Window_Draw(Window* win);
 
+/**
+ * Make the content of the framebuffer visible.
+ */
 void Window_SwapBuffers(const Window* win);
+
+/**
+ * Grab the contents of the window into an image.
+ *
+ * @param win    Window instance.
+ * @param image  Grabbed image contents. Caller gets ownership; call GL_DestroyImage().
+ */
+void Window_Grab(const Window* win, image_t* image);
+
+void Window_Grab2(const Window* win, image_t* image, boolean halfSize);
 
 /**
  * Saves the window's state into a persistent storage so that it can be later

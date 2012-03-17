@@ -22,6 +22,8 @@
 #ifndef LIBDENG_CANVAS_H
 #define LIBDENG_CANVAS_H
 
+#include "image.h"
+
 #include <QGLWidget>
 
 /**
@@ -69,6 +71,16 @@ public:
      * Forces immediate repainting of the canvas. The draw callback gets called.
      */
     void forcePaint();
+
+    /**
+     * Grabs the contents of the canvas framebuffer into a raw RGB image.
+     *
+     * @param img         Grabbed image data. Caller gets ownership.
+     *                    Use GL_DestroyImage() to destroy the image_t contents.
+     * @param outputSize  If specified, the contents will be scaled to this size before
+     *                    the image is returned.
+     */
+    void grab(image_t* img, const QSize& outputSize = QSize());
 
 protected:
     void initializeGL();

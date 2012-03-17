@@ -917,9 +917,6 @@ boolean Window_ChangeAttributes(Window* wnd, int* attribs)
     return true;
 }
 
-/**
- * Make the content of the framebuffer visible.
- */
 void Window_SwapBuffers(const Window* win)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
@@ -929,6 +926,19 @@ void Window_SwapBuffers(const Window* win)
 
     // Force a swapbuffers right now.
     win->widget->canvas().swapBuffers();
+}
+
+void Window_Grab(const Window* win, image_t* image)
+{
+    Window_Grab2(win, image, false /* fullsize */);
+}
+
+void Window_Grab2(const Window* win, image_t* image, boolean halfSize)
+{
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+    win->assertWindow();
+
+    win->widget->canvas().grab(image, halfSize? QSize(win->width()/2, win->height()/2) : QSize());
 }
 
 /**

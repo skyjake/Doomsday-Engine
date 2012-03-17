@@ -26,6 +26,7 @@
 #include <QShowEvent>
 #include <QResizeEvent>
 #include <QPaintEvent>
+#include <QImage>
 #include <QCursor>
 #include <QTimer>
 #include <QTime>
@@ -49,6 +50,7 @@ struct Canvas::Instance
     QPoint prevMousePos;
     QTime prevWheelAt;
     int wheelDir[2];
+    int wheelDelta[2];
 
     Instance(Canvas* c)
         : self(c),
@@ -114,6 +116,30 @@ void Canvas::setResizedFunc(void (*canvasResizedFunc)(Canvas&))
 void Canvas::forcePaint()
 {
     repaint();
+}
+
+void Canvas::grab(image_t* img, const QSize& outputSize)
+{
+    QImage grabbed = grabFrameBuffer(); // no alpha
+    if(outputSize.isValid())
+    {
+        grabbed = grabbed.scaled(outputSize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+    }
+
+    GL_InitImage(img);
+    img->size.width = grabbed.width();
+    img->size.height = grabbed.height();
+    img->pixels = (uint8_t*) malloc(grabbed.byteCount());
+    memcpy(img->pixels, grabbed.constBits(), grabbed.byteCount());
+    img->pixelSize = grabbed.depth()/8;
+
+#ifdef _DEBUG
+    qDebug() << "Canvas: grabbed" << grabbed.width() << "x" << grabbed.height()
+             << "byteCount:" << grabbed.byteCount()
+             << "depth:" << grabbed.depth() << "format" << grabbed.format();
+#endif
+
+    Q_ASSERT(img->pixelSize != 0);
 }
 
 void Canvas::initializeGL()
@@ -292,14 +318,17 @@ void Canvas::wheelEvent(QWheelEvent *ev)
     int axis = (ev->orientation() == Qt::Horizontal? 0 : 1);
     int dir = (ev->delta() < 0? -1 : 1);
 
-    /// TODO check previous delta: if grows significantly, also signal
-
-    if(!continuum || d->wheelDir[axis] != dir)
+    if(dir == d->wheelDir[axis] && qAbs(ev->delta()) > qAbs(d->wheelDelta[axis])*1.5f)
+    {
+        qDebug() << "Canvas: growing wheel axis" << axis << "dir" << dir;
+    }
+    else if(!continuum || d->wheelDir[axis] != dir)
     {
         d->wheelDir[axis] = dir;
         qDebug() << "Canvas: signal wheel axis" << axis << "dir" << dir;
     }
 
+    d->wheelDelta[axis] = ev->delta();
         /*
     if(ev->orientation() == Qt::Vertical)
     {

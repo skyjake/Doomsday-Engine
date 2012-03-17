@@ -321,21 +321,31 @@ static void Con_BusyDeleteTextures(void)
  */
 void Con_AcquireScreenshotTexture(void)
 {
+#if 0
     int oldMaxTexSize = GL_state.maxTexSize;
     uint8_t* frame;
 #ifdef _DEBUG
     timespan_t startTime;
 #endif
+#endif
+
+    image_t img;
 
     if(texScreenshot)
     {
         Con_ReleaseScreenshotTexture();
     }
 
+    Window_Grab(Window_Main(), &img);
+
+
+
+    GL_DestroyImage(&img);
+
+#if 0
 #ifdef _DEBUG
     startTime = Sys_GetRealSeconds();
 #endif
-
     frame = malloc(Window_Width(theWindow) * Window_Height(theWindow) * 3);
     GL_Grab(0, 0, Window_Width(theWindow), Window_Height(theWindow), DGL_RGB, frame);
     GL_state.maxTexSize = SCREENSHOT_TEXTURE_SIZE; // A bit of a hack, but don't use too large a texture.
@@ -344,10 +354,10 @@ void Con_AcquireScreenshotTexture(void)
         GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
     GL_state.maxTexSize = oldMaxTexSize;
     free(frame);
-
 #ifdef _DEBUG
     printf("Con_AcquireScreenshotTexture: Took %.2f seconds.\n",
            Sys_GetRealSeconds() - startTime);
+#endif
 #endif
 }
 
