@@ -181,13 +181,7 @@ div.hnav ul {
 }
 
 div.hnav li {
-    list-style-type: none;
-    padding: 0.25em 1em;
-    display: inline
-}
-
-div.hnav li:first-child {
-    border: none;
+    display: inline-block;
 }
 
 div.jumplist_wrapper {
@@ -973,7 +967,7 @@ span.metadata {
 
 .buildevents_outer {
     float:left;
-    padding-right:1em;
+    padding-right:.5em;
 }
 
 .buildevents_outer table thead {
@@ -988,25 +982,6 @@ span.metadata {
     padding:1.2em 0;
 }
 
-.buildevents {
-    border-spacing:0;
-    display:inline-block;
-    vertical-align:top;
-    border-collapse: collapse;
-}
-
-.buildevents {
-    text-align:center;
-    border-bottom: 2px solid #EEE;
-}
-
-.buildevents td {
-    border-left: 2px solid #EEE;
-    border-right: 2px solid #EEE;
-    min-width: 3.2em;
-}
-
-.buildevents thead tr th,
 #roadmap_badge {
     padding-bottom:.5em;
     font-size:large;
@@ -1014,13 +989,34 @@ span.metadata {
     font-family:Verdana, Arial, Helvetica, sans-serif;
 }
 
-.buildevents tr td {
-    padding:0 .5em;
+.buildstreamlist {
+    border:2px solid #EEE;
+    display:inline-block;
 }
 
-.buildevents tbody tr:first-child {
-    background-color: #F6FFF6;
-    border-top: 2px solid #EEE;
+.buildstream {
+    float:left;
+    overflow:hidden;
+    text-align:center;
+}
+
+.buildstream ul {
+    margin:0;
+    padding:0;
+}
+
+.buildstream ul li {
+    min-width: 3.2em;
+    list-style-type:none;
+    padding:0 .7em;
+    vertical-align:top;
+}
+
+.release-badge {
+    padding-bottom:.5em;
+    font-size:large;
+    font-weight:bold;
+    font-family:Verdana, Arial, Helvetica, sans-serif;
 }
 
 .buildevent_badge {
@@ -1131,7 +1127,7 @@ span.metadata {
 }
 
 .buildsoverview {
-    margin-top:2.1em;
+    margin-top:2.2em;
 }
 
 /*----------------- Master Server ------------------*/

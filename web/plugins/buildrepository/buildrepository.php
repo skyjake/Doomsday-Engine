@@ -1447,22 +1447,6 @@ jQuery(document).ready(function() {
         return $numEventsAdded;
     }
 
-    private function findMaxBuildEventCountInEventMatrix(&$matrix)
-    {
-        if(!is_array($matrix)) throw new Exception('findMaxBuildEventCountInEventMatrix: Invalid matrix argument, array expected.');
-
-        $max = 0;
-        foreach($matrix as &$releaseInfo)
-        {
-            if(!is_array($releaseInfo) || !isset($releaseInfo['buildIndex'])) continue;
-
-            $index = &$releaseInfo['buildIndex'];
-            $count = count($index);
-            if($count > $max) $max = $count;
-        }
-        return $max;
-    }
-
     /**
      * Print an HTML representation of the supplied build event matrix
      * to the output stream.
@@ -1471,12 +1455,7 @@ jQuery(document).ready(function() {
     {
         if(!is_array($matrix)) throw new Exception('outputEventMatrix: Invalid matrix argument, array expected.');
 
-        // The total number of rows in the table is determined by the
-        // maximum number of events associated with a single release.
-        $maxRows = $this->findMaxBuildEventCountInEventMatrix($matrix);
-
-        // Begin table header.
-?><table class="buildevents"><thead><tr><?php
+?><div class="buildstreamlist"><?php
 
         foreach($matrix as $version => &$releaseInfo)
         {
@@ -1508,26 +1487,14 @@ jQuery(document).ready(function() {
                 $releaseLabel = "<a href=\"{$releaseTypeLink}\" title=\"{$releaseTypeLinkTitle}\">{$releaseLabel}</a>";
             }*/
 
-?><th><?php echo $releaseLabel; ?></th><?php
+?><div class="buildstream"><ul><?php
+?><li><div class="release-badge"><?php echo $releaseLabel; ?></div></li><?php
 
-        }
-
-?></tr></thead><?php
-
-        // Begin table body.
-?><tbody><?php
-
-        for($row = (integer)0; $row < $maxRows; $row++)
-        {
-
-?><tr><?php
-
-            foreach($matrix as $version => &$releaseInfo)
+            foreach($releaseInfo['buildIndex'] as $uniqueId)
             {
 
-?><td><?php
+?><li><?php
 
-                $uniqueId = $this->ReleaseInfo_BuildUniqueIdByIndex($releaseInfo, $row);
                 if($uniqueId >= 0)
                 {
                     $build = $this->buildByUniqueId($uniqueId);
@@ -1537,15 +1504,16 @@ jQuery(document).ready(function() {
                     echo $build->genFancyBadge();
                 }
 
-?></td><?php
+?></li><?php
 
             }
 
-?></tr><?php
+?></ul></div><?php
 
         }
 
-?></tbody></table><?php
+?></div><?php
+
     }
 
     /**
