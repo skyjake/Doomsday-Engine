@@ -409,6 +409,12 @@ int UI_ScreenH(int relh)
     return (relh / UI_HEIGHT) * UI_AvailableHeight();
 }
 
+void UI_UpdatePageLayout(void)
+{
+    if(!uiCurrentPage) return;
+    UI_SetPage(uiCurrentPage);
+}
+
 void UI_SetPage(ui_page_t* page)
 {
     ui_object_t* ob;

@@ -324,8 +324,10 @@ static boolean winManagerInited = false;
 static Window mainWindow;
 static boolean mainWindowInited = false;
 
+/*
 static int screenWidth, screenHeight, screenBPP;
 static boolean screenIsWindow;
+*/
 
 Window* Window_Main(void)
 {
@@ -353,6 +355,7 @@ boolean Sys_ChangeVideoMode(int width, int height, int bpp)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
 
+#if 0
     // Do we need to change it?
     if(width == screenWidth && height == screenHeight && bpp == screenBPP &&
        screenIsWindow == !(theWindow->flags & DDWF_FULLSCREEN))
@@ -374,6 +377,8 @@ boolean Sys_ChangeVideoMode(int width, int height, int bpp)
     screenHeight = height; //info->current_h;
     screenBPP = bpp; //info->vfmt->BitsPerPixel;
     screenIsWindow = (theWindow->flags & DDWF_FULLSCREEN? false : true);
+#endif
+
     return true;
 
 #if 0
@@ -739,10 +744,14 @@ static void windowWasResized(Canvas& canvas)
 
     // Update viewports.
     R_SetViewGrid(0, 0);
-    if(Con_IsBusy())
+    if(Con_IsBusy() || UI_IsActive())
     {
         // Update for busy mode.
         R_UseViewPort(0);
+    }
+    if(UI_IsActive())
+    {
+        UI_UpdatePageLayout();
     }
 }
 

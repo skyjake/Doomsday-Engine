@@ -233,6 +233,9 @@ void UI_InitPage(ui_page_t* page, ui_object_t* objects);
 /// Change and prepare the active page.
 void UI_SetPage(ui_page_t* page);
 
+/// Update active page's layout for a new window size.
+void UI_UpdatePageLayout(void);
+
 /// Directs events through the ui and current page if active.
 int UI_Responder(ddevent_t* ev);
 
