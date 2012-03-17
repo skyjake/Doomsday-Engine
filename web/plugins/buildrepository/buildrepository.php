@@ -401,43 +401,6 @@ function outputCommitLog(&$build)
     return TRUE;
 }
 
-/**
- * Construct the BuildEvent collection by parsing the build log.
- *
- * @param buildLogUri  (String) Uri locator for the log to be parsed.
- * @param builds  (Array) Collection to be populated with BuildEvents.
- * @return (Boolean) @c TRUE iff successful.
- */
-function constructBuilds($buildLogUri, &$builds)
-{
-    global $FrontController;
-
-    // Is it time to update our cached copy of the build log?
-    $logCacheName = 'buildrepository/events.xml';
-    if(mustUpdateCachedBuildLog($buildLogUri, $logCacheName))
-    {
-        // Grab a copy and store it in the local file cache.
-        $logXml = retrieveBuildLogXml($buildLogUri);
-        if($logXml == FALSE)
-            throw new Exception('Failed retrieving build log');
-
-        $FrontController->contentCache()->store($logCacheName, $logXml);
-    }
-
-    // Attempt to parse the local cached copy, transforming it into a
-    // collection of abstract objects we use to model it.
-    try
-    {
-        $cachedLogXml = $FrontController->contentCache()->retrieve($logCacheName);
-        BuildLogParser::parse($cachedLogXml, $builds);
-        return TRUE;
-    }
-    catch(Exception $e)
-    {
-        return FALSE;
-    }
-}
-
 class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpreter
 {
     /// Plugin name.
@@ -589,10 +552,68 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         return $a < $b? -1 : 1;
     }
 
+    /**
+     * Attempt to parse the build log, constructing from it a collection
+     * of the abstract objects we use to model the events an packages it
+     * defines.
+     *
+     * @param builds  (Array) Collection to be populated with BuildEvents.
+     * @return (Boolean) @c TRUE iff successful.
+     */
+    private function constructBuilds(&$builds)
+    {
+        global $FrontController;
+
+        $buildLogUri = self::XML_FEED_URI;
+
+        // Is it time to update our cached copy of the build log?
+        $logCacheName = 'buildrepository/events.xml';
+        if(mustUpdateCachedBuildLog($buildLogUri, $logCacheName))
+        {
+            // Grab a copy and store it in the local file cache.
+            $logXml = retrieveBuildLogXml($buildLogUri);
+            if($logXml == FALSE)
+                throw new Exception('Failed retrieving build log');
+
+            try
+            {
+                // Attempt to parse the new log.
+                BuildLogParser::parse($logXml, $builds);
+
+                // Parsed successfully; update the cache with this new file.
+                $FrontController->contentCache()->store($logCacheName, $logXml);
+                return TRUE;
+            }
+            catch(Exception $e)
+            {
+                trigger_error('Failed parsing new XML build log.', E_USER_WARNING);
+
+                // Touch our cached copy so we don't try again too soon.
+                $FrontController->contentCache()->touch($logCacheName);
+            }
+        }
+
+        // Re-parse our locally cached copy of the log, hopefully
+        // we don't need to do this too often (cache everything!).
+        try
+        {
+            $cachedLogXml = $FrontController->contentCache()->retrieve($logCacheName);
+            BuildLogParser::parse($cachedLogXml, $builds);
+            return TRUE;
+        }
+        catch(Exception $e)
+        {
+            // Yikes! Looks like we broke something...
+            trigger_error('Failed parsing cached XML build log.', E_USER_WARNING);
+            return FALSE;
+        }
+    }
+
     private function grabAndParseBuildFeedXML()
     {
-        $this->builds = array();
-        constructBuilds(self::XML_FEED_URI, $this->builds);
+        $builds = array();
+        $this->constructBuilds($builds);
+        $this->builds = $builds;
     }
 
     /**

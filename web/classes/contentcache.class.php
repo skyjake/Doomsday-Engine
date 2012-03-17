@@ -62,12 +62,14 @@ class ContentCache
                 $fh = fopen($file, 'w');
             }
 
-            if(fwrite($fh, $content) === false)
-                throw new Exception(sprintf('failed writing to file %s.', $file));
-
             if(!$fh)
                 throw new Exception(sprintf('failed opening file %s.', $file));
 
+            if(!flock($fh, LOCK_EX))
+                throw new Exception(sprintf('failed obtaining write lock on file %s.', $file));
+
+            fwrite($fh, $content);
+            flock($fh, LOCK_UN);
             fclose($fh);
         /*}
         catch(Exception $e)
