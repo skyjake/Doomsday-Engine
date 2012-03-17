@@ -55,32 +55,23 @@ require_once('buildlogparser.class.php');
 
 function retrieveBuildLogXml(&$buildLogUri)
 {
-    try
-    {
-        // Open a new cURL session.
-        $cs = curl_init();
-        if($cs === FALSE)
-            throw new Exception('Failed initializing cURL');
+    // Open a new cURL session.
+    $cs = curl_init();
+    if($cs === FALSE)
+        throw new Exception('Failed initializing cURL');
 
-        curl_setopt($cs, CURLOPT_URL, $buildLogUri);
-        curl_setopt($cs, CURLOPT_HEADER, false);
-        curl_setopt($cs, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($cs, CURLOPT_URL, $buildLogUri);
+    curl_setopt($cs, CURLOPT_HEADER, false);
+    curl_setopt($cs, CURLOPT_RETURNTRANSFER, true);
 
-        $xml = curl_exec($cs);
-        if($xml === FALSE)
-            $error = curl_error($cs);
-        curl_close($cs);
-        if($xml === FALSE)
-            throw new Exception('Failed retrieving file' + $error);
+    $xml = curl_exec($cs);
+    if($xml === FALSE)
+        $error = curl_error($cs);
+    curl_close($cs);
+    if($xml === FALSE)
+        throw new Exception('Failed retrieving file' + $error);
 
-        return $xml;
-    }
-    catch(Exception $e)
-    {
-        /// \todo Store error so users can query.
-        //setError($e->getMessage());
-        return FALSE;
-    }
+    return $xml;
 }
 
 /**
@@ -401,43 +392,6 @@ function outputCommitLog(&$build)
     return TRUE;
 }
 
-/**
- * Construct the BuildEvent collection by parsing the build log.
- *
- * @param buildLogUri  (String) Uri locator for the log to be parsed.
- * @param builds  (Array) Collection to be populated with BuildEvents.
- * @return (Boolean) @c TRUE iff successful.
- */
-function constructBuilds($buildLogUri, &$builds)
-{
-    global $FrontController;
-
-    // Is it time to update our cached copy of the build log?
-    $logCacheName = 'buildrepository/events.xml';
-    if(mustUpdateCachedBuildLog($buildLogUri, $logCacheName))
-    {
-        // Grab a copy and store it in the local file cache.
-        $logXml = retrieveBuildLogXml($buildLogUri);
-        if($logXml == FALSE)
-            throw new Exception('Failed retrieving build log');
-
-        $FrontController->contentCache()->store($logCacheName, $logXml);
-    }
-
-    // Attempt to parse the local cached copy, transforming it into a
-    // collection of abstract objects we use to model it.
-    try
-    {
-        $cachedLogXml = $FrontController->contentCache()->retrieve($logCacheName);
-        BuildLogParser::parse($cachedLogXml, $builds);
-        return TRUE;
-    }
-    catch(Exception $e)
-    {
-        return FALSE;
-    }
-}
-
 class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpreter
 {
     /// Plugin name.
@@ -589,10 +543,72 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         return $a < $b? -1 : 1;
     }
 
+    /**
+     * Attempt to parse the build log, constructing from it a collection
+     * of the abstract objects we use to model the events an packages it
+     * defines.
+     *
+     * @param builds  (Array) Collection to be populated with BuildEvents.
+     * @return (Boolean) @c TRUE iff successful.
+     */
+    private function constructBuilds(&$builds)
+    {
+        global $FrontController;
+
+        $buildLogUri = self::XML_FEED_URI;
+
+        // Is it time to update our cached copy of the build log?
+        $logCacheName = 'buildrepository/events.xml';
+        if(mustUpdateCachedBuildLog($buildLogUri, $logCacheName))
+        {
+            try
+            {
+                // Grab a copy and store it in the local file cache.
+                $logXml = retrieveBuildLogXml($buildLogUri);
+                if($logXml == FALSE)
+                    throw new Exception('Failed retrieving build log');
+
+                // Attempt to parse the new log.
+                BuildLogParser::parse($logXml, $builds);
+
+                // Parsed successfully; update the cache with this new file.
+                $FrontController->contentCache()->store($logCacheName, $logXml);
+                return TRUE;
+            }
+            catch(Exception $e)
+            {
+                // Free up resources.
+                unset($logXml);
+
+                // Log the error.
+                trigger_error(sprintf('Failed parsing new XML build log.\nError:%s', $e->getMessage()), E_USER_WARNING);
+
+                // Touch our cached copy so we don't try again too soon.
+                $FrontController->contentCache()->touch($logCacheName);
+            }
+        }
+
+        // Re-parse our locally cached copy of the log, hopefully
+        // we don't need to do this too often (cache everything!).
+        try
+        {
+            $cachedLogXml = $FrontController->contentCache()->retrieve($logCacheName);
+            BuildLogParser::parse($cachedLogXml, $builds);
+            return TRUE;
+        }
+        catch(Exception $e)
+        {
+            // Yikes! Looks like we broke something...
+            trigger_error(sprintf('Failed parsing cached XML build log.\nError:%s', $e->getMessage()), E_USER_WARNING);
+            return FALSE;
+        }
+    }
+
     private function grabAndParseBuildFeedXML()
     {
-        $this->builds = array();
-        constructBuilds(self::XML_FEED_URI, $this->builds);
+        $builds = array();
+        $this->constructBuilds($builds);
+        $this->builds = $builds;
     }
 
     /**
@@ -608,7 +624,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
     private function populateStaticPackages(&$packages)
     {
         /**
-         * \todo Read this information from a config file, we should not
+         * @todo Read this information from a config file, we should not
          * expect to edit this file in order to change these...
          */
 
@@ -617,7 +633,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
             'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.8.6/deng-inst-1.8.6.exe/download');
         $packages[] = $pack;
 
-        $pack = PackageFactory::newUnstableDistribution(PID_WIN_X86, 'Doomsday', '1.9.0-beta6.9',
+        /*$pack = PackageFactory::newUnstableDistribution(PID_WIN_X86, 'Doomsday', '1.9.0-beta6.9',
             'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.0-beta6.9/deng-1.9.0-beta6.9-setup.exe/download');
         $packages[] = $pack;
 
@@ -627,7 +643,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         $packages[] = $pack;
 
         // Ubuntu:
-        /*$pack = PackageFactory::newUnstableDistribution(PID_LINUX_X86_64, 'Doomsday', '1.9.0-beta6.9',
+        $pack = PackageFactory::newUnstableDistribution(PID_LINUX_X86_64, 'Doomsday', '1.9.0-beta6.9',
             'http://sourceforge.net/projects/deng/files/');
         $packages[] = $pack;*/
 
@@ -652,11 +668,21 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 
         // Windows:
         $plat = $this->platform(PID_WIN_X86);
+        $pack = PackageFactory::newDistribution($plat['id'], 'Latest Doomsday',
+            NULL/*no version*/, 'latestbuild?platform='. $plat['name']);
+        $packages[] = $pack;
+
+        $plat = $this->platform(PID_WIN_X86);
         $pack = PackageFactory::newUnstableDistribution($plat['id'], 'Latest Doomsday',
             NULL/*no version*/, 'latestbuild?platform='. $plat['name']. '&unstable');
         $packages[] = $pack;
 
         // Mac OS:
+        $plat = $this->platform(PID_MAC10_4_X86_PPC);
+        $pack = PackageFactory::newDistribution($plat['id'], 'Latest Doomsday',
+            NULL/*no version*/, 'latestbuild?platform='. $plat['name']);
+        $packages[] = $pack;
+
         $plat = $this->platform(PID_MAC10_4_X86_PPC);
         $pack = PackageFactory::newUnstableDistribution($plat['id'], 'Latest Doomsday',
             NULL/*no version*/, 'latestbuild?platform='. $plat['name']. '&unstable');
@@ -664,8 +690,18 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 
         // Ubuntu:
         $plat = $this->platform(PID_LINUX_X86);
+        $pack = PackageFactory::newDistribution($plat['id'], 'Latest Doomsday',
+            NULL/*no version*/, 'latestbuild?platform='. $plat['name']);
+        $packages[] = $pack;
+
+        $plat = $this->platform(PID_LINUX_X86);
         $pack = PackageFactory::newUnstableDistribution($plat['id'], 'Latest Doomsday',
             NULL/*no version*/, 'latestbuild?platform='. $plat['name']. '&unstable');
+        $packages[] = $pack;
+
+        $plat = $this->platform(PID_LINUX_X86_64);
+        $pack = PackageFactory::newDistribution($plat['id'], 'Latest Doomsday',
+            NULL/*no version*/, 'latestbuild?platform='. $plat['name']);
         $packages[] = $pack;
 
         $plat = $this->platform(PID_LINUX_X86_64);
@@ -1265,12 +1301,317 @@ jQuery(document).ready(function() {
     }
 
     /**
+     * Print an HTML representation of the detailed information we have for
+     * the specified build @a event to the output stream.
+     *
+     * @param buildEvent  (object) BuildEvent to be detailed.
+     */
+    private function outputEventDetail(&$build)
+    {
+        if(!$build instanceof BuildEvent) throw new Exception('outputEventDetail: Invalid build argument, BuildEvent expected');
+
+?><div class="buildevent"><?php
+
+        $olderBuild = $this->findOlderBuild($build);
+        $newerBuild = $this->findNewerBuild($build);
+        $this->outputBuildStreamNavigation($olderBuild, $newerBuild);
+
+?><div id="buildoverview"><?php
+
+        $this->outputBuildEventMetadata($build);
+        $this->outputBuildPackageList($build);
+
+?></div><?php
+
+        $this->outputBuildCommitLog($build);
+
+?></div><?php
+    }
+
+    /**
+     * Construct a new ReleaseInfo record (array).
+     *
+     * Properties:
+     *
+     *   releaseTypeId < (integer) @ref releaseType
+     *   buildIndex    < (array) Array of unique identifiers which reference
+     *                   logical BuildEvents in the builds collection.
+     */
+    private function newReleaseInfo()
+    {
+        $record = array();
+        $record['releaseTypeId'] = RT_UNKNOWN; // Default.
+        $record['buildIndex'] = array();
+        return $record;
+    }
+
+    private function ReleaseInfo_BuildUniqueIdByIndex(&$info, $index)
+    {
+        if(!is_array($info)) throw new Exception('ReleaseInfo_BuildUniqueIdByIndex: Invalid info argument, array expected.');
+
+        $index = (integer)$index;
+        if($index < 0 || count($info['buildIndex']) <= 0) return -1;
+
+        $uniqueIds = &$info['buildIndex'];
+        if(!isset($uniqueIds[$index])) return -1;
+
+        return (integer)$uniqueIds[$index];
+    }
+
+    /**
+     * Produce a indexable directory of BuildEvents from the Packages
+     * collection, grouping them according to the version number of the
+     * 'Doomsday' packages those events produced.
+     *
+     * The version number (string) is used as key to each record.
+     *
+     * @param matrix  (Array) will be populated with new records.
+     * @return  (Mixed) FALSE if no packages were added to the matrix
+     *          otherwise the number of added packages (integer).
+     */
+    private function populateEventMatrix(&$matrix)
+    {
+        if(!is_array($matrix)) throw new Exception('populateEventMatrix: Invalid matrix argument, array expected.');
+        if(!isset($this->packages)) return FALSE;
+
+        // Running total of the number of events we add to the matrix.
+        $numEventsAdded = (integer)0;
+
+        foreach($this->packages as &$pack)
+        {
+            // We are only interested in the 'Doomsday' packages.
+            if($pack->title() !== 'Doomsday') continue;
+
+            // Have we encountered this version before?.
+            $version = $pack->version();
+            $key = array_casekey_exists($version, $matrix);
+            if($key === false)
+            {
+                // Not yet construct a new record and associate it
+                // in the matrix using the version number as the key.
+                $key = ucwords($version);
+                $matrix[$key] = $this->newReleaseInfo();
+
+                $releaseInfo = &$matrix[$key];
+            }
+            else
+            {
+                $releaseInfo = &$matrix[$version];
+            }
+
+            // Is this package a product of the autobuilder?
+            if($pack instanceof iBuilderProduct) //$pack->buildUniqueId() > 0)
+            {
+                // Yes; we have "real" BuildEvent we can link with this.
+                $buildUniqueId = $pack->buildUniqueId();
+                $build = $this->buildByUniqueId($buildUniqueId);
+                $buildKey = "$buildUniqueId";
+            }
+            else
+            {
+                // No - this must be a symbolic package.
+                // We'll instantiate a symbolic BuildEvent for this.
+                $build = new BuildEvent(0, 'Unknown', 'skyjake', 'jaakko.keranen@iki.fi');
+                //$build->setReleaseNotesUri();
+                $build->addPackage($pack);
+
+                // Symbolic events do not have a build id and therefore
+                // do not have a key; use an out-of-valid-range value.
+                $buildKey = "-1";
+            }
+
+            if(!$build instanceof BuildEvent) continue; // Odd...
+
+            // Is a build event already present in the index for this release version?
+            $index = &$releaseInfo['buildIndex'];
+            if(array_search($buildKey, $index) !== FALSE) continue;
+
+            // Add this build to the matrix.
+            $index[] = $buildKey;
+
+            // One more event was added to the matrix.
+            $numEventsAdded++;
+
+            // Promote the status of the release due to this package?
+            $releaseTypeId = $build->releaseTypeId();
+            if($releaseTypeId > $releaseInfo['releaseTypeId'])
+            {
+                $releaseInfo['releaseTypeId'] = $releaseTypeId;
+            }
+        }
+
+        return $numEventsAdded;
+    }
+
+    private function findMaxBuildEventCountInEventMatrix(&$matrix)
+    {
+        if(!is_array($matrix)) throw new Exception('findMaxBuildEventCountInEventMatrix: Invalid matrix argument, array expected.');
+
+        $max = 0;
+        foreach($matrix as &$releaseInfo)
+        {
+            if(!is_array($releaseInfo) || !isset($releaseInfo['buildIndex'])) continue;
+
+            $index = &$releaseInfo['buildIndex'];
+            $count = count($index);
+            if($count > $max) $max = $count;
+        }
+        return $max;
+    }
+
+    /**
+     * Print an HTML representation of the supplied build event matrix
+     * to the output stream.
+     */
+    private function outputEventMatrix(&$matrix)
+    {
+        if(!is_array($matrix)) throw new Exception('outputEventMatrix: Invalid matrix argument, array expected.');
+
+        // The total number of rows in the table is determined by the
+        // maximum number of events associated with a single release.
+        $maxRows = $this->findMaxBuildEventCountInEventMatrix($matrix);
+
+        // Begin table header.
+?><table class="buildevents"><thead><tr><?php
+
+        foreach($matrix as $version => &$releaseInfo)
+        {
+            $releaseTypeId = $releaseInfo['releaseTypeId'];
+            $releaseType = $this->releaseType($releaseTypeId);
+            $releaseLabel = htmlspecialchars($version);
+
+            // See if the latest package includes a release notes URI
+            // if it does we'll add a link to it to the column title.
+            $latestBuildUniqueId = $this->ReleaseInfo_BuildUniqueIdByIndex($releaseInfo, 0);
+            if($latestBuildUniqueId >= 0)
+            {
+                $latestBuild = $this->buildByUniqueId($latestBuildUniqueId);
+
+                if($latestBuild && $latestBuild->hasReleaseNotesUri())
+                {
+                    $releaseTypeLink = $latestBuild->releaseNotesUri();
+                    $releaseTypeLinkTitle = "Read the release notes for {$version}";
+
+                    $releaseLabel = "<a href=\"{$releaseTypeLink}\" title=\"{$releaseTypeLinkTitle}\">{$releaseLabel}</a>";
+                }
+            }
+            /*else
+            {
+                // Add release notes for the symbolic event.
+                $releaseTypeLink = '';//$latestBuild->releaseNotesUri();
+                $releaseTypeLinkTitle = "Read the release notes for $version";
+
+                $releaseLabel = "<a href=\"{$releaseTypeLink}\" title=\"{$releaseTypeLinkTitle}\">{$releaseLabel}</a>";
+            }*/
+
+?><th><?php echo $releaseLabel; ?></th><?php
+
+        }
+
+?></tr></thead><?php
+
+        // Begin table body.
+?><tbody><?php
+
+        for($row = (integer)0; $row < $maxRows; $row++)
+        {
+
+?><tr><?php
+
+            foreach($matrix as $version => &$releaseInfo)
+            {
+
+?><td><?php
+
+                $uniqueId = $this->ReleaseInfo_BuildUniqueIdByIndex($releaseInfo, $row);
+                if($uniqueId >= 0)
+                {
+                    $build = $this->buildByUniqueId($uniqueId);
+                    // Sanity check:
+                    if(!$build instanceof BuildEvent) throw new Exception("outputEventMatrix: Failed to locate a BuildEvent for uniqueId:'$uniqueId'.");
+
+                    echo $build->genFancyBadge();
+                }
+
+?></td><?php
+
+            }
+
+?></tr><?php
+
+        }
+
+?></tbody></table><?php
+    }
+
+    /**
+     * Merge the BuildEvent matrix to the output stream.
+     */
+    private function includeEventMatrix()
+    {
+        // Construct the event matrix.
+        $matrix = array();
+        $this->populateEventMatrix($matrix);
+
+        // Sort by key to achieve the version-number-ascending order.
+        ksort($matrix);
+        //print_r($matrix);
+
+        $this->outputEventMatrix($matrix);
+    }
+
+    /**
+     * Print an HTML representation of the entire builds collection to
+     * the output stream.
+     */
+    private function outputEventIndex()
+    {
+?><div class="buildevents_outer"><table><thead><tr><th></th><th><?php
+
+?>Version<?php
+
+?></th></tr></thead><?php
+
+?><tbody><tr><td><?php
+
+        // Output stream info
+        includeHTML('streaminfo', self::$name);
+
+?></td><td><?php
+
+        $this->includeEventMatrix();
+
+?></td></tr></tbody></table></div><?php
+
+?><div class="buildsoverview"><span id="roadmap_badge"><a href="dew/index.php?title=Roadmap" title="Read the Roadmap at the Wiki">Roadmap</a></span><?php
+
+        // Output an overview of the build system.
+        includeHTML('overview', self::$name);
+
+        // Generate widgets for the symbolic packages.
+        $packageListTitle = '<h3>Downloads for the latest packages</h3>';
+
+        $this->outputPackageList(&$this->symbolicPackages, NULL/*no chosen pack*/, PID_ANY,
+                                 TRUE/*stable filter*/, TRUE/*only downloadables*/,
+                                 -1/*no result limit*/, $packageListTitle);
+
+        $packageListTitle = '<h3>Downloads for the latest packages (<a class="link-definition" href="dew/index.php?title=Automated_build_system#Unstable" title="What does \'unstable\' mean?">unstable</a>)</h3>';
+
+        $this->outputPackageList(&$this->symbolicPackages, NULL/*no chosen pack*/, PID_ANY,
+                                 FALSE/*no stable filter*/, TRUE/*only downloadables*/,
+                                 -1/*no result limit*/, $packageListTitle);
+
+?></div><?php
+    }
+
+    /**
      * Implements Actioner.
      */
     public function execute($args=NULL)
     {
         global $FrontController;
 
+        // The autobuilder operates in Eastern European Time.
         date_default_timezone_set('EET');
 
         if(isset($args['getpackage']))
@@ -1285,10 +1626,9 @@ jQuery(document).ready(function() {
         }
 
         // Determine whether we are detailing a single build event or listing all events.
-        $uniqueId = $args['build'];
-        $build = $this->buildByUniqueId($uniqueId);
+        $build = isset($args['build'])? $this->buildByUniqueId($args['build']) : NULL;
 
-        $pageTitle = (!is_null($build)? $build->composeName(true/*add release type*/) : 'Builds');
+        $pageTitle = (($build instanceof BuildEvent)? $build->composeName(true/*add release type*/) : 'Build Repository');
 
         // Output this page.
         $FrontController->outputHeader($pageTitle);
@@ -1296,49 +1636,15 @@ jQuery(document).ready(function() {
 
 ?><div id="builds"><?php
 
-        if(!is_null($build))
+        if($build instanceof BuildEvent)
         {
             // Detailing a single build event.
-
-?><div class="buildevent"><?php
-
-            $olderBuild = $this->findOlderBuild($build);
-            $newerBuild = $this->findNewerBuild($build);
-            $this->outputBuildStreamNavigation($olderBuild, $newerBuild);
-
-?><div id="buildoverview"><?php
-
-            $this->outputBuildEventMetadata($build);
-            $this->outputBuildPackageList($build);
-
-?></div><?php
-
-            $this->outputBuildCommitLog($build);
-
-?></div><?php
-
+            $this->outputEventDetail($build);
         }
         else
         {
-            // Output an overview of the build system.
-            includeHTML('overview', self::$name);
-
-?><div class="centered"><?php
-
-            // Generate a navigation widget for the recent build events.
-            $this->outputEventList(10/*max events*/);
-
-            // Generate widgets for the symbolic packages.
-            $packageListTitle = 'Downloads for the latest packages (<a class="link-definition" href="dew/index.php?title=Automated_build_system#Unstable" title="What does \'unstable\' mean?">unstable</a>):';
-
-            $this->outputPackageList(&$this->symbolicPackages, NULL/*no chosen pack*/, PID_ANY,
-                                     -1/*no stable filter*/, TRUE/*only downloadables*/,
-                                     -1/*no result limit*/, $packageListTitle);
-
-?></div><?php
-
-            // Output footnotes for the build system.
-            includeHTML('footnotes', self::$name);
+            // Show the entire build event index.
+            $this->outputEventIndex();
         }
 
 ?></div><?php

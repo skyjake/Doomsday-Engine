@@ -32,6 +32,7 @@ class BuildEvent
     private $authorName;
     private $authorEmail;
     private $releaseTypeId;
+    private $releaseNotesUri = NULL;
 
     /// @todo Collections should be private but allow public iteration.
     public $packages = array();
@@ -85,6 +86,21 @@ class BuildEvent
         return $this->releaseTypeId;
     }
 
+    public function hasReleaseNotesUri()
+    {
+        return !is_null($this->releaseNotesUri);
+    }
+
+    public function releaseNotesUri()
+    {
+        return $this->releaseNotesUri;
+    }
+
+    public function setReleaseNotesUri($newUri)
+    {
+        $this->releaseNotesUri = "$newUri";
+    }
+
     public function addPackage(&$package)
     {
         $this->packages[] = $package;
@@ -116,6 +132,28 @@ class BuildEvent
         $html = '<a href="'.$this->composeBuildUri().'" title="'.$buildUriTitle.'">'.
             $this->composeName() .'</a>';
         return '<div class="build_news">'.$html.'</div>';
+    }
+
+    public function genFancyBadge()
+    {
+        $releaseType = BuildRepositoryPlugin::releaseType($this->releaseTypeId);
+
+        $name = "Build$this->uniqueId";
+        $inspectBuildUri = $name;
+        $inspectBuildLabel = "Read more about {$releaseType['nicename']} {$name}";
+
+        $cssClass = 'buildevent_badge';
+        if($this->releaseTypeId !== RT_UNKNOWN)
+        {
+            $cssClass .= " {$releaseType['name']}";
+        }
+
+        $html = "<a href=\"{$inspectBuildUri}\" title=\"{$inspectBuildLabel}\">"
+               ."<div class=\"{$cssClass}\">"
+               . htmlspecialchars($this->uniqueId)
+               ."<span class=\"startdate\">". htmlspecialchars(date('d M', $this->startDate)) .'</span></div></a>';
+
+        return $html;
     }
 
     public function __toString()
