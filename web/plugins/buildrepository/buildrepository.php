@@ -266,9 +266,10 @@ function outputCommitJumpList2(&$groups)
 ?><ol class="jumplist"><?php
     foreach($groups as $groupName => $group)
     {
+        $commitCount = count($group);
         $tagLinkTitle = "Jump to commits tagged '$groupName'";
 
-?><li><a href="#<?php echo $groupName; ?>" title="<?php echo htmlspecialchars($tagLinkTitle); ?>"><?php echo htmlspecialchars($groupName); ?></a></li><?php
+?><li><a href="#<?php echo $groupName; ?>" title="<?php echo htmlspecialchars($tagLinkTitle); ?>"><?php echo htmlspecialchars($groupName); ?></a><span class="commit-count"><?php echo htmlspecialchars($commitCount); ?></span></li><?php
     }
 ?></ol><?php
 }
@@ -334,7 +335,6 @@ function outputCommitLogHTML(&$build)
         // Generate the commit list itself.
 ?><hr />
 <div class="commit_list">
-<p><em><?php echo htmlspecialchars(count($build->commits));?></em> commits contributed to this build:</p>
 <ul><?php
 
         foreach($groups as $groupName => $group)
@@ -1287,7 +1287,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 
         if(count($build->commits))
         {
-?><div id="buildcommits"><a name="commitindex"></a><h3>Commits</h3>
+?><div id="buildcommits"><a name="commitindex"></a><h3><?php echo count($build->commits); ?> Commits</h3>
 <script type="text/javascript">
 jQuery(document).ready(function() {
   jQuery(".commit").hide();

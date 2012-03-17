@@ -904,6 +904,10 @@ p.legal a {
     margin-right:.8em;
 }
 
+span.commit-count {
+    padding-left:.5em;
+}
+
 .commit span.heading,
 .commit blockquote {
     font-size:medium;
