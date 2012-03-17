@@ -904,11 +904,18 @@ p.legal a {
     margin-right:.8em;
 }
 
+div.hnav span.commit-count {
+    float:none;
+    left:initial;
+}
+
 span.commit-count {
     padding-right:.5em;
-    float: left;
-    color: #aaa;
-}}
+    color:#aaa;
+    position:relative;
+    left:-100%;
+    float:right;
+}
 
 .commit span.heading,
 .commit blockquote {
