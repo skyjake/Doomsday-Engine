@@ -55,32 +55,23 @@ require_once('buildlogparser.class.php');
 
 function retrieveBuildLogXml(&$buildLogUri)
 {
-    try
-    {
-        // Open a new cURL session.
-        $cs = curl_init();
-        if($cs === FALSE)
-            throw new Exception('Failed initializing cURL');
+    // Open a new cURL session.
+    $cs = curl_init();
+    if($cs === FALSE)
+        throw new Exception('Failed initializing cURL');
 
-        curl_setopt($cs, CURLOPT_URL, $buildLogUri);
-        curl_setopt($cs, CURLOPT_HEADER, false);
-        curl_setopt($cs, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($cs, CURLOPT_URL, $buildLogUri);
+    curl_setopt($cs, CURLOPT_HEADER, false);
+    curl_setopt($cs, CURLOPT_RETURNTRANSFER, true);
 
-        $xml = curl_exec($cs);
-        if($xml === FALSE)
-            $error = curl_error($cs);
-        curl_close($cs);
-        if($xml === FALSE)
-            throw new Exception('Failed retrieving file' + $error);
+    $xml = curl_exec($cs);
+    if($xml === FALSE)
+        $error = curl_error($cs);
+    curl_close($cs);
+    if($xml === FALSE)
+        throw new Exception('Failed retrieving file' + $error);
 
-        return $xml;
-    }
-    catch(Exception $e)
-    {
-        /// @todo Store error so users can query.
-        //setError($e->getMessage());
-        return FALSE;
-    }
+    return $xml;
 }
 
 /**
@@ -570,13 +561,13 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         $logCacheName = 'buildrepository/events.xml';
         if(mustUpdateCachedBuildLog($buildLogUri, $logCacheName))
         {
-            // Grab a copy and store it in the local file cache.
-            $logXml = retrieveBuildLogXml($buildLogUri);
-            if($logXml == FALSE)
-                throw new Exception('Failed retrieving build log');
-
             try
             {
+                // Grab a copy and store it in the local file cache.
+                $logXml = retrieveBuildLogXml($buildLogUri);
+                if($logXml == FALSE)
+                    throw new Exception('Failed retrieving build log');
+
                 // Attempt to parse the new log.
                 BuildLogParser::parse($logXml, $builds);
 
@@ -586,7 +577,11 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
             }
             catch(Exception $e)
             {
-                trigger_error('Failed parsing new XML build log.', E_USER_WARNING);
+                // Free up resources.
+                unset($logXml);
+
+                // Log the error.
+                trigger_error(sprintf('Failed parsing new XML build log.\nError:%s', $e->getMessage()), E_USER_WARNING);
 
                 // Touch our cached copy so we don't try again too soon.
                 $FrontController->contentCache()->touch($logCacheName);
@@ -604,7 +599,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         catch(Exception $e)
         {
             // Yikes! Looks like we broke something...
-            trigger_error('Failed parsing cached XML build log.', E_USER_WARNING);
+            trigger_error(sprintf('Failed parsing cached XML build log.\nError:%s', $e->getMessage()), E_USER_WARNING);
             return FALSE;
         }
     }
