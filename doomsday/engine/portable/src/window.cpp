@@ -39,6 +39,7 @@
 #include "sys_system.h"
 #include "dd_main.h"
 #include "con_main.h"
+#include "con_busy.h"
 #include "gl_main.h"
 #include "ui_main.h"
 
@@ -731,19 +732,17 @@ static void windowWasResized(Canvas& canvas)
 {
     Window* win = canvasToWindow(canvas);
 
-    /*if(Con_IsBusy())
-    {
-        /// @todo Handle busy mode resizing.
-    }
-    else*/
-    {
-        DEBUG_Message(("Updating view geometry.\n"));
+    DEBUG_Message(("Updating view geometry.\n"));
 
-        win->geometry.size.width = win->widget->width();
-        win->geometry.size.height = win->widget->height();
+    win->geometry.size.width = win->widget->width();
+    win->geometry.size.height = win->widget->height();
 
-        // Update viewports.
-        R_SetViewGrid(0, 0);
+    // Update viewports.
+    R_SetViewGrid(0, 0);
+    if(Con_IsBusy())
+    {
+        // Update for busy mode.
+        R_UseViewPort(0);
     }
 }
 

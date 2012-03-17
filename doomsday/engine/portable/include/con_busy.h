@@ -79,9 +79,9 @@ extern int rTransitionTics;
  * Process a single work task in Busy Mode.
  *
  * @param mode          Busy mode flags @ref busyModeFlags
+ * @param taskName      Optional task name (drawn with the progress bar).
  * @param worker        Worker thread that does processing while in busy mode.
  * @param workerData    Data context for the worker thread.
- * @param taskName      Optional task name (drawn with the progress bar).
  *
  * @return  Return value of the worker.
  */
@@ -128,9 +128,11 @@ boolean Con_TransitionInProgress(void);
 void Con_TransitionTicker(timespan_t ticLength);
 void Con_DrawTransition(void);
 
-int BusyTask_Begin(BusyTask* task);
+// Private methods:
 int BusyTask_Run(int mode, const char* taskName, busyworkerfunc_t worker, void* workerData);
-void BusyTask_ReturnValue(int result);
+void BusyTask_Begin(BusyTask* task);
+void BusyTask_End(BusyTask* task);
+void BusyTask_ExitWithValue(int result);
 
 #ifdef __cplusplus
 }

@@ -105,18 +105,14 @@ static boolean animatedTransitionActive(int busyMode)
 }
 
 /**
- * Process a single work task in Busy Mode.
+ * Sets up module state for running a busy task. After this the busy mode event
+ * loop is started. The loop will run until the worker thread exits.
  *
- * Caller relinquishes ownership of the task until busy mode completes,
- * (therefore it should NOT be accessed in the worker).
- *
- * @param task          Task to be performed.
- *
- * @return  Return value of the worker.
+ * @todo Refactor: Should be private and static (currently needed in busytask.cpp)
  */
-int BusyTask_Begin(BusyTask* task)
+void BusyTask_Begin(BusyTask* task)
 {
-    if(!task) return 0;
+    if(!task) return;
 
     if(!busyInited)
     {
@@ -156,8 +152,6 @@ int BusyTask_Begin(BusyTask* task)
     }
 
     // Switch the engine loop and window to the busy mode.
-    LegacyCore_PushLoop(de2LegacyCore); // save previous loop
-    LegacyCore_SetLoopRate(de2LegacyCore, 30);
     LegacyCore_SetLoopFunc(de2LegacyCore, BusyTask_Loop);
 
     Window_SetDrawFunc(Window_Main(), BusyTask_Drawer);
@@ -165,10 +159,25 @@ int BusyTask_Begin(BusyTask* task)
     task->_startTime = Sys_GetRealSeconds();
 }
 
-static void BusyTask_End(BusyTask* task)
+/**
+ * Exits the busy mode event loop.
+ */
+static void BusyTask_Exit(void)
 {
-    int result;
+    // Make sure the worker finishes before we continue.
+    int result = Sys_WaitThread(busyThread);
+    busyThread = NULL;
 
+    BusyTask_ExitWithValue(result);
+}
+
+/**
+ * Called after the busy mode worker thread and the event (sub-)loop has been stopped.
+ *
+ * @todo Refactor: Should be private and static (currently needed in busytask.cpp)
+ */
+void BusyTask_End(BusyTask* task)
+{
     if(verbose)
     {
         Con_Message("Con_Busy: Was busy for %.2lf seconds.\n", busyTime);
@@ -188,22 +197,20 @@ static void BusyTask_End(BusyTask* task)
         transitionPosition = 0;
     }
 
-    // Make sure the worker finishes before we continue.
-    result = Sys_WaitThread(busyThread);
-    busyThread = NULL;
-    Sys_DestroyMutex(busy_Mutex);
-    busyInited = false;
-
     // Make sure that any remaining deferred content gets uploaded.
     if(!(task->mode & BUSYF_NO_UPLOADS))
     {
         GL_ProcessDeferredTasks(0);
     }
 
+    Sys_DestroyMutex(busy_Mutex);
+    busyInited = false;
+
     DD_IgnoreInput(task->_wasIgnoringInput);
     DD_ResetTimer();
 
-    BusyTask_ReturnValue(result);
+    // The window drawer will be restored later to the appropriate function.
+    Window_SetDrawFunc(Window_Main(), 0);
 }
 
 void Con_BusyWorkerError(const char* message)
@@ -350,11 +357,21 @@ void Con_ReleaseScreenshotTexture(void)
     texScreenshot = 0;
 }
 
+static void preBusySetup(void)
+{
+    // Save the present loop.
+    LegacyCore_PushLoop(de2LegacyCore);
+
+    // Set up loop for busy mode.
+    LegacyCore_SetLoopRate(de2LegacyCore, 30);
+    LegacyCore_SetLoopFunc(de2LegacyCore, NULL); // don't call main loop's func while busy
+
+    Window_SetDrawFunc(Window_Main(), 0);
+}
+
 static void postBusyCleanup(void)
 {
-    /// @see BusyTask_Begin(): loop pushed, window drawer changed
-
-    // Switch back to main loop.
+    // Restore old loop.
     LegacyCore_PopLoop(de2LegacyCore);
 
     // Resume drawing with the game loop drawer.
@@ -365,7 +382,7 @@ static int doBusy(int mode, const char* taskName, busyworkerfunc_t worker, void*
 {
     if(novideo)
     {
-        // Don't bother to go into busy mode.
+        // Don't bother to start a thread -- non-GUI mode.
         return worker(workerData);
     }
     return BusyTask_Run(mode, taskName, worker, workerData);
@@ -373,7 +390,10 @@ static int doBusy(int mode, const char* taskName, busyworkerfunc_t worker, void*
 
 int Con_Busy(int mode, const char* taskName, busyworkerfunc_t worker, void* workerData)
 {
-    int result = doBusy(mode, taskName, worker, workerData);
+    int result;
+
+    preBusySetup();
+    result = doBusy(mode, taskName, worker, workerData);
     postBusyCleanup();
     return result;
 }
@@ -385,6 +405,8 @@ void Con_BusyList(BusyTask* tasks, int numTasks)
     int i, mode;
 
     if(!tasks) return; // Hmm, no work?
+
+    preBusySetup();
 
     // Process tasks.
     task = tasks;
@@ -470,7 +492,7 @@ static void BusyTask_Loop(void)
     }
 
     // Stop the loop.
-    BusyTask_End(busyTask);
+    BusyTask_Exit();
 }
 
 /**
