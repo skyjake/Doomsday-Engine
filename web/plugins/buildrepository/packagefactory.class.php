@@ -44,14 +44,22 @@ class PackageFactory
         return self::$nullPackage;
     }
 
-    public static function newDistribution($platformId, $name, $version, $directDownloadUrl)
+    public static function newDistribution($platformId, $name, $version, $directDownloadUrl, $builder=true)
     {
+        if($builder)
+        {
+            return new DistributionBuilderPackage($platformId, $name, $version, $directDownloadUrl);
+        }
         return new DistributionPackage($platformId, $name, $version, $directDownloadUrl);
     }
 
-    public static function newUnstableDistribution($platformId, $name, $version, $directDownloadUrl)
+    public static function newDistributionUnstable($platformId, $name, $version, $directDownloadUrl, $builder=true)
     {
-        return new UnstableDistributionPackage($platformId, $name, $version, $directDownloadUrl);
+        if($builder)
+        {
+            return new DistributionUnstableBuilderPackage($platformId, $name, $version, $directDownloadUrl);
+        }
+        return new DistributionUnstablePackage($platformId, $name, $version, $directDownloadUrl);
     }
 
     /**
@@ -67,7 +75,6 @@ class PackageFactory
 
         $platformId = BuildRepositoryPlugin::parsePlatformId(clean_text($log_pack->platform));
         $cleanDirectDownloadUri = safe_url($log_pack->downloadUri);
-        $compileLogUri    = safe_url($log_pack->compileLogUri);
 
         if(!empty($log_pack->name))
         {
@@ -101,32 +108,33 @@ class PackageFactory
         case 'plugin':
             if($releaseType === RT_STABLE)
             {
-                $pack = new PluginPackage($platformId, $name, $version, $cleanDirectDownloadUri,
-                    $compileLogUri, (integer)$log_pack->compileWarnCount,
-                    (integer)$log_pack->compileErrorCount);
+                $pack = new PluginBuilderPackage($platformId, $name, $version, $cleanDirectDownloadUri);
             }
             else
             {
-                $pack = new UnstablePluginPackage($platformId, $name, $version, $cleanDirectDownloadUri,
-                    $compileLogUri, (integer)$log_pack->compileWarnCount,
-                    (integer)$log_pack->compileErrorCount);
+                $pack = new PluginUnstableBuilderPackage($platformId, $name, $version, $cleanDirectDownloadUri);
             }
             break;
         default:
             if($releaseType === RT_STABLE)
             {
-                $pack = new DistributionPackage($platformId, $name, $version, $cleanDirectDownloadUri,
-                    $compileLogUri, (integer)$log_pack->compileWarnCount,
-                    (integer)$log_pack->compileErrorCount);
+                $pack = new DistributionBuilderPackage($platformId, $name, $version, $cleanDirectDownloadUri);
             }
             else
             {
-                $pack = new UnstableDistributionPackage($platformId, $name, $version, $cleanDirectDownloadUri,
-                    $compileLogUri, (integer)$log_pack->compileWarnCount,
-                    (integer)$log_pack->compileErrorCount);
+                $pack = new DistributionUnstableBuilderPackage($platformId, $name, $version, $cleanDirectDownloadUri);
             }
             break;
         }
+
+        if(!empty($log_pack->compileLogUri))
+            $pack->setCompileLogUri(safe_url($log_pack->compileLogUri));
+
+        if(!empty($log_pack->compileWarnCount))
+            $pack->setCompileWarnCount((integer)$log_pack->compileWarnCount);
+
+        if(!empty($log_pack->compileErrorCount))
+            $pack->setCompileErrorCount((integer)$log_pack->compileErrorCount);
 
         return $pack;
     }

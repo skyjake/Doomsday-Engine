@@ -34,6 +34,12 @@ class BuildEvent
     private $releaseTypeId;
     private $releaseNotesUri = NULL;
 
+    // Event chains:
+    private $prevForStartDate = NULL;
+    private $nextForStartDate = NULL;
+    private $prevForVersion = NULL;
+    private $nextForVersion = NULL;
+
     /// @todo Collections should be private but allow public iteration.
     public $packages = array();
     public $commits = array();
@@ -106,6 +112,66 @@ class BuildEvent
         $this->packages[] = $package;
     }
 
+    public function prevForStartDate()
+    {
+        return $this->prevForStartDate;
+    }
+
+    public function setPrevForStartDate(&$event)
+    {
+        if(!$event instanceof BuildEvent)
+        {
+            $this->prevForStartDate = NULL;
+            return;
+        }
+        $this->prevForStartDate = $event;
+    }
+
+    public function nextForStartDate()
+    {
+        return $this->nextForStartDate;
+    }
+
+    public function setNextForStartDate(&$event)
+    {
+        if(!$event instanceof BuildEvent)
+        {
+            $this->nextForStartDate = NULL;
+            return;
+        }
+        $this->nextForStartDate = $event;
+    }
+
+    public function prevForVersion()
+    {
+        return $this->prevForVersion;
+    }
+
+    public function setPrevForVersion(&$event)
+    {
+        if(!$event instanceof BuildEvent)
+        {
+            $this->prevForVersion = NULL;
+            return;
+        }
+        $this->prevForVersion = $event;
+    }
+
+    public function nextForVersion()
+    {
+        return $this->nextForVersion;
+    }
+
+    public function setNextForVersion(&$event)
+    {
+        if(!$event instanceof BuildEvent)
+        {
+            $this->nextForVersion = NULL;
+            return;
+        }
+        $this->nextForVersion = $event;
+    }
+
     /**
      * Add a new Commit record to this build event.
      *
@@ -134,24 +200,41 @@ class BuildEvent
         return '<div class="build_news">'.$html.'</div>';
     }
 
-    public function genFancyBadge()
+    public function genFancyBadge($isActive=TRUE)
     {
-        $releaseType = BuildRepositoryPlugin::releaseType($this->releaseTypeId);
-
         $name = "Build$this->uniqueId";
-        $inspectBuildUri = $name;
-        $inspectBuildLabel = "Read more about {$releaseType['nicename']} {$name}";
+        $releaseType = BuildRepositoryPlugin::releaseType($this->releaseTypeId);
+        $isActive = (boolean)$isActive;
 
         $cssClass = 'buildevent_badge';
         if($this->releaseTypeId !== RT_UNKNOWN)
         {
             $cssClass .= " {$releaseType['name']}";
+            if(!$isActive || $this->uniqueId <= 0) $cssClass .= '_disabled';
         }
 
-        $html = "<a href=\"{$inspectBuildUri}\" title=\"{$inspectBuildLabel}\">"
-               ."<div class=\"{$cssClass}\">"
-               . htmlspecialchars($this->uniqueId)
-               ."<span class=\"startdate\">". htmlspecialchars(date('d M', $this->startDate)) .'</span></div></a>';
+        $html = '';
+
+        if($isActive && $this->uniqueId > 0)
+        {
+            $inspectBuildUri = $name;
+            $inspectBuildLabel = htmlspecialchars("Read more about {$releaseType['nicename']} {$name}");
+
+            $html .= "<a href=\"{$inspectBuildUri}\" title=\"{$inspectBuildLabel}\">";
+        }
+        else
+        {
+            $html .= "<a href=\"\\\" style=\"cursor:default;pointer-events:none\">";
+        }
+
+        $html .= "<div class=\"{$cssClass}\">"
+                . ($this->uniqueId > 0? htmlspecialchars($this->uniqueId) : '&nbsp;')
+                ."<span class=\"startdate\">". htmlspecialchars(date('d M Y', $this->startDate)) .'</span></div>';
+
+        //if($isActive && $this->uniqueId > 0)
+        {
+            $html .= '</a>';
+        }
 
         return $html;
     }

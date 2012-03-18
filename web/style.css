@@ -181,13 +181,7 @@ div.hnav ul {
 }
 
 div.hnav li {
-    list-style-type: none;
-    padding: 0.25em 1em;
-    display: inline
-}
-
-div.hnav li:first-child {
-    border: none;
+    display: inline-block;
 }
 
 div.jumplist_wrapper {
@@ -201,6 +195,10 @@ ol.jumplist {
     vertical-align:top;
     margin:0;
     padding:0 1em;
+}
+
+ol.jumplist li {
+    padding-right:1.8em;
 }
 
 .centered {
@@ -800,22 +798,17 @@ p.legal a {
     font-family: Verdana, Arial, Helvetica, sans-serif;
 }
 
-#buildsnav span.title {
+#buildsnav h3 {
+    font-size:small;
 }
 
-#buildsnav ul {
-    margin:.5em;
-}
-
-#buildsnav ul li {
-    padding:.25em 3em;
+#buildsnav h3 span {
+    color:lightgrey;
+    padding:0 1em;
 }
 
 #buildoverview {
     text-align:center;
-    margin-top:1em;
-    margin-left:auto;
-    margin-right:auto;
 }
 
 #buildpackagelist {
@@ -904,6 +897,19 @@ p.legal a {
     margin-right:.8em;
 }
 
+div.hnav span.commit-count {
+    float:none;
+    left:initial;
+}
+
+span.commit-count {
+    padding-right:.5em;
+    color:#aaa;
+    position:relative;
+    left:-100%;
+    float:right;
+}
+
 .commit span.heading,
 .commit blockquote {
     font-size:medium;
@@ -960,7 +966,7 @@ span.metadata {
 
 .buildevents_outer {
     float:left;
-    padding-right:1em;
+    padding-right:.5em;
 }
 
 .buildevents_outer table thead {
@@ -975,25 +981,6 @@ span.metadata {
     padding:1.2em 0;
 }
 
-.buildevents {
-    border-spacing:0;
-    display:inline-block;
-    vertical-align:top;
-    border-collapse: collapse;
-}
-
-.buildevents {
-    text-align:center;
-    border-bottom: 2px solid #EEE;
-}
-
-.buildevents td {
-    border-left: 2px solid #EEE;
-    border-right: 2px solid #EEE;
-    min-width: 3.2em;
-}
-
-.buildevents thead tr th,
 #roadmap_badge {
     padding-bottom:.5em;
     font-size:large;
@@ -1001,16 +988,43 @@ span.metadata {
     font-family:Verdana, Arial, Helvetica, sans-serif;
 }
 
-.buildevents tr td {
+.buildstreamlist {
+    border:2px solid #EEE;
+    display:inline-block;
+}
+
+.buildstream {
+    float:left;
+    overflow:hidden;
+    text-align:center;
+}
+
+.buildstream ul {
+    margin:0;
+    padding:0;
+}
+
+.buildstream ul li {
+    min-width: 3.2em;
+    list-style-type:none;
     padding:0 .5em;
+    vertical-align:top;
 }
 
-.buildevents tbody tr:first-child {
-    background-color: #F6FFF6;
-    border-top: 2px solid #EEE;
+.buildstream ul li.current {
+    background-color: #F2FBF2;
+    border:1px solid #F2FBF2;
 }
 
-.buildevent_badge {
+.release-badge {
+    padding-bottom:.5em;
+    font-size:large;
+    font-weight:bold;
+    font-family:Verdana, Arial, Helvetica, sans-serif;
+}
+
+.buildevent_badge,
+.buildevent_badge_active {
     width:2.5em;
     margin-left:auto;
     margin-right:auto;
@@ -1026,7 +1040,8 @@ span.metadata {
     font-weight: bolder;
 }
 
-.buildevent_badge .startdate {
+.buildevent_badge .startdate,
+.buildevent_badge_active .startdate {
     position:relative;
     bottom:-.6em;
     display:block;
@@ -1071,7 +1086,8 @@ span.metadata {
     color:#860;
 }
 
-.unstable:hover, .unstable:visited:hover {
+.unstable:hover,
+.unstable:visited:hover {
     background-color:#FF3;
     border-color:#FC6;
 }
@@ -1118,7 +1134,7 @@ span.metadata {
 }
 
 .buildsoverview {
-    margin-top:2.1em;
+    margin-top:2.2em;
 }
 
 /*----------------- Master Server ------------------*/
