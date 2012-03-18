@@ -65,6 +65,7 @@
 #include "de_platform.h"
 #include "dd_loop.h"
 #include "window.h"
+#include "displaymode.h"
 #include "sys_system.h"
 
 extern "C" {
@@ -131,6 +132,11 @@ int main(int argc, char** argv)
     // C interface to the app.
     de2LegacyCore = LegacyCore_New(&dengApp);
 
+    if(useGUI)
+    {
+        DisplayMode_Init();
+    }
+
     // Initialize.
 #if WIN32
     if(!DD_Win32_Init()) return 1;
@@ -152,6 +158,11 @@ int main(int argc, char** argv)
     Sys_Shutdown();
     DD_Shutdown();
     LegacyCore_Delete(de2LegacyCore);
+
+    if(useGUI)
+    {
+        DisplayMode_Shutdown();
+    }
 
     return result;
 }

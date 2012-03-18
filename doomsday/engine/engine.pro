@@ -185,6 +185,7 @@ DENG_HEADERS = \
     portable/include/de_render.h \
     portable/include/de_system.h \
     portable/include/de_ui.h \
+    portable/include/displaymode.h \
     portable/include/edit_bias.h \
     portable/include/edit_map.h \
     portable/include/filedirectory.h \
@@ -345,9 +346,11 @@ unix:!win32 {
 }
 macx {
     DENG_PLATFORM_HEADERS += \
+        $$DENG_MAC_INCLUDE_DIR/displaymode_macx.h \
         $$DENG_MAC_INCLUDE_DIR/MusicPlayer.h
 
     OBJECTIVE_SOURCES += \
+        mac/src/displaymode_macx.mm \
         mac/src/MusicPlayer.m
 
     INCLUDEPATH += $$DENG_MAC_INCLUDE_DIR
@@ -437,6 +440,7 @@ SOURCES += \
     portable/src/dfile.c \
     portable/src/dgl_common.c \
     portable/src/dgl_draw.c \
+    portable/src/displaymode.cpp \
     portable/src/edit_bias.c \
     portable/src/edit_map.c \
     portable/src/filedirectory.c \
