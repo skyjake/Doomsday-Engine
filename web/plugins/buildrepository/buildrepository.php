@@ -1606,6 +1606,16 @@ jQuery(document).ready(function() {
                 $n++;
                 if($chainLengthMax > 0 && $n >= $chainLengthMax) break;
             }
+
+            if($chainLengthMax > 0)
+            {
+                while($n++ < $chainLengthMax)
+                {
+
+?><li></li><?php
+
+                }
+            }
         }
         else
         {
