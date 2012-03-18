@@ -376,6 +376,7 @@ Window* Window_ByIndex(uint id)
     return getWindow(id);
 }
 
+#if 0
 boolean Sys_ChangeVideoMode(int width, int height, int bpp)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
@@ -446,6 +447,7 @@ boolean Sys_ChangeVideoMode(int width, int height, int bpp)
     return true;
 #endif
 }
+#endif
 
 #if 0
 static boolean setDDWindow(Window *window, int newWidth, int newHeight,

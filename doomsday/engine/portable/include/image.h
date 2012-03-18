@@ -26,7 +26,7 @@
 #define LIBDENG_IMAGE_H
 
 #include "dfile.h"
-#include "dd_share.h"
+#include "size.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -53,7 +53,7 @@ typedef struct image_s {
     int flags;
 
     /// Indentifier of the color palette used/assumed or @c 0 if none (1-based).
-    colorpaletteid_t paletteId;
+    unsigned int paletteId;
 
     /// Size of the image in pixels.
     Size2Raw size;
