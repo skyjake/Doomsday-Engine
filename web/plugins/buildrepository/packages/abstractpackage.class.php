@@ -30,9 +30,10 @@ abstract class AbstractPackage extends BasePackage implements iDownloadable, iBu
 {
     static protected $emptyString = '';
 
-    protected $directDownloadUri = NULL;
-
     protected $buildId = 0; /// Unique.
+
+    protected $directDownloadUri = NULL;
+    protected $releaseNotesUri = NULL;
 
     protected $compileLogUri = NULL;
     protected $compileWarnCount = NULL;
@@ -65,6 +66,9 @@ abstract class AbstractPackage extends BasePackage implements iDownloadable, iBu
             $tpl['build_uniqueid'] = $this->buildId;
         }
 
+        if($this->hasReleaseNotesUri())
+            $tpl['release_notesuri'] = $this->releaseNotesUri;
+
         if($this->hasCompileLogUri())
             $tpl['compile_loguri'] = $this->compileLogUri;
 
@@ -73,6 +77,21 @@ abstract class AbstractPackage extends BasePackage implements iDownloadable, iBu
 
         if($this->hasCompileWarnCount())
             $tpl['compile_warncount'] = $this->compileWarnCount;
+    }
+
+    public function hasReleaseNotesUri()
+    {
+        return !is_null($this->releaseNotesUri);
+    }
+
+    public function releaseNotesUri()
+    {
+        return $this->releaseNotesUri;
+    }
+
+    public function setReleaseNotesUri($newUri)
+    {
+        $this->releaseNotesUri = "$newUri";
     }
 
     public function hasCompileLogUri()

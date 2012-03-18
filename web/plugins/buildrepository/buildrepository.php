@@ -583,7 +583,10 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                 // No - this must be a symbolic package.
                 // We'll instantiate a symbolic BuildEvent for this.
                 $build = new BuildEvent(0, 'Unknown', 'skyjake', 'jaakko.keranen@iki.fi');
-                //$build->setReleaseNotesUri();
+                if($pack->hasReleaseNotesUri())
+                {
+                    $build->setReleaseNotesUri($pack->releaseNotesUri());
+                }
                 $build->addPackage($pack);
             }
 
@@ -1261,19 +1264,17 @@ jQuery(document).ready(function() {
                 // Yes; we have "real" BuildEvent we can link with this.
                 $buildUniqueId = $pack->buildUniqueId();
                 $build = $this->buildByUniqueId($buildUniqueId);
-                $buildKey = "$buildUniqueId";
             }
             else
             {
                 // No - this must be a symbolic package.
                 // We'll instantiate a symbolic BuildEvent for this.
                 $build = new BuildEvent(0, 'Unknown', 'skyjake', 'jaakko.keranen@iki.fi');
-                //$build->setReleaseNotesUri();
+                if($pack->hasReleaseNotesUri())
+                {
+                    $build->setReleaseNotesUri($pack->releaseNotesUri());
+                }
                 $build->addPackage($pack);
-
-                // Symbolic events do not have a build id and therefore
-                // do not have a key; use an out-of-valid-range value.
-                $buildKey = "-1";
             }
 
             if(!$build instanceof BuildEvent) continue; // Odd...
