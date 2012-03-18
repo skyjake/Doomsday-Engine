@@ -52,6 +52,7 @@
 #include "de_network.h"
 #include "de_misc.h"
 
+#include "displaymode.h"
 #include "fs_util.h"
 #include "dd_uinit.h"
 
@@ -419,4 +420,5 @@ void DD_Shutdown(void)
     SDL_Quit();
     unloadAllPlugins(&app);
     Library_Shutdown();
+    DisplayMode_Shutdown();
 }

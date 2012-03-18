@@ -47,6 +47,7 @@ public:
 
     // Events.
     void moveEvent(QMoveEvent* ev);
+    void hideEvent(QHideEvent* ev);
 
     /**
      * Must be called before any canvas windows are created. Defines the

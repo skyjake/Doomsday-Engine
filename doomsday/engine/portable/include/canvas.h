@@ -67,6 +67,8 @@ public:
      */
     void setResizedFunc(void (*canvasResizedFunc)(Canvas&));
 
+    void setFocusFunc(void (*canvasFocusChanged)(Canvas&, bool));
+
     /**
      * Grabs the contents of the canvas framebuffer.
      *
@@ -97,6 +99,8 @@ public:
      *                    the image is returned.
      */
     void grab(image_t* img, const QSize& outputSize = QSize());
+
+    void trapMouse(bool trap = true);
 
 protected:
     void initializeGL();

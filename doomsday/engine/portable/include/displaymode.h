@@ -49,6 +49,16 @@ int DisplayMode_Init(void);
  */
 void DisplayMode_Shutdown(void);
 
+const DisplayMode* DisplayMode_OriginalMode(void);
+
+int DisplayMode_Count(void);
+
+const DisplayMode* DisplayMode_ByIndex(int index);
+
+const DisplayMode* DisplayMode_FindClosest(int width, int height, int depth, float freq);
+
+int DisplayMode_Change(const DisplayMode* mode);
+
 #ifdef __cplusplus
 }
 #endif

@@ -35,6 +35,7 @@
 #include "canvas.h"
 #include "sys_opengl.h"
 #include "sys_input.h"
+#include "displaymode.h"
 #include "keycode.h"
 
 static const int MOUSE_WHEEL_CONTINUOUS_THRESHOLD_MS = 100;
@@ -46,6 +47,7 @@ struct Canvas::Instance
     void (*initCallback)(Canvas&);
     void (*drawCallback)(Canvas&);
     void (*resizedCallback)(Canvas&);
+    void (*focusCallback)(Canvas&, bool);
     bool mouseGrabbed;
     QPoint prevMousePos;
     QTime prevWheelAt;
@@ -57,6 +59,7 @@ struct Canvas::Instance
           initNotified(false), initCallback(0),
           drawCallback(0),
           resizedCallback(0),
+          focusCallback(0),
           mouseGrabbed(false)
     {
         wheelDir[0] = wheelDir[1] = 0;
@@ -113,6 +116,11 @@ void Canvas::setResizedFunc(void (*canvasResizedFunc)(Canvas&))
     d->resizedCallback = canvasResizedFunc;
 }
 
+void Canvas::setFocusFunc(void (*canvasFocusChanged)(Canvas&, bool))
+{
+    d->focusCallback = canvasFocusChanged;
+}
+
 QImage Canvas::grabImage(const QSize& outputSize)
 {
     QImage grabbed = grabFrameBuffer(); // no alpha
@@ -147,6 +155,18 @@ void Canvas::grab(image_t* img, const QSize& outputSize)
 #endif
 
     Q_ASSERT(img->pixelSize != 0);
+}
+
+void Canvas::trapMouse(bool trap)
+{
+    if(trap)
+    {
+        d->grabMouse();
+    }
+    else
+    {
+        d->ungrabMouse();
+    }
 }
 
 void Canvas::initializeGL()
@@ -238,6 +258,8 @@ void Canvas::paintGL()
 void Canvas::focusInEvent(QFocusEvent*)
 {
     qDebug() << "Canvas: focus in";
+
+    if(d->focusCallback) d->focusCallback(*this, true);
 }
 
 void Canvas::focusOutEvent(QFocusEvent*)
@@ -245,6 +267,8 @@ void Canvas::focusOutEvent(QFocusEvent*)
     qDebug() << "Canvas: focus out";
 
     d->ungrabMouse();
+
+    if(d->focusCallback) d->focusCallback(*this, false);
 }
 
 void Canvas::keyPressEvent(QKeyEvent *ev)

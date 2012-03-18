@@ -24,7 +24,6 @@
 #define LIBDENG_SYS_WINDOW_H
 
 #include "dd_types.h"
-#include "rect.h"
 #include "image.h"
 
 #ifdef __cplusplus
@@ -240,7 +239,7 @@ void Window_SwapBuffers(const Window* win);
  *
  * @return OpenGL texture name. Caller is reponsible for deleting the texture.
  */
-DGLuint Window_GrabAsTexture(const Window* win, boolean halfSized);
+unsigned int Window_GrabAsTexture(const Window* win, boolean halfSized);
 
 /**
  * Grabs the contents of the window and saves it into an image file.
@@ -284,6 +283,8 @@ void Window_SaveState(Window *wnd);
  * to determine the default window geometry.
  */
 void Window_RestoreState(Window* wnd);
+
+void* Window_NativeHandle(const Window* wnd);
 
 /**
  *\todo This is a compromise to prevent having to refactor half the

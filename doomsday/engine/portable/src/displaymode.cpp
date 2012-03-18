@@ -40,6 +40,11 @@ struct Mode : public DisplayMode
         memset(static_cast<DisplayMode*>(this), 0, sizeof(DisplayMode));
     }
 
+    Mode(const DisplayMode& dm)
+    {
+        memcpy(static_cast<DisplayMode*>(this), &dm, sizeof(dm));
+    }
+
     Mode(int i)
     {
         DisplayMode_Native_GetMode(i, this);
@@ -52,6 +57,12 @@ struct Mode : public DisplayMode
         DisplayMode_Native_GetCurrentMode(&m);
         m.updateRatio();
         return m;
+    }
+
+    bool operator == (const Mode& other) const
+    {
+        return width == other.width && height == other.height &&
+               depth == other.depth && refreshRate == other.refreshRate;
     }
 
     bool operator < (const Mode& b) const
@@ -143,7 +154,83 @@ int DisplayMode_Init(void)
 
 void DisplayMode_Shutdown(void)
 {
+    if(!inited) return;
+
+    // Back to the original mode.
+    DisplayMode_Change(&originalMode);
+
     modes.clear();
 
     DisplayMode_Native_Shutdown();
+    inited = false;
+}
+
+const DisplayMode* DisplayMode_OriginalMode(void)
+{
+    return &originalMode;
+}
+
+int DisplayMode_Count(void)
+{
+    return (int) modes.size();
+}
+
+const DisplayMode* DisplayMode_ByIndex(int index)
+{
+    Q_ASSERT(index >= 0);
+    Q_ASSERT(index < (int) modes.size());
+
+    int pos = 0;
+    for(Modes::iterator i = modes.begin(); i != modes.end(); ++i, ++pos)
+    {
+        if(pos == index)
+        {
+            return &*i;
+        }
+    }
+
+    Q_ASSERT(false);
+    return 0; // unreachable
+}
+
+template <typename T>
+T squared(const T& v) { return v * v; }
+
+const DisplayMode* DisplayMode_FindClosest(int width, int height, int depth, float freq)
+{
+    int bestScore = -1;
+    const DisplayMode* best = 0;
+
+    for(Modes::iterator i = modes.begin(); i != modes.end(); ++i)
+    {
+        int score = squared(i->width - width) + squared(i->height - height) + squared(i->depth - depth);
+        if(freq)
+        {
+            score += squared(i->refreshRate - freq);
+        }
+
+        if(!best || score < bestScore)
+        {
+#ifdef _DEBUG
+            i->debugPrint();
+            qDebug() << "Score for" << width << "x" << height << "pixels, depth:" << depth << "bpp, freq:" << freq << "Hz is" << score;
+#endif
+
+            bestScore = score;
+            best = &*i;
+        }
+    }
+    return best;
+}
+
+int DisplayMode_Change(const DisplayMode* mode)
+{
+    if(Mode::fromCurrent() == *mode)
+    {
+        qDebug() << "DisplayMode: Requested mode is the same as current, ignoring.";
+
+        // Already in this mode.
+        return true;
+    }
+    return DisplayMode_Native_Change(mode);
 }

@@ -25,8 +25,11 @@
 #include <assert.h>
 #include <CoreFoundation/CoreFoundation.h>
 #include <ApplicationServices/ApplicationServices.h>
+#include <AppKit/AppKit.h>
 #include <vector>
 #include <qDebug>
+
+#include "window.h"
 
 /// Returns -1 on error.
 static int intFromDict(CFDictionaryRef dict, CFStringRef key)
@@ -59,6 +62,7 @@ static DisplayMode modeFromDict(CFDictionaryRef dict)
 }
 
 static std::vector<DisplayMode> displayModes;
+static std::vector<CFDictionaryRef> displayDicts;
 
 void DisplayMode_Native_Init(void)
 {
@@ -67,8 +71,25 @@ void DisplayMode_Native_Init(void)
     CFIndex count = CFArrayGetCount(modes);
     for(CFIndex i = 0; i < count; ++i)
     {
-        displayModes.push_back(modeFromDict((CFDictionaryRef)CFArrayGetValueAtIndex(modes, i)));
+        CFDictionaryRef dict = (CFDictionaryRef) CFArrayGetValueAtIndex(modes, i);
+        displayModes.push_back(modeFromDict(dict));
+        displayDicts.push_back(dict);
     }
+}
+
+static void releaseDisplays()
+{
+    if(CGDisplayIsCaptured(kCGDirectMainDisplay))
+    {
+        CGReleaseAllDisplays();
+    }
+}
+
+void DisplayMode_Native_Shutdown(void)
+{
+    displayModes.clear();
+
+    releaseDisplays();
 }
 
 int DisplayMode_Native_Count(void)
@@ -82,13 +103,85 @@ void DisplayMode_Native_GetMode(int index, DisplayMode* mode)
     *mode = displayModes[index];
 }
 
+static CFDictionaryRef currentModeDict()
+{
+    return (CFDictionaryRef) CGDisplayCurrentMode(kCGDirectMainDisplay);
+}
+
 void DisplayMode_Native_GetCurrentMode(DisplayMode* mode)
 {
-    *mode = modeFromDict((CFDictionaryRef)CGDisplayCurrentMode(kCGDirectMainDisplay));
+    *mode = modeFromDict(currentModeDict());
 }
 
-void DisplayMode_Native_Shutdown(void)
+static int findIndex(const DisplayMode* mode)
 {
-    displayModes.clear();
+    for(unsigned int i = 0; i < displayModes.size(); ++i)
+    {
+        if(displayModes[i].width == mode->width &&
+           displayModes[i].height == mode->height &&
+           displayModes[i].depth == mode->depth &&
+           displayModes[i].refreshRate == mode->refreshRate)
+        {
+            return i;
+        }
+    }
+    return -1; // Invalid mode.
 }
 
+#define DISABLE_FADE
+
+int DisplayMode_Native_Change(const DisplayMode* mode)
+{
+    const CGDisplayFadeInterval fadeTime = .5f;
+
+    assert(mode);
+    assert(findIndex(mode) >= 0); // mode must be an enumerated one
+
+#ifndef DISABLE_FADE
+    // Fade all displays to black.
+    CGDisplayFadeReservationToken token;
+    CGAcquireDisplayFadeReservation(kCGMaxDisplayReservationInterval, &token);
+    CGDisplayFade(token, fadeTime, kCGDisplayBlendNormal, kCGDisplayBlendSolidColor, 0, 0, 0, true /* wait */);
+#endif
+
+    // Capture the displays now if haven't yet done so.
+    bool wasPreviouslyCaptured = true;
+    CGDisplayErr result = kCGErrorSuccess;
+    if(!CGDisplayIsCaptured(kCGDirectMainDisplay))
+    {
+        wasPreviouslyCaptured = false;
+        result = CGCaptureAllDisplays();
+    }
+    if(result == kCGErrorSuccess)
+    {
+        CFDictionaryRef current = currentModeDict();
+
+        // Try to change.
+        result = CGDisplaySwitchToMode(kCGDirectMainDisplay, displayDicts[findIndex(mode)]);
+        if(result != kCGErrorSuccess)
+        {
+            // Oh no!
+            CGDisplaySwitchToMode(kCGDirectMainDisplay, current);
+            if(!wasPreviouslyCaptured) releaseDisplays();
+        }
+    }
+
+    /// @todo fade should wait when shutting down
+
+#ifndef DISABLE_FADE
+    // Fade back to normal.
+    CGDisplayFade(token, fadeTime, kCGDisplayBlendSolidColor, kCGDisplayBlendNormal, 0, 0, 0, false /* don't wait */);
+    CGReleaseDisplayFadeReservation(token);
+#endif
+
+    return result == kCGErrorSuccess;
+}
+
+void DisplayMode_Native_Raise(void* nativeHandle)
+{
+    assert(nativeHandle);
+
+    NSView* handle = (NSView*) nativeHandle;
+    NSWindow* wnd = [handle window];
+    [wnd setLevel:CGShieldingWindowLevel()];
+}

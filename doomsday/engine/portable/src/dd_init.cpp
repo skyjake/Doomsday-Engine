@@ -58,6 +58,7 @@
 
 #include <QApplication>
 #include <QSettings>
+#include <QDebug>
 #include <stdlib.h>
 #include <de/App>
 #include <de/Log>
@@ -158,11 +159,6 @@ int main(int argc, char** argv)
     Sys_Shutdown();
     DD_Shutdown();
     LegacyCore_Delete(de2LegacyCore);
-
-    if(useGUI)
-    {
-        DisplayMode_Shutdown();
-    }
 
     return result;
 }

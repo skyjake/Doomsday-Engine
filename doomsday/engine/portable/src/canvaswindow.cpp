@@ -65,10 +65,19 @@ void CanvasWindow::setMoveFunc(void (*func)(CanvasWindow&))
 
 void CanvasWindow::moveEvent(QMoveEvent *ev)
 {
+    QMainWindow::moveEvent(ev);
+
     if(d->moveFunc)
     {
         d->moveFunc(*this);
     }
+}
+
+void CanvasWindow::hideEvent(QHideEvent* ev)
+{
+    QMainWindow::hideEvent(ev);
+
+    qDebug() << "CanvasWindow: hide event" << isHidden();
 }
 
 void CanvasWindow::setDefaultGLFormat() // static

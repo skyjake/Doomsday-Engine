@@ -32,16 +32,22 @@
 #  include <SDL.h>
 #endif
 
-#include "canvaswindow.h"
+#ifdef MACOSX
+#  include "displaymode_macx.h"
+#endif
 
-#include "de_platform.h"
 #include "window.h"
+#include "canvaswindow.h"
+#include "displaymode.h"
+#include "de_platform.h"
 #include "sys_system.h"
 #include "dd_main.h"
 #include "con_main.h"
 #include "con_busy.h"
 #include "gl_main.h"
 #include "ui_main.h"
+
+#include <QDebug>
 
 /// Used to determine the valid region for windows on the desktop.
 /// A window should never go fully (or nearly fully) outside the desktop.
@@ -177,6 +183,27 @@ struct ddwindow_s
         }
     }
 
+    void applyDisplayMode()
+    {
+        assertWindow();
+
+        if(flags & DDWF_FULLSCREEN)
+        {
+            const DisplayMode* mode = DisplayMode_FindClosest(width(), height(), colorDepthBits, 0);
+            if(mode)
+            {
+                if(DisplayMode_Change(mode))
+                {
+                    widget->canvas().trapMouse();
+                }
+            }
+        }
+        else
+        {
+            DisplayMode_Change(DisplayMode_OriginalMode());
+        }
+    }
+
     /**
      * Applies the information stored in the Window instance to the actual
      * widget geometry. Centering is applied in this stage (it only affects the
@@ -186,32 +213,34 @@ struct ddwindow_s
     {
         assertWindow();
 
-        QRect geom = rect();
-
-        if(flags & DDWF_CENTER)
+        if(flags & DDWF_FULLSCREEN)
         {
-            // Center the window.
-            QSize screenSize = desktopRect().size();
-            geom = QRect(desktopRect().topLeft() +
-                         QPoint((screenSize.width() - width())/2,
-                                (screenSize.height() - height())/2),
-                         screenSize);
-        }
-
-        if(flags & DDWF_MAXIMIZE)
-        {
-            if(widget->isVisible()) widget->showMaximized();
+            if(widget->isVisible()) widget->showFullScreen();
         }
         else
         {
-            if(widget->isVisible() && widget->isMaximized()) widget->showNormal();
-            widget->setGeometry(geom);
-            appliedGeometry = geom; // Saved for detecting changes.
-        }
+            QRect geom = rect();
 
-        if(flags & DDWF_FULLSCREEN)
-        {
-            /// @todo fullscreen mode
+            if(flags & DDWF_CENTER)
+            {
+                // Center the window.
+                QSize screenSize = desktopRect().size();
+                geom = QRect(desktopRect().topLeft() +
+                             QPoint((screenSize.width() - width())/2,
+                                    (screenSize.height() - height())/2),
+                             screenSize);
+            }
+
+            if(flags & DDWF_MAXIMIZE)
+            {
+                if(widget->isVisible()) widget->showMaximized();
+            }
+            else
+            {
+                if(widget->isVisible() && widget->isMaximized()) widget->showNormal();
+                widget->setGeometry(geom);
+                appliedGeometry = geom; // Saved for detecting changes.
+            }
         }
     }
 
@@ -722,10 +751,45 @@ static void drawCanvasWithCallback(Canvas& canvas)
     }
 }
 
+/*
+static void windowFocusChanged(Canvas& canvas, bool focus)
+{
+    Window* wnd = canvasToWindow(canvas);
+    wnd->assertWindow();
+
+    qDebug() << "windowFocusChanged" << focus << "fullscreen" << Window_IsFullscreen(wnd)
+             << "hidden" << wnd->widget->isHidden() << wnd->widget->isMinimized();
+
+    if(Window_IsFullscreen(wnd))
+    {
+        if(!focus)
+        {
+            DisplayMode_Change(DisplayMode_OriginalMode());
+        }
+        else
+        {
+            wnd->applyDisplayMode();
+        }
+    }
+}
+*/
+
 static void finishMainWindowInit(Canvas& canvas)
 {
-    // This is only for the main window.
-    assert(&mainWindow.widget->canvas() == &canvas);
+    Window* win = canvasToWindow(canvas);
+    assert(win == &mainWindow);
+
+#ifdef MACOSX
+    if(Window_IsFullscreen(win))
+    {
+        // The window must be manually raised above the shielding window put up by
+        // the display capture.
+        DisplayMode_Native_Raise(Window_NativeHandle(win));
+    }
+#endif
+
+    //win->widget->canvas().setFocusFunc(windowFocusChanged);
+
     DD_FinishInitializationAfterWindowReady();
 }
 
@@ -776,10 +840,11 @@ static Window* createWindow(ddwindowtype_t type, const char* title)
     }
     else
     {
+        Window_RestoreState(&mainWindow);
+
         // Create the main window (hidden).
         mainWindow.widget = new CanvasWindow;
         Window_SetTitle(&mainWindow, title);
-        Window_RestoreState(&mainWindow);
 
         // Minimum possible size when resizing.
         mainWindow.widget->setMinimumSize(QSize(WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT));
@@ -792,6 +857,8 @@ static Window* createWindow(ddwindowtype_t type, const char* title)
 
         // Let's see if there are command line options overriding the previous state.
         mainWindow.modifyAccordingToOptions();
+
+        mainWindow.applyDisplayMode();
 
         // Make it so. (Not shown yet.)
         mainWindow.applyWindowGeometry();
@@ -834,10 +901,16 @@ void Window_Delete(Window* wnd)
     }
     else
     {
-        assert(wnd->widget);
+        wnd->assertWindow();
+        wnd->widget->canvas().setFocusFunc(0);
 
         // Make sure we'll remember the config.
         Window_SaveState(wnd);
+
+        if(wnd == &mainWindow)
+        {
+            DisplayMode_Shutdown();
+        }
 
         // Delete the CanvasWindow.
         delete wnd->widget;
@@ -1025,6 +1098,12 @@ HWND Sys_GetWindowHandle(uint idx)
 
 #endif
 
+void* Window_NativeHandle(const Window* wnd)
+{
+    if(!wnd || !wnd->widget) return 0;
+    return reinterpret_cast<void*>(wnd->widget->winId());
+}
+
 void Window_SetDrawFunc(Window* win, void (*drawFunc)(void))
 {
     if(win->type == WT_CONSOLE) return;
@@ -1073,10 +1152,14 @@ void Window_Show(Window *wnd, boolean show)
     assert(wnd->widget);
     if(show)
     {
-        if(wnd->flags & DDWF_MAXIMIZE)
+        if(wnd->flags & DDWF_FULLSCREEN)
+            wnd->widget->showFullScreen();
+        else if(wnd->flags & DDWF_MAXIMIZE)
             wnd->widget->showMaximized();
         else
             wnd->widget->showNormal();
+
+        qDebug() << "Window_Show: Geometry" << wnd->widget->geometry();
     }
     else
     {
@@ -1184,4 +1267,7 @@ void Window_RestoreState(Window* wnd)
     wnd->setFlag(DDWF_CENTER, st.value(settingsKey(idx, "center"), true).toBool());
     wnd->setFlag(DDWF_MAXIMIZE, st.value(settingsKey(idx, "maximize"), false).toBool());
     wnd->setFlag(DDWF_FULLSCREEN, st.value(settingsKey(idx, "fullscreen"), true).toBool());
+
+    // testing
+    wnd->setFlag(DDWF_FULLSCREEN, false);
 }

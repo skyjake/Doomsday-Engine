@@ -57,6 +57,7 @@
 #include "de_defs.h"
 #include "de_filesys.h"
 
+#include "displaymode.h"
 #include "cbuffer.h"
 #include "font.h"
 
@@ -2051,6 +2052,8 @@ void Con_Error(const char* error, ...)
         dd_vsnprintf(buff, sizeof(buff), error, argptr);
         va_end(argptr);
         Sys_MessageBox(buff, true);
+
+        DisplayMode_Shutdown();
 
         // Exit immediately, lest we go into an infinite loop.
         exit(1);

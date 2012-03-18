@@ -36,7 +36,11 @@ void DisplayMode_Native_GetMode(int index, DisplayMode* mode);
 
 void DisplayMode_Native_GetCurrentMode(DisplayMode* mode);
 
+int DisplayMode_Native_Change(const DisplayMode* mode);
+
 void DisplayMode_Native_Shutdown(void);
+
+void DisplayMode_Native_Raise(void* handle);
 
 #ifdef __cplusplus
 }
