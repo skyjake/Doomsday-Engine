@@ -46,6 +46,7 @@ DENG2_PUBLIC void LegacyCore_SetLoopFunc(LegacyCore* lc, void (*callback)(void))
 DENG2_PUBLIC void LegacyCore_PushLoop(LegacyCore* lc);
 DENG2_PUBLIC void LegacyCore_PopLoop(LegacyCore* lc);
 DENG2_PUBLIC int LegacyCore_RunEventLoop(LegacyCore* lc);
+DENG2_PUBLIC void LegacyCore_Timer(LegacyCore* lc, unsigned int milliseconds, void (*callback)(void));
 DENG2_PUBLIC void LegacyCore_Stop(LegacyCore* lc, int exitCode);
 DENG2_PUBLIC void LegacyCore_Delete(LegacyCore* lc);
 

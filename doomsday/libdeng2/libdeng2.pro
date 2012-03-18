@@ -51,13 +51,15 @@ HEADERS += \
 
 # Private headers.
 HEADERS += \
-    src/core/logtextstyle.h
+    src/core/logtextstyle.h \
+    src/core/callbacktimer.h
 
 SOURCES += \
     src/c_wrapper.cpp \
     src/core/app.cpp \
+    src/core/callbacktimer.cpp \
     src/core/log.cpp \
-    src/core/logbuffer.cpp
+    src/core/logbuffer.cpp \
 
 # Installation ---------------------------------------------------------------
 

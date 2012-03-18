@@ -90,6 +90,14 @@ public:
     void stop(int exitCode = 0);
 
     /**
+     * Registers a new single-shot timer that will do a callback.
+     *
+     * @param milliseconds   Time to wait.
+     * @param timerCallback  Callback to call.
+     */
+    void timer(duint32 milliseconds, void (*func)(void));
+
+    /**
      * Returns the LegacyCore singleton instance.
      */
     static LegacyCore& instance();
@@ -101,6 +109,7 @@ public:
 
 public slots:
     void callback();
+    void timerTriggered();
 
 private:
     // Private instance data.

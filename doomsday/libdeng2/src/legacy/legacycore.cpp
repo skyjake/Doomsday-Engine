@@ -21,6 +21,8 @@
 #include "de/LegacyNetwork"
 #include "de/LogBuffer"
 
+#include "../core/callbacktimer.h"
+
 #include <QCoreApplication>
 #include <QList>
 #include <QTimer>
@@ -141,6 +143,13 @@ void LegacyCore::stop(int exitCode)
     d->app->exit(exitCode);
 }
 
+void LegacyCore::timer(duint32 milliseconds, void (*func)(void))
+{
+    // The timer will delete itself after it's triggered.
+    internal::CallbackTimer* timer = new internal::CallbackTimer(func, this);
+    timer->start(milliseconds);
+}
+
 void LegacyCore::callback()
 {
     if(d->loop.func)
@@ -150,4 +159,8 @@ void LegacyCore::callback()
         d->loop.func();
         QTimer::singleShot(d->loop.interval, this, SLOT(callback()));
     }
+}
+
+void LegacyCore::timerTriggered()
+{
 }
