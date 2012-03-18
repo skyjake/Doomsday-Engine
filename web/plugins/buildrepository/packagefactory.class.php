@@ -67,7 +67,6 @@ class PackageFactory
 
         $platformId = BuildRepositoryPlugin::parsePlatformId(clean_text($log_pack->platform));
         $cleanDirectDownloadUri = safe_url($log_pack->downloadUri);
-        $compileLogUri    = safe_url($log_pack->compileLogUri);
 
         if(!empty($log_pack->name))
         {
@@ -101,32 +100,33 @@ class PackageFactory
         case 'plugin':
             if($releaseType === RT_STABLE)
             {
-                $pack = new PluginPackage($platformId, $name, $version, $cleanDirectDownloadUri,
-                    $compileLogUri, (integer)$log_pack->compileWarnCount,
-                    (integer)$log_pack->compileErrorCount);
+                $pack = new PluginPackage($platformId, $name, $version, $cleanDirectDownloadUri);
             }
             else
             {
-                $pack = new UnstablePluginPackage($platformId, $name, $version, $cleanDirectDownloadUri,
-                    $compileLogUri, (integer)$log_pack->compileWarnCount,
-                    (integer)$log_pack->compileErrorCount);
+                $pack = new UnstablePluginPackage($platformId, $name, $version, $cleanDirectDownloadUri);
             }
             break;
         default:
             if($releaseType === RT_STABLE)
             {
-                $pack = new DistributionPackage($platformId, $name, $version, $cleanDirectDownloadUri,
-                    $compileLogUri, (integer)$log_pack->compileWarnCount,
-                    (integer)$log_pack->compileErrorCount);
+                $pack = new DistributionPackage($platformId, $name, $version, $cleanDirectDownloadUri);
             }
             else
             {
-                $pack = new UnstableDistributionPackage($platformId, $name, $version, $cleanDirectDownloadUri,
-                    $compileLogUri, (integer)$log_pack->compileWarnCount,
-                    (integer)$log_pack->compileErrorCount);
+                $pack = new UnstableDistributionPackage($platformId, $name, $version, $cleanDirectDownloadUri);
             }
             break;
         }
+
+        if(!empty($log_pack->compileLogUri))
+            $pack->setCompileLogUri(safe_url($log_pack->compileLogUri));
+
+        if(!empty($log_pack->compileWarnCount))
+            $pack->setCompileWarnCount((integer)$log_pack->compileWarnCount);
+
+        if(!empty($log_pack->compileErrorCount))
+            $pack->setCompileErrorCount((integer)$log_pack->compileErrorCount);
 
         return $pack;
     }

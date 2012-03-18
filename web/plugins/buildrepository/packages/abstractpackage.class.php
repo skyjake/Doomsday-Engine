@@ -34,23 +34,16 @@ abstract class AbstractPackage extends BasePackage implements iDownloadable, iBu
 
     protected $buildId = 0; /// Unique.
 
-    protected $compileLogUri;
-    protected $compileWarnCount;
-    protected $compileErrorCount;
+    protected $compileLogUri = NULL;
+    protected $compileWarnCount = NULL;
+    protected $compileErrorCount = NULL;
 
-    public function __construct($platformId=PID_ANY, $title=NULL, $version=NULL, $directDownloadUri=NULL,
-        $compileLogUri=NULL, $compileWarnCount=0, $compileErrorCount=0)
+    public function __construct($platformId=PID_ANY, $title=NULL, $version=NULL, $directDownloadUri=NULL)
     {
         parent::__construct($platformId, $title, $version);
 
         if(!is_null($directDownloadUri) && strlen($directDownloadUri) > 0)
             $this->directDownloadUri = "$directDownloadUri";
-
-        if(!is_null($compileLogUri))
-            $this->compileLogUri = "$compileLogUri";
-
-        $this->compileWarnCount  = intval($compileWarnCount);
-        $this->compileErrorCount = intval($compileErrorCount);
     }
 
     // Extends implementation in AbstractPackage.
@@ -72,33 +65,73 @@ abstract class AbstractPackage extends BasePackage implements iDownloadable, iBu
             $tpl['build_uniqueid'] = $this->buildId;
         }
 
-        $tpl['compile_loguri'] = $this->compileLogUri;
-        $tpl['compile_errorcount'] = $this->compileErrorCount;
-        $tpl['compile_warncount'] = $this->compileWarnCount;
+        if($this->hasCompileLogUri())
+            $tpl['compile_loguri'] = $this->compileLogUri;
+
+        if($this->hasCompileErrorCount())
+            $tpl['compile_errorcount'] = $this->compileErrorCount;
+
+        if($this->hasCompileWarnCount())
+            $tpl['compile_warncount'] = $this->compileWarnCount;
     }
 
-    public function &compileLogUri()
+    public function hasCompileLogUri()
     {
+        return !is_null($this->compileLogUri);
+    }
+
+    public function compileLogUri()
+    {
+        if(!$this->hasCompileLogUri()) return self::$emptyString;
         return $this->compileLogUri;
+    }
+
+    public function setCompileLogUri($compileLogUri)
+    {
+        if(strcasecmp(gettype($compileLogUri), 'string'))
+        {
+            $this->compileLogUri = NULL;
+            return;
+        }
+        $this->compileLogUri = strval($compileLogUri);
+    }
+
+    public function hasCompileWarnCount()
+    {
+        return !is_null($this->compileWarnCount);
     }
 
     public function compileWarnCount()
     {
+        if(!$this->hasCompileWarnCount()) return 0;
         return $this->compileWarnCount;
+    }
+
+    public function setCompileWarnCount($count)
+    {
+        $this->compileWarnCount = intval($count);
+    }
+
+    public function hasCompileErrorCount()
+    {
+        return !is_null($this->compileErrorCount);
     }
 
     public function compileErrorCount()
     {
+        if(!$this->hasCompileErrorCount()) return 0;
         return $this->compileErrorCount;
+    }
+
+    public function setCompileErrorCount($count)
+    {
+        $this->compileErrorCount = intval($count);
     }
 
     // Implements iDownloadable
     public function &directDownloadUri()
     {
-        if(!$this->hasDirectDownloadUri())
-        {
-            return $emptyString;
-        }
+        if(!$this->hasDirectDownloadUri()) return $emptyString;
         return $this->directDownloadUri;
     }
 
