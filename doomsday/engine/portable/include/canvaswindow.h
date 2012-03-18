@@ -41,6 +41,14 @@ public:
     Canvas& canvas();
 
     /**
+     * Sets a callback function for notifying about window movement.
+     */
+    void setMoveFunc(void (*func)(CanvasWindow&));
+
+    // Events.
+    void moveEvent(QMoveEvent* ev);
+
+    /**
      * Must be called before any canvas windows are created. Defines the
      * default OpenGL format settings for the contained canvases.
      */

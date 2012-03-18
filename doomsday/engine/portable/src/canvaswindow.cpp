@@ -24,10 +24,15 @@
 #include <assert.h>
 
 #include <QGLFormat>
+#include <QMoveEvent>
+#include <QDebug>
 
 struct CanvasWindow::Instance
 {
     Canvas* canvas;
+    void (*moveFunc)(CanvasWindow&);
+
+    Instance() : canvas(0), moveFunc(0) {}
 };
 
 CanvasWindow::CanvasWindow(QWidget *parent)
@@ -51,6 +56,19 @@ Canvas& CanvasWindow::canvas()
 {
     assert(d->canvas != 0);
     return *d->canvas;
+}
+
+void CanvasWindow::setMoveFunc(void (*func)(CanvasWindow&))
+{
+    d->moveFunc = func;
+}
+
+void CanvasWindow::moveEvent(QMoveEvent *ev)
+{
+    if(d->moveFunc)
+    {
+        d->moveFunc(*this);
+    }
 }
 
 void CanvasWindow::setDefaultGLFormat() // static

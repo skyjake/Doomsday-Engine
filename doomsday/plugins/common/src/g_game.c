@@ -3308,11 +3308,11 @@ void G_DoScreenShot(void)
 
     if(M_ScreenShot(Str_Text(name), 24))
     {
-        Con_Message("Wrote screenshot \"%s\"\n", F_PrettyPath(Str_Text(name)));
+        Con_Message("Wrote screenshot: %s\n", F_PrettyPath(Str_Text(name)));
     }
     else
     {
-        Con_Message("Failed to write screenshot \"%s\"\n", F_PrettyPath(Str_Text(name)));
+        Con_Message("Failed to write screenshot \"%s\".\n", F_PrettyPath(Str_Text(name)));
     }
     Str_Delete(name);
 }

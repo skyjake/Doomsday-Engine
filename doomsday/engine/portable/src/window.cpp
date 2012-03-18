@@ -61,13 +61,13 @@ static QRect desktopValidRect()
 
 struct ddwindow_s
 {
-    CanvasWindow* widget; ///< The widget this window represents.
+    CanvasWindow* widget;   ///< The widget this window represents.
     void (*drawFunc)(void); ///< Draws the contents of the canvas.
-    QRect appliedGeometry; ///< Saved for detecting when changes have occurred.
+    QRect appliedGeometry;  ///< Saved for detecting when changes have occurred.
 
     ddwindowtype_t type;
     boolean inited;
-    RectRaw geometry;
+    RectRaw geometry;       ///< Current actual geometry.
     int colorDepthBits;
     int flags;
     consolewindow_t console; ///< Only used for WT_CONSOLE windows.
@@ -223,20 +223,16 @@ struct ddwindow_s
     {
         assertWindow();
 
-        QRect rect = widget->geometry();
+        setFlag(DDWF_MAXIMIZE, widget->isMaximized());
+
+        QRect rect = widget->normalGeometry();
         geometry.origin.x = rect.x();
         geometry.origin.y = rect.y();
         geometry.size.width = rect.width();
         geometry.size.height = rect.height();
 
-        setFlag(DDWF_MAXIMIZE, widget->isMaximized());
-
-        if(rect != appliedGeometry)
-        {
-            // The user has moved or resized the window.
-            // Let's not recenter it any more.
-            setFlag(DDWF_CENTER, false);
-        }
+        Con_Message("Window geometry: %i,%i %ix%i (max? %i)\n", geometry.origin.x, geometry.origin.y,
+                    geometry.size.width, geometry.size.height, (flags & DDWF_MAXIMIZE) != 0);
     }
 
     void setFlag(int flag, bool set = true)
@@ -733,11 +729,20 @@ static void finishMainWindowInit(Canvas& canvas)
     DD_FinishInitializationAfterWindowReady();
 }
 
+static void windowWasMoved(CanvasWindow& cw)
+{
+    Window* win = canvasToWindow(cw.canvas());
+    win->fetchWindowGeometry();
+    win->setFlag(DDWF_CENTER, false);
+}
+
 static void windowWasResized(Canvas& canvas)
 {
     Window* win = canvasToWindow(canvas);
 
     DEBUG_Message(("Updating view geometry.\n"));
+
+    win->setFlag(DDWF_CENTER, false);
 
     win->geometry.size.width = win->widget->width();
     win->geometry.size.height = win->widget->height();
@@ -782,6 +787,7 @@ static Window* createWindow(ddwindowtype_t type, const char* title)
         // After the main window is created, we can finish with the engine init.
         mainWindow.widget->canvas().setInitFunc(finishMainWindowInit);
 
+        mainWindow.widget->setMoveFunc(windowWasMoved);
         mainWindow.widget->canvas().setResizedFunc(windowWasResized);
 
         // Let's see if there are command line options overriding the previous state.
@@ -937,6 +943,7 @@ DGLuint Window_GrabAsTexture(const Window* win, boolean halfSized)
 
 boolean Window_GrabToFile(const Window* win, const char* fileName)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
     win->assertWindow();
     return win->widget->canvas().grabImage().save(fileName);
 }
@@ -1037,7 +1044,15 @@ void Window_Draw(Window* win)
     assert(win->widget);
 
     // Repaint right now.
-    win->widget->canvas().forcePaint();
+    /// @todo check the rend-vsync cvar
+    if(/*vsync is on*/ true)
+    {
+        win->widget->canvas().update();
+    }
+    else
+    {
+        win->widget->canvas().repaint();
+    }
 }
 
 void Window_Show(Window *wnd, boolean show)
@@ -1138,8 +1153,6 @@ void Window_SaveState(Window* wnd)
     assert(wnd == &mainWindow); /// @todo  Figure out the window index if there are many.
     uint idx = mainWindowIdx;
     assert(idx == 1);
-
-    wnd->fetchWindowGeometry();
 
     QSettings st;
     st.setValue(settingsKey(idx, "rect"), QRect(wnd->x(), wnd->y(), wnd->width(), wnd->height()));

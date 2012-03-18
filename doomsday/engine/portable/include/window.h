@@ -232,8 +232,26 @@ void Window_Draw(Window* win);
  */
 void Window_SwapBuffers(const Window* win);
 
+/**
+ * Grab the contents of the window into an OpenGL texture.
+ *
+ * @param win    Window instance.
+ * @param halfSized  If @c true, scales the image to half the full size.
+ *
+ * @return OpenGL texture name. Caller is reponsible for deleting the texture.
+ */
 DGLuint Window_GrabAsTexture(const Window* win, boolean halfSized);
 
+/**
+ * Grabs the contents of the window and saves it into an image file.
+ *
+ * @param win       Window instance.
+ * @param fileName  Name of the file to save. May include a file extension
+ *                  that indicates which format to use (e.g, "screenshot.jpg").
+ *                  If omitted, defaults to PNG.
+ *
+ * @return @c true if successful, otherwise @c false.
+ */
 boolean Window_GrabToFile(const Window* win, const char* fileName);
 
 /**
@@ -244,6 +262,13 @@ boolean Window_GrabToFile(const Window* win, const char* fileName);
  */
 void Window_Grab(const Window* win, image_t* image);
 
+/**
+ * Grab the contents of the window into an image.
+ *
+ * @param win    Window instance.
+ * @param image  Grabbed image contents. Caller gets ownership; call GL_DestroyImage().
+ * @param halfSized  If @c true, scales the image to half the full size.
+ */
 void Window_Grab2(const Window* win, image_t* image, boolean halfSized);
 
 /**

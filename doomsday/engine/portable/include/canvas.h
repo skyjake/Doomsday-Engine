@@ -68,12 +68,24 @@ public:
     void setResizedFunc(void (*canvasResizedFunc)(Canvas&));
 
     /**
-     * Forces immediate repainting of the canvas. The draw callback gets called.
+     * Grabs the contents of the canvas framebuffer.
+     *
+     * @param outputSize  If specified, the contents will be scaled to this size before
+     *                    the image is returned.
+     *
+     * @return  Framebuffer contents (no alpha channel).
      */
-    void forcePaint();
-
     QImage grabImage(const QSize& outputSize = QSize());
 
+    /**
+     * Grabs the contents of the canvas framebuffer and creates an OpenGL
+     * texture out of it.
+     *
+     * @param outputSize  If specified, the contents will be scaled to this size before
+     *                    the image is returned.
+     *
+     * @return  OpenGL texture name. Caller is responsible for deleting the texture.
+     */
     GLuint grabAsTexture(const QSize& outputSize = QSize());
 
     /**
