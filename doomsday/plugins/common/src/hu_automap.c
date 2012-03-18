@@ -1438,7 +1438,7 @@ void UIAutomap_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     DGL_Translatef(-vx, -vy, 0);
 
     oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
-    DGL_SetFloat(DGL_LINE_WIDTH, MAX_OF(.5f, cfg.automapLineWidth * aspectScale));
+    DGL_SetFloat(DGL_LINE_WIDTH, MINMAX_OF(.5f, cfg.automapLineWidth * aspectScale, 3.f));
 
 /*#if _DEBUG
 { // Draw the rectangle described by the visible bounds.
