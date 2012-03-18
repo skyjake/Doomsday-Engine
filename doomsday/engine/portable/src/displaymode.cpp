@@ -172,6 +172,14 @@ const DisplayMode* DisplayMode_OriginalMode(void)
     return &originalMode;
 }
 
+const DisplayMode* DisplayMode_Current(void)
+{
+    static Mode currentMode;
+    // Update it with current mode.
+    currentMode = Mode::fromCurrent();
+    return &currentMode;
+}
+
 int DisplayMode_Count(void)
 {
     return (int) modes.size();
@@ -213,10 +221,12 @@ const DisplayMode* DisplayMode_FindClosest(int width, int height, int depth, flo
 
         if(!best || score < bestScore)
         {
+            /*
 #ifdef _DEBUG
             i->debugPrint();
             qDebug() << "Score for" << width << "x" << height << "pixels, depth:" << depth << "bpp, freq:" << freq << "Hz is" << score;
 #endif
+            */
 
             bestScore = score;
             best = &*i;

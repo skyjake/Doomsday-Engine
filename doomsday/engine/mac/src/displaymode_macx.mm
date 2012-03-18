@@ -63,6 +63,7 @@ static DisplayMode modeFromDict(CFDictionaryRef dict)
 
 static std::vector<DisplayMode> displayModes;
 static std::vector<CFDictionaryRef> displayDicts;
+static CFDictionaryRef currentDisplayDict;
 
 void DisplayMode_Native_Init(void)
 {
@@ -75,6 +76,7 @@ void DisplayMode_Native_Init(void)
         displayModes.push_back(modeFromDict(dict));
         displayDicts.push_back(dict);
     }
+    currentDisplayDict = (CFDictionaryRef) CGDisplayCurrentMode(kCGDirectMainDisplay);
 }
 
 static void releaseDisplays()
@@ -103,14 +105,9 @@ void DisplayMode_Native_GetMode(int index, DisplayMode* mode)
     *mode = displayModes[index];
 }
 
-static CFDictionaryRef currentModeDict()
-{
-    return (CFDictionaryRef) CGDisplayCurrentMode(kCGDirectMainDisplay);
-}
-
 void DisplayMode_Native_GetCurrentMode(DisplayMode* mode)
 {
-    *mode = modeFromDict(currentModeDict());
+    *mode = modeFromDict(currentDisplayDict);
 }
 
 static int findIndex(const DisplayMode* mode)
@@ -150,8 +147,6 @@ int DisplayMode_Native_Change(const DisplayMode* mode)
     }
     if(result == kCGErrorSuccess)
     {
-        CFDictionaryRef current = currentModeDict();
-
         qDebug() << "Changing to native mode" << findIndex(mode);
 
         // Try to change.
@@ -159,10 +154,17 @@ int DisplayMode_Native_Change(const DisplayMode* mode)
         if(result != kCGErrorSuccess)
         {
             // Oh no!
-            CGDisplaySwitchToMode(kCGDirectMainDisplay, current);
+            CGDisplaySwitchToMode(kCGDirectMainDisplay, currentDisplayDict);
             if(!wasPreviouslyCaptured) releaseDisplays();
         }
+        else
+        {
+            currentDisplayDict = displayDicts[findIndex(mode)];
+        }
     }
+
+    DisplayMode dm = modeFromDict(currentDisplayDict);
+    qDebug() << "Native current is now" << dm.width << dm.height;
 
     // Fade back to normal.
     CGDisplayFade(token, 2*fadeTime, kCGDisplayBlendSolidColor, kCGDisplayBlendNormal, 0, 0, 0, false);

@@ -51,6 +51,8 @@ void DisplayMode_Shutdown(void);
 
 const DisplayMode* DisplayMode_OriginalMode(void);
 
+const DisplayMode* DisplayMode_Current(void);
+
 int DisplayMode_Count(void);
 
 const DisplayMode* DisplayMode_ByIndex(int index);

@@ -65,6 +65,8 @@ static QRect desktopValidRect()
                                   -DESKTOP_EDGE_GRACE, -DESKTOP_EDGE_GRACE);
 }
 
+static void updateMainWindowLayout(void);
+
 struct ddwindow_s
 {
     CanvasWindow* widget;   ///< The widget this window represents.
@@ -195,13 +197,20 @@ struct ddwindow_s
                 if(DisplayMode_Change(mode))
                 {
                     widget->canvas().trapMouse();
+
+                    geometry.size.width = DisplayMode_Current()->width;
+                    geometry.size.height = DisplayMode_Current()->height;
+
+#ifdef MACOSX
+                    // Pull the window again over the shield after the mode change.
+                    DisplayMode_Native_Raise(Window_NativeHandle(this));
+#endif
                 }
             }
         }
         else
         {
             DisplayMode_Change(DisplayMode_OriginalMode());
-            widget->canvas().trapMouse(false);
         }
     }
 
@@ -218,7 +227,16 @@ struct ddwindow_s
 
         if(flags & DDWF_FULLSCREEN)
         {
-            if(widget->isVisible()) widget->showFullScreen();
+            if(widget->isVisible())
+            {
+                // The window is already visible, so let's allow a mode change to resolve itself
+                // before we go changing the window.
+                LegacyCore_Timer(de2LegacyCore, 100, updateMainWindowLayout);
+            }
+            else
+            {
+                widget->setGeometry(0, 0, DisplayMode_Current()->width, DisplayMode_Current()->height);
+            }
         }
         else
         {
@@ -283,6 +301,7 @@ struct ddwindow_s
     {
         if(width() < WINDOW_MIN_WIDTH) return false;
         if(height() < WINDOW_MIN_HEIGHT) return false;
+        qDebug() << desktopValidRect() << rect() << desktopValidRect().contains(rect());
         return desktopValidRect().contains(rect());
     }
 
@@ -332,7 +351,7 @@ struct ddwindow_s
 
         // Check geometry for validity (window must be on the desktop
         // at least partially).
-        if(!isGeometryValid())
+        if(!(flags & DDWF_FULLSCREEN) && !isGeometryValid())
         {
             // We can't place the window completely outside the desktop.
             return false;
@@ -341,6 +360,39 @@ struct ddwindow_s
         // Seems ok, apply them.
         applyWindowGeometry();
         return true;
+    }
+
+    void updateLayout()
+    {
+        qDebug() << "Window::updateLayout:" << widget->geometry() << widget->canvas().geometry();
+
+        if(!(flags & DDWF_FULLSCREEN))
+        {
+            setFlag(DDWF_CENTER, false);
+            geometry.size.width = widget->width();
+            geometry.size.height = widget->height();
+
+            DEBUG_Message(("Updating view geometry for window, fetched %i x %i.\n",
+                           width(), height()));
+        }
+        else
+        {
+            DEBUG_Message(("Updating view geometry for fullscreen (%i x %i).\n",
+                           width(), height()));
+        }
+
+        // Update viewports.
+        R_SetViewGrid(0, 0);
+        if(Con_IsBusy() || UI_IsActive())
+        {
+            // Update for busy mode.
+            R_UseViewPort(0);
+        }
+        if(UI_IsActive())
+        {
+            UI_UpdatePageLayout();
+        }
+        R_LoadSystemFonts();
     }
 };
 
@@ -352,10 +404,18 @@ static boolean winManagerInited = false;
 static Window mainWindow;
 static boolean mainWindowInited = false;
 
-/*
-static int screenWidth, screenHeight, screenBPP;
-static boolean screenIsWindow;
-*/
+static void updateMainWindowLayout(void)
+{
+    Window* win = Window_Main();
+
+#ifdef MACOSX
+    // For some interesting reason, we have to scale the window twice in fullscreen mode
+    // or the resulting layout won't be correct.
+    win->widget->setGeometry(QRect(0, 0, 320, 240));
+#endif
+
+    win->widget->setGeometry(QRect(0, 0, win->geometry.size.width, win->geometry.size.height));
+}
 
 Window* Window_Main(void)
 {
@@ -808,26 +868,8 @@ static void windowWasMoved(CanvasWindow& cw)
 static void windowWasResized(Canvas& canvas)
 {
     Window* win = canvasToWindow(canvas);
-
-    DEBUG_Message(("Updating view geometry.\n"));
-
-    win->setFlag(DDWF_CENTER, false);
-
-    win->geometry.size.width = win->widget->width();
-    win->geometry.size.height = win->widget->height();
-
-    // Update viewports.
-    R_SetViewGrid(0, 0);
-    if(Con_IsBusy() || UI_IsActive())
-    {
-        // Update for busy mode.
-        R_UseViewPort(0);
-    }
-    if(UI_IsActive())
-    {
-        UI_UpdatePageLayout();
-    }
-    R_LoadSystemFonts();
+    win->assertWindow();
+    win->updateLayout();
 }
 
 static Window* createWindow(ddwindowtype_t type, const char* title)
@@ -1270,7 +1312,4 @@ void Window_RestoreState(Window* wnd)
     wnd->setFlag(DDWF_CENTER, st.value(settingsKey(idx, "center"), true).toBool());
     wnd->setFlag(DDWF_MAXIMIZE, st.value(settingsKey(idx, "maximize"), false).toBool());
     wnd->setFlag(DDWF_FULLSCREEN, st.value(settingsKey(idx, "fullscreen"), true).toBool());
-
-    // testing
-    wnd->setFlag(DDWF_FULLSCREEN, false);
 }

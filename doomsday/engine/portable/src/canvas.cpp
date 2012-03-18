@@ -67,6 +67,8 @@ struct Canvas::Instance
 
     void grabMouse()
     {
+        if(mouseGrabbed) return;
+
         mouseGrabbed = true;
 
         // Start grabbing the mouse now.
@@ -79,6 +81,8 @@ struct Canvas::Instance
 
     void ungrabMouse()
     {
+        if(!mouseGrabbed) return;
+
         mouseGrabbed = false;
         self->releaseMouse();
         qApp->restoreOverrideCursor();
