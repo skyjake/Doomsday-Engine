@@ -197,6 +197,10 @@ ol.jumplist {
     padding:0 1em;
 }
 
+ol.jumplist li {
+    padding-right:1.8em;
+}
+
 .centered {
     text-align:center;
 }
@@ -794,22 +798,17 @@ p.legal a {
     font-family: Verdana, Arial, Helvetica, sans-serif;
 }
 
-#buildsnav span.title {
+#buildsnav h3 {
+    font-size:small;
 }
 
-#buildsnav ul {
-    margin:.5em;
-}
-
-#buildsnav ul li {
-    padding:.25em 3em;
+#buildsnav h3 span {
+    color:lightgrey;
+    padding:0 1em;
 }
 
 #buildoverview {
     text-align:center;
-    margin-top:1em;
-    margin-left:auto;
-    margin-right:auto;
 }
 
 #buildpackagelist {
@@ -1008,8 +1007,13 @@ span.metadata {
 .buildstream ul li {
     min-width: 3.2em;
     list-style-type:none;
-    padding:0 .7em;
+    padding:0 .5em;
     vertical-align:top;
+}
+
+.buildstream ul li.current {
+    background-color: #F2FBF2;
+    border:1px solid #F2FBF2;
 }
 
 .release-badge {
@@ -1019,7 +1023,8 @@ span.metadata {
     font-family:Verdana, Arial, Helvetica, sans-serif;
 }
 
-.buildevent_badge {
+.buildevent_badge,
+.buildevent_badge_active {
     width:2.5em;
     margin-left:auto;
     margin-right:auto;
@@ -1035,7 +1040,8 @@ span.metadata {
     font-weight: bolder;
 }
 
-.buildevent_badge .startdate {
+.buildevent_badge .startdate,
+.buildevent_badge_active .startdate {
     position:relative;
     bottom:-.6em;
     display:block;
@@ -1080,7 +1086,8 @@ span.metadata {
     color:#860;
 }
 
-.unstable:hover, .unstable:visited:hover {
+.unstable:hover,
+.unstable:visited:hover {
     background-color:#FF3;
     border-color:#FC6;
 }

@@ -134,13 +134,11 @@ class BuildEvent
         return '<div class="build_news">'.$html.'</div>';
     }
 
-    public function genFancyBadge()
+    public function genFancyBadge($isActive=TRUE)
     {
-        $releaseType = BuildRepositoryPlugin::releaseType($this->releaseTypeId);
-
         $name = "Build$this->uniqueId";
-        $inspectBuildUri = $name;
-        $inspectBuildLabel = htmlspecialchars("Read more about {$releaseType['nicename']} {$name}");
+        $releaseType = BuildRepositoryPlugin::releaseType($this->releaseTypeId);
+        $isActive = (boolean)$isActive;
 
         $cssClass = 'buildevent_badge';
         if($this->releaseTypeId !== RT_UNKNOWN)
@@ -148,10 +146,24 @@ class BuildEvent
             $cssClass .= " {$releaseType['name']}";
         }
 
-        $html = "<a href=\"{$inspectBuildUri}\" title=\"{$inspectBuildLabel}\">"
-               ."<div class=\"{$cssClass}\">"
-               . htmlspecialchars($this->uniqueId)
-               ."<span class=\"startdate\">". htmlspecialchars(date('d M', $this->startDate)) .'</span></div></a>';
+        $html = '';
+
+        if($isActive)
+        {
+            $inspectBuildUri = $name;
+            $inspectBuildLabel = htmlspecialchars("Read more about {$releaseType['nicename']} {$name}");
+
+            $html .= "<a href=\"{$inspectBuildUri}\" title=\"{$inspectBuildLabel}\">";
+        }
+
+        $html .= "<div class=\"{$cssClass}\">"
+                . htmlspecialchars($this->uniqueId)
+                ."<span class=\"startdate\">". htmlspecialchars(date('d M', $this->startDate)) .'</span></div>';
+
+        if($isActive)
+        {
+            $html .= '</a>';
+        }
 
         return $html;
     }

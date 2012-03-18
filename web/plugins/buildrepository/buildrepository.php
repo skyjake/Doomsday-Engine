@@ -871,38 +871,25 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
     /**
      * Output build event stream navigational controls.
      *
-     * @param prevEvent  (Object) Previous event in the stream (if any).
-     * @param nextEvent  (Object) Next event in the stream (if any).
+     * @param prevEvent  (integer) Previous event uniqueId in the stream (if any).
+     * @param currentEvent (integer) Current event uniqueId in the stream (if any).
+     * @param nextEvent  (integer) Next event uniqueId in the stream (if any).
      */
-    private function outputBuildStreamNavigation($prevEvent=NULL, $nextEvent=NULL)
+    private function outputBuildStreamNavigation($prevEvent=NULL, $currentEvent=NULL, $nextEvent=NULL)
     {
-        $prevBuildUri = isset($prevEvent)? $prevEvent->composeBuildUri() : '';
-        $nextBuildUri = isset($nextEvent)? $nextEvent->composeBuildUri() : '';
+        $buildIndex = array();
+        $buildIndex[] = $prevEvent;
+        $buildIndex[] = $currentEvent;
+        $buildIndex[] = $nextEvent;
 
-?><div class="hnav" id="buildsnav"><span class="title">Build stream navigation</span><ul><?php
+?><div id="buildsnav" class="hnav"><h3><span>&larr;Older</span> <a href="builds" title="Back to the Build Repository index">Index</a> <span>Newer&rarr;</span></h3><?php
+?><div class="buildstreamlist"><?php
 
-        // Older event link.
-        echo '<li>';
-        if(!is_null($prevEvent))
-            echo "<a href=\"$prevBuildUri\" title=\"View older ".htmlspecialchars($prevEvent->composeName())."\">";
-        echo '&lt; Older';
-        if(!is_null($prevEvent))
-            echo '</a>';
-        echo '</li>';
+        $this->outputBuildStreamWidget($buildIndex, NULL/*no release header*/,
+                                       TRUE/*use the horiztonal variant*/, $currentEvent, TRUE);
 
-        // Build Repository link.
-        echo '<li><a href="builds" title="Back to the Build Repository">Index</a></li>';
+?></div></div><?php
 
-        // Newer event link.
-        echo '<li>';
-        if(!is_null($nextEvent))
-            echo "<a href=\"$nextBuildUri\" title=\"View newer ".htmlspecialchars($nextEvent->composeName())."\">";
-        echo 'Newer &gt;';
-        if(!is_null($nextEvent))
-            echo '</a>';
-        echo '</li>';
-
-?></ul></div><?php
     }
 
     /**
@@ -1308,26 +1295,35 @@ jQuery(document).ready(function() {
      * Print an HTML representation of the detailed information we have for
      * the specified build @a event to the output stream.
      *
-     * @param buildEvent  (object) BuildEvent to be detailed.
+     * @param event  (object) BuildEvent to be detailed.
      */
-    private function outputEventDetail(&$build)
+    private function outputEventDetail(&$event)
     {
-        if(!$build instanceof BuildEvent) throw new Exception('outputEventDetail: Invalid build argument, BuildEvent expected');
+        if(!$event instanceof BuildEvent) throw new Exception('outputEventDetail: Invalid build argument, BuildEvent expected');
 
 ?><div class="buildevent"><?php
 
-        $olderBuild = $this->findOlderBuild($build);
-        $newerBuild = $this->findNewerBuild($build);
-        $this->outputBuildStreamNavigation($olderBuild, $newerBuild);
-
+        // Display an overview of the event.
 ?><div id="buildoverview"><?php
 
-        $this->outputBuildEventMetadata($build);
-        $this->outputBuildPackageList($build);
+        $this->outputBuildEventMetadata($event);
+        $this->outputBuildPackageList($event);
 
 ?></div><?php
 
-        $this->outputBuildCommitLog($build);
+        // Display a stream navigation widget.
+        $older = $this->findOlderBuild($event);
+        $older = ($older instanceof BuildEvent)? $older->uniqueId() : -1;
+
+        $current = ($event instanceof BuildEvent)? $event->uniqueId() : -1;
+
+        $newer = $this->findNewerBuild($event);
+        $newer = ($newer instanceof BuildEvent)? $newer->uniqueId() : -1;
+
+        $this->outputBuildStreamNavigation($older, $current, $newer);
+
+        // Display the full commit log.
+        $this->outputBuildCommitLog($event);
 
 ?></div><?php
     }
@@ -1337,13 +1333,15 @@ jQuery(document).ready(function() {
      *
      * Properties:
      *
+     *   version       < (string) Version string of the Doomsday package.
      *   releaseTypeId < (integer) @ref releaseType
      *   buildIndex    < (array) Array of unique identifiers which reference
      *                   logical BuildEvents in the builds collection.
      */
-    private function newReleaseInfo()
+    private function newReleaseInfo($version)
     {
         $record = array();
+        $record['version'] = strval($version);
         $record['releaseTypeId'] = RT_UNKNOWN; // Default.
         $record['buildIndex'] = array();
         return $record;
@@ -1394,7 +1392,7 @@ jQuery(document).ready(function() {
                 // Not yet construct a new record and associate it
                 // in the matrix using the version number as the key.
                 $key = ucwords($version);
-                $matrix[$key] = $this->newReleaseInfo();
+                $matrix[$key] = $this->newReleaseInfo($key);
 
                 $releaseInfo = &$matrix[$key];
             }
@@ -1447,19 +1445,21 @@ jQuery(document).ready(function() {
         return $numEventsAdded;
     }
 
-    /**
-     * Print an HTML representation of the supplied build event matrix
-     * to the output stream.
-     */
-    private function outputEventMatrix(&$matrix)
+    private function outputBuildStreamWidget(&$buildIndex, $releaseInfo=NULL,
+        $horizontal=FALSE, $currentBuildId=-1, $currentInactive=FALSE)
     {
-        if(!is_array($matrix)) throw new Exception('outputEventMatrix: Invalid matrix argument, array expected.');
+        if(!is_array($buildIndex)) throw new Exception('outputBuildStreamWidget: Invalid buildIndex argument, array expected.');
 
-?><div class="buildstreamlist"><?php
+        $currentBuildId = (integer)$currentBuildId;
+        $currentInactive = (boolean)$currentInactive;
 
-        foreach($matrix as $version => &$releaseInfo)
+?><div class="buildstream<?php echo ($horizontal ? ' hnav' : ''); ?>"><ul><?php
+
+        // Include a release version header?
+        if(is_array($releaseInfo))
         {
             $releaseTypeId = $releaseInfo['releaseTypeId'];
+            $version = $releaseInfo['version'];
             $releaseType = $this->releaseType($releaseTypeId);
             $releaseLabel = htmlspecialchars($version);
 
@@ -1487,29 +1487,54 @@ jQuery(document).ready(function() {
                 $releaseLabel = "<a href=\"{$releaseTypeLink}\" title=\"{$releaseTypeLinkTitle}\">{$releaseLabel}</a>";
             }*/
 
-?><div class="buildstream"><ul><?php
 ?><li><div class="release-badge"><?php echo $releaseLabel; ?></div></li><?php
 
-            foreach($releaseInfo['buildIndex'] as $uniqueId)
+        }
+
+        foreach($buildIndex as $uniqueId)
+        {
+            $cssClass = '';
+            if($currentBuildId >= 0 && $uniqueId == $currentBuildId)
             {
+                $cssClass = ' class="current"';
+            }
 
-?><li><?php
+?><li<?php echo $cssClass; ?>><?php
 
-                if($uniqueId >= 0)
-                {
-                    $build = $this->buildByUniqueId($uniqueId);
-                    // Sanity check:
-                    if(!$build instanceof BuildEvent) throw new Exception("outputEventMatrix: Failed to locate a BuildEvent for uniqueId:'$uniqueId'.");
+            if($uniqueId >= 0)
+            {
+                $build = $this->buildByUniqueId($uniqueId);
+                // Sanity check:
+                if(!$build instanceof BuildEvent) throw new Exception("outputEventMatrix: Failed to locate a BuildEvent for uniqueId:'$uniqueId'.");
 
-                    echo $build->genFancyBadge();
-                }
+                $isActive = !($currentInactive && $uniqueId === $currentBuildId);
+
+                echo $build->genFancyBadge($isActive);
+            }
 
 ?></li><?php
 
-            }
+        }
 
 ?></ul></div><?php
+    }
 
+    /**
+     * Print an HTML representation of the supplied build event matrix
+     * to the output stream.
+     */
+    private function outputEventMatrix(&$matrix)
+    {
+        if(!is_array($matrix)) throw new Exception('outputEventMatrix: Invalid matrix argument, array expected.');
+
+?><div class="buildstreamlist"><?php
+
+        foreach($matrix as &$releaseInfo)
+        {
+            $buildIndex = $releaseInfo['buildIndex'];
+            $current = $buildIndex[0];
+
+            $this->outputBuildStreamWidget($buildIndex, $releaseInfo, FALSE/*vertical*/, $current, FALSE);
         }
 
 ?></div><?php
