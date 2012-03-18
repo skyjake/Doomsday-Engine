@@ -572,7 +572,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
             }
 
             // Is this package a product of the autobuilder?
-            if($pack instanceof iBuilderProduct) //$pack->buildUniqueId() > 0)
+            if($pack instanceof iBuilderProduct)
             {
                 // Yes; we have "real" BuildEvent we can link with this.
                 $buildUniqueId = $pack->buildUniqueId();
@@ -1085,7 +1085,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         {
             $plat = &self::platform($pack->platformId());
 
-            if($pack instanceof iBuilderProduct)
+            if($pack instanceof AbstractPackage)
             {
                 $errors   = $pack->compileErrorCount();
                 $warnings = $pack->compileWarnCount();
@@ -1123,7 +1123,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 
 ?></td><td><?php
 
-            if($pack instanceof iBuilderProduct)
+            if($pack instanceof AbstractPackage)
             {
                 $logUri = $pack->compileLogUri();
 
@@ -1256,7 +1256,7 @@ jQuery(document).ready(function() {
             }
 
             // Is this package a product of the autobuilder?
-            if($pack instanceof iBuilderProduct) //$pack->buildUniqueId() > 0)
+            if($pack instanceof iBuilderProduct)
             {
                 // Yes; we have "real" BuildEvent we can link with this.
                 $buildUniqueId = $pack->buildUniqueId();
