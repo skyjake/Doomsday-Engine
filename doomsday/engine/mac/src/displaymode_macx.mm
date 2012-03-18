@@ -1,5 +1,5 @@
 /**
- * @file displaymode.mm
+ * @file displaymode_macx.mm
  * Mac OS X implementation of the DisplayMode class. @ingroup gl
  *
  * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -80,6 +80,11 @@ void DisplayMode_Native_GetMode(int index, DisplayMode* mode)
 {
     assert(index >= 0 && index < (int)displayModes.size());
     *mode = displayModes[index];
+}
+
+void DisplayMode_Native_GetCurrentMode(DisplayMode* mode)
+{
+    *mode = modeFromDict((CFDictionaryRef)CGDisplayCurrentMode(kCGDirectMainDisplay));
 }
 
 void DisplayMode_Native_Shutdown(void)

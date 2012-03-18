@@ -33,58 +33,85 @@
 
 static bool inited = false;
 
-typedef std::set<DisplayMode> DisplayModes;
-static DisplayModes displayModes;
-
-static bool operator < (const DisplayMode& a, const DisplayMode& b)
+struct Mode : public DisplayMode
 {
-    if(a.height == b.height)
+    Mode()
     {
-        if(a.width == b.width)
+        memset(static_cast<DisplayMode*>(this), 0, sizeof(DisplayMode));
+    }
+
+    Mode(int i)
+    {
+        DisplayMode_Native_GetMode(i, this);
+        updateRatio();
+    }
+
+    static Mode fromCurrent()
+    {
+        Mode m;
+        DisplayMode_Native_GetCurrentMode(&m);
+        m.updateRatio();
+        return m;
+    }
+
+    bool operator < (const Mode& b) const
+    {
+        if(height == b.height)
         {
-            if(a.depth == b.depth)
+            if(width == b.width)
             {
-                return a.refreshRate < b.refreshRate;
+                if(depth == b.depth)
+                {
+                    return refreshRate < b.refreshRate;
+                }
+                return depth < b.depth;
             }
-            return a.depth < b.depth;
+            return width < b.width;
         }
-        return a.width < b.width;
+        return height < b.height;
     }
-    return a.height < b.height;
-}
 
-static void calculateRatio(int width, int height, int* x, int* y)
-{
-    Q_ASSERT(x && y);
-
-    *x = width;
-    *y = height;
-
-    // Reduce until we must resort to fractions.
-    forever
+    void updateRatio()
     {
-        bool divved = false;
-        for(int div = 2; div <= qMin(*x/2, *y/2); div++)
+        ratioX = width;
+        ratioY = height;
+
+        // Reduce until we must resort to fractions.
+        forever
         {
-            int dx = *x / div;
-            if(dx * div != *x) continue;
-            int dy = *y / div;
-            if(dy * div != *y) continue;
-            divved = true;
-            *x = dx;
-            *y = dy;
-            break;
+            bool divved = false;
+            for(int div = 2; div <= qMin(ratioX, ratioY); div++)
+            {
+                int dx = ratioX / div;
+                if(dx * div != ratioX) continue;
+                int dy = ratioY / div;
+                if(dy * div != ratioY) continue;
+                divved = true;
+                ratioX = dx;
+                ratioY = dy;
+                break;
+            }
+            if(!divved) break;
         }
-        if(!divved) break;
+
+        if(ratioX == 8 && ratioY == 5)
+        {
+            // This is commonly referred to as 16:10.
+            ratioX *= 2;
+            ratioY *= 2;
+        }
     }
 
-    if(*x == 8 && *y == 5)
+    void debugPrint() const
     {
-        // This is commonly referred to as 16:10.
-        *x *= 2;
-        *y *= 2;
+        qDebug() << "size" << width << "x" << height << "depth" << depth << "rate"
+                 << refreshRate << "ratio" << ratioX << ":" << ratioY;
     }
-}
+};
+
+typedef std::set<Mode> Modes;
+static Modes modes;
+static Mode originalMode;
 
 int DisplayMode_Init(void)
 {
@@ -94,17 +121,21 @@ int DisplayMode_Init(void)
 
     for(int i = 0; i < DisplayMode_Native_Count(); ++i)
     {
-        DisplayMode m;
-        DisplayMode_Native_GetMode(i, &m);
-        calculateRatio(m.width, m.height, &m.ratioX, &m.ratioY);
-        displayModes.insert(m);
+        modes.insert(Mode(i));
     }
 
-    for(DisplayModes::iterator i = displayModes.begin(); i != displayModes.end(); ++i)
+    originalMode = Mode::fromCurrent();
+
+#ifdef _DEBUG
+    qDebug() << "Current mode is:";
+    originalMode.debugPrint();
+
+    qDebug() << "All available modes:";
+    for(Modes::iterator i = modes.begin(); i != modes.end(); ++i)
     {
-        qDebug() << "size" << i->width << "x" << i->height << "depth" << i->depth << "rate"
-                 << i->refreshRate << "ratio" << i->ratioX << ":" << i->ratioY;
+        i->debugPrint();
     }
+#endif
 
     inited = true;
     return true;
@@ -112,7 +143,7 @@ int DisplayMode_Init(void)
 
 void DisplayMode_Shutdown(void)
 {
-    displayModes.clear();
+    modes.clear();
 
     DisplayMode_Native_Shutdown();
 }

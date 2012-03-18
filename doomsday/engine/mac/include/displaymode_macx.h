@@ -34,6 +34,8 @@ int DisplayMode_Native_Count(void);
 
 void DisplayMode_Native_GetMode(int index, DisplayMode* mode);
 
+void DisplayMode_Native_GetCurrentMode(DisplayMode* mode);
+
 void DisplayMode_Native_Shutdown(void);
 
 #ifdef __cplusplus
