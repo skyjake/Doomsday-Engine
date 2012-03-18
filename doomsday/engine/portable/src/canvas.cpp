@@ -113,17 +113,6 @@ void Canvas::setResizedFunc(void (*canvasResizedFunc)(Canvas&))
     d->resizedCallback = canvasResizedFunc;
 }
 
-void Canvas::forcePaint()
-{
-#if 1
-    // This is the system-friendliest option: request repaint at the earliest convenience.
-    update();
-#else
-    // Immediate paint.
-    repaint();
-#endif
-}
-
 QImage Canvas::grabImage(const QSize& outputSize)
 {
     QImage grabbed = grabFrameBuffer(); // no alpha
