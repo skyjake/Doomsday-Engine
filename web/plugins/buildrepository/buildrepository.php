@@ -383,7 +383,8 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
      * one which was not produced by or that which has no persistent build
      * event information.
      *
-     * Static packages are primarily those for 'stable' releases.
+     * Static packages are primarily for historic releases which predate
+     * the autobuilder.
      *
      * @param packages  (Array) Collection to be populated.
      * @return  (Boolean) @c TRUE iff successful.
@@ -395,24 +396,11 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
          * expect to edit this file in order to change these...
          */
 
-        // Windows:
         $pack = PackageFactory::newDistribution(PID_WIN_X86, 'Doomsday', '1.8.6',
-            'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.8.6/deng-inst-1.8.6.exe/download');
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.8.6/deng-inst-1.8.6.exe/download',
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.8.6');
         $packages[] = $pack;
-
-        /*$pack = PackageFactory::newUnstableDistribution(PID_WIN_X86, 'Doomsday', '1.9.0-beta6.9',
-            'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.0-beta6.9/deng-1.9.0-beta6.9-setup.exe/download');
-        $packages[] = $pack;
-
-        // Mac OS:
-        $pack = PackageFactory::newUnstableDistribution(PID_MAC10_4_X86_PPC, 'Doomsday', '1.9.0-beta6.9',
-            'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.0-beta6.9/deng-1.9.0-beta6.9.dmg/download');
-        $packages[] = $pack;
-
-        // Ubuntu:
-        $pack = PackageFactory::newUnstableDistribution(PID_LINUX_X86_64, 'Doomsday', '1.9.0-beta6.9',
-            'http://sourceforge.net/projects/deng/files/');
-        $packages[] = $pack;*/
 
         return TRUE;
     }
@@ -440,7 +428,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         $packages[] = $pack;
 
         $plat = $this->platform(PID_WIN_X86);
-        $pack = PackageFactory::newUnstableDistribution($plat['id'], 'Latest Doomsday',
+        $pack = PackageFactory::newDistributionUnstable($plat['id'], 'Latest Doomsday',
             NULL/*no version*/, 'latestbuild?platform='. $plat['name']. '&unstable');
         $packages[] = $pack;
 
@@ -451,7 +439,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         $packages[] = $pack;
 
         $plat = $this->platform(PID_MAC10_4_X86_PPC);
-        $pack = PackageFactory::newUnstableDistribution($plat['id'], 'Latest Doomsday',
+        $pack = PackageFactory::newDistributionUnstable($plat['id'], 'Latest Doomsday',
             NULL/*no version*/, 'latestbuild?platform='. $plat['name']. '&unstable');
         $packages[] = $pack;
 
@@ -462,7 +450,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         $packages[] = $pack;
 
         $plat = $this->platform(PID_LINUX_X86);
-        $pack = PackageFactory::newUnstableDistribution($plat['id'], 'Latest Doomsday',
+        $pack = PackageFactory::newDistributionUnstable($plat['id'], 'Latest Doomsday',
             NULL/*no version*/, 'latestbuild?platform='. $plat['name']. '&unstable');
         $packages[] = $pack;
 
@@ -472,7 +460,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         $packages[] = $pack;
 
         $plat = $this->platform(PID_LINUX_X86_64);
-        $pack = PackageFactory::newUnstableDistribution($plat['id'], 'Latest Doomsday',
+        $pack = PackageFactory::newDistributionUnstable($plat['id'], 'Latest Doomsday',
             NULL/*no version*/, 'latestbuild?platform='. $plat['name']. '&unstable');
         $packages[] = $pack;
 
@@ -582,7 +570,8 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
             {
                 // No - this must be a symbolic package.
                 // We'll instantiate a symbolic BuildEvent for this.
-                $build = new BuildEvent(0, 'Unknown', 'skyjake', 'jaakko.keranen@iki.fi');
+                $build = new BuildEvent(0, strtotime('Jan 8, 2005'), 'skyjake',
+                                        'jaakko.keranen@iki.fi', RT_STABLE/*assumed*/);
                 if($pack->hasReleaseNotesUri())
                 {
                     $build->setReleaseNotesUri($pack->releaseNotesUri());
@@ -1258,6 +1247,8 @@ jQuery(document).ready(function() {
                 $releaseInfo = &$releases[$version];
             }
 
+            $build = NULL;
+
             // Is this package a product of the autobuilder?
             if($pack instanceof iBuilderProduct)
             {
@@ -1269,7 +1260,8 @@ jQuery(document).ready(function() {
             {
                 // No - this must be a symbolic package.
                 // We'll instantiate a symbolic BuildEvent for this.
-                $build = new BuildEvent(0, 'Unknown', 'skyjake', 'jaakko.keranen@iki.fi');
+                $build = new BuildEvent(0, strtotime('Jan 8, 2005'), 'skyjake',
+                                        'jaakko.keranen@iki.fi', RT_STABLE/*assumed*/);
                 if($pack->hasReleaseNotesUri())
                 {
                     $build->setReleaseNotesUri($pack->releaseNotesUri());
@@ -1333,14 +1325,6 @@ jQuery(document).ready(function() {
 
                 $releaseLabel = "<a href=\"{$releaseTypeLink}\" title=\"{$releaseTypeLinkTitle}\">{$releaseLabel}</a>";
             }
-            /*else
-            {
-                // Add release notes for the symbolic event.
-                $releaseTypeLink = '';//$latestBuild->releaseNotesUri();
-                $releaseTypeLinkTitle = htmlspecialchars("Read the release notes for $version");
-
-                $releaseLabel = "<a href=\"{$releaseTypeLink}\" title=\"{$releaseTypeLinkTitle}\">{$releaseLabel}</a>";
-            }*/
 
 ?><li><div class="release-badge"><?php echo $releaseLabel; ?></div></li><?php
 

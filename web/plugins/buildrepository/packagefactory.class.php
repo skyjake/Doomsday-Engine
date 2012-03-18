@@ -44,14 +44,22 @@ class PackageFactory
         return self::$nullPackage;
     }
 
-    public static function newDistribution($platformId, $name, $version, $directDownloadUrl)
+    public static function newDistribution($platformId, $name, $version, $directDownloadUrl, $builder=true)
     {
+        if($builder)
+        {
+            return new DistributionBuilderPackage($platformId, $name, $version, $directDownloadUrl);
+        }
         return new DistributionPackage($platformId, $name, $version, $directDownloadUrl);
     }
 
-    public static function newUnstableDistribution($platformId, $name, $version, $directDownloadUrl)
+    public static function newDistributionUnstable($platformId, $name, $version, $directDownloadUrl, $builder=true)
     {
-        return new UnstableDistributionPackage($platformId, $name, $version, $directDownloadUrl);
+        if($builder)
+        {
+            return new DistributionUnstableBuilderPackage($platformId, $name, $version, $directDownloadUrl);
+        }
+        return new DistributionUnstablePackage($platformId, $name, $version, $directDownloadUrl);
     }
 
     /**
@@ -100,21 +108,21 @@ class PackageFactory
         case 'plugin':
             if($releaseType === RT_STABLE)
             {
-                $pack = new PluginPackage($platformId, $name, $version, $cleanDirectDownloadUri);
+                $pack = new PluginBuilderPackage($platformId, $name, $version, $cleanDirectDownloadUri);
             }
             else
             {
-                $pack = new UnstablePluginPackage($platformId, $name, $version, $cleanDirectDownloadUri);
+                $pack = new PluginUnstableBuilderPackage($platformId, $name, $version, $cleanDirectDownloadUri);
             }
             break;
         default:
             if($releaseType === RT_STABLE)
             {
-                $pack = new DistributionPackage($platformId, $name, $version, $cleanDirectDownloadUri);
+                $pack = new DistributionBuilderPackage($platformId, $name, $version, $cleanDirectDownloadUri);
             }
             else
             {
-                $pack = new UnstableDistributionPackage($platformId, $name, $version, $cleanDirectDownloadUri);
+                $pack = new DistributionUnstableBuilderPackage($platformId, $name, $version, $cleanDirectDownloadUri);
             }
             break;
         }

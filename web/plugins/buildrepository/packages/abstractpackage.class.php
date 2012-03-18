@@ -26,11 +26,9 @@ require_once('basepackage.class.php');
 require_once(dirname(__FILE__) . '/../downloadable.interface.php');
 require_once(dirname(__FILE__) . '/../builderproduct.interface.php');
 
-abstract class AbstractPackage extends BasePackage implements iDownloadable, iBuilderProduct
+abstract class AbstractPackage extends BasePackage implements iDownloadable
 {
     static protected $emptyString = '';
-
-    protected $buildId = 0; /// Unique.
 
     protected $directDownloadUri = NULL;
     protected $releaseNotesUri = NULL;
@@ -58,13 +56,6 @@ abstract class AbstractPackage extends BasePackage implements iDownloadable, iBu
         parent::populateGraphTemplate($tpl);
 
         $tpl['direct_download_uri'] = $this->directDownloadUri();
-
-        $build = $FrontController->findPlugin('BuildRepository')->buildByUniqueId($this->buildId);
-        if($build instanceof BuildEvent)
-        {
-            $tpl['build_startdate'] = date(DATE_ATOM, $build->startDate());
-            $tpl['build_uniqueid'] = $this->buildId;
-        }
 
         if($this->hasReleaseNotesUri())
             $tpl['release_notesuri'] = $this->releaseNotesUri;
@@ -175,17 +166,5 @@ abstract class AbstractPackage extends BasePackage implements iDownloadable, iBu
             $html = htmlspecialchars($fullTitle);
         }
         return $html;
-    }
-
-    // Implements iBuilderProduct.
-    public function setBuildUniqueId($id)
-    {
-        $this->buildId = intval($id);
-    }
-
-    // Implements iBuilderProduct.
-    public function buildUniqueId()
-    {
-        return $this->buildId;
     }
 }
