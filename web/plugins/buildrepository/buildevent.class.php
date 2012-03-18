@@ -34,6 +34,12 @@ class BuildEvent
     private $releaseTypeId;
     private $releaseNotesUri = NULL;
 
+    // Event chains:
+    private $prevForStartDate = NULL;
+    private $nextForStartDate = NULL;
+    private $prevForVersion = NULL;
+    private $nextForVersion = NULL;
+
     /// @todo Collections should be private but allow public iteration.
     public $packages = array();
     public $commits = array();
@@ -104,6 +110,66 @@ class BuildEvent
     public function addPackage(&$package)
     {
         $this->packages[] = $package;
+    }
+
+    public function prevForStartDate()
+    {
+        return $this->prevForStartDate;
+    }
+
+    public function setPrevForStartDate(&$event)
+    {
+        if(!$event instanceof BuildEvent)
+        {
+            $this->prevForStartDate = NULL;
+            return;
+        }
+        $this->prevForStartDate = $event;
+    }
+
+    public function nextForStartDate()
+    {
+        return $this->nextForStartDate;
+    }
+
+    public function setNextForStartDate(&$event)
+    {
+        if(!$event instanceof BuildEvent)
+        {
+            $this->nextForStartDate = NULL;
+            return;
+        }
+        $this->nextForStartDate = $event;
+    }
+
+    public function prevForVersion()
+    {
+        return $this->prevForVersion;
+    }
+
+    public function setPrevForVersion(&$event)
+    {
+        if(!$event instanceof BuildEvent)
+        {
+            $this->prevForVersion = NULL;
+            return;
+        }
+        $this->prevForVersion = $event;
+    }
+
+    public function nextForVersion()
+    {
+        return $this->nextForVersion;
+    }
+
+    public function setNextForVersion(&$event)
+    {
+        if(!$event instanceof BuildEvent)
+        {
+            $this->nextForVersion = NULL;
+            return;
+        }
+        $this->nextForVersion = $event;
     }
 
     /**

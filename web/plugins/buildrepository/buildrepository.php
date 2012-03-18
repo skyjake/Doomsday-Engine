@@ -716,6 +716,157 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         return TRUE;
     }
 
+    private function findOlderBuild($build=NULL)
+    {
+        $older = NULL;
+        if(!is_null($build) && $build instanceof BuildEvent)
+        {
+            foreach($this->builds as &$other)
+            {
+                if($other === $build) continue;
+
+                $otherId = $other->uniqueId();
+                if($otherId < $build->uniqueId() &&
+                   (is_null($older) || $otherId > $older->uniqueId()))
+                {
+                    $older = $other;
+                }
+            }
+        }
+        return $older;
+    }
+
+    private function findNewerBuild($build=NULL)
+    {
+        $newer = NULL;
+        if(!is_null($build) && $build instanceof BuildEvent)
+        {
+            foreach($this->builds as &$other)
+            {
+                if($other === $build) continue;
+
+                $otherId = $other->uniqueId();
+                if($otherId > $build->uniqueId() &&
+                   (is_null($newer) || $otherId < $newer->uniqueId()))
+                {
+                    $newer = $other;
+                }
+            }
+        }
+        return $newer;
+    }
+
+    /**
+     * Chain BuildEvents together by 'start date', linking them according
+     * to their start timestamps.
+     */
+    private function chainBuildsByStartDate()
+    {
+        if(!isset($this->builds)) return FALSE;
+
+        foreach($this->builds as &$build)
+        {
+            $older = $this->findOlderBuild($build);
+            $build->setPrevForStartDate($older);
+
+            $newer = $this->findNewerBuild($build);
+            $build->setNextForStartDate($newer);
+        }
+
+        return TRUE;
+    }
+
+    /**
+     * Chain BuildEvents together by 'version', linking them according
+     * to the version number of the 'Doomsday' package(s) those events
+     * produced.
+     */
+    private function chainBuildsByDoomsdayVersion()
+    {
+        if(!isset($this->packages)) return FALSE;
+
+        $releases = array();
+        foreach($this->packages as &$pack)
+        {
+            // We are only interested in the 'Doomsday' packages.
+            if($pack->title() !== 'Doomsday') continue;
+
+            // Have we encountered this version before?.
+            $version = $pack->version();
+            $key = array_casekey_exists($version, $releases);
+            if($key === false)
+            {
+                // Not yet construct a new build list (array) and associate it
+                // in the release array using the version number as the key.
+                $key = ucwords($version);
+                $releases[$key] = array();
+
+                $buildList = &$releases[$key];
+            }
+            else
+            {
+                $buildList = &$releases[$version];
+            }
+
+            // Is this package a product of the autobuilder?
+            if($pack instanceof iBuilderProduct) //$pack->buildUniqueId() > 0)
+            {
+                // Yes; we have "real" BuildEvent we can link with this.
+                $buildUniqueId = $pack->buildUniqueId();
+                $build = $this->buildByUniqueId($buildUniqueId);
+            }
+            else
+            {
+                // No - this must be a symbolic package.
+                // We'll instantiate a symbolic BuildEvent for this.
+                $build = new BuildEvent(0, 'Unknown', 'skyjake', 'jaakko.keranen@iki.fi');
+                //$build->setReleaseNotesUri();
+                $build->addPackage($pack);
+            }
+
+            if(!$build instanceof BuildEvent) continue; // Odd...
+
+            // Is this build event already present in the index for this release version?
+            if(array_search($build, $buildList) !== FALSE) continue;
+
+            // Add this build to the index.
+            $buildList[] = $build;
+        }
+
+        foreach($releases as $version => &$buildList)
+        {
+            $numEvents = count($buildList);
+            for($i = (integer)0; $i < $numEvents; $i++)
+            {
+                $curEvent = &$buildList[$i];
+                if(!$curEvent instanceof BuildEvent) throw new Exception('BuildEvent expected but received something else.');
+
+                $prevEvent = (($i < $numEvents && isset($buildList[$i+1]))? $buildList[$i+1] : -1);
+                if($prevEvent instanceof BuildEvent)
+                {
+                    $curEvent->setPrevForVersion($prevEvent);
+                }
+
+                $nextEvent = (($i > 0 && isset($buildList[$i-1]))? $buildList[$i-1] : -1);
+                if($nextEvent instanceof BuildEvent)
+                {
+                    $curEvent->setNextForVersion($nextEvent);
+                }
+            }
+        }
+
+        return TRUE;
+    }
+
+    /**
+     * Chain BuildEvents together to form a navigable web of events.
+     */
+    private function chainBuilds()
+    {
+        $this->chainBuildsByStartDate();
+        $this->chainBuildsByDoomsdayVersion();
+    }
+
     private function rebuildPackages()
     {
         // Generate packages from feed events.
@@ -736,6 +887,9 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         // The symbolic packages are kept seperate.
         $this->symbolicPackages = array();
         $this->populateSymbolicPackages(&$this->symbolicPackages);
+
+        // Link build events together to form the navigation chains.
+        $this->chainBuilds();
     }
 
     /**
@@ -871,22 +1025,21 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
     /**
      * Output build event stream navigational controls.
      *
-     * @param prevEvent  (integer) Previous event uniqueId in the stream (if any).
-     * @param currentEvent (integer) Current event uniqueId in the stream (if any).
-     * @param nextEvent  (integer) Next event uniqueId in the stream (if any).
+     * @param currentEvent (integer) Current event.
      */
-    private function outputBuildStreamNavigation($prevEvent=NULL, $currentEvent=NULL, $nextEvent=NULL)
+    private function outputBuildStreamNavigation(&$event)
     {
-        $buildIndex = array();
-        $buildIndex[] = $prevEvent;
-        $buildIndex[] = $currentEvent;
-        $buildIndex[] = $nextEvent;
+        $headEvent = $event->prevForStartDate();
+        if(!$headEvent instanceof BuildEvent)
+            $headEvent = $event;
 
 ?><div id="buildsnav" class="hnav"><h3><span>&larr;Older</span> <a href="builds" title="Back to the Build Repository index">Index</a> <span>Newer&rarr;</span></h3><?php
 ?><div class="buildstreamlist"><?php
 
-        $this->outputBuildStreamWidget($buildIndex, NULL/*no release header*/,
-                                       TRUE/*use the horiztonal variant*/, $currentEvent, TRUE);
+        $this->outputBuildStreamWidget($headEvent, 'startdate', TRUE/*ascend*/, 3,
+                                       NULL/*no release header*/,
+                                       TRUE/*use the horiztonal variant*/,
+                                       $event, TRUE/*current is inactive*/);
 
 ?></div></div><?php
 
@@ -910,46 +1063,6 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
             }
         }
         return $build;
-    }
-
-    private function findNewerBuild($build=NULL)
-    {
-        $newer = NULL;
-        if(!is_null($build) && $build instanceof BuildEvent)
-        {
-            foreach($this->builds as &$other)
-            {
-                if($other === $build) continue;
-
-                $otherId = $other->uniqueId();
-                if($otherId > $build->uniqueId() &&
-                   (is_null($newer) || $otherId < $newer->uniqueId()))
-                {
-                    $newer = $other;
-                }
-            }
-        }
-        return $newer;
-    }
-
-    private function findOlderBuild($build=NULL)
-    {
-        $older = NULL;
-        if(!is_null($build) && $build instanceof BuildEvent)
-        {
-            foreach($this->builds as &$other)
-            {
-                if($other === $build) continue;
-
-                $otherId = $other->uniqueId();
-                if($otherId < $build->uniqueId() &&
-                   (is_null($older) || $otherId > $older->uniqueId()))
-                {
-                    $older = $other;
-                }
-            }
-        }
-        return $older;
     }
 
     private function outputEventList($maxEvents=10)
@@ -1312,15 +1425,7 @@ jQuery(document).ready(function() {
 ?></div><?php
 
         // Display a stream navigation widget.
-        $older = $this->findOlderBuild($event);
-        $older = ($older instanceof BuildEvent)? $older->uniqueId() : -1;
-
-        $current = ($event instanceof BuildEvent)? $event->uniqueId() : -1;
-
-        $newer = $this->findNewerBuild($event);
-        $newer = ($newer instanceof BuildEvent)? $newer->uniqueId() : -1;
-
-        $this->outputBuildStreamNavigation($older, $current, $newer);
+        $this->outputBuildStreamNavigation($event);
 
         // Display the full commit log.
         $this->outputBuildCommitLog($event);
@@ -1335,29 +1440,15 @@ jQuery(document).ready(function() {
      *
      *   version       < (string) Version string of the Doomsday package.
      *   releaseTypeId < (integer) @ref releaseType
-     *   buildIndex    < (array) Array of unique identifiers which reference
-     *                   logical BuildEvents in the builds collection.
+     *   latestBuild   < (BuildEvent) Latest build event for this logical release.
      */
     private function newReleaseInfo($version)
     {
         $record = array();
         $record['version'] = strval($version);
         $record['releaseTypeId'] = RT_UNKNOWN; // Default.
-        $record['buildIndex'] = array();
+        $record['latestBuild'] = NULL;
         return $record;
-    }
-
-    private function ReleaseInfo_BuildUniqueIdByIndex(&$info, $index)
-    {
-        if(!is_array($info)) throw new Exception('ReleaseInfo_BuildUniqueIdByIndex: Invalid info argument, array expected.');
-
-        $index = (integer)$index;
-        if($index < 0 || count($info['buildIndex']) <= 0) return -1;
-
-        $uniqueIds = &$info['buildIndex'];
-        if(!isset($uniqueIds[$index])) return -1;
-
-        return (integer)$uniqueIds[$index];
     }
 
     /**
@@ -1371,9 +1462,9 @@ jQuery(document).ready(function() {
      * @return  (Mixed) FALSE if no packages were added to the matrix
      *          otherwise the number of added packages (integer).
      */
-    private function populateEventMatrix(&$matrix)
+    private function populateReleases(&$releases)
     {
-        if(!is_array($matrix)) throw new Exception('populateEventMatrix: Invalid matrix argument, array expected.');
+        if(!is_array($releases)) throw new Exception('populateReleases: Invalid matrix argument, array expected.');
         if(!isset($this->packages)) return FALSE;
 
         // Running total of the number of events we add to the matrix.
@@ -1386,19 +1477,19 @@ jQuery(document).ready(function() {
 
             // Have we encountered this version before?.
             $version = $pack->version();
-            $key = array_casekey_exists($version, $matrix);
+            $key = array_casekey_exists($version, $releases);
             if($key === false)
             {
                 // Not yet construct a new record and associate it
-                // in the matrix using the version number as the key.
+                // in the release list using the version number as the key.
                 $key = ucwords($version);
-                $matrix[$key] = $this->newReleaseInfo($key);
+                $releases[$key] = $this->newReleaseInfo($key);
 
-                $releaseInfo = &$matrix[$key];
+                $releaseInfo = &$releases[$key];
             }
             else
             {
-                $releaseInfo = &$matrix[$version];
+                $releaseInfo = &$releases[$version];
             }
 
             // Is this package a product of the autobuilder?
@@ -1424,15 +1515,20 @@ jQuery(document).ready(function() {
 
             if(!$build instanceof BuildEvent) continue; // Odd...
 
-            // Is a build event already present in the index for this release version?
-            $index = &$releaseInfo['buildIndex'];
-            if(array_search($buildKey, $index) !== FALSE) continue;
-
-            // Add this build to the matrix.
-            $index[] = $buildKey;
-
-            // One more event was added to the matrix.
-            $numEventsAdded++;
+            // Is a build event already present for this release version?
+            $latestBuild = (isset($releaseInfo['latestBuild']) ? $releaseInfo['latestBuild'] : NULL);
+            if($latestBuild instanceof BuildEvent)
+            {
+                // Is this a newer build?
+                if($build->uniqueId() > $latestBuild->uniqueId())
+                {
+                    $releaseInfo['latestBuild'] = $build;
+                }
+            }
+            else
+            {
+                $releaseInfo['latestBuild'] = $build;
+            }
 
             // Promote the status of the release due to this package?
             $releaseTypeId = $build->releaseTypeId();
@@ -1445,12 +1541,12 @@ jQuery(document).ready(function() {
         return $numEventsAdded;
     }
 
-    private function outputBuildStreamWidget(&$buildIndex, $releaseInfo=NULL,
-        $horizontal=FALSE, $currentBuildId=-1, $currentInactive=FALSE)
+    private function outputBuildStreamWidget(&$headEvent, $chainProperty='version',
+        $chainDirection=FALSE, $chainLengthMax=-1, $releaseInfo=NULL, $horizontal=FALSE,
+        $currentEvent=NULL, $currentInactive=FALSE)
     {
-        if(!is_array($buildIndex)) throw new Exception('outputBuildStreamWidget: Invalid buildIndex argument, array expected.');
-
-        $currentBuildId = (integer)$currentBuildId;
+        $chainDirection = (boolean)$chainDirection;
+        $chainLengthMax = (integer)$chainLengthMax;
         $currentInactive = (boolean)$currentInactive;
 
 ?><div class="buildstream<?php echo ($horizontal ? ' hnav' : ''); ?>"><ul><?php
@@ -1465,18 +1561,13 @@ jQuery(document).ready(function() {
 
             // See if the latest package includes a release notes URI
             // if it does we'll add a link to it to the column title.
-            $latestBuildUniqueId = $this->ReleaseInfo_BuildUniqueIdByIndex($releaseInfo, 0);
-            if($latestBuildUniqueId >= 0)
+            $latestBuild = $releaseInfo['latestBuild'];
+            if($latestBuild instanceof BuildEvent && $latestBuild->hasReleaseNotesUri())
             {
-                $latestBuild = $this->buildByUniqueId($latestBuildUniqueId);
+                $releaseTypeLink = $latestBuild->releaseNotesUri();
+                $releaseTypeLinkTitle = htmlspecialchars("Read the release notes for {$version}");
 
-                if($latestBuild && $latestBuild->hasReleaseNotesUri())
-                {
-                    $releaseTypeLink = $latestBuild->releaseNotesUri();
-                    $releaseTypeLinkTitle = htmlspecialchars("Read the release notes for {$version}");
-
-                    $releaseLabel = "<a href=\"{$releaseTypeLink}\" title=\"{$releaseTypeLinkTitle}\">{$releaseLabel}</a>";
-                }
+                $releaseLabel = "<a href=\"{$releaseTypeLink}\" title=\"{$releaseTypeLinkTitle}\">{$releaseLabel}</a>";
             }
             /*else
             {
@@ -1491,28 +1582,35 @@ jQuery(document).ready(function() {
 
         }
 
-        foreach($buildIndex as $uniqueId)
+        if($headEvent instanceof BuildEvent)
         {
-            $cssClass = '';
-            if($currentBuildId >= 0 && $uniqueId == $currentBuildId)
+            $n = (integer) 0;
+            for($event = $headEvent; !is_null($event);
+                $event = $chainProperty === 'version' ? ($chainDirection? $event->nextForVersion()   : $event->prevForVersion())
+                                                      : ($chainDirection? $event->nextForStartDate() : $event->prevForStartDate()))
             {
-                $cssClass = ' class="current"';
-            }
+                $cssClass = '';
+                if($currentEvent instanceof BuildEvent && $event === $currentEvent)
+                {
+                    $cssClass = ' class="current"';
+                }
+
+                $isActive = !($currentInactive && ($currentEvent instanceof BuildEvent && $event === $currentEvent));
 
 ?><li<?php echo $cssClass; ?>><?php
 
-            if($uniqueId >= 0)
-            {
-                $build = $this->buildByUniqueId($uniqueId);
-                // Sanity check:
-                if(!$build instanceof BuildEvent) throw new Exception("outputEventMatrix: Failed to locate a BuildEvent for uniqueId:'$uniqueId'.");
-
-                $isActive = !($currentInactive && $uniqueId === $currentBuildId);
-
-                echo $build->genFancyBadge($isActive);
-            }
+                echo $event->genFancyBadge($isActive);
 
 ?></li><?php
+
+                $n++;
+                if($chainLengthMax > 0 && $n >= $chainLengthMax) break;
+            }
+        }
+        else
+        {
+
+?><li></li><?php
 
         }
 
@@ -1523,18 +1621,20 @@ jQuery(document).ready(function() {
      * Print an HTML representation of the supplied build event matrix
      * to the output stream.
      */
-    private function outputEventMatrix(&$matrix)
+    private function outputEventMatrix(&$releases)
     {
-        if(!is_array($matrix)) throw new Exception('outputEventMatrix: Invalid matrix argument, array expected.');
+        if(!is_array($releases)) throw new Exception('outputEventMatrix: Invalid releases argument, array expected.');
 
 ?><div class="buildstreamlist"><?php
 
-        foreach($matrix as &$releaseInfo)
+        foreach($releases as &$releaseInfo)
         {
-            $buildIndex = $releaseInfo['buildIndex'];
-            $current = $buildIndex[0];
+            $event = isset($releaseInfo['latestBuild']) ? $releaseInfo['latestBuild'] : -1;
 
-            $this->outputBuildStreamWidget($buildIndex, $releaseInfo, FALSE/*vertical*/, $current, FALSE);
+            $current = $event;
+
+            $this->outputBuildStreamWidget($event, 'version', FALSE/*descend*/, -1/*no length limit*/,
+                                           $releaseInfo, FALSE/*vertical*/, $current, FALSE);
         }
 
 ?></div><?php
@@ -1546,15 +1646,15 @@ jQuery(document).ready(function() {
      */
     private function includeEventMatrix()
     {
-        // Construct the event matrix.
-        $matrix = array();
-        $this->populateEventMatrix($matrix);
+        // Construct the release list.
+        $releases = array();
+        $this->populateReleases($releases);
 
         // Sort by key to achieve the version-number-ascending order.
-        ksort($matrix);
-        //print_r($matrix);
+        ksort($releases);
+        //print_r($releases);
 
-        $this->outputEventMatrix($matrix);
+        $this->outputEventMatrix($releases);
     }
 
     /**
