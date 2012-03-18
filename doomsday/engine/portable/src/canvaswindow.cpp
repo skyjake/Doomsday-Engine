@@ -63,6 +63,12 @@ void CanvasWindow::setMoveFunc(void (*func)(CanvasWindow&))
     d->moveFunc = func;
 }
 
+void CanvasWindow::closeEvent(QCloseEvent* ev)
+{
+    /// @todo autosave and quit?
+    ev->ignore();
+}
+
 void CanvasWindow::moveEvent(QMoveEvent *ev)
 {
     QMainWindow::moveEvent(ev);

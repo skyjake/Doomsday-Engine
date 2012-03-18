@@ -156,6 +156,8 @@ void DisplayMode_Shutdown(void)
 {
     if(!inited) return;
 
+    qDebug() << "Restoring original display mode due to shutdown.";
+
     // Back to the original mode.
     DisplayMode_Change(&originalMode);
 

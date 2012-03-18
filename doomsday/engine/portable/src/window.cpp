@@ -201,6 +201,7 @@ struct ddwindow_s
         else
         {
             DisplayMode_Change(DisplayMode_OriginalMode());
+            widget->canvas().trapMouse(false);
         }
     }
 
@@ -212,6 +213,8 @@ struct ddwindow_s
     void applyWindowGeometry()
     {
         assertWindow();
+
+        applyDisplayMode();
 
         if(flags & DDWF_FULLSCREEN)
         {
@@ -859,8 +862,6 @@ static Window* createWindow(ddwindowtype_t type, const char* title)
 
         // Let's see if there are command line options overriding the previous state.
         mainWindow.modifyAccordingToOptions();
-
-        mainWindow.applyDisplayMode();
 
         // Make it so. (Not shown yet.)
         mainWindow.applyWindowGeometry();

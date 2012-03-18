@@ -128,8 +128,6 @@ static int findIndex(const DisplayMode* mode)
     return -1; // Invalid mode.
 }
 
-#define DISABLE_FADE
-
 int DisplayMode_Native_Change(const DisplayMode* mode)
 {
     const CGDisplayFadeInterval fadeTime = .5f;
@@ -137,12 +135,10 @@ int DisplayMode_Native_Change(const DisplayMode* mode)
     assert(mode);
     assert(findIndex(mode) >= 0); // mode must be an enumerated one
 
-#ifndef DISABLE_FADE
     // Fade all displays to black.
     CGDisplayFadeReservationToken token;
     CGAcquireDisplayFadeReservation(kCGMaxDisplayReservationInterval, &token);
     CGDisplayFade(token, fadeTime, kCGDisplayBlendNormal, kCGDisplayBlendSolidColor, 0, 0, 0, true /* wait */);
-#endif
 
     // Capture the displays now if haven't yet done so.
     bool wasPreviouslyCaptured = true;
@@ -156,6 +152,8 @@ int DisplayMode_Native_Change(const DisplayMode* mode)
     {
         CFDictionaryRef current = currentModeDict();
 
+        qDebug() << "Changing to native mode" << findIndex(mode);
+
         // Try to change.
         result = CGDisplaySwitchToMode(kCGDirectMainDisplay, displayDicts[findIndex(mode)]);
         if(result != kCGErrorSuccess)
@@ -166,13 +164,9 @@ int DisplayMode_Native_Change(const DisplayMode* mode)
         }
     }
 
-    /// @todo fade should wait when shutting down
-
-#ifndef DISABLE_FADE
     // Fade back to normal.
-    CGDisplayFade(token, fadeTime, kCGDisplayBlendSolidColor, kCGDisplayBlendNormal, 0, 0, 0, false /* don't wait */);
+    CGDisplayFade(token, 2*fadeTime, kCGDisplayBlendSolidColor, kCGDisplayBlendNormal, 0, 0, 0, false);
     CGReleaseDisplayFadeReservation(token);
-#endif
 
     return result == kCGErrorSuccess;
 }
