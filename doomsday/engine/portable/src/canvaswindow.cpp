@@ -21,6 +21,7 @@
  */
 
 #include "canvaswindow.h"
+#include "con_main.h"
 #include <assert.h>
 
 #include <QGLFormat>
@@ -66,6 +67,7 @@ void CanvasWindow::setMoveFunc(void (*func)(CanvasWindow&))
 void CanvasWindow::closeEvent(QCloseEvent* ev)
 {
     /// @todo autosave and quit?
+    Con_Execute(CMDS_DDAY, "quit", true, false);
     ev->ignore();
 }
 
