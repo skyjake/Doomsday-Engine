@@ -50,351 +50,9 @@ define('RT_STABLE',           3);
 ///@}
 
 require_once('buildevent.class.php');
-require_once('packagefactory.class.php');
 require_once('buildlogparser.class.php');
-
-function retrieveBuildLogXml(&$buildLogUri)
-{
-    // Open a new cURL session.
-    $cs = curl_init();
-    if($cs === FALSE)
-        throw new Exception('Failed initializing cURL');
-
-    curl_setopt($cs, CURLOPT_URL, $buildLogUri);
-    curl_setopt($cs, CURLOPT_HEADER, false);
-    curl_setopt($cs, CURLOPT_RETURNTRANSFER, true);
-
-    $xml = curl_exec($cs);
-    if($xml === FALSE)
-        $error = curl_error($cs);
-    curl_close($cs);
-    if($xml === FALSE)
-        throw new Exception('Failed retrieving file' + $error);
-
-    return $xml;
-}
-
-/**
- * Determine if the local cached copy of the remote build log requires an
- * update (i.e., the remote server indicates the file has changed, or our
- * cached copy has been manually purged).
- *
- * @param buildLogUri  (String) Uri locator to the remote build log.
- * @param cacheName  (String) Name of the cache copy of the log.
- * @return  (Boolean) @c true if the cache copy of the log needs an update.
- */
-function mustUpdateCachedBuildLog(&$buildLogUri, &$cacheName)
-{
-    global $FrontController;
-
-    if(!$FrontController->contentCache()->isPresent($cacheName))
-        return TRUE;
-
-    // Only query the remote server at most once every five minutes for an
-    // updated build log. The modified time of our local cached copy is used
-    // to determine when it is time to query (we touch the cached copy after
-    // each query attempt).
-    $cacheInfo = new ContentInfo();
-    $FrontController->contentCache()->getInfo($cacheName, $cacheInfo);
-    if(time() < strtotime('+5 minutes', $cacheInfo->modifiedTime))
-        return FALSE;
-
-    // Check the remote time of the log and compare with our local cached copy.
-    try
-    {
-        // Open a new cURL session.
-        $cs = curl_init();
-        if($cs === FALSE)
-            throw new Exception('Failed initializing cURL');
-
-        // We only want the headers.
-        curl_setopt($cs, CURLOPT_URL, $buildLogUri);
-        curl_setopt($cs, CURLOPT_NOBODY, true);
-        curl_setopt($cs, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($cs, CURLOPT_FILETIME, true);
-
-        $xml = curl_exec($cs);
-        if($xml !== FALSE)
-        {
-            $timestamp = curl_getinfo($cs, CURLINFO_FILETIME);
-            // Close the cURL session.
-            curl_close($cs);
-
-            if($timestamp != -1)
-            {
-                if($timestamp > $cacheInfo->modifiedTime)
-                {
-                    // Update necessary.
-                    return TRUE;
-                }
-                else
-                {
-                    // Touch our cached copy so we can delay checking again.
-                    $FrontController->contentCache()->touch($cacheName);
-                    return FALSE;
-                }
-            }
-            else
-            {
-                // Server could/would not supply the headers we are interested in.
-                // We'll err on the side of caution and update (our five minute
-                // repeat delay mitigates the sting).
-                return TRUE;
-            }
-        }
-        else
-        {
-            $error = curl_error($cs);
-            // We are now done with the cURL session.
-            curl_close($cs);
-            throw new Exception('Failed retrieving file info' + $error);
-        }
-    }
-    catch(Exception $e)
-    {
-        /// @todo Store error so users can query.
-        //setError($e->getMessage());
-        return FALSE;
-    }
-}
-
-function addCommitToGroup(&$groups, $groupName, &$commit)
-{
-    if(!is_array($groups))
-        throw new Exception('Invalid groups argument, array expected');
-
-    $key = array_casekey_exists($groupName, $groups);
-    if($key === false)
-    {
-        $groups[$groupName] = array();
-        $group = &$groups[$groupName];
-    }
-    else
-    {
-        $group = &$groups[$key];
-    }
-
-    $group[] = $commit;
-}
-
-function groupBuildCommits(&$build, &$groups)
-{
-    if(!$build instanceof BuildEvent)
-        throw new Exception('Received invalid BuildEvent');
-    if(!is_array($groups))
-        throw new Exception('Invalid groups argument, array expected');
-
-    foreach($build->commits as &$commit)
-    {
-        if(!is_array($commit['tags']) || 0 === count($commit['tags']))
-        {
-            addCommitToGroup($groups, 'Miscellaneous', $commit);
-            continue;
-        }
-
-        $tags = $commit['tags'];
-        reset($tags);
-        $firstTag = key($tags);
-        addCommitToGroup($groups, $firstTag, $commit);
-    }
-}
-
-function make_pretty_hyperlink($matches)
-{
-    $uri = implode('', array_slice($matches, 1));
-    return genHyperlinkHTML($uri, 40, 'link-external');
-}
-
-function formatCommitMessageHTML($msg)
-{
-    if(strcasecmp(gettype($msg), 'string')) return $msg;
-
-    // Process the commit message, replacing web URIs with clickable links.
-    htmlspecialchars($msg);
-    $msg =  preg_replace_callback("/([^A-z0-9])(http|ftp|https)([\:\/\/])([^\\s]+)/",
-        "make_pretty_hyperlink", $msg);
-    $msg = nl2br($msg);
-    return $msg;
-}
-
-function outputCommitHTML(&$commit)
-{
-    if(!is_array($commit))
-        throw new Exception('Invalid commit argument, array expected');
-
-    // Format the commit message for HTML output.
-    $message = $commit['message'];
-    $haveMessage = (bool)(strlen($message) > 0);
-
-    // Compose the supplementary tag list.
-    $tagList = '<div class="tag_list">';
-    if(is_array($commit['tags']))
-    {
-        $n = (integer)0;
-        foreach($commit['tags'] as $tag => $value)
-        {
-            // Skip the first tag (its used for grouping).
-            if($n++ === 0) continue;
-
-            // Do not output guessed tags (mainly used for grouping).
-            if(is_array($value) && isset($value['guessed']) && $value['guessed'] !== 0) continue;
-
-            $cleanTag = htmlspecialchars($tag);
-            $tagList .= '<div class="tag"><label title="Tagged \''.$cleanTag.'\'">'.$cleanTag.'</label></div>';
-        }
-    }
-    $tagList .= '</div>';
-
-    $repoLinkTitle = 'Show changes in the repository for this commit submitted on '. date(DATE_RFC2822, $commit['submitDate']) .'.';
-
-    // Ouput HTML for the commit.
-?><span class="metadata"><a href="<?php echo $commit['repositoryUri']; ?>" class="link-external" title="<?php echo htmlspecialchars($repoLinkTitle); ?>"><?php echo htmlspecialchars(date('Y-m-d', $commit['submitDate'])); ?></a></span><?php
-
-?><p class="heading <?php if($haveMessage) echo 'collapsible'; ?>" <?php if($haveMessage) echo 'title="Toggle commit message display"'; ?>><strong><span class="title"><?php echo htmlspecialchars($commit['title']); ?></span></strong> by <em><?php echo htmlspecialchars($commit['author']); ?></em></p><?php echo $tagList;
-
-    if($haveMessage)
-    {
-        ?><div class="commit"><blockquote><?php echo $message; ?></blockquote></div><?php
-    }
-}
-
-function outputCommitJumpList2(&$groups)
-{
-    if(!is_array($groups))
-        throw new Exception('Invalid groups argument, array expected');
-
-?><ol class="jumplist"><?php
-    foreach($groups as $groupName => $group)
-    {
-        $commitCount = count($group);
-        $tagLinkTitle = "Jump to commits tagged '$groupName'";
-
-?><li><span class="commit-count"><?php echo htmlspecialchars($commitCount); ?></span><a href="#<?php echo $groupName; ?>" title="<?php echo htmlspecialchars($tagLinkTitle); ?>"><?php echo htmlspecialchars($groupName); ?></a></li><?php
-    }
-?></ol><?php
-}
-
-function outputCommitJumpList(&$groups)
-{
-    if(!is_array($groups))
-        throw new Exception('Invalid groups argument, array expected');
-
-    $groupCount = count($groups);
-
-    // If only one list; apply the special 'hnav' class (force horizontal).
-?><div class="jumplist_wrapper <?php if($groupCount <= 5) echo 'hnav'; ?>"><?php
-
-    // If the list is too long; split it into multiple sublists.
-    if($groupCount > 5)
-    {
-        $numLists = ceil($groupCount / 5);
-        for($i = (integer)0; $i < $numLists; $i++)
-        {
-            $subList = array_slice($groups, $i*5, 5);
-            outputCommitJumpList2(&$subList);
-        }
-    }
-    else
-    {
-        // Just the one list then.
-        outputCommitJumpList2($groups);
-    }
-
-?></div><?php
-}
-
-/**
- * Process the commit log of the given build event, generating HTML
- * content directly to the output stream.
- *
- * @param build  (object) BuildEvent object to process.
- */
-function outputCommitLogHTML(&$build)
-{
-    if(!$build instanceof BuildEvent)
-        throw new Exception('Received invalid BuildEvent');
-
-    $commitCount = count($build->commits);
-    if($commitCount)
-    {
-        $groups = array();
-        groupBuildCommits($build, &$groups);
-
-        $groupCount = count($groups);
-        if($groupCount > 1)
-        {
-            ksort($groups);
-
-            // Generate a jump list?
-            if($commitCount > 15)
-            {
-                outputCommitJumpList($groups);
-            }
-        }
-
-        // Generate the commit list itself.
-?><hr />
-<div class="commit_list">
-<ul><?php
-
-        foreach($groups as $groupName => $group)
-        {
-?><li><?php
-
-            if($groupCount > 1)
-            {
-?><strong><label title="<?php echo htmlspecialchars("Commits with primary tag '$groupName'"); ?>"><span class="tag"><?php echo htmlspecialchars($groupName); ?></span></label></strong><a name="<?php echo htmlspecialchars($groupName); ?>"></a><a class="jump" href="#commitindex" title="Back to Commits index">index</a><br /><ol><?php
-            }
-
-            foreach($group as &$commit)
-            {
-?><li <?php if(isset($commit['message']) && strlen($commit['message']) > 0) echo 'class="more"'; ?>><?php
-
-                outputCommitHTML($commit);
-
-?></li><?php
-            }
-
-?></ol></li><?php
-        }
-
-?></ul></div><?php
-    }
-}
-
-/**
- * @param build  (object) BuildEvent to generate a commit log for.
- * @return  (boolean) @c true if a commit log was sent to output.
- */
-function outputCommitLog(&$build)
-{
-    global $FrontController;
-
-    if(!$build instanceof BuildEvent)
-        throw new Exception('Received invalid BuildEvent');
-
-    if(count($build->commits) <= 0) return FALSE;
-
-    $commitsCacheName = 'buildrepository/'.$build->uniqueId().'/commits.html';
-    try
-    {
-        $FrontController->contentCache()->import($commitsCacheName);
-    }
-    catch(Exception $e)
-    {
-        $OutputCache = new OutputCache();
-
-        $OutputCache->start();
-        outputCommitLogHTML($build);
-        $content = $OutputCache->stop();
-
-        $FrontController->contentCache()->store($commitsCacheName, $content);
-
-        print($content);
-    }
-
-    return TRUE;
-}
+require_once('commitutils.php');
+require_once('packagefactory.class.php');
 
 class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpreter
 {
@@ -548,6 +206,111 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
     }
 
     /**
+     * Determine if the local cached copy of the remote build log requires an
+     * update (i.e., the remote server indicates the file has changed, or our
+     * cached copy has been manually purged).
+     *
+     * @param buildLogUri  (String) Uri locator to the remote build log.
+     * @param cacheName  (String) Name of the cache copy of the log.
+     * @return  (Boolean) @c true if the cache copy of the log needs an update.
+     */
+    private static function mustUpdateCachedBuildLog(&$buildLogUri, &$cacheName)
+    {
+        global $FrontController;
+
+        if(!$FrontController->contentCache()->isPresent($cacheName))
+            return TRUE;
+
+        // Only query the remote server at most once every five minutes for an
+        // updated build log. The modified time of our local cached copy is used
+        // to determine when it is time to query (we touch the cached copy after
+        // each query attempt).
+        $cacheInfo = new ContentInfo();
+        $FrontController->contentCache()->getInfo($cacheName, $cacheInfo);
+        if(time() < strtotime('+5 minutes', $cacheInfo->modifiedTime))
+            return FALSE;
+
+        // Check the remote time of the log and compare with our local cached copy.
+        try
+        {
+            // Open a new cURL session.
+            $cs = curl_init();
+            if($cs === FALSE)
+                throw new Exception('Failed initializing cURL');
+
+            // We only want the headers.
+            curl_setopt($cs, CURLOPT_URL, $buildLogUri);
+            curl_setopt($cs, CURLOPT_NOBODY, true);
+            curl_setopt($cs, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($cs, CURLOPT_FILETIME, true);
+
+            $xml = curl_exec($cs);
+            if($xml !== FALSE)
+            {
+                $timestamp = curl_getinfo($cs, CURLINFO_FILETIME);
+                // Close the cURL session.
+                curl_close($cs);
+
+                if($timestamp != -1)
+                {
+                    if($timestamp > $cacheInfo->modifiedTime)
+                    {
+                        // Update necessary.
+                        return TRUE;
+                    }
+                    else
+                    {
+                        // Touch our cached copy so we can delay checking again.
+                        $FrontController->contentCache()->touch($cacheName);
+                        return FALSE;
+                    }
+                }
+                else
+                {
+                    // Server could/would not supply the headers we are interested in.
+                    // We'll err on the side of caution and update (our five minute
+                    // repeat delay mitigates the sting).
+                    return TRUE;
+                }
+            }
+            else
+            {
+                $error = curl_error($cs);
+                // We are now done with the cURL session.
+                curl_close($cs);
+                throw new Exception('Failed retrieving file info' + $error);
+            }
+        }
+        catch(Exception $e)
+        {
+            /// @todo Store error so users can query.
+            //setError($e->getMessage());
+            return FALSE;
+        }
+    }
+
+    private static function retrieveBuildLogXml(&$buildLogUri)
+    {
+        // Open a new cURL session.
+        $cs = curl_init();
+        if($cs === FALSE)
+            throw new Exception('Failed initializing cURL');
+
+        curl_setopt($cs, CURLOPT_URL, $buildLogUri);
+        curl_setopt($cs, CURLOPT_HEADER, false);
+        curl_setopt($cs, CURLOPT_RETURNTRANSFER, true);
+
+        $xml = curl_exec($cs);
+        if($xml === FALSE)
+            $error = curl_error($cs);
+        curl_close($cs);
+        if($xml === FALSE)
+            throw new Exception('Failed retrieving file' + $error);
+
+        return $xml;
+    }
+
+    /**
      * Attempt to parse the build log, constructing from it a collection
      * of the abstract objects we use to model the events an packages it
      * defines.
@@ -563,12 +326,12 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 
         // Is it time to update our cached copy of the build log?
         $logCacheName = 'buildrepository/events.xml';
-        if(mustUpdateCachedBuildLog($buildLogUri, $logCacheName))
+        if(self::mustUpdateCachedBuildLog($buildLogUri, $logCacheName))
         {
             try
             {
                 // Grab a copy and store it in the local file cache.
-                $logXml = retrieveBuildLogXml($buildLogUri);
+                $logXml = self::retrieveBuildLogXml($buildLogUri);
                 if($logXml == FALSE)
                     throw new Exception('Failed retrieving build log');
 
