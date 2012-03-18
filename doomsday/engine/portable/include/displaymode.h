@@ -22,6 +22,8 @@
 #ifndef LIBDENG_DISPLAYMODE_H
 #define LIBDENG_DISPLAYMODE_H
 
+#include "dd_types.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -58,6 +60,8 @@ int DisplayMode_Count(void);
 const DisplayMode* DisplayMode_ByIndex(int index);
 
 const DisplayMode* DisplayMode_FindClosest(int width, int height, int depth, float freq);
+
+boolean DisplayMode_IsEqual(const DisplayMode* a, const DisplayMode* b);
 
 int DisplayMode_Change(const DisplayMode* mode);
 

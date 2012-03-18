@@ -235,6 +235,11 @@ const DisplayMode* DisplayMode_FindClosest(int width, int height, int depth, flo
     return best;
 }
 
+boolean DisplayMode_IsEqual(const DisplayMode* a, const DisplayMode* b)
+{
+    return Mode(*a) == Mode(*b);
+}
+
 int DisplayMode_Change(const DisplayMode* mode)
 {
     if(Mode::fromCurrent() == *mode)

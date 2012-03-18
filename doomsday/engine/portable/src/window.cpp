@@ -72,6 +72,8 @@ struct ddwindow_s
     CanvasWindow* widget;   ///< The widget this window represents.
     void (*drawFunc)(void); ///< Draws the contents of the canvas.
     QRect appliedGeometry;  ///< Saved for detecting when changes have occurred.
+    bool needShowFullscreen;
+    bool needShowNormal;
 
     ddwindowtype_t type;
     boolean inited;
@@ -185,14 +187,14 @@ struct ddwindow_s
         }
     }
 
-    void applyDisplayMode()
+    bool applyDisplayMode()
     {
         assertWindow();
 
         if(flags & DDWF_FULLSCREEN)
         {
             const DisplayMode* mode = DisplayMode_FindClosest(width(), height(), colorDepthBits, 0);
-            if(mode)
+            if(mode && !DisplayMode_IsEqual(DisplayMode_Current(), mode))
             {
                 if(DisplayMode_Change(mode))
                 {
@@ -205,13 +207,20 @@ struct ddwindow_s
                     // Pull the window again over the shield after the mode change.
                     DisplayMode_Native_Raise(Window_NativeHandle(this));
 #endif
+                    return true;
                 }
             }
         }
         else
         {
-            DisplayMode_Change(DisplayMode_OriginalMode());
+            if(DisplayMode_IsEqual(DisplayMode_Current(), DisplayMode_OriginalMode()))
+            {
+                // No need to change.
+                return false;
+            }
+            return DisplayMode_Change(DisplayMode_OriginalMode());
         }
+        return false;
     }
 
     /**
@@ -223,12 +232,16 @@ struct ddwindow_s
     {
         assertWindow();
 
-        applyDisplayMode();
+        bool modeChanged = applyDisplayMode();
 
         if(flags & DDWF_FULLSCREEN)
         {
+            if(!modeChanged) return; // We don't need to do anything.
+
             if(widget->isVisible())
             {
+                needShowFullscreen = !widget->isFullScreen();
+
                 // The window is already visible, so let's allow a mode change to resolve itself
                 // before we go changing the window.
                 LegacyCore_Timer(de2LegacyCore, 100, updateMainWindowLayout);
@@ -258,7 +271,18 @@ struct ddwindow_s
             }
             else
             {
-                if(widget->isVisible() && widget->isMaximized()) widget->showNormal();
+                if(widget->isVisible() && (modeChanged || widget->isMaximized()))
+                {
+                    if(modeChanged)
+                    {
+                        needShowNormal = true;
+                        LegacyCore_Timer(de2LegacyCore, 100, updateMainWindowLayout);
+                        /// @todo  Save the correct xy coordinate for the window and use them here.
+                        return;
+                    }
+
+                    widget->showNormal();
+                }
                 widget->setGeometry(geom);
                 appliedGeometry = geom; // Saved for detecting changes.
             }
@@ -307,6 +331,8 @@ struct ddwindow_s
 
     bool applyAttributes(int* attribs)
     {
+        bool wasFullscreen = (flags & DDWF_FULLSCREEN) != 0;
+
         // Parse the attributes array and check the values.
         assert(attribs);
         for(int i = 0; attribs[i]; ++i)
@@ -351,7 +377,7 @@ struct ddwindow_s
 
         // Check geometry for validity (window must be on the desktop
         // at least partially).
-        if(!(flags & DDWF_FULLSCREEN) && !isGeometryValid())
+        if(!wasFullscreen && !(flags & DDWF_FULLSCREEN) && !isGeometryValid())
         {
             // We can't place the window completely outside the desktop.
             return false;
@@ -408,13 +434,32 @@ static void updateMainWindowLayout(void)
 {
     Window* win = Window_Main();
 
+    if(win->needShowFullscreen)
+    {
+        win->needShowFullscreen = false;
+        win->widget->showFullScreen();
+    }
+
+    if(win->flags & DDWF_FULLSCREEN)
+    {
 #ifdef MACOSX
-    // For some interesting reason, we have to scale the window twice in fullscreen mode
-    // or the resulting layout won't be correct.
-    win->widget->setGeometry(QRect(0, 0, 320, 240));
+        // For some interesting reason, we have to scale the window twice in fullscreen mode
+        // or the resulting layout won't be correct.
+        win->widget->setGeometry(QRect(0, 0, 320, 240));
 #endif
 
-    win->widget->setGeometry(QRect(0, 0, win->geometry.size.width, win->geometry.size.height));
+        win->widget->setGeometry(QRect(0, 0, win->geometry.size.width, win->geometry.size.height));
+
+#ifdef MACOSX
+        DisplayMode_Native_Raise(Window_NativeHandle(win));
+#endif
+    }
+
+    if(win->needShowNormal)
+    {
+        win->needShowNormal = false;
+        win->widget->showNormal();
+    }
 }
 
 Window* Window_Main(void)
@@ -861,6 +906,10 @@ static void finishMainWindowInit(Canvas& canvas)
 static void windowWasMoved(CanvasWindow& cw)
 {
     Window* win = canvasToWindow(cw.canvas());
+    assert(win);
+
+    if(win->flags & DDWF_FULLSCREEN) return;
+
     win->fetchWindowGeometry();
     win->setFlag(DDWF_CENTER, false);
 }
@@ -1113,8 +1162,21 @@ boolean Window_IsFullscreen(const Window* wnd)
 {
     assert(wnd);
     if(wnd->type == WT_CONSOLE) return false;
-
     return (wnd->flags & DDWF_FULLSCREEN) != 0;
+}
+
+boolean Window_IsCentered(const Window* wnd)
+{
+    assert(wnd);
+    if(wnd->type == WT_CONSOLE) return false;
+    return (wnd->flags & DDWF_CENTER) != 0;
+}
+
+boolean Window_IsMaximized(const Window* wnd)
+{
+    assert(wnd);
+    if(wnd->type == WT_CONSOLE) return false;
+    return (wnd->flags & DDWF_MAXIMIZE) != 0;
 }
 
 #if 0

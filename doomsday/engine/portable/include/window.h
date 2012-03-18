@@ -164,6 +164,10 @@ ddwindowtype_t Window_Type(const Window* wnd);
 
 boolean Window_IsFullscreen(const Window* wnd);
 
+boolean Window_IsCentered(const Window* wnd);
+
+boolean Window_IsMaximized(const Window* wnd);
+
 struct consolewindow_s* Window_Console(Window* wnd);
 
 const struct consolewindow_s* Window_ConsoleConst(const Window* wnd);

@@ -63,6 +63,7 @@ static DisplayMode modeFromDict(CFDictionaryRef dict)
 
 static std::vector<DisplayMode> displayModes;
 static std::vector<CFDictionaryRef> displayDicts;
+static CFDictionaryRef originalDisplayDict;
 static CFDictionaryRef currentDisplayDict;
 
 void DisplayMode_Native_Init(void)
@@ -76,7 +77,7 @@ void DisplayMode_Native_Init(void)
         displayModes.push_back(modeFromDict(dict));
         displayDicts.push_back(dict);
     }
-    currentDisplayDict = (CFDictionaryRef) CGDisplayCurrentMode(kCGDirectMainDisplay);
+    originalDisplayDict = currentDisplayDict = (CFDictionaryRef) CGDisplayCurrentMode(kCGDirectMainDisplay);
 }
 
 static void releaseDisplays()
@@ -85,6 +86,20 @@ static void releaseDisplays()
     {
         CGReleaseAllDisplays();
     }
+}
+
+int DisplayMode_Native_CaptureScreen(int capture)
+{
+    if(capture && !CGDisplayIsCaptured(kCGDirectMainDisplay))
+    {
+        return CGCaptureAllDisplays() == kCGErrorSuccess;
+    }
+    else if(!capture && CGDisplayIsCaptured(kCGDirectMainDisplay))
+    {
+        CGReleaseAllDisplays();
+        return true;
+    }
+    return true;
 }
 
 void DisplayMode_Native_Shutdown(void)
@@ -138,13 +153,14 @@ int DisplayMode_Native_Change(const DisplayMode* mode)
     CGDisplayFade(token, fadeTime, kCGDisplayBlendNormal, kCGDisplayBlendSolidColor, 0, 0, 0, true /* wait */);
 
     // Capture the displays now if haven't yet done so.
-    bool wasPreviouslyCaptured = true;
+    bool wasPreviouslyCaptured = CGDisplayIsCaptured(kCGDirectMainDisplay);
     CGDisplayErr result = kCGErrorSuccess;
-    if(!CGDisplayIsCaptured(kCGDirectMainDisplay))
+
+    if(!DisplayMode_Native_CaptureScreen(true))
     {
-        wasPreviouslyCaptured = false;
-        result = CGCaptureAllDisplays();
+        result = kCGErrorFailure;
     }
+
     if(result == kCGErrorSuccess)
     {
         qDebug() << "Changing to native mode" << findIndex(mode);
@@ -163,12 +179,20 @@ int DisplayMode_Native_Change(const DisplayMode* mode)
         }
     }
 
+    /*
     DisplayMode dm = modeFromDict(currentDisplayDict);
     qDebug() << "Native current is now" << dm.width << dm.height;
+    */
 
     // Fade back to normal.
     CGDisplayFade(token, 2*fadeTime, kCGDisplayBlendSolidColor, kCGDisplayBlendNormal, 0, 0, 0, false);
     CGReleaseDisplayFadeReservation(token);
+
+    if(currentDisplayDict == originalDisplayDict)
+    {
+        // Returned to the original mode, don't capture.
+        DisplayMode_Native_CaptureScreen(false);
+    }
 
     return result == kCGErrorSuccess;
 }

@@ -50,6 +50,7 @@
 #include "texturecontent.h"
 #include "texturevariant.h"
 #include "materialvariant.h"
+#include "displaymode.h"
 
 #if defined(WIN32) && defined(WIN32_GAMMA)
 #  include <icm.h>
@@ -84,6 +85,8 @@ D_CMD(Fog);
 D_CMD(SetBPP);
 D_CMD(SetRes);
 D_CMD(ToggleFullscreen);
+D_CMD(DisplayModeInfo);
+D_CMD(ListDisplayModes);
 
 void    GL_SetGamma(void);
 
@@ -146,6 +149,8 @@ void GL_Register(void)
 
     // Ccmds
     C_CMD_FLAGS("fog", NULL, Fog, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("displaymode", "", DisplayModeInfo, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("listdisplaymodes", "", ListDisplayModes, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("setcolordepth", "i", SetBPP, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("setbpp", "i", SetBPP, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("setres", "ii", SetRes, CMDF_NO_DEDICATED);
@@ -1292,11 +1297,17 @@ D_CMD(SetRes)
 
 D_CMD(ToggleFullscreen)
 {
+    /// @todo Currently not supported: the window should be recreated when
+    /// switching at runtime so that its frameless flag has the appropriate
+    /// effect.
+#if 1
     int attribs[] = {
         DDWA_FULLSCREEN, !Window_IsFullscreen(Window_Main()),
         DDWA_END
     };
     return Window_ChangeAttributes(Window_Main(), attribs);
+#endif
+    return false;
 }
 
 D_CMD(SetBPP)
@@ -1306,6 +1317,37 @@ D_CMD(SetBPP)
         DDWA_END
     };
     return Window_ChangeAttributes(Window_Main(), attribs);
+}
+
+D_CMD(DisplayModeInfo)
+{
+    const Window* wnd = Window_Main();
+    const DisplayMode* mode = DisplayMode_Current();
+    int i;
+
+    Con_Message("Current display mode: %i x %i x %i (%i:%i, refresh: %f Hz)\n",
+                mode->width, mode->height, mode->depth, mode->ratioX, mode->ratioY, mode->refreshRate);
+    Con_Message("Main window: (%i,%i) %ix%i fullscreen:%s centered:%s maximixed:%s\n",
+                Window_X(wnd), Window_Y(wnd), Window_Width(wnd), Window_Height(wnd),
+                Window_IsFullscreen(wnd)? "yes" : "no",
+                Window_IsCentered(wnd)? "yes" : "no",
+                Window_IsMaximized(wnd)? "yes" : "no");
+    return true;
+}
+
+D_CMD(ListDisplayModes)
+{
+    const DisplayMode* mode;
+    int i;
+
+    Con_Message("There are %i display modes available:\n", DisplayMode_Count());
+    for(i = 0; i < DisplayMode_Count(); ++i)
+    {
+        mode = DisplayMode_ByIndex(i);
+        Con_Message("  %i x %i x %i (%i:%i, refresh: %f Hz)\n", mode->width, mode->height,
+                    mode->depth, mode->ratioX, mode->ratioY, mode->refreshRate);
+    }
+    return true;
 }
 
 D_CMD(UpdateGammaRamp)
