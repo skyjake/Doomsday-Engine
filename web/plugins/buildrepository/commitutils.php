@@ -21,6 +21,7 @@
 
 includeGuard('commitutils.php');
 
+require_once(DIR_INCLUDES.'/utilities.inc.php');
 require_once('buildevent.class.php');
 
 function addCommitToGroup(&$groups, $groupName, &$commit)
@@ -67,7 +68,7 @@ function groupBuildCommits(&$build, &$groups)
 function make_pretty_hyperlink($matches)
 {
     $uri = implode('', array_slice($matches, 1));
-    return genHyperlinkHTML($uri, 40, 'link-external');
+    return generateHyperlinkHTML($uri, 40, 'link-external');
 }
 
 function formatCommitMessageHTML($msg)
@@ -88,7 +89,7 @@ function outputCommitHTML(&$commit)
         throw new Exception('Invalid commit argument, array expected');
 
     // Format the commit message for HTML output.
-    $message = $commit['message'];
+    $message = formatCommitMessageHTML($commit['message']);
     $haveMessage = (bool)(strlen($message) > 0);
 
     // Compose the supplementary tag list.
