@@ -122,7 +122,6 @@ DENG_HEADERS = \
     portable/include/bsp_edge.h \
     portable/include/bsp_intersection.h \
     portable/include/bsp_main.h \
-    portable/include/bsp_map.h \
     portable/include/bsp_node.h \
     portable/include/bsp_superblock.h \
     portable/include/bspleaf.h \

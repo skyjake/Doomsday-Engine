@@ -35,6 +35,8 @@
 #include "m_binarytree.h"
 #include "p_mapdata.h"
 
+void BSP_InitForNodeBuild(GameMap* map);
+
 /**
  * Partition the given edge and perform any further necessary action (moving it into
  * either the left list, right list, or splitting it).
