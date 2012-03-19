@@ -628,6 +628,16 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     }
 
     sprFrame = &sprDef->spriteFrames[frame];
+
+    if(novideo)
+    {
+        // We can't prepare the material.
+        memset(info, 0, sizeof(*info));
+        info->numFrames = sprDef->numFrames;
+        info->flip = sprFrame->flip[0];
+        return true;
+    }
+
     mat = sprFrame->mats[0];
 
     spec = Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, 0, 0,
