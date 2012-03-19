@@ -328,14 +328,13 @@ static boolean C_DECL hardenNode(binarytree_t* tree, void* data)
             bspleafdata_t* leaf = (bspleafdata_t*) BinaryTree_GetData(right);
             uint idx = params->leafCurIndex++;
 
-            node->children[RIGHT] = idx | NF_LEAF;
-            hardenLeaf(params->dest, &params->dest->bspLeafs[idx], leaf);
+            node->children[RIGHT] = (runtime_mapdata_header_t*)(params->dest->bspLeafs + idx);
+            hardenLeaf(params->dest, (BspLeaf*)node->children[RIGHT], leaf);
         }
         else
         {
             BspNode* data = (BspNode*) BinaryTree_GetData(right);
-
-            node->children[RIGHT] = data->buildData.index;
+            node->children[RIGHT] = (runtime_mapdata_header_t*)(params->dest->bspNodes + data->buildData.index);
         }
     }
 
@@ -347,14 +346,13 @@ static boolean C_DECL hardenNode(binarytree_t* tree, void* data)
             bspleafdata_t* leaf = (bspleafdata_t*) BinaryTree_GetData(left);
             uint idx = params->leafCurIndex++;
 
-            node->children[LEFT] = idx | NF_LEAF;
-            hardenLeaf(params->dest, &params->dest->bspLeafs[idx], leaf);
+            node->children[LEFT] = (runtime_mapdata_header_t*)(params->dest->bspLeafs + idx);
+            hardenLeaf(params->dest, (BspLeaf*)node->children[LEFT], leaf);
         }
         else
         {
             BspNode* data = (BspNode*) BinaryTree_GetData(left);
-
-            node->children[LEFT]  = data->buildData.index;
+            node->children[LEFT] = (runtime_mapdata_header_t*)(params->dest->bspNodes + data->buildData.index);
         }
     }
 

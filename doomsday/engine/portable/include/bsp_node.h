@@ -92,7 +92,7 @@ void BSP_PartitionHEdges(SuperBlock* hEdgeList, SuperBlock* rightList, SuperBloc
  * @param hPlane        HPlaneIntercept list for storing any new intersections.
  * @return  @c true iff successfull.
  */
-boolean BuildNodes(struct superblock_s* hEdgeList, binarytree_t** parent, size_t depth,
+boolean BuildNodes(SuperBlock* hEdgeList, binarytree_t** parent, size_t depth,
     HPlane* hPlane);
 
 /**

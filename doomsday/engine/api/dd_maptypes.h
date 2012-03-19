@@ -76,6 +76,6 @@
 
 #define DMT_BSPNODE_AABOX  DDVT_FLOAT
 
-#define DMT_BSPNODE_CHILDREN DDVT_UINT    // If NF_LEAF it's a BspLeaf.
+#define DMT_BSPNODE_CHILDREN DDVT_PTR
 
 #endif

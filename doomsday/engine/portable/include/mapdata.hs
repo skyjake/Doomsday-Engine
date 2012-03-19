@@ -521,6 +521,6 @@ end
 struct BspNode
     -       partition_t partition
     -       AABoxf[2]   aaBox    // Bounding box for each child.
-    UINT    uint[2]     children // If NF_LEAF it's a BspLeaf.
+    PTR     runtime_mapdata_header_t*[2] children
     -       mbspnode_t  buildData
 end

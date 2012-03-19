@@ -482,7 +482,7 @@ typedef struct bspnode_s {
     runtime_mapdata_header_t header;
     partition_t         partition;
     AABoxf              aaBox[2];      // Bounding box for each child.
-    unsigned int        children[2];   // If NF_LEAF it's a BspLeaf.
+    runtime_mapdata_header_t* children[2];
     mbspnode_t          buildData;
 } BspNode;
 

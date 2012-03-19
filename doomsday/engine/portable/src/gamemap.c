@@ -1404,12 +1404,8 @@ int GameMap_PathXYTraverse(GameMap* map, float fromX, float fromY, float toX, fl
 
 BspLeaf* GameMap_BspLeafAtPoint(GameMap* map, float point_[2])
 {
-    BspNode* node = 0;
-    uint nodenum = 0;
+    BspNode* node;
     float point[2];
-
-    point[0] = point_? point_[0] : 0;
-    point[1] = point_? point_[1] : 0;
 
     // A single BSP leaf is a special case
     if(!map->numBspNodes)
@@ -1417,15 +1413,17 @@ BspLeaf* GameMap_BspLeafAtPoint(GameMap* map, float point_[2])
         return (BspLeaf*) map->bspLeafs;
     }
 
-    nodenum = map->numBspNodes - 1;
-    while(!(nodenum & NF_LEAF))
-    {
-        node = map->bspNodes + nodenum;
-        ASSERT_DMU_TYPE(node, DMU_BSPNODE);
-        nodenum = node->children[P_PointOnPartitionSide(point[0], point[1], &node->partition)];
-    }
+    point[0] = point_? point_[0] : 0;
+    point[1] = point_? point_[1] : 0;
 
-    return map->bspLeafs + (nodenum & ~NF_LEAF);
+    node = map->bspNodes + (map->numBspNodes - 1);
+    do
+    {
+        ASSERT_DMU_TYPE(node, DMU_BSPNODE);
+        node = (BspNode*)node->children[P_PointOnPartitionSide(point[0], point[1], &node->partition)];
+    } while(((runtime_mapdata_header_t*) node)->type != DMU_BSPLEAF);
+
+    return (BspLeaf*)node;
 }
 
 BspLeaf* GameMap_BspLeafAtPointXY(GameMap* map, float x, float y)
