@@ -702,29 +702,32 @@ boolean Bsp_ChoosePartition(SuperBlock* hEdgeList, size_t depth, HPlane* partiti
     // Finished, return the best partition.
     if(best)
     {
-        HPlanePartition* part = HPlane_Partition(partition);
+        LineDef* line = best->lineDef;
+        assert(line);
 
         //DEBUG_Message(("Bsp_ChoosePartition: Best has score %d.%02d  (%1.1f,%1.1f) -> "
         //               "(%1.1f,%1.1f)\n", bestCost / 100, bestCost % 100,
         //               best->v[0]->V_pos[VX], best->v[0]->V_pos[VY],
         //               best->v[1]->V_pos[VX], best->v[1]->V_pos[VY]));
 
-        assert(best->lineDef);
+        // Reconfigure the partition for the next round of HEdge sorting.
+        HPlane_SetXY(partition, line->L_v(best->side)->buildData.pos[VX],
+                                line->L_v(best->side)->buildData.pos[VY]);
+        HPlane_SetDXY(partition, line->L_v(best->side^1)->buildData.pos[VX] - line->L_v(best->side)->buildData.pos[VX],
+                                 line->L_v(best->side^1)->buildData.pos[VY] - line->L_v(best->side)->buildData.pos[VY]);
 
-        part->x  = best->lineDef->v[best->side]->buildData.pos[VX];
-        part->y  = best->lineDef->v[best->side]->buildData.pos[VY];
-        part->dX = best->lineDef->v[best->side^1]->buildData.pos[VX] - part->x;
-        part->dY = best->lineDef->v[best->side^1]->buildData.pos[VY] - part->y;
-        part->lineDef = best->lineDef;
-        part->sourceLineDef = best->sourceLineDef;
+        { HPlaneBuildInfo* info = HPlane_BuildInfo(partition);
+        info->lineDef = best->lineDef;
+        info->sourceLineDef = best->sourceLineDef;
+        info->pDX = best->pDX;
+        info->pDY = best->pDY;
+        info->pSX = best->pSX;
+        info->pSY = best->pSY;
+        info->pPara = best->pPara;
+        info->pPerp = best->pPerp;
+        info->pLength = best->pLength;
+        }
 
-        part->pDX = best->pDX;
-        part->pDY = best->pDY;
-        part->pSX = best->pSX;
-        part->pSY = best->pSY;
-        part->pPara = best->pPara;
-        part->pPerp = best->pPerp;
-        part->pLength = best->pLength;
         return true;
     }
 
@@ -740,7 +743,7 @@ static boolean lineDefHasSelfRef(LineDef* lineDef)
 static HPlaneIntercept* Bsp_MakeHPlaneIntersection(HPlane* hPlane, bsp_hedge_t* hEdge, int leftSide)
 {
     HEdgeIntercept* hEdgeIntercept;
-    const HPlanePartition* part;
+    const HPlaneBuildInfo* info;
     HPlaneIntercept* inter;
     Vertex* vertex;
     double distance;
@@ -751,11 +754,11 @@ static HPlaneIntercept* Bsp_MakeHPlaneIntersection(HPlane* hPlane, bsp_hedge_t* 
     inter = Bsp_HPlaneInterceptByVertex(hPlane, vertex);
     if(inter) return inter;
 
-    part = HPlane_Partition(hPlane);
-    distance = M_ParallelDist(part->pDX, part->pDY, part->pPara, part->pLength,
+    info = HPlane_BuildInfo(hPlane);
+    distance = M_ParallelDist(info->pDX, info->pDY, info->pPara, info->pLength,
                               vertex->buildData.pos[VX], vertex->buildData.pos[VY]);
 
-    hEdgeIntercept = Bsp_NewHEdgeIntercept(vertex, part, (hEdge->lineDef && lineDefHasSelfRef(hEdge->lineDef)));
+    hEdgeIntercept = Bsp_NewHEdgeIntercept(vertex, info, (hEdge->lineDef && lineDefHasSelfRef(hEdge->lineDef)));
     return HPlane_NewIntercept2(hPlane, distance, hEdgeIntercept);
 }
 
@@ -771,23 +774,23 @@ static HPlaneIntercept* makeIntersection(HPlane* hPlane, bsp_hedge_t* hEdge, int
  * Takes advantage of some common situations like horizontal and vertical lines to
  * choose a 'nicer' intersection point.
  */
-static __inline void calcIntersection(bsp_hedge_t* hEdge, const HPlanePartition* part,
+static __inline void calcIntersection(bsp_hedge_t* hEdge, const HPlaneBuildInfo* info,
     double perpC, double perpD, double* x, double* y)
 {
     double ds;
 
     // Horizontal partition against vertical half-edge.
-    if(part->pDY == 0 && hEdge->pDX == 0)
+    if(info->pDY == 0 && hEdge->pDX == 0)
     {
         *x = hEdge->pSX;
-        *y = part->pSY;
+        *y = info->pSY;
         return;
     }
 
     // Vertical partition against horizontal half-edge.
-    if(part->pDX == 0 && hEdge->pDY == 0)
+    if(info->pDX == 0 && hEdge->pDY == 0)
     {
-        *x = part->pSX;
+        *x = info->pSX;
         *y = hEdge->pSY;
         return;
     }
@@ -806,30 +809,30 @@ static __inline void calcIntersection(bsp_hedge_t* hEdge, const HPlanePartition*
         *y = hEdge->pSY + (hEdge->pDY * ds);
 }
 
-void BSP_DivideOneHEdge(bsp_hedge_t* hEdge, HPlane* hPlane, SuperBlock* rightList,
+void BSP_DivideOneHEdge(bsp_hedge_t* hEdge, HPlane* partition, SuperBlock* rightList,
     SuperBlock* leftList)
 {
-    const HPlanePartition* part = HPlane_Partition(hPlane);
+    const HPlaneBuildInfo* info = HPlane_BuildInfo(partition);
     bsp_hedge_t* newHEdge;
     double x, y;
     double a, b;
 
     // Get state of lines' relation to each other.
-    a = M_PerpDist(part->pDX, part->pDY, part->pPerp, part->pLength, hEdge->pSX, hEdge->pSY);
-    b = M_PerpDist(part->pDX, part->pDY, part->pPerp, part->pLength, hEdge->pEX, hEdge->pEY);
+    a = M_PerpDist(info->pDX, info->pDY, info->pPerp, info->pLength, hEdge->pSX, hEdge->pSY);
+    b = M_PerpDist(info->pDX, info->pDY, info->pPerp, info->pLength, hEdge->pEX, hEdge->pEY);
 
-    if(hEdge->sourceLineDef == part->sourceLineDef)
+    if(hEdge->sourceLineDef == info->sourceLineDef)
         a = b = 0;
 
     // Check for being on the same line.
     if(fabs(a) <= DIST_EPSILON && fabs(b) <= DIST_EPSILON)
     {
-        makeIntersection(hPlane, hEdge, RIGHT);
-        makeIntersection(hPlane, hEdge, LEFT);
+        makeIntersection(partition, hEdge, RIGHT);
+        makeIntersection(partition, hEdge, LEFT);
 
         // This hedge runs along the same line as the partition. Check whether it goes in
         // the same direction or the opposite.
-        if(hEdge->pDX * part->pDX + hEdge->pDY * part->pDY < 0)
+        if(hEdge->pDX * info->pDX + hEdge->pDY * info->pDY < 0)
         {
             SuperBlock_HEdgePush(leftList, hEdge);
         }
@@ -845,9 +848,9 @@ void BSP_DivideOneHEdge(bsp_hedge_t* hEdge, HPlane* hPlane, SuperBlock* rightLis
     if(a > -DIST_EPSILON && b > -DIST_EPSILON)
     {
         if(a < DIST_EPSILON)
-            makeIntersection(hPlane, hEdge, RIGHT);
+            makeIntersection(partition, hEdge, RIGHT);
         else if(b < DIST_EPSILON)
-            makeIntersection(hPlane, hEdge, LEFT);
+            makeIntersection(partition, hEdge, LEFT);
 
         SuperBlock_HEdgePush(rightList, hEdge);
         return;
@@ -857,9 +860,9 @@ void BSP_DivideOneHEdge(bsp_hedge_t* hEdge, HPlane* hPlane, SuperBlock* rightLis
     if(a < DIST_EPSILON && b < DIST_EPSILON)
     {
         if(a > -DIST_EPSILON)
-            makeIntersection(hPlane, hEdge, RIGHT);
+            makeIntersection(partition, hEdge, RIGHT);
         else if(b > -DIST_EPSILON)
-            makeIntersection(hPlane, hEdge, LEFT);
+            makeIntersection(partition, hEdge, LEFT);
 
         SuperBlock_HEdgePush(leftList, hEdge);
         return;
@@ -868,9 +871,9 @@ void BSP_DivideOneHEdge(bsp_hedge_t* hEdge, HPlane* hPlane, SuperBlock* rightLis
     // When we reach here, we have a and b non-zero and opposite sign, hence this edge
     // will be split by the partition line.
 
-    calcIntersection(hEdge, part, a, b, &x, &y);
+    calcIntersection(hEdge, info, a, b, &x, &y);
     newHEdge = BSP_HEdge_Split(hEdge, x, y);
-    makeIntersection(hPlane, hEdge, LEFT);
+    makeIntersection(partition, hEdge, LEFT);
 
     if(a < 0)
     {
@@ -964,7 +967,6 @@ boolean BuildNodes(SuperBlock* hEdgeList, binarytree_t** parent, size_t depth,
     bspnodedata_t* node;
     SuperBlock* hEdgeSet[2];
     bspleafdata_t* leaf;
-    HPlanePartition* part;
     boolean builtOK = false;
 
     *parent = NULL;
@@ -1004,11 +1006,10 @@ boolean BuildNodes(SuperBlock* hEdgeList, binarytree_t** parent, size_t depth,
     SuperBlock_FindHEdgeListBounds(hEdgeSet[LEFT],  &node->aaBox[LEFT]);
     SuperBlock_FindHEdgeListBounds(hEdgeSet[RIGHT], &node->aaBox[RIGHT]);
 
-    part = HPlane_Partition(hPlane);
-    node->partition.x = part->x;
-    node->partition.y = part->y;
-    node->partition.dX = part->dX;
-    node->partition.dY = part->dY;
+    node->partition.x = HPlane_X(hPlane);
+    node->partition.y = HPlane_Y(hPlane);
+    node->partition.dX = HPlane_DX(hPlane);
+    node->partition.dY = HPlane_DY(hPlane);
 
     builtOK = BuildNodes(hEdgeSet[RIGHT], &subTree, depth + 1, hPlane);
     BinaryTree_SetChild(*parent, RIGHT, subTree);

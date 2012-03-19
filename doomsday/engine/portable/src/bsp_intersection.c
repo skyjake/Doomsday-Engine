@@ -67,9 +67,14 @@ void* HPlaneIntercept_UserData(HPlaneIntercept* bi)
 }
 
 struct hplane_s {
-    // The intercept list. Kept sorted by along_dist, in ascending order.
+    double origin[2];
+    double angle[2];
+
+    /// The intercept list. Kept sorted by along_dist, in ascending order.
     HPlaneIntercept* headPtr;
-    HPlanePartition info;
+
+    /// Additional information used by the node builder during construction.
+    HPlaneBuildInfo info;
 };
 
 static boolean initedOK = false;
@@ -132,7 +137,115 @@ void HPlane_Clear(HPlane* bi)
     bi->headPtr = NULL;
 }
 
-HPlanePartition* HPlane_Partition(HPlane* bi)
+const double* HPlane_Origin(HPlane* bi)
+{
+    assert(bi);
+    return bi->origin;
+}
+
+double HPlane_X(HPlane* bi)
+{
+    assert(bi);
+    return bi->origin[0];
+}
+
+double HPlane_Y(HPlane* bi)
+{
+    assert(bi);
+    return bi->origin[1];
+}
+
+HPlane* HPlane_SetOrigin(HPlane* bi, double const origin[2])
+{
+    assert(bi);
+    if(origin)
+    {
+        bi->origin[0] = origin[0];
+        bi->origin[1] = origin[1];
+        HPlane_Clear(bi);
+    }
+    return bi;
+}
+
+HPlane* HPlane_SetXY(HPlane* bi, double x, double y)
+{
+    double origin[2];
+    origin[0] = x;
+    origin[1] = y;
+    return HPlane_SetOrigin(bi, origin);
+}
+
+HPlane* HPlane_SetX(HPlane* bi, double x)
+{
+    assert(bi);
+    bi->origin[0] = x;
+    HPlane_Clear(bi);
+    return bi;
+}
+
+HPlane* HPlane_SetY(HPlane* bi, double y)
+{
+    assert(bi);
+    bi->origin[1] = y;
+    HPlane_Clear(bi);
+    return bi;
+}
+
+const double* HPlane_Angle(HPlane* bi)
+{
+    assert(bi);
+    return bi->angle;
+}
+
+double HPlane_DX(HPlane* bi)
+{
+    assert(bi);
+    return bi->angle[0];
+}
+
+double HPlane_DY(HPlane* bi)
+{
+    assert(bi);
+    return bi->angle[1];
+}
+
+HPlane* HPlane_SetAngle(HPlane* bi, double const angle[2])
+{
+    assert(bi);
+    if(angle)
+    {
+        bi->angle[0] = angle[0];
+        bi->angle[1] = angle[1];
+        HPlane_Clear(bi);
+    }
+    return bi;
+}
+
+HPlane* HPlane_SetDXY(HPlane* bi, double x, double y)
+{
+    double angle[2];
+    angle[0] = x;
+    angle[1] = y;
+    return HPlane_SetAngle(bi, angle);
+}
+
+HPlane* HPlane_SetDX(HPlane* bi, double dx)
+{
+    assert(bi);
+    bi->angle[0] = dx;
+    HPlane_Clear(bi);
+    return bi;
+}
+
+HPlane* HPlane_SetDY(HPlane* bi, double dy)
+{
+    assert(bi);
+    bi->angle[1] = dy;
+    HPlane_Clear(bi);
+    return bi;
+}
+
+HPlaneBuildInfo* HPlane_BuildInfo(HPlane* bi)
 {
     assert(bi);
     return &bi->info;
@@ -236,15 +349,13 @@ void Bsp_MergeIntersections(HPlane* hPlane)
     }
 }
 
-void Bsp_BuildHEdgesAtIntersectionGaps(HPlane* hPlane,
-    SuperBlock* rightList, SuperBlock* leftList)
+void Bsp_BuildHEdgesAtIntersectionGaps(HPlane* hPlane, SuperBlock* rightList,
+    SuperBlock* leftList)
 {
     HPlaneIntercept* node;
-    const HPlanePartition* part;
 
     if(!hPlane) return;
 
-    part = HPlane_Partition(hPlane);
     node = hPlane->headPtr;
     while(node && node->next)
     {

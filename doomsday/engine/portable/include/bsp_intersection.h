@@ -30,13 +30,10 @@
 
 #include "bsp_edge.h"
 
-struct hplanepartition_s;
+struct hplanebuildinfo_s;
 struct superblock_s;
 
-typedef struct hplanepartition_s {
-    double x, y;
-    double dX, dY;
-
+typedef struct hplanebuildinfo_s {
     LineDef* lineDef; // Not NULL if partition originated from a linedef.
     LineDef* sourceLineDef;
 
@@ -44,7 +41,7 @@ typedef struct hplanepartition_s {
     double pDX, pDY;
     double pPara, pPerp;
     double pLength;
-} HPlanePartition;
+} HPlaneBuildInfo;
 
 typedef struct hplaneintercept_s HPlaneIntercept;
 
@@ -64,7 +61,25 @@ typedef struct hplane_s HPlane;
  */
 HPlane* HPlane_New(void);
 
-HPlanePartition* HPlane_Partition(HPlane* hPlane);
+const double* HPlane_Origin(HPlane* hPlane);
+double HPlane_X(HPlane* hPlane);
+double HPlane_Y(HPlane* hPlane);
+
+HPlane* HPlane_SetOrigin(HPlane* hPlane, double const origin[2]);
+HPlane* HPlane_SetXY(HPlane* hPlane, double x, double y);
+HPlane* HPlane_SetX(HPlane* hPlane, double x);
+HPlane* HPlane_SetY(HPlane* hPlane, double y);
+
+const double* HPlane_Angle(HPlane* hPlane);
+double HPlane_DX(HPlane* hPlane);
+double HPlane_DY(HPlane* hPlane);
+
+HPlane* HPlane_SetAngle(HPlane* hPlane, double const angle[2]);
+HPlane* HPlane_SetDXY(HPlane* hPlane, double x, double y);
+HPlane* HPlane_SetDX(HPlane* hPlane, double dx);
+HPlane* HPlane_SetDY(HPlane* hPlane, double dy);
+
+HPlaneBuildInfo* HPlane_BuildInfo(HPlane* hPlane);
 
 /**
  * Destroy a HPlane.
@@ -78,6 +93,10 @@ void HPlane_Clear(HPlane* hPlane);
 
 /**
  * Insert a point at the given intersection into the intersection list.
+ *
+ * @todo Ownership of the user data should NOT be passed to this object.
+ *
+ * @param userData  Ownership passes to HPlane.
  */
 HPlaneIntercept* HPlane_NewIntercept2(HPlane* hPlane, double distance, void* userData);
 HPlaneIntercept* HPlane_NewIntercept(HPlane* hPlane, double distance/*, userData=NULL*/);

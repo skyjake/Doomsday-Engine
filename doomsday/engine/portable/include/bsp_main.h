@@ -61,7 +61,7 @@ typedef double angle_g;
 
 struct hplane_s;
 struct superblock_s;
-struct hplanepartition_s;
+struct hplanebuildinfo_s;
 struct hplaneintercept_s;
 struct bsp_hedge_s;
 
@@ -88,7 +88,7 @@ typedef struct hedgeintercept_s {
 /**
  * Create a new intersection.
  */
-HEdgeIntercept* Bsp_NewHEdgeIntercept(Vertex* vertex, const struct hplanepartition_s* partition,
+HEdgeIntercept* Bsp_NewHEdgeIntercept(Vertex* vertex, const struct hplanebuildinfo_s* partition,
     boolean lineDefIsSelfReferencing);
 
 /**

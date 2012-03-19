@@ -382,19 +382,19 @@ HEdgeIntercept* Bsp_HEdgeInterceptByVertex(struct hplane_s* hPlane, Vertex* vert
 void Bsp_BuildHEdgesBetweenIntersections(HPlane* hPlane,
     HEdgeIntercept* start, HEdgeIntercept* end, bsp_hedge_t** right, bsp_hedge_t** left)
 {
-    HPlanePartition* part;
+    HPlaneBuildInfo* info;
 
     if(!hPlane || !start || !end)
         Con_Error("Bsp_BuildHEdgesBetweenIntersections: Invalid arguments.");
 
-    part = HPlane_Partition(hPlane);
+    info = HPlane_BuildInfo(hPlane);
 
     // Create the half-edge pair.
     // Leave 'linedef' field as NULL as these are not linedef-linked.
     // Leave 'side' as zero too.
-    (*right) = BSP_HEdge_Create(NULL, part->lineDef, start->vertex,
+    (*right) = BSP_HEdge_Create(NULL, info->lineDef, start->vertex,
                                 end->vertex, start->after, false);
-    (*left)  = BSP_HEdge_Create(NULL, part->lineDef, end->vertex,
+    (*left)  = BSP_HEdge_Create(NULL, info->lineDef, end->vertex,
                                 start->vertex, start->after, false);
 
     // Twin the half-edges together.
@@ -427,16 +427,16 @@ void BSP_AddMiniHEdges(HPlane* hPlane, SuperBlock* rightList,
     Bsp_MergeIntersections(hPlane);
 
     /*{
-    const HPlanePartition* part = HPlane_Partition(hPlane);
+    const HPlaneBuildInfo* info = HPlane_BuildInfo(hPlane);
     DEBUG_Message(("BSP_AddMiniHEdges: Partition (%1.1f,%1.1f) += (%1.1f,%1.1f)\n",
-                   part->pSX, part->pSY, part->pDX, part->pDY));
+                   info->pSX, info->pSY, info->pDX, info->pDY));
     }*/
 
     // Find connections in the intersections.
     Bsp_BuildHEdgesAtIntersectionGaps(hPlane, rightList, leftList);
 }
 
-HEdgeIntercept* Bsp_NewHEdgeIntercept(Vertex* vert, const struct hplanepartition_s* part,
+HEdgeIntercept* Bsp_NewHEdgeIntercept(Vertex* vert, const struct hplanebuildinfo_s* part,
     boolean selfRef)
 {
     HEdgeIntercept* inter = M_Calloc(sizeof(*inter));
