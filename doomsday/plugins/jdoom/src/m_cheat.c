@@ -87,6 +87,9 @@ int Cht_Reveal(const int* args, int player);
 
 static boolean cheatsEnabled(void)
 {
+#ifdef _DEBUG
+    if(IS_NETWORK_SERVER) return true; // Server operator can always cheat.
+#endif
     return !IS_NETGAME;
 }
 
