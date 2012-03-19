@@ -763,9 +763,15 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
            type <= MT_SUPERSHOTGUN)
             return NULL;
 
+        /**
+         * @todo cfg.noCoopAnything: Exactly which objects is this supposed to
+         * prevent spawning? (at least not MT_PLAYER*...). -jk
+         */
+#if 0
         // Don't spawn any special objects in coop?
         if(cfg.noCoopAnything && !deathmatch)
             return NULL;
+#endif
 
         // BFG disabled in netgames?
         if(cfg.noNetBFG && type == MT_MISC25)

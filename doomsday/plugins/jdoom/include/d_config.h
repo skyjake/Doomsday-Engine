@@ -138,7 +138,7 @@ typedef struct jdoom_config_s {
     byte            noCoopDamage;
     byte            noTeamDamage;
     byte            noCoopWeapons;
-    byte            noCoopAnything;
+    byte            noCoopAnything; // disable all multiplayer objects in co-op
     byte            noNetBFG;
     byte            coopRespawnItems;
     byte            respawnMonstersNightmare;

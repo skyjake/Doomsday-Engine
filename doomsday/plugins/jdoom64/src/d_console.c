@@ -106,7 +106,9 @@ cvartemplate_t gameCVars[] = {
 
     // Items
     {"server-game-nobfg", 0, CVT_BYTE, &cfg.noNetBFG, 0, 1},
-    {"server-game-coop-nothing", 0, CVT_BYTE, &cfg.noCoopAnything, 0, 1},
+#if 0
+    {"server-game-coop-nothing", 0, CVT_BYTE, &cfg.noCoopAnything, 0, 1}, // not implemented atm, see P_SpawnMobj3f
+#endif
     {"server-game-coop-respawn-items", 0, CVT_BYTE,
         &cfg.coopRespawnItems, 0, 1},
     {"server-game-coop-noweapons", 0, CVT_BYTE, &cfg.noCoopWeapons, 0, 1},
