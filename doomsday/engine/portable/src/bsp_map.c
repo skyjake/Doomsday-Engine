@@ -299,7 +299,7 @@ typedef struct {
 static boolean C_DECL hardenNode(binarytree_t* tree, void* data)
 {
     binarytree_t* right, *left;
-    bspnodedata_t* nodeData;
+    BspNode* nodeData;
     hardenbspparams_t* params;
     BspNode* node;
 
@@ -309,7 +309,7 @@ static boolean C_DECL hardenNode(binarytree_t* tree, void* data)
     nodeData = BinaryTree_GetData(tree);
     params = (hardenbspparams_t*) data;
 
-    node = &params->dest->bspNodes[nodeData->index = params->nodeCurIndex++];
+    node = &params->dest->bspNodes[nodeData->buildData.index = params->nodeCurIndex++];
     node->header.type = DMU_BSPNODE;
 
     node->partition.x = nodeData->partition.x;
@@ -333,9 +333,9 @@ static boolean C_DECL hardenNode(binarytree_t* tree, void* data)
         }
         else
         {
-            bspnodedata_t* data = (bspnodedata_t*) BinaryTree_GetData(right);
+            BspNode* data = (BspNode*) BinaryTree_GetData(right);
 
-            node->children[RIGHT] = data->index;
+            node->children[RIGHT] = data->buildData.index;
         }
     }
 
@@ -352,9 +352,9 @@ static boolean C_DECL hardenNode(binarytree_t* tree, void* data)
         }
         else
         {
-            bspnodedata_t* data = (bspnodedata_t*) BinaryTree_GetData(left);
+            BspNode* data = (BspNode*) BinaryTree_GetData(left);
 
-            node->children[LEFT]  = data->index;
+            node->children[LEFT]  = data->buildData.index;
         }
     }
 

@@ -35,13 +35,6 @@
 #include "m_binarytree.h"
 #include "p_mapdata.h"
 
-typedef struct bspnodedata_s {
-    partition_t partition;
-    AABoxf aaBox[2]; // Bounding box for each child.
-    // Node index. Only valid once the nodes have been hardened.
-    int index;
-} bspnodedata_t;
-
 /**
  * Partition the given edge and perform any further necessary action (moving it into
  * either the left list, right list, or splitting it).
@@ -94,7 +87,7 @@ void BSP_PartitionHEdges(SuperBlock* hEdgeList, SuperBlock* rightList, SuperBloc
  * @param hEdgeList     Ptr to the list of half edges at the current node.
  * @param parent        Ptr to write back the address of any newly created subtree.
  * @param depth         Current tree depth.
- * @param hPlane  HPlaneIntercept list for storing any new intersections.
+ * @param hPlane        HPlaneIntercept list for storing any new intersections.
  * @return  @c true iff successfull.
  */
 boolean BuildNodes(struct superblock_s* hEdgeList, binarytree_t** parent, size_t depth,

@@ -964,7 +964,7 @@ boolean BuildNodes(SuperBlock* hEdgeList, binarytree_t** parent, size_t depth,
     HPlane* hPlane)
 {
     binarytree_t* subTree;
-    bspnodedata_t* node;
+    BspNode* node;
     SuperBlock* hEdgeSet[2];
     bspleafdata_t* leaf;
     boolean builtOK = false;
@@ -1000,7 +1000,7 @@ boolean BuildNodes(SuperBlock* hEdgeList, binarytree_t** parent, size_t depth,
     BSP_PartitionHEdges(hEdgeList, hEdgeSet[RIGHT], hEdgeSet[LEFT], hPlane);
     HPlane_Clear(hPlane);
 
-    node = M_Calloc(sizeof(bspnodedata_t));
+    node = M_Calloc(sizeof(BspNode));
     *parent = BinaryTree_Create(node);
 
     SuperBlock_FindHEdgeListBounds(hEdgeSet[LEFT],  &node->aaBox[LEFT]);

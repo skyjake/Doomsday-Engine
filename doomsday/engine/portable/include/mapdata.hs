@@ -507,6 +507,11 @@ typedef struct partition_s {
     float x, y;
     float dX, dY;
 } partition_t;
+
+typedef struct mbspnode_s {
+    // Node index. Only valid once the nodes have been hardened.
+    int index;
+} mbspnode_t;
 end
 
 public
@@ -517,4 +522,5 @@ struct BspNode
     -       partition_t partition
     -       AABoxf[2]   aaBox    // Bounding box for each child.
     UINT    uint[2]     children // If NF_LEAF it's a BspLeaf.
+    -       mbspnode_t  buildData
 end
