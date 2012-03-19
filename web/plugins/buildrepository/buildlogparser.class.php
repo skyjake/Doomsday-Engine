@@ -103,11 +103,11 @@ class BuildLogParser
                     case 'package':
                         try
                         {
-                            $pack = PackageFactory::newFromSimpleXMLElement($child, $build->releaseType());
-
-                            if($build->releaseType() !== RT_STABLE)
+                            $pack = PackageFactory::newFromSimpleXMLElement($child, $build->releaseTypeId());
+                            $pack->setBuildUniqueId($build->uniqueId());
+                            if($build->hasReleaseNotesUri())
                             {
-                                $pack->setBuildUniqueId($build->uniqueId());
+                                $pack->setReleaseNotesUri($build->releaseNotesUri());
                             }
 
                             $build->addPackage($pack);
@@ -223,6 +223,11 @@ class BuildLogParser
             $releaseType = RT_UNSTABLE;
 
         $event = new BuildEvent($uniqueId, $startDate, $authorName, $authorEmail, $releaseType);
+        if(!empty($log_event->releaseNotes))
+        {
+            $event->setReleaseNotesUri(clean_text($log_event->releaseNotes));
+        }
+
         return $event;
     }
 }

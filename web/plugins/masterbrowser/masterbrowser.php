@@ -54,7 +54,7 @@ class MasterBrowserPlugin extends Plugin implements Actioner, RequestInterpreter
         $this->db = new MasterServer();
 
         $cacheInfo = new ContentInfo();
-        $FrontController->contentCache()->getInfo(self::$serverSummaryCacheName, &$cacheInfo);
+        $FrontController->contentCache()->getInfo(self::$serverSummaryCacheName, $cacheInfo);
         return ($this->db->lastUpdate > $cacheInfo->modifiedTime);
     }
 

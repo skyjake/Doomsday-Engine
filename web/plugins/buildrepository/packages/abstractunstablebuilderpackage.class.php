@@ -1,7 +1,7 @@
 <?php
 /**
- * @file abstractunstablepackage.class.php
- * An abstract, downloadable, "unstable" Package object.
+ * @file abstractunstablebuilderpackage.class.php
+ * An abstract, "unstable", autobuilder, downloadable Package object.
  *
  * @section License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -23,14 +23,16 @@
  * @author Copyright &copy; 2009-2012 Daniel Swanson <danij@dengine.net>
  */
 
-includeGuard('AbstractUnstablePackage');
+includeGuard('AbstractUnstableBuilderPackage');
 
-require_once('abstractpackage.class.php');
+require_once('abstractunstablepackage.class.php');
 
-abstract class AbstractUnstablePackage extends AbstractPackage
+abstract class AbstractUnstableBuilderPackage extends AbstractUnstablePackage implements iBuilderProduct
 {
-    // Override implementation in AbstractPackage.
-    public function composeFullTitle($includeVersion=true, $includePlatformName=true)
+    protected $buildId = 0; /// Unique.
+
+    // Override implementation in AbstractUnstablePackage.
+    public function composeFullTitle($includeVersion=true, $includePlatformName=true, $includeBuildId=true)
     {
         $includeVersion = (boolean) $includeVersion;
         $includeBuildId = (boolean) $includeBuildId;
@@ -38,6 +40,8 @@ abstract class AbstractUnstablePackage extends AbstractPackage
         $title = $this->title;
         if($includeVersion && isset($this->version))
             $title .= ' '. $this->version;
+        if($includeBuildId && $this->buildId !== 0)
+            $title .= ' Build'. $this->buildId;
         if($includePlatformName && $this->platformId !== PID_ANY)
         {
             $plat = &BuildRepositoryPlugin::platform($this->platformId);
@@ -46,15 +50,15 @@ abstract class AbstractUnstablePackage extends AbstractPackage
         return $title;
     }
 
-    // Extends implementation in AbstractPackage.
-    public function populateGraphTemplate(&$tpl)
+    // Implements iBuilderProduct.
+    public function setBuildUniqueId($id)
     {
-        global $FrontController;
+        $this->buildId = intval($id);
+    }
 
-        if(!is_array($tpl))
-            throw new Exception('Invalid template argument, array expected');
-
-        parent::populateGraphTemplate($tpl);
-        $tpl['is_unstable'] = true;
+    // Implements iBuilderProduct.
+    public function buildUniqueId()
+    {
+        return $this->buildId;
     }
 }

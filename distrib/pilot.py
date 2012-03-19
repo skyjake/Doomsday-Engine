@@ -94,6 +94,22 @@ def checkHome():
         raise Exception(".pilot home directory does not exist.")
 
 
+def branchFileName():
+    return os.path.join(homeDir(), 'branch')
+
+
+def currentBranch():
+    if not os.path.exists(branchFileName()):
+        return 'master' # default branch
+    return file(branchFileName(), 'rt').read().strip()
+
+
+def switchToBranch(branch):
+    f = file(branchFileName(), 'wt')
+    print >> f, branch
+    f.close()
+
+
 def checkMasterActions():
     """Special master actions."""
     if len(sys.argv) < 2: return
@@ -282,8 +298,23 @@ def doTask(task):
         task in pilotcfg.IGNORED_TASKS:
         return True
 
-    if task == 'tag_build':
-        msg("TAG NEW BUILD")
+    if task == 'patch':
+        msg("PATCH")
+        switchToBranch('stable')
+        return True
+        
+    elif task == 'branch_stable':
+        msg("SWITCH TO STABLE BRANCH")
+        switchToBranch('stable')
+        return autobuild('pull')
+        
+    elif task == 'branch_master':
+        msg("SWITCH TO MASTER BRANCH")
+        switchToBranch('master')
+        return autobuild('pull')
+
+    elif task == 'tag_build':
+        msg("TAG MASTER BRANCH")
         return autobuild('create')
 
     elif task == 'deb_changes':
@@ -318,6 +349,10 @@ def doTask(task):
     elif task == 'generate_apidoc':
         msg("GENERATE API DOCUMENTATION")
         return autobuild('apidoc')
+        
+    elif task == 'mirror':
+        msg("MIRROR")
+        systemCommand('mirror-buildmaster-to-idisk.sh')
 
     return True
     
@@ -336,7 +371,15 @@ def handleCompletedTasks():
         
         print "Task '%s' has been completed (noticed at %s)" % (task, time.asctime())
         
-        if task == 'tag_build':
+        if task == 'patch':
+            # Everyone must switch to the stable branch.
+            newTask('branch_stable', allClients=True)
+            
+        elif task == 'branch_stable':
+            # Commence with a build when everyone is ready.
+            newTask('tag_build', forClient='master')
+        
+        elif task == 'tag_build':
             newTask('deb_changes', forClient='ubuntu')
             newTask('generate_readme', forClient='clikits')
         
@@ -346,9 +389,14 @@ def handleCompletedTasks():
         elif task == 'build':
             newTask('publish', forClient='master')
             newTask('apt_refresh', forClient='ubuntu')
+            # After the build we can switch to the master again.
+            newTask('branch_master', allClients=True)
             
         elif task == 'publish':
             newTask('update_feed', forClient='master')
+            
+        elif task == 'update_feed':
+            newTask('mirror', forClient='master')
     
     
 def autobuild(cmd):
@@ -359,6 +407,8 @@ def autobuild(cmd):
         cmdLine += " --events %s" % pilotcfg.EVENTS_DIR
     if 'APT_DIR' in dir(pilotcfg):
         cmdLine += " --apt %s" % pilotcfg.APT_DIR
+
+    cmdLine += " --branch %s" % currentBranch()
 
     systemCommand(cmdLine)
     return True

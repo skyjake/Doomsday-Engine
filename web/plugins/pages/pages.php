@@ -45,7 +45,7 @@ class PagesPlugin extends Plugin implements Actioner, RequestInterpreter
         if(!$FrontController->contentCache()->isPresent($cacheName)) return TRUE;
 
         $cacheInfo = new ContentInfo();
-        $FrontController->contentCache()->getInfo($cacheName, &$cacheInfo);
+        $FrontController->contentCache()->getInfo($cacheName, $cacheInfo);
         return (filemtime($pageFile) > $cacheInfo->modifiedTime);
     }
 

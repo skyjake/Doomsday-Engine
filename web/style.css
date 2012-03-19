@@ -60,7 +60,7 @@ a[class ="link-definition"]:after {
     position:absolute;
     text-decoration: none;
     color:#5f5fff;
-    font-size: .83em;
+    font-size: .6em;
     font-family: georgia, serif;
     font-weight: normal;
     content:"?";
@@ -108,6 +108,11 @@ table.directory {
     border-style: hidden;
     border-collapse: separate;
     padding: inherit;
+}
+
+table tr th {
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    padding-bottom:.5em;
 }
 
 table.directory th {
@@ -176,13 +181,7 @@ div.hnav ul {
 }
 
 div.hnav li {
-    list-style-type: none;
-    padding: 0.25em 1em;
-    display: inline
-}
-
-div.hnav li:first-child {
-    border: none;
+    display: inline-block;
 }
 
 div.jumplist_wrapper {
@@ -196,6 +195,10 @@ ol.jumplist {
     vertical-align:top;
     margin:0;
     padding:0 1em;
+}
+
+ol.jumplist li {
+    padding-right:1.8em;
 }
 
 .centered {
@@ -526,6 +529,10 @@ p.legal a {
     min-height: 1.6em;
 }
 
+#projectnews ul li.feed-error {
+    color: grey;
+}
+
 #projectnews a {
     color: #ff8a00;
 }
@@ -541,7 +548,7 @@ p.legal a {
 }
 
 .projectnews-label {
-    color: #ffffff;
+    color: white;
     font-weight: bold;
     min-height: 139px;
 }
@@ -549,14 +556,18 @@ p.legal a {
 /*-------------------- GameServers -------------------*/
 
 #servers-label {
-    color: #ffffff;
+    color: white;
     font-weight: bold;
+}
+
+#servers-timestamp {
+    color: white;
 }
 
 #servers {
     position: relative;
-    min-width: 201px;
     top: -282px; /* minus image height */
+    min-width: 201px;
     padding-right: .5em;
     padding-top: .5em;
     float: right;
@@ -569,12 +580,30 @@ p.legal a {
     background-position: top right;
 }
 
-.server {
-    margin-right: .7em;
+#servers ul {
+    padding: 0;
+    margin-top: .4em;
 }
 
-.server img {
-    margin-top: .5em;
+#servers ul li {
+    list-style-type: none;
+    min-height: 1.6em;
+}
+
+#servers .name {
+    font-weight: bold;
+}
+
+#servers a {
+    color: #ff8a00;
+}
+
+#servers a:hover, #servers a:visited:hover {
+    color: white;
+}
+
+#servers .player-summary, #servers .game-mode {
+    color: white;
 }
 
 #servers ul li {
@@ -767,19 +796,74 @@ p.legal a {
 /* Stream navigation widget */
 #buildsnav {
     font-family: Verdana, Arial, Helvetica, sans-serif;
-    margin:1em 0;
 }
 
-#buildsnav span.title {
+#buildsnav h3 {
     font-size:small;
 }
 
-#buildsnav ul {
-    margin:.5em;
+#buildsnav h3 span {
+    color:lightgrey;
+    padding:0 1em;
 }
 
-#buildsnav ul li {
-    padding:.25em 3em;
+#buildoverview {
+    text-align:center;
+}
+
+#buildpackagelist {
+}
+
+#buildpackagelist table tr.platform {
+    padding-bottom:1em;
+}
+
+#buildeventmetadata {
+    vertical-align:top;
+    position:relative;
+    margin-right:2em;
+}
+
+#buildcommits {
+}
+
+#buildcommits hr {
+    visibility:hidden;
+    margin:0;
+}
+
+#buildcommits ul li {
+    list-style-type:none;
+}
+
+#buildcommits ul {
+    padding-left:0;
+}
+
+#buildcommits ol {
+    padding-top: 1em;
+    padding-bottom: 1em;
+}
+
+#buildcommits ol li {
+    list-style-type:circle;
+}
+
+#buildcommits ol li.more {
+    list-style-type:disc;
+}
+
+#buildcommits ol.jumplist li {
+    list-style-type:none;
+}
+
+#buildcommits ol.jumplist a {
+    color:#558866;
+}
+
+#buildcommits ol.jumplist a:hover {
+    text-decoration: underline;
+    color: #ff8a00;
 }
 
 .buildnews_list {
@@ -797,30 +881,7 @@ p.legal a {
     padding-left:.5em;
 }
 
-.commit_list ul {
-    padding-left:0;
-}
-
-.commit_list ul li {
-    list-style-type:none;
-}
-
-.commit_list ol {
-    padding-top: 1em;
-    padding-bottom: 1em;
-}
-
-.commit_list ol li {
-    list-style-type:circle;
-}
-
-.commit_list ol li.more {
-    list-style-type:disc;
-}
-
-.commit_list hr {
-    visibility:hidden;
-    margin:0;
+.commit_list {
 }
 
 .commit_list p.collapsible:hover {
@@ -836,17 +897,17 @@ p.legal a {
     margin-right:.8em;
 }
 
-.commit_list ol.jumplist li {
-    list-style-type:none;
+div.hnav span.commit-count {
+    float:none;
+    left:initial;
 }
 
-.commit_list ol.jumplist a {
-    color:#558866;
-}
-
-.commit_list ol.jumplist a:hover {
-    text-decoration: underline;
-    color: #ff8a00;
+span.commit-count {
+    padding-right:.5em;
+    color:#aaa;
+    position:relative;
+    left:-100%;
+    float:right;
 }
 
 .commit span.heading,
@@ -891,18 +952,189 @@ span.metadata {
 .buildevent table {
     border-collapse:separate;
     border-spacing:.5em;
-    margin-top:1em;
-    margin-left:auto;
-    margin-right:auto;
+    display:inline-block;
+    text-align:left;
 }
 
 .buildevent table tr th {
-    font-family: Verdana, Arial, Helvetica, sans-serif;
     text-align:left;
 }
 
 .buildevent table td.issue_level {
     text-align:center;
+}
+
+.buildevents_outer {
+    float:left;
+    padding-right:.5em;
+}
+
+.buildevents_outer table thead {
+    text-align:center;
+}
+
+.buildevents_outer table tbody {
+    vertical-align:top;
+}
+
+.buildstreaminfo {
+    padding:1.2em 0;
+}
+
+#roadmap_badge {
+    padding-bottom:.5em;
+    font-size:large;
+    font-weight:bold;
+    font-family:Verdana, Arial, Helvetica, sans-serif;
+}
+
+.buildstreamlist {
+    border:2px solid #EEE;
+    display:inline-block;
+}
+
+.buildstream {
+    float:left;
+    overflow:hidden;
+    text-align:center;
+}
+
+.buildstream ul {
+    margin:0;
+    padding:0;
+}
+
+.buildstream ul li {
+    min-width: 3.2em;
+    list-style-type:none;
+    padding:0 .5em;
+    vertical-align:top;
+}
+
+.buildstream ul li.current {
+    background-color: #F2FBF2;
+    border:1px solid #F2FBF2;
+}
+
+.release-badge {
+    padding-bottom:.5em;
+    font-size:large;
+    font-weight:bold;
+    font-family:Verdana, Arial, Helvetica, sans-serif;
+}
+
+.buildevent_badge,
+.buildevent_badge_active {
+    width:2.5em;
+    margin-left:auto;
+    margin-right:auto;
+    padding:.3em .2em;
+    border:3px solid;
+    margin-top:.25em;
+    margin-bottom:1em;
+    border-top-left-radius:40px 10px;
+    border-top-right-radius:40px 10px;
+    border-bottom-left-radius:40px 10px;
+    border-bottom-right-radius:40px 10px;
+    font-family: Helvetica;
+    font-weight: bolder;
+}
+
+.buildevent_badge .startdate,
+.buildevent_badge_active .startdate {
+    position:relative;
+    bottom:-.6em;
+    display:block;
+    margin-bottom:-1.4em;
+    white-space:nowrap;
+    font-size:60%;
+}
+
+.buildevent_badge .startdate,
+.buildevent_badge a[class = "startdate"]:hover, .buildevent_badge a[class = "startdate"]:visited:hover {
+    color:grey;
+}
+
+.stable {
+    background-color:#78E;
+    border-color:#56D;
+    box-shadow:0px -10px 5px 0px rgba(30,100,230,.5) inset;
+    color:#EEE;
+}
+
+.stable:hover, .stable:visited:hover {
+    background-color:#9AF;
+    border-color:#56D;
+}
+
+.candidate {
+    background-color:#FBA000;
+    border-color:#D71;
+    box-shadow:0px -10px 5px 0px rgba(200,80,0,.5) inset;
+    color:#555;
+}
+
+.candidate:hover, .candidate:visited:hover {
+    background-color:#FFC400;
+    border-color:#D71;
+}
+
+.unstable {
+    background-color:#FFE400;
+    border-color:#FC6;
+    box-shadow:0px -10px 5px 0px rgba(250,140,10,.5) inset;
+    color:#860;
+}
+
+.unstable:hover,
+.unstable:visited:hover {
+    background-color:#FF3;
+    border-color:#FC6;
+}
+
+#buildEventLegend {
+    padding:1em 0;
+    margin:0;
+    margin-right:1em;
+    margin-top:.3em;
+}
+
+#buildEventLegend legend {
+    margin-left:.5em;
+    margin-right:3em;
+}
+
+#buildEventLegend dl {
+    padding:0 .5em;
+}
+
+#buildEventLegend dl dt {
+    display:inline-block;
+    float:left;
+    margin-right:.5em;
+}
+
+#buildEventLegend dl dd {
+    margin-left:0;
+    margin-bottom:.8em;
+    font-size:small;
+}
+
+#buildEventLegend div.buildevent_badge {
+    margin-top:0;
+    margin-bottom:0;
+    width:1em;
+    height:.6em;
+    padding:0;
+    border-top-left-radius:10px 2px;
+    border-top-right-radius:10px 2px;
+    border-bottom-left-radius:10px 2px;
+    border-bottom-right-radius:10px 2px;
+    border-width:2px;
+}
+
+.buildsoverview {
+    margin-top:2.2em;
 }
 
 /*----------------- Master Server ------------------*/
@@ -1093,7 +1325,8 @@ ul.games_list li a.game_badge span {
 
 .downloads_list {
     vertical-align:top;
-    margin:0 3em;
+    display: inline-block;
+    margin-right:1em;
 }
 
 .downloads_list ul {
@@ -1114,7 +1347,7 @@ ul.games_list li a.game_badge span {
     background-color: transparent;
     background: url(http://code.iki.fi/dengine.net/images/download_badge.png) no-repeat;
     height: 60px;
-    width: 320px;
+    min-width: 320px;
     padding-top: 1.5em;
     padding-bottom: 0;
     padding-left: 0;

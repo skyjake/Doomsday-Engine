@@ -44,6 +44,8 @@
 
 // MACROS ------------------------------------------------------------------
 
+#define map     DENG_PLUGIN_GLOBAL(map)
+
 // Size of the map data structures in bytes in the arrived WAD format.
 #define SIZEOF_64VERTEX         (4 * 2)
 #define SIZEOF_VERTEX           (2 * 2)

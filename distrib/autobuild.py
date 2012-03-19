@@ -21,6 +21,11 @@ from builder.git import *
 from builder.utils import * 
     
     
+def pull_from_branch():
+    """Pulls commits from the repository."""
+    git_pull()
+    
+    
 def create_build_event():
     """Creates and tags a new build for with today's number."""
     print 'Creating a new build event.'
@@ -32,18 +37,18 @@ def create_build_event():
     # Tag the source with the build identifier.
     git_tag(todaysBuild)
     
-    prevBuild = builder.find_newest_event()['tag']
-    print 'The previous build is:', prevBuild
+    #prevBuild = builder.find_newest_event()['tag']
+    #print 'The previous build is:', prevBuild
     
-    if prevBuild == todaysBuild:
-        prevBuild = ''
+    #if prevBuild == todaysBuild:
+    #    prevBuild = ''
     
     # Prepare the build directory.
     ev = builder.Event(todaysBuild)
     ev.clean()
 
-    if prevBuild:
-        update_changes(prevBuild, todaysBuild)
+    #if prevBuild:
+    update_changes()
     
 
 def todays_platform_release():
@@ -84,28 +89,55 @@ def todays_platform_release():
         remote_copy('dsfmod/fmod-out-%s.txt' % sys_id(), ev.file_path('fmod-out-%s.txt' % sys_id()))
         remote_copy('dsfmod/fmod-err-%s.txt' % sys_id(), ev.file_path('fmod-err-%s.txt' % sys_id()))
                                              
-    git_checkout('master')
+    git_checkout(builder.config.BRANCH)
 
 
-def update_changes(fromTag=None, toTag=None, debChanges=False):
+def find_previous_tag(toTag, version):
+    builds = builder.events_by_time()
+    #print [(e[1].number(), e[1].timestamp()) for e in builds]
+    i = 0
+    while i < len(builds):
+        ev = builds[i][1]
+        print ev.tag(), ev.version(), ev.timestamp()
+        if ev.tag() != toTag and (ev.version() is None or version is None or
+                                  ev.version().startswith(version)):
+            # This is good.
+            return ev.tag()
+        i += 1
+    # Nothing suitable found. Fall back to a more lax search.
+    return find_previous_tag(toTag, None)
+
+
+def update_changes(debChanges=False):
     """Generates the list of commits for the latest build."""
+
+    git_pull()
+    toTag = todays_build_tag()
+
+    import build_version
+    build_version.find_version(quiet=True)
+
+    # Let's find the previous event of this version.
+    fromTag = find_previous_tag(toTag, build_version.DOOMSDAY_VERSION_FULL_PLAIN)
     
-    if debChanges:
-        # Make sure we have the latest changes.
-        git_pull()
-        fromTag = aptrepo_find_latest_tag()
-        toTag = 'master' # Everything up to now.
-    else:
-        # Use the two most recent builds by default.
-        if fromTag is None or toTag is None:
-            builds = builder.events_by_time()
-            if len(builds) < 2: return
-            fromTag = builds[1][1].tag()
-            toTag = builds[0][1].tag()
+    #if debChanges:
+    #    # Make sure we have the latest changes.
+    #    git_pull()
+    #    fromTag = aptrepo_find_latest_tag(build_version.DOOMSDAY_VERSION_FULL_PLAIN)
+    #    toTag = builder.config.BRANCH # Everything up to now.
+    #else:
+    #    # Use the two most recent builds by default.
+    #    if fromTag is None or toTag is None:
+    #        fromTag, toTag = find_latest_tags(build_version.DOOMSDAY_VERSION_FULL_PLAIN)
+
+    if fromTag is None or toTag is None:
+        # Range not defined.
+        return
+
+    print 'Changes for range', fromTag, '..', toTag
 
     changes = builder.Changes(fromTag, toTag)
 
-    import build_version
     if debChanges:
         # Only update the Debian changelog.
         changes.generate('deb')
@@ -117,10 +149,11 @@ def update_changes(fromTag=None, toTag=None, debChanges=False):
         debVer = "%s.%s.%s-%s" % (fmodVer[0], fmodVer[1], fmodVer[2], todays_build_tag())
         print "Marking new FMOD version:", debVer
         msg = 'New release: Doomsday Engine build %i.' % builder.Event().number()
-        os.system('dch --check-dirname-level 0 -v %s "%s"' % (debVer, msg))
+        os.system('dch --check-dirname-level 0 -v %s -b "%s"' % (debVer, msg))
     else:
-        # Save the release type.
-        build_version.find_version(quiet=True)
+        # Save version information.
+        print >> file(builder.Event(toTag).file_path('version.txt'), 'wt'), \
+            build_version.DOOMSDAY_VERSION_FULL        
         print >> file(builder.Event(toTag).file_path('releaseType.txt'), 'wt'), \
             build_version.DOOMSDAY_RELEASE_TYPE
         
@@ -131,7 +164,7 @@ def update_changes(fromTag=None, toTag=None, debChanges=False):
 def update_debian_changelog():
     """Updates the Debian changelog at (distrib)/debian/changelog."""
     # Update debian changelog.
-    update_changes(None, None, True)
+    update_changes(debChanges=True)
            
 
 def rebuild_apt_repository():
@@ -375,6 +408,7 @@ def sorted_commands():
 
 
 commands = {
+    'pull': pull_from_branch,
     'create': create_build_event,
     'platform_release': todays_platform_release,
     'changes': update_changes,
@@ -396,6 +430,7 @@ if __name__ == '__main__':
         print 'The arguments must be: (command) [args]'
         print 'Commands:', string.join(sorted_commands())
         print 'Arguments:'
+        print '--branch   Branch to use (default: master)'
         print '--distrib  Doomsday distrib directory'
         print '--events   Event directory (builds are stored here in subdirs)'
         print '--apt      Apt repository'

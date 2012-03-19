@@ -24,7 +24,10 @@
 
 includeGuard('PluginPackage');
 
-require_once('abstractpackage.class.php');
+require_once('abstractbuilderpackage.class.php');
 
 class PluginPackage extends AbstractPackage
+{}
+
+class PluginBuilderPackage extends AbstractBuilderPackage
 {}

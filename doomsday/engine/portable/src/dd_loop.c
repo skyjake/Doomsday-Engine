@@ -486,6 +486,8 @@ void DD_WaitForOptimalUpdateTime(void)
     // accuracy, so we can't use fractions of a millisecond.
     const uint optimalDelta = (maxFrameRate > 0? 1000/maxFrameRate : 1);
 
+    if(Sys_IsShuttingDown()) return; // No need for finesse.
+
     // This is when we would ideally like to make the update.
     targetUpdateTime = prevUpdateTime + optimalDelta;
 

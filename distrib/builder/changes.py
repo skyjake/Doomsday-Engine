@@ -14,6 +14,7 @@ def encodedText(logText):
     logText = logText.encode('utf-8')
     logText = logText.replace('<', '&lt;')
     logText = logText.replace('>', '&gt;')
+    logText = filter(lambda c: c in string.whitespace or c > ' ', logText)
     return logText
 
 
@@ -74,8 +75,8 @@ class Changes:
         self.parse()
         
     def should_ignore(self, subject):
-        if subject.startswith("Merge branch 'master' of"):
-            # master->master merges are not listed.
+        if subject.startswith("Merge branch '%s' of" % config.BRANCH):
+            # Same-branch merges are not listed.
             return True
         return False
         
@@ -144,7 +145,7 @@ class Changes:
                 
     def all_tags(self):
         # These words are always considered to be valid tags.
-        tags = ['Cleanup', 'Fixed', 'Added', 'Refactor', 'Performance', 'Optimize', 'merge branch']
+        tags = ['Cleanup', 'Fixed', 'Added', 'Refactor', 'Performance', 'Optimize', 'Merge branch']
         for e in self.entries:
             for t in e.tags + e.guessedTags:
                 if t not in tags: 
@@ -269,13 +270,16 @@ class Changes:
             os.chdir(os.path.join(config.DISTRIB_DIR, 'linux'))
 
             # First we need to update the version.
-            debVersion = build_version.DOOMSDAY_VERSION_FULL_PLAIN + '-' + Event().tag()
+            if build_version.DOOMSDAY_RELEASE_TYPE == 'Stable':
+                debVersion = build_version.DOOMSDAY_VERSION_FULL
+            else:
+                debVersion = build_version.DOOMSDAY_VERSION_FULL + '-' + Event().tag()
 
             # Always make one entry.
             print 'Marking new version...'
             msg = 'New release: %s build %i.' % (build_version.DOOMSDAY_RELEASE_TYPE,
                                                  Event().number())
-            os.system("dch --check-dirname-level 0 -v %s \"%s\"" % (debVersion, msg))       
+            os.system("dch -b --check-dirname-level 0 -v %s \"%s\"" % (debVersion, msg))       
 
             for entry in self.debChangeEntries:
                 # Quote it for the command line.
