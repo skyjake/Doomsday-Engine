@@ -31,27 +31,43 @@
 #include "de_platform.h"
 
 struct kdtree_s;
+struct kdtreenode_s;
 
 typedef struct kdtree_s KdTree;
+typedef struct kdtreenode_s KdTreeNode;
 
+/**
+ * Constructs a new KdTree. The kd-tree must be destroyed with KdTree_Delete()
+ * when no longer needed.
+ */
 KdTree* KdTree_New(const AABox* bounds);
-KdTree* KdTree_NewWithUserData(const AABox* bounds, void* userData);
 
+/**
+ * Destroys the KdTree.
+ *
+ * @param kdTree  KdTree instance.
+ */
 void KdTree_Delete(KdTree* kdTree);
 
-const AABox* KdTree_Bounds(KdTree* kdTree);
+struct kdtreenode_s* KdTree_Root(KdTree* kdTree);
 
-void* KdTree_UserData(KdTree* kdTree);
-KdTree* KdTree_SetUserData(KdTree* kdTree, void* userData);
+int KdTree_PostTraverse2(KdTree* kdTree, int(*callback)(KdTreeNode*, void*), void* parameters);
+int KdTree_PostTraverse(KdTree* kdTree, int(*callback)(KdTreeNode*, void*)/*, parameters=NULL*/);
 
-KdTree* KdTree_Child(KdTree* kdTree, int left);
+KdTree* KdTreeNode_KdTree(KdTreeNode* kdTreeNode);
 
-KdTree* KdTree_AddChild(KdTree* kdTree, const AABox* bounds, int left, void* userData);
+const AABox* KdTreeNode_Bounds(KdTreeNode* kdTreeNode);
 
-int KdTree_Traverse2(KdTree* kdTree, int (*callback)(KdTree*, void*), void* parameters);
-int KdTree_Traverse(KdTree* kdTree, int (*callback)(KdTree*, void*), void* parameters);
+void* KdTreeNode_UserData(KdTreeNode* kdTreeNode);
+KdTreeNode* KdTreeNode_SetUserData(KdTreeNode* kdTreeNode, void* userData);
 
-int KdTree_PostTraverse2(KdTree* kdTree, int(*callback)(KdTree*, void*), void* parameters);
-int KdTree_PostTraverse(KdTree* kdTree, int(*callback)(KdTree*, void*)/*, parameters=NULL*/);
+KdTreeNode* KdTreeNode_Parent(KdTreeNode* kdTreeNode);
+
+KdTreeNode* KdTreeNode_Child(KdTreeNode* kdTreeNode, int left);
+
+KdTreeNode* KdTreeNode_AddChild(KdTreeNode* kdTreeNode, const AABox* bounds, int left, void* userData);
+
+int KdTreeNode_Traverse2(KdTreeNode* kdTreeNode, int (*callback)(KdTreeNode*, void*), void* parameters);
+int KdTreeNode_Traverse(KdTreeNode* kdTreeNode, int (*callback)(KdTreeNode*, void*), void* parameters);
 
 #endif /// LIBDENG_KDTREE

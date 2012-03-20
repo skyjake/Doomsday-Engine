@@ -41,7 +41,7 @@ struct superblock_s {
     struct superblockmap_s* blockmap;
 
     /// KdTree node in the owning SuperBlockmap.
-    KdTree* tree;
+    KdTreeNode* tree;
 
     /// Number of real half-edges and minihedges contained by this block
     /// (including all sub-blocks below it).
@@ -70,28 +70,41 @@ static void SuperBlock_Delete(SuperBlock* superblock);
  * Division of a block always occurs horizontally, e.g. 512x512 -> 256x512 -> 256x256.
  */
 struct superblockmap_s {
-    SuperBlock* root;
+    KdTree* kdTree;
 };
 
 SuperBlockmap* SuperBlockmap_New(const AABox* bounds)
 {
     SuperBlockmap* bmap = malloc(sizeof *bmap);
+    SuperBlock* block;
     if(!bmap) Con_Error("SuperBlockmap_New: Failed on allocation of %lu bytes for new SuperBlockmap.", (unsigned long) sizeof *bmap);
-    bmap->root = SuperBlock_New(bmap, bounds);
+    bmap->kdTree = KdTree_New(bounds);
+
+    block = SuperBlock_New(bmap, bounds);
+    block->tree = KdTreeNode_SetUserData(KdTree_Root(bmap->kdTree), block);
+
     return bmap;
+}
+
+static int deleteSuperBlock(SuperBlock* block, void* parameters)
+{
+    KdTreeNode_SetUserData(block->tree, NULL);
+    SuperBlock_Delete(block);
+    return false; // Continue iteration.
 }
 
 void SuperBlockmap_Delete(SuperBlockmap* bmap)
 {
     assert(bmap);
-    SuperBlock_Delete(bmap->root);
+    SuperBlockmap_PostTraverse(bmap, deleteSuperBlock);
+    KdTree_Delete(bmap->kdTree);
     free(bmap);
 }
 
 SuperBlock* SuperBlockmap_Root(SuperBlockmap* bmap)
 {
     assert(bmap);
-    return bmap->root;
+    return KdTreeNode_UserData(KdTree_Root(bmap->kdTree));
 }
 
 static __inline boolean isLeaf(SuperBlockmap* blockmap, SuperBlock* sb)
@@ -115,27 +128,16 @@ SuperBlock* SuperBlock_New(SuperBlockmap* blockmap, const AABox* bounds)
     SuperBlock* sb = malloc(sizeof *sb);
     if(!sb) Con_Error("SuperBlock_New: Failed on allocation of %lu bytes for new SuperBlock.", (unsigned long) sizeof *sb);
     sb->blockmap = blockmap;
-    sb->tree = KdTree_NewWithUserData(bounds, sb);
     sb->realNum = 0;
     sb->miniNum = 0;
     sb->hEdges = NULL;
     return sb;
 }
 
-static int deleteSuperBlock(SuperBlock* sb, void* parameters)
-{
-    M_Free(sb);
-    return false; // Continue iteration.
-}
-
 void SuperBlock_Delete(SuperBlock* sb)
 {
-    KdTree* tree;
     assert(sb);
-
-    tree = sb->tree;
-    SuperBlock_PostTraverse(sb, deleteSuperBlock);
-    KdTree_Delete(tree);
+    free(sb);
 }
 
 SuperBlockmap* SuperBlock_Blockmap(SuperBlock* sb)
@@ -147,7 +149,7 @@ SuperBlockmap* SuperBlock_Blockmap(SuperBlock* sb)
 const AABox* SuperBlock_Bounds(SuperBlock* sb)
 {
     assert(sb);
-    return KdTree_Bounds(sb->tree);
+    return KdTreeNode_Bounds(sb->tree);
 }
 
 uint SuperBlock_HEdgeCount(SuperBlock* sb, boolean addReal, boolean addMini)
@@ -217,7 +219,7 @@ void SuperBlock_HEdgePush(SuperBlock* sb, bsp_hedge_t* hEdge)
 
         // The hedge lies in one half of this block. Create the sub-block
         // if it doesn't already exist, and loop back to add the hedge.
-        if(!KdTree_Child(sb->tree, half))
+        if(!KdTreeNode_Child(sb->tree, half))
         {
             SuperBlock* child;
             AABox sub;
@@ -241,10 +243,10 @@ void SuperBlock_HEdgePush(SuperBlock* sb, bsp_hedge_t* hEdge)
             }
 
             child = SuperBlock_New(SuperBlock_Blockmap(sb), &sub);
-            child->tree = KdTree_AddChild(sb->tree, &sub, half, child);
+            child->tree = KdTreeNode_AddChild(sb->tree, &sub, half, child);
         }
 
-        sb = KdTree_UserData(KdTree_Child(sb->tree, half));
+        sb = (SuperBlock*)KdTreeNode_UserData(KdTreeNode_Child(sb->tree, half));
     }
 }
 
@@ -292,11 +294,11 @@ int SuperBlock_IterateHEdges(SuperBlock* sp, int (*callback)(bsp_hedge_t*, void*
 
 SuperBlock* SuperBlock_Child(SuperBlock* sb, int left)
 {
-    KdTree* child;
+    KdTreeNode* child;
     assert(sb);
-    child = KdTree_Child(sb->tree, left);
+    child = KdTreeNode_Child(sb->tree, left);
     if(!child) return NULL;
-    return (SuperBlock*)KdTree_UserData(child);
+    return (SuperBlock*)KdTreeNode_UserData(child);
 }
 
 typedef struct {
@@ -304,10 +306,10 @@ typedef struct {
     void* parameters;
 } treetraverserparams_t;
 
-static int SuperBlock_TreeTraverser(KdTree* kd, void* parameters)
+static int SuperBlock_TreeTraverser(KdTreeNode* kd, void* parameters)
 {
     treetraverserparams_t* p = (treetraverserparams_t*)parameters;
-    return p->callback(KdTree_UserData(kd), p->parameters);
+    return p->callback(KdTreeNode_UserData(kd), p->parameters);
 }
 
 int SuperBlock_Traverse2(SuperBlock* sb, int (*callback)(SuperBlock*, void*),
@@ -319,7 +321,7 @@ int SuperBlock_Traverse2(SuperBlock* sb, int (*callback)(SuperBlock*, void*),
 
     parm.callback = callback;
     parm.parameters = parameters;
-    return KdTree_Traverse2(sb->tree, SuperBlock_TreeTraverser, (void*)&parm);
+    return KdTreeNode_Traverse2(sb->tree, SuperBlock_TreeTraverser, (void*)&parm);
 }
 
 int SuperBlock_Traverse(SuperBlock* sb, int (*callback)(SuperBlock*, void*))
@@ -327,21 +329,21 @@ int SuperBlock_Traverse(SuperBlock* sb, int (*callback)(SuperBlock*, void*))
     return SuperBlock_Traverse2(sb, callback, NULL/*no parameters*/);
 }
 
-int SuperBlock_PostTraverse2(SuperBlock* sb, int(*callback)(SuperBlock*, void*),
+int SuperBlockmap_PostTraverse2(SuperBlockmap* sbmap, int(*callback)(SuperBlock*, void*),
     void* parameters)
 {
     treetraverserparams_t parm;
-    assert(sb);
+    assert(sbmap);
     if(!callback) return false; // Continue iteration.
 
     parm.callback = callback;
     parm.parameters = parameters;
-    return KdTree_PostTraverse2(sb->tree, SuperBlock_TreeTraverser, (void*)&parm);
+    return KdTree_PostTraverse2(sbmap->kdTree, SuperBlock_TreeTraverser, (void*)&parm);
 }
 
-int SuperBlock_PostTraverse(SuperBlock* sb, int(*callback)(SuperBlock*, void*))
+int SuperBlockmap_PostTraverse(SuperBlockmap* sbmap, int(*callback)(SuperBlock*, void*))
 {
-    return SuperBlock_PostTraverse2(sb, callback, NULL/*no parameters*/);
+    return SuperBlockmap_PostTraverse2(sbmap, callback, NULL/*no parameters*/);
 }
 
 static void initAABoxFromHEdgeVertexes(AABoxf* aaBox, const bsp_hedge_t* hEdge)
@@ -389,7 +391,7 @@ void SuperBlockmap_FindHEdgeBounds(SuperBlockmap* sbmap, AABoxf* aaBox)
     assert(sbmap && aaBox);
 
     parm.initialized = false;
-    SuperBlock_Traverse2(sbmap->root, findHEdgeListBoundsWorker, (void*)&parm);
+    SuperBlock_Traverse2(SuperBlockmap_Root(sbmap), findHEdgeListBoundsWorker, (void*)&parm);
     if(parm.initialized)
     {
         V2_CopyBox(aaBox->arvec2, parm.bounds.arvec2);

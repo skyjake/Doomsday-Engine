@@ -47,35 +47,38 @@ typedef struct superblockmap_s SuperBlockmap;
 typedef struct superblock_s SuperBlock;
 
 /**
- * Constructs a new superblockmap. The superblockmap must be destroyed with
+ * Constructs a new superBlockmap. The superBlockmap must be destroyed with
  * SuperBlockmap_Delete() when no longer needed.
  */
 SuperBlockmap* SuperBlockmap_New(const AABox* bounds);
 
 /**
- * Destroys the superblockmap.
+ * Destroys the superBlockmap.
  *
- * @param superblockmap  SuperBlockmap instance.
+ * @param superBlockmap  SuperBlockmap instance.
  */
-void SuperBlockmap_Delete(SuperBlockmap* superblockmap);
+void SuperBlockmap_Delete(SuperBlockmap* superBlockmap);
 
 /**
  * Retrieve the root SuperBlock in this SuperBlockmap.
  *
- * @param superblockmap  SuperBlockmap instance.
+ * @param superBlockmap  SuperBlockmap instance.
  * @return  Root SuperBlock instance.
  */
-SuperBlock* SuperBlockmap_Root(SuperBlockmap* superblockmap);
+SuperBlock* SuperBlockmap_Root(SuperBlockmap* superBlockmap);
 
 /**
  * Find the axis-aligned bounding box defined by the vertices of all
  * HEdges within this superblock. If no HEdges are linked then @a bounds
  * will be set to the "cleared" state (i.e., min[x,y] > max[x,y]).
  *
- * @param superblockmap SuperBlock instance.
+ * @param superBlockmap SuperBlock instance.
  * @param bounds        Determined bounds are written here.
  */
-void SuperBlockmap_FindHEdgeBounds(SuperBlockmap* superblockmap, AABoxf* bounds);
+void SuperBlockmap_FindHEdgeBounds(SuperBlockmap* superBlockmap, AABoxf* bounds);
+
+int SuperBlockmap_PostTraverse2(SuperBlockmap* superBlockmap, int(*callback)(SuperBlock*, void*), void* parameters);
+int SuperBlockmap_PostTraverse(SuperBlockmap* superBlockmap, int(*callback)(SuperBlock*, void*)/*, parameters = NULL*/);
 
 /**
  * Retrieve the SuperBlockmap which owns this block.
@@ -155,8 +158,5 @@ SuperBlock* SuperBlock_Child(SuperBlock* superblock, int left);
 
 int SuperBlock_Traverse2(SuperBlock* superblock, int (*callback)(SuperBlock*, void*), void* parameters);
 int SuperBlock_Traverse(SuperBlock* superblock, int (*callback)(SuperBlock*, void*)/*, parameters=NULL*/);
-
-int SuperBlock_PostTraverse2(SuperBlock* sb, int(*callback)(SuperBlock*, void*), void* parameters);
-int SuperBlock_PostTraverse(SuperBlock* sb, int(*callback)(SuperBlock*, void*)/*, parameters = NULL*/);
 
 #endif /// LIBDENG_MAP_BSP_SUPERBLOCK

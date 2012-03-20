@@ -32,12 +32,15 @@
 #include "de_console.h"
 #include "kdtree.h"
 
-struct kdtree_s {
+struct kdtreenode_s {
+    /// KdTree instance which owns this tree node.
+    struct kdtree_s* kdTree;
+
     /// Parent of this (sub)tree else @c NULL.
-    struct kdtree_s* parent;
+    struct kdtreenode_s* parent;
 
     /// Subtree of this (sub)tree else @c NULL.
-    struct kdtree_s* subs[2];
+    struct kdtreenode_s* subs[2];
 
     /// Coordinates for this subtree, from lower-left to upper-right corner.
     /// Pseudo-inclusive, i.e (x,y) is inside block if and only if:
@@ -48,127 +51,185 @@ struct kdtree_s {
     void* userData;
 };
 
-KdTree* KdTree_NewWithUserData(const AABox* bounds, void* userData)
-{
-    KdTree* kd = calloc(1, sizeof *kd);
-    if(!kd) Con_Error("KdTree_New: Failed on allocation of %lu bytes for new KdTree.", sizeof *kd);
-    memcpy(&kd->aaBox, bounds, sizeof(kd->aaBox));
-    kd->userData = userData;
-    return kd;
-}
+static KdTreeNode* KdTreeNode_New(KdTree* kdTree, const AABox* bounds);
+static KdTreeNode* KdTreeNode_NewWithUserData(KdTree* kdTree, const AABox* bounds, void* userData);
+
+static void KdTreeNode_Delete(KdTreeNode* kdTreeNode);
+
+static int KdTreeNode_PostTraverse2(KdTreeNode* kdn, int(*callback)(KdTreeNode*, void*), void* parameters);
+static int KdTreeNode_PostTraverse(KdTreeNode* kdn, int(*callback)(KdTreeNode*, void*)/*, parameters=NULL*/);
+
+struct kdtree_s {
+    KdTreeNode* root;
+};
 
 KdTree* KdTree_New(const AABox* bounds)
 {
-    return KdTree_NewWithUserData(bounds, NULL/*no user data*/);
+    KdTree* kd = malloc(sizeof *kd);
+    if(!kd) Con_Error("KdTree_New: Failed on allocation of %lu bytes for new KdTree.", (unsigned long) sizeof *kd);
+    kd->root = KdTreeNode_New(kd, bounds);
+    return kd;
 }
 
-static int deleteKdTree(KdTree* kd, void* parameters)
+static int deleteKdTreeNode(KdTreeNode* kdn, void* parameters)
 {
-    free(kd);
+    KdTreeNode_Delete(kdn);
     return false; // Continue iteration.
 }
 
 void KdTree_Delete(KdTree* kd)
 {
-    KdTree_PostTraverse(kd, deleteKdTree);
+    assert(kd);
+    KdTree_PostTraverse(kd, deleteKdTreeNode);
+    free(kd);
 }
 
-const AABox* KdTree_Bounds(KdTree* kd)
+KdTreeNode* KdTree_Root(KdTree* kd)
 {
     assert(kd);
-    return &kd->aaBox;
+    return kd->root;
 }
 
-void* KdTree_UserData(KdTree* kd)
+int KdTree_PostTraverse2(KdTree* kd, int(*callback)(KdTreeNode*, void*),
+    void* parameters)
 {
-    assert(kd);
-    return kd->userData;
+    return KdTreeNode_PostTraverse2(kd->root, callback, parameters);
 }
 
-KdTree* KdTree_SetUserData(KdTree* kd, void* userData)
+int KdTree_PostTraverse(KdTree* kd, int(*callback)(KdTreeNode*, void*))
 {
-    assert(kd);
-    kd->userData = userData;
-    return kd;
+    return KdTree_PostTraverse2(kd, callback, NULL/*no parameters*/);
 }
 
-KdTree* KdTree_Child(KdTree* kd, int left)
+static KdTreeNode* KdTreeNode_NewWithUserData(KdTree* kdTree, const AABox* bounds, void* userData)
 {
-    assert(kd);
-    return kd->subs[left?1:0];
+    KdTreeNode* kdn = calloc(1, sizeof *kdn);
+    if(!kdn) Con_Error("KdTreeNode_New: Failed on allocation of %lu bytes for new KdTreeNode.", sizeof *kdn);
+    kdn->kdTree = kdTree;
+    memcpy(&kdn->aaBox, bounds, sizeof(kdn->aaBox));
+    kdn->userData = userData;
+    return kdn;
 }
 
-KdTree* KdTree_AddChild(KdTree* kd, const AABox* bounds, int left, void* userData)
+static KdTreeNode* KdTreeNode_New(KdTree* kdTree, const AABox* bounds)
 {
-    KdTree* child;
-    assert(kd);
+    return KdTreeNode_NewWithUserData(kdTree, bounds, NULL/*no user data*/);
+}
 
-    child = kd->subs[left?1:0];
+static void KdTreeNode_Delete(KdTreeNode* kdn)
+{
+    assert(kdn);
+    free(kdn);
+}
+
+KdTree* KdTreeNode_KdTree(KdTreeNode* kdn)
+{
+    assert(kdn);
+    return kdn->kdTree;
+}
+
+const AABox* KdTreeNode_Bounds(KdTreeNode* kdn)
+{
+    assert(kdn);
+    return &kdn->aaBox;
+}
+
+void* KdTreeNode_UserData(KdTreeNode* kdn)
+{
+    assert(kdn);
+    return kdn->userData;
+}
+
+KdTreeNode* KdTreeNode_SetUserData(KdTreeNode* kdn, void* userData)
+{
+    assert(kdn);
+    kdn->userData = userData;
+    return kdn;
+}
+
+KdTreeNode* KdTreeNode_Parent(KdTreeNode* kdn)
+{
+    assert(kdn);
+    return kdn->parent;
+}
+
+KdTreeNode* KdTreeNode_Child(KdTreeNode* kdn, int left)
+{
+    assert(kdn);
+    return kdn->subs[left?1:0];
+}
+
+KdTreeNode* KdTreeNode_AddChild(KdTreeNode* kdn, const AABox* bounds, int left, void* userData)
+{
+    KdTreeNode* child;
+    assert(kdn);
+
+    child = kdn->subs[left?1:0];
     if(!child)
     {
-        child = kd->subs[left?1:0] = KdTree_New(bounds);
-        child->parent = kd;
+        child = kdn->subs[left?1:0] = KdTreeNode_New(kdn->kdTree, bounds);
+        child->parent = kdn;
     }
 
     child->userData = userData;
     return child;
 }
 
-int KdTree_Traverse2(KdTree* kd, int (*callback)(KdTree*, void*),
+int KdTreeNode_Traverse2(KdTreeNode* kdn, int (*callback)(KdTreeNode*, void*),
     void* parameters)
 {
     int num, result;
-    assert(kd);
+    assert(kdn);
 
     if(!callback) return false; // Continue iteration.
 
-    result = callback(kd, parameters);
+    result = callback(kdn, parameters);
     if(result) return result;
 
     // Recursively handle subtrees.
     for(num = 0; num < 2; ++num)
     {
-        KdTree* child = kd->subs[num];
+        KdTreeNode* child = kdn->subs[num];
         if(!child) continue;
 
-        result = KdTree_Traverse2(child, callback, parameters);
+        result = KdTreeNode_Traverse2(child, callback, parameters);
         if(result) return result;
     }
 
     return false; // Continue iteration.
 }
 
-int KdTree_Traverse(KdTree* kd, int (*callback)(KdTree*, void*),
+int KdTreeNode_Traverse(KdTreeNode* kdn, int (*callback)(KdTreeNode*, void*),
     void* parameters)
 {
-    return KdTree_Traverse2(kd, callback, NULL/*no parameters*/);
+    return KdTreeNode_Traverse2(kdn, callback, NULL/*no parameters*/);
 }
 
-int KdTree_PostTraverse2(KdTree* kd, int(*callback)(KdTree*, void*),
+static int KdTreeNode_PostTraverse2(KdTreeNode* kdn, int(*callback)(KdTreeNode*, void*),
     void* parameters)
 {
     int num, result;
-    assert(kd);
+    assert(kdn);
 
     if(!callback) return false; // Continue iteration.
 
     // Recursively handle sub-blocks.
     for(num = 0; num < 2; ++num)
     {
-        KdTree* child = kd->subs[num];
+        KdTreeNode* child = kdn->subs[num];
         if(!child) continue;
 
-        result = KdTree_PostTraverse2(child, callback, parameters);
+        result = KdTreeNode_PostTraverse2(child, callback, parameters);
         if(result) return result;
     }
 
-    result = callback(kd, parameters);
+    result = callback(kdn, parameters);
     if(result) return result;
 
     return false; // Continue iteration.
 }
 
-int KdTree_PostTraverse(KdTree* kd, int(*callback)(KdTree*, void*))
+static int KdTreeNode_PostTraverse(KdTreeNode* kdn, int(*callback)(KdTreeNode*, void*))
 {
-    return KdTree_PostTraverse2(kd, callback, NULL/*no parameters*/);
+    return KdTreeNode_PostTraverse2(kdn, callback, NULL/*no parameters*/);
 }
