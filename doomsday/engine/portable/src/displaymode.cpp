@@ -33,6 +33,29 @@
 
 static bool inited = false;
 
+#if 0
+static bool tryDivide(int& ratioX, int& ratioY, int div)
+{
+    int dx = ratioX / div;
+    if(dx * div != ratioX) return false;
+    int dy = ratioY / div;
+    if(dy * div != ratioY) return false;
+    ratioX = dx;
+    ratioY = dy;
+    return true;
+}
+
+static bool reduce(int& ratioX, int& ratioY)
+{
+    for(int div = 2; div <= qMin(ratioX, ratioY); div++)
+    {
+        if(tryDivide(ratioX, ratioY, div))
+            return true;
+    }
+    return false;
+}
+#endif
+
 struct Mode : public DisplayMode
 {
     Mode()
@@ -92,24 +115,37 @@ struct Mode : public DisplayMode
         ratioX = width;
         ratioY = height;
 
-        // Reduce until we must resort to fractions.
-        forever
+        float fx;
+        float fy;
+        if(width > height)
         {
-            bool divved = false;
-            for(int div = 2; div <= qMin(ratioX, ratioY); div++)
-            {
-                int dx = ratioX / div;
-                if(dx * div != ratioX) continue;
-                int dy = ratioY / div;
-                if(dy * div != ratioY) continue;
-                divved = true;
-                ratioX = dx;
-                ratioY = dy;
-                break;
-            }
-            if(!divved) break;
+            fx = width/float(height);
+            fy = 1.f;
+        }
+        else
+        {
+            fx = 1.f;
+            fy = height/float(width);
         }
 
+        // Multiply until we arrive at a close enough integer ratio.
+        for(int mul = 2; mul < qMin(width, height); ++mul)
+        {
+            float rx = fx*mul;
+            float ry = fy*mul;
+            if(qAbs(rx - qRound(rx)) < .01f && qAbs(ry - qRound(ry)) < .01f)
+            {
+                // This seems good.
+                ratioX = qRound(rx);
+                ratioY = qRound(ry);
+                break;
+            }
+        }
+#if 0
+        // Reduce until we must resort to fractions.
+        while(reduce(ratioX, ratioY)) {}
+
+#endif
         if(ratioX == 8 && ratioY == 5)
         {
             // This is commonly referred to as 16:10.
