@@ -84,6 +84,8 @@ typedef unsigned short gramp_t[3 * 256];
 D_CMD(Fog);
 D_CMD(SetBPP);
 D_CMD(SetRes);
+D_CMD(SetFullRes);
+D_CMD(SetWinRes);
 D_CMD(ToggleFullscreen);
 D_CMD(DisplayModeInfo);
 D_CMD(ListDisplayModes);
@@ -154,6 +156,8 @@ void GL_Register(void)
     C_CMD_FLAGS("setcolordepth", "i", SetBPP, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("setbpp", "i", SetBPP, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("setres", "ii", SetRes, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("setfullres", "ii", SetFullRes, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("setwinres", "ii", SetWinRes, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("setvidramp", "", UpdateGammaRamp, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("togglefullscreen", "", ToggleFullscreen, CMDF_NO_DEDICATED);
 
@@ -1290,6 +1294,28 @@ D_CMD(SetRes)
     int attribs[] = {
         DDWA_WIDTH, atoi(argv[1]),
         DDWA_HEIGHT, atoi(argv[2]),
+        DDWA_END
+    };
+    return Window_ChangeAttributes(Window_Main(), attribs);
+}
+
+D_CMD(SetFullRes)
+{
+    int attribs[] = {
+        DDWA_WIDTH, atoi(argv[1]),
+        DDWA_HEIGHT, atoi(argv[2]),
+        DDWA_FULLSCREEN, true,
+        DDWA_END
+    };
+    return Window_ChangeAttributes(Window_Main(), attribs);
+}
+
+D_CMD(SetWinRes)
+{
+    int attribs[] = {
+        DDWA_WIDTH, atoi(argv[1]),
+        DDWA_HEIGHT, atoi(argv[2]),
+        DDWA_FULLSCREEN, false,
         DDWA_END
     };
     return Window_ChangeAttributes(Window_Main(), attribs);
