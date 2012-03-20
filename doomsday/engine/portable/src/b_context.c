@@ -348,11 +348,7 @@ void B_ActivateContext(bcontext_t* bc, boolean doActivate)
 
     if(bc->flags & BCF_ACQUIRE_ALL)
     {
-        int i;
-        for(i = 0; i < NUM_INPUT_DEVICES; ++i)
-        {
-            I_DeviceReset(i);
-        }
+        I_ResetAllDevices();
     }
 }
 

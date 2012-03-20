@@ -278,8 +278,7 @@ void Canvas::focusOutEvent(QFocusEvent*)
 void Canvas::keyPressEvent(QKeyEvent *ev)
 {
     ev->accept();
-
-    if(ev->isAutoRepeat()) return; // Ignore repeats, we do our own (should we really?).
+    if(ev->isAutoRepeat()) return; // Ignore repeats, we do our own.
 
     qDebug() << "Canvas: key press" << ev->key() << QString("0x%1").arg(ev->key(), 0, 16)
              << "text:" << ev->text() << "native:" << ev->nativeVirtualKey();
@@ -295,6 +294,7 @@ void Canvas::keyPressEvent(QKeyEvent *ev)
 void Canvas::keyReleaseEvent(QKeyEvent *ev)
 {
     ev->accept();
+    if(ev->isAutoRepeat()) return; // Ignore repeats, we do our own.
 
     qDebug() << "Canvas: key release" << ev->key() << "text:" << ev->text() << "native:"
                 << ev->nativeVirtualKey();

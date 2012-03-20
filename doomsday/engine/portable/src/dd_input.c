@@ -353,6 +353,25 @@ void I_DeviceReset(uint ident)
     inputdev_t*         dev = &inputDevices[ident];
     int                 k;
 
+    if(ident == IDEV_KEYBOARD)
+    {
+        altDown = shiftDown = false;
+    }
+
+    for(k = 0; k < (int)dev->numKeys; ++k)
+    {
+        if(dev->keys[k].isDown)
+        {
+            dev->keys[k].assoc.flags |= IDAF_EXPIRED;
+        }
+        else
+        {
+            dev->keys[k].isDown = false;
+            dev->keys[k].time = 0;
+            dev->keys[k].assoc.flags &= ~(IDAF_TRIGGERED | IDAF_EXPIRED);
+        }
+    }
+
     for(k = 0; k < (int)dev->numAxes; ++k)
     {
         if(dev->axes[k].type == IDAT_POINTER)
@@ -360,6 +379,15 @@ void I_DeviceReset(uint ident)
             // Clear the accumulation.
             dev->axes[k].position = 0;
         }
+    }
+}
+
+void I_ResetAllDevices(void)
+{
+    uint i;
+    for(i = 0; i < NUM_INPUT_DEVICES; ++i)
+    {
+        I_DeviceReset(i);
     }
 }
 

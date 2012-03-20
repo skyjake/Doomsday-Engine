@@ -290,6 +290,10 @@ void Window_RestoreState(Window* wnd);
 
 void* Window_NativeHandle(const Window* wnd);
 
+#ifdef _DEBUG
+void debugPrint(const char* msg);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

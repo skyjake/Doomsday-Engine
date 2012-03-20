@@ -241,10 +241,9 @@ struct ddwindow_s
             {
                 // Center the window.
                 QSize screenSize = desktopRect().size();
-                geom = QRect(desktopRect().topLeft() +
-                             QPoint((screenSize.width() - width())/2,
-                                    (screenSize.height() - height())/2),
-                             screenSize);
+                geom = QRect(desktopRect().topLeft() + QPoint((screenSize.width() - width())/2,
+                                                              (screenSize.height() - height())/2),
+                             geom.size());
             }
 
             if(flags & DDWF_MAXIMIZE)
@@ -888,7 +887,6 @@ static void drawCanvasWithCallback(Canvas& canvas)
     }
 }
 
-/*
 static void windowFocusChanged(Canvas& canvas, bool focus)
 {
     Window* wnd = canvasToWindow(canvas);
@@ -897,6 +895,13 @@ static void windowFocusChanged(Canvas& canvas, bool focus)
     qDebug() << "windowFocusChanged" << focus << "fullscreen" << Window_IsFullscreen(wnd)
              << "hidden" << wnd->widget->isHidden() << wnd->widget->isMinimized();
 
+    if(!focus)
+    {
+        DD_ClearEvents();
+        I_ResetAllDevices();
+    }
+
+#if 0
     if(Window_IsFullscreen(wnd))
     {
         if(!focus)
@@ -908,8 +913,8 @@ static void windowFocusChanged(Canvas& canvas, bool focus)
             wnd->applyDisplayMode();
         }
     }
+#endif
 }
-*/
 
 static void finishMainWindowInit(Canvas& canvas)
 {
@@ -925,7 +930,7 @@ static void finishMainWindowInit(Canvas& canvas)
     }
 #endif
 
-    //win->widget->canvas().setFocusFunc(windowFocusChanged);
+    win->widget->canvas().setFocusFunc(windowFocusChanged);
 
     DD_FinishInitializationAfterWindowReady();
 }
@@ -1261,7 +1266,7 @@ void Window_Draw(Window* win)
     //win->widget->canvas().forcePaint();
 
     /// @todo check the rend-vsync cvar
-    win->widget->canvas().repaint();
+    win->widget->canvas().update(); //repaint();
 }
 
 void Window_Show(Window *wnd, boolean show)
@@ -1397,4 +1402,9 @@ void Window_RestoreState(Window* wnd)
     wnd->setFlag(DDWF_CENTER, st.value(settingsKey(idx, "center"), true).toBool());
     wnd->setFlag(DDWF_MAXIMIZE, st.value(settingsKey(idx, "maximize"), false).toBool());
     wnd->setFlag(DDWF_FULLSCREEN, st.value(settingsKey(idx, "fullscreen"), true).toBool());
+}
+
+void debugPrint(const char* msg)
+{
+    qDebug() << msg;
 }

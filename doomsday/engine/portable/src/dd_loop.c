@@ -151,6 +151,7 @@ void DD_GameLoopCallback(void)
 
 void DD_GameLoopDrawer(void)
 {
+    //debugPrint("loop drawer");
     waitingForDraw = false;
 
     if(novideo)

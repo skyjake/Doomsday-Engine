@@ -217,6 +217,7 @@ void        I_InitVirtualInputDevices(void);
 void        I_ShutdownInputDevices(void);
 void        I_ClearDeviceContextAssociations(void);
 void        I_DeviceReset(uint ident);
+void        I_ResetAllDevices(void);
 
 inputdev_t* I_GetDevice(uint ident, boolean ifactive);
 inputdev_t* I_GetDeviceByName(const char* name, boolean ifactive);
