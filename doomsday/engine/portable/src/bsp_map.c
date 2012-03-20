@@ -93,7 +93,7 @@ static boolean hEdgeCollector(binarytree_t* tree, void* data)
         bspleafdata_t* leaf = (bspleafdata_t*) BinaryTree_GetData(tree);
         bsp_hedge_t* hEdge;
 
-        for(hEdge = leaf->hEdges; hEdge; hEdge = hEdge->next)
+        for(hEdge = leaf->hEdges; hEdge; hEdge = hEdge->nextInLeaf)
         {
             if(params->indexPtr)
             {
@@ -237,7 +237,7 @@ static void hardenBspLeafHEdgeList(GameMap* dest, BspLeaf* bspLeaf, bsp_hedge_t*
 
     hedges = Z_Malloc(sizeof(HEdge*) * (hedgeCount + 1), PU_MAPSTATIC, 0);
 
-    for(cur = list, i = 0; cur; cur = cur->next, ++i)
+    for(cur = list, i = 0; cur; cur = cur->nextInLeaf, ++i)
         hedges[i] = &dest->hedges[cur->index];
     hedges[hedgeCount] = NULL; // Terminate.
 
@@ -259,7 +259,7 @@ static void hardenLeaf(GameMap* map, BspLeaf* dest, const bspleafdata_t* src)
     do
     {
         hEdgeCount++;
-    } while((hEdge = hEdge->next) != NULL);
+    } while((hEdge = hEdge->nextInLeaf) != NULL);
 
     dest->header.type = DMU_BSPLEAF;
     dest->hedgeCount = (uint) hEdgeCount;

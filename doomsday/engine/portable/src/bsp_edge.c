@@ -155,10 +155,6 @@ bsp_hedge_t* BSP_HEdge_Split(bsp_hedge_t* oldHEdge, double x, double y)
         Con_Message("Splitting MiniHEdge %p at (%1.1f,%1.1f)\n", oldHEdge, x, y);
 #endif*/
 
-    // Update superblock, if needed.
-    if(oldHEdge->block)
-        SuperBlock_IncrementHEdgeCounts(oldHEdge->block, (oldHEdge->lineDef != NULL));
-
     /**
      * Create a new vertex (with correct wall_tip info) for the split that
      * happens along the given half-edge at the given location.
@@ -178,7 +174,6 @@ bsp_hedge_t* BSP_HEdge_Split(bsp_hedge_t* oldHEdge, double x, double y)
 
     // Copy the old half-edge info.
     memcpy(newHEdge, oldHEdge, sizeof(bsp_hedge_t));
-    newHEdge->next = NULL;
 
     newHEdge->prevOnSide = oldHEdge;
     oldHEdge->nextOnSide = newHEdge;
@@ -197,13 +192,9 @@ bsp_hedge_t* BSP_HEdge_Split(bsp_hedge_t* oldHEdge, double x, double y)
     {
         //DEBUG_Message(("Splitting hEdge->twin %p\n", oldHEdge->twin));
 
-        // Update superblock, if needed.
-        if(oldHEdge->twin->block)
-            SuperBlock_IncrementHEdgeCounts(oldHEdge->twin->block, (oldHEdge->twin != NULL));
-
         newHEdge->twin = allocHEdge();
 
-        // Copy hedge info.
+        // Copy the old hedge info.
         memcpy(newHEdge->twin, oldHEdge->twin, sizeof(bsp_hedge_t));
 
         // It is important to keep the twin relationship valid.
@@ -218,8 +209,15 @@ bsp_hedge_t* BSP_HEdge_Split(bsp_hedge_t* oldHEdge, double x, double y)
         newHEdge->twin->v[1] = newVert;
         updateHEdge(newHEdge->twin);
 
-        // Link it into list.
-        oldHEdge->twin->next = newHEdge->twin;
+        // Update superblock, if needed.
+        if(oldHEdge->twin->block)
+        {
+            SuperBlock_HEdgePush(oldHEdge->twin->block, newHEdge->twin);
+        }
+        else
+        {
+            oldHEdge->twin->nextInLeaf = newHEdge->twin;
+        }
     }
 
     return newHEdge;

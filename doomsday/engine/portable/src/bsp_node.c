@@ -70,7 +70,7 @@ static boolean getAveragedCoords(bsp_hedge_t* headPtr, double* x, double* y)
 
     avg[VX] = avg[VY] = 0;
 
-    for(cur = headPtr; cur; cur = cur->next)
+    for(cur = headPtr; cur; cur = cur->nextInLeaf)
     {
         avg[VX] += cur->v[0]->buildData.pos[VX];
         avg[VY] += cur->v[0]->buildData.pos[VY];
@@ -148,7 +148,7 @@ static void clockwiseOrder(bsp_hedge_t** headPtr, size_t num, double x, double y
     size_t i;
 
     // Insert ptrs to the hEdges into the sort buffer.
-    for(hEdge = *headPtr, i = 0; hEdge; hEdge = hEdge->next, ++i)
+    for(hEdge = *headPtr, i = 0; hEdge; hEdge = hEdge->nextInLeaf, ++i)
     {
         hEdgeSortBuf[i] = hEdge;
     }
@@ -166,7 +166,7 @@ static void clockwiseOrder(bsp_hedge_t** headPtr, size_t num, double x, double y
         size_t idx = (num - 1) - i;
         size_t j = idx % num;
 
-        hEdgeSortBuf[j]->next = *headPtr;
+        hEdgeSortBuf[j]->nextInLeaf = *headPtr;
         *headPtr = hEdgeSortBuf[j];
     }
 
@@ -190,9 +190,9 @@ static void sanityCheckClosed(const bspleafdata_t* leaf)
     int total = 0, gaps = 0;
     bsp_hedge_t* cur, *next;
 
-    for(cur = leaf->hEdges; cur; cur = cur->next)
+    for(cur = leaf->hEdges; cur; cur = cur->nextInLeaf)
     {
-        next = (cur->next? cur->next : leaf->hEdges);
+        next = (cur->nextInLeaf? cur->nextInLeaf : leaf->hEdges);
 
         if(cur->v[1]->buildData.pos[VX] != next->v[0]->buildData.pos[VX] ||
            cur->v[1]->buildData.pos[VY] != next->v[0]->buildData.pos[VY])
@@ -223,14 +223,14 @@ static void sanityCheckSameSector(const bspleafdata_t* leaf)
     bsp_hedge_t* cur, *compare;
 
     // Find a suitable half-edge for comparison.
-    for(compare = leaf->hEdges; compare; compare = compare->next)
+    for(compare = leaf->hEdges; compare; compare = compare->nextInLeaf)
     {
         if(compare->sector) break;
     }
 
     if(!compare) return;
 
-    for(cur = compare->next; cur; cur = cur->next)
+    for(cur = compare->nextInLeaf; cur; cur = cur->nextInLeaf)
     {
         if(!cur->sector) continue;
 
@@ -258,7 +258,7 @@ static boolean sanityCheckHasRealHEdge(const bspleafdata_t* leaf)
 {
     bsp_hedge_t* cur;
 
-    for(cur = leaf->hEdges; cur; cur = cur->next)
+    for(cur = leaf->hEdges; cur; cur = cur->nextInLeaf)
     {
         if(cur->lineDef)
             return true;
@@ -273,7 +273,7 @@ static void renumberLeafHEdges(bspleafdata_t* leaf, uint* curIndex)
     bsp_hedge_t* cur;
 
     n = 0;
-    for(cur = leaf->hEdges; cur; cur = cur->next)
+    for(cur = leaf->hEdges; cur; cur = cur->nextInLeaf)
     {
         cur->index = *curIndex;
         (*curIndex)++;
@@ -305,7 +305,7 @@ static boolean C_DECL clockwiseLeaf(binarytree_t* tree, void* data)
 
         // Count half-edges.
         total = 0;
-        for(hEdge = leaf->hEdges; hEdge; hEdge = hEdge->next)
+        for(hEdge = leaf->hEdges; hEdge; hEdge = hEdge->nextInLeaf)
             total++;
 
         // Ensure the sort buffer is large enough.
@@ -372,7 +372,7 @@ void BSPLeaf_Destroy(bspleafdata_t* leaf)
     cur = leaf->hEdges;
     while(cur)
     {
-        np = cur->next;
+        np = cur->nextInLeaf;
         BSP_HEdge_Destroy(cur);
         cur = np;
     }
@@ -901,8 +901,6 @@ static int partitionHEdgeWorker(SuperBlock* superblock, void* parameters)
 
     while((hEdge = SuperBlock_HEdgePop(superblock)))
     {
-        hEdge->block = NULL;
-
         BSP_DivideOneHEdge(hEdge, p->hPlane, p->rights, p->lefts);
     }
 
@@ -938,9 +936,7 @@ static int createBSPLeafWorker(SuperBlock* superblock, void* parameters)
     while((hEdge = SuperBlock_HEdgePop(superblock)))
     {
         // Link it into head of the leaf's list.
-        hEdge->next = leaf->hEdges;
-        hEdge->block = NULL;
-
+        hEdge->nextInLeaf = leaf->hEdges;
         leaf->hEdges = hEdge;
     }
 

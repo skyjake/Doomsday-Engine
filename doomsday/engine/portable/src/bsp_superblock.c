@@ -67,7 +67,7 @@ static __inline boolean isLeaf(SuperBlock* sb)
 static void linkHEdge(SuperBlock* sb, bsp_hedge_t* hEdge)
 {
     assert(sb && hEdge);
-    hEdge->next = sb->hEdges;
+    hEdge->nextInBlock = sb->hEdges;
     hEdge->block = sb;
 
     sb->hEdges = hEdge;
@@ -108,21 +108,6 @@ uint SuperBlock_HEdgeCount(SuperBlock* sb, boolean addReal, boolean addMini)
     if(addReal) total += sb->realNum;
     if(addMini) total += sb->miniNum;
     return total;
-}
-
-void SuperBlock_IncrementHEdgeCounts(SuperBlock* sb, boolean lineLinked)
-{
-    assert(sb);
-    if(lineLinked)
-        sb->realNum++;
-    else
-        sb->miniNum++;
-
-    // Recursively handle parents.
-    if(sb->parent)
-    {
-        SuperBlock_IncrementHEdgeCounts(sb->parent, lineLinked);
-    }
 }
 
 void SuperBlock_HEdgePush(SuperBlock* sb, bsp_hedge_t* hEdge)
@@ -220,7 +205,9 @@ bsp_hedge_t* SuperBlock_HEdgePop(SuperBlock* sb)
     hEdge = sb->hEdges;
     if(hEdge)
     {
-        sb->hEdges = hEdge->next;
+        sb->hEdges = hEdge->nextInBlock;
+        hEdge->block = NULL;
+        hEdge->nextInBlock = NULL;
 
         // Update half-edge counts.
         if(hEdge->lineDef)
@@ -238,7 +225,7 @@ int SuperBlock_IterateHEdges2(SuperBlock* sp, int (*callback)(bsp_hedge_t*, void
     if(callback)
     {
         bsp_hedge_t* hEdge;
-        for(hEdge = sp->hEdges; hEdge; hEdge = hEdge->next)
+        for(hEdge = sp->hEdges; hEdge; hEdge = hEdge->nextInBlock)
         {
             int result = callback(hEdge, parameters);
             if(result) return result; // Stop iteration.
@@ -309,7 +296,7 @@ static void findHEdgeListBoundsWorker(SuperBlock* sb, void* parameters)
     bsp_hedge_t* hEdge;
     uint i;
 
-    for(hEdge = sb->hEdges; hEdge; hEdge = hEdge->next)
+    for(hEdge = sb->hEdges; hEdge; hEdge = hEdge->nextInBlock)
     {
         initAABoxFromHEdgeVertexes(&hEdgeAABox, hEdge);
         if(p->initialized)

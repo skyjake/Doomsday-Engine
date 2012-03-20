@@ -81,15 +81,6 @@ void SuperBlock_HEdgePush(SuperBlock* superblock, bsp_hedge_t* hEdge);
 bsp_hedge_t* SuperBlock_HEdgePop(SuperBlock* superblock);
 
 /**
- * Increase the counts within the superblock, to account for the given
- * half-edge being split.
- *
- * @todo Refactor: Redesign so counts are incremented automatically
- *       upon the call to SuperBlock_HEdgePush().
- */
-void SuperBlock_IncrementHEdgeCounts(SuperBlock* superblock, boolean lineLinked);
-
-/**
  * Retrieve the total number of HEdges linked in this superblock (including
  * any within child superblocks).
  *

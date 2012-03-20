@@ -62,7 +62,8 @@ typedef struct bsp_hedge_s {
     // must also be split.
     struct bsp_hedge_s* twin;
 
-    struct bsp_hedge_s* next;
+    struct bsp_hedge_s* nextInBlock;
+    struct bsp_hedge_s* nextInLeaf;
     struct bsp_hedge_s* nextOnSide;
     struct bsp_hedge_s* prevOnSide;
 
