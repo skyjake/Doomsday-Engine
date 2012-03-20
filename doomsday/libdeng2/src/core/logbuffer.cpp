@@ -46,6 +46,10 @@ LogBuffer::LogBuffer(duint maxEntryCount)
 {
     _autoFlushTimer = new QTimer(this);
     connect(_autoFlushTimer, SIGNAL(timeout()), this, SLOT(flush()));
+
+#ifdef WIN32
+    _standardOutput = false;
+#endif
 }
 
 LogBuffer::~LogBuffer()
