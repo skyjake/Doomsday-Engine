@@ -1351,9 +1351,13 @@ D_CMD(DisplayModeInfo)
     const DisplayMode* mode = DisplayMode_Current();
     int i;
 
-    Con_Message("Current display mode: %i x %i x %i (%i:%i, refresh: %f Hz)\n",
-                mode->width, mode->height, mode->depth, mode->ratioX, mode->ratioY, mode->refreshRate);
-    Con_Message("Main window: (%i,%i) %ix%i fullscreen:%s centered:%s maximixed:%s\n",
+    Con_Message("Current display mode: %i x %i x %i (%i:%i",
+                mode->width, mode->height, mode->depth, mode->ratioX, mode->ratioY);
+    if(mode->refreshRate > 0)
+    {
+        Con_Message(", refresh: %.1f Hz", mode->refreshRate);
+    }
+    Con_Message(")\nMain window: (%i,%i) %ix%i fullscreen:%s centered:%s maximixed:%s\n",
                 Window_X(wnd), Window_Y(wnd), Window_Width(wnd), Window_Height(wnd),
                 Window_IsFullscreen(wnd)? "yes" : "no",
                 Window_IsCentered(wnd)? "yes" : "no",
@@ -1370,8 +1374,16 @@ D_CMD(ListDisplayModes)
     for(i = 0; i < DisplayMode_Count(); ++i)
     {
         mode = DisplayMode_ByIndex(i);
-        Con_Message("  %i x %i x %i (%i:%i, refresh: %f Hz)\n", mode->width, mode->height,
-                    mode->depth, mode->ratioX, mode->ratioY, mode->refreshRate);
+        if(mode->refreshRate > 0)
+        {
+            Con_Message("  %i x %i x %i (%i:%i, refresh: %.1f Hz)\n", mode->width, mode->height,
+                        mode->depth, mode->ratioX, mode->ratioY, mode->refreshRate);
+        }
+        else
+        {
+            Con_Message("  %i x %i x %i (%i:%i)\n", mode->width, mode->height,
+                        mode->depth, mode->ratioX, mode->ratioY);
+        }
     }
     return true;
 }
