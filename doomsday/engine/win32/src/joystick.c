@@ -364,6 +364,8 @@ static boolean directInputInit(void)
         Con_Message(" DirectInput init failed.\n");
         return false;
     }
+
+    return true;
 }
 
 static void directInputShutdown(void)
@@ -398,6 +400,8 @@ boolean Joystick_Init(void)
         Con_Error("Joystick_Init: Main window not available, cannot init joystick.");
         return false;
     }
+
+    if(!directInputInit()) return false;
 
     // ddi will contain info for the joystick device.
     memset(&firstJoystick, 0, sizeof(firstJoystick));
