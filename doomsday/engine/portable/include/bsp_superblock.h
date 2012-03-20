@@ -78,17 +78,6 @@ SuperBlock* SuperBlockmap_Root(SuperBlockmap* superblockmap);
 void SuperBlockmap_FindHEdgeBounds(SuperBlockmap* superblockmap, AABoxf* bounds);
 
 /**
- * Constructs a new superblock. The superblock must be destroyed with
- * SuperBlock_Delete() when no longer needed.
- */
-SuperBlock* SuperBlock_New(SuperBlockmap* blockmap, const AABox* bounds);
-
-/**
- * Destroys the superblock.
- */
-void SuperBlock_Delete(SuperBlock* superblock);
-
-/**
  * Retrieve the SuperBlockmap which owns this block.
  * @param superblock  SuperBlock instance.
  * @return  SuperBlockmap instance which owns this.

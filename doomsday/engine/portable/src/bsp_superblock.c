@@ -36,6 +36,33 @@
 
 #include "kdtree.h"
 
+struct superblock_s {
+    /// SuperBlockmap which owns this block.
+    struct superblockmap_s* blockmap;
+
+    /// KdTree node in the owning SuperBlockmap.
+    KdTree* tree;
+
+    /// Number of real half-edges and minihedges contained by this block
+    /// (including all sub-blocks below it).
+    int realNum;
+    int miniNum;
+
+    /// List of half-edges completely contained by this block.
+    struct bsp_hedge_s* hEdges;
+};
+
+/**
+ * Constructs a new superblock. The superblock must be destroyed with
+ * SuperBlock_Delete() when no longer needed.
+ */
+static SuperBlock* SuperBlock_New(SuperBlockmap* blockmap, const AABox* bounds);
+
+/**
+ * Destroys the superblock.
+ */
+static void SuperBlock_Delete(SuperBlock* superblock);
+
 /**
  * Subblocks:
  * RIGHT - has the lower coordinates.
@@ -67,23 +94,7 @@ SuperBlock* SuperBlockmap_Root(SuperBlockmap* bmap)
     return bmap->root;
 }
 
-struct superblock_s {
-    /// SuperBlockmap which owns this block.
-    SuperBlockmap* blockmap;
-
-    /// KdTree node in the owning SuperBlockmap.
-    KdTree* tree;
-
-    /// Number of real half-edges and minihedges contained by this block
-    /// (including all sub-blocks below it).
-    int realNum;
-    int miniNum;
-
-    /// List of half-edges completely contained by this block.
-    struct bsp_hedge_s* hEdges;
-};
-
-static __inline boolean isLeaf(SuperBlock* sb)
+static __inline boolean isLeaf(SuperBlockmap* blockmap, SuperBlock* sb)
 {
     const AABox* bounds = SuperBlock_Bounds(sb);
     return (bounds->maxX - bounds->minX <= 256 &&
@@ -164,7 +175,7 @@ void SuperBlock_HEdgePush(SuperBlock* sb, bsp_hedge_t* hEdge)
         else
             sb->miniNum++;
 
-        if(isLeaf(sb))
+        if(isLeaf(SuperBlock_Blockmap(sb), sb))
         {
             // No further subdivision possible.
             linkHEdge(sb, hEdge);
