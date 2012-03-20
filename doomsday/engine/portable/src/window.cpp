@@ -1406,5 +1406,5 @@ void Window_RestoreState(Window* wnd)
 
 void debugPrint(const char* msg)
 {
-    qDebug() << msg;
+    qDebug() << QString(msg).trimmed().toLatin1().constData();
 }
