@@ -20,6 +20,7 @@
 #ifndef LIBDENG2_APP_H
 #define LIBDENG2_APP_H
 
+#include "../libdeng2.h"
 #include <QApplication>
 
 namespace de
@@ -28,7 +29,7 @@ namespace de
      * Application whose event loop is protected against uncaught exceptions.
      * Catches the exception and shuts down the app cleanly.
      */
-    class App : public QApplication
+    class DENG2_PUBLIC App : public QApplication
     {
     public:
         App(int& argc, char** argv, bool useGUI);

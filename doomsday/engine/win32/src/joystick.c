@@ -334,11 +334,11 @@ static BOOL CALLBACK enumJoysticks(LPCDIDEVICEINSTANCE lpddi, void *ref)
     return DIENUM_CONTINUE;
 }
 
-static void directInputInit(void)
+static boolean directInputInit(void)
 {
     HRESULT hr;
 
-    if(dInput) return;
+    if(dInput) return true;
 
     // We'll create the DirectInput object. The only required input device
     // is the keyboard. The others are optional.

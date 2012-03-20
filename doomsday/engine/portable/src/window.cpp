@@ -95,29 +95,13 @@ struct ddwindow_s
         assert(widget);
     }
 
-    int x() const
-    {
-        return geometry.origin.x;
-    }
+    int x() const      { return geometry.origin.x; }
+    int y() const      { return geometry.origin.y; }
+    int width() const  { return geometry.size.width; }
+    int height() const { return geometry.size.height; }
+    QRect rect() const { return QRect(x(), y(), width(), height()); }
 
-    int y() const
-    {
-        return geometry.origin.y;
-    }
-
-    int width() const
-    {
-        return geometry.size.width;
-    }
-
-    int height() const
-    {
-        return geometry.size.height;
-    }
-
-    QRect rect() const {
-        return QRect(x(), y(), width(), height());
-    }
+    bool checkFlag(int flag) const { return (flags & flag) != 0; }
 
     /**
      * Checks all command line options that affect window geometry and applies
@@ -305,10 +289,6 @@ struct ddwindow_s
 
         Con_Message("Window geometry: %i,%i %ix%i (max? %i)\n", geometry.origin.x, geometry.origin.y,
                     geometry.size.width, geometry.size.height, (flags & DDWF_MAXIMIZE) != 0);
-    }
-
-    bool checkFlag(int flag) const {
-        return (flags & flag) != 0;
     }
 
     void setFlag(int flag, bool set = true)

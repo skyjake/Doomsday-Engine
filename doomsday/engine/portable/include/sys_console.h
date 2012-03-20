@@ -22,9 +22,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * sys_console.h: Win32 Console
- */
+/** @todo This needs further refactoring to fit more nicely into the rest
+    of the window management. */
 
 #ifndef __DOOMSDAY_WINCONSOLE_H__
 #define __DOOMSDAY_WINCONSOLE_H__
@@ -48,20 +47,22 @@ struct consolewindow_s;
 // Console window state.
 typedef struct consolewindow_s {
 #if defined(WIN32)
-    HANDLE      hcScreen;
+    HWND hWnd;
+    HANDLE hcScreen;
     CONSOLE_SCREEN_BUFFER_INFO cbInfo;
-    WORD        attrib;
+    WORD attrib;
 #elif defined(UNIX)
-    WINDOW     *winTitle, *winText, *winCommand;
+    WINDOW *winTitle, *winText, *winCommand;
 #endif
-    int         cx, cy;
-    int         needNewLine;
+    int cx, cy;
+    int needNewLine;
     struct {
-        int         flags;
+        int flags;
     } cmdline;
 } consolewindow_t;
 
 Window* Sys_ConInit(const char* title);
+
 void Sys_ConShutdown(Window *window);
 
 void ConsoleWindow_SetTitle(const Window *window, const char* title);
