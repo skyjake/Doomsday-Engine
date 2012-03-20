@@ -956,29 +956,29 @@ static bspleafdata_t* createBSPLeaf(SuperBlock* hEdgeList)
     return leaf;
 }
 
-boolean BuildNodes(SuperBlock* hEdgeList, binarytree_t** parent, size_t depth,
+boolean BuildNodes(SuperBlock* superblock, binarytree_t** parent, size_t depth,
     HPlane* hPlane)
 {
+    SuperBlockmap* hEdgeSet[2];
     binarytree_t* subTree;
-    BspNode* node;
-    SuperBlock* hEdgeSet[2];
     bspleafdata_t* leaf;
+    BspNode* node;
     boolean builtOK = false;
 
     *parent = NULL;
 
     /*DEBUG_Message(("Build: Begun @ %lu\n", (unsigned long) depth));
 #if _DEBUG
-    BSP_PrintSuperBlockHEdges(hEdgeList);
+    BSP_PrintSuperBlockHEdges(superblock);
 #endif*/
 
     // Pick the next partition to use.
-    if(!Bsp_ChoosePartition(hEdgeList, depth, hPlane))
+    if(!Bsp_ChoosePartition(superblock, depth, hPlane))
     {
         // No partition required, already convex.
         //DEBUG_Message(("BuildNodes: Convex.\n"));
 
-        leaf = createBSPLeaf(hEdgeList);
+        leaf = createBSPLeaf(superblock);
         *parent = BinaryTree_Create(leaf);
         return true;
     }
@@ -987,37 +987,40 @@ boolean BuildNodes(SuperBlock* hEdgeList, binarytree_t** parent, size_t depth,
     //               best, best->v[0]->V_pos[VX], best->v[0]->V_pos[VY],
     //               best->v[1]->V_pos[VX], best->v[1]->V_pos[VY]));
 
-    // Create left and right super blocks.
+    // Create left and right super blockmaps.
+    /// @todo There should be no need to construct entirely independent
+    ///       data structures to contain these HEdge subsets.
     // Copy the bounding box of the edge list to the superblocks.
-    hEdgeSet[RIGHT] = SuperBlock_New(SuperBlock_Bounds(hEdgeList));
-    hEdgeSet[LEFT]  = SuperBlock_New(SuperBlock_Bounds(hEdgeList));
+    hEdgeSet[RIGHT] = SuperBlockmap_New(SuperBlock_Bounds(superblock));
+    hEdgeSet[LEFT]  = SuperBlockmap_New(SuperBlock_Bounds(superblock));
 
     // Divide the half-edges into two lists: left & right.
-    BSP_PartitionHEdges(hEdgeList, hEdgeSet[RIGHT], hEdgeSet[LEFT], hPlane);
+    BSP_PartitionHEdges(superblock, SuperBlockmap_Root(hEdgeSet[RIGHT]),
+                                    SuperBlockmap_Root(hEdgeSet[LEFT]), hPlane);
     HPlane_Clear(hPlane);
 
     node = M_Calloc(sizeof(BspNode));
     *parent = BinaryTree_Create(node);
 
-    SuperBlock_FindHEdgeListBounds(hEdgeSet[LEFT],  &node->aaBox[LEFT]);
-    SuperBlock_FindHEdgeListBounds(hEdgeSet[RIGHT], &node->aaBox[RIGHT]);
+    SuperBlockmap_FindHEdgeBounds(hEdgeSet[LEFT],  &node->aaBox[LEFT]);
+    SuperBlockmap_FindHEdgeBounds(hEdgeSet[RIGHT], &node->aaBox[RIGHT]);
 
     node->partition.x = HPlane_X(hPlane);
     node->partition.y = HPlane_Y(hPlane);
     node->partition.dX = HPlane_DX(hPlane);
     node->partition.dY = HPlane_DY(hPlane);
 
-    builtOK = BuildNodes(hEdgeSet[RIGHT], &subTree, depth + 1, hPlane);
+    builtOK = BuildNodes(SuperBlockmap_Root(hEdgeSet[RIGHT]), &subTree, depth + 1, hPlane);
     BinaryTree_SetChild(*parent, RIGHT, subTree);
-    SuperBlock_Delete(hEdgeSet[RIGHT]);
+    SuperBlockmap_Delete(hEdgeSet[RIGHT]);
 
     if(builtOK)
     {
-        builtOK = BuildNodes(hEdgeSet[LEFT], &subTree, depth + 1, hPlane);
+        builtOK = BuildNodes(SuperBlockmap_Root(hEdgeSet[LEFT]), &subTree, depth + 1, hPlane);
         BinaryTree_SetChild(*parent, LEFT, subTree);
     }
 
-    SuperBlock_Delete(hEdgeSet[LEFT]);
+    SuperBlockmap_Delete(hEdgeSet[LEFT]);
 
     return builtOK;
 }

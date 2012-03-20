@@ -107,12 +107,12 @@ static void findMapBounds(GameMap* map, AABoxf* aaBox)
  *
  * @return  The list of created half-edges.
  */
-static SuperBlock* createInitialHEdges(GameMap* map)
+static SuperBlockmap* createInitialHEdges(GameMap* map)
 {
     uint startTime = Sys_GetRealTime();
 
     bsp_hedge_t* back, *front;
-    SuperBlock* block;
+    SuperBlockmap* sbmap;
     AABoxf mapBoundsf;
     AABox mapBounds, blockBounds;
     int bw, bh;
@@ -138,7 +138,7 @@ static SuperBlock* createInitialHEdges(GameMap* map)
     blockBounds.maxX = blockBounds.minX + 128 * M_CeilPow2(bw);
     blockBounds.maxY = blockBounds.minY + 128 * M_CeilPow2(bh);
 
-    block = SuperBlock_New(&blockBounds);
+    sbmap = SuperBlockmap_New(&blockBounds);
 
     for(i = 0; i < map->numLineDefs; ++i)
     {
@@ -173,7 +173,7 @@ static SuperBlock* createInitialHEdges(GameMap* map)
                     Con_Message("Warning: Bad sidedef on linedef #%d\n", line->buildData.index);
 
                 front = BSP_HEdge_Create(line, line, line->v[0], line->v[1], side->sector, false);
-                SuperBlock_HEdgePush(block, front);
+                SuperBlock_HEdgePush(SuperBlockmap_Root(sbmap), front);
             }
             else
                 Con_Message("Warning: Linedef #%d has no front sidedef!\n", line->buildData.index);
@@ -186,7 +186,7 @@ static SuperBlock* createInitialHEdges(GameMap* map)
                     Con_Message("Warning: Bad sidedef on linedef #%d\n", line->buildData.index);
 
                 back = BSP_HEdge_Create(line, line, line->v[1], line->v[0], side->sector, true);
-                SuperBlock_HEdgePush(block, back);
+                SuperBlock_HEdgePush(SuperBlockmap_Root(sbmap), back);
 
                 if(front)
                 {
@@ -212,7 +212,7 @@ static SuperBlock* createInitialHEdges(GameMap* map)
                     other = BSP_HEdge_Create(front->lineDef, line, line->v[1], line->v[0],
                                              line->buildData.windowEffect, true);
 
-                    SuperBlock_HEdgePush(block, other);
+                    SuperBlock_HEdgePush(SuperBlockmap_Root(sbmap), other);
 
                     // Setup the twin-ing (it's very strange to have a mini
                     // and a normal partnered together).
@@ -237,7 +237,7 @@ static SuperBlock* createInitialHEdges(GameMap* map)
     // How much time did we spend?
     VERBOSE2( Con_Message("createInitialHEdges: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
 
-    return block;
+    return sbmap;
 }
 
 static boolean C_DECL freeBSPData(binarytree_t* tree, void* data)
@@ -259,10 +259,10 @@ static boolean C_DECL freeBSPData(binarytree_t* tree, void* data)
 
 boolean BSP_Build(GameMap* map, Vertex*** vertexes, uint* numVertexes)
 {
+    binarytree_t* rootNode;
+    SuperBlockmap* sbmap;
     boolean builtOK;
     uint startTime;
-    SuperBlock* hEdgeList;
-    binarytree_t* rootNode;
 
     VERBOSE( Con_Message("BSP_Build: Processing map using tunable factor of %d...\n", bspFactor) )
 
@@ -275,7 +275,7 @@ boolean BSP_Build(GameMap* map, Vertex*** vertexes, uint* numVertexes)
     BSP_InitForNodeBuild(map);
 
     // Create initial half-edges.
-    hEdgeList = createInitialHEdges(map);
+    sbmap = createInitialHEdges(map);
 
     // Build the BSP.
     {
@@ -286,7 +286,7 @@ boolean BSP_Build(GameMap* map, Vertex*** vertexes, uint* numVertexes)
 
     // Recursively create nodes.
     rootNode = NULL;
-    builtOK = BuildNodes(hEdgeList, &rootNode, 0, hPlane);
+    builtOK = BuildNodes(SuperBlockmap_Root(sbmap), &rootNode, 0, hPlane);
 
     // The intersection list is no longer needed.
     HPlane_Delete(hPlane);
@@ -295,7 +295,7 @@ boolean BSP_Build(GameMap* map, Vertex*** vertexes, uint* numVertexes)
     VERBOSE2( Con_Message("BuildNodes: Done in %.2f seconds.\n", (Sys_GetRealTime() - buildStartTime) / 1000.0f));
     }
 
-    SuperBlock_Delete(hEdgeList);
+    SuperBlockmap_Delete(sbmap);
 
     if(builtOK)
     {

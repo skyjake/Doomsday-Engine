@@ -33,7 +33,13 @@
 #include "de_platform.h"
 #include "bsp_edge.h"
 
+struct superblockmap_s; // The SuperBlockmap instance (opaque).
 struct superblock_s; // The SuperBlock instance (opaque).
+
+/**
+ * SuperBlockmap instance. Created with SuperBlockmap_New().
+ */
+typedef struct superblockmap_s SuperBlockmap;
 
 /**
  * SuperBlock instance. Created with SuperBlock_New().
@@ -41,15 +47,53 @@ struct superblock_s; // The SuperBlock instance (opaque).
 typedef struct superblock_s SuperBlock;
 
 /**
+ * Constructs a new superblockmap. The superblockmap must be destroyed with
+ * SuperBlockmap_Delete() when no longer needed.
+ */
+SuperBlockmap* SuperBlockmap_New(const AABox* bounds);
+
+/**
+ * Destroys the superblockmap.
+ *
+ * @param superblockmap  SuperBlockmap instance.
+ */
+void SuperBlockmap_Delete(SuperBlockmap* superblockmap);
+
+/**
+ * Retrieve the root SuperBlock in this SuperBlockmap.
+ *
+ * @param superblockmap  SuperBlockmap instance.
+ * @return  Root SuperBlock instance.
+ */
+SuperBlock* SuperBlockmap_Root(SuperBlockmap* superblockmap);
+
+/**
+ * Find the axis-aligned bounding box defined by the vertices of all
+ * HEdges within this superblock. If no HEdges are linked then @a bounds
+ * will be set to the "cleared" state (i.e., min[x,y] > max[x,y]).
+ *
+ * @param superblockmap SuperBlock instance.
+ * @param bounds        Determined bounds are written here.
+ */
+void SuperBlockmap_FindHEdgeBounds(SuperBlockmap* superblockmap, AABoxf* bounds);
+
+/**
  * Constructs a new superblock. The superblock must be destroyed with
  * SuperBlock_Delete() when no longer needed.
  */
-SuperBlock* SuperBlock_New(const AABox* bounds);
+SuperBlock* SuperBlock_New(SuperBlockmap* blockmap, const AABox* bounds);
 
 /**
  * Destroys the superblock.
  */
 void SuperBlock_Delete(SuperBlock* superblock);
+
+/**
+ * Retrieve the SuperBlockmap which owns this block.
+ * @param superblock  SuperBlock instance.
+ * @return  SuperBlockmap instance which owns this.
+ */
+SuperBlockmap* SuperBlock_Blockmap(SuperBlock* superblock);
 
 /**
  * Retrieve the axis-aligned bounding box defined for this superblock
@@ -125,15 +169,5 @@ int SuperBlock_Traverse(SuperBlock* superblock, int (*callback)(SuperBlock*, voi
 
 int SuperBlock_PostTraverse2(SuperBlock* sb, int(*callback)(SuperBlock*, void*), void* parameters);
 int SuperBlock_PostTraverse(SuperBlock* sb, int(*callback)(SuperBlock*, void*)/*, parameters = NULL*/);
-
-/**
- * Find the axis-aligned bounding box defined by the vertices of all
- * HEdges within this superblock. If no HEdges are linked then @a bounds
- * will be set to the "cleared" state (i.e., min[x,y] > max[x,y]).
- *
- * @param superblock    SuperBlock instance.
- * @param bounds        Determined bounds are written here.
- */
-void SuperBlock_FindHEdgeListBounds(SuperBlock* superblock, AABoxf* bounds);
 
 #endif /// LIBDENG_MAP_BSP_SUPERBLOCK

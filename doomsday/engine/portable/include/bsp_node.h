@@ -86,13 +86,13 @@ void BSP_PartitionHEdges(SuperBlock* hEdgeList, SuperBlock* rightList, SuperBloc
  * If the ones on the right side make a BspLeaf, then create another BspLeaf
  * else put the half-edges into the right list.
  *
- * @param hEdgeList     Ptr to the list of half edges at the current node.
+ * @param superblock    Ptr to the list of half edges at the current node.
  * @param parent        Ptr to write back the address of any newly created subtree.
  * @param depth         Current tree depth.
  * @param hPlane        HPlaneIntercept list for storing any new intersections.
  * @return  @c true iff successfull.
  */
-boolean BuildNodes(SuperBlock* hEdgeList, binarytree_t** parent, size_t depth,
+boolean BuildNodes(SuperBlock* superblock, binarytree_t** parent, size_t depth,
     HPlane* hPlane);
 
 /**

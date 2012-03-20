@@ -42,7 +42,36 @@
  * LEFT  - has the higher coordinates.
  * Division of a block always occurs horizontally, e.g. 512x512 -> 256x512 -> 256x256.
  */
+struct superblockmap_s {
+    SuperBlock* root;
+};
+
+SuperBlockmap* SuperBlockmap_New(const AABox* bounds)
+{
+    SuperBlockmap* bmap = malloc(sizeof *bmap);
+    if(!bmap) Con_Error("SuperBlockmap_New: Failed on allocation of %lu bytes for new SuperBlockmap.", (unsigned long) sizeof *bmap);
+    bmap->root = SuperBlock_New(bmap, bounds);
+    return bmap;
+}
+
+void SuperBlockmap_Delete(SuperBlockmap* bmap)
+{
+    assert(bmap);
+    SuperBlock_Delete(bmap->root);
+    free(bmap);
+}
+
+SuperBlock* SuperBlockmap_Root(SuperBlockmap* bmap)
+{
+    assert(bmap);
+    return bmap->root;
+}
+
 struct superblock_s {
+    /// SuperBlockmap which owns this block.
+    SuperBlockmap* blockmap;
+
+    /// KdTree node in the owning SuperBlockmap.
     KdTree* tree;
 
     /// Number of real half-edges and minihedges contained by this block
@@ -70,10 +99,11 @@ static void linkHEdge(SuperBlock* sb, bsp_hedge_t* hEdge)
     sb->hEdges = hEdge;
 }
 
-SuperBlock* SuperBlock_New(const AABox* bounds)
+SuperBlock* SuperBlock_New(SuperBlockmap* blockmap, const AABox* bounds)
 {
     SuperBlock* sb = malloc(sizeof *sb);
     if(!sb) Con_Error("SuperBlock_New: Failed on allocation of %lu bytes for new SuperBlock.", (unsigned long) sizeof *sb);
+    sb->blockmap = blockmap;
     sb->tree = KdTree_NewWithUserData(bounds, sb);
     sb->realNum = 0;
     sb->miniNum = 0;
@@ -95,6 +125,12 @@ void SuperBlock_Delete(SuperBlock* sb)
     tree = sb->tree;
     SuperBlock_PostTraverse(sb, deleteSuperBlock);
     KdTree_Delete(tree);
+}
+
+SuperBlockmap* SuperBlock_Blockmap(SuperBlock* sb)
+{
+    assert(sb);
+    return sb->blockmap;
 }
 
 const AABox* SuperBlock_Bounds(SuperBlock* sb)
@@ -193,7 +229,7 @@ void SuperBlock_HEdgePush(SuperBlock* sb, bsp_hedge_t* hEdge)
                 sub.maxY = (half? bounds->maxY : midPoint[VY]);
             }
 
-            child = SuperBlock_New(&sub);
+            child = SuperBlock_New(SuperBlock_Blockmap(sb), &sub);
             child->tree = KdTree_AddChild(sb->tree, &sub, half, child);
         }
 
@@ -336,13 +372,13 @@ static int findHEdgeListBoundsWorker(SuperBlock* sb, void* parameters)
     return false; // Continue iteration.
 }
 
-void SuperBlock_FindHEdgeListBounds(SuperBlock* sb, AABoxf* aaBox)
+void SuperBlockmap_FindHEdgeBounds(SuperBlockmap* sbmap, AABoxf* aaBox)
 {
     findhedgelistboundsparams_t parm;
-    assert(sb && aaBox);
+    assert(sbmap && aaBox);
 
     parm.initialized = false;
-    SuperBlock_Traverse2(sb, findHEdgeListBoundsWorker, (void*)&parm);
+    SuperBlock_Traverse2(sbmap->root, findHEdgeListBoundsWorker, (void*)&parm);
     if(parm.initialized)
     {
         V2_CopyBox(aaBox->arvec2, parm.bounds.arvec2);
