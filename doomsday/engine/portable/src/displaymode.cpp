@@ -101,7 +101,8 @@ struct Mode : public DisplayMode
             {
                 if(depth == b.depth)
                 {
-                    return refreshRate < b.refreshRate;
+                    // Biggest refresh rate first.
+                    return refreshRate > b.refreshRate;
                 }
                 return depth < b.depth;
             }
