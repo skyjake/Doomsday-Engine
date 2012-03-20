@@ -109,7 +109,6 @@ public:
 
 public slots:
     void callback();
-    void timerTriggered();
 
 private:
     // Private instance data.

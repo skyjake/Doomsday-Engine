@@ -85,6 +85,8 @@ static int timeDeltasIndex = 0;
 
 static float realFrameTimePos = 0;
 
+static boolean waitingForDraw = false;
+
 static void startFrame(void);
 static void endFrame(void);
 static void runTics(void);
@@ -117,6 +119,8 @@ int DD_GameLoop(void)
 
 void DD_GameLoopCallback(void)
 {
+    if(waitingForDraw) return; // Only after the frame has been drawn, please.
+
     if(Sys_IsShuttingDown())
         return; // Shouldn't run this while shutting down.
 
@@ -139,6 +143,7 @@ void DD_GameLoopCallback(void)
 
     // Draw the frame.
     Window_Draw(Window_Main());
+    waitingForDraw = true;
 
     // After the first frame, start timedemo.
     DD_CheckTimeDemo();
@@ -146,6 +151,8 @@ void DD_GameLoopCallback(void)
 
 void DD_GameLoopDrawer(void)
 {
+    waitingForDraw = false;
+
     if(novideo)
     {
         // Just wait to reach the maximum FPS.

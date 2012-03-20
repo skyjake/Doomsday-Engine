@@ -66,6 +66,7 @@ LegacyCore::LegacyCore(App* dengApp)
 #ifdef DENG2_DEBUG
     d->logBuffer.enable(Log::DEBUG);
 #endif
+    //d->logBuffer.enable(Log::TRACE);
 }
 
 LegacyCore::~LegacyCore()
@@ -154,13 +155,8 @@ void LegacyCore::callback()
 {
     if(d->loop.func)
     {
-        //LOG_TRACE("Loop callback.");
-
         d->loop.func();
+
         QTimer::singleShot(d->loop.interval, this, SLOT(callback()));
     }
-}
-
-void LegacyCore::timerTriggered()
-{
 }

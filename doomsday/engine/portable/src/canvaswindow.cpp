@@ -95,7 +95,7 @@ void CanvasWindow::setDefaultGLFormat() // static
     fmt.setDepthBufferSize(16);
     fmt.setStencilBufferSize(8);
     fmt.setDoubleBuffer(true);
-    fmt.setSwapInterval(1);     // vsync on
-    fmt.setSampleBuffers(true); // multisampling on (default: highest available)
+    //fmt.setSwapInterval(1);     // vsync on
+    //fmt.setSampleBuffers(true); // multisampling on (default: highest available)
     QGLFormat::setDefaultFormat(fmt);
 }

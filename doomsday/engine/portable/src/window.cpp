@@ -1273,15 +1273,11 @@ void Window_Draw(Window* win)
     assert(win->widget);
 
     // Repaint right now.
+
+    //win->widget->canvas().forcePaint();
+
     /// @todo check the rend-vsync cvar
-    if(/*vsync is on*/ true)
-    {
-        win->widget->canvas().update();
-    }
-    else
-    {
-        win->widget->canvas().repaint();
-    }
+    win->widget->canvas().repaint();
 }
 
 void Window_Show(Window *wnd, boolean show)
