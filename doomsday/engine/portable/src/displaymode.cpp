@@ -65,6 +65,11 @@ struct Mode : public DisplayMode
                depth == other.depth && refreshRate == other.refreshRate;
     }
 
+    bool operator != (const Mode& other) const
+    {
+        return !(*this == other);
+    }
+
     bool operator < (const Mode& b) const
     {
         if(height == b.height)
@@ -123,11 +128,13 @@ struct Mode : public DisplayMode
 typedef std::set<Mode> Modes;
 static Modes modes;
 static Mode originalMode;
+static bool captured;
 
 int DisplayMode_Init(void)
 {
     if(inited) return true;
 
+    captured = false;
     DisplayMode_Native_Init();
 
     for(int i = 0; i < DisplayMode_Native_Count(); ++i)
@@ -159,11 +166,12 @@ void DisplayMode_Shutdown(void)
     qDebug() << "Restoring original display mode due to shutdown.";
 
     // Back to the original mode.
-    DisplayMode_Change(&originalMode);
+    DisplayMode_Change(&originalMode, false /*release captured*/);
 
     modes.clear();
 
     DisplayMode_Native_Shutdown();
+    captured = false;
     inited = false;
 }
 
@@ -240,14 +248,15 @@ boolean DisplayMode_IsEqual(const DisplayMode* a, const DisplayMode* b)
     return Mode(*a) == Mode(*b);
 }
 
-int DisplayMode_Change(const DisplayMode* mode)
+int DisplayMode_Change(const DisplayMode* mode, boolean shouldCapture)
 {
-    if(Mode::fromCurrent() == *mode)
+    if(Mode::fromCurrent() == *mode && shouldCapture == captured)
     {
         qDebug() << "DisplayMode: Requested mode is the same as current, ignoring.";
 
         // Already in this mode.
         return true;
     }
-    return DisplayMode_Native_Change(mode);
+    captured = shouldCapture;
+    return DisplayMode_Native_Change(mode, shouldCapture || (originalMode != *mode));
 }

@@ -63,7 +63,7 @@ const DisplayMode* DisplayMode_FindClosest(int width, int height, int depth, flo
 
 boolean DisplayMode_IsEqual(const DisplayMode* a, const DisplayMode* b);
 
-int DisplayMode_Change(const DisplayMode* mode);
+int DisplayMode_Change(const DisplayMode* mode, boolean shouldCapture);
 
 #ifdef __cplusplus
 }

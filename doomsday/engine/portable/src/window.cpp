@@ -196,7 +196,7 @@ struct ddwindow_s
             const DisplayMode* mode = DisplayMode_FindClosest(width(), height(), colorDepthBits, 0);
             if(mode && !DisplayMode_IsEqual(DisplayMode_Current(), mode))
             {
-                if(DisplayMode_Change(mode))
+                if(DisplayMode_Change(mode, true /* fullscreen: capture */))
                 {
                     widget->canvas().trapMouse();
 
@@ -213,12 +213,8 @@ struct ddwindow_s
         }
         else
         {
-            if(DisplayMode_IsEqual(DisplayMode_Current(), DisplayMode_OriginalMode()))
-            {
-                // No need to change.
-                return false;
-            }
-            return DisplayMode_Change(DisplayMode_OriginalMode());
+            return DisplayMode_Change(DisplayMode_OriginalMode(),
+                                      false /* windowed: don't capture */);
         }
         return false;
     }
@@ -309,6 +305,10 @@ struct ddwindow_s
                     geometry.size.width, geometry.size.height, (flags & DDWF_MAXIMIZE) != 0);
     }
 
+    bool checkFlag(int flag) const {
+        return (flags & flag) != 0;
+    }
+
     void setFlag(int flag, bool set = true)
     {
         if(set)
@@ -331,6 +331,7 @@ struct ddwindow_s
 
     bool applyAttributes(int* attribs)
     {
+        bool changed = false;
         bool wasFullscreen = (flags & DDWF_FULLSCREEN) != 0;
 
         // Parse the attributes array and check the values.
@@ -340,39 +341,81 @@ struct ddwindow_s
             switch(attribs[i++])
             {
             case DDWA_X:
-                geometry.origin.x = attribs[i];
+                if(x() != attribs[i])
+                {
+                    geometry.origin.x = attribs[i];
+                    changed = true;
+                }
                 break;
             case DDWA_Y:
-                geometry.origin.y = attribs[i];
+                if(y() != attribs[i])
+                {
+                    geometry.origin.y = attribs[i];
+                    changed = true;
+                }
                 break;
             case DDWA_WIDTH:
-                geometry.size.width = attribs[i];
-                if(geometry.size.width < WINDOW_MIN_WIDTH) return false;
+                if(width() != attribs[i])
+                {
+                    geometry.size.width = attribs[i];
+                    if(geometry.size.width < WINDOW_MIN_WIDTH) return false;
+                    changed = true;
+                }
                 break;
             case DDWA_HEIGHT:
-                geometry.size.height = attribs[i];
-                if(geometry.size.height < WINDOW_MIN_HEIGHT) return false;
+                if(height() != attribs[i])
+                {
+                    geometry.size.height = attribs[i];
+                    if(geometry.size.height < WINDOW_MIN_HEIGHT) return false;
+                    changed = true;
+                }
                 break;
             case DDWA_CENTER:
-                setFlag(DDWF_CENTER, attribs[i]);
+                if(attribs[i] != checkFlag(DDWF_CENTER))
+                {
+                    setFlag(DDWF_CENTER, attribs[i]);
+                    changed = true;
+                }
                 break;
             case DDWA_MAXIMIZE:
-                setFlag(DDWF_MAXIMIZE, attribs[i]);
+                if(attribs[i] != checkFlag(DDWF_MAXIMIZE))
+                {
+                    setFlag(DDWF_MAXIMIZE, attribs[i]);
+                    changed = true;
+                }
                 break;
             case DDWA_FULLSCREEN:
-                setFlag(DDWF_FULLSCREEN, attribs[i]);
+                if(attribs[i] != checkFlag(DDWF_FULLSCREEN))
+                {
+                    setFlag(DDWF_FULLSCREEN, attribs[i]);
+                    changed = true;
+                }
                 break;
             case DDWA_VISIBLE:
-                setFlag(DDWF_VISIBLE, attribs[i]);
+                if(attribs[i] != checkFlag(DDWF_VISIBLE))
+                {
+                    setFlag(DDWF_VISIBLE, attribs[i]);
+                    changed = true;
+                }
                 break;
             case DDWA_COLOR_DEPTH_BITS:
-                colorDepthBits = attribs[i];
-                if(colorDepthBits < 8 || colorDepthBits > 32) return false; // Illegal value.
+                if(attribs[i] != colorDepthBits)
+                {
+                    colorDepthBits = attribs[i];
+                    if(colorDepthBits < 8 || colorDepthBits > 32) return false; // Illegal value.
+                    changed = true;
+                }
                 break;
             default:
                 // Unknown attribute.
                 return false;
             }
+        }
+
+        if(!changed)
+        {
+            VERBOSE(Con_Message("New window attributes same as before.\n"));
+            return true;
         }
 
         // Check geometry for validity (window must be on the desktop
