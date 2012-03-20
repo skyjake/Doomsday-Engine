@@ -1,6 +1,10 @@
 /**
- * @file displaymode_macx.h
- * Changing and enumerating available display modes for Mac OS X. @ingroup gl
+ * @file displaymode_native.h
+ * Changing and enumerating available display modes using native APIs. @ingroup gl
+ *
+ * These routines are only intended to be used privately by the DisplayMode
+ * class. Never call these directly unless you are sure you want to access
+ * platform specific low-level functionality.
  *
  * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -19,8 +23,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_DISPLAYMODE_MACX_H
-#define LIBDENG_DISPLAYMODE_MACX_H
+#ifndef LIBDENG_DISPLAYMODE_NATIVE_H
+#define LIBDENG_DISPLAYMODE_NATIVE_H
 
 #include "displaymode.h"
 
@@ -40,10 +44,12 @@ int DisplayMode_Native_Change(const DisplayMode* mode, boolean shouldCapture);
 
 void DisplayMode_Native_Shutdown(void);
 
+#ifdef MACOSX
 void DisplayMode_Native_Raise(void* handle);
+#endif
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // LIBDENG_DISPLAYMODE_MACX_H
+#endif // LIBDENG_DISPLAYMODE_NATIVE_H
