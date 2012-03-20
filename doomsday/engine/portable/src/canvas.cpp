@@ -32,11 +32,11 @@
 #include <QTime>
 #include <QDebug>
 
-#include "canvas.h"
 #include "sys_opengl.h"
 #include "sys_input.h"
 #include "displaymode.h"
 #include "keycode.h"
+#include "canvas.h"
 
 static const int MOUSE_WHEEL_CONTINUOUS_THRESHOLD_MS = 100;
 

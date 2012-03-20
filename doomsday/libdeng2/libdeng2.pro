@@ -23,7 +23,7 @@ win32 {
     QMAKE_CXXFLAGS_WARN_ON *= -Wall -Wextra -pedantic -Wno-long-long
 }
 win32-msvc* {
-    QMAKE_CXXFLAGS_WARN_ON ~= s/-W3/-W4/
+    #QMAKE_CXXFLAGS_WARN_ON ~= s/-W3/-W4/
 }
 
 INCLUDEPATH += include

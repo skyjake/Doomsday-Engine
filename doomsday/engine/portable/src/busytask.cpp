@@ -22,6 +22,7 @@
  * 02110-1301 USA</small>
  */
 
+#include "de_platform.h"
 #include "con_busy.h"
 #include "de/c_wrapper.h"
 

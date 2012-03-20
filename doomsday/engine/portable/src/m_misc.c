@@ -985,6 +985,7 @@ float M_ApproxDistance3f(float dx, float dy, float dz)
 int M_ScreenShot(const char* name, int bits)
 {
     ddstring_t fullName;
+    boolean result;
 
     Str_Init(&fullName);
     Str_Set(&fullName, name);
@@ -993,7 +994,7 @@ int M_ScreenShot(const char* name, int bits)
         Str_Append(&fullName, ".png"); // Default format.
     }
     F_ToNativeSlashes(&fullName, &fullName);
-    boolean result = Window_GrabToFile(Window_Main(), Str_Text(&fullName));
+    result = Window_GrabToFile(Window_Main(), Str_Text(&fullName));
     Str_Free(&fullName);
     return result;
 

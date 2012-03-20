@@ -29,6 +29,8 @@
 #ifndef LIBDENG_WINIT_H
 #define LIBDENG_WINIT_H
 
+#define WIN32_LEAN_AND_MEAN
+
 #include "dd_pinit.h"
 #include <windows.h>
 

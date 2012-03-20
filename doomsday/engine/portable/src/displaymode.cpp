@@ -20,6 +20,7 @@
  */
 
 #include "displaymode.h"
+#include "displaymode_native.h"
 
 #ifdef MACOSX
 #  include "displaymode_macx.h"

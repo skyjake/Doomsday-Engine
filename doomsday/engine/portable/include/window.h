@@ -290,15 +290,6 @@ void Window_RestoreState(Window* wnd);
 
 void* Window_NativeHandle(const Window* wnd);
 
-/**
- *\todo This is a compromise to prevent having to refactor half the
- * engine. In general, system specific patterns should not be carried
- * into the engine.
- */
-#if defined(WIN32)
-HWND Sys_GetWindowHandle(uint idx);
-#endif
-
 #ifdef __cplusplus
 }
 #endif

@@ -19,7 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#include "displaymode_macx.h"
+#include "displaymode_native.h"
 #include "dd_types.h"
 
 #include <assert.h>

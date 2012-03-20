@@ -28,6 +28,7 @@
  */
 
 #ifdef WIN32
+#  define WIN32_LEAN_AND_MEAN
 #  include <windows.h>
 #  include <process.h>
 #endif
@@ -169,7 +170,7 @@ static int showCriticalMessage(const char* msg)
     char buf[256];
 #endif
     int ret;
-    HWND hWnd = Sys_GetWindowHandle(mainWindowIdx);
+    HWND hWnd = (HWND) Window_NativeHandle(Window_Main());
 
     if(!hWnd)
     {
@@ -297,7 +298,7 @@ void Sys_MessageBox(const char *msg, boolean iserror)
 #else
     char    title[300];
 #endif
-    HWND    hWnd = Sys_GetWindowHandle(mainWindowIdx);
+    HWND    hWnd = (HWND) Window_NativeHandle(Window_Main());
 
     if(!hWnd)
     {

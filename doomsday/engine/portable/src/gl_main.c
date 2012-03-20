@@ -217,7 +217,7 @@ void GL_GetGammaRamp(unsigned short *ramp)
 
 #if defined(WIN32) && defined(WIN32_GAMMA)
     {
-        HWND    hWnd = Sys_GetWindowHandle(mainWindowIdx);
+        HWND    hWnd = (HWND) Window_NativeHandle(Window_Main());
         HDC     hDC;
 
         if(!hWnd)
@@ -298,7 +298,7 @@ void GL_SetGammaRamp(unsigned short* ramp)
 
 #if defined(WIN32) && defined(WIN32_GAMMA)
     { HWND hWnd;
-    if((hWnd = Sys_GetWindowHandle(mainWindowIdx)))
+    if((hWnd = (HWND) Window_NativeHandle(Window_Main())))
     {
         HDC hDC;
         if((hDC = GetDC(hWnd)))
@@ -454,8 +454,6 @@ boolean GL_EarlyInit(void)
     // Check the maximum texture size.
     if(GL_state.maxTexSize == 256)
     {
-        int bpp;
-
         Con_Message("Using restricted texture w/h ratio (1:8).\n");
         ratioLimit = 8;
     }
@@ -1349,7 +1347,6 @@ D_CMD(DisplayModeInfo)
 {
     const Window* wnd = Window_Main();
     const DisplayMode* mode = DisplayMode_Current();
-    int i;
 
     Con_Message("Current display mode: %i x %i x %i (%i:%i",
                 mode->width, mode->height, mode->depth, mode->ratioX, mode->ratioY);

@@ -2,6 +2,9 @@
  * @file displaymode.h
  * Changing and enumerating available display modes. @ingroup gl
  *
+ * High-level logic for enumerating, selecting, and changing display modes. See
+ * displaymode_native.h for the platform-specific low-level routines.
+ *
  * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License

@@ -40,6 +40,7 @@ struct consolewindow_s;
 #endif
 
 #if defined(WIN32)
+#  define WIN32_LEAN_AND_MEAN
 #  include <windows.h>
 #  include "dd_winit.h"
 #endif
