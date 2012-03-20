@@ -989,8 +989,8 @@ boolean BuildNodes(SuperBlock* hEdgeList, binarytree_t** parent, size_t depth,
 
     // Create left and right super blocks.
     // Copy the bounding box of the edge list to the superblocks.
-    hEdgeSet[RIGHT] = BSP_NewSuperBlock(SuperBlock_Bounds(hEdgeList));
-    hEdgeSet[LEFT]  = BSP_NewSuperBlock(SuperBlock_Bounds(hEdgeList));
+    hEdgeSet[RIGHT] = SuperBlock_New(SuperBlock_Bounds(hEdgeList));
+    hEdgeSet[LEFT]  = SuperBlock_New(SuperBlock_Bounds(hEdgeList));
 
     // Divide the half-edges into two lists: left & right.
     BSP_PartitionHEdges(hEdgeList, hEdgeSet[RIGHT], hEdgeSet[LEFT], hPlane);
@@ -1009,7 +1009,7 @@ boolean BuildNodes(SuperBlock* hEdgeList, binarytree_t** parent, size_t depth,
 
     builtOK = BuildNodes(hEdgeSet[RIGHT], &subTree, depth + 1, hPlane);
     BinaryTree_SetChild(*parent, RIGHT, subTree);
-    BSP_RecycleSuperBlock(hEdgeSet[RIGHT]);
+    SuperBlock_Delete(hEdgeSet[RIGHT]);
 
     if(builtOK)
     {
@@ -1017,7 +1017,7 @@ boolean BuildNodes(SuperBlock* hEdgeList, binarytree_t** parent, size_t depth,
         BinaryTree_SetChild(*parent, LEFT, subTree);
     }
 
-    BSP_RecycleSuperBlock(hEdgeSet[LEFT]);
+    SuperBlock_Delete(hEdgeSet[LEFT]);
 
     return builtOK;
 }

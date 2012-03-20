@@ -114,14 +114,17 @@ int SuperBlock_IterateHEdges(SuperBlock* superblock, int (*callback)(bsp_hedge_t
  * Retrieve a pointer to a sub-block of this superblock.
  *
  * @param superblock    SuperBlock instance.
- * @param left          @c true= pick the "left" child.
+ * @param left          non-zero= pick the "left" child.
  *
  * @return  Selected child superblock else @c NULL if none.
  */
-SuperBlock* SuperBlock_Child(SuperBlock* superblock, boolean left);
+SuperBlock* SuperBlock_Child(SuperBlock* superblock, int left);
 
 int SuperBlock_Traverse2(SuperBlock* superblock, int (*callback)(SuperBlock*, void*), void* parameters);
 int SuperBlock_Traverse(SuperBlock* superblock, int (*callback)(SuperBlock*, void*)/*, parameters=NULL*/);
+
+int SuperBlock_PostTraverse2(SuperBlock* sb, int(*callback)(SuperBlock*, void*), void* parameters);
+int SuperBlock_PostTraverse(SuperBlock* sb, int(*callback)(SuperBlock*, void*)/*, parameters = NULL*/);
 
 /**
  * Find the axis-aligned bounding box defined by the vertices of all
@@ -132,22 +135,5 @@ int SuperBlock_Traverse(SuperBlock* superblock, int (*callback)(SuperBlock*, voi
  * @param bounds        Determined bounds are written here.
  */
 void SuperBlock_FindHEdgeListBounds(SuperBlock* superblock, AABoxf* bounds);
-
-/**
- * @todo The following functions do not belong in this module.
- */
-
-/**
- * Init the superblock allocator.
- */
-void BSP_InitSuperBlockAllocator(void);
-
-/**
- * Free all the superblocks on the quick-alloc list.
- */
-void BSP_ShutdownSuperBlockAllocator(void);
-
-SuperBlock* BSP_NewSuperBlock(const AABox* bounds);
-void BSP_RecycleSuperBlock(SuperBlock* superblock);
 
 #endif /// LIBDENG_MAP_BSP_SUPERBLOCK

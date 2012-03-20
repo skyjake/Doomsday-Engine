@@ -138,7 +138,7 @@ static SuperBlock* createInitialHEdges(GameMap* map)
     blockBounds.maxX = blockBounds.minX + 128 * M_CeilPow2(bw);
     blockBounds.maxY = blockBounds.minY + 128 * M_CeilPow2(bh);
 
-    block = BSP_NewSuperBlock(&blockBounds);
+    block = SuperBlock_New(&blockBounds);
 
     for(i = 0; i < map->numLineDefs; ++i)
     {
@@ -269,7 +269,6 @@ boolean BSP_Build(GameMap* map, Vertex*** vertexes, uint* numVertexes)
     // It begins...
     startTime = Sys_GetRealTime();
 
-    BSP_InitSuperBlockAllocator();
     BSP_InitHPlaneInterceptAllocator();
     BSP_InitHEdgeAllocator();
 
@@ -296,7 +295,7 @@ boolean BSP_Build(GameMap* map, Vertex*** vertexes, uint* numVertexes)
     VERBOSE2( Con_Message("BuildNodes: Done in %.2f seconds.\n", (Sys_GetRealTime() - buildStartTime) / 1000.0f));
     }
 
-    BSP_RecycleSuperBlock(hEdgeList);
+    SuperBlock_Delete(hEdgeList);
 
     if(builtOK)
     {
@@ -334,7 +333,6 @@ boolean BSP_Build(GameMap* map, Vertex*** vertexes, uint* numVertexes)
     // Free temporary storage.
     BSP_ShutdownHEdgeAllocator();
     BSP_ShutdownHPlaneInterceptAllocator();
-    BSP_ShutdownSuperBlockAllocator();
 
     // How much time did we spend?
     VERBOSE2( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );

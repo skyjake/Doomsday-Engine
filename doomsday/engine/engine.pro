@@ -202,6 +202,7 @@ DENG_HEADERS = \
     portable/include/hedge.h \
     portable/include/huffman.h \
     portable/include/image.h \
+    portable/include/kdtree.h \
     portable/include/library.h \
     portable/include/linedef.h \
     portable/include/lumpdirectory.h \
@@ -455,6 +456,7 @@ SOURCES += \
     portable/src/hedge.c \
     portable/src/huffman.c \
     portable/src/image.c \
+    portable/src/kdtree.c \
     portable/src/library.c \
     portable/src/linedef.c \
     portable/src/lumpdirectory.c \
