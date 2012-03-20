@@ -133,7 +133,7 @@ static void setConWindowCmdLine(uint idx, const char *text,
 
 void Sys_ConPrint(uint idx, const char *text, int clflags)
 {
-    Window         *win;
+    Window *win;
     char                line[LINELEN];
     int                 count = strlen(text), lineStart, bPos;
     const char         *ptr = text;

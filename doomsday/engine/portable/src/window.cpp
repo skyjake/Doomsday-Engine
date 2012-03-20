@@ -33,19 +33,21 @@
 #endif
 
 #ifdef MACOSX
-#  include "displaymode_macx.h"
+#  include "displaymode_native.h"
 #endif
+
+#include "de_platform.h"
 
 #include "window.h"
 #include "canvaswindow.h"
 #include "displaymode.h"
-#include "de_platform.h"
 #include "sys_system.h"
 #include "dd_main.h"
 #include "con_main.h"
 #include "con_busy.h"
 #include "gl_main.h"
 #include "ui_main.h"
+#include "m_args.h"
 
 #include <QDebug>
 
@@ -370,34 +372,36 @@ struct ddwindow_s
                     changed = true;
                 }
                 break;
+#define IS_NONZERO(x) ((x) != 0)
             case DDWA_CENTER:
-                if(attribs[i] != checkFlag(DDWF_CENTER))
+                if(IS_NONZERO(attribs[i]) != IS_NONZERO(checkFlag(DDWF_CENTER)))
                 {
                     setFlag(DDWF_CENTER, attribs[i]);
                     changed = true;
                 }
                 break;
             case DDWA_MAXIMIZE:
-                if(attribs[i] != checkFlag(DDWF_MAXIMIZE))
+                if(IS_NONZERO(attribs[i]) != IS_NONZERO(checkFlag(DDWF_MAXIMIZE)))
                 {
                     setFlag(DDWF_MAXIMIZE, attribs[i]);
                     changed = true;
                 }
                 break;
             case DDWA_FULLSCREEN:
-                if(attribs[i] != checkFlag(DDWF_FULLSCREEN))
+                if(IS_NONZERO(attribs[i]) != IS_NONZERO(checkFlag(DDWF_FULLSCREEN)))
                 {
                     setFlag(DDWF_FULLSCREEN, attribs[i]);
                     changed = true;
                 }
                 break;
             case DDWA_VISIBLE:
-                if(attribs[i] != checkFlag(DDWF_VISIBLE))
+                if(IS_NONZERO(attribs[i]) != IS_NONZERO(checkFlag(DDWF_VISIBLE)))
                 {
                     setFlag(DDWF_VISIBLE, attribs[i]);
                     changed = true;
                 }
                 break;
+#undef IS_NONZERO
             case DDWA_COLOR_DEPTH_BITS:
                 if(attribs[i] != colorDepthBits)
                 {

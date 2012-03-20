@@ -28,7 +28,7 @@
 
 #include <QEventLoop>
 
-extern LegacyCore* de2LegacyCore; // from dd_init.cpp
+extern "C" LegacyCore* de2LegacyCore; // from dd_init.cpp
 
 static QEventLoop* eventLoop;
 

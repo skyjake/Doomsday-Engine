@@ -299,6 +299,7 @@ static BOOL initDGL(void)
 
 static BOOL initApplication(application_t* app)
 {
+#if 0
     WNDCLASSEX wcex;
     assert(app);
 
@@ -320,6 +321,8 @@ static BOOL initApplication(application_t* app)
 
     // Register our window class.
     return RegisterClassEx(&wcex);
+#endif
+    return TRUE;
 }
 
 static void determineGlobalPaths(application_t* app)
@@ -420,11 +423,13 @@ static BOOL createMainWindow(int lnCmdShow)
 boolean DD_Win32_Init(void)
 {
     BOOL failed = TRUE;
-    int lnCmdShow = SW_SHOWNORMAL; // nCmdShow;
+    //int lnCmdShow = SW_SHOWNORMAL; // nCmdShow;
 
     memset(&app, 0, sizeof(app));
     app.hInstance = GetModuleHandle(NULL);
+#if 0
     app.className = TEXT(MAINWCLASS);
+#endif
 
     if(!initApplication(&app))
     {
@@ -631,8 +636,10 @@ void DD_Shutdown(void)
     // No more use of COM beyond, this point.
     CoUninitialize();
 
+#if 0
     // Unregister our window class.
     UnregisterClass(app.className, app.hInstance);
+#endif
 }
 
 /**

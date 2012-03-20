@@ -22,7 +22,7 @@
 #ifndef LIBDENG_CANVAS_H
 #define LIBDENG_CANVAS_H
 
-#include "image.h"
+struct image_s; // see image.h
 
 #include <QGLWidget>
 
@@ -98,7 +98,7 @@ public:
      * @param outputSize  If specified, the contents will be scaled to this size before
      *                    the image is returned.
      */
-    void grab(image_t* img, const QSize& outputSize = QSize());
+    void grab(struct image_s* img, const QSize& outputSize = QSize());
 
     void trapMouse(bool trap = true);
 

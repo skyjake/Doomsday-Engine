@@ -26,8 +26,6 @@
  * sys_console.c: Std input handling - Win32 specific
  */
 
-// HEADER FILES ------------------------------------------------------------
-
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
@@ -35,23 +33,7 @@
 #include "de_console.h"
 #include "de_misc.h"
 
-// MACROS ------------------------------------------------------------------
-
 #define MAXRECS             128
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean conInputInited = false;
 
@@ -61,8 +43,6 @@ static byte *vKeyDown = NULL; // Used for tracking the state of the vKeys.
 
 static INPUT_RECORD *inputBuf = NULL;
 static DWORD inputBufsize = 0;
-
-// CODE --------------------------------------------------------------------
 
 static void initVKeyToDDKeyTlat(void)
 {

@@ -38,15 +38,17 @@
 extern "C" {
 #endif
 
-#define MAINWCLASS          "DoomsdayMainWClass"
+//#define MAINWCLASS          "DoomsdayMainWClass"
 
 typedef struct {
     HINSTANCE hInstance;
+/*
 #ifdef UNICODE
     LPCWSTR className;
 #else
     LPCSTR className;
 #endif
+*/
     /// @c true = We are using a custom user dir specified on the command line.
     BOOL usingUserDir;
 

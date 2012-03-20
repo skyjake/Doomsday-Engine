@@ -381,6 +381,7 @@ DENG_UNIX_SOURCES += \
 
 DENG_WIN32_SOURCES += \
     win32/src/dd_winit.c \
+    win32/src/displaymode_win32.cpp \
     win32/src/sys_console.c \
     win32/src/sys_findfile.c \
     win32/src/joystick.c
