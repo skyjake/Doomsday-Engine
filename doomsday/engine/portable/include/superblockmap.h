@@ -114,7 +114,7 @@ const AABox* SuperBlock_Bounds(SuperBlock* superblock);
  * @param superblock    SuperBlock instance.
  * @param hEdge  HEdge instance to add.
  */
-void SuperBlock_HEdgePush(SuperBlock* superblock, struct bsp_hedge_s* hEdge);
+SuperBlock* SuperBlock_HEdgePush(SuperBlock* superblock, struct bsp_hedge_s* hEdge);
 
 /**
  * Pop (unlink) the next HEdge from the FIFO list of half-edges linked
