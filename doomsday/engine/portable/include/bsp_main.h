@@ -88,15 +88,15 @@ typedef struct hedgeintercept_s {
 /**
  * Create a new intersection.
  */
-HEdgeIntercept* Bsp_NewHEdgeIntercept(Vertex* vertex, const struct hplanebuildinfo_s* partition,
-    boolean lineDefIsSelfReferencing);
+HEdgeIntercept* BspBuilder_NewHEdgeIntercept(Vertex* vertex,
+    const struct hplanebuildinfo_s* partition, boolean lineDefIsSelfReferencing);
 
 /**
  * Destroy the specified intersection.
  *
  * @param inter  Ptr to the intersection to be destroyed.
  */
-void Bsp_DeleteHEdgeIntercept(HEdgeIntercept* intercept);
+void BspBuilder_DeleteHEdgeIntercept(HEdgeIntercept* intercept);
 
 #if _DEBUG
 void Bsp_PrintHEdgeIntercept(HEdgeIntercept* intercept);
@@ -110,9 +110,9 @@ void Bsp_PrintHEdgeIntercept(HEdgeIntercept* intercept);
  *
  * @return  Ptr to the found intercept, else @c NULL;
  */
-struct hplaneintercept_s* Bsp_HPlaneInterceptByVertex(struct hplane_s* hPlane, Vertex* vertex);
+struct hplaneintercept_s* BspBuilder_HPlaneInterceptByVertex(struct hplane_s* hPlane, Vertex* vertex);
 
-HEdgeIntercept* Bsp_HEdgeInterceptByVertex(struct hplane_s* hPlane, Vertex* vertex);
+HEdgeIntercept* BspBuilder_HEdgeInterceptByVertex(struct hplane_s* hPlane, Vertex* vertex);
 
 /**
  * Analyze the intersection list, and add any needed minihedges to the given half-edge lists
@@ -120,10 +120,10 @@ HEdgeIntercept* Bsp_HEdgeInterceptByVertex(struct hplane_s* hPlane, Vertex* vert
  *
  * @note All the intersections in the hPlane will be free'd back into the quick-alloc list.
  */
-void BSP_AddMiniHEdges(struct hplane_s* hPlane,
+void BspBuilder_AddMiniHEdges(struct hplane_s* hPlane,
     struct superblock_s* rightList, struct superblock_s* leftList);
 
-void Bsp_BuildHEdgesBetweenIntersections(struct hplane_s* hPlane,
+void BspBuilder_AddHEdgesBetweenIntercepts(struct hplane_s* hPlane,
     HEdgeIntercept* start, HEdgeIntercept* end, struct bsp_hedge_s** right, struct bsp_hedge_s** left);
 
 // CVar for tuning the BSP edge split cost factor.
@@ -132,7 +132,7 @@ extern int bspFactor;
 /**
  * Register the ccmds and cvars of the BSP builder. Called during engine startup
  */
-void BSP_Register(void);
+void BspBuilder_Register(void);
 
 /**
  * Build the BSP for the given map.
@@ -143,6 +143,6 @@ void BSP_Register(void);
  *
  * @return  @c true= iff completed successfully.
  */
-boolean BSP_Build(GameMap* map, Vertex*** vertexes, uint* numVertexes);
+boolean BspBuilder_Build(GameMap* map, Vertex*** vertexes, uint* numVertexes);
 
 #endif /// LIBDENG_MAP_BSP_BUILDER

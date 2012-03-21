@@ -125,7 +125,7 @@ void HPlane_Clear(HPlane* bi)
     {
         HPlaneIntercept* p = node->next;
 
-        Bsp_DeleteHEdgeIntercept(node->userData);
+        BspBuilder_DeleteHEdgeIntercept(node->userData);
 
         // Move the bi node to the unused node bi.
         node->next = usedIntercepts;
@@ -305,7 +305,7 @@ void Bsp_MergeHEdgeIntercepts(HEdgeIntercept* final, const HEdgeIntercept* other
 #endif*/
 }
 
-void Bsp_MergeIntersections(HPlane* hPlane)
+void BspBuilder_MergeIntersections(HPlane* hPlane)
 {
     HPlaneIntercept* node, *np;
 
@@ -321,7 +321,7 @@ void Bsp_MergeIntersections(HPlane* hPlane)
 
         if(len < -0.1)
         {
-            Con_Error("Bsp_MergeIntersections: Invalid intercept order - %1.3f > %1.3f\n",
+            Con_Error("BspBuilder_MergeIntersections: Invalid intercept order - %1.3f > %1.3f\n",
                       node->distance, np->distance);
         }
         else if(len > 0.2)
@@ -343,13 +343,13 @@ void Bsp_MergeIntersections(HPlane* hPlane)
         Bsp_MergeHEdgeIntercepts(cur, next);
 
         // Destroy the orphaned info.
-        Bsp_DeleteHEdgeIntercept(next);
+        BspBuilder_DeleteHEdgeIntercept(next);
 
         np = node->next;
     }
 }
 
-void Bsp_BuildHEdgesAtIntersectionGaps(HPlane* hPlane, SuperBlock* rightList,
+void BspBuilder_BuildHEdgesAtIntersectionGaps(HPlane* hPlane, SuperBlock* rightList,
     SuperBlock* leftList)
 {
     HPlaneIntercept* node;
@@ -418,7 +418,7 @@ void Bsp_BuildHEdgesAtIntersectionGaps(HPlane* hPlane, SuperBlock* rightList,
                     }
                 }
 
-                Bsp_BuildHEdgesBetweenIntersections(hPlane, cur, next, &right, &left);
+                BspBuilder_AddHEdgesBetweenIntercepts(hPlane, cur, next, &right, &left);
 
                 // Add the new half-edges to the appropriate lists.
                 SuperBlock_HEdgePush(rightList, right);
@@ -496,7 +496,7 @@ void HPlane_Print(HPlane* bi)
 }
 #endif
 
-void BSP_InitHPlaneInterceptAllocator(void)
+void BspBuilder_InitHPlaneInterceptAllocator(void)
 {
     if(!initedOK)
     {
@@ -505,7 +505,7 @@ void BSP_InitHPlaneInterceptAllocator(void)
     }
 }
 
-void BSP_ShutdownHPlaneInterceptAllocator(void)
+void BspBuilder_ShutdownHPlaneInterceptAllocator(void)
 {
     if(usedIntercepts)
     {

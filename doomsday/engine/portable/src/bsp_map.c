@@ -402,7 +402,7 @@ static void hardenBSP(GameMap* dest, binarytree_t* rootNode)
     }
 }
 
-void BSP_InitForNodeBuild(GameMap* map)
+void BspBuilder_InitForMap(GameMap* map)
 {
     uint i;
 
@@ -469,7 +469,7 @@ static void updateVertexLinks(GameMap* dest)
     }
 }
 
-void SaveMap(GameMap* dest, void* rootNode, Vertex*** vertexes, uint* numVertexes)
+void BspBuilder_Save(GameMap* dest, void* rootNode, Vertex*** vertexes, uint* numVertexes)
 {
     uint startTime = Sys_GetRealTime();
     binarytree_t* rn = (binarytree_t*) rootNode;
@@ -480,5 +480,5 @@ void SaveMap(GameMap* dest, void* rootNode, Vertex*** vertexes, uint* numVertexe
     hardenBSP(dest, rn);
 
     // How much time did we spend?
-    VERBOSE( Con_Message("SaveMap: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
+    VERBOSE( Con_Message("BspBuilder_Save: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
 }

@@ -101,17 +101,17 @@ typedef struct bsp_hedge_s {
 /**
  * Init the half-edge block allocator.
  */
-void BSP_InitHEdgeAllocator(void);
+void BspBuilder_InitHEdgeAllocator(void);
 
 /**
  * Shutdown the half-edge block allocator. All elements will be free'd!
  */
-void BSP_ShutdownHEdgeAllocator(void);
+void BspBuilder_ShutdownHEdgeAllocator(void);
 
 /**
  * Create a new half-edge.
  */
-bsp_hedge_t* BSP_HEdge_Create(LineDef* line, LineDef* sourceLine, Vertex* start, Vertex* end,
+bsp_hedge_t* BspBuilder_NewHEdge(LineDef* line, LineDef* sourceLine, Vertex* start, Vertex* end,
     Sector* sec, boolean back);
 
 /**
@@ -119,7 +119,7 @@ bsp_hedge_t* BSP_HEdge_Create(LineDef* line, LineDef* sourceLine, Vertex* start,
  *
  * @param hEdge  Ptr to the half-edge to be destroyed.
  */
-void BSP_HEdge_Destroy(bsp_hedge_t* hEdge);
+void BspBuilder_DeleteHEdge(bsp_hedge_t* hEdge);
 
 /**
  * Splits the given half-edge at the point (x,y). The new half-edge is returned.
@@ -135,17 +135,17 @@ void BSP_HEdge_Destroy(bsp_hedge_t* hEdge);
  *       half-edge (and/or backseg), so that future processing is not messed up
  *       by incorrect counts.
  */
-bsp_hedge_t* BSP_HEdge_Split(bsp_hedge_t* oldHEdge, double x, double y);
+bsp_hedge_t* BspBuilder_SplitHEdge(bsp_hedge_t* oldHEdge, double x, double y);
 
-void BSP_CreateVertexEdgeTip(Vertex* vert, double dx, double dy, bsp_hedge_t* back, bsp_hedge_t* front);
+void BspBuilder_NewEdgeTip(Vertex* vert, double dx, double dy, bsp_hedge_t* back, bsp_hedge_t* front);
 
-void BSP_DestroyVertexEdgeTip(struct edgetip_s* tip);
+void BspBuilder_DeleteEdgeTip(struct edgetip_s* tip);
 
 /**
  * Check whether a line with the given delta coordinates and beginning at this
  * vertex is open. Returns a sector reference if it's open, or NULL if closed
  * (void space or directly along a linedef).
  */
-Sector* BSP_VertexCheckOpen(Vertex* vert, double dx, double dy);
+Sector* BspBuilder_OpenSectorAtPoint(Vertex* vert, double dx, double dy);
 
 #endif /// LIBDENG_MAP_BSP_HEDGE

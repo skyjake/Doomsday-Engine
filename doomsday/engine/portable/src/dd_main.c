@@ -146,7 +146,7 @@ void DD_Register(void)
     I_Register();
     H_Register();
     DAM_Register();
-    BSP_Register();
+    BspBuilder_Register();
     UI_Register();
     Demo_Register();
     P_ControlRegister();

@@ -35,7 +35,7 @@
 #include "m_binarytree.h"
 #include "p_mapdata.h"
 
-void BSP_InitForNodeBuild(GameMap* map);
+void BspBuilder_InitForMap(GameMap* map);
 
 /**
  * Partition the given edge and perform any further necessary action (moving it into
@@ -50,7 +50,7 @@ void BSP_InitForNodeBuild(GameMap* map);
  *       reworked, heavily). I think it is important that both these routines follow
  *       the exact same logic.
  */
-void BSP_DivideOneHEdge(bsp_hedge_t* hEdge, HPlane* hPlane,
+void BspBuilder_DivideHEdge(bsp_hedge_t* hEdge, HPlane* hPlane,
     SuperBlock* rightList, SuperBlock* leftList);
 
 /**
@@ -62,15 +62,15 @@ void BSP_DivideOneHEdge(bsp_hedge_t* hEdge, HPlane* hPlane,
  *
  * @return  @c true= A suitable partition was found.
  */
-boolean Bsp_ChoosePartition(SuperBlock* hEdgeList, size_t depth, HPlane* hPlane);
+boolean BspBuilder_ChoosePartition(SuperBlock* hEdgeList, size_t depth, HPlane* hPlane);
 
 /**
  * Remove all the half-edges from the list, partitioning them into the left or right
  * lists based on the given partition line. Adds any intersections onto the
  * intersection list as it goes.
  */
-void BSP_PartitionHEdges(SuperBlock* hEdgeList, SuperBlock* rightList, SuperBlock* leftList,
-    HPlane* hPlane);
+void BspBuilder_PartitionHEdges(SuperBlock* hEdgeList, SuperBlock* rightList,
+    SuperBlock* leftList, HPlane* hPlane);
 
 /**
  * Takes the half-edge list and determines if it is convex, possibly converting it
@@ -92,27 +92,27 @@ void BSP_PartitionHEdges(SuperBlock* hEdgeList, SuperBlock* rightList, SuperBloc
  * @param hPlane        HPlaneIntercept list for storing any new intersections.
  * @return  @c true iff successfull.
  */
-boolean BuildNodes(SuperBlock* superblock, binarytree_t** parent, size_t depth,
-    HPlane* hPlane);
+boolean BspBuilder_BuildNodes(SuperBlock* superblock, binarytree_t** parent,
+    size_t depth, HPlane* hPlane);
 
 /**
  * Traverse the BSP tree and put all the half-edges in each BSP leaf into clockwise
  * order, and renumber their indices.
  *
- * @important This cannot be done during BuildNodes() since splitting a half-edge with
+ * @important This cannot be done during BspBuilder_BuildNodes() since splitting a half-edge with
  * a twin may insert another half-edge into that twin's list, usually in the wrong
  * place order-wise.
  */
-void ClockwiseBspTree(binarytree_t* rootNode);
+void BspBuilder_WindLeafs(binarytree_t* rootNode);
 
-void SaveMap(GameMap* dest, void* rootNode, Vertex*** vertexes, uint* numVertexes);
+void BspBuilder_Save(GameMap* dest, void* rootNode, Vertex*** vertexes, uint* numVertexes);
 
 typedef struct bspleafdata_s {
     struct bsp_hedge_s* hEdges; // Head ptr to a list of half-edges at this leaf.
 } bspleafdata_t;
 
-bspleafdata_t* BSPLeaf_Create(void);
+bspleafdata_t* BspBuilder_NewLeaf(void);
 
-void BSPLeaf_Destroy(bspleafdata_t *leaf);
+void BspBuilder_DeleteLeaf(bspleafdata_t *leaf);
 
 #endif /// LIBDENG_MAP_BSP_NODE

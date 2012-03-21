@@ -225,7 +225,7 @@ static void destroyEditableVertexes(editmap_t* map)
             while(tip)
             {
                 n = tip->ET_next;
-                BSP_DestroyVertexEdgeTip(tip);
+                BspBuilder_DeleteEdgeTip(tip);
                 tip = n;
             }
 
@@ -1696,7 +1696,7 @@ boolean MPE_End(void)
     /**
      * Build a BSP for this map.
      */
-    builtOK = BSP_Build(gamemap, &map->vertexes, &map->numVertexes);
+    builtOK = BspBuilder_Build(gamemap, &map->vertexes, &map->numVertexes);
 
     // Finish the polyobjs (after the vertexes are hardened).
     for(i = 0; i < gamemap->numPolyObjs; ++i)

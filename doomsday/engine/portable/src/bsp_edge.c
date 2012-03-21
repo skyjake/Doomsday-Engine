@@ -73,7 +73,7 @@ static __inline void freeEdgeTip(edgetip_t* tip)
     M_Free(tip);
 }
 
-void BSP_InitHEdgeAllocator(void)
+void BspBuilder_InitHEdgeAllocator(void)
 {
     if(hEdgeAllocatorInited) return; // Already been here.
 
@@ -81,7 +81,7 @@ void BSP_InitHEdgeAllocator(void)
     hEdgeAllocatorInited = true;
 }
 
-void BSP_ShutdownHEdgeAllocator(void)
+void BspBuilder_ShutdownHEdgeAllocator(void)
 {
     if(hEdgeAllocatorInited)
     {
@@ -114,7 +114,7 @@ static void updateHEdge(bsp_hedge_t *hedge)
     hedge->pPara = -hedge->pSX * hedge->pDX - hedge->pSY * hedge->pDY;
 }
 
-bsp_hedge_t* BSP_HEdge_Create(LineDef* lineDef, LineDef* sourceLineDef,
+bsp_hedge_t* BspBuilder_NewHEdge(LineDef* lineDef, LineDef* sourceLineDef,
     Vertex* start, Vertex* end, Sector* sec, boolean back)
 {
     bsp_hedge_t* hEdge = allocHEdge();
@@ -135,7 +135,7 @@ bsp_hedge_t* BSP_HEdge_Create(LineDef* lineDef, LineDef* sourceLineDef,
     return hEdge;
 }
 
-void BSP_HEdge_Destroy(bsp_hedge_t* hEdge)
+void BspBuilder_DeleteHEdge(bsp_hedge_t* hEdge)
 {
     if(hEdge)
     {
@@ -143,7 +143,7 @@ void BSP_HEdge_Destroy(bsp_hedge_t* hEdge)
     }
 }
 
-bsp_hedge_t* BSP_HEdge_Split(bsp_hedge_t* oldHEdge, double x, double y)
+bsp_hedge_t* BspBuilder_SplitHEdge(bsp_hedge_t* oldHEdge, double x, double y)
 {
     bsp_hedge_t* newHEdge;
     Vertex* newVert;
@@ -165,9 +165,9 @@ bsp_hedge_t* BSP_HEdge_Split(bsp_hedge_t* oldHEdge, double x, double y)
     newVert->buildData.refCount = (oldHEdge->twin? 4 : 2);
 
     // Compute wall_tip info.
-    BSP_CreateVertexEdgeTip(newVert, -oldHEdge->pDX, -oldHEdge->pDY,
+    BspBuilder_NewEdgeTip(newVert, -oldHEdge->pDX, -oldHEdge->pDY,
                             oldHEdge, oldHEdge->twin);
-    BSP_CreateVertexEdgeTip(newVert, oldHEdge->pDX, oldHEdge->pDY,
+    BspBuilder_NewEdgeTip(newVert, oldHEdge->pDX, oldHEdge->pDY,
                             oldHEdge->twin, oldHEdge);
 
     newHEdge = allocHEdge();
@@ -223,7 +223,7 @@ bsp_hedge_t* BSP_HEdge_Split(bsp_hedge_t* oldHEdge, double x, double y)
     return newHEdge;
 }
 
-void BSP_CreateVertexEdgeTip(Vertex* vert, double dx, double dy, bsp_hedge_t* back,
+void BspBuilder_NewEdgeTip(Vertex* vert, double dx, double dy, bsp_hedge_t* back,
     bsp_hedge_t* front)
 {
     edgetip_t* tip = allocEdgeTip();
@@ -263,7 +263,7 @@ void BSP_CreateVertexEdgeTip(Vertex* vert, double dx, double dy, bsp_hedge_t* ba
     }
 }
 
-void BSP_DestroyVertexEdgeTip(edgetip_t* tip)
+void BspBuilder_DeleteEdgeTip(edgetip_t* tip)
 {
     if(tip)
     {
@@ -271,7 +271,7 @@ void BSP_DestroyVertexEdgeTip(edgetip_t* tip)
     }
 }
 
-Sector* BSP_VertexCheckOpen(Vertex* vert, double dX, double dY)
+Sector* BspBuilder_OpenSectorAtPoint(Vertex* vert, double dX, double dY)
 {
     edgetip_t* tip;
     angle_g angle = M_SlopeToAngle(dX, dY);

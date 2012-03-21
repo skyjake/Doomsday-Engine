@@ -108,15 +108,15 @@ int HPlane_IterateIntercepts(HPlane* bi, int (*callback)(HPlaneIntercept*, void*
 void HPlaneIntercept_Print(HPlane* hPlane);
 #endif
 
-void BSP_InitHPlaneInterceptAllocator(void);
-void BSP_ShutdownHPlaneInterceptAllocator(void);
-
 /**
  * @todo the following functions do not belong in this module.
  */
 
-void Bsp_MergeIntersections(HPlane* intersections);
-void Bsp_BuildHEdgesAtIntersectionGaps(HPlane* hPlane,
+void BspBuilder_InitHPlaneInterceptAllocator(void);
+void BspBuilder_ShutdownHPlaneInterceptAllocator(void);
+
+void BspBuilder_MergeIntersections(HPlane* intersections);
+void BspBuilder_BuildHEdgesAtIntersectionGaps(HPlane* hPlane,
     struct superblock_s* rightList, struct superblock_s* leftList);
 
 #endif /// LIBDENG_MAP_BSP_INTERSECTION
