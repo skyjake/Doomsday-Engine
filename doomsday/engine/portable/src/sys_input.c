@@ -24,28 +24,27 @@
 
 #include <stdlib.h>
 
+#ifdef WIN32
+#  include "directinput.h"
+#  include "mouse_win32.h"
+#endif
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
 #include "de_misc.h"
 
+#include "mouse_qt.h" // portable
+
 #define EVBUFSIZE       64
 #define KEYBUFSIZE      32
 
-typedef struct clicker_s {
-    int down;                   // Count for down events.
-    int up;                     // Count for up events.
-} clicker_t;
-
 static boolean initOk;
-static byte useMouse; // Input enabled from a source?
+static byte useMouse; // Input enabled from mouse?
+static mouseinterface_t* iMouse; ///< Current mouse interface.
 
 static keyevent_t keyEvents[EVBUFSIZE];
 static int evHead, evTail;
-
-static int mousePosX, mousePosY; // Window position.
-static struct { int dx, dy; } mouseDelta[IMA_MAXAXES];
-static clicker_t mouseClickers[IMB_MAXBUTTONS];
 
 void I_Register(void)
 {
@@ -132,22 +131,24 @@ static void Mouse_Init(void)
     if(ArgCheck("-nomouse") || novideo)
         return;
 
-    memset(&mouseDelta, 0, sizeof(mouseDelta));
-    memset(&mouseClickers, 0, sizeof(mouseClickers));
+    assert(iMouse);
+    iMouse->init();
 
     // Init was successful.
     useMouse = true;
 }
 
-/**
- * Initialize input.
- *
- * @return              @c true, if successful.
- */
 boolean I_Init(void)
 {
     if(initOk)
         return true; // Already initialized.
+
+    // Select drivers.
+    iMouse = &qtMouse;
+#ifdef WIN32
+    iMouse = &win32Mouse;
+    DirectInput_Init();
+#endif
 
     Mouse_Init();
     Joystick_Init();
@@ -161,8 +162,15 @@ void I_Shutdown(void)
     if(!initOk)
         return; // Not initialized.
 
+    if(useMouse) iMouse->shutdown();
+    useMouse = false;
+
     Joystick_Shutdown();
     initOk = false;
+
+#ifdef WIN32
+    DirectInput_Shutdown();
+#endif
 }
 
 void Keyboard_Submit(int type, int ddKey, int native, const char* text)
@@ -204,60 +212,18 @@ boolean Mouse_IsPresent(void)
     return useMouse;
 }
 
-void Mouse_SubmitButton(int button, boolean isDown)
-{
-    if(button < 0 || button >= IMB_MAXBUTTONS) return; // Ignore...
-
-    if(isDown)
-        mouseClickers[button].down++;
-    else
-        mouseClickers[button].up++;
-}
-
-void Mouse_SubmitMotion(int axis, int deltaX, int deltaY)
-{
-    if(axis < 0 || axis >= IMA_MAXAXES) return; // Ignore...
-
-    /// @todo It would likely be better to directly post a ddevent out of this.
-
-    mouseDelta[axis].dx += deltaX;
-    mouseDelta[axis].dy += deltaY;
-}
-
-void Mouse_SubmitWindowPosition(int x, int y)
-{
-    // Absolute coordintes.
-    mouseDelta[IMA_POINTER].dx = x;
-    mouseDelta[IMA_POINTER].dy = y;
-}
-
 void Mouse_GetState(mousestate_t *state)
 {
-    int i;
-
-    memset(state, 0, sizeof(*state));
-
-    // Has the mouse been initialized?
-    if(!Mouse_IsPresent() || !initOk)
-        return;
-
-    // Position and wheel.
-    for(i = 0; i < IMA_MAXAXES; ++i)
+    if(useMouse)
     {
-        state->axis[i].x = mouseDelta[i].dx;
-        state->axis[i].y = mouseDelta[i].dy;
-
-        // Reset.
-        mouseDelta[i].dx = mouseDelta[i].dy = 0;
+        iMouse->getState(state);
     }
+}
 
-    // Button presses and releases.
-    for(i = 0; i < IMB_MAXBUTTONS; ++i)
+void Mouse_Trap(boolean enabled)
+{
+    if(useMouse)
     {
-        state->buttonDowns[i] = mouseClickers[i].down;
-        state->buttonUps[i] = mouseClickers[i].up;
-
-        // Reset counters.
-        mouseClickers[i].down = mouseClickers[i].up = 0;
-    }    
+        iMouse->trap(enabled);
+    }
 }

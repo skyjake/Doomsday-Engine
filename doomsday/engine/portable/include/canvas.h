@@ -119,7 +119,7 @@ protected:
 
 protected slots:
     void notifyInit();
-    void trackMousePosition();
+    void trackMousePosition(bool keepTracking = true);
 
 private:
     struct Instance;

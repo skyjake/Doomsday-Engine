@@ -226,6 +226,7 @@ DENG_HEADERS = \
     portable/include/materials.h \
     portable/include/materialvariant.h \
     portable/include/monitor.h \
+    portable/include/mouse_qt.h \
     portable/include/m_args.h \
     portable/include/m_bams.h \
     portable/include/m_binarytree.h \
@@ -358,6 +359,8 @@ macx {
 win32 {
     DENG_PLATFORM_HEADERS += \
         $$DENG_WIN_INCLUDE_DIR/dd_winit.h \
+        $$DENG_WIN_INCLUDE_DIR/directinput.h \
+        $$DENG_WIN_INCLUDE_DIR/mouse_win32.h \
         $$DENG_WIN_INCLUDE_DIR/resource.h
 
     INCLUDEPATH += $$DENG_WIN_INCLUDE_DIR
@@ -382,9 +385,11 @@ DENG_UNIX_SOURCES += \
 DENG_WIN32_SOURCES += \
     win32/src/dd_winit.c \
     win32/src/displaymode_win32.cpp \
+    win32/src/directinput.c \
     win32/src/sys_console.c \
     win32/src/sys_findfile.c \
-    win32/src/joystick.c
+    win32/src/joystick.c \
+    win32/src/mouse_win32.c
 
 SOURCES += \
     portable/src/abstractfile.c \
@@ -479,6 +484,7 @@ SOURCES += \
     portable/src/materials.c \
     portable/src/materialvariant.c \
     portable/src/monitor.c \
+    portable/src/mouse_qt.c \
     portable/src/m_args.c \
     portable/src/m_bams.c \
     portable/src/m_binarytree.c \

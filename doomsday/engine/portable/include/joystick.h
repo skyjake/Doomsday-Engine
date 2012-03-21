@@ -26,6 +26,8 @@
 #ifndef LIBDENG_SYSTEM_JOYSTICK_H
 #define LIBDENG_SYSTEM_JOYSTICK_H
 
+#include "dd_types.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

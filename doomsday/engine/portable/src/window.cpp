@@ -184,7 +184,7 @@ struct ddwindow_s
             {
                 if(DisplayMode_Change(mode, true /* fullscreen: capture */))
                 {
-                    widget->canvas().trapMouse();
+                    Mouse_Trap(true);
 
                     geometry.size.width = DisplayMode_Current()->width;
                     geometry.size.height = DisplayMode_Current()->height;
@@ -1402,6 +1402,12 @@ void Window_RestoreState(Window* wnd)
     wnd->setFlag(DDWF_CENTER, st.value(settingsKey(idx, "center"), true).toBool());
     wnd->setFlag(DDWF_MAXIMIZE, st.value(settingsKey(idx, "maximize"), false).toBool());
     wnd->setFlag(DDWF_FULLSCREEN, st.value(settingsKey(idx, "fullscreen"), true).toBool());
+}
+
+void Window_TrapMouse(const Window* wnd, boolean enable)
+{
+    wnd->assertWindow();
+    wnd->widget->canvas().trapMouse(enable);
 }
 
 void debugPrint(const char* msg)

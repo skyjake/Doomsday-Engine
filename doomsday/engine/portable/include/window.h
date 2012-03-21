@@ -288,6 +288,12 @@ void Window_SaveState(Window *wnd);
  */
 void Window_RestoreState(Window* wnd);
 
+/**
+ * Activates or deactivates the window mouse trap. When trapped, the mouse cursor is
+ * not visible and all mouse motions are interpreted as deltas.
+ */
+void Window_TrapMouse(const Window* wnd, boolean enable);
+
 void* Window_NativeHandle(const Window* wnd);
 
 #ifdef _DEBUG

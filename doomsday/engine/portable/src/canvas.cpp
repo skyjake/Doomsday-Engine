@@ -34,6 +34,7 @@
 
 #include "sys_opengl.h"
 #include "sys_input.h"
+#include "mouse_qt.h"
 #include "displaymode.h"
 #include "keycode.h"
 #include "canvas.h"
@@ -74,6 +75,7 @@ struct Canvas::Instance
         // Start grabbing the mouse now.
         QCursor::setPos(self->mapToGlobal(self->rect().center()));
         self->grabMouse();
+        self->setCursor(QCursor(Qt::BlankCursor));
         qApp->setOverrideCursor(QCursor(Qt::BlankCursor));
 
         QTimer::singleShot(1, self, SLOT(trackMousePosition()));
@@ -86,6 +88,7 @@ struct Canvas::Instance
         mouseGrabbed = false;
         self->releaseMouse();
         qApp->restoreOverrideCursor();
+        self->setCursor(QCursor(Qt::ArrowCursor)); // Default cursor.
     }
 };
 
@@ -210,7 +213,7 @@ void Canvas::notifyInit()
     }
 }
 
-void Canvas::trackMousePosition()
+void Canvas::trackMousePosition(bool keepTracking)
 {
     if(d->mouseGrabbed)
     {
@@ -220,7 +223,7 @@ void Canvas::trackMousePosition()
             QPoint delta = curPos - d->prevMousePos;
             if(!delta.isNull())
             {
-                Mouse_SubmitMotion(IMA_POINTER, delta.x(), delta.y());
+                Mouse_Qt_SubmitMotion(IMA_POINTER, delta.x(), delta.y());
 
                 // Keep the cursor centered.
                 QPoint mid = rect().center();
@@ -232,7 +235,7 @@ void Canvas::trackMousePosition()
         {
             d->prevMousePos = curPos;
         }
-        QTimer::singleShot(1, this, SLOT(trackMousePosition()));
+        if(keepTracking) QTimer::singleShot(1, this, SLOT(trackMousePosition()));
     }
     else
     {
@@ -324,7 +327,7 @@ void Canvas::mousePressEvent(QMouseEvent* ev)
 
     ev->accept();
 
-    Mouse_SubmitButton(translateButton(ev->button()), true);
+    Mouse_Qt_SubmitButton(translateButton(ev->button()), true);
 
     qDebug() << "Canvas: mouse press at" << ev->pos();
 }
@@ -336,11 +339,11 @@ void Canvas::mouseReleaseEvent(QMouseEvent* ev)
     if(!d->mouseGrabbed)
     {
         // Start grabbing after a click.
-        d->grabMouse();
+        Mouse_Trap(true);
         return;
     }
 
-    Mouse_SubmitButton(translateButton(ev->button()), false);
+    Mouse_Qt_SubmitButton(translateButton(ev->button()), false);
 
     qDebug() << "Canvas: mouse release at" << ev->pos();
 }

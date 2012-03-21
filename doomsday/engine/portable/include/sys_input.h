@@ -73,8 +73,22 @@ typedef struct mousestate_s {
     int buttonUps[IMB_MAXBUTTONS];      ///< Button up count.
 } mousestate_t;
 
+typedef struct mouseinterface_s {
+    int (*init)(void);  ///< Initialize the mouse.
+    void (*shutdown)(void);
+    void (*getState)(mousestate_t*);
+    void (*trap)(boolean);  ///< Enable or disable mouse grabbing.
+} mouseinterface_t;
+
 void I_Register(void);
+
+/**
+ * Initialize input.
+ *
+ * @return @c true, if successful.
+ */
 boolean I_Init(void);
+
 void I_Shutdown(void);
 
 /**
@@ -92,31 +106,7 @@ size_t Keyboard_GetEvents(keyevent_t *evbuf, size_t bufsize);
 
 boolean Mouse_IsPresent(void);
 
-/**
- * Submits a new mouse event for preprocessing. The event has likely just been
- * received from the windowing system.
- *
- * @param button  Which button.
- * @param isDown  Is the button pressed or released.
- */
-void Mouse_SubmitButton(int button, boolean isDown);
-
-/**
- * Submits a new motion event for preprocessing.
- *
- * @param axis    Which axis.
- * @param deltaX  Horizontal delta.
- * @param deltaY  Vertical delta.
- */
-void Mouse_SubmitMotion(int axis, int deltaX, int deltaY);
-
-/**
- * Submits an absolute mouse position for the UI mouse mode.
- *
- * @param x  X coordinate. 0 is at the left edge of the window.
- * @param y  Y coordinate. 0 is at the top edge of the window.
- */
-void Mouse_SubmitWindowPosition(int x, int y);
+void Mouse_Trap(boolean enabled);
 
 void Mouse_GetState(mousestate_t *state);
 
