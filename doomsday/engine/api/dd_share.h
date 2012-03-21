@@ -1237,7 +1237,7 @@ typedef struct {
 #define MN_SPRITES_NAME         "Sprites"
 /**@}*/
 
-typedef enum {
+typedef enum materialnamespaceid_e {
     MN_ANY = -1,
     MATERIALNAMESPACE_FIRST = 1000,
     MN_SYSTEM = MATERIALNAMESPACE_FIRST,

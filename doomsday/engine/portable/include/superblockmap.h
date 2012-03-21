@@ -1,5 +1,5 @@
 /**
- * @file bsp_superblock.h
+ * @file superblockmap.h
  * BSP Builder SuperBlock. @ingroup map
  *
  * Design is effectively that of a 2-dimensional kd-tree.
@@ -30,8 +30,18 @@
 #ifndef LIBDENG_MAP_BSP_SUPERBLOCK
 #define LIBDENG_MAP_BSP_SUPERBLOCK
 
-#include "de_platform.h"
-#include "bsp_edge.h"
+#include "dd_types.h"
+//#include "de_platform.h"
+//#include "bsp_edge.h"
+#include "m_misc.h"
+
+struct bsp_hedge_s;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "kdtree.h"
 
 struct superblockmap_s; // The SuperBlockmap instance (opaque).
 struct superblock_s; // The SuperBlock instance (opaque).
@@ -104,7 +114,7 @@ const AABox* SuperBlock_Bounds(SuperBlock* superblock);
  * @param superblock    SuperBlock instance.
  * @param hEdge  HEdge instance to add.
  */
-void SuperBlock_HEdgePush(SuperBlock* superblock, bsp_hedge_t* hEdge);
+void SuperBlock_HEdgePush(SuperBlock* superblock, struct bsp_hedge_s* hEdge);
 
 /**
  * Pop (unlink) the next HEdge from the FIFO list of half-edges linked
@@ -114,7 +124,7 @@ void SuperBlock_HEdgePush(SuperBlock* superblock, bsp_hedge_t* hEdge);
  *
  * @return  Previous top-most HEdge instance or @c NULL if empty.
  */
-bsp_hedge_t* SuperBlock_HEdgePop(SuperBlock* superblock);
+struct bsp_hedge_s* SuperBlock_HEdgePop(SuperBlock* superblock);
 
 /**
  * Retrieve the total number of HEdges linked in this superblock (including
@@ -143,8 +153,8 @@ uint SuperBlock_HEdgeCount(SuperBlock* superblock, boolean addReal, boolean addM
  *
  * @return  @c 0 iff iteration completed wholly.
  */
-int SuperBlock_IterateHEdges2(SuperBlock* superblock, int (*callback)(bsp_hedge_t*, void*), void* parameters);
-int SuperBlock_IterateHEdges(SuperBlock* superblock, int (*callback)(bsp_hedge_t*, void*)/*, parameters=NULL*/);
+int SuperBlock_IterateHEdges2(SuperBlock* superblock, int (*callback)(struct bsp_hedge_s*, void*), void* parameters);
+int SuperBlock_IterateHEdges(SuperBlock* superblock, int (*callback)(struct bsp_hedge_s*, void*)/*, parameters=NULL*/);
 
 /**
  * Retrieve a pointer to a sub-block of this superblock.
@@ -158,5 +168,9 @@ SuperBlock* SuperBlock_Child(SuperBlock* superblock, int left);
 
 int SuperBlock_Traverse2(SuperBlock* superblock, int (*callback)(SuperBlock*, void*), void* parameters);
 int SuperBlock_Traverse(SuperBlock* superblock, int (*callback)(SuperBlock*, void*)/*, parameters=NULL*/);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /// LIBDENG_MAP_BSP_SUPERBLOCK

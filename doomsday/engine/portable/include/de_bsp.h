@@ -26,7 +26,7 @@
 #include "bsp_main.h"
 #include "bsp_node.h"
 #include "bsp_edge.h"
-#include "bsp_superblock.h"
 #include "bsp_intersection.h"
+#include "superblockmap.h"
 
 #endif /// LIBDENG_BSP

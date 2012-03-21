@@ -31,7 +31,7 @@
 #include "de_platform.h"
 #include "bsp_edge.h"
 #include "bsp_intersection.h"
-#include "bsp_superblock.h"
+#include "superblockmap.h"
 #include "m_binarytree.h"
 #include "p_mapdata.h"
 

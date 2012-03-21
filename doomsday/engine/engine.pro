@@ -123,7 +123,6 @@ DENG_HEADERS = \
     portable/include/bsp_intersection.h \
     portable/include/bsp_main.h \
     portable/include/bsp_node.h \
-    portable/include/bsp_superblock.h \
     portable/include/bspleaf.h \
     portable/include/b_command.h \
     portable/include/b_context.h \
@@ -280,6 +279,7 @@ DENG_HEADERS = \
     portable/include/sidedef.h \
     portable/include/string.hh \
     portable/include/stringarray.h \
+    portable/include/superblockmap.h \
     portable/include/surface.h \
     portable/include/sv_def.h \
     portable/include/sv_frame.h \
@@ -397,7 +397,6 @@ SOURCES += \
     portable/src/bsp_main.c \
     portable/src/bsp_map.c \
     portable/src/bsp_node.c \
-    portable/src/bsp_superblock.c \
     portable/src/bspleaf.c \
     portable/src/cbuffer.c \
     portable/src/cl_frame.c \
@@ -547,6 +546,7 @@ SOURCES += \
     portable/src/s_wav.c \
     portable/src/size.c \
     portable/src/stringarray.cpp \
+    portable/src/superblockmap.cpp \
     portable/src/surface.c \
     portable/src/sv_frame.c \
     portable/src/sv_infine.c \
