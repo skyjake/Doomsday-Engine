@@ -899,6 +899,7 @@ static void windowFocusChanged(Canvas& canvas, bool focus)
     {
         DD_ClearEvents();
         I_ResetAllDevices();
+        Mouse_Trap(false);
     }
 
 #if 0
