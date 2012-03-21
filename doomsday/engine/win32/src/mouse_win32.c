@@ -29,6 +29,7 @@
 #include "window.h"
 
 static LPDIRECTINPUTDEVICE8 didMouse;
+static boolean mouseTrapped;
 
 static int Mouse_Win32_Init(void)
 {
@@ -73,7 +74,11 @@ static int Mouse_Win32_Init(void)
     }
 
     // Acquire the device.
-    IDirectInputDevice_Acquire(didMouse);
+    //IDirectInputDevice_Acquire(didMouse);
+    //mouseTrapped = true;
+
+    // We will be told when to trap the mouse.
+    mouseTrapped = false;
 
     // Init was successful.
     return true;
@@ -95,36 +100,37 @@ static void Mouse_Win32_GetState(mousestate_t *state)
 
     DIMOUSESTATE2   mstate;
     DWORD           i;
-    //BYTE            tries;
-    //BOOL            acquired;
+    int             tries;
+    BOOL            acquired;
     HRESULT         hr;
 
     memset(state, 0, sizeof(*state));
 
-    // Try to get the mouse state.
-/*    tries = 1;
-    acquired = false;
-    while(!acquired && tries > 0)
-    {*/
-
-    hr = IDirectInputDevice_GetDeviceState(didMouse, sizeof(mstate), &mstate);
-    if(FAILED(hr))
+    if(!mouseTrapped)
     {
+        // We are not supposed to be reading the mouse right now.
         return;
-        //acquired = true;
     }
 
-    /*        else if(tries > 0)
+    // Try to get the mouse state.
+    tries = 1;
+    acquired = false;
+    while(!acquired && tries > 0)
+    {
+        hr = IDirectInputDevice_GetDeviceState(didMouse, sizeof(mstate), &mstate);
+        if(SUCCEEDED(hr))
+        {
+            acquired = true;
+        }
+        else if(tries > 0)
         {
             // Try to reacquire.
             IDirectInputDevice_Acquire(didMouse);
             tries--;
         }
     }
-
     if(!acquired)
         return; // The operation is a failure.
-    */
 
     // Fill in the state structure.
     state->axis[IMA_POINTER].x = (int) mstate.lX;
@@ -197,6 +203,7 @@ static void Mouse_Win32_Trap(boolean enabled)
 {
     assert(didMouse);
 
+    mouseTrapped = (enabled != 0);
     if(enabled)
     {
         IDirectInputDevice_Acquire(didMouse);
