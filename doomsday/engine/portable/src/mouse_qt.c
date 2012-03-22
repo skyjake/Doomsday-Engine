@@ -21,6 +21,7 @@
  * 02110-1301 USA</small>
  */
 
+#include "dd_share.h"
 #include "sys_input.h"
 #include "window.h"
 #include <string.h>
@@ -75,7 +76,8 @@ static void Mouse_Qt_GetState(mousestate_t *state)
 
 static void Mouse_Qt_Trap(boolean enabled)
 {
-    Window_TrapMouse(Window_Main(), enabled);
+    // nothing to do -- the window will submit input to us when trapped
+    DENG_UNUSED(enabled);
 }
 
 void Mouse_Qt_SubmitButton(int button, boolean isDown)

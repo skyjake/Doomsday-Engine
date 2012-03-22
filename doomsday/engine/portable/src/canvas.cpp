@@ -70,25 +70,33 @@ struct Canvas::Instance
     {
         if(mouseGrabbed) return;
 
+        // Tell the mouse driver that the mouse is supposed to be trapped now.
         mouseGrabbed = true;
+        Mouse_Trap(true);
 
-        // Start grabbing the mouse now.
+#ifndef WIN32
+        // Start tracking the mouse now.
         QCursor::setPos(self->mapToGlobal(self->rect().center()));
         self->grabMouse();
         self->setCursor(QCursor(Qt::BlankCursor));
         qApp->setOverrideCursor(QCursor(Qt::BlankCursor));
-
         QTimer::singleShot(1, self, SLOT(trackMousePosition()));
+#endif
     }
 
     void ungrabMouse()
     {
         if(!mouseGrabbed) return;
 
-        mouseGrabbed = false;
+#ifndef WIN32
         self->releaseMouse();
         qApp->restoreOverrideCursor();
         self->setCursor(QCursor(Qt::ArrowCursor)); // Default cursor.
+#endif
+
+        // Tell the mouse driver that the mouse is untrapepd.
+        mouseGrabbed = false;
+        Mouse_Trap(false);
     }
 };
 
@@ -339,7 +347,7 @@ void Canvas::mouseReleaseEvent(QMouseEvent* ev)
     if(!d->mouseGrabbed)
     {
         // Start grabbing after a click.
-        Mouse_Trap(true);
+        trapMouse();
         return;
     }
 

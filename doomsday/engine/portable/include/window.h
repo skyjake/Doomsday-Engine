@@ -291,12 +291,18 @@ void Window_RestoreState(Window* wnd);
 /**
  * Activates or deactivates the window mouse trap. When trapped, the mouse cursor is
  * not visible and all mouse motions are interpreted as deltas.
+ *
+ * @param wnd     Window instance.
+ * @param enable  @c true, if the mouse is to be trapped in the window.
+ *
+ * @note This is a C wrapper for Canvas::trapMouse().
  */
 void Window_TrapMouse(const Window* wnd, boolean enable);
 
 void* Window_NativeHandle(const Window* wnd);
 
 #ifdef _DEBUG
+/// @todo Get rid of this; libdeng2 should do debug output.
 void debugPrint(const char* msg);
 #endif
 

@@ -184,7 +184,7 @@ struct ddwindow_s
             {
                 if(DisplayMode_Change(mode, true /* fullscreen: capture */))
                 {
-                    Mouse_Trap(true);
+                    Window_TrapMouse(this, true);
 
                     geometry.size.width = DisplayMode_Current()->width;
                     geometry.size.height = DisplayMode_Current()->height;
@@ -899,7 +899,7 @@ static void windowFocusChanged(Canvas& canvas, bool focus)
     {
         DD_ClearEvents();
         I_ResetAllDevices();
-        Mouse_Trap(false);
+        Window_TrapMouse(wnd, false);
     }
 
 #if 0
