@@ -1023,8 +1023,7 @@ span.metadata {
     font-family:Verdana, Arial, Helvetica, sans-serif;
 }
 
-.buildevent_badge,
-.buildevent_badge_active {
+.buildevent_badge {
     width:2.5em;
     margin-left:auto;
     margin-right:auto;
@@ -1040,54 +1039,63 @@ span.metadata {
     font-weight: bolder;
 }
 
-.buildevent_badge .startdate,
-.buildevent_badge_active .startdate {
+.buildevent_badge .startdate {
     position:relative;
     bottom:-.6em;
     display:block;
     margin-bottom:-1.4em;
     white-space:nowrap;
     font-size:60%;
+    left:-1em;
 }
 
 .buildevent_badge .startdate,
-.buildevent_badge a[class = "startdate"]:hover, .buildevent_badge a[class = "startdate"]:visited:hover {
+.buildevent_badge a[class = "startdate"]:hover,
+.buildevent_badge a[class = "startdate"]:visited:hover {
     color:grey;
 }
 
-.stable {
+.stable,
+.stable_disabled {
+    color:#EEE;
     background-color:#78E;
     border-color:#56D;
     box-shadow:0px -10px 5px 0px rgba(30,100,230,.5) inset;
-    color:#EEE;
 }
 
-.stable:hover, .stable:visited:hover {
+.stable:hover,
+.stable:visited:hover {
+    color:#EEE;
     background-color:#9AF;
     border-color:#56D;
 }
 
-.candidate {
+.candidate,
+.candidate_disabled {
+    color:#555;
     background-color:#FBA000;
     border-color:#D71;
     box-shadow:0px -10px 5px 0px rgba(200,80,0,.5) inset;
-    color:#555;
 }
 
-.candidate:hover, .candidate:visited:hover {
+.candidate:hover,
+.candidate:visited:hover {
+    color:#555;
     background-color:#FFC400;
     border-color:#D71;
 }
 
-.unstable {
+.unstable,
+.unstable_disabled {
+    color:#860;
     background-color:#FFE400;
     border-color:#FC6;
     box-shadow:0px -10px 5px 0px rgba(250,140,10,.5) inset;
-    color:#860;
 }
 
 .unstable:hover,
 .unstable:visited:hover {
+    color:#860;
     background-color:#FF3;
     border-color:#FC6;
 }
@@ -1101,7 +1109,7 @@ span.metadata {
 
 #buildEventLegend legend {
     margin-left:.5em;
-    margin-right:3em;
+    margin-right:4em;
 }
 
 #buildEventLegend dl {
