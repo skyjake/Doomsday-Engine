@@ -33,11 +33,12 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_bsp.h"
-//#include "de_misc.h"
 
+#include "m_misc.h"
 #include "edit_map.h"
 
 #include "bspbuilder/intersection.hh"
+#include "bspbuilder/superblockmap.hh"
 #include "bspbuilder/bspbuilder.hh"
 
 using namespace de;

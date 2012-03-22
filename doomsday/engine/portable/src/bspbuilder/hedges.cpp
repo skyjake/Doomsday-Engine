@@ -38,6 +38,8 @@
 
 #include "m_misc.h"
 
+#include "bspbuilder/hedges.hh"
+#include "bspbuilder/superblockmap.hh"
 #include "bspbuilder/bspbuilder.hh"
 
 using namespace de;

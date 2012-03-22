@@ -33,9 +33,11 @@
 #include "de_console.h"
 #include "de_bsp.h"
 #include "de_play.h"
-//#include "de_misc.h"
+
+#include "m_binarytree.h"
 
 #include "bspbuilder/intersection.hh"
+#include "bspbuilder/superblockmap.hh"
 #include "bspbuilder/bspbuilder.hh"
 
 using namespace de;

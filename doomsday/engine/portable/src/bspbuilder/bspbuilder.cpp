@@ -36,9 +36,11 @@
 #include "edit_map.h"
 
 #include "p_mapdata.h"
+#include "m_binarytree.h"
 
 #include "bspbuilder/intersection.hh"
 #include "bspbuilder/bspbuilder.hh"
+#include "bspbuilder/superblockmap.hh"
 
 using namespace de;
 

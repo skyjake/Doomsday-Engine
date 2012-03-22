@@ -22,13 +22,6 @@
 #ifndef LIBDENG_BSPBUILDER_HH
 #define LIBDENG_BSPBUILDER_HH
 
-//#include "bsp_main.h"
-#include "bspbuilder/hedges.hh"
-//#include "bspbuilder/intersection.hh"
-#include "bspbuilder/superblockmap.hh"
-
-#include "m_binarytree.h"
-
 struct hplane_s;
 struct hplanebuildinfo_s;
 struct hplaneintercept_s;
@@ -36,6 +29,10 @@ struct bsp_hedge_s;
 struct hedgeintercept_s;
 struct vertex_s;
 struct gamemap_s;
+struct binarytree_s;
+struct superblockmap_s;
+struct superblock_s;
+struct bspleafdata_s;
 
 #ifdef __cplusplus
 extern "C" {
@@ -44,9 +41,6 @@ extern "C" {
 namespace de {
 
 class BspBuilder {
-private:
-    int placeholder;
-
 public:
     BspBuilder()
     {}
@@ -55,43 +49,6 @@ public:
     {}
 
     void initForMap(struct gamemap_s* map);
-
-    bspleafdata_t* BspBuilder::createBSPLeaf(SuperBlock* hEdgeList);
-
-    boolean build(GameMap* map, Vertex*** vertexes, uint* numVertexes);
-
-    struct hplaneintercept_s* makeHPlaneIntersection(struct hplane_s* hPlane, bsp_hedge_t* hEdge, int leftSide);
-
-    struct hplaneintercept_s* makeIntersection(struct hplane_s* hPlane, bsp_hedge_t* hEdge, int leftSide);
-
-    /**
-     * Initially create all half-edges, one for each side of a linedef.
-     *
-     * @return  The list of created half-edges.
-     */
-    SuperBlockmap* createInitialHEdges(struct gamemap_s* map);
-
-    bspleafdata_t* newLeaf(void);
-
-    void deleteLeaf(bspleafdata_t* leaf);
-
-    void initHPlaneInterceptAllocator(void);
-    void shutdownHPlaneInterceptAllocator(void);
-
-    void mergeIntersections(struct hplane_s* intersections);
-
-    void buildHEdgesAtIntersectionGaps(struct hplane_s* hPlane,
-        struct superblock_s* rightList, struct superblock_s* leftList);
-
-    void addEdgeTip(struct vertex_s* vert, double dx, double dy, bsp_hedge_t* back,
-        bsp_hedge_t* front);
-
-    /**
-     * Destroy the specified intersection.
-     *
-     * @param inter  Ptr to the intersection to be destroyed.
-     */
-    void deleteHEdgeIntercept(struct hedgeintercept_s* intercept);
 
     /**
      * Build the BSP for the given map.
@@ -102,7 +59,43 @@ public:
      *
      * @return  @c true= iff completed successfully.
      */
-    //boolean build(GameMap* map, Vertex*** vertexes, uint* numVertexes);
+    boolean build(struct gamemap_s* map, struct vertex_s*** vertexes, uint* numVertexes);
+
+    void deleteLeaf(struct bspleafdata_s* leaf);
+
+    /**
+     * Destroy the specified intersection.
+     *
+     * @param inter  Ptr to the intersection to be destroyed.
+     */
+    void deleteHEdgeIntercept(struct hedgeintercept_s* intercept);
+
+private:
+    struct bspleafdata_s* createBSPLeaf(struct superblock_s* hEdgeList);
+
+    struct hplaneintercept_s* makeHPlaneIntersection(struct hplane_s* hPlane, struct bsp_hedge_s* hEdge, int leftSide);
+
+    struct hplaneintercept_s* makeIntersection(struct hplane_s* hPlane, struct bsp_hedge_s* hEdge, int leftSide);
+
+    /**
+     * Initially create all half-edges, one for each side of a linedef.
+     *
+     * @return  The list of created half-edges.
+     */
+    struct superblockmap_s* createInitialHEdges(struct gamemap_s* map);
+
+    struct bspleafdata_s* newLeaf(void);
+
+    void initHPlaneInterceptAllocator(void);
+    void shutdownHPlaneInterceptAllocator(void);
+
+    void mergeIntersections(struct hplane_s* intersections);
+
+    void buildHEdgesAtIntersectionGaps(struct hplane_s* hPlane,
+        struct superblock_s* rightList, struct superblock_s* leftList);
+
+    void addEdgeTip(struct vertex_s* vert, double dx, double dy, struct bsp_hedge_s* back,
+        struct bsp_hedge_s* front);
 
     /**
      * Init the half-edge block allocator.
@@ -119,7 +112,7 @@ public:
      *
      * @param hEdge  Ptr to the half-edge to be destroyed.
      */
-    void deleteHEdge(bsp_hedge_t* hEdge);
+    void deleteHEdge(struct bsp_hedge_s* hEdge);
 
     /**
      * Splits the given half-edge at the point (x,y). The new half-edge is returned.
@@ -131,12 +124,13 @@ public:
      *       the one we are currently splitting) must exist on a singly-linked list
      *       somewhere.
      *
-     * @note We must update the count values of any superblock that contains the
+     * @note We must update the count values of any struct superblock_s that contains the
      *       half-edge (and/or backseg), so that future processing is not messed up
      *       by incorrect counts.
      */
-    bsp_hedge_t* splitHEdge(bsp_hedge_t* oldHEdge, double x, double y);
+    struct bsp_hedge_s* splitHEdge(struct bsp_hedge_s* oldHEdge, double x, double y);
 
+public:
     /**
      * Partition the given edge and perform any further necessary action (moving it into
      * either the left list, right list, or splitting it).
@@ -151,8 +145,9 @@ public:
      *       the exact same logic.
      */
     void divideHEdge(struct bsp_hedge_s* hEdge, struct hplane_s* hPlane,
-        SuperBlock* rightList, SuperBlock* leftList);
+        struct superblock_s* rightList, struct superblock_s* leftList);
 
+private:
     /**
      * Find the best half-edge in the list to use as a partition.
      *
@@ -162,7 +157,7 @@ public:
      *
      * @return  @c true= A suitable partition was found.
      */
-    boolean choosePartition(SuperBlock* hEdgeList, size_t depth, struct hplane_s* hPlane);
+    boolean choosePartition(struct superblock_s* hEdgeList, size_t depth, struct hplane_s* hPlane);
 
     /**
      * Takes the half-edge list and determines if it is convex, possibly converting it
@@ -184,7 +179,7 @@ public:
      * @param hPlane        struct hplaneintercept_s list for storing any new intersections.
      * @return  @c true iff successfull.
      */
-    boolean buildNodes(SuperBlock* superblock, binarytree_t** parent,
+    boolean buildNodes(struct superblock_s* superblock, struct binarytree_s** parent,
         size_t depth, struct hplane_s* hPlane);
 
     /**
@@ -195,15 +190,15 @@ public:
      * a twin may insert another half-edge into that twin's list, usually in the wrong
      * place order-wise.
      */
-    void windLeafs(binarytree_t* rootNode);
+    void windLeafs(struct binarytree_s* rootNode);
 
     /**
      * Remove all the half-edges from the list, partitioning them into the left or right
      * lists based on the given partition line. Adds any intersections onto the
      * intersection list as it goes.
      */
-    void partitionHEdges(SuperBlock* hEdgeList, SuperBlock* rightList,
-        SuperBlock* leftList, struct hplane_s* hPlane);
+    void partitionHEdges(struct superblock_s* hEdgeList, struct superblock_s* rightList,
+        struct superblock_s* leftList, struct hplane_s* hPlane);
 
     void addHEdgesBetweenIntercepts(struct hplane_s* hPlane,
         struct hedgeintercept_s* start, struct hedgeintercept_s* end, struct bsp_hedge_s** right, struct bsp_hedge_s** left);
@@ -236,7 +231,7 @@ public:
     /**
      * Create a new half-edge.
      */
-    bsp_hedge_t* newHEdge(LineDef* line, LineDef* sourceLine, Vertex* start, Vertex* end,
+    struct bsp_hedge_s* newHEdge(LineDef* line, LineDef* sourceLine, Vertex* start, Vertex* end,
         Sector* sec, boolean back);
 
     struct hedgeintercept_s* hedgeInterceptByVertex(struct hplane_s* hPlane, Vertex* vertex);
