@@ -338,16 +338,53 @@ DENG_HEADERS = \
     portable/include/window.h \
     portable/include/zipfile.h
 
-# Platform-specific configuration.
-unix:!win32 {
-    DENG_PLATFORM_HEADERS += \
+INCLUDEPATH += \
+    $$DENG_INCLUDE_DIR \
+    $$DENG_API_DIR
+
+HEADERS += \
+    $$DENG_API_HEADERS \
+    $$DENG_HEADERS
+
+# Platform-specific sources.
+win32 {
+    # Windows.
+    HEADERS += \
+        $$DENG_WIN_INCLUDE_DIR/dd_winit.h \
+        $$DENG_WIN_INCLUDE_DIR/directinput.h \
+        $$DENG_WIN_INCLUDE_DIR/mouse_win32.h \
+        $$DENG_WIN_INCLUDE_DIR/resource.h
+
+    INCLUDEPATH += $$DENG_WIN_INCLUDE_DIR
+
+    SOURCES += \
+        win32/src/dd_winit.c \
+        win32/src/displaymode_win32.cpp \
+        win32/src/directinput.c \
+        win32/src/sys_console.c \
+        win32/src/sys_findfile.c \
+        win32/src/joystick.c \
+        win32/src/mouse_win32.c
+}
+else:unix {
+    # Common Unix (including Mac OS X).
+    HEADERS += \
         $$DENG_UNIX_INCLUDE_DIR/dd_uinit.h \
         $$DENG_UNIX_INCLUDE_DIR/sys_path.h
 
     INCLUDEPATH += $$DENG_UNIX_INCLUDE_DIR
+
+    SOURCES += \
+        unix/src/dd_uinit.c \
+        unix/src/joystick.c \
+        unix/src/sys_console.c \
+        unix/src/sys_findfile.c \
+        unix/src/sys_path.c
 }
+
 macx {
-    DENG_PLATFORM_HEADERS += \
+    # Mac OS X only.
+    HEADERS += \
         $$DENG_MAC_INCLUDE_DIR/MusicPlayer.h
 
     OBJECTIVE_SOURCES += \
@@ -356,41 +393,13 @@ macx {
 
     INCLUDEPATH += $$DENG_MAC_INCLUDE_DIR
 }
-win32 {
-    DENG_PLATFORM_HEADERS += \
-        $$DENG_WIN_INCLUDE_DIR/dd_winit.h \
-        $$DENG_WIN_INCLUDE_DIR/directinput.h \
-        $$DENG_WIN_INCLUDE_DIR/mouse_win32.h \
-        $$DENG_WIN_INCLUDE_DIR/resource.h
-
-    INCLUDEPATH += $$DENG_WIN_INCLUDE_DIR
+else:unix {
+    # Unix (non-Mac) only.
+    SOURCES += \
+        unix/src/displaymode_x11.cpp
 }
 
-INCLUDEPATH += \
-    $$DENG_INCLUDE_DIR \
-    $$DENG_API_DIR
-
-HEADERS += \
-    $$DENG_API_HEADERS \
-    $$DENG_PLATFORM_HEADERS \
-    $$DENG_HEADERS
-
-DENG_UNIX_SOURCES += \
-    unix/src/dd_uinit.c \
-    unix/src/joystick.c \
-    unix/src/sys_console.c \
-    unix/src/sys_findfile.c \
-    unix/src/sys_path.c
-
-DENG_WIN32_SOURCES += \
-    win32/src/dd_winit.c \
-    win32/src/displaymode_win32.cpp \
-    win32/src/directinput.c \
-    win32/src/sys_console.c \
-    win32/src/sys_findfile.c \
-    win32/src/joystick.c \
-    win32/src/mouse_win32.c
-
+# Platform-independent sources.
 SOURCES += \
     portable/src/abstractfile.c \
     portable/src/abstractresource.c \
@@ -599,14 +608,6 @@ SOURCES += \
     portable/src/writer.c \
     portable/src/zipfile.c
 
-unix {
-    SOURCES += $$DENG_UNIX_SOURCES
-}
-
-win32 {
-    SOURCES += $$DENG_WIN32_SOURCES
-}
-
 !deng_nosdlmixer {
     HEADERS += portable/include/sys_audiod_sdlmixer.h
     SOURCES += portable/src/sys_audiod_sdlmixer.c
@@ -618,7 +619,7 @@ SOURCES += ../plugins/common/src/m_fixed.c
 
 OTHER_FILES += \
     data/cphelp.txt \
-	portable/include/mapdata.hs \
+    portable/include/mapdata.hs \
     portable/include/template.h.template \
     portable/src/template.c.template
 

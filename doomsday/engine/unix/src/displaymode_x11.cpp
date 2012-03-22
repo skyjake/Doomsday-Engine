@@ -1,9 +1,10 @@
 /**
- * @file displaymode_win32.cpp
- * Win32 implementation of the DisplayMode native functionality. @ingroup gl
+ * @file displaymode_x11.cpp
+ * X11 implementation of the DisplayMode native functionality. @ingroup gl
  *
- * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
+ * Uses the XRandR extension to manipulate the display.
+ *
+ * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -23,67 +24,53 @@
 #include <QDebug>
 
 #include "de_platform.h"
-//#include <windowsx.h>
-
 #include "displaymode_native.h"
 
 #include <assert.h>
 #include <vector>
 
+#if 0
 static std::vector<DEVMODE> devModes;
 static DEVMODE currentDevMode;
-
-static DisplayMode devToDisplayMode(const DEVMODE& d)
-{
-    DisplayMode m;
-    m.width = d.dmPelsWidth;
-    m.height = d.dmPelsHeight;
-    m.depth = d.dmBitsPerPel;
-    m.refreshRate = d.dmDisplayFrequency;
-    return m;
-}
+#endif
 
 void DisplayMode_Native_Init(void)
 {
     // Let's see which modes are available.
-    for(int i = 0; ; i++)
-    {
-        DEVMODE mode;
-        memset(&mode, 0, sizeof(mode));
-        mode.dmSize = sizeof(mode);
-        if(!EnumDisplaySettings(NULL, i, &mode))
-            break; // That's all.
-
-        devModes.push_back(mode);
-    }
 
     // And which is the current mode?
-    memset(&currentDevMode, 0, sizeof(currentDevMode));
-    currentDevMode.dmSize = sizeof(currentDevMode);
-    EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &currentDevMode);
 }
 
 void DisplayMode_Native_Shutdown(void)
 {
+#if 0
     devModes.clear();
+#endif
 }
 
 int DisplayMode_Native_Count(void)
 {
+#if 0
     return devModes.size();
+#endif
 }
 
 void DisplayMode_Native_GetMode(int index, DisplayMode* mode)
 {
+#if 0
     assert(index >= 0 && index < DisplayMode_Native_Count());
     *mode = devToDisplayMode(devModes[index]);
+#endif
 }
 
 void DisplayMode_Native_GetCurrentMode(DisplayMode* mode)
 {
+#if 0
     *mode = devToDisplayMode(currentDevMode);
+#endif
 }
 
+#if 0
 static int findMode(const DisplayMode* mode)
 {
     for(int i = 0; i < DisplayMode_Native_Count(); ++i)
@@ -96,18 +83,9 @@ static int findMode(const DisplayMode* mode)
     }
     return -1;
 }
+#endif
 
 int DisplayMode_Native_Change(const DisplayMode* mode, boolean shouldCapture)
 {
-    assert(mode);
-    assert(findMode(mode) >= 0);
-
-    DEVMODE m = devModes[findMode(mode)];
-    m.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL | DM_DISPLAYFREQUENCY;
-
-    if(ChangeDisplaySettings(&m, shouldCapture? CDS_FULLSCREEN : 0) != DISP_CHANGE_SUCCESSFUL)
-        return false;
-
-    currentDevMode = m;
-    return true;
+    return false;
 }

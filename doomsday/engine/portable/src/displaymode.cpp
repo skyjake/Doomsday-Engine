@@ -30,7 +30,7 @@
 #include <set>
 #include <algorithm>
 
-#include <qDebug>
+#include <QDebug>
 
 static bool inited = false;
 
