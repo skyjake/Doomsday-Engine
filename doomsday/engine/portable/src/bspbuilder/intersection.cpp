@@ -74,21 +74,7 @@ void* HPlaneIntercept_UserData(HPlaneIntercept* bi)
     return bi->userData;
 }
 
-struct hplane_s {
-    double origin[2];
-    double angle[2];
-
-    /// The intercept list. Kept sorted by along_dist, in ascending order.
-    HPlaneIntercept* headPtr;
-
-    /// Additional information used by the node builder during construction.
-    HPlaneBuildInfo info;
-};
-
-static boolean initedOK = false;
-static HPlaneIntercept* usedIntercepts;
-
-static HPlaneIntercept* newIntercept(void)
+HPlaneIntercept* HPlaneIntercept_New(void)
 {
     HPlaneIntercept* node;
 
@@ -109,26 +95,9 @@ static HPlaneIntercept* newIntercept(void)
     return node;
 }
 
-HPlane* HPlane_New(void)
+void HPlane::clear()
 {
-    HPlane* bi = (HPlane*)M_Malloc(sizeof *bi);
-    bi->headPtr = NULL;
-    return bi;
-}
-
-void HPlane_Delete(HPlane* bi, de::BspBuilder* builder)
-{
-    assert(bi);
-    HPlane_Clear(bi, builder);
-    M_Free(bi);
-}
-
-void HPlane_Clear(HPlane* bi, de::BspBuilder* builder)
-{
-    HPlaneIntercept* node;
-    assert(bi);
-
-    node = bi->headPtr;
+    HPlaneIntercept* node = headPtr;
     while(node)
     {
         HPlaneIntercept* p = node->next;
@@ -141,125 +110,76 @@ void HPlane_Clear(HPlane* bi, de::BspBuilder* builder)
 
         node = p;
     }
-
-    bi->headPtr = NULL;
+    headPtr = NULL;
 }
 
-const double* HPlane_Origin(HPlane* bi)
+HPlane* HPlane::setOrigin(double const newOrigin[2])
 {
-    assert(bi);
-    return bi->origin;
-}
-
-double HPlane_X(HPlane* bi)
-{
-    assert(bi);
-    return bi->origin[0];
-}
-
-double HPlane_Y(HPlane* bi)
-{
-    assert(bi);
-    return bi->origin[1];
-}
-
-HPlane* HPlane_SetOrigin(HPlane* bi, double const origin[2], de::BspBuilder* builder)
-{
-    assert(bi);
-    if(origin)
+    if(newOrigin)
     {
-        bi->origin[0] = origin[0];
-        bi->origin[1] = origin[1];
-        HPlane_Clear(bi, builder);
+        partition.origin[0] = newOrigin[0];
+        partition.origin[1] = newOrigin[1];
+        clear();
     }
-    return bi;
+    return this;
 }
 
-HPlane* HPlane_SetXY(HPlane* bi, double x, double y, de::BspBuilder* builder)
+HPlane* HPlane::setXY(double newX, double newY)
 {
-    double origin[2];
-    origin[0] = x;
-    origin[1] = y;
-    return HPlane_SetOrigin(bi, origin, builder);
+    double newOrigin[2];
+    newOrigin[0] = newX;
+    newOrigin[1] = newY;
+    return setOrigin(newOrigin);
 }
 
-HPlane* HPlane_SetX(HPlane* bi, double x, de::BspBuilder* builder)
+HPlane* HPlane::setX(double newX)
 {
-    assert(bi);
-    bi->origin[0] = x;
-    HPlane_Clear(bi, builder);
-    return bi;
+    partition.origin[0] = newX;
+    clear();
+    return this;
 }
 
-HPlane* HPlane_SetY(HPlane* bi, double y, de::BspBuilder* builder)
+HPlane* HPlane::setY(double newY)
 {
-    assert(bi);
-    bi->origin[1] = y;
-    HPlane_Clear(bi, builder);
-    return bi;
+    partition.origin[1] = newY;
+    clear();
+    return this;
 }
 
-const double* HPlane_Angle(HPlane* bi)
+HPlane* HPlane::setAngle(double const newAngle[2])
 {
-    assert(bi);
-    return bi->angle;
-}
-
-double HPlane_DX(HPlane* bi)
-{
-    assert(bi);
-    return bi->angle[0];
-}
-
-double HPlane_DY(HPlane* bi)
-{
-    assert(bi);
-    return bi->angle[1];
-}
-
-HPlane* HPlane_SetAngle(HPlane* bi, double const angle[2], de::BspBuilder* builder)
-{
-    assert(bi);
-    if(angle)
+    if(newAngle)
     {
-        bi->angle[0] = angle[0];
-        bi->angle[1] = angle[1];
-        HPlane_Clear(bi, builder);
+        partition.angle[0] = newAngle[0];
+        partition.angle[1] = newAngle[1];
+        clear();
     }
-    return bi;
+    return this;
 }
 
-HPlane* HPlane_SetDXY(HPlane* bi, double x, double y, de::BspBuilder* builder)
+HPlane* HPlane::setDXY(double newDX, double newDY)
 {
-    double angle[2];
-    angle[0] = x;
-    angle[1] = y;
-    return HPlane_SetAngle(bi, angle, builder);
+    double newAngle[2];
+    newAngle[0] = newDX;
+    newAngle[1] = newDY;
+    return setAngle(newAngle);
 }
 
-HPlane* HPlane_SetDX(HPlane* bi, double dx, de::BspBuilder* builder)
+HPlane* HPlane::setDX(double newDX)
 {
-    assert(bi);
-    bi->angle[0] = dx;
-    HPlane_Clear(bi, builder);
-    return bi;
+    partition.angle[0] = newDX;
+    clear();
+    return this;
 }
 
-HPlane* HPlane_SetDY(HPlane* bi, double dy, de::BspBuilder* builder)
+HPlane* HPlane::setDY(double newDY)
 {
-    assert(bi);
-    bi->angle[1] = dy;
-    HPlane_Clear(bi, builder);
-    return bi;
+    partition.angle[1] = newDY;
+    clear();
+    return this;
 }
 
-HPlaneBuildInfo* HPlane_BuildInfo(HPlane* bi)
-{
-    assert(bi);
-    return &bi->info;
-}
-
-int HPlane_IterateIntercepts2(HPlane* bi, int (*callback)(HPlaneIntercept*, void*), void* parameters)
+int HPlane_IterateIntercepts2(de::HPlane* bi, int (*callback)(HPlaneIntercept*, void*), void* parameters)
 {
     assert(bi);
     if(callback)
@@ -274,7 +194,7 @@ int HPlane_IterateIntercepts2(HPlane* bi, int (*callback)(HPlaneIntercept*, void
     return false; // Continue iteration.
 }
 
-int HPlane_IterateIntercepts(HPlane* bi, int (*callback)(HPlaneIntercept*, void*))
+int HPlane_IterateIntercepts(de::HPlane* bi, int (*callback)(HPlaneIntercept*, void*))
 {
     return HPlane_IterateIntercepts2(bi, callback, NULL/*no parameters*/);
 }
@@ -438,27 +358,26 @@ void BspBuilder::buildHEdgesAtIntersectionGaps(HPlane* hPlane, SuperBlock* right
     }
 }
 
-HPlaneIntercept* HPlane_NewIntercept2(HPlane* bi, double distance, void* userData)
+HPlaneIntercept* HPlane::newIntercept2(double distance, void* userData)
 {
     HPlaneIntercept* after, *newNode;
-    assert(bi);
 
     /**
      * Enqueue the new intercept into the bi.
      */
-    after = bi->headPtr;
+    after = headPtr;
     while(after && after->next)
         after = after->next;
 
     while(after && distance < after->distance)
         after = after->prev;
 
-    newNode = newIntercept();
+    newNode = HPlaneIntercept_New();
     newNode->distance = distance;
     newNode->userData = userData;
 
     // Link it in.
-    newNode->next = (after? after->next : bi->headPtr);
+    newNode->next = (after? after->next : headPtr);
     newNode->prev = after;
 
     if(after)
@@ -470,18 +389,18 @@ HPlaneIntercept* HPlane_NewIntercept2(HPlane* bi, double distance, void* userDat
     }
     else
     {
-        if(bi->headPtr)
-            bi->headPtr->prev = newNode;
+        if(headPtr)
+            headPtr->prev = newNode;
 
-        bi->headPtr = newNode;
+        headPtr = newNode;
     }
 
     return newNode;
 }
 
-HPlaneIntercept* HPlane_NewIntercept(HPlane* bi, double distance)
+HPlaneIntercept* HPlane::newIntercept(double distance)
 {
-    return HPlane_NewIntercept2(bi, distance, NULL/*no user data*/);
+    return newIntercept2(distance, NULL/*no user data*/);
 }
 
 #if _DEBUG

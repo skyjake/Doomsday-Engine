@@ -32,8 +32,27 @@
 #include "bspbuilder/bspbuilder.hh"
 
 struct linedef_s;
-struct hplanebuildinfo_s;
 struct superblock_s;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+struct hplaneintercept_s;
+typedef struct hplaneintercept_s HPlaneIntercept;
+
+HPlaneIntercept* HPlaneIntercept_Next(HPlaneIntercept* intersection);
+
+HPlaneIntercept* HPlaneIntercept_Prev(HPlaneIntercept* intersection);
+
+void* HPlaneIntercept_UserData(HPlaneIntercept* intersection);
+
+static boolean initedOK = false;
+static HPlaneIntercept* usedIntercepts;
+
+HPlaneIntercept* HPlaneIntercept_New(void);
+
+namespace de {
 
 typedef struct hplanebuildinfo_s {
     struct linedef_s* lineDef; // Not NULL if partition originated from a linedef.
@@ -45,69 +64,88 @@ typedef struct hplanebuildinfo_s {
     double pLength;
 } HPlaneBuildInfo;
 
-typedef struct hplaneintercept_s HPlaneIntercept;
-
-HPlaneIntercept* HPlaneIntercept_Next(HPlaneIntercept* intersection);
-
-HPlaneIntercept* HPlaneIntercept_Prev(HPlaneIntercept* intersection);
-
-void* HPlaneIntercept_UserData(HPlaneIntercept* intersection);
+class BspBuilder;
 
 /**
- * HPlane instance. Created with HPlane_New().
+ * HPlane instance.
  */
-typedef struct hplane_s HPlane;
+class HPlane {
+public:
+    HPlane(BspBuilder* builder) :
+        builder(builder), headPtr(0)
+    {
+        partition.origin[0] = partition.origin[1] = 0;
+        partition.angle[0] = partition.angle[1] = 0;
+        memset(&info, 0, sizeof(info));
+    }
 
-/**
- * Create a new HPlane.
- */
-HPlane* HPlane_New(void);
+    ~HPlane()
+    {
+        clear();
+    }
 
-const double* HPlane_Origin(HPlane* hPlane);
-double HPlane_X(HPlane* hPlane);
-double HPlane_Y(HPlane* hPlane);
+    const double* origin() { return partition.origin; }
+    double x() { return partition.origin[0]; }
+    double y() { return partition.origin[1]; }
 
-HPlane* HPlane_SetOrigin(HPlane* hPlane, double const origin[2], de::BspBuilder* builder);
-HPlane* HPlane_SetXY(HPlane* hPlane, double x, double y, de::BspBuilder* builder);
-HPlane* HPlane_SetX(HPlane* hPlane, double x, de::BspBuilder* builder);
-HPlane* HPlane_SetY(HPlane* hPlane, double y, de::BspBuilder* builder);
+    HPlane* setOrigin(double const origin[2]);
+    HPlane* setXY(double x, double y);
+    HPlane* setX(double x);
+    HPlane* setY(double y);
 
-const double* HPlane_Angle(HPlane* hPlane);
-double HPlane_DX(HPlane* hPlane);
-double HPlane_DY(HPlane* hPlane);
+    const double* angle() { return partition.angle; }
+    double dX() { return partition.angle[0]; }
+    double dY() { return partition.angle[1]; }
 
-HPlane* HPlane_SetAngle(HPlane* hPlane, double const angle[2], de::BspBuilder* builder);
-HPlane* HPlane_SetDXY(HPlane* hPlane, double x, double y, de::BspBuilder* builder);
-HPlane* HPlane_SetDX(HPlane* hPlane, double dx, de::BspBuilder* builder);
-HPlane* HPlane_SetDY(HPlane* hPlane, double dy, de::BspBuilder* builder);
+    HPlane* setAngle(double const angle[2]);
+    HPlane* setDXY(double x, double y);
+    HPlane* setDX(double dx);
+    HPlane* setDY(double dy);
 
-HPlaneBuildInfo* HPlane_BuildInfo(HPlane* hPlane);
+    /// @fixme Should be immutable.
+    HPlaneBuildInfo* buildInfo() { return &info; }
 
-/**
- * Destroy a HPlane.
- */
-void HPlane_Delete(HPlane* hPlane, de::BspBuilder* builder);
+    /**
+     * Empty all intersections from the specified HPlane.
+     */
+    void clear();
 
-/**
- * Empty all intersections from the specified HPlane.
- */
-void HPlane_Clear(HPlane* hPlane, de::BspBuilder* builder);
+    /**
+     * Insert a point at the given intersection into the intersection list.
+     *
+     * @todo Ownership of the user data should NOT be passed to this object.
+     *
+     * @param userData  Ownership passes to HPlane.
+     */
+    HPlaneIntercept* newIntercept2(double distance, void* userData);
+    HPlaneIntercept* newIntercept(double distance/*, userData=NULL*/);
 
-/**
- * Insert a point at the given intersection into the intersection list.
- *
- * @todo Ownership of the user data should NOT be passed to this object.
- *
- * @param userData  Ownership passes to HPlane.
- */
-HPlaneIntercept* HPlane_NewIntercept2(HPlane* hPlane, double distance, void* userData);
-HPlaneIntercept* HPlane_NewIntercept(HPlane* hPlane, double distance/*, userData=NULL*/);
+private:
+    /// BspBuilder instance which produced this.
+    /// @todo Remove me.
+    BspBuilder* builder;
 
-int HPlane_IterateIntercepts2(HPlane* bi, int (*callback)(HPlaneIntercept*, void*), void* parameters);
-int HPlane_IterateIntercepts(HPlane* bi, int (*callback)(HPlaneIntercept*, void*)/*, parameters=NULL*/);
+    struct {
+        double origin[2];
+        double angle[2];
+    } partition;
 
-#if _DEBUG
-void HPlaneIntercept_Print(HPlane* hPlane);
+public:
+    /// The intercept list. Kept sorted by along_dist, in ascending order.
+    HPlaneIntercept* headPtr;
+
+private:
+    /// Additional information used by the node builder during construction.
+    HPlaneBuildInfo info;
+};
+
+} // namespace de
+
+int HPlane_IterateIntercepts2(de::HPlane* bi, int (*callback)(HPlaneIntercept*, void*), void* parameters);
+int HPlane_IterateIntercepts(de::HPlane* bi, int (*callback)(HPlaneIntercept*, void*)/*, parameters=NULL*/);
+
+#ifdef __cplusplus
+} // extern "C"
 #endif
 
 #endif /// LIBDENG_MAP_BSP_INTERSECTION

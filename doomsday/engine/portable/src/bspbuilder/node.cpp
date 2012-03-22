@@ -718,12 +718,12 @@ boolean BspBuilder::choosePartition(SuperBlock* hEdgeList, size_t /*depth*/, HPl
         //               best->v[1]->V_pos[VX], best->v[1]->V_pos[VY]));
 
         // Reconfigure the partition for the next round of HEdge sorting.
-        HPlane_SetXY(partition, line->L_v(best->side)->buildData.pos[VX],
-                                line->L_v(best->side)->buildData.pos[VY], this);
-        HPlane_SetDXY(partition, line->L_v(best->side^1)->buildData.pos[VX] - line->L_v(best->side)->buildData.pos[VX],
-                                 line->L_v(best->side^1)->buildData.pos[VY] - line->L_v(best->side)->buildData.pos[VY], this);
+        partition->setXY(line->L_v(best->side)->buildData.pos[VX],
+                         line->L_v(best->side)->buildData.pos[VY]);
+        partition->setDXY(line->L_v(best->side^1)->buildData.pos[VX] - line->L_v(best->side)->buildData.pos[VX],
+                          line->L_v(best->side^1)->buildData.pos[VY] - line->L_v(best->side)->buildData.pos[VY]);
 
-        { HPlaneBuildInfo* info = HPlane_BuildInfo(partition);
+        { HPlaneBuildInfo* info = partition->buildInfo();
         info->lineDef = best->lineDef;
         info->sourceLineDef = best->sourceLineDef;
         info->pDX = best->pDX;
@@ -761,12 +761,12 @@ HPlaneIntercept* BspBuilder::makeHPlaneIntersection(HPlane* hPlane, bsp_hedge_t*
     inter = hplaneInterceptByVertex(hPlane, vertex);
     if(inter) return inter;
 
-    info = HPlane_BuildInfo(hPlane);
+    info = hPlane->buildInfo();
     distance = M_ParallelDist(info->pDX, info->pDY, info->pPara, info->pLength,
                               vertex->buildData.pos[VX], vertex->buildData.pos[VY]);
 
     hEdgeIntercept = newHEdgeIntercept(vertex, info, (hEdge->lineDef && lineDefHasSelfRef(hEdge->lineDef)));
-    return HPlane_NewIntercept2(hPlane, distance, hEdgeIntercept);
+    return hPlane->newIntercept2(distance, hEdgeIntercept);
 }
 
 HPlaneIntercept* BspBuilder::makeIntersection(HPlane* hPlane, bsp_hedge_t* hEdge, int leftSide)
@@ -819,7 +819,7 @@ static __inline void calcIntersection(bsp_hedge_t* hEdge, const HPlaneBuildInfo*
 void BspBuilder::divideHEdge(bsp_hedge_t* hEdge, HPlane* partition, SuperBlock* rightList,
     SuperBlock* leftList)
 {
-    const HPlaneBuildInfo* info = HPlane_BuildInfo(partition);
+    const HPlaneBuildInfo* info = partition->buildInfo();
     bsp_hedge_t* newHEdge;
     double x, y;
     double a, b;
@@ -1006,7 +1006,7 @@ boolean BspBuilder::buildNodes(SuperBlock* superblock, binarytree_t** parent, si
     // Divide the half-edges into two lists: left & right.
     partitionHEdges(superblock, SuperBlockmap_Root(hEdgeSet[RIGHT]),
                                 SuperBlockmap_Root(hEdgeSet[LEFT]), hPlane);
-    HPlane_Clear(hPlane, this);
+    hPlane->clear();
 
     node = (BspNode*)M_Calloc(sizeof *node);
     *parent = BinaryTree_Create(node);
@@ -1014,10 +1014,10 @@ boolean BspBuilder::buildNodes(SuperBlock* superblock, binarytree_t** parent, si
     SuperBlockmap_FindHEdgeBounds(hEdgeSet[LEFT],  &node->aaBox[LEFT]);
     SuperBlockmap_FindHEdgeBounds(hEdgeSet[RIGHT], &node->aaBox[RIGHT]);
 
-    node->partition.x = HPlane_X(hPlane);
-    node->partition.y = HPlane_Y(hPlane);
-    node->partition.dX = HPlane_DX(hPlane);
-    node->partition.dY = HPlane_DY(hPlane);
+    node->partition.x = hPlane->x();
+    node->partition.y = hPlane->y();
+    node->partition.dX = hPlane->dX();
+    node->partition.dY = hPlane->dY();
 
     builtOK = buildNodes(SuperBlockmap_Root(hEdgeSet[RIGHT]), &subTree, depth + 1, hPlane);
     BinaryTree_SetChild(*parent, RIGHT, subTree);

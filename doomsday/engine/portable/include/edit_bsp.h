@@ -58,7 +58,6 @@
 
 struct hplane_s;
 struct superblock_s;
-struct hplanebuildinfo_s;
 struct hplaneintercept_s;
 struct bsp_hedge_s;
 struct edgetip_s;

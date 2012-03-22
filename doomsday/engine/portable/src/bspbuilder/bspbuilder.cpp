@@ -336,14 +336,14 @@ boolean BspBuilder::build(GameMap* map, Vertex*** vertexes, uint* numVertexes)
     uint buildStartTime = Sys_GetRealTime();
     HPlane* hPlane;
 
-    hPlane = HPlane_New();
+    hPlane = new HPlane(this);
 
     // Recursively create nodes.
     rootNode = NULL;
     builtOK = buildNodes(SuperBlockmap_Root(sbmap), &rootNode, 0, hPlane);
 
     // The intersection list is no longer needed.
-    HPlane_Delete(hPlane, this);
+    delete hPlane;
 
     // How much time did we spend?
     VERBOSE2( Con_Message("BspBuilder::buildNodes: Done in %.2f seconds.\n", (Sys_GetRealTime() - buildStartTime) / 1000.0f));
@@ -429,7 +429,7 @@ HPlaneIntercept* BspBuilder::hplaneInterceptByVertex(HPlane* intersections, Vert
     return parm.found;
 }
 
-HEdgeIntercept* BspBuilder::hedgeInterceptByVertex(struct hplane_s* hPlane, Vertex* vertex)
+HEdgeIntercept* BspBuilder::hedgeInterceptByVertex(HPlane* hPlane, Vertex* vertex)
 {
     HPlaneIntercept* hpi = hplaneInterceptByVertex(hPlane, vertex);
     if(!hpi) return NULL; // Not found.
@@ -444,7 +444,7 @@ void BspBuilder::addHEdgesBetweenIntercepts(HPlane* hPlane,
     if(!hPlane || !start || !end)
         Con_Error("BspBuilder::addHEdgesBetweenIntercepts: Invalid arguments.");
 
-    info = HPlane_BuildInfo(hPlane);
+    info = hPlane->buildInfo();
 
     // Create the half-edge pair.
     // Leave 'linedef' field as NULL as these are not linedef-linked.
@@ -491,7 +491,7 @@ void BspBuilder::addMiniHEdges(HPlane* hPlane, SuperBlock* rightList,
     buildHEdgesAtIntersectionGaps(hPlane, rightList, leftList);
 }
 
-HEdgeIntercept* BspBuilder::newHEdgeIntercept(Vertex* vert, const struct hplanebuildinfo_s* part,
+HEdgeIntercept* BspBuilder::newHEdgeIntercept(Vertex* vert, const HPlaneBuildInfo* part,
     boolean selfRef)
 {
     HEdgeIntercept* inter = (HEdgeIntercept*)M_Calloc(sizeof *inter);

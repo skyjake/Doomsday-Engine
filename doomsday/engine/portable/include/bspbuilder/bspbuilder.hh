@@ -26,10 +26,9 @@
 #include "dd_zone.h"
 
 #include "bspbuilder/hedges.hh"
+#include "bspbuilder/intersection.hh"
 
-struct hplane_s;
-struct hplanebuildinfo_s;
-struct hplaneintercept_s;
+//struct hplaneintercept_s;
 struct hedgeintercept_s;
 struct vertex_s;
 struct gamemap_s;
@@ -46,6 +45,9 @@ namespace de {
 
 /// Number of bsp_hedge_t to block allocate.
 #define BSPBUILDER_HEDGE_ALLOCATOR_BLOCKSIZE   512
+
+class HPlane;
+struct hplanebuildinfo_s;
 
 class BspBuilder {
 public:
@@ -99,9 +101,9 @@ private:
 
     struct bspleafdata_s* createBSPLeaf(struct superblock_s* hEdgeList);
 
-    struct hplaneintercept_s* makeHPlaneIntersection(struct hplane_s* hPlane, bsp_hedge_t* hEdge, int leftSide);
+    struct hplaneintercept_s* makeHPlaneIntersection(HPlane* hPlane, bsp_hedge_t* hEdge, int leftSide);
 
-    struct hplaneintercept_s* makeIntersection(struct hplane_s* hPlane, bsp_hedge_t* hEdge, int leftSide);
+    struct hplaneintercept_s* makeIntersection(HPlane* hPlane, bsp_hedge_t* hEdge, int leftSide);
 
     /**
      * Initially create all half-edges, one for each side of a linedef.
@@ -115,9 +117,9 @@ private:
     void initHPlaneInterceptAllocator(void);
     void shutdownHPlaneInterceptAllocator(void);
 
-    void mergeIntersections(struct hplane_s* intersections);
+    void mergeIntersections(HPlane* intersections);
 
-    void buildHEdgesAtIntersectionGaps(struct hplane_s* hPlane,
+    void buildHEdgesAtIntersectionGaps(HPlane* hPlane,
         struct superblock_s* rightList, struct superblock_s* leftList);
 
     void addEdgeTip(struct vertex_s* vert, double dx, double dy, bsp_hedge_t* back,
@@ -160,7 +162,7 @@ public:
      *       reworked, heavily). I think it is important that both these routines follow
      *       the exact same logic.
      */
-    void divideHEdge(bsp_hedge_t* hEdge, struct hplane_s* hPlane,
+    void divideHEdge(bsp_hedge_t* hEdge, HPlane* hPlane,
         struct superblock_s* rightList, struct superblock_s* leftList);
 
 private:
@@ -173,7 +175,7 @@ private:
      *
      * @return  @c true= A suitable partition was found.
      */
-    boolean choosePartition(struct superblock_s* hEdgeList, size_t depth, struct hplane_s* hPlane);
+    boolean choosePartition(struct superblock_s* hEdgeList, size_t depth, HPlane* hPlane);
 
     /**
      * Takes the half-edge list and determines if it is convex, possibly converting it
@@ -196,7 +198,7 @@ private:
      * @return  @c true iff successfull.
      */
     boolean buildNodes(struct superblock_s* superblock, struct binarytree_s** parent,
-        size_t depth, struct hplane_s* hPlane);
+        size_t depth, HPlane* hPlane);
 
     /**
      * Traverse the BSP tree and put all the half-edges in each BSP leaf into clockwise
@@ -214,9 +216,9 @@ private:
      * intersection list as it goes.
      */
     void partitionHEdges(struct superblock_s* hEdgeList, struct superblock_s* rightList,
-        struct superblock_s* leftList, struct hplane_s* hPlane);
+        struct superblock_s* leftList, HPlane* hPlane);
 
-    void addHEdgesBetweenIntercepts(struct hplane_s* hPlane,
+    void addHEdgesBetweenIntercepts(HPlane* hPlane,
         struct hedgeintercept_s* start, struct hedgeintercept_s* end, bsp_hedge_t** right, bsp_hedge_t** left);
 
     /**
@@ -225,7 +227,7 @@ private:
      *
      * @note All the intersections in the hPlane will be free'd back into the quick-alloc list.
      */
-    void addMiniHEdges(struct hplane_s* hPlane, struct superblock_s* rightList,
+    void addMiniHEdges(HPlane* hPlane, struct superblock_s* rightList,
                        struct superblock_s* leftList);
 
     /**
@@ -236,12 +238,12 @@ private:
      *
      * @return  Ptr to the found intercept, else @c NULL;
      */
-    struct hplaneintercept_s* hplaneInterceptByVertex(struct hplane_s* hPlane, Vertex* vertex);
+    struct hplaneintercept_s* hplaneInterceptByVertex(HPlane* hPlane, Vertex* vertex);
 
     /**
      * Create a new intersection.
      */
-    struct hedgeintercept_s* newHEdgeIntercept(Vertex* vertex,
+    struct hedgeintercept_s* newHEdgeIntercept(struct vertex_s* vertex,
         const struct hplanebuildinfo_s* partition, boolean lineDefIsSelfReferencing);
 
     /**
@@ -250,7 +252,7 @@ private:
     bsp_hedge_t* newHEdge(LineDef* line, LineDef* sourceLine, Vertex* start, Vertex* end,
         Sector* sec, boolean back);
 
-    struct hedgeintercept_s* hedgeInterceptByVertex(struct hplane_s* hPlane, Vertex* vertex);
+    struct hedgeintercept_s* hedgeInterceptByVertex(HPlane* hPlane, Vertex* vertex);
 
     /**
      * Check whether a line with the given delta coordinates and beginning at this
