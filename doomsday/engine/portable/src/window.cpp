@@ -51,6 +51,12 @@
 
 #include <QDebug>
 
+#ifdef MACOSX
+static const int POST_MODE_CHANGE_WAIT_BEFORE_LAYOUT_UPDATE = 100; // ms
+#else
+static const int POST_MODE_CHANGE_WAIT_BEFORE_UPDATE = 1; // ms
+#endif
+
 /// Used to determine the valid region for windows on the desktop.
 /// A window should never go fully (or nearly fully) outside the desktop.
 static const int DESKTOP_EDGE_GRACE = 30; // pixels
@@ -226,7 +232,7 @@ struct ddwindow_s
 
                 // The window is already visible, so let's allow a mode change to resolve itself
                 // before we go changing the window.
-                LegacyCore_Timer(de2LegacyCore, 100, updateMainWindowLayout);
+                LegacyCore_Timer(de2LegacyCore, POST_MODE_CHANGE_WAIT_BEFORE_UPDATE, updateMainWindowLayout);
             }
             else
             {
@@ -257,7 +263,7 @@ struct ddwindow_s
                     if(modeChanged)
                     {
                         needShowNormal = true;
-                        LegacyCore_Timer(de2LegacyCore, 100, updateMainWindowLayout);
+                        LegacyCore_Timer(de2LegacyCore, POST_MODE_CHANGE_WAIT_BEFORE_UPDATE, updateMainWindowLayout);
                         /// @todo  Save the correct xy coordinate for the window and use them here.
                         return;
                     }
@@ -382,6 +388,7 @@ struct ddwindow_s
                 break;
 #undef IS_NONZERO
             case DDWA_COLOR_DEPTH_BITS:
+                qDebug() << attribs[i] << colorDepthBits;
                 if(attribs[i] != colorDepthBits)
                 {
                     colorDepthBits = attribs[i];
@@ -406,6 +413,7 @@ struct ddwindow_s
         if(!wasFullscreen && !(flags & DDWF_FULLSCREEN) && !isGeometryValid())
         {
             // We can't place the window completely outside the desktop.
+            Con_Message("Window geometry is unacceptable.\n");
             return false;
         }
 
@@ -472,11 +480,9 @@ static void updateMainWindowLayout(void)
         // For some interesting reason, we have to scale the window twice in fullscreen mode
         // or the resulting layout won't be correct.
         win->widget->setGeometry(QRect(0, 0, 320, 240));
-#endif
 
         win->widget->setGeometry(QRect(0, 0, win->geometry.size.width, win->geometry.size.height));
 
-#ifdef MACOSX
         DisplayMode_Native_Raise(Window_NativeHandle(win));
 #endif
     }
@@ -1400,6 +1406,7 @@ void Window_RestoreState(Window* wnd)
     wnd->geometry.size.width = geom.width();
     wnd->geometry.size.height = geom.height();
     wnd->colorDepthBits = st.value(settingsKey(idx, "colorDepth"), 32).toInt();
+    qDebug() << "Window restored depth" << wnd->colorDepthBits;
     wnd->setFlag(DDWF_CENTER, st.value(settingsKey(idx, "center"), true).toBool());
     wnd->setFlag(DDWF_MAXIMIZE, st.value(settingsKey(idx, "maximize"), false).toBool());
     wnd->setFlag(DDWF_FULLSCREEN, st.value(settingsKey(idx, "fullscreen"), true).toBool());
