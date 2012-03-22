@@ -119,10 +119,10 @@ DENG_HEADERS = \
     portable/include/blockmap.h \
     portable/include/blockmapvisual.h \
     portable/include/blockset.h \
-    portable/include/bsp_edge.h \
-    portable/include/bsp_intersection.h \
-    portable/include/bsp_main.h \
-    portable/include/bsp_node.h \
+    portable/include/bspbuilder/bspbuilder.hh \
+    portable/include/bspbuilder/hedges.hh \
+    portable/include/bspbuilder/intersection.hh \
+    portable/include/bspbuilder/superblockmap.hh \
     portable/include/bspleaf.h \
     portable/include/b_command.h \
     portable/include/b_context.h \
@@ -174,6 +174,7 @@ DENG_HEADERS = \
     portable/include/de_system.h \
     portable/include/de_ui.h \
     portable/include/edit_bias.h \
+    portable/include/edit_bsp.h \
     portable/include/edit_map.h \
     portable/include/filedirectory.h \
     portable/include/filelist.h \
@@ -279,7 +280,6 @@ DENG_HEADERS = \
     portable/include/sidedef.h \
     portable/include/string.hh \
     portable/include/stringarray.h \
-    portable/include/superblockmap.h \
     portable/include/surface.h \
     portable/include/sv_def.h \
     portable/include/sv_frame.h \
@@ -392,11 +392,11 @@ SOURCES += \
     portable/src/b_util.c \
     portable/src/blockmap.c \
     portable/src/blockmapvisual.c \
-    portable/src/bsp_edge.c \
-    portable/src/bsp_intersection.c \
-    portable/src/bsp_main.c \
-    portable/src/bsp_map.c \
-    portable/src/bsp_node.c \
+    portable/src/bspbuilder/bspbuilder.cpp \
+    portable/src/bspbuilder/hedges.cpp \
+    portable/src/bspbuilder/intersection.cpp \
+    portable/src/bspbuilder/node.cpp \
+    portable/src/bspbuilder/superblockmap.cpp \
     portable/src/bspleaf.c \
     portable/src/cbuffer.c \
     portable/src/cl_frame.c \
@@ -429,6 +429,7 @@ SOURCES += \
     portable/src/dgl_common.c \
     portable/src/dgl_draw.c \
     portable/src/edit_bias.c \
+    portable/src/edit_bsp.c \
     portable/src/edit_map.c \
     portable/src/filedirectory.c \
     portable/src/filelist.c \
@@ -546,7 +547,6 @@ SOURCES += \
     portable/src/s_wav.c \
     portable/src/size.c \
     portable/src/stringarray.cpp \
-    portable/src/superblockmap.cpp \
     portable/src/surface.c \
     portable/src/sv_frame.c \
     portable/src/sv_infine.c \

@@ -34,7 +34,13 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_bsp.h"
-#include "de_misc.h"
+#include "de_edit.h"
+
+#include "m_misc.h"
+
+#include "bspbuilder/bspbuilder.hh"
+
+using namespace de;
 
 static zblockset_t* hEdgeBlockSet;
 static boolean hEdgeAllocatorInited = false;
@@ -44,12 +50,12 @@ static __inline bsp_hedge_t* allocHEdge(void)
     if(hEdgeAllocatorInited)
     {
         // Use the block allocator.
-        bsp_hedge_t* hEdge = ZBlockSet_Allocate(hEdgeBlockSet);
+        bsp_hedge_t* hEdge = (bsp_hedge_t*)ZBlockSet_Allocate(hEdgeBlockSet);
         memset(hEdge, 0, sizeof(bsp_hedge_t));
         return hEdge;
     }
 
-    return M_Calloc(sizeof(bsp_hedge_t));
+    return (bsp_hedge_t*)M_Calloc(sizeof(bsp_hedge_t));
 }
 
 static __inline void freeHEdge(bsp_hedge_t* hEdge)
@@ -63,17 +69,7 @@ static __inline void freeHEdge(bsp_hedge_t* hEdge)
     M_Free(hEdge);
 }
 
-static __inline edgetip_t* allocEdgeTip(void)
-{
-    return M_Calloc(sizeof(edgetip_t));
-}
-
-static __inline void freeEdgeTip(edgetip_t* tip)
-{
-    M_Free(tip);
-}
-
-void BspBuilder_InitHEdgeAllocator(void)
+void BspBuilder::initHEdgeAllocator(void)
 {
     if(hEdgeAllocatorInited) return; // Already been here.
 
@@ -81,7 +77,7 @@ void BspBuilder_InitHEdgeAllocator(void)
     hEdgeAllocatorInited = true;
 }
 
-void BspBuilder_ShutdownHEdgeAllocator(void)
+void BspBuilder::shutdownHEdgeAllocator(void)
 {
     if(hEdgeAllocatorInited)
     {
@@ -114,7 +110,7 @@ static void updateHEdge(bsp_hedge_t *hedge)
     hedge->pPara = -hedge->pSX * hedge->pDX - hedge->pSY * hedge->pDY;
 }
 
-bsp_hedge_t* BspBuilder_NewHEdge(LineDef* lineDef, LineDef* sourceLineDef,
+bsp_hedge_t* BspBuilder::newHEdge(LineDef* lineDef, LineDef* sourceLineDef,
     Vertex* start, Vertex* end, Sector* sec, boolean back)
 {
     bsp_hedge_t* hEdge = allocHEdge();
@@ -135,7 +131,7 @@ bsp_hedge_t* BspBuilder_NewHEdge(LineDef* lineDef, LineDef* sourceLineDef,
     return hEdge;
 }
 
-void BspBuilder_DeleteHEdge(bsp_hedge_t* hEdge)
+void BspBuilder::deleteHEdge(bsp_hedge_t* hEdge)
 {
     if(hEdge)
     {
@@ -143,7 +139,7 @@ void BspBuilder_DeleteHEdge(bsp_hedge_t* hEdge)
     }
 }
 
-bsp_hedge_t* BspBuilder_SplitHEdge(bsp_hedge_t* oldHEdge, double x, double y)
+bsp_hedge_t* BspBuilder::splitHEdge(bsp_hedge_t* oldHEdge, double x, double y)
 {
     bsp_hedge_t* newHEdge;
     Vertex* newVert;
@@ -165,10 +161,8 @@ bsp_hedge_t* BspBuilder_SplitHEdge(bsp_hedge_t* oldHEdge, double x, double y)
     newVert->buildData.refCount = (oldHEdge->twin? 4 : 2);
 
     // Compute wall_tip info.
-    BspBuilder_NewEdgeTip(newVert, -oldHEdge->pDX, -oldHEdge->pDY,
-                            oldHEdge, oldHEdge->twin);
-    BspBuilder_NewEdgeTip(newVert, oldHEdge->pDX, oldHEdge->pDY,
-                            oldHEdge->twin, oldHEdge);
+    addEdgeTip(newVert, -oldHEdge->pDX, -oldHEdge->pDY, oldHEdge, oldHEdge->twin);
+    addEdgeTip(newVert,  oldHEdge->pDX,  oldHEdge->pDY, oldHEdge->twin, oldHEdge);
 
     newHEdge = allocHEdge();
 
@@ -223,64 +217,16 @@ bsp_hedge_t* BspBuilder_SplitHEdge(bsp_hedge_t* oldHEdge, double x, double y)
     return newHEdge;
 }
 
-void BspBuilder_NewEdgeTip(Vertex* vert, double dx, double dy, bsp_hedge_t* back,
-    bsp_hedge_t* front)
-{
-    edgetip_t* tip = allocEdgeTip();
-    edgetip_t* after;
-
-    tip->angle = M_SlopeToAngle(dx, dy);
-    tip->ET_edge[BACK]  = back;
-    tip->ET_edge[FRONT] = front;
-
-    // Find the correct place (order is increasing angle).
-    for(after = vert->buildData.tipSet; after && after->ET_next;
-        after = after->ET_next);
-
-    while(after && tip->angle + ANG_EPSILON < after->angle)
-        after = after->ET_prev;
-
-    // Link it in.
-    if(after)
-        tip->ET_next = after->ET_next;
-    else
-        tip->ET_next = vert->buildData.tipSet;
-    tip->ET_prev = after;
-
-    if(after)
-    {
-        if(after->ET_next)
-            after->ET_next->ET_prev = tip;
-
-        after->ET_next = tip;
-    }
-    else
-    {
-        if(vert->buildData.tipSet)
-            vert->buildData.tipSet->ET_prev = tip;
-
-        vert->buildData.tipSet = tip;
-    }
-}
-
-void BspBuilder_DeleteEdgeTip(edgetip_t* tip)
-{
-    if(tip)
-    {
-        freeEdgeTip(tip);
-    }
-}
-
-Sector* BspBuilder_OpenSectorAtPoint(Vertex* vert, double dX, double dY)
+Sector* BspBuilder::openSectorAtPoint(Vertex* vert, double dX, double dY)
 {
     edgetip_t* tip;
-    angle_g angle = M_SlopeToAngle(dX, dY);
+    double angle = M_SlopeToAngle(dX, dY);
 
     // First check whether there's a wall_tip that lies in the exact direction of
     // the given direction (which is relative to the vertex).
     for(tip = vert->buildData.tipSet; tip; tip = tip->ET_next)
     {
-        angle_g diff = fabs(tip->angle - angle);
+        double diff = fabs(tip->angle - angle);
 
         if(diff < ANG_EPSILON || diff > (360.0 - ANG_EPSILON))
         {   // Yes, found one.

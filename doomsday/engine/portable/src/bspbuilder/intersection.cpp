@@ -33,7 +33,14 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_bsp.h"
-#include "de_misc.h"
+//#include "de_misc.h"
+
+#include "edit_map.h"
+
+#include "bspbuilder/intersection.hh"
+#include "bspbuilder/bspbuilder.hh"
+
+using namespace de;
 
 struct hplaneintercept_s {
     struct hplaneintercept_s* next;
@@ -92,7 +99,7 @@ static HPlaneIntercept* newIntercept(void)
     else
     {
         // Need to allocate another.
-        node = M_Malloc(sizeof(HPlaneIntercept));
+        node = (HPlaneIntercept*)M_Malloc(sizeof *node);
     }
 
     node->userData = NULL;
@@ -103,19 +110,19 @@ static HPlaneIntercept* newIntercept(void)
 
 HPlane* HPlane_New(void)
 {
-    HPlane* bi = M_Malloc(sizeof(HPlane));
+    HPlane* bi = (HPlane*)M_Malloc(sizeof *bi);
     bi->headPtr = NULL;
     return bi;
 }
 
-void HPlane_Delete(HPlane* bi)
+void HPlane_Delete(HPlane* bi, de::BspBuilder* builder)
 {
     assert(bi);
-    HPlane_Clear(bi);
+    HPlane_Clear(bi, builder);
     M_Free(bi);
 }
 
-void HPlane_Clear(HPlane* bi)
+void HPlane_Clear(HPlane* bi, de::BspBuilder* builder)
 {
     HPlaneIntercept* node;
     assert(bi);
@@ -125,7 +132,7 @@ void HPlane_Clear(HPlane* bi)
     {
         HPlaneIntercept* p = node->next;
 
-        BspBuilder_DeleteHEdgeIntercept(node->userData);
+        builder->deleteHEdgeIntercept((HEdgeIntercept*)node->userData);
 
         // Move the bi node to the unused node bi.
         node->next = usedIntercepts;
@@ -155,39 +162,39 @@ double HPlane_Y(HPlane* bi)
     return bi->origin[1];
 }
 
-HPlane* HPlane_SetOrigin(HPlane* bi, double const origin[2])
+HPlane* HPlane_SetOrigin(HPlane* bi, double const origin[2], de::BspBuilder* builder)
 {
     assert(bi);
     if(origin)
     {
         bi->origin[0] = origin[0];
         bi->origin[1] = origin[1];
-        HPlane_Clear(bi);
+        HPlane_Clear(bi, builder);
     }
     return bi;
 }
 
-HPlane* HPlane_SetXY(HPlane* bi, double x, double y)
+HPlane* HPlane_SetXY(HPlane* bi, double x, double y, de::BspBuilder* builder)
 {
     double origin[2];
     origin[0] = x;
     origin[1] = y;
-    return HPlane_SetOrigin(bi, origin);
+    return HPlane_SetOrigin(bi, origin, builder);
 }
 
-HPlane* HPlane_SetX(HPlane* bi, double x)
+HPlane* HPlane_SetX(HPlane* bi, double x, de::BspBuilder* builder)
 {
     assert(bi);
     bi->origin[0] = x;
-    HPlane_Clear(bi);
+    HPlane_Clear(bi, builder);
     return bi;
 }
 
-HPlane* HPlane_SetY(HPlane* bi, double y)
+HPlane* HPlane_SetY(HPlane* bi, double y, de::BspBuilder* builder)
 {
     assert(bi);
     bi->origin[1] = y;
-    HPlane_Clear(bi);
+    HPlane_Clear(bi, builder);
     return bi;
 }
 
@@ -209,39 +216,39 @@ double HPlane_DY(HPlane* bi)
     return bi->angle[1];
 }
 
-HPlane* HPlane_SetAngle(HPlane* bi, double const angle[2])
+HPlane* HPlane_SetAngle(HPlane* bi, double const angle[2], de::BspBuilder* builder)
 {
     assert(bi);
     if(angle)
     {
         bi->angle[0] = angle[0];
         bi->angle[1] = angle[1];
-        HPlane_Clear(bi);
+        HPlane_Clear(bi, builder);
     }
     return bi;
 }
 
-HPlane* HPlane_SetDXY(HPlane* bi, double x, double y)
+HPlane* HPlane_SetDXY(HPlane* bi, double x, double y, de::BspBuilder* builder)
 {
     double angle[2];
     angle[0] = x;
     angle[1] = y;
-    return HPlane_SetAngle(bi, angle);
+    return HPlane_SetAngle(bi, angle, builder);
 }
 
-HPlane* HPlane_SetDX(HPlane* bi, double dx)
+HPlane* HPlane_SetDX(HPlane* bi, double dx, de::BspBuilder* builder)
 {
     assert(bi);
     bi->angle[0] = dx;
-    HPlane_Clear(bi);
+    HPlane_Clear(bi, builder);
     return bi;
 }
 
-HPlane* HPlane_SetDY(HPlane* bi, double dy)
+HPlane* HPlane_SetDY(HPlane* bi, double dy, de::BspBuilder* builder)
 {
     assert(bi);
     bi->angle[1] = dy;
-    HPlane_Clear(bi);
+    HPlane_Clear(bi, builder);
     return bi;
 }
 
@@ -305,7 +312,7 @@ void Bsp_MergeHEdgeIntercepts(HEdgeIntercept* final, const HEdgeIntercept* other
 #endif*/
 }
 
-void BspBuilder_MergeIntersections(HPlane* hPlane)
+void BspBuilder::mergeIntersections(HPlane* hPlane)
 {
     HPlaneIntercept* node, *np;
 
@@ -315,8 +322,8 @@ void BspBuilder_MergeIntersections(HPlane* hPlane)
     np = node->next;
     while(node && np)
     {
-        HEdgeIntercept* cur = node->userData;
-        HEdgeIntercept* next = np->userData;
+        HEdgeIntercept* cur = (HEdgeIntercept*)node->userData;
+        HEdgeIntercept* next = (HEdgeIntercept*)np->userData;
         double len = np->distance - node->distance;
 
         if(len < -0.1)
@@ -343,13 +350,13 @@ void BspBuilder_MergeIntersections(HPlane* hPlane)
         Bsp_MergeHEdgeIntercepts(cur, next);
 
         // Destroy the orphaned info.
-        BspBuilder_DeleteHEdgeIntercept(next);
+        deleteHEdgeIntercept(next);
 
         np = node->next;
     }
 }
 
-void BspBuilder_BuildHEdgesAtIntersectionGaps(HPlane* hPlane, SuperBlock* rightList,
+void BspBuilder::buildHEdgesAtIntersectionGaps(HPlane* hPlane, SuperBlock* rightList,
     SuperBlock* leftList)
 {
     HPlaneIntercept* node;
@@ -359,8 +366,8 @@ void BspBuilder_BuildHEdgesAtIntersectionGaps(HPlane* hPlane, SuperBlock* rightL
     node = hPlane->headPtr;
     while(node && node->next)
     {
-        HEdgeIntercept* cur = node->userData;
-        HEdgeIntercept* next = (node->next? node->next->userData : NULL);
+        HEdgeIntercept* cur = (HEdgeIntercept*)node->userData;
+        HEdgeIntercept* next = (HEdgeIntercept*)(node->next? node->next->userData : NULL);
 
         if(!(!cur->after && !next->before))
         {
@@ -418,7 +425,7 @@ void BspBuilder_BuildHEdgesAtIntersectionGaps(HPlane* hPlane, SuperBlock* rightL
                     }
                 }
 
-                BspBuilder_AddHEdgesBetweenIntercepts(hPlane, cur, next, &right, &left);
+                addHEdgesBetweenIntercepts(hPlane, cur, next, &right, &left);
 
                 // Add the new half-edges to the appropriate lists.
                 SuperBlock_HEdgePush(rightList, right);
@@ -487,7 +494,7 @@ void HPlane_Print(HPlane* bi)
         node = bi->headPtr;
         while(node)
         {
-            HEdgeIntercept* inter = node->userData;
+            HEdgeIntercept* inter = (HEdgeIntercept*)node->userData;
             Con_Printf(" %i: >%1.2f ", node->distance);
             Bsp_PrintHEdgeIntercept(inter);
             node = node->next;
@@ -496,7 +503,7 @@ void HPlane_Print(HPlane* bi)
 }
 #endif
 
-void BspBuilder_InitHPlaneInterceptAllocator(void)
+void BspBuilder::initHPlaneInterceptAllocator(void)
 {
     if(!initedOK)
     {
@@ -505,7 +512,7 @@ void BspBuilder_InitHPlaneInterceptAllocator(void)
     }
 }
 
-void BspBuilder_ShutdownHPlaneInterceptAllocator(void)
+void BspBuilder::shutdownHPlaneInterceptAllocator(void)
 {
     if(usedIntercepts)
     {

@@ -34,6 +34,10 @@
 #include "sys_direc.h"
 #include "textures.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Verbose messages.
 #define VERBOSE(code)   { if(verbose >= 1) { code; } }
 #define VERBOSE2(code)  { if(verbose >= 2) { code; } }
@@ -163,5 +167,9 @@ D_CMD(Unload);
 D_CMD(Reset);
 D_CMD(ReloadGame);
 D_CMD(ListGames);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_MAIN_H */

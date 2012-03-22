@@ -32,6 +32,12 @@
 #include "m_binarytree.h"
 #include "materials.h"
 
+struct bsp_hedge_s;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Editable map.
 typedef struct editmap_s {
     uint numVertexes;
@@ -49,7 +55,7 @@ typedef struct editmap_s {
     gameobjdata_t gameObjData;
 } editmap_t;
 
-editmap_t editMap;
+//extern editmap_t editMap;
 
 boolean         MPE_Begin(const char* mapUri);
 boolean         MPE_End(void);
@@ -99,4 +105,30 @@ void            MPE_FreeUnclosedSectorList(void);
 
 GameMap*        MPE_GetLastBuiltMap(void);
 Vertex*         createVertex(void);
+
+#define ET_prev             link[0]
+#define ET_next             link[1]
+#define ET_edge             hEdges
+
+// An edge tip is where an edge meets a vertex.
+typedef struct edgetip_s {
+    // Link in list. List is kept in ANTI-clockwise order.
+    struct edgetip_s* link[2]; // {prev, next};
+
+    /// Angle that line makes at vertex (degrees; 0 is E, 90 is N).
+    double angle;
+
+    // Half-edge on each side of the edge. Left is the side of increasing
+    // angles, right is the side of decreasing angles. Either can be NULL
+    // for one sided edges.
+    struct bsp_hedge_s* hEdges[2];
+} edgetip_t;
+
+struct edgetip_s* MPE_NewEdgeTip(void);
+void MPE_DeleteEdgeTip(struct edgetip_s* tip);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
 #endif

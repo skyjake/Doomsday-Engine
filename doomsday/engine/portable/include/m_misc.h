@@ -34,6 +34,10 @@
 #include "dd_types.h"
 #include "dfile.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define ISSPACE(c)  ((c) == 0 || (c) == ' ' || (c) == '\t' || (c) == '\n' ||\
                      (c) == '\r')
 
@@ -191,4 +195,8 @@ uint M_CRC32(byte* data, uint length);
  */
 int M_ScreenShot(const char* filePath, int bits);
 
-#endif /* LIBDENG_M_MISC_H */
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
+#endif /// LIBDENG_M_MISC_H

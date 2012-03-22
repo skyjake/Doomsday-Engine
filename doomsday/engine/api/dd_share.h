@@ -1315,7 +1315,7 @@ typedef enum {
 ///@}
 
 /// Font namespace identifier. @ingroup namespace
-typedef enum {
+typedef enum fontnamespaceid_e {
     FN_ANY = -1,
     FONTNAMESPACE_FIRST = 3000,
     FN_SYSTEM = FONTNAMESPACE_FIRST,

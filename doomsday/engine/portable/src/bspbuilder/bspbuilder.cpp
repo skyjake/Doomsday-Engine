@@ -32,15 +32,39 @@
 #include "de_console.h"
 #include "de_bsp.h"
 #include "de_play.h"
-#include "de_misc.h"
+//#include "de_misc.h"
+#include "edit_map.h"
 
 #include "p_mapdata.h"
 
+#include "bspbuilder/intersection.hh"
+#include "bspbuilder/bspbuilder.hh"
+
+using namespace de;
+
 int bspFactor = 7;
+
+struct bspbuilder_c_s {
+   BspBuilder* inst;
+};
 
 void BspBuilder_Register(void)
 {
     C_VAR_INT("bsp-factor", &bspFactor, CVF_NO_MAX, 0, 0);
+}
+
+BspBuilder_c* BspBuilder_New(void)
+{
+    BspBuilder_c* builder = (BspBuilder_c*)malloc(sizeof *builder);
+    builder->inst = new BspBuilder();
+    return builder;
+}
+
+void BspBuilder_Delete(BspBuilder_c* builder)
+{
+    assert(builder);
+    delete builder->inst;
+    free(builder);
 }
 
 static void initAABoxFromEditableLineDefVertexes(AABoxf* aaBox, const LineDef* line)
@@ -102,12 +126,7 @@ static void findMapBounds(GameMap* map, AABoxf* aaBox)
     V2_Set(aaBox->max, DDMINFLOAT, DDMINFLOAT);
 }
 
-/**
- * Initially create all half-edges, one for each side of a linedef.
- *
- * @return  The list of created half-edges.
- */
-static SuperBlockmap* createInitialHEdges(GameMap* map)
+SuperBlockmap* BspBuilder::createInitialHEdges(GameMap* map)
 {
     uint startTime = Sys_GetRealTime();
 
@@ -142,7 +161,7 @@ static SuperBlockmap* createInitialHEdges(GameMap* map)
 
     for(i = 0; i < map->numLineDefs; ++i)
     {
-        LineDef* line = &map->lineDefs[i];
+        LineDef* line = GameMap_LineDef(map, i);
 
         if(line->buildData.mlFlags & MLF_POLYOBJ) continue;
 
@@ -172,7 +191,7 @@ static SuperBlockmap* createInitialHEdges(GameMap* map)
                 if(!side->sector)
                     Con_Message("Warning: Bad sidedef on linedef #%d\n", line->buildData.index);
 
-                front = BspBuilder_NewHEdge(line, line, line->v[0], line->v[1], side->sector, false);
+                front = newHEdge(line, line, line->v[0], line->v[1], side->sector, false);
                 SuperBlock_HEdgePush(SuperBlockmap_Root(sbmap), front);
             }
             else
@@ -185,7 +204,7 @@ static SuperBlockmap* createInitialHEdges(GameMap* map)
                 if(!side->sector)
                     Con_Message("Warning: Bad sidedef on linedef #%d\n", line->buildData.index);
 
-                back = BspBuilder_NewHEdge(line, line, line->v[1], line->v[0], side->sector, true);
+                back = newHEdge(line, line, line->v[1], line->v[0], side->sector, true);
                 SuperBlock_HEdgePush(SuperBlockmap_Root(sbmap), back);
 
                 if(front)
@@ -209,8 +228,8 @@ static SuperBlockmap* createInitialHEdges(GameMap* map)
                 {
                     bsp_hedge_t* other;
 
-                    other = BspBuilder_NewHEdge(front->lineDef, line, line->v[1], line->v[0],
-                                             line->buildData.windowEffect, true);
+                    other = newHEdge(front->lineDef, line, line->v[1], line->v[0],
+                                     line->buildData.windowEffect, true);
 
                     SuperBlock_HEdgePush(SuperBlockmap_Root(sbmap), other);
 
@@ -229,8 +248,8 @@ static SuperBlockmap* createInitialHEdges(GameMap* map)
         double x2 = line->v[1]->buildData.pos[VX];
         double y2 = line->v[1]->buildData.pos[VY];
 
-        BspBuilder_NewEdgeTip(line->v[0], x2 - x1, y2 - y1, back, front);
-        BspBuilder_NewEdgeTip(line->v[1], x1 - x2, y1 - y2, front, back);
+        addEdgeTip(line->v[0], x2 - x1, y2 - y1, back, front);
+        addEdgeTip(line->v[1], x1 - x2, y1 - y2, front, back);
         }
     }
 
@@ -240,14 +259,48 @@ static SuperBlockmap* createInitialHEdges(GameMap* map)
     return sbmap;
 }
 
-static boolean C_DECL freeBSPData(binarytree_t* tree, void* data)
+void BspBuilder::initForMap(GameMap* map)
 {
+    uint i;
+
+    for(i = 0; i < map->numLineDefs; ++i)
+    {
+        LineDef* l = GameMap_LineDef(map, i);
+        Vertex* start = l->v[0];
+        Vertex* end   = l->v[1];
+
+        start->buildData.refCount++;
+        end->buildData.refCount++;
+
+        l->buildData.mlFlags = 0;
+
+        // Check for zero-length line.
+        if((fabs(start->buildData.pos[VX] - end->buildData.pos[VX]) < DIST_EPSILON) &&
+           (fabs(start->buildData.pos[VY] - end->buildData.pos[VY]) < DIST_EPSILON))
+            l->buildData.mlFlags |= MLF_ZEROLENGTH;
+
+        if(l->inFlags & LF_POLYOBJ)
+            l->buildData.mlFlags |= MLF_POLYOBJ;
+
+        if(l->sideDefs[BACK] && l->sideDefs[FRONT])
+        {
+            l->buildData.mlFlags |= MLF_TWOSIDED;
+
+            if(l->sideDefs[BACK]->sector == l->sideDefs[FRONT]->sector)
+                l->buildData.mlFlags |= MLF_SELFREF;
+        }
+    }
+}
+
+boolean C_DECL BspBuilder_FreeBSPData(binarytree_t* tree, void* parameters)
+{
+    BspBuilder* builder = (BspBuilder*)parameters;
     void* bspData = BinaryTree_GetData(tree);
 
     if(bspData)
     {
         if(BinaryTree_IsLeaf(tree))
-            BspBuilder_DeleteLeaf(bspData);
+            builder->deleteLeaf((bspleafdata_t*)bspData);
         else
             M_Free(bspData);
     }
@@ -257,22 +310,22 @@ static boolean C_DECL freeBSPData(binarytree_t* tree, void* data)
     return true; // Continue iteration.
 }
 
-boolean BspBuilder_Build(GameMap* map, Vertex*** vertexes, uint* numVertexes)
+boolean BspBuilder::build(GameMap* map, Vertex*** vertexes, uint* numVertexes)
 {
     binarytree_t* rootNode;
     SuperBlockmap* sbmap;
     boolean builtOK;
     uint startTime;
 
-    VERBOSE( Con_Message("BspBuilder_Build: Processing map using tunable factor of %d...\n", bspFactor) )
+    VERBOSE( Con_Message("BspBuilder::build: Processing map using tunable factor of %d...\n", bspFactor) )
 
     // It begins...
     startTime = Sys_GetRealTime();
 
-    BspBuilder_InitHPlaneInterceptAllocator();
-    BspBuilder_InitHEdgeAllocator();
+    initHPlaneInterceptAllocator();
+    initHEdgeAllocator();
 
-    BspBuilder_InitForMap(map);
+    initForMap(map);
 
     // Create initial half-edges.
     sbmap = createInitialHEdges(map);
@@ -286,13 +339,13 @@ boolean BspBuilder_Build(GameMap* map, Vertex*** vertexes, uint* numVertexes)
 
     // Recursively create nodes.
     rootNode = NULL;
-    builtOK = BspBuilder_BuildNodes(SuperBlockmap_Root(sbmap), &rootNode, 0, hPlane);
+    builtOK = buildNodes(SuperBlockmap_Root(sbmap), &rootNode, 0, hPlane);
 
     // The intersection list is no longer needed.
-    HPlane_Delete(hPlane);
+    HPlane_Delete(hPlane, this);
 
     // How much time did we spend?
-    VERBOSE2( Con_Message("BspBuilder_BuildNodes: Done in %.2f seconds.\n", (Sys_GetRealTime() - buildStartTime) / 1000.0f));
+    VERBOSE2( Con_Message("BspBuilder::buildNodes: Done in %.2f seconds.\n", (Sys_GetRealTime() - buildStartTime) / 1000.0f));
     }
 
     SuperBlockmap_Delete(sbmap);
@@ -303,7 +356,7 @@ boolean BspBuilder_Build(GameMap* map, Vertex*** vertexes, uint* numVertexes)
         long rHeight, lHeight;
 
         // Wind the BSP tree and link to the map.
-        BspBuilder_WindLeafs(rootNode);
+        windLeafs(rootNode);
         BspBuilder_Save(map, rootNode, vertexes, numVertexes);
 
         if(rootNode && !BinaryTree_IsLeaf(rootNode))
@@ -325,19 +378,25 @@ boolean BspBuilder_Build(GameMap* map, Vertex*** vertexes, uint* numVertexes)
     // We are finished with the BSP build data.
     if(rootNode)
     {
-        BinaryTree_PostOrder(rootNode, freeBSPData, NULL);
+        BinaryTree_PostOrder(rootNode, BspBuilder_FreeBSPData, this);
         BinaryTree_Destroy(rootNode);
     }
     rootNode = NULL;
 
     // Free temporary storage.
-    BspBuilder_ShutdownHEdgeAllocator();
-    BspBuilder_ShutdownHPlaneInterceptAllocator();
+    shutdownHEdgeAllocator();
+    shutdownHPlaneInterceptAllocator();
 
     // How much time did we spend?
     VERBOSE2( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
 
     return builtOK;
+}
+
+boolean BspBuilder_Build(BspBuilder_c* builder, GameMap* map, Vertex*** vertexes, uint* numVertexes)
+{
+    assert(builder);
+    return builder->inst->build(map, vertexes, numVertexes);
 }
 
 typedef struct {
@@ -358,7 +417,7 @@ static int findIntersectionForVertexWorker(HPlaneIntercept* hpi, void* parameter
     return false; // Continue iteration.
 }
 
-HPlaneIntercept* BspBuilder_HPlaneInterceptByVertex(HPlane* intersections, Vertex* vertex)
+HPlaneIntercept* BspBuilder::hplaneInterceptByVertex(HPlane* intersections, Vertex* vertex)
 {
     findintersectionforvertexworkerparams_t parm;
 
@@ -370,30 +429,28 @@ HPlaneIntercept* BspBuilder_HPlaneInterceptByVertex(HPlane* intersections, Verte
     return parm.found;
 }
 
-HEdgeIntercept* BspBuilder_HEdgeInterceptByVertex(struct hplane_s* hPlane, Vertex* vertex)
+HEdgeIntercept* BspBuilder::hedgeInterceptByVertex(struct hplane_s* hPlane, Vertex* vertex)
 {
-    HPlaneIntercept* hpi = BspBuilder_HPlaneInterceptByVertex(hPlane, vertex);
+    HPlaneIntercept* hpi = hplaneInterceptByVertex(hPlane, vertex);
     if(!hpi) return NULL; // Not found.
     return (HEdgeIntercept*) HPlaneIntercept_UserData(hpi);
 }
 
-void BspBuilder_AddHEdgesBetweenIntercepts(HPlane* hPlane,
+void BspBuilder::addHEdgesBetweenIntercepts(HPlane* hPlane,
     HEdgeIntercept* start, HEdgeIntercept* end, bsp_hedge_t** right, bsp_hedge_t** left)
 {
     HPlaneBuildInfo* info;
 
     if(!hPlane || !start || !end)
-        Con_Error("BspBuilder_AddHEdgesBetweenIntercepts: Invalid arguments.");
+        Con_Error("BspBuilder::addHEdgesBetweenIntercepts: Invalid arguments.");
 
     info = HPlane_BuildInfo(hPlane);
 
     // Create the half-edge pair.
     // Leave 'linedef' field as NULL as these are not linedef-linked.
     // Leave 'side' as zero too.
-    (*right) = BspBuilder_NewHEdge(NULL, info->lineDef, start->vertex,
-                                end->vertex, start->after, false);
-    (*left)  = BspBuilder_NewHEdge(NULL, info->lineDef, end->vertex,
-                                start->vertex, start->after, false);
+    (*right) = newHEdge(NULL, info->lineDef, start->vertex, end->vertex, start->after, false);
+    (*left)  = newHEdge(NULL, info->lineDef, end->vertex, start->vertex, start->after, false);
 
     // Twin the half-edges together.
     (*right)->twin = *left;
@@ -412,7 +469,7 @@ void BspBuilder_AddHEdgesBetweenIntercepts(HPlane* hPlane,
     */
 }
 
-void BspBuilder_AddMiniHEdges(HPlane* hPlane, SuperBlock* rightList,
+void BspBuilder::addMiniHEdges(HPlane* hPlane, SuperBlock* rightList,
     SuperBlock* leftList)
 {
     if(!hPlane) return;
@@ -422,36 +479,76 @@ void BspBuilder_AddMiniHEdges(HPlane* hPlane, SuperBlock* rightList,
 #endif*/
 
     // Fix any issues with the current intersections.
-    BspBuilder_MergeIntersections(hPlane);
+    mergeIntersections(hPlane);
 
     /*{
     const HPlaneBuildInfo* info = HPlane_BuildInfo(hPlane);
-    DEBUG_Message(("BspBuilder_AddMiniHEdges: Partition (%1.1f,%1.1f) += (%1.1f,%1.1f)\n",
+    DEBUG_Message(("BspBuilder::addMiniHEdges: Partition (%1.1f,%1.1f) += (%1.1f,%1.1f)\n",
                    info->pSX, info->pSY, info->pDX, info->pDY));
     }*/
 
     // Find connections in the intersections.
-    BspBuilder_BuildHEdgesAtIntersectionGaps(hPlane, rightList, leftList);
+    buildHEdgesAtIntersectionGaps(hPlane, rightList, leftList);
 }
 
-HEdgeIntercept* BspBuilder_NewHEdgeIntercept(Vertex* vert, const struct hplanebuildinfo_s* part,
+HEdgeIntercept* BspBuilder::newHEdgeIntercept(Vertex* vert, const struct hplanebuildinfo_s* part,
     boolean selfRef)
 {
-    HEdgeIntercept* inter = M_Calloc(sizeof(*inter));
+    HEdgeIntercept* inter = (HEdgeIntercept*)M_Calloc(sizeof *inter);
 
     inter->vertex = vert;
     inter->selfRef = selfRef;
 
-    inter->before = BspBuilder_OpenSectorAtPoint(vert, -part->pDX, -part->pDY);
-    inter->after  = BspBuilder_OpenSectorAtPoint(vert,  part->pDX,  part->pDY);
+    inter->before = openSectorAtPoint(vert, -part->pDX, -part->pDY);
+    inter->after  = openSectorAtPoint(vert,  part->pDX,  part->pDY);
 
     return inter;
 }
 
-void BspBuilder_DeleteHEdgeIntercept(HEdgeIntercept* inter)
+void BspBuilder::deleteHEdgeIntercept(HEdgeIntercept* inter)
 {
     assert(inter);
     M_Free(inter);
+}
+
+void BspBuilder::addEdgeTip(Vertex* vert, double dx, double dy, bsp_hedge_t* back,
+    bsp_hedge_t* front)
+{
+    edgetip_t* tip = MPE_NewEdgeTip();
+    edgetip_t* after;
+
+    tip->angle = M_SlopeToAngle(dx, dy);
+    tip->ET_edge[BACK]  = back;
+    tip->ET_edge[FRONT] = front;
+
+    // Find the correct place (order is increasing angle).
+    for(after = vert->buildData.tipSet; after && after->ET_next;
+        after = after->ET_next);
+
+    while(after && tip->angle + ANG_EPSILON < after->angle)
+        after = after->ET_prev;
+
+    // Link it in.
+    if(after)
+        tip->ET_next = after->ET_next;
+    else
+        tip->ET_next = vert->buildData.tipSet;
+    tip->ET_prev = after;
+
+    if(after)
+    {
+        if(after->ET_next)
+            after->ET_next->ET_prev = tip;
+
+        after->ET_next = tip;
+    }
+    else
+    {
+        if(vert->buildData.tipSet)
+            vert->buildData.tipSet->ET_prev = tip;
+
+        vert->buildData.tipSet = tip;
+    }
 }
 
 #if _DEBUG

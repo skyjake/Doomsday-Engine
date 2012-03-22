@@ -28,14 +28,16 @@
 #ifndef LIBDENG_MAP_BSP_INTERSECTION
 #define LIBDENG_MAP_BSP_INTERSECTION
 
-#include "bsp_edge.h"
+#include "bspbuilder/hedges.hh"
+#include "bspbuilder/bspbuilder.hh"
 
+struct linedef_s;
 struct hplanebuildinfo_s;
 struct superblock_s;
 
 typedef struct hplanebuildinfo_s {
-    LineDef* lineDef; // Not NULL if partition originated from a linedef.
-    LineDef* sourceLineDef;
+    struct linedef_s* lineDef; // Not NULL if partition originated from a linedef.
+    struct linedef_s* sourceLineDef;
 
     double pSX, pSY;
     double pDX, pDY;
@@ -65,31 +67,31 @@ const double* HPlane_Origin(HPlane* hPlane);
 double HPlane_X(HPlane* hPlane);
 double HPlane_Y(HPlane* hPlane);
 
-HPlane* HPlane_SetOrigin(HPlane* hPlane, double const origin[2]);
-HPlane* HPlane_SetXY(HPlane* hPlane, double x, double y);
-HPlane* HPlane_SetX(HPlane* hPlane, double x);
-HPlane* HPlane_SetY(HPlane* hPlane, double y);
+HPlane* HPlane_SetOrigin(HPlane* hPlane, double const origin[2], de::BspBuilder* builder);
+HPlane* HPlane_SetXY(HPlane* hPlane, double x, double y, de::BspBuilder* builder);
+HPlane* HPlane_SetX(HPlane* hPlane, double x, de::BspBuilder* builder);
+HPlane* HPlane_SetY(HPlane* hPlane, double y, de::BspBuilder* builder);
 
 const double* HPlane_Angle(HPlane* hPlane);
 double HPlane_DX(HPlane* hPlane);
 double HPlane_DY(HPlane* hPlane);
 
-HPlane* HPlane_SetAngle(HPlane* hPlane, double const angle[2]);
-HPlane* HPlane_SetDXY(HPlane* hPlane, double x, double y);
-HPlane* HPlane_SetDX(HPlane* hPlane, double dx);
-HPlane* HPlane_SetDY(HPlane* hPlane, double dy);
+HPlane* HPlane_SetAngle(HPlane* hPlane, double const angle[2], de::BspBuilder* builder);
+HPlane* HPlane_SetDXY(HPlane* hPlane, double x, double y, de::BspBuilder* builder);
+HPlane* HPlane_SetDX(HPlane* hPlane, double dx, de::BspBuilder* builder);
+HPlane* HPlane_SetDY(HPlane* hPlane, double dy, de::BspBuilder* builder);
 
 HPlaneBuildInfo* HPlane_BuildInfo(HPlane* hPlane);
 
 /**
  * Destroy a HPlane.
  */
-void HPlane_Delete(HPlane* hPlane);
+void HPlane_Delete(HPlane* hPlane, de::BspBuilder* builder);
 
 /**
  * Empty all intersections from the specified HPlane.
  */
-void HPlane_Clear(HPlane* hPlane);
+void HPlane_Clear(HPlane* hPlane, de::BspBuilder* builder);
 
 /**
  * Insert a point at the given intersection into the intersection list.
@@ -107,16 +109,5 @@ int HPlane_IterateIntercepts(HPlane* bi, int (*callback)(HPlaneIntercept*, void*
 #if _DEBUG
 void HPlaneIntercept_Print(HPlane* hPlane);
 #endif
-
-/**
- * @todo the following functions do not belong in this module.
- */
-
-void BspBuilder_InitHPlaneInterceptAllocator(void);
-void BspBuilder_ShutdownHPlaneInterceptAllocator(void);
-
-void BspBuilder_MergeIntersections(HPlane* intersections);
-void BspBuilder_BuildHEdgesAtIntersectionGaps(HPlane* hPlane,
-    struct superblock_s* rightList, struct superblock_s* leftList);
 
 #endif /// LIBDENG_MAP_BSP_INTERSECTION

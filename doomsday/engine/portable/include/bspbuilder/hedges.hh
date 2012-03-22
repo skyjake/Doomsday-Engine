@@ -28,6 +28,13 @@
 #ifndef LIBDENG_MAP_BSP_HEDGE
 #define LIBDENG_MAP_BSP_HEDGE
 
+//#include "dd_types.h"
+//#include "bsp_main.h"
+
+struct vertex_s;
+struct linedef_s;
+struct sector_s;
+
 #define IFFY_LEN            4.0
 
 // Smallest distance between two points before being considered equal.
@@ -36,26 +43,8 @@
 // Smallest degrees between two angles before being considered equal.
 #define ANG_EPSILON         (1.0 / 1024.0)
 
-#define ET_prev             link[0]
-#define ET_next             link[1]
-#define ET_edge             hEdges
-
-// An edge tip is where an edge meets a vertex.
-typedef struct edgetip_s {
-    // Link in list. List is kept in ANTI-clockwise order.
-    struct edgetip_s* link[2]; // {prev, next};
-
-    // Angle that line makes at vertex (degrees).
-    angle_g angle;
-
-    // Half-edge on each side of the edge. Left is the side of increasing
-    // angles, right is the side of decreasing angles. Either can be NULL
-    // for one sided edges.
-    struct bsp_hedge_s* hEdges[2];
-} edgetip_t;
-
 typedef struct bsp_hedge_s {
-    Vertex* v[2]; // [Start, End] of the half-edge..
+    struct vertex_s* v[2]; // [Start, End] of the half-edge..
 
     // Half-edge on the other side, or NULL if one-sided. This relationship
     // is always one-to-one -- if one of the half-edges is split, the twin
@@ -87,65 +76,43 @@ typedef struct bsp_hedge_s {
     double pPerp;
 
     // Linedef that this half-edge goes along, or NULL if miniseg.
-    LineDef* lineDef;
+    struct linedef_s* lineDef;
 
     // Linedef that this half-edge initially comes from.
     // For "real" half-edges, this is just the same as the 'linedef' field
     // above. For "miniedges", this is the linedef of the partition line.
-    LineDef* sourceLineDef;
+    struct linedef_s* sourceLineDef;
 
-    Sector* sector; // Adjacent sector, or NULL if invalid sidedef or minihedge.
+    struct sector_s* sector; // Adjacent sector, or NULL if invalid sidedef or minihedge.
     byte side; // 0 for right, 1 for left.
 } bsp_hedge_t;
 
-/**
- * Init the half-edge block allocator.
- */
-void BspBuilder_InitHEdgeAllocator(void);
+typedef struct bspleafdata_s {
+    struct bsp_hedge_s* hEdges; // Head ptr to a list of half-edges at this leaf.
+} bspleafdata_t;
 
 /**
- * Shutdown the half-edge block allocator. All elements will be free'd!
- */
-void BspBuilder_ShutdownHEdgeAllocator(void);
-
-/**
- * Create a new half-edge.
- */
-bsp_hedge_t* BspBuilder_NewHEdge(LineDef* line, LineDef* sourceLine, Vertex* start, Vertex* end,
-    Sector* sec, boolean back);
-
-/**
- * Destroys the given half-edge.
+ * Plain-old-data structure containing additional information for a half-edge
+ * half-plane intercept point where the geometry intersects (an incident vertex
+ * can be found here (or at there will be upon insertion.)).
  *
- * @param hEdge  Ptr to the half-edge to be destroyed.
+ * There is always a corresponding HPlaneIntercept in the owning HPlane.
  */
-void BspBuilder_DeleteHEdge(bsp_hedge_t* hEdge);
+typedef struct hedgeintercept_s {
+    // Vertex in question.
+    struct vertex_s* vertex;
 
-/**
- * Splits the given half-edge at the point (x,y). The new half-edge is returned.
- * The old half-edge is shortened (the original start vertex is unchanged), the
- * new half-edge becomes the cut-off tail (keeping the original end vertex).
- *
- * @note If the half-edge has a twin, it is also split and is inserted into the
- *       same list as the original (and after it), thus all half-edges (except
- *       the one we are currently splitting) must exist on a singly-linked list
- *       somewhere.
- *
- * @note We must update the count values of any superblock that contains the
- *       half-edge (and/or backseg), so that future processing is not messed up
- *       by incorrect counts.
- */
-bsp_hedge_t* BspBuilder_SplitHEdge(bsp_hedge_t* oldHEdge, double x, double y);
+    // True if this intersection was on a self-referencing linedef.
+    boolean selfRef;
 
-void BspBuilder_NewEdgeTip(Vertex* vert, double dx, double dy, bsp_hedge_t* back, bsp_hedge_t* front);
+    // Sector on each side of the vertex (along the partition),
+    // or NULL when that direction isn't OPEN.
+    struct sector_s* before;
+    struct sector_s* after;
+} HEdgeIntercept;
 
-void BspBuilder_DeleteEdgeTip(struct edgetip_s* tip);
-
-/**
- * Check whether a line with the given delta coordinates and beginning at this
- * vertex is open. Returns a sector reference if it's open, or NULL if closed
- * (void space or directly along a linedef).
- */
-Sector* BspBuilder_OpenSectorAtPoint(Vertex* vert, double dx, double dy);
+#if _DEBUG
+void Bsp_PrintHEdgeIntercept(HEdgeIntercept* intercept);
+#endif
 
 #endif /// LIBDENG_MAP_BSP_HEDGE

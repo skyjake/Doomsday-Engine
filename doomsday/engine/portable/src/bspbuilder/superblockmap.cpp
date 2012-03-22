@@ -24,9 +24,10 @@
  */
 
 #include "de_platform.h"
-#include "de_bsp.h"
+#include "p_mapdata.h"
 
-#include "superblockmap.h"
+#include "bspbuilder/hedges.hh"
+#include "bspbuilder/superblockmap.hh"
 
 #include <stdio.h>
 #include <ctype.h>
@@ -86,8 +87,8 @@ private:
     void initAABoxFromHEdgeVertexes(AABoxf* aaBox, const bsp_hedge_t* hEdge)
     {
         assert(aaBox && hEdge);
-        const double* from = hEdge->HE_v1->buildData.pos;
-        const double* to   = hEdge->HE_v2->buildData.pos;
+        const double* from = hEdge->v[0]->buildData.pos;
+        const double* to   = hEdge->v[1]->buildData.pos;
         aaBox->minX = (float)MIN_OF(from[0], to[0]);
         aaBox->minY = (float)MIN_OF(from[1], to[1]);
         aaBox->maxX = (float)MAX_OF(from[0], to[0]);

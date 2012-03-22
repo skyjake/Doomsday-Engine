@@ -33,7 +33,12 @@
 #include "de_console.h"
 #include "de_bsp.h"
 #include "de_play.h"
-#include "de_misc.h"
+//#include "de_misc.h"
+
+#include "bspbuilder/intersection.hh"
+#include "bspbuilder/bspbuilder.hh"
+
+using namespace de;
 
 typedef struct evalinfo_s {
     int cost;
@@ -107,7 +112,7 @@ static void sortHEdgesByAngleAroundPoint(bsp_hedge_t** hEdges, size_t total,
     {
         bsp_hedge_t* a = hEdges[i];
         bsp_hedge_t* b = hEdges[i+1];
-        angle_g angle1, angle2;
+        double angle1, angle2;
 
         angle1 = M_SlopeToAngle(a->v[0]->buildData.pos[VX] - x,
                                 a->v[0]->buildData.pos[VY] - y);
@@ -175,7 +180,7 @@ static void clockwiseOrder(bsp_hedge_t** headPtr, size_t num, double x, double y
 
     for(hEdge = sub->hEdges; hEdge; hEdge = hEdge->next)
     {
-        angle_g angle = M_SlopeToAngle(hEdge->v[0]->V_pos[VX] - x,
+        double angle = M_SlopeToAngle(hEdge->v[0]->V_pos[VX] - x,
                                        hEdge->v[0]->V_pos[VY] - y);
 
         Con_Message("  half-edge %p: Angle %1.6f  (%1.1f,%1.1f) -> (%1.1f,%1.1f)\n",
@@ -287,8 +292,7 @@ static void prepareHEdgeSortBuffer(size_t numHEdges)
     if(numHEdges + 1 > hEdgeSortBufSize)
     {
         hEdgeSortBufSize = numHEdges + 1;
-        hEdgeSortBuf =
-            M_Realloc(hEdgeSortBuf, hEdgeSortBufSize * sizeof(bsp_hedge_t*));
+        hEdgeSortBuf = (bsp_hedge_t**)M_Realloc(hEdgeSortBuf, hEdgeSortBufSize * sizeof(*hEdgeSortBuf));
     }
 }
 
@@ -312,7 +316,7 @@ static boolean C_DECL clockwiseLeaf(binarytree_t* tree, void* data)
         prepareHEdgeSortBuffer(total);
 
         clockwiseOrder(&leaf->hEdges, total, midPoint[VX], midPoint[VY]);
-        renumberLeafHEdges(leaf, data);
+        renumberLeafHEdges(leaf, (uint*)data);
 
         // Do some sanity checks.
         sanityCheckClosed(leaf);
@@ -326,7 +330,7 @@ static boolean C_DECL clockwiseLeaf(binarytree_t* tree, void* data)
     return true; // Continue traversal.
 }
 
-void BspBuilder_WindLeafs(binarytree_t* rootNode)
+void BspBuilder::windLeafs(binarytree_t* rootNode)
 {
     uint curIndex;
 
@@ -346,7 +350,8 @@ void BspBuilder_WindLeafs(binarytree_t* rootNode)
 
 static __inline bspleafdata_t* allocBSPLeaf(void)
 {
-    return M_Malloc(sizeof(bspleafdata_t));
+    bspleafdata_t* leafData = (bspleafdata_t*)M_Malloc(sizeof *leafData);
+    return leafData;
 }
 
 static __inline void freeBSPLeaf(bspleafdata_t* leaf)
@@ -354,7 +359,7 @@ static __inline void freeBSPLeaf(bspleafdata_t* leaf)
     M_Free(leaf);
 }
 
-bspleafdata_t* BspBuilder_NewLeaf(void)
+bspleafdata_t* BspBuilder::newLeaf(void)
 {
     bspleafdata_t* leaf = allocBSPLeaf();
 
@@ -363,7 +368,7 @@ bspleafdata_t* BspBuilder_NewLeaf(void)
     return leaf;
 }
 
-void BspBuilder_DeleteLeaf(bspleafdata_t* leaf)
+void BspBuilder::deleteLeaf(bspleafdata_t* leaf)
 {
     bsp_hedge_t* cur, *np;
 
@@ -373,7 +378,7 @@ void BspBuilder_DeleteLeaf(bspleafdata_t* leaf)
     while(cur)
     {
         np = cur->nextInLeaf;
-        BspBuilder_DeleteHEdge(cur);
+        deleteHEdge(cur);
         cur = np;
     }
 
@@ -680,13 +685,13 @@ static int pickHEdgeWorker(SuperBlock* partList, void* parameters)
     return SuperBlock_IterateHEdges2(partList, pickHEdgeWorker2, parameters);
 }
 
-boolean BspBuilder_ChoosePartition(SuperBlock* hEdgeList, size_t depth, HPlane* partition)
+boolean BspBuilder::choosePartition(SuperBlock* hEdgeList, size_t /*depth*/, HPlane* partition)
 {
     pickhedgeworkerparams_t parm;
     int bestCost = INT_MAX;
     bsp_hedge_t* best = NULL;
 
-    //DEBUG_Message(("BspBuilder_ChoosePartition: Begun (depth %lu)\n", (unsigned long) depth));
+    //DEBUG_Message(("BspBuilder::choosePartition: Begun (depth %lu)\n", (unsigned long) depth));
 
     parm.hEdgeList = hEdgeList;
     parm.best = &best;
@@ -695,7 +700,7 @@ boolean BspBuilder_ChoosePartition(SuperBlock* hEdgeList, size_t depth, HPlane* 
     validCount++;
     if(SuperBlock_Traverse2(hEdgeList, pickHEdgeWorker, (void*)&parm))
     {
-        /// @kludge BspBuilder_BuildNodes() will detect the cancellation.
+        /// @kludge BspBuilder::buildNodes() will detect the cancellation.
         return false;
     }
 
@@ -705,16 +710,16 @@ boolean BspBuilder_ChoosePartition(SuperBlock* hEdgeList, size_t depth, HPlane* 
         LineDef* line = best->lineDef;
         assert(line);
 
-        //DEBUG_Message(("BspBuilder_ChoosePartition: Best has score %d.%02d  (%1.1f,%1.1f) -> "
+        //DEBUG_Message(("BspBuilder::choosePartition: Best has score %d.%02d  (%1.1f,%1.1f) -> "
         //               "(%1.1f,%1.1f)\n", bestCost / 100, bestCost % 100,
         //               best->v[0]->V_pos[VX], best->v[0]->V_pos[VY],
         //               best->v[1]->V_pos[VX], best->v[1]->V_pos[VY]));
 
         // Reconfigure the partition for the next round of HEdge sorting.
         HPlane_SetXY(partition, line->L_v(best->side)->buildData.pos[VX],
-                                line->L_v(best->side)->buildData.pos[VY]);
+                                line->L_v(best->side)->buildData.pos[VY], this);
         HPlane_SetDXY(partition, line->L_v(best->side^1)->buildData.pos[VX] - line->L_v(best->side)->buildData.pos[VX],
-                                 line->L_v(best->side^1)->buildData.pos[VY] - line->L_v(best->side)->buildData.pos[VY]);
+                                 line->L_v(best->side^1)->buildData.pos[VY] - line->L_v(best->side)->buildData.pos[VY], this);
 
         { HPlaneBuildInfo* info = HPlane_BuildInfo(partition);
         info->lineDef = best->lineDef;
@@ -731,7 +736,7 @@ boolean BspBuilder_ChoosePartition(SuperBlock* hEdgeList, size_t depth, HPlane* 
         return true;
     }
 
-    //DEBUG_Message(("BspBuilder_ChoosePartition: No best found!\n"));
+    //DEBUG_Message(("BspBuilder::choosePartition: No best found!\n"));
     return false;
 }
 
@@ -740,7 +745,7 @@ static boolean lineDefHasSelfRef(LineDef* lineDef)
     return !!(lineDef->buildData.mlFlags & MLF_SELFREF);
 }
 
-static HPlaneIntercept* Bsp_MakeHPlaneIntersection(HPlane* hPlane, bsp_hedge_t* hEdge, int leftSide)
+HPlaneIntercept* BspBuilder::makeHPlaneIntersection(HPlane* hPlane, bsp_hedge_t* hEdge, int leftSide)
 {
     HEdgeIntercept* hEdgeIntercept;
     const HPlaneBuildInfo* info;
@@ -751,22 +756,22 @@ static HPlaneIntercept* Bsp_MakeHPlaneIntersection(HPlane* hPlane, bsp_hedge_t* 
 
     // Already present on this edge?
     vertex = hEdge->v[leftSide?1:0];
-    inter = BspBuilder_HPlaneInterceptByVertex(hPlane, vertex);
+    inter = hplaneInterceptByVertex(hPlane, vertex);
     if(inter) return inter;
 
     info = HPlane_BuildInfo(hPlane);
     distance = M_ParallelDist(info->pDX, info->pDY, info->pPara, info->pLength,
                               vertex->buildData.pos[VX], vertex->buildData.pos[VY]);
 
-    hEdgeIntercept = BspBuilder_NewHEdgeIntercept(vertex, info, (hEdge->lineDef && lineDefHasSelfRef(hEdge->lineDef)));
+    hEdgeIntercept = newHEdgeIntercept(vertex, info, (hEdge->lineDef && lineDefHasSelfRef(hEdge->lineDef)));
     return HPlane_NewIntercept2(hPlane, distance, hEdgeIntercept);
 }
 
-static HPlaneIntercept* makeIntersection(HPlane* hPlane, bsp_hedge_t* hEdge, int leftSide)
+HPlaneIntercept* BspBuilder::makeIntersection(HPlane* hPlane, bsp_hedge_t* hEdge, int leftSide)
 {
     if(!hPlane || !hEdge)
-        Con_Error("Bsp_MakeHPlaneIntersection: Invalid arguments.");
-    return Bsp_MakeHPlaneIntersection(hPlane, hEdge, leftSide);
+        Con_Error("BspBuilder::makeHPlaneIntersection: Invalid arguments.");
+    return makeHPlaneIntersection(hPlane, hEdge, leftSide);
 }
 
 /**
@@ -809,7 +814,7 @@ static __inline void calcIntersection(bsp_hedge_t* hEdge, const HPlaneBuildInfo*
         *y = hEdge->pSY + (hEdge->pDY * ds);
 }
 
-void BspBuilder_DivideHEdge(bsp_hedge_t* hEdge, HPlane* partition, SuperBlock* rightList,
+void BspBuilder::divideHEdge(bsp_hedge_t* hEdge, HPlane* partition, SuperBlock* rightList,
     SuperBlock* leftList)
 {
     const HPlaneBuildInfo* info = HPlane_BuildInfo(partition);
@@ -872,7 +877,7 @@ void BspBuilder_DivideHEdge(bsp_hedge_t* hEdge, HPlane* partition, SuperBlock* r
     // will be split by the partition line.
 
     calcIntersection(hEdge, info, a, b, &x, &y);
-    newHEdge = BspBuilder_SplitHEdge(hEdge, x, y);
+    newHEdge = splitHEdge(hEdge, x, y);
     makeIntersection(partition, hEdge, LEFT);
 
     if(a < 0)
@@ -891,9 +896,10 @@ typedef struct {
     SuperBlock* rights;
     SuperBlock* lefts;
     HPlane* hPlane;
+    BspBuilder* builder;
 } partitionhedgeworkerparams_t;
 
-static int partitionHEdgeWorker(SuperBlock* superblock, void* parameters)
+int C_DECL BspBuilder_PartitionHEdgeWorker(SuperBlock* superblock, void* parameters)
 {
     partitionhedgeworkerparams_t* p = (partitionhedgeworkerparams_t*)parameters;
     bsp_hedge_t* hEdge;
@@ -901,13 +907,13 @@ static int partitionHEdgeWorker(SuperBlock* superblock, void* parameters)
 
     while((hEdge = SuperBlock_HEdgePop(superblock)))
     {
-        BspBuilder_DivideHEdge(hEdge, p->hPlane, p->rights, p->lefts);
+        p->builder->divideHEdge(hEdge, p->hPlane, p->rights, p->lefts);
     }
 
     return false; // Continue iteration.
 }
 
-void BspBuilder_PartitionHEdges(SuperBlock* hEdgeList, SuperBlock* rights, SuperBlock* lefts,
+void BspBuilder::partitionHEdges(SuperBlock* hEdgeList, SuperBlock* rights, SuperBlock* lefts,
     HPlane* hPlane)
 {
     partitionhedgeworkerparams_t parm;
@@ -915,16 +921,17 @@ void BspBuilder_PartitionHEdges(SuperBlock* hEdgeList, SuperBlock* rights, Super
     parm.rights = rights;
     parm.lefts = lefts;
     parm.hPlane = hPlane;
-    SuperBlock_Traverse2(hEdgeList, partitionHEdgeWorker, (void*)&parm);
+    parm.builder = this;
+    SuperBlock_Traverse2(hEdgeList, BspBuilder_PartitionHEdgeWorker, (void*)&parm);
 
     // Sanity checks...
     if(!SuperBlock_TotalHEdgeCount(rights))
-        Con_Error("BspBuilder_PartitionHEdges: Separated half-edge has no right side.");
+        Con_Error("BspBuilder::partitionHEdges: Separated half-edge has no right side.");
 
     if(!SuperBlock_TotalHEdgeCount(lefts))
-        Con_Error("BspBuilder_PartitionHEdges: Separated half-edge has no left side.");
+        Con_Error("BspBuilder::partitionHEdges: Separated half-edge has no left side.");
 
-    BspBuilder_AddMiniHEdges(hPlane, rights, lefts);
+    addMiniHEdges(hPlane, rights, lefts);
 }
 
 static int createBSPLeafWorker(SuperBlock* superblock, void* parameters)
@@ -946,9 +953,9 @@ static int createBSPLeafWorker(SuperBlock* superblock, void* parameters)
 /**
  * Create a new leaf from a list of half-edges.
  */
-static bspleafdata_t* createBSPLeaf(SuperBlock* hEdgeList)
+bspleafdata_t* BspBuilder::createBSPLeaf(SuperBlock* hEdgeList)
 {
-    bspleafdata_t* leaf = BspBuilder_NewLeaf();
+    bspleafdata_t* leaf = newLeaf();
 
     // Link the half-edges into the new leaf.
     SuperBlock_Traverse2(hEdgeList, createBSPLeafWorker, leaf);
@@ -956,7 +963,7 @@ static bspleafdata_t* createBSPLeaf(SuperBlock* hEdgeList)
     return leaf;
 }
 
-boolean BspBuilder_BuildNodes(SuperBlock* superblock, binarytree_t** parent, size_t depth,
+boolean BspBuilder::buildNodes(SuperBlock* superblock, binarytree_t** parent, size_t depth,
     HPlane* hPlane)
 {
     SuperBlockmap* hEdgeSet[2];
@@ -973,17 +980,17 @@ boolean BspBuilder_BuildNodes(SuperBlock* superblock, binarytree_t** parent, siz
 #endif*/
 
     // Pick the next partition to use.
-    if(!BspBuilder_ChoosePartition(superblock, depth, hPlane))
+    if(!choosePartition(superblock, depth, hPlane))
     {
         // No partition required, already convex.
-        //DEBUG_Message(("BspBuilder_BuildNodes: Convex.\n"));
+        //DEBUG_Message(("BspBuilder::buildNodes: Convex.\n"));
 
         leaf = createBSPLeaf(superblock);
         *parent = BinaryTree_Create(leaf);
         return true;
     }
 
-    //DEBUG_Message(("BspBuilder_BuildNodes: Partition %p (%1.0f,%1.0f) -> (%1.0f,%1.0f).\n",
+    //DEBUG_Message(("BspBuilder::buildNodes: Partition %p (%1.0f,%1.0f) -> (%1.0f,%1.0f).\n",
     //               best, best->v[0]->V_pos[VX], best->v[0]->V_pos[VY],
     //               best->v[1]->V_pos[VX], best->v[1]->V_pos[VY]));
 
@@ -995,11 +1002,11 @@ boolean BspBuilder_BuildNodes(SuperBlock* superblock, binarytree_t** parent, siz
     hEdgeSet[LEFT]  = SuperBlockmap_New(SuperBlock_Bounds(superblock));
 
     // Divide the half-edges into two lists: left & right.
-    BspBuilder_PartitionHEdges(superblock, SuperBlockmap_Root(hEdgeSet[RIGHT]),
-                                    SuperBlockmap_Root(hEdgeSet[LEFT]), hPlane);
-    HPlane_Clear(hPlane);
+    partitionHEdges(superblock, SuperBlockmap_Root(hEdgeSet[RIGHT]),
+                                SuperBlockmap_Root(hEdgeSet[LEFT]), hPlane);
+    HPlane_Clear(hPlane, this);
 
-    node = M_Calloc(sizeof(BspNode));
+    node = (BspNode*)M_Calloc(sizeof *node);
     *parent = BinaryTree_Create(node);
 
     SuperBlockmap_FindHEdgeBounds(hEdgeSet[LEFT],  &node->aaBox[LEFT]);
@@ -1010,13 +1017,13 @@ boolean BspBuilder_BuildNodes(SuperBlock* superblock, binarytree_t** parent, siz
     node->partition.dX = HPlane_DX(hPlane);
     node->partition.dY = HPlane_DY(hPlane);
 
-    builtOK = BspBuilder_BuildNodes(SuperBlockmap_Root(hEdgeSet[RIGHT]), &subTree, depth + 1, hPlane);
+    builtOK = buildNodes(SuperBlockmap_Root(hEdgeSet[RIGHT]), &subTree, depth + 1, hPlane);
     BinaryTree_SetChild(*parent, RIGHT, subTree);
     SuperBlockmap_Delete(hEdgeSet[RIGHT]);
 
     if(builtOK)
     {
-        builtOK = BspBuilder_BuildNodes(SuperBlockmap_Root(hEdgeSet[LEFT]), &subTree, depth + 1, hPlane);
+        builtOK = buildNodes(SuperBlockmap_Root(hEdgeSet[LEFT]), &subTree, depth + 1, hPlane);
         BinaryTree_SetChild(*parent, LEFT, subTree);
     }
 
@@ -1026,7 +1033,7 @@ boolean BspBuilder_BuildNodes(SuperBlock* superblock, binarytree_t** parent, siz
 }
 
 #if _DEBUG
-static int printSuperBlockHEdgesWorker2(bsp_hedge_t* hEdge, void* parameters)
+static int printSuperBlockHEdgesWorker2(bsp_hedge_t* hEdge, void* /*parameters*/)
 {
     Con_Message("Build: %s %p sector=%d (%1.1f,%1.1f) -> (%1.1f,%1.1f)\n",
                 (hEdge->lineDef? "NORM" : "MINI"), hEdge,

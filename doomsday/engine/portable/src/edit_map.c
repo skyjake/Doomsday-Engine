@@ -34,6 +34,8 @@
 #include "de_dam.h"
 #include "de_filesys.h"
 
+//#include "bsp_edge.h" /// @todo Remove me.
+
 #include "s_environ.h"
 
 typedef struct usecrecord_s {
@@ -49,6 +51,8 @@ static boolean editMapInited = false;
 static editmap_t* map = &editMap;
 
 static GameMap *lastBuiltMap = NULL;
+
+static BspBuilder_c* bspBuilder = NULL;
 
 static uint numUnclosedSectors;
 static usecrecord_t *unclosedSectors;
@@ -211,6 +215,19 @@ static void destroyEditableSectors(editmap_t* map)
     map->numSectors = 0;
 }
 
+edgetip_t* MPE_NewEdgeTip(void)
+{
+    return (edgetip_t*)M_Calloc(sizeof(edgetip_t));
+}
+
+void MPE_DeleteEdgeTip(struct edgetip_s* tip)
+{
+    if(tip)
+    {
+        M_Free(tip);
+    }
+}
+
 static void destroyEditableVertexes(editmap_t* map)
 {
     if(map->vertexes)
@@ -225,7 +242,7 @@ static void destroyEditableVertexes(editmap_t* map)
             while(tip)
             {
                 n = tip->ET_next;
-                BspBuilder_DeleteEdgeTip(tip);
+                MPE_DeleteEdgeTip(tip);
                 tip = n;
             }
 
@@ -1696,7 +1713,9 @@ boolean MPE_End(void)
     /**
      * Build a BSP for this map.
      */
-    builtOK = BspBuilder_Build(gamemap, &map->vertexes, &map->numVertexes);
+    bspBuilder = BspBuilder_New();
+    builtOK = BspBuilder_Build(bspBuilder, gamemap, &map->vertexes, &map->numVertexes);
+    BspBuilder_Delete(bspBuilder);
 
     // Finish the polyobjs (after the vertexes are hardened).
     for(i = 0; i < gamemap->numPolyObjs; ++i)

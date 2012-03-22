@@ -30,8 +30,9 @@
 #include "de_edit.h"
 #include "de_refresh.h"
 
-static void hardenSidedefHEdgeList(GameMap* map, SideDef* side, HEdge* hedge,
-    bsp_hedge_t* bspHEdge)
+#include "bspbuilder/hedges.hh" /// @todo Remove me.
+
+static void hardenSidedefHEdgeList(GameMap* map, SideDef* side, bsp_hedge_t* bspHEdge)
 {
     bsp_hedge_t* first, *other;
     uint count;
@@ -57,7 +58,7 @@ static void hardenSidedefHEdgeList(GameMap* map, SideDef* side, HEdge* hedge,
 
     // Allocate the final side hedge table.
     side->hedgeCount = count;
-    side->hedges = Z_Malloc(sizeof(HEdge*) * (side->hedgeCount + 1), PU_MAPSTATIC, 0);
+    side->hedges = (HEdge**)Z_Malloc(sizeof(*side->hedges) * (side->hedgeCount + 1), PU_MAPSTATIC, 0);
 
     count = 0;
     other = first;
@@ -133,7 +134,7 @@ static void buildHEdgesFromBSPHEdges(GameMap* dest, binarytree_t* rootNode)
         Con_Error("buildHEdgesFromBSPHEdges: No hedges?");
 
     // Allocate the sort buffer.
-    index = M_Malloc(sizeof(bsp_hedge_t*) * params.curIdx);
+    index = (bsp_hedge_t**)M_Malloc(sizeof(*index) * params.curIdx);
 
     // Pass 2: Collect ptrs the hedges and insert into the index.
     params.curIdx = 0;
@@ -144,7 +145,7 @@ static void buildHEdgesFromBSPHEdges(GameMap* dest, binarytree_t* rootNode)
     qsort(index, params.curIdx, sizeof(bsp_hedge_t*), hEdgeCompare);
 
     dest->numHEdges = (uint) params.curIdx;
-    dest->hedges = Z_Calloc(dest->numHEdges * sizeof(HEdge), PU_MAPSTATIC, 0);
+    dest->hedges = (HEdge*)Z_Calloc(dest->numHEdges * sizeof(HEdge), PU_MAPSTATIC, 0);
     for(i = 0; i < dest->numHEdges; ++i)
     {
         HEdge* hedge = &dest->hedges[i];
@@ -190,7 +191,7 @@ static void buildHEdgesFromBSPHEdges(GameMap* dest, binarytree_t* rootNode)
         }
 
         if(hedge->lineDef)
-            hardenSidedefHEdgeList(dest, HEDGE_SIDEDEF(hedge), hedge, bspHEdge);
+            hardenSidedefHEdgeList(dest, HEDGE_SIDEDEF(hedge), bspHEdge);
 
         hedge->angle = bamsAtan2((int) (hedge->HE_v2pos[VY] - hedge->HE_v1pos[VY]),
                                  (int) (hedge->HE_v2pos[VX] - hedge->HE_v1pos[VX])) << FRACBITS;
@@ -235,7 +236,7 @@ static void hardenBspLeafHEdgeList(GameMap* dest, BspLeaf* bspLeaf, bsp_hedge_t*
     bsp_hedge_t* cur;
     HEdge** hedges;
 
-    hedges = Z_Malloc(sizeof(HEdge*) * (hedgeCount + 1), PU_MAPSTATIC, 0);
+    hedges = (HEdge**)Z_Malloc(sizeof(*hedges) * (hedgeCount + 1), PU_MAPSTATIC, 0);
 
     for(cur = list, i = 0; cur; cur = cur->nextInLeaf, ++i)
         hedges[i] = &dest->hedges[cur->index];
@@ -306,7 +307,7 @@ static boolean C_DECL hardenNode(binarytree_t* tree, void* data)
     if(BinaryTree_IsLeaf(tree))
         return true; // Continue iteration.
 
-    nodeData = BinaryTree_GetData(tree);
+    nodeData =(BspNode*)BinaryTree_GetData(tree);
     params = (hardenbspparams_t*) data;
 
     node = &params->dest->bspNodes[nodeData->buildData.index = params->nodeCurIndex++];
@@ -378,13 +379,13 @@ static void hardenBSP(GameMap* dest, binarytree_t* rootNode)
     dest->numBspNodes = 0;
     BinaryTree_PostOrder(rootNode, countNode, &dest->numBspNodes);
     if(dest->numBspNodes != 0)
-        dest->bspNodes = Z_Calloc(dest->numBspNodes * sizeof(BspNode), PU_MAPSTATIC, 0);
+        dest->bspNodes = (BspNode*)Z_Calloc(dest->numBspNodes * sizeof(BspNode), PU_MAPSTATIC, 0);
     else
         dest->bspNodes = 0;
 
     dest->numBspLeafs = 0;
     BinaryTree_PostOrder(rootNode, countSSec, &dest->numBspLeafs);
-    dest->bspLeafs = Z_Calloc(dest->numBspLeafs * sizeof(BspLeaf), PU_MAPSTATIC, 0);
+    dest->bspLeafs = (BspLeaf*)Z_Calloc(dest->numBspLeafs * sizeof(BspLeaf), PU_MAPSTATIC, 0);
 
     if(!rootNode) return;
 
@@ -402,45 +403,12 @@ static void hardenBSP(GameMap* dest, binarytree_t* rootNode)
     }
 }
 
-void BspBuilder_InitForMap(GameMap* map)
-{
-    uint i;
-
-    for(i = 0; i < map->numLineDefs; ++i)
-    {
-        LineDef* l = &map->lineDefs[i];
-        Vertex* start = l->v[0];
-        Vertex* end   = l->v[1];
-
-        start->buildData.refCount++;
-        end->buildData.refCount++;
-
-        l->buildData.mlFlags = 0;
-
-        // Check for zero-length line.
-        if((fabs(start->buildData.pos[VX] - end->buildData.pos[VX]) < DIST_EPSILON) &&
-           (fabs(start->buildData.pos[VY] - end->buildData.pos[VY]) < DIST_EPSILON))
-            l->buildData.mlFlags |= MLF_ZEROLENGTH;
-
-        if(l->inFlags & LF_POLYOBJ)
-            l->buildData.mlFlags |= MLF_POLYOBJ;
-
-        if(l->sideDefs[BACK] && l->sideDefs[FRONT])
-        {
-            l->buildData.mlFlags |= MLF_TWOSIDED;
-
-            if(l->sideDefs[BACK]->sector == l->sideDefs[FRONT]->sector)
-                l->buildData.mlFlags |= MLF_SELFREF;
-        }
-    }
-}
-
 static void hardenVertexes(GameMap* dest, Vertex*** vertexes, uint* numVertexes)
 {
     uint i;
 
     dest->numVertexes = *numVertexes;
-    dest->vertexes = Z_Calloc(dest->numVertexes * sizeof(Vertex), PU_MAPSTATIC, 0);
+    dest->vertexes = (Vertex*)Z_Calloc(dest->numVertexes * sizeof(Vertex), PU_MAPSTATIC, 0);
 
     for(i = 0; i < dest->numVertexes; ++i)
     {

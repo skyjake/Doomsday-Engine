@@ -54,85 +54,36 @@
 #ifndef LIBDENG_MAP_BSP_BUILDER
 #define LIBDENG_MAP_BSP_BUILDER
 
-#include "de_edit.h"
-
-// Degrees, 0 is E, 90 is N
-typedef double angle_g;
+#include "dd_types.h"
 
 struct hplane_s;
 struct superblock_s;
 struct hplanebuildinfo_s;
 struct hplaneintercept_s;
 struct bsp_hedge_s;
+struct edgetip_s;
+struct vertex_s;
+struct sector_s;
+struct gamemap_s;
 
-/**
- * Plain-old-data structure containing additional information for a half-edge
- * half-plane intercept point where the geometry intersects (an incident vertex
- * can be found here (or at there will be upon insertion.)).
- *
- * There is always a corresponding HPlaneIntercept in the owning HPlane.
- */
-typedef struct hedgeintercept_s {
-    // Vertex in question.
-    Vertex* vertex;
-
-    // True if this intersection was on a self-referencing linedef.
-    boolean selfRef;
-
-    // Sector on each side of the vertex (along the partition),
-    // or NULL when that direction isn't OPEN.
-    Sector* before;
-    Sector* after;
-} HEdgeIntercept;
-
-/**
- * Create a new intersection.
- */
-HEdgeIntercept* BspBuilder_NewHEdgeIntercept(Vertex* vertex,
-    const struct hplanebuildinfo_s* partition, boolean lineDefIsSelfReferencing);
-
-/**
- * Destroy the specified intersection.
- *
- * @param inter  Ptr to the intersection to be destroyed.
- */
-void BspBuilder_DeleteHEdgeIntercept(HEdgeIntercept* intercept);
-
-#if _DEBUG
-void Bsp_PrintHEdgeIntercept(HEdgeIntercept* intercept);
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-/**
- * Search the given list for an intercept, if found; return it.
- *
- * @param list  The list to be searched.
- * @param vert  Ptr to the vertex to look for.
- *
- * @return  Ptr to the found intercept, else @c NULL;
- */
-struct hplaneintercept_s* BspBuilder_HPlaneInterceptByVertex(struct hplane_s* hPlane, Vertex* vertex);
+struct bspbuilder_c_s;
 
-HEdgeIntercept* BspBuilder_HEdgeInterceptByVertex(struct hplane_s* hPlane, Vertex* vertex);
-
-/**
- * Analyze the intersection list, and add any needed minihedges to the given half-edge lists
- * (one minihedge on each side).
- *
- * @note All the intersections in the hPlane will be free'd back into the quick-alloc list.
- */
-void BspBuilder_AddMiniHEdges(struct hplane_s* hPlane,
-    struct superblock_s* rightList, struct superblock_s* leftList);
-
-void BspBuilder_AddHEdgesBetweenIntercepts(struct hplane_s* hPlane,
-    HEdgeIntercept* start, HEdgeIntercept* end, struct bsp_hedge_s** right, struct bsp_hedge_s** left);
+typedef struct bspbuilder_c_s BspBuilder_c;
 
 // CVar for tuning the BSP edge split cost factor.
 extern int bspFactor;
 
-/**
- * Register the ccmds and cvars of the BSP builder. Called during engine startup
- */
 void BspBuilder_Register(void);
+
+BspBuilder_c* BspBuilder_New(void);
+
+void BspBuilder_Delete(BspBuilder_c* builder);
+
+void BspBuilder_Save(struct gamemap_s* dest, void* rootNode, struct vertex_s*** vertexes, uint* numVertexes);
 
 /**
  * Build the BSP for the given map.
@@ -143,6 +94,10 @@ void BspBuilder_Register(void);
  *
  * @return  @c true= iff completed successfully.
  */
-boolean BspBuilder_Build(GameMap* map, Vertex*** vertexes, uint* numVertexes);
+boolean BspBuilder_Build(BspBuilder_c* builder, struct gamemap_s* map, struct vertex_s*** vertexes, uint* numVertexes);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /// LIBDENG_MAP_BSP_BUILDER

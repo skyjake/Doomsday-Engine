@@ -23,10 +23,6 @@
 #ifndef LIBDENG_BSP
 #define LIBDENG_BSP
 
-#include "bsp_main.h"
-#include "bsp_node.h"
-#include "bsp_edge.h"
-#include "bsp_intersection.h"
-#include "superblockmap.h"
+#include "edit_bsp.h"
 
 #endif /// LIBDENG_BSP

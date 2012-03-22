@@ -26,11 +26,15 @@
  * p_maputil.h: Map Utility Routines
  */
 
-#ifndef __DOOMSDAY_MAP_UTILITIES_H__
-#define __DOOMSDAY_MAP_UTILITIES_H__
+#ifndef LIBDENG_MAP_UTILITIES_H
+#define LIBDENG_MAP_UTILITIES_H
 
 #include "m_vector.h"
 #include "p_object.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define IS_SECTOR_LINKED(mo)    ((mo)->sPrev != NULL)
 #define IS_BLOCK_LINKED(mo)     ((mo)->bNext != NULL)
@@ -217,4 +221,8 @@ int P_PathXYTraverse2(float fromX, float fromY, float toX, float toY, int flags,
 boolean P_CheckLineSight(const float from[3], const float to[3], float bottomSlope,
     float topSlope, int flags);
 
+#ifdef __cplusplus
+} // extern "C"
 #endif
+
+#endif /// LIBDENG_MAP_UTILITIES_H

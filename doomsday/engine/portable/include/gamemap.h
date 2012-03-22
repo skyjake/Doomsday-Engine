@@ -25,6 +25,10 @@
 
 #include "p_particle.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct thinkerlist_s;
 struct clmoinfo_s;
 struct generators_s;
@@ -770,5 +774,9 @@ void GameMap_InitBspLeafBlockmap(GameMap* map, const_pvec2_t min, const_pvec2_t 
  * @param max  Maximal coordinates for the map.
  */
 void GameMap_InitPolyobjBlockmap(GameMap* map, const_pvec2_t min, const_pvec2_t max);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /// LIBDENG_GAMEMAP_H
