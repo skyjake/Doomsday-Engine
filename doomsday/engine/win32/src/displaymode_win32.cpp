@@ -1,8 +1,9 @@
 /**
  * @file displaymode_win32.cpp
- * Win32 implementation of the DisplayMode class. @ingroup gl
+ * Win32 implementation of the DisplayMode native functionality. @ingroup gl
  *
- * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -22,118 +23,91 @@
 #include <qDebug>
 
 #include "de_platform.h"
+//#include <windowsx.h>
+
 #include "displaymode_native.h"
 
 #include <assert.h>
 #include <vector>
 
-#if 0
-static std::vector<DisplayMode> displayModes;
-static std::vector<CFDictionaryRef> displayDicts;
-static CFDictionaryRef currentDisplayDict;
-#endif
+static std::vector<DEVMODE> devModes;
+static DEVMODE currentDevMode;
+
+static DisplayMode devToDisplayMode(const DEVMODE& d)
+{
+    DisplayMode m;
+    m.width = d.dmPelsWidth;
+    m.height = d.dmPelsHeight;
+    m.depth = d.dmBitsPerPel;
+    m.refreshRate = d.dmDisplayFrequency;
+    return m;
+}
 
 void DisplayMode_Native_Init(void)
 {
-#if 0
     // Let's see which modes are available.
-    CFArrayRef modes = CGDisplayAvailableModes(kCGDirectMainDisplay);
-    CFIndex count = CFArrayGetCount(modes);
-    for(CFIndex i = 0; i < count; ++i)
+    for(int i = 0; ; i++)
     {
-        CFDictionaryRef dict = (CFDictionaryRef) CFArrayGetValueAtIndex(modes, i);
-        displayModes.push_back(modeFromDict(dict));
-        displayDicts.push_back(dict);
+        DEVMODE mode;
+        memset(&mode, 0, sizeof(mode));
+        mode.dmSize = sizeof(mode);
+        if(!EnumDisplaySettings(NULL, i, &mode))
+            break; // That's all.
+
+        devModes.push_back(mode);
     }
-    currentDisplayDict = (CFDictionaryRef) CGDisplayCurrentMode(kCGDirectMainDisplay);
-#endif
+
+    // And which is the current mode?
+    memset(&currentDevMode, 0, sizeof(currentDevMode));
+    currentDevMode.dmSize = sizeof(currentDevMode);
+    EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &currentDevMode);
 }
 
 void DisplayMode_Native_Shutdown(void)
 {
-#if 0
-    displayModes.clear();
-    releaseDisplays();
-#endif
+    devModes.clear();
 }
 
 int DisplayMode_Native_Count(void)
 {
-#if 0
-    return displayModes.size();
-#endif
-    return 0;
+    return devModes.size();
 }
 
 void DisplayMode_Native_GetMode(int index, DisplayMode* mode)
 {
-#if 0
-    assert(index >= 0 && index < (int)displayModes.size());
-    *mode = displayModes[index];
-#endif
+    assert(index >= 0 && index < DisplayMode_Native_Count());
+    *mode = devToDisplayMode(devModes[index]);
 }
 
 void DisplayMode_Native_GetCurrentMode(DisplayMode* mode)
 {
-#if 0
-    *mode = modeFromDict(currentDisplayDict);
-#endif
+    *mode = devToDisplayMode(currentDevMode);
+}
+
+static int findMode(const DisplayMode* mode)
+{
+    for(int i = 0; i < DisplayMode_Native_Count(); ++i)
+    {
+        DisplayMode d = devToDisplayMode(devModes[i]);
+        if(DisplayMode_IsEqual(&d, mode))
+        {
+            return i;
+        }
+    }
+    return -1;
 }
 
 int DisplayMode_Native_Change(const DisplayMode* mode, boolean shouldCapture)
 {
-#if 0
-    const CGDisplayFadeInterval fadeTime = .5f;
-
     assert(mode);
-    assert(findIndex(mode) >= 0); // mode must be an enumerated one
+    assert(findMode(mode) >= 0);
 
-    // Fade all displays to black (blocks until faded).
-    CGDisplayFadeReservationToken token;
-    CGAcquireDisplayFadeReservation(kCGMaxDisplayReservationInterval, &token);
-    CGDisplayFade(token, fadeTime, kCGDisplayBlendNormal, kCGDisplayBlendSolidColor, 0, 0, 0, true /* wait */);
+    DEVMODE m = devModes[findMode(mode)];
+    m.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL | DM_DISPLAYFREQUENCY;
 
-    // Capture the displays now if haven't yet done so.
-    bool wasPreviouslyCaptured = CGDisplayIsCaptured(kCGDirectMainDisplay);
-    CGDisplayErr result = kCGErrorSuccess;
+    if(ChangeDisplaySettings(&m, shouldCapture? CDS_FULLSCREEN : 0) != DISP_CHANGE_SUCCESSFUL)
+        return false;
 
-    CFDictionaryRef newModeDict = displayDicts[findIndex(mode)];
-
-    // Capture displays if instructed to do so.
-    if(shouldCapture && !captureDisplays(true))
-    {
-        result = kCGErrorFailure;
-    }
-
-    if(result == kCGErrorSuccess && currentDisplayDict != newModeDict)
-    {
-        qDebug() << "Changing to native mode" << findIndex(mode);
-
-        // Try to change.
-        result = CGDisplaySwitchToMode(kCGDirectMainDisplay, newModeDict);
-        if(result != kCGErrorSuccess)
-        {
-            // Oh no!
-            CGDisplaySwitchToMode(kCGDirectMainDisplay, currentDisplayDict);
-            if(!wasPreviouslyCaptured) releaseDisplays();
-        }
-        else
-        {
-            currentDisplayDict = displayDicts[findIndex(mode)];
-        }
-    }
-
-    // Fade back to normal.
-    CGDisplayFade(token, 2*fadeTime, kCGDisplayBlendSolidColor, kCGDisplayBlendNormal, 0, 0, 0, false);
-    CGReleaseDisplayFadeReservation(token);
-
-    // Release display capture if instructed to do so.
-    if(!shouldCapture)
-    {
-        captureDisplays(false);
-    }
-
-    return result == kCGErrorSuccess;
-#endif
-    return 0;
+    currentDevMode = m;
+    return true;
 }
