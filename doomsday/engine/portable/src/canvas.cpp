@@ -2,6 +2,9 @@
  * @file canvas.cpp
  * OpenGL drawing surface implementation. @ingroup gl
  *
+ * @todo Merge mouse_qt.c with this source file since the mouse tracking
+ * functionality is implemented here.
+ *
  * @authors Copyright (c) 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License

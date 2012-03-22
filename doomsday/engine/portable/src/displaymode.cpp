@@ -57,6 +57,8 @@ static bool reduce(int& ratioX, int& ratioY)
 }
 #endif
 
+static float differenceToOriginalHz(float hz);
+
 struct Mode : public DisplayMode
 {
     Mode()
@@ -102,8 +104,8 @@ struct Mode : public DisplayMode
             {
                 if(depth == b.depth)
                 {
-                    // Biggest refresh rate first.
-                    return refreshRate > b.refreshRate;
+                    // The refresh rate that more closely matches the original is preferable.
+                    return differenceToOriginalHz(refreshRate) < differenceToOriginalHz(b.refreshRate);
                 }
                 return depth < b.depth;
             }
@@ -163,10 +165,15 @@ struct Mode : public DisplayMode
     }
 };
 
-typedef std::set<Mode> Modes;
+typedef std::set<Mode> Modes; // note: no duplicates
 static Modes modes;
 static Mode originalMode;
 static bool captured;
+
+static float differenceToOriginalHz(float hz)
+{
+    return qAbs(hz - originalMode.refreshRate);
+}
 
 int DisplayMode_Init(void)
 {
@@ -175,12 +182,13 @@ int DisplayMode_Init(void)
     captured = false;
     DisplayMode_Native_Init();
 
+    // This is used for sorting the mode set (Hz).
+    originalMode = Mode::fromCurrent();
+
     for(int i = 0; i < DisplayMode_Native_Count(); ++i)
     {
         modes.insert(Mode(i));
     }
-
-    originalMode = Mode::fromCurrent();
 
 #ifdef _DEBUG
     qDebug() << "Current mode is:";
@@ -265,6 +273,10 @@ const DisplayMode* DisplayMode_FindClosest(int width, int height, int depth, flo
             score += squared(i->refreshRate - freq);
         }
 
+        // Note: The first mode to hit the lowest score wins; if there are many modes
+        // with the same score, the first one will be chosen. Particularly if the
+        // frequency has not been specified, the sort order of the modes defines which
+        // one is picked.
         if(!best || score < bestScore)
         {
             /*
