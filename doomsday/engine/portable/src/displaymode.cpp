@@ -187,7 +187,10 @@ int DisplayMode_Init(void)
 
     for(int i = 0; i < DisplayMode_Native_Count(); ++i)
     {
-        modes.insert(Mode(i));
+        Mode mode(i);
+        if(mode.depth < 16 || mode.width < 320 || mode.height < 240)
+            continue; // This mode is not good.
+        modes.insert(mode);
     }
 
 #ifdef _DEBUG
