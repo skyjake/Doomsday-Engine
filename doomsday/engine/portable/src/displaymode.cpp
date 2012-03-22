@@ -305,7 +305,7 @@ int DisplayMode_Change(const DisplayMode* mode, boolean shouldCapture)
         qDebug() << "DisplayMode: Requested mode is the same as current, ignoring.";
 
         // Already in this mode.
-        return true;
+        return false;
     }
     captured = shouldCapture;
     return DisplayMode_Native_Change(mode, shouldCapture || (originalMode != *mode));
