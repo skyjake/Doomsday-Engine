@@ -107,6 +107,11 @@ int             dd_vsnprintf(char* str, size_t size, const char* format,
 #   define PRINTF_F(f,v)
 #endif
 
+/**
+ * Macro for hiding the warning about an unused parameter.
+ */
+#define DENG_UNUSED(x)      (void)x
+
 int16_t         ShortSwap(int16_t);
 int32_t         LongSwap(int32_t);
 float           FloatSwap(float);
