@@ -44,52 +44,6 @@
 
 using namespace de;
 
-static zblockset_t* hEdgeBlockSet;
-static boolean hEdgeAllocatorInited = false;
-
-static __inline bsp_hedge_t* allocHEdge(void)
-{
-    if(hEdgeAllocatorInited)
-    {
-        // Use the block allocator.
-        bsp_hedge_t* hEdge = (bsp_hedge_t*)ZBlockSet_Allocate(hEdgeBlockSet);
-        memset(hEdge, 0, sizeof(bsp_hedge_t));
-        return hEdge;
-    }
-
-    return (bsp_hedge_t*)M_Calloc(sizeof(bsp_hedge_t));
-}
-
-static __inline void freeHEdge(bsp_hedge_t* hEdge)
-{
-    if(hEdgeAllocatorInited)
-    {
-        // Ignore, it'll be free'd along with the block allocator.
-        return;
-    }
-
-    M_Free(hEdge);
-}
-
-void BspBuilder::initHEdgeAllocator(void)
-{
-    if(hEdgeAllocatorInited) return; // Already been here.
-
-    hEdgeBlockSet = ZBlockSet_New(sizeof(bsp_hedge_t), 512, PU_APPSTATIC);
-    hEdgeAllocatorInited = true;
-}
-
-void BspBuilder::shutdownHEdgeAllocator(void)
-{
-    if(hEdgeAllocatorInited)
-    {
-        ZBlockSet_Delete(hEdgeBlockSet);
-        hEdgeBlockSet = NULL;
-
-        hEdgeAllocatorInited = false;
-    }
-}
-
 /**
  * Update the precomputed members of the hedge.
  */

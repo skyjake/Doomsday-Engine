@@ -325,7 +325,6 @@ boolean BspBuilder::build(GameMap* map, Vertex*** vertexes, uint* numVertexes)
     startTime = Sys_GetRealTime();
 
     initHPlaneInterceptAllocator();
-    initHEdgeAllocator();
 
     initForMap(map);
 
@@ -386,7 +385,6 @@ boolean BspBuilder::build(GameMap* map, Vertex*** vertexes, uint* numVertexes)
     rootNode = NULL;
 
     // Free temporary storage.
-    shutdownHEdgeAllocator();
     shutdownHPlaneInterceptAllocator();
 
     // How much time did we spend?

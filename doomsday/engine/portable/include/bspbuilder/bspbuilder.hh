@@ -22,10 +22,14 @@
 #ifndef LIBDENG_BSPBUILDER_HH
 #define LIBDENG_BSPBUILDER_HH
 
+#include "dd_types.h"
+#include "dd_zone.h"
+
+#include "bspbuilder/hedges.hh"
+
 struct hplane_s;
 struct hplanebuildinfo_s;
 struct hplaneintercept_s;
-struct bsp_hedge_s;
 struct hedgeintercept_s;
 struct vertex_s;
 struct gamemap_s;
@@ -40,13 +44,22 @@ extern "C" {
 
 namespace de {
 
+/// Number of bsp_hedge_t to block allocate.
+#define BSPBUILDER_HEDGE_ALLOCATOR_BLOCKSIZE   512
+
 class BspBuilder {
 public:
     BspBuilder()
-    {}
+    {
+        // Init the half-edge block allocator.
+        hEdgeBlockSet = ZBlockSet_New(sizeof(bsp_hedge_t), BSPBUILDER_HEDGE_ALLOCATOR_BLOCKSIZE, PU_APPSTATIC);
+    }
 
     ~BspBuilder()
-    {}
+    {
+        // Shutdown the half-edge block allocator.
+        ZBlockSet_Delete(hEdgeBlockSet);
+    }
 
     void initForMap(struct gamemap_s* map);
 
@@ -71,11 +84,24 @@ public:
     void deleteHEdgeIntercept(struct hedgeintercept_s* intercept);
 
 private:
+    inline bsp_hedge_t* allocHEdge(void)
+    {
+        bsp_hedge_t* hEdge = (bsp_hedge_t*)ZBlockSet_Allocate(hEdgeBlockSet);
+        memset(hEdge, 0, sizeof(bsp_hedge_t));
+        return hEdge;
+    }
+
+    inline void BspBuilder::freeHEdge(bsp_hedge_t* hEdge)
+    {
+        // Ignore it'll be free'd along with the block allocator itself.
+        (void*)hEdge;
+    }
+
     struct bspleafdata_s* createBSPLeaf(struct superblock_s* hEdgeList);
 
-    struct hplaneintercept_s* makeHPlaneIntersection(struct hplane_s* hPlane, struct bsp_hedge_s* hEdge, int leftSide);
+    struct hplaneintercept_s* makeHPlaneIntersection(struct hplane_s* hPlane, bsp_hedge_t* hEdge, int leftSide);
 
-    struct hplaneintercept_s* makeIntersection(struct hplane_s* hPlane, struct bsp_hedge_s* hEdge, int leftSide);
+    struct hplaneintercept_s* makeIntersection(struct hplane_s* hPlane, bsp_hedge_t* hEdge, int leftSide);
 
     /**
      * Initially create all half-edges, one for each side of a linedef.
@@ -94,25 +120,15 @@ private:
     void buildHEdgesAtIntersectionGaps(struct hplane_s* hPlane,
         struct superblock_s* rightList, struct superblock_s* leftList);
 
-    void addEdgeTip(struct vertex_s* vert, double dx, double dy, struct bsp_hedge_s* back,
-        struct bsp_hedge_s* front);
-
-    /**
-     * Init the half-edge block allocator.
-     */
-    void initHEdgeAllocator(void/*BspBuilder* builder*/);
-
-    /**
-     * Shutdown the half-edge block allocator. All elements will be free'd!
-     */
-    void shutdownHEdgeAllocator(void);
+    void addEdgeTip(struct vertex_s* vert, double dx, double dy, bsp_hedge_t* back,
+        bsp_hedge_t* front);
 
     /**
      * Destroys the given half-edge.
      *
      * @param hEdge  Ptr to the half-edge to be destroyed.
      */
-    void deleteHEdge(struct bsp_hedge_s* hEdge);
+    void deleteHEdge(bsp_hedge_t* hEdge);
 
     /**
      * Splits the given half-edge at the point (x,y). The new half-edge is returned.
@@ -128,7 +144,7 @@ private:
      *       half-edge (and/or backseg), so that future processing is not messed up
      *       by incorrect counts.
      */
-    struct bsp_hedge_s* splitHEdge(struct bsp_hedge_s* oldHEdge, double x, double y);
+    bsp_hedge_t* splitHEdge(bsp_hedge_t* oldHEdge, double x, double y);
 
 public:
     /**
@@ -144,7 +160,7 @@ public:
      *       reworked, heavily). I think it is important that both these routines follow
      *       the exact same logic.
      */
-    void divideHEdge(struct bsp_hedge_s* hEdge, struct hplane_s* hPlane,
+    void divideHEdge(bsp_hedge_t* hEdge, struct hplane_s* hPlane,
         struct superblock_s* rightList, struct superblock_s* leftList);
 
 private:
@@ -201,7 +217,7 @@ private:
         struct superblock_s* leftList, struct hplane_s* hPlane);
 
     void addHEdgesBetweenIntercepts(struct hplane_s* hPlane,
-        struct hedgeintercept_s* start, struct hedgeintercept_s* end, struct bsp_hedge_s** right, struct bsp_hedge_s** left);
+        struct hedgeintercept_s* start, struct hedgeintercept_s* end, bsp_hedge_t** right, bsp_hedge_t** left);
 
     /**
      * Analyze the intersection list, and add any needed minihedges to the given half-edge lists
@@ -231,7 +247,7 @@ private:
     /**
      * Create a new half-edge.
      */
-    struct bsp_hedge_s* newHEdge(LineDef* line, LineDef* sourceLine, Vertex* start, Vertex* end,
+    bsp_hedge_t* newHEdge(LineDef* line, LineDef* sourceLine, Vertex* start, Vertex* end,
         Sector* sec, boolean back);
 
     struct hedgeintercept_s* hedgeInterceptByVertex(struct hplane_s* hPlane, Vertex* vertex);
@@ -242,6 +258,9 @@ private:
      * (void space or directly along a linedef).
      */
     Sector* openSectorAtPoint(Vertex* vert, double dx, double dy);
+
+private:
+    zblockset_t* hEdgeBlockSet;
 };
 
 } // namespace de
