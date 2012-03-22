@@ -39,10 +39,10 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct treenode_s {
-    void               *data;
-    struct treenode_s  *children[2]; // {RIGHT, LEFT}
-} treenode_t;
+struct binarytree_s {
+    void* data;
+    struct binarytree_s* children[2]; // {RIGHT, LEFT}
+};
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -58,20 +58,20 @@ typedef struct treenode_s {
 
 // CODE --------------------------------------------------------------------
 
-static __inline treenode_t *allocNode(void)
+static __inline binarytree_t *allocNode(void)
 {
-    return malloc(sizeof(treenode_t));
+    return malloc(sizeof(binarytree_t));
 }
 
-static __inline void freeNode(treenode_t *node)
+static __inline void freeNode(binarytree_t *node)
 {
     free(node);
 }
 
-static treenode_t *createTree(const void *userData, treenode_t *right,
-                              treenode_t *left)
+static binarytree_t *createTree(const void *userData, binarytree_t *right,
+                              binarytree_t *left)
 {
-    treenode_t         *n;
+    binarytree_t         *n;
 
     n = allocNode();
     n->data = (void*) userData;
@@ -81,21 +81,21 @@ static treenode_t *createTree(const void *userData, treenode_t *right,
     return n;
 }
 
-static void destroyTree(treenode_t *tree)
+static void destroyTree(binarytree_t *tree)
 {
-    treenode_t         *n;
+    binarytree_t         *n;
 
     if(!tree)
         return;
 
-    n = (treenode_t*) tree;
+    n = (binarytree_t*) tree;
     destroyTree(n->children[RIGHT]);
     destroyTree(n->children[LEFT]);
 
     freeNode(n);
 }
 
-static size_t getHeight(const treenode_t *n)
+static size_t getHeight(const binarytree_t *n)
 {
     if(n && !IS_LEAF(n))
     {
@@ -110,7 +110,7 @@ static size_t getHeight(const treenode_t *n)
     return 0;
 }
 
-static boolean preOrder(treenode_t *n,
+static boolean preOrder(binarytree_t *n,
                         boolean (C_DECL *func) (binarytree_t *tree, void *data),
                         void *data)
 {
@@ -133,7 +133,7 @@ static boolean preOrder(treenode_t *n,
     return true;
 }
 
-static boolean inOrder(treenode_t *n,
+static boolean inOrder(binarytree_t *n,
                        boolean (C_DECL *func) (binarytree_t *tree, void *data),
                        void *data)
 {
@@ -159,7 +159,7 @@ static boolean inOrder(treenode_t *n,
     return true;
 }
 
-static boolean postOrder(treenode_t *n,
+static boolean postOrder(binarytree_t *n,
                          boolean (C_DECL *func) (binarytree_t *tree, void *data),
                          void *data)
 {
@@ -206,8 +206,8 @@ binarytree_t *BinaryTree_Create(const void *data)
 binarytree_t *BinaryTree_Create2(const void *data, binarytree_t *initialRight,
                                  binarytree_t *initialLeft)
 {
-    return (binarytree_t*) createTree(data, (treenode_t*) initialRight,
-                                      (treenode_t*) initialLeft);
+    return (binarytree_t*) createTree(data, (binarytree_t*) initialRight,
+                                      (binarytree_t*) initialLeft);
 }
 
 /**
@@ -220,7 +220,7 @@ void BinaryTree_Destroy(binarytree_t *tree)
     if(!tree)
         return;
 
-    destroyTree((treenode_t*) tree);
+    destroyTree((binarytree_t*) tree);
 }
 
 /**
@@ -235,7 +235,7 @@ size_t BinaryTree_GetHeight(binarytree_t *tree)
     if(!tree)
         return 0;
 
-    return getHeight((treenode_t*) tree);
+    return getHeight((binarytree_t*) tree);
 }
 
 /**
@@ -249,7 +249,7 @@ boolean BinaryTree_IsLeaf(binarytree_t *tree)
     if(!tree)
         return false;
 
-    return IS_LEAF((treenode_t*) tree);
+    return IS_LEAF((binarytree_t*) tree);
 }
 
 /**
@@ -262,12 +262,12 @@ boolean BinaryTree_IsLeaf(binarytree_t *tree)
  */
 binarytree_t *BinaryTree_GetChild(binarytree_t *tree, boolean left)
 {
-    treenode_t   *n;
+    binarytree_t   *n;
 
     if(!tree)
         return NULL;
 
-    n = (treenode_t*) tree;
+    n = (binarytree_t*) tree;
     return (binarytree_t*) n->children[left? LEFT : RIGHT];
 }
 
@@ -282,13 +282,13 @@ binarytree_t *BinaryTree_GetChild(binarytree_t *tree, boolean left)
 void BinaryTree_SetChild(binarytree_t *tree, boolean left,
                          binarytree_t *subTree)
 {
-    treenode_t         *parent, *child;
+    binarytree_t         *parent, *child;
 
     if(!tree)
         return;
 
-    parent = (treenode_t*) tree;
-    child = (treenode_t*) subTree;
+    parent = (binarytree_t*) tree;
+    child = (binarytree_t*) subTree;
     parent->children[left? LEFT : RIGHT] = child;
 }
 
@@ -301,12 +301,12 @@ void BinaryTree_SetChild(binarytree_t *tree, boolean left,
  */
 void *BinaryTree_GetData(binarytree_t *tree)
 {
-    treenode_t   *n;
+    binarytree_t   *n;
 
     if(!tree)
         return NULL;
 
-    n = (treenode_t*) tree;
+    n = (binarytree_t*) tree;
     return n->data;
 }
 
@@ -318,12 +318,12 @@ void *BinaryTree_GetData(binarytree_t *tree)
  */
 void BinaryTree_SetData(binarytree_t *tree, const void *data)
 {
-    treenode_t         *n;
+    binarytree_t         *n;
 
     if(!tree)
         return;
 
-    n = (treenode_t*) tree;
+    n = (binarytree_t*) tree;
     n->data = (void*) data;
 }
 
@@ -347,7 +347,7 @@ boolean BinaryTree_PreOrder(binarytree_t *tree,
     if(!tree)
         return true;
 
-    return preOrder((treenode_t*) tree, callback, data);
+    return preOrder((binarytree_t*) tree, callback, data);
 }
 
 /**
@@ -370,7 +370,7 @@ boolean BinaryTree_InOrder(binarytree_t *tree,
     if(!tree)
         return true;
 
-    return inOrder((treenode_t*) tree, callback, data);
+    return inOrder((binarytree_t*) tree, callback, data);
 }
 
 /**
@@ -393,5 +393,5 @@ boolean BinaryTree_PostOrder(binarytree_t *tree,
     if(!tree)
         return true;
 
-    return postOrder((treenode_t*) tree, callback, data);
+    return postOrder((binarytree_t*) tree, callback, data);
 }

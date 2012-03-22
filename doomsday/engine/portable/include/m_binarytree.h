@@ -32,7 +32,8 @@
 extern "C" {
 #endif
 
-typedef void* binarytree_t;
+struct binarytree_s;
+typedef struct binarytree_s binarytree_t;
 
 // Creation/destruction methods:
 binarytree_t   *BinaryTree_Create(const void *data);
