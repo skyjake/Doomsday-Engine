@@ -30,14 +30,13 @@
 
 #include "dd_types.h"
 #include "dd_zone.h"
-
 #include "p_mapdata.h"
+
 #include "bspbuilder/hedges.hh"
 #include "bspbuilder/intersection.hh"
+#include "bspbuilder/superblockmap.hh"
 
 struct binarytree_s;
-struct superblockmap_s;
-struct superblock_s;
 
 namespace de {
 
@@ -94,7 +93,7 @@ private:
         (void*)hedge;
     }
 
-    struct bspleafdata_s* createBSPLeaf(struct superblock_s* hedgeList);
+    struct bspleafdata_s* createBSPLeaf(SuperBlock* hedgeList);
 
     const HPlaneIntercept* makeHPlaneIntersection(HPlane* hplane, bsp_hedge_t* hedge, int leftSide);
 
@@ -105,14 +104,14 @@ private:
      *
      * @return  The list of created half-edges.
      */
-    struct superblockmap_s* createInitialHEdges(GameMap* map);
+    SuperBlockmap* createInitialHEdges(GameMap* map);
 
     struct bspleafdata_s* newLeaf(void);
 
     void mergeIntersections(HPlane* intersections);
 
     void buildHEdgesAtIntersectionGaps(HPlane* hplane,
-        struct superblock_s* rightList, struct superblock_s* leftList);
+        SuperBlock* rightList, SuperBlock* leftList);
 
     void addEdgeTip(Vertex* vert, double dx, double dy, bsp_hedge_t* back,
         bsp_hedge_t* front);
@@ -134,7 +133,7 @@ private:
      *       the one we are currently splitting) must exist on a singly-linked list
      *       somewhere.
      *
-     * @note We must update the count values of any struct superblock_s that contains the
+     * @note We must update the count values of any SuperBlock that contains the
      *       half-edge (and/or backseg), so that future processing is not messed up
      *       by incorrect counts.
      */
@@ -155,7 +154,7 @@ public:
      *       the exact same logic.
      */
     void divideHEdge(bsp_hedge_t* hedge, HPlane* hplane,
-        struct superblock_s* rightList, struct superblock_s* leftList);
+        SuperBlock* rightList, SuperBlock* leftList);
 
 private:
     /**
@@ -167,7 +166,7 @@ private:
      *
      * @return  @c true= A suitable partition was found.
      */
-    boolean choosePartition(struct superblock_s* hedgeList, size_t depth, HPlane* hplane);
+    boolean choosePartition(SuperBlock* hedgeList, size_t depth, HPlane* hplane);
 
     /**
      * Takes the half-edge list and determines if it is convex, possibly converting it
@@ -189,7 +188,7 @@ private:
      * @param hplane        HPlaneIntercept list for storing any new intersections.
      * @return  @c true iff successfull.
      */
-    boolean buildNodes(struct superblock_s* superblock, struct binarytree_s** parent,
+    boolean buildNodes(SuperBlock* superblock, struct binarytree_s** parent,
         size_t depth, HPlane* hplane);
 
     /**
@@ -207,8 +206,8 @@ private:
      * lists based on the given partition line. Adds any intersections onto the
      * intersection list as it goes.
      */
-    void partitionHEdges(struct superblock_s* hedgeList, struct superblock_s* rightList,
-        struct superblock_s* leftList, HPlane* hplane);
+    void partitionHEdges(SuperBlock* hedgeList, SuperBlock* rightList,
+        SuperBlock* leftList, HPlane* hplane);
 
     void addHEdgesBetweenIntercepts(HPlane* hplane,
         HEdgeIntercept* start, HEdgeIntercept* end, bsp_hedge_t** right, bsp_hedge_t** left);
@@ -219,8 +218,8 @@ private:
      *
      * @note All the intersections in the hplane will be free'd back into the quick-alloc list.
      */
-    void addMiniHEdges(HPlane* hplane, struct superblock_s* rightList,
-                       struct superblock_s* leftList);
+    void addMiniHEdges(HPlane* hplane, SuperBlock* rightList,
+                       SuperBlock* leftList);
 
     /**
      * Search the given list for an intercept, if found; return it.

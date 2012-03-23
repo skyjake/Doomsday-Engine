@@ -30,6 +30,10 @@
 
 #include "de_platform.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct kdtree_s;
 struct kdtreenode_s;
 
@@ -69,5 +73,9 @@ KdTreeNode* KdTreeNode_AddChild(KdTreeNode* kdTreeNode, const AABox* bounds, int
 
 int KdTreeNode_Traverse2(KdTreeNode* kdTreeNode, int (*callback)(KdTreeNode*, void*), void* parameters);
 int KdTreeNode_Traverse(KdTreeNode* kdTreeNode, int (*callback)(KdTreeNode*, void*), void* parameters);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /// LIBDENG_KDTREE

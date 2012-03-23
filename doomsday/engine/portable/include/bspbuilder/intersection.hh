@@ -1,5 +1,5 @@
 /**
- * @file bsp_intersection.h
+ * @file intersection.hh
  * BSP Builder Intersections. @ingroup map
  *
  * Based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted on
@@ -25,8 +25,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_MAP_BSP_INTERSECTION
-#define LIBDENG_MAP_BSP_INTERSECTION
+#ifndef LIBDENG_BSPBUILDER_INTERSECTION
+#define LIBDENG_BSPBUILDER_INTERSECTION
 
 #include "bspbuilder/hedges.hh"
 
@@ -164,4 +164,4 @@ private:
 
 } // namespace de
 
-#endif /// LIBDENG_MAP_BSP_INTERSECTION
+#endif /// LIBDENG_BSPBUILDER_INTERSECTION

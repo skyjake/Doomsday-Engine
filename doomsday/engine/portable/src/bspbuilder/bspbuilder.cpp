@@ -1,5 +1,5 @@
 /**
- * @file bsp_main.c
+ * @file bspbuilder.cpp
  * BSP Builder. @ingroup map
  *
  * Based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted on
@@ -158,7 +158,7 @@ SuperBlockmap* BspBuilder::createInitialHEdges(GameMap* map)
     blockBounds.maxX = blockBounds.minX + 128 * M_CeilPow2(bw);
     blockBounds.maxY = blockBounds.minY + 128 * M_CeilPow2(bh);
 
-    sbmap = SuperBlockmap_New(&blockBounds);
+    sbmap = new SuperBlockmap(&blockBounds);
 
     for(i = 0; i < map->numLineDefs; ++i)
     {
@@ -193,7 +193,7 @@ SuperBlockmap* BspBuilder::createInitialHEdges(GameMap* map)
                     Con_Message("Warning: Bad sidedef on linedef #%d\n", line->buildData.index);
 
                 front = newHEdge(line, line, line->v[0], line->v[1], side->sector, false);
-                SuperBlock_HEdgePush(SuperBlockmap_Root(sbmap), front);
+                sbmap->root()->hedgePush(front);
             }
             else
                 Con_Message("Warning: Linedef #%d has no front sidedef!\n", line->buildData.index);
@@ -206,7 +206,7 @@ SuperBlockmap* BspBuilder::createInitialHEdges(GameMap* map)
                     Con_Message("Warning: Bad sidedef on linedef #%d\n", line->buildData.index);
 
                 back = newHEdge(line, line, line->v[1], line->v[0], side->sector, true);
-                SuperBlock_HEdgePush(SuperBlockmap_Root(sbmap), back);
+                sbmap->root()->hedgePush(back);
 
                 if(front)
                 {
@@ -232,7 +232,7 @@ SuperBlockmap* BspBuilder::createInitialHEdges(GameMap* map)
                     other = newHEdge(front->info.lineDef, line, line->v[1], line->v[0],
                                      line->buildData.windowEffect, true);
 
-                    SuperBlock_HEdgePush(SuperBlockmap_Root(sbmap), other);
+                    sbmap->root()->hedgePush(other);
 
                     // Setup the twin-ing (it's very strange to have a mini
                     // and a normal partnered together).
@@ -337,7 +337,7 @@ boolean BspBuilder::build(GameMap* map, Vertex*** vertexes, uint* numVertexes)
 
     // Recursively create nodes.
     rootNode = NULL;
-    builtOK = buildNodes(SuperBlockmap_Root(sbmap), &rootNode, 0, hplane);
+    builtOK = buildNodes(sbmap->root(), &rootNode, 0, hplane);
 
     // The intersection list is no longer needed.
     delete hplane;
@@ -346,7 +346,7 @@ boolean BspBuilder::build(GameMap* map, Vertex*** vertexes, uint* numVertexes)
     VERBOSE2( Con_Message("BspBuilder::buildNodes: Done in %.2f seconds.\n", (Sys_GetRealTime() - buildStartTime) / 1000.0f));
     }
 
-    SuperBlockmap_Delete(sbmap);
+    delete sbmap;
 
     if(builtOK)
     {

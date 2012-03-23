@@ -1,5 +1,5 @@
 /**
- * @file superblockmap.h
+ * @file superblockmap.hh
  * BSP Builder SuperBlock. @ingroup map
  *
  * Design is effectively that of a 2-dimensional kd-tree.
@@ -27,118 +27,146 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_MAP_BSP_SUPERBLOCK
-#define LIBDENG_MAP_BSP_SUPERBLOCK
+#ifndef LIBDENG_BSPBUILDER_SUPERBLOCKMAP
+#define LIBDENG_BSPBUILDER_SUPERBLOCKMAP
 
 #include "dd_types.h"
 
+#include "kdtree.h" /// @todo Remove me.
 #include "bspbuilder/hedges.hh"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <list>
+#include <assert.h>
 
-#include "kdtree.h"
+namespace de {
 
-struct superblockmap_s; // The SuperBlockmap instance (opaque).
-struct superblock_s; // The SuperBlock instance (opaque).
+class SuperBlockmap;
 
-/**
- * SuperBlockmap instance. Created with SuperBlockmap_New().
- */
-typedef struct superblockmap_s SuperBlockmap;
+class SuperBlock {
+public:
+    typedef std::list<bsp_hedge_t*> HEdges;
 
-/**
- * SuperBlock instance. Created with SuperBlock_New().
- */
-typedef struct superblock_s SuperBlock;
+    /// Half-edges completely contained by this block.
+    HEdges hedges;
 
-/**
- * Constructs a new superBlockmap. The superBlockmap must be destroyed with
- * SuperBlockmap_Delete() when no longer needed.
- */
-SuperBlockmap* SuperBlockmap_New(const AABox* bounds);
+    SuperBlock(SuperBlockmap* blockmap) :
+        bmap(blockmap), realNum(0), miniNum(0), hedges(0)
+    {}
 
-/**
- * Destroys the superBlockmap.
- *
- * @param superBlockmap  SuperBlockmap instance.
- */
-void SuperBlockmap_Delete(SuperBlockmap* superBlockmap);
+    ~SuperBlock() { clear(); }
 
-/**
- * Retrieve the root SuperBlock in this SuperBlockmap.
- *
- * @param superBlockmap  SuperBlockmap instance.
- * @return  Root SuperBlock instance.
- */
-SuperBlock* SuperBlockmap_Root(SuperBlockmap* superBlockmap);
+    /**
+     * Retrieve the SuperBlockmap which owns this block.
+     *
+     * @return  The owning SuperBlockmap instance.
+     */
+    SuperBlockmap* blockmap() { return bmap; }
 
-/**
- * Find the axis-aligned bounding box defined by the vertices of all
- * HEdges within this superblock. If no HEdges are linked then @a bounds
- * will be set to the "cleared" state (i.e., min[x,y] > max[x,y]).
- *
- * @param superBlockmap SuperBlock instance.
- * @param bounds        Determined bounds are written here.
- */
-void SuperBlockmap_FindHEdgeBounds(SuperBlockmap* superBlockmap, AABoxf* bounds);
+    /**
+     * Retrieve the axis-aligned bounding box defined for this superblock
+     * during instantiation. Note that this is NOT the bounds defined by
+     * the linked HEdges' vertices (@see SuperBlock::findHEdgeBounds()).
+     *
+     * @return  Axis-aligned bounding box.
+     */
+    const AABox* bounds() { return KdTreeNode_Bounds(tree); }
 
-int SuperBlockmap_PostTraverse2(SuperBlockmap* superBlockmap, int(*callback)(SuperBlock*, void*), void* parameters);
-int SuperBlockmap_PostTraverse(SuperBlockmap* superBlockmap, int(*callback)(SuperBlock*, void*)/*, parameters = NULL*/);
+    bool inline isLeaf()
+    {
+        const AABox* aaBox = bounds();
+        return (aaBox->maxX - aaBox->minX <= 256 &&
+                aaBox->maxY - aaBox->minY <= 256);
+    }
 
-/**
- * Retrieve the SuperBlockmap which owns this block.
- * @param superblock  SuperBlock instance.
- * @return  SuperBlockmap instance which owns this.
- */
-SuperBlockmap* SuperBlock_Blockmap(SuperBlock* superblock);
+    /**
+     * Retrieve a pointer to a sub-block of this superblock.
+     *
+     * @param left          non-zero= pick the "left" child.
+     *
+     * @return  Selected child superblock else @c NULL if none.
+     */
+    SuperBlock* child(int left)
+    {
+        KdTreeNode* subtree = KdTreeNode_Child(tree, left);
+        if(!subtree) return NULL;
+        return (SuperBlock*)KdTreeNode_UserData(subtree);
+    }
 
-/**
- * Retrieve the axis-aligned bounding box defined for this superblock
- * during instantiation. Note that this is NOT the bounds defined by
- * the linked HEdges' vertices (@see SuperBlock_FindHEdgeListBounds()).
- *
- * @param superblock    SuperBlock instance.
- * @return  Axis-aligned bounding box.
- */
-const AABox* SuperBlock_Bounds(SuperBlock* superblock);
+    void findHEdgeBounds(AABoxf* bounds);
 
-/**
- * Push (link) the given HEdge onto the FIFO list of half-edges linked
- * to this superblock.
- *
- * @param superblock    SuperBlock instance.
- * @param hedge  HEdge instance to add.
- */
-SuperBlock* SuperBlock_HEdgePush(SuperBlock* superblock, bsp_hedge_t* hedge);
+    /**
+     * Retrieve the total number of HEdges linked in this superblock (including
+     * any within child superblocks).
+     *
+     * @param addReal       Include the "real" half-edges in the total.
+     * @param addMini       Include the "mini" half-edges in the total.
+     *
+     * @return  Total HEdge count.
+     */
+    uint hedgeCount(bool addReal, bool addMini)
+    {
+        uint total = 0;
+        if(addReal) total += realNum;
+        if(addMini) total += miniNum;
+        return total;
+    }
 
-/**
- * Pop (unlink) the next HEdge from the FIFO list of half-edges linked
- * to this superblock.
- *
- * @param superblock    SuperBlock instance.
- *
- * @return  Previous top-most HEdge instance or @c NULL if empty.
- */
-bsp_hedge_t* SuperBlock_HEdgePop(SuperBlock* superblock);
+    // Convenience functions for retrieving the HEdge totals:
+    inline uint miniHEdgeCount() {  return hedgeCount(false, true); }
+    inline uint realHEdgeCount() { return hedgeCount(true, false); }
+    inline uint totalHEdgeCount() { return hedgeCount(true, true); }
 
-/**
- * Retrieve the total number of HEdges linked in this superblock (including
- * any within child superblocks).
- *
- * @param superblock    SuperBlock instance.
- * @param addReal       Include the "real" half-edges in the total.
- * @param addMini       Include the "mini" half-edges in the total.
- *
- * @return  Total HEdge count.
- */
-uint SuperBlock_HEdgeCount(SuperBlock* superblock, boolean addReal, boolean addMini);
+    /**
+     * Push (link) the given HEdge onto the FIFO list of half-edges linked
+     * to this superblock.
+     *
+     * @param hedge  HEdge instance to add.
+     */
+    SuperBlock* hedgePush(bsp_hedge_t* hedge);
 
-/// Convenience macros for retrieving the HEdge totals:
-#define SuperBlock_MiniHEdgeCount(sb)  SuperBlock_HEdgeCount((sb), false, true)
-#define SuperBlock_RealHEdgeCount(sb)  SuperBlock_HEdgeCount((sb), true, false)
-#define SuperBlock_TotalHEdgeCount(sb) SuperBlock_HEdgeCount((sb), true, true)
+    /**
+     * Pop (unlink) the next HEdge from the FIFO list of half-edges linked
+     * to this superblock.
+     *
+     * @return  Previous top-most HEdge instance or @c NULL if empty.
+     */
+    bsp_hedge_t* hedgePop();
+
+//private:
+    /// KdTree node in the owning SuperBlockmap.
+    KdTreeNode* tree;
+
+private:
+    void clear();
+
+    void inline incrementHEdgeCount(bsp_hedge_t* hedge)
+    {
+        if(!hedge) return;
+        if(hedge->info.lineDef)
+            realNum++;
+        else
+            miniNum++;
+    }
+
+    void inline linkHEdge(bsp_hedge_t* hedge)
+    {
+        if(!hedge) return;
+
+        hedges.push_front(hedge);
+        // Associate ourself.
+        hedge->block = this;
+    }
+
+    /// SuperBlockmap that owns this SuperBlock.
+    SuperBlockmap* bmap;
+
+    /// Number of real half-edges and minihedges contained by this block
+    /// (including all sub-blocks below it).
+    int realNum;
+    int miniNum;
+};
+
+} // namespace de
 
 /**
  * Iterate over all HEdges linked in this superblock. Iteration ends
@@ -150,24 +178,52 @@ uint SuperBlock_HEdgeCount(SuperBlock* superblock, boolean addReal, boolean addM
  *
  * @return  @c 0 iff iteration completed wholly.
  */
-int SuperBlock_IterateHEdges2(SuperBlock* superblock, int (*callback)(bsp_hedge_t*, void*), void* parameters);
-int SuperBlock_IterateHEdges(SuperBlock* superblock, int (*callback)(bsp_hedge_t*, void*)/*, parameters=NULL*/);
+int SuperBlock_IterateHEdges(de::SuperBlock* superblock, int (*callback)(bsp_hedge_t*, void*), void* parameters=NULL);
 
-/**
- * Retrieve a pointer to a sub-block of this superblock.
- *
- * @param superblock    SuperBlock instance.
- * @param left          non-zero= pick the "left" child.
- *
- * @return  Selected child superblock else @c NULL if none.
- */
-SuperBlock* SuperBlock_Child(SuperBlock* superblock, int left);
+int SuperBlock_Traverse(de::SuperBlock* superblock, int (*callback)(de::SuperBlock*, void*), void* parameters=NULL);
 
-int SuperBlock_Traverse2(SuperBlock* superblock, int (*callback)(SuperBlock*, void*), void* parameters);
-int SuperBlock_Traverse(SuperBlock* superblock, int (*callback)(SuperBlock*, void*)/*, parameters=NULL*/);
+int SuperBlockmap_PostTraverse(de::SuperBlockmap* superBlockmap, int(*callback)(de::SuperBlock*, void*), void* parameters=NULL);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
+namespace de {
 
-#endif /// LIBDENG_MAP_BSP_SUPERBLOCK
+class SuperBlockmap {
+public:
+    SuperBlockmap(const AABox* bounds) { init(bounds); }
+    ~SuperBlockmap() { clear(); }
+
+    /**
+     * Retrieve the root SuperBlock in this SuperBlockmap.
+     *
+     * @return  Root SuperBlock instance.
+     */
+    SuperBlock* root();
+
+    /**
+     * Find the axis-aligned bounding box defined by the vertices of all
+     * HEdges within this superblock. If no HEdges are linked then @a bounds
+     * will be set to the "cleared" state (i.e., min[x,y] > max[x,y]).
+     *
+     * @param bounds        Determined bounds are written here.
+     */
+    void findHEdgeBounds(AABoxf* aaBox);
+
+//private:
+    /**
+     * The KdTree of SuperBlocks.
+     *
+     * Subblocks:
+     * RIGHT - has the lower coordinates.
+     * LEFT  - has the higher coordinates.
+     * Division of a block always occurs horizontally:
+     *     e.g. 512x512 -> 256x512 -> 256x256.
+     */
+    KdTree* kdTree;
+
+private:
+    void init(const AABox* bounds);
+    void clear();
+};
+
+} // namespace de
+
+#endif /// LIBDENG_BSPBUILDER_SUPERBLOCKMAP

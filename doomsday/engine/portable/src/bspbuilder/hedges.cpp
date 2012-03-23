@@ -1,5 +1,5 @@
 /**
- * @file bsp_edge.c
+ * @file hedges.cpp
  * BSP Builder Half-edges. @ingroup map
  *
  * Based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted on
@@ -168,7 +168,8 @@ bsp_hedge_t* BspBuilder::splitHEdge(bsp_hedge_t* oldHEdge, double x, double y)
         // Update superblock, if needed.
         if(oldHEdge->twin->block)
         {
-            SuperBlock_HEdgePush(oldHEdge->twin->block, newHEdge->twin);
+            SuperBlock* block = reinterpret_cast<SuperBlock*>(oldHEdge->twin->block);
+            block->hedgePush(newHEdge->twin);
         }
         else
         {

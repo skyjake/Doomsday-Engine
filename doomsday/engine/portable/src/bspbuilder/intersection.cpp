@@ -1,5 +1,5 @@
 /**
- * @file bsp_intersection.c
+ * @file intersection.cpp
  * BSP Builder Intersections. @ingroup map
  *
  * Based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted on
@@ -270,8 +270,8 @@ void BspBuilder::buildHEdgesAtIntersectionGaps(HPlane* hplane, SuperBlock* right
                 addHEdgesBetweenIntercepts(hplane, cur, next, &right, &left);
 
                 // Add the new half-edges to the appropriate lists.
-                SuperBlock_HEdgePush(rightList, right);
-                SuperBlock_HEdgePush(leftList, left);
+                rightList->hedgePush(right);
+                leftList->hedgePush(left);
             }
         }
 

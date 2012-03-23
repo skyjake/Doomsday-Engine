@@ -1,5 +1,5 @@
 /**
- * @file bsp_edge.h
+ * @file hedges.hh
  * BSP Builder Half-edges. @ingroup map
  *
  * Based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted on
@@ -25,8 +25,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_MAP_BSP_HEDGE
-#define LIBDENG_MAP_BSP_HEDGE
+#ifndef LIBDENG_BSPBUILDER_HEDGES_HH
+#define LIBDENG_BSPBUILDER_HEDGES_HH
 
 #include "dd_types.h"
 #include "p_mapdata.h"
@@ -83,7 +83,7 @@ typedef struct bsp_hedge_s {
 
     // The superblock that contains this half-edge, or NULL if the half-edge
     // is no longer in any superblock (e.g. now in a leaf).
-    struct superblock_s* block;
+    void* block;
 
     BspHEdgeInfo info;
 
@@ -119,4 +119,4 @@ typedef struct hedgeintercept_s {
 void Bsp_PrintHEdgeIntercept(HEdgeIntercept* intercept);
 #endif
 
-#endif /// LIBDENG_MAP_BSP_HEDGE
+#endif /// LIBDENG_BSPBUILDER_HEDGES_HH

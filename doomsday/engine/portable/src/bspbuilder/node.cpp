@@ -1,5 +1,5 @@
 /**
- * @file bsp_node.c
+ * @file node.cpp
  * BSP Builder Node. Recursive node creation and sorting. @ingroup map
  *
  * Based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted on
@@ -544,23 +544,23 @@ static int evalPartitionWorker(SuperBlock* hedgeList, bsp_hedge_t* part,
      * half-edges within it at once. Only when the partition line intercepts the
      * box do we need to go deeper into it.
      */
-    num = P_BoxOnLineSide3(SuperBlock_Bounds(hedgeList), partInfo->pSX, partInfo->pSY,
+    num = P_BoxOnLineSide3(hedgeList->bounds(), partInfo->pSX, partInfo->pSY,
                            partInfo->pDX, partInfo->pDY, partInfo->pPerp,
                            partInfo->pLength, DIST_EPSILON);
 
     if(num < 0)
     {
         // Left.
-        info->realLeft += SuperBlock_RealHEdgeCount(hedgeList);
-        info->miniLeft += SuperBlock_MiniHEdgeCount(hedgeList);
+        info->realLeft += hedgeList->realHEdgeCount();
+        info->miniLeft += hedgeList->miniHEdgeCount();
 
         return false;
     }
     else if(num > 0)
     {
         // Right.
-        info->realRight += SuperBlock_RealHEdgeCount(hedgeList);
-        info->miniRight += SuperBlock_MiniHEdgeCount(hedgeList);
+        info->realRight += hedgeList->realHEdgeCount();
+        info->miniRight += hedgeList->miniHEdgeCount();
 
         return false;
     }
@@ -569,13 +569,13 @@ static int evalPartitionWorker(SuperBlock* hedgeList, bsp_hedge_t* part,
     parm.partInfo = partInfo;
     parm.bestCost = bestCost;
     parm.info = info;
-    result = SuperBlock_IterateHEdges2(hedgeList, evalPartitionWorker2, (void*)&parm);
+    result = SuperBlock_IterateHEdges(hedgeList, evalPartitionWorker2, (void*)&parm);
     if(result) return true;
 
     // Handle sub-blocks recursively.
     for(num = 0; num < 2; ++num)
     {
-        SuperBlock* child = SuperBlock_Child(hedgeList, num);
+        SuperBlock* child = hedgeList->child(num);
         if(!child) continue;
 
         if(evalPartitionWorker(child, part, bestCost, info))
@@ -685,7 +685,7 @@ static int pickhedgeWorker2(bsp_hedge_t* part, void* parameters)
 static int pickhedgeWorker(SuperBlock* partList, void* parameters)
 {
     // Test each half-edge as a potential partition.
-    return SuperBlock_IterateHEdges2(partList, pickhedgeWorker2, parameters);
+    return SuperBlock_IterateHEdges(partList, pickhedgeWorker2, parameters);
 }
 
 boolean BspBuilder::choosePartition(SuperBlock* hedgeList, size_t /*depth*/, HPlane* partition)
@@ -701,7 +701,7 @@ boolean BspBuilder::choosePartition(SuperBlock* hedgeList, size_t /*depth*/, HPl
     parm.bestCost = &bestCost;
 
     validCount++;
-    if(SuperBlock_Traverse2(hedgeList, pickhedgeWorker, (void*)&parm))
+    if(SuperBlock_Traverse(hedgeList, pickhedgeWorker, (void*)&parm))
     {
         /// @kludge BspBuilder::buildNodes() will detect the cancellation.
         return false;
@@ -835,13 +835,12 @@ void BspBuilder::divideHEdge(bsp_hedge_t* hedge, HPlane* partition, SuperBlock* 
         // the same direction or the opposite.
         if(hedge->info.pDX * info->pDX + hedge->info.pDY * info->pDY < 0)
         {
-            SuperBlock_HEdgePush(leftList, hedge);
+            leftList->hedgePush(hedge);
         }
         else
         {
-            SuperBlock_HEdgePush(rightList, hedge);
+            rightList->hedgePush(hedge);
         }
-
         return;
     }
 
@@ -853,7 +852,7 @@ void BspBuilder::divideHEdge(bsp_hedge_t* hedge, HPlane* partition, SuperBlock* 
         else if(b < DIST_EPSILON)
             makeIntersection(partition, hedge, LEFT);
 
-        SuperBlock_HEdgePush(rightList, hedge);
+        rightList->hedgePush(hedge);
         return;
     }
 
@@ -865,7 +864,7 @@ void BspBuilder::divideHEdge(bsp_hedge_t* hedge, HPlane* partition, SuperBlock* 
         else if(b > -DIST_EPSILON)
             makeIntersection(partition, hedge, LEFT);
 
-        SuperBlock_HEdgePush(leftList, hedge);
+        leftList->hedgePush(hedge);
         return;
     }
 
@@ -878,13 +877,13 @@ void BspBuilder::divideHEdge(bsp_hedge_t* hedge, HPlane* partition, SuperBlock* 
 
     if(a < 0)
     {
-        SuperBlock_HEdgePush(leftList,  hedge);
-        SuperBlock_HEdgePush(rightList, newhedge);
+        leftList->hedgePush(hedge);
+        rightList->hedgePush(newhedge);
     }
     else
     {
-        SuperBlock_HEdgePush(rightList, hedge);
-        SuperBlock_HEdgePush(leftList,  newhedge);
+        rightList->hedgePush(hedge);
+        leftList->hedgePush(newhedge);
     }
 }
 
@@ -901,7 +900,7 @@ int C_DECL BspBuilder_PartitionHEdgeWorker(SuperBlock* superblock, void* paramet
     bsp_hedge_t* hedge;
     assert(p);
 
-    while((hedge = SuperBlock_HEdgePop(superblock)))
+    while((hedge = superblock->hedgePop()))
     {
         p->builder->divideHEdge(hedge, p->hplane, p->rights, p->lefts);
     }
@@ -918,13 +917,13 @@ void BspBuilder::partitionHEdges(SuperBlock* hedgeList, SuperBlock* rights, Supe
     parm.lefts = lefts;
     parm.hplane = hplane;
     parm.builder = this;
-    SuperBlock_Traverse2(hedgeList, BspBuilder_PartitionHEdgeWorker, (void*)&parm);
+    SuperBlock_Traverse(hedgeList, BspBuilder_PartitionHEdgeWorker, (void*)&parm);
 
     // Sanity checks...
-    if(!SuperBlock_TotalHEdgeCount(rights))
+    if(!rights->totalHEdgeCount())
         Con_Error("BspBuilder::partitionhedges: Separated half-edge has no right side.");
 
-    if(!SuperBlock_TotalHEdgeCount(lefts))
+    if(!lefts->totalHEdgeCount())
         Con_Error("BspBuilder::partitionhedges: Separated half-edge has no left side.");
 
     addMiniHEdges(hplane, rights, lefts);
@@ -936,7 +935,7 @@ static int createBSPLeafWorker(SuperBlock* superblock, void* parameters)
     bsp_hedge_t* hedge;
     assert(leaf);
 
-    while((hedge = SuperBlock_HEdgePop(superblock)))
+    while((hedge = superblock->hedgePop()))
     {
         // Link it into head of the leaf's list.
         hedge->nextInLeaf = leaf->hedges;
@@ -954,7 +953,7 @@ bspleafdata_t* BspBuilder::createBSPLeaf(SuperBlock* hedgeList)
     bspleafdata_t* leaf = newLeaf();
 
     // Link the half-edges into the new leaf.
-    SuperBlock_Traverse2(hedgeList, createBSPLeafWorker, leaf);
+    SuperBlock_Traverse(hedgeList, createBSPLeafWorker, leaf);
 
     return leaf;
 }
@@ -994,36 +993,36 @@ boolean BspBuilder::buildNodes(SuperBlock* superblock, binarytree_t** parent, si
     /// @todo There should be no need to construct entirely independent
     ///       data structures to contain these hedge subsets.
     // Copy the bounding box of the edge list to the superblocks.
-    hedgeSet[RIGHT] = SuperBlockmap_New(SuperBlock_Bounds(superblock));
-    hedgeSet[LEFT]  = SuperBlockmap_New(SuperBlock_Bounds(superblock));
+    hedgeSet[RIGHT] =  new SuperBlockmap(superblock->bounds());
+    hedgeSet[LEFT]  = new SuperBlockmap(superblock->bounds());
 
     // Divide the half-edges into two lists: left & right.
-    partitionHEdges(superblock, SuperBlockmap_Root(hedgeSet[RIGHT]),
-                                SuperBlockmap_Root(hedgeSet[LEFT]), hplane);
+    partitionHEdges(superblock, hedgeSet[RIGHT]->root(),
+                                hedgeSet[LEFT]->root(), hplane);
     hplane->clear();
 
     node = (BspNode*)M_Calloc(sizeof *node);
     *parent = BinaryTree_Create(node);
 
-    SuperBlockmap_FindHEdgeBounds(hedgeSet[LEFT],  &node->aaBox[LEFT]);
-    SuperBlockmap_FindHEdgeBounds(hedgeSet[RIGHT], &node->aaBox[RIGHT]);
+    hedgeSet[LEFT]->findHEdgeBounds(&node->aaBox[LEFT]);
+    hedgeSet[RIGHT]->findHEdgeBounds(&node->aaBox[RIGHT]);
 
     node->partition.x = hplane->x();
     node->partition.y = hplane->y();
     node->partition.dX = hplane->dX();
     node->partition.dY = hplane->dY();
 
-    builtOK = buildNodes(SuperBlockmap_Root(hedgeSet[RIGHT]), &subTree, depth + 1, hplane);
+    builtOK = buildNodes(hedgeSet[RIGHT]->root(), &subTree, depth + 1, hplane);
     BinaryTree_SetChild(*parent, RIGHT, subTree);
-    SuperBlockmap_Delete(hedgeSet[RIGHT]);
+    delete hedgeSet[RIGHT];
 
     if(builtOK)
     {
-        builtOK = buildNodes(SuperBlockmap_Root(hedgeSet[LEFT]), &subTree, depth + 1, hplane);
+        builtOK = buildNodes(hedgeSet[LEFT]->root(), &subTree, depth + 1, hplane);
         BinaryTree_SetChild(*parent, LEFT, subTree);
     }
 
-    SuperBlockmap_Delete(hedgeSet[LEFT]);
+    delete hedgeSet[LEFT];
 
     return builtOK;
 }
@@ -1041,7 +1040,7 @@ static int printSuperBlockhedgesWorker2(bsp_hedge_t* hedge, void* /*parameters*/
 
 static int printSuperBlockhedgesWorker(SuperBlock* superblock, void* parameters)
 {
-    return SuperBlock_IterateHEdges2(superblock, printSuperBlockhedgesWorker2, parameters);
+    return SuperBlock_IterateHEdges(superblock, printSuperBlockhedgesWorker2, parameters);
 }
 
 void BSP_PrintSuperBlockhedges(SuperBlock* superblock)
