@@ -29,30 +29,15 @@
 #define LIBDENG_MAP_BSP_INTERSECTION
 
 #include "bspbuilder/hedges.hh"
-#include "bspbuilder/bspbuilder.hh"
+
+#include <list>
+#include <algorithm>
 
 struct linedef_s;
-struct superblock_s;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-struct hplaneintercept_s;
-typedef struct hplaneintercept_s HPlaneIntercept;
-
-HPlaneIntercept* HPlaneIntercept_Next(HPlaneIntercept* intersection);
-
-HPlaneIntercept* HPlaneIntercept_Prev(HPlaneIntercept* intersection);
-
-void* HPlaneIntercept_UserData(HPlaneIntercept* intersection);
-
-static boolean initedOK = false;
-static HPlaneIntercept* usedIntercepts;
-
-HPlaneIntercept* HPlaneIntercept_New(void);
 
 namespace de {
+
+class BspBuilder;
 
 typedef struct hplanebuildinfo_s {
     struct linedef_s* lineDef; // Not NULL if partition originated from a linedef.
@@ -64,25 +49,41 @@ typedef struct hplanebuildinfo_s {
     double pLength;
 } HPlaneBuildInfo;
 
-class BspBuilder;
+struct HPlaneIntercept {
+    // How far along the partition line the vertex is. Zero is at the
+    // partition half-edge's start point, positive values move in the same
+    // direction as the partition's direction, and negative values move
+    // in the opposite direction.
+    double distance;
 
-/**
- * HPlane instance.
- */
+    void* userData;
+
+    HPlaneIntercept() :
+        distance(0), userData(0)
+    {}
+
+    HPlaneIntercept(double distance, void* userData) :
+        distance(distance), userData(userData)
+    {}
+
+    double operator - (const HPlaneIntercept& other) const {
+        return distance - other.distance;
+    }
+};
+
 class HPlane {
 public:
+    typedef std::list<HPlaneIntercept> Intercepts;
+
     HPlane(BspBuilder* builder) :
-        builder(builder), headPtr(0)
+        builder(builder), intercepts(0)
     {
         partition.origin[0] = partition.origin[1] = 0;
         partition.angle[0] = partition.angle[1] = 0;
         memset(&info, 0, sizeof(info));
     }
 
-    ~HPlane()
-    {
-        clear();
-    }
+    ~HPlane() { clear(); }
 
     const double* origin() { return partition.origin; }
     double x() { return partition.origin[0]; }
@@ -117,8 +118,17 @@ public:
      *
      * @param userData  Ownership passes to HPlane.
      */
-    HPlaneIntercept* newIntercept2(double distance, void* userData);
-    HPlaneIntercept* newIntercept(double distance/*, userData=NULL*/);
+    HPlaneIntercept* newIntercept(double distance, void* userData=NULL);
+
+    Intercepts::const_iterator deleteIntercept(Intercepts::const_iterator at);
+
+    inline bool empty() const { return intercepts.empty(); }
+
+    inline Intercepts::const_iterator begin() const { return intercepts.begin(); }
+
+    inline Intercepts::const_iterator end() const { return intercepts.end(); }
+
+    inline Intercepts::size_type size() const { return intercepts.size(); }
 
 private:
     /// BspBuilder instance which produced this.
@@ -130,22 +140,13 @@ private:
         double angle[2];
     } partition;
 
-public:
     /// The intercept list. Kept sorted by along_dist, in ascending order.
-    HPlaneIntercept* headPtr;
+    Intercepts intercepts;
 
-private:
     /// Additional information used by the node builder during construction.
     HPlaneBuildInfo info;
 };
 
 } // namespace de
-
-int HPlane_IterateIntercepts2(de::HPlane* bi, int (*callback)(HPlaneIntercept*, void*), void* parameters);
-int HPlane_IterateIntercepts(de::HPlane* bi, int (*callback)(HPlaneIntercept*, void*)/*, parameters=NULL*/);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif /// LIBDENG_MAP_BSP_INTERSECTION

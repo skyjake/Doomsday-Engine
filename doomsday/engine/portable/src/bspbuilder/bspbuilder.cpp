@@ -324,8 +324,6 @@ boolean BspBuilder::build(GameMap* map, Vertex*** vertexes, uint* numVertexes)
     // It begins...
     startTime = Sys_GetRealTime();
 
-    initHPlaneInterceptAllocator();
-
     initForMap(map);
 
     // Create initial half-edges.
@@ -384,9 +382,6 @@ boolean BspBuilder::build(GameMap* map, Vertex*** vertexes, uint* numVertexes)
     }
     rootNode = NULL;
 
-    // Free temporary storage.
-    shutdownHPlaneInterceptAllocator();
-
     // How much time did we spend?
     VERBOSE2( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
 
@@ -399,41 +394,24 @@ boolean BspBuilder_Build(BspBuilder_c* builder, GameMap* map, Vertex*** vertexes
     return builder->inst->build(map, vertexes, numVertexes);
 }
 
-typedef struct {
-    Vertex* vertex;
-    HPlaneIntercept* found;
-} findintersectionforvertexworkerparams_t;
-
-static int findIntersectionForVertexWorker(HPlaneIntercept* hpi, void* parameters)
+const HPlaneIntercept* BspBuilder::hplaneInterceptByVertex(HPlane* hPlane, Vertex* vertex)
 {
-    HEdgeIntercept* inter = (HEdgeIntercept*) HPlaneIntercept_UserData(hpi);
-    findintersectionforvertexworkerparams_t* p = (findintersectionforvertexworkerparams_t*) parameters;
-    assert(p);
-    if(inter->vertex == p->vertex)
+    if(!hPlane || !vertex) return NULL; // Hmm...
+
+    for(HPlane::Intercepts::const_iterator it = hPlane->begin(); it != hPlane->end(); ++it)
     {
-        p->found = hpi;
-        return true; // Stop iteration.
+        const HPlaneIntercept* inter = &*it;
+        if(((HEdgeIntercept*)inter->userData)->vertex == vertex) return inter;
     }
-    return false; // Continue iteration.
-}
 
-HPlaneIntercept* BspBuilder::hplaneInterceptByVertex(HPlane* intersections, Vertex* vertex)
-{
-    findintersectionforvertexworkerparams_t parm;
-
-    if(!intersections || !vertex) return NULL; // Hmm...
-
-    parm.vertex = vertex;
-    parm.found = NULL;
-    HPlane_IterateIntercepts2(intersections, findIntersectionForVertexWorker, (void*)&parm);
-    return parm.found;
+    return NULL;
 }
 
 HEdgeIntercept* BspBuilder::hedgeInterceptByVertex(HPlane* hPlane, Vertex* vertex)
 {
-    HPlaneIntercept* hpi = hplaneInterceptByVertex(hPlane, vertex);
+    const HPlaneIntercept* hpi = hplaneInterceptByVertex(hPlane, vertex);
     if(!hpi) return NULL; // Not found.
-    return (HEdgeIntercept*) HPlaneIntercept_UserData(hpi);
+    return (HEdgeIntercept*) hpi->userData;
 }
 
 void BspBuilder::addHEdgesBetweenIntercepts(HPlane* hPlane,
@@ -555,8 +533,9 @@ void BspBuilder::addEdgeTip(Vertex* vert, double dx, double dy, bsp_hedge_t* bac
 void Bsp_PrintHEdgeIntercept(HEdgeIntercept* inter)
 {
     assert(inter);
-    Con_Message("  Vertex %8X (%1.1f,%1.1f) beforeSector: %d afterSector:%d %s\n",
-                inter->vertex->buildData.index, inter->vertex->buildData.pos[VX],
+    Con_Message("Vertex #%i [x:%f, y:%f] beforeSector: #%d afterSector: #%d %s\n",
+                inter->vertex->buildData.index,
+                inter->vertex->buildData.pos[VX],
                 inter->vertex->buildData.pos[VY],
                 (inter->before? inter->before->buildData.index : -1),
                 (inter->after? inter->after->buildData.index : -1),

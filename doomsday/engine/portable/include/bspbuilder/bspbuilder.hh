@@ -1,8 +1,14 @@
 /**
- * @file string.hh
- * C++ wrapper for ddstring_t. @ingroup base
+ * @file bspbuilder.hh
+ * BSP Builder. @ingroup map
  *
- * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted on
+ * SourceForge: http://sourceforge.net/projects/glbsp/
+ *
+ * @authors Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
+ * @authors Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
+ * @authors Copyright © 1998-2000 Lee Killough <killough@rsn.hp.com>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -28,7 +34,6 @@
 #include "bspbuilder/hedges.hh"
 #include "bspbuilder/intersection.hh"
 
-//struct hplaneintercept_s;
 struct hedgeintercept_s;
 struct vertex_s;
 struct gamemap_s;
@@ -37,17 +42,10 @@ struct superblockmap_s;
 struct superblock_s;
 struct bspleafdata_s;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 namespace de {
 
 /// Number of bsp_hedge_t to block allocate.
 #define BSPBUILDER_HEDGE_ALLOCATOR_BLOCKSIZE   512
-
-class HPlane;
-struct hplanebuildinfo_s;
 
 class BspBuilder {
 public:
@@ -101,9 +99,9 @@ private:
 
     struct bspleafdata_s* createBSPLeaf(struct superblock_s* hEdgeList);
 
-    struct hplaneintercept_s* makeHPlaneIntersection(HPlane* hPlane, bsp_hedge_t* hEdge, int leftSide);
+    const HPlaneIntercept* makeHPlaneIntersection(HPlane* hPlane, bsp_hedge_t* hEdge, int leftSide);
 
-    struct hplaneintercept_s* makeIntersection(HPlane* hPlane, bsp_hedge_t* hEdge, int leftSide);
+    const HPlaneIntercept* makeIntersection(HPlane* hPlane, bsp_hedge_t* hEdge, int leftSide);
 
     /**
      * Initially create all half-edges, one for each side of a linedef.
@@ -113,9 +111,6 @@ private:
     struct superblockmap_s* createInitialHEdges(struct gamemap_s* map);
 
     struct bspleafdata_s* newLeaf(void);
-
-    void initHPlaneInterceptAllocator(void);
-    void shutdownHPlaneInterceptAllocator(void);
 
     void mergeIntersections(HPlane* intersections);
 
@@ -194,7 +189,7 @@ private:
      * @param superblock    Ptr to the list of half edges at the current node.
      * @param parent        Ptr to write back the address of any newly created subtree.
      * @param depth         Current tree depth.
-     * @param hPlane        struct hplaneintercept_s list for storing any new intersections.
+     * @param hPlane        HPlaneIntercept list for storing any new intersections.
      * @return  @c true iff successfull.
      */
     boolean buildNodes(struct superblock_s* superblock, struct binarytree_s** parent,
@@ -238,7 +233,7 @@ private:
      *
      * @return  Ptr to the found intercept, else @c NULL;
      */
-    struct hplaneintercept_s* hplaneInterceptByVertex(HPlane* hPlane, Vertex* vertex);
+    const HPlaneIntercept* hplaneInterceptByVertex(HPlane* hPlane, Vertex* vertex);
 
     /**
      * Create a new intersection.
@@ -266,9 +261,5 @@ private:
 };
 
 } // namespace de
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif /// LIBDENG_BSPBUILDER_HH

@@ -43,74 +43,14 @@
 
 using namespace de;
 
-struct hplaneintercept_s {
-    struct hplaneintercept_s* next;
-    struct hplaneintercept_s* prev;
-
-    // How far along the partition line the vertex is. Zero is at the
-    // partition half-edge's start point, positive values move in the same
-    // direction as the partition's direction, and negative values move
-    // in the opposite direction.
-    double distance;
-
-    void* userData;
-};
-
-HPlaneIntercept* HPlaneIntercept_Next(HPlaneIntercept* bi)
-{
-    assert(bi);
-    return bi->next;
-}
-
-HPlaneIntercept* HPlaneIntercept_Prev(HPlaneIntercept* bi)
-{
-    assert(bi);
-    return bi->prev;
-}
-
-void* HPlaneIntercept_UserData(HPlaneIntercept* bi)
-{
-    assert(bi);
-    return bi->userData;
-}
-
-HPlaneIntercept* HPlaneIntercept_New(void)
-{
-    HPlaneIntercept* node;
-
-    if(initedOK && usedIntercepts)
-    {
-        node = usedIntercepts;
-        usedIntercepts = usedIntercepts->next;
-    }
-    else
-    {
-        // Need to allocate another.
-        node = (HPlaneIntercept*)M_Malloc(sizeof *node);
-    }
-
-    node->userData = NULL;
-    node->next = node->prev = NULL;
-
-    return node;
-}
-
 void HPlane::clear()
 {
-    HPlaneIntercept* node = headPtr;
-    while(node)
+    for(Intercepts::iterator it = intercepts.begin(); it != intercepts.end(); ++it)
     {
-        HPlaneIntercept* p = node->next;
-
-        builder->deleteHEdgeIntercept((HEdgeIntercept*)node->userData);
-
-        // Move the bi node to the unused node bi.
-        node->next = usedIntercepts;
-        usedIntercepts = node;
-
-        node = p;
+        HPlaneIntercept* inter = &*it;
+        builder->deleteHEdgeIntercept((HEdgeIntercept*)inter->userData);
     }
-    headPtr = NULL;
+    intercepts.clear();
 }
 
 HPlane* HPlane::setOrigin(double const newOrigin[2])
@@ -179,26 +119,6 @@ HPlane* HPlane::setDY(double newDY)
     return this;
 }
 
-int HPlane_IterateIntercepts2(de::HPlane* bi, int (*callback)(HPlaneIntercept*, void*), void* parameters)
-{
-    assert(bi);
-    if(callback)
-    {
-        HPlaneIntercept* node;
-        for(node = bi->headPtr; node; node = node->next)
-        {
-            int result = callback(node, parameters);
-            if(result) return result; // Stop iteration.
-        }
-    }
-    return false; // Continue iteration.
-}
-
-int HPlane_IterateIntercepts(de::HPlane* bi, int (*callback)(HPlaneIntercept*, void*))
-{
-    return HPlane_IterateIntercepts2(bi, callback, NULL/*no parameters*/);
-}
-
 void Bsp_MergeHEdgeIntercepts(HEdgeIntercept* final, const HEdgeIntercept* other)
 {
     if(!final || !other)
@@ -235,18 +155,15 @@ void Bsp_MergeHEdgeIntercepts(HEdgeIntercept* final, const HEdgeIntercept* other
 
 void BspBuilder::mergeIntersections(HPlane* hPlane)
 {
-    HPlaneIntercept* node, *np;
-
     if(!hPlane) return;
 
-    node = hPlane->headPtr;
-    np = node->next;
-    while(node && np)
+    HPlane::Intercepts::const_iterator node = hPlane->begin();
+    while(node != hPlane->end())
     {
-        HEdgeIntercept* cur = (HEdgeIntercept*)node->userData;
-        HEdgeIntercept* next = (HEdgeIntercept*)np->userData;
-        double len = np->distance - node->distance;
+        HPlane::Intercepts::const_iterator np = node; np++;
+        if(np == hPlane->end()) break;
 
+        double len = *np - *node;
         if(len < -0.1)
         {
             Con_Error("BspBuilder_MergeIntersections: Invalid intercept order - %1.3f > %1.3f\n",
@@ -254,18 +171,18 @@ void BspBuilder::mergeIntersections(HPlane* hPlane)
         }
         else if(len > 0.2)
         {
-            node = np;
-            np = node->next;
+            node++;
             continue;
         }
-        /*else if(len > DIST_EPSILON)
+
+        HEdgeIntercept* cur  = (HEdgeIntercept*)node->userData;
+        HEdgeIntercept* next = (HEdgeIntercept*)np->userData;
+
+        /*if(len > DIST_EPSILON)
         {
             DEBUG_Message((" Skipping very short half-edge (len=%1.3f) near (%1.1f,%1.1f)\n",
                            len, cur->vertex->V_pos[VX], cur->vertex->V_pos[VY]));
         }*/
-
-        // Unlink this intercept.
-        node->next = np->next;
 
         // Merge info for the two intersections into one.
         Bsp_MergeHEdgeIntercepts(cur, next);
@@ -273,22 +190,26 @@ void BspBuilder::mergeIntersections(HPlane* hPlane)
         // Destroy the orphaned info.
         deleteHEdgeIntercept(next);
 
-        np = node->next;
+        // Unlink this intercept.
+        hPlane->deleteIntercept(np);
     }
 }
 
 void BspBuilder::buildHEdgesAtIntersectionGaps(HPlane* hPlane, SuperBlock* rightList,
     SuperBlock* leftList)
 {
-    HPlaneIntercept* node;
+    HPlane::Intercepts::const_iterator node;
 
     if(!hPlane) return;
 
-    node = hPlane->headPtr;
-    while(node && node->next)
+    node = hPlane->begin();
+    while(node != hPlane->end())
     {
-        HEdgeIntercept* cur = (HEdgeIntercept*)node->userData;
-        HEdgeIntercept* next = (HEdgeIntercept*)(node->next? node->next->userData : NULL);
+        HPlane::Intercepts::const_iterator np = node; np++;
+        if(np == hPlane->end()) break;
+
+        HEdgeIntercept* cur = (HEdgeIntercept*)((*node).userData);
+        HEdgeIntercept* next = (HEdgeIntercept*)((*np).userData);
 
         if(!(!cur->after && !next->before))
         {
@@ -354,101 +275,41 @@ void BspBuilder::buildHEdgesAtIntersectionGaps(HPlane* hPlane, SuperBlock* right
             }
         }
 
-        node = node->next;
+        node++;
     }
 }
 
-HPlaneIntercept* HPlane::newIntercept2(double distance, void* userData)
+HPlaneIntercept* HPlane::newIntercept(double distance, void* userData)
 {
-    HPlaneIntercept* after, *newNode;
+    Intercepts::const_reverse_iterator after;
+    HPlaneIntercept* inter;
 
-    /**
-     * Enqueue the new intercept into the bi.
-     */
-    after = headPtr;
-    while(after && after->next)
-        after = after->next;
+    for(after = intercepts.rbegin();
+        after != intercepts.rend() && distance < (*after).distance; after++)
+    {}
 
-    while(after && distance < after->distance)
-        after = after->prev;
-
-    newNode = HPlaneIntercept_New();
-    newNode->distance = distance;
-    newNode->userData = userData;
-
-    // Link it in.
-    newNode->next = (after? after->next : headPtr);
-    newNode->prev = after;
-
-    if(after)
-    {
-        if(after->next)
-            after->next->prev = newNode;
-
-        after->next = newNode;
-    }
-    else
-    {
-        if(headPtr)
-            headPtr->prev = newNode;
-
-        headPtr = newNode;
-    }
-
-    return newNode;
+    inter = &*intercepts.insert(after.base(), HPlaneIntercept(distance, userData));
+    return inter;
 }
 
-HPlaneIntercept* HPlane::newIntercept(double distance)
+HPlane::Intercepts::const_iterator HPlane::deleteIntercept(Intercepts::const_iterator at)
 {
-    return newIntercept2(distance, NULL/*no user data*/);
+    //if(at < intercepts.begin() || at >= intercepts.end()) return at;
+    return intercepts.erase(at);
 }
 
 #if _DEBUG
-void HPlane_Print(HPlane* bi)
+void HPlane_Print(HPlane* hplane)
 {
-    if(bi)
-    {
-        HPlaneIntercept* node;
+    if(!hplane) return;
 
-        Con_Message("HPlane %p:\n", bi);
-        node = bi->headPtr;
-        while(node)
-        {
-            HEdgeIntercept* inter = (HEdgeIntercept*)node->userData;
-            Con_Printf(" %i: >%1.2f ", node->distance);
-            Bsp_PrintHEdgeIntercept(inter);
-            node = node->next;
-        }
+    Con_Message("HPlane %p:\n", hplane);
+    uint n = 0;
+    for(HPlane::Intercepts::const_iterator it = hplane->begin(); it != hplane->end(); it++, n++)
+    {
+        const HPlaneIntercept* inter = &*it;
+        Con_Printf(" %u: >%1.2f ", n, inter->distance);
+        Bsp_PrintHEdgeIntercept((HEdgeIntercept*)inter->userData);
     }
 }
 #endif
-
-void BspBuilder::initHPlaneInterceptAllocator(void)
-{
-    if(!initedOK)
-    {
-        usedIntercepts = NULL;
-        initedOK = true;
-    }
-}
-
-void BspBuilder::shutdownHPlaneInterceptAllocator(void)
-{
-    if(usedIntercepts)
-    {
-        HPlaneIntercept* node;
-
-        node = usedIntercepts;
-        while(node)
-        {
-            HPlaneIntercept* np = node->next;
-
-            M_Free(node);
-            node = np;
-        }
-
-        usedIntercepts = NULL;
-    }
-
-    initedOK = false;
-}

@@ -747,11 +747,11 @@ static boolean lineDefHasSelfRef(LineDef* lineDef)
     return !!(lineDef->buildData.mlFlags & MLF_SELFREF);
 }
 
-HPlaneIntercept* BspBuilder::makeHPlaneIntersection(HPlane* hPlane, bsp_hedge_t* hEdge, int leftSide)
+const HPlaneIntercept* BspBuilder::makeHPlaneIntersection(HPlane* hPlane, bsp_hedge_t* hEdge, int leftSide)
 {
     HEdgeIntercept* hEdgeIntercept;
     const HPlaneBuildInfo* info;
-    HPlaneIntercept* inter;
+    const HPlaneIntercept* inter;
     Vertex* vertex;
     double distance;
     assert(hPlane && hEdge);
@@ -766,10 +766,10 @@ HPlaneIntercept* BspBuilder::makeHPlaneIntersection(HPlane* hPlane, bsp_hedge_t*
                               vertex->buildData.pos[VX], vertex->buildData.pos[VY]);
 
     hEdgeIntercept = newHEdgeIntercept(vertex, info, (hEdge->lineDef && lineDefHasSelfRef(hEdge->lineDef)));
-    return hPlane->newIntercept2(distance, hEdgeIntercept);
+    return hPlane->newIntercept(distance, hEdgeIntercept);
 }
 
-HPlaneIntercept* BspBuilder::makeIntersection(HPlane* hPlane, bsp_hedge_t* hEdge, int leftSide)
+const HPlaneIntercept* BspBuilder::makeIntersection(HPlane* hPlane, bsp_hedge_t* hEdge, int leftSide)
 {
     if(!hPlane || !hEdge)
         Con_Error("BspBuilder::makeHPlaneIntersection: Invalid arguments.");
