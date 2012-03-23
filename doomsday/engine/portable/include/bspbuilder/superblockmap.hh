@@ -46,9 +46,6 @@ class SuperBlock {
 public:
     typedef std::list<bsp_hedge_t*> HEdges;
 
-    /// Half-edges completely contained by this block.
-    HEdges hedges;
-
     SuperBlock(SuperBlockmap* blockmap) :
         bmap(blockmap), realNum(0), miniNum(0), hedges(0)
     {}
@@ -91,6 +88,9 @@ public:
         if(!subtree) return NULL;
         return (SuperBlock*)KdTreeNode_UserData(subtree);
     }
+
+    inline HEdges::const_iterator hedgesBegin() const { return hedges.begin(); }
+    inline HEdges::const_iterator hedgesEnd() const { return hedges.end(); }
 
     void findHEdgeBounds(AABoxf* bounds);
 
@@ -160,6 +160,9 @@ private:
     /// SuperBlockmap that owns this SuperBlock.
     SuperBlockmap* bmap;
 
+    /// Half-edges completely contained by this block.
+    HEdges hedges;
+
     /// Number of real half-edges and minihedges contained by this block
     /// (including all sub-blocks below it).
     int realNum;
@@ -167,18 +170,6 @@ private:
 };
 
 } // namespace de
-
-/**
- * Iterate over all HEdges linked in this superblock. Iteration ends
- * when all HEdges have been visited or a callback returns non-zero.
- *
- * @param superblock    SuperBlock instance.
- * @param callback      Callback function ptr.
- * @param parameters    Passed to the callback.
- *
- * @return  @c 0 iff iteration completed wholly.
- */
-int SuperBlock_IterateHEdges(de::SuperBlock* superblock, int (*callback)(bsp_hedge_t*, void*), void* parameters=NULL);
 
 int SuperBlock_Traverse(de::SuperBlock* superblock, int (*callback)(de::SuperBlock*, void*), void* parameters=NULL);
 

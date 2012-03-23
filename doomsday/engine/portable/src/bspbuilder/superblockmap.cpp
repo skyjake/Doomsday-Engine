@@ -186,20 +186,6 @@ bsp_hedge_t* SuperBlock::hedgePop()
     return hedge;
 }
 
-int SuperBlock_IterateHEdges(SuperBlock* block, int (*callback)(bsp_hedge_t*, void*),
-    void* parameters)
-{
-    assert(block);
-    if(!callback) return 0;
-    for(SuperBlock::HEdges::iterator it = block->hedges.begin(); it != block->hedges.end(); ++it)
-    {
-        bsp_hedge_t* hedge = *it;
-        int result = callback(hedge, parameters);
-        if(result) return result; // Stop iteration.
-    }
-    return 0; // Continue iteration.
-}
-
 typedef struct {
     int (*callback)(SuperBlock*, void*);
     void* parameters;

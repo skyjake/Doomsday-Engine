@@ -390,7 +390,7 @@ typedef struct {
     evalinfo_t* info;
 } evalpartitionworkerparams_t;
 
-static int evalPartitionWorker2(bsp_hedge_t* check, void* parameters)
+static int evalPartitionWorker2(const bsp_hedge_t* check, void* parameters)
 {
 #define ADD_LEFT()  \
       do {  \
@@ -537,7 +537,7 @@ static int evalPartitionWorker(SuperBlock* hedgeList, bsp_hedge_t* part,
 {
     const BspHEdgeInfo* partInfo = &part->info;
     evalpartitionworkerparams_t parm;
-    int result, num;
+    int num;
 
     /**
      * Test the whole block against the partition line to quickly handle all the
@@ -569,8 +569,14 @@ static int evalPartitionWorker(SuperBlock* hedgeList, bsp_hedge_t* part,
     parm.partInfo = partInfo;
     parm.bestCost = bestCost;
     parm.info = info;
-    result = SuperBlock_IterateHEdges(hedgeList, evalPartitionWorker2, (void*)&parm);
-    if(result) return true;
+
+    for(SuperBlock::HEdges::const_iterator it = hedgeList->hedgesBegin();
+        it != hedgeList->hedgesEnd(); ++it)
+    {
+        const bsp_hedge_t* hedge = *it;
+        int result = evalPartitionWorker2(hedge, (void*)&parm);
+        if(result) return result; // Stop iteration.
+    }
 
     // Handle sub-blocks recursively.
     for(num = 0; num < 2; ++num)
@@ -644,14 +650,14 @@ typedef struct {
     SuperBlock* hedgeList;
     bsp_hedge_t** best;
     int* bestCost;
-} pickhedgeworkerparams_t;
+} choosehedgefromsuperblockparams_t;
 
 /**
  * @return  @c true= cancelled.
  */
-static int pickhedgeWorker2(bsp_hedge_t* part, void* parameters)
+static int chooseHEdgeFromSuperBlockWorker(bsp_hedge_t* part, void* parameters)
 {
-    pickhedgeworkerparams_t* p = (pickhedgeworkerparams_t*)parameters;
+    choosehedgefromsuperblockparams_t* p = (choosehedgefromsuperblockparams_t*)parameters;
     LineDef* lineDef = part->info.lineDef;
     int cost;
 
@@ -682,15 +688,22 @@ static int pickhedgeWorker2(bsp_hedge_t* part, void* parameters)
     return false; // Continue iteration.
 }
 
-static int pickhedgeWorker(SuperBlock* partList, void* parameters)
+static int chooseHEdgeFromSuperBlock(SuperBlock* partList, void* parameters)
 {
     // Test each half-edge as a potential partition.
-    return SuperBlock_IterateHEdges(partList, pickhedgeWorker2, parameters);
+    for(SuperBlock::HEdges::const_iterator it = partList->hedgesBegin();
+        it != partList->hedgesEnd(); ++it)
+    {
+        bsp_hedge_t* hedge = *it;
+        int result = chooseHEdgeFromSuperBlockWorker(hedge, parameters);
+        if(result) return result; // Stop iteration.
+    }
+    return false; // Continue iteration.
 }
 
 boolean BspBuilder::choosePartition(SuperBlock* hedgeList, size_t /*depth*/, HPlane* partition)
 {
-    pickhedgeworkerparams_t parm;
+    choosehedgefromsuperblockparams_t parm;
     int bestCost = INT_MAX;
     bsp_hedge_t* best = NULL;
 
@@ -701,7 +714,7 @@ boolean BspBuilder::choosePartition(SuperBlock* hedgeList, size_t /*depth*/, HPl
     parm.bestCost = &bestCost;
 
     validCount++;
-    if(SuperBlock_Traverse(hedgeList, pickhedgeWorker, (void*)&parm))
+    if(SuperBlock_Traverse(hedgeList, chooseHEdgeFromSuperBlock, (void*)&parm))
     {
         /// @kludge BspBuilder::buildNodes() will detect the cancellation.
         return false;
@@ -1028,24 +1041,29 @@ boolean BspBuilder::buildNodes(SuperBlock* superblock, binarytree_t** parent, si
 }
 
 #if _DEBUG
-static int printSuperBlockhedgesWorker2(bsp_hedge_t* hedge, void* /*parameters*/)
+static void printHEdge(bsp_hedge_t* hedge)
 {
     Con_Message("Build: %s %p sector=%d (%1.1f,%1.1f) -> (%1.1f,%1.1f)\n",
                 (hedge->info.lineDef? "NORM" : "MINI"), hedge,
                 hedge->sector->buildData.index,
                 hedge->v[0]->buildData.pos[VX], hedge->v[0]->buildData.pos[VY],
                 hedge->v[1]->buildData.pos[VX], hedge->v[1]->buildData.pos[VY]);
+}
+
+static int printSuperBlockHEdgesWorker(SuperBlock* block, void* /*parameters*/)
+{
+    for(SuperBlock::HEdges::const_iterator it = block->hedgesBegin();
+        it != block->hedgesEnd(); ++it)
+    {
+        bsp_hedge_t* hedge = *it;
+        printHEdge(hedge);
+    }
     return false; // Continue iteration.
 }
 
-static int printSuperBlockhedgesWorker(SuperBlock* superblock, void* parameters)
+void BSP_PrintSuperBlockhedges(SuperBlock* block)
 {
-    return SuperBlock_IterateHEdges(superblock, printSuperBlockhedgesWorker2, parameters);
-}
-
-void BSP_PrintSuperBlockhedges(SuperBlock* superblock)
-{
-    if(!superblock) return;
-    SuperBlock_Traverse(superblock, printSuperBlockhedgesWorker);
+    if(!block) return;
+    SuperBlock_Traverse(block, printSuperBlockHEdgesWorker);
 }
 #endif
