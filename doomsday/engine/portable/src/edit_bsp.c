@@ -70,7 +70,7 @@ static void hardenSidedefHEdgeList(GameMap* map, SideDef* side, bsp_hedge_t* bsp
     side->hedges[count] = NULL; // Terminate.
 }
 
-static int C_DECL hEdgeCompare(const void* p1, const void* p2)
+static int C_DECL hedgeCompare(const void* p1, const void* p2)
 {
     const bsp_hedge_t* a = ((const bsp_hedge_t**) p1)[0];
     const bsp_hedge_t* b = ((const bsp_hedge_t**) p2)[0];
@@ -86,26 +86,26 @@ typedef struct {
     boolean write;
 } hedgecollectorparams_t;
 
-static boolean hEdgeCollector(binarytree_t* tree, void* data)
+static boolean hedgeCollector(binarytree_t* tree, void* data)
 {
     if(BinaryTree_IsLeaf(tree))
     {
         hedgecollectorparams_t* params = (hedgecollectorparams_t*) data;
         bspleafdata_t* leaf = (bspleafdata_t*) BinaryTree_GetData(tree);
-        bsp_hedge_t* hEdge;
+        bsp_hedge_t* hedge;
 
-        for(hEdge = leaf->hEdges; hEdge; hEdge = hEdge->nextInLeaf)
+        for(hedge = leaf->hedges; hedge; hedge = hedge->nextInLeaf)
         {
             if(params->indexPtr)
             {
                 // Write mode.
-                (*params->indexPtr)[params->curIdx++] = hEdge;
+                (*params->indexPtr)[params->curIdx++] = hedge;
             }
             else
             {
                 // Count mode.
-                if(hEdge->index == -1)
-                    Con_Error("HEdge %p never reached a BspLeaf!", hEdge);
+                if(hedge->index == -1)
+                    Con_Error("HEdge %p never reached a BspLeaf!", hedge);
 
                 params->curIdx++;
             }
@@ -128,7 +128,7 @@ static void buildHEdgesFromBSPHEdges(GameMap* dest, binarytree_t* rootNode)
     // Pass 1: Count the number of used hedges.
     params.curIdx = 0;
     params.indexPtr = NULL;
-    BinaryTree_InOrder(rootNode, hEdgeCollector, &params);
+    BinaryTree_InOrder(rootNode, hedgeCollector, &params);
 
     if(!(params.curIdx > 0))
         Con_Error("buildHEdgesFromBSPHEdges: No hedges?");
@@ -139,10 +139,10 @@ static void buildHEdgesFromBSPHEdges(GameMap* dest, binarytree_t* rootNode)
     // Pass 2: Collect ptrs the hedges and insert into the index.
     params.curIdx = 0;
     params.indexPtr = &index;
-    BinaryTree_InOrder(rootNode, hEdgeCollector, &params);
+    BinaryTree_InOrder(rootNode, hedgeCollector, &params);
 
     // Sort the half-edges into ascending index order.
-    qsort(index, params.curIdx, sizeof(bsp_hedge_t*), hEdgeCompare);
+    qsort(index, params.curIdx, sizeof(bsp_hedge_t*), hedgeCompare);
 
     dest->numHEdges = (uint) params.curIdx;
     dest->hedges = (HEdge*)Z_Calloc(dest->numHEdges * sizeof(HEdge), PU_MAPSTATIC, 0);
@@ -157,8 +157,8 @@ static void buildHEdgesFromBSPHEdges(GameMap* dest, binarytree_t* rootNode)
         hedge->HE_v2 = &dest->vertexes[bspHEdge->v[1]->buildData.index - 1];
 
         hedge->side  = bspHEdge->side;
-        if(bspHEdge->lineDef)
-            hedge->lineDef = &dest->lineDefs[bspHEdge->lineDef->buildData.index - 1];
+        if(bspHEdge->info.lineDef)
+            hedge->lineDef = &dest->lineDefs[bspHEdge->info.lineDef->buildData.index - 1];
         if(bspHEdge->twin)
             hedge->twin = &dest->hedges[bspHEdge->twin->index];
 
@@ -252,22 +252,22 @@ static void hardenLeaf(GameMap* map, BspLeaf* dest, const bspleafdata_t* src)
 {
     HEdge** segp;
     boolean found;
-    size_t hEdgeCount;
-    bsp_hedge_t* hEdge;
+    size_t hedgeCount;
+    bsp_hedge_t* hedge;
 
-    hEdge = src->hEdges;
-    hEdgeCount = 0;
+    hedge = src->hedges;
+    hedgeCount = 0;
     do
     {
-        hEdgeCount++;
-    } while((hEdge = hEdge->nextInLeaf) != NULL);
+        hedgeCount++;
+    } while((hedge = hedge->nextInLeaf) != NULL);
 
     dest->header.type = DMU_BSPLEAF;
-    dest->hedgeCount = (uint) hEdgeCount;
+    dest->hedgeCount = (uint) hedgeCount;
     dest->shadows = NULL;
     dest->vertices = NULL;
 
-    hardenBspLeafHEdgeList(map, dest, src->hEdges, hEdgeCount);
+    hardenBspLeafHEdgeList(map, dest, src->hedges, hedgeCount);
 
     // Determine which sector this BSP leaf belongs to.
     segp = dest->hedges;

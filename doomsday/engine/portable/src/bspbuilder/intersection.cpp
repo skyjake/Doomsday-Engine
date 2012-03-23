@@ -153,15 +153,15 @@ void Bsp_MergeHEdgeIntercepts(HEdgeIntercept* final, const HEdgeIntercept* other
 #endif*/
 }
 
-void BspBuilder::mergeIntersections(HPlane* hPlane)
+void BspBuilder::mergeIntersections(HPlane* hplane)
 {
-    if(!hPlane) return;
+    if(!hplane) return;
 
-    HPlane::Intercepts::const_iterator node = hPlane->begin();
-    while(node != hPlane->end())
+    HPlane::Intercepts::const_iterator node = hplane->begin();
+    while(node != hplane->end())
     {
         HPlane::Intercepts::const_iterator np = node; np++;
-        if(np == hPlane->end()) break;
+        if(np == hplane->end()) break;
 
         double len = *np - *node;
         if(len < -0.1)
@@ -191,22 +191,22 @@ void BspBuilder::mergeIntersections(HPlane* hPlane)
         deleteHEdgeIntercept(next);
 
         // Unlink this intercept.
-        hPlane->deleteIntercept(np);
+        hplane->deleteIntercept(np);
     }
 }
 
-void BspBuilder::buildHEdgesAtIntersectionGaps(HPlane* hPlane, SuperBlock* rightList,
+void BspBuilder::buildHEdgesAtIntersectionGaps(HPlane* hplane, SuperBlock* rightList,
     SuperBlock* leftList)
 {
     HPlane::Intercepts::const_iterator node;
 
-    if(!hPlane) return;
+    if(!hplane) return;
 
-    node = hPlane->begin();
-    while(node != hPlane->end())
+    node = hplane->begin();
+    while(node != hplane->end())
     {
         HPlane::Intercepts::const_iterator np = node; np++;
-        if(np == hPlane->end()) break;
+        if(np == hplane->end()) break;
 
         HEdgeIntercept* cur = (HEdgeIntercept*)((*node).userData);
         HEdgeIntercept* next = (HEdgeIntercept*)((*np).userData);
@@ -267,7 +267,7 @@ void BspBuilder::buildHEdgesAtIntersectionGaps(HPlane* hPlane, SuperBlock* right
                     }
                 }
 
-                addHEdgesBetweenIntercepts(hPlane, cur, next, &right, &left);
+                addHEdgesBetweenIntercepts(hplane, cur, next, &right, &left);
 
                 // Add the new half-edges to the appropriate lists.
                 SuperBlock_HEdgePush(rightList, right);

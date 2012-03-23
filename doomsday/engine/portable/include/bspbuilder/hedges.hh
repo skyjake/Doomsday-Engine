@@ -28,12 +28,8 @@
 #ifndef LIBDENG_MAP_BSP_HEDGE
 #define LIBDENG_MAP_BSP_HEDGE
 
-//#include "dd_types.h"
-//#include "bsp_main.h"
-
-struct vertex_s;
-struct linedef_s;
-struct sector_s;
+#include "dd_types.h"
+#include "p_mapdata.h"
 
 #define IFFY_LEN            4.0
 
@@ -42,6 +38,30 @@ struct sector_s;
 
 // Smallest degrees between two angles before being considered equal.
 #define ANG_EPSILON         (1.0 / 1024.0)
+
+/**
+ * BspHEdgeInfo. Plain old data structure storing additional information about
+ * a half-edge produced by BspBuilder.
+ */
+typedef struct bsphedgeinfo_s {
+    // Precomputed data for faster calculations.
+    double pSX, pSY;
+    double pEX, pEY;
+    double pDX, pDY;
+
+    double pLength;
+    double pAngle;
+    double pPara;
+    double pPerp;
+
+    // Linedef that this half-edge goes along, or NULL if miniseg.
+    struct linedef_s* lineDef;
+
+    // Linedef that this half-edge initially comes from.
+    // For "real" half-edges, this is just the same as the 'linedef' field
+    // above. For "miniedges", this is the linedef of the partition line.
+    struct linedef_s* sourceLineDef;
+} BspHEdgeInfo;
 
 typedef struct bsp_hedge_s {
     struct vertex_s* v[2]; // [Start, End] of the half-edge..
@@ -65,30 +85,14 @@ typedef struct bsp_hedge_s {
     // is no longer in any superblock (e.g. now in a leaf).
     struct superblock_s* block;
 
-    // Precomputed data for faster calculations.
-    double pSX, pSY;
-    double pEX, pEY;
-    double pDX, pDY;
-
-    double pLength;
-    double pAngle;
-    double pPara;
-    double pPerp;
-
-    // Linedef that this half-edge goes along, or NULL if miniseg.
-    struct linedef_s* lineDef;
-
-    // Linedef that this half-edge initially comes from.
-    // For "real" half-edges, this is just the same as the 'linedef' field
-    // above. For "miniedges", this is the linedef of the partition line.
-    struct linedef_s* sourceLineDef;
+    BspHEdgeInfo info;
 
     struct sector_s* sector; // Adjacent sector, or NULL if invalid sidedef or minihedge.
     byte side; // 0 for right, 1 for left.
 } bsp_hedge_t;
 
 typedef struct bspleafdata_s {
-    struct bsp_hedge_s* hEdges; // Head ptr to a list of half-edges at this leaf.
+    struct bsp_hedge_s* hedges; // Head ptr to a list of half-edges at this leaf.
 } bspleafdata_t;
 
 /**

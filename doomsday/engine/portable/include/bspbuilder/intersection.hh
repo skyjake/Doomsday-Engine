@@ -31,23 +31,31 @@
 #include "bspbuilder/hedges.hh"
 
 #include <list>
-#include <algorithm>
-
-struct linedef_s;
 
 namespace de {
 
 class BspBuilder;
 
-typedef struct hplanebuildinfo_s {
-    struct linedef_s* lineDef; // Not NULL if partition originated from a linedef.
-    struct linedef_s* sourceLineDef;
+struct HPlanePartition {
+    double origin[2];
+    double angle[2];
 
-    double pSX, pSY;
-    double pDX, pDY;
-    double pPara, pPerp;
-    double pLength;
-} HPlaneBuildInfo;
+    HPlanePartition(double x=0, double y=0, double dX=0, double dY=0)
+    {
+        origin[0] = x;
+        origin[1] = y;
+        angle[0] = dX;
+        angle[1] = dY;
+    }
+
+    HPlanePartition(double const _origin[2], double const _angle[2])
+    {
+        origin[0] = _origin[0];
+        origin[1] = _origin[1];
+        angle[0] = _angle[0];
+        angle[1] = _angle[1];
+    }
+};
 
 struct HPlaneIntercept {
     // How far along the partition line the vertex is. Zero is at the
@@ -76,11 +84,15 @@ public:
     typedef std::list<HPlaneIntercept> Intercepts;
 
     HPlane(BspBuilder* builder) :
-        builder(builder), intercepts(0)
+        builder(builder), intercepts(0), partition()
     {
-        partition.origin[0] = partition.origin[1] = 0;
-        partition.angle[0] = partition.angle[1] = 0;
-        memset(&info, 0, sizeof(info));
+        initHEdgeInfo();
+    }
+
+    HPlane(BspBuilder* builder, double const origin[2], double const angle[2]) :
+        builder(builder), intercepts(0), partition(origin, angle)
+    {
+        initHEdgeInfo();
     }
 
     ~HPlane() { clear(); }
@@ -103,8 +115,8 @@ public:
     HPlane* setDX(double dx);
     HPlane* setDY(double dy);
 
-    /// @fixme Should be immutable.
-    HPlaneBuildInfo* buildInfo() { return &info; }
+    /// @todo Does not belong here.
+    BspHEdgeInfo* partitionHEdgeInfo() { return &hedgeInfo; }
 
     /**
      * Empty all intersections from the specified HPlane.
@@ -131,20 +143,23 @@ public:
     inline Intercepts::size_type size() const { return intercepts.size(); }
 
 private:
-    /// BspBuilder instance which produced this.
-    /// @todo Remove me.
-    BspBuilder* builder;
+    void initHEdgeInfo()
+    {
+        memset(&hedgeInfo, 0, sizeof(hedgeInfo));
+    }
 
-    struct {
-        double origin[2];
-        double angle[2];
-    } partition;
+private:
+    HPlanePartition partition;
 
     /// The intercept list. Kept sorted by along_dist, in ascending order.
     Intercepts intercepts;
 
     /// Additional information used by the node builder during construction.
-    HPlaneBuildInfo info;
+    BspHEdgeInfo hedgeInfo;
+
+    /// BspBuilder instance which produced this.
+    /// @todo Remove me.
+    BspBuilder* builder;
 };
 
 } // namespace de

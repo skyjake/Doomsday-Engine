@@ -108,7 +108,7 @@ Vertex*         createVertex(void);
 
 #define ET_prev             link[0]
 #define ET_next             link[1]
-#define ET_edge             hEdges
+#define ET_edge             hedges
 
 // An edge tip is where an edge meets a vertex.
 typedef struct edgetip_s {
@@ -121,7 +121,7 @@ typedef struct edgetip_s {
     // Half-edge on each side of the edge. Left is the side of increasing
     // angles, right is the side of decreasing angles. Either can be NULL
     // for one sided edges.
-    struct bsp_hedge_s* hEdges[2];
+    struct bsp_hedge_s* hedges[2];
 } edgetip_t;
 
 struct edgetip_s* MPE_NewEdgeTip(void);

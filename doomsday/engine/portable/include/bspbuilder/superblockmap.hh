@@ -31,11 +31,8 @@
 #define LIBDENG_MAP_BSP_SUPERBLOCK
 
 #include "dd_types.h"
-//#include "de_platform.h"
-//#include "bsp_edge.h"
-#include "m_misc.h"
 
-struct bsp_hedge_s;
+#include "bspbuilder/hedges.hh"
 
 #ifdef __cplusplus
 extern "C" {
@@ -112,9 +109,9 @@ const AABox* SuperBlock_Bounds(SuperBlock* superblock);
  * to this superblock.
  *
  * @param superblock    SuperBlock instance.
- * @param hEdge  HEdge instance to add.
+ * @param hedge  HEdge instance to add.
  */
-SuperBlock* SuperBlock_HEdgePush(SuperBlock* superblock, struct bsp_hedge_s* hEdge);
+SuperBlock* SuperBlock_HEdgePush(SuperBlock* superblock, bsp_hedge_t* hedge);
 
 /**
  * Pop (unlink) the next HEdge from the FIFO list of half-edges linked
@@ -124,7 +121,7 @@ SuperBlock* SuperBlock_HEdgePush(SuperBlock* superblock, struct bsp_hedge_s* hEd
  *
  * @return  Previous top-most HEdge instance or @c NULL if empty.
  */
-struct bsp_hedge_s* SuperBlock_HEdgePop(SuperBlock* superblock);
+bsp_hedge_t* SuperBlock_HEdgePop(SuperBlock* superblock);
 
 /**
  * Retrieve the total number of HEdges linked in this superblock (including
@@ -153,8 +150,8 @@ uint SuperBlock_HEdgeCount(SuperBlock* superblock, boolean addReal, boolean addM
  *
  * @return  @c 0 iff iteration completed wholly.
  */
-int SuperBlock_IterateHEdges2(SuperBlock* superblock, int (*callback)(struct bsp_hedge_s*, void*), void* parameters);
-int SuperBlock_IterateHEdges(SuperBlock* superblock, int (*callback)(struct bsp_hedge_s*, void*)/*, parameters=NULL*/);
+int SuperBlock_IterateHEdges2(SuperBlock* superblock, int (*callback)(bsp_hedge_t*, void*), void* parameters);
+int SuperBlock_IterateHEdges(SuperBlock* superblock, int (*callback)(bsp_hedge_t*, void*)/*, parameters=NULL*/);
 
 /**
  * Retrieve a pointer to a sub-block of this superblock.

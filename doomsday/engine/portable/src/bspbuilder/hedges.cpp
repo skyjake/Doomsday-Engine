@@ -44,54 +44,60 @@
 
 using namespace de;
 
-/**
- * Update the precomputed members of the hedge.
- */
-static void updateHEdge(bsp_hedge_t *hedge)
+static void initBspHEdgeInfo(const bsp_hedge_t* hedge, BspHEdgeInfo* info)
 {
-    hedge->pSX = hedge->v[0]->buildData.pos[VX];
-    hedge->pSY = hedge->v[0]->buildData.pos[VY];
-    hedge->pEX = hedge->v[1]->buildData.pos[VX];
-    hedge->pEY = hedge->v[1]->buildData.pos[VY];
-    hedge->pDX = hedge->pEX - hedge->pSX;
-    hedge->pDY = hedge->pEY - hedge->pSY;
+    assert(hedge);
+    if(!info) return;
 
-    hedge->pLength = M_Length(hedge->pDX, hedge->pDY);
-    hedge->pAngle  = M_SlopeToAngle(hedge->pDX, hedge->pDY);
+    info->pSX = hedge->v[0]->buildData.pos[VX];
+    info->pSY = hedge->v[0]->buildData.pos[VY];
+    info->pEX = hedge->v[1]->buildData.pos[VX];
+    info->pEY = hedge->v[1]->buildData.pos[VY];
+    info->pDX = info->pEX - info->pSX;
+    info->pDY = info->pEY - info->pSY;
 
-    if(hedge->pLength <= 0)
-        Con_Error("Hedge %p has zero p_length.", hedge);
+    info->pLength = M_Length(info->pDX, info->pDY);
+    info->pAngle  = M_SlopeToAngle(info->pDX, info->pDY);
 
-    hedge->pPerp =  hedge->pSY * hedge->pDX - hedge->pSX * hedge->pDY;
-    hedge->pPara = -hedge->pSX * hedge->pDX - hedge->pSY * hedge->pDY;
+    info->pPerp =  info->pSY * info->pDX - info->pSX * info->pDY;
+    info->pPara = -info->pSX * info->pDX - info->pSY * info->pDY;
+}
+
+static void updateBspHEdgeInfo(const bsp_hedge_t* hedge, BspHEdgeInfo* info)
+{
+    assert(hedge);
+    if(!info) return;
+
+    initBspHEdgeInfo(hedge, info);
+    if(info->pLength <= 0)
+        Con_Error("HEdge {%p} is of zero length.", hedge);
 }
 
 bsp_hedge_t* BspBuilder::newHEdge(LineDef* lineDef, LineDef* sourceLineDef,
     Vertex* start, Vertex* end, Sector* sec, boolean back)
 {
-    bsp_hedge_t* hEdge = allocHEdge();
+    bsp_hedge_t* hedge = allocHEdge();
 
-    hEdge->v[0] = start;
-    hEdge->v[1] = end;
-    hEdge->lineDef = lineDef;
-    hEdge->side = (back? 1 : 0);
-    hEdge->sector = sec;
-    hEdge->twin = NULL;
-    hEdge->nextOnSide = hEdge->prevOnSide = NULL;
+    hedge->v[0] = start;
+    hedge->v[1] = end;
+    hedge->side = (back? 1 : 0);
+    hedge->sector = sec;
+    hedge->twin = NULL;
+    hedge->nextOnSide = hedge->prevOnSide = NULL;
+    hedge->index = -1;
 
-    hEdge->sourceLineDef = sourceLineDef;
-    hEdge->index = -1;
+    updateBspHEdgeInfo(hedge, &hedge->info);
+    hedge->info.lineDef = lineDef;
+    hedge->info.sourceLineDef = sourceLineDef;
 
-    updateHEdge(hEdge);
-
-    return hEdge;
+    return hedge;
 }
 
-void BspBuilder::deleteHEdge(bsp_hedge_t* hEdge)
+void BspBuilder::deleteHEdge(bsp_hedge_t* hedge)
 {
-    if(hEdge)
+    if(hedge)
     {
-        freeHEdge(hEdge);
+        freeHEdge(hedge);
     }
 }
 
@@ -117,8 +123,8 @@ bsp_hedge_t* BspBuilder::splitHEdge(bsp_hedge_t* oldHEdge, double x, double y)
     newVert->buildData.refCount = (oldHEdge->twin? 4 : 2);
 
     // Compute wall_tip info.
-    addEdgeTip(newVert, -oldHEdge->pDX, -oldHEdge->pDY, oldHEdge, oldHEdge->twin);
-    addEdgeTip(newVert,  oldHEdge->pDX,  oldHEdge->pDY, oldHEdge->twin, oldHEdge);
+    addEdgeTip(newVert, -oldHEdge->info.pDX, -oldHEdge->info.pDY, oldHEdge, oldHEdge->twin);
+    addEdgeTip(newVert,  oldHEdge->info.pDX,  oldHEdge->info.pDY, oldHEdge->twin, oldHEdge);
 
     newHEdge = allocHEdge();
 
@@ -129,10 +135,10 @@ bsp_hedge_t* BspBuilder::splitHEdge(bsp_hedge_t* oldHEdge, double x, double y)
     oldHEdge->nextOnSide = newHEdge;
 
     oldHEdge->v[1] = newVert;
-    updateHEdge(oldHEdge);
+    updateBspHEdgeInfo(oldHEdge, &oldHEdge->info);
 
     newHEdge->v[0] = newVert;
-    updateHEdge(newHEdge);
+    updateBspHEdgeInfo(newHEdge, &newHEdge->info);
 
     //DEBUG_Message(("Splitting Vertex is %04X at (%1.1f,%1.1f)\n",
     //               newVert->index, newVert->V_pos[VX], newVert->V_pos[VY]));
@@ -140,7 +146,7 @@ bsp_hedge_t* BspBuilder::splitHEdge(bsp_hedge_t* oldHEdge, double x, double y)
     // Handle the twin.
     if(oldHEdge->twin)
     {
-        //DEBUG_Message(("Splitting hEdge->twin %p\n", oldHEdge->twin));
+        //DEBUG_Message(("Splitting hedge->twin %p\n", oldHEdge->twin));
 
         newHEdge->twin = allocHEdge();
 
@@ -154,10 +160,10 @@ bsp_hedge_t* BspBuilder::splitHEdge(bsp_hedge_t* oldHEdge, double x, double y)
         oldHEdge->twin->prevOnSide = newHEdge->twin;
 
         oldHEdge->twin->v[0] = newVert;
-        updateHEdge(oldHEdge->twin);
+        updateBspHEdgeInfo(oldHEdge->twin, &oldHEdge->twin->info);
 
         newHEdge->twin->v[1] = newVert;
-        updateHEdge(newHEdge->twin);
+        updateBspHEdgeInfo(newHEdge->twin, &newHEdge->twin->info);
 
         // Update superblock, if needed.
         if(oldHEdge->twin->block)
