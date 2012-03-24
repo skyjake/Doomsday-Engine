@@ -321,11 +321,11 @@ static void preparehedgeSortBuffer(size_t numhedges)
     }
 }
 
-static boolean C_DECL clockwiseLeaf(binarytree_t* tree, void* data)
+static int C_DECL clockwiseLeaf(BinaryTree* tree, void* data)
 {
     if(BinaryTree_IsLeaf(tree))
     {
-        bspleafdata_t* leaf = (bspleafdata_t*) BinaryTree_GetData(tree);
+        bspleafdata_t* leaf = (bspleafdata_t*) BinaryTree_UserData(tree);
         double midPoint[2] = { 0, 0 };
         bsp_hedge_t* hedge;
         size_t total;
@@ -352,10 +352,10 @@ static boolean C_DECL clockwiseLeaf(binarytree_t* tree, void* data)
         }
     }
 
-    return true; // Continue traversal.
+    return false; // Continue traversal.
 }
 
-void BspBuilder::windLeafs(binarytree_t* rootNode)
+void BspBuilder::windLeafs(BinaryTree* rootNode)
 {
     uint curIndex;
 
@@ -969,11 +969,11 @@ bspleafdata_t* BspBuilder::createBSPLeaf(SuperBlock* hedgeList)
     return leaf;
 }
 
-boolean BspBuilder::buildNodes(SuperBlock* superblock, binarytree_t** parent, size_t depth,
+boolean BspBuilder::buildNodes(SuperBlock* superblock, BinaryTree** parent, size_t depth,
     HPlane* hplane)
 {
     SuperBlockmap* hedgeSet[2];
-    binarytree_t* subTree;
+    BinaryTree* subTree;
     bspleafdata_t* leaf;
     BspNode* node;
     boolean builtOK = false;
@@ -992,7 +992,7 @@ boolean BspBuilder::buildNodes(SuperBlock* superblock, binarytree_t** parent, si
         //DEBUG_Message(("BspBuilder::buildNodes: Convex.\n"));
 
         leaf = createBSPLeaf(superblock);
-        *parent = BinaryTree_Create(leaf);
+        *parent = BinaryTree_NewWithUserData(leaf);
         return true;
     }
 
@@ -1013,7 +1013,7 @@ boolean BspBuilder::buildNodes(SuperBlock* superblock, binarytree_t** parent, si
     hplane->clear();
 
     node = (BspNode*)M_Calloc(sizeof *node);
-    *parent = BinaryTree_Create(node);
+    *parent = BinaryTree_NewWithUserData(node);
 
     hedgeSet[LEFT]->findHEdgeBounds(&node->aaBox[LEFT]);
     hedgeSet[RIGHT]->findHEdgeBounds(&node->aaBox[RIGHT]);

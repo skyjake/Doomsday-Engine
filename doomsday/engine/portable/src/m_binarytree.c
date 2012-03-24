@@ -1,397 +1,171 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2009-2012 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * m_binarytree.c: A fairly standard binary tree implementation.
+ * @file m_binarytree.c
+ * A fairly standard binary tree implementation. @ingroup data
+ *
+ * @authors Copyright © 2009-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-// HEADER FILES ------------------------------------------------------------
+#include <assert.h>
 
-#include "de_base.h"
+#include "de_platform.h"
+#include "de_console.h"
+
 #include "m_binarytree.h"
 
-// MACROS ------------------------------------------------------------------
-
-#define RIGHT                   0
-#define LEFT                    1
-
-#define IS_LEAF(node) (!((node)->children[RIGHT] || (node)->children[LEFT]))
-
-// TYPES -------------------------------------------------------------------
+enum { RIGHT = 0, LEFT };
 
 struct binarytree_s {
-    void* data;
-    struct binarytree_s* children[2]; // {RIGHT, LEFT}
+    /// {RIGHT, LEFT} subtrees.
+    struct binarytree_s* children[2];
+
+    /// User data pointer at this node.
+    void* userData;
 };
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
-
-static __inline binarytree_t *allocNode(void)
+BinaryTree* BinaryTree_NewWithSubtrees(void* userData, BinaryTree* rightSubtree, BinaryTree* leftSubtree)
 {
-    return malloc(sizeof(binarytree_t));
+    BinaryTree* tree = malloc(sizeof *tree);
+    if(!tree) Con_Error("BinaryTree_NewWithUserData: Failed on allocation of %lu bytes for new BinaryTree.", (unsigned long) sizeof *tree);
+
+    tree->children[RIGHT] = rightSubtree;
+    tree->children[LEFT] = leftSubtree;
+    tree->userData = userData;
+
+    return tree;
 }
 
-static __inline void freeNode(binarytree_t *node)
+BinaryTree* BinaryTree_NewWithUserData(void* userData)
 {
-    free(node);
+    return BinaryTree_NewWithSubtrees(userData, NULL/*no right subtree*/, NULL/*no left subtree*/);
 }
 
-static binarytree_t *createTree(const void *userData, binarytree_t *right,
-                              binarytree_t *left)
+BinaryTree* BinaryTree_New(void)
 {
-    binarytree_t         *n;
-
-    n = allocNode();
-    n->data = (void*) userData;
-    n->children[RIGHT] = right;
-    n->children[LEFT] = left;
-
-    return n;
+    return BinaryTree_NewWithUserData(NULL/*no user data*/);
 }
 
-static void destroyTree(binarytree_t *tree)
+void BinaryTree_Delete(BinaryTree* tree)
 {
-    binarytree_t         *n;
-
-    if(!tree)
-        return;
-
-    n = (binarytree_t*) tree;
-    destroyTree(n->children[RIGHT]);
-    destroyTree(n->children[LEFT]);
-
-    freeNode(n);
+    assert(tree);
+    if(tree->children[RIGHT]) BinaryTree_Delete(tree->children[RIGHT]);
+    if(tree->children[LEFT]) BinaryTree_Delete(tree->children[LEFT]);
+    free(tree);
 }
 
-static size_t getHeight(const binarytree_t *n)
+size_t BinaryTree_Height(BinaryTree* tree)
 {
-    if(n && !IS_LEAF(n))
+    assert(tree);
+    if(!BinaryTree_IsLeaf(tree))
     {
-        size_t      left, right;
-
-        right = getHeight(n->children[RIGHT]);
-        left  = getHeight(n->children[LEFT]);
-
+        size_t right = BinaryTree_Height(tree->children[RIGHT]);
+        size_t left = BinaryTree_Height(tree->children[LEFT]);
         return MAX_OF(left, right) + 1;
     }
-
     return 0;
 }
 
-static boolean preOrder(binarytree_t *n,
-                        boolean (C_DECL *func) (binarytree_t *tree, void *data),
-                        void *data)
+boolean BinaryTree_IsLeaf(BinaryTree* tree)
 {
-    if(!n)
-        return true;
-
-    // Visit this node.
-    if(!func((binarytree_t*) n, data))
-        return false;
-
-    if(!IS_LEAF(n))
-    {
-        if(!preOrder(n->children[RIGHT], func, data))
-            return false;
-
-        if(!preOrder(n->children[LEFT], func, data))
-            return false;
-    }
-
-    return true;
+    assert(tree);
+    return !tree->children[RIGHT] && !tree->children[LEFT];
 }
 
-static boolean inOrder(binarytree_t *n,
-                       boolean (C_DECL *func) (binarytree_t *tree, void *data),
-                       void *data)
+BinaryTree* BinaryTree_Child(BinaryTree* tree, boolean left)
 {
-    if(!n)
-        return true;
-
-    if(!IS_LEAF(n))
-    {
-        if(!inOrder(n->children[RIGHT], func, data))
-            return false;
-    }
-
-    // Visit this node.
-    if(!func((binarytree_t*) n, data))
-        return false;
-
-    if(!IS_LEAF(n))
-    {
-        if(!inOrder(n->children[LEFT], func, data))
-            return false;
-    }
-
-    return true;
+    assert(tree);
+    return tree->children[left? LEFT : RIGHT];
 }
 
-static boolean postOrder(binarytree_t *n,
-                         boolean (C_DECL *func) (binarytree_t *tree, void *data),
-                         void *data)
+void BinaryTree_SetChild(BinaryTree* tree, boolean left, BinaryTree* child)
 {
-    if(!n)
-        return true;
+    assert(tree);
+    tree->children[left? LEFT : RIGHT] = child;
+}
 
-    if(!IS_LEAF(n))
+void* BinaryTree_UserData(BinaryTree* tree)
+{
+    assert(tree);
+    return tree->userData;
+}
+
+void BinaryTree_SetUserData(BinaryTree* tree, void* userData)
+{
+    assert(tree);
+    tree->userData = userData;
+}
+
+int BinaryTree_PreOrder(BinaryTree* tree, int (C_DECL *callback) (BinaryTree*, void*), void* parameters)
+{
+    int result;
+    if(!tree || !callback) return false;
+
+    // Visit this node.
+    result = callback(tree, parameters);
+    if(result) return result;
+
+    if(!BinaryTree_IsLeaf(tree))
     {
-        if(!postOrder(n->children[RIGHT], func, data))
-            return false;
+        result = BinaryTree_PreOrder(tree->children[RIGHT], callback, parameters);
+        if(result) return result;
 
-        if(!postOrder(n->children[LEFT], func, data))
-            return false;
+        result = BinaryTree_PreOrder(tree->children[LEFT], callback, parameters);
+        if(result) return result;
+    }
+
+    return false; // Continue iteration.
+}
+
+int BinaryTree_InOrder(BinaryTree* tree, int (C_DECL *callback) (BinaryTree*, void*), void* parameters)
+{
+    int result;
+    if(!tree || !callback) return false; // Continue iteration.
+
+    if(!BinaryTree_IsLeaf(tree))
+    {
+        result = BinaryTree_InOrder(tree->children[RIGHT], callback, parameters);
+        if(result) return result;
     }
 
     // Visit this node.
-    if(!func((binarytree_t*) n, data))
-        return false;
+    result = callback(tree, parameters);
+    if(result) return result;
 
-    return true;
+    if(!BinaryTree_IsLeaf(tree))
+    {
+        result = BinaryTree_InOrder(tree->children[LEFT], callback, parameters);
+        if(result) return result;
+    }
+
+    return false; // Continue iteration.
 }
 
-/**
- * Create a new binary (sub)tree.
- *
- * @param data          User-data to be associated with the new (sub)tree.
- *
- * @return              Ptr to the newly created (sub)tree.
- */
-binarytree_t *BinaryTree_Create(const void *data)
+int BinaryTree_PostOrder(BinaryTree* tree, int (C_DECL *callback) (BinaryTree*, void*), void* parameters)
 {
-    return (binarytree_t*) createTree(data, NULL, NULL);
-}
+    if(!tree || !callback) return false;
 
-/**
- * Create a new binary (sub)tree.
- *
- * @param data          User-data to be associated with the new (sub)tree.
- * @param initialRight  Ptr to the (sub)tree to link as the right child.
- * @param initialLeft   Ptr to the (sub)tree to link as the left child.
- *
- * @return              Ptr to the newly created (sub)tree.
- */
-binarytree_t *BinaryTree_Create2(const void *data, binarytree_t *initialRight,
-                                 binarytree_t *initialLeft)
-{
-    return (binarytree_t*) createTree(data, (binarytree_t*) initialRight,
-                                      (binarytree_t*) initialLeft);
-}
+    if(!BinaryTree_IsLeaf(tree))
+    {
+        int result = BinaryTree_PostOrder(tree->children[RIGHT], callback, parameters);
+        if(result) return result;
 
-/**
- * Destroy the given binary tree.
- *
- * @param tree          Ptr to the tree to be destroyed.
- */
-void BinaryTree_Destroy(binarytree_t *tree)
-{
-    if(!tree)
-        return;
+        result = BinaryTree_PostOrder(tree->children[LEFT], callback, parameters);
+        if(result) return result;
+    }
 
-    destroyTree((binarytree_t*) tree);
-}
-
-/**
- * Calculate the height of the given tree.
- *
- * @param rootNode      Node to begin at.
- *
- * @return              Height of the tree.
- */
-size_t BinaryTree_GetHeight(binarytree_t *tree)
-{
-    if(!tree)
-        return 0;
-
-    return getHeight((binarytree_t*) tree);
-}
-
-/**
- * Is this node a leaf?
- *
- * @param node          Ptr to the node to test.
- * @return              @c true iff this node is a leaf.
- */
-boolean BinaryTree_IsLeaf(binarytree_t *tree)
-{
-    if(!tree)
-        return false;
-
-    return IS_LEAF((binarytree_t*) tree);
-}
-
-/**
- * Given the specified node, return one of it's children.
- *
- * @param node          Ptr to the parent.
- * @param left          @c true= retrieve the left child.
- *                      @c false= retrieve the right child.
- * @return              Ptr to the requested child if present ELSE @c NULL.
- */
-binarytree_t *BinaryTree_GetChild(binarytree_t *tree, boolean left)
-{
-    binarytree_t   *n;
-
-    if(!tree)
-        return NULL;
-
-    n = (binarytree_t*) tree;
-    return (binarytree_t*) n->children[left? LEFT : RIGHT];
-}
-
-/**
- * Set a child of the specified tree.
- *
- * @param tree          Ptr to the (parent) tree to have its child set.
- * @param left          @c true= set the left child.
- *                      @c false= set the right child.
- * @param subTree       Ptr to the (child) tree to be linked or @c NULL.
- */
-void BinaryTree_SetChild(binarytree_t *tree, boolean left,
-                         binarytree_t *subTree)
-{
-    binarytree_t         *parent, *child;
-
-    if(!tree)
-        return;
-
-    parent = (binarytree_t*) tree;
-    child = (binarytree_t*) subTree;
-    parent->children[left? LEFT : RIGHT] = child;
-}
-
-/**
- * Retrieve the user data associated with the specified (sub)tree.
- *
- * @param               Ptr to the node.
- *
- * @return              Ptr to the user data if present ELSE @c NULL.
- */
-void *BinaryTree_GetData(binarytree_t *tree)
-{
-    binarytree_t   *n;
-
-    if(!tree)
-        return NULL;
-
-    n = (binarytree_t*) tree;
-    return n->data;
-}
-
-/**
- * Set the user data assoicated with the specified (sub)tree.
- *
- * @param tree          Ptr to the tree.
- * @param data          Ptr to the user data.
- */
-void BinaryTree_SetData(binarytree_t *tree, const void *data)
-{
-    binarytree_t         *n;
-
-    if(!tree)
-        return;
-
-    n = (binarytree_t*) tree;
-    n->data = (void*) data;
-}
-
-/**
- * Traverse a binary tree in Preorder.
- *
- * Make a callback for all nodes of the tree (including the root).
- * Traversal continues until all nodes have been visited or a callback
- * returns @c false; at which point traversal is aborted.
- *
- * @param tree          Ptr to the (sub)tree to be traversed.
- * @param callback      Function to call for each object of the tree.
- * @param data          Used to pass additional data to func.
- *
- * @return              @c true, iff all callbacks return @c true;
- */
-boolean BinaryTree_PreOrder(binarytree_t *tree,
-                            boolean (C_DECL *callback) (binarytree_t *tree, void *data),
-                            void *data)
-{
-    if(!tree)
-        return true;
-
-    return preOrder((binarytree_t*) tree, callback, data);
-}
-
-/**
- * Traverse a binary tree in Inorder.
- *
- * Make a callback for all nodes of the tree (including the root).
- * Traversal continues until all nodes have been visited or a callback
- * returns @c false; at which point traversal is aborted.
- *
- * @param tree          Ptr to the (sub)tree to be traversed.
- * @param callback      Function to call for each object of the tree.
- * @param data          Used to pass additional data to func.
- *
- * @return              @c true, iff all callbacks return @c true;
- */
-boolean BinaryTree_InOrder(binarytree_t *tree,
-                           boolean (C_DECL *callback) (binarytree_t *tree, void *data),
-                           void *data)
-{
-    if(!tree)
-        return true;
-
-    return inOrder((binarytree_t*) tree, callback, data);
-}
-
-/**
- * Traverse a binary tree in Postorder.
- *
- * Make a callback for all nodes of the tree (including the root).
- * Traversal continues until all nodes have been visited or a callback
- * returns @c false; at which point traversal is aborted.
- *
- * @param tree          Ptr to the (sub)tree to be traversed.
- * @param callback      Function to call for each object of the tree.
- * @param data          Used to pass additional data to func.
- *
- * @return              @c true, iff all callbacks return @c true;
- */
-boolean BinaryTree_PostOrder(binarytree_t *tree,
-                             boolean (C_DECL *callback) (binarytree_t *tree, void *data),
-                             void *data)
-{
-    if(!tree)
-        return true;
-
-    return postOrder((binarytree_t*) tree, callback, data);
+    // Visit this node.
+    return callback(tree, parameters);
 }

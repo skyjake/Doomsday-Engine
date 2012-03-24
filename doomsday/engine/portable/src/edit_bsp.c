@@ -86,20 +86,20 @@ typedef struct {
     boolean write;
 } hedgecollectorparams_t;
 
-static boolean hedgeCollector(binarytree_t* tree, void* data)
+static int hedgeCollector(BinaryTree* tree, void* parameters)
 {
     if(BinaryTree_IsLeaf(tree))
     {
-        hedgecollectorparams_t* params = (hedgecollectorparams_t*) data;
-        bspleafdata_t* leaf = (bspleafdata_t*) BinaryTree_GetData(tree);
+        hedgecollectorparams_t* p = (hedgecollectorparams_t*) parameters;
+        bspleafdata_t* leaf = (bspleafdata_t*) BinaryTree_UserData(tree);
         bsp_hedge_t* hedge;
 
         for(hedge = leaf->hedges; hedge; hedge = hedge->nextInLeaf)
         {
-            if(params->indexPtr)
+            if(p->indexPtr)
             {
                 // Write mode.
-                (*params->indexPtr)[params->curIdx++] = hedge;
+                (*p->indexPtr)[p->curIdx++] = hedge;
             }
             else
             {
@@ -107,15 +107,14 @@ static boolean hedgeCollector(binarytree_t* tree, void* data)
                 if(hedge->index == -1)
                     Con_Error("HEdge %p never reached a BspLeaf!", hedge);
 
-                params->curIdx++;
+                p->curIdx++;
             }
         }
     }
-
-    return true; // Continue traversal.
+    return false; // Continue traversal.
 }
 
-static void buildHEdgesFromBSPHEdges(GameMap* dest, binarytree_t* rootNode)
+static void buildHEdgesFromBSPHEdges(GameMap* dest, BinaryTree* rootNode)
 {
     uint i;
     bsp_hedge_t** index;
@@ -297,17 +296,17 @@ typedef struct {
     uint nodeCurIndex;
 } hardenbspparams_t;
 
-static boolean C_DECL hardenNode(binarytree_t* tree, void* data)
+static int C_DECL hardenNode(BinaryTree* tree, void* data)
 {
-    binarytree_t* right, *left;
+    BinaryTree* right, *left;
     BspNode* nodeData;
     hardenbspparams_t* params;
     BspNode* node;
 
     if(BinaryTree_IsLeaf(tree))
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
-    nodeData =(BspNode*)BinaryTree_GetData(tree);
+    nodeData =(BspNode*)BinaryTree_UserData(tree);
     params = (hardenbspparams_t*) data;
 
     node = &params->dest->bspNodes[nodeData->buildData.index = params->nodeCurIndex++];
@@ -321,12 +320,12 @@ static boolean C_DECL hardenNode(binarytree_t* tree, void* data)
     memcpy(&node->aaBox[RIGHT], &nodeData->aaBox[RIGHT], sizeof(node->aaBox[RIGHT]));
     memcpy(&node->aaBox[LEFT],  &nodeData->aaBox[LEFT],  sizeof(node->aaBox[LEFT]));
 
-    right = BinaryTree_GetChild(tree, RIGHT);
+    right = BinaryTree_Child(tree, RIGHT);
     if(right)
     {
         if(BinaryTree_IsLeaf(right))
         {
-            bspleafdata_t* leaf = (bspleafdata_t*) BinaryTree_GetData(right);
+            bspleafdata_t* leaf = (bspleafdata_t*) BinaryTree_UserData(right);
             uint idx = params->leafCurIndex++;
 
             node->children[RIGHT] = (runtime_mapdata_header_t*)(params->dest->bspLeafs + idx);
@@ -334,17 +333,17 @@ static boolean C_DECL hardenNode(binarytree_t* tree, void* data)
         }
         else
         {
-            BspNode* data = (BspNode*) BinaryTree_GetData(right);
+            BspNode* data = (BspNode*) BinaryTree_UserData(right);
             node->children[RIGHT] = (runtime_mapdata_header_t*)(params->dest->bspNodes + data->buildData.index);
         }
     }
 
-    left = BinaryTree_GetChild(tree, LEFT);
+    left = BinaryTree_Child(tree, LEFT);
     if(left)
     {
         if(BinaryTree_IsLeaf(left))
         {
-            bspleafdata_t* leaf = (bspleafdata_t*) BinaryTree_GetData(left);
+            bspleafdata_t* leaf = (bspleafdata_t*) BinaryTree_UserData(left);
             uint idx = params->leafCurIndex++;
 
             node->children[LEFT] = (runtime_mapdata_header_t*)(params->dest->bspLeafs + idx);
@@ -352,29 +351,29 @@ static boolean C_DECL hardenNode(binarytree_t* tree, void* data)
         }
         else
         {
-            BspNode* data = (BspNode*) BinaryTree_GetData(left);
+            BspNode* data = (BspNode*) BinaryTree_UserData(left);
             node->children[LEFT] = (runtime_mapdata_header_t*)(params->dest->bspNodes + data->buildData.index);
         }
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
-static boolean C_DECL countNode(binarytree_t* tree, void* data)
+static int C_DECL countNode(BinaryTree* tree, void* data)
 {
     if(!BinaryTree_IsLeaf(tree))
         (*((uint*) data))++;
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
-static boolean C_DECL countSSec(binarytree_t* tree, void* data)
+static int C_DECL countSSec(BinaryTree* tree, void* data)
 {
     if(BinaryTree_IsLeaf(tree))
         (*((uint*) data))++;
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
-static void hardenBSP(GameMap* dest, binarytree_t* rootNode)
+static void hardenBSP(GameMap* dest, BinaryTree* rootNode)
 {
     dest->numBspNodes = 0;
     BinaryTree_PostOrder(rootNode, countNode, &dest->numBspNodes);
@@ -391,7 +390,7 @@ static void hardenBSP(GameMap* dest, binarytree_t* rootNode)
 
     if(BinaryTree_IsLeaf(rootNode))
     {
-        hardenLeaf(dest, &dest->bspLeafs[0], (bspleafdata_t*) BinaryTree_GetData(rootNode));
+        hardenLeaf(dest, &dest->bspLeafs[0], (bspleafdata_t*) BinaryTree_UserData(rootNode));
         return;
     }
 
@@ -440,7 +439,7 @@ static void updateVertexLinks(GameMap* dest)
 void BspBuilder_Save(GameMap* dest, void* rootNode, Vertex*** vertexes, uint* numVertexes)
 {
     uint startTime = Sys_GetRealTime();
-    binarytree_t* rn = (binarytree_t*) rootNode;
+    BinaryTree* rn = (BinaryTree*) rootNode;
 
     hardenVertexes(dest, vertexes, numVertexes);
     updateVertexLinks(dest);

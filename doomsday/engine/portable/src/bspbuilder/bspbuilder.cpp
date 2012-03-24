@@ -300,10 +300,10 @@ void BspBuilder::initForMap(GameMap* map)
     }
 }
 
-boolean C_DECL BspBuilder_FreeBSPData(binarytree_t* tree, void* parameters)
+int C_DECL BspBuilder_FreeBSPData(BinaryTree* tree, void* parameters)
 {
     BspBuilder* builder = (BspBuilder*)parameters;
-    void* bspData = BinaryTree_GetData(tree);
+    void* bspData = BinaryTree_UserData(tree);
 
     if(bspData)
     {
@@ -313,14 +313,14 @@ boolean C_DECL BspBuilder_FreeBSPData(binarytree_t* tree, void* parameters)
             M_Free(bspData);
     }
 
-    BinaryTree_SetData(tree, NULL);
+    BinaryTree_SetUserData(tree, NULL);
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 boolean BspBuilder::build(GameMap* map, Vertex*** vertexes, uint* numVertexes)
 {
-    binarytree_t* rootNode;
+    BinaryTree* rootNode;
     SuperBlockmap* sbmap;
     boolean builtOK;
     uint startTime;
@@ -366,8 +366,8 @@ boolean BspBuilder::build(GameMap* map, Vertex*** vertexes, uint* numVertexes)
 
         if(rootNode && !BinaryTree_IsLeaf(rootNode))
         {
-            rHeight = (long) BinaryTree_GetHeight(BinaryTree_GetChild(rootNode, RIGHT));
-            lHeight = (long) BinaryTree_GetHeight(BinaryTree_GetChild(rootNode, LEFT));
+            rHeight = (long) BinaryTree_Height(BinaryTree_Child(rootNode, RIGHT));
+            lHeight = (long) BinaryTree_Height(BinaryTree_Child(rootNode, LEFT));
         }
         else
         {
@@ -384,7 +384,7 @@ boolean BspBuilder::build(GameMap* map, Vertex*** vertexes, uint* numVertexes)
     if(rootNode)
     {
         BinaryTree_PostOrder(rootNode, BspBuilder_FreeBSPData, this);
-        BinaryTree_Destroy(rootNode);
+        BinaryTree_Delete(rootNode);
     }
     rootNode = NULL;
 
