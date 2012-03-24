@@ -446,6 +446,166 @@ void BspBuilder::addHEdgesBetweenIntercepts(HPlane* hplane,
     */
 }
 
+void Bsp_MergeHEdgeIntercepts(HEdgeIntercept* final, const HEdgeIntercept* other)
+{
+    if(!final || !other)
+        Con_Error("Bsp_MergeIntersections2: Invalid arguments");
+
+/*  DEBUG_Message((" Merging intersections:\n"));
+#if _DEBUG
+    Bsp_PrintHEdgeIntercept(final);
+    Bsp_PrintHEdgeIntercept(other);
+#endif*/
+
+    if(final->selfRef && !other->selfRef)
+    {
+        if(final->before && other->before)
+            final->before = other->before;
+
+        if(final->after && other->after)
+            final->after = other->after;
+
+        final->selfRef = false;
+    }
+
+    if(!final->before && other->before)
+        final->before = other->before;
+
+    if(!final->after && other->after)
+        final->after = other->after;
+
+/*  DEBUG_Message((" Result:\n"));
+#if _DEBUG
+    Bsp_PrintHEdgeIntercept(final);
+#endif*/
+}
+
+void BspBuilder::mergeIntersections(HPlane* hplane)
+{
+    if(!hplane) return;
+
+    HPlane::Intercepts::const_iterator node = hplane->begin();
+    while(node != hplane->end())
+    {
+        HPlane::Intercepts::const_iterator np = node; np++;
+        if(np == hplane->end()) break;
+
+        double len = *np - *node;
+        if(len < -0.1)
+        {
+            Con_Error("BspBuilder_MergeIntersections: Invalid intercept order - %1.3f > %1.3f\n",
+                      node->distance, np->distance);
+        }
+        else if(len > 0.2)
+        {
+            node++;
+            continue;
+        }
+
+        HEdgeIntercept* cur  = (HEdgeIntercept*)node->userData;
+        HEdgeIntercept* next = (HEdgeIntercept*)np->userData;
+
+        /*if(len > DIST_EPSILON)
+        {
+            DEBUG_Message((" Skipping very short half-edge (len=%1.3f) near (%1.1f,%1.1f)\n",
+                           len, cur->vertex->V_pos[VX], cur->vertex->V_pos[VY]));
+        }*/
+
+        // Merge info for the two intersections into one.
+        Bsp_MergeHEdgeIntercepts(cur, next);
+
+        // Destroy the orphaned info.
+        deleteHEdgeIntercept(next);
+
+        // Unlink this intercept.
+        hplane->deleteIntercept(np);
+    }
+}
+
+void BspBuilder::buildHEdgesAtIntersectionGaps(HPlane* hplane, SuperBlock* rightList,
+    SuperBlock* leftList)
+{
+    HPlane::Intercepts::const_iterator node;
+
+    if(!hplane) return;
+
+    node = hplane->begin();
+    while(node != hplane->end())
+    {
+        HPlane::Intercepts::const_iterator np = node; np++;
+        if(np == hplane->end()) break;
+
+        HEdgeIntercept* cur = (HEdgeIntercept*)((*node).userData);
+        HEdgeIntercept* next = (HEdgeIntercept*)((*np).userData);
+
+        if(!(!cur->after && !next->before))
+        {
+            // Check for some nasty open/closed or close/open cases.
+            if(cur->after && !next->before)
+            {
+                if(!cur->selfRef)
+                {
+                    double pos[2];
+
+                    pos[VX] = cur->vertex->buildData.pos[VX] + next->vertex->buildData.pos[VX];
+                    pos[VY] = cur->vertex->buildData.pos[VY] + next->vertex->buildData.pos[VY];
+
+                    pos[VX] /= 2;
+                    pos[VY] /= 2;
+
+                    MPE_RegisterUnclosedSectorNear(cur->after, pos[VX], pos[VY]);
+                }
+            }
+            else if(!cur->after && next->before)
+            {
+                if(!next->selfRef)
+                {
+                    double pos[2];
+
+                    pos[VX] = cur->vertex->buildData.pos[VX] + next->vertex->buildData.pos[VX];
+                    pos[VY] = cur->vertex->buildData.pos[VY] + next->vertex->buildData.pos[VY];
+                    pos[VX] /= 2;
+                    pos[VY] /= 2;
+
+                    MPE_RegisterUnclosedSectorNear(next->before, pos[VX], pos[VY]);
+                }
+            }
+            else
+            {
+                // This is definitetly open space.
+                bsp_hedge_t* right, *left;
+
+                // Do a sanity check on the sectors (just for good measure).
+                if(cur->after != next->before)
+                {
+                    if(!cur->selfRef && !next->selfRef)
+                    {
+                        VERBOSE(
+                        Con_Message("Sector mismatch: #%d (%1.1f,%1.1f) != #%d (%1.1f,%1.1f)\n",
+                                    cur->after->buildData.index, cur->vertex->buildData.pos[VX],
+                                    cur->vertex->buildData.pos[VY], next->before->buildData.index,
+                                    next->vertex->buildData.pos[VX], next->vertex->buildData.pos[VY]));
+                    }
+
+                    // Choose the non-self-referencing sector when we can.
+                    if(cur->selfRef && !next->selfRef)
+                    {
+                        cur->after = next->before;
+                    }
+                }
+
+                addHEdgesBetweenIntercepts(hplane, cur, next, &right, &left);
+
+                // Add the new half-edges to the appropriate lists.
+                rightList->hedgePush(right);
+                leftList->hedgePush(left);
+            }
+        }
+
+        node++;
+    }
+}
+
 void BspBuilder::addMiniHEdges(HPlane* hplane, SuperBlock* rightList,
     SuperBlock* leftList)
 {
@@ -527,17 +687,3 @@ void BspBuilder::addEdgeTip(Vertex* vert, double dx, double dy, bsp_hedge_t* bac
         vert->buildData.tipSet = tip;
     }
 }
-
-#if _DEBUG
-void Bsp_PrintHEdgeIntercept(HEdgeIntercept* inter)
-{
-    assert(inter);
-    Con_Message("Vertex #%i [x:%f, y:%f] beforeSector: #%d afterSector: #%d %s\n",
-                inter->vertex->buildData.index,
-                inter->vertex->buildData.pos[VX],
-                inter->vertex->buildData.pos[VY],
-                (inter->before? inter->before->buildData.index : -1),
-                (inter->after? inter->after->buildData.index : -1),
-                (inter->selfRef? "SELFREF" : ""));
-}
-#endif

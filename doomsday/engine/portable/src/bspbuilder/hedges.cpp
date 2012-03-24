@@ -44,6 +44,20 @@
 
 using namespace de;
 
+#if _DEBUG
+void Bsp_PrintHEdgeIntercept(HEdgeIntercept* inter)
+{
+    assert(inter);
+    Con_Message("Vertex #%i [x:%f, y:%f] beforeSector: #%d afterSector: #%d %s\n",
+                inter->vertex->buildData.index,
+                inter->vertex->buildData.pos[VX],
+                inter->vertex->buildData.pos[VY],
+                (inter->before? inter->before->buildData.index : -1),
+                (inter->after? inter->after->buildData.index : -1),
+                (inter->selfRef? "SELFREF" : ""));
+}
+#endif
+
 static void initBspHEdgeInfo(const bsp_hedge_t* hedge, BspHEdgeInfo* info)
 {
     assert(hedge);
