@@ -365,7 +365,7 @@ static int x11ScancodeToDDKey(int scancode)
     case XK_KP_Home:            return DDKEY_NUMPAD7;
     case XK_KP_Up:              return DDKEY_NUMPAD8;
     case XK_KP_Page_Up:         return DDKEY_NUMPAD9;
-#if 0
+
     case XK_KP_0:               return DDKEY_NUMPAD0;
     case XK_KP_1:               return DDKEY_NUMPAD1;
     case XK_KP_2:               return DDKEY_NUMPAD2;
@@ -376,7 +376,7 @@ static int x11ScancodeToDDKey(int scancode)
     case XK_KP_7:               return DDKEY_NUMPAD7;
     case XK_KP_8:               return DDKEY_NUMPAD8;
     case XK_KP_9:               return DDKEY_NUMPAD9;
-#endif
+
     case XK_KP_Equal:           return '=';
     case XK_KP_Multiply:        return DDKEY_MULTIPLY;
     case XK_KP_Add:             return DDKEY_ADD;
