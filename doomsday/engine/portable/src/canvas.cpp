@@ -289,19 +289,30 @@ void Canvas::focusOutEvent(QFocusEvent*)
     if(d->focusCallback) d->focusCallback(*this, false);
 }
 
+static int nativeCode(QKeyEvent* ev)
+{
+#if defined(UNIX) && !defined(MACOSX)
+    return ev->nativeScanCode();
+#else
+    return ev->nativeVirtualKey();
+#endif
+}
+
 void Canvas::keyPressEvent(QKeyEvent *ev)
 {
     ev->accept();
     if(ev->isAutoRepeat()) return; // Ignore repeats, we do our own.
 
     qDebug() << "Canvas: key press" << ev->key() << QString("0x%1").arg(ev->key(), 0, 16)
-             << "text:" << ev->text() << "native:" << ev->nativeVirtualKey();
+             << "text:" << ev->text()
+             << "native:" << ev->nativeVirtualKey()
+             << "scancode:" << ev->nativeScanCode();
 
     /// @todo Use the Unicode text instead.
 
     Keyboard_Submit(IKE_DOWN,
-                    Keycode_TranslateFromQt(ev->key(), ev->nativeVirtualKey()),
-                    ev->nativeVirtualKey(),
+                    Keycode_TranslateFromQt(ev->key(), ev->nativeVirtualKey(), ev->nativeScanCode()),
+                    nativeCode(ev),
                     ev->text().isEmpty()? 0 : ev->text().toLatin1().constData());
 }
 
@@ -310,12 +321,12 @@ void Canvas::keyReleaseEvent(QKeyEvent *ev)
     ev->accept();
     if(ev->isAutoRepeat()) return; // Ignore repeats, we do our own.
 
-    qDebug() << "Canvas: key release" << ev->key() << "text:" << ev->text() << "native:"
-                << ev->nativeVirtualKey();
+    qDebug() << "Canvas: key release" << ev->key() << "text:" << ev->text()
+             << "native:" << ev->nativeVirtualKey();
 
     Keyboard_Submit(IKE_UP,
-                    Keycode_TranslateFromQt(ev->key(), ev->nativeVirtualKey()),
-                    ev->nativeVirtualKey(),
+                    Keycode_TranslateFromQt(ev->key(), ev->nativeVirtualKey(), ev->nativeScanCode()),
+                    nativeCode(ev),
                     ev->text().isEmpty()? 0 : ev->text().toLatin1().constData());
 }
 

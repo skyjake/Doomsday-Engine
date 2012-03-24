@@ -28,6 +28,15 @@
 #  include "de_platform.h"
 #endif
 
+#if defined(UNIX) && !defined(MACOSX)
+#  include <QX11Info>
+#  include <X11/keysym.h>
+#  include <X11/Xlib.h>
+#  include "../unix/src/imKStoUCS.c"
+#  define XFREE_KEYMAPPING
+static int x11ScancodeToDDKey(int scancode);
+#endif
+
 #include "keycode.h"
 #include "dd_share.h"
 
@@ -37,7 +46,7 @@ static int win32Keymap[256];
 /**
  * Initialize the Windows virtual key => DDKEY translation map.
  */
-void checkWin32Keymap()
+static void checkWin32Keymap()
 {
     if(win32Keymap[VK_BACK] == DDKEY_BACKSPACE)
     {
@@ -110,7 +119,7 @@ void checkWin32Keymap()
     keymap[VK_NUMPAD7] = DDKEY_NUMPAD7;
     keymap[VK_NUMPAD8] = DDKEY_NUMPAD8;
     keymap[VK_NUMPAD9] = DDKEY_NUMPAD9;
-    keymap[VK_MULTIPLY] = '*';
+    keymap[VK_MULTIPLY] = DDKEY_MULTIPLY;
     keymap[VK_ADD] = DDKEY_ADD;
     //keymap[VK_SEPARATOR] = ;
     keymap[VK_SUBTRACT] = DDKEY_SUBTRACT;
@@ -169,7 +178,7 @@ void checkWin32Keymap()
 }
 #endif // WIN32
 
-int Keycode_TranslateFromQt(int qtKey, int nativeVirtualKey)
+int Keycode_TranslateFromQt(int qtKey, int nativeVirtualKey, int nativeScanCode)
 {   
 #ifdef MACOSX
     switch(qtKey)
@@ -182,6 +191,14 @@ int Keycode_TranslateFromQt(int qtKey, int nativeVirtualKey)
     default:
         break;
     }
+#endif
+
+#ifdef XFREE_KEYMAPPING
+    // We'll check before the generic Qt keys to detect the numpad.
+    int mapped = x11ScancodeToDDKey(nativeScanCode);
+    if(mapped) return mapped;
+#else
+    DENG_UNUSED(nativeScanCode);
 #endif
 
     // Non-character-inserting keys.
@@ -307,16 +324,12 @@ int Keycode_TranslateFromQt(int qtKey, int nativeVirtualKey)
     case 69:                    return DDKEY_ADD;
     case 78:                    return DDKEY_SUBTRACT;
     case 75:                    return DDKEY_DIVIDE;
-
-        // kVK_ANSI_KeypadClear     0x47
-        // kVK_ANSI_KeypadMultiply  0x43
+    case 0x43:                  return DDKEY_MULTIPLY;
 
     default:
         break;
     }
 #endif
-
-    // TODO: Windows virtual keys
 
     // Not supported.
     qDebug() << "Keycode" << qtKey << QString("0x%1").arg(qtKey, 0, 16)
@@ -324,3 +337,59 @@ int Keycode_TranslateFromQt(int qtKey, int nativeVirtualKey)
 
     return 0;
 }
+
+#ifdef XFREE_KEYMAPPING
+static int x11ScancodeToDDKey(int scancode)
+{
+    Display* disp = QX11Info::display();
+    KeySym sym = XKeycodeToKeysym(disp, scancode, 0);
+    if(sym == NoSymbol) return 0;
+    unsigned int ucs4 = X11_KeySymToUcs4(sym);
+    if(ucs4)
+    {
+        // ASCII range.
+        if(ucs4 > ' ' && ucs4 < 128) return ucs4;
+        //qDebug() << "ucs4:" << ucs4 << hex << ucs4 << dec;
+        return 0;
+    }
+    //qDebug() << "sym:" << hex << sym << dec;
+    switch(sym)
+    {
+    case XK_KP_Insert:          return DDKEY_NUMPAD0;
+    case XK_KP_End:             return DDKEY_NUMPAD1;
+    case XK_KP_Down:            return DDKEY_NUMPAD2;
+    case XK_KP_Page_Down:       return DDKEY_NUMPAD3;
+    case XK_KP_Left:            return DDKEY_NUMPAD4;
+    case XK_KP_Begin:           return DDKEY_NUMPAD5;
+    case XK_KP_Right:           return DDKEY_NUMPAD6;
+    case XK_KP_Home:            return DDKEY_NUMPAD7;
+    case XK_KP_Up:              return DDKEY_NUMPAD8;
+    case XK_KP_Page_Up:         return DDKEY_NUMPAD9;
+#if 0
+    case XK_KP_0:               return DDKEY_NUMPAD0;
+    case XK_KP_1:               return DDKEY_NUMPAD1;
+    case XK_KP_2:               return DDKEY_NUMPAD2;
+    case XK_KP_3:               return DDKEY_NUMPAD3;
+    case XK_KP_4:               return DDKEY_NUMPAD4;
+    case XK_KP_5:               return DDKEY_NUMPAD5;
+    case XK_KP_6:               return DDKEY_NUMPAD6;
+    case XK_KP_7:               return DDKEY_NUMPAD7;
+    case XK_KP_8:               return DDKEY_NUMPAD8;
+    case XK_KP_9:               return DDKEY_NUMPAD9;
+#endif
+    case XK_KP_Equal:           return '=';
+    case XK_KP_Multiply:        return DDKEY_MULTIPLY;
+    case XK_KP_Add:             return DDKEY_ADD;
+    case XK_KP_Separator:       return DDKEY_DECIMAL;
+    case XK_KP_Delete:          return DDKEY_DECIMAL;
+    case XK_KP_Subtract:        return DDKEY_SUBTRACT;
+    case XK_KP_Decimal:         return DDKEY_DECIMAL;
+    case XK_KP_Divide:          return DDKEY_DIVIDE;
+
+    default:
+        break;
+    }
+    //qDebug() << "=>failed to map";
+    return 0;
+}
+#endif

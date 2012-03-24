@@ -33,8 +33,9 @@ extern "C" {
  *
  * @param qtKey             Qt key code.
  * @param nativeVirtualKey  Native virtual key code.
+ * @param nativeScanCode    Native scan code.
  */
-int Keycode_TranslateFromQt(int qtKey, int nativeVirtualKey);
+int Keycode_TranslateFromQt(int qtKey, int nativeVirtualKey, int nativeScanCode);
 
 #ifdef __cplusplus
 }

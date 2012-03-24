@@ -150,6 +150,7 @@ static const keyname_t keyNames[] = {
     {DDKEY_PRINT,       "prtsc"},
     {DDKEY_ENTER,       "enter"},
     {DDKEY_DIVIDE,      "divide"},
+    {DDKEY_MULTIPLY,    "multiply"},
     {0, NULL} // The terminator
 };
 

@@ -396,7 +396,8 @@ macx {
 else:unix {
     # Unix (non-Mac) only.
     SOURCES += \
-        unix/src/displaymode_x11.cpp
+        unix/src/displaymode_x11.cpp \
+        unix/src/imKStoUCS.c
 }
 
 # Platform-independent sources.
