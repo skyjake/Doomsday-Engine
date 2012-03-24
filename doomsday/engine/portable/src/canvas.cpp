@@ -56,7 +56,6 @@ struct Canvas::Instance
     QPoint prevMousePos;
     QTime prevWheelAt;
     int wheelDir[2];
-    int wheelDelta[2];
 
     Instance(Canvas* c)
         : self(c),
@@ -177,6 +176,8 @@ void Canvas::grab(image_t* img, const QSize& outputSize)
 
 void Canvas::trapMouse(bool trap)
 {
+    if(!Mouse_IsPresent()) return;
+
     if(trap)
     {
         d->grabMouse();
@@ -374,21 +375,18 @@ void Canvas::wheelEvent(QWheelEvent *ev)
 {
     ev->accept();
 
-    bool continuum = (d->prevWheelAt.elapsed() < MOUSE_WHEEL_CONTINUOUS_THRESHOLD_MS);
+    bool continuousMovement = (d->prevWheelAt.elapsed() < MOUSE_WHEEL_CONTINUOUS_THRESHOLD_MS);
     int axis = (ev->orientation() == Qt::Horizontal? 0 : 1);
     int dir = (ev->delta() < 0? -1 : 1);
 
-    if(dir == d->wheelDir[axis] && qAbs(ev->delta()) > qAbs(d->wheelDelta[axis])*1.5f)
-    {
-        qDebug() << "Canvas: growing wheel axis" << axis << "dir" << dir;
-    }
-    else if(!continuum || d->wheelDir[axis] != dir)
+    if(!continuousMovement || d->wheelDir[axis] != dir)
     {
         d->wheelDir[axis] = dir;
         qDebug() << "Canvas: signal wheel axis" << axis << "dir" << dir;
+
+        Mouse_Qt_SubmitMotion(IMA_WHEEL, axis == 0? dir : 0, axis == 1? dir : 0);
     }
 
-    d->wheelDelta[axis] = ev->delta();
         /*
     if(ev->orientation() == Qt::Vertical)
     {

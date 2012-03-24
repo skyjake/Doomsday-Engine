@@ -21,7 +21,8 @@
  * 02110-1301 USA</small>
  */
 
-#include "dd_share.h"
+#include "de_base.h"
+#include "con_main.h"
 #include "sys_input.h"
 #include "window.h"
 #include <string.h>
@@ -95,6 +96,19 @@ void Mouse_Qt_SubmitMotion(int axis, int deltaX, int deltaY)
     if(axis < 0 || axis >= IMA_MAXAXES) return; // Ignore...
 
     /// @todo It would likely be better to directly post a ddevent out of this.
+
+    if(axis == IMA_WHEEL)
+    {
+        int idx = ( deltaX < 0? IMB_MWHEELLEFT
+                  : deltaX > 0? IMB_MWHEELRIGHT
+                  : deltaY < 0? IMB_MWHEELUP
+                              : IMB_MWHEELDOWN);
+
+        // We are not yet equipped to handle finer wheel motions.
+        Mouse_Qt_SubmitButton(idx, true);
+        Mouse_Qt_SubmitButton(idx, false);
+        return;
+    }
 
     mouseDelta[axis].dx += deltaX;
     mouseDelta[axis].dy += deltaY;

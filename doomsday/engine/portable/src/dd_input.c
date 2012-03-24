@@ -246,12 +246,14 @@ void I_InitVirtualInputDevices(void)
     strcpy(dev->name, "mouse");
     I_DeviceAllocKeys(dev, IMB_MAXBUTTONS);
 
-    // The first five mouse buttons have symbolic names.
-    dev->keys[0].name = "left";
-    dev->keys[1].name = "middle";
-    dev->keys[2].name = "right";
-    dev->keys[3].name = "wheelup";
-    dev->keys[4].name = "wheeldown";
+    // Some of the mouse buttons have symbolic names.
+    dev->keys[IMB_LEFT].name = "left";
+    dev->keys[IMB_MIDDLE].name = "middle";
+    dev->keys[IMB_RIGHT].name = "right";
+    dev->keys[IMB_MWHEELUP].name = "wheelup";
+    dev->keys[IMB_MWHEELDOWN].name = "wheeldown";
+    dev->keys[IMB_MWHEELLEFT].name = "wheelleft";
+    dev->keys[IMB_MWHEELRIGHT].name = "wheelright";
 
     // The mouse wheel is translated to keys, so there is no need to
     // create an axis for it.
