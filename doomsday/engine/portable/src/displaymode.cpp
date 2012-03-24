@@ -22,10 +22,6 @@
 #include "displaymode.h"
 #include "displaymode_native.h"
 
-#ifdef MACOSX
-#  include "displaymode_macx.h"
-#endif
-
 #include <vector>
 #include <set>
 #include <algorithm>
@@ -33,29 +29,6 @@
 #include <QDebug>
 
 static bool inited = false;
-
-#if 0
-static bool tryDivide(int& ratioX, int& ratioY, int div)
-{
-    int dx = ratioX / div;
-    if(dx * div != ratioX) return false;
-    int dy = ratioY / div;
-    if(dy * div != ratioY) return false;
-    ratioX = dx;
-    ratioY = dy;
-    return true;
-}
-
-static bool reduce(int& ratioX, int& ratioY)
-{
-    for(int div = 2; div <= qMin(ratioX, ratioY); div++)
-    {
-        if(tryDivide(ratioX, ratioY, div))
-            return true;
-    }
-    return false;
-}
-#endif
 
 static float differenceToOriginalHz(float hz);
 

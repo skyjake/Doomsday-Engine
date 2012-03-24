@@ -52,7 +52,7 @@
 #include <QDebug>
 
 #ifdef MACOSX
-static const int POST_MODE_CHANGE_WAIT_BEFORE_LAYOUT_UPDATE = 100; // ms
+static const int POST_MODE_CHANGE_WAIT_BEFORE_UPDATE = 100; // ms
 #else
 static const int POST_MODE_CHANGE_WAIT_BEFORE_UPDATE = 1; // ms
 #endif
