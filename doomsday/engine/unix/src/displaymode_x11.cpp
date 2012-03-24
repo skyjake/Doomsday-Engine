@@ -31,11 +31,6 @@
 #include <assert.h>
 #include <vector>
 
-#if 0
-static std::vector<DEVMODE> devModes;
-static DEVMODE currentDevMode;
-#endif
-
 typedef std::vector<DisplayMode> DisplayModes;
 
 static int displayDepth;
@@ -43,9 +38,16 @@ static Rotation displayRotation;
 static DisplayModes availableModes;
 static DisplayMode currentMode;
 
+/**
+ * Wrapper for the Xrandr configuration info. The config is kept in memory only
+ * for the lifetime of an RRInfo instance.
+ */
 class RRInfo
 {
 public:
+    /**
+     * Queries all the available modes in the display configuration.
+     */
     RRInfo() : _numSizes(0)
     {
         _conf = XRRGetScreenInfo(QX11Info::display(), QX11Info::appRootWindow());
@@ -73,6 +75,15 @@ public:
         _confTime = XRRConfigTimes(_conf, &prevConfTime);
     }
 
+    ~RRInfo()
+    {
+        if(_conf) XRRFreeScreenConfigInfo(_conf);
+    }
+
+    /**
+     * Returns the currently active mode as specified in the Xrandr config.
+     * Also determines the display's current rotation angle.
+     */
     DisplayMode currentMode() const
     {
         DisplayMode mode;
@@ -80,7 +91,6 @@ public:
 
         if(!_conf) return mode;
 
-        // Also updates the display's current rotation.
         SizeID currentSize = XRRConfigCurrentConfiguration(_conf, &displayRotation);
 
         // Update the current mode.
@@ -138,14 +148,6 @@ public:
         // Update the current mode.
         ::currentMode = *mode;
         return true;
-    }
-
-    ~RRInfo()
-    {
-        if(_conf)
-        {
-            XRRFreeScreenConfigInfo(_conf);
-        }
     }
 
 private:
