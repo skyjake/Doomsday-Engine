@@ -22,6 +22,8 @@
  */
 
 #include <QDebug>
+#include <QX11Info>
+#include <X11/extensions/Xrandr.h>
 
 #include "de_platform.h"
 #include "displaymode_native.h"
@@ -34,40 +36,155 @@ static std::vector<DEVMODE> devModes;
 static DEVMODE currentDevMode;
 #endif
 
+typedef std::vector<DisplayMode> DisplayModes;
+
+static int displayDepth;
+static Rotation displayRotation;
+static DisplayModes availableModes;
+static DisplayMode currentMode;
+
+class RRInfo
+{
+public:
+    RRInfo() : _numSizes(0)
+    {
+        _conf = XRRGetScreenInfo(QX11Info::display(), QX11Info::appRootWindow());
+        if(!_conf) return; // Not available.
+
+        // Let's see which modes are available.
+        _sizes = XRRConfigSizes(_conf, &_numSizes);
+        for(int i = 0; i < _numSizes; ++i)
+        {
+            int numRates = 0;
+            short* rates = XRRConfigRates(_conf, i, &numRates);
+            for(int k = 0; k < numRates; k++)
+            {
+                DisplayMode mode;
+                memset(&mode, 0, sizeof(mode));
+                mode.width = _sizes[i].width;
+                mode.height = _sizes[i].height;
+                mode.depth = displayDepth;
+                mode.refreshRate = rates[k];
+                _modes.push_back(mode);
+            }
+        }
+
+        Time prevConfTime;
+        _confTime = XRRConfigTimes(_conf, &prevConfTime);
+    }
+
+    DisplayMode currentMode() const
+    {
+        DisplayMode mode;
+        memset(&mode, 0, sizeof(mode));
+
+        if(!_conf) return mode;
+
+        // Also updates the display's current rotation.
+        SizeID currentSize = XRRConfigCurrentConfiguration(_conf, &displayRotation);
+
+        // Update the current mode.
+        mode.width = _sizes[currentSize].width;
+        mode.height = _sizes[currentSize].height;
+        mode.depth = displayDepth;
+        mode.refreshRate = XRRConfigCurrentRate(_conf);
+        return mode;
+    }
+
+    std::vector<DisplayMode>& modes() { return _modes; }
+
+    static short rateFromMode(const DisplayMode* mode)
+    {
+        return short(qRound(mode->refreshRate));
+    }
+
+    int find(const DisplayMode* mode) const
+    {
+        for(int i = 0; i < _numSizes; ++i)
+        {
+            int numRates = 0;
+            short* rates = XRRConfigRates(_conf, i, &numRates);
+            for(int k = 0; k < numRates; k++)
+            {
+                if(rateFromMode(mode) == rates[k] &&
+                   mode->width == _sizes[i].width &&
+                   mode->height == _sizes[i].height)
+                {
+                    // This is the one.
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+
+    bool apply(const DisplayMode* mode)
+    {
+        if(!_conf) return false;
+
+        int sizeIdx = find(mode);
+        assert(sizeIdx >= 0);
+
+        //qDebug() << "calling XRRSetScreenConfig" << _confTime;
+        Status result = XRRSetScreenConfigAndRate(QX11Info::display(), _conf, QX11Info::appRootWindow(),
+                                                  sizeIdx, displayRotation, rateFromMode(mode), _confTime);
+        //qDebug() << "result" << result;
+        if(result == BadValue)
+        {
+            qDebug() << "Failed to apply screen config and rate with Xrandr";
+            return false;
+        }
+
+        // Update the current mode.
+        ::currentMode = *mode;
+        return true;
+    }
+
+    ~RRInfo()
+    {
+        if(_conf)
+        {
+            XRRFreeScreenConfigInfo(_conf);
+        }
+    }
+
+private:
+    XRRScreenConfiguration* _conf;
+    XRRScreenSize* _sizes;
+    Time _confTime;
+    int _numSizes;
+    DisplayModes _modes;
+};
+
 void DisplayMode_Native_Init(void)
 {
-    // Let's see which modes are available.
+    // We will not be changing the depth at runtime.
+    displayDepth = QX11Info::appDepth();
 
-    // And which is the current mode?
+    RRInfo info;
+    availableModes = info.modes();
+    currentMode = info.currentMode();
 }
 
 void DisplayMode_Native_Shutdown(void)
 {
-#if 0
-    devModes.clear();
-#endif
+    availableModes.clear();
 }
 
 int DisplayMode_Native_Count(void)
 {
-#if 0
-    return devModes.size();
-#endif
+    return availableModes.size();
 }
 
 void DisplayMode_Native_GetMode(int index, DisplayMode* mode)
 {
-#if 0
     assert(index >= 0 && index < DisplayMode_Native_Count());
-    *mode = devToDisplayMode(devModes[index]);
-#endif
+    *mode = availableModes[index];
 }
 
 void DisplayMode_Native_GetCurrentMode(DisplayMode* mode)
 {
-#if 0
-    *mode = devToDisplayMode(currentDevMode);
-#endif
+    *mode = currentMode;
 }
 
 #if 0
@@ -87,5 +204,6 @@ static int findMode(const DisplayMode* mode)
 
 int DisplayMode_Native_Change(const DisplayMode* mode, boolean shouldCapture)
 {
-    return true;
+    DENG_UNUSED(shouldCapture);
+    return RRInfo().apply(mode);
 }

@@ -56,6 +56,12 @@ else {
     QMAKE_LFLAGS += -rdynamic
 
     !freebsd-*: LIBS += -ldl
+
+    # DisplayMode uses the Xrandr extension.
+    !deng_nodisplaymode {
+        QMAKE_CXXFLAGS += $$system(pkg-config xrandr --cflags)
+                  LIBS += $$system(pkg-config xrandr --libs)
+    }
 }
 
 # Build Configuration --------------------------------------------------------

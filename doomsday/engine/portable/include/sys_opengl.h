@@ -51,7 +51,9 @@
 #    include <OpenGL/OpenGL.h>
 #  else
 #    include <SDL.h>
-#    include <SDL_opengl.h>
+#    include <GL/gl.h>
+#    include <GL/glext.h>
+#    include <GL/glu.h>
 #  endif
 #  define GL_CALL
 #endif
