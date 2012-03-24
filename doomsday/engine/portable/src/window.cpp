@@ -1062,6 +1062,7 @@ void Window_SetDrawFunc(Window* win, void (*drawFunc)(void))
 
     win->drawFunc = drawFunc;
     win->widget->canvas().setDrawFunc(drawFunc? drawCanvasWithCallback : 0);
+    win->widget->update();
 }
 
 void Window_Draw(Window* win)
