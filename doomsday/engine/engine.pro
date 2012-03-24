@@ -359,12 +359,13 @@ win32 {
 
     SOURCES += \
         win32/src/dd_winit.c \
-        win32/src/displaymode_win32.cpp \
         win32/src/directinput.c \
         win32/src/sys_console.c \
         win32/src/sys_findfile.c \
         win32/src/joystick.c \
         win32/src/mouse_win32.c
+
+    !deng_nodisplaymode: SOURCES += win32/src/displaymode_win32.cpp
 }
 else:unix {
     # Common Unix (including Mac OS X).
@@ -388,16 +389,23 @@ macx {
         $$DENG_MAC_INCLUDE_DIR/MusicPlayer.h
 
     OBJECTIVE_SOURCES += \
-        mac/src/displaymode_macx.mm \
         mac/src/MusicPlayer.m
+
+    !deng_nodisplaymode: OBJECTIVE_SOURCES += mac/src/displaymode_macx.mm
 
     INCLUDEPATH += $$DENG_MAC_INCLUDE_DIR
 }
 else:unix {
-    # Unix (non-Mac) only.
-    SOURCES += \
-        unix/src/displaymode_x11.cpp \
-        unix/src/imKStoUCS.c
+    !deng_nodisplaymode {
+        # Unix (non-Mac) only.
+        SOURCES += \
+            unix/src/displaymode_x11.cpp \
+            unix/src/imKStoUCS.c
+    }
+}
+
+deng_nodisplaymode {
+    SOURCES += portable/src/displaymode_dummy.c
 }
 
 # Platform-independent sources.

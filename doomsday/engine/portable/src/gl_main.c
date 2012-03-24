@@ -1354,7 +1354,7 @@ D_CMD(DisplayModeInfo)
     {
         Con_Message(", refresh: %.1f Hz", mode->refreshRate);
     }
-    Con_Message(")\nMain window: (%i,%i) %ix%i fullscreen:%s centered:%s maximixed:%s\n",
+    Con_Message(")\nMain window: (%i,%i) %ix%i fullscreen:%s centered:%s maximized:%s\n",
                 Window_X(wnd), Window_Y(wnd), Window_Width(wnd), Window_Height(wnd),
                 Window_IsFullscreen(wnd)? "yes" : "no",
                 Window_IsCentered(wnd)? "yes" : "no",

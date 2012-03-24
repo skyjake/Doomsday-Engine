@@ -178,6 +178,8 @@ struct ddwindow_s
     {
         assertWindow();
 
+        if(!DisplayMode_Count()) return true; // No modes to change to.
+
         if(flags & DDWF_FULLSCREEN)
         {
             const DisplayMode* mode = DisplayMode_FindClosest(width(), height(), colorDepthBits, 0);
@@ -718,6 +720,8 @@ boolean Sys_ShutdownWindowManager(void)
 {
     if(!winManagerInited)
         return false; // Window manager is not initialized.
+
+    /// @todo Delete all windows, not just the main one.
 
     // Get rid of the windows.
     Window_Delete(Window_Main());
