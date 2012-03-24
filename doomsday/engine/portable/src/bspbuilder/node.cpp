@@ -373,23 +373,10 @@ void BspBuilder::windLeafs(BinaryTree* rootNode)
     }
 }
 
-static __inline bspleafdata_t* allocBSPLeaf(void)
-{
-    bspleafdata_t* leafData = (bspleafdata_t*)M_Malloc(sizeof *leafData);
-    return leafData;
-}
-
-static __inline void freeBSPLeaf(bspleafdata_t* leaf)
-{
-    M_Free(leaf);
-}
-
 bspleafdata_t* BspBuilder::newLeaf(void)
 {
-    bspleafdata_t* leaf = allocBSPLeaf();
-
+    bspleafdata_t* leaf = (bspleafdata_t*)malloc(sizeof *leaf);
     leaf->hedges = NULL;
-
     return leaf;
 }
 
@@ -407,7 +394,7 @@ void BspBuilder::deleteLeaf(bspleafdata_t* leaf)
         cur = np;
     }
 
-    freeBSPLeaf(leaf);
+    free(leaf);
 }
 
 static void evalPartitionCostForHEdge(const BspHEdgeInfo* partInfo,
@@ -431,11 +418,9 @@ static void evalPartitionCostForHEdge(const BspHEdgeInfo* partInfo,
     }
     else
     {
-        a = M_PerpDist(partInfo->pDX, partInfo->pDY,
-                       partInfo->pPerp, partInfo->pLength,
+        a = M_PerpDist(partInfo->pDX, partInfo->pDY, partInfo->pPerp, partInfo->pLength,
                        hedge->info.pSX, hedge->info.pSY);
-        b = M_PerpDist(partInfo->pDX, partInfo->pDY,
-                       partInfo->pPerp, partInfo->pLength,
+        b = M_PerpDist(partInfo->pDX, partInfo->pDY, partInfo->pPerp, partInfo->pLength,
                        hedge->info.pEX, hedge->info.pEY);
 
         fa = fabs(a);
@@ -547,7 +532,7 @@ static void evalPartitionCostForHEdge(const BspHEdgeInfo* partInfo,
  *              been initialized prior to calling this.
  * @return  @c true= iff a "bad half-edge" was found early.
  */
-static int evalPartitionWorker(SuperBlock* superblock, int splitCostFactor,
+static int evalPartitionCostForSuperBlock(SuperBlock* superblock, int splitCostFactor,
     const BspHEdgeInfo* hedgeInfo, int bestCost, PartitionCost& cost)
 {
     int num;
@@ -600,7 +585,7 @@ static int evalPartitionWorker(SuperBlock* superblock, int splitCostFactor,
         SuperBlock* child = superblock->child(num);
         if(!child) continue;
 
-        if(evalPartitionWorker(child, splitCostFactor, hedgeInfo, bestCost, cost))
+        if(evalPartitionCostForSuperBlock(child, splitCostFactor, hedgeInfo, bestCost, cost))
             return true;
     }
 
@@ -624,7 +609,7 @@ static int evalPartition(SuperBlock* superblock, int splitCostFactor,
     PartitionCost cost;
 
     cost.initialize();
-    if(evalPartitionWorker(superblock, splitCostFactor, hedgeInfo, bestCost, cost)) return -1;
+    if(evalPartitionCostForSuperBlock(superblock, splitCostFactor, hedgeInfo, bestCost, cost)) return -1;
 
     // Make sure there is at least one real half-edge on each side.
     if(!cost.realLeft || !cost.realRight)
