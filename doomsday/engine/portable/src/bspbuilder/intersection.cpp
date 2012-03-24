@@ -25,20 +25,10 @@
  * 02110-1301 USA</small>
  */
 
-#include <stdlib.h>
-#include <ctype.h>
-#include <math.h>
-#include <limits.h>
-
 #include "de_base.h"
 #include "de_console.h"
-#include "de_bsp.h"
-
-#include "m_misc.h"
-#include "edit_map.h"
 
 #include "bspbuilder/intersection.hh"
-#include "bspbuilder/superblockmap.hh"
 #include "bspbuilder/bspbuilder.hh"
 
 using namespace de;

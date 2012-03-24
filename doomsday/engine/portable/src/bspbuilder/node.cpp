@@ -31,9 +31,9 @@
 
 #include "de_base.h"
 #include "de_console.h"
-#include "de_bsp.h"
 #include "de_play.h"
-#include "de_misc.h"
+#include "m_misc.h"
+#include "m_binarytree.h"
 
 #include "bspbuilder/intersection.hh"
 #include "bspbuilder/superblockmap.hh"
@@ -386,6 +386,7 @@ void BspBuilder::deleteLeaf(bspleafdata_t* leaf)
 
 typedef struct {
     const BspHEdgeInfo* partInfo;
+    int splitCostFactor;
     int bestCost;
     evalinfo_t* info;
 } evalpartitionworkerparams_t;
@@ -405,7 +406,6 @@ static int evalPartitionWorker2(const bsp_hedge_t* check, void* parameters)
       } while (0)
 
     evalpartitionworkerparams_t* p = (evalpartitionworkerparams_t*) parameters;
-    const int factor = bspFactor;
     double qnty, a, b, fa, fb;
     assert(p);
 
@@ -473,7 +473,7 @@ static int evalPartitionWorker2(const bsp_hedge_t* check, void* parameters)
         else
             qnty = IFFY_LEN / MIN_OF(a, b);
 
-        p->info->cost += (int) (100 * factor * (qnty * qnty - 1.0));
+        p->info->cost += (int) (100 * p->splitCostFactor * (qnty * qnty - 1.0));
         return false; // Continue iteration.
     }
 
@@ -498,7 +498,7 @@ static int evalPartitionWorker2(const bsp_hedge_t* check, void* parameters)
         else
             qnty = IFFY_LEN / -MAX_OF(a, b);
 
-        p->info->cost += (int) (70 * factor * (qnty * qnty - 1.0));
+        p->info->cost += (int) (70 * p->splitCostFactor * (qnty * qnty - 1.0));
         return false; // Continue iteration.
     }
 
@@ -508,7 +508,7 @@ static int evalPartitionWorker2(const bsp_hedge_t* check, void* parameters)
      */
 
     p->info->splits++;
-    p->info->cost += 100 * factor;
+    p->info->cost += 100 * p->splitCostFactor;
 
     /**
      * Check if the split point is very close to one end, which is quite an undesirable
@@ -521,7 +521,7 @@ static int evalPartitionWorker2(const bsp_hedge_t* check, void* parameters)
 
         // The closer to the end, the higher the cost.
         qnty = IFFY_LEN / MIN_OF(fa, fb);
-        p->info->cost += (int) (140 * factor * (qnty * qnty - 1.0));
+        p->info->cost += (int) (140 * p->splitCostFactor * (qnty * qnty - 1.0));
     }
     return false; // Continue iteration.
 
@@ -648,6 +648,7 @@ static int evalPartition(SuperBlock* hedgeList, bsp_hedge_t* part, int bestCost)
 
 typedef struct {
     SuperBlock* hedgeList;
+    int splitCostFactor;
     bsp_hedge_t** best;
     int* bestCost;
 } choosehedgefromsuperblockparams_t;
@@ -710,6 +711,7 @@ boolean BspBuilder::choosePartition(SuperBlock* hedgeList, size_t /*depth*/, HPl
     //DEBUG_Message(("BspBuilder::choosePartition: Begun (depth %lu)\n", (unsigned long) depth));
 
     parm.hedgeList = hedgeList;
+    parm.splitCostFactor = splitCostFactor;
     parm.best = &best;
     parm.bestCost = &bestCost;
 

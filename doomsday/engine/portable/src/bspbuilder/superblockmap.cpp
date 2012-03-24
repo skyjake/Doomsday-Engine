@@ -29,11 +29,6 @@
 #include "bspbuilder/hedges.hh"
 #include "bspbuilder/superblockmap.hh"
 
-#include <stdio.h>
-#include <ctype.h>
-#include <math.h>
-#include <limits.h>
-
 using namespace de;
 
 void SuperBlock::clear()

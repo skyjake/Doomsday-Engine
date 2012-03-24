@@ -68,6 +68,13 @@ void BspBuilder_Delete(BspBuilder_c* builder)
     free(builder);
 }
 
+BspBuilder_c* BspBuilder_SetSplitCostFactor(BspBuilder_c* builder, int factor)
+{
+    assert(builder);
+    builder->inst->setSplitCostFactor(factor);
+    return builder;
+}
+
 static void initAABoxFromEditableLineDefVertexes(AABoxf* aaBox, const LineDef* line)
 {
     const double* from = line->L_v1->buildData.pos;

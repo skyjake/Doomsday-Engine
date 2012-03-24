@@ -57,6 +57,12 @@ public:
         ZBlockSet_Delete(hedgeBlockSet);
     }
 
+    BspBuilder* setSplitCostFactor(int factor)
+    {
+        splitCostFactor = factor;
+        return this;
+    }
+
     void initForMap(GameMap* map);
 
     /**
@@ -253,6 +259,8 @@ private:
     Sector* openSectorAtPoint(Vertex* vert, double dx, double dy);
 
 private:
+    int splitCostFactor;
+
     zblockset_t* hedgeBlockSet;
 };
 

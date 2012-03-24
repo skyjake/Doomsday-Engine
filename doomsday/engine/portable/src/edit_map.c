@@ -1714,6 +1714,7 @@ boolean MPE_End(void)
      * Build a BSP for this map.
      */
     bspBuilder = BspBuilder_New();
+    BspBuilder_SetSplitCostFactor(bspBuilder, bspFactor);
     builtOK = BspBuilder_Build(bspBuilder, gamemap, &map->vertexes, &map->numVertexes);
     BspBuilder_Delete(bspBuilder);
 

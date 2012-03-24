@@ -82,6 +82,8 @@ BspBuilder_c* BspBuilder_New(void);
 
 void BspBuilder_Delete(BspBuilder_c* builder);
 
+BspBuilder_c* BspBuilder_SetSplitCostFactor(BspBuilder_c* builder, int factor);
+
 void BspBuilder_Save(struct gamemap_s* dest, void* rootNode, struct vertex_s*** vertexes, uint* numVertexes);
 
 /**
