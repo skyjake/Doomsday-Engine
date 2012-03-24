@@ -43,9 +43,12 @@ namespace de {
 /// Number of bsp_hedge_t to block allocate.
 #define BSPBUILDER_HEDGE_ALLOCATOR_BLOCKSIZE   512
 
+/// Default cost factor attributed to splitting an existing half-edge.
+#define BSPBUILDER_PARTITION_COST_HEDGESPLIT   7
+
 class BspBuilder {
 public:
-    BspBuilder()
+    BspBuilder() : splitCostFactor(BSPBUILDER_PARTITION_COST_HEDGESPLIT)
     {
         // Init the half-edge block allocator.
         hedgeBlockSet = ZBlockSet_New(sizeof(bsp_hedge_t), BSPBUILDER_HEDGE_ALLOCATOR_BLOCKSIZE, PU_APPSTATIC);

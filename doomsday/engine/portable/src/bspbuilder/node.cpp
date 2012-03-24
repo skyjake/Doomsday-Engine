@@ -41,8 +41,8 @@
 
 using namespace de;
 
-typedef struct evalinfo_s {
-    int cost;
+typedef struct partitioncost_s {
+    int total;
     int splits;
     int iffy;
     int nearMiss;
@@ -50,7 +50,33 @@ typedef struct evalinfo_s {
     int realRight;
     int miniLeft;
     int miniRight;
-} evalinfo_t;
+
+    struct partitioncost_s* initialize()
+    {
+        total = 0;
+        splits = 0;
+        iffy = 0;
+        nearMiss = 0;
+        realLeft = 0;
+        realRight = 0;
+        miniLeft = 0;
+        miniRight = 0;
+        return this;
+    }
+
+    struct partitioncost_s* applyDelta(const struct partitioncost_s& other)
+    {
+        total += other.total;
+        splits += other.splits;
+        iffy += other.iffy;
+        nearMiss += other.nearMiss;
+        realLeft += other.realLeft;
+        realRight += other.realRight;
+        miniLeft += other.miniLeft;
+        miniRight += other.miniRight;
+        return this;
+    }
+} PartitionCost;
 
 // Used when sorting BSP leaf half-edges by angle around midpoint.
 static size_t hedgeSortBufSize;
@@ -384,58 +410,44 @@ void BspBuilder::deleteLeaf(bspleafdata_t* leaf)
     freeBSPLeaf(leaf);
 }
 
-typedef struct {
-    const BspHEdgeInfo* partInfo;
-    int splitCostFactor;
-    int bestCost;
-    evalinfo_t* info;
-} evalpartitionworkerparams_t;
-
-static int evalPartitionWorker2(const bsp_hedge_t* check, void* parameters)
+static void evalPartitionCostForHEdge(const BspHEdgeInfo* partInfo,
+    int costFactorMultiplier, const bsp_hedge_t* hedge, PartitionCost& cost)
 {
 #define ADD_LEFT()  \
-      do {  \
-        if (check->info.lineDef) p->info->realLeft += 1;  \
-        else                     p->info->miniLeft += 1;  \
-      } while (0)
+    if (hedge->info.lineDef) cost.realLeft += 1;  \
+    else                     cost.miniLeft += 1;  \
 
 #define ADD_RIGHT()  \
-      do {  \
-        if (check->info.lineDef) p->info->realRight += 1;  \
-        else                     p->info->miniRight += 1;  \
-      } while (0)
+    if (hedge->info.lineDef) cost.realRight += 1;  \
+    else                     cost.miniRight += 1;  \
 
-    evalpartitionworkerparams_t* p = (evalpartitionworkerparams_t*) parameters;
     double qnty, a, b, fa, fb;
-    assert(p);
-
-    // Catch "bad half-edges" early on.
-    if(p->info->cost > p->bestCost) return true; // Stop iteration.
+    assert(hedge);
 
     // Get state of lines' relation to each other.
-    if(check->info.sourceLineDef == p->partInfo->sourceLineDef)
+    if(hedge->info.sourceLineDef == partInfo->sourceLineDef)
     {
         a = b = fa = fb = 0;
     }
     else
     {
-        a = M_PerpDist(p->partInfo->pDX, p->partInfo->pDY,
-                       p->partInfo->pPerp, p->partInfo->pLength,
-                       check->info.pSX, check->info.pSY);
-        b = M_PerpDist(p->partInfo->pDX, p->partInfo->pDY,
-                       p->partInfo->pPerp, p->partInfo->pLength,
-                       check->info.pEX, check->info.pEY);
+        a = M_PerpDist(partInfo->pDX, partInfo->pDY,
+                       partInfo->pPerp, partInfo->pLength,
+                       hedge->info.pSX, hedge->info.pSY);
+        b = M_PerpDist(partInfo->pDX, partInfo->pDY,
+                       partInfo->pPerp, partInfo->pLength,
+                       hedge->info.pEX, hedge->info.pEY);
 
         fa = fabs(a);
         fb = fabs(b);
     }
 
-    // Check for being on the same line.
+    // hedge for being on the same line.
     if(fa <= DIST_EPSILON && fb <= DIST_EPSILON)
     {
         // This half-edge runs along the same line as the partition.
-        // Check whether it goes in the same direction or the opposite.
-        if(check->info.pDX * p->partInfo->pDX + check->info.pDY * p->partInfo->pDY < 0)
+        // hedge whether it goes in the same direction or the opposite.
+        if(hedge->info.pDX * partInfo->pDX + hedge->info.pDY * partInfo->pDY < 0)
         {
             ADD_LEFT();
         }
@@ -444,23 +456,23 @@ static int evalPartitionWorker2(const bsp_hedge_t* check, void* parameters)
             ADD_RIGHT();
         }
 
-        return false; // Continue iteration.
+        return;
     }
 
-    // Check for right side.
+    // hedge for right side.
     if(a > -DIST_EPSILON && b > -DIST_EPSILON)
     {
         ADD_RIGHT();
 
-        // Check for a near miss.
+        // hedge for a near miss.
         if((a >= IFFY_LEN && b >= IFFY_LEN) ||
            (a <= DIST_EPSILON && b >= IFFY_LEN) ||
            (b <= DIST_EPSILON && a >= IFFY_LEN))
         {
-            return false; // Continue iteration.
+            return;
         }
 
-        p->info->nearMiss++;
+        cost.nearMiss++;
 
         /**
          * Near misses are bad, since they have the potential to cause really short
@@ -473,24 +485,24 @@ static int evalPartitionWorker2(const bsp_hedge_t* check, void* parameters)
         else
             qnty = IFFY_LEN / MIN_OF(a, b);
 
-        p->info->cost += (int) (100 * p->splitCostFactor * (qnty * qnty - 1.0));
-        return false; // Continue iteration.
+        cost.total += (int) (100 * costFactorMultiplier * (qnty * qnty - 1.0));
+        return;
     }
 
-    // Check for left side.
+    // hedge for left side.
     if(a < DIST_EPSILON && b < DIST_EPSILON)
     {
         ADD_LEFT();
 
-        // Check for a near miss.
+        // hedge for a near miss.
         if((a <= -IFFY_LEN && b <= -IFFY_LEN) ||
            (a >= -DIST_EPSILON && b <= -IFFY_LEN) ||
            (b >= -DIST_EPSILON && a <= -IFFY_LEN))
         {
-            return false; // Continue iteration.
+            return;
         }
 
-        p->info->nearMiss++;
+        cost.nearMiss++;
 
         // The closer the miss, the higher the cost (see note above).
         if(a >= -DIST_EPSILON || b >= -DIST_EPSILON)
@@ -498,8 +510,8 @@ static int evalPartitionWorker2(const bsp_hedge_t* check, void* parameters)
         else
             qnty = IFFY_LEN / -MAX_OF(a, b);
 
-        p->info->cost += (int) (70 * p->splitCostFactor * (qnty * qnty - 1.0));
-        return false; // Continue iteration.
+        cost.total += (int) (70 * costFactorMultiplier * (qnty * qnty - 1.0));
+        return;
     }
 
     /**
@@ -507,36 +519,37 @@ static int evalPartitionWorker2(const bsp_hedge_t* check, void* parameters)
      * hence this half-edge will be split by the partition line.
      */
 
-    p->info->splits++;
-    p->info->cost += 100 * p->splitCostFactor;
+    cost.splits++;
+    cost.total += 100 * costFactorMultiplier;
 
     /**
-     * Check if the split point is very close to one end, which is quite an undesirable
+     * If the split point is very close to one end, which is quite an undesirable
      * situation (producing really short edges). This is perhaps _one_ source of those
      * darn slime trails. Hence the name "IFFY segs" and a rather hefty surcharge.
      */
     if(fa < IFFY_LEN || fb < IFFY_LEN)
     {
-        p->info->iffy++;
+        cost.iffy++;
 
         // The closer to the end, the higher the cost.
         qnty = IFFY_LEN / MIN_OF(fa, fb);
-        p->info->cost += (int) (140 * p->splitCostFactor * (qnty * qnty - 1.0));
+        cost.total += (int) (140 * costFactorMultiplier * (qnty * qnty - 1.0));
     }
-    return false; // Continue iteration.
 
 #undef ADD_RIGHT
 #undef ADD_LEFT
 }
 
 /**
+ * @param hedgeInfo  Info about the candidate half-edge to be evaluated.
+ * @param bestCost  Running cost total result from the best candidate half-edge so far.
+ * @param cost  PartitionCost analysis to be completed for this candidate. Must have
+ *              been initialized prior to calling this.
  * @return  @c true= iff a "bad half-edge" was found early.
  */
-static int evalPartitionWorker(SuperBlock* hedgeList, bsp_hedge_t* part,
-    int bestCost, evalinfo_t* info)
+static int evalPartitionWorker(SuperBlock* superblock, int splitCostFactor,
+    const BspHEdgeInfo* hedgeInfo, int bestCost, PartitionCost& cost)
 {
-    const BspHEdgeInfo* partInfo = &part->info;
-    evalpartitionworkerparams_t parm;
     int num;
 
     /**
@@ -544,47 +557,50 @@ static int evalPartitionWorker(SuperBlock* hedgeList, bsp_hedge_t* part,
      * half-edges within it at once. Only when the partition line intercepts the
      * box do we need to go deeper into it.
      */
-    num = P_BoxOnLineSide3(hedgeList->bounds(), partInfo->pSX, partInfo->pSY,
-                           partInfo->pDX, partInfo->pDY, partInfo->pPerp,
-                           partInfo->pLength, DIST_EPSILON);
+    num = P_BoxOnLineSide3(superblock->bounds(), hedgeInfo->pSX, hedgeInfo->pSY,
+                           hedgeInfo->pDX, hedgeInfo->pDY, hedgeInfo->pPerp,
+                           hedgeInfo->pLength, DIST_EPSILON);
 
     if(num < 0)
     {
         // Left.
-        info->realLeft += hedgeList->realHEdgeCount();
-        info->miniLeft += hedgeList->miniHEdgeCount();
+        cost.realLeft += superblock->realHEdgeCount();
+        cost.miniLeft += superblock->miniHEdgeCount();
 
         return false;
     }
     else if(num > 0)
     {
         // Right.
-        info->realRight += hedgeList->realHEdgeCount();
-        info->miniRight += hedgeList->miniHEdgeCount();
+        cost.realRight += superblock->realHEdgeCount();
+        cost.miniRight += superblock->miniHEdgeCount();
 
         return false;
     }
 
     // Check partition against all half-edges.
-    parm.partInfo = partInfo;
-    parm.bestCost = bestCost;
-    parm.info = info;
-
-    for(SuperBlock::HEdges::const_iterator it = hedgeList->hedgesBegin();
-        it != hedgeList->hedgesEnd(); ++it)
+    PartitionCost costDelta;
+    for(SuperBlock::HEdges::const_iterator it = superblock->hedgesBegin();
+        it != superblock->hedgesEnd(); ++it)
     {
-        const bsp_hedge_t* hedge = *it;
-        int result = evalPartitionWorker2(hedge, (void*)&parm);
-        if(result) return result; // Stop iteration.
+        // Catch "bad half-edges" early on.
+        if(cost.total > bestCost) return true; // Stop iteration.
+
+        // Evaluate the cost delta for this hedge.
+        costDelta.initialize();
+        evalPartitionCostForHEdge(hedgeInfo, splitCostFactor, *it, costDelta);
+
+        // Merge cost result into the cummulative total.
+        cost.applyDelta(costDelta);
     }
 
     // Handle sub-blocks recursively.
     for(num = 0; num < 2; ++num)
     {
-        SuperBlock* child = hedgeList->child(num);
+        SuperBlock* child = superblock->child(num);
         if(!child) continue;
 
-        if(evalPartitionWorker(child, part, bestCost, info))
+        if(evalPartitionWorker(child, splitCostFactor, hedgeInfo, bestCost, cost))
             return true;
     }
 
@@ -602,102 +618,83 @@ static int evalPartitionWorker(SuperBlock* hedgeList, bsp_hedge_t* part,
  *
  * @return  The computed cost, or a negative value if the edge should be skipped.
  */
-static int evalPartition(SuperBlock* hedgeList, bsp_hedge_t* part, int bestCost)
+static int evalPartition(SuperBlock* superblock, int splitCostFactor,
+    BspHEdgeInfo* hedgeInfo, int bestCost)
 {
-    evalinfo_t info;
+    PartitionCost cost;
 
-    // Initialize info structure.
-    info.cost   = 0;
-    info.splits = 0;
-    info.iffy   = 0;
-    info.nearMiss  = 0;
+    cost.initialize();
+    if(evalPartitionWorker(superblock, splitCostFactor, hedgeInfo, bestCost, cost)) return -1;
 
-    info.realLeft  = 0;
-    info.realRight = 0;
-    info.miniLeft  = 0;
-    info.miniRight = 0;
-
-    if(evalPartitionWorker(hedgeList, part, bestCost, &info)) return -1;
-
-    // Make sure there is at least one real hedge on each side.
-    if(!info.realLeft || !info.realRight)
+    // Make sure there is at least one real half-edge on each side.
+    if(!cost.realLeft || !cost.realRight)
     {
         //DEBUG_Message(("Eval : No real half-edges on %s%sside\n",
-        //              (info.realLeft? "" : "left "), (info.realRight? "" : "right ")));
+        //              (cost.realLeft? "" : "left "), (cost.realRight? "" : "right ")));
         return -1;
     }
 
     // Increase cost by the difference between left and right.
-    info.cost += 100 * ABS(info.realLeft - info.realRight);
+    cost.total += 100 * ABS(cost.realLeft - cost.realRight);
 
     // Allow minihedge counts to affect the outcome.
-    info.cost += 50 * ABS(info.miniLeft - info.miniRight);
+    cost.total += 50 * ABS(cost.miniLeft - cost.miniRight);
 
     // Another little twist, here we show a slight preference for partition
     // lines that lie either purely horizontally or purely vertically.
-    if(!FEQUAL(part->info.pDX, 0) && !FEQUAL(part->info.pDY, 0))
-        info.cost += 25;
+    if(!FEQUAL(hedgeInfo->pDX, 0) && !FEQUAL(hedgeInfo->pDY, 0))
+        cost.total += 25;
 
     //DEBUG_Message(("Eval %p: splits=%d iffy=%d near=%d left=%d+%d right=%d+%d "
-    //               "cost=%d.%02d\n", part, info.splits, info.iffy, info.nearMiss,
-    //               info.realLeft, info.miniLeft, info.realRight, info.miniRight,
-    //               info.cost / 100, info.cost % 100));
+    //               "cost=%d.%02d\n", hedgeInfo, cost.splits, cost.iffy, cost.nearMiss,
+    //               cost.realLeft, cost.miniLeft, cost.realRight, cost.miniRight,
+    //               cost.total / 100, cost.total % 100));
 
-    return info.cost;
+    return cost.total;
 }
 
 typedef struct {
     SuperBlock* hedgeList;
     int splitCostFactor;
-    bsp_hedge_t** best;
-    int* bestCost;
+    bsp_hedge_t* best;
+    int bestCost;
 } choosehedgefromsuperblockparams_t;
-
-/**
- * @return  @c true= cancelled.
- */
-static int chooseHEdgeFromSuperBlockWorker(bsp_hedge_t* part, void* parameters)
-{
-    choosehedgefromsuperblockparams_t* p = (choosehedgefromsuperblockparams_t*)parameters;
-    LineDef* lineDef = part->info.lineDef;
-    int cost;
-
-    //DEBUG_Message(("pickhedgeWorker: %shedge %p sector=%d  (%1.1f,%1.1f) -> "
-    //               "(%1.1f,%1.1f)\n", (lineDef? "" : "MINI"), part,
-    //               (part->sector? part->sector->index : -1),
-    //               part->v[0]->V_pos[VX], part->v[0]->V_pos[VY],
-    //               part->v[1]->V_pos[VX], part->v[1]->V_pos[VY]));
-
-    // Ignore minihedges as partition candidates.
-    if(!lineDef) return false; // Continue iteration.
-
-    // Only test half-edges from the same linedef once per round of
-    // partition picking (they are collinear).
-    if(lineDef->validCount == validCount) return false; // Continue iteration.
-    lineDef->validCount = validCount;
-
-    // Unsuitable or too costly?
-    cost = evalPartition(p->hedgeList, part, *p->bestCost);
-    if(cost < 0 || cost >= *p->bestCost) return false; // Continue iteration.
-
-    // We have a new better choice.
-    (*p->bestCost) = cost;
-
-    // Remember which half-edge.
-    (*p->best) = part;
-
-    return false; // Continue iteration.
-}
 
 static int chooseHEdgeFromSuperBlock(SuperBlock* partList, void* parameters)
 {
+    choosehedgefromsuperblockparams_t* p = (choosehedgefromsuperblockparams_t*)parameters;
+
     // Test each half-edge as a potential partition.
     for(SuperBlock::HEdges::const_iterator it = partList->hedgesBegin();
         it != partList->hedgesEnd(); ++it)
     {
         bsp_hedge_t* hedge = *it;
-        int result = chooseHEdgeFromSuperBlockWorker(hedge, parameters);
-        if(result) return result; // Stop iteration.
+
+        //DEBUG_Message(("chooseHEdgeFromSuperBlock: %shedge %p sector=%d  (%1.1f,%1.1f) -> "
+        //               "(%1.1f,%1.1f)\n", (lineDef? "" : "MINI"), hedge,
+        //               (hedge->sector? hedge->sector->index : -1),
+        //               hedge->v[0]->V_pos[VX], hedge->v[0]->V_pos[VY],
+        //               hedge->v[1]->V_pos[VX], hedge->v[1]->V_pos[VY]));
+
+        // "Mini-hedges" are never potential candidates.
+        LineDef* lineDef = hedge->info.lineDef;
+        if(!lineDef) continue;
+
+        // Only test half-edges from the same linedef once per round of
+        // partition picking (they are collinear).
+        if(lineDef->validCount == validCount) continue;
+        lineDef->validCount = validCount;
+
+        // Unsuitable or too costly?
+        int cost = evalPartition(p->hedgeList, p->splitCostFactor, &hedge->info, p->bestCost);
+        if(cost >= 0 && cost < p->bestCost)
+        {
+            // We have a new better choice.
+            p->bestCost = cost;
+
+            // Remember which half-edge.
+            p->best = hedge;
+        }
     }
     return false; // Continue iteration.
 }
@@ -705,15 +702,13 @@ static int chooseHEdgeFromSuperBlock(SuperBlock* partList, void* parameters)
 boolean BspBuilder::choosePartition(SuperBlock* hedgeList, size_t /*depth*/, HPlane* partition)
 {
     choosehedgefromsuperblockparams_t parm;
-    int bestCost = INT_MAX;
-    bsp_hedge_t* best = NULL;
 
     //DEBUG_Message(("BspBuilder::choosePartition: Begun (depth %lu)\n", (unsigned long) depth));
 
     parm.hedgeList = hedgeList;
     parm.splitCostFactor = splitCostFactor;
-    parm.best = &best;
-    parm.bestCost = &bestCost;
+    parm.best = NULL;
+    parm.bestCost = INT_MAX;
 
     validCount++;
     if(SuperBlock_Traverse(hedgeList, chooseHEdgeFromSuperBlock, (void*)&parm))
@@ -723,6 +718,7 @@ boolean BspBuilder::choosePartition(SuperBlock* hedgeList, size_t /*depth*/, HPl
     }
 
     // Finished, return the best partition.
+    bsp_hedge_t* best = parm.best;
     if(best)
     {
         LineDef* lineDef = best->info.lineDef;
