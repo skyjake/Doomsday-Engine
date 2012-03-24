@@ -2703,6 +2703,14 @@ void G_QuitGame(void)
     const char* endString;
     if(G_QuitInProgress()) return;
 
+    if(Hu_IsMessageActiveWithCallback(G_QuitGameResponse))
+    {
+        // User has re-tried to quit with "quit" when the question is one the
+        // screen. Apparently we should quit...
+        DD_Execute(true, "quit!");
+        return;
+    }
+
 #if __JDOOM__ || __JDOOM64__
     endString = endmsg[((int) GAMETIC % (NUM_QUITMESSAGES + 1))];
 #else
