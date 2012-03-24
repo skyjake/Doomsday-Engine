@@ -292,8 +292,8 @@ struct ddwindow_s
         geometry.size.width = rect.width();
         geometry.size.height = rect.height();
 
-        Con_Message("Window geometry: %i,%i %ix%i (max? %i)\n", geometry.origin.x, geometry.origin.y,
-                    geometry.size.width, geometry.size.height, (flags & DDWF_MAXIMIZE) != 0);
+        DEBUG_VERBOSE_Message(("Window geometry: %i,%i %ix%i (max? %i)\n", geometry.origin.x, geometry.origin.y,
+                               geometry.size.width, geometry.size.height, (flags & DDWF_MAXIMIZE) != 0));
     }
 
     void setFlag(int flag, bool set = true)

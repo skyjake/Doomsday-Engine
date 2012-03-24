@@ -87,5 +87,5 @@ static int findMode(const DisplayMode* mode)
 
 int DisplayMode_Native_Change(const DisplayMode* mode, boolean shouldCapture)
 {
-    return false;
+    return true;
 }
