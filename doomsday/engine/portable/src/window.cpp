@@ -90,11 +90,6 @@ struct ddwindow_s
     int flags;
     consolewindow_t console; ///< Only used for WT_CONSOLE windows.
 
-#if defined(WIN32)
-    HWND hWnd; ///< Needed for input (among other things).
-    HGLRC glContext;
-#endif
-
     void __inline assertWindow() const
     {
         assert(this);
@@ -517,79 +512,6 @@ Window* Window_ByIndex(uint id)
 }
 
 #if 0
-boolean Sys_ChangeVideoMode(int width, int height, int bpp)
-{
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-
-#if 0
-    // Do we need to change it?
-    if(width == screenWidth && height == screenHeight && bpp == screenBPP &&
-       screenIsWindow == !(theWindow->flags & DDWF_FULLSCREEN))
-    {
-        // Got it already.
-        DEBUG_Message(("Sys_ChangeVideoMode: Ignoring because already using %ix%i bpp:%i window:%i\n",
-                       width, height, bpp, screenIsWindow));
-        return true;
-    }
-
-    DEBUG_Message(("Sys_ChangeVideoMode: Setting %ix%i bpp:%i window:%i\n",
-                   width, height, bpp, screenIsWindow));
-
-    // TODO: Attempt to change mode.
-
-
-    // Update current mode.
-    screenWidth = width; //info->current_w;
-    screenHeight = height; //info->current_h;
-    screenBPP = bpp; //info->vfmt->BitsPerPixel;
-    screenIsWindow = (theWindow->flags & DDWF_FULLSCREEN? false : true);
-#endif
-
-    return true;
-
-#if 0
-    int flags = SDL_OPENGL;
-    const SDL_VideoInfo *info = NULL;
-
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-
-    // Do we need to change it?
-    if(width == screenWidth && height == screenHeight && bpp == screenBPP &&
-       screenIsWindow == !(theWindow->flags & DDWF_FULLSCREEN))
-    {
-        // Got it already.
-        DEBUG_Message(("Sys_ChangeVideoMode: Ignoring because already using %ix%i bpp:%i window:%i\n",
-                       width, height, bpp, screenIsWindow));
-        return true;
-    }
-
-    if(theWindow->flags & DDWF_FULLSCREEN)
-        flags |= SDL_FULLSCREEN;
-
-    DEBUG_Message(("Sys_ChangeVideoMode: Setting %ix%i bpp:%i window:%i\n",
-                   width, height, bpp, screenIsWindow));
-
-    if(!SDL_SetVideoMode(width, height, bpp, flags))
-    {
-        // This could happen for a variety of reasons, including
-        // DISPLAY not being set, the specified resolution not being
-        // available, etc.
-        Con_Message("SDL Error: %s\n", SDL_GetError());
-        return false;
-    }
-
-    info = SDL_GetVideoInfo();
-    screenWidth = info->current_w;
-    screenHeight = info->current_h;
-    screenBPP = info->vfmt->BitsPerPixel;
-    screenIsWindow = (theWindow->flags & DDWF_FULLSCREEN? false : true);
-
-    return true;
-#endif
-}
-#endif
-
-#if 0
 static boolean setDDWindow(Window *window, int newWidth, int newHeight,
                            int newBPP, uint wFlags, uint uFlags)
 {
@@ -778,27 +700,6 @@ boolean Sys_InitWindowManager(void)
     if(!ArgExists("-dedicated"))
     {
         SDL_InitSubSystem(SDL_INIT_VIDEO); // used for gamma
-    }
-#endif
-
-#if 0
-    // Initialize the SDL video subsystem, unless we're going to run in
-    // dedicated mode.
-    if(!ArgExists("-dedicated"))
-    {
-/**
- * @attention Solaris has no Joystick support according to
- * https://sourceforge.net/tracker/?func=detail&atid=542099&aid=1732554&group_id=74815
- */
-#ifdef SOLARIS
-        if(SDL_InitSubSystem(SDL_INIT_VIDEO))
-#else
-        if(SDL_InitSubSystem(SDL_INIT_VIDEO | (!ArgExists("-nojoy")?SDL_INIT_JOYSTICK : 0)))
-#endif
-        {
-            Con_Message("SDL Init Failed: %s\n", SDL_GetError());
-            return false;
-        }
     }
 #endif
 
@@ -997,20 +898,6 @@ static Window* createWindow(ddwindowtype_t type, const char* title)
         mainWindow.applyWindowGeometry();
 
         mainWindow.inited = true;
-
-#if 0
-#if defined(WIN32)
-        // We need to grab a handle from SDL so we can link other subsystems
-        // (e.g. DX-based input).
-        {
-        struct SDL_SysWMinfo wmInfo;
-        if(!SDL_GetWMInfo(&wmInfo))
-            return NULL;
-
-        mainWindow.hWnd = wmInfo.window;
-        }
-#endif
-#endif
     }
 
     /// @todo Refactor for multiwindow support.
@@ -1051,68 +938,6 @@ void Window_Delete(Window* wnd)
         memset(wnd, 0, sizeof(*wnd));
     }
 }
-
-#if 0
-/**
- * Attempt to set the appearance/behavioral properties of the given window.
- *
- * @param idx           Index identifier (1-based) to the window.
- * @param newX          New x position of the left side of the window.
- * @param newY          New y position of the top of the window.
- * @param newWidth      New width to set the window to.
- * @param newHeight     New height to set the window to.
- * @param newBPP        New BPP (bits-per-pixel) to change to.
- * @param wFlags        DDWF_* flags to change other appearance/behavior.
- * @param uFlags        DDSW_* flags govern how the other paramaters should be
- *                      interpreted.
- *
- *                      DDSW_NOSIZE:
- *                      If set, params 'newWidth' and 'newHeight' are ignored
- *                      and no change will be made to the window dimensions.
- *
- *                      DDSW_NOMOVE:
- *                      If set, params 'newX' and 'newY' are ignored and no
- *                      change will be made to the window position.
- *
- *                      DDSW_NOBPP:
- *                      If set, param 'newBPP' is ignored and the no change
- *                      will be made to the window color depth.
- *
- *                      DDSW_NOFULLSCREEN:
- *                      If set, the value of the DDWF_FULLSCREEN bit in param
- *                      'wFlags' is ignored and no change will be made to the
- *                      fullscreen state of the window.
- *
- *                      DDSW_NOVISIBLE:
- *                      If set, the value of the DDWF_VISIBLE bit in param
- *                      'wFlags' is ignored and no change will be made to the
- *                      window's visibility.
- *
- *                      DDSW_NOCENTER:
- *                      If set, the value of the DDWF_CENTER bit in param
- *                      'wFlags' is ignored and no change will be made to the
- *                      auto-center state of the window.
- *
- * @return              @c true, if successful.
- */
-boolean Sys_SetWindow(uint idx, int newX, int newY, int newWidth, int newHeight,
-                      int newBPP, uint wFlags, uint uFlags)
-{
-    Window *window = getWindow(idx);
-
-    if(window)
-    {
-        // TODO: Update if necessary.
-        return true;
-    }
-    /*
-    if(window)
-        return setDDWindow(window, newWidth, newHeight, newBPP,
-                           wFlags, uFlags);
-    */
-    return false;
-}
-#endif
 
 boolean Window_ChangeAttributes(Window* wnd, int* attribs)
 {
@@ -1218,32 +1043,6 @@ boolean Window_IsMaximized(const Window* wnd)
     return (wnd->flags & DDWF_MAXIMIZE) != 0;
 }
 
-#if 0
-
-/**
- * Attempt to get a HWND handle to the given window.
- *
- * \todo: Factor platform specific design patterns out of Doomsday. We should
- * not be passing around HWND handles...
- *
- * @param idx           Index identifier (1-based) to the window.
- *
- * @return              HWND handle if successful, ELSE @c NULL,.
- */
-#if defined(WIN32)
-HWND Sys_GetWindowHandle(uint idx)
-{
-    Window *window = getWindow(idx);
-
-    if(!window)
-        return NULL;
-
-    return window->hWnd;
-}
-#endif
-
-#endif
-
 void* Window_NativeHandle(const Window* wnd)
 {
     if(!wnd || !wnd->widget) return 0;
@@ -1268,12 +1067,8 @@ void Window_Draw(Window* win)
     assert(win);
     assert(win->widget);
 
-    // Repaint right now.
-
-    //win->widget->canvas().forcePaint();
-
-    /// @todo check the rend-vsync cvar
-    win->widget->canvas().update(); //repaint();
+    // Request repaint at the earliest convenience.
+    win->widget->canvas().update();
 }
 
 void Window_Show(Window *wnd, boolean show)
@@ -1301,7 +1096,7 @@ void Window_Show(Window *wnd, boolean show)
         else
             wnd->widget->showNormal();
 
-        qDebug() << "Window_Show: Geometry" << wnd->widget->geometry();
+        //qDebug() << "Window_Show: Geometry" << wnd->widget->geometry();
     }
     else
     {
@@ -1406,7 +1201,6 @@ void Window_RestoreState(Window* wnd)
     wnd->geometry.size.width = geom.width();
     wnd->geometry.size.height = geom.height();
     wnd->colorDepthBits = st.value(settingsKey(idx, "colorDepth"), 32).toInt();
-    qDebug() << "Window restored depth" << wnd->colorDepthBits;
     wnd->setFlag(DDWF_CENTER, st.value(settingsKey(idx, "center"), true).toBool());
     wnd->setFlag(DDWF_MAXIMIZE, st.value(settingsKey(idx, "maximize"), false).toBool());
     wnd->setFlag(DDWF_FULLSCREEN, st.value(settingsKey(idx, "fullscreen"), true).toBool());
