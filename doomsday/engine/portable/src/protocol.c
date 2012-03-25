@@ -17,55 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-/**
- * @page sysNetwork Low-Level Networking
- *
- * On server-side connected clients can be either in "unjoined" mode or
- * "joined" mode. The former is for querying information about the server's
- * status, while the latter one is for clients participating in the on-going
- * game.
- *
- * Unjoined TCP sockets are periodically polled for activity
- * (N_ListenUnjoinedNodes()). Joined TCP sockets are handled in a separate
- * receiver thread (N_JoinedListenerThread()).
- *
- * @section netProtocol Network Protocol
- *
- * In joined mode, the network protocol works as follows. All messages are sent
- * over a TCP socket. Every message consists of a header and the message payload.
- * The content of these depends on the compressed message size.
- *
- * @par 1&ndash;127 bytes
- * Very small messages, such as the position updates that a client streams
- * to the server, are encoded with Huffman codes (see huffman.h). If
- * the Huffman coded payload happens to exceed 127 bytes, the message is
- * switched to the medium format (see below). Message structure:
- * - 1 byte: payload size
- * - @em n bytes: payload contents (Huffman)
- *
- * @par 128&ndash;4095 bytes
- * Medium-sized messages are compressed either using a fast zlib deflate level,
- * or Huffman codes if it yields better compression.
- * If the deflated message size exceeds 4095 bytes, the message is switched to
- * the large format (see below). Message structure:
- * - 1 byte: 0x80 | (payload size & 0x7f)
- * - 1 byte: (payload size >> 7) | (0x40 for deflated, otherwise Huffman)
- * - @em n bytes: payload contents (as produced by ZipFile_CompressAtLevel()).
- *
- * @par >= 4096 bytes (up to 4MB)
- * Large messages are compressed using the best zlib deflate level.
- * Message structure:
- * - 1 byte: 0x80 | (payload size & 0x7f)
- * - 1 byte: 0x80 | (payload size >> 7) & 0x7f
- * - 1 byte: payload size >> 14
- * - @em n bytes: payload contents (as produced by ZipFile_CompressAtLevel()).
- *
- * Messages larger than or equal to 2^22 bytes (about 4MB) must be broken into
- * smaller pieces before sending.
- *
- * @see Protocol_Send()
- * @see Protocol_Receive()
- */
+
 
 #include "de_base.h"
 #include "de_console.h"
@@ -77,23 +29,7 @@
 #include "huffman.h"
 #include "zipfile.h"
 
-#define MAX_SIZE_SMALL          127 // bytes
-#define MAX_SIZE_MEDIUM         4095 // bytes
-#define MAX_SIZE_LARGE          PROTOCOL_MAX_DATAGRAM_SIZE
-
-/// Threshold for input data size: messages smaller than this are first compressed
-/// with Doomsday's Huffman codes. If the result is smaller than the deflated data,
-/// the Huffman coded payload is used (unless it doesn't fit in a medium-sized packet).
-#define MAX_HUFFMAN_INPUT_SIZE  4096 // bytes
-
-#define DEFAULT_TRANSMISSION_SIZE   4096
-
-#define TRMF_CONTINUE           0x80
-#define TRMF_DEFLATED           0x40
-#define TRMF_SIZE_MASK          0x7f
-#define TRMF_SIZE_MASK_MEDIUM   0x3f
-#define TRMF_SIZE_SHIFT         7
-
+#if 0
 static byte* transmissionBuffer;
 static size_t transmissionBufferSize;
 
@@ -110,6 +46,7 @@ void Protocol_Shutdown(void)
     transmissionBuffer = NULL;
     transmissionBufferSize = 0;
 }
+#endif
 
 #if 0
 static boolean getBytesBlocking(TCPsocket sock, byte* buffer, size_t size)
@@ -154,10 +91,6 @@ boolean Protocol_Receive(nodeid_t from)
         msg->data = packet;
         msg->size = size;
         msg->handle = packet; // needs to be freed
-
-/*#ifdef _DEBUG
-        VERBOSE2(Con_Message("Protocol_Receive: Posting message, from=%i, size=%i\n", from, size));
-#endif*/
 
         // The message queue will handle the message from now on.
         N_PostMessage(msg);
@@ -264,58 +197,21 @@ static void checkTransmissionBufferSize(size_t atLeastBytes)
     }
 }
 
-/**
- * Copies the message payload @a data to the transmission buffer.
- *
- * @param data  Data payload being send.
- * @param size  Size of the data payload.
- * @param needInflate  @c true, if the payload is deflated.
- */
-static size_t prepareTransmission(void* data, size_t size, boolean needInflate)
-{
-    Writer* msg = 0;
-    size_t msgSize = 0;
-
-    // The header is at most 3 bytes.
-    checkTransmissionBufferSize(size + 3);
-
-    // Compose the header and payload into the transmission buffer.
-    msg = Writer_NewWithBuffer(transmissionBuffer, transmissionBufferSize);
-
-    if(size <= MAX_SIZE_SMALL && !needInflate)
-    {
-        Writer_WriteByte(msg, size);
-    }
-    else if(size <= MAX_SIZE_MEDIUM)
-    {
-        Writer_WriteByte(msg, TRMF_CONTINUE | (size & TRMF_SIZE_MASK));
-        Writer_WriteByte(msg, (needInflate? TRMF_DEFLATED : 0) | (size >> TRMF_SIZE_SHIFT));
-    }
-    else if(size <= MAX_SIZE_LARGE)
-    {
-        assert(needInflate);
-        Writer_WriteByte(msg, TRMF_CONTINUE | (size & TRMF_SIZE_MASK));
-        Writer_WriteByte(msg, TRMF_CONTINUE | ((size >> TRMF_SIZE_SHIFT) & TRMF_SIZE_MASK));
-        Writer_WriteByte(msg, size >> (2*TRMF_SIZE_SHIFT));
-    }
-    else
-    {
-        // Not supported.
-        assert(false);
-    }
-
-    // The payload.
-    Writer_Write(msg, data, size);
-
-    msgSize = Writer_Size(msg);
-    Writer_Delete(msg);
-    return msgSize;
-}
 
 void Protocol_Send(void *data, size_t size, nodeid_t destination)
 {
     if(size == 0 || !N_GetNodeSocket(destination) || !N_HasNodeJoined(destination))
         return;
+
+    if(size > DDMAXINT)
+    {
+        Con_Error("Protocol_Send: Trying to send an oversized data buffer.\n"
+                  "  Attempted size is %u bytes.\n", (unsigned long) size);
+    }
+
+#ifdef _DEBUG
+    Monitor_Add(data, size);
+#endif
 
     LegacyNetwork_Send(N_GetNodeSocket(destination), data, size);
 

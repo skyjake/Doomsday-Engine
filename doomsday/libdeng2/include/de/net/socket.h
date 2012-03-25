@@ -60,8 +60,8 @@ public:
     /// The TCP/IP connection was disconnected. @ingroup errors
     DENG2_SUB_ERROR(BrokenError, DisconnectedError)
 
-    /// Incoming packet has an unknown block protocol. @ingroup errors
-    DENG2_SUB_ERROR(BrokenError, UnknownProtocolError)
+    /// Encountered a problem related to the messaging protocol. @ingroup errors
+    DENG2_SUB_ERROR(BrokenError, ProtocolError)
 
     /// There is no peer connected. @ingroup errors
     DENG2_SUB_ERROR(BrokenError, PeerError)
@@ -74,7 +74,17 @@ public:
     Q_DECLARE_FLAGS(HeaderFlags, HeaderFlag)
 
 public:
-    Socket(const Address& address);
+    /**
+     * Opens a socket to @a address and waits (blocks) until the connection has
+     * been formed. The socket is ready to be used after the constructor
+     * returns. If the connection can be formed within the specified @a timeOut
+     * threshold, an exception is thrown.
+     *
+     * @param address  Address to connect to.
+     * @param timeOut  Maximum time to wait for connection.
+     */
+    Socket(const Address& address, const Time::Delta& timeOut = 5);
+
     virtual ~Socket();
 
     /**
@@ -171,16 +181,6 @@ private slots:
     void bytesWereWritten(qint64 bytes);
 
 protected:
-    /// Values for the transmission block header.
-    struct Header {
-        duint version;
-        bool huffman;
-        duint channel;
-        duint size;
-
-        Header();
-    };
-
     /// Create a Socket object for a previously opened socket.
     Socket(QTcpSocket* existingSocket);
 
@@ -194,10 +194,6 @@ protected:
     void receiveBytes(duint count, dbyte* buffer);
 
     void send(const IByteArray& packet, duint channel);
-
-    duint32 packHeader(const Header& header);
-
-    void unpackHeader(duint32 headerBytes, Header& header);
 
 private:
     struct Instance;

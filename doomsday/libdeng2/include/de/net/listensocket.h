@@ -23,7 +23,6 @@
 #include "../libdeng2.h"
 
 #include <QObject>
-#include <QTcpServer>
 #include <QList>
 #include <QThread>
 #include <QDebug>
@@ -68,7 +67,7 @@ signals:
     void incomingConnection();
 
 protected slots:
-    void acceptNewConnection(int handle);
+    void acceptNewConnection();
 
 private:
     struct Instance;

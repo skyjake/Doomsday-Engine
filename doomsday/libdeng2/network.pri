@@ -13,8 +13,7 @@ HEADERS += \
     include/de/net/transmitter.h \
 
 # Private headers.
-HEADERS += \
-    src/net/doorman.h
+HEADERS +=
 
 SOURCES += \
     src/net/address.cpp \
