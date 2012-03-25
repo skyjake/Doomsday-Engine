@@ -542,7 +542,7 @@ static int evalPartitionCostForSuperBlock(SuperBlock* superblock, int splitCostF
      * half-edges within it at once. Only when the partition line intercepts the
      * box do we need to go deeper into it.
      */
-    num = P_BoxOnLineSide3(superblock->bounds(), hedgeInfo->pSX, hedgeInfo->pSY,
+    num = P_BoxOnLineSide3(&superblock->bounds(), hedgeInfo->pSX, hedgeInfo->pSY,
                            hedgeInfo->pDX, hedgeInfo->pDY, hedgeInfo->pPerp,
                            hedgeInfo->pLength, DIST_EPSILON);
 

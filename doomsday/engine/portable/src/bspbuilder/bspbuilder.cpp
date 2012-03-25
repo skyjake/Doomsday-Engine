@@ -165,7 +165,7 @@ SuperBlockmap* BspBuilder::createInitialHEdges(GameMap* map)
     blockBounds.maxX = blockBounds.minX + 128 * M_CeilPow2(bw);
     blockBounds.maxY = blockBounds.minY + 128 * M_CeilPow2(bh);
 
-    sbmap = new SuperBlockmap(&blockBounds);
+    sbmap = new SuperBlockmap(blockBounds);
 
     for(i = 0; i < map->numLineDefs; ++i)
     {

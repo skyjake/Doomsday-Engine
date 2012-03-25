@@ -37,11 +37,23 @@ void SuperBlock::clear()
     KdTreeNode_SetUserData(tree, NULL);
 }
 
+const AABox& SuperBlock::bounds() const
+{
+    return *KdTreeNode_Bounds(tree);
+}
+
 SuperBlock* SuperBlock::child(int left)
 {
     KdTreeNode* subtree = KdTreeNode_Child(tree, left);
     if(!subtree) return NULL;
-    return (SuperBlock*)KdTreeNode_UserData(subtree);
+    return static_cast<SuperBlock*>(KdTreeNode_UserData(subtree));
+}
+
+SuperBlock* SuperBlock::addChild(int vertical, int left)
+{
+    SuperBlock* child = new SuperBlock(bmap);
+    child->tree = KdTreeNode_AddChild(tree, 0.5, vertical, left, child);
+    return child;
 }
 
 uint SuperBlock::hedgeCount(bool addReal, bool addMini) const
@@ -118,14 +130,13 @@ SuperBlock* SuperBlock::hedgePush(bsp_hedge_t* hedge)
             break;
         }
 
-        const AABox* bounds = sb->bounds();
         int midPoint[2];
-        midPoint[0] = (bounds->minX + bounds->maxX) / 2;
-        midPoint[1] = (bounds->minY + bounds->maxY) / 2;
+        midPoint[0] = (sb->bounds().minX + sb->bounds().maxX) / 2;
+        midPoint[1] = (sb->bounds().minY + sb->bounds().maxY) / 2;
 
         int p1, p2, vertical;
-        if(bounds->maxX - bounds->minX >=
-           bounds->maxY - bounds->minY)
+        if(sb->bounds().maxX - sb->bounds().minX >=
+           sb->bounds().maxY - sb->bounds().minY)
         {
             // Wider than tall.
             vertical = false;
@@ -150,13 +161,12 @@ SuperBlock* SuperBlock::hedgePush(bsp_hedge_t* hedge)
         // The hedge lies in one half of this block. Create the sub-block
         // if it doesn't already exist, and loop back to add the hedge.
         int left = p1? 1 : 0;
-        if(!KdTreeNode_Child(sb->tree, left))
+        if(!sb->child(left))
         {
-            SuperBlock* child = new SuperBlock(sb->blockmap());
-            child->tree = KdTreeNode_AddChild(sb->tree, 0.5, vertical, left, child);
+            sb->addChild(vertical, left);
         }
 
-        sb = (SuperBlock*)KdTreeNode_UserData(KdTreeNode_Child(sb->tree, left));
+        sb = sb->child(left);
     }
 
     return this;
@@ -204,9 +214,9 @@ int SuperBlock::traverse(int (C_DECL *callback)(SuperBlock*, void*), void* param
     return false; // Continue iteration.
 }
 
-void SuperBlockmap::init(const AABox* bounds)
+void SuperBlockmap::init(const AABox& bounds)
 {
-    kdTree = KdTree_New(bounds);
+    kdTree = KdTree_New(&bounds);
 
     SuperBlock* block = new SuperBlock(*this);
     block->tree = KdTreeNode_SetUserData(KdTree_Root(kdTree), block);
@@ -214,14 +224,13 @@ void SuperBlockmap::init(const AABox* bounds)
 
 SuperBlock* SuperBlockmap::root()
 {
-    return (SuperBlock*)KdTreeNode_UserData(KdTree_Root(kdTree));
+    return static_cast<SuperBlock*>(KdTreeNode_UserData(KdTree_Root(kdTree)));
 }
 
 bool SuperBlockmap::isLeaf(const SuperBlock& block) const
 {
-    const AABox* aaBox = block.bounds();
-    return (aaBox->maxX - aaBox->minX <= 256 &&
-            aaBox->maxY - aaBox->minY <= 256);
+    return (block.bounds().maxX - block.bounds().minX <= 256 &&
+            block.bounds().maxY - block.bounds().minY <= 256);
 }
 
 typedef struct {

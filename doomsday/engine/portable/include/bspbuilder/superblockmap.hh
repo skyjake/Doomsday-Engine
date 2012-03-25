@@ -48,12 +48,14 @@ friend class SuperBlockmap;
 public:
     typedef std::list<bsp_hedge_t*> HEdges;
 
+private:
     SuperBlock(SuperBlockmap& blockmap) :
         bmap(blockmap), hedges(0), realNum(0), miniNum(0)
     {}
 
     ~SuperBlock() { clear(); }
 
+public:
     /**
      * Retrieve the SuperBlockmap which owns this block.
      *
@@ -68,7 +70,7 @@ public:
      *
      * @return  Axis-aligned bounding box.
      */
-    const AABox* bounds() const { return KdTreeNode_Bounds(tree); }
+    const AABox& bounds() const;
 
     /**
      * Retrieve a pointer to a sub-block of this superblock.
@@ -78,6 +80,8 @@ public:
      * @return  Selected child superblock else @c NULL if none.
      */
     SuperBlock* child(int left);
+
+    SuperBlock* addChild(int vertical, int left);
 
     /**
      * Perform a depth-first traversal over all child superblocks and
@@ -153,7 +157,7 @@ private:
 
 class SuperBlockmap {
 public:
-    SuperBlockmap(const AABox* bounds) { init(bounds); }
+    SuperBlockmap(const AABox& bounds) { init(bounds); }
     ~SuperBlockmap() { clear(); }
 
     /**
@@ -175,7 +179,7 @@ public:
     bool inline isLeaf(const SuperBlock& block) const;
 
 private:
-    void init(const AABox* bounds);
+    void init(const AABox& bounds);
 
     void clear();
     void clearBlockWorker(SuperBlock& block);
