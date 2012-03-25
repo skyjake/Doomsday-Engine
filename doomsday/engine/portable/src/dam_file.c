@@ -754,7 +754,30 @@ static void archiveSegs(GameMap *map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
-static void writeNode(const GameMap* map, uint idx)
+#define NF_LEAF            0x80000000
+
+static void writeBspReference(GameMap* map, runtime_mapdata_header_t* bspRef)
+{
+    assert(map);
+    if(bspRef->type == DMU_BSPLEAF)
+        writeLong((long)(GameMap_BspLeafIndex(map, (BspLeaf*)bspRef) | NF_LEAF));
+    else
+        writeLong((long)GameMap_BspNodeIndex(map, (BspNode*)bspRef));
+}
+
+static runtime_mapdata_header_t* readBspReference(GameMap* map)
+{
+    long idx;
+    assert(map);
+    idx = readLong();
+    if(idx & NF_LEAF)
+        return (runtime_mapdata_header_t*)GameMap_BspLeaf(map, idx & ~NF_LEAF);
+    return (runtime_mapdata_header_t*)GameMap_BspNode(map, idx);
+}
+
+#undef NF_LEAF
+
+static void writeNode(GameMap* map, uint idx)
 {
     BspNode* n = &map->bspNodes[idx];
 
@@ -770,11 +793,11 @@ static void writeNode(const GameMap* map, uint idx)
     writeFloat(n->aaBox[LEFT ].minY);
     writeFloat(n->aaBox[LEFT ].maxX);
     writeFloat(n->aaBox[LEFT ].maxY);
-    writeLong((long) n->children[RIGHT]);
-    writeLong((long) n->children[LEFT]);
+    writeBspReference(map, n->children[RIGHT]);
+    writeBspReference(map, n->children[LEFT]);
 }
 
-static void readNode(const GameMap* map, uint idx)
+static void readNode(GameMap* map, uint idx)
 {
     BspNode* n = &map->bspNodes[idx];
 
@@ -790,8 +813,8 @@ static void readNode(const GameMap* map, uint idx)
     n->aaBox[LEFT ].minY = readFloat();
     n->aaBox[LEFT ].maxX = readFloat();
     n->aaBox[LEFT ].maxY = readFloat();
-    n->children[RIGHT] = (uint) readLong();
-    n->children[LEFT] = (uint) readLong();
+    n->children[RIGHT] = readBspReference(map);
+    n->children[LEFT]  = readBspReference(map);
 }
 
 static void archiveNodes(GameMap* map, boolean write)
