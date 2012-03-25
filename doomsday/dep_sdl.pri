@@ -1,6 +1,3 @@
-# No more support for SDL_net.
-CONFIG += deng_sdlnetdummy
-
 # Build configuration for SDL (core library).
 win32 {
     isEmpty(SDL_DIR) {
@@ -62,10 +59,4 @@ else {
     else {
         LIBS += -lSDL_mixer
     }
-}
-
-# Should we use the SDL_net dummy implementation?
-deng_sdlnetdummy {
-    warning("dep_sdl: Using dummy implementation for SDL_net")
-    DEFINES += DENG_SDLNET_DUMMY
 }
