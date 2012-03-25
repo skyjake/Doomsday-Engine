@@ -754,49 +754,72 @@ static void archiveSegs(GameMap *map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
-static void writeNode(const GameMap *map, uint idx)
+#define NF_LEAF            0x80000000
+
+static void writeBspReference(GameMap* map, runtime_mapdata_header_t* bspRef)
 {
-    BspNode             *n = &map->bspNodes[idx];
+    assert(map);
+    if(bspRef->type == DMU_BSPLEAF)
+        writeLong((long)(GameMap_BspLeafIndex(map, (BspLeaf*)bspRef) | NF_LEAF));
+    else
+        writeLong((long)GameMap_BspNodeIndex(map, (BspNode*)bspRef));
+}
+
+static runtime_mapdata_header_t* readBspReference(GameMap* map)
+{
+    long idx;
+    assert(map);
+    idx = readLong();
+    if(idx & NF_LEAF)
+        return (runtime_mapdata_header_t*)GameMap_BspLeaf(map, idx & ~NF_LEAF);
+    return (runtime_mapdata_header_t*)GameMap_BspNode(map, idx);
+}
+
+#undef NF_LEAF
+
+static void writeNode(GameMap* map, uint idx)
+{
+    BspNode* n = &map->bspNodes[idx];
 
     writeFloat(n->partition.x);
     writeFloat(n->partition.y);
     writeFloat(n->partition.dX);
     writeFloat(n->partition.dY);
-    writeFloat(n->bBox[RIGHT][BOXLEFT]);
-    writeFloat(n->bBox[RIGHT][BOXRIGHT]);
-    writeFloat(n->bBox[RIGHT][BOXBOTTOM]);
-    writeFloat(n->bBox[RIGHT][BOXTOP]);
-    writeFloat(n->bBox[LEFT][BOXLEFT]);
-    writeFloat(n->bBox[LEFT][BOXRIGHT]);
-    writeFloat(n->bBox[LEFT][BOXBOTTOM]);
-    writeFloat(n->bBox[LEFT][BOXTOP]);
-    writeLong((long) n->children[RIGHT]);
-    writeLong((long) n->children[LEFT]);
+    writeFloat(n->aaBox[RIGHT].minX);
+    writeFloat(n->aaBox[RIGHT].minY);
+    writeFloat(n->aaBox[RIGHT].maxX);
+    writeFloat(n->aaBox[RIGHT].maxY);
+    writeFloat(n->aaBox[LEFT ].minX);
+    writeFloat(n->aaBox[LEFT ].minY);
+    writeFloat(n->aaBox[LEFT ].maxX);
+    writeFloat(n->aaBox[LEFT ].maxY);
+    writeBspReference(map, n->children[RIGHT]);
+    writeBspReference(map, n->children[LEFT]);
 }
 
-static void readNode(const GameMap *map, uint idx)
+static void readNode(GameMap* map, uint idx)
 {
-    BspNode             *n = &map->bspNodes[idx];
+    BspNode* n = &map->bspNodes[idx];
 
     n->partition.x = readFloat();
     n->partition.y = readFloat();
     n->partition.dX = readFloat();
     n->partition.dY = readFloat();
-    n->bBox[RIGHT][BOXLEFT] = readFloat();
-    n->bBox[RIGHT][BOXRIGHT] = readFloat();
-    n->bBox[RIGHT][BOXBOTTOM] = readFloat();
-    n->bBox[RIGHT][BOXTOP] = readFloat();
-    n->bBox[LEFT][BOXLEFT] = readFloat();
-    n->bBox[LEFT][BOXRIGHT] = readFloat();
-    n->bBox[LEFT][BOXBOTTOM] = readFloat();
-    n->bBox[LEFT][BOXTOP] = readFloat();
-    n->children[RIGHT] = (uint) readLong();
-    n->children[LEFT] = (uint) readLong();
+    n->aaBox[RIGHT].minX = readFloat();
+    n->aaBox[RIGHT].minY = readFloat();
+    n->aaBox[RIGHT].maxX = readFloat();
+    n->aaBox[RIGHT].maxY = readFloat();
+    n->aaBox[LEFT ].minX = readFloat();
+    n->aaBox[LEFT ].minY = readFloat();
+    n->aaBox[LEFT ].maxX = readFloat();
+    n->aaBox[LEFT ].maxY = readFloat();
+    n->children[RIGHT] = readBspReference(map);
+    n->children[LEFT]  = readBspReference(map);
 }
 
-static void archiveNodes(GameMap *map, boolean write)
+static void archiveNodes(GameMap* map, boolean write)
 {
-    uint                i;
+    uint i;
 
     if(write)
         beginSegment(DAMSEG_BSPNODES);

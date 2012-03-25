@@ -165,9 +165,9 @@ static boolean crossLineDef(const LineDef* li, byte side, losdata_t* los)
 /**
  * @return  @c true iff trace crosses the given BSP leaf.
  */
-static boolean crossBspLeaf(GameMap* map, uint bspLeafIdx, losdata_t* los)
+static boolean crossBspLeaf(GameMap* map, const BspLeaf* bspLeaf, losdata_t* los)
 {
-    const BspLeaf* bspLeaf = &map->bspLeafs[bspLeafIdx];
+    assert(bspLeaf);
     if(bspLeaf->polyObj)
     {
         // Check polyobj lines.
@@ -207,19 +207,19 @@ static boolean crossBspLeaf(GameMap* map, uint bspLeafIdx, losdata_t* los)
 /**
  * @return  @c true iff trace crosses the node.
  */
-static boolean crossBspNode(GameMap* map, unsigned int bspNum, losdata_t* los)
+static boolean crossBspNode(GameMap* map, runtime_mapdata_header_t* bspPtr, losdata_t* los)
 {
-    while(!(bspNum & NF_LEAF))
+    while(bspPtr->type != DMU_BSPLEAF)
     {
-        const BspNode* node = &map->bspNodes[bspNum];
+        const BspNode* node = (BspNode*)bspPtr;
         int side = P_PointOnPartitionSide(FIX2FLT(los->trace.pos[VX]), FIX2FLT(los->trace.pos[VY]),
                                           &node->partition);
 
         // Would the trace completely cross this partition?
         if(side == P_PointOnPartitionSide(los->to[VX], los->to[VY], &node->partition))
         {
-            // Yes, decend!
-            bspNum = node->children[side];
+            // Yes, descend!
+            bspPtr = node->children[side];
         }
         else
         {
@@ -227,11 +227,11 @@ static boolean crossBspNode(GameMap* map, unsigned int bspNum, losdata_t* los)
             if(!crossBspNode(map, node->children[side], los))
                 return 0; // Cross the starting side.
 
-            bspNum = node->children[side^1]; // Cross the ending side.
+            bspPtr = node->children[side^1]; // Cross the ending side.
         }
     }
 
-    return crossBspLeaf(map, bspNum & ~NF_LEAF, los);
+    return crossBspLeaf(map, (BspLeaf*)bspPtr, los);
 }
 
 boolean GameMap_CheckLineSight(GameMap* map, const float from[3], const float to[3],
@@ -275,5 +275,10 @@ boolean GameMap_CheckLineSight(GameMap* map, const float from[3], const float to
     }
 
     validCount++;
-    return crossBspNode(map, map->numBspNodes - 1, &los);
+    // A single leaf is a special case.
+    if(!map->numBspNodes)
+    {
+        return crossBspLeaf(map, map->bspLeafs, &los);
+    }
+    return crossBspNode(map, (runtime_mapdata_header_t*) (map->bspNodes + (map->numBspNodes - 1)), &los);
 }

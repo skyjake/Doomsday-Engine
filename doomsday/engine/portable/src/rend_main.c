@@ -2725,13 +2725,12 @@ static void occludeBspLeaf(const BspLeaf* bspLeaf, boolean forwardFacing)
     }
 }
 
-static void Rend_RenderBspLeaf(uint bspLeafIdx)
+static void Rend_RenderBspLeaf(BspLeaf* bspLeaf)
 {
-    uint i;
-    BspLeaf* bspLeaf = BSPLEAF_PTR(bspLeafIdx);
     HEdge* hedge, **segIt;
-    Sector* sect;
     float sceil, sfloor;
+    uint i, bspLeafIdx;
+    Sector* sect;
 
     if(!bspLeaf->sector) return; // An orphan BSP leaf?
 
@@ -2764,6 +2763,7 @@ static void Rend_RenderBspLeaf(uint bspLeafIdx)
     R_InitForBspLeaf(bspLeaf);
     Rend_RadioBspLeafEdges(bspLeaf);
 
+    bspLeafIdx = GET_BSPLEAF_IDX(bspLeaf);
     occludeBspLeaf(bspLeaf, false);
     LO_ClipInBspLeaf(bspLeafIdx);
     occludeBspLeaf(bspLeaf, true);
@@ -2895,33 +2895,31 @@ static void Rend_RenderBspLeaf(uint bspLeafIdx)
     }
 }
 
-static void Rend_RenderNode(uint bspnum)
+static void Rend_RenderNode(runtime_mapdata_header_t* bspPtr)
 {
     // If the clipper is full we're pretty much done. This means no geometry
     // will be visible in the distance because every direction has already been
     // fully covered by geometry.
     if(C_IsFull()) return;
 
-    if(bspnum & NF_LEAF)
+    if(bspPtr->type == DMU_BSPLEAF)
     {
         // We've arrived at a leaf. Render it.
-        Rend_RenderBspLeaf(bspnum & ~NF_LEAF);
+        Rend_RenderBspLeaf((BspLeaf*)bspPtr);
     }
     else
     {
-        const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
-        BspNode* bsp;
-        byte side;
-
         // Descend deeper into the nodes.
-        bsp = BSPNODE_PTR(bspnum);
+        const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
+        BspNode* node = (BspNode*)bspPtr;
+        byte side;
 
         // Decide which side the view point is on.
         side = P_PointOnPartitionSide(viewData->current.pos[VX], viewData->current.pos[VY],
-                             &bsp->partition);
+                                      &node->partition);
 
-        Rend_RenderNode(bsp->children[side]); // Recursively divide front space.
-        Rend_RenderNode(bsp->children[side ^ 1]); // ...and back space.
+        Rend_RenderNode(node->children[side]); // Recursively divide front space.
+        Rend_RenderNode(node->children[side ^ 1]); // ...and back space.
     }
 }
 
@@ -3355,6 +3353,8 @@ void Rend_RenderMap(void)
 {
     binangle_t viewside;
 
+    if(!theMap) return;
+
     // Set to true if dynlights are inited for this frame.
     loInited = false;
 
@@ -3408,13 +3408,14 @@ void Rend_RenderMap(void)
 
         // We don't want BSP clip checking for the first BSP leaf.
         firstBspLeaf = true;
-        if(NUM_BSPNODES != 0)
+        if(NUM_BSPNODES)
         {
-            Rend_RenderNode(NUM_BSPNODES - 1);
+            Rend_RenderNode((runtime_mapdata_header_t*) BSPNODE_PTR(NUM_BSPNODES - 1));
         }
         else
         {
-            Rend_RenderBspLeaf(0);
+            // A single leaf is a special case.
+            Rend_RenderBspLeaf(BSPLEAF_PTR(0));
         }
 
         if(Rend_MobjShadowsEnabled())

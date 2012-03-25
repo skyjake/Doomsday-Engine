@@ -26,11 +26,15 @@
  * p_maputil.h: Map Utility Routines
  */
 
-#ifndef __DOOMSDAY_MAP_UTILITIES_H__
-#define __DOOMSDAY_MAP_UTILITIES_H__
+#ifndef LIBDENG_MAP_UTILITIES_H
+#define LIBDENG_MAP_UTILITIES_H
 
 #include "m_vector.h"
 #include "p_object.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define IS_SECTOR_LINKED(mo)    ((mo)->sPrev != NULL)
 #define IS_BLOCK_LINKED(mo)     ((mo)->bNext != NULL)
@@ -62,10 +66,25 @@ int             P_PointOnLinedefSide2(double pointX, double pointY,
 int             P_BoxOnLineSide(const AABoxf* box, const LineDef* ld);
 int             P_BoxOnLineSide2(float xl, float xh, float yl, float yh,
                                  const LineDef *ld);
-int             P_BoxOnLineSide3(const int bbox[4], double lineSX,
-                                 double lineSY, double lineDX, double lineDY,
-                                 double linePerp, double lineLength,
-                                 double epsilon);
+
+/**
+ * Check the spatial relationship between the given box and a partitioning line.
+ *
+ * @param bbox          Ptr to the box being tested.
+ * @param lineSX        X coordinate of the start of the line.
+ * @param lineSY        Y coordinate of the end of the line.
+ * @param lineDX        X delta of the line (slope).
+ * @param lineDY        Y delta of the line (slope).
+ * @param linePerp      Perpendicular d of the line.
+ * @param lineLength    Length of the line.
+ * @param epsilon       Points within this distance will be considered equal.
+ *
+ * @return  @c <0= bbox is wholly on the left side.
+ *          @c  0= line intersects bbox.
+ *          @c >0= bbox wholly on the right side.
+ */
+int P_BoxOnLineSide3(const AABox* aaBox, double lineSX, double lineSY, double lineDX,
+    double lineDY, double linePerp, double lineLength, double epsilon);
 
 void P_MakeDivline(const LineDef* lineDef, divline_t* divline);
 
@@ -202,4 +221,8 @@ int P_PathXYTraverse2(float fromX, float fromY, float toX, float toY, int flags,
 boolean P_CheckLineSight(const float from[3], const float to[3], float bottomSlope,
     float topSlope, int flags);
 
+#ifdef __cplusplus
+} // extern "C"
 #endif
+
+#endif /// LIBDENG_MAP_UTILITIES_H

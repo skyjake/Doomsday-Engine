@@ -61,9 +61,6 @@
 
 #define NUM_POLYOBJS            GameMap_PolyobjCount(theMap)
 
-// Node flags.
-#define NF_LEAF            0x80000000
-
 // Runtime map data objects, such as vertices, sectors, and BspLeafs all
 // have this header as their first member. This makes it possible to treat
 // an unknown map data pointer as a runtime_mapdata_header_t* and determine

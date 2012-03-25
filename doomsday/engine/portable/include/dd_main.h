@@ -42,6 +42,10 @@ extern "C" {
 #include "sys_direc.h"
 #include "de/c_wrapper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Verbose messages.
 #define VERBOSE(code)   { if(verbose >= 1) { code; } }
 #define VERBOSE2(code)  { if(verbose >= 2) { code; } }
@@ -176,7 +180,7 @@ D_CMD(ReloadGame);
 D_CMD(ListGames);
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif /* LIBDENG_MAIN_H */

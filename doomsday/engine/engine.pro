@@ -133,12 +133,10 @@ DENG_HEADERS = \
     portable/include/blockmap.h \
     portable/include/blockmapvisual.h \
     portable/include/blockset.h \
-    portable/include/bsp_edge.h \
-    portable/include/bsp_intersection.h \
-    portable/include/bsp_main.h \
-    portable/include/bsp_map.h \
-    portable/include/bsp_node.h \
-    portable/include/bsp_superblock.h \
+    portable/include/bspbuilder/bspbuilder.hh \
+    portable/include/bspbuilder/hedges.hh \
+    portable/include/bspbuilder/intersection.hh \
+    portable/include/bspbuilder/superblockmap.hh \
     portable/include/bspleaf.h \
     portable/include/b_command.h \
     portable/include/b_context.h \
@@ -194,6 +192,7 @@ DENG_HEADERS = \
     portable/include/displaymode.h \
     portable/include/displaymode_native.h \
     portable/include/edit_bias.h \
+    portable/include/edit_bsp.h \
     portable/include/edit_map.h \
     portable/include/filedirectory.h \
     portable/include/filelist.h \
@@ -222,6 +221,7 @@ DENG_HEADERS = \
     portable/include/huffman.h \
     portable/include/image.h \
     portable/include/joystick.h \
+    portable/include/kdtree.h \
     portable/include/keycode.h \
     portable/include/library.h \
     portable/include/linedef.h \
@@ -429,12 +429,11 @@ SOURCES += \
     portable/src/b_util.c \
     portable/src/blockmap.c \
     portable/src/blockmapvisual.c \
-    portable/src/bsp_edge.c \
-    portable/src/bsp_intersection.c \
-    portable/src/bsp_main.c \
-    portable/src/bsp_map.c \
-    portable/src/bsp_node.c \
-    portable/src/bsp_superblock.c \
+    portable/src/bspbuilder/bspbuilder.cpp \
+    portable/src/bspbuilder/hedges.cpp \
+    portable/src/bspbuilder/intersection.cpp \
+    portable/src/bspbuilder/node.cpp \
+    portable/src/bspbuilder/superblockmap.cpp \
     portable/src/bspleaf.c \
     portable/src/busytask.cpp \
     portable/src/canvas.cpp \
@@ -472,6 +471,7 @@ SOURCES += \
     portable/src/dgl_draw.c \
     portable/src/displaymode.cpp \
     portable/src/edit_bias.c \
+    portable/src/edit_bsp.c \
     portable/src/edit_map.c \
     portable/src/filedirectory.c \
     portable/src/filelist.c \
@@ -498,6 +498,7 @@ SOURCES += \
     portable/src/hedge.c \
     portable/src/huffman.c \
     portable/src/image.c \
+    portable/src/kdtree.c \
     portable/src/keycode.cpp \
     portable/src/library.c \
     portable/src/linedef.c \

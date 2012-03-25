@@ -40,6 +40,10 @@ extern "C" {
 #include "dd_input.h"
 #include "pathdirectory.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define CMDLINE_SIZE 256
 #define MAX_ARGS            256
 
@@ -387,7 +391,7 @@ void Con_PrintCVar(cvar_t* cvar, char* prefix);
 void Con_PrintCCmdUsage(ccmd_t* ccmd, boolean printInfo);
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif /* LIBDENG_CONSOLE_MAIN_H */

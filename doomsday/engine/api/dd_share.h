@@ -1243,7 +1243,7 @@ typedef struct {
 #define MN_SPRITES_NAME         "Sprites"
 /**@}*/
 
-typedef enum {
+typedef enum materialnamespaceid_e {
     MN_ANY = -1,
     MATERIALNAMESPACE_FIRST = 1000,
     MN_SYSTEM = MATERIALNAMESPACE_FIRST,
@@ -1283,7 +1283,7 @@ typedef enum {
 ///@}
 
 /// Texture namespace identifiers. @ingroup namespace
-typedef enum {
+typedef enum texturenamespaceid_e {
     TN_ANY = -1,
     TEXTURENAMESPACE_FIRST = 2000,
     TN_SYSTEM = TEXTURENAMESPACE_FIRST,
@@ -1321,7 +1321,7 @@ typedef enum {
 ///@}
 
 /// Font namespace identifier. @ingroup namespace
-typedef enum {
+typedef enum fontnamespaceid_e {
     FN_ANY = -1,
     FONTNAMESPACE_FIRST = 3000,
     FN_SYSTEM = FONTNAMESPACE_FIRST,

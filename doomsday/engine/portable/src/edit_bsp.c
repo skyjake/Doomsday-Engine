@@ -30,8 +30,9 @@
 #include "de_edit.h"
 #include "de_refresh.h"
 
-static void hardenSidedefHEdgeList(GameMap* map, SideDef* side, HEdge* hedge,
-    bsp_hedge_t* bspHEdge)
+#include "bspbuilder/hedges.hh" /// @todo Remove me.
+
+static void hardenSidedefHEdgeList(GameMap* map, SideDef* side, bsp_hedge_t* bspHEdge)
 {
     bsp_hedge_t* first, *other;
     uint count;
@@ -57,7 +58,7 @@ static void hardenSidedefHEdgeList(GameMap* map, SideDef* side, HEdge* hedge,
 
     // Allocate the final side hedge table.
     side->hedgeCount = count;
-    side->hedges = Z_Malloc(sizeof(HEdge*) * (side->hedgeCount + 1), PU_MAPSTATIC, 0);
+    side->hedges = (HEdge**)Z_Malloc(sizeof(*side->hedges) * (side->hedgeCount + 1), PU_MAPSTATIC, 0);
 
     count = 0;
     other = first;
@@ -69,7 +70,7 @@ static void hardenSidedefHEdgeList(GameMap* map, SideDef* side, HEdge* hedge,
     side->hedges[count] = NULL; // Terminate.
 }
 
-static int C_DECL hEdgeCompare(const void* p1, const void* p2)
+static int C_DECL hedgeCompare(const void* p1, const void* p2)
 {
     const bsp_hedge_t* a = ((const bsp_hedge_t**) p1)[0];
     const bsp_hedge_t* b = ((const bsp_hedge_t**) p2)[0];
@@ -85,36 +86,35 @@ typedef struct {
     boolean write;
 } hedgecollectorparams_t;
 
-static boolean hEdgeCollector(binarytree_t* tree, void* data)
+static int hedgeCollector(BinaryTree* tree, void* parameters)
 {
     if(BinaryTree_IsLeaf(tree))
     {
-        hedgecollectorparams_t* params = (hedgecollectorparams_t*) data;
-        bspleafdata_t* leaf = (bspleafdata_t*) BinaryTree_GetData(tree);
-        bsp_hedge_t* hEdge;
+        hedgecollectorparams_t* p = (hedgecollectorparams_t*) parameters;
+        bspleafdata_t* leaf = (bspleafdata_t*) BinaryTree_UserData(tree);
+        bsp_hedge_t* hedge;
 
-        for(hEdge = leaf->hEdges; hEdge; hEdge = hEdge->next)
+        for(hedge = leaf->hedges; hedge; hedge = hedge->nextInLeaf)
         {
-            if(params->indexPtr)
+            if(p->indexPtr)
             {
                 // Write mode.
-                (*params->indexPtr)[params->curIdx++] = hEdge;
+                (*p->indexPtr)[p->curIdx++] = hedge;
             }
             else
             {
                 // Count mode.
-                if(hEdge->index == -1)
-                    Con_Error("HEdge %p never reached a BspLeaf!", hEdge);
+                if(hedge->index == -1)
+                    Con_Error("HEdge %p never reached a BspLeaf!", hedge);
 
-                params->curIdx++;
+                p->curIdx++;
             }
         }
     }
-
-    return true; // Continue traversal.
+    return false; // Continue traversal.
 }
 
-static void buildHEdgesFromBSPHEdges(GameMap* dest, binarytree_t* rootNode)
+static void buildHEdgesFromBSPHEdges(GameMap* dest, BinaryTree* rootNode)
 {
     uint i;
     bsp_hedge_t** index;
@@ -127,24 +127,24 @@ static void buildHEdgesFromBSPHEdges(GameMap* dest, binarytree_t* rootNode)
     // Pass 1: Count the number of used hedges.
     params.curIdx = 0;
     params.indexPtr = NULL;
-    BinaryTree_InOrder(rootNode, hEdgeCollector, &params);
+    BinaryTree_InOrder(rootNode, hedgeCollector, &params);
 
     if(!(params.curIdx > 0))
         Con_Error("buildHEdgesFromBSPHEdges: No hedges?");
 
     // Allocate the sort buffer.
-    index = M_Malloc(sizeof(bsp_hedge_t*) * params.curIdx);
+    index = (bsp_hedge_t**)M_Malloc(sizeof(*index) * params.curIdx);
 
     // Pass 2: Collect ptrs the hedges and insert into the index.
     params.curIdx = 0;
     params.indexPtr = &index;
-    BinaryTree_InOrder(rootNode, hEdgeCollector, &params);
+    BinaryTree_InOrder(rootNode, hedgeCollector, &params);
 
     // Sort the half-edges into ascending index order.
-    qsort(index, params.curIdx, sizeof(bsp_hedge_t*), hEdgeCompare);
+    qsort(index, params.curIdx, sizeof(bsp_hedge_t*), hedgeCompare);
 
     dest->numHEdges = (uint) params.curIdx;
-    dest->hedges = Z_Calloc(dest->numHEdges * sizeof(HEdge), PU_MAPSTATIC, 0);
+    dest->hedges = (HEdge*)Z_Calloc(dest->numHEdges * sizeof(HEdge), PU_MAPSTATIC, 0);
     for(i = 0; i < dest->numHEdges; ++i)
     {
         HEdge* hedge = &dest->hedges[i];
@@ -156,8 +156,8 @@ static void buildHEdgesFromBSPHEdges(GameMap* dest, binarytree_t* rootNode)
         hedge->HE_v2 = &dest->vertexes[bspHEdge->v[1]->buildData.index - 1];
 
         hedge->side  = bspHEdge->side;
-        if(bspHEdge->lineDef)
-            hedge->lineDef = &dest->lineDefs[bspHEdge->lineDef->buildData.index - 1];
+        if(bspHEdge->info.lineDef)
+            hedge->lineDef = &dest->lineDefs[bspHEdge->info.lineDef->buildData.index - 1];
         if(bspHEdge->twin)
             hedge->twin = &dest->hedges[bspHEdge->twin->index];
 
@@ -190,7 +190,7 @@ static void buildHEdgesFromBSPHEdges(GameMap* dest, binarytree_t* rootNode)
         }
 
         if(hedge->lineDef)
-            hardenSidedefHEdgeList(dest, HEDGE_SIDEDEF(hedge), hedge, bspHEdge);
+            hardenSidedefHEdgeList(dest, HEDGE_SIDEDEF(hedge), bspHEdge);
 
         hedge->angle = bamsAtan2((int) (hedge->HE_v2pos[VY] - hedge->HE_v1pos[VY]),
                                  (int) (hedge->HE_v2pos[VX] - hedge->HE_v1pos[VX])) << FRACBITS;
@@ -235,9 +235,9 @@ static void hardenBspLeafHEdgeList(GameMap* dest, BspLeaf* bspLeaf, bsp_hedge_t*
     bsp_hedge_t* cur;
     HEdge** hedges;
 
-    hedges = Z_Malloc(sizeof(HEdge*) * (hedgeCount + 1), PU_MAPSTATIC, 0);
+    hedges = (HEdge**)Z_Malloc(sizeof(*hedges) * (hedgeCount + 1), PU_MAPSTATIC, 0);
 
-    for(cur = list, i = 0; cur; cur = cur->next, ++i)
+    for(cur = list, i = 0; cur; cur = cur->nextInLeaf, ++i)
         hedges[i] = &dest->hedges[cur->index];
     hedges[hedgeCount] = NULL; // Terminate.
 
@@ -251,22 +251,22 @@ static void hardenLeaf(GameMap* map, BspLeaf* dest, const bspleafdata_t* src)
 {
     HEdge** segp;
     boolean found;
-    size_t hEdgeCount;
-    bsp_hedge_t* hEdge;
+    size_t hedgeCount;
+    bsp_hedge_t* hedge;
 
-    hEdge = src->hEdges;
-    hEdgeCount = 0;
+    hedge = src->hedges;
+    hedgeCount = 0;
     do
     {
-        hEdgeCount++;
-    } while((hEdge = hEdge->next) != NULL);
+        hedgeCount++;
+    } while((hedge = hedge->nextInLeaf) != NULL);
 
     dest->header.type = DMU_BSPLEAF;
-    dest->hedgeCount = (uint) hEdgeCount;
+    dest->hedgeCount = (uint) hedgeCount;
     dest->shadows = NULL;
     dest->vertices = NULL;
 
-    hardenBspLeafHEdgeList(map, dest, src->hEdges, hEdgeCount);
+    hardenBspLeafHEdgeList(map, dest, src->hedges, hedgeCount);
 
     // Determine which sector this BSP leaf belongs to.
     segp = dest->hedges;
@@ -296,20 +296,20 @@ typedef struct {
     uint nodeCurIndex;
 } hardenbspparams_t;
 
-static boolean C_DECL hardenNode(binarytree_t* tree, void* data)
+static int C_DECL hardenNode(BinaryTree* tree, void* data)
 {
-    binarytree_t* right, *left;
-    bspnodedata_t* nodeData;
+    BinaryTree* right, *left;
+    BspNode* nodeData;
     hardenbspparams_t* params;
     BspNode* node;
 
     if(BinaryTree_IsLeaf(tree))
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
-    nodeData = BinaryTree_GetData(tree);
+    nodeData =(BspNode*)BinaryTree_UserData(tree);
     params = (hardenbspparams_t*) data;
 
-    node = &params->dest->bspNodes[nodeData->index = params->nodeCurIndex++];
+    node = &params->dest->bspNodes[nodeData->buildData.index = params->nodeCurIndex++];
     node->header.type = DMU_BSPNODE;
 
     node->partition.x = nodeData->partition.x;
@@ -317,89 +317,80 @@ static boolean C_DECL hardenNode(binarytree_t* tree, void* data)
     node->partition.dX = nodeData->partition.dX;
     node->partition.dY = nodeData->partition.dY;
 
-    node->bBox[RIGHT][BOXTOP]    = nodeData->bBox[RIGHT][BOXTOP];
-    node->bBox[RIGHT][BOXBOTTOM] = nodeData->bBox[RIGHT][BOXBOTTOM];
-    node->bBox[RIGHT][BOXLEFT]   = nodeData->bBox[RIGHT][BOXLEFT];
-    node->bBox[RIGHT][BOXRIGHT]  = nodeData->bBox[RIGHT][BOXRIGHT];
+    memcpy(&node->aaBox[RIGHT], &nodeData->aaBox[RIGHT], sizeof(node->aaBox[RIGHT]));
+    memcpy(&node->aaBox[LEFT],  &nodeData->aaBox[LEFT],  sizeof(node->aaBox[LEFT]));
 
-    node->bBox[LEFT][BOXTOP]     = nodeData->bBox[LEFT][BOXTOP];
-    node->bBox[LEFT][BOXBOTTOM]  = nodeData->bBox[LEFT][BOXBOTTOM];
-    node->bBox[LEFT][BOXLEFT]    = nodeData->bBox[LEFT][BOXLEFT];
-    node->bBox[LEFT][BOXRIGHT]   = nodeData->bBox[LEFT][BOXRIGHT];
-
-    right = BinaryTree_GetChild(tree, RIGHT);
+    right = BinaryTree_Child(tree, RIGHT);
     if(right)
     {
         if(BinaryTree_IsLeaf(right))
         {
-            bspleafdata_t* leaf = (bspleafdata_t*) BinaryTree_GetData(right);
+            bspleafdata_t* leaf = (bspleafdata_t*) BinaryTree_UserData(right);
             uint idx = params->leafCurIndex++;
 
-            node->children[RIGHT] = idx | NF_LEAF;
-            hardenLeaf(params->dest, &params->dest->bspLeafs[idx], leaf);
+            node->children[RIGHT] = (runtime_mapdata_header_t*)(params->dest->bspLeafs + idx);
+            hardenLeaf(params->dest, (BspLeaf*)node->children[RIGHT], leaf);
         }
         else
         {
-            bspnodedata_t* data = (bspnodedata_t*) BinaryTree_GetData(right);
-
-            node->children[RIGHT] = data->index;
+            BspNode* data = (BspNode*) BinaryTree_UserData(right);
+            node->children[RIGHT] = (runtime_mapdata_header_t*)(params->dest->bspNodes + data->buildData.index);
         }
     }
 
-    left = BinaryTree_GetChild(tree, LEFT);
+    left = BinaryTree_Child(tree, LEFT);
     if(left)
     {
         if(BinaryTree_IsLeaf(left))
         {
-            bspleafdata_t* leaf = (bspleafdata_t*) BinaryTree_GetData(left);
+            bspleafdata_t* leaf = (bspleafdata_t*) BinaryTree_UserData(left);
             uint idx = params->leafCurIndex++;
 
-            node->children[LEFT] = idx | NF_LEAF;
-            hardenLeaf(params->dest, &params->dest->bspLeafs[idx], leaf);
+            node->children[LEFT] = (runtime_mapdata_header_t*)(params->dest->bspLeafs + idx);
+            hardenLeaf(params->dest, (BspLeaf*)node->children[LEFT], leaf);
         }
         else
         {
-            bspnodedata_t* data = (bspnodedata_t*) BinaryTree_GetData(left);
-
-            node->children[LEFT]  = data->index;
+            BspNode* data = (BspNode*) BinaryTree_UserData(left);
+            node->children[LEFT] = (runtime_mapdata_header_t*)(params->dest->bspNodes + data->buildData.index);
         }
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
-static boolean C_DECL countNode(binarytree_t* tree, void* data)
+static int C_DECL countNode(BinaryTree* tree, void* data)
 {
     if(!BinaryTree_IsLeaf(tree))
         (*((uint*) data))++;
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
-static boolean C_DECL countSSec(binarytree_t* tree, void* data)
+static int C_DECL countSSec(BinaryTree* tree, void* data)
 {
     if(BinaryTree_IsLeaf(tree))
         (*((uint*) data))++;
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
-static void hardenBSP(GameMap* dest, binarytree_t* rootNode)
+static void hardenBSP(GameMap* dest, BinaryTree* rootNode)
 {
     dest->numBspNodes = 0;
     BinaryTree_PostOrder(rootNode, countNode, &dest->numBspNodes);
     if(dest->numBspNodes != 0)
-        dest->bspNodes = Z_Calloc(dest->numBspNodes * sizeof(BspNode), PU_MAPSTATIC, 0);
+        dest->bspNodes = (BspNode*)Z_Calloc(dest->numBspNodes * sizeof(BspNode), PU_MAPSTATIC, 0);
     else
         dest->bspNodes = 0;
 
     dest->numBspLeafs = 0;
     BinaryTree_PostOrder(rootNode, countSSec, &dest->numBspLeafs);
-    dest->bspLeafs = Z_Calloc(dest->numBspLeafs * sizeof(BspLeaf), PU_MAPSTATIC, 0);
+    dest->bspLeafs = (BspLeaf*)Z_Calloc(dest->numBspLeafs * sizeof(BspLeaf), PU_MAPSTATIC, 0);
 
     if(!rootNode) return;
 
     if(BinaryTree_IsLeaf(rootNode))
     {
-        hardenLeaf(dest, &dest->bspLeafs[0], (bspleafdata_t*) BinaryTree_GetData(rootNode));
+        hardenLeaf(dest, &dest->bspLeafs[0], (bspleafdata_t*) BinaryTree_UserData(rootNode));
         return;
     }
 
@@ -411,45 +402,12 @@ static void hardenBSP(GameMap* dest, binarytree_t* rootNode)
     }
 }
 
-void BSP_InitForNodeBuild(GameMap* map)
-{
-    uint i;
-
-    for(i = 0; i < map->numLineDefs; ++i)
-    {
-        LineDef* l = &map->lineDefs[i];
-        Vertex* start = l->v[0];
-        Vertex* end   = l->v[1];
-
-        start->buildData.refCount++;
-        end->buildData.refCount++;
-
-        l->buildData.mlFlags = 0;
-
-        // Check for zero-length line.
-        if((fabs(start->buildData.pos[VX] - end->buildData.pos[VX]) < DIST_EPSILON) &&
-           (fabs(start->buildData.pos[VY] - end->buildData.pos[VY]) < DIST_EPSILON))
-            l->buildData.mlFlags |= MLF_ZEROLENGTH;
-
-        if(l->inFlags & LF_POLYOBJ)
-            l->buildData.mlFlags |= MLF_POLYOBJ;
-
-        if(l->sideDefs[BACK] && l->sideDefs[FRONT])
-        {
-            l->buildData.mlFlags |= MLF_TWOSIDED;
-
-            if(l->sideDefs[BACK]->sector == l->sideDefs[FRONT]->sector)
-                l->buildData.mlFlags |= MLF_SELFREF;
-        }
-    }
-}
-
 static void hardenVertexes(GameMap* dest, Vertex*** vertexes, uint* numVertexes)
 {
     uint i;
 
     dest->numVertexes = *numVertexes;
-    dest->vertexes = Z_Calloc(dest->numVertexes * sizeof(Vertex), PU_MAPSTATIC, 0);
+    dest->vertexes = (Vertex*)Z_Calloc(dest->numVertexes * sizeof(Vertex), PU_MAPSTATIC, 0);
 
     for(i = 0; i < dest->numVertexes; ++i)
     {
@@ -478,10 +436,10 @@ static void updateVertexLinks(GameMap* dest)
     }
 }
 
-void SaveMap(GameMap* dest, void* rootNode, Vertex*** vertexes, uint* numVertexes)
+void BspBuilder_Save(GameMap* dest, void* rootNode, Vertex*** vertexes, uint* numVertexes)
 {
     uint startTime = Sys_GetRealTime();
-    binarytree_t* rn = (binarytree_t*) rootNode;
+    BinaryTree* rn = (BinaryTree*) rootNode;
 
     hardenVertexes(dest, vertexes, numVertexes);
     updateVertexLinks(dest);
@@ -489,5 +447,5 @@ void SaveMap(GameMap* dest, void* rootNode, Vertex*** vertexes, uint* numVertexe
     hardenBSP(dest, rn);
 
     // How much time did we spend?
-    VERBOSE( Con_Message("SaveMap: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
+    VERBOSE( Con_Message("BspBuilder_Save: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
 }

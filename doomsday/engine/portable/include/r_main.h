@@ -31,6 +31,10 @@
 
 #include "rect.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct viewport_s {
     int console;
     RectRaw geometry;
@@ -137,5 +141,9 @@ void R_LoadSystemFonts(void);
 
 const char* R_ChooseFixedFont(void);
 const char* R_ChooseVariableFont(fontstyle_t style, int resX, int resY);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_REFRESH_MAIN_H */

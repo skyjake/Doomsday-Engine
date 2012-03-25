@@ -54,18 +54,37 @@
 #ifndef LIBDENG_MAP_BSP_BUILDER
 #define LIBDENG_MAP_BSP_BUILDER
 
-#include "de_edit.h"
+#include "dd_types.h"
 
-// Degrees, 0 is E, 90 is N
-typedef double angle_g;
+struct hplane_s;
+struct superblock_s;
+struct hplaneintercept_s;
+struct bsp_hedge_s;
+struct edgetip_s;
+struct vertex_s;
+struct sector_s;
+struct gamemap_s;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+struct bspbuilder_c_s;
+
+typedef struct bspbuilder_c_s BspBuilder_c;
 
 // CVar for tuning the BSP edge split cost factor.
 extern int bspFactor;
 
-/**
- * Register the ccmds and cvars of the BSP builder. Called during engine startup
- */
-void BSP_Register(void);
+void BspBuilder_Register(void);
+
+BspBuilder_c* BspBuilder_New(void);
+
+void BspBuilder_Delete(BspBuilder_c* builder);
+
+BspBuilder_c* BspBuilder_SetSplitCostFactor(BspBuilder_c* builder, int factor);
+
+void BspBuilder_Save(struct gamemap_s* dest, void* rootNode, struct vertex_s*** vertexes, uint* numVertexes);
 
 /**
  * Build the BSP for the given map.
@@ -76,6 +95,10 @@ void BSP_Register(void);
  *
  * @return  @c true= iff completed successfully.
  */
-boolean BSP_Build(GameMap* map, Vertex*** vertexes, uint* numVertexes);
+boolean BspBuilder_Build(BspBuilder_c* builder, struct gamemap_s* map, struct vertex_s*** vertexes, uint* numVertexes);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /// LIBDENG_MAP_BSP_BUILDER

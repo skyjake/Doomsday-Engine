@@ -473,11 +473,17 @@ typedef struct partition_s {
     float dX, dY;
 } partition_t;
 
+typedef struct mbspnode_s {
+    // Node index. Only valid once the nodes have been hardened.
+    int index;
+} mbspnode_t;
+
 typedef struct bspnode_s {
     runtime_mapdata_header_t header;
     partition_t         partition;
-    float               bBox[2][4];    // Bounding box for each child.
-    unsigned int        children[2];   // If NF_LEAF it's a BspLeaf.
+    AABoxf              aaBox[2];      // Bounding box for each child.
+    runtime_mapdata_header_t* children[2];
+    mbspnode_t          buildData;
 } BspNode;
 
 #endif

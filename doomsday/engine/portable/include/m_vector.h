@@ -29,6 +29,10 @@
 #ifndef LIBDENG_DATA_VECTOR_H
 #define LIBDENG_DATA_VECTOR_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef float         vectorcomp_t;
 typedef vectorcomp_t  vec2_t[2];
 typedef const float   const_pvec2_t[2];
@@ -70,8 +74,10 @@ boolean         V2_Intercept2(const pvec2_t a, const pvec2_t b,
                               float *abFrac, float *cdFrac);
 void            V2_Lerp(pvec2_t dest, const pvec2_t a, const pvec2_t b,
                         float c);
+
 void            V2_InitBox(arvec2_t box, const pvec2_t point);
 void            V2_AddToBox(arvec2_t box, const pvec2_t point);
+void            V2_CopyBox(arvec2_t dest, const arvec2_t src);
 
 // 3-dimensions:
 void            V3_Set(pvec3_t vec, vectorcomp_t x, vectorcomp_t y, vectorcomp_t z);
@@ -127,5 +133,9 @@ void            V4_Sum(pvec4_t dest, const_pvec4_t src1, const_pvec4_t src2);
 void            V4_Subtract(pvec4_t dest, const_pvec4_t src1, const_pvec4_t src2);
 boolean         V4_IsZero(const pvec4_t vec);
 void            V4_Lerp(pvec4_t dest, const pvec4_t a, const pvec4_t b, float c);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_DATA_VECTOR_H */
