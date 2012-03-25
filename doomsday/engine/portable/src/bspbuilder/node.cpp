@@ -696,7 +696,7 @@ boolean BspBuilder::choosePartition(SuperBlock* hedgeList, size_t /*depth*/, HPl
     parm.bestCost = INT_MAX;
 
     validCount++;
-    if(SuperBlock_Traverse(hedgeList, chooseHEdgeFromSuperBlock, (void*)&parm))
+    if(hedgeList->traverse(chooseHEdgeFromSuperBlock, (void*)&parm))
     {
         /// @kludge BspBuilder::buildNodes() will detect the cancellation.
         return false;
@@ -913,7 +913,7 @@ void BspBuilder::partitionHEdges(SuperBlock* hedgeList, SuperBlock* rights, Supe
     parm.lefts = lefts;
     parm.hplane = hplane;
     parm.builder = this;
-    SuperBlock_Traverse(hedgeList, BspBuilder_PartitionHEdgeWorker, (void*)&parm);
+    hedgeList->traverse(BspBuilder_PartitionHEdgeWorker, (void*)&parm);
 
     // Sanity checks...
     if(!rights->totalHEdgeCount())
@@ -949,7 +949,7 @@ bspleafdata_t* BspBuilder::createBSPLeaf(SuperBlock* hedgeList)
     bspleafdata_t* leaf = newLeaf();
 
     // Link the half-edges into the new leaf.
-    SuperBlock_Traverse(hedgeList, createBSPLeafWorker, leaf);
+    hedgeList->traverse(createBSPLeafWorker, leaf);
 
     return leaf;
 }
@@ -1047,6 +1047,6 @@ static int printSuperBlockHEdgesWorker(SuperBlock* block, void* /*parameters*/)
 void BSP_PrintSuperBlockhedges(SuperBlock* block)
 {
     if(!block) return;
-    SuperBlock_Traverse(block, printSuperBlockHEdgesWorker);
+    block->traverse(printSuperBlockHEdgesWorker);
 }
 #endif

@@ -43,6 +43,8 @@ namespace de {
 class SuperBlockmap;
 
 class SuperBlock {
+friend class SuperBlockmap;
+
 public:
     typedef std::list<bsp_hedge_t*> HEdges;
 
@@ -89,6 +91,19 @@ public:
         return (SuperBlock*)KdTreeNode_UserData(subtree);
     }
 
+    /**
+     * Perform a depth-first traversal over all child superblocks and
+     * then ultimately visiting this instance, making a callback for
+     * each object visited. Iteration ends when all superblocks have
+     * been visited or @a callback returns a non-zero value.
+     *
+     * @param callback       Callback function ptr.
+     * @param parameters     Passed to the callback. Default=NULL.
+     *
+     * @return  @c 0 iff iteration completed wholly.
+     */
+    int traverse(int (C_DECL *callback)(SuperBlock*, void*), void* parameters=NULL);
+
     inline HEdges::const_iterator hedgesBegin() const { return hedges.begin(); }
     inline HEdges::const_iterator hedgesEnd() const { return hedges.end(); }
 
@@ -132,7 +147,7 @@ public:
      */
     bsp_hedge_t* hedgePop();
 
-//private:
+protected:
     /// KdTree node in the owning SuperBlockmap.
     KdTreeNode* tree;
 
@@ -142,10 +157,8 @@ private:
     void inline incrementHEdgeCount(bsp_hedge_t* hedge)
     {
         if(!hedge) return;
-        if(hedge->info.lineDef)
-            realNum++;
-        else
-            miniNum++;
+        if(hedge->info.lineDef) realNum++;
+        else                    miniNum++;
     }
 
     void inline linkHEdge(bsp_hedge_t* hedge)
@@ -168,14 +181,6 @@ private:
     int realNum;
     int miniNum;
 };
-
-} // namespace de
-
-int SuperBlock_Traverse(de::SuperBlock* superblock, int (*callback)(de::SuperBlock*, void*), void* parameters=NULL);
-
-int SuperBlockmap_PostTraverse(de::SuperBlockmap* superBlockmap, int(*callback)(de::SuperBlock*, void*), void* parameters=NULL);
-
-namespace de {
 
 class SuperBlockmap {
 public:
@@ -212,7 +217,9 @@ public:
 
 private:
     void init(const AABox* bounds);
+
     void clear();
+    void clearBlockWorker(SuperBlock* block);
 };
 
 } // namespace de

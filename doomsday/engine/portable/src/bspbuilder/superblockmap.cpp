@@ -142,37 +142,38 @@ bsp_hedge_t* SuperBlock::hedgePop()
     hedges.pop_front();
 
     // Update half-edge counts.
-    if(hedge->info.lineDef)
-        realNum--;
-    else
-        miniNum--;
+    if(hedge->info.lineDef) realNum--;
+    else                    miniNum--;
 
     // Disassociate ourself.
     hedge->block = NULL;
     return hedge;
 }
 
-typedef struct {
-    int (*callback)(SuperBlock*, void*);
-    void* parameters;
-} treetraverserparams_t;
-
-static int SuperBlock_TreeTraverser(KdTreeNode* kd, void* parameters)
+int SuperBlock::traverse(int (C_DECL *callback)(SuperBlock*, void*), void* parameters)
 {
-    treetraverserparams_t* p = (treetraverserparams_t*)parameters;
-    return p->callback((SuperBlock*)KdTreeNode_UserData(kd), p->parameters);
-}
-
-int SuperBlock_Traverse(SuperBlock* sb, int (*callback)(SuperBlock*, void*),
-    void* parameters)
-{
-    treetraverserparams_t parm;
-    assert(sb);
     if(!callback) return false; // Continue iteration.
 
-    parm.callback = callback;
-    parm.parameters = parameters;
-    return KdTreeNode_Traverse2(sb->tree, SuperBlock_TreeTraverser, (void*)&parm);
+    int result = callback(this, parameters);
+    if(result) return result;
+
+    if(tree)
+    {
+        // Recursively handle subtrees.
+        for(uint num = 0; num < 2; ++num)
+        {
+            KdTreeNode* node = KdTreeNode_Child(tree, num);
+            if(!node) continue;
+
+            SuperBlock* child = static_cast<SuperBlock*>(KdTreeNode_UserData(node));
+            if(!child) continue;
+
+            result = child->traverse(callback, parameters);
+            if(result) return result;
+        }
+    }
+
+    return false; // Continue iteration.
 }
 
 void SuperBlockmap::init(const AABox* bounds)
@@ -214,15 +215,30 @@ static int findHEdgeBoundsWorker(SuperBlock* block, void* parameters)
     return false; // Continue iteration.
 }
 
-static int deleteSuperBlockWorker(SuperBlock* block, void* /*parameters*/)
+void SuperBlockmap::clearBlockWorker(SuperBlock* block)
 {
+    if(!block) return;
+
+    if(block->tree)
+    {
+        // Recursively handle sub-blocks.
+        KdTreeNode* child;
+        for(uint num = 0; num < 2; ++num)
+        {
+            child = KdTreeNode_Child(block->tree, num);
+            if(!child) continue;
+
+            SuperBlock* block = static_cast<SuperBlock*>(KdTreeNode_UserData(child));
+            if(block) clearBlockWorker(block);
+        }
+    }
+
     delete block;
-    return false; // Continue iteration.
 }
 
 void SuperBlockmap::clear()
 {
-    SuperBlockmap_PostTraverse(this, deleteSuperBlockWorker);
+    clearBlockWorker(root());
     KdTree_Delete(kdTree);
 }
 
@@ -230,28 +246,20 @@ void SuperBlockmap::findHEdgeBounds(AABoxf* aaBox)
 {
     if(!aaBox) return;
 
-    findhedgelistboundsparams_t parm;
-    parm.initialized = false;
-    SuperBlock_Traverse(root(), findHEdgeBoundsWorker, (void*)&parm);
-    if(parm.initialized)
+    SuperBlock* block = root();
+    if(block)
     {
-        V2_CopyBox(aaBox->arvec2, parm.bounds.arvec2);
-        return;
+        findhedgelistboundsparams_t parm;
+        parm.initialized = false;
+        block->traverse(findHEdgeBoundsWorker, (void*)&parm);
+        if(parm.initialized)
+        {
+            V2_CopyBox(aaBox->arvec2, parm.bounds.arvec2);
+            return;
+        }
     }
 
     // Clear.
     V2_Set(aaBox->min, DDMAXFLOAT, DDMAXFLOAT);
     V2_Set(aaBox->max, DDMINFLOAT, DDMINFLOAT);
-}
-
-int SuperBlockmap_PostTraverse(SuperBlockmap* bmap, int(*callback)(SuperBlock*, void*),
-    void* parameters)
-{
-    treetraverserparams_t parm;
-    assert(bmap);
-    if(!callback) return false; // Continue iteration.
-
-    parm.callback = callback;
-    parm.parameters = parameters;
-    return KdTree_PostTraverse2(bmap->kdTree, SuperBlock_TreeTraverser, (void*)&parm);
 }
