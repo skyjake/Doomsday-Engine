@@ -1000,8 +1000,8 @@ boolean BspBuilder::buildNodes(SuperBlock* superblock, BinaryTree** parent, size
     node = (BspNode*)M_Calloc(sizeof *node);
     *parent = BinaryTree_NewWithUserData(node);
 
-    hedgeSet[LEFT]->findHEdgeBounds(&node->aaBox[LEFT]);
-    hedgeSet[RIGHT]->findHEdgeBounds(&node->aaBox[RIGHT]);
+    hedgeSet[LEFT]->findHEdgeBounds(node->aaBox[LEFT]);
+    hedgeSet[RIGHT]->findHEdgeBounds(node->aaBox[RIGHT]);
 
     node->partition.x = hplane->x();
     node->partition.y = hplane->y();
