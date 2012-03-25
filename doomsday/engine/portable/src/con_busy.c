@@ -1,29 +1,25 @@
-/**\file con_busy.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file con_busy.c
+ * Console Busy Mode @ingroup console
  *
- *\author Copyright © 2007-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ * @authors Copyright © 2007-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
 
@@ -43,35 +39,20 @@
 #include "cbuffer.h"
 #include "font.h"
 
-// MACROS ------------------------------------------------------------------
-
+#if 0
 #define SCREENSHOT_TEXTURE_SIZE 512
+#endif
 
 #define DOOMWIPESINE_NUMSAMPLES 320
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void BusyTask_Loop(void);
 static void BusyTask_Drawer(void);
 static void Con_BusyPrepareResources(void);
-static void Con_BusyDeleteTextures(void);
-
+static void deleteBusyTextures(void);
 static void seedDoomWipeSine(void);
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 int rTransition = (int) TS_CROSSFADE;
 int rTransitionTics = 28;
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean busyInited;
 static BusyTask* busyTask; // Current task.
@@ -95,8 +76,6 @@ static float transitionPosition;
 
 static float doomWipeSine[DOOMWIPESINE_NUMSAMPLES];
 static float doomWipeSamples[SCREENWIDTH+1];
-
-// CODE --------------------------------------------------------------------
 
 static boolean animatedTransitionActive(int busyMode)
 {
@@ -183,8 +162,10 @@ void BusyTask_End(BusyTask* task)
         Con_Message("Con_Busy: Was busy for %.2lf seconds.\n", busyTime);
     }
 
+#if 0
     // Free resources.
-    Con_BusyDeleteTextures();
+    deleteBusyTextures();
+#endif
 
     if(busyError)
     {
@@ -255,26 +236,6 @@ static void Con_BusyPrepareResources(void)
         Con_AcquireScreenshotTexture();
     }
 
-    // Need to load the progress indicator?
-    if(busyTask->mode & (BUSYF_ACTIVITY | BUSYF_PROGRESS_BAR))
-    {
-        image_t image;
-
-        // These must be real files in the base dir because virtual files haven't
-        // been loaded yet when engine startup is done.
-        if(GL_LoadImage(&image, "}data/graphics/loading1.png"))
-        {
-            texLoading[0] = GL_NewTextureWithParams(DGL_RGBA, image.size.width, image.size.height, image.pixels, TXCF_NEVER_DEFER);
-            GL_DestroyImage(&image);
-        }
-
-        if(GL_LoadImage(&image, "}data/graphics/loading2.png"))
-        {
-            texLoading[1] = GL_NewTextureWithParams(DGL_RGBA, image.size.width, image.size.height, image.pixels, TXCF_NEVER_DEFER);
-            GL_DestroyImage(&image);
-        }
-    }
-
     // Need to load any fonts for log messages etc?
     if((busyTask->mode & BUSYF_CONSOLE_OUTPUT) || busyTask->name)
     {
@@ -301,7 +262,7 @@ static void Con_BusyPrepareResources(void)
     }
 }
 
-static void Con_BusyDeleteTextures(void)
+static void deleteBusyTextures(void)
 {
     if(isDedicated)
         return;
@@ -363,8 +324,27 @@ void Con_ReleaseScreenshotTexture(void)
     texScreenshot = 0;
 }
 
+static void loadBusyTextures(void)
+{
+    image_t image;
+
+    if(GL_LoadImage(&image, "}data/graphics/loading1.png"))
+    {
+        texLoading[0] = GL_NewTextureWithParams(DGL_RGBA, image.size.width, image.size.height, image.pixels, TXCF_NEVER_DEFER);
+        GL_DestroyImage(&image);
+    }
+
+    if(GL_LoadImage(&image, "}data/graphics/loading2.png"))
+    {
+        texLoading[1] = GL_NewTextureWithParams(DGL_RGBA, image.size.width, image.size.height, image.pixels, TXCF_NEVER_DEFER);
+        GL_DestroyImage(&image);
+    }
+}
+
 static void preBusySetup(void)
 {
+    loadBusyTextures();
+
     // Save the present loop.
     LegacyCore_PushLoop(de2LegacyCore);
 
@@ -377,6 +357,8 @@ static void preBusySetup(void)
 
 static void postBusyCleanup(void)
 {
+    deleteBusyTextures();
+
     // Restore old loop.
     LegacyCore_PopLoop(de2LegacyCore);
 

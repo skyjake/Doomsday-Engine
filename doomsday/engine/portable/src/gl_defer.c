@@ -159,10 +159,6 @@ LIBDENG_GL_DEFER1(e, GLenum e)
     api->func.ptr_e = ptr;
     api->param.e = e;
 
-#ifdef _DEBUG
-    fprintf(stderr, "GL_Defer1e: ptr=%p enum=%i\n", ptr, e);
-#endif
-
     enqueueTask(DTT_FUNC_PTR_E, api);
 }
 
@@ -217,9 +213,6 @@ static void processTask(deferredtask_t* task)
         break;
 
     case DTT_FUNC_PTR_E:
-#ifdef _DEBUG
-        fprintf(stderr, "processDeferred: ptr=%p enum=%i\n", api->func.ptr_e, api->param.e);
-#endif
         api->func.ptr_e(api->param.e);
         break;
 
