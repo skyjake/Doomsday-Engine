@@ -1277,7 +1277,7 @@ typedef enum materialnamespaceid_e {
 ///@}
 
 /// Texture namespace identifiers. @ingroup namespace
-typedef enum {
+typedef enum texturenamespaceid_e {
     TN_ANY = -1,
     TEXTURENAMESPACE_FIRST = 2000,
     TN_SYSTEM = TEXTURENAMESPACE_FIRST,

@@ -44,6 +44,7 @@
 #define LIBDENG_REFRESH_TEXTURES_H
 
 #include "dd_string.h"
+#include "dd_share.h"
 #include "uri.h"
 
 /// Unique identifier associated with each texture name in the collection.
