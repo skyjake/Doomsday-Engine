@@ -29,10 +29,6 @@
 #ifndef LIBDENG_CONSOLE_MAIN_H
 #define LIBDENG_CONSOLE_MAIN_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdio.h>
 #include "dd_share.h"
 #include "dd_types.h"

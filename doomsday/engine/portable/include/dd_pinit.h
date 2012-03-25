@@ -54,7 +54,7 @@ extern game_import_t gi;
 extern game_export_t gx;
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif /* LIBDENG_PORTABLE_INIT_H */

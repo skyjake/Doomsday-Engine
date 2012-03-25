@@ -29,10 +29,6 @@
 #ifndef LIBDENG_MAIN_H
 #define LIBDENG_MAIN_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "dd_types.h"
 #include "dd_plugin.h"
 #ifndef __cplusplus // Kludge: these aren't yet C++ compatible

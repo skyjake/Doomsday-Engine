@@ -96,7 +96,7 @@ void DD_SetGameLoopExitCode(int code);
 int DD_GameLoopExitCode(void);
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif

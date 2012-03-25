@@ -99,7 +99,7 @@ void MaterialArchive_Read(MaterialArchive* arc, int forcedVersion, Reader* reade
 ///@}
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif // LIBDENG_MATERIALARCHIVE_H

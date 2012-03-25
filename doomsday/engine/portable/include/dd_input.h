@@ -300,7 +300,7 @@ void Rend_AllInputDeviceStateVisuals(void);
 #endif
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif /* LIBDENG_CORE_INPUT_H */

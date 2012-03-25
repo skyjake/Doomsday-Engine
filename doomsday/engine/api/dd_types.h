@@ -221,4 +221,3 @@ struct material_s;
 #include "uri.h"
 
 #endif /* LIBDENG_TYPES_H */
-

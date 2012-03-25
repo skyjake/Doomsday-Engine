@@ -777,6 +777,7 @@ boolean M_IsStringValidFloat(const char* str);
 ///@}
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
+
 #endif /* LIBDENG_EXPORTS_H */

@@ -135,7 +135,7 @@ void BusyTask_End(BusyTask* task);
 void BusyTask_ExitWithValue(int result);
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif /// LIBDENG_CONSOLE_BUSY

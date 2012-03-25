@@ -1827,7 +1827,7 @@ struct polyobj_s;
     } ddplayer_t;
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif /* LIBDENG_SHARED_H */

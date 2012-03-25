@@ -115,7 +115,7 @@ boolean DisplayMode_IsEqual(const DisplayMode* a, const DisplayMode* b);
 int DisplayMode_Change(const DisplayMode* mode, boolean shouldCapture);
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif // LIBDENG_DISPLAYMODE_H
