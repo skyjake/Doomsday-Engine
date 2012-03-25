@@ -83,14 +83,13 @@ class HPlane {
 public:
     typedef std::list<HPlaneIntercept> Intercepts;
 
-    HPlane(BspBuilder* builder) :
-        builder(builder), intercepts(0), partition()
+    HPlane(BspBuilder* builder) : intercepts(0), builder(builder)
     {
         initHEdgeInfo();
     }
 
     HPlane(BspBuilder* builder, double const origin[2], double const angle[2]) :
-        builder(builder), intercepts(0), partition(origin, angle)
+        partition(origin, angle), intercepts(0), builder(builder)
     {
         initHEdgeInfo();
     }

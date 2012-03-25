@@ -47,7 +47,7 @@ public:
     typedef std::list<bsp_hedge_t*> HEdges;
 
     SuperBlock(SuperBlockmap* blockmap) :
-        bmap(blockmap), realNum(0), miniNum(0), hedges(0)
+        bmap(blockmap), hedges(0), realNum(0), miniNum(0)
     {}
 
     ~SuperBlock() { clear(); }

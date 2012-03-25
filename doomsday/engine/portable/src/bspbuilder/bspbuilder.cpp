@@ -667,7 +667,7 @@ void BspBuilder::addEdgeTip(Vertex* vert, double dx, double dy, bsp_hedge_t* bac
 
     // Find the correct place (order is increasing angle).
     for(after = vert->buildData.tipSet; after && after->ET_next;
-        after = after->ET_next);
+        after = after->ET_next) {}
 
     while(after && tip->angle + ANG_EPSILON < after->angle)
         after = after->ET_prev;
