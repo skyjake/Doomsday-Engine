@@ -132,11 +132,15 @@ public:
      */
     HPlaneIntercept* newIntercept(double distance, void* userData=NULL);
 
-    Intercepts::const_iterator deleteIntercept(Intercepts::const_iterator at);
+    Intercepts::const_iterator deleteIntercept(Intercepts::iterator at);
 
     inline bool empty() const { return intercepts.empty(); }
 
+    inline Intercepts::iterator begin() { return intercepts.begin(); }
+
     inline Intercepts::const_iterator begin() const { return intercepts.begin(); }
+
+    inline Intercepts::iterator end() { return intercepts.end(); }
 
     inline Intercepts::const_iterator end() const { return intercepts.end(); }
 

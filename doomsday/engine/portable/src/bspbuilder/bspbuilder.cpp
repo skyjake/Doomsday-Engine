@@ -491,10 +491,10 @@ void BspBuilder::mergeIntersections(HPlane* hplane)
 {
     if(!hplane) return;
 
-    HPlane::Intercepts::const_iterator node = hplane->begin();
+    HPlane::Intercepts::iterator node = hplane->begin();
     while(node != hplane->end())
     {
-        HPlane::Intercepts::const_iterator np = node; np++;
+        HPlane::Intercepts::iterator np = node; np++;
         if(np == hplane->end()) break;
 
         double len = *np - *node;

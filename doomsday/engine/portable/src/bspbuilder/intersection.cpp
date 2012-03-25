@@ -111,7 +111,7 @@ HPlane* HPlane::setDY(double newDY)
 
 HPlaneIntercept* HPlane::newIntercept(double distance, void* userData)
 {
-    Intercepts::const_reverse_iterator after;
+    Intercepts::reverse_iterator after;
     HPlaneIntercept* inter;
 
     for(after = intercepts.rbegin();
@@ -122,7 +122,7 @@ HPlaneIntercept* HPlane::newIntercept(double distance, void* userData)
     return inter;
 }
 
-HPlane::Intercepts::const_iterator HPlane::deleteIntercept(Intercepts::const_iterator at)
+HPlane::Intercepts::const_iterator HPlane::deleteIntercept(Intercepts::iterator at)
 {
     //if(at < intercepts.begin() || at >= intercepts.end()) return at;
     return intercepts.erase(at);
