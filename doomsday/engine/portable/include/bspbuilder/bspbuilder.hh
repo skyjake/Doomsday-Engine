@@ -96,10 +96,9 @@ private:
         return hedge;
     }
 
-    inline void BspBuilder::freeHEdge(bsp_hedge_t* hedge)
+    inline void freeHEdge(bsp_hedge_t* /*hedge*/)
     {
-        // Ignore it'll be free'd along with the block allocator itself.
-        (void*)hedge;
+        // Ignore @a hedge it'll be free'd along with the block allocator itself.
     }
 
     struct bspleafdata_s* createBSPLeaf(SuperBlock* hedgeList);
