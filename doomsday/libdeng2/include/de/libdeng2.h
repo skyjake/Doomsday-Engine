@@ -142,13 +142,13 @@ typedef duint32 dintptr;
 /*
  * Data types for C APIs.
  */
-typedef unsigned char       dbyte;
-typedef unsigned int        duint;  // 32-bit
+typedef unsigned char   dbyte;
+typedef unsigned int    duint;  // 32-bit
 
 #ifdef DENG2_64BIT
-typedef unsigned int64_t    dsize;  // 64-bit size
+typedef uint64_t        dsize;  // 64-bit size
 #else
-typedef unsigned int        dsize;  // 32-bit size
+typedef unsigned int    dsize;  // 32-bit size
 #endif
 
 #endif

@@ -26,37 +26,28 @@
 #define LIBDENG2_HUFFMAN_H
 
 #include "../libdeng2.h"
+#include "../Block"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+namespace de {
+namespace codec {
 
 /**
  * Encodes the data using Huffman codes.
+ * @param data  Block of data to encode.
  *
- * @param data         Block of data to encode.
- * @param size         Size of data to encode.
- * @param encodedSize  The number of bytes in the encoded data is written here.
- *
- * @return Pointer to the encoded block of bits. Caller gets ownership and must
- * delete the data with M_Free().
+ * @return Encoded block of bits.
  */
-void* DENG2_PUBLIC Huffman_Encode(const dbyte* data, dsize size, dsize *encodedSize);
+Block huffmanEncode(const Block& data);
 
 /**
  * Decodes the coded message using the Huffman tree.
+ * @param data  Block of Huffman-coded data.
  *
- * @param data         Block of Huffman-coded data.
- * @param size         Size of the data to decode.
- * @param decodedSize  The number of bytes in the decoded data is written here.
- *
- * @return Pointer to the decoded data. Caller gets ownership and must delete
- * the data with M_Free().
+ * @return Decoded block of data.
  */
-dbyte* DENG2_PUBLIC Huffman_Decode(const void *data, dsize size, dsize *decodedSize);
+Block huffmanDecode(const Block& codedData);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
+} // namespace codec
+} // namespace de
 
 #endif // LIBDENG2_HUFFMAN_H
