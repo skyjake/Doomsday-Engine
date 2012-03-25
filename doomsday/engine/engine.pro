@@ -218,7 +218,6 @@ DENG_HEADERS = \
     portable/include/gl_tga.h \
     portable/include/gridmap.h \
     portable/include/hedge.h \
-    portable/include/huffman.h \
     portable/include/image.h \
     portable/include/joystick.h \
     portable/include/kdtree.h \
@@ -496,7 +495,6 @@ SOURCES += \
     portable/src/gl_tga.c \
     portable/src/gridmap.c \
     portable/src/hedge.c \
-    portable/src/huffman.c \
     portable/src/image.c \
     portable/src/kdtree.c \
     portable/src/keycode.cpp \

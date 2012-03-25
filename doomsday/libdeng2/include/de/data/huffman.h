@@ -22,18 +22,14 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_HUFFMAN_H
-#define LIBDENG_HUFFMAN_H
+#ifndef LIBDENG2_HUFFMAN_H
+#define LIBDENG2_HUFFMAN_H
 
-/**
- * Builds the Huffman tree and initializes the code lookup.
- */
-void Huffman_Init(void);
+#include "../libdeng2.h"
 
-/**
- * Free all resources allocated for Huffman codes.
- */
-void Huffman_Shutdown(void);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * Encodes the data using Huffman codes.
@@ -45,7 +41,7 @@ void Huffman_Shutdown(void);
  * @return Pointer to the encoded block of bits. Caller gets ownership and must
  * delete the data with M_Free().
  */
-void* Huffman_Encode(const byte *data, size_t size, size_t *encodedSize);
+void* DENG2_PUBLIC Huffman_Encode(const dbyte* data, dsize size, dsize *encodedSize);
 
 /**
  * Decodes the coded message using the Huffman tree.
@@ -57,6 +53,10 @@ void* Huffman_Encode(const byte *data, size_t size, size_t *encodedSize);
  * @return Pointer to the decoded data. Caller gets ownership and must delete
  * the data with M_Free().
  */
-byte* Huffman_Decode(const void *data, size_t size, size_t *decodedSize);
+dbyte* DENG2_PUBLIC Huffman_Decode(const void *data, dsize size, dsize *decodedSize);
 
-#endif // LIBDENG_HUFFMAN_H
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
+#endif // LIBDENG2_HUFFMAN_H

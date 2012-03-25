@@ -36,6 +36,10 @@
 #include <QtCore/qglobal.h>
 #endif
 
+#ifndef _MSC_VER
+#  include <stdint.h> // Not MSVC so use C99 standard header
+#endif
+
 #include <assert.h>
 
 /*
@@ -132,6 +136,20 @@ typedef duint32 dintptr;
 } // namespace de
 
 #include "Error"
+
+#else // !__cplusplus
+
+/*
+ * Data types for C APIs.
+ */
+typedef unsigned char       dbyte;
+typedef unsigned int        duint;  // 32-bit
+
+#ifdef DENG2_64BIT
+typedef unsigned int64_t    dsize;  // 64-bit size
+#else
+typedef unsigned int        dsize;  // 32-bit size
+#endif
 
 #endif
 

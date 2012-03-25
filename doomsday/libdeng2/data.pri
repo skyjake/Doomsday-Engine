@@ -23,6 +23,7 @@ HEADERS += \
     include/de/data/date.h \
     include/de/data/fixedbytearray.h \
     include/de/data/guard.h \
+    include/de/data/huffman.h \
     include/de/data/iblock.h \
     include/de/data/ibytearray.h \
     include/de/data/ireadable.h \
@@ -41,6 +42,7 @@ SOURCES += \
     src/data/bytesubarray.cpp \
     src/data/date.cpp \
     src/data/fixedbytearray.cpp \
+    src/data/huffman.cpp \
     src/data/guard.cpp \
     src/data/lockable.cpp \
     src/data/string.cpp \
