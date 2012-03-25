@@ -37,7 +37,7 @@ void SuperBlock::clear()
     KdTreeNode_SetUserData(tree, NULL);
 }
 
-static int deleteSuperBlockIterator(SuperBlock* block, void* /*parameters*/);
+//static int deleteSuperBlockIterator(SuperBlock* block, void* /*parameters*/);
 
 static void initAABoxFromHEdgeVertexes(AABoxf* aaBox, const bsp_hedge_t* hedge)
 {
