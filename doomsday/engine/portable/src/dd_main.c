@@ -59,7 +59,6 @@
 #include "m_misc.h"
 #include "m_args.h"
 #include "texture.h"
-#include "huffman.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1527,7 +1526,6 @@ boolean DD_Init(void)
     // Initialize the subsystems needed prior to entering busy mode for the first time.
     Sys_Init();
     F_Init();
-    Huffman_Init();
 
     Fonts_Init();
     FR_Init();

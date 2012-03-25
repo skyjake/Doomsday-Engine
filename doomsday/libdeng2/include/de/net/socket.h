@@ -35,6 +35,9 @@
 #include <QList>
 #include <QFlags>
 
+/// Largest message sendable using the protocol.
+#define DENG2_SOCKET_MAX_PAYLOAD_SIZE (1 << 22) // 4 MB
+
 namespace de {
 
 class Message;

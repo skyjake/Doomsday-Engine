@@ -104,7 +104,7 @@ Block& Block::operator += (const Block& other)
 
 Block& Block::operator = (const Block& other)
 {
-    *static_cast<QByteArray*>(this) = static_cast<QByteArray&>(other);
+    *static_cast<QByteArray*>(this) = static_cast<const QByteArray&>(other);
     return *this;
 }
 

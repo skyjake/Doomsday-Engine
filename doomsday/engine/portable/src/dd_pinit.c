@@ -47,7 +47,6 @@
 
 #include "m_args.h"
 #include "def_main.h"
-#include "huffman.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -256,7 +255,6 @@ void DD_ShutdownAll(void)
     Def_Destroy();
     F_ShutdownResourceLocator();
     F_Shutdown();
-    Huffman_Shutdown();
     ArgShutdown();
     Z_Shutdown();
     Sys_ShutdownWindowManager();

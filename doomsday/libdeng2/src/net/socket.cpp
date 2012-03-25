@@ -70,7 +70,6 @@
 #include "de/Message"
 #include "de/Writer"
 #include "de/Reader"
-#include "de/ByteRefArray"
 #include "de/data/huffman.h"
 
 using namespace de;
@@ -81,9 +80,9 @@ static const duint PROTOCOL_VERSION = 0;
 /// Maximum number of channels.
 static const duint MAX_CHANNELS = 2;
 
-#define MAX_SIZE_SMALL          127 // bytes
-#define MAX_SIZE_MEDIUM         4095 // bytes
-#define MAX_SIZE_LARGE          PROTOCOL_MAX_DATAGRAM_SIZE
+static const int MAX_SIZE_SMALL  = 127; // bytes
+static const int MAX_SIZE_MEDIUM = 4095; // bytes
+static const int MAX_SIZE_LARGE  = DENG2_SOCKET_MAX_PAYLOAD_SIZE;
 
 /// Threshold for input data size: messages smaller than this are first compressed
 /// with Doomsday's Huffman codes. If the result is smaller than the deflated data,
@@ -103,7 +102,7 @@ static const duint MAX_CHANNELS = 2;
  */
 struct Header : public ISerializable
 {
-    duint size;
+    int size;
     bool isHuffmanCoded;
     bool isDeflated;
     duint channel; /// @todo include in the written header
@@ -221,23 +220,21 @@ struct Socket::Instance
 
     void serializeAndSendMessage(const IByteArray& packet)
     {
-        Header header;
         Block payload(packet);
-
-        dsize huffSize = 0;
-        dbyte* huffData = 0;
+        Block huffData;
+        Header header;
 
         // Let's find the appropriate compression method of the payload. First see
         // if the encoded contents are under 128 bytes as Huffman codes.
         if(payload.size() <= MAX_HUFFMAN_INPUT_SIZE) // Potentially short enough.
         {
-            huffData = Huffman_Encode(payload.data(), payload.size(), &huffSize);
-            if(huffSize <= MAX_SIZE_SMALL)
+            huffData = codec::huffmanEncode(payload);
+            if(int(huffData.size()) <= MAX_SIZE_SMALL)
             {
                 // We'll use this.
                 header.isHuffmanCoded = true;
-                header.size = huffSize;
-                payload.copyFrom(ByteRefArray(huffData, huffSize));
+                header.size = huffData.size();
+                payload = huffData;
             }
             // Even if that didn't seem suitable, we'll keep it to compare against
             // the deflated payload.
@@ -249,28 +246,26 @@ struct Socket::Instance
 
         if(!header.size) // Try deflate.
         {
-            const int level = (size < 2*MAX_SIZE_MEDIUM? 6 /*default*/ : 9 /*best*/);
-            QByteArray deflated = qCompressAtLevel(payload, level);
+            const int level = (payload.size() < 2*MAX_SIZE_MEDIUM? 6 /*default*/ : 9 /*best*/);
+            QByteArray deflated = qCompress(payload, level);
 
             if(!deflated.size())
             {
-                free(huffData);
                 throw ProtocolError("Socket::send:", "Failed to deflate message payload");
             }
             if(deflated.size() > MAX_SIZE_LARGE)
             {
-                free(huffData);
                 throw ProtocolError("Socket::send",
                                     QString("Compressed payload is too large (%1 bytes)").arg(deflated.size()));
             }
 
             // Choose the smallest compression.
-            if(huffData && huffSize <= deflated.size() && huffSize <= MAX_SIZE_MEDIUM)
+            if(huffData.size() && int(huffData.size()) <= deflated.size() && int(huffData.size()) <= MAX_SIZE_MEDIUM)
             {
                 // Huffman yielded smaller payload.
                 header.isHuffmanCoded = true;
-                header.size = huffSize;
-                payload.copyFrom(ByteRefArray(huffData, huffSize));
+                header.size = huffData.size();
+                payload = huffData;
             }
             else
             {
@@ -280,9 +275,6 @@ struct Socket::Instance
                 payload = deflated;
             }
         }
-
-        free(huffData);
-        huffData = 0;
 
         // Write the message header.
         Block dest;
@@ -327,7 +319,7 @@ struct Socket::Instance
 
             if(receptionState == ReceivingPayload)
             {
-                if(receivedBytes.size() >= incomingHeader.size)
+                if(int(receivedBytes.size()) >= incomingHeader.size)
                 {
                     // Extract the payload from the incoming buffer.
                     Block payload = receivedBytes.left(incomingHeader.size);
@@ -336,15 +328,11 @@ struct Socket::Instance
                     // We have the full payload, but it still may need to uncompressed.
                     if(incomingHeader.isHuffmanCoded)
                     {
-                        dsize huffSize = 0;
-                        dbyte* decoded = Huffman_Decode(payload.data(), payload.size(), &huffSize);
-                        if(!decoded)
+                        payload = codec::huffmanDecode(payload);
+                        if(!payload.size())
                         {
-                            throw ProtocolError("Socket::Instance::deserializeMessages",
-                                                "Huffman decoding failed");
+                            throw ProtocolError("Socket::Instance::deserializeMessages", "Huffman decoding failed");
                         }
-                        payload.copyFrom(ByteRefArray(decoded, huffSize));
-                        free(decoded);
                     }
                     else if(incomingHeader.isDeflated)
                     {
@@ -461,7 +449,7 @@ Socket& Socket::operator << (const IByteArray& packet)
     return *this;
 }
 
-void Socket::send(const IByteArray& packet, duint channel)
+void Socket::send(const IByteArray& packet, duint /*channel*/)
 {
     if(!d->socket)
     {

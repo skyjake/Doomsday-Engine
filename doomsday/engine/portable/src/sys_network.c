@@ -39,8 +39,6 @@
 #include "de_play.h"
 
 #include <de/c_wrapper.h> // using LegacyNetwork
-#include "huffman.h"
-#include "zipfile.h"
 #include "protocol.h"
 
 #define MAX_NODES                   32
@@ -108,8 +106,6 @@ void N_Register(void)
 void N_SystemInit(void)
 {
     memset(netNodes, 0, sizeof(netNodes));
-
-    Protocol_Init();
 }
 
 /**
@@ -126,7 +122,6 @@ void N_SystemShutdown(void)
             N_ServerClose();
     }
 
-    Protocol_Shutdown();
     N_ShutdownService();
 }
 

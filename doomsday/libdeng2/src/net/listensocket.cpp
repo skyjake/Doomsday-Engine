@@ -56,7 +56,7 @@ struct ListenSocket::Instance
     duint16 port;
 
     /// Incoming connections.
-    QList<int> incoming;
+    QList<QTcpSocket*> incoming;
 
     Instance() : socket(0), port(0) {}
     ~Instance() {
@@ -75,6 +75,7 @@ ListenSocket::ListenSocket(duint16 port)
 
     d->doorman->start();
 */
+    d->port = port;
 
     if(!d->socket->listen(QHostAddress::Any, d->port))
     {
@@ -95,7 +96,7 @@ void ListenSocket::acceptNewConnection()
 {
     LOG_AS("ListenSocket::acceptNewConnection");
 
-    d->incoming.append(d->socket->nextPendingConnection());
+    d->incoming << d->socket->nextPendingConnection();
 
     emit incomingConnection();
 }
