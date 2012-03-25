@@ -48,7 +48,7 @@ public:
      *                   (big-endian) byte order.
      * @param offset     Offset in @a source where to start reading.
      */
-    Reader(const IByteArray& source, const ByteOrder& byteOrder = bigEndianByteOrder,
+    Reader(const IByteArray& source, const ByteOrder& byteOrder = littleEndianByteOrder,
         IByteArray::Offset offset = 0);
 
     //@{ Read a number from the source buffer, in network byte order.

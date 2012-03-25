@@ -102,6 +102,12 @@ Block& Block::operator += (const Block& other)
     return *this;
 }
 
+Block& Block::operator = (const Block& other)
+{
+    *static_cast<QByteArray*>(this) = static_cast<QByteArray&>(other);
+    return *this;
+}
+
 void Block::clear()
 {
     QByteArray::clear();

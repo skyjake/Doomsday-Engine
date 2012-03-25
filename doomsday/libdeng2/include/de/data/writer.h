@@ -44,15 +44,14 @@ public:
      * Constructs a new writer.
      *
      * @param destination  Byte array to write to.
-     * @param byteOrder    Byte order to use. The byte order defaults to network
-     *                     (big-endian) byte order.
+     * @param byteOrder    Byte order to use. The byte order defaults to little-endian byte order.
      * @param offset       Offset in @a destination where to start writing.
      */
-    Writer(IByteArray& destination, const ByteOrder& byteOrder = bigEndianByteOrder,
+    Writer(IByteArray& destination, const ByteOrder& byteOrder = littleEndianByteOrder,
            IByteArray::Offset offset = 0);
 
     /**
-     * Constructs a new writer (with big-endian byte order).
+     * Constructs a new writer (with little-endian byte order).
      *
      * @param destination  Byte array to write to.
      * @param offset       Offset in @a destination where to start writing.
@@ -64,9 +63,9 @@ public:
      * zero offset.
      *
      * @param other      Writer.
-     * @param byteOrder  Byte order. Defaults to big-endian.
+     * @param byteOrder  Byte order. Defaults to little-endian.
      */
-    Writer(const Writer& other, const ByteOrder& byteOrder = bigEndianByteOrder);
+    Writer(const Writer& other, const ByteOrder& byteOrder = littleEndianByteOrder);
 
     //@{ Write a number to the destination buffer, in the chosen byte order.
     Writer& operator << (const char& byte);

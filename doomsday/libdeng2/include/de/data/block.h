@@ -65,6 +65,9 @@ public:
 
     /// Appends a block after this one.
     Block& operator += (const Block& other);
+
+    /// Copies the contents of another block.
+    Block& operator = (const Block& other);
 };
 
 } // namespace de
