@@ -37,8 +37,6 @@ void SuperBlock::clear()
     KdTreeNode_SetUserData(tree, NULL);
 }
 
-//static int deleteSuperBlockIterator(SuperBlock* block, void* /*parameters*/);
-
 static void initAABoxFromHEdgeVertexes(AABoxf* aaBox, const bsp_hedge_t* hedge)
 {
     assert(aaBox && hedge);
@@ -82,9 +80,6 @@ SuperBlock* SuperBlock::hedgePush(bsp_hedge_t* hedge)
     SuperBlock* sb = this;
     for(;;)
     {
-        int p1, p2, half, midPoint[2];
-        const AABox* bounds;
-
         // Update half-edge counts.
         sb->incrementHEdgeCount(hedge);
 
@@ -95,69 +90,45 @@ SuperBlock* SuperBlock::hedgePush(bsp_hedge_t* hedge)
             break;
         }
 
-        bounds = sb->bounds();
+        const AABox* bounds = sb->bounds();
+        int midPoint[2];
         midPoint[0] = (bounds->minX + bounds->maxX) / 2;
         midPoint[1] = (bounds->minY + bounds->maxY) / 2;
 
+        int p1, p2, vertical;
         if(bounds->maxX - bounds->minX >=
            bounds->maxY - bounds->minY)
         {
             // Wider than tall.
+            vertical = false;
             p1 = hedge->v[0]->buildData.pos[0] >= midPoint[0];
             p2 = hedge->v[1]->buildData.pos[0] >= midPoint[0];
         }
         else
         {
             // Taller than wide.
+            vertical = true;
             p1 = hedge->v[0]->buildData.pos[1] >= midPoint[1];
             p2 = hedge->v[1]->buildData.pos[1] >= midPoint[1];
         }
 
-        if(p1 && p2)
+        if(p1 != p2)
         {
-            half = 1;
-        }
-        else if(!p1 && !p2)
-        {
-            half = 0;
-        }
-        else
-        {
-            // Line crosses midpoint -- link it in and return.
+            // Line crosses midpoint; link it in and return.
             sb->linkHEdge(hedge);
             break;
         }
 
         // The hedge lies in one half of this block. Create the sub-block
         // if it doesn't already exist, and loop back to add the hedge.
-        if(!KdTreeNode_Child(sb->tree, half))
+        int left = p1? 1 : 0;
+        if(!KdTreeNode_Child(sb->tree, left))
         {
-            SuperBlock* child;
-            AABox sub;
-
-            bounds = sb->bounds();
-            if(bounds->maxX - bounds->minX >= bounds->maxY - bounds->minY)
-            {
-                sub.minX = (half? midPoint[0] : bounds->minX);
-                sub.minY = bounds->minY;
-
-                sub.maxX = (half? bounds->maxX : midPoint[0]);
-                sub.maxY = bounds->maxY;
-            }
-            else
-            {
-                sub.minX = bounds->minX;
-                sub.minY = (half? midPoint[1] : bounds->minY);
-
-                sub.maxX = bounds->maxX;
-                sub.maxY = (half? bounds->maxY : midPoint[1]);
-            }
-
-            child = new SuperBlock(sb->blockmap()/*, &sub*/);
-            child->tree = KdTreeNode_AddChild(sb->tree, &sub, half, child);
+            SuperBlock* child = new SuperBlock(sb->blockmap());
+            child->tree = KdTreeNode_AddChild(sb->tree, 0.5, vertical, left, child);
         }
 
-        sb = (SuperBlock*)KdTreeNode_UserData(KdTreeNode_Child(sb->tree, half));
+        sb = (SuperBlock*)KdTreeNode_UserData(KdTreeNode_Child(sb->tree, left));
     }
 
     return this;
