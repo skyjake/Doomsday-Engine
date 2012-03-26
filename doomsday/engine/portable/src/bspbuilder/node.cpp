@@ -694,7 +694,7 @@ boolean BspBuilder::choosePartition(SuperBlock* hedgeList, size_t /*depth*/, HPl
     parm.hedgeList = hedgeList;
     parm.splitCostFactor = splitCostFactor;
     parm.best = NULL;
-    parm.bestCost = INT_MAX;
+    parm.bestCost = DDMAXINT;
 
     validCount++;
     if(hedgeList->traverse(chooseHEdgeFromSuperBlock, (void*)&parm))
