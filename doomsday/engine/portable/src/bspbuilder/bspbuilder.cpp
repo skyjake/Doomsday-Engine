@@ -366,8 +366,8 @@ boolean BspBuilder::build(GameMap* map, Vertex*** vertexes, uint* numVertexes)
 
         if(rootNode && !BinaryTree_IsLeaf(rootNode))
         {
-            rHeight = (long) BinaryTree_Height(BinaryTree_Child(rootNode, RIGHT));
-            lHeight = (long) BinaryTree_Height(BinaryTree_Child(rootNode, LEFT));
+            rHeight = (long) BinaryTree_Height(BinaryTree_Right(rootNode));
+            lHeight = (long) BinaryTree_Height(BinaryTree_Left(rootNode));
         }
         else
         {

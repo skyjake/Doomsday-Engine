@@ -38,6 +38,14 @@
 #include <list>
 #include <assert.h>
 
+#ifdef RIGHT
+#  undef RIGHT
+#endif
+
+#ifdef LEFT
+#  undef LEFT
+#endif
+
 namespace de {
 
 class SuperBlockmap;
@@ -48,9 +56,20 @@ friend class SuperBlockmap;
 public:
     typedef std::list<bsp_hedge_t*> HEdges;
 
+    enum ChildId
+    {
+        RIGHT,
+        LEFT
+    };
+
+    static void inline assertValidChildId(ChildId childId)
+    {
+        assert(childId == RIGHT || childId == LEFT);
+    }
+
 private:
     SuperBlock(SuperBlockmap& blockmap) :
-        bmap(blockmap), hedges(0), realNum(0), miniNum(0)
+        _bmap(blockmap), _hedges(0), _realNum(0), _miniNum(0)
     {}
 
     ~SuperBlock() { clear(); }
@@ -61,7 +80,7 @@ public:
      *
      * @return  The owning SuperBlockmap instance.
      */
-    SuperBlockmap& blockmap() const { return bmap; }
+    SuperBlockmap& blockmap() const { return _bmap; }
 
     /**
      * Retrieve the axis-aligned bounding box defined for this superblock
@@ -72,16 +91,34 @@ public:
      */
     const AABox& bounds() const;
 
-    /**
-     * Retrieve a pointer to a sub-block of this superblock.
-     *
-     * @param left          non-zero= pick the "left" child.
-     *
-     * @return  Selected child superblock else @c NULL if none.
-     */
-    SuperBlock* child(int left);
+    bool hasChild(ChildId childId) const;
 
-    SuperBlock* addChild(int vertical, int left);
+    inline bool hasRight() const { return hasChild(RIGHT); }
+    inline bool hasLeft() const  { return hasChild(LEFT); }
+
+    /**
+     * Retrieve a pointer to a sub-block if present.
+     * @param childId  Identifier to the sub-block.
+     * @return  Selected sub-block else @c NULL.
+     */
+    SuperBlock& child(ChildId childId);
+
+    /**
+     * Retrieve the right sub-block. Use SuperBlock::hasRight() before calling.
+     * @return  Right sub-block.
+     */
+    inline SuperBlock& right() { return child(RIGHT); }
+
+    /**
+     * Retrieve the right sub-block. Use SuperBlock::hasLeft() before calling.
+     * @return  Left sub-block else @c NULL.
+     */
+    inline SuperBlock& left()  { return child(LEFT); }
+
+    SuperBlock* addChild(ChildId childId, bool splitVertical);
+
+    inline SuperBlock* addRight(bool splitVertical) { return addChild(RIGHT, splitVertical); }
+    inline SuperBlock* addLeft(bool splitVertical)  { return addChild(LEFT,  splitVertical); }
 
     /**
      * Perform a depth-first traversal over all child superblocks and
@@ -96,8 +133,8 @@ public:
      */
     int traverse(int (C_DECL *callback)(SuperBlock*, void*), void* parameters=NULL);
 
-    inline HEdges::const_iterator hedgesBegin() const { return hedges.begin(); }
-    inline HEdges::const_iterator hedgesEnd() const { return hedges.end(); }
+    inline HEdges::const_iterator hedgesBegin() const { return _hedges.begin(); }
+    inline HEdges::const_iterator hedgesEnd() const { return _hedges.end(); }
 
     void findHEdgeBounds(AABoxf& bounds);
 
@@ -135,7 +172,7 @@ public:
 
 protected:
     /// KdTree node in the owning SuperBlockmap.
-    KdTreeNode* tree;
+    KdTreeNode* _tree;
 
 private:
     void clear();
@@ -144,15 +181,15 @@ private:
     void inline linkHEdge(bsp_hedge_t* hedge);
 
     /// SuperBlockmap that owns this SuperBlock.
-    SuperBlockmap& bmap;
+    SuperBlockmap& _bmap;
 
     /// Half-edges completely contained by this block.
-    HEdges hedges;
+    HEdges _hedges;
 
     /// Number of real half-edges and minihedges contained by this block
     /// (including all sub-blocks below it).
-    int realNum;
-    int miniNum;
+    int _realNum;
+    int _miniNum;
 };
 
 class SuperBlockmap {
@@ -193,7 +230,7 @@ private:
      * Division of a block always occurs horizontally:
      *     e.g. 512x512 -> 256x512 -> 256x256.
      */
-    KdTree* kdTree;
+    KdTree* _kdTree;
 };
 
 } // namespace de

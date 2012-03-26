@@ -532,7 +532,7 @@ static void evalPartitionCostForHEdge(const BspHEdgeInfo* partInfo,
  *              been initialized prior to calling this.
  * @return  @c true= iff a "bad half-edge" was found early.
  */
-static int evalPartitionCostForSuperBlock(SuperBlock* superblock, int splitCostFactor,
+static int evalPartitionCostForSuperBlock(SuperBlock& block, int splitCostFactor,
     const BspHEdgeInfo* hedgeInfo, int bestCost, PartitionCost& cost)
 {
     int num;
@@ -542,31 +542,31 @@ static int evalPartitionCostForSuperBlock(SuperBlock* superblock, int splitCostF
      * half-edges within it at once. Only when the partition line intercepts the
      * box do we need to go deeper into it.
      */
-    num = P_BoxOnLineSide3(&superblock->bounds(), hedgeInfo->pSX, hedgeInfo->pSY,
+    num = P_BoxOnLineSide3(&block.bounds(), hedgeInfo->pSX, hedgeInfo->pSY,
                            hedgeInfo->pDX, hedgeInfo->pDY, hedgeInfo->pPerp,
                            hedgeInfo->pLength, DIST_EPSILON);
 
     if(num < 0)
     {
         // Left.
-        cost.realLeft += superblock->realHEdgeCount();
-        cost.miniLeft += superblock->miniHEdgeCount();
+        cost.realLeft += block.realHEdgeCount();
+        cost.miniLeft += block.miniHEdgeCount();
 
         return false;
     }
     else if(num > 0)
     {
         // Right.
-        cost.realRight += superblock->realHEdgeCount();
-        cost.miniRight += superblock->miniHEdgeCount();
+        cost.realRight += block.realHEdgeCount();
+        cost.miniRight += block.miniHEdgeCount();
 
         return false;
     }
 
     // Check partition against all half-edges.
     PartitionCost costDelta;
-    for(SuperBlock::HEdges::const_iterator it = superblock->hedgesBegin();
-        it != superblock->hedgesEnd(); ++it)
+    for(SuperBlock::HEdges::const_iterator it = block.hedgesBegin();
+        it != block.hedgesEnd(); ++it)
     {
         // Catch "bad half-edges" early on.
         if(cost.total > bestCost) return true; // Stop iteration.
@@ -580,36 +580,37 @@ static int evalPartitionCostForSuperBlock(SuperBlock* superblock, int splitCostF
     }
 
     // Handle sub-blocks recursively.
-    for(num = 0; num < 2; ++num)
-    {
-        SuperBlock* child = superblock->child(num);
-        if(!child) continue;
+    if(block.hasRight() &&
+       evalPartitionCostForSuperBlock(block.right(), splitCostFactor,
+                                      hedgeInfo, bestCost, cost)) return true;
 
-        if(evalPartitionCostForSuperBlock(child, splitCostFactor, hedgeInfo, bestCost, cost))
-            return true;
-    }
+    if(block.hasLeft() &&
+       evalPartitionCostForSuperBlock(block.left(), splitCostFactor,
+                                      hedgeInfo, bestCost, cost)) return true;
 
     // No "bad half-edge" was found. Good.
     return false;
 }
 
 /**
- * Evaluate a partition and determine the cost, taking into account the number of
- * splits and the difference between left and right.
+ * Evaluate a partition and determine the cost, taking into account the
+ * number of splits and the difference between left and right.
  *
- * To be able to divide the nodes down, evalPartition must decide which is the best
- * half-edge to use as a nodeline. It does this by selecting the line with least
- * splits and has least difference of hald-edges on either side of it.
+ * To be able to divide the nodes down, evalPartition must decide which
+ * is the best half-edge to use as a nodeline. It does this by selecting
+ * the line with least splits and has least difference of hald-edges on
+ * either side of it.
  *
- * @return  The computed cost, or a negative value if the edge should be skipped.
+ * @return  The computed cost, or a negative value (should be skipped).
  */
-static int evalPartition(SuperBlock* superblock, int splitCostFactor,
+static int evalPartition(SuperBlock& block, int splitCostFactor,
     BspHEdgeInfo* hedgeInfo, int bestCost)
 {
     PartitionCost cost;
 
     cost.initialize();
-    if(evalPartitionCostForSuperBlock(superblock, splitCostFactor, hedgeInfo, bestCost, cost)) return -1;
+    if(evalPartitionCostForSuperBlock(block, splitCostFactor, hedgeInfo,
+                                      bestCost, cost)) return -1;
 
     // Make sure there is at least one real half-edge on each side.
     if(!cost.realLeft || !cost.realRight)
@@ -671,7 +672,7 @@ static int chooseHEdgeFromSuperBlock(SuperBlock* partList, void* parameters)
         lineDef->validCount = validCount;
 
         // Unsuitable or too costly?
-        int cost = evalPartition(p->hedgeList, p->splitCostFactor, &hedge->info, p->bestCost);
+        int cost = evalPartition(*p->hedgeList, p->splitCostFactor, &hedge->info, p->bestCost);
         if(cost >= 0 && cost < p->bestCost)
         {
             // We have a new better choice.
@@ -736,6 +737,11 @@ static boolean lineDefHasSelfRef(LineDef* lineDef)
 {
     return !!(lineDef->buildData.mlFlags & MLF_SELFREF);
 }
+
+enum {
+   RIGHT = 0,
+   LEFT
+};
 
 const HPlaneIntercept* BspBuilder::makeHPlaneIntersection(HPlane* hplane, bsp_hedge_t* hedge, int leftSide)
 {
@@ -957,7 +963,8 @@ bspleafdata_t* BspBuilder::createBSPLeaf(SuperBlock* hedgeList)
 boolean BspBuilder::buildNodes(SuperBlock* superblock, BinaryTree** parent, size_t depth,
     HPlane* hplane)
 {
-    SuperBlockmap* hedgeSet[2];
+    SuperBlockmap* rightHEdges, *leftHEdges;
+    AABoxf rightHEdgesBounds, leftHEdgesBounds;
     BinaryTree* subTree;
     bspleafdata_t* leaf;
     BspNode* node;
@@ -989,36 +996,32 @@ boolean BspBuilder::buildNodes(SuperBlock* superblock, BinaryTree** parent, size
     /// @todo There should be no need to construct entirely independent
     ///       data structures to contain these hedge subsets.
     // Copy the bounding box of the edge list to the superblocks.
-    hedgeSet[RIGHT] =  new SuperBlockmap(superblock->bounds());
-    hedgeSet[LEFT]  = new SuperBlockmap(superblock->bounds());
+    rightHEdges = new SuperBlockmap(superblock->bounds());
+    leftHEdges  = new SuperBlockmap(superblock->bounds());
 
     // Divide the half-edges into two lists: left & right.
-    partitionHEdges(superblock, hedgeSet[RIGHT]->root(),
-                                hedgeSet[LEFT]->root(), hplane);
+    partitionHEdges(superblock, rightHEdges->root(), leftHEdges->root(), hplane);
     hplane->clear();
 
-    node = (BspNode*)M_Calloc(sizeof *node);
+    rightHEdges->findHEdgeBounds(rightHEdgesBounds);
+    leftHEdges->findHEdgeBounds(leftHEdgesBounds);
+
+    node = BspNode_New(hplane->origin(), hplane->angle());
+    BspNode_SetRightBounds(node, &rightHEdgesBounds);
+    BspNode_SetLeftBounds(node, &leftHEdgesBounds);
     *parent = BinaryTree_NewWithUserData(node);
 
-    hedgeSet[LEFT]->findHEdgeBounds(node->aaBox[LEFT]);
-    hedgeSet[RIGHT]->findHEdgeBounds(node->aaBox[RIGHT]);
-
-    node->partition.x = hplane->x();
-    node->partition.y = hplane->y();
-    node->partition.dX = hplane->dX();
-    node->partition.dY = hplane->dY();
-
-    builtOK = buildNodes(hedgeSet[RIGHT]->root(), &subTree, depth + 1, hplane);
-    BinaryTree_SetChild(*parent, RIGHT, subTree);
-    delete hedgeSet[RIGHT];
+    builtOK = buildNodes(rightHEdges->root(), &subTree, depth + 1, hplane);
+    BinaryTree_SetRight(*parent, subTree);
+    delete rightHEdges;
 
     if(builtOK)
     {
-        builtOK = buildNodes(hedgeSet[LEFT]->root(), &subTree, depth + 1, hplane);
-        BinaryTree_SetChild(*parent, LEFT, subTree);
+        builtOK = buildNodes(leftHEdges->root(), &subTree, depth + 1, hplane);
+        BinaryTree_SetLeft(*parent, subTree);
     }
 
-    delete hedgeSet[LEFT];
+    delete leftHEdges;
 
     return builtOK;
 }
