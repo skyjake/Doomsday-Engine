@@ -158,7 +158,7 @@ def mac_package_snowberry():
     os.system('python buildapp.py py2app')
     
     # Share it.
-    duptree('dist/Doomsday Engine.app', 'shared/Doomsday Engine.app')
+    duptree('dist/Doomsday Engine.app', 'shared/')
 
 
 def mac_release():
