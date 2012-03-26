@@ -14,9 +14,13 @@ CONFIG += deng_nofixedasm
         # 4.6 or earlier, assume Tiger with 32-bit Universal Intel/PowerPC binaries.
         CONFIG += deng_macx4u_32bit
     }
+    else:contains(QT_VERSION, ^4\\.7\\..*) {
+        # 4.7, assume Snow Leopard with 32/64-bit Intel.
+        CONFIG += deng_macx6_32bit_64bit
+    }
     else {
-        # 4.7 or newer, assume Snow Leopard with 64-bit only Intel.
-        CONFIG += deng_macx6_64bit
+        # 4.8+, assume Lion and 64-bit Intel.
+        CONFIG += deng_macx7_64bit
     }
 }
 
@@ -32,15 +36,39 @@ QMAKE_LFLAGS += -flat_namespace -undefined suppress
 deng_nativesdk {
     echo(Using native SDK.)
 }
-else:deng_macx6_64bit {
-    echo(Using 64-bit only 10.6+ SDK.)
+else:deng_macx7_64bit {
+    echo(Using Mac OS 10.7 SDK.)
+    CONFIG -= x86
+    CONFIG += x86_64
+    QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.7.sdk
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
-    QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.6.sdk
+    QMAKE_CFLAGS += -mmacosx-version-min=10.6
+    QMAKE_CXXFLAGS += -mmacosx-version-min=10.6
     INCLUDEPATH = $$QMAKE_MAC_SDK/usr/X11/include $$INCLUDEPATH
     QMAKE_INCDIR_QT = $${QMAKE_MAC_SDK}$$QMAKE_INCDIR_QT
+    QMAKE_LIBDIR_QT = $${QMAKE_MAC_SDK}$$QMAKE_LIBDIR_QT    
+}
+else:deng_macx6_32bit_64bit {
+    echo(Using Mac OS 10.6 SDK.)
+    CONFIG += x86 x86_64
+    QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.6.sdk
+    QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.5
+    QMAKE_CFLAGS += -mmacosx-version-min=10.5
+    QMAKE_CXXFLAGS += -mmacosx-version-min=10.5
+    INCLUDEPATH = $$QMAKE_MAC_SDK/usr/X11/include $$INCLUDEPATH
+    QMAKE_INCDIR_QT = $${QMAKE_MAC_SDK}$$QMAKE_INCDIR_QT
+    QMAKE_LIBDIR_QT = $${QMAKE_MAC_SDK}$$QMAKE_LIBDIR_QT
 }
 else:deng_macx4u_32bit {
-    error("32-bit 10.4+ SDK still wip.")
+    echo(Using Mac OS 10.4u SDK.)
+    CONFIG += x86 ppc
+    QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.4u.sdk
+    QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.4
+    QMAKE_CFLAGS += -mmacosx-version-min=10.4
+    INCLUDEPATH = $$QMAKE_MAC_SDK/usr/X11R6/include $$INCLUDEPATH
+    QMAKE_INCDIR_QT = $${QMAKE_MAC_SDK}$$QMAKE_INCDIR_QT
+    QMAKE_LIBDIR_QT = $${QMAKE_MAC_SDK}$$QMAKE_LIBDIR_QT
+    DEFINES += MACOS_10_4
 }
 else {
     error(Unspecified SDK configuration.)
