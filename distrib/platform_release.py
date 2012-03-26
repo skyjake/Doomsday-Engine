@@ -198,13 +198,13 @@ def mac_release():
 
     masterDmg = target
     volumeName = "Doomsday Engine " + DOOMSDAY_VERSION_FULL
-    templateFile = os.path.join(SNOWBERRY_DIR, 'template-image/template.dmg')
+    templateFile = os.path.join(SNOWBERRY_DIR, 'template-image/template.sparseimage')
     if not os.path.exists(templateFile):
-        print 'Template .dmg not found, trying to extract from compressed archive...'
+        print 'Template .sparseimage not found, trying to extract from compressed archive...'
         os.system('bunzip2 -k "%s.bz2"' % templateFile)
-    shutil.copy(templateFile, 'imaging.dmg')
+    shutil.copy(templateFile, 'imaging.sparseimage')
     remkdir('imaging')
-    os.system('hdiutil attach imaging.dmg -noautoopen -quiet -mountpoint imaging')
+    os.system('hdiutil attach imaging.sparseimage -noautoopen -quiet -mountpoint imaging')
     shutil.rmtree('imaging/Doomsday Engine.app', True)
     remove('imaging/Read Me.rtf')
     duptree('Doomsday Engine.app', 'imaging/Doomsday Engine.app')
@@ -214,8 +214,8 @@ def mac_release():
         ' "' + "Doomsday Engine " + DOOMSDAY_VERSION_FULL + '"')
 
     os.system('hdiutil detach -quiet imaging')
-    os.system('hdiutil convert imaging.dmg -format UDZO -imagekey zlib-level=9 -o "' + target + '"')
-    remove('imaging.dmg')
+    os.system('hdiutil convert imaging.sparseimage -format UDZO -imagekey zlib-level=9 -o "' + target + '"')
+    remove('imaging.sparseimage')
 
 
 def win_release():
