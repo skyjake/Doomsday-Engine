@@ -24,6 +24,7 @@
  */
 
 #include "de_platform.h"
+#include "de_console.h"
 #include "p_mapdata.h"
 
 #include "bspbuilder/hedges.hh"
@@ -33,11 +34,59 @@ using namespace de;
 
 void SuperBlock::clear()
 {
-    hedges.clear();
-    KdTreeNode_SetUserData(tree, NULL);
+    _hedges.clear();
+    KdTreeNode_SetUserData(_tree, NULL);
 }
 
-//static int deleteSuperBlockIterator(SuperBlock* block, void* /*parameters*/);
+const AABox& SuperBlock::bounds() const
+{
+    return *KdTreeNode_Bounds(_tree);
+}
+
+bool SuperBlock::hasChild(ChildId childId) const
+{
+    assertValidChildId(childId);
+    return NULL != KdTreeNode_Child(_tree, childId==LEFT);
+}
+
+SuperBlock& SuperBlock::child(ChildId childId)
+{
+    assertValidChildId(childId);
+    KdTreeNode* subtree = KdTreeNode_Child(_tree, childId==LEFT);
+    if(!subtree) Con_Error("SuperBlock::child: Has no %s subblock.", childId==LEFT? "left" : "right");
+    return *static_cast<SuperBlock*>(KdTreeNode_UserData(subtree));
+}
+
+SuperBlock* SuperBlock::addChild(ChildId childId, bool splitVertical)
+{
+    assertValidChildId(childId);
+    SuperBlock* child = new SuperBlock(_bmap);
+    child->_tree = KdTreeNode_AddChild(_tree, 0.5, int(splitVertical), childId==LEFT, child);
+    return child;
+}
+
+uint SuperBlock::hedgeCount(bool addReal, bool addMini) const
+{
+    uint total = 0;
+    if(addReal) total += _realNum;
+    if(addMini) total += _miniNum;
+    return total;
+}
+
+void SuperBlock::incrementHEdgeCount(bsp_hedge_t* hedge)
+{
+    if(!hedge) return;
+    if(hedge->info.lineDef) _realNum++;
+    else                    _miniNum++;
+}
+
+void SuperBlock::linkHEdge(bsp_hedge_t* hedge)
+{
+    if(!hedge) return;
+    _hedges.push_front(hedge);
+    // Associate ourself.
+    hedge->block = this;
+}
 
 static void initAABoxFromHEdgeVertexes(AABoxf* aaBox, const bsp_hedge_t* hedge)
 {
@@ -51,27 +100,25 @@ static void initAABoxFromHEdgeVertexes(AABoxf* aaBox, const bsp_hedge_t* hedge)
 }
 
 /// @todo Optimize: Cache this result.
-void SuperBlock::findHEdgeBounds(AABoxf* bounds)
+void SuperBlock::findHEdgeBounds(AABoxf& bounds)
 {
-    if(!bounds) return;
-
     bool initialized = false;
     AABoxf hedgeAABox;
 
-    for(HEdges::iterator it = hedges.begin(); it != hedges.end(); ++it)
+    for(HEdges::iterator it = _hedges.begin(); it != _hedges.end(); ++it)
     {
         bsp_hedge_t* hedge = *it;
         initAABoxFromHEdgeVertexes(&hedgeAABox, hedge);
         if(initialized)
         {
-            V2_AddToBox(bounds->arvec2, hedgeAABox.min);
+            V2_AddToBox(bounds.arvec2, hedgeAABox.min);
         }
         else
         {
-            V2_InitBox(bounds->arvec2, hedgeAABox.min);
+            V2_InitBox(bounds.arvec2, hedgeAABox.min);
             initialized = true;
         }
-        V2_AddToBox(bounds->arvec2, hedgeAABox.max);
+        V2_AddToBox(bounds.arvec2, hedgeAABox.max);
     }
 }
 
@@ -82,82 +129,51 @@ SuperBlock* SuperBlock::hedgePush(bsp_hedge_t* hedge)
     SuperBlock* sb = this;
     for(;;)
     {
-        int p1, p2, half, midPoint[2];
-        const AABox* bounds;
-
         // Update half-edge counts.
         sb->incrementHEdgeCount(hedge);
 
-        if(sb->isLeaf())
+        if(sb->blockmap().isLeaf(*sb))
         {
             // No further subdivision possible.
             sb->linkHEdge(hedge);
             break;
         }
 
-        bounds = sb->bounds();
-        midPoint[0] = (bounds->minX + bounds->maxX) / 2;
-        midPoint[1] = (bounds->minY + bounds->maxY) / 2;
-
-        if(bounds->maxX - bounds->minX >=
-           bounds->maxY - bounds->minY)
+        ChildId p1, p2;
+        bool splitVertical;
+        if(sb->bounds().maxX - sb->bounds().minX >=
+           sb->bounds().maxY - sb->bounds().minY)
         {
             // Wider than tall.
-            p1 = hedge->v[0]->buildData.pos[0] >= midPoint[0];
-            p2 = hedge->v[1]->buildData.pos[0] >= midPoint[0];
+            int midPoint = (sb->bounds().minX + sb->bounds().maxX) / 2;
+            p1 = hedge->v[0]->buildData.pos[0] >= midPoint? LEFT : RIGHT;
+            p2 = hedge->v[1]->buildData.pos[0] >= midPoint? LEFT : RIGHT;
+            splitVertical = false;
         }
         else
         {
             // Taller than wide.
-            p1 = hedge->v[0]->buildData.pos[1] >= midPoint[1];
-            p2 = hedge->v[1]->buildData.pos[1] >= midPoint[1];
+            int midPoint = (sb->bounds().minY + sb->bounds().maxY) / 2;
+            p1 = hedge->v[0]->buildData.pos[1] >= midPoint? LEFT : RIGHT;
+            p2 = hedge->v[1]->buildData.pos[1] >= midPoint? LEFT : RIGHT;
+            splitVertical = true;
         }
 
-        if(p1 && p2)
+        if(p1 != p2)
         {
-            half = 1;
-        }
-        else if(!p1 && !p2)
-        {
-            half = 0;
-        }
-        else
-        {
-            // Line crosses midpoint -- link it in and return.
+            // Line crosses midpoint; link it in and return.
             sb->linkHEdge(hedge);
             break;
         }
 
         // The hedge lies in one half of this block. Create the sub-block
         // if it doesn't already exist, and loop back to add the hedge.
-        if(!KdTreeNode_Child(sb->tree, half))
+        if(!sb->hasChild(p1))
         {
-            SuperBlock* child;
-            AABox sub;
-
-            bounds = sb->bounds();
-            if(bounds->maxX - bounds->minX >= bounds->maxY - bounds->minY)
-            {
-                sub.minX = (half? midPoint[0] : bounds->minX);
-                sub.minY = bounds->minY;
-
-                sub.maxX = (half? bounds->maxX : midPoint[0]);
-                sub.maxY = bounds->maxY;
-            }
-            else
-            {
-                sub.minX = bounds->minX;
-                sub.minY = (half? midPoint[1] : bounds->minY);
-
-                sub.maxX = bounds->maxX;
-                sub.maxY = (half? bounds->maxY : midPoint[1]);
-            }
-
-            child = new SuperBlock(sb->blockmap()/*, &sub*/);
-            child->tree = KdTreeNode_AddChild(sb->tree, &sub, half, child);
+            sb->addChild(p1, (int)splitVertical);
         }
 
-        sb = (SuperBlock*)KdTreeNode_UserData(KdTreeNode_Child(sb->tree, half));
+        sb = &sb->child(p1);
     }
 
     return this;
@@ -165,56 +181,63 @@ SuperBlock* SuperBlock::hedgePush(bsp_hedge_t* hedge)
 
 bsp_hedge_t* SuperBlock::hedgePop()
 {
-    if(hedges.empty()) return NULL;
+    if(_hedges.empty()) return NULL;
 
-    bsp_hedge_t* hedge = hedges.front();
-    hedges.pop_front();
+    bsp_hedge_t* hedge = _hedges.front();
+    _hedges.pop_front();
 
     // Update half-edge counts.
-    if(hedge->info.lineDef)
-        realNum--;
-    else
-        miniNum--;
+    if(hedge->info.lineDef) _realNum--;
+    else                    _miniNum--;
 
     // Disassociate ourself.
     hedge->block = NULL;
     return hedge;
 }
 
-typedef struct {
-    int (*callback)(SuperBlock*, void*);
-    void* parameters;
-} treetraverserparams_t;
-
-static int SuperBlock_TreeTraverser(KdTreeNode* kd, void* parameters)
+int SuperBlock::traverse(int (C_DECL *callback)(SuperBlock*, void*), void* parameters)
 {
-    treetraverserparams_t* p = (treetraverserparams_t*)parameters;
-    return p->callback((SuperBlock*)KdTreeNode_UserData(kd), p->parameters);
-}
-
-int SuperBlock_Traverse(SuperBlock* sb, int (*callback)(SuperBlock*, void*),
-    void* parameters)
-{
-    treetraverserparams_t parm;
-    assert(sb);
     if(!callback) return false; // Continue iteration.
 
-    parm.callback = callback;
-    parm.parameters = parameters;
-    return KdTreeNode_Traverse2(sb->tree, SuperBlock_TreeTraverser, (void*)&parm);
+    int result = callback(this, parameters);
+    if(result) return result;
+
+    if(_tree)
+    {
+        // Recursively handle subtrees.
+        for(uint num = 0; num < 2; ++num)
+        {
+            KdTreeNode* node = KdTreeNode_Child(_tree, num);
+            if(!node) continue;
+
+            SuperBlock* child = static_cast<SuperBlock*>(KdTreeNode_UserData(node));
+            if(!child) continue;
+
+            result = child->traverse(callback, parameters);
+            if(result) return result;
+        }
+    }
+
+    return false; // Continue iteration.
 }
 
-void SuperBlockmap::init(const AABox* bounds)
+void SuperBlockmap::init(const AABox& bounds)
 {
-    kdTree = KdTree_New(bounds);
+    _kdTree = KdTree_New(&bounds);
 
-    SuperBlock* block = new SuperBlock(this);
-    block->tree = KdTreeNode_SetUserData(KdTree_Root(kdTree), block);
+    SuperBlock* block = new SuperBlock(*this);
+    block->_tree = KdTreeNode_SetUserData(KdTree_Root(_kdTree), block);
 }
 
 SuperBlock* SuperBlockmap::root()
 {
-    return (SuperBlock*)KdTreeNode_UserData(KdTree_Root(kdTree));
+    return static_cast<SuperBlock*>(KdTreeNode_UserData(KdTree_Root(_kdTree)));
+}
+
+bool SuperBlockmap::isLeaf(const SuperBlock& block) const
+{
+    return (block.bounds().maxX - block.bounds().minX <= 256 &&
+            block.bounds().maxY - block.bounds().minY <= 256);
 }
 
 typedef struct {
@@ -228,7 +251,7 @@ static int findHEdgeBoundsWorker(SuperBlock* block, void* parameters)
     if(block->hedgeCount(true, true))
     {
         AABoxf blockHEdgeAABox;
-        block->findHEdgeBounds(&blockHEdgeAABox);
+        block->findHEdgeBounds(blockHEdgeAABox);
         if(p->initialized)
         {
             V2_AddToBox(p->bounds.arvec2, blockHEdgeAABox.min);
@@ -243,44 +266,47 @@ static int findHEdgeBoundsWorker(SuperBlock* block, void* parameters)
     return false; // Continue iteration.
 }
 
-static int deleteSuperBlockWorker(SuperBlock* block, void* /*parameters*/)
+void SuperBlockmap::clearBlockWorker(SuperBlock& block)
 {
-    delete block;
-    return false; // Continue iteration.
+    if(block._tree)
+    {
+        // Recursively handle sub-blocks.
+        KdTreeNode* child;
+        for(uint num = 0; num < 2; ++num)
+        {
+            child = KdTreeNode_Child(block._tree, num);
+            if(!child) continue;
+
+            SuperBlock* blockPtr = static_cast<SuperBlock*>(KdTreeNode_UserData(child));
+            if(blockPtr) clearBlockWorker(*blockPtr);
+        }
+    }
+    delete &block;
 }
 
 void SuperBlockmap::clear()
 {
-    SuperBlockmap_PostTraverse(this, deleteSuperBlockWorker);
-    KdTree_Delete(kdTree);
+    SuperBlock* block = root();
+    if(block) clearBlockWorker(*block);
+    KdTree_Delete(_kdTree);
 }
 
-void SuperBlockmap::findHEdgeBounds(AABoxf* aaBox)
+void SuperBlockmap::findHEdgeBounds(AABoxf& aaBox)
 {
-    if(!aaBox) return;
-
-    findhedgelistboundsparams_t parm;
-    parm.initialized = false;
-    SuperBlock_Traverse(root(), findHEdgeBoundsWorker, (void*)&parm);
-    if(parm.initialized)
+    SuperBlock* block = root();
+    if(block)
     {
-        V2_CopyBox(aaBox->arvec2, parm.bounds.arvec2);
-        return;
+        findhedgelistboundsparams_t parm;
+        parm.initialized = false;
+        block->traverse(findHEdgeBoundsWorker, (void*)&parm);
+        if(parm.initialized)
+        {
+            V2_CopyBox(aaBox.arvec2, parm.bounds.arvec2);
+            return;
+        }
     }
 
     // Clear.
-    V2_Set(aaBox->min, DDMAXFLOAT, DDMAXFLOAT);
-    V2_Set(aaBox->max, DDMINFLOAT, DDMINFLOAT);
-}
-
-int SuperBlockmap_PostTraverse(SuperBlockmap* bmap, int(*callback)(SuperBlock*, void*),
-    void* parameters)
-{
-    treetraverserparams_t parm;
-    assert(bmap);
-    if(!callback) return false; // Continue iteration.
-
-    parm.callback = callback;
-    parm.parameters = parameters;
-    return KdTree_PostTraverse2(bmap->kdTree, SuperBlock_TreeTraverser, (void*)&parm);
+    V2_Set(aaBox.min, DDMAXFLOAT, DDMAXFLOAT);
+    V2_Set(aaBox.max, DDMINFLOAT, DDMINFLOAT);
 }

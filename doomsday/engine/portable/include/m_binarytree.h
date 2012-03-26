@@ -75,6 +75,9 @@ void BinaryTree_Delete(BinaryTree* tree);
  */
 BinaryTree* BinaryTree_Child(BinaryTree* tree, boolean left);
 
+#define BinaryTree_Right(tree) BinaryTree_Child((tree), false)
+#define BinaryTree_Left(tree)  BinaryTree_Child((tree), true)
+
 /**
  * Retrieve the user data associated with the specified (sub)tree.
  *
@@ -93,6 +96,9 @@ void* BinaryTree_UserData(BinaryTree* tree);
  * @param subTree  Ptr to the (child) tree to be linked or @c NULL.
  */
 void BinaryTree_SetChild(BinaryTree* tree, boolean left, BinaryTree* subtree);
+
+#define BinaryTree_SetRight(tree, subtree) BinaryTree_SetChild((tree), false, (subtree))
+#define BinaryTree_SetLeft(tree, subtree)  BinaryTree_SetChild((tree), true, (subtree))
 
 /**
  * Set the user data assoicated with the specified (sub)tree.

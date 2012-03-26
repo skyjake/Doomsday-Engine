@@ -69,7 +69,13 @@ KdTreeNode* KdTreeNode_Parent(KdTreeNode* kdTreeNode);
 
 KdTreeNode* KdTreeNode_Child(KdTreeNode* kdTreeNode, int left);
 
-KdTreeNode* KdTreeNode_AddChild(KdTreeNode* kdTreeNode, const AABox* bounds, int left, void* userData);
+#define KdTreeNode_Right(kdTreeNode) KdTreeNode_Child((kdTreeNode), false)
+#define KdTreeNode_Left(kdTreeNode)  KdTreeNode_Child((kdTreeNode), true)
+
+KdTreeNode* KdTreeNode_AddChild(KdTreeNode* kdTreeNode, double distance, int vertical, int left, void* userData);
+
+#define KdTreeNode_AddRight(kdTreeNode), distance, vertical, userData) KdTreeNode_AddChild((kdTreeNode), (distance), (vertical), false, (userData))
+#define KdTreeNode_AddLeft(kdTreeNode), distance, vertical, userData) KdTreeNode_AddChild((kdTreeNode), (distance), (vertical), true, (userData))
 
 int KdTreeNode_Traverse2(KdTreeNode* kdTreeNode, int (*callback)(KdTreeNode*, void*), void* parameters);
 int KdTreeNode_Traverse(KdTreeNode* kdTreeNode, int (*callback)(KdTreeNode*, void*), void* parameters);

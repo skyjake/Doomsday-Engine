@@ -202,6 +202,12 @@ typedef unsigned char binangle_t;
 #define DDMINLONG   ((int32_t)0x80000000)
 #define DDMINFLOAT  ((float)-(1E+37))
 
+#ifdef _DEBUG
+#  define DENG_DEBUG_ONLY(x)    x
+#else
+#  define DENG_DEBUG_ONLY(x)
+#endif
+
 // Forward declarations for map data types. The contents of these structs is
 // declared in p_maptypes.h.
 struct bspnode_s;

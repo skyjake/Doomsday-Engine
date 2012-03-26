@@ -165,7 +165,7 @@ SuperBlockmap* BspBuilder::createInitialHEdges(GameMap* map)
     blockBounds.maxX = blockBounds.minX + 128 * M_CeilPow2(bw);
     blockBounds.maxY = blockBounds.minY + 128 * M_CeilPow2(bh);
 
-    sbmap = new SuperBlockmap(&blockBounds);
+    sbmap = new SuperBlockmap(blockBounds);
 
     for(i = 0; i < map->numLineDefs; ++i)
     {
@@ -366,8 +366,8 @@ boolean BspBuilder::build(GameMap* map, Vertex*** vertexes, uint* numVertexes)
 
         if(rootNode && !BinaryTree_IsLeaf(rootNode))
         {
-            rHeight = (long) BinaryTree_Height(BinaryTree_Child(rootNode, RIGHT));
-            lHeight = (long) BinaryTree_Height(BinaryTree_Child(rootNode, LEFT));
+            rHeight = (long) BinaryTree_Height(BinaryTree_Right(rootNode));
+            lHeight = (long) BinaryTree_Height(BinaryTree_Left(rootNode));
         }
         else
         {

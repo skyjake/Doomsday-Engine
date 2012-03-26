@@ -38,6 +38,7 @@
 #include "plane.h"
 #include "hedge.h"
 #include "bspleaf.h"
+#include "bspnode.h"
 #include "sector.h"
 #include "p_polyobjs.h"
 #include "p_dmu.h"

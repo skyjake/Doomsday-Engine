@@ -159,15 +159,40 @@ KdTreeNode* KdTreeNode_Child(KdTreeNode* kdn, int left)
     return kdn->subs[left?1:0];
 }
 
-KdTreeNode* KdTreeNode_AddChild(KdTreeNode* kdn, const AABox* bounds, int left, void* userData)
+KdTreeNode* KdTreeNode_AddChild(KdTreeNode* kdn, double distance, int vertical, int left, void* userData)
 {
     KdTreeNode* child;
+    AABox sub;
     assert(kdn);
+
+    distance = MINMAX_OF(-1, distance, 1);
+    if(distance < 0) distance = -distance;
+
+    if(!vertical)
+    {
+        int division = kdn->aaBox.minX + 0.5 + distance * (kdn->aaBox.maxX - kdn->aaBox.minX);
+
+        sub.minX = (left? division : kdn->aaBox.minX);
+        sub.minY = kdn->aaBox.minY;
+
+        sub.maxX = (left? kdn->aaBox.maxX : division);
+        sub.maxY = kdn->aaBox.maxY;
+    }
+    else
+    {
+        int division = kdn->aaBox.minY + 0.5 + distance * (kdn->aaBox.maxY - kdn->aaBox.minY);
+
+        sub.minX = kdn->aaBox.minX;
+        sub.minY = (left? division : kdn->aaBox.minY);
+
+        sub.maxX = kdn->aaBox.maxX;
+        sub.maxY = (left? kdn->aaBox.maxY : division);
+    }
 
     child = kdn->subs[left?1:0];
     if(!child)
     {
-        child = kdn->subs[left?1:0] = KdTreeNode_New(kdn->kdTree, bounds);
+        child = kdn->subs[left?1:0] = KdTreeNode_New(kdn->kdTree, &sub);
         child->parent = kdn;
     }
 

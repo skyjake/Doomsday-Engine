@@ -138,6 +138,7 @@ DENG_HEADERS = \
     portable/include/bspbuilder/intersection.hh \
     portable/include/bspbuilder/superblockmap.hh \
     portable/include/bspleaf.h \
+    portable/include/bspnode.h \
     portable/include/b_command.h \
     portable/include/b_context.h \
     portable/include/b_device.h \
@@ -434,6 +435,7 @@ SOURCES += \
     portable/src/bspbuilder/node.cpp \
     portable/src/bspbuilder/superblockmap.cpp \
     portable/src/bspleaf.c \
+    portable/src/bspnode.c \
     portable/src/busytask.cpp \
     portable/src/canvas.cpp \
     portable/src/canvaswindow.cpp \
