@@ -62,10 +62,14 @@ public:
         LEFT
     };
 
+#if _DEBUG
     static void inline assertValidChildId(ChildId childId)
     {
         assert(childId == RIGHT || childId == LEFT);
     }
+#else
+    static void inline assertValidChildId(ChildId) {}
+#endif
 
 private:
     SuperBlock(SuperBlockmap& blockmap) :
