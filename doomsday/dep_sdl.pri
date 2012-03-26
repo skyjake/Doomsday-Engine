@@ -44,6 +44,7 @@ else:macx {
 else {
     # Generic Unix.
     QMAKE_CFLAGS += $$system(pkg-config sdl --cflags)
+    QMAKE_CXXFLAGS += $$system(pkg-config sdl --cflags)
     LIBS += $$system(pkg-config sdl --libs)
 
     # Also include SDL_net.
