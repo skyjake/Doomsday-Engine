@@ -380,6 +380,18 @@ static int translateKey(int key)
     }
 }
 
+static void submitEvent(keyevent_t* ev, int type, int ddkey)
+{
+    memset(ev, 0, sizeof(*ev));
+    ev->ddkey = ddkey;
+    ev->type = type;
+    if(ddkey >= ' ' && ddkey < 128)
+    {
+        // Simple ASCII.
+        ev->text[0] = ddkey;
+    }
+}
+
 /**
  * Copy n key events from the console and encode them into given buffer.
  *
@@ -402,15 +414,10 @@ size_t I_GetConsoleKeyEvents(keyevent_t *evbuf, size_t bufsize)
     {
         // Use the table to translate the vKey to a DDKEY.
         ddkey = translateKey(key);
-
-        evbuf[n].ddkey = ddkey;
-        evbuf[n].type = IKE_DOWN;
-        n++;
+        submitEvent(&evbuf[n++], IKE_DOWN, ddkey);
 
         // Release immediately.
-        evbuf[n].ddkey = ddkey;
-        evbuf[n].type = IKE_UP;
-        n++;
+        submitEvent(&evbuf[n++], IKE_UP, ddkey);
     }
 
     return n;
