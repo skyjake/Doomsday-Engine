@@ -105,38 +105,16 @@ def output_filename(ext=''):
         return 'doomsday_' + DOOMSDAY_VERSION_FULL + "_" + DOOMSDAY_BUILD + ext
 
 
-def mac_release():
-    """The Mac OS X release procedure."""
+def mac_version():
+    """Determines the Mac OS version."""
+    return platform.mac_ver()[0]
+
+
+def mac_able_to_package_snowberry():
+    return mac_version().startswith('10.5')
     
-    # Check Python dependencies.
-    try:
-        import wx
-    except ImportError:
-        raise Exception("Python: wx not found!")
-    try:
-        import py2app
-    except ImportError:
-        raise Exception("Python: py2app not found!")
-    # First we need to make a release build.
-    print "Building the release..."
-    # Must work in the deng root for qmake (resource bundling apparently
-    # fails otherwise).
-    MAC_WORK_DIR = os.path.abspath(os.path.join(DOOMSDAY_DIR, '../macx_release_build'))
-    remkdir(MAC_WORK_DIR)
-    os.chdir(MAC_WORK_DIR)
-    if os.system('qmake -r -spec macx-g++ CONFIG+="release deng_packres" DENG_BUILD=%s ' % (DOOMSDAY_BUILD_NUMBER) +
-                 '../doomsday/doomsday.pro && make -w ' +
-                 '&& ../doomsday/build/mac/bundleapp.sh ../doomsday'):
-        raise Exception("Failed to build from source.")
 
-    # Now we can proceed to packaging.
-    target = os.path.join(OUTPUT_DIR, output_filename('.dmg'))
-    try:
-        os.remove(target)
-        print 'Removed existing target file', target
-    except:
-        print 'Target:', target
-
+def mac_package_snowberry():
     os.chdir(SNOWBERRY_DIR)
     remkdir('dist')
     remkdir('build')
@@ -182,10 +160,56 @@ def mac_release():
     f.write(DOOMSDAY_VERSION_FULL)
     f.close()
     os.system('python buildapp.py py2app')
+    
+    # Share it.
+    duptree('dist/Doomsday Engine.app', 'shared/')
+
+
+def mac_release():
+    """The Mac OS X release procedure."""
+
+    # Package Snowberry or acquire the shared package.
+    if mac_able_to_package_snowberry():
+        # Check Python dependencies.
+        try:
+            import wx
+        except ImportError:
+            raise Exception("Python: wx not found!")
+        try:
+            import py2app
+        except ImportError:
+            raise Exception("Python: py2app not found!")
+
+        mac_package_snowberry()
+        sbLoc = '/dist/Doomsday Engine.app'
+    else:
+        # Wait until the updated packaged SB has been shared.
+        time.sleep(7 * 60)
+        sbLoc = '/shared/Doomsday Engine.app'
+
+    # First we need to make a release build.
+    print "Building the release..."
+    # Must work in the deng root for qmake (resource bundling apparently
+    # fails otherwise).
+    MAC_WORK_DIR = os.path.abspath(os.path.join(DOOMSDAY_DIR, '../macx_release_build'))
+    remkdir(MAC_WORK_DIR)
+    os.chdir(MAC_WORK_DIR)
+    if os.system('qmake -r -spec macx-g++ CONFIG+="release deng_packres" DENG_BUILD=%s ' % (DOOMSDAY_BUILD_NUMBER) +
+                 '../doomsday/doomsday.pro && make -w ' +
+                 '&& ../doomsday/build/mac/bundleapp.sh ../doomsday'):
+        raise Exception("Failed to build from source.")
+
+    # Now we can proceed to packaging.
+    target = os.path.join(OUTPUT_DIR, output_filename('.dmg'))
+    try:
+        os.remove(target)
+        print 'Removed existing target file', target
+    except:
+        print 'Target:', target
 
     # Back to the normal work dir.
     os.chdir(WORK_DIR)
-    copytree(SNOWBERRY_DIR + '/dist/Doomsday Engine.app', 'Doomsday Engine.app')
+    copytree(SNOWBERRY_DIR + sbLoc, 'Doomsday Engine.app')
 
     print 'Coping release binaries into the launcher bundle.'
     duptree(os.path.join(MAC_WORK_DIR, 'engine/Doomsday.app'), 'Doomsday Engine.app/Contents/Doomsday.app')
