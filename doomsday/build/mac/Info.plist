@@ -16,9 +16,7 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>1.9.8</string>
-	<key>NSMainNibFile</key>
-	<string>MainMenu</string>
-	<key>NSPrincipalClass</key>
-	<string>NSApplication</string>
+	<key>NSUIElement</key>
+	<string>1</string>
 </dict>
 </plist>
