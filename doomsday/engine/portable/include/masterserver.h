@@ -76,10 +76,39 @@ private:
 extern "C" {
 #endif
 
+/**
+ * Called while initializing the low-level network subsystem.
+ */
 void N_MasterInit(void);
+
+/**
+ * Called during engine shutdown.
+ */
 void N_MasterShutdown(void);
+
+/**
+ * Sends a server announcement to the master. The announcement includes our
+ * IP address and other information.
+ *
+ * @param isOpen            If @c true, then the server will be
+ *                          visible on the server list for other clients to
+ *                          find by querying the server list.
+ */
 void N_MasterAnnounceServer(boolean isOpen);
+
+/**
+ * Requests the list of open servers from the master.
+ */
 void N_MasterRequestList(void);
+
+/**
+ * Returns information about the server #N.
+ *
+ * @return @c 0, if communication with the master is currently in progress. If
+ * param info is @c NULL, will return the number of known servers ELSE, will
+ * return @c not zero, if param index was valid and the master returned info on
+ * the requested server.
+ */
 int N_MasterGet(int index, serverinfo_t *info);
 
 #ifdef __cplusplus
