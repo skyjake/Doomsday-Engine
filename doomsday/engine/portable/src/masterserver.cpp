@@ -1,117 +1,260 @@
-/**\file sys_master.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file masterserver.cpp
+ * Communication with the Master Server. @ingroup network
  *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
+
+#include <QNetworkAccessManager>
+#include <QDebug>
+#include <vector>
+#include <list>
+#include "masterserver.h"
+#include "de_platform.h"
+#include "dd_main.h"
+#include "con_main.h"
+#include "m_misc.h"
+#include "net_main.h"
+#include "sv_def.h"
 
 /*
- * Communication with the Master Server.
- *
- * Communication with the master server, using TCP and HTTP.
- * The HTTP requests run in their own threads.
- * Sockets were initialized by sys_network.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
-#include "de_platform.h"
-
-#include <curl/curl.h>
-
 #include "de_base.h"
 #include "de_network.h"
 #include "de_system.h"
 #include "de_console.h"
-#include "de_misc.h"
 
 #include "r_world.h"
-
-// MACROS ------------------------------------------------------------------
+*/
 
 // Maximum time allowed time for a master server operation to take (seconds).
 #define RESPONSE_TIMEOUT    15
 
-// Size of the master worker action queue.
-#define MWA_MAX             10
-
-// TYPES -------------------------------------------------------------------
-
-typedef struct serverlist_s {
-    struct serverlist_s *next;
-    serverinfo_t info;
-} serverlist_t;
-
-// Actions for the master worker.
-typedef enum workeraction_e {
-    MWA_EXIT = 0,
-    MWA_REQUEST,
-    MWA_ANNOUNCE
-} workeraction_t;
-
 typedef struct job_s {
-    workeraction_t act;
+    MasterWorker::Action act;
     void* data;
 } job_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-static void Master_ClearList(void);
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
+//static void Master_ClearList(void);
 
 // Master server info. Hardcoded defaults.
-char   *masterAddress = "www.dengine.net";
-int     masterPort = 0;         // Uses 80 by default.
-char   *masterPath = "/master.php";
+char* masterAddress = const_cast<char*>("www.dengine.net"); /// @todo refactor cvars
+int masterPort = 0; // Defaults to port 80.
+char* masterPath = const_cast<char*>("/master.php"); /// @todo refactor cvars
 boolean masterAware = false;
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// This variable will be true while a communication is in progress.
-//static volatile boolean communicating;
-
-static thread_t worker;
-
-// Semaphore for waking up the worker.
-static sem_t semPending;
-
-// Queue for worker actions.
-static job_t mwaQueue[MWA_MAX];
+/*static job_t mwaQueue[MWA_MAX];
 static int mwaHead;
 static int mwaTail;
-static mutex_t mwaMutex;
+*/
 
+static QString masterUrl(const char* suffix = 0)
+{
+    QString u = QString("http://%1:%2%3")
+            .arg(masterAddress)
+            .arg(masterPort? masterPort : 80)
+            .arg(masterPath);
+    if(suffix) u += suffix;
+    return u;
+}
+
+struct MasterWorker::Instance
+{
+    QNetworkAccessManager* network;
+
+    typedef std::list<job_t> Jobs;
+    Jobs jobs;
+    MasterWorker::Action currentAction;
+
+    typedef std::vector<serverinfo_t> Servers;
+    Servers servers;
+
+    Instance() : network(0), currentAction(NONE) {}
+};
+
+MasterWorker::MasterWorker()
+{
+    d = new Instance;
+    d->network = new QNetworkAccessManager(this);
+    connect(d->network, SIGNAL(finished(QNetworkReply*)), this, SLOT(requestFinished(QNetworkReply*)));
+}
+
+MasterWorker::~MasterWorker()
+{
+    delete d->network;
+}
+
+void MasterWorker::newJob(Action action, void* data)
+{
+    job_t job;
+    job.act = action;
+    job.data = data;
+    d->jobs.push_back(job);
+
+    // Let's get to it!
+    nextJob();
+}
+
+bool MasterWorker::isAllDone() const
+{
+    return d->jobs.empty() && !isOngoing();
+}
+
+bool MasterWorker::isOngoing() const
+{
+    return d->currentAction != NONE;
+}
+
+int MasterWorker::serverCount() const
+{
+    return (int) d->servers.size();
+}
+
+serverinfo_t MasterWorker::server(int index) const
+{
+    assert(index >= 0 && index < serverCount());
+    return d->servers[index];
+}
+
+void MasterWorker::nextJob()
+{
+    if(isOngoing() || isAllDone()) return; // Not a good time, or nothing to do.
+
+    // Get the next job from the queue.
+    job_t job = d->jobs.front();
+    d->jobs.pop_front();
+    d->currentAction = job.act;
+
+    // Let's form an HTTP request.
+    QNetworkRequest req(masterUrl(d->currentAction == REQUEST_SERVERS? "?list" : 0));
+    req.setRawHeader("User-Agent", "Doomsday Engine " DOOMSDAY_VERSION_TEXT);
+
+    if(d->currentAction == ANNOUNCE)
+    {
+        req.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-deng-announce");
+
+        // Include the server info.
+        ddstring_t* msg = Str_NewStd();
+        Sv_InfoToString((serverinfo_t*)job.data, msg);
+
+        qDebug() << "MasterWorker: POST request" << req.url() << req.rawHeaderList() << "content:";
+        qDebug() << Str_Text(msg);
+
+        d->network->post(req, QString(Str_Text(msg)).toUtf8());
+        Str_Delete(msg);
+    }
+    else
+    {
+        qDebug() << "MasterWorker: GET request" << req.url() << req.rawHeaderList();
+
+        d->network->get(req);
+    }
+
+    // Ownership of the data was given to us, so get rid of it now.
+    if(job.data) M_Free(job.data);
+}
+
+void MasterWorker::requestFinished(QNetworkReply* reply)
+{
+    // Make sure the reply gets deleted afterwards.
+    reply->deleteLater();
+
+    if(reply->error() != QNetworkReply::NoError)
+    {
+        qWarning() << "MasterWorker:" << reply->errorString();
+        /// @todo Log the error.
+        return;
+    }
+
+    qDebug() << "MasterWorker: Got reply.";
+
+    if(d->currentAction == REQUEST_SERVERS)
+    {
+        parseResponse(reply->readAll());
+    }
+
+    d->currentAction = NONE;
+
+    // Continue with the next job.
+    nextJob();
+}
+
+/**
+ * Attempts to parse a list of servers from the given text string.
+ *
+ * @param response  The string to be parsed.
+ *
+ * @return @c true, if successful.
+ */
+bool MasterWorker::parseResponse(const QByteArray& response)
+{
+    ddstring_t msg;
+    ddstring_t line;
+    serverinfo_t* info = NULL;
+
+    Str_InitStd(&msg);
+    Str_PartAppend(&msg, response.constData(), 0, response.size());
+
+    Str_InitStd(&line);
+
+    d->servers.clear();
+
+    // The syntax of the response is simple:
+    // label:value
+    // One or more empty lines separate servers.
+
+    const char* pos = Str_Text(&msg);
+    while(*pos)
+    {
+        pos = Str_GetLine(&line, pos);
+
+        if(Str_Length(&line) && !info)
+        {
+            // A new server begins.
+            d->servers.push_back(serverinfo_t());
+            info = &d->servers.back();
+            memset(info, 0, sizeof(*info));
+        }
+        else if(!Str_Length(&line) && info)
+        {
+            // No more current server.
+            info = NULL;
+        }
+
+        if(info)
+        {
+            Sv_StringToInfo(Str_Text(&line), info);
+        }
+    }
+
+    qDebug() << "MasterWorker: Parsed" << serverCount() << "servers.";
+
+    Str_Free(&line);
+    Str_Free(&msg);
+    return true;
+}
+
+static MasterWorker* worker;
+
+#if 0
 // A linked list of servers created from info retrieved from the master.
 static serverlist_t *servers;
 static int numServers;
-static mutex_t serversMutex;
-
-// CODE --------------------------------------------------------------------
 
 /**
  * Creates a new server and links it into our copy of the server list.
@@ -122,12 +265,12 @@ static serverlist_t *Master_NewServer(void)
 {
     serverlist_t *node;
 
-    Sys_Lock(serversMutex);
+    //Sys_Lock(serversMutex);
     numServers++;
     node = M_Calloc(sizeof(serverlist_t));
     node->next = servers;
     servers = node;
-    Sys_Unlock(serversMutex);
+    //Sys_Unlock(serversMutex);
     return node;
 }
 
@@ -136,7 +279,7 @@ static serverlist_t *Master_NewServer(void)
  */
 static void Master_ClearList(void)
 {
-    Sys_Lock(serversMutex);
+    //Sys_Lock(serversMutex);
     numServers = 0;
     while(servers)
     {
@@ -144,7 +287,7 @@ static void Master_ClearList(void)
         M_Free(servers);
         servers = next;
     }
-    Sys_Unlock(serversMutex);
+    //Sys_Unlock(serversMutex);
 }
 
 /**
@@ -157,7 +300,8 @@ static void MasterWorker_Do(workeraction_t act, void* data)
 {
     int nextPos = 0;
 
-    Sys_Lock(mwaMutex);
+    //Sys_Lock(mwaMutex);
+
     nextPos = (mwaHead + 1) % MWA_MAX;
     if(nextPos == mwaTail)
     {
@@ -170,18 +314,19 @@ static void MasterWorker_Do(workeraction_t act, void* data)
         mwaQueue[mwaHead].data = data;
         mwaHead = nextPos;
     }
-    Sys_Unlock(mwaMutex);
+    //Sys_Unlock(mwaMutex);
 
     // Wake up the worker.
-    Sem_V(semPending);
+    //Sem_V(semPending);
+
 }
 
 static boolean MasterWorker_IsDone(void)
 {
     boolean done;
-    Sys_Lock(mwaMutex);
+    //Sys_Lock(mwaMutex);
     done = (mwaHead == mwaTail);
-    Sys_Unlock(mwaMutex);
+    //Sys_Unlock(mwaMutex);
     return done;
 }
 
@@ -193,7 +338,7 @@ static boolean MasterWorker_Get(job_t* job)
     job->act = MWA_EXIT;
     job->data = 0;
 
-    Sys_Lock(mwaMutex);
+    //Sys_Lock(mwaMutex);
     if(mwaHead != mwaTail)
     {
         success = true;
@@ -203,17 +348,17 @@ static boolean MasterWorker_Get(job_t* job)
         job->data = mwaQueue[mwaTail].data;
         mwaQueue[mwaTail].data = 0;
     }
-    Sys_Unlock(mwaMutex);
+    //Sys_Unlock(mwaMutex);
     return success;
 }
 
 static void MasterWorker_Discard(void)
 {
-    Sys_Lock(mwaMutex);
+    //Sys_Lock(mwaMutex);
     assert(mwaHead != mwaTail);
     assert(mwaQueue[mwaTail].data == NULL);
     mwaTail = (mwaTail + 1) % MWA_MAX;
-    Sys_Unlock(mwaMutex);
+    //Sys_Unlock(mwaMutex);
 }
 
 static void MasterWorker_Clear(void)
@@ -232,7 +377,9 @@ static void MasterWorker_Clear(void)
     }
     Sys_Unlock(mwaMutex);
 }
+#endif
 
+#if 0
 /**
  * Callback function that sends outgoing data with libcurl.
  */
@@ -265,74 +412,20 @@ static size_t C_DECL MasterWorker_WriteCallback(void *ptr, size_t size, size_t n
 
     return bytes;
 }
+#endif
 
-static void MasterWorker_GetUrl(char* url)
-{
-    sprintf(url, "http://%s:%i%s", masterAddress, (masterPort? masterPort : 80), masterPath);
-}
-
-/**
- * Attempts to parses a list of servers from the given text string.
- *
- * @param response          The string to be parsed.
- *
- * @return                  @c true, if successful.
- */
-static int MasterWorker_ParseResponse(ddstring_t *msg)
-{
-    ddstring_t line;
-    const char* pos;
-    serverinfo_t* info = NULL;
-
-    Str_InitStd(&line);
-
-    // Clear the list of servers.
-    Master_ClearList();
-
-    // The syntax of the response is simple:
-    // label:value
-    // One or more empty lines separate servers.
-    pos = Str_Text(msg);
-    if(*pos)
-    {
-        boolean isDone = false;
-        while(!isDone)
-        {
-            pos = Str_GetLine(&line, pos);
-
-            if(Str_Length(&line) && !info)
-            {
-                // A new server begins.
-                info = &Master_NewServer()->info;
-            }
-            else if(!Str_Length(&line) && info)
-            {
-                // No more current server.
-                info = NULL;
-            }
-
-            if(info)
-                Sv_StringToInfo(Str_Text(&line), info);
-
-            if(!*pos) isDone = true;
-        }
-    }
-
-    Str_Free(&line);
-    return true;
-}
-
+#if 0
 static int C_DECL MasterWorker_Thread(void* param)
 {
     ddstring_t msg;
-    char masterUrl[512];
-    char errorBuf[CURL_ERROR_SIZE];
-    CURL* session;
+    QString masterUrl;
+    //char errorBuf[CURL_ERROR_SIZE];
+    //CURL* session;
 
     Str_InitStd(&msg);
 
     // Prepare the curl session for our HTTP requests.
-    session = curl_easy_init();
+    //session = curl_easy_init();
 
     while(true)
     {
@@ -352,9 +445,8 @@ static int C_DECL MasterWorker_Thread(void* param)
         {
             assert(!job.data);
 
-            MasterWorker_GetUrl(masterUrl);
-            strcat(masterUrl, "?list");
-
+            masterUrl = MasterWorker_GetUrl() + "?list";
+/*
 #ifdef _DEBUG
             curl_easy_setopt(session, CURLOPT_VERBOSE, true);
 #endif
@@ -379,6 +471,7 @@ static int C_DECL MasterWorker_Thread(void* param)
             {
                 fprintf(outFile, "N_MasterSendRequest: %s\n", errorBuf);
             }
+            */
 
             // We're done with the parsing.
             Str_Free(&msg);
@@ -386,10 +479,10 @@ static int C_DECL MasterWorker_Thread(void* param)
         else if(job.act == MWA_ANNOUNCE)
         {
             // Post a server announcement.
-            struct curl_slist* headers = 0;
-            headers = curl_slist_append(0, "Content-Type: application/x-deng-announce");
+            //struct curl_slist* headers = 0;
+            //headers = curl_slist_append(0, "Content-Type: application/x-deng-announce");
 
-            MasterWorker_GetUrl(masterUrl);
+            masterUrl = MasterWorker_GetUrl();
 
             // Convert the serverinfo into plain text.
             Sv_InfoToString((serverinfo_t*)job.data, &msg);
@@ -398,6 +491,7 @@ static int C_DECL MasterWorker_Thread(void* param)
             M_Free(job.data);
             job.data = 0;
 
+            /*
             // Setup the request.
 #ifdef _DEBUG
             curl_easy_setopt(session, CURLOPT_VERBOSE, true);
@@ -422,19 +516,23 @@ static int C_DECL MasterWorker_Thread(void* param)
             // Cleanup.
             Str_Free(&msg);
             curl_slist_free_all(headers);
+            */
         }
 
         // The job is done!
         MasterWorker_Discard();
     }
 
+    /*
     // Cleanup the curl session.
     curl_easy_cleanup(session);
     session = NULL;
-
+*/
     return 0;
 }
+#endif
 
+/*
 static void MasterWorker_Init(void)
 {
     semPending = Sem_Create(0);
@@ -449,7 +547,9 @@ static void MasterWorker_Init(void)
     // Start the worker thread.
     worker = Sys_StartThread(MasterWorker_Thread, NULL);
 }
+    */
 
+/*
 static void MasterWorker_Shutdown(void)
 {
     MasterWorker_Clear();
@@ -465,19 +565,15 @@ static void MasterWorker_Shutdown(void)
     mwaMutex = 0;
     semPending = 0;
 }
+    */
 
 /**
  * Called by N_Init() while initializing the low-level network subsystem.
  */
 void N_MasterInit(void)
 {
-    // Initialize libcurl.
-    curl_global_init(CURL_GLOBAL_WIN32);
-
-    serversMutex = Sys_CreateMutex("serverListFromMaster");
-
-    // The master worker.
-    MasterWorker_Init();
+    assert(worker == 0);
+    worker = new MasterWorker;
 }
 
 /**
@@ -485,16 +581,9 @@ void N_MasterInit(void)
  */
 void N_MasterShutdown(void)
 {
-    MasterWorker_Shutdown();
-
-    // Free the server list.
-    Master_ClearList();
-
-    Sys_DestroyMutex(serversMutex);
-    serversMutex = 0;
-
-    // Clean up libcurl.
-    curl_global_cleanup();
+    assert(worker != 0);
+    delete worker;
+    worker = 0;
 }
 
 /**
@@ -507,15 +596,13 @@ void N_MasterShutdown(void)
  */
 void N_MasterAnnounceServer(boolean isOpen)
 {
-    serverinfo_t *info;
+    // Must be a server.
+   if(isClient) return;
 
-     // Must be a server.
-    if(isClient) return;
+    DEBUG_Message(("N_MasterAnnounceServer: Announcing as open=%i.\n", isOpen));
 
-    Con_Message("N_MasterAnnounceServer: Announcing as open=%i.\n", isOpen);
-
-    // The info is not freed in this function, but in the worker thread.
-    info = M_Calloc(sizeof(serverinfo_t));
+    // This will be freed by the worker after the request has been made.
+    serverinfo_t *info = (serverinfo_t*) M_Calloc(sizeof(*info));
 
     // Let's figure out what we want to tell about ourselves.
     Sv_GetInfo(info);
@@ -524,7 +611,10 @@ void N_MasterAnnounceServer(boolean isOpen)
         info->canJoin = false;
     }
 
-    MasterWorker_Do(MWA_ANNOUNCE, info);
+    assert(worker);
+    worker->newJob(MasterWorker::ANNOUNCE, info);
+
+    //MasterWorker_Do(MWA_ANNOUNCE, info);
 }
 
 /**
@@ -532,37 +622,38 @@ void N_MasterAnnounceServer(boolean isOpen)
  */
 void N_MasterRequestList(void)
 {
-    MasterWorker_Do(MWA_REQUEST, 0);
+    //MasterWorker_Do(MWA_REQUEST, 0);
+
+    assert(worker);
+    worker->newJob(MasterWorker::REQUEST_SERVERS, 0);
 }
 
 /**
  * Returns information about the server #N.
  *
- * @return                  @c 0, if communication with the master
- *                          is currently in progress.
- *                          If param info is @c NULL,, will return
- *                          the number of known servers ELSE, will return
- *                          @c not zero, if param index was valid
- *                          and the master returned info on the requested
- *                          server.
+ * @return @c 0, if communication with the master is currently in progress. If
+ * param info is @c NULL, will return the number of known servers ELSE, will
+ * return @c not zero, if param index was valid and the master returned info on
+ * the requested server.
  */
 int N_MasterGet(int index, serverinfo_t *info)
 {
-    int result = -1;
+    assert(worker);
 
-    if(!MasterWorker_IsDone())
+    if(!worker->isAllDone())
     {
         // Not done yet.
         return -1;
     }
 
-    Sys_Lock(serversMutex);
+    //Sys_Lock(serversMutex);
     if(!info)
     {
-        result = numServers;
+        return worker->serverCount();
     }
     else
     {
+        /*
         serverlist_t *it;
 
         // Find the index'th entry.
@@ -580,8 +671,19 @@ int N_MasterGet(int index, serverinfo_t *info)
             memcpy(info, &it->info, sizeof(*info));
             result = true;
         }
-    }
-    Sys_Unlock(serversMutex);
+        */
 
-    return result;
+        if(index >= 0 && index < worker->serverCount())
+        {
+            *info = worker->server(index);
+            return true;
+        }
+        else
+        {
+            memset(info, 0, sizeof(*info));
+            return false;
+        }
+    }
+    //Sys_Unlock(serversMutex);
+    //return result;
 }

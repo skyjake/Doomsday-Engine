@@ -68,7 +68,7 @@ void N_Init(void)
 
     allowSending = false;
 
-    N_SockInit();
+    //N_SockInit();
     N_MasterInit();
     N_SystemInit();             // Platform dependent stuff.
 }
@@ -81,7 +81,7 @@ void N_Shutdown(void)
 {
     N_SystemShutdown();
     N_MasterShutdown();
-    N_SockShutdown();
+    //N_SockShutdown();
 
     allowSending = false;
 

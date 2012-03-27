@@ -20,7 +20,6 @@ include(../dep_opengl.pri)
 include(../dep_zlib.pri)
 include(../dep_png.pri)
 include(../dep_curses.pri)
-include(../dep_curl.pri)
 include(../dep_lzss.pri)
 win32 {
     include(../dep_directx.pri)
@@ -228,6 +227,7 @@ DENG_HEADERS = \
     portable/include/lumpdirectory.h \
     portable/include/lumpfile.h \
     portable/include/lumpinfo.h \
+    portable/include/masterserver.h \
     portable/include/material.h \
     portable/include/materials.h \
     portable/include/materialvariant.h \
@@ -315,11 +315,9 @@ DENG_HEADERS = \
     portable/include/sys_direc.h \
     portable/include/sys_findfile.h \
     portable/include/sys_input.h \
-    portable/include/sys_master.h \
     portable/include/sys_network.h \
     portable/include/sys_opengl.h \
     portable/include/sys_reslocator.h \
-    portable/include/sys_sock.h \
     portable/include/sys_system.h \
     portable/include/sys_timer.h \
     portable/include/s_cache.h \
@@ -504,6 +502,7 @@ SOURCES += \
     portable/src/linedef.c \
     portable/src/lumpdirectory.c \
     portable/src/lumpfile.c \
+    portable/src/masterserver.cpp \
     portable/src/material.c \
     portable/src/materialarchive.c \
     portable/src/materials.c \
@@ -602,11 +601,9 @@ SOURCES += \
     portable/src/sys_audiod_dummy.c \
     portable/src/sys_direc.c \
     portable/src/sys_input.c \
-    portable/src/sys_master.c \
     portable/src/sys_network.c \
     portable/src/sys_opengl.c \
     portable/src/sys_reslocator.c \
-    portable/src/sys_sock.c \
     portable/src/sys_system.c \
     portable/src/sys_timer.c \
     portable/src/tab_tables.c \

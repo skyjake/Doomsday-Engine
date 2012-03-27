@@ -32,6 +32,12 @@
 #include "dd_def.h"
 #include "sys_network.h"
 
+struct material_s;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define SV_VERSION          19
 #define SV_WELCOME_STRING   "Doomsday "DOOMSDAY_VERSION_TEXT" Server (R19)"
 
@@ -75,6 +81,10 @@ boolean         Sv_CanTrustClientPos(int plrNum);
 /**
  * Returns a unique id for material @a mat that can be passed on to clients.
  */
-unsigned int Sv_IdForMaterial(material_t* mat);
+unsigned int Sv_IdForMaterial(struct material_s* mat);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

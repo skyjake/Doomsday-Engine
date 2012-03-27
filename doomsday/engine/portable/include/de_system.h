@@ -29,8 +29,8 @@
 #include "sys_console.h"
 #include "sys_input.h"
 #include "sys_network.h"
-#include "sys_sock.h"
-#include "sys_master.h"
+#include "masterserver.h"
+//#include "sys_sock.h" // obsolete
 #include "sys_timer.h"
 #include "sys_opengl.h"
 

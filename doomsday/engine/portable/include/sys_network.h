@@ -30,7 +30,7 @@
 #include "monitor.h"
 
 #ifdef __cplusplus
-extern          "C" {
+extern "C" {
 #endif
 
 #define DEFAULT_TCP_PORT    13209
@@ -94,4 +94,5 @@ extern          "C" {
 #ifdef __cplusplus
 }
 #endif
+
 #endif /* LIBDENG_SYSTEM_NETWORK_H */
