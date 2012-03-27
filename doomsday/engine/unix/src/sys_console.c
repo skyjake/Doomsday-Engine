@@ -38,19 +38,15 @@
 static WINDOW* cursesRootWin;
 static boolean conInputInited = false;
 
-static boolean isValidWindow(const Window* win)
+static boolean isValidConsoleWindow(const Window* win)
 {
-    if(Window_Type(win) == WT_CONSOLE)
-    {
-        const consolewindow_t* console = Window_ConsoleConst(win);
-        return console->winText && console->winTitle && console->winCommand;
-    }
-    return true;
+    const consolewindow_t* console = Window_ConsoleConst(win);
+    return console->winText && console->winTitle && console->winCommand;
 }
 
 static void setAttrib(int flags)
 {
-    if(!isValidWindow(Window_Main()))
+    if(!isValidConsoleWindow(Window_Main()))
         return;
 
     if(flags & (CPF_YELLOW | CPF_LIGHT))
@@ -64,7 +60,7 @@ static void setAttrib(int flags)
  */
 static void writeText(const char *line, int len)
 {
-    if(!isValidWindow(Window_Main())) return;
+    if(!isValidConsoleWindow(Window_Main())) return;
 
     wmove(mainConsole.winText, mainConsole.cy, mainConsole.cx);
     waddnstr(mainConsole.winText, line, len);
@@ -75,7 +71,7 @@ static int getScreenSize(int axis)
 {
     int                 x, y;
 
-    if(!isValidWindow(Window_Main())) return;
+    if(!isValidConsoleWindow(Window_Main())) return;
 
     getmaxyx(mainConsole.winText, y, x);
     return axis == VX ? x : y;
@@ -97,7 +93,7 @@ static void setConWindowCmdLine(uint idx, const char *text,
         return;
     }
     win = Window_Main();
-    if(!isValidWindow(win)) return;
+    if(!isValidConsoleWindow(win)) return;
     console = Window_Console(win);
 
     maxX = getScreenSize(VX);
@@ -151,7 +147,7 @@ void Sys_ConPrint(uint idx, const char *text, int clflags)
     }
 
     win = Window_Main();
-    if(!isValidWindow(win)) return;
+    if(!isValidConsoleWindow(win)) return;
     console = Window_Console(win);
 
     // Determine the size of the text window.
@@ -224,7 +220,7 @@ void Sys_SetConWindowCmdLine(uint idx, const char* text, uint cursorPos, int fla
 {
     Window* win = Window_ByIndex(idx);
 
-    if(!win || Window_Type(win) != WT_CONSOLE || !isValidWindow(win))
+    if(!win || Window_Type(win) != WT_CONSOLE || !isValidConsoleWindow(win))
         return;
 
     assert(win == Window_Main());
@@ -236,7 +232,7 @@ void ConsoleWindow_SetTitle(const Window* window, const char* title)
 {
     const consolewindow_t* console;
 
-    if(!isValidWindow(window)) return;
+    if(!isValidConsoleWindow(window)) return;
     console = Window_ConsoleConst(window);
 
     // The background will also be in reverse.
@@ -329,7 +325,7 @@ void Sys_ConShutdown(Window* window)
 {
     consolewindow_t* console;
 
-    if(!isValidWindow(window)) return;
+    if(!isValidConsoleWindow(window)) return;
     console = Window_Console(window);
 
     // We should only have one window.

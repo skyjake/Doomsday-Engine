@@ -433,7 +433,7 @@ static void printConfiguration(void)
  */
 boolean GL_EarlyInit(void)
 {
-    if(isDedicated) return true;
+    if(novideo) return true;
     if(initGLOk) return true; // Already initialized.
 
     Con_Message("Initializing Render subsystem...\n");

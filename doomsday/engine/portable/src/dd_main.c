@@ -1505,9 +1505,8 @@ boolean DD_Init(void)
         return false;
     }
 
-    assert(!Sys_GLCheckError());
-
     /*
+    assert(!Sys_GLCheckError());
     if(!novideo)
     {
         // Render a few black frames before we continue. This will help to
@@ -1519,9 +1518,9 @@ boolean DD_Init(void)
             glClear(GL_COLOR_BUFFER_BIT);
             GL_DoUpdate();
         }
-    }*/
-
+    }
     assert(!Sys_GLCheckError());
+*/
 
     // Initialize the subsystems needed prior to entering busy mode for the first time.
     Sys_Init();

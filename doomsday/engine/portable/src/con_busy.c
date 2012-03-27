@@ -264,7 +264,7 @@ static void Con_BusyPrepareResources(void)
 
 static void deleteBusyTextures(void)
 {
-    if(isDedicated)
+    if(novideo)
         return;
 
     glDeleteTextures(2, (const GLuint*) texLoading);
@@ -327,6 +327,8 @@ void Con_ReleaseScreenshotTexture(void)
 static void loadBusyTextures(void)
 {
     image_t image;
+
+    if(novideo) return;
 
     if(GL_LoadImage(&image, "}data/graphics/loading1.png"))
     {

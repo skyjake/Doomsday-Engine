@@ -69,12 +69,7 @@ ListenSocket::ListenSocket(duint16 port)
     LOG_AS("ListenSocket");
 
     d = new Instance;
-/*
-    d->doorman = new internal::Doorman(port);
-    connect(d->doorman, SIGNAL(incomingSocketDesc(int)), this, SLOT(acceptNewConnection(int)));
-
-    d->doorman->start();
-*/
+    d->socket = new QTcpServer(this);
     d->port = port;
 
     if(!d->socket->listen(QHostAddress::Any, d->port))

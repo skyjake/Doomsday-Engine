@@ -44,6 +44,10 @@ struct consolewindow_s;
 #  include "dd_winit.h"
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Console window state.
 typedef struct consolewindow_s {
 #if defined(WIN32)
@@ -83,5 +87,9 @@ void Sys_ConPrint(uint idx, const char* text, int flags);
 void Sys_SetConWindowCmdLine(uint idx, const char* text, unsigned int cursorPos, int flags);
 
 size_t I_GetConsoleKeyEvents(keyevent_t *evbuf, size_t bufsize);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif
