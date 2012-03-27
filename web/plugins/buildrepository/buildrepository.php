@@ -1,25 +1,23 @@
 <?php
 /**
  * @file buildrepository.php
+ * Build Repository.
  *
- * @section License
+ * @authors Copyright © 2009-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the Free
- * Software Foundation; either version 2 of the License, or (at your option)
- * any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- *
- * @author Copyright &copy; 2009-2012 Daniel Swanson <danij@dengine.net>
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 includeGuard('BuildRepositoryPlugin');
@@ -31,11 +29,12 @@ require_once(DIR_CLASSES.'/outputcache.class.php');
  * @ingroup builds
  */
 ///@{
-define('PID_ANY',             0); ///< (Enumeration). Ordinals are meaningless (can change) however must be unique.
-define('PID_WIN_X86',         1);
-define('PID_MAC10_4_X86_PPC', 2);
-define('PID_LINUX_X86',       3);
-define('PID_LINUX_X86_64',    4);
+define('PID_ANY',                0); ///< (Enumeration). Ordinals are meaningless (can change) however must be unique.
+define('PID_WIN_X86',            1);
+define('PID_MAC10_4_X86_PPC',    2);
+define('PID_MAX10_6_X86_X86_64', 3);
+define('PID_LINUX_X86',          4);
+define('PID_LINUX_X86_64',       5);
 ///@}
 
 /**
@@ -71,10 +70,11 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
      * 'nicename': User facing/friendly name for this platform.
      */
     private static $platforms = array(
-        PID_WIN_X86         => array('id'=>PID_WIN_X86,         'name'=>'win-x86',         'nicename'=>'Windows'),
-        PID_MAC10_4_X86_PPC => array('id'=>PID_MAC10_4_X86_PPC, 'name'=>'mac10_4-x86-ppc', 'nicename'=>'Mac OS (10.4+)'),
-        PID_LINUX_X86       => array('id'=>PID_LINUX_X86,       'name'=>'linux-x86',       'nicename'=>'Ubuntu (32bit)'),
-        PID_LINUX_X86_64    => array('id'=>PID_LINUX_X86_64,    'name'=>'linux-x86_64',    'nicename'=>'Ubuntu (64bit)')
+        PID_WIN_X86            => array('id'=>PID_WIN_X86,            'name'=>'win-x86',            'nicename'=>'Windows'),
+        PID_MAC10_4_X86_PPC    => array('id'=>PID_MAC10_4_X86_PPC,    'name'=>'mac10_4-x86-ppc',    'nicename'=>'Mac OS (10.4+)'),
+        PID_MAC10_6_X86_X86_64 => array('id'=>PID_MAC10_6_X86_X86_64, 'name'=>'mac10_6-x86-x86_64', 'nicename'=>'Mac OS (10.6+)'),
+        PID_LINUX_X86          => array('id'=>PID_LINUX_X86,          'name'=>'linux-x86',          'nicename'=>'Ubuntu (32bit)'),
+        PID_LINUX_X86_64       => array('id'=>PID_LINUX_X86_64,       'name'=>'linux-x86_64',       'nicename'=>'Ubuntu (64bit)')
     );
     private static $unknownPlatform = array(
         'id'=>PID_ANY, 'name'=>'unknown', 'nicename'=>'Unknown');
@@ -442,6 +442,19 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         $pack = PackageFactory::newDistributionUnstable($plat['id'], 'Latest Doomsday',
             NULL/*no version*/, 'latestbuild?platform='. $plat['name']. '&unstable');
         $packages[] = $pack;
+
+        if(0)
+        {
+        $plat = $this->platform(PID_MAC10_6_X86_X86_64);
+        $pack = PackageFactory::newDistribution($plat['id'], 'Latest Doomsday',
+            NULL/*no version*/, 'latestbuild?platform='. $plat['name']);
+        $packages[] = $pack;
+
+        $plat = $this->platform(PID_MAC10_6_X86_X86_64);
+        $pack = PackageFactory::newDistributionUnstable($plat['id'], 'Latest Doomsday',
+            NULL/*no version*/, 'latestbuild?platform='. $plat['name']. '&unstable');
+        $packages[] = $pack;
+        }
 
         // Ubuntu:
         $plat = $this->platform(PID_LINUX_X86);
