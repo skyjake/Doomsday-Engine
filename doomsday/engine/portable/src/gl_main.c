@@ -983,14 +983,13 @@ void GL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT)
 
 void GL_BindTextureUnmanaged(DGLuint glName, int magMode)
 {
-    if(Con_InBusyWorker()) return;
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     if(glName == 0)
     {
         GL_SetNoTexture();
         return;
     }
-
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     glBindTexture(GL_TEXTURE_2D, glName);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magMode);

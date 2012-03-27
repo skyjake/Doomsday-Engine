@@ -517,6 +517,17 @@ static void Con_DrawScreenshotBackground(float x, float y, float width, float he
     }
 }
 
+#ifdef _DEBUG
+#define _assertTexture(tex) { \
+    GLint p; \
+    glGetIntegerv(GL_TEXTURE_BINDING_2D, &p); \
+    Sys_GLCheckError(); \
+    if(p != tex) fprintf(stderr, "tex=%i, got %i at line %i\n", tex, p, __LINE__); \
+}
+#else
+#define _assertTexture(tex)
+#endif
+
 /**
  * @param 0...1, to indicate how far things have progressed.
  */
@@ -561,6 +572,7 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
     glEnable(GL_TEXTURE_2D);
 
     GL_BindTextureUnmanaged(texLoading[0], GL_LINEAR);
+    _assertTexture(texLoading[0]);
     glColor4fv(col);
     GL_DrawRectf2(x - radius, y - radius, radius*2, radius*2);
 
@@ -574,7 +586,9 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
 
     // Draw a fan.
     glColor4f(col[0], col[1], col[2], .5f);
+    _assertTexture(texLoading[0]);
     GL_BindTextureUnmanaged(texLoading[1], GL_LINEAR);
+    _assertTexture(texLoading[1]);
     glBegin(GL_TRIANGLE_FAN);
     // Center.
     glTexCoord2f(.5f, .5f);
@@ -587,6 +601,7 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
         glVertex2f(x + cos(angle)*radius*1.05f, y + sin(angle)*radius*1.05f);
     }
     glEnd();
+    _assertTexture(texLoading[1]);
 
     glMatrixMode(GL_TEXTURE);
     glPopMatrix();
