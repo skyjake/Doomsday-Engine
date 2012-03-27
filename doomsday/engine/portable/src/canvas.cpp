@@ -290,13 +290,22 @@ void Canvas::focusOutEvent(QFocusEvent*)
     if(d->focusCallback) d->focusCallback(*this, false);
 }
 
-static int nativeCode(QKeyEvent* ev)
+static int nativeCode(const QKeyEvent* ev)
 {
 #if defined(UNIX) && !defined(MACOSX)
     return ev->nativeScanCode();
 #else
     return ev->nativeVirtualKey();
 #endif
+}
+
+void Keyboard_SubmitQtEvent(int evType, const QKeyEvent* ev)
+{
+    Keyboard_Submit(evType,
+                    Keycode_TranslateFromQt(ev->key(), ev->nativeVirtualKey(), ev->nativeScanCode()),
+                    nativeCode(ev),
+                    ev->text().isEmpty()? 0 : ev->text().toLatin1().constData());
+    /// @todo Use the Unicode text instead.
 }
 
 void Canvas::keyPressEvent(QKeyEvent *ev)
@@ -309,12 +318,7 @@ void Canvas::keyPressEvent(QKeyEvent *ev)
              << "native:" << ev->nativeVirtualKey()
              << "scancode:" << ev->nativeScanCode();
 
-    /// @todo Use the Unicode text instead.
-
-    Keyboard_Submit(IKE_DOWN,
-                    Keycode_TranslateFromQt(ev->key(), ev->nativeVirtualKey(), ev->nativeScanCode()),
-                    nativeCode(ev),
-                    ev->text().isEmpty()? 0 : ev->text().toLatin1().constData());
+    Keyboard_SubmitQtEvent(IKE_DOWN, ev);
 }
 
 void Canvas::keyReleaseEvent(QKeyEvent *ev)
@@ -325,10 +329,7 @@ void Canvas::keyReleaseEvent(QKeyEvent *ev)
     qDebug() << "Canvas: key release" << ev->key() << "text:" << ev->text()
              << "native:" << ev->nativeVirtualKey();
 
-    Keyboard_Submit(IKE_UP,
-                    Keycode_TranslateFromQt(ev->key(), ev->nativeVirtualKey(), ev->nativeScanCode()),
-                    nativeCode(ev),
-                    ev->text().isEmpty()? 0 : ev->text().toLatin1().constData());
+    Keyboard_SubmitQtEvent(IKE_UP, ev);
 }
 
 static int translateButton(Qt::MouseButton btn)

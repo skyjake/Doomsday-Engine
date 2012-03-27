@@ -119,7 +119,7 @@ int DD_GameLoop(void)
 
 void DD_GameLoopCallback(void)
 {
-    if(waitingForDraw) return; // Only after the frame has been drawn, please.
+    if(!novideo && waitingForDraw) return; // Only after the frame has been drawn, please.
 
     if(Sys_IsShuttingDown())
         return; // Shouldn't run this while shutting down.

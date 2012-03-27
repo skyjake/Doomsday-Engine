@@ -137,6 +137,8 @@ int LegacyCore::runEventLoop()
 void LegacyCore::setLoopRate(int freqHz)
 {
     d->loop.interval = qMax(1, 1000/freqHz);
+
+    LOG_DEBUG("Loop interval set to %i ms.") << d->loop.interval;
 }
 
 void LegacyCore::stop(int exitCode)

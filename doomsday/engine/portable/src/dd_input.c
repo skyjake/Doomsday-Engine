@@ -1049,34 +1049,6 @@ void DD_Win32_SuspendMessagePump(boolean suspend)
  */
 static void postEvents(timespan_t ticLength)
 {
-#ifdef WIN32
-    if(!Con_InBusyWorker())
-    {
-        MSG msg;
-
-        /**
-         * Checking native Windows messages. This must be in the same thread as
-         * that which registered the window it is handling messages for (main
-         * thread).
-         */
-        while(!suspendMsgPump &&
-              PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) > 0)
-        {
-            if(msg.message == WM_QUIT)
-            {
-                DD_Win32_SuspendMessagePump(true);
-                DD_SetGameLoopExitCode(msg.wParam);
-                Sys_Quit();
-            }
-            else
-            {
-                TranslateMessage(&msg);
-                DispatchMessage(&msg);
-            }
-        }
-    }
-#endif
-
     if(ArgExists("-noinput")) return;
 
     DD_ReadKeyboard();
@@ -1231,7 +1203,7 @@ void DD_ReadKeyboard(void)
     }
 
     // Read the new keyboard events.
-    if(isDedicated)
+    if(novideo)
         numkeyevs = I_GetConsoleKeyEvents(keyevs, KBDQUESIZE);
     else
         numkeyevs = Keyboard_GetEvents(keyevs, KBDQUESIZE);
