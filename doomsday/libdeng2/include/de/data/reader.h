@@ -32,8 +32,9 @@ class IReadable;
 class FixedByteArray;
 
 /**
- * Provides a protocol for reading network byte ordered data from a byte array object
- * (anything with a IByteArray interface).
+ * Provides a protocol for reading data from a byte array object (anything with
+ * a IByteArray interface). Byte order defaults to little-endian but can be
+ * changed to big-endian.
  *
  * @ingroup data
  */

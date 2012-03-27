@@ -32,8 +32,9 @@ class Block;
 class FixedByteArray;
 
 /**
- * Provides a protocol for writing data in a specific byte order
- * into a byte array object (anything with a IByteArray interface).
+ * Provides a protocol for writing data in a specific byte order into a byte
+ * array object (anything with a IByteArray interface). Defaults to
+ * little-endian byte order.
  *
  * @ingroup data
  */
