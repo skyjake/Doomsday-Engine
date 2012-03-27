@@ -244,6 +244,21 @@ void V2f_AddToBox(arvec2f_t box, const pvec2f_t point)
         box[1][VY] = point[VY];
 }
 
+void V2f_UniteBox(arvec2f_t box, const arvec2f_t other)
+{
+    if(other[0][VX] < box[0][VX])
+        box[0][VX] = other[0][VX];
+
+    if(other[1][VX] > box[1][VX])
+        box[1][VX] = other[1][VX];
+
+    if(other[0][VY] < box[0][VY])
+        box[0][VY] = other[0][VY];
+
+    if(other[1][VY] > box[1][VY])
+        box[1][VY] = other[1][VY];
+}
+
 void V2f_CopyBox(arvec2f_t dest, const arvec2f_t src)
 {
     V2f_Copy(dest[0], src[0]);
@@ -466,6 +481,21 @@ void V2d_AddToBox(arvec2d_t box, const pvec2d_t point)
         box[0][VY] = point[VY];
     if(point[VY] > box[1][VY])
         box[1][VY] = point[VY];
+}
+
+void V2d_UniteBox(arvec2d_t box, const arvec2d_t other)
+{
+    if(other[0][VX] < box[0][VX])
+        box[0][VX] = other[0][VX];
+
+    if(other[1][VX] > box[1][VX])
+        box[1][VX] = other[1][VX];
+
+    if(other[0][VY] < box[0][VY])
+        box[0][VY] = other[0][VY];
+
+    if(other[1][VY] > box[1][VY])
+        box[1][VY] = other[1][VY];
 }
 
 void V2d_CopyBox(arvec2d_t dest, const arvec2d_t src)

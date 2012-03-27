@@ -145,6 +145,8 @@ void V2f_InitBox(arvec2f_t box, const pvec2f_t point);
 
 void V2f_AddToBox(arvec2f_t box, const pvec2f_t point);
 
+void V2f_UniteBox(arvec2f_t box, const arvec2f_t other);
+
 void V2f_CopyBox(arvec2f_t dest, const arvec2f_t src);
 
 typedef double vectorcompd_t;
@@ -258,6 +260,8 @@ void V2d_Lerp(pvec2d_t dest, const pvec2d_t a, const pvec2d_t b, double c);
 void V2d_InitBox(arvec2d_t box, const pvec2d_t point);
 
 void V2d_AddToBox(arvec2d_t box, const pvec2d_t point);
+
+void V2d_UniteBox(arvec2d_t box, const arvec2d_t other);
 
 void V2d_CopyBox(arvec2d_t dest, const arvec2d_t src);
 
