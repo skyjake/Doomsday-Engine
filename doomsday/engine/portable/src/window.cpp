@@ -39,6 +39,7 @@
 #include "de_platform.h"
 
 #include "window.h"
+#include "consolewindow.h"
 #include "canvaswindow.h"
 #include "displaymode.h"
 #include "sys_system.h"

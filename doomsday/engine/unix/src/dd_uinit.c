@@ -358,8 +358,10 @@ boolean DD_Unix_Init(int argc, char** argv)
 
     memset(&app, 0, sizeof(app));
 
+#if 0
     // SDL lock key behavior: send up event when key released.
     setenv("SDL_DISABLE_LOCK_KEYS", "1", true);
+#endif
 
     {       
     // Prepare the command line arguments.

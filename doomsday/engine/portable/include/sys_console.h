@@ -25,45 +25,17 @@
 /** @todo This needs further refactoring to fit more nicely into the rest
     of the window management. */
 
-#ifndef __DOOMSDAY_WINCONSOLE_H__
-#define __DOOMSDAY_WINCONSOLE_H__
+#ifndef LIBDENG_SYSTEM_CONSOLE_H
+#define LIBDENG_SYSTEM_CONSOLE_H
 
-struct consolewindow_s;
+struct consolewindow_s; // opaque type
 
 #include "window.h"
 #include "sys_input.h"
 
-#if defined(UNIX)
-#  include <curses.h>
-#  include "dd_uinit.h"
-#endif
-
-#if defined(WIN32)
-#  define WIN32_LEAN_AND_MEAN
-#  include <windows.h>
-#  include "dd_winit.h"
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-// Console window state.
-typedef struct consolewindow_s {
-#if defined(WIN32)
-    HWND hWnd;
-    HANDLE hcScreen;
-    CONSOLE_SCREEN_BUFFER_INFO cbInfo;
-    WORD attrib;
-#elif defined(UNIX)
-    WINDOW *winTitle, *winText, *winCommand;
-#endif
-    int cx, cy;
-    int needNewLine;
-    struct {
-        int flags;
-    } cmdline;
-} consolewindow_t;
 
 Window* Sys_ConInit(const char* title);
 

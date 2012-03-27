@@ -154,6 +154,7 @@ DENG_HEADERS = \
     portable/include/cl_sound.h \
     portable/include/cl_world.h \
     portable/include/colorpalette.h \
+    portable/include/consolewindow.h \
     portable/include/con_bar.h \
     portable/include/con_bind.h \
     portable/include/con_busy.h \
