@@ -134,7 +134,7 @@ void LegacyNetwork::close(int socket)
 
 bool LegacyNetwork::isOpen(int socket)
 {
-    DENG2_ASSERT(d->sockets.contains(socket));
+    if(!d->sockets.contains(socket)) return false;
     return d->sockets[socket]->isOpen();
 }
 

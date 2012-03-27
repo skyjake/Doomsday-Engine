@@ -701,9 +701,11 @@ boolean Sys_GLCheckError(void)
 {
     if(novideo) return false;
 #ifdef _DEBUG
-    GLenum error = glGetError();
-    if(error != GL_NO_ERROR)
-        Con_Error("OpenGL error: 0x%x\n", error);
+    {
+        GLenum error = glGetError();
+        if(error != GL_NO_ERROR)
+            Con_Error("OpenGL error: 0x%x\n", error);
+    }
 #endif
     return false;
 }

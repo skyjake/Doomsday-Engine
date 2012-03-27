@@ -319,7 +319,6 @@ void N_TerminateNode(nodeid_t id)
 
     // Close the socket and forget everything about the node.
     LegacyNetwork_Close(node->sock);
-
     memset(node, 0, sizeof(*node));
 }
 
@@ -402,41 +401,45 @@ static boolean N_JoinNode(nodeid_t id, /*Uint16 port,*/ const char *name)
 void N_ClientHandleResponseToInfoQuery(int nodeId, const byte *data, int size)
 {
     netnode_t* svNode = &netNodes[nodeId];
-    const char* response = (const char*) data;
 
     // Close the connection; that was all the information we need.
     LegacyNetwork_Close(svNode->sock);
+    svNode->sock = 0;
 
     // Did we receive what we expected to receive?
-    if(size >= 5 && !strncmp(response, "Info\n", 5))
+    if(size >= 5 && !strncmp(data, "Info\n", 5))
     {
         const char *ch;
         ddstring_t *line;
+        ddstring_t* response = Str_New();
+
+        // Make a null-terminated copy of the response text.
+        Str_PartAppend(response, data, 0, size);
 
         located.valid = true;
 
         // Convert the string into a serverinfo_s.
         line = Str_New();
-        ch = response;
+        ch = Str_Text(response);
         do
         {
             ch = Str_GetLine(line, ch);
             Sv_StringToInfo(Str_Text(line), &located.info);
         }
         while(*ch);
+
         Str_Delete(line);
+        Str_Delete(response);
 
         // Show the information in the console.
-        Con_Message("%i server%s been found.\n", N_GetHostCount(),
-                   N_GetHostCount() != 1 ? "s have" : " has");
+        Con_Message("%i server%s been found.\n", N_GetHostCount(), N_GetHostCount() != 1 ? "s have" : " has");
         Net_PrintServerInfo(0, NULL);
         Net_PrintServerInfo(0, &located.info);
     }
     else
     {
         located.valid = false;
-        Con_Message("Reply from %s (port %i) was invalid.\n",
-                    svNode->addr.host, svNode->addr.port);
+        Con_Message("Reply from %s (port %i) was invalid.\n", svNode->addr.host, svNode->addr.port);
     }
 
     memset(svNode, 0, sizeof(*svNode));
@@ -581,12 +584,10 @@ boolean N_Disconnect(void)
     // Close the control connection.  This will let the server know
     // that we are no more.
     LegacyNetwork_Close(svNode->sock);
+    memset(svNode, 0, sizeof(*svNode));
 
     LegacyNetwork_DeleteSocketSet(joinedSockSet);
     joinedSockSet = 0;
-
-    // Reset the node completely.
-    memset(svNode, 0, sizeof(svNode));
 
     Net_StopGame();
 
