@@ -25,14 +25,14 @@
 namespace de {
 
 /**
- * Locks the variable @a varName until the Guard becomes out of scope.
+ * Locks the variable @a varName until the end of the current scope.
  * assertLocked() is called so the compiler does not complain about the unused
  * variable.
  *
  * @param varName  Name of the variable to guard. Must be just a single
  *                 identifier with no operators or anything else.
  */
-#define DENG2_GUARD(varName)    Guard mutexFor_##varName(varName); mutexFor_##varName.assertLocked();
+#define DENG2_GUARD(varName)    Guard _guarding_##varName(varName); _guarding_##varName.assertLocked();
 
 class Lockable;
 
