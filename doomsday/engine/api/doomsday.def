@@ -865,10 +865,10 @@ EXPORTS
     bamsAtan2                   @145 NONAME
 
     ; Vectors.
-    V2_Sum                      @54 NONAME
-    V2_Subtract                 @341 NONAME
-    V2_Rotate                   @344 NONAME
-    V2_Intersection             @349 NONAME
+    V2f_Sum                     @54 NONAME
+    V2f_Subtract                @341 NONAME
+    V2f_Rotate                  @344 NONAME
+    V2f_Intersection            @349 NONAME
 
     ; Utilities.
     M_PointLineDistance         @442 NONAME

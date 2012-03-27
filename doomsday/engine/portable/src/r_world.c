@@ -593,7 +593,7 @@ Plane* R_NewPlaneForSector(Sector* sec)
     suf = &plane->surface;
     suf->header.type = DMU_SURFACE; // Setup header for DMU.
     suf->normal[VZ] = 1;
-    V3_BuildTangents(suf->tangent, suf->bitangent, suf->normal);
+    V3f_BuildTangents(suf->tangent, suf->bitangent, suf->normal);
 
     suf->owner = (void*) plane;
     // \todo The initial material should be the "unknown" material.
@@ -1876,7 +1876,7 @@ float R_CheckSectorLight(float lightlevel, float min, float max)
 
 const float* R_GetSectorLightColor(const Sector* sector)
 {
-    static vec3_t skyLightColor, oldSkyAmbientColor = { -1, -1, -1 };
+    static vec3f_t skyLightColor, oldSkyAmbientColor = { -1, -1, -1 };
     static float oldRendSkyLight = -1;
     if(rendSkyLight > .001f && R_SectorContainsSkySurfaces(sector))
     {
@@ -1886,16 +1886,16 @@ const float* R_GetSectorLightColor(const Sector* sector)
            !INRANGE_OF(ambientColor->green, oldSkyAmbientColor[CG], .001f) ||
            !INRANGE_OF(ambientColor->blue,  oldSkyAmbientColor[CB], .001f))
         {
-            vec3_t white = { 1, 1, 1 };
-            V3_Copy(skyLightColor, ambientColor->rgb);
+            vec3f_t white = { 1, 1, 1 };
+            V3f_Copy(skyLightColor, ambientColor->rgb);
             R_AmplifyColor(skyLightColor);
 
             // Apply the intensity factor cvar.
-            V3_Lerp(skyLightColor, skyLightColor, white, 1-rendSkyLight);
+            V3f_Lerp(skyLightColor, skyLightColor, white, 1-rendSkyLight);
 
             // When the sky light color changes we must update the lightgrid.
             LG_MarkAllForUpdate();
-            V3_Copy(oldSkyAmbientColor, ambientColor->rgb);
+            V3f_Copy(oldSkyAmbientColor, ambientColor->rgb);
         }
         oldRendSkyLight = rendSkyLight;
         return skyLightColor;

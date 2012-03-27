@@ -90,10 +90,10 @@ typedef struct rtexmapuint_s {
     float opacity;
 
     /// Texture-space scale multiplier.
-    vec2_t scale;
+    vec2f_t scale;
 
     /// Texture-space origin translation (unscaled).
-    vec2_t offset;
+    vec2f_t offset;
 } rtexmapunit_t;
 
 /// Manipulators, for convenience.

@@ -44,7 +44,7 @@ boolean Rend_MobjShadowsEnabled(void)
     return (useShadows && !levelFullBright);
 }
 
-static void drawShadowPrimitive(const vectorcomp_t pos[3], float radius, float alpha)
+static void drawShadowPrimitive(const vectorcompf_t pos[3], float radius, float alpha)
 {
     alpha = MINMAX_OF(0, alpha, 1);
     if(alpha <= 0) return;

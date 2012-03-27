@@ -71,7 +71,7 @@ float R_ShadowAttenuationFactor(float distance);
  * @return  Projection list identifier if surface is lit else @c 0.
  */
 uint R_ProjectShadowsToSurface(BspLeaf* bspLeaf, float blendFactor,
-    vec3_t topLeft, vec3_t bottomRight, vec3_t tangent, vec3_t bitangent, vec3_t normal);
+    vec3f_t topLeft, vec3f_t bottomRight, vec3f_t tangent, vec3f_t bitangent, vec3f_t normal);
 
 /**
  * Iterate over projections in the identified shadow-projection list, making

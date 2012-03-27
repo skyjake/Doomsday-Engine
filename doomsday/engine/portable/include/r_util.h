@@ -62,8 +62,8 @@ void R_HSVToRGB(float* rgb, float h, float s, float v);
  *
  * @return  @c true if the generated coords are within bounds.
  */
-boolean R_GenerateTexCoords(pvec2_t s, pvec2_t t, const_pvec3_t point, float xScale, float yScale,
-    const_pvec3_t v1, const_pvec3_t v2, const_pvec3_t tangent, const_pvec3_t bitangent);
+boolean R_GenerateTexCoords(pvec2f_t s, pvec2f_t t, const_pvec3f_t point, float xScale, float yScale,
+    const_pvec3f_t v1, const_pvec3f_t v2, const_pvec3f_t tangent, const_pvec3f_t bitangent);
 
 /**
  * Choose an alignment mode and/or calculate the appropriate scaling factor

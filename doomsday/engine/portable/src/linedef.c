@@ -32,13 +32,13 @@
 
 #include "linedef.h"
 
-static void calcNormal(const LineDef* l, byte side, pvec2_t normal)
+static void calcNormal(const LineDef* l, byte side, pvec2f_t normal)
 {
-    V2_Set(normal, (l->L_vpos(side^1)[VY] - l->L_vpos(side)  [VY]) / l->length,
-                   (l->L_vpos(side)  [VX] - l->L_vpos(side^1)[VX]) / l->length);
+    V2f_Set(normal, (l->L_vpos(side^1)[VY] - l->L_vpos(side)  [VY]) / l->length,
+                    (l->L_vpos(side)  [VX] - l->L_vpos(side^1)[VX]) / l->length);
 }
 
-static float lightLevelDelta(const pvec2_t normal)
+static float lightLevelDelta(const pvec2f_t normal)
 {
     return (1.0f / 255) * (normal[VX] * 18) * rendLightWallAngle;
 }
@@ -183,7 +183,7 @@ void LineDef_LightLevelDelta(const LineDef* l, int side, float* deltaL, float* d
 {
     binangle_t diff;
     LineDef* other;
-    vec2_t normal;
+    vec2f_t normal;
     float delta;
 
     // Disabled?
@@ -213,11 +213,11 @@ void LineDef_LightLevelDelta(const LineDef* l, int side, float* deltaL, float* d
     other = findBlendNeighbor(l, side, 0, &diff);
     if(other && INRANGE_OF(diff, BANG_180, BANG_45))
     {
-        vec2_t otherNormal;
+        vec2f_t otherNormal;
         calcNormal(other, other->L_v2 != l->L_v(side), otherNormal);
 
         // Average normals.
-        V2_Sum(otherNormal, otherNormal, normal);
+        V2f_Sum(otherNormal, otherNormal, normal);
         otherNormal[VX] /= 2; otherNormal[VY] /= 2;
 
         *deltaL = lightLevelDelta(otherNormal);
@@ -232,11 +232,11 @@ void LineDef_LightLevelDelta(const LineDef* l, int side, float* deltaL, float* d
     other = findBlendNeighbor(l, side, 1, &diff);
     if(other && INRANGE_OF(diff, BANG_180, BANG_45))
     {
-        vec2_t otherNormal;
+        vec2f_t otherNormal;
         calcNormal(other, other->L_v1 != l->L_v(side^1), otherNormal);
 
         // Average normals.
-        V2_Sum(otherNormal, otherNormal, normal);
+        V2f_Sum(otherNormal, otherNormal, normal);
         otherNormal[VX] /= 2; otherNormal[VY] /= 2;
 
         *deltaR = lightLevelDelta(otherNormal);

@@ -749,7 +749,7 @@ BspLeaf* GameMap_BspLeafAtPointXY(GameMap* map, float x, float y);
  * @param min  Minimal coordinates for the map.
  * @param max  Maximal coordinates for the map.
  */
-void GameMap_InitMobjBlockmap(GameMap* map, const_pvec2_t min, const_pvec2_t max);
+void GameMap_InitMobjBlockmap(GameMap* map, const_pvec2f_t min, const_pvec2f_t max);
 
 /**
  * Construct an initial (empty) LineDef Blockmap for this map.
@@ -757,7 +757,7 @@ void GameMap_InitMobjBlockmap(GameMap* map, const_pvec2_t min, const_pvec2_t max
  * @param min  Minimal coordinates for the map.
  * @param max  Maximal coordinates for the map.
  */
-void GameMap_InitLineDefBlockmap(GameMap* map, const_pvec2_t min, const_pvec2_t max);
+void GameMap_InitLineDefBlockmap(GameMap* map, const_pvec2f_t min, const_pvec2f_t max);
 
 /**
  * Construct an initial (empty) BspLeaf Blockmap for this map.
@@ -765,7 +765,7 @@ void GameMap_InitLineDefBlockmap(GameMap* map, const_pvec2_t min, const_pvec2_t 
  * @param min  Minimal coordinates for the map.
  * @param max  Maximal coordinates for the map.
  */
-void GameMap_InitBspLeafBlockmap(GameMap* map, const_pvec2_t min, const_pvec2_t max);
+void GameMap_InitBspLeafBlockmap(GameMap* map, const_pvec2f_t min, const_pvec2f_t max);
 
 /**
  * Construct an initial (empty) Polyobj Blockmap for this map.
@@ -773,7 +773,7 @@ void GameMap_InitBspLeafBlockmap(GameMap* map, const_pvec2_t min, const_pvec2_t 
  * @param min  Minimal coordinates for the map.
  * @param max  Maximal coordinates for the map.
  */
-void GameMap_InitPolyobjBlockmap(GameMap* map, const_pvec2_t min, const_pvec2_t max);
+void GameMap_InitPolyobjBlockmap(GameMap* map, const_pvec2f_t min, const_pvec2f_t max);
 
 #ifdef __cplusplus
 } // extern "C"

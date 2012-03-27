@@ -52,13 +52,13 @@ BspNode* BspNode_SetChildBounds(BspNode* node, int left, AABoxf* bounds)
     assert(node);
     if(bounds)
     {
-        V2_CopyBox(node->aaBox[left? LEFT:RIGHT].arvec2, bounds->arvec2);
+        V2f_CopyBox(node->aaBox[left? LEFT:RIGHT].arvec2, bounds->arvec2);
     }
     else
     {
         // Clear.
-        V2_Set(node->aaBox[left? LEFT:RIGHT].min, DDMAXFLOAT, DDMAXFLOAT);
-        V2_Set(node->aaBox[left? LEFT:RIGHT].max, DDMINFLOAT, DDMINFLOAT);
+        V2f_Set(node->aaBox[left? LEFT:RIGHT].min, DDMAXFLOAT, DDMAXFLOAT);
+        V2f_Set(node->aaBox[left? LEFT:RIGHT].max, DDMINFLOAT, DDMINFLOAT);
     }
     return node;
 }

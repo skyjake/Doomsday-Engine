@@ -44,11 +44,11 @@ typedef struct {
 /// Orientation is toward the projectee.
 typedef struct {
     float blendFactor; /// Multiplied with projection alpha.
-    pvec3_t v1; /// Top left vertex of the surface being projected to.
-    pvec3_t v2; /// Bottom right vertex of the surface being projected to.
-    pvec3_t tangent; /// Normalized tangent of the surface being projected to.
-    pvec3_t bitangent; /// Normalized bitangent of the surface being projected to.
-    pvec3_t normal; /// Normalized normal of the surface being projected to.
+    pvec3f_t v1; /// Top left vertex of the surface being projected to.
+    pvec3f_t v2; /// Bottom right vertex of the surface being projected to.
+    pvec3f_t tangent; /// Normalized tangent of the surface being projected to.
+    pvec3f_t bitangent; /// Normalized bitangent of the surface being projected to.
+    pvec3f_t normal; /// Normalized normal of the surface being projected to.
 } shadowprojectparams_t;
 
 // List nodes.
@@ -164,8 +164,8 @@ static void newShadowProjection(uint* listIdx, const float s[2], const float t[2
     linkProjectionToList(newProjection(s, t, alpha), getList(listIdx));
 }
 
-static boolean genTexCoords(pvec2_t s, pvec2_t t, const_pvec3_t point, float scale,
-    const_pvec3_t v1, const_pvec3_t v2, const_pvec3_t tangent, const_pvec3_t bitangent)
+static boolean genTexCoords(pvec2f_t s, pvec2f_t t, const_pvec3f_t point, float scale,
+    const_pvec3f_t v1, const_pvec3f_t v2, const_pvec3f_t tangent, const_pvec3f_t bitangent)
 {
     // Counteract aspect correction slightly (not too round mind).
     return R_GenerateTexCoords(s, t, point, scale, scale * 1.08f, v1, v2, tangent, bitangent);
@@ -203,8 +203,8 @@ int RIT_ProjectShadowToSurfaceIterator(void* obj, void* paramaters)
     shadowprojectparams_t* spParams = &p->spParams;
     float distanceFromViewer = 0, mobjHeight, halfMobjHeight, distanceFromSurface, scale;
     float shadowRadius, shadowStrength;
-    vec3_t mobjOrigin, point;
-    vec2_t s, t;
+    vec3f_t mobjOrigin, point;
+    vec2f_t s, t;
 
     Mobj_OriginSmoothed(mo, mobjOrigin);
 
@@ -238,13 +238,13 @@ int RIT_ProjectShadowToSurfaceIterator(void* obj, void* paramaters)
     // in the opposite direction (inward toward the mobj's origin), therefore this
     // has "volume/depth".
     //
-    // vec3_t vToMobj;
-    // V3_Subtract(vToMobj, spParams->v1, mobjOrigin);
-    // if(V3_DotProduct(vToMobj, spParams->normal) > 0) return false; // Continue iteration
+    // vec3f_t vToMobj;
+    // V3f_Subtract(vToMobj, spParams->v1, mobjOrigin);
+    // if(V3f_DotProduct(vToMobj, spParams->normal) > 0) return false; // Continue iteration
 
     // Calculate 3D distance between surface and mobj.
-    V3_ClosestPointOnPlane(point, spParams->normal, spParams->v1, mobjOrigin);
-    distanceFromSurface = V3_Distance(point, mobjOrigin);
+    V3f_ClosestPointOnPlane(point, spParams->normal, spParams->v1, mobjOrigin);
+    distanceFromSurface = V3f_Distance(point, mobjOrigin);
 
     // Too far above or below the shadowed surface?
     if(distanceFromSurface > mo->height) return false; // Continue iteration.
@@ -310,7 +310,7 @@ void R_InitShadowProjectionListsForNewFrame(void)
 }
 
 uint R_ProjectShadowsToSurface(BspLeaf* bspLeaf, float blendFactor,
-    vec3_t topLeft, vec3_t bottomRight, vec3_t tangent, vec3_t bitangent, vec3_t normal)
+    vec3f_t topLeft, vec3f_t bottomRight, vec3f_t tangent, vec3f_t bitangent, vec3f_t normal)
 {
     projectshadowonsurfaceiteratorparams_t p;
 

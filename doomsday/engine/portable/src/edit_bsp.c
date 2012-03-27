@@ -211,7 +211,7 @@ static void buildHEdgesFromBSPHEdges(GameMap* dest, BinaryTree* rootNode)
             surface->normal[VY] = (hedge->HE_v1pos[VX] - hedge->HE_v2pos[VX]) / hedge->length;
             surface->normal[VX] = (hedge->HE_v2pos[VY] - hedge->HE_v1pos[VY]) / hedge->length;
             surface->normal[VZ] = 0;
-            V3_BuildTangents(surface->tangent, surface->bitangent, surface->normal);
+            V3f_BuildTangents(surface->tangent, surface->bitangent, surface->normal);
 
             // All surfaces of a sidedef have the same tangent space vectors.
             memcpy(side->SW_middletangent, surface->tangent, sizeof(surface->tangent));

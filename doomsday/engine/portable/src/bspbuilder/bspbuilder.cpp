@@ -102,14 +102,14 @@ static int findMapBoundsIterator(LineDef* line, void* parameters)
     initAABoxFromEditableLineDefVertexes(&lineAABox, line);
     if(p->initialized)
     {
-        V2_AddToBox(p->bounds.arvec2, lineAABox.min);
+        V2f_AddToBox(p->bounds.arvec2, lineAABox.min);
     }
     else
     {
-        V2_InitBox(p->bounds.arvec2, lineAABox.min);
+        V2f_InitBox(p->bounds.arvec2, lineAABox.min);
         p->initialized = true;
     }
-    V2_AddToBox(p->bounds.arvec2, lineAABox.max);
+    V2f_AddToBox(p->bounds.arvec2, lineAABox.max);
     return false; // Continue iteration.
 }
 
@@ -124,14 +124,14 @@ static void findMapBounds(GameMap* map, AABoxf* aaBox)
         GameMap_LineDefIterator(map, findMapBoundsIterator, (void*)&parm);
         if(parm.initialized)
         {
-            V2_CopyBox(aaBox->arvec2, parm.bounds.arvec2);
+            V2f_CopyBox(aaBox->arvec2, parm.bounds.arvec2);
             return;
         }
     }
 
     // Clear.
-    V2_Set(aaBox->min, DDMAXFLOAT, DDMAXFLOAT);
-    V2_Set(aaBox->max, DDMINFLOAT, DDMINFLOAT);
+    V2f_Set(aaBox->min, DDMAXFLOAT, DDMAXFLOAT);
+    V2f_Set(aaBox->max, DDMINFLOAT, DDMINFLOAT);
 }
 
 SuperBlockmap* BspBuilder::createInitialHEdges(GameMap* map)

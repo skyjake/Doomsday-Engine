@@ -224,7 +224,7 @@ void R_LoadSystemFonts(void)
 void R_SetViewOrigin(int consoleNum, float const origin[3])
 {
     if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
-    V3_Copy(viewDataOfConsole[consoleNum].latest.pos, origin);
+    V3f_Copy(viewDataOfConsole[consoleNum].latest.pos, origin);
 }
 
 /**
@@ -657,7 +657,7 @@ void R_InterpolateViewer(viewer_t* start, viewer_t* end, float pos, viewer_t* ou
 
 void R_CopyViewer(viewer_t* dst, const viewer_t* src)
 {
-    V3_Copy(dst->pos, src->pos);
+    V3f_Copy(dst->pos, src->pos);
     dst->angle = src->angle;
     dst->pitch = src->pitch;
 }
@@ -679,7 +679,7 @@ void R_CheckViewerLimits(viewer_t* src, viewer_t* dst)
     if(fabs(dst->pos[VX] - src->pos[VX]) > MAXMOVE ||
        fabs(dst->pos[VY] - src->pos[VY]) > MAXMOVE)
     {
-        V3_Copy(src->pos, dst->pos);
+        V3f_Copy(src->pos, dst->pos);
     }
     if(abs((int) dst->angle - (int) src->angle) >= ANGLE_45)
     {
@@ -879,7 +879,7 @@ void R_UpdateViewer(int consoleNum)
     R_GetSharpView(&sharpView, player);
 
     if(resetNextViewer ||
-       V3_Distance(vd->current.pos, sharpView.pos) > VIEWPOS_MAX_SMOOTHDISTANCE)
+       V3f_Distance(vd->current.pos, sharpView.pos) > VIEWPOS_MAX_SMOOTHDISTANCE)
     {
         // Keep reseting until a new sharp world has arrived.
         if(resetNextViewer > 1)
@@ -1194,14 +1194,14 @@ void R_RenderPlayerView(int num)
         static float prevTime;
         float delta[2] = { vd->current.pos[VX] - prevPos[VX],
                            vd->current.pos[VY] - prevPos[VY] };
-        float speed = V2_Length(delta);
+        float speed = V2f_Length(delta);
         float time = sysTime - devCameraMovementStartTime;
         float elapsed = time - prevTime;
 
         Con_Message("%f,%f,%f,%f,%f\n", Sys_GetRealSeconds() - devCameraMovementStartTimeRealSecs,
                     time, elapsed, speed/elapsed, speed/elapsed - prevSpeed);
 
-        V3_Copy(prevPos, vd->current.pos);
+        V3f_Copy(prevPos, vd->current.pos);
         prevSpeed = speed/elapsed;
         prevTime = time;
     }

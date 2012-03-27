@@ -361,22 +361,22 @@ void R_HSVToRGB(float* rgb, float h, float s, float v)
     }
 }
 
-boolean R_GenerateTexCoords(pvec2_t s, pvec2_t t, const_pvec3_t point, float xScale, float yScale,
-    const_pvec3_t v1, const_pvec3_t v2, const_pvec3_t tangent, const_pvec3_t bitangent)
+boolean R_GenerateTexCoords(pvec2f_t s, pvec2f_t t, const_pvec3f_t point, float xScale, float yScale,
+    const_pvec3f_t v1, const_pvec3f_t v2, const_pvec3f_t tangent, const_pvec3f_t bitangent)
 {
-    vec3_t vToPoint;
+    vec3f_t vToPoint;
 
-    V3_Subtract(vToPoint, v1, point);
-    s[0] = V3_DotProduct(vToPoint, tangent)   * xScale + .5f;
-    t[0] = V3_DotProduct(vToPoint, bitangent) * yScale + .5f;
+    V3f_Subtract(vToPoint, v1, point);
+    s[0] = V3f_DotProduct(vToPoint, tangent)   * xScale + .5f;
+    t[0] = V3f_DotProduct(vToPoint, bitangent) * yScale + .5f;
 
     // Is the origin point visible?
     if(s[0] >= 1 || t[0] >= 1)
         return false; // Right on the X axis or below on the Y axis.
 
-    V3_Subtract(vToPoint, v2, point);
-    s[1] = V3_DotProduct(vToPoint, tangent)   * xScale + .5f;
-    t[1] = V3_DotProduct(vToPoint, bitangent) * yScale + .5f;
+    V3f_Subtract(vToPoint, v2, point);
+    s[1] = V3f_DotProduct(vToPoint, tangent)   * xScale + .5f;
+    t[1] = V3f_DotProduct(vToPoint, bitangent) * yScale + .5f;
 
     // Is the end point visible?
     if(s[1] <= 0 || t[1] <= 0)

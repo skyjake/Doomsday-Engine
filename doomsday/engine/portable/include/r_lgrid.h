@@ -46,7 +46,7 @@ void LG_SectorChanged(Sector* sector);
  * @param point  3D point.
  * @param color  Evaluated color of the point (return value).
  */
-void LG_Evaluate(const vectorcomp_t point[3], vectorcomp_t destColor[3]);
+void LG_Evaluate(const vectorcompf_t point[3], vectorcompf_t destColor[3]);
 
 /**
  * Calculate the light level for a 3D point in the world.
@@ -54,7 +54,7 @@ void LG_Evaluate(const vectorcomp_t point[3], vectorcomp_t destColor[3]);
  * @param point  3D point.
  * @return  Evaluated light level of the point.
  */
-float LG_EvaluateLightLevel(const vectorcomp_t point[3]);
+float LG_EvaluateLightLevel(const vectorcompf_t point[3]);
 
 void LG_Debug(void);
 

@@ -647,7 +647,7 @@ int PIT_LinkToLines(LineDef* ld, void* parameters)
 void GameMap_LinkMobjToLineDefs(GameMap* map, mobj_t* mo)
 {
     linelinker_data_t p;
-    vec2_t point;
+    vec2f_t point;
     assert(map);
 
     // Get a new root node.
@@ -656,10 +656,10 @@ void GameMap_LinkMobjToLineDefs(GameMap* map, mobj_t* mo)
     // Set up a line iterator for doing the linking.
     p.map = map;
     p.mo = mo;
-    V2_Set(point, mo->pos[VX] - mo->radius, mo->pos[VY] - mo->radius);
-    V2_InitBox(p.box.arvec2, point);
-    V2_Set(point, mo->pos[VX] + mo->radius, mo->pos[VY] + mo->radius);
-    V2_AddToBox(p.box.arvec2, point);
+    V2f_Set(point, mo->pos[VX] - mo->radius, mo->pos[VY] - mo->radius);
+    V2f_InitBox(p.box.arvec2, point);
+    V2f_Set(point, mo->pos[VX] + mo->radius, mo->pos[VY] + mo->radius);
+    V2f_AddToBox(p.box.arvec2, point);
 
     validCount++;
     P_AllLinesBoxIterator(&p.box, PIT_LinkToLines, (void*)&p);
@@ -932,7 +932,7 @@ int PIT_AddLineDefIntercepts(LineDef* lineDef, void* paramaters)
 int PIT_AddMobjIntercepts(mobj_t* mobj, void* paramaters)
 {
     const divline_t* traceLOS;
-    vec2_t from, to;
+    vec2f_t from, to;
     float distance;
     divline_t dl;
     int s1, s2;
@@ -946,18 +946,18 @@ int PIT_AddMobjIntercepts(mobj_t* mobj, void* paramaters)
     if((traceLOS->dX ^ traceLOS->dY) > 0)
     {
         // \ Slope
-        V2_Set(from, mobj->pos[VX] - mobj->radius,
-                     mobj->pos[VY] + mobj->radius);
-        V2_Set(to,   mobj->pos[VX] + mobj->radius,
-                     mobj->pos[VY] - mobj->radius);
+        V2f_Set(from, mobj->pos[VX] - mobj->radius,
+                      mobj->pos[VY] + mobj->radius);
+        V2f_Set(to,   mobj->pos[VX] + mobj->radius,
+                      mobj->pos[VY] - mobj->radius);
     }
     else
     {
         // / Slope
-        V2_Set(from, mobj->pos[VX] - mobj->radius,
-                     mobj->pos[VY] - mobj->radius);
-        V2_Set(to,   mobj->pos[VX] + mobj->radius,
-                     mobj->pos[VY] + mobj->radius);
+        V2f_Set(from, mobj->pos[VX] - mobj->radius,
+                      mobj->pos[VY] - mobj->radius);
+        V2f_Set(to,   mobj->pos[VX] + mobj->radius,
+                      mobj->pos[VY] + mobj->radius);
     }
 
     // Is this line crossed?

@@ -70,7 +70,7 @@ static int editShowAll = false;
 static int editShowIndices = true;
 static int editHueCircle = false;
 static float hueDistance = 100;
-static vec3_t hueOrigin, hueSide, hueUp;
+static vec3f_t hueOrigin, hueSide, hueUp;
 
 void SBE_Register(void)
 {
@@ -170,7 +170,7 @@ static void SBE_GetHueColor(float* color, float* angle, float* sat)
     float dot;
     float saturation, hue, scale;
     float minAngle = 0.1f, range = 0.19f;
-    vec3_t h, proj;
+    vec3f_t h, proj;
     const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
 
     dot = M_DotProduct(viewData->frontVec, hueOrigin);
@@ -955,8 +955,8 @@ static void SBE_HueOffset(double angle, float *offset)
 
 static void SBE_DrawHue(void)
 {
-    vec3_t eye;
-    vec3_t center, off, off2;
+    vec3f_t eye;
+    vec3f_t center, off, off2;
     float steps = 32, inner = 10, outer = 30, s;
     double angle;
     float color[4], sel[4], hue, saturation;

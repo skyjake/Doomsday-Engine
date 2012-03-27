@@ -1145,8 +1145,8 @@ static void setTexUnit(materialsnapshot_t* ms, byte unit, TextureVariant* textur
     tu->texture.variant = texture;
     tu->texture.flags = TUF_TEXTURE_IS_MANAGED;
     tu->blendMode = blendMode;
-    V2_Set(tu->scale, sScale, tScale);
-    V2_Set(tu->offset, sOffset, tOffset);
+    V2f_Set(tu->scale, sScale, tScale);
+    V2f_Set(tu->offset, sOffset, tOffset);
     tu->opacity = MINMAX_OF(0, opacity, 1);
 }
 
@@ -1165,7 +1165,7 @@ void Materials_InitSnapshot(materialsnapshot_t* ms)
     ms->size.width = ms->size.height = 0;
     ms->glowing = 0;
     ms->isOpaque = true;
-    V3_Set(ms->shinyMinColor, 0, 0, 0);
+    V3f_Set(ms->shinyMinColor, 0, 0, 0);
 }
 
 /// @return  Same as @a snapshot for caller convenience.

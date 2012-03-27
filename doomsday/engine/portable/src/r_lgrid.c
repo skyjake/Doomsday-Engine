@@ -870,7 +870,7 @@ BEGIN_PROF( PROF_GRID_UPDATE );
 END_PROF( PROF_GRID_UPDATE );
 }
 
-void LG_Evaluate(const vectorcomp_t point[3], float color[3])
+void LG_Evaluate(const vectorcompf_t point[3], float color[3])
 {
     int x, y, i;
     //float dz = 0, dimming;
@@ -964,7 +964,7 @@ void LG_Evaluate(const vectorcomp_t point[3], float color[3])
     }
 }
 
-float LG_EvaluateLightLevel(const vectorcomp_t point[3])
+float LG_EvaluateLightLevel(const vectorcompf_t point[3])
 {
     float color[3];
     LG_Evaluate(point, color);

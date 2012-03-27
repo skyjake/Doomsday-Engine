@@ -39,13 +39,13 @@ void Polyobj_UpdateAABox(Polyobj* po)
     if(!*lineIter) return; // Very odd...
 
     line = *lineIter;
-    V2_InitBox(po->aaBox.arvec2, line->L_v1pos);
+    V2f_InitBox(po->aaBox.arvec2, line->L_v1pos);
     lineIter++;
 
     while(*lineIter)
     {
         line = *lineIter;
-        V2_AddToBox(po->aaBox.arvec2, line->L_v1pos);
+        V2f_AddToBox(po->aaBox.arvec2, line->L_v1pos);
         lineIter++;
     }
 }

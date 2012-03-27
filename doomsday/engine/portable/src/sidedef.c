@@ -49,7 +49,7 @@ void SideDef_UpdateSurfaceTangents(SideDef* side)
     surface->normal[VY] = (line->L_vpos(sid  )[VX] - line->L_vpos(sid^1)[VX]) / line->length;
     surface->normal[VX] = (line->L_vpos(sid^1)[VY] - line->L_vpos(sid  )[VY]) / line->length;
     surface->normal[VZ] = 0;
-    V3_BuildTangents(surface->tangent, surface->bitangent, surface->normal);
+    V3f_BuildTangents(surface->tangent, surface->bitangent, surface->normal);
 
     // All surfaces of a sidedef have the same vectors.
     memcpy(side->SW_middletangent, surface->tangent, sizeof(surface->tangent));

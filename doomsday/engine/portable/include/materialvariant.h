@@ -60,7 +60,7 @@ typedef struct materialsnapshot_s {
     float glowing;
 
     /// Minimum sector light color for shiny texturing.
-    vec3_t shinyMinColor;
+    vec3f_t shinyMinColor;
 
     /// Textures used on each texture unit.
     struct texturevariant_s* textures[NUM_MATERIAL_TEXTURE_UNITS];

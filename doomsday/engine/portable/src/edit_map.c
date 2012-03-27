@@ -1610,9 +1610,9 @@ void MPE_DetectOverlappingLines(GameMap* map)
  * @param min  Minimal coordinates will be written here.
  * @param max  Maximal coordinates will be written here.
  */
-static void findBounds(Vertex const** vertexes, uint numVertexes, vec2_t min, vec2_t max)
+static void findBounds(Vertex const** vertexes, uint numVertexes, vec2f_t min, vec2f_t max)
 {
-    vec2_t bounds[2], point;
+    vec2f_t bounds[2], point;
     const Vertex* vtx;
     uint i;
 
@@ -1620,28 +1620,28 @@ static void findBounds(Vertex const** vertexes, uint numVertexes, vec2_t min, ve
 
     if(!vertexes || !numVertexes)
     {
-        V2_Set(min, DDMAXFLOAT, DDMAXFLOAT);
-        V2_Set(max, DDMINFLOAT, DDMINFLOAT);
+        V2f_Set(min, DDMAXFLOAT, DDMAXFLOAT);
+        V2f_Set(max, DDMINFLOAT, DDMINFLOAT);
         return;
     }
 
     for(i = 0; i < numVertexes; ++i)
     {
         vtx = vertexes[i];
-        V2_Set(point, vtx->V_pos[VX], vtx->V_pos[VY]);
+        V2f_Set(point, vtx->V_pos[VX], vtx->V_pos[VY]);
         if(!i)
-            V2_InitBox(bounds, point);
+            V2f_InitBox(bounds, point);
         else
-            V2_AddToBox(bounds, point);
+            V2f_AddToBox(bounds, point);
     }
 
     if(min)
     {
-        V2_Set(min, bounds[0][VX], bounds[0][VY]);
+        V2f_Set(min, bounds[0][VX], bounds[0][VY]);
     }
     if(max)
     {
-        V2_Set(max, bounds[1][VX], bounds[1][VY]);
+        V2f_Set(max, bounds[1][VX], bounds[1][VY]);
     }
 }
 
@@ -1652,7 +1652,7 @@ boolean MPE_End(void)
 {
     GameMap* gamemap;
     boolean builtOK;
-    vec2_t min, max;
+    vec2f_t min, max;
     uint i;
 
     if(!editMapInited)
@@ -2031,9 +2031,9 @@ uint MPE_PlaneCreate(uint sector, float height, materialid_t material, float mat
     Surface_SetColorAndAlpha(&pln->surface, r, g, b, a);
     Surface_SetMaterialOrigin(&pln->surface, matOffsetX, matOffsetY);
 
-    V3_Set(pln->PS_normal, normalX, normalY, normalZ);
-    V3_Normalize(pln->PS_normal);
-    V3_BuildTangents(pln->PS_tangent, pln->PS_bitangent, pln->PS_normal);
+    V3f_Set(pln->PS_normal, normalX, normalY, normalZ);
+    V3f_Normalize(pln->PS_normal);
+    V3f_BuildTangents(pln->PS_tangent, pln->PS_bitangent, pln->PS_normal);
 
     pln->type = (pln->PS_normal[VZ] < 0? PLN_CEILING : PLN_FLOOR);
 
