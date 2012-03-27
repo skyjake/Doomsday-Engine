@@ -182,6 +182,7 @@ public slots:
 
 private slots:
     void bytesWereWritten(qint64 bytes);
+    void socketDestroyed();
 
 protected:
     /// Create a Socket object for a previously opened socket.

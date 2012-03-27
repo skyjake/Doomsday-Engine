@@ -408,6 +408,12 @@ Socket::~Socket()
     delete d;
 }
 
+void Socket::socketDestroyed()
+{
+    // The socket is gone...
+    d->socket = 0;
+}
+
 void Socket::initialize()
 {
     // Options.
@@ -417,10 +423,13 @@ void Socket::initialize()
     connect(d->socket, SIGNAL(disconnected()), this, SLOT(socketDisconnected()));
     connect(d->socket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(socketError(QAbstractSocket::SocketError)), Qt::DirectConnection);
     connect(d->socket, SIGNAL(readyRead()), this, SLOT(readIncomingBytes()));
+    connect(d->socket, SIGNAL(destroyed()), this, SLOT(socketDestroyed()));
 }
 
 void Socket::close()
 {
+    if(!d->socket) return;
+
     // All pending data will be written to the socket before closing.
     d->socket->disconnectFromHost();
 
@@ -468,6 +477,8 @@ void Socket::send(const IByteArray& packet, duint /*channel*/)
 
 void Socket::readIncomingBytes()
 {
+    if(!d->socket) return;
+
     int available = d->socket->bytesAvailable();
     if(available > 0)
     {
@@ -503,6 +514,8 @@ Message* Socket::peek()
 
 void Socket::flush()
 {
+    if(!d->socket) return;
+
     // Wait until data has been written.
     d->socket->flush();
     d->socket->waitForBytesWritten();

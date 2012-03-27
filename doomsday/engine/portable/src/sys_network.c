@@ -205,7 +205,7 @@ void N_ShutdownService(void)
         serverSock = 0;
 
         // Clear the client nodes.
-        for(i = 0; i < MAX_NODES; ++i)
+        for(i = 1; i < MAX_NODES; ++i)
             N_TerminateNode(i);
 
         // Free the socket set.
