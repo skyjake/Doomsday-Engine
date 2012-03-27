@@ -185,7 +185,13 @@ def mac_release():
         sbLoc = '/dist/Doomsday Engine.app'
     else:
         # Wait until the updated packaged SB has been shared.
-        time.sleep(5 * 60)
+        try:
+            print 'This system seems unable to package Snowberry. Waiting a while'
+            print 'for an updated shared Doomsday Engine.app bundle...'
+            print '(press Ctrl-C to skip)'
+            time.sleep(5 * 60)
+        except KeyboardInterrupt:
+            pass
         sbLoc = '/shared/Doomsday Engine.app'
 
     # First we need to make a release build.
