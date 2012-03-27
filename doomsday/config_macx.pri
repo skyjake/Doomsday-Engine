@@ -18,10 +18,11 @@ CONFIG += deng_nofixedasm
         # 4.7, assume Snow Leopard with 32/64-bit Intel.
         CONFIG += deng_macx6_32bit_64bit
     }
-    else {
+    else:contains(QT_VERSION, ^4\\.8\\..*) {
         # 4.8+, assume Lion and 64-bit Intel.
         CONFIG += deng_macx7_64bit
     }
+    else:error(Unsupported Qt version: $$QT_VERSION)
 }
 
 QMAKE_LFLAGS += -flat_namespace -undefined suppress
@@ -45,8 +46,6 @@ else:deng_macx7_64bit {
     QMAKE_CFLAGS += -mmacosx-version-min=10.6
     QMAKE_CXXFLAGS += -mmacosx-version-min=10.6
     INCLUDEPATH = $$QMAKE_MAC_SDK/usr/X11/include $$INCLUDEPATH
-    QMAKE_INCDIR_QT = $${QMAKE_MAC_SDK}$$QMAKE_INCDIR_QT
-    QMAKE_LIBDIR_QT = $${QMAKE_MAC_SDK}$$QMAKE_LIBDIR_QT    
 }
 else:deng_macx6_32bit_64bit {
     echo(Using Mac OS 10.6 SDK.)
@@ -56,8 +55,6 @@ else:deng_macx6_32bit_64bit {
     QMAKE_CFLAGS += -mmacosx-version-min=10.5
     QMAKE_CXXFLAGS += -mmacosx-version-min=10.5
     INCLUDEPATH = $$QMAKE_MAC_SDK/usr/X11/include $$INCLUDEPATH
-    QMAKE_INCDIR_QT = $${QMAKE_MAC_SDK}$$QMAKE_INCDIR_QT
-    QMAKE_LIBDIR_QT = $${QMAKE_MAC_SDK}$$QMAKE_LIBDIR_QT
 }
 else:deng_macx4u_32bit {
     echo(Using Mac OS 10.4u SDK.)
@@ -66,12 +63,17 @@ else:deng_macx4u_32bit {
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.4
     QMAKE_CFLAGS += -mmacosx-version-min=10.4
     INCLUDEPATH = $$QMAKE_MAC_SDK/usr/X11R6/include $$INCLUDEPATH
-    QMAKE_INCDIR_QT = $${QMAKE_MAC_SDK}$$QMAKE_INCDIR_QT
-    QMAKE_LIBDIR_QT = $${QMAKE_MAC_SDK}$$QMAKE_LIBDIR_QT
     DEFINES += MACOS_10_4
 }
 else {
     error(Unspecified SDK configuration.)
+}
+
+# Adjust Qt paths as needed.
+qtbase = $$(QTDIR)
+isEmpty(qtbase):!isEmpty(QMAKE_MAC_SDK) {
+    QMAKE_INCDIR_QT = $${QMAKE_MAC_SDK}$$QMAKE_INCDIR_QT
+    QMAKE_LIBDIR_QT = $${QMAKE_MAC_SDK}$$QMAKE_LIBDIR_QT
 }
 
 #deng_nativesdk {
