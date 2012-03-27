@@ -99,6 +99,11 @@ def mac_os_version():
     return platform.mac_ver()[0][:4]
 
 
+def mac_target_ext():
+    if mac_os_version() == '10.6': return '_64bit.dmg'
+    return '.dmg'
+
+
 def output_filename(ext=''):
     if DOOMSDAY_RELEASE_TYPE == "Stable":
         return 'doomsday_' + DOOMSDAY_VERSION_FULL + ext
@@ -196,7 +201,7 @@ def mac_release():
         raise Exception("Failed to build from source.")
 
     # Now we can proceed to packaging.
-    target = os.path.join(OUTPUT_DIR, output_filename('.dmg'))
+    target = os.path.join(OUTPUT_DIR, output_filename(mac_target_ext()))
     try:
         os.remove(target)
         print 'Removed existing target file', target
