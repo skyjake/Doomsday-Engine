@@ -147,6 +147,120 @@ void V2f_AddToBox(arvec2f_t box, const pvec2f_t point);
 
 void V2f_CopyBox(arvec2f_t dest, const arvec2f_t src);
 
+typedef double vectorcompd_t;
+typedef vectorcompd_t vec2d_t[2];
+typedef const double const_pvec2d_t[2];
+typedef vectorcompd_t* pvec2d_t;
+typedef vec2d_t* arvec2d_t;
+
+/**
+ * Set the vector's x and y components.
+ */
+void V2d_Set(pvec2d_t vec, vectorcompd_t x, vectorcompd_t y);
+
+void V2d_SetFixed(pvec2d_t vec, fixed_t x, fixed_t y);
+
+/**
+ * 2-dimensional vector length.
+ */
+double V2d_Length(const pvec2d_t vector);
+
+/**
+ * The distance between two points.
+ */
+double V2d_Distance(const pvec2d_t a, const pvec2d_t b);
+
+/**
+ * Normalize a 2-dimensional vector.
+ *
+ * @return  The length of the vector.
+ */
+double V2d_Normalize(pvec2d_t vec);
+
+/**
+ * Make a copy of the source vector.
+ */
+void V2d_Copy(pvec2d_t dest, const_pvec2d_t src);
+
+/**
+ * Multiply the vector by the scalar.
+ */
+void V2d_Scale(pvec2d_t vector, double scalar);
+
+/**
+ * Rotate the vector by a radian angle.
+ */
+void V2d_Rotate(pvec2d_t vec, double radians);
+
+/**
+ * Calculate the sum of two 2-dimensional vectors.
+ */
+void V2d_Sum(pvec2d_t dest, const_pvec2d_t src1, const_pvec2d_t src2);
+
+/**
+ * Subtract src1 from src2, return result in 'dest'.
+ */
+void V2d_Subtract(pvec2d_t dest, const_pvec2d_t src1, const_pvec2d_t src2);
+
+/**
+ * Calculate the dot product of the two vectors.
+ */
+double V2d_DotProduct(const pvec2d_t a, const pvec2d_t b);
+
+/**
+ * Calculate the scalar projection of 'a' onto 'b': dot(a,b)/len(b)
+ */
+double V2d_ScalarProject(const pvec2d_t a, const pvec2d_t b);
+
+/**
+ * Project 'a' onto 'b' and store the resulting vector to 'dest':
+ * dot(a,b)/dot(b,b)*b
+ */
+void V2d_Project(pvec2d_t dest, const pvec2d_t a, const pvec2d_t b);
+
+/**
+ * @return  @c true, if the two vectors are parallel.
+ */
+boolean V2d_IsParallel(const pvec2d_t a, const pvec2d_t b);
+
+/**
+ * @return  @c true, if the vector is a zero vector.
+ */
+boolean V2d_IsZero(const pvec2d_t vec);
+
+/**
+ * Determine where the two lines cross each other.  Notice that the
+ * lines are defined with a point and a vector.
+ *
+ * @return  A scaling factor for the first line.
+ */
+double V2d_Intersection(const_pvec2d_t p1, const_pvec2d_t delta1, const_pvec2d_t p2, const_pvec2d_t delta2, pvec2d_t point);
+
+/**
+ * Intersection of lines a->b and c->d.  Unlike V2d_Intersection(), the
+ * arguments are all points.
+ */
+double V2d_Intercept(const pvec2d_t a, const pvec2d_t b, const pvec2d_t c, const pvec2d_t d, pvec2d_t point);
+
+/**
+ * @return  @c true, if the two lines intercept.
+ */
+boolean V2d_Intercept2(const pvec2d_t a, const pvec2d_t b, const pvec2d_t c, const pvec2d_t d, pvec2d_t point, double *abFrac, double *cdFrac);
+
+/**
+ * Linear interpolation between a and b, by c.
+ */
+void V2d_Lerp(pvec2d_t dest, const pvec2d_t a, const pvec2d_t b, double c);
+
+/**
+ * Left/top is the min-point.  Right/bottom is the max-point.
+ */
+void V2d_InitBox(arvec2d_t box, const pvec2d_t point);
+
+void V2d_AddToBox(arvec2d_t box, const pvec2d_t point);
+
+void V2d_CopyBox(arvec2d_t dest, const arvec2d_t src);
+
 /**
  * 3-dimensions:
  */
@@ -261,6 +375,116 @@ void V3f_Lerp(pvec3f_t dest, const pvec3f_t a, const pvec3f_t b, float c);
  */
 void V3f_BuildTangents(pvec3f_t tangent, pvec3f_t bitangent, const_pvec3f_t normal);
 
+typedef vectorcompd_t vec3d_t[3];
+typedef const double const_pvec3d_t[3];
+typedef vectorcompd_t* pvec3d_t;
+typedef vec3d_t* arvec3d_t;
+
+/**
+ * Set the vector's x, y and z components.
+ */
+void V3d_Set(pvec3d_t vec, vectorcompd_t x, vectorcompd_t y, vectorcompd_t z);
+
+void V3d_SetFixed(pvec3d_t vec, fixed_t x, fixed_t y, fixed_t z);
+
+/**
+ * 3-dimensional vector length.
+ */
+double V3d_Length(const pvec3d_t vec);
+
+/**
+ * The distance between two points.
+ */
+double V3d_Distance(const pvec3d_t a, const pvec3d_t b);
+
+/**
+ * Normalize a 3-dimensional vector.
+ *
+ * @return  The length of the vector.
+ */
+double V3d_Normalize(pvec3d_t vec);
+
+/**
+ * Make a copy of the source vector.
+ */
+void V3d_Copy(pvec3d_t dest, const_pvec3d_t src);
+
+/**
+ * Multiply the vector by the scalar.
+ */
+void V3d_Scale(pvec3d_t vec, double scalar);
+
+/**
+ * Calculate the sum of two 3-dimensional vectors.
+ */
+void V3d_Sum(pvec3d_t dest, const_pvec3d_t src1, const_pvec3d_t src2);
+
+/**
+ * Subtract src1 from src2, return result in 'dest'.
+ */
+void V3d_Subtract(pvec3d_t dest, const_pvec3d_t src1, const_pvec3d_t src2);
+
+/**
+ * Calculate the dot product of the two vectors.
+ */
+double V3d_DotProduct(const_pvec3d_t a, const_pvec3d_t b);
+
+/**
+ * Calculate the cross product of two vectors.
+ *
+ * @param dest  Result will be written back here.
+ * @param src1  First vector.
+ * @param src2  Second vector.
+ */
+void V3d_CrossProduct(pvec3d_t dest, const_pvec3d_t src1, const_pvec3d_t src2);
+
+/**
+ * Cross product of two vectors composed of three points.
+ *
+ * @param dest  Result will be written back here.
+ * @param v1  First vector.
+ * @param v2  Second vector.
+ * @param v3  Third vector.
+ */
+void V3d_PointCrossProduct(pvec3d_t dest, const pvec3d_t v1, const pvec3d_t v2, const pvec3d_t v3);
+
+/**
+ * Find the closest point in the plane, to an arbitary point.
+ *
+ * @param dest  Result will be written back here.
+ * @param planeNormal  The normalized plane normal.
+ * @param planePoint  A point already on the plane.
+ * @param arbPoint  The arbitrary point to find the closest point too.
+ *
+ * @return  Distance from the closest point on the plane to the specified arbitary point.
+ */
+double V3d_ClosestPointOnPlane(pvec3d_t dest, const_pvec3d_t planeNormal, const_pvec3d_t planePoint, const_pvec3d_t arbPoint);
+
+/**
+ * Determine which axis of the given vector is the major.
+ */
+int V3d_MajorAxis(const pvec3d_t vec);
+
+/**
+ * @return  @c true, if the vector is a zero vector.
+ */
+boolean V3d_IsZero(const pvec3d_t vec);
+
+/**
+ * Linear interpolation between a and b, by c.
+ */
+void V3d_Lerp(pvec3d_t dest, const pvec3d_t a, const pvec3d_t b, double c);
+
+/**
+ * Given a normalized normal, construct up and right vectors, oriented about
+ * @a normal in our right-handed world coordinate space.
+ *
+ * @param tangent  The 'right' vector will be written back here.
+ * @param bitangent  The 'up' vector will be written back here.
+ * @param normal  Normal to construct tangents for.
+ */
+void V3d_BuildTangents(pvec3d_t tangent, pvec3d_t bitangent, const_pvec3d_t normal);
+
 /**
  * 4-dimensions:
  */
@@ -323,6 +547,65 @@ boolean V4f_IsZero(const pvec4f_t vec);
  * Linear interpolation between a and b, by c.
  */
 void V4f_Lerp(pvec4f_t dest, const pvec4f_t a, const pvec4f_t b, float c);
+
+typedef vectorcompd_t vec4d_t[4];
+typedef const double const_pvec4d_t[4];
+typedef vectorcompd_t* pvec4d_t;
+typedef vec4d_t* arvec4d_t;
+
+/**
+ * Set the vector's x, y, z and w components.
+ */
+void V4d_Set(pvec4d_t vec, vectorcompd_t x, vectorcompd_t y, vectorcompd_t z, vectorcompd_t w);
+
+void V4d_SetFixed(pvec4d_t vec, fixed_t x, fixed_t y, fixed_t z, fixed_t w);
+
+/**
+ * 4-dimensional vector length.
+ */
+double V4d_Length(const pvec4d_t vec);
+
+/**
+ * The distance between two points.
+ */
+double V4d_Distance(const pvec4d_t a, const pvec4d_t b);
+
+/**
+ * Normalize a 4-dimensional vector.
+ *
+ * @return  The length of the vector.
+ */
+double V4d_Normalize(pvec4d_t vec);
+
+/**
+ * Make a copy of the source vector.
+ */
+void V4d_Copy(pvec4d_t dest, const_pvec4d_t src);
+
+/**
+ * Multiply the vector by the scalar.
+ */
+void V4d_Scale(pvec4d_t vec, double scalar);
+
+/**
+ * Calculate the sum of two 4-dimensional vectors.
+ */
+void V4d_Sum(pvec4d_t dest, const_pvec4d_t src1, const_pvec4d_t src2);
+
+/**
+ * Subtract src1 from src2, return result in 'dest'.
+ */
+void V4d_Subtract(pvec4d_t dest, const_pvec4d_t src1, const_pvec4d_t src2);
+
+/**
+ * @return  @c true, if the vector is a zero vector.
+ */
+boolean V4d_IsZero(const pvec4d_t vec);
+
+/**
+ * Linear interpolation between a and b, by c.
+ */
+void V4d_Lerp(pvec4d_t dest, const pvec4d_t a, const pvec4d_t b, double c);
 
 #ifdef __cplusplus
 } // extern "C"
