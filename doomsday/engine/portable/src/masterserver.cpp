@@ -23,10 +23,10 @@
 
 #include <QNetworkAccessManager>
 #include <QDebug>
+#include "de_platform.h"
 #include <vector>
 #include <list>
 #include "masterserver.h"
-#include "de_platform.h"
 #include "dd_main.h"
 #include "con_main.h"
 #include "m_misc.h"
