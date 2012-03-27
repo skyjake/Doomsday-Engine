@@ -580,6 +580,7 @@ void Net_StopGame(void)
 
         plr->shared.inGame = false;
         cl->ready = cl->connected = false;
+        cl->id = 0;
         cl->nodeID = 0;
         cl->viewConsole = -1;
         plr->shared.flags &= ~(DDPF_CAMERA | DDPF_CHASECAM | DDPF_LOCAL);
