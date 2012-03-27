@@ -339,7 +339,9 @@ void Net_SendPacket(int to_player, int type, const void* data, size_t length)
  */
 void Net_ShowChatMessage(int plrNum, const char* message)
 {
-    Con_FPrintf(CPF_GREEN, "%s: %s\n", clients[plrNum].name, message);
+    const char* fromName = (plrNum > 0? clients[plrNum].name : "[sysop]");
+    const char* sep      = (plrNum > 0? ":"                  : "");
+    Con_FPrintf(!plrNum? SV_CONSOLE_PRINT_FLAGS : CPF_GREEN, "%s%s %s\n", fromName, sep, message);
 }
 
 /**
