@@ -71,6 +71,8 @@ void N_Init(void)
     //N_SockInit();
     N_MasterInit();
     N_SystemInit();             // Platform dependent stuff.
+
+    N_InitService(false /* client mode by default */);
 }
 
 /**
