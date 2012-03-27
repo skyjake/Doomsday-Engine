@@ -158,6 +158,7 @@ typedef enum {
     DDVT_FIXED,
     DDVT_ANGLE,
     DDVT_FLOAT,
+    DDVT_DOUBLE,
     DDVT_LONG,
     DDVT_ULONG,
     DDVT_PTR,

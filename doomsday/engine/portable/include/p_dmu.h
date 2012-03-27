@@ -41,6 +41,7 @@ typedef struct setargs_s {
     int            *intValues;
     fixed_t        *fixedValues;
     float          *floatValues;
+    double         *doubleValues;
     angle_t        *angleValues;
     void          **ptrValues;
 } setargs_t;
