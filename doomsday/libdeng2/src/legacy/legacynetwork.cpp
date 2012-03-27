@@ -220,15 +220,15 @@ bool LegacyNetwork::checkSetForActivity(int set)
 
     foreach(Socket* sock, d->sets[set].members)
     {
+        if(sock->hasIncoming())
+        {
+            // There are incoming messages ready for reading.
+            return true;
+        }
         if(!sock->isOpen())
         {
             // Closed sockets as reported as activity so that they can be removed
             // from the set by the caller.
-            return true;
-        }
-        if(sock->hasIncoming())
-        {
-            // There are incoming messages ready for reading.
             return true;
         }
     }

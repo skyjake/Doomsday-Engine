@@ -309,6 +309,9 @@ struct Socket::Instance
                     Reader reader(receivedBytes);
                     reader >> incomingHeader;
                     receptionState = ReceivingPayload;
+
+                    // Remove the read bytes from the buffer.
+                    receivedBytes.remove(0, reader.offset());
                 }
                 catch(const de::Error&)
                 {
@@ -393,6 +396,9 @@ Socket::Socket(QTcpSocket* existingSocket)
     d = new Instance;
     d->socket = existingSocket;
     initialize();
+
+    // Maybe we missed an earlier signal, since we are only now getting ownership.
+    readIncomingBytes();
 }
 
 Socket::~Socket()
@@ -545,8 +551,6 @@ dsize Socket::bytesBuffered() const
 
 void Socket::bytesWereWritten(qint64 bytes)
 {
-    qDebug() << "Socket:" << bytes << "were written to" << d->socket->peerAddress().toString();
-
     d->bytesToBeWritten -= bytes;
     DENG2_ASSERT(d->bytesToBeWritten >= 0);
 }

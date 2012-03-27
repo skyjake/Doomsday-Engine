@@ -155,7 +155,7 @@ boolean N_InitService(boolean inServerMode)
     {
         port = (!nptIPPort ? defaultTCPPort : nptIPPort);
 
-        Con_Message("N_InitService: Listening TCP socket on port %i.\n", port);
+        Con_Message("Listening on TCP port %i.\n", port);
 
         // Open a listening TCP socket. It will accept client connections.
         if(!(serverSock = LegacyNetwork_OpenServerSocket(port)))
@@ -347,9 +347,7 @@ static boolean N_RegisterNewSocket(int sock)
             // Add this socket to the set of client sockets.
             LegacyNetwork_SocketSet_Add(sockSet, sock);
 
-#ifdef _DEBUG
-            Con_Message("N_RegisterNewSocket: Socket %i as node %i.\n", sock, i);
-#endif
+            DEBUG_VERBOSE2_Message(("N_RegisterNewSocket: Socket #%i registered as node %i.\n", sock, i));
 
             found = true;
         }
@@ -379,7 +377,7 @@ static boolean N_JoinNode(nodeid_t id, /*Uint16 port,*/ const char *name)
     {
         char buf[80];
         N_IPToString(buf, &node->addr);
-        Con_Message("N_JoinNode: Node %i listens at %s.\n", id, buf);
+        Con_Message("Node %i listens at %s.\n", id, buf);
     }
 
     // Convert the network node into a real client node.
@@ -437,7 +435,7 @@ void N_ClientHandleResponseToInfoQuery(int nodeId, const byte *data, int size)
     else
     {
         located.valid = false;
-        Con_Message("N_ClientHandleResponseToInfoQuery: Reply from %s (port %i) was invalid.\n",
+        Con_Message("Reply from %s (port %i) was invalid.\n",
                     svNode->addr.host, svNode->addr.port);
     }
 
@@ -470,14 +468,14 @@ boolean N_LookForHosts(const char *address, int port, expectedresponder_t respon
     svNode->sock = LegacyNetwork_Open(located.addr.host, located.addr.port);
     if(!svNode->sock)
     {
-        Con_Message("N_LookForHosts: No reply from %s (port %i).\n", address, port);
+        Con_Message("No reply from %s (port %i).\n", address, port);
         memset(svNode, 0, sizeof(*svNode));
         return false;
     }
 
     // Send an INFO query.
     LegacyNetwork_Send(svNode->sock, "Info?", 5);
-    Con_Message("N_LookForHosts: Sent info query to %s (port %i).\n", address, port);
+    Con_Message("Sent info query to %s (port %i).\n", address, port);
 
     svNode->expectedResponder = (responder? responder : N_ClientHandleResponseToInfoQuery);
     return true;
@@ -493,7 +491,7 @@ void N_ClientHandleResponseToJoin(int nodeId, const byte* data, int size)
 
     if(size < 5 || strncmp(buf, "Enter", 5))
     {
-        Con_Message("N_Connect: Server refused connection (received %i bytes).\n", size);
+        Con_Message("Server refused connection (received %i bytes).\n", size);
         N_Disconnect();
         return;
     }
@@ -548,7 +546,7 @@ boolean N_Connect(int index)
     if(!(svNode->sock = LegacyNetwork_Open(host->addr.host, host->addr.port)))
     {
         N_IPToString(buf, &host->addr);
-        Con_Message("N_Connect: No reply from %s.\n", buf);
+        Con_Message("No reply from %s.\n", buf);
         return false;
     }
     memcpy(&svNode->addr, &located.addr, sizeof(ipaddress_t));
@@ -603,12 +601,12 @@ boolean N_ServerOpen(void)
 {
     if(!isDedicated)
     {
-        Con_Message("N_ServerOpen: Server can only be started in dedicated mode! (run with -dedicated)\n");
+        Con_Message("Server can only be started in dedicated mode! (run with -dedicated)\n");
         return false;
     }
 
-    if(!N_IsAvailable())
-        return false;
+    /*if(!N_IsAvailable())
+        return false;*/
 
     Demo_StopPlayback();
 
@@ -616,7 +614,7 @@ boolean N_ServerOpen(void)
     // in server mode.
     if(!N_InitService(true))
     {
-        Con_Message("N_ServerOpen: Failed to initialize server mode.\n");
+        Con_Message("Failed to initialize server mode.\n");
         return false;
     }
 
@@ -691,9 +689,9 @@ static boolean N_ServerHandleNodeRequest(nodeid_t node, const char *command, int
         Str_Init(&msg);
         Str_Appendf(&msg, "Info\n");
         Sv_InfoToString(&info, &msg);
-#ifdef _DEBUG
-        Con_Message("N_ServerHandleNodeRequest: Sending: %s\n", Str_Text(&msg));
-#endif
+
+        DEBUG_VERBOSE_Message(("N_ServerHandleNodeRequest: Sending: %s\n", Str_Text(&msg)));
+
         LegacyNetwork_Send(sock, Str_Text(&msg), (int) Str_Length(&msg));
         Str_Free(&msg);
     }
@@ -762,21 +760,21 @@ void N_ServerListenUnjoinedNodes(void)
             netnode_t* node = netNodes + i;
             if(node->hasJoined || !node->sock) continue;
 
-            if(LegacyNetwork_IsDisconnected(node->sock))
-            {
-                // Close this socket & node.
-                Con_Message("N_ServerListenUnjoinedNodes: Connection closed on node %i.\n", i);
-                N_TerminateNode(i);
-                continue;
-            }
-
-            // Does this socket have got any activity?
-            if(LegacyNetwork_BytesReady(node->sock))
+            // Does this socket have incoming messages?
+            while(node->sock && LegacyNetwork_BytesReady(node->sock))
             {
                 int size = 0;
                 byte* message = LegacyNetwork_Receive(node->sock, &size);
                 N_ServerHandleNodeRequest(i, (const char*) message, size);
                 LegacyNetwork_FreeBuffer(message);
+            }
+
+            if(node->sock && LegacyNetwork_IsDisconnected(node->sock))
+            {
+                // Close this socket & node.
+                Con_Message("Connection to client closed on node %i.\n", i);
+                N_TerminateNode(i);
+                continue;
             }
         }
     }
@@ -814,14 +812,14 @@ void N_ClientListenUnjoined(void)
             }
             else
             {
-                Con_Message("N_ClientListenUnjoinNodes: Unexpected message from server (%i bytes), ignoring.\n", size);
+                Con_Message("Unexpected message from server (%i bytes), ignoring.\n", size);
             }
             LegacyNetwork_FreeBuffer(data);
         }
         else
         {
             // An error!
-            Con_Message("N_ClientListenUnjoinedNodes: Connection closed.\n");
+            Con_Message("Connection closed.\n");
             N_Disconnect();
         }
     }
