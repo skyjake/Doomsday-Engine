@@ -2046,13 +2046,15 @@ void Con_Error(const char* error, ...)
     if(!ConsoleInited || errorInProgress)
     {
         DisplayMode_Shutdown();
-        LegacyCore_PrintLogFragment(de2LegacyCore, "Con_Error: Error while error already in progress...\n");
 
         va_start(argptr, error);
         dd_vsnprintf(buff, sizeof(buff), error, argptr);
         va_end(argptr);
 
-        Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, buff, 0);
+        if(!Con_InBusyWorker())
+        {
+            Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, buff, 0);
+        }
 
         // Exit immediately, lest we go into an infinite loop.
         exit(1);

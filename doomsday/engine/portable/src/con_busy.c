@@ -143,8 +143,12 @@ void BusyTask_Begin(BusyTask* task)
  */
 static void BusyTask_Exit(void)
 {
+    int result;
+
+    busyDone = true;
+
     // Make sure the worker finishes before we continue.
-    int result = Sys_WaitThread(busyThread);
+    result = Sys_WaitThread(busyThread);
     busyThread = NULL;
 
     BusyTask_ExitWithValue(result);

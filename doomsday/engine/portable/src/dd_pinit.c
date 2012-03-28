@@ -205,30 +205,22 @@ void DD_ConsoleInit(void)
 
     if(!outFileOk)
     {
-        Sys_MessageBoxf(MBT_WARNING, "Console", "Couldn't open message output file: %s", Str_Text(&nativePath));
+        Sys_MessageBoxf(MBT_WARNING, "Console", "Couldn't open message output file: %s",
+                        LegacyCore_LogFile(de2LegacyCore));
     }
-    else
+
+    // Get the console online ASAP.
+    Con_Init();
+
+    Con_Message("Executable: " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_FULLTEXT ".\n");
+
+    // Print the used command line.
+    if(verbose)
     {
-        //setbuf(outFile, NULL); // Don't buffer much.
-
-        // Get the console online ASAP.
-        if(!Con_Init())
-        {
-            Sys_MessageBox(MBT_ERROR, "Console", "Error initializing console.", 0);
-        }
-        else
-        {
-            Con_Message("Executable: " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_FULLTEXT ".\n");
-
-            // Print the used command line.
-            if(verbose)
-            {
-                int p;
-                Con_Message("Command line (%i strings):\n", Argc());
-                for(p = 0; p < Argc(); ++p)
-                    Con_Message("  %i: %s\n", p, Argv(p));
-            }
-        }
+        int p;
+        Con_Message("Command line (%i strings):\n", Argc());
+        for(p = 0; p < Argc(); ++p)
+            Con_Message("  %i: %s\n", p, Argv(p));
     }
 }
 
