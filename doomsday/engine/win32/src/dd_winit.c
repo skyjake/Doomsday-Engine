@@ -659,7 +659,7 @@ const char* strcasestr(const char *text, const char *sub)
     int subLen = strlen(sub);
     int i;
 
-    for(i = 0; i < textLen - subLen; ++i)
+    for(i = 0; i <= textLen - subLen; ++i)
     {
         const char* start = text + i;
         if(!strnicmp(start, sub, subLen)) return start;

@@ -152,8 +152,7 @@ void Sys_ConPrint(uint idx, const char* text, int flags)
 #endif
 
     win = Window_Console(Window_ByIndex(idx));
-    if(!win || !text)
-        return;
+    if(!win || !text) return;
 
     if(win->needNewLine)
     {   // Need to make some room.
@@ -620,14 +619,28 @@ size_t I_GetConsoleKeyEvents(keyevent_t *evbuf, size_t bufsize)
             if((!vKeyDown[key->wVirtualKeyCode] && key->bKeyDown) ||
                (vKeyDown[key->wVirtualKeyCode] && !key->bKeyDown))
             {
+                evbuf[n].type = (key->bKeyDown? IKE_DOWN : IKE_UP);
+
                 // Use the table to translate the vKey to a DDKEY.
                 evbuf[n].ddkey = vKeyToDDKey(key->wVirtualKeyCode);
-                evbuf[n].type =
-                    (key->bKeyDown? IKE_DOWN : IKE_UP);
+                evbuf[n].native = 0;
+
+                memset(evbuf[n].text, 0, sizeof(evbuf[n].text));
+#ifdef UNICODE
+                wctomb(evbuf[n].text, key->uChar.UnicodeChar);
+#else
+                evbuf[n].text[0] = key->uChar.AsciiChar;
+#endif
+/*
+                if(evbuf[n].ddkey >= ' ' && evbuf[n].ddkey < 128)
+                {
+                    // Printable ASCII.
+                    evbuf[n].text[0] = evbuf[n].ddkey;
+                }
+                /// @todo Shift? Other modifiers?*/
 
                 // Record the new state of this vKey.
-                vKeyDown[key->wVirtualKeyCode] =
-                    (key->bKeyDown? true : false);
+                vKeyDown[key->wVirtualKeyCode] = (key->bKeyDown? true : false);
                 n++;
             }
         }

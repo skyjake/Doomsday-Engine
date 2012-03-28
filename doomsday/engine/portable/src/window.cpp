@@ -505,7 +505,7 @@ static __inline Window *getWindow(uint idx)
     if(idx == 1)
         return &mainWindow;
 
-    assert(false); // We can only have window 1 (main window).
+    //assert(false); // We can only have window 1 (main window).
     return NULL;
 }
 
@@ -1118,7 +1118,7 @@ ddwindowtype_t Window_Type(const Window* wnd)
 
 struct consolewindow_s* Window_Console(Window* wnd)
 {
-    assert(wnd);
+    if(!wnd) return 0;
     return &wnd->console;
 }
 
