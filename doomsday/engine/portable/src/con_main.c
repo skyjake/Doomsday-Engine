@@ -2046,14 +2046,14 @@ void Con_Error(const char* error, ...)
     // Already in an error?
     if(!ConsoleInited || errorInProgress)
     {
-        fprintf(outFile, "Con_Error: Stack overflow imminent, aborting...\n");
+        DisplayMode_Shutdown();
+        //fprintf(outFile, "Con_Error: Stack overflow imminent, aborting...\n");
 
         va_start(argptr, error);
         dd_vsnprintf(buff, sizeof(buff), error, argptr);
         va_end(argptr);
-        Sys_MessageBox(buff, true);
 
-        DisplayMode_Shutdown();
+        Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, buff, 0);
 
         // Exit immediately, lest we go into an infinite loop.
         exit(1);
@@ -2109,24 +2109,25 @@ void Con_Error(const char* error, ...)
 void Con_AbnormalShutdown(const char* message)
 {
     Sys_Shutdown();
-
-#ifdef WIN32
-    ChangeDisplaySettings(0, 0); // Restore original mode, just in case.
-#endif
+    DisplayMode_Shutdown();
 
     // Be a bit more graphic.
     Sys_ShowCursor(true);
     Sys_ShowCursor(true);
     if(message) // Only show if a message given.
     {
-        Sys_MessageBox(message, true);
+        fflush(outFile); // Make sure all the buffered stuff goes into the file.
+
+        /// @todo Get the actual output filename (might be a custom one).
+        Sys_MessageBoxWithDetailsFromFile(MBT_ERROR, DOOMSDAY_NICENAME, message,
+                                          "See Details for complete messsage log contents.", "doomsday.out");
     }
 
     DD_Shutdown();
 
     // Open Doomsday.out in a text editor.
-    fflush(outFile); // Make sure all the buffered stuff goes into the file.
-    Sys_OpenTextEditor("doomsday.out");
+    //fflush(outFile); // Make sure all the buffered stuff goes into the file.
+    //Sys_OpenTextEditor("doomsday.out");
 
     // Get outta here.
     exit(1);

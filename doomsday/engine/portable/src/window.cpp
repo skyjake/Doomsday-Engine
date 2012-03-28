@@ -290,8 +290,8 @@ struct ddwindow_s
         geometry.size.width = rect.width();
         geometry.size.height = rect.height();
 
-        DEBUG_VERBOSE_Message(("Window geometry: %i,%i %ix%i (max? %i)\n", geometry.origin.x, geometry.origin.y,
-                               geometry.size.width, geometry.size.height, (flags & DDWF_MAXIMIZE) != 0));
+        DEBUG_VERBOSE2_Message(("Window geometry: %i,%i %ix%i (max? %i)\n", geometry.origin.x, geometry.origin.y,
+                                geometry.size.width, geometry.size.height, (flags & DDWF_MAXIMIZE) != 0));
     }
 
     void setFlag(int flag, bool set = true)
@@ -422,7 +422,7 @@ struct ddwindow_s
 
     void updateLayout()
     {
-        qDebug() << "Window::updateLayout:" << widget->geometry() << widget->canvas().geometry();
+        //qDebug() << "Window::updateLayout:" << widget->geometry() << widget->canvas().geometry();
 
         if(!(flags & DDWF_FULLSCREEN))
         {
@@ -430,18 +430,16 @@ struct ddwindow_s
             geometry.size.width = widget->width();
             geometry.size.height = widget->height();
 
-            DEBUG_Message(("Updating view geometry for window, fetched %i x %i.\n",
-                           width(), height()));
+            DEBUG_VERBOSE2_Message(("Updating view geometry for window, fetched %i x %i.\n", width(), height()));
         }
         else
         {
-            DEBUG_Message(("Updating view geometry for fullscreen (%i x %i).\n",
-                           width(), height()));
+            DEBUG_VERBOSE2_Message(("Updating view geometry for fullscreen (%i x %i).\n", width(), height()));
         }
 
         // Update viewports.
         R_SetViewGrid(0, 0);
-        if(Con_IsBusy() || UI_IsActive())
+        if(Con_IsBusy() || UI_IsActive() || !DD_GameLoaded())
         {
             // Update for busy mode.
             R_UseViewPort(0);

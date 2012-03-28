@@ -431,11 +431,6 @@ boolean DD_Win32_Init(void)
     app.className = TEXT(MAINWCLASS);
 #endif
 
-    if(!initApplication(&app))
-    {
-        DD_ErrorBox(true, "Failed to initialize application.");
-    }
-    else
     {
         // Initialize COM.
         CoInitialize(NULL);
@@ -454,33 +449,24 @@ boolean DD_Win32_Init(void)
 
         if(!DD_EarlyInit())
         {
-            DD_ErrorBox(true, "Error during early init.");
+            Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, "Error during early init.", 0);
         }
         else if(!initTimingSystem())
         {
-            DD_ErrorBox(true, "Error initalizing timing system.");
+            Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, "Error initalizing timing system.", 0);
         }
         else if(!initPluginSystem())
         {
-            DD_ErrorBox(true, "Error initializing plugin system.");
+            Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, "Error initializing plugin system.", 0);
         }
         else if(!initDGL())
         {
-            DD_ErrorBox(true, "Error initializing DGL.");
+            Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, "Error initializing DGL.", 0);
         }
         else if(!loadAllPlugins(&app))
         {
-            DD_ErrorBox(true, "Error loading plugins.");
+            Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, "Error loading plugins.", 0);
         }
-        /*
-        else if(!createMainWindow(lnCmdShow))
-        {
-            DD_ErrorBox(true, "Error creating main window.");
-        }
-        else if(!Sys_GLInitialize())
-        {
-            DD_ErrorBox(true, "Error initializing OpenGL.");
-        }*/
         else
         {   // All initialization complete.
             failed = FALSE;

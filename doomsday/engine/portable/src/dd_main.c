@@ -1373,10 +1373,7 @@ int DD_EarlyInit(void)
     verbose = ArgExists("-verbose");
 
     // The memory zone must be online before the console module.
-    if(!Z_Init())
-    {
-        DD_ErrorBox(true, "Error initializing memory zone.");
-    }
+    Z_Init();
 
     // Bring the console online as soon as we can.
     DD_ConsoleInit();
@@ -1443,7 +1440,7 @@ void DD_FinishInitializationAfterWindowReady(void)
 {    
     if(!Sys_GLInitialize())
     {
-        DD_ErrorBox(true, "Error initializing OpenGL.");
+        Con_Error("Error initializing OpenGL.\n");
     }
     else
     {

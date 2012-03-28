@@ -44,7 +44,6 @@ extern uint mainWindowIdx;
 
 void DD_ShutdownAll(void);
 int DD_CheckArg(char* tag, const char** value);
-void DD_ErrorBox(boolean error, char* format, ...) PRINTF_F(2,3);
 void DD_ComposeMainWindowTitle(char* title);
 void DD_ConsoleInit(void);
 void DD_InitAPI(void);

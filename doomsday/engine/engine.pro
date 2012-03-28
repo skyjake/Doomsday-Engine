@@ -246,6 +246,7 @@ DENG_HEADERS = \
     portable/include/m_profiler.h \
     portable/include/m_stack.h \
     portable/include/m_vector.h \
+    portable/include/nativeui.h \
     portable/include/net_buf.h \
     portable/include/net_demo.h \
     portable/include/net_event.h \
@@ -522,6 +523,7 @@ SOURCES += \
     portable/src/m_stack.c \
     portable/src/m_string.c \
     portable/src/m_vector.c \
+    portable/src/nativeui.cpp \
     portable/src/net_buf.c \
     portable/src/net_demo.c \
     portable/src/net_event.c \

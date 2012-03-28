@@ -194,12 +194,6 @@ void        DD_StartInput(void);
 void        DD_StopInput(void);
 boolean     DD_IgnoreInput(boolean ignore);
 
-#ifdef WIN32
-void        DD_Win32_SuspendMessagePump(boolean suspend);
-#else
-#  define   DD_Win32_SuspendMessagePump(s)  // nop
-#endif
-
 void        DD_ReadKeyboard(void);
 void        DD_ReadMouse(timespan_t ticLength);
 void        DD_ReadJoystick(void);

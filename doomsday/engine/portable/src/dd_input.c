@@ -106,10 +106,6 @@ inputdev_t inputDevices[NUM_INPUT_DEVICES];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-#ifdef WIN32
-static boolean suspendMsgPump = false; // Set to true to disable checking windows msgs.
-#endif
-
 static boolean ignoreInput = false;
 
 static byte shiftKeyMappings[NUMKKEYS], altKeyMappings[NUMKKEYS];
@@ -360,7 +356,7 @@ void I_DeviceReset(uint ident)
         altDown = shiftDown = false;
     }
 
-    for(k = 0; k < (int)dev->numKeys; ++k)
+    for(k = 0; k < (int)dev->numKeys && dev->keys; ++k)
     {
         if(dev->keys[k].isDown)
         {
@@ -374,7 +370,7 @@ void I_DeviceReset(uint ident)
         }
     }
 
-    for(k = 0; k < (int)dev->numAxes; ++k)
+    for(k = 0; k < (int)dev->numAxes && dev->axes; ++k)
     {
         if(dev->axes[k].type == IDAT_POINTER)
         {
@@ -1036,13 +1032,6 @@ static void dispatchEvents(eventqueue_t* q, timespan_t ticLength)
             gx.FallbackResponder(&ev);
     }
 }
-
-#ifdef WIN32
-void DD_Win32_SuspendMessagePump(boolean suspend)
-{
-    suspendMsgPump = suspend;
-}
-#endif
 
 /**
  * Poll all event sources (i.e., input devices) and post events.

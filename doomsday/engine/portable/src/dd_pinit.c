@@ -84,6 +84,7 @@ int DD_CheckArg(char* tag, const char** value)
     return 1;
 }
 
+#if 0
 void DD_ErrorBox(boolean error, char* format, ...)
 {
     char buff[200];
@@ -105,6 +106,7 @@ void DD_ErrorBox(boolean error, char* format, ...)
     fputs(buff, stderr);
 #endif
 }
+#endif
 
 /**
  * Compose the title for the main window.
@@ -200,7 +202,7 @@ void DD_ConsoleInit(void)
     Str_Free(&nativePath);
     if(!outFile)
     {
-        DD_ErrorBox(false, "Couldn't open message output file.");
+        Sys_MessageBoxf(MBT_WARNING, "Console", "Couldn't open message output file: %s", outFileName);
     }
     else
     {
@@ -209,7 +211,7 @@ void DD_ConsoleInit(void)
         // Get the console online ASAP.
         if(!Con_Init())
         {
-            DD_ErrorBox(true, "Error initializing console.");
+            Sys_MessageBox(MBT_ERROR, "Console", "Error initializing console.", 0);
         }
         else
         {

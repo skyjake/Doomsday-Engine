@@ -197,9 +197,9 @@ void Canvas::initializeGL()
     Sys_GLConfigureDefaultState();
 }
 
-void Canvas::resizeGL(int w, int h)
+void Canvas::resizeGL(int /*w*/, int /*h*/)
 {
-    qDebug() << "Canvas: resized" << w << "x" << h;
+    //qDebug() << "Canvas: resized" << w << "x" << h;
 
     if(d->resizedCallback)
     {
@@ -317,10 +317,12 @@ void Canvas::keyPressEvent(QKeyEvent *ev)
     ev->accept();
     if(ev->isAutoRepeat()) return; // Ignore repeats, we do our own.
 
+    /*
     qDebug() << "Canvas: key press" << ev->key() << QString("0x%1").arg(ev->key(), 0, 16)
              << "text:" << ev->text()
              << "native:" << ev->nativeVirtualKey()
              << "scancode:" << ev->nativeScanCode();
+             */
 
     Keyboard_SubmitQtEvent(IKE_DOWN, ev);
 }
@@ -330,8 +332,9 @@ void Canvas::keyReleaseEvent(QKeyEvent *ev)
     ev->accept();
     if(ev->isAutoRepeat()) return; // Ignore repeats, we do our own.
 
+    /*
     qDebug() << "Canvas: key release" << ev->key() << "text:" << ev->text()
-             << "native:" << ev->nativeVirtualKey();
+             << "native:" << ev->nativeVirtualKey();*/
 
     Keyboard_SubmitQtEvent(IKE_UP, ev);
 }
@@ -361,7 +364,7 @@ void Canvas::mousePressEvent(QMouseEvent* ev)
 
     Mouse_Qt_SubmitButton(translateButton(ev->button()), true);
 
-    qDebug() << "Canvas: mouse press at" << ev->pos();
+    //qDebug() << "Canvas: mouse press at" << ev->pos();
 }
 
 void Canvas::mouseReleaseEvent(QMouseEvent* ev)
@@ -377,7 +380,7 @@ void Canvas::mouseReleaseEvent(QMouseEvent* ev)
 
     Mouse_Qt_SubmitButton(translateButton(ev->button()), false);
 
-    qDebug() << "Canvas: mouse release at" << ev->pos();
+    //qDebug() << "Canvas: mouse release at" << ev->pos();
 }
 
 void Canvas::wheelEvent(QWheelEvent *ev)
@@ -391,20 +394,10 @@ void Canvas::wheelEvent(QWheelEvent *ev)
     if(!continuousMovement || d->wheelDir[axis] != dir)
     {
         d->wheelDir[axis] = dir;
-        qDebug() << "Canvas: signal wheel axis" << axis << "dir" << dir;
+        //qDebug() << "Canvas: signal wheel axis" << axis << "dir" << dir;
 
         Mouse_Qt_SubmitMotion(IMA_WHEEL, axis == 0? dir : 0, axis == 1? dir : 0);
     }
-
-        /*
-    if(ev->orientation() == Qt::Vertical)
-    {
-        qDebug() << "Canvas: vertical mouse wheel" << ev->delta()/8.f << "continous" << continuum;
-    }
-    else
-    {
-        qDebug() << "Canvas: horizontal mouse wheel" << ev->delta()/8.f << "continous" << continuum;
-    }*/
 
     d->prevWheelAt.start();
 }

@@ -163,6 +163,10 @@ void Sys_Shutdown(void)
 
 static int showCriticalMessage(const char* msg)
 {
+    Sys_MessageBox(MBT_WARNING, DOOMSDAY_NICENAME, msg, 0);
+    return 0;
+
+#if 0
 #ifdef WIN32
 #ifdef UNICODE
     wchar_t buf[256];
@@ -193,6 +197,7 @@ static int showCriticalMessage(const char* msg)
 #else
     fprintf(stderr, "--- %s\n", msg);
     return 0;
+#endif
 #endif
 }
 
@@ -290,6 +295,7 @@ void Sys_Quit(void)
     LegacyCore_Stop(de2LegacyCore, DD_GameLoopExitCode());
 }
 
+#if 0
 void Sys_MessageBox(const char *msg, boolean iserror)
 {
 #ifdef WIN32
@@ -331,6 +337,7 @@ void Sys_OpenTextEditor(const char *filename)
     spawnlp(P_NOWAIT, "notepad.exe", "notepad.exe", filename, 0);
 #endif
 }
+#endif
 
 /**
  * Utilises SDL Threads on ALL systems.

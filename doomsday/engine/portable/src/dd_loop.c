@@ -151,6 +151,8 @@ void DD_GameLoopCallback(void)
 
 void DD_GameLoopDrawer(void)
 {
+    if(Sys_IsShuttingDown()) return;
+
     //debugPrint("loop drawer");
     waitingForDraw = false;
 

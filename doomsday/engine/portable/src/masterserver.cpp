@@ -243,7 +243,8 @@ void N_MasterInit(void)
 
 void N_MasterShutdown(void)
 {
-    assert(worker != 0);
+    if(!worker) return;
+
     delete worker;
     worker = 0;
 }

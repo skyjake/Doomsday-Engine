@@ -67,8 +67,10 @@ void Sys_BlockUntilRealTime(uint realTimeMs);
 
 void Sys_ShowCursor(boolean show);
 void Sys_HideMouse(void);
+#if 0
 void Sys_MessageBox(const char* msg, boolean iserror);
 void Sys_OpenTextEditor(const char* filename);
+#endif
 
 /**
  * @def LIBDENG_ASSERT_IN_MAIN_THREAD
