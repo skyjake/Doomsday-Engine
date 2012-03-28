@@ -179,7 +179,7 @@ void LegacyCore::printLogFragment(const char* text)
     while((pos = d->currentLogLine.find('\n')) != std::string::npos)
     {
         LOG_MSG(d->currentLogLine.substr(0, pos).c_str());
-        d->currentLogLine.erase(0, pos);
+        d->currentLogLine.erase(0, pos + 1);
     }
 }
 

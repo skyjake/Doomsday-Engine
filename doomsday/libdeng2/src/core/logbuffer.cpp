@@ -30,8 +30,6 @@
 using namespace de;
 
 const Time::Delta FLUSH_INTERVAL = .2;
-const duint SIMPLE_INDENT = 30;
-const duint RULER_LENGTH = 98 - SIMPLE_INDENT;
 
 LogBuffer* LogBuffer::_appBuffer = 0;
 
@@ -122,6 +120,8 @@ void LogBuffer::enable(Log::LogLevel overLevel)
 
 void LogBuffer::setOutputFile(const String& path)
 {
+    flush();
+
     if(_outputFile)
     {
         delete _outputFile;
@@ -130,7 +130,7 @@ void LogBuffer::setOutputFile(const String& path)
     if(path.isEmpty()) return;
 
     _outputFile = new QFile(path);
-    if(/*!*/_outputFile->open(QFile::Text | QFile::WriteOnly))
+    if(!_outputFile->open(QFile::Text | QFile::WriteOnly))
     {
         delete _outputFile;
         _outputFile = 0;
@@ -162,19 +162,65 @@ void LogBuffer::flush()
         }
         */
 
+#ifndef _DEBUG
+        const duint MAX_LENGTH = 109;
+        const duint SIMPLE_INDENT = 30;
+#else
+        const duint MAX_LENGTH = 89;
+        const duint SIMPLE_INDENT = 4;
+#endif
+        const duint RULER_LENGTH = MAX_LENGTH - SIMPLE_INDENT - 1;
+
         DENG2_FOR_EACH(i, _toBeFlushed, EntryList::iterator)
         {
             // Error messages will go to stderr instead of stdout.
             QList<QTextStream*> os;
             os << ((*i)->level() >= Log::ERROR? errs.data() : outs.data()) << fs.data();
 
+#ifndef _DEBUG
             String message = (*i)->asText();
+#else
+            // In a release build we can dispense with the metadata.
+            String message = (*i)->asText(LogEntry::Simple);
+#endif
 
             // Print line by line.
             String::size_type pos = 0;
             while(pos != String::npos)
             {
                 String::size_type next = message.indexOf('\n', pos);
+                duint lineLen = (next == String::npos? message.size() - pos : next - pos);
+                const duint maxLen = (pos > 0? MAX_LENGTH - SIMPLE_INDENT : MAX_LENGTH);
+                if(lineLen > maxLen)
+                {
+                    // Wrap overly long lines.
+                    next = pos + maxLen;
+                    lineLen = maxLen;
+
+                    // Maybe there's whitespace we can wrap at.
+                    int checkPos = pos + maxLen;
+                    while(checkPos > pos)
+                    {
+                        if(message[checkPos].isSpace() ||
+                                (message[checkPos].isPunct() && message[checkPos] != '.' &&
+                                 message[checkPos] != ','))
+                        {
+                            if(!message[checkPos].isSpace())
+                            {
+                                // Include the punctuation on this line.
+                                checkPos++;
+                            }
+
+                            // Break here.
+                            next = checkPos;
+                            lineLen = checkPos - pos;
+                            break;
+                        }
+                        checkPos--;
+                    }
+                }
+
+                // For lines other than the first one, print an indentation.
                 if(pos > 0)
                 {
                     foreach(QTextStream* stream, os)
@@ -189,19 +235,18 @@ void LogBuffer::flush()
                     }
                     */
                 }
-                String lineText = message.substr(pos, next != String::npos? next - pos + 1 : next);
+
+                String lineText = message.substr(pos, lineLen);
 
                 // Check for formatting symbols.
-                if(lineText == "$R")
-                {
-                    lineText = String(RULER_LENGTH, '-');
-                }
+                lineText.replace("$R", String(RULER_LENGTH, '-'));
 
                 foreach(QTextStream* stream, os)
                 {
                     if(!stream) continue;
                     *stream << lineText;
                 }
+
                 /*
                 if(writer)
                 {
@@ -210,14 +255,15 @@ void LogBuffer::flush()
                 */
 
                 pos = next;
-                if(pos != String::npos) pos++;
+                if(pos != String::npos && message[pos].isSpace()) pos++; // Skip whitespace.
+
+                foreach(QTextStream* stream, os)
+                {
+                    if(!stream) continue;
+                    *stream << "\n";
+                }
             }
 
-            foreach(QTextStream* stream, os)
-            {
-                if(!stream) continue;
-                *stream << "\n";
-            }
             /*
             if(writer)
             {
