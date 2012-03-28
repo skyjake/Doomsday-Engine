@@ -330,6 +330,7 @@ void GL_BlendOp(int op)
     glBlendEquationEXT(op);
 }
 
+/*
 boolean GL_Grab(int x, int y, int width, int height, dgltexformat_t format, void *buffer)
 {
     if(format != DGL_RGB) return false;
@@ -341,6 +342,7 @@ boolean GL_Grab(int x, int y, int width, int height, dgltexformat_t format, void
     glReadPixels(x, FLIP(y + height - 1), width, height, GL_RGB, GL_UNSIGNED_BYTE, buffer);
     return true;
 }
+*/
 
 void GL_SetVSync(boolean on)
 {

@@ -66,6 +66,9 @@ struct font_s;
 /// Register the console commands, variables, etc..., of this module.
 void Fonts_Register(void);
 
+/// Determines whether the fonts collection has been initialized.
+boolean Fonts_IsInitialized(void);
+
 /// Initialize this module.
 void Fonts_Init(void);
 

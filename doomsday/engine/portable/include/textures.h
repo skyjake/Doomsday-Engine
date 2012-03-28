@@ -43,12 +43,12 @@
 #ifndef LIBDENG_REFRESH_TEXTURES_H
 #define LIBDENG_REFRESH_TEXTURES_H
 
+/// Unique identifier associated with each texture name in the collection.
+typedef uint textureid_t;
+
 #include "dd_string.h"
 #include "dd_share.h"
 #include "uri.h"
-
-/// Unique identifier associated with each texture name in the collection.
-typedef uint textureid_t;
 
 /// Special value used to signify an invalid texture id.
 #define NOTEXTUREID                 0

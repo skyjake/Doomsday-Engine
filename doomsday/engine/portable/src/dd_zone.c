@@ -1228,7 +1228,7 @@ void Z_DebugDrawer(void)
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, theWindow->geometry.size.width, theWindow->geometry.size.height, 0, -1, 1);
+    glOrtho(0, Window_Width(theWindow), Window_Height(theWindow), 0, -1, 1);
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
@@ -1240,19 +1240,19 @@ void Z_DebugDrawer(void)
     // Make sure all the volumes fit vertically.
     volCount = Z_VolumeCount();
     h = 200;
-    if(h * volCount + 10*(volCount - 1) > theWindow->geometry.size.height)
+    if(h * volCount + 10*(volCount - 1) > Window_Height(theWindow))
     {
-        h = (theWindow->geometry.size.height - 10*(volCount - 1))/volCount;
+        h = (Window_Height(theWindow) - 10*(volCount - 1))/volCount;
     }
 
     i = 0;
     for(volume = volumeRoot; volume; volume = volume->next, ++i)
     {
         RectRaw rect;
-        rect.size.width = MIN_OF(400, theWindow->geometry.size.width);
+        rect.size.width = MIN_OF(400, Window_Width(theWindow));
         rect.size.height = h;
-        rect.origin.x = theWindow->geometry.size.width - rect.size.width - 1;
-        rect.origin.y = theWindow->geometry.size.height - rect.size.height*(i+1) - 10*i - 1;
+        rect.origin.x = Window_Width(theWindow) - rect.size.width - 1;
+        rect.origin.y = Window_Height(theWindow) - rect.size.height*(i+1) - 10*i - 1;
         Z_DebugDrawVolume(volume, &rect);
     }
 

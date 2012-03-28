@@ -26,10 +26,10 @@
 /// Largest message sendable using the protocol.
 #define PROTOCOL_MAX_DATAGRAM_SIZE (1 << 22) // 4 MB
 
-void Protocol_Init(void);
-
-void Protocol_Shutdown(void);
-
+/**
+ * Send the data buffer over a TCP connection.
+ * The data may be compressed with zlib.
+ */
 void Protocol_Send(void *data, size_t size, nodeid_t destination);
 
 /**

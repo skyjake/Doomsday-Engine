@@ -69,7 +69,7 @@ static int rendBspLeaf(BspLeaf* bspLeaf, void* parameters)
     if(bspLeaf->validCount != validCount)
     {
         const float scale = MAX_OF(bmapDebugSize, 1);
-        const float width = (theWindow->geometry.size.width / 16) / scale;
+        const float width = (Window_Width(theWindow) / 16) / scale;
         float length, dx, dy, normal[2], unit[2];
         HEdge** hedgeIter, *hedge;
         vec2_t start, end;
@@ -555,12 +555,12 @@ void Rend_BlockmapDebug(void)
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, theWindow->geometry.size.width, theWindow->geometry.size.height, 0, -1, 1);
+    glOrtho(0, Window_Width(theWindow), Window_Height(theWindow), 0, -1, 1);
     // Orient on the center of the window.
-    glTranslatef((theWindow->geometry.size.width / 2), (theWindow->geometry.size.height / 2), 0);
+    glTranslatef((Window_Width(theWindow) / 2), (Window_Height(theWindow) / 2), 0);
 
     // Uniform scaling factor for this visual.
-    scale = bmapDebugSize / MAX_OF(theWindow->geometry.size.height / 100, 1);
+    scale = bmapDebugSize / MAX_OF(Window_Height(theWindow) / 100, 1);
     glScalef(scale, -scale, 1);
 
     // If possible we'll tailor what we draw relative to the viewPlayer.
@@ -579,7 +579,7 @@ void Rend_BlockmapDebug(void)
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, theWindow->geometry.size.width, theWindow->geometry.size.height, 0, -1, 1);
+    glOrtho(0, Window_Width(theWindow), Window_Height(theWindow), 0, -1, 1);
 
     if(followMobj)
     {
@@ -587,15 +587,15 @@ void Rend_BlockmapDebug(void)
         BlockmapCell cell;
         if(!Blockmap_Cell(blockmap, cell, followMobj->pos))
         {
-            origin.x = theWindow->geometry.size.width / 2;
+            origin.x = Window_Width(theWindow) / 2;
             origin.y = 30;
             drawCellInfoBox(blockmap, &origin, objectTypeName, cell);
         }
     }
 
     // About the Blockmap itself.
-    origin.x = theWindow->geometry.size.width  - 10;
-    origin.y = theWindow->geometry.size.height - 10;
+    origin.x = Window_Width(theWindow)  - 10;
+    origin.y = Window_Height(theWindow) - 10;
     drawBlockmapInfo(&origin, blockmap);
 
     glMatrixMode(GL_PROJECTION);

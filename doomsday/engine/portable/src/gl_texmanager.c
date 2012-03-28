@@ -1549,7 +1549,8 @@ void GL_DestroyImage(image_t* img)
 {
     assert(img);
     if(!img->pixels) return;
-    free(img->pixels), img->pixels = NULL;
+    free(img->pixels);
+    img->pixels = NULL;
 }
 
 static int BytesPerPixelFmt(dgltexformat_t format)

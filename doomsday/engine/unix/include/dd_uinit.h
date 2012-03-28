@@ -32,6 +32,10 @@
 #include "dd_pinit.h"
 #include "library.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct {
     Library* hInstPlug[MAX_PLUGS];
     GETGAMEAPI GetGameAPI;
@@ -44,9 +48,13 @@ typedef struct {
 #endif
 } application_t;
 
-extern uint windowIDX; // Main window.
 extern application_t app;
 
+boolean DD_Unix_Init(int argc, char** argv);
 void DD_Shutdown(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* LIBDENG_UINIT_H */

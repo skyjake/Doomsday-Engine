@@ -239,6 +239,7 @@ static void printGLUInfo(void)
     Sys_GLPrintExtensions();
 }
 
+#if 0
 #ifdef WIN32
 static void testMultisampling(HDC hDC)
 {
@@ -415,6 +416,7 @@ static void createDummyWindow(application_t* app)
         DestroyWindow(hWnd);
 }
 #endif
+#endif // 0
 
 boolean Sys_GLPreInit(void)
 {
@@ -442,7 +444,7 @@ boolean Sys_GLPreInit(void)
     GL_state.currentPointSize = 1.5f;
     GL_state.currentUseFog = false;
 
-#ifdef WIN32
+#if 0 // WIN32
     // We prefer to use  multisampling if available so create a dummy window
     // and see what pixel formats are present.
     createDummyWindow(&app);
@@ -462,6 +464,8 @@ boolean Sys_GLInitialize(void)
 
     assert(doneEarlyInit);
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+
+    assert(!Sys_GLCheckError());
 
     if(firstTimeInit)
     {
@@ -509,6 +513,8 @@ boolean Sys_GLInitialize(void)
     // Always use vsync if available.
     /// @fixme Should be determined by cvar.
     GL_SetVSync(true);
+
+    assert(!Sys_GLCheckError());
 
     return true;
 }
@@ -599,7 +605,7 @@ void Sys_GLConfigureDefaultState(void)
     glHint(GL_TEXTURE_COMPRESSION_HINT, GL_NICEST);
 
     // Clear the buffers.
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 /**
@@ -693,10 +699,13 @@ void Sys_GLPrintExtensions(void)
 
 boolean Sys_GLCheckError(void)
 {
+    if(novideo) return false;
 #ifdef _DEBUG
-    GLenum error = glGetError();
-    if(error != GL_NO_ERROR)
-        Con_Error("OpenGL error: 0x%x\n", error);
+    {
+        GLenum error = glGetError();
+        if(error != GL_NO_ERROR)
+            Con_Error("OpenGL error: 0x%x\n", error);
+    }
 #endif
     return false;
 }

@@ -95,7 +95,13 @@ def prepare_work_dir():
 
 
 def mac_os_version():
+    """Determines the Mac OS version."""
     return platform.mac_ver()[0][:4]
+
+
+def mac_target_ext():
+    if mac_os_version() == '10.6': return '_64bit.dmg'
+    return '.dmg'
 
 
 def output_filename(ext=''):
@@ -105,13 +111,8 @@ def output_filename(ext=''):
         return 'doomsday_' + DOOMSDAY_VERSION_FULL + "_" + DOOMSDAY_BUILD + ext
 
 
-def mac_version():
-    """Determines the Mac OS version."""
-    return platform.mac_ver()[0]
-
-
 def mac_able_to_package_snowberry():
-    return mac_version().startswith('10.5')
+    return mac_os_version() == '10.5'
     
 
 def mac_package_snowberry():
@@ -184,7 +185,13 @@ def mac_release():
         sbLoc = '/dist/Doomsday Engine.app'
     else:
         # Wait until the updated packaged SB has been shared.
-        time.sleep(7 * 60)
+        try:
+            print 'This system seems unable to package Snowberry. Waiting a while'
+            print 'for an updated shared Doomsday Engine.app bundle...'
+            print '(press Ctrl-C to skip)'
+            time.sleep(5 * 60)
+        except KeyboardInterrupt:
+            pass
         sbLoc = '/shared/Doomsday Engine.app'
 
     # First we need to make a release build.
@@ -194,13 +201,13 @@ def mac_release():
     MAC_WORK_DIR = os.path.abspath(os.path.join(DOOMSDAY_DIR, '../macx_release_build'))
     remkdir(MAC_WORK_DIR)
     os.chdir(MAC_WORK_DIR)
-    if os.system('qmake -r -spec macx-g++ CONFIG+="release deng_packres" DENG_BUILD=%s ' % (DOOMSDAY_BUILD_NUMBER) +
+    if os.system('qmake -r -spec macx-g++ CONFIG+=release DENG_BUILD=%s ' % (DOOMSDAY_BUILD_NUMBER) +
                  '../doomsday/doomsday.pro && make -w ' +
                  '&& ../doomsday/build/mac/bundleapp.sh ../doomsday'):
         raise Exception("Failed to build from source.")
 
     # Now we can proceed to packaging.
-    target = os.path.join(OUTPUT_DIR, output_filename('.dmg'))
+    target = os.path.join(OUTPUT_DIR, output_filename(mac_target_ext()))
     try:
         os.remove(target)
         print 'Removed existing target file', target
@@ -222,13 +229,13 @@ def mac_release():
 
     masterDmg = target
     volumeName = "Doomsday Engine " + DOOMSDAY_VERSION_FULL
-    templateFile = os.path.join(SNOWBERRY_DIR, 'template-image/template.dmg')
+    templateFile = os.path.join(SNOWBERRY_DIR, 'template-image/template.sparseimage')
     if not os.path.exists(templateFile):
-        print 'Template .dmg not found, trying to extract from compressed archive...'
+        print 'Template .sparseimage not found, trying to extract from compressed archive...'
         os.system('bunzip2 -k "%s.bz2"' % templateFile)
-    shutil.copy(templateFile, 'imaging.dmg')
+    shutil.copy(templateFile, 'imaging.sparseimage')
     remkdir('imaging')
-    os.system('hdiutil attach imaging.dmg -noautoopen -quiet -mountpoint imaging')
+    os.system('hdiutil attach imaging.sparseimage -noautoopen -quiet -mountpoint imaging')
     shutil.rmtree('imaging/Doomsday Engine.app', True)
     remove('imaging/Read Me.rtf')
     duptree('Doomsday Engine.app', 'imaging/Doomsday Engine.app')
@@ -238,8 +245,8 @@ def mac_release():
         ' "' + "Doomsday Engine " + DOOMSDAY_VERSION_FULL + '"')
 
     os.system('hdiutil detach -quiet imaging')
-    os.system('hdiutil convert imaging.dmg -format UDZO -imagekey zlib-level=9 -o "' + target + '"')
-    remove('imaging.dmg')
+    os.system('hdiutil convert imaging.sparseimage -format UDZO -imagekey zlib-level=9 -o "' + target + '"')
+    remove('imaging.sparseimage')
 
 
 def win_release():
@@ -287,6 +294,10 @@ def linux_release():
         #os.system('rm -f dsfmod/fmod-*.txt')
 
     clean_products()
+
+    # Check that the changelog exists.
+    if not os.path.exists('debian/changelog'):
+        os.system('dch --check-dirname-level=0 --create --package doomsday -v %s-%s "Initial release."' % (DOOMSDAY_VERSION, DOOMSDAY_BUILD))
 
     if os.system('linux/gencontrol.sh && dpkg-buildpackage -b'):
         raise Exception("Failure to build from source.")

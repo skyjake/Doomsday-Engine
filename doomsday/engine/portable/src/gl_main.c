@@ -50,6 +50,7 @@
 #include "texturecontent.h"
 #include "texturevariant.h"
 #include "materialvariant.h"
+#include "displaymode.h"
 
 #if defined(WIN32) && defined(WIN32_GAMMA)
 #  include <icm.h>
@@ -83,7 +84,11 @@ typedef unsigned short gramp_t[3 * 256];
 D_CMD(Fog);
 D_CMD(SetBPP);
 D_CMD(SetRes);
+D_CMD(SetFullRes);
+D_CMD(SetWinRes);
 D_CMD(ToggleFullscreen);
+D_CMD(DisplayModeInfo);
+D_CMD(ListDisplayModes);
 
 void    GL_SetGamma(void);
 
@@ -136,20 +141,25 @@ void GL_Register(void)
     C_VAR_INT("rend-mobj-smooth-turn", &useSRVOAngle, 0, 0, 1);
 
     // * video
-    C_VAR_INT("vid-res-x", &defResX, CVF_NO_MAX, 320, 0);
-    C_VAR_INT("vid-res-y", &defResY, CVF_NO_MAX, 240, 0);
-    C_VAR_INT("vid-bpp", &defBPP, 0, 16, 32);
-    C_VAR_INT("vid-fullscreen", &defFullscreen, 0, 0, 1);
+    C_VAR_INT("vid-res-x", &defResX, CVF_NO_MAX|CVF_READ_ONLY|CVF_NO_ARCHIVE, 320, 0);
+    C_VAR_INT("vid-res-y", &defResY, CVF_NO_MAX|CVF_READ_ONLY|CVF_NO_ARCHIVE, 240, 0);
+    C_VAR_INT("vid-bpp", &defBPP, CVF_READ_ONLY|CVF_NO_ARCHIVE, 16, 32);
+    C_VAR_INT("vid-fullscreen", &defFullscreen, CVF_READ_ONLY|CVF_NO_ARCHIVE, 0, 1);
     C_VAR_FLOAT("vid-gamma", &vid_gamma, 0, 0.1f, 6);
     C_VAR_FLOAT("vid-contrast", &vid_contrast, 0, 0, 10);
     C_VAR_FLOAT("vid-bright", &vid_bright, 0, -2, 2);
 
     // Ccmds
     C_CMD_FLAGS("fog", NULL, Fog, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("displaymode", "", DisplayModeInfo, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("listdisplaymodes", "", ListDisplayModes, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("setcolordepth", "i", SetBPP, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("setbpp", "i", SetBPP, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("setres", "ii", SetRes, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("setfullres", "ii", SetFullRes, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("setwinres", "ii", SetWinRes, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("setvidramp", "", UpdateGammaRamp, CMDF_NO_DEDICATED);
-    C_CMD("togglefullscreen", "", ToggleFullscreen);
+    C_CMD_FLAGS("togglefullscreen", "", ToggleFullscreen, CMDF_NO_DEDICATED);
 
     GL_TexRegister();
 }
@@ -172,14 +182,14 @@ void GL_DoUpdate(void)
     LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     // Tell GL to finish drawing right now.
-    glFinish();
+    //glFinish();
 
     // Wait until the right time to show the frame so that the realized
     // frame rate is exactly right.
-    DD_WaitForOptimalUpdateTime();
+    //DD_WaitForOptimalUpdateTime();
 
     // Blit screen to video.
-    Sys_UpdateWindow(windowIDX);
+    Window_SwapBuffers(theWindow);
 
     // Increment frame counter.
     r_framecounter++;
@@ -207,16 +217,12 @@ void GL_GetGammaRamp(unsigned short *ramp)
 
 #if defined(WIN32) && defined(WIN32_GAMMA)
     {
-        HWND    hWnd = Sys_GetWindowHandle(windowIDX);
+        HWND    hWnd = (HWND) Window_NativeHandle(Window_Main());
         HDC     hDC;
 
         if(!hWnd)
         {
-            DD_Win32_SuspendMessagePump(true);
-            MessageBox(HWND_DESKTOP,
-                       TEXT("GL_GetGammaRamp: Main window not available."), NULL,
-                       MB_ICONERROR | MB_OK);
-            DD_Win32_SuspendMessagePump(false);
+            Sys_MessageBox(MBT_ERROR, "Gamma Correction", "Main window not available.", 0);
         }
         else
         {
@@ -288,7 +294,7 @@ void GL_SetGammaRamp(unsigned short* ramp)
 
 #if defined(WIN32) && defined(WIN32_GAMMA)
     { HWND hWnd;
-    if((hWnd = Sys_GetWindowHandle(windowIDX)))
+    if((hWnd = (HWND) Window_NativeHandle(Window_Main())))
     {
         HDC hDC;
         if((hDC = GetDC(hWnd)))
@@ -304,9 +310,7 @@ void GL_SetGammaRamp(unsigned short* ramp)
     }
     else
     {
-        DD_Win32_SuspendMessagePump(true);
-        MessageBox(HWND_DESKTOP, TEXT("GL_SetGammaRamp: Main window not available."), 0, MB_ICONERROR | MB_OK);
-        DD_Win32_SuspendMessagePump(false);
+        Sys_MessageBox(MBT_ERROR, "Gamma Correction", "Main window not available.", 0);
     }}
 #endif
 
@@ -423,7 +427,7 @@ static void printConfiguration(void)
  */
 boolean GL_EarlyInit(void)
 {
-    if(isDedicated) return true;
+    if(novideo) return true;
     if(initGLOk) return true; // Already initialized.
 
     Con_Message("Initializing Render subsystem...\n");
@@ -444,15 +448,8 @@ boolean GL_EarlyInit(void)
     // Check the maximum texture size.
     if(GL_state.maxTexSize == 256)
     {
-        int bpp;
-
         Con_Message("Using restricted texture w/h ratio (1:8).\n");
         ratioLimit = 8;
-        Sys_GetWindowBPP(windowIDX, &bpp);
-        if(bpp == 32)
-        {
-            Con_Message("Warning: Are you sure your video card accelerates a 32 bit mode?\n");
-        }
     }
     // Set a custom maximum size?
     if(ArgCheckWith("-maxtex", 1))
@@ -793,8 +790,9 @@ unsigned char* GL_GrabScreen(void)
 
     if(!isDedicated && !novideo)
     {
-        const int width  = theWindow->geometry.size.width;
-        const int height = theWindow->geometry.size.height;
+        /*
+        const int width  = Window_Width(theWindow);
+        const int height = Window_Height(theWindow);
 
         buffer = (unsigned char*) malloc(width * height * 3);
         if(!buffer)
@@ -807,7 +805,7 @@ unsigned char* GL_GrabScreen(void)
 #if _DEBUG
             Con_Message("Warning:GL_GrabScreen: Failed copying frame buffer content.\n");
 #endif
-        }
+        }*/
     }
     return buffer;
 }
@@ -979,14 +977,13 @@ void GL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT)
 
 void GL_BindTextureUnmanaged(DGLuint glName, int magMode)
 {
-    if(Con_InBusyWorker()) return;
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     if(glName == 0)
     {
         GL_SetNoTexture();
         return;
     }
-
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     glBindTexture(GL_TEXTURE_2D, glName);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magMode);
@@ -1285,24 +1282,99 @@ void GL_CalcLuminance(const uint8_t* buffer, int width, int height, int pixelSiz
  */
 D_CMD(SetRes)
 {
-    int                 width = atoi(argv[1]), height = atoi(argv[2]);
+    int attribs[] = {
+        DDWA_WIDTH, atoi(argv[1]),
+        DDWA_HEIGHT, atoi(argv[2]),
+        DDWA_END
+    };
+    return Window_ChangeAttributes(Window_Main(), attribs);
+}
 
-    return Sys_SetWindow(windowIDX, 0, 0, width, height, 0, 0,
-                         DDSW_NOVISIBLE|DDSW_NOCENTER|DDSW_NOFULLSCREEN|
-                         DDSW_NOBPP);
+D_CMD(SetFullRes)
+{
+    int attribs[] = {
+        DDWA_WIDTH, atoi(argv[1]),
+        DDWA_HEIGHT, atoi(argv[2]),
+        DDWA_FULLSCREEN, true,
+        DDWA_END
+    };
+    return Window_ChangeAttributes(Window_Main(), attribs);
+}
+
+D_CMD(SetWinRes)
+{
+    int attribs[] = {
+        DDWA_WIDTH, atoi(argv[1]),
+        DDWA_HEIGHT, atoi(argv[2]),
+        DDWA_FULLSCREEN, false,
+        DDWA_END
+    };
+    return Window_ChangeAttributes(Window_Main(), attribs);
 }
 
 D_CMD(ToggleFullscreen)
 {
-    boolean             fullscreen;
+    /// @todo Currently not supported: the window should be recreated when
+    /// switching at runtime so that its frameless flag has the appropriate
+    /// effect.
+#if 1
+    int attribs[] = {
+        DDWA_FULLSCREEN, !Window_IsFullscreen(Window_Main()),
+        DDWA_END
+    };
+    return Window_ChangeAttributes(Window_Main(), attribs);
+#endif
+    return false;
+}
 
-    if(!Sys_GetWindowFullscreen(windowIDX, &fullscreen))
-        Con_Message("CCmd 'ToggleFullscreen': Failed acquiring window "
-                    "fullscreen");
-    else
-        Sys_SetWindow(windowIDX, 0, 0, 0, 0, 0,
-                      (!fullscreen? DDWF_FULLSCREEN : 0),
-                      DDSW_NOCENTER|DDSW_NOSIZE|DDSW_NOBPP|DDSW_NOVISIBLE);
+D_CMD(SetBPP)
+{
+    int attribs[] = {
+        DDWA_COLOR_DEPTH_BITS, atoi(argv[1]),
+        DDWA_END
+    };
+    return Window_ChangeAttributes(Window_Main(), attribs);
+}
+
+D_CMD(DisplayModeInfo)
+{
+    const Window* wnd = Window_Main();
+    const DisplayMode* mode = DisplayMode_Current();
+
+    Con_Message("Current display mode: %i x %i x %i (%i:%i",
+                mode->width, mode->height, mode->depth, mode->ratioX, mode->ratioY);
+    if(mode->refreshRate > 0)
+    {
+        Con_Message(", refresh: %.1f Hz", mode->refreshRate);
+    }
+    Con_Message(")\nMain window: (%i,%i) %ix%i fullscreen:%s centered:%s maximized:%s\n",
+                Window_X(wnd), Window_Y(wnd), Window_Width(wnd), Window_Height(wnd),
+                Window_IsFullscreen(wnd)? "yes" : "no",
+                Window_IsCentered(wnd)? "yes" : "no",
+                Window_IsMaximized(wnd)? "yes" : "no");
+    return true;
+}
+
+D_CMD(ListDisplayModes)
+{
+    const DisplayMode* mode;
+    int i;
+
+    Con_Message("There are %i display modes available:\n", DisplayMode_Count());
+    for(i = 0; i < DisplayMode_Count(); ++i)
+    {
+        mode = DisplayMode_ByIndex(i);
+        if(mode->refreshRate > 0)
+        {
+            Con_Message("  %i x %i x %i (%i:%i, refresh: %.1f Hz)\n", mode->width, mode->height,
+                        mode->depth, mode->ratioX, mode->ratioY, mode->refreshRate);
+        }
+        else
+        {
+            Con_Message("  %i x %i x %i (%i:%i)\n", mode->width, mode->height,
+                        mode->depth, mode->ratioX, mode->ratioY);
+        }
+    }
     return true;
 }
 
@@ -1311,21 +1383,6 @@ D_CMD(UpdateGammaRamp)
     GL_SetGamma();
     Con_Printf("Gamma ramp set.\n");
     return true;
-}
-
-D_CMD(SetBPP)
-{
-    int                 bpp = atoi(argv[1]);
-
-    if(bpp != 16 && bpp != 32)
-    {
-        bpp = 32;
-        Con_Printf("%d not valid for bits per pixel, setting to 32.\n", bpp);
-    }
-
-    return Sys_SetWindow(windowIDX, 0, 0, 0, 0, bpp, 0,
-                        DDSW_NOCENTER|DDSW_NOSIZE|DDSW_NOFULLSCREEN|
-                        DDSW_NOVISIBLE);
 }
 
 D_CMD(Fog)

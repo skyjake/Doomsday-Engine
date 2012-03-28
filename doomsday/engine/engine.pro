@@ -18,15 +18,15 @@ echo(Doomsday version $${DENG_VERSION}.)
 include(../dep_sdl.pri)
 include(../dep_opengl.pri)
 include(../dep_zlib.pri)
-include(../dep_libpng.pri)
+include(../dep_png.pri)
 include(../dep_curses.pri)
-include(../dep_curl.pri)
 include(../dep_lzss.pri)
 win32 {
     include(../dep_directx.pri)
 }
+include(../dep_deng2.pri)
 
-# Common Definitions ---------------------------------------------------------
+# Definitions ----------------------------------------------------------------
 
 DEFINES += __DOOMSDAY__
 
@@ -37,26 +37,41 @@ DEFINES += __DOOMSDAY__
     !win32: echo(DENG_BUILD is not defined.)
 }
 
-OTHER_FILES += portable/include/mapdata.hs
+win32 {
+    DEFINES += WIN32_GAMMA
 
-unix:!macx {
+    RC_FILE = win32/res/doomsday.rc
+    OTHER_FILES += api/doomsday.def
+}
+else:macx {
+    useFramework(Cocoa)
+    useFramework(QTKit)
+}
+else {
+    # Generic Unix.
     DEFINES += DENG_BASE_DIR=\\\"$${DENG_BASE_DIR}/\\\"
     DEFINES += DENG_LIBRARY_DIR=\\\"$${DENG_LIB_DIR}/\\\"
 
     QMAKE_LFLAGS += -rdynamic
 
     !freebsd-*: LIBS += -ldl
+
+    # DisplayMode uses the Xrandr extension.
+    !deng_nodisplaymode {
+        QMAKE_CXXFLAGS += $$system(pkg-config xrandr --cflags)
+                  LIBS += $$system(pkg-config xrandr --libs)
+    }
 }
-macx {
-    useFramework(Cocoa)
-    useFramework(QTKit)
+
+# Build Configuration --------------------------------------------------------
+
+deng_writertypecheck {
+    DEFINES += DENG_WRITER_TYPECHECK
 }
+
+# Linking --------------------------------------------------------------------
+
 win32 {
-    DEFINES += WIN32_GAMMA
-
-    RC_FILE = win32/res/doomsday.rc
-    OTHER_FILES += api/doomsday.def
-
     QMAKE_LFLAGS += \
         /NODEFAULTLIB:libcmt \
         /DEF:\"$$DENG_API_DIR/doomsday.def\" \
@@ -65,15 +80,13 @@ win32 {
     LIBS += -lkernel32 -lgdi32 -lole32 -luser32 -lwsock32 -lwinmm \
         -lopengl32 -lglu32
 }
-
-# Engine Configuration -------------------------------------------------------
-
-deng_writertypecheck {
-    DEFINES += DENG_WRITER_TYPECHECK
+else:macx {
+    useFramework(Cocoa)
+    useFramework(QTKit)
 }
-
-deng_sdlnetdummy {
-    HEADERS += portable/include/sdlnet_dummy.h
+else {
+    # Allow exporting symbols out of the main executable.
+    QMAKE_LFLAGS += -rdynamic
 }
 
 # Source Files ---------------------------------------------------------------
@@ -130,6 +143,8 @@ DENG_HEADERS = \
     portable/include/b_device.h \
     portable/include/b_main.h \
     portable/include/b_util.h \
+    portable/include/canvas.h \
+    portable/include/canvaswindow.h \
     portable/include/cbuffer.h \
     portable/include/cl_def.h \
     portable/include/cl_frame.h \
@@ -139,6 +154,7 @@ DENG_HEADERS = \
     portable/include/cl_sound.h \
     portable/include/cl_world.h \
     portable/include/colorpalette.h \
+    portable/include/consolewindow.h \
     portable/include/con_bar.h \
     portable/include/con_bind.h \
     portable/include/con_busy.h \
@@ -174,6 +190,8 @@ DENG_HEADERS = \
     portable/include/de_render.h \
     portable/include/de_system.h \
     portable/include/de_ui.h \
+    portable/include/displaymode.h \
+    portable/include/displaymode_native.h \
     portable/include/edit_bias.h \
     portable/include/edit_bsp.h \
     portable/include/edit_map.h \
@@ -201,18 +219,21 @@ DENG_HEADERS = \
     portable/include/gl_tga.h \
     portable/include/gridmap.h \
     portable/include/hedge.h \
-    portable/include/huffman.h \
     portable/include/image.h \
+    portable/include/joystick.h \
     portable/include/kdtree.h \
+    portable/include/keycode.h \
     portable/include/library.h \
     portable/include/linedef.h \
     portable/include/lumpdirectory.h \
     portable/include/lumpfile.h \
     portable/include/lumpinfo.h \
+    portable/include/masterserver.h \
     portable/include/material.h \
     portable/include/materials.h \
     portable/include/materialvariant.h \
     portable/include/monitor.h \
+    portable/include/mouse_qt.h \
     portable/include/m_args.h \
     portable/include/m_bams.h \
     portable/include/m_binarytree.h \
@@ -225,6 +246,7 @@ DENG_HEADERS = \
     portable/include/m_profiler.h \
     portable/include/m_stack.h \
     portable/include/m_vector.h \
+    portable/include/nativeui.h \
     portable/include/net_buf.h \
     portable/include/net_demo.h \
     portable/include/net_event.h \
@@ -295,14 +317,11 @@ DENG_HEADERS = \
     portable/include/sys_direc.h \
     portable/include/sys_findfile.h \
     portable/include/sys_input.h \
-    portable/include/sys_master.h \
     portable/include/sys_network.h \
     portable/include/sys_opengl.h \
     portable/include/sys_reslocator.h \
-    portable/include/sys_sock.h \
     portable/include/sys_system.h \
     portable/include/sys_timer.h \
-    portable/include/sys_window.h \
     portable/include/s_cache.h \
     portable/include/s_environ.h \
     portable/include/s_logic.h \
@@ -322,38 +341,8 @@ DENG_HEADERS = \
     portable/include/ui_panel.h \
     portable/include/vertex.h \
     portable/include/wadfile.h \
+    portable/include/window.h \
     portable/include/zipfile.h
-
-# Platform-specific configuration.
-unix:!win32 {
-    DENG_PLATFORM_HEADERS += \
-        $$DENG_UNIX_INCLUDE_DIR/dd_uinit.h \
-        $$DENG_UNIX_INCLUDE_DIR/sys_path.h
-
-    INCLUDEPATH += $$DENG_UNIX_INCLUDE_DIR
-}
-macx {
-    DENG_PLATFORM_HEADERS += \
-        $$DENG_MAC_INCLUDE_DIR/DoomsdayRunner.h \
-        $$DENG_MAC_INCLUDE_DIR/MusicPlayer.h \
-        $$DENG_MAC_INCLUDE_DIR/SDLMain.h \
-        $$DENG_MAC_INCLUDE_DIR/StartupWindowController.h
-
-    OBJECTIVE_SOURCES += \
-        mac/src/DoomsdayRunner.m \
-        mac/src/MusicPlayer.m \
-        mac/src/SDLMain.m \
-        mac/src/StartupWindowController.m
-
-    INCLUDEPATH += $$DENG_MAC_INCLUDE_DIR
-}
-win32 {
-    DENG_PLATFORM_HEADERS += \
-        $$DENG_WIN_INCLUDE_DIR/dd_winit.h \
-        $$DENG_WIN_INCLUDE_DIR/resource.h
-
-    INCLUDEPATH += $$DENG_WIN_INCLUDE_DIR
-}
 
 INCLUDEPATH += \
     $$DENG_INCLUDE_DIR \
@@ -361,24 +350,71 @@ INCLUDEPATH += \
 
 HEADERS += \
     $$DENG_API_HEADERS \
-    $$DENG_PLATFORM_HEADERS \
     $$DENG_HEADERS
 
-DENG_UNIX_SOURCES += \
-    portable/src/sys_sdl_window.c \
-    unix/src/dd_uinit.c \
-    unix/src/sys_console.c \
-    unix/src/sys_findfile.c \
-    unix/src/sys_input.c \
-    unix/src/sys_path.c
+# Platform-specific sources.
+win32 {
+    # Windows.
+    HEADERS += \
+        $$DENG_WIN_INCLUDE_DIR/dd_winit.h \
+        $$DENG_WIN_INCLUDE_DIR/directinput.h \
+        $$DENG_WIN_INCLUDE_DIR/mouse_win32.h \
+        $$DENG_WIN_INCLUDE_DIR/resource.h
 
-DENG_WIN32_SOURCES += \
-    win32/src/dd_winit.c \
-    win32/src/sys_console.c \
-    win32/src/sys_findfile.c \
-    win32/src/sys_input.c \
-    win32/src/sys_window.c
+    INCLUDEPATH += $$DENG_WIN_INCLUDE_DIR
 
+    SOURCES += \
+        win32/src/dd_winit.c \
+        win32/src/directinput.c \
+        win32/src/sys_console.c \
+        win32/src/sys_findfile.c \
+        win32/src/joystick.c \
+        win32/src/mouse_win32.c
+
+    !deng_nodisplaymode: SOURCES += win32/src/displaymode_win32.cpp
+}
+else:unix {
+    # Common Unix (including Mac OS X).
+    HEADERS += \
+        $$DENG_UNIX_INCLUDE_DIR/dd_uinit.h \
+        $$DENG_UNIX_INCLUDE_DIR/sys_path.h
+
+    INCLUDEPATH += $$DENG_UNIX_INCLUDE_DIR
+
+    SOURCES += \
+        unix/src/dd_uinit.c \
+        unix/src/joystick.c \
+        unix/src/sys_console.c \
+        unix/src/sys_findfile.c \
+        unix/src/sys_path.c
+}
+
+macx {
+    # Mac OS X only.
+    HEADERS += \
+        $$DENG_MAC_INCLUDE_DIR/MusicPlayer.h
+
+    OBJECTIVE_SOURCES += \
+        mac/src/MusicPlayer.m
+
+    !deng_nodisplaymode: OBJECTIVE_SOURCES += mac/src/displaymode_macx.mm
+
+    INCLUDEPATH += $$DENG_MAC_INCLUDE_DIR
+}
+else:unix {
+    !deng_nodisplaymode {
+        # Unix (non-Mac) only.
+        SOURCES += \
+            unix/src/displaymode_x11.cpp \
+            unix/src/imKStoUCS.c
+    }
+}
+
+deng_nodisplaymode {
+    SOURCES += portable/src/displaymode_dummy.c
+}
+
+# Platform-independent sources.
 SOURCES += \
     portable/src/abstractfile.c \
     portable/src/abstractresource.c \
@@ -400,6 +436,9 @@ SOURCES += \
     portable/src/bspbuilder/superblockmap.cpp \
     portable/src/bspleaf.c \
     portable/src/bspnode.c \
+    portable/src/busytask.cpp \
+    portable/src/canvas.cpp \
+    portable/src/canvaswindow.cpp \
     portable/src/cbuffer.c \
     portable/src/cl_frame.c \
     portable/src/cl_infine.c \
@@ -417,6 +456,7 @@ SOURCES += \
     portable/src/dam_file.c \
     portable/src/dam_main.c \
     portable/src/dd_help.c \
+    portable/src/dd_init.cpp \
     portable/src/dd_input.c \
     portable/src/dd_loop.c \
     portable/src/dd_main.c \
@@ -430,6 +470,7 @@ SOURCES += \
     portable/src/dfile.c \
     portable/src/dgl_common.c \
     portable/src/dgl_draw.c \
+    portable/src/displaymode.cpp \
     portable/src/edit_bias.c \
     portable/src/edit_bsp.c \
     portable/src/edit_map.c \
@@ -456,18 +497,20 @@ SOURCES += \
     portable/src/gl_tga.c \
     portable/src/gridmap.c \
     portable/src/hedge.c \
-    portable/src/huffman.c \
     portable/src/image.c \
     portable/src/kdtree.c \
+    portable/src/keycode.cpp \
     portable/src/library.c \
     portable/src/linedef.c \
     portable/src/lumpdirectory.c \
     portable/src/lumpfile.c \
+    portable/src/masterserver.cpp \
     portable/src/material.c \
     portable/src/materialarchive.c \
     portable/src/materials.c \
     portable/src/materialvariant.c \
     portable/src/monitor.c \
+    portable/src/mouse_qt.c \
     portable/src/m_args.c \
     portable/src/m_bams.c \
     portable/src/m_binarytree.c \
@@ -480,6 +523,7 @@ SOURCES += \
     portable/src/m_stack.c \
     portable/src/m_string.c \
     portable/src/m_vector.c \
+    portable/src/nativeui.cpp \
     portable/src/net_buf.c \
     portable/src/net_demo.c \
     portable/src/net_event.c \
@@ -559,11 +603,10 @@ SOURCES += \
     portable/src/svg.c \
     portable/src/sys_audiod_dummy.c \
     portable/src/sys_direc.c \
-    portable/src/sys_master.c \
+    portable/src/sys_input.c \
     portable/src/sys_network.c \
     portable/src/sys_opengl.c \
     portable/src/sys_reslocator.c \
-    portable/src/sys_sock.c \
     portable/src/sys_system.c \
     portable/src/sys_timer.c \
     portable/src/tab_tables.c \
@@ -577,16 +620,9 @@ SOURCES += \
     portable/src/uri.c \
     portable/src/vertex.c \
     portable/src/wadfile.c \
+    portable/src/window.cpp \
     portable/src/writer.c \
     portable/src/zipfile.c
-
-unix {
-    SOURCES += $$DENG_UNIX_SOURCES
-}
-
-win32 {
-    SOURCES += $$DENG_WIN32_SOURCES
-}
 
 !deng_nosdlmixer {
     HEADERS += portable/include/sys_audiod_sdlmixer.h
@@ -599,6 +635,7 @@ SOURCES += ../plugins/common/src/m_fixed.c
 
 OTHER_FILES += \
     data/cphelp.txt \
+    portable/include/mapdata.hs \
     portable/include/template.h.template \
     portable/src/template.c.template
 
@@ -639,12 +676,10 @@ macx {
     !deng_nosdlmixer {
         doPostLink("cp -fRp \"$${SDL_FRAMEWORK_DIR}/SDL_mixer.framework\" \"$${OUT_PWD}/doomsday.app/Contents/Frameworks/\"")
     }
-    doPostLink("cp -fRp \"$${SDL_FRAMEWORK_DIR}/SDL_net.framework\" \"$${OUT_PWD}/doomsday.app/Contents/Frameworks/\"")
 
     res.path = Contents/Resources
     res.files = \
         mac/res/English.lproj \
-        mac/res/Startup.nib \
         mac/res/deng.icns
 
     data.path = $$res.path
@@ -655,6 +690,29 @@ macx {
     QMAKE_BUNDLE_DATA += res data startupfonts startupdata startupgfx
 
     QMAKE_INFO_PLIST = ../build/mac/Info.plist
+
+    # Since qmake is unable to copy directories as bundle data, let's copy
+    # the frameworks manually.
+    FW_DIR = \"$${OUT_PWD}/doomsday.app/Contents/Frameworks/\"
+    doPostLink("rm -rf $$FW_DIR")
+    doPostLink("mkdir $$FW_DIR")
+    doPostLink("cp -fRp $${SDL_FRAMEWORK_DIR}/SDL.framework $$FW_DIR")
+    doPostLink("cp -fRp $${SDL_FRAMEWORK_DIR}/SDL_mixer.framework $$FW_DIR")
+
+    # libdeng2 dynamic library.
+    doPostLink("cp -fRp $$OUT_PWD/../libdeng2/libdeng2*dylib $$FW_DIR")
+
+    # Fix the dynamic linker paths so they point to ../Frameworks/.
+    defineTest(fixInstallName) {
+        doPostLink("install_name_tool -change $$1 @executable_path/../Frameworks/$$1 doomsday.app/Contents/MacOS/doomsday")
+    }
+    fixInstallName("libdeng2.2.dylib")
+
+    # Clean up previous deployment.
+    doPostLink("rm -rf Doomsday.app/Contents/PlugIns/")
+    doPostLink("rm -f Doomsday.app/Contents/Resources/qt.conf")
+
+    doPostLink("macdeployqt Doomsday.app")
 }
 
 # Installation ---------------------------------------------------------------

@@ -37,6 +37,10 @@
 #include "p_mapdata.h"
 #include "smoother.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define BIT(x)              (1 << (x))
 
 #define NSP_BROADCAST       -1     // For Net_SendBuffer.
@@ -294,5 +298,9 @@ const char*     Net_GetPlayerName(int player);
 ident_t         Net_GetPlayerID(int player);
 
 void            Net_PrintServerInfo(int index, serverinfo_t *info);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_NETWORK_H */

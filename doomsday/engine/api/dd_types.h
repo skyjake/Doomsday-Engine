@@ -167,8 +167,10 @@ typedef enum {
 #  ifdef __cplusplus
 typedef bool                ddboolean_t; // Use builtin type in C++
 #  else // Plain C.
-#  define false             0
-#  define true              (!false)
+#    undef false
+#    define false             0
+#    undef true
+#    define true              1
 typedef int                 ddboolean_t;
 #  endif
 #endif
@@ -227,4 +229,3 @@ struct material_s;
 #include "uri.h"
 
 #endif /* LIBDENG_TYPES_H */
-
