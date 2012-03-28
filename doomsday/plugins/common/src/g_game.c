@@ -2703,6 +2703,14 @@ void G_QuitGame(void)
     const char* endString;
     if(G_QuitInProgress()) return;
 
+    if(Hu_IsMessageActiveWithCallback(G_QuitGameResponse))
+    {
+        // User has re-tried to quit with "quit" when the question is one the
+        // screen. Apparently we should quit...
+        DD_Execute(true, "quit!");
+        return;
+    }
+
 #if __JDOOM__ || __JDOOM64__
     endString = endmsg[((int) GAMETIC % (NUM_QUITMESSAGES + 1))];
 #else
@@ -3289,7 +3297,7 @@ static ddstring_t* composeScreenshotFileName(void)
     { int i;
     for(i = 0; i < 1e6; ++i) // Stop eventually...
     {
-        Str_Appendf(name, "%03i.tga", i);
+        Str_Appendf(name, "%03i.png", i);
         if(!F_FileExists(Str_Text(name)))
             break;
         Str_Truncate(name, numPos);
@@ -3306,9 +3314,13 @@ void G_DoScreenShot(void)
         return;
     }
 
-    if(0 != M_ScreenShot(Str_Text(name), 24))
+    if(M_ScreenShot(Str_Text(name), 24))
     {
-        Con_Message("Wrote screenshot \"%s\"\n", F_PrettyPath(Str_Text(name)));
+        Con_Message("Wrote screenshot: %s\n", F_PrettyPath(Str_Text(name)));
+    }
+    else
+    {
+        Con_Message("Failed to write screenshot \"%s\".\n", F_PrettyPath(Str_Text(name)));
     }
     Str_Delete(name);
 }

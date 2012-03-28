@@ -329,7 +329,14 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
     {
         int oldecho = cfg.echoMsg;
 
-        dd_snprintf(msgBuff, NETBUFFER_MAXMESSAGE, "%s: %s", Net_GetPlayerName(plrNumber), (const char *) data);
+        if(plrNumber > 0)
+        {
+            dd_snprintf(msgBuff, NETBUFFER_MAXMESSAGE, "%s: %s", Net_GetPlayerName(plrNumber), (const char *) data);
+        }
+        else
+        {
+            dd_snprintf(msgBuff, NETBUFFER_MAXMESSAGE, "[sysop] %s", (const char *) data);
+        }
 
         // The chat message is already echoed by the console.
         cfg.echoMsg = false;

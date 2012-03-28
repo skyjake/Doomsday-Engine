@@ -60,12 +60,6 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct connectparam_s {
-    char        address[256];
-    int         port;
-    serverinfo_t info;
-} connectparam_t;
-
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 D_CMD(Login); // in cl_main.c
@@ -345,7 +339,9 @@ void Net_SendPacket(int to_player, int type, const void* data, size_t length)
  */
 void Net_ShowChatMessage(int plrNum, const char* message)
 {
-    Con_FPrintf(CPF_GREEN, "%s: %s\n", clients[plrNum].name, message);
+    const char* fromName = (plrNum > 0? clients[plrNum].name : "[sysop]");
+    const char* sep      = (plrNum > 0? ":"                  : "");
+    Con_FPrintf(!plrNum? SV_CONSOLE_PRINT_FLAGS : CPF_GREEN, "%s%s %s\n", fromName, sep, message);
 }
 
 /**
@@ -466,9 +462,7 @@ static void Net_DoUpdate(void)
 void Net_Update(void)
 {
     Net_DoUpdate();
-
-    // Check for new arrivals and unjoined net commands.
-    N_ListenUnjoinedNodes();
+    N_ListenNodes();
 
     // Check for received packets.
     if(isClient)
@@ -586,6 +580,7 @@ void Net_StopGame(void)
 
         plr->shared.inGame = false;
         cl->ready = cl->connected = false;
+        cl->id = 0;
         cl->nodeID = 0;
         cl->viewConsole = -1;
         plr->shared.flags &= ~(DDPF_CAMERA | DDPF_CHASECAM | DDPF_LOCAL);
@@ -651,7 +646,7 @@ static boolean recordingDemo(void)
 void Net_DrawDemoOverlay(void)
 {
     char buf[160], tmp[40];
-    int x = theWindow->geometry.size.width - 10, y = 10;
+    int x = Window_Width(theWindow) - 10, y = 10;
 
     if(!recordingDemo() || !(SECONDS_TO_TICKS(gameTime) & 8))
         return;
@@ -678,7 +673,7 @@ void Net_DrawDemoOverlay(void)
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, theWindow->geometry.size.width, theWindow->geometry.size.height, 0, -1, 1);
+    glOrtho(0, Window_Width(theWindow), Window_Height(theWindow), 0, -1, 1);
 
     glEnable(GL_TEXTURE_2D);
 
@@ -1150,25 +1145,44 @@ D_CMD(SetConsole)
     return true;
 }
 
-int Net_ConnectWorker(void *ptr)
+void Net_FinishConnection(int nodeId, const byte* data, int size)
 {
-    connectparam_t     *param = ptr;
-    double              startTime = 0;
-    boolean             isDone = false;
-    int                 returnValue = false;
+    serverinfo_t info;
 
-    // Make sure TCP/IP is active.
-    if(N_InitService(false))
+    Con_Message("Net_FinishConnection: Got reply with %i bytes.\n", size);
+
+    // Parse the response for server info.
+    N_ClientHandleResponseToInfoQuery(nodeId, data, size);
+
+    if(N_GetHostInfo(0, &info))
     {
-        Con_Message("Connecting to %s...\n", param->address);
+        // Found something!
+        //Net_PrintServerInfo(0, NULL);
+        //Net_PrintServerInfo(0, &info);
+        Con_Execute(CMDS_CONSOLE, "net connect 0", false, false);
+    }
+    else
+    {
+        Con_Message("Net_FinishConnection: Failed to retrieve server info.\n");
+    }
+}
 
-        // Start searching at the specified location.
-        N_LookForHosts(param->address, param->port);
+int Net_StartConnection(const char* address, int port)
+{
+    // Make sure TCP/IP is active.
+    if(!N_InitService(false))
+    {
+        Con_Message("TCP/IP not available.\n");
+        return false;
+    }
 
-        startTime = Sys_GetSeconds();
-        isDone = false;
-        while(!isDone)
-        {
+    Con_Message("Net_StartConnection: Connecting to %s...\n", address);
+
+    // Start searching at the specified location.
+    return N_LookForHosts(address, port, Net_FinishConnection);
+
+
+/*
             if(N_GetHostInfo(0, &param->info))
             {   // Found something!
                 Con_Execute(CMDS_CONSOLE, "net connect 0", false, false);
@@ -1186,7 +1200,7 @@ int Net_ConnectWorker(void *ptr)
         }
 
         if(!returnValue)
-            Con_Printf("No response from %s.\n", param->address);
+            Con_Message("No response from %s.\n", param->address);
     }
     else
     {
@@ -1194,7 +1208,7 @@ int Net_ConnectWorker(void *ptr)
     }
 
     Con_BusyWorkerEnd();
-    return returnValue;
+    return returnValue;*/
 }
 
 /**
@@ -1203,8 +1217,8 @@ int Net_ConnectWorker(void *ptr)
  */
 D_CMD(Connect)
 {
-    connectparam_t      param;
-    char               *ptr;
+    char *ptr;
+    int port = 0;
 
     if(argc < 2 || argc > 3)
     {
@@ -1220,21 +1234,19 @@ D_CMD(Connect)
         return false;
     }
 
-    strcpy(param.address, argv[1]);
-
     // If there is a port specified in the address, use it.
-    param.port = 0;
-    if((ptr = strrchr(param.address, ':')))
+    port = 0;
+    if((ptr = strrchr(argv[1], ':')))
     {
-        param.port = strtol(ptr + 1, 0, 0);
+        port = strtol(ptr + 1, 0, 0);
         *ptr = 0;
     }
     if(argc == 3)
     {
-        param.port = strtol(argv[2], 0, 0);
+        port = strtol(argv[2], 0, 0);
     }
 
-    return Con_Busy(BUSYF_ACTIVITY | (verbose? BUSYF_CONSOLE_OUTPUT : 0), NULL, Net_ConnectWorker, &param);
+    return Net_StartConnection(argv[1], port);
 }
 
 /**
@@ -1381,7 +1393,7 @@ D_CMD(Net)
         }
         else if(!stricmp(argv[1], "search"))
         {
-            success = N_LookForHosts(argv[2], 0);
+            success = N_LookForHosts(argv[2], 0, 0);
         }
         else if(!stricmp(argv[1], "connect"))
         {
@@ -1426,7 +1438,7 @@ D_CMD(Net)
     {
         if(!stricmp(argv[1], "search"))
         {
-            success = N_LookForHosts(argv[2], strtol(argv[3], 0, 0));
+            success = N_LookForHosts(argv[2], strtol(argv[3], 0, 0), 0);
         }
     }
 

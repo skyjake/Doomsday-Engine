@@ -107,6 +107,11 @@ int             dd_vsnprintf(char* str, size_t size, const char* format,
 #   define PRINTF_F(f,v)
 #endif
 
+/**
+ * Macro for hiding the warning about an unused parameter.
+ */
+#define DENG_UNUSED(x)      (void)x
+
 int16_t         ShortSwap(int16_t);
 int32_t         LongSwap(int32_t);
 float           FloatSwap(float);
@@ -532,6 +537,7 @@ enum {
     DDKEY_PRINT,
     DDKEY_ENTER, ///< on the numeric keypad.
     DDKEY_DIVIDE, ///< '/' on numeric keypad.
+    DDKEY_MULTIPLY, ///< '*' on the numeric keypad.
     DD_HIGHEST_KEYCODE
 };
 ///@}
@@ -1822,7 +1828,7 @@ struct polyobj_s;
     } ddplayer_t;
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif /* LIBDENG_SHARED_H */

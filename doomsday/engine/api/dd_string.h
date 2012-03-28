@@ -233,6 +233,9 @@ ddstring_t* Str_Strip(ddstring_t* ds);
 
 /**
  * Extract a line of text from the source.
+ *
+ * @param ds   String instance where to put the extracted line.
+ * @param src  Source string. Must be @c NULL terminated.
  */
 const char* Str_GetLine(ddstring_t* ds, const char* src);
 

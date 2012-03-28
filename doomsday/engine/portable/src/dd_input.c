@@ -60,9 +60,11 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct repeater_s {
-    int     key;                // The DDKEY code (0 if not in use).
-    timespan_t timer;           // How's the time?
-    int     count;              // How many times has been repeated?
+    int key;                // The DDKEY code (0 if not in use).
+    int native;             // Used to determine which key is repeating.
+    char text[8];           // Text to insert.
+    timespan_t timer;       // How's the time?
+    int count;              // How many times has been repeated?
 } repeater_t;
 
 typedef struct {
@@ -90,7 +92,9 @@ static void postEvents(timespan_t ticLength);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int     mouseFilter = 1;        // Filtering on by default.
+#ifdef OLD_FILTER
+int     mouseFilter = 0;        // Filtering off by default.
+#endif
 
 // The initial and secondary repeater delays (tics).
 int     repWait1 = 15, repWait2 = 3;
@@ -101,10 +105,6 @@ boolean shiftDown = false, altDown = false;
 inputdev_t inputDevices[NUM_INPUT_DEVICES];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-#ifdef WIN32
-static boolean suspendMsgPump = false; // Set to true to disable checking windows msgs.
-#endif
 
 static boolean ignoreInput = false;
 
@@ -149,8 +149,10 @@ void DD_RegisterInput(void)
     C_VAR_INT("input-key-delay2", &keyRepeatDelay2, CVF_NO_MAX, 20, 0);
     C_VAR_BYTE("input-toggle-sharp", &useSharpToggleEvents, 0, 0, 1);
 
+#ifdef OLD_FILTER
     C_VAR_INT("input-mouse-filter", &mouseFilter, 0, 0, MAX_AXIS_FILTER - 1);
     C_VAR_INT("input-mouse-frequency", &mouseFreq, CVF_NO_MAX, 0, 0);
+#endif
 
 #if _DEBUG
     C_VAR_BYTE("rend-dev-input-joy-state", &devRendJoyState, CVF_NO_ARCHIVE, 0, 1);
@@ -240,12 +242,14 @@ void I_InitVirtualInputDevices(void)
     strcpy(dev->name, "mouse");
     I_DeviceAllocKeys(dev, IMB_MAXBUTTONS);
 
-    // The first five mouse buttons have symbolic names.
-    dev->keys[0].name = "left";
-    dev->keys[1].name = "middle";
-    dev->keys[2].name = "right";
-    dev->keys[3].name = "wheelup";
-    dev->keys[4].name = "wheeldown";
+    // Some of the mouse buttons have symbolic names.
+    dev->keys[IMB_LEFT].name = "left";
+    dev->keys[IMB_MIDDLE].name = "middle";
+    dev->keys[IMB_RIGHT].name = "right";
+    dev->keys[IMB_MWHEELUP].name = "wheelup";
+    dev->keys[IMB_MWHEELDOWN].name = "wheeldown";
+    dev->keys[IMB_MWHEELLEFT].name = "wheelleft";
+    dev->keys[IMB_MWHEELRIGHT].name = "wheelright";
 
     // The mouse wheel is translated to keys, so there is no need to
     // create an axis for it.
@@ -264,7 +268,7 @@ void I_InitVirtualInputDevices(void)
     C_VAR_FLOAT("input-mouse-y-scale", &dev->axes[1].scale, CVF_NO_MAX, 0, 0);
     C_VAR_INT("input-mouse-y-flags", &dev->axes[1].flags, 0, 0, 3);
 
-    if(I_MousePresent())
+    if(Mouse_IsPresent())
         dev->flags = ID_ACTIVE;
 
     // TODO: Add support for several joysticks.
@@ -312,7 +316,7 @@ void I_InitVirtualInputDevices(void)
     }
 
     // The joystick may not be active.
-    if(I_JoystickPresent())
+    if(Joystick_IsPresent())
         dev->flags = ID_ACTIVE;
 }
 
@@ -347,13 +351,41 @@ void I_DeviceReset(uint ident)
     inputdev_t*         dev = &inputDevices[ident];
     int                 k;
 
-    for(k = 0; k < (int)dev->numAxes; ++k)
+    if(ident == IDEV_KEYBOARD)
+    {
+        altDown = shiftDown = false;
+    }
+
+    for(k = 0; k < (int)dev->numKeys && dev->keys; ++k)
+    {
+        if(dev->keys[k].isDown)
+        {
+            dev->keys[k].assoc.flags |= IDAF_EXPIRED;
+        }
+        else
+        {
+            dev->keys[k].isDown = false;
+            dev->keys[k].time = 0;
+            dev->keys[k].assoc.flags &= ~(IDAF_TRIGGERED | IDAF_EXPIRED);
+        }
+    }
+
+    for(k = 0; k < (int)dev->numAxes && dev->axes; ++k)
     {
         if(dev->axes[k].type == IDAT_POINTER)
         {
             // Clear the accumulation.
             dev->axes[k].position = 0;
         }
+    }
+}
+
+void I_ResetAllDevices(void)
+{
+    uint i;
+    for(i = 0; i < NUM_INPUT_DEVICES; ++i)
+    {
+        I_DeviceReset(i);
     }
 }
 
@@ -715,6 +747,7 @@ int DD_KeyOrCode(char* token)
 void DD_InitInput(void)
 {
     int i;
+
     for(i = 0; i < 256; ++i)
     {
         if(i >= 32 && i <= 127)
@@ -725,6 +758,14 @@ void DD_InitInput(void)
     }
 }
 
+/**
+ * Returns a copy of the string @a str. The caller does not get ownership of
+ * the string. The string is valid until it gets overwritten by a new
+ * allocation. There are at most MAXEVENTS strings allocated at a time.
+ *
+ * These are intended for strings in ddevent_t that are valid during the
+ * processing of an event.
+ */
 const char* DD_AllocEventString(const char* str)
 {
     static int eventStringRover = 0;
@@ -807,6 +848,12 @@ void DD_PostEvent(ddevent_t *ev)
     if(useSharpToggleEvents && ev->type == E_TOGGLE)
     {
         q = &sharpQueue;
+    }
+
+    // Cleanup: make sure only keyboard toggles can have a text insert.
+    if(ev->type == E_TOGGLE && ev->device != IDEV_KEYBOARD)
+    {
+        memset(ev->toggle.text, 0, sizeof(ev->toggle.text));
     }
 
     postToQueue(q, ev);
@@ -986,46 +1033,11 @@ static void dispatchEvents(eventqueue_t* q, timespan_t ticLength)
     }
 }
 
-#ifdef WIN32
-void DD_Win32_SuspendMessagePump(boolean suspend)
-{
-    suspendMsgPump = suspend;
-}
-#endif
-
 /**
  * Poll all event sources (i.e., input devices) and post events.
  */
 static void postEvents(timespan_t ticLength)
 {
-#ifdef WIN32
-    if(!Con_InBusyWorker())
-    {
-        MSG msg;
-
-        /**
-         * Checking native Windows messages. This must be in the same thread as
-         * that which registered the window it is handling messages for (main
-         * thread).
-         */
-        while(!suspendMsgPump &&
-              PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) > 0)
-        {
-            if(msg.message == WM_QUIT)
-            {
-                DD_Win32_SuspendMessagePump(true);
-                DD_SetGameLoopExitCode(msg.wParam);
-                Sys_Quit();
-            }
-            else
-            {
-                TranslateMessage(&msg);
-                DispatchMessage(&msg);
-            }
-        }
-    }
-#endif
-
     if(ArgExists("-noinput")) return;
 
     DD_ReadKeyboard();
@@ -1108,14 +1120,29 @@ void DD_ClearKeyRepeaters(void)
     memset(keyReps, 0, sizeof(keyReps));
 }
 
-void DD_ClearKeyRepeaterForKey(int key)
+void DD_ClearKeyRepeaterForKey(int ddkey, int native)
 {
     int k;
 
     // Clear any repeaters with this key.
     for(k = 0; k < MAX_DOWNKEYS; ++k)
-        if(keyReps[k].key == key)
-            keyReps[k].key = 0;
+    {
+        // Check the native code first, if provided.
+        if(native >= 0)
+        {
+            if(native != keyReps[k].native)
+                continue;
+        }
+        else
+        {
+            if(keyReps[k].key != ddkey) continue;
+        }
+
+        // Clear this.
+        keyReps[k].native = -1;
+        keyReps[k].key = 0;
+        memset(keyReps[k].text, 0, sizeof(keyReps[k].text));
+    }
 }
 
 /**
@@ -1134,6 +1161,8 @@ void DD_ReadKeyboard(void)
     ev.type = E_TOGGLE;
     ev.toggle.state = ETOG_REPEAT;
 
+    // Post key repeat events.
+    /// @todo Move this to a ticker function?
     for(i = 0; i < MAX_DOWNKEYS; ++i)
     {
         repeater_t *rep = keyReps + i;
@@ -1141,6 +1170,7 @@ void DD_ReadKeyboard(void)
             continue;
 
         ev.toggle.id = rep->key;
+        memcpy(ev.toggle.text, rep->text, sizeof(ev.toggle.text));
 
         if(!rep->count && sysTime - rep->timer >= keyRepeatDelay1 / 1000.0)
         {
@@ -1162,27 +1192,33 @@ void DD_ReadKeyboard(void)
     }
 
     // Read the new keyboard events.
-    if(isDedicated)
+    if(novideo)
         numkeyevs = I_GetConsoleKeyEvents(keyevs, KBDQUESIZE);
     else
-        numkeyevs = I_GetKeyEvents(keyevs, KBDQUESIZE);
+        numkeyevs = Keyboard_GetEvents(keyevs, KBDQUESIZE);
 
     // Convert to ddevents and post them.
     for(n = 0; n < numkeyevs; ++n)
     {
-        keyevent_t     *ke = &keyevs[n];
+        keyevent_t *ke = &keyevs[n];
 
         // Check the type of the event.
-        if(ke->event == IKE_KEY_DOWN)   // Key pressed?
+        if(ke->type == IKE_DOWN)   // Key pressed?
         {
             ev.toggle.state = ETOG_DOWN;
         }
-        else if(ke->event == IKE_KEY_UP) // Key released?
+        else if(ke->type == IKE_UP) // Key released?
         {
             ev.toggle.state = ETOG_UP;
         }
 
         ev.toggle.id = ke->ddkey;
+
+        // Text content to insert?
+        assert(sizeof(ev.toggle.text) == sizeof(ke->text));
+        memcpy(ev.toggle.text, ke->text, sizeof(ev.toggle.text));
+
+        DEBUG_VERBOSE2_Message(("toggle.id: %i/%c [%s:%u]\n", ev.toggle.id, ev.toggle.id, ev.toggle.text, (uint)strlen(ev.toggle.text)));
 
         // Maintain the repeater table.
         if(ev.toggle.state == ETOG_DOWN)
@@ -1192,6 +1228,8 @@ void DD_ReadKeyboard(void)
                 if(!keyReps[k].key)
                 {
                     keyReps[k].key = ev.toggle.id;
+                    keyReps[k].native = ke->native;
+                    memcpy(keyReps[k].text, ev.toggle.text, sizeof(ev.toggle.text));
                     keyReps[k].timer = sysTime;
                     keyReps[k].count = 0;
                     break;
@@ -1199,7 +1237,7 @@ void DD_ReadKeyboard(void)
         }
         else if(ev.toggle.state == ETOG_UP)
         {
-            DD_ClearKeyRepeaterForKey(ev.toggle.id);
+            DD_ClearKeyRepeaterForKey(ev.toggle.id, ke->native);
         }
 
         // Post the event.
@@ -1207,7 +1245,8 @@ void DD_ReadKeyboard(void)
     }
 }
 
-float I_FilterMouse(float pos, float* accumulation, float ticLength)
+#ifdef OLD_FILTER
+static float I_FilterMouse(float pos, float* accumulation, float ticLength)
 {
     float   target;
     int     dir;
@@ -1242,6 +1281,7 @@ float I_FilterMouse(float pos, float* accumulation, float ticLength)
     // This is the new (filtered) axis position.
     return dir * used;
 }
+#endif
 
 /**
  * Change between normal and UI mousing modes.
@@ -1250,17 +1290,22 @@ void I_SetUIMouseMode(boolean on)
 {
     uiMouseMode = on;
 
+    /// @todo  Update this after the Qt window management is working.
+
+#if 0
 #ifdef UNIX
-    if(I_MousePresent())
+    if(Mouse_IsPresent())
     {
         // Release mouse grab when in windowed mode.
         boolean isFullScreen = true;
+
         Sys_GetWindowFullscreen(1, &isFullScreen);
         if(!isFullScreen)
         {
             SDL_WM_GrabInput(on? SDL_GRAB_OFF : SDL_GRAB_ON);
         }
     }
+#endif
 #endif
 }
 
@@ -1275,9 +1320,10 @@ void DD_ReadMouse(timespan_t ticLength)
     float           xpos, ypos;
     int             i;
 
-    if(!I_MousePresent())
+    if(!Mouse_IsPresent())
         return;
 
+#ifdef OLD_FILTER
     // Should we test the mouse input frequency?
     if(mouseFreq > 0)
     {
@@ -1292,49 +1338,40 @@ void DD_ReadMouse(timespan_t ticLength)
         else
         {
             lastTime = nowTime;
-            I_GetMouseState(&mouse);
+            Mouse_GetState(&mouse);
         }
     }
     else
+#endif
     {
         // Get the mouse state.
-        I_GetMouseState(&mouse);
+        Mouse_GetState(&mouse);
     }
 
     ev.device = IDEV_MOUSE;
     ev.type = E_AXIS;
-    ev.axis.type = EAXIS_RELATIVE;
-    xpos = mouse.x;
-    ypos = mouse.y;
 
-    if(ticLength > 0 && mouseFilter > 0)
-    {
-        // Filtering ensures that events are sent more evenly on each frame.
-        static float accumulation[2] = { 0, 0 };
-        xpos = I_FilterMouse(xpos, &accumulation[0], ticLength);
-        ypos = I_FilterMouse(ypos, &accumulation[1], ticLength);
-    }
+    xpos = mouse.axis[IMA_POINTER].x;
+    ypos = mouse.axis[IMA_POINTER].y;
 
-    // Mouse axis data may be modified if not in UI mode.
-/*
     if(uiMouseMode)
     {
-        if(mouseDisableX)
-            xpos = 0;
-        if(mouseDisableY)
-            ypos = 0;
-        if(!mouseInverseY)
-            ypos = -ypos;
-    }
-    */
-    if(uiMouseMode)
-    {
-        // Scale the movement depending on screen resolution.
-        xpos *= MAX_OF(1, theWindow->geometry.size.width / 800.0f);
-        ypos *= MAX_OF(1, theWindow->geometry.size.height / 600.0f);
+        ev.axis.type = EAXIS_ABSOLUTE;
     }
     else
     {
+        ev.axis.type = EAXIS_RELATIVE;
+
+#ifdef OLD_FILTER
+        if(ticLength > 0 && mouseFilter > 0)
+        {
+            // Filtering ensures that events are sent more evenly on each frame.
+            static float accumulation[2] = { 0, 0 };
+            xpos = I_FilterMouse(xpos, &accumulation[0], ticLength);
+            ypos = I_FilterMouse(ypos, &accumulation[1], ticLength);
+        }
+#endif
+
         ypos = -ypos;
     }
 
@@ -1377,11 +1414,13 @@ void DD_ReadMouse(timespan_t ticLength)
             if(mouse.buttonDowns[i]-- > 0)
             {
                 ev.toggle.state = ETOG_DOWN;
+                DEBUG_Message(("mb %i down\n", i));
                 DD_PostEvent(&ev);
             }
             if(mouse.buttonUps[i]-- > 0)
             {
                 ev.toggle.state = ETOG_UP;
+                DEBUG_Message(("mb %i up\n", i));
                 DD_PostEvent(&ev);
             }
         }
@@ -1399,10 +1438,10 @@ void DD_ReadJoystick(void)
     ddevent_t       ev;
     joystate_t      state;
 
-    if(!I_JoystickPresent())
+    if(!Joystick_IsPresent())
         return;
 
-    I_GetJoystickState(&state);
+    Joystick_GetState(&state);
 
     // Joystick buttons.
     ev.device = IDEV_JOY1;
@@ -1417,11 +1456,13 @@ void DD_ReadJoystick(void)
             {
                 ev.toggle.state = ETOG_DOWN;
                 DD_PostEvent(&ev);
+                DEBUG_VERBOSE2_Message(("Joy button %i down\n", i));
             }
             if(state.buttonUps[i]-- > 0)
             {
                 ev.toggle.state = ETOG_UP;
                 DD_PostEvent(&ev);
+                DEBUG_VERBOSE2_Message(("Joy button %i up\n", i));
             }
         }
     }
@@ -1442,7 +1483,7 @@ void DD_ReadJoystick(void)
             else
             {
                 // The new angle becomes active.
-                ev.angle.pos = (int) (state.hatAngle[0] / 45 + .5); // Round off correctly w/.5.
+                ev.angle.pos = ROUND(state.hatAngle[0] / 45);
             }
             DD_PostEvent(&ev);
 
@@ -2110,7 +2151,7 @@ void Rend_AllInputDeviceStateVisuals(void)
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, theWindow->geometry.size.width, theWindow->geometry.size.height, 0, -1, 1);
+    glOrtho(0, Window_Width(theWindow), Window_Height(theWindow), 0, -1, 1);
 
     if(devRendKeyState)
     {

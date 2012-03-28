@@ -238,7 +238,7 @@ void B_UpdateDeviceStateAssociations(void)
                 // No longer valid.
                 dev->keys[j].assoc.flags |= IDAF_EXPIRED;
                 dev->keys[j].assoc.flags &= ~IDAF_TRIGGERED; // Not any more.
-                DD_ClearKeyRepeaterForKey(j);
+                DD_ClearKeyRepeaterForKey(j, -1);
             }
         }
 
@@ -348,11 +348,7 @@ void B_ActivateContext(bcontext_t* bc, boolean doActivate)
 
     if(bc->flags & BCF_ACQUIRE_ALL)
     {
-        int i;
-        for(i = 0; i < NUM_INPUT_DEVICES; ++i)
-        {
-            I_DeviceReset(i);
-        }
+        I_ResetAllDevices();
     }
 }
 

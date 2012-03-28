@@ -25,6 +25,7 @@
  */
 
 #include <stdlib.h>
+#include <ctype.h>
 
 #include "de_base.h"
 #include "de_console.h"

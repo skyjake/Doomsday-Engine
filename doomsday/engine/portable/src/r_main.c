@@ -135,9 +135,9 @@ void R_Register(void)
 
 const char* R_ChooseFixedFont(void)
 {
-    if(theWindow->geometry.size.width < 300)
+    if(Window_Width(theWindow) < 300)
         return "console11";
-    if(theWindow->geometry.size.width > 768)
+    if(Window_Width(theWindow) > 768)
         return "console18";
     return "console14";
 }
@@ -202,14 +202,23 @@ static fontid_t loadSystemFont(const char* name)
     return Fonts_Id(font);
 }
 
+static void loadFontIfNeeded(const char* uri, fontid_t* fid)
+{
+    *fid = Fonts_ResolveUriCString(uri);
+    if(*fid == NOFONTID)
+    {
+        *fid = loadSystemFont(uri);
+    }
+}
+
 void R_LoadSystemFonts(void)
 {
-    if(isDedicated) return;
+    if(!Fonts_IsInitialized() || isDedicated) return;
 
-    fontFixed = loadSystemFont(R_ChooseFixedFont());
-    fontVariable[FS_NORMAL] = loadSystemFont(R_ChooseVariableFont(FS_NORMAL, theWindow->geometry.size.width, theWindow->geometry.size.height));
-    fontVariable[FS_BOLD]   = loadSystemFont(R_ChooseVariableFont(FS_BOLD,   theWindow->geometry.size.width, theWindow->geometry.size.height));
-    fontVariable[FS_LIGHT]  = loadSystemFont(R_ChooseVariableFont(FS_LIGHT,  theWindow->geometry.size.width, theWindow->geometry.size.height));
+    loadFontIfNeeded(R_ChooseFixedFont(), &fontFixed);
+    loadFontIfNeeded(R_ChooseVariableFont(FS_NORMAL, Window_Width(theWindow), Window_Height(theWindow)), &fontVariable[FS_NORMAL]);
+    loadFontIfNeeded(R_ChooseVariableFont(FS_BOLD,   Window_Width(theWindow), Window_Height(theWindow)), &fontVariable[FS_BOLD]);
+    loadFontIfNeeded(R_ChooseVariableFont(FS_LIGHT,  Window_Width(theWindow), Window_Height(theWindow)), &fontVariable[FS_LIGHT]);
 
     Con_SetFont(fontFixed);
 }
@@ -260,8 +269,8 @@ void R_SetupDefaultViewWindow(int consoleNum)
 
     vd->window.origin.x = vd->windowOld.origin.x = vd->windowTarget.origin.x = 0;
     vd->window.origin.y = vd->windowOld.origin.y = vd->windowTarget.origin.y = 0;
-    vd->window.size.width  = vd->windowOld.size.width  = vd->windowTarget.size.width  = theWindow->geometry.size.width;
-    vd->window.size.height = vd->windowOld.size.height = vd->windowTarget.size.height = theWindow->geometry.size.height;
+    vd->window.size.width  = vd->windowOld.size.width  = vd->windowTarget.size.width  = Window_Width(theWindow);
+    vd->window.size.height = vd->windowOld.size.height = vd->windowTarget.size.height = Window_Height(theWindow);
     vd->windowInter = 1;
 }
 
@@ -441,10 +450,10 @@ void R_UpdateViewPortGeometry(viewport_t* port, int col, int row)
     assert(port);
     {
     RectRaw* rect = &port->geometry;
-    const int x = col * theWindow->geometry.size.width  / gridCols;
-    const int y = row * theWindow->geometry.size.height / gridRows;
-    const int width  = (col+1) * theWindow->geometry.size.width  / gridCols - x;
-    const int height = (row+1) * theWindow->geometry.size.height / gridRows - y;
+    const int x = col * Window_Width(theWindow)  / gridCols;
+    const int y = row * Window_Height(theWindow) / gridRows;
+    const int width  = (col+1) * Window_Width(theWindow)  / gridCols - x;
+    const int height = (row+1) * Window_Height(theWindow) / gridRows - y;
     ddhook_viewport_reshape_t p;
     boolean doReshape = false;
 
@@ -1057,8 +1066,8 @@ void R_UseViewPort(viewport_t* vp)
     if(!vp)
     {
         currentViewport = NULL;
-        glViewport(0, FLIP(0 + theWindow->geometry.size.height - 1),
-            theWindow->geometry.size.width, theWindow->geometry.size.height);
+        glViewport(0, FLIP(0 + Window_Height(theWindow) - 1),
+            Window_Width(theWindow), Window_Height(theWindow));
     }
     else
     {

@@ -37,6 +37,8 @@
 #include <limits.h>
 #include <SDL.h>
 
+#include <de/c_wrapper.h>
+
 #ifdef UNIX
 #  include "library.h"
 #endif
@@ -50,6 +52,7 @@
 #include "de_network.h"
 #include "de_misc.h"
 
+#include "displaymode.h"
 #include "fs_util.h"
 #include "dd_uinit.h"
 
@@ -68,8 +71,6 @@ typedef Library* PluginHandle;
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-uint windowIDX;   // Main window.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -216,7 +217,7 @@ static boolean unloadAllPlugins(application_t* app)
 static int initTimingSystem(void)
 {
     // For timing, we use SDL under *nix, so get it initialized. SDL_Init() returns zero on success.
-    return !SDL_Init(SDL_INIT_TIMER);
+    return !SDL_Init(SDL_INIT_TIMER | SDL_INIT_NOPARACHUTE);
 }
 
 static int initPluginSystem(void)
@@ -337,96 +338,73 @@ static char* buildCommandLineString(int argc, char** argv)
     return cmdLine;
 }
 
+/*
 static int createMainWindow(void)
 {
     Point2Raw origin = { 0, 0 };
     Size2Raw size = { 640, 480 };
     char buf[256];
     DD_ComposeMainWindowTitle(buf);
-    windowIDX = Sys_CreateWindow(&app, 0, &origin, &size, 32, 0,
-                                 isDedicated? WT_CONSOLE : WT_NORMAL, buf, 0);
-    return windowIDX != 0;
+    mainWindowIdx = Window_Create(&app, &origin, &size, 32, 0,
+                                  isDedicated? WT_CONSOLE : WT_NORMAL, buf, 0);
+    return mainWindowIdx != 0;
 }
+*/
 
-int main(int argc, char** argv)
+boolean DD_Unix_Init(int argc, char** argv)
 {
-    boolean doShutdown = true;
-    int exitCode = 0;
+    boolean failed = true;
+    //int exitCode = 0;
 
     memset(&app, 0, sizeof(app));
 
+#if 0
     // SDL lock key behavior: send up event when key released.
     setenv("SDL_DISABLE_LOCK_KEYS", "1", true);
+#endif
 
-    /*if(!initApplication(&app))
+    {       
+    // Prepare the command line arguments.
+    char* cmdLine = buildCommandLineString(argc, argv);
+    DD_InitCommandLine(cmdLine);
+    M_Free(cmdLine);
+
+    // First order of business: are we running in dedicated mode?
+    isDedicated = ArgCheck("-dedicated");
+    novideo = ArgCheck("-novideo") || isDedicated;
+
+    Library_Init();
+
+    // Determine our basedir and other global paths.
+    determineGlobalPaths(&app);
+
+    if(!DD_EarlyInit())
     {
-        DD_ErrorBox(true, "Failed to initialize application.\n");
+        Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, "Error during early init.", 0);
     }
-    else*/
+    else if(!initTimingSystem())
     {
-        // Prepare the command line arguments.
-        char* cmdLine = buildCommandLineString(argc, argv);
-        DD_InitCommandLine(cmdLine);
-        M_Free(cmdLine);
-
-        // First order of business: are we running in dedicated mode?
-        isDedicated = ArgCheck("-dedicated");
-        novideo = ArgCheck("-novideo") || isDedicated;
-
-        Library_Init();
-
-        // Determine our basedir and other global paths.
-        determineGlobalPaths(&app);
-
-        if(!DD_EarlyInit())
-        {
-            DD_ErrorBox(true, "Error during early init.");
-        }
-        else if(!initTimingSystem())
-        {
-            DD_ErrorBox(true, "Error initalizing timing system.");
-        }
-        else if(!initPluginSystem())
-        {
-            DD_ErrorBox(true, "Error initializing plugin system.");
-        }
-        else if(!initDGL())
-        {
-            DD_ErrorBox(true, "Error initializing DGL.");
-        }
-        else if(!loadAllPlugins(&app))
-        {
-            DD_ErrorBox(true, "Error loading plugins.");
-        }
-        else if(!createMainWindow())
-        {
-            DD_ErrorBox(true, "Error creating main window.");
-        }
-        else if(!Sys_GLInitialize())
-        {
-            DD_ErrorBox(true, "Error initializing OpenGL.");
-        }
-        else
-        {   // All initialization complete.
-            doShutdown = false;
-
-            { char buf[256];
-            DD_ComposeMainWindowTitle(buf);
-            Sys_SetWindowTitle(windowIDX, buf);
-            }
-
-           // \todo Set foreground window and focus.
-        }
+        Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, "Error initalizing timing system.", 0);
     }
-
-    if(!doShutdown)
-    {   // Fire up the engine. The game loop will also act as the message pump.
-        exitCode = DD_Main();
+    else if(!initPluginSystem())
+    {
+        Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, "Error initializing plugin system.", 0);
     }
-    DD_Shutdown();
+    else if(!initDGL())
+    {
+        Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, "Error initializing DGL.", 0);
+    }
+    else if(!loadAllPlugins(&app))
+    {
+        Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, "Error loading plugins.", 0);
+    }
+    else
+    {
+        // Everything okay so far.
+        failed = false;
+    }}
 
-    // Bye!
-    return exitCode;
+    return !failed;
 }
 
 /**
@@ -440,4 +418,5 @@ void DD_Shutdown(void)
     SDL_Quit();
     unloadAllPlugins(&app);
     Library_Shutdown();
+    DisplayMode_Shutdown();
 }

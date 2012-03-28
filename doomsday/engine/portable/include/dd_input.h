@@ -29,6 +29,10 @@
 #ifndef LIBDENG_CORE_INPUT_H
 #define LIBDENG_CORE_INPUT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define NUMKKEYS            256
 
 #if _DEBUG
@@ -82,6 +86,7 @@ typedef struct ddevent_s {
         struct {
             int             id;         // Button/key index number
             ddevent_togglestate_t state;// State of the toggle
+            char            text[8];    // For characters, latin1-encoded text to insert (or empty).
         } toggle;
         struct {
             int             id;         // Axis index number
@@ -189,12 +194,6 @@ void        DD_StartInput(void);
 void        DD_StopInput(void);
 boolean     DD_IgnoreInput(boolean ignore);
 
-#ifdef WIN32
-void        DD_Win32_SuspendMessagePump(boolean suspend);
-#else
-#  define   DD_Win32_SuspendMessagePump(s)  // nop
-#endif
-
 void        DD_ReadKeyboard(void);
 void        DD_ReadMouse(timespan_t ticLength);
 void        DD_ReadJoystick(void);
@@ -204,7 +203,7 @@ void        DD_ProcessEvents(timespan_t ticLength);
 void        DD_ProcessSharpEvents(timespan_t ticLength);
 void        DD_ClearEvents(void);
 void        DD_ClearKeyRepeaters(void);
-void        DD_ClearKeyRepeaterForKey(int key);
+void        DD_ClearKeyRepeaterForKey(int ddkey, int native);
 byte        DD_ModKey(byte key);
 void        DD_ConvertEvent(const ddevent_t* ddEvent, event_t* ev);
 
@@ -212,6 +211,7 @@ void        I_InitVirtualInputDevices(void);
 void        I_ShutdownInputDevices(void);
 void        I_ClearDeviceContextAssociations(void);
 void        I_DeviceReset(uint ident);
+void        I_ResetAllDevices(void);
 
 inputdev_t* I_GetDevice(uint ident, boolean ifactive);
 inputdev_t* I_GetDeviceByName(const char* name, boolean ifactive);
@@ -291,6 +291,10 @@ void        I_TrackInput(ddevent_t *ev, timespan_t ticLength);
 void Rend_AllInputDeviceStateVisuals(void);
 #else
 #  define Rend_AllInputDeviceStateVisuals()
+#endif
+
+#ifdef __cplusplus
+} // extern "C"
 #endif
 
 #endif /* LIBDENG_CORE_INPUT_H */

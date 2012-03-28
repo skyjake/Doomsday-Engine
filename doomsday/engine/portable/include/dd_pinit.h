@@ -31,13 +31,19 @@
 
 #include "dd_share.h"
 #include "dd_api.h"
+#include <de/c_wrapper.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+extern uint mainWindowIdx;
 
 // Maximum allowed number of plugins.
 #define MAX_PLUGS   32
 
 void DD_ShutdownAll(void);
 int DD_CheckArg(char* tag, const char** value);
-void DD_ErrorBox(boolean error, char* format, ...) PRINTF_F(2,3);
 void DD_ComposeMainWindowTitle(char* title);
 void DD_ConsoleInit(void);
 void DD_InitAPI(void);
@@ -45,5 +51,9 @@ void DD_InitCommandLine(const char* cmdLine);
 
 extern game_import_t gi;
 extern game_export_t gx;
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_PORTABLE_INIT_H */

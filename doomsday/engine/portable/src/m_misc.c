@@ -984,6 +984,21 @@ float M_ApproxDistance3f(float dx, float dy, float dz)
 
 int M_ScreenShot(const char* name, int bits)
 {
+    ddstring_t fullName;
+    boolean result;
+
+    Str_Init(&fullName);
+    Str_Set(&fullName, name);
+    if(!F_FindFileExtension(name))
+    {
+        Str_Append(&fullName, ".png"); // Default format.
+    }
+    F_ToNativeSlashes(&fullName, &fullName);
+    result = Window_GrabToFile(Window_Main(), Str_Text(&fullName));
+    Str_Free(&fullName);
+    return result;
+
+    /*
     byte* screen = (byte*) GL_GrabScreen();
     ddstring_t fullName;
     FILE* file;
@@ -1010,14 +1025,15 @@ int M_ScreenShot(const char* name, int bits)
 
     bits = (bits == 24? 24 : 16);
     if(bits == 16)
-        TGA_Save16_rgb888(file, theWindow->geometry.size.width, theWindow->geometry.size.height, screen);
+        TGA_Save16_rgb888(file, Window_Width(theWindow), Window_Height(theWindow), screen);
     else
-        TGA_Save24_rgb888(file, theWindow->geometry.size.width, theWindow->geometry.size.height, screen);
+        TGA_Save24_rgb888(file, Window_Width(theWindow), Window_Height(theWindow), screen);
 
     fclose(file);
     Str_Free(&fullName);
     free(screen);
     return true;
+    */
 }
 
 /**

@@ -66,8 +66,8 @@ int             Hu_MsgResponder(event_t* ev);
 void            Hu_MsgDrawer(void);
 
 boolean         Hu_IsMessageActive(void);
+boolean         Hu_IsMessageActiveWithCallback(msgfunc_t callback);
 
-void            Hu_MsgStart(msgtype_t type, const char* msg,
-                            msgfunc_t callback, void* context);
+void            Hu_MsgStart(msgtype_t type, const char* msg, msgfunc_t callback, void* context);
 
 #endif

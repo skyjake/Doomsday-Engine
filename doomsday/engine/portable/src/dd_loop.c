@@ -4,8 +4,8 @@
  *
  * The engine's main loop.
  *
- * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright Â© 2003-2012 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ * @authors Copyright Â© 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -85,6 +85,8 @@ static int timeDeltasIndex = 0;
 
 static float realFrameTimePos = 0;
 
+static boolean waitingForDraw = false;
+
 static void startFrame(void);
 static void endFrame(void);
 static void runTics(void);
@@ -104,50 +106,56 @@ void DD_SetGameLoopExitCode(int code)
     gameLoopExitCode = code;
 }
 
-int DD_GameLoop(void)
+int DD_GameLoopExitCode(void)
 {
-    // Limit the frame rate to 35 when running in dedicated mode.
-    if(isDedicated)
-    {
-        maxFrameRate = 35;
-    }
-
-    while(!Sys_IsShuttingDown())
-    {
-        // Frame syncronous I/O operations.
-        startFrame();
-
-        // Run at least one tic. If no tics are available (maxfps interval
-        // not reached yet), the function blocks.
-        runTics();
-
-        // We may have received a Quit message from the windowing system
-        // during events/tics processing.
-        if(Sys_IsShuttingDown())
-            continue;
-
-        // Update clients.
-        Sv_TransmitFrame();
-
-        // Finish the refresh frame.
-        endFrame();
-
-        // Draw the frame.
-        drawAndUpdate();
-
-        // After the first frame, start timedemo.
-        DD_CheckTimeDemo();
-    }
-
     return gameLoopExitCode;
 }
 
-/**
- * Drawing anything outside this routine is frowned upon.
- * Seriously frowned! (Don't do it.)
- */
-static void drawAndUpdate(void)
+int DD_GameLoop(void)
 {
+    // Start the deng2 event loop.
+    return LegacyCore_RunEventLoop(de2LegacyCore);
+}
+
+void DD_GameLoopCallback(void)
+{
+    if(!novideo && waitingForDraw) return; // Only after the frame has been drawn, please.
+
+    if(Sys_IsShuttingDown())
+        return; // Shouldn't run this while shutting down.
+
+    // Frame syncronous I/O operations.
+    startFrame();
+
+    // Run at least one (fractional) tic.
+    runTics();
+
+    // We may have received a Quit message from the windowing system
+    // during events/tics processing.
+    if(Sys_IsShuttingDown())
+        return;
+
+    // Update clients.
+    Sv_TransmitFrame();
+
+    // Finish the refresh frame.
+    endFrame();
+
+    // Draw the frame.
+    Window_Draw(Window_Main());
+    waitingForDraw = true;
+
+    // After the first frame, start timedemo.
+    DD_CheckTimeDemo();
+}
+
+void DD_GameLoopDrawer(void)
+{
+    if(Sys_IsShuttingDown()) return;
+
+    //debugPrint("loop drawer");
+    waitingForDraw = false;
+
     if(novideo)
     {
         // Just wait to reach the maximum FPS.
@@ -200,7 +208,7 @@ static void drawAndUpdate(void)
 
             // Draw any full window game graphics.
             if(DD_GameLoaded() && gx.DrawWindow)
-                gx.DrawWindow(&theWindow->geometry.size);
+                gx.DrawWindow(Window_Size(theWindow));
         }
     }
 
@@ -485,6 +493,12 @@ void DD_WaitForOptimalUpdateTime(void)
     // optimalDelta is integer on purpose: we're measuring time at a 1 ms
     // accuracy, so we can't use fractions of a millisecond.
     const uint optimalDelta = (maxFrameRate > 0? 1000/maxFrameRate : 1);
+
+    // If vsync is on, this is unnecessary.
+    /// @todo check the rend-vsync cvar
+#if defined(MACOSX) || defined(WIN32)
+    return;
+#endif
 
     if(Sys_IsShuttingDown()) return; // No need for finesse.
 

@@ -35,6 +35,7 @@
 #include "thinker.h"
 #include "m_nodepile.h"
 #include "def_data.h"
+#include "textures.h"
 
 struct texture_s;
 struct font_s;

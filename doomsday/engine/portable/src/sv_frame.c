@@ -834,8 +834,8 @@ size_t Sv_GetMaxFrameSize(int playerNumber)
     size_t              size = MINIMUM_FRAME_SIZE + FRAME_SIZE_FACTOR * clients[playerNumber].bandwidthRating;
 
     // What about the communications medium?
-    if(size > maxDatagramSize)
-        size = maxDatagramSize;
+    if(size > PROTOCOL_MAX_DATAGRAM_SIZE)
+        size = PROTOCOL_MAX_DATAGRAM_SIZE;
 
     return size;
 }

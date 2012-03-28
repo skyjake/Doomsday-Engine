@@ -23,10 +23,13 @@
  */
 
 /**
- * sys_console.c: Std input handling - Win32 specific
+ * @todo  This code is on its way out... It will be replaced with a Qt based
+ * console GUI window. On Windows there will be no true text-mode console.
  */
 
-// HEADER FILES ------------------------------------------------------------
+/**
+ * sys_console.c: Std input handling - Win32 specific
+ */
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -34,24 +37,17 @@
 #include "de_platform.h"
 #include "de_console.h"
 #include "de_misc.h"
+#include "consolewindow.h"
 
-// MACROS ------------------------------------------------------------------
+#define WINDOWEDSTYLE (WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | \
+                       WS_CLIPCHILDREN | WS_CLIPSIBLINGS)
+#define FULLSCREENSTYLE (WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS)
+
+#define LINELEN         80
+#define TEXT_ATTRIB     (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE)
+#define CMDLINE_ATTRIB  (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY)
 
 #define MAXRECS             128
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean conInputInited = false;
 
@@ -62,7 +58,356 @@ static byte *vKeyDown = NULL; // Used for tracking the state of the vKeys.
 static INPUT_RECORD *inputBuf = NULL;
 static DWORD inputBufsize = 0;
 
-// CODE --------------------------------------------------------------------
+static void Sys_ConInputInit(void);
+
+static void setCmdLineCursor(consolewindow_t *win, int x, int y)
+{
+    COORD pos;
+
+    pos.X = x;
+    pos.Y = y;
+    SetConsoleCursorPosition(win->hcScreen, pos);
+}
+
+static void scrollLine(consolewindow_t *win)
+{
+    SMALL_RECT  src;
+    COORD       dest;
+    CHAR_INFO   fill;
+
+    src.Left = 0;
+    src.Right = win->cbInfo.dwSize.X - 1;
+    src.Top = 1;
+    src.Bottom = win->cbInfo.dwSize.Y - 2;
+    dest.X = 0;
+    dest.Y = 0;
+    fill.Attributes = TEXT_ATTRIB;
+#ifdef UNICODE
+    fill.Char.UnicodeChar = L' ';
+#else
+    fill.Char.AsciiChar = ' ';
+#endif
+
+    ScrollConsoleScreenBuffer(win->hcScreen, &src, NULL, dest, &fill);
+}
+
+/**
+ * @param flags  @see consolePrintFlags
+ */
+static void setAttrib(consolewindow_t* win, int flags)
+{
+    win->attrib = 0;
+    if(flags & CPF_WHITE)
+        win->attrib = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
+    if(flags & CPF_BLUE)
+        win->attrib = FOREGROUND_BLUE;
+    if(flags & CPF_GREEN)
+        win->attrib = FOREGROUND_GREEN;
+    if(flags & CPF_CYAN)
+        win->attrib = FOREGROUND_BLUE | FOREGROUND_GREEN;
+    if(flags & CPF_RED)
+        win->attrib = FOREGROUND_RED;
+    if(flags & CPF_MAGENTA)
+        win->attrib = FOREGROUND_RED | FOREGROUND_BLUE;
+    if(flags & CPF_YELLOW)
+        win->attrib = FOREGROUND_RED | FOREGROUND_GREEN;
+    if(flags & CPF_LIGHT)
+        win->attrib |= FOREGROUND_INTENSITY;
+    if((flags & CPF_WHITE) != CPF_WHITE)
+        win->attrib |= FOREGROUND_INTENSITY;
+
+    SetConsoleTextAttribute(win->hcScreen, win->attrib);
+}
+
+/**
+ * Writes the text at the (cx,cy).
+ */
+static void writeText(consolewindow_t *win, CHAR_INFO *line, int len)
+{
+    COORD       linesize;
+    COORD       from = {0, 0};
+    SMALL_RECT  rect;
+
+    linesize.X = len;
+    linesize.Y = 1;
+    rect.Left = win->cx;
+    rect.Right = win->cx + len;
+    rect.Top = win->cy;
+    rect.Bottom = win->cy;
+
+    WriteConsoleOutput(win->hcScreen, line, linesize, from, &rect);
+}
+
+void Sys_ConPrint(uint idx, const char* text, int flags)
+{
+    consolewindow_t* win;
+    unsigned int i;
+    int linestart, bpos;
+    const char* ptr = text;
+    CHAR_INFO line[LINELEN];
+    size_t len;
+    char ch;
+#ifdef UNICODE
+    wchar_t wch;
+#endif
+
+    win = Window_Console(Window_ByIndex(idx));
+    if(!win || !text) return;
+
+    if(win->needNewLine)
+    {   // Need to make some room.
+        win->cx = 0;
+        win->cy++;
+        if(win->cy == win->cbInfo.dwSize.Y - 1)
+        {
+            win->cy--;
+            scrollLine(win);
+        }
+        win->needNewLine = false;
+    }
+
+    bpos = linestart = win->cx;
+    setAttrib(win, flags);
+    len = strlen(text);
+    for(i = 0; i < len; i++, ptr++)
+    {
+        ch = *ptr;
+        if(ch != '\n' && bpos < LINELEN)
+        {
+            line[bpos].Attributes = win->attrib;
+#ifdef UNICODE
+            mbtowc(&wch, &ch, MB_CUR_MAX);
+            line[bpos].Char.UnicodeChar = wch;
+#else
+            line[bpos].Char.AsciiChar = ch;
+#endif
+            bpos++;
+        }
+
+        // Time for newline?
+        if(ch == '\n' || bpos == LINELEN)
+        {
+            writeText(win, line + linestart, bpos - linestart);
+            win->cx += bpos - linestart;
+            bpos = 0;
+            linestart = 0;
+            if(i < len - 1)
+            {   // Not the last character.
+                win->needNewLine = false;
+                win->cx = 0;
+                win->cy++;
+                if(win->cy == win->cbInfo.dwSize.Y - 1)
+                {
+                    scrollLine(win);
+                    win->cy--;
+                }
+            }
+            else
+            {
+                win->needNewLine = true;
+            }
+        }
+    }
+
+    // Something left in the buffer?
+    if(bpos - linestart)
+    {
+        writeText(win, line + linestart, bpos - linestart);
+        win->cx += bpos - linestart;
+    }
+}
+
+static void setConWindowCmdLine(consolewindow_t* win, const char* text, uint cursorPos, int flags)
+{
+    CHAR_INFO line[LINELEN], *ch;
+    COORD linesize = {LINELEN, 1};
+    COORD from = {0, 0};
+    SMALL_RECT rect;
+    uint i;
+#ifdef UNICODE
+    wchar_t wch;
+#endif
+
+    // Do we need to change the look of the cursor?
+    if((flags & CLF_CURSOR_LARGE) !=
+        (win->cmdline.flags & CLF_CURSOR_LARGE))
+    {
+        CONSOLE_CURSOR_INFO curInfo;
+
+        curInfo.bVisible = TRUE;
+        curInfo.dwSize = ((flags & CLF_CURSOR_LARGE)? 100 : 10);
+
+        SetConsoleCursorInfo(win->hcScreen, &curInfo);
+        win->cmdline.flags ^= CLF_CURSOR_LARGE;
+    }
+
+#ifdef UNICODE
+    line[0].Char.UnicodeChar = L'>';
+#else
+    line[0].Char.AsciiChar = '>';
+#endif
+    line[0].Attributes = CMDLINE_ATTRIB;
+    for(i = 0, ch = line + 1; i < LINELEN - 1; ++i, ch++)
+    {
+#ifdef UNICODE
+        if(i < strlen(text))
+            mbtowc(&wch, &text[i], MB_CUR_MAX);
+        else
+            wch = L' ';
+        ch->Char.UnicodeChar = wch;
+#else
+        ch->Char.AsciiChar = (i < strlen(text)? text[i] : ' ');
+#endif
+        // Gray color.
+        ch->Attributes = CMDLINE_ATTRIB;
+    }
+
+    rect.Left = 0;
+    rect.Right = LINELEN - 1;
+    rect.Top = win->cbInfo.dwSize.Y - 1;
+    rect.Bottom = win->cbInfo.dwSize.Y - 1;
+    WriteConsoleOutput(win->hcScreen, line, linesize, from, &rect);
+    setCmdLineCursor(win, cursorPos, win->cbInfo.dwSize.Y - 1);
+}
+
+void Sys_SetConWindowCmdLine(uint idx, const char* text, uint cursorPos, int flags)
+{
+    consolewindow_t* win = Window_Console(Window_ByIndex(idx));
+
+    if(!win) return;
+    setConWindowCmdLine(win, text, cursorPos, flags);
+}
+
+void ConsoleWindow_SetTitle(const Window *window, const char* title)
+{
+    const consolewindow_t* win = Window_ConsoleConst(window);
+    if(win)
+    {
+        SetWindowText(win->hWnd, WIN_STRING(title));
+    }
+}
+
+static void Sys_ConInputShutdown(void)
+{
+    if(!conInputInited)
+        return;
+
+    if(inputBuf)
+    {
+        M_Free(inputBuf);
+        inputBuf = NULL;
+        inputBufsize = 0;
+    }
+
+    M_Free(keymap);
+    keymap = NULL;
+    M_Free(vKeyDown);
+    vKeyDown = NULL;
+
+    conInputInited = false;
+}
+
+static void consoleShutdown()
+{
+    // We no longer need the input handler.
+    Sys_ConInputShutdown();
+
+    // Detach the console for this process.
+    FreeConsole();
+}
+
+void Sys_ConShutdown(Window *window)
+{
+    if(window == Window_Main())
+    {
+        consoleShutdown();
+    }
+}
+
+
+Window* Sys_ConInit(const char* title)
+{
+    consolewindow_t* win;
+    //uint i;
+    boolean ok = true;
+    HANDLE hcScreen;
+
+#if 0
+    // We only support one dedicated console.
+    for(i = 0; i < numWindows; ++i)
+    {
+        ddwindow_t* other = windows[i];
+
+        if(other && other->type == WT_CONSOLE)
+        {
+            Con_Message("createWindow: maxConsoles limit reached.\n");
+            return NULL;
+        }
+    }
+
+    if(parentIdx)
+    {
+        pWin = getWindow(parentIdx - 1);
+        if(pWin) phWnd = pWin->hWnd;
+    }
+
+    win = (ddwindow_t*) calloc(1, sizeof *win);
+    if(!win) return NULL;
+#endif
+
+    if(!AllocConsole())
+    {
+        Con_Error("createWindow: Couldn't allocate a console! error %i\n", GetLastError());
+    }
+
+    win = Window_Console(Window_Main());
+    win->hWnd = GetConsoleWindow();
+
+    if(win->hWnd)
+    {
+        ConsoleWindow_SetTitle(Window_Main(), title);
+
+        hcScreen = GetStdHandle(STD_OUTPUT_HANDLE);
+        if(hcScreen == INVALID_HANDLE_VALUE)
+            Con_Error("createWindow: Bad output handle\n");
+
+        win->hcScreen = hcScreen;
+        GetConsoleScreenBufferInfo(hcScreen, &win->cbInfo);
+
+        // This is the location of the print cursor.
+        win->cx = 0;
+        win->cy = win->cbInfo.dwSize.Y - 2;
+
+        setConWindowCmdLine(win, "", 1, 0);
+
+        // We'll be needing the console input handler.
+        Sys_ConInputInit();
+    }
+    else
+    {
+        win->hWnd = NULL;
+        ok = false;
+        consoleShutdown(win);
+        return 0;
+    }
+
+    return Window_Main();
+
+    /*
+    setDDWindow(win, origin->x, origin->y, size->width, size->height, bpp, flags,
+                DDSW_NOVISIBLE | DDSW_NOCENTER | DDSW_NOFULLSCREEN);
+
+    // Ensure new windows are hidden on creation.
+    ShowWindow(win->hWnd, SW_HIDE);
+    if(!ok)
+    {   // Damn, something went wrong... clean up.
+        destroyWindow(win);
+        return NULL;
+    }
+
+    return win;
+*/
+}
 
 static void initVKeyToDDKeyTlat(void)
 {
@@ -200,7 +545,7 @@ static byte vKeyToDDKey(byte vkey)
     return keymap[vkey];
 }
 
-void Sys_ConInputInit(void)
+static void Sys_ConInputInit(void)
 {
     if(conInputInited)
         return; // Already active.
@@ -223,26 +568,6 @@ void Sys_ConInputInit(void)
         Con_Error("Sys_ConInit: Bad input handle\n");
 
     conInputInited = true;
-}
-
-void Sys_ConInputShutdown(void)
-{
-    if(!conInputInited)
-        return;
-
-    if(inputBuf)
-    {
-        M_Free(inputBuf);
-        inputBuf = NULL;
-        inputBufsize = 0;
-    }
-
-    M_Free(keymap);
-    keymap = NULL;
-    M_Free(vKeyDown);
-    vKeyDown = NULL;
-
-    conInputInited = false;
 }
 
 /**
@@ -294,14 +619,28 @@ size_t I_GetConsoleKeyEvents(keyevent_t *evbuf, size_t bufsize)
             if((!vKeyDown[key->wVirtualKeyCode] && key->bKeyDown) ||
                (vKeyDown[key->wVirtualKeyCode] && !key->bKeyDown))
             {
+                evbuf[n].type = (key->bKeyDown? IKE_DOWN : IKE_UP);
+
                 // Use the table to translate the vKey to a DDKEY.
                 evbuf[n].ddkey = vKeyToDDKey(key->wVirtualKeyCode);
-                evbuf[n].event =
-                    (key->bKeyDown? IKE_KEY_DOWN : IKE_KEY_UP);
+                evbuf[n].native = 0;
+
+                memset(evbuf[n].text, 0, sizeof(evbuf[n].text));
+#ifdef UNICODE
+                wctomb(evbuf[n].text, key->uChar.UnicodeChar);
+#else
+                evbuf[n].text[0] = key->uChar.AsciiChar;
+#endif
+/*
+                if(evbuf[n].ddkey >= ' ' && evbuf[n].ddkey < 128)
+                {
+                    // Printable ASCII.
+                    evbuf[n].text[0] = evbuf[n].ddkey;
+                }
+                /// @todo Shift? Other modifiers?*/
 
                 // Record the new state of this vKey.
-                vKeyDown[key->wVirtualKeyCode] =
-                    (key->bKeyDown? true : false);
+                vKeyDown[key->wVirtualKeyCode] = (key->bKeyDown? true : false);
                 n++;
             }
         }

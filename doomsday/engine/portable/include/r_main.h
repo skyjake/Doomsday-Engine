@@ -102,6 +102,8 @@ void R_RenderPlayerViewBorder(void);
 /// @return  Current viewport else @c NULL.
 const viewport_t* R_CurrentViewPort(void);
 
+void R_UseViewPort(viewport_t* vp);
+
 const viewdata_t* R_ViewData(int consoleNum);
 
 void R_UpdateViewer(int consoleNum);

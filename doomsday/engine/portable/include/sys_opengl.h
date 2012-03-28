@@ -46,21 +46,27 @@
 #ifdef UNIX
 #  define GL_GLEXT_PROTOTYPES
 #  ifdef MACOSX
-#    include <SDL.h>
-#    include <SDL_opengl.h>
+#    include <GL/gl.h>
+#    include <GL/glu.h>
 #    include <OpenGL/OpenGL.h>
 #  else
 #    include <SDL.h>
-#    include <SDL_opengl.h>
+#    include <GL/gl.h>
+#    include <GL/glext.h>
+#    include <GL/glu.h>
 #  endif
 #  define GL_CALL
+#endif
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 #include "gl_deferredapi.h"
 
 #include <string.h>
 
-#include "sys_window.h"
+#include "window.h"
 
 /**
  * Configure available features
@@ -183,5 +189,9 @@ void Sys_GLPrintExtensions(void);
 boolean Sys_GLQueryExtension(const char* name, const GLubyte* extensions);
 
 boolean Sys_GLCheckError(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* LIBDENG_SYSTEM_OPENGL_H */

@@ -301,7 +301,7 @@ boolean I_InitMouse(void)
     if(ArgCheck("-nomouse") || novideo)
         return false;
 
-    hWnd = Sys_GetWindowHandle(windowIDX);
+    hWnd = Sys_GetWindowHandle(mainWindowIdx);
     if(!hWnd)
     {
         Con_Error("I_InitMouse: Main window not available, cannot init mouse.");
@@ -377,7 +377,7 @@ boolean I_InitJoystick(void)
     if(ArgCheck("-nojoy"))
         return false;
 
-    hWnd = Sys_GetWindowHandle(windowIDX);
+    hWnd = Sys_GetWindowHandle(mainWindowIdx);
     if(!hWnd)
     {
         Con_Error("I_InitJoystick: Main window not available, cannot init joystick.");
@@ -492,7 +492,7 @@ static boolean I_InitKeyboard(void)
     HWND            hWnd;
     HRESULT         hr;
 
-    hWnd = Sys_GetWindowHandle(windowIDX);
+    hWnd = Sys_GetWindowHandle(mainWindowIdx);
     if(!hWnd)
     {
         Con_Error("I_Init: Main window not available, cannot init keyboard.");

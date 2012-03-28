@@ -35,6 +35,10 @@
 #ifndef LIBDENG_SYSTEM_UTILS_DYNAMIC_LIBRARY_H
 #define LIBDENG_SYSTEM_UTILS_DYNAMIC_LIBRARY_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct library_s; // The library instance (opaque).
 typedef struct library_s Library;
 
@@ -88,5 +92,9 @@ void* Library_Symbol(Library* lib, const char* symbolName);
  * Returns the latest error message.
  */
 const char* Library_LastError(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* LIBDENG_SYSTEM_UTILS_DYNAMIC_LIBRARY_H */

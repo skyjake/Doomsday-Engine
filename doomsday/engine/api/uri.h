@@ -11,7 +11,6 @@
  * @todo Derive from Qt::QUrl
  *
  * @authors Daniel Swanson <danij@dengine.net>
- * @authors Copyright (C) 1992-2000 Trolltech AS.  All rights reserved.
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

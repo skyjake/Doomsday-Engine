@@ -40,6 +40,10 @@
 #include "dd_types.h"
 #include "dd_api.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef WIN32
 // Disable annoying MSVC warnings.
 // 4761: integral size mismatch in argument
@@ -127,5 +131,9 @@ extern float    texGamma;
 // tab_tables.c
 extern fixed_t  finesine[5 * FINEANGLES / 4];
 extern fixed_t *fineCosine;
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

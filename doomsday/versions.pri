@@ -24,6 +24,7 @@ defineTest(isStableRelease) {
 }
 
 DENG_VERSION            = $$findVersion(engine/portable/include/dd_version.h)
+DENG2_VERSION           = 2.0.0 # not yet defined in a header
 
 JDOOM_VERSION           = $$findVersion(plugins/jdoom/include/version.h)
 JHERETIC_VERSION        = $$findVersion(plugins/jheretic/include/version.h)

@@ -59,7 +59,6 @@
 #include "m_misc.h"
 #include "m_args.h"
 #include "texture.h"
-#include "huffman.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -102,7 +101,7 @@ filename_t ddRuntimePath, ddBinPath;
 int isDedicated = false;
 
 int verbose = 0; // For debug messages (-verbose).
-FILE* outFile; // Output file for console messages.
+//FILE* outFile; // Output file for console messages.
 
 // List of file names, whitespace seperating (written to .cfg).
 char* gameStartupFiles = "";
@@ -460,8 +459,8 @@ void DD_StartTitle(void)
     Str_Init(&setupCmds);
 
     // Configure the predefined fonts (all normal, variable width).
-    fontName = R_ChooseVariableFont(FS_NORMAL, theWindow->geometry.size.width,
-                                               theWindow->geometry.size.height);
+    fontName = R_ChooseVariableFont(FS_NORMAL, Window_Width(theWindow),
+                                               Window_Height(theWindow));
     for(i = 1; i <= FIPAGE_NUM_PREDEFINED_FONTS; ++i)
     {
         Str_Appendf(&setupCmds, "prefont %i "FN_SYSTEM_NAME":%s\n", i, fontName);
@@ -1194,7 +1193,7 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
     Library_ReleaseGames();
 
     DD_ComposeMainWindowTitle(buf);
-    Sys_SetWindowTitle(windowIDX, buf);
+    Window_SetTitle(theWindow, buf);
 
     if(!DD_IsShuttingDown())
     {
@@ -1213,7 +1212,7 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
     theGame = game;
 
     DD_ComposeMainWindowTitle(buf);
-    Sys_SetWindowTitle(windowIDX, buf);
+    Window_SetTitle(theWindow, buf);
 
     /**
      * If we aren't shutting down then we are either loading a game or switching
@@ -1374,10 +1373,7 @@ int DD_EarlyInit(void)
     verbose = ArgExists("-verbose");
 
     // The memory zone must be online before the console module.
-    if(!Z_Init())
-    {
-        DD_ErrorBox(true, "Error initializing memory zone.");
-    }
+    Z_Init();
 
     // Bring the console online as soon as we can.
     DD_ConsoleInit();
@@ -1437,15 +1433,49 @@ static int DD_LocateAllGameResourcesWorker(void* paramaters)
 }
 
 /**
- * Engine initialization. When complete, starts the "game loop".
+ * This gets called when the main window is ready for GL init. The application
+ * event loop is already running.
  */
-int DD_Main(void)
+void DD_FinishInitializationAfterWindowReady(void)
+{    
+    if(!Sys_GLInitialize())
+    {
+        Con_Error("Error initializing OpenGL.\n");
+    }
+    else
+    {
+        char buf[256];
+        DD_ComposeMainWindowTitle(buf);
+        Window_SetTitle(theWindow, buf);
+    }
+
+    // Now we can start executing the engine's main loop.
+    LegacyCore_SetLoopFunc(de2LegacyCore, DD_GameLoopCallback);
+
+    // Initialize engine subsystems and initial state.
+    if(!DD_Init())
+    {
+        exit(2); // Cannot continue...
+        return;
+    }
+
+    // Start drawing with the game loop drawer.
+    Window_SetDrawFunc(Window_Main(), DD_GameLoopDrawer);
+}
+
+/**
+ * Engine initialization. After completed, the game loop is ready to be started.
+ * Called from the app entrypoint function.
+ *
+ * @return  @c true on success, @c false if an error occurred.
+ */
+boolean DD_Init(void)
 {
     // By default, use the resolution defined in (default).cfg.
-    int winWidth = defResX, winHeight = defResY, winBPP = defBPP, winX = 0, winY = 0;
-    uint winFlags = DDWF_VISIBLE | DDWF_CENTER | (defFullscreen? DDWF_FULLSCREEN : 0);
-    boolean noCenter = false;
-    int i, exitCode = 0;
+    //int winWidth = defResX, winHeight = defResY, winBPP = defBPP, winX = 0, winY = 0;
+    //uint winFlags = DDWF_VISIBLE | DDWF_CENTER | (defFullscreen? DDWF_FULLSCREEN : 0);
+    //boolean noCenter = false;
+    //int i; //, exitCode = 0;
 
 #ifdef _DEBUG
     // Type size check.
@@ -1466,47 +1496,14 @@ int DD_Main(void)
     }
 #endif
 
-    // Check for command line options modifying the defaults.
-    if(ArgCheckWith("-width", 1))
-        winWidth = atoi(ArgNext());
-    if(ArgCheckWith("-height", 1))
-        winHeight = atoi(ArgNext());
-    if(ArgCheckWith("-winsize", 2))
-    {
-        winWidth = atoi(ArgNext());
-        winHeight = atoi(ArgNext());
-    }
-    if(ArgCheckWith("-bpp", 1))
-        winBPP = atoi(ArgNext());
-    if(winBPP != 16 && winBPP != 32)
-        winBPP = 32;
-    if(ArgCheck("-nocenter"))
-        noCenter = true;
-    if(ArgCheckWith("-xpos", 1))
-    {
-        winX = atoi(ArgNext());
-        noCenter = true;
-    }
-    if(ArgCheckWith("-ypos", 1))
-    {
-        winY = atoi(ArgNext());
-        noCenter = true;
-    }
-    if(noCenter)
-        winFlags &= ~DDWF_CENTER;
-
-    if(ArgExists("-nofullscreen") || ArgExists("-window"))
-        winFlags &= ~DDWF_FULLSCREEN;
-
-    if(!Sys_SetWindow(windowIDX, winX, winY, winWidth, winHeight, winBPP, winFlags, 0))
-        return -1;
-
     if(!GL_EarlyInit())
     {
         Sys_CriticalMessage("GL_EarlyInit() failed.");
-        return -1;
+        return false;
     }
 
+    /*
+    assert(!Sys_GLCheckError());
     if(!novideo)
     {
         // Render a few black frames before we continue. This will help to
@@ -1519,14 +1516,16 @@ int DD_Main(void)
             GL_DoUpdate();
         }
     }
+    assert(!Sys_GLCheckError());
+*/
 
     // Initialize the subsystems needed prior to entering busy mode for the first time.
     Sys_Init();
     F_Init();
-    Huffman_Init();
 
     Fonts_Init();
     FR_Init();
+    DD_InitInput();
 
     // Enter busy mode until startup complete.
     Con_InitProgress2(200, 0, .25f); // First half.
@@ -1576,6 +1575,7 @@ int DD_Main(void)
     Con_Busy(BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
              "Locating game resources...", DD_LocateAllGameResourcesWorker, 0);
 
+    /*
     // Unless we reenter busy-mode due to automatic game selection, we won't be
     // drawing anything further until DD_GameLoop; so lets clean up.
     if(!novideo)
@@ -1583,6 +1583,7 @@ int DD_Main(void)
         glClear(GL_COLOR_BUFFER_BIT);
         GL_DoUpdate();
     }
+    */
 
     // Attempt automatic game selection.
     if(!ArgExists("-noautoselect"))
@@ -1734,14 +1735,7 @@ int DD_Main(void)
         Con_Execute(CMDS_DDAY, "listgames", false, false);
     }
 
-    // Start the game loop.
-    exitCode = DD_GameLoop();
-
-    // Time to shutdown.
-    Sys_Shutdown();
-
-    // Bye!
-    return exitCode;
+    return true;
 }
 
 static void DD_InitResourceSystem(void)
@@ -1763,9 +1757,6 @@ static int DD_StartupWorker(void* parm)
     // Initialize COM for this thread (needed for DirectInput).
     CoInitialize(NULL);
 #endif
-
-    // Initialize the key mappings.
-    DD_InitInput();
 
     Con_SetProgress(10);
 
@@ -1853,7 +1844,12 @@ static int DD_StartupWorker(void* parm)
     // In dedicated mode the console must be opened, so all input events
     // will be handled by it.
     if(isDedicated)
+    {
         Con_Open(true);
+
+        // Also make sure the game loop isn't running needlessly often.
+        LegacyCore_SetLoopRate(de2LegacyCore, 35);
+    }
 
     Con_SetProgress(199);
 
@@ -2032,10 +2028,10 @@ int DD_GetInteger(int ddvalue)
     switch(ddvalue)
     {
     case DD_WINDOW_WIDTH:
-        return theWindow->geometry.size.width;
+        return Window_Width(theWindow);
 
     case DD_WINDOW_HEIGHT:
-        return theWindow->geometry.size.height;
+        return Window_Height(theWindow);
 
     case DD_DYNLIGHT_TEXTURE:
         return (int) GL_PrepareLSTexture(LST_DYNAMIC);
@@ -2214,9 +2210,10 @@ void* DD_GetVariable(int ddvalue)
 
     case DD_TORCH_ADDITIVE:
         return &torchAdditive;
+
 #ifdef WIN32
     case DD_WINDOW_HANDLE:
-        return Sys_GetWindowHandle(windowIDX);
+        return Window_NativeHandle(Window_Main());
 #endif
 
     // We have to separately calculate the 35 Hz ticks.

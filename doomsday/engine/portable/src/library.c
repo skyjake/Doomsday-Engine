@@ -20,6 +20,15 @@
  * 02110-1301 USA</small>
  */
 
+#ifdef UNIX
+#  include <sys/types.h>
+#  include <unistd.h>
+#  include <dirent.h>
+#  include <dlfcn.h>
+#  include <string.h>
+#  include <stdbool.h>
+#endif
+
 #include "de_base.h"
 #include "de_filesys.h"
 #include "m_misc.h"
@@ -27,14 +36,6 @@
 
 #ifdef WIN32
 #  include "de_platform.h"
-#endif
-
-#ifdef UNIX
-#  include <sys/types.h>
-#  include <unistd.h>
-#  include <dirent.h>
-#  include <dlfcn.h>
-#  include <string.h>
 #endif
 
 #define MAX_LIBRARIES   64  /// @todo  Replace with a dynamic list.

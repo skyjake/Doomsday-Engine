@@ -28,6 +28,7 @@
  */
 
 #ifdef WIN32
+#  define WIN32_LEAN_AND_MEAN
 #  include <windows.h>
 #  include <process.h>
 #endif
@@ -162,6 +163,10 @@ void Sys_Shutdown(void)
 
 static int showCriticalMessage(const char* msg)
 {
+    Sys_MessageBox(MBT_WARNING, DOOMSDAY_NICENAME, msg, 0);
+    return 0;
+
+#if 0
 #ifdef WIN32
 #ifdef UNICODE
     wchar_t buf[256];
@@ -169,7 +174,7 @@ static int showCriticalMessage(const char* msg)
     char buf[256];
 #endif
     int ret;
-    HWND hWnd = Sys_GetWindowHandle(windowIDX);
+    HWND hWnd = (HWND) Window_NativeHandle(Window_Main());
 
     if(!hWnd)
     {
@@ -192,6 +197,7 @@ static int showCriticalMessage(const char* msg)
 #else
     fprintf(stderr, "--- %s\n", msg);
     return 0;
+#endif
 #endif
 }
 
@@ -260,9 +266,9 @@ void Sys_ShowCursor(boolean show)
 #ifdef WIN32
     ShowCursor(show);
 #endif
-#ifdef UNIX
+/*#ifdef UNIX
     SDL_ShowCursor(show ? SDL_ENABLE : SDL_DISABLE);
-#endif
+#endif*/
 }
 
 void Sys_HideMouse(void)
@@ -284,8 +290,12 @@ void Sys_HideMouse(void)
 void Sys_Quit(void)
 {
     appShutdown = true;
+
+    // It's time to stop the main loop.
+    LegacyCore_Stop(de2LegacyCore, DD_GameLoopExitCode());
 }
 
+#if 0
 void Sys_MessageBox(const char *msg, boolean iserror)
 {
 #ifdef WIN32
@@ -294,7 +304,7 @@ void Sys_MessageBox(const char *msg, boolean iserror)
 #else
     char    title[300];
 #endif
-    HWND    hWnd = Sys_GetWindowHandle(windowIDX);
+    HWND    hWnd = (HWND) Window_NativeHandle(Window_Main());
 
     if(!hWnd)
     {
@@ -327,6 +337,7 @@ void Sys_OpenTextEditor(const char *filename)
     spawnlp(P_NOWAIT, "notepad.exe", "notepad.exe", filename, 0);
 #endif
 }
+#endif
 
 /**
  * Utilises SDL Threads on ALL systems.
