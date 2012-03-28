@@ -323,10 +323,10 @@ void N_TerminateNode(nodeid_t id)
 }
 
 /**
- * Registers a new TCP socket as a client node.  There can only be a
- * limited number of nodes at a time.  This is only used by a server.
+ * Registers a new TCP socket as a client node. There can only be a limited
+ * number of nodes at a time. This is only used by a server.
  */
-static boolean N_RegisterNewSocket(int sock)
+static boolean registerNewSocket(int sock)
 {
     uint        i;
     netnode_t  *node;
@@ -355,13 +355,16 @@ static boolean N_RegisterNewSocket(int sock)
 }
 
 /**
- * A network node wishes to become a real client. Returns true if we
- * allow this.
+ * A network node wishes to become a real client. @return @c true if we allow
+ * this.
  */
-static boolean N_JoinNode(nodeid_t id, /*Uint16 port,*/ const char *name)
+static boolean joinNode(nodeid_t id, int clientProtocol, const char *name)
 {
     netnode_t *node;
     netevent_t netEvent;
+
+    if(clientProtocol != SV_VERSION)
+        return false; // Incompatible.
 
     // If the server is full, attempts to connect are canceled.
     if(Sv_GetNumConnected() >= svMaxPlayers)
@@ -446,7 +449,9 @@ void N_ClientHandleResponseToInfoQuery(int nodeId, const byte *data, int size)
 }
 
 /**
- * Maybe it would be wisest to run this in a separate thread?
+ * @todo Socket connection shouldn't block while forming the connection.
+ * Instead, there should be a notification after the connection has opened or
+ * failed.
  */
 boolean N_LookForHosts(const char *address, int port, expectedresponder_t responder)
 {
@@ -538,7 +543,7 @@ boolean N_Connect(int index)
 
     Demo_StopPlayback();
 
-    // Call game DLL's NetConnect.
+    // Tell the Game that a connection is about to happen.
     gx.NetConnect(true);
 
     host = &located;
@@ -560,7 +565,7 @@ boolean N_Connect(int index)
     {
         pName = "Anonymous";
     }
-    sprintf(buf, "Join %s", pName);
+    sprintf(buf, "Join %04x %s", SV_VERSION, pName);
     LegacyNetwork_Send(svNode->sock, buf, (int) strlen(buf));
 
     svNode->expectedResponder = N_ClientHandleResponseToJoin;
@@ -605,9 +610,6 @@ boolean N_ServerOpen(void)
         Con_Message("Server can only be started in dedicated mode! (run with -dedicated)\n");
         return false;
     }
-
-    /*if(!N_IsAvailable())
-        return false;*/
 
     Demo_StopPlayback();
 
@@ -664,13 +666,12 @@ boolean N_ServerClose(void)
 }
 
 /**
- * Validate and process the command, which has been sent by a remote
- * agent.
+ * Validate and process the command, which has been sent by a remote agent.
  *
- * If the command is invalid, the node is immediately closed. We don't
- * have time to fool around with badly behaving clients.
+ * If the command is invalid, the node is immediately closed. We don't have
+ * time to fool around with badly behaving clients.
  */
-static boolean N_ServerHandleNodeRequest(nodeid_t node, const char *command, int length)
+static boolean serverHandleNodeRequest(nodeid_t node, const char *command, int length)
 {
     int sock = netNodes[node].sock;
     serverinfo_t info;
@@ -691,20 +692,26 @@ static boolean N_ServerHandleNodeRequest(nodeid_t node, const char *command, int
         Str_Appendf(&msg, "Info\n");
         Sv_InfoToString(&info, &msg);
 
-        DEBUG_VERBOSE_Message(("N_ServerHandleNodeRequest: Sending: %s\n", Str_Text(&msg)));
+        DEBUG_VERBOSE_Message(("serverHandleNodeRequest: Sending: %s\n", Str_Text(&msg)));
 
         LegacyNetwork_Send(sock, Str_Text(&msg), (int) Str_Length(&msg));
         Str_Free(&msg);
     }
-    else if(length >= 5 && !strncmp(command, "Join ", 5))
+    else if(length >= 10 && !strncmp(command, "Join ", 5) && command[9] == ' ')
     {
         ddstring_t name;
-        Str_Init(&name);
-        Str_PartAppend(&name, command, 5, length - 5);
+        int protocol = 0;
+        char protoStr[5];
 
-        // Read the client's name and convert the network node into a
-        // real client network node (which has a transmitter).
-        if(N_JoinNode(node, Str_Text(&name)))
+        strncpy(protoStr, command + 5, 4);
+        protocol = strtol(protoStr, 0, 16);
+
+        // Read the client's name and convert the network node into an actual
+        // client. Here we also decide if the client's protocol is compatible
+        // with ours.
+        Str_Init(&name);
+        Str_PartAppend(&name, command, 10, length - 10);
+        if(joinNode(node, protocol, Str_Text(&name)))
         {
             // Successful! Send a reply.
             LegacyNetwork_Send(sock, "Enter", 5);
@@ -745,7 +752,7 @@ void N_ServerListenUnjoinedNodes(void)
     {
         // A new client is attempting to connect. Let's try to
         // register the new socket as a network node.
-        if(!N_RegisterNewSocket(sock))
+        if(!registerNewSocket(sock))
         {
             // There was a failure, close the socket.
             LegacyNetwork_Close(sock);
@@ -766,7 +773,7 @@ void N_ServerListenUnjoinedNodes(void)
             {
                 int size = 0;
                 byte* message = LegacyNetwork_Receive(node->sock, &size);
-                N_ServerHandleNodeRequest(i, (const char*) message, size);
+                serverHandleNodeRequest(i, (const char*) message, size);
                 LegacyNetwork_FreeBuffer(message);
             }
 
