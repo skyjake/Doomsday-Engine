@@ -162,7 +162,7 @@ void LogBuffer::flush()
         }
         */
 
-#ifndef _DEBUG
+#ifdef _DEBUG
         const duint MAX_LENGTH = 109;
         const duint SIMPLE_INDENT = 30;
 #else
@@ -177,7 +177,7 @@ void LogBuffer::flush()
             QList<QTextStream*> os;
             os << ((*i)->level() >= Log::ERROR? errs.data() : outs.data()) << fs.data();
 
-#ifndef _DEBUG
+#ifdef _DEBUG
             String message = (*i)->asText();
 #else
             // In a release build we can dispense with the metadata.
