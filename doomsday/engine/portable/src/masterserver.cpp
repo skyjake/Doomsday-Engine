@@ -158,23 +158,23 @@ void MasterWorker::requestFinished(QNetworkReply* reply)
     // Make sure the reply gets deleted afterwards.
     reply->deleteLater();
 
-    if(reply->error() != QNetworkReply::NoError)
+    if(reply->error() == QNetworkReply::NoError)
+    {
+        qDebug() << "MasterWorker: Got reply.";
+
+        if(d->currentAction == REQUEST_SERVERS)
+        {
+            parseResponse(reply->readAll());
+        }
+    }
+    else
     {
         qWarning() << "MasterWorker:" << reply->errorString();
         /// @todo Log the error.
-        return;
     }
-
-    qDebug() << "MasterWorker: Got reply.";
-
-    if(d->currentAction == REQUEST_SERVERS)
-    {
-        parseResponse(reply->readAll());
-    }
-
-    d->currentAction = NONE;
 
     // Continue with the next job.
+    d->currentAction = NONE;
     nextJob();
 }
 
