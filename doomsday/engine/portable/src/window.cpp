@@ -1215,8 +1215,3 @@ void Window_TrapMouse(const Window* wnd, boolean enable)
     wnd->assertWindow();
     wnd->widget->canvas().trapMouse(enable);
 }
-
-void debugPrint(const char* msg)
-{
-    qDebug() << QString(msg).trimmed().toLatin1().constData();
-}

@@ -98,6 +98,26 @@ public:
     void timer(duint32 milliseconds, void (*func)(void));
 
     /**
+     * Sets the file where log output is to be written.
+     *
+     * @param nativeFilePath  Path of a native file for writing output.
+     */
+    void setLogFileName(const char* nativeFilePath);
+
+    /**
+     * Returns name of the the current log output file.
+     */
+    const char* logFileName() const;
+
+    /**
+     * Prints a fragment of text to the output log. The output is added to the log
+     * only when a complete line has been printed (i.e., newline character required).
+     *
+     * @param text  Text to print.
+     */
+    void printLogFragment(const char* text);
+
+    /**
      * Returns the LegacyCore singleton instance.
      */
     static LegacyCore& instance();

@@ -1855,16 +1855,17 @@ void Con_PrintRuler(void)
     if(consoleDump)
     {
         // A 70 characters long line.
-        int i;
-        for(i = 0; i < 7; ++i)
-        {
-            fprintf(outFile, "----------");
-            if(isDedicated)
-                Sys_ConPrint(mainWindowIdx, "----------", 0);
-        }
-        fprintf(outFile, "\n");
         if(isDedicated)
+        {
+            int i;
+            for(i = 0; i < 7; ++i)
+            {
+                Sys_ConPrint(mainWindowIdx, "----------", 0);
+            }
             Sys_ConPrint(mainWindowIdx, "\n", 0);
+        }
+
+        LegacyCore_PrintLogFragment(de2LegacyCore, "$R\n");
     }
 }
 
@@ -1883,12 +1884,10 @@ static void conPrintf(int flags, const char* format, va_list args)
         text = prbuff;
 
         if(consoleDump)
-            fprintf(outFile, "%s", text);
+        {
+            LegacyCore_PrintLogFragment(de2LegacyCore, prbuff);
+        }
     }
-
-#if defined(_DEBUG) && defined(WIN32)
-    debugPrint(prbuff);
-#endif
 
     // Servers might have to send the text to a number of clients.
     if(isServer)
@@ -2047,7 +2046,7 @@ void Con_Error(const char* error, ...)
     if(!ConsoleInited || errorInProgress)
     {
         DisplayMode_Shutdown();
-        //fprintf(outFile, "Con_Error: Stack overflow imminent, aborting...\n");
+        LegacyCore_PrintLogFragment(de2LegacyCore, "Con_Error: Error while error already in progress...\n");
 
         va_start(argptr, error);
         dd_vsnprintf(buff, sizeof(buff), error, argptr);
@@ -2068,7 +2067,9 @@ void Con_Error(const char* error, ...)
     va_start(argptr, error);
     dd_vsnprintf(err, sizeof(err), error, argptr);
     va_end(argptr);
-    fprintf(outFile, "%s\n", err);
+    //fprintf(outFile, "%s\n", err);
+    LegacyCore_PrintLogFragment(de2LegacyCore, err);
+    LegacyCore_PrintLogFragment(de2LegacyCore, "\n");
 
     strcpy(buff, "");
     if(histBuf != NULL)
@@ -2116,11 +2117,13 @@ void Con_AbnormalShutdown(const char* message)
     Sys_ShowCursor(true);
     if(message) // Only show if a message given.
     {
-        fflush(outFile); // Make sure all the buffered stuff goes into the file.
+        // Make sure all the buffered stuff goes into the file.
+        LegacyCore_FlushLog();
 
         /// @todo Get the actual output filename (might be a custom one).
         Sys_MessageBoxWithDetailsFromFile(MBT_ERROR, DOOMSDAY_NICENAME, message,
-                                          "See Details for complete messsage log contents.", "doomsday.out");
+                                          "See Details for complete messsage log contents.",
+                                          LegacyCore_LogFile(de2LegacyCore));
     }
 
     DD_Shutdown();

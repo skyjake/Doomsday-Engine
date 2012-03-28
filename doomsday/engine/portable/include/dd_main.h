@@ -59,7 +59,7 @@ extern "C" {
 extern LegacyCore* de2LegacyCore;
 
 extern int verbose;
-extern FILE* outFile; // Output file for console messages.
+//extern FILE* outFile; // Output file for console messages.
 
 extern filename_t ddBasePath;
 extern filename_t ddRuntimePath, ddBinPath;

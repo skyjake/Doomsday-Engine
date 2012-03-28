@@ -23,6 +23,7 @@
 #include "de/Address"
 #include "de/ByteRefArray"
 #include "de/Block"
+#include "de/LogBuffer"
 #include <cstring>
 
 #define DENG2_LEGACYNETWORK()   de::LegacyCore::instance().network()
@@ -32,10 +33,25 @@ LegacyCore* LegacyCore_New(void* dengApp)
     return reinterpret_cast<LegacyCore*>(new de::LegacyCore(reinterpret_cast<de::App*>(dengApp)));
 }
 
+void LegacyCore_Delete(LegacyCore* lc)
+{
+    if(lc)
+    {
+        // It gets stopped automatically.
+        delete reinterpret_cast<de::LegacyCore*>(lc);
+    }
+}
+
 int LegacyCore_RunEventLoop(LegacyCore* lc)
 {
     DENG2_SELF(LegacyCore, lc);
     return self->runEventLoop();
+}
+
+void LegacyCore_Stop(LegacyCore *lc, int exitCode)
+{
+    DENG2_SELF(LegacyCore, lc);
+    self->stop(exitCode);
 }
 
 void LegacyCore_SetLoopRate(LegacyCore* lc, int freqHz)
@@ -68,19 +84,37 @@ void LegacyCore_Timer(LegacyCore* lc, unsigned int milliseconds, void (*callback
     self->timer(milliseconds, callback);
 }
 
-void LegacyCore_Stop(LegacyCore *lc, int exitCode)
+int LegacyCore_SetLogFile(LegacyCore* lc, const char* filePath)
 {
-    DENG2_SELF(LegacyCore, lc);
-    self->stop(exitCode);
+    try
+    {
+        DENG2_SELF(LegacyCore, lc);
+        self->setLogFileName(filePath);
+        return true;
+    }
+    catch(de::LogBuffer::FileError& er)
+    {
+        LOG_AS("LegacyCore_SetLogFile");
+        LOG_WARNING(er.asText());
+        return false;
+    }
 }
 
-void LegacyCore_Delete(LegacyCore* lc)
+const char* LegacyCore_LogFile(LegacyCore* lc)
 {
-    if(lc)
-    {
-        // It gets stopped automatically.
-        delete reinterpret_cast<de::LegacyCore*>(lc);
-    }
+    DENG2_SELF(LegacyCore, lc);
+    return self->logFileName();
+}
+
+void LegacyCore_PrintLogFragment(LegacyCore* lc, const char* text)
+{
+    DENG2_SELF(LegacyCore, lc);
+    self->printLogFragment(text);
+}
+
+void LegacyCore_FlushLog(void)
+{
+    de::LogBuffer::appBuffer().flush();
 }
 
 int LegacyNetwork_OpenServerSocket(unsigned short port)

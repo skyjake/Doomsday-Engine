@@ -39,9 +39,7 @@ LogBuffer::LogBuffer(duint maxEntryCount)
     : _enabledOverLevel(Log::MESSAGE), 
       _maxEntryCount(maxEntryCount),
       _standardOutput(true),
-#ifdef DENG2_FS_AVAILABLE
       _outputFile(0),
-#endif
       _autoFlushTimer(0)
 {
     _autoFlushTimer = new QTimer(this);
@@ -122,22 +120,22 @@ void LogBuffer::enable(Log::LogLevel overLevel)
     _enabledOverLevel = overLevel;
 }
 
-void LogBuffer::setOutputFile(const String& /*path*/)
+void LogBuffer::setOutputFile(const String& path)
 {
-#ifdef DENG2_FS_AVAILABLE
     if(_outputFile)
     {
-        flush();
-        _outputFile->audienceForDeletion.remove(this);
+        delete _outputFile;
         _outputFile = 0;
     }
-    if(!path.empty())
+    if(path.isEmpty()) return;
+
+    _outputFile = new QFile(path);
+    if(/*!*/_outputFile->open(QFile::Text | QFile::WriteOnly))
     {
-        _outputFile = &App::fileRoot().replaceFile(path);
-        _outputFile->setMode(File::Write);
-        _outputFile->audienceForDeletion.add(this);
+        delete _outputFile;
+        _outputFile = 0;
+        throw FileError("LogBuffer::setOutputFile", "Could not open " + path);
     }
-#endif
 }
 
 void LogBuffer::flush()
@@ -146,27 +144,29 @@ void LogBuffer::flush()
 
     if(!_toBeFlushed.isEmpty())
     {
+        QScopedPointer<QTextStream> fs  (_outputFile?     new QTextStream(_outputFile) : 0);
+        QScopedPointer<QTextStream> outs(_standardOutput? new QTextStream(stdout) : 0);
+        QScopedPointer<QTextStream> errs(_standardOutput? new QTextStream(stderr) : 0);
+
+        if(fs.data())
+        {
+            fs->setCodec("UTF-8");
+        }
+
+        /*
         Writer* writer = 0;
-#ifdef DENG2_FS_AVAILABLE
         if(_outputFile)
         {
             // We will add to the end.
             writer = new Writer(*_outputFile, _outputFile->size());
         }
-#endif
+        */
 
         DENG2_FOR_EACH(i, _toBeFlushed, EntryList::iterator)
         {
             // Error messages will go to stderr instead of stdout.
-            QScopedPointer<QTextStream> os(_standardOutput?
-                                           ((*i)->level() >= Log::ERROR?
-                                    #ifdef WIN32
-                                                // Use stdout for everything on Windows.
-                                                new QTextStream(stdout) :
-                                    #else
-                                                new QTextStream(stderr) :
-                                    #endif
-                                                new QTextStream(stdout)) : 0);
+            QList<QTextStream*> os;
+            os << ((*i)->level() >= Log::ERROR? errs.data() : outs.data()) << fs.data();
 
             String message = (*i)->asText();
 
@@ -177,14 +177,17 @@ void LogBuffer::flush()
                 String::size_type next = message.indexOf('\n', pos);
                 if(pos > 0)
                 {
-                    if(os)
+                    foreach(QTextStream* stream, os)
                     {
-                        *os << qSetFieldWidth(SIMPLE_INDENT) << "" << qSetFieldWidth(0);
+                        if(!stream) continue;
+                        *stream << qSetFieldWidth(SIMPLE_INDENT) << "" << qSetFieldWidth(0);
                     }
+                    /*
                     if(writer)
                     {
                         *writer << FixedByteArray(String(SIMPLE_INDENT, ' ').toUtf8());
                     }
+                    */
                 }
                 String lineText = message.substr(pos, next != String::npos? next - pos + 1 : next);
 
@@ -194,38 +197,44 @@ void LogBuffer::flush()
                     lineText = String(RULER_LENGTH, '-');
                 }
 
-                if(os)
+                foreach(QTextStream* stream, os)
                 {
-                    *os << lineText;
+                    if(!stream) continue;
+                    *stream << lineText;
                 }
+                /*
                 if(writer)
                 {
                     *writer << FixedByteArray(lineText.toUtf8());
                 }
+                */
+
                 pos = next;
                 if(pos != String::npos) pos++;
             }
 
-            if(os)
+            foreach(QTextStream* stream, os)
             {
-                *os << "\n";
+                if(!stream) continue;
+                *stream << "\n";
             }
+            /*
             if(writer)
             {
                 *writer << FixedByteArray(String("\n").toUtf8());
             }
+            */
         }
-        delete writer;
+
+        //delete writer;
 
         _toBeFlushed.clear();
 
-#ifdef DENG2_FS_AVAILABLE
-        if(_outputFile)
+        if(fs.data())
         {
-            // Make sure they get written now.
-            _outputFile->flush();
+            // Make sure it really gets written now.
+            fs->flush();
         }
-#endif
     }
 
     _lastFlushedAt = Time();

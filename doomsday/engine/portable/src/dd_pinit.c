@@ -192,21 +192,24 @@ void DD_ConsoleInit(void)
 {
     const char* outFileName = "doomsday.out";
     ddstring_t nativePath;
+    boolean outFileOk;
 
     DD_CheckArg("-out", &outFileName);
     Str_Init(&nativePath); Str_Set(&nativePath, outFileName);
     F_ToNativeSlashes(&nativePath, &nativePath);
 
     // We'll redirect stdout to a log file.
-    outFile = fopen(Str_Text(&nativePath), "w");
+    outFileOk = LegacyCore_SetLogFile(de2LegacyCore, Str_Text(&nativePath));
+    //outFile = fopen(Str_Text(&nativePath), "w");
     Str_Free(&nativePath);
-    if(!outFile)
+
+    if(!outFileOk)
     {
-        Sys_MessageBoxf(MBT_WARNING, "Console", "Couldn't open message output file: %s", outFileName);
+        Sys_MessageBoxf(MBT_WARNING, "Console", "Couldn't open message output file: %s", Str_Text(&nativePath));
     }
     else
     {
-        setbuf(outFile, NULL); // Don't buffer much.
+        //setbuf(outFile, NULL); // Don't buffer much.
 
         // Get the console online ASAP.
         if(!Con_Init())
@@ -261,10 +264,12 @@ void DD_ShutdownAll(void)
     Z_Shutdown();
     Sys_ShutdownWindowManager();
 
+    /*
     // Close the message output file.
     if(outFile)
     {
         fclose(outFile);
         outFile = NULL;
     }
+    */
 }

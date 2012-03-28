@@ -301,11 +301,6 @@ void Window_TrapMouse(const Window* wnd, boolean enable);
 
 void* Window_NativeHandle(const Window* wnd);
 
-#ifdef _DEBUG
-/// @todo Get rid of this; libdeng2 should do debug output.
-void debugPrint(const char* msg);
-#endif
-
 #ifdef __cplusplus
 }
 #endif

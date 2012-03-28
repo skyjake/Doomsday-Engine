@@ -674,6 +674,8 @@ void Con_BusyDrawConsoleOutput(void)
     uint                i, newCount;
 
     buffer = Con_HistoryBuffer();
+    if(!buffer) return;
+
     newCount = GetBufLines(buffer, visibleBusyLines);
     nowTime = Sys_GetRealSeconds();
     if(newCount > 0)

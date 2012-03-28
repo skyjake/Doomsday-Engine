@@ -353,8 +353,6 @@ static int translateKey(int key)
     if(key >= 32 && key <= 127)
         return key;
 
-    //fprintf(outFile, "key=%i\n", key);
-
     switch(key)
     {
     case '\r':

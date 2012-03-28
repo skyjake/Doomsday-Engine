@@ -101,7 +101,7 @@ filename_t ddRuntimePath, ddBinPath;
 int isDedicated = false;
 
 int verbose = 0; // For debug messages (-verbose).
-FILE* outFile; // Output file for console messages.
+//FILE* outFile; // Output file for console messages.
 
 // List of file names, whitespace seperating (written to .cfg).
 char* gameStartupFiles = "";

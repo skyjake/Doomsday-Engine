@@ -41,14 +41,18 @@ extern "C" {
 DENG2_OPAQUE(LegacyCore)
 
 DENG2_PUBLIC LegacyCore* LegacyCore_New(void* dengApp);
+DENG2_PUBLIC void LegacyCore_Delete(LegacyCore* lc);
 DENG2_PUBLIC void LegacyCore_SetLoopRate(LegacyCore* lc, int freqHz);
 DENG2_PUBLIC void LegacyCore_SetLoopFunc(LegacyCore* lc, void (*callback)(void));
 DENG2_PUBLIC void LegacyCore_PushLoop(LegacyCore* lc);
 DENG2_PUBLIC void LegacyCore_PopLoop(LegacyCore* lc);
 DENG2_PUBLIC int LegacyCore_RunEventLoop(LegacyCore* lc);
-DENG2_PUBLIC void LegacyCore_Timer(LegacyCore* lc, unsigned int milliseconds, void (*callback)(void));
 DENG2_PUBLIC void LegacyCore_Stop(LegacyCore* lc, int exitCode);
-DENG2_PUBLIC void LegacyCore_Delete(LegacyCore* lc);
+DENG2_PUBLIC void LegacyCore_Timer(LegacyCore* lc, unsigned int milliseconds, void (*callback)(void));
+DENG2_PUBLIC int LegacyCore_SetLogFile(LegacyCore* lc, const char* filePath);
+DENG2_PUBLIC const char* LegacyCore_LogFile(LegacyCore* lc);
+DENG2_PUBLIC void LegacyCore_PrintLogFragment(LegacyCore* lc, const char* text);
+DENG2_PUBLIC void LegacyCore_FlushLog(void);
 
 /*
  * LegacyNetwork

@@ -27,6 +27,7 @@
 #include <QList>
 #include <QTimer>
 #include <QDebug>
+#include <string>
 
 using namespace de;
 
@@ -48,6 +49,12 @@ struct LegacyCore::Instance
     LegacyNetwork network;
     Loop loop;
     LogBuffer logBuffer;
+
+    /// Pointer returned to callers, see LegacyCore::logFileName().
+    std::string logName;
+
+    /// Current log output line being formed.
+    std::string currentLogLine;
 
     Instance() : app(0) {}
     ~Instance() {}
@@ -151,6 +158,29 @@ void LegacyCore::timer(duint32 milliseconds, void (*func)(void))
     // The timer will delete itself after it's triggered.
     internal::CallbackTimer* timer = new internal::CallbackTimer(func, this);
     timer->start(milliseconds);
+}
+
+void LegacyCore::setLogFileName(const char *nativeFilePath)
+{
+    d->logName = nativeFilePath;
+    d->logBuffer.setOutputFile(nativeFilePath);
+}
+
+const char *LegacyCore::logFileName() const
+{
+    return d->logName.c_str();
+}
+
+void LegacyCore::printLogFragment(const char* text)
+{
+    d->currentLogLine += text;
+
+    std::string::size_type pos;
+    while((pos = d->currentLogLine.find('\n')) != std::string::npos)
+    {
+        LOG_MSG(d->currentLogLine.substr(0, pos).c_str());
+        d->currentLogLine.erase(0, pos);
+    }
 }
 
 void LegacyCore::callback()

@@ -28,6 +28,7 @@
 #include <QObject>
 #include <QTimer>
 #include <QList>
+#include <QFile>
 
 namespace de {
 
@@ -42,13 +43,13 @@ class LogEntry;
  * @ingroup core
  */
 class LogBuffer : public QObject, public Lockable
-#ifdef DENG2_FS_AVAILABLE
-    , OBSERVES(File, Deletion)
-#endif
 {
     Q_OBJECT
 
 public:
+    /// There was a problem opening the output file. @ingroup errors
+    DENG2_ERROR(FileError)
+
     typedef QList<const LogEntry*> Entries;
 
 public:
@@ -124,11 +125,6 @@ public:
      */
     void setOutputFile(const String& path);
 
-#ifdef DENG2_FS_AVAILABLE
-    // Observes File deletion.
-    void fileBeingDeleted(const File& file);
-#endif
-
 public:
     /**
      * Sets the application's global log buffer. This is available to all.
@@ -153,9 +149,7 @@ private:
     dint _enabledOverLevel;
     dint _maxEntryCount;
     bool _standardOutput;
-#ifdef DENG2_FS_AVAILABLE
-    File* _outputFile;
-#endif
+    QFile* _outputFile;
     EntryList _entries;
     EntryList _toBeFlushed;
     Time _lastFlushedAt;
