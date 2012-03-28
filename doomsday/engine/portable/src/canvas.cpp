@@ -42,6 +42,10 @@
 #include "keycode.h"
 #include "canvas.h"
 
+#if (QT_VERSION < QT_VERSION_CHECK(4, 7, 0))
+#  define constBits bits
+#endif
+
 static const int MOUSE_WHEEL_CONTINUOUS_THRESHOLD_MS = 100;
 
 struct Canvas::Instance
@@ -335,7 +339,11 @@ void Canvas::keyReleaseEvent(QKeyEvent *ev)
 static int translateButton(Qt::MouseButton btn)
 {
     if(btn == Qt::LeftButton) return IMB_LEFT;
+#if (QT_VERSION >= QT_VERSION_CHECK(4, 7, 0))
     if(btn == Qt::MiddleButton) return IMB_MIDDLE;
+#else
+    if(btn == Qt::MidButton) return IMB_MIDDLE;
+#endif
     if(btn == Qt::RightButton) return IMB_RIGHT;
     return -1;
 }
