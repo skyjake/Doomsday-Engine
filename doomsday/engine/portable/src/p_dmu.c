@@ -1292,7 +1292,6 @@ void DMU_GetValue(valuetype_t valueType, const void* src, setargs_t* args,
             args->floatValues[index] = *s;
             break;
         case DDVT_DOUBLE:
-        case DDVT_DOUBLE:
             args->doubleValues[index] = (double)*s;
             break;
         default:
