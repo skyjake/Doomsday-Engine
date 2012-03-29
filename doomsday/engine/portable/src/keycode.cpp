@@ -78,7 +78,7 @@ static void checkWin32Keymap()
     //keymap[VK_ACCEPT] = ;
     //keymap[VK_MODECHANGE] = ;
     keymap[VK_SPACE] = ' ';
-    keymap[VK_OEM_PLUS] = '+';
+    keymap[VK_OEM_PLUS] = '='; //+';
     keymap[VK_OEM_COMMA] = ',';
     keymap[VK_OEM_MINUS] = '-';
     keymap[VK_OEM_PERIOD] = '.';
