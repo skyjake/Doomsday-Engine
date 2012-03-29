@@ -31,8 +31,6 @@
 #define LIBDENG_BSPBUILDER_SUPERBLOCKMAP
 
 #include "dd_types.h"
-
-#include "kdtree.h" /// @todo Remove me.
 #include "bspbuilder/hedges.hh"
 
 #include <list>
@@ -50,6 +48,13 @@ namespace de {
 
 class SuperBlockmap;
 
+/**
+ * Subblocks:
+ * RIGHT - has the lower coordinates.
+ * LEFT  - has the higher coordinates.
+ * Division of a block always occurs horizontally:
+ *     e.g. 512x512 -> 256x512 -> 256x256.
+ */
 class SuperBlock {
 friend class SuperBlockmap;
 
@@ -68,11 +73,9 @@ public:
     }
 
 private:
-    SuperBlock(SuperBlockmap& blockmap) :
-        _bmap(blockmap), _hedges(0), _realNum(0), _miniNum(0)
-    {}
-
-    ~SuperBlock() { clear(); }
+    SuperBlock(SuperBlockmap& blockmap);
+    SuperBlock(SuperBlock& parent, ChildId childId, bool splitVertical);
+    ~SuperBlock();
 
 public:
     /**
@@ -80,7 +83,7 @@ public:
      *
      * @return  The owning SuperBlockmap instance.
      */
-    SuperBlockmap& blockmap() const { return _bmap; }
+    SuperBlockmap& blockmap() const;
 
     /**
      * Retrieve the axis-aligned bounding box defined for this superblock
@@ -133,8 +136,9 @@ public:
      */
     int traverse(int (C_DECL *callback)(SuperBlock*, void*), void* parameters=NULL);
 
-    inline HEdges::const_iterator hedgesBegin() const { return _hedges.begin(); }
-    inline HEdges::const_iterator hedgesEnd() const { return _hedges.end(); }
+    /// Half-edges completely contained by this block.
+    HEdges::const_iterator hedgesBegin() const;
+    HEdges::const_iterator hedgesEnd() const;
 
     void findHEdgeBounds(AABoxf& bounds);
 
@@ -170,26 +174,9 @@ public:
      */
     bsp_hedge_t* hedgePop();
 
-protected:
-    /// KdTree node in the owning SuperBlockmap.
-    KdTreeNode* _tree;
-
 private:
-    void clear();
-
-    void inline incrementHEdgeCount(bsp_hedge_t* hedge);
-    void inline linkHEdge(bsp_hedge_t* hedge);
-
-    /// SuperBlockmap that owns this SuperBlock.
-    SuperBlockmap& _bmap;
-
-    /// Half-edges completely contained by this block.
-    HEdges _hedges;
-
-    /// Number of real half-edges and minihedges contained by this block
-    /// (including all sub-blocks below it).
-    int _realNum;
-    int _miniNum;
+    struct Instance;
+    Instance* d;
 };
 
 class SuperBlockmap {

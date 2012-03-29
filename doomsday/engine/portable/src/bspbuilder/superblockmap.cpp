@@ -27,32 +27,94 @@
 #include "de_console.h"
 #include "p_mapdata.h"
 
+#include "kdtree.h"
 #include "bspbuilder/hedges.hh"
 #include "bspbuilder/superblockmap.hh"
 
 using namespace de;
 
-void SuperBlock::clear()
+struct SuperBlock::Instance
 {
-    _hedges.clear();
-    KdTreeNode_SetUserData(_tree, NULL);
+    /// SuperBlockmap that owns this SuperBlock.
+    SuperBlockmap& bmap;
+
+    /// KdTree node in the owning SuperBlockmap.
+    KdTreeNode* tree;
+
+    /// Half-edges completely contained by this block.
+    SuperBlock::HEdges hedges;
+
+    /// Number of real half-edges and minihedges contained by this block
+    /// (including all sub-blocks below it).
+    int realNum;
+    int miniNum;
+
+    Instance(SuperBlockmap& blockmap) :
+        bmap(blockmap), tree(0), hedges(0), realNum(0), miniNum(0)
+    {}
+
+    ~Instance()
+    {
+        KdTreeNode_SetUserData(tree, NULL);
+    }
+
+    void inline linkHEdge(bsp_hedge_t* hedge)
+    {
+        if(!hedge) return;
+        hedges.push_front(hedge);
+    }
+
+    void incrementHEdgeCount(bsp_hedge_t* hedge)
+    {
+        if(!hedge) return;
+        if(hedge->info.lineDef) realNum++;
+        else                    miniNum++;
+    }
+
+    void decrementHEdgeCount(bsp_hedge_t* hedge)
+    {
+        if(!hedge) return;
+        if(hedge->info.lineDef) realNum--;
+        else                    miniNum--;
+    }
+};
+
+SuperBlock::SuperBlock(SuperBlockmap& blockmap)
+{
+    d = new Instance(blockmap);
+}
+
+SuperBlock::SuperBlock(SuperBlock& parent, ChildId childId, bool splitVertical)
+{
+    d = new Instance(parent.blockmap());
+    d->tree = KdTreeNode_AddChild(parent.d->tree, 0.5, int(splitVertical), childId==LEFT, this);
+}
+
+SuperBlock::~SuperBlock()
+{
+    delete d;
+}
+
+SuperBlockmap& SuperBlock::blockmap() const
+{
+    return d->bmap;
 }
 
 const AABox& SuperBlock::bounds() const
 {
-    return *KdTreeNode_Bounds(_tree);
+    return *KdTreeNode_Bounds(d->tree);
 }
 
 bool SuperBlock::hasChild(ChildId childId) const
 {
     assertValidChildId(childId);
-    return NULL != KdTreeNode_Child(_tree, childId==LEFT);
+    return NULL != KdTreeNode_Child(d->tree, childId==LEFT);
 }
 
 SuperBlock& SuperBlock::child(ChildId childId)
 {
     assertValidChildId(childId);
-    KdTreeNode* subtree = KdTreeNode_Child(_tree, childId==LEFT);
+    KdTreeNode* subtree = KdTreeNode_Child(d->tree, childId==LEFT);
     if(!subtree) Con_Error("SuperBlock::child: Has no %s subblock.", childId==LEFT? "left" : "right");
     return *static_cast<SuperBlock*>(KdTreeNode_UserData(subtree));
 }
@@ -60,32 +122,26 @@ SuperBlock& SuperBlock::child(ChildId childId)
 SuperBlock* SuperBlock::addChild(ChildId childId, bool splitVertical)
 {
     assertValidChildId(childId);
-    SuperBlock* child = new SuperBlock(_bmap);
-    child->_tree = KdTreeNode_AddChild(_tree, 0.5, int(splitVertical), childId==LEFT, child);
+    SuperBlock* child = new SuperBlock(*this, childId, splitVertical);
     return child;
+}
+
+SuperBlock::HEdges::const_iterator SuperBlock::hedgesBegin() const
+{
+    return d->hedges.begin();
+}
+
+SuperBlock::HEdges::const_iterator SuperBlock::hedgesEnd() const
+{
+    return d->hedges.end();
 }
 
 uint SuperBlock::hedgeCount(bool addReal, bool addMini) const
 {
     uint total = 0;
-    if(addReal) total += _realNum;
-    if(addMini) total += _miniNum;
+    if(addReal) total += d->realNum;
+    if(addMini) total += d->miniNum;
     return total;
-}
-
-void SuperBlock::incrementHEdgeCount(bsp_hedge_t* hedge)
-{
-    if(!hedge) return;
-    if(hedge->info.lineDef) _realNum++;
-    else                    _miniNum++;
-}
-
-void SuperBlock::linkHEdge(bsp_hedge_t* hedge)
-{
-    if(!hedge) return;
-    _hedges.push_front(hedge);
-    // Associate ourself.
-    hedge->block = this;
 }
 
 static void initAABoxFromHEdgeVertexes(AABoxf* aaBox, const bsp_hedge_t* hedge)
@@ -105,7 +161,7 @@ void SuperBlock::findHEdgeBounds(AABoxf& bounds)
     bool initialized = false;
     AABoxf hedgeAABox;
 
-    for(HEdges::iterator it = _hedges.begin(); it != _hedges.end(); ++it)
+    for(HEdges::iterator it = d->hedges.begin(); it != d->hedges.end(); ++it)
     {
         bsp_hedge_t* hedge = *it;
         initAABoxFromHEdgeVertexes(&hedgeAABox, hedge);
@@ -130,12 +186,14 @@ SuperBlock* SuperBlock::hedgePush(bsp_hedge_t* hedge)
     for(;;)
     {
         // Update half-edge counts.
-        sb->incrementHEdgeCount(hedge);
+        sb->d->incrementHEdgeCount(hedge);
 
         if(sb->blockmap().isLeaf(*sb))
         {
             // No further subdivision possible.
-            sb->linkHEdge(hedge);
+            sb->d->linkHEdge(hedge);
+            // Associate ourself.
+            hedge->block = sb;
             break;
         }
 
@@ -162,7 +220,9 @@ SuperBlock* SuperBlock::hedgePush(bsp_hedge_t* hedge)
         if(p1 != p2)
         {
             // Line crosses midpoint; link it in and return.
-            sb->linkHEdge(hedge);
+            sb->d->linkHEdge(hedge);
+            // Associate ourself.
+            hedge->block = sb;
             break;
         }
 
@@ -181,14 +241,13 @@ SuperBlock* SuperBlock::hedgePush(bsp_hedge_t* hedge)
 
 bsp_hedge_t* SuperBlock::hedgePop()
 {
-    if(_hedges.empty()) return NULL;
+    if(d->hedges.empty()) return NULL;
 
-    bsp_hedge_t* hedge = _hedges.front();
-    _hedges.pop_front();
+    bsp_hedge_t* hedge = d->hedges.front();
+    d->hedges.pop_front();
 
     // Update half-edge counts.
-    if(hedge->info.lineDef) _realNum--;
-    else                    _miniNum--;
+    d->decrementHEdgeCount(hedge);
 
     // Disassociate ourself.
     hedge->block = NULL;
@@ -202,12 +261,12 @@ int SuperBlock::traverse(int (C_DECL *callback)(SuperBlock*, void*), void* param
     int result = callback(this, parameters);
     if(result) return result;
 
-    if(_tree)
+    if(d->tree)
     {
         // Recursively handle subtrees.
         for(uint num = 0; num < 2; ++num)
         {
-            KdTreeNode* node = KdTreeNode_Child(_tree, num);
+            KdTreeNode* node = KdTreeNode_Child(d->tree, num);
             if(!node) continue;
 
             SuperBlock* child = static_cast<SuperBlock*>(KdTreeNode_UserData(node));
@@ -223,22 +282,15 @@ int SuperBlock::traverse(int (C_DECL *callback)(SuperBlock*, void*), void* param
 
 struct SuperBlockmap::Instance
 {
-    /**
-     * The KdTree of SuperBlocks.
-     *
-     * Subblocks:
-     * RIGHT - has the lower coordinates.
-     * LEFT  - has the higher coordinates.
-     * Division of a block always occurs horizontally:
-     *     e.g. 512x512 -> 256x512 -> 256x256.
-     */
+    /// The KdTree of SuperBlocks.
     KdTree* kdTree;
 
     Instance(SuperBlockmap& bmap, const AABox& bounds)
     {
         kdTree = KdTree_New(&bounds);
+        // Attach the root node.
         SuperBlock* block = new SuperBlock(bmap);
-        block->_tree = KdTreeNode_SetUserData(KdTree_Root(kdTree), block);
+        block->d->tree = KdTreeNode_SetUserData(KdTree_Root(kdTree), block);
     }
 
     ~Instance()
@@ -248,13 +300,13 @@ struct SuperBlockmap::Instance
 
     void clearBlockWorker(SuperBlock& block)
     {
-        if(block._tree)
+        if(block.d->tree)
         {
             // Recursively handle sub-blocks.
             KdTreeNode* child;
             for(uint num = 0; num < 2; ++num)
             {
-                child = KdTreeNode_Child(block._tree, num);
+                child = KdTreeNode_Child(block.d->tree, num);
                 if(!child) continue;
 
                 SuperBlock* blockPtr = static_cast<SuperBlock*>(KdTreeNode_UserData(child));
