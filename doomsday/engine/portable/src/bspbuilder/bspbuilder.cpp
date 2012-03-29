@@ -309,8 +309,8 @@ int C_DECL BspBuilder_FreeBSPData(BinaryTree* tree, void* parameters)
     {
         if(BinaryTree_IsLeaf(tree))
             builder->deleteLeaf((bspleafdata_t*)bspData);
-        else
-            M_Free(bspData);
+        //else
+        //    M_Free(bspData);
     }
 
     BinaryTree_SetUserData(tree, NULL);

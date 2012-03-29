@@ -231,16 +231,22 @@ HEdge* GameMap_HEdge(GameMap* map, uint idx)
 
 int GameMap_BspNodeIndex(GameMap* map, BspNode* node)
 {
+    uint i;
     assert(map);
-    if(!node || !(node >= map->bspNodes && node <= &map->bspNodes[map->numBspNodes])) return -1;
-    return node - map->bspNodes;
+    if(!node) return -1;
+    /// @todo replace with a more performant algorithm!
+    for(i = 0; i < map->numBspNodes; ++i)
+    {
+        if(node == map->bspNodes[i]) return (int)i;
+    }
+    return -1;
 }
 
 BspNode* GameMap_BspNode(GameMap* map, uint idx)
 {
     assert(map);
     if(idx >= map->numBspNodes) return NULL;
-    return &map->bspNodes[idx];
+    return map->bspNodes[idx];
 }
 
 uint GameMap_VertexCount(GameMap* map)
@@ -1137,7 +1143,7 @@ int GameMap_BspNodeIterator(GameMap* map, int (*callback) (BspNode*, void*), voi
     assert(map);
     for(i = 0; i < map->numBspNodes; ++i)
     {
-        int result = callback(map->bspNodes + i, parameters);
+        int result = callback(map->bspNodes[i], parameters);
         if(result) return result;
     }
     return false; // Continue iteration.
@@ -1408,7 +1414,7 @@ BspLeaf* GameMap_BspLeafAtPoint(GameMap* map, float point_[2])
     float point[2];
 
     // A single BSP leaf is a special case
-    if(!map->numBspNodes)
+    if(!map->bsp)
     {
         return (BspLeaf*) map->bspLeafs;
     }
@@ -1416,7 +1422,7 @@ BspLeaf* GameMap_BspLeafAtPoint(GameMap* map, float point_[2])
     point[0] = point_? point_[0] : 0;
     point[1] = point_? point_[1] : 0;
 
-    node = map->bspNodes + (map->numBspNodes - 1);
+    node = map->bsp;
     do
     {
         ASSERT_DMU_TYPE(node, DMU_BSPNODE);

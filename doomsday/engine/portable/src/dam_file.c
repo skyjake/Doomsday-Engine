@@ -777,10 +777,9 @@ static runtime_mapdata_header_t* readBspReference(GameMap* map)
 
 #undef NF_LEAF
 
-static void writeNode(GameMap* map, uint idx)
+static void writeNode(GameMap* map, BspNode* n)
 {
-    BspNode* n = &map->bspNodes[idx];
-
+    assert(n);
     writeFloat(n->partition.x);
     writeFloat(n->partition.y);
     writeFloat(n->partition.dX);
@@ -797,10 +796,9 @@ static void writeNode(GameMap* map, uint idx)
     writeBspReference(map, n->children[LEFT]);
 }
 
-static void readNode(GameMap* map, uint idx)
+static void readNode(GameMap* map, BspNode* n)
 {
-    BspNode* n = &map->bspNodes[idx];
-
+    assert(n);
     n->partition.x = readFloat();
     n->partition.y = readFloat();
     n->partition.dX = readFloat();
@@ -819,14 +817,14 @@ static void readNode(GameMap* map, uint idx)
 
 static void archiveNodes(GameMap* map, boolean write)
 {
-    uint i;
+    //uint i;
 
     if(write)
         beginSegment(DAMSEG_BSPNODES);
     else
         assertSegment(DAMSEG_BSPNODES);
 
-    if(write)
+    /*if(write)
     {
         writeLong(map->numBspNodes);
         for(i = 0; i < map->numBspNodes; ++i)
@@ -837,7 +835,7 @@ static void archiveNodes(GameMap* map, boolean write)
         map->numBspNodes = readLong();
         for(i = 0; i < map->numBspNodes; ++i)
             readNode(map, i);
-    }
+    }*/
 
     if(write)
         endSegment();

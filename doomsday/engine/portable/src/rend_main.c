@@ -3408,9 +3408,9 @@ void Rend_RenderMap(void)
 
         // We don't want BSP clip checking for the first BSP leaf.
         firstBspLeaf = true;
-        if(NUM_BSPNODES)
+        if(theMap->bsp)
         {
-            Rend_RenderNode((runtime_mapdata_header_t*) BSPNODE_PTR(NUM_BSPNODES - 1));
+            Rend_RenderNode((runtime_mapdata_header_t*) theMap->bsp);
         }
         else
         {

@@ -174,7 +174,7 @@ extern Vertex* vertexes;
 extern HEdge* hedges;
 extern Sector* sectors;
 extern BspLeaf* bspLeafs;
-extern BspNode* bspNodes;
+extern BspNode** bspNodes;
 extern LineDef* lineDefs;
 extern SideDef* sideDefs;
 extern Polyobj** polyObjs; ///< List of all polyobjs on the current map.

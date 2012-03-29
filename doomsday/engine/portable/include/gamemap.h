@@ -92,12 +92,6 @@ typedef struct gamemap_s {
     uint numSectors;
     Sector* sectors;
 
-    uint numBspLeafs;
-    BspLeaf* bspLeafs;
-
-    uint numBspNodes;
-    BspNode* bspNodes;
-
     uint numLineDefs;
     LineDef* lineDefs;
 
@@ -106,6 +100,15 @@ typedef struct gamemap_s {
 
     uint numPolyObjs;
     Polyobj** polyObjs;
+
+    BspNode* bsp;
+
+    /// BSP object LUTs:
+    uint numBspNodes;
+    BspNode** bspNodes;
+
+    uint numBspLeafs;
+    BspLeaf* bspLeafs;
 
     gameobjdata_t gameObjData;
 

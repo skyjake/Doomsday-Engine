@@ -299,26 +299,17 @@ typedef struct {
 static int C_DECL hardenNode(BinaryTree* tree, void* data)
 {
     BinaryTree* right, *left;
-    BspNode* nodeData;
     hardenbspparams_t* params;
     BspNode* node;
 
     if(BinaryTree_IsLeaf(tree))
         return false; // Continue iteration.
 
-    nodeData =(BspNode*)BinaryTree_UserData(tree);
+    node =(BspNode*)BinaryTree_UserData(tree);
     params = (hardenbspparams_t*) data;
 
-    node = &params->dest->bspNodes[nodeData->buildData.index = params->nodeCurIndex++];
-    node->header.type = DMU_BSPNODE;
-
-    node->partition.x = nodeData->partition.x;
-    node->partition.y = nodeData->partition.y;
-    node->partition.dX = nodeData->partition.dX;
-    node->partition.dY = nodeData->partition.dY;
-
-    memcpy(&node->aaBox[RIGHT], &nodeData->aaBox[RIGHT], sizeof(node->aaBox[RIGHT]));
-    memcpy(&node->aaBox[LEFT],  &nodeData->aaBox[LEFT],  sizeof(node->aaBox[LEFT]));
+    // Add this to BspNode LUT.
+    params->dest->bspNodes[params->nodeCurIndex++] = node;
 
     right = BinaryTree_Child(tree, RIGHT);
     if(right)
@@ -334,7 +325,7 @@ static int C_DECL hardenNode(BinaryTree* tree, void* data)
         else
         {
             BspNode* data = (BspNode*) BinaryTree_UserData(right);
-            node->children[RIGHT] = (runtime_mapdata_header_t*)(params->dest->bspNodes + data->buildData.index);
+            node->children[RIGHT] = (runtime_mapdata_header_t*)data;
         }
     }
 
@@ -352,7 +343,7 @@ static int C_DECL hardenNode(BinaryTree* tree, void* data)
         else
         {
             BspNode* data = (BspNode*) BinaryTree_UserData(left);
-            node->children[LEFT] = (runtime_mapdata_header_t*)(params->dest->bspNodes + data->buildData.index);
+            node->children[LEFT] = (runtime_mapdata_header_t*)data;
         }
     }
 
@@ -378,7 +369,7 @@ static void hardenBSP(GameMap* dest, BinaryTree* rootNode)
     dest->numBspNodes = 0;
     BinaryTree_PostOrder(rootNode, countNode, &dest->numBspNodes);
     if(dest->numBspNodes != 0)
-        dest->bspNodes = (BspNode*)Z_Calloc(dest->numBspNodes * sizeof(BspNode), PU_MAPSTATIC, 0);
+        dest->bspNodes = (BspNode**)Z_Malloc(dest->numBspNodes * sizeof(BspNode*), PU_MAPSTATIC, 0);
     else
         dest->bspNodes = 0;
 
@@ -391,8 +382,11 @@ static void hardenBSP(GameMap* dest, BinaryTree* rootNode)
     if(BinaryTree_IsLeaf(rootNode))
     {
         hardenLeaf(dest, &dest->bspLeafs[0], (bspleafdata_t*) BinaryTree_UserData(rootNode));
+        dest->bsp = NULL;
         return;
     }
+
+    dest->bsp = (BspNode*)BinaryTree_UserData(rootNode);
 
     { hardenbspparams_t p;
     p.dest = dest;
