@@ -91,10 +91,10 @@ static int hedgeCollector(BinaryTree* tree, void* parameters)
     if(BinaryTree_IsLeaf(tree))
     {
         hedgecollectorparams_t* p = (hedgecollectorparams_t*) parameters;
-        bspleafdata_t* leaf = (bspleafdata_t*) BinaryTree_UserData(tree);
+        BspLeaf* leaf = (BspLeaf*) BinaryTree_UserData(tree);
         bsp_hedge_t* hedge;
 
-        for(hedge = leaf->hedges; hedge; hedge = hedge->nextInLeaf)
+        for(hedge = leaf->buildData.hedges; hedge; hedge = hedge->nextInLeaf)
         {
             if(p->indexPtr)
             {
@@ -247,32 +247,25 @@ static void hardenBspLeafHEdgeList(GameMap* dest, BspLeaf* bspLeaf, bsp_hedge_t*
     bspLeaf->hedges = hedges;
 }
 
-static BspLeaf* hardenLeaf(GameMap* map, const bspleafdata_t* src)
+static BspLeaf* hardenLeaf(GameMap* map, BspLeaf* leaf)
 {
     HEdge** segp;
     boolean found;
     size_t hedgeCount;
     bsp_hedge_t* hedge;
-    BspLeaf* dest;
 
-    dest = BspLeaf_New();
-
-    hedge = src->hedges;
+    hedge = leaf->buildData.hedges;
     hedgeCount = 0;
     do
     {
         hedgeCount++;
     } while((hedge = hedge->nextInLeaf) != NULL);
 
-    dest->header.type = DMU_BSPLEAF;
-    dest->hedgeCount = (uint) hedgeCount;
-    dest->shadows = NULL;
-    dest->vertices = NULL;
-
-    hardenBspLeafHEdgeList(map, dest, src->hedges, hedgeCount);
+    leaf->hedgeCount = (uint) hedgeCount;
+    hardenBspLeafHEdgeList(map, leaf, leaf->buildData.hedges, hedgeCount);
 
     // Determine which sector this BSP leaf belongs to.
-    segp = dest->hedges;
+    segp = leaf->hedges;
     found = false;
     while(*segp)
     {
@@ -280,19 +273,19 @@ static BspLeaf* hardenLeaf(GameMap* map, const bspleafdata_t* src)
         if(!found && hedge->lineDef && HEDGE_SIDEDEF(hedge))
         {
             SideDef* side = HEDGE_SIDEDEF(hedge);
-            dest->sector = side->sector;
+            leaf->sector = side->sector;
             found = true;
         }
-        hedge->bspLeaf = dest;
+        hedge->bspLeaf = leaf;
         segp++;
     }
 
-    if(!dest->sector)
+    if(!leaf->sector)
     {
-        Con_Message("hardenLeaf: Warning orphan BSP leaf %p.\n", dest);
+        Con_Message("hardenLeaf: Warning orphan BSP leaf %p.\n", leaf);
     }
 
-    return dest;
+    return leaf;
 }
 
 typedef struct {
@@ -321,12 +314,11 @@ static int C_DECL hardenNode(BinaryTree* tree, void* data)
     {
         if(BinaryTree_IsLeaf(right))
         {
-            bspleafdata_t* leaf = (bspleafdata_t*) BinaryTree_UserData(right);
-            BspLeaf* bspLeaf;
+            BspLeaf* leaf = (BspLeaf*) BinaryTree_UserData(right);
 
-            bspLeaf = hardenLeaf(params->dest, leaf);
-            node->children[RIGHT] = (runtime_mapdata_header_t*)bspLeaf;
-            params->dest->bspLeafs[params->leafCurIndex++] = bspLeaf;
+            hardenLeaf(params->dest, leaf);
+            node->children[RIGHT] = (runtime_mapdata_header_t*)leaf;
+            params->dest->bspLeafs[params->leafCurIndex++] = leaf;
         }
         else
         {
@@ -340,12 +332,11 @@ static int C_DECL hardenNode(BinaryTree* tree, void* data)
     {
         if(BinaryTree_IsLeaf(left))
         {
-            bspleafdata_t* leaf = (bspleafdata_t*) BinaryTree_UserData(left);
-            BspLeaf* bspLeaf;
+            BspLeaf* leaf = (BspLeaf*) BinaryTree_UserData(left);
 
-            bspLeaf = hardenLeaf(params->dest, leaf);
-            node->children[LEFT] = (runtime_mapdata_header_t*)bspLeaf;
-            params->dest->bspLeafs[params->leafCurIndex++] = bspLeaf;
+            hardenLeaf(params->dest, leaf);
+            node->children[LEFT] = (runtime_mapdata_header_t*)leaf;
+            params->dest->bspLeafs[params->leafCurIndex++] = leaf;
         }
         else
         {
@@ -388,8 +379,9 @@ static void hardenBSP(GameMap* dest, BinaryTree* rootNode)
 
     if(BinaryTree_IsLeaf(rootNode))
     {
-        hardenLeaf(dest, (bspleafdata_t*) BinaryTree_UserData(rootNode));
-        dest->bsp = (runtime_mapdata_header_t*)dest->bspLeafs[0];
+        BspLeaf* leaf = (BspLeaf*) BinaryTree_UserData(rootNode);
+        hardenLeaf(dest, leaf);
+        dest->bsp = (runtime_mapdata_header_t*)leaf;
         return;
     }
 

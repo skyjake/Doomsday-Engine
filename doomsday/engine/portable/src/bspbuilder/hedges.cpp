@@ -104,10 +104,8 @@ bsp_hedge_t* BspBuilder::newHEdge(LineDef* lineDef, LineDef* sourceLineDef,
 
 void BspBuilder::deleteHEdge(bsp_hedge_t* hedge)
 {
-    if(hedge)
-    {
-        freeHEdge(hedge);
-    }
+    if(!hedge) return;
+    freeHEdge(hedge);
 }
 
 bsp_hedge_t* BspBuilder::splitHEdge(bsp_hedge_t* oldHEdge, double x, double y)

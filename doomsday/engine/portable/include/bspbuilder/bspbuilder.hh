@@ -79,14 +79,19 @@ public:
      */
     boolean build(GameMap* map, Vertex*** vertexes, uint* numVertexes);
 
-    void deleteLeaf(struct bspleafdata_s* leaf);
-
     /**
      * Destroy the specified intersection.
      *
      * @param inter  Ptr to the intersection to be destroyed.
      */
     void deleteHEdgeIntercept(HEdgeIntercept* intercept);
+
+    /**
+     * Destroys the given half-edge.
+     *
+     * @param hedge  Ptr to the half-edge to be destroyed.
+     */
+    void deleteHEdge(bsp_hedge_t* hedge);
 
 private:
     inline bsp_hedge_t* allocHEdge(void)
@@ -101,7 +106,7 @@ private:
         // Ignore @a hedge it'll be free'd along with the block allocator itself.
     }
 
-    struct bspleafdata_s* createBSPLeaf(SuperBlock* hedgeList);
+    BspLeaf* createBSPLeaf(SuperBlock* hedgeList);
 
     const HPlaneIntercept* makeHPlaneIntersection(HPlane* hplane, bsp_hedge_t* hedge, int leftSide);
 
@@ -114,8 +119,6 @@ private:
      */
     SuperBlockmap* createInitialHEdges(GameMap* map);
 
-    struct bspleafdata_s* newLeaf(void);
-
     void mergeIntersections(HPlane* intersections);
 
     void buildHEdgesAtIntersectionGaps(HPlane* hplane,
@@ -123,13 +126,6 @@ private:
 
     void addEdgeTip(Vertex* vert, double dx, double dy, bsp_hedge_t* back,
         bsp_hedge_t* front);
-
-    /**
-     * Destroys the given half-edge.
-     *
-     * @param hedge  Ptr to the half-edge to be destroyed.
-     */
-    void deleteHEdge(bsp_hedge_t* hedge);
 
     /**
      * Splits the given half-edge at the point (x,y). The new half-edge is returned.

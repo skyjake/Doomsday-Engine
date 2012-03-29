@@ -26,6 +26,10 @@
 #include "r_data.h"
 #include "p_dmu.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 BspLeaf* BspLeaf_New(void);
 
 /**
@@ -71,5 +75,9 @@ int BspLeaf_GetProperty(const BspLeaf* bspLeaf, setargs_t* args);
  * @return  Always @c 0 (can be used as an iterator).
  */
 int BspLeaf_SetProperty(BspLeaf* bspLeaf, const setargs_t* args);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /// LIBDENG_MAP_BSPLEAF

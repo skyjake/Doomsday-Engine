@@ -91,10 +91,6 @@ typedef struct bsp_hedge_s {
     byte side; // 0 for right, 1 for left.
 } bsp_hedge_t;
 
-typedef struct bspleafdata_s {
-    struct bsp_hedge_s* hedges; // Head ptr to a list of half-edges at this leaf.
-} bspleafdata_t;
-
 /**
  * Plain-old-data structure containing additional information for a half-edge
  * half-plane intercept point where the geometry intersects (an incident vertex

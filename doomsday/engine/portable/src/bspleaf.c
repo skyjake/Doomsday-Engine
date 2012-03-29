@@ -30,6 +30,7 @@
 BspLeaf* BspLeaf_New(void)
 {
     BspLeaf* leaf = Z_Calloc(sizeof(*leaf), PU_MAPSTATIC, 0);
+    leaf->header.type = DMU_BSPLEAF;
     return leaf;
 }
 

@@ -305,16 +305,21 @@ int C_DECL BspBuilder_FreeBSPData(BinaryTree* tree, void* parameters)
     BspBuilder* builder = (BspBuilder*)parameters;
     void* bspData = BinaryTree_UserData(tree);
 
-    if(bspData)
+    if(bspData && BinaryTree_IsLeaf(tree))
     {
-        if(BinaryTree_IsLeaf(tree))
-            builder->deleteLeaf((bspleafdata_t*)bspData);
-        //else
-        //    M_Free(bspData);
+        BspLeaf* leaf = static_cast<BspLeaf*>(bspData);
+        bsp_hedge_t* cur, *np;
+
+        cur = leaf->buildData.hedges;
+        while(cur)
+        {
+            np = cur->nextInLeaf;
+            builder->deleteHEdge(cur);
+            cur = np;
+        }
     }
 
     BinaryTree_SetUserData(tree, NULL);
-
     return false; // Continue iteration.
 }
 
