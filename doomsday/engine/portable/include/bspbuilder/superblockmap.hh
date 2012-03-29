@@ -194,43 +194,38 @@ private:
 
 class SuperBlockmap {
 public:
-    SuperBlockmap(const AABox& bounds) { init(bounds); }
-    ~SuperBlockmap() { clear(); }
+    /**
+     * @param bounds  Bounding box in map coordinates for the whole blockmap.
+     */
+    SuperBlockmap(const AABox& bounds);
+    ~SuperBlockmap();
 
     /**
-     * Retrieve the root SuperBlock in this SuperBlockmap.
-     *
+     * Retrieve the root SuperBlock.
      * @return  Root SuperBlock instance.
      */
     SuperBlock* root();
 
     /**
      * Find the axis-aligned bounding box defined by the vertices of all
-     * HEdges within this superblock. If no HEdges are linked then @a bounds
-     * will be set to the "cleared" state (i.e., min[x,y] > max[x,y]).
+     * HEdges within this superblockmap. If there are no HEdges linked to
+     * this then @a bounds will be initialized to the "cleared" state
+     * (i.e., min[x,y] > max[x,y]).
      *
-     * @param bounds        Determined bounds are written here.
+     * @param bounds  Determined bounds are written here.
      */
-    void findHEdgeBounds(AABoxf& aaBox);
+    void findHEdgeBounds(AABoxf& bounds);
 
     bool inline isLeaf(const SuperBlock& block) const;
 
-private:
-    void init(const AABox& bounds);
-
-    void clear();
-    void clearBlockWorker(SuperBlock& block);
-
     /**
-     * The KdTree of SuperBlocks.
-     *
-     * Subblocks:
-     * RIGHT - has the lower coordinates.
-     * LEFT  - has the higher coordinates.
-     * Division of a block always occurs horizontally:
-     *     e.g. 512x512 -> 256x512 -> 256x256.
+     * Empty this SuperBlockmap clearing all HEdges and sub-blocks.
      */
-    KdTree* _kdTree;
+    void clear();
+
+private:
+    struct Instance;
+    Instance* d;
 };
 
 } // namespace de

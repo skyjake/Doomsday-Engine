@@ -221,17 +221,64 @@ int SuperBlock::traverse(int (C_DECL *callback)(SuperBlock*, void*), void* param
     return false; // Continue iteration.
 }
 
-void SuperBlockmap::init(const AABox& bounds)
+struct SuperBlockmap::Instance
 {
-    _kdTree = KdTree_New(&bounds);
+    /**
+     * The KdTree of SuperBlocks.
+     *
+     * Subblocks:
+     * RIGHT - has the lower coordinates.
+     * LEFT  - has the higher coordinates.
+     * Division of a block always occurs horizontally:
+     *     e.g. 512x512 -> 256x512 -> 256x256.
+     */
+    KdTree* kdTree;
 
-    SuperBlock* block = new SuperBlock(*this);
-    block->_tree = KdTreeNode_SetUserData(KdTree_Root(_kdTree), block);
+    Instance(SuperBlockmap& bmap, const AABox& bounds)
+    {
+        kdTree = KdTree_New(&bounds);
+        SuperBlock* block = new SuperBlock(bmap);
+        block->_tree = KdTreeNode_SetUserData(KdTree_Root(kdTree), block);
+    }
+
+    ~Instance()
+    {
+        KdTree_Delete(kdTree);
+    }
+
+    void clearBlockWorker(SuperBlock& block)
+    {
+        if(block._tree)
+        {
+            // Recursively handle sub-blocks.
+            KdTreeNode* child;
+            for(uint num = 0; num < 2; ++num)
+            {
+                child = KdTreeNode_Child(block._tree, num);
+                if(!child) continue;
+
+                SuperBlock* blockPtr = static_cast<SuperBlock*>(KdTreeNode_UserData(child));
+                if(blockPtr) clearBlockWorker(*blockPtr);
+            }
+        }
+        delete &block;
+    }
+};
+
+SuperBlockmap::SuperBlockmap(const AABox& bounds)
+{
+    d = new Instance(*this, bounds);
+}
+
+SuperBlockmap::~SuperBlockmap()
+{
+    clear();
+    delete d;
 }
 
 SuperBlock* SuperBlockmap::root()
 {
-    return static_cast<SuperBlock*>(KdTreeNode_UserData(KdTree_Root(_kdTree)));
+    return static_cast<SuperBlock*>(KdTreeNode_UserData(KdTree_Root(d->kdTree)));
 }
 
 bool SuperBlockmap::isLeaf(const SuperBlock& block) const
@@ -266,29 +313,10 @@ static int findHEdgeBoundsWorker(SuperBlock* block, void* parameters)
     return false; // Continue iteration.
 }
 
-void SuperBlockmap::clearBlockWorker(SuperBlock& block)
-{
-    if(block._tree)
-    {
-        // Recursively handle sub-blocks.
-        KdTreeNode* child;
-        for(uint num = 0; num < 2; ++num)
-        {
-            child = KdTreeNode_Child(block._tree, num);
-            if(!child) continue;
-
-            SuperBlock* blockPtr = static_cast<SuperBlock*>(KdTreeNode_UserData(child));
-            if(blockPtr) clearBlockWorker(*blockPtr);
-        }
-    }
-    delete &block;
-}
-
 void SuperBlockmap::clear()
 {
     SuperBlock* block = root();
-    if(block) clearBlockWorker(*block);
-    KdTree_Delete(_kdTree);
+    if(block) d->clearBlockWorker(*block);
 }
 
 void SuperBlockmap::findHEdgeBounds(AABoxf& aaBox)
