@@ -173,7 +173,7 @@ extern Uri* mapUri;
 extern Vertex* vertexes;
 extern HEdge* hedges;
 extern Sector* sectors;
-extern BspLeaf* bspLeafs;
+extern BspLeaf** bspLeafs;
 extern BspNode** bspNodes;
 extern LineDef* lineDefs;
 extern SideDef* sideDefs;

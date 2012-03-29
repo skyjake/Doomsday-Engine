@@ -275,10 +275,5 @@ boolean GameMap_CheckLineSight(GameMap* map, const float from[3], const float to
     }
 
     validCount++;
-    // A single leaf is a special case.
-    if(!map->bsp)
-    {
-        return crossBspLeaf(map, map->bspLeafs, &los);
-    }
-    return crossBspNode(map, (runtime_mapdata_header_t*)(map->bsp), &los);
+    return crossBspNode(map, map->bsp, &los);
 }

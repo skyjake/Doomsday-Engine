@@ -418,7 +418,7 @@ static void archiveSides(GameMap *map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
-static void writeSector(const GameMap *map, uint idx)
+static void writeSector(GameMap* map, uint idx)
 {
     uint                i;
     Sector             *s = &map->sectors[idx];
@@ -475,15 +475,15 @@ static void writeSector(const GameMap *map, uint idx)
     // BspLeaf list.
     writeLong((long) s->bspLeafCount);
     for(i = 0; i < s->bspLeafCount; ++i)
-        writeLong((s->bspLeafs[i] - map->bspLeafs) + 1);
+        writeLong(GameMap_BspLeafIndex(map, s->bspLeafs[i]) + 1);
 
     // Reverb BSP leaf attributors.
     writeLong((long) s->numReverbBspLeafAttributors);
     for(i = 0; i < s->numReverbBspLeafAttributors; ++i)
-        writeLong((s->reverbBspLeafs[i] - map->bspLeafs) + 1);
+        writeLong(GameMap_BspLeafIndex(map, s->reverbBspLeafs[i]) + 1);
 }
 
-static void readSector(const GameMap *map, uint idx)
+static void readSector(GameMap* map, uint idx)
 {
     uint                i, numPlanes;
     float               offset[2], rgba[4];
@@ -561,7 +561,7 @@ static void readSector(const GameMap *map, uint idx)
     s->bspLeafs =
         Z_Malloc(sizeof(BspLeaf*) * (s->bspLeafCount + 1), PU_MAP, 0);
     for(i = 0; i < s->bspLeafCount; ++i)
-        s->bspLeafs[i] = &map->bspLeafs[(unsigned) readLong() - 1];
+        s->bspLeafs[i] = GameMap_BspLeaf(map, (unsigned) readLong() - 1);
     s->bspLeafs[i] = NULL; // Terminate.
 
     // Reverb BSP leaf attributors.
@@ -569,7 +569,7 @@ static void readSector(const GameMap *map, uint idx)
     s->reverbBspLeafs =
         Z_Malloc(sizeof(BspLeaf*) * (s->numReverbBspLeafAttributors + 1), PU_MAP, 0);
     for(i = 0; i < s->numReverbBspLeafAttributors; ++i)
-        s->reverbBspLeafs[i] = &map->bspLeafs[(unsigned) readLong() - 1];
+        s->reverbBspLeafs[i] = GameMap_BspLeaf(map, (unsigned) readLong() - 1);
     s->reverbBspLeafs[i] = NULL; // Terminate.
 }
 
@@ -601,10 +601,10 @@ static void archiveSectors(GameMap *map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
-static void writeBspLeaf(const GameMap *map, uint idx)
+static void writeBspLeaf(const GameMap* map, BspLeaf* s)
 {
-    uint                i;
-    BspLeaf        *s = &map->bspLeafs[idx];
+    uint i;
+    assert(s);
 
     writeLong((long) s->flags);
     writeFloat(s->aaBox.minX);
@@ -626,11 +626,11 @@ static void writeBspLeaf(const GameMap *map, uint idx)
         writeLong((s->hedges[i] - map->hedges) + 1);
 }
 
-static void readBspLeaf(const GameMap *map, uint idx)
+static void readBspLeaf(const GameMap* map, BspLeaf* s)
 {
-    uint                i;
-    long                obIdx;
-    BspLeaf        *s = &map->bspLeafs[idx];
+    uint i;
+    long obIdx;
+    assert(s);
 
     s->flags = (int) readLong();
     s->aaBox.minX = readFloat();
@@ -656,16 +656,16 @@ static void readBspLeaf(const GameMap *map, uint idx)
     s->hedges[i] = NULL; // Terminate.
 }
 
-static void archiveBspLeafs(GameMap *map, boolean write)
+static void archiveBspLeafs(GameMap* map, boolean write)
 {
-    uint                i;
+    //uint i;
 
     if(write)
         beginSegment(DAMSEG_BSPLEAFS);
     else
         assertSegment(DAMSEG_BSPLEAFS);
 
-    if(write)
+    /*if(write)
     {
         writeLong(map->numBspLeafs);
         for(i = 0; i < map->numBspLeafs; ++i)
@@ -676,7 +676,7 @@ static void archiveBspLeafs(GameMap *map, boolean write)
         map->numBspLeafs = readLong();
         for(i = 0; i < map->numBspLeafs; ++i)
             readBspLeaf(map, i);
-    }
+    }*/
 
     if(write)
         endSegment();
@@ -684,7 +684,7 @@ static void archiveBspLeafs(GameMap *map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
-static void writeSeg(const GameMap *map, uint idx)
+static void writeSeg(GameMap* map, uint idx)
 {
     HEdge              *s = &map->hedges[idx];
 
@@ -695,14 +695,14 @@ static void writeSeg(const GameMap *map, uint idx)
     writeLong(s->lineDef? ((s->lineDef - map->lineDefs) + 1) : 0);
     writeLong(s->sec[FRONT]? ((s->sec[FRONT] - map->sectors) + 1) : 0);
     writeLong(s->sec[BACK]? ((s->sec[BACK] - map->sectors) + 1) : 0);
-    writeLong(s->bspLeaf? ((s->bspLeaf - map->bspLeafs) + 1) : 0);
+    writeLong(s->bspLeaf? (GameMap_BspLeafIndex(map, s->bspLeaf) + 1) : 0);
     writeLong(s->twin? ((s->twin - map->hedges) + 1) : 0);
     writeLong((long) s->angle);
     writeByte(s->side);
     writeByte(s->flags);
 }
 
-static void readSeg(const GameMap *map, uint idx)
+static void readSeg(GameMap* map, uint idx)
 {
     long                obIdx;
     HEdge              *s = &map->hedges[idx];
@@ -718,7 +718,7 @@ static void readSeg(const GameMap *map, uint idx)
     obIdx = readLong();
     s->sec[BACK] = (obIdx == 0? NULL : &map->sectors[(unsigned) obIdx - 1]);
     obIdx = readLong();
-    s->bspLeaf = (obIdx == 0? NULL : &map->bspLeafs[(unsigned) obIdx - 1]);
+    s->bspLeaf = (obIdx == 0? NULL : GameMap_BspLeaf(map, (unsigned) obIdx - 1));
     obIdx = readLong();
     s->twin = (obIdx == 0? NULL : &map->hedges[(unsigned) obIdx - 1]);
     s->angle = (angle_t) readLong();

@@ -176,7 +176,7 @@ static void findBspLeafsAffectingSector(GameMap* map, uint secIDX)
 
     for(i = 0; i < map->numBspLeafs; ++i)
     {
-        bspLeaf = &map->bspLeafs[i];
+        bspLeaf = GameMap_BspLeaf(map, i);
 
         // Is this BSP leaf close enough?
         if(bspLeaf->sector == sec || // leaf is IN this sector

@@ -26,6 +26,8 @@
 #include "r_data.h"
 #include "p_dmu.h"
 
+BspLeaf* BspLeaf_New(void);
+
 /**
  * Update the BspLeaf's map space axis-aligned bounding box to encompass
  * the points defined by it's vertices.

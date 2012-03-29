@@ -101,14 +101,14 @@ typedef struct gamemap_s {
     uint numPolyObjs;
     Polyobj** polyObjs;
 
-    BspNode* bsp;
+    runtime_mapdata_header_t* bsp;
 
     /// BSP object LUTs:
     uint numBspNodes;
     BspNode** bspNodes;
 
     uint numBspLeafs;
-    BspLeaf* bspLeafs;
+    BspLeaf** bspLeafs;
 
     gameobjdata_t gameObjData;
 

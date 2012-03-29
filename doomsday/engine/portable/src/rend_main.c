@@ -3037,7 +3037,7 @@ void Rend_RenderSurfaceVectors(void)
 
     for(i = 0; i < NUM_BSPLEAFS; ++i)
     {
-        BspLeaf* bspLeaf = &bspLeafs[i];
+        BspLeaf* bspLeaf = bspLeafs[i];
         uint j;
 
         if(!bspLeaf->sector) continue;
@@ -3408,14 +3408,14 @@ void Rend_RenderMap(void)
 
         // We don't want BSP clip checking for the first BSP leaf.
         firstBspLeaf = true;
-        if(theMap->bsp)
+        if(theMap->bsp->type == DMU_BSPNODE)
         {
-            Rend_RenderNode((runtime_mapdata_header_t*) theMap->bsp);
+            Rend_RenderNode(theMap->bsp);
         }
         else
         {
             // A single leaf is a special case.
-            Rend_RenderBspLeaf(BSPLEAF_PTR(0));
+            Rend_RenderBspLeaf((BspLeaf*)theMap->bsp);
         }
 
         if(Rend_MobjShadowsEnabled())

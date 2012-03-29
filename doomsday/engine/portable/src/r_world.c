@@ -1231,7 +1231,7 @@ void R_PolygonizeMap(GameMap* map)
 
     for(i = 0; i < map->numBspLeafs; ++i)
     {
-        BspLeaf* bspLeaf = &map->bspLeafs[i];
+        BspLeaf* bspLeaf = GameMap_BspLeaf(map, i);
         tessellateBspLeaf(bspLeaf, true/*force rebuild*/);
     }
 

@@ -201,18 +201,24 @@ Sector* GameMap_SectorByOrigin(GameMap* map, const void* ddMobjBase)
     return NULL;
 }
 
-int GameMap_BspLeafIndex(GameMap* map, BspLeaf* bspLeaf)
+int GameMap_BspLeafIndex(GameMap* map, BspLeaf* leaf)
 {
+    uint i;
     assert(map);
-    if(!bspLeaf || !(bspLeaf >= map->bspLeafs && bspLeaf <= &map->bspLeafs[map->numBspLeafs])) return -1;
-    return bspLeaf - map->bspLeafs;
+    if(!leaf) return -1;
+    /// @todo replace with a more performant algorithm!
+    for(i = 0; i < map->numBspLeafs; ++i)
+    {
+        if(leaf == map->bspLeafs[i]) return (int)i;
+    }
+    return -1;
 }
 
 BspLeaf* GameMap_BspLeaf(GameMap* map, uint idx)
 {
     assert(map);
     if(idx >= map->numBspLeafs) return NULL;
-    return &map->bspLeafs[idx];
+    return map->bspLeafs[idx];
 }
 
 int GameMap_HEdgeIndex(GameMap* map, HEdge* hedge)
@@ -888,7 +894,7 @@ int GameMap_BspLeafIterator(GameMap* map, int (*callback) (BspLeaf*, void*), voi
     assert(map);
     for(i = 0; i < map->numBspLeafs; ++i)
     {
-        int result = callback(map->bspLeafs + i, parameters);
+        int result = callback(map->bspLeafs[i], parameters);
         if(result) return result;
     }
     return false; // Continue iteration.
@@ -1410,25 +1416,18 @@ int GameMap_PathXYTraverse(GameMap* map, float fromX, float fromY, float toX, fl
 
 BspLeaf* GameMap_BspLeafAtPoint(GameMap* map, float point_[2])
 {
-    BspNode* node;
+    runtime_mapdata_header_t* node;
     float point[2];
-
-    // A single BSP leaf is a special case
-    if(!map->bsp)
-    {
-        return (BspLeaf*) map->bspLeafs;
-    }
 
     point[0] = point_? point_[0] : 0;
     point[1] = point_? point_[1] : 0;
 
     node = map->bsp;
-    do
+    while(node->type != DMU_BSPLEAF)
     {
-        ASSERT_DMU_TYPE(node, DMU_BSPNODE);
-        node = (BspNode*)node->children[P_PointOnPartitionSide(point[0], point[1], &node->partition)];
-    } while(((runtime_mapdata_header_t*) node)->type != DMU_BSPLEAF);
-
+        BspNode* bspNode = (BspNode*)node;
+        node = bspNode->children[P_PointOnPartitionSide(point[0], point[1], &bspNode->partition)];
+    }
     return (BspLeaf*)node;
 }
 

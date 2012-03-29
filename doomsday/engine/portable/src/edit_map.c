@@ -600,7 +600,7 @@ static void hardenSectorBspLeafList(GameMap* map, uint secIDX)
     count = 0;
     for(i = 0; i < map->numBspLeafs; ++i)
     {
-        BspLeaf *bspLeaf = &map->bspLeafs[i];
+        BspLeaf *bspLeaf = map->bspLeafs[i];
         if(bspLeaf->sector == sec)
             ++count;
     }
@@ -612,7 +612,7 @@ static void hardenSectorBspLeafList(GameMap* map, uint secIDX)
     n = 0;
     for(i = 0; i < map->numBspLeafs; ++i)
     {
-        BspLeaf* bspLeaf = &map->bspLeafs[i];
+        BspLeaf* bspLeaf = map->bspLeafs[i];
         if(bspLeaf->sector == sec)
         {
             bspLeaf->inSectorID = n;
@@ -847,7 +847,7 @@ static void prepareBspLeafs(GameMap* map)
 
     for(i = 0; i < map->numBspLeafs; ++i)
     {
-        BspLeaf* bspLeaf = &map->bspLeafs[i];
+        BspLeaf* bspLeaf = map->bspLeafs[i];
 
         BspLeaf_UpdateAABox(bspLeaf);
         BspLeaf_UpdateMidPoint(bspLeaf);

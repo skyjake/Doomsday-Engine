@@ -1142,7 +1142,7 @@ boolean LOIT_ClipLumObj(void* data, void* context)
 
 void LO_ClipInBspLeaf(uint bspLeafIdx)
 {
-    iterateBspLeafLumObjs(&bspLeafs[bspLeafIdx], LOIT_ClipLumObj, NULL);
+    iterateBspLeafLumObjs(GameMap_BspLeaf(theMap, bspLeafIdx), LOIT_ClipLumObj, NULL);
 }
 
 boolean LOIT_ClipLumObjBySight(void* data, void* context)
@@ -1188,7 +1188,7 @@ boolean LOIT_ClipLumObjBySight(void* data, void* context)
 
 void LO_ClipInBspLeafBySight(uint bspLeafIdx)
 {
-    iterateBspLeafLumObjs(&bspLeafs[bspLeafIdx], LOIT_ClipLumObjBySight, &bspLeafs[bspLeafIdx]);
+    iterateBspLeafLumObjs(GameMap_BspLeaf(theMap, bspLeafIdx), LOIT_ClipLumObjBySight, &bspLeafs[bspLeafIdx]);
 }
 
 static boolean iterateBspLeafLumObjs(BspLeaf* bspLeaf, boolean (*func) (void*, void*),

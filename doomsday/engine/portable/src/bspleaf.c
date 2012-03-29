@@ -27,6 +27,12 @@
 #include "de_refresh.h"
 #include "de_play.h"
 
+BspLeaf* BspLeaf_New(void)
+{
+    BspLeaf* leaf = Z_Calloc(sizeof(*leaf), PU_MAPSTATIC, 0);
+    return leaf;
+}
+
 void BspLeaf_UpdateAABox(BspLeaf* leaf)
 {
     HEdge** hedgeIter;
