@@ -75,8 +75,9 @@ class Changes:
         self.parse()
         
     def should_ignore(self, subject):
-        if subject.startswith("Merge branch '%s' of" % config.BRANCH):
-            # Same-branch merges are not listed.
+        #if subject.startswith("Merge branch '%s' of" % config.BRANCH):
+        if subject.startswith("Merge branch"):
+            # Branch merges are not listed.
             return True
         return False
         
