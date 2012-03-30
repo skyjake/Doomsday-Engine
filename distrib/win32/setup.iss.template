@@ -65,7 +65,6 @@ Source: "bin\QtGui4.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components
 Source: "bin\QtNetwork4.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\QtOpenGL4.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\SDL.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "bin\SDL_net.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\eax.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\libogg-0.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\libvorbis-0.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
