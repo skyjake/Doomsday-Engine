@@ -79,13 +79,13 @@ function genPackageBadgeHTML(json, downloadUri)
  * Called upon receipt of a new JSON package object graph to add it
  * to the global list of packages.
  */
-function addPackages(json, downloadUri, elementId)
+function addPackages(json, downloadUri, packageListElementId)
 {
     var record = new Array();
     var json_copy = json;
-    record["json"] = json_copy;
-    record["downloadUri"] = downloadUri;
-    record["elementId"] = elementId;
+    record['json'] = json_copy;
+    record['downloadUri'] = downloadUri;
+    record['packageListElementId'] = packageListElementId;
     packages.push(record);
 }
 
@@ -94,15 +94,21 @@ function addPackages(json, downloadUri, elementId)
  */
 function recordSorter(recordA, recordB)
 {
-    var a = recordA["json"];
+    var a = recordA['json'];
     var a_is_unstable = a.hasOwnProperty('is_unstable');
-    var b = recordB["json"];
+    var b = recordB['json'];
     var b_is_unstable = b.hasOwnProperty('is_unstable');
 
     // Order stable packages first.
     if(a_is_unstable != b_is_unstable)
     {
         return a_is_unstable? 1 : -1;
+    }
+
+    // Platform ids are arranged such that latest appears last.
+    if(a.platform_id != b.platform_id)
+    {
+        return a.platform_id > b.platform_id? 1 : -1;
     }
 
     // Use the lexicographical difference between titles.
@@ -121,7 +127,7 @@ function populatePackages()
     for(var i in packages)
     {
         var record = packages[i];
-        genPackageBadgeHTML(record["json"], record["downloadUri"]).appendTo(record["elementId"]);
+        genPackageBadgeHTML(record['json'], record['downloadUri']).appendTo(record['packageListElementId']);
     }
 }
 
@@ -142,14 +148,14 @@ function updateLatestPackages(requests)
 
         // Request!
         var deferred = $.ajax({
-            url: task["request"],
-            data: task["data"],
+            url: task['request'],
+            data: task['data'],
             context: {
-                downloadUri: task["downloadUri"],
-                elementId: task['elementId']
+                downloadUri: task['downloadUri'],
+                packageListElementId: task['packageListElementId']
             },
             success: function(json){
-                addPackages(json, this.downloadUri, this.elementId);
+                addPackages(json, this.downloadUri, this.packageListElementId);
             }
         });
 
@@ -175,7 +181,7 @@ task['data'] = {
     platform: 'linux-x86'
 };
 task['downloadUri'] = 'latestbuild?' + 'platform=linux-x86';
-task['elementId'] = '#downloads_list1';
+task['packageListElementId'] = '#downloads_list1';
 requests.push(task);
 
 task = new Array();
@@ -185,7 +191,7 @@ task['data'] = {
     platform: 'linux-x86_64'
 };
 task['downloadUri'] = 'latestbuild?' + 'platform=linux-x86_64';
-task['elementId'] = '#downloads_list1';
+task['packageListElementId'] = '#downloads_list1';
 requests.push(task);
 
 // Latest unstable Doomsday packages.
@@ -197,7 +203,7 @@ task['data'] = {
     unstable: 'yes'
 };
 task['downloadUri'] = 'latestbuild?' + 'platform=linux-x86' + '&unstable';
-task['elementId'] = '#downloads_list1';
+task['packageListElementId'] = '#downloads_list1';
 requests.push(task);
 
 task = new Array();
@@ -208,7 +214,7 @@ task['data'] = {
     unstable: 'yes'
 };
 task['downloadUri'] = 'latestbuild?' + 'platform=linux-x86_64' + '&unstable';
-task['elementId'] = '#downloads_list1';
+task['packageListElementId'] = '#downloads_list1';
 requests.push(task);
 
 // Latest stable FMOD Ex Plugin packages.
@@ -220,7 +226,7 @@ task['data'] = {
     pack: 'FMOD Ex Audio Plugin'
 };
 task['downloadUri'] = 'latestbuild?' + 'platform=linux-x86' + '&pack=FMOD Ex Audio Plugin';
-task['elementId'] = '#downloads_list2';
+task['packageListElementId'] = '#downloads_list1';
 requests.push(task);
 
 task = new Array();
@@ -231,7 +237,7 @@ task['data'] = {
     pack: 'FMOD Ex Audio Plugin'
 };
 task['downloadUri'] = 'latestbuild?' + 'platform=linux-x86_64' + '&pack=FMOD Ex Audio Plugin';
-task['elementId'] = '#downloads_list2';
+task['packageListElementId'] = '#downloads_list1';
 requests.push(task);
 
 // Latest unstable FMOD Ex Plugin packages.
@@ -244,7 +250,7 @@ task['data'] = {
     unstable: 'yes'
 };
 task['downloadUri'] = 'latestbuild?' + 'platform=linux-x86' + '&pack=FMOD Ex Audio Plugin' + '&unstable';
-task['elementId'] = '#downloads_list2';
+task['packageListElementId'] = '#downloads_list2';
 requests.push(task);
 
 task = new Array();
@@ -256,7 +262,7 @@ task['data'] = {
     unstable: 'yes'
 };
 task['downloadUri'] = 'latestbuild?' + 'platform=linux-x86_64' + '&pack=FMOD Ex Audio Plugin' + '&unstable';
-task['elementId'] = '#downloads_list2';
+task['packageListElementId'] = '#downloads_list2';
 requests.push(task);
 
 removeAllChildren('#downloads_list1');
