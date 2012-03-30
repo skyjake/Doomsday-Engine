@@ -644,6 +644,7 @@ p.legal a {
 
 #downloadbox ul li {
     margin-bottom: .4em;
+    list-style-type: none;
 }
 
 #downloadbox a.windows_icon {
@@ -667,27 +668,9 @@ p.legal a {
 }
 
 #downloadbox div.project_links {
-    margin-top:2em;
-    padding-left:.8em;
-    text-align:left;
-}
-
-#downloadbox div.socialbookmark_buttons {
-    margin-left:-.4em;
-    margin-right:-.4em;
-}
-
-#downloadbox div.package_links {
-    font-size: xx-small;
-}
-
-#downloadbox div.platform_buttons ul, div.package_links ul {
-    margin-top:0;
-}
-
-#downloadbox div.package_links ul li {
-    list-style-type: none;
-    padding-left:1em;
+    margin-top: 1.8em;
+    padding-left: 1.5em;
+    text-align: left;
 }
 
 .getitnow-label {
@@ -707,6 +690,14 @@ p.legal a {
 
 .getitnow-label span.version-label {
     padding-left: 1em;
+}
+
+#socialbookmarkbox ul li {
+    list-style-type: none;
+}
+
+#socialbookmarkbox div.hnav ul {
+    margin-bottom: 0;
 }
 
 .fb-like {
