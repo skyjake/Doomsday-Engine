@@ -36,8 +36,6 @@ BspNode* BspNode_New(double const origin[2], double const angle[2])
     node->partition.dX = (float)angle[0];
     node->partition.dY = (float)angle[1];
 
-    memset(&node->buildData, 0, sizeof(node->buildData));
-
     node->children[RIGHT] = NULL;
     node->children[LEFT] = NULL;
 
