@@ -456,7 +456,8 @@ class FrontController
         $rightTabs[] = array('page'=>'/masterserver', 'label'=>'Servers', 'tooltip'=>'Doomsday Engine Master Server');
 
 ?>
-        <div id="menu" class="hnav">
+        <div id="menuouter"><div id="menu" class="hnav">
+        <div id="divider"></div>
             <ul><section class="left">
 <?php
             echo $this->buildTabs($leftTabs, $page, "paddle_left", "paddle_left_select");
@@ -466,7 +467,8 @@ class FrontController
             echo $this->buildTabs($rightTabs, $page, "paddle_right", "paddle_right_select");
 ?></section>
             </ul>
-        </div>
+        <div id="divider2"></div>
+        </div></div>
 <?php
     }
 
@@ -476,11 +478,11 @@ class FrontController
 <body>
 <div id="mainouter">
     <div id="main">
-        <div id="divider"></div>
 <?php
+
         $this->outputMainMenu($page);
+
 ?>
-        <div id="divider2"></div>
         <div id="maininner">
             <div id="framepanel_bottom">
                 <div id="pageheading">
