@@ -993,32 +993,35 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
             throw new Exception('Received invalid Package.');
 
         $cacheName = $this->composePackageGraphCacheName($pack);
-
-        if($FrontController->contentCache()->isPresent($cacheName))
+        try
         {
+            if(!$FrontController->contentCache()->isPresent($cacheName))
+            {
+                // Generate a graph template for this package.
+                $template = array();
+                $pack->populateGraphTemplate($template);
+                $json = json_encode_clean($template);
+
+                // Store the graph in the cache.
+                $FrontController->contentCache()->store($cacheName, $json);
+            }
+
             $contentInfo = new ContentInfo();
-            $FrontController->contentCache()->getInfo($cacheName, $contentInfo);
+            if($FrontController->contentCache()->getInfo($cacheName, $contentInfo))
+            {
+                header('Pragma: public');
+                header('Cache-Control: public');
+                header('Content-Type: application/json');
+                header('Last-Modified: '. date(DATE_RFC1123, $contentInfo->modifiedTime));
+                header('Expires: '. date(DATE_RFC1123, strtotime('+5 days')));
 
-            header('Pragma: public');
-            header('Cache-Control: public');
-            header('Content-Type: application/json');
-            header('Last-Modified: '. date(DATE_RFC1123, $contentInfo->modifiedTime));
-            header('Expires: '. date(DATE_RFC1123, strtotime('+5 days')));
-
-            $FrontController->contentCache()->import($cacheName);
+                $FrontController->contentCache()->import($cacheName);
+            }
         }
-        else
+        catch(Exception $e)
         {
-            // Generate a graph template for this package.
-            $template = array();
-            $pack->populateGraphTemplate($template);
-            $json = json_encode_clean($template);
-
-            // Store the graph in the cache.
-            $FrontController->contentCache()->store($cacheName, $json);
-
-            // Print to the output stream.
-            print($json);
+            // Log the error.
+            trigger_error(sprintf('Failed reading Package JSON from cache.\nError:%s', $e->getMessage()), E_USER_WARNING);
         }
         return TRUE;
     }
