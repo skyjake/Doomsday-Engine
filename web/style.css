@@ -609,15 +609,21 @@ p.legal a {
 
 /*----------------- Get It Now Panel ---------------*/
 
-#downloadbox {
+.asideboxgroup {
+    float: right;
+}
+
+.asidebox {
     width: 17em;
     background: #e7eeeb;
-    float: right;
     padding: 0.5em;
     display: block;
     font-family: Verdana, Arial, Helvetica, sans-serif;
-    text-align: center;
     margin:.8em;
+}
+
+#downloadbox, #socialbookmarkbox {
+    text-align: center;
 }
 
 #downloadbox div.hnav ul li, div.platform_buttons ul li {
