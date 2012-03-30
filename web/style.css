@@ -272,17 +272,6 @@ ol.jumplist li {
     cursor: pointer;
 }
 
-/*------------- Graphical Outer Border ------------*/
-
-.t {background: url(http://code.iki.fi/dengine.net/images/tc02.png) 0 0 repeat-x;}
-.b {background: url(http://code.iki.fi/dengine.net/images/tc08.png) 0 100% repeat-x;}
-.l {background: url(http://code.iki.fi/dengine.net/images/tc04.png) 0 0 repeat-y;}
-.r {background: url(http://code.iki.fi/dengine.net/images/tc06.png) 100% 0 repeat-y;}
-.bl {background: url(http://code.iki.fi/dengine.net/images/tc07.gif) 0 100% no-repeat;}
-.br {background: url(http://code.iki.fi/dengine.net/images/tc09.gif) 100% 100% no-repeat;}
-.tl {background: url(http://code.iki.fi/dengine.net/images/tc01.gif) 0 0 no-repeat;}
-.tr {background: url(http://code.iki.fi/dengine.net/images/tc03.gif) 100% 0 no-repeat; padding:7px;}
-
 /*---------------- Main site frame ----------------*/
 
 #mainouter {
@@ -296,6 +285,12 @@ ol.jumplist li {
     margin-right: auto;
     z-index: 1;
     text-align: left;
+}
+
+#main {
+    border: 2px solid #A5B9A5;
+    border-radius: 10px;
+    box-shadow: 0 0 20px 10px rgba(0, 0, 0, .05);
 }
 
 #maininner {

@@ -475,7 +475,7 @@ class FrontController
 ?>
 <body>
 <div id="mainouter">
-    <div class="t"><div class="b"><div class="l"><div class="r"><div class="bl"><div class="br"><div class="tl"><div class="tr">
+    <div id="main">
         <div id="divider"></div>
 <?php
         $this->outputMainMenu($page);
@@ -525,7 +525,7 @@ class FrontController
             </div>
         </div>
     </div>
-</div></div></div></div></div></div></div></div>
+</div>
 <div id="footer">
 <?php
 
