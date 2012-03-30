@@ -119,8 +119,11 @@ class FrontController
         $this->_plugins = new Plugins(DIR_PLUGINS);
 
         // Construct the Request
-        $url = $_SERVER['SERVER_PORT'] == '443' ? 'https' : 'http'
-            .'://'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
+        $url = ($_SERVER['SERVER_PORT'] == '443' ? 'https' : 'http') .'://';
+        if(isset($_SERVER['HTTP_HOST']))
+            $url .= $_SERVER['HTTP_HOST'];
+        if(isset($_SERVER['REQUEST_URI']))
+            $url .= $_SERVER['REQUEST_URI'];
 
         $this->_request = new Request($url, $_POST);
         $this->_actions = new Actions();
