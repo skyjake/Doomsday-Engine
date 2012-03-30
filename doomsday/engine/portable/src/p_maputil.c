@@ -475,9 +475,9 @@ boolean P_IsPointXYInBspLeaf(float x, float y, const BspLeaf* bspLeaf)
     fvertex_t* vi, *vj;
     HEdge* hedge;
 
-    if(!bspLeaf || !bspLeaf->hedges || !bspLeaf->hedges[0]) return false; // I guess?
+    if(!bspLeaf || !bspLeaf->hedge) return false; // I guess?
 
-    hedge = bspLeaf->hedges[0];
+    hedge = bspLeaf->hedge;
     do
     {
         HEdge* next = hedge->next;
@@ -491,7 +491,7 @@ boolean P_IsPointXYInBspLeaf(float x, float y, const BspLeaf* bspLeaf)
             // Outside the BSP leaf's edges.
             return false;
         }
-    } while((hedge = hedge->next) != bspLeaf->hedges[0]);
+    } while((hedge = hedge->next) != bspLeaf->hedge);
 
     return true;
 }

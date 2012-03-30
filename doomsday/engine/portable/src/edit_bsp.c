@@ -228,55 +228,33 @@ static void buildHEdgesFromBSPHEdges(GameMap* dest, BinaryTree* rootNode)
     M_Free(index);
 }
 
-static void hardenBspLeafHEdgeList(GameMap* dest, BspLeaf* bspLeaf, bsp_hedge_t* list,
-    size_t hedgeCount)
-{
-    size_t i;
-    bsp_hedge_t* cur;
-    HEdge** hedges;
-
-    hedges = (HEdge**)Z_Malloc(sizeof(*hedges) * (hedgeCount + 1), PU_MAPSTATIC, 0);
-
-    for(cur = list, i = 0; cur; cur = cur->nextInLeaf, ++i)
-        hedges[i] = &dest->hedges[cur->index];
-    hedges[hedgeCount] = NULL; // Terminate.
-
-    if(i != hedgeCount)
-        Con_Error("hardenBspLeafHEdgeList: Miscounted?");
-
-    bspLeaf->hedges = hedges;
-}
-
 static BspLeaf* hardenLeaf(GameMap* map, BspLeaf* leaf)
 {
-    size_t hedgeCount;
     bsp_hedge_t* hedge;
 
-    hedge = leaf->buildData.hedges;
-    hedgeCount = 0;
-    do
+    leaf->hedgeCount = 0;
+    leaf->hedge = NULL;
+    if(leaf->buildData.hedges)
     {
-        hedgeCount++;
-    } while((hedge = hedge->nextInLeaf) != NULL);
+        leaf->hedge = &map->hedges[leaf->buildData.hedges[0].index];
 
-    leaf->hedgeCount = (uint) hedgeCount;
-    hardenBspLeafHEdgeList(map, leaf, leaf->buildData.hedges, hedgeCount);
+        for(hedge = leaf->buildData.hedges; hedge; hedge = hedge->nextInLeaf)
+        {
+            bsp_hedge_t* leafNext = hedge->nextInLeaf? hedge->nextInLeaf : leaf->buildData.hedges;
+            HEdge* next = &map->hedges[leafNext->index];
+            HEdge* cur = &map->hedges[hedge->index];
 
-    for(hedge = leaf->buildData.hedges; hedge; hedge = hedge->nextInLeaf)
-    {
-        bsp_hedge_t* leafNext = hedge->nextInLeaf? hedge->nextInLeaf : leaf->buildData.hedges;
-        HEdge* next = &map->hedges[leafNext->index];
-        HEdge* cur = &map->hedges[hedge->index];
-
-        cur->next = next;
-        cur->next->prev = cur;
-        cur->bspLeaf = leaf;
+            cur->next = next;
+            cur->next->prev = cur;
+            cur->bspLeaf = leaf;
+            leaf->hedgeCount++;
+        }
     }
 
     // Determine which sector this BSP leaf belongs to.
-    if(leaf->hedges && leaf->hedges[0])
+    if(leaf->hedge)
     {
-        HEdge* hedge = leaf->hedges[0];
+        HEdge* hedge = leaf->hedge;
         do
         {
             if(hedge->lineDef && HEDGE_SIDEDEF(hedge))
@@ -284,7 +262,7 @@ static BspLeaf* hardenLeaf(GameMap* map, BspLeaf* leaf)
                 SideDef* side = HEDGE_SIDEDEF(hedge);
                 leaf->sector = side->sector;
             }
-        } while(!leaf->sector && (hedge = hedge->next) != leaf->hedges[0]);
+        } while(!leaf->sector && (hedge = hedge->next) != leaf->hedge);
     }
 
     if(!leaf->sector)

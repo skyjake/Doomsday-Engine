@@ -113,7 +113,7 @@ end
 
 struct BspLeaf
     UINT    uint        hedgeCount
-    PTR     hedge_s**   hedges // [hedgeCount] size.
+    PTR     hedge_s*    hedge
     PTR     polyobj_s*  polyObj // NULL, if there is no polyobj.
     PTR     sector_s*   sector
     -       int         addSpriteCount // frame number of last R_AddSprites
@@ -163,7 +163,7 @@ struct material
     -       boolean     _inAnimGroup // @c true if belongs to some animgroup.
     -       boolean     _isCustom
     -       texture_s*  _detailTex;
-    _       float       _detailScale;
+    -       float       _detailScale;
     -       float       _detailStrength;
     -       texture_s*  _shinyTex;
     -       blendmode_t _shinyBlendmode;

@@ -42,12 +42,12 @@ void BspLeaf_UpdateAABox(BspLeaf* leaf)
     V2f_Set(leaf->aaBox.min, DDMAXFLOAT, DDMAXFLOAT);
     V2f_Set(leaf->aaBox.max, DDMINFLOAT, DDMINFLOAT);
 
-    if(!leaf->hedges || !leaf->hedges[0]) return; // Very odd...
+    if(!leaf->hedge) return; // Very odd...
 
-    hedge = leaf->hedges[0];
+    hedge = leaf->hedge;
     V2f_InitBox(leaf->aaBox.arvec2, hedge->HE_v1pos);
 
-    while((hedge = hedge->next) != leaf->hedges[0])
+    while((hedge = hedge->next) != leaf->hedge)
     {
         V2f_AddToBox(leaf->aaBox.arvec2, hedge->HE_v1pos);
     }

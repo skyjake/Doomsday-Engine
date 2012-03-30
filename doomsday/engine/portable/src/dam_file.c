@@ -623,18 +623,19 @@ static void writeBspLeaf(GameMap* map, BspLeaf* s)
 
     // BspLeaf hedges list.
     writeLong((long) s->hedgeCount);
-    if(!s->hedges || !s->hedges[0]) return;
+    if(!s->hedge) return;
 
-    hedge = s->hedges[0];
+    hedge = s->hedge;
     do
     {
         writeLong(GameMap_HEdgeIndex(map, hedge) + 1);
-    } while((hedge = hedge->next) != s->hedges[0]);
+    } while((hedge = hedge->next) != s->hedge);
 }
 
 static void readBspLeaf(GameMap* map, BspLeaf* s)
 {
     uint i;
+    HEdge* hedge;
     long obIdx;
     assert(s);
 
@@ -658,13 +659,27 @@ static void readBspLeaf(GameMap* map, BspLeaf* s)
     s->hedgeCount = (uint) readLong();
     if(!s->hedgeCount)
     {
-        s->hedges = 0;
+        s->hedge = 0;
         return;
     }
-    s->hedges = Z_Malloc(sizeof(HEdge*) * (s->hedgeCount + 1), PU_MAP, 0);
+
     for(i = 0; i < s->hedgeCount; ++i)
-        s->hedges[i] = GameMap_HEdge(map, (unsigned) readLong() - 1);
-    s->hedges[i] = NULL; // Terminate.
+    {
+        HEdge* next = GameMap_HEdge(map, (unsigned) readLong() - 1);
+        if(i == 0)
+        {
+            s->hedge = next;
+            hedge = next;
+        }
+        else
+        {
+            hedge->next = next;
+            next->prev = hedge;
+            hedge = next;
+        }
+    }
+
+    s->hedge->prev = hedge;
 }
 
 static void archiveBspLeafs(GameMap* map, boolean write)

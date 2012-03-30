@@ -74,9 +74,9 @@ static int rendBspLeaf(BspLeaf* bspLeaf, void* parameters)
         HEdge* hedge;
         vec2f_t start, end;
 
-        if(bspLeaf->hedges[0])
+        if(bspLeaf->hedge)
         {
-            hedge = bspLeaf->hedges[0];
+            hedge = bspLeaf->hedge;
             do
             {
                 V2f_Set(start, hedge->HE_v1pos[VX], hedge->HE_v1pos[VY]);
@@ -134,7 +134,7 @@ static int rendBspLeaf(BspLeaf* bspLeaf, void* parameters)
                     glVertex2f(start[VX],   end[VY]);
                     glVertex2f(start[VX], start[VY]);
                 glEnd();
-            } while((hedge = hedge->next) != bspLeaf->hedges[0]);
+            } while((hedge = hedge->next) != bspLeaf->hedge);
         }
 
         bspLeaf->validCount = validCount;

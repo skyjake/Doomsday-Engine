@@ -554,14 +554,14 @@ int P_Iteratep(void *ptr, uint prop, void* context, int (*callback) (void* p, vo
         case DMU_HEDGE: {
             BspLeaf* bspLeaf = (BspLeaf*) ptr;
             int result = false; // Continue iteration.
-            if(bspLeaf->hedges && bspLeaf->hedges[0])
+            if(bspLeaf->hedge)
             {
-                HEdge* hedge = bspLeaf->hedges[0];
+                HEdge* hedge = bspLeaf->hedge;
                 do
                 {
                     result = callback(hedge, context);
                     if(result) break;
-                } while((hedge = hedge->next) != bspLeaf->hedges[0]);
+                } while((hedge = hedge->next) != bspLeaf->hedge);
             }
             return result; }
 

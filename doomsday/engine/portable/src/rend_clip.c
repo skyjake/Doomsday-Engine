@@ -1291,7 +1291,7 @@ int C_CheckBspLeaf(BspLeaf* bspLeaf)
 
     // Find angles to all corners.
     i = 0;
-    hedge = bspLeaf->hedges[0];
+    hedge = bspLeaf->hedge;
     do
     {
         Vertex* vtx = hedge->HE_v1;
@@ -1299,7 +1299,7 @@ int C_CheckBspLeaf(BspLeaf* bspLeaf)
         anglist[i++] = bamsAtan2((int) ((vtx->V_pos[VY] - vz) * 100),
                                  (int) ((vtx->V_pos[VX] - vx) * 100));
 
-    } while((hedge = hedge->next) != bspLeaf->hedges[0]);
+    } while((hedge = hedge->next) != bspLeaf->hedge);
 
     // Check each of the ranges defined by the edges.
     for(i = 0; i < bspLeaf->hedgeCount - 1; ++i)

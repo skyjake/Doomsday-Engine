@@ -106,7 +106,7 @@ typedef struct {
 typedef struct bspleaf_s {
     runtime_mapdata_header_t header;
     unsigned int        hedgeCount;
-    struct hedge_s**    hedges;        // [hedgeCount] size.
+    struct hedge_s*     hedge;
     struct polyobj_s*   polyObj;       // NULL, if there is no polyobj.
     struct sector_s*    sector;
     int                 addSpriteCount; // frame number of last R_AddSprites

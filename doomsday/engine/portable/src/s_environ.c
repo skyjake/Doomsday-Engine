@@ -284,7 +284,7 @@ static boolean calcBspLeafReverb(BspLeaf* bspLeaf)
 
     // The other reverb properties can be found out by taking a look at the
     // materials of all surfaces in the BSP leaf.
-    hedge = bspLeaf->hedges[0];
+    hedge = bspLeaf->hedge;
     do
     {
         if(hedge->lineDef && HEDGE_SIDEDEF(hedge) && HEDGE_SIDEDEF(hedge)->SW_middlematerial)
@@ -297,7 +297,7 @@ static boolean calcBspLeafReverb(BspLeaf* bspLeaf)
                 mclass = MEC_WOOD; // Assume it's wood if unknown.
             materials[mclass] += hedge->length;
         }
-    } while((hedge = hedge->next) != bspLeaf->hedges[0]);
+    } while((hedge = hedge->next) != bspLeaf->hedge);
 
     if(!total)
     {

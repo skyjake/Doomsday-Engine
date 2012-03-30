@@ -2321,9 +2321,9 @@ static boolean Rend_RenderSegTwosided(BspLeaf* bspLeaf, HEdge* hedge)
 
 static void Rend_MarkSegsFacingFront(BspLeaf* leaf)
 {
-    if(leaf->hedges && leaf->hedges[0])
+    if(leaf->hedge)
     {
-        HEdge* hedge = leaf->hedges[0];
+        HEdge* hedge = leaf->hedge;
         do
         {
             // Occlusions can only happen where two sectors contact.
@@ -2337,7 +2337,7 @@ static void Rend_MarkSegsFacingFront(BspLeaf* leaf)
 
                 Rend_MarkSideDefSectionsPVisible(hedge);
             }
-        } while((hedge = hedge->next) != leaf->hedges[0]);
+        } while((hedge = hedge->next) != leaf->hedge);
     }
 
     if(leaf->polyObj)
@@ -2363,9 +2363,9 @@ static void Rend_MarkSegsFacingFront(BspLeaf* leaf)
 
 static void occludeFrontFacingSegsInBspLeaf(const BspLeaf* bspLeaf)
 {
-    if(bspLeaf->hedges && bspLeaf->hedges[0])
+    if(bspLeaf->hedge)
     {
-        HEdge* hedge = bspLeaf->hedges[0];
+        HEdge* hedge = bspLeaf->hedge;
         do
         {
             if(!hedge->lineDef || !(hedge->frameFlags & HEDGEINF_FACINGFRONT)) continue;
@@ -2375,7 +2375,7 @@ static void occludeFrontFacingSegsInBspLeaf(const BspLeaf* bspLeaf)
             {
                 hedge->frameFlags &= ~HEDGEINF_FACINGFRONT;
             }
-        } while((hedge = hedge->next) != bspLeaf->hedges[0]);
+        } while((hedge = hedge->next) != bspLeaf->hedge);
     }
 
     if(bspLeaf->polyObj)
@@ -2528,7 +2528,7 @@ static void writeSkyFixGeometry(BspLeaf* bspLeaf, int skyCap, int rendPolyFlags)
     if(!bspLeaf || !bspLeaf->hedgeCount || !bspLeaf->sector) return;
     if(!(skyCap & SKYCAP_LOWER|SKYCAP_UPPER)) return;
 
-    hedge = bspLeaf->hedges[0];
+    hedge = bspLeaf->hedge;
     do
     {
         // Is a fix or two necessary for this hedge?
@@ -2569,7 +2569,7 @@ static void writeSkyFixGeometry(BspLeaf* bspLeaf, int skyCap, int rendPolyFlags)
                 RL_AddPoly(PT_TRIANGLE_STRIP, rendPolyFlags, 4, verts, NULL);
             }
         }
-    } while((hedge = hedge->next) != bspLeaf->hedges[0]);
+    } while((hedge = hedge->next) != bspLeaf->hedge);
 }
 
 /**
@@ -2668,13 +2668,13 @@ static void occludeBspLeaf(const BspLeaf* bspLeaf, boolean forwardFacing)
     Sector* front, *back;
     HEdge* hedge;
 
-    if(devNoCulling || !bspLeaf || !bspLeaf->hedges || P_IsInVoid(viewPlayer)) return;
+    if(devNoCulling || !bspLeaf || !bspLeaf->hedge || P_IsInVoid(viewPlayer)) return;
 
     front = bspLeaf->sector;
     fronth[0] = front->SP_floorheight;
     fronth[1] = front->SP_ceilheight;
 
-    hedge = bspLeaf->hedges[0];
+    hedge = bspLeaf->hedge;
     do
     {
         // Occlusions can only happen where two sectors contact.
@@ -2724,7 +2724,7 @@ static void occludeBspLeaf(const BspLeaf* bspLeaf, boolean forwardFacing)
                 }
             }
         }
-    } while((hedge = hedge->next) != bspLeaf->hedges[0]);
+    } while((hedge = hedge->next) != bspLeaf->hedge);
 }
 
 static void Rend_RenderBspLeaf(BspLeaf* bspLeaf)
@@ -2795,9 +2795,9 @@ static void Rend_RenderBspLeaf(BspLeaf* bspLeaf)
     Rend_RenderBspLeafSky(bspLeaf);
 
     // Draw the walls.
-    if(bspLeaf->hedges[0])
+    if(bspLeaf->hedge)
     {
-        HEdge* hedge = bspLeaf->hedges[0];
+        HEdge* hedge = bspLeaf->hedge;
         do
         {
             if(!(hedge->flags & HEDGEF_POLYOBJ)  &&// Not handled here.
@@ -2816,7 +2816,7 @@ static void Rend_RenderBspLeaf(BspLeaf* bspLeaf)
                                     hedge->HE_v2pos[VX], hedge->HE_v2pos[VY]);
                 }
             }
-        } while((hedge = hedge->next) != bspLeaf->hedges[0]);
+        } while((hedge = hedge->next) != bspLeaf->hedge);
     }
 
     // Is there a polyobj on board?

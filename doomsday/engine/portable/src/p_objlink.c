@@ -333,13 +333,13 @@ int RIT_LinkObjToBspLeaf(BspLeaf* bspLeaf, void* paramaters)
 static void spreadInBspLeaf(BspLeaf* bspLeaf, void* paramaters)
 {
     HEdge* hedge;
-    if(!bspLeaf || !bspLeaf->hedges || !bspLeaf->hedges[0]) return;
+    if(!bspLeaf || !bspLeaf->hedge) return;
 
-    hedge = bspLeaf->hedges[0];
+    hedge = bspLeaf->hedge;
     do
     {
         processSeg(hedge, paramaters);
-    } while((hedge = hedge->next) != bspLeaf->hedges[0]);
+    } while((hedge = hedge->next) != bspLeaf->hedge);
 }
 
 static void processSeg(HEdge* hedge, void* paramaters)

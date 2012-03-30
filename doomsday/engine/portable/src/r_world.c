@@ -1133,7 +1133,7 @@ static void tessellateBspLeaf(BspLeaf* bspLeaf, boolean force)
     bspLeaf->flags &= ~BLF_MIDPOINT;
 
     // Search for a good base.
-    baseHEdge = bspLeaf->hedges[0];
+    baseHEdge = bspLeaf->hedge;
     if(bspLeaf->hedgeCount > 3)
     {
         // BspLeafs with higher vertex counts demand checking.
@@ -1145,11 +1145,11 @@ static void tessellateBspLeaf(BspLeaf* bspLeaf, boolean force)
             HEdge* otherHEdge;
 
             base = &hedge->HE_v1->v;
-            otherHEdge = bspLeaf->hedges[0];
+            otherHEdge = bspLeaf->hedge;
             do
             {
                 // Test this triangle?
-                if(!(baseHEdge != bspLeaf->hedges[0] &&
+                if(!(baseHEdge != bspLeaf->hedge &&
                      (otherHEdge == baseHEdge || otherHEdge == baseHEdge->prev)))
                 {
                     a = &otherHEdge->HE_v1->v;
@@ -1163,14 +1163,14 @@ static void tessellateBspLeaf(BspLeaf* bspLeaf, boolean force)
                 }
 
                 // On to the next triangle.
-            } while(base && (otherHEdge = otherHEdge->next) != bspLeaf->hedges[0]);
+            } while(base && (otherHEdge = otherHEdge->next) != bspLeaf->hedge);
 
             if(!base)
             {
                 // No good. Select the next vertex and start over.
                 baseHEdge = baseHEdge->next;
             }
-        } while(!base && baseHEdge != bspLeaf->hedges[0]);
+        } while(!base && baseHEdge != bspLeaf->hedge);
 
         // Did we find something suitable?
         if(base) ok = true;
@@ -1211,7 +1211,7 @@ static void tessellateBspLeaf(BspLeaf* bspLeaf, boolean force)
     // If this is a trifan the last vertex is always equal to the first.
     if(bspLeaf->flags & BLF_MIDPOINT)
     {
-        bspLeaf->vertices[n++] = &bspLeaf->hedges[0]->HE_v1->v;
+        bspLeaf->vertices[n++] = &bspLeaf->hedge->HE_v1->v;
     }
 
     bspLeaf->vertices[n] = NULL; // terminate.
@@ -1713,9 +1713,9 @@ boolean R_UpdatePlane(Plane* pln, boolean forceUpdate)
             do
             {
                 BspLeaf* bspLeaf = *ssecIter;
-                if(bspLeaf->hedges && bspLeaf->hedges[0])
+                if(bspLeaf->hedge)
                 {
-                    HEdge* hedge = bspLeaf->hedges[0];
+                    HEdge* hedge = bspLeaf->hedge;
                     do
                     {
                         if(hedge->lineDef)
@@ -1725,7 +1725,7 @@ boolean R_UpdatePlane(Plane* pln, boolean forceUpdate)
                                 SB_SurfaceMoved(hedge->bsuf[i]);
                             }
                         }
-                    } while((hedge = hedge->next) != bspLeaf->hedges[0]);
+                    } while((hedge = hedge->next) != bspLeaf->hedge);
                 }
 
                 SB_SurfaceMoved(bspLeaf->bsuf[pln->planeID]);
