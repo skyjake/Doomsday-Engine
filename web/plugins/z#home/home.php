@@ -64,6 +64,8 @@ class HomePlugin extends Plugin implements Actioner, RequestInterpreter
         $FrontController->outputHeader($FrontController->siteDescription());
         $FrontController->beginPage($this->title());
 
+        includeHTML('latestversion', 'z#home');
+
 ?><div class="asideboxgroup"><div id="downloadbox" class="asidebox"><?php
 
         includeHTML('getitnow', 'z#home');

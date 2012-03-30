@@ -451,13 +451,30 @@ ol.jumplist li {
     float: left;
     margin-top: -5.4em;
     white-space: nowrap;
+    color: white;
     z-index: 1;
 }
 
-#pageheading h1 {
-    color: #ffffff;
+#latestversion {
+    position: relative;
+    float: right;
+    margin-top: -5.4em;
+    white-space: nowrap;
+    color: white;
+    z-index: 1;
+}
+
+#pageheading h1,
+#latestversion h1 {
     font-size: 280%;
+}
+
+#pageheading h1 {
     margin-left: .4em;
+}
+
+#latestversion h1 {
+    margin-right: .25em;
 }
 
 #contentbox, #contentbox2 {
@@ -626,6 +643,10 @@ p.legal a {
     text-align: center;
 }
 
+#downloadbox div.hnav ul {
+    margin-top: 0;
+}
+
 #downloadbox div.hnav ul li, div.platform_buttons ul li {
     padding: 0;
     margin: 0;
@@ -676,7 +697,6 @@ p.legal a {
 .getitnow-label {
     font-size: x-large;
     text-align:center;
-    margin-left:-1em;
 }
 
 .getitnow-label a, a:hover, a:visited:hover {
@@ -686,10 +706,6 @@ p.legal a {
 .getitnow-label span.free-label {
     font-style: italic;
     font-size: medium;
-}
-
-.getitnow-label span.version-label {
-    padding-left: 1em;
 }
 
 #socialbookmarkbox ul li {
