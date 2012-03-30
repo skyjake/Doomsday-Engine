@@ -614,12 +614,15 @@ p.legal a {
 }
 
 .asidebox {
-    width: 17em;
+    width: 16.5em;
     background: #e7eeeb;
-    padding: 0.5em;
+    padding: 0.8em;
     display: block;
     font-family: Verdana, Arial, Helvetica, sans-serif;
     margin:.8em;
+    border-radius: 10px;
+    box-shadow: 4px 4px 10px 0 rgba(0, 0, 0, .1);
+    border: 2px solid #CCC;
 }
 
 #downloadbox, #socialbookmarkbox {
@@ -710,7 +713,6 @@ p.legal a {
 }
 
 .fb-like {
-    margin-top: 1em;
     padding-left: .1em;
 }
 
