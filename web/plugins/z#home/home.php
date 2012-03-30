@@ -67,6 +67,7 @@ class HomePlugin extends Plugin implements Actioner, RequestInterpreter
                     <div id="downloadbox">
 <?php
         includeHTML('getitnow', 'z#home');
+        includeHTML('socialbookmarks', 'z#home');
 ?>
                     </div>
                     <div id="contentbox"><?php
