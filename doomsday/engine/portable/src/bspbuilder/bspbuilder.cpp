@@ -138,7 +138,7 @@ SuperBlockmap* BspBuilder::createInitialHEdges(GameMap* map)
 {
     uint startTime = Sys_GetRealTime();
 
-    bsp_hedge_t* back, *front;
+    HEdge* back, *front;
     SuperBlockmap* sbmap;
     AABoxf mapBoundsf;
     AABox mapBounds, blockBounds;
@@ -234,9 +234,9 @@ SuperBlockmap* BspBuilder::createInitialHEdges(GameMap* map)
                 // Handle the 'One-Sided Window' trick.
                 if(line->buildData.windowEffect && front)
                 {
-                    bsp_hedge_t* other;
+                    HEdge* other;
 
-                    other = newHEdge(front->info.lineDef, line, line->v[1], line->v[0],
+                    other = newHEdge(front->buildData.info.lineDef, line, line->v[1], line->v[0],
                                      line->buildData.windowEffect, true);
 
                     sbmap->root()->hedgePush(other);
@@ -298,29 +298,6 @@ void BspBuilder::initForMap(GameMap* map)
                 l->buildData.mlFlags |= MLF_SELFREF;
         }
     }
-}
-
-int C_DECL BspBuilder_FreeBSPData(BinaryTree* tree, void* parameters)
-{
-    BspBuilder* builder = (BspBuilder*)parameters;
-    void* bspData = BinaryTree_UserData(tree);
-
-    if(bspData && BinaryTree_IsLeaf(tree))
-    {
-        BspLeaf* leaf = static_cast<BspLeaf*>(bspData);
-        bsp_hedge_t* cur, *np;
-
-        cur = leaf->buildData.hedges;
-        while(cur)
-        {
-            np = cur->nextInLeaf;
-            builder->deleteHEdge(cur);
-            cur = np;
-        }
-    }
-
-    BinaryTree_SetUserData(tree, NULL);
-    return false; // Continue iteration.
 }
 
 boolean BspBuilder::build(GameMap* map, Vertex*** vertexes, uint* numVertexes)
@@ -388,7 +365,6 @@ boolean BspBuilder::build(GameMap* map, Vertex*** vertexes, uint* numVertexes)
     // We are finished with the BSP build data.
     if(rootNode)
     {
-        BinaryTree_PostOrder(rootNode, BspBuilder_FreeBSPData, this);
         BinaryTree_Delete(rootNode);
     }
     rootNode = NULL;
@@ -426,7 +402,7 @@ HEdgeIntercept* BspBuilder::hedgeInterceptByVertex(HPlane* hplane, Vertex* verte
 }
 
 void BspBuilder::addHEdgesBetweenIntercepts(HPlane* hplane,
-    HEdgeIntercept* start, HEdgeIntercept* end, bsp_hedge_t** right, bsp_hedge_t** left)
+    HEdgeIntercept* start, HEdgeIntercept* end, HEdge** right, HEdge** left)
 {
     BspHEdgeInfo* info;
 
@@ -585,7 +561,7 @@ void BspBuilder::buildHEdgesAtIntersectionGaps(HPlane* hplane, SuperBlock* right
             else
             {
                 // This is definitetly open space.
-                bsp_hedge_t* right, *left;
+                HEdge* right, *left;
 
                 // Do a sanity check on the sectors (just for good measure).
                 if(cur->after != next->before)
@@ -660,8 +636,8 @@ void BspBuilder::deleteHEdgeIntercept(HEdgeIntercept* inter)
     M_Free(inter);
 }
 
-void BspBuilder::addEdgeTip(Vertex* vert, double dx, double dy, bsp_hedge_t* back,
-    bsp_hedge_t* front)
+void BspBuilder::addEdgeTip(Vertex* vert, double dx, double dy, HEdge* back,
+    HEdge* front)
 {
     edgetip_t* tip = MPE_NewEdgeTip();
     edgetip_t* after;

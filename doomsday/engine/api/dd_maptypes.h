@@ -9,7 +9,7 @@
 
 #define DMT_HEDGE_V DDVT_PTR             // [Start, End] of the segment.
 #define DMT_HEDGE_LINEDEF DDVT_PTR
-#define DMT_HEDGE_SEC DDVT_PTR
+#define DMT_HEDGE_SECTOR DDVT_PTR
 #define DMT_HEDGE_BSPLEAF DDVT_PTR
 #define DMT_HEDGE_TWIN DDVT_PTR
 #define DMT_HEDGE_ANGLE DDVT_ANGLE

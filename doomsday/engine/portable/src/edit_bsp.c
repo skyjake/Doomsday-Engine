@@ -32,9 +32,9 @@
 
 #include "bspbuilder/hedges.hh" /// @todo Remove me.
 
-static void hardenSidedefHEdgeList(GameMap* map, SideDef* side, bsp_hedge_t* bspHEdge)
+static void hardenSidedefHEdgeList(GameMap* map, SideDef* side, HEdge* bspHEdge)
 {
-    bsp_hedge_t* first, *other;
+    HEdge* first, *other;
     uint count;
 
     if(!side) return;
@@ -44,15 +44,15 @@ static void hardenSidedefHEdgeList(GameMap* map, SideDef* side, bsp_hedge_t* bsp
 
     // Find the first hedge.
     first = bspHEdge;
-    while(first->prevOnSide)
-        first = first->prevOnSide;
+    while(first->buildData.prevOnSide)
+        first = first->buildData.prevOnSide;
 
     // Count the hedges for this side.
     count = 0;
     other = first;
     while(other)
     {
-        other = other->nextOnSide;
+        other = other->buildData.nextOnSide;
         count++;
     }
 
@@ -64,25 +64,25 @@ static void hardenSidedefHEdgeList(GameMap* map, SideDef* side, bsp_hedge_t* bsp
     other = first;
     while(other)
     {
-        side->hedges[count++] = GameMap_HEdge(map, other->index);
-        other = other->nextOnSide;
+        side->hedges[count++] = GameMap_HEdge(map, other->buildData.index);
+        other = other->buildData.nextOnSide;
     }
     side->hedges[count] = NULL; // Terminate.
 }
 
 static int C_DECL hedgeCompare(const void* p1, const void* p2)
 {
-    const bsp_hedge_t* a = ((const bsp_hedge_t**) p1)[0];
-    const bsp_hedge_t* b = ((const bsp_hedge_t**) p2)[0];
+    const HEdge* a = ((const HEdge**) p1)[0];
+    const HEdge* b = ((const HEdge**) p2)[0];
 
-    if(a->index == b->index) return 0;
-    if(a->index < b->index) return -1;
+    if(a->buildData.index == b->buildData.index) return 0;
+    if(a->buildData.index  < b->buildData.index) return -1;
     return 1;
 }
 
 typedef struct {
     size_t curIdx;
-    bsp_hedge_t*** indexPtr;
+    HEdge*** indexPtr;
     boolean write;
 } hedgecollectorparams_t;
 
@@ -92,9 +92,9 @@ static int hedgeCollector(BinaryTree* tree, void* parameters)
     {
         hedgecollectorparams_t* p = (hedgecollectorparams_t*) parameters;
         BspLeaf* leaf = (BspLeaf*) BinaryTree_UserData(tree);
-        bsp_hedge_t* hedge;
+        HEdge* hedge;
 
-        for(hedge = leaf->buildData.hedges; hedge; hedge = hedge->nextInLeaf)
+        for(hedge = leaf->buildData.hedges; hedge; hedge = hedge->buildData.nextInLeaf)
         {
             if(p->indexPtr)
             {
@@ -104,7 +104,7 @@ static int hedgeCollector(BinaryTree* tree, void* parameters)
             else
             {
                 // Count mode.
-                if(hedge->index == -1)
+                if(hedge->buildData.index == -1)
                     Con_Error("HEdge %p never reached a BspLeaf!", hedge);
 
                 p->curIdx++;
@@ -117,7 +117,7 @@ static int hedgeCollector(BinaryTree* tree, void* parameters)
 static void buildHEdgesFromBSPHEdges(GameMap* dest, BinaryTree* rootNode)
 {
     uint i;
-    bsp_hedge_t** index;
+    HEdge** index;
     hedgecollectorparams_t params;
 
     //
@@ -133,7 +133,7 @@ static void buildHEdgesFromBSPHEdges(GameMap* dest, BinaryTree* rootNode)
         Con_Error("buildHEdgesFromBSPHEdges: No hedges?");
 
     // Allocate the sort buffer.
-    index = (bsp_hedge_t**)M_Malloc(sizeof(*index) * params.curIdx);
+    index = (HEdge**)M_Malloc(sizeof(*index) * params.curIdx);
 
     // Pass 2: Collect ptrs the hedges and insert into the index.
     params.curIdx = 0;
@@ -141,59 +141,43 @@ static void buildHEdgesFromBSPHEdges(GameMap* dest, BinaryTree* rootNode)
     BinaryTree_InOrder(rootNode, hedgeCollector, &params);
 
     // Sort the half-edges into ascending index order.
-    qsort(index, params.curIdx, sizeof(bsp_hedge_t*), hedgeCompare);
+    qsort(index, params.curIdx, sizeof(HEdge*), hedgeCompare);
 
     dest->numHEdges = (uint) params.curIdx;
     dest->hedges = (HEdge**)Z_Calloc(dest->numHEdges * sizeof(HEdge*), PU_MAPSTATIC, 0);
     for(i = 0; i < dest->numHEdges; ++i)
     {
-        dest->hedges[i] = HEdge_New();
+        dest->hedges[i] = index[i];
     }
 
     for(i = 0; i < dest->numHEdges; ++i)
     {
-        bsp_hedge_t* bspHEdge = index[i];
+        HEdge* bspHEdge = index[i];
         HEdge* hedge = dest->hedges[i];
 
         hedge->HE_v1 = &dest->vertexes[bspHEdge->v[0]->buildData.index - 1];
         hedge->HE_v2 = &dest->vertexes[bspHEdge->v[1]->buildData.index - 1];
 
-        hedge->side  = bspHEdge->side;
-        if(bspHEdge->info.lineDef)
-            hedge->lineDef = &dest->lineDefs[bspHEdge->info.lineDef->buildData.index - 1];
-        if(bspHEdge->twin)
-            hedge->twin = dest->hedges[bspHEdge->twin->index];
+        //hedge->side  = bspHEdge->side;
+        if(bspHEdge->buildData.info.lineDef)
+            hedge->lineDef = &dest->lineDefs[bspHEdge->buildData.info.lineDef->buildData.index - 1];
+        //if(bspHEdge->twin)
+        //    hedge->twin = dest->hedges[bspHEdge->twin->index];
 
-        hedge->flags = 0;
+        //hedge->flags = 0;
         if(hedge->lineDef)
         {
             LineDef* ldef = hedge->lineDef;
             Vertex* vtx = hedge->lineDef->L_v(hedge->side);
 
             if(ldef->L_side(hedge->side))
-                hedge->HE_frontsector = ldef->L_side(hedge->side)->sector;
-
-            if(ldef->L_frontside && ldef->L_backside)
-            {
-                hedge->HE_backsector = ldef->L_side(hedge->side ^ 1)->sector;
-            }
-            else
-            {
-                hedge->HE_backsector = 0;
-            }
+                hedge->sector = ldef->L_side(hedge->side)->sector;
 
             hedge->offset = P_AccurateDistance(hedge->HE_v1pos[VX] - vtx->V_pos[VX],
                                                hedge->HE_v1pos[VY] - vtx->V_pos[VY]);
-        }
-        else
-        {
-            hedge->lineDef = NULL;
-            hedge->HE_frontsector = NULL;
-            hedge->HE_backsector = NULL;
-        }
 
-        if(hedge->lineDef)
             hardenSidedefHEdgeList(dest, HEDGE_SIDEDEF(hedge), bspHEdge);
+        }
 
         hedge->angle = bamsAtan2((int) (hedge->HE_v2pos[VY] - hedge->HE_v1pos[VY]),
                                  (int) (hedge->HE_v2pos[VX] - hedge->HE_v1pos[VX])) << FRACBITS;
@@ -233,19 +217,19 @@ static void buildHEdgesFromBSPHEdges(GameMap* dest, BinaryTree* rootNode)
 
 static BspLeaf* hardenLeaf(GameMap* map, BspLeaf* leaf)
 {
-    bsp_hedge_t* hedge;
+    HEdge* hedge;
 
     leaf->hedgeCount = 0;
     leaf->hedge = NULL;
     if(leaf->buildData.hedges)
     {
-        leaf->hedge = map->hedges[leaf->buildData.hedges[0].index];
+        leaf->hedge = map->hedges[leaf->buildData.hedges[0].buildData.index];
 
-        for(hedge = leaf->buildData.hedges; hedge; hedge = hedge->nextInLeaf)
+        for(hedge = leaf->buildData.hedges; hedge; hedge = hedge->buildData.nextInLeaf)
         {
-            bsp_hedge_t* leafNext = hedge->nextInLeaf? hedge->nextInLeaf : leaf->buildData.hedges;
-            HEdge* next = map->hedges[leafNext->index];
-            HEdge* cur = map->hedges[hedge->index];
+            HEdge* leafNext = hedge->buildData.nextInLeaf? hedge->buildData.nextInLeaf : leaf->buildData.hedges;
+            HEdge* next = map->hedges[leafNext->buildData.index];
+            HEdge* cur = map->hedges[hedge->buildData.index];
 
             cur->next = next;
             cur->next->prev = cur;
@@ -260,9 +244,10 @@ static BspLeaf* hardenLeaf(GameMap* map, BspLeaf* leaf)
         HEdge* hedge = leaf->hedge;
         do
         {
-            if(hedge->lineDef && HEDGE_SIDEDEF(hedge))
+            if(hedge->buildData.info.lineDef &&
+               hedge->buildData.info.lineDef->sideDefs[hedge->side])
             {
-                SideDef* side = HEDGE_SIDEDEF(hedge);
+                SideDef* side = hedge->buildData.info.lineDef->sideDefs[hedge->side];
                 leaf->sector = side->sector;
             }
         } while(!leaf->sector && (hedge = hedge->next) != leaf->hedge);

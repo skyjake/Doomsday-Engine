@@ -32,6 +32,21 @@ HEdge* HEdge_New(void)
     return hedge;
 }
 
+HEdge* HEdge_NewCopy(HEdge* other)
+{
+    HEdge* hedge;
+    assert(other);
+    hedge = Z_Malloc(sizeof *hedge, PU_MAPSTATIC, 0);
+    memcpy(hedge, other, sizeof *hedge);
+    return hedge;
+}
+
+void HEdge_Delete(HEdge* hedge)
+{
+    assert(hedge);
+    Z_Free(hedge);
+}
+
 int HEdge_SetProperty(HEdge* hedge, const setargs_t* args)
 {
     switch(args->prop)
@@ -69,17 +84,13 @@ int HEdge_GetProperty(const HEdge* hedge, setargs_t* args)
         DMU_GetValue(DMT_HEDGE_LINEDEF, &hedge->lineDef, args, 0);
         break;
     case DMU_FRONT_SECTOR: {
-        Sector* sec = NULL;
-        if(hedge->HE_frontsector && hedge->lineDef)
-            sec = hedge->HE_frontsector;
-        DMU_GetValue(DMT_HEDGE_SEC, &sec, args, 0);
+        Sector* sec = hedge->sector? hedge->sector : NULL;
+        DMU_GetValue(DMT_HEDGE_SECTOR, &sec, args, 0);
         break;
       }
     case DMU_BACK_SECTOR: {
-        Sector* sec = NULL;
-        if(hedge->HE_backsector && hedge->lineDef)
-            sec = hedge->HE_backsector;
-        DMU_GetValue(DMT_HEDGE_SEC, &hedge->HE_backsector, args, 0);
+        Sector* sec = HEDGE_BACK_SECTOR(hedge);
+        DMU_GetValue(DMT_HEDGE_SECTOR, &sec, args, 0);
         break;
       }
     case DMU_FLAGS:

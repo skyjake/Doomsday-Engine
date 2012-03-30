@@ -29,7 +29,6 @@
 #define LIBDENG_BSPBUILDER_HEDGES_HH
 
 #include "dd_types.h"
-#include "p_mapdata.h"
 
 #define IFFY_LEN            4.0
 
@@ -39,57 +38,8 @@
 // Smallest degrees between two angles before being considered equal.
 #define ANG_EPSILON         (1.0 / 1024.0)
 
-/**
- * BspHEdgeInfo. Plain old data structure storing additional information about
- * a half-edge produced by BspBuilder.
- */
-typedef struct bsphedgeinfo_s {
-    // Precomputed data for faster calculations.
-    double pSX, pSY;
-    double pEX, pEY;
-    double pDX, pDY;
-
-    double pLength;
-    double pAngle;
-    double pPara;
-    double pPerp;
-
-    // Linedef that this half-edge goes along, or NULL if miniseg.
-    struct linedef_s* lineDef;
-
-    // Linedef that this half-edge initially comes from.
-    // For "real" half-edges, this is just the same as the 'linedef' field
-    // above. For "miniedges", this is the linedef of the partition line.
-    struct linedef_s* sourceLineDef;
-} BspHEdgeInfo;
-
-typedef struct bsp_hedge_s {
-    struct vertex_s* v[2]; // [Start, End] of the half-edge..
-
-    // Half-edge on the other side, or NULL if one-sided. This relationship
-    // is always one-to-one -- if one of the half-edges is split, the twin
-    // must also be split.
-    struct bsp_hedge_s* twin;
-
-    //struct bsp_hedge_s* nextInBlock;
-    struct bsp_hedge_s* nextInLeaf;
-    struct bsp_hedge_s* nextOnSide;
-    struct bsp_hedge_s* prevOnSide;
-
-    // Index of the half-edge. Only valid once the half-edge has been added
-    // to a polygon. A negative value means it is invalid -- there
-    // shouldn't be any of these once the BSP tree has been built.
-    int index;
-
-    // The superblock that contains this half-edge, or NULL if the half-edge
-    // is no longer in any superblock (e.g. now in a leaf).
-    void* block;
-
-    BspHEdgeInfo info;
-
-    struct sector_s* sector; // Adjacent sector, or NULL if invalid sidedef or minihedge.
-    byte side; // 0 for right, 1 for left.
-} bsp_hedge_t;
+struct vertex_s;
+struct sector_s;
 
 /**
  * Plain-old-data structure containing additional information for a half-edge

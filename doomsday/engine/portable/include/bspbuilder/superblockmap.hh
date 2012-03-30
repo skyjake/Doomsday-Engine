@@ -59,7 +59,7 @@ class SuperBlock {
 friend class SuperBlockmap;
 
 public:
-    typedef std::list<bsp_hedge_t*> HEdges;
+    typedef std::list<HEdge*> HEdges;
 
     enum ChildId
     {
@@ -164,7 +164,7 @@ public:
      *
      * @param hedge  HEdge instance to add.
      */
-    SuperBlock* hedgePush(bsp_hedge_t* hedge);
+    SuperBlock* hedgePush(HEdge* hedge);
 
     /**
      * Pop (unlink) the next HEdge from the FIFO list of half-edges linked
@@ -172,7 +172,7 @@ public:
      *
      * @return  Previous top-most HEdge instance or @c NULL if empty.
      */
-    bsp_hedge_t* hedgePop();
+    HEdge* hedgePop();
 
 private:
     struct Instance;

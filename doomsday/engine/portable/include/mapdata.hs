@@ -89,7 +89,7 @@ end
 struct HEdge
     PTR     vertex_s*[2] v          // [Start, End] of the segment.
     PTR     linedef_s*  lineDef
-    PTR     sector_s*[2] sec
+    PTR     sector_s*   sector
     PTR     bspleaf_s*  bspLeaf
     PTR     hedge_s*    twin
     ANGLE   angle_t     angle
@@ -107,7 +107,7 @@ internal
 #define BLF_MIDPOINT             0x80 ///< Midpoint is tri-fan centre.
 
 typedef struct {
-    struct bsp_hedge_s* hedges; // Head ptr to a list of half-edges at this leaf.
+    struct hedge_s* hedges; // Head ptr to a list of half-edges at this leaf.
 } mbspleaf_t;
 end
 

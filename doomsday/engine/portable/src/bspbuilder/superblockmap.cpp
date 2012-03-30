@@ -58,24 +58,24 @@ struct SuperBlock::Instance
         KdTreeNode_SetUserData(tree, NULL);
     }
 
-    void inline linkHEdge(bsp_hedge_t* hedge)
+    void inline linkHEdge(HEdge* hedge)
     {
         if(!hedge) return;
         hedges.push_front(hedge);
     }
 
-    void incrementHEdgeCount(bsp_hedge_t* hedge)
+    void incrementHEdgeCount(HEdge* hedge)
     {
         if(!hedge) return;
-        if(hedge->info.lineDef) realNum++;
-        else                    miniNum++;
+        if(hedge->buildData.info.lineDef) realNum++;
+        else                              miniNum++;
     }
 
-    void decrementHEdgeCount(bsp_hedge_t* hedge)
+    void decrementHEdgeCount(HEdge* hedge)
     {
         if(!hedge) return;
-        if(hedge->info.lineDef) realNum--;
-        else                    miniNum--;
+        if(hedge->buildData.info.lineDef) realNum--;
+        else                              miniNum--;
     }
 };
 
@@ -144,7 +144,7 @@ uint SuperBlock::hedgeCount(bool addReal, bool addMini) const
     return total;
 }
 
-static void initAABoxFromHEdgeVertexes(AABoxf* aaBox, const bsp_hedge_t* hedge)
+static void initAABoxFromHEdgeVertexes(AABoxf* aaBox, const HEdge* hedge)
 {
     assert(aaBox && hedge);
     const double* from = hedge->v[0]->buildData.pos;
@@ -163,7 +163,7 @@ void SuperBlock::findHEdgeBounds(AABoxf& bounds)
 
     for(HEdges::iterator it = d->hedges.begin(); it != d->hedges.end(); ++it)
     {
-        bsp_hedge_t* hedge = *it;
+        HEdge* hedge = *it;
         initAABoxFromHEdgeVertexes(&hedgeAABox, hedge);
         if(initialized)
         {
@@ -178,7 +178,7 @@ void SuperBlock::findHEdgeBounds(AABoxf& bounds)
     }
 }
 
-SuperBlock* SuperBlock::hedgePush(bsp_hedge_t* hedge)
+SuperBlock* SuperBlock::hedgePush(HEdge* hedge)
 {
     if(!hedge) return this;
 
@@ -193,7 +193,7 @@ SuperBlock* SuperBlock::hedgePush(bsp_hedge_t* hedge)
             // No further subdivision possible.
             sb->d->linkHEdge(hedge);
             // Associate ourself.
-            hedge->block = sb;
+            hedge->buildData.block = sb;
             break;
         }
 
@@ -222,7 +222,7 @@ SuperBlock* SuperBlock::hedgePush(bsp_hedge_t* hedge)
             // Line crosses midpoint; link it in and return.
             sb->d->linkHEdge(hedge);
             // Associate ourself.
-            hedge->block = sb;
+            hedge->buildData.block = sb;
             break;
         }
 
@@ -239,18 +239,18 @@ SuperBlock* SuperBlock::hedgePush(bsp_hedge_t* hedge)
     return this;
 }
 
-bsp_hedge_t* SuperBlock::hedgePop()
+HEdge* SuperBlock::hedgePop()
 {
     if(d->hedges.empty()) return NULL;
 
-    bsp_hedge_t* hedge = d->hedges.front();
+    HEdge* hedge = d->hedges.front();
     d->hedges.pop_front();
 
     // Update half-edge counts.
     d->decrementHEdgeCount(hedge);
 
     // Disassociate ourself.
-    hedge->block = NULL;
+    hedge->buildData.block = NULL;
     return hedge;
 }
 

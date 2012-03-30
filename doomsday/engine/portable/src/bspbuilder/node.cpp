@@ -80,29 +80,30 @@ typedef struct partitioncost_s {
 
 // Used when sorting BSP leaf half-edges by angle around midpoint.
 static size_t hedgeSortBufSize;
-static bsp_hedge_t** hedgeSortBuf;
+static HEdge** hedgeSortBuf;
 
 #if _DEBUG
 void BSP_PrintSuperBlockhedges(SuperBlock* superblock);
 #endif
 
-static __inline int pointOnhedgeSide(double x, double y, const bsp_hedge_t* part)
+static __inline int pointOnhedgeSide(double x, double y, const HEdge* part)
 {
-    return P_PointOnLinedefSide2(x, y, part->info.pDX, part->info.pDY, part->info.pPerp,
-                                 part->info.pLength, DIST_EPSILON);
+    return P_PointOnLinedefSide2(x, y, part->buildData.info.pDX, part->buildData.info.pDY,
+                                 part->buildData.info.pPerp, part->buildData.info.pLength,
+                                 DIST_EPSILON);
 }
 
-static boolean getAveragedCoords(bsp_hedge_t* headPtr, double* x, double* y)
+static boolean getAveragedCoords(HEdge* headPtr, double* x, double* y)
 {
     size_t total = 0;
     double avg[2];
-    bsp_hedge_t* cur;
+    HEdge* cur;
 
     if(!x || !y) return false;
 
     avg[VX] = avg[VY] = 0;
 
-    for(cur = headPtr; cur; cur = cur->nextInLeaf)
+    for(cur = headPtr; cur; cur = cur->buildData.nextInLeaf)
     {
         avg[VX] += cur->v[0]->buildData.pos[VX];
         avg[VY] += cur->v[0]->buildData.pos[VY];
@@ -129,7 +130,7 @@ static boolean getAveragedCoords(bsp_hedge_t* headPtr, double* x, double* y)
  *
  * @algorithm "double bubble"
  */
-static void sorthedgesByAngleAroundPoint(bsp_hedge_t** hedges, size_t total,
+static void sorthedgesByAngleAroundPoint(HEdge** hedges, size_t total,
     double x, double y)
 {
     size_t i;
@@ -137,8 +138,8 @@ static void sorthedgesByAngleAroundPoint(bsp_hedge_t** hedges, size_t total,
     i = 0;
     while(i + 1 < total)
     {
-        bsp_hedge_t* a = hedges[i];
-        bsp_hedge_t* b = hedges[i+1];
+        HEdge* a = hedges[i];
+        HEdge* b = hedges[i+1];
         double angle1, angle2;
 
         angle1 = M_SlopeToAngle(a->v[0]->buildData.pos[VX] - x,
@@ -174,13 +175,13 @@ static void sorthedgesByAngleAroundPoint(bsp_hedge_t** hedges, size_t total,
  * @param x             X coordinate of the point to order around.
  * @param y             Y coordinate of the point to order around.
  */
-static void clockwiseOrder(bsp_hedge_t** headPtr, size_t num, double x, double y)
+static void clockwiseOrder(HEdge** headPtr, size_t num, double x, double y)
 {
-    bsp_hedge_t* hedge;
+    HEdge* hedge;
     size_t i;
 
     // Insert ptrs to the hedges into the sort buffer.
-    for(hedge = *headPtr, i = 0; hedge; hedge = hedge->nextInLeaf, ++i)
+    for(hedge = *headPtr, i = 0; hedge; hedge = hedge->buildData.nextInLeaf, ++i)
     {
         hedgeSortBuf[i] = hedge;
     }
@@ -198,7 +199,7 @@ static void clockwiseOrder(bsp_hedge_t** headPtr, size_t num, double x, double y
         size_t idx = (num - 1) - i;
         size_t j = idx % num;
 
-        hedgeSortBuf[j]->nextInLeaf = *headPtr;
+        hedgeSortBuf[j]->buildData.nextInLeaf = *headPtr;
         *headPtr = hedgeSortBuf[j];
     }
 
@@ -220,11 +221,11 @@ static void clockwiseOrder(bsp_hedge_t** headPtr, size_t num, double x, double y
 static void sanityCheckClosed(const BspLeaf* leaf)
 {
     int total = 0, gaps = 0;
-    bsp_hedge_t* cur, *next;
+    HEdge* cur, *next;
 
-    for(cur = leaf->buildData.hedges; cur; cur = cur->nextInLeaf)
+    for(cur = leaf->buildData.hedges; cur; cur = cur->buildData.nextInLeaf)
     {
-        next = (cur->nextInLeaf? cur->nextInLeaf : leaf->buildData.hedges);
+        next = (cur->buildData.nextInLeaf? cur->buildData.nextInLeaf : leaf->buildData.hedges);
 
         if(cur->v[1]->buildData.pos[VX] != next->v[0]->buildData.pos[VX] ||
            cur->v[1]->buildData.pos[VY] != next->v[0]->buildData.pos[VY])
@@ -252,17 +253,17 @@ static void sanityCheckClosed(const BspLeaf* leaf)
 
 static void sanityCheckSameSector(const BspLeaf* leaf)
 {
-    bsp_hedge_t* cur, *compare;
+    HEdge* cur, *compare;
 
     // Find a suitable half-edge for comparison.
-    for(compare = leaf->buildData.hedges; compare; compare = compare->nextInLeaf)
+    for(compare = leaf->buildData.hedges; compare; compare = compare->buildData.nextInLeaf)
     {
         if(compare->sector) break;
     }
 
     if(!compare) return;
 
-    for(cur = compare->nextInLeaf; cur; cur = cur->nextInLeaf)
+    for(cur = compare->buildData.nextInLeaf; cur; cur = cur->buildData.nextInLeaf)
     {
         if(!cur->sector) continue;
 
@@ -276,10 +277,10 @@ static void sanityCheckSameSector(const BspLeaf* leaf)
 
         if(verbose >= 1)
         {
-            if(cur->info.lineDef)
+            if(cur->buildData.info.lineDef)
                 Con_Message("Sector #%d has sidedef facing #%d (line #%d).\n",
                             compare->sector->buildData.index, cur->sector->buildData.index,
-                            cur->info.lineDef->buildData.index);
+                            cur->buildData.info.lineDef->buildData.index);
             else
                 Con_Message("Sector #%d has sidedef facing #%d.\n",
                             compare->sector->buildData.index, cur->sector->buildData.index);
@@ -289,10 +290,10 @@ static void sanityCheckSameSector(const BspLeaf* leaf)
 
 static boolean sanityCheckHasRealhedge(const BspLeaf* leaf)
 {
-    bsp_hedge_t* cur;
-    for(cur = leaf->buildData.hedges; cur; cur = cur->nextInLeaf)
+    HEdge* cur;
+    for(cur = leaf->buildData.hedges; cur; cur = cur->buildData.nextInLeaf)
     {
-        if(cur->info.lineDef) return true;
+        if(cur->buildData.info.lineDef) return true;
     }
     return false;
 }
@@ -300,12 +301,12 @@ static boolean sanityCheckHasRealhedge(const BspLeaf* leaf)
 static void renumberLeafhedges(BspLeaf* leaf, uint* curIndex)
 {
     uint n;
-    bsp_hedge_t* cur;
+    HEdge* cur;
 
     n = 0;
-    for(cur = leaf->buildData.hedges; cur; cur = cur->nextInLeaf)
+    for(cur = leaf->buildData.hedges; cur; cur = cur->buildData.nextInLeaf)
     {
-        cur->index = *curIndex;
+        cur->buildData.index = *curIndex;
         (*curIndex)++;
         n++;
     }
@@ -317,7 +318,7 @@ static void preparehedgeSortBuffer(size_t numhedges)
     if(numhedges + 1 > hedgeSortBufSize)
     {
         hedgeSortBufSize = numhedges + 1;
-        hedgeSortBuf = (bsp_hedge_t**)M_Realloc(hedgeSortBuf, hedgeSortBufSize * sizeof(*hedgeSortBuf));
+        hedgeSortBuf = (HEdge**)M_Realloc(hedgeSortBuf, hedgeSortBufSize * sizeof(*hedgeSortBuf));
     }
 }
 
@@ -327,14 +328,14 @@ static int C_DECL clockwiseLeaf(BinaryTree* tree, void* data)
     {
         BspLeaf* leaf = (BspLeaf*) BinaryTree_UserData(tree);
         double midPoint[2] = { 0, 0 };
-        bsp_hedge_t* hedge;
+        HEdge* hedge;
         size_t total;
 
         getAveragedCoords(leaf->buildData.hedges, &midPoint[VX], &midPoint[VY]);
 
         // Count half-edges.
         total = 0;
-        for(hedge = leaf->buildData.hedges; hedge; hedge = hedge->nextInLeaf)
+        for(hedge = leaf->buildData.hedges; hedge; hedge = hedge->buildData.nextInLeaf)
             total++;
 
         // Ensure the sort buffer is large enough.
@@ -374,30 +375,30 @@ void BspBuilder::windLeafs(BinaryTree* rootNode)
 }
 
 static void evalPartitionCostForHEdge(const BspHEdgeInfo* partInfo,
-    int costFactorMultiplier, const bsp_hedge_t* hedge, PartitionCost& cost)
+    int costFactorMultiplier, const HEdge* hedge, PartitionCost& cost)
 {
 #define ADD_LEFT()  \
-    if (hedge->info.lineDef) cost.realLeft += 1;  \
-    else                     cost.miniLeft += 1;  \
+    if (hedge->buildData.info.lineDef) cost.realLeft += 1;  \
+    else                               cost.miniLeft += 1;  \
 
 #define ADD_RIGHT()  \
-    if (hedge->info.lineDef) cost.realRight += 1;  \
-    else                     cost.miniRight += 1;  \
+    if (hedge->buildData.info.lineDef) cost.realRight += 1;  \
+    else                               cost.miniRight += 1;  \
 
     double qnty, a, b, fa, fb;
     assert(hedge);
 
     // Get state of lines' relation to each other.
-    if(hedge->info.sourceLineDef == partInfo->sourceLineDef)
+    if(hedge->buildData.info.sourceLineDef == partInfo->sourceLineDef)
     {
         a = b = fa = fb = 0;
     }
     else
     {
         a = M_PerpDist(partInfo->pDX, partInfo->pDY, partInfo->pPerp, partInfo->pLength,
-                       hedge->info.pSX, hedge->info.pSY);
+                       hedge->buildData.info.pSX, hedge->buildData.info.pSY);
         b = M_PerpDist(partInfo->pDX, partInfo->pDY, partInfo->pPerp, partInfo->pLength,
-                       hedge->info.pEX, hedge->info.pEY);
+                       hedge->buildData.info.pEX, hedge->buildData.info.pEY);
 
         fa = fabs(a);
         fb = fabs(b);
@@ -408,7 +409,7 @@ static void evalPartitionCostForHEdge(const BspHEdgeInfo* partInfo,
     {
         // This half-edge runs along the same line as the partition.
         // hedge whether it goes in the same direction or the opposite.
-        if(hedge->info.pDX * partInfo->pDX + hedge->info.pDY * partInfo->pDY < 0)
+        if(hedge->buildData.info.pDX * partInfo->pDX + hedge->buildData.info.pDY * partInfo->pDY < 0)
         {
             ADD_LEFT();
         }
@@ -618,7 +619,7 @@ static int evalPartition(SuperBlock& block, int splitCostFactor,
 typedef struct {
     SuperBlock* hedgeList;
     int splitCostFactor;
-    bsp_hedge_t* best;
+    HEdge* best;
     int bestCost;
 } choosehedgefromsuperblockparams_t;
 
@@ -630,16 +631,16 @@ static int chooseHEdgeFromSuperBlock(SuperBlock* partList, void* parameters)
     for(SuperBlock::HEdges::const_iterator it = partList->hedgesBegin();
         it != partList->hedgesEnd(); ++it)
     {
-        bsp_hedge_t* hedge = *it;
+        HEdge* hedge = *it;
 
         //DEBUG_Message(("chooseHEdgeFromSuperBlock: %shedge %p sector=%d  (%1.1f,%1.1f) -> "
         //               "(%1.1f,%1.1f)\n", (lineDef? "" : "MINI"), hedge,
-        //               (hedge->sector? hedge->sector->index : -1),
+        //               (hedge->buildData.sector? hedge->buildData.sector->index : -1),
         //               hedge->v[0]->V_pos[VX], hedge->v[0]->V_pos[VY],
         //               hedge->v[1]->V_pos[VX], hedge->v[1]->V_pos[VY]));
 
         // "Mini-hedges" are never potential candidates.
-        LineDef* lineDef = hedge->info.lineDef;
+        LineDef* lineDef = hedge->buildData.info.lineDef;
         if(!lineDef) continue;
 
         // Only test half-edges from the same linedef once per round of
@@ -648,7 +649,7 @@ static int chooseHEdgeFromSuperBlock(SuperBlock* partList, void* parameters)
         lineDef->validCount = validCount;
 
         // Unsuitable or too costly?
-        int cost = evalPartition(*p->hedgeList, p->splitCostFactor, &hedge->info, p->bestCost);
+        int cost = evalPartition(*p->hedgeList, p->splitCostFactor, &hedge->buildData.info, p->bestCost);
         if(cost >= 0 && cost < p->bestCost)
         {
             // We have a new better choice.
@@ -680,10 +681,10 @@ boolean BspBuilder::choosePartition(SuperBlock* hedgeList, size_t /*depth*/, HPl
     }
 
     // Finished, return the best partition.
-    bsp_hedge_t* best = parm.best;
+    HEdge* best = parm.best;
     if(best)
     {
-        LineDef* lineDef = best->info.lineDef;
+        LineDef* lineDef = best->buildData.info.lineDef;
 
         // This must not be a "mini hedge".
         assert(lineDef);
@@ -700,7 +701,7 @@ boolean BspBuilder::choosePartition(SuperBlock* hedgeList, size_t /*depth*/, HPl
                           lineDef->L_v(best->side^1)->buildData.pos[VY] - lineDef->L_v(best->side)->buildData.pos[VY]);
 
         BspHEdgeInfo* info = partition->partitionHEdgeInfo();
-        memcpy(info, &best->info, sizeof(*info));
+        memcpy(info, &best->buildData.info, sizeof(*info));
 
         return true;
     }
@@ -719,7 +720,7 @@ enum {
    LEFT
 };
 
-const HPlaneIntercept* BspBuilder::makeHPlaneIntersection(HPlane* hplane, bsp_hedge_t* hedge, int leftSide)
+const HPlaneIntercept* BspBuilder::makeHPlaneIntersection(HPlane* hplane, HEdge* hedge, int leftSide)
 {
     HEdgeIntercept* hedgeIntercept;
     const BspHEdgeInfo* info;
@@ -737,11 +738,11 @@ const HPlaneIntercept* BspBuilder::makeHPlaneIntersection(HPlane* hplane, bsp_he
     distance = M_ParallelDist(info->pDX, info->pDY, info->pPara, info->pLength,
                               vertex->buildData.pos[VX], vertex->buildData.pos[VY]);
 
-    hedgeIntercept = newHEdgeIntercept(vertex, info, (hedge->info.lineDef && lineDefHasSelfRef(hedge->info.lineDef)));
+    hedgeIntercept = newHEdgeIntercept(vertex, info, (hedge->buildData.info.lineDef && lineDefHasSelfRef(hedge->buildData.info.lineDef)));
     return hplane->newIntercept(distance, hedgeIntercept);
 }
 
-const HPlaneIntercept* BspBuilder::makeIntersection(HPlane* hplane, bsp_hedge_t* hedge, int leftSide)
+const HPlaneIntercept* BspBuilder::makeIntersection(HPlane* hplane, HEdge* hedge, int leftSide)
 {
     if(!hplane || !hedge)
         Con_Error("BspBuilder::makeHPlaneIntersection: Invalid arguments.");
@@ -788,19 +789,19 @@ static __inline void calcIntersection(BspHEdgeInfo* hedge, const BspHEdgeInfo* o
         *y = hedge->pSY + (hedge->pDY * ds);
 }
 
-void BspBuilder::divideHEdge(bsp_hedge_t* hedge, HPlane* partition, SuperBlock* rightList,
+void BspBuilder::divideHEdge(HEdge* hedge, HPlane* partition, SuperBlock* rightList,
     SuperBlock* leftList)
 {
     const BspHEdgeInfo* info = partition->partitionHEdgeInfo();
-    bsp_hedge_t* newhedge;
+    HEdge* newhedge;
     double x, y;
     double a, b;
 
     // Get state of lines' relation to each other.
-    a = M_PerpDist(info->pDX, info->pDY, info->pPerp, info->pLength, hedge->info.pSX, hedge->info.pSY);
-    b = M_PerpDist(info->pDX, info->pDY, info->pPerp, info->pLength, hedge->info.pEX, hedge->info.pEY);
+    a = M_PerpDist(info->pDX, info->pDY, info->pPerp, info->pLength, hedge->buildData.info.pSX, hedge->buildData.info.pSY);
+    b = M_PerpDist(info->pDX, info->pDY, info->pPerp, info->pLength, hedge->buildData.info.pEX, hedge->buildData.info.pEY);
 
-    if(hedge->info.sourceLineDef == info->sourceLineDef)
+    if(hedge->buildData.info.sourceLineDef == info->sourceLineDef)
         a = b = 0;
 
     // Check for being on the same line.
@@ -811,7 +812,7 @@ void BspBuilder::divideHEdge(bsp_hedge_t* hedge, HPlane* partition, SuperBlock* 
 
         // This hedge runs along the same line as the partition. Check whether it goes in
         // the same direction or the opposite.
-        if(hedge->info.pDX * info->pDX + hedge->info.pDY * info->pDY < 0)
+        if(hedge->buildData.info.pDX * info->pDX + hedge->buildData.info.pDY * info->pDY < 0)
         {
             leftList->hedgePush(hedge);
         }
@@ -849,7 +850,7 @@ void BspBuilder::divideHEdge(bsp_hedge_t* hedge, HPlane* partition, SuperBlock* 
     // When we reach here, we have a and b non-zero and opposite sign, hence this edge
     // will be split by the partition line.
 
-    calcIntersection(&hedge->info, info, a, b, &x, &y);
+    calcIntersection(&hedge->buildData.info, info, a, b, &x, &y);
     newhedge = splitHEdge(hedge, x, y);
     makeIntersection(partition, hedge, LEFT);
 
@@ -875,7 +876,7 @@ typedef struct {
 int C_DECL BspBuilder_PartitionHEdgeWorker(SuperBlock* superblock, void* parameters)
 {
     partitionhedgeworkerparams_t* p = (partitionhedgeworkerparams_t*)parameters;
-    bsp_hedge_t* hedge;
+    HEdge* hedge;
     assert(p);
 
     while((hedge = superblock->hedgePop()))
@@ -910,13 +911,13 @@ void BspBuilder::partitionHEdges(SuperBlock* hedgeList, SuperBlock* rights, Supe
 static int createBSPLeafWorker(SuperBlock* superblock, void* parameters)
 {
     BspLeaf* leaf = (BspLeaf*) parameters;
-    bsp_hedge_t* hedge;
+    HEdge* hedge;
     assert(leaf);
 
     while((hedge = superblock->hedgePop()))
     {
         // Link it into head of the leaf's list.
-        hedge->nextInLeaf = leaf->buildData.hedges;
+        hedge->buildData.nextInLeaf = leaf->buildData.hedges;
         leaf->buildData.hedges = hedge;
     }
 
@@ -1003,10 +1004,10 @@ boolean BspBuilder::buildNodes(SuperBlock* superblock, BinaryTree** parent, size
 }
 
 #if _DEBUG
-static void printHEdge(bsp_hedge_t* hedge)
+static void printHEdge(HEdge* hedge)
 {
     Con_Message("Build: %s %p sector=%d (%1.1f,%1.1f) -> (%1.1f,%1.1f)\n",
-                (hedge->info.lineDef? "NORM" : "MINI"), hedge,
+                (hedge->buildData.info.lineDef? "NORM" : "MINI"), hedge,
                 hedge->sector->buildData.index,
                 hedge->v[0]->buildData.pos[VX], hedge->v[0]->buildData.pos[VY],
                 hedge->v[1]->buildData.pos[VX], hedge->v[1]->buildData.pos[VY]);
@@ -1017,7 +1018,7 @@ static int printSuperBlockHEdgesWorker(SuperBlock* block, void* /*parameters*/)
     for(SuperBlock::HEdges::const_iterator it = block->hedgesBegin();
         it != block->hedgesEnd(); ++it)
     {
-        bsp_hedge_t* hedge = *it;
+        HEdge* hedge = *it;
         printHEdge(hedge);
     }
     return false; // Continue iteration.

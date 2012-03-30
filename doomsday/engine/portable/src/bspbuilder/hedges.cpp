@@ -33,6 +33,7 @@
 #include "de_console.h"
 #include "edit_map.h"
 #include "m_misc.h"
+#include "hedge.h"
 
 #include "bspbuilder/hedges.hh"
 #include "bspbuilder/bspbuilder.hh"
@@ -53,7 +54,7 @@ void Bsp_PrintHEdgeIntercept(HEdgeIntercept* inter)
 }
 #endif
 
-static void initBspHEdgeInfo(const bsp_hedge_t* hedge, BspHEdgeInfo* info)
+static void initBspHEdgeInfo(const HEdge* hedge, BspHEdgeInfo* info)
 {
     assert(hedge);
     if(!info) return;
@@ -72,7 +73,7 @@ static void initBspHEdgeInfo(const bsp_hedge_t* hedge, BspHEdgeInfo* info)
     info->pPara = -info->pSX * info->pDX - info->pSY * info->pDY;
 }
 
-static void updateBspHEdgeInfo(const bsp_hedge_t* hedge, BspHEdgeInfo* info)
+static void updateBspHEdgeInfo(const HEdge* hedge, BspHEdgeInfo* info)
 {
     assert(hedge);
     if(!info) return;
@@ -82,35 +83,29 @@ static void updateBspHEdgeInfo(const bsp_hedge_t* hedge, BspHEdgeInfo* info)
         Con_Error("HEdge {%p} is of zero length.", hedge);
 }
 
-bsp_hedge_t* BspBuilder::newHEdge(LineDef* lineDef, LineDef* sourceLineDef,
+HEdge* BspBuilder::newHEdge(LineDef* lineDef, LineDef* sourceLineDef,
     Vertex* start, Vertex* end, Sector* sec, boolean back)
 {
-    bsp_hedge_t* hedge = allocHEdge();
+    HEdge* hedge = HEdge_New();
 
     hedge->v[0] = start;
     hedge->v[1] = end;
     hedge->side = (back? 1 : 0);
-    hedge->sector = sec;
     hedge->twin = NULL;
-    hedge->nextOnSide = hedge->prevOnSide = NULL;
-    hedge->index = -1;
+    hedge->sector = sec;
+    hedge->buildData.nextOnSide = hedge->buildData.prevOnSide = NULL;
+    hedge->buildData.index = -1;
 
-    updateBspHEdgeInfo(hedge, &hedge->info);
-    hedge->info.lineDef = lineDef;
-    hedge->info.sourceLineDef = sourceLineDef;
+    updateBspHEdgeInfo(hedge, &hedge->buildData.info);
+    hedge->buildData.info.lineDef = lineDef;
+    hedge->buildData.info.sourceLineDef = sourceLineDef;
 
     return hedge;
 }
 
-void BspBuilder::deleteHEdge(bsp_hedge_t* hedge)
+HEdge* BspBuilder::splitHEdge(HEdge* oldHEdge, double x, double y)
 {
-    if(!hedge) return;
-    freeHEdge(hedge);
-}
-
-bsp_hedge_t* BspBuilder::splitHEdge(bsp_hedge_t* oldHEdge, double x, double y)
-{
-    bsp_hedge_t* newHEdge;
+    HEdge* newHEdge;
     Vertex* newVert;
 
 /*#if _DEBUG
@@ -130,22 +125,20 @@ bsp_hedge_t* BspBuilder::splitHEdge(bsp_hedge_t* oldHEdge, double x, double y)
     newVert->buildData.refCount = (oldHEdge->twin? 4 : 2);
 
     // Compute wall_tip info.
-    addEdgeTip(newVert, -oldHEdge->info.pDX, -oldHEdge->info.pDY, oldHEdge, oldHEdge->twin);
-    addEdgeTip(newVert,  oldHEdge->info.pDX,  oldHEdge->info.pDY, oldHEdge->twin, oldHEdge);
-
-    newHEdge = allocHEdge();
+    addEdgeTip(newVert, -oldHEdge->buildData.info.pDX, -oldHEdge->buildData.info.pDY, oldHEdge, oldHEdge->twin);
+    addEdgeTip(newVert,  oldHEdge->buildData.info.pDX,  oldHEdge->buildData.info.pDY, oldHEdge->twin, oldHEdge);
 
     // Copy the old half-edge info.
-    memcpy(newHEdge, oldHEdge, sizeof(bsp_hedge_t));
+    newHEdge = HEdge_NewCopy(oldHEdge);
 
-    newHEdge->prevOnSide = oldHEdge;
-    oldHEdge->nextOnSide = newHEdge;
+    newHEdge->buildData.prevOnSide = oldHEdge;
+    oldHEdge->buildData.nextOnSide = newHEdge;
 
     oldHEdge->v[1] = newVert;
-    updateBspHEdgeInfo(oldHEdge, &oldHEdge->info);
+    updateBspHEdgeInfo(oldHEdge, &oldHEdge->buildData.info);
 
     newHEdge->v[0] = newVert;
-    updateBspHEdgeInfo(newHEdge, &newHEdge->info);
+    updateBspHEdgeInfo(newHEdge, &newHEdge->buildData.info);
 
     //DEBUG_Message(("Splitting Vertex is %04X at (%1.1f,%1.1f)\n",
     //               newVert->index, newVert->V_pos[VX], newVert->V_pos[VY]));
@@ -155,32 +148,30 @@ bsp_hedge_t* BspBuilder::splitHEdge(bsp_hedge_t* oldHEdge, double x, double y)
     {
         //DEBUG_Message(("Splitting hedge->twin %p\n", oldHEdge->twin));
 
-        newHEdge->twin = allocHEdge();
-
         // Copy the old hedge info.
-        memcpy(newHEdge->twin, oldHEdge->twin, sizeof(bsp_hedge_t));
+        newHEdge->twin = HEdge_NewCopy(oldHEdge->twin);
 
         // It is important to keep the twin relationship valid.
         newHEdge->twin->twin = newHEdge;
 
-        newHEdge->twin->nextOnSide = oldHEdge->twin;
-        oldHEdge->twin->prevOnSide = newHEdge->twin;
+        newHEdge->twin->buildData.nextOnSide = oldHEdge->twin;
+        oldHEdge->twin->buildData.prevOnSide = newHEdge->twin;
 
         oldHEdge->twin->v[0] = newVert;
-        updateBspHEdgeInfo(oldHEdge->twin, &oldHEdge->twin->info);
+        updateBspHEdgeInfo(oldHEdge->twin, &oldHEdge->twin->buildData.info);
 
         newHEdge->twin->v[1] = newVert;
-        updateBspHEdgeInfo(newHEdge->twin, &newHEdge->twin->info);
+        updateBspHEdgeInfo(newHEdge->twin, &newHEdge->twin->buildData.info);
 
         // Update superblock, if needed.
-        if(oldHEdge->twin->block)
+        if(oldHEdge->twin->buildData.block)
         {
-            SuperBlock* block = reinterpret_cast<SuperBlock*>(oldHEdge->twin->block);
+            SuperBlock* block = reinterpret_cast<SuperBlock*>(oldHEdge->twin->buildData.block);
             block->hedgePush(newHEdge->twin);
         }
         else
         {
-            oldHEdge->twin->nextInLeaf = newHEdge->twin;
+            oldHEdge->twin->buildData.nextInLeaf = newHEdge->twin;
         }
     }
 

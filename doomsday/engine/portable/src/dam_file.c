@@ -719,8 +719,7 @@ static void writeSeg(GameMap* map, HEdge* s)
     writeFloat(s->length);
     writeFloat(s->offset);
     writeLong(s->lineDef? ((s->lineDef - map->lineDefs) + 1) : 0);
-    writeLong(s->sec[FRONT]? ((s->sec[FRONT] - map->sectors) + 1) : 0);
-    writeLong(s->sec[BACK]? ((s->sec[BACK] - map->sectors) + 1) : 0);
+    writeLong(s->sector? (GameMap_SectorIndex(map, s->sector) + 1) : 0);
     writeLong(s->bspLeaf? (GameMap_BspLeafIndex(map, s->bspLeaf) + 1) : 0);
     writeLong(s->twin? (GameMap_HEdgeIndex(map, s->twin) + 1) : 0);
     writeLong((long) s->angle);
@@ -742,9 +741,7 @@ static void readSeg(GameMap* map, HEdge* s)
     obIdx = readLong();
     s->lineDef = (obIdx == 0? NULL : &map->lineDefs[(unsigned) obIdx - 1]);
     obIdx = readLong();
-    s->sec[FRONT] = (obIdx == 0? NULL : &map->sectors[(unsigned) obIdx - 1]);
-    obIdx = readLong();
-    s->sec[BACK] = (obIdx == 0? NULL : &map->sectors[(unsigned) obIdx - 1]);
+    s->sector = (obIdx == 0? NULL : GameMap_Sector(map, (unsigned) obIdx - 1));
     obIdx = readLong();
     s->bspLeaf = (obIdx == 0? NULL : GameMap_BspLeaf(map, (unsigned) obIdx - 1));
     obIdx = readLong();
@@ -901,7 +898,7 @@ static void archiveReject(GameMap *map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
-static void writePolyobj(const GameMap* map, uint idx)
+static void writePolyobj(GameMap* map, uint idx)
 {
     Polyobj* p = map->polyObjs[idx];
     uint i;
@@ -935,14 +932,14 @@ static void writePolyobj(const GameMap* map, uint idx)
         writeFloat(he->length);
         writeFloat(he->offset);
         writeLong(he->lineDef? ((he->lineDef - map->lineDefs) + 1) : 0);
-        writeLong(he->sec[FRONT]? ((he->sec[FRONT] - map->sectors) + 1) : 0);
+        writeLong(he->sector? (GameMap_SectorIndex(map, he->sector) + 1) : 0);
         writeLong((long) he->angle);
         writeByte(he->side);
         writeByte(he->flags);
     }
 }
 
-static void readPolyobj(const GameMap* map, uint idx)
+static void readPolyobj(GameMap* map, uint idx)
 {
     Polyobj* p = map->polyObjs[idx];
     long obIdx;
@@ -984,7 +981,7 @@ static void readPolyobj(const GameMap* map, uint idx)
         obIdx = readLong();
         he->lineDef = (obIdx == 0? NULL : &map->lineDefs[(unsigned) obIdx - 1]);
         obIdx = readLong();
-        he->sec[FRONT] = (obIdx == 0? NULL : &map->sectors[(unsigned) obIdx - 1]);
+        he->sector = (obIdx == 0? NULL : &map->sectors[(unsigned) obIdx - 1]);
         he->angle = (angle_t) readLong();
         he->side = (readByte()? 1 : 0);
         he->flags = readByte();

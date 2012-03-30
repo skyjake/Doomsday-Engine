@@ -28,6 +28,8 @@
 #ifndef LIBDENG_BSPBUILDER_INTERSECTION
 #define LIBDENG_BSPBUILDER_INTERSECTION
 
+#include "p_mapdata.h"
+
 #include "bspbuilder/hedges.hh"
 
 #include <list>

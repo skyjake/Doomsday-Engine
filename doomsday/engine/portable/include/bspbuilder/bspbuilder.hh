@@ -29,7 +29,6 @@
 #define LIBDENG_BSPBUILDER_HH
 
 #include "dd_types.h"
-#include "dd_zone.h"
 #include "p_mapdata.h"
 
 #include "bspbuilder/hedges.hh"
@@ -40,7 +39,7 @@ struct binarytree_s;
 
 namespace de {
 
-/// Number of bsp_hedge_t to block allocate.
+/// Number of HEdge to block allocate.
 #define BSPBUILDER_HEDGE_ALLOCATOR_BLOCKSIZE   512
 
 /// Default cost factor attributed to splitting an existing half-edge.
@@ -49,16 +48,10 @@ namespace de {
 class BspBuilder {
 public:
     BspBuilder() : splitCostFactor(BSPBUILDER_PARTITION_COST_HEDGESPLIT)
-    {
-        // Init the half-edge block allocator.
-        hedgeBlockSet = ZBlockSet_New(sizeof(bsp_hedge_t), BSPBUILDER_HEDGE_ALLOCATOR_BLOCKSIZE, PU_APPSTATIC);
-    }
+    {}
 
     ~BspBuilder()
-    {
-        // Shutdown the half-edge block allocator.
-        ZBlockSet_Delete(hedgeBlockSet);
-    }
+    {}
 
     BspBuilder* setSplitCostFactor(int factor)
     {
@@ -86,31 +79,12 @@ public:
      */
     void deleteHEdgeIntercept(HEdgeIntercept* intercept);
 
-    /**
-     * Destroys the given half-edge.
-     *
-     * @param hedge  Ptr to the half-edge to be destroyed.
-     */
-    void deleteHEdge(bsp_hedge_t* hedge);
-
 private:
-    inline bsp_hedge_t* allocHEdge(void)
-    {
-        bsp_hedge_t* hedge = (bsp_hedge_t*)ZBlockSet_Allocate(hedgeBlockSet);
-        memset(hedge, 0, sizeof(bsp_hedge_t));
-        return hedge;
-    }
-
-    inline void freeHEdge(bsp_hedge_t* /*hedge*/)
-    {
-        // Ignore @a hedge it'll be free'd along with the block allocator itself.
-    }
-
     BspLeaf* createBSPLeaf(SuperBlock* hedgeList);
 
-    const HPlaneIntercept* makeHPlaneIntersection(HPlane* hplane, bsp_hedge_t* hedge, int leftSide);
+    const HPlaneIntercept* makeHPlaneIntersection(HPlane* hplane, HEdge* hedge, int leftSide);
 
-    const HPlaneIntercept* makeIntersection(HPlane* hplane, bsp_hedge_t* hedge, int leftSide);
+    const HPlaneIntercept* makeIntersection(HPlane* hplane, HEdge* hedge, int leftSide);
 
     /**
      * Initially create all half-edges, one for each side of a linedef.
@@ -124,8 +98,8 @@ private:
     void buildHEdgesAtIntersectionGaps(HPlane* hplane,
         SuperBlock* rightList, SuperBlock* leftList);
 
-    void addEdgeTip(Vertex* vert, double dx, double dy, bsp_hedge_t* back,
-        bsp_hedge_t* front);
+    void addEdgeTip(Vertex* vert, double dx, double dy, HEdge* back,
+        HEdge* front);
 
     /**
      * Splits the given half-edge at the point (x,y). The new half-edge is returned.
@@ -141,7 +115,7 @@ private:
      *       half-edge (and/or backseg), so that future processing is not messed up
      *       by incorrect counts.
      */
-    bsp_hedge_t* splitHEdge(bsp_hedge_t* oldHEdge, double x, double y);
+    HEdge* splitHEdge(HEdge* oldHEdge, double x, double y);
 
 public:
     /**
@@ -157,7 +131,7 @@ public:
      *       reworked, heavily). I think it is important that both these routines follow
      *       the exact same logic.
      */
-    void divideHEdge(bsp_hedge_t* hedge, HPlane* hplane,
+    void divideHEdge(HEdge* hedge, HPlane* hplane,
         SuperBlock* rightList, SuperBlock* leftList);
 
 private:
@@ -214,7 +188,7 @@ private:
         SuperBlock* leftList, HPlane* hplane);
 
     void addHEdgesBetweenIntercepts(HPlane* hplane,
-        HEdgeIntercept* start, HEdgeIntercept* end, bsp_hedge_t** right, bsp_hedge_t** left);
+        HEdgeIntercept* start, HEdgeIntercept* end, HEdge** right, HEdge** left);
 
     /**
      * Analyze the intersection list, and add any needed minihedges to the given half-edge lists
@@ -244,7 +218,7 @@ private:
     /**
      * Create a new half-edge.
      */
-    bsp_hedge_t* newHEdge(LineDef* line, LineDef* sourceLine, Vertex* start, Vertex* end,
+    HEdge* newHEdge(LineDef* line, LineDef* sourceLine, Vertex* start, Vertex* end,
         Sector* sec, boolean back);
 
     HEdgeIntercept* hedgeInterceptByVertex(HPlane* hplane, Vertex* vertex);
@@ -258,8 +232,6 @@ private:
 
 private:
     int splitCostFactor;
-
-    zblockset_t* hedgeBlockSet;
 };
 
 } // namespace de

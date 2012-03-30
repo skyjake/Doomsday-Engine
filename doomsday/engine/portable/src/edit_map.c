@@ -1286,8 +1286,7 @@ static void hardenPolyobjs(GameMap* dest, editmap_t* src)
             hedge->length = P_AccurateDistance(dx, dy);
             hedge->twin = NULL;
             hedge->bspLeaf = NULL;
-            hedge->HE_frontsector = line->L_frontsector;
-            hedge->HE_backsector = NULL;
+            hedge->sector = line->L_frontsector;
             hedge->flags |= HEDGEF_POLYOBJ;
 
             line->L_frontside->hedges = Z_Malloc(sizeof(*line->L_frontside->hedges), PU_MAP, 0);

@@ -1526,8 +1526,8 @@ static boolean doRenderSeg(HEdge* hedge,
             radioParams.spans = side->spans;
             radioParams.segOffset = &hedge->offset;
             radioParams.segLength = &hedge->length;
-            radioParams.frontSec = hedge->HE_frontsector;
-            radioParams.backSec = (!isTwosidedMiddle? hedge->HE_backsector : NULL);
+            radioParams.frontSec = hedge->sector;
+            radioParams.backSec = (!isTwosidedMiddle? HEDGE_BACK_SECTOR(hedge) : NULL);
 
             /**
              * \kludge Revert the vertex coords as they may have been changed
@@ -1824,14 +1824,14 @@ static boolean rendSegSection(BspLeaf* bspLeaf, HEdge* hedge,
         V3f_Set(texBR, to->pos  [VX], to->pos  [VY], bottom);
 
         // Determine which Material to use.
-        if(devRendSkyMode && hedge->HE_backsector &&
-           ((section == SS_BOTTOM && Surface_IsSkyMasked(&hedge->HE_frontsector->SP_floorsurface) &&
-                                      Surface_IsSkyMasked(&hedge->HE_backsector->SP_floorsurface)) ||
-            (section == SS_TOP    && Surface_IsSkyMasked(&hedge->HE_frontsector->SP_ceilsurface) &&
-                                      Surface_IsSkyMasked(&hedge->HE_backsector->SP_ceilsurface))))
+        if(devRendSkyMode && HEDGE_BACK_SECTOR(hedge) &&
+           ((section == SS_BOTTOM && Surface_IsSkyMasked(&hedge->sector->SP_floorsurface) &&
+                                     Surface_IsSkyMasked(&HEDGE_BACK_SECTOR(hedge)->SP_floorsurface)) ||
+            (section == SS_TOP    && Surface_IsSkyMasked(&hedge->sector->SP_ceilsurface) &&
+                                     Surface_IsSkyMasked(&HEDGE_BACK_SECTOR(hedge)->SP_ceilsurface))))
         {
             // Geometry not normally rendered however we do so in dev sky mode.
-            mat = hedge->HE_frontsector->SP_planematerial(section == SS_TOP? PLN_CEILING : PLN_FLOOR);
+            mat = hedge->sector->SP_planematerial(section == SS_TOP? PLN_CEILING : PLN_FLOOR);
         }
         else
         {
@@ -2440,10 +2440,10 @@ static int segSkyFixes(HEdge* hedge)
     int fixes = 0;
     if(hedge && hedge->lineDef) // "minisegs" have no linedefs.
     {
-        const Sector* frontSec = hedge->HE_frontsector;
-        const Sector* backSec  = hedge->HE_backsector;
+        const Sector* frontSec = hedge->sector;
+        const Sector* backSec  = HEDGE_BACK_SECTOR(hedge);
 
-        if(!backSec || backSec != hedge->HE_frontsector)
+        if(!backSec || backSec != hedge->sector)
         {
             const boolean hasSkyFloor   = Surface_IsSkyMasked(&frontSec->SP_floorsurface);
             const boolean hasSkyCeiling = Surface_IsSkyMasked(&frontSec->SP_ceilsurface);
@@ -2495,8 +2495,8 @@ static int segSkyFixes(HEdge* hedge)
  */
 static void skyFixZCoords(HEdge* hedge, int skyCap, float* bottom, float* top)
 {
-    const Sector* frontSec = hedge->HE_frontsector;
-    const Sector* backSec  = hedge->HE_backsector;
+    const Sector* frontSec = hedge->sector;
+    const Sector* backSec  = HEDGE_BACK_SECTOR(hedge);
     const Plane* ffloor = frontSec->SP_plane(PLN_FLOOR);
     const Plane* fceil  = frontSec->SP_plane(PLN_CEILING);
     const Plane* bceil  = backSec? backSec->SP_plane(PLN_CEILING) : NULL;
@@ -2635,8 +2635,8 @@ static boolean skymaskSegIsVisible(HEdge* hedge, boolean clipBackFacing)
     // Let's first check which way this hedge is facing.
     if(clipBackFacing && !(hedge->frameFlags & HEDGEINF_FACINGFRONT)) return false;
 
-    backSec  = hedge->HE_backsector;
-    frontSec = hedge->HE_frontsector;
+    frontSec = hedge->sector;
+    backSec  = HEDGE_BACK_SECTOR(hedge);
 
     // Avoid obvious hack (best take no chances...).
     return !(backSec == frontSec && !sideDef->SW_topmaterial && !sideDef->SW_bottommaterial &&
@@ -2679,10 +2679,10 @@ static void occludeBspLeaf(const BspLeaf* bspLeaf, boolean forwardFacing)
     {
         // Occlusions can only happen where two sectors contact.
         if(hedge->lineDef &&
-           hedge->HE_backsector && !(hedge->flags & HEDGEF_POLYOBJ) && // Polyobjects don't occlude.
+           HEDGE_BACK_SECTOR(hedge) && !(hedge->flags & HEDGEF_POLYOBJ) && // Polyobjects don't occlude.
            (forwardFacing == ((hedge->frameFlags & HEDGEINF_FACINGFRONT)? true : false)))
         {
-            back = hedge->HE_backsector;
+            back = HEDGE_BACK_SECTOR(hedge);
             backh[0] = back->SP_floorheight;
             backh[1] = back->SP_ceilheight;
 
@@ -2805,7 +2805,7 @@ static void Rend_RenderBspLeaf(BspLeaf* bspLeaf)
                (hedge->frameFlags & HEDGEINF_FACINGFRONT))
             {
                 boolean solid;
-                if(!hedge->HE_backsector || !hedge->HE_frontsector)
+                if(!hedge->sector || !HEDGE_BACK_SECTOR(hedge))
                     solid = Rend_RenderSeg(bspLeaf, hedge);
                 else
                     solid = Rend_RenderSegTwosided(bspLeaf, hedge);
@@ -2978,11 +2978,12 @@ void Rend_RenderSurfaceVectors(void)
     {
         HEdge* hedge = GameMap_HEdge(theMap, i);
         float x, y, bottom, top;
+        Sector* backSec;
         SideDef* side;
         Surface* suf;
         vec3f_t origin;
 
-        if(!hedge->lineDef || !hedge->HE_frontsector ||
+        if(!hedge->lineDef || !hedge->sector ||
            (hedge->lineDef->inFlags & LF_POLYOBJ))
             continue;
 
@@ -2990,7 +2991,8 @@ void Rend_RenderSurfaceVectors(void)
         x = hedge->HE_v1pos[VX] + (hedge->HE_v2pos[VX] - hedge->HE_v1pos[VX]) / 2;
         y = hedge->HE_v1pos[VY] + (hedge->HE_v2pos[VY] - hedge->HE_v1pos[VY]) / 2;
 
-        if(!hedge->HE_backsector)
+        backSec = HEDGE_BACK_SECTOR(hedge);
+        if(!backSec)
         {
             bottom = side->sector->SP_floorvisheight;
             top = side->sector->SP_ceilvisheight;
@@ -3003,34 +3005,34 @@ void Rend_RenderSurfaceVectors(void)
         {
             if(side->SW_middlesurface.material)
             {
-                top = hedge->HE_frontsector->SP_ceilvisheight;
-                bottom = hedge->HE_frontsector->SP_floorvisheight;
+                top = hedge->sector->SP_ceilvisheight;
+                bottom = hedge->sector->SP_floorvisheight;
                 suf = &side->SW_middlesurface;
 
                 V3f_Set(origin, x, y, bottom + (top - bottom) / 2);
                 drawSurfaceTangentSpaceVectors(suf, origin);
             }
 
-            if(hedge->HE_backsector->SP_ceilvisheight <
-               hedge->HE_frontsector->SP_ceilvisheight &&
-               !(Surface_IsSkyMasked(&hedge->HE_frontsector->SP_ceilsurface) &&
-                 Surface_IsSkyMasked(&hedge->HE_backsector->SP_ceilsurface)))
+            if(backSec->SP_ceilvisheight <
+               hedge->sector->SP_ceilvisheight &&
+               !(Surface_IsSkyMasked(&hedge->sector->SP_ceilsurface) &&
+                 Surface_IsSkyMasked(&backSec->SP_ceilsurface)))
             {
-                bottom = hedge->HE_backsector->SP_ceilvisheight;
-                top = hedge->HE_frontsector->SP_ceilvisheight;
+                bottom = backSec->SP_ceilvisheight;
+                top = hedge->sector->SP_ceilvisheight;
                 suf = &side->SW_topsurface;
 
                 V3f_Set(origin, x, y, bottom + (top - bottom) / 2);
                 drawSurfaceTangentSpaceVectors(suf, origin);
             }
 
-            if(hedge->HE_backsector->SP_floorvisheight >
-               hedge->HE_frontsector->SP_floorvisheight &&
-               !(Surface_IsSkyMasked(&hedge->HE_frontsector->SP_floorsurface) &&
-                 Surface_IsSkyMasked(&hedge->HE_backsector->SP_floorsurface)))
+            if(backSec->SP_floorvisheight >
+               hedge->sector->SP_floorvisheight &&
+               !(Surface_IsSkyMasked(&hedge->sector->SP_floorsurface) &&
+                 Surface_IsSkyMasked(&backSec->SP_floorsurface)))
             {
-                bottom = hedge->HE_frontsector->SP_floorvisheight;
-                top = hedge->HE_backsector->SP_floorvisheight;
+                bottom = hedge->sector->SP_floorvisheight;
+                top = backSec->SP_floorvisheight;
                 suf = &side->SW_bottomsurface;
 
                 V3f_Set(origin, x, y, bottom + (top - bottom) / 2);

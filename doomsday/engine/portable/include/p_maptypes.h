@@ -58,20 +58,17 @@ typedef struct vertex_s {
 #define FRONT 0
 #define BACK  1
 
-#define HE_v(n)                 v[(n)? 1:0]
-#define HE_vpos(n)              HE_v(n)->V_pos
+#define HE_v(n)                   v[(n)? 1:0]
+#define HE_vpos(n)                HE_v(n)->V_pos
 
-#define HE_v1                   HE_v(0)
-#define HE_v1pos                HE_v(0)->V_pos
+#define HE_v1                     HE_v(0)
+#define HE_v1pos                  HE_v(0)->V_pos
 
-#define HE_v2                   HE_v(1)
-#define HE_v2pos                HE_v(1)->V_pos
+#define HE_v2                     HE_v(1)
+#define HE_v2pos                  HE_v(1)->V_pos
 
-#define HE_sector(n)            sec[(n)? 1:0]
-#define HE_frontsector          HE_sector(FRONT)
-#define HE_backsector           HE_sector(BACK)
-
-#define HEDGE_SIDEDEF(s)          ((s)->lineDef->sideDefs[(s)->side])
+#define HEDGE_BACK_SECTOR(h)      ((h)->twin ? (h)->twin->sector : NULL)
+#define HEDGE_SIDEDEF(h)          ((h)->lineDef->sideDefs[(h)->side])
 
 // HEdge flags
 #define HEDGEF_POLYOBJ            0x1 // HEdge is part of a poly object.
@@ -79,13 +76,59 @@ typedef struct vertex_s {
 // HEdge frame flags
 #define HEDGEINF_FACINGFRONT      0x0001
 
+/**
+ * BspHEdgeInfo. Plain old data structure storing additional information about
+ * a half-edge produced by BspBuilder.
+ */
+typedef struct bsphedgeinfo_s {
+    // Precomputed data for faster calculations.
+    double pSX, pSY;
+    double pEX, pEY;
+    double pDX, pDY;
+
+    double pLength;
+    double pAngle;
+    double pPara;
+    double pPerp;
+
+    // Linedef that this half-edge goes along, or NULL if miniseg.
+    struct linedef_s* lineDef;
+
+    // Linedef that this half-edge initially comes from.
+    // For "real" half-edges, this is just the same as the 'linedef' field
+    // above. For "miniedges", this is the linedef of the partition line.
+    struct linedef_s* sourceLineDef;
+} BspHEdgeInfo;
+
+typedef struct mhedge_s {
+    struct hedge_s* nextInLeaf;
+    struct hedge_s* nextOnSide;
+    struct hedge_s* prevOnSide;
+
+    // Index of the half-edge. Only valid once the half-edge has been added
+    // to a polygon. A negative value means it is invalid -- there
+    // shouldn't be any of these once the BSP tree has been built.
+    int index;
+
+    // The superblock that contains this half-edge, or NULL if the half-edge
+    // is no longer in any superblock (e.g. now in a leaf).
+    void* block;
+
+    BspHEdgeInfo info;
+} mhedge_t;
+
 typedef struct hedge_s {
     runtime_mapdata_header_t header;
     struct vertex_s*    v[2];          // [Start, End] of the segment.
     struct linedef_s*   lineDef;
-    struct sector_s*    sec[2];
+    struct sector_s*    sector;
     struct bspleaf_s*   bspLeaf;
+
+    // Half-edge on the other side, or NULL if one-sided. This relationship
+    // is always one-to-one -- if one of the half-edges is split, the twin
+    // must also be split.
     struct hedge_s*     twin;
+
     angle_t             angle;
     byte                side;          // 0=front, 1=back
     byte                flags;
@@ -95,12 +138,13 @@ typedef struct hedge_s {
     short               frameFlags;
     struct hedge_s*     next;
     struct hedge_s*     prev;
+    mhedge_t            buildData;
 } HEdge;
 
 #define BLF_MIDPOINT         0x80    // Midpoint is tri-fan centre.
 
 typedef struct {
-    struct bsp_hedge_s* hedges; // Head ptr to a list of half-edges at this leaf.
+    struct hedge_s*     hedges; // Head ptr to a list of half-edges at this leaf.
 } mbspleaf_t;
 
 typedef struct bspleaf_s {

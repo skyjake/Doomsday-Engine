@@ -32,8 +32,6 @@
 #include "m_binarytree.h"
 #include "materials.h"
 
-struct bsp_hedge_s;
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -121,7 +119,7 @@ typedef struct edgetip_s {
     // Half-edge on each side of the edge. Left is the side of increasing
     // angles, right is the side of decreasing angles. Either can be NULL
     // for one sided edges.
-    struct bsp_hedge_s* hedges[2];
+    struct hedge_s* hedges[2];
 } edgetip_t;
 
 struct edgetip_s* MPE_NewEdgeTip(void);
