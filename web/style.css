@@ -436,6 +436,7 @@ ol.jumplist li {
     height: 282px;
     width: 1300px;
     background: #282D2B url(panoramarotator) no-repeat;
+    box-shadow: 0 -10px 10px 0 rgba(255, 255, 255, 1) inset;
 }
 
 /*------------------- Bottom Panel -----------------*/
@@ -468,12 +469,8 @@ ol.jumplist li {
     background: #ffffff;
     padding-left: .6em;
     padding-right: .4em;
-    padding-top: .4em;
+    padding-top: .2em;
     padding-bottom: .2em;
-}
-
-#contentbox {
-    border-right: 18em #e7eeeb solid; /* Border is width of download box + padding */
 }
 
 /*----------------------- Footer ----------------------*/
@@ -620,6 +617,7 @@ p.legal a {
     display: block;
     font-family: Verdana, Arial, Helvetica, sans-serif;
     text-align: center;
+    margin:.8em;
 }
 
 #downloadbox div.hnav ul li, div.platform_buttons ul li {
