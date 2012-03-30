@@ -324,10 +324,11 @@ void SB_Clear(void)
  */
 void SB_InitForMap(const char* uniqueID)
 {
-    uint                startTime = Sys_GetRealTime();
+    uint startTime = Sys_GetRealTime();
+    ded_light_t* def;
+    int i;
 
-    int                 i;
-    ded_light_t*        def;
+    assert(theMap);
 
     // Start with no sources whatsoever.
     numSources = 0;
@@ -360,8 +361,11 @@ void SB_InitForMap(const char* uniqueID)
 
     // First, determine the total number of vertexillum_ts we need.
     for(i = 0; i < NUM_HEDGES; ++i)
-        if(hedges[i].lineDef)
+    {
+        HEdge* hedge = GameMap_HEdge(theMap, i);
+        if(hedge->lineDef)
             numVertIllums++;
+    }
 
     numVertIllums *= 3 * 4;
 
@@ -394,7 +398,7 @@ void SB_InitForMap(const char* uniqueID)
     // Allocate bias surfaces and attach vertexillum_ts.
     for(i = 0; i < NUM_HEDGES; ++i)
     {
-        HEdge* hedge = &hedges[i];
+        HEdge* hedge = GameMap_HEdge(theMap, i);
         int j;
 
         if(!hedge->lineDef)

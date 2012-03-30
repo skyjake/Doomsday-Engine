@@ -45,19 +45,20 @@ typedef struct {
 
 extern boolean mapSetup;
 
+Uri* mapUri; // Name by which the game referred to the current map.
+
 /**
  * These map data arrays are internal to the engine.
  */
-Uri* mapUri; // Name by which the game referred to the current map.
-
 Vertex* vertexes = NULL;
-HEdge* hedges = NULL;
+SideDef* sideDefs = NULL;
+LineDef* lineDefs = NULL;
 Sector* sectors = NULL;
+Polyobj** polyObjs = NULL; // List of all poly-objects in the map.
+
+HEdge** hedges = NULL;
 BspLeaf** bspLeafs = NULL;
 BspNode** bspNodes = NULL;
-LineDef* lineDefs = NULL;
-SideDef* sideDefs = NULL;
-Polyobj** polyObjs = NULL; // List of all poly-objects in the map.
 
 GameMap* theMap = NULL;
 
@@ -117,13 +118,14 @@ void P_SetCurrentMap(GameMap* map)
     mapUri = map->uri;
 
     vertexes = map->vertexes;
-    hedges = map->hedges;
+    sideDefs = map->sideDefs;
+    lineDefs = map->lineDefs;
     sectors = map->sectors;
+    polyObjs = map->polyObjs;
+
+    hedges = map->hedges;
     bspLeafs = map->bspLeafs;
     bspNodes = map->bspNodes;
-    lineDefs = map->lineDefs;
-    sideDefs = map->sideDefs;
-    polyObjs = map->polyObjs;
 
     theMap = map;
 }

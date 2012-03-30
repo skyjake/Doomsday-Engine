@@ -2970,13 +2970,13 @@ void Rend_RenderSurfaceVectors(void)
 {
     uint i;
 
-    if(devSurfaceVectors == 0) return;
+    if(devSurfaceVectors == 0 || !theMap) return;
 
     glDisable(GL_CULL_FACE);
 
     for(i = 0; i < NUM_HEDGES; ++i)
     {
-        HEdge* hedge = &hedges[i];
+        HEdge* hedge = GameMap_HEdge(theMap, i);
         float x, y, bottom, top;
         SideDef* side;
         Surface* suf;

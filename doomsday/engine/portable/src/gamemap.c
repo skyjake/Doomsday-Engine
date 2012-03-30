@@ -223,16 +223,22 @@ BspLeaf* GameMap_BspLeaf(GameMap* map, uint idx)
 
 int GameMap_HEdgeIndex(GameMap* map, HEdge* hedge)
 {
+    uint i;
     assert(map);
-    if(!hedge || !(hedge >= map->hedges && hedge <= &map->hedges[map->numHEdges])) return -1;
-    return hedge - map->hedges;
+    if(!hedge) return -1;
+    /// @todo replace with a more performant algorithm!
+    for(i = 0; i < map->numHEdges; ++i)
+    {
+        if(hedge == map->hedges[i]) return (int)i;
+    }
+    return -1;
 }
 
 HEdge* GameMap_HEdge(GameMap* map, uint idx)
 {
     assert(map);
     if(idx >= map->numHEdges) return NULL;
-    return &map->hedges[idx];
+    return map->hedges[idx];
 }
 
 int GameMap_BspNodeIndex(GameMap* map, BspNode* node)
@@ -1137,7 +1143,7 @@ int GameMap_HEdgeIterator(GameMap* map, int (*callback) (HEdge*, void*), void* p
     assert(map);
     for(i = 0; i < map->numHEdges; ++i)
     {
-        int result = callback(map->hedges + i, parameters);
+        int result = callback(map->hedges[i], parameters);
         if(result) return result;
     }
     return false; // Continue iteration.

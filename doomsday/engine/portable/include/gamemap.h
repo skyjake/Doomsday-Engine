@@ -86,9 +86,6 @@ typedef struct gamemap_s {
     uint numVertexes;
     Vertex* vertexes;
 
-    uint numHEdges;
-    HEdge* hedges;
-
     uint numSectors;
     Sector* sectors;
 
@@ -104,11 +101,14 @@ typedef struct gamemap_s {
     runtime_mapdata_header_t* bsp;
 
     /// BSP object LUTs:
-    uint numBspNodes;
-    BspNode** bspNodes;
+    uint numHEdges;
+    HEdge** hedges;
 
     uint numBspLeafs;
     BspLeaf** bspLeafs;
+
+    uint numBspNodes;
+    BspNode** bspNodes;
 
     gameobjdata_t gameObjData;
 

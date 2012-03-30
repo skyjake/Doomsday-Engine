@@ -26,6 +26,8 @@
 #include "r_data.h"
 #include "p_dmu.h"
 
+HEdge* HEdge_New(void);
+
 /**
  * Get a property value, selected by DMU_* name.
  *

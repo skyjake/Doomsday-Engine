@@ -64,7 +64,7 @@ static void hardenSidedefHEdgeList(GameMap* map, SideDef* side, bsp_hedge_t* bsp
     other = first;
     while(other)
     {
-        side->hedges[count++] = &map->hedges[other->index];
+        side->hedges[count++] = GameMap_HEdge(map, other->index);
         other = other->nextOnSide;
     }
     side->hedges[count] = NULL; // Terminate.
@@ -144,13 +144,16 @@ static void buildHEdgesFromBSPHEdges(GameMap* dest, BinaryTree* rootNode)
     qsort(index, params.curIdx, sizeof(bsp_hedge_t*), hedgeCompare);
 
     dest->numHEdges = (uint) params.curIdx;
-    dest->hedges = (HEdge*)Z_Calloc(dest->numHEdges * sizeof(HEdge), PU_MAPSTATIC, 0);
+    dest->hedges = (HEdge**)Z_Calloc(dest->numHEdges * sizeof(HEdge*), PU_MAPSTATIC, 0);
     for(i = 0; i < dest->numHEdges; ++i)
     {
-        HEdge* hedge = &dest->hedges[i];
-        bsp_hedge_t* bspHEdge = index[i];
+        dest->hedges[i] = HEdge_New();
+    }
 
-        hedge->header.type = DMU_HEDGE;
+    for(i = 0; i < dest->numHEdges; ++i)
+    {
+        bsp_hedge_t* bspHEdge = index[i];
+        HEdge* hedge = dest->hedges[i];
 
         hedge->HE_v1 = &dest->vertexes[bspHEdge->v[0]->buildData.index - 1];
         hedge->HE_v2 = &dest->vertexes[bspHEdge->v[1]->buildData.index - 1];
@@ -159,7 +162,7 @@ static void buildHEdgesFromBSPHEdges(GameMap* dest, BinaryTree* rootNode)
         if(bspHEdge->info.lineDef)
             hedge->lineDef = &dest->lineDefs[bspHEdge->info.lineDef->buildData.index - 1];
         if(bspHEdge->twin)
-            hedge->twin = &dest->hedges[bspHEdge->twin->index];
+            hedge->twin = dest->hedges[bspHEdge->twin->index];
 
         hedge->flags = 0;
         if(hedge->lineDef)
@@ -236,13 +239,13 @@ static BspLeaf* hardenLeaf(GameMap* map, BspLeaf* leaf)
     leaf->hedge = NULL;
     if(leaf->buildData.hedges)
     {
-        leaf->hedge = &map->hedges[leaf->buildData.hedges[0].index];
+        leaf->hedge = map->hedges[leaf->buildData.hedges[0].index];
 
         for(hedge = leaf->buildData.hedges; hedge; hedge = hedge->nextInLeaf)
         {
             bsp_hedge_t* leafNext = hedge->nextInLeaf? hedge->nextInLeaf : leaf->buildData.hedges;
-            HEdge* next = &map->hedges[leafNext->index];
-            HEdge* cur = &map->hedges[hedge->index];
+            HEdge* next = map->hedges[leafNext->index];
+            HEdge* cur = map->hedges[hedge->index];
 
             cur->next = next;
             cur->next->prev = cur;

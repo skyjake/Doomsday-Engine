@@ -166,18 +166,20 @@ typedef struct {
     valuedb_t       db;
 } gameobjdata_t;
 
+extern Uri* mapUri;
+
 /**
  * The map data arrays are accessible globally inside the engine.
  */
-extern Uri* mapUri;
 extern Vertex* vertexes;
-extern HEdge* hedges;
-extern Sector* sectors;
-extern BspLeaf** bspLeafs;
-extern BspNode** bspNodes;
-extern LineDef* lineDefs;
 extern SideDef* sideDefs;
+extern LineDef* lineDefs;
+extern Sector* sectors;
 extern Polyobj** polyObjs; ///< List of all polyobjs on the current map.
+
+extern BspNode** bspNodes;
+extern BspLeaf** bspLeafs;
+extern HEdge** hedges;
 
 #include "gamemap.h"
 

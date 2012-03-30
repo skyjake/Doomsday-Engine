@@ -25,6 +25,13 @@
 #include "de_refresh.h"
 #include "de_play.h"
 
+HEdge* HEdge_New(void)
+{
+    HEdge* hedge = Z_Calloc(sizeof *hedge, PU_MAPSTATIC, 0);
+    hedge->header.type = DMU_HEDGE;
+    return hedge;
+}
+
 int HEdge_SetProperty(HEdge* hedge, const setargs_t* args)
 {
     switch(args->prop)

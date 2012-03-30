@@ -323,14 +323,14 @@ static void archiveLines(GameMap *map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
-static void writeSide(const GameMap *map, uint idx)
+static void writeSide(GameMap* map, uint idx)
 {
-    uint                i;
-    SideDef            *s = &map->sideDefs[idx];
+    uint i;
+    SideDef* s = &map->sideDefs[idx];
 
     for(i = 0; i < 3; ++i)
     {
-        Surface            *suf = &s->sections[3];
+        Surface* suf = &s->sections[3];
 
         writeLong(suf->flags);
         //writeLong(getMaterialDictID(materialDict, suf->material));
@@ -349,19 +349,19 @@ static void writeSide(const GameMap *map, uint idx)
     writeShort(s->flags);
     writeLong((long) s->hedgeCount);
     for(i = 0; i < s->hedgeCount; ++i)
-        writeLong((s->hedges[i] - map->hedges) + 1);
+        writeLong(GameMap_HEdgeIndex(map, s->hedges[i]) + 1);
 }
 
-static void readSide(const GameMap *map, uint idx)
+static void readSide(GameMap* map, uint idx)
 {
-    uint                i;
-    long                secIdx;
-    float               offset[2], rgba[4];
-    SideDef            *s = &map->sideDefs[idx];
+    uint i;
+    long secIdx;
+    float offset[2], rgba[4];
+    SideDef* s = &map->sideDefs[idx];
 
     for(i = 0; i < 3; ++i)
     {
-        Surface            *suf = &s->sections[3];
+        Surface* suf = &s->sections[3];
 
         suf->flags = (int) readLong();
         //Surface_SetMaterial(suf, lookupMaterialFromDict(materialDict, readLong()));
@@ -386,7 +386,7 @@ static void readSide(const GameMap *map, uint idx)
     s->hedgeCount = (uint) readLong();
     s->hedges = Z_Malloc(sizeof(HEdge*) * (s->hedgeCount + 1), PU_MAP, 0);
     for(i = 0; i < s->hedgeCount; ++i)
-        s->hedges[i] = &map->hedges[(unsigned) readLong() - 1];
+        s->hedges[i] = GameMap_HEdge(map, (unsigned) readLong() - 1);
     s->hedges[i] = NULL; // Terminate.
 }
 
@@ -710,9 +710,9 @@ static void archiveBspLeafs(GameMap* map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
-static void writeSeg(GameMap* map, uint idx)
+static void writeSeg(GameMap* map, HEdge* s)
 {
-    HEdge              *s = &map->hedges[idx];
+    assert(map && s);
 
     writeLong((s->v[0] - map->vertexes) + 1);
     writeLong((s->v[1] - map->vertexes) + 1);
@@ -722,7 +722,7 @@ static void writeSeg(GameMap* map, uint idx)
     writeLong(s->sec[FRONT]? ((s->sec[FRONT] - map->sectors) + 1) : 0);
     writeLong(s->sec[BACK]? ((s->sec[BACK] - map->sectors) + 1) : 0);
     writeLong(s->bspLeaf? (GameMap_BspLeafIndex(map, s->bspLeaf) + 1) : 0);
-    writeLong(s->twin? ((s->twin - map->hedges) + 1) : 0);
+    writeLong(s->twin? (GameMap_HEdgeIndex(map, s->twin) + 1) : 0);
     writeLong((long) s->angle);
     writeByte(s->side);
     writeByte(s->flags);
@@ -730,10 +730,10 @@ static void writeSeg(GameMap* map, uint idx)
     writeLong(s->twin? (GameMap_HEdgeIndex(map, s->prev) + 1) : 0);
 }
 
-static void readSeg(GameMap* map, uint idx)
+static void readSeg(GameMap* map, HEdge* s)
 {
-    long                obIdx;
-    HEdge              *s = &map->hedges[idx];
+    long obIdx;
+    assert(map && s);
 
     s->v[0] = &map->vertexes[(unsigned) readLong() - 1];
     s->v[1] = &map->vertexes[(unsigned) readLong() - 1];
@@ -748,7 +748,7 @@ static void readSeg(GameMap* map, uint idx)
     obIdx = readLong();
     s->bspLeaf = (obIdx == 0? NULL : GameMap_BspLeaf(map, (unsigned) obIdx - 1));
     obIdx = readLong();
-    s->twin = (obIdx == 0? NULL : &map->hedges[(unsigned) obIdx - 1]);
+    s->twin = (obIdx == 0? NULL : GameMap_HEdge(map, (unsigned) obIdx - 1));
     s->angle = (angle_t) readLong();
     s->side = readByte();
     s->flags = readByte();
@@ -760,14 +760,14 @@ static void readSeg(GameMap* map, uint idx)
 
 static void archiveSegs(GameMap *map, boolean write)
 {
-    uint                i;
+    //uint                i;
 
     if(write)
         beginSegment(DAMSEG_HEDGES);
     else
         assertSegment(DAMSEG_HEDGES);
 
-    if(write)
+    /*if(write)
     {
         writeLong(map->numHEdges);
         for(i = 0; i < map->numHEdges; ++i)
@@ -778,7 +778,7 @@ static void archiveSegs(GameMap *map, boolean write)
         map->numHEdges = readLong();
         for(i = 0; i < map->numHEdges; ++i)
             readSeg(map, i);
-    }
+    }*/
 
     if(write)
         endSegment();
