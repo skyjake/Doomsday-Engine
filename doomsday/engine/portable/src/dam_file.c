@@ -601,8 +601,9 @@ static void archiveSectors(GameMap *map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
-static void writeBspLeaf(const GameMap* map, BspLeaf* s)
+static void writeBspLeaf(GameMap* map, BspLeaf* s)
 {
+    HEdge* hedge;
     uint i;
     assert(s);
 
@@ -622,11 +623,16 @@ static void writeBspLeaf(const GameMap* map, BspLeaf* s)
 
     // BspLeaf hedges list.
     writeLong((long) s->hedgeCount);
-    for(i = 0; i < s->hedgeCount; ++i)
-        writeLong((s->hedges[i] - map->hedges) + 1);
+    if(!s->hedges || !s->hedges[0]) return;
+
+    hedge = s->hedges[0];
+    do
+    {
+        writeLong(GameMap_HEdgeIndex(map, hedge) + 1);
+    } while((hedge = hedge->next) != s->hedges[0]);
 }
 
-static void readBspLeaf(const GameMap* map, BspLeaf* s)
+static void readBspLeaf(GameMap* map, BspLeaf* s)
 {
     uint i;
     long obIdx;
@@ -650,9 +656,14 @@ static void readBspLeaf(const GameMap* map, BspLeaf* s)
 
     // BspLeaf hedges list.
     s->hedgeCount = (uint) readLong();
+    if(!s->hedgeCount)
+    {
+        s->hedges = 0;
+        return;
+    }
     s->hedges = Z_Malloc(sizeof(HEdge*) * (s->hedgeCount + 1), PU_MAP, 0);
     for(i = 0; i < s->hedgeCount; ++i)
-        s->hedges[i] = &map->hedges[(unsigned) readLong() - 1];
+        s->hedges[i] = GameMap_HEdge(map, (unsigned) readLong() - 1);
     s->hedges[i] = NULL; // Terminate.
 }
 
@@ -700,6 +711,8 @@ static void writeSeg(GameMap* map, uint idx)
     writeLong((long) s->angle);
     writeByte(s->side);
     writeByte(s->flags);
+    writeLong(s->next? (GameMap_HEdgeIndex(map, s->next) + 1) : 0);
+    writeLong(s->twin? (GameMap_HEdgeIndex(map, s->prev) + 1) : 0);
 }
 
 static void readSeg(GameMap* map, uint idx)
@@ -724,6 +737,10 @@ static void readSeg(GameMap* map, uint idx)
     s->angle = (angle_t) readLong();
     s->side = readByte();
     s->flags = readByte();
+    obIdx = readLong();
+    s->next = (obIdx == 0? NULL : GameMap_HEdge(map, (unsigned) obIdx - 1));
+    obIdx = readLong();
+    s->prev = (obIdx == 0? NULL : GameMap_HEdge(map, (unsigned) obIdx - 1));
 }
 
 static void archiveSegs(GameMap *map, boolean write)

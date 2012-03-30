@@ -2319,34 +2319,35 @@ static boolean Rend_RenderSegTwosided(BspLeaf* bspLeaf, HEdge* hedge)
     return false;
 }
 
-static void Rend_MarkSegsFacingFront(BspLeaf *sub)
+static void Rend_MarkSegsFacingFront(BspLeaf* leaf)
 {
-    HEdge* hedge, **segIt;
-    uint i;
-
-    for(segIt = sub->hedges; *segIt; segIt++)
+    if(leaf->hedges && leaf->hedges[0])
     {
-        hedge = *segIt;
-
-        // Occlusions can only happen where two sectors contact.
-        if(hedge->lineDef)
+        HEdge* hedge = leaf->hedges[0];
+        do
         {
-            // Which way should it be facing?
-            if(!(segFacingViewerDot(hedge->HE_v1pos, hedge->HE_v2pos) < 0))
-                hedge->frameFlags |= HEDGEINF_FACINGFRONT;
-            else
-                hedge->frameFlags &= ~HEDGEINF_FACINGFRONT;
+            // Occlusions can only happen where two sectors contact.
+            if(hedge->lineDef)
+            {
+                // Which way should it be facing?
+                if(!(segFacingViewerDot(hedge->HE_v1pos, hedge->HE_v2pos) < 0))
+                    hedge->frameFlags |= HEDGEINF_FACINGFRONT;
+                else
+                    hedge->frameFlags &= ~HEDGEINF_FACINGFRONT;
 
-            Rend_MarkSideDefSectionsPVisible(hedge);
-        }
+                Rend_MarkSideDefSectionsPVisible(hedge);
+            }
+        } while((hedge = hedge->next) != leaf->hedges[0]);
     }
 
-    if(sub->polyObj)
+    if(leaf->polyObj)
     {
-        for(i = 0; i < sub->polyObj->lineCount; ++i)
+        LineDef* line;
+        HEdge* hedge;
+        uint i;
+        for(i = 0; i < leaf->polyObj->lineCount; ++i)
         {
-            LineDef* line = sub->polyObj->lines[i];
-
+            line = leaf->polyObj->lines[i];
             hedge = line->L_frontside->hedges[0];
 
             // Which way should it be facing?
@@ -2362,36 +2363,39 @@ static void Rend_MarkSegsFacingFront(BspLeaf *sub)
 
 static void occludeFrontFacingSegsInBspLeaf(const BspLeaf* bspLeaf)
 {
-    HEdge** segIt;
-    HEdge* hedge;
-    uint i;
-
-    for(segIt = bspLeaf->hedges; *segIt; segIt++)
+    if(bspLeaf->hedges && bspLeaf->hedges[0])
     {
-        hedge = *segIt;
-        if(!hedge->lineDef || !(hedge->frameFlags & HEDGEINF_FACINGFRONT)) continue;
-
-        if(!C_CheckViewRelSeg(hedge->HE_v1pos[VX], hedge->HE_v1pos[VY],
-                              hedge->HE_v2pos[VX], hedge->HE_v2pos[VY]))
+        HEdge* hedge = bspLeaf->hedges[0];
+        do
         {
-            hedge->frameFlags &= ~HEDGEINF_FACINGFRONT;
-        }
+            if(!hedge->lineDef || !(hedge->frameFlags & HEDGEINF_FACINGFRONT)) continue;
+
+            if(!C_CheckViewRelSeg(hedge->HE_v1pos[VX], hedge->HE_v1pos[VY],
+                                  hedge->HE_v2pos[VX], hedge->HE_v2pos[VY]))
+            {
+                hedge->frameFlags &= ~HEDGEINF_FACINGFRONT;
+            }
+        } while((hedge = hedge->next) != bspLeaf->hedges[0]);
     }
 
-    if(!bspLeaf->polyObj) return;
-
-    for(i = 0; i < bspLeaf->polyObj->lineCount; ++i)
+    if(bspLeaf->polyObj)
     {
-        LineDef* line = bspLeaf->polyObj->lines[i];
+        LineDef* line;
+        HEdge* hedge;
+        uint i;
 
-        hedge = line->L_frontside->hedges[0];
-
-        if(!(hedge->frameFlags & HEDGEINF_FACINGFRONT)) continue;
-
-        if(!C_CheckViewRelSeg(hedge->HE_v1pos[VX], hedge->HE_v1pos[VY],
-                              hedge->HE_v2pos[VX], hedge->HE_v2pos[VY]))
+        for(i = 0; i < bspLeaf->polyObj->lineCount; ++i)
         {
-            hedge->frameFlags &= ~HEDGEINF_FACINGFRONT;
+            line = bspLeaf->polyObj->lines[i];
+            hedge = line->L_frontside->hedges[0];
+
+            if(!(hedge->frameFlags & HEDGEINF_FACINGFRONT)) continue;
+
+            if(!C_CheckViewRelSeg(hedge->HE_v1pos[VX], hedge->HE_v1pos[VY],
+                                  hedge->HE_v2pos[VX], hedge->HE_v2pos[VY]))
+            {
+                hedge->frameFlags &= ~HEDGEINF_FACINGFRONT;
+            }
         }
     }
 }
@@ -2519,15 +2523,14 @@ static void writeSkyFixGeometry(BspLeaf* bspLeaf, int skyCap, int rendPolyFlags)
     float zBottom, zTop;
     int segSkyCapFlags;
     rvertex_t verts[4];
-    HEdge** segPtr;
+    HEdge* hedge;
 
     if(!bspLeaf || !bspLeaf->hedgeCount || !bspLeaf->sector) return;
     if(!(skyCap & SKYCAP_LOWER|SKYCAP_UPPER)) return;
 
-    for(segPtr = bspLeaf->hedges; *segPtr; segPtr++)
+    hedge = bspLeaf->hedges[0];
+    do
     {
-        HEdge* hedge = *segPtr;
-
         // Is a fix or two necessary for this hedge?
         segSkyCapFlags = segSkyFixes(hedge);
         if(!(segSkyCapFlags & (SKYCAP_LOWER|SKYCAP_UPPER))) continue;
@@ -2566,7 +2569,7 @@ static void writeSkyFixGeometry(BspLeaf* bspLeaf, int skyCap, int rendPolyFlags)
                 RL_AddPoly(PT_TRIANGLE_STRIP, rendPolyFlags, 4, verts, NULL);
             }
         }
-    }
+    } while((hedge = hedge->next) != bspLeaf->hedges[0]);
 }
 
 /**
@@ -2662,19 +2665,18 @@ static void occludeBspLeaf(const BspLeaf* bspLeaf, boolean forwardFacing)
 {
     float fronth[2], backh[2];
     float* startv, *endv;
-    Sector* front = bspLeaf->sector, *back;
-    HEdge* hedge, **segIt;
+    Sector* front, *back;
+    HEdge* hedge;
 
-    if(devNoCulling || P_IsInVoid(viewPlayer))
-        return;
+    if(devNoCulling || !bspLeaf || !bspLeaf->hedges || P_IsInVoid(viewPlayer)) return;
 
+    front = bspLeaf->sector;
     fronth[0] = front->SP_floorheight;
     fronth[1] = front->SP_ceilheight;
 
-    for(segIt = bspLeaf->hedges; *segIt; segIt++)
+    hedge = bspLeaf->hedges[0];
+    do
     {
-        hedge = *segIt;
-
         // Occlusions can only happen where two sectors contact.
         if(hedge->lineDef &&
            hedge->HE_backsector && !(hedge->flags & HEDGEF_POLYOBJ) && // Polyobjects don't occlude.
@@ -2722,12 +2724,11 @@ static void occludeBspLeaf(const BspLeaf* bspLeaf, boolean forwardFacing)
                 }
             }
         }
-    }
+    } while((hedge = hedge->next) != bspLeaf->hedges[0]);
 }
 
 static void Rend_RenderBspLeaf(BspLeaf* bspLeaf)
 {
-    HEdge* hedge, **segIt;
     float sceil, sfloor;
     uint i, bspLeafIdx;
     Sector* sect;
@@ -2794,35 +2795,38 @@ static void Rend_RenderBspLeaf(BspLeaf* bspLeaf)
     Rend_RenderBspLeafSky(bspLeaf);
 
     // Draw the walls.
-    for(segIt = bspLeaf->hedges; *segIt; segIt++)
+    if(bspLeaf->hedges[0])
     {
-        hedge = *segIt;
-
-        if(!(hedge->flags & HEDGEF_POLYOBJ)  &&// Not handled here.
-           hedge->lineDef && // "minisegs" have no linedefs.
-           (hedge->frameFlags & HEDGEINF_FACINGFRONT))
+        HEdge* hedge = bspLeaf->hedges[0];
+        do
         {
-            boolean solid;
-            if(!hedge->HE_backsector || !hedge->HE_frontsector)
-                solid = Rend_RenderSeg(bspLeaf, hedge);
-            else
-                solid = Rend_RenderSegTwosided(bspLeaf, hedge);
-
-            if(solid)
+            if(!(hedge->flags & HEDGEF_POLYOBJ)  &&// Not handled here.
+               hedge->lineDef && // "minisegs" have no linedefs.
+               (hedge->frameFlags & HEDGEINF_FACINGFRONT))
             {
-                C_AddViewRelSeg(hedge->HE_v1pos[VX], hedge->HE_v1pos[VY],
-                                hedge->HE_v2pos[VX], hedge->HE_v2pos[VY]);
+                boolean solid;
+                if(!hedge->HE_backsector || !hedge->HE_frontsector)
+                    solid = Rend_RenderSeg(bspLeaf, hedge);
+                else
+                    solid = Rend_RenderSegTwosided(bspLeaf, hedge);
+
+                if(solid)
+                {
+                    C_AddViewRelSeg(hedge->HE_v1pos[VX], hedge->HE_v1pos[VY],
+                                    hedge->HE_v2pos[VX], hedge->HE_v2pos[VY]);
+                }
             }
-        }
+        } while((hedge = hedge->next) != bspLeaf->hedges[0]);
     }
 
     // Is there a polyobj on board?
     if(bspLeaf->polyObj)
     {
+        LineDef* line;
+        HEdge* hedge;
         for(i = 0; i < bspLeaf->polyObj->lineCount; ++i)
         {
-            LineDef* line = bspLeaf->polyObj->lines[i];
-
+            line = bspLeaf->polyObj->lines[i];
             hedge = line->L_frontside->hedges[0];
 
             // Let's first check which way this hedge is facing.

@@ -93,6 +93,8 @@ typedef struct hedge_s {
     float               offset;
     biassurface_t*      bsuf[3];       // 0=middle, 1=top, 2=bottom
     short               frameFlags;
+    struct hedge_s*     next;
+    struct hedge_s*     prev;
 } HEdge;
 
 #define BLF_MIDPOINT         0x80    // Midpoint is tri-fan centre.

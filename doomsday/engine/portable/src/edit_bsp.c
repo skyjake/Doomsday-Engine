@@ -249,8 +249,6 @@ static void hardenBspLeafHEdgeList(GameMap* dest, BspLeaf* bspLeaf, bsp_hedge_t*
 
 static BspLeaf* hardenLeaf(GameMap* map, BspLeaf* leaf)
 {
-    HEdge** segp;
-    boolean found;
     size_t hedgeCount;
     bsp_hedge_t* hedge;
 
@@ -264,20 +262,29 @@ static BspLeaf* hardenLeaf(GameMap* map, BspLeaf* leaf)
     leaf->hedgeCount = (uint) hedgeCount;
     hardenBspLeafHEdgeList(map, leaf, leaf->buildData.hedges, hedgeCount);
 
-    // Determine which sector this BSP leaf belongs to.
-    segp = leaf->hedges;
-    found = false;
-    while(*segp)
+    for(hedge = leaf->buildData.hedges; hedge; hedge = hedge->nextInLeaf)
     {
-        HEdge* hedge = *segp;
-        if(!found && hedge->lineDef && HEDGE_SIDEDEF(hedge))
+        bsp_hedge_t* leafNext = hedge->nextInLeaf? hedge->nextInLeaf : leaf->buildData.hedges;
+        HEdge* next = &map->hedges[leafNext->index];
+        HEdge* cur = &map->hedges[hedge->index];
+
+        cur->next = next;
+        cur->next->prev = cur;
+        cur->bspLeaf = leaf;
+    }
+
+    // Determine which sector this BSP leaf belongs to.
+    if(leaf->hedges && leaf->hedges[0])
+    {
+        HEdge* hedge = leaf->hedges[0];
+        do
         {
-            SideDef* side = HEDGE_SIDEDEF(hedge);
-            leaf->sector = side->sector;
-            found = true;
-        }
-        hedge->bspLeaf = leaf;
-        segp++;
+            if(hedge->lineDef && HEDGE_SIDEDEF(hedge))
+            {
+                SideDef* side = HEDGE_SIDEDEF(hedge);
+                leaf->sector = side->sector;
+            }
+        } while(!leaf->sector && (hedge = hedge->next) != leaf->hedges[0]);
     }
 
     if(!leaf->sector)

@@ -36,25 +36,20 @@ BspLeaf* BspLeaf_New(void)
 
 void BspLeaf_UpdateAABox(BspLeaf* leaf)
 {
-    HEdge** hedgeIter;
     HEdge* hedge;
     assert(leaf);
 
     V2f_Set(leaf->aaBox.min, DDMAXFLOAT, DDMAXFLOAT);
     V2f_Set(leaf->aaBox.max, DDMINFLOAT, DDMINFLOAT);
 
-    hedgeIter = leaf->hedges;
-    if(!*hedgeIter) return; // Very odd...
+    if(!leaf->hedges || !leaf->hedges[0]) return; // Very odd...
 
-    hedge = *hedgeIter;
+    hedge = leaf->hedges[0];
     V2f_InitBox(leaf->aaBox.arvec2, hedge->HE_v1pos);
-    hedgeIter++;
 
-    while(*hedgeIter)
+    while((hedge = hedge->next) != leaf->hedges[0])
     {
-        hedge = *hedgeIter;
         V2f_AddToBox(leaf->aaBox.arvec2, hedge->HE_v1pos);
-        hedgeIter++;
     }
 }
 

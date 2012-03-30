@@ -99,10 +99,16 @@ struct HEdge
     FLOAT   float       offset
     -       biassurface_t*[3] bsuf // 0=middle, 1=top, 2=bottom
     -       short       frameFlags
+    PTR     hedge_s*    next
+    PTR     hedge_s*    prev
 end
 
 internal
 #define BLF_MIDPOINT             0x80 ///< Midpoint is tri-fan centre.
+
+typedef struct {
+    struct bsp_hedge_s* hedges; // Head ptr to a list of half-edges at this leaf.
+} mbspleaf_t;
 end
 
 struct BspLeaf
@@ -122,6 +128,7 @@ struct BspLeaf
     -       fvertex_s** vertices // [numvertices] size
     -       shadowlink_s* shadows
     -       biassurface_s** bsuf // [sector->planeCount] size.
+    -       mbspleaf_t  buildData
 end
 
 internal

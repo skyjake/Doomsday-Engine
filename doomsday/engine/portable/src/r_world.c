@@ -1117,8 +1117,9 @@ static void tessellateBspLeaf(BspLeaf* bspLeaf, boolean force)
 {
 #define MIN_TRIANGLE_EPSILON  (0.1) ///< Area
 
-    uint baseIDX = 0, i, n;
     boolean ok = false;
+    HEdge* baseHEdge;
+    uint n;
 
     // Already built?
     if(bspLeaf->vertices && !force) return;
@@ -1132,27 +1133,27 @@ static void tessellateBspLeaf(BspLeaf* bspLeaf, boolean force)
     bspLeaf->flags &= ~BLF_MIDPOINT;
 
     // Search for a good base.
+    baseHEdge = bspLeaf->hedges[0];
     if(bspLeaf->hedgeCount > 3)
     {
         // BspLeafs with higher vertex counts demand checking.
         fvertex_t* base, *a, *b;
 
-        baseIDX = 0;
         do
         {
-            HEdge* hedge = bspLeaf->hedges[baseIDX];
+            HEdge* hedge = baseHEdge;
+            HEdge* otherHEdge;
 
             base = &hedge->HE_v1->v;
-            i = 0;
+            otherHEdge = bspLeaf->hedges[0];
             do
             {
-                HEdge* hedge2 = bspLeaf->hedges[i];
-
                 // Test this triangle?
-                if(!(baseIDX > 0 && (i == baseIDX || i == baseIDX - 1)))
+                if(!(baseHEdge != bspLeaf->hedges[0] &&
+                     (otherHEdge == baseHEdge || otherHEdge == baseHEdge->prev)))
                 {
-                    a = &hedge2->HE_v1->v;
-                    b = &hedge2->HE_v2->v;
+                    a = &otherHEdge->HE_v1->v;
+                    b = &otherHEdge->HE_v2->v;
 
                     if(M_TriangleArea(base->pos, a->pos, b->pos) <= MIN_TRIANGLE_EPSILON)
                     {
@@ -1162,15 +1163,14 @@ static void tessellateBspLeaf(BspLeaf* bspLeaf, boolean force)
                 }
 
                 // On to the next triangle.
-                i++;
-            } while(base && i < bspLeaf->hedgeCount);
+            } while(base && (otherHEdge = otherHEdge->next) != bspLeaf->hedges[0]);
 
             if(!base)
             {
                 // No good. Select the next vertex and start over.
-                baseIDX++;
+                baseHEdge = baseHEdge->next;
             }
-        } while(!base && baseIDX < bspLeaf->hedgeCount);
+        } while(!base && baseHEdge != bspLeaf->hedges[0]);
 
         // Did we find something suitable?
         if(base) ok = true;
@@ -1200,17 +1200,12 @@ static void tessellateBspLeaf(BspLeaf* bspLeaf, boolean force)
     }
 
     // Add the vertices for each hedge.
-    for(i = 0; i < bspLeaf->hedgeCount; ++i)
     {
-        HEdge* hedge;
-        uint idx;
-
-        idx = baseIDX + i;
-        if(idx >= bspLeaf->hedgeCount)
-            idx = idx - bspLeaf->hedgeCount; // Wrap around.
-
-        hedge = bspLeaf->hedges[idx];
+    HEdge* hedge = baseHEdge;
+    do
+    {
         bspLeaf->vertices[n++] = &hedge->HE_v1->v;
+    } while((hedge = hedge->next) != baseHEdge);
     }
 
     // If this is a trifan the last vertex is always equal to the first.
@@ -1713,21 +1708,24 @@ boolean R_UpdatePlane(Plane* pln, boolean forceUpdate)
         // Inform the shadow bias of changed geometry.
         if(sec->bspLeafs && *sec->bspLeafs)
         {
+            uint i;
             ssecIter = sec->bspLeafs;
             do
             {
                 BspLeaf* bspLeaf = *ssecIter;
-                HEdge** hedgeIter = bspLeaf->hedges;
-                while(*hedgeIter)
+                if(bspLeaf->hedges && bspLeaf->hedges[0])
                 {
-                    HEdge* hedge = *hedgeIter;
-                    if(hedge->lineDef)
+                    HEdge* hedge = bspLeaf->hedges[0];
+                    do
                     {
-                        uint i;
-                        for(i = 0; i < 3; ++i)
-                            SB_SurfaceMoved(hedge->bsuf[i]);
-                    }
-                    hedgeIter++;
+                        if(hedge->lineDef)
+                        {
+                            for(i = 0; i < 3; ++i)
+                            {
+                                SB_SurfaceMoved(hedge->bsuf[i]);
+                            }
+                        }
+                    } while((hedge = hedge->next) != bspLeaf->hedges[0]);
                 }
 
                 SB_SurfaceMoved(bspLeaf->bsuf[pln->planeID]);

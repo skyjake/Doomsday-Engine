@@ -551,19 +551,20 @@ int P_Iteratep(void *ptr, uint prop, void* context, int (*callback) (void* p, vo
     case DMU_BSPLEAF:
         switch(prop)
         {
-        case DMU_HEDGE:
-            {
+        case DMU_HEDGE: {
             BspLeaf* bspLeaf = (BspLeaf*) ptr;
             int result = false; // Continue iteration.
-
-            if(bspLeaf->hedges)
+            if(bspLeaf->hedges && bspLeaf->hedges[0])
             {
-                HEdge** segIter = bspLeaf->hedges;
-                while(*segIter && !(result = callback(*segIter, context)))
-                    segIter++;
+                HEdge* hedge = bspLeaf->hedges[0];
+                do
+                {
+                    result = callback(hedge, context);
+                    if(result) break;
+                } while((hedge = hedge->next) != bspLeaf->hedges[0]);
             }
-            return result;
-          }
+            return result; }
+
         default:
             Con_Error("P_Iteratep: Property %s unknown/not vector.\n", DMU_Str(prop));
         }
