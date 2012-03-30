@@ -560,7 +560,7 @@ p.legal a {
     position: relative;
     top: -282px; /* minus image height */
     min-width: 201px;
-    padding-right: .5em;
+    padding-right: 1.3em;
     padding-top: .5em;
     float: right;
     text-align: right;
