@@ -2015,6 +2015,7 @@ void Con_Message(const char *message, ...)
         dd_vsnprintf(buffer, PRBUFF_SIZE, message, argptr);
         va_end(argptr);
 
+        /*
 #ifdef UNIX
         if(!isDedicated)
         {
@@ -2022,11 +2023,15 @@ void Con_Message(const char *message, ...)
             fprintf(stderr, "%s", buffer);
         }
 #endif
+        */
 
         // These messages are always dumped. If consoleDump is set,
         // Con_Printf() will dump the message for us.
         if(!consoleDump)
-            printf("%s", buffer);
+        {
+            //printf("%s", buffer);
+            LegacyCore_PrintLogFragment(de2LegacyCore, buffer);
+        }
 
         // Also print in the console.
         Con_Printf("%s", buffer);

@@ -203,7 +203,7 @@ void LogBuffer::flush()
                     {
                         if(message[checkPos].isSpace() ||
                                 (message[checkPos].isPunct() && message[checkPos] != '.' &&
-                                 message[checkPos] != ','))
+                                 message[checkPos] != ',' && message[checkPos] != '-'))
                         {
                             if(!message[checkPos].isSpace())
                             {

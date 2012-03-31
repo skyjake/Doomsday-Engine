@@ -50,6 +50,7 @@
 #include "ui_main.h"
 #include "m_args.h"
 
+#include <de/Log>
 #include <QDebug>
 
 #ifdef MACOSX
@@ -802,8 +803,11 @@ static void windowFocusChanged(Canvas& canvas, bool focus)
     Window* wnd = canvasToWindow(canvas);
     wnd->assertWindow();
 
-    qDebug() << "windowFocusChanged" << focus << "fullscreen" << Window_IsFullscreen(wnd)
-             << "hidden" << wnd->widget->isHidden() << wnd->widget->isMinimized();
+    LOG_DEBUG("windowFocusChanged, focus:")
+            << (focus? "true" : "false")
+            << " fullscreen:" << (Window_IsFullscreen(wnd)? "true" : "false")
+            << " hidden:" << (wnd->widget->isHidden()? "true" : "false")
+            << " minimized:" << (wnd->widget->isMinimized()? "true" : "false");
 
     if(!focus)
     {

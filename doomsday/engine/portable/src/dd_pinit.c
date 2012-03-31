@@ -84,30 +84,6 @@ int DD_CheckArg(char* tag, const char** value)
     return 1;
 }
 
-#if 0
-void DD_ErrorBox(boolean error, char* format, ...)
-{
-    char buff[200];
-    va_list args;
-
-    va_start(args, format);
-    dd_vsnprintf(buff, sizeof(buff), format, args);
-    va_end(args);
-
-#ifdef WIN32
-    DD_Win32_SuspendMessagePump(true);
-    MessageBox(NULL, WIN_STRING(buff),
-               TEXT(DOOMSDAY_NICENAME) DOOMSDAY_VERSION_TEXT_WSTR,
-               (UINT) (MB_OK | (error ? MB_ICONERROR : MB_ICONWARNING)));
-    DD_Win32_SuspendMessagePump(false);
-#endif
-
-#ifdef UNIX
-    fputs(buff, stderr);
-#endif
-}
-#endif
-
 /**
  * Compose the title for the main window.
  */

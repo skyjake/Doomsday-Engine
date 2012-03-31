@@ -40,6 +40,18 @@ extern "C" {
  */
 DENG2_OPAQUE(LegacyCore)
 
+// Log levels (see de::Log for description).
+typedef enum legacycore_loglevel_e {
+    DE2_LOG_TRACE,
+    DE2_LOG_DEBUG,
+    DE2_LOG_VERBOSE,
+    DE2_LOG_MESSAGE,
+    DE2_LOG_INFO,
+    DE2_LOG_WARNING,
+    DE2_LOG_ERROR,
+    DE2_LOG_CRITICAL
+} legacycore_loglevel_t;
+
 DENG2_PUBLIC LegacyCore* LegacyCore_New(void* dengApp);
 DENG2_PUBLIC void LegacyCore_Delete(LegacyCore* lc);
 DENG2_PUBLIC void LegacyCore_SetLoopRate(LegacyCore* lc, int freqHz);
@@ -52,6 +64,7 @@ DENG2_PUBLIC void LegacyCore_Timer(LegacyCore* lc, unsigned int milliseconds, vo
 DENG2_PUBLIC int LegacyCore_SetLogFile(LegacyCore* lc, const char* filePath);
 DENG2_PUBLIC const char* LegacyCore_LogFile(LegacyCore* lc);
 DENG2_PUBLIC void LegacyCore_PrintLogFragment(LegacyCore* lc, const char* text);
+DENG2_PUBLIC void LegacyCore_PrintfLogFragmentAtLevel(LegacyCore* lc, legacycore_loglevel_t level, const char* format, ...);
 DENG2_PUBLIC void LegacyCore_FlushLog(void);
 
 /*

@@ -33,7 +33,7 @@
 #include <QCursor>
 #include <QTimer>
 #include <QTime>
-#include <QDebug>
+#include <de/Log>
 
 #include "sys_opengl.h"
 #include "sys_input.h"
@@ -169,11 +169,9 @@ void Canvas::grab(image_t* img, const QSize& outputSize)
     memcpy(img->pixels, grabbed.constBits(), grabbed.byteCount());
     img->pixelSize = grabbed.depth()/8;
 
-#ifdef _DEBUG
-    qDebug() << "Canvas: grabbed" << grabbed.width() << "x" << grabbed.height()
-             << "byteCount:" << grabbed.byteCount()
-             << "depth:" << grabbed.depth() << "format" << grabbed.format();
-#endif
+    LOG_DEBUG("Canvas: grabbed %i x %i, byteCount:%i depth:%i format:%i")
+            << grabbed.width() << grabbed.height()
+            << grabbed.byteCount() << grabbed.depth() << grabbed.format();
 
     Q_ASSERT(img->pixelSize != 0);
 }
@@ -268,7 +266,8 @@ void Canvas::paintGL()
     }
     else
     {
-        qDebug() << "Canvas: drawing with default";
+        LOG_AS("Canvas");
+        LOG_TRACE("Drawing with default paint func.");
 
         // If we don't know what else to draw, just draw a black screen.
         glClearColor(0, 0, 0, 1);
@@ -280,14 +279,16 @@ void Canvas::paintGL()
 
 void Canvas::focusInEvent(QFocusEvent*)
 {
-    qDebug() << "Canvas: focus in";
+    LOG_AS("Canvas");
+    LOG_INFO("Gained focus.");
 
     if(d->focusCallback) d->focusCallback(*this, true);
 }
 
 void Canvas::focusOutEvent(QFocusEvent*)
 {
-    qDebug() << "Canvas: focus out";
+    LOG_AS("Canvas");
+    LOG_INFO("Lost focus.");
 
     d->ungrabMouse();
 

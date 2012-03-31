@@ -25,6 +25,7 @@
 #include "de/Block"
 #include "de/LogBuffer"
 #include <cstring>
+#include <stdarg.h>
 
 #define DENG2_LEGACYNETWORK()   de::LegacyCore::instance().network()
 
@@ -110,6 +111,25 @@ void LegacyCore_PrintLogFragment(LegacyCore* lc, const char* text)
 {
     DENG2_SELF(LegacyCore, lc);
     self->printLogFragment(text);
+}
+
+void LegacyCore_PrintfLogFragmentAtLevel(LegacyCore* lc, legacycore_loglevel_t level, const char* format, ...)
+{
+    char buffer[2048];
+    va_list args;
+    va_start(args, format);
+    vsprintf(buffer, format, args); /// @todo unsafe
+    va_end(args);
+
+    // Validate the level.
+    de::Log::LogLevel logLevel = de::Log::LogLevel(level);
+    if(level < DE2_LOG_TRACE || level > DE2_LOG_CRITICAL)
+    {
+        logLevel = de::Log::MESSAGE;
+    }
+
+    DENG2_SELF(LegacyCore, lc);
+    self->printLogFragment(buffer, logLevel);
 }
 
 void LegacyCore_FlushLog(void)

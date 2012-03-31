@@ -229,8 +229,8 @@ void Z_Shutdown(void)
         M_Free(vol);
     }
 
-    printf("Z_Shutdown: Used %i volumes, total %lu bytes.\n",
-           numVolumes, (long unsigned int) totalMemory);
+    LegacyCore_PrintfLogFragmentAtLevel(de2LegacyCore, DE2_LOG_INFO,
+            "Z_Shutdown: Used %i volumes, total %u bytes.\n", numVolumes, totalMemory);
 
     Sys_DestroyMutex(zoneMutex);
     zoneMutex = 0;

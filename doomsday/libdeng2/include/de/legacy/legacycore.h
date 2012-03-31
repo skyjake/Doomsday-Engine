@@ -22,6 +22,7 @@
 
 #include "../libdeng2.h"
 #include "../App"
+#include "../Log"
 
 namespace de {
 
@@ -113,9 +114,11 @@ public:
      * Prints a fragment of text to the output log. The output is added to the log
      * only when a complete line has been printed (i.e., newline character required).
      *
-     * @param text  Text to print.
+     * @param text   Text to print.
+     * @param level  Log level for the message. Only the level in effect when a newline
+     *               is printed will be entered into the log.
      */
-    void printLogFragment(const char* text);
+    void printLogFragment(const char* text, Log::LogLevel level = Log::MESSAGE);
 
     /**
      * Returns the LegacyCore singleton instance.

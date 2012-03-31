@@ -171,14 +171,14 @@ const char *LegacyCore::logFileName() const
     return d->logName.c_str();
 }
 
-void LegacyCore::printLogFragment(const char* text)
+void LegacyCore::printLogFragment(const char* text, Log::LogLevel level)
 {
     d->currentLogLine += text;
 
     std::string::size_type pos;
     while((pos = d->currentLogLine.find('\n')) != std::string::npos)
     {
-        LOG_MSG(d->currentLogLine.substr(0, pos).c_str());
+        LOG().enter(level, d->currentLogLine.substr(0, pos).c_str());
         d->currentLogLine.erase(0, pos + 1);
     }
 }

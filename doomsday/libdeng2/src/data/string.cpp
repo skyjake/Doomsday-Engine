@@ -426,7 +426,11 @@ String String::patternFormat(String::const_iterator& formatIter,
         
     case 'i':
     case 'd':
-        output << dint(arg.asNumber());
+        output << dint64(arg.asNumber());
+        break;
+
+    case 'u':
+        output << duint64(arg.asNumber());
         break;
     
     case 'X':
