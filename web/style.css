@@ -74,6 +74,7 @@ a[class ="link-external"] {
 a[class ="link-rss"] {
     padding-left: 13px;
     background: transparent url(http://code.iki.fi/dengine.net/images/rssicon.png) no-repeat center left;
+    background-size: 13px 12px;
 }
 
 span.hidden {
@@ -290,7 +291,7 @@ ol.jumplist li {
 #main {
     border: 2px solid #A5B9A5;
     border-radius: 10px;
-    box-shadow: 0 0 20px 10px rgba(0, 0, 0, .05);
+    box-shadow: 0 0 20px 10px rgba(0, 0, 0, .1);
 }
 
 #maininner {
@@ -317,8 +318,8 @@ ol.jumplist li {
     font-family: Verdana, Arial, Helvetica, sans-serif;
     font-weight: bold;
     box-shadow: 0 16px 8px 0 rgb(205, 220, 213) inset;
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
 }
 
 #menu ul {
@@ -329,7 +330,7 @@ ol.jumplist li {
 
 #menu section {
     display: inline-block;
-    min-width: 12em;
+    min-width: 11em;
     text-align: right;
 }
 
@@ -515,7 +516,7 @@ p.legal a {
 
 #projectnews {
     position: relative;
-    top: -276px; /* minus (image height - divider height) */
+    top: -275px; /* minus (image height - divider height) */
     min-width: 201px;
     padding-left: .5em;
     padding-top: .5em;
@@ -553,7 +554,7 @@ p.legal a {
     font-weight: bold;
 }
 
-#projectnews a:hover, #projectnews a:visited:hover {
+#projectnews ul li a:hover, #projectnews ul li a:visited:hover {
     color: #ffffff;
     font-size: x-small;
 }
@@ -577,7 +578,7 @@ p.legal a {
 
 #servers {
     position: relative;
-    top: -276px; /* minus (image height - divider height) */
+    top: -275px; /* minus (image height - divider height) */
     min-width: 201px;
     padding-right: 1.3em;
     padding-top: .5em;
