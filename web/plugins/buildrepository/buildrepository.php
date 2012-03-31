@@ -779,8 +779,14 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         {
             $this->initPackages();
 
-            $buildNumber = intval(substr($tokens[0], 5));
-            $FrontController->enqueueAction($this, array('build' => $buildNumber));
+            $buildId = intval(substr($tokens[0], 5));
+
+            // Is this a known event?
+            $build = $this->buildByUniqueId($buildId);
+            if(!$build instanceof BuildEvent)
+                $buildId = 0; // Show the index.
+
+            $FrontController->enqueueAction($this, array('build' => $buildId));
             return true; // Eat the request.
         }
 
@@ -819,15 +825,12 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
     public function buildByUniqueId($uniqueId=0)
     {
         $uniqueId = intval($uniqueId);
-        $build = NULL;
         if($uniqueId > 0)
+        foreach($this->builds as &$build)
         {
-            foreach($this->builds as &$build)
-            {
-                if($uniqueId === $build->uniqueId()) break;
-            }
+            if($uniqueId === $build->uniqueId()) return $build;
         }
-        return $build;
+        return NULL;
     }
 
     private function outputEventList($maxEvents=10)
