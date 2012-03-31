@@ -76,7 +76,7 @@ class HomePlugin extends Plugin implements Actioner, RequestInterpreter
 
         includeHTML('socialbookmarks', 'z#home');
 
-?></div></div><?php
+?></div><?php
 
 ?><div id="contentbox"><?php
 
