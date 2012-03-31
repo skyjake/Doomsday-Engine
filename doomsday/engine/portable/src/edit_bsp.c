@@ -178,13 +178,12 @@ static BspLeaf* hardenLeaf(GameMap* map, BspLeaf* leaf)
 
         for(hedge = leaf->buildData.hedges; hedge; hedge = hedge->buildData.nextInLeaf)
         {
-            HEdge* leafNext = hedge->buildData.nextInLeaf? hedge->buildData.nextInLeaf : leaf->buildData.hedges;
-            HEdge* next = map->hedges[leafNext->buildData.index];
-            HEdge* cur = map->hedges[hedge->buildData.index];
+            HEdge* next = hedge->buildData.nextInLeaf? hedge->buildData.nextInLeaf : leaf->buildData.hedges;
 
-            cur->next = next;
-            cur->next->prev = cur;
-            cur->bspLeaf = leaf;
+            hedge->next = next;
+            hedge->next->prev = hedge;
+            hedge->bspLeaf = leaf;
+
             leaf->hedgeCount++;
         }
     }
@@ -279,7 +278,7 @@ static int C_DECL countNode(BinaryTree* tree, void* data)
     return false; // Continue iteration.
 }
 
-static int C_DECL countSSec(BinaryTree* tree, void* data)
+static int C_DECL countLeaf(BinaryTree* tree, void* data)
 {
     if(BinaryTree_IsLeaf(tree))
         (*((uint*) data))++;
@@ -296,7 +295,7 @@ static void hardenBSP(GameMap* dest, BinaryTree* rootNode)
         dest->bspNodes = 0;
 
     dest->numBspLeafs = 0;
-    BinaryTree_PostOrder(rootNode, countSSec, &dest->numBspLeafs);
+    BinaryTree_PostOrder(rootNode, countLeaf, &dest->numBspLeafs);
     dest->bspLeafs = (BspLeaf**)Z_Calloc(dest->numBspLeafs * sizeof(BspLeaf*), PU_MAPSTATIC, 0);
 
     if(!rootNode) return;
