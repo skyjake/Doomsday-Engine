@@ -781,7 +781,7 @@ static boolean createContext(void)
 }
 #endif
 
-static Window* canvasToWindow(Canvas& canvas)
+static Window* canvasToWindow(Canvas& DENG_DEBUG_ONLY(canvas))
 {
     assert(&mainWindow.widget->canvas() == &canvas); /// @todo multiwindow
 
