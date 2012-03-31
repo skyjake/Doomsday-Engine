@@ -65,10 +65,11 @@ class Event:
             return 'doomsday'        
     
     def os_from_filename(self, name):
+        found = None
         for n, ext, ident in self.oses:
             if name.endswith(ext) or ident in name:
-                return (n, ext, ident)
-        return None
+                found = (n, ext, ident)
+        return found
                 
     def version_from_filename(self, name):
         ver = self.extract_version_from_filename(name)
@@ -239,7 +240,7 @@ class Event:
             # Find the binaries for this OS.
             binaries = []
             for f in files:
-                if osExt in f:
+                if self.os_from_filename(f)[2] == osIdent:
                     binaries.append(f)
 
             if not binaries:

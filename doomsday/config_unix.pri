@@ -40,6 +40,12 @@ contains(QMAKE_HOST.arch, x86_64) {
     }
 }
 
+# When installing libraries to a non-standard location, instruct
+# the linker where to find them.
+!contains(DENG_LIB_DIR, ^/usr/.*) {
+    QMAKE_LFLAGS += -Wl,-rpath,$$DENG_LIB_DIR
+}
+
 DENG_BASE_DIR = $$PREFIX/share/doomsday
 DENG_DATA_DIR = $$DENG_BASE_DIR/data
 

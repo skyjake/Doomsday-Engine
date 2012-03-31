@@ -32,7 +32,7 @@ require_once(DIR_CLASSES.'/outputcache.class.php');
 define('PID_ANY',                0); ///< (Enumeration). Ordinals are meaningless (can change) however must be unique.
 define('PID_WIN_X86',            1);
 define('PID_MAC10_4_X86_PPC',    2);
-define('PID_MAX10_6_X86_X86_64', 3);
+define('PID_MAC10_6_X86_X86_64', 3);
 define('PID_LINUX_X86',          4);
 define('PID_LINUX_X86_64',       5);
 ///@}
@@ -443,8 +443,6 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
             NULL/*no version*/, 'latestbuild?platform='. $plat['name']. '&unstable');
         $packages[] = $pack;
 
-        if(0)
-        {
         $plat = $this->platform(PID_MAC10_6_X86_X86_64);
         $pack = PackageFactory::newDistribution($plat['id'], 'Latest Doomsday',
             NULL/*no version*/, 'latestbuild?platform='. $plat['name']);
@@ -454,7 +452,6 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         $pack = PackageFactory::newDistributionUnstable($plat['id'], 'Latest Doomsday',
             NULL/*no version*/, 'latestbuild?platform='. $plat['name']. '&unstable');
         $packages[] = $pack;
-        }
 
         // Ubuntu:
         $plat = $this->platform(PID_LINUX_X86);
@@ -996,32 +993,35 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
             throw new Exception('Received invalid Package.');
 
         $cacheName = $this->composePackageGraphCacheName($pack);
-
-        if($FrontController->contentCache()->isPresent($cacheName))
+        try
         {
+            if(!$FrontController->contentCache()->isPresent($cacheName))
+            {
+                // Generate a graph template for this package.
+                $template = array();
+                $pack->populateGraphTemplate($template);
+                $json = json_encode_clean($template);
+
+                // Store the graph in the cache.
+                $FrontController->contentCache()->store($cacheName, $json);
+            }
+
             $contentInfo = new ContentInfo();
-            $FrontController->contentCache()->getInfo($cacheName, $contentInfo);
+            if($FrontController->contentCache()->getInfo($cacheName, $contentInfo))
+            {
+                header('Pragma: public');
+                header('Cache-Control: public');
+                header('Content-Type: application/json');
+                header('Last-Modified: '. date(DATE_RFC1123, $contentInfo->modifiedTime));
+                header('Expires: '. date(DATE_RFC1123, strtotime('+5 days')));
 
-            header('Pragma: public');
-            header('Cache-Control: public');
-            header('Content-Type: application/json');
-            header('Last-Modified: '. date(DATE_RFC1123, $contentInfo->modifiedTime));
-            header('Expires: '. date(DATE_RFC1123, strtotime('+5 days')));
-
-            $FrontController->contentCache()->import($cacheName);
+                $FrontController->contentCache()->import($cacheName);
+            }
         }
-        else
+        catch(Exception $e)
         {
-            // Generate a graph template for this package.
-            $template = array();
-            $pack->populateGraphTemplate($template);
-            $json = json_encode_clean($template);
-
-            // Store the graph in the cache.
-            $FrontController->contentCache()->store($cacheName, $json);
-
-            // Print to the output stream.
-            print($json);
+            // Log the error.
+            trigger_error(sprintf('Failed reading Package JSON from cache.\nError:%s', $e->getMessage()), E_USER_WARNING);
         }
         return TRUE;
     }

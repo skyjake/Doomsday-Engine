@@ -119,8 +119,11 @@ class FrontController
         $this->_plugins = new Plugins(DIR_PLUGINS);
 
         // Construct the Request
-        $url = $_SERVER['SERVER_PORT'] == '443' ? 'https' : 'http'
-            .'://'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
+        $url = ($_SERVER['SERVER_PORT'] == '443' ? 'https' : 'http') .'://';
+        if(isset($_SERVER['HTTP_HOST']))
+            $url .= $_SERVER['HTTP_HOST'];
+        if(isset($_SERVER['REQUEST_URI']))
+            $url .= $_SERVER['REQUEST_URI'];
 
         $this->_request = new Request($url, $_POST);
         $this->_actions = new Actions();
@@ -453,7 +456,8 @@ class FrontController
         $rightTabs[] = array('page'=>'/masterserver', 'label'=>'Servers', 'tooltip'=>'Doomsday Engine Master Server');
 
 ?>
-        <div id="menu" class="hnav">
+        <div id="menuouter"><div id="menu" class="hnav">
+        <div id="divider"></div>
             <ul><section class="left">
 <?php
             echo $this->buildTabs($leftTabs, $page, "paddle_left", "paddle_left_select");
@@ -463,7 +467,8 @@ class FrontController
             echo $this->buildTabs($rightTabs, $page, "paddle_right", "paddle_right_select");
 ?></section>
             </ul>
-        </div>
+        <div id="divider2"></div>
+        </div></div>
 <?php
     }
 
@@ -472,12 +477,12 @@ class FrontController
 ?>
 <body>
 <div id="mainouter">
-    <div class="t"><div class="b"><div class="l"><div class="r"><div class="bl"><div class="br"><div class="tl"><div class="tr">
-        <div id="divider"></div>
+    <div id="main">
 <?php
+
         $this->outputMainMenu($page);
+
 ?>
-        <div id="divider2"></div>
         <div id="maininner">
             <div id="framepanel_bottom">
                 <div id="pageheading">
@@ -522,7 +527,7 @@ class FrontController
             </div>
         </div>
     </div>
-</div></div></div></div></div></div></div></div>
+</div>
 <div id="footer">
 <?php
 
