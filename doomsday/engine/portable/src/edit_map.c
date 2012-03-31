@@ -772,6 +772,17 @@ static void finishSectors(GameMap* map)
     }
 }
 
+static void finishSideDefs(GameMap* map)
+{
+    uint i;
+    // Calculate the tangent space surface vectors.
+    for(i = 0; i < map->numSideDefs; ++i)
+    {
+        SideDef* side = &map->sideDefs[i];
+        SideDef_UpdateSurfaceTangents(side);
+    }
+}
+
 static void finishLineDefs(GameMap* map)
 {
     uint i;
@@ -1764,6 +1775,7 @@ boolean MPE_End(void)
     }
 
     buildSectorLineLists(gamemap);
+    finishSideDefs(gamemap);
     finishLineDefs(gamemap);
     finishSectors(gamemap);
     updateMapBounds(gamemap);
