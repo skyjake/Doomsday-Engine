@@ -78,7 +78,21 @@ internal
 // HEdge frame flags
 #define HEDGEINF_FACINGFRONT      0x0001
 
-typedef struct mhedge_s {
+/**
+ * BspHEdgeInfo. Plain old data structure storing additional information about
+ * a half-edge produced by BspBuilder.
+ */
+typedef struct bsphedgeinfo_s {
+    // Precomputed data for faster calculations.
+    double pSX, pSY;
+    double pEX, pEY;
+    double pDX, pDY;
+
+    double pLength;
+    double pAngle;
+    double pPara;
+    double pPerp;
+
     struct hedge_s* nextOnSide;
     struct hedge_s* prevOnSide;
 
@@ -86,8 +100,14 @@ typedef struct mhedge_s {
     // is no longer in any superblock (e.g. now in a leaf).
     void* block;
 
-    BspHEdgeInfo info;
-} mhedge_t;
+    // Linedef that this half-edge goes along, or NULL if miniseg.
+    struct linedef_s* lineDef;
+
+    // Linedef that this half-edge initially comes from.
+    // For "real" half-edges, this is just the same as the 'linedef' field
+    // above. For "miniedges", this is the linedef of the partition line.
+    struct linedef_s* sourceLineDef;
+} BspHEdgeInfo;
 end
 
 public
@@ -114,7 +134,7 @@ struct HEdge
     FLOAT   float       offset
     -       biassurface_t*[3] bsuf // 0=middle, 1=top, 2=bottom
     -       short       frameFlags
-    -       mhedge_t    buildData
+    -       BspHEdgeInfo buildData
 end
 
 internal

@@ -91,6 +91,13 @@ typedef struct bsphedgeinfo_s {
     double pPara;
     double pPerp;
 
+    struct hedge_s* nextOnSide;
+    struct hedge_s* prevOnSide;
+
+    // The superblock that contains this half-edge, or NULL if the half-edge
+    // is no longer in any superblock (e.g. now in a leaf).
+    void* block;
+
     // Linedef that this half-edge goes along, or NULL if miniseg.
     struct linedef_s* lineDef;
 
@@ -99,17 +106,6 @@ typedef struct bsphedgeinfo_s {
     // above. For "miniedges", this is the linedef of the partition line.
     struct linedef_s* sourceLineDef;
 } BspHEdgeInfo;
-
-typedef struct mhedge_s {
-    struct hedge_s* nextOnSide;
-    struct hedge_s* prevOnSide;
-
-    // The superblock that contains this half-edge, or NULL if the half-edge
-    // is no longer in any superblock (e.g. now in a leaf).
-    void* block;
-
-    BspHEdgeInfo info;
-} mhedge_t;
 
 typedef struct hedge_s {
     runtime_mapdata_header_t header;
@@ -132,7 +128,7 @@ typedef struct hedge_s {
     float               offset;
     biassurface_t*      bsuf[3];       // 0=middle, 1=top, 2=bottom
     short               frameFlags;
-    mhedge_t            buildData;
+    BspHEdgeInfo        buildData;
 } HEdge;
 
 #define BLF_MIDPOINT         0x80    // Midpoint is tri-fan centre.

@@ -236,7 +236,7 @@ SuperBlockmap* BspBuilder::createInitialHEdges(GameMap* map)
                 {
                     HEdge* other;
 
-                    other = newHEdge(front->buildData.info.lineDef, line, line->v[1], line->v[0],
+                    other = newHEdge(front->buildData.lineDef, line, line->v[1], line->v[0],
                                      line->buildData.windowEffect, true);
 
                     sbmap->root()->hedgePush(other);

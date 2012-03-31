@@ -133,8 +133,8 @@ static void finishHEdges(GameMap* map)
     {
         HEdge* hedge = map->hedges[i];
 
-        if(hedge->buildData.info.lineDef)
-            hedge->lineDef = &map->lineDefs[hedge->buildData.info.lineDef->buildData.index - 1];
+        if(hedge->buildData.lineDef)
+            hedge->lineDef = &map->lineDefs[hedge->buildData.lineDef->buildData.index - 1];
 
         if(hedge->lineDef)
         {
