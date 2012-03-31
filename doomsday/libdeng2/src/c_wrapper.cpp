@@ -154,9 +154,10 @@ void LegacyNetwork_Close(int socket)
     DENG2_LEGACYNETWORK().close(socket);
 }
 
-int LegacyNetwork_Send(int socket, const unsigned char* data, int size)
+int LegacyNetwork_Send(int socket, const void* data, int size)
 {
-    return DENG2_LEGACYNETWORK().sendBytes(socket, de::ByteRefArray(data, size));
+    return DENG2_LEGACYNETWORK().sendBytes(
+                socket, de::ByteRefArray(reinterpret_cast<const de::IByteArray::Byte*>(data), size));
 }
 
 unsigned char* LegacyNetwork_Receive(int socket, int *size)

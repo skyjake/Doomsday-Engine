@@ -66,7 +66,7 @@ DENG2_PUBLIC void LegacyNetwork_GetPeerAddress(int socket, char* host, int hostM
 DENG2_PUBLIC int LegacyNetwork_IsDisconnected(int socket);
 DENG2_PUBLIC void LegacyNetwork_Close(int socket);
 
-DENG2_PUBLIC int LegacyNetwork_Send(int socket, const unsigned char* data, int size);
+DENG2_PUBLIC int LegacyNetwork_Send(int socket, const void *data, int size);
 DENG2_PUBLIC unsigned char* LegacyNetwork_Receive(int socket, int* size);
 DENG2_PUBLIC void LegacyNetwork_FreeBuffer(unsigned char* buffer);
 DENG2_PUBLIC int LegacyNetwork_BytesReady(int socket);

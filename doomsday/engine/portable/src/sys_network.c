@@ -410,14 +410,14 @@ void N_ClientHandleResponseToInfoQuery(int nodeId, const byte *data, int size)
     svNode->sock = 0;
 
     // Did we receive what we expected to receive?
-    if(size >= 5 && !strncmp(data, "Info\n", 5))
+    if(size >= 5 && !strncmp((const char*)data, "Info\n", 5))
     {
         const char *ch;
         ddstring_t *line;
         ddstring_t* response = Str_New();
 
         // Make a null-terminated copy of the response text.
-        Str_PartAppend(response, data, 0, size);
+        Str_PartAppend(response, (const char*)data, 0, size);
 
         located.valid = true;
 
