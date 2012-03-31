@@ -228,7 +228,7 @@ void Log::beginSection(const char* name)
     _sectionStack.append(name);
 }
 
-void Log::endSection(const char* name)
+void Log::endSection(const char* DENG2_DEBUG_ONLY(name))
 {
     DENG2_ASSERT(_sectionStack.back() == name);
     _sectionStack.takeLast();
