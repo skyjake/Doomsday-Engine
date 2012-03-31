@@ -94,7 +94,6 @@ HEdge* BspBuilder::newHEdge(LineDef* lineDef, LineDef* sourceLineDef,
     hedge->twin = NULL;
     hedge->sector = sec;
     hedge->buildData.nextOnSide = hedge->buildData.prevOnSide = NULL;
-    hedge->buildData.index = -1;
 
     updateBspHEdgeInfo(hedge, &hedge->buildData.info);
     hedge->buildData.info.lineDef = lineDef;

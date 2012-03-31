@@ -104,11 +104,6 @@ typedef struct mhedge_s {
     struct hedge_s* nextOnSide;
     struct hedge_s* prevOnSide;
 
-    // Index of the half-edge. Only valid once the half-edge has been added
-    // to a polygon. A negative value means it is invalid -- there
-    // shouldn't be any of these once the BSP tree has been built.
-    int index;
-
     // The superblock that contains this half-edge, or NULL if the half-edge
     // is no longer in any superblock (e.g. now in a leaf).
     void* block;
@@ -119,15 +114,17 @@ typedef struct mhedge_s {
 typedef struct hedge_s {
     runtime_mapdata_header_t header;
     struct vertex_s*    v[2];          // [Start, End] of the segment.
-    struct linedef_s*   lineDef;
-    struct sector_s*    sector;
-    struct bspleaf_s*   bspLeaf;
+    struct hedge_s*     next;
+    struct hedge_s*     prev;
 
     // Half-edge on the other side, or NULL if one-sided. This relationship
     // is always one-to-one -- if one of the half-edges is split, the twin
     // must also be split.
     struct hedge_s*     twin;
+    struct bspleaf_s*   bspLeaf;
 
+    struct linedef_s*   lineDef;
+    struct sector_s*    sector;
     angle_t             angle;
     byte                side;          // 0=front, 1=back
     byte                flags;
@@ -135,8 +132,6 @@ typedef struct hedge_s {
     float               offset;
     biassurface_t*      bsuf[3];       // 0=middle, 1=top, 2=bottom
     short               frameFlags;
-    struct hedge_s*     next;
-    struct hedge_s*     prev;
     mhedge_t            buildData;
 } HEdge;
 
@@ -321,11 +316,11 @@ typedef struct plane_s {
 
 typedef struct msector_s {
     // Sector index. Always valid after loading & pruning.
-    int         index;
+    int index;
 
     // Suppress superfluous mini warnings.
-    int         warnedFacing;
-    int			refCount;
+    int warnedFacing;
+    int	refCount;
 } msector_t;
 
 typedef struct sector_s {
@@ -418,8 +413,8 @@ typedef enum sidedefsection_e {
 
 typedef struct msidedef_s {
     // Sidedef index. Always valid after loading & pruning.
-    int         index;
-    int         refCount;
+    int index;
+    int refCount;
 } msidedef_t;
 
 typedef struct sidedef_s {
@@ -461,11 +456,11 @@ typedef struct sidedef_s {
 #define L_backsector            L_sector(BACK)
 
 // Is this line self-referencing (front sec == back sec)?
-#define LINE_SELFREF(l)			((l)->L_frontside && (l)->L_backside && \
-								 (l)->L_frontsector == (l)->L_backsector)
+#define LINE_SELFREF(l)         ((l)->L_frontside && (l)->L_backside && \
+                                 (l)->L_frontsector == (l)->L_backsector)
 
 // Internal flags:
-#define LF_POLYOBJ				0x1 // Line is part of a polyobject.
+#define LF_POLYOBJ              0x1 // Line is part of a polyobject.
 
 #define MLF_TWOSIDED            0x1 // Line is marked two-sided.
 #define MLF_ZEROLENGTH          0x2 // Zero length (line should be totally ignored).
@@ -475,17 +470,17 @@ typedef struct sidedef_s {
 typedef struct mlinedef_s {
     // Linedef index. Always valid after loading & pruning of zero
     // length lines has occurred.
-    int         index;
-    int         mlFlags; // MLF_* flags.
+    int index;
+    int mlFlags; // MLF_* flags.
 
     // One-sided linedef used for a special effect (windows).
     // The value refers to the opposite sector on the back side.
-    struct sector_s *windowEffect;
+    struct sector_s* windowEffect;
 
     // Normally NULL, except when this linedef directly overlaps an earlier
     // one (a rarely-used trick to create higher mid-masked textures).
     // No hedges should be created for these overlapping linedefs.
-    struct linedef_s *overlap;
+    struct linedef_s* overlap;
 } mlinedef_t;
 
 typedef struct linedef_s {

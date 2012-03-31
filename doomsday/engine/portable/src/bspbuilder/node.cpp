@@ -93,35 +93,28 @@ static __inline int pointOnhedgeSide(double x, double y, const HEdge* part)
                                  DIST_EPSILON);
 }
 
-static boolean getAveragedCoords(HEdge* headPtr, double* x, double* y)
+static boolean getAveragedCoords(BspLeaf* leaf, double* x, double* y)
 {
-    size_t total = 0;
-    double avg[2];
-    HEdge* cur;
+    if(!leaf || !x || !y) return false;
 
-    if(!x || !y) return false;
+    vec2d_t avg;
+    V2d_Set(avg, 0, 0);
+    size_t numPoints = 0;
 
-    avg[VX] = avg[VY] = 0;
-
-    for(cur = headPtr; cur; cur = cur->next)
+    for(HEdge* hedge = leaf->hedge; hedge; hedge = hedge->next)
     {
-        avg[VX] += cur->v[0]->buildData.pos[VX];
-        avg[VY] += cur->v[0]->buildData.pos[VY];
-
-        avg[VX] += cur->v[1]->buildData.pos[VX];
-        avg[VY] += cur->v[1]->buildData.pos[VY];
-
-        total += 2;
+        V2d_Sum(avg, avg, hedge->v[0]->buildData.pos);
+        V2d_Sum(avg, avg, hedge->v[1]->buildData.pos);
+        numPoints += 2;
     }
 
-    if(total > 0)
+    if(numPoints)
     {
-        *x = avg[VX] / total;
-        *y = avg[VY] / total;
-        return true;
+        if(x) *x = avg[VX] / numPoints;
+        if(y) *y = avg[VY] / numPoints;
     }
 
-    return false;
+    return true;
 }
 
 /**
@@ -209,13 +202,23 @@ static void clockwiseOrder(HEdge** headPtr, uint num, double x, double y)
     for(hedge = sub->hedges; hedge; hedge = hedge->next)
     {
         double angle = M_SlopeToAngle(hedge->v[0]->V_pos[VX] - x,
-                                       hedge->v[0]->V_pos[VY] - y);
+                                      hedge->v[0]->V_pos[VY] - y);
 
         Con_Message("  half-edge %p: Angle %1.6f  (%1.1f,%1.1f) -> (%1.1f,%1.1f)\n",
                     hedge, angle, hedge->v[0]->V_pos[VX], hedge->v[0]->V_pos[VY],
                     hedge->v[1]->V_pos[VX], hedge->v[1]->V_pos[VY]);
     }
 #endif*/
+}
+
+static void preparehedgeSortBuffer(uint numhedges)
+{
+    // Do we need to enlarge our sort buffer?
+    if(numhedges + 1 > hedgeSortBufSize)
+    {
+        hedgeSortBufSize = numhedges + 1;
+        hedgeSortBuf = (HEdge**)M_Realloc(hedgeSortBuf, hedgeSortBufSize * sizeof(*hedgeSortBuf));
+    }
 }
 
 static void sanityCheckClosed(const BspLeaf* leaf)
@@ -300,31 +303,7 @@ static boolean sanityCheckHasRealhedge(const BspLeaf* leaf)
     return false;
 }
 
-static void renumberLeafhedges(BspLeaf* leaf, uint* curIndex)
-{
-    uint n;
-    HEdge* cur;
-
-    n = 0;
-    for(cur = leaf->hedge; cur; cur = cur->next)
-    {
-        cur->buildData.index = *curIndex;
-        (*curIndex)++;
-        n++;
-    }
-}
-
-static void preparehedgeSortBuffer(uint numhedges)
-{
-    // Do we need to enlarge our sort buffer?
-    if(numhedges + 1 > hedgeSortBufSize)
-    {
-        hedgeSortBufSize = numhedges + 1;
-        hedgeSortBuf = (HEdge**)M_Realloc(hedgeSortBuf, hedgeSortBufSize * sizeof(*hedgeSortBuf));
-    }
-}
-
-static int C_DECL clockwiseLeaf(BinaryTree* tree, void* data)
+static int C_DECL clockwiseLeaf(BinaryTree* tree, void* /*parameters*/)
 {
     if(BinaryTree_IsLeaf(tree))
     {
@@ -332,7 +311,7 @@ static int C_DECL clockwiseLeaf(BinaryTree* tree, void* data)
         double midPoint[2] = { 0, 0 };
         HEdge* hedge;
 
-        getAveragedCoords(leaf->hedge, &midPoint[VX], &midPoint[VY]);
+        getAveragedCoords(leaf, &midPoint[VX], &midPoint[VY]);
 
         // Count half-edges.
         leaf->hedgeCount = 0;
@@ -341,9 +320,7 @@ static int C_DECL clockwiseLeaf(BinaryTree* tree, void* data)
 
         // Ensure the sort buffer is large enough.
         preparehedgeSortBuffer(leaf->hedgeCount);
-
         clockwiseOrder(&leaf->hedge, leaf->hedgeCount, midPoint[VX], midPoint[VY]);
-        renumberLeafhedges(leaf, (uint*)data);
 
         if(leaf->hedge)
         {
@@ -400,13 +377,12 @@ static int C_DECL clockwiseLeaf(BinaryTree* tree, void* data)
 
 void BspBuilder::windLeafs(BinaryTree* rootNode)
 {
-    uint curIndex;
-
+    // Init half-edge angle sort buffer.
     hedgeSortBufSize = 0;
     hedgeSortBuf = NULL;
 
-    curIndex = 0;
-    BinaryTree_PostOrder(rootNode, clockwiseLeaf, &curIndex);
+    // Wind all BspLeafs.
+    BinaryTree_PostOrder(rootNode, clockwiseLeaf, NULL/*no parameters*/);
 
     // Free temporary storage.
     if(hedgeSortBuf)

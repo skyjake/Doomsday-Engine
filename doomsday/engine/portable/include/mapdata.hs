@@ -60,26 +60,34 @@ internal
 #define FRONT 0
 #define BACK  1
 
-#define HE_v(n)                 v[(n)? 1:0]
-#define HE_vpos(n)              HE_v(n)->V_pos
+#define HE_v(n)                   v[(n)? 1:0]
+#define HE_vpos(n)                HE_v(n)->V_pos
 
-#define HE_v1                   HE_v(0)
-#define HE_v1pos                HE_v(0)->V_pos
+#define HE_v1                     HE_v(0)
+#define HE_v1pos                  HE_v(0)->V_pos
 
-#define HE_v2                   HE_v(1)
-#define HE_v2pos                HE_v(1)->V_pos
+#define HE_v2                     HE_v(1)
+#define HE_v2pos                  HE_v(1)->V_pos
 
-#define HE_sector(n)            sec[(n)? 1:0]
-#define HE_frontsector          HE_sector(FRONT)
-#define HE_backsector           HE_sector(BACK)
-
-#define HEDGE_SIDEDEF(he)       ((he)->lineDef->sideDefs[(he)->side])
+#define HEDGE_BACK_SECTOR(h)      ((h)->twin ? (h)->twin->sector : NULL)
+#define HEDGE_SIDEDEF(h)          ((h)->lineDef->sideDefs[(h)->side])
 
 // HEdge flags
-#define HEDGEF_POLYOBJ          0x1 /// < Half-edge is part of a poly object.
+#define HEDGEF_POLYOBJ            0x1 /// < Half-edge is part of a poly object.
 
 // HEdge frame flags
-#define HEDGEINF_FACINGFRONT    0x0001
+#define HEDGEINF_FACINGFRONT      0x0001
+
+typedef struct mhedge_s {
+    struct hedge_s* nextOnSide;
+    struct hedge_s* prevOnSide;
+
+    // The superblock that contains this half-edge, or NULL if the half-edge
+    // is no longer in any superblock (e.g. now in a leaf).
+    void* block;
+
+    BspHEdgeInfo info;
+} mhedge_t;
 end
 
 public
@@ -88,10 +96,17 @@ end
 
 struct HEdge
     PTR     vertex_s*[2] v          // [Start, End] of the segment.
+    PTR     hedge_s*    next
+    PTR     hedge_s*    prev
+
+    // Half-edge on the other side, or NULL if one-sided. This relationship
+    // is always one-to-one -- if one of the half-edges is split, the twin
+    // must also be split.
+    PTR     hedge_s*    twin
+    PTR     bspleaf_s*  bspLeaf
+
     PTR     linedef_s*  lineDef
     PTR     sector_s*   sector
-    PTR     bspleaf_s*  bspLeaf
-    PTR     hedge_s*    twin
     ANGLE   angle_t     angle
     BYTE    byte        side        // 0=front, 1=back
     BYTE    byte        flags
@@ -99,8 +114,7 @@ struct HEdge
     FLOAT   float       offset
     -       biassurface_t*[3] bsuf // 0=middle, 1=top, 2=bottom
     -       short       frameFlags
-    PTR     hedge_s*    next
-    PTR     hedge_s*    prev
+    -       mhedge_t    buildData
 end
 
 internal
@@ -299,11 +313,11 @@ internal
 
 typedef struct msector_s {
     // Sector index. Always valid after loading & pruning.
-    int         index;
+    int index;
 
     // Suppress superfluous mini warnings.
-    int         warnedFacing;
-    int         refCount;
+    int warnedFacing;
+    int refCount;
 } msector_t;
 end
 
@@ -399,8 +413,8 @@ internal
 
 typedef struct msidedef_s {
     // Sidedef index. Always valid after loading & pruning.
-    int         index;
-    int         refCount;
+    int index;
+    int refCount;
 } msidedef_t;
 end
 
@@ -461,17 +475,17 @@ internal
 typedef struct mlinedef_s {
     // Linedef index. Always valid after loading & pruning of zero
     // length lines has occurred.
-    int         index;
-    int         mlFlags; // MLF_* flags.
+    int index;
+    int mlFlags; // MLF_* flags.
     
     // One-sided linedef used for a special effect (windows).
     // The value refers to the opposite sector on the back side.
-    struct sector_s *windowEffect;
+    struct sector_s* windowEffect;
 
     // Normally NULL, except when this linedef directly overlaps an earlier
     // one (a rarely-used trick to create higher mid-masked textures).
     // No segs should be created for these overlapping linedefs.
-    struct linedef_s *overlap;
+    struct linedef_s* overlap;
 } mlinedef_t;
 end
 

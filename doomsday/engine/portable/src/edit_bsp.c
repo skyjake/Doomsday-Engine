@@ -64,7 +64,7 @@ static void hardenSidedefHEdgeList(GameMap* map, SideDef* side, HEdge* bspHEdge)
     other = first;
     while(other)
     {
-        side->hedges[count++] = GameMap_HEdge(map, other->buildData.index);
+        side->hedges[count++] = other;
         other = other->buildData.nextOnSide;
     }
     side->hedges[count] = NULL; // Terminate.
