@@ -630,14 +630,14 @@ p.legal a {
 
 .asidebox {
     width: 16.5em;
-    background: #e7eeeb;
+    background: #F6F9F8;
     padding: 0.8em;
     display: block;
     font-family: Verdana, Arial, Helvetica, sans-serif;
     margin:.8em;
     border-radius: 10px;
     box-shadow: 4px 4px 10px 0 rgba(0, 0, 0, .1);
-    border: 2px solid #CCC;
+    border: 2px solid #E0EBE7;
 }
 
 #downloadbox, #socialbookmarkbox {
@@ -670,22 +670,22 @@ p.legal a {
 }
 
 #downloadbox a.windows_icon {
-    background-image: url(http://code.iki.fi/dengine.net/images/windowslogo.png);
+    background-image: url(images/windowslogo.gif);
     background-position: 0 0;
 }
 
 #downloadbox a.macos_icon {
-    background-image: url(http://code.iki.fi/dengine.net/images/macosxlogo.png);
+    background-image: url(images/macosxlogo.gif);
     background-position: 0 0;
 }
 
 #downloadbox a.ubuntu_icon {
-    background-image: url(images/ubuntulogo.png);
+    background-image: url(images/ubuntulogo.gif);
     background-position: 0 0;
 }
 
 #downloadbox a.linux_icon {
-    background-image: url(http://code.iki.fi/dengine.net/images/linuxlogo.png);
+    background-image: url(images/linuxlogo.gif);
     background-position: 0 0;
 }
 
