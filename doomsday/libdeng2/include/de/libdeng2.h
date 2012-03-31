@@ -66,9 +66,11 @@
 #  else
 #    define DENG2_ASSERT(x) assert(x)
 #  endif
+#  define DENG2_DEBUG_ONLY(x) x
 #else
 #  define DENG2_NO_DEBUG
 #  define DENG2_ASSERT(x)
+#  define DENG2_DEBUG_ONLY(x)
 #endif
 
 /**

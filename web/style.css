@@ -249,7 +249,7 @@ ol.jumplist li {
     top: 0;
     left: 0;
     width: 100%;
-    min-width: 640px;
+    min-width: 649px;
     z-index: 0;
     overflow: hidden;
 }
@@ -286,7 +286,7 @@ ol.jumplist li {
     max-width: 1280px;
     height: auto;
     clear: both;
-    min-width: 624px;
+    min-width: 649px;
     margin-top: 52px;
     margin-bottom: 0px;
     margin-left: auto;
@@ -337,7 +337,7 @@ ol.jumplist li {
 
 #menu section {
     display: inline-block;
-    min-width: 11em;
+    min-width: 13em;
     text-align: right;
 }
 
@@ -721,6 +721,11 @@ p.legal a {
 #socialbookmarkbox div.hnav ul {
     margin-top: .4em;
     margin-bottom: 0;
+}
+
+.sf-button {
+    position:relative;
+    top:-3px;
 }
 
 .fb-like {
