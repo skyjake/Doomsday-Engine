@@ -140,7 +140,6 @@ typedef struct bspleaf_s {
     struct polyobj_s*   polyObj;       // NULL, if there is no polyobj.
     struct sector_s*    sector;
     int                 addSpriteCount; // frame number of last R_AddSprites
-    unsigned int        inSectorID;
     int                 flags;
     int                 validCount;
     unsigned int        reverb[NUM_REVERB_DATA];

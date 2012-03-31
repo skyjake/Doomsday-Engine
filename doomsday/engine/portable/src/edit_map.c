@@ -615,7 +615,6 @@ static void hardenSectorBspLeafList(GameMap* map, uint secIDX)
         BspLeaf* bspLeaf = map->bspLeafs[i];
         if(bspLeaf->sector == sec)
         {
-            bspLeaf->inSectorID = n;
             sec->bspLeafs[n++] = bspLeaf;
         }
     }

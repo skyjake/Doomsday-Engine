@@ -31,20 +31,20 @@ typedef struct lineowner_s {
 typedef struct mvertex_s {
     // Vertex index. Always valid after loading and pruning of unused
     // vertices has occurred.
-    int         index;
+    int index;
 
     // Reference count. When building normal node info, unused vertices
     // will be pruned.
-    int         refCount;
+    int refCount;
 
     // Usually NULL, unless this vertex occupies the same location as a
     // previous vertex. Only used during the pruning phase.
-    struct vertex_s *equiv;
+    struct vertex_s* equiv;
 
-    struct edgetip_s *tipSet; // Set of wall_tips.
+    struct edgetip_s* tipSet; // Set of wall_tips.
 
 // Final data.
-    double      pos[2];
+    double pos[2];
 } mvertex_t;
 end
 
@@ -147,7 +147,6 @@ struct BspLeaf
     PTR     polyobj_s*  polyObj // NULL, if there is no polyobj.
     PTR     sector_s*   sector
     -       int         addSpriteCount // frame number of last R_AddSprites
-    -       uint        inSectorID
     -       int         flags
     -       int         validCount
     -       uint[NUM_REVERB_DATA] reverb
