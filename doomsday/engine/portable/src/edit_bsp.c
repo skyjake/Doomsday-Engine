@@ -137,9 +137,6 @@ static void finishHEdges(GameMap* map)
     {
         HEdge* hedge = map->hedges[i];
 
-        hedge->HE_v1 = &map->vertexes[hedge->v[0]->buildData.index - 1];
-        hedge->HE_v2 = &map->vertexes[hedge->v[1]->buildData.index - 1];
-
         if(hedge->buildData.info.lineDef)
             hedge->lineDef = &map->lineDefs[hedge->buildData.info.lineDef->buildData.index - 1];
 
@@ -343,16 +340,24 @@ static void hardenVertexes(GameMap* dest, Vertex*** vertexes, uint* numVertexes)
     }
 }
 
-static void updateVertexLinks(GameMap* dest)
+static void updateVertexLinks(GameMap* map)
 {
     uint i;
 
-    for(i = 0; i < dest->numLineDefs; ++i)
+    for(i = 0; i < map->numLineDefs; ++i)
     {
-        LineDef* line = &dest->lineDefs[i];
+        LineDef* line = &map->lineDefs[i];
 
-        line->L_v1 = &dest->vertexes[line->L_v1->buildData.index - 1];
-        line->L_v2 = &dest->vertexes[line->L_v2->buildData.index - 1];
+        line->L_v1 = &map->vertexes[line->L_v1->buildData.index - 1];
+        line->L_v2 = &map->vertexes[line->L_v2->buildData.index - 1];
+    }
+
+    for(i = 0; i < map->numHEdges; ++i)
+    {
+        HEdge* hedge = map->hedges[i];
+
+        hedge->HE_v1 = &map->vertexes[hedge->v[0]->buildData.index - 1];
+        hedge->HE_v2 = &map->vertexes[hedge->v[1]->buildData.index - 1];
     }
 }
 
@@ -361,9 +366,10 @@ void BspBuilder_Save(GameMap* dest, void* rootNode, Vertex*** vertexes, uint* nu
     uint startTime = Sys_GetRealTime();
     BinaryTree* rn = (BinaryTree*) rootNode;
 
+    buildHEdgeLut(dest, rn);
     hardenVertexes(dest, vertexes, numVertexes);
     updateVertexLinks(dest);
-    buildHEdgeLut(dest, rn);
+
     finishHEdges(dest);
     hardenBSP(dest, rn);
 
