@@ -103,7 +103,7 @@ static boolean getAveragedCoords(HEdge* headPtr, double* x, double* y)
 
     avg[VX] = avg[VY] = 0;
 
-    for(cur = headPtr; cur; cur = cur->buildData.nextInLeaf)
+    for(cur = headPtr; cur; cur = cur->next)
     {
         avg[VX] += cur->v[0]->buildData.pos[VX];
         avg[VY] += cur->v[0]->buildData.pos[VY];
@@ -175,13 +175,13 @@ static void sorthedgesByAngleAroundPoint(HEdge** hedges, size_t total,
  * @param x             X coordinate of the point to order around.
  * @param y             Y coordinate of the point to order around.
  */
-static void clockwiseOrder(HEdge** headPtr, size_t num, double x, double y)
+static void clockwiseOrder(HEdge** headPtr, uint num, double x, double y)
 {
     HEdge* hedge;
-    size_t i;
+    uint i;
 
     // Insert ptrs to the hedges into the sort buffer.
-    for(hedge = *headPtr, i = 0; hedge; hedge = hedge->buildData.nextInLeaf, ++i)
+    for(hedge = *headPtr, i = 0; hedge; hedge = hedge->next, ++i)
     {
         hedgeSortBuf[i] = hedge;
     }
@@ -196,10 +196,10 @@ static void clockwiseOrder(HEdge** headPtr, size_t num, double x, double y)
     *headPtr = NULL;
     for(i = 0; i < num; ++i)
     {
-        size_t idx = (num - 1) - i;
-        size_t j = idx % num;
+        uint idx = (num - 1) - i;
+        uint j = idx % num;
 
-        hedgeSortBuf[j]->buildData.nextInLeaf = *headPtr;
+        hedgeSortBuf[j]->next = *headPtr;
         *headPtr = hedgeSortBuf[j];
     }
 
@@ -221,80 +221,82 @@ static void clockwiseOrder(HEdge** headPtr, size_t num, double x, double y)
 static void sanityCheckClosed(const BspLeaf* leaf)
 {
     int total = 0, gaps = 0;
-    HEdge* cur, *next;
-
-    for(cur = leaf->buildData.hedges; cur; cur = cur->buildData.nextInLeaf)
+    const HEdge* hedge = leaf->hedge;
+    do
     {
-        next = (cur->buildData.nextInLeaf? cur->buildData.nextInLeaf : leaf->buildData.hedges);
-
-        if(cur->v[1]->buildData.pos[VX] != next->v[0]->buildData.pos[VX] ||
-           cur->v[1]->buildData.pos[VY] != next->v[0]->buildData.pos[VY])
+        HEdge* next = hedge->next;
+        if(hedge->v[1]->buildData.pos[VX] != next->v[0]->buildData.pos[VX] ||
+           hedge->v[1]->buildData.pos[VY] != next->v[0]->buildData.pos[VY])
         {
             gaps++;
         }
 
         total++;
-    }
+    } while((hedge = hedge->next) != leaf->hedge);
 
     if(gaps > 0)
     {
         VERBOSE( Con_Message("hedge list for leaf #%p is not closed (%d gaps, %d half-edges)\n", leaf, gaps, total) );
 
 /*#if _DEBUG
-    for(cur = leaf->buildData.hedges; cur; cur = cur->next)
+    hedge = leaf->hedge;
+    do
     {
-        Con_Message("  half-edge %p  (%1.1f,%1.1f) --> (%1.1f,%1.1f)\n", cur,
-                    cur->v[0]->pos[VX], cur->v[0]->pos[VY],
-                    cur->v[1]->pos[VX], cur->v[1]->pos[VY]);
-    }
+        Con_Message("  half-edge %p  (%1.1f,%1.1f) --> (%1.1f,%1.1f)\n", hedge,
+                    hedge->v[0]->pos[VX], hedge->v[0]->pos[VY],
+                    hedge->v[1]->pos[VX], hedge->v[1]->pos[VY]);
+    } while((hedge = hedge->next) != leaf->hedge);
 #endif*/
     }
 }
 
 static void sanityCheckSameSector(const BspLeaf* leaf)
 {
-    HEdge* cur, *compare;
+    HEdge* hedge, *compare = NULL;
 
     // Find a suitable half-edge for comparison.
-    for(compare = leaf->buildData.hedges; compare; compare = compare->buildData.nextInLeaf)
+    hedge = leaf->hedge;
+    do
     {
-        if(compare->sector) break;
-    }
+        if(hedge->sector)
+        {
+            compare = hedge;
+        }
+    } while(!compare && (hedge = hedge->next) != leaf->hedge);
 
     if(!compare) return;
 
-    for(cur = compare->buildData.nextInLeaf; cur; cur = cur->buildData.nextInLeaf)
+    hedge = leaf->hedge;
+    do
     {
-        if(!cur->sector) continue;
-
-        if(cur->sector == compare->sector) continue;
+        if(!hedge->sector || hedge->sector == compare->sector) continue;
 
         // Prevent excessive number of warnings.
-        if(compare->sector->buildData.warnedFacing == cur->sector->buildData.index)
+        if(compare->sector->buildData.warnedFacing == hedge->sector->buildData.index)
             continue;
 
-        compare->sector->buildData.warnedFacing = cur->sector->buildData.index;
+        compare->sector->buildData.warnedFacing = hedge->sector->buildData.index;
 
         if(verbose >= 1)
         {
-            if(cur->buildData.info.lineDef)
+            if(hedge->buildData.info.lineDef)
                 Con_Message("Sector #%d has sidedef facing #%d (line #%d).\n",
-                            compare->sector->buildData.index, cur->sector->buildData.index,
-                            cur->buildData.info.lineDef->buildData.index);
+                            compare->sector->buildData.index, hedge->sector->buildData.index,
+                            hedge->buildData.info.lineDef->buildData.index);
             else
                 Con_Message("Sector #%d has sidedef facing #%d.\n",
-                            compare->sector->buildData.index, cur->sector->buildData.index);
+                            compare->sector->buildData.index, hedge->sector->buildData.index);
         }
-    }
+    } while((hedge = hedge->next) != leaf->hedge);
 }
 
 static boolean sanityCheckHasRealhedge(const BspLeaf* leaf)
 {
-    HEdge* cur;
-    for(cur = leaf->buildData.hedges; cur; cur = cur->buildData.nextInLeaf)
+    HEdge* hedge = leaf->hedge;
+    do
     {
-        if(cur->buildData.info.lineDef) return true;
-    }
+        if(hedge->buildData.info.lineDef) return true;
+    } while((hedge = hedge->next) != leaf->hedge);
     return false;
 }
 
@@ -304,7 +306,7 @@ static void renumberLeafhedges(BspLeaf* leaf, uint* curIndex)
     HEdge* cur;
 
     n = 0;
-    for(cur = leaf->buildData.hedges; cur; cur = cur->buildData.nextInLeaf)
+    for(cur = leaf->hedge; cur; cur = cur->next)
     {
         cur->buildData.index = *curIndex;
         (*curIndex)++;
@@ -312,7 +314,7 @@ static void renumberLeafhedges(BspLeaf* leaf, uint* curIndex)
     }
 }
 
-static void preparehedgeSortBuffer(size_t numhedges)
+static void preparehedgeSortBuffer(uint numhedges)
 {
     // Do we need to enlarge our sort buffer?
     if(numhedges + 1 > hedgeSortBufSize)
@@ -329,20 +331,60 @@ static int C_DECL clockwiseLeaf(BinaryTree* tree, void* data)
         BspLeaf* leaf = (BspLeaf*) BinaryTree_UserData(tree);
         double midPoint[2] = { 0, 0 };
         HEdge* hedge;
-        size_t total;
 
-        getAveragedCoords(leaf->buildData.hedges, &midPoint[VX], &midPoint[VY]);
+        getAveragedCoords(leaf->hedge, &midPoint[VX], &midPoint[VY]);
 
         // Count half-edges.
-        total = 0;
-        for(hedge = leaf->buildData.hedges; hedge; hedge = hedge->buildData.nextInLeaf)
-            total++;
+        leaf->hedgeCount = 0;
+        for(hedge = leaf->hedge; hedge; hedge = hedge->next)
+            leaf->hedgeCount++;
 
         // Ensure the sort buffer is large enough.
-        preparehedgeSortBuffer(total);
+        preparehedgeSortBuffer(leaf->hedgeCount);
 
-        clockwiseOrder(&leaf->buildData.hedges, total, midPoint[VX], midPoint[VY]);
+        clockwiseOrder(&leaf->hedge, leaf->hedgeCount, midPoint[VX], midPoint[VY]);
         renumberLeafhedges(leaf, (uint*)data);
+
+        if(leaf->hedge)
+        {
+            hedge = leaf->hedge;
+            for(;;)
+            {
+                // Link hedge to this leaf.
+                hedge->bspLeaf = leaf;
+
+                if(hedge->next)
+                {
+                    // Reverse link.
+                    hedge->next->prev = hedge;
+                    hedge = hedge->next;
+                }
+                else
+                {
+                    // Circular link.
+                    hedge->next = leaf->hedge;
+                    hedge->next->prev = hedge;
+                    break;
+                }
+            }
+
+            // Determine which sector this BSP leaf belongs to.
+            hedge = leaf->hedge;
+            do
+            {
+                if(hedge->buildData.info.lineDef &&
+                   hedge->buildData.info.lineDef->sideDefs[hedge->side])
+                {
+                    SideDef* side = hedge->buildData.info.lineDef->sideDefs[hedge->side];
+                    leaf->sector = side->sector;
+                }
+            } while(!leaf->sector && (hedge = hedge->next) != leaf->hedge);
+        }
+
+        if(!leaf->sector)
+        {
+            Con_Message("Warning: clockwiseLeaf: Orphan BSP leaf %p.\n", leaf);
+        }
 
         // Do some sanity checks.
         sanityCheckClosed(leaf);
@@ -917,8 +959,8 @@ static int createBSPLeafWorker(SuperBlock* superblock, void* parameters)
     while((hedge = superblock->hedgePop()))
     {
         // Link it into head of the leaf's list.
-        hedge->buildData.nextInLeaf = leaf->buildData.hedges;
-        leaf->buildData.hedges = hedge;
+        hedge->next = leaf->hedge;
+        leaf->hedge = hedge;
     }
 
     return false; // Continue iteration.
@@ -930,10 +972,8 @@ static int createBSPLeafWorker(SuperBlock* superblock, void* parameters)
 BspLeaf* BspBuilder::createBSPLeaf(SuperBlock* hedgeList)
 {
     BspLeaf* leaf = BspLeaf_New();
-
     // Link the half-edges into the new leaf.
     hedgeList->traverse(createBSPLeafWorker, leaf);
-
     return leaf;
 }
 

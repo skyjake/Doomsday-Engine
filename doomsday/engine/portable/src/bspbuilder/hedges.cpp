@@ -171,7 +171,7 @@ HEdge* BspBuilder::splitHEdge(HEdge* oldHEdge, double x, double y)
         }
         else
         {
-            oldHEdge->twin->buildData.nextInLeaf = newHEdge->twin;
+            oldHEdge->twin->next = newHEdge->twin;
         }
     }
 

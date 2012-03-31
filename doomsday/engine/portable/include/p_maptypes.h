@@ -101,7 +101,6 @@ typedef struct bsphedgeinfo_s {
 } BspHEdgeInfo;
 
 typedef struct mhedge_s {
-    struct hedge_s* nextInLeaf;
     struct hedge_s* nextOnSide;
     struct hedge_s* prevOnSide;
 
@@ -143,10 +142,6 @@ typedef struct hedge_s {
 
 #define BLF_MIDPOINT         0x80    // Midpoint is tri-fan centre.
 
-typedef struct {
-    struct hedge_s*     hedges; // Head ptr to a list of half-edges at this leaf.
-} mbspleaf_t;
-
 typedef struct bspleaf_s {
     runtime_mapdata_header_t header;
     unsigned int        hedgeCount;
@@ -165,7 +160,6 @@ typedef struct bspleaf_s {
     struct fvertex_s**  vertices;      // [numvertices] size
     struct shadowlink_s* shadows;
     struct biassurface_s** bsuf;       // [sector->planeCount] size.
-    mbspleaf_t          buildData;
 } BspLeaf;
 
 typedef enum {

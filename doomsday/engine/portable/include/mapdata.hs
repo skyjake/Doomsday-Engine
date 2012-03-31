@@ -105,10 +105,6 @@ end
 
 internal
 #define BLF_MIDPOINT             0x80 ///< Midpoint is tri-fan centre.
-
-typedef struct {
-    struct hedge_s* hedges; // Head ptr to a list of half-edges at this leaf.
-} mbspleaf_t;
 end
 
 struct BspLeaf
@@ -128,7 +124,6 @@ struct BspLeaf
     -       fvertex_s** vertices // [numvertices] size
     -       shadowlink_s* shadows
     -       biassurface_s** bsuf // [sector->planeCount] size.
-    -       mbspleaf_t  buildData
 end
 
 internal
