@@ -436,7 +436,7 @@ ol.jumplist li {
     height: 300px;
     width: 1300px;
     background: #282D2B url(panoramarotator) no-repeat;
-    box-shadow: 0 -20px 10px 0 rgba(246, 246, 246, 1) inset;
+    box-shadow: 0 -20px 10px 0 rgba(250, 250, 250, 1) inset;
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
     margin-top: 10px;
@@ -452,6 +452,9 @@ ol.jumplist li {
     margin-right: 0;
     margin-bottom: 0;
     width: 100%;
+    background: #FAFAFA;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
 }
 
 #pageheading,
@@ -486,7 +489,6 @@ ol.jumplist li {
 }
 
 #contentbox, #contentbox2 {
-    background: #F6F6F6;
     padding-left: .6em;
     padding-right: .4em;
     padding-top: .2em;
@@ -733,7 +735,6 @@ p.legal a {
 /*-------------------- Addons ---------------------*/
 
 #addons {
-    background: #ffffff;
     padding:.5em 1em;
 }
 
@@ -804,7 +805,6 @@ p.legal a {
 
 /* Panel */
 #builds {
-    background: #ffffff;
     padding:.5em 1em;
 }
 
@@ -837,9 +837,6 @@ p.legal a {
     vertical-align:top;
     position:relative;
     margin-right:2em;
-}
-
-#buildcommits {
 }
 
 #buildcommits hr {
@@ -1006,6 +1003,7 @@ span.metadata {
 .buildstreamlist {
     border:2px solid #EEE;
     display:inline-block;
+    background:white;
 }
 
 .buildstream {
@@ -1163,7 +1161,6 @@ span.metadata {
 /*----------------- Master Server ------------------*/
 
 #masterbrowser {
-    background: #ffffff;
     padding:.5em 1em;
 }
 
@@ -1286,7 +1283,6 @@ span.port {
 /*------------------ Screens Page ------------------*/
 
 #screenshots {
-    background: #ffffff;
     padding:.5em 1em;
 }
 
