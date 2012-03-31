@@ -25,6 +25,7 @@
 #include "de/Block"
 #include "de/LogBuffer"
 #include <cstring>
+#include <stdarg.h>
 
 #define DENG2_LEGACYNETWORK()   de::LegacyCore::instance().network()
 
@@ -112,6 +113,25 @@ void LegacyCore_PrintLogFragment(LegacyCore* lc, const char* text)
     self->printLogFragment(text);
 }
 
+void LegacyCore_PrintfLogFragmentAtLevel(LegacyCore* lc, legacycore_loglevel_t level, const char* format, ...)
+{
+    char buffer[2048];
+    va_list args;
+    va_start(args, format);
+    vsprintf(buffer, format, args); /// @todo unsafe
+    va_end(args);
+
+    // Validate the level.
+    de::Log::LogLevel logLevel = de::Log::LogLevel(level);
+    if(level < DE2_LOG_TRACE || level > DE2_LOG_CRITICAL)
+    {
+        logLevel = de::Log::MESSAGE;
+    }
+
+    DENG2_SELF(LegacyCore, lc);
+    self->printLogFragment(buffer, logLevel);
+}
+
 void LegacyCore_FlushLog(void)
 {
     de::LogBuffer::appBuffer().flush();
@@ -154,9 +174,10 @@ void LegacyNetwork_Close(int socket)
     DENG2_LEGACYNETWORK().close(socket);
 }
 
-int LegacyNetwork_Send(int socket, const unsigned char* data, int size)
+int LegacyNetwork_Send(int socket, const void* data, int size)
 {
-    return DENG2_LEGACYNETWORK().sendBytes(socket, de::ByteRefArray(data, size));
+    return DENG2_LEGACYNETWORK().sendBytes(
+                socket, de::ByteRefArray(reinterpret_cast<const de::IByteArray::Byte*>(data), size));
 }
 
 unsigned char* LegacyNetwork_Receive(int socket, int *size)

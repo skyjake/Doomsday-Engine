@@ -30,8 +30,7 @@
 #include <cstdlib>
 
 /// Macro for accessing the local log of the current thread.
-#define LOG() \
-    de::Log& log = de::Log::threadLog();
+#define LOG()               de::Log::threadLog()
 
 /// Macro for accessing the local log of the current thread and entering
 /// a new log section.
@@ -44,14 +43,14 @@
     de::String __logSectionName = str; \
     LOG_AS(__logSectionName.c_str());
 
-#define LOG_TRACE(str)      de::Log::threadLog().enter(de::Log::TRACE, str)
-#define LOG_DEBUG(str)      de::Log::threadLog().enter(de::Log::DEBUG, str)
-#define LOG_VERBOSE(str)    de::Log::threadLog().enter(de::Log::VERBOSE, str)
-#define LOG_MSG(str)        de::Log::threadLog().enter(str)
-#define LOG_INFO(str)       de::Log::threadLog().enter(de::Log::INFO, str)
-#define LOG_WARNING(str)    de::Log::threadLog().enter(de::Log::WARNING, str)
-#define LOG_ERROR(str)      de::Log::threadLog().enter(de::Log::ERROR, str)
-#define LOG_CRITICAL(str)   de::Log::threadLog().enter(de::Log::CRITICAL, str)
+#define LOG_TRACE(str)      LOG().enter(de::Log::TRACE, str)
+#define LOG_DEBUG(str)      LOG().enter(de::Log::DEBUG, str)
+#define LOG_VERBOSE(str)    LOG().enter(de::Log::VERBOSE, str)
+#define LOG_MSG(str)        LOG().enter(str)
+#define LOG_INFO(str)       LOG().enter(de::Log::INFO, str)
+#define LOG_WARNING(str)    LOG().enter(de::Log::WARNING, str)
+#define LOG_ERROR(str)      LOG().enter(de::Log::ERROR, str)
+#define LOG_CRITICAL(str)   LOG().enter(de::Log::CRITICAL, str)
 
 #ifdef WIN32
 #   undef ERROR

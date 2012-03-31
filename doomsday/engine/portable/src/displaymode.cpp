@@ -25,8 +25,7 @@
 #include <vector>
 #include <set>
 #include <algorithm>
-
-#include <QDebug>
+#include <de/Log>
 
 static bool inited = false;
 
@@ -118,11 +117,7 @@ struct Mode : public DisplayMode
                 break;
             }
         }
-#if 0
-        // Reduce until we must resort to fractions.
-        while(reduce(ratioX, ratioY)) {}
 
-#endif
         if(ratioX == 8 && ratioY == 5)
         {
             // This is commonly referred to as 16:10.
@@ -133,8 +128,8 @@ struct Mode : public DisplayMode
 
     void debugPrint() const
     {
-        qDebug() << "size" << width << "x" << height << "depth" << depth << "rate"
-                 << refreshRate << "ratio" << ratioX << ":" << ratioY;
+        LOG_DEBUG("size: %i x %i x %i, rate: %.1f Hz, ratio: %i:%i")
+                << width << height << depth << refreshRate << ratioX << ratioY;
     }
 };
 
@@ -166,16 +161,14 @@ int DisplayMode_Init(void)
         modes.insert(mode);
     }
 
-#ifdef _DEBUG
-    qDebug() << "Current mode is:";
+    LOG_DEBUG("Current mode is:");
     originalMode.debugPrint();
 
-    qDebug() << "All available modes:";
+    LOG_DEBUG("All available modes:");
     for(Modes::iterator i = modes.begin(); i != modes.end(); ++i)
     {
         i->debugPrint();
     }
-#endif
 
     inited = true;
     return true;
@@ -185,7 +178,7 @@ void DisplayMode_Shutdown(void)
 {
     if(!inited) return;
 
-    qDebug() << "Restoring original display mode due to shutdown.";
+    LOG_INFO("Restoring original display mode due to shutdown.");
 
     // Back to the original mode.
     DisplayMode_Change(&originalMode, false /*release captured*/);
@@ -255,13 +248,6 @@ const DisplayMode* DisplayMode_FindClosest(int width, int height, int depth, flo
         // one is picked.
         if(!best || score < bestScore)
         {
-            /*
-#ifdef _DEBUG
-            i->debugPrint();
-            qDebug() << "Score for" << width << "x" << height << "pixels, depth:" << depth << "bpp, freq:" << freq << "Hz is" << score;
-#endif
-            */
-
             bestScore = score;
             best = &*i;
         }
@@ -278,7 +264,7 @@ int DisplayMode_Change(const DisplayMode* mode, boolean shouldCapture)
 {
     if(Mode::fromCurrent() == *mode && shouldCapture == captured)
     {
-        qDebug() << "DisplayMode: Requested mode is the same as current, ignoring.";
+        LOG_DEBUG("DisplayMode: Requested mode is the same as current, ignoring.");
 
         // Already in this mode.
         return false;
