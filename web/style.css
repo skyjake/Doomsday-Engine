@@ -723,6 +723,11 @@ p.legal a {
     margin-bottom: 0;
 }
 
+.sf-button {
+    position:relative;
+    top:-3px;
+}
+
 .fb-like {
     padding-left: .1em;
 }
