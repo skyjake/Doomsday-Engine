@@ -522,7 +522,7 @@ p.legal a {
     padding-top: .5em;
     float: left;
     text-align: left;
-    color: #ff8a00;
+    color: #fb0;
     font-size: xx-small;
     font-family: Verdana, Arial, Helvetica, sans-serif;
     font-weight: lighter;
@@ -546,7 +546,7 @@ p.legal a {
 }
 
 #projectnews a {
-    color: #ff8a00;
+    color: #fb0;
 }
 
 #projectnews .new-label {
@@ -584,7 +584,7 @@ p.legal a {
     padding-top: .5em;
     float: right;
     text-align: right;
-    color: #ff8a00;
+    color: #fb0;
     font-size: xx-small;
     font-family: Verdana, Arial, Helvetica, sans-serif;
     min-height: 139px;
@@ -607,7 +607,7 @@ p.legal a {
 }
 
 #servers a {
-    color: #ff8a00;
+    color: #fb0;
 }
 
 #servers a:hover, #servers a:visited:hover {
