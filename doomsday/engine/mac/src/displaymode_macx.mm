@@ -27,7 +27,6 @@
 #include <ApplicationServices/ApplicationServices.h>
 #include <AppKit/AppKit.h>
 #include <vector>
-#include <qDebug>
 
 #include "window.h"
 
@@ -161,8 +160,6 @@ int DisplayMode_Native_Change(const DisplayMode* mode, boolean shouldCapture)
 
     if(result == kCGErrorSuccess && currentDisplayDict != newModeDict)
     {
-        qDebug() << "Changing to native mode" << findIndex(mode);
-
         // Try to change.
         result = CGDisplaySwitchToMode(kCGDirectMainDisplay, newModeDict);
         if(result != kCGErrorSuccess)
