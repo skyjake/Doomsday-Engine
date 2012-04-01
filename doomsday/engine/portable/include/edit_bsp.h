@@ -64,6 +64,7 @@ struct edgetip_s;
 struct vertex_s;
 struct sector_s;
 struct gamemap_s;
+struct binarytree_s;
 
 #ifdef __cplusplus
 extern "C" {
@@ -84,21 +85,21 @@ void BspBuilder_Delete(BspBuilder_c* builder);
 
 BspBuilder_c* BspBuilder_SetSplitCostFactor(BspBuilder_c* builder, int factor);
 
-void BspBuilder_Save(struct gamemap_s* dest, void* rootNode, struct vertex_s*** vertexes, uint* numVertexes);
+struct binarytree_s* BspBuilder_Root(BspBuilder_c* builder);
 
 /**
  * Build the BSP for the given map.
  *
- * @param map           The map to build the BSP for.
- * @param vertexes      Editable vertex (ptr) array.
- * @param numVertexes   Number of vertexes in the array.
+ * @param map  The map to build the BSP for.
  *
  * @return  @c true= iff completed successfully.
  */
-boolean BspBuilder_Build(BspBuilder_c* builder, struct gamemap_s* map, struct vertex_s*** vertexes, uint* numVertexes);
+boolean BspBuilder_Build(BspBuilder_c* builder, struct gamemap_s* map);
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
+
+void MPE_SaveBsp(BspBuilder_c* builder, struct gamemap_s* dest, struct vertex_s*** vertexes, uint* numVertexes);
 
 #endif /// LIBDENG_MAP_BSP_BUILDER

@@ -39,19 +39,13 @@ struct binarytree_s;
 
 namespace de {
 
-/// Number of HEdge to block allocate.
-#define BSPBUILDER_HEDGE_ALLOCATOR_BLOCKSIZE   512
-
 /// Default cost factor attributed to splitting an existing half-edge.
 #define BSPBUILDER_PARTITION_COST_HEDGESPLIT   7
 
 class BspBuilder {
 public:
-    BspBuilder() : splitCostFactor(BSPBUILDER_PARTITION_COST_HEDGESPLIT)
-    {}
-
-    ~BspBuilder()
-    {}
+    BspBuilder();
+    ~BspBuilder();
 
     BspBuilder* setSplitCostFactor(int factor)
     {
@@ -70,7 +64,16 @@ public:
      *
      * @return  @c true= iff completed successfully.
      */
-    boolean build(GameMap* map, Vertex*** vertexes, uint* numVertexes);
+    boolean build(GameMap* map);
+
+    /**
+     * Retrieve a pointer to the root BinaryTree node for the constructed BSP.
+     * Even if construction fails this will return a valid node.
+     *
+     * The only time upon which @c NULL is returned is if called prior to calling
+     * BspBuilder::build()
+     */
+    struct binarytree_s* root() const;
 
     /**
      * Destroy the specified intersection.
@@ -237,6 +240,9 @@ private:
 
 private:
     int splitCostFactor;
+
+    struct binarytree_s* rootNode;
+    boolean builtOK;
 };
 
 } // namespace de

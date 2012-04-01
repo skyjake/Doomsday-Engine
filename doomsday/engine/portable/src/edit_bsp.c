@@ -159,9 +159,6 @@ static void finishHEdges(GameMap* map)
 
         if(hedge->length == 0)
             hedge->length = 0.01f; // Hmm...
-
-        // We're done with the build info.
-        Z_Free(HEdge_DetachBspBuildInfo(hedge));
     }
 }
 
@@ -250,8 +247,6 @@ static void hardenBSP(GameMap* dest, BinaryTree* rootNode)
     BinaryTree_PostOrder(rootNode, countLeaf, &dest->numBspLeafs);
     dest->bspLeafs = (BspLeaf**)Z_Calloc(dest->numBspLeafs * sizeof(BspLeaf*), PU_MAPSTATIC, 0);
 
-    if(!rootNode) return;
-
     if(BinaryTree_IsLeaf(rootNode))
     {
         BspLeaf* leaf = (BspLeaf*) BinaryTree_UserData(rootNode);
@@ -311,18 +306,31 @@ static void updateVertexLinks(GameMap* map)
     }
 }
 
-void BspBuilder_Save(GameMap* dest, void* rootNode, Vertex*** vertexes, uint* numVertexes)
+void MPE_SaveBsp(BspBuilder_c* builder, GameMap* map, Vertex*** vertexes, uint* numVertexes)
 {
-    uint startTime = Sys_GetRealTime();
-    BinaryTree* rn = (BinaryTree*) rootNode;
+    BinaryTree* rootNode = BspBuilder_Root(builder);
+    long rHeight, lHeight;
 
-    buildHEdgeLut(dest, rn);
-    hardenVertexes(dest, vertexes, numVertexes);
-    updateVertexLinks(dest);
+    buildHEdgeLut(map, rootNode);
+    hardenVertexes(map, vertexes, numVertexes);
+    updateVertexLinks(map);
 
-    finishHEdges(dest);
-    hardenBSP(dest, rn);
+    finishHEdges(map);
+    hardenBSP(map, rootNode);
 
-    // How much time did we spend?
-    VERBOSE( Con_Message("BspBuilder_Save: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
+    if(rootNode && !BinaryTree_IsLeaf(rootNode))
+    {
+        rHeight = (long) BinaryTree_Height(BinaryTree_Right(rootNode));
+        lHeight = (long) BinaryTree_Height(BinaryTree_Left(rootNode));
+    }
+    else
+    {
+        rHeight = lHeight = 0;
+    }
+
+    VERBOSE(
+    Con_Message("BSP built: %d Nodes, %d BspLeafs, %d HEdges, %d Vertexes\n"
+                "  Balance %+ld (l%ld - r%ld).\n", map->numBspNodes, map->numBspLeafs,
+                map->numHEdges, map->numVertexes, lHeight - rHeight, lHeight, rHeight) );
+
 }

@@ -52,8 +52,6 @@ static editmap_t* map = &editMap;
 
 static GameMap *lastBuiltMap = NULL;
 
-static BspBuilder_c* bspBuilder = NULL;
-
 static uint numUnclosedSectors;
 static usecrecord_t *unclosedSectors;
 
@@ -1654,6 +1652,35 @@ static void findBounds(Vertex const** vertexes, uint numVertexes, vec2f_t min, v
     }
 }
 
+static boolean buildBsp(GameMap* gamemap)
+{
+    BspBuilder_c* bspBuilder = NULL;
+    uint startTime;
+    boolean builtOK;
+
+    if(!map) return false;
+
+    VERBOSE( Con_Message("Building BSP using tunable split factor of %d...\n", bspFactor) )
+
+    // It begins...
+    startTime = Sys_GetRealTime();
+
+    bspBuilder = BspBuilder_New();
+    BspBuilder_SetSplitCostFactor(bspBuilder, bspFactor);
+
+    builtOK = BspBuilder_Build(bspBuilder, gamemap);
+    if(builtOK)
+    {
+        MPE_SaveBsp(bspBuilder, gamemap, &map->vertexes, &map->numVertexes);
+    }
+
+    BspBuilder_Delete(bspBuilder);
+
+    // How much time did we spend?
+    VERBOSE2( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
+    return builtOK;
+}
+
 /**
  * Called to complete the map building process.
  */
@@ -1722,10 +1749,7 @@ boolean MPE_End(void)
     /**
      * Build a BSP for this map.
      */
-    bspBuilder = BspBuilder_New();
-    BspBuilder_SetSplitCostFactor(bspBuilder, bspFactor);
-    builtOK = BspBuilder_Build(bspBuilder, gamemap, &map->vertexes, &map->numVertexes);
-    BspBuilder_Delete(bspBuilder);
+    builtOK = buildBsp(gamemap);
 
     // Finish the polyobjs (after the vertexes are hardened).
     for(i = 0; i < gamemap->numPolyObjs; ++i)

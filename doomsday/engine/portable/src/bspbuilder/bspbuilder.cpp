@@ -54,25 +54,35 @@ void BspBuilder_Register(void)
     C_VAR_INT("bsp-factor", &bspFactor, CVF_NO_MAX, 0, 0);
 }
 
-BspBuilder_c* BspBuilder_New(void)
+BspBuilder::BspBuilder() :
+    splitCostFactor(BSPBUILDER_PARTITION_COST_HEDGESPLIT),
+    rootNode(0), builtOK(false)
+{}
+
+static int C_DECL clearBspHEdgeInfo(BinaryTree* tree, void* /*parameters*/)
 {
-    BspBuilder_c* builder = (BspBuilder_c*)malloc(sizeof *builder);
-    builder->inst = new BspBuilder();
-    return builder;
+    if(BinaryTree_IsLeaf(tree))
+    {
+        BspLeaf* leaf = static_cast<BspLeaf*>(BinaryTree_UserData(tree));
+        HEdge* hedge = leaf->hedge;
+        do
+        {
+            Z_Free(HEdge_DetachBspBuildInfo(hedge));
+        } while((hedge = hedge->next) != leaf->hedge);
+    }
+    return 0; // Continue iteration.
 }
 
-void BspBuilder_Delete(BspBuilder_c* builder)
+BspBuilder::~BspBuilder()
 {
-    assert(builder);
-    delete builder->inst;
-    free(builder);
-}
-
-BspBuilder_c* BspBuilder_SetSplitCostFactor(BspBuilder_c* builder, int factor)
-{
-    assert(builder);
-    builder->inst->setSplitCostFactor(factor);
-    return builder;
+    // We are finished with the BSP build data.
+    if(rootNode)
+    {
+        // We're done with the build info.
+        BinaryTree_PreOrder(rootNode, clearBspHEdgeInfo, NULL/*no parameters*/);
+        BinaryTree_Delete(rootNode);
+    }
+    rootNode = NULL;
 }
 
 static void initAABoxFromEditableLineDefVertexes(AABoxf* aaBox, const LineDef* line)
@@ -300,85 +310,33 @@ void BspBuilder::initForMap(GameMap* map)
     }
 }
 
-boolean BspBuilder::build(GameMap* map, Vertex*** vertexes, uint* numVertexes)
+boolean BspBuilder::build(GameMap* map)
 {
-    BinaryTree* rootNode;
-    SuperBlockmap* sbmap;
-    boolean builtOK;
-    uint startTime;
-
-    VERBOSE( Con_Message("BspBuilder::build: Processing map using tunable factor of %d...\n", bspFactor) )
-
-    // It begins...
-    startTime = Sys_GetRealTime();
-
     initForMap(map);
 
     // Create initial half-edges.
-    sbmap = createInitialHEdges(map);
-
-    // Build the BSP.
-    {
-    uint buildStartTime = Sys_GetRealTime();
-    HPlane* hplane;
-
-    hplane = new HPlane(this);
+    SuperBlockmap* sbmap = createInitialHEdges(map);
+    HPlane* hplane = new HPlane(this);
 
     // Recursively create nodes.
     rootNode = NULL;
     builtOK = buildNodes(sbmap->root(), &rootNode, 0, hplane);
 
-    // The intersection list is no longer needed.
     delete hplane;
-
-    // How much time did we spend?
-    VERBOSE2( Con_Message("BspBuilder::buildNodes: Done in %.2f seconds.\n", (Sys_GetRealTime() - buildStartTime) / 1000.0f));
-    }
-
     delete sbmap;
 
+    // Wind the BSP tree.
     if(builtOK)
     {
-        // Success!
-        long rHeight, lHeight;
-
-        // Wind the BSP tree and link to the map.
         windLeafs(rootNode);
-        BspBuilder_Save(map, rootNode, vertexes, numVertexes);
-
-        if(rootNode && !BinaryTree_IsLeaf(rootNode))
-        {
-            rHeight = (long) BinaryTree_Height(BinaryTree_Right(rootNode));
-            lHeight = (long) BinaryTree_Height(BinaryTree_Left(rootNode));
-        }
-        else
-        {
-            rHeight = lHeight = 0;
-        }
-
-        VERBOSE(
-        Con_Message("BSP built: %d Nodes, %d BspLeafs, %d HEdges, %d Vertexes\n"
-                    "  Balance %+ld (l%ld - r%ld).\n", map->numBspNodes, map->numBspLeafs,
-                    map->numHEdges, map->numVertexes, lHeight - rHeight, lHeight, rHeight) );
     }
-
-    // We are finished with the BSP build data.
-    if(rootNode)
-    {
-        BinaryTree_Delete(rootNode);
-    }
-    rootNode = NULL;
-
-    // How much time did we spend?
-    VERBOSE2( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
 
     return builtOK;
 }
 
-boolean BspBuilder_Build(BspBuilder_c* builder, GameMap* map, Vertex*** vertexes, uint* numVertexes)
+BinaryTree* BspBuilder::root() const
 {
-    assert(builder);
-    return builder->inst->build(map, vertexes, numVertexes);
+    return rootNode;
 }
 
 const HPlaneIntercept* BspBuilder::hplaneInterceptByVertex(HPlane* hplane, Vertex* vertex)
@@ -674,4 +632,37 @@ void BspBuilder::addEdgeTip(Vertex* vert, double dx, double dy, HEdge* back,
 
         vert->buildData.tipSet = tip;
     }
+}
+
+BspBuilder_c* BspBuilder_New(void)
+{
+    BspBuilder_c* builder = (BspBuilder_c*)malloc(sizeof *builder);
+    builder->inst = new BspBuilder();
+    return builder;
+}
+
+void BspBuilder_Delete(BspBuilder_c* builder)
+{
+    assert(builder);
+    delete builder->inst;
+    free(builder);
+}
+
+BspBuilder_c* BspBuilder_SetSplitCostFactor(BspBuilder_c* builder, int factor)
+{
+    assert(builder);
+    builder->inst->setSplitCostFactor(factor);
+    return builder;
+}
+
+boolean BspBuilder_Build(BspBuilder_c* builder, GameMap* map)
+{
+    assert(builder);
+    return builder->inst->build(map);
+}
+
+BinaryTree* BspBuilder_Root(BspBuilder_c* builder)
+{
+    assert(builder);
+    return builder->inst->root();
 }
