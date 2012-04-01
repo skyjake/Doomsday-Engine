@@ -528,7 +528,7 @@ static void Con_DrawScreenshotBackground(float x, float y, float width, float he
     GLint p; \
     glGetIntegerv(GL_TEXTURE_BINDING_2D, &p); \
     Sys_GLCheckError(); \
-    if(p != tex) fprintf(stderr, "tex=%i, got %i at line %i\n", tex, p, __LINE__); \
+    assert(p == tex); \
 }
 #else
 #define _assertTexture(tex)

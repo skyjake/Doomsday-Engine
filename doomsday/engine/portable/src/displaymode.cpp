@@ -70,9 +70,9 @@ struct Mode : public DisplayMode
 
     bool operator < (const Mode& b) const
     {
-        if(height == b.height)
+        if(width == b.width)
         {
-            if(width == b.width)
+            if(height == b.height)
             {
                 if(depth == b.depth)
                 {
@@ -81,9 +81,9 @@ struct Mode : public DisplayMode
                 }
                 return depth < b.depth;
             }
-            return width < b.width;
+            return height < b.height;
         }
-        return height < b.height;
+        return width < b.width;
     }
 
     void updateRatio()
