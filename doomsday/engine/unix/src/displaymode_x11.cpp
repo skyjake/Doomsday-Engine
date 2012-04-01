@@ -32,6 +32,7 @@
 
 #include <assert.h>
 #include <vector>
+#include <de/Log>
 
 typedef std::vector<DisplayMode> DisplayModes;
 
@@ -215,31 +216,39 @@ int DisplayMode_Native_Change(const DisplayMode* mode, boolean shouldCapture)
 void DisplayMode_Native_GetColorTransfer(displaycolortransfer_t* colors)
 {
     Display *dpy = QX11Info::display();
-    int screen = QX11Info::screen();
+    int screen = QX11Info::appScreen();
     int event = 0, error = 0;
-    int rampSize = 0;
 
-    Con_Message("GL_GetGammaRamp:\n");
+    LOG_AS("GetColorTransfer");
+
     if(!dpy || !XF86VidModeQueryExtension(dpy, &event, &error))
     {
-        Con_Message("  XFree86-VidModeExtension not available.\n");
+        LOG_MSG("XFree86-VidModeExtension not available.");
         return;
     }
-    VERBOSE(Con_Message("  XFree86-VidModeExtension: event# %i error# %i\n", event, error));
+    LOG_DEBUG("event# %i error# %i") << event << error;
 
     // Ramp size.
+    int rampSize = 0;
     XF86VidModeGetGammaRampSize(dpy, screen, &rampSize);
-    Con_Message("  Gamma ramp size: %i\n", rampSize);
-    if(rampSize != 256)
-    {
-        Con_Message("  This implementation only understands ramp size "
-                    "256.\n  Please complain to the developer.\n");
-        return;
-    }
+    LOG_VERBOSE("Gamma ramp size: %i") << rampSize;
+    if(!rampSize) return;
+
+    ushort* xRamp = new ushort[3 * rampSize];
 
     // Get the current ramps.
-    XF86VidModeGetGammaRamp(dpy, screen, rampSize,
-                            colors->table, colors->table + 256, colors->table + 512);
+    XF86VidModeGetGammaRamp(dpy, screen, rampSize, xRamp,
+                            xRamp + rampSize, xRamp + 2*rampSize);
+
+    for(uint i = 0; i < 256; ++i)
+    {
+        const uint tx = qMin(uint(rampSize - 1), i * rampSize / 255);
+        colors->table[i]       = xRamp[tx];
+        colors->table[i + 256] = xRamp[tx + rampSize];
+        colors->table[i + 512] = xRamp[tx + 2*rampSize];
+    }
+
+    delete xRamp;
 }
 
 void DisplayMode_Native_SetColorTransfer(const displaycolortransfer_t* colors)
@@ -247,7 +256,23 @@ void DisplayMode_Native_SetColorTransfer(const displaycolortransfer_t* colors)
     Display* dpy = QX11Info::display();
     if(!dpy) return;
 
-    // We assume that the gamme ramp size actually is 256.
-    XF86VidModeSetGammaRamp(dpy, QX11Info::screen(), 256,
-                            colors->table, colors->table + 256, colors->table + 512);
+    // Ramp size.
+    int rampSize = 0;
+    XF86VidModeGetGammaRampSize(dpy, QX11Info::appScreen(), &rampSize);
+    if(!rampSize) return;
+
+    ushort* xRamp = new ushort[3 * rampSize];
+
+    for(int i = 0; i < rampSize; ++i)
+    {
+        const uint tx = qMin(255, i * 256 / (rampSize - 1));
+        xRamp[i]              = colors->table[tx];
+        xRamp[i + rampSize]   = colors->table[tx + 256];
+        xRamp[i + 2*rampSize] = colors->table[tx + 512];
+    }
+
+    XF86VidModeSetGammaRamp(dpy, QX11Info::appScreen(), rampSize,
+                            xRamp, xRamp + rampSize, xRamp + 2*rampSize);
+
+    delete xRamp;
 }
