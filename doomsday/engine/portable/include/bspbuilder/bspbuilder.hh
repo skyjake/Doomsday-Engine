@@ -221,6 +221,11 @@ private:
     HEdge* newHEdge(LineDef* line, LineDef* sourceLine, Vertex* start, Vertex* end,
         Sector* sec, boolean back);
 
+    /**
+     * Create a clone of an existing half-edge.
+     */
+    HEdge* cloneHEdge(const HEdge& other);
+
     HEdgeIntercept* hedgeInterceptByVertex(HPlane* hplane, Vertex* vertex);
 
     /**

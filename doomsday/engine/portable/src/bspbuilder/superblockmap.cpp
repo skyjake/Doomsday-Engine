@@ -67,14 +67,14 @@ struct SuperBlock::Instance
     void incrementHEdgeCount(HEdge* hedge)
     {
         if(!hedge) return;
-        if(hedge->buildData.lineDef) realNum++;
+        if(hedge->bspBuildInfo->lineDef) realNum++;
         else                         miniNum++;
     }
 
     void decrementHEdgeCount(HEdge* hedge)
     {
         if(!hedge) return;
-        if(hedge->buildData.lineDef) realNum--;
+        if(hedge->bspBuildInfo->lineDef) realNum--;
         else                         miniNum--;
     }
 };
@@ -193,7 +193,7 @@ SuperBlock* SuperBlock::hedgePush(HEdge* hedge)
             // No further subdivision possible.
             sb->d->linkHEdge(hedge);
             // Associate ourself.
-            hedge->buildData.block = sb;
+            hedge->bspBuildInfo->block = sb;
             break;
         }
 
@@ -222,7 +222,7 @@ SuperBlock* SuperBlock::hedgePush(HEdge* hedge)
             // Line crosses midpoint; link it in and return.
             sb->d->linkHEdge(hedge);
             // Associate ourself.
-            hedge->buildData.block = sb;
+            hedge->bspBuildInfo->block = sb;
             break;
         }
 
@@ -250,7 +250,7 @@ HEdge* SuperBlock::hedgePop()
     d->decrementHEdgeCount(hedge);
 
     // Disassociate ourself.
-    hedge->buildData.block = NULL;
+    hedge->bspBuildInfo->block = NULL;
     return hedge;
 }
 

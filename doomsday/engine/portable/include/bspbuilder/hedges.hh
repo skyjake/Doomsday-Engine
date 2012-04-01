@@ -1,6 +1,6 @@
 /**
- * @file hedges.hh
- * BSP Builder Half-edges. @ingroup map
+ * @file hedgeinfo.h
+ * BSP Builder Half-edge info. @ingroup bsp
  *
  * Based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted on
  * SourceForge: http://sourceforge.net/projects/glbsp/
@@ -25,10 +25,15 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_BSPBUILDER_HEDGES_HH
-#define LIBDENG_BSPBUILDER_HEDGES_HH
+#ifndef LIBDENG_BSPBUILDER_HEDGEINFO_H
+#define LIBDENG_BSPBUILDER_HEDGEINFO_H
 
 #include "dd_types.h"
+#include "p_mapdata.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define IFFY_LEN            4.0
 
@@ -38,8 +43,36 @@
 // Smallest degrees between two angles before being considered equal.
 #define ANG_EPSILON         (1.0 / 1024.0)
 
-struct vertex_s;
-struct sector_s;
+/**
+ * BspHEdgeInfo. Plain old data structure storing additional information about
+ * a half-edge produced by BspBuilder.
+ */
+typedef struct bsphedgeinfo_s {
+    // Precomputed data for faster calculations.
+    double pSX, pSY;
+    double pEX, pEY;
+    double pDX, pDY;
+
+    double pLength;
+    double pAngle;
+    double pPara;
+    double pPerp;
+
+    HEdge* nextOnSide;
+    HEdge* prevOnSide;
+
+    // The superblock that contains this half-edge, or NULL if the half-edge
+    // is no longer in any superblock (e.g. now in a leaf).
+    void* block;
+
+    // Linedef that this half-edge goes along, or NULL if miniseg.
+    LineDef* lineDef;
+
+    // Linedef that this half-edge initially comes from.
+    // For "real" half-edges, this is just the same as the 'linedef' field
+    // above. For "miniedges", this is the linedef of the partition line.
+    LineDef* sourceLineDef;
+} BspHEdgeInfo;
 
 /**
  * Plain-old-data structure containing additional information for a half-edge
@@ -50,19 +83,23 @@ struct sector_s;
  */
 typedef struct hedgeintercept_s {
     // Vertex in question.
-    struct vertex_s* vertex;
+    Vertex* vertex;
 
     // True if this intersection was on a self-referencing linedef.
     boolean selfRef;
 
     // Sector on each side of the vertex (along the partition),
     // or NULL when that direction isn't OPEN.
-    struct sector_s* before;
-    struct sector_s* after;
+    Sector* before;
+    Sector* after;
 } HEdgeIntercept;
 
 #if _DEBUG
 void Bsp_PrintHEdgeIntercept(HEdgeIntercept* intercept);
 #endif
 
-#endif /// LIBDENG_BSPBUILDER_HEDGES_HH
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
+#endif /// LIBDENG_BSPBUILDER_HEDGEINFO_H

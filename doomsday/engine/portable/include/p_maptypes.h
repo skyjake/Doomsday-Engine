@@ -5,6 +5,8 @@
 
 #include "p_mapdata.h"
 
+struct bsphedgeinfo_s;
+
 // Each Sector and SideDef has an origin in the world (used for distance based delta queuing)
 typedef struct origin_s {
     float               pos[2];
@@ -76,37 +78,6 @@ typedef struct vertex_s {
 // HEdge frame flags
 #define HEDGEINF_FACINGFRONT      0x0001
 
-/**
- * BspHEdgeInfo. Plain old data structure storing additional information about
- * a half-edge produced by BspBuilder.
- */
-typedef struct bsphedgeinfo_s {
-    // Precomputed data for faster calculations.
-    double pSX, pSY;
-    double pEX, pEY;
-    double pDX, pDY;
-
-    double pLength;
-    double pAngle;
-    double pPara;
-    double pPerp;
-
-    struct hedge_s* nextOnSide;
-    struct hedge_s* prevOnSide;
-
-    // The superblock that contains this half-edge, or NULL if the half-edge
-    // is no longer in any superblock (e.g. now in a leaf).
-    void* block;
-
-    // Linedef that this half-edge goes along, or NULL if miniseg.
-    struct linedef_s* lineDef;
-
-    // Linedef that this half-edge initially comes from.
-    // For "real" half-edges, this is just the same as the 'linedef' field
-    // above. For "miniedges", this is the linedef of the partition line.
-    struct linedef_s* sourceLineDef;
-} BspHEdgeInfo;
-
 typedef struct hedge_s {
     runtime_mapdata_header_t header;
     struct vertex_s*    v[2];          // [Start, End] of the segment.
@@ -128,7 +99,7 @@ typedef struct hedge_s {
     float               offset;
     biassurface_t*      bsuf[3];       // 0=middle, 1=top, 2=bottom
     short               frameFlags;
-    BspHEdgeInfo        buildData;
+    struct bsphedgeinfo_s* bspBuildInfo;
 } HEdge;
 
 #define BLF_MIDPOINT         0x80    // Midpoint is tri-fan centre.

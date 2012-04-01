@@ -86,11 +86,27 @@ HEdge* BspBuilder::newHEdge(LineDef* lineDef, LineDef* sourceLineDef,
     hedge->sector = sec;
     hedge->side = (back? 1 : 0);
 
-    updateBspHEdgeInfo(hedge, &hedge->buildData);
-    hedge->buildData.lineDef = lineDef;
-    hedge->buildData.sourceLineDef = sourceLineDef;
-    hedge->buildData.nextOnSide = hedge->buildData.prevOnSide = NULL;
+    BspHEdgeInfo* info = static_cast<BspHEdgeInfo*>(Z_Malloc(sizeof *info, PU_MAP, 0));
+    HEdge_AttachBspBuildInfo(hedge, info);
 
+    info->lineDef = lineDef;
+    info->sourceLineDef = sourceLineDef;
+    info->nextOnSide = info->prevOnSide = NULL;
+    info->block = NULL;
+    updateBspHEdgeInfo(hedge, info);
+
+    return hedge;
+}
+
+HEdge* BspBuilder::cloneHEdge(const HEdge& other)
+{
+    HEdge* hedge = HEdge_NewCopy(&other);
+    if(other.bspBuildInfo)
+    {
+        BspHEdgeInfo* info = static_cast<BspHEdgeInfo*>(Z_Malloc(sizeof *info, PU_MAP, 0));
+        memcpy(info, other.bspBuildInfo, sizeof(BspHEdgeInfo));
+        HEdge_AttachBspBuildInfo(hedge, info);
+    }
     return hedge;
 }
 
@@ -116,20 +132,20 @@ HEdge* BspBuilder::splitHEdge(HEdge* oldHEdge, double x, double y)
     newVert->buildData.refCount = (oldHEdge->twin? 4 : 2);
 
     // Compute wall_tip info.
-    addEdgeTip(newVert, -oldHEdge->buildData.pDX, -oldHEdge->buildData.pDY, oldHEdge, oldHEdge->twin);
-    addEdgeTip(newVert,  oldHEdge->buildData.pDX,  oldHEdge->buildData.pDY, oldHEdge->twin, oldHEdge);
+    addEdgeTip(newVert, -oldHEdge->bspBuildInfo->pDX, -oldHEdge->bspBuildInfo->pDY, oldHEdge, oldHEdge->twin);
+    addEdgeTip(newVert,  oldHEdge->bspBuildInfo->pDX,  oldHEdge->bspBuildInfo->pDY, oldHEdge->twin, oldHEdge);
 
     // Copy the old half-edge info.
-    newHEdge = HEdge_NewCopy(oldHEdge);
+    newHEdge = cloneHEdge(*oldHEdge);
 
-    newHEdge->buildData.prevOnSide = oldHEdge;
-    oldHEdge->buildData.nextOnSide = newHEdge;
+    newHEdge->bspBuildInfo->prevOnSide = oldHEdge;
+    oldHEdge->bspBuildInfo->nextOnSide = newHEdge;
 
     oldHEdge->v[1] = newVert;
-    updateBspHEdgeInfo(oldHEdge, &oldHEdge->buildData);
+    updateBspHEdgeInfo(oldHEdge, oldHEdge->bspBuildInfo);
 
     newHEdge->v[0] = newVert;
-    updateBspHEdgeInfo(newHEdge, &newHEdge->buildData);
+    updateBspHEdgeInfo(newHEdge, newHEdge->bspBuildInfo);
 
     //DEBUG_Message(("Splitting Vertex is %04X at (%1.1f,%1.1f)\n",
     //               newVert->index, newVert->V_pos[VX], newVert->V_pos[VY]));
@@ -140,24 +156,24 @@ HEdge* BspBuilder::splitHEdge(HEdge* oldHEdge, double x, double y)
         //DEBUG_Message(("Splitting hedge->twin %p\n", oldHEdge->twin));
 
         // Copy the old hedge info.
-        newHEdge->twin = HEdge_NewCopy(oldHEdge->twin);
+        newHEdge->twin = cloneHEdge(*oldHEdge->twin);
 
         // It is important to keep the twin relationship valid.
         newHEdge->twin->twin = newHEdge;
 
-        newHEdge->twin->buildData.nextOnSide = oldHEdge->twin;
-        oldHEdge->twin->buildData.prevOnSide = newHEdge->twin;
+        newHEdge->twin->bspBuildInfo->nextOnSide = oldHEdge->twin;
+        oldHEdge->twin->bspBuildInfo->prevOnSide = newHEdge->twin;
 
         oldHEdge->twin->v[0] = newVert;
-        updateBspHEdgeInfo(oldHEdge->twin, &oldHEdge->twin->buildData);
+        updateBspHEdgeInfo(oldHEdge->twin, oldHEdge->twin->bspBuildInfo);
 
         newHEdge->twin->v[1] = newVert;
-        updateBspHEdgeInfo(newHEdge->twin, &newHEdge->twin->buildData);
+        updateBspHEdgeInfo(newHEdge->twin, newHEdge->twin->bspBuildInfo);
 
         // Update superblock, if needed.
-        if(oldHEdge->twin->buildData.block)
+        if(oldHEdge->twin->bspBuildInfo->block)
         {
-            SuperBlock* block = reinterpret_cast<SuperBlock*>(oldHEdge->twin->buildData.block);
+            SuperBlock* block = reinterpret_cast<SuperBlock*>(oldHEdge->twin->bspBuildInfo->block);
             block->hedgePush(newHEdge->twin);
         }
         else

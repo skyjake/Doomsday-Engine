@@ -30,11 +30,43 @@
 extern "C" {
 #endif
 
+struct bsphedgeinfo_s;
+
 HEdge* HEdge_New(void);
 
-HEdge* HEdge_NewCopy(HEdge* other);
+HEdge* HEdge_NewCopy(const HEdge* other);
 
 void HEdge_Delete(HEdge* hedge);
+
+/**
+ * Attach the specified BspHEdgeInfo to this half edge, replacing any existing
+ * info already owned by this instance. Ownership of the info is relinquished
+ * to this HEdge instance.
+ *
+ * @param hedge  HEdge instance.
+ * @param info  BspHEdgeInfo to attach to this half-edge. HEdge takes ownership.
+ *              It is assumed that @a info has been allocated from the Zone.
+ *              If this is not the case it must be detached prior to calling
+ *              HEdge_Delete()
+ */
+HEdge* HEdge_AttachBspBuildInfo(HEdge* hedge, struct bsphedgeinfo_s* info);
+
+/**
+ * Retrieve a pointer to the BspHEdgeInfo info associated with this instance.
+ *
+ * @param hedge  HEdge instance.
+ * @return  BspHEdgeInfo associated with this half-edge, else @c NULL.
+ */
+struct bsphedgeinfo_s* HEdge_BspBuildInfo(HEdge* hedge);
+
+/**
+ * Detach any BspHEdgeInfo associated with this half-edge and relinquish
+ * ownership to the caller.
+ *
+ * @param hedge  HEdge instance.
+ * @return  BspHEdgeInfo associated with this half-edge, else @c NULL.
+ */
+struct bsphedgeinfo_s* HEdge_DetachBspBuildInfo(HEdge* hedge);
 
 /**
  * Get a property value, selected by DMU_* name.

@@ -44,15 +44,15 @@ static void hardenSidedefHEdgeList(GameMap* map, SideDef* side, HEdge* bspHEdge)
 
     // Find the first hedge.
     first = bspHEdge;
-    while(first->buildData.prevOnSide)
-        first = first->buildData.prevOnSide;
+    while(first->bspBuildInfo->prevOnSide)
+        first = first->bspBuildInfo->prevOnSide;
 
     // Count the hedges for this side.
     count = 0;
     other = first;
     while(other)
     {
-        other = other->buildData.nextOnSide;
+        other = other->bspBuildInfo->nextOnSide;
         count++;
     }
 
@@ -65,7 +65,7 @@ static void hardenSidedefHEdgeList(GameMap* map, SideDef* side, HEdge* bspHEdge)
     while(other)
     {
         side->hedges[count++] = other;
-        other = other->buildData.nextOnSide;
+        other = other->bspBuildInfo->nextOnSide;
     }
     side->hedges[count] = NULL; // Terminate.
 }
@@ -133,8 +133,8 @@ static void finishHEdges(GameMap* map)
     {
         HEdge* hedge = map->hedges[i];
 
-        if(hedge->buildData.lineDef)
-            hedge->lineDef = &map->lineDefs[hedge->buildData.lineDef->buildData.index - 1];
+        if(hedge->bspBuildInfo->lineDef)
+            hedge->lineDef = &map->lineDefs[hedge->bspBuildInfo->lineDef->buildData.index - 1];
 
         if(hedge->lineDef)
         {
@@ -159,6 +159,9 @@ static void finishHEdges(GameMap* map)
 
         if(hedge->length == 0)
             hedge->length = 0.01f; // Hmm...
+
+        // We're done with the build info.
+        Z_Free(HEdge_DetachBspBuildInfo(hedge));
     }
 }
 
