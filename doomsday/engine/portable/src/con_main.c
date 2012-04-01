@@ -144,7 +144,11 @@ byte    ConsoleSilent = false;
 int     conCompMode = 0;        // Completion mode.
 byte    conSilentCVars = 1;
 byte    consoleDump = true;
+#ifndef MACOSX
 int     consoleActiveKey = '`'; // Tilde.
+#else
+int     consoleActiveKey = DDKEY_SECTION; // Left of the "1" key.
+#endif
 byte    consoleSnapBackOnPrint = false;
 
 char* prbuff = NULL; // Print buffer, used by conPrintf.
