@@ -574,7 +574,7 @@ desc = 1=Dump all console messages to Doomsday.out.
 desc = 1=Show FPS counter on screen.
 
 [con-key-activate]
-desc = Key to activate the console (ASCII code, default is tilde, 96).
+desc = Key to activate the console (DDKEY code; default is tilde, 96).
 
 [con-move-speed]
 desc = Speed of console opening/closing.

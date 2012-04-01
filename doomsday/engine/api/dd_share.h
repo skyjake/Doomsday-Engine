@@ -537,6 +537,7 @@ enum {
     DDKEY_ENTER, ///< on the numeric keypad.
     DDKEY_DIVIDE, ///< '/' on numeric keypad.
     DDKEY_MULTIPLY, ///< '*' on the numeric keypad.
+    DDKEY_SECTION, ///< §
     DD_HIGHEST_KEYCODE
 };
 ///@}

@@ -144,13 +144,14 @@ static const keyname_t keyNames[] = {
     {DDKEY_NUMPAD9,     "pad9"},
     {DDKEY_DECIMAL,     "decimal"},
     {DDKEY_DECIMAL,     "padcomma"},
-    {DDKEY_SUBTRACT,    "padminus"}, // not really used
-    {DDKEY_ADD,         "padplus"}, // not really used
+    {DDKEY_SUBTRACT,    "padminus"},
+    {DDKEY_ADD,         "padplus"},
     {DDKEY_PRINT,       "print"},
     {DDKEY_PRINT,       "prtsc"},
     {DDKEY_ENTER,       "enter"},
     {DDKEY_DIVIDE,      "divide"},
     {DDKEY_MULTIPLY,    "multiply"},
+    {DDKEY_SECTION,     "section"},
     {0, NULL} // The terminator
 };
 

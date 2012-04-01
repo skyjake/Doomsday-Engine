@@ -273,6 +273,7 @@ int Keycode_TranslateFromQt(int qtKey, int nativeVirtualKey, int nativeScanCode)
     case 0x07:                  return 'x';
     case 0x08:                  return 'c';
     case 0x09:                  return 'v';
+    case 0x0A:                  return DDKEY_SECTION;
     case 0x0B:                  return 'b';
     case 0x0C:                  return 'q';
     case 0x0D:                  return 'w';
