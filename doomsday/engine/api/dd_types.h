@@ -164,15 +164,16 @@ typedef enum {
 
 #ifndef __BYTEBOOL__
 #define __BYTEBOOL__
-#  ifdef __cplusplus
+/*#  ifdef __cplusplus
 typedef bool                ddboolean_t; // Use builtin type in C++
-#  else // Plain C.
+#  else // Plain C.*/
+#  ifndef __cplusplus
 #    undef false
 #    define false             0
 #    undef true
 #    define true              1
-typedef int                 ddboolean_t;
 #  endif
+typedef int                 ddboolean_t;
 #endif
 #define boolean             ddboolean_t
 
