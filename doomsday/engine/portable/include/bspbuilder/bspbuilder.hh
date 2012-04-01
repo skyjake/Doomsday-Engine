@@ -35,9 +35,39 @@
 #include "bspbuilder/intersection.hh"
 #include "bspbuilder/superblockmap.hh"
 
+#include <QGlobalStatic>
+#include <vector>
+
 struct binarytree_s;
 
 namespace de {
+
+/**
+ * Plain old data (POD) structure used to record additional information and
+ * precalculated values for a LineDef in the current map.
+ */
+struct BspLineDefInfo
+{
+    enum Flag
+    {
+        TWOSIDED   =        0x1, ///< Line is marked two-sided.
+        ZEROLENGTH =        0x2, ///< Zero length (line should be totally ignored).
+        SELFREF    =        0x4, ///< Sector is the same on both sides.
+        POLYOBJ    =        0x8  ///< Line is part of a polyobj.
+    };
+    Q_DECLARE_FLAGS(Flags, Flag)
+    Flags flags;
+
+    /// Normally NULL, except when this linedef directly overlaps an earlier
+    /// one (a rarely-used trick to create higher mid-masked textures).
+    /// No hedges should be created for these overlapping linedefs.
+    LineDef* overlap;
+
+    BspLineDefInfo::BspLineDefInfo() : flags(0), overlap(0)
+    {}
+};
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(BspLineDefInfo::Flags)
 
 /// Default cost factor attributed to splitting an existing half-edge.
 #define BSPBUILDER_PARTITION_COST_HEDGESPLIT   7
@@ -83,6 +113,19 @@ public:
     void deleteHEdgeIntercept(HEdgeIntercept* intercept);
 
 private:
+    /**
+     * Retrieve the extended build info for the specified @a lineDef.
+     * @return  Extended info for that LineDef.
+     */
+    BspLineDefInfo& lineDefInfo(const LineDef& lineDef) {
+        return _lineDefInfo[lineDef.buildData.index - 1];
+    }
+    const BspLineDefInfo& lineDefInfo(const LineDef& lineDef) const {
+        return _lineDefInfo[lineDef.buildData.index - 1];
+    }
+
+    void findMapBounds(GameMap* map, AABoxf* aaBox) const;
+
     /**
      * Create a new leaf from a list of half-edges.
      */
@@ -236,6 +279,9 @@ private:
 
 private:
     int splitCostFactor;
+
+    typedef std::vector<BspLineDefInfo>LineDefInfo;
+    LineDefInfo _lineDefInfo;
 
     struct binarytree_s* rootNode;
     boolean builtOK;

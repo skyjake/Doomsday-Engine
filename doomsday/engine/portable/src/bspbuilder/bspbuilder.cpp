@@ -46,7 +46,7 @@ using namespace de;
 
 BspBuilder::BspBuilder() :
     splitCostFactor(BSPBUILDER_PARTITION_COST_HEDGESPLIT),
-    rootNode(0), builtOK(false)
+    _lineDefInfo(0), rootNode(0), builtOK(false)
 {}
 
 static int C_DECL clearBspHEdgeInfo(BinaryTree* tree, void* /*parameters*/)
@@ -85,49 +85,40 @@ static void initAABoxFromEditableLineDefVertexes(AABoxf* aaBox, const LineDef* l
     aaBox->maxY = MAX_OF(from[VY], to[VY]);
 }
 
-typedef struct {
-    AABoxf bounds;
-    boolean initialized;
-} findmapboundsparams_t;
-
-static int findMapBoundsIterator(LineDef* line, void* parameters)
-{
-    // Do not consider zero-length LineDefs.
-    if(line->buildData.mlFlags & MLF_ZEROLENGTH) return false; // Continue iteration.
-
-    AABoxf lineAABox;
-    initAABoxFromEditableLineDefVertexes(&lineAABox, line);
-
-    findmapboundsparams_t* p = (findmapboundsparams_t*) parameters;
-    Q_ASSERT(p);
-    if(p->initialized)
-    {
-        V2f_AddToBox(p->bounds.arvec2, lineAABox.min);
-    }
-    else
-    {
-        V2f_InitBox(p->bounds.arvec2, lineAABox.min);
-        p->initialized = true;
-    }
-
-    V2f_AddToBox(p->bounds.arvec2, lineAABox.max);
-    return false; // Continue iteration.
-}
-
-static void findMapBounds(GameMap* map, AABoxf* aaBox)
+void BspBuilder::findMapBounds(GameMap* map, AABoxf* aaBox) const
 {
     Q_ASSERT(map && aaBox);
 
-    if(GameMap_LineDefCount(map))
+    AABoxf bounds;
+    boolean initialized = false;
+
+    for(uint i = 0; i < GameMap_LineDefCount(map); ++i)
     {
-        findmapboundsparams_t parm;
-        parm.initialized = false;
-        GameMap_LineDefIterator(map, findMapBoundsIterator, (void*)&parm);
-        if(parm.initialized)
+        LineDef* line = GameMap_LineDef(map, i);
+
+        // Do not consider zero-length LineDefs.
+        if(lineDefInfo(*line).flags.testFlag(BspLineDefInfo::ZEROLENGTH)) continue;
+
+        AABoxf lineAABox;
+        initAABoxFromEditableLineDefVertexes(&lineAABox, line);
+
+        if(initialized)
         {
-            V2f_CopyBox(aaBox->arvec2, parm.bounds.arvec2);
-            return;
+            V2f_AddToBox(bounds.arvec2, lineAABox.min);
         }
+        else
+        {
+            V2f_InitBox(bounds.arvec2, lineAABox.min);
+            initialized = true;
+        }
+
+        V2f_AddToBox(bounds.arvec2, lineAABox.max);
+    }
+
+    if(initialized)
+    {
+        V2f_CopyBox(aaBox->arvec2, bounds.arvec2);
+        return;
     }
 
     // Clear.
@@ -175,11 +166,12 @@ SuperBlockmap* BspBuilder::createInitialHEdges(GameMap* map)
         HEdge* front = NULL;
         HEdge* back = NULL;
 
-        if(line->buildData.mlFlags & MLF_POLYOBJ) continue;
+        // Polyobj lines are completely ignored.
+        if(line->inFlags & LF_POLYOBJ) continue;
 
         // Ignore zero-length and polyobj lines.
-        if(!(line->buildData.mlFlags & MLF_ZEROLENGTH)
-           /*&& !line->buildData.overlap*/)
+        if(!lineDefInfo(*line).flags.testFlag(BspLineDefInfo::ZEROLENGTH)
+           /*&& !lineDefInfo(*line).overlap*/)
         {
             // Check for Humungously long lines.
             if(ABS(line->v[0]->buildData.pos[VX] - line->v[1]->buildData.pos[VX]) >= 10000 ||
@@ -228,10 +220,10 @@ SuperBlockmap* BspBuilder::createInitialHEdges(GameMap* map)
             }
             else
             {
-                if(line->buildData.mlFlags & MLF_TWOSIDED)
+                if(lineDefInfo(*line).flags.testFlag(BspLineDefInfo::TWOSIDED))
                 {
                     LOG_INFO("LineDef #%d is two-sided but has no back SideDef.") << line->buildData.index;
-                    line->buildData.mlFlags &= ~MLF_TWOSIDED;
+                    lineDefInfo(*line).flags &= ~BspLineDefInfo::TWOSIDED;
                 }
 
                 // Handle the 'One-Sided Window' trick.
@@ -265,28 +257,27 @@ SuperBlockmap* BspBuilder::createInitialHEdges(GameMap* map)
 
 void BspBuilder::initForMap(GameMap* map)
 {
-    for(uint i = 0; i < map->numLineDefs; ++i)
+    uint numLineDefs = GameMap_LineDefCount(map);
+    _lineDefInfo.resize(numLineDefs);
+
+    for(uint i = 0; i < numLineDefs; ++i)
     {
         LineDef* l = GameMap_LineDef(map, i);
-        Vertex* start = l->v[0];
-        Vertex* end   = l->v[1];
-
-        l->buildData.mlFlags = 0;
+        BspLineDefInfo& info = lineDefInfo(*l);
+        const Vertex* start = l->v[0];
+        const Vertex* end   = l->v[1];
 
         // Check for zero-length line.
         if((fabs(start->buildData.pos[VX] - end->buildData.pos[VX]) < DIST_EPSILON) &&
            (fabs(start->buildData.pos[VY] - end->buildData.pos[VY]) < DIST_EPSILON))
-            l->buildData.mlFlags |= MLF_ZEROLENGTH;
-
-        if(l->inFlags & LF_POLYOBJ)
-            l->buildData.mlFlags |= MLF_POLYOBJ;
+            info.flags |= BspLineDefInfo::ZEROLENGTH;
 
         if(l->sideDefs[BACK] && l->sideDefs[FRONT])
         {
-            l->buildData.mlFlags |= MLF_TWOSIDED;
+            info.flags |= BspLineDefInfo::TWOSIDED;
 
             if(l->sideDefs[BACK]->sector == l->sideDefs[FRONT]->sector)
-                l->buildData.mlFlags |= MLF_SELFREF;
+                info.flags |= BspLineDefInfo::SELFREF;
         }
     }
 }

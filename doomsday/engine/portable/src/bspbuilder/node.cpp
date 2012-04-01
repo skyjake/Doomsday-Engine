@@ -708,11 +708,6 @@ boolean BspBuilder::choosePartition(SuperBlock& hedgeList, HPlane& hplane)
     return true;
 }
 
-static inline boolean lineDefHasSelfRef(LineDef* lineDef)
-{
-    return !!(lineDef->buildData.mlFlags & MLF_SELFREF);
-}
-
 const HPlaneIntercept* BspBuilder::makeHPlaneIntersection(HPlane& hplane, HEdge* hedge, int leftSide)
 {
     HEdgeIntercept* hedgeIntercept;
@@ -730,7 +725,8 @@ const HPlaneIntercept* BspBuilder::makeHPlaneIntersection(HPlane& hplane, HEdge*
     distance = M_ParallelDist(info.pDX, info.pDY, info.pPara, info.pLength,
                               vertex->buildData.pos[VX], vertex->buildData.pos[VY]);
 
-    hedgeIntercept = newHEdgeIntercept(vertex, &info, (hedge->bspBuildInfo->lineDef && lineDefHasSelfRef(hedge->bspBuildInfo->lineDef)));
+    LineDef* line = hedge->bspBuildInfo->lineDef;
+    hedgeIntercept = newHEdgeIntercept(vertex, &info, line && lineDefInfo(*line).flags.testFlag(BspLineDefInfo::SELFREF));
     return hplane.newIntercept(distance, hedgeIntercept);
 }
 

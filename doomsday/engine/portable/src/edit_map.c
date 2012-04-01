@@ -1344,10 +1344,9 @@ static void testForWindowEffect(editmap_t* map, LineDef* l)
         SideDef* hitSide;
         double dX2, dY2;
 
-        if(n == l || LINE_SELFREF(n) /*|| n->buildData.overlap ||
-           (n->buildData.mlFlags & MLF_ZEROLENGTH)*/)
+        if(n == l || LINE_SELFREF(n) /*|| n->buildData.overlap || n->length <= 0*/)
             continue;
-        if(n->buildData.mlFlags & MLF_POLYOBJ)
+        if(n->inFlags & LF_POLYOBJ)
             continue;
 
         dX2 = n->v[1]->buildData.pos[VX] - n->v[0]->buildData.pos[VX];
@@ -1473,11 +1472,10 @@ void MPE_DetectWindowEffects(editmap_t* map)
     {
         LineDef* l = map->lineDefs[i];
 
-        if((l->L_frontside && l->L_backside) || !l->L_frontside /*||
-           (l->buildData.mlFlags & MLF_ZEROLENGTH) ||
+        if((l->L_frontside && l->L_backside) || !l->L_frontside /*|| l->length <= 0 ||
            l->buildData.overlap*/)
             continue;
-        if(l->buildData.mlFlags & MLF_POLYOBJ)
+        if(l->inFlags & LF_POLYOBJ)
             continue;
 
         oneSiders = twoSiders = 0;
