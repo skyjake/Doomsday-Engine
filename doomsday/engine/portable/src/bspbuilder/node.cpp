@@ -667,7 +667,7 @@ static int chooseHEdgeFromSuperBlock(SuperBlock* partList, void* parameters)
     return false; // Continue iteration.
 }
 
-boolean BspBuilder::choosePartition(SuperBlock& hedgeList, size_t /*depth*/, HPlane& hplane)
+boolean BspBuilder::choosePartition(SuperBlock& hedgeList, HPlane& hplane)
 {
     choosehedgefromsuperblockparams_t parm;
     parm.hedgeList = &hedgeList;
@@ -684,35 +684,31 @@ boolean BspBuilder::choosePartition(SuperBlock& hedgeList, size_t /*depth*/, HPl
 
     // Finished, return the best partition.
     HEdge* best = parm.best;
-    if(best)
-    {
-        const LineDef* lineDef = best->bspBuildInfo->lineDef;
-        // This must not be a "mini hedge".
-        Q_ASSERT(lineDef);
+    if(!best) return false; // Oh oh...
 
-        // Reconfigure the half plane for the next round of hedge sorting.
-        hplane.setPartitionHEdgeInfo(*best->bspBuildInfo);
+    const LineDef* lineDef = best->bspBuildInfo->lineDef;
+    // This must not be a "mini hedge".
+    Q_ASSERT(lineDef);
 
-        const Vertex* from = lineDef->L_v(best->side);
-        const Vertex* to   = lineDef->L_v(best->side^1);
-        hplane.setOrigin(from->buildData.pos);
+    // Reconfigure the half plane for the next round of hedge sorting.
+    hplane.setPartitionHEdgeInfo(*best->bspBuildInfo);
 
-        vec2d_t angle; V2d_Subtract(angle, to->buildData.pos, from->buildData.pos);
-        hplane.setAngle(angle);
+    const Vertex* from = lineDef->L_v(best->side);
+    const Vertex* to   = lineDef->L_v(best->side^1);
+    hplane.setOrigin(from->buildData.pos);
 
-        //LOG_DEBUG("BspBuilder::choosePartition: best: %p score: %d.%02d [%1.1f, %1.1f] -> [%1.1f, %1.1f].")
-        //    << best << bestCost / 100 << bestCost % 100
-        //    << from->buildData.pos[VX] << from->buildData.pos[VY]
-        //    << angle[VX] << angle[VY];
+    vec2d_t angle; V2d_Subtract(angle, to->buildData.pos, from->buildData.pos);
+    hplane.setAngle(angle);
 
-        return true;
-    }
+    //LOG_DEBUG("BspBuilder::choosePartition: best: %p score: %d.%02d [%1.1f, %1.1f] -> [%1.1f, %1.1f].")
+    //    << best << bestCost / 100 << bestCost % 100
+    //    << from->buildData.pos[VX] << from->buildData.pos[VY]
+    //    << angle[VX] << angle[VY];
 
-    //DEBUG_Message(("BspBuilder::choosePartition: No best found!\n"));
-    return false;
+    return true;
 }
 
-static boolean lineDefHasSelfRef(LineDef* lineDef)
+static inline boolean lineDefHasSelfRef(LineDef* lineDef)
 {
     return !!(lineDef->buildData.mlFlags & MLF_SELFREF);
 }
@@ -736,11 +732,6 @@ const HPlaneIntercept* BspBuilder::makeHPlaneIntersection(HPlane& hplane, HEdge*
 
     hedgeIntercept = newHEdgeIntercept(vertex, &info, (hedge->bspBuildInfo->lineDef && lineDefHasSelfRef(hedge->bspBuildInfo->lineDef)));
     return hplane.newIntercept(distance, hedgeIntercept);
-}
-
-const HPlaneIntercept* BspBuilder::makeIntersection(HPlane& hplane, HEdge* hedge, int leftSide)
-{
-    return makeHPlaneIntersection(hplane, hedge, leftSide);
 }
 
 /**
@@ -802,8 +793,8 @@ void BspBuilder::divideHEdge(HEdge* hedge, HPlane& hplane, SuperBlock& rightList
     // Check for being on the same line.
     if(fabs(a) <= DIST_EPSILON && fabs(b) <= DIST_EPSILON)
     {
-        makeIntersection(hplane, hedge, RIGHT);
-        makeIntersection(hplane, hedge, LEFT);
+        makeHPlaneIntersection(hplane, hedge, RIGHT);
+        makeHPlaneIntersection(hplane, hedge, LEFT);
 
         // This hedge runs along the same line as the partition. Check whether it goes in
         // the same direction or the opposite.
@@ -822,9 +813,9 @@ void BspBuilder::divideHEdge(HEdge* hedge, HPlane& hplane, SuperBlock& rightList
     if(a > -DIST_EPSILON && b > -DIST_EPSILON)
     {
         if(a < DIST_EPSILON)
-            makeIntersection(hplane, hedge, RIGHT);
+            makeHPlaneIntersection(hplane, hedge, RIGHT);
         else if(b < DIST_EPSILON)
-            makeIntersection(hplane, hedge, LEFT);
+            makeHPlaneIntersection(hplane, hedge, LEFT);
 
         rightList.hedgePush(hedge);
         return;
@@ -834,9 +825,9 @@ void BspBuilder::divideHEdge(HEdge* hedge, HPlane& hplane, SuperBlock& rightList
     if(a < DIST_EPSILON && b < DIST_EPSILON)
     {
         if(a > -DIST_EPSILON)
-            makeIntersection(hplane, hedge, RIGHT);
+            makeHPlaneIntersection(hplane, hedge, RIGHT);
         else if(b > -DIST_EPSILON)
-            makeIntersection(hplane, hedge, LEFT);
+            makeHPlaneIntersection(hplane, hedge, LEFT);
 
         leftList.hedgePush(hedge);
         return;
@@ -847,7 +838,7 @@ void BspBuilder::divideHEdge(HEdge* hedge, HPlane& hplane, SuperBlock& rightList
     double x, y;
     calcIntersection(hedge->bspBuildInfo, &info, a, b, &x, &y);
     HEdge* newhedge = splitHEdge(hedge, x, y);
-    makeIntersection(hplane, hedge, LEFT);
+    makeHPlaneIntersection(hplane, hedge, LEFT);
 
     if(a < 0)
     {
@@ -917,9 +908,6 @@ static int createBSPLeafWorker(SuperBlock* superblock, void* parameters)
     return false; // Continue iteration.
 }
 
-/**
- * Create a new leaf from a list of half-edges.
- */
 BspLeaf* BspBuilder::createBSPLeaf(SuperBlock& hedgeList)
 {
     BspLeaf* leaf = BspLeaf_New();
@@ -928,44 +916,35 @@ BspLeaf* BspBuilder::createBSPLeaf(SuperBlock& hedgeList)
     return leaf;
 }
 
-boolean BspBuilder::buildNodes(SuperBlock& hedgeList, BinaryTree** parent, size_t depth,
-    HPlane& hplane)
+boolean BspBuilder::buildNodes(SuperBlock& hedgeList, BinaryTree** parent, HPlane& hplane)
 {
-    SuperBlockmap* rightHEdges, *leftHEdges;
-    AABoxf rightHEdgesBounds, leftHEdgesBounds;
-    BinaryTree* subTree;
-    BspLeaf* leaf;
-    BspNode* node;
-    boolean builtOK = false;
-
     *parent = NULL;
 
-    /*DEBUG_Message(("Build: Begun @ %lu\n", (unsigned long) depth));
-#if _DEBUG
+/*#if _DEBUG
     BSP_PrintSuperBlockhedges(superblock);
 #endif*/
 
     // Pick the next partition to use.
-    if(!choosePartition(hedgeList, depth, hplane))
+    if(!choosePartition(hedgeList, hplane))
     {
         // No partition required, already convex.
-        //DEBUG_Message(("BspBuilder::buildNodes: Convex.\n"));
+        //LOG_TRACE("BspBuilder::buildNodes: Convex.");
 
-        leaf = createBSPLeaf(hedgeList);
+        BspLeaf* leaf = createBSPLeaf(hedgeList);
         *parent = BinaryTree_NewWithUserData(leaf);
         return true;
     }
 
-    //DEBUG_Message(("BspBuilder::buildNodes: Partition %p (%1.0f,%1.0f) -> (%1.0f,%1.0f).\n",
-    //               best, best->v[0]->V_pos[VX], best->v[0]->V_pos[VY],
-    //               best->v[1]->V_pos[VX], best->v[1]->V_pos[VY]));
+    //LOG_TRACE("BspBuilder::buildNodes: Partition %p [%1.0f, %1.0f] -> [%1.0f, %1.0f].")
+    //      << best << best->v[0]->V_pos[VX] << best->v[0]->V_pos[VY]
+    //      << best->v[1]->V_pos[VX] << best->v[1]->V_pos[VY];
 
     // Create left and right super blockmaps.
     /// @todo There should be no need to construct entirely independent
     ///       data structures to contain these hedge subsets.
     // Copy the bounding box of the edge list to the superblocks.
-    rightHEdges = new SuperBlockmap(hedgeList.bounds());
-    leftHEdges  = new SuperBlockmap(hedgeList.bounds());
+    SuperBlockmap* rightHEdges = new SuperBlockmap(hedgeList.bounds());
+    SuperBlockmap* leftHEdges  = new SuperBlockmap(hedgeList.bounds());
 
     // Divide the half-edges into two lists: left & right.
     partitionHEdges(hplane, hedgeList, rightHEdges->root(), leftHEdges->root());
@@ -973,21 +952,25 @@ boolean BspBuilder::buildNodes(SuperBlock& hedgeList, BinaryTree** parent, size_
     addMiniHEdges(hplane, rightHEdges->root(), leftHEdges->root());
     hplane.clear();
 
+    AABoxf rightHEdgesBounds, leftHEdgesBounds;
     rightHEdges->findHEdgeBounds(rightHEdgesBounds);
     leftHEdges->findHEdgeBounds(leftHEdgesBounds);
 
-    node = BspNode_New(hplane.origin(), hplane.angle());
+    BspNode* node = BspNode_New(hplane.origin(), hplane.angle());
     BspNode_SetRightBounds(node, &rightHEdgesBounds);
     BspNode_SetLeftBounds(node, &leftHEdgesBounds);
     *parent = BinaryTree_NewWithUserData(node);
 
-    builtOK = buildNodes(rightHEdges->root(), &subTree, depth + 1, hplane);
+    // Recurse on the right subset.
+    BinaryTree* subTree;
+    boolean builtOK = buildNodes(rightHEdges->root(), &subTree, hplane);
     BinaryTree_SetRight(*parent, subTree);
     delete rightHEdges;
 
     if(builtOK)
     {
-        builtOK = buildNodes(leftHEdges->root(), &subTree, depth + 1, hplane);
+        // Recurse on the left subset.
+        builtOK = buildNodes(leftHEdges->root(), &subTree, hplane);
         BinaryTree_SetLeft(*parent, subTree);
     }
 

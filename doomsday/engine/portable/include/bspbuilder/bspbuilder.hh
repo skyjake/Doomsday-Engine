@@ -83,11 +83,12 @@ public:
     void deleteHEdgeIntercept(HEdgeIntercept* intercept);
 
 private:
+    /**
+     * Create a new leaf from a list of half-edges.
+     */
     BspLeaf* createBSPLeaf(SuperBlock& hedgeList);
 
     const HPlaneIntercept* makeHPlaneIntersection(HPlane& hplane, HEdge* hedge, int leftSide);
-
-    const HPlaneIntercept* makeIntersection(HPlane& hplane, HEdge* hedge, int leftSide);
 
     SuperBlockmap* createBlockmap(const AABoxf& mapBounds);
 
@@ -141,12 +142,11 @@ private:
      * Find the best half-edge in the list to use as a partition.
      *
      * @param hedgeList     List of half-edges to choose from.
-     * @param depth         Current node depth.
      * @param partition     Ptr to partition to be updated with the results.
      *
      * @return  @c true= A suitable partition was found.
      */
-    boolean choosePartition(SuperBlock& hedgeList, size_t depth, HPlane& hplane);
+    boolean choosePartition(SuperBlock& hedgeList, HPlane& hplane);
 
     /**
      * Takes the half-edge list and determines if it is convex, possibly converting it
@@ -164,12 +164,10 @@ private:
      *
      * @param superblock    Ptr to the list of half edges at the current node.
      * @param parent        Ptr to write back the address of any newly created subtree.
-     * @param depth         Current tree depth.
      * @param hplane        HPlaneIntercept list for storing any new intersections.
      * @return  @c true iff successfull.
      */
-    boolean buildNodes(SuperBlock& superblock, struct binarytree_s** parent,
-                       size_t depth, HPlane& hplane);
+    boolean buildNodes(SuperBlock& superblock, struct binarytree_s** parent, HPlane& hplane);
 
     /**
      * Traverse the BSP tree and put all the half-edges in each BSP leaf into clockwise

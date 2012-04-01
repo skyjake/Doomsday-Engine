@@ -308,7 +308,7 @@ boolean BspBuilder::build(GameMap* map)
 
     // Recursively create nodes.
     rootNode = NULL;
-    builtOK = buildNodes(sbmap->root(), &rootNode, 0, HPlane(this));
+    builtOK = buildNodes(sbmap->root(), &rootNode, HPlane(this));
 
     delete sbmap;
 
