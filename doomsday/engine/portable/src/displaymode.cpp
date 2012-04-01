@@ -262,7 +262,7 @@ boolean DisplayMode_IsEqual(const DisplayMode* a, const DisplayMode* b)
 
 int DisplayMode_Change(const DisplayMode* mode, boolean shouldCapture)
 {
-    if(Mode::fromCurrent() == *mode && shouldCapture == captured)
+    if(Mode::fromCurrent() == *mode && !shouldCapture == !captured)
     {
         LOG_DEBUG("DisplayMode: Requested mode is the same as current, ignoring.");
 
