@@ -31,6 +31,8 @@
 #include <vector>
 #include <algorithm>
 
+#include <de/Log>
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_play.h"
@@ -43,42 +45,35 @@
 
 using namespace de;
 
-typedef struct partitioncost_s {
+struct PartitionCost
+{
     int total;
     int splits;
     int iffy;
     int nearMiss;
-    int realLeft;
     int realRight;
-    int miniLeft;
+    int realLeft;
     int miniRight;
+    int miniLeft;
 
-    struct partitioncost_s* initialize()
-    {
-        total = 0;
-        splits = 0;
-        iffy = 0;
-        nearMiss = 0;
-        realLeft = 0;
-        realRight = 0;
-        miniLeft = 0;
-        miniRight = 0;
-        return this;
-    }
+    PartitionCost::PartitionCost() :
+        total(0), splits(0), iffy(0), nearMiss(0), realRight(0),
+        realLeft(0), miniRight(0), miniLeft(0)
+    {}
 
-    struct partitioncost_s* applyDelta(const struct partitioncost_s& other)
+    PartitionCost& operator += (const PartitionCost& other)
     {
-        total += other.total;
-        splits += other.splits;
-        iffy += other.iffy;
-        nearMiss += other.nearMiss;
-        realLeft += other.realLeft;
+        total     += other.total;
+        splits    += other.splits;
+        iffy      += other.iffy;
+        nearMiss  += other.nearMiss;
+        realLeft  += other.realLeft;
         realRight += other.realRight;
-        miniLeft += other.miniLeft;
+        miniLeft  += other.miniLeft;
         miniRight += other.miniRight;
-        return this;
+        return *this;
     }
-} PartitionCost;
+};
 
 // Used when sorting BSP leaf half-edges by angle around midpoint.
 typedef std::vector<HEdge*>HEdgeSortBuffer;
@@ -86,13 +81,6 @@ typedef std::vector<HEdge*>HEdgeSortBuffer;
 #if _DEBUG
 void BSP_PrintSuperBlockhedges(SuperBlock* superblock);
 #endif
-
-static __inline int pointOnhedgeSide(double x, double y, const HEdge* part)
-{
-    return P_PointOnLinedefSide2(x, y, part->bspBuildInfo->pDX, part->bspBuildInfo->pDY,
-                                 part->bspBuildInfo->pPerp, part->bspBuildInfo->pLength,
-                                 DIST_EPSILON);
-}
 
 static boolean getAveragedCoords(BspLeaf* leaf, double* x, double* y)
 {
@@ -176,9 +164,6 @@ static void sortHEdgesByAngleAroundPoint(HEdgeSortBuffer& hedges,
 static void clockwiseOrder(HEdgeSortBuffer& sortBuffer, HEdge** headPtr,
     uint num, double x, double y)
 {
-    HEdge* hedge;
-    uint i;
-
     // Ensure the sort buffer is large enough.
     if(num > sortBuffer.size())
     {
@@ -186,19 +171,17 @@ static void clockwiseOrder(HEdgeSortBuffer& sortBuffer, HEdge** headPtr,
     }
 
     // Insert the hedges into the sort buffer.
-    for(hedge = *headPtr, i = 0; hedge; hedge = hedge->next, ++i)
+    uint i = 0;
+    for(HEdge* hedge = *headPtr; hedge; hedge = hedge->next, ++i)
     {
         sortBuffer[i] = hedge;
     }
-
-    if(i != num)
-        Con_Error("clockwiseOrder: Miscounted?");
 
     sortHEdgesByAngleAroundPoint(sortBuffer, num, x, y);
 
     // Re-link the half-edge list in the order of the sorted array.
     *headPtr = NULL;
-    for(i = 0; i < num; ++i)
+    for(uint i = 0; i < num; ++i)
     {
         uint idx = (num - 1) - i;
         uint j = idx % num;
@@ -207,24 +190,24 @@ static void clockwiseOrder(HEdgeSortBuffer& sortBuffer, HEdge** headPtr,
         *headPtr = sortBuffer[j];
     }
 
-/*#if _DEBUG
-    Con_Message("Sorted half-edges around (%1.1f,%1.1f)\n", x, y);
-
-    for(hedge = sub->hedges; hedge; hedge = hedge->next)
+    /*
+    LOG_DEBUG("Sorted half-edges around [%1.1f, %1.1f]" << x << y;
+    for(hedge = *hedgePtr; hedge; hedge = hedge->next)
     {
         double angle = M_SlopeToAngle(hedge->v[0]->V_pos[VX] - x,
                                       hedge->v[0]->V_pos[VY] - y);
 
-        Con_Message("  half-edge %p: Angle %1.6f  (%1.1f,%1.1f) -> (%1.1f,%1.1f)\n",
-                    hedge, angle, hedge->v[0]->V_pos[VX], hedge->v[0]->V_pos[VY],
-                    hedge->v[1]->V_pos[VX], hedge->v[1]->V_pos[VY]);
+        LOG_DEBUG("  half-edge %p: Angle %1.6f [%1.1f, %1.1f] -> [%1.1f, %1.1f]")
+            << hedge << angle
+            << hedge->v[0]->V_pos[VX] << hedge->v[0]->V_pos[VY]
+            << hedge->v[1]->V_pos[VX] << hedge->v[1]->V_pos[VY];
     }
-#endif*/
+    */
 }
 
-static void sanityCheckClosed(const BspLeaf* leaf)
+static void logUnclosed(const BspLeaf* leaf)
 {
-    int total = 0, gaps = 0;
+    uint total = 0, gaps = 0;
     const HEdge* hedge = leaf->hedge;
     do
     {
@@ -234,68 +217,82 @@ static void sanityCheckClosed(const BspLeaf* leaf)
         {
             gaps++;
         }
-
         total++;
+
     } while((hedge = hedge->next) != leaf->hedge);
 
     if(gaps > 0)
     {
-        VERBOSE( Con_Message("hedge list for leaf #%p is not closed (%d gaps, %d half-edges)\n", leaf, gaps, total) );
+        LOG_INFO("HEdge list for BspLeaf #%p is not closed (%u gaps, %u hedges).")
+                << leaf << gaps << total;
 
-/*#if _DEBUG
-    hedge = leaf->hedge;
-    do
-    {
-        Con_Message("  half-edge %p  (%1.1f,%1.1f) --> (%1.1f,%1.1f)\n", hedge,
-                    hedge->v[0]->pos[VX], hedge->v[0]->pos[VY],
-                    hedge->v[1]->pos[VX], hedge->v[1]->pos[VY]);
-    } while((hedge = hedge->next) != leaf->hedge);
-#endif*/
+        /*
+        hedge = leaf->hedge;
+        do
+        {
+            LOG_DEBUG("  half-edge %p [%1.1f, %1.1f] -> [%1.1f, %1.1f]")
+                << hedge
+                << hedge->v[0]->pos[VX] << hedge->v[0]->pos[VY],
+                << hedge->v[1]->pos[VX] << hedge->v[1]->pos[VY];
+
+        } while((hedge = hedge->next) != leaf->hedge);
+        */
     }
 }
 
-static void sanityCheckSameSector(const BspLeaf* leaf)
+static Sector* findFirstSectorInHEdgeList(const BspLeaf* leaf)
 {
-    HEdge* hedge, *compare = NULL;
-
-    // Find a suitable half-edge for comparison.
-    hedge = leaf->hedge;
+    Q_ASSERT(leaf);
+    HEdge* hedge = leaf->hedge;
     do
     {
         if(hedge->sector)
         {
-            compare = hedge;
+            return hedge->sector;
         }
-    } while(!compare && (hedge = hedge->next) != leaf->hedge);
+    } while((hedge = hedge->next) != leaf->hedge);
+    return NULL; // Nothing??
+}
 
-    if(!compare) return;
+static void logMigrantHEdge(Sector* sector, HEdge* migrant)
+{
+    if(!sector || !migrant) return;
 
-    hedge = leaf->hedge;
+    // Prevent an excessive number of warnings per sector.
+    if(sector->buildData.warnedFacing == migrant->sector->buildData.index) return;
+    sector->buildData.warnedFacing = migrant->sector->buildData.index;
+
+    if(migrant->bspBuildInfo->lineDef)
+        LOG_INFO("Sector #%d has SideDef facing #%d (line #%d).")
+                << sector->buildData.index << migrant->sector->buildData.index
+                << migrant->bspBuildInfo->lineDef->buildData.index;
+    else
+        LOG_INFO("Sector #%d has SideDef facing #%d.")
+                << sector->buildData.index << migrant->sector->buildData.index;
+}
+
+static void logMigrantHEdges(const BspLeaf* leaf)
+{
+    if(!leaf) return;
+
+    // Find a suitable half-edge for comparison.
+    Sector* sector = findFirstSectorInHEdgeList(leaf);
+    if(!sector) return;
+
+    // Log migrants.
+    HEdge* hedge = leaf->hedge;
     do
     {
-        if(!hedge->sector || hedge->sector == compare->sector) continue;
-
-        // Prevent excessive number of warnings.
-        if(compare->sector->buildData.warnedFacing == hedge->sector->buildData.index)
-            continue;
-
-        compare->sector->buildData.warnedFacing = hedge->sector->buildData.index;
-
-        if(verbose >= 1)
+        if(hedge->sector && hedge->sector != sector)
         {
-            if(hedge->bspBuildInfo->lineDef)
-                Con_Message("Sector #%d has sidedef facing #%d (line #%d).\n",
-                            compare->sector->buildData.index, hedge->sector->buildData.index,
-                            hedge->bspBuildInfo->lineDef->buildData.index);
-            else
-                Con_Message("Sector #%d has sidedef facing #%d.\n",
-                            compare->sector->buildData.index, hedge->sector->buildData.index);
+            logMigrantHEdge(sector, hedge);
         }
     } while((hedge = hedge->next) != leaf->hedge);
 }
 
 static boolean sanityCheckHasRealhedge(const BspLeaf* leaf)
 {
+    Q_ASSERT(leaf);
     HEdge* hedge = leaf->hedge;
     do
     {
@@ -360,12 +357,15 @@ static int C_DECL clockwiseLeaf(BinaryTree* tree, void* parameters)
 
         if(!leaf->sector)
         {
-            Con_Message("Warning: clockwiseLeaf: Orphan BSP leaf %p.\n", leaf);
+            LOG_DEBUG("BspLeaf %p is orphan.") << leaf;
         }
 
-        // Do some sanity checks.
-        sanityCheckClosed(leaf);
-        sanityCheckSameSector(leaf);
+        if(verbose)
+        {
+            logMigrantHEdges(leaf);
+            logUnclosed(leaf);
+        }
+
         if(!sanityCheckHasRealhedge(leaf))
         {
             Con_Error("BSP Leaf #%p has no linedef-linked half-edge!", leaf);
@@ -386,11 +386,11 @@ static void evalPartitionCostForHEdge(const BspHEdgeInfo* partInfo,
 {
 #define ADD_LEFT()  \
     if (hedge->bspBuildInfo->lineDef) cost.realLeft += 1;  \
-    else                          cost.miniLeft += 1;  \
+    else                              cost.miniLeft += 1;  \
 
 #define ADD_RIGHT()  \
     if (hedge->bspBuildInfo->lineDef) cost.realRight += 1;  \
-    else                          cost.miniRight += 1;  \
+    else                              cost.miniRight += 1;  \
 
     double qnty, a, b, fa, fb;
     assert(hedge);
@@ -548,7 +548,6 @@ static int evalPartitionCostForSuperBlock(SuperBlock& block, int splitCostFactor
     }
 
     // Check partition against all half-edges.
-    PartitionCost costDelta;
     for(SuperBlock::HEdges::const_iterator it = block.hedgesBegin();
         it != block.hedgesEnd(); ++it)
     {
@@ -556,11 +555,11 @@ static int evalPartitionCostForSuperBlock(SuperBlock& block, int splitCostFactor
         if(cost.total > bestCost) return true; // Stop iteration.
 
         // Evaluate the cost delta for this hedge.
-        costDelta.initialize();
+        PartitionCost costDelta;
         evalPartitionCostForHEdge(hedgeInfo, splitCostFactor, *it, costDelta);
 
         // Merge cost result into the cummulative total.
-        cost.applyDelta(costDelta);
+        cost += costDelta;
     }
 
     // Handle sub-blocks recursively.
@@ -592,15 +591,14 @@ static int evalPartition(SuperBlock& block, int splitCostFactor,
 {
     PartitionCost cost;
 
-    cost.initialize();
     if(evalPartitionCostForSuperBlock(block, splitCostFactor, hedgeInfo,
                                       bestCost, cost)) return -1;
 
     // Make sure there is at least one real half-edge on each side.
     if(!cost.realLeft || !cost.realRight)
     {
-        //DEBUG_Message(("Eval : No real half-edges on %s%sside\n",
-        //              (cost.realLeft? "" : "left "), (cost.realRight? "" : "right ")));
+        //LOG_DEBUG("evalPartition: No real half-edges on %s%sside")
+        //    << (cost.realLeft? "" : "left ") << (cost.realRight? "" : "right ");
         return -1;
     }
 
@@ -615,10 +613,10 @@ static int evalPartition(SuperBlock& block, int splitCostFactor,
     if(!FEQUAL(hedgeInfo->pDX, 0) && !FEQUAL(hedgeInfo->pDY, 0))
         cost.total += 25;
 
-    //DEBUG_Message(("Eval %p: splits=%d iffy=%d near=%d left=%d+%d right=%d+%d "
-    //               "cost=%d.%02d\n", hedgeInfo, cost.splits, cost.iffy, cost.nearMiss,
-    //               cost.realLeft, cost.miniLeft, cost.realRight, cost.miniRight,
-    //               cost.total / 100, cost.total % 100));
+    //LOG_DEBUG("evalPartition: %p: splits=%d iffy=%d near=%d left=%d+%d right=%d+%d cost=%d.%02d")
+    //    << hedgeInfo << cost.splits << cost.iffy << cost.nearMiss
+    //    << cost.realLeft << cost.miniLeft << cost.realRight << cost.miniRight
+    //    << cost.total / 100 << cost.total % 100;
 
     return cost.total;
 }
@@ -640,11 +638,11 @@ static int chooseHEdgeFromSuperBlock(SuperBlock* partList, void* parameters)
     {
         HEdge* hedge = *it;
 
-        //DEBUG_Message(("chooseHEdgeFromSuperBlock: %shedge %p sector=%d  (%1.1f,%1.1f) -> "
-        //               "(%1.1f,%1.1f)\n", (lineDef? "" : "MINI"), hedge,
-        //               (hedge->bspBuildInfo->sector? hedge->bspBuildInfo->sector->index : -1),
-        //               hedge->v[0]->V_pos[VX], hedge->v[0]->V_pos[VY],
-        //               hedge->v[1]->V_pos[VX], hedge->v[1]->V_pos[VY]));
+        //LOG_DEBUG("chooseHEdgeFromSuperBlock: %shedge %p sector:%d [%1.1f, %1.1f] -> [%1.1f, %1.1f]")
+        //    << (lineDef? "" : "mini-") << hedge
+        //    << (hedge->bspBuildInfo->sector? hedge->bspBuildInfo->sector->index : -1)
+        //    << hedge->v[0]->V_pos[VX] << hedge->v[0]->V_pos[VY]
+        //    << hedge->v[1]->V_pos[VX] << hedge->v[1]->V_pos[VY];
 
         // "Mini-hedges" are never potential candidates.
         LineDef* lineDef = hedge->bspBuildInfo->lineDef;
@@ -672,9 +670,6 @@ static int chooseHEdgeFromSuperBlock(SuperBlock* partList, void* parameters)
 boolean BspBuilder::choosePartition(SuperBlock& hedgeList, size_t /*depth*/, HPlane& hplane)
 {
     choosehedgefromsuperblockparams_t parm;
-
-    //DEBUG_Message(("BspBuilder::choosePartition: Begun (depth %lu)\n", (unsigned long) depth));
-
     parm.hedgeList = &hedgeList;
     parm.splitCostFactor = splitCostFactor;
     parm.best = NULL;
@@ -691,22 +686,24 @@ boolean BspBuilder::choosePartition(SuperBlock& hedgeList, size_t /*depth*/, HPl
     HEdge* best = parm.best;
     if(best)
     {
-        LineDef* lineDef = best->bspBuildInfo->lineDef;
-
+        const LineDef* lineDef = best->bspBuildInfo->lineDef;
         // This must not be a "mini hedge".
-        assert(lineDef);
-
-        //DEBUG_Message(("BspBuilder::choosePartition: Best has score %d.%02d  (%1.1f,%1.1f) -> "
-        //               "(%1.1f,%1.1f)\n", bestCost / 100, bestCost % 100,
-        //               best->v[0]->V_pos[VX], best->v[0]->V_pos[VY],
-        //               best->v[1]->V_pos[VX], best->v[1]->V_pos[VY]));
+        Q_ASSERT(lineDef);
 
         // Reconfigure the half plane for the next round of hedge sorting.
-        hplane.setXY(lineDef->L_v(best->side)->buildData.pos[VX],
-                     lineDef->L_v(best->side)->buildData.pos[VY]);
-        hplane.setDXY(lineDef->L_v(best->side^1)->buildData.pos[VX] - lineDef->L_v(best->side)->buildData.pos[VX],
-                      lineDef->L_v(best->side^1)->buildData.pos[VY] - lineDef->L_v(best->side)->buildData.pos[VY]);
         hplane.setPartitionHEdgeInfo(*best->bspBuildInfo);
+
+        const Vertex* from = lineDef->L_v(best->side);
+        const Vertex* to   = lineDef->L_v(best->side^1);
+        hplane.setOrigin(from->buildData.pos);
+
+        vec2d_t angle; V2d_Subtract(angle, to->buildData.pos, from->buildData.pos);
+        hplane.setAngle(angle);
+
+        //LOG_DEBUG("BspBuilder::choosePartition: best: %p score: %d.%02d [%1.1f, %1.1f] -> [%1.1f, %1.1f].")
+        //    << best << bestCost / 100 << bestCost % 100
+        //    << from->buildData.pos[VX] << from->buildData.pos[VY]
+        //    << angle[VX] << angle[VY];
 
         return true;
     }
