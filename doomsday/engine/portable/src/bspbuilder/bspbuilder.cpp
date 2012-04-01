@@ -271,9 +271,6 @@ void BspBuilder::initForMap(GameMap* map)
         Vertex* start = l->v[0];
         Vertex* end   = l->v[1];
 
-        start->buildData.refCount++;
-        end->buildData.refCount++;
-
         l->buildData.mlFlags = 0;
 
         // Check for zero-length line.

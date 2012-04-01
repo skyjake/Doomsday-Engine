@@ -129,7 +129,6 @@ HEdge* BspBuilder::splitHEdge(HEdge* oldHEdge, double x, double y)
     newVert = createVertex();
     newVert->buildData.pos[VX] = x;
     newVert->buildData.pos[VY] = y;
-    newVert->buildData.refCount = (oldHEdge->twin? 4 : 2);
 
     // Compute wall_tip info.
     addEdgeTip(newVert, -oldHEdge->bspBuildInfo->pDX, -oldHEdge->bspBuildInfo->pDY, oldHEdge, oldHEdge->twin);
