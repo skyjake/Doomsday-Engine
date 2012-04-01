@@ -17,6 +17,7 @@
 # - deng_nativesdk          (Mac) Use current OS's SDK for non-distrib use
 # - deng_nodisplaymode      Disable native display mode changes
 # - deng_nofixedasm         Disable assembler fixed-point math
+# - deng_noopenal           Disable building of the OpenAL sound driver
 # - deng_nosdlmixer         Disable SDL_mixer; use dummy driver as default
 # - deng_nosnowberry        (Unix) Exclude Snowberry from installation
 # - deng_openal             Build the OpenAL sound driver

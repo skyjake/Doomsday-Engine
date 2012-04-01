@@ -424,6 +424,10 @@ String String::patternFormat(String::const_iterator& formatIter,
         output << arg.asText();
         break;
         
+    case 'b':
+        output << (int(arg.asNumber())? "true" : "false");
+        break;
+
     case 'i':
     case 'd':
         output << dint64(arg.asNumber());

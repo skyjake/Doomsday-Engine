@@ -22,7 +22,7 @@
 
 #include <QGLFormat>
 #include <QMoveEvent>
-#include <QDebug>
+#include <de/Log>
 
 #include "de_platform.h"
 #include "con_main.h"
@@ -86,7 +86,7 @@ void CanvasWindow::hideEvent(QHideEvent* ev)
 {
     QMainWindow::hideEvent(ev);
 
-    qDebug() << "CanvasWindow: hide event" << isHidden();
+    LOG_DEBUG("CanvasWindow: hide event (hidden:%b)") << isHidden();
 }
 
 void CanvasWindow::setDefaultGLFormat() // static

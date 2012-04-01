@@ -28,6 +28,7 @@
 #include <de/Log>
 
 static bool inited = false;
+static displaycolortransfer_t originalColorTransfer;
 
 static float differenceToOriginalHz(float hz);
 
@@ -70,9 +71,9 @@ struct Mode : public DisplayMode
 
     bool operator < (const Mode& b) const
     {
-        if(height == b.height)
+        if(width == b.width)
         {
-            if(width == b.width)
+            if(height == b.height)
             {
                 if(depth == b.depth)
                 {
@@ -81,9 +82,9 @@ struct Mode : public DisplayMode
                 }
                 return depth < b.depth;
             }
-            return width < b.width;
+            return height < b.height;
         }
-        return height < b.height;
+        return width < b.width;
     }
 
     void updateRatio()
@@ -149,6 +150,7 @@ int DisplayMode_Init(void)
 
     captured = false;
     DisplayMode_Native_Init();
+    DisplayMode_Native_GetColorTransfer(&originalColorTransfer);
 
     // This is used for sorting the mode set (Hz).
     originalMode = Mode::fromCurrent();
@@ -182,6 +184,8 @@ void DisplayMode_Shutdown(void)
 
     // Back to the original mode.
     DisplayMode_Change(&originalMode, false /*release captured*/);
+
+    DisplayMode_Native_SetColorTransfer(&originalColorTransfer);
 
     modes.clear();
 
@@ -262,7 +266,7 @@ boolean DisplayMode_IsEqual(const DisplayMode* a, const DisplayMode* b)
 
 int DisplayMode_Change(const DisplayMode* mode, boolean shouldCapture)
 {
-    if(Mode::fromCurrent() == *mode && shouldCapture == captured)
+    if(Mode::fromCurrent() == *mode && !shouldCapture == !captured)
     {
         LOG_DEBUG("DisplayMode: Requested mode is the same as current, ignoring.");
 
@@ -271,4 +275,20 @@ int DisplayMode_Change(const DisplayMode* mode, boolean shouldCapture)
     }
     captured = shouldCapture;
     return DisplayMode_Native_Change(mode, shouldCapture || (originalMode != *mode));
+}
+
+void DisplayMode_GetColorTransfer(displaycolortransfer_t* colors)
+{
+    /// @todo  Factor in the original color transfer function, which may be
+    /// set up specifically by the user.
+
+    DisplayMode_Native_GetColorTransfer(colors);
+}
+
+void DisplayMode_SetColorTransfer(const displaycolortransfer_t* colors)
+{
+    /// @todo  Factor in the original color transfer function, which may be
+    /// set up specifically by the user.
+
+    DisplayMode_Native_SetColorTransfer(colors);
 }

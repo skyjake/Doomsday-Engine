@@ -37,13 +37,14 @@
 #include "de_render.h"
 #include "de_ui.h"
 
+#include "displaymode.h"
 #include "rend_main.h"
 
 // MACROS ------------------------------------------------------------------
 
 #define NUM_CP_BUTTONS  11
 #define NUMITEMS(x)     (sizeof(x)/sizeof(uidata_listitem_t))
-#define RES(x, y)       (x | (y<<16))
+#define RES(x, y)       ((x) | ((y) << 16))
 #define CPID_FRAME      (UIF_ID0 | UIF_ID1)
 #define CPID_RES_X      UIF_ID0
 #define CPID_RES_Y      UIF_ID1
@@ -219,7 +220,7 @@ uidata_list_t lst_blend = {
     lstit_blend, NUMITEMS(lstit_blend), "rend-light-blend"
 };
 
-uidata_listitem_t lstit_resolution[] = {
+uidata_listitem_t* lstit_resolution; /* = {
     // 5:4
     {"1280 x 1024 (5:4 SXGA)", RES(1280, 1024)},
     {"2560 x 2048 (5:4 QSXGA)", RES(2560, 2048)},
@@ -253,9 +254,10 @@ uidata_listitem_t lstit_resolution[] = {
     {"854 x 480 (16:9 WVGA)", RES(854, 480)},
     {"1280 x 720 (16:9 WXGA/HD720)", RES(1280, 720)},
     {"1920 x 1080 (16:9 HD1080)", RES(1920, 1080)}
-};
+};*/
 uidata_list_t lst_resolution = {
-    lstit_resolution, NUMITEMS(lstit_resolution)
+    NULL, 0 // dynamically populated
+    //   lstit_resolution, NUMITEMS(lstit_resolution)
 };
 
 uidata_slider_t sld_con_alpha = { 0, 1, 0, .01f, true, "con-alpha" };
@@ -1183,6 +1185,36 @@ void CP_InitCvarSliders(ui_object_t *ob)
     }
 }
 
+static void populateDisplayResolutions(void)
+{
+    int i, k, p = 0;
+
+    lstit_resolution = Z_Recalloc(lstit_resolution,
+                                  sizeof(*lstit_resolution) * DisplayMode_Count(),
+                                  PU_APPSTATIC);
+
+    for(i = 0; i < DisplayMode_Count(); ++i)
+    {
+        const DisplayMode* mode = DisplayMode_ByIndex(i);
+        int spec = RES(mode->width, mode->height);
+
+        // Make sure we haven't added this size yet (many with different refresh rates).
+        for(k = 0; k < i; ++k)
+        {
+            if(lstit_resolution[k].data == spec) break;
+        }
+        if(k < i) continue; // Already got it.
+
+        dd_snprintf(lstit_resolution[p].text, sizeof(lstit_resolution[p].text),
+                    "%i x %i (%i:%i)", mode->width, mode->height, mode->ratioX, mode->ratioY);
+        lstit_resolution[p].data = spec;
+        ++p;
+    }
+
+    lst_resolution.items = lstit_resolution;
+    lst_resolution.count = p;
+}
+
 /**
  * Initialize and open the Control Panel.
  */
@@ -1194,6 +1226,8 @@ D_CMD(OpenPanel)
     int i;
 
     Con_Execute(CMDS_DDAY, "conclose", true, false);
+
+    populateDisplayResolutions();
 
     // The help window is hidden.
     panel_help_active = false;

@@ -23,9 +23,11 @@
 #include <QDebug>
 
 #include "de_platform.h"
-//#include <windowsx.h>
+#include <icm.h>
+#include <math.h>
 
 #include "displaymode_native.h"
+#include "window.h"
 
 #include <assert.h>
 #include <vector>
@@ -110,4 +112,32 @@ int DisplayMode_Native_Change(const DisplayMode* mode, boolean shouldCapture)
 
     currentDevMode = m;
     return true;
+}
+
+void DisplayMode_Native_SetColorTransfer(const displaycolortransfer_t* colors)
+{
+    HWND hWnd = (HWND) Window_NativeHandle(Window_Main());
+    if(hWnd)
+    {
+        HDC hDC = GetDC(hWnd);
+        if(hDC)
+        {
+            SetDeviceGammaRamp(hDC, (void*) colors->table);
+            ReleaseDC(hWnd, hDC);
+        }
+    }
+}
+
+void DisplayMode_Native_GetColorTransfer(displaycolortransfer_t* colors)
+{
+    HWND hWnd = (HWND) Window_NativeHandle(Window_Main());
+    if(hWnd)
+    {
+        HDC hDC = GetDC(hWnd);
+        if(hDC)
+        {
+            GetDeviceGammaRamp(hDC, (void*) colors->table);
+            ReleaseDC(hWnd, hDC);
+        }
+    }
 }
