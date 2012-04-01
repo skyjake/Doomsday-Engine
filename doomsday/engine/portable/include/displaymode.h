@@ -42,6 +42,10 @@ typedef struct displaymode_s {
     int ratioY;
 } DisplayMode;
 
+typedef struct displaycolortransfer_s {
+    unsigned short table[3 * 256]; // 0-255:red, 256-511:green, 512-767:blue (range: 0..ffff)
+} displaycolortransfer_t;
+
 /**
  * Initializes the DisplayMode class. Enumerates all available display modes and
  * saves the current display mode. Must be called at engine startup.
@@ -113,6 +117,20 @@ boolean DisplayMode_IsEqual(const DisplayMode* a, const DisplayMode* b);
  * when attempting to change to the current mode).
  */
 int DisplayMode_Change(const DisplayMode* mode, boolean shouldCapture);
+
+/**
+ * Gets the current color transfer table.
+ *
+ * @param colors  Color transfer.
+ */
+void DisplayMode_GetColorTransfer(displaycolortransfer_t* colors);
+
+/**
+ * Sets the color transfer table.
+ *
+ * @param colors  Color transfer.
+ */
+void DisplayMode_SetColorTransfer(const displaycolortransfer_t* colors);
 
 #ifdef __cplusplus
 } // extern "C"

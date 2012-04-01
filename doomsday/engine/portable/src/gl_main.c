@@ -52,11 +52,12 @@
 #include "materialvariant.h"
 #include "displaymode.h"
 
+/*
 #if defined(WIN32) && defined(WIN32_GAMMA)
-#  include <icm.h>
-#  include <math.h>
 #endif
+*/
 
+/*
 // SDL's gamma settings seem more robust.
 #if 0
 #if defined(UNIX) && defined(HAVE_X11_EXTENSIONS_XF86VMODE_H)
@@ -66,16 +67,18 @@
 #endif
 #endif
 
-#if !defined(WIN32_GAMMA) && !defined(XFREE_GAMMA)
-#  define SDL_GAMMA
-#  include <SDL.h>
-#endif
+#ifdef MACOSX
+#  define MAC_GAMMA
+#else
+#  if !defined(WIN32_GAMMA) && !defined(XFREE_GAMMA)
+#    define SDL_GAMMA
+#    include <SDL.h>
+#  endif
+#endif*/
 
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
-
-typedef unsigned short gramp_t[3 * 256];
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -116,7 +119,7 @@ float   glNearClip, glFarClip;
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean initGLOk = false;
-static gramp_t original_gamma_ramp;
+//static gramp_t original_gamma_ramp;
 static boolean gamma_support = false;
 static float oldgamma, oldcontrast, oldbright;
 static int fogModeDefault = 0;
@@ -195,18 +198,13 @@ void GL_DoUpdate(void)
     r_framecounter++;
 }
 
-/**
- * On Win32, use the gamma ramp functions in the Win32 API. On Linux, use
- * the XFree86-VidMode extension.
- */
-void GL_GetGammaRamp(unsigned short *ramp)
+void GL_GetGammaRamp(displaycolortransfer_t *ramp)
 {
-    if(ArgCheck("-noramp"))
-    {
-        gamma_support = false;
-        return;
-    }
+    if(!gamma_support) return;
 
+    DisplayMode_GetColorTransfer(ramp);
+
+    /*
 #ifdef SDL_GAMMA
     gamma_support = true;
     if(SDL_GetGammaRamp(ramp, ramp + 256, ramp + 512) < 0)
@@ -214,135 +212,37 @@ void GL_GetGammaRamp(unsigned short *ramp)
         gamma_support = false;
     }
 #endif
+    */
 
-#if defined(WIN32) && defined(WIN32_GAMMA)
-    {
-        HWND    hWnd = (HWND) Window_NativeHandle(Window_Main());
-        HDC     hDC;
-
-        if(!hWnd)
-        {
-            Sys_MessageBox(MBT_ERROR, "Gamma Correction", "Main window not available.", 0);
-        }
-        else
-        {
-            hDC = GetDC(hWnd);
-
-            if(!hDC)
-            {
-                Con_Message("GL_GetGammaRamp: Failed getting device context.");
-                gamma_support = false;
-            }
-            else
-            {
-                gamma_support = false;
-                if(GetDeviceGammaRamp(hDC, (void*) ramp))
-                {
-                    gamma_support = true;
-                }
-                ReleaseDC(hWnd, hDC);
-            }
-        }
-    }
-#endif
-
-#ifdef XFREE_GAMMA
-    {
-        Display *dpy = XOpenDisplay(NULL);
-        int screen = DefaultScreen(dpy);
-        int event = 0, error = 0;
-        int rampSize = 0;
-
-        Con_Message("GL_GetGammaRamp:\n");
-        if(!dpy || !XF86VidModeQueryExtension(dpy, &event, &error))
-        {
-            Con_Message("  XFree86-VidModeExtension not available.\n");
-            gamma_support = false;
-            return;
-        }
-        VERBOSE(Con_Message("  XFree86-VidModeExtension: event# %i "
-                            "error# %i\n", event, error));
-        XF86VidModeGetGammaRampSize(dpy, screen, &rampSize);
-        Con_Message("  Gamma ramp size: %i\n", rampSize);
-        if(rampSize != 256)
-        {
-            Con_Message("  This implementation only understands ramp size "
-                        "256.\n  Please complain to the developer.\n");
-            gamma_support = false;
-            XCloseDisplay(dpy);
-            return;
-        }
-
-        // Get the current ramps.
-        XF86VidModeGetGammaRamp(dpy, screen, rampSize, ramp, ramp + 256,
-                                ramp + 512);
-        XCloseDisplay(dpy);
-
-        gamma_support = true;
-    }
-#endif
 }
 
-void GL_SetGammaRamp(unsigned short* ramp)
+void GL_SetGammaRamp(const displaycolortransfer_t* ramp)
 {
-    if(!gamma_support)
-        return;
+    if(!gamma_support) return;
 
+    DisplayMode_SetColorTransfer(ramp);
+
+    /*
 #ifdef SDL_GAMMA
-    SDL_SetGammaRamp(ramp, ramp + 256, ramp + 512);
-#endif
-
-#if defined(WIN32) && defined(WIN32_GAMMA)
-    { HWND hWnd;
-    if((hWnd = (HWND) Window_NativeHandle(Window_Main())))
+    if(SDL_SetGammaRamp(ramp, ramp + 256, ramp + 512) < 0)
     {
-        HDC hDC;
-        if((hDC = GetDC(hWnd)))
-        {
-            SetDeviceGammaRamp(hDC, (void*) ramp);
-            ReleaseDC(hWnd, hDC);
-        }
-        else
-        {
-            Con_Message("GL_SetGammaRamp: Failed getting device context.");
-            gamma_support = false;
-        }
+        Con_Message("Failed to set gamma with SDL.\n");
     }
-    else
-    {
-        Sys_MessageBox(MBT_ERROR, "Gamma Correction", "Main window not available.", 0);
-    }}
 #endif
-
-#ifdef XFREE_GAMMA
-    { Display* dpy;
-    if((dpy = XOpenDisplay(0)))
-    {
-        int screen = DefaultScreen(dpy);
-        // We assume that the gamme ramp size actually is 256.
-        XF86VidModeSetGammaRamp(dpy, screen, 256, ramp, ramp + 256, ramp + 512);
-        XCloseDisplay(dpy);
-    }
-    else
-    {
-        Con_Message("GL_SetGammaRamp: Failed acquiring Display handle.");
-        gamma_support = false;
-    }}
-#endif
+    */
 }
 
 /**
  * Calculate a gamma ramp and write the result to the location pointed to.
  *
- * PRE: 'ramp' must point to a ushort[256] area of memory.
+ * @todo  Allow for finer control of the curves (separate red, green, blue).
  *
- * @param ramp          Ptr to the ramp table to write to.
+ * @param ramp          Ptr to the ramp table to write to. Must point to a ushort[768] area of memory.
  * @param gamma         Non-linear factor (curvature; >1.0 multiplies).
  * @param contrast      Steepness.
  * @param bright        Brightness, uniform offset.
  */
-void GL_MakeGammaRamp(unsigned short *ramp, float gamma, float contrast,
-                      float bright)
+void GL_MakeGammaRamp(unsigned short *ramp, float gamma, float contrast, float bright)
 {
     int         i;
     double      ideal[256]; // After processing clamped to unsigned short.
@@ -391,14 +291,14 @@ void GL_MakeGammaRamp(unsigned short *ramp, float gamma, float contrast,
  */
 void GL_SetGamma(void)
 {
-    gramp_t myramp;
+    displaycolortransfer_t myramp;
 
     oldgamma = vid_gamma;
     oldcontrast = vid_contrast;
     oldbright = vid_bright;
 
-    GL_MakeGammaRamp(myramp, vid_gamma, vid_contrast, vid_bright);
-    GL_SetGammaRamp(myramp);
+    GL_MakeGammaRamp(myramp.table, vid_gamma, vid_contrast, vid_bright);
+    GL_SetGammaRamp(&myramp);
 }
 
 static void printConfiguration(void)
@@ -432,8 +332,7 @@ boolean GL_EarlyInit(void)
 
     Con_Message("Initializing Render subsystem...\n");
 
-    // Get the original gamma ramp and check if ramps are supported.
-    GL_GetGammaRamp(original_gamma_ramp);
+    gamma_support = !ArgCheck("-noramp");
 
     // We are simple people; two texture units is enough.
     numTexUnits = MIN_OF(GL_state.maxTexUnits, MAX_TEX_UNITS);
@@ -557,11 +456,13 @@ void GL_Shutdown(void)
     // Shutdown OpenGL.
     Sys_GLShutdown();
 
+    /*
     // Restore original gamma.
     if(!ArgExists("-leaveramp"))
     {
         GL_SetGammaRamp(original_gamma_ramp);
     }
+    */
 
     initGLOk = false;
 }

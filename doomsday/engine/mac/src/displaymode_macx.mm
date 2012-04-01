@@ -195,3 +195,39 @@ void DisplayMode_Native_Raise(void* nativeHandle)
     NSWindow* wnd = [handle window];
     [wnd setLevel:CGShieldingWindowLevel()];
 }
+
+void DisplayMode_Native_GetColorTransfer(displaycolortransfer_t* colors)
+{
+    const uint size = 256;
+    CGGammaValue red[size];
+    CGGammaValue green[size];
+    CGGammaValue blue[size];
+    uint32_t count = 0;
+
+    CGGetDisplayTransferByTable(kCGDirectMainDisplay, size, red, green, blue, &count);
+    assert(count == size);
+
+    for(uint i = 0; i < size; ++i)
+    {
+        colors->table[i]          = (unsigned short) (red[i]   * 0xffff);
+        colors->table[i + size]   = (unsigned short) (green[i] * 0xffff);
+        colors->table[i + 2*size] = (unsigned short) (blue[i]  * 0xffff);
+    }
+}
+
+void DisplayMode_Native_SetColorTransfer(const displaycolortransfer_t* colors)
+{
+    const uint size = 256;
+    CGGammaValue red[size];
+    CGGammaValue green[size];
+    CGGammaValue blue[size];
+
+    for(uint i = 0; i < size; ++i)
+    {
+        red[i]   = colors->table[i]/float(0xffff);
+        green[i] = colors->table[i + size]/float(0xffff);
+        blue[i]  = colors->table[i + 2*size]/float(0xffff);
+    }
+
+    CGSetDisplayTransferByTable(kCGDirectMainDisplay, size, red, green, blue);
+}

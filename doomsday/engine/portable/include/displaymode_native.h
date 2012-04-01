@@ -34,6 +34,8 @@ extern "C" {
 
 void DisplayMode_Native_Init(void);
 
+void DisplayMode_Native_Shutdown(void);
+
 int DisplayMode_Native_Count(void);
 
 void DisplayMode_Native_GetMode(int index, DisplayMode* mode);
@@ -42,7 +44,9 @@ void DisplayMode_Native_GetCurrentMode(DisplayMode* mode);
 
 int DisplayMode_Native_Change(const DisplayMode* mode, boolean shouldCapture);
 
-void DisplayMode_Native_Shutdown(void);
+void DisplayMode_Native_GetColorTransfer(displaycolortransfer_t* colors);
+
+void DisplayMode_Native_SetColorTransfer(const displaycolortransfer_t* colors);
 
 #ifdef MACOSX
 void DisplayMode_Native_Raise(void* handle);

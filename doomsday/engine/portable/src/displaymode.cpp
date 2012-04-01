@@ -28,6 +28,7 @@
 #include <de/Log>
 
 static bool inited = false;
+static displaycolortransfer_t originalColorTransfer;
 
 static float differenceToOriginalHz(float hz);
 
@@ -149,6 +150,7 @@ int DisplayMode_Init(void)
 
     captured = false;
     DisplayMode_Native_Init();
+    DisplayMode_Native_GetColorTransfer(&originalColorTransfer);
 
     // This is used for sorting the mode set (Hz).
     originalMode = Mode::fromCurrent();
@@ -182,6 +184,8 @@ void DisplayMode_Shutdown(void)
 
     // Back to the original mode.
     DisplayMode_Change(&originalMode, false /*release captured*/);
+
+    DisplayMode_Native_SetColorTransfer(&originalColorTransfer);
 
     modes.clear();
 
@@ -271,4 +275,20 @@ int DisplayMode_Change(const DisplayMode* mode, boolean shouldCapture)
     }
     captured = shouldCapture;
     return DisplayMode_Native_Change(mode, shouldCapture || (originalMode != *mode));
+}
+
+void DisplayMode_GetColorTransfer(displaycolortransfer_t* colors)
+{
+    /// @todo  Factor in the original color transfer function, which may be
+    /// set up specifically by the user.
+
+    DisplayMode_Native_GetColorTransfer(colors);
+}
+
+void DisplayMode_SetColorTransfer(const displaycolortransfer_t* colors)
+{
+    /// @todo  Factor in the original color transfer function, which may be
+    /// set up specifically by the user.
+
+    DisplayMode_Native_SetColorTransfer(colors);
 }
