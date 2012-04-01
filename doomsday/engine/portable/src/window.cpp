@@ -185,21 +185,18 @@ struct ddwindow_s
         if(flags & DDWF_FULLSCREEN)
         {
             const DisplayMode* mode = DisplayMode_FindClosest(width(), height(), colorDepthBits, 0);
-            if(mode && !DisplayMode_IsEqual(DisplayMode_Current(), mode))
+            if(mode && DisplayMode_Change(mode, true /* fullscreen: capture */))
             {
-                if(DisplayMode_Change(mode, true /* fullscreen: capture */))
-                {
-                    Window_TrapMouse(this, true);
+                Window_TrapMouse(this, true);
 
-                    geometry.size.width = DisplayMode_Current()->width;
-                    geometry.size.height = DisplayMode_Current()->height;
+                geometry.size.width = DisplayMode_Current()->width;
+                geometry.size.height = DisplayMode_Current()->height;
 
 #ifdef MACOSX
-                    // Pull the window again over the shield after the mode change.
-                    DisplayMode_Native_Raise(Window_NativeHandle(this));
+                // Pull the window again over the shield after the mode change.
+                DisplayMode_Native_Raise(Window_NativeHandle(this));
 #endif
-                    return true;
-                }
+                return true;
             }
         }
         else
@@ -317,8 +314,8 @@ struct ddwindow_s
 
     bool applyAttributes(int* attribs)
     {
+        //bool wasFullscreen = (flags & DDWF_FULLSCREEN) != 0;
         bool changed = false;
-        bool wasFullscreen = (flags & DDWF_FULLSCREEN) != 0;
 
         // Parse the attributes array and check the values.
         assert(attribs);
@@ -407,6 +404,7 @@ struct ddwindow_s
             return true;
         }
 
+        /*
         // Check geometry for validity (window must be on the desktop
         // at least partially).
         if(!wasFullscreen && !(flags & DDWF_FULLSCREEN) && !isGeometryValid())
@@ -415,6 +413,7 @@ struct ddwindow_s
             Con_Message("Window geometry is unacceptable.\n");
             return false;
         }
+        */
 
         // Seems ok, apply them.
         applyWindowGeometry();
@@ -803,11 +802,9 @@ static void windowFocusChanged(Canvas& canvas, bool focus)
     Window* wnd = canvasToWindow(canvas);
     wnd->assertWindow();
 
-    LOG_DEBUG("windowFocusChanged, focus:")
-            << (focus? "true" : "false")
-            << " fullscreen:" << (Window_IsFullscreen(wnd)? "true" : "false")
-            << " hidden:" << (wnd->widget->isHidden()? "true" : "false")
-            << " minimized:" << (wnd->widget->isMinimized()? "true" : "false");
+    LOG_DEBUG("windowFocusChanged focus:%b fullscreen:%b hidden:%b minimized:%b")
+            << focus << Window_IsFullscreen(wnd)
+            << wnd->widget->isHidden() << wnd->widget->isMinimized();
 
     if(!focus)
     {
