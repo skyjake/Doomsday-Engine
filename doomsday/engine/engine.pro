@@ -38,8 +38,6 @@ DEFINES += __DOOMSDAY__
 }
 
 win32 {
-    DEFINES += WIN32_GAMMA
-
     RC_FILE = win32/res/doomsday.rc
     OTHER_FILES += api/doomsday.def
 }
