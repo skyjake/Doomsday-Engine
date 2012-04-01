@@ -54,10 +54,10 @@ else {
 
     !freebsd-*: LIBS += -ldl
 
-    # DisplayMode uses the Xrandr extension.
+    # DisplayMode uses the Xrandr and XFree86-VideoMode extensions.
     !deng_nodisplaymode {
-        QMAKE_CXXFLAGS += $$system(pkg-config xrandr --cflags)
-                  LIBS += $$system(pkg-config xrandr --libs)
+        QMAKE_CXXFLAGS += $$system(pkg-config xrandr xxf86vm --cflags)
+                  LIBS += $$system(pkg-config xrandr xxf86vm --libs)
     }
 }
 
