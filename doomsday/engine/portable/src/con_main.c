@@ -2143,12 +2143,17 @@ static void Con_Alias(char *aName, char *command)
 }
 
 D_CMD(Help)
-{
+{      
+    char actKeyName[40];
+
+    strcpy(actKeyName, B_ShortNameForKey(consoleActiveKey));
+    actKeyName[0] = toupper(actKeyName[0]);
+
     Con_PrintRuler();
     Con_FPrintf(CPF_YELLOW | CPF_CENTER, "-=- " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT " Console -=-\n");
     Con_Printf("Keys:\n");
-    Con_Printf("Tilde          Open/close the console.\n");
-    Con_Printf("Shift-Tilde    Switch between half and full screen mode.\n");
+    Con_Printf("%-14s Open/close the console.\n", actKeyName);
+    Con_Printf("Shift-%-8s Switch between half and full screen mode.\n", actKeyName);
     Con_Printf("F5             Clear the buffer.\n");
     Con_Printf("Alt-C          Clear the command line.\n");
     Con_Printf("Insert         Switch between replace and insert modes.\n");
