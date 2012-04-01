@@ -166,11 +166,11 @@ typedef enum {
 #define __BYTEBOOL__
 #  ifndef __cplusplus
 #    undef false
-#    define false             0
+#    define false           0
 #    undef true
-#    define true              1
+#    define true            1
 #  else
-#    CPP_BOOL(x)            ((x) != 0)
+#    define CPP_BOOL(x)     ((x) != 0)
 #  endif
 typedef int                 ddboolean_t;
 #endif
