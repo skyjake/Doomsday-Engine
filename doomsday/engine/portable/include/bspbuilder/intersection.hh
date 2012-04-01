@@ -117,7 +117,12 @@ public:
     HPlane* setDY(double dy);
 
     /// @todo Does not belong here.
-    BspHEdgeInfo* partitionHEdgeInfo() { return &hedgeInfo; }
+    void setPartitionHEdgeInfo(const BspHEdgeInfo& info) {
+        memcpy(&hedgeInfo, &info, sizeof(hedgeInfo));
+    }
+
+    /// @todo Does not belong here.
+    const BspHEdgeInfo& partitionHEdgeInfo() const { return hedgeInfo; }
 
     /**
      * Empty all intersections from the specified HPlane.

@@ -191,7 +191,7 @@ public:
      * Retrieve the root SuperBlock.
      * @return  Root SuperBlock instance.
      */
-    SuperBlock* root();
+    SuperBlock& root();
 
     /**
      * Find the axis-aligned bounding box defined by the vertices of all

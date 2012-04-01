@@ -51,27 +51,19 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_MAP_BSP_BUILDER
-#define LIBDENG_MAP_BSP_BUILDER
+#ifndef LIBDENG_MAP_EDIT_BSP_H
+#define LIBDENG_MAP_EDIT_BSP_H
 
 #include "dd_types.h"
 
-struct hplane_s;
-struct superblock_s;
-struct hplaneintercept_s;
-struct hedge_s;
-struct edgetip_s;
 struct vertex_s;
-struct sector_s;
 struct gamemap_s;
-struct binarytree_s;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 struct bspbuilder_c_s;
-
 typedef struct bspbuilder_c_s BspBuilder_c;
 
 // CVar for tuning the BSP edge split cost factor.
@@ -100,6 +92,7 @@ boolean BspBuilder_Build(BspBuilder_c* builder, struct gamemap_s* map);
 } // extern "C"
 #endif
 
-void MPE_SaveBsp(BspBuilder_c* builder, struct gamemap_s* dest, struct vertex_s*** vertexes, uint* numVertexes);
+void MPE_SaveBsp(BspBuilder_c* builder, struct gamemap_s* map, struct vertex_s*** editableVertexes,
+    uint* numEditableVertexes);
 
-#endif /// LIBDENG_MAP_BSP_BUILDER
+#endif /// LIBDENG_MAP_EDIT_BSP_H

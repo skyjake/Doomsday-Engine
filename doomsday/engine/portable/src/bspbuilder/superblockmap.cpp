@@ -328,9 +328,9 @@ SuperBlockmap::~SuperBlockmap()
     delete d;
 }
 
-SuperBlock* SuperBlockmap::root()
+SuperBlock& SuperBlockmap::root()
 {
-    return static_cast<SuperBlock*>(KdTreeNode_UserData(KdTree_Root(d->kdTree)));
+    return *static_cast<SuperBlock*>(KdTreeNode_UserData(KdTree_Root(d->kdTree)));
 }
 
 bool SuperBlockmap::isLeaf(const SuperBlock& block) const
@@ -367,23 +367,18 @@ static int findHEdgeBoundsWorker(SuperBlock* block, void* parameters)
 
 void SuperBlockmap::clear()
 {
-    SuperBlock* block = root();
-    if(block) d->clearBlockWorker(*block);
+    d->clearBlockWorker(root());
 }
 
 void SuperBlockmap::findHEdgeBounds(AABoxf& aaBox)
 {
-    SuperBlock* block = root();
-    if(block)
+    findhedgelistboundsparams_t parm;
+    parm.initialized = false;
+    root().traverse(findHEdgeBoundsWorker, (void*)&parm);
+    if(parm.initialized)
     {
-        findhedgelistboundsparams_t parm;
-        parm.initialized = false;
-        block->traverse(findHEdgeBoundsWorker, (void*)&parm);
-        if(parm.initialized)
-        {
-            V2f_CopyBox(aaBox.arvec2, parm.bounds.arvec2);
-            return;
-        }
+        V2f_CopyBox(aaBox.arvec2, parm.bounds.arvec2);
+        return;
     }
 
     // Clear.

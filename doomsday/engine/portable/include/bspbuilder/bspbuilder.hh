@@ -83,11 +83,13 @@ public:
     void deleteHEdgeIntercept(HEdgeIntercept* intercept);
 
 private:
-    BspLeaf* createBSPLeaf(SuperBlock* hedgeList);
+    BspLeaf* createBSPLeaf(SuperBlock& hedgeList);
 
-    const HPlaneIntercept* makeHPlaneIntersection(HPlane* hplane, HEdge* hedge, int leftSide);
+    const HPlaneIntercept* makeHPlaneIntersection(HPlane& hplane, HEdge* hedge, int leftSide);
 
-    const HPlaneIntercept* makeIntersection(HPlane* hplane, HEdge* hedge, int leftSide);
+    const HPlaneIntercept* makeIntersection(HPlane& hplane, HEdge* hedge, int leftSide);
+
+    SuperBlockmap* createBlockmap(const AABoxf& mapBounds);
 
     /**
      * Initially create all half-edges, one for each side of a linedef.
@@ -96,13 +98,11 @@ private:
      */
     SuperBlockmap* createInitialHEdges(GameMap* map);
 
-    void mergeIntersections(HPlane* intersections);
+    void mergeIntersections(HPlane& intersections);
 
-    void buildHEdgesAtIntersectionGaps(HPlane* hplane,
-        SuperBlock* rightList, SuperBlock* leftList);
+    void buildHEdgesAtIntersectionGaps(HPlane& hplane, SuperBlock& rightList, SuperBlock& leftList);
 
-    void addEdgeTip(Vertex* vert, double dx, double dy, HEdge* back,
-        HEdge* front);
+    void addEdgeTip(Vertex* vert, double dx, double dy, HEdge* back, HEdge* front);
 
     /**
      * Splits the given half-edge at the point (x,y). The new half-edge is returned.
@@ -134,8 +134,7 @@ public:
      *       reworked, heavily). I think it is important that both these routines follow
      *       the exact same logic.
      */
-    void divideHEdge(HEdge* hedge, HPlane* hplane,
-        SuperBlock* rightList, SuperBlock* leftList);
+    void divideHEdge(HEdge* hedge, HPlane& hplane, SuperBlock& rightList, SuperBlock& leftList);
 
 private:
     /**
@@ -147,7 +146,7 @@ private:
      *
      * @return  @c true= A suitable partition was found.
      */
-    boolean choosePartition(SuperBlock* hedgeList, size_t depth, HPlane* hplane);
+    boolean choosePartition(SuperBlock& hedgeList, size_t depth, HPlane& hplane);
 
     /**
      * Takes the half-edge list and determines if it is convex, possibly converting it
@@ -169,8 +168,8 @@ private:
      * @param hplane        HPlaneIntercept list for storing any new intersections.
      * @return  @c true iff successfull.
      */
-    boolean buildNodes(SuperBlock* superblock, struct binarytree_s** parent,
-        size_t depth, HPlane* hplane);
+    boolean buildNodes(SuperBlock& superblock, struct binarytree_s** parent,
+                       size_t depth, HPlane& hplane);
 
     /**
      * Traverse the BSP tree and put all the half-edges in each BSP leaf into clockwise
@@ -187,11 +186,11 @@ private:
      * lists based on the given partition line. Adds any intersections onto the
      * intersection list as it goes.
      */
-    void partitionHEdges(SuperBlock* hedgeList, SuperBlock* rightList,
-        SuperBlock* leftList, HPlane* hplane);
+    void partitionHEdges(HPlane& hplane, SuperBlock& hedgeList,
+                         SuperBlock& rightList, SuperBlock& leftList);
 
-    void addHEdgesBetweenIntercepts(HPlane* hplane,
-        HEdgeIntercept* start, HEdgeIntercept* end, HEdge** right, HEdge** left);
+    void addHEdgesBetweenIntercepts(HPlane& hplane, HEdgeIntercept* start, HEdgeIntercept* end,
+                                    HEdge** right, HEdge** left);
 
     /**
      * Analyze the intersection list, and add any needed minihedges to the given half-edge lists
@@ -199,8 +198,7 @@ private:
      *
      * @note All the intersections in the hplane will be free'd back into the quick-alloc list.
      */
-    void addMiniHEdges(HPlane* hplane, SuperBlock* rightList,
-                       SuperBlock* leftList);
+    void addMiniHEdges(HPlane& hplane, SuperBlock& rightList, SuperBlock& leftList);
 
     /**
      * Search the given list for an intercept, if found; return it.
@@ -210,26 +208,26 @@ private:
      *
      * @return  Ptr to the found intercept, else @c NULL;
      */
-    const HPlaneIntercept* hplaneInterceptByVertex(HPlane* hplane, Vertex* vertex);
+    const HPlaneIntercept* hplaneInterceptByVertex(HPlane& hplane, Vertex* vertex);
 
     /**
      * Create a new intersection.
      */
-    HEdgeIntercept* newHEdgeIntercept(Vertex* vertex,
-        const BspHEdgeInfo* partition, boolean lineDefIsSelfReferencing);
+    HEdgeIntercept* newHEdgeIntercept(Vertex* vertex, const BspHEdgeInfo* partition,
+                                      boolean lineDefIsSelfReferencing);
 
     /**
      * Create a new half-edge.
      */
     HEdge* newHEdge(LineDef* line, LineDef* sourceLine, Vertex* start, Vertex* end,
-        Sector* sec, boolean back);
+                    Sector* sec, boolean back);
 
     /**
      * Create a clone of an existing half-edge.
      */
     HEdge* cloneHEdge(const HEdge& other);
 
-    HEdgeIntercept* hedgeInterceptByVertex(HPlane* hplane, Vertex* vertex);
+    HEdgeIntercept* hedgeInterceptByVertex(HPlane& hplane, Vertex* vertex);
 
     /**
      * Check whether a line with the given delta coordinates and beginning at this
