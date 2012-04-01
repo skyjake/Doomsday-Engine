@@ -27,7 +27,9 @@
  * 02110-1301 USA</small>
  */
 
-#include <math.h>
+#include <cmath>
+#include <vector>
+#include <algorithm>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -79,8 +81,7 @@ typedef struct partitioncost_s {
 } PartitionCost;
 
 // Used when sorting BSP leaf half-edges by angle around midpoint.
-static size_t hedgeSortBufSize;
-static HEdge** hedgeSortBuf;
+typedef std::vector<HEdge*>HEdgeSortBuffer;
 
 #if _DEBUG
 void BSP_PrintSuperBlockhedges(SuperBlock* superblock);
@@ -123,38 +124,42 @@ static boolean getAveragedCoords(BspLeaf* leaf, double* x, double* y)
  *
  * @algorithm "double bubble"
  */
-static void sorthedgesByAngleAroundPoint(HEdge** hedges, size_t total,
-    double x, double y)
+static void sortHEdgesByAngleAroundPoint(HEdgeSortBuffer& hedges,
+    HEdgeSortBuffer::size_type total, double x, double y)
 {
-    size_t i;
+    HEdgeSortBuffer::iterator begin = hedges.begin();
+    HEdgeSortBuffer::iterator end = begin + total;
+    bool done = false;
 
-    i = 0;
-    while(i + 1 < total)
+    while(begin != end && !done)
     {
-        HEdge* a = hedges[i];
-        HEdge* b = hedges[i+1];
-        double angle1, angle2;
-
-        angle1 = M_SlopeToAngle(a->v[0]->buildData.pos[VX] - x,
-                                a->v[0]->buildData.pos[VY] - y);
-        angle2 = M_SlopeToAngle(b->v[0]->buildData.pos[VX] - x,
-                                b->v[0]->buildData.pos[VY] - y);
-
-        if(angle1 + ANG_EPSILON < angle2)
+        done = true;
+        HEdgeSortBuffer::iterator it(begin);
+        HEdgeSortBuffer::iterator next(begin);
+        ++next;
+        while(next != end)
         {
-            // Swap them.
-            hedges[i] = b;
-            hedges[i + 1] = a;
+            HEdge* a = *it;
+            HEdge* b = *next;
+            double angle1 = M_SlopeToAngle(a->v[0]->buildData.pos[VX] - x,
+                                           a->v[0]->buildData.pos[VY] - y);
+            double angle2 = M_SlopeToAngle(b->v[0]->buildData.pos[VX] - x,
+                                           b->v[0]->buildData.pos[VY] - y);
+
+            if(angle1 + ANG_EPSILON < angle2)
+            {
+                // Swap them.
+                std::swap(*next, *it);
+                done = false;
+            }
 
             // Bubble down.
-            if(i > 0)
-                i--;
+            ++it;
+            ++next;
         }
-        else
-        {
-            // Bubble up.
-            i++;
-        }
+
+        // Bubble up.
+        --end;
     }
 }
 
@@ -168,22 +173,28 @@ static void sorthedgesByAngleAroundPoint(HEdge** hedges, size_t total,
  * @param x             X coordinate of the point to order around.
  * @param y             Y coordinate of the point to order around.
  */
-static void clockwiseOrder(HEdge** headPtr, uint num, double x, double y)
+static void clockwiseOrder(HEdgeSortBuffer& sortBuffer, HEdge** headPtr,
+    uint num, double x, double y)
 {
     HEdge* hedge;
     uint i;
 
-    // Insert ptrs to the hedges into the sort buffer.
+    // Ensure the sort buffer is large enough.
+    if(num > sortBuffer.size())
+    {
+        sortBuffer.resize(num);
+    }
+
+    // Insert the hedges into the sort buffer.
     for(hedge = *headPtr, i = 0; hedge; hedge = hedge->next, ++i)
     {
-        hedgeSortBuf[i] = hedge;
+        sortBuffer[i] = hedge;
     }
-    hedgeSortBuf[i] = NULL; // Terminate.
 
     if(i != num)
         Con_Error("clockwiseOrder: Miscounted?");
 
-    sorthedgesByAngleAroundPoint(hedgeSortBuf, num, x, y);
+    sortHEdgesByAngleAroundPoint(sortBuffer, num, x, y);
 
     // Re-link the half-edge list in the order of the sorted array.
     *headPtr = NULL;
@@ -192,8 +203,8 @@ static void clockwiseOrder(HEdge** headPtr, uint num, double x, double y)
         uint idx = (num - 1) - i;
         uint j = idx % num;
 
-        hedgeSortBuf[j]->next = *headPtr;
-        *headPtr = hedgeSortBuf[j];
+        sortBuffer[j]->next = *headPtr;
+        *headPtr = sortBuffer[j];
     }
 
 /*#if _DEBUG
@@ -209,16 +220,6 @@ static void clockwiseOrder(HEdge** headPtr, uint num, double x, double y)
                     hedge->v[1]->V_pos[VX], hedge->v[1]->V_pos[VY]);
     }
 #endif*/
-}
-
-static void preparehedgeSortBuffer(uint numhedges)
-{
-    // Do we need to enlarge our sort buffer?
-    if(numhedges + 1 > hedgeSortBufSize)
-    {
-        hedgeSortBufSize = numhedges + 1;
-        hedgeSortBuf = (HEdge**)M_Realloc(hedgeSortBuf, hedgeSortBufSize * sizeof(*hedgeSortBuf));
-    }
 }
 
 static void sanityCheckClosed(const BspLeaf* leaf)
@@ -303,10 +304,11 @@ static boolean sanityCheckHasRealhedge(const BspLeaf* leaf)
     return false;
 }
 
-static int C_DECL clockwiseLeaf(BinaryTree* tree, void* /*parameters*/)
+static int C_DECL clockwiseLeaf(BinaryTree* tree, void* parameters)
 {
     if(BinaryTree_IsLeaf(tree))
     {
+        HEdgeSortBuffer& sortBuffer = *static_cast<HEdgeSortBuffer*>(parameters);
         BspLeaf* leaf = (BspLeaf*) BinaryTree_UserData(tree);
         double midPoint[2] = { 0, 0 };
         HEdge* hedge;
@@ -318,9 +320,7 @@ static int C_DECL clockwiseLeaf(BinaryTree* tree, void* /*parameters*/)
         for(hedge = leaf->hedge; hedge; hedge = hedge->next)
             leaf->hedgeCount++;
 
-        // Ensure the sort buffer is large enough.
-        preparehedgeSortBuffer(leaf->hedgeCount);
-        clockwiseOrder(&leaf->hedge, leaf->hedgeCount, midPoint[VX], midPoint[VY]);
+        clockwiseOrder(sortBuffer, &leaf->hedge, leaf->hedgeCount, midPoint[VX], midPoint[VY]);
 
         if(leaf->hedge)
         {
@@ -377,19 +377,8 @@ static int C_DECL clockwiseLeaf(BinaryTree* tree, void* /*parameters*/)
 
 void BspBuilder::windLeafs(BinaryTree* rootNode)
 {
-    // Init half-edge angle sort buffer.
-    hedgeSortBufSize = 0;
-    hedgeSortBuf = NULL;
-
-    // Wind all BspLeafs.
-    BinaryTree_PostOrder(rootNode, clockwiseLeaf, NULL/*no parameters*/);
-
-    // Free temporary storage.
-    if(hedgeSortBuf)
-    {
-        M_Free(hedgeSortBuf);
-        hedgeSortBuf = NULL;
-    }
+    HEdgeSortBuffer sortBuffer;
+    BinaryTree_PostOrder(rootNode, clockwiseLeaf, static_cast<void*>(&sortBuffer));
 }
 
 static void evalPartitionCostForHEdge(const BspHEdgeInfo* partInfo,
@@ -731,11 +720,6 @@ static boolean lineDefHasSelfRef(LineDef* lineDef)
     return !!(lineDef->buildData.mlFlags & MLF_SELFREF);
 }
 
-enum {
-   RIGHT = 0,
-   LEFT
-};
-
 const HPlaneIntercept* BspBuilder::makeHPlaneIntersection(HPlane& hplane, HEdge* hedge, int leftSide)
 {
     HEdgeIntercept* hedgeIntercept;
@@ -805,6 +789,11 @@ static __inline void calcIntersection(BspHEdgeInfo* hedge, const BspHEdgeInfo* o
 void BspBuilder::divideHEdge(HEdge* hedge, HPlane& hplane, SuperBlock& rightList,
     SuperBlock& leftList)
 {
+    enum {
+       RIGHT = 0,
+       LEFT
+    };
+
     // Get state of lines' relation to each other.
     const BspHEdgeInfo& info = hplane.partitionHEdgeInfo();
     double a = M_PerpDist(info.pDX, info.pDY, info.pPerp, info.pLength, hedge->bspBuildInfo->pSX, hedge->bspBuildInfo->pSY);
