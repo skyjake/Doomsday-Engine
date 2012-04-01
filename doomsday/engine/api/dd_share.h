@@ -558,6 +558,7 @@ typedef enum {
     EV_JOY_BUTTON,
     EV_POV,
     EV_SYMBOLIC,    ///< Symbol text pointed to by data1+data2.
+    EV_FOCUS,       ///< Change in game window focus (data1=gained, data2=windowID).
     NUM_EVENT_TYPES
 } evtype_t;
 
@@ -585,16 +586,6 @@ typedef struct event_s {
 #define DD_MWHEEL_UP        3
 #define DD_MWHEEL_DOWN      4
 #define DD_MICKEY_ACCURACY  1000
-
-/*
-/// Controller classes. @ingroup input
-typedef enum {
-    CC_AXIS,        ///< Axis controller, e.g., a joystick or mouse axis.
-    CC_TOGGLE,      ///< Toggle controller, e.g., a keyboard key.
-    CC_IMPULSE,
-    NUM_CONTROL_CLASSES
-} ctlclass_t;
-*/
 
 //------------------------------------------------------------------------
 //

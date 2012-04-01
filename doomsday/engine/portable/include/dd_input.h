@@ -63,7 +63,8 @@ typedef enum ddeventtype_e {
     E_TOGGLE,               // Two-state device
     E_AXIS,                 // Axis position
     E_ANGLE,                // Hat angle
-    E_SYMBOLIC              // Symbolic event
+    E_SYMBOLIC,             // Symbolic event
+    E_FOCUS                 // Window focus
 } ddeventtype_t;
 
 typedef enum ddeevent_togglestate_e {
@@ -101,6 +102,10 @@ typedef struct ddevent_s {
             int             id;         // Console that originated the event.
             const char*     name;       // Symbolic name of the event.
         } symbolic;
+        struct {
+            boolean         gained;     // Gained or lost focus.
+            int             inWindow;   // Window where the focus change occurred (index).
+        } focus;
     };
 } ddevent_t;
 

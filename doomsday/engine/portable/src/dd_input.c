@@ -618,6 +618,9 @@ void I_TrackInput(ddevent_t *ev, timespan_t ticLength)
 {
     inputdev_t *dev;
 
+    if(ev->type == E_FOCUS || ev->type == E_SYMBOLIC)
+        return; // Not a tracked device state.
+
     if((dev = I_GetDevice(ev->device, true)) == NULL)
         return;
 
@@ -896,7 +899,7 @@ void DD_ConvertEvent(const ddevent_t* ddEvent, event_t* ev)
     //
     /// @todo This is probably broken! (DD_MICKEY_ACCURACY=1000 no longer used...)
     //
-    memset(ev, 0, sizeof(ev));
+    memset(ev, 0, sizeof(*ev));
     if(ddEvent->type == E_SYMBOLIC)
     {
         ev->type = EV_SYMBOLIC;
@@ -910,6 +913,12 @@ void DD_ConvertEvent(const ddevent_t* ddEvent, event_t* ev)
         ev->data1 = (int) ddEvent->symbolic.name;
         ev->data2 = 0;
 #endif
+    }
+    else if(ddEvent->type == E_FOCUS)
+    {
+        ev->type = EV_FOCUS;
+        ev->data1 = ddEvent->focus.gained;
+        ev->data2 = ddEvent->focus.inWindow;
     }
     else
     {
@@ -993,7 +1002,7 @@ static void dispatchEvents(eventqueue_t* q, timespan_t ticLength)
         // Update the state of the input device tracking table.
         I_TrackInput(ddev, ticLength);
 
-        if(ignoreInput)
+        if(ignoreInput && ddev->type != E_FOCUS)
             continue;
 
         DD_ConvertEvent(ddev, &ev);
@@ -1020,7 +1029,7 @@ static void dispatchEvents(eventqueue_t* q, timespan_t ticLength)
         {
             // The game's normal responder only returns true if the bindings can't
             // be used (like when chatting).
-            if(gx.Responder(&ev))
+            if(gx.Responder && gx.Responder(&ev))
                 continue;
         }
 

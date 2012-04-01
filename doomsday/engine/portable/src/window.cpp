@@ -495,6 +495,14 @@ Window* Window_Main(void)
     return &mainWindow;
 }
 
+static int getWindowIdx(const Window* wnd)
+{
+    /// @todo  Multiple windows.
+    if(wnd == &mainWindow) return mainWindowIdx;
+
+    return 0;
+}
+
 static __inline Window *getWindow(uint idx)
 {
     if(!winManagerInited)
@@ -812,6 +820,13 @@ static void windowFocusChanged(Canvas& canvas, bool focus)
         I_ResetAllDevices();
         Window_TrapMouse(wnd, false);
     }
+
+    // Generate an event about this.
+    ddevent_t ev;
+    ev.type = E_FOCUS;
+    ev.focus.gained = focus;
+    ev.focus.inWindow = getWindowIdx(wnd);    
+    DD_PostEvent(&ev);
 
 #if 0
     if(Window_IsFullscreen(wnd))
