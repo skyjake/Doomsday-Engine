@@ -49,8 +49,16 @@ HEdge* HEdge_NewCopy(const HEdge* other)
 
 void HEdge_Delete(HEdge* hedge)
 {
+    uint i;
     assert(hedge);
     if(hedge->bspBuildInfo) Z_Free(hedge->bspBuildInfo);
+    for(i = 0; i < 3; ++i)
+    {
+        if(hedge->bsuf[i])
+        {
+            SB_DestroySurface(hedge->bsuf[i]);
+        }
+    }
     Z_Free(hedge);
 }
 

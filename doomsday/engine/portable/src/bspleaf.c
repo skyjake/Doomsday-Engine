@@ -41,6 +41,7 @@ void BspLeaf_Delete(BspLeaf* leaf)
     {
         Z_Free(leaf->vertices);
     }
+
     if(leaf->bsuf)
     {
         Sector* sec = leaf->sector;
@@ -51,6 +52,29 @@ void BspLeaf_Delete(BspLeaf* leaf)
         }
         Z_Free(leaf->bsuf);
     }
+
+    // Clear the HEdges.
+    if(leaf->hedge)
+    {
+        HEdge* hedge = leaf->hedge;
+        if(hedge->next == hedge)
+        {
+            HEdge_Delete(hedge);
+        }
+        else
+        {
+            HEdge* next;
+
+            // Break the ring.
+            hedge->prev->next = NULL;
+            do
+            {
+                next = hedge->next;
+                HEdge_Delete(hedge);
+            } while((hedge = next));
+        }
+    }
+
     Z_Free(leaf);
 }
 
