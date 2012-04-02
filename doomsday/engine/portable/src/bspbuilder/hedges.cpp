@@ -40,21 +40,7 @@
 
 using namespace de;
 
-#if _DEBUG
-void Bsp_PrintHEdgeIntercept(HEdgeIntercept* inter)
-{
-    assert(inter);
-    Con_Message("Vertex #%i [x:%f, y:%f] beforeSector: #%d afterSector: #%d %s\n",
-                inter->vertex->buildData.index,
-                inter->vertex->buildData.pos[VX],
-                inter->vertex->buildData.pos[VY],
-                (inter->before? inter->before->buildData.index : -1),
-                (inter->after? inter->after->buildData.index : -1),
-                (inter->selfRef? "SELFREF" : ""));
-}
-#endif
-
-static void updateBspHEdgeInfo(const HEdge* hedge, BspHEdgeInfo* info)
+static void updateHEdgeInfo(const HEdge* hedge, BspHEdgeInfo* info)
 {
     assert(hedge);
     if(!info) return;
@@ -93,7 +79,7 @@ HEdge* BspBuilder::newHEdge(LineDef* lineDef, LineDef* sourceLineDef,
     info->sourceLineDef = sourceLineDef;
     info->nextOnSide = info->prevOnSide = NULL;
     info->block = NULL;
-    updateBspHEdgeInfo(hedge, info);
+    updateHEdgeInfo(hedge, info);
 
     return hedge;
 }
@@ -141,10 +127,10 @@ HEdge* BspBuilder::splitHEdge(HEdge* oldHEdge, double x, double y)
     oldHEdge->bspBuildInfo->nextOnSide = newHEdge;
 
     oldHEdge->v[1] = newVert;
-    updateBspHEdgeInfo(oldHEdge, oldHEdge->bspBuildInfo);
+    updateHEdgeInfo(oldHEdge, oldHEdge->bspBuildInfo);
 
     newHEdge->v[0] = newVert;
-    updateBspHEdgeInfo(newHEdge, newHEdge->bspBuildInfo);
+    updateHEdgeInfo(newHEdge, newHEdge->bspBuildInfo);
 
     //DEBUG_Message(("Splitting Vertex is %04X at (%1.1f,%1.1f)\n",
     //               newVert->index, newVert->V_pos[VX], newVert->V_pos[VY]));
@@ -164,10 +150,10 @@ HEdge* BspBuilder::splitHEdge(HEdge* oldHEdge, double x, double y)
         oldHEdge->twin->bspBuildInfo->prevOnSide = newHEdge->twin;
 
         oldHEdge->twin->v[0] = newVert;
-        updateBspHEdgeInfo(oldHEdge->twin, oldHEdge->twin->bspBuildInfo);
+        updateHEdgeInfo(oldHEdge->twin, oldHEdge->twin->bspBuildInfo);
 
         newHEdge->twin->v[1] = newVert;
-        updateBspHEdgeInfo(newHEdge->twin, newHEdge->twin->bspBuildInfo);
+        updateHEdgeInfo(newHEdge->twin, newHEdge->twin->bspBuildInfo);
 
         // Update superblock, if needed.
         if(oldHEdge->twin->bspBuildInfo->block)
@@ -182,42 +168,4 @@ HEdge* BspBuilder::splitHEdge(HEdge* oldHEdge, double x, double y)
     }
 
     return newHEdge;
-}
-
-Sector* BspBuilder::openSectorAtPoint(Vertex* vert, double dX, double dY)
-{
-    edgetip_t* tip;
-    double angle = M_SlopeToAngle(dX, dY);
-
-    // First check whether there's a wall_tip that lies in the exact direction of
-    // the given direction (which is relative to the vertex).
-    for(tip = vert->buildData.tipSet; tip; tip = tip->ET_next)
-    {
-        double diff = fabs(tip->angle - angle);
-
-        if(diff < ANG_EPSILON || diff > (360.0 - ANG_EPSILON))
-        {   // Yes, found one.
-            return NULL;
-        }
-    }
-
-    // OK, now just find the first wall_tip whose angle is greater than the angle
-    // we're interested in. Therefore we'll be on the FRONT side of that tip edge.
-    for(tip = vert->buildData.tipSet; tip; tip = tip->ET_next)
-    {
-        if(angle + ANG_EPSILON < tip->angle)
-        {
-            // Found it.
-            return (tip->ET_edge[FRONT]? tip->ET_edge[FRONT]->sector : NULL);
-        }
-
-        if(!tip->ET_next)
-        {
-            // No more tips, therefore this is the BACK of the tip with the largest angle.
-            return (tip->ET_edge[BACK]? tip->ET_edge[BACK]->sector : NULL);
-        }
-    }
-
-    Con_Error("Vertex %d has no tips !", vert->buildData.index);
-    exit(1); // Unreachable.
 }

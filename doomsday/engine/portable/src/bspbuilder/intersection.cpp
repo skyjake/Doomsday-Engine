@@ -139,7 +139,7 @@ void HPlane_Print(HPlane* hplane)
     {
         const HPlaneIntercept* inter = &*it;
         Con_Printf(" %u: >%1.2f ", n, inter->distance);
-        Bsp_PrintHEdgeIntercept((HEdgeIntercept*)inter->userData);
+        HEdgeIntercept::DebugPrint(*static_cast<HEdgeIntercept*>(inter->userData));
     }
 }
 #endif

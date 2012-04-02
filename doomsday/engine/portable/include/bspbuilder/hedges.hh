@@ -74,30 +74,6 @@ typedef struct bsphedgeinfo_s {
     LineDef* sourceLineDef;
 } BspHEdgeInfo;
 
-/**
- * Plain-old-data structure containing additional information for a half-edge
- * half-plane intercept point where the geometry intersects (an incident vertex
- * can be found here (or at there will be upon insertion.)).
- *
- * There is always a corresponding HPlaneIntercept in the owning HPlane.
- */
-typedef struct hedgeintercept_s {
-    // Vertex in question.
-    Vertex* vertex;
-
-    // True if this intersection was on a self-referencing linedef.
-    boolean selfRef;
-
-    // Sector on each side of the vertex (along the partition),
-    // or NULL when that direction isn't OPEN.
-    Sector* before;
-    Sector* after;
-} HEdgeIntercept;
-
-#if _DEBUG
-void Bsp_PrintHEdgeIntercept(HEdgeIntercept* intercept);
-#endif
-
 #ifdef __cplusplus
 } // extern "C"
 #endif

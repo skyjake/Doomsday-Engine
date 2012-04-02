@@ -32,6 +32,7 @@
 #include "p_mapdata.h"
 
 #include "bspbuilder/hedges.hh"
+#include "bspbuilder/hedgeintercept.h"
 #include "bspbuilder/intersection.hh"
 #include "bspbuilder/superblockmap.hh"
 #include "bspbuilder/linedefinfo.h"

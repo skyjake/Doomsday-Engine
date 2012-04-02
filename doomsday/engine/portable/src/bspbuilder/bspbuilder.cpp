@@ -367,8 +367,8 @@ void Bsp_MergeHEdgeIntercepts(HEdgeIntercept* final, const HEdgeIntercept* other
 
     /*
     LOG_TRACE("Bsp_MergeHEdgeIntercepts: Merging intersections:");
-    Bsp_PrintHEdgeIntercept(final);
-    Bsp_PrintHEdgeIntercept(other);
+    HEdgeIntercept::DebugPrint(*final);
+    HEdgeIntercept::DebugPrint(*other);
     */
 
     if(final->selfRef && !other->selfRef)
@@ -390,7 +390,7 @@ void Bsp_MergeHEdgeIntercepts(HEdgeIntercept* final, const HEdgeIntercept* other
 
     /*
     LOG_TRACE("Bsp_MergeHEdgeIntercepts: Result:");
-    Bsp_PrintHEdgeIntercept(final);
+    HEdgeIntercept::DebugPrint(*final);
     */
 }
 
@@ -533,7 +533,7 @@ void BspBuilder::addMiniHEdges(HPlane& hplane, SuperBlock& rightList, SuperBlock
 HEdgeIntercept* BspBuilder::newHEdgeIntercept(Vertex* vert, const BspHEdgeInfo* part,
     boolean selfRef)
 {
-    HEdgeIntercept* inter = (HEdgeIntercept*)M_Calloc(sizeof *inter);
+    HEdgeIntercept* inter = new HEdgeIntercept();
 
     inter->vertex = vert;
     inter->selfRef = selfRef;
@@ -546,8 +546,8 @@ HEdgeIntercept* BspBuilder::newHEdgeIntercept(Vertex* vert, const BspHEdgeInfo* 
 
 void BspBuilder::deleteHEdgeIntercept(HEdgeIntercept* inter)
 {
-    assert(inter);
-    M_Free(inter);
+    Q_ASSERT(inter);
+    delete inter;
 }
 
 void BspBuilder::addEdgeTip(Vertex* vert, double dx, double dy, HEdge* back,
@@ -588,4 +588,42 @@ void BspBuilder::addEdgeTip(Vertex* vert, double dx, double dy, HEdge* back,
 
         vert->buildData.tipSet = tip;
     }
+}
+
+Sector* BspBuilder::openSectorAtPoint(Vertex* vert, double dX, double dY)
+{
+    edgetip_t* tip;
+    double angle = M_SlopeToAngle(dX, dY);
+
+    // First check whether there's a wall_tip that lies in the exact direction of
+    // the given direction (which is relative to the vertex).
+    for(tip = vert->buildData.tipSet; tip; tip = tip->ET_next)
+    {
+        double diff = fabs(tip->angle - angle);
+
+        if(diff < ANG_EPSILON || diff > (360.0 - ANG_EPSILON))
+        {   // Yes, found one.
+            return NULL;
+        }
+    }
+
+    // OK, now just find the first wall_tip whose angle is greater than the angle
+    // we're interested in. Therefore we'll be on the FRONT side of that tip edge.
+    for(tip = vert->buildData.tipSet; tip; tip = tip->ET_next)
+    {
+        if(angle + ANG_EPSILON < tip->angle)
+        {
+            // Found it.
+            return (tip->ET_edge[FRONT]? tip->ET_edge[FRONT]->sector : NULL);
+        }
+
+        if(!tip->ET_next)
+        {
+            // No more tips, therefore this is the BACK of the tip with the largest angle.
+            return (tip->ET_edge[BACK]? tip->ET_edge[BACK]->sector : NULL);
+        }
+    }
+
+    Con_Error("Vertex %d has no tips !", vert->buildData.index);
+    exit(1); // Unreachable.
 }
