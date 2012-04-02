@@ -32,6 +32,8 @@ extern "C" {
 
 BspLeaf* BspLeaf_New(void);
 
+void BspLeaf_Delete(BspLeaf* bspLeaf);
+
 /**
  * Update the BspLeaf's map space axis-aligned bounding box to encompass
  * the points defined by it's vertices.

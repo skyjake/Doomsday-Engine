@@ -49,11 +49,38 @@ BspBuilder::BspBuilder(GameMap* _map) :
     map(_map), lineDefInfos(0), rootNode(0), builtOK(false)
 {}
 
+static int C_DECL clearBspObject(BinaryTree* tree, void* /*parameters*/)
+{
+    if(BinaryTree_IsLeaf(tree))
+    {
+        BspLeaf* leaf = static_cast<BspLeaf*>(BinaryTree_UserData(tree));
+        if(leaf)
+        {
+            LOG_DEBUG("BspBuilder: Clearing unclaimed leaf %p.") << leaf;
+            BspLeaf_Delete(leaf);
+        }
+    }
+    else
+    {
+        BspNode* node = static_cast<BspNode*>(BinaryTree_UserData(tree));
+        if(node)
+        {
+            LOG_DEBUG("BspBuilder: Clearing unclaimed node %p.") << node;
+            BspNode_Delete(node);
+        }
+    }
+    return false; // Continue iteration.
+}
+
 BspBuilder::~BspBuilder()
 {
-    // We are finished with the BSP build data.
+    // We are finished with the BSP data.
     if(rootNode)
     {
+        // If ownership of the BSP data has been claimed this should be a no-op.
+        BinaryTree_PostOrder(rootNode, clearBspObject, NULL/*no parameters*/);
+
+        // Destroy our private BSP tree.
         BinaryTree_Delete(rootNode);
     }
     rootNode = NULL;

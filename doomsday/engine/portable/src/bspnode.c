@@ -27,7 +27,7 @@
 
 BspNode* BspNode_New(double const origin[2], double const angle[2])
 {
-    BspNode* node = (BspNode*)Z_Malloc(sizeof *node, PU_MAPSTATIC, 0);
+    BspNode* node = (BspNode*)Z_Malloc(sizeof *node, PU_MAP, 0);
     if(!node) Con_Error("BspNode_New: Failed on allocation of %lu bytes for new BspNode.", (unsigned long) sizeof *node);
 
     node->header.type = DMU_BSPNODE;
@@ -43,6 +43,12 @@ BspNode* BspNode_New(double const origin[2], double const angle[2])
     BspNode_SetLeftBounds(node, NULL);
 
     return node;
+}
+
+void BspNode_Delete(BspNode* node)
+{
+    assert(node);
+    Z_Free(node);
 }
 
 BspNode* BspNode_SetChild(BspNode* node, int left, runtime_mapdata_header_t* child)

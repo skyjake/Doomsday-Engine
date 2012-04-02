@@ -29,9 +29,29 @@
 
 BspLeaf* BspLeaf_New(void)
 {
-    BspLeaf* leaf = Z_Calloc(sizeof(*leaf), PU_MAPSTATIC, 0);
+    BspLeaf* leaf = Z_Calloc(sizeof(*leaf), PU_MAP, 0);
     leaf->header.type = DMU_BSPLEAF;
     return leaf;
+}
+
+void BspLeaf_Delete(BspLeaf* leaf)
+{
+    assert(leaf);
+    if(leaf->vertices)
+    {
+        Z_Free(leaf->vertices);
+    }
+    if(leaf->bsuf)
+    {
+        Sector* sec = leaf->sector;
+        uint i;
+        for(i = 0; i < sec->planeCount; ++i)
+        {
+            SB_DestroySurface(leaf->bsuf[i]);
+        }
+        Z_Free(leaf->bsuf);
+    }
+    Z_Free(leaf);
 }
 
 void BspLeaf_UpdateAABox(BspLeaf* leaf)
