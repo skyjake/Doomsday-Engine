@@ -32,10 +32,15 @@ extern "C" {
 
 BspNode* BspNode_New(double const origin[2], double const angle[2]);
 
+BspNode* BspNode_SetChild(BspNode* node, int left, runtime_mapdata_header_t* child);
+
+#define BspNode_SetRight(node, child) BspNode_SetChild((node), false, (child))
+#define BspNode_SetLeft(node,  child) BspNode_SetChild((node), true,  (child))
+
 BspNode* BspNode_SetChildBounds(BspNode* node, int left, AABoxf* bounds);
 
 #define BspNode_SetRightBounds(node, bounds) BspNode_SetChildBounds((node), false, (bounds))
-#define BspNode_SetLeftBounds(node, bounds) BspNode_SetChildBounds((node), true, (bounds))
+#define BspNode_SetLeftBounds(node,  bounds) BspNode_SetChildBounds((node), true,  (bounds))
 
 #ifdef __cplusplus
 } // extern "C"

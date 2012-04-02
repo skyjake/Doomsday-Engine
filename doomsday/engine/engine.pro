@@ -473,7 +473,7 @@ SOURCES += \
     portable/src/dgl_draw.c \
     portable/src/displaymode.cpp \
     portable/src/edit_bias.c \
-    portable/src/edit_bsp.c \
+    portable/src/edit_bsp.cpp \
     portable/src/edit_map.c \
     portable/src/filedirectory.c \
     portable/src/filelist.c \

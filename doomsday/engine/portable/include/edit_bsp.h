@@ -56,11 +56,11 @@ struct binarytree_s* BspBuilder_Root(BspBuilder_c* builder);
  */
 boolean BspBuilder_Build(BspBuilder_c* builder);
 
+void MPE_SaveBsp(BspBuilder_c* builder, struct gamemap_s* map, struct vertex_s*** editableVertexes,
+    uint* numEditableVertexes);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif
-
-void MPE_SaveBsp(BspBuilder_c* builder, struct gamemap_s* map, struct vertex_s*** editableVertexes,
-    uint* numEditableVertexes);
 
 #endif /// LIBDENG_MAP_EDIT_BSP_H

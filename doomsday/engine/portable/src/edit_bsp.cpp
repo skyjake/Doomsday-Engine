@@ -19,37 +19,80 @@
  * 02110-1301 USA</small>
  */
 
-#include <stdlib.h>
-#include <math.h>
+#include <cstdlib>
+#include <cmath>
 
 #include "de_base.h"
-#include "de_console.h"
 #include "de_bsp.h"
+#include "de_console.h"
 #include "de_misc.h"
 #include "de_play.h"
-#include "de_edit.h"
-#include "de_refresh.h"
 
-#include "bspbuilder/hedges.hh" /// @todo Remove me.
+#include <de/Log>
 
-static void hardenSidedefHEdgeList(GameMap* map, SideDef* side, HEdge* bspHEdge)
+#include "bspbuilder/bspbuilder.hh"
+
+using namespace de;
+
+int bspFactor = 7;
+
+struct bspbuilder_c_s {
+   BspBuilder* inst;
+};
+
+void BspBuilder_Register(void)
 {
-    HEdge* first, *other;
-    uint count;
+    C_VAR_INT("bsp-factor", &bspFactor, CVF_NO_MAX, 0, 0);
+}
 
+BspBuilder_c* BspBuilder_New(GameMap* map)
+{
+    BspBuilder_c* builder = static_cast<BspBuilder_c*>(malloc(sizeof *builder));
+    builder->inst = new BspBuilder(map);
+    return builder;
+}
+
+void BspBuilder_Delete(BspBuilder_c* builder)
+{
+    Q_ASSERT(builder);
+    delete builder->inst;
+    free(builder);
+}
+
+BspBuilder_c* BspBuilder_SetSplitCostFactor(BspBuilder_c* builder, int factor)
+{
+    Q_ASSERT(builder);
+    builder->inst->setSplitCostFactor(factor);
+    return builder;
+}
+
+boolean BspBuilder_Build(BspBuilder_c* builder)
+{
+    Q_ASSERT(builder);
+    return builder->inst->build();
+}
+
+BinaryTree* BspBuilder_Root(BspBuilder_c* builder)
+{
+    Q_ASSERT(builder);
+    return builder->inst->root();
+}
+
+static void hardenSidedefHEdgeList(SideDef* side, HEdge* bspHEdge)
+{
     if(!side) return;
 
     // Have we already processed this side?
     if(side->hedges) return;
 
     // Find the first hedge.
-    first = bspHEdge;
+    HEdge* first = bspHEdge;
     while(first->bspBuildInfo->prevOnSide)
         first = first->bspBuildInfo->prevOnSide;
 
     // Count the hedges for this side.
-    count = 0;
-    other = first;
+    uint count = 0;
+    HEdge* other = first;
     while(other)
     {
         other = other->bspBuildInfo->nextOnSide;
@@ -58,7 +101,7 @@ static void hardenSidedefHEdgeList(GameMap* map, SideDef* side, HEdge* bspHEdge)
 
     // Allocate the final side hedge table.
     side->hedgeCount = count;
-    side->hedges = (HEdge**)Z_Malloc(sizeof(*side->hedges) * (side->hedgeCount + 1), PU_MAPSTATIC, 0);
+    side->hedges = static_cast<HEdge**>(Z_Malloc(sizeof(*side->hedges) * (side->hedgeCount + 1), PU_MAPSTATIC, 0));
 
     count = 0;
     other = first;
@@ -79,8 +122,8 @@ static int hedgeCollector(BinaryTree* tree, void* parameters)
 {
     if(BinaryTree_IsLeaf(tree))
     {
-        hedgecollectorparams_t* p = (hedgecollectorparams_t*) parameters;
-        BspLeaf* leaf = (BspLeaf*) BinaryTree_UserData(tree);
+        hedgecollectorparams_t* p = static_cast<hedgecollectorparams_t*>(parameters);
+        BspLeaf* leaf = static_cast<BspLeaf*>(BinaryTree_UserData(tree));
         HEdge* hedge = leaf->hedge;
         do
         {
@@ -101,7 +144,7 @@ static int hedgeCollector(BinaryTree* tree, void* parameters)
 
 static void buildHEdgeLut(GameMap* map, BinaryTree* rootNode)
 {
-    hedgecollectorparams_t parm;
+    Q_ASSERT(map);
 
     if(map->hedges)
     {
@@ -110,6 +153,7 @@ static void buildHEdgeLut(GameMap* map, BinaryTree* rootNode)
     }
 
     // Count the number of used hedges.
+    hedgecollectorparams_t parm;
     parm.curIdx = 0;
     parm.hedgeLUT = 0;
     BinaryTree_InOrder(rootNode, hedgeCollector, &parm);
@@ -126,10 +170,9 @@ static void buildHEdgeLut(GameMap* map, BinaryTree* rootNode)
 
 static void finishHEdges(GameMap* map)
 {
-    uint i;
-    assert(map);
+    Q_ASSERT(map);
 
-    for(i = 0; i < map->numHEdges; ++i)
+    for(uint i = 0; i < map->numHEdges; ++i)
     {
         HEdge* hedge = map->hedges[i];
 
@@ -147,7 +190,7 @@ static void finishHEdges(GameMap* map)
             hedge->offset = P_AccurateDistance(hedge->HE_v1pos[VX] - vtx->V_pos[VX],
                                                hedge->HE_v1pos[VY] - vtx->V_pos[VY]);
 
-            hardenSidedefHEdgeList(map, HEDGE_SIDEDEF(hedge), hedge);
+            hardenSidedefHEdgeList(HEDGE_SIDEDEF(hedge), hedge);
         }
 
         hedge->angle = bamsAtan2((int) (hedge->HE_v2pos[VY] - hedge->HE_v1pos[VY]),
@@ -168,52 +211,50 @@ typedef struct {
     uint nodeCurIndex;
 } hardenbspparams_t;
 
-static int C_DECL hardenNode(BinaryTree* tree, void* data)
+/**
+ * @todo The tree linking functionality should be moved into BspBuilder.
+ */
+static int C_DECL hardenNode(BinaryTree* tree, void* parameters)
 {
-    BinaryTree* right, *left;
-    hardenbspparams_t* params;
-    BspNode* node;
+    // We are only interested in nodes at this level.
+    if(BinaryTree_IsLeaf(tree)) return false; // Continue iteration.
 
-    if(BinaryTree_IsLeaf(tree))
-        return false; // Continue iteration.
+    BspNode* node = static_cast<BspNode*>(BinaryTree_UserData(tree));
+    hardenbspparams_t* p = static_cast<hardenbspparams_t*>(parameters);
+    Q_ASSERT(p);
 
-    node =(BspNode*)BinaryTree_UserData(tree);
-    params = (hardenbspparams_t*) data;
+    // Add this to the BspNode LUT.
+    p->dest->bspNodes[p->nodeCurIndex++] = node;
 
-    // Add this to BspNode LUT.
-    params->dest->bspNodes[params->nodeCurIndex++] = node;
-
-    right = BinaryTree_Child(tree, RIGHT);
-    if(right)
+    if(BinaryTree* right = BinaryTree_Right(tree))
     {
         if(BinaryTree_IsLeaf(right))
         {
-            BspLeaf* leaf = (BspLeaf*) BinaryTree_UserData(right);
+            BspLeaf* leaf = static_cast<BspLeaf*>(BinaryTree_UserData(right));
 
-            node->children[RIGHT] = (runtime_mapdata_header_t*)leaf;
-            params->dest->bspLeafs[params->leafCurIndex++] = leaf;
+            BspNode_SetRight(node, reinterpret_cast<runtime_mapdata_header_t*>(leaf));
+            p->dest->bspLeafs[p->leafCurIndex++] = leaf;
         }
         else
         {
-            BspNode* data = (BspNode*) BinaryTree_UserData(right);
-            node->children[RIGHT] = (runtime_mapdata_header_t*)data;
+            BspNode* data = static_cast<BspNode*>(BinaryTree_UserData(right));
+            BspNode_SetRight(node, reinterpret_cast<runtime_mapdata_header_t*>(data));
         }
     }
 
-    left = BinaryTree_Child(tree, LEFT);
-    if(left)
+    if(BinaryTree* left = BinaryTree_Left(tree))
     {
         if(BinaryTree_IsLeaf(left))
         {
-            BspLeaf* leaf = (BspLeaf*) BinaryTree_UserData(left);
+            BspLeaf* leaf = static_cast<BspLeaf*>(BinaryTree_UserData(left));
 
-            node->children[LEFT] = (runtime_mapdata_header_t*)leaf;
-            params->dest->bspLeafs[params->leafCurIndex++] = leaf;
+            BspNode_SetLeft(node, reinterpret_cast<runtime_mapdata_header_t*>(leaf));
+            p->dest->bspLeafs[p->leafCurIndex++] = leaf;
         }
         else
         {
-            BspNode* data = (BspNode*) BinaryTree_UserData(left);
-            node->children[LEFT] = (runtime_mapdata_header_t*)data;
+            BspNode* data = static_cast<BspNode*>(BinaryTree_UserData(left));
+            BspNode_SetLeft(node, reinterpret_cast<runtime_mapdata_header_t*>(data));
         }
     }
 
@@ -239,39 +280,36 @@ static void hardenBSP(GameMap* dest, BinaryTree* rootNode)
     dest->numBspNodes = 0;
     BinaryTree_PostOrder(rootNode, countNode, &dest->numBspNodes);
     if(dest->numBspNodes != 0)
-        dest->bspNodes = (BspNode**)Z_Malloc(dest->numBspNodes * sizeof(BspNode*), PU_MAPSTATIC, 0);
+        dest->bspNodes = static_cast<BspNode**>(Z_Malloc(dest->numBspNodes * sizeof(BspNode*), PU_MAPSTATIC, 0));
     else
         dest->bspNodes = 0;
 
     dest->numBspLeafs = 0;
     BinaryTree_PostOrder(rootNode, countLeaf, &dest->numBspLeafs);
-    dest->bspLeafs = (BspLeaf**)Z_Calloc(dest->numBspLeafs * sizeof(BspLeaf*), PU_MAPSTATIC, 0);
+    dest->bspLeafs = static_cast<BspLeaf**>(Z_Calloc(dest->numBspLeafs * sizeof(BspLeaf*), PU_MAPSTATIC, 0));
 
     if(BinaryTree_IsLeaf(rootNode))
     {
-        BspLeaf* leaf = (BspLeaf*) BinaryTree_UserData(rootNode);
-        dest->bsp = (runtime_mapdata_header_t*)leaf;
+        BspLeaf* leaf = static_cast<BspLeaf*>(BinaryTree_UserData(rootNode));
+        dest->bsp = reinterpret_cast<runtime_mapdata_header_t*>(leaf);
         return;
     }
 
-    dest->bsp = (runtime_mapdata_header_t*)BinaryTree_UserData(rootNode);
+    dest->bsp = static_cast<runtime_mapdata_header_t*>(BinaryTree_UserData(rootNode));
 
-    { hardenbspparams_t p;
+    hardenbspparams_t p;
     p.dest = dest;
     p.leafCurIndex = 0;
     p.nodeCurIndex = 0;
     BinaryTree_PostOrder(rootNode, hardenNode, &p);
-    }
 }
 
 static void hardenVertexes(GameMap* dest, Vertex*** vertexes, uint* numVertexes)
 {
-    uint i;
-
     dest->numVertexes = *numVertexes;
-    dest->vertexes = (Vertex*)Z_Calloc(dest->numVertexes * sizeof(Vertex), PU_MAPSTATIC, 0);
+    dest->vertexes = static_cast<Vertex*>(Z_Calloc(dest->numVertexes * sizeof(Vertex), PU_MAPSTATIC, 0));
 
-    for(i = 0; i < dest->numVertexes; ++i)
+    for(uint i = 0; i < dest->numVertexes; ++i)
     {
         Vertex* destV = &dest->vertexes[i];
         Vertex* srcV = (*vertexes)[i];
@@ -280,16 +318,14 @@ static void hardenVertexes(GameMap* dest, Vertex*** vertexes, uint* numVertexes)
         destV->numLineOwners = srcV->numLineOwners;
         destV->lineOwners = srcV->lineOwners;
 
-        destV->V_pos[VX] = (float) srcV->buildData.pos[VX];
-        destV->V_pos[VY] = (float) srcV->buildData.pos[VY];
+        destV->V_pos[VX] = float(srcV->buildData.pos[VX]);
+        destV->V_pos[VY] = float(srcV->buildData.pos[VY]);
     }
 }
 
 static void updateVertexLinks(GameMap* map)
 {
-    uint i;
-
-    for(i = 0; i < map->numLineDefs; ++i)
+    for(uint i = 0; i < map->numLineDefs; ++i)
     {
         LineDef* line = &map->lineDefs[i];
 
@@ -297,7 +333,7 @@ static void updateVertexLinks(GameMap* map)
         line->L_v2 = &map->vertexes[line->L_v2->buildData.index - 1];
     }
 
-    for(i = 0; i < map->numHEdges; ++i)
+    for(uint i = 0; i < map->numHEdges; ++i)
     {
         HEdge* hedge = map->hedges[i];
 
@@ -309,7 +345,6 @@ static void updateVertexLinks(GameMap* map)
 void MPE_SaveBsp(BspBuilder_c* builder, GameMap* map, Vertex*** vertexes, uint* numVertexes)
 {
     BinaryTree* rootNode = BspBuilder_Root(builder);
-    long rHeight, lHeight;
 
     buildHEdgeLut(map, rootNode);
     hardenVertexes(map, vertexes, numVertexes);
@@ -318,19 +353,15 @@ void MPE_SaveBsp(BspBuilder_c* builder, GameMap* map, Vertex*** vertexes, uint* 
     finishHEdges(map);
     hardenBSP(map, rootNode);
 
+    long rHeight = 0, lHeight = 0;
     if(rootNode && !BinaryTree_IsLeaf(rootNode))
     {
         rHeight = (long) BinaryTree_Height(BinaryTree_Right(rootNode));
         lHeight = (long) BinaryTree_Height(BinaryTree_Left(rootNode));
-    }
-    else
-    {
-        rHeight = lHeight = 0;
     }
 
     VERBOSE(
     Con_Message("BSP built: %d Nodes, %d BspLeafs, %d HEdges, %d Vertexes\n"
                 "  Balance %+ld (l%ld - r%ld).\n", map->numBspNodes, map->numBspLeafs,
                 map->numHEdges, map->numVertexes, lHeight - rHeight, lHeight, rHeight) );
-
 }

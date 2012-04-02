@@ -45,6 +45,13 @@ BspNode* BspNode_New(double const origin[2], double const angle[2])
     return node;
 }
 
+BspNode* BspNode_SetChild(BspNode* node, int left, runtime_mapdata_header_t* child)
+{
+    assert(node && child != (runtime_mapdata_header_t*)node);
+    node->children[left? LEFT:RIGHT] = child;
+    return node;
+}
+
 BspNode* BspNode_SetChildBounds(BspNode* node, int left, AABoxf* bounds)
 {
     assert(node);
