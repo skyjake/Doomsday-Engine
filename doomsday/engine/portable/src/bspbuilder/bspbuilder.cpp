@@ -49,27 +49,11 @@ BspBuilder::BspBuilder(GameMap* _map) :
     map(_map), lineDefInfos(0), rootNode(0), builtOK(false)
 {}
 
-static int C_DECL clearBspHEdgeInfo(BinaryTree* tree, void* /*parameters*/)
-{
-    if(BinaryTree_IsLeaf(tree))
-    {
-        BspLeaf* leaf = static_cast<BspLeaf*>(BinaryTree_UserData(tree));
-        HEdge* hedge = leaf->hedge;
-        do
-        {
-            Z_Free(HEdge_DetachBspBuildInfo(hedge));
-        } while((hedge = hedge->next) != leaf->hedge);
-    }
-    return 0; // Continue iteration.
-}
-
 BspBuilder::~BspBuilder()
 {
     // We are finished with the BSP build data.
     if(rootNode)
     {
-        // We're done with the build info.
-        BinaryTree_PreOrder(rootNode, clearBspHEdgeInfo, NULL/*no parameters*/);
         BinaryTree_Delete(rootNode);
     }
     rootNode = NULL;
@@ -272,6 +256,20 @@ static int C_DECL linkTreeNode(BinaryTree* tree, void* /*parameters*/)
     return false; // Continue iteration.
 }
 
+static int C_DECL clearHEdgeInfo(BinaryTree* tree, void* /*parameters*/)
+{
+    if(BinaryTree_IsLeaf(tree))
+    {
+        BspLeaf* leaf = static_cast<BspLeaf*>(BinaryTree_UserData(tree));
+        HEdge* hedge = leaf->hedge;
+        do
+        {
+            Z_Free(HEdge_DetachBspBuildInfo(hedge));
+        } while((hedge = hedge->next) != leaf->hedge);
+    }
+    return false; // Continue iteration.
+}
+
 void BspBuilder::initHEdgesAndBuildBsp(SuperBlockmap& blockmap, HPlane& hplane)
 {
     Q_ASSERT(map);
@@ -288,7 +286,11 @@ void BspBuilder::initHEdgesAndBuildBsp(SuperBlockmap& blockmap, HPlane& hplane)
         windLeafs(rootNode);
 
         // Link up the BSP object tree.
+        /// @todo Do this earlier.
         BinaryTree_PostOrder(rootNode, linkTreeNode, NULL/*no parameters*/);
+
+        // We're done with the build info.
+        BinaryTree_PreOrder(rootNode, clearHEdgeInfo, NULL/*no parameters*/);
     }
 }
 
