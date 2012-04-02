@@ -347,9 +347,8 @@ static void writeSide(GameMap* map, uint idx)
     }
     writeLong(s->sector? ((s->sector - map->sectors) + 1) : 0);
     writeShort(s->flags);
-    writeLong((long) s->hedgeCount);
-    for(i = 0; i < s->hedgeCount; ++i)
-        writeLong(GameMap_HEdgeIndex(map, s->hedges[i]) + 1);
+    writeLong(GameMap_HEdgeIndex(map, s->hedgeLeft)  + 1);
+    writeLong(GameMap_HEdgeIndex(map, s->hedgeRight) + 1);
 }
 
 static void readSide(GameMap* map, uint idx)
@@ -383,11 +382,8 @@ static void readSide(GameMap* map, uint idx)
     secIdx = readLong();
     s->sector = (secIdx == 0? NULL : &map->sectors[secIdx -1]);
     s->flags = readShort();
-    s->hedgeCount = (uint) readLong();
-    s->hedges = Z_Malloc(sizeof(HEdge*) * (s->hedgeCount + 1), PU_MAP, 0);
-    for(i = 0; i < s->hedgeCount; ++i)
-        s->hedges[i] = GameMap_HEdge(map, (unsigned) readLong() - 1);
-    s->hedges[i] = NULL; // Terminate.
+    s->hedgeLeft  = GameMap_HEdge(map, (unsigned) readLong() - 1);
+    s->hedgeRight = GameMap_HEdge(map, (unsigned) readLong() - 1);
 }
 
 static void archiveSides(GameMap *map, boolean write)
@@ -925,7 +921,7 @@ static void writePolyobj(GameMap* map, uint idx)
     for(i = 0; i < p->lineCount; ++i)
     {
         LineDef* line = p->lines[i];
-        HEdge* he = line->L_frontside->hedges[0];
+        HEdge* he = line->L_frontside->hedgeLeft;
 
         writeLong((he->v[0] - map->vertexes) + 1);
         writeLong((he->v[1] - map->vertexes) + 1);
@@ -987,8 +983,7 @@ static void readPolyobj(GameMap* map, uint idx)
         he->flags = readByte();
 
         line = he->lineDef;
-        line->L_frontside->hedges = Z_Malloc(sizeof(*line->L_frontside->hedges), PU_MAP, 0);
-        line->L_frontside->hedges[0] = he;
+        line->L_frontside->hedgeLeft = line->L_frontside->hedgeRight = he;
 
         p->lines[i] = line;
     }

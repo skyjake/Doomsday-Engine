@@ -580,10 +580,9 @@ static void updateSideSectionDecorations(SideDef* side, sidedefsection_t section
     const Plane*        frontCeil, *frontFloor, *backCeil = NULL, *backFloor = NULL;
     float               bottom, top;
 
-    if(!side->hedges || !side->hedges[0])
-        return;
+    if(!side->hedgeLeft) return;
 
-    line = side->hedges[0]->lineDef;
+    line = side->hedgeLeft->lineDef;
     sid = (line->L_backside && line->L_backside == side)? 1 : 0;
     frontCeil  = line->L_sector(sid)->SP_plane(PLN_CEILING);
     frontFloor = line->L_sector(sid)->SP_plane(PLN_FLOOR);

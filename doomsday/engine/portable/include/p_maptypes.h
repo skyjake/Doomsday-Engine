@@ -386,8 +386,8 @@ typedef struct msidedef_s {
 typedef struct sidedef_s {
     runtime_mapdata_header_t header;
     Surface             sections[3];
-    unsigned int        hedgeCount;
-    struct hedge_s**    hedges;          // [hedgeCount] size, hedges arranged left>right
+    struct hedge_s*     hedgeLeft;  /// Left-most HEdge on this SideDef's side of the owning LineDef
+    struct hedge_s*     hedgeRight; /// Right-most HEdge on this SideDef's side of the owning LineDef
     struct linedef_s*   line;
     struct sector_s*    sector;
     short               flags;

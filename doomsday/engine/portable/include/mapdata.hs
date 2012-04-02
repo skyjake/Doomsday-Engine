@@ -410,8 +410,8 @@ end
 
 struct SideDef
     -       Surface[3]  sections
-    UINT    uint        hedgeCount
-    PTR     hedge_s**   hedges      // [hedgeCount] size, segs arranged left>right
+    -       hedge_s*    hedgeLeft  /// Left-most HEdge on this SideDef's side of the owning LineDef
+    -       hedge_s*    hedgeRight /// Right-most HEdge on this SideDef's side of the owning LineDef
     PTR     linedef_s*  line
     PTR     sector_s*   sector
     SHORT   short       flags

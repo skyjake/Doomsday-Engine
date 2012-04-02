@@ -561,8 +561,8 @@ static void calcSegDivisions(walldiv_t* div, const HEdge* hedge,
 
     // Only hedges at sidedef ends can/should be split.
     side = HEDGE_SIDEDEF(hedge);
-    if(!((hedge == side->hedges[0] && !doRight) ||
-         (hedge == side->hedges[side->hedgeCount -1] && doRight)))
+    if(!((hedge == side->hedgeLeft  && !doRight) ||
+         (hedge == side->hedgeRight &&  doRight)))
         return;
 
     doCalcSegDivisions(div, hedge->lineDef, hedge->side, frontSec, bottomZ, topZ, doRight);
@@ -2348,7 +2348,7 @@ static void Rend_MarkSegsFacingFront(BspLeaf* leaf)
         for(i = 0; i < leaf->polyObj->lineCount; ++i)
         {
             line = leaf->polyObj->lines[i];
-            hedge = line->L_frontside->hedges[0];
+            hedge = line->L_frontside->hedgeLeft;
 
             // Which way should it be facing?
             if(!(segFacingViewerDot(hedge->HE_v1pos, hedge->HE_v2pos) < 0))
@@ -2387,7 +2387,7 @@ static void occludeFrontFacingSegsInBspLeaf(const BspLeaf* bspLeaf)
         for(i = 0; i < bspLeaf->polyObj->lineCount; ++i)
         {
             line = bspLeaf->polyObj->lines[i];
-            hedge = line->L_frontside->hedges[0];
+            hedge = line->L_frontside->hedgeLeft;
 
             if(!(hedge->frameFlags & HEDGEINF_FACINGFRONT)) continue;
 
@@ -2827,7 +2827,7 @@ static void Rend_RenderBspLeaf(BspLeaf* bspLeaf)
         for(i = 0; i < bspLeaf->polyObj->lineCount; ++i)
         {
             line = bspLeaf->polyObj->lines[i];
-            hedge = line->L_frontside->hedges[0];
+            hedge = line->L_frontside->hedgeLeft;
 
             // Let's first check which way this hedge is facing.
             if(hedge->frameFlags & HEDGEINF_FACINGFRONT)

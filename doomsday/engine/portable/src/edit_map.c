@@ -791,10 +791,10 @@ static void finishLineDefs(GameMap* map)
         LineDef* ld = &map->lineDefs[i];
         const HEdge* leftHEdge, *rightHEdge;
 
-        if(!ld->L_frontside->hedgeCount) continue;
+        if(!ld->L_frontside->hedgeLeft) continue;
 
-        leftHEdge  = ld->L_frontside->hedges[0];
-        rightHEdge = ld->L_frontside->hedges[ld->L_frontside->hedgeCount - 1];
+        leftHEdge  = ld->L_frontside->hedgeLeft;
+        rightHEdge = ld->L_frontside->hedgeRight;
 
         ld->v[0] = leftHEdge->HE_v1;
         ld->v[1] = rightHEdge->HE_v2;
@@ -1297,8 +1297,7 @@ static void hardenPolyobjs(GameMap* dest, editmap_t* src)
             hedge->sector = line->L_frontsector;
             hedge->flags |= HEDGEF_POLYOBJ;
 
-            line->L_frontside->hedges = Z_Malloc(sizeof(*line->L_frontside->hedges), PU_MAP, 0);
-            line->L_frontside->hedges[0] = hedge;
+            line->L_frontside->hedgeLeft = line->L_frontside->hedgeRight = hedge;
 
             destP->lines[j] = line;
         }
@@ -1759,7 +1758,7 @@ boolean MPE_End(void)
         for(lineIter = po->lines; *lineIter; lineIter++, n++)
         {
             LineDef* line = *lineIter;
-            HEdge* hedge = line->L_frontside->hedges[0];
+            HEdge* hedge = line->L_frontside->hedgeLeft;
 
             hedge->HE_v1 = line->L_v1;
             hedge->HE_v2 = line->L_v2;

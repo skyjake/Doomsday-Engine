@@ -78,39 +78,22 @@ BinaryTree* BspBuilder_Root(BspBuilder_c* builder)
     return builder->inst->root();
 }
 
-static void hardenSidedefHEdgeList(SideDef* side, HEdge* bspHEdge)
+static void findSideDefHEdges(SideDef* side, HEdge* hedge)
 {
-    if(!side) return;
+    Q_ASSERT(side && hedge);
 
-    // Have we already processed this side?
-    if(side->hedges) return;
+    // Already processed?
+    if(side->hedgeLeft) return;
 
-    // Find the first hedge.
-    HEdge* first = bspHEdge;
-    while(first->bspBuildInfo->prevOnSide)
-        first = first->bspBuildInfo->prevOnSide;
+    side->hedgeLeft = hedge;
+    // Find the left-most hedge.
+    while(side->hedgeLeft->bspBuildInfo->prevOnSide)
+        side->hedgeLeft = side->hedgeLeft->bspBuildInfo->prevOnSide;
 
-    // Count the hedges for this side.
-    uint count = 0;
-    HEdge* other = first;
-    while(other)
-    {
-        other = other->bspBuildInfo->nextOnSide;
-        count++;
-    }
-
-    // Allocate the final side hedge table.
-    side->hedgeCount = count;
-    side->hedges = static_cast<HEdge**>(Z_Malloc(sizeof(*side->hedges) * (side->hedgeCount + 1), PU_MAPSTATIC, 0));
-
-    count = 0;
-    other = first;
-    while(other)
-    {
-        side->hedges[count++] = other;
-        other = other->bspBuildInfo->nextOnSide;
-    }
-    side->hedges[count] = NULL; // Terminate.
+    // Find the right-most hedge.
+    side->hedgeRight = hedge;
+    while(side->hedgeRight->bspBuildInfo->nextOnSide)
+        side->hedgeRight = side->hedgeRight->bspBuildInfo->nextOnSide;
 }
 
 typedef struct {
@@ -190,7 +173,7 @@ static void finishHEdges(GameMap* map)
             hedge->offset = P_AccurateDistance(hedge->HE_v1pos[VX] - vtx->V_pos[VX],
                                                hedge->HE_v1pos[VY] - vtx->V_pos[VY]);
 
-            hardenSidedefHEdgeList(HEDGE_SIDEDEF(hedge), hedge);
+            findSideDefHEdges(HEDGE_SIDEDEF(hedge), hedge);
         }
 
         hedge->angle = bamsAtan2((int) (hedge->HE_v2pos[VY] - hedge->HE_v1pos[VY]),
