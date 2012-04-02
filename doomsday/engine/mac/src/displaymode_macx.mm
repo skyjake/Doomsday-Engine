@@ -26,8 +26,10 @@
 #include <CoreFoundation/CoreFoundation.h>
 #include <ApplicationServices/ApplicationServices.h>
 #include <AppKit/AppKit.h>
+#ifdef MACOS_10_4
+#  include <Carbon/Carbon.h>
+#endif
 #include <vector>
-#include <QDebug>
 
 #include "window.h"
 
@@ -199,10 +201,8 @@ void DisplayMode_Native_Raise(void* nativeHandle)
     [wnd setLevel:CGShieldingWindowLevel()];
 #else
     // Qt uses the Carbon framework.
-    WindowRef* wnd = HIViewGetWindow((HIViewRef*) nativeHandle);
-    qWarning() << "wnd:" << wnd;
-    WindowGroupRef* wndGroup = GetWindowGroup(wnd);
-    qWarning() << "wndGroup:" << wndGroup;
+    WindowRef wnd = HIViewGetWindow((HIViewRef) nativeHandle);
+    WindowGroupRef wndGroup = GetWindowGroup(wnd);
     SetWindowGroupLevel(wndGroup, CGShieldingWindowLevel());
 #endif
 }
