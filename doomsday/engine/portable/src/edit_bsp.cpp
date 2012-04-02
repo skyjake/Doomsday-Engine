@@ -173,12 +173,15 @@ typedef struct {
 
 static int C_DECL populateBspObjectLuts(BinaryTree* tree, void* parameters)
 {
+    populatebspobjectluts_params_t* p = static_cast<populatebspobjectluts_params_t*>(parameters);
+    Q_ASSERT(p);
+
     // We are only interested in BspNodes at this level.
     if(BinaryTree_IsLeaf(tree)) return false; // Continue iteration.
 
+    // Take ownership of this BspNode.
     BspNode* node = static_cast<BspNode*>(BinaryTree_UserData(tree));
-    populatebspobjectluts_params_t* p = static_cast<populatebspobjectluts_params_t*>(parameters);
-    Q_ASSERT(p);
+    BinaryTree_SetUserData(tree, NULL);
 
     // Add this BspNode to the LUT.
     p->dest->bspNodes[p->nodeCurIndex++] = node;
@@ -187,7 +190,10 @@ static int C_DECL populateBspObjectLuts(BinaryTree* tree, void* parameters)
     {
         if(BinaryTree_IsLeaf(right))
         {
+            // Take ownership of this BspLeaf.
             BspLeaf* leaf = static_cast<BspLeaf*>(BinaryTree_UserData(right));
+            BinaryTree_SetUserData(right, NULL);
+
             // Add this BspLeaf to the LUT.
             p->dest->bspLeafs[p->leafCurIndex++] = leaf;
         }
@@ -197,7 +203,10 @@ static int C_DECL populateBspObjectLuts(BinaryTree* tree, void* parameters)
     {
         if(BinaryTree_IsLeaf(left))
         {
+            // Take ownership of this BspLeaf.
             BspLeaf* leaf = static_cast<BspLeaf*>(BinaryTree_UserData(left));
+            BinaryTree_SetUserData(left, NULL);
+
             // Add this BspLeaf to the LUT.
             p->dest->bspLeafs[p->leafCurIndex++] = leaf;
         }
@@ -235,7 +244,10 @@ static void hardenBSP(GameMap* dest, BinaryTree* rootNode)
 
     if(BinaryTree_IsLeaf(rootNode))
     {
+        // Take ownership of this leaf.
         BspLeaf* leaf = static_cast<BspLeaf*>(BinaryTree_UserData(rootNode));
+        BinaryTree_SetUserData(rootNode, NULL);
+
         dest->bsp = reinterpret_cast<runtime_mapdata_header_t*>(leaf);
         return;
     }
