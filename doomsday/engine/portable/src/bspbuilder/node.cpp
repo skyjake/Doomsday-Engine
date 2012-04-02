@@ -301,12 +301,30 @@ static boolean sanityCheckHasRealhedge(const BspLeaf* leaf)
     return false;
 }
 
+static void findSideDefHEdges(SideDef* side, HEdge* hedge)
+{
+    Q_ASSERT(side && hedge);
+
+    // Already processed?
+    if(side->hedgeLeft) return;
+
+    side->hedgeLeft = hedge;
+    // Find the left-most hedge.
+    while(side->hedgeLeft->bspBuildInfo->prevOnSide)
+        side->hedgeLeft = side->hedgeLeft->bspBuildInfo->prevOnSide;
+
+    // Find the right-most hedge.
+    side->hedgeRight = hedge;
+    while(side->hedgeRight->bspBuildInfo->nextOnSide)
+        side->hedgeRight = side->hedgeRight->bspBuildInfo->nextOnSide;
+}
+
 static int C_DECL clockwiseLeaf(BinaryTree* tree, void* parameters)
 {
     if(BinaryTree_IsLeaf(tree))
     {
         HEdgeSortBuffer& sortBuffer = *static_cast<HEdgeSortBuffer*>(parameters);
-        BspLeaf* leaf = (BspLeaf*) BinaryTree_UserData(tree);
+        BspLeaf* leaf = static_cast<BspLeaf*>(BinaryTree_UserData(tree));
         double midPoint[2] = { 0, 0 };
         HEdge* hedge;
 
@@ -321,11 +339,21 @@ static int C_DECL clockwiseLeaf(BinaryTree* tree, void* parameters)
 
         if(leaf->hedge)
         {
+            /// @todo Construct the leaf's hedge ring as we go.
             hedge = leaf->hedge;
             for(;;)
             {
                 // Link hedge to this leaf.
                 hedge->bspLeaf = leaf;
+
+                /// @kludge This should not be done here!
+                if(hedge->bspBuildInfo->lineDef)
+                {
+                    // Update LineDef link.
+                    hedge->lineDef = hedge->bspBuildInfo->lineDef;
+                    findSideDefHEdges(HEDGE_SIDEDEF(hedge), hedge);
+                }
+                /// kludge end
 
                 if(hedge->next)
                 {
