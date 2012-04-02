@@ -45,9 +45,35 @@ namespace de {
 /// Default cost factor attributed to splitting an existing half-edge.
 #define BSPBUILDER_PARTITION_COST_HEDGESPLIT   7
 
+/**
+ * @algorithm High-level description (courtesy of Raphael Quinet)
+ *   1 - Create one Seg for each SideDef: pick each LineDef in turn.  If it
+ *       has a "first" SideDef, then create a normal Seg.  If it has a
+ *       "second" SideDef, then create a flipped Seg.
+ *   2 - Call CreateNodes with the current list of Segs.  The list of Segs is
+ *       the only argument to CreateNodes.
+ *   3 - Save the Nodes, Segs and BspLeafs to disk.  Start with the leaves of
+ *       the Nodes tree and continue up to the root (last Node).
+ *
+ * CreateNodes does the following:
+ *   1 - Pick a nodeline amongst the Segs (minimize the number of splits and
+ *       keep the tree as balanced as possible).
+ *   2 - Move all Segs on the right of the nodeline in a list (segs1) and do
+ *       the same for all Segs on the left of the nodeline (in segs2).
+ *   3 - If the first list (segs1) contains references to more than one
+ *       Sector or if the angle between two adjacent Segs is greater than
+ *       180 degrees, then call CreateNodes with this (smaller) list.
+ *       Else, create a BspLeaf with all these Segs.
+ *   4 - Do the same for the second list (segs2).
+ *   5 - Return the new node (its two children are already OK).
+ *
+ * Each time CreateBspLeaf is called, the Segs are put in a global list.
+ * When there is no more Seg in CreateNodes' list, then they are all in the
+ * global list and ready to be saved to disk.
+ */
 class BspBuilder {
 public:
-    BspBuilder();
+    BspBuilder(GameMap* map);
     ~BspBuilder();
 
     BspBuilder* setSplitCostFactor(int factor)
@@ -56,18 +82,13 @@ public:
         return this;
     }
 
-    void initForMap(GameMap* map);
+    void initForMap();
 
     /**
      * Build the BSP for the given map.
-     *
-     * @param map           The map to build the BSP for.
-     * @param vertexes      Editable vertex (ptr) array.
-     * @param numVertexes   Number of vertexes in the array.
-     *
      * @return  @c true= iff completed successfully.
      */
-    boolean build(GameMap* map);
+    boolean build();
 
     /**
      * Retrieve a pointer to the root BinaryTree node for the constructed BSP.
@@ -97,7 +118,7 @@ private:
         return lineDefInfos[lineDef.buildData.index - 1];
     }
 
-    void findMapBounds(GameMap* map, AABoxf* aaBox) const;
+    void findMapBounds(AABoxf* aaBox) const;
 
     /**
      * Create a new leaf from a list of half-edges.
@@ -106,14 +127,14 @@ private:
 
     const HPlaneIntercept* makeHPlaneIntersection(HPlane& hplane, HEdge* hedge, int leftSide);
 
-    SuperBlockmap* createBlockmap(const AABoxf& mapBounds);
-
     /**
      * Initially create all half-edges, one for each side of a linedef.
      *
      * @return  The list of created half-edges.
      */
-    SuperBlockmap* createInitialHEdges(GameMap* map);
+    void createInitialHEdges(SuperBlock& hedgeList);
+
+    void initHEdgesAndBuildBsp(SuperBlockmap& blockmap, HPlane& hplane);
 
     void mergeIntersections(HPlane& intersections);
 
@@ -252,6 +273,8 @@ private:
 
 private:
     int splitCostFactor;
+
+    GameMap* map;
 
     typedef std::vector<LineDefInfo> LineDefInfos;
     LineDefInfos lineDefInfos;

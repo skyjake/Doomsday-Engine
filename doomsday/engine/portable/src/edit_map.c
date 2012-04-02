@@ -1663,10 +1663,10 @@ static boolean buildBsp(GameMap* gamemap)
     // It begins...
     startTime = Sys_GetRealTime();
 
-    bspBuilder = BspBuilder_New();
+    bspBuilder = BspBuilder_New(gamemap);
     BspBuilder_SetSplitCostFactor(bspBuilder, bspFactor);
 
-    builtOK = BspBuilder_Build(bspBuilder, gamemap);
+    builtOK = BspBuilder_Build(bspBuilder);
     if(builtOK)
     {
         MPE_SaveBsp(bspBuilder, gamemap, &map->vertexes, &map->numVertexes);

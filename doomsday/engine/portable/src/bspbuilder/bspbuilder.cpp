@@ -44,7 +44,7 @@
 
 using namespace de;
 
-BspBuilder::BspBuilder() :
+BspBuilder::BspBuilder(GameMap* _map) :
     splitCostFactor(BSPBUILDER_PARTITION_COST_HEDGESPLIT),
     map(_map), lineDefInfos(0), rootNode(0), builtOK(false)
 {}
@@ -85,9 +85,9 @@ static void initAABoxFromEditableLineDefVertexes(AABoxf* aaBox, const LineDef* l
     aaBox->maxY = MAX_OF(from[VY], to[VY]);
 }
 
-void BspBuilder::findMapBounds(GameMap* map, AABoxf* aaBox) const
+void BspBuilder::findMapBounds(AABoxf* aaBox) const
 {
-    Q_ASSERT(map && aaBox);
+    Q_ASSERT(aaBox);
 
     AABoxf bounds;
     boolean initialized = false;
@@ -126,40 +126,10 @@ void BspBuilder::findMapBounds(GameMap* map, AABoxf* aaBox) const
     V2f_Set(aaBox->max, DDMINFLOAT, DDMINFLOAT);
 }
 
-SuperBlockmap* BspBuilder::createBlockmap(const AABoxf& mapBoundsf)
-{
-    AABox mapBounds;
-    mapBounds.minX = (int) floor(mapBoundsf.minX);
-    mapBounds.minY = (int) floor(mapBoundsf.minY);
-    mapBounds.maxX = (int)  ceil(mapBoundsf.maxX);
-    mapBounds.maxY = (int)  ceil(mapBoundsf.maxY);
-
-    AABox blockBounds;
-    blockBounds.minX = mapBounds.minX - (mapBounds.minX & 0x7);
-    blockBounds.minY = mapBounds.minY - (mapBounds.minY & 0x7);
-    int bw = ((mapBounds.maxX - blockBounds.minX) / 128) + 1;
-    int bh = ((mapBounds.maxY - blockBounds.minY) / 128) + 1;
-
-    blockBounds.maxX = blockBounds.minX + 128 * M_CeilPow2(bw);
-    blockBounds.maxY = blockBounds.minY + 128 * M_CeilPow2(bh);
-
-    SuperBlockmap* bmap = new SuperBlockmap(blockBounds);
-    return bmap;
-}
-
-SuperBlockmap* BspBuilder::createInitialHEdges(GameMap* map)
+void BspBuilder::createInitialHEdges(SuperBlock& hedgeList)
 {
     Q_ASSERT(map);
 
-    // Find maximal vertexes.
-    AABoxf mapBounds;
-    findMapBounds(map, &mapBounds);
-
-    LOG_VERBOSE("Map bounds:")
-            << " min[x:" << mapBounds.minX << ", y:" << mapBounds.minY << "]"
-            << " max[x:" << mapBounds.maxX << ", y:" << mapBounds.maxY << "]";
-
-    SuperBlockmap* sbmap = createBlockmap(mapBounds);
     for(uint i = 0; i < map->numLineDefs; ++i)
     {
         LineDef* line = GameMap_LineDef(map, i);
@@ -193,7 +163,7 @@ SuperBlockmap* BspBuilder::createInitialHEdges(GameMap* map)
                     LOG_INFO("Bad SideDef on LineDef #%d.") << line->buildData.index;
 
                 front = newHEdge(line, line, line->v[0], line->v[1], side->sector, false);
-                sbmap->root().hedgePush(front);
+                hedgeList.hedgePush(front);
             }
             else
             {
@@ -208,7 +178,7 @@ SuperBlockmap* BspBuilder::createInitialHEdges(GameMap* map)
                     LOG_INFO("Bad SideDef on LineDef #%d.") << line->buildData.index;
 
                 back = newHEdge(line, line, line->v[1], line->v[0], side->sector, true);
-                sbmap->root().hedgePush(back);
+                hedgeList.hedgePush(back);
 
                 if(front)
                 {
@@ -232,7 +202,7 @@ SuperBlockmap* BspBuilder::createInitialHEdges(GameMap* map)
                     HEdge* other = newHEdge(front->bspBuildInfo->lineDef, line,
                                             line->v[1], line->v[0], line->buildData.windowEffect, true);
 
-                    sbmap->root().hedgePush(other);
+                    hedgeList.hedgePush(other);
 
                     // Setup the twin-ing (it's very strange to have a mini
                     // and a normal partnered together).
@@ -251,11 +221,9 @@ SuperBlockmap* BspBuilder::createInitialHEdges(GameMap* map)
         addEdgeTip(line->v[0], x2 - x1, y2 - y1, back, front);
         addEdgeTip(line->v[1], x1 - x2, y1 - y2, front, back);
     }
-
-    return sbmap;
 }
 
-void BspBuilder::initForMap(GameMap* map)
+void BspBuilder::initForMap()
 {
     uint numLineDefs = GameMap_LineDefCount(map);
     lineDefInfos.resize(numLineDefs);
@@ -282,29 +250,59 @@ void BspBuilder::initForMap(GameMap* map)
     }
 }
 
-boolean BspBuilder::build(GameMap* map)
+void BspBuilder::initHEdgesAndBuildBsp(SuperBlockmap& blockmap, HPlane& hplane)
 {
-    initForMap(map);
+    Q_ASSERT(map);
 
-    // Create initial half-edges.
-    uint startTime = Sys_GetRealTime();
+    createInitialHEdges(blockmap.root());
 
-    SuperBlockmap* sbmap = createInitialHEdges(map);
-
-    // How much time did we spend?
-    LOG_DEBUG("createInitialHEdges: Done in %.2f seconds.") << (Sys_GetRealTime() - startTime) / 1000.0f;
-
-    // Recursively create nodes.
+    // Build the tree.
     rootNode = NULL;
-    builtOK = buildNodes(sbmap->root(), &rootNode, HPlane(this));
+    builtOK = buildNodes(blockmap.root(), &rootNode, hplane);
 
-    delete sbmap;
-
-    // Wind the BSP tree.
+    // Wind the tree.
     if(builtOK)
     {
         windLeafs(rootNode);
     }
+}
+
+boolean BspBuilder::build()
+{
+    if(!map) return false;
+
+    initForMap();
+
+    // Find maximal vertexes.
+    AABoxf mapBounds;
+    findMapBounds(&mapBounds);
+
+    LOG_VERBOSE("Map bounds:")
+            << " min[x:" << mapBounds.minX << ", y:" << mapBounds.minY << "]"
+            << " max[x:" << mapBounds.maxX << ", y:" << mapBounds.maxY << "]";
+
+    AABox mapBoundsi;
+    mapBoundsi.minX = (int) floor(mapBounds.minX);
+    mapBoundsi.minY = (int) floor(mapBounds.minY);
+    mapBoundsi.maxX = (int)  ceil(mapBounds.maxX);
+    mapBoundsi.maxY = (int)  ceil(mapBounds.maxY);
+
+    AABox blockBounds;
+    blockBounds.minX = mapBoundsi.minX - (mapBoundsi.minX & 0x7);
+    blockBounds.minY = mapBoundsi.minY - (mapBoundsi.minY & 0x7);
+    int bw = ((mapBoundsi.maxX - blockBounds.minX) / 128) + 1;
+    int bh = ((mapBoundsi.maxY - blockBounds.minY) / 128) + 1;
+
+    blockBounds.maxX = blockBounds.minX + 128 * M_CeilPow2(bw);
+    blockBounds.maxY = blockBounds.minY + 128 * M_CeilPow2(bh);
+
+    SuperBlockmap* blockmap = new SuperBlockmap(blockBounds);
+    HPlane* hplane = new HPlane(this);
+
+    initHEdgesAndBuildBsp(*blockmap, *hplane);
+
+    delete hplane;
+    delete blockmap;
 
     return builtOK;
 }
@@ -603,10 +601,10 @@ void BspBuilder_Register(void)
     C_VAR_INT("bsp-factor", &bspFactor, CVF_NO_MAX, 0, 0);
 }
 
-BspBuilder_c* BspBuilder_New(void)
+BspBuilder_c* BspBuilder_New(GameMap* map)
 {
     BspBuilder_c* builder = (BspBuilder_c*)malloc(sizeof *builder);
-    builder->inst = new BspBuilder();
+    builder->inst = new BspBuilder(map);
     return builder;
 }
 
@@ -624,10 +622,10 @@ BspBuilder_c* BspBuilder_SetSplitCostFactor(BspBuilder_c* builder, int factor)
     return builder;
 }
 
-boolean BspBuilder_Build(BspBuilder_c* builder, GameMap* map)
+boolean BspBuilder_Build(BspBuilder_c* builder)
 {
     assert(builder);
-    return builder->inst->build(map);
+    return builder->inst->build();
 }
 
 BinaryTree* BspBuilder_Root(BspBuilder_c* builder)
