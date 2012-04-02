@@ -1,6 +1,6 @@
 /**
- * @file hedgeinfo.h
- * BSP Builder Half-edge info. @ingroup bsp
+ * @file bsphedgeinfo.h
+ * BSP Builder half-edge info. @ingroup bsp
  *
  * Based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted on
  * SourceForge: http://sourceforge.net/projects/glbsp/
@@ -25,8 +25,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_BSPBUILDER_HEDGEINFO_H
-#define LIBDENG_BSPBUILDER_HEDGEINFO_H
+#ifndef LIBDENG_BSPBUILDER_HEDGEINFO
+#define LIBDENG_BSPBUILDER_HEDGEINFO
 
 #include "dd_types.h"
 #include "p_mapdata.h"
@@ -35,17 +35,9 @@
 extern "C" {
 #endif
 
-#define IFFY_LEN            4.0
-
-// Smallest distance between two points before being considered equal.
-#define DIST_EPSILON        (1.0 / 128.0)
-
-// Smallest degrees between two angles before being considered equal.
-#define ANG_EPSILON         (1.0 / 1024.0)
-
 /**
- * BspHEdgeInfo. Plain old data structure storing additional information about
- * a half-edge produced by BspBuilder.
+ * Plain old data (POD) structure storing additional information about a
+ * half-edge produced by BspBuilder.
  */
 typedef struct bsphedgeinfo_s {
     // Precomputed data for faster calculations.
@@ -78,4 +70,4 @@ typedef struct bsphedgeinfo_s {
 } // extern "C"
 #endif
 
-#endif /// LIBDENG_BSPBUILDER_HEDGEINFO_H
+#endif /// LIBDENG_BSPBUILDER_HEDGEINFO

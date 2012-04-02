@@ -28,7 +28,7 @@
 #include "p_mapdata.h"
 
 #include "kdtree.h"
-#include "bspbuilder/hedges.hh"
+#include "bspbuilder/bsphedgeinfo.h"
 #include "bspbuilder/superblockmap.hh"
 
 using namespace de;

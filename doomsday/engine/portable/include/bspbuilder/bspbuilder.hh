@@ -31,7 +31,7 @@
 #include "dd_types.h"
 #include "p_mapdata.h"
 
-#include "bspbuilder/hedges.hh"
+#include "bspbuilder/bsphedgeinfo.h"
 #include "bspbuilder/hedgeintercept.h"
 #include "bspbuilder/intersection.hh"
 #include "bspbuilder/superblockmap.hh"
@@ -45,6 +45,14 @@ namespace de {
 
 /// Default cost factor attributed to splitting an existing half-edge.
 #define BSPBUILDER_PARTITION_COST_HEDGESPLIT   7
+
+#define IFFY_LEN            4.0
+
+/// Smallest distance between two points before being considered equal.
+#define DIST_EPSILON        (1.0 / 128.0)
+
+/// Smallest difference between two angles before being considered equal (in degrees).
+#define ANG_EPSILON         (1.0 / 1024.0)
 
 /**
  * @algorithm High-level description (courtesy of Raphael Quinet)

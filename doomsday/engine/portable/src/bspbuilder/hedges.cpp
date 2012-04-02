@@ -35,7 +35,7 @@
 #include "m_misc.h"
 #include "hedge.h"
 
-#include "bspbuilder/hedges.hh"
+#include "bspbuilder/bsphedgeinfo.h"
 #include "bspbuilder/bspbuilder.hh"
 
 using namespace de;

@@ -31,7 +31,7 @@
 #define LIBDENG_BSPBUILDER_SUPERBLOCKMAP
 
 #include "dd_types.h"
-#include "bspbuilder/hedges.hh"
+#include "bspbuilder/bsphedgeinfo.h"
 
 #include <list>
 #include <assert.h>

@@ -30,7 +30,7 @@
 
 #include "p_mapdata.h"
 
-#include "bspbuilder/hedges.hh"
+#include "bspbuilder/bsphedgeinfo.h"
 
 #include <list>
 
