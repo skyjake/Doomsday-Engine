@@ -250,6 +250,28 @@ void BspBuilder::initForMap()
     }
 }
 
+static int C_DECL linkTreeNode(BinaryTree* tree, void* /*parameters*/)
+{
+    // We are only interested in BspNodes at this level.
+    if(BinaryTree_IsLeaf(tree)) return false; // Continue iteration.
+
+    BspNode* node = static_cast<BspNode*>(BinaryTree_UserData(tree));
+
+    if(BinaryTree* right = BinaryTree_Right(tree))
+    {
+        runtime_mapdata_header_t* child = reinterpret_cast<runtime_mapdata_header_t*>(BinaryTree_UserData(right));
+        BspNode_SetRight(node, child);
+    }
+
+    if(BinaryTree* left = BinaryTree_Left(tree))
+    {
+        runtime_mapdata_header_t* child = reinterpret_cast<runtime_mapdata_header_t*>(BinaryTree_UserData(left));
+        BspNode_SetLeft(node, child);
+    }
+
+    return false; // Continue iteration.
+}
+
 void BspBuilder::initHEdgesAndBuildBsp(SuperBlockmap& blockmap, HPlane& hplane)
 {
     Q_ASSERT(map);
@@ -260,10 +282,13 @@ void BspBuilder::initHEdgesAndBuildBsp(SuperBlockmap& blockmap, HPlane& hplane)
     rootNode = NULL;
     builtOK = buildNodes(blockmap.root(), &rootNode, hplane);
 
-    // Wind the tree.
     if(builtOK)
     {
+        // Wind leafs.
         windLeafs(rootNode);
+
+        // Link up the BSP object tree.
+        BinaryTree_PostOrder(rootNode, linkTreeNode, NULL/*no parameters*/);
     }
 }
 

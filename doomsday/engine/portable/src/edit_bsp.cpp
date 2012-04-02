@@ -209,21 +209,18 @@ typedef struct {
     GameMap* dest;
     uint leafCurIndex;
     uint nodeCurIndex;
-} hardenbspparams_t;
+} populatebspobjectluts_params_t;
 
-/**
- * @todo The tree linking functionality should be moved into BspBuilder.
- */
-static int C_DECL hardenNode(BinaryTree* tree, void* parameters)
+static int C_DECL populateBspObjectLuts(BinaryTree* tree, void* parameters)
 {
-    // We are only interested in nodes at this level.
+    // We are only interested in BspNodes at this level.
     if(BinaryTree_IsLeaf(tree)) return false; // Continue iteration.
 
     BspNode* node = static_cast<BspNode*>(BinaryTree_UserData(tree));
-    hardenbspparams_t* p = static_cast<hardenbspparams_t*>(parameters);
+    populatebspobjectluts_params_t* p = static_cast<populatebspobjectluts_params_t*>(parameters);
     Q_ASSERT(p);
 
-    // Add this to the BspNode LUT.
+    // Add this BspNode to the LUT.
     p->dest->bspNodes[p->nodeCurIndex++] = node;
 
     if(BinaryTree* right = BinaryTree_Right(tree))
@@ -231,14 +228,8 @@ static int C_DECL hardenNode(BinaryTree* tree, void* parameters)
         if(BinaryTree_IsLeaf(right))
         {
             BspLeaf* leaf = static_cast<BspLeaf*>(BinaryTree_UserData(right));
-
-            BspNode_SetRight(node, reinterpret_cast<runtime_mapdata_header_t*>(leaf));
+            // Add this BspLeaf to the LUT.
             p->dest->bspLeafs[p->leafCurIndex++] = leaf;
-        }
-        else
-        {
-            BspNode* data = static_cast<BspNode*>(BinaryTree_UserData(right));
-            BspNode_SetRight(node, reinterpret_cast<runtime_mapdata_header_t*>(data));
         }
     }
 
@@ -247,14 +238,8 @@ static int C_DECL hardenNode(BinaryTree* tree, void* parameters)
         if(BinaryTree_IsLeaf(left))
         {
             BspLeaf* leaf = static_cast<BspLeaf*>(BinaryTree_UserData(left));
-
-            BspNode_SetLeft(node, reinterpret_cast<runtime_mapdata_header_t*>(leaf));
+            // Add this BspLeaf to the LUT.
             p->dest->bspLeafs[p->leafCurIndex++] = leaf;
-        }
-        else
-        {
-            BspNode* data = static_cast<BspNode*>(BinaryTree_UserData(left));
-            BspNode_SetLeft(node, reinterpret_cast<runtime_mapdata_header_t*>(data));
         }
     }
 
@@ -297,11 +282,11 @@ static void hardenBSP(GameMap* dest, BinaryTree* rootNode)
 
     dest->bsp = static_cast<runtime_mapdata_header_t*>(BinaryTree_UserData(rootNode));
 
-    hardenbspparams_t p;
+    populatebspobjectluts_params_t p;
     p.dest = dest;
     p.leafCurIndex = 0;
     p.nodeCurIndex = 0;
-    BinaryTree_PostOrder(rootNode, hardenNode, &p);
+    BinaryTree_PostOrder(rootNode, populateBspObjectLuts, &p);
 }
 
 static void hardenVertexes(GameMap* dest, Vertex*** vertexes, uint* numVertexes)
