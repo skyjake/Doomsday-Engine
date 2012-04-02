@@ -52,3 +52,13 @@ int DisplayMode_Native_Change(const DisplayMode* mode, boolean shouldCapture)
     DENG_UNUSED(shouldCapture);
     return true;
 }
+
+void DisplayMode_Native_GetColorTransfer(displaycolortransfer_t* colors)
+{
+    DENG_UNUSED(colors);
+}
+
+void DisplayMode_Native_SetColorTransfer(const displaycolortransfer_t* colors)
+{
+    DENG_UNUSED(colors);
+}
