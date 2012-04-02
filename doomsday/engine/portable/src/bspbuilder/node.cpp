@@ -726,7 +726,7 @@ const HPlaneIntercept* BspBuilder::makeHPlaneIntersection(HPlane& hplane, HEdge*
                               vertex->buildData.pos[VX], vertex->buildData.pos[VY]);
 
     LineDef* line = hedge->bspBuildInfo->lineDef;
-    hedgeIntercept = newHEdgeIntercept(vertex, &info, line && lineDefInfo(*line).flags.testFlag(BspLineDefInfo::SELFREF));
+    hedgeIntercept = newHEdgeIntercept(vertex, &info, line && lineDefInfo(*line).flags.testFlag(LineDefInfo::SELFREF));
     return hplane.newIntercept(distance, hedgeIntercept);
 }
 

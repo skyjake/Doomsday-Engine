@@ -46,7 +46,7 @@ using namespace de;
 
 BspBuilder::BspBuilder() :
     splitCostFactor(BSPBUILDER_PARTITION_COST_HEDGESPLIT),
-    _lineDefInfo(0), rootNode(0), builtOK(false)
+    map(_map), lineDefInfos(0), rootNode(0), builtOK(false)
 {}
 
 static int C_DECL clearBspHEdgeInfo(BinaryTree* tree, void* /*parameters*/)
@@ -97,7 +97,7 @@ void BspBuilder::findMapBounds(GameMap* map, AABoxf* aaBox) const
         LineDef* line = GameMap_LineDef(map, i);
 
         // Do not consider zero-length LineDefs.
-        if(lineDefInfo(*line).flags.testFlag(BspLineDefInfo::ZEROLENGTH)) continue;
+        if(lineDefInfo(*line).flags.testFlag(LineDefInfo::ZEROLENGTH)) continue;
 
         AABoxf lineAABox;
         initAABoxFromEditableLineDefVertexes(&lineAABox, line);
@@ -170,7 +170,7 @@ SuperBlockmap* BspBuilder::createInitialHEdges(GameMap* map)
         if(line->inFlags & LF_POLYOBJ) continue;
 
         // Ignore zero-length and polyobj lines.
-        if(!lineDefInfo(*line).flags.testFlag(BspLineDefInfo::ZEROLENGTH)
+        if(!lineDefInfo(*line).flags.testFlag(LineDefInfo::ZEROLENGTH)
            /*&& !lineDefInfo(*line).overlap*/)
         {
             // Check for Humungously long lines.
@@ -220,10 +220,10 @@ SuperBlockmap* BspBuilder::createInitialHEdges(GameMap* map)
             }
             else
             {
-                if(lineDefInfo(*line).flags.testFlag(BspLineDefInfo::TWOSIDED))
+                if(lineDefInfo(*line).flags.testFlag(LineDefInfo::TWOSIDED))
                 {
                     LOG_INFO("LineDef #%d is two-sided but has no back SideDef.") << line->buildData.index;
-                    lineDefInfo(*line).flags &= ~BspLineDefInfo::TWOSIDED;
+                    lineDefInfo(*line).flags &= ~LineDefInfo::TWOSIDED;
                 }
 
                 // Handle the 'One-Sided Window' trick.
@@ -258,26 +258,26 @@ SuperBlockmap* BspBuilder::createInitialHEdges(GameMap* map)
 void BspBuilder::initForMap(GameMap* map)
 {
     uint numLineDefs = GameMap_LineDefCount(map);
-    _lineDefInfo.resize(numLineDefs);
+    lineDefInfos.resize(numLineDefs);
 
     for(uint i = 0; i < numLineDefs; ++i)
     {
         LineDef* l = GameMap_LineDef(map, i);
-        BspLineDefInfo& info = lineDefInfo(*l);
+        LineDefInfo& info = lineDefInfo(*l);
         const Vertex* start = l->v[0];
         const Vertex* end   = l->v[1];
 
         // Check for zero-length line.
         if((fabs(start->buildData.pos[VX] - end->buildData.pos[VX]) < DIST_EPSILON) &&
            (fabs(start->buildData.pos[VY] - end->buildData.pos[VY]) < DIST_EPSILON))
-            info.flags |= BspLineDefInfo::ZEROLENGTH;
+            info.flags |= LineDefInfo::ZEROLENGTH;
 
         if(l->sideDefs[BACK] && l->sideDefs[FRONT])
         {
-            info.flags |= BspLineDefInfo::TWOSIDED;
+            info.flags |= LineDefInfo::TWOSIDED;
 
             if(l->sideDefs[BACK]->sector == l->sideDefs[FRONT]->sector)
-                info.flags |= BspLineDefInfo::SELFREF;
+                info.flags |= LineDefInfo::SELFREF;
         }
     }
 }
