@@ -42,7 +42,7 @@ a {
 
 a:hover {
     text-decoration: underline;
-    color: #fb0;
+    color: #FFCB0F;
 }
 
 a[class ="jump"] {
@@ -296,7 +296,7 @@ ol.jumplist li {
 }
 
 #main {
-    border: 2px solid #A5B9A5;
+    border: 2px solid #A6B9AA;
     border-radius: 10px;
     box-shadow: 0 0 20px 10px rgba(0, 0, 0, .1);
 }
@@ -324,7 +324,7 @@ ol.jumplist li {
 #menu {
     font-family: Verdana, Arial, Helvetica, sans-serif;
     font-weight: bold;
-    box-shadow: 0 16px 8px 0 rgb(205, 220, 213) inset;
+    box-shadow: 0 16px 8px 0 rgb(199, 220, 215) inset;
     border-top-left-radius: 8px;
     border-top-right-radius: 8px;
 }
@@ -378,11 +378,11 @@ ol.jumplist li {
 }
 
 #menu a.paddle_left, span.paddle_left_select {
-    border-left: solid 2px #A5B9A5;
+    border-left: solid 2px #A6B9AA;
 }
 
 #menu a.paddle_right, span.paddle_right_select {
-    border-right: solid 2px #A5B9A5;
+    border-right: solid 2px #A6B9AA;
 }
 
 #menu span.paddle_left_select,
@@ -407,6 +407,7 @@ ol.jumplist li {
     border: 0;
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
+    box-shadow: 0 4px 6px 0 rgba(186, 196, 189, 260) inset;
 }
 
 #divider2 {
@@ -531,7 +532,7 @@ p.legal a {
     padding-top: .5em;
     float: left;
     text-align: left;
-    color: #fb0;
+    color: #FFCB0F;
     font-size: xx-small;
     font-family: Verdana, Arial, Helvetica, sans-serif;
     font-weight: lighter;
@@ -555,7 +556,7 @@ p.legal a {
 }
 
 #projectnews a {
-    color: #fb0;
+    color: #FFCB0F;
 }
 
 #projectnews .new-label {
@@ -593,7 +594,7 @@ p.legal a {
     padding-top: .5em;
     float: right;
     text-align: right;
-    color: #fb0;
+    color: #FFCB0F;
     font-size: xx-small;
     font-family: Verdana, Arial, Helvetica, sans-serif;
     min-height: 139px;
@@ -616,7 +617,7 @@ p.legal a {
 }
 
 #servers a {
-    color: #fb0;
+    color: #FFCB0F;
 }
 
 #servers a:hover, #servers a:visited:hover {
@@ -880,7 +881,7 @@ p.legal a {
 
 #buildcommits ol.jumplist a:hover {
     text-decoration: underline;
-    color: #fb0;
+    color: #FFCB0F;
 }
 
 .buildnews_list {
@@ -902,7 +903,7 @@ p.legal a {
 }
 
 .commit_list p.collapsible:hover {
-    color: #fb0;
+    color: #FFCB0F;
 }
 
 .commit_list .tag {
