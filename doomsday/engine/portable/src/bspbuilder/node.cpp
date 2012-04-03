@@ -888,22 +888,33 @@ void BspBuilder::divideHEdge(HEdge* hedge, SuperBlock& rightList, SuperBlock& le
         return;
     }
 
-    // This half-edge straddles the partition plane and must therefore be split.
+    /**
+     * Straddles the partition plane and must therefore be split.
+     */
     vec2d_t point;
     hedgePartitionIntersection(hedge, a, b, point);
-    HEdge* newhedge = splitHEdge(hedge, point);
+
+    HEdge* newHEdge = splitHEdge(hedge, point);
+
+    // Ensure the new twin is inserted into the same block as the old twin.
+    if(hedge->twin && !hedgeIsInLeaf(hedge->twin))
+    {
+        SuperBlock* block = reinterpret_cast<SuperBlock*>(hedge->twin->bspBuildInfo->block);
+        Q_ASSERT(block);
+        block->push(newHEdge->twin);
+    }
 
     makePartitionIntersection(hedge, LEFT);
 
     if(a < 0)
     {
-        rightList.push(newhedge);
+        rightList.push(newHEdge);
         leftList.push(hedge);
     }
     else
     {
         rightList.push(hedge);
-        leftList.push(newhedge);
+        leftList.push(newHEdge);
     }
 }
 

@@ -116,6 +116,8 @@ public:
     void deleteHEdgeIntercept(HEdgeIntercept* intercept);
 
 private:
+    Vertex* newVertex(const_pvec2d_t point);
+
     /**
      * Retrieve the extended build info for the specified @a lineDef.
      * @return  Extended info for that LineDef.
@@ -149,7 +151,11 @@ private:
 
     void buildHEdgesAtIntersectionGaps(SuperBlock& rightList, SuperBlock& leftList);
 
-    void addEdgeTip(Vertex* vert, double dx, double dy, HEdge* back, HEdge* front);
+    void addEdgeTip(Vertex* vert, double angle, HEdge* back, HEdge* front);
+
+    /// @c true  Iff @a hedge has been added to a BSP leaf (i.e., it is no longer
+    ///          linked in the hedge blockmap).
+    bool hedgeIsInLeaf(const HEdge* hedge) const;
 
     /**
      * Splits the given half-edge at the point (x,y). The new half-edge is returned.

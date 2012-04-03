@@ -231,8 +231,8 @@ void BspBuilder::createInitialHEdges(SuperBlock& hedgeList)
         double x2 = line->v[1]->buildData.pos[VX];
         double y2 = line->v[1]->buildData.pos[VY];
 
-        addEdgeTip(line->v[0], x2 - x1, y2 - y1, back, front);
-        addEdgeTip(line->v[1], x1 - x2, y1 - y2, front, back);
+        addEdgeTip(line->v[0], M_SlopeToAngle(x2 - x1, y2 - y1), back, front);
+        addEdgeTip(line->v[1], M_SlopeToAngle(x1 - x2, y1 - y2), front, back);
     }
 }
 
@@ -605,13 +605,24 @@ void BspBuilder::deleteHEdgeIntercept(HEdgeIntercept* inter)
     delete inter;
 }
 
-void BspBuilder::addEdgeTip(Vertex* vert, double dx, double dy, HEdge* back,
-    HEdge* front)
+Vertex* BspBuilder::newVertex(const_pvec2d_t point)
+{
+    /// @todo Vertex should not come from the editable map but from a store
+    ///       within our own domain.
+    Vertex* vtx = createVertex();
+    if(point)
+    {
+        V2d_Copy(vtx->buildData.pos, point);
+    }
+    return vtx;
+}
+
+void BspBuilder::addEdgeTip(Vertex* vert, double angle, HEdge* back, HEdge* front)
 {
     edgetip_t* tip = MPE_NewEdgeTip();
     edgetip_t* after;
 
-    tip->angle = M_SlopeToAngle(dx, dy);
+    tip->angle = angle;
     tip->ET_edge[BACK]  = back;
     tip->ET_edge[FRONT] = front;
 

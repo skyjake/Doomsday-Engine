@@ -1,6 +1,6 @@
 /**
  * @file hedges.cpp
- * BSP Builder Half-edges. @ingroup map
+ * BSP Builder Half-edges. @ingroup bsp
  *
  * Based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted on
  * SourceForge: http://sourceforge.net/projects/glbsp/
@@ -96,29 +96,23 @@ HEdge* BspBuilder::cloneHEdge(const HEdge& other)
     return hedge;
 }
 
+bool BspBuilder::hedgeIsInLeaf(const HEdge* hedge) const
+{
+    /// @todo Are we now able to determine this by testing hedge->leaf ?
+    return !hedge->bspBuildInfo->block;
+}
+
 HEdge* BspBuilder::splitHEdge(HEdge* oldHEdge, const_pvec2d_t point)
 {
-    Q_ASSERT(oldHEdge && point);
+    Q_ASSERT(oldHEdge);
 
-/*#if _DEBUG
-    if(oldHEdge->lineDef)
-        Con_Message("Splitting Linedef %d (%p) at (%1.1f,%1.1f)\n", oldHEdge->lineDef->index, oldHEdge, x, y);
-    else
-        Con_Message("Splitting MiniHEdge %p at (%1.1f,%1.1f)\n", oldHEdge, x, y);
-#endif*/
+    //LOG_DEBUG("Splitting hedge %p at [%1.1f, %1.1f].")
+    //        << oldHEdge << x << y;
 
-    /**
-     * Create a new vertex (with correct wall_tip info) for the split that
-     * happens along the given half-edge at the given location.
-     */
-    Vertex* newVert = createVertex();
-    V2d_Copy(newVert->buildData.pos, point);
+    Vertex* newVert = newVertex(point);
+    addEdgeTip(newVert, M_SlopeToAngle(-oldHEdge->bspBuildInfo->pDX, -oldHEdge->bspBuildInfo->pDY), oldHEdge, oldHEdge->twin);
+    addEdgeTip(newVert, M_SlopeToAngle( oldHEdge->bspBuildInfo->pDX,  oldHEdge->bspBuildInfo->pDY), oldHEdge->twin, oldHEdge);
 
-    // Compute wall_tip info.
-    addEdgeTip(newVert, -oldHEdge->bspBuildInfo->pDX, -oldHEdge->bspBuildInfo->pDY, oldHEdge, oldHEdge->twin);
-    addEdgeTip(newVert,  oldHEdge->bspBuildInfo->pDX,  oldHEdge->bspBuildInfo->pDY, oldHEdge->twin, oldHEdge);
-
-    // Copy the old half-edge info.
     HEdge* newHEdge = cloneHEdge(*oldHEdge);
 
     newHEdge->bspBuildInfo->prevOnSide = oldHEdge;
@@ -130,9 +124,6 @@ HEdge* BspBuilder::splitHEdge(HEdge* oldHEdge, const_pvec2d_t point)
     newHEdge->v[0] = newVert;
     updateHEdgeInfo(newHEdge, newHEdge->bspBuildInfo);
 
-    //LOG_DEBUG("Splitting Vertex is %04X at [%1.1f, %1.1f].")
-    //        << newVert->index << newVert->V_pos[VX] << newVert->V_pos[VY];
-
     // Handle the twin.
     if(oldHEdge->twin)
     {
@@ -140,8 +131,6 @@ HEdge* BspBuilder::splitHEdge(HEdge* oldHEdge, const_pvec2d_t point)
 
         // Copy the old hedge info.
         newHEdge->twin = cloneHEdge(*oldHEdge->twin);
-
-        // It is important to keep the twin relationship valid.
         newHEdge->twin->twin = newHEdge;
 
         newHEdge->twin->bspBuildInfo->nextOnSide = oldHEdge->twin;
@@ -153,14 +142,10 @@ HEdge* BspBuilder::splitHEdge(HEdge* oldHEdge, const_pvec2d_t point)
         newHEdge->twin->v[1] = newVert;
         updateHEdgeInfo(newHEdge->twin, newHEdge->twin->bspBuildInfo);
 
-        // Update superblock, if needed.
-        if(oldHEdge->twin->bspBuildInfo->block)
+        // Has this already been added to a leaf?
+        if(hedgeIsInLeaf(oldHEdge->twin))
         {
-            SuperBlock* block = reinterpret_cast<SuperBlock*>(oldHEdge->twin->bspBuildInfo->block);
-            block->push(newHEdge->twin);
-        }
-        else
-        {
+            // Update the in-leaf references.
             oldHEdge->twin->next = newHEdge->twin;
         }
     }
