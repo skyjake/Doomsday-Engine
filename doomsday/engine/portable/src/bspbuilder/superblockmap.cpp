@@ -105,6 +105,12 @@ const AABox& SuperBlock::bounds() const
     return *KdTreeNode_Bounds(d->tree);
 }
 
+bool SuperBlock::isLeaf() const
+{
+    const AABox& aaBox = bounds();
+    return (aaBox.maxX - aaBox.minX <= 256 && aaBox.maxY - aaBox.minY <= 256);
+}
+
 bool SuperBlock::hasChild(ChildId childId) const
 {
     assertValidChildId(childId);
@@ -188,7 +194,7 @@ SuperBlock* SuperBlock::hedgePush(HEdge* hedge)
         // Update half-edge counts.
         sb->d->incrementHEdgeCount(hedge);
 
-        if(sb->blockmap().isLeaf(*sb))
+        if(sb->isLeaf())
         {
             // No further subdivision possible.
             sb->d->linkHEdge(hedge);
@@ -331,12 +337,6 @@ SuperBlockmap::~SuperBlockmap()
 SuperBlock& SuperBlockmap::root()
 {
     return *static_cast<SuperBlock*>(KdTreeNode_UserData(KdTree_Root(d->kdTree)));
-}
-
-bool SuperBlockmap::isLeaf(const SuperBlock& block) const
-{
-    return (block.bounds().maxX - block.bounds().minX <= 256 &&
-            block.bounds().maxY - block.bounds().minY <= 256);
 }
 
 typedef struct {

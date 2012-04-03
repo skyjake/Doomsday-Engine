@@ -45,6 +45,7 @@
 #endif
 
 namespace de {
+//namespace bspbuilder {
 
 class SuperBlockmap;
 
@@ -55,32 +56,27 @@ class SuperBlockmap;
  * Division of a block always occurs horizontally:
  *     e.g. 512x512 -> 256x512 -> 256x256.
  */
-class SuperBlock {
-friend class SuperBlockmap;
-
+class SuperBlock
+{
 public:
     typedef std::list<HEdge*> HEdges;
 
+    /// A SuperBlock may be subdivided with two child subblocks which are
+    /// uniquely identifiable by these associated ids.
     enum ChildId
     {
         RIGHT,
         LEFT
     };
 
+    /// Assert that the specified value is a valid @a childId.
     static void inline assertValidChildId(ChildId DENG_DEBUG_ONLY(childId))
     {
         assert(childId == RIGHT || childId == LEFT);
     }
 
-private:
-    SuperBlock(SuperBlockmap& blockmap);
-    SuperBlock(SuperBlock& parent, ChildId childId, bool splitVertical);
-    ~SuperBlock();
-
-public:
     /**
      * Retrieve the SuperBlockmap which owns this block.
-     *
      * @return  The owning SuperBlockmap instance.
      */
     SuperBlockmap& blockmap() const;
@@ -94,34 +90,49 @@ public:
      */
     const AABox& bounds() const;
 
+    /**
+     * Is this block small enough to be considered a "leaf"? A leaf in this
+     * context is a block whose dimensions are <= [256, 256] and thus can
+     * not be subdivided any further.
+     */
+    bool isLeaf() const;
+
+    /**
+     * Does this block have a child subblock?
+     */
     bool hasChild(ChildId childId) const;
 
+    /**
+     * Does this block have a Right child subblock?
+     */
     inline bool hasRight() const { return hasChild(RIGHT); }
+
+    /**
+     * Does this block have a Left child subblock?
+     */
     inline bool hasLeft() const  { return hasChild(LEFT); }
 
     /**
-     * Retrieve a pointer to a sub-block if present.
-     * @param childId  Identifier to the sub-block.
-     * @return  Selected sub-block else @c NULL.
+     * Retrieve a child of this subblock. Callers must first determine if a
+     * child is present using SuperBlock::hasChild() (or similar), attempting
+     * to call this with no child present results in fatal error.
+     *
+     * @param childId  Subblock identifier.
+     * @return  Selected subblock.
      */
     SuperBlock& child(ChildId childId);
 
     /**
-     * Retrieve the right sub-block. Use SuperBlock::hasRight() before calling.
+     * Retrieve the right sub-block. @see SuperBlock::child()
      * @return  Right sub-block.
      */
     inline SuperBlock& right() { return child(RIGHT); }
 
     /**
-     * Retrieve the right sub-block. Use SuperBlock::hasLeft() before calling.
+     * Retrieve the right sub-block. @see SuperBlock::child()
      * @return  Left sub-block else @c NULL.
      */
     inline SuperBlock& left()  { return child(LEFT); }
-
-    SuperBlock* addChild(ChildId childId, bool splitVertical);
-
-    inline SuperBlock* addRight(bool splitVertical) { return addChild(RIGHT, splitVertical); }
-    inline SuperBlock* addLeft(bool splitVertical)  { return addChild(LEFT,  splitVertical); }
 
     /**
      * Perform a depth-first traversal over all child superblocks and
@@ -136,15 +147,19 @@ public:
      */
     int traverse(int (C_DECL *callback)(SuperBlock*, void*), void* parameters=NULL);
 
-    /// Half-edges completely contained by this block.
-    HEdges::const_iterator hedgesBegin() const;
-    HEdges::const_iterator hedgesEnd() const;
-
+    /**
+     * Find the axis-aligned bounding box defined by the vertices of all
+     * HEdges within this superblock. If there are no HEdges linked to
+     * this then @a bounds will be initialized to the "cleared" state
+     * (i.e., min[x,y] > max[x,y]).
+     *
+     * @param bounds  Determined bounds are written here.
+     */
     void findHEdgeBounds(AABoxf& bounds);
 
     /**
-     * Retrieve the total number of HEdges linked in this superblock (including
-     * any within child superblocks).
+     * Retrieve the total number of HEdges linked in this superblock
+     * (including any within child superblocks).
      *
      * @param addReal       Include the "real" half-edges in the total.
      * @param addMini       Include the "mini" half-edges in the total.
@@ -153,7 +168,7 @@ public:
      */
     uint hedgeCount(bool addReal, bool addMini) const;
 
-    // Convenience functions for retrieving the HEdge totals:
+    /// Convenience functions for retrieving HEdge totals:
     inline uint miniHEdgeCount() const {  return hedgeCount(false, true); }
     inline uint realHEdgeCount() const { return hedgeCount(true, false); }
     inline uint totalHEdgeCount() const { return hedgeCount(true, true); }
@@ -174,9 +189,40 @@ public:
      */
     HEdge* hedgePop();
 
+    HEdges::const_iterator hedgesBegin() const;
+    HEdges::const_iterator hedgesEnd() const;
+
+private:
+    /**
+     * SuperBlock objects must be constructed within the context of an
+     * owning SuperBlockmap. Instantiation outside of this context is not
+     * permitted. @see SuperBlockmap
+     */
+    SuperBlock(SuperBlockmap& blockmap);
+    SuperBlock(SuperBlock& parent, ChildId childId, bool splitVertical);
+    ~SuperBlock();
+
+    /**
+     * Attach a new SuperBlock instance as a child of this.
+     * @param childId  Unique identifier of the child.
+     * @param splitVertical  @c true= Subdivide this block on the y axis
+     *                       rather than the x axis.
+     */
+    SuperBlock* addChild(ChildId childId, bool splitVertical);
+
+    inline SuperBlock* addRight(bool splitVertical) { return addChild(RIGHT, splitVertical); }
+    inline SuperBlock* addLeft(bool splitVertical)  { return addChild(LEFT,  splitVertical); }
+
 private:
     struct Instance;
     Instance* d;
+
+    /**
+     * SuperBlockmap creates instances of SuperBlock so it needs to use
+     * the special private constructor that takes an existing superblock
+     * object reference as a parameter.
+     */
+    friend class SuperBlockmap;
 };
 
 class SuperBlockmap {
@@ -203,8 +249,6 @@ public:
      */
     void findHEdgeBounds(AABoxf& bounds);
 
-    bool inline isLeaf(const SuperBlock& block) const;
-
     /**
      * Empty this SuperBlockmap clearing all HEdges and sub-blocks.
      */
@@ -215,6 +259,7 @@ private:
     Instance* d;
 };
 
+//} // namespace bspbuilder
 } // namespace de
 
 #endif /// LIBDENG_BSPBUILDER_SUPERBLOCKMAP
