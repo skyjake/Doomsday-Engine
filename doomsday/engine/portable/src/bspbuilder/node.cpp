@@ -40,7 +40,7 @@
 #include "m_binarytree.h"
 
 #include "bspbuilder/intersection.hh"
-#include "bspbuilder/superblockmap.hh"
+#include "bspbuilder/superblockmap.h"
 #include "bspbuilder/bspbuilder.hh"
 
 using namespace de;

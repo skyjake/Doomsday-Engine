@@ -29,7 +29,7 @@
 
 #include "kdtree.h"
 #include "bspbuilder/bsphedgeinfo.h"
-#include "bspbuilder/superblockmap.hh"
+#include "bspbuilder/superblockmap.h"
 
 using namespace de;
 

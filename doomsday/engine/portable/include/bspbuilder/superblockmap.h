@@ -1,6 +1,6 @@
 /**
- * @file superblockmap.hh
- * BSP Builder SuperBlock. @ingroup map
+ * @file superblockmap.h
+ * BSP Builder SuperBlockmap. @ingroup map
  *
  * Design is effectively that of a 2-dimensional kd-tree.
  *

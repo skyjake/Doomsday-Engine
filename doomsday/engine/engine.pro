@@ -137,7 +137,7 @@ DENG_HEADERS = \
     portable/include/bspbuilder/hedgeintercept.h \
     portable/include/bspbuilder/intersection.hh \
     portable/include/bspbuilder/linedefinfo.h \
-    portable/include/bspbuilder/superblockmap.hh \
+    portable/include/bspbuilder/superblockmap.h \
     portable/include/bspleaf.h \
     portable/include/bspnode.h \
     portable/include/b_command.h \

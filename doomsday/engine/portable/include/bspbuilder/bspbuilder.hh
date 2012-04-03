@@ -34,7 +34,7 @@
 #include "bspbuilder/bsphedgeinfo.h"
 #include "bspbuilder/hedgeintercept.h"
 #include "bspbuilder/intersection.hh"
-#include "bspbuilder/superblockmap.hh"
+#include "bspbuilder/superblockmap.h"
 #include "bspbuilder/linedefinfo.h"
 
 #include <vector>

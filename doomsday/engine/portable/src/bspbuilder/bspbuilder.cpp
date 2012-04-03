@@ -40,7 +40,7 @@
 
 #include "bspbuilder/intersection.hh"
 #include "bspbuilder/bspbuilder.hh"
-#include "bspbuilder/superblockmap.hh"
+#include "bspbuilder/superblockmap.h"
 
 using namespace de;
 
