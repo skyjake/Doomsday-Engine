@@ -30,8 +30,6 @@
 
 #include "p_mapdata.h"
 
-#include "bspbuilder/bsphedgeinfo.h"
-
 #include <list>
 
 namespace de {
@@ -59,42 +57,50 @@ struct HPlanePartition {
     }
 };
 
-struct HPlaneIntercept {
-    // How far along the partition line the vertex is. Zero is at the
-    // partition half-edge's start point, positive values move in the same
-    // direction as the partition's direction, and negative values move
-    // in the opposite direction.
-    double distance;
+class HPlaneIntercept
+{
+public:
+    /**
+     * Distance from the owning HPlane's origin point. Negative values
+     * mean this intercept is positioned to the left of the origin.
+     */
+    double distance() const { return _distance; }
 
-    void* userData;
+    /**
+     * Retrieve the data pointer associated with this intercept.
+     */
+    void* userData() const { return _userData; }
 
-    HPlaneIntercept() :
-        distance(0), userData(0)
-    {}
-
-    HPlaneIntercept(double distance, void* userData) :
-        distance(distance), userData(userData)
-    {}
-
-    double operator - (const HPlaneIntercept& other) const {
-        return distance - other.distance;
+    /**
+     * Determine the distance between two intercepts. It does not matter
+     * if the intercepts are from different half-planes.
+     */
+    double operator - (const HPlaneIntercept& other) const
+    {
+        return _distance - other.distance();
     }
+
+    HPlaneIntercept() : _distance(0), _userData(0) {}
+    HPlaneIntercept(double distance, void* userData) :
+        _distance(distance), _userData(userData) {}
+
+private:
+    /**
+     * Distance along the owning HPlane.
+     */
+    double _distance;
+
+    /// User data pointer associated with this intercept.
+    void* _userData;
 };
 
 class HPlane {
 public:
     typedef std::list<HPlaneIntercept> Intercepts;
 
-    HPlane(BspBuilder* builder) : intercepts(0), builder(builder)
-    {
-        initHEdgeInfo();
-    }
-
-    HPlane(BspBuilder* builder, double const origin[2], double const angle[2]) :
-        partition(origin, angle), intercepts(0), builder(builder)
-    {
-        initHEdgeInfo();
-    }
+    HPlane() : partition(), intercepts(0){}
+    HPlane(double const origin[2], double const angle[2]) :
+        partition(origin, angle), intercepts(0) {}
 
     ~HPlane() { clear(); }
 
@@ -115,14 +121,6 @@ public:
     HPlane* setDXY(double x, double y);
     HPlane* setDX(double dx);
     HPlane* setDY(double dy);
-
-    /// @todo Does not belong here.
-    void setPartitionHEdgeInfo(const BspHEdgeInfo& info) {
-        memcpy(&hedgeInfo, &info, sizeof(hedgeInfo));
-    }
-
-    /// @todo Does not belong here.
-    const BspHEdgeInfo& partitionHEdgeInfo() const { return hedgeInfo; }
 
     /**
      * Empty all intersections from the specified HPlane.
@@ -153,23 +151,10 @@ public:
     inline Intercepts::size_type size() const { return intercepts.size(); }
 
 private:
-    void initHEdgeInfo()
-    {
-        memset(&hedgeInfo, 0, sizeof(hedgeInfo));
-    }
-
-private:
     HPlanePartition partition;
 
     /// The intercept list. Kept sorted by along_dist, in ascending order.
     Intercepts intercepts;
-
-    /// Additional information used by the node builder during construction.
-    BspHEdgeInfo hedgeInfo;
-
-    /// BspBuilder instance which produced this.
-    /// @todo Remove me.
-    BspBuilder* builder;
 };
 
 } // namespace de

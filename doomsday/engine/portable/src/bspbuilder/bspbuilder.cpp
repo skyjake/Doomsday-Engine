@@ -46,8 +46,10 @@ using namespace de;
 
 BspBuilder::BspBuilder(GameMap* _map) :
     splitCostFactor(BSPBUILDER_PARTITION_COST_HEDGESPLIT),
-    map(_map), lineDefInfos(0), rootNode(0), builtOK(false)
-{}
+    map(_map), lineDefInfos(0), rootNode(0), _partition(0), builtOK(false)
+{
+    initPartitionInfo();
+}
 
 static int C_DECL clearBspObject(BinaryTree* tree, void* /*parameters*/)
 {
@@ -297,7 +299,7 @@ static int C_DECL clearHEdgeInfo(BinaryTree* tree, void* /*parameters*/)
     return false; // Continue iteration.
 }
 
-void BspBuilder::initHEdgesAndBuildBsp(SuperBlockmap& blockmap, HPlane& hplane)
+void BspBuilder::initHEdgesAndBuildBsp(SuperBlockmap& blockmap)
 {
     Q_ASSERT(map);
 
@@ -305,7 +307,7 @@ void BspBuilder::initHEdgesAndBuildBsp(SuperBlockmap& blockmap, HPlane& hplane)
 
     // Build the tree.
     rootNode = NULL;
-    builtOK = buildNodes(blockmap.root(), &rootNode, hplane);
+    builtOK = buildNodes(blockmap.root(), &rootNode);
 
     if(builtOK)
     {
@@ -351,11 +353,11 @@ boolean BspBuilder::build()
     blockBounds.maxY = blockBounds.minY + 128 * M_CeilPow2(bh);
 
     SuperBlockmap* blockmap = new SuperBlockmap(blockBounds);
-    HPlane* hplane = new HPlane(this);
+    _partition = new HPlane();
 
-    initHEdgesAndBuildBsp(*blockmap, *hplane);
+    initHEdgesAndBuildBsp(*blockmap);
 
-    delete hplane;
+    delete _partition;
     delete blockmap;
 
     return builtOK;
@@ -366,35 +368,35 @@ BinaryTree* BspBuilder::root() const
     return rootNode;
 }
 
-const HPlaneIntercept* BspBuilder::hplaneInterceptByVertex(HPlane& hplane, Vertex* vertex)
+const HPlaneIntercept* BspBuilder::hplaneInterceptByVertex(Vertex* vertex)
 {
     if(!vertex) return NULL; // Hmm...
 
-    for(HPlane::Intercepts::const_iterator it = hplane.begin(); it != hplane.end(); ++it)
+    for(HPlane::Intercepts::const_iterator it = partition().begin(); it != partition().end(); ++it)
     {
         const HPlaneIntercept* inter = &*it;
-        if(((HEdgeIntercept*)inter->userData)->vertex == vertex) return inter;
+        if(((HEdgeIntercept*)inter->userData())->vertex == vertex) return inter;
     }
 
     return NULL;
 }
 
-HEdgeIntercept* BspBuilder::hedgeInterceptByVertex(HPlane& hplane, Vertex* vertex)
+HEdgeIntercept* BspBuilder::hedgeInterceptByVertex(Vertex* vertex)
 {
-    const HPlaneIntercept* hpi = hplaneInterceptByVertex(hplane, vertex);
+    const HPlaneIntercept* hpi = hplaneInterceptByVertex(vertex);
     if(!hpi) return NULL; // Not found.
-    return (HEdgeIntercept*) hpi->userData;
+    return (HEdgeIntercept*) hpi->userData();
 }
 
-void BspBuilder::addHEdgesBetweenIntercepts(HPlane& hplane,
-    HEdgeIntercept* start, HEdgeIntercept* end, HEdge** right, HEdge** left)
+void BspBuilder::addHEdgesBetweenIntercepts(HEdgeIntercept* start, HEdgeIntercept* end,
+    HEdge** right, HEdge** left)
 {
     Q_ASSERT(start && end);
 
     // Create the half-edge pair.
     // Leave 'linedef' field as NULL as these are not linedef-linked.
     // Leave 'side' as zero too.
-    const BspHEdgeInfo& info = hplane.partitionHEdgeInfo();
+    const BspHEdgeInfo& info = partitionInfo();
     (*right) = newHEdge(NULL, info.lineDef, start->vertex, end->vertex, start->after, false);
     ( *left) = newHEdge(NULL, info.lineDef, end->vertex, start->vertex, start->after, false);
 
@@ -448,19 +450,19 @@ void Bsp_MergeHEdgeIntercepts(HEdgeIntercept* final, const HEdgeIntercept* other
     */
 }
 
-void BspBuilder::mergeIntersections(HPlane& hplane)
+void BspBuilder::mergeIntersections()
 {
-    HPlane::Intercepts::iterator node = hplane.begin();
-    while(node != hplane.end())
+    HPlane::Intercepts::iterator node = partition().begin();
+    while(node != partition().end())
     {
         HPlane::Intercepts::iterator np = node; np++;
-        if(np == hplane.end()) break;
+        if(np == partition().end()) break;
 
         double len = *np - *node;
         if(len < -0.1)
         {
             Con_Error("BspBuilder_MergeIntersections: Invalid intercept order - %1.3f > %1.3f\n",
-                      node->distance, np->distance);
+                      node->distance(), np->distance());
         }
         else if(len > 0.2)
         {
@@ -468,8 +470,8 @@ void BspBuilder::mergeIntersections(HPlane& hplane)
             continue;
         }
 
-        HEdgeIntercept* cur  = (HEdgeIntercept*)node->userData;
-        HEdgeIntercept* next = (HEdgeIntercept*)np->userData;
+        HEdgeIntercept* cur  = (HEdgeIntercept*)node->userData();
+        HEdgeIntercept* next = (HEdgeIntercept*)np->userData();
 
         /*if(len > DIST_EPSILON)
         {
@@ -484,21 +486,20 @@ void BspBuilder::mergeIntersections(HPlane& hplane)
         deleteHEdgeIntercept(next);
 
         // Unlink this intercept.
-        hplane.deleteIntercept(np);
+        partition().deleteIntercept(np);
     }
 }
 
-void BspBuilder::buildHEdgesAtIntersectionGaps(HPlane& hplane, SuperBlock& rightList,
-    SuperBlock& leftList)
+void BspBuilder::buildHEdgesAtIntersectionGaps(SuperBlock& rightList, SuperBlock& leftList)
 {
-    HPlane::Intercepts::const_iterator node = hplane.begin();
-    while(node != hplane.end())
+    HPlane::Intercepts::const_iterator node = partition().begin();
+    while(node != partition().end())
     {
         HPlane::Intercepts::const_iterator np = node; np++;
-        if(np == hplane.end()) break;
+        if(np == partition().end()) break;
 
-        HEdgeIntercept* cur = (HEdgeIntercept*)((*node).userData);
-        HEdgeIntercept* next = (HEdgeIntercept*)((*np).userData);
+        HEdgeIntercept* cur = (HEdgeIntercept*)((*node).userData());
+        HEdgeIntercept* next = (HEdgeIntercept*)((*np).userData());
 
         if(!(!cur->after && !next->before))
         {
@@ -555,7 +556,7 @@ void BspBuilder::buildHEdgesAtIntersectionGaps(HPlane& hplane, SuperBlock& right
                     }
                 }
 
-                addHEdgesBetweenIntercepts(hplane, cur, next, &right, &left);
+                addHEdgesBetweenIntercepts(cur, next, &right, &left);
 
                 // Add the new half-edges to the appropriate lists.
                 rightList.hedgePush(right);
@@ -567,21 +568,21 @@ void BspBuilder::buildHEdgesAtIntersectionGaps(HPlane& hplane, SuperBlock& right
     }
 }
 
-void BspBuilder::addMiniHEdges(HPlane& hplane, SuperBlock& rightList, SuperBlock& leftList)
+void BspBuilder::addMiniHEdges(SuperBlock& rightList, SuperBlock& leftList)
 {
 /*#if _DEBUG
-    HPlane_Print(hplane);
+    HPlane_Print(hplane()));
 #endif*/
 
     // Fix any issues with the current intersections.
-    mergeIntersections(hplane);
+    mergeIntersections();
 
-    const BspHEdgeInfo& info = hplane.partitionHEdgeInfo();
+    const BspHEdgeInfo& info = partitionInfo();
     LOG_TRACE("Building HEdges along partition [%1.1f, %1.1f] > [%1.1f, %1.1f]")
             << info.pSX << info.pSY << info.pDX << info.pDY;
 
     // Find connections in the intersections.
-    buildHEdgesAtIntersectionGaps(hplane, rightList, leftList);
+    buildHEdgesAtIntersectionGaps(rightList, leftList);
 }
 
 HEdgeIntercept* BspBuilder::newHEdgeIntercept(Vertex* vert, const BspHEdgeInfo* part,

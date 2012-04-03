@@ -134,7 +134,7 @@ private:
      */
     BspLeaf* createBSPLeaf(SuperBlock& hedgeList);
 
-    const HPlaneIntercept* makeHPlaneIntersection(HPlane& hplane, HEdge* hedge, int leftSide);
+    const HPlaneIntercept* makeHPlaneIntersection(HEdge* hedge, int leftSide);
 
     /**
      * Initially create all half-edges, one for each side of a linedef.
@@ -143,11 +143,11 @@ private:
      */
     void createInitialHEdges(SuperBlock& hedgeList);
 
-    void initHEdgesAndBuildBsp(SuperBlockmap& blockmap, HPlane& hplane);
+    void initHEdgesAndBuildBsp(SuperBlockmap& blockmap);
 
-    void mergeIntersections(HPlane& intersections);
+    void mergeIntersections();
 
-    void buildHEdgesAtIntersectionGaps(HPlane& hplane, SuperBlock& rightList, SuperBlock& leftList);
+    void buildHEdgesAtIntersectionGaps(SuperBlock& rightList, SuperBlock& leftList);
 
     void addEdgeTip(Vertex* vert, double dx, double dy, HEdge* back, HEdge* front);
 
@@ -169,21 +169,25 @@ private:
 
 public:
     /**
-     * Partition the given edge and perform any further necessary action (moving it into
-     * either the left list, right list, or splitting it).
+     * Partition the given edge and perform any further necessary action (moving it
+     * into either the left list, right list, or splitting it).
      *
-     * Take the given half-edge 'cur', compare it with the partition line, and determine
+     * Take the given half-edge 'cur', compare it with the partition line and determine
      * it's fate: moving it into either the left or right lists (perhaps both, when
-     * splitting it in two). Handles the twin as well. Updates the intersection list if
-     * the half-edge lies on or crosses the partition line.
+     * splitting it in two). Handles the twin as well. Updates the intersection list
+     * if the half-edge lies on or crosses the partition line.
      *
-     * @note AJA: I have rewritten this routine based on evalPartition() (which I've also
-     *       reworked, heavily). I think it is important that both these routines follow
-     *       the exact same logic.
+     * @note AJA: I have rewritten this routine based on evalPartition() (which I've
+     *       also reworked, heavily). I think it is important that both these routines
+     *       follow the exact same logic.
      */
-    void divideHEdge(HEdge* hedge, HPlane& hplane, SuperBlock& rightList, SuperBlock& leftList);
+    void divideHEdge(HEdge* hedge, SuperBlock& rightList, SuperBlock& leftList);
 
 private:
+    void clearHPlaneIntercepts();
+
+    boolean configureHPlane(const HEdge* hedge);
+
     /**
      * Find the best half-edge in the list to use as a partition.
      *
@@ -192,7 +196,7 @@ private:
      *
      * @return  @c true= A suitable partition was found.
      */
-    boolean choosePartition(SuperBlock& hedgeList, HPlane& hplane);
+    boolean choosePartition(SuperBlock& hedgeList);
 
     /**
      * Takes the half-edge list and determines if it is convex, possibly converting it
@@ -210,10 +214,9 @@ private:
      *
      * @param superblock    Ptr to the list of half edges at the current node.
      * @param parent        Ptr to write back the address of any newly created subtree.
-     * @param hplane        HPlaneIntercept list for storing any new intersections.
      * @return  @c true iff successfull.
      */
-    boolean buildNodes(SuperBlock& superblock, struct binarytree_s** parent, HPlane& hplane);
+    boolean buildNodes(SuperBlock& superblock, struct binarytree_s** parent);
 
     /**
      * Traverse the BSP tree and put all the half-edges in each BSP leaf into clockwise
@@ -230,10 +233,9 @@ private:
      * lists based on the given partition line. Adds any intersections onto the
      * intersection list as it goes.
      */
-    void partitionHEdges(HPlane& hplane, SuperBlock& hedgeList,
-                         SuperBlock& rightList, SuperBlock& leftList);
+    void partitionHEdges(SuperBlock& hedgeList, SuperBlock& rightList, SuperBlock& leftList);
 
-    void addHEdgesBetweenIntercepts(HPlane& hplane, HEdgeIntercept* start, HEdgeIntercept* end,
+    void addHEdgesBetweenIntercepts(HEdgeIntercept* start, HEdgeIntercept* end,
                                     HEdge** right, HEdge** left);
 
     /**
@@ -242,7 +244,7 @@ private:
      *
      * @note All the intersections in the hplane will be free'd back into the quick-alloc list.
      */
-    void addMiniHEdges(HPlane& hplane, SuperBlock& rightList, SuperBlock& leftList);
+    void addMiniHEdges(SuperBlock& rightList, SuperBlock& leftList);
 
     /**
      * Search the given list for an intercept, if found; return it.
@@ -252,7 +254,7 @@ private:
      *
      * @return  Ptr to the found intercept, else @c NULL;
      */
-    const HPlaneIntercept* hplaneInterceptByVertex(HPlane& hplane, Vertex* vertex);
+    const HPlaneIntercept* hplaneInterceptByVertex(Vertex* vertex);
 
     /**
      * Create a new intersection.
@@ -271,7 +273,7 @@ private:
      */
     HEdge* cloneHEdge(const HEdge& other);
 
-    HEdgeIntercept* hedgeInterceptByVertex(HPlane& hplane, Vertex* vertex);
+    HEdgeIntercept* hedgeInterceptByVertex(Vertex* vertex);
 
     /**
      * Check whether a line with the given delta coordinates and beginning at this
@@ -280,15 +282,58 @@ private:
      */
     Sector* openSectorAtPoint(Vertex* vert, double dx, double dy);
 
+    /**
+     * Initialize the extra info about the current partition plane.
+     */
+    void initPartitionInfo()
+    {
+        memset(&_partitionInfo, 0, sizeof(_partitionInfo));
+    }
+
+    /**
+     * Update the extra info about the current partition plane.
+     */
+    void setPartitionInfo(const BspHEdgeInfo& info)
+    {
+        memcpy(&_partitionInfo, &info, sizeof(_partitionInfo));
+    }
+
+    /**
+     * @return  HPlane instance used to model the current partition plane.
+     */
+    inline HPlane& partition()
+    {
+        Q_ASSERT(_partition);
+        return *_partition;
+    }
+
+    /**
+     * @return  BspHEdgeInfo instance containing extra info about the current partition plane.
+     */
+    inline const BspHEdgeInfo& partitionInfo() const { return _partitionInfo; }
+
 private:
+    /// The Active HEdge split cost factor. @see BSPBUILDER_PARTITION_COST_HEDGESPLIT
     int splitCostFactor;
 
+    /// Current map which we are building BSP data for.
     GameMap* map;
 
+    /// Extra info about LineDefs in the current map.
     typedef std::vector<LineDefInfo> LineDefInfos;
     LineDefInfos lineDefInfos;
 
+    /// Root node of our internal binary tree around which the final BSP data
+    /// objects are constructed.
     struct binarytree_s* rootNode;
+
+    /// HPlane used to model the current BSP partition and the list of intercepts.
+    HPlane* _partition;
+
+    /// Extra info about the partition plane.
+    BspHEdgeInfo _partitionInfo;
+
+    /// @c true = a BSP for the current map has been built successfully.
     boolean builtOK;
 };
 

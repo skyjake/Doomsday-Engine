@@ -35,11 +35,6 @@ using namespace de;
 
 void HPlane::clear()
 {
-    for(Intercepts::iterator it = intercepts.begin(); it != intercepts.end(); ++it)
-    {
-        HPlaneIntercept* inter = &*it;
-        builder->deleteHEdgeIntercept((HEdgeIntercept*)inter->userData);
-    }
     intercepts.clear();
 }
 
@@ -115,7 +110,7 @@ HPlaneIntercept* HPlane::newIntercept(double distance, void* userData)
     HPlaneIntercept* inter;
 
     for(after = intercepts.rbegin();
-        after != intercepts.rend() && distance < (*after).distance; after++)
+        after != intercepts.rend() && distance < (*after).distance(); after++)
     {}
 
     inter = &*intercepts.insert(after.base(), HPlaneIntercept(distance, userData));
@@ -138,8 +133,8 @@ void HPlane_Print(HPlane* hplane)
     for(HPlane::Intercepts::const_iterator it = hplane->begin(); it != hplane->end(); it++, n++)
     {
         const HPlaneIntercept* inter = &*it;
-        Con_Printf(" %u: >%1.2f ", n, inter->distance);
-        HEdgeIntercept::DebugPrint(*static_cast<HEdgeIntercept*>(inter->userData));
+        Con_Printf(" %u: >%1.2f ", n, inter->distance());
+        HEdgeIntercept::DebugPrint(*static_cast<HEdgeIntercept*>(inter->userData()));
     }
 }
 #endif
