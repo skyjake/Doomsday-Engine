@@ -351,7 +351,11 @@ static int C_DECL clockwiseLeaf(BinaryTree* tree, void* parameters)
                 {
                     // Update LineDef link.
                     hedge->lineDef = hedge->bspBuildInfo->lineDef;
-                    findSideDefHEdges(HEDGE_SIDEDEF(hedge), hedge);
+                    SideDef* side = HEDGE_SIDEDEF(hedge);
+                    if(side)
+                    {
+                        findSideDefHEdges(side, hedge);
+                    }
                 }
                 /// kludge end
 
