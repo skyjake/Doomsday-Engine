@@ -1,6 +1,6 @@
 /**
- * @file intersection.hh
- * BSP Builder Intersections. @ingroup map
+ * @file hplane.h
+ * BSP Builder half-plane and plane intersection list. @ingroup map
  *
  * Based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted on
  * SourceForge: http://sourceforge.net/projects/glbsp/
@@ -25,8 +25,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_BSPBUILDER_INTERSECTION
-#define LIBDENG_BSPBUILDER_INTERSECTION
+#ifndef LIBDENG_BSPBUILDER_HPLANE
+#define LIBDENG_BSPBUILDER_HPLANE
 
 #include "p_mapdata.h"
 
@@ -159,4 +159,4 @@ private:
 
 } // namespace de
 
-#endif /// LIBDENG_BSPBUILDER_INTERSECTION
+#endif /// LIBDENG_BSPBUILDER_HPLANE

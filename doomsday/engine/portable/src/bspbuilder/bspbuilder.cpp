@@ -38,8 +38,8 @@
 
 #include <de/Log>
 
-#include "bspbuilder/intersection.hh"
 #include "bspbuilder/bspbuilder.hh"
+#include "bspbuilder/hplane.h"
 #include "bspbuilder/superblockmap.h"
 
 using namespace de;

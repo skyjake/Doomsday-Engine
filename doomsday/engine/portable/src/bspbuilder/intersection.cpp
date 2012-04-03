@@ -28,8 +28,8 @@
 #include "de_base.h"
 #include "de_console.h"
 
-#include "bspbuilder/intersection.hh"
 #include "bspbuilder/bspbuilder.hh"
+#include "bspbuilder/hplane.h"
 
 using namespace de;
 

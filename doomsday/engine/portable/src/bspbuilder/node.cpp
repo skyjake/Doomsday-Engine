@@ -39,9 +39,9 @@
 #include "m_misc.h"
 #include "m_binarytree.h"
 
-#include "bspbuilder/intersection.hh"
-#include "bspbuilder/superblockmap.h"
 #include "bspbuilder/bspbuilder.hh"
+#include "bspbuilder/hplane.h"
+#include "bspbuilder/superblockmap.h"
 
 using namespace de;
 
