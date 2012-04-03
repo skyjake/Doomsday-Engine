@@ -134,7 +134,7 @@ private:
      */
     BspLeaf* createBSPLeaf(SuperBlock& hedgeList);
 
-    const HPlaneIntercept* makeHPlaneIntersection(HEdge* hedge, int leftSide);
+    const HPlaneIntercept* makePartitionIntersection(HEdge* hedge, int leftSide);
 
     /**
      * Initially create all half-edges, one for each side of a linedef.
@@ -184,27 +184,26 @@ public:
     void divideHEdge(HEdge* hedge, SuperBlock& rightList, SuperBlock& leftList);
 
 private:
-    void clearHPlaneIntercepts();
+    void clearPartitionIntercepts();
 
-    boolean configureHPlane(const HEdge* hedge);
+    boolean configurePartition(const HEdge* hedge);
 
     /**
-     * Find the best half-edge in the list to use as a partition.
+     * Find the best half-edge in the list to use as the next partition.
      *
      * @param hedgeList     List of half-edges to choose from.
-     * @param partition     Ptr to partition to be updated with the results.
-     *
      * @return  @c true= A suitable partition was found.
      */
-    boolean choosePartition(SuperBlock& hedgeList);
+    boolean chooseNextPartition(SuperBlock& hedgeList);
 
     /**
-     * Takes the half-edge list and determines if it is convex, possibly converting it
-     * into a BSP leaf. Otherwise, the list is divided into two halves and recursion will
-     * continue on the new sub list.
+     * Takes the half-edge list and determines if it is convex, possibly converting
+     * it into a BSP leaf. Otherwise, the list is divided into two halves and recursion
+     * will continue on the new sub list.
      *
-     * This is done by scanning all of the half-edges and finding the one that does the
-     * least splitting and has the least difference in numbers of half-edges on either side.
+     * This is done by scanning all of the half-edges and finding the one that does
+     * the least splitting and has the least difference in numbers of half-edges on
+     * either side.
      *
      * If the ones on the left side make a BspLeaf, then create another BspLeaf
      * else put the half-edges into the left list.
@@ -212,7 +211,7 @@ private:
      * If the ones on the right side make a BspLeaf, then create another BspLeaf
      * else put the half-edges into the right list.
      *
-     * @param superblock    Ptr to the list of half edges at the current node.
+     * @param superblock    The list of half edges at the current node.
      * @param parent        Ptr to write back the address of any newly created subtree.
      * @return  @c true iff successfull.
      */
@@ -222,15 +221,15 @@ private:
      * Traverse the BSP tree and put all the half-edges in each BSP leaf into clockwise
      * order, and renumber their indices.
      *
-     * @important This cannot be done during BspBuilder::buildNodes() since splitting a half-edge with
-     * a twin may insert another half-edge into that twin's list, usually in the wrong
-     * place order-wise.
+     * @important This cannot be done during BspBuilder::buildNodes() since splitting
+     * a half-edge with a twin may insert another half-edge into that twin's list,
+     * usually in the wrong place order-wise.
      */
     void windLeafs(struct binarytree_s* rootNode);
 
     /**
-     * Remove all the half-edges from the list, partitioning them into the left or right
-     * lists based on the given partition line. Adds any intersections onto the
+     * Remove all the half-edges from the list, partitioning them into the left or
+     * right lists based on the given partition line. Adds any intersections onto the
      * intersection list as it goes.
      */
     void partitionHEdges(SuperBlock& hedgeList, SuperBlock& rightList, SuperBlock& leftList);
@@ -239,10 +238,8 @@ private:
                                     HEdge** right, HEdge** left);
 
     /**
-     * Analyze the intersection list, and add any needed minihedges to the given half-edge lists
-     * (one minihedge on each side).
-     *
-     * @note All the intersections in the hplane will be free'd back into the quick-alloc list.
+     * Analyze the intersection list, and add any needed minihedges to the given
+     * half-edge lists (one minihedge on each side).
      */
     void addMiniHEdges(SuperBlock& rightList, SuperBlock& leftList);
 
@@ -254,7 +251,7 @@ private:
      *
      * @return  Ptr to the found intercept, else @c NULL;
      */
-    const HPlaneIntercept* hplaneInterceptByVertex(Vertex* vertex);
+    const HPlaneIntercept* partitionInterceptByVertex(Vertex* vertex);
 
     /**
      * Create a new intersection.

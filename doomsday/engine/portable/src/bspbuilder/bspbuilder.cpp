@@ -368,7 +368,7 @@ BinaryTree* BspBuilder::root() const
     return rootNode;
 }
 
-const HPlaneIntercept* BspBuilder::hplaneInterceptByVertex(Vertex* vertex)
+const HPlaneIntercept* BspBuilder::partitionInterceptByVertex(Vertex* vertex)
 {
     if(!vertex) return NULL; // Hmm...
 
@@ -383,7 +383,7 @@ const HPlaneIntercept* BspBuilder::hplaneInterceptByVertex(Vertex* vertex)
 
 HEdgeIntercept* BspBuilder::hedgeInterceptByVertex(Vertex* vertex)
 {
-    const HPlaneIntercept* hpi = hplaneInterceptByVertex(vertex);
+    const HPlaneIntercept* hpi = partitionInterceptByVertex(vertex);
     if(!hpi) return NULL; // Not found.
     return (HEdgeIntercept*) hpi->userData();
 }

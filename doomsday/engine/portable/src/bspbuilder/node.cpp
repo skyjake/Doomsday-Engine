@@ -699,7 +699,7 @@ static int chooseHEdgeFromSuperBlock(SuperBlock* partList, void* parameters)
     return false; // Continue iteration.
 }
 
-void BspBuilder::clearHPlaneIntercepts()
+void BspBuilder::clearPartitionIntercepts()
 {
     for(HPlane::Intercepts::iterator it = partition().begin(); it != partition().end(); ++it)
     {
@@ -709,7 +709,7 @@ void BspBuilder::clearHPlaneIntercepts()
     partition().clear();
 }
 
-boolean BspBuilder::configureHPlane(const HEdge* hedge)
+boolean BspBuilder::configurePartition(const HEdge* hedge)
 {
     if(!hedge) return false;
 
@@ -717,7 +717,7 @@ boolean BspBuilder::configureHPlane(const HEdge* hedge)
     if(!lineDef) return false; // A "mini hedge" is not suitable.
 
     // Clear the HEdge intercept data associated with points in the half-plane.
-    clearHPlaneIntercepts();
+    clearPartitionIntercepts();
 
     setPartitionInfo(*hedge->bspBuildInfo);
 
@@ -737,7 +737,7 @@ boolean BspBuilder::configureHPlane(const HEdge* hedge)
     return true;
 }
 
-boolean BspBuilder::choosePartition(SuperBlock& hedgeList)
+boolean BspBuilder::chooseNextPartition(SuperBlock& hedgeList)
 {
     choosehedgefromsuperblockparams_t parm;
     parm.hedgeList = &hedgeList;
@@ -759,10 +759,10 @@ boolean BspBuilder::choosePartition(SuperBlock& hedgeList)
     }*/
 
     // Reconfigure the half plane for the next round of hedge sorting.
-    return configureHPlane(parm.best);
+    return configurePartition(parm.best);
 }
 
-const HPlaneIntercept* BspBuilder::makeHPlaneIntersection(HEdge* hedge, int leftSide)
+const HPlaneIntercept* BspBuilder::makePartitionIntersection(HEdge* hedge, int leftSide)
 {
     HEdgeIntercept* hedgeIntercept;
     const HPlaneIntercept* inter;
@@ -772,7 +772,7 @@ const HPlaneIntercept* BspBuilder::makeHPlaneIntersection(HEdge* hedge, int left
 
     // Already present on this edge?
     vertex = hedge->v[leftSide?1:0];
-    inter = hplaneInterceptByVertex(vertex);
+    inter = partitionInterceptByVertex(vertex);
     if(inter) return inter;
 
     const BspHEdgeInfo& info = partitionInfo();
@@ -831,22 +831,26 @@ void BspBuilder::divideHEdge(HEdge* hedge, SuperBlock& rightList, SuperBlock& le
        LEFT
     };
 
-    // Get state of lines' relation to each other.
+    // Determine the relationship between this half-edge and the partition plane.
     const BspHEdgeInfo& info = partitionInfo();
     double a = M_PerpDist(info.pDX, info.pDY, info.pPerp, info.pLength, hedge->bspBuildInfo->pSX, hedge->bspBuildInfo->pSY);
     double b = M_PerpDist(info.pDX, info.pDY, info.pPerp, info.pLength, hedge->bspBuildInfo->pEX, hedge->bspBuildInfo->pEY);
 
+    /// @kludge Half-edges produced from the same source linedef must always
+    ///         be treated as collinear.
+    /// @todo   Why is this override necessary?
     if(hedge->bspBuildInfo->sourceLineDef == info.sourceLineDef)
         a = b = 0;
+    // kludge end
 
-    // Check for being on the same line.
+    // Collinear with the partition plane?
     if(fabs(a) <= DIST_EPSILON && fabs(b) <= DIST_EPSILON)
     {
-        makeHPlaneIntersection(hedge, RIGHT);
-        makeHPlaneIntersection(hedge, LEFT);
+        makePartitionIntersection(hedge, RIGHT);
+        makePartitionIntersection(hedge, LEFT);
 
-        // This hedge runs along the same line as the partition. Check whether it goes in
-        // the same direction or the opposite.
+        // Direction (vs that of the partition plane) determines in which subset
+        // this half-edge belongs.
         if(hedge->bspBuildInfo->pDX * info.pDX + hedge->bspBuildInfo->pDY * info.pDY < 0)
         {
             leftList.hedgePush(hedge);
@@ -858,25 +862,27 @@ void BspBuilder::divideHEdge(HEdge* hedge, SuperBlock& rightList, SuperBlock& le
         return;
     }
 
-    // Check for right side.
+    // Right of the partition plane?.
     if(a > -DIST_EPSILON && b > -DIST_EPSILON)
     {
+        // Close enough to intersect?
         if(a < DIST_EPSILON)
-            makeHPlaneIntersection(hedge, RIGHT);
+            makePartitionIntersection(hedge, RIGHT);
         else if(b < DIST_EPSILON)
-            makeHPlaneIntersection(hedge, LEFT);
+            makePartitionIntersection(hedge, LEFT);
 
         rightList.hedgePush(hedge);
         return;
     }
 
-    // Check for left side.
+    // Left of the partition plane?
     if(a < DIST_EPSILON && b < DIST_EPSILON)
     {
+        // Close enough to intersect?
         if(a > -DIST_EPSILON)
-            makeHPlaneIntersection(hedge, RIGHT);
+            makePartitionIntersection(hedge, RIGHT);
         else if(b > -DIST_EPSILON)
-            makeHPlaneIntersection(hedge, LEFT);
+            makePartitionIntersection(hedge, LEFT);
 
         leftList.hedgePush(hedge);
         return;
@@ -887,7 +893,7 @@ void BspBuilder::divideHEdge(HEdge* hedge, SuperBlock& rightList, SuperBlock& le
     double x, y;
     calcIntersection(hedge->bspBuildInfo, &info, a, b, &x, &y);
     HEdge* newhedge = splitHEdge(hedge, x, y);
-    makeHPlaneIntersection(hedge, LEFT);
+    makePartitionIntersection(hedge, LEFT);
 
     if(a < 0)
     {
@@ -970,8 +976,8 @@ boolean BspBuilder::buildNodes(SuperBlock& hedgeList, BinaryTree** parent)
     BSP_PrintSuperBlockhedges(superblock);
 #endif*/
 
-    // Pick the next partition to use.
-    if(!choosePartition(hedgeList))
+    // Pick a half-edge to use as the next partition plane.
+    if(!chooseNextPartition(hedgeList))
     {
         // No partition required, already convex.
         //LOG_TRACE("BspBuilder::buildNodes: Convex.");
@@ -997,7 +1003,7 @@ boolean BspBuilder::buildNodes(SuperBlock& hedgeList, BinaryTree** parent)
 
     addMiniHEdges(rightHEdges->root(), leftHEdges->root());
 
-    clearHPlaneIntercepts();
+    clearPartitionIntercepts();
 
     AABoxf rightHEdgesBounds, leftHEdgesBounds;
     rightHEdges->findHEdgeBounds(rightHEdgesBounds);
