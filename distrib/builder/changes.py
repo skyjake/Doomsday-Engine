@@ -29,9 +29,15 @@ class Entry:
         self._message = ''
         self.tags = []
         self.guessedTags = []
+        self.reverted = False
         
     def set_subject(self, subject):
         self.extra = ''
+        
+        # Check for a revert.
+        if subject.startswith('Revert "') and subject[-1] == '"':
+            self.reverted = True
+            subject = subject[8:-1]
         
         # Remote tags from the subject.
         pos = subject.find(':')
@@ -75,7 +81,6 @@ class Changes:
         self.parse()
         
     def should_ignore(self, subject):
-        #if subject.startswith("Merge branch '%s' of" % config.BRANCH):
         if subject.startswith("Merge branch"):
             # Branch merges are not listed.
             return True
@@ -143,6 +148,7 @@ class Changes:
                 self.entries.append(entry)
 
         self.deduce_tags()
+        self.remove_reverts()
                 
     def all_tags(self):
         # These words are always considered to be valid tags.
@@ -152,6 +158,15 @@ class Changes:
                 if t not in tags: 
                     tags.append(t)
         return tags
+
+    def is_reverted(self, entry):
+        for e in self.entries:
+            if e.reverted and e.subject == entry.subject and e.tags == entry.tags:
+                return True
+        return False
+
+    def remove_reverts(self):
+        self.entries = filter(lambda e: not self.is_reverted(e), self.entries)
 
     def deduce_tags(self):
         # Look for known tags in untagged titles.
