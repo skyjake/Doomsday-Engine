@@ -1,6 +1,6 @@
 /**
  * @file hplane.h
- * BSP Builder half-plane and plane intersection list. @ingroup map
+ * BSP Builder half-plane and plane intersection list. @ingroup bsp
  *
  * Based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted on
  * SourceForge: http://sourceforge.net/projects/glbsp/

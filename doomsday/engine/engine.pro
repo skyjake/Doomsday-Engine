@@ -433,7 +433,7 @@ SOURCES += \
     portable/src/blockmapvisual.c \
     portable/src/bspbuilder/bspbuilder.cpp \
     portable/src/bspbuilder/hedges.cpp \
-    portable/src/bspbuilder/intersection.cpp \
+    portable/src/bspbuilder/hplane.cpp \
     portable/src/bspbuilder/node.cpp \
     portable/src/bspbuilder/superblockmap.cpp \
     portable/src/bspleaf.c \
