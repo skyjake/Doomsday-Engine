@@ -68,14 +68,14 @@ struct SuperBlock::Instance
     {
         if(!hedge) return;
         if(hedge->bspBuildInfo->lineDef) realNum++;
-        else                         miniNum++;
+        else                             miniNum++;
     }
 
     void decrementHEdgeCount(HEdge* hedge)
     {
         if(!hedge) return;
         if(hedge->bspBuildInfo->lineDef) realNum--;
-        else                         miniNum--;
+        else                             miniNum--;
     }
 };
 
@@ -184,7 +184,7 @@ void SuperBlock::findHEdgeBounds(AABoxf& bounds)
     }
 }
 
-SuperBlock* SuperBlock::hedgePush(HEdge* hedge)
+SuperBlock* SuperBlock::push(HEdge* hedge)
 {
     if(!hedge) return this;
 
@@ -245,7 +245,7 @@ SuperBlock* SuperBlock::hedgePush(HEdge* hedge)
     return this;
 }
 
-HEdge* SuperBlock::hedgePop()
+HEdge* SuperBlock::pop()
 {
     if(d->hedges.empty()) return NULL;
 

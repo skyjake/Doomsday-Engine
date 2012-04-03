@@ -176,7 +176,7 @@ void BspBuilder::createInitialHEdges(SuperBlock& hedgeList)
                     LOG_INFO("Bad SideDef on LineDef #%d.") << line->buildData.index;
 
                 front = newHEdge(line, line, line->v[0], line->v[1], side->sector, false);
-                hedgeList.hedgePush(front);
+                hedgeList.push(front);
             }
             else
             {
@@ -191,7 +191,7 @@ void BspBuilder::createInitialHEdges(SuperBlock& hedgeList)
                     LOG_INFO("Bad SideDef on LineDef #%d.") << line->buildData.index;
 
                 back = newHEdge(line, line, line->v[1], line->v[0], side->sector, true);
-                hedgeList.hedgePush(back);
+                hedgeList.push(back);
 
                 if(front)
                 {
@@ -215,7 +215,7 @@ void BspBuilder::createInitialHEdges(SuperBlock& hedgeList)
                     HEdge* other = newHEdge(front->bspBuildInfo->lineDef, line,
                                             line->v[1], line->v[0], line->buildData.windowEffect, true);
 
-                    hedgeList.hedgePush(other);
+                    hedgeList.push(other);
 
                     // Setup the twin-ing (it's very strange to have a mini
                     // and a normal partnered together).
@@ -559,8 +559,8 @@ void BspBuilder::buildHEdgesAtIntersectionGaps(SuperBlock& rightList, SuperBlock
                 addHEdgesBetweenIntercepts(cur, next, &right, &left);
 
                 // Add the new half-edges to the appropriate lists.
-                rightList.hedgePush(right);
-                leftList.hedgePush(left);
+                rightList.push(right);
+                leftList.push(left);
             }
         }
 

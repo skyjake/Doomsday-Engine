@@ -96,10 +96,9 @@ HEdge* BspBuilder::cloneHEdge(const HEdge& other)
     return hedge;
 }
 
-HEdge* BspBuilder::splitHEdge(HEdge* oldHEdge, double x, double y)
+HEdge* BspBuilder::splitHEdge(HEdge* oldHEdge, const_pvec2d_t point)
 {
-    HEdge* newHEdge;
-    Vertex* newVert;
+    Q_ASSERT(oldHEdge && point);
 
 /*#if _DEBUG
     if(oldHEdge->lineDef)
@@ -112,16 +111,15 @@ HEdge* BspBuilder::splitHEdge(HEdge* oldHEdge, double x, double y)
      * Create a new vertex (with correct wall_tip info) for the split that
      * happens along the given half-edge at the given location.
      */
-    newVert = createVertex();
-    newVert->buildData.pos[VX] = x;
-    newVert->buildData.pos[VY] = y;
+    Vertex* newVert = createVertex();
+    V2d_Copy(newVert->buildData.pos, point);
 
     // Compute wall_tip info.
     addEdgeTip(newVert, -oldHEdge->bspBuildInfo->pDX, -oldHEdge->bspBuildInfo->pDY, oldHEdge, oldHEdge->twin);
     addEdgeTip(newVert,  oldHEdge->bspBuildInfo->pDX,  oldHEdge->bspBuildInfo->pDY, oldHEdge->twin, oldHEdge);
 
     // Copy the old half-edge info.
-    newHEdge = cloneHEdge(*oldHEdge);
+    HEdge* newHEdge = cloneHEdge(*oldHEdge);
 
     newHEdge->bspBuildInfo->prevOnSide = oldHEdge;
     oldHEdge->bspBuildInfo->nextOnSide = newHEdge;
@@ -132,13 +130,13 @@ HEdge* BspBuilder::splitHEdge(HEdge* oldHEdge, double x, double y)
     newHEdge->v[0] = newVert;
     updateHEdgeInfo(newHEdge, newHEdge->bspBuildInfo);
 
-    //DEBUG_Message(("Splitting Vertex is %04X at (%1.1f,%1.1f)\n",
-    //               newVert->index, newVert->V_pos[VX], newVert->V_pos[VY]));
+    //LOG_DEBUG("Splitting Vertex is %04X at [%1.1f, %1.1f].")
+    //        << newVert->index << newVert->V_pos[VX] << newVert->V_pos[VY];
 
     // Handle the twin.
     if(oldHEdge->twin)
     {
-        //DEBUG_Message(("Splitting hedge->twin %p\n", oldHEdge->twin));
+        //LOG_DEBUG("Splitting hedge twin %p.") << oldHEdge->twin;
 
         // Copy the old hedge info.
         newHEdge->twin = cloneHEdge(*oldHEdge->twin);
@@ -159,7 +157,7 @@ HEdge* BspBuilder::splitHEdge(HEdge* oldHEdge, double x, double y)
         if(oldHEdge->twin->bspBuildInfo->block)
         {
             SuperBlock* block = reinterpret_cast<SuperBlock*>(oldHEdge->twin->bspBuildInfo->block);
-            block->hedgePush(newHEdge->twin);
+            block->push(newHEdge->twin);
         }
         else
         {

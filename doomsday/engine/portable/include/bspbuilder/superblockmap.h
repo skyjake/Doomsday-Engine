@@ -33,8 +33,8 @@
 #include "dd_types.h"
 #include "bspbuilder/bsphedgeinfo.h"
 
+#include <de/Log>
 #include <list>
-#include <assert.h>
 
 #ifdef RIGHT
 #  undef RIGHT
@@ -72,7 +72,7 @@ public:
     /// Assert that the specified value is a valid @a childId.
     static void inline assertValidChildId(ChildId DENG_DEBUG_ONLY(childId))
     {
-        assert(childId == RIGHT || childId == LEFT);
+        Q_ASSERT(childId == RIGHT || childId == LEFT);
     }
 
     /**
@@ -179,7 +179,7 @@ public:
      *
      * @param hedge  HEdge instance to add.
      */
-    SuperBlock* hedgePush(HEdge* hedge);
+    SuperBlock* push(HEdge* hedge);
 
     /**
      * Pop (unlink) the next HEdge from the FIFO list of half-edges linked
@@ -187,10 +187,25 @@ public:
      *
      * @return  Previous top-most HEdge instance or @c NULL if empty.
      */
-    HEdge* hedgePop();
+    HEdge* pop();
 
     HEdges::const_iterator hedgesBegin() const;
     HEdges::const_iterator hedgesEnd() const;
+
+    DENG_DEBUG_ONLY(
+    void DebugPrint() const
+    {
+        for(SuperBlock::HEdges::const_iterator it = hedgesBegin();
+            it != hedgesEnd(); ++it)
+        {
+            HEdge* hedge = *it;
+            LOG_DEBUG("Build: %s %p sector: %d [%1.1f, %1.1f] -> [%1.1f, %1.1f]")
+                    << (hedge->bspBuildInfo->lineDef? "NORM" : "MINI")
+                    << hedge << hedge->sector->buildData.index
+                    << hedge->v[0]->buildData.pos[VX] << hedge->v[0]->buildData.pos[VY]
+                    << hedge->v[1]->buildData.pos[VX] << hedge->v[1]->buildData.pos[VY];
+        }
+    })
 
 private:
     /**

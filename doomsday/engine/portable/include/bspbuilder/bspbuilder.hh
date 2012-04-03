@@ -165,9 +165,25 @@ private:
      *       half-edge (and/or backseg), so that future processing is not messed up
      *       by incorrect counts.
      */
-    HEdge* splitHEdge(HEdge* oldHEdge, double x, double y);
+    HEdge* splitHEdge(HEdge* oldHEdge, const_pvec2d_t point);
 
 public:
+    /**
+     * Determine the distance (euclidean) from @a hedge to the current partition plane.
+     *
+     * @param hedge  Half-edge to test.
+     * @param end    @c true= use the point defined by the end (else start) vertex.
+     */
+    inline double hedgeDistanceFromPartition(const HEdge* hedge, bool end) const;
+
+    /**
+     * Calculate the intersection point between a half-edge and the current partition
+     * plane. Takes advantage of some common situations like horizontal and vertical
+     * lines to choose a 'nicer' intersection point.
+     */
+    void hedgePartitionIntersection(const HEdge* hedge, double perpC, double perpD,
+                                    pvec2d_t point) const;
+
     /**
      * Partition the given edge and perform any further necessary action (moving it
      * into either the left list, right list, or splitting it).

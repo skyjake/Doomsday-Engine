@@ -78,10 +78,6 @@ struct PartitionCost
 // Used when sorting BSP leaf half-edges by angle around midpoint.
 typedef std::vector<HEdge*>HEdgeSortBuffer;
 
-#if _DEBUG
-void BSP_PrintSuperBlockhedges(SuperBlock* superblock);
-#endif
-
 static boolean getAveragedCoords(BspLeaf* leaf, double* x, double* y)
 {
     if(!leaf || !x || !y) return false;
@@ -784,44 +780,48 @@ const HPlaneIntercept* BspBuilder::makePartitionIntersection(HEdge* hedge, int l
     return partition().newIntercept(distance, hedgeIntercept);
 }
 
-/**
- * Calculate the intersection location between the current half-edge and the partition.
- * Takes advantage of some common situations like horizontal and vertical lines to
- * choose a 'nicer' intersection point.
- */
-static __inline void calcIntersection(BspHEdgeInfo* hedge, const BspHEdgeInfo* other,
-    double perpC, double perpD, double* x, double* y)
+double BspBuilder::hedgeDistanceFromPartition(const HEdge* hedge, bool end) const
 {
-    double ds;
+    Q_ASSERT(hedge);
+    const BspHEdgeInfo& info = partitionInfo();
+    return M_PerpDist(info.pDX, info.pDY, info.pPerp, info.pLength,
+                      end? hedge->bspBuildInfo->pEX : hedge->bspBuildInfo->pSX,
+                      end? hedge->bspBuildInfo->pEY : hedge->bspBuildInfo->pSY);
+}
+
+void BspBuilder::hedgePartitionIntersection(const HEdge* hedge, double perpC, double perpD,
+    pvec2d_t point) const
+{
+    if(!hedge || !point) return;
+
+    BspHEdgeInfo* hedgeInfo = hedge->bspBuildInfo;
 
     // Horizontal partition against vertical half-edge.
-    if(other->pDY == 0 && hedge->pDX == 0)
+    if(partitionInfo().pDY == 0 && hedgeInfo->pDX == 0)
     {
-        *x = hedge->pSX;
-        *y = other->pSY;
+        V2d_Set(point, hedgeInfo->pSX, partitionInfo().pSY);
         return;
     }
 
     // Vertical partition against horizontal half-edge.
-    if(other->pDX == 0 && hedge->pDY == 0)
+    if(partitionInfo().pDX == 0 && hedgeInfo->pDY == 0)
     {
-        *x = other->pSX;
-        *y = hedge->pSY;
+        V2d_Set(point, partitionInfo().pSX, hedgeInfo->pSY);
         return;
     }
 
     // 0 = start, 1 = end.
-    ds = perpC / (perpC - perpD);
+    double ds = perpC / (perpC - perpD);
 
-    if(hedge->pDX == 0)
-        *x = hedge->pSX;
+    if(hedgeInfo->pDX == 0)
+        point[VX] = hedgeInfo->pSX;
     else
-        *x = hedge->pSX + (hedge->pDX * ds);
+        point[VX] = hedgeInfo->pSX + (hedgeInfo->pDX * ds);
 
-    if(hedge->pDY == 0)
-        *y = hedge->pSY;
+    if(hedgeInfo->pDY == 0)
+        point[VY] = hedgeInfo->pSY;
     else
-        *y = hedge->pSY + (hedge->pDY * ds);
+        point[VY] = hedgeInfo->pSY + (hedgeInfo->pDY * ds);
 }
 
 void BspBuilder::divideHEdge(HEdge* hedge, SuperBlock& rightList, SuperBlock& leftList)
@@ -832,14 +832,13 @@ void BspBuilder::divideHEdge(HEdge* hedge, SuperBlock& rightList, SuperBlock& le
     };
 
     // Determine the relationship between this half-edge and the partition plane.
-    const BspHEdgeInfo& info = partitionInfo();
-    double a = M_PerpDist(info.pDX, info.pDY, info.pPerp, info.pLength, hedge->bspBuildInfo->pSX, hedge->bspBuildInfo->pSY);
-    double b = M_PerpDist(info.pDX, info.pDY, info.pPerp, info.pLength, hedge->bspBuildInfo->pEX, hedge->bspBuildInfo->pEY);
+    double a = hedgeDistanceFromPartition(hedge, false/*start vertex*/);
+    double b = hedgeDistanceFromPartition(hedge, true/*end vertex*/);
 
     /// @kludge Half-edges produced from the same source linedef must always
     ///         be treated as collinear.
     /// @todo   Why is this override necessary?
-    if(hedge->bspBuildInfo->sourceLineDef == info.sourceLineDef)
+    if(hedge->bspBuildInfo->sourceLineDef == partitionInfo().sourceLineDef)
         a = b = 0;
     // kludge end
 
@@ -851,13 +850,14 @@ void BspBuilder::divideHEdge(HEdge* hedge, SuperBlock& rightList, SuperBlock& le
 
         // Direction (vs that of the partition plane) determines in which subset
         // this half-edge belongs.
-        if(hedge->bspBuildInfo->pDX * info.pDX + hedge->bspBuildInfo->pDY * info.pDY < 0)
+        if(hedge->bspBuildInfo->pDX * partitionInfo().pDX +
+           hedge->bspBuildInfo->pDY * partitionInfo().pDY < 0)
         {
-            leftList.hedgePush(hedge);
+            leftList.push(hedge);
         }
         else
         {
-            rightList.hedgePush(hedge);
+            rightList.push(hedge);
         }
         return;
     }
@@ -871,7 +871,7 @@ void BspBuilder::divideHEdge(HEdge* hedge, SuperBlock& rightList, SuperBlock& le
         else if(b < DIST_EPSILON)
             makePartitionIntersection(hedge, LEFT);
 
-        rightList.hedgePush(hedge);
+        rightList.push(hedge);
         return;
     }
 
@@ -884,26 +884,26 @@ void BspBuilder::divideHEdge(HEdge* hedge, SuperBlock& rightList, SuperBlock& le
         else if(b > -DIST_EPSILON)
             makePartitionIntersection(hedge, LEFT);
 
-        leftList.hedgePush(hedge);
+        leftList.push(hedge);
         return;
     }
 
-    // When we reach here, we have a and b non-zero and opposite sign, hence this edge
-    // will be split by the partition line.
-    double x, y;
-    calcIntersection(hedge->bspBuildInfo, &info, a, b, &x, &y);
-    HEdge* newhedge = splitHEdge(hedge, x, y);
+    // This half-edge straddles the partition plane and must therefore be split.
+    vec2d_t point;
+    hedgePartitionIntersection(hedge, a, b, point);
+    HEdge* newhedge = splitHEdge(hedge, point);
+
     makePartitionIntersection(hedge, LEFT);
 
     if(a < 0)
     {
-        leftList.hedgePush(hedge);
-        rightList.hedgePush(newhedge);
+        rightList.push(newhedge);
+        leftList.push(hedge);
     }
     else
     {
-        rightList.hedgePush(hedge);
-        leftList.hedgePush(newhedge);
+        rightList.push(hedge);
+        leftList.push(newhedge);
     }
 }
 
@@ -919,7 +919,7 @@ int C_DECL BspBuilder_PartitionHEdgeWorker(SuperBlock* superblock, void* paramet
     HEdge* hedge;
     assert(p);
 
-    while((hedge = superblock->hedgePop()))
+    while((hedge = superblock->pop()))
     {
         p->builder->divideHEdge(hedge, *p->rights, *p->lefts);
     }
@@ -950,7 +950,7 @@ static int createBSPLeafWorker(SuperBlock* superblock, void* parameters)
     HEdge* hedge;
     assert(leaf);
 
-    while((hedge = superblock->hedgePop()))
+    while((hedge = superblock->pop()))
     {
         // Link it into head of the leaf's list.
         hedge->next = leaf->hedge;
@@ -968,12 +968,19 @@ BspLeaf* BspBuilder::createBSPLeaf(SuperBlock& hedgeList)
     return leaf;
 }
 
+DENG_DEBUG_ONLY(
+static int printSuperBlockHEdgesWorker(SuperBlock* block, void* /*parameters*/)
+{
+    block->DebugPrint();
+    return false; // Continue iteration.
+})
+
 boolean BspBuilder::buildNodes(SuperBlock& hedgeList, BinaryTree** parent)
 {
     *parent = NULL;
 
 /*#if _DEBUG
-    BSP_PrintSuperBlockhedges(superblock);
+    hedgeList.traverse(printSuperBlockHEdgesWorker);
 #endif*/
 
     // Pick a half-edge to use as the next partition plane.
@@ -1031,31 +1038,3 @@ boolean BspBuilder::buildNodes(SuperBlock& hedgeList, BinaryTree** parent)
 
     return builtOK;
 }
-
-#if _DEBUG
-static void printHEdge(HEdge* hedge)
-{
-    Con_Message("Build: %s %p sector=%d (%1.1f,%1.1f) -> (%1.1f,%1.1f)\n",
-                (hedge->bspBuildInfo->lineDef? "NORM" : "MINI"), hedge,
-                hedge->sector->buildData.index,
-                hedge->v[0]->buildData.pos[VX], hedge->v[0]->buildData.pos[VY],
-                hedge->v[1]->buildData.pos[VX], hedge->v[1]->buildData.pos[VY]);
-}
-
-static int printSuperBlockHEdgesWorker(SuperBlock* block, void* /*parameters*/)
-{
-    for(SuperBlock::HEdges::const_iterator it = block->hedgesBegin();
-        it != block->hedgesEnd(); ++it)
-    {
-        HEdge* hedge = *it;
-        printHEdge(hedge);
-    }
-    return false; // Continue iteration.
-}
-
-void BSP_PrintSuperBlockhedges(SuperBlock* block)
-{
-    if(!block) return;
-    block->traverse(printSuperBlockHEdgesWorker);
-}
-#endif
