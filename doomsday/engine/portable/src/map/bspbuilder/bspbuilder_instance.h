@@ -40,6 +40,7 @@
 #include "map/bspbuilder/superblockmap.h"
 
 #include <vector>
+#include <list>
 
 namespace de {
 namespace bspbuilder {
@@ -51,6 +52,18 @@ const double DIST_EPSILON = (1.0 / 128.0);
 
 /// Smallest difference between two angles before being considered equal (in degrees).
 const double ANG_EPSILON = (1.0 / 1024.0);
+
+struct UnclosedSectorRecord
+{
+    Sector* sector;
+    vec2d_t nearPoint;
+
+    UnclosedSectorRecord(Sector* _sector, double x, double y)
+        : sector(_sector)
+    {
+        V2d_Set(nearPoint, x, y);
+    }
+};
 
 /**
  * @algorithm High-level description (courtesy of Raphael Quinet)
@@ -81,8 +94,11 @@ const double ANG_EPSILON = (1.0 / 1024.0);
 struct BspBuilderImp
 {
     BspBuilderImp(GameMap* _map, int _splitCostFactor=7) :
-        splitCostFactor(_splitCostFactor), map(_map),
-        lineDefInfos(0), rootNode(0), partition(0), builtOK(false)
+        splitCostFactor(_splitCostFactor),
+        map(_map),
+        rootNode(0), partition(0),
+        unclosedSectors(),
+        builtOK(false)
     {
         initPartitionInfo();
     }
@@ -330,6 +346,17 @@ struct BspBuilderImp
         memcpy(&partitionInfo, &info, sizeof(partitionInfo));
     }
 
+    /**
+     * Register the specified sector in the list of unclosed sectors.
+     *
+     * @param sector  Sector to be registered.
+     * @param x  X coordinate near the open point.
+     * @param y  X coordinate near the open point.
+     *
+     * @return @c true iff sector newly registered.
+     */
+    bool registerUnclosedSector(Sector* sector, double x, double y);
+
     /// The Active HEdge split cost factor. @see BSPBUILDER_PARTITION_COST_HEDGESPLIT
     int splitCostFactor;
 
@@ -349,6 +376,10 @@ struct BspBuilderImp
 
     /// Extra info about the partition plane.
     BspHEdgeInfo partitionInfo;
+
+    /// Unclosed sectors are recorded here so we don't print too many warnings.
+    typedef std::list<UnclosedSectorRecord> UnclosedSectors;
+    UnclosedSectors unclosedSectors;
 
     /// @c true = a BSP for the current map has been built successfully.
     bool builtOK;

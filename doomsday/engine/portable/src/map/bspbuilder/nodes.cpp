@@ -1498,7 +1498,7 @@ void BspBuilderImp::buildHEdgesAtIntersectionGaps(SuperBlock& rightList, SuperBl
                     pos[VX] /= 2;
                     pos[VY] /= 2;
 
-                    MPE_RegisterUnclosedSectorNear(cur->after, pos[VX], pos[VY]);
+                    registerUnclosedSector(cur->after, pos[VX], pos[VY]);
                 }
             }
             else if(!cur->after && next->before)
@@ -1512,7 +1512,7 @@ void BspBuilderImp::buildHEdgesAtIntersectionGaps(SuperBlock& rightList, SuperBl
                     pos[VX] /= 2;
                     pos[VY] /= 2;
 
-                    MPE_RegisterUnclosedSectorNear(next->before, pos[VX], pos[VY]);
+                    registerUnclosedSector(next->before, pos[VX], pos[VY]);
                 }
             }
             else
@@ -1669,4 +1669,28 @@ HEdgeIntercept* BspBuilderImp::newHEdgeIntercept(Vertex* vert, bool selfRef)
 void BspBuilderImp::deleteHEdgeIntercept(HEdgeIntercept& inter)
 {
     delete &inter;
+}
+
+bool BspBuilderImp::registerUnclosedSector(Sector* sector, double x, double y)
+{
+    if(!sector) return false;
+
+    // Has this sector already been registered?
+    for(UnclosedSectors::const_iterator it = unclosedSectors.begin();
+        it != unclosedSectors.end(); ++it)
+    {
+        UnclosedSectorRecord const& record = *it;
+        if(record.sector == sector)
+            return false;
+    }
+
+    // Add a new record.
+    unclosedSectors.push_back(UnclosedSectorRecord(sector, x, y));
+
+    // In the absence of a better mechanism, simply log this right away.
+    /// @todo Implement something better!
+    LOG_WARNING("Sector %p #%d is unclosed near [%1.1f, %1.1f].")
+        << sector << sector->buildData.index - 1 << x << y;
+
+    return true;
 }

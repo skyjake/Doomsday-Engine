@@ -34,8 +34,6 @@
 #include "de_dam.h"
 #include "de_filesys.h"
 
-//#include "bsp_edge.h" /// @todo Remove me.
-
 #include "s_environ.h"
 
 typedef struct usecrecord_s {
@@ -504,79 +502,11 @@ void MPE_PruneRedundantMapData(editmap_t* map, int flags)
 }
 
 /**
- * Register the specified sector in the list of unclosed sectors.
- *
- * @param sec           Ptr to the sector to be registered.
- * @param x             Approximate X coordinate to the sector's origin.
- * @param y             Approximate Y coordinate to the sector's origin.
- *
- * @return              @c true, if sector was registered.
- */
-boolean MPE_RegisterUnclosedSectorNear(Sector* sec, double x, double y)
-{
-    usecrecord_t* usec;
-    uint i;
-
-    if(!sec) return false; // Wha?
-
-    // Has this sector already been registered as unclosed?
-    for(i = 0; i < numUnclosedSectors; ++i)
-    {
-        if(unclosedSectors[i].sec == sec)
-            return true;
-    }
-
-    // A new one.
-    unclosedSectors = M_Realloc(unclosedSectors, ++numUnclosedSectors * sizeof(usecrecord_t));
-    usec = &unclosedSectors[numUnclosedSectors-1];
-    usec->sec = sec;
-    usec->nearPos[VX] = x;
-    usec->nearPos[VY] = y;
-
-    // Flag the sector as unclosed.
-    sec->flags |= SECF_UNCLOSED;
-
-    return true;
-}
-
-/**
- * Print the list of unclosed sectors.
- */
-void MPE_PrintUnclosedSectorList(void)
-{
-    uint i;
-
-    if(!editMapInited) return;
-
-    for(i = 0; i < numUnclosedSectors; ++i)
-    {
-        usecrecord_t* usec = &unclosedSectors[i];
-
-        Con_Message("Sector #%d is unclosed near (%1.1f,%1.1f)\n",
-                    usec->sec->buildData.index - 1, usec->nearPos[VX],
-                    usec->nearPos[VY]);
-    }
-}
-
-/**
- * Free the list of unclosed sectors.
- */
-void MPE_FreeUnclosedSectorList(void)
-{
-    if(unclosedSectors)
-        M_Free(unclosedSectors);
-    unclosedSectors = NULL;
-    numUnclosedSectors = 0;
-}
-
-/**
  * Called to begin the map building process.
  */
 boolean MPE_Begin(const char* mapUri)
 {
     if(editMapInited) return true; // Already been here.
-
-    MPE_FreeUnclosedSectorList();
 
     // Init the gameObj lists, and value db.
     map->gameObjData.db.numTables = 0;
@@ -1743,6 +1673,9 @@ boolean MPE_End(void)
     GameMap_InitMobjBlockmap(gamemap, min, max);
     GameMap_InitPolyobjBlockmap(gamemap, min, max);
 
+    // Announce any issues detected with the map.
+    MPE_PrintMapErrors();
+
     /**
      * Build a BSP for this map.
      */
@@ -1775,9 +1708,6 @@ boolean MPE_End(void)
 
     buildSectorBspLeafLists(gamemap);
 
-    // Announce any issues detected with the map.
-    MPE_PrintMapErrors();
-
     // Map must be polygonized and sector->bspLeafs must be built before
     // this is called!
     hardenPlanes(gamemap, map);
@@ -1803,7 +1733,6 @@ boolean MPE_End(void)
     prepareBspLeafs(gamemap);
 
     P_FreeBadTexList();
-    MPE_FreeUnclosedSectorList();
 
     editMapInited = false;
 
@@ -1858,9 +1787,6 @@ GameMap* MPE_GetLastBuiltMap(void)
  */
 void MPE_PrintMapErrors(void)
 {
-    // Announce unclosed sectors.
-    MPE_PrintUnclosedSectorList();
-
     // Announce any bad texture names we came across when loading the map.
     P_PrintMissingTextureList();
 }

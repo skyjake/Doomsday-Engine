@@ -97,10 +97,6 @@ boolean         MPE_GameObjProperty(const char *objName, uint idx,
 
 void            MPE_PruneRedundantMapData(editmap_t* map, int flags);
 
-boolean         MPE_RegisterUnclosedSectorNear(Sector* sec, double x, double y);
-void            MPE_PrintUnclosedSectorList(void);
-void            MPE_FreeUnclosedSectorList(void);
-
 GameMap*        MPE_GetLastBuiltMap(void);
 Vertex*         createVertex(void);
 
