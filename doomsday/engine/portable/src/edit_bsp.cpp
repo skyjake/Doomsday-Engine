@@ -29,8 +29,7 @@
 #include "de_play.h"
 
 #include <de/Log>
-
-#include "bspbuilder/bspbuilder.hh"
+#include <BspBuilder>
 
 using namespace de;
 
@@ -69,7 +68,7 @@ BspBuilder_c* BspBuilder_SetSplitCostFactor(BspBuilder_c* builder, int factor)
 boolean BspBuilder_Build(BspBuilder_c* builder)
 {
     Q_ASSERT(builder);
-    return builder->inst->build();
+    return CPP_BOOL(builder->inst->build());
 }
 
 BinaryTree* BspBuilder_Root(BspBuilder_c* builder)

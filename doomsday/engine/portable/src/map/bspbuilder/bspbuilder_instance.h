@@ -1,6 +1,6 @@
 /**
- * @file bspbuilder.hh
- * BSP Builder. @ingroup map
+ * @file bsphedgeinfo.h
+ * BSP Builder half-edge info. @ingroup bsp
  *
  * Based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted on
  * SourceForge: http://sourceforge.net/projects/glbsp/
@@ -25,34 +25,31 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_BSPBUILDER_HH
-#define LIBDENG_BSPBUILDER_HH
+#ifndef LIBDENG_BSPBUILDER_IMPLEMENTATION
+#define LIBDENG_BSPBUILDER_IMPLEMENTATION
 
 #include "dd_types.h"
 #include "p_mapdata.h"
+#include "m_binarytree.h"
 
-#include "bspbuilder/bsphedgeinfo.h"
-#include "bspbuilder/hedgeintercept.h"
-#include "bspbuilder/hplane.h"
-#include "bspbuilder/superblockmap.h"
-#include "bspbuilder/linedefinfo.h"
+#include "map/bspbuilder/bsphedgeinfo.h"
+#include "map/bspbuilder/hedgeintercept.h"
+#include "map/bspbuilder/hplane.h"
+#include "map/bspbuilder/linedefinfo.h"
+#include "map/bspbuilder/superblockmap.h"
 
 #include <vector>
 
-struct binarytree_s;
-
 namespace de {
+namespace bspbuilder {
 
-/// Default cost factor attributed to splitting an existing half-edge.
-#define BSPBUILDER_PARTITION_COST_HEDGESPLIT   7
-
-#define IFFY_LEN            4.0
+const double IFFY_LEN = 4.0;
 
 /// Smallest distance between two points before being considered equal.
-#define DIST_EPSILON        (1.0 / 128.0)
+const double DIST_EPSILON = (1.0 / 128.0);
 
 /// Smallest difference between two angles before being considered equal (in degrees).
-#define ANG_EPSILON         (1.0 / 1024.0)
+const double ANG_EPSILON = (1.0 / 1024.0);
 
 /**
  * @algorithm High-level description (courtesy of Raphael Quinet)
@@ -80,33 +77,29 @@ namespace de {
  * When there is no more Seg in CreateNodes' list, then they are all in the
  * global list and ready to be saved to disk.
  */
-class BspBuilder {
-public:
-    BspBuilder(GameMap* map);
-    ~BspBuilder();
+struct BspBuilderImp
+{
+    BspBuilderImp(GameMap* _map, int _splitCostFactor=7) :
+        splitCostFactor(_splitCostFactor), map(_map),
+        lineDefInfos(0), rootNode(0), _partition(0), builtOK(false)
+    {
+        initPartitionInfo();
+    }
 
-    BspBuilder* setSplitCostFactor(int factor)
+    ~BspBuilderImp();
+
+    void setSplitCostFactor(int factor)
     {
         splitCostFactor = factor;
-        return this;
     }
+
+    bool build();
+
+    BinaryTree* root() const;
 
     void initForMap();
 
-    /**
-     * Build the BSP for the given map.
-     * @return  @c true= iff completed successfully.
-     */
-    boolean build();
-
-    /**
-     * Retrieve a pointer to the root BinaryTree node for the constructed BSP.
-     * Even if construction fails this will return a valid node.
-     *
-     * The only time upon which @c NULL is returned is if called prior to calling
-     * BspBuilder::build()
-     */
-    struct binarytree_s* root() const;
+    Vertex* newVertex(const_pvec2d_t point);
 
     /**
      * Destroy the specified intersection.
@@ -114,9 +107,6 @@ public:
      * @param inter  Ptr to the intersection to be destroyed.
      */
     void deleteHEdgeIntercept(HEdgeIntercept* intercept);
-
-private:
-    Vertex* newVertex(const_pvec2d_t point);
 
     /**
      * Retrieve the extended build info for the specified @a lineDef.
@@ -173,7 +163,6 @@ private:
      */
     HEdge* splitHEdge(HEdge* oldHEdge, const_pvec2d_t point);
 
-public:
     /**
      * Determine the distance (euclidean) from @a hedge to the current partition plane.
      *
@@ -205,10 +194,9 @@ public:
      */
     void divideHEdge(HEdge* hedge, SuperBlock& rightList, SuperBlock& leftList);
 
-private:
     void clearPartitionIntercepts();
 
-    boolean configurePartition(const HEdge* hedge);
+    bool configurePartition(const HEdge* hedge);
 
     /**
      * Find the best half-edge in the list to use as the next partition.
@@ -216,7 +204,7 @@ private:
      * @param hedgeList     List of half-edges to choose from.
      * @return  @c true= A suitable partition was found.
      */
-    boolean chooseNextPartition(SuperBlock& hedgeList);
+    bool chooseNextPartition(SuperBlock& hedgeList);
 
     /**
      * Takes the half-edge list and determines if it is convex, possibly converting
@@ -237,7 +225,7 @@ private:
      * @param parent        Ptr to write back the address of any newly created subtree.
      * @return  @c true iff successfull.
      */
-    boolean buildNodes(SuperBlock& superblock, struct binarytree_s** parent);
+    bool buildNodes(SuperBlock& superblock, struct binarytree_s** parent);
 
     /**
      * Traverse the BSP tree and put all the half-edges in each BSP leaf into clockwise
@@ -279,13 +267,13 @@ private:
      * Create a new intersection.
      */
     HEdgeIntercept* newHEdgeIntercept(Vertex* vertex, const BspHEdgeInfo* partition,
-                                      boolean lineDefIsSelfReferencing);
+                                      bool lineDefIsSelfReferencing);
 
     /**
      * Create a new half-edge.
      */
     HEdge* newHEdge(LineDef* line, LineDef* sourceLine, Vertex* start, Vertex* end,
-                    Sector* sec, boolean back);
+                    Sector* sec, bool back);
 
     /**
      * Create a clone of an existing half-edge.
@@ -331,7 +319,6 @@ private:
      */
     inline const BspHEdgeInfo& partitionInfo() const { return _partitionInfo; }
 
-private:
     /// The Active HEdge split cost factor. @see BSPBUILDER_PARTITION_COST_HEDGESPLIT
     int splitCostFactor;
 
@@ -353,9 +340,10 @@ private:
     BspHEdgeInfo _partitionInfo;
 
     /// @c true = a BSP for the current map has been built successfully.
-    boolean builtOK;
+    bool builtOK;
 };
 
+} // namespace bspbuilder
 } // namespace de
 
-#endif /// LIBDENG_BSPBUILDER_HH
+#endif /// LIBDENG_BSPBUILDER_IMPLEMENTATION

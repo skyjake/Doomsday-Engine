@@ -28,10 +28,9 @@
 #include "de_base.h"
 #include "de_console.h"
 
-#include "bspbuilder/bspbuilder.hh"
-#include "bspbuilder/hplane.h"
+#include "map/bspbuilder/hplane.h"
 
-using namespace de;
+using namespace de::bspbuilder;
 
 void HPlane::clear()
 {
@@ -122,6 +121,8 @@ HPlane::Intercepts::const_iterator HPlane::deleteIntercept(Intercepts::iterator 
     //if(at < intercepts.begin() || at >= intercepts.end()) return at;
     return intercepts.erase(at);
 }
+
+#include "map/bspbuilder/hedgeintercept.h"
 
 #if _DEBUG
 void HPlane_Print(HPlane* hplane)

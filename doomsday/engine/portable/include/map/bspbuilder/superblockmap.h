@@ -31,10 +31,14 @@
 #define LIBDENG_BSPBUILDER_SUPERBLOCKMAP
 
 #include "dd_types.h"
-#include "bspbuilder/bsphedgeinfo.h"
 
 #include <de/Log>
 #include <list>
+
+namespace de {
+namespace bspbuilder {
+
+class SuperBlockmap;
 
 #ifdef RIGHT
 #  undef RIGHT
@@ -43,11 +47,6 @@
 #ifdef LEFT
 #  undef LEFT
 #endif
-
-namespace de {
-//namespace bspbuilder {
-
-class SuperBlockmap;
 
 /**
  * Subblocks:
@@ -274,7 +273,7 @@ private:
     Instance* d;
 };
 
-//} // namespace bspbuilder
+} // namespace bspbuilder
 } // namespace de
 
 #endif /// LIBDENG_BSPBUILDER_SUPERBLOCKMAP

@@ -35,10 +35,9 @@
 #include "m_misc.h"
 #include "hedge.h"
 
-#include "bspbuilder/bsphedgeinfo.h"
-#include "bspbuilder/bspbuilder.hh"
+#include "portable/src/map/bspbuilder/bspbuilder_instance.h"
 
-using namespace de;
+using namespace de::bspbuilder;
 
 static void updateHEdgeInfo(const HEdge* hedge, BspHEdgeInfo* info)
 {
@@ -62,8 +61,8 @@ static void updateHEdgeInfo(const HEdge* hedge, BspHEdgeInfo* info)
         Con_Error("HEdge {%p} is of zero length.", hedge);
 }
 
-HEdge* BspBuilder::newHEdge(LineDef* lineDef, LineDef* sourceLineDef,
-    Vertex* start, Vertex* end, Sector* sec, boolean back)
+HEdge* BspBuilderImp::newHEdge(LineDef* lineDef, LineDef* sourceLineDef,
+    Vertex* start, Vertex* end, Sector* sec, bool back)
 {
     HEdge* hedge = HEdge_New();
 
@@ -84,7 +83,7 @@ HEdge* BspBuilder::newHEdge(LineDef* lineDef, LineDef* sourceLineDef,
     return hedge;
 }
 
-HEdge* BspBuilder::cloneHEdge(const HEdge& other)
+HEdge* BspBuilderImp::cloneHEdge(const HEdge& other)
 {
     HEdge* hedge = HEdge_NewCopy(&other);
     if(other.bspBuildInfo)
@@ -96,13 +95,13 @@ HEdge* BspBuilder::cloneHEdge(const HEdge& other)
     return hedge;
 }
 
-bool BspBuilder::hedgeIsInLeaf(const HEdge* hedge) const
+bool BspBuilderImp::hedgeIsInLeaf(const HEdge* hedge) const
 {
     /// @todo Are we now able to determine this by testing hedge->leaf ?
     return !hedge->bspBuildInfo->block;
 }
 
-HEdge* BspBuilder::splitHEdge(HEdge* oldHEdge, const_pvec2d_t point)
+HEdge* BspBuilderImp::splitHEdge(HEdge* oldHEdge, const_pvec2d_t point)
 {
     Q_ASSERT(oldHEdge);
 

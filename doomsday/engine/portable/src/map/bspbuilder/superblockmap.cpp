@@ -28,10 +28,11 @@
 #include "p_mapdata.h"
 
 #include "kdtree.h"
-#include "bspbuilder/bsphedgeinfo.h"
-#include "bspbuilder/superblockmap.h"
 
-using namespace de;
+#include "map/bspbuilder/bsphedgeinfo.h"
+#include "map/bspbuilder/superblockmap.h"
+
+using namespace de::bspbuilder;
 
 struct SuperBlock::Instance
 {

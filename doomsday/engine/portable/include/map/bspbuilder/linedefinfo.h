@@ -25,15 +25,15 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_BSPBUILDER_LINEDEFINFO_H
-#define LIBDENG_BSPBUILDER_LINEDEFINFO_H
+#ifndef LIBDENG_BSPBUILDER_LINEDEFINFO
+#define LIBDENG_BSPBUILDER_LINEDEFINFO
 
 #include "p_mapdata.h"
 
 #include <QGlobalStatic>
 
 namespace de {
-//namespace bspbuilder {
+namespace bspbuilder {
 
 /**
  * Plain old data (POD) structure used to record additional information and
@@ -62,7 +62,7 @@ struct LineDefInfo
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(LineDefInfo::Flags)
 
-//} // namespace bspbuilder
+} // namespace bspbuilder
 } // namespace de
 
 #endif /// LIBDENG_BSPBUILDER_LINEDEFINFO

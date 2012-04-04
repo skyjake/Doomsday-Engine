@@ -34,7 +34,7 @@
 #include <de/Log>
 
 namespace de {
-//namespace bspbuilder {
+namespace bspbuilder {
 
 /**
  * Plain-old-data structure containing additional information for a half-edge
@@ -49,7 +49,7 @@ struct HEdgeIntercept
     Vertex* vertex;
 
     // True if this intersection was on a self-referencing linedef.
-    boolean selfRef;
+    bool selfRef;
 
     // Sector on each side of the vertex (along the partition),
     // or NULL when that direction isn't OPEN.
@@ -69,7 +69,7 @@ struct HEdgeIntercept
     })
 };
 
-//} // namespace bspbuilder
+} // namespace bspbuilder
 } // namespace de
 
 #endif /// LIBDENG_BSPBUILDER_HEDGEINTERCEPT

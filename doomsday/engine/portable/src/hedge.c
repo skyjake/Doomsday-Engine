@@ -25,7 +25,7 @@
 #include "de_refresh.h"
 #include "de_play.h"
 
-#include "bspbuilder/bsphedgeinfo.h"
+#include "map/bspbuilder/bsphedgeinfo.h"
 
 HEdge* HEdge_New(void)
 {
