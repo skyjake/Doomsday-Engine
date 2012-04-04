@@ -69,6 +69,7 @@ HEdge* BspBuilderImp::newHEdge(LineDef* lineDef, LineDef* sourceLineDef,
     hedge->v[0] = start;
     hedge->v[1] = end;
     hedge->sector = sec;
+    Q_ASSERT(sec == NULL || GameMap_SectorIndex(map, sec) >= 0);
     hedge->side = (back? 1 : 0);
 
     BspHEdgeInfo* info = static_cast<BspHEdgeInfo*>(Z_Malloc(sizeof *info, PU_MAP, 0));
