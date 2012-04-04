@@ -1255,7 +1255,7 @@ static Sector *getContainingSectorOf(GameMap* map, Sector* sec)
     // Try all sectors that fit in the bounding box.
     for(i = 0, other = map->sectors; i < map->numSectors; other++, ++i)
     {
-        if(!other->lineDefCount || (other->flags & SECF_UNCLOSED))
+        if(!other->lineDefCount)
             continue;
 
         if(other == sec)

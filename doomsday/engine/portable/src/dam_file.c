@@ -448,7 +448,6 @@ static void writeSector(GameMap* map, uint idx)
         writeFloat(p->surface.rgba[CA]);
     }
 
-    writeLong(s->flags);
     writeFloat(s->aaBox.minX);
     writeFloat(s->aaBox.minY);
     writeFloat(s->aaBox.maxX);
@@ -519,7 +518,6 @@ static void readSector(GameMap* map, uint idx)
         p->surface.numDecorations = 0;
     }
 
-    s->flags = readLong();
     s->aaBox.minX = readFloat();
     s->aaBox.minY = readFloat();
     s->aaBox.maxX = readFloat();

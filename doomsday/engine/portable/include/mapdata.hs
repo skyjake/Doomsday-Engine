@@ -298,9 +298,6 @@ internal
 #define SIF_FRAME_CLEAR     0x1     // Flags to clear before each frame.
 #define SIF_LIGHT_CHANGED   0x2
 
-// Sector flags.
-#define SECF_UNCLOSED       0x1     // An unclosed sector (some sort of fancy hack).
-
 typedef struct msector_s {
     // Sector index. Always valid after loading & pruning.
     int index;
@@ -314,7 +311,6 @@ end
 struct Sector
     -       int         frameFlags
     INT     int         validCount // if == validCount, already checked.
-    -       int         flags
     -       AABox       aaBox // Bounding box for the sector.
     -       float       roughArea // Rough approximation of sector area.
     FLOAT   float       lightLevel
