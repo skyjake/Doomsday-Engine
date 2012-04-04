@@ -1093,6 +1093,9 @@ static void hardenLinedefs(GameMap* dest, editmap_t* src)
         destL->L_backside = (srcL->L_backside?
             &dest->sideDefs[srcL->L_backside->buildData.index - 1] : NULL);
 
+        if(srcL->buildData.windowEffect)
+            destL->buildData.windowEffect = &dest->sectors[srcL->buildData.windowEffect->buildData.index - 1];
+
         if(destL->L_frontside)
             destL->L_frontside->line = destL;
         if(destL->L_backside)
