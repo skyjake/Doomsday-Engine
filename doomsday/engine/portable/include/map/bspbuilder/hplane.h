@@ -149,6 +149,8 @@ public:
 
     inline Intercepts::size_type size() const { return intercepts.size(); }
 
+    static void DebugPrint(const HPlane& inst);
+
 private:
     HPlanePartition partition;
 

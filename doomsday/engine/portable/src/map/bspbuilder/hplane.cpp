@@ -125,13 +125,11 @@ HPlane::Intercepts::const_iterator HPlane::deleteIntercept(Intercepts::iterator 
 #include "map/bspbuilder/hedgeintercept.h"
 
 #if _DEBUG
-void HPlane_Print(HPlane* hplane)
+void HPlane::DebugPrint(const HPlane& hplane)
 {
-    if(!hplane) return;
-
-    Con_Message("HPlane %p:\n", hplane);
+    Con_Message("HPlane %p:\n", &hplane);
     uint n = 0;
-    for(HPlane::Intercepts::const_iterator it = hplane->begin(); it != hplane->end(); it++, n++)
+    for(HPlane::Intercepts::const_iterator it = hplane.begin(); it != hplane.end(); it++, n++)
     {
         const HPlaneIntercept* inter = &*it;
         Con_Printf(" %u: >%1.2f ", n, inter->distance());

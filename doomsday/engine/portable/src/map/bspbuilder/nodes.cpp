@@ -697,12 +697,12 @@ static int chooseHEdgeFromSuperBlock(SuperBlock* partList, void* parameters)
 
 void BspBuilderImp::clearPartitionIntercepts()
 {
-    for(HPlane::Intercepts::iterator it = partition().begin(); it != partition().end(); ++it)
+    for(HPlane::Intercepts::iterator it = partition->begin(); it != partition->end(); ++it)
     {
         HEdgeIntercept* intercept = static_cast<HEdgeIntercept*>((*it).userData());
-        deleteHEdgeIntercept(intercept);
+        deleteHEdgeIntercept(*intercept);
     }
-    partition().clear();
+    partition->clear();
 }
 
 bool BspBuilderImp::configurePartition(const HEdge* hedge)
@@ -721,10 +721,10 @@ bool BspBuilderImp::configurePartition(const HEdge* hedge)
 
     const Vertex* from = lineDef->L_v(hedge->side);
     const Vertex* to   = lineDef->L_v(hedge->side^1);
-    partition().setOrigin(from->buildData.pos);
+    partition->setOrigin(from->buildData.pos);
 
     vec2d_t angle; V2d_Subtract(angle, to->buildData.pos, from->buildData.pos);
-    partition().setAngle(angle);
+    partition->setAngle(angle);
 
     //LOG_DEBUG("BspBuilderImp::configureHPlane: hedge %p [%1.1f, %1.1f] -> [%1.1f, %1.1f].")
     //    << best << from->buildData.pos[VX] << from->buildData.pos[VY]
@@ -760,36 +760,20 @@ bool BspBuilderImp::chooseNextPartition(SuperBlock& hedgeList)
 
 const HPlaneIntercept* BspBuilderImp::makePartitionIntersection(HEdge* hedge, int leftSide)
 {
-    HEdgeIntercept* hedgeIntercept;
-    const HPlaneIntercept* inter;
-    Vertex* vertex;
-    double distance;
     Q_ASSERT(hedge);
 
     // Already present on this edge?
-    vertex = hedge->v[leftSide?1:0];
-    inter = partitionInterceptByVertex(vertex);
+    Vertex* vertex = hedge->v[leftSide?1:0];
+    const HPlaneIntercept* inter = partitionInterceptByVertex(vertex);
     if(inter) return inter;
 
-    const BspHEdgeInfo& info = partitionInfo();
-    distance = M_ParallelDist(info.pDX, info.pDY, info.pPara, info.pLength,
-                              vertex->buildData.pos[VX], vertex->buildData.pos[VY]);
-
     LineDef* line = hedge->bspBuildInfo->lineDef;
-    hedgeIntercept = newHEdgeIntercept(vertex, &info, line && lineDefInfo(*line).flags.testFlag(LineDefInfo::SELFREF));
-    return partition().newIntercept(distance, hedgeIntercept);
+    HEdgeIntercept* intercept = newHEdgeIntercept(vertex, line && lineDefInfo(*line).flags.testFlag(LineDefInfo::SELFREF));
+
+    return partition->newIntercept(vertexDistanceFromPartition(vertex), intercept);
 }
 
-double BspBuilderImp::hedgeDistanceFromPartition(const HEdge* hedge, bool end) const
-{
-    Q_ASSERT(hedge);
-    const BspHEdgeInfo& info = partitionInfo();
-    return M_PerpDist(info.pDX, info.pDY, info.pPerp, info.pLength,
-                      end? hedge->bspBuildInfo->pEX : hedge->bspBuildInfo->pSX,
-                      end? hedge->bspBuildInfo->pEY : hedge->bspBuildInfo->pSY);
-}
-
-void BspBuilderImp::hedgePartitionIntersection(const HEdge* hedge, double perpC, double perpD,
+void BspBuilderImp::interceptHEdgePartition(const HEdge* hedge, double perpC, double perpD,
     pvec2d_t point) const
 {
     if(!hedge || !point) return;
@@ -797,16 +781,16 @@ void BspBuilderImp::hedgePartitionIntersection(const HEdge* hedge, double perpC,
     BspHEdgeInfo* hedgeInfo = hedge->bspBuildInfo;
 
     // Horizontal partition against vertical half-edge.
-    if(partitionInfo().pDY == 0 && hedgeInfo->pDX == 0)
+    if(partitionInfo.pDY == 0 && hedgeInfo->pDX == 0)
     {
-        V2d_Set(point, hedgeInfo->pSX, partitionInfo().pSY);
+        V2d_Set(point, hedgeInfo->pSX, partitionInfo.pSY);
         return;
     }
 
     // Vertical partition against horizontal half-edge.
-    if(partitionInfo().pDX == 0 && hedgeInfo->pDY == 0)
+    if(partitionInfo.pDX == 0 && hedgeInfo->pDY == 0)
     {
-        V2d_Set(point, partitionInfo().pSX, hedgeInfo->pSY);
+        V2d_Set(point, partitionInfo.pSX, hedgeInfo->pSY);
         return;
     }
 
@@ -836,7 +820,7 @@ void BspBuilderImp::divideHEdge(HEdge* hedge, SuperBlock& rightList, SuperBlock&
     /// @kludge Half-edges produced from the same source linedef must always
     ///         be treated as collinear.
     /// @todo   Why is this override necessary?
-    if(hedge->bspBuildInfo->sourceLineDef == partitionInfo().sourceLineDef)
+    if(hedge->bspBuildInfo->sourceLineDef == partitionInfo.sourceLineDef)
         a = b = 0;
     // kludge end
 
@@ -848,8 +832,8 @@ void BspBuilderImp::divideHEdge(HEdge* hedge, SuperBlock& rightList, SuperBlock&
 
         // Direction (vs that of the partition plane) determines in which subset
         // this half-edge belongs.
-        if(hedge->bspBuildInfo->pDX * partitionInfo().pDX +
-           hedge->bspBuildInfo->pDY * partitionInfo().pDY < 0)
+        if(hedge->bspBuildInfo->pDX * partitionInfo.pDX +
+           hedge->bspBuildInfo->pDY * partitionInfo.pDY < 0)
         {
             leftList.push(hedge);
         }
@@ -890,7 +874,7 @@ void BspBuilderImp::divideHEdge(HEdge* hedge, SuperBlock& rightList, SuperBlock&
      * Straddles the partition plane and must therefore be split.
      */
     vec2d_t point;
-    hedgePartitionIntersection(hedge, a, b, point);
+    interceptHEdgePartition(hedge, a, b, point);
 
     HEdge* newHEdge = splitHEdge(hedge, point);
 
@@ -1028,7 +1012,7 @@ bool BspBuilderImp::buildNodes(SuperBlock& hedgeList, BinaryTree** parent)
     rightHEdges->findHEdgeBounds(rightHEdgesBounds);
     leftHEdges->findHEdgeBounds(leftHEdgesBounds);
 
-    BspNode* node = BspNode_New(partition().origin(), partition().angle());
+    BspNode* node = BspNode_New(partition->origin(), partition->angle());
     BspNode_SetRightBounds(node, &rightHEdgesBounds);
     BspNode_SetLeftBounds(node, &leftHEdgesBounds);
     *parent = BinaryTree_NewWithUserData(node);
@@ -1353,11 +1337,11 @@ bool BspBuilderImp::build()
     blockBounds.maxY = blockBounds.minY + 128 * M_CeilPow2(bh);
 
     SuperBlockmap* blockmap = new SuperBlockmap(blockBounds);
-    _partition = new HPlane();
+    partition = new HPlane();
 
     initHEdgesAndBuildBsp(*blockmap);
 
-    delete _partition;
+    delete partition;
     delete blockmap;
 
     return builtOK;
@@ -1372,10 +1356,10 @@ const HPlaneIntercept* BspBuilderImp::partitionInterceptByVertex(Vertex* vertex)
 {
     if(!vertex) return NULL; // Hmm...
 
-    for(HPlane::Intercepts::const_iterator it = partition().begin(); it != partition().end(); ++it)
+    for(HPlane::Intercepts::const_iterator it = partition->begin(); it != partition->end(); ++it)
     {
         const HPlaneIntercept* inter = &*it;
-        if(((HEdgeIntercept*)inter->userData())->vertex == vertex) return inter;
+        if(reinterpret_cast<HEdgeIntercept*>(inter->userData())->vertex == vertex) return inter;
     }
 
     return NULL;
@@ -1385,7 +1369,7 @@ HEdgeIntercept* BspBuilderImp::hedgeInterceptByVertex(Vertex* vertex)
 {
     const HPlaneIntercept* hpi = partitionInterceptByVertex(vertex);
     if(!hpi) return NULL; // Not found.
-    return (HEdgeIntercept*) hpi->userData();
+    return reinterpret_cast<HEdgeIntercept*>(hpi->userData());
 }
 
 void BspBuilderImp::addHEdgesBetweenIntercepts(HEdgeIntercept* start, HEdgeIntercept* end,
@@ -1396,9 +1380,8 @@ void BspBuilderImp::addHEdgesBetweenIntercepts(HEdgeIntercept* start, HEdgeInter
     // Create the half-edge pair.
     // Leave 'linedef' field as NULL as these are not linedef-linked.
     // Leave 'side' as zero too.
-    const BspHEdgeInfo& info = partitionInfo();
-    (*right) = newHEdge(NULL, info.lineDef, start->vertex, end->vertex, start->after, false);
-    ( *left) = newHEdge(NULL, info.lineDef, end->vertex, start->vertex, start->after, false);
+    (*right) = newHEdge(NULL, partitionInfo.lineDef, start->vertex, end->vertex, start->after, false);
+    ( *left) = newHEdge(NULL, partitionInfo.lineDef, end->vertex, start->vertex, start->after, false);
 
     // Twin the half-edges together.
     (*right)->twin = *left;
@@ -1417,46 +1400,48 @@ void BspBuilderImp::addHEdgesBetweenIntercepts(HEdgeIntercept* start, HEdgeInter
     */
 }
 
-void Bsp_MergeHEdgeIntercepts(HEdgeIntercept* final, const HEdgeIntercept* other)
+HEdgeIntercept& BspBuilderImp::mergeHEdgeIntercepts(HEdgeIntercept& final, HEdgeIntercept& other)
 {
-    Q_ASSERT(final && other);
-
     /*
-    LOG_TRACE("Bsp_MergeHEdgeIntercepts: Merging intersections:");
-    HEdgeIntercept::DebugPrint(*final);
-    HEdgeIntercept::DebugPrint(*other);
+    LOG_TRACE("BspBuilder::mergeHEdgeIntercepts: Merging intersections:");
+    HEdgeIntercept::DebugPrint(final);
+    HEdgeIntercept::DebugPrint(other);
     */
 
-    if(final->selfRef && !other->selfRef)
+    if(final.selfRef && !other.selfRef)
     {
-        if(final->before && other->before)
-            final->before = other->before;
+        if(final.before && other.before)
+            final.before = other.before;
 
-        if(final->after && other->after)
-            final->after = other->after;
+        if(final.after && other.after)
+            final.after = other.after;
 
-        final->selfRef = false;
+        final.selfRef = false;
     }
 
-    if(!final->before && other->before)
-        final->before = other->before;
+    if(!final.before && other.before)
+        final.before = other.before;
 
-    if(!final->after && other->after)
-        final->after = other->after;
+    if(!final.after && other.after)
+        final.after = other.after;
 
     /*
     LOG_TRACE("Bsp_MergeHEdgeIntercepts: Result:");
-    HEdgeIntercept::DebugPrint(*final);
+    HEdgeIntercept::DebugPrint(final);
     */
+
+    // Destroy the redundant other.
+    deleteHEdgeIntercept(other);
+    return final;
 }
 
 void BspBuilderImp::mergeIntersections()
 {
-    HPlane::Intercepts::iterator node = partition().begin();
-    while(node != partition().end())
+    HPlane::Intercepts::iterator node = partition->begin();
+    while(node != partition->end())
     {
         HPlane::Intercepts::iterator np = node; np++;
-        if(np == partition().end()) break;
+        if(np == partition->end()) break;
 
         double len = *np - *node;
         if(len < -0.1)
@@ -1470,8 +1455,8 @@ void BspBuilderImp::mergeIntersections()
             continue;
         }
 
-        HEdgeIntercept* cur  = (HEdgeIntercept*)node->userData();
-        HEdgeIntercept* next = (HEdgeIntercept*)np->userData();
+        HEdgeIntercept* cur  = reinterpret_cast<HEdgeIntercept*>(node->userData());
+        HEdgeIntercept* next = reinterpret_cast<HEdgeIntercept*>(np->userData());
 
         /*if(len > DIST_EPSILON)
         {
@@ -1479,27 +1464,24 @@ void BspBuilderImp::mergeIntersections()
                     << len << cur->vertex->V_pos[VX] << cur->vertex->V_pos[VY];
         }*/
 
-        // Merge info for the two intersections into one.
-        Bsp_MergeHEdgeIntercepts(cur, next);
-
-        // Destroy the orphaned info.
-        deleteHEdgeIntercept(next);
+        // Merge info for the two intersections into one (next is destroyed).
+        mergeHEdgeIntercepts(*cur, *next);
 
         // Unlink this intercept.
-        partition().deleteIntercept(np);
+        partition->deleteIntercept(np);
     }
 }
 
 void BspBuilderImp::buildHEdgesAtIntersectionGaps(SuperBlock& rightList, SuperBlock& leftList)
 {
-    HPlane::Intercepts::const_iterator node = partition().begin();
-    while(node != partition().end())
+    HPlane::Intercepts::const_iterator node = partition->begin();
+    while(node != partition->end())
     {
         HPlane::Intercepts::const_iterator np = node; np++;
-        if(np == partition().end()) break;
+        if(np == partition->end()) break;
 
-        HEdgeIntercept* cur = (HEdgeIntercept*)((*node).userData());
-        HEdgeIntercept* next = (HEdgeIntercept*)((*np).userData());
+        HEdgeIntercept* cur = reinterpret_cast<HEdgeIntercept*>((*node).userData());
+        HEdgeIntercept* next = reinterpret_cast<HEdgeIntercept*>((*np).userData());
 
         if(!(!cur->after && !next->before))
         {
@@ -1571,38 +1553,17 @@ void BspBuilderImp::buildHEdgesAtIntersectionGaps(SuperBlock& rightList, SuperBl
 void BspBuilderImp::addMiniHEdges(SuperBlock& rightList, SuperBlock& leftList)
 {
 /*#if _DEBUG
-    HPlane_Print(hplane()));
+    HPlane::DebugPrint(*partition);
 #endif*/
 
     // Fix any issues with the current intersections.
     mergeIntersections();
 
-    const BspHEdgeInfo& info = partitionInfo();
     LOG_TRACE("Building HEdges along partition [%1.1f, %1.1f] > [%1.1f, %1.1f]")
-            << info.pSX << info.pSY << info.pDX << info.pDY;
+            << partitionInfo.pSX << partitionInfo.pSY << partitionInfo.pDX << partitionInfo.pDY;
 
     // Find connections in the intersections.
     buildHEdgesAtIntersectionGaps(rightList, leftList);
-}
-
-HEdgeIntercept* BspBuilderImp::newHEdgeIntercept(Vertex* vert, const BspHEdgeInfo* part,
-    bool selfRef)
-{
-    HEdgeIntercept* inter = new HEdgeIntercept();
-
-    inter->vertex = vert;
-    inter->selfRef = selfRef;
-
-    inter->before = openSectorAtPoint(vert, -part->pDX, -part->pDY);
-    inter->after  = openSectorAtPoint(vert,  part->pDX,  part->pDY);
-
-    return inter;
-}
-
-void BspBuilderImp::deleteHEdgeIntercept(HEdgeIntercept* inter)
-{
-    Q_ASSERT(inter);
-    delete inter;
 }
 
 Vertex* BspBuilderImp::newVertex(const_pvec2d_t point)
@@ -1656,26 +1617,24 @@ void BspBuilderImp::addEdgeTip(Vertex* vert, double angle, HEdge* back, HEdge* f
     }
 }
 
-Sector* BspBuilderImp::openSectorAtPoint(Vertex* vert, double dX, double dY)
+Sector* BspBuilderImp::openSectorAtAngle(Vertex* vert, double angle)
 {
-    edgetip_t* tip;
-    double angle = M_SlopeToAngle(dX, dY);
-
     // First check whether there's a wall_tip that lies in the exact direction of
     // the given direction (which is relative to the vertex).
-    for(tip = vert->buildData.tipSet; tip; tip = tip->ET_next)
+    for(edgetip_t* tip = vert->buildData.tipSet; tip; tip = tip->ET_next)
     {
         double diff = fabs(tip->angle - angle);
 
         if(diff < ANG_EPSILON || diff > (360.0 - ANG_EPSILON))
-        {   // Yes, found one.
+        {
+            // Yes, found one.
             return NULL;
         }
     }
 
     // OK, now just find the first wall_tip whose angle is greater than the angle
     // we're interested in. Therefore we'll be on the FRONT side of that tip edge.
-    for(tip = vert->buildData.tipSet; tip; tip = tip->ET_next)
+    for(edgetip_t* tip = vert->buildData.tipSet; tip; tip = tip->ET_next)
     {
         if(angle + ANG_EPSILON < tip->angle)
         {
@@ -1692,4 +1651,22 @@ Sector* BspBuilderImp::openSectorAtPoint(Vertex* vert, double dX, double dY)
 
     Con_Error("Vertex %d has no tips !", vert->buildData.index);
     exit(1); // Unreachable.
+}
+
+HEdgeIntercept* BspBuilderImp::newHEdgeIntercept(Vertex* vert, bool selfRef)
+{
+    HEdgeIntercept* inter = new HEdgeIntercept();
+
+    inter->vertex = vert;
+    inter->selfRef = selfRef;
+
+    inter->before = openSectorAtAngle(vert, M_SlopeToAngle(-partitionInfo.pDX, -partitionInfo.pDY));
+    inter->after  = openSectorAtAngle(vert, M_SlopeToAngle( partitionInfo.pDX,  partitionInfo.pDY));
+
+    return inter;
+}
+
+void BspBuilderImp::deleteHEdgeIntercept(HEdgeIntercept& inter)
+{
+    delete &inter;
 }

@@ -31,6 +31,7 @@
 #include "dd_types.h"
 #include "p_mapdata.h"
 #include "m_binarytree.h"
+#include "m_misc.h"
 
 #include "map/bspbuilder/bsphedgeinfo.h"
 #include "map/bspbuilder/hedgeintercept.h"
@@ -81,7 +82,7 @@ struct BspBuilderImp
 {
     BspBuilderImp(GameMap* _map, int _splitCostFactor=7) :
         splitCostFactor(_splitCostFactor), map(_map),
-        lineDefInfos(0), rootNode(0), _partition(0), builtOK(false)
+        lineDefInfos(0), rootNode(0), partition(0), builtOK(false)
     {
         initPartitionInfo();
     }
@@ -106,7 +107,7 @@ struct BspBuilderImp
      *
      * @param inter  Ptr to the intersection to be destroyed.
      */
-    void deleteHEdgeIntercept(HEdgeIntercept* intercept);
+    void deleteHEdgeIntercept(HEdgeIntercept& intercept);
 
     /**
      * Retrieve the extended build info for the specified @a lineDef.
@@ -137,6 +138,11 @@ struct BspBuilderImp
 
     void initHEdgesAndBuildBsp(SuperBlockmap& blockmap);
 
+    /**
+     * @return  Same as @a final for caller convenience.
+     */
+    HEdgeIntercept& mergeHEdgeIntercepts(HEdgeIntercept& final, HEdgeIntercept& other);
+
     void mergeIntersections();
 
     void buildHEdgesAtIntersectionGaps(SuperBlock& rightList, SuperBlock& leftList);
@@ -164,20 +170,40 @@ struct BspBuilderImp
     HEdge* splitHEdge(HEdge* oldHEdge, const_pvec2d_t point);
 
     /**
+     * Determine the distance (euclidean) from @a vertex to the current partition plane.
+     *
+     * @param vertex  Vertex to test.
+     */
+    inline double BspBuilderImp::vertexDistanceFromPartition(const Vertex* vertex) const
+    {
+        Q_ASSERT(vertex);
+        const BspHEdgeInfo& info = partitionInfo;
+        return M_ParallelDist(info.pDX, info.pDY, info.pPara, info.pLength,
+                              vertex->buildData.pos[VX], vertex->buildData.pos[VY]);
+    }
+
+    /**
      * Determine the distance (euclidean) from @a hedge to the current partition plane.
      *
      * @param hedge  Half-edge to test.
      * @param end    @c true= use the point defined by the end (else start) vertex.
      */
-    inline double hedgeDistanceFromPartition(const HEdge* hedge, bool end) const;
+    inline double hedgeDistanceFromPartition(const HEdge* hedge, bool end) const
+    {
+        Q_ASSERT(hedge);
+        const BspHEdgeInfo& info = partitionInfo;
+        return M_PerpDist(info.pDX, info.pDY, info.pPerp, info.pLength,
+                          end? hedge->bspBuildInfo->pEX : hedge->bspBuildInfo->pSX,
+                          end? hedge->bspBuildInfo->pEY : hedge->bspBuildInfo->pSY);
+    }
 
     /**
      * Calculate the intersection point between a half-edge and the current partition
      * plane. Takes advantage of some common situations like horizontal and vertical
      * lines to choose a 'nicer' intersection point.
      */
-    void hedgePartitionIntersection(const HEdge* hedge, double perpC, double perpD,
-                                    pvec2d_t point) const;
+    void interceptHEdgePartition(const HEdge* hedge, double perpC, double perpD,
+                                 pvec2d_t point) const;
 
     /**
      * Partition the given edge and perform any further necessary action (moving it
@@ -266,8 +292,7 @@ struct BspBuilderImp
     /**
      * Create a new intersection.
      */
-    HEdgeIntercept* newHEdgeIntercept(Vertex* vertex, const BspHEdgeInfo* partition,
-                                      bool lineDefIsSelfReferencing);
+    HEdgeIntercept* newHEdgeIntercept(Vertex* vertex, bool lineDefIsSelfReferencing);
 
     /**
      * Create a new half-edge.
@@ -287,14 +312,14 @@ struct BspBuilderImp
      * vertex is open. Returns a sector reference if it's open, or NULL if closed
      * (void space or directly along a linedef).
      */
-    Sector* openSectorAtPoint(Vertex* vert, double dx, double dy);
+    Sector* openSectorAtAngle(Vertex* vert, double angle);
 
     /**
      * Initialize the extra info about the current partition plane.
      */
     void initPartitionInfo()
     {
-        memset(&_partitionInfo, 0, sizeof(_partitionInfo));
+        memset(&partitionInfo, 0, sizeof(partitionInfo));
     }
 
     /**
@@ -302,22 +327,8 @@ struct BspBuilderImp
      */
     void setPartitionInfo(const BspHEdgeInfo& info)
     {
-        memcpy(&_partitionInfo, &info, sizeof(_partitionInfo));
+        memcpy(&partitionInfo, &info, sizeof(partitionInfo));
     }
-
-    /**
-     * @return  HPlane instance used to model the current partition plane.
-     */
-    inline HPlane& partition()
-    {
-        Q_ASSERT(_partition);
-        return *_partition;
-    }
-
-    /**
-     * @return  BspHEdgeInfo instance containing extra info about the current partition plane.
-     */
-    inline const BspHEdgeInfo& partitionInfo() const { return _partitionInfo; }
 
     /// The Active HEdge split cost factor. @see BSPBUILDER_PARTITION_COST_HEDGESPLIT
     int splitCostFactor;
@@ -334,10 +345,10 @@ struct BspBuilderImp
     struct binarytree_s* rootNode;
 
     /// HPlane used to model the current BSP partition and the list of intercepts.
-    HPlane* _partition;
+    HPlane* partition;
 
     /// Extra info about the partition plane.
-    BspHEdgeInfo _partitionInfo;
+    BspHEdgeInfo partitionInfo;
 
     /// @c true = a BSP for the current map has been built successfully.
     bool builtOK;
