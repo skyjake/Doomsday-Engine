@@ -30,7 +30,7 @@
 
 #include "dd_types.h"
 #include "p_mapdata.h"
-#include "m_binarytree.h"
+#include "binarytree.h"
 #include "m_misc.h"
 
 #include "map/bspbuilder/bsphedgeinfo.h"
@@ -112,7 +112,7 @@ struct BspBuilderImp
 
     bool build();
 
-    BinaryTree* root() const;
+    BinaryTree<void*>* root() const;
 
     void initForMap();
 
@@ -267,7 +267,7 @@ struct BspBuilderImp
      * @param parent        Ptr to write back the address of any newly created subtree.
      * @return  @c true iff successfull.
      */
-    bool buildNodes(SuperBlock& superblock, struct binarytree_s** parent);
+    bool buildNodes(SuperBlock& superblock, BinaryTree<void*>** parent);
 
     /**
      * Traverse the BSP tree and put all the half-edges in each BSP leaf into clockwise
@@ -277,7 +277,7 @@ struct BspBuilderImp
      * a half-edge with a twin may insert another half-edge into that twin's list,
      * usually in the wrong place order-wise.
      */
-    void windLeafs(struct binarytree_s* rootNode);
+    void windLeafs();
 
     /**
      * Remove all the half-edges from the list, partitioning them into the left or
@@ -369,7 +369,7 @@ struct BspBuilderImp
 
     /// Root node of our internal binary tree around which the final BSP data
     /// objects are constructed.
-    struct binarytree_s* rootNode;
+    BinaryTree<void*>* rootNode;
 
     /// HPlane used to model the current BSP partition and the list of intercepts.
     HPlane* partition;

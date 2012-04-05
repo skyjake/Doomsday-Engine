@@ -29,8 +29,7 @@
 #define LIBDENG_BSPBUILDER
 
 #include "de_play.h"
-
-struct binarytree_s;
+#include "binarytree.h"
 
 namespace de {
 
@@ -77,7 +76,7 @@ public:
      * The only time upon which @c NULL is returned is if called prior to calling
      * BspBuilder::build()
      */
-    struct binarytree_s* root() const;
+    BinaryTree<void*>* root() const;
 
 private:
     bspbuilder::BspBuilderImp* d;

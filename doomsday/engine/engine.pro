@@ -141,6 +141,7 @@ DENG_HEADERS += \
     portable/include/abstractfile.h \
     portable/include/abstractresource.h \
     portable/include/audiodriver.h \
+    portable/include/binarytree.h \
     portable/include/bitmapfont.h \
     portable/include/blockmap.h \
     portable/include/blockmapvisual.h \
@@ -246,7 +247,6 @@ DENG_HEADERS += \
     portable/include/mouse_qt.h \
     portable/include/m_args.h \
     portable/include/m_bams.h \
-    portable/include/m_binarytree.h \
     portable/include/m_decomp64.h \
     portable/include/m_linkedlist.h \
     portable/include/m_md5.h \
@@ -430,13 +430,14 @@ SOURCES += \
     portable/src/abstractresource.c \
     portable/src/audiodriver.c \
     portable/src/animator.c \
-    portable/src/bitmapfont.c \
-    portable/src/blockset.c \
     portable/src/b_command.c \
     portable/src/b_context.c \
     portable/src/b_device.c \
     portable/src/b_main.c \
     portable/src/b_util.c \
+    portable/src/binarytree.cpp \
+    portable/src/bitmapfont.c \
+    portable/src/blockset.c \
     portable/src/blockmap.c \
     portable/src/blockmapvisual.c \
     portable/src/map/bspbuilder/bspbuilder.cpp \
@@ -523,7 +524,6 @@ SOURCES += \
     portable/src/mouse_qt.c \
     portable/src/m_args.c \
     portable/src/m_bams.c \
-    portable/src/m_binarytree.c \
     portable/src/m_decomp64.c \
     portable/src/m_linkedlist.c \
     portable/src/m_md5.c \

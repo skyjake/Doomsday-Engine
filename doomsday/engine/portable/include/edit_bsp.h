@@ -45,8 +45,6 @@ void BspBuilder_Delete(BspBuilder_c* builder);
 
 BspBuilder_c* BspBuilder_SetSplitCostFactor(BspBuilder_c* builder, int factor);
 
-struct binarytree_s* BspBuilder_Root(BspBuilder_c* builder);
-
 /**
  * Build the BSP for the given map.
  *
