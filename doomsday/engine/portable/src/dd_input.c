@@ -83,6 +83,7 @@ D_CMD(AxisChangeValue);
 D_CMD(DumpKeyMap);
 D_CMD(KeyMap);
 D_CMD(ListInputDevices);
+D_CMD(ReleaseMouse);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -166,6 +167,8 @@ void DD_RegisterInput(void)
     C_CMD("keymap", "s", KeyMap);
 #endif
     C_CMD("listinputdevices", "", ListInputDevices);
+
+    C_CMD("releasemouse", "", ReleaseMouse);
 
     //C_CMD_FLAGS("setaxis", "s",      AxisPrintConfig, CMDF_NO_DEDICATED);
     //C_CMD_FLAGS("setaxis", "ss",     AxisChangeOption, CMDF_NO_DEDICATED);
@@ -2312,5 +2315,11 @@ D_CMD(ListInputDevices)
             I_PrintAxisConfig(dev, &dev->axes[j]);
         }
     }
+    return true;
+}
+
+D_CMD(ReleaseMouse)
+{
+    Window_TrapMouse(Window_Main(), false);
     return true;
 }
