@@ -74,6 +74,7 @@ boolean     B_ParseAnglePosition(const char* desc, float* pos);
 boolean     B_ParseStateCondition(statecondition_t* cond, const char* desc);
 boolean     B_CheckAxisPos(ebstate_t test, float testPos, float pos);
 boolean     B_CheckCondition(statecondition_t* cond, int localNum, struct bcontext_s* context);
+boolean     B_EqualConditions(const statecondition_t* a, const statecondition_t* b);
 void        B_AppendDeviceDescToString(uint device, ddeventtype_t type, int id, ddstring_t* str);
 void        B_AppendToggleStateToString(ebstate_t state, ddstring_t* str);
 void        B_AppendAxisPositionToString(ebstate_t state, float pos, ddstring_t* str);
