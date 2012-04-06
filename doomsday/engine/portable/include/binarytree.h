@@ -46,7 +46,7 @@ public:
         LEFT  = 1
     };
 
-    static inline void assertValidChildId(ChildId child)
+    static inline void assertValidChildId(ChildId DENG_DEBUG_ONLY(child))
     {
         assert(child == RIGHT || child == LEFT);
     }
