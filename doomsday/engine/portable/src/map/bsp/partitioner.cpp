@@ -612,11 +612,11 @@ static int evalPartitionCostForSuperBlock(SuperBlock& block, int splitCostFactor
 
     // Handle sub-blocks recursively.
     if(block.hasRight() &&
-       evalPartitionCostForSuperBlock(block.right(), splitCostFactor,
+       evalPartitionCostForSuperBlock(*block.right(), splitCostFactor,
                                       hedgeInfo, bestCost, cost)) return true;
 
     if(block.hasLeft() &&
-       evalPartitionCostForSuperBlock(block.left(), splitCostFactor,
+       evalPartitionCostForSuperBlock(*block.left(), splitCostFactor,
                                       hedgeInfo, bestCost, cost)) return true;
 
     // No "bad half-edge" was found. Good.

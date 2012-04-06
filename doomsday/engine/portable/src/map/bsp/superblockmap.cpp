@@ -112,18 +112,30 @@ bool SuperBlock::isLeaf() const
     return (aaBox.maxX - aaBox.minX <= 256 && aaBox.maxY - aaBox.minY <= 256);
 }
 
-bool SuperBlock::hasChild(ChildId childId) const
+SuperBlock* SuperBlock::parent() const
 {
-    assertValidChildId(childId);
-    return NULL != KdTreeNode_Child(d->tree, childId==LEFT);
+    KdTreeNode* pNode = KdTreeNode_Parent(d->tree);
+    if(!pNode) return 0;
+    return static_cast<SuperBlock*>(KdTreeNode_UserData(pNode));
 }
 
-SuperBlock& SuperBlock::child(ChildId childId)
+bool SuperBlock::hasParent() const
+{
+    return 0 != parent();
+}
+
+SuperBlock* SuperBlock::child(ChildId childId) const
 {
     assertValidChildId(childId);
     KdTreeNode* subtree = KdTreeNode_Child(d->tree, childId==LEFT);
-    if(!subtree) Con_Error("SuperBlock::child: Has no %s subblock.", childId==LEFT? "left" : "right");
-    return *static_cast<SuperBlock*>(KdTreeNode_UserData(subtree));
+    if(!subtree) return 0;
+    return static_cast<SuperBlock*>(KdTreeNode_UserData(subtree));
+}
+
+bool SuperBlock::hasChild(ChildId childId) const
+{
+    assertValidChildId(childId);
+    return 0 != child(childId);
 }
 
 SuperBlock* SuperBlock::addChild(ChildId childId, bool splitVertical)
@@ -240,7 +252,7 @@ SuperBlock* SuperBlock::push(HEdge* hedge)
             sb->addChild(p1, (int)splitVertical);
         }
 
-        sb = &sb->child(p1);
+        sb = sb->child(p1);
     }
 
     return this;

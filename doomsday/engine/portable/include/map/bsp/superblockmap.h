@@ -98,6 +98,10 @@ public:
      */
     bool isLeaf() const;
 
+    bool hasParent() const;
+
+    SuperBlock* parent() const;
+
     /**
      * Does this block have a child subblock?
      */
@@ -121,19 +125,19 @@ public:
      * @param childId  Subblock identifier.
      * @return  Selected subblock.
      */
-    SuperBlock& child(ChildId childId);
+    SuperBlock* child(ChildId childId) const;
 
     /**
      * Retrieve the right sub-block. @see SuperBlock::child()
      * @return  Right sub-block.
      */
-    inline SuperBlock& right() { return child(RIGHT); }
+    inline SuperBlock* right() const { return child(RIGHT); }
 
     /**
      * Retrieve the right sub-block. @see SuperBlock::child()
      * @return  Left sub-block else @c NULL.
      */
-    inline SuperBlock& left()  { return child(LEFT); }
+    inline SuperBlock* left()  const { return child(LEFT); }
 
     /**
      * Perform a depth-first traversal over all child superblocks and
