@@ -59,3 +59,13 @@ uint BspBuilder::numLeafs()
 {
     return partitioner->numLeafs();
 }
+
+uint BspBuilder::numVertexes()
+{
+    return partitioner->numVertexes();
+}
+
+Vertex const& BspBuilder::vertex(uint idx)
+{
+    return partitioner->vertex(idx);
+}

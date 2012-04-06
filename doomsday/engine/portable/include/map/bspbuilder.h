@@ -83,6 +83,10 @@ public:
 
     uint numLeafs();
 
+    uint numVertexes();
+
+    Vertex const& vertex(uint idx);
+
 private:
     bsp::Partitioner* partitioner;
 };

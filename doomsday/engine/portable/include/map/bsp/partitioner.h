@@ -127,6 +127,10 @@ public:
 
     uint numLeafs();
 
+    uint numVertexes();
+
+    Vertex const& vertex(uint idx);
+
 private:
     void initForMap();
 
@@ -393,13 +397,17 @@ private:
     uint* numEditableVertexes;
     Vertex*** editableVertexes;
 
-    /// Extra info about LineDefs in the current map.
+    /// Extended info about LineDefs in the current map.
     typedef std::vector<LineDefInfo> LineDefInfos;
     LineDefInfos lineDefInfos;
 
-    /// Extra info about Vertexes in the current map.
+    /// Extended info about Vertexes in the current map (including extras).
     typedef std::vector<VertexInfo> VertexInfos;
     VertexInfos vertexInfos;
+
+    /// Extra vertexes allocated for the current map.
+    typedef std::vector<Vertex*> Vertexes;
+    Vertexes vertexes;
 
     /// Root node of our internal binary tree around which the final BSP data
     /// objects are constructed.

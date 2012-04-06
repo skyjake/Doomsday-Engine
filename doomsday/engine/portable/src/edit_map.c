@@ -55,7 +55,7 @@ static usecrecord_t *unclosedSectors;
 
 static Vertex *rootVtx; // Used when sorting vertex line owners.
 
-Vertex* createVertex(void)
+static Vertex* createVertex(void)
 {
     Vertex* vtx;
 

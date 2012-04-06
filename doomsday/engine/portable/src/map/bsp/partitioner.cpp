@@ -36,7 +36,6 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_play.h"
-#include "edit_map.h"
 #include "p_mapdata.h"
 #include "m_misc.h"
 
@@ -120,6 +119,16 @@ Partitioner::~Partitioner()
     for(uint i = 0; i < *numEditableVertexes; ++i)
     {
         deleteHEdgeTips((*editableVertexes)[i]);
+    }
+
+    for(Vertexes::iterator it = vertexes.begin(); it != vertexes.end(); ++it)
+    {
+        Vertex* vtx = *it;
+        // Has ownership of this vertex been claimed?
+        if(!vtx) continue;
+
+        deleteHEdgeTips(vtx);
+        free(vtx);
     }
 
     // We are finished with the BSP data.
@@ -1587,11 +1596,27 @@ void Partitioner::addMiniHEdges(SuperBlock& rightList, SuperBlock& leftList)
     buildHEdgesAtIntersectionGaps(rightList, leftList);
 }
 
+uint Partitioner::numVertexes()
+{
+    return vertexes.size();
+}
+
+Vertex const& Partitioner::vertex(uint idx)
+{
+    Q_ASSERT(idx < vertexes.size());
+    return *vertexes[idx];
+}
+
 Vertex* Partitioner::newVertex(const_pvec2d_t point)
 {
-    /// @todo Vertex should not come from the editable map but from a store
-    ///       within our own domain.
-    Vertex* vtx = createVertex();
+    Vertex* vtx;
+
+    // Allocate with calloc for uniformity with the editable vertexes.
+    vtx = static_cast<Vertex*>(calloc(1, sizeof *vtx));
+    vtx->header.type = DMU_VERTEX;
+    vtx->buildData.index = *numEditableVertexes + uint(vertexes.size() + 1); // 1-based index, 0 = NIL.
+    vertexes.push_back(vtx);
+
     vertexInfos.push_back(VertexInfo());
     if(point)
     {
