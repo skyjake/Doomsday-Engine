@@ -124,7 +124,8 @@ def count_log_word(fn, word):
         pos = txt.find(unicode(word), pos)
         if pos < 0: break 
         if txt[pos-1] not in '/\\_'+string.ascii_letters and txt[pos+len(word)] != 's' and \
-            txt[pos-11:pos] != 'shlibdeps: ' and txt[pos-12:pos] != 'genchanges: ':
+            txt[pos-11:pos] != 'shlibdeps: ' and txt[pos-12:pos] != 'genchanges: ' and \
+            txt[pos-12:pos] != 'cc1objplus: ':
             count += 1            
         pos += len(word)
     return count

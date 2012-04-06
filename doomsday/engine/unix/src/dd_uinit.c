@@ -216,8 +216,11 @@ static boolean unloadAllPlugins(application_t* app)
 
 static int initTimingSystem(void)
 {
+    /*
     // For timing, we use SDL under *nix, so get it initialized. SDL_Init() returns zero on success.
     return !SDL_Init(SDL_INIT_TIMER | SDL_INIT_NOPARACHUTE);
+    */
+    return true;
 }
 
 static int initPluginSystem(void)

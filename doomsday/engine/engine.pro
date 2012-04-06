@@ -38,8 +38,6 @@ DEFINES += __DOOMSDAY__
 }
 
 win32 {
-    DEFINES += WIN32_GAMMA
-
     RC_FILE = win32/res/doomsday.rc
     OTHER_FILES += api/doomsday.def
 }
@@ -133,6 +131,11 @@ DENG_HEADERS += \
     portable/include/abstractfile.h \
     portable/include/abstractresource.h \
     portable/include/audiodriver.h \
+    portable/include/b_command.h \
+    portable/include/b_context.h \
+    portable/include/b_device.h \
+    portable/include/b_main.h \
+    portable/include/b_util.h \
     portable/include/binarytree.h \
     portable/include/bitmapfont.h \
     portable/include/blockmap.h \
@@ -147,11 +150,6 @@ DENG_HEADERS += \
     portable/include/map/bsp/superblockmap.h \
     portable/include/bspleaf.h \
     portable/include/bspnode.h \
-    portable/include/b_command.h \
-    portable/include/b_context.h \
-    portable/include/b_device.h \
-    portable/include/b_main.h \
-    portable/include/b_util.h \
     portable/include/canvas.h \
     portable/include/canvaswindow.h \
     portable/include/cbuffer.h \
@@ -163,12 +161,13 @@ DENG_HEADERS += \
     portable/include/cl_sound.h \
     portable/include/cl_world.h \
     portable/include/colorpalette.h \
-    portable/include/consolewindow.h \
     portable/include/con_bar.h \
     portable/include/con_bind.h \
     portable/include/con_busy.h \
     portable/include/con_config.h \
     portable/include/con_main.h \
+    portable/include/concurrency.h \
+    portable/include/consolewindow.h \
     portable/include/dam_file.h \
     portable/include/dam_main.h \
     portable/include/dd_def.h \
@@ -179,8 +178,6 @@ DENG_HEADERS += \
     portable/include/dd_pinit.h \
     portable/include/dd_version.h \
     portable/include/dd_zone.h \
-    portable/include/def_data.h \
-    portable/include/def_main.h \
     portable/include/de_audio.h \
     portable/include/de_base.h \
     portable/include/de_bsp.h \
@@ -199,15 +196,17 @@ DENG_HEADERS += \
     portable/include/de_render.h \
     portable/include/de_system.h \
     portable/include/de_ui.h \
+    portable/include/def_data.h \
+    portable/include/def_main.h \
     portable/include/displaymode.h \
     portable/include/displaymode_native.h \
     portable/include/edit_bias.h \
     portable/include/edit_bsp.h \
     portable/include/edit_map.h \
+    portable/include/fi_main.h \
     portable/include/filedirectory.h \
     portable/include/filelist.h \
     portable/include/finaleinterpreter.h \
-    portable/include/fi_main.h \
     portable/include/font.h \
     portable/include/fonts.h \
     portable/include/fs_main.h \
@@ -237,12 +236,6 @@ DENG_HEADERS += \
     portable/include/lumpdirectory.h \
     portable/include/lumpfile.h \
     portable/include/lumpinfo.h \
-    portable/include/masterserver.h \
-    portable/include/material.h \
-    portable/include/materials.h \
-    portable/include/materialvariant.h \
-    portable/include/monitor.h \
-    portable/include/mouse_qt.h \
     portable/include/m_args.h \
     portable/include/m_bams.h \
     portable/include/m_decomp64.h \
@@ -254,6 +247,12 @@ DENG_HEADERS += \
     portable/include/m_profiler.h \
     portable/include/m_stack.h \
     portable/include/m_vector.h \
+    portable/include/masterserver.h \
+    portable/include/material.h \
+    portable/include/materials.h \
+    portable/include/materialvariant.h \
+    portable/include/monitor.h \
+    portable/include/mouse_qt.h \
     portable/include/nativeui.h \
     portable/include/net_buf.h \
     portable/include/net_demo.h \
@@ -279,6 +278,18 @@ DENG_HEADERS += \
     portable/include/plane.h \
     portable/include/polyobj.h \
     portable/include/protocol.h \
+    portable/include/r_data.h \
+    portable/include/r_draw.h \
+    portable/include/r_fakeradio.h \
+    portable/include/r_lgrid.h \
+    portable/include/r_lumobjs.h \
+    portable/include/r_main.h \
+    portable/include/r_model.h \
+    portable/include/r_shadow.h \
+    portable/include/r_sky.h \
+    portable/include/r_things.h \
+    portable/include/r_util.h \
+    portable/include/r_world.h \
     portable/include/rend_bias.h \
     portable/include/rend_clip.h \
     portable/include/rend_console.h \
@@ -295,18 +306,13 @@ DENG_HEADERS += \
     portable/include/rend_sky.h \
     portable/include/rend_sprite.h \
     portable/include/resourcenamespace.h \
-    portable/include/r_data.h \
-    portable/include/r_draw.h \
-    portable/include/r_fakeradio.h \
-    portable/include/r_lgrid.h \
-    portable/include/r_lumobjs.h \
-    portable/include/r_main.h \
-    portable/include/r_model.h \
-    portable/include/r_shadow.h \
-    portable/include/r_sky.h \
-    portable/include/r_things.h \
-    portable/include/r_util.h \
-    portable/include/r_world.h \
+    portable/include/s_cache.h \
+    portable/include/s_environ.h \
+    portable/include/s_logic.h \
+    portable/include/s_main.h \
+    portable/include/s_mus.h \
+    portable/include/s_sfx.h \
+    portable/include/s_wav.h \
     portable/include/sector.h \
     portable/include/sidedef.h \
     portable/include/string.hh \
@@ -329,20 +335,13 @@ DENG_HEADERS += \
     portable/include/sys_opengl.h \
     portable/include/sys_reslocator.h \
     portable/include/sys_system.h \
-    portable/include/sys_timer.h \
-    portable/include/s_cache.h \
-    portable/include/s_environ.h \
-    portable/include/s_logic.h \
-    portable/include/s_main.h \
-    portable/include/s_mus.h \
-    portable/include/s_sfx.h \
-    portable/include/s_wav.h \
     portable/include/tab_anorms.h \
     portable/include/texture.h \
-    portable/include/textures.h \
     portable/include/texturecontent.h \
+    portable/include/textures.h \
     portable/include/texturevariant.h \
     portable/include/texturevariantspecification.h \
+    portable/include/timer.h \
     portable/include/ui2_main.h \
     portable/include/ui_main.h \
     portable/include/ui_mpi.h \
@@ -426,8 +425,8 @@ deng_nodisplaymode {
 SOURCES += \
     portable/src/abstractfile.c \
     portable/src/abstractresource.c \
-    portable/src/audiodriver.c \
     portable/src/animator.c \
+    portable/src/audiodriver.c \
     portable/src/b_command.c \
     portable/src/b_context.c \
     portable/src/b_device.c \
@@ -435,9 +434,9 @@ SOURCES += \
     portable/src/b_util.c \
     portable/src/binarytree.cpp \
     portable/src/bitmapfont.c \
-    portable/src/blockset.c \
     portable/src/blockmap.c \
     portable/src/blockmapvisual.c \
+    portable/src/blockset.c \
     portable/src/map/bspbuilder.cpp \
     portable/src/map/bsp/hedges.cpp \
     portable/src/map/bsp/hplane.cpp \
@@ -462,6 +461,7 @@ SOURCES += \
     portable/src/con_config.c \
     portable/src/con_data.c \
     portable/src/con_main.c \
+    portable/src/concurrency.cpp \
     portable/src/dam_file.c \
     portable/src/dam_main.c \
     portable/src/dd_help.c \
@@ -483,10 +483,10 @@ SOURCES += \
     portable/src/edit_bias.c \
     portable/src/edit_bsp.cpp \
     portable/src/edit_map.c \
+    portable/src/fi_main.c \
     portable/src/filedirectory.c \
     portable/src/filelist.c \
     portable/src/finaleinterpreter.c \
-    portable/src/fi_main.c \
     portable/src/fonts.c \
     portable/src/fs_main.c \
     portable/src/fs_util.c \
@@ -513,13 +513,6 @@ SOURCES += \
     portable/src/linedef.c \
     portable/src/lumpdirectory.c \
     portable/src/lumpfile.c \
-    portable/src/masterserver.cpp \
-    portable/src/material.c \
-    portable/src/materialarchive.c \
-    portable/src/materials.c \
-    portable/src/materialvariant.c \
-    portable/src/monitor.c \
-    portable/src/mouse_qt.c \
     portable/src/m_args.c \
     portable/src/m_bams.c \
     portable/src/m_decomp64.c \
@@ -531,6 +524,13 @@ SOURCES += \
     portable/src/m_stack.c \
     portable/src/m_string.c \
     portable/src/m_vector.c \
+    portable/src/masterserver.cpp \
+    portable/src/material.c \
+    portable/src/materialarchive.c \
+    portable/src/materials.c \
+    portable/src/materialvariant.c \
+    portable/src/monitor.c \
+    portable/src/mouse_qt.c \
     portable/src/nativeui.cpp \
     portable/src/net_buf.c \
     portable/src/net_demo.c \
@@ -588,10 +588,6 @@ SOURCES += \
     portable/src/rend_sky.c \
     portable/src/rend_sprite.c \
     portable/src/resourcenamespace.c \
-    portable/src/sector.c \
-    portable/src/sidedef.c \
-    portable/src/smoother.c \
-    portable/src/stringpool.cpp \
     portable/src/s_cache.c \
     portable/src/s_environ.c \
     portable/src/s_logic.c \
@@ -599,8 +595,12 @@ SOURCES += \
     portable/src/s_mus.c \
     portable/src/s_sfx.c \
     portable/src/s_wav.c \
+    portable/src/sector.c \
+    portable/src/sidedef.c \
     portable/src/size.c \
+    portable/src/smoother.c \
     portable/src/stringarray.cpp \
+    portable/src/stringpool.cpp \
     portable/src/surface.c \
     portable/src/sv_frame.c \
     portable/src/sv_infine.c \
@@ -616,13 +616,13 @@ SOURCES += \
     portable/src/sys_opengl.c \
     portable/src/sys_reslocator.c \
     portable/src/sys_system.c \
-    portable/src/sys_timer.c \
     portable/src/tab_tables.c \
     portable/src/texture.c \
     portable/src/textures.c \
     portable/src/texturevariant.c \
-    portable/src/ui_main.c \
+    portable/src/timer.cpp \
     portable/src/ui2_main.c \
+    portable/src/ui_main.c \
     portable/src/ui_mpi.c \
     portable/src/ui_panel.c \
     portable/src/uri.c \

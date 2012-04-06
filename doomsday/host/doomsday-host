@@ -213,7 +213,7 @@ class State:
         cfgFn = homeFile('server%i.cfg' % sv.port)
         cfgFile = file(cfgFn, 'wt')
         print >> cfgFile, 'server-name "%s"' % sv.name
-        print >> cfgFile, 'server-info "%s"' % sv.info
+        print >> cfgFile, 'server-info "[#%s] %s"' % (todaysBuild(), sv.info)
         print >> cfgFile, 'net-ip-port %i' % sv.port
         cfgFile.close()
         

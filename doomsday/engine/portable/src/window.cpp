@@ -703,6 +703,7 @@ boolean Sys_InitWindowManager(void)
 
     CanvasWindow::setDefaultGLFormat();
 
+    /*
 #ifdef UNIX
     // Initialize the SDL video subsystem, unless we're going to run in
     // dedicated mode.
@@ -711,6 +712,7 @@ boolean Sys_InitWindowManager(void)
         SDL_InitSubSystem(SDL_INIT_VIDEO); // used for gamma
     }
 #endif
+    */
 
     memset(&mainWindow, 0, sizeof(mainWindow));
     winManagerInited = true;

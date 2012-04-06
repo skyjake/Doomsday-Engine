@@ -314,7 +314,7 @@ void B_DeleteMatching(bcontext_t* bc, evbinding_t* eventBinding,
     while(B_FindMatchingBinding(bc, eventBinding, deviceBinding, &evb, &devb))
     {
         // Only either evb or devb is returned as non-NULL.
-        int                 bid = (evb? evb->bid : (devb? devb->bid : 0));
+        int bid = (evb? evb->bid : (devb? devb->bid : 0));
 
         if(bid)
         {
