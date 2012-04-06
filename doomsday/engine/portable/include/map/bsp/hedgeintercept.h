@@ -34,7 +34,7 @@
 #include <de/Log>
 
 namespace de {
-namespace bspbuilder {
+namespace bsp {
 
 /**
  * Plain-old-data structure containing additional information for a half-edge
@@ -69,7 +69,7 @@ struct HEdgeIntercept
     })
 };
 
-} // namespace bspbuilder
+} // namespace bsp
 } // namespace de
 
 #endif /// LIBDENG_BSPBUILDER_HEDGEINTERCEPT

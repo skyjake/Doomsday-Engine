@@ -33,7 +33,7 @@
 #include <QGlobalStatic>
 
 namespace de {
-namespace bspbuilder {
+namespace bsp {
 
 /**
  * Plain old data (POD) structure used to record additional information and
@@ -62,7 +62,7 @@ struct LineDefInfo
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(LineDefInfo::Flags)
 
-} // namespace bspbuilder
+} // namespace bsp
 } // namespace de
 
 #endif /// LIBDENG_BSPBUILDER_LINEDEFINFO

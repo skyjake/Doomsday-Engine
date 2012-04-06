@@ -37,13 +37,13 @@
 #include "de_bsp.h"
 #include "de_console.h"
 #include "de_play.h"
-//#include "de_misc.h"
 #include "edit_map.h"
 #include "p_mapdata.h"
 
-#include "portable/src/map/bspbuilder/bspbuilder_instance.h"
+#include "map/bsp/bsptreenode.h"
+#include "map/bsp/partitioner.h"
 
-using namespace de::bspbuilder;
+using namespace de::bsp;
 
 struct PartitionCost
 {
@@ -315,7 +315,7 @@ static void findSideDefHEdges(SideDef* side, HEdge* hedge)
         side->hedgeRight = side->hedgeRight->bspBuildInfo->nextOnSide;
 }
 
-static int clockwiseLeaf(de::BspBuilder::TreeNode& tree, void* parameters)
+static int clockwiseLeaf(BspTreeNode& tree, void* parameters)
 {
     if(tree.isLeaf())
     {
@@ -403,10 +403,10 @@ static int clockwiseLeaf(de::BspBuilder::TreeNode& tree, void* parameters)
     return false; // Continue traversal.
 }
 
-void BspBuilderImp::windLeafs()
+void Partitioner::windLeafs()
 {
     HEdgeSortBuffer sortBuffer;
-    de::BspBuilder::TreeNode::PostOrder(*rootNode, clockwiseLeaf, static_cast<void*>(&sortBuffer));
+    BspTreeNode::PostOrder(*rootNode, clockwiseLeaf, static_cast<void*>(&sortBuffer));
 }
 
 static void evalPartitionCostForHEdge(const BspHEdgeInfo* partInfo,
@@ -695,7 +695,7 @@ static int chooseHEdgeFromSuperBlock(SuperBlock* partList, void* parameters)
     return false; // Continue iteration.
 }
 
-void BspBuilderImp::clearPartitionIntercepts()
+void Partitioner::clearPartitionIntercepts()
 {
     for(HPlane::Intercepts::iterator it = partition->begin(); it != partition->end(); ++it)
     {
@@ -705,7 +705,7 @@ void BspBuilderImp::clearPartitionIntercepts()
     partition->clear();
 }
 
-bool BspBuilderImp::configurePartition(const HEdge* hedge)
+bool Partitioner::configurePartition(const HEdge* hedge)
 {
     if(!hedge) return false;
 
@@ -726,14 +726,14 @@ bool BspBuilderImp::configurePartition(const HEdge* hedge)
     vec2d_t angle; V2d_Subtract(angle, to->buildData.pos, from->buildData.pos);
     partition->setAngle(angle);
 
-    //LOG_DEBUG("BspBuilderImp::configureHPlane: hedge %p [%1.1f, %1.1f] -> [%1.1f, %1.1f].")
+    //LOG_DEBUG("Partitioner::configureHPlane: hedge %p [%1.1f, %1.1f] -> [%1.1f, %1.1f].")
     //    << best << from->buildData.pos[VX] << from->buildData.pos[VY]
     //    << angle[VX] << angle[VY];
 
     return true;
 }
 
-bool BspBuilderImp::chooseNextPartition(SuperBlock& hedgeList)
+bool Partitioner::chooseNextPartition(SuperBlock& hedgeList)
 {
     choosehedgefromsuperblockparams_t parm;
     parm.hedgeList = &hedgeList;
@@ -744,13 +744,13 @@ bool BspBuilderImp::chooseNextPartition(SuperBlock& hedgeList)
     validCount++;
     if(hedgeList.traverse(chooseHEdgeFromSuperBlock, (void*)&parm))
     {
-        /// @kludge BspBuilderImp::buildNodes() will detect the cancellation.
+        /// @kludge Partitioner::buildNodes() will detect the cancellation.
         return false;
     }
 
     /*if(parm.best)
     {
-        LOG_DEBUG("BspBuilderImp::choosePartition: best %p score: %d.%02d.")
+        LOG_DEBUG("Partitioner::choosePartition: best %p score: %d.%02d.")
             << best << bestCost / 100 << bestCost % 100;
     }*/
 
@@ -758,7 +758,7 @@ bool BspBuilderImp::chooseNextPartition(SuperBlock& hedgeList)
     return configurePartition(parm.best);
 }
 
-const HPlaneIntercept* BspBuilderImp::makePartitionIntersection(HEdge* hedge, int leftSide)
+const HPlaneIntercept* Partitioner::makePartitionIntersection(HEdge* hedge, int leftSide)
 {
     Q_ASSERT(hedge);
 
@@ -773,7 +773,7 @@ const HPlaneIntercept* BspBuilderImp::makePartitionIntersection(HEdge* hedge, in
     return partition->newIntercept(vertexDistanceFromPartition(vertex), intercept);
 }
 
-void BspBuilderImp::interceptHEdgePartition(const HEdge* hedge, double perpC, double perpD,
+void Partitioner::interceptHEdgePartition(const HEdge* hedge, double perpC, double perpD,
     pvec2d_t point) const
 {
     if(!hedge || !point) return;
@@ -808,7 +808,7 @@ void BspBuilderImp::interceptHEdgePartition(const HEdge* hedge, double perpC, do
         point[VY] = hedgeInfo->pSY + (hedgeInfo->pDY * ds);
 }
 
-void BspBuilderImp::divideHEdge(HEdge* hedge, SuperBlock& rightList, SuperBlock& leftList)
+void Partitioner::divideHEdge(HEdge* hedge, SuperBlock& rightList, SuperBlock& leftList)
 {
 #define RIGHT 0
 #define LEFT  1
@@ -906,10 +906,10 @@ void BspBuilderImp::divideHEdge(HEdge* hedge, SuperBlock& rightList, SuperBlock&
 typedef struct {
     SuperBlock* rights;
     SuperBlock* lefts;
-    BspBuilderImp* builder;
+    Partitioner* partitioner;
 } partitionhedgeworkerparams_t;
 
-int C_DECL BspBuilder_PartitionHEdgeWorker(SuperBlock* superblock, void* parameters)
+int C_DECL Partitioner_PartitionHEdgeWorker(SuperBlock* superblock, void* parameters)
 {
     partitionhedgeworkerparams_t* p = (partitionhedgeworkerparams_t*)parameters;
     HEdge* hedge;
@@ -917,27 +917,27 @@ int C_DECL BspBuilder_PartitionHEdgeWorker(SuperBlock* superblock, void* paramet
 
     while((hedge = superblock->pop()))
     {
-        p->builder->divideHEdge(hedge, *p->rights, *p->lefts);
+        p->partitioner->divideHEdge(hedge, *p->rights, *p->lefts);
     }
 
     return false; // Continue iteration.
 }
 
-void BspBuilderImp::partitionHEdges(SuperBlock& hedgeList, SuperBlock& rights, SuperBlock& lefts)
+void Partitioner::partitionHEdges(SuperBlock& hedgeList, SuperBlock& rights, SuperBlock& lefts)
 {
     partitionhedgeworkerparams_t parm;
 
     parm.rights = &rights;
     parm.lefts = &lefts;
-    parm.builder = this;
-    hedgeList.traverse(BspBuilder_PartitionHEdgeWorker, (void*)&parm);
+    parm.partitioner = this;
+    hedgeList.traverse(Partitioner_PartitionHEdgeWorker, (void*)&parm);
 
     // Sanity checks...
     if(!rights.totalHEdgeCount())
-        Con_Error("BspBuilderImp::partitionhedges: Separated half-edge has no right side.");
+        Con_Error("Partitioner::partitionhedges: Separated half-edge has no right side.");
 
     if(!lefts.totalHEdgeCount())
-        Con_Error("BspBuilderImp::partitionhedges: Separated half-edge has no left side.");
+        Con_Error("Partitioner::partitionhedges: Separated half-edge has no left side.");
 }
 
 static int createBSPLeafWorker(SuperBlock* superblock, void* parameters)
@@ -956,7 +956,7 @@ static int createBSPLeafWorker(SuperBlock* superblock, void* parameters)
     return false; // Continue iteration.
 }
 
-BspLeaf* BspBuilderImp::createBSPLeaf(SuperBlock& hedgeList)
+BspLeaf* Partitioner::createBSPLeaf(SuperBlock& hedgeList)
 {
     BspLeaf* leaf = BspLeaf_New();
     // Link the half-edges into the new leaf.
@@ -971,7 +971,7 @@ static int printSuperBlockHEdgesWorker(SuperBlock* block, void* /*parameters*/)
     return false; // Continue iteration.
 })
 
-bool BspBuilderImp::buildNodes(SuperBlock& hedgeList, de::BspBuilder::TreeNode** parent)
+bool Partitioner::buildNodes(SuperBlock& hedgeList, BspTreeNode** parent)
 {
     *parent = NULL;
 
@@ -983,14 +983,14 @@ bool BspBuilderImp::buildNodes(SuperBlock& hedgeList, de::BspBuilder::TreeNode**
     if(!chooseNextPartition(hedgeList))
     {
         // No partition required, already convex.
-        //LOG_TRACE("BspBuilderImp::buildNodes: Convex.");
+        //LOG_TRACE("Partitioner::buildNodes: Convex.");
 
         BspLeaf* leaf = createBSPLeaf(hedgeList);
-        *parent = new de::BspBuilder::TreeNode(reinterpret_cast<runtime_mapdata_header_t*>(leaf));
+        *parent = new BspTreeNode(reinterpret_cast<runtime_mapdata_header_t*>(leaf));
         return true;
     }
 
-    //LOG_TRACE("BspBuilderImp::buildNodes: Partition %p [%1.0f, %1.0f] -> [%1.0f, %1.0f].")
+    //LOG_TRACE("Partitioner::buildNodes: Partition %p [%1.0f, %1.0f] -> [%1.0f, %1.0f].")
     //      << best << best->v[0]->V_pos[VX] << best->v[0]->V_pos[VY]
     //      << best->v[1]->V_pos[VX] << best->v[1]->V_pos[VY];
 
@@ -1016,10 +1016,10 @@ bool BspBuilderImp::buildNodes(SuperBlock& hedgeList, de::BspBuilder::TreeNode**
     BspNode_SetRightBounds(node, &rightHEdgesBounds);
     BspNode_SetLeftBounds(node, &leftHEdgesBounds);
 
-    *parent = new de::BspBuilder::TreeNode(reinterpret_cast<runtime_mapdata_header_t*>(node));
+    *parent = new BspTreeNode(reinterpret_cast<runtime_mapdata_header_t*>(node));
 
     // Recurse on the right subset.
-    de::BspBuilder::TreeNode* subTree;
+    BspTreeNode* subTree;
     bool builtOK = buildNodes(rightHEdges->root(), &subTree);
     (*parent)->setRight(subTree);
     delete rightHEdges;
@@ -1036,14 +1036,14 @@ bool BspBuilderImp::buildNodes(SuperBlock& hedgeList, de::BspBuilder::TreeNode**
     return builtOK;
 }
 
-static int clearBspObject(de::BspBuilder::TreeNode& tree, void* /*parameters*/)
+static int clearBspObject(BspTreeNode& tree, void* /*parameters*/)
 {
     if(tree.isLeaf())
     {
         BspLeaf* leaf = reinterpret_cast<BspLeaf*>(tree.userData());
         if(leaf)
         {
-            LOG_DEBUG("BspBuilderImp: Clearing unclaimed leaf %p.") << leaf;
+            LOG_DEBUG("Partitioner: Clearing unclaimed leaf %p.") << leaf;
             BspLeaf_Delete(leaf);
         }
     }
@@ -1052,20 +1052,20 @@ static int clearBspObject(de::BspBuilder::TreeNode& tree, void* /*parameters*/)
         BspNode* node = reinterpret_cast<BspNode*>(tree.userData());
         if(node)
         {
-            LOG_DEBUG("BspBuilderImp: Clearing unclaimed node %p.") << node;
+            LOG_DEBUG("Partitioner: Clearing unclaimed node %p.") << node;
             BspNode_Delete(node);
         }
     }
     return false; // Continue iteration.
 }
 
-BspBuilderImp::~BspBuilderImp()
+Partitioner::~Partitioner()
 {
     // We are finished with the BSP data.
     if(rootNode)
     {
         // If ownership of the BSP data has been claimed this should be a no-op.
-        de::BspBuilder::TreeNode::PostOrder(*rootNode, clearBspObject, NULL/*no parameters*/);
+        BspTreeNode::PostOrder(*rootNode, clearBspObject, NULL/*no parameters*/);
 
         // Destroy our private BSP tree.
         delete rootNode;
@@ -1082,7 +1082,7 @@ static void initAABoxFromEditableLineDefVertexes(AABoxf* aaBox, const LineDef* l
     aaBox->maxY = MAX_OF(from[VY], to[VY]);
 }
 
-void BspBuilderImp::findMapBounds(AABoxf* aaBox) const
+void Partitioner::findMapBounds(AABoxf* aaBox) const
 {
     Q_ASSERT(aaBox);
 
@@ -1123,7 +1123,7 @@ void BspBuilderImp::findMapBounds(AABoxf* aaBox) const
     V2f_Set(aaBox->max, DDMINFLOAT, DDMINFLOAT);
 }
 
-void BspBuilderImp::createInitialHEdges(SuperBlock& hedgeList)
+void Partitioner::createInitialHEdges(SuperBlock& hedgeList)
 {
     Q_ASSERT(map);
 
@@ -1220,7 +1220,7 @@ void BspBuilderImp::createInitialHEdges(SuperBlock& hedgeList)
     }
 }
 
-void BspBuilderImp::initForMap()
+void Partitioner::initForMap()
 {
     uint numLineDefs = GameMap_LineDefCount(map);
     lineDefInfos.resize(numLineDefs);
@@ -1247,19 +1247,19 @@ void BspBuilderImp::initForMap()
     }
 }
 
-static int linkTreeNode(de::BspBuilder::TreeNode& tree, void* /*parameters*/)
+static int linkBspTreeNode(BspTreeNode& tree, void* /*parameters*/)
 {
     // We are only interested in BspNodes at this level.
     if(tree.isLeaf()) return false; // Continue iteration.
 
     BspNode* node = reinterpret_cast<BspNode*>(tree.userData());
 
-    if(de::BspBuilder::TreeNode* right = tree.right())
+    if(BspTreeNode* right = tree.right())
     {
         BspNode_SetRight(node, right->userData());
     }
 
-    if(de::BspBuilder::TreeNode* left = tree.left())
+    if(BspTreeNode* left = tree.left())
     {
         BspNode_SetLeft(node, left->userData());
     }
@@ -1267,7 +1267,7 @@ static int linkTreeNode(de::BspBuilder::TreeNode& tree, void* /*parameters*/)
     return false; // Continue iteration.
 }
 
-static int clearHEdgeInfo(de::BspBuilder::TreeNode& tree, void* /*parameters*/)
+static int clearHEdgeInfo(BspTreeNode& tree, void* /*parameters*/)
 {
     if(tree.isLeaf())
     {
@@ -1281,7 +1281,7 @@ static int clearHEdgeInfo(de::BspBuilder::TreeNode& tree, void* /*parameters*/)
     return false; // Continue iteration.
 }
 
-void BspBuilderImp::initHEdgesAndBuildBsp(SuperBlockmap& blockmap)
+void Partitioner::initHEdgesAndBuildBsp(SuperBlockmap& blockmap)
 {
     Q_ASSERT(map);
     // It begins...
@@ -1297,14 +1297,14 @@ void BspBuilderImp::initHEdgesAndBuildBsp(SuperBlockmap& blockmap)
 
         // Link up the BSP object tree.
         /// @todo Do this earlier.
-        de::BspBuilder::TreeNode::PostOrder(*rootNode, linkTreeNode);
+        BspTreeNode::PostOrder(*rootNode, linkBspTreeNode);
 
         // We're done with the build info.
-        de::BspBuilder::TreeNode::PreOrder(*rootNode, clearHEdgeInfo);
+        BspTreeNode::PreOrder(*rootNode, clearHEdgeInfo);
     }
 }
 
-bool BspBuilderImp::build()
+bool Partitioner::build()
 {
     if(!map) return false;
 
@@ -1344,12 +1344,12 @@ bool BspBuilderImp::build()
     return builtOK;
 }
 
-de::BspBuilder::TreeNode* BspBuilderImp::root() const
+BspTreeNode* Partitioner::root() const
 {
     return rootNode;
 }
 
-const HPlaneIntercept* BspBuilderImp::partitionInterceptByVertex(Vertex* vertex)
+const HPlaneIntercept* Partitioner::partitionInterceptByVertex(Vertex* vertex)
 {
     if(!vertex) return NULL; // Hmm...
 
@@ -1362,14 +1362,14 @@ const HPlaneIntercept* BspBuilderImp::partitionInterceptByVertex(Vertex* vertex)
     return NULL;
 }
 
-HEdgeIntercept* BspBuilderImp::hedgeInterceptByVertex(Vertex* vertex)
+HEdgeIntercept* Partitioner::hedgeInterceptByVertex(Vertex* vertex)
 {
     const HPlaneIntercept* hpi = partitionInterceptByVertex(vertex);
     if(!hpi) return NULL; // Not found.
     return reinterpret_cast<HEdgeIntercept*>(hpi->userData());
 }
 
-void BspBuilderImp::addHEdgesBetweenIntercepts(HEdgeIntercept* start, HEdgeIntercept* end,
+void Partitioner::addHEdgesBetweenIntercepts(HEdgeIntercept* start, HEdgeIntercept* end,
     HEdge** right, HEdge** left)
 {
     Q_ASSERT(start && end);
@@ -1397,7 +1397,7 @@ void BspBuilderImp::addHEdgesBetweenIntercepts(HEdgeIntercept* start, HEdgeInter
     */
 }
 
-HEdgeIntercept& BspBuilderImp::mergeHEdgeIntercepts(HEdgeIntercept& final, HEdgeIntercept& other)
+HEdgeIntercept& Partitioner::mergeHEdgeIntercepts(HEdgeIntercept& final, HEdgeIntercept& other)
 {
     /*
     LOG_TRACE("BspBuilder::mergeHEdgeIntercepts: Merging intersections:");
@@ -1432,7 +1432,7 @@ HEdgeIntercept& BspBuilderImp::mergeHEdgeIntercepts(HEdgeIntercept& final, HEdge
     return final;
 }
 
-void BspBuilderImp::mergeIntersections()
+void Partitioner::mergeIntersections()
 {
     HPlane::Intercepts::iterator node = partition->begin();
     while(node != partition->end())
@@ -1469,7 +1469,7 @@ void BspBuilderImp::mergeIntersections()
     }
 }
 
-void BspBuilderImp::buildHEdgesAtIntersectionGaps(SuperBlock& rightList, SuperBlock& leftList)
+void Partitioner::buildHEdgesAtIntersectionGaps(SuperBlock& rightList, SuperBlock& leftList)
 {
     HPlane::Intercepts::const_iterator node = partition->begin();
     while(node != partition->end())
@@ -1547,7 +1547,7 @@ void BspBuilderImp::buildHEdgesAtIntersectionGaps(SuperBlock& rightList, SuperBl
     }
 }
 
-void BspBuilderImp::addMiniHEdges(SuperBlock& rightList, SuperBlock& leftList)
+void Partitioner::addMiniHEdges(SuperBlock& rightList, SuperBlock& leftList)
 {
 /*#if _DEBUG
     HPlane::DebugPrint(*partition);
@@ -1563,7 +1563,7 @@ void BspBuilderImp::addMiniHEdges(SuperBlock& rightList, SuperBlock& leftList)
     buildHEdgesAtIntersectionGaps(rightList, leftList);
 }
 
-Vertex* BspBuilderImp::newVertex(const_pvec2d_t point)
+Vertex* Partitioner::newVertex(const_pvec2d_t point)
 {
     /// @todo Vertex should not come from the editable map but from a store
     ///       within our own domain.
@@ -1575,7 +1575,7 @@ Vertex* BspBuilderImp::newVertex(const_pvec2d_t point)
     return vtx;
 }
 
-void BspBuilderImp::addEdgeTip(Vertex* vert, double angle, HEdge* back, HEdge* front)
+void Partitioner::addEdgeTip(Vertex* vert, double angle, HEdge* back, HEdge* front)
 {
     edgetip_t* tip = MPE_NewEdgeTip();
     edgetip_t* after;
@@ -1614,7 +1614,7 @@ void BspBuilderImp::addEdgeTip(Vertex* vert, double angle, HEdge* back, HEdge* f
     }
 }
 
-Sector* BspBuilderImp::openSectorAtAngle(Vertex* vert, double angle)
+Sector* Partitioner::openSectorAtAngle(Vertex* vert, double angle)
 {
     // First check whether there's a wall_tip that lies in the exact direction of
     // the given direction (which is relative to the vertex).
@@ -1650,7 +1650,7 @@ Sector* BspBuilderImp::openSectorAtAngle(Vertex* vert, double angle)
     exit(1); // Unreachable.
 }
 
-HEdgeIntercept* BspBuilderImp::newHEdgeIntercept(Vertex* vert, bool selfRef)
+HEdgeIntercept* Partitioner::newHEdgeIntercept(Vertex* vert, bool selfRef)
 {
     HEdgeIntercept* inter = new HEdgeIntercept();
 
@@ -1663,12 +1663,12 @@ HEdgeIntercept* BspBuilderImp::newHEdgeIntercept(Vertex* vert, bool selfRef)
     return inter;
 }
 
-void BspBuilderImp::deleteHEdgeIntercept(HEdgeIntercept& inter)
+void Partitioner::deleteHEdgeIntercept(HEdgeIntercept& inter)
 {
     delete &inter;
 }
 
-bool BspBuilderImp::registerUnclosedSector(Sector* sector, double x, double y)
+bool Partitioner::registerUnclosedSector(Sector* sector, double x, double y)
 {
     if(!sector) return false;
 

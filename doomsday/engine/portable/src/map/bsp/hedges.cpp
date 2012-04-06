@@ -35,9 +35,9 @@
 #include "m_misc.h"
 #include "hedge.h"
 
-#include "portable/src/map/bspbuilder/bspbuilder_instance.h"
+#include "map/bsp/partitioner.h"
 
-using namespace de::bspbuilder;
+using namespace de::bsp;
 
 static void updateHEdgeInfo(const HEdge* hedge, BspHEdgeInfo* info)
 {
@@ -61,7 +61,7 @@ static void updateHEdgeInfo(const HEdge* hedge, BspHEdgeInfo* info)
         Con_Error("HEdge {%p} is of zero length.", hedge);
 }
 
-HEdge* BspBuilderImp::newHEdge(LineDef* lineDef, LineDef* sourceLineDef,
+HEdge* Partitioner::newHEdge(LineDef* lineDef, LineDef* sourceLineDef,
     Vertex* start, Vertex* end, Sector* sec, bool back)
 {
     HEdge* hedge = HEdge_New();
@@ -84,7 +84,7 @@ HEdge* BspBuilderImp::newHEdge(LineDef* lineDef, LineDef* sourceLineDef,
     return hedge;
 }
 
-HEdge* BspBuilderImp::cloneHEdge(const HEdge& other)
+HEdge* Partitioner::cloneHEdge(const HEdge& other)
 {
     HEdge* hedge = HEdge_NewCopy(&other);
     if(other.bspBuildInfo)
@@ -96,13 +96,13 @@ HEdge* BspBuilderImp::cloneHEdge(const HEdge& other)
     return hedge;
 }
 
-bool BspBuilderImp::hedgeIsInLeaf(const HEdge* hedge) const
+bool Partitioner::hedgeIsInLeaf(const HEdge* hedge) const
 {
     /// @todo Are we now able to determine this by testing hedge->leaf ?
     return !hedge->bspBuildInfo->block;
 }
 
-HEdge* BspBuilderImp::splitHEdge(HEdge* oldHEdge, const_pvec2d_t point)
+HEdge* Partitioner::splitHEdge(HEdge* oldHEdge, const_pvec2d_t point)
 {
     Q_ASSERT(oldHEdge);
 

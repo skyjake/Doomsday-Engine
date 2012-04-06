@@ -130,14 +130,6 @@ DENG_HEADERS += \
 
 # Private headers.
 DENG_HEADERS += \
-    portable/src/map/bspbuilder/bspbuilder_instance.h \
-    portable/include/map/bspbuilder/bsphedgeinfo.h \
-    portable/include/map/bspbuilder/hedgeintercept.h \
-    portable/include/map/bspbuilder/hplane.h \
-    portable/include/map/bspbuilder/linedefinfo.h \
-    portable/include/map/bspbuilder/superblockmap.h \
-
-DENG_HEADERS += \
     portable/include/abstractfile.h \
     portable/include/abstractresource.h \
     portable/include/audiodriver.h \
@@ -146,7 +138,13 @@ DENG_HEADERS += \
     portable/include/blockmap.h \
     portable/include/blockmapvisual.h \
     portable/include/blockset.h \
-    portable/include/map/bspbuilder/bspbuilder.h \
+    portable/include/map/bspbuilder.h \
+    portable/include/map/bsp/bsphedgeinfo.h \
+    portable/include/map/bsp/hedgeintercept.h \
+    portable/include/map/bsp/hplane.h \
+    portable/include/map/bsp/linedefinfo.h \
+    portable/include/map/bsp/partitioner.h \
+    portable/include/map/bsp/superblockmap.h \
     portable/include/bspleaf.h \
     portable/include/bspnode.h \
     portable/include/b_command.h \
@@ -440,11 +438,11 @@ SOURCES += \
     portable/src/blockset.c \
     portable/src/blockmap.c \
     portable/src/blockmapvisual.c \
-    portable/src/map/bspbuilder/bspbuilder.cpp \
-    portable/src/map/bspbuilder/hedges.cpp \
-    portable/src/map/bspbuilder/hplane.cpp \
-    portable/src/map/bspbuilder/nodes.cpp \
-    portable/src/map/bspbuilder/superblockmap.cpp \
+    portable/src/map/bspbuilder.cpp \
+    portable/src/map/bsp/hedges.cpp \
+    portable/src/map/bsp/hplane.cpp \
+    portable/src/map/bsp/nodes.cpp \
+    portable/src/map/bsp/superblockmap.cpp \
     portable/src/bspleaf.c \
     portable/src/bspnode.c \
     portable/src/busytask.cpp \

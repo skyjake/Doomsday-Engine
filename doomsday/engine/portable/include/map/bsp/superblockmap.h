@@ -36,7 +36,7 @@
 #include <list>
 
 namespace de {
-namespace bspbuilder {
+namespace bsp {
 
 class SuperBlockmap;
 
@@ -273,7 +273,7 @@ private:
     Instance* d;
 };
 
-} // namespace bspbuilder
+} // namespace bsp
 } // namespace de
 
 #endif /// LIBDENG_BSPBUILDER_SUPERBLOCKMAP

@@ -33,18 +33,19 @@
 #include "binarytree.h"
 #include "m_misc.h"
 
-#include "map/bspbuilder/bsphedgeinfo.h"
-#include "map/bspbuilder/hedgeintercept.h"
-#include "map/bspbuilder/hplane.h"
-#include "map/bspbuilder/linedefinfo.h"
-#include "map/bspbuilder/superblockmap.h"
+#include "map/bsp/bsphedgeinfo.h"
+#include "map/bsp/bsptreenode.h"
+#include "map/bsp/hedgeintercept.h"
+#include "map/bsp/hplane.h"
+#include "map/bsp/linedefinfo.h"
+#include "map/bsp/superblockmap.h"
 
 #include <BspBuilder>
 #include <vector>
 #include <list>
 
 namespace de {
-namespace bspbuilder {
+namespace bsp {
 
 const double IFFY_LEN = 4.0;
 
@@ -92,9 +93,10 @@ struct UnclosedSectorRecord
  * When there is no more Seg in CreateNodes' list, then they are all in the
  * global list and ready to be saved to disk.
  */
-struct BspBuilderImp
+class Partitioner
 {
-    BspBuilderImp(GameMap* _map, int _splitCostFactor=7) :
+public:
+    Partitioner(GameMap* _map, int _splitCostFactor=7) :
         splitCostFactor(_splitCostFactor),
         map(_map),
         rootNode(0), partition(0),
@@ -104,7 +106,7 @@ struct BspBuilderImp
         initPartitionInfo();
     }
 
-    ~BspBuilderImp();
+    ~Partitioner();
 
     void setSplitCostFactor(int factor)
     {
@@ -113,8 +115,9 @@ struct BspBuilderImp
 
     bool build();
 
-    BspBuilder::TreeNode* root() const;
+    BspTreeNode* root() const;
 
+private:
     void initForMap();
 
     Vertex* newVertex(const_pvec2d_t point);
@@ -191,7 +194,7 @@ struct BspBuilderImp
      *
      * @param vertex  Vertex to test.
      */
-    inline double BspBuilderImp::vertexDistanceFromPartition(const Vertex* vertex) const
+    inline double Partitioner::vertexDistanceFromPartition(const Vertex* vertex) const
     {
         Q_ASSERT(vertex);
         const BspHEdgeInfo& info = partitionInfo;
@@ -235,8 +238,10 @@ struct BspBuilderImp
      *       also reworked, heavily). I think it is important that both these routines
      *       follow the exact same logic.
      */
+public:
     void divideHEdge(HEdge* hedge, SuperBlock& rightList, SuperBlock& leftList);
 
+private:
     void clearPartitionIntercepts();
 
     bool configurePartition(const HEdge* hedge);
@@ -268,7 +273,7 @@ struct BspBuilderImp
      * @param parent        Ptr to write back the address of any newly created subtree.
      * @return  @c true iff successfull.
      */
-    bool buildNodes(SuperBlock& superblock, BspBuilder::TreeNode** parent);
+    bool buildNodes(SuperBlock& superblock, BspTreeNode** parent);
 
     /**
      * Traverse the BSP tree and put all the half-edges in each BSP leaf into clockwise
@@ -279,6 +284,8 @@ struct BspBuilderImp
      * usually in the wrong place order-wise.
      */
     void windLeafs();
+
+    static int C_DECL partitionHEdgeWorker(SuperBlock* superblock, void* parameters);
 
     /**
      * Remove all the half-edges from the list, partitioning them into the left or
@@ -358,7 +365,7 @@ struct BspBuilderImp
      */
     bool registerUnclosedSector(Sector* sector, double x, double y);
 
-    /// The Active HEdge split cost factor. @see BSPBUILDER_PARTITION_COST_HEDGESPLIT
+    /// HEdge split cost factor.
     int splitCostFactor;
 
     /// Current map which we are building BSP data for.
@@ -370,7 +377,7 @@ struct BspBuilderImp
 
     /// Root node of our internal binary tree around which the final BSP data
     /// objects are constructed.
-    BspBuilder::TreeNode* rootNode;
+    BspTreeNode* rootNode;
 
     /// HPlane used to model the current BSP partition and the list of intercepts.
     HPlane* partition;
@@ -386,7 +393,7 @@ struct BspBuilderImp
     bool builtOK;
 };
 
-} // namespace bspbuilder
+} // namespace bsp
 } // namespace de
 
 #endif /// LIBDENG_BSPBUILDER_IMPLEMENTATION

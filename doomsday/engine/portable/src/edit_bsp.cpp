@@ -76,7 +76,7 @@ typedef struct {
     HEdge*** hedgeLUT;
 } hedgecollectorparams_t;
 
-static int hedgeCollector(BspBuilder::TreeNode& tree, void* parameters)
+static int hedgeCollector(BspTreeNode& tree, void* parameters)
 {
     if(tree.isLeaf())
     {
@@ -100,7 +100,7 @@ static int hedgeCollector(BspBuilder::TreeNode& tree, void* parameters)
     return false; // Continue traversal.
 }
 
-static void buildHEdgeLut(GameMap* map, BspBuilder::TreeNode* rootNode)
+static void buildHEdgeLut(GameMap* map, BspTreeNode* rootNode)
 {
     Q_ASSERT(map);
 
@@ -116,7 +116,7 @@ static void buildHEdgeLut(GameMap* map, BspBuilder::TreeNode* rootNode)
     parm.hedgeLUT = 0;
     if(rootNode)
     {
-        BspBuilder::TreeNode::InOrder(*rootNode, hedgeCollector, &parm);
+        BspTreeNode::InOrder(*rootNode, hedgeCollector, &parm);
     }
     map->numHEdges = parm.curIdx;
 
@@ -126,7 +126,7 @@ static void buildHEdgeLut(GameMap* map, BspBuilder::TreeNode* rootNode)
     map->hedges = (HEdge**)Z_Calloc(map->numHEdges * sizeof(HEdge*), PU_MAPSTATIC, 0);
     parm.curIdx = 0;
     parm.hedgeLUT = &map->hedges;
-    BspBuilder::TreeNode::InOrder(*rootNode, hedgeCollector, &parm);
+    BspTreeNode::InOrder(*rootNode, hedgeCollector, &parm);
 }
 
 static void finishHEdges(GameMap* map)
@@ -167,7 +167,7 @@ typedef struct {
     uint nodeCurIndex;
 } populatebspobjectluts_params_t;
 
-static int populateBspObjectLuts(BspBuilder::TreeNode& tree, void* parameters)
+static int populateBspObjectLuts(BspTreeNode& tree, void* parameters)
 {
     populatebspobjectluts_params_t* p = static_cast<populatebspobjectluts_params_t*>(parameters);
     Q_ASSERT(p);
@@ -182,7 +182,7 @@ static int populateBspObjectLuts(BspBuilder::TreeNode& tree, void* parameters)
     // Add this BspNode to the LUT.
     p->dest->bspNodes[p->nodeCurIndex++] = node;
 
-    if(BspBuilder::TreeNode* right = tree.right())
+    if(BspTreeNode* right = tree.right())
     {
         if(right->isLeaf())
         {
@@ -195,7 +195,7 @@ static int populateBspObjectLuts(BspBuilder::TreeNode& tree, void* parameters)
         }
     }
 
-    if(BspBuilder::TreeNode* left = tree.left())
+    if(BspTreeNode* left = tree.left())
     {
         if(left->isLeaf())
         {
@@ -211,31 +211,31 @@ static int populateBspObjectLuts(BspBuilder::TreeNode& tree, void* parameters)
     return false; // Continue iteration.
 }
 
-static int countNode(BspBuilder::TreeNode& tree, void* data)
+static int countNode(BspTreeNode& tree, void* data)
 {
     if(!tree.isLeaf())
         (*((uint*) data))++;
     return false; // Continue iteration.
 }
 
-static int countLeaf(BspBuilder::TreeNode& tree, void* data)
+static int countLeaf(BspTreeNode& tree, void* data)
 {
     if(tree.isLeaf())
         (*((uint*) data))++;
     return false; // Continue iteration.
 }
 
-static void hardenBSP(GameMap* dest, BspBuilder::TreeNode* rootNode)
+static void hardenBSP(GameMap* dest, BspTreeNode* rootNode)
 {
     dest->numBspNodes = 0;
-    BspBuilder::TreeNode::PostOrder(*rootNode, countNode, &dest->numBspNodes);
+    BspTreeNode::PostOrder(*rootNode, countNode, &dest->numBspNodes);
     if(dest->numBspNodes != 0)
         dest->bspNodes = static_cast<BspNode**>(Z_Malloc(dest->numBspNodes * sizeof(BspNode*), PU_MAPSTATIC, 0));
     else
         dest->bspNodes = 0;
 
     dest->numBspLeafs = 0;
-    BspBuilder::TreeNode::PostOrder(*rootNode, countLeaf, &dest->numBspLeafs);
+    BspTreeNode::PostOrder(*rootNode, countLeaf, &dest->numBspLeafs);
     dest->bspLeafs = static_cast<BspLeaf**>(Z_Calloc(dest->numBspLeafs * sizeof(BspLeaf*), PU_MAPSTATIC, 0));
 
     if(rootNode->isLeaf())
@@ -252,7 +252,7 @@ static void hardenBSP(GameMap* dest, BspBuilder::TreeNode* rootNode)
     p.dest = dest;
     p.leafCurIndex = 0;
     p.nodeCurIndex = 0;
-    BspBuilder::TreeNode::PostOrder(*rootNode, populateBspObjectLuts, &p);
+    BspTreeNode::PostOrder(*rootNode, populateBspObjectLuts, &p);
 }
 
 static void hardenVertexes(GameMap* dest, Vertex*** vertexes, uint* numVertexes)
@@ -297,7 +297,7 @@ void MPE_SaveBsp(BspBuilder_c* builder, GameMap* map, Vertex*** vertexes, uint* 
 {
     Q_ASSERT(builder);
 
-    BspBuilder::TreeNode* rootNode = builder->inst->root();
+    BspTreeNode* rootNode = builder->inst->root();
 
     buildHEdgeLut(map, rootNode);
     hardenVertexes(map, vertexes, numVertexes);

@@ -29,11 +29,11 @@
 #define LIBDENG_BSPBUILDER
 
 #include "de_play.h"
-#include "binarytree.h"
+#include "map/bsp/bsptreenode.h"
 
 namespace de {
 
-namespace bspbuilder { struct BspBuilderImp; }
+namespace bsp { class Partitioner; }
 
 /**
  * BSP node builder.
@@ -47,9 +47,6 @@ class BspBuilder
 public:
     /// Default cost factor attributed to splitting an existing half-edge.
     static const int DEFAULT_PARTITION_COST_HEDGESPLIT = 7;
-
-    /// Nodes in the internal tree are modelled with this type.
-    typedef BinaryTree<runtime_mapdata_header_t*> TreeNode;
 
     /**
      * Create a new BspBuilder initialized for construction using the specified map.
@@ -79,10 +76,10 @@ public:
      * The only time upon which @c NULL is returned is if called prior to calling
      * BspBuilder::build()
      */
-    TreeNode* root() const;
+    BspTreeNode* root() const;
 
 private:
-    bspbuilder::BspBuilderImp* d;
+    bsp::Partitioner* partitioner;
 };
 
 } // namespace de

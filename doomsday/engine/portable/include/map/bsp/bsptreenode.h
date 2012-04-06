@@ -1,6 +1,6 @@
 /**
- * @file bspbuilder.cpp
- * Public interface to the BspBuilder class. @ingroup map
+ * @file bsptreenode.h
+ * BSP Builder BspTreeNode. @ingroup bsp
  *
  * @authors Copyright © 2012 Daniel Swanson <danij@dengine.net>
  *
@@ -19,33 +19,13 @@
  * 02110-1301 USA</small>
  */
 
-#include <BspBuilder>
-#include "portable/src/map/bspbuilder/bspbuilder_instance.h"
+#ifndef LIBDENG_BSPBUILDER_BSPTREENODE
+#define LIBDENG_BSPBUILDER_BSPTREENODE
 
-using namespace de;
+#include "p_mapdata.h"
+#include "binarytree.h"
 
-BspBuilder::BspBuilder(GameMap* map, int splitCostFactor)
-{
-    d = new bspbuilder::BspBuilderImp(map, splitCostFactor);
-}
+/// Nodes in BspBuilder's internal tree are modelled with this type.
+typedef de::BinaryTree<runtime_mapdata_header_t*> BspTreeNode;
 
-BspBuilder::~BspBuilder()
-{
-    delete d;
-}
-
-BspBuilder& BspBuilder::setSplitCostFactor(int factor)
-{
-    d->setSplitCostFactor(factor);
-    return *this;
-}
-
-bool BspBuilder::build()
-{
-    return d->build();
-}
-
-BspBuilder::TreeNode* BspBuilder::root() const
-{
-    return d->root();
-}
+#endif /// LIBDENG_BSPBUILDER_BSPTREENODE

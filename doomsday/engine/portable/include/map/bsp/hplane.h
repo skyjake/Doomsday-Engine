@@ -33,7 +33,7 @@
 #include <list>
 
 namespace de {
-namespace bspbuilder {
+namespace bsp {
 
 struct HPlanePartition {
     double origin[2];
@@ -158,7 +158,7 @@ private:
     Intercepts intercepts;
 };
 
-} // namespace bspbuilder
+} // namespace bsp
 } // namespace de
 
 #endif /// LIBDENG_BSPBUILDER_HPLANE
