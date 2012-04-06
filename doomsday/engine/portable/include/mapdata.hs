@@ -301,9 +301,6 @@ internal
 typedef struct msector_s {
     // Sector index. Always valid after loading & pruning.
     int index;
-
-    // Suppress superfluous mini warnings.
-    int warnedFacing;
     int refCount;
 } msector_t;
 end

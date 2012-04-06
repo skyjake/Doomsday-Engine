@@ -34,7 +34,6 @@
 #include <de/Log>
 
 #include "de_base.h"
-#include "de_bsp.h"
 #include "de_console.h"
 #include "de_play.h"
 #include "edit_map.h"
@@ -239,56 +238,6 @@ static void logUnclosed(const BspLeaf* leaf)
     }
 }
 
-static Sector* findFirstSectorInHEdgeList(const BspLeaf* leaf)
-{
-    Q_ASSERT(leaf);
-    HEdge* hedge = leaf->hedge;
-    do
-    {
-        if(hedge->sector)
-        {
-            return hedge->sector;
-        }
-    } while((hedge = hedge->next) != leaf->hedge);
-    return NULL; // Nothing??
-}
-
-static void logMigrantHEdge(Sector* sector, HEdge* migrant)
-{
-    if(!sector || !migrant) return;
-
-    // Prevent an excessive number of warnings per sector.
-    if(sector->buildData.warnedFacing == migrant->sector->buildData.index) return;
-    sector->buildData.warnedFacing = migrant->sector->buildData.index;
-
-    if(migrant->bspBuildInfo->lineDef)
-        LOG_INFO("Sector #%d has SideDef facing #%d (line #%d).")
-                << sector->buildData.index << migrant->sector->buildData.index
-                << migrant->bspBuildInfo->lineDef->buildData.index;
-    else
-        LOG_INFO("Sector #%d has SideDef facing #%d.")
-                << sector->buildData.index << migrant->sector->buildData.index;
-}
-
-static void logMigrantHEdges(const BspLeaf* leaf)
-{
-    if(!leaf) return;
-
-    // Find a suitable half-edge for comparison.
-    Sector* sector = findFirstSectorInHEdgeList(leaf);
-    if(!sector) return;
-
-    // Log migrants.
-    HEdge* hedge = leaf->hedge;
-    do
-    {
-        if(hedge->sector && hedge->sector != sector)
-        {
-            logMigrantHEdge(sector, hedge);
-        }
-    } while((hedge = hedge->next) != leaf->hedge);
-}
-
 static boolean sanityCheckHasRealhedge(const BspLeaf* leaf)
 {
     Q_ASSERT(leaf);
@@ -318,11 +267,16 @@ static void findSideDefHEdges(SideDef* side, HEdge* hedge)
         side->hedgeRight = side->hedgeRight->bspBuildInfo->nextOnSide;
 }
 
+typedef struct {
+    Partitioner* partitioner;
+    HEdgeSortBuffer sortBuffer;
+} clockwiseleafparams_t;
+
 static int clockwiseLeaf(BspTreeNode& tree, void* parameters)
 {
     if(tree.isLeaf())
     {
-        HEdgeSortBuffer& sortBuffer = *static_cast<HEdgeSortBuffer*>(parameters);
+        clockwiseleafparams_t* p = static_cast<clockwiseleafparams_t*>(parameters);
         BspLeaf* leaf = reinterpret_cast<BspLeaf*>(tree.userData());
         double midPoint[2] = { 0, 0 };
         HEdge* hedge;
@@ -334,7 +288,7 @@ static int clockwiseLeaf(BspTreeNode& tree, void* parameters)
         for(hedge = leaf->hedge; hedge; hedge = hedge->next)
             leaf->hedgeCount++;
 
-        clockwiseOrder(sortBuffer, &leaf->hedge, leaf->hedgeCount, midPoint[VX], midPoint[VY]);
+        clockwiseOrder(p->sortBuffer, &leaf->hedge, leaf->hedgeCount, midPoint[VX], midPoint[VY]);
 
         if(leaf->hedge)
         {
@@ -388,12 +342,12 @@ static int clockwiseLeaf(BspTreeNode& tree, void* parameters)
 
         if(!leaf->sector)
         {
-            LOG_DEBUG("BspLeaf %p is orphan.") << leaf;
+            LOG_WARNING("BspLeaf %p is orphan.") << leaf;
         }
 
         if(verbose)
         {
-            logMigrantHEdges(leaf);
+            p->partitioner->registerMigrantHEdges(leaf);
             logUnclosed(leaf);
         }
 
@@ -408,8 +362,9 @@ static int clockwiseLeaf(BspTreeNode& tree, void* parameters)
 
 void Partitioner::windLeafs()
 {
-    HEdgeSortBuffer sortBuffer;
-    BspTreeNode::PostOrder(*rootNode, clockwiseLeaf, static_cast<void*>(&sortBuffer));
+    clockwiseleafparams_t parm;
+    parm.partitioner = this;
+    BspTreeNode::PostOrder(*rootNode, clockwiseLeaf, static_cast<void*>(&parm));
 }
 
 static void evalPartitionCostForHEdge(const BspHEdgeInfo* partInfo,
@@ -1707,7 +1662,69 @@ bool Partitioner::registerUnclosedSector(Sector* sector, double x, double y)
     // In the absence of a better mechanism, simply log this right away.
     /// @todo Implement something better!
     LOG_WARNING("Sector %p #%d is unclosed near [%1.1f, %1.1f].")
-        << sector << sector->buildData.index - 1 << x << y;
+            << sector << sector->buildData.index - 1 << x << y;
 
     return true;
+}
+
+bool Partitioner::registerMigrantHEdge(Sector* sector, HEdge* migrant)
+{
+    if(!sector || !migrant) return false;
+
+    // Has this pair already been registered?
+    for(MigrantHEdges::const_iterator it = migrantHEdges.begin();
+        it != migrantHEdges.end(); ++it)
+    {
+        MigrantHEdgeRecord const& record = *it;
+        if(record.facingSector == sector && record.hedge == migrant)
+            return false;
+    }
+
+    // Add a new record.
+    migrantHEdges.push_back(MigrantHEdgeRecord(migrant, sector));
+
+    // In the absence of a better mechanism, simply log this right away.
+    /// @todo Implement something better!
+    if(migrant->bspBuildInfo->lineDef)
+        LOG_WARNING("Sector #%d has HEdge facing #%d (line #%d).")
+                << sector->buildData.index << migrant->sector->buildData.index
+                << migrant->bspBuildInfo->lineDef->buildData.index;
+    else
+        LOG_WARNING("Sector #%d has HEdge facing #%d.")
+                << sector->buildData.index << migrant->sector->buildData.index;
+
+    return true;
+}
+
+static Sector* findFirstSectorInHEdgeList(const BspLeaf* leaf)
+{
+    Q_ASSERT(leaf);
+    HEdge* hedge = leaf->hedge;
+    do
+    {
+        if(hedge->sector)
+        {
+            return hedge->sector;
+        }
+    } while((hedge = hedge->next) != leaf->hedge);
+    return NULL; // Nothing??
+}
+
+void Partitioner::registerMigrantHEdges(const BspLeaf* leaf)
+{
+    if(!leaf) return;
+
+    // Find a suitable half-edge for comparison.
+    Sector* sector = findFirstSectorInHEdgeList(leaf);
+    if(!sector) return;
+
+    // Log migrants.
+    HEdge* hedge = leaf->hedge;
+    do
+    {
+        if(hedge->sector && hedge->sector != sector)
+        {
+            registerMigrantHEdge(sector, hedge);
+        }
+    } while((hedge = hedge->next) != leaf->hedge);
 }

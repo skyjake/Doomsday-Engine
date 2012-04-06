@@ -87,7 +87,7 @@ public:
         splitCostFactor(_splitCostFactor),
         map(_map),
         rootNode(0), partition(0),
-        unclosedSectors(),
+        unclosedSectors(), migrantHEdges(),
         builtOK(false)
     {
         initPartitionInfo();
@@ -337,6 +337,12 @@ private:
      */
     bool registerUnclosedSector(Sector* sector, double x, double y);
 
+    bool registerMigrantHEdge(Sector* sector, HEdge* migrant);
+
+public:
+    void registerMigrantHEdges(const BspLeaf* leaf);
+
+private:
     /// HEdge split cost factor.
     int splitCostFactor;
 
@@ -371,6 +377,19 @@ private:
     };
     typedef std::list<UnclosedSectorRecord> UnclosedSectors;
     UnclosedSectors unclosedSectors;
+
+    /// Migrant hedges are recorded here so we don't print too many warnings.
+    struct MigrantHEdgeRecord
+    {
+        HEdge* hedge;
+        Sector* facingSector;
+
+        MigrantHEdgeRecord(HEdge* _hedge, Sector* _facingSector)
+            : hedge(_hedge), facingSector(_facingSector)
+        {}
+    };
+    typedef std::list<MigrantHEdgeRecord> MigrantHEdges;
+    MigrantHEdges migrantHEdges;
 
     /// @c true = a BSP for the current map has been built successfully.
     bool builtOK;
