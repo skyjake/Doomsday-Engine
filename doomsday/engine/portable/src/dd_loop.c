@@ -124,9 +124,6 @@ void DD_GameLoopCallback(void)
     if(Sys_IsShuttingDown())
         return; // Shouldn't run this while shutting down.
 
-    // Frame syncronous I/O operations.
-    startFrame();
-
     // Run at least one (fractional) tic.
     runTics();
 
@@ -135,14 +132,13 @@ void DD_GameLoopCallback(void)
     if(Sys_IsShuttingDown())
         return;
 
-    // Update clients.
+    // Update clients at regular intervals.
     Sv_TransmitFrame();
 
-    // Finish the refresh frame.
-    endFrame();
-
-    // Draw the frame.
+    // Request update of window contents.
     Window_Draw(Window_Main());
+
+    // Don't run this callback until the drawing has occurred.
     waitingForDraw = true;
 
     // After the first frame, start timedemo.
@@ -151,24 +147,17 @@ void DD_GameLoopCallback(void)
 
 void DD_GameLoopDrawer(void)
 {
-    if(Sys_IsShuttingDown()) return;
+    if(novideo || Sys_IsShuttingDown()) return;
 
-    //debugPrint("loop drawer");
+    assert(!Con_IsBusy()); // Busy mode has its own drawer.
+
+    // We will now be drawing the contents of the window.
     waitingForDraw = false;
 
-    if(novideo)
-    {
-        // Just wait to reach the maximum FPS.
-        DD_WaitForOptimalUpdateTime();
-        return;
-    }
-
-    if(Con_IsBusy())
-    {
-        Con_Error("DD_DrawAndBlit: Console is busy, can't draw!\n");
-    }
-
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+
+    // Frame syncronous I/O operations.
+    startFrame();
 
     if(renderWireframe)
     {
@@ -237,8 +226,11 @@ void DD_GameLoopDrawer(void)
     // End any open DGL sequence.
     DGL_End();
 
-    // Flush buffered stuff to screen (blits everything).
+    // Finish GL drawing and swap it on to the screen.
     GL_DoUpdate();
+
+    // Finish the refresh frame.
+    endFrame();
 }
 
 static void startFrame(void)
