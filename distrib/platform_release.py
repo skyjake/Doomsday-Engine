@@ -241,8 +241,9 @@ def mac_release():
     duptree('Doomsday Engine.app', 'imaging/Doomsday Engine.app')
     shutil.copy(os.path.join(DOOMSDAY_DIR, "doc/output/Read Me.rtf"), 'imaging/Read Me.rtf')
 
-    os.system('/usr/sbin/diskutil rename ' + os.path.abspath('imaging') +
-        ' "' + "Doomsday Engine " + DOOMSDAY_VERSION_FULL + '"')
+    volumeName = "Doomsday Engine " + DOOMSDAY_VERSION_FULL
+    os.system('/usr/sbin/diskutil rename ' + os.path.abspath('imaging') + ' "' + volumeName + '"')
+    #os.system("osascript %s/template-image/template.applescript \"%s\"" % (SNOWBERRY_DIR, volumeName))
 
     os.system('hdiutil detach -quiet imaging')
     os.system('hdiutil convert imaging.sparseimage -format UDZO -imagekey zlib-level=9 -o "' + target + '"')

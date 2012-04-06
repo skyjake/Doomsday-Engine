@@ -915,8 +915,8 @@ void R_UpdateViewer(int consoleNum)
         // For example, view locking (dead or camera setlock).
         /*if(!(player->shared.flags & DDPF_INTERYAW))
             smoothView.angle = sharpView.angle;*/
-        if(!(player->shared.flags & DDPF_INTERPITCH))
-            smoothView.pitch = sharpView.pitch;
+        /*if(!(player->shared.flags & DDPF_INTERPITCH))
+            smoothView.pitch = sharpView.pitch;*/
 
         R_CopyViewer(&vd->current, &smoothView);
 

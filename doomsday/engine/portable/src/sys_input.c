@@ -209,6 +209,7 @@ size_t Keyboard_GetEvents(keyevent_t *evbuf, size_t bufsize)
 
 boolean Mouse_IsPresent(void)
 {
+    if(!initOk) I_Init();
     return useMouse;
 }
 

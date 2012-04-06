@@ -859,6 +859,14 @@ static void finishMainWindowInit(Canvas& canvas)
     }
 #endif
 
+    win->widget->raise();
+    win->widget->activateWindow();
+
+    if(Mouse_IsPresent())
+    {
+        Window_TrapMouse(&mainWindow, true);
+    }
+
     win->widget->canvas().setFocusFunc(windowFocusChanged);
 
     DD_FinishInitializationAfterWindowReady();
