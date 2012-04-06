@@ -48,6 +48,9 @@ public:
     /// Default cost factor attributed to splitting an existing half-edge.
     static const int DEFAULT_PARTITION_COST_HEDGESPLIT = 7;
 
+    /// Nodes in the internal tree are modelled with this type.
+    typedef BinaryTree<runtime_mapdata_header_t*> TreeNode;
+
     /**
      * Create a new BspBuilder initialized for construction using the specified map.
      * @param map  GameMap for which to construct a BSP object tree.
@@ -76,7 +79,7 @@ public:
      * The only time upon which @c NULL is returned is if called prior to calling
      * BspBuilder::build()
      */
-    BinaryTree<void*>* root() const;
+    TreeNode* root() const;
 
 private:
     bspbuilder::BspBuilderImp* d;

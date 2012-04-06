@@ -315,12 +315,12 @@ static void findSideDefHEdges(SideDef* side, HEdge* hedge)
         side->hedgeRight = side->hedgeRight->bspBuildInfo->nextOnSide;
 }
 
-static int clockwiseLeaf(de::BinaryTree<void*>& tree, void* parameters)
+static int clockwiseLeaf(de::BspBuilder::TreeNode& tree, void* parameters)
 {
     if(tree.isLeaf())
     {
         HEdgeSortBuffer& sortBuffer = *static_cast<HEdgeSortBuffer*>(parameters);
-        BspLeaf* leaf = static_cast<BspLeaf*>(tree.userData());
+        BspLeaf* leaf = reinterpret_cast<BspLeaf*>(tree.userData());
         double midPoint[2] = { 0, 0 };
         HEdge* hedge;
 
@@ -406,7 +406,7 @@ static int clockwiseLeaf(de::BinaryTree<void*>& tree, void* parameters)
 void BspBuilderImp::windLeafs()
 {
     HEdgeSortBuffer sortBuffer;
-    de::BinaryTree<void*>::PostOrder(*rootNode, clockwiseLeaf, static_cast<void*>(&sortBuffer));
+    de::BspBuilder::TreeNode::PostOrder(*rootNode, clockwiseLeaf, static_cast<void*>(&sortBuffer));
 }
 
 static void evalPartitionCostForHEdge(const BspHEdgeInfo* partInfo,
@@ -971,7 +971,7 @@ static int printSuperBlockHEdgesWorker(SuperBlock* block, void* /*parameters*/)
     return false; // Continue iteration.
 })
 
-bool BspBuilderImp::buildNodes(SuperBlock& hedgeList, de::BinaryTree<void*>** parent)
+bool BspBuilderImp::buildNodes(SuperBlock& hedgeList, de::BspBuilder::TreeNode** parent)
 {
     *parent = NULL;
 
@@ -986,7 +986,7 @@ bool BspBuilderImp::buildNodes(SuperBlock& hedgeList, de::BinaryTree<void*>** pa
         //LOG_TRACE("BspBuilderImp::buildNodes: Convex.");
 
         BspLeaf* leaf = createBSPLeaf(hedgeList);
-        *parent = new de::BinaryTree<void*>(static_cast<void*>(leaf));
+        *parent = new de::BspBuilder::TreeNode(reinterpret_cast<runtime_mapdata_header_t*>(leaf));
         return true;
     }
 
@@ -1016,10 +1016,10 @@ bool BspBuilderImp::buildNodes(SuperBlock& hedgeList, de::BinaryTree<void*>** pa
     BspNode_SetRightBounds(node, &rightHEdgesBounds);
     BspNode_SetLeftBounds(node, &leftHEdgesBounds);
 
-    *parent = new BinaryTree<void*>(static_cast<void*>(node));
+    *parent = new de::BspBuilder::TreeNode(reinterpret_cast<runtime_mapdata_header_t*>(node));
 
     // Recurse on the right subset.
-    de::BinaryTree<void*>* subTree;
+    de::BspBuilder::TreeNode* subTree;
     bool builtOK = buildNodes(rightHEdges->root(), &subTree);
     (*parent)->setRight(subTree);
     delete rightHEdges;
@@ -1036,11 +1036,11 @@ bool BspBuilderImp::buildNodes(SuperBlock& hedgeList, de::BinaryTree<void*>** pa
     return builtOK;
 }
 
-static int clearBspObject(de::BinaryTree<void*>& tree, void* /*parameters*/)
+static int clearBspObject(de::BspBuilder::TreeNode& tree, void* /*parameters*/)
 {
     if(tree.isLeaf())
     {
-        BspLeaf* leaf = static_cast<BspLeaf*>(tree.userData());
+        BspLeaf* leaf = reinterpret_cast<BspLeaf*>(tree.userData());
         if(leaf)
         {
             LOG_DEBUG("BspBuilderImp: Clearing unclaimed leaf %p.") << leaf;
@@ -1049,7 +1049,7 @@ static int clearBspObject(de::BinaryTree<void*>& tree, void* /*parameters*/)
     }
     else
     {
-        BspNode* node = static_cast<BspNode*>(tree.userData());
+        BspNode* node = reinterpret_cast<BspNode*>(tree.userData());
         if(node)
         {
             LOG_DEBUG("BspBuilderImp: Clearing unclaimed node %p.") << node;
@@ -1065,7 +1065,7 @@ BspBuilderImp::~BspBuilderImp()
     if(rootNode)
     {
         // If ownership of the BSP data has been claimed this should be a no-op.
-        de::BinaryTree<void*>::PostOrder(*rootNode, clearBspObject, NULL/*no parameters*/);
+        de::BspBuilder::TreeNode::PostOrder(*rootNode, clearBspObject, NULL/*no parameters*/);
 
         // Destroy our private BSP tree.
         delete rootNode;
@@ -1247,33 +1247,31 @@ void BspBuilderImp::initForMap()
     }
 }
 
-static int linkTreeNode(de::BinaryTree<void*>& tree, void* /*parameters*/)
+static int linkTreeNode(de::BspBuilder::TreeNode& tree, void* /*parameters*/)
 {
     // We are only interested in BspNodes at this level.
     if(tree.isLeaf()) return false; // Continue iteration.
 
-    BspNode* node = static_cast<BspNode*>(tree.userData());
+    BspNode* node = reinterpret_cast<BspNode*>(tree.userData());
 
-    if(de::BinaryTree<void*>* right = tree.right())
+    if(de::BspBuilder::TreeNode* right = tree.right())
     {
-        runtime_mapdata_header_t* child = reinterpret_cast<runtime_mapdata_header_t*>(right->userData());
-        BspNode_SetRight(node, child);
+        BspNode_SetRight(node, right->userData());
     }
 
-    if(de::BinaryTree<void*>* left = tree.left())
+    if(de::BspBuilder::TreeNode* left = tree.left())
     {
-        runtime_mapdata_header_t* child = reinterpret_cast<runtime_mapdata_header_t*>(left->userData());
-        BspNode_SetLeft(node, child);
+        BspNode_SetLeft(node, left->userData());
     }
 
     return false; // Continue iteration.
 }
 
-static int clearHEdgeInfo(de::BinaryTree<void*>& tree, void* /*parameters*/)
+static int clearHEdgeInfo(de::BspBuilder::TreeNode& tree, void* /*parameters*/)
 {
     if(tree.isLeaf())
     {
-        BspLeaf* leaf = static_cast<BspLeaf*>(tree.userData());
+        BspLeaf* leaf = reinterpret_cast<BspLeaf*>(tree.userData());
         HEdge* hedge = leaf->hedge;
         do
         {
@@ -1299,10 +1297,10 @@ void BspBuilderImp::initHEdgesAndBuildBsp(SuperBlockmap& blockmap)
 
         // Link up the BSP object tree.
         /// @todo Do this earlier.
-        de::BinaryTree<void*>::PostOrder(*rootNode, linkTreeNode);
+        de::BspBuilder::TreeNode::PostOrder(*rootNode, linkTreeNode);
 
         // We're done with the build info.
-        de::BinaryTree<void*>::PreOrder(*rootNode, clearHEdgeInfo);
+        de::BspBuilder::TreeNode::PreOrder(*rootNode, clearHEdgeInfo);
     }
 }
 
@@ -1346,7 +1344,7 @@ bool BspBuilderImp::build()
     return builtOK;
 }
 
-de::BinaryTree<void*>* BspBuilderImp::root() const
+de::BspBuilder::TreeNode* BspBuilderImp::root() const
 {
     return rootNode;
 }

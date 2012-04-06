@@ -76,12 +76,12 @@ typedef struct {
     HEdge*** hedgeLUT;
 } hedgecollectorparams_t;
 
-static int hedgeCollector(de::BinaryTree<void*>& tree, void* parameters)
+static int hedgeCollector(BspBuilder::TreeNode& tree, void* parameters)
 {
     if(tree.isLeaf())
     {
         hedgecollectorparams_t* p = static_cast<hedgecollectorparams_t*>(parameters);
-        BspLeaf* leaf = static_cast<BspLeaf*>(tree.userData());
+        BspLeaf* leaf = reinterpret_cast<BspLeaf*>(tree.userData());
         HEdge* hedge = leaf->hedge;
         do
         {
@@ -100,7 +100,7 @@ static int hedgeCollector(de::BinaryTree<void*>& tree, void* parameters)
     return false; // Continue traversal.
 }
 
-static void buildHEdgeLut(GameMap* map, de::BinaryTree<void*>* rootNode)
+static void buildHEdgeLut(GameMap* map, BspBuilder::TreeNode* rootNode)
 {
     Q_ASSERT(map);
 
@@ -116,7 +116,7 @@ static void buildHEdgeLut(GameMap* map, de::BinaryTree<void*>* rootNode)
     parm.hedgeLUT = 0;
     if(rootNode)
     {
-        de::BinaryTree<void*>::InOrder(*rootNode, hedgeCollector, &parm);
+        BspBuilder::TreeNode::InOrder(*rootNode, hedgeCollector, &parm);
     }
     map->numHEdges = parm.curIdx;
 
@@ -126,7 +126,7 @@ static void buildHEdgeLut(GameMap* map, de::BinaryTree<void*>* rootNode)
     map->hedges = (HEdge**)Z_Calloc(map->numHEdges * sizeof(HEdge*), PU_MAPSTATIC, 0);
     parm.curIdx = 0;
     parm.hedgeLUT = &map->hedges;
-    de::BinaryTree<void*>::InOrder(*rootNode, hedgeCollector, &parm);
+    BspBuilder::TreeNode::InOrder(*rootNode, hedgeCollector, &parm);
 }
 
 static void finishHEdges(GameMap* map)
@@ -167,7 +167,7 @@ typedef struct {
     uint nodeCurIndex;
 } populatebspobjectluts_params_t;
 
-static int C_DECL populateBspObjectLuts(de::BinaryTree<void*>& tree, void* parameters)
+static int populateBspObjectLuts(BspBuilder::TreeNode& tree, void* parameters)
 {
     populatebspobjectluts_params_t* p = static_cast<populatebspobjectluts_params_t*>(parameters);
     Q_ASSERT(p);
@@ -176,18 +176,18 @@ static int C_DECL populateBspObjectLuts(de::BinaryTree<void*>& tree, void* param
     if(tree.isLeaf()) return false; // Continue iteration.
 
     // Take ownership of this BspNode.
-    BspNode* node = static_cast<BspNode*>(tree.userData());
+    BspNode* node = reinterpret_cast<BspNode*>(tree.userData());
     tree.setUserData(NULL);
 
     // Add this BspNode to the LUT.
     p->dest->bspNodes[p->nodeCurIndex++] = node;
 
-    if(de::BinaryTree<void*>* right = tree.right())
+    if(BspBuilder::TreeNode* right = tree.right())
     {
         if(right->isLeaf())
         {
             // Take ownership of this BspLeaf.
-            BspLeaf* leaf = static_cast<BspLeaf*>(right->userData());
+            BspLeaf* leaf = reinterpret_cast<BspLeaf*>(right->userData());
             right->setUserData(NULL);
 
             // Add this BspLeaf to the LUT.
@@ -195,12 +195,12 @@ static int C_DECL populateBspObjectLuts(de::BinaryTree<void*>& tree, void* param
         }
     }
 
-    if(de::BinaryTree<void*>* left = tree.left())
+    if(BspBuilder::TreeNode* left = tree.left())
     {
         if(left->isLeaf())
         {
             // Take ownership of this BspLeaf.
-            BspLeaf* leaf = static_cast<BspLeaf*>(left->userData());
+            BspLeaf* leaf = reinterpret_cast<BspLeaf*>(left->userData());
             left->setUserData(NULL);
 
             // Add this BspLeaf to the LUT.
@@ -211,50 +211,48 @@ static int C_DECL populateBspObjectLuts(de::BinaryTree<void*>& tree, void* param
     return false; // Continue iteration.
 }
 
-static int C_DECL countNode(de::BinaryTree<void*>& tree, void* data)
+static int countNode(BspBuilder::TreeNode& tree, void* data)
 {
     if(!tree.isLeaf())
         (*((uint*) data))++;
     return false; // Continue iteration.
 }
 
-static int C_DECL countLeaf(de::BinaryTree<void*>& tree, void* data)
+static int countLeaf(BspBuilder::TreeNode& tree, void* data)
 {
     if(tree.isLeaf())
         (*((uint*) data))++;
     return false; // Continue iteration.
 }
 
-static void hardenBSP(GameMap* dest, de::BinaryTree<void*>* rootNode)
+static void hardenBSP(GameMap* dest, BspBuilder::TreeNode* rootNode)
 {
     dest->numBspNodes = 0;
-    de::BinaryTree<void*>::PostOrder(*rootNode, countNode, &dest->numBspNodes);
+    BspBuilder::TreeNode::PostOrder(*rootNode, countNode, &dest->numBspNodes);
     if(dest->numBspNodes != 0)
         dest->bspNodes = static_cast<BspNode**>(Z_Malloc(dest->numBspNodes * sizeof(BspNode*), PU_MAPSTATIC, 0));
     else
         dest->bspNodes = 0;
 
     dest->numBspLeafs = 0;
-    de::BinaryTree<void*>::PostOrder(*rootNode, countLeaf, &dest->numBspLeafs);
+    BspBuilder::TreeNode::PostOrder(*rootNode, countLeaf, &dest->numBspLeafs);
     dest->bspLeafs = static_cast<BspLeaf**>(Z_Calloc(dest->numBspLeafs * sizeof(BspLeaf*), PU_MAPSTATIC, 0));
 
     if(rootNode->isLeaf())
     {
         // Take ownership of this leaf.
-        BspLeaf* leaf = static_cast<BspLeaf*>(rootNode->userData());
+        dest->bsp = rootNode->userData();
         rootNode->setUserData(NULL);
-
-        dest->bsp = reinterpret_cast<runtime_mapdata_header_t*>(leaf);
         return;
     }
 
-    dest->bsp = static_cast<runtime_mapdata_header_t*>(rootNode->userData());
+    dest->bsp = rootNode->userData();
 
     populatebspobjectluts_params_t p;
     p.dest = dest;
     p.leafCurIndex = 0;
     p.nodeCurIndex = 0;
-    de::BinaryTree<void*>::PostOrder(*rootNode, populateBspObjectLuts, &p);
+    BspBuilder::TreeNode::PostOrder(*rootNode, populateBspObjectLuts, &p);
 }
 
 static void hardenVertexes(GameMap* dest, Vertex*** vertexes, uint* numVertexes)
@@ -299,7 +297,7 @@ void MPE_SaveBsp(BspBuilder_c* builder, GameMap* map, Vertex*** vertexes, uint* 
 {
     Q_ASSERT(builder);
 
-    de::BinaryTree<void*>* rootNode = builder->inst->root();
+    BspBuilder::TreeNode* rootNode = builder->inst->root();
 
     buildHEdgeLut(map, rootNode);
     hardenVertexes(map, vertexes, numVertexes);

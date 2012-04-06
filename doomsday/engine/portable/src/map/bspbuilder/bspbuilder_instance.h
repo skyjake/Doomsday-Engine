@@ -39,6 +39,7 @@
 #include "map/bspbuilder/linedefinfo.h"
 #include "map/bspbuilder/superblockmap.h"
 
+#include <BspBuilder>
 #include <vector>
 #include <list>
 
@@ -112,7 +113,7 @@ struct BspBuilderImp
 
     bool build();
 
-    BinaryTree<void*>* root() const;
+    BspBuilder::TreeNode* root() const;
 
     void initForMap();
 
@@ -267,7 +268,7 @@ struct BspBuilderImp
      * @param parent        Ptr to write back the address of any newly created subtree.
      * @return  @c true iff successfull.
      */
-    bool buildNodes(SuperBlock& superblock, BinaryTree<void*>** parent);
+    bool buildNodes(SuperBlock& superblock, BspBuilder::TreeNode** parent);
 
     /**
      * Traverse the BSP tree and put all the half-edges in each BSP leaf into clockwise
@@ -369,7 +370,7 @@ struct BspBuilderImp
 
     /// Root node of our internal binary tree around which the final BSP data
     /// objects are constructed.
-    BinaryTree<void*>* rootNode;
+    BspBuilder::TreeNode* rootNode;
 
     /// HPlane used to model the current BSP partition and the list of intercepts.
     HPlane* partition;

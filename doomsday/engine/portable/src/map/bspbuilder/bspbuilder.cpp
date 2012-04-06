@@ -45,7 +45,7 @@ bool BspBuilder::build()
     return d->build();
 }
 
-de::BinaryTree<void*>* BspBuilder::root() const
+BspBuilder::TreeNode* BspBuilder::root() const
 {
     return d->root();
 }
