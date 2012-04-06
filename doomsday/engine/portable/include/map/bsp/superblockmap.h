@@ -27,10 +27,12 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_BSPBUILDER_SUPERBLOCKMAP
-#define LIBDENG_BSPBUILDER_SUPERBLOCKMAP
+#ifndef LIBDENG_BSP_SUPERBLOCKMAP
+#define LIBDENG_BSP_SUPERBLOCKMAP
 
 #include "dd_types.h"
+
+#include "map/bsp/bsphedgeinfo.h"
 
 #include <de/Log>
 #include <list>
@@ -276,4 +278,4 @@ private:
 } // namespace bsp
 } // namespace de
 
-#endif /// LIBDENG_BSPBUILDER_SUPERBLOCKMAP
+#endif /// LIBDENG_BSP_SUPERBLOCKMAP

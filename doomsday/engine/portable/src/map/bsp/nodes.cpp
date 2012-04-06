@@ -39,9 +39,12 @@
 #include "de_play.h"
 #include "edit_map.h"
 #include "p_mapdata.h"
+#include "m_misc.h"
 
-#include "map/bsp/bsptreenode.h"
+#include "map/bsp/hedgeintercept.h"
+#include "map/bsp/hplane.h"
 #include "map/bsp/partitioner.h"
+#include "map/bsp/superblockmap.h"
 
 using namespace de::bsp;
 
@@ -771,6 +774,23 @@ const HPlaneIntercept* Partitioner::makePartitionIntersection(HEdge* hedge, int 
     HEdgeIntercept* intercept = newHEdgeIntercept(vertex, line && lineDefInfo(*line).flags.testFlag(LineDefInfo::SELFREF));
 
     return partition->newIntercept(vertexDistanceFromPartition(vertex), intercept);
+}
+
+double Partitioner::vertexDistanceFromPartition(const Vertex* vertex) const
+{
+    Q_ASSERT(vertex);
+    const BspHEdgeInfo& info = partitionInfo;
+    return M_ParallelDist(info.pDX, info.pDY, info.pPara, info.pLength,
+                          vertex->buildData.pos[VX], vertex->buildData.pos[VY]);
+}
+
+double Partitioner::hedgeDistanceFromPartition(const HEdge* hedge, bool end) const
+{
+    Q_ASSERT(hedge);
+    const BspHEdgeInfo& info = partitionInfo;
+    return M_PerpDist(info.pDX, info.pDY, info.pPerp, info.pLength,
+                      end? hedge->bspBuildInfo->pEX : hedge->bspBuildInfo->pSX,
+                      end? hedge->bspBuildInfo->pEY : hedge->bspBuildInfo->pSY);
 }
 
 void Partitioner::interceptHEdgePartition(const HEdge* hedge, double perpC, double perpD,

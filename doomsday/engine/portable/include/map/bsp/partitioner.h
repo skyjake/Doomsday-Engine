@@ -1,6 +1,6 @@
 /**
- * @file bsphedgeinfo.h
- * BSP Builder half-edge info. @ingroup bsp
+ * @file partitioner.h
+ * BSP space partitioner. @ingroup bsp
  *
  * Based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted on
  * SourceForge: http://sourceforge.net/projects/glbsp/
@@ -25,22 +25,15 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_BSPBUILDER_IMPLEMENTATION
-#define LIBDENG_BSPBUILDER_IMPLEMENTATION
+#ifndef LIBDENG_BSP_PARTITIONER
+#define LIBDENG_BSP_PARTITIONER
 
-#include "dd_types.h"
 #include "p_mapdata.h"
-#include "binarytree.h"
-#include "m_misc.h"
 
-#include "map/bsp/bsphedgeinfo.h"
 #include "map/bsp/bsptreenode.h"
-#include "map/bsp/hedgeintercept.h"
-#include "map/bsp/hplane.h"
+#include "map/bsp/bsphedgeinfo.h"
 #include "map/bsp/linedefinfo.h"
-#include "map/bsp/superblockmap.h"
 
-#include <BspBuilder>
 #include <vector>
 #include <list>
 
@@ -55,17 +48,11 @@ const double DIST_EPSILON = (1.0 / 128.0);
 /// Smallest difference between two angles before being considered equal (in degrees).
 const double ANG_EPSILON = (1.0 / 1024.0);
 
-struct UnclosedSectorRecord
-{
-    Sector* sector;
-    vec2d_t nearPoint;
-
-    UnclosedSectorRecord(Sector* _sector, double x, double y)
-        : sector(_sector)
-    {
-        V2d_Set(nearPoint, x, y);
-    }
-};
+struct HEdgeIntercept;
+class HPlane;
+class HPlaneIntercept;
+class SuperBlock;
+class SuperBlockmap;
 
 /**
  * @algorithm High-level description (courtesy of Raphael Quinet)
@@ -194,13 +181,7 @@ private:
      *
      * @param vertex  Vertex to test.
      */
-    inline double Partitioner::vertexDistanceFromPartition(const Vertex* vertex) const
-    {
-        Q_ASSERT(vertex);
-        const BspHEdgeInfo& info = partitionInfo;
-        return M_ParallelDist(info.pDX, info.pDY, info.pPara, info.pLength,
-                              vertex->buildData.pos[VX], vertex->buildData.pos[VY]);
-    }
+    inline double vertexDistanceFromPartition(const Vertex* vertex) const;
 
     /**
      * Determine the distance (euclidean) from @a hedge to the current partition plane.
@@ -208,14 +189,7 @@ private:
      * @param hedge  Half-edge to test.
      * @param end    @c true= use the point defined by the end (else start) vertex.
      */
-    inline double hedgeDistanceFromPartition(const HEdge* hedge, bool end) const
-    {
-        Q_ASSERT(hedge);
-        const BspHEdgeInfo& info = partitionInfo;
-        return M_PerpDist(info.pDX, info.pDY, info.pPerp, info.pLength,
-                          end? hedge->bspBuildInfo->pEX : hedge->bspBuildInfo->pSX,
-                          end? hedge->bspBuildInfo->pEY : hedge->bspBuildInfo->pSY);
-    }
+    inline double hedgeDistanceFromPartition(const HEdge* hedge, bool end) const;
 
     /**
      * Calculate the intersection point between a half-edge and the current partition
@@ -284,8 +258,6 @@ private:
      * usually in the wrong place order-wise.
      */
     void windLeafs();
-
-    static int C_DECL partitionHEdgeWorker(SuperBlock* superblock, void* parameters);
 
     /**
      * Remove all the half-edges from the list, partitioning them into the left or
@@ -386,6 +358,17 @@ private:
     BspHEdgeInfo partitionInfo;
 
     /// Unclosed sectors are recorded here so we don't print too many warnings.
+    struct UnclosedSectorRecord
+    {
+        Sector* sector;
+        vec2d_t nearPoint;
+
+        UnclosedSectorRecord(Sector* _sector, double x, double y)
+            : sector(_sector)
+        {
+            V2d_Set(nearPoint, x, y);
+        }
+    };
     typedef std::list<UnclosedSectorRecord> UnclosedSectors;
     UnclosedSectors unclosedSectors;
 
@@ -396,4 +379,4 @@ private:
 } // namespace bsp
 } // namespace de
 
-#endif /// LIBDENG_BSPBUILDER_IMPLEMENTATION
+#endif /// LIBDENG_BSP_PARTITIONER
