@@ -1986,9 +1986,6 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
 
     P_PlayerThinkState(player);
 
-    // Adjust turn angles and look direction. This is done in fractional time.
-    P_PlayerThinkLookPitch(player, ticLength);
-
     P_PlayerRemoteMove(player);
 
     if(!DD_IsSharpTick())
@@ -2000,6 +1997,9 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
 #if __JHEXEN__
     player->worldTimer++;
 #endif
+
+    // Adjust turn angles and look direction. This is done in fractional time.
+    P_PlayerThinkLookPitch(player, 1.0/35.0 /*ticLength*/);
 
     P_PlayerThinkLookYaw(player);
     P_PlayerThinkUpdateControls(player);
