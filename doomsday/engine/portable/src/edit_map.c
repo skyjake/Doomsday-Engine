@@ -36,24 +36,13 @@
 
 #include "s_environ.h"
 
-typedef struct usecrecord_s {
-    Sector* sec;
-    double nearPos[2];
-} usecrecord_t;
-
-void MPE_PrintMapErrors(void);
-
 editmap_t editMap;
-
 static boolean editMapInited = false;
+
 static editmap_t* map = &editMap;
+static GameMap* lastBuiltMap = NULL;
 
-static GameMap *lastBuiltMap = NULL;
-
-static uint numUnclosedSectors;
-static usecrecord_t *unclosedSectors;
-
-static Vertex *rootVtx; // Used when sorting vertex line owners.
+static Vertex* rootVtx; // Used when sorting vertex line owners.
 
 static Vertex* createVertex(void)
 {
@@ -1653,8 +1642,8 @@ boolean MPE_End(void)
     GameMap_InitMobjBlockmap(gamemap, min, max);
     GameMap_InitPolyobjBlockmap(gamemap, min, max);
 
-    // Announce any issues detected with the map.
-    MPE_PrintMapErrors();
+    // Announce any bad texture names we came across when loading the map.
+    P_PrintMissingTextureList();
 
     /**
      * Build a BSP for this map.
@@ -1760,15 +1749,6 @@ boolean MPE_End(void)
 GameMap* MPE_GetLastBuiltMap(void)
 {
     return lastBuiltMap;
-}
-
-/**
- * If we encountered any problems during setup - announce them to the user.
- */
-void MPE_PrintMapErrors(void)
-{
-    // Announce any bad texture names we came across when loading the map.
-    P_PrintMissingTextureList();
 }
 
 /**
