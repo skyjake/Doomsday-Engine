@@ -49,3 +49,13 @@ BspTreeNode* BspBuilder::root() const
 {
     return partitioner->root();
 }
+
+uint BspBuilder::numNodes()
+{
+    return partitioner->numNodes();
+}
+
+uint BspBuilder::numLeafs()
+{
+    return partitioner->numLeafs();
+}

@@ -79,6 +79,10 @@ public:
      */
     BspTreeNode* root() const;
 
+    uint numNodes();
+
+    uint numLeafs();
+
 private:
     bsp::Partitioner* partitioner;
 };

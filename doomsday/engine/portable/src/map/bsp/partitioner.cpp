@@ -1343,6 +1343,36 @@ BspTreeNode* Partitioner::root() const
     return rootNode;
 }
 
+static int countNode(BspTreeNode& tree, void* data)
+{
+    if(!tree.isLeaf())
+        (*((uint*) data))++;
+    return false; // Continue iteration.
+}
+
+/// @todo Store this as a running total.
+uint Partitioner::numNodes()
+{
+    uint count = 0;
+    BspTreeNode::PostOrder(*rootNode, countNode, static_cast<void*>(&count));
+    return count;
+}
+
+static int countLeaf(BspTreeNode& tree, void* data)
+{
+    if(tree.isLeaf())
+        (*((uint*) data))++;
+    return false; // Continue iteration.
+}
+
+/// @todo Store this as a running total.
+uint Partitioner::numLeafs()
+{
+    uint count = 0;
+    BspTreeNode::PostOrder(*rootNode, countLeaf, static_cast<void*>(&count));
+    return count;
+}
+
 const HPlaneIntercept* Partitioner::partitionInterceptByVertex(Vertex* vertex)
 {
     if(!vertex) return NULL; // Hmm...

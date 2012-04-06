@@ -211,33 +211,18 @@ static int populateBspObjectLuts(BspTreeNode& tree, void* parameters)
     return false; // Continue iteration.
 }
 
-static int countNode(BspTreeNode& tree, void* data)
+static void hardenBSP(BspBuilder& builder, GameMap* dest)
 {
-    if(!tree.isLeaf())
-        (*((uint*) data))++;
-    return false; // Continue iteration.
-}
-
-static int countLeaf(BspTreeNode& tree, void* data)
-{
-    if(tree.isLeaf())
-        (*((uint*) data))++;
-    return false; // Continue iteration.
-}
-
-static void hardenBSP(GameMap* dest, BspTreeNode* rootNode)
-{
-    dest->numBspNodes = 0;
-    BspTreeNode::PostOrder(*rootNode, countNode, &dest->numBspNodes);
+    dest->numBspNodes = builder.numNodes();
     if(dest->numBspNodes != 0)
         dest->bspNodes = static_cast<BspNode**>(Z_Malloc(dest->numBspNodes * sizeof(BspNode*), PU_MAPSTATIC, 0));
     else
         dest->bspNodes = 0;
 
-    dest->numBspLeafs = 0;
-    BspTreeNode::PostOrder(*rootNode, countLeaf, &dest->numBspLeafs);
+    dest->numBspLeafs = builder.numLeafs();
     dest->bspLeafs = static_cast<BspLeaf**>(Z_Calloc(dest->numBspLeafs * sizeof(BspLeaf*), PU_MAPSTATIC, 0));
 
+    BspTreeNode* rootNode = builder.root();
     if(rootNode->isLeaf())
     {
         // Take ownership of this leaf.
@@ -293,18 +278,19 @@ static void updateVertexLinks(GameMap* map)
     }
 }
 
-void MPE_SaveBsp(BspBuilder_c* builder, GameMap* map, uint* numVertexes, Vertex*** vertexes)
+void MPE_SaveBsp(BspBuilder_c* builder_c, GameMap* map, uint* numVertexes, Vertex*** vertexes)
 {
-    Q_ASSERT(builder);
+    Q_ASSERT(builder_c);
+    BspBuilder* builder = builder_c->inst;
 
-    BspTreeNode* rootNode = builder->inst->root();
+    BspTreeNode* rootNode = builder->root();
 
     buildHEdgeLut(map, rootNode);
     hardenVertexes(map, vertexes, numVertexes);
     updateVertexLinks(map);
 
     finishHEdges(map);
-    hardenBSP(map, rootNode);
+    hardenBSP(*builder, map);
 
     long rHeight = 0, lHeight = 0;
     if(rootNode && !rootNode->isLeaf())
