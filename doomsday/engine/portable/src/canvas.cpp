@@ -74,6 +74,8 @@ struct Canvas::Instance
 
     void grabMouse()
     {
+        LOG_DEBUG("grabbing mouse (already grabbed? %b)") << mouseGrabbed;
+
         if(mouseGrabbed) return;
 
         // Tell the mouse driver that the mouse is supposed to be trapped now.
@@ -92,6 +94,8 @@ struct Canvas::Instance
 
     void ungrabMouse()
     {
+        LOG_DEBUG("ungrabbing mouse (presently grabbed? %b)") << mouseGrabbed;
+
         if(!mouseGrabbed) return;
 
 #ifndef WIN32
