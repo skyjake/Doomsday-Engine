@@ -438,9 +438,8 @@ SOURCES += \
     portable/src/blockmapvisual.c \
     portable/src/blockset.c \
     portable/src/map/bspbuilder.cpp \
-    portable/src/map/bsp/hedges.cpp \
     portable/src/map/bsp/hplane.cpp \
-    portable/src/map/bsp/nodes.cpp \
+    portable/src/map/bsp/partitioner.cpp \
     portable/src/map/bsp/superblockmap.cpp \
     portable/src/bspleaf.c \
     portable/src/bspnode.c \

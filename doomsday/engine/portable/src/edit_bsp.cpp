@@ -320,7 +320,7 @@ void MPE_SaveBsp(BspBuilder_c* builder, GameMap* map, Vertex*** vertexes, uint* 
             lHeight = 0;
     }
 
-    LOG_INFO("BSP built: %d Nodes, %d Leafs, %d HEdges, %d Vertexes\n Balance %d (l%d - r%d).")
+    LOG_INFO("BSP built: %d Nodes, %d Leafs, %d HEdges, %d Vertexes\n  Balance %d (l%d - r%d).")
             << map->numBspNodes << map->numBspLeafs << map->numHEdges << map->numVertexes
             << lHeight - rHeight << lHeight << rHeight;
 }
