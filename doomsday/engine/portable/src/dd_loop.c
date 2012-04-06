@@ -141,6 +141,11 @@ void DD_GameLoopCallback(void)
     // Don't run this callback until the drawing has occurred.
     waitingForDraw = true;
 
+    if(!novideo)
+    {
+        GL_ProcessDeferredTasks(FRAME_DEFERRED_UPLOAD_TIMEOUT);
+    }
+
     // After the first frame, start timedemo.
     DD_CheckTimeDemo();
 }
@@ -235,11 +240,6 @@ void DD_GameLoopDrawer(void)
 
 static void startFrame(void)
 {
-    if(!novideo)
-    {
-        GL_ProcessDeferredTasks(FRAME_DEFERRED_UPLOAD_TIMEOUT);
-    }
-
     S_StartFrame();
     if(gx.BeginFrame)
     {
