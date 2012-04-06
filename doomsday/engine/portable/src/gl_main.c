@@ -184,9 +184,6 @@ void GL_DoUpdate(void)
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
 
-    // Tell GL to finish drawing right now.
-    //glFinish();
-
     // Wait until the right time to show the frame so that the realized
     // frame rate is exactly right.
     //DD_WaitForOptimalUpdateTime();

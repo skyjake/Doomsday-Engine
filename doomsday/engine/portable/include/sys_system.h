@@ -36,11 +36,6 @@
 extern "C" {
 #endif
 
-typedef void* thread_t;
-typedef intptr_t mutex_t;
-typedef intptr_t sem_t;
-typedef int (C_DECL *systhreadfunc_t) (void* parm);
-
 extern int novideo;
 
 void Sys_Init(void);
@@ -71,52 +66,6 @@ void Sys_HideMouse(void);
 void Sys_MessageBox(const char* msg, boolean iserror);
 void Sys_OpenTextEditor(const char* filename);
 #endif
-
-/**
- * @def LIBDENG_ASSERT_IN_MAIN_THREAD
- * In a debug build, this asserts that the current code is executing in the main thread.
- */
-#ifdef _DEBUG
-#  define LIBDENG_ASSERT_IN_MAIN_THREAD() {assert(Sys_InMainThread());}
-#else
-#  define LIBDENG_ASSERT_IN_MAIN_THREAD()
-#endif
-
-thread_t Sys_StartThread(systhreadfunc_t startpos, void* parm);
-void Sys_SuspendThread(thread_t handle, boolean dopause);
-int Sys_WaitThread(thread_t handle);
-
-/**
- * @param handle  Handle to the thread to return the id of.
- *                Can be @c NULL in which case the current thread is assumed.
- * @return  Identifier of the thread.
- */
-uint Sys_ThreadId(thread_t handle);
-
-uint Sys_CurrentThreadId(void);
-
-void Sys_MarkAsMainThread(void);
-boolean Sys_InMainThread(void);
-
-mutex_t Sys_CreateMutex(const char* name);
-void Sys_DestroyMutex(mutex_t mutexHandle);
-void Sys_Lock(mutex_t mutexHandle);
-void Sys_Unlock(mutex_t mutexHandle);
-
-sem_t Sem_Create(uint32_t initialValue);
-void Sem_Destroy(sem_t semaphore);
-
-/**
- * "Proberen" a semaphore. Blocks until the successful.
- */
-void Sem_P(sem_t semaphore);
-
-/**
- * "Verhogen" a semaphore. Returns immediately.
- */
-void Sem_V(sem_t semaphore);
-
-uint32_t Sem_Value(sem_t semaphore);
 
 #ifdef __cplusplus
 }

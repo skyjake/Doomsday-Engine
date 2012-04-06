@@ -41,7 +41,7 @@
 #include "de_play.h"
 
 #include "s_main.h"
-#include "sys_timer.h"
+#include "timer.h"
 
 // MACROS ------------------------------------------------------------------
 

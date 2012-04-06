@@ -31,7 +31,8 @@
 #include "sys_network.h"
 #include "masterserver.h"
 //#include "sys_sock.h" // obsolete
-#include "sys_timer.h"
+#include "timer.h"
+#include "concurrency.h"
 #include "sys_opengl.h"
 
 // Use SDL for window management under *nix

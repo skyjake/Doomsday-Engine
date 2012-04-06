@@ -1102,6 +1102,7 @@ int UIEdit_Responder(ui_object_t* ob, ddevent_t* ev)
             break;
 
         default:
+            /// @todo  Use the text included in the event instead of DD_ModKey().
             if((int) strlen(ob->text) < dat->maxlen && ev->toggle.id >= 32 &&
                (DD_ModKey(ev->toggle.id) <= 127 || DD_ModKey(ev->toggle.id) >= DD_HIGHEST_KEYCODE))
             {

@@ -24,7 +24,7 @@
 #include "de_console.h"
 #include "de_filesys.h"
 
-#include "sys_timer.h"
+#include "timer.h"
 
 #include "filedirectory.h"
 
