@@ -250,13 +250,14 @@ private:
      *       also reworked, heavily). I think it is important that both these routines
      *       follow the exact same logic.
      */
-public:
     void divideHEdge(HEdge* hedge, SuperBlock& rightList, SuperBlock& leftList);
 
-private:
     void clearPartitionIntercepts();
 
     bool configurePartition(const HEdge* hedge);
+
+    void chooseHEdgeFromSuperBlock(SuperBlock* partList, SuperBlock& hedgeList,
+        HEdge** best, int* bestCost);
 
     /**
      * Find the best half-edge in the list to use as the next partition.

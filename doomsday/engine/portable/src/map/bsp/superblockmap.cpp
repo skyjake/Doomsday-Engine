@@ -352,45 +352,76 @@ SuperBlock& SuperBlockmap::root()
     return *static_cast<SuperBlock*>(KdTreeNode_UserData(KdTree_Root(d->kdTree)));
 }
 
-typedef struct {
-    AABoxf bounds;
-    boolean initialized;
-} findhedgelistboundsparams_t;
-
-static int findHEdgeBoundsWorker(SuperBlock* block, void* parameters)
-{
-    findhedgelistboundsparams_t* p = (findhedgelistboundsparams_t*)parameters;
-    if(block->hedgeCount(true, true))
-    {
-        AABoxf blockHEdgeAABox;
-        block->findHEdgeBounds(blockHEdgeAABox);
-        if(p->initialized)
-        {
-            V2f_AddToBox(p->bounds.arvec2, blockHEdgeAABox.min);
-        }
-        else
-        {
-            V2f_InitBox(p->bounds.arvec2, blockHEdgeAABox.min);
-            p->initialized = true;
-        }
-        V2f_AddToBox(p->bounds.arvec2, blockHEdgeAABox.max);
-    }
-    return false; // Continue iteration.
-}
-
 void SuperBlockmap::clear()
 {
     d->clearBlockWorker(root());
 }
 
+static void findHEdgeBoundsWorker(SuperBlock& block, AABoxf& bounds, bool* initialized)
+{
+    Q_ASSERT(initialized);
+    if(block.hedgeCount(true, true))
+    {
+        AABoxf blockHEdgeAABox;
+        block.findHEdgeBounds(blockHEdgeAABox);
+        if(*initialized)
+        {
+            V2f_AddToBox(bounds.arvec2, blockHEdgeAABox.min);
+        }
+        else
+        {
+            V2f_InitBox(bounds.arvec2, blockHEdgeAABox.min);
+            *initialized = true;
+        }
+        V2f_AddToBox(bounds.arvec2, blockHEdgeAABox.max);
+    }
+}
+
 void SuperBlockmap::findHEdgeBounds(AABoxf& aaBox)
 {
-    findhedgelistboundsparams_t parm;
-    parm.initialized = false;
-    root().traverse(findHEdgeBoundsWorker, (void*)&parm);
-    if(parm.initialized)
+    bool initialized = false;
+    AABoxf bounds;
+
+    // Iterative pre-order traversal of SuperBlock.
+    SuperBlock* cur = &root();
+    SuperBlock* prev = 0;
+    while(cur)
     {
-        V2f_CopyBox(aaBox.arvec2, parm.bounds.arvec2);
+        while(cur)
+        {
+            findHEdgeBoundsWorker(*cur, bounds, &initialized);
+
+            if(prev == cur->parent())
+            {
+                // Descending - right first, then left.
+                prev = cur;
+                if(cur->hasRight()) cur = cur->right();
+                else                cur = cur->left();
+            }
+            else if(prev == cur->right())
+            {
+                // Last moved up the right branch - descend the left.
+                prev = cur;
+                cur = cur->left();
+            }
+            else if(prev == cur->left())
+            {
+                // Last moved up the left branch - continue upward.
+                prev = cur;
+                cur = cur->parent();
+            }
+        }
+
+        if(prev)
+        {
+            // No right child - back up.
+            cur = prev->parent();
+        }
+    }
+
+    if(initialized)
+    {
+        V2f_CopyBox(aaBox.arvec2, bounds.arvec2);
         return;
     }
 

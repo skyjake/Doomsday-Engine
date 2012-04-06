@@ -56,7 +56,10 @@ struct LineDefInfo
     /// No hedges should be created for these overlapping linedefs.
     LineDef* overlap;
 
-    LineDefInfo::LineDefInfo() : flags(0), overlap(0)
+    /// @todo Refactor me away.
+    int validCount;
+
+    LineDefInfo::LineDefInfo() : flags(0), overlap(0), validCount(0)
     {}
 };
 

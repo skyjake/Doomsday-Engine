@@ -245,7 +245,8 @@ private:
     friend class SuperBlockmap;
 };
 
-class SuperBlockmap {
+class SuperBlockmap
+{
 public:
     /**
      * @param bounds  Bounding box in map coordinates for the whole blockmap.
