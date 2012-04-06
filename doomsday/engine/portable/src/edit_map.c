@@ -211,19 +211,6 @@ static void destroyEditableSectors(editmap_t* map)
     map->numSectors = 0;
 }
 
-edgetip_t* MPE_NewEdgeTip(void)
-{
-    return (edgetip_t*)M_Calloc(sizeof(edgetip_t));
-}
-
-void MPE_DeleteEdgeTip(struct edgetip_s* tip)
-{
-    if(tip)
-    {
-        M_Free(tip);
-    }
-}
-
 static void destroyEditableVertexes(editmap_t* map)
 {
     if(map->vertexes)
@@ -232,16 +219,6 @@ static void destroyEditableVertexes(editmap_t* map)
         for(i = 0; i < map->numVertexes; ++i)
         {
             Vertex* vtx = map->vertexes[i];
-            edgetip_t* tip, *n;
-
-            tip = vtx->buildData.tipSet;
-            while(tip)
-            {
-                n = tip->ET_next;
-                MPE_DeleteEdgeTip(tip);
-                tip = n;
-            }
-
             M_Free(vtx);
         }
 
@@ -1595,13 +1572,13 @@ static boolean buildBsp(GameMap* gamemap)
     // It begins...
     startTime = Sys_GetRealTime();
 
-    bspBuilder = BspBuilder_New(gamemap);
+    bspBuilder = BspBuilder_New(gamemap, &map->numVertexes, &map->vertexes);
     BspBuilder_SetSplitCostFactor(bspBuilder, bspFactor);
 
     builtOK = BspBuilder_Build(bspBuilder);
     if(builtOK)
     {
-        MPE_SaveBsp(bspBuilder, gamemap, &map->vertexes, &map->numVertexes);
+        MPE_SaveBsp(bspBuilder, gamemap, &map->numVertexes, &map->vertexes);
     }
 
     BspBuilder_Delete(bspBuilder);

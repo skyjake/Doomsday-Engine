@@ -33,9 +33,37 @@
 #include "map/bsp/bsptreenode.h"
 #include "map/bsp/bsphedgeinfo.h"
 #include "map/bsp/linedefinfo.h"
+#include "map/bsp/vertexinfo.h"
 
 #include <vector>
 #include <list>
+
+#define ET_prev             link[0]
+#define ET_next             link[1]
+#define ET_edge             hedges
+
+// An edge tip is where an edge meets a vertex.
+struct HEdgeTip
+{
+    // Link in list. List is kept in ANTI-clockwise order.
+    HEdgeTip* link[2]; // {prev, next};
+
+    /// Angle that line makes at vertex (degrees; 0 is E, 90 is N).
+    double angle;
+
+    // Half-edge on each side of the edge. Left is the side of increasing
+    // angles, right is the side of decreasing angles. Either can be NULL
+    // for one sided edges.
+    struct hedge_s* hedges[2];
+
+    HEdgeTip() : angle()
+    {
+        link[0] = 0;
+        link[1] = 0;
+        hedges[0] = 0;
+        hedges[1] = 0;
+    }
+};
 
 namespace de {
 namespace bsp {
@@ -83,16 +111,7 @@ class SuperBlockmap;
 class Partitioner
 {
 public:
-    Partitioner(GameMap* _map, int _splitCostFactor=7) :
-        splitCostFactor(_splitCostFactor),
-        map(_map),
-        rootNode(0), partition(0),
-        unclosedSectors(), migrantHEdges(),
-        builtOK(false)
-    {
-        initPartitionInfo();
-    }
-
+    Partitioner(GameMap* _map, uint* numEditableVertexes, Vertex*** editableVertexes, int _splitCostFactor=7);
     ~Partitioner();
 
     void setSplitCostFactor(int factor)
@@ -127,6 +146,17 @@ private:
         return lineDefInfos[lineDef.buildData.index - 1];
     }
 
+    /**
+     * Retrieve the extended build info for the specified @a vertex.
+     * @return  Extended info for that Vertex.
+     */
+    VertexInfo& vertexInfo(const Vertex& vertex) {
+        return vertexInfos[vertex.buildData.index - 1];
+    }
+    const VertexInfo& vertexInfo(const Vertex& vertex) const {
+        return vertexInfos[vertex.buildData.index - 1];
+    }
+
     void findMapBounds(AABoxf* aaBox) const;
 
     /**
@@ -154,7 +184,7 @@ private:
 
     void buildHEdgesAtIntersectionGaps(SuperBlock& rightList, SuperBlock& leftList);
 
-    void addEdgeTip(Vertex* vert, double angle, HEdge* back, HEdge* front);
+    void addHEdgeTip(Vertex* vert, double angle, HEdge* back, HEdge* front);
 
     /// @c true  Iff @a hedge has been added to a BSP leaf (i.e., it is no longer
     ///          linked in the hedge blockmap).
@@ -296,6 +326,12 @@ private:
     HEdge* newHEdge(LineDef* line, LineDef* sourceLine, Vertex* start, Vertex* end,
                     Sector* sec, bool back);
 
+    HEdgeTip* newHEdgeTip();
+
+    void deleteHEdgeTip(HEdgeTip* tip);
+
+    void deleteHEdgeTips(Vertex* vtx);
+
     /**
      * Create a clone of an existing half-edge.
      */
@@ -349,9 +385,17 @@ private:
     /// Current map which we are building BSP data for.
     GameMap* map;
 
+    /// @todo Refactor me away:
+    uint* numEditableVertexes;
+    Vertex*** editableVertexes;
+
     /// Extra info about LineDefs in the current map.
     typedef std::vector<LineDefInfo> LineDefInfos;
     LineDefInfos lineDefInfos;
+
+    /// Extra info about Vertexes in the current map.
+    typedef std::vector<VertexInfo> VertexInfos;
+    VertexInfos vertexInfos;
 
     /// Root node of our internal binary tree around which the final BSP data
     /// objects are constructed.

@@ -9,7 +9,7 @@ struct bsphedgeinfo_s;
 
 // Each Sector and SideDef has an origin in the world (used for distance based delta queuing)
 typedef struct origin_s {
-    float               pos[2];
+    float           pos[2];
 } origin_t;
 
 #define LO_prev     link[0]
@@ -41,8 +41,6 @@ typedef struct mvertex_s {
     // Usually NULL, unless this vertex occupies the same location as a
     // previous vertex. Only used during the pruning phase.
     struct vertex_s *equiv;
-
-    struct edgetip_s *tipSet; // Set of wall_tips.
 
 // Final data.
     double      pos[2];

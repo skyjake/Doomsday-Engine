@@ -44,10 +44,10 @@ void BspBuilder_Register(void)
     C_VAR_INT("bsp-factor", &bspFactor, CVF_NO_MAX, 0, 0);
 }
 
-BspBuilder_c* BspBuilder_New(GameMap* map)
+BspBuilder_c* BspBuilder_New(GameMap* map, uint* numEditableVertexes, Vertex*** editableVertexes)
 {
     BspBuilder_c* builder = static_cast<BspBuilder_c*>(malloc(sizeof *builder));
-    builder->inst = new BspBuilder(map);
+    builder->inst = new BspBuilder(map, numEditableVertexes, editableVertexes);
     return builder;
 }
 
@@ -293,7 +293,7 @@ static void updateVertexLinks(GameMap* map)
     }
 }
 
-void MPE_SaveBsp(BspBuilder_c* builder, GameMap* map, Vertex*** vertexes, uint* numVertexes)
+void MPE_SaveBsp(BspBuilder_c* builder, GameMap* map, uint* numVertexes, Vertex*** vertexes)
 {
     Q_ASSERT(builder);
 

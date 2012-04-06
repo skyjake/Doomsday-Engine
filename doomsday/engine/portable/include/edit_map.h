@@ -100,27 +100,6 @@ void            MPE_PruneRedundantMapData(editmap_t* map, int flags);
 GameMap*        MPE_GetLastBuiltMap(void);
 Vertex*         createVertex(void);
 
-#define ET_prev             link[0]
-#define ET_next             link[1]
-#define ET_edge             hedges
-
-// An edge tip is where an edge meets a vertex.
-typedef struct edgetip_s {
-    // Link in list. List is kept in ANTI-clockwise order.
-    struct edgetip_s* link[2]; // {prev, next};
-
-    /// Angle that line makes at vertex (degrees; 0 is E, 90 is N).
-    double angle;
-
-    // Half-edge on each side of the edge. Left is the side of increasing
-    // angles, right is the side of decreasing angles. Either can be NULL
-    // for one sided edges.
-    struct hedge_s* hedges[2];
-} edgetip_t;
-
-struct edgetip_s* MPE_NewEdgeTip(void);
-void MPE_DeleteEdgeTip(struct edgetip_s* tip);
-
 #ifdef __cplusplus
 } // extern "C"
 #endif

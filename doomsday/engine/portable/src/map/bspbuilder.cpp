@@ -24,9 +24,9 @@
 
 using namespace de;
 
-BspBuilder::BspBuilder(GameMap* map, int splitCostFactor)
+BspBuilder::BspBuilder(GameMap* map, uint* numEditableVertexes, Vertex*** editableVertexes, int splitCostFactor)
 {
-    partitioner = new bsp::Partitioner(map, splitCostFactor);
+    partitioner = new bsp::Partitioner(map, numEditableVertexes, editableVertexes, splitCostFactor);
 }
 
 BspBuilder::~BspBuilder()

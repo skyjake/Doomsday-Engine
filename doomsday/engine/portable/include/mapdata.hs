@@ -43,8 +43,6 @@ typedef struct mvertex_s {
     // previous vertex. Only used during the pruning phase.
     struct vertex_s* equiv;
 
-    struct edgetip_s* tipSet; // Set of wall_tips.
-
 // Final data.
     double pos[2];
 } mvertex_t;

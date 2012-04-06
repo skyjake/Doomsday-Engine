@@ -80,6 +80,59 @@ struct PartitionCost
 // Used when sorting BSP leaf half-edges by angle around midpoint.
 typedef std::vector<HEdge*>HEdgeSortBuffer;
 
+Partitioner::Partitioner(GameMap* _map, uint* _numEditableVertexes,
+    Vertex*** _editableVertexes, int _splitCostFactor) :
+    splitCostFactor(_splitCostFactor),
+    map(_map),
+    numEditableVertexes(_numEditableVertexes), editableVertexes(_editableVertexes),
+    rootNode(0), partition(0),
+    unclosedSectors(), migrantHEdges(),
+    builtOK(false)
+{
+    initPartitionInfo();
+}
+
+static int clearBspObject(BspTreeNode& tree, void* /*parameters*/)
+{
+    if(tree.isLeaf())
+    {
+        BspLeaf* leaf = reinterpret_cast<BspLeaf*>(tree.userData());
+        if(leaf)
+        {
+            LOG_DEBUG("Partitioner: Clearing unclaimed leaf %p.") << leaf;
+            BspLeaf_Delete(leaf);
+        }
+    }
+    else
+    {
+        BspNode* node = reinterpret_cast<BspNode*>(tree.userData());
+        if(node)
+        {
+            LOG_DEBUG("Partitioner: Clearing unclaimed node %p.") << node;
+            BspNode_Delete(node);
+        }
+    }
+    return false; // Continue iteration.
+}
+
+Partitioner::~Partitioner()
+{
+    for(uint i = 0; i < *numEditableVertexes; ++i)
+    {
+        deleteHEdgeTips((*editableVertexes)[i]);
+    }
+
+    // We are finished with the BSP data.
+    if(rootNode)
+    {
+        // If ownership of the BSP data has been claimed this should be a no-op.
+        BspTreeNode::PostOrder(*rootNode, clearBspObject, NULL/*no parameters*/);
+
+        // Destroy our private BSP tree.
+        delete rootNode;
+    }
+}
+
 static boolean getAveragedCoords(BspLeaf* leaf, double* x, double* y)
 {
     if(!leaf || !x || !y) return false;
@@ -1011,42 +1064,6 @@ bool Partitioner::buildNodes(SuperBlock& hedgeList, BspTreeNode** parent)
     return builtOK;
 }
 
-static int clearBspObject(BspTreeNode& tree, void* /*parameters*/)
-{
-    if(tree.isLeaf())
-    {
-        BspLeaf* leaf = reinterpret_cast<BspLeaf*>(tree.userData());
-        if(leaf)
-        {
-            LOG_DEBUG("Partitioner: Clearing unclaimed leaf %p.") << leaf;
-            BspLeaf_Delete(leaf);
-        }
-    }
-    else
-    {
-        BspNode* node = reinterpret_cast<BspNode*>(tree.userData());
-        if(node)
-        {
-            LOG_DEBUG("Partitioner: Clearing unclaimed node %p.") << node;
-            BspNode_Delete(node);
-        }
-    }
-    return false; // Continue iteration.
-}
-
-Partitioner::~Partitioner()
-{
-    // We are finished with the BSP data.
-    if(rootNode)
-    {
-        // If ownership of the BSP data has been claimed this should be a no-op.
-        BspTreeNode::PostOrder(*rootNode, clearBspObject, NULL/*no parameters*/);
-
-        // Destroy our private BSP tree.
-        delete rootNode;
-    }
-}
-
 static void initAABoxFromEditableLineDefVertexes(AABoxf* aaBox, const LineDef* line)
 {
     const double* from = line->L_v1->buildData.pos;
@@ -1190,8 +1207,8 @@ void Partitioner::createInitialHEdges(SuperBlock& hedgeList)
         double x2 = line->v[1]->buildData.pos[VX];
         double y2 = line->v[1]->buildData.pos[VY];
 
-        addEdgeTip(line->v[0], M_SlopeToAngle(x2 - x1, y2 - y1), back, front);
-        addEdgeTip(line->v[1], M_SlopeToAngle(x1 - x2, y1 - y2), front, back);
+        addHEdgeTip(line->v[0], M_SlopeToAngle(x2 - x1, y2 - y1), back, front);
+        addHEdgeTip(line->v[1], M_SlopeToAngle(x1 - x2, y1 - y2), front, back);
     }
 }
 
@@ -1220,6 +1237,8 @@ void Partitioner::initForMap()
                 info.flags |= LineDefInfo::SELFREF;
         }
     }
+
+    vertexInfos.resize(*numEditableVertexes);
 }
 
 static int linkBspTreeNode(BspTreeNode& tree, void* /*parameters*/)
@@ -1543,6 +1562,7 @@ Vertex* Partitioner::newVertex(const_pvec2d_t point)
     /// @todo Vertex should not come from the editable map but from a store
     ///       within our own domain.
     Vertex* vtx = createVertex();
+    vertexInfos.push_back(VertexInfo());
     if(point)
     {
         V2d_Copy(vtx->buildData.pos, point);
@@ -1550,50 +1570,13 @@ Vertex* Partitioner::newVertex(const_pvec2d_t point)
     return vtx;
 }
 
-void Partitioner::addEdgeTip(Vertex* vert, double angle, HEdge* back, HEdge* front)
+Sector* Partitioner::openSectorAtAngle(Vertex* vtx, double angle)
 {
-    edgetip_t* tip = MPE_NewEdgeTip();
-    edgetip_t* after;
+    Q_ASSERT(vtx);
 
-    tip->angle = angle;
-    tip->ET_edge[BACK]  = back;
-    tip->ET_edge[FRONT] = front;
-
-    // Find the correct place (order is increasing angle).
-    for(after = vert->buildData.tipSet; after && after->ET_next;
-        after = after->ET_next) {}
-
-    while(after && tip->angle + ANG_EPSILON < after->angle)
-        after = after->ET_prev;
-
-    // Link it in.
-    if(after)
-        tip->ET_next = after->ET_next;
-    else
-        tip->ET_next = vert->buildData.tipSet;
-    tip->ET_prev = after;
-
-    if(after)
-    {
-        if(after->ET_next)
-            after->ET_next->ET_prev = tip;
-
-        after->ET_next = tip;
-    }
-    else
-    {
-        if(vert->buildData.tipSet)
-            vert->buildData.tipSet->ET_prev = tip;
-
-        vert->buildData.tipSet = tip;
-    }
-}
-
-Sector* Partitioner::openSectorAtAngle(Vertex* vert, double angle)
-{
     // First check whether there's a wall_tip that lies in the exact direction of
-    // the given direction (which is relative to the vertex).
-    for(edgetip_t* tip = vert->buildData.tipSet; tip; tip = tip->ET_next)
+    // the given direction (which is relative to the vtxex).
+    for(HEdgeTip* tip = vertexInfo(*vtx).tipSet; tip; tip = tip->ET_next)
     {
         double diff = fabs(tip->angle - angle);
 
@@ -1606,7 +1589,7 @@ Sector* Partitioner::openSectorAtAngle(Vertex* vert, double angle)
 
     // OK, now just find the first wall_tip whose angle is greater than the angle
     // we're interested in. Therefore we'll be on the FRONT side of that tip edge.
-    for(edgetip_t* tip = vert->buildData.tipSet; tip; tip = tip->ET_next)
+    for(HEdgeTip* tip = vertexInfo(*vtx).tipSet; tip; tip = tip->ET_next)
     {
         if(angle + ANG_EPSILON < tip->angle)
         {
@@ -1621,7 +1604,7 @@ Sector* Partitioner::openSectorAtAngle(Vertex* vert, double angle)
         }
     }
 
-    Con_Error("Vertex %d has no tips !", vert->buildData.index);
+    Con_Error("Vertex %d has no hedge tips !", vtx->buildData.index);
     exit(1); // Unreachable.
 }
 
@@ -1641,6 +1624,72 @@ HEdgeIntercept* Partitioner::newHEdgeIntercept(Vertex* vert, bool selfRef)
 void Partitioner::deleteHEdgeIntercept(HEdgeIntercept& inter)
 {
     delete &inter;
+}
+
+HEdgeTip* Partitioner::newHEdgeTip(void)
+{
+    HEdgeTip* tip = new HEdgeTip();
+    return tip;
+}
+
+void Partitioner::deleteHEdgeTip(HEdgeTip* tip)
+{
+    Q_ASSERT(tip);
+    delete tip;
+}
+
+void Partitioner::addHEdgeTip(Vertex* vtx, double angle, HEdge* back, HEdge* front)
+{
+    Q_ASSERT(vtx);
+
+    HEdgeTip* tip = newHEdgeTip();
+    tip->angle = angle;
+    tip->ET_edge[BACK]  = back;
+    tip->ET_edge[FRONT] = front;
+
+    // Find the correct place (order is increasing angle).
+    VertexInfo& vtxInfo = vertexInfo(*vtx);
+    HEdgeTip* after;
+    for(after = vtxInfo.tipSet; after && after->ET_next;
+        after = after->ET_next) {}
+
+    while(after && tip->angle + ANG_EPSILON < after->angle)
+        after = after->ET_prev;
+
+    // Link it in.
+    if(after)
+        tip->ET_next = after->ET_next;
+    else
+        tip->ET_next = vtxInfo.tipSet;
+    tip->ET_prev = after;
+
+    if(after)
+    {
+        if(after->ET_next)
+            after->ET_next->ET_prev = tip;
+
+        after->ET_next = tip;
+    }
+    else
+    {
+        if(vtxInfo.tipSet)
+            vtxInfo.tipSet->ET_prev = tip;
+
+        vtxInfo.tipSet = tip;
+    }
+}
+
+void Partitioner::deleteHEdgeTips(Vertex* vtx)
+{
+    if(!vtx) return;
+
+    HEdgeTip* tip = vertexInfo(*vtx).tipSet;
+    while(tip)
+    {
+        HEdgeTip* next = tip->ET_next;
+        deleteHEdgeTip(tip);
+        tip = next;
+    }
 }
 
 static void updateHEdgeInfo(const HEdge* hedge, BspHEdgeInfo* info)
@@ -1714,8 +1763,8 @@ HEdge* Partitioner::splitHEdge(HEdge* oldHEdge, const_pvec2d_t point)
     //        << oldHEdge << x << y;
 
     Vertex* newVert = newVertex(point);
-    addEdgeTip(newVert, M_SlopeToAngle(-oldHEdge->bspBuildInfo->pDX, -oldHEdge->bspBuildInfo->pDY), oldHEdge, oldHEdge->twin);
-    addEdgeTip(newVert, M_SlopeToAngle( oldHEdge->bspBuildInfo->pDX,  oldHEdge->bspBuildInfo->pDY), oldHEdge->twin, oldHEdge);
+    addHEdgeTip(newVert, M_SlopeToAngle(-oldHEdge->bspBuildInfo->pDX, -oldHEdge->bspBuildInfo->pDY), oldHEdge, oldHEdge->twin);
+    addHEdgeTip(newVert, M_SlopeToAngle( oldHEdge->bspBuildInfo->pDX,  oldHEdge->bspBuildInfo->pDY), oldHEdge->twin, oldHEdge);
 
     HEdge* newHEdge = cloneHEdge(*oldHEdge);
 
