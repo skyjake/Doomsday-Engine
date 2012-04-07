@@ -55,11 +55,14 @@ void Sys_ShutdownTimer(void)
 #ifdef WIN32
     timeEndPeriod(1);
 #endif
-    Sys_DestroyMutex(timerMutex);
+    mutex_t m = timerMutex;
+    timerMutex = 0;
+    Sys_DestroyMutex(m);
 }
 
 void Sys_InitTimer(void)
 {
+    assert(timerMutex == 0);
     timerMutex = Sys_CreateMutex("TIMER_MUTEX");
 #ifdef WIN32
     timeBeginPeriod(1);
