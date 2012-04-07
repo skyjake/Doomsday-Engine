@@ -79,9 +79,6 @@ struct PartitionCost
     }
 };
 
-// Used when sorting BSP leaf half-edges by angle around midpoint.
-typedef std::vector<HEdge*>HEdgeSortBuffer;
-
 Partitioner::Partitioner(GameMap* _map, uint* _numEditableVertexes,
     Vertex*** _editableVertexes, int _splitCostFactor) :
     splitCostFactor(_splitCostFactor),
@@ -145,9 +142,9 @@ Partitioner::~Partitioner()
     }
 }
 
-static boolean getAveragedCoords(BspLeaf* leaf, double* x, double* y)
+static bool getAveragedCoords(BspLeaf* leaf, pvec2d_t midPoint)
 {
-    if(!leaf || !x || !y) return false;
+    if(!leaf || !midPoint) return false;
 
     vec2d_t avg;
     V2d_Set(avg, 0, 0);
@@ -162,26 +159,19 @@ static boolean getAveragedCoords(BspLeaf* leaf, double* x, double* y)
 
     if(numPoints)
     {
-        if(x) *x = avg[VX] / numPoints;
-        if(y) *y = avg[VY] / numPoints;
+        V2d_Set(midPoint, avg[VX] / numPoints, avg[VY] / numPoints);
     }
 
     return true;
 }
 
-/**
- * Sort half-edges by angle (from the middle point to the start vertex).
- * The desired order (clockwise) means descending angles.
- *
- * @algorithm "double bubble"
- */
-static void sortHEdgesByAngleAroundPoint(HEdgeSortBuffer& hedges,
-    HEdgeSortBuffer::size_type total, double x, double y)
+void Partitioner::sortHEdgesByAngleAroundPoint(HEdgeSortBuffer::iterator begin,
+    HEdgeSortBuffer::iterator end, pvec2d_t point)
 {
-    HEdgeSortBuffer::iterator begin = hedges.begin();
-    HEdgeSortBuffer::iterator end = begin + total;
-    bool done = false;
+    Q_ASSERT(point);
 
+    /// @algorithm "double bubble"
+    bool done = false;
     while(begin != end && !done)
     {
         done = true;
@@ -192,10 +182,10 @@ static void sortHEdgesByAngleAroundPoint(HEdgeSortBuffer& hedges,
         {
             HEdge* a = *it;
             HEdge* b = *next;
-            double angle1 = M_SlopeToAngle(a->v[0]->buildData.pos[VX] - x,
-                                           a->v[0]->buildData.pos[VY] - y);
-            double angle2 = M_SlopeToAngle(b->v[0]->buildData.pos[VX] - x,
-                                           b->v[0]->buildData.pos[VY] - y);
+            double angle1 = M_SlopeToAngle(a->v[0]->buildData.pos[VX] - point[VX],
+                                           a->v[0]->buildData.pos[VY] - point[VY]);
+            double angle2 = M_SlopeToAngle(b->v[0]->buildData.pos[VX] - point[VX],
+                                           b->v[0]->buildData.pos[VY] - point[VY]);
 
             if(angle1 + ANG_EPSILON < angle2)
             {
@@ -214,18 +204,8 @@ static void sortHEdgesByAngleAroundPoint(HEdgeSortBuffer& hedges,
     }
 }
 
-/**
- * Sort the given list of half-edges into clockwise order based on their
- * position/orientation compared to the specified point.
- *
- * @param headPtr       Ptr to the address of the headPtr to the list
- *                      of hedges to be sorted.
- * @param num           Number of half edges in the list.
- * @param x             X coordinate of the point to order around.
- * @param y             Y coordinate of the point to order around.
- */
-static void clockwiseOrder(HEdgeSortBuffer& sortBuffer, HEdge** headPtr,
-    uint num, double x, double y)
+void Partitioner::clockwiseOrder(HEdgeSortBuffer& sortBuffer, HEdge** headPtr,
+    uint num, pvec2d_t point)
 {
     // Ensure the sort buffer is large enough.
     if(num > sortBuffer.size())
@@ -240,7 +220,9 @@ static void clockwiseOrder(HEdgeSortBuffer& sortBuffer, HEdge** headPtr,
         sortBuffer[i] = hedge;
     }
 
-    sortHEdgesByAngleAroundPoint(sortBuffer, num, x, y);
+    HEdgeSortBuffer::iterator begin = sortBuffer.begin();
+    HEdgeSortBuffer::iterator end = begin + num;
+    sortHEdgesByAngleAroundPoint(begin, end, point);
 
     // Re-link the half-edge list in the order of the sorted array.
     *headPtr = NULL;
@@ -254,11 +236,11 @@ static void clockwiseOrder(HEdgeSortBuffer& sortBuffer, HEdge** headPtr,
     }
 
     /*
-    LOG_DEBUG("Sorted half-edges around [%1.1f, %1.1f]" << x << y;
-    for(hedge = *hedgePtr; hedge; hedge = hedge->next)
+    LOG_DEBUG("Sorted half-edges around [%1.1f, %1.1f]" << point[VX] << point[VY];
+    for(hedge = *headPtr; hedge; hedge = hedge->next)
     {
-        double angle = M_SlopeToAngle(hedge->v[0]->V_pos[VX] - x,
-                                      hedge->v[0]->V_pos[VY] - y);
+        double angle = M_SlopeToAngle(hedge->v[0]->V_pos[VX] - point[VX],
+                                      hedge->v[0]->V_pos[VY] - point[VY]);
 
         LOG_DEBUG("  half-edge %p: Angle %1.6f [%1.1f, %1.1f] -> [%1.1f, %1.1f]")
             << hedge << angle
@@ -332,104 +314,133 @@ static void findSideDefHEdges(SideDef* side, HEdge* hedge)
         side->hedgeRight = side->hedgeRight->bspBuildInfo->nextOnSide;
 }
 
-typedef struct {
-    Partitioner* partitioner;
-    HEdgeSortBuffer sortBuffer;
-} clockwiseleafparams_t;
-
-static int clockwiseLeaf(BspTreeNode& tree, void* parameters)
+void Partitioner::clockwiseLeaf(BspTreeNode& tree, HEdgeSortBuffer& sortBuffer)
 {
-    if(tree.isLeaf())
+    Q_ASSERT(tree.isLeaf());
+
+    BspLeaf* leaf = reinterpret_cast<BspLeaf*>(tree.userData());
+    vec2d_t midPoint;
+
+    V2d_Set(midPoint, 0, 0);
+    getAveragedCoords(leaf, midPoint);
+
+    // Count half-edges.
+    leaf->hedgeCount = 0;
+    for(HEdge* hedge = leaf->hedge; hedge; hedge = hedge->next)
+        leaf->hedgeCount++;
+
+    clockwiseOrder(sortBuffer, &leaf->hedge, leaf->hedgeCount, midPoint);
+
+    if(leaf->hedge)
     {
-        clockwiseleafparams_t* p = static_cast<clockwiseleafparams_t*>(parameters);
-        BspLeaf* leaf = reinterpret_cast<BspLeaf*>(tree.userData());
-        double midPoint[2] = { 0, 0 };
+        /// @todo Construct the leaf's hedge ring as we go.
         HEdge* hedge;
-
-        getAveragedCoords(leaf, &midPoint[VX], &midPoint[VY]);
-
-        // Count half-edges.
-        leaf->hedgeCount = 0;
-        for(hedge = leaf->hedge; hedge; hedge = hedge->next)
-            leaf->hedgeCount++;
-
-        clockwiseOrder(p->sortBuffer, &leaf->hedge, leaf->hedgeCount, midPoint[VX], midPoint[VY]);
-
-        if(leaf->hedge)
+        for(hedge = leaf->hedge; ;)
         {
-            /// @todo Construct the leaf's hedge ring as we go.
-            hedge = leaf->hedge;
-            for(;;)
+            // Link hedge to this leaf.
+            hedge->bspLeaf = leaf;
+
+            /// @kludge This should not be done here!
+            if(hedge->bspBuildInfo->lineDef)
             {
-                // Link hedge to this leaf.
-                hedge->bspLeaf = leaf;
-
-                /// @kludge This should not be done here!
-                if(hedge->bspBuildInfo->lineDef)
+                // Update LineDef link.
+                hedge->lineDef = hedge->bspBuildInfo->lineDef;
+                SideDef* side = HEDGE_SIDEDEF(hedge);
+                if(side)
                 {
-                    // Update LineDef link.
-                    hedge->lineDef = hedge->bspBuildInfo->lineDef;
-                    SideDef* side = HEDGE_SIDEDEF(hedge);
-                    if(side)
-                    {
-                        findSideDefHEdges(side, hedge);
-                    }
-                }
-                /// kludge end
-
-                if(hedge->next)
-                {
-                    // Reverse link.
-                    hedge->next->prev = hedge;
-                    hedge = hedge->next;
-                }
-                else
-                {
-                    // Circular link.
-                    hedge->next = leaf->hedge;
-                    hedge->next->prev = hedge;
-                    break;
+                    findSideDefHEdges(side, hedge);
                 }
             }
+            /// kludge end
 
-            // Determine which sector this BSP leaf belongs to.
-            hedge = leaf->hedge;
-            do
+            if(hedge->next)
             {
-                if(hedge->bspBuildInfo->lineDef &&
-                   hedge->bspBuildInfo->lineDef->sideDefs[hedge->side])
-                {
-                    SideDef* side = hedge->bspBuildInfo->lineDef->sideDefs[hedge->side];
-                    leaf->sector = side->sector;
-                }
-            } while(!leaf->sector && (hedge = hedge->next) != leaf->hedge);
+                // Reverse link.
+                hedge->next->prev = hedge;
+                hedge = hedge->next;
+            }
+            else
+            {
+                // Circular link.
+                hedge->next = leaf->hedge;
+                hedge->next->prev = hedge;
+                break;
+            }
         }
 
-        if(!leaf->sector)
+        // Determine which sector this BSP leaf belongs to.
+        hedge = leaf->hedge;
+        do
         {
-            LOG_WARNING("BspLeaf %p is orphan.") << leaf;
-        }
-
-        if(verbose)
-        {
-            p->partitioner->registerMigrantHEdges(leaf);
-            logUnclosed(leaf);
-        }
-
-        if(!sanityCheckHasRealhedge(leaf))
-        {
-            Con_Error("BSP Leaf #%p has no linedef-linked half-edge!", leaf);
-        }
+            if(hedge->bspBuildInfo->lineDef &&
+               hedge->bspBuildInfo->lineDef->sideDefs[hedge->side])
+            {
+                SideDef* side = hedge->bspBuildInfo->lineDef->sideDefs[hedge->side];
+                leaf->sector = side->sector;
+            }
+        } while(!leaf->sector && (hedge = hedge->next) != leaf->hedge);
     }
 
-    return false; // Continue traversal.
+    if(!leaf->sector)
+    {
+        LOG_WARNING("BspLeaf %p is orphan.") << leaf;
+    }
+
+    if(verbose)
+    {
+        registerMigrantHEdges(leaf);
+        logUnclosed(leaf);
+    }
+
+    if(!sanityCheckHasRealhedge(leaf))
+    {
+        Con_Error("BSP Leaf #%p has no linedef-linked half-edge!", leaf);
+    }
 }
 
 void Partitioner::windLeafs()
 {
-    clockwiseleafparams_t parm;
-    parm.partitioner = this;
-    BspTreeNode::PostOrder(*rootNode, clockwiseLeaf, static_cast<void*>(&parm));
+    HEdgeSortBuffer sortBuffer;
+
+    // Iterative pre-order traversal of the BSP tree.
+    BspTreeNode* cur = rootNode;
+    BspTreeNode* prev = 0;
+    while(cur)
+    {
+        while(cur)
+        {
+            if(cur->isLeaf())
+            {
+                clockwiseLeaf(*cur, sortBuffer);
+            }
+
+            if(prev == cur->parent())
+            {
+                // Descending - right first, then left.
+                prev = cur;
+                if(cur->hasRight()) cur = cur->right();
+                else                cur = cur->left();
+            }
+            else if(prev == cur->right())
+            {
+                // Last moved up the right branch - descend the left.
+                prev = cur;
+                cur = cur->left();
+            }
+            else if(prev == cur->left())
+            {
+                // Last moved up the left branch - continue upward.
+                prev = cur;
+                cur = cur->parent();
+            }
+        }
+
+        if(prev)
+        {
+            // No left child - back up.
+            cur = prev->parent();
+        }
+    }
 }
 
 static void evalPartitionCostForHEdge(const BspHEdgeInfo* partInfo,
@@ -1324,6 +1335,59 @@ void Partitioner::initForMap()
     vertexInfos.resize(*numEditableVertexes);
 }
 
+static void clearHEdgeInfo(BspTreeNode& tree)
+{
+    if(tree.isLeaf())
+    {
+        BspLeaf* leaf = reinterpret_cast<BspLeaf*>(tree.userData());
+        HEdge* hedge = leaf->hedge;
+        do
+        {
+            Z_Free(HEdge_DetachBspBuildInfo(hedge));
+        } while((hedge = hedge->next) != leaf->hedge);
+    }
+}
+
+void Partitioner::clearAllHEdgeInfo()
+{
+    // Iterative pre-order traversal of the BSP tree.
+    BspTreeNode* cur = rootNode;
+    BspTreeNode* prev = 0;
+    while(cur)
+    {
+        while(cur)
+        {
+            clearHEdgeInfo(*cur);
+
+            if(prev == cur->parent())
+            {
+                // Descending - right first, then left.
+                prev = cur;
+                if(cur->hasRight()) cur = cur->right();
+                else                cur = cur->left();
+            }
+            else if(prev == cur->right())
+            {
+                // Last moved up the right branch - descend the left.
+                prev = cur;
+                cur = cur->left();
+            }
+            else if(prev == cur->left())
+            {
+                // Last moved up the left branch - continue upward.
+                prev = cur;
+                cur = cur->parent();
+            }
+        }
+
+        if(prev)
+        {
+            // No left child - back up.
+            cur = prev->parent();
+        }
+    }
+}
+
 static int linkBspTreeNode(BspTreeNode& tree, void* /*parameters*/)
 {
     // We are only interested in BspNodes at this level.
@@ -1344,20 +1408,6 @@ static int linkBspTreeNode(BspTreeNode& tree, void* /*parameters*/)
     return false; // Continue iteration.
 }
 
-static int clearHEdgeInfo(BspTreeNode& tree, void* /*parameters*/)
-{
-    if(tree.isLeaf())
-    {
-        BspLeaf* leaf = reinterpret_cast<BspLeaf*>(tree.userData());
-        HEdge* hedge = leaf->hedge;
-        do
-        {
-            Z_Free(HEdge_DetachBspBuildInfo(hedge));
-        } while((hedge = hedge->next) != leaf->hedge);
-    }
-    return false; // Continue iteration.
-}
-
 void Partitioner::initHEdgesAndBuildBsp(SuperBlockmap& blockmap)
 {
     Q_ASSERT(map);
@@ -1369,7 +1419,6 @@ void Partitioner::initHEdgesAndBuildBsp(SuperBlockmap& blockmap)
 
     if(rootNode)
     {
-        // Wind leafs.
         windLeafs();
 
         // Link up the BSP object tree.
@@ -1377,7 +1426,7 @@ void Partitioner::initHEdgesAndBuildBsp(SuperBlockmap& blockmap)
         BspTreeNode::PostOrder(*rootNode, linkBspTreeNode);
 
         // We're done with the build info.
-        BspTreeNode::PreOrder(*rootNode, clearHEdgeInfo);
+        clearAllHEdgeInfo();
     }
 }
 

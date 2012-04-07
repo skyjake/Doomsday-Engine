@@ -110,6 +110,9 @@ class SuperBlockmap;
  */
 class Partitioner
 {
+    // Used when sorting BSP leaf half-edges by angle around midpoint.
+    typedef std::vector<HEdge*>HEdgeSortBuffer;
+
 public:
     Partitioner(GameMap* _map, uint* numEditableVertexes, Vertex*** editableVertexes, int _splitCostFactor=7);
     ~Partitioner();
@@ -289,6 +292,27 @@ private:
     bool buildNodes(SuperBlock& superblock, BspTreeNode** subtree);
 
     /**
+     * Sort half-edges by angle (from the middle point to the start vertex).
+     * The desired order (clockwise) means descending angles.
+     */
+    static void sortHEdgesByAngleAroundPoint(HEdgeSortBuffer::iterator begin,
+        HEdgeSortBuffer::iterator end, pvec2d_t point);
+
+    /**
+     * Sort the given list of half-edges into clockwise order based on their
+     * position/orientation compared to the specified point.
+     *
+     * @param headPtr       Ptr to the address of the headPtr to the list
+     *                      of hedges to be sorted.
+     * @param num           Number of half edges in the list.
+     * @param point         The point to order around.
+     */
+    static void clockwiseOrder(HEdgeSortBuffer& sortBuffer, HEdge** headPtr,
+        uint num, pvec2d_t point);
+
+    void clockwiseLeaf(BspTreeNode& tree, HEdgeSortBuffer& sortBuffer);
+
+    /**
      * Traverse the BSP tree and put all the half-edges in each BSP leaf into clockwise
      * order, and renumber their indices.
      *
@@ -329,17 +353,19 @@ private:
      */
     HEdgeIntercept* newHEdgeIntercept(Vertex* vertex, bool lineDefIsSelfReferencing);
 
-    /**
-     * Create a new half-edge.
-     */
-    HEdge* newHEdge(LineDef* line, LineDef* sourceLine, Vertex* start, Vertex* end,
-                    Sector* sec, bool back);
+    void clearAllHEdgeInfo();
 
     HEdgeTip* newHEdgeTip();
 
     void deleteHEdgeTip(HEdgeTip* tip);
 
     void deleteHEdgeTips(Vertex* vtx);
+
+    /**
+     * Create a new half-edge.
+     */
+    HEdge* newHEdge(LineDef* line, LineDef* sourceLine, Vertex* start, Vertex* end,
+                    Sector* sec, bool back);
 
     /**
      * Create a clone of an existing half-edge.
@@ -384,7 +410,6 @@ private:
 
     bool registerMigrantHEdge(Sector* sector, HEdge* migrant);
 
-public:
     void registerMigrantHEdges(const BspLeaf* leaf);
 
 private:
