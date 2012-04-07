@@ -283,10 +283,10 @@ private:
      * else put the half-edges into the right list.
      *
      * @param superblock    The list of half edges at the current node.
-     * @param parent        Ptr to write back the address of any newly created subtree.
+     * @param subtree       Ptr to write back the address of any newly created subtree.
      * @return  @c true iff successfull.
      */
-    bool buildNodes(SuperBlock& superblock, BspTreeNode** parent);
+    bool buildNodes(SuperBlock& superblock, BspTreeNode** subtree);
 
     /**
      * Traverse the BSP tree and put all the half-edges in each BSP leaf into clockwise

@@ -789,7 +789,7 @@ bool Partitioner::chooseNextPartition(SuperBlock& hedgeList)
 
         if(prev)
         {
-            // No right child - back up.
+            // No left child - back up.
             cur = prev->parent();
         }
     }
@@ -1004,7 +1004,7 @@ void Partitioner::partitionHEdges(SuperBlock& hedgeList, SuperBlock& rights, Sup
 
         if(prev)
         {
-            // No right child - back up.
+            // No left child - back up.
             cur = prev->parent();
         }
     }
@@ -1059,7 +1059,7 @@ BspLeaf* Partitioner::createBSPLeaf(SuperBlock& hedgeList)
 
         if(prev)
         {
-            // No right child - back up.
+            // No left child - back up.
             cur = prev->parent();
         }
     }
@@ -1074,9 +1074,9 @@ static int printSuperBlockHEdgesWorker(SuperBlock* block, void* /*parameters*/)
     return false; // Continue iteration.
 })
 
-bool Partitioner::buildNodes(SuperBlock& hedgeList, BspTreeNode** parent)
+bool Partitioner::buildNodes(SuperBlock& hedgeList, BspTreeNode** subtree)
 {
-    *parent = NULL;
+    *subtree = NULL;
 
 /*#if _DEBUG
     hedgeList.traverse(printSuperBlockHEdgesWorker);
@@ -1089,7 +1089,7 @@ bool Partitioner::buildNodes(SuperBlock& hedgeList, BspTreeNode** parent)
         //LOG_TRACE("Partitioner::buildNodes: Convex.");
 
         BspLeaf* leaf = createBSPLeaf(hedgeList);
-        *parent = new BspTreeNode(reinterpret_cast<runtime_mapdata_header_t*>(leaf));
+        *subtree = new BspTreeNode(reinterpret_cast<runtime_mapdata_header_t*>(leaf));
         return true;
     }
 
@@ -1119,19 +1119,19 @@ bool Partitioner::buildNodes(SuperBlock& hedgeList, BspTreeNode** parent)
     BspNode_SetRightBounds(node, &rightHEdgesBounds);
     BspNode_SetLeftBounds(node, &leftHEdgesBounds);
 
-    *parent = new BspTreeNode(reinterpret_cast<runtime_mapdata_header_t*>(node));
+    *subtree = new BspTreeNode(reinterpret_cast<runtime_mapdata_header_t*>(node));
 
     // Recurse on the right subset.
-    BspTreeNode* subTree;
-    bool builtOK = buildNodes(rightHEdges->root(), &subTree);
-    (*parent)->setRight(subTree);
+    BspTreeNode* child;
+    bool builtOK = buildNodes(rightHEdges->root(), &child);
+    (*subtree)->setRight(child);
     delete rightHEdges;
 
     if(builtOK)
     {
         // Recurse on the left subset.
-        builtOK = buildNodes(leftHEdges->root(), &subTree);
-        (*parent)->setLeft(subTree);
+        builtOK = buildNodes(leftHEdges->root(), &child);
+        (*subtree)->setLeft(child);
     }
 
     delete leftHEdges;

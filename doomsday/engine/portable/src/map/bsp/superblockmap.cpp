@@ -414,7 +414,7 @@ void SuperBlockmap::findHEdgeBounds(AABoxf& aaBox)
 
         if(prev)
         {
-            // No right child - back up.
+            // No left child - back up.
             cur = prev->parent();
         }
     }
