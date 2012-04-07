@@ -363,7 +363,7 @@ boolean Demo_BeginPlayback(const char* fileName)
 
 void Demo_StopPlayback(void)
 {
-    float           diff;
+    //float           diff;
 
     if(!playback)
         return;
