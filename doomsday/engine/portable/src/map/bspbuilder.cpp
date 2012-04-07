@@ -60,6 +60,11 @@ uint BspBuilder::numLeafs()
     return partitioner->numLeafs();
 }
 
+uint BspBuilder::numHEdges()
+{
+    return partitioner->numHEdges();
+}
+
 uint BspBuilder::numVertexes()
 {
     return partitioner->numVertexes();

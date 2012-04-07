@@ -83,6 +83,8 @@ public:
 
     uint numLeafs();
 
+    uint numHEdges();
+
     uint numVertexes();
 
     Vertex const& vertex(uint idx);

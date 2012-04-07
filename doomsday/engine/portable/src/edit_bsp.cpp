@@ -85,22 +85,14 @@ static int hedgeCollector(BspTreeNode& tree, void* parameters)
         HEdge* hedge = leaf->hedge;
         do
         {
-            if(p->hedgeLUT)
-            {
-                // Write mode.
-                (*p->hedgeLUT)[p->curIdx++] = hedge;
-            }
-            else
-            {
-                // Count mode.
-                p->curIdx++;
-            }
+            (*p->hedgeLUT)[p->curIdx++] = hedge;
+
         } while((hedge = hedge->next) != leaf->hedge);
     }
     return false; // Continue traversal.
 }
 
-static void buildHEdgeLut(GameMap* map, BspTreeNode* rootNode)
+static void buildHEdgeLut(BspBuilder& builder, GameMap* map)
 {
     Q_ASSERT(map);
 
@@ -110,23 +102,16 @@ static void buildHEdgeLut(GameMap* map, BspTreeNode* rootNode)
         map->hedges = 0;
     }
 
-    // Count the number of used hedges.
-    hedgecollectorparams_t parm;
-    parm.curIdx = 0;
-    parm.hedgeLUT = 0;
-    if(rootNode)
-    {
-        BspTreeNode::InOrder(*rootNode, hedgeCollector, &parm);
-    }
-    map->numHEdges = parm.curIdx;
-
+    map->numHEdges = builder.numHEdges();
     if(!map->numHEdges) return; // Should never happen.
 
-    // Allocate the HEdge LUT and collect pointers.
+    // Allocate the LUT and acquire ownership of the half-edges.
     map->hedges = (HEdge**)Z_Calloc(map->numHEdges * sizeof(HEdge*), PU_MAPSTATIC, 0);
+
+    hedgecollectorparams_t parm;
     parm.curIdx = 0;
     parm.hedgeLUT = &map->hedges;
-    BspTreeNode::InOrder(*rootNode, hedgeCollector, &parm);
+    BspTreeNode::InOrder(*builder.root(), hedgeCollector, &parm);
 }
 
 static void finishHEdges(GameMap* map)
@@ -307,16 +292,8 @@ void MPE_SaveBsp(BspBuilder_c* builder_c, GameMap* map, uint* numEditableVertexe
     Q_ASSERT(builder_c);
     BspBuilder& builder = *builder_c->inst;
 
-    BspTreeNode* rootNode = builder.root();
-
-    buildHEdgeLut(map, rootNode);
-    hardenVertexes(builder, map, numEditableVertexes, editableVertexes);
-    updateVertexLinks(map);
-
-    finishHEdges(map);
-    hardenBSP(builder, map);
-
     long rHeight = 0, lHeight = 0;
+    BspTreeNode* rootNode = builder.root();
     if(rootNode && !rootNode->isLeaf())
     {
         if(rootNode->right())
@@ -330,7 +307,14 @@ void MPE_SaveBsp(BspBuilder_c* builder_c, GameMap* map, uint* numEditableVertexe
             lHeight = 0;
     }
 
-    LOG_INFO("BSP built: %d Nodes, %d Leafs, %d HEdges, %d Vertexes\n  Balance %d (l%d - r%d).")
-            << map->numBspNodes << map->numBspLeafs << map->numHEdges << map->numVertexes
-            << lHeight - rHeight << lHeight << rHeight;
+    LOG_INFO("BSP built: Balance %d (r:%d - l:%d) #%d Nodes, #%d Leafs, #%d HEdges, #%d Vertexes.")
+            << builder.numNodes() << builder.numLeafs() << builder.numHEdges() << builder.numVertexes()
+            << rHeight - lHeight << rHeight << lHeight;
+
+    buildHEdgeLut(builder, map);
+    hardenVertexes(builder, map, numEditableVertexes, editableVertexes);
+    updateVertexLinks(map);
+
+    finishHEdges(map);
+    hardenBSP(builder, map);
 }

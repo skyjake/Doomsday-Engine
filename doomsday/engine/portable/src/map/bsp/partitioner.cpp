@@ -1536,6 +1536,32 @@ uint Partitioner::numLeafs()
     return _numLeafs;
 }
 
+static int hedgeCounter(BspTreeNode& tree, void* parameters)
+{
+    if(tree.isLeaf())
+    {
+        uint* count = static_cast<uint*>(parameters);
+        BspLeaf* leaf = reinterpret_cast<BspLeaf*>(tree.userData());
+        HEdge* hedge = leaf->hedge;
+        do
+        {
+            (*count)++;
+        } while((hedge = hedge->next) != leaf->hedge);
+    }
+    return false; // Continue traversal.
+}
+
+uint Partitioner::numHEdges()
+{
+    uint count = 0;
+    if(rootNode)
+    {
+        // Count the number of used hedges.
+        BspTreeNode::InOrder(*rootNode, hedgeCounter, static_cast<void*>(&count));
+    }
+    return count;
+}
+
 const HPlaneIntercept* Partitioner::partitionInterceptByVertex(Vertex* vertex)
 {
     if(!vertex) return NULL; // Hmm...
