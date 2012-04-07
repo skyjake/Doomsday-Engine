@@ -110,7 +110,7 @@ int     defFullscreen = true;
 int numTexUnits = 1;
 boolean envModAdd;              // TexEnv: modulate and add is available.
 int     test3dfx = 0;
-int     r_framecounter;         // Used only for statistics.
+//int     r_framecounter;         // Used only for statistics.
 int     r_detail = true;        // Render detail textures (if available).
 
 float   vid_gamma = 1.0f, vid_bright = 0, vid_contrast = 1.0f;
@@ -192,7 +192,7 @@ void GL_DoUpdate(void)
     Window_SwapBuffers(theWindow);
 
     // Increment frame counter.
-    r_framecounter++;
+    //r_framecounter++;
 }
 
 void GL_GetGammaRamp(displaycolortransfer_t *ramp)
