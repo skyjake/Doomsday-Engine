@@ -75,7 +75,7 @@ public:
      * Retrieve the user data value associated with this node.
      * @return  User data pointer associated with this tree node else @c NULL.
      */
-    value userData()
+    value userData() const
     {
         return userDataValue;
     }
@@ -96,13 +96,13 @@ public:
      * Retrieve the parent tree node (if present).
      * @return  The parent tree node else @c NULL.
      */
-    BinaryTree* parent()
+    BinaryTree* parent() const
     {
         return _parent;
     }
 
     /// @c true iff this node has a parent node.
-    inline bool hasParent() { return 0 != parent(); }
+    inline bool hasParent() const { return 0 != parent(); }
 
     /**
      * Set the parent node of this node.
@@ -122,7 +122,7 @@ public:
      * @param child  Identifier of the child to return.
      * @return  The identified child if present else @c NULL.
      */
-    BinaryTree* child(ChildId child)
+    BinaryTree* child(ChildId child) const
     {
         assertValidChildId(child);
         if(child) return leftChild;
@@ -130,17 +130,17 @@ public:
     }
 
     /// Convenience methods for accessing the right and left subtrees respectively.
-    inline BinaryTree* right() { return child(RIGHT); }
-    inline BinaryTree* left()  { return child(LEFT);  }
+    inline BinaryTree* right() const { return child(RIGHT); }
+    inline BinaryTree* left()  const { return child(LEFT);  }
 
     /// @c true iff this node has the specifed @a childId node.
-    inline bool hasChild(ChildId childId) { return 0 != child(childId); }
+    inline bool hasChild(ChildId childId) const { return 0 != child(childId); }
 
     /// @c true iff this node has a right child node.
-    inline bool hasRight() { return hasChild(RIGHT); }
+    inline bool hasRight() const { return hasChild(RIGHT); }
 
     /// @c true iff this node has a left child node
-    inline bool hasLeft()  { return hasChild(LEFT); }
+    inline bool hasLeft()  const { return hasChild(LEFT); }
 
     /**
      * Set the specified node as a child of this node.
@@ -165,7 +165,7 @@ public:
      * Retrieve the height of this tree.
      * @return  Tree height.
      */
-    size_t height()
+    size_t height() const
     {
         if(!isLeaf())
         {
