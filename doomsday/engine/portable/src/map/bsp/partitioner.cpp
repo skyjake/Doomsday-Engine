@@ -1125,6 +1125,10 @@ bool Partitioner::buildNodes(SuperBlock& hedgeList, BspTreeNode** subtree)
     BspTreeNode* child;
     bool builtOK = buildNodes(rightHEdges->root(), &child);
     (*subtree)->setRight(child);
+    if((*subtree)->hasRight())
+    {
+        (*subtree)->right()->setParent(*subtree);
+    }
     delete rightHEdges;
 
     if(builtOK)
@@ -1132,6 +1136,10 @@ bool Partitioner::buildNodes(SuperBlock& hedgeList, BspTreeNode** subtree)
         // Recurse on the left subset.
         builtOK = buildNodes(leftHEdges->root(), &child);
         (*subtree)->setLeft(child);
+        if((*subtree)->hasLeft())
+        {
+            (*subtree)->left()->setParent(*subtree);
+        }
     }
 
     delete leftHEdges;
