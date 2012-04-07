@@ -704,7 +704,7 @@ boolean Sys_GLCheckError(void)
     {
         GLenum error = glGetError();
         if(error != GL_NO_ERROR)
-            Con_Error("OpenGL error: 0x%x\n", error);
+            Con_Message("OpenGL error: 0x%x\n", error);
     }
 #endif
     return false;

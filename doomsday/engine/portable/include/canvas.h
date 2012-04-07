@@ -38,7 +38,7 @@ class Canvas : public QGLWidget
     Q_OBJECT
 
 public:
-    explicit Canvas(QWidget *parent = 0);
+    explicit Canvas(QWidget *parent = 0, QGLWidget* shared = 0);
     ~Canvas();
     
     /**
@@ -68,6 +68,8 @@ public:
     void setResizedFunc(void (*canvasResizedFunc)(Canvas&));
 
     void setFocusFunc(void (*canvasFocusChanged)(Canvas&, bool));
+
+    void useCallbacksFrom(Canvas& other);
 
     /**
      * Grabs the contents of the canvas framebuffer.
@@ -101,6 +103,8 @@ public:
     void grab(struct image_s* img, const QSize& outputSize = QSize());
 
     void trapMouse(bool trap = true);
+
+    bool isMouseTrapped() const;
 
 protected:
     void initializeGL();

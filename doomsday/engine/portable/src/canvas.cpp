@@ -110,9 +110,13 @@ struct Canvas::Instance
     }
 };
 
-Canvas::Canvas(QWidget *parent) : QGLWidget(parent)
+Canvas::Canvas(QWidget* parent, QGLWidget* shared) : QGLWidget(parent, shared)
 {
     d = new Instance(this);
+
+    LOG_AS("Canvas");
+    LOG_DEBUG("swap interval: ") << format().swapInterval();
+    LOG_DEBUG("multisample: %b") << format().sampleBuffers();
 
     setFocusPolicy(Qt::StrongFocus);
     setMouseTracking(true); // receive moves always
@@ -144,6 +148,13 @@ void Canvas::setResizedFunc(void (*canvasResizedFunc)(Canvas&))
 void Canvas::setFocusFunc(void (*canvasFocusChanged)(Canvas&, bool))
 {
     d->focusCallback = canvasFocusChanged;
+}
+
+void Canvas::useCallbacksFrom(Canvas &other)
+{
+    d->drawCallback = other.d->drawCallback;
+    d->focusCallback = other.d->focusCallback;
+    d->resizedCallback = other.d->resizedCallback;
 }
 
 QImage Canvas::grabImage(const QSize& outputSize)
@@ -192,6 +203,11 @@ void Canvas::trapMouse(bool trap)
     {
         d->ungrabMouse();
     }
+}
+
+bool Canvas::isMouseTrapped() const
+{
+    return d->mouseGrabbed;
 }
 
 void Canvas::initializeGL()

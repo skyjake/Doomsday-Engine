@@ -59,6 +59,10 @@ void DD_GameLoopDrawer(void);
  * ready before this is called. Ideally the updates would appear at a fixed
  * frequency; in practice, inaccuracies due to time measurement and background
  * processes may result in varying update intervals.
+ *
+ * Note that if the maximum refresh rate has been set to a value higher than
+ * the vsync rate, this function does nothing but update the statistisc on
+ * frame timing.
  */
 void DD_WaitForOptimalUpdateTime(void);
 

@@ -2047,6 +2047,8 @@ void Con_Error(const char* error, ...)
     char        buff[2048], err[256];
     va_list     argptr;
 
+    Window_TrapMouse(Window_Main(), false);
+
     // Already in an error?
     if(!ConsoleInited || errorInProgress)
     {

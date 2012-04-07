@@ -85,6 +85,7 @@ struct ddwindow_s
     bool needShowFullscreen;
     bool needReshowFullscreen;
     bool needShowNormal;
+    bool needRecreateCanvas;
 
     ddwindowtype_t type;
     boolean inited;
@@ -188,8 +189,6 @@ struct ddwindow_s
             const DisplayMode* mode = DisplayMode_FindClosest(width(), height(), colorDepthBits, 0);
             if(mode && DisplayMode_Change(mode, true /* fullscreen: capture */))
             {
-                Window_TrapMouse(this, true);
-
                 geometry.size.width = DisplayMode_Current()->width;
                 geometry.size.height = DisplayMode_Current()->height;
 
@@ -197,6 +196,7 @@ struct ddwindow_s
                 // Pull the window again over the shield after the mode change.
                 DisplayMode_Native_Raise(Window_NativeHandle(this));
 #endif
+                Window_TrapMouse(this, true);
                 return true;
             }
         }
@@ -507,6 +507,7 @@ static void updateMainWindowLayout(void)
 
         DisplayMode_Native_Raise(Window_NativeHandle(win));
 #endif
+        Window_TrapMouse(win, true);
     }
 
     if(win->needShowNormal)
@@ -820,7 +821,7 @@ static boolean createContext(void)
 
 static Window* canvasToWindow(Canvas& DENG_DEBUG_ONLY(canvas))
 {
-    assert(&mainWindow.widget->canvas() == &canvas); /// @todo multiwindow
+    assert(mainWindow.widget->ownsCanvas(&canvas)); /// @todo multiwindow
 
     return &mainWindow;
 }
@@ -1124,8 +1125,24 @@ void Window_Draw(Window* win)
     assert(win);
     assert(win->widget);
 
-    // Request repaint at the earliest convenience.
-    win->widget->canvas().update();
+    // The canvas needs to be recreated when the GL format has changed
+    // (e.g., multisampling).
+    if(win->needRecreateCanvas)
+    {
+        win->needRecreateCanvas = false;
+        win->widget->recreateCanvas();
+        return;
+    }
+
+    if(Window_ShouldRepaintManually(win))
+    {
+        win->widget->canvas().repaint();
+    }
+    else
+    {
+        // Request repaint at the earliest convenience.
+        win->widget->canvas().update();
+    }
 }
 
 void Window_Show(Window *wnd, boolean show)
@@ -1265,6 +1282,29 @@ void Window_RestoreState(Window* wnd)
 
 void Window_TrapMouse(const Window* wnd, boolean enable)
 {
+    if(!wnd || novideo) return;
+
     wnd->assertWindow();
     wnd->widget->canvas().trapMouse(enable);
+}
+
+boolean Window_IsMouseTrapped(const Window* wnd)
+{
+    if(wnd->type == WT_CONSOLE) return false;
+    wnd->assertWindow();
+    return wnd->widget->canvas().isMouseTrapped();
+}
+
+boolean Window_ShouldRepaintManually(const Window* wnd)
+{
+    // When mouse is trapped, we update the screen during the main loop
+    // iteration rather than waiting for the windowing system to send an update
+    // event.
+    return Window_IsMouseTrapped(wnd);
+}
+
+void Window_UpdateCanvasFormat(Window* wnd)
+{
+    assert(wnd != 0);
+    wnd->needRecreateCanvas = true;
 }
