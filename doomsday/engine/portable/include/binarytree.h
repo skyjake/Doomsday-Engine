@@ -24,6 +24,7 @@
 
 #ifdef __cplusplus
 
+#include "dd_types.h"
 #include <algorithm>
 #include <assert.h>
 
