@@ -43,7 +43,13 @@
 
 BinaryTree* BinaryTree_NewWithSubtrees(void* userData, BinaryTree* rightSubtree, BinaryTree* leftSubtree)
 {
-    BinaryTree* tree = TOPUBLIC(new de::BinaryTree<void*>(userData, TOINTERNAL(rightSubtree), TOINTERNAL(leftSubtree)));
+    BinaryTree* tree = TOPUBLIC(new de::BinaryTree<void*>(userData, 0/*no parent*/, TOINTERNAL(rightSubtree), TOINTERNAL(leftSubtree)));
+    return tree;
+}
+
+BinaryTree* BinaryTree_NewWithParent(void* userData, BinaryTree* parent)
+{
+    BinaryTree* tree = TOPUBLIC(new de::BinaryTree<void*>(userData, TOINTERNAL(parent)));
     return tree;
 }
 
@@ -77,6 +83,24 @@ boolean BinaryTree_IsLeaf(BinaryTree* tree)
     return CPP_BOOL(self->isLeaf());
 }
 
+BinaryTree* BinaryTree_Parent(BinaryTree* tree)
+{
+    SELF(tree);
+    return TOPUBLIC(self->parent());
+}
+
+boolean BinaryTree_HasParent(BinaryTree* tree)
+{
+    SELF(tree);
+    return CPP_BOOL(self->hasParent());
+}
+
+BinaryTree* BinaryTree_SetParent(BinaryTree* tree, BinaryTree* parent)
+{
+    SELF(tree);
+    return TOPUBLIC(&self->setParent(TOINTERNAL(parent)));
+}
+
 BinaryTree* BinaryTree_Child(BinaryTree* tree, boolean left)
 {
     SELF(tree);
@@ -87,6 +111,12 @@ BinaryTree* BinaryTree_SetChild(BinaryTree* tree, boolean left, BinaryTree* chil
 {
     SELF(tree);
     return TOPUBLIC(&self->setChild(TOCHILDID(left), TOINTERNAL(child)));
+}
+
+boolean BinaryTree_HasChild(BinaryTree* tree, boolean left)
+{
+    SELF(tree);
+    return CPP_BOOL(self->hasChild(TOCHILDID(left)));
 }
 
 void* BinaryTree_UserData(BinaryTree* tree)

@@ -52,8 +52,8 @@ public:
         assert(child == RIGHT || child == LEFT);
     }
 
-    BinaryTree(value userData, BinaryTree* right=NULL, BinaryTree* left=NULL)
-        : rightChild(right), leftChild(left), userDataValue(userData)
+    BinaryTree(value userData, BinaryTree* parent=0, BinaryTree* right=0, BinaryTree* left=0)
+        : _parent(parent), rightChild(right), leftChild(left), userDataValue(userData)
     {}
 
     ~BinaryTree()
@@ -93,6 +93,30 @@ public:
     }
 
     /**
+     * Retrieve the parent tree node (if present).
+     * @return  The parent tree node else @c NULL.
+     */
+    BinaryTree* parent()
+    {
+        return _parent;
+    }
+
+    /// @c true iff this node has a parent node.
+    inline bool hasParent() { return 0 != parent(); }
+
+    /**
+     * Set the parent node of this node.
+     *
+     * @param parent  Parent node to be linked (can be @c NULL).
+     * @return  Reference to this BinaryTree.
+     */
+    BinaryTree& setParent(BinaryTree* parent)
+    {
+        _parent = parent;
+        return *this;
+    }
+
+    /**
      * Retrieve the identified child of this node (if present).
      *
      * @param child  Identifier of the child to return.
@@ -108,6 +132,15 @@ public:
     /// Convenience methods for accessing the right and left subtrees respectively.
     inline BinaryTree* right() { return child(RIGHT); }
     inline BinaryTree* left()  { return child(LEFT);  }
+
+    /// @c true iff this node has the specifed @a childId node.
+    inline bool hasChild(ChildId childId) { return 0 != child(childId); }
+
+    /// @c true iff this node has a right child node.
+    inline bool hasRight() { return hasChild(RIGHT); }
+
+    /// @c true iff this node has a left child node
+    inline bool hasLeft()  { return hasChild(LEFT); }
 
     /**
      * Set the specified node as a child of this node.
@@ -250,6 +283,9 @@ public:
     }
 
 private:
+    /// Parent of this subtree (if any).
+    BinaryTree* _parent;
+
     /// Subtrees.
     BinaryTree* rightChild, *leftChild;
 
@@ -298,6 +334,15 @@ BinaryTree* BinaryTree_NewWithUserData(void* userData);
  * Create a new BinaryTree.
  *
  * @param userData  User data to be associated with the new (sub)tree.
+ * @param parent  Parent node to associate with the new (sub)tree.
+ * @return  New BinaryTree instance.
+ */
+BinaryTree* BinaryTree_NewWithParent(void* userData, BinaryTree* parent);
+
+/**
+ * Create a new BinaryTree.
+ *
+ * @param userData  User data to be associated with the new (sub)tree.
  * @param rightSubtree  Right child subtree. Can be @a NULL.
  * @param leftSubtree   Left child subtree. Can be @c NULL.
  * @return  New BinaryTree instance.
@@ -309,6 +354,12 @@ BinaryTree* BinaryTree_NewWithSubtrees(void* userData, BinaryTree* rightSubtree,
  * @param tree  BinaryTree instance.
  */
 void BinaryTree_Delete(BinaryTree* tree);
+
+BinaryTree* BinaryTree_Parent(BinaryTree* tree);
+
+boolean BinaryTree_HasParent(BinaryTree* tree);
+
+BinaryTree* BinaryTree_SetParent(BinaryTree* tree, BinaryTree* parent);
 
 /**
  * Given the specified node, return one of it's children.
@@ -327,7 +378,6 @@ BinaryTree* BinaryTree_Child(BinaryTree* tree, boolean left);
  * Retrieve the user data associated with the specified (sub)tree.
  *
  * @param tree  BinaryTree instance.
- *
  * @return  User data pointer associated with this tree node else @c NULL.
  */
 void* BinaryTree_UserData(BinaryTree* tree);
@@ -344,6 +394,11 @@ BinaryTree* BinaryTree_SetChild(BinaryTree* tree, boolean left, BinaryTree* subt
 
 #define BinaryTree_SetRight(tree, subtree) BinaryTree_SetChild((tree), false, (subtree))
 #define BinaryTree_SetLeft(tree, subtree)  BinaryTree_SetChild((tree), true, (subtree))
+
+boolean BinaryTree_HasChild(BinaryTree* tree, boolean left);
+
+#define BinaryTree_HasRight(tree, subtree) BinaryTree_HasChild((tree), false)
+#define BinaryTree_HasLeft(tree, subtree)  BinaryTree_HasChild((tree), true)
 
 /**
  * Set the user data assoicated with the specified (sub)tree.
