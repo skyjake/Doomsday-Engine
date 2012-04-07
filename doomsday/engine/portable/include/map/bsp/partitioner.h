@@ -117,19 +117,35 @@ public:
     Partitioner(GameMap* _map, uint* numEditableVertexes, Vertex*** editableVertexes, int _splitCostFactor=7);
     ~Partitioner();
 
-    void setSplitCostFactor(int factor)
-    {
-        splitCostFactor = factor;
-    }
+    Partitioner& setSplitCostFactor(int factor);
 
     bool build();
 
     BspTreeNode* root() const;
 
+    /**
+     * Retrieve the number of BspNodes owned by this Partitioner. When the
+     * build completes this number will be the total number of BspNodes that
+     * were produced during that process. Note that as BspNode ownership is
+     * claimed this number will decrease respectively.
+     *
+     * @return  Current number of BspNodes owned by this Partitioner.
+     */
     uint numNodes();
 
+    /**
+     * Retrieve the number of BspLeafs owned by this Partitioner. When the
+     * build completes this number will be the total number of BspLeafs that
+     * were produced during that process. Note that as BspLeaf ownership is
+     * claimed this number will decrease respectively.
+     *
+     * @return  Current number of BspLeafs owned by this Partitioner.
+     */
     uint numLeafs();
 
+    /**
+     * Retrieve the total number of Vertexes produced during the build process.
+     */
     uint numVertexes();
 
     Vertex const& vertex(uint idx);
@@ -169,11 +185,6 @@ private:
     }
 
     void findMapBounds(AABoxf* aaBox) const;
-
-    /**
-     * Create a new leaf from a list of half-edges.
-     */
-    BspLeaf* createBSPLeaf(SuperBlock& hedgeList);
 
     const HPlaneIntercept* makePartitionIntersection(HEdge* hedge, int leftSide);
 
@@ -353,6 +364,12 @@ private:
      */
     HEdgeIntercept* newHEdgeIntercept(Vertex* vertex, bool lineDefIsSelfReferencing);
 
+    HEdgeIntercept* hedgeInterceptByVertex(Vertex* vertex);
+
+    void clearBspObject(BspTreeNode& tree);
+
+    void clearAllBspObjects();
+
     void clearAllHEdgeInfo();
 
     HEdgeTip* newHEdgeTip();
@@ -372,7 +389,27 @@ private:
      */
     HEdge* cloneHEdge(const HEdge& other);
 
-    HEdgeIntercept* hedgeInterceptByVertex(Vertex* vertex);
+    /**
+     * Allocate another BspLeaf and populate it with half-edges from the supplied list.
+     *
+     * @param hedgeList  SuperBlock containing the list of half-edges with which
+     *                   to build the leaf using.
+     * @return  Newly created BspLeaf.
+     */
+    BspLeaf* newBspLeaf(SuperBlock& hedgeList);
+
+    /**
+     * Allocate another BspNode.
+     *
+     * @param origin  Origin of the half-plane in the map coordinate space.
+     * @param angle  Angle of the half-plane in the map coordinate space.
+     * @param rightBounds  Boundary of the right child map coordinate subspace. Can be @c NULL.
+     * @param leftBoubds   Boundary of the left child map coordinate subspace. Can be @a NULL.
+     *
+     * @return  Newly created BspNode.
+     */
+    BspNode* newBspNode(double const origin[2], double const angle[2],
+                        AABoxf* rightBounds, AABoxf* leftBounds);
 
     /**
      * Check whether a line with the given delta coordinates and beginning at this
@@ -422,6 +459,10 @@ private:
     /// @todo Refactor me away:
     uint* numEditableVertexes;
     Vertex*** editableVertexes;
+
+    /// Running totals of constructed BSP data objects.
+    uint _numNodes;
+    uint _numLeafs;
 
     /// Extended info about LineDefs in the current map.
     typedef std::vector<LineDefInfo> LineDefInfos;

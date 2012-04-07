@@ -84,6 +84,7 @@ Partitioner::Partitioner(GameMap* _map, uint* _numEditableVertexes,
     splitCostFactor(_splitCostFactor),
     map(_map),
     numEditableVertexes(_numEditableVertexes), editableVertexes(_editableVertexes),
+    _numNodes(0), _numLeafs(0),
     rootNode(0), partition(0),
     unclosedSectors(), migrantHEdges(),
     builtOK(false)
@@ -91,7 +92,7 @@ Partitioner::Partitioner(GameMap* _map, uint* _numEditableVertexes,
     initPartitionInfo();
 }
 
-static int clearBspObject(BspTreeNode& tree, void* /*parameters*/)
+void Partitioner::clearBspObject(BspTreeNode& tree)
 {
     if(tree.isLeaf())
     {
@@ -100,6 +101,8 @@ static int clearBspObject(BspTreeNode& tree, void* /*parameters*/)
         {
             LOG_DEBUG("Partitioner: Clearing unclaimed leaf %p.") << leaf;
             BspLeaf_Delete(leaf);
+            // There is now one less BspLeaf.
+            _numLeafs -= 1;
         }
     }
     else
@@ -109,9 +112,50 @@ static int clearBspObject(BspTreeNode& tree, void* /*parameters*/)
         {
             LOG_DEBUG("Partitioner: Clearing unclaimed node %p.") << node;
             BspNode_Delete(node);
+            // There is now one less BspNode.
+            _numNodes -= 1;
         }
     }
-    return false; // Continue iteration.
+}
+
+void Partitioner::clearAllBspObjects()
+{
+    // Iterative pre-order traversal of the BSP tree.
+    BspTreeNode* cur = rootNode;
+    BspTreeNode* prev = 0;
+    while(cur)
+    {
+        while(cur)
+        {
+            clearBspObject(*cur);
+
+            if(prev == cur->parent())
+            {
+                // Descending - right first, then left.
+                prev = cur;
+                if(cur->hasRight()) cur = cur->right();
+                else                cur = cur->left();
+            }
+            else if(prev == cur->right())
+            {
+                // Last moved up the right branch - descend the left.
+                prev = cur;
+                cur = cur->left();
+            }
+            else if(prev == cur->left())
+            {
+                // Last moved up the left branch - continue upward.
+                prev = cur;
+                cur = cur->parent();
+            }
+        }
+
+        if(prev)
+        {
+            // No left child - back up.
+            cur = prev->parent();
+        }
+    }
 }
 
 Partitioner::~Partitioner()
@@ -135,7 +179,7 @@ Partitioner::~Partitioner()
     if(rootNode)
     {
         // If ownership of the BSP data has been claimed this should be a no-op.
-        BspTreeNode::PostOrder(*rootNode, clearBspObject, NULL/*no parameters*/);
+        clearAllBspObjects();
 
         // Destroy our private BSP tree.
         delete rootNode;
@@ -1028,7 +1072,7 @@ void Partitioner::partitionHEdges(SuperBlock& hedgeList, SuperBlock& rights, Sup
         Con_Error("Partitioner::partitionhedges: Separated half-edge has no left side.");
 }
 
-BspLeaf* Partitioner::createBSPLeaf(SuperBlock& hedgeList)
+BspLeaf* Partitioner::newBspLeaf(SuperBlock& hedgeList)
 {
     BspLeaf* leaf = BspLeaf_New();
 
@@ -1075,6 +1119,8 @@ BspLeaf* Partitioner::createBSPLeaf(SuperBlock& hedgeList)
         }
     }
 
+    // There is now one more BspLeaf;
+    _numLeafs += 1;
     return leaf;
 }
 
@@ -1099,7 +1145,7 @@ bool Partitioner::buildNodes(SuperBlock& hedgeList, BspTreeNode** subtree)
         // No partition required, already convex.
         //LOG_TRACE("Partitioner::buildNodes: Convex.");
 
-        BspLeaf* leaf = createBSPLeaf(hedgeList);
+        BspLeaf* leaf = newBspLeaf(hedgeList);
         *subtree = new BspTreeNode(reinterpret_cast<runtime_mapdata_header_t*>(leaf));
         return true;
     }
@@ -1126,9 +1172,8 @@ bool Partitioner::buildNodes(SuperBlock& hedgeList, BspTreeNode** subtree)
     rightHEdges->findHEdgeBounds(rightHEdgesBounds);
     leftHEdges->findHEdgeBounds(leftHEdgesBounds);
 
-    BspNode* node = BspNode_New(partition->origin(), partition->angle());
-    BspNode_SetRightBounds(node, &rightHEdgesBounds);
-    BspNode_SetLeftBounds(node, &leftHEdgesBounds);
+    BspNode* node = newBspNode(partition->origin(), partition->angle(),
+                               &rightHEdgesBounds, &leftHEdgesBounds);
 
     *subtree = new BspTreeNode(reinterpret_cast<runtime_mapdata_header_t*>(node));
 
@@ -1470,39 +1515,25 @@ bool Partitioner::build()
     return builtOK;
 }
 
+Partitioner& Partitioner::setSplitCostFactor(int factor)
+{
+    splitCostFactor = factor;
+    return *this;
+}
+
 BspTreeNode* Partitioner::root() const
 {
     return rootNode;
 }
 
-static int countNode(BspTreeNode& tree, void* data)
-{
-    if(!tree.isLeaf())
-        (*((uint*) data))++;
-    return false; // Continue iteration.
-}
-
-/// @todo Store this as a running total.
 uint Partitioner::numNodes()
 {
-    uint count = 0;
-    BspTreeNode::PostOrder(*rootNode, countNode, static_cast<void*>(&count));
-    return count;
+    return _numNodes;
 }
 
-static int countLeaf(BspTreeNode& tree, void* data)
-{
-    if(tree.isLeaf())
-        (*((uint*) data))++;
-    return false; // Continue iteration.
-}
-
-/// @todo Store this as a running total.
 uint Partitioner::numLeafs()
 {
-    uint count = 0;
-    BspTreeNode::PostOrder(*rootNode, countLeaf, static_cast<void*>(&count));
-    return count;
+    return _numLeafs;
 }
 
 const HPlaneIntercept* Partitioner::partitionInterceptByVertex(Vertex* vertex)
@@ -1925,6 +1956,26 @@ HEdge* Partitioner::cloneHEdge(const HEdge& other)
         HEdge_AttachBspBuildInfo(hedge, info);
     }
     return hedge;
+}
+
+BspNode* Partitioner::newBspNode(double const origin[2], double const angle[2],
+    AABoxf* rightBounds, AABoxf* leftBounds)
+{
+    BspNode* node = BspNode_New(origin, angle);
+
+    if(rightBounds)
+    {
+        BspNode_SetRightBounds(node, rightBounds);
+    }
+
+    if(leftBounds)
+    {
+        BspNode_SetLeftBounds(node, leftBounds);
+    }
+
+    // There is now one more BspNode.
+    _numNodes += 1;
+    return node;
 }
 
 bool Partitioner::hedgeIsInLeaf(const HEdge* hedge) const
