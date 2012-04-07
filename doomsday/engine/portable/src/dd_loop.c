@@ -85,8 +85,6 @@ static int timeDeltasIndex = 0;
 
 static float realFrameTimePos = 0;
 
-static boolean waitingForDraw = false;
-
 static void startFrame(void);
 static void endFrame(void);
 static void runTics(void);
@@ -118,7 +116,7 @@ int DD_GameLoop(void)
 
 void DD_GameLoopCallback(void)
 {
-    if(!novideo && waitingForDraw) return; // Only after the frame has been drawn, please.
+    if(novideo) return; // Only after the frame has been drawn, please.
 
     if(Sys_IsShuttingDown())
         return; // Shouldn't run this while shutting down.
@@ -137,9 +135,6 @@ void DD_GameLoopCallback(void)
     // Request update of window contents.
     Window_Draw(Window_Main());
 
-    // Don't run this callback until the drawing has occurred.
-    waitingForDraw = true;
-
     if(!novideo)
     {
         GL_ProcessDeferredTasks(FRAME_DEFERRED_UPLOAD_TIMEOUT);
@@ -154,9 +149,6 @@ void DD_GameLoopDrawer(void)
     if(novideo || Sys_IsShuttingDown()) return;
 
     assert(!Con_IsBusy()); // Busy mode has its own drawer.
-
-    // We will now be drawing the contents of the window.
-    waitingForDraw = false;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
 
