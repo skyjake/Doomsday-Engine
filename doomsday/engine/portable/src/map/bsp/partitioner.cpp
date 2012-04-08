@@ -29,27 +29,40 @@
 
 #include <cmath>
 #include <vector>
+#include <list>
 #include <algorithm>
 
 #include <de/Log>
 
 #include "de_base.h"
 #include "de_console.h"
-#include "bspleaf.h"
-#include "bspnode.h"
-#include "hedge.h"
 #include "p_mapdata.h"
 #include "p_maputil.h"
 #include "m_misc.h"
 
+#include "bspleaf.h"
+#include "bspnode.h"
+#include "hedge.h"
+#include "map/bsp/bsphedgeinfo.h"
 #include "map/bsp/hedgeintercept.h"
+#include "map/bsp/hedgetip.h"
 #include "map/bsp/hplane.h"
+#include "map/bsp/linedefinfo.h"
 #include "map/bsp/partitioncost.h"
 #include "map/bsp/superblockmap.h"
+#include "map/bsp/vertexinfo.h"
 
 #include "map/bsp/partitioner.h"
 
 using namespace de::bsp;
+
+static const double IFFY_LEN = 4.0;
+
+/// Smallest distance between two points before being considered equal.
+static const double DIST_EPSILON = (1.0 / 128.0);
+
+/// Smallest difference between two angles before being considered equal (in degrees).
+static const double ANG_EPSILON = (1.0 / 1024.0);
 
 static bool getAveragedCoords(BspLeaf* leaf, pvec2d_t midPoint);
 static void logUnclosed(const BspLeaf* leaf);
@@ -1575,8 +1588,8 @@ struct Partitioner::Instance
 
         HEdgeTip* tip = newHEdgeTip();
         tip->angle = angle;
-        tip->ET_edge[BACK]  = back;
-        tip->ET_edge[FRONT] = front;
+        tip->ET_back  = back;
+        tip->ET_front = front;
 
         // Find the correct place (order is increasing angle).
         VertexInfo& vtxInfo = vertexInfo(*vtx);
@@ -1769,13 +1782,13 @@ struct Partitioner::Instance
             if(angle + ANG_EPSILON < tip->angle)
             {
                 // Found it.
-                return (tip->ET_edge[FRONT]? tip->ET_edge[FRONT]->sector : NULL);
+                return (tip->ET_front? tip->ET_front->sector : NULL);
             }
 
             if(!tip->ET_next)
             {
                 // No more tips, therefore this is the BACK of the tip with the largest angle.
-                return (tip->ET_edge[BACK]? tip->ET_edge[BACK]->sector : NULL);
+                return (tip->ET_back? tip->ET_back->sector : NULL);
             }
         }
 

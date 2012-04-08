@@ -28,8 +28,6 @@
 #ifndef LIBDENG_BSPBUILDER_HPLANE
 #define LIBDENG_BSPBUILDER_HPLANE
 
-#include "p_mapdata.h"
-
 #include <list>
 
 namespace de {

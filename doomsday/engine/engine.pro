@@ -144,6 +144,7 @@ DENG_HEADERS += \
     portable/include/map/bspbuilder.h \
     portable/include/map/bsp/bsphedgeinfo.h \
     portable/include/map/bsp/hedgeintercept.h \
+    portable/include/map/bsp/hedgetip.h \
     portable/include/map/bsp/hplane.h \
     portable/include/map/bsp/linedefinfo.h \
     portable/include/map/bsp/partitioncost.h \

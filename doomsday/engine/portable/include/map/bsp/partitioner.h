@@ -29,58 +29,10 @@
 #define LIBDENG_BSP_PARTITIONER
 
 #include "p_mapdata.h"
-
 #include "map/bsp/bsptreenode.h"
-#include "map/bsp/bsphedgeinfo.h"
-#include "map/bsp/linedefinfo.h"
-#include "map/bsp/vertexinfo.h"
-
-#include <vector>
-#include <list>
-
-#define ET_prev             link[0]
-#define ET_next             link[1]
-#define ET_edge             hedges
-
-// An edge tip is where an edge meets a vertex.
-struct HEdgeTip
-{
-    // Link in list. List is kept in ANTI-clockwise order.
-    HEdgeTip* link[2]; // {prev, next};
-
-    /// Angle that line makes at vertex (degrees; 0 is E, 90 is N).
-    double angle;
-
-    // Half-edge on each side of the edge. Left is the side of increasing
-    // angles, right is the side of decreasing angles. Either can be NULL
-    // for one sided edges.
-    struct hedge_s* hedges[2];
-
-    HEdgeTip() : angle()
-    {
-        link[0] = 0;
-        link[1] = 0;
-        hedges[0] = 0;
-        hedges[1] = 0;
-    }
-};
 
 namespace de {
 namespace bsp {
-
-const double IFFY_LEN = 4.0;
-
-/// Smallest distance between two points before being considered equal.
-const double DIST_EPSILON = (1.0 / 128.0);
-
-/// Smallest difference between two angles before being considered equal (in degrees).
-const double ANG_EPSILON = (1.0 / 1024.0);
-
-struct HEdgeIntercept;
-class HPlane;
-class HPlaneIntercept;
-class SuperBlock;
-class SuperBlockmap;
 
 /**
  * @algorithm High-level description (courtesy of Raphael Quinet)
@@ -111,14 +63,30 @@ class SuperBlockmap;
 class Partitioner
 {
 public:
-    Partitioner(GameMap* _map, uint* numEditableVertexes,
-                Vertex*** editableVertexes, int _splitCostFactor=7);
+    explicit Partitioner(GameMap* _map, uint* numEditableVertexes,
+                         Vertex*** editableVertexes, int _splitCostFactor=7);
     ~Partitioner();
 
+    /**
+     * Set the cost factor associated with splitting an existing half-edge.
+     * @param factor  New factor value.
+     * @return  Reference to this Partitioner.
+     */
     Partitioner& setSplitCostFactor(int factor);
 
+    /**
+     * Build the BSP for the given map.
+     * @return  @c true= iff completed successfully.
+     */
     bool build();
 
+    /**
+     * Retrieve a pointer to the root BinaryTree node for the constructed BSP.
+     * Even if construction fails this will return a valid node.
+     *
+     * The only time upon which @c NULL is returned is if called prior to calling
+     * BspBuilder::build()
+     */
     BspTreeNode* root() const;
 
     /**

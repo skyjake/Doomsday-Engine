@@ -28,7 +28,7 @@
 #ifndef LIBDENG_BSPBUILDER
 #define LIBDENG_BSPBUILDER
 
-#include "de_play.h"
+#include "p_mapdata.h"
 #include "map/bsp/bsptreenode.h"
 
 namespace de {
@@ -79,14 +79,46 @@ public:
      */
     BspTreeNode* root() const;
 
+    /**
+     * Retrieve the number of BspNodes owned by this Partitioner. When the
+     * build completes this number will be the total number of BspNodes that
+     * were produced during that process. Note that as BspNode ownership is
+     * claimed this number will decrease respectively.
+     *
+     * @return  Current number of BspNodes owned by this Partitioner.
+     */
     uint numNodes();
 
+    /**
+     * Retrieve the number of BspLeafs owned by this Partitioner. When the
+     * build completes this number will be the total number of BspLeafs that
+     * were produced during that process. Note that as BspLeaf ownership is
+     * claimed this number will decrease respectively.
+     *
+     * @return  Current number of BspLeafs owned by this Partitioner.
+     */
     uint numLeafs();
 
+    /**
+     * Retrieve the number of HEdges owned by this Partitioner. When the build
+     * completes this number will be the total number of half-edges that were
+     * produced during that process. Note that as BspLeaf ownership is claimed
+     * this number will decrease respectively.
+     *
+     * @return  Current number of HEdges owned by this Partitioner.
+     */
     uint numHEdges();
 
+    /**
+     * Retrieve the total number of Vertexes produced during the build process.
+     */
     uint numVertexes();
 
+    /**
+     * Retrieve the vertex with specified @a index. If the index is not valid
+     * this will result in fatal error. The caller should ensure the index is
+     * within valid range using Partitioner::numVertexes()
+     */
     Vertex const& vertex(uint idx);
 
 private:

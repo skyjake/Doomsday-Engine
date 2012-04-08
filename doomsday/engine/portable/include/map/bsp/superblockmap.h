@@ -31,8 +31,7 @@
 #define LIBDENG_BSP_SUPERBLOCKMAP
 
 #include "dd_types.h"
-
-#include "map/bsp/bsphedgeinfo.h"
+#include "p_mapdata.h"
 
 #include <de/Log>
 #include <list>
