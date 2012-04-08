@@ -113,6 +113,8 @@ public:
     /**
      * Prints a fragment of text to the output log. The output is added to the log
      * only when a complete line has been printed (i.e., newline character required).
+     * "Fragment" means that the text is not considered to form a complete line;
+     * no newline character is automatically added to the end.
      *
      * @param text   Text to print.
      * @param level  Log level for the message. Only the level in effect when a newline

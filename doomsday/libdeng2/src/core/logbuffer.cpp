@@ -26,6 +26,7 @@
 #include <QTextStream>
 #include <QCoreApplication>
 #include <QTimer>
+#include <QDebug>
 
 using namespace de;
 
@@ -138,31 +139,70 @@ void LogBuffer::setOutputFile(const String& path)
     }
 }
 
+class IOutputStream
+{
+public:
+    virtual ~IOutputStream() {}
+    virtual void flush() {}
+    virtual IOutputStream& operator << (const QString& text) = 0;
+};
+
+class TextOutputStream : public IOutputStream
+{
+public:
+    TextOutputStream(QTextStream* ts) : _ts(ts) {
+        if(_ts) _ts->setCodec("UTF-8");
+    }
+    ~TextOutputStream() {
+        delete _ts;
+    }
+    void flush() {
+        if(_ts) _ts->flush();
+    }
+    IOutputStream& operator << (const QString& text) {
+        if(_ts) (*_ts) << text;
+        return *this;
+    }
+private:
+    QTextStream* _ts;
+};
+
+class DebugOutputStream : public IOutputStream
+{
+public:
+    DebugOutputStream(QtMsgType msgType) {
+        _qs = new QDebug(msgType);
+    }
+    ~DebugOutputStream() {
+        delete _qs;
+    }
+    IOutputStream& operator << (const QString& text) {
+        _qs->nospace();
+        (*_qs) << text.toUtf8().constData();
+        _qs->nospace();
+        return *this;
+    }
+private:
+    QDebug* _qs;
+};
+
 void LogBuffer::flush()
 {
     DENG2_GUARD(this);
 
     if(!_toBeFlushed.isEmpty())
     {
-        QScopedPointer<QTextStream> fs  (_outputFile?     new QTextStream(_outputFile) : 0);
-        QScopedPointer<QTextStream> outs(_standardOutput? new QTextStream(stdout) : 0);
-        QScopedPointer<QTextStream> errs(_standardOutput? new QTextStream(stderr) : 0);
-
-        if(fs.data())
-        {
-            fs->setCodec("UTF-8");
-        }
-
-        /*
-        Writer* writer = 0;
-        if(_outputFile)
-        {
-            // We will add to the end.
-            writer = new Writer(*_outputFile, _outputFile->size());
-        }
-        */
+        TextOutputStream fs  (_outputFile?     new QTextStream(_outputFile) : 0);
+#ifndef WIN32
+        TextOutputStream outs(_standardOutput? new QTextStream(stdout) : 0);
+        TextOutputStream errs(_standardOutput? new QTextStream(stderr) : 0);
+#else
+        DebugOutputStream outs(QtDebugMsg);
+        DebugOutputStream errs(QtWarningMsg);
+#endif
 
 #ifdef _DEBUG
+        // Debug builds include a timestamp and msg type indicator.
         const duint MAX_LENGTH = 109;
         const duint SIMPLE_INDENT = 30;
 #else
@@ -174,8 +214,8 @@ void LogBuffer::flush()
         DENG2_FOR_EACH(i, _toBeFlushed, EntryList::iterator)
         {
             // Error messages will go to stderr instead of stdout.
-            QList<QTextStream*> os;
-            os << ((*i)->level() >= Log::ERROR? errs.data() : outs.data()) << fs.data();
+            QList<IOutputStream*> os;
+            os << ((*i)->level() >= Log::WARNING? &errs : &outs) << &fs;
 
 #ifdef _DEBUG
             String message = (*i)->asText();
@@ -223,17 +263,11 @@ void LogBuffer::flush()
                 // For lines other than the first one, print an indentation.
                 if(pos > 0)
                 {
-                    foreach(QTextStream* stream, os)
+                    foreach(IOutputStream* stream, os)
                     {
                         if(!stream) continue;
-                        *stream << qSetFieldWidth(SIMPLE_INDENT) << "" << qSetFieldWidth(0);
+                        *stream << QString(SIMPLE_INDENT, QChar(' '));
                     }
-                    /*
-                    if(writer)
-                    {
-                        *writer << FixedByteArray(String(SIMPLE_INDENT, ' ').toUtf8());
-                    }
-                    */
                 }
 
                 String lineText = message.substr(pos, lineLen);
@@ -241,46 +275,27 @@ void LogBuffer::flush()
                 // Check for formatting symbols.
                 lineText.replace("$R", String(RULER_LENGTH, '-'));
 
-                foreach(QTextStream* stream, os)
+                foreach(IOutputStream* stream, os)
                 {
                     if(!stream) continue;
                     *stream << lineText;
                 }
 
-                /*
-                if(writer)
-                {
-                    *writer << FixedByteArray(lineText.toUtf8());
-                }
-                */
-
                 pos = next;
                 if(pos != String::npos && message[pos].isSpace()) pos++; // Skip whitespace.
 
-                foreach(QTextStream* stream, os)
+                foreach(IOutputStream* stream, os)
                 {
                     if(!stream) continue;
                     *stream << "\n";
                 }
             }
-
-            /*
-            if(writer)
-            {
-                *writer << FixedByteArray(String("\n").toUtf8());
-            }
-            */
         }
-
-        //delete writer;
 
         _toBeFlushed.clear();
 
-        if(fs.data())
-        {
-            // Make sure it really gets written now.
-            fs->flush();
-        }
+        // Make sure it really gets written now.
+        fs.flush();
     }
 
     _lastFlushedAt = Time();
