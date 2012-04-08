@@ -61,6 +61,7 @@ static timespan_t busyTime;
 static timespan_t accumulatedBusyTime; // Never cleared.
 static volatile boolean busyDone;
 static volatile boolean busyDoneCopy;
+static boolean busyTaskEndedWithError;
 static char busyError[256];
 static fontid_t busyFont = 0;
 static int busyFontHgt; // Height of the font.
@@ -115,6 +116,7 @@ void BusyTask_Begin(BusyTask* task)
     // Load any textures needed in this mode.
     Con_BusyPrepareResources();
 
+    busyTaskEndedWithError = false;
     busyInited = true;
 
     // Start the busy worker thread, which will proces things in the
@@ -139,16 +141,19 @@ void BusyTask_Begin(BusyTask* task)
 }
 
 /**
- * Exits the busy mode event loop.
+ * Exits the busy mode event loop. Called in the main thread, does not return
+ * until the worker thread is stopped.
  */
 static void BusyTask_Exit(void)
 {
     int result;
 
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     busyDone = true;
 
     // Make sure the worker finishes before we continue.
-    result = Sys_WaitThread(busyThread);
+    result = Sys_WaitThread(busyThread, busyTaskEndedWithError? 100 : 5000);
     busyThread = NULL;
 
     BusyTask_ExitWithValue(result);
@@ -174,7 +179,7 @@ void BusyTask_End(BusyTask* task)
     // The window drawer will be restored later to the appropriate function.
     Window_SetDrawFunc(Window_Main(), 0);
 
-    if(busyError[0])
+    if(busyTaskEndedWithError)
     {
         Con_AbnormalShutdown(busyError);
     }
@@ -200,6 +205,7 @@ void BusyTask_End(BusyTask* task)
 
 void Con_BusyWorkerError(const char* message)
 {
+    busyTaskEndedWithError = true;
     strncpy(busyError, message, sizeof(busyError) - 1);
     Con_BusyWorkerEnd();
 }

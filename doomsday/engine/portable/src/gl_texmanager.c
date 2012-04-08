@@ -1379,7 +1379,7 @@ void GL_ReleaseTextures(void)
 void GL_PruneTextureVariantSpecifications(void)
 {
     int numPruned = 0;
-    if(!initedOk) return;
+    if(!initedOk || Sys_IsShuttingDown()) return;
 
     numPruned += pruneUnusedVariantSpecifications(TST_GENERAL);
     numPruned += pruneUnusedVariantSpecifications(TST_DETAIL);

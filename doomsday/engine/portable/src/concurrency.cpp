@@ -27,6 +27,7 @@
 #include <QApplication>
 #include <QDebug>
 #include <de/Time>
+#include <de/Log>
 #include <assert.h>
 
 static uint mainThreadId = 0; ///< ID of the main thread.
@@ -36,13 +37,25 @@ CallbackThread::CallbackThread(systhreadfunc_t func, void* param)
 {
     qDebug() << "CallbackThread:" << this << "created.";
 
+    // Only used if the thread needs to be shut down forcibly.
+    setTerminationEnabled(true);
+
     // Cleanup at app exit time for threads whose exit value hasn't been checked.
     connect(qApp, SIGNAL(destroyed()), this, SLOT(deleteNow()));
 }
 
 CallbackThread::~CallbackThread()
 {
-    qDebug() << "CallbackThread:" << this << "deleted.";
+    if(isRunning())
+    {
+        qDebug() << "CallbackThread:" << this << "forcibly stopping, deleting.";
+        terminate();
+        wait(1000);
+    }
+    else
+    {
+        qDebug() << "CallbackThread:" << this << "deleted.";
+    }
 }
 
 void CallbackThread::deleteNow()
@@ -86,11 +99,26 @@ thread_t Sys_StartThread(systhreadfunc_t startpos, void *parm)
     return t;
 }
 
-int Sys_WaitThread(thread_t handle)
+void Thread_KillAbnormally(thread_t handle)
+{
+    QThread* t = reinterpret_cast<QThread*>(handle);
+    if(!handle)
+    {
+        t = QThread::currentThread();
+    }
+    assert(t);
+    t->terminate();
+}
+
+int Sys_WaitThread(thread_t handle, int timeoutMs)
 {
     CallbackThread* t = reinterpret_cast<CallbackThread*>(handle);
     assert(static_cast<QThread*>(t) != QThread::currentThread());
-    t->wait(10000); // 10 seconds at most
+    t->wait(timeoutMs);
+    if(!t->isFinished())
+    {
+        LOG_WARNING("Thread did not stop in time, forcibly killing it.");
+    }
     t->deleteLater(); // get rid of it
     return t->exitValue();
 }

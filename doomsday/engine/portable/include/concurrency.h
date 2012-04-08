@@ -83,9 +83,15 @@ thread_t Sys_StartThread(systhreadfunc_t startpos, void* parm);
 void Thread_Sleep(int milliseconds);
 
 /**
+ * Wait for a thread to stop. If the thread does not stop after @a timeoutMs,
+ * it will be forcibly terminated.
+ *
+ * @param handle     Thread handle.
+ * @param timeoutMs  How long to wait until the thread terminates.
+ *
  * @return  Return value of the thread.
  */
-int Sys_WaitThread(thread_t handle);
+int Sys_WaitThread(thread_t handle, int timeoutMs);
 
 /**
  * @param handle  Handle to the thread to return the id of.
