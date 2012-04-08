@@ -559,9 +559,8 @@ void *Z_Malloc(size_t size, int tag, void *user)
             {
                 // Scanned all the way through, no suitable space found.
                 gotoNextVolume = true;
-#ifdef _DEBUG
-                fprintf(stderr, "Z_Malloc: gave up on volume after %i checks\n", numChecked);
-#endif
+                LegacyCore_PrintfLogFragmentAtLevel(de2LegacyCore, DE2_LOG_DEBUG,
+                        "Z_Malloc: gave up on volume after %i checks\n", numChecked);
                 break;
             }
         }

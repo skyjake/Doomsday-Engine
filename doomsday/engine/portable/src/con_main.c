@@ -2015,16 +2015,6 @@ void Con_Message(const char *message, ...)
         dd_vsnprintf(buffer, PRBUFF_SIZE, message, argptr);
         va_end(argptr);
 
-        /*
-#ifdef UNIX
-        if(!isDedicated)
-        {
-            // These messages are supposed to be visible in the real console.
-            fprintf(stderr, "%s", buffer);
-        }
-#endif
-        */
-
         // These messages are always dumped. If consoleDump is set,
         // Con_Printf() will dump the message for us.
         if(!consoleDump)
