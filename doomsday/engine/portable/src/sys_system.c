@@ -246,7 +246,8 @@ void Sys_BlockUntilRealTime(uint realTimeMs)
 
     while(Sys_GetRealTime() < realTimeMs)
     {
-        // Do nothing; don't yield execution.
+        // Do nothing; don't yield execution. We want to exit here at the
+        // precise right moment.
     }
 }
 

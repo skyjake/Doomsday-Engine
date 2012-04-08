@@ -84,6 +84,11 @@ public:
             return Delta(milliseconds/1000.0);
         }
 
+        /**
+         * Blocks the thread.
+         */
+        void sleep() const;
+
     private:
         ddouble _seconds;
     };

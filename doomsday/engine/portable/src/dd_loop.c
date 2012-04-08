@@ -85,12 +85,9 @@ static int timeDeltasIndex = 0;
 
 static float realFrameTimePos = 0;
 
-static boolean waitingForDraw = false;
-
 static void startFrame(void);
 static void endFrame(void);
 static void runTics(void);
-static void drawAndUpdate(void);
 
 void DD_RegisterLoop(void)
 {
@@ -119,7 +116,7 @@ int DD_GameLoop(void)
 
 void DD_GameLoopCallback(void)
 {
-    if(!novideo && waitingForDraw) return; // Only after the frame has been drawn, please.
+    if(novideo) return; // Only after the frame has been drawn, please.
 
     if(Sys_IsShuttingDown())
         return; // Shouldn't run this while shutting down.
@@ -138,9 +135,6 @@ void DD_GameLoopCallback(void)
     // Request update of window contents.
     Window_Draw(Window_Main());
 
-    // Don't run this callback until the drawing has occurred.
-    waitingForDraw = true;
-
     if(!novideo)
     {
         GL_ProcessDeferredTasks(FRAME_DEFERRED_UPLOAD_TIMEOUT);
@@ -155,9 +149,6 @@ void DD_GameLoopDrawer(void)
     if(novideo || Sys_IsShuttingDown()) return;
 
     assert(!Con_IsBusy()); // Busy mode has its own drawer.
-
-    // We will now be drawing the contents of the window.
-    waitingForDraw = false;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
 
@@ -238,8 +229,12 @@ void DD_GameLoopDrawer(void)
     endFrame();
 }
 
+//static uint frameStartAt;
+
 static void startFrame(void)
 {
+    //frameStartAt = Sys_GetRealTime();
+
     S_StartFrame();
     if(gx.BeginFrame)
     {
@@ -247,11 +242,18 @@ static void startFrame(void)
     }
 }
 
+static uint lastShowAt;
+
 static void endFrame(void)
 {
     static uint lastFpsTime = 0;
 
     uint nowTime = Sys_GetRealTime();
+
+    /*
+    Con_Message("endFrame with %i ms (%i render)\n", nowTime - lastShowAt, nowTime - frameStartAt);
+    lastShowAt = nowTime;
+    */
 
     // Increment the (local) frame counter.
     rFrameCount++;
@@ -475,8 +477,6 @@ static void timeDeltaStatistics(int deltaMs)
 
 void DD_WaitForOptimalUpdateTime(void)
 {
-    /// @todo This would benefit from microsecond-accurate timing.
-
     // All times are in milliseconds.
     static uint prevUpdateTime = 0;
     uint nowTime, elapsed = 0;
@@ -488,9 +488,9 @@ void DD_WaitForOptimalUpdateTime(void)
 
     // If vsync is on, this is unnecessary.
     /// @todo check the rend-vsync cvar
-#if defined(MACOSX) || defined(WIN32)
-    return;
-#endif
+//#if defined(MACOSX) || defined(WIN32)
+//    return;
+//#endif
 
     if(Sys_IsShuttingDown()) return; // No need for finesse.
 

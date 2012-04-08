@@ -39,7 +39,7 @@
 #include "de_play.h"
 
 #include "r_main.h"
-#include "gl_main.h" // For r_framecounter.
+//#include "gl_main.h" // For r_framecounter.
 
 // MACROS ------------------------------------------------------------------
 
@@ -353,15 +353,17 @@ boolean Demo_BeginPlayback(const char* fileName)
     demoStartTic = DEMOTIC;
     memset(posDelta, 0, sizeof(posDelta));
     // Start counting frames from here.
+    /*
     if(ArgCheck("-timedemo"))
         r_framecounter = 0;
+        */
 
     return true;
 }
 
 void Demo_StopPlayback(void)
 {
-    float           diff;
+    //float           diff;
 
     if(!playback)
         return;
@@ -376,6 +378,7 @@ void Demo_StopPlayback(void)
     fieldOfView = startFOV;
     Net_StopGame();
 
+    /*
     if(ArgCheck("-timedemo"))
     {
         diff = Sys_GetSeconds() - netConnectTime;
@@ -387,6 +390,7 @@ void Demo_StopPlayback(void)
         Con_Message("%f FPS\n", r_framecounter / diff);
         Sys_Quit();
     }
+    */
 
     // "Play demo once" mode?
     if(ArgCheck("-playdemo"))

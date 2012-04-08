@@ -26,15 +26,19 @@
 
 #include "de_platform.h"
 #include "con_main.h"
+#include "gl_main.h"
+#include "m_args.h"
 #include "canvaswindow.h"
 #include <assert.h>
 
 struct CanvasWindow::Instance
 {
     Canvas* canvas;
+    Canvas* recreated;
     void (*moveFunc)(CanvasWindow&);
+    bool mouseWasTrapped;
 
-    Instance() : canvas(0), moveFunc(0) {}
+    Instance() : canvas(0), moveFunc(0), mouseWasTrapped(false) {}
 };
 
 CanvasWindow::CanvasWindow(QWidget *parent)
@@ -54,10 +58,68 @@ CanvasWindow::~CanvasWindow()
     delete d;
 }
 
+void CanvasWindow::initCanvasAfterRecreation(Canvas& canvas)
+{
+    CanvasWindow* self = dynamic_cast<CanvasWindow*>(canvas.parentWidget());
+    assert(self);
+
+    LOG_DEBUG("About to replace Canvas %p with %p")
+            << de::dintptr(self->d->canvas) << de::dintptr(self->d->recreated);
+
+    // Take the existing callbacks of the old canvas.
+    self->d->recreated->useCallbacksFrom(*self->d->canvas);
+
+    // Switch the central widget. This will delete the old canvas automatically.
+    self->setCentralWidget(self->d->recreated);
+    self->d->canvas = self->d->recreated;
+    self->d->recreated = 0;
+
+    // Set up the basic GL state for the new canvas.
+    self->d->canvas->makeCurrent();
+    GL_Init2DState();
+    self->d->canvas->doneCurrent();
+    self->d->canvas->update();
+
+    // Reacquire the focus.
+    self->d->canvas->setFocus();
+    if(self->d->mouseWasTrapped)
+    {
+        self->d->canvas->trapMouse();
+    }
+
+    LOG_DEBUG("Canvas replaced with %p") << de::dintptr(self->d->canvas);
+}
+
+void CanvasWindow::recreateCanvas()
+{
+    // We'll re-trap the mouse after the new canvas is ready.
+    d->mouseWasTrapped = canvas().isMouseTrapped();
+    canvas().trapMouse(false);
+
+    // Update the GL format for subsequently created Canvases.
+    setDefaultGLFormat();
+
+    // Create the replacement Canvas. Once it's created and visible, we'll
+    // finish the switch-over.
+    d->recreated = new Canvas(this, d->canvas);
+    d->recreated->setInitFunc(initCanvasAfterRecreation);
+
+    d->recreated->setGeometry(d->canvas->geometry());
+    d->recreated->show();
+
+    LOG_DEBUG("Canvas recreated, old one still exists");
+}
+
 Canvas& CanvasWindow::canvas()
 {
     assert(d->canvas != 0);
     return *d->canvas;
+}
+
+bool CanvasWindow::ownsCanvas(Canvas *c) const
+{
+    if(!c) return false;
+    return (d->canvas == c || d->recreated == c);
 }
 
 void CanvasWindow::setMoveFunc(void (*func)(CanvasWindow&))
@@ -96,7 +158,25 @@ void CanvasWindow::setDefaultGLFormat() // static
     fmt.setDepthBufferSize(16);
     fmt.setStencilBufferSize(8);
     fmt.setDoubleBuffer(true);
-    fmt.setSwapInterval(1);     // vsync on
-    fmt.setSampleBuffers(true); // multisampling on (default: highest available)
+
+    if(ArgExists("-novsync") || !Con_GetByte("vid-vsync"))
+    {
+        fmt.setSwapInterval(0); // vsync off
+    }
+    else
+    {
+        fmt.setSwapInterval(1);
+    }
+
+    if(ArgExists("-nofsaa") || !Con_GetByte("vid-fsaa"))
+    {
+        fmt.setSampleBuffers(false);
+    }
+    else
+    {
+        fmt.setSampleBuffers(true); // multisampling on (default: highest available)
+        //fmt.setSamples(4);
+    }
+
     QGLFormat::setDefaultFormat(fmt);
 }

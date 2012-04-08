@@ -23,13 +23,40 @@
 #include "de/Writer"
 #include "de/Reader"
 
+#include <QThread>
 #include <QDataStream>
 
 using namespace de;
 
+class SleeperThread : public QThread
+{
+public:
+    void run() {}
+    static void msleep(unsigned long milliseconds)
+    {
+        QThread::msleep(milliseconds);
+    }
+    static void usleep(unsigned long microseconds)
+    {
+        QThread::usleep(microseconds);
+    }
+};
+
 duint64 Time::Delta::asMilliSeconds() const
 {
     return duint64(_seconds * 1000);
+}
+
+void Time::Delta::sleep() const
+{
+    if(_seconds < 60)
+    {
+        SleeperThread::usleep((unsigned long)(_seconds * 1e6));
+    }
+    else
+    {
+        SleeperThread::msleep((unsigned long)(_seconds * 1e3));
+    }
 }
 
 Time::Delta Time::Delta::operator + (const ddouble& d) const

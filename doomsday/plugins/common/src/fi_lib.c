@@ -599,7 +599,7 @@ int Hook_FinaleScriptEvalIf(int hookType, int finaleId, void* paramaters)
 int FI_PrivilegedResponder(const void* ev)
 {
     fi_state_t* s;
-    if(!finaleStackInited) Con_Error("FI_Responder: Not initialized yet!");
+    if(!finaleStackInited) return false;
     if(IS_CLIENT && DD_GetInteger(DD_CURRENT_CLIENT_FINALE_ID))
     {
         return FI_ScriptResponder(DD_GetInteger(DD_CURRENT_CLIENT_FINALE_ID), ev);

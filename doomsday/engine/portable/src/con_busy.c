@@ -61,7 +61,7 @@ static timespan_t busyTime;
 static timespan_t accumulatedBusyTime; // Never cleared.
 static volatile boolean busyDone;
 static volatile boolean busyDoneCopy;
-static volatile const char* busyError = NULL;
+static char busyError[256];
 static fontid_t busyFont = 0;
 static int busyFontHgt; // Height of the font.
 static mutex_t busy_Mutex; // To prevent Data races in the busy thread.
@@ -171,9 +171,12 @@ void BusyTask_End(BusyTask* task)
     deleteBusyTextures();
 #endif
 
-    if(busyError)
+    // The window drawer will be restored later to the appropriate function.
+    Window_SetDrawFunc(Window_Main(), 0);
+
+    if(busyError[0])
     {
-        Con_AbnormalShutdown((const char*) busyError);
+        Con_AbnormalShutdown(busyError);
     }
 
     if(transitionInProgress)
@@ -193,14 +196,11 @@ void BusyTask_End(BusyTask* task)
 
     DD_IgnoreInput(task->_wasIgnoringInput);
     DD_ResetTimer();
-
-    // The window drawer will be restored later to the appropriate function.
-    Window_SetDrawFunc(Window_Main(), 0);
 }
 
 void Con_BusyWorkerError(const char* message)
 {
-    busyError = message;
+    strncpy(busyError, message, sizeof(busyError) - 1);
     Con_BusyWorkerEnd();
 }
 
@@ -472,8 +472,6 @@ static void BusyTask_Loop(void)
         accumulatedBusyTime += busyTime - oldTime;
     }
 
-    Window_Draw(Window_Main());
-
     Sys_Lock(busy_Mutex);
     busyDoneCopy = busyDone;
     Sys_Unlock(busy_Mutex);
@@ -482,6 +480,7 @@ static void BusyTask_Loop(void)
        !Con_IsProgressAnimationCompleted())
     {
         // Let's keep running the busy loop.
+        Window_Draw(Window_Main());
         return;
     }
 

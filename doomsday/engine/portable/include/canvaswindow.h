@@ -38,7 +38,14 @@ public:
     explicit CanvasWindow(QWidget *parent = 0);
     ~CanvasWindow();
     
+    /**
+     * Recreates the contained Canvas with an update GL format.
+     * The context is shared with the old Canvas.
+     */
+    void recreateCanvas();
+
     Canvas& canvas();
+    bool ownsCanvas(Canvas* c) const;
 
     /**
      * Sets a callback function for notifying about window movement.
@@ -59,6 +66,9 @@ public:
 signals:
     
 public slots:
+
+protected:
+    static void initCanvasAfterRecreation(Canvas& canvas);
 
 private:
     struct Instance;

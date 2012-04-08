@@ -56,7 +56,7 @@
 #ifdef MACOSX
 static const int POST_MODE_CHANGE_WAIT_BEFORE_UPDATE = 100; // ms
 #else
-static const int POST_MODE_CHANGE_WAIT_BEFORE_UPDATE = 1; // ms
+static const int POST_MODE_CHANGE_WAIT_BEFORE_UPDATE = 10; // ms
 #endif
 
 /// Used to determine the valid region for windows on the desktop.
@@ -83,7 +83,9 @@ struct ddwindow_s
     void (*drawFunc)(void); ///< Draws the contents of the canvas.
     QRect appliedGeometry;  ///< Saved for detecting when changes have occurred.
     bool needShowFullscreen;
+    bool needReshowFullscreen;
     bool needShowNormal;
+    bool needRecreateCanvas;
 
     ddwindowtype_t type;
     boolean inited;
@@ -187,8 +189,6 @@ struct ddwindow_s
             const DisplayMode* mode = DisplayMode_FindClosest(width(), height(), colorDepthBits, 0);
             if(mode && DisplayMode_Change(mode, true /* fullscreen: capture */))
             {
-                Window_TrapMouse(this, true);
-
                 geometry.size.width = DisplayMode_Current()->width;
                 geometry.size.height = DisplayMode_Current()->height;
 
@@ -196,6 +196,7 @@ struct ddwindow_s
                 // Pull the window again over the shield after the mode change.
                 DisplayMode_Native_Raise(Window_NativeHandle(this));
 #endif
+                Window_TrapMouse(this, true);
                 return true;
             }
         }
@@ -214,17 +215,30 @@ struct ddwindow_s
      */
     void applyWindowGeometry()
     {
+        LOG_AS("applyWindowGeometry");
+
         assertWindow();
 
         bool modeChanged = applyDisplayMode();
 
         if(flags & DDWF_FULLSCREEN)
         {
+            LOG_DEBUG("fullscreen mode (mode changed? %b)") << modeChanged;
+
             if(!modeChanged) return; // We don't need to do anything.
 
             if(widget->isVisible())
             {
                 needShowFullscreen = !widget->isFullScreen();
+#ifdef WIN32
+                if(widget->isFullScreen())
+                {
+                    needShowFullscreen = false;
+                    needReshowFullscreen = true;
+                }
+#endif
+                LOG_DEBUG("widget is visible, need showFS:%b reshowFS:%b")
+                        << needShowFullscreen << needReshowFullscreen;
 
                 // The window is already visible, so let's allow a mode change to resolve itself
                 // before we go changing the window.
@@ -232,6 +246,9 @@ struct ddwindow_s
             }
             else
             {
+                LOG_DEBUG("widget is not visible, setting geometry to ")
+                        << DisplayMode_Current()->width << "x"
+                        << DisplayMode_Current()->height;
                 widget->setGeometry(0, 0, DisplayMode_Current()->width, DisplayMode_Current()->height);
             }
         }
@@ -464,8 +481,17 @@ static void updateMainWindowLayout(void)
 {
     Window* win = Window_Main();
 
+    if(win->needReshowFullscreen)
+    {
+        LOG_DEBUG("Main window re-set to fullscreen mode.");
+        win->needReshowFullscreen = false;
+        win->widget->showNormal();
+        win->widget->showFullScreen();
+    }
+
     if(win->needShowFullscreen)
     {
+        LOG_DEBUG("Main window to fullscreen mode.");
         win->needShowFullscreen = false;
         win->widget->showFullScreen();
     }
@@ -481,10 +507,12 @@ static void updateMainWindowLayout(void)
 
         DisplayMode_Native_Raise(Window_NativeHandle(win));
 #endif
+        Window_TrapMouse(win, true);
     }
 
     if(win->needShowNormal)
     {
+        LOG_DEBUG("Main window to normal mode.");
         win->needShowNormal = false;
         win->widget->showNormal();
     }
@@ -793,7 +821,7 @@ static boolean createContext(void)
 
 static Window* canvasToWindow(Canvas& DENG_DEBUG_ONLY(canvas))
 {
-    assert(&mainWindow.widget->canvas() == &canvas); /// @todo multiwindow
+    assert(mainWindow.widget->ownsCanvas(&canvas)); /// @todo multiwindow
 
     return &mainWindow;
 }
@@ -1097,8 +1125,24 @@ void Window_Draw(Window* win)
     assert(win);
     assert(win->widget);
 
-    // Request repaint at the earliest convenience.
-    win->widget->canvas().update();
+    // The canvas needs to be recreated when the GL format has changed
+    // (e.g., multisampling).
+    if(win->needRecreateCanvas)
+    {
+        win->needRecreateCanvas = false;
+        win->widget->recreateCanvas();
+        return;
+    }
+
+    if(Window_ShouldRepaintManually(win))
+    {
+        win->widget->canvas().repaint();
+    }
+    else
+    {
+        // Request repaint at the earliest convenience.
+        win->widget->canvas().update();
+    }
 }
 
 void Window_Show(Window *wnd, boolean show)
@@ -1238,6 +1282,34 @@ void Window_RestoreState(Window* wnd)
 
 void Window_TrapMouse(const Window* wnd, boolean enable)
 {
+    if(!wnd || novideo) return;
+
     wnd->assertWindow();
     wnd->widget->canvas().trapMouse(enable);
+}
+
+boolean Window_IsMouseTrapped(const Window* wnd)
+{
+    if(wnd->type == WT_CONSOLE) return false;
+    wnd->assertWindow();
+    return wnd->widget->canvas().isMouseTrapped();
+}
+
+boolean Window_ShouldRepaintManually(const Window* wnd)
+{
+#ifdef WIN32
+    DENG_UNUSED(wnd);
+    return false;
+#else
+    // When mouse is trapped, we update the screen during the main loop
+    // iteration rather than waiting for the windowing system to send an update
+    // event.
+    return Window_IsMouseTrapped(wnd);
+#endif
+}
+
+void Window_UpdateCanvasFormat(Window* wnd)
+{
+    assert(wnd != 0);
+    wnd->needRecreateCanvas = true;
 }

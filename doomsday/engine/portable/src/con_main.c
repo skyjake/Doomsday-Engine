@@ -2047,6 +2047,8 @@ void Con_Error(const char* error, ...)
     char        buff[2048], err[256];
     va_list     argptr;
 
+    Window_TrapMouse(Window_Main(), false);
+
     // Already in an error?
     if(!ConsoleInited || errorInProgress)
     {
@@ -2098,14 +2100,9 @@ void Con_Error(const char* error, ...)
     if(Con_IsBusy())
     {
         Con_BusyWorkerError(buff);
-
         if(Con_InBusyWorker())
         {
-            for(;;)
-            {
-                // We'll stop here. The main thread will shut down the process.
-                Sys_Sleep(500);
-            }
+            BusyTask_ExitWithValue(1);
         }
     }
     else

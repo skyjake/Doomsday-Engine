@@ -299,6 +299,19 @@ void Window_RestoreState(Window* wnd);
  */
 void Window_TrapMouse(const Window* wnd, boolean enable);
 
+boolean Window_IsMouseTrapped(const Window* wnd);
+
+/**
+ * Determines whether the contents of a window should be drawn during the
+ * execution of the main loop callback, or should we wait for an update event
+ * from the windowing system.
+ *
+ * @param wnd  Window instance.
+ */
+boolean Window_ShouldRepaintManually(const Window* wnd);
+
+void Window_UpdateCanvasFormat(Window* wnd);
+
 void* Window_NativeHandle(const Window* wnd);
 
 #ifdef __cplusplus

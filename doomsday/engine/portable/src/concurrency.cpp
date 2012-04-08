@@ -26,6 +26,7 @@
 #include <QMutex>
 #include <QApplication>
 #include <QDebug>
+#include <de/Time>
 #include <assert.h>
 
 static uint mainThreadId = 0; ///< ID of the main thread.
@@ -75,7 +76,7 @@ boolean Sys_InMainThread(void)
 
 void Thread_Sleep(int milliseconds)
 {
-    QThread::currentThread()->wait(milliseconds);
+    de::Time::Delta::fromMilliSeconds(milliseconds).sleep();
 }
 
 thread_t Sys_StartThread(systhreadfunc_t startpos, void *parm)

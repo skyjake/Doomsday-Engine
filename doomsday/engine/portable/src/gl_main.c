@@ -110,7 +110,7 @@ int     defFullscreen = true;
 int numTexUnits = 1;
 boolean envModAdd;              // TexEnv: modulate and add is available.
 int     test3dfx = 0;
-int     r_framecounter;         // Used only for statistics.
+//int     r_framecounter;         // Used only for statistics.
 int     r_detail = true;        // Render detail textures (if available).
 
 float   vid_gamma = 1.0f, vid_bright = 0, vid_contrast = 1.0f;
@@ -123,16 +123,27 @@ static boolean initGLOk = false;
 static boolean gamma_support = false;
 static float oldgamma, oldcontrast, oldbright;
 static int fogModeDefault = 0;
+static byte fsaaEnabled = true;
+static byte vsyncEnabled = true;
 
 static viewport_t currentView;
 
 // CODE --------------------------------------------------------------------
+
+static void videoSettingsChanged(void)
+{
+    if(!novideo && Window_Main())
+    {
+        Window_UpdateCanvasFormat(Window_Main());
+    }
+}
 
 void GL_Register(void)
 {
     // Cvars
     C_VAR_INT("rend-dev-wireframe", &renderWireframe, 0, 0, 2);
     C_VAR_INT("rend-fog-default", &fogModeDefault, 0, 0, 2);
+
     // * Render-HUD
     C_VAR_FLOAT("rend-hud-offset-scale", &weaponOffsetScale, CVF_NO_MAX,
                 0, 0);
@@ -144,6 +155,8 @@ void GL_Register(void)
     C_VAR_INT("rend-mobj-smooth-turn", &useSRVOAngle, 0, 0, 1);
 
     // * video
+    C_VAR_BYTE2("vid-vsync", &vsyncEnabled, 0, 0, 1, videoSettingsChanged);
+    C_VAR_BYTE2("vid-fsaa", &fsaaEnabled, 0, 0, 1, videoSettingsChanged);
     C_VAR_INT("vid-res-x", &defResX, CVF_NO_MAX|CVF_READ_ONLY|CVF_NO_ARCHIVE, 320, 0);
     C_VAR_INT("vid-res-y", &defResY, CVF_NO_MAX|CVF_READ_ONLY|CVF_NO_ARCHIVE, 240, 0);
     C_VAR_INT("vid-bpp", &defBPP, CVF_READ_ONLY|CVF_NO_ARCHIVE, 16, 32);
@@ -184,15 +197,16 @@ void GL_DoUpdate(void)
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
 
-    // Wait until the right time to show the frame so that the realized
-    // frame rate is exactly right.
-    //DD_WaitForOptimalUpdateTime();
+    if(Window_ShouldRepaintManually(Window_Main()))
+    {
+        // Wait until the right time to show the frame so that the realized
+        // frame rate is exactly right.
+        glFlush();
+        DD_WaitForOptimalUpdateTime();
+    }
 
     // Blit screen to video.
     Window_SwapBuffers(theWindow);
-
-    // Increment frame counter.
-    r_framecounter++;
 }
 
 void GL_GetGammaRamp(displaycolortransfer_t *ramp)
