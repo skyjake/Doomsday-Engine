@@ -53,6 +53,7 @@ else {
     QMAKE_LFLAGS += -rdynamic
 
     !freebsd-*: LIBS += -ldl
+    LIBS += -lX11
 
     # DisplayMode uses the Xrandr and XFree86-VideoMode extensions.
     !deng_nodisplaymode {
