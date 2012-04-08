@@ -82,6 +82,54 @@ class HPlaneIntercept;
 class SuperBlock;
 class SuperBlockmap;
 
+struct PartitionCost
+{
+    int total;
+    int splits;
+    int iffy;
+    int nearMiss;
+    int realRight;
+    int realLeft;
+    int miniRight;
+    int miniLeft;
+
+    PartitionCost::PartitionCost() :
+        total(0), splits(0), iffy(0), nearMiss(0), realRight(0),
+        realLeft(0), miniRight(0), miniLeft(0)
+    {}
+
+    PartitionCost& operator += (const PartitionCost& other)
+    {
+        total     += other.total;
+        splits    += other.splits;
+        iffy      += other.iffy;
+        nearMiss  += other.nearMiss;
+        realLeft  += other.realLeft;
+        realRight += other.realRight;
+        miniLeft  += other.miniLeft;
+        miniRight += other.miniRight;
+        return *this;
+    }
+
+    PartitionCost& operator = (const PartitionCost& other)
+    {
+        total     = other.total;
+        splits    = other.splits;
+        iffy      = other.iffy;
+        nearMiss  = other.nearMiss;
+        realLeft  = other.realLeft;
+        realRight = other.realRight;
+        miniLeft  = other.miniLeft;
+        miniRight = other.miniRight;
+        return *this;
+    }
+
+    bool operator < (const PartitionCost& rhs) const
+    {
+        return total < rhs.total;
+    }
+};
+
 /**
  * @algorithm High-level description (courtesy of Raphael Quinet)
  *   1 - Create one Seg for each SideDef: pick each LineDef in turn.  If it
@@ -158,20 +206,14 @@ public:
      */
     uint numVertexes();
 
-    Vertex const& vertex(uint idx);
+    /**
+     * Retrieve the vertex with specified @a index. If the index is not valid
+     * this will result in fatal error. The caller should ensure the index is
+     * within valid range using Partitioner::numVertexes()
+     */
+    Vertex const& vertex(uint index);
 
 private:
-    void initForMap();
-
-    Vertex* newVertex(const_pvec2d_t point);
-
-    /**
-     * Destroy the specified intersection.
-     *
-     * @param inter  Ptr to the intersection to be destroyed.
-     */
-    void deleteHEdgeIntercept(HEdgeIntercept& intercept);
-
     /**
      * Retrieve the extended build info for the specified @a lineDef.
      * @return  Extended info for that LineDef.
@@ -194,18 +236,22 @@ private:
         return vertexInfos[vertex.buildData.index - 1];
     }
 
+    void initForMap();
+
     void findMapBounds(AABoxf* aaBox) const;
 
-    const HPlaneIntercept* makePartitionIntersection(HEdge* hedge, int leftSide);
-
     /**
-     * Initially create all half-edges, one for each side of a linedef.
-     *
-     * @return  The list of created half-edges.
+     * Initially create all half-edges and add them to specified SuperBlock.
      */
     void createInitialHEdges(SuperBlock& hedgeList);
 
     void initHEdgesAndBuildBsp(SuperBlockmap& blockmap);
+
+    /// @c true  Iff @a hedge has been added to a BSP leaf (i.e., it is no longer
+    ///          linked in the hedge blockmap).
+    bool hedgeIsInLeaf(const HEdge* hedge) const;
+
+    const HPlaneIntercept* makePartitionIntersection(HEdge* hedge, int leftSide);
 
     /**
      * @return  Same as @a final for caller convenience.
@@ -215,12 +261,6 @@ private:
     void mergeIntersections();
 
     void buildHEdgesAtIntersectionGaps(SuperBlock& rightList, SuperBlock& leftList);
-
-    void addHEdgeTip(Vertex* vert, double angle, HEdge* back, HEdge* front);
-
-    /// @c true  Iff @a hedge has been added to a BSP leaf (i.e., it is no longer
-    ///          linked in the hedge blockmap).
-    bool hedgeIsInLeaf(const HEdge* hedge) const;
 
     /**
      * Splits the given half-edge at the point (x,y). The new half-edge is returned.
@@ -237,6 +277,60 @@ private:
      *       by incorrect counts.
      */
     HEdge* splitHEdge(HEdge* oldHEdge, const_pvec2d_t point);
+
+    /**
+     * Partition the given edge and perform any further necessary action (moving it
+     * into either the left list, right list, or splitting it).
+     *
+     * Take the given half-edge 'cur', compare it with the partition line and determine
+     * it's fate: moving it into either the left or right lists (perhaps both, when
+     * splitting it in two). Handles the twin as well. Updates the intersection list
+     * if the half-edge lies on or crosses the partition line.
+     *
+     * @note AJA: I have rewritten this routine based on evalPartition() (which I've
+     *       also reworked, heavily). I think it is important that both these routines
+     *       follow the exact same logic.
+     */
+    void divideHEdge(HEdge* hedge, SuperBlock& rightList, SuperBlock& leftList);
+
+    /**
+     * Remove all the half-edges from the list, partitioning them into the left or
+     * right lists based on the given partition line. Adds any intersections onto the
+     * intersection list as it goes.
+     */
+    void partitionHEdges(SuperBlock& hedgeList, SuperBlock& rightList, SuperBlock& leftList);
+
+    void chooseNextPartitionFromSuperBlock(const SuperBlock& partList, const SuperBlock& hedgeList,
+        HEdge** best, PartitionCost& bestCost);
+
+    /**
+     * Find the best half-edge in the list to use as the next partition.
+     *
+     * @param hedgeList     List of half-edges to choose from.
+     * @return  The chosen half-edge.
+     */
+    HEdge* chooseNextPartition(const SuperBlock& hedgeList);
+
+    /**
+     * Takes the half-edge list and determines if it is convex, possibly converting
+     * it into a BSP leaf. Otherwise, the list is divided into two halves and recursion
+     * will continue on the new sub list.
+     *
+     * This is done by scanning all of the half-edges and finding the one that does
+     * the least splitting and has the least difference in numbers of half-edges on
+     * either side.
+     *
+     * If the ones on the left side make a BspLeaf, then create another BspLeaf
+     * else put the half-edges into the left list.
+     *
+     * If the ones on the right side make a BspLeaf, then create another BspLeaf
+     * else put the half-edges into the right list.
+     *
+     * @param superblock    The list of half edges at the current node.
+     * @param subtree       Ptr to write back the address of any newly created subtree.
+     * @return  @c true iff successfull.
+     */
+    bool buildNodes(SuperBlock& superblock, BspTreeNode** subtree);
 
     /**
      * Determine the distance (euclidean) from @a vertex to the current partition plane.
@@ -261,56 +355,9 @@ private:
     void interceptHEdgePartition(const HEdge* hedge, double perpC, double perpD,
                                  pvec2d_t point) const;
 
-    /**
-     * Partition the given edge and perform any further necessary action (moving it
-     * into either the left list, right list, or splitting it).
-     *
-     * Take the given half-edge 'cur', compare it with the partition line and determine
-     * it's fate: moving it into either the left or right lists (perhaps both, when
-     * splitting it in two). Handles the twin as well. Updates the intersection list
-     * if the half-edge lies on or crosses the partition line.
-     *
-     * @note AJA: I have rewritten this routine based on evalPartition() (which I've
-     *       also reworked, heavily). I think it is important that both these routines
-     *       follow the exact same logic.
-     */
-    void divideHEdge(HEdge* hedge, SuperBlock& rightList, SuperBlock& leftList);
-
     void clearPartitionIntercepts();
 
     bool configurePartition(const HEdge* hedge);
-
-    void chooseHEdgeFromSuperBlock(SuperBlock* partList, SuperBlock& hedgeList,
-        HEdge** best, int* bestCost);
-
-    /**
-     * Find the best half-edge in the list to use as the next partition.
-     *
-     * @param hedgeList     List of half-edges to choose from.
-     * @return  @c true= A suitable partition was found.
-     */
-    bool chooseNextPartition(SuperBlock& hedgeList);
-
-    /**
-     * Takes the half-edge list and determines if it is convex, possibly converting
-     * it into a BSP leaf. Otherwise, the list is divided into two halves and recursion
-     * will continue on the new sub list.
-     *
-     * This is done by scanning all of the half-edges and finding the one that does
-     * the least splitting and has the least difference in numbers of half-edges on
-     * either side.
-     *
-     * If the ones on the left side make a BspLeaf, then create another BspLeaf
-     * else put the half-edges into the left list.
-     *
-     * If the ones on the right side make a BspLeaf, then create another BspLeaf
-     * else put the half-edges into the right list.
-     *
-     * @param superblock    The list of half edges at the current node.
-     * @param subtree       Ptr to write back the address of any newly created subtree.
-     * @return  @c true iff successfull.
-     */
-    bool buildNodes(SuperBlock& superblock, BspTreeNode** subtree);
 
     /**
      * Sort half-edges by angle (from the middle point to the start vertex).
@@ -343,13 +390,6 @@ private:
      */
     void windLeafs();
 
-    /**
-     * Remove all the half-edges from the list, partitioning them into the left or
-     * right lists based on the given partition line. Adds any intersections onto the
-     * intersection list as it goes.
-     */
-    void partitionHEdges(SuperBlock& hedgeList, SuperBlock& rightList, SuperBlock& leftList);
-
     void addHEdgesBetweenIntercepts(HEdgeIntercept* start, HEdgeIntercept* end,
                                     HEdge** right, HEdge** left);
 
@@ -374,6 +414,13 @@ private:
      */
     HEdgeIntercept* newHEdgeIntercept(Vertex* vertex, bool lineDefIsSelfReferencing);
 
+    /**
+     * Destroy the specified intersection.
+     *
+     * @param inter  Ptr to the intersection to be destroyed.
+     */
+    void deleteHEdgeIntercept(HEdgeIntercept& intercept);
+
     HEdgeIntercept* hedgeInterceptByVertex(Vertex* vertex);
 
     void clearBspObject(BspTreeNode& tree);
@@ -386,7 +433,17 @@ private:
 
     void deleteHEdgeTip(HEdgeTip* tip);
 
-    void deleteHEdgeTips(Vertex* vtx);
+    void clearHEdgeTipsByVertex(Vertex* vtx);
+
+    /**
+     * Allocate another Vertex.
+     *
+     * @param point  Origin of the vertex in the map coordinate space.
+     * @return  Newly created Vertex.
+     */
+    Vertex* newVertex(const_pvec2d_t point);
+
+    void addHEdgeTip(Vertex* vert, double angle, HEdge* back, HEdge* front);
 
     /**
      * Create a new half-edge.
@@ -451,12 +508,26 @@ private:
      * @param x  X coordinate near the open point.
      * @param y  X coordinate near the open point.
      *
-     * @return @c true iff sector newly registered.
+     * @return @c true iff the sector was newly registered.
      */
     bool registerUnclosedSector(Sector* sector, double x, double y);
 
-    bool registerMigrantHEdge(Sector* sector, HEdge* migrant);
+    /**
+     * Register the specified half-edge as as migrant edge of the specified sector.
+     *
+     * @param migrant  Migrant half-edge to register.
+     * @param sector  Sector containing the @a migrant half-edge.
+     *
+     * @return @c true iff the half-edge was newly registered.
+     */
+    bool registerMigrantHEdge(HEdge* migrant, Sector* sector);
 
+    /**
+     * Look for migrant half-edges in the specified leaf and register them to the
+     * list of migrants.
+     *
+     * @param leaf  BSP leaf to be searched.
+     */
     void registerMigrantHEdges(const BspLeaf* leaf);
 
 private:

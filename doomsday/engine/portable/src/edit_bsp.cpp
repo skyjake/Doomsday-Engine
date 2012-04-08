@@ -287,29 +287,27 @@ static void updateVertexLinks(GameMap* map)
     }
 }
 
-void MPE_SaveBsp(BspBuilder_c* builder_c, GameMap* map, uint* numEditableVertexes, Vertex*** editableVertexes)
+void MPE_SaveBsp(BspBuilder_c* builder_c, GameMap* map, uint* numEditableVertexes,
+    Vertex*** editableVertexes)
 {
     Q_ASSERT(builder_c);
     BspBuilder& builder = *builder_c->inst;
 
-    long rHeight = 0, lHeight = 0;
+    long rHeight, lHeight;
     BspTreeNode* rootNode = builder.root();
-    if(rootNode && !rootNode->isLeaf())
+    if(!rootNode->isLeaf())
     {
-        if(rootNode->right())
-            rHeight = long(rootNode->right()->height());
-        else
-            rHeight = 0;
-
-        if(rootNode->left())
-            lHeight = long(rootNode->left()->height());
-        else
-            lHeight = 0;
+        rHeight = long(rootNode->right()->height());
+        lHeight = long(rootNode->left()->height());
+    }
+    else
+    {
+        rHeight = lHeight = 0;
     }
 
-    LOG_INFO("BSP built: Balance %d (r:%d - l:%d) #%d Nodes, #%d Leafs, #%d HEdges, #%d Vertexes.")
-            << builder.numNodes() << builder.numLeafs() << builder.numHEdges() << builder.numVertexes()
-            << rHeight - lHeight << rHeight << lHeight;
+    LOG_INFO("BSP built: (%d:%d) #%d Nodes, #%d Leafs, #%d HEdges, #%d Vertexes.")
+            << rHeight << lHeight << builder.numNodes() << builder.numLeafs()
+            << builder.numHEdges() << builder.numVertexes();
 
     buildHEdgeLut(builder, map);
     hardenVertexes(builder, map, numEditableVertexes, editableVertexes);
