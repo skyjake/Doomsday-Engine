@@ -89,6 +89,7 @@ thread_t Sys_StartThread(systhreadfunc_t startpos, void *parm)
 int Sys_WaitThread(thread_t handle)
 {
     CallbackThread* t = reinterpret_cast<CallbackThread*>(handle);
+    assert(static_cast<QThread*>(t) != QThread::currentThread());
     t->wait(10000); // 10 seconds at most
     t->deleteLater(); // get rid of it
     return t->exitValue();
