@@ -494,7 +494,7 @@ struct Partitioner::Instance
                     {
                         if(!cur->selfRef && !next->selfRef)
                         {
-                            LOG_DEBUG("Sector mismatch: #%d (%1.1f,%1.1f) != #%d (%1.1f,%1.1f)")
+                            LOG_DEBUG("Sector mismatch (#%d [%1.1f, %1.1f] != #%d [%1.1f, %1.1f]).")
                                     << cur->after->buildData.index << cur->vertex->buildData.pos[VX]
                                     << cur->vertex->buildData.pos[VY] << next->before->buildData.index
                                     << next->vertex->buildData.pos[VX] << next->vertex->buildData.pos[VY];
