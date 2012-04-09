@@ -50,7 +50,12 @@ int Z_Init(void);
 
 void            Z_Shutdown(void);
 void*           Z_Malloc(size_t size, int tag, void* ptr);
-void            Z_Free(void* ptr);
+
+/**
+ * Free memory that was allocated with Z_Malloc.
+ */
+void Z_Free(void* ptr);
+
 void            Z_FreeTags(int lowTag, int highTag);
 void            Z_CheckHeap(void);
 void            Z_ChangeTag2(void* ptr, int tag);
