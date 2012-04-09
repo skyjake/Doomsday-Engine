@@ -578,6 +578,11 @@ void *Z_Malloc(size_t size, int tag, void *user)
             // Move to the next block.
             iter = advanceBlock(volume, iter);
 
+            // Ensure that iter will eventually touch start.
+            assert(!start->seqFirst || start->seqFirst == start ||
+                   !start->seqFirst->prev->seqFirst ||
+                   start->seqFirst->prev->seqFirst == start->seqFirst->prev->seqLast);
+
             if(iter == start && numChecked > 0)
             {
                 // Scanned all the way through, no suitable space found.
