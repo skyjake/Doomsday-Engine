@@ -2,12 +2,14 @@
 @INCLUDE = ../doomsday.doxy
 
 PROJECT_NAME            = "libdeng"
-PROJECT_NUMBER          = 1.9.7
+PROJECT_NUMBER          = 1.9.8
 PROJECT_BRIEF           = "Public API"
 OUTPUT_DIRECTORY        = ../apidoc/api/
 
-INPUT                   = api 
+INPUT                   = api ../libdeng2/include
 PREDEFINED              = __DOOMSDAY__
 
 INCLUDED_BY_GRAPH       = YES
 REFERENCED_BY_RELATION  = NO
+OPTIMIZE_OUTPUT_FOR_C   = NO
+MACRO_EXPANSION         = YES

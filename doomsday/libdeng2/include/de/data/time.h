@@ -42,9 +42,7 @@ class DENG2_PUBLIC Time : public ISerializable
 {
 public:
     /**
-     * The difference between to points of time.
-     *
-     * @ingroup types
+     * Difference between two points in time. @ingroup types
      */
     class DENG2_PUBLIC Delta
     {
