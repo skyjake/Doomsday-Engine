@@ -2015,16 +2015,6 @@ void Con_Message(const char *message, ...)
         dd_vsnprintf(buffer, PRBUFF_SIZE, message, argptr);
         va_end(argptr);
 
-        /*
-#ifdef UNIX
-        if(!isDedicated)
-        {
-            // These messages are supposed to be visible in the real console.
-            fprintf(stderr, "%s", buffer);
-        }
-#endif
-        */
-
         // These messages are always dumped. If consoleDump is set,
         // Con_Printf() will dump the message for us.
         if(!consoleDump)
@@ -2102,7 +2092,8 @@ void Con_Error(const char* error, ...)
         Con_BusyWorkerError(buff);
         if(Con_InBusyWorker())
         {
-            BusyTask_ExitWithValue(1);
+            // We should not continue to execute the worker any more.
+            for(;;) Thread_Sleep(10000);
         }
     }
     else
@@ -2117,8 +2108,9 @@ void Con_AbnormalShutdown(const char* message)
     DisplayMode_Shutdown();
 
     // Be a bit more graphic.
-    Sys_ShowCursor(true);
-    Sys_ShowCursor(true);
+    Window_TrapMouse(Window_Main(), false);
+    //Sys_ShowCursor(true);
+
     if(message) // Only show if a message given.
     {
         // Make sure all the buffered stuff goes into the file.

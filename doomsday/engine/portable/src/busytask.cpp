@@ -79,6 +79,10 @@ int BusyTask_Run(int mode, const char* taskName, busyworkerfunc_t worker, void* 
     return result;
 }
 
+/**
+ * Ends the busy event loop and sets its return value. The loop callback, which
+ * during busy mode points to the busy loop callback, is reset to NULL.
+ */
 void BusyTask_ExitWithValue(int result)
 {
     // After the event loop is gone, we don't want any loop callbacks until the

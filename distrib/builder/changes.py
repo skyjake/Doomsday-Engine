@@ -40,8 +40,8 @@ class Entry:
             subject = subject[8:-1]
         
         # Remote tags from the subject.
-        pos = subject.find(':')
-        if subject[pos + 1] in string.whitespace:
+        pos = subject.find(': ')
+        if pos > 0:
             for tag in subject[:pos].split('|'):
                 self.tags.append(tag.strip())
             subject = subject[pos + 1:].strip()
