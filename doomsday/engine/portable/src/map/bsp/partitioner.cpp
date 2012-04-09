@@ -1556,6 +1556,7 @@ struct Partitioner::Instance
             deleteHEdgeTip(tip);
             tip = next;
         }
+        vertexInfo(*vtx).tipSet = 0;
     }
 
     /**
