@@ -260,9 +260,13 @@ memblock_t *Z_GetBlock(void *ptr)
 #endif
 
 /**
- * Free memory that was allocated with Z_Malloc.
+ * Frees a block of memory allocated with Z_Malloc.
+ *
+ * @param ptr      Memory area to free.
+ * @param tracked  Pointer to a tracked memory block. Will be updated
+ *                 if affected by the operation.
  */
-void Z_Free(void *ptr)
+static void freeBlock(void* ptr, memblock_t** tracked)
 {
     memblock_t     *block, *other;
     memvolume_t    *volume;
@@ -320,7 +324,8 @@ void Z_Free(void *ptr)
 
     other = block->prev;
     if(!other->user)
-    {   // Merge with previous free block.
+    {
+        // Merge with previous free block.
         other->size += block->size;
         other->next = block->next;
         other->next->prev = other;
@@ -329,11 +334,18 @@ void Z_Free(void *ptr)
         if(block == volume->zone->staticRover)
             volume->zone->staticRover = other;
         block = other;
+
+        // Keep track of what happens to the referenced block.
+        if(tracked && *tracked == block)
+        {
+            *tracked = other;
+        }
     }
 
     other = block->next;
     if(!other->user)
-    {   // Merge the next free block onto the end.
+    {
+        // Merge the next free block onto the end.
         block->size += other->size;
         block->next = other->next;
         block->next->prev = block;
@@ -341,9 +353,20 @@ void Z_Free(void *ptr)
             volume->zone->rover = block;
         if(other == volume->zone->staticRover)
             volume->zone->staticRover = block;
+
+        // Keep track of what happens to the referenced block.
+        if(tracked && *tracked == other)
+        {
+            *tracked = block;
+        }
     }
 
     unlockZone();
+}
+
+void Z_Free(void *ptr)
+{
+    freeBlock(ptr, 0);
 }
 
 static __inline boolean isFreeBlock(memblock_t* block)
@@ -536,9 +559,9 @@ void *Z_Malloc(size_t size, int tag, void *user)
                     memblock_t* old = iter;
                     iter = iter->prev; // Step back.
 #ifdef FAKE_MEMORY_ZONE
-                    Z_Free(old->area);
+                    freeBlock(old->area, &start);
 #else
-                    Z_Free((byte *) old + sizeof(memblock_t));
+                    freeBlock((byte *) old + sizeof(memblock_t), &start);
 #endif
                 }
                 else
