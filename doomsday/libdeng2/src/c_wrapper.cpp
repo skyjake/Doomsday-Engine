@@ -132,7 +132,7 @@ void LegacyCore_PrintfLogFragmentAtLevel(LegacyCore* lc, legacycore_loglevel_t l
     self->printLogFragment(buffer, logLevel);
 }
 
-void LegacyCore_FlushLog(void)
+void LogBuffer_Flush(void)
 {
     de::LogBuffer::appBuffer().flush();
 }

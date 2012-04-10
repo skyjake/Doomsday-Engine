@@ -2114,7 +2114,7 @@ void Con_AbnormalShutdown(const char* message)
     if(message) // Only show if a message given.
     {
         // Make sure all the buffered stuff goes into the file.
-        LegacyCore_FlushLog();
+        LogBuffer_Flush();
 
         /// @todo Get the actual output filename (might be a custom one).
         Sys_MessageBoxWithDetailsFromFile(MBT_ERROR, DOOMSDAY_NICENAME, message,
