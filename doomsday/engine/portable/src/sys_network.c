@@ -685,7 +685,7 @@ static boolean serverHandleNodeRequest(nodeid_t node, const char *command, int l
     }
 
     // Status query?
-    if(length == 5 && !strcmp(command, "Info?"))
+    if(length == 5 && !strncmp(command, "Info?", 5))
     {
         Sv_GetInfo(&info);
         Str_Init(&msg);
