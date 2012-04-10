@@ -104,6 +104,7 @@ struct HEdge
     -       biassurface_t*[3] bsuf // 0=middle, 1=top, 2=bottom
     -       short       frameFlags
     -       bsphedgeinfo_s* bspBuildInfo
+    -       uint        index /// Unique. Set when saving the BSP.
 end
 
 internal
@@ -126,6 +127,7 @@ struct BspLeaf
     -       fvertex_s** vertices // [numvertices] size
     -       shadowlink_s* shadows
     -       biassurface_s** bsuf // [sector->planeCount] size.
+    -       uint        index /// Unique. Set when saving the BSP.
 end
 
 internal
@@ -505,4 +507,5 @@ struct BspNode
     -       partition_t partition
     -       AABoxf[2]   aaBox    // Bounding box for each child.
     PTR     runtime_mapdata_header_t*[2] children
+    -       uint        index /// Unique. Set when saving the BSP.
 end

@@ -98,6 +98,7 @@ typedef struct hedge_s {
     biassurface_t*      bsuf[3];       // 0=middle, 1=top, 2=bottom
     short               frameFlags;
     struct bsphedgeinfo_s* bspBuildInfo;
+    uint                index; /// Unique. Set when saving the BSP.
 } HEdge;
 
 #define BLF_MIDPOINT         0x80    // Midpoint is tri-fan centre.
@@ -119,6 +120,7 @@ typedef struct bspleaf_s {
     struct fvertex_s**  vertices;      // [numvertices] size
     struct shadowlink_s* shadows;
     struct biassurface_s** bsuf;       // [sector->planeCount] size.
+    uint                index; /// Unique. Set when saving the BSP.
 } BspLeaf;
 
 typedef enum {
@@ -466,6 +468,7 @@ typedef struct bspnode_s {
     partition_t         partition;
     AABoxf              aaBox[2];      // Bounding box for each child.
     runtime_mapdata_header_t* children[2];
+    uint                index; /// Unique. Set when saving the BSP.
 } BspNode;
 
 #endif

@@ -203,15 +203,9 @@ Sector* GameMap_SectorByOrigin(GameMap* map, const void* ddMobjBase)
 
 int GameMap_BspLeafIndex(GameMap* map, BspLeaf* leaf)
 {
-    uint i;
-    assert(map);
+    DENG_UNUSED(map);
     if(!leaf) return -1;
-    /// @todo replace with a more performant algorithm!
-    for(i = 0; i < map->numBspLeafs; ++i)
-    {
-        if(leaf == map->bspLeafs[i]) return (int)i;
-    }
-    return -1;
+    return leaf->index;
 }
 
 BspLeaf* GameMap_BspLeaf(GameMap* map, uint idx)
@@ -223,15 +217,9 @@ BspLeaf* GameMap_BspLeaf(GameMap* map, uint idx)
 
 int GameMap_HEdgeIndex(GameMap* map, HEdge* hedge)
 {
-    uint i;
-    assert(map);
-    if(!hedge) return -1;
-    /// @todo replace with a more performant algorithm!
-    for(i = 0; i < map->numHEdges; ++i)
-    {
-        if(hedge == map->hedges[i]) return (int)i;
-    }
-    return -1;
+    DENG_UNUSED(map);
+    if(hedge) return -1;
+    return hedge->index;
 }
 
 HEdge* GameMap_HEdge(GameMap* map, uint idx)
@@ -243,15 +231,9 @@ HEdge* GameMap_HEdge(GameMap* map, uint idx)
 
 int GameMap_BspNodeIndex(GameMap* map, BspNode* node)
 {
-    uint i;
-    assert(map);
+    DENG_UNUSED(map);
     if(!node) return -1;
-    /// @todo replace with a more performant algorithm!
-    for(i = 0; i < map->numBspNodes; ++i)
-    {
-        if(node == map->bspNodes[i]) return (int)i;
-    }
-    return -1;
+    return node->index;
 }
 
 BspNode* GameMap_BspNode(GameMap* map, uint idx)

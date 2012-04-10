@@ -85,7 +85,8 @@ static int hedgeCollector(BspTreeNode& tree, void* parameters)
         HEdge* hedge = leaf->hedge;
         do
         {
-            (*p->hedgeLUT)[p->curIdx++] = hedge;
+            hedge->index = p->curIdx++;
+            (*p->hedgeLUT)[hedge->index] = hedge;
 
         } while((hedge = hedge->next) != leaf->hedge);
     }
@@ -165,7 +166,8 @@ static int populateBspObjectLuts(BspTreeNode& tree, void* parameters)
     tree.setUserData(NULL);
 
     // Add this BspNode to the LUT.
-    p->dest->bspNodes[p->nodeCurIndex++] = node;
+    node->index = p->nodeCurIndex++;
+    p->dest->bspNodes[node->index] = node;
 
     if(BspTreeNode* right = tree.right())
     {
@@ -176,7 +178,8 @@ static int populateBspObjectLuts(BspTreeNode& tree, void* parameters)
             right->setUserData(NULL);
 
             // Add this BspLeaf to the LUT.
-            p->dest->bspLeafs[p->leafCurIndex++] = leaf;
+            leaf->index = p->leafCurIndex++;
+            p->dest->bspLeafs[leaf->index] = leaf;
         }
     }
 
@@ -189,7 +192,8 @@ static int populateBspObjectLuts(BspTreeNode& tree, void* parameters)
             left->setUserData(NULL);
 
             // Add this BspLeaf to the LUT.
-            p->dest->bspLeafs[p->leafCurIndex++] = leaf;
+            leaf->index = p->leafCurIndex++;
+            p->dest->bspLeafs[leaf->index] = leaf;
         }
     }
 
@@ -213,6 +217,10 @@ static void hardenBSP(BspBuilder& builder, GameMap* dest)
         // Take ownership of this leaf.
         dest->bsp = rootNode->userData();
         rootNode->setUserData(NULL);
+
+        BspLeaf* leaf = reinterpret_cast<BspLeaf*>(dest->bsp);
+        leaf->index = 0;
+        dest->bspLeafs[0] = leaf;
         return;
     }
 
