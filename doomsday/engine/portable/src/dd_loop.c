@@ -119,6 +119,16 @@ void DD_GameLoopCallback(void)
     if(Sys_IsShuttingDown())
         return; // Shouldn't run this while shutting down.
 
+    if(isDedicated)
+    {
+        // Adjust loop rate depending on whether players are in game.
+        int i, count = 0;
+        for(i = 1; i < DDMAXPLAYERS; ++i)
+            if(ddPlayers[i].shared.inGame) count++;
+
+        LegacyCore_SetLoopRate(de2LegacyCore, count? 35 : 2);
+    }
+
     // Run at least one (fractional) tic.
     runTics();
 
