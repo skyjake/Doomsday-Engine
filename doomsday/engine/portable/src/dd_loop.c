@@ -116,8 +116,6 @@ int DD_GameLoop(void)
 
 void DD_GameLoopCallback(void)
 {
-    if(novideo) return; // Only after the frame has been drawn, please.
-
     if(Sys_IsShuttingDown())
         return; // Shouldn't run this while shutting down.
 
@@ -132,11 +130,11 @@ void DD_GameLoopCallback(void)
     // Update clients at regular intervals.
     Sv_TransmitFrame();
 
-    // Request update of window contents.
-    Window_Draw(Window_Main());
-
     if(!novideo)
     {
+        // Request update of window contents.
+        Window_Draw(Window_Main());
+
         GL_ProcessDeferredTasks(FRAME_DEFERRED_UPLOAD_TIMEOUT);
     }
 

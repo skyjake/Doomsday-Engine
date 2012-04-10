@@ -127,6 +127,12 @@ void LegacyCore::popLoop()
     d->loopStack.removeLast();
 
     LOG_DEBUG("Loop function popped, now %p.") << dintptr(d->loop.func);
+
+    if(d->loop.func)
+    {
+        // Start the periodic callback calls.
+        QTimer::singleShot(d->loop.interval, this, SLOT(callback()));
+    }
 }
 
 int LegacyCore::runEventLoop()
