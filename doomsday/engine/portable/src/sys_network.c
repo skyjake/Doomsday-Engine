@@ -330,10 +330,9 @@ static boolean registerNewSocket(int sock)
 {
     uint        i;
     netnode_t  *node;
-    boolean     found;
 
     // Find a free node.
-    for(i = 1, node = netNodes + 1, found = false; i < MAX_NODES && !found; ++i, node++)
+    for(i = 1, node = netNodes + 1; i < MAX_NODES; ++i, node++)
     {
         if(!node->sock)
         {
@@ -348,10 +347,10 @@ static boolean registerNewSocket(int sock)
 
             DEBUG_VERBOSE2_Message(("N_RegisterNewSocket: Socket #%i registered as node %i.\n", sock, i));
 
-            found = true;
+            return true;
         }
     }
-    return found;
+    return false;
 }
 
 /**
