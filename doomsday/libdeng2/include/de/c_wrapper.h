@@ -68,6 +68,11 @@ DENG2_PUBLIC void LegacyCore_PrintfLogFragmentAtLevel(LegacyCore* lc, legacycore
 DENG2_PUBLIC void LegacyCore_FlushLog(void);
 
 /*
+ * LogBuffer
+ */
+DENG2_PUBLIC void LogBuffer_EnableStandardOutput(int enable);
+
+/*
  * LegacyNetwork
  */
 DENG2_OPAQUE(LegacyNetwork)

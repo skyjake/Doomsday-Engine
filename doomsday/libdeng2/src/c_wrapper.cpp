@@ -137,6 +137,11 @@ void LegacyCore_FlushLog(void)
     de::LogBuffer::appBuffer().flush();
 }
 
+void LogBuffer_EnableStandardOutput(int enable)
+{
+	de::LogBuffer::appBuffer().enableStandardOutput(enable != 0);
+}
+
 int LegacyNetwork_OpenServerSocket(unsigned short port)
 {
     try
