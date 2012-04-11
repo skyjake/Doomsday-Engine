@@ -2250,7 +2250,7 @@ D_CMD(Parse)
     for(i = 1; i < argc; ++i)
     {
         Con_Printf("Parsing %s.\n", argv[i]);
-        Con_ParseCommands(argv[i], false);
+        Con_ParseCommands(argv[i]);
     }
     return true;
 }

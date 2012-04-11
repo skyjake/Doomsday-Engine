@@ -993,7 +993,7 @@ static int DD_ActivateGameWorker(void* paramaters)
     }
 
     Con_Message("Parsing primary config \"%s\"...\n", F_PrettyPath(Str_Text(configFileName)));
-    Con_ParseCommands(Str_Text(configFileName), true);
+    Con_ParseCommands2(Str_Text(configFileName), CPCF_SET_DEFAULT | CPCF_ALLOW_SAVE_STATE);
     if(configFileName == &tmp)
         Str_Free(&tmp);
     }
@@ -1004,7 +1004,7 @@ static int DD_ActivateGameWorker(void* paramaters)
         B_BindGameDefaults();
 
         // Read bindings for this game and merge with the working set.
-        Con_ParseCommands(Str_Text(Game_BindingConfig(theGame)), false);
+        Con_ParseCommands2(Str_Text(Game_BindingConfig(theGame)), CPCF_ALLOW_SAVE_BINDINGS);
     }
 
     if(p->initiatedBusyMode)
@@ -1641,7 +1641,7 @@ boolean DD_Init(void)
     // Try to load the autoexec file. This is done here to make sure everything is
     // initialized: the user can do here anything that s/he'd be able to do in-game
     // provided a game was loaded during startup.
-    Con_ParseCommands("autoexec.cfg", false);
+    Con_ParseCommands("autoexec.cfg");
 
     // Read additional config files that should be processed post engine init.
     if(ArgCheckWith("-parse", 1))
@@ -1655,7 +1655,7 @@ boolean DD_Init(void)
             if(!arg || arg[0] == '-') break;
 
             Con_Message("  Processing \"%s\"...\n", F_PrettyPath(arg));
-            Con_ParseCommands(arg, false);
+            Con_ParseCommands(arg);
         }
         VERBOSE( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
     }
@@ -1791,7 +1791,7 @@ static int DD_StartupWorker(void* parm)
             if(!arg || arg[0] == '-')
                 break;
             Con_Message("  Processing \"%s\"...\n", F_PrettyPath(arg));
-            Con_ParseCommands(arg, false);
+            Con_ParseCommands(arg);
         }
         VERBOSE( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
     }
@@ -1815,7 +1815,7 @@ static int DD_StartupWorker(void* parm)
     Con_SetProgress(60);
 
     // Execute the startup script (Startup.cfg).
-    Con_ParseCommands("startup.cfg", false);
+    Con_ParseCommands("startup.cfg");
 
     // Get the material manager up and running.
     Con_SetProgress(90);
