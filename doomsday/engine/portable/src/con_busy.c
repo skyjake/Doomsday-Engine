@@ -156,7 +156,7 @@ static void BusyTask_Exit(void)
     result = Sys_WaitThread(busyThread, busyTaskEndedWithError? 100 : 5000);
     busyThread = NULL;
 
-    BusyTask_ExitWithValue(result);
+    BusyTask_StopEventLoopWithValue(result);
 }
 
 /**
