@@ -675,7 +675,7 @@ lumpnum_t F_CheckLumpNumForName2(const char* name, boolean silent)
     size_t lumpSize = 0;
     size_t refSize;
 
-    Con_Message("checking for \"%s\"\n", name);
+    //Con_Message("checking for \"%s\"\n", name);
 
     errorIfNotInited("F_CheckLumpNumForName");
 
@@ -741,7 +741,7 @@ lumpnum_t F_CheckLumpNumForName2(const char* name, boolean silent)
         }
 
         // If still not found, warn the user.
-        if(/*!silent &&*/ lumpNum < 0)
+        if(!silent && lumpNum < 0)
         {
             if(sizeCond == LSCOND_NONE)
             {
@@ -750,7 +750,7 @@ lumpnum_t F_CheckLumpNumForName2(const char* name, boolean silent)
             else
             {
                 Con_Message("Warning: F_CheckLumpNumForName: Lump \"%s\" with size%s%i not found.\n",
-                            name, sizeCond==LSCOND_EQUAL? "==" :
+                            Str_Text(&searchPath), sizeCond==LSCOND_EQUAL? "==" :
                             sizeCond==LSCOND_GREATER_OR_EQUAL? ">=" : "<=", (int)refSize);
             }
         }
