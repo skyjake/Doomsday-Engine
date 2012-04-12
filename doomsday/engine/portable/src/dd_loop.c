@@ -116,10 +116,18 @@ int DD_GameLoop(void)
 
 void DD_GameLoopCallback(void)
 {
-    if(novideo) return; // Only after the frame has been drawn, please.
-
     if(Sys_IsShuttingDown())
         return; // Shouldn't run this while shutting down.
+
+    if(isDedicated)
+    {
+        // Adjust loop rate depending on whether players are in game.
+        int i, count = 0;
+        for(i = 1; i < DDMAXPLAYERS; ++i)
+            if(ddPlayers[i].shared.inGame) count++;
+
+        LegacyCore_SetLoopRate(de2LegacyCore, count? 35 : 2);
+    }
 
     // Run at least one (fractional) tic.
     runTics();
@@ -132,11 +140,11 @@ void DD_GameLoopCallback(void)
     // Update clients at regular intervals.
     Sv_TransmitFrame();
 
-    // Request update of window contents.
-    Window_Draw(Window_Main());
-
     if(!novideo)
     {
+        // Request update of window contents.
+        Window_Draw(Window_Main());
+
         GL_ProcessDeferredTasks(FRAME_DEFERRED_UPLOAD_TIMEOUT);
     }
 

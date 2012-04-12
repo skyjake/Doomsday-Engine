@@ -107,6 +107,7 @@ inputdev_t inputDevices[NUM_INPUT_DEVICES];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static boolean inputDisabledFully = false;
 static boolean ignoreInput = false;
 
 static byte shiftKeyMappings[NUMKKEYS], altKeyMappings[NUMKKEYS];
@@ -754,6 +755,8 @@ void DD_InitInput(void)
 {
     int i;
 
+    inputDisabledFully = ArgExists("-noinput");
+
     for(i = 0; i < 256; ++i)
     {
         if(i >= 32 && i <= 127)
@@ -1050,7 +1053,7 @@ static void dispatchEvents(eventqueue_t* q, timespan_t ticLength)
  */
 static void postEvents(timespan_t ticLength)
 {
-    if(ArgExists("-noinput")) return;
+    if(inputDisabledFully) return;
 
     DD_ReadKeyboard();
 

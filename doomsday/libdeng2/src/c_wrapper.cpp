@@ -132,9 +132,14 @@ void LegacyCore_PrintfLogFragmentAtLevel(LegacyCore* lc, legacycore_loglevel_t l
     self->printLogFragment(buffer, logLevel);
 }
 
-void LegacyCore_FlushLog(void)
+void LogBuffer_Flush(void)
 {
     de::LogBuffer::appBuffer().flush();
+}
+
+void LogBuffer_EnableStandardOutput(int enable)
+{
+	de::LogBuffer::appBuffer().enableStandardOutput(enable != 0);
 }
 
 int LegacyNetwork_OpenServerSocket(unsigned short port)

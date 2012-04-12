@@ -127,6 +127,12 @@ void LegacyCore::popLoop()
     d->loopStack.removeLast();
 
     LOG_DEBUG("Loop function popped, now %p.") << dintptr(d->loop.func);
+
+    if(d->loop.func)
+    {
+        // Start the periodic callback calls.
+        QTimer::singleShot(d->loop.interval, this, SLOT(callback()));
+    }
 }
 
 int LegacyCore::runEventLoop()
@@ -143,9 +149,13 @@ int LegacyCore::runEventLoop()
 
 void LegacyCore::setLoopRate(int freqHz)
 {
+    const int oldInterval = d->loop.interval;
     d->loop.interval = qMax(1, 1000/freqHz);
 
-    LOG_DEBUG("Loop interval set to %i ms.") << d->loop.interval;
+    if(oldInterval != d->loop.interval)
+    {
+        LOG_DEBUG("Loop interval changed to %i ms.") << d->loop.interval;
+    }
 }
 
 void LegacyCore::stop(int exitCode)

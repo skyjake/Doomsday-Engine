@@ -1075,7 +1075,7 @@ void Materials_Ticker(timespan_t time)
     materiallist_node_t* node;
 
     // The animation will only progress when the game is not paused.
-    if(clientPaused) return;
+    if(clientPaused || novideo) return;
 
     node = materials;
     while(node)

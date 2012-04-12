@@ -263,6 +263,9 @@ Window* Sys_ConInit(const char* title)
     {
         int maxPos[2];
 
+		// Do not output to standard out, curses would get confused.
+		LogBuffer_EnableStandardOutput(false);
+
         // Initialize curses.
         if(!(cursesRootWin = initscr()))
         {

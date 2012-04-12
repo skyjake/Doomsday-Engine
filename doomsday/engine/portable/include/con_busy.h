@@ -132,7 +132,7 @@ void Con_DrawTransition(void);
 int BusyTask_Run(int mode, const char* taskName, busyworkerfunc_t worker, void* workerData);
 void BusyTask_Begin(BusyTask* task);
 void BusyTask_End(BusyTask* task);
-void BusyTask_ExitWithValue(int result);
+void BusyTask_StopEventLoopWithValue(int result);
 
 #ifdef __cplusplus
 } // extern "C"
