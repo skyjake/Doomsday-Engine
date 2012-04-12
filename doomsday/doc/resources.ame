@@ -31,14 +31,17 @@ lists the resource classes and gives a brief description of each.
 	Sfx @tab Sound effects
 }
 
-For example, sound effects for Doom II would be placed in the directory 
+Another example: sound effects for Doom II would be placed in the directory 
 @file{ data/doom2/sfx/ }.
 
 $ TODO: Is the following correct?
-The resource class directory can have a subdirectory for each game mode. When
-Doomsday looks for an external resource, it first checks the current game
+The resource class directory can have a subdirectory for each game mode.
+For example, textures meant only for Final Doom: Plutonia Experiment would be
+placed in the directory @file{ data/jdoom/textures/doom2-plut/ }.
+
+When Doomsday looks for an external resource, it first checks the current game
 mode's subdirectory. If no suitable resource is found there, the class
-directory is searched instead.
+directory is searched instead. 
 
 $ TODO: What is this about? Move to a move appropriate place. -jk
 $
