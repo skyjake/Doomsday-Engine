@@ -169,7 +169,7 @@ void P_InitMapInfo(void)
     defMapInfo.warpTrans = 0;
     defMapInfo.nextMap = 0; // Always go to map 0 if not specified.
     defMapInfo.cdTrack = 1;
-    defMapInfo.sky1Material = Materials_ResolveUriCString(gameMode == hexen_demo ? MN_TEXTURES_NAME":SKY2" : MN_TEXTURES_NAME":SKY1");
+    defMapInfo.sky1Material = Materials_ResolveUriCString(gameMode == hexen_demo || gameMode == hexen_betademo? MN_TEXTURES_NAME":SKY2" : MN_TEXTURES_NAME":SKY1");
     defMapInfo.sky2Material = defMapInfo.sky1Material;
     defMapInfo.sky1ScrollDelta = 0;
     defMapInfo.sky2ScrollDelta = 0;

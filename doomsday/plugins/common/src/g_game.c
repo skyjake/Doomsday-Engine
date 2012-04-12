@@ -2075,7 +2075,7 @@ void G_LeaveMap(uint newMap, uint _entryPoint, boolean _secretExit)
     if(IS_CLIENT || (cyclingMaps && mapCycleNoExit)) return;
 
 #if __JHEXEN__
-    if(gameMode == hexen_demo && newMap != DDMAXINT && newMap > 3)
+    if((gameMode == hexen_betademo || gameMode == hexen_demo) && newMap != DDMAXINT && newMap > 3)
     {   // Not possible in the 4-map demo.
         P_SetMessage(&players[CONSOLEPLAYER], "PORTAL INACTIVE -- DEMO", false);
         return;
