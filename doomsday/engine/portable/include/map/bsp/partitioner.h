@@ -81,15 +81,6 @@ public:
     bool build();
 
     /**
-     * Retrieve a pointer to the root BinaryTree node for the constructed BSP.
-     * Even if construction fails this will return a valid node.
-     *
-     * The only time upon which @c NULL is returned is if called prior to calling
-     * BspBuilder::build()
-     */
-    BspTreeNode* root() const;
-
-    /**
      * Retrieve the number of BspNodes owned by this Partitioner. When the
      * build completes this number will be the total number of BspNodes that
      * were produced during that process. Note that as BspNode ownership is
@@ -98,6 +89,15 @@ public:
      * @return  Current number of BspNodes owned by this Partitioner.
      */
     uint numNodes();
+
+    /**
+     * Retrieve a pointer to the root BinaryTree node for the constructed BSP.
+     * Even if construction fails this will return a valid node.
+     *
+     * The only time upon which @c NULL is returned is if called prior to calling
+     * BspBuilder::build()
+     */
+    BspTreeNode* root() const;
 
     /**
      * Retrieve the number of BspLeafs owned by this Partitioner. When the
@@ -130,6 +130,14 @@ public:
      * within valid range using Partitioner::numVertexes()
      */
     Vertex const& vertex(uint index);
+
+    /**
+     * Release ownership of the specified object.
+     *
+     * @param ob  Map data object to release ownership of.
+     * @return  Reference to this Partitioner.
+     */
+    Partitioner& releaseOwnership(runtime_mapdata_header_t const& ob);
 
 private:
     struct Instance;

@@ -93,7 +93,7 @@ struct Partitioner::Instance
         splitCostFactor(_splitCostFactor),
         map(_map),
         numEditableVertexes(_numEditableVertexes), editableVertexes(_editableVertexes),
-        numNodes(0), numLeafs(0),
+        numNodes(0), numLeafs(0), numVertexes(0),
         rootNode(0), partition(0),
         unclosedSectors(), migrantHEdges(),
         builtOK(false)
@@ -1493,6 +1493,67 @@ struct Partitioner::Instance
         }
     }
 
+    BspTreeNode* treeNodeForBspObject(runtime_mapdata_header_t const& ob)
+    {
+        if(DMU_GetType(&ob) == DMU_BSPLEAF || DMU_GetType(&ob) == DMU_BSPNODE)
+        {
+            // Iterative pre-order traversal of the BSP tree.
+            BspTreeNode* cur = rootNode;
+            BspTreeNode* prev = 0;
+            while(cur)
+            {
+                while(cur)
+                {
+                    if(cur->isLeaf() && DMU_GetType(&ob) == DMU_BSPLEAF)
+                    {
+                        const BspLeaf* leaf = reinterpret_cast<BspLeaf const*>(&ob);
+                        if(cur->userData() && leaf == reinterpret_cast<BspLeaf*>(cur->userData()))
+                        {
+                            return cur;
+                        }
+                    }
+                    else if(DMU_GetType(&ob) == DMU_BSPNODE)
+                    {
+                        const BspNode* node = reinterpret_cast<BspNode const*>(&ob);
+                        if(cur->userData() && node == reinterpret_cast<BspNode*>(cur->userData()))
+                        {
+                            return cur;
+                        }
+                    }
+
+                    if(prev == cur->parent())
+                    {
+                        // Descending - right first, then left.
+                        prev = cur;
+                        if(cur->hasRight()) cur = cur->right();
+                        else                cur = cur->left();
+                    }
+                    else if(prev == cur->right())
+                    {
+                        // Last moved up the right branch - descend the left.
+                        prev = cur;
+                        cur = cur->left();
+                    }
+                    else if(prev == cur->left())
+                    {
+                        // Last moved up the left branch - continue upward.
+                        prev = cur;
+                        cur = cur->parent();
+                    }
+                }
+
+                if(prev)
+                {
+                    // No left child - back up.
+                    cur = prev->parent();
+                }
+            }
+        }
+
+        LOG_DEBUG("Partitioner::treeNodeForBspObject: Attempted to locate using an unknown object %p.") << &ob;
+        return 0;
+    }
+
     void clearAllHEdgeInfo()
     {
         // Iterative pre-order traversal of the BSP tree.
@@ -1574,6 +1635,9 @@ struct Partitioner::Instance
         vtx->header.type = DMU_VERTEX;
         vtx->buildData.index = *numEditableVertexes + uint(vertexes.size() + 1); // 1-based index, 0 = NIL.
         vertexes.push_back(vtx);
+
+        // There is now one more Vertex.
+        numVertexes += 1;
 
         vertexInfos.push_back(VertexInfo());
         if(point)
@@ -1921,16 +1985,19 @@ struct Partitioner::Instance
     /// Running totals of constructed BSP data objects.
     uint numNodes;
     uint numLeafs;
+    uint numVertexes;
 
     /// Extended info about LineDefs in the current map.
     typedef std::vector<LineDefInfo> LineDefInfos;
     LineDefInfos lineDefInfos;
 
     /// Extended info about Vertexes in the current map (including extras).
+    /// @note May be larger than Instance::numVertexes (deallocation is lazy).
     typedef std::vector<VertexInfo> VertexInfos;
     VertexInfos vertexInfos;
 
     /// Extra vertexes allocated for the current map.
+    /// @note May be larger than Instance::numVertexes (deallocation is lazy).
     typedef std::vector<Vertex*> Vertexes;
     Vertexes vertexes;
 
@@ -2041,13 +2108,60 @@ uint Partitioner::numHEdges()
 
 uint Partitioner::numVertexes()
 {
-    return d->vertexes.size();
+    return d->numVertexes;
 }
 
 Vertex const& Partitioner::vertex(uint idx)
 {
     Q_ASSERT(idx < d->vertexes.size());
+    Q_ASSERT(d->vertexes[idx]);
     return *d->vertexes[idx];
+}
+
+Partitioner& Partitioner::releaseOwnership(runtime_mapdata_header_t const& ob)
+{
+    // Is this object owned?
+    if(DMU_GetType(&ob) == DMU_VERTEX)
+    {
+        const Vertex* vtx = reinterpret_cast<Vertex const*>(&ob);
+        if(vtx->buildData.index > 0 && uint(vtx->buildData.index) > *d->numEditableVertexes)
+        {
+            uint idx = uint(vtx->buildData.index) - 1 - *d->numEditableVertexes;
+            if(idx < d->vertexes.size() && d->vertexes[idx])
+            {
+                d->vertexes[idx] = 0;
+                // There is now one fewer Vertex.
+                d->numVertexes -= 1;
+                return *this;
+            }
+        }
+    }
+    else if(DMU_GetType(&ob) == DMU_HEDGE)
+    {
+        /// @todo Implement a mechanic for tracking HEdge ownership.
+        return *this;
+    }
+    else if(BspTreeNode* treeNode = d->treeNodeForBspObject(ob))
+    {
+        treeNode->setUserData(0);
+        switch(DMU_GetType(&ob))
+        {
+        case DMU_BSPLEAF:
+            // There is now one fewer BspLeaf.
+            d->numLeafs -= 1;
+            break;
+        case DMU_BSPNODE:
+            // There is now one fewer BspNode.
+            d->numNodes -= 1;
+            break;
+
+        default: Q_ASSERT(0);
+        }
+        return *this;
+    }
+
+    LOG_DEBUG("Partitioner::releaseOwnership: Attempted to release an unknown/unowned object %p.") << &ob;
+    return *this;
 }
 
 static bool getAveragedCoords(BspLeaf* leaf, pvec2d_t midPoint)

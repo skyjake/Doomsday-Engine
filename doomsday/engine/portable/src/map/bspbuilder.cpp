@@ -74,3 +74,9 @@ Vertex const& BspBuilder::vertex(uint idx)
 {
     return partitioner->vertex(idx);
 }
+
+BspBuilder& BspBuilder::releaseOwnership(runtime_mapdata_header_t const& ob)
+{
+    partitioner->releaseOwnership(ob);
+    return *this;
+}

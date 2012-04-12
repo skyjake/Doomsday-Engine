@@ -31,6 +31,10 @@
 #ifndef __DOOMSDAY_MAP_UPDATE_H__
 #define __DOOMSDAY_MAP_UPDATE_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct setargs_s {
     int             type;
     uint            prop;
@@ -74,6 +78,10 @@ int DMU_GetMaterialProperty(struct material_s* material, setargs_t* args);
         Con_Error("ASSERT_DMU_TYPE failure on line %i in "__FILE__". " #ptr " is not %s.\n", __LINE__, DMU_Str(dmuType));
 #else
 # define ASSERT_DMU_TYPE(ptr, dmuType)
+#endif
+
+#ifdef __cplusplus
+} // extern "C"
 #endif
 
 #endif
