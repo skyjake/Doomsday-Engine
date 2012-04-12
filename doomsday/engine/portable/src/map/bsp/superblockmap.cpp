@@ -29,7 +29,6 @@
 
 #include "kdtree.h"
 
-#include "map/bsp/bsphedgeinfo.h"
 #include "map/bsp/superblockmap.h"
 
 using namespace de::bsp;
@@ -59,24 +58,21 @@ struct SuperBlock::Instance
         KdTreeNode_SetUserData(tree, NULL);
     }
 
-    void inline linkHEdge(HEdge* hedge)
+    void inline linkHEdge(HEdge& hedge)
     {
-        if(!hedge) return;
-        hedges.push_front(hedge);
+        hedges.push_front(&hedge);
     }
 
-    void incrementHEdgeCount(HEdge* hedge)
+    void inline incrementHEdgeCount(HEdge const& hedge)
     {
-        if(!hedge) return;
-        if(hedge->lineDef) realNum++;
-        else               miniNum++;
+        if(hedge.lineDef) realNum++;
+        else              miniNum++;
     }
 
-    void decrementHEdgeCount(HEdge* hedge)
+    void inline decrementHEdgeCount(HEdge const& hedge)
     {
-        if(!hedge) return;
-        if(hedge->lineDef) realNum--;
-        else               miniNum--;
+        if(hedge.lineDef) realNum--;
+        else              miniNum--;
     }
 };
 
@@ -197,13 +193,13 @@ void SuperBlock::findHEdgeBounds(AABoxf& bounds)
     }
 }
 
-SuperBlock* SuperBlock::push(HEdge* hedge)
+SuperBlock& SuperBlock::push(HEdge& hedge)
 {
-    if(!hedge) return this;
-
     SuperBlock* sb = this;
     for(;;)
     {
+        Q_ASSERT(sb);
+
         // Update half-edge counts.
         sb->d->incrementHEdgeCount(hedge);
 
@@ -211,8 +207,6 @@ SuperBlock* SuperBlock::push(HEdge* hedge)
         {
             // No further subdivision possible.
             sb->d->linkHEdge(hedge);
-            // Associate ourself.
-            hedge->bspBuildInfo->block = sb;
             break;
         }
 
@@ -223,16 +217,16 @@ SuperBlock* SuperBlock::push(HEdge* hedge)
         {
             // Wider than tall.
             int midPoint = (sb->bounds().minX + sb->bounds().maxX) / 2;
-            p1 = hedge->v[0]->buildData.pos[0] >= midPoint? LEFT : RIGHT;
-            p2 = hedge->v[1]->buildData.pos[0] >= midPoint? LEFT : RIGHT;
+            p1 = hedge.v[0]->buildData.pos[0] >= midPoint? LEFT : RIGHT;
+            p2 = hedge.v[1]->buildData.pos[0] >= midPoint? LEFT : RIGHT;
             splitVertical = false;
         }
         else
         {
             // Taller than wide.
             int midPoint = (sb->bounds().minY + sb->bounds().maxY) / 2;
-            p1 = hedge->v[0]->buildData.pos[1] >= midPoint? LEFT : RIGHT;
-            p2 = hedge->v[1]->buildData.pos[1] >= midPoint? LEFT : RIGHT;
+            p1 = hedge.v[0]->buildData.pos[1] >= midPoint? LEFT : RIGHT;
+            p2 = hedge.v[1]->buildData.pos[1] >= midPoint? LEFT : RIGHT;
             splitVertical = true;
         }
 
@@ -240,8 +234,6 @@ SuperBlock* SuperBlock::push(HEdge* hedge)
         {
             // Line crosses midpoint; link it in and return.
             sb->d->linkHEdge(hedge);
-            // Associate ourself.
-            hedge->bspBuildInfo->block = sb;
             break;
         }
 
@@ -255,7 +247,7 @@ SuperBlock* SuperBlock::push(HEdge* hedge)
         sb = sb->child(p1);
     }
 
-    return this;
+    return *sb;
 }
 
 HEdge* SuperBlock::pop()
@@ -266,10 +258,8 @@ HEdge* SuperBlock::pop()
     d->hedges.pop_front();
 
     // Update half-edge counts.
-    d->decrementHEdgeCount(hedge);
+    d->decrementHEdgeCount(*hedge);
 
-    // Disassociate ourself.
-    hedge->bspBuildInfo->block = NULL;
     return hedge;
 }
 

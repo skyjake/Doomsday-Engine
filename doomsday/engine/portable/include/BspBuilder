@@ -1,3 +1,2 @@
 #include "map/bspbuilder.h"
-#include "map/bsp/bsphedgeinfo.h"
 #include "map/bsp/bsptreenode.h"

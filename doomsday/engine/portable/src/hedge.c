@@ -25,8 +25,6 @@
 #include "de_refresh.h"
 #include "de_play.h"
 
-#include "map/bsp/bsphedgeinfo.h"
-
 HEdge* HEdge_New(void)
 {
     HEdge* hedge = Z_Calloc(sizeof *hedge, PU_MAPSTATIC, 0);
@@ -38,12 +36,8 @@ HEdge* HEdge_NewCopy(const HEdge* other)
 {
     HEdge* hedge;
     assert(other);
-
     hedge = Z_Malloc(sizeof *hedge, PU_MAPSTATIC, 0);
     memcpy(hedge, other, sizeof *hedge);
-
-    // BspBuildInfo is not copied.
-    hedge->bspBuildInfo = 0;
     return hedge;
 }
 
@@ -51,7 +45,6 @@ void HEdge_Delete(HEdge* hedge)
 {
     uint i;
     assert(hedge);
-    if(hedge->bspBuildInfo) Z_Free(hedge->bspBuildInfo);
     for(i = 0; i < 3; ++i)
     {
         if(hedge->bsuf[i])
@@ -60,29 +53,6 @@ void HEdge_Delete(HEdge* hedge)
         }
     }
     Z_Free(hedge);
-}
-
-HEdge* HEdge_AttachBspBuildInfo(HEdge* hedge, BspHEdgeInfo* info)
-{
-    assert(hedge);
-    if(hedge->bspBuildInfo) Z_Free(hedge->bspBuildInfo);
-    hedge->bspBuildInfo = info;
-    return hedge;
-}
-
-BspHEdgeInfo* HEdge_BspBuildInfo(HEdge* hedge)
-{
-    assert(hedge);
-    return hedge->bspBuildInfo;
-}
-
-BspHEdgeInfo* HEdge_DetachBspBuildInfo(HEdge* hedge)
-{
-    BspHEdgeInfo* info;
-    assert(hedge);
-    info = hedge->bspBuildInfo;
-    hedge->bspBuildInfo = 0;
-    return info;
 }
 
 int HEdge_SetProperty(HEdge* hedge, const setargs_t* args)

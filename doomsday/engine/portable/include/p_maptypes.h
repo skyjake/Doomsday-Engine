@@ -5,8 +5,6 @@
 
 #include "p_mapdata.h"
 
-struct bsphedgeinfo_s;
-
 // Each Sector and SideDef has an origin in the world (used for distance based delta queuing)
 typedef struct origin_s {
     float           pos[2];
@@ -76,6 +74,11 @@ typedef struct vertex_s {
 // HEdge frame flags
 #define HEDGEINF_FACINGFRONT      0x0001
 
+/// @todo Refactor me away.
+typedef struct mhedge_s {
+    uint                index;
+} mhedge_t;
+
 typedef struct hedge_s {
     runtime_mapdata_header_t header;
     struct vertex_s*    v[2];          // [Start, End] of the segment.
@@ -97,8 +100,8 @@ typedef struct hedge_s {
     float               offset;
     biassurface_t*      bsuf[3];       // 0=middle, 1=top, 2=bottom
     short               frameFlags;
-    struct bsphedgeinfo_s* bspBuildInfo;
     uint                index; /// Unique. Set when saving the BSP.
+    mhedge_t            buildData;
 } HEdge;
 
 #define BLF_MIDPOINT         0x80    // Midpoint is tri-fan centre.

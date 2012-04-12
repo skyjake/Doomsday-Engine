@@ -182,8 +182,9 @@ public:
      * to this superblock.
      *
      * @param hedge  HEdge instance to add.
+     * @return  SuperBlock instance the HEdge was actually linked to.
      */
-    SuperBlock* push(HEdge* hedge);
+    SuperBlock& push(HEdge& hedge);
 
     /**
      * Pop (unlink) the next HEdge from the FIFO list of half-edges linked

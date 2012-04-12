@@ -31,15 +31,12 @@
 #include "dd_types.h"
 #include "p_mapdata.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /**
  * Plain old data (POD) structure storing additional information about a
  * half-edge produced by BspBuilder.
  */
-typedef struct bsphedgeinfo_s {
+struct BspHEdgeInfo
+{
     // Precomputed data for faster calculations.
     double pSX, pSY;
     double pEX, pEY;
@@ -61,10 +58,12 @@ typedef struct bsphedgeinfo_s {
     // For "real" half-edges, this is just the same as the 'linedef' field
     // above. For "miniedges", this is the linedef of the partition line.
     LineDef* sourceLineDef;
-} BspHEdgeInfo;
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
+    BspHEdgeInfo()
+        : pSX(0), pSY(0), pEX(0), pEY(0), pDX(0), pDY(0), pLength(0), pAngle(0), pPara(0), pPerp(0),
+          nextOnSide(0), prevOnSide(0), block(0), sourceLineDef(0)
+    {}
+};
+
 
 #endif /// LIBDENG_BSPBUILDER_HEDGEINFO
