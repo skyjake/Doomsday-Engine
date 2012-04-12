@@ -35,7 +35,7 @@
  * Plain old data (POD) structure storing additional information about a
  * half-edge produced by BspBuilder.
  */
-struct BspHEdgeInfo
+struct HEdgeInfo
 {
     // Precomputed data for faster calculations.
     double pSX, pSY;
@@ -59,7 +59,7 @@ struct BspHEdgeInfo
     // above. For "miniedges", this is the linedef of the partition line.
     LineDef* sourceLineDef;
 
-    BspHEdgeInfo()
+    HEdgeInfo()
         : pSX(0), pSY(0), pEX(0), pEY(0), pDX(0), pDY(0), pLength(0), pAngle(0), pPara(0), pPerp(0),
           nextOnSide(0), prevOnSide(0), block(0), sourceLineDef(0)
     {}

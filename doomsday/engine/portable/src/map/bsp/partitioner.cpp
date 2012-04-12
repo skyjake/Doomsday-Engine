@@ -69,7 +69,7 @@ static void logUnclosed(const BspLeaf* leaf);
 static void initAABoxFromEditableLineDefVertexes(AABoxf* aaBox, const LineDef* line);
 static int linkBspTreeNode(BspTreeNode& tree, void* /*parameters*/);
 static int hedgeCounter(BspTreeNode& tree, void* parameters);
-static void updateHEdgeInfo(const HEdge* hedge, BspHEdgeInfo& info);
+static void updateHEdgeInfo(const HEdge* hedge, HEdgeInfo& info);
 static Sector* findFirstSectorInHEdgeList(const BspLeaf* leaf);
 
 DENG_DEBUG_ONLY(static int printSuperBlockHEdgesWorker(SuperBlock* block, void* /*parameters*/));
@@ -135,10 +135,10 @@ struct Partitioner::Instance
      * Retrieve the extended build info for the specified @a hedge.
      * @return  Extended info for that HEdge.
      */
-    BspHEdgeInfo& hedgeInfo(const HEdge& hedge) {
+    HEdgeInfo& hedgeInfo(const HEdge& hedge) {
         return hedgeInfos[hedge.buildData.index - 1];
     }
-    const BspHEdgeInfo& hedgeInfo(const HEdge& hedge) const {
+    const HEdgeInfo& hedgeInfo(const HEdge& hedge) const {
         return hedgeInfos[hedge.buildData.index - 1];
     }
 
@@ -227,7 +227,7 @@ struct Partitioner::Instance
     {
         if(hedge)
         {
-            BspHEdgeInfo& hInfo = hedgeInfo(*hedge);
+            HEdgeInfo& hInfo = hedgeInfo(*hedge);
             SuperBlock* subblock = &block.push(*hedge);
 
             // Associate this half-edge with the final subblock.
@@ -549,13 +549,13 @@ struct Partitioner::Instance
         //        << oldHEdge << x << y;
 
         Vertex* newVert = newVertex(point);
-        BspHEdgeInfo& oldInfo = hedgeInfo(*oldHEdge);
+        HEdgeInfo& oldInfo = hedgeInfo(*oldHEdge);
         addHEdgeTip(newVert, M_SlopeToAngle(-oldInfo.pDX, -oldInfo.pDY), oldHEdge, oldHEdge->twin);
         addHEdgeTip(newVert, M_SlopeToAngle( oldInfo.pDX,  oldInfo.pDY), oldHEdge->twin, oldHEdge);
 
         HEdge* newHEdge = cloneHEdge(*oldHEdge);
         //oldInfo = hedgeInfo(*oldHEdge);
-        BspHEdgeInfo& newInfo = hedgeInfo(*newHEdge);
+        HEdgeInfo& newInfo = hedgeInfo(*newHEdge);
 
         newInfo.prevOnSide = oldHEdge;
         oldInfo.nextOnSide = newHEdge;
@@ -620,7 +620,7 @@ struct Partitioner::Instance
         /// @kludge Half-edges produced from the same source linedef must always
         ///         be treated as collinear.
         /// @todo   Why is this override necessary?
-        BspHEdgeInfo& hInfo = hedgeInfo(*hedge);
+        HEdgeInfo& hInfo = hedgeInfo(*hedge);
         if(hInfo.sourceLineDef == partitionInfo.sourceLineDef)
             a = b = 0;
         // kludge end
@@ -763,7 +763,7 @@ struct Partitioner::Instance
             Con_Error("Partitioner::partitionhedges: Separated half-edge has no left side.");
     }
 
-    void evalPartitionCostForHEdge(const BspHEdgeInfo& partInfo, int costFactorMultiplier,
+    void evalPartitionCostForHEdge(const HEdgeInfo& partInfo, int costFactorMultiplier,
         const HEdge* hedge, PartitionCost& cost)
     {
     #define ADD_LEFT()  \
@@ -778,7 +778,7 @@ struct Partitioner::Instance
         Q_ASSERT(hedge);
 
         // Get state of lines' relation to each other.
-        const BspHEdgeInfo& hInfo = hedgeInfo(*hedge);
+        const HEdgeInfo& hInfo = hedgeInfo(*hedge);
         if(hInfo.sourceLineDef == partInfo.sourceLineDef)
         {
             a = b = fa = fb = 0;
@@ -908,7 +908,7 @@ struct Partitioner::Instance
          * half-edges within it at once. Only when the partition line intercepts the
          * box do we need to go deeper into it.
          */
-        const BspHEdgeInfo& hInfo = hedgeInfo(*hedge);
+        const HEdgeInfo& hInfo = hedgeInfo(*hedge);
         int side = P_BoxOnLineSide3(&block.bounds(), hInfo.pSX, hInfo.pSY,
                                     hInfo.pDX, hInfo.pDY, hInfo.pPerp,
                                     hInfo.pLength, DIST_EPSILON);
@@ -1004,7 +1004,7 @@ struct Partitioner::Instance
 
         // Another little twist, here we show a slight preference for partition
         // lines that lie either purely horizontally or purely vertically.
-        const BspHEdgeInfo& hInfo = hedgeInfo(*hedge);
+        const HEdgeInfo& hInfo = hedgeInfo(*hedge);
         if(!FEQUAL(hInfo.pDX, 0) && !FEQUAL(hInfo.pDY, 0))
             cost.total += 25;
 
@@ -1261,7 +1261,7 @@ struct Partitioner::Instance
     inline double vertexDistanceFromPartition(const Vertex* vertex) const
     {
         Q_ASSERT(vertex);
-        const BspHEdgeInfo& info = partitionInfo;
+        const HEdgeInfo& info = partitionInfo;
         return M_ParallelDist(info.pDX, info.pDY, info.pPara, info.pLength,
                               vertex->buildData.pos[VX], vertex->buildData.pos[VY]);
     }
@@ -1275,8 +1275,8 @@ struct Partitioner::Instance
     inline double hedgeDistanceFromPartition(const HEdge* hedge, bool end) const
     {
         Q_ASSERT(hedge);
-        const BspHEdgeInfo& pInfo = partitionInfo;
-        const BspHEdgeInfo& hInfo = hedgeInfo(*hedge);
+        const HEdgeInfo& pInfo = partitionInfo;
+        const HEdgeInfo& hInfo = hedgeInfo(*hedge);
         return M_PerpDist(pInfo.pDX, pInfo.pDY, pInfo.pPerp, pInfo.pLength,
                           end? hInfo.pEX : hInfo.pSX, end? hInfo.pEY : hInfo.pSY);
     }
@@ -1291,7 +1291,7 @@ struct Partitioner::Instance
     {
         if(!hedge || !point) return;
 
-        const BspHEdgeInfo& hInfo = hedgeInfo(*hedge);
+        const HEdgeInfo& hInfo = hedgeInfo(*hedge);
 
         // Horizontal partition against vertical half-edge.
         if(partitionInfo.pDY == 0 && hInfo.pDX == 0)
@@ -1936,9 +1936,9 @@ struct Partitioner::Instance
 
         // There is now one more HEdge.
         hedge->buildData.index = numHEdges += 1;
-        hedgeInfos.push_back(BspHEdgeInfo());
+        hedgeInfos.push_back(HEdgeInfo());
 
-        BspHEdgeInfo& info = hedgeInfo(*hedge);
+        HEdgeInfo& info = hedgeInfo(*hedge);
         info.sourceLineDef = sourceLineDef;
         updateHEdgeInfo(hedge, info);
 
@@ -1954,9 +1954,9 @@ struct Partitioner::Instance
 
         // There is now one more HEdge.
         hedge->buildData.index = numHEdges += 1;
-        hedgeInfos.push_back(BspHEdgeInfo());
+        hedgeInfos.push_back(HEdgeInfo());
 
-        memcpy(&hedgeInfo(*hedge), &hedgeInfo(other), sizeof(BspHEdgeInfo));
+        memcpy(&hedgeInfo(*hedge), &hedgeInfo(other), sizeof(HEdgeInfo));
 
         return hedge;
     }
@@ -2111,7 +2111,7 @@ struct Partitioner::Instance
     /**
      * Update the extra info about the current partition plane.
      */
-    void setPartitionInfo(const BspHEdgeInfo& info, LineDef* lineDef)
+    void setPartitionInfo(const HEdgeInfo& info, LineDef* lineDef)
     {
         memcpy(&partitionInfo, &info, sizeof(partitionInfo));
         partitionLineDef = lineDef;
@@ -2244,7 +2244,7 @@ struct Partitioner::Instance
     LineDefInfos lineDefInfos;
 
     /// Extended info about HEdges in the BSP object tree.
-    typedef std::vector<BspHEdgeInfo> HEdgeInfos;
+    typedef std::vector<HEdgeInfo> HEdgeInfos;
     HEdgeInfos hedgeInfos;
 
     /// Extended info about Vertexes in the current map (including extras).
@@ -2265,7 +2265,7 @@ struct Partitioner::Instance
     HPlane* partition;
 
     /// Extra info about the partition plane.
-    BspHEdgeInfo partitionInfo;
+    HEdgeInfo partitionInfo;
     LineDef* partitionLineDef;
 
     /// Unclosed sectors are recorded here so we don't print too many warnings.
@@ -2495,7 +2495,7 @@ static int linkBspTreeNode(BspTreeNode& tree, void* /*parameters*/)
     return false; // Continue iteration.
 }
 
-static void updateHEdgeInfo(const HEdge* hedge, BspHEdgeInfo& info)
+static void updateHEdgeInfo(const HEdge* hedge, HEdgeInfo& info)
 {
     assert(hedge);
 
