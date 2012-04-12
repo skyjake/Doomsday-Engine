@@ -25,8 +25,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_BSPBUILDER_HPLANE
-#define LIBDENG_BSPBUILDER_HPLANE
+#ifndef LIBDENG_BSP_HPLANE
+#define LIBDENG_BSP_HPLANE
 
 #include <list>
 
@@ -159,4 +159,4 @@ private:
 } // namespace bsp
 } // namespace de
 
-#endif /// LIBDENG_BSPBUILDER_HPLANE
+#endif /// LIBDENG_BSP_HPLANE

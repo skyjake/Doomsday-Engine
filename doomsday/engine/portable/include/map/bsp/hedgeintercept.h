@@ -25,8 +25,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_BSPBUILDER_HEDGEINTERCEPT
-#define LIBDENG_BSPBUILDER_HEDGEINTERCEPT
+#ifndef LIBDENG_BSP_HEDGEINTERCEPT
+#define LIBDENG_BSP_HEDGEINTERCEPT
 
 #include "dd_types.h"
 #include "p_mapdata.h"
@@ -72,4 +72,4 @@ struct HEdgeIntercept
 } // namespace bsp
 } // namespace de
 
-#endif /// LIBDENG_BSPBUILDER_HEDGEINTERCEPT
+#endif /// LIBDENG_BSP_HEDGEINTERCEPT

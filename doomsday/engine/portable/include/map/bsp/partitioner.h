@@ -34,32 +34,6 @@
 namespace de {
 namespace bsp {
 
-/**
- * @algorithm High-level description (courtesy of Raphael Quinet)
- *   1 - Create one Seg for each SideDef: pick each LineDef in turn.  If it
- *       has a "first" SideDef, then create a normal Seg.  If it has a
- *       "second" SideDef, then create a flipped Seg.
- *   2 - Call CreateNodes with the current list of Segs.  The list of Segs is
- *       the only argument to CreateNodes.
- *   3 - Save the Nodes, Segs and BspLeafs to disk.  Start with the leaves of
- *       the Nodes tree and continue up to the root (last Node).
- *
- * CreateNodes does the following:
- *   1 - Pick a nodeline amongst the Segs (minimize the number of splits and
- *       keep the tree as balanced as possible).
- *   2 - Move all Segs on the right of the nodeline in a list (segs1) and do
- *       the same for all Segs on the left of the nodeline (in segs2).
- *   3 - If the first list (segs1) contains references to more than one
- *       Sector or if the angle between two adjacent Segs is greater than
- *       180 degrees, then call CreateNodes with this (smaller) list.
- *       Else, create a BspLeaf with all these Segs.
- *   4 - Do the same for the second list (segs2).
- *   5 - Return the new node (its two children are already OK).
- *
- * Each time CreateBspLeaf is called, the Segs are put in a global list.
- * When there is no more Seg in CreateNodes' list, then they are all in the
- * global list and ready to be saved to disk.
- */
 class Partitioner
 {
 public:
@@ -76,6 +50,16 @@ public:
 
     /**
      * Build the BSP for the given map.
+     *
+     * @algorithm High-level description (courtesy of Raphael Quinet)
+     *   1 - Create one Seg for each SideDef: pick each LineDef in turn.  If it
+     *       has a "first" SideDef, then create a normal Seg.  If it has a
+     *       "second" SideDef, then create a flipped Seg.
+     *   2 - Call CreateNodes with the current list of Segs.  The list of Segs is
+     *       the only argument to CreateNodes.
+     *   3 - Save the Nodes, Segs and BspLeafs to disk.  Start with the leaves of
+     *       the Nodes tree and continue up to the root (last Node).
+     *
      * @return  @c true= iff completed successfully.
      */
     bool build();

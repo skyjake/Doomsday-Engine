@@ -30,6 +30,7 @@
 #ifndef LIBDENG_BSP_SUPERBLOCKMAP
 #define LIBDENG_BSP_SUPERBLOCKMAP
 
+#include "dd_def.h"
 #include "dd_types.h"
 #include "p_mapdata.h"
 

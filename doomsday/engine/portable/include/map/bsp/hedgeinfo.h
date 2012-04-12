@@ -25,11 +25,16 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_BSPBUILDER_HEDGEINFO
-#define LIBDENG_BSPBUILDER_HEDGEINFO
+#ifndef LIBDENG_BSP_HEDGEINFO
+#define LIBDENG_BSP_HEDGEINFO
 
-#include "dd_types.h"
+#include "m_misc.h"
 #include "p_mapdata.h"
+
+namespace de {
+namespace bsp {
+
+class SuperBlock;
 
 /**
  * Plain old data (POD) structure storing additional information about a
@@ -52,7 +57,7 @@ struct HEdgeInfo
 
     // The superblock that contains this half-edge, or NULL if the half-edge
     // is no longer in any superblock (e.g. now in a leaf).
-    void* block;
+    class SuperBlock* bmapBlock;
 
     // Linedef that this half-edge initially comes from.
     // For "real" half-edges, this is just the same as the 'linedef' field
@@ -61,9 +66,30 @@ struct HEdgeInfo
 
     HEdgeInfo()
         : pSX(0), pSY(0), pEX(0), pEY(0), pDX(0), pDY(0), pLength(0), pAngle(0), pPara(0), pPerp(0),
-          nextOnSide(0), prevOnSide(0), block(0), sourceLineDef(0)
+          nextOnSide(0), prevOnSide(0), bmapBlock(0), sourceLineDef(0)
     {}
+
+    HEdgeInfo& initFromHEdge(const HEdge& hedge)
+    {
+        pSX = hedge.v[0]->buildData.pos[VX];
+        pSY = hedge.v[0]->buildData.pos[VY];
+        pEX = hedge.v[1]->buildData.pos[VX];
+        pEY = hedge.v[1]->buildData.pos[VY];
+        pDX = pEX - pSX;
+        pDY = pEY - pSY;
+
+        pLength = M_Length(pDX, pDY);
+        pAngle  = M_SlopeToAngle(pDX, pDY);
+
+        pPerp =  pSY * pDX - pSX * pDY;
+        pPara = -pSX * pDX - pSY * pDY;
+
+        Q_ASSERT(pLength > 0);
+        return *this;
+    }
 };
 
+} // namespace bsp
+} // namespace de
 
-#endif /// LIBDENG_BSPBUILDER_HEDGEINFO
+#endif /// LIBDENG_BSP_HEDGEINFO

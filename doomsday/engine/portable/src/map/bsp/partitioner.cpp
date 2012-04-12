@@ -68,8 +68,6 @@ static bool getAveragedCoords(BspLeaf* leaf, pvec2d_t midPoint);
 static void logUnclosed(const BspLeaf* leaf);
 static void initAABoxFromEditableLineDefVertexes(AABoxf* aaBox, const LineDef* line);
 static int linkBspTreeNode(BspTreeNode& tree, void* /*parameters*/);
-static int hedgeCounter(BspTreeNode& tree, void* parameters);
-static void updateHEdgeInfo(const HEdge* hedge, HEdgeInfo& info);
 static Sector* findFirstSectorInHEdgeList(const BspLeaf* leaf);
 
 DENG_DEBUG_ONLY(static int printSuperBlockHEdgesWorker(SuperBlock* block, void* /*parameters*/));
@@ -231,7 +229,7 @@ struct Partitioner::Instance
             SuperBlock* subblock = &block.push(*hedge);
 
             // Associate this half-edge with the final subblock.
-            hInfo.block = static_cast<void*>(subblock);
+            hInfo.bmapBlock = subblock;
         }
         return hedge;
     }
@@ -363,7 +361,7 @@ struct Partitioner::Instance
     bool hedgeIsInLeaf(const HEdge& hedge) const
     {
         /// @todo Are we now able to determine this by testing hedge->leaf ?
-        return !hedgeInfo(hedge).block;
+        return !hedgeInfo(hedge).bmapBlock;
     }
 
     const HPlaneIntercept* makePartitionIntersection(HEdge* hedge, int leftSide)
@@ -561,10 +559,10 @@ struct Partitioner::Instance
         oldInfo.nextOnSide = newHEdge;
 
         oldHEdge->v[1] = newVert;
-        updateHEdgeInfo(oldHEdge, oldInfo);
+        oldInfo.initFromHEdge(*oldHEdge);
 
         newHEdge->v[0] = newVert;
-        updateHEdgeInfo(newHEdge, newInfo);
+        newInfo.initFromHEdge(*newHEdge);
 
         // Handle the twin.
         if(oldHEdge->twin)
@@ -579,10 +577,10 @@ struct Partitioner::Instance
             hedgeInfo(*oldHEdge->twin).prevOnSide = newHEdge->twin;
 
             oldHEdge->twin->v[0] = newVert;
-            updateHEdgeInfo(oldHEdge->twin, hedgeInfo(*oldHEdge->twin));
+            hedgeInfo(*oldHEdge->twin).initFromHEdge(*oldHEdge->twin);
 
             newHEdge->twin->v[1] = newVert;
-            updateHEdgeInfo(newHEdge->twin, hedgeInfo(*newHEdge->twin));
+            hedgeInfo(*newHEdge->twin).initFromHEdge(*newHEdge->twin);
 
             // Has this already been added to a leaf?
             if(hedgeIsInLeaf(*oldHEdge->twin))
@@ -682,9 +680,9 @@ struct Partitioner::Instance
         // Ensure the new twin is inserted into the same block as the old twin.
         if(hedge->twin && !hedgeIsInLeaf(*hedge->twin))
         {
-            SuperBlock* block = reinterpret_cast<SuperBlock*>(hedgeInfo(*hedge->twin).block);
-            Q_ASSERT(block);
-            linkHEdgeInSuperBlockmap(*block, newHEdge->twin);
+            SuperBlock* bmapBlock = hedgeInfo(*hedge->twin).bmapBlock;
+            Q_ASSERT(bmapBlock);
+            linkHEdgeInSuperBlockmap(*bmapBlock, newHEdge->twin);
         }
 
         makePartitionIntersection(hedge, LEFT);
@@ -722,7 +720,7 @@ struct Partitioner::Instance
                 while((hedge = cur->pop()))
                 {
                     // Disassociate the half-edge from the blockmap.
-                    hedgeInfo(*hedge).block = 0;
+                    hedgeInfo(*hedge).bmapBlock = 0;
 
                     divideHEdge(hedge, rights, lefts);
                 }
@@ -1940,7 +1938,7 @@ struct Partitioner::Instance
 
         HEdgeInfo& info = hedgeInfo(*hedge);
         info.sourceLineDef = sourceLineDef;
-        updateHEdgeInfo(hedge, info);
+        info.initFromHEdge(*hedge);
 
         return hedge;
     }
@@ -1983,7 +1981,7 @@ struct Partitioner::Instance
                 while((hedge = cur->pop()))
                 {
                     // Disassociate the half-edge from the blockmap.
-                    hedgeInfo(*hedge).block = 0;
+                    hedgeInfo(*hedge).bmapBlock = 0;
 
                     // Link it into head of the leaf's list.
                     hedge->next = leaf->hedge;
@@ -2493,27 +2491,6 @@ static int linkBspTreeNode(BspTreeNode& tree, void* /*parameters*/)
     }
 
     return false; // Continue iteration.
-}
-
-static void updateHEdgeInfo(const HEdge* hedge, HEdgeInfo& info)
-{
-    assert(hedge);
-
-    info.pSX = hedge->v[0]->buildData.pos[VX];
-    info.pSY = hedge->v[0]->buildData.pos[VY];
-    info.pEX = hedge->v[1]->buildData.pos[VX];
-    info.pEY = hedge->v[1]->buildData.pos[VY];
-    info.pDX = info.pEX - info.pSX;
-    info.pDY = info.pEY - info.pSY;
-
-    info.pLength = M_Length(info.pDX, info.pDY);
-    info.pAngle  = M_SlopeToAngle(info.pDX, info.pDY);
-
-    info.pPerp =  info.pSY * info.pDX - info.pSX * info.pDY;
-    info.pPara = -info.pSX * info.pDX - info.pSY * info.pDY;
-
-    if(info.pLength <= 0)
-        Con_Error("HEdge {%p} is of zero length.", hedge);
 }
 
 static Sector* findFirstSectorInHEdgeList(const BspLeaf* leaf)
