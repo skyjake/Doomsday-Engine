@@ -68,7 +68,6 @@ static const double ANG_EPSILON = (1.0 / 1024.0);
 static bool getAveragedCoords(BspLeaf* leaf, pvec2d_t midPoint);
 static void logUnclosed(const BspLeaf* leaf);
 static void initAABoxFromEditableLineDefVertexes(AABoxf* aaBox, const LineDef* line);
-static int linkBspTreeNode(BspTreeNode& tree, void* /*parameters*/);
 static Sector* findFirstSectorInHEdgeList(const BspLeaf* leaf);
 
 DENG_DEBUG_ONLY(static int printSuperBlockHEdgesWorker(SuperBlock* block, void* /*parameters*/));
@@ -347,10 +346,6 @@ struct Partitioner::Instance
         if(rootNode)
         {
             windLeafs();
-
-            // Link up the BSP object tree.
-            /// @todo Do this earlier.
-            BspTreeNode::PostOrder(*rootNode, linkBspTreeNode);
 
             // We're done with the build info.
             //clearAllHEdgeInfo();
@@ -1194,6 +1189,9 @@ struct Partitioner::Instance
         if((*subtree)->hasRight())
         {
             (*subtree)->right()->setParent(*subtree);
+
+            // Link the BSP object too.
+            BspNode_SetRight(node, (*subtree)->right()->userData());
         }
         delete rightHEdges;
 
@@ -1205,6 +1203,9 @@ struct Partitioner::Instance
             if((*subtree)->hasLeft())
             {
                 (*subtree)->left()->setParent(*subtree);
+
+                // Link the BSP object too.
+                BspNode_SetLeft(node, (*subtree)->left()->userData());
             }
         }
 
@@ -2473,26 +2474,6 @@ static void initAABoxFromEditableLineDefVertexes(AABoxf* aaBox, const LineDef* l
     aaBox->minY = MIN_OF(from[VY], to[VY]);
     aaBox->maxX = MAX_OF(from[VX], to[VX]);
     aaBox->maxY = MAX_OF(from[VY], to[VY]);
-}
-
-static int linkBspTreeNode(BspTreeNode& tree, void* /*parameters*/)
-{
-    // We are only interested in BspNodes at this level.
-    if(tree.isLeaf()) return false; // Continue iteration.
-
-    BspNode* node = reinterpret_cast<BspNode*>(tree.userData());
-
-    if(BspTreeNode* right = tree.right())
-    {
-        BspNode_SetRight(node, right->userData());
-    }
-
-    if(BspTreeNode* left = tree.left())
-    {
-        BspNode_SetLeft(node, left->userData());
-    }
-
-    return false; // Continue iteration.
 }
 
 static Sector* findFirstSectorInHEdgeList(const BspLeaf* leaf)
