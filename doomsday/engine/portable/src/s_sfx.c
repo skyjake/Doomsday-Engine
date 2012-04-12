@@ -669,7 +669,7 @@ int Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
     boolean             play3D = sfx3D && (emitter || fixedPos);
 
     if(!sfxAvail || sample->id < 1 || sample->id >= defs.count.sounds.num ||
-       volume <= 0)
+       volume <= 0 || !sample->size)
         return false;
 
     if(emitter && sfxOneSoundPerEmitter)
