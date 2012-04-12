@@ -43,7 +43,7 @@
 #include "bspleaf.h"
 #include "bspnode.h"
 #include "hedge.h"
-#include "map/bsp/bsphedgeinfo.h"
+#include "map/bsp/hedgeinfo.h"
 #include "map/bsp/hedgeintercept.h"
 #include "map/bsp/hedgetip.h"
 #include "map/bsp/hplane.h"

@@ -143,7 +143,7 @@ DENG_HEADERS += \
     portable/include/blockmapvisual.h \
     portable/include/blockset.h \
     portable/include/map/bspbuilder.h \
-    portable/include/map/bsp/bsphedgeinfo.h \
+    portable/include/map/bsp/hedgeinfo.h \
     portable/include/map/bsp/hedgeintercept.h \
     portable/include/map/bsp/hedgetip.h \
     portable/include/map/bsp/hplane.h \

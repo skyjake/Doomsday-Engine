@@ -1,5 +1,5 @@
 /**
- * @file bsphedgeinfo.h
+ * @file hedgeinfo.h
  * BSP Builder half-edge info. @ingroup bsp
  *
  * Based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted on
