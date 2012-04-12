@@ -94,7 +94,7 @@ struct Partitioner::Instance
         map(_map),
         numEditableVertexes(_numEditableVertexes), editableVertexes(_editableVertexes),
         numNodes(0), numLeafs(0), numVertexes(0),
-        rootNode(0), partition(0),
+        rootNode(0), partition(0), partitionLineDef(0),
         unclosedSectors(), migrantHEdges(),
         builtOK(false)
     {
@@ -297,7 +297,7 @@ struct Partitioner::Instance
                     // Handle the 'One-Sided Window' trick.
                     if(line->buildData.windowEffect && front)
                     {
-                        HEdge* other = newHEdge(front->bspBuildInfo->lineDef, line,
+                        HEdge* other = newHEdge(front->lineDef, line,
                                                 line->v[1], line->v[0], line->buildData.windowEffect, true);
 
                         hedgeList.push(other);
@@ -360,7 +360,7 @@ struct Partitioner::Instance
         const HPlaneIntercept* inter = partitionInterceptByVertex(vertex);
         if(inter) return inter;
 
-        LineDef* line = hedge->bspBuildInfo->lineDef;
+        LineDef* line = hedge->lineDef;
         HEdgeIntercept* intercept = newHEdgeIntercept(vertex, line && lineDefInfo(*line).flags.testFlag(LineDefInfo::SELFREF));
 
         return partition->newIntercept(vertexDistanceFromPartition(vertex), intercept);
@@ -767,9 +767,9 @@ struct Partitioner::Instance
 
             // Only test half-edges from the same linedef once per round of
             // partition picking (they are collinear).
-            if(hedge->bspBuildInfo->lineDef)
+            if(hedge->lineDef)
             {
-                LineDefInfo& lInfo = lineDefInfo(*hedge->bspBuildInfo->lineDef);
+                LineDefInfo& lInfo = lineDefInfo(*hedge->lineDef);
                 if(lInfo.validCount == validCount) continue;
                 lInfo.validCount = validCount;
             }
@@ -1067,13 +1067,13 @@ struct Partitioner::Instance
     {
         if(!hedge) return false;
 
-        const LineDef* lineDef = hedge->bspBuildInfo->lineDef;
+        LineDef* lineDef = hedge->lineDef;
         if(!lineDef) return false; // A "mini hedge" is not suitable.
 
         // Clear the HEdge intercept data associated with points in the half-plane.
         clearPartitionIntercepts();
 
-        setPartitionInfo(*hedge->bspBuildInfo);
+        setPartitionInfo(*hedge->bspBuildInfo, lineDef);
 
         // We can now reconfire the half-plane itself.
 
@@ -1216,10 +1216,8 @@ struct Partitioner::Instance
                 hedge->bspLeaf = leaf;
 
                 /// @kludge This should not be done here!
-                if(hedge->bspBuildInfo->lineDef)
+                if(hedge->lineDef)
                 {
-                    // Update LineDef link.
-                    hedge->lineDef = hedge->bspBuildInfo->lineDef;
                     SideDef* side = HEDGE_SIDEDEF(hedge);
                     if(side)
                     {
@@ -1247,10 +1245,9 @@ struct Partitioner::Instance
             hedge = leaf->hedge;
             do
             {
-                if(hedge->bspBuildInfo->lineDef &&
-                   hedge->bspBuildInfo->lineDef->sideDefs[hedge->side])
+                if(hedge->lineDef && hedge->lineDef->sideDefs[hedge->side])
                 {
-                    SideDef* side = hedge->bspBuildInfo->lineDef->sideDefs[hedge->side];
+                    SideDef* side = hedge->lineDef->sideDefs[hedge->side];
                     leaf->sector = side->sector;
                 }
             } while(!leaf->sector && (hedge = hedge->next) != leaf->hedge);
@@ -1334,8 +1331,8 @@ struct Partitioner::Instance
         // Create the half-edge pair.
         // Leave 'linedef' field as NULL as these are not linedef-linked.
         // Leave 'side' as zero too.
-        (*right) = newHEdge(NULL, partitionInfo.lineDef, start->vertex, end->vertex, start->after, false);
-        ( *left) = newHEdge(NULL, partitionInfo.lineDef, end->vertex, start->vertex, start->after, false);
+        (*right) = newHEdge(NULL, partitionLineDef, start->vertex, end->vertex, start->after, false);
+        ( *left) = newHEdge(NULL, partitionLineDef, end->vertex, start->vertex, start->after, false);
 
         // Twin the half-edges together.
         (*right)->twin = *left;
@@ -1701,11 +1698,11 @@ struct Partitioner::Instance
         hedge->sector = sec;
         Q_ASSERT(sec == NULL || GameMap_SectorIndex(map, sec) >= 0);
         hedge->side = (back? 1 : 0);
+        hedge->lineDef = lineDef;
 
         BspHEdgeInfo* info = static_cast<BspHEdgeInfo*>(Z_Malloc(sizeof *info, PU_MAP, 0));
         HEdge_AttachBspBuildInfo(hedge, info);
 
-        info->lineDef = lineDef;
         info->sourceLineDef = sourceLineDef;
         info->nextOnSide = info->prevOnSide = NULL;
         info->block = NULL;
@@ -1867,14 +1864,16 @@ struct Partitioner::Instance
     void initPartitionInfo()
     {
         memset(&partitionInfo, 0, sizeof(partitionInfo));
+        partitionLineDef = 0;
     }
 
     /**
      * Update the extra info about the current partition plane.
      */
-    void setPartitionInfo(const BspHEdgeInfo& info)
+    void setPartitionInfo(const BspHEdgeInfo& info, LineDef* lineDef)
     {
         memcpy(&partitionInfo, &info, sizeof(partitionInfo));
+        partitionLineDef = lineDef;
     }
 
     /**
@@ -1936,10 +1935,10 @@ struct Partitioner::Instance
 
         // In the absence of a better mechanism, simply log this right away.
         /// @todo Implement something better!
-        if(migrant->bspBuildInfo->lineDef)
+        if(migrant->lineDef)
             LOG_WARNING("Sector #%d has HEdge facing #%d (line #%d).")
                     << sector->buildData.index << migrant->sector->buildData.index
-                    << migrant->bspBuildInfo->lineDef->buildData.index;
+                    << migrant->lineDef->buildData.index;
         else
             LOG_WARNING("Sector #%d has HEdge facing #%d.")
                     << sector->buildData.index << migrant->sector->buildData.index;
@@ -2010,6 +2009,7 @@ struct Partitioner::Instance
 
     /// Extra info about the partition plane.
     BspHEdgeInfo partitionInfo;
+    LineDef* partitionLineDef;
 
     /// Unclosed sectors are recorded here so we don't print too many warnings.
     struct UnclosedSectorRecord
@@ -2228,7 +2228,7 @@ static boolean sanityCheckHasRealhedge(const BspLeaf* leaf)
     HEdge* hedge = leaf->hedge;
     do
     {
-        if(hedge->bspBuildInfo->lineDef) return true;
+        if(hedge->lineDef) return true;
     } while((hedge = hedge->next) != leaf->hedge);
     return false;
 }
@@ -2255,12 +2255,12 @@ static void evalPartitionCostForHEdge(const BspHEdgeInfo* partInfo,
     int costFactorMultiplier, const HEdge* hedge, PartitionCost& cost)
 {
 #define ADD_LEFT()  \
-    if (hedge->bspBuildInfo->lineDef) cost.realLeft += 1;  \
-    else                              cost.miniLeft += 1;  \
+    if (hedge->lineDef) cost.realLeft += 1;  \
+    else                cost.miniLeft += 1;  \
 
 #define ADD_RIGHT()  \
-    if (hedge->bspBuildInfo->lineDef) cost.realRight += 1;  \
-    else                              cost.miniRight += 1;  \
+    if (hedge->lineDef) cost.realRight += 1;  \
+    else                cost.miniRight += 1;  \
 
     double qnty, a, b, fa, fb;
     assert(hedge);
@@ -2466,8 +2466,7 @@ static bool evalPartition(const SuperBlock& block, int splitCostFactor,
     if(!hedge) return false;
 
     // "Mini-hedges" are never potential candidates.
-    BspHEdgeInfo* hedgeInfo = hedge->bspBuildInfo;
-    LineDef* lineDef = hedgeInfo->lineDef;
+    LineDef* lineDef = hedge->lineDef;
     if(!lineDef) return false;
 
     if(!evalPartitionCostForSuperBlock(block, splitCostFactor, best, bestCost, hedge, cost))
@@ -2492,6 +2491,7 @@ static bool evalPartition(const SuperBlock& block, int splitCostFactor,
 
     // Another little twist, here we show a slight preference for partition
     // lines that lie either purely horizontally or purely vertically.
+    BspHEdgeInfo* hedgeInfo = hedge->bspBuildInfo;
     if(!FEQUAL(hedgeInfo->pDX, 0) && !FEQUAL(hedgeInfo->pDY, 0))
         cost.total += 25;
 
