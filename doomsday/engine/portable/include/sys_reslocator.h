@@ -175,6 +175,8 @@ resourcenamespace_t* F_ToResourceNamespace(resourcenamespaceid_t rni);
  */
 uint F_FindResourceForRecord(struct AbstractResource_s* rec, ddstring_t* foundPath);
 
+uint F_FindResourceForRecord2(AbstractResource* rec, ddstring_t* foundPath, const Uri* const* searchPaths);
+
 /**
  * Attempt to locate a named resource.
  *

@@ -528,31 +528,37 @@ static boolean recognizeZIP(const char* filePath, void* data)
 static int validateResource(AbstractResource* rec, void* paramaters)
 {
     int validated = false;
-    const ddstring_t* path = AbstractResource_ResolvedPath(rec, true/*can locate resources*/);
 
-    if(path)
+    if(AbstractResource_ResourceClass(rec) == RC_PACKAGE)
     {
-        switch(AbstractResource_ResourceClass(rec))
+        Uri* const* uriList = AbstractResource_SearchPaths(rec);
+        Uri* const* ptr;
+        int i = 0;
+        for(ptr = uriList; *ptr; ptr++, i++)
         {
-        case RC_PACKAGE:
+            const ddstring_t* path;
+            path = AbstractResource_ResolvedPathWithIndex(rec, i, true/*locate resources*/);
+            if(!path) continue;
+
             if(recognizeWAD(Str_Text(path), (void*)AbstractResource_IdentityKeys(rec)))
             {
                 validated = true;
+                break;
             }
             else if(recognizeZIP(Str_Text(path), (void*)AbstractResource_IdentityKeys(rec)))
             {
                 validated = true;
+                break;
             }
-            break;
-        default:
-            // Other resource types are not validated.
-            validated = true;
-            break;
         }
+    }
+    else
+    {
+        // Other resource types are not validated.
+        validated = true;
     }
 
     AbstractResource_MarkAsFound(rec, validated);
-
     return validated;
 }
 

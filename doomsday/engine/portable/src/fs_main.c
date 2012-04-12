@@ -675,8 +675,6 @@ lumpnum_t F_CheckLumpNumForName2(const char* name, boolean silent)
     size_t lumpSize = 0;
     size_t refSize;
 
-    //Con_Message("checking for \"%s\"\n", name);
-
     errorIfNotInited("F_CheckLumpNumForName");
 
     if(name && name[0])
