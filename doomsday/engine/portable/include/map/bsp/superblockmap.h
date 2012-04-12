@@ -199,10 +199,10 @@ public:
     HEdges::const_iterator hedgesEnd() const;
 
     DENG_DEBUG_ONLY(
-    void DebugPrint() const
+    static void DebugPrint(SuperBlock const& inst)
     {
-        for(SuperBlock::HEdges::const_iterator it = hedgesBegin();
-            it != hedgesEnd(); ++it)
+        for(SuperBlock::HEdges::const_iterator it = inst.hedgesBegin();
+            it != inst.hedgesEnd(); ++it)
         {
             HEdge* hedge = *it;
             LOG_DEBUG("Build: %s %p sector: %d [%1.1f, %1.1f] -> [%1.1f, %1.1f]")

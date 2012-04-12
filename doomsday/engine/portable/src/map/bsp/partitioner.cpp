@@ -56,7 +56,8 @@
 
 using namespace de::bsp;
 
-static const double IFFY_LEN = 4.0;
+/// Minimum length of a half-edge post partitioning. Used in cost evaluation.
+static const double SHORT_HEDGE_EPSILON = 4.0;
 
 /// Smallest distance between two points before being considered equal.
 static const double DIST_EPSILON = (1.0 / 128.0);
@@ -764,11 +765,11 @@ struct Partitioner::Instance
     void evalPartitionCostForHEdge(const HEdgeInfo& partInfo, int costFactorMultiplier,
         const HEdge* hedge, PartitionCost& cost)
     {
-    #define ADD_LEFT()  \
+#define ADD_LEFT()  \
         if (hedge->lineDef) cost.realLeft += 1;  \
         else                cost.miniLeft += 1;  \
 
-    #define ADD_RIGHT()  \
+#define ADD_RIGHT()  \
         if (hedge->lineDef) cost.realRight += 1;  \
         else                cost.miniRight += 1;  \
 
@@ -792,7 +793,7 @@ struct Partitioner::Instance
             fb = fabs(b);
         }
 
-        // hedge for being on the same line.
+        // Collinear?
         if(fa <= DIST_EPSILON && fb <= DIST_EPSILON)
         {
             // This half-edge runs along the same line as the partition.
@@ -809,16 +810,17 @@ struct Partitioner::Instance
             return;
         }
 
-        // hedge for right side.
+        // Off to the right?
         if(a > -DIST_EPSILON && b > -DIST_EPSILON)
         {
             ADD_RIGHT();
 
-            // hedge for a near miss.
-            if((a >= IFFY_LEN && b >= IFFY_LEN) ||
-               (a <= DIST_EPSILON && b >= IFFY_LEN) ||
-               (b <= DIST_EPSILON && a >= IFFY_LEN))
+            // Near miss?
+            if((a >= SHORT_HEDGE_EPSILON && b >= SHORT_HEDGE_EPSILON) ||
+               (a <= DIST_EPSILON && b >= SHORT_HEDGE_EPSILON) ||
+               (b <= DIST_EPSILON && a >= SHORT_HEDGE_EPSILON))
             {
+                // No.
                 return;
             }
 
@@ -831,24 +833,25 @@ struct Partitioner::Instance
              */
 
             if(a <= DIST_EPSILON || b <= DIST_EPSILON)
-                qnty = IFFY_LEN / MAX_OF(a, b);
+                qnty = SHORT_HEDGE_EPSILON / MAX_OF(a, b);
             else
-                qnty = IFFY_LEN / MIN_OF(a, b);
+                qnty = SHORT_HEDGE_EPSILON / MIN_OF(a, b);
 
             cost.total += (int) (100 * costFactorMultiplier * (qnty * qnty - 1.0));
             return;
         }
 
-        // hedge for left side.
+        // Off to the left?
         if(a < DIST_EPSILON && b < DIST_EPSILON)
         {
             ADD_LEFT();
 
-            // hedge for a near miss.
-            if((a <= -IFFY_LEN && b <= -IFFY_LEN) ||
-               (a >= -DIST_EPSILON && b <= -IFFY_LEN) ||
-               (b >= -DIST_EPSILON && a <= -IFFY_LEN))
+            // Near miss?
+            if((a <= -SHORT_HEDGE_EPSILON && b <= -SHORT_HEDGE_EPSILON) ||
+               (a >= -DIST_EPSILON && b <= -SHORT_HEDGE_EPSILON) ||
+               (b >= -DIST_EPSILON && a <= -SHORT_HEDGE_EPSILON))
             {
+                // No.
                 return;
             }
 
@@ -856,9 +859,9 @@ struct Partitioner::Instance
 
             // The closer the miss, the higher the cost (see note above).
             if(a >= -DIST_EPSILON || b >= -DIST_EPSILON)
-                qnty = IFFY_LEN / -MIN_OF(a, b);
+                qnty = SHORT_HEDGE_EPSILON / -MIN_OF(a, b);
             else
-                qnty = IFFY_LEN / -MAX_OF(a, b);
+                qnty = SHORT_HEDGE_EPSILON / -MAX_OF(a, b);
 
             cost.total += (int) (70 * costFactorMultiplier * (qnty * qnty - 1.0));
             return;
@@ -874,15 +877,14 @@ struct Partitioner::Instance
 
         /**
          * If the split point is very close to one end, which is quite an undesirable
-         * situation (producing really short edges). This is perhaps _one_ source of those
-         * darn slime trails. Hence the name "IFFY segs" and a rather hefty surcharge.
+         * situation (producing really short edges), thus a rather hefty surcharge.
          */
-        if(fa < IFFY_LEN || fb < IFFY_LEN)
+        if(fa < SHORT_HEDGE_EPSILON || fb < SHORT_HEDGE_EPSILON)
         {
             cost.iffy++;
 
             // The closer to the end, the higher the cost.
-            qnty = IFFY_LEN / MIN_OF(fa, fb);
+            qnty = SHORT_HEDGE_EPSILON / MIN_OF(fa, fb);
             cost.total += (int) (140 * costFactorMultiplier * (qnty * qnty - 1.0));
         }
 
@@ -2459,7 +2461,7 @@ static void logUnclosed(const BspLeaf* leaf)
 DENG_DEBUG_ONLY(
 static int printSuperBlockHEdgesWorker(SuperBlock* block, void* /*parameters*/)
 {
-    block->DebugPrint();
+    SuperBlock::DebugPrint(*block);
     return false; // Continue iteration.
 })
 

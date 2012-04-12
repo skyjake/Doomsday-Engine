@@ -28,6 +28,7 @@
 #include "de_base.h"
 #include "de_console.h"
 
+#include "map/bsp/hedgeintercept.h"
 #include "map/bsp/hplane.h"
 
 using namespace de::bsp;
@@ -122,14 +123,11 @@ HPlane::Intercepts::const_iterator HPlane::deleteIntercept(Intercepts::iterator 
     return intercepts.erase(at);
 }
 
-#include "map/bsp/hedgeintercept.h"
-
 #if _DEBUG
-void HPlane::DebugPrint(const HPlane& hplane)
+void HPlane::DebugPrint(const HPlane& inst)
 {
-    Con_Message("HPlane %p:\n", &hplane);
     uint n = 0;
-    for(HPlane::Intercepts::const_iterator it = hplane.begin(); it != hplane.end(); it++, n++)
+    for(HPlane::Intercepts::const_iterator it = inst.begin(); it != inst.end(); it++, n++)
     {
         const HPlaneIntercept* inter = &*it;
         Con_Printf(" %u: >%1.2f ", n, inter->distance());
