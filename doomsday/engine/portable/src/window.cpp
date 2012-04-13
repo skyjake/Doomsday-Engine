@@ -1314,6 +1314,15 @@ void Window_UpdateCanvasFormat(Window* wnd)
     wnd->needRecreateCanvas = true;
 }
 
+#if defined(UNIX) && !defined(MACOSX)
+void GL_AssertContextActive(void)
+{
+    Window* wnd = Window_Main();
+    if(wnd->type == WT_CONSOLE) return;
+    assert(QGLContext::currentContext() != 0);
+}
+#endif
+
 void Window_GLActivate(Window* wnd)
 {
     if(wnd->type == WT_CONSOLE) return;

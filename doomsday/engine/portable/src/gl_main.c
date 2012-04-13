@@ -185,15 +185,16 @@ boolean GL_IsInited(void)
     return initGLOk;
 }
 
+#if defined(WIN32) || defined(MACOSX)
 void GL_AssertContextActive(void)
 {
-#ifdef MACOSX
-    assert(CGLGetCurrentContext() != 0);
-#endif
 #ifdef WIN32
     assert(wglGetCurrentContext() != 0);
+#else
+    assert(CGLGetCurrentContext() != 0);
 #endif
 }
+#endif
 
 /**
  * Swaps buffers / blits the back buffer to the front.
