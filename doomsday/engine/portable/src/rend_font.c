@@ -1287,6 +1287,8 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
                     for(; *end && *end != FR_FORMAT_ESCAPE_CHAR && (escaped || *end != '{') &&
                         *end != '\n'; end++)
                     {
+                        escaped = false;
+
                         // We can skip whitespace.
                         if(isspace(*end))
                             continue;
@@ -1301,7 +1303,7 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
                 {
                     curCase = 0;
                     for(; *end && *end != FR_FORMAT_ESCAPE_CHAR && (escaped || *end != '{') &&
-                        *end != '\n'; end++);
+                        *end != '\n'; end++) { escaped = false; }
                 }
 
                 // No longer escaped.
