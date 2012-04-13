@@ -40,7 +40,7 @@
 namespace de {
 namespace bsp {
 
-class SuperBlockmap;
+class SuperBlock;
 
 #ifdef RIGHT
 #  undef RIGHT
@@ -49,6 +49,43 @@ class SuperBlockmap;
 #ifdef LEFT
 #  undef LEFT
 #endif
+
+class SuperBlockmap
+{
+public:
+    /**
+     * @param bounds  Bounding box in map coordinates for the whole blockmap.
+     */
+    SuperBlockmap(const AABox& bounds);
+    ~SuperBlockmap();
+
+    /**
+     * Retrieve the root SuperBlock.
+     * @return  Root SuperBlock instance.
+     */
+    SuperBlock& root();
+
+    /**
+     * Find the axis-aligned bounding box defined by the vertices of all
+     * HEdges within this superblockmap. If there are no HEdges linked to
+     * this then @a bounds will be initialized to the "cleared" state
+     * (i.e., min[x,y] > max[x,y]).
+     *
+     * @param bounds  Determined bounds are written here.
+     */
+    void findHEdgeBounds(AABoxf& bounds);
+
+    /**
+     * Empty this SuperBlockmap clearing all HEdges and sub-blocks.
+     */
+    void clear();
+
+private:
+    struct Instance;
+    Instance* d;
+    
+    friend class SuperBlock;
+};
 
 /**
  * Subblocks:
@@ -243,42 +280,7 @@ private:
      * the special private constructor that takes an existing superblock
      * object reference as a parameter.
      */
-    friend class SuperBlockmap;
-};
-
-class SuperBlockmap
-{
-public:
-    /**
-     * @param bounds  Bounding box in map coordinates for the whole blockmap.
-     */
-    SuperBlockmap(const AABox& bounds);
-    ~SuperBlockmap();
-
-    /**
-     * Retrieve the root SuperBlock.
-     * @return  Root SuperBlock instance.
-     */
-    SuperBlock& root();
-
-    /**
-     * Find the axis-aligned bounding box defined by the vertices of all
-     * HEdges within this superblockmap. If there are no HEdges linked to
-     * this then @a bounds will be initialized to the "cleared" state
-     * (i.e., min[x,y] > max[x,y]).
-     *
-     * @param bounds  Determined bounds are written here.
-     */
-    void findHEdgeBounds(AABoxf& bounds);
-
-    /**
-     * Empty this SuperBlockmap clearing all HEdges and sub-blocks.
-     */
-    void clear();
-
-private:
-    struct Instance;
-    Instance* d;
+    friend struct SuperBlockmap::Instance;
 };
 
 } // namespace bsp
