@@ -55,6 +55,12 @@ typedef struct displaycolortransfer_s {
 int DisplayMode_Init(void);
 
 /**
+ * Gets the current color transfer function and saves it as the one that will be
+ * restored at shutdown.
+ */
+void DisplayMode_SaveOriginalColorTransfer(void);
+
+/**
  * Shuts down the DisplayMode class. The current display mode is restored to what
  * it was at initialization time.
  */

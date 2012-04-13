@@ -132,7 +132,6 @@ void DisplayMode_Native_SetColorTransfer(const displaycolortransfer_t* colors)
 void DisplayMode_Native_GetColorTransfer(displaycolortransfer_t* colors)
 {
     HWND hWnd = (HWND) Window_NativeHandle(Window_Main());
-    assert(hWnd != 0);
     if(hWnd)
     {
         HDC hDC = GetDC(hWnd);

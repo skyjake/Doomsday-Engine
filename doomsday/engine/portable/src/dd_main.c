@@ -59,6 +59,7 @@
 #include "m_misc.h"
 #include "m_args.h"
 #include "texture.h"
+#include "displaymode.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1444,6 +1445,11 @@ static int DD_LocateAllGameResourcesWorker(void* paramaters)
  */
 void DD_FinishInitializationAfterWindowReady(void)
 {    
+#ifdef WIN32
+    // Now we can get the color transfer table as the window is available.
+    DisplayMode_SaveOriginalColorTransfer();
+#endif
+
     if(!Sys_GLInitialize())
     {
         Con_Error("Error initializing OpenGL.\n");
