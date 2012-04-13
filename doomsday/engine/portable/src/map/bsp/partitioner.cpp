@@ -65,12 +65,11 @@ static const double DIST_EPSILON = (1.0 / 128.0);
 /// Smallest difference between two angles before being considered equal (in degrees).
 static const double ANG_EPSILON = (1.0 / 1024.0);
 
-static bool getAveragedCoords(BspLeaf* leaf, pvec2d_t midPoint);
-static void logUnclosed(const BspLeaf* leaf);
+DENG_DEBUG_ONLY(static int printSuperBlockHEdgesWorker(SuperBlock* block, void* /*parameters*/));
+
+static bool findBspLeafCenter(BspLeaf const& leaf, pvec2d_t midPoint);
 static void initAABoxFromEditableLineDefVertexes(AABoxf* aaBox, const LineDef* line);
 static Sector* findFirstSectorInHEdgeList(const BspLeaf* leaf);
-
-DENG_DEBUG_ONLY(static int printSuperBlockHEdgesWorker(SuperBlock* block, void* /*parameters*/));
 
 struct Partitioner::Instance
 {
@@ -84,7 +83,7 @@ struct Partitioner::Instance
         numEditableVertexes(_numEditableVertexes), editableVertexes(_editableVertexes),
         numNodes(0), numLeafs(0), numHEdges(0), numVertexes(0),
         rootNode(0), partition(0), partitionLineDef(0),
-        unclosedSectors(), migrantHEdges(),
+        unclosedSectors(), unclosedBspLeafs(), migrantHEdges(),
         builtOK(false)
     {
         initPartitionInfo();
@@ -1398,50 +1397,50 @@ struct Partitioner::Instance
     }
 
     /**
-     * Sort the given list of half-edges into clockwise order based on their
-     * position/orientation compared to the specified point.
+     * Sort the half-edges linked within the given BSP leaf into a clockwise
+     * order according to their position/orientation relative to to the
+     * specified point.
      *
-     * @param hedgeList  Head of the list of hedges to be sorted.
-     * @param num  Number of half edges in the list.
+     * @param leaf  BSP leaf containing the list of hedges to be sorted.
      * @param point  Map space point around which to order.
      * @param sortBuffer  Buffer to use for sorting of the hedges.
      */
-    static void clockwiseOrder(HEdge** hedgeList, uint num, pvec2d_t point,
+    static void clockwiseOrder(BspLeaf& leaf, pvec2d_t point,
         HEdgeSortBuffer& sortBuffer)
     {
-        if(!hedgeList) return;
+        if(!leaf.hedge) return;
 
         // Ensure the sort buffer is large enough.
-        if(num > sortBuffer.size())
+        if(leaf.hedgeCount > sortBuffer.size())
         {
-            sortBuffer.resize(num);
+            sortBuffer.resize(leaf.hedgeCount);
         }
 
         // Insert the hedges into the sort buffer.
         uint i = 0;
-        for(HEdge* hedge = *hedgeList; hedge; hedge = hedge->next, ++i)
+        for(HEdge* hedge = leaf.hedge; hedge; hedge = hedge->next, ++i)
         {
             sortBuffer[i] = hedge;
         }
 
         HEdgeSortBuffer::iterator begin = sortBuffer.begin();
-        HEdgeSortBuffer::iterator end = begin + num;
+        HEdgeSortBuffer::iterator end = begin + leaf.hedgeCount;
         sortHEdgesByAngleAroundPoint(begin, end, point);
 
         // Re-link the half-edge list in the order of the sort buffer.
-        *hedgeList = NULL;
-        for(uint i = 0; i < num; ++i)
+        leaf.hedge = 0;
+        for(uint i = 0; i < leaf.hedgeCount; ++i)
         {
-            uint idx = (num - 1) - i;
-            uint j = idx % num;
+            uint idx = (leaf.hedgeCount - 1) - i;
+            uint j = idx % leaf.hedgeCount;
 
-            sortBuffer[j]->next = *hedgeList;
-            *hedgeList = sortBuffer[j];
+            sortBuffer[j]->next = leaf.hedge;
+            leaf.hedge = sortBuffer[j];
         }
 
         /*
         LOG_DEBUG("Sorted half-edges around [%1.1f, %1.1f]" << point[VX] << point[VY];
-        for(hedge = *hedgeList; hedge; hedge = hedge->next)
+        for(hedge = leaf.hedge; hedge; hedge = hedge->next)
         {
             double angle = M_SlopeToAngle(hedge->v[0]->V_pos[VX] - point[VX],
                                           hedge->v[0]->V_pos[VY] - point[VY]);
@@ -1459,11 +1458,11 @@ struct Partitioner::Instance
         Q_ASSERT(tree.isLeaf());
 
         BspLeaf* leaf = reinterpret_cast<BspLeaf*>(tree.userData());
-        vec2d_t midPoint;
+        vec2d_t center;
 
-        V2d_Set(midPoint, 0, 0);
-        getAveragedCoords(leaf, midPoint);
-        clockwiseOrder(&leaf->hedge, leaf->hedgeCount, midPoint, sortBuffer);
+        V2d_Set(center, 0, 0);
+        findBspLeafCenter(*leaf, center);
+        clockwiseOrder(*leaf, center, sortBuffer);
 
         if(leaf->hedge)
         {
@@ -1523,11 +1522,8 @@ struct Partitioner::Instance
             LOG_WARNING("BspLeaf %p is orphan.") << leaf;
         }
 
-        if(verbose)
-        {
-            registerMigrantHEdges(leaf);
-            logUnclosed(leaf);
-        }
+        logMigrantHEdges(leaf);
+        logUnclosedBspLeaf(leaf);
 
         if(!sanityCheckHasRealHEdge(leaf))
         {
@@ -1816,18 +1812,6 @@ struct Partitioner::Instance
         return 0;
     }
 
-    HEdgeTip* newHEdgeTip()
-    {
-        HEdgeTip* tip = new HEdgeTip();
-        return tip;
-    }
-
-    void deleteHEdgeTip(HEdgeTip* tip)
-    {
-        Q_ASSERT(tip);
-        delete tip;
-    }
-
     void clearHEdgeTipsByVertex(Vertex* vtx)
     {
         if(!vtx) return;
@@ -1836,7 +1820,7 @@ struct Partitioner::Instance
         while(tip)
         {
             HEdgeTip* next = tip->ET_next;
-            deleteHEdgeTip(tip);
+            delete tip;
             tip = next;
         }
         vertexInfo(*vtx).tipSet = 0;
@@ -1873,7 +1857,7 @@ struct Partitioner::Instance
     {
         Q_ASSERT(vtx);
 
-        HEdgeTip* tip = newHEdgeTip();
+        HEdgeTip* tip = new HEdgeTip();
         tip->angle = angle;
         tip->ET_back  = back;
         tip->ET_front = front;
@@ -2144,6 +2128,62 @@ struct Partitioner::Instance
         return true;
     }
 
+    bool registerUnclosedBspLeaf(BspLeaf* leaf, uint gapTotal)
+    {
+        if(!leaf) return false;
+
+        // Has this leaf already been registered?
+        for(UnclosedBspLeafs::const_iterator it = unclosedBspLeafs.begin();
+            it != unclosedBspLeafs.end(); ++it)
+        {
+            UnclosedBspLeafRecord const& record = *it;
+            if(record.leaf == leaf)
+                return false;
+        }
+
+        // Add a new record.
+        unclosedBspLeafs.push_back(UnclosedBspLeafRecord(leaf, gapTotal));
+
+        // In the absence of a better mechanism, simply log this right away.
+        /// @todo Implement something better!
+        LOG_WARNING("HEdge list for BspLeaf #%p is not closed (%u gaps, %u hedges).")
+                << leaf << gapTotal << leaf->hedgeCount;
+        /*
+        HEdge* hedge = leaf->hedge;
+        do
+        {
+            LOG_DEBUG("  half-edge %p [%1.1f, %1.1f] -> [%1.1f, %1.1f]")
+                << hedge
+                << hedge->v[0]->pos[VX] << hedge->v[0]->pos[VY],
+                << hedge->v[1]->pos[VX] << hedge->v[1]->pos[VY];
+
+        } while((hedge = hedge->next) != leaf->hedge);
+        */
+        return true;
+    }
+
+    void logUnclosedBspLeaf(BspLeaf* leaf)
+    {
+        if(!leaf) return;
+
+        uint gaps = 0;
+        const HEdge* hedge = leaf->hedge;
+        do
+        {
+            HEdge* next = hedge->next;
+            if(hedge->v[1]->buildData.pos[VX] != next->v[0]->buildData.pos[VX] ||
+               hedge->v[1]->buildData.pos[VY] != next->v[0]->buildData.pos[VY])
+            {
+                gaps++;
+            }
+        } while((hedge = hedge->next) != leaf->hedge);
+
+        if(gaps > 0)
+        {
+            registerUnclosedBspLeaf(leaf, gaps);
+        }
+    }
+
     /**
      * Register the specified half-edge as as migrant edge of the specified sector.
      *
@@ -2187,7 +2227,7 @@ struct Partitioner::Instance
      *
      * @param leaf  BSP leaf to be searched.
      */
-    void registerMigrantHEdges(const BspLeaf* leaf)
+    void logMigrantHEdges(const BspLeaf* leaf)
     {
         if(!leaf) return;
 
@@ -2276,6 +2316,19 @@ struct Partitioner::Instance
     };
     typedef std::list<UnclosedSectorRecord> UnclosedSectors;
     UnclosedSectors unclosedSectors;
+
+    /// Unclosed BSP leafs are recorded here so we don't print too many warnings.
+    struct UnclosedBspLeafRecord
+    {
+        BspLeaf* leaf;
+        uint gapTotal;
+
+        UnclosedBspLeafRecord(BspLeaf* _leaf, uint _gapTotal)
+            : leaf(_leaf), gapTotal(_gapTotal)
+        {}
+    };
+    typedef std::list<UnclosedBspLeafRecord> UnclosedBspLeafs;
+    UnclosedBspLeafs unclosedBspLeafs;
 
     /// Migrant hedges are recorded here so we don't print too many warnings.
     struct MigrantHEdgeRecord
@@ -2394,15 +2447,15 @@ Partitioner& Partitioner::releaseOwnership(runtime_mapdata_header_t const& ob)
     return *this;
 }
 
-static bool getAveragedCoords(BspLeaf* leaf, pvec2d_t midPoint)
+static bool findBspLeafCenter(BspLeaf const& leaf, pvec2d_t center)
 {
-    if(!leaf || !midPoint) return false;
+    Q_ASSERT(center);
 
     vec2d_t avg;
     V2d_Set(avg, 0, 0);
     size_t numPoints = 0;
 
-    for(HEdge* hedge = leaf->hedge; hedge; hedge = hedge->next)
+    for(HEdge* hedge = leaf.hedge; hedge; hedge = hedge->next)
     {
         V2d_Sum(avg, avg, hedge->v[0]->buildData.pos);
         V2d_Sum(avg, avg, hedge->v[1]->buildData.pos);
@@ -2411,45 +2464,10 @@ static bool getAveragedCoords(BspLeaf* leaf, pvec2d_t midPoint)
 
     if(numPoints)
     {
-        V2d_Set(midPoint, avg[VX] / numPoints, avg[VY] / numPoints);
+        V2d_Set(center, avg[VX] / numPoints, avg[VY] / numPoints);
     }
 
     return true;
-}
-
-static void logUnclosed(const BspLeaf* leaf)
-{
-    uint total = 0, gaps = 0;
-    const HEdge* hedge = leaf->hedge;
-    do
-    {
-        HEdge* next = hedge->next;
-        if(hedge->v[1]->buildData.pos[VX] != next->v[0]->buildData.pos[VX] ||
-           hedge->v[1]->buildData.pos[VY] != next->v[0]->buildData.pos[VY])
-        {
-            gaps++;
-        }
-        total++;
-
-    } while((hedge = hedge->next) != leaf->hedge);
-
-    if(gaps > 0)
-    {
-        LOG_INFO("HEdge list for BspLeaf #%p is not closed (%u gaps, %u hedges).")
-                << leaf << gaps << total;
-
-        /*
-        hedge = leaf->hedge;
-        do
-        {
-            LOG_DEBUG("  half-edge %p [%1.1f, %1.1f] -> [%1.1f, %1.1f]")
-                << hedge
-                << hedge->v[0]->pos[VX] << hedge->v[0]->pos[VY],
-                << hedge->v[1]->pos[VX] << hedge->v[1]->pos[VY];
-
-        } while((hedge = hedge->next) != leaf->hedge);
-        */
-    }
 }
 
 DENG_DEBUG_ONLY(
