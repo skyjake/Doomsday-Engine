@@ -81,7 +81,7 @@ class Changes:
         self.parse()
         
     def should_ignore(self, subject):
-        if subject.startswith("Merge branch"):
+        if subject.startswith("Merge branch") or subject.startswith("Merge commit"):
             # Branch merges are not listed.
             return True
         return False
