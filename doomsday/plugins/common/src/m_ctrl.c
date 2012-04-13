@@ -711,6 +711,13 @@ int MNBindings_PrivilegedResponder(mn_object_t* obj, event_t* ev)
         if(binds->bindContext)
         {
             bindContext = binds->bindContext;
+
+            if((!strcmp(bindContext, "menu") || !strcmp(bindContext, "shortcut")) &&
+               !strcmp(symbol + 5, "key-delete-down"))
+            {
+                Con_Message("The Delete key in the Menu context is reserved for deleting bindings.\n");
+                return false;
+            }
         }
 
         if(binds->command)
