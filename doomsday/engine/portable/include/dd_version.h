@@ -57,8 +57,8 @@
  * DOOMSDAY_RELEASE_TYPE determines the classification of the release.
  * Possible values are "Unstable", "Candidate" and "Stable".
  */
-#define DOOMSDAY_RELEASE_TYPE   "Unstable"
-//#define DOOMSDAY_RELEASE_TYPE   "Candidate"
+//#define DOOMSDAY_RELEASE_TYPE   "Unstable"
+#define DOOMSDAY_RELEASE_TYPE   "Candidate"
 //#define DOOMSDAY_RELEASE_TYPE   "Stable"
 
 /**
