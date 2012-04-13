@@ -150,7 +150,9 @@ int DisplayMode_Init(void)
 
     captured = false;
     DisplayMode_Native_Init();
+#if defined(MACOSX) || defined(UNIX)
     DisplayMode_SaveOriginalColorTransfer();
+#endif
 
     // This is used for sorting the mode set (Hz).
     originalMode = Mode::fromCurrent();
