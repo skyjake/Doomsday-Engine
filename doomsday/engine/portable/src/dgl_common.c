@@ -390,6 +390,7 @@ void GL_SetMultisample(boolean on)
     if(!GL_state.features.multisample) return;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
 #if defined(WIN32)
     if(on) glEnable(GL_MULTISAMPLE_ARB);
