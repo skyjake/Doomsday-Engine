@@ -346,6 +346,9 @@ boolean GL_Grab(int x, int y, int width, int height, dgltexformat_t format, void
 
 void GL_SetVSync(boolean on)
 {
+    Con_SetInteger("vid-vsync", on? 1 : 0);
+
+    /*
     // Outside the main thread we'll need to defer the call.
     if(!Sys_InMainThread())
     {
@@ -374,11 +377,15 @@ void GL_SetVSync(boolean on)
             CGLSetParameter(context, kCGLCPSwapInterval, params);
         }
     }
-#endif
+#endif*/
+
 }
 
 void GL_SetMultisample(boolean on)
 {
+    Con_SetInteger("vid-fsaa", on? 1 : 0);
+
+    /*
     if(!GL_state.features.multisample) return;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
@@ -387,6 +394,7 @@ void GL_SetMultisample(boolean on)
     if(on) glEnable(GL_MULTISAMPLE_ARB);
     else  glDisable(GL_MULTISAMPLE_ARB);
 #endif
+    */
 }
 
 void DGL_SetScissor(const RectRaw* rect)

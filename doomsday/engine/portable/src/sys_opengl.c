@@ -510,10 +510,6 @@ boolean Sys_GLInitialize(void)
     if(GL_state.features.genMipmap && GL_state.extensions.genMipmapSGIS)
         glHint(GL_GENERATE_MIPMAP_HINT_SGIS, GL_NICEST);
 
-    // Always use vsync if available.
-    /// @fixme Should be determined by cvar.
-    GL_SetVSync(true);
-
     assert(!Sys_GLCheckError());
 
     return true;
