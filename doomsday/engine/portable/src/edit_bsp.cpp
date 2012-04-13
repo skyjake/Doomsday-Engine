@@ -317,12 +317,12 @@ void MPE_SaveBsp(BspBuilder_c* builder_c, GameMap* map, uint* numEditableVertexe
     Q_ASSERT(builder_c);
     BspBuilder& builder = *builder_c->inst;
 
-    long rHeight, lHeight;
+    dint32 rHeight, lHeight;
     BspTreeNode* rootNode = builder.root();
     if(!rootNode->isLeaf())
     {
-        rHeight = long(rootNode->right()->height());
-        lHeight = long(rootNode->left()->height());
+        rHeight = dint32(rootNode->right()->height());
+        lHeight = dint32(rootNode->left()->height());
     }
     else
     {
