@@ -1183,6 +1183,7 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
     float origColor[4];
     short textFlags;
     char* str, *end;
+    boolean escaped = false;
 
     errorIfNotInited("FR_DrawText");
 
@@ -1224,7 +1225,13 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
         str = (char*)text;
         while(*str)
         {
-            if(*str == '{') // Paramaters included?
+            if(*str == FR_FORMAT_ESCAPE_CHAR)
+            {
+                escaped = true;
+                ++str;
+                continue;
+            }
+            if(!escaped && *str == '{') // Paramaters included?
             {
                 fontid_t lastFont = state.fontNum;
                 int lastTracking = state.tracking;
@@ -1267,7 +1274,7 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
                     FR_SetCaseScale(state.caseScale);
             }
 
-            for(end = str; *end && *end != '{';)
+            for(end = str; *end && *end != FR_FORMAT_ESCAPE_CHAR && (escaped || *end != '{');)
             {
                 int newlines = 0, fragmentAlignFlags;
                 float alignx = 0;
@@ -1277,7 +1284,8 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
                 {
                     curCase = -1;
                     // Select a substring with characters of the same case (or whitespace).
-                    for(; *end && *end != '{' && *end != '\n'; end++)
+                    for(; *end && *end != FR_FORMAT_ESCAPE_CHAR && (escaped || *end != '{') &&
+                        *end != '\n'; end++)
                     {
                         // We can skip whitespace.
                         if(isspace(*end))
@@ -1292,8 +1300,12 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
                 else
                 {
                     curCase = 0;
-                    for(; *end && *end != '{' && *end != '\n'; end++);
+                    for(; *end && *end != FR_FORMAT_ESCAPE_CHAR && (escaped || *end != '{') &&
+                        *end != '\n'; end++);
                 }
+
+                // No longer escaped.
+                escaped = false;
 
                 { char* buffer = enlargeTextBuffer(end - str);
                 memcpy(buffer, str, end - str);
@@ -1424,7 +1436,7 @@ void FR_TextSize(Size2Raw* size, const char* text)
 int FR_TextWidth(const char* string)
 {
     int w, maxWidth = -1;
-    boolean skip = false;
+    boolean skipping = false, escaped = false;
     const char* ch;
     size_t i, len;
 
@@ -1433,6 +1445,8 @@ int FR_TextWidth(const char* string)
     if(!string || !string[0])
         return 0;
 
+    /// @todo All visual format parsing should be done in one place.
+
     w = 0;
     len = strlen(string);
     ch = string;
@@ -1440,18 +1454,25 @@ int FR_TextWidth(const char* string)
     {
         unsigned char c = *ch;
 
-        if(c == '{')
+        if(c == FR_FORMAT_ESCAPE_CHAR)
         {
-            skip = true;
+            escaped = true;
+            continue;
         }
-        else if(c == '}')
+        if(!escaped && c == '{')
         {
-            skip = false;
+            skipping = true;
+        }
+        else if(skipping && c == '}')
+        {
+            skipping = false;
             continue;
         }
 
-        if(skip)
+        if(skipping)
             continue;
+
+        escaped = false;
 
         if(c == '\n')
         {

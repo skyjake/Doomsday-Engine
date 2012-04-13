@@ -641,6 +641,35 @@ static void drawSideText(const char* text, int line, float alpha)
     FR_PopAttrib();
 }
 
+static void escapeFormatting(ddstring_t* dest, const char* src)
+{
+    if(!src) return;
+    Str_Clear(dest);
+    for(; *src; ++src)
+    {
+        if(*src == '{')
+        {
+            Str_AppendChar(dest, FR_FORMAT_ESCAPE_CHAR);
+        }
+        Str_AppendChar(dest, *src);
+    }
+}
+
+static void applyFilter(char* buff)
+{
+    con_textfilter_t printFilter = Con_PrintFilter();
+    ddstring_t* escaped = Str_New();
+
+    escapeFormatting(escaped, buff);
+    strcpy(buff, Str_Text(escaped));
+    Str_Delete(escaped);
+
+    if(printFilter)
+    {
+        printFilter(buff);
+    }
+}
+
 /**
  * \note Slightly messy...
  */
@@ -661,7 +690,6 @@ static void drawConsole(float consoleAlpha)
     char buff[LOCALBUFFSIZE];
     font_t* cfont;
     int lineHeight, textOffsetY;
-    con_textfilter_t printFilter = Con_PrintFilter();
     uint reqLines, maxLineLength;
     Point2Raw origin;
     Size2Raw size;
@@ -745,10 +773,11 @@ static void drawConsole(float consoleAlpha)
                 const cbline_t* line = lines[i];
 
                 if(line->flags & CBLF_RULER)
-                {   // Draw a ruler here, and nothing else.
+                {
+                    // Draw a ruler here, and nothing else.
                     drawRuler(XORIGIN + PADDING, (YORIGIN + y) / scale[1],
-                               Window_Width(theWindow) / scale[0] - PADDING*2, lineHeight,
-                               consoleAlpha);
+                              Window_Width(theWindow) / scale[0] - PADDING*2, lineHeight,
+                              consoleAlpha);
                 }
                 else
                 {
@@ -770,8 +799,8 @@ static void drawConsole(float consoleAlpha)
                         xOffset = 0;
                     }
 
-                    if(printFilter)
-                        printFilter(buff);
+                    // Escape any visual formatting characters in the text.
+                    applyFilter(buff);
 
                     // Set the color.
                     if(Font_Flags(cfont) & FF_COLORIZE)
@@ -820,13 +849,20 @@ static void drawConsole(float consoleAlpha)
         }
     }
 
-    dd_snprintf(buff, LOCALBUFFSIZE -1/*terminator*/, ">%s%.*s%s",
-        abbrevLeft?  "{alpha=.5}[...]{alpha=1}" : "",
-        maxLineLength, cmdLine + offset,
-        abbrevRight? "{alpha=.5}[...]" : "");
+    // Apply filtering.
+    /// @todo Clean this up; use a common applyFilter() function.
+    {
+        ddstring_t* escaped = Str_New();
+        escapeFormatting(escaped, cmdLine + offset);
 
-    if(printFilter)
-        printFilter(buff);
+        dd_snprintf(buff, LOCALBUFFSIZE -1/*terminator*/, ">%s%.*s%s",
+                    abbrevLeft?  "{alpha=.5}[...]{alpha=1}" : "",
+                    maxLineLength, Str_Text(escaped),
+                    abbrevRight? "{alpha=.5}[...]" : "");
+
+        Str_Delete(escaped);
+        if(Con_PrintFilter()) (Con_PrintFilter())(buff);
+    }
 
     glEnable(GL_TEXTURE_2D);
     if(Font_Flags(cfont) & FF_COLORIZE)
@@ -850,7 +886,10 @@ static void drawConsole(float consoleAlpha)
 
         // Where is the cursor?
         memset(temp, 0, sizeof(temp));
-        strncpy(temp, buff, MIN_OF(LOCALBUFFSIZE -1/*prompt length*/ -1/*vis clamp*/, cmdCursor-offset + (abbrevLeft? 24/*abbrev length*/:0) + 1));
+        //strncpy(temp, cmdLine + offset, MIN_OF(LOCALBUFFSIZE -1/*prompt length*/ /*-1*//*vis clamp*/, cmdCursor-offset + (abbrevLeft? 24/*abbrev length*/:0) + 1));
+        strcpy(temp, ">");
+        strncpy(temp + 1, cmdLine + offset, MIN_OF(LOCALBUFFSIZE - 1, cmdCursor - offset));
+        applyFilter(temp);
         xOffset = FR_TextWidth(temp);
         if(Con_InputMode())
         {
@@ -869,7 +908,7 @@ static void drawConsole(float consoleAlpha)
         glColor4f(CcolYellow[0], CcolYellow[1], CcolYellow[2],
                   consoleAlpha * (((int) ConsoleBlink) & 0x10 ? .2f : .5f));
         GL_DrawRectf2(XORIGIN + PADDING + xOffset, (int)((YORIGIN + y + yOffset) / scale[1]),
-                    (int)width, MAX_OF(1, (int)(height / scale[1])));
+                      (int)width, MAX_OF(1, (int)(height / scale[1])));
     }
 
     FR_PopAttrib();
