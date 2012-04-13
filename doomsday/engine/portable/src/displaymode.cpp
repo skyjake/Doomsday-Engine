@@ -185,12 +185,13 @@ void DisplayMode_Shutdown(void)
     // Back to the original mode.
     DisplayMode_Change(&originalMode, false /*release captured*/);
 
-    DisplayMode_Native_SetColorTransfer(&originalColorTransfer);
-
     modes.clear();
 
     DisplayMode_Native_Shutdown();
     captured = false;
+
+    DisplayMode_Native_SetColorTransfer(&originalColorTransfer);
+
     inited = false;
 }
 
