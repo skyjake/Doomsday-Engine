@@ -129,6 +129,9 @@ void DD_GameLoopCallback(void)
         LegacyCore_SetLoopRate(de2LegacyCore, count? 35 : 2);
     }
 
+    // We may be performing GL operations.
+    Window_GLActivate(Window_Main());
+
     // Run at least one (fractional) tic.
     runTics();
 
