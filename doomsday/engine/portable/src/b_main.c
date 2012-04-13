@@ -777,6 +777,8 @@ static bindcontrol_t* B_GetBindControlForEvent(ddevent_t* ev)
  */
 boolean B_Responder(ddevent_t* ev)
 {
+    if(ev->type == E_FOCUS) return false; // Cannot be bound.
+
     if(symbolicEchoMode && ev->type != E_SYMBOLIC)
     {
         // Make an echo.
