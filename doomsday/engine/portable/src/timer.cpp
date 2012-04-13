@@ -89,11 +89,18 @@ unsigned int Sys_GetRealTime(void)
 #ifdef WIN32
     now = timeGetTime();
 #else
-    now = uint(startedAt.elapsed()) + timerOffset;
+    now = uint(startedAt.elapsed());
     if(now > TIMER_WARP_INTERVAL)
     {
+        now += timerOffset;
+
+        // QTime will wrap around every 24 hours; we'll wrap it manually before that.
         timerOffset += TIMER_WARP_INTERVAL;
         startedAt = startedAt.addMSecs(TIMER_WARP_INTERVAL);
+    }
+    else
+    {
+        now += timerOffset;
     }
 #endif
 

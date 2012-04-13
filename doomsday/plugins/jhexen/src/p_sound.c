@@ -131,4 +131,16 @@ void S_ParseSndInfoLump(void)
         if(!strcmp(buf, ""))
             Def_Set(DD_DEF_SOUND, i, DD_LUMP, "default");
     }
+
+    if(gameMode == hexen_betademo)
+    {
+        // The WAD contains two lumps with the name CHAIN, the other one a
+        // sample and the other a graphics lump.
+        i = Def_Get(DD_DEF_SOUND_BY_NAME, "AMBIENT12", 0);
+        Def_Get(DD_DEF_SOUND_LUMPNAME, (char *) &i, buf);
+        if(!strcasecmp(buf, "chain"))
+        {
+            Def_Set(DD_DEF_SOUND, i, DD_LUMP, "default");
+        }
+    }
 }

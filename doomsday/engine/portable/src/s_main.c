@@ -230,7 +230,7 @@ sfxinfo_t* S_GetSoundInfo(int soundID, float* freq, float* volume)
     sfxinfo_t*          info;
     int                 i;
 
-    if(soundID <= 0)
+    if(soundID <= 0 || soundID >= defs.count.sounds.num)
         return NULL;
 
     if(!freq)
@@ -249,6 +249,8 @@ sfxinfo_t* S_GetSoundInfo(int soundID, float* freq, float* volume)
         (info->linkPitch > 0 ? info->linkPitch / 128.0f : *freq), *volume +=
         (info->linkVolume != -1 ? info->linkVolume / 127.0f : 0), soundID =
         info - sounds, i++);
+
+    assert(soundID < defs.count.sounds.num);
 
     return info;
 }
