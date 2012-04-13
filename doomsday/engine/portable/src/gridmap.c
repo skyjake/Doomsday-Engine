@@ -486,11 +486,11 @@ void GridmapBlock_SetCoordsXY(GridmapCellBlock* block, GridmapCoord minX, Gridma
 
 static int drawCell(TreeCell* tree, void* parameters)
 {
-    vec2_t topLeft, bottomRight;
+    vec2f_t topLeft, bottomRight;
 
-    V2_Set(topLeft, UNIT_WIDTH * tree->origin[X], UNIT_HEIGHT * tree->origin[Y]);
-    V2_Set(bottomRight, UNIT_WIDTH  * (tree->origin[X] + tree->size),
-                        UNIT_HEIGHT * (tree->origin[Y] + tree->size));
+    V2f_Set(topLeft, UNIT_WIDTH * tree->origin[X], UNIT_HEIGHT * tree->origin[Y]);
+    V2f_Set(bottomRight, UNIT_WIDTH  * (tree->origin[X] + tree->size),
+                         UNIT_HEIGHT * (tree->origin[Y] + tree->size));
 
     glBegin(GL_LINE_LOOP);
         glVertex2fv((GLfloat*)topLeft);
@@ -504,7 +504,7 @@ static int drawCell(TreeCell* tree, void* parameters)
 void Gridmap_DebugDrawer(const Gridmap* gm)
 {
     GLfloat oldColor[4];
-    vec2_t start, end;
+    vec2f_t start, end;
     assert(gm);
 
     // We'll be changing the color, so query the current and restore later.
@@ -519,8 +519,8 @@ void Gridmap_DebugDrawer(const Gridmap* gm)
     /**
      * Draw our bounds.
      */
-    V2_Set(start, 0, 0);
-    V2_Set(end, UNIT_WIDTH * gm->dimensions[X], UNIT_HEIGHT * gm->dimensions[Y]);
+    V2f_Set(start, 0, 0);
+    V2f_Set(end, UNIT_WIDTH * gm->dimensions[X], UNIT_HEIGHT * gm->dimensions[Y]);
 
     glColor3f(1, .5f, .5f);
     glBegin(GL_LINES);

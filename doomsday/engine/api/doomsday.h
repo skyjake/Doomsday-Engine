@@ -747,10 +747,10 @@ boolean M_IsStringValidFloat(const char* str);
     float           RNG_RandFloat(void);
 
     // Miscellaneous: Math.
-    void            V2_Sum(float dest[2], const float* srcA, const float* srcB);
-    void            V2_Subtract(float dest[2], const float* srcA, const float* srcB);
-    void            V2_Rotate(float vec[2], float radians);
-    float           V2_Intersection(const float* p1, const float* delta1, const float* p2, const float* delta2, float point[2]);
+    void            V2f_Sum(float dest[2], const float* srcA, const float* srcB);
+    void            V2f_Subtract(float dest[2], const float* srcA, const float* srcB);
+    void            V2f_Rotate(float vec[2], float radians);
+    float           V2f_Intersection(const float* p1, const float* delta1, const float* p2, const float* delta2, float point[2]);
 
     int             P_PointOnLineSide(float x, float y, float lX, float lY, float lDX, float lDY);
     float           M_PointLineDistance(const float* a, const float* b, const float* c);

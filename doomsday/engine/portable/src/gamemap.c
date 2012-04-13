@@ -201,46 +201,46 @@ Sector* GameMap_SectorByOrigin(GameMap* map, const void* ddMobjBase)
     return NULL;
 }
 
-int GameMap_BspLeafIndex(GameMap* map, BspLeaf* bspLeaf)
+int GameMap_BspLeafIndex(GameMap* map, BspLeaf* leaf)
 {
-    assert(map);
-    if(!bspLeaf || !(bspLeaf >= map->bspLeafs && bspLeaf <= &map->bspLeafs[map->numBspLeafs])) return -1;
-    return bspLeaf - map->bspLeafs;
+    DENG_UNUSED(map);
+    if(!leaf) return -1;
+    return leaf->index;
 }
 
 BspLeaf* GameMap_BspLeaf(GameMap* map, uint idx)
 {
     assert(map);
     if(idx >= map->numBspLeafs) return NULL;
-    return &map->bspLeafs[idx];
+    return map->bspLeafs[idx];
 }
 
 int GameMap_HEdgeIndex(GameMap* map, HEdge* hedge)
 {
-    assert(map);
-    if(!hedge || !(hedge >= map->hedges && hedge <= &map->hedges[map->numHEdges])) return -1;
-    return hedge - map->hedges;
+    DENG_UNUSED(map);
+    if(hedge) return -1;
+    return hedge->index;
 }
 
 HEdge* GameMap_HEdge(GameMap* map, uint idx)
 {
     assert(map);
     if(idx >= map->numHEdges) return NULL;
-    return &map->hedges[idx];
+    return map->hedges[idx];
 }
 
 int GameMap_BspNodeIndex(GameMap* map, BspNode* node)
 {
-    assert(map);
-    if(!node || !(node >= map->bspNodes && node <= &map->bspNodes[map->numBspNodes])) return -1;
-    return node - map->bspNodes;
+    DENG_UNUSED(map);
+    if(!node) return -1;
+    return node->index;
 }
 
 BspNode* GameMap_BspNode(GameMap* map, uint idx)
 {
     assert(map);
     if(idx >= map->numBspNodes) return NULL;
-    return &map->bspNodes[idx];
+    return map->bspNodes[idx];
 }
 
 uint GameMap_VertexCount(GameMap* map)
@@ -333,11 +333,11 @@ static void initPolyobj(Polyobj* po)
 {
     LineDef** lineIter;
     BspLeaf* bspLeaf;
-    vec2_t avg; /// < Used to find a polyobj's center, and hence BSP leaf.
+    vec2f_t avg; /// < Used to find a polyobj's center, and hence BSP leaf.
 
     if(!po) return;
 
-    V2_Set(avg, 0, 0);
+    V2f_Set(avg, 0, 0);
     for(lineIter = po->lines; *lineIter; lineIter++)
     {
         LineDef* line = *lineIter;
@@ -356,9 +356,9 @@ static void initPolyobj(Polyobj* po)
             back->SW_bottominflags |= SUIF_NO_RADIO;
         }
 
-        V2_Sum(avg, avg, line->L_v1pos);
+        V2f_Sum(avg, avg, line->L_v1pos);
     }
-    V2_Scale(avg, 1.f / po->lineCount);
+    V2f_Scale(avg, 1.f / po->lineCount);
 
     bspLeaf = P_BspLeafAtPointXY(avg[VX], avg[VY]);
     if(bspLeaf)
@@ -451,20 +451,20 @@ void GameMap_InitNodePiles(GameMap* map)
     VERBOSE2( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - starttime) / 1000.0f) )
 }
 
-void GameMap_InitLineDefBlockmap(GameMap* map, const_pvec2_t min_, const_pvec2_t max_)
+void GameMap_InitLineDefBlockmap(GameMap* map, const_pvec2f_t min_, const_pvec2f_t max_)
 {
 #define BLOCKMAP_MARGIN      8 // size guardband around map
 #define CELL_SIZE            MAPBLOCKUNITS
 
-    vec2_t min, max;
+    vec2f_t min, max;
     assert(map && min_ && max_);
 
     // Setup the blockmap area to enclose the whole map, plus a margin
     // (margin is needed for a map that fits entirely inside one blockmap cell).
-    V2_Set(min, min_[VX] - BLOCKMAP_MARGIN,
-                min_[VY] - BLOCKMAP_MARGIN);
-    V2_Set(max, max_[VX] + BLOCKMAP_MARGIN,
-                max_[VY] + BLOCKMAP_MARGIN);
+    V2f_Set(min, min_[VX] - BLOCKMAP_MARGIN,
+                 min_[VY] - BLOCKMAP_MARGIN);
+    V2f_Set(max, max_[VX] + BLOCKMAP_MARGIN,
+                 max_[VY] + BLOCKMAP_MARGIN);
 
     map->lineDefBlockmap = Blockmap_New(min, max, CELL_SIZE, CELL_SIZE);
 
@@ -472,20 +472,20 @@ void GameMap_InitLineDefBlockmap(GameMap* map, const_pvec2_t min_, const_pvec2_t
 #undef BLOCKMAP_MARGIN
 }
 
-void GameMap_InitMobjBlockmap(GameMap* map, const_pvec2_t min_, const_pvec2_t max_)
+void GameMap_InitMobjBlockmap(GameMap* map, const_pvec2f_t min_, const_pvec2f_t max_)
 {
 #define BLOCKMAP_MARGIN      8 // size guardband around map
 #define CELL_SIZE            MAPBLOCKUNITS
 
-    vec2_t min, max;
+    vec2f_t min, max;
     assert(map && min_ && max_);
 
     // Setup the blockmap area to enclose the whole map, plus a margin
     // (margin is needed for a map that fits entirely inside one blockmap cell).
-    V2_Set(min, min_[VX] - BLOCKMAP_MARGIN,
-                min_[VY] - BLOCKMAP_MARGIN);
-    V2_Set(max, max_[VX] + BLOCKMAP_MARGIN,
-                max_[VY] + BLOCKMAP_MARGIN);
+    V2f_Set(min, min_[VX] - BLOCKMAP_MARGIN,
+                 min_[VY] - BLOCKMAP_MARGIN);
+    V2f_Set(max, max_[VX] + BLOCKMAP_MARGIN,
+                 max_[VY] + BLOCKMAP_MARGIN);
 
     map->mobjBlockmap = Blockmap_New(min, max, CELL_SIZE, CELL_SIZE);
 
@@ -493,20 +493,20 @@ void GameMap_InitMobjBlockmap(GameMap* map, const_pvec2_t min_, const_pvec2_t ma
 #undef BLOCKMAP_MARGIN
 }
 
-void GameMap_InitPolyobjBlockmap(GameMap* map, const_pvec2_t min_, const_pvec2_t max_)
+void GameMap_InitPolyobjBlockmap(GameMap* map, const_pvec2f_t min_, const_pvec2f_t max_)
 {
 #define BLOCKMAP_MARGIN      8 // size guardband around map
 #define CELL_SIZE            MAPBLOCKUNITS
 
-    vec2_t min, max;
+    vec2f_t min, max;
     assert(map && min_ && max_);
 
     // Setup the blockmap area to enclose the whole map, plus a margin
     // (margin is needed for a map that fits entirely inside one blockmap cell).
-    V2_Set(min, min_[VX] - BLOCKMAP_MARGIN,
-                min_[VY] - BLOCKMAP_MARGIN);
-    V2_Set(max, max_[VX] + BLOCKMAP_MARGIN,
-                max_[VY] + BLOCKMAP_MARGIN);
+    V2f_Set(min, min_[VX] - BLOCKMAP_MARGIN,
+                 min_[VY] - BLOCKMAP_MARGIN);
+    V2f_Set(max, max_[VX] + BLOCKMAP_MARGIN,
+                 max_[VY] + BLOCKMAP_MARGIN);
 
     map->polyobjBlockmap = Blockmap_New(min, max, CELL_SIZE, CELL_SIZE);
 
@@ -514,20 +514,20 @@ void GameMap_InitPolyobjBlockmap(GameMap* map, const_pvec2_t min_, const_pvec2_t
 #undef BLOCKMAP_MARGIN
 }
 
-void GameMap_InitBspLeafBlockmap(GameMap* map, const_pvec2_t min_, const_pvec2_t max_)
+void GameMap_InitBspLeafBlockmap(GameMap* map, const_pvec2f_t min_, const_pvec2f_t max_)
 {
 #define BLOCKMAP_MARGIN      8 // size guardband around map
 #define CELL_SIZE            MAPBLOCKUNITS
 
-    vec2_t min, max;
+    vec2f_t min, max;
     assert(map && min_ && max_);
 
     // Setup the blockmap area to enclose the whole map, plus a margin
     // (margin is needed for a map that fits entirely inside one blockmap cell).
-    V2_Set(min, min_[VX] - BLOCKMAP_MARGIN,
-                min_[VY] - BLOCKMAP_MARGIN);
-    V2_Set(max, max_[VX] + BLOCKMAP_MARGIN,
-                max_[VY] + BLOCKMAP_MARGIN);
+    V2f_Set(min, min_[VX] - BLOCKMAP_MARGIN,
+                 min_[VY] - BLOCKMAP_MARGIN);
+    V2f_Set(max, max_[VX] + BLOCKMAP_MARGIN,
+                 max_[VY] + BLOCKMAP_MARGIN);
 
     map->bspLeafBlockmap = Blockmap_New(min, max, CELL_SIZE, CELL_SIZE);
 
@@ -631,7 +631,7 @@ int GameMap_MobjsBoxIterator(GameMap* map, const AABoxf* box,
 
 void GameMap_LinkLineDef(GameMap* map, LineDef* lineDef)
 {
-    vec2_t origin, cellSize, cell, from, to;
+    vec2f_t origin, cellSize, cell, from, to;
     BlockmapCellBlock cellBlock;
     Blockmap* blockmap;
     uint x, y;
@@ -648,8 +648,8 @@ void GameMap_LinkLineDef(GameMap* map, LineDef* lineDef)
     if(lineDef->inFlags & LF_POLYOBJ) return;
 
     blockmap = map->lineDefBlockmap;
-    V2_Copy(origin, Blockmap_Origin(blockmap));
-    V2_Copy(cellSize, Blockmap_CellSize(blockmap));
+    V2f_Copy(origin, Blockmap_Origin(blockmap));
+    V2f_Copy(cellSize, Blockmap_CellSize(blockmap));
 
     // Determine the block of cells we'll be working within.
     Blockmap_CellBlock(blockmap, &cellBlock, &lineDef->aaBox);
@@ -664,22 +664,22 @@ void GameMap_LinkLineDef(GameMap* map, LineDef* lineDef)
         }
 
         // Calculate cell origin.
-        V2_Copy(cell, Blockmap_CellSize(blockmap));
+        V2f_Copy(cell, Blockmap_CellSize(blockmap));
         cell[VX] *= x; cell[VY] *= y;
-        V2_Sum(cell, cell, Blockmap_Origin(blockmap));
+        V2f_Sum(cell, cell, Blockmap_Origin(blockmap));
 
         // Choose a cell diagonal to test.
         if(lineDef->slopeType == ST_POSITIVE)
         {
             // LineDef slope / vs \ cell diagonal.
-            V2_Set(from, cell[VX], cell[VY] + cellSize[VY]);
-            V2_Set(to,   cell[VX] + cellSize[VX], cell[VY]);
+            V2f_Set(from, cell[VX], cell[VY] + cellSize[VY]);
+            V2f_Set(to,   cell[VX] + cellSize[VX], cell[VY]);
         }
         else
         {
             // LineDef slope \ vs / cell diagonal.
-            V2_Set(from, cell[VX] + cellSize[VX], cell[VY] + cellSize[VY]);
-            V2_Set(to,   cell[VX], cell[VY]);
+            V2f_Set(from, cell[VX] + cellSize[VX], cell[VY] + cellSize[VY]);
+            V2f_Set(to,   cell[VX], cell[VY]);
         }
 
         // Would LineDef intersect this?
@@ -882,7 +882,7 @@ int GameMap_BspLeafIterator(GameMap* map, int (*callback) (BspLeaf*, void*), voi
     assert(map);
     for(i = 0; i < map->numBspLeafs; ++i)
     {
-        int result = callback(map->bspLeafs + i, parameters);
+        int result = callback(map->bspLeafs[i], parameters);
         if(result) return result;
     }
     return false; // Continue iteration.
@@ -1125,7 +1125,7 @@ int GameMap_HEdgeIterator(GameMap* map, int (*callback) (HEdge*, void*), void* p
     assert(map);
     for(i = 0; i < map->numHEdges; ++i)
     {
-        int result = callback(map->hedges + i, parameters);
+        int result = callback(map->hedges[i], parameters);
         if(result) return result;
     }
     return false; // Continue iteration.
@@ -1137,7 +1137,7 @@ int GameMap_BspNodeIterator(GameMap* map, int (*callback) (BspNode*, void*), voi
     assert(map);
     for(i = 0; i < map->numBspNodes; ++i)
     {
-        int result = callback(map->bspNodes + i, parameters);
+        int result = callback(map->bspNodes[i], parameters);
         if(result) return result;
     }
     return false; // Continue iteration.
@@ -1238,16 +1238,16 @@ static int traverseCellPath(GameMap* map, Blockmap* bmap, float const from_[2],
     const float epsilon    = FIX2FLT(FRACUNIT);
     const float unitOffset = FIX2FLT(FRACUNIT);
     uint fromBlock[2], toBlock[2];
-    vec2_t from, to, min, max;
+    vec2f_t from, to, min, max;
     float dX, dY;
     assert(bmap);
 
-    V2_Copy(min, Blockmap_Bounds(bmap)->min);
-    V2_Copy(max, Blockmap_Bounds(bmap)->max);
+    V2f_Copy(min, Blockmap_Bounds(bmap)->min);
+    V2f_Copy(max, Blockmap_Bounds(bmap)->max);
 
     // We may need to clip and/or fudge these points.
-    V2_Copy(from, from_);
-    V2_Copy(to, to_);
+    V2f_Copy(from, from_);
+    V2f_Copy(to, to_);
 
     if(!(from[VX] >= min[VX] && from[VX] <= max[VX] &&
          from[VY] >= min[VY] && from[VY] <= max[VY]))
@@ -1288,37 +1288,37 @@ static int traverseCellPath(GameMap* map, Blockmap* bmap, float const from_[2],
          to[VY] >= min[VY] && to[VY] <= max[VY]))
     {
         // 'to' is outside the blockmap.
-        vec2_t bounds[4], point;
+        vec2f_t bounds[4], point;
         float ab;
 
-        V2_Set(bounds[0], min[VX], min[VY]);
-        V2_Set(bounds[1], min[VX], max[VY]);
-        V2_Set(bounds[2], max[VX], max[VY]);
-        V2_Set(bounds[3], max[VX], min[VY]);
+        V2f_Set(bounds[0], min[VX], min[VY]);
+        V2f_Set(bounds[1], min[VX], max[VY]);
+        V2f_Set(bounds[2], max[VX], max[VY]);
+        V2f_Set(bounds[3], max[VX], min[VY]);
 
-        ab = V2_Intercept(from, to, bounds[0], bounds[1], point);
+        ab = V2f_Intercept(from, to, bounds[0], bounds[1], point);
         if(ab >= 0 && ab <= 1)
-            V2_Copy(to, point);
+            V2f_Copy(to, point);
 
-        ab = V2_Intercept(from, to, bounds[1], bounds[2], point);
+        ab = V2f_Intercept(from, to, bounds[1], bounds[2], point);
         if(ab >= 0 && ab <= 1)
-            V2_Copy(to, point);
+            V2f_Copy(to, point);
 
-        ab = V2_Intercept(from, to, bounds[2], bounds[3], point);
+        ab = V2f_Intercept(from, to, bounds[2], bounds[3], point);
         if(ab >= 0 && ab <= 1)
-            V2_Copy(to, point);
+            V2f_Copy(to, point);
 
-        ab = V2_Intercept(from, to, bounds[3], bounds[0], point);
+        ab = V2f_Intercept(from, to, bounds[3], bounds[0], point);
         if(ab >= 0 && ab <= 1)
-            V2_Copy(to, point);
+            V2f_Copy(to, point);
     }
 
     // Clipping already applied above, so we don't need to check it again...
     Blockmap_Cell(bmap, fromBlock, from);
     Blockmap_Cell(bmap, toBlock, to);
 
-    V2_Subtract(from, from, min);
-    V2_Subtract(to, to, min);
+    V2f_Subtract(from, from, min);
+    V2f_Subtract(to, to, min);
     return traverseCellPath2(bmap, fromBlock, toBlock, from, to, callback, parameters);
 }
 
@@ -1390,9 +1390,9 @@ int GameMap_PathTraverse(GameMap* map, float const from[2], float const to[2],
 int GameMap_PathXYTraverse2(GameMap* map, float fromX, float fromY, float toX, float toY,
     int flags, traverser_t callback, void* parameters)
 {
-    vec2_t from, to;
-    V2_Set(from, fromX, fromY);
-    V2_Set(to, toX, toY);
+    vec2f_t from, to;
+    V2f_Set(from, fromX, fromY);
+    V2f_Set(to, toX, toY);
     return GameMap_PathTraverse2(map, from, to, flags, callback, parameters);
 }
 
@@ -1404,25 +1404,18 @@ int GameMap_PathXYTraverse(GameMap* map, float fromX, float fromY, float toX, fl
 
 BspLeaf* GameMap_BspLeafAtPoint(GameMap* map, float point_[2])
 {
-    BspNode* node;
+    runtime_mapdata_header_t* node;
     float point[2];
-
-    // A single BSP leaf is a special case
-    if(!map->numBspNodes)
-    {
-        return (BspLeaf*) map->bspLeafs;
-    }
 
     point[0] = point_? point_[0] : 0;
     point[1] = point_? point_[1] : 0;
 
-    node = map->bspNodes + (map->numBspNodes - 1);
-    do
+    node = map->bsp;
+    while(node->type != DMU_BSPLEAF)
     {
-        ASSERT_DMU_TYPE(node, DMU_BSPNODE);
-        node = (BspNode*)node->children[P_PointOnPartitionSide(point[0], point[1], &node->partition)];
-    } while(((runtime_mapdata_header_t*) node)->type != DMU_BSPLEAF);
-
+        BspNode* bspNode = (BspNode*)node;
+        node = bspNode->children[P_PointOnPartitionSide(point[0], point[1], &bspNode->partition)];
+    }
     return (BspLeaf*)node;
 }
 

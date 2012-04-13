@@ -31,20 +31,18 @@ typedef struct lineowner_s {
 typedef struct mvertex_s {
     // Vertex index. Always valid after loading and pruning of unused
     // vertices has occurred.
-    int         index;
+    int index;
 
     // Reference count. When building normal node info, unused vertices
     // will be pruned.
-    int         refCount;
+    int refCount;
 
     // Usually NULL, unless this vertex occupies the same location as a
     // previous vertex. Only used during the pruning phase.
-    struct vertex_s *equiv;
-
-    struct edgetip_s *tipSet; // Set of wall_tips.
+    struct vertex_s* equiv;
 
 // Final data.
-    double      pos[2];
+    double pos[2];
 } mvertex_t;
 end
 
@@ -60,26 +58,28 @@ internal
 #define FRONT 0
 #define BACK  1
 
-#define HE_v(n)                 v[(n)? 1:0]
-#define HE_vpos(n)              HE_v(n)->V_pos
+#define HE_v(n)                   v[(n)? 1:0]
+#define HE_vpos(n)                HE_v(n)->V_pos
 
-#define HE_v1                   HE_v(0)
-#define HE_v1pos                HE_v(0)->V_pos
+#define HE_v1                     HE_v(0)
+#define HE_v1pos                  HE_v(0)->V_pos
 
-#define HE_v2                   HE_v(1)
-#define HE_v2pos                HE_v(1)->V_pos
+#define HE_v2                     HE_v(1)
+#define HE_v2pos                  HE_v(1)->V_pos
 
-#define HE_sector(n)            sec[(n)? 1:0]
-#define HE_frontsector          HE_sector(FRONT)
-#define HE_backsector           HE_sector(BACK)
-
-#define HEDGE_SIDEDEF(he)       ((he)->lineDef->sideDefs[(he)->side])
+#define HEDGE_BACK_SECTOR(h)      ((h)->twin ? (h)->twin->sector : NULL)
+#define HEDGE_SIDEDEF(h)          ((h)->lineDef->sideDefs[(h)->side])
 
 // HEdge flags
-#define HEDGEF_POLYOBJ          0x1 /// < Half-edge is part of a poly object.
+#define HEDGEF_POLYOBJ            0x1 /// < Half-edge is part of a poly object.
 
 // HEdge frame flags
-#define HEDGEINF_FACINGFRONT    0x0001
+#define HEDGEINF_FACINGFRONT      0x0001
+
+/// @todo Refactor me away.
+typedef struct mhedge_s {
+    uint                index;
+} mhedge_t;
 end
 
 public
@@ -88,10 +88,17 @@ end
 
 struct HEdge
     PTR     vertex_s*[2] v          // [Start, End] of the segment.
-    PTR     linedef_s*  lineDef
-    PTR     sector_s*[2] sec
-    PTR     bspleaf_s*  bspLeaf
+    PTR     hedge_s*    next
+    PTR     hedge_s*    prev
+
+    // Half-edge on the other side, or NULL if one-sided. This relationship
+    // is always one-to-one -- if one of the half-edges is split, the twin
+    // must also be split.
     PTR     hedge_s*    twin
+    PTR     bspleaf_s*  bspLeaf
+
+    PTR     linedef_s*  lineDef
+    PTR     sector_s*   sector
     ANGLE   angle_t     angle
     BYTE    byte        side        // 0=front, 1=back
     BYTE    byte        flags
@@ -99,6 +106,8 @@ struct HEdge
     FLOAT   float       offset
     -       biassurface_t*[3] bsuf // 0=middle, 1=top, 2=bottom
     -       short       frameFlags
+    -       uint        index /// Unique. Set when saving the BSP.
+    -       mhedge_t    buildData
 end
 
 internal
@@ -107,11 +116,10 @@ end
 
 struct BspLeaf
     UINT    uint        hedgeCount
-    PTR     hedge_s**   hedges // [hedgeCount] size.
+    PTR     hedge_s*    hedge
     PTR     polyobj_s*  polyObj // NULL, if there is no polyobj.
     PTR     sector_s*   sector
     -       int         addSpriteCount // frame number of last R_AddSprites
-    -       uint        inSectorID
     -       int         flags
     -       int         validCount
     -       uint[NUM_REVERB_DATA] reverb
@@ -122,6 +130,7 @@ struct BspLeaf
     -       fvertex_s** vertices // [numvertices] size
     -       shadowlink_s* shadows
     -       biassurface_s** bsuf // [sector->planeCount] size.
+    -       uint        index /// Unique. Set when saving the BSP.
 end
 
 internal
@@ -156,7 +165,7 @@ struct material
     -       boolean     _inAnimGroup // @c true if belongs to some animgroup.
     -       boolean     _isCustom
     -       texture_s*  _detailTex;
-    _       float       _detailScale;
+    -       float       _detailScale;
     -       float       _detailStrength;
     -       texture_s*  _shinyTex;
     -       blendmode_t _shinyBlendmode;
@@ -292,23 +301,16 @@ internal
 #define SIF_FRAME_CLEAR     0x1     // Flags to clear before each frame.
 #define SIF_LIGHT_CHANGED   0x2
 
-// Sector flags.
-#define SECF_UNCLOSED       0x1     // An unclosed sector (some sort of fancy hack).
-
 typedef struct msector_s {
     // Sector index. Always valid after loading & pruning.
-    int         index;
-
-    // Suppress superfluous mini warnings.
-    int         warnedFacing;
-    int         refCount;
+    int index;
+    int refCount;
 } msector_t;
 end
 
 struct Sector
     -       int         frameFlags
     INT     int         validCount // if == validCount, already checked.
-    -       int         flags
     -       AABox       aaBox // Bounding box for the sector.
     -       float       roughArea // Rough approximation of sector area.
     FLOAT   float       lightLevel
@@ -397,15 +399,15 @@ internal
 
 typedef struct msidedef_s {
     // Sidedef index. Always valid after loading & pruning.
-    int         index;
-    int         refCount;
+    int index;
+    int refCount;
 } msidedef_t;
 end
 
 struct SideDef
     -       Surface[3]  sections
-    UINT    uint        hedgeCount
-    PTR     hedge_s**   hedges      // [hedgeCount] size, segs arranged left>right
+    -       hedge_s*    hedgeLeft  /// Left-most HEdge on this SideDef's side of the owning LineDef
+    -       hedge_s*    hedgeRight /// Right-most HEdge on this SideDef's side of the owning LineDef
     PTR     linedef_s*  line
     PTR     sector_s*   sector
     SHORT   short       flags
@@ -451,25 +453,16 @@ internal
 end
 
 internal
-#define MLF_TWOSIDED            0x1 // Line is marked two-sided.
-#define MLF_ZEROLENGTH          0x2 // Zero length (line should be totally ignored).
-#define MLF_SELFREF             0x4 // Sector is the same on both sides.
-#define MLF_POLYOBJ             0x8 // Line is part of a polyobj.
-
 typedef struct mlinedef_s {
     // Linedef index. Always valid after loading & pruning of zero
     // length lines has occurred.
-    int         index;
-    int         mlFlags; // MLF_* flags.
+    int index;
     
     // One-sided linedef used for a special effect (windows).
     // The value refers to the opposite sector on the back side.
-    struct sector_s *windowEffect;
-
-    // Normally NULL, except when this linedef directly overlaps an earlier
-    // one (a rarely-used trick to create higher mid-masked textures).
-    // No segs should be created for these overlapping linedefs.
-    struct linedef_s *overlap;
+    /// @todo Refactor so this information is represented using the
+    ///       BSP data objects.
+    struct sector_s* windowEffect;
 } mlinedef_t;
 end
 
@@ -507,11 +500,6 @@ typedef struct partition_s {
     float x, y;
     float dX, dY;
 } partition_t;
-
-typedef struct mbspnode_s {
-    // Node index. Only valid once the nodes have been hardened.
-    int index;
-} mbspnode_t;
 end
 
 public
@@ -522,5 +510,5 @@ struct BspNode
     -       partition_t partition
     -       AABoxf[2]   aaBox    // Bounding box for each child.
     PTR     runtime_mapdata_header_t*[2] children
-    -       mbspnode_t  buildData
+    -       uint        index /// Unique. Set when saving the BSP.
 end

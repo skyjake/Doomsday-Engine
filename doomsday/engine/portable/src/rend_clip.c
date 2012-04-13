@@ -1271,7 +1271,7 @@ clipnode_t *C_AngleClippedBy(binangle_t bang)
  */
 int C_CheckBspLeaf(BspLeaf* bspLeaf)
 {
-    HEdge** ptr;
+    HEdge* hedge;
     uint i;
 
     if(!bspLeaf || bspLeaf->hedgeCount < 3) return 0;
@@ -1289,23 +1289,23 @@ int C_CheckBspLeaf(BspLeaf* bspLeaf)
          Z_Realloc(anglist, sizeof(binangle_t) * anglistSize, PU_APPSTATIC);
     }
 
-    ptr = bspLeaf->hedges;
+    // Find angles to all corners.
     i = 0;
-    while(*ptr) // Angles to all corners.
+    hedge = bspLeaf->hedge;
+    do
     {
-        Vertex *vtx = (*ptr)->HE_v1;
-
+        Vertex* vtx = hedge->HE_v1;
         // Shift for more accuracy.
         anglist[i++] = bamsAtan2((int) ((vtx->V_pos[VY] - vz) * 100),
                                  (int) ((vtx->V_pos[VX] - vx) * 100));
-        ptr++;
-    }
+
+    } while((hedge = hedge->next) != bspLeaf->hedge);
 
     // Check each of the ranges defined by the edges.
     for(i = 0; i < bspLeaf->hedgeCount - 1; ++i)
     {
-        uint        end = i + 1;
-        binangle_t  angLen;
+        uint end = i + 1;
+        binangle_t angLen;
 
         // The last edge won't be checked. This is because the edges
         // define a closed, convex polygon and the last edge's range is

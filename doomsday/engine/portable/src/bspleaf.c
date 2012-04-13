@@ -27,27 +27,73 @@
 #include "de_refresh.h"
 #include "de_play.h"
 
+BspLeaf* BspLeaf_New(void)
+{
+    BspLeaf* leaf = Z_Calloc(sizeof(*leaf), PU_MAP, 0);
+    leaf->header.type = DMU_BSPLEAF;
+    return leaf;
+}
+
+void BspLeaf_Delete(BspLeaf* leaf)
+{
+    assert(leaf);
+    if(leaf->vertices)
+    {
+        Z_Free(leaf->vertices);
+    }
+
+    if(leaf->bsuf)
+    {
+        Sector* sec = leaf->sector;
+        uint i;
+        for(i = 0; i < sec->planeCount; ++i)
+        {
+            SB_DestroySurface(leaf->bsuf[i]);
+        }
+        Z_Free(leaf->bsuf);
+    }
+
+    // Clear the HEdges.
+    if(leaf->hedge)
+    {
+        HEdge* hedge = leaf->hedge;
+        if(hedge->next == hedge)
+        {
+            HEdge_Delete(hedge);
+        }
+        else
+        {
+            HEdge* next;
+
+            // Break the ring.
+            hedge->prev->next = NULL;
+            do
+            {
+                next = hedge->next;
+                HEdge_Delete(hedge);
+            } while((hedge = next));
+        }
+    }
+
+    Z_Free(leaf);
+}
+
 void BspLeaf_UpdateAABox(BspLeaf* leaf)
 {
-    HEdge** hedgeIter;
     HEdge* hedge;
     assert(leaf);
 
-    V2_Set(leaf->aaBox.min, DDMAXFLOAT, DDMAXFLOAT);
-    V2_Set(leaf->aaBox.max, DDMINFLOAT, DDMINFLOAT);
+    V2f_Set(leaf->aaBox.min, DDMAXFLOAT, DDMAXFLOAT);
+    V2f_Set(leaf->aaBox.max, DDMINFLOAT, DDMINFLOAT);
 
-    hedgeIter = leaf->hedges;
-    if(!*hedgeIter) return; // Very odd...
+    if(!leaf->hedge) return; // Very odd...
 
-    hedge = *hedgeIter;
-    V2_InitBox(leaf->aaBox.arvec2, hedge->HE_v1pos);
-    hedgeIter++;
+    hedge = leaf->hedge;
+    V2f_InitBox(leaf->aaBox.arvec2, hedge->HE_v1pos);
 
-    while(*hedgeIter)
+    while((hedge = hedge->next) != leaf->hedge)
     {
-        hedge = *hedgeIter;
-        V2_AddToBox(leaf->aaBox.arvec2, hedge->HE_v1pos);
-        hedgeIter++;
+        V2f_AddToBox(leaf->aaBox.arvec2, hedge->HE_v1pos);
     }
 }
 

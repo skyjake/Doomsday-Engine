@@ -34,32 +34,17 @@
 #include "de_dam.h"
 #include "de_filesys.h"
 
-//#include "bsp_edge.h" /// @todo Remove me.
-
 #include "s_environ.h"
 
-typedef struct usecrecord_s {
-    Sector* sec;
-    double nearPos[2];
-} usecrecord_t;
-
-void MPE_PrintMapErrors(void);
-
 editmap_t editMap;
-
 static boolean editMapInited = false;
+
 static editmap_t* map = &editMap;
+static GameMap* lastBuiltMap = NULL;
 
-static GameMap *lastBuiltMap = NULL;
+static Vertex* rootVtx; // Used when sorting vertex line owners.
 
-static BspBuilder_c* bspBuilder = NULL;
-
-static uint numUnclosedSectors;
-static usecrecord_t *unclosedSectors;
-
-static Vertex *rootVtx; // Used when sorting vertex line owners.
-
-Vertex* createVertex(void)
+static Vertex* createVertex(void)
 {
     Vertex* vtx;
 
@@ -215,19 +200,6 @@ static void destroyEditableSectors(editmap_t* map)
     map->numSectors = 0;
 }
 
-edgetip_t* MPE_NewEdgeTip(void)
-{
-    return (edgetip_t*)M_Calloc(sizeof(edgetip_t));
-}
-
-void MPE_DeleteEdgeTip(struct edgetip_s* tip)
-{
-    if(tip)
-    {
-        M_Free(tip);
-    }
-}
-
 static void destroyEditableVertexes(editmap_t* map)
 {
     if(map->vertexes)
@@ -236,16 +208,6 @@ static void destroyEditableVertexes(editmap_t* map)
         for(i = 0; i < map->numVertexes; ++i)
         {
             Vertex* vtx = map->vertexes[i];
-            edgetip_t* tip, *n;
-
-            tip = vtx->buildData.tipSet;
-            while(tip)
-            {
-                n = tip->ET_next;
-                MPE_DeleteEdgeTip(tip);
-                tip = n;
-            }
-
             M_Free(vtx);
         }
 
@@ -506,79 +468,11 @@ void MPE_PruneRedundantMapData(editmap_t* map, int flags)
 }
 
 /**
- * Register the specified sector in the list of unclosed sectors.
- *
- * @param sec           Ptr to the sector to be registered.
- * @param x             Approximate X coordinate to the sector's origin.
- * @param y             Approximate Y coordinate to the sector's origin.
- *
- * @return              @c true, if sector was registered.
- */
-boolean MPE_RegisterUnclosedSectorNear(Sector* sec, double x, double y)
-{
-    usecrecord_t* usec;
-    uint i;
-
-    if(!sec) return false; // Wha?
-
-    // Has this sector already been registered as unclosed?
-    for(i = 0; i < numUnclosedSectors; ++i)
-    {
-        if(unclosedSectors[i].sec == sec)
-            return true;
-    }
-
-    // A new one.
-    unclosedSectors = M_Realloc(unclosedSectors, ++numUnclosedSectors * sizeof(usecrecord_t));
-    usec = &unclosedSectors[numUnclosedSectors-1];
-    usec->sec = sec;
-    usec->nearPos[VX] = x;
-    usec->nearPos[VY] = y;
-
-    // Flag the sector as unclosed.
-    sec->flags |= SECF_UNCLOSED;
-
-    return true;
-}
-
-/**
- * Print the list of unclosed sectors.
- */
-void MPE_PrintUnclosedSectorList(void)
-{
-    uint i;
-
-    if(!editMapInited) return;
-
-    for(i = 0; i < numUnclosedSectors; ++i)
-    {
-        usecrecord_t* usec = &unclosedSectors[i];
-
-        Con_Message("Sector #%d is unclosed near (%1.1f,%1.1f)\n",
-                    usec->sec->buildData.index - 1, usec->nearPos[VX],
-                    usec->nearPos[VY]);
-    }
-}
-
-/**
- * Free the list of unclosed sectors.
- */
-void MPE_FreeUnclosedSectorList(void)
-{
-    if(unclosedSectors)
-        M_Free(unclosedSectors);
-    unclosedSectors = NULL;
-    numUnclosedSectors = 0;
-}
-
-/**
  * Called to begin the map building process.
  */
 boolean MPE_Begin(const char* mapUri)
 {
     if(editMapInited) return true; // Already been here.
-
-    MPE_FreeUnclosedSectorList();
 
     // Init the gameObj lists, and value db.
     map->gameObjData.db.numTables = 0;
@@ -600,7 +494,7 @@ static void hardenSectorBspLeafList(GameMap* map, uint secIDX)
     count = 0;
     for(i = 0; i < map->numBspLeafs; ++i)
     {
-        BspLeaf *bspLeaf = &map->bspLeafs[i];
+        BspLeaf *bspLeaf = map->bspLeafs[i];
         if(bspLeaf->sector == sec)
             ++count;
     }
@@ -612,10 +506,9 @@ static void hardenSectorBspLeafList(GameMap* map, uint secIDX)
     n = 0;
     for(i = 0; i < map->numBspLeafs; ++i)
     {
-        BspLeaf* bspLeaf = &map->bspLeafs[i];
+        BspLeaf* bspLeaf = map->bspLeafs[i];
         if(bspLeaf->sector == sec)
         {
-            bspLeaf->inSectorID = n;
             sec->bspLeafs[n++] = bspLeaf;
         }
     }
@@ -772,6 +665,17 @@ static void finishSectors(GameMap* map)
     }
 }
 
+static void finishSideDefs(GameMap* map)
+{
+    uint i;
+    // Calculate the tangent space surface vectors.
+    for(i = 0; i < map->numSideDefs; ++i)
+    {
+        SideDef* side = &map->sideDefs[i];
+        SideDef_UpdateSurfaceTangents(side);
+    }
+}
+
 static void finishLineDefs(GameMap* map)
 {
     uint i;
@@ -783,10 +687,10 @@ static void finishLineDefs(GameMap* map)
         LineDef* ld = &map->lineDefs[i];
         const HEdge* leftHEdge, *rightHEdge;
 
-        if(!ld->L_frontside->hedgeCount) continue;
+        if(!ld->L_frontside->hedgeLeft) continue;
 
-        leftHEdge  = ld->L_frontside->hedges[0];
-        rightHEdge = ld->L_frontside->hedges[ld->L_frontside->hedgeCount - 1];
+        leftHEdge  = ld->L_frontside->hedgeLeft;
+        rightHEdge = ld->L_frontside->hedgeRight;
 
         ld->v[0] = leftHEdge->HE_v1;
         ld->v[1] = rightHEdge->HE_v2;
@@ -847,7 +751,7 @@ static void prepareBspLeafs(GameMap* map)
 
     for(i = 0; i < map->numBspLeafs; ++i)
     {
-        BspLeaf* bspLeaf = &map->bspLeafs[i];
+        BspLeaf* bspLeaf = map->bspLeafs[i];
 
         BspLeaf_UpdateAABox(bspLeaf);
         BspLeaf_UpdateMidPoint(bspLeaf);
@@ -1155,6 +1059,9 @@ static void hardenLinedefs(GameMap* dest, editmap_t* src)
         destL->L_backside = (srcL->L_backside?
             &dest->sideDefs[srcL->L_backside->buildData.index - 1] : NULL);
 
+        if(srcL->buildData.windowEffect)
+            destL->buildData.windowEffect = &dest->sectors[srcL->buildData.windowEffect->buildData.index - 1];
+
         if(destL->L_frontside)
             destL->L_frontside->line = destL;
         if(destL->L_backside)
@@ -1286,12 +1193,10 @@ static void hardenPolyobjs(GameMap* dest, editmap_t* src)
             hedge->length = P_AccurateDistance(dx, dy);
             hedge->twin = NULL;
             hedge->bspLeaf = NULL;
-            hedge->HE_frontsector = line->L_frontsector;
-            hedge->HE_backsector = NULL;
+            hedge->sector = line->L_frontsector;
             hedge->flags |= HEDGEF_POLYOBJ;
 
-            line->L_frontside->hedges = Z_Malloc(sizeof(*line->L_frontside->hedges), PU_MAP, 0);
-            line->L_frontside->hedges[0] = hedge;
+            line->L_frontside->hedgeLeft = line->L_frontside->hedgeRight = hedge;
 
             destP->lines[j] = line;
         }
@@ -1337,10 +1242,9 @@ static void testForWindowEffect(editmap_t* map, LineDef* l)
         SideDef* hitSide;
         double dX2, dY2;
 
-        if(n == l || LINE_SELFREF(n) /*|| n->buildData.overlap ||
-           (n->buildData.mlFlags & MLF_ZEROLENGTH)*/)
+        if(n == l || LINE_SELFREF(n) /*|| n->buildData.overlap || n->length <= 0*/)
             continue;
-        if(n->buildData.mlFlags & MLF_POLYOBJ)
+        if(n->inFlags & LF_POLYOBJ)
             continue;
 
         dX2 = n->v[1]->buildData.pos[VX] - n->v[0]->buildData.pos[VX];
@@ -1466,11 +1370,10 @@ void MPE_DetectWindowEffects(editmap_t* map)
     {
         LineDef* l = map->lineDefs[i];
 
-        if((l->L_frontside && l->L_backside) || !l->L_frontside /*||
-           (l->buildData.mlFlags & MLF_ZEROLENGTH) ||
+        if((l->L_frontside && l->L_backside) || !l->L_frontside /*|| l->length <= 0 ||
            l->buildData.overlap*/)
             continue;
-        if(l->buildData.mlFlags & MLF_POLYOBJ)
+        if(l->inFlags & LF_POLYOBJ)
             continue;
 
         oneSiders = twoSiders = 0;
@@ -1610,9 +1513,9 @@ void MPE_DetectOverlappingLines(GameMap* map)
  * @param min  Minimal coordinates will be written here.
  * @param max  Maximal coordinates will be written here.
  */
-static void findBounds(Vertex const** vertexes, uint numVertexes, vec2_t min, vec2_t max)
+static void findBounds(Vertex const** vertexes, uint numVertexes, vec2f_t min, vec2f_t max)
 {
-    vec2_t bounds[2], point;
+    vec2f_t bounds[2], point;
     const Vertex* vtx;
     uint i;
 
@@ -1620,29 +1523,58 @@ static void findBounds(Vertex const** vertexes, uint numVertexes, vec2_t min, ve
 
     if(!vertexes || !numVertexes)
     {
-        V2_Set(min, DDMAXFLOAT, DDMAXFLOAT);
-        V2_Set(max, DDMINFLOAT, DDMINFLOAT);
+        V2f_Set(min, DDMAXFLOAT, DDMAXFLOAT);
+        V2f_Set(max, DDMINFLOAT, DDMINFLOAT);
         return;
     }
 
     for(i = 0; i < numVertexes; ++i)
     {
         vtx = vertexes[i];
-        V2_Set(point, vtx->V_pos[VX], vtx->V_pos[VY]);
+        V2f_Set(point, vtx->V_pos[VX], vtx->V_pos[VY]);
         if(!i)
-            V2_InitBox(bounds, point);
+            V2f_InitBox(bounds, point);
         else
-            V2_AddToBox(bounds, point);
+            V2f_AddToBox(bounds, point);
     }
 
     if(min)
     {
-        V2_Set(min, bounds[0][VX], bounds[0][VY]);
+        V2f_Set(min, bounds[0][VX], bounds[0][VY]);
     }
     if(max)
     {
-        V2_Set(max, bounds[1][VX], bounds[1][VY]);
+        V2f_Set(max, bounds[1][VX], bounds[1][VY]);
     }
+}
+
+static boolean buildBsp(GameMap* gamemap)
+{
+    BspBuilder_c* bspBuilder = NULL;
+    uint startTime;
+    boolean builtOK;
+
+    if(!map) return false;
+
+    VERBOSE( Con_Message("Building BSP using tunable split factor of %d...\n", bspFactor) )
+
+    // It begins...
+    startTime = Sys_GetRealTime();
+
+    bspBuilder = BspBuilder_New(gamemap, &map->numVertexes, &map->vertexes);
+    BspBuilder_SetSplitCostFactor(bspBuilder, bspFactor);
+
+    builtOK = BspBuilder_Build(bspBuilder);
+    if(builtOK)
+    {
+        MPE_SaveBsp(bspBuilder, gamemap, &map->numVertexes, &map->vertexes);
+    }
+
+    BspBuilder_Delete(bspBuilder);
+
+    // How much time did we spend?
+    VERBOSE2( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
+    return builtOK;
 }
 
 /**
@@ -1652,7 +1584,7 @@ boolean MPE_End(void)
 {
     GameMap* gamemap;
     boolean builtOK;
-    vec2_t min, max;
+    vec2f_t min, max;
     uint i;
 
     if(!editMapInited)
@@ -1710,13 +1642,13 @@ boolean MPE_End(void)
     GameMap_InitMobjBlockmap(gamemap, min, max);
     GameMap_InitPolyobjBlockmap(gamemap, min, max);
 
+    // Announce any bad texture names we came across when loading the map.
+    P_PrintMissingTextureList();
+
     /**
      * Build a BSP for this map.
      */
-    bspBuilder = BspBuilder_New();
-    BspBuilder_SetSplitCostFactor(bspBuilder, bspFactor);
-    builtOK = BspBuilder_Build(bspBuilder, gamemap, &map->vertexes, &map->numVertexes);
-    BspBuilder_Delete(bspBuilder);
+    builtOK = buildBsp(gamemap);
 
     // Finish the polyobjs (after the vertexes are hardened).
     for(i = 0; i < gamemap->numPolyObjs; ++i)
@@ -1728,7 +1660,7 @@ boolean MPE_End(void)
         for(lineIter = po->lines; *lineIter; lineIter++, n++)
         {
             LineDef* line = *lineIter;
-            HEdge* hedge = line->L_frontside->hedges[0];
+            HEdge* hedge = line->L_frontside->hedgeLeft;
 
             hedge->HE_v1 = line->L_v1;
             hedge->HE_v2 = line->L_v2;
@@ -1744,9 +1676,6 @@ boolean MPE_End(void)
     R_PolygonizeMap(gamemap);
 
     buildSectorBspLeafLists(gamemap);
-
-    // Announce any issues detected with the map.
-    MPE_PrintMapErrors();
 
     // Map must be polygonized and sector->bspLeafs must be built before
     // this is called!
@@ -1765,6 +1694,7 @@ boolean MPE_End(void)
     }
 
     buildSectorLineLists(gamemap);
+    finishSideDefs(gamemap);
     finishLineDefs(gamemap);
     finishSectors(gamemap);
     updateMapBounds(gamemap);
@@ -1772,7 +1702,6 @@ boolean MPE_End(void)
     prepareBspLeafs(gamemap);
 
     P_FreeBadTexList();
-    MPE_FreeUnclosedSectorList();
 
     editMapInited = false;
 
@@ -1820,18 +1749,6 @@ boolean MPE_End(void)
 GameMap* MPE_GetLastBuiltMap(void)
 {
     return lastBuiltMap;
-}
-
-/**
- * If we encountered any problems during setup - announce them to the user.
- */
-void MPE_PrintMapErrors(void)
-{
-    // Announce unclosed sectors.
-    MPE_PrintUnclosedSectorList();
-
-    // Announce any bad texture names we came across when loading the map.
-    P_PrintMissingTextureList();
 }
 
 /**
@@ -2031,9 +1948,9 @@ uint MPE_PlaneCreate(uint sector, float height, materialid_t material, float mat
     Surface_SetColorAndAlpha(&pln->surface, r, g, b, a);
     Surface_SetMaterialOrigin(&pln->surface, matOffsetX, matOffsetY);
 
-    V3_Set(pln->PS_normal, normalX, normalY, normalZ);
-    V3_Normalize(pln->PS_normal);
-    V3_BuildTangents(pln->PS_tangent, pln->PS_bitangent, pln->PS_normal);
+    V3f_Set(pln->PS_normal, normalX, normalY, normalZ);
+    V3f_Normalize(pln->PS_normal);
+    V3f_BuildTangents(pln->PS_tangent, pln->PS_bitangent, pln->PS_normal);
 
     pln->type = (pln->PS_normal[VZ] < 0? PLN_CEILING : PLN_FLOOR);
 

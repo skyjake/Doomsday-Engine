@@ -551,19 +551,20 @@ int P_Iteratep(void *ptr, uint prop, void* context, int (*callback) (void* p, vo
     case DMU_BSPLEAF:
         switch(prop)
         {
-        case DMU_HEDGE:
-            {
+        case DMU_HEDGE: {
             BspLeaf* bspLeaf = (BspLeaf*) ptr;
             int result = false; // Continue iteration.
-
-            if(bspLeaf->hedges)
+            if(bspLeaf->hedge)
             {
-                HEdge** segIter = bspLeaf->hedges;
-                while(*segIter && !(result = callback(*segIter, context)))
-                    segIter++;
+                HEdge* hedge = bspLeaf->hedge;
+                do
+                {
+                    result = callback(hedge, context);
+                    if(result) break;
+                } while((hedge = hedge->next) != bspLeaf->hedge);
             }
-            return result;
-          }
+            return result; }
+
         default:
             Con_Error("P_Iteratep: Property %s unknown/not vector.\n", DMU_Str(prop));
         }
@@ -732,6 +733,9 @@ void DMU_SetValue(valuetype_t valueType, void* dst, const setargs_t* args,
         case DDVT_FLOAT:
             *d = FLT2FIX(args->floatValues[index]);
             break;
+        case DDVT_DOUBLE:
+            *d = FLT2FIX(args->doubleValues[index]);
+            break;
         default:
             Con_Error("SetValue: DDVT_FIXED incompatible with value type %s.\n",
                       value_Str(args->valueType));
@@ -755,8 +759,37 @@ void DMU_SetValue(valuetype_t valueType, void* dst, const setargs_t* args,
         case DDVT_FLOAT:
             *d = args->floatValues[index];
             break;
+        case DDVT_DOUBLE:
+            *d = (float)args->doubleValues[index];
+            break;
         default:
             Con_Error("SetValue: DDVT_FLOAT incompatible with value type %s.\n",
+                      value_Str(args->valueType));
+        }
+    }
+    else if(valueType == DDVT_DOUBLE)
+    {
+        double* d = dst;
+
+        switch(args->valueType)
+        {
+        case DDVT_BYTE:
+            *d = args->byteValues[index];
+            break;
+        case DDVT_INT:
+            *d = args->intValues[index];
+            break;
+        case DDVT_FIXED:
+            *d = FIX2FLT(args->fixedValues[index]);
+            break;
+        case DDVT_FLOAT:
+            *d = args->floatValues[index];
+            break;
+        case DDVT_DOUBLE:
+            *d = args->doubleValues[index];
+            break;
+        default:
+            Con_Error("SetValue: DDVT_DOUBLE incompatible with value type %s.\n",
                       value_Str(args->valueType));
         }
     }
@@ -792,6 +825,9 @@ void DMU_SetValue(valuetype_t valueType, void* dst, const setargs_t* args,
         case DDVT_FLOAT:
             *d = (byte) args->floatValues[index];
             break;
+        case DDVT_DOUBLE:
+            *d = (byte) args->doubleValues[index];
+            break;
         default:
             Con_Error("SetValue: DDVT_BYTE incompatible with value type %s.\n",
                       value_Str(args->valueType));
@@ -814,6 +850,9 @@ void DMU_SetValue(valuetype_t valueType, void* dst, const setargs_t* args,
             break;
         case DDVT_FLOAT:
             *d = args->floatValues[index];
+            break;
+        case DDVT_DOUBLE:
+            *d = args->doubleValues[index];
             break;
         case DDVT_FIXED:
             *d = (args->fixedValues[index] >> FRACBITS);
@@ -840,6 +879,9 @@ void DMU_SetValue(valuetype_t valueType, void* dst, const setargs_t* args,
             break;
         case DDVT_FLOAT:
             *d = args->floatValues[index];
+            break;
+        case DDVT_DOUBLE:
+            *d = args->doubleValues[index];
             break;
         case DDVT_FIXED:
             *d = (args->fixedValues[index] >> FRACBITS);
@@ -1224,6 +1266,9 @@ void DMU_GetValue(valuetype_t valueType, const void* src, setargs_t* args,
         case DDVT_FLOAT:
             args->floatValues[index] = FIX2FLT(*s);
             break;
+        case DDVT_DOUBLE:
+            args->doubleValues[index] = FIX2FLT(*s);
+            break;
         default:
             Con_Error("GetValue: DDVT_FIXED incompatible with value type %s.\n",
                       value_Str(args->valueType));
@@ -1247,8 +1292,37 @@ void DMU_GetValue(valuetype_t valueType, const void* src, setargs_t* args,
         case DDVT_FLOAT:
             args->floatValues[index] = *s;
             break;
+        case DDVT_DOUBLE:
+            args->doubleValues[index] = (double)*s;
+            break;
         default:
             Con_Error("GetValue: DDVT_FLOAT incompatible with value type %s.\n",
+                      value_Str(args->valueType));
+        }
+    }
+    else if(valueType == DDVT_DOUBLE)
+    {
+        const double* s = src;
+
+        switch(args->valueType)
+        {
+        case DDVT_BYTE:
+            args->byteValues[index] = (byte)*s;
+            break;
+        case DDVT_INT:
+            args->intValues[index] = (int) *s;
+            break;
+        case DDVT_FIXED:
+            args->fixedValues[index] = FLT2FIX(*s);
+            break;
+        case DDVT_FLOAT:
+            args->floatValues[index] = (float)*s;
+            break;
+        case DDVT_DOUBLE:
+            args->doubleValues[index] = *s;
+            break;
+        default:
+            Con_Error("GetValue: DDVT_DOUBLE incompatible with value type %s.\n",
                       value_Str(args->valueType));
         }
     }
@@ -1284,6 +1358,9 @@ void DMU_GetValue(valuetype_t valueType, const void* src, setargs_t* args,
         case DDVT_FLOAT:
             args->floatValues[index] = *s;
             break;
+        case DDVT_DOUBLE:
+            args->doubleValues[index] = *s;
+            break;
         default:
             Con_Error("GetValue: DDVT_BYTE incompatible with value type %s.\n",
                       value_Str(args->valueType));
@@ -1306,6 +1383,9 @@ void DMU_GetValue(valuetype_t valueType, const void* src, setargs_t* args,
             break;
         case DDVT_FLOAT:
             args->floatValues[index] = *s;
+            break;
+        case DDVT_DOUBLE:
+            args->doubleValues[index] = *s;
             break;
         case DDVT_FIXED:
             args->fixedValues[index] = (*s << FRACBITS);
@@ -1332,6 +1412,9 @@ void DMU_GetValue(valuetype_t valueType, const void* src, setargs_t* args,
             break;
         case DDVT_FLOAT:
             args->floatValues[index] = *s;
+            break;
+        case DDVT_DOUBLE:
+            args->doubleValues[index] = *s;
             break;
         case DDVT_FIXED:
             args->fixedValues[index] = (*s << FRACBITS);
@@ -1628,6 +1711,16 @@ void P_SetFloat(int type, uint index, uint prop, float param)
     P_Callback(type, index, &args, setProperty);
 }
 
+void P_SetDouble(int type, uint index, uint prop, double param)
+{
+    setargs_t           args;
+
+    initArgs(&args, type, prop);
+    args.valueType = DDVT_DOUBLE;
+    args.doubleValues = &param;
+    P_Callback(type, index, &args, setProperty);
+}
+
 void P_SetPtr(int type, uint index, uint prop, void* param)
 {
     setargs_t           args;
@@ -1695,6 +1788,16 @@ void P_SetFloatv(int type, uint index, uint prop, float* params)
     initArgs(&args, type, prop);
     args.valueType = DDVT_FLOAT;
     args.floatValues = params;
+    P_Callback(type, index, &args, setProperty);
+}
+
+void P_SetDoublev(int type, uint index, uint prop, double* params)
+{
+    setargs_t           args;
+
+    initArgs(&args, type, prop);
+    args.valueType = DDVT_DOUBLE;
+    args.doubleValues = params;
     P_Callback(type, index, &args, setProperty);
 }
 
@@ -1772,6 +1875,16 @@ void P_SetFloatp(void* ptr, uint prop, float param)
     P_Callbackp(args.type, ptr, &args, setProperty);
 }
 
+void P_SetDoublep(void* ptr, uint prop, double param)
+{
+    setargs_t           args;
+
+    initArgs(&args, DMU_GetType(ptr), prop);
+    args.valueType = DDVT_DOUBLE;
+    args.doubleValues = &param;
+    P_Callbackp(args.type, ptr, &args, setProperty);
+}
+
 void P_SetPtrp(void* ptr, uint prop, void* param)
 {
     setargs_t           args;
@@ -1839,6 +1952,16 @@ void P_SetFloatpv(void* ptr, uint prop, float* params)
     initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_FLOAT;
     args.floatValues = params;
+    P_Callbackp(args.type, ptr, &args, setProperty);
+}
+
+void P_SetDoublepv(void* ptr, uint prop, double* params)
+{
+    setargs_t           args;
+
+    initArgs(&args, DMU_GetType(ptr), prop);
+    args.valueType = DDVT_DOUBLE;
+    args.doubleValues = params;
     P_Callbackp(args.type, ptr, &args, setProperty);
 }
 
@@ -1926,6 +2049,18 @@ float P_GetFloat(int type, uint index, uint prop)
     return returnValue;
 }
 
+double P_GetDouble(int type, uint index, uint prop)
+{
+    setargs_t           args;
+    double              returnValue = 0;
+
+    initArgs(&args, type, prop);
+    args.valueType = DDVT_DOUBLE;
+    args.doubleValues = &returnValue;
+    P_Callback(type, index, &args, getProperty);
+    return returnValue;
+}
+
 void* P_GetPtr(int type, uint index, uint prop)
 {
     setargs_t           args;
@@ -1995,6 +2130,16 @@ void P_GetFloatv(int type, uint index, uint prop, float* params)
     initArgs(&args, type, prop);
     args.valueType = DDVT_FLOAT;
     args.floatValues = params;
+    P_Callback(type, index, &args, getProperty);
+}
+
+void P_GetDoublev(int type, uint index, uint prop, double* params)
+{
+    setargs_t           args;
+
+    initArgs(&args, type, prop);
+    args.valueType = DDVT_DOUBLE;
+    args.doubleValues = params;
     P_Callback(type, index, &args, getProperty);
 }
 
@@ -2106,6 +2251,22 @@ float P_GetFloatp(void* ptr, uint prop)
     return returnValue;
 }
 
+double P_GetDoublep(void* ptr, uint prop)
+{
+    setargs_t           args;
+    double              returnValue = 0;
+
+    if(ptr)
+    {
+        initArgs(&args, DMU_GetType(ptr), prop);
+        args.valueType = DDVT_DOUBLE;
+        args.doubleValues = &returnValue;
+        P_Callbackp(args.type, ptr, &args, getProperty);
+    }
+
+    return returnValue;
+}
+
 void* P_GetPtrp(void* ptr, uint prop)
 {
     setargs_t           args;
@@ -2196,6 +2357,19 @@ void P_GetFloatpv(void* ptr, uint prop, float* params)
         initArgs(&args, DMU_GetType(ptr), prop);
         args.valueType = DDVT_FLOAT;
         args.floatValues = params;
+        P_Callbackp(args.type, ptr, &args, getProperty);
+    }
+}
+
+void P_GetDoublepv(void* ptr, uint prop, double* params)
+{
+    setargs_t           args;
+
+    if(ptr)
+    {
+        initArgs(&args, DMU_GetType(ptr), prop);
+        args.valueType = DDVT_DOUBLE;
+        args.doubleValues = params;
         P_Callbackp(args.type, ptr, &args, getProperty);
     }
 }

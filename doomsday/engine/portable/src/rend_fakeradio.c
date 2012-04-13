@@ -1232,7 +1232,7 @@ static uint radioEdgeHackType(const LineDef* line, const Sector* front, const Se
 /**
  * Construct and write a new shadow polygon to the rendering lists.
  */
-static void addShadowEdge(vec2_t inner[2], vec2_t outer[2], float innerLeftZ,
+static void addShadowEdge(vec2f_t inner[2], vec2f_t outer[2], float innerLeftZ,
     float innerRightZ, float outerLeftZ, float outerRightZ, const float sideOpen[2],
     const float edgeOpen[2], boolean isFloor, const float shadowRGB[3], float shadowDark)
 {
@@ -1241,17 +1241,17 @@ static void addShadowEdge(vec2_t inner[2], vec2_t outer[2], float innerLeftZ,
 
     rvertex_t rvertices[4];
     ColorRawf rcolors[4];
-    vec2_t outerAlpha;
+    vec2f_t outerAlpha;
     const uint* idx;
     uint i, winding; // Winding: 0 = left, 1 = right
 
-    V2_Set(outerAlpha, MIN_OF(shadowDark * (1 - edgeOpen[0]), 1), MIN_OF(shadowDark * (1 - edgeOpen[1]), 1));
+    V2f_Set(outerAlpha, MIN_OF(shadowDark * (1 - edgeOpen[0]), 1), MIN_OF(shadowDark * (1 - edgeOpen[1]), 1));
 
     if(!(outerAlpha[0] > .0001 && outerAlpha[1] > .0001)) return;
 
     // What vertex winding order?
     // (for best results, the cross edge should always be the shortest).
-    winding = (V2_Distance(inner[1], outer[1]) > V2_Distance(inner[0], outer[0])? 1 : 0);
+    winding = (V2f_Distance(inner[1], outer[1]) > V2f_Distance(inner[0], outer[0])? 1 : 0);
 
     idx = (isFloor ? floorIndices[winding] : ceilIndices[winding]);
 
@@ -1310,13 +1310,13 @@ static void processEdgeShadow(const BspLeaf* bspLeaf, const LineDef* lineDef,
 {
     const SideDef* sideDef = lineDef->L_side(side? BACK : FRONT);
     const Plane* pln = sideDef->sector->SP_plane(planeId);
-    vec2_t inner[2], outer[2], edgeOpen, sideOpen;
+    vec2f_t inner[2], outer[2], edgeOpen, sideOpen;
     const materialvariantspecification_t* spec;
     const materialsnapshot_t* ms;
     float plnHeight, fz, bz, bhz;
     Sector* front, *back;
     const Surface* suf;
-    vec3_t shadowRGB;
+    vec3f_t shadowRGB;
     int i;
     assert(bspLeaf && lineDef && (side == FRONT || side == BACK) && lineDef->L_side(side) && planeId <= lineDef->L_sector(side)->planeCount);
 
@@ -1347,17 +1347,17 @@ static void processEdgeShadow(const BspLeaf* bspLeaf, const LineDef* lineDef,
         hackType = radioEdgeHackType(lineDef, front, back, side, planeId == PLN_CEILING, fz, bz);
         if(hackType)
         {
-            V2_Set(edgeOpen, hackType - 1, hackType - 1);
+            V2f_Set(edgeOpen, hackType - 1, hackType - 1);
         }
         else
         {
             float openness = radioEdgeOpenness(fz, bz, bhz);
-            V2_Set(edgeOpen, openness, openness);
+            V2f_Set(edgeOpen, openness, openness);
         }
     }
     else
     {
-        V2_Set(edgeOpen, 0, 0);
+        V2f_Set(edgeOpen, 0, 0);
     }
 
     if(edgeOpen[0] >= 1 && edgeOpen[1] >= 1) return;
@@ -1415,18 +1415,18 @@ static void processEdgeShadow(const BspLeaf* bspLeaf, const LineDef* lineDef,
             if(i)
                 vo = vo->LO_prev;
 
-            V2_Sum(inner[i], lineDef->L_vpos(i^side), vo->shadowOffsets.inner);
+            V2f_Sum(inner[i], lineDef->L_vpos(i^side), vo->shadowOffsets.inner);
         }
         else
         {
-            V2_Sum(inner[i], lineDef->L_vpos(i^side), vo->shadowOffsets.extended);
+            V2f_Sum(inner[i], lineDef->L_vpos(i^side), vo->shadowOffsets.extended);
         }
     }
 
-    V2_Copy(outer[0], lineDef->L_vpos(side));
-    V2_Copy(outer[1], lineDef->L_vpos(side^1));
+    V2f_Copy(outer[0], lineDef->L_vpos(side));
+    V2f_Copy(outer[1], lineDef->L_vpos(side^1));
     // Shadows are black
-    V3_Set(shadowRGB, 0, 0, 0);
+    V3f_Set(shadowRGB, 0, 0, 0);
 
     addShadowEdge(inner, outer, plnHeight, plnHeight, plnHeight, plnHeight, sideOpen, edgeOpen, suf->normal[VZ] > 0, shadowRGB, shadowDark);
 }
@@ -1623,10 +1623,10 @@ void Rend_DrawShadowOffsetVerts(void)
             {
                 pos[VZ] = vo->lineDef->L_frontsector->SP_floorvisheight;
 
-                V2_Sum(pos, vtx->V_pos, vo->shadowOffsets.extended);
+                V2f_Sum(pos, vtx->V_pos, vo->shadowOffsets.extended);
                 drawPoint(pos, 1.f, yellow);
 
-                V2_Sum(pos, vtx->V_pos, vo->shadowOffsets.inner);
+                V2f_Sum(pos, vtx->V_pos, vo->shadowOffsets.inner);
                 drawPoint(pos, 1.f, red);
 
                 vo = vo->LO_next;

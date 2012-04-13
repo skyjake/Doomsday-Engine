@@ -31,22 +31,22 @@ void Sector_UpdateAABox(Sector* sec)
     LineDef* line;
     assert(sec);
 
-    V2_Set(sec->aaBox.min, DDMAXFLOAT, DDMAXFLOAT);
-    V2_Set(sec->aaBox.max, DDMINFLOAT, DDMINFLOAT);
+    V2f_Set(sec->aaBox.min, DDMAXFLOAT, DDMAXFLOAT);
+    V2f_Set(sec->aaBox.max, DDMINFLOAT, DDMINFLOAT);
 
     lineIter = sec->lineDefs;
     if(!lineIter) return;
 
     line = *lineIter;
-    V2_InitBox(sec->aaBox.arvec2, line->aaBox.min);
-    V2_AddToBox(sec->aaBox.arvec2, line->aaBox.max);
+    V2f_InitBox(sec->aaBox.arvec2, line->aaBox.min);
+    V2f_AddToBox(sec->aaBox.arvec2, line->aaBox.max);
     lineIter++;
 
     for(; *lineIter; lineIter++)
     {
         line = *lineIter;
-        V2_AddToBox(sec->aaBox.arvec2, line->aaBox.min);
-        V2_AddToBox(sec->aaBox.arvec2, line->aaBox.max);
+        V2f_AddToBox(sec->aaBox.arvec2, line->aaBox.min);
+        V2f_AddToBox(sec->aaBox.arvec2, line->aaBox.max);
     }
 }
 

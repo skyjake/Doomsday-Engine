@@ -39,24 +39,24 @@
 #define GET_LINE_IDX(li)        GameMap_LineDefIndex(theMap, li)
 #define GET_SIDE_IDX(si)        GameMap_SideDefIndex(theMap, si)
 #define GET_SECTOR_IDX(sec)     GameMap_SectorIndex(theMap, sec)
-#define GET_BSPLEAF_IDX(bspLeaf) GameMap_BspLeafIndex(theMap, bspLeaf)
 #define GET_HEDGE_IDX(he)       GameMap_HEdgeIndex(theMap, he)
+#define GET_BSPLEAF_IDX(bspLeaf) GameMap_BspLeafIndex(theMap, bspLeaf)
 #define GET_BSPNODE_IDX(nd)     GameMap_BspNodeIndex(theMap, nd)
 
 #define VERTEX_PTR(idx)         GameMap_Vertex(theMap, idx)
 #define LINE_PTR(idx)           GameMap_LineDef(theMap, idx)
 #define SIDE_PTR(idx)           GameMap_SideDef(theMap, idx)
 #define SECTOR_PTR(idx)         GameMap_Sector(theMap, idx)
-#define BSPLEAF_PTR(idx)        GameMap_BspLeaf(theMap, idx)
 #define HEDGE_PTR(idx)          GameMap_HEdge(theMap, idx)
+#define BSPLEAF_PTR(idx)        GameMap_BspLeaf(theMap, idx)
 #define BSPNODE_PTR(idx)        GameMap_BspNode(theMap, idx)
 
 #define NUM_VERTEXES            GameMap_VertexCount(theMap)
 #define NUM_LINEDEFS            GameMap_LineDefCount(theMap)
 #define NUM_SIDEDEFS            GameMap_SideDefCount(theMap)
 #define NUM_SECTORS             GameMap_SectorCount(theMap)
-#define NUM_BSPLEAFS            GameMap_BspLeafCount(theMap)
 #define NUM_HEDGES              GameMap_HEdgeCount(theMap)
+#define NUM_BSPLEAFS            GameMap_BspLeafCount(theMap)
 #define NUM_BSPNODES            GameMap_BspNodeCount(theMap)
 
 #define NUM_POLYOBJS            GameMap_PolyobjCount(theMap)
@@ -166,18 +166,20 @@ typedef struct {
     valuedb_t       db;
 } gameobjdata_t;
 
+extern Uri* mapUri;
+
 /**
  * The map data arrays are accessible globally inside the engine.
  */
-extern Uri* mapUri;
 extern Vertex* vertexes;
-extern HEdge* hedges;
-extern Sector* sectors;
-extern BspLeaf* bspLeafs;
-extern BspNode* bspNodes;
-extern LineDef* lineDefs;
 extern SideDef* sideDefs;
+extern LineDef* lineDefs;
+extern Sector* sectors;
 extern Polyobj** polyObjs; ///< List of all polyobjs on the current map.
+
+extern BspNode** bspNodes;
+extern BspLeaf** bspLeafs;
+extern HEdge** hedges;
 
 #include "gamemap.h"
 

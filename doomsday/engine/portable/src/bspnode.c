@@ -27,7 +27,7 @@
 
 BspNode* BspNode_New(double const origin[2], double const angle[2])
 {
-    BspNode* node = (BspNode*)malloc(sizeof *node);
+    BspNode* node = (BspNode*)Z_Malloc(sizeof *node, PU_MAP, 0);
     if(!node) Con_Error("BspNode_New: Failed on allocation of %lu bytes for new BspNode.", (unsigned long) sizeof *node);
 
     node->header.type = DMU_BSPNODE;
@@ -35,8 +35,6 @@ BspNode* BspNode_New(double const origin[2], double const angle[2])
     node->partition.y = (float)origin[1];
     node->partition.dX = (float)angle[0];
     node->partition.dY = (float)angle[1];
-
-    memset(&node->buildData, 0, sizeof(node->buildData));
 
     node->children[RIGHT] = NULL;
     node->children[LEFT] = NULL;
@@ -47,18 +45,31 @@ BspNode* BspNode_New(double const origin[2], double const angle[2])
     return node;
 }
 
+void BspNode_Delete(BspNode* node)
+{
+    assert(node);
+    Z_Free(node);
+}
+
+BspNode* BspNode_SetChild(BspNode* node, int left, runtime_mapdata_header_t* child)
+{
+    assert(node && child != (runtime_mapdata_header_t*)node);
+    node->children[left? LEFT:RIGHT] = child;
+    return node;
+}
+
 BspNode* BspNode_SetChildBounds(BspNode* node, int left, AABoxf* bounds)
 {
     assert(node);
     if(bounds)
     {
-        V2_CopyBox(node->aaBox[left? LEFT:RIGHT].arvec2, bounds->arvec2);
+        V2f_CopyBox(node->aaBox[left? LEFT:RIGHT].arvec2, bounds->arvec2);
     }
     else
     {
         // Clear.
-        V2_Set(node->aaBox[left? LEFT:RIGHT].min, DDMAXFLOAT, DDMAXFLOAT);
-        V2_Set(node->aaBox[left? LEFT:RIGHT].max, DDMINFLOAT, DDMINFLOAT);
+        V2f_Set(node->aaBox[left? LEFT:RIGHT].min, DDMAXFLOAT, DDMAXFLOAT);
+        V2f_Set(node->aaBox[left? LEFT:RIGHT].max, DDMINFLOAT, DDMINFLOAT);
     }
     return node;
 }

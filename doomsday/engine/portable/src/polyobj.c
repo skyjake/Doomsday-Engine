@@ -39,13 +39,13 @@ void Polyobj_UpdateAABox(Polyobj* po)
     if(!*lineIter) return; // Very odd...
 
     line = *lineIter;
-    V2_InitBox(po->aaBox.arvec2, line->L_v1pos);
+    V2f_InitBox(po->aaBox.arvec2, line->L_v1pos);
     lineIter++;
 
     while(*lineIter)
     {
         line = *lineIter;
-        V2_AddToBox(po->aaBox.arvec2, line->L_v1pos);
+        V2f_AddToBox(po->aaBox.arvec2, line->L_v1pos);
         lineIter++;
     }
 }
@@ -261,7 +261,7 @@ boolean Polyobj_Rotate(Polyobj* po, angle_t angle)
         line->angle += ANGLE_TO_BANG(angle);
 
         // HEdge angle must be kept in sync.
-        line->L_frontside->hedges[0]->angle = BANG_TO_ANGLE(line->angle);
+        line->L_frontside->hedgeLeft->angle = BANG_TO_ANGLE(line->angle);
     }
     Polyobj_UpdateAABox(po);
     po->angle += angle;
@@ -293,7 +293,7 @@ boolean Polyobj_Rotate(Polyobj* po, angle_t angle)
             line->angle -= ANGLE_TO_BANG(angle);
 
             // HEdge angle must be kept in sync.
-            line->L_frontside->hedges[0]->angle = BANG_TO_ANGLE(line->angle);
+            line->L_frontside->hedgeLeft->angle = BANG_TO_ANGLE(line->angle);
         }
         Polyobj_UpdateAABox(po);
         po->angle -= angle;

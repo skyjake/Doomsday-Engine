@@ -187,19 +187,20 @@ static boolean crossBspLeaf(GameMap* map, const BspLeaf* bspLeaf, losdata_t* los
     }
 
     // Check edges.
-    { HEdge** hedgeIter = bspLeaf->hedges;
-    while(*hedgeIter)
+    if(bspLeaf->hedge)
     {
-        const HEdge* hedge = *hedgeIter;
-        if(hedge->lineDef && hedge->lineDef->validCount != validCount)
+        const HEdge* hedge = bspLeaf->hedge;
+        do
         {
-            LineDef* li = hedge->lineDef;
-            li->validCount = validCount;
-            if(!crossLineDef(li, hedge->side, los))
-                return false;
-        }
-        hedgeIter++;
-    }}
+            if(hedge->lineDef && hedge->lineDef->validCount != validCount)
+            {
+                LineDef* li = hedge->lineDef;
+                li->validCount = validCount;
+                if(!crossLineDef(li, hedge->side, los))
+                    return false;
+            }
+        } while((hedge = hedge->next) != bspLeaf->hedge);
+    }
 
     return true; // Continue iteration.
 }
@@ -275,10 +276,5 @@ boolean GameMap_CheckLineSight(GameMap* map, const float from[3], const float to
     }
 
     validCount++;
-    // A single leaf is a special case.
-    if(!map->numBspNodes)
-    {
-        return crossBspLeaf(map, map->bspLeafs, &los);
-    }
-    return crossBspNode(map, (runtime_mapdata_header_t*) (map->bspNodes + (map->numBspNodes - 1)), &los);
+    return crossBspNode(map, map->bsp, &los);
 }

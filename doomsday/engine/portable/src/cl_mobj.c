@@ -944,7 +944,7 @@ void ClMobj_ReadDelta2(boolean skip)
             {
                 // Oopsie, on second thought we shouldn't do this move.
                 ClMobj_UnsetPosition(mo);
-                V3_Copy(mo->pos, oldState.pos);
+                V3f_Copy(mo->pos, oldState.pos);
                 mo->floorZ = oldState.floorZ;
                 mo->ceilingZ = oldState.ceilingZ;
                 ClMobj_SetPosition(mo);

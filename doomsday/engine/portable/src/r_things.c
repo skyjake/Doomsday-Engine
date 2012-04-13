@@ -77,7 +77,7 @@ typedef struct vlightlist_s {
 } vlightlist_t;
 
 typedef struct {
-    vec3_t          pos;
+    vec3f_t         pos;
     boolean         haveList;
     uint            listIdx;
 } vlightiterparams_t;
@@ -730,7 +730,7 @@ float R_ShadowStrength(mobj_t* mo)
     if(useBias)
     {
         // Evaluate in the light grid.
-        vec3_t point; V3_Set(point, mo->pos[VX], mo->pos[VY], mo->pos[VZ]);
+        vec3f_t point; V3f_Set(point, mo->pos[VX], mo->pos[VY], mo->pos[VZ]);
         ambientLightLevel = LG_EvaluateLightLevel(point);
     }
     else
@@ -1093,10 +1093,10 @@ void getLightingParams(float x, float y, float z, BspLeaf* bspLeaf,
 
         if(useBias)
         {
-            vec3_t point;
+            vec3f_t point;
 
             // Evaluate the position in the light grid.
-            V3_Set(point, x, y, z);
+            V3f_Set(point, x, y, z);
             LG_Evaluate(point, ambientColor);
         }
         else
@@ -1145,7 +1145,7 @@ void R_ProjectSprite(mobj_t* mo)
     Sector* sect = mo->bspLeaf->sector;
     float thangle = 0, alpha, floorClip, secFloor, secCeil;
     float pos[2], yaw = 0, pitch = 0;
-    vec3_t visOff;
+    vec3f_t visOff;
     spritedef_t* sprDef;
     spriteframe_t* sprFrame = NULL;
     int tmap = 0, tclass = 0;
@@ -1387,27 +1387,27 @@ void R_ProjectSprite(mobj_t* mo)
     }
 
     // Determine possible short-range visual offset.
-    V3_Set(visOff, 0, 0, 0);
+    V3f_Set(visOff, 0, 0, 0);
 
     if((mf && useSRVO > 0) || (!mf && useSRVO > 1))
     {
         if(mo->state && mo->tics >= 0)
         {
-            V3_Set(visOff, mo->srvo[VX], mo->srvo[VY], mo->srvo[VZ]);
-            V3_Scale(visOff, (mo->tics - frameTimePos) / (float) mo->state->tics);
+            V3f_Set(visOff, mo->srvo[VX], mo->srvo[VY], mo->srvo[VZ]);
+            V3f_Scale(visOff, (mo->tics - frameTimePos) / (float) mo->state->tics);
         }
 
         if(!INRANGE_OF(mo->mom[MX], 0, NOMOMENTUM_THRESHOLD) ||
            !INRANGE_OF(mo->mom[MY], 0, NOMOMENTUM_THRESHOLD) ||
            !INRANGE_OF(mo->mom[MZ], 0, NOMOMENTUM_THRESHOLD))
         {
-            vec3_t              tmp;
+            vec3f_t             tmp;
 
             // Use the object's speed to calculate a short-range offset.
-            V3_Set(tmp, mo->mom[MX], mo->mom[MY], mo->mom[MZ]);
-            V3_Scale(tmp, frameTimePos);
+            V3f_Set(tmp, mo->mom[MX], mo->mom[MY], mo->mom[MZ]);
+            V3f_Scale(tmp, frameTimePos);
 
-            V3_Sum(visOff, visOff, tmp);
+            V3f_Sum(visOff, visOff, tmp);
         }
     }
 
@@ -1535,7 +1535,7 @@ void R_ProjectSprite(mobj_t* mo)
         vis->distance = distance;
 
         // Determine the exact center of the flare.
-        V3_Sum(vis->center, moPos, visOff);
+        V3f_Sum(vis->center, moPos, visOff);
         vis->center[VZ] += LUM_OMNI(lum)->zOff;
 
         flareSize = pl->brightMul;
@@ -1559,7 +1559,7 @@ void R_ProjectSprite(mobj_t* mo)
         if(vis->data.flare.size < 8) vis->data.flare.size = 8;
 
         // Color is taken from the associated lumobj.
-        V3_Copy(vis->data.flare.color, LUM_OMNI(lum)->color);
+        V3f_Copy(vis->data.flare.color, LUM_OMNI(lum)->color);
 
         vis->data.flare.factor = mo->haloFactors[viewPlayer - ddPlayers];
         vis->data.flare.xOff = xOffset;

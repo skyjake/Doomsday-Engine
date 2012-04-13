@@ -1,6 +1,6 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 829 <--
+; Highest ordinal is currently: --> 837 <--
 ; Other free ordinals: none
 
 NAME                            "DOOMSDAY"
@@ -499,6 +499,7 @@ EXPORTS
     P_SetFixed                  @263 NONAME
     P_SetAngle                  @264 NONAME
     P_SetFloat                  @265 NONAME
+    P_SetDouble                 @830 NONAME
     P_SetPtr                    @267 NONAME
 
     P_SetBoolv                  @268 NONAME
@@ -507,6 +508,7 @@ EXPORTS
     P_SetFixedv                 @271 NONAME
     P_SetAnglev                 @272 NONAME
     P_SetFloatv                 @273 NONAME
+    P_SetDoublev                @831 NONAME
     P_SetPtrv                   @274 NONAME
 
     ; pointer-based write functions
@@ -516,6 +518,7 @@ EXPORTS
     P_SetFixedp                 @278 NONAME
     P_SetAnglep                 @279 NONAME
     P_SetFloatp                 @280 NONAME
+    P_SetDoublep                @832 NONAME
     P_SetPtrp                   @281 NONAME
 
     P_SetBoolpv                 @282 NONAME
@@ -524,6 +527,7 @@ EXPORTS
     P_SetFixedpv                @285 NONAME
     P_SetAnglepv                @286 NONAME
     P_SetFloatpv                @287 NONAME
+    P_SetDoublepv               @833 NONAME
     P_SetPtrpv                  @288 NONAME
 
     ; index-based read functions
@@ -533,6 +537,7 @@ EXPORTS
     P_GetFixed                  @292 NONAME
     P_GetAngle                  @293 NONAME
     P_GetFloat                  @294 NONAME
+    P_GetDouble                 @834 NONAME
     P_GetPtr                    @295 NONAME
 
     P_GetBoolv                  @296 NONAME
@@ -541,6 +546,7 @@ EXPORTS
     P_GetFixedv                 @299 NONAME
     P_GetAnglev                 @300 NONAME
     P_GetFloatv                 @301 NONAME
+    P_GetDoublev                @835 NONAME
     P_GetPtrv                   @302 NONAME
 
     ; pointer-based read functions
@@ -550,6 +556,7 @@ EXPORTS
     P_GetFixedp                 @306 NONAME
     P_GetAnglep                 @307 NONAME
     P_GetFloatp                 @308 NONAME
+    P_GetDoublep                @836 NONAME
     P_GetPtrp                   @309 NONAME
 
     P_GetBoolpv                 @310 NONAME
@@ -558,6 +565,7 @@ EXPORTS
     P_GetFixedpv                @313 NONAME
     P_GetAnglepv                @314 NONAME
     P_GetFloatpv                @315 NONAME
+    P_GetDoublepv               @837 NONAME
     P_GetPtrpv                  @316 NONAME
 
     P_CountGameMapObjs          @414 NONAME
@@ -865,10 +873,10 @@ EXPORTS
     bamsAtan2                   @145 NONAME
 
     ; Vectors.
-    V2_Sum                      @54 NONAME
-    V2_Subtract                 @341 NONAME
-    V2_Rotate                   @344 NONAME
-    V2_Intersection             @349 NONAME
+    V2f_Sum                     @54 NONAME
+    V2f_Subtract                @341 NONAME
+    V2f_Rotate                  @344 NONAME
+    V2f_Intersection            @349 NONAME
 
     ; Utilities.
     M_PointLineDistance         @442 NONAME

@@ -70,11 +70,11 @@ typedef struct {
 typedef struct {
     int flags; /// @see lightProjectFlags
     float blendFactor; /// Multiplied with projection alpha.
-    pvec3_t v1; /// Top left vertex of the surface being projected to.
-    pvec3_t v2; /// Bottom right vertex of the surface being projected to.
-    pvec3_t tangent; /// Normalized tangent of the surface being projected to.
-    pvec3_t bitangent; /// Normalized bitangent of the surface being projected to.
-    pvec3_t normal; /// Normalized normal of the surface being projected to.
+    pvec3f_t v1; /// Top left vertex of the surface being projected to.
+    pvec3f_t v2; /// Bottom right vertex of the surface being projected to.
+    pvec3f_t tangent; /// Normalized tangent of the surface being projected to.
+    pvec3f_t bitangent; /// Normalized bitangent of the surface being projected to.
+    pvec3f_t normal; /// Normalized normal of the surface being projected to.
 } lightprojectparams_t;
 
 static boolean iterateBspLeafLumObjs(BspLeaf* bspLeaf, boolean (*func) (void*, void*), void* data);
@@ -435,8 +435,8 @@ static int projectPlaneLightToSurface(const lumobj_t* lum, void* paramaters)
     }
 }
 
-static boolean genTexCoords(pvec2_t s, pvec2_t t, const_pvec3_t point, float scale,
-    const_pvec3_t v1, const_pvec3_t v2, const_pvec3_t tangent, const_pvec3_t bitangent)
+static boolean genTexCoords(pvec2f_t s, pvec2f_t t, const_pvec3f_t point, float scale,
+    const_pvec3f_t v1, const_pvec3f_t v2, const_pvec3f_t tangent, const_pvec3f_t bitangent)
 {
     // Counteract aspect correction slightly (not too round mind).
     return R_GenerateTexCoords(s, t, point, scale, scale * 1.08f, v1, v2, tangent, bitangent);
@@ -468,11 +468,11 @@ static int projectOmniLightToSurface(lumobj_t* lum, void* paramaters)
     projectlighttosurfaceiteratorparams_t* p = (projectlighttosurfaceiteratorparams_t*)paramaters;
     lightprojectparams_t* spParams = &p->spParams;
     float dist, luma, scale, color[3];
-    vec3_t lumCenter, vToLum;
-    vec3_t point;
+    vec3f_t lumCenter, vToLum;
+    vec3f_t point;
     uint lumIdx;
     DGLuint tex;
-    vec2_t s, t;
+    vec2f_t s, t;
 
     // Early test of the external blend factor for quick rejection.
     if(spParams->blendFactor < OMNILIGHT_SURFACE_LUMINOSITY_ATTRIBUTION_MIN) return false; // Continue iteration.
@@ -485,15 +485,15 @@ static int projectOmniLightToSurface(lumobj_t* lum, void* paramaters)
     lumIdx = LO_ToIndex(lum);
     if(LO_IsHidden(lumIdx, viewPlayer - ddPlayers)) return false; // Continue iteration.
 
-    V3_Set(lumCenter, lum->pos[VX], lum->pos[VY], lum->pos[VZ] + LUM_OMNI(lum)->zOff);
-    V3_Subtract(vToLum, spParams->v1, lumCenter);
+    V3f_Set(lumCenter, lum->pos[VX], lum->pos[VY], lum->pos[VZ] + LUM_OMNI(lum)->zOff);
+    V3f_Subtract(vToLum, spParams->v1, lumCenter);
 
     // On the right side?
-    if(V3_DotProduct(vToLum, spParams->normal) > 0.f) return false; // Continue iteration.
+    if(V3f_DotProduct(vToLum, spParams->normal) > 0.f) return false; // Continue iteration.
 
     // Calculate 3D distance between surface and lumobj.
-    V3_ClosestPointOnPlane(point, spParams->normal, spParams->v1, lumCenter);
-    dist = V3_Distance(point, lumCenter);
+    V3f_ClosestPointOnPlane(point, spParams->normal, spParams->v1, lumCenter);
+    dist = V3f_Distance(point, lumCenter);
     if(dist <= 0 || dist > LUM_OMNI(lum)->radius) return false; // Continue iteration.
 
     // Calculate the final surface light attribution factor.
@@ -829,11 +829,11 @@ static void addLuminous(mobj_t* mo)
      * @todo We cannot use smoothing here because this could move the
      * light into another BSP leaf (thereby breaking the rules of the
      * optimized BSP leaf contact/spread algorithm).
-    V3_Set(l->pos, 0, 0, 0);
+    V3f_Set(l->pos, 0, 0, 0);
     if(mo->state && mo->tics >= 0)
     {
-        V3_Copy(l->pos, mo->srvo);
-        V3_Scale(l->pos, (mo->tics - frameTimePos) / (float) mo->state->tics);
+        V3f_Copy(l->pos, mo->srvo);
+        V3f_Scale(l->pos, (mo->tics - frameTimePos) / (float) mo->state->tics);
     }
 
     if(!INRANGE_OF(mo->mom[MX], 0, NOMOMENTUM_THRESHOLD) ||
@@ -841,16 +841,16 @@ static void addLuminous(mobj_t* mo)
        !INRANGE_OF(mo->mom[MZ], 0, NOMOMENTUM_THRESHOLD))
     {
         // Use the object's momentum to calculate a short-range offset.
-        vec3_t tmp;
-        V3_Copy(tmp, mo->mom);
-        V3_Scale(tmp, frameTimePos);
-        V3_Sum(l->pos, l->pos, tmp);
+        vec3f_t tmp;
+        V3f_Copy(tmp, mo->mom);
+        V3f_Scale(tmp, frameTimePos);
+        V3f_Sum(l->pos, l->pos, tmp);
     }
 
     // Translate to world-space origin.
-    V3_Sum(l->pos, l->pos, mo->pos);
+    V3f_Sum(l->pos, l->pos, mo->pos);
     */
-    V3_Copy(l->pos, mo->pos);
+    V3f_Copy(l->pos, mo->pos);
 
     // Don't make too large a light.
     if(radius > loMaxRadius)
@@ -911,7 +911,7 @@ BEGIN_PROF( PROF_LUMOBJ_FRAME_SORT );
         lumobj_t* lum = luminousList[i];
         float pos[3];
 
-        V3_Subtract(pos, lum->pos, viewData->current.pos);
+        V3f_Subtract(pos, lum->pos, viewData->current.pos);
 
         // Approximate the distance in 3D.
         luminousDist[i] = P_ApproxDistance3(pos[VX], pos[VY], pos[VZ]);
@@ -990,10 +990,10 @@ static boolean createGlowLightForSurface(Surface* suf, void* paramaters)
 
         // @note Plane lights do not spread so simply link to all BspLeafs of this sector.
         lum = createLuminous(LT_PLANE, sec->bspLeafs[0]);
-        V3_Set(lum->pos, pln->origin.pos[VX], pln->origin.pos[VY], pln->visHeight);
+        V3f_Set(lum->pos, pln->origin.pos[VX], pln->origin.pos[VY], pln->visHeight);
 
-        V3_Copy(LUM_PLANE(lum)->normal, pln->PS_normal);
-        V3_Copy(LUM_PLANE(lum)->color, avgColorAmplified->color.rgb);
+        V3f_Copy(LUM_PLANE(lum)->normal, pln->PS_normal);
+        V3f_Copy(LUM_PLANE(lum)->color, avgColorAmplified->color.rgb);
         LUM_PLANE(lum)->intensity = ms->glowing;
         LUM_PLANE(lum)->tex = GL_PrepareLSTexture(LST_GRADIENT);
         lum->maxDistance = 0;
@@ -1098,7 +1098,7 @@ boolean LOIT_ClipLumObj(void* data, void* context)
 {
     lumobj_t* lum = (lumobj_t*) data;
     uint lumIdx = lumToIndex(lum);
-    vec3_t pos;
+    vec3f_t pos;
 
     if(lum->type != LT_OMNI)
         return true; // Only interested in omnilights.
@@ -1110,7 +1110,7 @@ boolean LOIT_ClipLumObj(void* data, void* context)
 
     // \fixme Determine the exact centerpoint of the light in
     // addLuminous!
-    V3_Set(pos, lum->pos[VX], lum->pos[VY], lum->pos[VZ] + LUM_OMNI(lum)->zOff);
+    V3f_Set(pos, lum->pos[VX], lum->pos[VY], lum->pos[VZ] + LUM_OMNI(lum)->zOff);
 
     /**
      * Select clipping strategy:
@@ -1126,9 +1126,9 @@ boolean LOIT_ClipLumObj(void* data, void* context)
     }
     else
     {
-        vec3_t              vpos;
+        vec3f_t              vpos;
 
-        V3_Set(vpos, vx, vz, vy);
+        V3f_Set(vpos, vx, vz, vy);
 
         luminousClipped[lumIdx] = 1;
         if(P_CheckLineSight(vpos, pos, -1, 1, LS_PASSLEFT | LS_PASSOVER | LS_PASSUNDER))
@@ -1142,7 +1142,7 @@ boolean LOIT_ClipLumObj(void* data, void* context)
 
 void LO_ClipInBspLeaf(uint bspLeafIdx)
 {
-    iterateBspLeafLumObjs(&bspLeafs[bspLeafIdx], LOIT_ClipLumObj, NULL);
+    iterateBspLeafLumObjs(GameMap_BspLeaf(theMap, bspLeafIdx), LOIT_ClipLumObj, NULL);
 }
 
 boolean LOIT_ClipLumObjBySight(void* data, void* context)
@@ -1156,25 +1156,25 @@ boolean LOIT_ClipLumObjBySight(void* data, void* context)
 
     if(!luminousClipped[lumIdx])
     {
-        vec2_t eye;
+        vec2f_t eye;
         uint i;
 
-        V2_Set(eye, vx, vz);
+        V2f_Set(eye, vx, vz);
 
         // We need to figure out if any of the polyobj's segments lies
         // between the viewpoint and the lumobj.
         for(i = 0; i < bspLeaf->polyObj->lineCount; ++i)
         {
             LineDef* line = bspLeaf->polyObj->lines[i];
-            HEdge* hedge = line->L_frontside->hedges[0];
+            HEdge* hedge = line->L_frontside->hedgeLeft;
 
             // Ignore hedges facing the wrong way.
             if(hedge->frameFlags & HEDGEINF_FACINGFRONT)
             {
-                vec2_t source;
+                vec2f_t source;
 
-                V2_Set(source, lum->pos[VX], lum->pos[VY]);
-                if(V2_Intercept2(source, eye, hedge->HE_v1pos, hedge->HE_v2pos, NULL, NULL, NULL))
+                V2f_Set(source, lum->pos[VX], lum->pos[VY]);
+                if(V2f_Intercept2(source, eye, hedge->HE_v1pos, hedge->HE_v2pos, NULL, NULL, NULL))
                 {
                     luminousClipped[lumIdx] = 1;
                     break;
@@ -1188,7 +1188,7 @@ boolean LOIT_ClipLumObjBySight(void* data, void* context)
 
 void LO_ClipInBspLeafBySight(uint bspLeafIdx)
 {
-    iterateBspLeafLumObjs(&bspLeafs[bspLeafIdx], LOIT_ClipLumObjBySight, &bspLeafs[bspLeafIdx]);
+    iterateBspLeafLumObjs(GameMap_BspLeaf(theMap, bspLeafIdx), LOIT_ClipLumObjBySight, &bspLeafs[bspLeafIdx]);
 }
 
 static boolean iterateBspLeafLumObjs(BspLeaf* bspLeaf, boolean (*func) (void*, void*),
@@ -1244,7 +1244,7 @@ int RIT_ProjectLightToSurfaceIterator(void* obj, void* paramaters)
 }
 
 uint LO_ProjectToSurface(int flags, BspLeaf* bspLeaf, float blendFactor,
-    vec3_t topLeft, vec3_t bottomRight, vec3_t tangent, vec3_t bitangent, vec3_t normal)
+    vec3f_t topLeft, vec3f_t bottomRight, vec3f_t tangent, vec3f_t bitangent, vec3f_t normal)
 {
     projectlighttosurfaceiteratorparams_t p;
 
@@ -1299,7 +1299,7 @@ void LO_DrawLumobjs(void)
     for(i = 0; i < numLuminous; ++i)
     {
         lumobj_t* lum = luminousList[i];
-        vec3_t lumCenter;
+        vec3f_t lumCenter;
 
         if(!(lum->type == LT_OMNI || lum->type == LT_PLANE))
             continue;
@@ -1307,7 +1307,7 @@ void LO_DrawLumobjs(void)
         if(lum->type == LT_OMNI && loMaxLumobjs > 0 && luminousClipped[i] == 2)
             continue;
 
-        V3_Copy(lumCenter, lum->pos);
+        V3f_Copy(lumCenter, lum->pos);
         if(lum->type == LT_OMNI)
             lumCenter[VZ] += LUM_OMNI(lum)->zOff;
 

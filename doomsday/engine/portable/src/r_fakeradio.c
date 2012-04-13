@@ -61,52 +61,52 @@ static zblockset_t *shadowLinksBlockSet;
  * from line2, while also being the nearest point to the origin (in
  * case the lines are parallel).
  */
-void R_CornerNormalPoint(const pvec2_t line1, float dist1,
-                         const pvec2_t line2, float dist2, pvec2_t point,
-                         pvec2_t lp)
+void R_CornerNormalPoint(const pvec2f_t line1, float dist1,
+                         const pvec2f_t line2, float dist2, pvec2f_t point,
+                         pvec2f_t lp)
 {
     float               len1, len2;
-    vec2_t              norm1, norm2;
+    vec2f_t             norm1, norm2;
 
     // Length of both lines.
-    len1 = V2_Length(line1);
-    len2 = V2_Length(line2);
+    len1 = V2f_Length(line1);
+    len2 = V2f_Length(line2);
 
     // Calculate normals for both lines.
-    V2_Set(norm1, -line1[VY] / len1 * dist1, line1[VX] / len1 * dist1);
-    V2_Set(norm2, line2[VY] / len2 * dist2, -line2[VX] / len2 * dist2);
+    V2f_Set(norm1, -line1[VY] / len1 * dist1, line1[VX] / len1 * dist1);
+    V2f_Set(norm2, line2[VY] / len2 * dist2, -line2[VX] / len2 * dist2);
 
     // Do we need to calculate the extended points, too?  Check that
     // the extension does not bleed too badly outside the legal shadow
     // area.
     if(lp)
     {
-        V2_Set(lp, line2[VX] / len2 * dist2, line2[VY] / len2 * dist2);
+        V2f_Set(lp, line2[VX] / len2 * dist2, line2[VY] / len2 * dist2);
     }
 
     // Are the lines parallel?  If so, they won't connect at any
     // point, and it will be impossible to determine a corner point.
-    if(V2_IsParallel(line1, line2))
+    if(V2f_IsParallel(line1, line2))
     {
         // Just use a normal as the point.
         if(point)
-            V2_Copy(point, norm1);
+            V2f_Copy(point, norm1);
         return;
     }
 
     // Find the intersection of normal-shifted lines.  That'll be our
     // corner point.
     if(point)
-        V2_Intersection(norm1, line1, norm2, line2, point);
+        V2f_Intersection(norm1, line1, norm2, line2, point);
 }
 
 /**
  * @return          The width (world units) of the shadow edge.
  *                  It is scaled depending on the length of the edge.
  */
-float R_ShadowEdgeWidth(const pvec2_t edge)
+float R_ShadowEdgeWidth(const pvec2f_t edge)
 {
-    float       length = V2_Length(edge);
+    float       length = V2f_Length(edge);
     float       normalWidth = 20;   //16;
     float       maxWidth = 60;
     float       w;
@@ -132,7 +132,7 @@ float R_ShadowEdgeWidth(const pvec2_t edge)
  */
 void R_UpdateVertexShadowOffsets(Vertex *vtx)
 {
-    vec2_t              left, right;
+    vec2f_t             left, right;
 
     if(vtx->numLineOwners > 0)
     {
@@ -167,7 +167,7 @@ void R_UpdateVertexShadowOffsets(Vertex *vtx)
             }
 
             // The left side is always flipped.
-            V2_Scale(left, -1);
+            V2f_Scale(left, -1);
 
             R_CornerNormalPoint(left, R_ShadowEdgeWidth(left), right,
                                 R_ShadowEdgeWidth(right),
@@ -245,7 +245,7 @@ void R_InitFakeRadioForMap(void)
     Vertex* vtx0, *vtx1;
     lineowner_t* vo0, *vo1;
     AABoxf bounds;
-    vec2_t point;
+    vec2f_t point;
     uint i, j;
 
     for(i = 0; i < NUM_VERTEXES; ++i)
@@ -282,17 +282,17 @@ void R_InitFakeRadioForMap(void)
             vo1 = line->L_vo(j^1)->LO_prev;
 
             // Use the extended points, they are wider than inoffsets.
-            V2_Set(point, vtx0->V_pos[VX], vtx0->V_pos[VY]);
-            V2_InitBox(bounds.arvec2, point);
+            V2f_Set(point, vtx0->V_pos[VX], vtx0->V_pos[VY]);
+            V2f_InitBox(bounds.arvec2, point);
 
-            V2_Sum(point, point, vo0->shadowOffsets.extended);
-            V2_AddToBox(bounds.arvec2, point);
+            V2f_Sum(point, point, vo0->shadowOffsets.extended);
+            V2f_AddToBox(bounds.arvec2, point);
 
-            V2_Set(point, vtx1->V_pos[VX], vtx1->V_pos[VY]);
-            V2_AddToBox(bounds.arvec2, point);
+            V2f_Set(point, vtx1->V_pos[VX], vtx1->V_pos[VY]);
+            V2f_AddToBox(bounds.arvec2, point);
 
-            V2_Sum(point, point, vo1->shadowOffsets.extended);
-            V2_AddToBox(bounds.arvec2, point);
+            V2f_Sum(point, point, vo1->shadowOffsets.extended);
+            V2f_AddToBox(bounds.arvec2, point);
 
             data.lineDef = line;
             data.side = j;

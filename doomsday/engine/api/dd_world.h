@@ -73,6 +73,7 @@ void            P_SetInt(int type, uint index, uint prop, int param);
 void            P_SetFixed(int type, uint index, uint prop, fixed_t param);
 void            P_SetAngle(int type, uint index, uint prop, angle_t param);
 void            P_SetFloat(int type, uint index, uint prop, float param);
+void            P_SetDouble(int type, uint index, uint prop, double param);
 void            P_SetPtr(int type, uint index, uint prop, void* param);
 
 void            P_SetBoolv(int type, uint index, uint prop, boolean* params);
@@ -81,6 +82,7 @@ void            P_SetIntv(int type, uint index, uint prop, int* params);
 void            P_SetFixedv(int type, uint index, uint prop, fixed_t* params);
 void            P_SetAnglev(int type, uint index, uint prop, angle_t* params);
 void            P_SetFloatv(int type, uint index, uint prop, float* params);
+void            P_SetDoublev(int type, uint index, uint prop, double* params);
 void            P_SetPtrv(int type, uint index, uint prop, void* params);
 
 /* pointer-based write functions */
@@ -90,6 +92,7 @@ void            P_SetIntp(void* ptr, uint prop, int param);
 void            P_SetFixedp(void* ptr, uint prop, fixed_t param);
 void            P_SetAnglep(void* ptr, uint prop, angle_t param);
 void            P_SetFloatp(void* ptr, uint prop, float param);
+void            P_SetDoublep(void* ptr, uint prop, double param);
 void            P_SetPtrp(void* ptr, uint prop, void* param);
 
 void            P_SetBoolpv(void* ptr, uint prop, boolean* params);
@@ -98,6 +101,7 @@ void            P_SetIntpv(void* ptr, uint prop, int* params);
 void            P_SetFixedpv(void* ptr, uint prop, fixed_t* params);
 void            P_SetAnglepv(void* ptr, uint prop, angle_t* params);
 void            P_SetFloatpv(void* ptr, uint prop, float* params);
+void            P_SetDoublepv(void* ptr, uint prop, double* params);
 void            P_SetPtrpv(void* ptr, uint prop, void* params);
 
 /* index-based read functions */
@@ -107,6 +111,7 @@ int             P_GetInt(int type, uint index, uint prop);
 fixed_t         P_GetFixed(int type, uint index, uint prop);
 angle_t         P_GetAngle(int type, uint index, uint prop);
 float           P_GetFloat(int type, uint index, uint prop);
+double          P_GetDouble(int type, uint index, uint prop);
 void*           P_GetPtr(int type, uint index, uint prop);
 
 void            P_GetBoolv(int type, uint index, uint prop, boolean* params);
@@ -115,6 +120,7 @@ void            P_GetIntv(int type, uint index, uint prop, int* params);
 void            P_GetFixedv(int type, uint index, uint prop, fixed_t* params);
 void            P_GetAnglev(int type, uint index, uint prop, angle_t* params);
 void            P_GetFloatv(int type, uint index, uint prop, float* params);
+void            P_GetDoublev(int type, uint index, uint prop, double* params);
 void            P_GetPtrv(int type, uint index, uint prop, void* params);
 
 /* pointer-based read functions */
@@ -124,6 +130,7 @@ int             P_GetIntp(void* ptr, uint prop);
 fixed_t         P_GetFixedp(void* ptr, uint prop);
 angle_t         P_GetAnglep(void* ptr, uint prop);
 float           P_GetFloatp(void* ptr, uint prop);
+double          P_GetDoublep(void* ptr, uint prop);
 void*           P_GetPtrp(void* ptr, uint prop);
 
 void            P_GetBoolpv(void* ptr, uint prop, boolean* params);
@@ -132,6 +139,7 @@ void            P_GetIntpv(void* ptr, uint prop, int* params);
 void            P_GetFixedpv(void* ptr, uint prop, fixed_t* params);
 void            P_GetAnglepv(void* ptr, uint prop, angle_t* params);
 void            P_GetFloatpv(void* ptr, uint prop, float* params);
+void            P_GetDoublepv(void* ptr, uint prop, double* params);
 void            P_GetPtrpv(void* ptr, uint prop, void* params);
 
 ///@}

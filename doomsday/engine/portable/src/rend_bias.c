@@ -324,10 +324,11 @@ void SB_Clear(void)
  */
 void SB_InitForMap(const char* uniqueID)
 {
-    uint                startTime = Sys_GetRealTime();
+    uint startTime = Sys_GetRealTime();
+    ded_light_t* def;
+    int i;
 
-    int                 i;
-    ded_light_t*        def;
+    assert(theMap);
 
     // Start with no sources whatsoever.
     numSources = 0;
@@ -360,8 +361,11 @@ void SB_InitForMap(const char* uniqueID)
 
     // First, determine the total number of vertexillum_ts we need.
     for(i = 0; i < NUM_HEDGES; ++i)
-        if(hedges[i].lineDef)
+    {
+        HEdge* hedge = GameMap_HEdge(theMap, i);
+        if(hedge->lineDef)
             numVertIllums++;
+    }
 
     numVertIllums *= 3 * 4;
 
@@ -394,7 +398,7 @@ void SB_InitForMap(const char* uniqueID)
     // Allocate bias surfaces and attach vertexillum_ts.
     for(i = 0; i < NUM_HEDGES; ++i)
     {
-        HEdge* hedge = &hedges[i];
+        HEdge* hedge = GameMap_HEdge(theMap, i);
         int j;
 
         if(!hedge->lineDef)
@@ -446,7 +450,7 @@ void SB_InitForMap(const char* uniqueID)
         for(j = 0; j < po->lineCount; ++j)
         {
             LineDef* line = po->lines[j];
-            HEdge* hedge = line->L_frontside->hedges[0];
+            HEdge* hedge = line->L_frontside->hedgeLeft;
             int k;
 
             for(k = 0; k < 3; ++k)
@@ -546,25 +550,25 @@ void SB_SurfaceMoved(biassurface_t* bsuf)
     }
 }
 
-static float SB_Dot(source_t* src, const vectorcomp_t* point,
-                    const vectorcomp_t* normal)
+static float SB_Dot(source_t* src, const vectorcompf_t* point,
+                    const vectorcompf_t* normal)
 {
     float               delta[3];
 
     // Delta vector between source and given point.
-    V3_Subtract(delta, src->pos, point);
+    V3f_Subtract(delta, src->pos, point);
 
     // Calculate the distance.
-    V3_Normalize(delta);
+    V3f_Normalize(delta);
 
-    return V3_DotProduct(delta, normal);
+    return V3f_DotProduct(delta, normal);
 }
 
 static void updateAffected(biassurface_t* bsuf, const fvertex_t* from,
-                           const fvertex_t* to, const vectorcomp_t* normal)
+                           const fvertex_t* to, const vectorcompf_t* normal)
 {
     int                 i, k;
-    vec2_t              delta;
+    vec2f_t             delta;
     source_t*           src;
     float               distance = 0, len;
     float               intensity;
@@ -588,12 +592,12 @@ static void updateAffected(biassurface_t* bsuf, const fvertex_t* from,
         for(i = 0; i < 2; ++i)
         {
             if(!i)
-                V2_Set(delta, from->pos[VX] - src->pos[VX],
-                       from->pos[VY] - src->pos[VY]);
+                V2f_Set(delta, from->pos[VX] - src->pos[VX],
+                               from->pos[VY] - src->pos[VY]);
             else
-                V2_Set(delta, to->pos[VX] - src->pos[VX],
-                       to->pos[VY] - src->pos[VY]);
-            len = V2_Normalize(delta);
+                V2f_Set(delta, to->pos[VX] - src->pos[VX],
+                               to->pos[VY] - src->pos[VY]);
+            len = V2f_Normalize(delta);
 
             if(i == 0 || len < distance)
                 distance = len;
@@ -616,12 +620,12 @@ static void updateAffected(biassurface_t* bsuf, const fvertex_t* from,
 }
 
 static void updateAffected2(biassurface_t* bsuf, const struct rvertex_s* rvertices,
-                            size_t numVertices, const vectorcomp_t* point,
-                            const vectorcomp_t* normal)
+                            size_t numVertices, const vectorcompf_t* point,
+                            const vectorcompf_t* normal)
 {
     int                 i;
     uint                k;
-    vec2_t              delta;
+    vec2f_t             delta;
     source_t*           src;
     float               distance = 0, len, dot;
     float               intensity;
@@ -645,10 +649,9 @@ static void updateAffected2(biassurface_t* bsuf, const struct rvertex_s* rvertic
         /// @fixme This is probably too accurate an estimate.
         for(k = 0; k < bsuf->size; ++k)
         {
-            V2_Set(delta,
-                   rvertices[k].pos[VX] - src->pos[VX],
-                   rvertices[k].pos[VY] - src->pos[VY]);
-            len = V2_Length(delta);
+            V2f_Set(delta, rvertices[k].pos[VX] - src->pos[VX],
+                           rvertices[k].pos[VY] - src->pos[VY]);
+            len = V2f_Length(delta);
 
             if(k == 0 || len < distance)
                 distance = len;
@@ -929,7 +932,7 @@ static boolean SB_CheckColorOverride(biasaffection_t *affected)
  */
 void SB_RendPoly(struct ColorRawf_s* rcolors, biassurface_t* bsuf,
                  const struct rvertex_s* rvertices,
-                 size_t numVertices, const vectorcomp_t* normal,
+                 size_t numVertices, const vectorcompf_t* normal,
                  float sectorLightLevel,
                  void* mapObject, uint elmIdx, boolean isHEdge)
 {
@@ -971,10 +974,10 @@ void SB_RendPoly(struct ColorRawf_s* rcolors, biassurface_t* bsuf,
         else
         {
             BspLeaf* bspLeaf = (BspLeaf*) mapObject;
-            vec3_t point;
+            vec3f_t point;
 
-            V3_Set(point, bspLeaf->midPoint.pos[VX], bspLeaf->midPoint.pos[VY],
-                   bspLeaf->sector->planes[elmIdx]->height);
+            V3f_Set(point, bspLeaf->midPoint.pos[VX], bspLeaf->midPoint.pos[VY],
+                           bspLeaf->sector->planes[elmIdx]->height);
 
             updateAffected2(bsuf, rvertices, numVertices, point, normal);
         }
@@ -1118,7 +1121,7 @@ void SB_EvalPoint(float light[4], vertexillum_t* illum,
 
     float               newColor[3];
     float               dot;
-    vec3_t              delta, surfacePoint;
+    vec3f_t             delta, surfacePoint;
     float               distance;
     float               level;
     uint                i;
@@ -1216,10 +1219,10 @@ void SB_EvalPoint(float light[4], vertexillum_t* illum,
         else
             casted = NULL;
 
-        V3_Subtract(delta, s->pos, point);
-        V3_Copy(surfacePoint, delta);
-        V3_Scale(surfacePoint, 1.f / 100);
-        V3_Sum(surfacePoint, surfacePoint, point);
+        V3f_Subtract(delta, s->pos, point);
+        V3f_Copy(surfacePoint, delta);
+        V3f_Scale(surfacePoint, 1.f / 100);
+        V3f_Sum(surfacePoint, surfacePoint, point);
 
         if(useSightCheck && !P_CheckLineSight(s->pos, surfacePoint, -1, 1, 0))
         {
@@ -1234,8 +1237,8 @@ void SB_EvalPoint(float light[4], vertexillum_t* illum,
         }
         else
         {
-            distance = V3_Normalize(delta);
-            dot = V3_DotProduct(delta, normal);
+            distance = V3f_Normalize(delta);
+            dot = V3f_DotProduct(delta, normal);
 
             // The surface faces away from the light.
             if(dot <= 0)

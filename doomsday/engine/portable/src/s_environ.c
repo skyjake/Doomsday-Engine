@@ -176,7 +176,7 @@ static void findBspLeafsAffectingSector(GameMap* map, uint secIDX)
 
     for(i = 0; i < map->numBspLeafs; ++i)
     {
-        bspLeaf = &map->bspLeafs[i];
+        bspLeaf = GameMap_BspLeaf(map, i);
 
         // Is this BSP leaf close enough?
         if(bspLeaf->sector == sec || // leaf is IN this sector
@@ -263,7 +263,7 @@ static boolean calcBspLeafReverb(BspLeaf* bspLeaf)
 {
     float materials[NUM_MATERIAL_ENV_CLASSES];
     material_env_class_t mclass;
-    HEdge** hedgeIter;
+    HEdge* hedge;
     float total = 0;
     uint i, v;
 
@@ -284,10 +284,9 @@ static boolean calcBspLeafReverb(BspLeaf* bspLeaf)
 
     // The other reverb properties can be found out by taking a look at the
     // materials of all surfaces in the BSP leaf.
-    hedgeIter = bspLeaf->hedges;
-    while(*hedgeIter)
+    hedge = bspLeaf->hedge;
+    do
     {
-        HEdge* hedge = *hedgeIter;
         if(hedge->lineDef && HEDGE_SIDEDEF(hedge) && HEDGE_SIDEDEF(hedge)->SW_middlematerial)
         {
             material_t* mat = HEDGE_SIDEDEF(hedge)->SW_middlematerial;
@@ -298,8 +297,7 @@ static boolean calcBspLeafReverb(BspLeaf* bspLeaf)
                 mclass = MEC_WOOD; // Assume it's wood if unknown.
             materials[mclass] += hedge->length;
         }
-        hedgeIter++;
-    }
+    } while((hedge = hedge->next) != bspLeaf->hedge);
 
     if(!total)
     {

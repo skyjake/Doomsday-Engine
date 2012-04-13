@@ -40,9 +40,9 @@ static int rendMobj(mobj_t* mo, void* parameters)
 {
     if(mo->validCount != validCount)
     {
-        vec2_t start, end;
-        V2_Set(start, mo->pos[VX] - mo->radius, mo->pos[VY] - mo->radius);
-        V2_Set(end,   mo->pos[VX] + mo->radius, mo->pos[VY] + mo->radius);
+        vec2f_t start, end;
+        V2f_Set(start, mo->pos[VX] - mo->radius, mo->pos[VY] - mo->radius);
+        V2f_Set(end,   mo->pos[VX] + mo->radius, mo->pos[VY] + mo->radius);
         glVertex2f(start[VX], start[VY]);
         glVertex2f(  end[VX], start[VY]);
         glVertex2f(  end[VX],   end[VY]);
@@ -72,68 +72,70 @@ static int rendBspLeaf(BspLeaf* bspLeaf, void* parameters)
         const float scale = MAX_OF(bmapDebugSize, 1);
         const float width = (Window_Width(theWindow) / 16) / scale;
         float length, dx, dy, normal[2], unit[2];
-        HEdge** hedgeIter, *hedge;
-        vec2_t start, end;
+        HEdge* hedge;
+        vec2f_t start, end;
 
-        for(hedgeIter = bspLeaf->hedges; *hedgeIter; hedgeIter++)
+        if(bspLeaf->hedge)
         {
-            hedge = *hedgeIter;
-
-            V2_Set(start, hedge->HE_v1pos[VX], hedge->HE_v1pos[VY]);
-            V2_Set(end,   hedge->HE_v2pos[VX], hedge->HE_v2pos[VY]);
-
-            glBegin(GL_LINES);
-                glVertex2fv(start);
-                glVertex2fv(end);
-            glEnd();
-
-            dx = end[VX] - start[VX];
-            dy = end[VY] - start[VY];
-            length = sqrt(dx * dx + dy * dy);
-            if(length > 0)
+            hedge = bspLeaf->hedge;
+            do
             {
-                unit[VX] = dx / length;
-                unit[VY] = dy / length;
-                normal[VX] = -unit[VY];
-                normal[VY] = unit[VX];
+                V2f_Set(start, hedge->HE_v1pos[VX], hedge->HE_v1pos[VY]);
+                V2f_Set(end,   hedge->HE_v2pos[VX], hedge->HE_v2pos[VY]);
 
-                GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_DYNAMIC), GL_LINEAR);
-                glEnable(GL_TEXTURE_2D);
-
-                GL_BlendOp(GL_FUNC_ADD);
-                glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-
-                glBegin(GL_QUADS);
-                    glTexCoord2f(0.75f, 0.5f);
+                glBegin(GL_LINES);
                     glVertex2fv(start);
-                    glTexCoord2f(0.75f, 0.5f);
                     glVertex2fv(end);
-                    glTexCoord2f(0.75f, 1);
-                    glVertex2f(end[VX] - normal[VX] * width,
-                               end[VY] - normal[VY] * width);
-                    glTexCoord2f(0.75f, 1);
-                    glVertex2f(start[VX] - normal[VX] * width,
-                               start[VY] - normal[VY] * width);
                 glEnd();
 
-                glDisable(GL_TEXTURE_2D);
-                GL_BlendMode(BM_NORMAL);
-            }
+                dx = end[VX] - start[VX];
+                dy = end[VY] - start[VY];
+                length = sqrt(dx * dx + dy * dy);
+                if(length > 0)
+                {
+                    unit[VX] = dx / length;
+                    unit[VY] = dy / length;
+                    normal[VX] = -unit[VY];
+                    normal[VY] = unit[VX];
 
-            // Draw the bounding box.
-            V2_Set(start, bspLeaf->aaBox.minX, bspLeaf->aaBox.minY);
-            V2_Set(end,   bspLeaf->aaBox.maxX, bspLeaf->aaBox.maxY);
+                    GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_DYNAMIC), GL_LINEAR);
+                    glEnable(GL_TEXTURE_2D);
 
-            glBegin(GL_LINES);
-                glVertex2f(start[VX], start[VY]);
-                glVertex2f(  end[VX], start[VY]);
-                glVertex2f(  end[VX], start[VY]);
-                glVertex2f(  end[VX],   end[VY]);
-                glVertex2f(  end[VX],   end[VY]);
-                glVertex2f(start[VX],   end[VY]);
-                glVertex2f(start[VX],   end[VY]);
-                glVertex2f(start[VX], start[VY]);
-            glEnd();
+                    GL_BlendOp(GL_FUNC_ADD);
+                    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+
+                    glBegin(GL_QUADS);
+                        glTexCoord2f(0.75f, 0.5f);
+                        glVertex2fv(start);
+                        glTexCoord2f(0.75f, 0.5f);
+                        glVertex2fv(end);
+                        glTexCoord2f(0.75f, 1);
+                        glVertex2f(end[VX] - normal[VX] * width,
+                                   end[VY] - normal[VY] * width);
+                        glTexCoord2f(0.75f, 1);
+                        glVertex2f(start[VX] - normal[VX] * width,
+                                   start[VY] - normal[VY] * width);
+                    glEnd();
+
+                    glDisable(GL_TEXTURE_2D);
+                    GL_BlendMode(BM_NORMAL);
+                }
+
+                // Draw the bounding box.
+                V2f_Set(start, bspLeaf->aaBox.minX, bspLeaf->aaBox.minY);
+                V2f_Set(end,   bspLeaf->aaBox.maxX, bspLeaf->aaBox.maxY);
+
+                glBegin(GL_LINES);
+                    glVertex2f(start[VX], start[VY]);
+                    glVertex2f(  end[VX], start[VY]);
+                    glVertex2f(  end[VX], start[VY]);
+                    glVertex2f(  end[VX],   end[VY]);
+                    glVertex2f(  end[VX],   end[VY]);
+                    glVertex2f(start[VX],   end[VY]);
+                    glVertex2f(start[VX],   end[VY]);
+                    glVertex2f(start[VX], start[VY]);
+                glEnd();
+            } while((hedge = hedge->next) != bspLeaf->hedge);
         }
 
         bspLeaf->validCount = validCount;
@@ -178,7 +180,7 @@ int rendCellBspLeafs(Blockmap* blockmap, uint const coords[2], void* parameters)
 
 void rendBlockmapBackground(Blockmap* blockmap)
 {
-    vec2_t start, end;
+    vec2f_t start, end;
     uint x, y, bmapSize[2];
     assert(blockmap);
 
@@ -193,8 +195,8 @@ void rendBlockmapBackground(Blockmap* blockmap)
     /**
      * Draw the translucent quad which represents the "used" cells.
      */
-    V2_Set(start, 0, 0);
-    V2_Set(end, bmapSize[VX], bmapSize[VY]);
+    V2f_Set(start, 0, 0);
+    V2f_Set(end, bmapSize[VX], bmapSize[VY]);
     glColor4f(.25f, .25f, .25f, .66f);
     glBegin(GL_QUADS);
         glVertex2f(start[VX], start[VY]);
@@ -327,10 +329,10 @@ static void rendBlockmap(Blockmap* blockmap, mobj_t* followMobj,
     BlockmapCellBlock vCellBlock;
     BlockmapCell vCell, cell;
     BlockmapCoord dimensions[2];
-    vec2_t start, end, cellSize;
+    vec2f_t start, end, cellSize;
 
     Blockmap_Size(blockmap, dimensions);
-    V2_Copy(cellSize, Blockmap_CellSize(blockmap));
+    V2f_Copy(cellSize, Blockmap_CellSize(blockmap));
 
     if(followMobj)
     {
@@ -344,10 +346,10 @@ static void rendBlockmap(Blockmap* blockmap, mobj_t* followMobj,
             // Mobj's "touch" range.
             const float radius = followMobj->radius + DDMOBJ_RADIUS_MAX * 2;
             AABoxf aaBox;
-            V2_Set(start, followMobj->pos[VX] - radius, followMobj->pos[VY] - radius);
-            V2_Set(end,   followMobj->pos[VX] + radius, followMobj->pos[VY] + radius);
-            V2_InitBox(aaBox.arvec2, start);
-            V2_AddToBox(aaBox.arvec2, end);
+            V2f_Set(start, followMobj->pos[VX] - radius, followMobj->pos[VY] - radius);
+            V2f_Set(end,   followMobj->pos[VX] + radius, followMobj->pos[VY] + radius);
+            V2f_InitBox(aaBox.arvec2, start);
+            V2f_AddToBox(aaBox.arvec2, end);
             Blockmap_CellBlock(blockmap, &vCellBlock, &aaBox);
         }
     }
@@ -355,7 +357,7 @@ static void rendBlockmap(Blockmap* blockmap, mobj_t* followMobj,
     if(followMobj)
     {
         // Orient on the center of the followed Mobj.
-        V2_Set(start, vCell[VX] * cellSize[VX],
+        V2f_Set(start, vCell[VX] * cellSize[VX],
                       vCell[VY] * cellSize[VY]);
         glTranslatef(-start[VX], -start[VY], 0);
     }
@@ -387,9 +389,9 @@ static void rendBlockmap(Blockmap* blockmap, mobj_t* followMobj,
                 glColor4f(.33f, .33f, .66f, .33f);
             }
 
-            V2_Set(start, cell[VX] * cellSize[VX], cell[VY] * cellSize[VY]);
-            V2_Set(end, cellSize[VX], cellSize[VY]);
-            V2_Sum(end, end, start);
+            V2f_Set(start, cell[VX] * cellSize[VX], cell[VY] * cellSize[VY]);
+            V2f_Set(end, cellSize[VX], cellSize[VY]);
+            V2f_Sum(end, end, start);
 
             glVertex2f(start[VX], start[VY]);
             glVertex2f(  end[VX], start[VY]);

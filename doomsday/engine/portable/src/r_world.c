@@ -593,7 +593,7 @@ Plane* R_NewPlaneForSector(Sector* sec)
     suf = &plane->surface;
     suf->header.type = DMU_SURFACE; // Setup header for DMU.
     suf->normal[VZ] = 1;
-    V3_BuildTangents(suf->tangent, suf->bitangent, suf->normal);
+    V3f_BuildTangents(suf->tangent, suf->bitangent, suf->normal);
 
     suf->owner = (void*) plane;
     // \todo The initial material should be the "unknown" material.
@@ -1117,8 +1117,9 @@ static void tessellateBspLeaf(BspLeaf* bspLeaf, boolean force)
 {
 #define MIN_TRIANGLE_EPSILON  (0.1) ///< Area
 
-    uint baseIDX = 0, i, n;
     boolean ok = false;
+    HEdge* baseHEdge;
+    uint n;
 
     // Already built?
     if(bspLeaf->vertices && !force) return;
@@ -1132,27 +1133,27 @@ static void tessellateBspLeaf(BspLeaf* bspLeaf, boolean force)
     bspLeaf->flags &= ~BLF_MIDPOINT;
 
     // Search for a good base.
+    baseHEdge = bspLeaf->hedge;
     if(bspLeaf->hedgeCount > 3)
     {
         // BspLeafs with higher vertex counts demand checking.
         fvertex_t* base, *a, *b;
 
-        baseIDX = 0;
         do
         {
-            HEdge* hedge = bspLeaf->hedges[baseIDX];
+            HEdge* hedge = baseHEdge;
+            HEdge* otherHEdge;
 
             base = &hedge->HE_v1->v;
-            i = 0;
+            otherHEdge = bspLeaf->hedge;
             do
             {
-                HEdge* hedge2 = bspLeaf->hedges[i];
-
                 // Test this triangle?
-                if(!(baseIDX > 0 && (i == baseIDX || i == baseIDX - 1)))
+                if(!(baseHEdge != bspLeaf->hedge &&
+                     (otherHEdge == baseHEdge || otherHEdge == baseHEdge->prev)))
                 {
-                    a = &hedge2->HE_v1->v;
-                    b = &hedge2->HE_v2->v;
+                    a = &otherHEdge->HE_v1->v;
+                    b = &otherHEdge->HE_v2->v;
 
                     if(M_TriangleArea(base->pos, a->pos, b->pos) <= MIN_TRIANGLE_EPSILON)
                     {
@@ -1162,15 +1163,14 @@ static void tessellateBspLeaf(BspLeaf* bspLeaf, boolean force)
                 }
 
                 // On to the next triangle.
-                i++;
-            } while(base && i < bspLeaf->hedgeCount);
+            } while(base && (otherHEdge = otherHEdge->next) != bspLeaf->hedge);
 
             if(!base)
             {
                 // No good. Select the next vertex and start over.
-                baseIDX++;
+                baseHEdge = baseHEdge->next;
             }
-        } while(!base && baseIDX < bspLeaf->hedgeCount);
+        } while(!base && baseHEdge != bspLeaf->hedge);
 
         // Did we find something suitable?
         if(base) ok = true;
@@ -1200,23 +1200,18 @@ static void tessellateBspLeaf(BspLeaf* bspLeaf, boolean force)
     }
 
     // Add the vertices for each hedge.
-    for(i = 0; i < bspLeaf->hedgeCount; ++i)
     {
-        HEdge* hedge;
-        uint idx;
-
-        idx = baseIDX + i;
-        if(idx >= bspLeaf->hedgeCount)
-            idx = idx - bspLeaf->hedgeCount; // Wrap around.
-
-        hedge = bspLeaf->hedges[idx];
+    HEdge* hedge = baseHEdge;
+    do
+    {
         bspLeaf->vertices[n++] = &hedge->HE_v1->v;
+    } while((hedge = hedge->next) != baseHEdge);
     }
 
     // If this is a trifan the last vertex is always equal to the first.
     if(bspLeaf->flags & BLF_MIDPOINT)
     {
-        bspLeaf->vertices[n++] = &bspLeaf->hedges[0]->HE_v1->v;
+        bspLeaf->vertices[n++] = &bspLeaf->hedge->HE_v1->v;
     }
 
     bspLeaf->vertices[n] = NULL; // terminate.
@@ -1231,7 +1226,7 @@ void R_PolygonizeMap(GameMap* map)
 
     for(i = 0; i < map->numBspLeafs; ++i)
     {
-        BspLeaf* bspLeaf = &map->bspLeafs[i];
+        BspLeaf* bspLeaf = GameMap_BspLeaf(map, i);
         tessellateBspLeaf(bspLeaf, true/*force rebuild*/);
     }
 
@@ -1260,7 +1255,7 @@ static Sector *getContainingSectorOf(GameMap* map, Sector* sec)
     // Try all sectors that fit in the bounding box.
     for(i = 0, other = map->sectors; i < map->numSectors; other++, ++i)
     {
-        if(!other->lineDefCount || (other->flags & SECF_UNCLOSED))
+        if(!other->lineDefCount)
             continue;
 
         if(other == sec)
@@ -1713,21 +1708,24 @@ boolean R_UpdatePlane(Plane* pln, boolean forceUpdate)
         // Inform the shadow bias of changed geometry.
         if(sec->bspLeafs && *sec->bspLeafs)
         {
+            uint i;
             ssecIter = sec->bspLeafs;
             do
             {
                 BspLeaf* bspLeaf = *ssecIter;
-                HEdge** hedgeIter = bspLeaf->hedges;
-                while(*hedgeIter)
+                if(bspLeaf->hedge)
                 {
-                    HEdge* hedge = *hedgeIter;
-                    if(hedge->lineDef)
+                    HEdge* hedge = bspLeaf->hedge;
+                    do
                     {
-                        uint i;
-                        for(i = 0; i < 3; ++i)
-                            SB_SurfaceMoved(hedge->bsuf[i]);
-                    }
-                    hedgeIter++;
+                        if(hedge->lineDef)
+                        {
+                            for(i = 0; i < 3; ++i)
+                            {
+                                SB_SurfaceMoved(hedge->bsuf[i]);
+                            }
+                        }
+                    } while((hedge = hedge->next) != bspLeaf->hedge);
                 }
 
                 SB_SurfaceMoved(bspLeaf->bsuf[pln->planeID]);
@@ -1876,7 +1874,7 @@ float R_CheckSectorLight(float lightlevel, float min, float max)
 
 const float* R_GetSectorLightColor(const Sector* sector)
 {
-    static vec3_t skyLightColor, oldSkyAmbientColor = { -1, -1, -1 };
+    static vec3f_t skyLightColor, oldSkyAmbientColor = { -1, -1, -1 };
     static float oldRendSkyLight = -1;
     if(rendSkyLight > .001f && R_SectorContainsSkySurfaces(sector))
     {
@@ -1886,16 +1884,16 @@ const float* R_GetSectorLightColor(const Sector* sector)
            !INRANGE_OF(ambientColor->green, oldSkyAmbientColor[CG], .001f) ||
            !INRANGE_OF(ambientColor->blue,  oldSkyAmbientColor[CB], .001f))
         {
-            vec3_t white = { 1, 1, 1 };
-            V3_Copy(skyLightColor, ambientColor->rgb);
+            vec3f_t white = { 1, 1, 1 };
+            V3f_Copy(skyLightColor, ambientColor->rgb);
             R_AmplifyColor(skyLightColor);
 
             // Apply the intensity factor cvar.
-            V3_Lerp(skyLightColor, skyLightColor, white, 1-rendSkyLight);
+            V3f_Lerp(skyLightColor, skyLightColor, white, 1-rendSkyLight);
 
             // When the sky light color changes we must update the lightgrid.
             LG_MarkAllForUpdate();
-            V3_Copy(oldSkyAmbientColor, ambientColor->rgb);
+            V3f_Copy(oldSkyAmbientColor, ambientColor->rgb);
         }
         oldRendSkyLight = rendSkyLight;
         return skyLightColor;

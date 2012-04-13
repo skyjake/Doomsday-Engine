@@ -1,6 +1,6 @@
 /**
- * @file intersection.cpp
- * BSP Builder Intersections. @ingroup map
+ * @file hplane.cpp
+ * BSP Builder half-plane and plane intersection list. @ingroup bsp
  *
  * Based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted on
  * SourceForge: http://sourceforge.net/projects/glbsp/
@@ -28,18 +28,13 @@
 #include "de_base.h"
 #include "de_console.h"
 
-#include "bspbuilder/intersection.hh"
-#include "bspbuilder/bspbuilder.hh"
+#include "map/bsp/hedgeintercept.h"
+#include "map/bsp/hplane.h"
 
-using namespace de;
+using namespace de::bsp;
 
 void HPlane::clear()
 {
-    for(Intercepts::iterator it = intercepts.begin(); it != intercepts.end(); ++it)
-    {
-        HPlaneIntercept* inter = &*it;
-        builder->deleteHEdgeIntercept((HEdgeIntercept*)inter->userData);
-    }
     intercepts.clear();
 }
 
@@ -115,7 +110,7 @@ HPlaneIntercept* HPlane::newIntercept(double distance, void* userData)
     HPlaneIntercept* inter;
 
     for(after = intercepts.rbegin();
-        after != intercepts.rend() && distance < (*after).distance; after++)
+        after != intercepts.rend() && distance < (*after).distance(); after++)
     {}
 
     inter = &*intercepts.insert(after.base(), HPlaneIntercept(distance, userData));
@@ -129,17 +124,14 @@ HPlane::Intercepts::const_iterator HPlane::deleteIntercept(Intercepts::iterator 
 }
 
 #if _DEBUG
-void HPlane_Print(HPlane* hplane)
+void HPlane::DebugPrint(const HPlane& inst)
 {
-    if(!hplane) return;
-
-    Con_Message("HPlane %p:\n", hplane);
     uint n = 0;
-    for(HPlane::Intercepts::const_iterator it = hplane->begin(); it != hplane->end(); it++, n++)
+    for(HPlane::Intercepts::const_iterator it = inst.begin(); it != inst.end(); it++, n++)
     {
         const HPlaneIntercept* inter = &*it;
-        Con_Printf(" %u: >%1.2f ", n, inter->distance);
-        Bsp_PrintHEdgeIntercept((HEdgeIntercept*)inter->userData);
+        Con_Printf(" %u: >%1.2f ", n, inter->distance());
+        HEdgeIntercept::DebugPrint(*static_cast<HEdgeIntercept*>(inter->userData()));
     }
 }
 #endif

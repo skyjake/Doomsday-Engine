@@ -313,7 +313,7 @@ static boolean loadBlockmap(tempmap_t *map, maplumpinfo_t *maplump)
         blockmap_t *blockmap;
         uint        x, y, width, height;
         float       v[2];
-        vec2_t      bounds[2];
+        vec2f_t     bounds[2];
         long       *lineListOffsets, i, n, numBlocks, blockIdx;
         short      *blockmapLump;
 
@@ -356,10 +356,10 @@ static boolean loadBlockmap(tempmap_t *map, maplumpinfo_t *maplump)
          * by cleaning up and then generating our own.
          */
 
-        V2_Set(bounds[0], v[VX], v[VY]);
+        V2f_Set(bounds[0], v[VX], v[VY]);
         v[VX] += (float) (width * MAPBLOCKUNITS);
         v[VY] += (float) (height * MAPBLOCKUNITS);
-        V2_Set(bounds[1], v[VX], v[VY]);
+        V2f_Set(bounds[1], v[VX], v[VY]);
 
         blockmap = P_BlockmapCreate(bounds[0], bounds[1],
                                     width, height);

@@ -217,20 +217,20 @@ void Mobj_OriginSmoothed(mobj_t* mo, float origin[3])
 {
     if(!origin) return;
 
-    V3_Set(origin, 0, 0, 0);
+    V3f_Set(origin, 0, 0, 0);
     if(!mo) return;
 
-    V3_Copy(origin, mo->pos);
+    V3f_Copy(origin, mo->pos);
 
     // Apply a Short Range Visual Offset?
     if(useSRVO && mo->state && mo->tics >= 0)
     {
         const float mul = mo->tics / (float) mo->state->tics;
-        vec3_t srvo;
+        vec3f_t srvo;
 
-        V3_Copy(srvo, mo->srvo);
-        V3_Scale(srvo, mul);
-        V3_Sum(origin, origin, srvo);
+        V3f_Copy(srvo, mo->srvo);
+        V3f_Scale(srvo, mul);
+        V3f_Sum(origin, origin, srvo);
     }
 
     if(mo->dPlayer)
@@ -239,7 +239,7 @@ void Mobj_OriginSmoothed(mobj_t* mo, float origin[3])
         if(P_GetDDPlayerIdx(mo->dPlayer) == consolePlayer)
         {
             const viewdata_t* vd = R_ViewData(consolePlayer);
-            V3_Copy(origin, vd->current.pos);
+            V3f_Copy(origin, vd->current.pos);
         }
         // The client may have a Smoother for this object.
         else if(isClient)

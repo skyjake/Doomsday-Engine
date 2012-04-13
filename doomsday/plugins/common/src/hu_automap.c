@@ -1070,7 +1070,7 @@ static boolean interceptEdge(float point[2], const float fromA[2], const float t
         float deltaB[2];
         deltaB[0] = toB[0] - fromB[0];
         deltaB[1] = toB[1] - fromB[1];
-        V2_Intersection(fromA, deltaA, fromB, deltaB, point);
+        V2f_Intersection(fromA, deltaA, fromB, deltaB, point);
         return true;
     }
     return false;
@@ -1673,7 +1673,7 @@ void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength)
 
         xy[VX] = panX[0] * panUnitsPerSecond * ticLength + panX[1];
         xy[VY] = panY[0] * panUnitsPerSecond * ticLength + panY[1];
-        V2_Rotate(xy, am->angle / 360 * 2 * PI);
+        V2f_Rotate(xy, am->angle / 360 * 2 * PI);
 
         if(xy[VX] || xy[VY])
         {
@@ -1777,17 +1777,17 @@ void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength)
 
     // Apply rotation.
     rads = (float)(am->angle / 360 * 2 * PI);
-    V2_Rotate(am->topLeft,     rads);
-    V2_Rotate(am->bottomRight, rads);
-    V2_Rotate(am->bottomLeft,  rads);
-    V2_Rotate(am->topRight,    rads);
+    V2f_Rotate(am->topLeft,     rads);
+    V2f_Rotate(am->bottomRight, rads);
+    V2f_Rotate(am->bottomLeft,  rads);
+    V2f_Rotate(am->topRight,    rads);
 
     // Translate to the view point.
     UIAutomap_CameraOrigin(obj, &viewPoint[0], &viewPoint[1]);
-    V2_Sum(am->topLeft,     am->topLeft,     viewPoint);
-    V2_Sum(am->bottomRight, am->bottomRight, viewPoint);
-    V2_Sum(am->bottomLeft,  am->bottomLeft,  viewPoint);
-    V2_Sum(am->topRight,    am->topRight,    viewPoint);
+    V2f_Sum(am->topLeft,     am->topLeft,     viewPoint);
+    V2f_Sum(am->bottomRight, am->bottomRight, viewPoint);
+    V2f_Sum(am->bottomLeft,  am->bottomLeft,  viewPoint);
+    V2f_Sum(am->topRight,    am->topRight,    viewPoint);
     }
 
     width  = UIAutomap_FrameToMap(obj, Rect_Width(obj->geometry));

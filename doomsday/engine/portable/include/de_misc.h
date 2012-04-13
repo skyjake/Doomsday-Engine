@@ -38,7 +38,7 @@
 #include "m_md5.h"
 #include "m_linkedlist.h"
 #include "m_stack.h"
-#include "m_binarytree.h"
+#include "binarytree.h"
 #include "gridmap.h"
 #include "m_decomp64.h"
 #include "smoother.h"

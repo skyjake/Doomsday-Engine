@@ -26,6 +26,18 @@
 #include "r_data.h"
 #include "p_dmu.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+struct bsphedgeinfo_s;
+
+HEdge* HEdge_New(void);
+
+HEdge* HEdge_NewCopy(const HEdge* other);
+
+void HEdge_Delete(HEdge* hedge);
+
 /**
  * Get a property value, selected by DMU_* name.
  *
@@ -43,5 +55,9 @@ int HEdge_GetProperty(const HEdge* hedge, setargs_t* args);
  * @return  Always @c 0 (can be used as an iterator).
  */
 int HEdge_SetProperty(HEdge* hedge, const setargs_t* args);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /// LIBDENG_MAP_HEDGE

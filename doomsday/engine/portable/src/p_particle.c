@@ -909,7 +909,7 @@ static void P_MoveParticle(ptcgen_t* gen, particle_t* pt)
     ptcstage_t*         st = &gen->stages[pt->stage];
     ded_ptcstage_t*     stDef = &gen->def->stages[pt->stage];
     boolean             zBounce = false, hitFloor = false;
-    vec2_t              point;
+    vec2f_t             point;
     fixed_t             x, y, z, hardRadius = st->radius / 2;
 
     // Particle rotates according to spin speed.
@@ -1126,12 +1126,12 @@ static void P_MoveParticle(ptcgen_t* gen, particle_t* pt)
     tmpx2 = x;
     tmpy1 = pt->pos[VY];
     tmpy2 = y;
-    V2_Set(point, FIX2FLT(MIN_OF(x, pt->pos[VX]) - st->radius),
-                  FIX2FLT(MIN_OF(y, pt->pos[VY]) - st->radius));
-    V2_InitBox(mbox.arvec2, point);
-    V2_Set(point, FIX2FLT(MAX_OF(x, pt->pos[VX]) + st->radius),
-                  FIX2FLT(MAX_OF(y, pt->pos[VY]) + st->radius));
-    V2_AddToBox(mbox.arvec2, point);
+    V2f_Set(point, FIX2FLT(MIN_OF(x, pt->pos[VX]) - st->radius),
+                   FIX2FLT(MIN_OF(y, pt->pos[VY]) - st->radius));
+    V2f_InitBox(mbox.arvec2, point);
+    V2f_Set(point, FIX2FLT(MAX_OF(x, pt->pos[VX]) + st->radius),
+                   FIX2FLT(MAX_OF(y, pt->pos[VY]) + st->radius));
+    V2f_AddToBox(mbox.arvec2, point);
 
     // Iterate the lines in the contacted blocks.
 
@@ -1350,7 +1350,7 @@ void P_SpawnDamageParticleGen(mobj_t* mo, mobj_t* inflictor, int amount)
     if(def)
     {
         ptcgen_t* gen = P_NewGenerator();
-        vec3_t vector, vecDelta;
+        vec3f_t vector, vecDelta;
 
         if(!gen) return; // No more generators.
 
@@ -1366,14 +1366,13 @@ void P_SpawnDamageParticleGen(mobj_t* mo, mobj_t* inflictor, int amount)
         gen->center[VZ] += FLT2FIX(mo->pos[VZ] + mo->height / 2);
 
         // Calculate launch vector.
-        V3_Set(vecDelta, inflictor->pos[VX] - mo->pos[VX],
-               inflictor->pos[VY] - mo->pos[VY],
-               (inflictor->pos[VZ] - inflictor->height / 2) -
-                  (mo->pos[VZ] + mo->height / 2));
+        V3f_Set(vecDelta, inflictor->pos[VX] - mo->pos[VX],
+                inflictor->pos[VY] - mo->pos[VY],
+                (inflictor->pos[VZ] - inflictor->height / 2) - (mo->pos[VZ] + mo->height / 2));
 
-        V3_SetFixed(vector, gen->vector[VX], gen->vector[VY], gen->vector[VZ]);
-        V3_Sum(vector, vector, vecDelta);
-        V3_Normalize(vector);
+        V3f_SetFixed(vector, gen->vector[VX], gen->vector[VY], gen->vector[VZ]);
+        V3f_Sum(vector, vector, vecDelta);
+        V3f_Normalize(vector);
 
         gen->vector[VX] = FLT2FIX(vector[VX]);
         gen->vector[VY] = FLT2FIX(vector[VY]);

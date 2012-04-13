@@ -123,7 +123,12 @@ DENG_API_HEADERS = \
     api/uri.h \
     api/writer.h
 
-DENG_HEADERS = \
+# Convenience headers.
+DENG_HEADERS += \
+    portable/include/BspBuilder \
+
+# Private headers.
+DENG_HEADERS += \
     portable/include/abstractfile.h \
     portable/include/abstractresource.h \
     portable/include/audiodriver.h \
@@ -132,14 +137,20 @@ DENG_HEADERS = \
     portable/include/b_device.h \
     portable/include/b_main.h \
     portable/include/b_util.h \
+    portable/include/binarytree.h \
     portable/include/bitmapfont.h \
     portable/include/blockmap.h \
     portable/include/blockmapvisual.h \
     portable/include/blockset.h \
-    portable/include/bspbuilder/bspbuilder.hh \
-    portable/include/bspbuilder/hedges.hh \
-    portable/include/bspbuilder/intersection.hh \
-    portable/include/bspbuilder/superblockmap.hh \
+    portable/include/map/bspbuilder.h \
+    portable/include/map/bsp/hedgeinfo.h \
+    portable/include/map/bsp/hedgeintercept.h \
+    portable/include/map/bsp/hedgetip.h \
+    portable/include/map/bsp/hplane.h \
+    portable/include/map/bsp/linedefinfo.h \
+    portable/include/map/bsp/partitioncost.h \
+    portable/include/map/bsp/partitioner.h \
+    portable/include/map/bsp/superblockmap.h \
     portable/include/bspleaf.h \
     portable/include/bspnode.h \
     portable/include/canvas.h \
@@ -230,7 +241,6 @@ DENG_HEADERS = \
     portable/include/lumpinfo.h \
     portable/include/m_args.h \
     portable/include/m_bams.h \
-    portable/include/m_binarytree.h \
     portable/include/m_decomp64.h \
     portable/include/m_linkedlist.h \
     portable/include/m_md5.h \
@@ -425,15 +435,15 @@ SOURCES += \
     portable/src/b_device.c \
     portable/src/b_main.c \
     portable/src/b_util.c \
+    portable/src/binarytree.cpp \
     portable/src/bitmapfont.c \
     portable/src/blockmap.c \
     portable/src/blockmapvisual.c \
     portable/src/blockset.c \
-    portable/src/bspbuilder/bspbuilder.cpp \
-    portable/src/bspbuilder/hedges.cpp \
-    portable/src/bspbuilder/intersection.cpp \
-    portable/src/bspbuilder/node.cpp \
-    portable/src/bspbuilder/superblockmap.cpp \
+    portable/src/map/bspbuilder.cpp \
+    portable/src/map/bsp/hplane.cpp \
+    portable/src/map/bsp/partitioner.cpp \
+    portable/src/map/bsp/superblockmap.cpp \
     portable/src/bspleaf.c \
     portable/src/bspnode.c \
     portable/src/busytask.cpp \
@@ -473,7 +483,7 @@ SOURCES += \
     portable/src/dgl_draw.c \
     portable/src/displaymode.cpp \
     portable/src/edit_bias.c \
-    portable/src/edit_bsp.c \
+    portable/src/edit_bsp.cpp \
     portable/src/edit_map.c \
     portable/src/fi_main.c \
     portable/src/filedirectory.c \
@@ -507,7 +517,6 @@ SOURCES += \
     portable/src/lumpfile.c \
     portable/src/m_args.c \
     portable/src/m_bams.c \
-    portable/src/m_binarytree.c \
     portable/src/m_decomp64.c \
     portable/src/m_linkedlist.c \
     portable/src/m_md5.c \

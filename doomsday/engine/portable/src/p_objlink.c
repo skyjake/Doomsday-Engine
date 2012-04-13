@@ -65,7 +65,7 @@ typedef struct {
 typedef struct {
     void* obj;
     objtype_t objType;
-    vec3_t objPos;
+    vec3f_t objPos;
     float objRadius;
     float box[4];
 } contactfinderparams_t;
@@ -332,8 +332,14 @@ int RIT_LinkObjToBspLeaf(BspLeaf* bspLeaf, void* paramaters)
  */
 static void spreadInBspLeaf(BspLeaf* bspLeaf, void* paramaters)
 {
-    HEdge** hedgeIter = bspLeaf->hedges;
-    while(*hedgeIter) { processSeg(*hedgeIter++, paramaters); }
+    HEdge* hedge;
+    if(!bspLeaf || !bspLeaf->hedge) return;
+
+    hedge = bspLeaf->hedge;
+    do
+    {
+        processSeg(hedge, paramaters);
+    } while((hedge = hedge->next) != bspLeaf->hedge);
 }
 
 static void processSeg(HEdge* hedge, void* paramaters)
@@ -441,7 +447,7 @@ static void findContacts(objlink_t* link)
     contactfinderparams_t cfParams;
     linkobjtobspleafparams_t loParams;
     float radius;
-    pvec3_t pos;
+    pvec3f_t pos;
     BspLeaf** ssecAdr;
 
     switch(link->type)
@@ -474,7 +480,7 @@ static void findContacts(objlink_t* link)
 
     cfParams.obj = link->obj;
     cfParams.objType = link->type;
-    V3_Copy(cfParams.objPos, pos);
+    V3f_Copy(cfParams.objPos, pos);
     // Use a slightly smaller radius than what the obj really is.
     cfParams.objRadius = radius * .98f;
 
@@ -565,7 +571,7 @@ void R_LinkObjs(void)
     objlinkblockmap_t* obm;
     objlink_t* link;
     uint block[2];
-    pvec3_t pos;
+    pvec3f_t pos;
 
 BEGIN_PROF( PROF_OBJLINK_LINK );
 
