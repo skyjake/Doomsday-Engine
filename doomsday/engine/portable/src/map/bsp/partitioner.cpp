@@ -352,14 +352,6 @@ struct Partitioner::Instance
         }
     }
 
-    /// @c true  Iff @a hedge has been added to a BSP leaf (i.e., it is no longer
-    ///          linked in the hedge blockmap).
-    bool hedgeIsInLeaf(const HEdge& hedge) const
-    {
-        /// @todo Are we now able to determine this by testing hedge->leaf ?
-        return !hedgeInfo(hedge).bmapBlock;
-    }
-
     const HPlaneIntercept* makePartitionIntersection(HEdge* hedge, int leftSide)
     {
         Q_ASSERT(hedge);
@@ -579,10 +571,13 @@ struct Partitioner::Instance
             hedgeInfo(*newHEdge->twin).initFromHEdge(*newHEdge->twin);
 
             // Has this already been added to a leaf?
-            if(hedgeIsInLeaf(*oldHEdge->twin))
+            if(oldHEdge->twin->bspLeaf)
             {
                 // Update the in-leaf references.
                 oldHEdge->twin->next = newHEdge->twin;
+
+                // There is now one more half-edge in this leaf.
+                oldHEdge->twin->bspLeaf->hedgeCount += 1;
             }
         }
 
@@ -674,7 +669,7 @@ struct Partitioner::Instance
         HEdge* newHEdge = splitHEdge(hedge, point);
 
         // Ensure the new twin is inserted into the same block as the old twin.
-        if(hedge->twin && !hedgeIsInLeaf(*hedge->twin))
+        if(hedge->twin && !hedge->twin->bspLeaf)
         {
             SuperBlock* bmapBlock = hedgeInfo(*hedge->twin).bmapBlock;
             Q_ASSERT(bmapBlock);
@@ -1342,9 +1337,8 @@ struct Partitioner::Instance
         // Clear the HEdge intercept data associated with points in the half-plane.
         clearPartitionIntercepts();
 
-        setPartitionInfo(hedgeInfo(*hedge), lineDef);
-
         // We can now reconfire the half-plane itself.
+        setPartitionInfo(hedgeInfo(*hedge), lineDef);
 
         const Vertex* from = lineDef->L_v(hedge->side);
         const Vertex* to   = lineDef->L_v(hedge->side^1);
@@ -1407,14 +1401,16 @@ struct Partitioner::Instance
      * Sort the given list of half-edges into clockwise order based on their
      * position/orientation compared to the specified point.
      *
-     * @param headPtr       Ptr to the address of the headPtr to the list
-     *                      of hedges to be sorted.
-     * @param num           Number of half edges in the list.
-     * @param point         The point to order around.
+     * @param hedgeList  Head of the list of hedges to be sorted.
+     * @param num  Number of half edges in the list.
+     * @param point  Map space point around which to order.
+     * @param sortBuffer  Buffer to use for sorting of the hedges.
      */
-    static void clockwiseOrder(HEdgeSortBuffer& sortBuffer, HEdge** headPtr,
-        uint num, pvec2d_t point)
+    static void clockwiseOrder(HEdge** hedgeList, uint num, pvec2d_t point,
+        HEdgeSortBuffer& sortBuffer)
     {
+        if(!hedgeList) return;
+
         // Ensure the sort buffer is large enough.
         if(num > sortBuffer.size())
         {
@@ -1423,7 +1419,7 @@ struct Partitioner::Instance
 
         // Insert the hedges into the sort buffer.
         uint i = 0;
-        for(HEdge* hedge = *headPtr; hedge; hedge = hedge->next, ++i)
+        for(HEdge* hedge = *hedgeList; hedge; hedge = hedge->next, ++i)
         {
             sortBuffer[i] = hedge;
         }
@@ -1432,20 +1428,20 @@ struct Partitioner::Instance
         HEdgeSortBuffer::iterator end = begin + num;
         sortHEdgesByAngleAroundPoint(begin, end, point);
 
-        // Re-link the half-edge list in the order of the sorted array.
-        *headPtr = NULL;
+        // Re-link the half-edge list in the order of the sort buffer.
+        *hedgeList = NULL;
         for(uint i = 0; i < num; ++i)
         {
             uint idx = (num - 1) - i;
             uint j = idx % num;
 
-            sortBuffer[j]->next = *headPtr;
-            *headPtr = sortBuffer[j];
+            sortBuffer[j]->next = *hedgeList;
+            *hedgeList = sortBuffer[j];
         }
 
         /*
         LOG_DEBUG("Sorted half-edges around [%1.1f, %1.1f]" << point[VX] << point[VY];
-        for(hedge = *headPtr; hedge; hedge = hedge->next)
+        for(hedge = *hedgeList; hedge; hedge = hedge->next)
         {
             double angle = M_SlopeToAngle(hedge->v[0]->V_pos[VX] - point[VX],
                                           hedge->v[0]->V_pos[VY] - point[VY]);
@@ -1467,17 +1463,11 @@ struct Partitioner::Instance
 
         V2d_Set(midPoint, 0, 0);
         getAveragedCoords(leaf, midPoint);
-
-        // Count half-edges.
-        leaf->hedgeCount = 0;
-        for(HEdge* hedge = leaf->hedge; hedge; hedge = hedge->next)
-            leaf->hedgeCount++;
-
-        clockwiseOrder(sortBuffer, &leaf->hedge, leaf->hedgeCount, midPoint);
+        clockwiseOrder(&leaf->hedge, leaf->hedgeCount, midPoint, sortBuffer);
 
         if(leaf->hedge)
         {
-            /// @todo Construct the leaf's hedge ring as we go.
+            /// @todo Construct the leaf's hedge ring as we go?
             HEdge* hedge;
             for(hedge = leaf->hedge; ;)
             {
@@ -1546,12 +1536,12 @@ struct Partitioner::Instance
     }
 
     /**
-     * Traverse the BSP tree and put all the half-edges in each BSP leaf into clockwise
-     * order, and renumber their indices.
+     * Traverse the BSP tree and sort all half-edges in each BSP leaf into a
+     * clockwise order.
      *
-     * @important This cannot be done during BspBuilder::buildNodes() since splitting
-     * a half-edge with a twin may insert another half-edge into that twin's list,
-     * usually in the wrong place order-wise.
+     * @important This cannot be done during Partitioner::buildNodes() as
+     * splitting a half-edge with a twin will result in another half-edge being
+     * inserted into that twin's leaf (usually in the wrong place order-wise).
      */
     void windLeafs()
     {
@@ -1992,6 +1982,9 @@ struct Partitioner::Instance
 
                     // Link hedge to this leaf.
                     hedge->bspLeaf = leaf;
+
+                    // There is now one more half-edge in this leaf.
+                    leaf->hedgeCount += 1;
                 }
 
                 if(prev == cur->parent())
