@@ -325,6 +325,7 @@ void GL_ReserveNames(void)
     if(reservedCount < NUM_RESERVED_TEXTURENAMES)
     {
         LIBDENG_ASSERT_IN_MAIN_THREAD();
+        LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
         glGenTextures(NUM_RESERVED_TEXTURENAMES - reservedCount,
             (GLuint*) &reservedTextureNames[reservedCount]);
@@ -339,6 +340,7 @@ void GL_ReleaseReservedNames(void)
         return; // Just ignore.
 
     LIBDENG_ASSERT_IN_MAIN_THREAD(); // not deferring here
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     Sys_Lock(deferredMutex);
     glDeleteTextures(reservedCount, (const GLuint*) reservedTextureNames);
@@ -413,6 +415,7 @@ void GL_ProcessDeferredTasks(uint timeOutMilliSeconds)
         Con_Error("GL_ProcessDeferredTasks: Deferred GL task system not initialized.");
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     startTime = Sys_GetRealTime();
 

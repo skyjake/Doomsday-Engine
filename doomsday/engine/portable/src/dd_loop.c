@@ -159,6 +159,7 @@ void DD_GameLoopDrawer(void)
     assert(!Con_IsBusy()); // Busy mode has its own drawer.
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Frame syncronous I/O operations.
     startFrame();

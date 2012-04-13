@@ -1319,6 +1319,7 @@ void FIData_TextDraw(fi_object_t* obj, const float offset[3])
     if(!t->text) return;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();

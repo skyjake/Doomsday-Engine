@@ -471,6 +471,7 @@ void Rend_ConsoleFPS(const Point2Raw* origin)
     size.height = FR_SingleLineHeight(buf)  + 16;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glEnable(GL_TEXTURE_2D);
 
@@ -502,6 +503,7 @@ static void drawConsoleTitleBar(float alpha)
     barHeight = calcConsoleTitleBarHeight();
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
@@ -666,6 +668,7 @@ static void drawConsole(float consoleAlpha)
     assert(inited);
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     FR_SetFont(Con_Font());
     FR_PushAttrib();

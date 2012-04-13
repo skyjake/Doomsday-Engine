@@ -104,6 +104,7 @@ static void renderSkyModels(void)
     int i, c;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();

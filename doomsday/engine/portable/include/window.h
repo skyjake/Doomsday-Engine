@@ -312,6 +312,24 @@ boolean Window_ShouldRepaintManually(const Window* wnd);
 
 void Window_UpdateCanvasFormat(Window* wnd);
 
+/**
+ * Activates the window's GL context so that OpenGL API calls can be made.
+ * The GL context is automatically active during the drawing of the window's
+ * contents; at other times it needs to be manually activated.
+ *
+ * @param wnd  Window instance.
+ */
+void Window_GLActivate(Window* wnd);
+
+/**
+ * Dectivates the window's GL context after OpenGL API calls have been done.
+ * The GL context is automatically deactived after the drawing of the window's
+ * contents; at other times it needs to be manually deactivated.
+ *
+ * @param wnd  Window instance.
+ */
+void Window_GLDone(Window* wnd);
+
 void* Window_NativeHandle(const Window* wnd);
 
 #ifdef __cplusplus

@@ -668,6 +668,7 @@ void Net_DrawDemoOverlay(void)
     strcat(buf, "]");
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Go into screen projection mode.
     glMatrixMode(GL_PROJECTION);

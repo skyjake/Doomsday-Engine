@@ -223,6 +223,7 @@ void Rend_ModelViewMatrix(boolean useAngles)
     vpitch = viewData->current.pitch * 85.0 / 110.0;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();

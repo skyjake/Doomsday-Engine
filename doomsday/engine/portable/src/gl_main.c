@@ -185,6 +185,16 @@ boolean GL_IsInited(void)
     return initGLOk;
 }
 
+void GL_AssertContextActive(void)
+{
+#ifdef MACOSX
+    assert(CGLGetCurrentContext() != 0);
+#endif
+#ifdef WIN32
+    assert(wglGetCurrentContext() != 0);
+#endif
+}
+
 /**
  * Swaps buffers / blits the back buffer to the front.
  */
@@ -196,6 +206,7 @@ void GL_DoUpdate(void)
         GL_SetGamma();
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(Window_ShouldRepaintManually(Window_Main()))
     {
@@ -442,6 +453,7 @@ void GL_Shutdown(void)
         return; // Not yet initialized fully.
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // We won't be drawing anything further but we don't want to shutdown
     // with the previous frame still visible as this can lead to unwanted
@@ -488,6 +500,7 @@ void GL_Init2DState(void)
     glFarClip = 16500;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Here we configure the OpenGL state and set the projection matrix.
     glDisable(GL_CULL_FACE);
@@ -521,6 +534,7 @@ void GL_Init2DState(void)
 void GL_SwitchTo3DState(boolean push_state, const viewport_t* port, const viewdata_t* viewData)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(push_state)
     {
@@ -549,6 +563,7 @@ void GL_SwitchTo3DState(boolean push_state, const viewport_t* port, const viewda
 void GL_Restore2DState(int step, const viewport_t* port, const viewdata_t* viewData)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     switch(step)
     {
@@ -622,6 +637,7 @@ void GL_ProjectionMatrix(void)
     float aspect = viewpw / (float) viewph;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -728,6 +744,7 @@ unsigned char* GL_GrabScreen(void)
 void GL_BlendMode(blendmode_t mode)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     switch(mode)
     {
@@ -880,6 +897,7 @@ void GL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT)
     if(rawTex)
     {
         LIBDENG_ASSERT_IN_MAIN_THREAD();
+        LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
         GL_BindTextureUnmanaged(GL_PrepareRawTexture(rawTex), (filterUI ? GL_LINEAR : GL_NEAREST));
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapS);
@@ -890,6 +908,7 @@ void GL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT)
 void GL_BindTextureUnmanaged(DGLuint glName, int magMode)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(glName == 0)
     {
@@ -906,6 +925,7 @@ void GL_BindTextureUnmanaged(DGLuint glName, int magMode)
 void GL_SetNoTexture(void)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     /// @todo Don't actually change the current binding.
     ///       Simply disable any currently enabled texture types.

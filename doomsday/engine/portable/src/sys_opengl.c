@@ -200,6 +200,7 @@ static void printGLUInfo(void)
     GLint iVal;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     Con_Message("OpenGL information:\n");
     Con_Message("  Vendor: %s\n", glGetString(GL_VENDOR));
@@ -463,7 +464,9 @@ boolean Sys_GLInitialize(void)
     if(novideo) return true;
 
     assert(doneEarlyInit);
+
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     assert(!Sys_GLCheckError());
 
@@ -535,7 +538,9 @@ void Sys_GLConfigureDefaultState(void)
      *       cannot be accessed here during initial startup.
      */
     assert(doneEarlyInit);
+
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glFrontFace(GL_CW);
     glDisable(GL_CULL_FACE);

@@ -1571,6 +1571,7 @@ static void drawPoint(float pos[3], float radius, const float color[4])
     radY = radX / 1.2f;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glColor4fv(color);
 
@@ -1603,6 +1604,7 @@ void Rend_DrawShadowOffsetVerts(void)
     float pos[3];
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glDepthMask(GL_FALSE);
     glDisable(GL_DEPTH_TEST);

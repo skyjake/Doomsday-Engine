@@ -1256,6 +1256,7 @@ void Sfx_DebugInfo(void)
     uint cachesize, ccnt;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glEnable(GL_TEXTURE_2D);
 

@@ -60,6 +60,14 @@ extern int      r_detail;
 
 boolean         GL_IsInited(void);
 
+#ifdef _DEBUG
+#  define LIBDENG_ASSERT_GL_CONTEXT_ACTIVE()  {GL_AssertContextActive();}
+#else
+#  define LIBDENG_ASSERT_GL_CONTEXT_ACTIVE()
+#endif
+
+void GL_AssertContextActive(void);
+
 void            GL_Register(void);
 boolean         GL_EarlyInit(void);
 void            GL_Init(void);

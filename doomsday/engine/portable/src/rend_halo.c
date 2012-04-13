@@ -108,6 +108,7 @@ void H_Register(void)
 void H_SetupState(boolean dosetup)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(dosetup)
     {
@@ -255,6 +256,7 @@ boolean H_RenderHalo(float x, float y, float z, float size, DGLuint tex,
         H_SetupState(true);
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Prepare the texture rotation matrix.
     glMatrixMode(GL_TEXTURE);

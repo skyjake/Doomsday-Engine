@@ -462,6 +462,8 @@ static void BusyTask_Loop(void)
 
     if(canUpload)
     {
+        Window_GLActivate(Window_Main());
+
         // Any deferred content needs to get uploaded.
         GL_ProcessDeferredTasks(15);
     }
@@ -503,6 +505,7 @@ static void Con_DrawScreenshotBackground(float x, float y, float width, float he
     if(texScreenshot)
     {
         LIBDENG_ASSERT_IN_MAIN_THREAD();
+        LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
         //GL_BindTextureUnmanaged(texScreenshot, GL_LINEAR);
         glBindTexture(GL_TEXTURE_2D, texScreenshot);
@@ -554,6 +557,7 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
     edgeCount = MAX_OF(1, pos * 30);
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Draw a background.
     GL_BlendMode(BM_NORMAL);
@@ -772,6 +776,7 @@ static void BusyTask_Drawer(void)
     float pos = 0;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
@@ -866,6 +871,7 @@ void Con_DrawTransition(void)
     if(!Con_TransitionInProgress()) return;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();

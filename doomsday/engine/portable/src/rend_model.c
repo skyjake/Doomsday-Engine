@@ -197,6 +197,7 @@ static void Mod_EnableArrays(int vertices, int colors, int coords)
     int i;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(vertices)
     {
@@ -238,6 +239,7 @@ static void Mod_DisableArrays(int vertices, int colors, int coords)
     int i;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(vertices)
     {
@@ -278,6 +280,7 @@ static void Mod_DisableArrays(int vertices, int colors, int coords)
 static __inline void enableTexUnit(byte id)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glActiveTexture(GL_TEXTURE0 + id);
     glEnable(GL_TEXTURE_2D);
@@ -286,6 +289,7 @@ static __inline void enableTexUnit(byte id)
 static __inline void disableTexUnit(byte id)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glActiveTexture(GL_TEXTURE0 + id);
     glDisable(GL_TEXTURE_2D);
@@ -325,6 +329,7 @@ static void Mod_Arrays(void* vertices, void* colors, int numCoords,
     int i;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(vertices)
     {
@@ -335,7 +340,6 @@ static void Mod_Arrays(void* vertices, void* colors, int numCoords,
         }
         else
         {
-            LIBDENG_ASSERT_IN_MAIN_THREAD();
             glEnableClientState(GL_VERTEX_ARRAY);
             glVertexPointer(3, GL_FLOAT, 16, vertices);
         }
@@ -385,6 +389,7 @@ static void Mod_Arrays(void* vertices, void* colors, int numCoords,
 static void Mod_UnlockArrays(void)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(!GL_state.features.elementArrays) return;
 
@@ -395,6 +400,7 @@ static void Mod_UnlockArrays(void)
 static void Mod_ArrayElement(int index)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(GL_state.features.elementArrays)
     {
@@ -425,6 +431,7 @@ static void Mod_DrawElements(dglprimtype_t type, int count, const uint* indices)
                        type == DGL_TRIANGLE_STRIP ? GL_TRIANGLE_STRIP : GL_TRIANGLES);
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(GL_state.features.elementArrays)
     {
@@ -494,6 +501,7 @@ static void Mod_RenderCommands(rendcmd_t mode, void* glCommands, /*uint numVerti
     byte* pos;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Disable all vertex arrays.
     Mod_DisableArrays(true, true, DDMAXINT);
@@ -865,6 +873,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     int zSign = (params->mirror? -1 : 1);
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Do not bother with infinitely small models...
     if(mf->scale[VX] == 0 && (int)mf->scale[VY] == 0 && mf->scale[VZ] == 0) return;
@@ -1342,6 +1351,7 @@ void Rend_RenderModel(const rendmodelparams_t* params)
     uint i;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     errorIfNotInited("Rend_RenderModel");
 

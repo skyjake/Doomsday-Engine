@@ -1313,3 +1313,17 @@ void Window_UpdateCanvasFormat(Window* wnd)
     assert(wnd != 0);
     wnd->needRecreateCanvas = true;
 }
+
+void Window_GLActivate(Window* wnd)
+{
+    if(wnd->type == WT_CONSOLE) return;
+    wnd->assertWindow();
+    wnd->widget->canvas().makeCurrent();
+}
+
+void Window_GLDone(Window* wnd)
+{
+    if(wnd->type == WT_CONSOLE) return;
+    wnd->assertWindow();
+    wnd->widget->canvas().doneCurrent();
+}

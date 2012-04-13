@@ -97,6 +97,7 @@ void Rend_SpriteRegister(void)
 static __inline void renderQuad(dgl_vertex_t *v, dgl_color_t *c, dgl_texcoord_t *tc)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glBegin(GL_QUADS);
         glColor4ubv(c[0].rgba);
