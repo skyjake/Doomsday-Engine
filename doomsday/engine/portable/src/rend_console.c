@@ -641,12 +641,15 @@ static void drawSideText(const char* text, int line, float alpha)
     FR_PopAttrib();
 }
 
-static void escapeFormatting(ddstring_t* dest, const char* src)
+static void escapeFormatting(ddstring_t* dest, const char* src, int maxSourceLen)
 {
+    int i = 0;
+
     if(!src) return;
     Str_Clear(dest);
-    for(; *src; ++src)
+    for(; *src; ++src, ++i)
     {
+        if(maxSourceLen && i == maxSourceLen) break;
         if(*src == '{')
         {
             Str_AppendChar(dest, FR_FORMAT_ESCAPE_CHAR);
@@ -660,7 +663,7 @@ static void applyFilter(char* buff)
     con_textfilter_t printFilter = Con_PrintFilter();
     ddstring_t* escaped = Str_New();
 
-    escapeFormatting(escaped, buff);
+    escapeFormatting(escaped, buff, 0);
     strcpy(buff, Str_Text(escaped));
     Str_Delete(escaped);
 
@@ -853,11 +856,11 @@ static void drawConsole(float consoleAlpha)
     /// @todo Clean this up; use a common applyFilter() function.
     {
         ddstring_t* escaped = Str_New();
-        escapeFormatting(escaped, cmdLine + offset);
+        escapeFormatting(escaped, cmdLine + offset, maxLineLength);
 
-        dd_snprintf(buff, LOCALBUFFSIZE -1/*terminator*/, ">%s%.*s%s",
+        dd_snprintf(buff, LOCALBUFFSIZE - 1/*terminator*/, ">%s%s%s",
                     abbrevLeft?  "{alpha=.5}[...]{alpha=1}" : "",
-                    maxLineLength, Str_Text(escaped),
+                    Str_Text(escaped),
                     abbrevRight? "{alpha=.5}[...]" : "");
 
         Str_Delete(escaped);
@@ -888,7 +891,9 @@ static void drawConsole(float consoleAlpha)
         memset(temp, 0, sizeof(temp));
         //strncpy(temp, cmdLine + offset, MIN_OF(LOCALBUFFSIZE -1/*prompt length*/ /*-1*//*vis clamp*/, cmdCursor-offset + (abbrevLeft? 24/*abbrev length*/:0) + 1));
         strcpy(temp, ">");
-        strncpy(temp + 1, cmdLine + offset, MIN_OF(LOCALBUFFSIZE - 1, cmdCursor - offset));
+        if(abbrevLeft) strcat(temp, "[...]");
+        strncat(temp, cmdLine + offset, MIN_OF(LOCALBUFFSIZE - 1,
+                                               cmdCursor - offset - (abbrevRight? 5 : 0)));
         applyFilter(temp);
         xOffset = FR_TextWidth(temp);
         if(Con_InputMode())
