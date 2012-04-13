@@ -589,7 +589,7 @@ void FIPage_Drawer(fi_page_t* p)
     glPushMatrix();
     //glLoadIdentity();
 
-    //GL_SetMultisample(true);
+    GL_SetMultisample(true);
 
     // The 3D projection matrix.
     // We're assuming pixels are squares.
@@ -648,7 +648,7 @@ void FIPage_Drawer(fi_page_t* p)
         GL_DrawRectf2Color(0, 0, SCREENWIDTH, SCREENHEIGHT, p->_filter[0].value, p->_filter[1].value, p->_filter[2].value, p->_filter[3].value);
     }
 
-    //GL_SetMultisample(false);
+    GL_SetMultisample(false);
 
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();

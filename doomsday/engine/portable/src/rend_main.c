@@ -3365,7 +3365,7 @@ void Rend_RenderMap(void)
     // Set to true if dynlights are inited for this frame.
     loInited = false;
 
-    //GL_SetMultisample(true);
+    GL_SetMultisample(true);
 
     // Setup the modelview matrix.
     Rend_ModelViewMatrix(true);
@@ -3442,7 +3442,7 @@ void Rend_RenderMap(void)
     // Draw the Source Bias Editor's draw that identifies the current light.
     SBE_DrawCursor();
 
-    //GL_SetMultisample(false);
+    GL_SetMultisample(false);
 }
 
 /**

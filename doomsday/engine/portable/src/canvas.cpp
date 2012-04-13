@@ -118,6 +118,9 @@ Canvas::Canvas(QWidget* parent, QGLWidget* shared) : QGLWidget(parent, shared)
     LOG_DEBUG("swap interval: ") << format().swapInterval();
     LOG_DEBUG("multisample: %b") << format().sampleBuffers();
 
+    // Update the capability flags.
+    GL_state.features.multisample = format().sampleBuffers();
+
     setFocusPolicy(Qt::StrongFocus);
     setMouseTracking(true); // receive moves always
 

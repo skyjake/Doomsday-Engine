@@ -387,18 +387,17 @@ void GL_SetVSync(boolean on)
 
 void GL_SetMultisample(boolean on)
 {
-    Con_SetInteger("vid-fsaa", on? 1 : 0);
-
-    /*
     if(!GL_state.features.multisample) return;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
 
-#if WIN32
+#if defined(WIN32)
     if(on) glEnable(GL_MULTISAMPLE_ARB);
     else  glDisable(GL_MULTISAMPLE_ARB);
+#else
+    if(on) glEnable(GL_MULTISAMPLE);
+    else  glDisable(GL_MULTISAMPLE);
 #endif
-    */
 }
 
 void DGL_SetScissor(const RectRaw* rect)

@@ -89,8 +89,25 @@ void            GL_UseFog(int yes);
 void            GL_LowRes(void);
 
 void            GL_ModulateTexture(int mode);
-void            GL_SetVSync(boolean on);
-void            GL_SetMultisample(boolean on);
+
+/**
+ * Enables or disables vsync. Changes the value of the vid-vsync variable.
+ * May cause the OpenGL surface to be recreated.
+ *
+ * @param on  @c true to enable vsync, @c false to disable.
+ */
+void GL_SetVSync(boolean on);
+
+/**
+ * Enables or disables multisampling when FSAA is available (vid-fsaa 1). You
+ * cannot enable multisampling if vid-fsaa is 0. Never causes the GL surface or
+ * pixel format to be modified; can be called at any time during the rendering
+ * of a frame.
+ *
+ * @param on  @c true to enable multisampling, @c false to disable.
+ */
+void GL_SetMultisample(boolean on);
+
 void            GL_BlendOp(int op);
 boolean         GL_NewList(DGLuint list, int mode);
 DGLuint         GL_EndList(void);
