@@ -130,6 +130,9 @@ int main(int argc, char** argv)
     // Application core.
     de::App dengApp(argc, argv, useGUI);
 
+    // Override the system locale (affects number/time formatting).
+    QLocale::setDefault(QLocale::c());
+
     // Metadata.
     QApplication::setOrganizationDomain("dengine.net");
     QApplication::setOrganizationName("Deng Team");
