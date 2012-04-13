@@ -40,8 +40,7 @@ namespace bsp {
 struct VertexInfo
 {
     struct HEdgeTip* tipSet;
-    VertexInfo::VertexInfo() : tipSet(0)
-    {}
+    VertexInfo() : tipSet(0) {}
 };
 
 } // namespace bsp

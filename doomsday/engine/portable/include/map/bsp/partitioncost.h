@@ -42,7 +42,7 @@ struct PartitionCost
     int miniRight;
     int miniLeft;
 
-    PartitionCost::PartitionCost() :
+    PartitionCost() :
         total(0), splits(0), iffy(0), nearMiss(0), realRight(0),
         realLeft(0), miniRight(0), miniLeft(0)
     {}

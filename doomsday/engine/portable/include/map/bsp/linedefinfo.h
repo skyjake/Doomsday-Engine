@@ -59,7 +59,7 @@ struct LineDefInfo
     /// @todo Refactor me away.
     int validCount;
 
-    LineDefInfo::LineDefInfo() : flags(0), overlap(0), validCount(0)
+    LineDefInfo() : flags(0), overlap(0), validCount(0)
     {}
 };
 

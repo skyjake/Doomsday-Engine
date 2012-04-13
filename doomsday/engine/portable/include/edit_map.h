@@ -98,7 +98,6 @@ boolean         MPE_GameObjProperty(const char *objName, uint idx,
 void            MPE_PruneRedundantMapData(editmap_t* map, int flags);
 
 GameMap*        MPE_GetLastBuiltMap(void);
-Vertex*         createVertex(void);
 
 #ifdef __cplusplus
 } // extern "C"
