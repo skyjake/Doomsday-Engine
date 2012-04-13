@@ -150,7 +150,7 @@ int DisplayMode_Init(void)
 
     captured = false;
     DisplayMode_Native_Init();
-    DisplayMode_Native_GetColorTransfer(&originalColorTransfer);
+    DisplayMode_SaveOriginalColorTransfer();
 
     // This is used for sorting the mode set (Hz).
     originalMode = Mode::fromCurrent();
@@ -193,6 +193,11 @@ void DisplayMode_Shutdown(void)
     DisplayMode_Native_SetColorTransfer(&originalColorTransfer);
 
     inited = false;
+}
+
+void DisplayMode_SaveOriginalColorTransfer(void)
+{
+    DisplayMode_Native_GetColorTransfer(&originalColorTransfer);
 }
 
 const DisplayMode* DisplayMode_OriginalMode(void)
