@@ -104,9 +104,17 @@ Time::Delta Time::operator - (const Time& earlierTime) const
 #endif
 }
 
-String Time::asText() const
+String Time::asText(Format format) const
 {
-    return _time.toString("yyyy-MM-dd hh:mm:ss.zzz");
+    if(format == ISOFormat)
+    {
+        return _time.toString("yyyy-MM-dd hh:mm:ss.zzz");
+    }
+    else
+    {
+        return QString("#%1 ").arg(QDate(2011, 1, 1).daysTo(_time.date()) + 1, -4) +
+                _time.toString("hh:mm:ss.zzz");
+    }
 }
 
 Date Time::asDate() const

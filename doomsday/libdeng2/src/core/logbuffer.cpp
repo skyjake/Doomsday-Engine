@@ -205,7 +205,7 @@ void LogBuffer::flush()
 #ifdef _DEBUG
             // Debug builds include a timestamp and msg type indicator.
             const duint MAX_LENGTH = 110;
-            const duint SIMPLE_INDENT = 30;
+            const duint SIMPLE_INDENT = 25;
 #else
             const duint MAX_LENGTH = 89;
             const duint SIMPLE_INDENT = 4;

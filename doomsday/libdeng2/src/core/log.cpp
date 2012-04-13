@@ -86,7 +86,7 @@ String LogEntry::asText(const Flags& formattingFlags) const
         // Begin with the timestamp.
         if(flags & Styled) output << TEXT_STYLE_LOG_TIME;
     
-        output << _when << " ";
+        output << _when.asText(Date::BuildNumberAndTime) << " ";
 
         if(!flags.testFlag(Styled))
         {

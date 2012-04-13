@@ -91,6 +91,11 @@ public:
         ddouble _seconds;
     };
 
+    enum Format {
+        ISOFormat,
+        BuildNumberAndTime
+    };
+
 public:
     /**
      * Constructor initializes the time to the current time.
@@ -182,7 +187,7 @@ public:
     /**
      * Makes a text representation of the time (default is seconds since the epoch).
      */
-    String asText() const;
+    String asText(Format format = ISOFormat) const;
 
     /**
      * Converts the time to a QDateTime.
