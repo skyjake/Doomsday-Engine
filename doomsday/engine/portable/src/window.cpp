@@ -890,7 +890,8 @@ static void finishMainWindowInit(Canvas& canvas)
     win->widget->raise();
     win->widget->activateWindow();
 
-    if(Mouse_IsPresent())
+    // Automatically grab the mouse from the get-go if in fullscreen mode.
+    if(Mouse_IsPresent() && Window_IsFullscreen(win))
     {
         Window_TrapMouse(&mainWindow, true);
     }
