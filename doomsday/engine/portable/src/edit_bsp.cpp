@@ -276,6 +276,7 @@ static void hardenVertexes(BspBuilder& builder, GameMap* map,
         Vertex& dest = map->vertexes[n];
         Vertex const& src = *((*editableVertexes)[n]);
 
+        dest.header.type = DMU_VERTEX;
         copyVertex(dest, src);
     }
 
@@ -285,6 +286,8 @@ static void hardenVertexes(BspBuilder& builder, GameMap* map,
         Vertex const& src = builder.vertex(i);
 
         builder.releaseOwnership(*reinterpret_cast<runtime_mapdata_header_t const*>(&src));
+
+        dest.header.type = DMU_VERTEX;
         copyVertex(dest, src);
     }
 }
