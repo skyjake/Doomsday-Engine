@@ -123,6 +123,11 @@ public:
     void printLogFragment(const char* text, Log::LogLevel level = Log::MESSAGE);
 
     /**
+     * Sets a callback to be called when an uncaught exception occurs.
+     */
+    void setTerminateFunc(void (*func)(const char* msg));
+
+    /**
      * Returns the LegacyCore singleton instance.
      */
     static LegacyCore& instance();
@@ -134,6 +139,7 @@ public:
 
 public slots:
     void callback();
+    void handleUncaughtException(QString message);
 
 private:
     // Private instance data.

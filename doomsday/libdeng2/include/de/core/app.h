@@ -31,9 +31,14 @@ namespace de
      */
     class DENG2_PUBLIC App : public QApplication
     {
+        Q_OBJECT
+
     public:
         App(int& argc, char** argv, bool useGUI);
         bool notify(QObject* receiver, QEvent* event);
+
+    signals:
+        void uncaughtException(QString message);
     };
 }
 

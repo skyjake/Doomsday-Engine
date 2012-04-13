@@ -132,6 +132,12 @@ void LegacyCore_PrintfLogFragmentAtLevel(LegacyCore* lc, legacycore_loglevel_t l
     self->printLogFragment(buffer, logLevel);
 }
 
+void LegacyCore_SetTerminateFunc(LegacyCore* lc, void (*func)(const char*))
+{
+    DENG2_SELF(LegacyCore, lc);
+    self->setTerminateFunc(func);
+}
+
 void LogBuffer_Flush(void)
 {
     de::LogBuffer::appBuffer().flush();

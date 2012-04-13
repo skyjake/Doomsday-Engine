@@ -200,95 +200,103 @@ void LogBuffer::flush()
         DebugOutputStream outs(QtDebugMsg);
         DebugOutputStream errs(QtWarningMsg);
 #endif
-
-#ifdef _DEBUG
-        // Debug builds include a timestamp and msg type indicator.
-        const duint MAX_LENGTH = 109;
-        const duint SIMPLE_INDENT = 30;
-#else
-        const duint MAX_LENGTH = 89;
-        const duint SIMPLE_INDENT = 4;
-#endif
-        const duint RULER_LENGTH = MAX_LENGTH - SIMPLE_INDENT - 1;
-
-        DENG2_FOR_EACH(i, _toBeFlushed, EntryList::iterator)
+        try
         {
-            // Error messages will go to stderr instead of stdout.
-            QList<IOutputStream*> os;
-            os << ((*i)->level() >= Log::WARNING? &errs : &outs) << &fs;
+#ifdef _DEBUG
+            // Debug builds include a timestamp and msg type indicator.
+            const duint MAX_LENGTH = 110;
+            const duint SIMPLE_INDENT = 30;
+#else
+            const duint MAX_LENGTH = 89;
+            const duint SIMPLE_INDENT = 4;
+#endif
+            const duint RULER_LENGTH = MAX_LENGTH - SIMPLE_INDENT - 1;
+
+            DENG2_FOR_EACH(i, _toBeFlushed, EntryList::iterator)
+            {
+                // Error messages will go to stderr instead of stdout.
+                QList<IOutputStream*> os;
+                os << ((*i)->level() >= Log::WARNING? &errs : &outs) << &fs;
 
 #ifdef _DEBUG
-            String message = (*i)->asText();
+                String message = (*i)->asText();
 #else
-            // In a release build we can dispense with the metadata.
-            String message = (*i)->asText(LogEntry::Simple);
+                // In a release build we can dispense with the metadata.
+                String message = (*i)->asText(LogEntry::Simple);
 #endif
 
-            // Print line by line.
-            String::size_type pos = 0;
-            while(pos != String::npos)
-            {
-                String::size_type next = message.indexOf('\n', pos);
-                duint lineLen = (next == String::npos? message.size() - pos : next - pos);
-                const duint maxLen = (pos > 0? MAX_LENGTH - SIMPLE_INDENT : MAX_LENGTH);
-                if(lineLen > maxLen)
+                // Print line by line.
+                String::size_type pos = 0;
+                while(pos != String::npos)
                 {
-                    // Wrap overly long lines.
-                    next = pos + maxLen;
-                    lineLen = maxLen;
-
-                    // Maybe there's whitespace we can wrap at.
-                    int checkPos = pos + maxLen;
-                    while(checkPos > pos)
+                    String::size_type next = message.indexOf('\n', pos);
+                    duint lineLen = (next == String::npos? message.size() - pos : next - pos);
+                    const duint maxLen = (pos > 0? MAX_LENGTH - SIMPLE_INDENT : MAX_LENGTH);
+                    if(lineLen > maxLen)
                     {
-                        if(message[checkPos].isSpace() ||
-                                (message[checkPos].isPunct() && message[checkPos] != '.' &&
-                                 message[checkPos] != ',' && message[checkPos] != '-'))
+                        // Wrap overly long lines.
+                        next = pos + maxLen;
+                        lineLen = maxLen;
+
+                        // Maybe there's whitespace we can wrap at.
+                        int checkPos = pos + maxLen;
+                        while(checkPos > pos)
                         {
-                            if(!message[checkPos].isSpace())
+                            if(message[checkPos].isSpace() ||
+                                    (message[checkPos].isPunct() && message[checkPos] != '.' &&
+                                     message[checkPos] != ',' && message[checkPos] != '-'))
                             {
-                                // Include the punctuation on this line.
-                                checkPos++;
+                                if(!message[checkPos].isSpace())
+                                {
+                                    // Include the punctuation on this line.
+                                    checkPos++;
+                                }
+
+                                // Break here.
+                                next = checkPos;
+                                lineLen = checkPos - pos;
+                                break;
                             }
-
-                            // Break here.
-                            next = checkPos;
-                            lineLen = checkPos - pos;
-                            break;
+                            checkPos--;
                         }
-                        checkPos--;
                     }
-                }
 
-                // For lines other than the first one, print an indentation.
-                if(pos > 0)
-                {
+                    // For lines other than the first one, print an indentation.
+                    if(pos > 0)
+                    {
+                        foreach(IOutputStream* stream, os)
+                        {
+                            if(stream) *stream << QString(SIMPLE_INDENT, QChar(' '));
+                        }
+                    }
+
+                    String lineText = message.substr(pos, lineLen);
+
+                    // Check for formatting symbols.
+                    lineText.replace("$R", String(RULER_LENGTH, '-'));
+
                     foreach(IOutputStream* stream, os)
                     {
-                        if(!stream) continue;
-                        *stream << QString(SIMPLE_INDENT, QChar(' '));
+                        if(stream) *stream << lineText;
+                    }
+
+                    pos = next;
+                    if(pos != String::npos && message[pos].isSpace()) pos++; // Skip whitespace.
+
+                    foreach(IOutputStream* stream, os)
+                    {
+                        if(stream) *stream << "\n";
                     }
                 }
-
-                String lineText = message.substr(pos, lineLen);
-
-                // Check for formatting symbols.
-                lineText.replace("$R", String(RULER_LENGTH, '-'));
-
-                foreach(IOutputStream* stream, os)
-                {
-                    if(!stream) continue;
-                    *stream << lineText;
-                }
-
-                pos = next;
-                if(pos != String::npos && message[pos].isSpace()) pos++; // Skip whitespace.
-
-                foreach(IOutputStream* stream, os)
-                {
-                    if(!stream) continue;
-                    *stream << "\n";
-                }
+            }
+        }
+        catch(const de::Error& error)
+        {
+            QList<IOutputStream*> os;
+            os << &errs << &fs;
+            foreach(IOutputStream* stream, os)
+            {
+                if(stream) *stream << "Exception during log flush:\n" << error.what() << "\n";
             }
         }
 

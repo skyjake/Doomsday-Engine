@@ -34,13 +34,11 @@ bool App::notify(QObject* receiver, QEvent* event)
     }
     catch(const std::exception& error)
     {
-        qWarning() << "de::App caught exception:" << error.what();
-        ::exit(1);
+        emit uncaughtException(error.what());
     }
     catch(...)
     {
-        qWarning() << "de::App caught exception.";
-        ::exit(1);
+        emit uncaughtException("de::App caught exception of unknown type.");
     }
     return false;
 }

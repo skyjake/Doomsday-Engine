@@ -26,6 +26,10 @@
 #include <stdarg.h>
 #include "dd_share.h"
 #include "sys_system.h"
+#include <QLayout>
+#include <QLabel>
+#include <QVBoxLayout>
+#include <QDebug>
 
 #include "nativeui.h"
 

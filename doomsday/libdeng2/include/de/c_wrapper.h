@@ -65,6 +65,7 @@ DENG2_PUBLIC int LegacyCore_SetLogFile(LegacyCore* lc, const char* filePath);
 DENG2_PUBLIC const char* LegacyCore_LogFile(LegacyCore* lc);
 DENG2_PUBLIC void LegacyCore_PrintLogFragment(LegacyCore* lc, const char* text);
 DENG2_PUBLIC void LegacyCore_PrintfLogFragmentAtLevel(LegacyCore* lc, legacycore_loglevel_t level, const char* format, ...);
+DENG2_PUBLIC void LegacyCore_SetTerminateFunc(LegacyCore* lc, void (*func)(const char*));
 
 /*
  * LogBuffer

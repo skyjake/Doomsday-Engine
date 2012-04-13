@@ -65,9 +65,18 @@ void CallbackThread::deleteNow()
 
 void CallbackThread::run()
 {
-    if(_callback)
+    try
     {
-        _returnValue = _callback(_parm);
+        if(_callback)
+        {
+            _returnValue = _callback(_parm);
+        }
+    }
+    catch(const std::exception& error)
+    {
+        LOG_AS("CallbackThread");
+        LOG_ERROR(QString("Uncaught exception: ") + error.what());
+        _returnValue = -1;
     }
 }
 

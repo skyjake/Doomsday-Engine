@@ -44,6 +44,7 @@ struct LegacyCore::Instance
         Loop() : interval(1), func(0) {}
     };
     QList<Loop> loopStack;
+    void (*terminateFunc)(const char*);
 
     App* app;
     LegacyNetwork network;
@@ -56,7 +57,7 @@ struct LegacyCore::Instance
     /// Current log output line being formed.
     std::string currentLogLine;
 
-    Instance() : app(0) {}
+    Instance() : terminateFunc(0), app(0) {}
     ~Instance() {}
 };
 
@@ -67,6 +68,8 @@ LegacyCore::LegacyCore(App* dengApp)
 
     // Construct a new core application (must have one for the event loop).
     d->app = dengApp;
+
+    connect(d->app, SIGNAL(uncaughtException(QString)), this, SLOT(handleUncaughtException(QString)));
 
     // The global log buffer will be available for the entire runtime of deng2.
     LogBuffer::setAppBuffer(d->logBuffer);
@@ -193,6 +196,11 @@ void LegacyCore::printLogFragment(const char* text, Log::LogLevel level)
     }
 }
 
+void LegacyCore::setTerminateFunc(void (*func)(const char*))
+{
+    d->terminateFunc = func;
+}
+
 void LegacyCore::callback()
 {
     if(d->loop.func)
@@ -201,4 +209,11 @@ void LegacyCore::callback()
 
         QTimer::singleShot(d->loop.interval, this, SLOT(callback()));
     }
+}
+
+void LegacyCore::handleUncaughtException(QString message)
+{
+    LOG_CRITICAL(message);
+
+    if(d->terminateFunc) d->terminateFunc(message.toUtf8().constData());
 }

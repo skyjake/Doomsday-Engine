@@ -65,6 +65,7 @@
 #include <de/c_wrapper.h>
 #include "de_platform.h"
 #include "dd_loop.h"
+#include "con_main.h"
 #include "window.h"
 #include "displaymode.h"
 #include "sys_system.h"
@@ -97,6 +98,11 @@ static void continueInitWithEventLoopRunning(void)
     // Show the main window. This causes initialization to finish (in busy mode)
     // as the canvas is visible and ready for initialization.
     Window_Show(Window_Main(), true);
+}
+
+static void handleLegacyCoreTerminate(const char* msg)
+{
+    Con_Error("Application terminated due to exception:\n%s\n", msg);
 }
 
 /**
@@ -132,6 +138,7 @@ int main(int argc, char** argv)
 
     // C interface to the app.
     de2LegacyCore = LegacyCore_New(&dengApp);
+    LegacyCore_SetTerminateFunc(de2LegacyCore, handleLegacyCoreTerminate);
 
     if(useGUI)
     {
