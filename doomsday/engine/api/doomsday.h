@@ -313,8 +313,8 @@ void Con_SetPrintFilter(con_textfilter_t filter);
 boolean MPE_Begin(const char* mapUri);
 boolean MPE_End(void);
 
-    uint            MPE_VertexCreate(float x, float y);
-    boolean         MPE_VertexCreatev(size_t num, float* values, uint* indices);
+    uint            MPE_VertexCreate(coord_t x, coord_t y);
+    boolean         MPE_VertexCreatev(size_t num, coord_t* values, uint* indices);
     uint            MPE_SidedefCreate(uint sector, short flags, materialid_t topMaterial, float topOffsetX, float topOffsetY, float topRed, float topGreen, float topBlue, materialid_t middleMaterial, float middleOffsetX, float middleOffsetY, float middleRed, float middleGreen, float middleBlue, float middleAlpha, materialid_t bottomMaterial, float bottomOffsetX, float bottomOffsetY, float bottomRed, float bottomGreen, float bottomBlue);
     uint            MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide, int flags);
     uint            MPE_SectorCreate(float lightlevel, float red, float green, float blue);

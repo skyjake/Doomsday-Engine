@@ -58,8 +58,29 @@ typedef struct editmap_s {
 boolean         MPE_Begin(const char* mapUri);
 boolean         MPE_End(void);
 
-uint            MPE_VertexCreate(float x, float y);
-boolean         MPE_VertexCreatev(size_t num, float *values, uint *indices);
+/**
+ * Create a new vertex in currently loaded editable map.
+ *
+ * @param x  X map space coordinate of the new vertex.
+ * @param y  Y map space coordinate of the new vertex.
+ *
+ * @return  Index number of the newly created vertex else @c =0 if the vertex
+ *          could not be created for some reason.
+ */
+uint MPE_VertexCreate(coord_t x, coord_t y);
+
+/**
+ * Create many new vertexs in the currently loaded editable map.
+ *
+ * @param num  Number of vertexes to be created.
+ * @param values  Array containing the coordinates for all vertexes to be
+ *                created [v0:X, vo:Y, v1:X, v1:Y, ..]
+ * @param indices  If not @c =NULL, the indices of the newly created vertexes
+ *                 will be written back here.
+ * @return  @c =true iff all vertexes were created successfully.
+ */
+boolean MPE_VertexCreatev(size_t num, coord_t* values, uint* indices);
+
 uint            MPE_SidedefCreate(uint sector, short flags,
                                   materialid_t topMaterial,
                                   float topOffsetX, float topOffsetY, float topRed,

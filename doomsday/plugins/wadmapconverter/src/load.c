@@ -109,7 +109,6 @@ typedef enum lumptype_e {
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static uint PolyLineCount;
-static int16_t PolyStart[2];
 
 static uint validCount = 0; // Used for Polyobj LineDef collection.
 
@@ -679,26 +678,24 @@ static boolean createPolyobj(mline_t **lineList, uint num, uint *poIdx,
  * @param lineList      @c NULL, will cause IterFindPolyLines to count
  *                      the number of lines in the polyobj.
  */
-static void iterFindPolyLines(int16_t x, int16_t y, mline_t** lineList)
+static void iterFindPolyLines(coord_t x, coord_t y, mline_t** lineList)
 {
     uint i;
 
     for(i = 0; i < map->numLines; ++i)
     {
         mline_t* line = &map->lines[i];
-        int16_t v1[2], v2[2];
+        coord_t v1[2], v2[2];
 
-        if(line->aFlags & LAF_POLYOBJ)
-            continue;
-        if(line->validCount == validCount)
-            continue;
+        if(line->aFlags & LAF_POLYOBJ) continue;
+        if(line->validCount == validCount) continue;
 
-        v1[VX] = (int16_t) map->vertexes[(line->v[0] - 1) * 2];
-        v1[VY] = (int16_t) map->vertexes[(line->v[0] - 1) * 2 + 1];
-        v2[VX] = (int16_t) map->vertexes[(line->v[1] - 1) * 2];
-        v2[VY] = (int16_t) map->vertexes[(line->v[1] - 1) * 2 + 1];
+        v1[VX] = map->vertexes[(line->v[0] - 1) * 2];
+        v1[VY] = map->vertexes[(line->v[0] - 1) * 2 + 1];
+        v2[VX] = map->vertexes[(line->v[1] - 1) * 2];
+        v2[VY] = map->vertexes[(line->v[1] - 1) * 2 + 1];
 
-        if(v1[VX] == x && v1[VY] == y)
+        if(FEQUAL(v1[VX], x) && FEQUAL(v1[VY], y))
         {
             line->validCount = validCount;
 
@@ -719,18 +716,16 @@ static void iterFindPolyLines(int16_t x, int16_t y, mline_t** lineList)
 static mline_t** collectPolyobjLineDefs(mline_t* lineDef, uint* num)
 {
     mline_t** lineList;
-    int16_t v1[2], v2[2];
+    coord_t v1[2], v2[2];
 
     lineDef->xType = 0;
     lineDef->xArgs[0] = 0;
 
-    v1[VX] = (int16_t) map->vertexes[(lineDef->v[0]-1) * 2];
-    v1[VY] = (int16_t) map->vertexes[(lineDef->v[0]-1) * 2 + 1];
-    v2[VX] = (int16_t) map->vertexes[(lineDef->v[1]-1) * 2];
-    v2[VY] = (int16_t) map->vertexes[(lineDef->v[1]-1) * 2 + 1];
+    v1[VX] = map->vertexes[(lineDef->v[0]-1) * 2];
+    v1[VY] = map->vertexes[(lineDef->v[0]-1) * 2 + 1];
+    v2[VX] = map->vertexes[(lineDef->v[1]-1) * 2];
+    v2[VY] = map->vertexes[(lineDef->v[1]-1) * 2 + 1];
 
-    PolyStart[VX] = v1[VX];
-    PolyStart[VY] = v1[VY];
     PolyLineCount = 1;
     validCount++;
     lineDef->validCount = validCount;
@@ -1085,16 +1080,16 @@ static boolean loadVertexes(const uint8_t* buf, size_t len)
     case MF_DOOM:
         for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
         {
-            map->vertexes[n * 2] = (float) SHORT(*((const int16_t*) (ptr)));
-            map->vertexes[n * 2 + 1] = (float) SHORT(*((const int16_t*) (ptr+2)));
+            map->vertexes[n * 2]     = (coord_t)SHORT(*((const int16_t*) (ptr)));
+            map->vertexes[n * 2 + 1] = (coord_t)SHORT(*((const int16_t*) (ptr+2)));
         }
         break;
 
     case MF_DOOM64:
         for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
         {
-            map->vertexes[n * 2] = FIX2FLT(LONG(*((const int32_t*) (ptr))));
-            map->vertexes[n * 2 + 1] = FIX2FLT(LONG(*((const int32_t*) (ptr+4))));
+            map->vertexes[n * 2]     = (coord_t)FIX2FLT(LONG(*((const int32_t*) (ptr))));
+            map->vertexes[n * 2 + 1] = (coord_t)FIX2FLT(LONG(*((const int32_t*) (ptr+4))));
         }
         break;
     }
@@ -1705,7 +1700,7 @@ boolean LoadMap(const lumpnum_t* lumpList, int numLumps)
     size_t oldLen = 0;
 
     // Allocate the data structure arrays.
-    map->vertexes = malloc(map->numVertexes * 2 * sizeof(float));
+    map->vertexes = malloc(map->numVertexes * 2 * sizeof(*map->vertexes));
     map->lines = malloc(map->numLines * sizeof(mline_t));
     map->sides = malloc(map->numSides * sizeof(mside_t));
     map->sectors = malloc(map->numSectors * sizeof(msector_t));

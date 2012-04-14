@@ -1751,40 +1751,22 @@ GameMap* MPE_GetLastBuiltMap(void)
     return lastBuiltMap;
 }
 
-/**
- * Create a new vertex in currently loaded editable map.
- *
- * @param x             X coordinate of the new vertex.
- * @param y             Y coordinate of the new vertex.
- *
- * @return              Index number of the newly created vertex else 0 if
- *                      the vertex could not be created for some reason.
- */
-uint MPE_VertexCreate(float x, float y)
+uint MPE_VertexCreate(coord_t x, coord_t y)
 {
     Vertex* v;
 
     if(!editMapInited) return 0;
 
     v = createVertex();
-    v->V_pos[VX] = x;
-    v->V_pos[VY] = y;
-    v->buildData.pos[VX] = (double) v->V_pos[VX];
-    v->buildData.pos[VY] = (double) v->V_pos[VY];
+    v->buildData.pos[VX] = x;
+    v->buildData.pos[VY] = y;
+    v->V_pos[VX] = (float)v->buildData.pos[VX];
+    v->V_pos[VY] = (float)v->buildData.pos[VY];
 
     return v->buildData.index;
 }
 
-/**
- * Create many new vertexs in the currently loaded editable map.
- *
- * @param num           Number of vertexes to be created.
- * @param values        Ptr to an array containing the coordinates for the
- *                      vertexs to create [v0 X, vo Y, v1 X, v1 Y...]
- * @param indices       If not @c NULL, the indices of the newly created
- *                      vertexes will be written back here.
- */
-boolean MPE_VertexCreatev(size_t num, float* values, uint* indices)
+boolean MPE_VertexCreatev(size_t num, coord_t* values, uint* indices)
 {
     uint n;
 
@@ -1797,10 +1779,10 @@ boolean MPE_VertexCreatev(size_t num, float* values, uint* indices)
         Vertex* v;
 
         v = createVertex();
-        v->V_pos[VX] = values[n * 2];
-        v->V_pos[VY] = values[n * 2 + 1];
-        v->buildData.pos[VX] = (double) v->V_pos[VX];
-        v->buildData.pos[VY] = (double) v->V_pos[VY];
+        v->buildData.pos[VX] = values[n * 2];
+        v->buildData.pos[VY] = values[n * 2 + 1];
+        v->V_pos[VX] = (float)v->buildData.pos[VX];
+        v->V_pos[VY] = (float)v->buildData.pos[VY];
 
         if(indices)
             indices[n] = v->buildData.index;

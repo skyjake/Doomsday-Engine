@@ -41,7 +41,7 @@ typedef struct mvertex_s {
     struct vertex_s *equiv;
 
 // Final data.
-    double      pos[2];
+    coord_t     pos[2];
 } mvertex_t;
 
 typedef struct vertex_s {

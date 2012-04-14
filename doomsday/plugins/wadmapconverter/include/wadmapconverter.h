@@ -152,7 +152,7 @@ typedef struct map_s {
     uint            numThings;
     uint            numLights;
 
-    float*          vertexes; // Array of vertex coords [v0 X, vo Y, v1 X, v1 Y...]
+    coord_t*        vertexes; // Array of vertex coords [v0:X, vo:Y, v1:X, v1:Y, ..]
     msector_t*      sectors;
     mline_t*        lines;
     mside_t*        sides;

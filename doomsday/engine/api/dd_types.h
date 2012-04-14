@@ -119,6 +119,9 @@ typedef uint16_t        nodeindex_t;
 typedef uint16_t        thid_t;
 typedef double          timespan_t;
 
+/// All points in the map coordinate space should be defined using this type.
+typedef double          coord_t;
+
 /// \todo Should be a public typedef of a type defined by de::LumpDirectory.
 typedef int32_t         lumpnum_t;
 #define LUMPNAME_T_MAXLEN 9
