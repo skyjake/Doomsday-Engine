@@ -43,14 +43,14 @@ class SuperBlock;
 struct HEdgeInfo
 {
     // Precomputed data for faster calculations.
-    double pSX, pSY;
-    double pEX, pEY;
-    double pDX, pDY;
+    coord_t pSX, pSY;
+    coord_t pEX, pEY;
+    coord_t pDX, pDY;
 
-    double pLength;
-    double pAngle;
-    double pPara;
-    double pPerp;
+    coord_t pLength;
+    coord_t pAngle;
+    coord_t pPara;
+    coord_t pPerp;
 
     HEdge* nextOnSide;
     HEdge* prevOnSide;
