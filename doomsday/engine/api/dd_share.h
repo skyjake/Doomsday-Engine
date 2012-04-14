@@ -997,8 +997,6 @@ typedef struct aabox_s {
 /**
  * Axis-aligned bounding box with floating-point precision.
  * Handy POD structure for manipulation of bounding boxes. @ingroup map
- *
- * @todo Switch precision to double?
  */
 typedef struct aaboxf_s {
     union {
@@ -1020,6 +1018,31 @@ typedef struct aaboxf_s {
         };
     };
 } AABoxf;
+
+/**
+ * Axis-aligned bounding box with double floating-point precision.
+ * Handy POD structure for manipulation of bounding boxes. @ingroup map
+ */
+typedef struct aaboxd_s {
+    union {
+        struct {
+            double vec4[4];
+        };
+        struct {
+            double arvec2[2][2];
+        };
+        struct {
+            double min[2];
+            double max[2];
+        };
+        struct {
+            double minX;
+            double minY;
+            double maxX;
+            double maxY;
+        };
+    };
+} AABoxd;
 
 /// Base mobj_t elements. Games MUST use this as the basis for mobj_t. @ingroup mobj
 #define DD_BASE_MOBJ_ELEMENTS() \

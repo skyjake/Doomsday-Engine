@@ -154,22 +154,22 @@ uint SuperBlock::hedgeCount(bool addReal, bool addMini) const
     return total;
 }
 
-static void initAABoxFromHEdgeVertexes(AABoxf* aaBox, const HEdge* hedge)
+static void initAABoxFromHEdgeVertexes(AABoxd* aaBox, const HEdge* hedge)
 {
     assert(aaBox && hedge);
-    const double* from = hedge->v[0]->buildData.pos;
-    const double* to   = hedge->v[1]->buildData.pos;
-    aaBox->minX = (float)MIN_OF(from[0], to[0]);
-    aaBox->minY = (float)MIN_OF(from[1], to[1]);
-    aaBox->maxX = (float)MAX_OF(from[0], to[0]);
-    aaBox->maxY = (float)MAX_OF(from[1], to[1]);
+    const coord_t* from = hedge->v[0]->buildData.pos;
+    const coord_t* to   = hedge->v[1]->buildData.pos;
+    aaBox->minX = MIN_OF(from[0], to[0]);
+    aaBox->minY = MIN_OF(from[1], to[1]);
+    aaBox->maxX = MAX_OF(from[0], to[0]);
+    aaBox->maxY = MAX_OF(from[1], to[1]);
 }
 
 /// @todo Optimize: Cache this result.
-void SuperBlock::findHEdgeBounds(AABoxf& bounds)
+void SuperBlock::findHEdgeBounds(AABoxd& bounds)
 {
     bool initialized = false;
-    AABoxf hedgeAABox;
+    AABoxd hedgeAABox;
 
     for(HEdges::iterator it = d->hedges.begin(); it != d->hedges.end(); ++it)
     {
@@ -177,14 +177,14 @@ void SuperBlock::findHEdgeBounds(AABoxf& bounds)
         initAABoxFromHEdgeVertexes(&hedgeAABox, hedge);
         if(initialized)
         {
-            V2f_AddToBox(bounds.arvec2, hedgeAABox.min);
+            V2d_AddToBox(bounds.arvec2, hedgeAABox.min);
         }
         else
         {
-            V2f_InitBox(bounds.arvec2, hedgeAABox.min);
+            V2d_InitBox(bounds.arvec2, hedgeAABox.min);
             initialized = true;
         }
-        V2f_AddToBox(bounds.arvec2, hedgeAABox.max);
+        V2d_AddToBox(bounds.arvec2, hedgeAABox.max);
     }
 }
 
@@ -342,30 +342,30 @@ void SuperBlockmap::clear()
     d->clearBlockWorker(root());
 }
 
-static void findHEdgeBoundsWorker(SuperBlock& block, AABoxf& bounds, bool* initialized)
+static void findHEdgeBoundsWorker(SuperBlock& block, AABoxd& bounds, bool* initialized)
 {
     Q_ASSERT(initialized);
     if(block.hedgeCount(true, true))
     {
-        AABoxf blockHEdgeAABox;
+        AABoxd blockHEdgeAABox;
         block.findHEdgeBounds(blockHEdgeAABox);
         if(*initialized)
         {
-            V2f_AddToBox(bounds.arvec2, blockHEdgeAABox.min);
+            V2d_AddToBox(bounds.arvec2, blockHEdgeAABox.min);
         }
         else
         {
-            V2f_InitBox(bounds.arvec2, blockHEdgeAABox.min);
+            V2d_InitBox(bounds.arvec2, blockHEdgeAABox.min);
             *initialized = true;
         }
-        V2f_AddToBox(bounds.arvec2, blockHEdgeAABox.max);
+        V2d_AddToBox(bounds.arvec2, blockHEdgeAABox.max);
     }
 }
 
-void SuperBlockmap::findHEdgeBounds(AABoxf& aaBox)
+void SuperBlockmap::findHEdgeBounds(AABoxd& aaBox)
 {
     bool initialized = false;
-    AABoxf bounds;
+    AABoxd bounds;
 
     // Iterative pre-order traversal of SuperBlock.
     SuperBlock* cur = &root();
@@ -406,11 +406,11 @@ void SuperBlockmap::findHEdgeBounds(AABoxf& aaBox)
 
     if(initialized)
     {
-        V2f_CopyBox(aaBox.arvec2, bounds.arvec2);
+        V2d_CopyBox(aaBox.arvec2, bounds.arvec2);
         return;
     }
 
     // Clear.
-    V2f_Set(aaBox.min, DDMAXFLOAT, DDMAXFLOAT);
-    V2f_Set(aaBox.max, DDMINFLOAT, DDMINFLOAT);
+    V2d_Set(aaBox.min, DDMAXFLOAT, DDMAXFLOAT);
+    V2d_Set(aaBox.max, DDMINFLOAT, DDMINFLOAT);
 }

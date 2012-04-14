@@ -265,6 +265,14 @@ void V2f_CopyBox(arvec2f_t dest, const arvec2f_t src)
     V2f_Copy(dest[1], src[1]);
 }
 
+void V2f_CopyBoxd(arvec2f_t dest, const arvec2d_t src)
+{
+    vec2f_t other[2];
+    V2f_Set(other[0], src[0][VX], src[0][VY]);
+    V2f_Set(other[1], src[1][VX], src[1][VY]);
+    V2f_CopyBox(dest, other);
+}
+
 void V2d_Set(pvec2d_t vec, vectorcompd_t x, vectorcompd_t y)
 {
     vec[VX] = x;

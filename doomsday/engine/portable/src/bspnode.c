@@ -58,18 +58,20 @@ BspNode* BspNode_SetChild(BspNode* node, int left, runtime_mapdata_header_t* chi
     return node;
 }
 
-BspNode* BspNode_SetChildBounds(BspNode* node, int left, AABoxf* bounds)
+BspNode* BspNode_SetChildBounds(BspNode* node, int left, AABoxd* bounds)
 {
     assert(node);
     if(bounds)
     {
-        V2f_CopyBox(node->aaBox[left? LEFT:RIGHT].arvec2, bounds->arvec2);
+        AABoxf* dst = &node->aaBox[left? LEFT:RIGHT];
+        V2f_CopyBoxd(dst->arvec2, bounds->arvec2);
     }
     else
     {
         // Clear.
-        V2f_Set(node->aaBox[left? LEFT:RIGHT].min, DDMAXFLOAT, DDMAXFLOAT);
-        V2f_Set(node->aaBox[left? LEFT:RIGHT].max, DDMINFLOAT, DDMINFLOAT);
+        AABoxf* dst = &node->aaBox[left? LEFT:RIGHT];
+        V2f_Set(dst->min, DDMAXFLOAT, DDMAXFLOAT);
+        V2f_Set(dst->max, DDMINFLOAT, DDMINFLOAT);
     }
     return node;
 }

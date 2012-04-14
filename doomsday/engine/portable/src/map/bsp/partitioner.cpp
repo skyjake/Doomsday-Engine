@@ -1169,7 +1169,7 @@ struct Partitioner::Instance
 
         clearPartitionIntercepts();
 
-        AABoxf rightHEdgesBounds, leftHEdgesBounds;
+        AABoxd rightHEdgesBounds, leftHEdgesBounds;
         rightHEdges->findHEdgeBounds(rightHEdgesBounds);
         leftHEdges->findHEdgeBounds(leftHEdgesBounds);
 
@@ -2017,7 +2017,7 @@ struct Partitioner::Instance
      * @return  Newly created BspNode.
      */
     BspNode* newBspNode(coord_t const origin[2], coord_t const angle[2],
-        AABoxf* rightBounds, AABoxf* leftBounds)
+        AABoxd* rightBounds, AABoxd* leftBounds)
     {
         BspNode* node = BspNode_New(origin, angle);
 

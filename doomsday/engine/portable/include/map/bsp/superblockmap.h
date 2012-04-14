@@ -73,7 +73,7 @@ public:
      *
      * @param bounds  Determined bounds are written here.
      */
-    void findHEdgeBounds(AABoxf& bounds);
+    void findHEdgeBounds(AABoxd& bounds);
 
     /**
      * Empty this SuperBlockmap clearing all HEdges and sub-blocks.
@@ -197,7 +197,7 @@ public:
      *
      * @param bounds  Determined bounds are written here.
      */
-    void findHEdgeBounds(AABoxf& bounds);
+    void findHEdgeBounds(AABoxd& bounds);
 
     /**
      * Retrieve the total number of HEdges linked in this superblock

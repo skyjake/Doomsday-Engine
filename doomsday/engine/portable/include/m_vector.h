@@ -33,11 +33,19 @@ extern "C" {
  * 2-dimensions:
  */
 
+// Floating-point.
 typedef float vectorcompf_t;
 typedef vectorcompf_t vec2f_t[2];
 typedef const float const_pvec2f_t[2];
 typedef vectorcompf_t* pvec2f_t;
 typedef vec2f_t* arvec2f_t;
+
+// Double floating-point.
+typedef double vectorcompd_t;
+typedef vectorcompd_t vec2d_t[2];
+typedef const double const_pvec2d_t[2];
+typedef vectorcompd_t* pvec2d_t;
+typedef vec2d_t* arvec2d_t;
 
 /**
  * Set the vector's x and y components.
@@ -148,12 +156,7 @@ void V2f_AddToBox(arvec2f_t box, const pvec2f_t point);
 void V2f_UniteBox(arvec2f_t box, const arvec2f_t other);
 
 void V2f_CopyBox(arvec2f_t dest, const arvec2f_t src);
-
-typedef double vectorcompd_t;
-typedef vectorcompd_t vec2d_t[2];
-typedef const double const_pvec2d_t[2];
-typedef vectorcompd_t* pvec2d_t;
-typedef vec2d_t* arvec2d_t;
+void V2f_CopyBoxd(arvec2f_t dest, const arvec2d_t src);
 
 /**
  * Set the vector's x and y components.
@@ -269,10 +272,17 @@ void V2d_CopyBox(arvec2d_t dest, const arvec2d_t src);
  * 3-dimensions:
  */
 
+// Floating-point.
 typedef vectorcompf_t vec3f_t[3];
 typedef const float const_pvec3f_t[3];
 typedef vectorcompf_t* pvec3f_t;
 typedef vec3f_t* arvec3f_t;
+
+// Double floating-point.
+typedef vectorcompd_t vec3d_t[3];
+typedef const double const_pvec3d_t[3];
+typedef vectorcompd_t* pvec3d_t;
+typedef vec3d_t* arvec3d_t;
 
 /**
  * Set the vector's x, y and z components.
@@ -378,11 +388,6 @@ void V3f_Lerp(pvec3f_t dest, const pvec3f_t a, const pvec3f_t b, float c);
  * @param normal  Normal to construct tangents for.
  */
 void V3f_BuildTangents(pvec3f_t tangent, pvec3f_t bitangent, const_pvec3f_t normal);
-
-typedef vectorcompd_t vec3d_t[3];
-typedef const double const_pvec3d_t[3];
-typedef vectorcompd_t* pvec3d_t;
-typedef vec3d_t* arvec3d_t;
 
 /**
  * Set the vector's x, y and z components.
