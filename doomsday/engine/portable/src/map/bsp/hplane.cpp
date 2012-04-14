@@ -38,7 +38,7 @@ void HPlane::clear()
     intercepts.clear();
 }
 
-HPlane* HPlane::setOrigin(double const newOrigin[2])
+HPlane* HPlane::setOrigin(coord_t const newOrigin[2])
 {
     if(newOrigin)
     {
@@ -49,29 +49,29 @@ HPlane* HPlane::setOrigin(double const newOrigin[2])
     return this;
 }
 
-HPlane* HPlane::setXY(double newX, double newY)
+HPlane* HPlane::setXY(coord_t newX, coord_t newY)
 {
-    double newOrigin[2];
+    coord_t newOrigin[2];
     newOrigin[0] = newX;
     newOrigin[1] = newY;
     return setOrigin(newOrigin);
 }
 
-HPlane* HPlane::setX(double newX)
+HPlane* HPlane::setX(coord_t newX)
 {
     partition.origin[0] = newX;
     clear();
     return this;
 }
 
-HPlane* HPlane::setY(double newY)
+HPlane* HPlane::setY(coord_t newY)
 {
     partition.origin[1] = newY;
     clear();
     return this;
 }
 
-HPlane* HPlane::setAngle(double const newAngle[2])
+HPlane* HPlane::setAngle(coord_t const newAngle[2])
 {
     if(newAngle)
     {
@@ -82,29 +82,29 @@ HPlane* HPlane::setAngle(double const newAngle[2])
     return this;
 }
 
-HPlane* HPlane::setDXY(double newDX, double newDY)
+HPlane* HPlane::setDXY(coord_t newDX, coord_t newDY)
 {
-    double newAngle[2];
+    coord_t newAngle[2];
     newAngle[0] = newDX;
     newAngle[1] = newDY;
     return setAngle(newAngle);
 }
 
-HPlane* HPlane::setDX(double newDX)
+HPlane* HPlane::setDX(coord_t newDX)
 {
     partition.angle[0] = newDX;
     clear();
     return this;
 }
 
-HPlane* HPlane::setDY(double newDY)
+HPlane* HPlane::setDY(coord_t newDY)
 {
     partition.angle[1] = newDY;
     clear();
     return this;
 }
 
-HPlaneIntercept* HPlane::newIntercept(double distance, void* userData)
+HPlaneIntercept* HPlane::newIntercept(coord_t distance, void* userData)
 {
     Intercepts::reverse_iterator after;
     HPlaneIntercept* inter;

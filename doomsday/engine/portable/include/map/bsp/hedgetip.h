@@ -46,7 +46,7 @@ struct HEdgeTip
     HEdgeTip* link[2]; // {prev, next};
 
     /// Angle that line makes at vertex (degrees; 0 is E, 90 is N).
-    double angle;
+    coord_t angle;
 
     // Half-edge on each side of the edge. Left is the side of increasing
     // angles, right is the side of decreasing angles. Either can be NULL

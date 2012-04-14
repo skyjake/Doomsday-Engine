@@ -28,16 +28,17 @@
 #ifndef LIBDENG_BSP_HPLANE
 #define LIBDENG_BSP_HPLANE
 
+#include "dd_types.h"
 #include <list>
 
 namespace de {
 namespace bsp {
 
 struct HPlanePartition {
-    double origin[2];
-    double angle[2];
+    coord_t origin[2];
+    coord_t angle[2];
 
-    HPlanePartition(double x=0, double y=0, double dX=0, double dY=0)
+    HPlanePartition(coord_t x=0, coord_t y=0, coord_t dX=0, coord_t dY=0)
     {
         origin[0] = x;
         origin[1] = y;
@@ -45,7 +46,7 @@ struct HPlanePartition {
         angle[1] = dY;
     }
 
-    HPlanePartition(double const _origin[2], double const _angle[2])
+    HPlanePartition(coord_t const _origin[2], coord_t const _angle[2])
     {
         origin[0] = _origin[0];
         origin[1] = _origin[1];
@@ -61,7 +62,7 @@ public:
      * Distance from the owning HPlane's origin point. Negative values
      * mean this intercept is positioned to the left of the origin.
      */
-    double distance() const { return _distance; }
+    coord_t distance() const { return _distance; }
 
     /**
      * Retrieve the data pointer associated with this intercept.
@@ -72,20 +73,20 @@ public:
      * Determine the distance between two intercepts. It does not matter
      * if the intercepts are from different half-planes.
      */
-    double operator - (const HPlaneIntercept& other) const
+    coord_t operator - (const HPlaneIntercept& other) const
     {
         return _distance - other.distance();
     }
 
     HPlaneIntercept() : _distance(0), _userData(0) {}
-    HPlaneIntercept(double distance, void* userData) :
+    HPlaneIntercept(coord_t distance, void* userData) :
         _distance(distance), _userData(userData) {}
 
 private:
     /**
-     * Distance along the owning HPlane.
+     * Distance along the owning HPlane in the map coordinate space.
      */
-    double _distance;
+    coord_t _distance;
 
     /// User data pointer associated with this intercept.
     void* _userData;
@@ -96,28 +97,28 @@ public:
     typedef std::list<HPlaneIntercept> Intercepts;
 
     HPlane() : partition(), intercepts(0){}
-    HPlane(double const origin[2], double const angle[2]) :
+    HPlane(coord_t const origin[2], coord_t const angle[2]) :
         partition(origin, angle), intercepts(0) {}
 
     ~HPlane() { clear(); }
 
-    const double* origin() { return partition.origin; }
-    double x() { return partition.origin[0]; }
-    double y() { return partition.origin[1]; }
+    const coord_t* origin() { return partition.origin; }
+    coord_t x() { return partition.origin[0]; }
+    coord_t y() { return partition.origin[1]; }
 
-    HPlane* setOrigin(double const origin[2]);
-    HPlane* setXY(double x, double y);
-    HPlane* setX(double x);
-    HPlane* setY(double y);
+    HPlane* setOrigin(coord_t const origin[2]);
+    HPlane* setXY(coord_t x, coord_t y);
+    HPlane* setX(coord_t x);
+    HPlane* setY(coord_t y);
 
-    const double* angle() { return partition.angle; }
-    double dX() { return partition.angle[0]; }
-    double dY() { return partition.angle[1]; }
+    const coord_t* angle() { return partition.angle; }
+    coord_t dX() { return partition.angle[0]; }
+    coord_t dY() { return partition.angle[1]; }
 
-    HPlane* setAngle(double const angle[2]);
-    HPlane* setDXY(double x, double y);
-    HPlane* setDX(double dx);
-    HPlane* setDY(double dy);
+    HPlane* setAngle(coord_t const angle[2]);
+    HPlane* setDXY(coord_t x, coord_t y);
+    HPlane* setDX(coord_t dx);
+    HPlane* setDY(coord_t dy);
 
     /**
      * Empty all intersections from the specified HPlane.
@@ -131,7 +132,7 @@ public:
      *
      * @param userData  Ownership passes to HPlane.
      */
-    HPlaneIntercept* newIntercept(double distance, void* userData=NULL);
+    HPlaneIntercept* newIntercept(coord_t distance, void* userData=NULL);
 
     Intercepts::const_iterator deleteIntercept(Intercepts::iterator at);
 

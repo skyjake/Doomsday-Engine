@@ -25,7 +25,7 @@
 #include "de_play.h"
 #include "de_misc.h"
 
-BspNode* BspNode_New(double const origin[2], double const angle[2])
+BspNode* BspNode_New(coord_t const origin[2], coord_t const angle[2])
 {
     BspNode* node = (BspNode*)Z_Malloc(sizeof *node, PU_MAP, 0);
     if(!node) Con_Error("BspNode_New: Failed on allocation of %lu bytes for new BspNode.", (unsigned long) sizeof *node);

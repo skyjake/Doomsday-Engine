@@ -30,7 +30,7 @@
 extern "C" {
 #endif
 
-BspNode* BspNode_New(double const origin[2], double const angle[2]);
+BspNode* BspNode_New(coord_t const origin[2], coord_t const angle[2]);
 
 /**
  * @note Does nothing about child nodes!

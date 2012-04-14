@@ -57,13 +57,13 @@
 using namespace de::bsp;
 
 /// Minimum length of a half-edge post partitioning. Used in cost evaluation.
-static const double SHORT_HEDGE_EPSILON = 4.0;
+static const coord_t SHORT_HEDGE_EPSILON = 4.0;
 
 /// Smallest distance between two points before being considered equal.
-static const double DIST_EPSILON = (1.0 / 128.0);
+static const coord_t DIST_EPSILON = (1.0 / 128.0);
 
 /// Smallest difference between two angles before being considered equal (in degrees).
-static const double ANG_EPSILON = (1.0 / 1024.0);
+static const coord_t ANG_EPSILON = (1.0 / 1024.0);
 
 DENG_DEBUG_ONLY(static int printSuperBlockHEdgesWorker(SuperBlock* block, void* /*parameters*/));
 
@@ -323,10 +323,10 @@ struct Partitioner::Instance
             }
 
             // @todo edge tips should be created when half-edges are created.
-            double x1 = line->v[0]->buildData.pos[VX];
-            double y1 = line->v[0]->buildData.pos[VY];
-            double x2 = line->v[1]->buildData.pos[VX];
-            double y2 = line->v[1]->buildData.pos[VY];
+            coord_t x1 = line->v[0]->buildData.pos[VX];
+            coord_t y1 = line->v[0]->buildData.pos[VY];
+            coord_t x2 = line->v[1]->buildData.pos[VX];
+            coord_t y2 = line->v[1]->buildData.pos[VY];
 
             addHEdgeTip(line->v[0], M_SlopeToAngle(x2 - x1, y2 - y1), back, front);
             addHEdgeTip(line->v[1], M_SlopeToAngle(x1 - x2, y1 - y2), front, back);
@@ -412,7 +412,7 @@ struct Partitioner::Instance
             HPlane::Intercepts::iterator np = node; np++;
             if(np == partition->end()) break;
 
-            double len = *np - *node;
+            coord_t len = *np - *node;
             if(len < -0.1)
             {
                 Con_Error("Partitioner::MergeIntersections: Invalid intercept order - %1.3f > %1.3f\n",
@@ -459,11 +459,10 @@ struct Partitioner::Instance
                 {
                     if(!cur->selfRef)
                     {
-                        double pos[2];
+                        coord_t pos[2];
 
                         pos[VX] = cur->vertex->buildData.pos[VX] + next->vertex->buildData.pos[VX];
                         pos[VY] = cur->vertex->buildData.pos[VY] + next->vertex->buildData.pos[VY];
-
                         pos[VX] /= 2;
                         pos[VY] /= 2;
 
@@ -474,7 +473,7 @@ struct Partitioner::Instance
                 {
                     if(!next->selfRef)
                     {
-                        double pos[2];
+                        coord_t pos[2];
 
                         pos[VX] = cur->vertex->buildData.pos[VX] + next->vertex->buildData.pos[VX];
                         pos[VY] = cur->vertex->buildData.pos[VY] + next->vertex->buildData.pos[VY];
@@ -602,8 +601,8 @@ struct Partitioner::Instance
     #define LEFT  1
 
         // Determine the relationship between this half-edge and the partition plane.
-        double a = hedgeDistanceFromPartition(hedge, false/*start vertex*/);
-        double b = hedgeDistanceFromPartition(hedge, true/*end vertex*/);
+        coord_t a = hedgeDistanceFromPartition(hedge, false/*start vertex*/);
+        coord_t b = hedgeDistanceFromPartition(hedge, true/*end vertex*/);
 
         /// @kludge Half-edges produced from the same source linedef must always
         ///         be treated as collinear.
@@ -762,8 +761,9 @@ struct Partitioner::Instance
         if (hedge->lineDef) cost.realRight += 1;  \
         else                cost.miniRight += 1;  \
 
-        double qnty, a, b, fa, fb;
         Q_ASSERT(hedge);
+
+        coord_t a, b, fa, fb;
 
         // Get state of lines' relation to each other.
         const HEdgeInfo& hInfo = hedgeInfo(*hedge);
@@ -813,7 +813,7 @@ struct Partitioner::Instance
                 return;
             }
 
-            cost.nearMiss++;
+            cost.nearMiss += 1;
 
             /**
              * Near misses are bad, since they have the potential to cause really short
@@ -821,6 +821,7 @@ struct Partitioner::Instance
              * miss, the higher the cost.
              */
 
+            double qnty;
             if(a <= DIST_EPSILON || b <= DIST_EPSILON)
                 qnty = SHORT_HEDGE_EPSILON / MAX_OF(a, b);
             else
@@ -844,9 +845,10 @@ struct Partitioner::Instance
                 return;
             }
 
-            cost.nearMiss++;
+            cost.nearMiss += 1;
 
             // The closer the miss, the higher the cost (see note above).
+            double qnty;
             if(a >= -DIST_EPSILON || b >= -DIST_EPSILON)
                 qnty = SHORT_HEDGE_EPSILON / -MIN_OF(a, b);
             else
@@ -861,7 +863,7 @@ struct Partitioner::Instance
          * hence this half-edge will be split by the partition line.
          */
 
-        cost.splits++;
+        cost.splits += 1;
         cost.total += 100 * costFactorMultiplier;
 
         /**
@@ -870,10 +872,10 @@ struct Partitioner::Instance
          */
         if(fa < SHORT_HEDGE_EPSILON || fb < SHORT_HEDGE_EPSILON)
         {
-            cost.iffy++;
+            cost.iffy += 1;
 
             // The closer to the end, the higher the cost.
-            qnty = SHORT_HEDGE_EPSILON / MIN_OF(fa, fb);
+            double qnty = SHORT_HEDGE_EPSILON / MIN_OF(fa, fb);
             cost.total += (int) (140 * costFactorMultiplier * (qnty * qnty - 1.0));
         }
 
@@ -1253,7 +1255,7 @@ struct Partitioner::Instance
      *
      * @param vertex  Vertex to test.
      */
-    inline double vertexDistanceFromPartition(const Vertex* vertex) const
+    inline coord_t vertexDistanceFromPartition(const Vertex* vertex) const
     {
         Q_ASSERT(vertex);
         const HEdgeInfo& info = partitionInfo;
@@ -1267,7 +1269,7 @@ struct Partitioner::Instance
      * @param hedge  Half-edge to test.
      * @param end    @c true= use the point defined by the end (else start) vertex.
      */
-    inline double hedgeDistanceFromPartition(const HEdge* hedge, bool end) const
+    inline coord_t hedgeDistanceFromPartition(const HEdge* hedge, bool end) const
     {
         Q_ASSERT(hedge);
         const HEdgeInfo& pInfo = partitionInfo;
@@ -1281,8 +1283,8 @@ struct Partitioner::Instance
      * plane. Takes advantage of some common situations like horizontal and vertical
      * lines to choose a 'nicer' intersection point.
      */
-    void interceptHEdgePartition(const HEdge* hedge, double perpC, double perpD,
-        pvec2d_t point) const
+    void interceptHEdgePartition(const HEdge* hedge, coord_t perpC, coord_t perpD,
+        coord_t point[2]) const
     {
         if(!hedge || !point) return;
 
@@ -1303,7 +1305,7 @@ struct Partitioner::Instance
         }
 
         // 0 = start, 1 = end.
-        double ds = perpC / (perpC - perpD);
+        coord_t ds = perpC / (perpC - perpD);
 
         if(hInfo.pDX == 0)
             point[VX] = hInfo.pSX;
@@ -1374,10 +1376,10 @@ struct Partitioner::Instance
             {
                 HEdge* a = *it;
                 HEdge* b = *next;
-                double angle1 = M_SlopeToAngle(a->v[0]->buildData.pos[VX] - point[VX],
-                                               a->v[0]->buildData.pos[VY] - point[VY]);
-                double angle2 = M_SlopeToAngle(b->v[0]->buildData.pos[VX] - point[VX],
-                                               b->v[0]->buildData.pos[VY] - point[VY]);
+                coord_t angle1 = M_SlopeToAngle(a->v[0]->buildData.pos[VX] - point[VX],
+                                                a->v[0]->buildData.pos[VY] - point[VY]);
+                coord_t angle2 = M_SlopeToAngle(b->v[0]->buildData.pos[VX] - point[VX],
+                                                b->v[0]->buildData.pos[VY] - point[VY]);
 
                 if(angle1 + ANG_EPSILON < angle2)
                 {
@@ -1442,8 +1444,8 @@ struct Partitioner::Instance
         LOG_DEBUG("Sorted half-edges around [%1.1f, %1.1f]" << point[VX] << point[VY];
         for(hedge = leaf.hedge; hedge; hedge = hedge->next)
         {
-            double angle = M_SlopeToAngle(hedge->v[0]->V_pos[VX] - point[VX],
-                                          hedge->v[0]->V_pos[VY] - point[VY]);
+            coord_t angle = M_SlopeToAngle(hedge->v[0]->V_pos[VX] - point[VX],
+                                           hedge->v[0]->V_pos[VY] - point[VY]);
 
             LOG_DEBUG("  half-edge %p: Angle %1.6f [%1.1f, %1.1f] -> [%1.1f, %1.1f]")
                 << hedge << angle
@@ -1853,7 +1855,7 @@ struct Partitioner::Instance
         return vtx;
     }
 
-    void addHEdgeTip(Vertex* vtx, double angle, HEdge* back, HEdge* front)
+    void addHEdgeTip(Vertex* vtx, coord_t angle, HEdge* back, HEdge* front)
     {
         Q_ASSERT(vtx);
 
@@ -2014,7 +2016,7 @@ struct Partitioner::Instance
      *
      * @return  Newly created BspNode.
      */
-    BspNode* newBspNode(double const origin[2], double const angle[2],
+    BspNode* newBspNode(coord_t const origin[2], coord_t const angle[2],
         AABoxf* rightBounds, AABoxf* leftBounds)
     {
         BspNode* node = BspNode_New(origin, angle);
@@ -2039,7 +2041,7 @@ struct Partitioner::Instance
      * vertex is open. Returns a sector reference if it's open, or NULL if closed
      * (void space or directly along a linedef).
      */
-    Sector* openSectorAtAngle(Vertex* vtx, double angle)
+    Sector* openSectorAtAngle(Vertex* vtx, coord_t angle)
     {
         Q_ASSERT(vtx);
 
@@ -2047,7 +2049,7 @@ struct Partitioner::Instance
         // the given direction (which is relative to the vtxex).
         for(HEdgeTip* tip = vertexInfo(*vtx).tipSet; tip; tip = tip->ET_next)
         {
-            double diff = fabs(tip->angle - angle);
+            coord_t diff = fabs(tip->angle - angle);
 
             if(diff < ANG_EPSILON || diff > (360.0 - ANG_EPSILON))
             {
@@ -2104,7 +2106,7 @@ struct Partitioner::Instance
      *
      * @return @c true iff the sector was newly registered.
      */
-    bool registerUnclosedSector(Sector* sector, double x, double y)
+    bool registerUnclosedSector(Sector* sector, coord_t x, coord_t y)
     {
         if(!sector) return false;
 
@@ -2308,7 +2310,7 @@ struct Partitioner::Instance
         Sector* sector;
         vec2d_t nearPoint;
 
-        UnclosedSectorRecord(Sector* _sector, double x, double y)
+        UnclosedSectorRecord(Sector* _sector, coord_t x, coord_t y)
             : sector(_sector)
         {
             V2d_Set(nearPoint, x, y);
@@ -2479,8 +2481,8 @@ static int printSuperBlockHEdgesWorker(SuperBlock* block, void* /*parameters*/)
 
 static void initAABoxFromEditableLineDefVertexes(AABoxf* aaBox, const LineDef* line)
 {
-    const double* from = line->L_v1->buildData.pos;
-    const double* to   = line->L_v2->buildData.pos;
+    const coord_t* from = line->L_v1->buildData.pos;
+    const coord_t* to   = line->L_v2->buildData.pos;
     aaBox->minX = MIN_OF(from[VX], to[VX]);
     aaBox->minY = MIN_OF(from[VY], to[VY]);
     aaBox->maxX = MAX_OF(from[VX], to[VX]);
