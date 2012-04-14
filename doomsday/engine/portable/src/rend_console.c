@@ -892,8 +892,7 @@ static void drawConsole(float consoleAlpha)
         //strncpy(temp, cmdLine + offset, MIN_OF(LOCALBUFFSIZE -1/*prompt length*/ /*-1*//*vis clamp*/, cmdCursor-offset + (abbrevLeft? 24/*abbrev length*/:0) + 1));
         strcpy(temp, ">");
         if(abbrevLeft) strcat(temp, "[...]");
-        strncat(temp, cmdLine + offset, MIN_OF(LOCALBUFFSIZE - 1,
-                                               cmdCursor - offset - (abbrevRight? 5 : 0)));
+        strncat(temp, cmdLine + offset, MIN_OF(LOCALBUFFSIZE - 1, cmdCursor - offset));
         applyFilter(temp);
         xOffset = FR_TextWidth(temp);
         if(Con_InputMode())
