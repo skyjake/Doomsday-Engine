@@ -533,12 +533,13 @@ struct Partitioner::Instance
         //        << oldHEdge << x << y;
 
         Vertex* newVert = newVertex(point);
-        HEdgeInfo& oldInfo = hedgeInfo(*oldHEdge);
+        { HEdgeInfo& oldInfo = hedgeInfo(*oldHEdge);
         addHEdgeTip(newVert, M_SlopeToAngle(-oldInfo.pDX, -oldInfo.pDY), oldHEdge, oldHEdge->twin);
         addHEdgeTip(newVert, M_SlopeToAngle( oldInfo.pDX,  oldInfo.pDY), oldHEdge->twin, oldHEdge);
+        }
 
         HEdge* newHEdge = cloneHEdge(*oldHEdge);
-        oldInfo = hedgeInfo(*oldHEdge);
+        HEdgeInfo& oldInfo = hedgeInfo(*oldHEdge);
         HEdgeInfo& newInfo = hedgeInfo(*newHEdge);
 
         newInfo.prevOnSide = oldHEdge;
