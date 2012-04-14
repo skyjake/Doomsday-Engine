@@ -898,6 +898,14 @@ static void finishMainWindowInit(Canvas& canvas)
 
     win->widget->canvas().setFocusFunc(windowFocusChanged);
 
+#ifdef WIN32
+    if(Window_IsFullscreen(win))
+    {
+        // It would seem we must manually give our canvas focus. Bug in Qt?
+        win->widget->canvas().setFocus();
+    }
+#endif
+
     DD_FinishInitializationAfterWindowReady();
 }
 
