@@ -131,7 +131,7 @@ int main(int argc, char** argv)
     de::App dengApp(argc, argv, useGUI);
 
     // Override the system locale (affects number/time formatting).
-    QLocale::setDefault(QLocale::c());
+    QLocale::setDefault(QLocale("en_US.UTF-8"));
 
     // Metadata.
     QApplication::setOrganizationDomain("dengine.net");

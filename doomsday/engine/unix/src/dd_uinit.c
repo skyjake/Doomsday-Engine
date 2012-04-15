@@ -35,6 +35,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include <locale.h>
 #include <SDL.h>
 
 #include <de/c_wrapper.h>
@@ -360,6 +361,9 @@ boolean DD_Unix_Init(int argc, char** argv)
     //int exitCode = 0;
 
     memset(&app, 0, sizeof(app));
+
+    // We wish to use U.S. English formatting for time and numbers.
+    setlocale(LC_ALL, "en_US.UTF-8");
 
 #if 0
     // SDL lock key behavior: send up event when key released.
