@@ -1200,11 +1200,11 @@ static void populateDisplayResolutions(void)
         int spec = RES(mode->width, mode->height);
 
         // Make sure we haven't added this size yet (many with different refresh rates).
-        for(k = 0; k < i; ++k)
+        for(k = 0; k < p; ++k)
         {
             if(lstit_resolution[k].data == spec) break;
         }
-        if(k < i) continue; // Already got it.
+        if(k < p) continue; // Already got it.
 
         dd_snprintf(lstit_resolution[p].text, sizeof(lstit_resolution[p].text),
                     "%i x %i (%i:%i)", mode->width, mode->height, mode->ratioX, mode->ratioY);
