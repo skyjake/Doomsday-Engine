@@ -26,6 +26,10 @@ struct image_s; // see image.h
 
 #include <QGLWidget>
 
+#ifdef Q_WS_X11
+#  define LIBDENG_CANVAS_TRACK_WITH_MOUSE_MOVE_EVENTS
+#endif
+
 /**
  * Drawing canvas with an OpenGL context and window surface. Each CanvasWindow
  * creates one Canvas instance on which to draw. Buffer swapping must be done
@@ -118,12 +122,17 @@ protected:
     void keyReleaseEvent(QKeyEvent* ev);
     void mousePressEvent(QMouseEvent* ev);
     void mouseReleaseEvent(QMouseEvent* ev);
+#ifdef LIBDENG_CANVAS_TRACK_WITH_MOUSE_MOVE_EVENTS
+    void mouseMoveEvent(QMouseEvent* ev);
+#endif
     void wheelEvent(QWheelEvent* ev);
     void showEvent(QShowEvent* ev);
 
 protected slots:
     void notifyInit();
+#ifndef LIBDENG_CANVAS_TRACK_WITH_MOUSE_MOVE_EVENTS
     void trackMousePosition(bool keepTracking = true);
+#endif
 
 private:
     struct Instance;

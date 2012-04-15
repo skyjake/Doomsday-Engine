@@ -33,6 +33,7 @@
 #include <QCursor>
 #include <QTimer>
 #include <QTime>
+#include <QDebug>
 #include <de/Log>
 
 #include "sys_opengl.h"
@@ -88,7 +89,9 @@ struct Canvas::Instance
         self->grabMouse();
         self->setCursor(QCursor(Qt::BlankCursor));
         qApp->setOverrideCursor(QCursor(Qt::BlankCursor));
+#ifndef LIBDENG_CANVAS_TRACK_WITH_MOUSE_MOVE_EVENTS
         QTimer::singleShot(1, self, SLOT(trackMousePosition()));
+#endif
 #endif
     }
 
@@ -121,11 +124,14 @@ Canvas::Canvas(QWidget* parent, QGLWidget* shared) : QGLWidget(parent, shared)
     // Update the capability flags.
     GL_state.features.multisample = format().sampleBuffers();
 
-    setFocusPolicy(Qt::StrongFocus);
-    setMouseTracking(true); // receive moves always
-
     // We will be doing buffer swaps manually (for timing purposes).
     setAutoBufferSwap(false);
+
+    setFocusPolicy(Qt::StrongFocus);
+
+#ifdef LIBDENG_CANVAS_TRACK_WITH_MOUSE_MOVE_EVENTS
+    setMouseTracking(true); // receive moves always
+#endif
 }
 
 Canvas::~Canvas()
@@ -250,6 +256,7 @@ void Canvas::notifyInit()
     }
 }
 
+#ifndef LIBDENG_CANVAS_TRACK_WITH_MOUSE_MOVE_EVENTS
 void Canvas::trackMousePosition(bool keepTracking)
 {
     if(d->mouseGrabbed)
@@ -280,6 +287,7 @@ void Canvas::trackMousePosition(bool keepTracking)
         d->prevMousePos = QPoint();
     }
 }
+#endif
 
 void Canvas::paintGL()
 {
@@ -346,7 +354,7 @@ void Canvas::keyPressEvent(QKeyEvent *ev)
              << "text:" << ev->text()
              << "native:" << ev->nativeVirtualKey()
              << "scancode:" << ev->nativeScanCode();
-             */
+    */
 
     Keyboard_SubmitQtEvent(IKE_DOWN, ev);
 }
@@ -358,7 +366,8 @@ void Canvas::keyReleaseEvent(QKeyEvent *ev)
 
     /*
     qDebug() << "Canvas: key release" << ev->key() << "text:" << ev->text()
-             << "native:" << ev->nativeVirtualKey();*/
+             << "native:" << ev->nativeVirtualKey();
+    */
 
     Keyboard_SubmitQtEvent(IKE_UP, ev);
 }
@@ -406,6 +415,32 @@ void Canvas::mouseReleaseEvent(QMouseEvent* ev)
 
     //qDebug() << "Canvas: mouse release at" << ev->pos();
 }
+
+#ifdef LIBDENG_CANVAS_TRACK_WITH_MOUSE_MOVE_EVENTS
+void Canvas::mouseMoveEvent(QMouseEvent* ev)
+{
+    if(!d->mouseGrabbed) return;
+
+    ev->accept();
+
+    if(d->prevMousePos.isNull())
+    {
+        d->prevMousePos = ev->pos();
+        return;
+    }
+
+    QPoint delta = ev->pos() - d->prevMousePos;
+    if(!delta.isNull())
+    {
+        Mouse_Qt_SubmitMotion(IMA_POINTER, delta.x(), delta.y());
+    }
+
+    QCursor::setPos(mapToGlobal(rect().center()));
+
+    // Ignore the next event, which is caused by the forced cursor move.
+    d->prevMousePos = QPoint();
+}
+#endif
 
 void Canvas::wheelEvent(QWheelEvent *ev)
 {
