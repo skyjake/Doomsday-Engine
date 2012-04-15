@@ -187,10 +187,8 @@ static void initialize(void)
     }
     if(0 == GL_state.extensions.wglSwapIntervalEXT || NULL == wglSwapIntervalEXT)
         GL_state.features.vsync = false;
-#elif defined(MACOSX)
-    GL_state.features.vsync = true;
 #else
-    GL_state.features.vsync = false;
+    GL_state.features.vsync = true;
 #endif
 }
 

@@ -350,9 +350,6 @@ boolean GL_Grab(int x, int y, int width, int height, dgltexformat_t format, void
 
 void GL_SetVSync(boolean on)
 {
-    Con_SetInteger("vid-vsync", on? 1 : 0);
-
-    /*
     // Outside the main thread we'll need to defer the call.
     if(!Sys_InMainThread())
     {
@@ -381,8 +378,7 @@ void GL_SetVSync(boolean on)
             CGLSetParameter(context, kCGLCPSwapInterval, params);
         }
     }
-#endif*/
-
+#endif
 }
 
 void GL_SetMultisample(boolean on)

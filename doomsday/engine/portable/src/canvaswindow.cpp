@@ -92,6 +92,15 @@ void CanvasWindow::initCanvasAfterRecreation(Canvas& canvas)
 
 void CanvasWindow::recreateCanvas()
 {
+    /// @todo Instead of recreating, there is also the option of modifying the
+    /// existing QGLContext -- however, changing its format causes it to be
+    /// reset. We are doing it this way because we wish to retain the current
+    /// GL context's texture objects by sharing them with the new Canvas.
+
+    /// @todo See if reseting the QGLContext actually causes all textures to be
+    /// lost. If not, it would be better to just change the format and
+    /// reinitialize the context state.
+
     // We'll re-trap the mouse after the new canvas is ready.
     d->mouseWasTrapped = canvas().isMouseTrapped();
     canvas().trapMouse(false);
