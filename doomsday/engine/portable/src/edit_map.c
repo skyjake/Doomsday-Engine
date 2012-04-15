@@ -1170,8 +1170,8 @@ static void hardenPolyobjs(GameMap* dest, editmap_t* src)
 
         destP->lineCount = srcP->lineCount;
 
-        destP->originalPts = Z_Malloc(destP->lineCount * sizeof(fvertex_t), PU_MAP, 0);
-        destP->prevPts     = Z_Malloc(destP->lineCount * sizeof(fvertex_t), PU_MAP, 0);
+        destP->originalPts = Z_Malloc(destP->lineCount * sizeof(povertex_t), PU_MAP, 0);
+        destP->prevPts     = Z_Malloc(destP->lineCount * sizeof(povertex_t), PU_MAP, 0);
 
         // Create a hedge for each line of this polyobj.
         hedges = Z_Calloc(sizeof(HEdge) * destP->lineCount, PU_MAP, 0);

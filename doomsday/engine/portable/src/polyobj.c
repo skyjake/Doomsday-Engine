@@ -103,7 +103,7 @@ static boolean mobjIsBlockingPolyobj(Polyobj* po)
 
 boolean Polyobj_Move(Polyobj* po, float delta[2])
 {
-    fvertex_t* prevPts;
+    povertex_t* prevPts;
     LineDef** lineIter;
     uint i;
     assert(po);
@@ -226,7 +226,7 @@ static void rotatePoint2d(float point[2], const float origin[2], uint fineAngle)
 
 boolean Polyobj_Rotate(Polyobj* po, angle_t angle)
 {
-    fvertex_t* originalPts, *prevPts;
+    povertex_t* originalPts, *prevPts;
     uint i, fineAngle;
     LineDef** lineIter;
     assert(po);

@@ -1087,6 +1087,10 @@ typedef struct aaboxd_s {
     int             health;\
     mobjinfo_t     *info; /* &mobjinfo[mobj->type] */
 
+typedef struct povertex_s {
+    float           pos[2];
+} povertex_t;
+
 /// Base Polyobj elements. Games MUST use this as the basis for Polyobj. @ingroup map
 #define DD_BASE_POLYOBJ_ELEMENTS() \
     DD_BASE_DDMOBJ_ELEMENTS() \
@@ -1102,8 +1106,8 @@ typedef struct aaboxd_s {
     angle_t         angleSpeed; /* Rotation speed. */ \
     struct linedef_s** lines; \
     unsigned int    lineCount; \
-    struct fvertex_s* originalPts; /* Used as the base for the rotations. */ \
-    struct fvertex_s* prevPts; /* Use to restore the old point values. */ \
+    struct povertex_s* originalPts; /* Used as the base for the rotations. */ \
+    struct povertex_s* prevPts; /* Use to restore the old point values. */ \
     float           speed; /* Movement speed. */ \
     boolean         crush; /* Should the polyobj attempt to crush mobjs? */ \
     int             seqType; \

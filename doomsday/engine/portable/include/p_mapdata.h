@@ -69,10 +69,6 @@ typedef struct runtime_mapdata_header_s {
     int             type; // One of the DMU type constants.
 } runtime_mapdata_header_t;
 
-typedef struct fvertex_s {
-    float           pos[2];
-} fvertex_t;
-
 typedef struct shadowcorner_s {
     float           corner;
     struct sector_s* proximity;
