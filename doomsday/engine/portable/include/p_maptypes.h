@@ -61,9 +61,6 @@ typedef struct vertex_s {
 #define HEDGE_BACK_SECTOR(h)      ((h)->twin ? (h)->twin->sector : NULL)
 #define HEDGE_SIDEDEF(h)          ((h)->lineDef->sideDefs[(h)->side])
 
-// HEdge flags
-#define HEDGEF_POLYOBJ            0x1 // HEdge is part of a poly object.
-
 // HEdge frame flags
 #define HEDGEINF_FACINGFRONT      0x0001
 
@@ -88,7 +85,6 @@ typedef struct hedge_s {
     struct sector_s*    sector;
     angle_t             angle;
     byte                side;          // 0=front, 1=back
-    byte                flags;
     float               length;        // Accurate length of the segment (v1 -> v2).
     float               offset;
     biassurface_t*      bsuf[3];       // 0=middle, 1=top, 2=bottom

@@ -14,7 +14,6 @@
 #define DMT_HEDGE_TWIN DDVT_PTR
 #define DMT_HEDGE_ANGLE DDVT_ANGLE
 #define DMT_HEDGE_SIDE DDVT_BYTE         // 0=front, 1=back
-#define DMT_HEDGE_FLAGS DDVT_BYTE
 #define DMT_HEDGE_LENGTH DDVT_FLOAT      // Accurate length of the segment (v1 -> v2).
 #define DMT_HEDGE_OFFSET DDVT_FLOAT
 #define DMT_HEDGE_NEXT DDVT_PTR

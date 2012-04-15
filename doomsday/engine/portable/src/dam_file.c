@@ -716,7 +716,6 @@ static void writeSeg(GameMap* map, HEdge* s)
     writeLong(s->twin? (GameMap_HEdgeIndex(map, s->twin) + 1) : 0);
     writeLong((long) s->angle);
     writeByte(s->side);
-    writeByte(s->flags);
     writeLong(s->next? (GameMap_HEdgeIndex(map, s->next) + 1) : 0);
     writeLong(s->twin? (GameMap_HEdgeIndex(map, s->prev) + 1) : 0);
 }
@@ -740,7 +739,6 @@ static void readSeg(GameMap* map, HEdge* s)
     s->twin = (obIdx == 0? NULL : GameMap_HEdge(map, (unsigned) obIdx - 1));
     s->angle = (angle_t) readLong();
     s->side = readByte();
-    s->flags = readByte();
     obIdx = readLong();
     s->next = (obIdx == 0? NULL : GameMap_HEdge(map, (unsigned) obIdx - 1));
     obIdx = readLong();
@@ -927,7 +925,6 @@ static void writePolyobj(GameMap* map, uint idx)
         writeLong(he->sector? (GameMap_SectorIndex(map, he->sector) + 1) : 0);
         writeLong((long) he->angle);
         writeByte(he->side);
-        writeByte(he->flags);
     }
 }
 
@@ -976,7 +973,6 @@ static void readPolyobj(GameMap* map, uint idx)
         he->sector = (obIdx == 0? NULL : &map->sectors[(unsigned) obIdx - 1]);
         he->angle = (angle_t) readLong();
         he->side = (readByte()? 1 : 0);
-        he->flags = readByte();
 
         line = he->lineDef;
         line->L_frontside->hedgeLeft = line->L_frontside->hedgeRight = he;

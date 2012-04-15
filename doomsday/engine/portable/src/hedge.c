@@ -57,15 +57,8 @@ void HEdge_Delete(HEdge* hedge)
 
 int HEdge_SetProperty(HEdge* hedge, const setargs_t* args)
 {
-    switch(args->prop)
-    {
-    case DMU_FLAGS:
-        DMU_SetValue(DMT_HEDGE_FLAGS, &hedge->flags, args, 0);
-        break;
-    default:
-        Con_Error("HEdge_SetProperty: Property %s is not writable.\n", DMU_Str(args->prop));
-    }
-
+    assert(hedge);
+    Con_Error("HEdge_SetProperty: Property %s is not writable.\n", DMU_Str(args->prop));
     return false; // Continue iteration.
 }
 
@@ -101,9 +94,6 @@ int HEdge_GetProperty(const HEdge* hedge, setargs_t* args)
         DMU_GetValue(DMT_HEDGE_SECTOR, &sec, args, 0);
         break;
       }
-    case DMU_FLAGS:
-        DMU_GetValue(DMT_HEDGE_FLAGS, &hedge->flags, args, 0);
-        break;
     case DMU_ANGLE:
         DMU_GetValue(DMT_HEDGE_ANGLE, &hedge->angle, args, 0);
         break;

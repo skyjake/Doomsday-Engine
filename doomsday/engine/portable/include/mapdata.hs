@@ -63,9 +63,6 @@ internal
 #define HEDGE_BACK_SECTOR(h)      ((h)->twin ? (h)->twin->sector : NULL)
 #define HEDGE_SIDEDEF(h)          ((h)->lineDef->sideDefs[(h)->side])
 
-// HEdge flags
-#define HEDGEF_POLYOBJ            0x1 /// < Half-edge is part of a poly object.
-
 // HEdge frame flags
 #define HEDGEINF_FACINGFRONT      0x0001
 
@@ -94,7 +91,6 @@ struct HEdge
     PTR     sector_s*   sector
     ANGLE   angle_t     angle
     BYTE    byte        side        // 0=front, 1=back
-    BYTE    byte        flags
     FLOAT   float       length      // Accurate length of the segment (v1 -> v2).
     FLOAT   float       offset
     -       biassurface_t*[3] bsuf // 0=middle, 1=top, 2=bottom

@@ -532,7 +532,7 @@ static void calcSegDivisions(walldiv_t* div, const HEdge* hedge,
     div->num = 0;
 
     // Polyobj hedges are never split.
-    if(hedge->flags & HEDGEF_POLYOBJ) return;
+    if(hedge->lineDef && (hedge->lineDef->flags & LF_POLYOBJ)) return;
 
     // Only hedges at sidedef ends can/should be split.
     side = HEDGE_SIDEDEF(hedge);
@@ -2654,7 +2654,7 @@ static void occludeBspLeaf(const BspLeaf* bspLeaf, boolean forwardFacing)
     {
         // Occlusions can only happen where two sectors contact.
         if(hedge->lineDef &&
-           HEDGE_BACK_SECTOR(hedge) && !(hedge->flags & HEDGEF_POLYOBJ) && // Polyobjects don't occlude.
+           HEDGE_BACK_SECTOR(hedge) && !(hedge->lineDef->flags & LF_POLYOBJ) && // Polyobjects don't occlude.
            (forwardFacing == ((hedge->frameFlags & HEDGEINF_FACINGFRONT)? true : false)))
         {
             back = HEDGE_BACK_SECTOR(hedge);
@@ -2775,8 +2775,8 @@ static void Rend_RenderBspLeaf(BspLeaf* bspLeaf)
         HEdge* hedge = bspLeaf->hedge;
         do
         {
-            if(!(hedge->flags & HEDGEF_POLYOBJ)  &&// Not handled here.
-               hedge->lineDef && // "minisegs" have no linedefs.
+            if(hedge->lineDef && // "minisegs" have no linedefs.
+               !(hedge->lineDef->flags & LF_POLYOBJ) && // Not handled here.
                (hedge->frameFlags & HEDGEINF_FACINGFRONT))
             {
                 boolean solid;

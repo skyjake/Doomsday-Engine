@@ -1192,7 +1192,6 @@ static void hardenPolyobjs(GameMap* dest, editmap_t* src)
             hedge->twin = NULL;
             hedge->bspLeaf = NULL;
             hedge->sector = line->L_frontsector;
-            hedge->flags |= HEDGEF_POLYOBJ;
 
             line->L_frontside->hedgeLeft = line->L_frontside->hedgeRight = hedge;
 
