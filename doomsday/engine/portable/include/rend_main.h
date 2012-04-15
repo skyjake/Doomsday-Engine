@@ -33,6 +33,10 @@
 #include "rend_list.h"
 #include "r_things.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define GLOW_HEIGHT_MAX                     (1024.f) /// Absolute maximum
 
 #define OMNILIGHT_SURFACE_LUMINOSITY_ATTRIBUTION_MIN (.05f)
@@ -87,5 +91,9 @@ void Rend_ApplyLightAdaptation(float* lightValue);
 float Rend_LightAdaptationDelta(float lightvalue);
 
 void            Rend_CalcLightModRange(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_REND_MAIN_H */

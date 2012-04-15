@@ -1126,7 +1126,7 @@ boolean LOIT_ClipLumObj(void* data, void* context)
     }
     else
     {
-        vec3f_t              vpos;
+        vec3f_t vpos;
 
         V3f_Set(vpos, vx, vz, vy);
 

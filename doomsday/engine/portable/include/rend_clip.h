@@ -1,59 +1,102 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * rend_clip.h: Clipper
+ * @file rend_clip.h
+ * Angle Clipper (clipnodes and oranges). @ingroup render
+ *
+ * The idea is to keep track of occluded angles around the camera.
+ * Since BSP leafs are rendered front-to-back, the occlusion lists
+ * start a frame empty and eventually fill up to cover the whole 360
+ * degrees around the camera.
+ *
+ * Oranges (occlusion ranges) clip a half-space on an angle range.
+ * These are produced by horizontal edges that have empty space behind.
+ *
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-#ifndef __DOOMSDAY_RENDER_CLIP_H__
-#define __DOOMSDAY_RENDER_CLIP_H__
+#ifndef LIBDENG_RENDER_CLIP_H
+#define LIBDENG_RENDER_CLIP_H
 
+#include "p_mapdata.h"
 #include "m_bams.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 extern int devNoCulling;
 
-void            C_Init(void);
-boolean         C_IsFull(void);
-void            C_ClearRanges(void);
-void            C_Ranger(void); // Debugging aid.
-int             C_SafeAddRange(binangle_t startAngle, binangle_t endAngle);
-boolean         C_IsPointVisible(float x, float y, float height);
+void C_Init(void);
 
-// Add a segment relative to the current viewpoint.
-void            C_AddViewRelSeg(float x1, float y1, float x2, float y2);
+/**
+ * @return  @c =true if clipnodes cover the whole range [0..360] degrees.
+ */
+boolean C_IsFull(void);
 
-// Add an occlusion segment relative to the current viewpoint.
-void            C_AddViewRelOcclusion(float *v1, float *v2, float height,
-                                      boolean tophalf);
+void C_ClearRanges(void);
 
-// Check a segment relative to the current viewpoint.
-int             C_CheckViewRelSeg(float x1, float y1, float x2, float y2);
+int C_SafeAddRange(binangle_t startAngle, binangle_t endAngle);
 
-// Returns 1 if the specified angle is visible.
-int             C_IsAngleVisible(binangle_t bang);
+/**
+ * @return  @c =true if the point is visible after checking both the clipnodes
+ *          and the occlusion planes.
+ */
+boolean C_IsPointVisible(coord_t x, coord_t y, coord_t height);
 
-// Returns 1 if the BSP leaf might be visible.
-int             C_CheckBspLeaf(BspLeaf* bspLeaf);
+/**
+ * @return  @c =true if the angle is visible after checking both the clipnodes
+ *          and the occlusion planes.
+ */
+boolean C_IsAngleVisible(binangle_t bang);
 
+/**
+ * Add a segment relative to the current viewpoint.
+ */
+void C_AddViewRelSeg(coord_t x1, coord_t y1, coord_t x2, coord_t y2);
+
+/**
+ * Add an occlusion segment relative to the current viewpoint.
+ */
+void C_AddViewRelOcclusion(coord_t const* v1, coord_t const* v2, coord_t height, boolean tophalf);
+
+/**
+ * Check a segment relative to the current viewpoint.
+ */
+int C_CheckViewRelSeg(coord_t x1, coord_t y1, coord_t x2, coord_t y2);
+
+/**
+ * @return  @c =1 if the specified @a angle is visible, else @c 0.
+ */
+int C_IsAngleVisible(binangle_t angle);
+
+/**
+ * @return  @c =1 if the BSP leaf might be visible, else @c 0.
+ */
+int C_CheckBspLeaf(BspLeaf* bspLeaf);
+
+#if _DEBUG
+/**
+ * A debugging aid: checks if clipnode links are valid.
+ */
+void C_Ranger(void);
 #endif
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
+#endif /// LIBDENG_RENDER_CLIP_H

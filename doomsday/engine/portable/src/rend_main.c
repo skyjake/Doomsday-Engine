@@ -2638,39 +2638,38 @@ static void Rend_RenderBspLeafSky(BspLeaf* bspLeaf)
  */
 static void occludeBspLeaf(const BspLeaf* bspLeaf, boolean forwardFacing)
 {
-    float fronth[2], backh[2];
-    float* startv, *endv;
+    coord_t fFloor, fCeil, bFloor, bCeil;
+    coord_t startv[2], endv[2];
     Sector* front, *back;
     HEdge* hedge;
 
     if(devNoCulling || !bspLeaf || !bspLeaf->hedge || P_IsInVoid(viewPlayer)) return;
 
     front = bspLeaf->sector;
-    fronth[0] = front->SP_floorheight;
-    fronth[1] = front->SP_ceilheight;
+    fFloor = front->SP_floorheight;
+    fCeil = front->SP_ceilheight;
 
     hedge = bspLeaf->hedge;
     do
     {
         // Occlusions can only happen where two sectors contact.
-        if(hedge->lineDef &&
-           HEDGE_BACK_SECTOR(hedge) && !(hedge->lineDef->inFlags & LF_POLYOBJ) && // Polyobjects don't occlude.
+        if(hedge->lineDef && HEDGE_BACK_SECTOR(hedge) &&
            (forwardFacing == ((hedge->frameFlags & HEDGEINF_FACINGFRONT)? true : false)))
         {
             back = HEDGE_BACK_SECTOR(hedge);
-            backh[0] = back->SP_floorheight;
-            backh[1] = back->SP_ceilheight;
+            bFloor = back->SP_floorheight;
+            bCeil = back->SP_ceilheight;
 
             // Choose start and end vertices so that it's facing forward.
             if(forwardFacing)
             {
-                startv = hedge->HE_v1pos;
-                endv   = hedge->HE_v2pos;
+                V2d_Copyf(startv, hedge->HE_v1pos);
+                V2d_Copyf(endv,   hedge->HE_v2pos);
             }
             else
             {
-                startv = hedge->HE_v2pos;
-                endv   = hedge->HE_v1pos;
+                V2d_Copyf(startv, hedge->HE_v2pos);
+                V2d_Copyf(endv,   hedge->HE_v1pos);
             }
 
             // Do not create an occlusion for sky floors.
@@ -2678,11 +2677,11 @@ static void occludeBspLeaf(const BspLeaf* bspLeaf, boolean forwardFacing)
                !Surface_IsSkyMasked(&front->SP_floorsurface))
             {
                 // Do the floors create an occlusion?
-                if((backh[0] > fronth[0] && vy <= backh[0]) ||
-                   (backh[0] < fronth[0] && vy >= fronth[0]))
+                if((bFloor > fFloor && vy <= bFloor) ||
+                   (bFloor < fFloor && vy >= fFloor))
                 {
                     // Occlude down.
-                    C_AddViewRelOcclusion(startv, endv, MAX_OF(fronth[0], backh[0]), false);
+                    C_AddViewRelOcclusion(startv, endv, MAX_OF(fFloor, bFloor), false);
                 }
             }
 
@@ -2691,11 +2690,11 @@ static void occludeBspLeaf(const BspLeaf* bspLeaf, boolean forwardFacing)
                !Surface_IsSkyMasked(&front->SP_ceilsurface))
             {
                 // Do the ceilings create an occlusion?
-                if((backh[1] < fronth[1] && vy >= backh[1]) ||
-                   (backh[1] > fronth[1] && vy <= fronth[1]))
+                if((bCeil < fCeil && vy >= bCeil) ||
+                   (bCeil > fCeil && vy <= fCeil))
                 {
                     // Occlude up.
-                    C_AddViewRelOcclusion(startv, endv, MIN_OF(fronth[1], backh[1]), true);
+                    C_AddViewRelOcclusion(startv, endv, MIN_OF(fCeil, bCeil), true);
                 }
             }
         }

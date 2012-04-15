@@ -575,7 +575,7 @@ SOURCES += \
     portable/src/reader.c \
     portable/src/rect.c \
     portable/src/rend_bias.c \
-    portable/src/rend_clip.c \
+    portable/src/rend_clip.cpp \
     portable/src/rend_console.c \
     portable/src/rend_decor.c \
     portable/src/rend_dynlight.c \

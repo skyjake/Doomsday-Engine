@@ -186,6 +186,7 @@ double V2d_Normalize(pvec2d_t vec);
  * Make a copy of the source vector.
  */
 void V2d_Copy(pvec2d_t dest, const_pvec2d_t src);
+void V2d_Copyf(pvec2d_t dest, const_pvec2f_t srcf);
 
 /**
  * Multiply the vector by the scalar.
@@ -312,6 +313,7 @@ float V3f_Normalize(pvec3f_t vec);
  * Make a copy of the source vector.
  */
 void V3f_Copy(pvec3f_t dest, const_pvec3f_t src);
+void V3f_Copyd(pvec3f_t dest, const_pvec3d_t src);
 
 /**
  * Multiply the vector by the scalar.
@@ -341,6 +343,7 @@ float V3f_DotProduct(const_pvec3f_t a, const_pvec3f_t b);
  * @param src2  Second vector.
  */
 void V3f_CrossProduct(pvec3f_t dest, const_pvec3f_t src1, const_pvec3f_t src2);
+void V3f_CrossProductd(pvec3f_t dest, const_pvec3d_t src1d, const_pvec3d_t src2d);
 
 /**
  * Cross product of two vectors composed of three points.
@@ -417,6 +420,7 @@ double V3d_Normalize(pvec3d_t vec);
  * Make a copy of the source vector.
  */
 void V3d_Copy(pvec3d_t dest, const_pvec3d_t src);
+void V3d_Copyf(pvec3d_t dest, const_pvec3f_t src);
 
 /**
  * Multiply the vector by the scalar.
@@ -437,6 +441,7 @@ void V3d_Subtract(pvec3d_t dest, const_pvec3d_t src1, const_pvec3d_t src2);
  * Calculate the dot product of the two vectors.
  */
 double V3d_DotProduct(const_pvec3d_t a, const_pvec3d_t b);
+double V3d_DotProductf(const_pvec3d_t a, const_pvec3f_t b);
 
 /**
  * Calculate the cross product of two vectors.

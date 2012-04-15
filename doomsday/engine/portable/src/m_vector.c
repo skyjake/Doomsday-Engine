@@ -315,6 +315,11 @@ void V2d_Copy(pvec2d_t dest, const_pvec2d_t src)
     dest[VY] = src[VY];
 }
 
+void V2d_Copyf(pvec2d_t dest, const_pvec2f_t srcf)
+{
+    V2d_Set(dest, srcf[VX], srcf[VY]);
+}
+
 void V2d_Scale(pvec2d_t vec, double scalar)
 {
     vec[VX] *= scalar;
@@ -558,6 +563,11 @@ void V3f_Copy(pvec3f_t dest, const_pvec3f_t src)
     dest[VZ] = src[VZ];
 }
 
+void V3f_Copyd(pvec3f_t dest, const_pvec3d_t src)
+{
+    V3f_Set(dest,  src[VX], src[VY], src[VZ]);
+}
+
 void V3f_Scale(pvec3f_t vec, float scalar)
 {
     vec[VX] *= scalar;
@@ -589,6 +599,14 @@ void V3f_CrossProduct(pvec3f_t dest, const_pvec3f_t src1, const_pvec3f_t src2)
     dest[VX] = src1[VY] * src2[VZ] - src1[VZ] * src2[VY];
     dest[VY] = src1[VZ] * src2[VX] - src1[VX] * src2[VZ];
     dest[VZ] = src1[VX] * src2[VY] - src1[VY] * src2[VX];
+}
+
+void V3f_CrossProductd(pvec3f_t dest, const_pvec3d_t src1d, const_pvec3d_t src2d)
+{
+    vec3f_t src1, src2;
+    V3f_Copyd(src1, src1d);
+    V3f_Copyd(src2, src2d);
+    V3f_CrossProduct(dest, src1, src2);
 }
 
 void V3f_PointCrossProduct(pvec3f_t dest, const pvec3f_t v1, const pvec3f_t v2,
@@ -748,6 +766,11 @@ void V3d_Copy(pvec3d_t dest, const_pvec3d_t src)
     dest[VZ] = src[VZ];
 }
 
+void V3d_Copyf(pvec3d_t dest, const_pvec3f_t srcf)
+{
+    V3d_Set(dest, srcf[VX], srcf[VY], srcf[VZ]);
+}
+
 void V3d_Scale(pvec3d_t vec, double scalar)
 {
     vec[VX] *= scalar;
@@ -772,6 +795,13 @@ void V3d_Subtract(pvec3d_t dest, const_pvec3d_t src1, const_pvec3d_t src2)
 double V3d_DotProduct(const_pvec3d_t a, const_pvec3d_t b)
 {
     return a[VX] * b[VX] + a[VY] * b[VY] + a[VZ] * b[VZ];
+}
+
+double V3d_DotProductf(const_pvec3d_t a, const_pvec3f_t bf)
+{
+    vec3d_t b;
+    V3d_Copyf(b, bf);
+    return V3d_DotProduct(a, b);
 }
 
 void V3d_CrossProduct(pvec3d_t dest, const_pvec3d_t src1, const_pvec3d_t src2)

@@ -1263,7 +1263,9 @@ void R_ProjectSprite(mobj_t* mo)
     float width = R_VisualRadius(mo)*2, offset = 0;
 
     if(!mf)
+    {
         offset = (float) -pTex->offX - (width / 2);
+    }
 
     // Project a line segment relative to the view in 2D, then check
     // if not entirely clipped away in the 360 degree angle clipper.
@@ -1274,15 +1276,15 @@ void R_ProjectSprite(mobj_t* mo)
 
     // Check for visibility.
     if(!C_CheckViewRelSeg(v1[VX], v1[VY], v2[VX], v2[VY]))
-    {   // Isn't visible.
+    {
+        // Isn't visible.
         if(mf)
         {
             // If the model is close to the viewpoint we will need to
             // draw it. Otherwise large models are likely to disappear
             // too early.
-            if(P_ApproxDistance
-                (distance, moPos[VZ] + (mo->height / 2) - viewData->current.pos[VZ]) >
-               MAX_OBJECT_RADIUS)
+            if(P_ApproxDistance(distance, moPos[VZ] + (mo->height / 2) -
+                                          viewData->current.pos[VZ]) > MAX_OBJECT_RADIUS)
             {
                 return; // Can't be visible.
             }
