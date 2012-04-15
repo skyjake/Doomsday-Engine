@@ -130,11 +130,23 @@ static viewport_t currentView;
 
 // CODE --------------------------------------------------------------------
 
-static void videoSettingsChanged(void)
+static void videoFSAAChanged(void)
 {
     if(!novideo && Window_Main())
     {
         Window_UpdateCanvasFormat(Window_Main());
+    }
+}
+
+static void videoVsyncChanged(void)
+{
+    if(!novideo && Window_Main())
+    {
+#if defined(WIN32) || defined(MACOSX)
+        GL_SetVSync(Con_GetByte("vid-vsync") != 0);
+#else
+        Window_UpdateCanvasFormat(Window_Main());
+#endif
     }
 }
 
@@ -155,8 +167,8 @@ void GL_Register(void)
     C_VAR_INT("rend-mobj-smooth-turn", &useSRVOAngle, 0, 0, 1);
 
     // * video
-    C_VAR_BYTE2("vid-vsync", &vsyncEnabled, 0, 0, 1, videoSettingsChanged);
-    C_VAR_BYTE2("vid-fsaa", &fsaaEnabled, 0, 0, 1, videoSettingsChanged);
+    C_VAR_BYTE2("vid-vsync", &vsyncEnabled, 0, 0, 1, videoVsyncChanged);
+    C_VAR_BYTE2("vid-fsaa", &fsaaEnabled, 0, 0, 1, videoFSAAChanged);
     C_VAR_INT("vid-res-x", &defResX, CVF_NO_MAX|CVF_READ_ONLY|CVF_NO_ARCHIVE, 320, 0);
     C_VAR_INT("vid-res-y", &defResY, CVF_NO_MAX|CVF_READ_ONLY|CVF_NO_ARCHIVE, 240, 0);
     C_VAR_INT("vid-bpp", &defBPP, CVF_READ_ONLY|CVF_NO_ARCHIVE, 16, 32);
