@@ -137,63 +137,9 @@ float P_MobjPointDistancef(mobj_t* start, mobj_t* end, float* fixpoint)
     return 0;
 }
 
-/**
- * Lines start, end and fdiv must intersect.
- */
-#ifdef _MSC_VER
-#  pragma optimize("g", off)
-#endif
-float P_FloatInterceptVertex(fvertex_t* start, fvertex_t* end,
-                             fdivline_t* fdiv, fvertex_t* inter)
+float P_PointOnLineSide(float x, float y, float lX, float lY, float lDX, float lDY)
 {
-    float               ax = start->pos[VX], ay = start->pos[VY];
-    float               bx = end->pos[VX], by = end->pos[VY];
-    float               cx = fdiv->pos[VX], cy = fdiv->pos[VY];
-    float               dx = cx + fdiv->dX, dy = cy + fdiv->dY;
-
-    /*
-           (YA-YC)(XD-XC)-(XA-XC)(YD-YC)
-       r = -----------------------------  (eqn 1)
-           (XB-XA)(YD-YC)-(YB-YA)(XD-XC)
-     */
-
-    float               r =
-        ((ay - cy) * (dx - cx) - (ax - cx) * (dy - cy)) /
-        ((bx - ax) * (dy - cy) - (by - ay) * (dx - cx));
-    /*
-       XI = XA+r(XB-XA)
-       YI = YA+r(YB-YA)
-     */
-    inter->pos[VX] = ax + r * (bx - ax);
-    inter->pos[VY] = ay + r * (by - ay);
-    return r;
-}
-
-int P_PointOnLineSide(float x, float y, float lX, float lY, float lDX, float lDY)
-{
-    /*
-       (AY-CY)(BX-AX)-(AX-CX)(BY-AY)
-       s = -----------------------------
-       L**2
-
-       If s<0      C is left of AB (you can just check the numerator)
-       If s>0      C is right of AB
-       If s=0      C is on AB
-     */
-    return ((lY - y) * lDX - (lX - x) * lDY >= 0);
-}
-#ifdef _MSC_VER
-#  pragma optimize("", on)
-#endif
-
-/**
- * Determines on which side of dline the point is. Returns true if the
- * point is on the line or on the right side.
- */
-int P_PointOnDivLineSidef(fvertex_t* pnt, fdivline_t* dline)
-{
-    return !P_PointOnLineSide(pnt->pos[VX], pnt->pos[VY], dline->pos[VX],
-                              dline->pos[VY], dline->dX, dline->dY);
+    return (lY - y) * lDX - (lX - x) * lDY;
 }
 
 /// @note Part of the Doomsday public API.

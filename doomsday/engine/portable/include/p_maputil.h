@@ -47,10 +47,20 @@ float           P_MobjPointDistancef(mobj_t *start, mobj_t *end,
                                      float *fixpoint);
 
 /**
- * @return              Non-zero if the point is on the right side of the
- *                      specified line.
+ * Determines on which side of line the point is.
+ *
+ * @param x  X coordinate of the point.
+ * @param y  Y coordinate of the point.
+ * @param lX  X coordinate of the line (origin).
+ * @param lY  Y coordinate of the line (origin).
+ * @param lDX  X axis angle delta (from origin -> out).
+ * @param lDY  Y axis angle delta (from origin -> out).
+ *
+ * @return @c <0 Point is to the left of the line.
+ *         @c >0 Point is to the right of the line.
+ *         @c =0 Point lies directly on the line.
  */
-int P_PointOnLineSide(float x, float y, float lX, float lY, float lDX, float lDY);
+float P_PointOnLineSide(float x, float y, float lX, float lY, float lDX, float lDY);
 
 /**
  * @return  Non-zero if the point is on the right side of the specified line.
@@ -88,11 +98,9 @@ int P_BoxOnLineSide3(const AABox* aaBox, double lineSX, double lineSY, double li
 
 void P_MakeDivline(const LineDef* lineDef, divline_t* divline);
 
-int             P_PointOnDivlineSide(float x, float y, const divline_t* line);
-float           P_InterceptVector(const divline_t* v2, const divline_t* v1);
-int             P_PointOnDivLineSidef(fvertex_t *pnt, fdivline_t *dline);
-float           P_FloatInterceptVertex(fvertex_t *start, fvertex_t *end,
-                                       fdivline_t *fdiv, fvertex_t *inter);
+int P_PointOnDivlineSide(float x, float y, const divline_t* line);
+
+float P_InterceptVector(const divline_t* v2, const divline_t* v1);
 
 /**
  * Retrieve an immutable copy of the LOS trace line for the CURRENT map.

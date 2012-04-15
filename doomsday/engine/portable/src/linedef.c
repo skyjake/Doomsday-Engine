@@ -62,7 +62,7 @@ int LineDef_PointOnSide(const LineDef* line, float const xy[2])
         DEBUG_Message(("LineDef_PointOnSide: Invalid arguments, returning zero.\n"));
         return 0;
     }
-    return !P_PointOnLineSide(xy[0], xy[1], line->L_v1pos[VX], line->L_v1pos[VY], line->dX, line->dY);
+    return P_PointOnLineSide(xy[0], xy[1], line->L_v1pos[VX], line->L_v1pos[VY], line->dX, line->dY) < 0;
 }
 
 int LineDef_PointXYOnSide(const LineDef* line, float x, float y)

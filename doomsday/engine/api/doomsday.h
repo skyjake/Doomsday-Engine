@@ -752,7 +752,7 @@ boolean M_IsStringValidFloat(const char* str);
     void            V2f_Rotate(float vec[2], float radians);
     float           V2f_Intersection(const float* p1, const float* delta1, const float* p2, const float* delta2, float point[2]);
 
-    int             P_PointOnLineSide(float x, float y, float lX, float lY, float lDX, float lDY);
+    float           P_PointOnLineSide(float x, float y, float lX, float lY, float lDX, float lDY);
     float           M_PointLineDistance(const float* a, const float* b, const float* c);
     float           M_ProjectPointOnLine(const float* point, const float* linepoint, const float* delta, float gap, float* result);
 
