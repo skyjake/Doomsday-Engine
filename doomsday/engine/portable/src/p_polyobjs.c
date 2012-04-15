@@ -30,7 +30,7 @@ static void (*po_callback) (mobj_t* mobj, void* line, void* polyobj);
 
 void P_PolyobjCallback(mobj_t* mobj, LineDef* lineDef, Polyobj* polyobj)
 {
-    if(po_callback) return;
+    if(!po_callback) return;
     po_callback(mobj, lineDef, polyobj);
 }
 
