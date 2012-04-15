@@ -1483,8 +1483,8 @@ static void radioBspLeafEdges(const BspLeaf* bspLeaf)
     // Any need to continue?
     if(!(shadowDark > .0001f)) return;
 
-    vec[VX] = vx - bspLeaf->midPoint.pos[VX];
-    vec[VY] = vz - bspLeaf->midPoint.pos[VY];
+    vec[VX] = vx - bspLeaf->midPoint[VX];
+    vec[VY] = vz - bspLeaf->midPoint[VY];
     vec[VZ] = 0;
 
     // Do we need to enlarge the size of the doPlanes array?

@@ -444,7 +444,7 @@ SOURCES += \
     portable/src/map/bsp/hplane.cpp \
     portable/src/map/bsp/partitioner.cpp \
     portable/src/map/bsp/superblockmap.cpp \
-    portable/src/bspleaf.c \
+    portable/src/bspleaf.cpp \
     portable/src/bspnode.c \
     portable/src/busytask.cpp \
     portable/src/canvas.cpp \

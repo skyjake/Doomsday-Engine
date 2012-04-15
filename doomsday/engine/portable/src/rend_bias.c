@@ -374,13 +374,13 @@ void SB_InitForMap(const char* uniqueID)
         Sector* sec = &sectors[i];
         if(sec->bspLeafs && *sec->bspLeafs)
         {
-            BspLeaf** ssecIter = sec->bspLeafs;
+            BspLeaf** leafIter = sec->bspLeafs;
             do
             {
-                BspLeaf* bspLeaf = *ssecIter;
-                numVertIllums += bspLeaf->numVertices * sec->planeCount;
-                ssecIter++;
-            } while(*ssecIter);
+                BspLeaf* leaf = *leafIter;
+                numVertIllums += BspLeaf_NumFanVertices(leaf) * sec->planeCount;
+                leafIter++;
+            } while(*leafIter);
         }
     }
 
@@ -421,24 +421,24 @@ void SB_InitForMap(const char* uniqueID)
         Sector* sec = &sectors[i];
         if(sec->bspLeafs && *sec->bspLeafs)
         {
-            BspLeaf** ssecIter = sec->bspLeafs;
+            BspLeaf** leafIter = sec->bspLeafs;
             do
             {
-                BspLeaf* bspLeaf = *ssecIter;
+                BspLeaf* leaf = *leafIter;
                 uint j;
 
                 for(j = 0; j < sec->planeCount; ++j)
                 {
                     biassurface_t* bsuf = SB_CreateSurface();
 
-                    bsuf->size = bspLeaf->numVertices;
+                    bsuf->size = BspLeaf_NumFanVertices(leaf);
                     bsuf->illum = illums;
-                    illums += bspLeaf->numVertices;
+                    illums += bsuf->size;
 
-                    bspLeaf->bsuf[j] = bsuf;
+                    leaf->bsuf[j] = bsuf;
                 }
-                ssecIter++;
-            } while(*ssecIter);
+                leafIter++;
+            } while(*leafIter);
         }
     }
 
@@ -976,7 +976,7 @@ void SB_RendPoly(struct ColorRawf_s* rcolors, biassurface_t* bsuf,
             BspLeaf* bspLeaf = (BspLeaf*) mapObject;
             vec3f_t point;
 
-            V3f_Set(point, bspLeaf->midPoint.pos[VX], bspLeaf->midPoint.pos[VY],
+            V3f_Set(point, bspLeaf->midPoint[VX], bspLeaf->midPoint[VY],
                            bspLeaf->sector->planes[elmIdx]->height);
 
             updateAffected2(bsuf, rvertices, numVertices, point, normal);

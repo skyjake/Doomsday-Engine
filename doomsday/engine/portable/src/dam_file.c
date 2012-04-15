@@ -601,13 +601,12 @@ static void writeBspLeaf(GameMap* map, BspLeaf* s)
     uint i;
     assert(s);
 
-    writeLong((long) s->flags);
     writeFloat(s->aaBox.minX);
     writeFloat(s->aaBox.minY);
     writeFloat(s->aaBox.maxX);
     writeFloat(s->aaBox.maxY);
-    writeFloat(s->midPoint.pos[VX]);
-    writeFloat(s->midPoint.pos[VY]);
+    writeFloat(s->midPoint[VX]);
+    writeFloat(s->midPoint[VY]);
     writeLong(s->sector? ((s->sector - map->sectors) + 1) : 0);
     writeLong(s->polyObj? (s->polyObj->idx + 1) : 0);
 
@@ -633,13 +632,12 @@ static void readBspLeaf(GameMap* map, BspLeaf* s)
     long obIdx;
     assert(s);
 
-    s->flags = (int) readLong();
     s->aaBox.minX = readFloat();
     s->aaBox.minY = readFloat();
     s->aaBox.maxX = readFloat();
     s->aaBox.maxY = readFloat();
-    s->midPoint.pos[VX] = readFloat();
-    s->midPoint.pos[VY] = readFloat();
+    s->midPoint[VX] = readFloat();
+    s->midPoint[VY] = readFloat();
     obIdx = readLong();
     s->sector = (obIdx == 0? NULL : &map->sectors[(unsigned) obIdx - 1]);
     obIdx = readLong();

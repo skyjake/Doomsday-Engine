@@ -351,32 +351,6 @@ void Rend_VertexColorsApplyTorchLight(ColorRawf* colors, const rvertex_t* vertic
     }
 }
 
-void Rend_PreparePlane(rvertex_t* rvertices, size_t numVertices,
-    float height, const BspLeaf* bspLeaf, boolean antiClockwise)
-{
-    size_t i, vid;
-
-    // First vertex is always #0.
-    rvertices[0].pos[VX] = bspLeaf->vertices[0]->pos[VX];
-    rvertices[0].pos[VY] = bspLeaf->vertices[0]->pos[VY];
-    rvertices[0].pos[VZ] = height;
-
-    // Copy the vertices in reverse order for ceilings (flip faces).
-    if(antiClockwise)
-        vid = numVertices - 1;
-    else
-        vid = 1;
-
-    for(i = 1; i < numVertices; ++i)
-    {
-        rvertices[i].pos[VX] = bspLeaf->vertices[vid]->pos[VX];
-        rvertices[i].pos[VY] = bspLeaf->vertices[vid]->pos[VY];
-        rvertices[i].pos[VZ] = height;
-
-        (antiClockwise? vid-- : vid++);
-    }
-}
-
 static void markSideDefSectionsPVisible(HEdge* hedge)
 {
     const Plane* fceil, *bceil, *ffloor, *bfloor;
@@ -1587,7 +1561,7 @@ static void renderPlane(BspLeaf* bspLeaf, planetype_t type, float height,
 {
     float               inter = 0;
     rendworldpoly_params_t params;
-    uint                numVertices = bspLeaf->numVertices;
+    uint                numVertices = BspLeaf_NumFanVertices(bspLeaf);
     rvertex_t*          rvertices;
     boolean             blended = false;
     Sector*             sec = bspLeaf->sector;
@@ -1648,7 +1622,7 @@ static void renderPlane(BspLeaf* bspLeaf, planetype_t type, float height,
     }
 
     rvertices = R_AllocRendVertices(numVertices);
-    Rend_PreparePlane(rvertices, numVertices, height, bspLeaf, !(normal[VZ] > 0) ^ flipSurfaceNormal);
+    BspLeaf_PrepareFan(bspLeaf, !(normal[VZ] > 0) ^ flipSurfaceNormal, height, rvertices, numVertices);
 
     if(!(params.flags & RPF_SKYMASK))
     {
@@ -1706,7 +1680,7 @@ static void Rend_RenderPlane(BspLeaf* bspLeaf, planetype_t type, float height,
     // Must have a visible surface.
     if(!inMat || !Material_IsDrawable(inMat)) return;
 
-    V3f_Set(vec, vx - bspLeaf->midPoint.pos[VX], vz - bspLeaf->midPoint.pos[VY], vy - height);
+    V3f_Set(vec, vx - bspLeaf->midPoint[VX], vz - bspLeaf->midPoint[VY], vy - height);
 
     /**
      * Flip surface tangent space vectors according to the z positon of the viewer relative
@@ -2597,10 +2571,10 @@ static void rendBspLeafSky(BspLeaf* bspLeaf, int skyCap)
     if(skyCap & SKYCAP_LOWER)
     {
         const float height = skyCapZ(bspLeaf, SKYCAP_LOWER);
-        const int numVerts = bspLeaf->numVertices;
+        const int numVerts = BspLeaf_NumFanVertices(bspLeaf);
         rvertex_t* verts = R_AllocRendVertices(numVerts);
 
-        Rend_PreparePlane(verts, numVerts, height, bspLeaf, false/*clockwise*/);
+        BspLeaf_PrepareFan(bspLeaf, false/*clockwise*/, height, verts, numVerts);
         RL_AddPoly(PT_FAN, rendPolyFlags, numVerts, verts, NULL);
         R_FreeRendVertices(verts);
     }
@@ -2609,10 +2583,10 @@ static void rendBspLeafSky(BspLeaf* bspLeaf, int skyCap)
     if(skyCap & SKYCAP_UPPER)
     {
         const float height = skyCapZ(bspLeaf, SKYCAP_UPPER);
-        const int numVerts = bspLeaf->numVertices;
+        const int numVerts = BspLeaf_NumFanVertices(bspLeaf);
         rvertex_t* verts = R_AllocRendVertices(numVerts);
 
-        Rend_PreparePlane(verts, numVerts, height, bspLeaf, true/*anticlockwise*/);
+        BspLeaf_PrepareFan(bspLeaf, true/*anticlockwise*/, height, verts, numVerts);
         RL_AddPoly(PT_FAN, rendPolyFlags, numVerts, verts, NULL);
         R_FreeRendVertices(verts);
     }
@@ -3054,7 +3028,7 @@ void Rend_RenderSurfaceVectors(void)
             Plane* pln = bspLeaf->sector->SP_plane(j);
             vec3f_t origin;
 
-            V3f_Set(origin, bspLeaf->midPoint.pos[VX], bspLeaf->midPoint.pos[VY], pln->visHeight);
+            V3f_Set(origin, bspLeaf->midPoint[VX], bspLeaf->midPoint[VY], pln->visHeight);
             if(pln->type != PLN_MID && Surface_IsSkyMasked(&pln->surface))
                 origin[VZ] = GameMap_SkyFix(theMap, pln->type == PLN_CEILING);
 

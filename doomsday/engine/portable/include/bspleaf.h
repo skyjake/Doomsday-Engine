@@ -35,6 +35,47 @@ BspLeaf* BspLeaf_New(void);
 void BspLeaf_Delete(BspLeaf* bspLeaf);
 
 /**
+ * Determine the HEdge from @a bspleaf whose vertex is suitable for use as the
+ * center point of a trifan primitive (clockwise).
+ *
+ * Note that we do not want any overlapping or zero-area (degenerate) triangles.
+ *
+ * We are assured by the node build process that BspLeaf->hedges has been ordered
+ * by angle, clockwise starting from the smallest angle.
+ *
+ * @algorithm:
+ * For each vertex
+ *    For each triangle
+ *        if area is not greater than minimum bound, move to next vertex
+ *    Vertex is suitable
+ *
+ * If a vertex exists which results in no zero-area triangles it is suitable for
+ * use as the center of our trifan. If a suitable vertex is not found then the
+ * center of BSP leaf should be selected instead (it will always be valid as
+ * BSP leafs are convex).
+ */
+void BspLeaf_ChooseFanBase(BspLeaf* leaf);
+
+/**
+ * Number of vertices needed for this leaf's trifan.
+ */
+uint BspLeaf_NumFanVertices(const BspLeaf* bspLeaf);
+
+/**
+ * Prepare the trifan rvertex_t buffer specified according to the edges of this
+ * BSP leaf. If a fan base HEdge has been chosen it will be used as the center of
+ * the trifan, else the mid point of this leaf will be used instead.
+ *
+ * @param bspLeaf  BspLeaf instance.
+ * @param antiClockwise  @c true= wind vertices in anticlockwise order (else clockwise).
+ * @param height  Z map space height coordinate to be set for each vertex.
+ * @param rvertices  The rvertex_t buffer to be populated.
+ * @param numVertices  Number of rvertex_ts in @a rvertices.
+ */
+void BspLeaf_PrepareFan(const BspLeaf* bspLeaf, boolean antiClockwise, float height,
+    rvertex_t* rvertices, uint numVertices);
+
+/**
  * Update the BspLeaf's map space axis-aligned bounding box to encompass
  * the points defined by it's vertices.
  *

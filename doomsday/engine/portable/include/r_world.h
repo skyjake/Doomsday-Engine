@@ -56,11 +56,6 @@ extern boolean ddMapSetup;
  */
 void R_SetupMap(int mode, int flags);
 
-/**
- * Polygonizes all BSP leafs in the map.
- */
-void R_PolygonizeMap(GameMap* map);
-
 void            R_SetupFog(float start, float end, float density, float* rgb);
 void            R_SetupFogDefaults(void);
 

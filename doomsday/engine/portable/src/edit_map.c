@@ -1672,8 +1672,11 @@ boolean MPE_End(void)
         }
     }
 
-    // Polygonize.
-    R_PolygonizeMap(gamemap);
+    for(i = 0; i < gamemap->numBspLeafs; ++i)
+    {
+        BspLeaf* leaf = GameMap_BspLeaf(gamemap, i);
+        BspLeaf_ChooseFanBase(leaf);
+    }
 
     buildSectorBspLeafLists(gamemap);
 

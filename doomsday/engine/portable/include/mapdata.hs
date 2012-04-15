@@ -110,24 +110,18 @@ struct HEdge
     -       mhedge_t    buildData
 end
 
-internal
-#define BLF_MIDPOINT             0x80 ///< Midpoint is tri-fan centre.
-end
-
 struct BspLeaf
     UINT    uint        hedgeCount
     PTR     hedge_s*    hedge
     PTR     polyobj_s*  polyObj // NULL, if there is no polyobj.
     PTR     sector_s*   sector
     -       int         addSpriteCount // frame number of last R_AddSprites
-    -       int         flags
     -       int         validCount
     -       uint[NUM_REVERB_DATA] reverb
     -       AABoxf      aaBox // Min and max points.
     -       float[2]    worldGridOffset // Offset to align the top left of the bBox to the world grid.
-    -       fvertex_t   midPoint // Center of vertices.
-    -       ushort      numVertices
-    -       fvertex_s** vertices // [numvertices] size
+    -       float[2]    midPoint /// Center of vertices.
+    -       hedge_s*    fanBase /// HEdge whose vertex to use as the base for a trifan. If @c NULL then midPoint is used instead.
     -       shadowlink_s* shadows
     -       biassurface_s** bsuf // [sector->planeCount] size.
     -       uint        index /// Unique. Set when saving the BSP.
