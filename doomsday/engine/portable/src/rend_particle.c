@@ -704,7 +704,7 @@ static void renderParticles(int rtype, boolean withBlend)
                 // Z-fighting.
                 pos[VX] = FIX2FLT(pt->pos[VX]);
                 pos[VY] = FIX2FLT(pt->pos[VY]);
-                M_ProjectPointOnLine(pos, &vtx->V_pos[VX], line, 1, projected);
+                M_ProjectPointOnLine(pos, &vtx->pos[VX], line, 1, projected);
 
                 LineDef_UnitVector(pt->contact, line);
 

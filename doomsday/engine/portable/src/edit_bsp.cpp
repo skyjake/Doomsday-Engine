@@ -139,8 +139,8 @@ static void finishHEdges(GameMap* map)
             if(ldef->L_side(hedge->side))
                 hedge->sector = ldef->L_side(hedge->side)->sector;
 
-            hedge->offset = P_AccurateDistance(hedge->HE_v1pos[VX] - vtx->V_pos[VX],
-                                               hedge->HE_v1pos[VY] - vtx->V_pos[VY]);
+            hedge->offset = P_AccurateDistance(hedge->HE_v1pos[VX] - vtx->pos[VX],
+                                               hedge->HE_v1pos[VY] - vtx->pos[VY]);
         }
 
         hedge->angle = bamsAtan2((int) (hedge->HE_v2pos[VY] - hedge->HE_v1pos[VY]),
@@ -258,8 +258,8 @@ static void copyVertex(Vertex& vtx, Vertex const& other)
     V2d_Copy(vtx.buildData.pos, other.buildData.pos);
 
     // Apply the final coordinates.
-    vtx.V_pos[VX] = float(vtx.buildData.pos[VX]);
-    vtx.V_pos[VY] = float(vtx.buildData.pos[VY]);
+    vtx.pos[VX] = float(vtx.buildData.pos[VX]);
+    vtx.pos[VY] = float(vtx.buildData.pos[VY]);
 }
 
 static void hardenVertexes(BspBuilder& builder, GameMap* map,

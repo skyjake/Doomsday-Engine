@@ -46,22 +46,22 @@ void BspLeaf_ChooseFanBase(BspLeaf* leaf)
     if(leaf->hedgeCount > 3)
     {
         // Leafs with higher vertex counts demand checking.
-        fvertex_t* baseVtx, *a, *b;
+        Vertex* baseVtx, *a, *b;
 
         // Search for a good base.
         do
         {
             HEdge* other = leaf->hedge;
 
-            baseVtx = &leaf->fanBase->HE_v1->v;
+            baseVtx = leaf->fanBase->HE_v1;
             do
             {
                 // Test this triangle?
                 if(!(leaf->fanBase != leaf->hedge &&
                      (other == leaf->fanBase || other == leaf->fanBase->prev)))
                 {
-                    a = &other->HE_v1->v;
-                    b = &other->HE_v2->v;
+                    a = other->HE_v1;
+                    b = other->HE_v2;
 
                     if(M_TriangleArea(baseVtx->pos, a->pos, b->pos) <= MIN_TRIANGLE_EPSILON)
                     {

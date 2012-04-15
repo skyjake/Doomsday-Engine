@@ -1625,10 +1625,10 @@ void Rend_DrawShadowOffsetVerts(void)
             {
                 pos[VZ] = vo->lineDef->L_frontsector->SP_floorvisheight;
 
-                V2f_Sum(pos, vtx->V_pos, vo->shadowOffsets.extended);
+                V2f_Sum(pos, vtx->pos, vo->shadowOffsets.extended);
                 drawPoint(pos, 1.f, yellow);
 
-                V2f_Sum(pos, vtx->V_pos, vo->shadowOffsets.inner);
+                V2f_Sum(pos, vtx->pos, vo->shadowOffsets.inner);
                 drawPoint(pos, 1.f, red);
 
                 vo = vo->LO_next;

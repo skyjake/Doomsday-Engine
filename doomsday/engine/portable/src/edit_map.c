@@ -788,8 +788,8 @@ static int C_DECL lineAngleSorter(const void* a, const void* b)
             line = own[i]->lineDef;
             otherVtx = line->L_v(line->L_v1 == rootVtx? 1:0);
 
-            dx = otherVtx->V_pos[VX] - rootVtx->V_pos[VX];
-            dy = otherVtx->V_pos[VY] - rootVtx->V_pos[VY];
+            dx = otherVtx->pos[VX] - rootVtx->pos[VX];
+            dy = otherVtx->pos[VY] - rootVtx->pos[VY];
 
             own[i]->angle = angles[i] = bamsAtan2(-100 *dx, 100 * dy);
 
@@ -1531,7 +1531,7 @@ static void findBounds(Vertex const** vertexes, uint numVertexes, vec2f_t min, v
     for(i = 0; i < numVertexes; ++i)
     {
         vtx = vertexes[i];
-        V2f_Set(point, vtx->V_pos[VX], vtx->V_pos[VY]);
+        V2f_Set(point, vtx->pos[VX], vtx->pos[VY]);
         if(!i)
             V2f_InitBox(bounds, point);
         else
@@ -1763,8 +1763,8 @@ uint MPE_VertexCreate(coord_t x, coord_t y)
     v = createVertex();
     v->buildData.pos[VX] = x;
     v->buildData.pos[VY] = y;
-    v->V_pos[VX] = (float)v->buildData.pos[VX];
-    v->V_pos[VY] = (float)v->buildData.pos[VY];
+    v->pos[VX] = (float)v->buildData.pos[VX];
+    v->pos[VY] = (float)v->buildData.pos[VY];
 
     return v->buildData.index;
 }
@@ -1784,8 +1784,8 @@ boolean MPE_VertexCreatev(size_t num, coord_t* values, uint* indices)
         v = createVertex();
         v->buildData.pos[VX] = values[n * 2];
         v->buildData.pos[VY] = values[n * 2 + 1];
-        v->V_pos[VX] = (float)v->buildData.pos[VX];
-        v->V_pos[VY] = (float)v->buildData.pos[VY];
+        v->pos[VX] = (float)v->buildData.pos[VX];
+        v->pos[VY] = (float)v->buildData.pos[VY];
 
         if(indices)
             indices[n] = v->buildData.index;
@@ -1860,8 +1860,8 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide, int flag
     // Next, check the length is not zero.
     vtx1 = map->vertexes[v1 - 1];
     vtx2 = map->vertexes[v2 - 1];
-    length = P_AccurateDistance(vtx2->V_pos[VX] - vtx1->V_pos[VX],
-                                vtx2->V_pos[VY] - vtx1->V_pos[VY]);
+    length = P_AccurateDistance(vtx2->pos[VX] - vtx1->pos[VX],
+                                vtx2->pos[VY] - vtx1->pos[VY]);
     if(!(length > 0)) return 0;
 
     if(frontSide > 0)

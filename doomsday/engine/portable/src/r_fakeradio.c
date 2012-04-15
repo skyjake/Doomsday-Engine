@@ -282,13 +282,13 @@ void R_InitFakeRadioForMap(void)
             vo1 = line->L_vo(j^1)->LO_prev;
 
             // Use the extended points, they are wider than inoffsets.
-            V2f_Set(point, vtx0->V_pos[VX], vtx0->V_pos[VY]);
+            V2f_Set(point, vtx0->pos[VX], vtx0->pos[VY]);
             V2f_InitBox(bounds.arvec2, point);
 
             V2f_Sum(point, point, vo0->shadowOffsets.extended);
             V2f_AddToBox(bounds.arvec2, point);
 
-            V2f_Set(point, vtx1->V_pos[VX], vtx1->V_pos[VY]);
+            V2f_Set(point, vtx1->pos[VX], vtx1->pos[VY]);
             V2f_AddToBox(bounds.arvec2, point);
 
             V2f_Sum(point, point, vo1->shadowOffsets.extended);

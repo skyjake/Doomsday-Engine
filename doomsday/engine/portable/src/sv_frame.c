@@ -641,9 +641,9 @@ void Sv_WritePolyDelta(const void* deltaPtr)
     Writer_WriteByte(msgWriter, df & 0xff);
 
     if(df & PODF_DEST_X)
-        Writer_WriteFloat(msgWriter, d->dest.pos[VX]);
+        Writer_WriteFloat(msgWriter, d->dest[VX]);
     if(df & PODF_DEST_Y)
-        Writer_WriteFloat(msgWriter, d->dest.pos[VY]);
+        Writer_WriteFloat(msgWriter, d->dest[VY]);
     if(df & PODF_SPEED)
         Writer_WriteFloat(msgWriter, d->speed);
     if(df & PODF_DEST_ANGLE)

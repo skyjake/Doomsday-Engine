@@ -293,7 +293,7 @@ typedef struct {
 } sidedelta_t;
 
 typedef struct {
-    fvertex_t       dest;
+    float           dest[2];
     float           speed;
     angle_t         destAngle;
     angle_t         angleSpeed;

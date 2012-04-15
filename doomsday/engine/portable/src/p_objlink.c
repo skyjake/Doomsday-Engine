@@ -403,8 +403,8 @@ static void processSeg(HEdge* hedge, void* paramaters)
     const float dx = hedge->HE_v2pos[VX] - hedge->HE_v1pos[VX];
     const float dy = hedge->HE_v2pos[VY] - hedge->HE_v1pos[VY];
     vtx = hedge->HE_v1;
-    distance = ((vtx->V_pos[VY] - p->objPos[VY]) * dx -
-                (vtx->V_pos[VX] - p->objPos[VX]) * dy) / hedge->length;
+    distance = ((vtx->pos[VY] - p->objPos[VY]) * dx -
+                (vtx->pos[VX] - p->objPos[VX]) * dy) / hedge->length;
     }
 
     if(hedge->lineDef)

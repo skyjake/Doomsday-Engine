@@ -25,8 +25,6 @@ typedef struct lineowner_s {
     shadowvert_t    shadowOffsets;
 } lineowner_t;
 
-#define V_pos                   v.pos
-
 typedef struct mvertex_s {
     // Vertex index. Always valid after loading and pruning of unused
     // vertices has occurred.
@@ -46,9 +44,9 @@ typedef struct mvertex_s {
 
 typedef struct vertex_s {
     runtime_mapdata_header_t header;
+    float               pos[2];
     unsigned int        numLineOwners; // Number of line owners.
     lineowner_t*        lineOwners;    // Lineowner base ptr [numlineowners] size. A doubly, circularly linked list. The base is the line with the lowest angle and the next-most with the largest angle.
-    fvertex_t           v;
     mvertex_t           buildData;
 } Vertex;
 
@@ -57,13 +55,13 @@ typedef struct vertex_s {
 #define BACK  1
 
 #define HE_v(n)                   v[(n)? 1:0]
-#define HE_vpos(n)                HE_v(n)->V_pos
+#define HE_vpos(n)                HE_v(n)->pos
 
 #define HE_v1                     HE_v(0)
-#define HE_v1pos                  HE_v(0)->V_pos
+#define HE_v1pos                  HE_v(0)->pos
 
 #define HE_v2                     HE_v(1)
-#define HE_v2pos                  HE_v(1)->V_pos
+#define HE_v2pos                  HE_v(1)->pos
 
 #define HEDGE_BACK_SECTOR(h)      ((h)->twin ? (h)->twin->sector : NULL)
 #define HEDGE_SIDEDEF(h)          ((h)->lineDef->sideDefs[(h)->side])
@@ -394,13 +392,13 @@ typedef struct sidedef_s {
 
 // Helper macros for accessing linedef data elements.
 #define L_v(n)                  v[(n)? 1:0]
-#define L_vpos(n)               v[(n)? 1:0]->V_pos
+#define L_vpos(n)               v[(n)? 1:0]->pos
 
 #define L_v1                    L_v(0)
-#define L_v1pos                 L_v(0)->V_pos
+#define L_v1pos                 L_v(0)->pos
 
 #define L_v2                    L_v(1)
-#define L_v2pos                 L_v(1)->V_pos
+#define L_v2pos                 L_v(1)->pos
 
 #define L_vo(n)                 vo[(n)? 1:0]
 #define L_vo1                   L_vo(0)

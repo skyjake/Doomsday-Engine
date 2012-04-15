@@ -243,12 +243,12 @@ boolean Polyobj_Rotate(Polyobj* po, angle_t angle)
         LineDef* line = *lineIter;
         Vertex* vtx = line->L_v1;
 
-        prevPts->pos[VX] = vtx->V_pos[VX];
-        prevPts->pos[VY] = vtx->V_pos[VY];
-        vtx->V_pos[VX] = originalPts->pos[VX];
-        vtx->V_pos[VY] = originalPts->pos[VY];
+        prevPts->pos[VX] = vtx->pos[VX];
+        prevPts->pos[VY] = vtx->pos[VY];
+        vtx->pos[VX] = originalPts->pos[VX];
+        vtx->pos[VY] = originalPts->pos[VY];
 
-        rotatePoint2d(vtx->V_pos, po->pos, fineAngle);
+        rotatePoint2d(vtx->pos, po->pos, fineAngle);
     }
 
     lineIter = po->lines;
@@ -279,8 +279,8 @@ boolean Polyobj_Rotate(Polyobj* po, angle_t angle)
         {
             LineDef* line = *lineIter;
             Vertex* vtx = line->L_v1;
-            vtx->V_pos[VX] = prevPts->pos[VX];
-            vtx->V_pos[VY] = prevPts->pos[VY];
+            vtx->pos[VX] = prevPts->pos[VX];
+            vtx->pos[VY] = prevPts->pos[VY];
         }
 
         lineIter = po->lines;

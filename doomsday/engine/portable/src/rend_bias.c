@@ -564,8 +564,8 @@ static float SB_Dot(source_t* src, const vectorcompf_t* point,
     return V3f_DotProduct(delta, normal);
 }
 
-static void updateAffected(biassurface_t* bsuf, const fvertex_t* from,
-                           const fvertex_t* to, const vectorcompf_t* normal)
+static void updateAffected(biassurface_t* bsuf, float const from[2],
+                           float const to[2], const vectorcompf_t* normal)
 {
     int                 i, k;
     vec2f_t             delta;
@@ -592,11 +592,11 @@ static void updateAffected(biassurface_t* bsuf, const fvertex_t* from,
         for(i = 0; i < 2; ++i)
         {
             if(!i)
-                V2f_Set(delta, from->pos[VX] - src->pos[VX],
-                               from->pos[VY] - src->pos[VY]);
+                V2f_Set(delta, from[VX] - src->pos[VX],
+                               from[VY] - src->pos[VY]);
             else
-                V2f_Set(delta, to->pos[VX] - src->pos[VX],
-                               to->pos[VY] - src->pos[VY]);
+                V2f_Set(delta, to[VX] - src->pos[VX],
+                               to[VY] - src->pos[VY]);
             len = V2f_Normalize(delta);
 
             if(i == 0 || len < distance)
@@ -969,7 +969,7 @@ void SB_RendPoly(struct ColorRawf_s* rcolors, biassurface_t* bsuf,
         {
             HEdge* hedge = (HEdge*) mapObject;
 
-            updateAffected(bsuf, &hedge->HE_v1->v, &hedge->HE_v2->v, normal);
+            updateAffected(bsuf, hedge->HE_v1pos, hedge->HE_v2pos, normal);
         }
         else
         {

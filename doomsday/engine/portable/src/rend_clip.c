@@ -1296,8 +1296,8 @@ int C_CheckBspLeaf(BspLeaf* bspLeaf)
     {
         Vertex* vtx = hedge->HE_v1;
         // Shift for more accuracy.
-        anglist[i++] = bamsAtan2((int) ((vtx->V_pos[VY] - vz) * 100),
-                                 (int) ((vtx->V_pos[VX] - vx) * 100));
+        anglist[i++] = bamsAtan2((int) ((vtx->pos[VY] - vz) * 100),
+                                 (int) ((vtx->pos[VX] - vx) * 100));
 
     } while((hedge = hedge->next) != bspLeaf->hedge);
 

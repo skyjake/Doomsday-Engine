@@ -164,8 +164,8 @@ static void writeVertex(const GameMap *map, uint idx)
 {
     Vertex             *v = &map->vertexes[idx];
 
-    writeFloat(v->V_pos[VX]);
-    writeFloat(v->V_pos[VY]);
+    writeFloat(v->pos[VX]);
+    writeFloat(v->pos[VY]);
     writeLong((long) v->numLineOwners);
 
     if(v->numLineOwners > 0)
@@ -187,8 +187,8 @@ static void readVertex(const GameMap *map, uint idx)
     uint                i;
     Vertex             *v = &map->vertexes[idx];
 
-    v->V_pos[VX] = readFloat();
-    v->V_pos[VY] = readFloat();
+    v->pos[VX] = readFloat();
+    v->pos[VY] = readFloat();
     v->numLineOwners = (uint) readLong();
 
     if(v->numLineOwners > 0)

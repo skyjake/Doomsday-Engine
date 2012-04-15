@@ -1410,7 +1410,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
 }
 
 static boolean doRenderSeg(HEdge* hedge,
-                           const fvertex_t* from, const fvertex_t* to,
+                           float const from[2], float const to[2],
                            float bottom, float top, const pvec3f_t normal,
                            float alpha,
                            const float* lightLevel, float lightLevelDL,
@@ -1474,16 +1474,16 @@ static boolean doRenderSeg(HEdge* hedge,
 
     // Vertex coords.
     // Bottom Left.
-    V3f_Set(rvertices[0].pos, from->pos[VX], from->pos[VY], bottom);
+    V3f_Set(rvertices[0].pos, from[VX], from[VY], bottom);
 
     // Top Left.
-    V3f_Set(rvertices[1].pos, from->pos[VX], from->pos[VY], top);
+    V3f_Set(rvertices[1].pos, from[VX], from[VY], top);
 
     // Bottom Right.
-    V3f_Set(rvertices[2].pos, to->pos[VX], to->pos[VY], bottom);
+    V3f_Set(rvertices[2].pos, to[VX], to[VY], bottom);
 
     // Top Right.
-    V3f_Set(rvertices[3].pos, to->pos[VX], to->pos[VY], top);
+    V3f_Set(rvertices[3].pos, to[VX], to[VY], top);
 
     // Draw this hedge.
     if(renderWorldPoly(rvertices, 4, divs, &params, msA, inter, msB))
@@ -1510,23 +1510,23 @@ static boolean doRenderSeg(HEdge* hedge,
              */
 
             // Bottom Left.
-            V3f_Set(rvertices[0].pos, from->pos[VX], from->pos[VY], bottom);
+            V3f_Set(rvertices[0].pos, from[VX], from[VY], bottom);
 
             // Top Left.
-            V3f_Set(rvertices[1].pos, from->pos[VX], from->pos[VY], top);
+            V3f_Set(rvertices[1].pos, from[VX], from[VY], top);
 
             // Bottom Right.
-            V3f_Set(rvertices[2].pos, to->pos[VX], to->pos[VY], bottom);
+            V3f_Set(rvertices[2].pos, to[VX], to[VY], bottom);
 
             // Top Right.
-            V3f_Set(rvertices[3].pos, to->pos[VX], to->pos[VY], top);
+            V3f_Set(rvertices[3].pos, to[VX], to[VY], top);
 
             ll = *lightLevel;
             Rend_ApplyLightAdaptation(&ll);
             if(ll > 0)
             {
                 // Determine the shadow properties.
-                // \fixme Make cvars out of constants.
+                /// @fixme Make cvars out of constants.
                 radioParams.shadowSize = 2 * (8 + 16 - ll * 16);
                 radioParams.shadowDark = Rend_RadioCalcShadowDarkness(ll);
 
@@ -1716,7 +1716,7 @@ static void Rend_RenderPlane(BspLeaf* bspLeaf, planetype_t type, float height,
 
 static boolean rendSegSection(BspLeaf* bspLeaf, HEdge* hedge,
                               sidedefsection_t section, Surface* surface,
-                              const fvertex_t* from, const fvertex_t* to,
+                              float const from[2], float const to[2],
                               float bottom, float top,
                               const float texOffset[2],
                               Sector* frontsec, boolean softSurface,
@@ -1795,8 +1795,8 @@ static boolean rendSegSection(BspLeaf* bspLeaf, HEdge* hedge,
         texScale[0] = ((surface->flags & DDSUF_MATERIAL_FLIPH)? -1 : 1);
         texScale[1] = ((surface->flags & DDSUF_MATERIAL_FLIPV)? -1 : 1);
 
-        V3f_Set(texTL, from->pos[VX], from->pos[VY], top);
-        V3f_Set(texBR, to->pos  [VX], to->pos  [VY], bottom);
+        V3f_Set(texTL, from[VX], from[VY], top);
+        V3f_Set(texBR, to  [VX], to  [VY], bottom);
 
         // Determine which Material to use.
         if(devRendSkyMode && HEDGE_BACK_SECTOR(hedge) &&
@@ -1989,7 +1989,7 @@ static boolean Rend_RenderSeg(BspLeaf* bspLeaf, HEdge* hedge)
         Rend_RadioUpdateLinedef(hedge->lineDef, hedge->side);
 
         solidSeg = rendSegSection(bspLeaf, hedge, SS_MIDDLE, &side->SW_middlesurface,
-                           &hedge->HE_v1->v, &hedge->HE_v2->v, ffloor, fceil,
+                           hedge->HE_v1pos, hedge->HE_v2pos, ffloor, fceil,
                            texOffset,
                            /*temp >*/ frontsec, /*< temp*/
                            false, true, true, side->flags);
@@ -2182,7 +2182,7 @@ static boolean Rend_RenderSegTwosided(BspLeaf* bspLeaf, HEdge* hedge)
                &bottom, &top, texOffset))
         {
             solidSeg = rendSegSection(bspLeaf, hedge, SS_MIDDLE, suf,
-                                      &hedge->HE_v1->v, &hedge->HE_v2->v, bottom, top, texOffset,
+                                      hedge->HE_v1pos, hedge->HE_v2pos, bottom, top, texOffset,
                                       frontSec,
                                       (((viewPlayer->shared.flags & (DDPF_NOCLIP|DDPF_CAMERA)) ||
                                         !(line->flags & DDLF_BLOCKING))? true : false),
@@ -2228,7 +2228,7 @@ static boolean Rend_RenderSegTwosided(BspLeaf* bspLeaf, HEdge* hedge)
                &bottom, &top, texOffset))
         {
             rendSegSection(bspLeaf, hedge, SS_TOP, suf,
-                           &hedge->HE_v1->v, &hedge->HE_v2->v, bottom, top, texOffset,
+                           hedge->HE_v1pos, hedge->HE_v2pos, bottom, top, texOffset,
                            frontSec, false, true, true, frontSide->flags);
         }
     }
@@ -2248,7 +2248,7 @@ static boolean Rend_RenderSegTwosided(BspLeaf* bspLeaf, HEdge* hedge)
                &bottom, &top, texOffset))
         {
             rendSegSection(bspLeaf, hedge, SS_BOTTOM, suf,
-                           &hedge->HE_v1->v, &hedge->HE_v2->v, bottom, top, texOffset,
+                           hedge->HE_v1pos, hedge->HE_v2pos, bottom, top, texOffset,
                            frontSec, false, true, true, frontSide->flags);
         }
     }
@@ -3095,7 +3095,7 @@ static void drawVertexPoint(const Vertex* vtx, float z, float alpha)
 {
     glBegin(GL_POINTS);
         glColor4f(.7f, .7f, .2f, alpha * 2);
-        glVertex3f(vtx->V_pos[VX], z, vtx->V_pos[VY]);
+        glVertex3f(vtx->pos[VX], z, vtx->pos[VY]);
     glEnd();
 }
 
@@ -3107,14 +3107,14 @@ static void drawVertexBar(const Vertex* vtx, float bottom, float top, float alph
 
     glBegin(GL_LINES);
         glColor4fv(black);
-        glVertex3f(vtx->V_pos[VX], bottom - EXTEND_DIST, vtx->V_pos[VY]);
+        glVertex3f(vtx->pos[VX], bottom - EXTEND_DIST, vtx->pos[VY]);
         glColor4f(1, 1, 1, alpha);
-        glVertex3f(vtx->V_pos[VX], bottom, vtx->V_pos[VY]);
-        glVertex3f(vtx->V_pos[VX], bottom, vtx->V_pos[VY]);
-        glVertex3f(vtx->V_pos[VX], top, vtx->V_pos[VY]);
-        glVertex3f(vtx->V_pos[VX], top, vtx->V_pos[VY]);
+        glVertex3f(vtx->pos[VX], bottom, vtx->pos[VY]);
+        glVertex3f(vtx->pos[VX], bottom, vtx->pos[VY]);
+        glVertex3f(vtx->pos[VX], top, vtx->pos[VY]);
+        glVertex3f(vtx->pos[VX], top, vtx->pos[VY]);
         glColor4fv(black);
-        glVertex3f(vtx->V_pos[VX], top + EXTEND_DIST, vtx->V_pos[VY]);
+        glVertex3f(vtx->pos[VX], top + EXTEND_DIST, vtx->pos[VY]);
     glEnd();
 
 #undef EXTEND_DIST
@@ -3134,7 +3134,7 @@ static void drawVertexIndex(const Vertex* vtx, float z, float scale, float alpha
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-    glTranslatef(vtx->V_pos[VX], z, vtx->V_pos[VY]);
+    glTranslatef(vtx->pos[VX], z, vtx->pos[VY]);
     glRotatef(-vang + 180, 0, 1, 0);
     glRotatef(vpitch, 1, 0, 0);
     glScalef(-scale, -scale, 1);
@@ -3155,7 +3155,7 @@ static int drawVertex1(LineDef* li, void* context)
 {
     Vertex* vtx = li->L_v1;
     Polyobj* po = context;
-    float dist2D = M_ApproxDistancef(vx - vtx->V_pos[VX], vz - vtx->V_pos[VY]);
+    float dist2D = M_ApproxDistancef(vx - vtx->pos[VX], vz - vtx->pos[VY]);
 
     if(dist2D < MAX_VERTEX_POINT_DIST)
     {
@@ -3181,8 +3181,8 @@ static int drawVertex1(LineDef* li, void* context)
         eye[VY] = vz;
         eye[VZ] = vy;
 
-        pos[VX] = vtx->V_pos[VX];
-        pos[VY] = vtx->V_pos[VY];
+        pos[VX] = vtx->pos[VX];
+        pos[VY] = vtx->pos[VY];
         pos[VZ] = po->bspLeaf->sector->SP_floorvisheight;
 
         dist3D = M_Distance(pos, eye);
@@ -3231,8 +3231,8 @@ void Rend_Vertexes(void)
             if(vtx->lineOwners[0].lineDef->inFlags & LF_POLYOBJ)
                 continue; // A polyobj linedef vertex.
 
-            alpha = 1 - M_ApproxDistancef(vx - vtx->V_pos[VX],
-                                          vz - vtx->V_pos[VY]) / MAX_VERTEX_POINT_DIST;
+            alpha = 1 - M_ApproxDistancef(vx - vtx->pos[VX],
+                                          vz - vtx->pos[VY]) / MAX_VERTEX_POINT_DIST;
             alpha = MIN_OF(alpha, .15f);
 
             if(alpha > 0)
@@ -3263,7 +3263,7 @@ void Rend_Vertexes(void)
         if(vtx->lineOwners[0].lineDef->inFlags & LF_POLYOBJ)
             continue; // A polyobj linedef vertex.
 
-        dist = M_ApproxDistancef(vx - vtx->V_pos[VX], vz - vtx->V_pos[VY]);
+        dist = M_ApproxDistancef(vx - vtx->pos[VX], vz - vtx->pos[VY]);
 
         if(dist < MAX_VERTEX_POINT_DIST)
         {
@@ -3293,8 +3293,8 @@ void Rend_Vertexes(void)
             if(!vtx->lineOwners) continue; // Not a linedef vertex.
             if(vtx->lineOwners[0].lineDef->inFlags & LF_POLYOBJ) continue; // A polyobj linedef vertex.
 
-            pos[VX] = vtx->V_pos[VX];
-            pos[VY] = vtx->V_pos[VY];
+            pos[VX] = vtx->pos[VX];
+            pos[VY] = vtx->pos[VY];
             pos[VZ] = DDMAXFLOAT;
             getVertexPlaneMinMax(vtx, &pos[VZ], NULL);
 

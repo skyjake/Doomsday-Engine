@@ -472,7 +472,7 @@ BspLeaf* P_BspLeafAtPointXY(float x, float y)
 
 boolean P_IsPointXYInBspLeaf(float x, float y, const BspLeaf* bspLeaf)
 {
-    fvertex_t* vi, *vj;
+    Vertex* vi, *vj;
     HEdge* hedge;
 
     if(!bspLeaf || !bspLeaf->hedge) return false; // I guess?
@@ -482,8 +482,8 @@ boolean P_IsPointXYInBspLeaf(float x, float y, const BspLeaf* bspLeaf)
     {
         HEdge* next = hedge->next;
 
-        vi = &hedge->HE_v1->v;
-        vj = &next->HE_v1->v;
+        vi = hedge->HE_v1;
+        vj = next->HE_v1;
 
         if(((vi->pos[VY] - y) * (vj->pos[VX] - vi->pos[VX]) -
             (vi->pos[VX] - x) * (vj->pos[VY] - vi->pos[VY])) < 0)
