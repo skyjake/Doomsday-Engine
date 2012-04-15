@@ -240,6 +240,9 @@ boolean Con_ParseCommands2(const char* fileName, int flags)
         cfgFile[FILENAME_T_LASTINDEX] = '\0';
     }
 
+    // Update the allowed operations.
+    flagsAllow |= flags & (CPCF_ALLOW_SAVE_STATE | CPCF_ALLOW_SAVE_BINDINGS);
+
     // Open the file.
     file = F_Open(fileName, "rt");
     if(!file) return false;
@@ -264,9 +267,6 @@ boolean Con_ParseCommands2(const char* fileName, int flags)
     }}
 
     F_Delete(file);
-
-    // Update the allowed operations.
-    flagsAllow |= flags & (CPCF_ALLOW_SAVE_STATE | CPCF_ALLOW_SAVE_BINDINGS);
 
     return true;
 }
