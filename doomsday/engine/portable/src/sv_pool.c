@@ -1569,8 +1569,11 @@ float Sv_DeltaDistance(const void* deltaPtr, const ownerinfo_t* info)
     if(delta->type == DT_SIDE)
     {
         SideDef* sideDef = &sideDefs[delta->id];
-        return P_ApproxDistance(info->pos[VX] - sideDef->origin.pos[VX],
-                                info->pos[VY] - sideDef->origin.pos[VY]);
+        vec2f_t origin;
+        V2f_Set(origin, sideDef->line->L_v1pos[VX] + sideDef->line->dX / 2,
+                        sideDef->line->L_v1pos[VY] + sideDef->line->dY / 2);
+        return P_ApproxDistance(info->pos[VX] - origin[VX],
+                                info->pos[VY] - origin[VY]);
     }
 
     if(delta->type == DT_POLY)

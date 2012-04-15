@@ -1092,8 +1092,6 @@ static void hardenSidedefs(GameMap* dest, editmap_t* src)
         destS->SW_middlesurface.visOffset[1] = destS->SW_middlesurface.offset[1];
         destS->SW_topsurface.visOffset[0] = destS->SW_topsurface.offset[0];
         destS->SW_topsurface.visOffset[1] = destS->SW_topsurface.offset[1];
-
-        SideDef_UpdateOrigin(destS);
     }
 }
 

@@ -6,11 +6,6 @@ public
 end
 
 internal
-// Each Sector and SideDef has an origin in the world (used for distance based delta queuing)
-typedef struct origin_s {
-    float               pos[2];
-} origin_t;
-
 #define LO_prev     link[0]
 #define LO_next     link[1]
 
@@ -403,7 +398,6 @@ struct SideDef
     PTR     linedef_s*  line
     PTR     sector_s*   sector
     SHORT   short       flags
-    -       origin_t    origin
     -       msidedef_t  buildData
 
 # The following is used with FakeRadio.

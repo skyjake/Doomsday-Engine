@@ -66,14 +66,6 @@ void Polyobj_UpdateAABox(Polyobj* polyobj);
 void Polyobj_UpdateSurfaceTangents(Polyobj* polyobj);
 
 /**
- * Update the Polyobj's SideDef's map space origins according to the points
- * defined by the center of the associated LineDef's vertices.
- *
- * @param polyobj  Polyobj instance.
- */
-void Polyobj_UpdateSideDefOrigins(Polyobj* polyobj);
-
-/**
  * Iterate over the lines of the Polyobj making a callback for each.
  * Iteration ends when all lines have been visited or @a callback
  * returns non-zero.

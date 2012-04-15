@@ -32,8 +32,6 @@ void SideDef_UpdateOrigin(SideDef* side)
     // The side must be owned by a line.
     if(!side->line) return;
 
-    side->origin.pos[VX] = side->line->L_v1pos[VX] + side->line->dX / 2;
-    side->origin.pos[VY] = side->line->L_v1pos[VY] + side->line->dY / 2;
 }
 
 void SideDef_UpdateSurfaceTangents(SideDef* side)

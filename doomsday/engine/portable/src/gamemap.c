@@ -374,7 +374,6 @@ static void initPolyobj(Polyobj* po)
     }
 
     Polyobj_UpdateAABox(po);
-    Polyobj_UpdateSideDefOrigins(po);
     Polyobj_UpdateSurfaceTangents(po);
 
     P_PolyobjUnlink(po);
