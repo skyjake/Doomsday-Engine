@@ -10,6 +10,9 @@ win32-g++* {
 
 DEFINES += WIN32 _CRT_SECURE_NO_WARNINGS _USE_MATH_DEFINES
 
+QMAKE_CFLAGS += -w14505
+QMAKE_CXXFLAGS += -w14505
+
 # Library location.
 DENG_EXPORT_LIB = $$OUT_PWD/../engine/doomsday.lib
 
