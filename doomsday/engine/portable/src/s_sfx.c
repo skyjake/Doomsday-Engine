@@ -66,7 +66,7 @@ boolean sfxAvail = false;
 
 int sfxMaxChannels = 16;
 int sfxDedicated2D = 4;
-float sfxReverbStrength = 1;
+float sfxReverbStrength = .5f;
 int sfxBits = 8;
 int sfxRate = 11025;
 
