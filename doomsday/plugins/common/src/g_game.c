@@ -3477,6 +3477,12 @@ D_CMD(SaveGame)
 
     if(G_QuitInProgress()) return false;
 
+    if(IS_CLIENT || IS_NETWORK_SERVER)
+    {
+        Con_Message("Network savegames are not supported at the moment.\n");
+        return false;
+    }
+
     if(player->playerState == PST_DEAD || Get(DD_PLAYBACK))
     {
         S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
