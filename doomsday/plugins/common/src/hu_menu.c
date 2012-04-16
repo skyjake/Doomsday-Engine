@@ -1049,7 +1049,7 @@ mn_object_t AutomapMenuObjects[] = {
 
 mndata_text_t txt_gameplay_always_run = { "Always Run" };
 mndata_text_t txt_gameplay_use_lookspring = { "Use LookSpring" };
-mndata_text_t txt_gameplay_use_autoaim = { "Use AutoAim" };
+mndata_text_t txt_gameplay_use_noautoaim = { "Disable AutoAim" };
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
 mndata_text_t txt_gameplay_allow_jumping = { "Allow Jumping" };
 #endif
@@ -1081,7 +1081,7 @@ mndata_text_t txt_gameplay_fix_weapon_slot = { "Fix Weapon Slot Display" };
 
 mndata_button_t btn_gameplay_always_run = { true, "ctl-run" };
 mndata_button_t btn_gameplay_use_lookspring = { true, "ctl-look-spring" };
-mndata_button_t btn_gameplay_use_autoaim = { true, "ctl-aim-noauto" };
+mndata_button_t btn_gameplay_use_noautoaim = { true, "ctl-aim-noauto" };
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
 mndata_button_t btn_gameplay_allow_jumping = { true, "player-jump" };
 #endif
@@ -1115,8 +1115,8 @@ static mn_object_t GameplayMenuObjects[] = {
     { MN_BUTTON,    0,  0,  { 0, 0 }, 'r',MENU_FONT1, MENU_COLOR3, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_gameplay_always_run },
     { MN_TEXT,      0,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_gameplay_use_lookspring },
     { MN_BUTTON,    0,  0,  { 0, 0 }, 'l',MENU_FONT1, MENU_COLOR3, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_gameplay_use_lookspring },
-    { MN_TEXT,      0,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_gameplay_use_autoaim },
-    { MN_BUTTON,    0,  0,  { 0, 0 }, 'a',MENU_FONT1, MENU_COLOR3, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_gameplay_use_autoaim },
+    { MN_TEXT,      0,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_gameplay_use_noautoaim },
+    { MN_BUTTON,    0,  0,  { 0, 0 }, 'a',MENU_FONT1, MENU_COLOR3, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_gameplay_use_noautoaim },
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     { MN_TEXT,      0,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_gameplay_allow_jumping },
     { MN_BUTTON,    0,  0,  { 0, 0 }, 'j',MENU_FONT1, MENU_COLOR3, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_gameplay_allow_jumping },
