@@ -203,19 +203,31 @@ boolean P_Move(mobj_t *actor, boolean dropoff)
     // killough $dropoff_fix.
     if(!P_TryMove(actor, pos[VX], pos[VY], dropoff, false))
     {
-        // Open any specials.
+        // Float up and down to the contacted floor height.
         if((actor->flags & MF_FLOAT) && floatOk)
         {
             // Must adjust height.
+            float oldZ = actor->pos[VZ];
             if(actor->pos[VZ] < tmFloorZ)
                 actor->pos[VZ] += FLOATSPEED;
             else
                 actor->pos[VZ] -= FLOATSPEED;
 
-            actor->flags |= MF_INFLOAT;
+            // What if we just floated into another mobj?
+            if(P_CheckPosition3fv(actor, actor->pos))
+            {
+                // Looks ok: floated to an unoccupied spot.
+                actor->flags |= MF_INFLOAT;
+            }
+            else
+            {
+                // Let's not do this; undo the float.
+                actor->pos[VZ] = oldZ;
+            }
             return true;
         }
 
+        // Open any specials.
         if(!IterList_Size(spechit))
             return false;
 
