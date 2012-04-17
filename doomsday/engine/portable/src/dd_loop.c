@@ -126,7 +126,7 @@ void DD_GameLoopCallback(void)
         for(i = 1; i < DDMAXPLAYERS; ++i)
             if(ddPlayers[i].shared.inGame) count++;
 
-        LegacyCore_SetLoopRate(de2LegacyCore, count? 35 : 2);
+        LegacyCore_SetLoopRate(de2LegacyCore, count? 35 : 3);
     }
 
     // We may be performing GL operations.
