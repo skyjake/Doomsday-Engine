@@ -107,6 +107,13 @@ static playerstart_t* playerStarts;
 static int numPlayerDMStarts = 0;
 static playerstart_t* deathmatchStarts;
 
+/**
+ * New class (or -1) for each player to be applied when the player respawns.
+ * Actually applied on serverside, on the client only valid for the local
+ * player(s).
+ */
+static int playerRespawnAsClass[MAXPLAYERS];
+
 // CODE --------------------------------------------------------------------
 
 static boolean fuzzySpawnPosition(float* x, float* y, float* z,
@@ -149,6 +156,47 @@ static boolean fuzzySpawnPosition(float* x, float* y, float* z,
 #undef YOFFSET
 
     return false;
+}
+
+void P_ResetPlayerRespawnClasses(void)
+{
+    int i;
+
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        // No change.
+        playerRespawnAsClass[i] = -1;
+    }
+}
+
+void P_SetPlayerRespawnClass(int plrNum, playerclass_t pc)
+{
+#ifndef __JHEXEN__
+    // There's only one player class.
+    assert(pc == PCLASS_PLAYER);
+#endif
+    playerRespawnAsClass[plrNum] = pc;
+}
+
+playerclass_t P_ClassForPlayerWhenRespawning(int plrNum, boolean clear)
+{
+#if __JHEXEN__
+    playerclass_t pClass = cfg.playerClass[plrNum];
+#else
+    playerclass_t pClass = PCLASS_PLAYER;
+#endif
+
+    if(playerRespawnAsClass[plrNum] != -1)
+    {
+        pClass = playerRespawnAsClass[plrNum];
+        if(clear)
+        {
+            // We can now clear the change request.
+            playerRespawnAsClass[plrNum] = -1;
+        }
+    }
+
+    return pClass;
 }
 
 /**
@@ -567,8 +615,10 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
     }
 
 #if __JHEXEN__
+    // Update the player class in effect.
     cfg.playerClass[plrNum] = pClass;
     NetSv_SendPlayerInfo(plrNum, DDSP_ALL_PLAYERS);
+    P_ClassForPlayerWhenRespawning(plrNum, true /* now applied; clear change request */);
 #endif
 
     // Player has been spawned, so tell the engine where the camera is
@@ -632,11 +682,7 @@ static void spawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
 void P_SpawnClient(int plrNum)
 {
     player_t* p;
-#if __JHEXEN__
-    playerclass_t pClass = cfg.playerClass[plrNum];
-#else
-    playerclass_t pClass = PCLASS_PLAYER;
-#endif
+    playerclass_t pClass = P_ClassForPlayerWhenRespawning(plrNum, true);
 
 #ifdef _DEBUG
     Con_Message("P_SpawnClient: Spawning client player mobj (for player %i; console player is %i).\n", plrNum, CONSOLEPLAYER);
@@ -671,11 +717,7 @@ void P_RebornPlayer(int plrNum)
     boolean             oldWeaponOwned[NUM_WEAPON_TYPES];
 #endif
     player_t*           p;
-#if __JHEXEN__
-    playerclass_t       pClass = cfg.playerClass[plrNum];
-#else
-    playerclass_t       pClass = PCLASS_PLAYER;
-#endif
+    playerclass_t       pClass;
     float               pos[3] = { 0, 0, 0 };
     angle_t             angle = 0;
     int                 spawnFlags = 0;
@@ -684,9 +726,10 @@ void P_RebornPlayer(int plrNum)
     if(plrNum < 0 || plrNum >= MAXPLAYERS)
         return; // Wha?
 
+    pClass = P_ClassForPlayerWhenRespawning(plrNum, false);
     p = &players[plrNum];
 
-    Con_Message("P_RebornPlayer: %i.\n", plrNum);
+    Con_Message("P_RebornPlayer: player %i (class %i).\n", plrNum, pClass);
 
     if(p->plr->mo)
     {
@@ -1003,11 +1046,7 @@ void P_SpawnPlayers(void)
                 angle_t             angle;
                 int                 spawnFlags;
                 boolean             makeCamera;
-#if __JHEXEN__
-                playerclass_t       pClass = cfg.playerClass[i];
-#else
-                playerclass_t       pClass = PCLASS_PLAYER;
-#endif
+                playerclass_t       pClass = P_ClassForPlayerWhenRespawning(i, false);
 
                 if(players[i].startSpot < numPlayerStarts)
                     start = &playerStarts[players[i].startSpot];
@@ -1068,15 +1107,14 @@ void G_DeathMatchSpawnPlayer(int playerNum)
     if(randomClassParm)
     {
         pClass = P_Random() % 3;
-        if(pClass == cfg.playerClass[playerNum])
+        if(pClass == cfg.playerClass[playerNum]) // Not the same class, please.
             pClass = (pClass + 1) % 3;
     }
     else
-    {
-        pClass = cfg.playerClass[playerNum];
-    }
 #else
-    pClass = PCLASS_PLAYER;
+    {
+        pClass = P_ClassForPlayerWhenRespawning(playerNum, false);
+    }
 #endif
 
     if(IS_CLIENT)

@@ -339,7 +339,7 @@ static boolean checkMapSpotSpawnFlags(const mapspot_t* spot)
     // Check current character classes with spawn flags.
     if(IS_NETGAME == false)
     {   // Single player.
-        if((spot->flags & classFlags[cfg.playerClass[0]]) == 0)
+        if((spot->flags & classFlags[P_ClassForPlayerWhenRespawning(0, false)]) == 0)
         {   // Not for current class.
             return false;
         }
@@ -352,7 +352,7 @@ static boolean checkMapSpotSpawnFlags(const mapspot_t* spot)
         {
             if(players[i].plr->inGame)
             {
-                spawnMask |= classFlags[cfg.playerClass[i]];
+                spawnMask |= classFlags[P_ClassForPlayerWhenRespawning(i, false)];
             }
         }
 

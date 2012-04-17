@@ -1916,11 +1916,7 @@ void G_PlayerReborn(int player)
     p->worldTimer = worldTimer;
     p->colorMap = cfg.playerColor[player];
 #endif
-#if __JHEXEN__
-    p->class_ = cfg.playerClass[player];
-#else
-    p->class_ = PCLASS_PLAYER;
-#endif
+    p->class_ = P_ClassForPlayerWhenRespawning(player, false);
     p->useDown = p->attackDown = true; // Don't do anything immediately.
     p->playerState = PST_LIVE;
     p->health = maxHealth;
