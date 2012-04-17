@@ -801,9 +801,6 @@ D_CMD(SetClass)
 
     if(IS_CLIENT)
     {
-        // Request that on the next respawn a new class will be used.
-        P_SetPlayerRespawnClass(CONSOLEPLAYER, newClass);
-
         // Tell the server that we want to change our class.
         NetCl_SendPlayerInfo();
     }

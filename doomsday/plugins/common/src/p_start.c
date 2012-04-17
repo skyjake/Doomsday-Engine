@@ -176,6 +176,10 @@ void P_SetPlayerRespawnClass(int plrNum, playerclass_t pc)
     assert(pc == PCLASS_PLAYER);
 #endif
     playerRespawnAsClass[plrNum] = pc;
+
+#ifdef _DEBUG
+    Con_Message("SetPlayerRespawnClass: plrNum=%i class=%i\n", plrNum, pc);
+#endif
 }
 
 playerclass_t P_ClassForPlayerWhenRespawning(int plrNum, boolean clear)
@@ -184,6 +188,10 @@ playerclass_t P_ClassForPlayerWhenRespawning(int plrNum, boolean clear)
     playerclass_t pClass = cfg.playerClass[plrNum];
 #else
     playerclass_t pClass = PCLASS_PLAYER;
+#endif
+
+#ifdef _DEBUG
+    Con_Message("ClassForPlayerWhenRespawning: plrNum=%i reqclass=%i\n", plrNum, playerRespawnAsClass[plrNum]);
 #endif
 
     if(playerRespawnAsClass[plrNum] != -1)
@@ -195,6 +203,9 @@ playerclass_t P_ClassForPlayerWhenRespawning(int plrNum, boolean clear)
             playerRespawnAsClass[plrNum] = -1;
         }
     }
+#ifdef _DEBUG
+    Con_Message("ClassForPlayerWhenRespawning: plrNum=%i actualclass=%i\n", plrNum, pClass);
+#endif
 
     return pClass;
 }
@@ -220,6 +231,8 @@ mobjtype_t P_DoomEdNumToMobjType(int doomEdNum)
 
 void P_Init(void)
 {
+    P_ResetPlayerRespawnClasses();
+
     // Create the various line lists (spechits, anims, buttons etc).
     spechit = IterList_ConstructDefault();
     linespecials = IterList_ConstructDefault();

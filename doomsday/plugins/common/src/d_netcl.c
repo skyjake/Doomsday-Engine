@@ -822,7 +822,11 @@ void NetCl_SendPlayerInfo()
     msg = D_NetWrite();
 
     Writer_WriteByte(msg, cfg.netColor);
-    Writer_WriteByte(msg, P_ClassForPlayerWhenRespawning(CONSOLEPLAYER, false));
+#ifdef __JHEXEN__
+    Writer_WriteByte(msg, cfg.netClass);
+#else
+    Writer_WriteByte(msg, PCLASS_PLAYER);
+#endif
 
     Net_SendPacket(0, GPT_PLAYER_INFO, Writer_Data(msg), Writer_Size(msg));
 }
