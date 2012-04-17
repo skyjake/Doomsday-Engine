@@ -27,7 +27,8 @@ struct image_s; // see image.h
 #include <QGLWidget>
 
 #ifdef Q_WS_X11
-#  define LIBDENG_CANVAS_TRACK_WITH_MOUSE_MOVE_EVENTS
+//#define LIBDENG_CANVAS_TRACK_WITH_MOUSE_MOVE_EVENTS
+//#  define LIBDENG_CANVAS_XWARPPOINTER
 #endif
 
 /**

@@ -36,6 +36,10 @@
 #include <QDebug>
 #include <de/Log>
 
+#ifdef LIBDENG_CANVAS_XWARPPOINTER
+#  include <X11/Xlib.h>
+#endif
+
 #include "sys_opengl.h"
 #include "sys_input.h"
 #include "mouse_qt.h"
@@ -45,6 +49,12 @@
 
 #if (QT_VERSION < QT_VERSION_CHECK(4, 7, 0))
 #  define constBits bits
+#endif
+
+#ifdef LIBDENG_CANVAS_XWARPPOINTER
+static const int MOUSE_TRACK_INTERVAL = 10; // ms
+#else
+static const int MOUSE_TRACK_INTERVAL = 1; // ms
 #endif
 
 static const int MOUSE_WHEEL_CONTINUOUS_THRESHOLD_MS = 100;
@@ -90,7 +100,7 @@ struct Canvas::Instance
         self->setCursor(QCursor(Qt::BlankCursor));
         qApp->setOverrideCursor(QCursor(Qt::BlankCursor));
 #ifndef LIBDENG_CANVAS_TRACK_WITH_MOUSE_MOVE_EVENTS
-        QTimer::singleShot(1, self, SLOT(trackMousePosition()));
+        QTimer::singleShot(MOUSE_TRACK_INTERVAL, self, SLOT(trackMousePosition()));
 #endif
 #endif
     }
