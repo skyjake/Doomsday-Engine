@@ -152,6 +152,7 @@ void D_NetClearBuffer(void)
  */
 int D_NetServerStarted(int before)
 {
+    int i;
     uint netMap, netEpisode;
 
     if(before)
@@ -167,6 +168,7 @@ int D_NetServerStarted(int before)
 #elif __JHERETIC__
     cfg.playerClass[0] = PCLASS_PLAYER;
 #endif
+    P_ResetPlayerRespawnClasses();
 
     // Set the game parameters.
     deathmatch = cfg.netDeathmatch;
@@ -212,6 +214,8 @@ int D_NetServerClose(int before)
 {
     if(!before)
     {
+        P_ResetPlayerRespawnClasses();
+
         // Restore normal game state.
         deathmatch = false;
         noMonstersParm = false;
@@ -228,8 +232,7 @@ int D_NetServerClose(int before)
 int D_NetConnect(int before)
 {
     // We do nothing before the actual connection is made.
-    if(before)
-        return true;
+    if(before) return true;
 
     // After connecting we tell the server a bit about ourselves.
     NetCl_SendPlayerInfo();
@@ -786,7 +789,7 @@ D_CMD(SetColor)
 #if __JHEXEN__
 D_CMD(SetClass)
 {
-    playerclass_t       newClass = atoi(argv[1]);
+    playerclass_t newClass = atoi(argv[1]);
 
     if(!(newClass < NUM_PLAYER_CLASSES))
         return false;
@@ -794,14 +797,19 @@ D_CMD(SetClass)
     if(!PCLASS_INFO(newClass)->userSelectable)
         return false;
 
-    cfg.netClass = newClass;
+    cfg.netClass = newClass; // Stored as a cvar.
+
     if(IS_CLIENT)
     {
-        // Tell the server that we've changed our class.
+        // Request that on the next respawn a new class will be used.
+        P_SetPlayerRespawnClass(CONSOLEPLAYER, newClass);
+
+        // Tell the server that we want to change our class.
         NetCl_SendPlayerInfo();
     }
     else
     {
+        // On the server (or singleplayer) we can do an immediate change.
         P_PlayerChangeClass(&players[CONSOLEPLAYER], cfg.netClass);
     }
 

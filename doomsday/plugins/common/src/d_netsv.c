@@ -631,12 +631,11 @@ void NetSv_NewPlayerEnters(int plrNum)
     else
     {
 #if __JHEXEN__
-        uint                nextMapEntryPoint = rebornPosition;
-        playerclass_t       pClass = cfg.playerClass[plrNum];
+        uint nextMapEntryPoint = rebornPosition;
 #else
-        uint                nextMapEntryPoint = 0;
-        playerclass_t       pClass = PCLASS_PLAYER;
+        uint nextMapEntryPoint = 0;
 #endif
+        playerclass_t pClass = P_ClassForPlayerWhenRespawning(plrNum, false);
         const playerstart_t* start;
 
         if((start = P_GetPlayerStart(nextMapEntryPoint, plrNum, false)))
@@ -1137,27 +1136,28 @@ void NetSv_SendPlayerInfo(int whose, int to_whom)
     Con_Message("NetSv_SendPlayerInfo: To %i, player %i's color is %i.\n", to_whom, whose, cfg.playerColor[whose]);
 #endif*/
 #if __JHERETIC__ || __JHEXEN__
-    Writer_WriteByte(writer, cfg.playerClass[whose]);
+    Writer_WriteByte(writer, cfg.playerClass[whose]); // current class
 #endif
-    Net_SendPacket(to_whom, GPT_PLAYER_INFO,
-                   Writer_Data(writer), Writer_Size(writer));
+    Net_SendPacket(to_whom, GPT_PLAYER_INFO, Writer_Data(writer), Writer_Size(writer));
 }
 
 void NetSv_ChangePlayerInfo(int from, Reader* msg)
 {
     int                 col;
+    int                 newClass;
     player_t*           pl = &players[from];
 
     // Color is first.
     col = Reader_ReadByte(msg);
     cfg.playerColor[from] = PLR_COLOR(from, col);
-#if __JHERETIC__ || __JHEXEN__
-    cfg.playerClass[from] = Reader_ReadByte(msg);
-    Con_Printf("NetSv_ChangePlayerInfo: pl%i, col=%i, class=%i\n", from,
-               cfg.playerColor[from], cfg.playerClass[from]);
-#else
-    Con_Printf("NetSv_ChangePlayerInfo: pl%i, col=%i\n", from,
-               cfg.playerColor[from]);
+
+    // Player class.
+    newClass = Reader_ReadByte(msg);
+    P_SetPlayerRespawnClass(from, newClass); // requesting class change?
+
+#ifdef _DEBUG
+    Con_Message("NetSv_ChangePlayerInfo: pl%i, col=%i, requested class=%i\n",
+                from, cfg.playerColor[from], newClass);
 #endif
 
 #if __JHEXEN__
@@ -1174,9 +1174,11 @@ void NetSv_ChangePlayerInfo(int from, Reader* msg)
     }
 #endif
 
+    /*
 #if __JHEXEN__
     P_PlayerChangeClass(pl, cfg.playerClass[from]);
 #endif
+    */
 
 #ifdef _DEBUG
     if(pl->plr->mo)
