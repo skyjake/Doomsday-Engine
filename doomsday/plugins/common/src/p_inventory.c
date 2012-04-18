@@ -585,8 +585,12 @@ int P_InventoryUse(int player, inventoryitemtype_t type, int silent)
 
     if(IS_CLIENT)
     {
-        // Clients will send a request to use the item, nothing else.
-        NetCl_PlayerActionRequest(&players[player], GPA_USE_FROM_INVENTORY, type);
+        if(countItems(inv, type))
+        {
+            // Clients will send a request to use the item, nothing else.
+            NetCl_PlayerActionRequest(&players[player], GPA_USE_FROM_INVENTORY, type);
+            lastUsed = type;
+        }
     }
     else
     {
@@ -619,10 +623,10 @@ int P_InventoryUse(int player, inventoryitemtype_t type, int silent)
             return false;
         }
     }
-    if(!silent)
-    {
-        invitem_t* item = &invItems[lastUsed-1];
 
+    if(!silent && lastUsed != IIT_NONE)
+    {
+        invitem_t* item = &invItems[lastUsed - 1];
         S_ConsoleSound(item->useSnd, NULL, player);
 #if __JHERETIC__ || __JHEXEN__
         ST_FlashCurrentItem(player);
