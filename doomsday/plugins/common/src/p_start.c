@@ -1124,11 +1124,10 @@ void G_DeathMatchSpawnPlayer(int playerNum)
             pClass = (pClass + 1) % 3;
     }
     else
-#else
+#endif
     {
         pClass = P_ClassForPlayerWhenRespawning(playerNum, false);
     }
-#endif
 
     if(IS_CLIENT)
     {
