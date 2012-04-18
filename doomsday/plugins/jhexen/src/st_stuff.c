@@ -3427,7 +3427,7 @@ void ST_FlashCurrentItem(int player)
     if(player < 0 || player >= MAXPLAYERS) return;
 
     plr = &players[player];
-    if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame)) return;
+    if(!(/*(plr->plr->flags & DDPF_LOCAL) &&*/ plr->plr->inGame)) return;
 
     hud = &hudStates[player];
     hud->readyItemFlashCounter = 4;
