@@ -123,7 +123,7 @@ static viewport_t currentView;
 void GL_Register(void)
 {
     // Cvars
-    C_VAR_INT("rend-dev-wireframe", &renderWireframe, 0, 0, 2);
+    C_VAR_INT("rend-dev-wireframe", &renderWireframe, CVF_NO_ARCHIVE, 0, 2);
     C_VAR_INT("rend-fog-default", &fogModeDefault, 0, 0, 2);
     // * Render-HUD
     C_VAR_FLOAT("rend-hud-offset-scale", &weaponOffsetScale, CVF_NO_MAX,
