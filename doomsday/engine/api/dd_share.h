@@ -716,7 +716,7 @@ enum {
     DMU_BLENDMODE,
     DMU_LIGHT_LEVEL,
     DMT_MOBJS, ///< pointer to start of sector mobjList
-    DMU_BOUNDING_BOX, ///< float[4]
+    DMU_BOUNDING_BOX, ///< AABoxd
     DMU_BASE,
     DMU_WIDTH,
     DMU_HEIGHT,
