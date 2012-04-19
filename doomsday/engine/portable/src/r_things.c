@@ -1619,7 +1619,7 @@ int RIT_AddSprite(void* ptr, void* paramaters)
                mo->origin[VZ] <= sec->SP_ceilheight &&
                mo->origin[VZ] >= sec->SP_floorheight)
             {
-                float visibleTop = mo->origin[VZ] + Material_Height(mat);
+                coord_t visibleTop = mo->origin[VZ] + Material_Height(mat);
                 if(visibleTop > GameMap_SkyFixCeiling(map))
                 {
                     // Raise skyfix ceiling.

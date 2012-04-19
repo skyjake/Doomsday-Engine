@@ -56,7 +56,7 @@ struct clplane_s;
 struct clpolyobj_s;
 
 typedef struct skyfix_s {
-    float height;
+    coord_t height;
 } skyfix_t;
 
 typedef struct gamemap_s {
@@ -207,12 +207,12 @@ void GameMap_SetTraceOpening(GameMap* map, LineDef* lineDef);
  */
 int GameMap_AmbientLightLevel(GameMap* map);
 
-float GameMap_SkyFix(GameMap* map, boolean ceiling);
+coord_t GameMap_SkyFix(GameMap* map, boolean ceiling);
 
 #define GameMap_SkyFixCeiling(m)       GameMap_SkyFix((m), true)
 #define GameMap_SkyFixFloor(m)         GameMap_SkyFix((m), false)
 
-GameMap* GameMap_SetSkyFix(GameMap* map, boolean ceiling, float height);
+GameMap* GameMap_SetSkyFix(GameMap* map, boolean ceiling, coord_t height);
 
 #define GameMap_SetSkyFixCeiling(m, h) GameMap_SetSkyFix((m), true, (h))
 #define GameMap_SetSkyFixFloor(m, h)   GameMap_SetSkyFix((m), false, (h))

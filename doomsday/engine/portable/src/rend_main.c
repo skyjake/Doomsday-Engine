@@ -2382,7 +2382,7 @@ static void occludeFrontFacingSegsInBspLeaf(const BspLeaf* bspLeaf)
 #define SKYCAP_UPPER                0x2
 ///@}
 
-static __inline float skyCapZ(BspLeaf* bspLeaf, int skyCap)
+static __inline coord_t skyCapZ(BspLeaf* bspLeaf, int skyCap)
 {
     const planetype_t plane = (skyCap & SKYCAP_UPPER)? PLN_CEILING : PLN_FLOOR;
     if(!bspLeaf) Con_Error("skyCapZ: Invalid bspLeaf argument (=NULL).");
@@ -2390,14 +2390,14 @@ static __inline float skyCapZ(BspLeaf* bspLeaf, int skyCap)
     return bspLeaf->sector->SP_planevisheight(plane);
 }
 
-static __inline float skyFixFloorZ(const Plane* frontFloor, const Plane* backFloor)
+static __inline coord_t skyFixFloorZ(const Plane* frontFloor, const Plane* backFloor)
 {
     if(P_IsInVoid(viewPlayer))
         return frontFloor->visHeight;
     return GameMap_SkyFixFloor(theMap);
 }
 
-static __inline float skyFixCeilZ(const Plane* frontCeil, const Plane* backCeil)
+static __inline coord_t skyFixCeilZ(const Plane* frontCeil, const Plane* backCeil)
 {
     if(P_IsInVoid(viewPlayer))
         return frontCeil->visHeight;
@@ -2431,7 +2431,7 @@ static int segSkyFixes(HEdge* hedge)
                 {
                     const Plane* ffloor = frontSec->SP_plane(PLN_FLOOR);
                     const Plane* bfloor = backSec? backSec->SP_plane(PLN_FLOOR) : NULL;
-                    const float skyZ = skyFixFloorZ(ffloor, bfloor);
+                    const coord_t skyZ = skyFixFloorZ(ffloor, bfloor);
 
                     if(hasClosedBack || (!Surface_IsSkyMasked(&bfloor->surface) || P_IsInVoid(viewPlayer)))
                     {
@@ -2446,7 +2446,7 @@ static int segSkyFixes(HEdge* hedge)
                 {
                     const Plane* fceil = frontSec->SP_plane(PLN_CEILING);
                     const Plane* bceil = backSec? backSec->SP_plane(PLN_CEILING) : NULL;
-                    const float skyZ = skyFixCeilZ(fceil, bceil);
+                    const coord_t skyZ = skyFixCeilZ(fceil, bceil);
 
                     if(hasClosedBack || (!Surface_IsSkyMasked(&bceil->surface) || P_IsInVoid(viewPlayer)))
                     {
@@ -2467,7 +2467,7 @@ static int segSkyFixes(HEdge* hedge)
  * @param bottom  Z map space coordinate for the bottom of the skyfix written here.
  * @param top  Z map space coordinate for the top of the skyfix written here.
  */
-static void skyFixZCoords(HEdge* hedge, int skyCap, float* bottom, float* top)
+static void skyFixZCoords(HEdge* hedge, int skyCap, coord_t* bottom, coord_t* top)
 {
     const Sector* frontSec = hedge->sector;
     const Sector* backSec  = HEDGE_BACK_SECTOR(hedge);
@@ -2494,7 +2494,7 @@ static void skyFixZCoords(HEdge* hedge, int skyCap, float* bottom, float* top)
 
 static void writeSkyFixGeometry(BspLeaf* bspLeaf, int skyCap, int rendPolyFlags)
 {
-    float zBottom, zTop;
+    coord_t zBottom, zTop;
     int segSkyCapFlags;
     rvertex_t verts[4];
     HEdge* hedge;

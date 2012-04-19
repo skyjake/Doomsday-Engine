@@ -169,7 +169,7 @@ boolean P_IsInVoid(player_t* player)
 
             if(Surface_IsSkyMasked(&sec->SP_ceilsurface))
             {
-                const float skyCeil = GameMap_SkyFixCeiling(theMap);
+                const coord_t skyCeil = GameMap_SkyFixCeiling(theMap);
                 if(skyCeil < DDMAXFLOAT && ddpl->mo->origin[VZ] > skyCeil - 4)
                     return true;
             }
@@ -178,7 +178,7 @@ boolean P_IsInVoid(player_t* player)
 
             if(Surface_IsSkyMasked(&sec->SP_floorsurface))
             {
-                const float skyFloor = GameMap_SkyFixFloor(theMap);
+                const coord_t skyFloor = GameMap_SkyFixFloor(theMap);
                 if(skyFloor > DDMINFLOAT && ddpl->mo->origin[VZ] < skyFloor + 4)
                     return true;
             }
