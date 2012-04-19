@@ -223,12 +223,12 @@ static void SV_v13_ReadPlayer(player_t* pl)
 
 static void SV_v13_ReadMobj(void)
 {
-    angle_t         angle;
-    spritenum_t     sprite;
-    int             frame, valid, type, ddflags = 0;
-    float           pos[3], mom[3], floorz, ceilingz, radius, height;
-    mobj_t         *mo;
-    mobjinfo_t*     info;
+    angle_t angle;
+    spritenum_t sprite;
+    int frame, valid, type, ddflags = 0;
+    coord_t pos[3], mom[3], floorz, ceilingz, radius, height;
+    mobj_t* mo;
+    mobjinfo_t* info;
 
     // The thinker was 3 ints long.
     SV_v13_ReadLong();
@@ -274,7 +274,7 @@ static void SV_v13_ReadMobj(void)
     /**
      * We now have all the information we need to create the mobj.
      */
-    mo = P_MobjCreate(P_MobjThinker, pos[VX], pos[VY], pos[VZ], angle,
+    mo = P_MobjCreateXYZ(P_MobjThinker, pos[VX], pos[VY], pos[VZ], angle,
                       radius, height, ddflags);
 
     mo->sprite = sprite;
@@ -330,9 +330,9 @@ static void SV_v13_ReadMobj(void)
     mo->player = (player_t *) SV_v13_ReadLong();
     mo->lastLook = SV_v13_ReadLong();
 
-    mo->spawnSpot.pos[VX] = (float) SV_v13_ReadLong();
-    mo->spawnSpot.pos[VY] = (float) SV_v13_ReadLong();
-    mo->spawnSpot.pos[VZ] = 0; // Initialize with "something".
+    mo->spawnSpot.origin[VX] = (coord_t) SV_v13_ReadLong();
+    mo->spawnSpot.origin[VY] = (coord_t) SV_v13_ReadLong();
+    mo->spawnSpot.origin[VZ] = 0; // Initialize with "something".
     mo->spawnSpot.angle = (angle_t) (ANG45 * (SV_v13_ReadLong() / 45));
     /*mo->spawnSpot.type = (int)*/ SV_v13_ReadLong();
 
@@ -354,14 +354,14 @@ static void SV_v13_ReadMobj(void)
         mo->player->plr->mo = mo;
         mo->player->plr->mo->dPlayer = mo->player->plr;
     }
-    P_MobjSetPosition(mo);
-    mo->floorZ = P_GetFloatp(mo->bspLeaf, DMU_FLOOR_HEIGHT);
-    mo->ceilingZ = P_GetFloatp(mo->bspLeaf, DMU_CEILING_HEIGHT);
+    P_MobjSetOrigin(mo);
+    mo->floorZ   = P_GetDoublep(mo->bspLeaf, DMU_FLOOR_HEIGHT);
+    mo->ceilingZ = P_GetDoublep(mo->bspLeaf, DMU_CEILING_HEIGHT);
 }
 
 void P_v13_UnArchivePlayers(void)
 {
-    int         i, j;
+    int i, j;
 
     for(i = 0; i < 4; ++i)
     {
@@ -373,7 +373,7 @@ void P_v13_UnArchivePlayers(void)
         players[i].attacker = NULL;
         for(j = 0; j < NUMPSPRITES; ++j)
         {
-            player_t       *plr = &players[i];
+            player_t* plr = &players[i];
 
             if(plr->pSprites[j].state)
             {
@@ -402,8 +402,8 @@ void P_v13_UnArchiveWorld(void)
         sec = P_ToPtr(DMU_SECTOR, i);
         xsec = P_ToXSector(sec);
 
-        P_SetFixedp(sec, DMU_FLOOR_HEIGHT, *get++ << FRACBITS);
-        P_SetFixedp(sec, DMU_CEILING_HEIGHT, *get++ << FRACBITS);
+        P_SetDoublep(sec, DMU_FLOOR_HEIGHT,   (coord_t)*get++);
+        P_SetDoublep(sec, DMU_CEILING_HEIGHT, (coord_t)*get++);
         P_SetPtrp(sec, DMU_FLOOR_MATERIAL,   P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_FLATS, *get++)));
         P_SetPtrp(sec, DMU_CEILING_MATERIAL, P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_FLATS, *get++)));
         P_SetFloatp(sec, DMU_LIGHT_LEVEL, (float) (*get++) / 255.0f);

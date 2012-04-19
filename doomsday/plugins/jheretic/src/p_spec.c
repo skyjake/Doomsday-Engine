@@ -51,6 +51,7 @@
 #include "p_door.h"
 #include "p_floor.h"
 #include "p_plat.h"
+#include "p_user.h"
 #include "p_switch.h"
 #include "d_netsv.h"
 
@@ -957,12 +958,12 @@ static void P_ShootSpecialLine(mobj_t* thing, LineDef* line)
 /**
  * Called every tic frame that the player origin is in a special sector.
  */
-void P_PlayerInSpecialSector(player_t *player)
+void P_PlayerInSpecialSector(player_t* player)
 {
     Sector *sector = P_GetPtrp(player->plr->mo->bspLeaf, DMU_SECTOR);
 
     // Falling, not all the way down yet?
-    if(player->plr->mo->pos[VZ] != P_GetFloatp(sector, DMU_FLOOR_HEIGHT))
+    if(!FEQUAL(player->plr->mo->origin[VZ], P_GetDoublep(sector, DMU_FLOOR_HEIGHT)))
         return;
 
     // Has hitten ground.
@@ -1059,10 +1060,10 @@ void P_UpdateSpecials(void)
 {
 #define PLANE_MATERIAL_SCROLLUNIT (8.f/35*2)
 
-    uint                i;
-    float               x;
-    LineDef*            line;
-    SideDef*            side;
+    uint i;
+    float x;
+    LineDef* line;
+    SideDef* side;
 
     // Extended lines and sectors.
     XG_Ticker();
@@ -1070,8 +1071,8 @@ void P_UpdateSpecials(void)
     // Update scrolling plane materials.
     for(i = 0; i < numsectors; ++i)
     {
-        xsector_t*          sect = P_ToXSector(P_ToPtr(DMU_SECTOR, i));
-        float               texOff[2];
+        xsector_t* sect = P_ToXSector(P_ToPtr(DMU_SECTOR, i));
+        float texOff[2];
 
         switch(sect->special)
         {
@@ -1325,7 +1326,7 @@ void P_InitLava(void)
 
 void P_PlayerInWindSector(player_t* player)
 {
-    static const float pushTab[5] = {
+    static const coord_t pushTab[5] = {
         2048.0 / FRACUNIT * 5,
         2048.0 / FRACUNIT * 10,
         2048.0 / FRACUNIT * 25,
