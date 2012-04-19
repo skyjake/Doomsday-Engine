@@ -102,7 +102,7 @@ uint            MPE_PlaneCreate(uint sector, coord_t height,
                                 float r, float g, float b, float a,
                                 float normalX, float normalY, float normalZ);
 uint            MPE_PolyobjCreate(uint *lines, uint linecount,
-                                  int tag, int sequenceType, float startX, float startY);
+                                  int tag, int sequenceType, coord_t originX, coord_t originY);
 
 boolean         MPE_GameObjProperty(const char *objName, uint idx,
                                     const char *propName, valuetype_t type,

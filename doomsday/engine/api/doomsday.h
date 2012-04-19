@@ -319,7 +319,7 @@ boolean MPE_End(void);
     uint            MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide, int flags);
     uint            MPE_SectorCreate(float lightlevel, float red, float green, float blue);
     uint            MPE_PlaneCreate(uint sector, coord_t height, materialid_t materialId, float matOffsetX, float matOffsetY, float r, float g, float b, float a, float normalX, float normalY, float normalZ);
-    uint            MPE_PolyobjCreate(uint* lines, uint linecount, int tag, int sequenceType, float anchorX, float anchorY);
+    uint            MPE_PolyobjCreate(uint* lines, uint linecount, int tag, int sequenceType, coord_t originX, coord_t originY);
     boolean         MPE_GameObjProperty(const char* objName, uint idx, const char* propName, valuetype_t type, void* data);
 ///@}
 

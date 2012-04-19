@@ -1893,15 +1893,15 @@ boolean TransferMap(void)
     VERBOSE2(Con_Message("WadMapConverter::Transfering polyobjs...\n"));
     for(i = 0; i < map->numPolyobjs; ++i)
     {
-        mpolyobj_t*         po = map->polyobjs[i];
-        uint                j, *lineList;
+        mpolyobj_t* po = map->polyobjs[i];
+        uint j, *lineList;
 
         lineList = malloc(sizeof(uint) * po->lineCount);
         for(j = 0; j < po->lineCount; ++j)
             lineList[j] = po->lineIndices[j] + 1;
         MPE_PolyobjCreate(lineList, po->lineCount, po->tag,
-                          po->seqType, (float) po->anchor[VX],
-                          (float) po->anchor[VY]);
+                          po->seqType, (coord_t) po->anchor[VX],
+                          (coord_t) po->anchor[VY]);
         free(lineList);
     }
 

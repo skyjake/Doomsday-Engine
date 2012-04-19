@@ -1951,7 +1951,7 @@ uint MPE_SectorCreate(float lightlevel, float red, float green, float blue)
 }
 
 uint MPE_PolyobjCreate(uint* lines, uint lineCount, int tag, int sequenceType,
-    float anchorX, float anchorY)
+    coord_t originX, coord_t originY)
 {
     Polyobj* po;
     uint i;
@@ -1973,8 +1973,8 @@ uint MPE_PolyobjCreate(uint* lines, uint lineCount, int tag, int sequenceType,
     po = createPolyobj();
     po->tag = tag;
     po->seqType = sequenceType;
-    po->origin[VX] = anchorX;
-    po->origin[VY] = anchorY;
+    po->origin[VX] = originX;
+    po->origin[VY] = originY;
 
     po->lineCount = lineCount;
     po->lines = M_Calloc(sizeof(LineDef*) * (po->lineCount+1));
