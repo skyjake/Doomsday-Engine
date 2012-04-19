@@ -886,6 +886,11 @@ void P_MobjThinker(mobj_t* mobj)
         if(mobj->thinker.function != P_MobjThinker)
             return; // mobj was removed
 
+        /**
+         * @todo Instead of this post-move check, we should fix the root cause why
+         * the SKULLFLYer is ending up in an invalid position during P_MobjMoveZ().
+         * If only the movement validity checks weren't so convoluted... -jk
+         */
         if((mobj->flags & MF_SKULLFLY) && !P_CheckPosition(mobj, mobj->origin))
         {
             // Let's not get stuck.
