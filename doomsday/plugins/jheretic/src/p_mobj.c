@@ -51,8 +51,8 @@
 
 #define MAX_BOB_OFFSET          (8)
 
-#define NOMOMENTUM_THRESHOLD    (0.000001f)
-#define WALKSTOP_THRESHOLD      (0.062484741f) // FIX2FLT(0x1000-1)
+#define NOMOMENTUM_THRESHOLD    (0.000001)
+#define WALKSTOP_THRESHOLD      (0.062484741) // FIX2FLT(0x1000-1)
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -880,7 +880,7 @@ void P_MobjThinker(mobj_t* mobj)
     }
     else if(!FEQUAL(mobj->origin[VZ], mobj->floorZ) || !FEQUAL(mobj->mom[MZ], 0))
     {
-        float oldZ = mobj->origin[VZ];
+        coord_t oldZ = mobj->origin[VZ];
 
         P_MobjMoveZ(mobj);
         if(mobj->thinker.function != P_MobjThinker)
