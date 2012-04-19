@@ -57,7 +57,7 @@ static LineDef* findBlendNeighbor(const LineDef* l, byte side, byte right,
 coord_t LineDef_PointDistance(LineDef* line, coord_t const point[2], coord_t* offset)
 {
     assert(line);
-    return V2d_PointLineDistance(point, line->L_v1origin, line->L_v2origin, offset);
+    return V2d_PointLineDistance(point, line->L_v1origin, line->direction, offset);
 }
 
 coord_t LineDef_PointXYDistance(LineDef* line, coord_t x, coord_t y, coord_t* offset)
