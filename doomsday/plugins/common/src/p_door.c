@@ -175,7 +175,7 @@ void T_Door(door_t* door)
     case DS_DOWN:
         res =
             T_MovePlane(door->sector, door->speed,
-                        P_GetFloatp(door->sector, DMU_FLOOR_HEIGHT),
+                        P_GetDoublep(door->sector, DMU_FLOOR_HEIGHT),
                         false, 1, -1);
 
         if(res == pastdest)
@@ -356,7 +356,7 @@ static int EV_DoDoor2(int tag, float speed, int topwait, doortype_e type)
         {
 #if __JDOOM__ || __JDOOM64__
         case DT_BLAZECLOSE:
-            P_FindSectorSurroundingLowestCeiling(sec, (float) MAXINT, &door->topHeight);
+            P_FindSectorSurroundingLowestCeiling(sec, (coord_t) MAXINT, &door->topHeight);
             door->topHeight -= 4;
             door->state = DS_DOWN;
             door->speed *= 4;
@@ -364,7 +364,7 @@ static int EV_DoDoor2(int tag, float speed, int topwait, doortype_e type)
             break;
 #endif
         case DT_CLOSE:
-            P_FindSectorSurroundingLowestCeiling(sec, (float) MAXINT, &door->topHeight);
+            P_FindSectorSurroundingLowestCeiling(sec, (coord_t) MAXINT, &door->topHeight);
             door->topHeight -= 4;
             door->state = DS_DOWN;
 #if !__JHEXEN__
@@ -373,7 +373,7 @@ static int EV_DoDoor2(int tag, float speed, int topwait, doortype_e type)
             break;
 
         case DT_CLOSE30THENOPEN:
-            door->topHeight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
+            door->topHeight = P_GetDoublep(sec, DMU_CEILING_HEIGHT);
             door->state = DS_DOWN;
 #if !__JHEXEN__
             sound = SFX_DOORCLOSE;
@@ -386,14 +386,14 @@ static int EV_DoDoor2(int tag, float speed, int topwait, doortype_e type)
 #if !__JHEXEN__
         case DT_BLAZEOPEN:
             door->state = DS_UP;
-            P_FindSectorSurroundingLowestCeiling(sec, (float) MAXINT, &door->topHeight);
+            P_FindSectorSurroundingLowestCeiling(sec, (coord_t) MAXINT, &door->topHeight);
             door->topHeight -= 4;
 # if __JHERETIC__
             door->speed *= 3;
 # else
             door->speed *= 4;
 # endif
-            if(door->topHeight != P_GetFloatp(sec, DMU_CEILING_HEIGHT))
+            if(!FEQUAL(door->topHeight, P_GetDoublep(sec, DMU_CEILING_HEIGHT)))
                 sound = SFX_DOORBLAZEOPEN;
             break;
 #endif
@@ -401,11 +401,11 @@ static int EV_DoDoor2(int tag, float speed, int topwait, doortype_e type)
         case DT_NORMAL:
         case DT_OPEN:
             door->state = DS_UP;
-            P_FindSectorSurroundingLowestCeiling(sec, (float) MAXINT, &door->topHeight);
+            P_FindSectorSurroundingLowestCeiling(sec, (coord_t) MAXINT, &door->topHeight);
             door->topHeight -= 4;
 
 #if !__JHEXEN__
-            if(door->topHeight != P_GetFloatp(sec, DMU_CEILING_HEIGHT))
+            if(!FEQUAL(door->topHeight, P_GetDoublep(sec, DMU_CEILING_HEIGHT)))
                 sound = SFX_DOOROPEN;
 #endif
             break;
@@ -858,7 +858,7 @@ boolean EV_VerticalDoor(LineDef* line, mobj_t* mo)
     }
 
     // find the top and bottom of the movement range
-    P_FindSectorSurroundingLowestCeiling(sec, (float) MAXINT, &door->topHeight);
+    P_FindSectorSurroundingLowestCeiling(sec, (coord_t) MAXINT, &door->topHeight);
     door->topHeight -= 4;
     return true;
 }
@@ -897,7 +897,7 @@ void P_SpawnDoorRaiseIn5Mins(Sector *sec)
     door->state = DS_INITIALWAIT;
     door->type = DT_RAISEIN5MINS;
     door->speed = DOORSPEED;
-    P_FindSectorSurroundingLowestCeiling(sec, (float) MAXINT, &door->topHeight);
+    P_FindSectorSurroundingLowestCeiling(sec, (coord_t) MAXINT, &door->topHeight);
     door->topHeight -= 4;
     door->topWait = DOORWAIT;
     door->topCountDown = 5 * 60 * TICSPERSEC;

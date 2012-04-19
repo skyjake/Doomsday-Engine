@@ -50,7 +50,7 @@ void NetCl_UpdateGameState(Reader* msg)
     byte gsRespawn = 0;
     byte gsJumping = 0;
     byte gsSkill = 0;
-    float gsGravity = 0;
+    coord_t gsGravity = 0;
 
     gsFlags = Reader_ReadByte(msg);
 
@@ -151,17 +151,17 @@ void NetCl_UpdateGameState(Reader* msg)
         mo = pl->plr->mo;
         if(mo)
         {
-            P_MobjUnsetPosition(mo);
-            mo->pos[VX] = Reader_ReadFloat(msg);
-            mo->pos[VY] = Reader_ReadFloat(msg);
-            mo->pos[VZ] = Reader_ReadFloat(msg);
-            P_MobjSetPosition(mo);
+            P_MobjUnsetOrigin(mo);
+            mo->origin[VX] = Reader_ReadFloat(msg);
+            mo->origin[VY] = Reader_ReadFloat(msg);
+            mo->origin[VZ] = Reader_ReadFloat(msg);
+            P_MobjSetOrigin(mo);
             mo->angle = Reader_ReadUInt32(msg);
             // Update floorz and ceilingz.
 #if __JDOOM__ || __JDOOM64__
-            P_CheckPosition3fv(mo, mo->pos);
+            P_CheckPosition(mo, mo->origin);
 #else
-            P_CheckPosition2f(mo, mo->pos[VX], mo->pos[VY]);
+            P_CheckPositionXY(mo, mo->origin[VX], mo->origin[VY]);
 #endif
             mo->floorZ = tmFloorZ;
             mo->ceilingZ = tmCeilingZ;
@@ -209,9 +209,9 @@ void NetCl_MobjImpulse(Reader* msg)
 void NetCl_PlayerSpawnPosition(Reader* msg)
 {
     player_t* p = &players[CONSOLEPLAYER];
-    mobj_t* mo;
-    float x, y, z;
+    coord_t x, y, z;
     angle_t angle;
+    mobj_t* mo;
 
     x = Reader_ReadFloat(msg);
     y = Reader_ReadFloat(msg);
@@ -226,7 +226,7 @@ void NetCl_PlayerSpawnPosition(Reader* msg)
     mo = p->plr->mo;
     assert(mo != 0);
 
-    P_TryMove3f(mo, x, y, z);
+    P_TryMoveXYZ(mo, x, y, z);
     mo->angle = angle;
 }
 
@@ -911,9 +911,9 @@ void NetCl_FloorHitRequest(player_t* player)
 #endif
 
     // Include the position and momentum of the hit.
-    Writer_WriteFloat(msg, mo->pos[VX]);
-    Writer_WriteFloat(msg, mo->pos[VY]);
-    Writer_WriteFloat(msg, mo->pos[VZ]);
+    Writer_WriteFloat(msg, mo->origin[VX]);
+    Writer_WriteFloat(msg, mo->origin[VY]);
+    Writer_WriteFloat(msg, mo->origin[VZ]);
     Writer_WriteFloat(msg, mo->mom[MX]);
     Writer_WriteFloat(msg, mo->mom[MY]);
     Writer_WriteFloat(msg, mo->mom[MZ]);
@@ -948,9 +948,9 @@ void NetCl_PlayerActionRequest(player_t *player, int actionType, int actionParam
     // Position of the action.
     if(G_GameState() == GS_MAP)
     {
-        Writer_WriteFloat(msg, player->plr->mo->pos[VX]);
-        Writer_WriteFloat(msg, player->plr->mo->pos[VY]);
-        Writer_WriteFloat(msg, player->plr->mo->pos[VZ]);
+        Writer_WriteFloat(msg, player->plr->mo->origin[VX]);
+        Writer_WriteFloat(msg, player->plr->mo->origin[VY]);
+        Writer_WriteFloat(msg, player->plr->mo->origin[VZ]);
 
         // Which way is the player looking at?
         Writer_WriteUInt32(msg, player->plr->mo->angle);

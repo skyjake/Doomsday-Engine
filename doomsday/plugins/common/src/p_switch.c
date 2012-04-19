@@ -323,10 +323,10 @@ void T_MaterialChanger(materialchanger_t* mchanger)
                   DMU_BOTTOM_MATERIAL, mchanger->material);
 #if __JDOOM__ || __JDOOM64__
         S_StartSound(SFX_SWTCHN, P_GetPtrp(
-            P_GetPtrp(mchanger->side, DMU_SECTOR), DMU_ORIGIN));
+            P_GetPtrp(mchanger->side, DMU_SECTOR), DMU_BASE));
 #elif __JHERETIC__
         S_StartSound(SFX_SWITCH, P_GetPtrp(
-            P_GetPtrp(mchanger->side, DMU_SECTOR), DMU_ORIGIN));
+            P_GetPtrp(mchanger->side, DMU_SECTOR), DMU_BASE));
 #endif
 
         DD_ThinkerRemove(&mchanger->thinker);
@@ -419,7 +419,7 @@ boolean P_ToggleSwitch2(SideDef* side, sidedefsurfaceid_t ssurfaceID,
 #endif
             }
 
-            S_StartSound(sound, P_GetPtrp(P_GetPtrp(side, DMU_SECTOR), DMU_ORIGIN));
+            S_StartSound(sound, P_GetPtrp(P_GetPtrp(side, DMU_SECTOR), DMU_BASE));
         }
 
         P_SetPtrp(side, ssurfaceID == SID_MIDDLE? DMU_MIDDLE_MATERIAL :

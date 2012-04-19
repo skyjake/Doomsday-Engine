@@ -764,31 +764,31 @@ weapontype_t P_PlayerFindWeapon(player_t* player, boolean prev)
  */
 void P_PlayerChangeClass(player_t* player, playerclass_t newClass)
 {
-    int                 i;
+    int i;
 
     // Don't change if morphed.
-    if(player->morphTics)
-        return;
-
-    if(!PCLASS_INFO(newClass)->userSelectable)
-        return;
+    if(player->morphTics) return;
+    if(!PCLASS_INFO(newClass)->userSelectable) return;
 
     player->class_ = newClass;
     cfg.playerClass[player - players] = newClass;
 
     // Take away armor.
     for(i = 0; i < NUMARMOR; ++i)
+    {
         player->armorPoints[i] = 0;
+    }
     player->update |= PSF_ARMOR_POINTS;
 
     P_PostMorphWeapon(player, WT_FIRST);
 
     if(player->plr->mo)
-    {   // Respawn the player and destroy the old mobj.
-        mobj_t*             oldMo = player->plr->mo;
+    {
+        // Respawn the player and destroy the old mobj.
+        mobj_t* oldMo = player->plr->mo;
 
-        P_SpawnPlayer(player - players, newClass, oldMo->pos[VX],
-                      oldMo->pos[VY], oldMo->pos[VZ], oldMo->angle, 0,
+        P_SpawnPlayer(player - players, newClass, oldMo->origin[VX],
+                      oldMo->origin[VY], oldMo->origin[VZ], oldMo->angle, 0,
                       P_MobjIsCamera(oldMo), true);
         P_MobjRemove(oldMo, true);
     }
@@ -861,12 +861,12 @@ void P_SetYellowMessage(player_t* pl, const char* msg, boolean noHide)
 #endif
 
 void P_Thrust3D(player_t* player, angle_t angle, float lookdir,
-                float forwardMove, float sideMove)
+                coord_t forwardMove, coord_t sideMove)
 {
     angle_t pitch = LOOKDIR2DEG(lookdir) / 360 * ANGLE_MAX;
     angle_t sideangle = angle - ANG90;
     mobj_t* mo = player->plr->mo;
-    float zmul, mom[3];
+    coord_t zmul, mom[3];
 
     angle >>= ANGLETOFINESHIFT;
     pitch >>= ANGLETOFINESHIFT;
@@ -894,15 +894,15 @@ int P_CameraXYMovement(mobj_t *mo)
 #if __JDOOM__ || __JDOOM64__
     if(mo->flags & MF_NOCLIP ||
        // This is a very rough check! Sometimes you get stuck in things.
-       P_CheckPosition3f(mo, mo->pos[VX] + mo->mom[MX], mo->pos[VY] + mo->mom[MY], mo->pos[VZ]))
+       P_CheckPositionXYZ(mo, mo->origin[VX] + mo->mom[MX], mo->origin[VY] + mo->mom[MY], mo->origin[VZ]))
     {
 #endif
 
-        P_MobjUnsetPosition(mo);
-        mo->pos[VX] += mo->mom[MX];
-        mo->pos[VY] += mo->mom[MY];
-        P_MobjSetPosition(mo);
-        P_CheckPosition2f(mo, mo->pos[VX], mo->pos[VY]);
+        P_MobjUnsetOrigin(mo);
+        mo->origin[VX] += mo->mom[MX];
+        mo->origin[VY] += mo->mom[MY];
+        P_MobjSetOrigin(mo);
+        P_CheckPositionXY(mo, mo->origin[VX], mo->origin[VY]);
         mo->floorZ = tmFloorZ;
         mo->ceilingZ = tmCeilingZ;
 
@@ -914,12 +914,14 @@ int P_CameraXYMovement(mobj_t *mo)
     if(!INRANGE_OF(mo->player->brain.forwardMove, 0, CAMERA_FRICTION_THRESHOLD) ||
        !INRANGE_OF(mo->player->brain.sideMove, 0, CAMERA_FRICTION_THRESHOLD) ||
        !INRANGE_OF(mo->player->brain.upMove, 0, CAMERA_FRICTION_THRESHOLD))
-    {   // While moving; normal friction applies.
+    {
+        // While moving; normal friction applies.
         mo->mom[MX] *= FRICTION_NORMAL;
         mo->mom[MY] *= FRICTION_NORMAL;
     }
     else
-    {   // Else lose momentum, quickly!.
+    {
+        // Else lose momentum, quickly!.
         mo->mom[MX] *= FRICTION_HIGH;
         mo->mom[MY] *= FRICTION_HIGH;
     }
@@ -932,7 +934,7 @@ int P_CameraZMovement(mobj_t *mo)
     if(!P_MobjIsCamera(mo))
         return false;
 
-    mo->pos[VZ] += mo->mom[MZ];
+    mo->origin[VZ] += mo->mom[MZ];
 
     // Friction.
     if(!INRANGE_OF(mo->player->brain.forwardMove, 0, CAMERA_FRICTION_THRESHOLD) ||
@@ -952,9 +954,9 @@ int P_CameraZMovement(mobj_t *mo)
 /**
  * Set appropriate parameters for a camera.
  */
-void P_PlayerThinkCamera(player_t *player)
+void P_PlayerThinkCamera(player_t* player)
 {
-    mobj_t *mo = player->plr->mo;
+    mobj_t* mo = player->plr->mo;
 
     if(!mo) return;
 
@@ -973,10 +975,10 @@ void P_PlayerThinkCamera(player_t *player)
     // How about viewlock?
     if(player->viewLock)
     {
-        angle_t             angle;
-        int                 full;
-        float               dist;
-        mobj_t             *target = players->viewLock;
+        angle_t angle;
+        int full;
+        coord_t dist;
+        mobj_t* target = players->viewLock;
 
         if(!target->player || !target->player->plr->inGame)
         {
@@ -986,8 +988,7 @@ void P_PlayerThinkCamera(player_t *player)
 
         full = player->lockFull;
 
-        angle = R_PointToAngle2(mo->pos[VX], mo->pos[VY],
-                                target->pos[VX], target->pos[VY]);
+        angle = M_PointToAngle2(mo->origin, target->origin);
         //player->plr->flags |= DDPF_FIXANGLES;
         /* $unifiedangles */
         mo->angle = angle;
@@ -996,18 +997,18 @@ void P_PlayerThinkCamera(player_t *player)
 
         if(full)
         {
-            dist = P_ApproxDistance(mo->pos[VX] - target->pos[VX],
-                                    mo->pos[VY] - target->pos[VY]);
-            angle =
-                R_PointToAngle2(0, 0,
-                                target->pos[VZ] + (target->height / 2) - mo->pos[VZ],
-                                dist);
-            //player->plr->clLookDir =
-            player->plr->lookDir =
-                -(angle / (float) ANGLE_MAX * 360.0f - 90);
+            dist = M_ApproxDistance(mo->origin[VX] - target->origin[VX],
+                                    mo->origin[VY] - target->origin[VY]);
+            angle = M_PointXYToAngle2(0, 0,
+                                      target->origin[VZ] + (target->height / 2) - mo->origin[VZ],
+                                      dist);
+
+            player->plr->lookDir = -(angle / (float) ANGLE_MAX * 360.0f - 90);
             if(player->plr->lookDir > 180)
                 player->plr->lookDir -= 360;
+
             player->plr->lookDir *= 110.0f / 85.0f;
+
             if(player->plr->lookDir > 110)
                 player->plr->lookDir = 110;
             if(player->plr->lookDir < -110)
@@ -1038,12 +1039,12 @@ D_CMD(SetCamera)
         if(player->plr->flags & DDPF_CAMERA)
         {   // Is now a camera.
             if(player->plr->mo)
-                player->plr->mo->pos[VZ] += player->viewHeight;
+                player->plr->mo->origin[VZ] += player->viewHeight;
         }
         else
         {   // Is now a "real" player.
             if(player->plr->mo)
-                player->plr->mo->pos[VZ] -= player->viewHeight;
+                player->plr->mo->origin[VZ] -= player->viewHeight;
         }
     }
     return true;
@@ -1208,7 +1209,7 @@ D_CMD(PrintPlayerCoords)
         return false;
 
     Con_Printf("Console %i: X=%g Y=%g Z=%g\n", CONSOLEPLAYER,
-               mo->pos[VX], mo->pos[VY], mo->pos[VZ]);
+               mo->origin[VX], mo->origin[VY], mo->origin[VZ]);
 
     return true;
 }
@@ -1237,7 +1238,7 @@ D_CMD(CycleSpy)
 D_CMD(SpawnMobj)
 {
     mobjtype_t type;
-    float pos[3];
+    coord_t pos[3];
     mobj_t* mo;
     angle_t angle;
     int spawnFlags = 0;
@@ -1289,7 +1290,7 @@ D_CMD(SpawnMobj)
     else
         angle = 0;
 
-    if((mo = P_SpawnMobj3fv(type, pos, angle, spawnFlags)))
+    if((mo = P_SpawnMobj(type, pos, angle, spawnFlags)))
     {
 #if __JDOOM64__
         // jd64 > kaiser - another cheesy hack!!!

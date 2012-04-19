@@ -221,7 +221,7 @@ void T_PlatRaise(plat_t* plat)
     case PS_WAIT:
         if(!--plat->count)
         {
-            if(P_GetFloatp(plat->sector, DMU_FLOOR_HEIGHT) == plat->low)
+            if(FEQUAL(P_GetDoublep(plat->sector, DMU_FLOOR_HEIGHT), plat->low))
                 plat->state = PS_UP;
             else
                 plat->state = PS_DOWN;
@@ -239,25 +239,23 @@ void T_PlatRaise(plat_t* plat)
 }
 
 #if __JHEXEN__
-static int doPlat(LineDef *line, int tag, byte *args, plattype_e type,
-                      int amount)
+static int doPlat(LineDef* line, int tag, byte* args, plattype_e type, int amount)
 #else
-static int doPlat(LineDef *line, int tag, plattype_e type, int amount)
+static int doPlat(LineDef* line, int tag, plattype_e type, int amount)
 #endif
 {
-    int                 rtn = 0;
-    float               floorHeight;
-    plat_t             *plat;
-    Sector             *sec = NULL;
+    int rtn = 0;
+    coord_t floorHeight;
+    plat_t* plat;
+    Sector* sec = NULL;
 #if !__JHEXEN__
-    Sector             *frontSector = P_GetPtrp(line, DMU_FRONT_SECTOR);
+    Sector* frontSector = P_GetPtrp(line, DMU_FRONT_SECTOR);
 #endif
-    xsector_t          *xsec;
-    iterlist_t         *list;
+    xsector_t* xsec;
+    iterlist_t* list;
 
     list = P_GetSectorIterListForTag(tag, false);
-    if(!list)
-        return rtn;
+    if(!list) return rtn;
 
     IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
     IterList_RewindIterator(list);
@@ -285,7 +283,7 @@ static int doPlat(LineDef *line, int tag, plattype_e type, int amount)
 #if __JHEXEN__
         plat->speed = (float) args[1] * (1.0 / 8);
 #endif
-        floorHeight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
+        floorHeight = P_GetDoublep(sec, DMU_FLOOR_HEIGHT);
         switch(type)
         {
 #if !__JHEXEN__
@@ -296,7 +294,7 @@ static int doPlat(LineDef *line, int tag, plattype_e type, int amount)
                       P_GetPtrp(frontSector, DMU_FLOOR_MATERIAL));
 
             {
-            float               nextFloor;
+            coord_t nextFloor;
             if(P_FindSectorSurroundingNextHighestFloor(sec, floorHeight, &nextFloor))
                 plat->high = nextFloor;
             else
@@ -324,7 +322,7 @@ static int doPlat(LineDef *line, int tag, plattype_e type, int amount)
 #endif
         case PT_DOWNWAITUPSTAY:
             P_FindSectorSurroundingLowestFloor(sec,
-                P_GetFloatp(sec, DMU_FLOOR_HEIGHT), &plat->low);
+                P_GetDoublep(sec, DMU_FLOOR_HEIGHT), &plat->low);
 #if __JHEXEN__
             plat->low += 8;
 #else
@@ -369,7 +367,7 @@ static int doPlat(LineDef *line, int tag, plattype_e type, int amount)
         case PT_DOWNWAITUPDOOR: // jd64
             plat->speed = PLATSPEED * 8;
             P_FindSectorSurroundingLowestFloor(sec,
-                P_GetFloatp(sec, DMU_FLOOR_HEIGHT), &plat->low);
+                P_GetDoublep(sec, DMU_FLOOR_HEIGHT), &plat->low);
 
             if(plat->low > floorHeight)
                 plat->low = floorHeight;
@@ -383,7 +381,7 @@ static int doPlat(LineDef *line, int tag, plattype_e type, int amount)
 #endif
 #if __JHEXEN__
        case PT_DOWNBYVALUEWAITUPSTAY:
-            plat->low = floorHeight - (float) args[3] * 8;
+            plat->low = floorHeight - (coord_t) args[3] * 8;
             if(plat->low > floorHeight)
                 plat->low = floorHeight;
             plat->high = floorHeight;
@@ -392,7 +390,7 @@ static int doPlat(LineDef *line, int tag, plattype_e type, int amount)
             break;
 
         case PT_UPBYVALUEWAITDOWNSTAY:
-            plat->high = floorHeight + (float) args[3] * 8;
+            plat->high = floorHeight + (coord_t) args[3] * 8;
             if(plat->high < floorHeight)
                 plat->high = floorHeight;
             plat->low = floorHeight;
@@ -404,7 +402,7 @@ static int doPlat(LineDef *line, int tag, plattype_e type, int amount)
         case PT_DOWNWAITUPSTAYBLAZE:
             plat->speed = PLATSPEED * 8;
             P_FindSectorSurroundingLowestFloor(sec,
-                P_GetFloatp(sec, DMU_FLOOR_HEIGHT), &plat->low);
+                P_GetDoublep(sec, DMU_FLOOR_HEIGHT), &plat->low);
 
             if(plat->low > floorHeight)
                 plat->low = floorHeight;
@@ -417,7 +415,7 @@ static int doPlat(LineDef *line, int tag, plattype_e type, int amount)
 #endif
         case PT_PERPETUALRAISE:
             P_FindSectorSurroundingLowestFloor(sec,
-                P_GetFloatp(sec, DMU_FLOOR_HEIGHT), &plat->low);
+                P_GetDoublep(sec, DMU_FLOOR_HEIGHT), &plat->low);
 #if __JHEXEN__
             plat->low += 8;
 #else

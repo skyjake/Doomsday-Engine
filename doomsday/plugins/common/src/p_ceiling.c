@@ -307,9 +307,8 @@ static int EV_DoCeiling2(int tag, float basespeed, ceilingtype_e type)
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
         case CT_CRUSHANDRAISEFAST:
             ceiling->crush = true;
-            ceiling->topHeight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
-            ceiling->bottomHeight =
-                P_GetFloatp(sec, DMU_FLOOR_HEIGHT) + 8;
+            ceiling->topHeight = P_GetDoublep(sec, DMU_CEILING_HEIGHT);
+            ceiling->bottomHeight = P_GetDoublep(sec, DMU_FLOOR_HEIGHT) + 8;
 
             ceiling->state = CS_DOWN;
             ceiling->speed *= 2;
@@ -318,8 +317,8 @@ static int EV_DoCeiling2(int tag, float basespeed, ceilingtype_e type)
 #if __JHEXEN__
         case CT_CRUSHRAISEANDSTAY:
             ceiling->crush = (int) arg[2];    // arg[2] = crushing value
-            ceiling->topHeight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
-            ceiling->bottomHeight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT) + 8;
+            ceiling->topHeight = P_GetDoublep(sec, DMU_CEILING_HEIGHT);
+            ceiling->bottomHeight = P_GetDoublep(sec, DMU_FLOOR_HEIGHT) + 8;
             ceiling->state = CS_DOWN;
             break;
 #endif
@@ -330,14 +329,14 @@ static int EV_DoCeiling2(int tag, float basespeed, ceilingtype_e type)
 #if !__JHEXEN__
             ceiling->crush = true;
 #endif
-            ceiling->topHeight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
+            ceiling->topHeight = P_GetDoublep(sec, DMU_CEILING_HEIGHT);
 
         case CT_LOWERANDCRUSH:
 #if __JHEXEN__
             ceiling->crush = (int) arg[2];    // arg[2] = crushing value
 #endif
         case CT_LOWERTOFLOOR:
-            ceiling->bottomHeight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
+            ceiling->bottomHeight = P_GetDoublep(sec, DMU_FLOOR_HEIGHT);
 
             if(type != CT_LOWERTOFLOOR)
                 ceiling->bottomHeight += 8;
@@ -358,13 +357,13 @@ static int EV_DoCeiling2(int tag, float basespeed, ceilingtype_e type)
         case CT_CUSTOM: // jd64
             {
             //bitmip? wha?
-            SideDef *front = P_GetPtrp(line, DMU_SIDEDEF0);
-            SideDef *back = P_GetPtrp(line, DMU_SIDEDEF1);
-            float bitmipL = 0, bitmipR = 0;
+            SideDef* front = P_GetPtrp(line, DMU_SIDEDEF0);
+            SideDef* back = P_GetPtrp(line, DMU_SIDEDEF1);
+            coord_t bitmipL = 0, bitmipR = 0;
 
-            bitmipL = P_GetFloatp(front, DMU_MIDDLE_MATERIAL_OFFSET_X);
+            bitmipL = P_GetDoublep(front, DMU_MIDDLE_MATERIAL_OFFSET_X);
             if(back)
-                bitmipR = P_GetFloatp(back, DMU_MIDDLE_MATERIAL_OFFSET_X);
+                bitmipR = P_GetDoublep(back, DMU_MIDDLE_MATERIAL_OFFSET_X);
 
             if(bitmipR > 0)
             {
@@ -375,7 +374,7 @@ static int EV_DoCeiling2(int tag, float basespeed, ceilingtype_e type)
             }
             else
             {
-                ceiling->bottomHeight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
+                ceiling->bottomHeight = P_GetDoublep(sec, DMU_FLOOR_HEIGHT);
                 ceiling->bottomHeight -= bitmipR;
                 ceiling->state = CS_DOWN;
                 ceiling->speed *= bitmipL;
@@ -385,31 +384,31 @@ static int EV_DoCeiling2(int tag, float basespeed, ceilingtype_e type)
 #if __JHEXEN__
         case CT_LOWERBYVALUE:
             ceiling->bottomHeight =
-                P_GetFloatp(sec, DMU_CEILING_HEIGHT) - (float) arg[2];
+                P_GetDoublep(sec, DMU_CEILING_HEIGHT) - (coord_t) arg[2];
             ceiling->state = CS_DOWN;
             break;
 
         case CT_RAISEBYVALUE:
             ceiling->topHeight =
-                P_GetFloatp(sec, DMU_CEILING_HEIGHT) + (float) arg[2];
+                P_GetDoublep(sec, DMU_CEILING_HEIGHT) + (coord_t) arg[2];
             ceiling->state = CS_UP;
             break;
 
         case CT_MOVETOVALUEMUL8:
             {
-            float   destHeight = (float) arg[2] * 8;
+            coord_t destHeight = (coord_t) arg[2] * 8;
 
             if(arg[3]) // Going down?
                 destHeight = -destHeight;
 
-            if(P_GetFloatp(sec, DMU_CEILING_HEIGHT) <= destHeight)
+            if(P_GetDoublep(sec, DMU_CEILING_HEIGHT) <= destHeight)
             {
                 ceiling->state = CS_UP;
                 ceiling->topHeight = destHeight;
-                if(P_GetFloatp(sec, DMU_CEILING_HEIGHT) == destHeight)
+                if(FEQUAL(P_GetDoublep(sec, DMU_CEILING_HEIGHT), destHeight))
                     rtn = 0;
             }
-            else if(P_GetFloatp(sec, DMU_CEILING_HEIGHT) > destHeight)
+            else if(P_GetDoublep(sec, DMU_CEILING_HEIGHT) > destHeight)
             {
                 ceiling->state = CS_DOWN;
                 ceiling->bottomHeight = destHeight;

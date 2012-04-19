@@ -271,7 +271,7 @@ void R_CycleGammaLevel(void)
  */
 void R_UpdateConsoleView(int player)
 {
-    float viewOrigin[3];
+    coord_t viewOrigin[3];
     player_t* plr;
     mobj_t* mo;
 
@@ -280,8 +280,8 @@ void R_UpdateConsoleView(int player)
     mo = plr->plr->mo;
     if(!mo || !plr->plr->inGame) return; // Not present?
 
-    viewOrigin[VX] = mo->pos[VX] + plr->viewOffset[VX];
-    viewOrigin[VY] = mo->pos[VY] + plr->viewOffset[VY];
+    viewOrigin[VX] = mo->origin[VX] + plr->viewOffset[VX];
+    viewOrigin[VY] = mo->origin[VY] + plr->viewOffset[VY];
     viewOrigin[VZ] = plr->viewZ + plr->viewOffset[VZ];
     R_SetViewOrigin(player, viewOrigin);
     R_SetViewAngle(player, mo->angle + (int) (ANGLE_MAX * -G_GetLookOffset(player)));

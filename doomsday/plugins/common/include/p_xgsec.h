@@ -135,9 +135,9 @@ typedef struct {
     int             flags;
     struct linedef_s* origin;
 
-    float           destination;
-    float           speed; // Signed.
-    float           crushSpeed; // Signed (speed to use when crushing).
+    coord_t         destination;
+    float           speed;
+    float           crushSpeed; // Speed to use when crushing.
 
     material_t*     setMaterial; // Set material when move done.
     int             setSectorType; // Sector type to set when move done
@@ -154,9 +154,9 @@ void            XS_Update(void);
 
 void            XS_Thinker(xsthinker_t* xs);
 
-float           XS_Gravity(struct sector_s *sector);
-float           XS_Friction(struct sector_s *sector);
-float           XS_ThrustMul(struct sector_s *sector);
+coord_t         XS_Gravity(struct sector_s *sector);
+coord_t         XS_Friction(struct sector_s *sector);
+coord_t         XS_ThrustMul(struct sector_s *sector);
 
 void            XS_InitMovePlane(struct linedef_s *line);
 int C_DECL      XSTrav_MovePlane(struct sector_s *sector, boolean ceiling,

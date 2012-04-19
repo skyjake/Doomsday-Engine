@@ -1012,16 +1012,14 @@ int XL_ValidateLineRef(LineDef* line, int reftype, void* context,
         XG_Dev("XL_ValidateLineRef: Using Line Count (%i) as %s", answer, parmname);
         break;
 
-    case LDREF_ANGLE: // Line angle.
-        {
-        float               d1[2];
+    case LDREF_ANGLE: { // Line angle.
+        coord_t d1[2];
 
-        P_GetFloatpv(line, DMU_DXY, d1);
-        answer = R_PointToAngle2(0, 0, d1[0], d1[1]) / (float) ANGLE_MAX *
-            360;
+        P_GetDoublepv(line, DMU_DXY, d1);
+        answer = M_PointXYToAngle2(0, 0, d1[0], d1[1]) / (float) ANGLE_MAX * 360;
         XG_Dev("XL_ValidateLineRef: Using Line Angle (%i) as %s", answer, parmname);
-        break;
-        }
+        break; }
+
     case LDREF_LENGTH: // Line length.
         // Answer should be in map units.
         answer = P_GetFixedp(line, DMU_LENGTH) >> FRACBITS;
@@ -1570,17 +1568,17 @@ int C_DECL XLTrav_LineTeleport(LineDef* newLine, boolean dummy,
 // Maximum units to move object to avoid hiccups.
 #define FUDGEFACTOR         10
 
-    int                 fudge = FUDGEFACTOR;
-    int                 side = 0, stepDown;
-    unsigned int        an;
-    mobj_t*             flash;
-    LineDef*            line = (LineDef *) context;
-    linetype_t*         info = (linetype_t *) context2;
-    Vertex*             newV1, *newV2, *oldV1, *oldV2;
-    Sector*             newFrontSec, *newBackSec;
-    float               newX, newY, newZ, pos, s, c;
-    float               oldLineDelta[2], newLineDelta[2];
-    angle_t             angle;
+    int fudge = FUDGEFACTOR;
+    int side = 0, stepDown;
+    unsigned int an;
+    mobj_t* flash;
+    LineDef* line = (LineDef *) context;
+    linetype_t* info = (linetype_t *) context2;
+    Vertex* newV1, *newV2, *oldV1, *oldV2;
+    Sector* newFrontSec, *newBackSec;
+    coord_t newX, newY, newZ, pos, s, c;
+    coord_t oldLineDelta[2], newLineDelta[2];
+    angle_t angle;
 
     // Don't teleport things marked noteleport!
     if(mobj->flags2 & MF2_NOTELEPORT)
@@ -1602,11 +1600,11 @@ int C_DECL XLTrav_LineTeleport(LineDef* newLine, boolean dummy,
     // Retrieve a few properties to make this look neater.
     oldV1 = P_GetPtrp(line, DMU_VERTEX0);
     oldV2 = P_GetPtrp(line, DMU_VERTEX1);
-    P_GetFloatpv(line, DMU_DXY, oldLineDelta);
+    P_GetDoublepv(line, DMU_DXY, oldLineDelta);
 
     newV1 = P_GetPtrp(newLine, DMU_VERTEX0);
     newV2 = P_GetPtrp(newLine, DMU_VERTEX1);
-    P_GetFloatpv(newLine, DMU_DXY, newLineDelta);
+    P_GetDoublepv(newLine, DMU_DXY, newLineDelta);
     newFrontSec = P_GetPtrp(newLine, DMU_FRONT_SECTOR);
     newBackSec  = P_GetPtrp(newLine, DMU_BACK_SECTOR);
 
@@ -1622,8 +1620,7 @@ int C_DECL XLTrav_LineTeleport(LineDef* newLine, boolean dummy,
     // Spawn flash at the old position?
     if(info->iparm[2])
     {
-        if((flash = P_SpawnMobj3fv(MT_TFOG, mobj->pos,
-                                    mobj->angle + ANG180, 0)))
+        if((flash = P_SpawnMobj(MT_TFOG, mobj->origin, mobj->angle + ANG180, 0)))
         {
             // Play a sound?
             if(info->iparm[3])
@@ -1633,39 +1630,39 @@ int C_DECL XLTrav_LineTeleport(LineDef* newLine, boolean dummy,
 
     // Get the thing's position along the source linedef
     if(fabs(oldLineDelta[0]) > fabs(oldLineDelta[1]))
-        pos = (mobj->pos[VX] - P_GetFloatp(oldV1, DMU_X)) / oldLineDelta[0];
+        pos = (mobj->origin[VX] - P_GetDoublep(oldV1, DMU_X)) / oldLineDelta[0];
     else
-        pos = (mobj->pos[VY] - P_GetFloatp(oldV1, DMU_Y)) / oldLineDelta[1];
+        pos = (mobj->origin[VY] - P_GetDoublep(oldV1, DMU_Y)) / oldLineDelta[1];
 
     // Get the angle between the two linedefs, for rotating orientation and
     // momentum. Rotate 180 degrees, and flip the position across the exit
     // linedef, if reversed.
     angle = (info->iparm[4] ? pos = 1 - pos, 0 : ANG180) +
-             R_PointToAngle2(0, 0, newLineDelta[0], newLineDelta[1]) -
-             R_PointToAngle2(0, 0, oldLineDelta[0], oldLineDelta[1]);
+             M_PointXYToAngle2(0, 0, newLineDelta[0], newLineDelta[1]) -
+             M_PointXYToAngle2(0, 0, oldLineDelta[0], oldLineDelta[1]);
 
     // Interpolate position across the exit linedef.
-    newX = P_GetFloatp(newV2, DMU_X) - (pos * newLineDelta[0]);
-    newY = P_GetFloatp(newV2, DMU_Y) - (pos * newLineDelta[1]);
+    newX = P_GetDoublep(newV2, DMU_X) - (pos * newLineDelta[0]);
+    newY = P_GetDoublep(newV2, DMU_Y) - (pos * newLineDelta[1]);
 
     // Sine, cosine of angle adjustment
     s = FIX2FLT(finesine[angle >> ANGLETOFINESHIFT]);
     c = FIX2FLT(finecosine[angle >> ANGLETOFINESHIFT]);
 
     // Whether walking towards first side of exit linedef steps down
-    if(P_GetFloatp(newFrontSec, DMU_FLOOR_HEIGHT) <
-       P_GetFloatp(newBackSec, DMU_FLOOR_HEIGHT))
+    if(P_GetDoublep(newFrontSec, DMU_FLOOR_HEIGHT) <
+       P_GetDoublep(newBackSec, DMU_FLOOR_HEIGHT))
         stepDown = true;
     else
         stepDown = false;
 
     // Height of thing above ground.
-    newZ = mobj->pos[VZ] - mobj->floorZ;
+    newZ = mobj->origin[VZ] - mobj->floorZ;
 
     /**
      * Side to exit the linedef on positionally.
      *
-     * \note
+     * @note
      * This flag concerns exit position, not momentum. Due to potential for
      * round-off error, the thing can land on either the left or the right
      * side of the exit linedef, and steps must be taken to make sure it
@@ -1689,7 +1686,7 @@ int C_DECL XLTrav_LineTeleport(LineDef* newLine, boolean dummy,
         side = 1;
 
     // Make sure we are on correct side of exit linedef.
-    while(P_PointXYOnLineDefSide(newX, newY, newLine) != side && --fudge >= 0)
+    while(LineDef_PointXYOnSide(newLine, newX, newY) < 0 != side && --fudge >= 0)
     {
         if(fabs(newLineDelta[0]) > fabs(newLineDelta[1]))
             newY -= FIX2FLT((newLineDelta[0] < 0) != side ? -1 : 1);
@@ -1708,9 +1705,9 @@ int C_DECL XLTrav_LineTeleport(LineDef* newLine, boolean dummy,
     // level at the exit is measured as the higher of the two floor heights
     // at the exit linedef.
     if(stepDown)
-        mobj->pos[VZ] = newZ + P_GetFloatp(newFrontSec, DMU_FLOOR_HEIGHT);
+        mobj->origin[VZ] = newZ + P_GetDoublep(newFrontSec, DMU_FLOOR_HEIGHT);
     else
-        mobj->pos[VZ] = newZ + P_GetFloatp(newBackSec, DMU_FLOOR_HEIGHT);
+        mobj->origin[VZ] = newZ + P_GetDoublep(newBackSec, DMU_FLOOR_HEIGHT);
 
     // Rotate mobj's orientation according to difference in linedef angles.
     mobj->angle += angle;
@@ -1728,7 +1725,7 @@ int C_DECL XLTrav_LineTeleport(LineDef* newLine, boolean dummy,
     {
         mobj->floorClip = 0;
 
-        if(mobj->pos[VZ] == P_GetFloatp(mobj->bspLeaf, DMU_FLOOR_HEIGHT))
+        if(FEQUAL(mobj->origin[VZ], P_GetDoublep(mobj->bspLeaf, DMU_FLOOR_HEIGHT)))
         {
             const terraintype_t* tt = P_MobjGetFloorTerrainType(mobj);
 
@@ -1743,10 +1740,10 @@ int C_DECL XLTrav_LineTeleport(LineDef* newLine, boolean dummy,
     if(info->iparm[2])
     {
         an = mobj->angle >> ANGLETOFINESHIFT;
-        if((flash = P_SpawnMobj3f(MT_TFOG,
-                                  mobj->pos[VX] + 24 * FIX2FLT(finecosine[an]),
-                                  mobj->pos[VY] + 24 * FIX2FLT(finesine[an]),
-                                  mobj->pos[VZ], mobj->angle + ANG180, 0)))
+        if((flash = P_SpawnMobjXYZ(MT_TFOG,
+                                   mobj->origin[VX] + 24 * FIX2FLT(finecosine[an]),
+                                   mobj->origin[VY] + 24 * FIX2FLT(finesine[an]),
+                                   mobj->origin[VZ], mobj->angle + ANG180, 0)))
         {
             // Play a sound?
             if(info->iparm[3])
@@ -1757,8 +1754,8 @@ int C_DECL XLTrav_LineTeleport(LineDef* newLine, boolean dummy,
     // Adjust the player's view, incase there has been a height change
     if(mobj->player)
     {
-        mobj->player->viewZ = mobj->pos[VZ] + mobj->player->viewHeight;
-        mobj->dPlayer->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
+        mobj->player->viewZ = mobj->origin[VZ] + mobj->player->viewHeight;
+        mobj->dPlayer->flags |= DDPF_FIXANGLES | DDPF_FIXORIGIN | DDPF_FIXMOM;
     }
 
     return false; // Do this only once!
@@ -1901,7 +1898,7 @@ int XL_CheckMobjGone(thinker_t* th, void* context)
     {   // Not dead.
         XG_Dev("XL_CheckMobjGone: Thing type %i: Found mo id=%i, "
                "health=%i, pos=(%g,%g)", thingtype, mo->thinker.id,
-               mo->health, mo->pos[VX], mo->pos[VY]);
+               mo->health, mo->origin[VX], mo->origin[VY]);
         return true; // Stop iteration.
     }
 
@@ -2058,7 +2055,7 @@ void XL_ActivateLine(boolean activating, linetype_t* info, LineDef* line,
     // Activation should happen on the front side.
     frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
     if(frontsector)
-        soundOrg = P_GetPtrp(frontsector, DMU_ORIGIN);
+        soundOrg = P_GetPtrp(frontsector, DMU_BASE);
 
     // Let the line know who's activating it.
     xg->activator = data;
@@ -2699,13 +2696,11 @@ void XL_Thinker(xlthinker_t* xl)
     if(info->materialMoveSpeed)
     {
         // The texture should be moved. Calculate the offsets.
-        float               current[2]; // The current offset.
-        SideDef*            side;
-        float               spd = info->materialMoveSpeed;
-        float               offset[2];
-        angle_t             ang =
-            ((angle_t) (ANGLE_MAX * (info->materialMoveAngle / 360))) >>
-            ANGLETOFINESHIFT;
+        coord_t current[2]; // The current offset.
+        SideDef* side;
+        float spd = info->materialMoveSpeed;
+        coord_t offset[2];
+        angle_t ang = ((angle_t) (ANGLE_MAX * (info->materialMoveAngle / 360))) >> ANGLETOFINESHIFT;
 
         offset[VX] = -(FIX2FLT(finecosine[ang]) * spd);
         offset[VY] = FIX2FLT(finesine[ang]) * spd;
@@ -2715,48 +2710,48 @@ void XL_Thinker(xlthinker_t* xl)
          * These are group offsets. All surfaces on a given side are moved
          * using the same texmove speed/angle.
          *
-         * \todo Implement per-surface texture movement also which would
-         * be added to each independantly.
+         * @todo Implement per-surface texture movement also which would
+         *        be added to each independantly.
          */
 
         // Front side.
         side = P_GetPtrp(line, DMU_SIDEDEF0);
         if(side)
         {
-            P_GetFloatpv(side, DMU_TOP_MATERIAL_OFFSET_XY, current);
+            P_GetDoublepv(side, DMU_TOP_MATERIAL_OFFSET_XY, current);
             current[VX] += offset[VX];
             current[VY] += offset[VY];
-            P_SetFloatpv(side, DMU_TOP_MATERIAL_OFFSET_XY, current);
+            P_SetDoublepv(side, DMU_TOP_MATERIAL_OFFSET_XY, current);
 
-            P_GetFloatpv(side, DMU_MIDDLE_MATERIAL_OFFSET_XY, current);
+            P_GetDoublepv(side, DMU_MIDDLE_MATERIAL_OFFSET_XY, current);
             current[VX] += offset[VX];
             current[VY] += offset[VY];
-            P_SetFloatpv(side, DMU_MIDDLE_MATERIAL_OFFSET_XY, current);
+            P_SetDoublepv(side, DMU_MIDDLE_MATERIAL_OFFSET_XY, current);
 
-            P_GetFloatpv(side, DMU_BOTTOM_MATERIAL_OFFSET_XY, current);
+            P_GetDoublepv(side, DMU_BOTTOM_MATERIAL_OFFSET_XY, current);
             current[VX] += offset[VX];
             current[VY] += offset[VY];
-            P_SetFloatpv(side, DMU_BOTTOM_MATERIAL_OFFSET_XY, current);
+            P_SetDoublepv(side, DMU_BOTTOM_MATERIAL_OFFSET_XY, current);
         }
 
         // Back side.
         side = P_GetPtrp(line, DMU_SIDEDEF1);
         if(side)
         {
-            P_GetFloatpv(side, DMU_TOP_MATERIAL_OFFSET_XY, current);
+            P_GetDoublepv(side, DMU_TOP_MATERIAL_OFFSET_XY, current);
             current[VX] += offset[VX];
             current[VY] += offset[VY];
-            P_SetFloatpv(side, DMU_TOP_MATERIAL_OFFSET_XY, current);
+            P_SetDoublepv(side, DMU_TOP_MATERIAL_OFFSET_XY, current);
 
-            P_GetFloatpv(side, DMU_MIDDLE_MATERIAL_OFFSET_XY, current);
+            P_GetDoublepv(side, DMU_MIDDLE_MATERIAL_OFFSET_XY, current);
             current[VX] += offset[VX];
             current[VY] += offset[VY];
-            P_SetFloatpv(side, DMU_MIDDLE_MATERIAL_OFFSET_XY, current);
+            P_SetDoublepv(side, DMU_MIDDLE_MATERIAL_OFFSET_XY, current);
 
-            P_GetFloatpv(side, DMU_BOTTOM_MATERIAL_OFFSET_XY, current);
+            P_GetDoublepv(side, DMU_BOTTOM_MATERIAL_OFFSET_XY, current);
             current[VX] += offset[VX];
             current[VY] += offset[VY];
-            P_SetFloatpv(side, DMU_BOTTOM_MATERIAL_OFFSET_XY, current);
+            P_SetDoublepv(side, DMU_BOTTOM_MATERIAL_OFFSET_XY, current);
         }
     }
 }

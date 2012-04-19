@@ -1604,8 +1604,8 @@ void G_Ticker(timespan_t ticLength)
             {
                 if(!IS_CLIENT)
                 {
-                    P_SpawnTeleFog(plr->plr->mo->pos[VX],
-                                   plr->plr->mo->pos[VY],
+                    P_SpawnTeleFog(plr->plr->mo->origin[VX],
+                                   plr->plr->mo->origin[VY],
                                    plr->plr->mo->angle + ANG180);
                 }
 
@@ -1857,7 +1857,7 @@ void ClearPlayer(player_t *p)
     ddplayer->fixAcked = acked;
 
     ddplayer->fixCounter.angles++;
-    ddplayer->fixCounter.pos++;
+    ddplayer->fixCounter.origin++;
     ddplayer->fixCounter.mom++;
 }
 
