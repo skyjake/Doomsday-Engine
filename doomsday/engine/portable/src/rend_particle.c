@@ -852,7 +852,7 @@ static int drawGeneratorOrigin(ptcgen_t* gen, void* parameters)
         if(gen->source)
         {
             V3f_Copyd(pos, gen->source->origin);
-            pos[VZ] -= gen->source->floorClip + FIX2FLT(gen->center[VZ]);
+            pos[VZ] += -gen->source->floorClip + FIX2FLT(gen->center[VZ]);
         }
         else
         {
