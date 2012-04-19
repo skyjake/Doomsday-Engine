@@ -67,7 +67,7 @@ typedef enum {
     STAIRS_PHASED
 } stairs_e;
 
-result_e    T_MovePlane(Sector *sector, float speed, float dest,
+result_e    T_MovePlane(Sector *sector, float speed, coord_t dest,
                         int crush, int floorOrCeiling, int direction);
 
 int         EV_BuildStairs(LineDef *line, byte *args, int direction,
@@ -76,8 +76,7 @@ int         EV_FloorCrushStop(LineDef *line, byte *args);
 
 #define TELEFOGHEIGHTF          (32)
 
-boolean     P_Teleport(mobj_t *mo, float x, float y, angle_t angle,
-                       boolean useFog);
+boolean     P_Teleport(mobj_t* mo, coord_t x, coord_t y, angle_t angle, boolean useFog);
 boolean     EV_Teleport(int tid, mobj_t *thing, boolean fog);
 void        P_ArtiTele(player_t *player);
 

@@ -45,6 +45,7 @@
 #include "p_plat.h"
 #include "p_floor.h"
 #include "p_switch.h"
+#include "p_user.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -663,7 +664,7 @@ boolean P_ActivateLine(LineDef *line, mobj_t *mo, int side, int activationType)
  */
 void P_PlayerInSpecialSector(player_t* player)
 {
-    static const float pushTab[3] = {
+    static const coord_t pushTab[3] = {
         1.0 / 32 * 5,
         1.0 / 32 * 10,
         1.0 / 32 * 25
@@ -671,7 +672,7 @@ void P_PlayerInSpecialSector(player_t* player)
     Sector* sector = P_GetPtrp(player->plr->mo->bspLeaf, DMU_SECTOR);
     xsector_t* xsector;
 
-    if(player->plr->mo->pos[VZ] != P_GetFloatp(sector, DMU_FLOOR_HEIGHT))
+    if(!FEQUAL(player->plr->mo->origin[VZ], P_GetDoublep(sector, DMU_FLOOR_HEIGHT)))
         return; // Player is not touching the floor
 
     xsector = P_ToXSector(sector);
@@ -771,8 +772,8 @@ void P_PlayerOnSpecialFloor(player_t* player)
     if(!(tt->flags & TTF_DAMAGING))
         return;
 
-    if(player->plr->mo->pos[VZ] >
-       P_GetFloatp(player->plr->mo->bspLeaf, DMU_FLOOR_HEIGHT))
+    if(player->plr->mo->origin[VZ] >
+       P_GetDoublep(player->plr->mo->bspLeaf, DMU_FLOOR_HEIGHT))
     {
         return; // Player is not touching the floor
     }
@@ -1150,9 +1151,9 @@ static void P_LightningFlash(void)
         if(cfg.snd3D && plrmo && !IS_NETGAME)
         {
             if((crashOrigin =
-                P_SpawnMobj3f(plrmo->pos[VX] + (16 * (M_Random() - 127) << FRACBITS),
-                              plrmo->pos[VY] + (16 * (M_Random() - 127) << FRACBITS),
-                              plrmo->pos[VZ] + (4000 << FRACBITS), MT_CAMERA,
+                P_SpawnMobjXYZ(plrmo->origin[VX] + (16 * (M_Random() - 127) << FRACBITS),
+                              plrmo->origin[VY] + (16 * (M_Random() - 127) << FRACBITS),
+                              plrmo->origin[VZ] + (4000 << FRACBITS), MT_CAMERA,
                               0, 0)))
                 crashOrigin->tics = 5 * TICSPERSEC; // Five seconds will do.
         }

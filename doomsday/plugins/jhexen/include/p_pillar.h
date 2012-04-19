@@ -1,4 +1,4 @@
-/**\file
+/**\file p_pillar.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,30 +23,26 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * p_pillar.h:
- */
-
-#ifndef __P_PILLAR_H__
-#define __P_PILLAR_H__
+#ifndef LIBHEXEN_P_PILLAR_H
+#define LIBHEXEN_P_PILLAR_H
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
 typedef struct {
-    thinker_t       thinker;
-    Sector*         sector;
-    float           ceilingSpeed;
-    float           floorSpeed;
-    float           floorDest;
-    float           ceilingDest;
-    int             direction;
-    int             crush;
+    thinker_t thinker;
+    Sector* sector;
+    float ceilingSpeed;
+    float floorSpeed;
+    coord_t floorDest;
+    coord_t ceilingDest;
+    int direction;
+    int crush;
 } pillar_t;
 
-void        T_BuildPillar(pillar_t* pillar);
-int         EV_BuildPillar(LineDef* line, byte* args, boolean crush);
-int         EV_OpenPillar(LineDef* line, byte* args);
+void T_BuildPillar(pillar_t* pillar);
+int EV_BuildPillar(LineDef* line, byte* args, boolean crush);
+int EV_OpenPillar(LineDef* line, byte* args);
 
-#endif
+#endif /// LIBHEXEN_P_PILLAR_H

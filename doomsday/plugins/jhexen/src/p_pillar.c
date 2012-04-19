@@ -67,23 +67,22 @@ void T_BuildPillar(pillar_t *pillar)
     if(res1 == pastdest && res2 == pastdest)
     {
         P_ToXSector(pillar->sector)->specialData = NULL;
-        SN_StopSequence(P_GetPtrp(pillar->sector, DMU_ORIGIN));
+        SN_StopSequence(P_GetPtrp(pillar->sector, DMU_BASE));
         P_TagFinished(P_ToXSector(pillar->sector)->tag);
         DD_ThinkerRemove(&pillar->thinker);
     }
 }
 
-int EV_BuildPillar(LineDef *line, byte *args, boolean crush)
+int EV_BuildPillar(LineDef* line, byte* args, boolean crush)
 {
-    int                 rtn = 0;
-    float               newHeight;
-    Sector             *sec = NULL;
-    pillar_t           *pillar;
-    iterlist_t         *list;
+    int rtn = 0;
+    coord_t newHeight;
+    Sector* sec = NULL;
+    pillar_t* pillar;
+    iterlist_t* list;
 
     list = P_GetSectorIterListForTag((int) args[0], false);
-    if(!list)
-        return rtn;
+    if(!list) return rtn;
 
     IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
     IterList_RewindIterator(list);
@@ -92,22 +91,20 @@ int EV_BuildPillar(LineDef *line, byte *args, boolean crush)
         if(P_ToXSector(sec)->specialData)
             continue; // Already moving, so keep going.
 
-        if(P_GetFloatp(sec, DMU_FLOOR_HEIGHT) ==
-           P_GetFloatp(sec, DMU_CEILING_HEIGHT))
+        if(FEQUAL(P_GetDoublep(sec, DMU_FLOOR_HEIGHT),
+                  P_GetDoublep(sec, DMU_CEILING_HEIGHT)))
             continue; // Pillar is already closed.
 
         rtn = 1;
         if(!args[2])
         {
-            newHeight =
-                P_GetFloatp(sec, DMU_FLOOR_HEIGHT) +
-                ((P_GetFloatp(sec, DMU_CEILING_HEIGHT) -
-                  P_GetFloatp(sec, DMU_FLOOR_HEIGHT)) * .5f);
+            newHeight = P_GetDoublep(sec, DMU_FLOOR_HEIGHT) +
+                ((P_GetDoublep(sec, DMU_CEILING_HEIGHT) -
+                  P_GetDoublep(sec, DMU_FLOOR_HEIGHT)) * .5f);
         }
         else
         {
-            newHeight =
-                P_GetFloatp(sec, DMU_FLOOR_HEIGHT) + (float) args[2];
+            newHeight = P_GetDoublep(sec, DMU_FLOOR_HEIGHT) + (coord_t) args[2];
         }
 
         pillar = Z_Calloc(sizeof(*pillar), PU_MAP, 0);
@@ -122,43 +119,41 @@ int EV_BuildPillar(LineDef *line, byte *args, boolean crush)
             pillar->ceilingSpeed = pillar->floorSpeed =
                 (float) args[1] * (1.0f / 8);
         }
-        else if(newHeight - P_GetFloatp(sec, DMU_FLOOR_HEIGHT) >
-                P_GetFloatp(sec, DMU_CEILING_HEIGHT) - newHeight)
+        else if(newHeight - P_GetDoublep(sec, DMU_FLOOR_HEIGHT) >
+                P_GetDoublep(sec, DMU_CEILING_HEIGHT) - newHeight)
         {
             pillar->floorSpeed = (float) args[1] * (1.0f / 8);
             pillar->ceilingSpeed =
-                (P_GetFloatp(sec, DMU_CEILING_HEIGHT) - newHeight) *
-                      (pillar->floorSpeed / (newHeight - P_GetFloatp(sec, DMU_FLOOR_HEIGHT)));
+                (P_GetDoublep(sec, DMU_CEILING_HEIGHT) - newHeight) *
+                      (pillar->floorSpeed / (newHeight - P_GetDoublep(sec, DMU_FLOOR_HEIGHT)));
         }
         else
         {
             pillar->ceilingSpeed = (float) args[1] * (1.0f / 8);
             pillar->floorSpeed =
-                (newHeight - P_GetFloatp(sec, DMU_FLOOR_HEIGHT)) *
-                    (pillar->ceilingSpeed /
-                                  (P_GetFloatp(sec, DMU_CEILING_HEIGHT) - newHeight));
+                (newHeight - P_GetDoublep(sec, DMU_FLOOR_HEIGHT)) *
+                    (pillar->ceilingSpeed / (P_GetDoublep(sec, DMU_CEILING_HEIGHT) - newHeight));
         }
 
         pillar->floorDest = newHeight;
         pillar->ceilingDest = newHeight;
         pillar->direction = 1;
         pillar->crush = crush * (int) args[3];
-        SN_StartSequence(P_GetPtrp(pillar->sector, DMU_ORIGIN),
+        SN_StartSequence(P_GetPtrp(pillar->sector, DMU_BASE),
                          SEQ_PLATFORM + P_ToXSector(pillar->sector)->seqType);
     }
     return rtn;
 }
 
-int EV_OpenPillar(LineDef *line, byte *args)
+int EV_OpenPillar(LineDef* line, byte* args)
 {
-    int                 rtn = 0;
-    Sector             *sec = NULL;
-    pillar_t           *pillar;
-    iterlist_t         *list;
+    int rtn = 0;
+    Sector* sec = NULL;
+    pillar_t* pillar;
+    iterlist_t* list;
 
     list = P_GetSectorIterListForTag((int) args[0], false);
-    if(!list)
-        return rtn;
+    if(!list) return rtn;
 
     IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
     IterList_RewindIterator(list);
@@ -167,8 +162,8 @@ int EV_OpenPillar(LineDef *line, byte *args)
         if(P_ToXSector(sec)->specialData)
             continue; // Already moving, so keep going...
 
-        if(P_GetFloatp(sec, DMU_FLOOR_HEIGHT) !=
-           P_GetFloatp(sec, DMU_CEILING_HEIGHT))
+        if(!FEQUAL(P_GetDoublep(sec, DMU_FLOOR_HEIGHT),
+                   P_GetDoublep(sec, DMU_CEILING_HEIGHT)))
             continue; // Pillar isn't closed.
 
         rtn = 1;
@@ -182,12 +177,12 @@ int EV_OpenPillar(LineDef *line, byte *args)
         if(!args[2])
         {
             P_FindSectorSurroundingLowestFloor(sec,
-                P_GetFloatp(sec, DMU_FLOOR_HEIGHT), &pillar->floorDest);
+                P_GetDoublep(sec, DMU_FLOOR_HEIGHT), &pillar->floorDest);
         }
         else
         {
             pillar->floorDest =
-                P_GetFloatp(sec, DMU_FLOOR_HEIGHT) - (float) args[2];
+                P_GetDoublep(sec, DMU_FLOOR_HEIGHT) - (coord_t) args[2];
         }
 
         if(!args[3])
@@ -197,29 +192,27 @@ int EV_OpenPillar(LineDef *line, byte *args)
         else
         {
             pillar->ceilingDest =
-                P_GetFloatp(sec, DMU_CEILING_HEIGHT) + (float) args[3];
+                P_GetDoublep(sec, DMU_CEILING_HEIGHT) + (coord_t) args[3];
         }
 
-        if(P_GetFloatp(sec, DMU_FLOOR_HEIGHT) - pillar->floorDest >=
-           pillar->ceilingDest - P_GetFloatp(sec, DMU_CEILING_HEIGHT))
+        if(P_GetDoublep(sec, DMU_FLOOR_HEIGHT) - pillar->floorDest >=
+           pillar->ceilingDest - P_GetDoublep(sec, DMU_CEILING_HEIGHT))
         {
             pillar->floorSpeed = (float) args[1] * (1.0f / 8);
             pillar->ceilingSpeed =
-                (P_GetFloatp(sec, DMU_CEILING_HEIGHT) - pillar->ceilingDest) *
-                    (pillar->floorSpeed /
-                        (pillar->floorDest - P_GetFloatp(sec, DMU_FLOOR_HEIGHT)));
+                (P_GetDoublep(sec, DMU_CEILING_HEIGHT) - pillar->ceilingDest) *
+                    (pillar->floorSpeed / (pillar->floorDest - P_GetDoublep(sec, DMU_FLOOR_HEIGHT)));
         }
         else
         {
             pillar->ceilingSpeed = (float) args[1] * (1.0f / 8);
             pillar->floorSpeed =
-                (pillar->floorDest - P_GetFloatp(sec, DMU_FLOOR_HEIGHT)) *
-                    (pillar->ceilingSpeed /
-                        (P_GetFloatp(sec, DMU_CEILING_HEIGHT) - pillar->ceilingDest));
+                (pillar->floorDest - P_GetDoublep(sec, DMU_FLOOR_HEIGHT)) *
+                    (pillar->ceilingSpeed / (P_GetDoublep(sec, DMU_CEILING_HEIGHT) - pillar->ceilingDest));
         }
 
         pillar->direction = -1; // Open the pillar.
-        SN_StartSequence(P_GetPtrp(pillar->sector, DMU_ORIGIN),
+        SN_StartSequence(P_GetPtrp(pillar->sector, DMU_BASE),
                          SEQ_PLATFORM + P_ToXSector(pillar->sector)->seqType);
     }
 
