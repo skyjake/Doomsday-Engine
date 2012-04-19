@@ -126,9 +126,9 @@ float ST_AutomapOpacity(int player);
 boolean ST_AutomapObscures2(int player, const RectRaw* region);
 boolean ST_AutomapObscures(int player, int x, int y, int width, int height);
 
-int ST_AutomapAddPoint(int player, float x, float y, float z);
+int ST_AutomapAddPoint(int player, coord_t x, coord_t y, coord_t z);
 void ST_AutomapClearPoints(int player);
-boolean ST_AutomapPointOrigin(int player, int point, float* x, float* y, float* z);
+boolean ST_AutomapPointOrigin(int player, int point, coord_t* x, coord_t* y, coord_t* z);
 
 void ST_SetAutomapCameraRotation(int player, boolean on);
 

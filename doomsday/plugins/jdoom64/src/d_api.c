@@ -162,9 +162,9 @@ game_export_t* GetGameAPI(game_import_t* imports)
     gx.Responder = G_Responder;
     gx.EndFrame = D_EndFrame;
     gx.MobjThinker = P_MobjThinker;
-    gx.MobjFriction = (float (*)(void *)) P_MobjGetFriction;
-    gx.MobjCheckPosition3f = P_CheckPosition3f;
-    gx.MobjTryMove3f = P_TryMove3f;
+    gx.MobjFriction = (coord_t (*)(void *)) P_MobjGetFriction;
+    gx.MobjCheckPositionXYZ = P_CheckPositionXYZ;
+    gx.MobjTryMoveXYZ = P_TryMoveXYZ;
     gx.SectorHeightChangeNotification = P_HandleSectorHeightChange;
     gx.UpdateState = G_UpdateState;
     gx.GetInteger = D_GetInteger;
