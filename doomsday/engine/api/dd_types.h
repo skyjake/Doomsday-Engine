@@ -122,6 +122,13 @@ typedef double          timespan_t;
 /// All points in the map coordinate space should be defined using this type.
 typedef double          coord_t;
 
+typedef enum slopetype_e {
+    ST_HORIZONTAL,
+    ST_VERTICAL,
+    ST_POSITIVE,
+    ST_NEGATIVE
+} slopetype_t;
+
 /// \todo Should be a public typedef of a type defined by de::LumpDirectory.
 typedef int32_t         lumpnum_t;
 #define LUMPNAME_T_MAXLEN 9

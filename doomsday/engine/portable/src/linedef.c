@@ -34,8 +34,8 @@
 
 static void calcNormal(const LineDef* l, byte side, pvec2f_t normal)
 {
-    V2f_Set(normal, (l->L_vpos(side^1)[VY] - l->L_vpos(side)  [VY]) / l->length,
-                    (l->L_vpos(side)  [VX] - l->L_vpos(side^1)[VX]) / l->length);
+    V2f_Set(normal, (l->L_vorigin(side^1)[VY] - l->L_vorigin(side)  [VY]) / l->length,
+                    (l->L_vorigin(side)  [VX] - l->L_vorigin(side^1)[VX]) / l->length);
 }
 
 static float lightLevelDelta(const pvec2f_t normal)
@@ -54,23 +54,39 @@ static LineDef* findBlendNeighbor(const LineDef* l, byte side, byte right,
     return R_FindLineNeighbor(l->L_sector(side), l, farVertOwner, right, diff);
 }
 
-int LineDef_PointOnSide(const LineDef* line, float const xy[2])
+coord_t LineDef_PointDistance(LineDef* line, coord_t const point[2], coord_t* offset)
 {
     assert(line);
-    if(!xy)
-    {
-        DEBUG_Message(("LineDef_PointOnSide: Invalid arguments, returning zero.\n"));
-        return 0;
-    }
-    return P_PointOnLineSide(xy[0], xy[1], line->L_v1pos[VX], line->L_v1pos[VY], line->dX, line->dY) < 0;
+    return V2d_PointLineDistance(point, line->L_v1origin, line->L_v2origin, offset);
 }
 
-int LineDef_PointXYOnSide(const LineDef* line, float x, float y)
+coord_t LineDef_PointXYDistance(LineDef* line, coord_t x, coord_t y, coord_t* offset)
 {
-    float point[2];
-    point[0] = x;
-    point[1] = y;
+    coord_t point[2] = { x, y };
+    return LineDef_PointDistance(line, point, offset);
+}
+
+coord_t LineDef_PointOnSide(const LineDef* line, coord_t const point[2])
+{
+    assert(line);
+    if(!point)
+    {
+        DEBUG_Message(("LineDef_PointOnSide: Invalid arguments, returning >0.\n"));
+        return 1;
+    }
+    return V2d_PointOnLineSide(point, line->L_v1origin, line->direction);
+}
+
+coord_t LineDef_PointXYOnSide(const LineDef* line, coord_t x, coord_t y)
+{
+    coord_t point[2] = { x, y };
     return LineDef_PointOnSide(line, point);
+}
+
+int LineDef_BoxOnSide(LineDef* line, const AABoxd* box)
+{
+    assert(line);
+    return M_BoxOnLineSide(box->minX, box->maxX, box->minY, box->maxY, line->L_v1origin, line->direction);
 }
 
 void LineDef_SetDivline(const LineDef* line, divline_t* dl)
@@ -79,10 +95,10 @@ void LineDef_SetDivline(const LineDef* line, divline_t* dl)
 
     if(!dl) return;
 
-    dl->pos[VX] = FLT2FIX(line->L_v1pos[VX]);
-    dl->pos[VY] = FLT2FIX(line->L_v1pos[VY]);
-    dl->dX = FLT2FIX(line->dX);
-    dl->dY = FLT2FIX(line->dY);
+    dl->origin[VX] = FLT2FIX(line->L_v1origin[VX]);
+    dl->origin[VY] = FLT2FIX(line->L_v1origin[VY]);
+    dl->direction[VX] = FLT2FIX(line->direction[VX]);
+    dl->direction[VY] = FLT2FIX(line->direction[VY]);
 }
 
 void LineDef_SetTraceOpening(const LineDef* line, TraceOpening* opening)
@@ -123,26 +139,8 @@ void LineDef_SetTraceOpening(const LineDef* line, TraceOpening* opening)
 void LineDef_UpdateSlope(LineDef* line)
 {
     assert(line);
-
-    line->dX = line->L_v2pos[VX] - line->L_v1pos[VX];
-    line->dY = line->L_v2pos[VY] - line->L_v1pos[VY];
-
-    if(FEQUAL(line->dX, 0))
-    {
-        line->slopeType = ST_VERTICAL;
-    }
-    else if(FEQUAL(line->dY, 0))
-    {
-        line->slopeType = ST_HORIZONTAL;
-    }
-    else if(line->dY / line->dX > 0)
-    {
-        line->slopeType = ST_POSITIVE;
-    }
-    else
-    {
-        line->slopeType = ST_NEGATIVE;
-    }
+    V2d_Subtract(line->direction, line->L_v2origin, line->L_v1origin);
+    line->slopeType = M_SlopeType(line->direction);
 }
 
 /**
@@ -150,14 +148,14 @@ void LineDef_UpdateSlope(LineDef* line)
  */
 void LineDef_UnitVector(LineDef* line, float* unitvec)
 {
-    float len;
+    coord_t len;
     assert(line);
 
-    len = M_ApproxDistancef(line->dX, line->dY);
+    len = M_ApproxDistance(line->direction[VX], line->direction[VY]);
     if(len)
     {
-        unitvec[VX] = line->dX / len;
-        unitvec[VY] = line->dY / len;
+        unitvec[VX] = line->direction[VX] / len;
+        unitvec[VY] = line->direction[VY] / len;
     }
     else
     {
@@ -169,11 +167,11 @@ void LineDef_UpdateAABox(LineDef* line)
 {
     assert(line);
 
-    line->aaBox.minX = MIN_OF(line->L_v2pos[VX], line->L_v1pos[VX]);
-    line->aaBox.minY = MIN_OF(line->L_v2pos[VY], line->L_v1pos[VY]);
+    line->aaBox.minX = MIN_OF(line->L_v2origin[VX], line->L_v1origin[VX]);
+    line->aaBox.minY = MIN_OF(line->L_v2origin[VY], line->L_v1origin[VY]);
 
-    line->aaBox.maxX = MAX_OF(line->L_v2pos[VX], line->L_v1pos[VX]);
-    line->aaBox.maxY = MAX_OF(line->L_v2pos[VY], line->L_v1pos[VY]);
+    line->aaBox.maxX = MAX_OF(line->L_v2origin[VX], line->L_v1origin[VX]);
+    line->aaBox.maxY = MAX_OF(line->L_v2origin[VY], line->L_v1origin[VY]);
 }
 
 /**
@@ -248,11 +246,11 @@ void LineDef_LightLevelDelta(const LineDef* l, int side, float* deltaL, float* d
 }
 
 int LineDef_MiddleMaterialCoords(const LineDef* lineDef, int side,
-    float* bottomLeft, float* bottomRight, float* topLeft, float* topRight,
+    coord_t* bottomLeft, coord_t* bottomRight, coord_t* topLeft, coord_t* topRight,
     float* texOffY, boolean lowerUnpeg, boolean clipTop, boolean clipBottom)
 {
-    float* top[2], *bottom[2], openingTop[2], openingBottom[2]; // {left, right}
-    float tcYOff;
+    coord_t* top[2], *bottom[2], openingTop[2], openingBottom[2]; // {left, right}
+    coord_t tcYOff;
     SideDef* sideDef;
     int i, texHeight;
     assert(lineDef && bottomLeft && bottomRight && topLeft && topRight);
@@ -343,8 +341,8 @@ boolean LineDef_MiddleMaterialCoversOpening(const LineDef *line, int side,
 
             if(ignoreOpacity || (ms->isOpaque && !sideDef->SW_middleblendmode && sideDef->SW_middlergba[3] >= 1))
             {
-                float openTop[2], matTop[2];
-                float openBottom[2], matBottom[2];
+                coord_t openTop[2], matTop[2];
+                coord_t openBottom[2], matBottom[2];
 
                 if(sideDef->flags & SDF_MIDDLE_STRETCH)
                     return true;
@@ -494,14 +492,14 @@ int LineDef_GetProperty(const LineDef* lin, setargs_t* args)
         DMU_GetValue(DMT_LINEDEF_V, &lin->L_v2, args, 0);
         break;
     case DMU_DX:
-        DMU_GetValue(DMT_LINEDEF_DX, &lin->dX, args, 0);
+        DMU_GetValue(DMT_LINEDEF_DX, &lin->direction[VX], args, 0);
         break;
     case DMU_DY:
-        DMU_GetValue(DMT_LINEDEF_DY, &lin->dY, args, 0);
+        DMU_GetValue(DMT_LINEDEF_DY, &lin->direction[VY], args, 0);
         break;
     case DMU_DXY:
-        DMU_GetValue(DMT_LINEDEF_DX, &lin->dX, args, 0);
-        DMU_GetValue(DMT_LINEDEF_DY, &lin->dY, args, 1);
+        DMU_GetValue(DMT_LINEDEF_DX, &lin->direction[VX], args, 0);
+        DMU_GetValue(DMT_LINEDEF_DY, &lin->direction[VY], args, 1);
         break;
     case DMU_LENGTH:
         DMU_GetValue(DDVT_FLOAT, &lin->length, args, 0);
@@ -511,7 +509,7 @@ int LineDef_GetProperty(const LineDef* lin, setargs_t* args)
         DMU_GetValue(DDVT_ANGLE, &lineAngle, args, 0);
         break;
       }
-    case DMU_SLOPE_TYPE:
+    case DMU_SLOPETYPE:
         DMU_GetValue(DMT_LINEDEF_SLOPETYPE, &lin->slopeType, args, 0);
         break;
     case DMU_FRONT_SECTOR: {
@@ -536,7 +534,7 @@ int LineDef_GetProperty(const LineDef* lin, setargs_t* args)
     case DMU_BOUNDING_BOX:
         if(args->valueType == DDVT_PTR)
         {
-            const AABoxf* aaBox = &lin->aaBox;
+            const AABoxd* aaBox = &lin->aaBox;
             DMU_GetValue(DDVT_PTR, &aaBox, args, 0);
         }
         else

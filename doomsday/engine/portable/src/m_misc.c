@@ -61,6 +61,10 @@
 
 // MACROS ------------------------------------------------------------------
 
+#define SLOPERANGE      2048
+#define SLOPEBITS       11
+#define DBITS           (FRACBITS-SLOPEBITS)
+
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -72,6 +76,8 @@
 static size_t FileReader(char const* name, char** buffer);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
+
+extern int tantoangle[SLOPERANGE + 1];  // get from tables.c
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -467,12 +473,9 @@ float M_CycleIntoRange(float value, float length)
     return value;
 }
 
-/**
- * Translate (dx, dy) into an angle value (degrees).
- */
-double M_SlopeToAngle(double dx, double dy)
+double M_DirectionToAngleXY(double dx, double dy)
 {
-    double      angle;
+    double angle;
 
     if(dx == 0)
         return (dy > 0? 90.0 : 270.0);
@@ -485,9 +488,34 @@ double M_SlopeToAngle(double dx, double dy)
     return angle;
 }
 
-double M_Length(double x, double y)
+double M_DirectionToAngle(double const direction[])
 {
-    return sqrt(x * x + y * y);
+    return M_DirectionToAngleXY(direction[VX], direction[VY]);
+}
+
+slopetype_t M_SlopeTypeXY(double dx, double dy)
+{
+    if(FEQUAL(dx, 0))
+    {
+        return ST_VERTICAL;
+    }
+    else if(FEQUAL(dy, 0))
+    {
+        return ST_HORIZONTAL;
+    }
+    else if(dy / dx > 0)
+    {
+        return ST_POSITIVE;
+    }
+    else
+    {
+        return ST_NEGATIVE;
+    }
+}
+
+slopetype_t M_SlopeType(double const direction[])
+{
+    return M_SlopeTypeXY(direction[VX], direction[VY]);
 }
 
 int M_NumDigits(int value)
@@ -495,97 +523,18 @@ int M_NumDigits(int value)
     return floor(log10(abs(value))) + 1;
 }
 
-/**
- * Normalize a vector.
- *
- * @return          The former length.
- */
-float M_Normalize(float *a)
+double M_TriangleArea(double const v1[], double const v2[], double const v3[])
 {
-    float   len = sqrt(a[VX] * a[VX] + a[VY] * a[VY] + a[VZ] * a[VZ]);
+    double a[2], b[2];
+    double area;
 
-    if(len)
-    {
-        a[VX] /= len;
-        a[VY] /= len;
-        a[VZ] /= len;
-    }
-    return len;
-}
-
-/**
- * For convenience.
- */
-float M_Distance(const float *a, const float *b)
-{
-    float       delta[3];
-    int         i;
-
-    for(i = 0; i < 3; ++i)
-        delta[i] = b[i] - a[i];
-
-    return M_Normalize(delta);
-}
-
-float M_DotProduct(const float *a, const float *b)
-{
-    return a[VX] * b[VX] + a[VY] * b[VY] + a[VZ] * b[VZ];
-}
-
-void M_Scale(float *dest, const float *a, float scale)
-{
-    dest[VX] = a[VX] * scale;
-    dest[VY] = a[VY] * scale;
-    dest[VZ] = a[VZ] * scale;
-}
-
-/**
- * Cross product of two vectors.
- */
-void M_CrossProduct(const float *a, const float *b, float *out)
-{
-    out[VX] = a[VY] * b[VZ] - a[VZ] * b[VY];
-    out[VY] = a[VZ] * b[VX] - a[VX] * b[VZ];
-    out[VZ] = a[VX] * b[VY] - a[VY] * b[VX];
-}
-
-/**
- * Cross product of two vectors composed of three points.
- */
-void M_PointCrossProduct(const float *v1, const float *v2, const float *v3,
-                         float *out)
-{
-    float   a[3], b[3];
-    int     i;
-
-    for(i = 0; i < 3; i++)
-    {
-        a[i] = v2[i] - v1[i];
-        b[i] = v3[i] - v1[i];
-    }
-    M_CrossProduct(a, b, out);
-}
-
-/**
- * Area of a triangle.
- */
-float M_TriangleArea(const float *v1, const float *v2, const float *v3)
-{
-    float   a[2], b[2];
-    float   area;
-
-    a[VX] = v2[VX] - v1[VX];
-    a[VY] = v2[VY] - v1[VY];
-
-    b[VX] = v3[VX] - v1[VX];
-    b[VY] = v3[VY] - v1[VY];
+    V2d_Subtract(a, v2, v1);
+    V2d_Subtract(b, v3, v1);
 
     area = (a[VX] * b[VY] - b[VX] * a[VY]) / 2;
-
     if(area < 0)
         return -area;
-    else
-        return area;
+    return area;
 }
 
 /**
@@ -594,8 +543,8 @@ float M_TriangleArea(const float *v1, const float *v2, const float *v3)
  */
 void M_RotateVector(float vec[3], float degYaw, float degPitch)
 {
-    float   radYaw = degYaw / 180 * PI, radPitch = degPitch / 180 * PI;
-    float   Cos, Sin, res[3];
+    float radYaw = degYaw / 180 * PI, radPitch = degPitch / 180 * PI;
+    float Cos, Sin, res[3];
 
     // Yaw.
     if(radYaw != 0)
@@ -607,6 +556,7 @@ void M_RotateVector(float vec[3], float degYaw, float degPitch)
         vec[VX] = res[VX];
         vec[VY] = res[VY];
     }
+
     // Pitch.
     if(radPitch != 0)
     {
@@ -619,127 +569,97 @@ void M_RotateVector(float vec[3], float degYaw, float degPitch)
     }
 }
 
-/**
- * Line a -> b, point c. The line must be exactly one unit long!
- */
-float M_PointUnitLineDistance(const float *a, const float *b, const float *c)
+int M_BoxOnLineSide(double xl, double xh, double yl, double yh,
+    double const lineOrigin[], double const lineDirection[])
 {
-    return
-        fabs(((a[VY] - c[VY]) * (b[VX] - a[VX]) -
-              (a[VX] - c[VX]) * (b[VY] - a[VY])));
-}
+    int a, b;
 
-/**
- * Line a -> b, point c.
- */
-float M_PointLineDistance(const float *a, const float *b, const float *c)
-{
-    float   d[2], len;
-
-    d[VX] = b[VX] - a[VX];
-    d[VY] = b[VY] - a[VY];
-    len = sqrt(d[VX] * d[VX] + d[VY] * d[VY]);  // Accurate.
-    if(!len)
-        return 0;
-
-    return
-        fabs(((a[VY] - c[VY]) * (b[VX] - a[VX]) -
-              (a[VX] - c[VX]) * (b[VY] - a[VY])) / len);
-}
-
-/**
- * Gap is the distance left between the line and the projected point.
- */
-float M_ProjectPointOnLine(const float* point, const float* linepoint,
-                           const float* delta, float gap, float* result)
-{
-#define DOTPROD(a,b)    (a[VX]*b[VX] + a[VY]*b[VY])
-    float   pointvec[2];
-    float   div = DOTPROD(delta, delta);
-    float   diff[2], dist;
-
-    if(!div)
-        return 0;
-
-    pointvec[0] = point[VX] - linepoint[VX];
-    pointvec[1] = point[VY] - linepoint[VY];
-
-    div = DOTPROD(pointvec, delta) / div;
-    if(!result)
-        return div;
-
-    result[VX] = linepoint[VX] + delta[VX] * div;
-    result[VY] = linepoint[VY] + delta[VY] * div;
-
-    // If a gap should be left, there is some extra math to do.
-    if(gap)
+    switch(M_SlopeType(lineDirection))
     {
-        diff[VX] = result[VX] - point[VX];
-        diff[VY] = result[VY] - point[VY];
-        if((dist = M_ApproxDistancef(diff[VX], diff[VY])) != 0)
+    default: // Shut up compiler.
+    case ST_HORIZONTAL:
+        a = yh > lineOrigin[VY]? -1 : 1;
+        b = yl > lineOrigin[VY]? -1 : 1;
+        if(lineDirection[VX] < 0)
         {
-            int     i;
-
-            for(i = 0; i < 2; i++)
-                result[i] -= diff[i] / dist * gap;
+            a = -a;
+            b = -b;
         }
+        break;
+
+    case ST_VERTICAL:
+        a = xh < lineOrigin[VX]? -1 : 1;
+        b = xl < lineOrigin[VX]? -1 : 1;
+        if(lineDirection[VY] < 0)
+        {
+            a = -a;
+            b = -b;
+        }
+        break;
+
+    case ST_POSITIVE: {
+        double topLeft[2]     = { xl, yh };
+        double bottomRight[2] = { xh, yl };
+        a = V2d_PointOnLineSide(topLeft,     lineOrigin, lineDirection) < 0 ? -1 : 1;
+        b = V2d_PointOnLineSide(bottomRight, lineOrigin, lineDirection) < 0 ? -1 : 1;
+        break; }
+
+    case ST_NEGATIVE: {
+        double topRight[2]   = { xh, yh };
+        double bottomLeft[2] = { xl, yl };
+        a = V2d_PointOnLineSide(topRight,   lineOrigin, lineDirection) < 0 ? -1 : 1;
+        b = V2d_PointOnLineSide(bottomLeft, lineOrigin, lineDirection) < 0 ? -1 : 1;
+        break; }
     }
 
-    return div;
+    if(a == b) return a;
+    return 0;
 }
 
-void M_ProjectViewRelativeLine2D(const float center[2],
-                                 boolean alignToViewPlane,
-                                 float width, float offset,
-                                 float start[2], float end[2])
+int M_BoxOnLineSide2(const AABoxd* box, double lineOriginX, double lineOriginY,
+    double const lineDirection[], double linePerp, double lineLength,
+    double epsilon)
 {
-    const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
-    float sinrv, cosrv;
+    int a, b;
 
-    if(alignToViewPlane)
+    switch(M_SlopeType(lineDirection))
     {
-        // Should be fully aligned to view plane.
-        sinrv = -viewData->viewCos;
-        cosrv = viewData->viewSin;
+    default: // Shut up compiler.
+    case ST_HORIZONTAL:
+        a = box->maxY > lineOriginY? -1 : 1;
+        b = box->minY > lineOriginY? -1 : 1;
+        if(lineDirection[VX] < 0)
+        {
+            a = -a;
+            b = -b;
+        }
+        break;
+
+    case ST_VERTICAL:
+        a = box->maxX < lineOriginX? -1 : 1;
+        b = box->minX < lineOriginX? -1 : 1;
+        if(lineDirection[VY] < 0)
+        {
+            a = -a;
+            b = -b;
+        }
+        break;
+
+    case ST_POSITIVE: {
+        double topLeft[2]       = { box->minX, box->maxY };
+        double bottomRight[2]   = { box->maxX, box->minY };
+        a = V2d_PointOnLineSide2(topLeft,     lineDirection, linePerp, lineLength, epsilon) < 0;
+        b = V2d_PointOnLineSide2(bottomRight, lineDirection, linePerp, lineLength, epsilon) < 0;
+        break; }
+
+    case ST_NEGATIVE:
+        a = V2d_PointOnLineSide2(box->max, lineDirection, linePerp, lineLength, epsilon) < 0;
+        b = V2d_PointOnLineSide2(box->min, lineDirection, linePerp, lineLength, epsilon) < 0;
+        break;
     }
-    else
-    {
-        float trx, try, thangle;
 
-        // Transform the origin point.
-        trx = center[VX] - viewData->current.pos[VX];
-        try = center[VY] - viewData->current.pos[VY];
-
-        thangle = BANG2RAD(bamsAtan2(try * 10, trx * 10)) - PI / 2;
-        sinrv = sin(thangle);
-        cosrv = cos(thangle);
-    }
-
-    start[VX] = center[VX];
-    start[VY] = center[VY];
-
-    start[VX] -= cosrv * ((width / 2) + offset);
-    start[VY] -= sinrv * ((width / 2) + offset);
-    end[VX] = start[VX] + cosrv * width;
-    end[VY] = start[VY] + sinrv * width;
-}
-
-/**
- * Compute the parallel distance from a partition line to a point.
- */
-double M_ParallelDist(double lineDX, double lineDY, double linePara,
-                      double lineLength, double x, double y)
-{
-    return (x * lineDX + y * lineDY + linePara) / lineLength;
-}
-
-/**
- * Compute the perpendicular distance from a partition line to a point.
- */
-double M_PerpDist(double lineDX, double lineDY, double linePerp,
-                  double lineLength, double x, double y)
-{
-    return (x * lineDY - y * lineDX + linePerp) / lineLength;
+    if(a == b) return a;
+    return 0;
 }
 
 float M_BoundingBoxDiff(const float in[4], const float out[4])
@@ -948,19 +868,118 @@ void M_WriteTextEsc(FILE* file, const char* text)
     }}
 }
 
-/**
- * Gives an estimation of distance (not exact)
- */
-#if 0
-fixed_t M_AproxDistance(fixed_t dx, fixed_t dy)
+static int slopeDiv(unsigned num, unsigned den)
 {
-    dx = abs(dx);
-    dy = abs(dy);
-    if(dx < dy)
-        return dx + dy - (dx >> 1);
-    return dx + dy - (dy >> 1);
+    uint ans;
+
+    if(den < 512)
+        return SLOPERANGE;
+    ans = (num << 3) / (den >> 8);
+    return ans <= SLOPERANGE ? ans : SLOPERANGE;
 }
-#endif
+
+angle_t M_PointToAngle(double const point[])
+{
+    fixed_t pos[2];
+
+    pos[VX] = FLT2FIX(point[VX]);
+    pos[VY] = FLT2FIX(point[VY]);
+
+    if(pos[VX] == 0 && pos[VY] == 0)
+        return 0;
+
+    if(pos[VX] >= 0)
+    {
+        // x >=0
+        if(pos[VY] >= 0)
+        {
+            // y>= 0
+            if(pos[VX] > pos[VY])
+                return tantoangle[slopeDiv(pos[VY], pos[VX])]; // octant 0
+
+            return ANG90 - 1 - tantoangle[slopeDiv(pos[VX], pos[VY])]; // octant 1
+        }
+
+        // y<0
+        pos[VY] = -pos[VY];
+        if(pos[VX] > pos[VY])
+            return -tantoangle[slopeDiv(pos[VY], pos[VX])]; // octant 8
+
+        return ANG270 + tantoangle[slopeDiv(pos[VX], pos[VY])]; // octant 7
+    }
+
+    // x<0
+    pos[VX] = -pos[VX];
+    if(pos[VY] >= 0)
+    {
+        // y>= 0
+        if(pos[VX] > pos[VY])
+            return ANG180 - 1 - tantoangle[slopeDiv(pos[VY], pos[VX])]; // octant 3
+
+        return ANG90 + tantoangle[slopeDiv(pos[VX], pos[VY])]; // octant 2
+    }
+
+    // y<0
+    pos[VY] = -pos[VY];
+    if(pos[VX] > pos[VY])
+        return ANG180 + tantoangle[slopeDiv(pos[VY], pos[VX])]; // octant 4
+
+    return ANG270 - 1 - tantoangle[slopeDiv(pos[VX], pos[VY])]; // octant 5
+}
+
+angle_t M_PointXYToAngle(double x, double y)
+{
+    double point[2] = { x, y };
+    return M_PointToAngle(point);
+}
+
+angle_t M_PointToAngle2(double const a[], double const b[])
+{
+    double delta[2] = { b[VX] - a[VX], b[VY] - a[VY] };
+    return M_PointToAngle(delta);
+}
+
+angle_t M_PointXYToAngle2(double aX, double aY, double bX, double bY)
+{
+    double a[2] = { aX, aY };
+    double b[2] = { bX, bY };
+    return M_PointToAngle2(a, b);
+}
+
+double M_PointDistance(double const a[], double const b[])
+{
+    double delta[2];
+    uint angle;
+
+    delta[VX] = fabs(b[VX] - a[VX]);
+    delta[VY] = fabs(b[VY] - a[VY]);
+
+    if(delta[VY] > delta[VX])
+    {
+        double temp = delta[VX];
+        delta[VX] = delta[VY];
+        delta[VY] = temp;
+    }
+
+    angle = (tantoangle[FLT2FIX(delta[VY] / delta[VX]) >> DBITS] + ANG90) >> ANGLETOFINESHIFT;
+    return delta[VX] / FIX2FLT(finesine[angle]); // Use as cosine
+}
+
+double M_PointXYDistance(double aX, double aY, double bX, double bY)
+{
+    double a[2] = { aX, aY };
+    double b[2] = { bX, bY };
+    return M_PointDistance(a, b);
+}
+
+double M_ApproxDistance(double dx, double dy)
+{
+    dx = fabs(dx);
+    dy = fabs(dy);
+    if(dx < dy)
+        return dx + dy - dx / 2;
+    return dx + dy - dy / 2;
+}
 
 float M_ApproxDistancef(float dx, float dy)
 {
@@ -971,10 +990,9 @@ float M_ApproxDistancef(float dx, float dy)
     return dx + dy - dy / 2;
 }
 
-float M_ApproxDistance3(const float delta[3])
+double M_ApproxDistance3(double dx, double dy, double dz)
 {
-    return M_ApproxDistancef(
-        M_ApproxDistancef(delta[0], delta[1]), delta[2]);
+    return M_ApproxDistance(M_ApproxDistance(dx, dy), dz);
 }
 
 float M_ApproxDistance3f(float dx, float dy, float dz)

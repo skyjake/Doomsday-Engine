@@ -698,7 +698,7 @@ enum {
     DMU_DY,
     DMU_DXY,
     DMU_LENGTH,
-    DMU_SLOPE_TYPE,
+    DMU_SLOPETYPE,
     DMU_ANGLE,
     DMU_OFFSET,
 
@@ -717,7 +717,7 @@ enum {
     DMU_LIGHT_LEVEL,
     DMT_MOBJS, ///< pointer to start of sector mobjList
     DMU_BOUNDING_BOX, ///< float[4]
-    DMU_ORIGIN,
+    DMU_BASE,
     DMU_WIDTH,
     DMU_HEIGHT,
     DMU_TARGET_HEIGHT,
@@ -776,7 +776,7 @@ enum { /* Do NOT change the numerical values of the constants. */
 /// @ingroup mobj
 #define DD_BASE_DDMOBJ_ELEMENTS() \
     thinker_t       thinker;            /* thinker node */ \
-    float           pos[3];             /* position [x,y,z] */
+    coord_t         origin[3];          /* origin [x,y,z] */
 
 /**
  * All map think-able objects must use this as a base. Also used for sound
@@ -786,18 +786,6 @@ enum { /* Do NOT change the numerical values of the constants. */
 typedef struct ddmobj_base_s {
     DD_BASE_DDMOBJ_ELEMENTS()
 } ddmobj_base_t;
-
-/// Fixed-point vertex position. Utility struct for the game, not used by
-/// the engine. @ingroup map
-typedef struct ddvertex_s {
-    fixed_t         pos[2];
-} ddvertex_t;
-
-/// Floating-point vertex position. Utility struct for the game, not used
-/// by the engine. @ingroup map
-typedef struct ddvertexf_s {
-    float           pos[2];
-} ddvertexf_t;
 
 /// R_SetupMap() modes. @ingroup map
 enum {
@@ -817,11 +805,13 @@ enum {
 };
 
 typedef struct {
-    fixed_t         pos[2], dX, dY;
+    fixed_t origin[2];
+    fixed_t direction[2];
 } divline_t;
 
 typedef struct {
-    float           pos[2], dX, dY;
+    float origin[2];
+    float direction[2];
 } fdivline_t;
 
 /**
@@ -832,13 +822,6 @@ typedef struct {
 #define PT_ADDLINES            1 ///< Intercept with LineDefs.
 #define PT_ADDMOBJS            2 ///< Intercept with Mobjs.
 ///@}
-
-typedef enum {
-    ST_HORIZONTAL,
-    ST_VERTICAL,
-    ST_POSITIVE,
-    ST_NEGATIVE
-} slopetype_t;
 
 /**
  * @defgroup lineSightFlags Line Sight Flags
@@ -1052,24 +1035,24 @@ typedef struct aaboxd_s {
     struct mobj_s*  sNext, **sPrev; /* links in sector (if needed) */ \
 \
     struct bspleaf_s* bspLeaf; /* bspLeaf in which this resides */ \
-    float           mom[3]; \
+    coord_t         mom[3]; \
     angle_t         angle; \
     spritenum_t     sprite; /* used to find patch_t and flip value */ \
     int             frame; \
-    float           radius; \
-    float           height; \
+    coord_t         radius; \
+    coord_t         height; \
     int             ddFlags; /* Doomsday mobj flags (DDMF_*) */ \
-    float           floorClip; /* value to use for floor clipping */ \
+    coord_t         floorClip; /* value to use for floor clipping */ \
     int             valid; /* if == valid, already checked */ \
     int             type; /* mobj type */ \
     struct state_s* state; \
     int             tics; /* state tic counter */ \
-    float           floorZ; /* highest contacted floor */ \
-    float           ceilingZ; /* lowest contacted ceiling */ \
+    coord_t         floorZ; /* highest contacted floor */ \
+    coord_t         ceilingZ; /* lowest contacted ceiling */ \
     struct mobj_s*  onMobj; /* the mobj this one is on top of. */ \
     boolean         wallHit; /* the mobj is hitting a wall. */ \
     struct ddplayer_s* dPlayer; /* NULL if not a player mobj. */ \
-    float           srvo[3]; /* short-range visual offset (xyz) */ \
+    coord_t         srvo[3]; /* short-range visual offset (xyz) */ \
     short           visAngle; /* visual angle ("angle-servo") */ \
     int             selector; /* multipurpose info */ \
     int             validCount; /* used in iterating */ \
@@ -1088,7 +1071,7 @@ typedef struct aaboxd_s {
     mobjinfo_t     *info; /* &mobjinfo[mobj->type] */
 
 typedef struct povertex_s {
-    float           pos[2];
+    coord_t         origin[2];
 } povertex_t;
 
 /// Base Polyobj elements. Games MUST use this as the basis for Polyobj. @ingroup map
@@ -1099,8 +1082,8 @@ typedef struct povertex_s {
     unsigned int    idx; /* Idx of polyobject. */ \
     int             tag; /* Reference tag. */ \
     int             validCount; \
-    AABoxf          aaBox; \
-    float           dest[2]; /* Destination XY. */ \
+    AABoxd          aaBox; \
+    coord_t         dest[2]; /* Destination XY. */ \
     angle_t         angle; \
     angle_t         destAngle; /* Destination angle. */ \
     angle_t         angleSpeed; /* Rotation speed. */ \
@@ -1108,7 +1091,7 @@ typedef struct povertex_s {
     unsigned int    lineCount; \
     struct povertex_s* originalPts; /* Used as the base for the rotations. */ \
     struct povertex_s* prevPts; /* Use to restore the old point values. */ \
-    float           speed; /* Movement speed. */ \
+    double          speed; /* Movement speed. */ \
     boolean         crush; /* Should the polyobj attempt to crush mobjs? */ \
     int             seqType; \
     struct { \
@@ -1763,7 +1746,7 @@ typedef enum controltype_e {
  */
 #define DDPF_FIXANGLES          0x0001 ///< Server: send angle/pitch to client.
 //#define DDPF_FILTER             0x0002 // Server: send filter to client.
-#define DDPF_FIXPOS             0x0004 ///< Server: send coords to client.
+#define DDPF_FIXORIGIN          0x0004 ///< Server: send coords to client.
 #define DDPF_DEAD               0x0008 ///< Cl & Sv: player is dead.
 #define DDPF_CAMERA             0x0010 ///< Player is a cameraman.
 #define DDPF_LOCAL              0x0020 ///< Player is local (e.g. player zero).
@@ -1775,7 +1758,7 @@ typedef enum controltype_e {
 #define DDPF_VIEW_FILTER        0x0800 ///< Cl & Sv: Draw the current view filter.
 #define DDPF_REMOTE_VIEW_FILTER 0x1000 ///< Client: Draw the view filter (has been set remotely).
 #define DDPF_USE_VIEW_FILTER    (DDPF_VIEW_FILTER | DDPF_REMOTE_VIEW_FILTER)
-#define DDPF_UNDEFINED_POS      0x2000 ///< Position of the player is undefined (view not drawn).
+#define DDPF_UNDEFINED_ORIGIN   0x2000 ///< Origin of the player is undefined (view not drawn).
 #define DDPF_UNDEFINED_WEAPON   0x4000 ///< Weapon of the player is undefined (not sent yet).
 ///@}
 
@@ -1822,7 +1805,7 @@ struct polyobj_s;
 
     typedef struct fixcounters_s {
         int             angles;
-        int             pos;
+        int             origin;
         int             mom;
     } fixcounters_t;
 

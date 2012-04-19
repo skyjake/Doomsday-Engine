@@ -1,4 +1,4 @@
-/**\file
+/**\file p_maputil.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,10 +23,8 @@
  */
 
 /**
- * p_maputil.c: Map Utility Routines
+ * Map Utility Routines
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
 
@@ -35,8 +33,6 @@
 #include "de_play.h"
 #include "de_refresh.h"
 #include "de_misc.h"
-
-// MACROS ------------------------------------------------------------------
 
 #define ORDER(x,y,a,b)  ( (x)<(y)? ((a)=(x),(b)=(y)) : ((b)=(x),(a)=(y)) )
 
@@ -56,320 +52,20 @@
     } \
 }
 
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
-
-float P_AccurateDistanceFixed(fixed_t dx, fixed_t dy)
+int Divline_PointXYOnSide(const divline_t* line, coord_t fx, coord_t fy)
 {
-    float               fx = FIX2FLT(dx), fy = FIX2FLT(dy);
-
-    return (float) sqrt(fx * fx + fy * fy);
+    fixed_t point[2] = { FLT2FIX((float)fx), FLT2FIX((float)fy) };
+    return V2x_PointOnLineSide(point, line->origin, line->direction);
 }
 
-float P_AccurateDistance(float dx, float dy)
+int Divline_PointOnSide(const divline_t* line, coord_t const point[])
 {
-    return (float) sqrt(dx * dx + dy * dy);
+    return Divline_PointXYOnSide(line, point[VX], point[VY]);
 }
 
-/**
- * Gives an estimation of distance (not exact).
- */
-float P_ApproxDistance(float dx, float dy)
+fixed_t Divline_Intersection(const divline_t* v1, const divline_t* v2)
 {
-    dx = fabs(dx);
-    dy = fabs(dy);
-
-    return dx + dy - ((dx < dy ? dx : dy) / 2);
-}
-
-/**
- * Gives an estimation of 3D distance (not exact).
- * The Z axis aspect ratio is corrected.
- */
-float P_ApproxDistance3(float dx, float dy, float dz)
-{
-    return P_ApproxDistance(P_ApproxDistance(dx, dy), dz * 1.2f);
-}
-
-/**
- * Either end or fixpoint must be specified. The distance is measured
- * (approximately) in 3D. Start must always be specified.
- */
-float P_MobjPointDistancef(mobj_t* start, mobj_t* end, float* fixpoint)
-{
-    if(!start)
-        return 0;
-
-    if(end)
-    {
-        // Start -> end.
-        return M_ApproxDistancef(end->pos[VZ] - start->pos[VZ],
-                                 M_ApproxDistancef(end->pos[VX] - start->pos[VX],
-                                                   end->pos[VY] - start->pos[VY]));
-    }
-
-    if(fixpoint)
-    {
-        float               sp[3];
-
-        sp[VX] = start->pos[VX];
-        sp[VY] = start->pos[VY],
-        sp[VZ] = start->pos[VZ];
-
-        return M_ApproxDistancef(fixpoint[VZ] - sp[VZ],
-                                 M_ApproxDistancef(fixpoint[VX] - sp[VX],
-                                                   fixpoint[VY] - sp[VY]));
-    }
-
-    return 0;
-}
-
-float P_PointOnLineSide(float x, float y, float lX, float lY, float lDX, float lDY)
-{
-    return (lY - y) * lDX - (lX - x) * lDY;
-}
-
-/// @note Part of the Doomsday public API.
-int P_PointOnLineDefSide(float const xy[2], const LineDef* lineDef)
-{
-    if(!xy || !lineDef)
-    {
-        DEBUG_Message(("P_PointOnLineDefSide: Invalid arguments, returning zero.\n"));
-        return 0;
-    }
-    return LineDef_PointOnSide(lineDef, xy);
-}
-
-/// @note Part of the Doomsday public API.
-int P_PointXYOnLineDefSide(float x, float y, const LineDef* lineDef)
-{
-    if(!lineDef)
-    {
-        DEBUG_Message(("P_PointXYOnLineDefSide: Invalid arguments, returning zero.\n"));
-        return 0;
-    }
-    return LineDef_PointXYOnSide(lineDef, x, y);
-}
-
-/**
- * Where is the given point in relation to the line.
- *
- * @param pointX        X coordinate of the point.
- * @param pointY        Y coordinate of the point.
- * @param lineDX        X delta of the line.
- * @param lineDY        Y delta of the line.
- * @param linePerp      Perpendicular d of the line.
- * @param lineLength    Length of the line.
- *
- * @return              @c <0= on left side.
- *                      @c  0= intersects.
- *                      @c >0= on right side.
- */
-int P_PointOnLinedefSide2(double pointX, double pointY, double lineDX,
-                       double lineDY, double linePerp, double lineLength,
-                       double epsilon)
-{
-    double              perp =
-        M_PerpDist(lineDX, lineDY, linePerp, lineLength, pointX, pointY);
-
-    if(fabs(perp) <= epsilon)
-        return 0;
-
-    return (perp < 0? -1 : +1);
-}
-
-int P_BoxOnLineSide3(const AABox* aaBox, double lineSX, double lineSY,
-    double lineDX, double lineDY, double linePerp, double lineLength, double epsilon)
-{
-#define IFFY_LEN                4.0
-
-    double x1 = (double)aaBox->minX - IFFY_LEN * 1.5;
-    double y1 = (double)aaBox->minY - IFFY_LEN * 1.5;
-    double x2 = (double)aaBox->maxX + IFFY_LEN * 1.5;
-    double y2 = (double)aaBox->maxY + IFFY_LEN * 1.5;
-    int p1, p2;
-
-    if(FEQUAL(lineDX, 0))
-    {
-        // Horizontal.
-        p1 = (x1 > lineSX? +1 : -1);
-        p2 = (x2 > lineSX? +1 : -1);
-
-        if(lineDY < 0)
-        {
-            p1 = -p1;
-            p2 = -p2;
-        }
-    }
-    else if(FEQUAL(lineDY, 0))
-    {
-        // Vertical.
-        p1 = (y1 < lineSY? +1 : -1);
-        p2 = (y2 < lineSY? +1 : -1);
-
-        if(lineDX < 0)
-        {
-            p1 = -p1;
-            p2 = -p2;
-        }
-    }
-    else if(lineDX * lineDY > 0)
-    {
-        // Positive slope.
-        p1 = P_PointOnLinedefSide2(x1, y2, lineDX, lineDY, linePerp, lineLength, epsilon);
-        p2 = P_PointOnLinedefSide2(x2, y1, lineDX, lineDY, linePerp, lineLength, epsilon);
-    }
-    else
-    {
-        // Negative slope.
-        p1 = P_PointOnLinedefSide2(x1, y1, lineDX, lineDY, linePerp, lineLength, epsilon);
-        p2 = P_PointOnLinedefSide2(x2, y2, lineDX, lineDY, linePerp, lineLength, epsilon);
-    }
-
-    if(p1 == p2) return p1;
-    return 0;
-
-#undef IFFY_LEN
-}
-
-/**
- * Considers the line to be infinite.
- *
- * @return              @c  0 = completely in front of the line.
- * @return              @c  1 = completely behind the line.
- *                      @c -1 = box crosses the line.
- */
-int P_BoxOnLineSide2(float xl, float xh, float yl, float yh,
-                     const LineDef* ld)
-{
-    int                 a = 0, b = 0;
-
-    switch(ld->slopeType)
-    {
-    default: // Shut up compiler.
-      case ST_HORIZONTAL:
-        a = yh > ld->L_v1pos[VY];
-        b = yl > ld->L_v1pos[VY];
-        if(ld->dX < 0)
-        {
-            a ^= 1;
-            b ^= 1;
-        }
-        break;
-
-      case ST_VERTICAL:
-        a = xh < ld->L_v1pos[VX];
-        b = xl < ld->L_v1pos[VX];
-        if(ld->dY < 0)
-        {
-            a ^= 1;
-            b ^= 1;
-        }
-        break;
-
-      case ST_POSITIVE:
-        a = P_PointXYOnLineDefSide(xl, yh, ld);
-        b = P_PointXYOnLineDefSide(xh, yl, ld);
-        break;
-
-    case ST_NEGATIVE:
-        a = P_PointXYOnLineDefSide(xh, yh, ld);
-        b = P_PointXYOnLineDefSide(xl, yl, ld);
-        break;
-    }
-
-    if(a == b)
-        return a;
-
-    return -1;
-}
-
-int P_BoxOnLineSide(const AABoxf* box, const LineDef* ld)
-{
-    return P_BoxOnLineSide2(box->minX, box->maxX,
-                            box->minY, box->maxY, ld);
-}
-
-/**
- * @return              @c 0 if point is in front of the line, else @c 1.
- */
-int P_PointOnDivlineSide(float fx, float fy, const divline_t* line)
-{
-    fixed_t             x = FLT2FIX(fx);
-    fixed_t             y = FLT2FIX(fy);
-
-    if(!line->dX)
-    {
-        return (x <= line->pos[VX])? line->dY > 0 : line->dY < 0;
-    }
-    else if(!line->dY)
-    {
-        return (y <= line->pos[VY])? line->dX < 0 : line->dX > 0;
-    }
-    else
-    {
-        fixed_t             dX = x - line->pos[VX];
-        fixed_t             dY = y - line->pos[VY];
-
-        // Try to quickly decide by comparing signs.
-        if((line->dY ^ line->dX ^ dX ^ dY) & 0x80000000)
-        {   // Left is negative.
-            return ((line->dY ^ dX) & 0x80000000)? 1 : 0;
-        }
-        else
-        {   // if left >= right return 1 else 0.
-            return FixedMul(dY >> 8, line->dX >> 8) >=
-                FixedMul(line->dY >> 8, dX >> 8);
-        }
-    }
-}
-
-/// @note Part of the Doomsday public API.
-void P_MakeDivline(const LineDef* line, divline_t* dl)
-{
-    if(!line || !dl)
-    {
-        DEBUG_Message(("P_MakeDivline: Invalid arguments.\n"));
-        return;
-    }
-    LineDef_SetDivline(line, dl);
-}
-
-/**
- * @return              Fractional intercept point along the first divline.
- */
-float P_InterceptVector(const divline_t* v2, const divline_t* v1)
-{
-    float               frac = 0;
-    fixed_t             den = FixedMul(v1->dY >> 8, v2->dX) -
-        FixedMul(v1->dX >> 8, v2->dY);
-
-    if(den)
-    {
-        fixed_t             f;
-
-        f = FixedMul((v1->pos[VX] - v2->pos[VX]) >> 8, v1->dY) +
-            FixedMul((v2->pos[VY] - v1->pos[VY]) >> 8, v1->dX);
-
-        f = FixedDiv(f, den);
-
-        frac = FIX2FLT(f);
-    }
-
-    return frac;
+    return V2x_Intersection(v1->origin, v1->direction, v2->origin, v2->direction);
 }
 
 /// @note Part of the Doomsday public API
@@ -407,16 +103,20 @@ void P_SetTraceOpening(LineDef* lineDef)
 }
 
 /// @note Part of the Doomsday public API
-BspLeaf* P_BspLeafAtPointXY(float x, float y)
+BspLeaf* P_BspLeafAtPoint(coord_t const point[])
 {
-    if(theMap)
-    {
-        return GameMap_BspLeafAtPointXY(theMap, x, y);
-    }
-    return NULL;
+    if(!theMap) return NULL;
+    return GameMap_BspLeafAtPoint(theMap, point);
 }
 
-boolean P_IsPointXYInBspLeaf(float x, float y, const BspLeaf* bspLeaf)
+/// @note Part of the Doomsday public API
+BspLeaf* P_BspLeafAtPointXY(coord_t x, coord_t y)
+{
+    if(!theMap) return NULL;
+    return GameMap_BspLeafAtPointXY(theMap, x, y);
+}
+
+boolean P_IsPointXYInBspLeaf(coord_t x, coord_t y, const BspLeaf* bspLeaf)
 {
     Vertex* vi, *vj;
     HEdge* hedge;
@@ -431,8 +131,8 @@ boolean P_IsPointXYInBspLeaf(float x, float y, const BspLeaf* bspLeaf)
         vi = hedge->HE_v1;
         vj = next->HE_v1;
 
-        if(((vi->pos[VY] - y) * (vj->pos[VX] - vi->pos[VX]) -
-            (vi->pos[VX] - x) * (vj->pos[VY] - vi->pos[VY])) < 0)
+        if(((vi->origin[VY] - y) * (vj->origin[VX] - vi->origin[VX]) -
+            (vi->origin[VX] - x) * (vj->origin[VY] - vi->origin[VY])) < 0)
         {
             // Outside the BSP leaf's edges.
             return false;
@@ -442,7 +142,12 @@ boolean P_IsPointXYInBspLeaf(float x, float y, const BspLeaf* bspLeaf)
     return true;
 }
 
-boolean P_IsPointXYInSector(float x, float y, const Sector* sector)
+boolean P_IsPointInBspLeaf(coord_t const point[], const BspLeaf* bspLeaf)
+{
+    return P_IsPointXYInBspLeaf(point[VX], point[VY], bspLeaf);
+}
+
+boolean P_IsPointXYInSector(coord_t x, coord_t y, const Sector* sector)
 {
     BspLeaf* bspLeaf;
     if(!sector) return false; // I guess?
@@ -452,6 +157,11 @@ boolean P_IsPointXYInSector(float x, float y, const Sector* sector)
     if(bspLeaf->sector != sector) return false;
 
     return P_IsPointXYInBspLeaf(x, y, bspLeaf);
+}
+
+boolean P_IsPointInSector(coord_t const point[], const Sector* sector)
+{
+    return P_IsPointXYInSector(point[VX], point[VY], sector);
 }
 
 /**
@@ -562,7 +272,7 @@ void GameMap_LinkMobjToLineDef(GameMap* map, mobj_t* mo, LineDef* lineDef)
 typedef struct {
     GameMap* map;
     mobj_t* mo;
-    AABoxf box;
+    AABoxd box;
 } linelinker_data_t;
 
 /**
@@ -581,7 +291,7 @@ int PIT_LinkToLines(LineDef* ld, void* parameters)
        p->box.maxY <= ld->aaBox.minY) return false;
 
     // Line does not cross the mobj's bounding box?
-    if(P_BoxOnLineSide(&p->box, ld) != -1) return false;
+    if(LineDef_BoxOnSide(ld, &p->box)) return false;
 
     // One sided lines will not be linked to because a mobj can't legally cross one.
     if(!ld->L_frontside || !ld->L_backside) return false;
@@ -596,7 +306,7 @@ int PIT_LinkToLines(LineDef* ld, void* parameters)
 void GameMap_LinkMobjToLineDefs(GameMap* map, mobj_t* mo)
 {
     linelinker_data_t p;
-    vec2f_t point;
+    vec2d_t point;
     assert(map);
 
     // Get a new root node.
@@ -605,10 +315,10 @@ void GameMap_LinkMobjToLineDefs(GameMap* map, mobj_t* mo)
     // Set up a line iterator for doing the linking.
     p.map = map;
     p.mo = mo;
-    V2f_Set(point, mo->pos[VX] - mo->radius, mo->pos[VY] - mo->radius);
-    V2f_InitBox(p.box.arvec2, point);
-    V2f_Set(point, mo->pos[VX] + mo->radius, mo->pos[VY] + mo->radius);
-    V2f_AddToBox(p.box.arvec2, point);
+    V2d_Set(point, mo->origin[VX] - mo->radius, mo->origin[VY] - mo->radius);
+    V2d_InitBox(p.box.arvec2, point);
+    V2d_Set(point, mo->origin[VX] + mo->radius, mo->origin[VY] + mo->radius);
+    V2d_AddToBox(p.box.arvec2, point);
 
     validCount++;
     P_AllLinesBoxIterator(&p.box, PIT_LinkToLines, (void*)&p);
@@ -624,7 +334,7 @@ void P_MobjLink(mobj_t* mo, byte flags)
     Sector* sec;
 
     // Link into the sector.
-    mo->bspLeaf = P_BspLeafAtPointXY(mo->pos[VX], mo->pos[VY]);
+    mo->bspLeaf = P_BspLeafAtPoint(mo->origin);
     sec = mo->bspLeaf->sector;
 
     if(flags & DDLINK_SECTOR)
@@ -668,11 +378,11 @@ void P_MobjLink(mobj_t* mo, byte flags)
         ddplayer_t* player = mo->dPlayer;
 
         player->inVoid = true;
-        if(P_IsPointXYInSector(player->mo->pos[VX],
-                              player->mo->pos[VY],
+        if(P_IsPointXYInSector(player->mo->origin[VX],
+                              player->mo->origin[VY],
                               player->mo->bspLeaf->sector) &&
-           (player->mo->pos[VZ] < player->mo->bspLeaf->sector->SP_ceilvisheight + 4 &&
-            player->mo->pos[VZ] >= player->mo->bspLeaf->sector->SP_floorvisheight))
+           (player->mo->origin[VZ] < player->mo->bspLeaf->sector->SP_ceilvisheight + 4 &&
+            player->mo->origin[VZ] >= player->mo->bspLeaf->sector->SP_floorvisheight))
             player->inVoid = false;
     }
 }
@@ -842,7 +552,7 @@ int GameMap_SectorTouchingMobjsIterator(GameMap* map, Sector* sector,
  *
  * @return  Non-zero if current iteration should stop.
  */
-int PIT_AddLineDefIntercepts(LineDef* lineDef, void* paramaters)
+int PIT_AddLineDefIntercepts(LineDef* lineDef, void* parameters)
 {
     /// @fixme Do not assume lineDef is from the current map.
     const divline_t* traceLOS = GameMap_TraceLOS(theMap);
@@ -852,23 +562,23 @@ int PIT_AddLineDefIntercepts(LineDef* lineDef, void* paramaters)
 
     // Is this line crossed?
     // Avoid precision problems with two routines.
-    if(traceLOS->dX >  FRACUNIT * 16 || traceLOS->dY >  FRACUNIT * 16 ||
-       traceLOS->dX < -FRACUNIT * 16 || traceLOS->dY < -FRACUNIT * 16)
+    if(traceLOS->direction[VX] >  FRACUNIT * 16 || traceLOS->direction[VY] >  FRACUNIT * 16 ||
+       traceLOS->direction[VX] < -FRACUNIT * 16 || traceLOS->direction[VY] < -FRACUNIT * 16)
     {
-        s1 = P_PointOnDivlineSide(lineDef->L_v1pos[VX], lineDef->L_v1pos[VY], traceLOS);
-        s2 = P_PointOnDivlineSide(lineDef->L_v2pos[VX], lineDef->L_v2pos[VY], traceLOS);
+        s1 = Divline_PointOnSide(traceLOS, lineDef->L_v1origin);
+        s2 = Divline_PointOnSide(traceLOS, lineDef->L_v2origin);
     }
     else
     {
-        s1 = P_PointXYOnLineDefSide(FIX2FLT(traceLOS->pos[VX]), FIX2FLT(traceLOS->pos[VY]), lineDef);
-        s2 = P_PointXYOnLineDefSide(FIX2FLT(traceLOS->pos[VX] + traceLOS->dX),
-                                    FIX2FLT(traceLOS->pos[VY] + traceLOS->dY), lineDef);
+        s1 = LineDef_PointXYOnSide(lineDef, FIX2FLT(traceLOS->origin[VX]), FIX2FLT(traceLOS->origin[VY])) < 0;
+        s2 = LineDef_PointXYOnSide(lineDef, FIX2FLT(traceLOS->origin[VX] + traceLOS->direction[VX]),
+                                            FIX2FLT(traceLOS->origin[VY] + traceLOS->direction[VY])) < 0;
     }
     if(s1 == s2) return false;
 
     // Calculate interception point.
-    P_MakeDivline(lineDef, &dl);
-    distance = P_InterceptVector(traceLOS, &dl);
+    LineDef_SetDivline(lineDef, &dl);
+    distance = FIX2FLT(Divline_Intersection(&dl, traceLOS));
     // On the correct side of the trace origin?
     if(!(distance < 0))
     {
@@ -878,52 +588,52 @@ int PIT_AddLineDefIntercepts(LineDef* lineDef, void* paramaters)
     return false;
 }
 
-int PIT_AddMobjIntercepts(mobj_t* mobj, void* paramaters)
+int PIT_AddMobjIntercepts(mobj_t* mo, void* paramaters)
 {
     const divline_t* traceLOS;
-    vec2f_t from, to;
-    float distance;
+    vec2d_t from, to;
+    coord_t distance;
     divline_t dl;
     int s1, s2;
 
-    if(mobj->dPlayer && (mobj->dPlayer->flags & DDPF_CAMERA))
+    if(mo->dPlayer && (mo->dPlayer->flags & DDPF_CAMERA))
         return false; // $democam: ssshh, keep going, we're not here...
 
     // Check a corner to corner crossection for hit.
     /// @fixme Do not assume mobj is from the current map.
     traceLOS = GameMap_TraceLOS(theMap);
-    if((traceLOS->dX ^ traceLOS->dY) > 0)
+    if((traceLOS->direction[VX] ^ traceLOS->direction[VY]) > 0)
     {
         // \ Slope
-        V2f_Set(from, mobj->pos[VX] - mobj->radius,
-                      mobj->pos[VY] + mobj->radius);
-        V2f_Set(to,   mobj->pos[VX] + mobj->radius,
-                      mobj->pos[VY] - mobj->radius);
+        V2d_Set(from, mo->origin[VX] - mo->radius,
+                      mo->origin[VY] + mo->radius);
+        V2d_Set(to,   mo->origin[VX] + mo->radius,
+                      mo->origin[VY] - mo->radius);
     }
     else
     {
         // / Slope
-        V2f_Set(from, mobj->pos[VX] - mobj->radius,
-                      mobj->pos[VY] - mobj->radius);
-        V2f_Set(to,   mobj->pos[VX] + mobj->radius,
-                      mobj->pos[VY] + mobj->radius);
+        V2d_Set(from, mo->origin[VX] - mo->radius,
+                      mo->origin[VY] - mo->radius);
+        V2d_Set(to,   mo->origin[VX] + mo->radius,
+                      mo->origin[VY] + mo->radius);
     }
 
     // Is this line crossed?
-    s1 = P_PointOnDivlineSide(from[VX], from[VY], traceLOS);
-    s2 = P_PointOnDivlineSide(to[VX], to[VY], traceLOS);
+    s1 = Divline_PointOnSide(traceLOS, from);
+    s2 = Divline_PointOnSide(traceLOS, to);
     if(s1 == s2) return false;
 
     // Calculate interception point.
-    dl.pos[VX] = FLT2FIX(from[VX]);
-    dl.pos[VY] = FLT2FIX(from[VY]);
-    dl.dX = FLT2FIX(to[VX] - from[VX]);
-    dl.dY = FLT2FIX(to[VY] - from[VY]);
-    distance = P_InterceptVector(traceLOS, &dl);
+    dl.origin[VX] = FLT2FIX((float)from[VX]);
+    dl.origin[VY] = FLT2FIX((float)from[VY]);
+    dl.direction[VX] = FLT2FIX((float)(to[VX] - from[VX]));
+    dl.direction[VY] = FLT2FIX((float)(to[VY] - from[VY]));
+    distance = FIX2FLT(Divline_Intersection(&dl, traceLOS));
     // On the correct side of the trace origin?
     if(!(distance < 0))
     {
-        P_AddIntercept(ICPT_MOBJ, distance, mobj);
+        P_AddIntercept(ICPT_MOBJ, distance, mo);
     }
     // Continue iteration.
     return false;
@@ -1004,35 +714,35 @@ int P_SectorTouchingMobjsIterator(Sector* sector, int (*callback) (mobj_t*, void
 }
 
 /// @note Part of the Doomsday public API.
-int P_MobjsBoxIterator(const AABoxf* box, int (*callback) (mobj_t*, void*), void* parameters)
+int P_MobjsBoxIterator(const AABoxd* box, int (*callback) (mobj_t*, void*), void* parameters)
 {
     if(!theMap) return false; // Continue iteration.
     return GameMap_MobjsBoxIterator(theMap, box, callback, parameters);
 }
 
 /// @note Part of the Doomsday public API.
-int P_PolyobjsBoxIterator(const AABoxf* box, int (*callback) (struct polyobj_s*, void*), void* parameters)
+int P_PolyobjsBoxIterator(const AABoxd* box, int (*callback) (struct polyobj_s*, void*), void* parameters)
 {
     if(!theMap) return false; // Continue iteration.
     return GameMap_PolyobjsBoxIterator(theMap, box, callback, parameters);
 }
 
 /// @note Part of the Doomsday public API.
-int P_LinesBoxIterator(const AABoxf* box, int (*callback) (LineDef*, void*), void* parameters)
+int P_LinesBoxIterator(const AABoxd* box, int (*callback) (LineDef*, void*), void* parameters)
 {
     if(!theMap) return false; // Continue iteration.
     return GameMap_LineDefsBoxIterator(theMap, box, callback, parameters);
 }
 
 /// @note Part of the Doomsday public API.
-int P_PolyobjLinesBoxIterator(const AABoxf* box, int (*callback) (LineDef*, void*), void* parameters)
+int P_PolyobjLinesBoxIterator(const AABoxd* box, int (*callback) (LineDef*, void*), void* parameters)
 {
     if(!theMap) return false; // Continue iteration.
     return GameMap_PolyobjLinesBoxIterator(theMap, box, callback, parameters);
 }
 
 /// @note Part of the Doomsday public API.
-int P_BspLeafsBoxIterator(const AABoxf* box, Sector* sector,
+int P_BspLeafsBoxIterator(const AABoxd* box, Sector* sector,
     int (*callback) (BspLeaf*, void*), void* parameters)
 {
     if(!theMap) return false; // Continue iteration.
@@ -1040,14 +750,14 @@ int P_BspLeafsBoxIterator(const AABoxf* box, Sector* sector,
 }
 
 /// @note Part of the Doomsday public API.
-int P_AllLinesBoxIterator(const AABoxf* box, int (*callback) (LineDef*, void*), void* parameters)
+int P_AllLinesBoxIterator(const AABoxd* box, int (*callback) (LineDef*, void*), void* parameters)
 {
     if(!theMap) return false; // Continue iteration.
     return GameMap_AllLineDefsBoxIterator(theMap, box, callback, parameters);
 }
 
 /// @note Part of the Doomsday public API.
-int P_PathTraverse2(float const from[2], float const to[2], int flags, traverser_t callback,
+int P_PathTraverse2(coord_t const from[2], coord_t const to[2], int flags, traverser_t callback,
     void* paramaters)
 {
     if(!theMap) return false; // Continue iteration.
@@ -1055,14 +765,14 @@ int P_PathTraverse2(float const from[2], float const to[2], int flags, traverser
 }
 
 /// @note Part of the Doomsday public API.
-int P_PathTraverse(float const from[2], float const to[2], int flags, traverser_t callback)
+int P_PathTraverse(coord_t const from[2], coord_t const to[2], int flags, traverser_t callback)
 {
     if(!theMap) return false; // Continue iteration.
     return GameMap_PathTraverse(theMap, from, to, flags, callback);
 }
 
 /// @note Part of the Doomsday public API.
-int P_PathXYTraverse2(float fromX, float fromY, float toX, float toY, int flags,
+int P_PathXYTraverse2(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags,
     traverser_t callback, void* paramaters)
 {
     if(!theMap) return false; // Continue iteration.
@@ -1070,7 +780,7 @@ int P_PathXYTraverse2(float fromX, float fromY, float toX, float toY, int flags,
 }
 
 /// @note Part of the Doomsday public API.
-int P_PathXYTraverse(float fromX, float fromY, float toX, float toY, int flags,
+int P_PathXYTraverse(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags,
     traverser_t callback)
 {
     if(!theMap) return false; // Continue iteration.
@@ -1078,8 +788,8 @@ int P_PathXYTraverse(float fromX, float fromY, float toX, float toY, int flags,
 }
 
 /// @note Part of the Doomsday public API.
-boolean P_CheckLineSight(const float from[3], const float to[3], float bottomSlope,
-    float topSlope, int flags)
+boolean P_CheckLineSight(coord_t const from[3], coord_t const to[3], coord_t bottomSlope,
+    coord_t topSlope, int flags)
 {
     if(!theMap) return false; // I guess?
     return GameMap_CheckLineSight(theMap, from, to, bottomSlope, topSlope, flags);

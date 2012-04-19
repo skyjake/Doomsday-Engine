@@ -60,11 +60,11 @@ void            S_EndFrame(void);
 sfxinfo_t*      S_GetSoundInfo(int sound_id, float* freq, float* volume);
 mobj_t*         S_GetListenerMobj(void);
 int             S_LocalSoundAtVolumeFrom(int sound_id, mobj_t* origin,
-                                         float* fixedpos, float volume);
+                                         coord_t* fixedpos, float volume);
 int             S_LocalSoundAtVolume(int sound_id, mobj_t* origin,
                                      float volume);
 int             S_LocalSound(int sound_id, mobj_t* origin);
-int             S_LocalSoundFrom(int sound_id, float* fixedpos);
+int             S_LocalSoundFrom(int sound_id, coord_t* fixedpos);
 int             S_StartSound(int soundId, mobj_t* origin);
 int             S_StartSoundEx(int soundId, mobj_t* origin);
 int             S_StartSoundAtVolume(int sound_id, mobj_t* origin,

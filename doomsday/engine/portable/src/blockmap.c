@@ -44,35 +44,35 @@ typedef struct {
 
 struct blockmap_s {
     /// Minimal and Maximal points in map space coordinates.
-    AABoxf bounds;
+    AABoxd bounds;
 
     /// Cell dimensions in map space coordinates.
-    vec2f_t cellSize;
+    vec2d_t cellSize;
 
     /// Gridmap which implements the blockmap itself.
     Gridmap* gridmap;
 };
 
-Blockmap* Blockmap_New(const pvec2f_t min, const pvec2f_t max, uint cellWidth, uint cellHeight)
+Blockmap* Blockmap_New(coord_t const min[2], coord_t const max[2], uint cellWidth, uint cellHeight)
 {
     Blockmap* bm = Z_Calloc(sizeof *bm, PU_MAPSTATIC, 0);
     uint width, height;
     if(!bm) Con_Error("Blockmap::New: Failed on allocation of %lu bytes for new Blockmap.", (unsigned long) sizeof *bm);
 
-    V2f_Copy(bm->bounds.min, min);
-    V2f_Copy(bm->bounds.max, max);
+    V2d_Copy(bm->bounds.min, min);
+    V2d_Copy(bm->bounds.max, max);
     bm->cellSize[VX] = cellWidth;
     bm->cellSize[VY] = cellHeight;
 
-    width  = (uint)ceil((max[0] - min[0]) / (float)cellWidth);
-    height = (uint)ceil((max[1] - min[1]) / (float)cellHeight);
+    width  = (uint)ceil((max[0] - min[0]) / (coord_t)cellWidth);
+    height = (uint)ceil((max[1] - min[1]) / (coord_t)cellHeight);
     bm->gridmap = Gridmap_New(width, height, sizeof(BlockmapCellData), PU_MAPSTATIC);
 
     VERBOSE( Con_Message("Blockmap::New: Width:%u Height:%u\n", width, height) )
     return bm;
 }
 
-BlockmapCoord Blockmap_CellX(Blockmap* bm, float x)
+BlockmapCoord Blockmap_CellX(Blockmap* bm, coord_t x)
 {
     uint result;
     assert(bm);
@@ -80,7 +80,7 @@ BlockmapCoord Blockmap_CellX(Blockmap* bm, float x)
     return result;
 }
 
-BlockmapCoord Blockmap_CellY(Blockmap* bm, float y)
+BlockmapCoord Blockmap_CellY(Blockmap* bm, coord_t y)
 {
     uint result;
     assert(bm);
@@ -88,7 +88,7 @@ BlockmapCoord Blockmap_CellY(Blockmap* bm, float y)
     return result;
 }
 
-boolean Blockmap_ClipCellX(Blockmap* bm, BlockmapCoord* outX, float x)
+boolean Blockmap_ClipCellX(Blockmap* bm, BlockmapCoord* outX, coord_t x)
 {
     boolean adjusted = false;
     assert(bm);
@@ -109,7 +109,7 @@ boolean Blockmap_ClipCellX(Blockmap* bm, BlockmapCoord* outX, float x)
     return adjusted;
 }
 
-boolean Blockmap_ClipCellY(Blockmap* bm, BlockmapCoord* outY, float y)
+boolean Blockmap_ClipCellY(Blockmap* bm, BlockmapCoord* outY, coord_t y)
 {
     boolean adjusted = false;
     assert(bm);
@@ -130,7 +130,7 @@ boolean Blockmap_ClipCellY(Blockmap* bm, BlockmapCoord* outY, float y)
     return adjusted;
 }
 
-boolean Blockmap_Cell(Blockmap* bm, BlockmapCell cell, float const pos[2])
+boolean Blockmap_Cell(Blockmap* bm, BlockmapCell cell, coord_t const pos[2])
 {
     assert(bm);
     if(cell && pos)
@@ -142,7 +142,7 @@ boolean Blockmap_Cell(Blockmap* bm, BlockmapCell cell, float const pos[2])
     return false;
 }
 
-boolean Blockmap_CellBlock(Blockmap* bm, BlockmapCellBlock* cellBlock, const AABoxf* box)
+boolean Blockmap_CellBlock(Blockmap* bm, BlockmapCellBlock* cellBlock, const AABoxd* box)
 {
     assert(bm);
     if(cellBlock && box)
@@ -154,13 +154,13 @@ boolean Blockmap_CellBlock(Blockmap* bm, BlockmapCellBlock* cellBlock, const AAB
     return false;
 }
 
-const pvec2f_t Blockmap_Origin(Blockmap* bm)
+const pvec2d_t Blockmap_Origin(Blockmap* bm)
 {
     assert(bm);
     return bm->bounds.min;
 }
 
-const AABoxf* Blockmap_Bounds(Blockmap* bm)
+const AABoxd* Blockmap_Bounds(Blockmap* bm)
 {
     assert(bm);
     return &bm->bounds;
@@ -184,19 +184,19 @@ void Blockmap_Size(Blockmap* bm, BlockmapCoord v[])
     Gridmap_Size(bm->gridmap, v);
 }
 
-float Blockmap_CellWidth(Blockmap* bm)
+coord_t Blockmap_CellWidth(Blockmap* bm)
 {
     assert(bm);
     return bm->cellSize[VX];
 }
 
-float Blockmap_CellHeight(Blockmap* bm)
+coord_t Blockmap_CellHeight(Blockmap* bm)
 {
     assert(bm);
     return bm->cellSize[VY];
 }
 
-const pvec2f_t Blockmap_CellSize(Blockmap* bm)
+const pvec2d_t Blockmap_CellSize(Blockmap* bm)
 {
     assert(bm);
     return bm->cellSize;

@@ -468,9 +468,9 @@ void Cl_PolyMoverThinker(clpolyobj_t* mover)
     if(mover->move)
     {
         // How much to go?
-        dx = po->dest[VX] - po->pos[VX];
-        dy = po->dest[VY] - po->pos[VY];
-        dist = P_ApproxDistance(dx, dy);
+        dx = po->dest[VX] - po->origin[VX];
+        dy = po->dest[VY] - po->origin[VY];
+        dist = M_ApproxDistance(dx, dy);
         if(dist <= po->speed || FEQUAL(po->speed, 0))
         {
             // We'll arrive at the destination.

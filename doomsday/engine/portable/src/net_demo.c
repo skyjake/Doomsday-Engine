@@ -464,7 +464,7 @@ void Demo_WriteLocalCamera(int plrNum)
 
     Msg_Begin(clients[plrNum].recordPaused ? PKT_DEMOCAM_RESUME : PKT_DEMOCAM);
     // Flags.
-    flags = (mo->pos[VZ] <= mo->floorZ ? LCAMF_ONGROUND : 0)  // On ground?
+    flags = (mo->origin[VZ] <= mo->floorZ ? LCAMF_ONGROUND : 0)  // On ground?
         | (incfov ? LCAMF_FOV : 0);
     if(ddpl->flags & DDPF_CAMERA)
     {
@@ -474,14 +474,14 @@ void Demo_WriteLocalCamera(int plrNum)
     Writer_WriteByte(msgWriter, flags);
 
     // Coordinates.
-    x = FLT2FIX(mo->pos[VX]);
-    y = FLT2FIX(mo->pos[VY]);
+    x = FLT2FIX(mo->origin[VX]);
+    y = FLT2FIX(mo->origin[VY]);
     Writer_WriteInt16(msgWriter, x >> 16);
     Writer_WriteByte(msgWriter, x >> 8);
     Writer_WriteInt16(msgWriter, y >> 16);
     Writer_WriteByte(msgWriter, y >> 8);
 
-    z = FLT2FIX(mo->pos[VZ] + viewData->current.pos[VZ]);
+    z = FLT2FIX(mo->origin[VZ] + viewData->current.origin[VZ]);
     Writer_WriteInt16(msgWriter, z >> 16);
     Writer_WriteByte(msgWriter, z >> 8);
 
@@ -531,9 +531,9 @@ void Demo_ReadLocalCamera(void)
 
     // X and Y coordinates are easy. Calculate deltas to the new coords.
     posDelta[VX] =
-        (FIX2FLT((Reader_ReadInt16(msgReader) << 16) + (Reader_ReadByte(msgReader) << 8)) - mo->pos[VX]) / intertics;
+        (FIX2FLT((Reader_ReadInt16(msgReader) << 16) + (Reader_ReadByte(msgReader) << 8)) - mo->origin[VX]) / intertics;
     posDelta[VY] =
-        (FIX2FLT((Reader_ReadInt16(msgReader) << 16) + (Reader_ReadByte(msgReader) << 8)) - mo->pos[VY]) / intertics;
+        (FIX2FLT((Reader_ReadInt16(msgReader) << 16) + (Reader_ReadByte(msgReader) << 8)) - mo->origin[VY]) / intertics;
 
     // The Z coordinate is a bit trickier. We are tracking the *camera's*
     // Z coordinate (z+viewheight), not the player mobj's Z.

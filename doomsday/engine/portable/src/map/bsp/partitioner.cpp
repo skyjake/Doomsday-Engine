@@ -68,7 +68,7 @@ static const coord_t ANG_EPSILON = (1.0 / 1024.0);
 DENG_DEBUG_ONLY(static int printSuperBlockHEdgesWorker(SuperBlock* block, void* /*parameters*/));
 
 static bool findBspLeafCenter(BspLeaf const& leaf, pvec2d_t midPoint);
-static void initAABoxFromEditableLineDefVertexes(AABoxf* aaBox, const LineDef* line);
+static void initAABoxFromEditableLineDefVertexes(AABoxd* aaBox, const LineDef* line);
 static Sector* findFirstSectorInHEdgeList(const BspLeaf* leaf);
 
 struct Partitioner::Instance
@@ -163,8 +163,8 @@ struct Partitioner::Instance
             const Vertex* end   = l->v[1];
 
             // Check for zero-length line.
-            if((fabs(start->buildData.pos[VX] - end->buildData.pos[VX]) < DIST_EPSILON) &&
-               (fabs(start->buildData.pos[VY] - end->buildData.pos[VY]) < DIST_EPSILON))
+            if((fabs(start->origin[VX] - end->origin[VX]) < DIST_EPSILON) &&
+               (fabs(start->origin[VY] - end->origin[VY]) < DIST_EPSILON))
                 info.flags |= LineDefInfo::ZEROLENGTH;
 
             if(l->sideDefs[BACK] && l->sideDefs[FRONT])
@@ -179,11 +179,11 @@ struct Partitioner::Instance
         vertexInfos.resize(*numEditableVertexes);
     }
 
-    void findMapBounds(AABoxf* aaBox) const
+    void findMapBounds(AABoxd* aaBox) const
     {
         Q_ASSERT(aaBox);
 
-        AABoxf bounds;
+        AABoxd bounds;
         boolean initialized = false;
 
         for(uint i = 0; i < GameMap_LineDefCount(map); ++i)
@@ -193,31 +193,31 @@ struct Partitioner::Instance
             // Do not consider zero-length LineDefs.
             if(lineDefInfo(*line).flags.testFlag(LineDefInfo::ZEROLENGTH)) continue;
 
-            AABoxf lineAABox;
+            AABoxd lineAABox;
             initAABoxFromEditableLineDefVertexes(&lineAABox, line);
 
             if(initialized)
             {
-                V2f_AddToBox(bounds.arvec2, lineAABox.min);
+                V2d_AddToBox(bounds.arvec2, lineAABox.min);
             }
             else
             {
-                V2f_InitBox(bounds.arvec2, lineAABox.min);
+                V2d_InitBox(bounds.arvec2, lineAABox.min);
                 initialized = true;
             }
 
-            V2f_AddToBox(bounds.arvec2, lineAABox.max);
+            V2d_AddToBox(bounds.arvec2, lineAABox.max);
         }
 
         if(initialized)
         {
-            V2f_CopyBox(aaBox->arvec2, bounds.arvec2);
+            V2d_CopyBox(aaBox->arvec2, bounds.arvec2);
             return;
         }
 
         // Clear.
-        V2f_Set(aaBox->min, DDMAXFLOAT, DDMAXFLOAT);
-        V2f_Set(aaBox->max, DDMINFLOAT, DDMINFLOAT);
+        V2d_Set(aaBox->min, DDMAXFLOAT, DDMAXFLOAT);
+        V2d_Set(aaBox->max, DDMINFLOAT, DDMINFLOAT);
     }
 
     HEdge* linkHEdgeInSuperBlockmap(SuperBlock& block, HEdge* hedge)
@@ -254,12 +254,10 @@ struct Partitioner::Instance
                /*&& !lineDefInfo(*line).overlap*/)
             {
                 // Check for Humungously long lines.
-                if(ABS(line->v[0]->buildData.pos[VX] - line->v[1]->buildData.pos[VX]) >= 10000 ||
-                   ABS(line->v[0]->buildData.pos[VY] - line->v[1]->buildData.pos[VY]) >= 10000)
+                if(ABS(line->L_v1origin[VX] - line->L_v2origin[VX]) >= 10000 ||
+                   ABS(line->L_v1origin[VY] - line->L_v2origin[VY]) >= 10000)
                 {
-                    if(3000 >=
-                       M_Length(line->v[0]->buildData.pos[VX] - line->v[1]->buildData.pos[VX],
-                                line->v[0]->buildData.pos[VY] - line->v[1]->buildData.pos[VY]))
+                    if(3000 >= V2d_Distance(line->L_v1origin, line->L_v2origin))
                     {
                         LOG_WARNING("LineDef #%d is very long, it may cause problems.") << line->buildData.index;
                     }
@@ -272,7 +270,7 @@ struct Partitioner::Instance
                     if(!side->sector)
                         LOG_INFO("Bad SideDef on LineDef #%d.") << line->buildData.index;
 
-                    front = newHEdge(line, line, line->v[0], line->v[1], side->sector, false);
+                    front = newHEdge(line, line, line->L_v1, line->L_v2, side->sector, false);
                     linkHEdgeInSuperBlockmap(hedgeList, front);
                 }
                 else
@@ -287,7 +285,7 @@ struct Partitioner::Instance
                     if(!side->sector)
                         LOG_INFO("Bad SideDef on LineDef #%d.") << line->buildData.index;
 
-                    back = newHEdge(line, line, line->v[1], line->v[0], side->sector, true);
+                    back = newHEdge(line, line, line->L_v2, line->L_v1, side->sector, true);
                     linkHEdgeInSuperBlockmap(hedgeList, back);
 
                     if(front)
@@ -310,7 +308,7 @@ struct Partitioner::Instance
                     if(line->buildData.windowEffect && front)
                     {
                         HEdge* other = newHEdge(front->lineDef, line,
-                                                line->v[1], line->v[0], line->buildData.windowEffect, true);
+                                                line->L_v2, line->L_v1, line->buildData.windowEffect, true);
 
                         linkHEdgeInSuperBlockmap(hedgeList, other);
 
@@ -323,13 +321,13 @@ struct Partitioner::Instance
             }
 
             // @todo edge tips should be created when half-edges are created.
-            coord_t x1 = line->v[0]->buildData.pos[VX];
-            coord_t y1 = line->v[0]->buildData.pos[VY];
-            coord_t x2 = line->v[1]->buildData.pos[VX];
-            coord_t y2 = line->v[1]->buildData.pos[VY];
+            const coord_t x1 = line->L_v1origin[VX];
+            const coord_t y1 = line->L_v1origin[VY];
+            const coord_t x2 = line->L_v2origin[VX];
+            const coord_t y2 = line->L_v2origin[VY];
 
-            addHEdgeTip(line->v[0], M_SlopeToAngle(x2 - x1, y2 - y1), back, front);
-            addHEdgeTip(line->v[1], M_SlopeToAngle(x1 - x2, y1 - y2), front, back);
+            addHEdgeTip(line->v[0], M_DirectionToAngleXY(x2 - x1, y2 - y1), back, front);
+            addHEdgeTip(line->v[1], M_DirectionToAngleXY(x1 - x2, y1 - y2), front, back);
         }
     }
 
@@ -461,8 +459,8 @@ struct Partitioner::Instance
                     {
                         coord_t pos[2];
 
-                        pos[VX] = cur->vertex->buildData.pos[VX] + next->vertex->buildData.pos[VX];
-                        pos[VY] = cur->vertex->buildData.pos[VY] + next->vertex->buildData.pos[VY];
+                        pos[VX] = cur->vertex->origin[VX] + next->vertex->origin[VX];
+                        pos[VY] = cur->vertex->origin[VY] + next->vertex->origin[VY];
                         pos[VX] /= 2;
                         pos[VY] /= 2;
 
@@ -475,8 +473,8 @@ struct Partitioner::Instance
                     {
                         coord_t pos[2];
 
-                        pos[VX] = cur->vertex->buildData.pos[VX] + next->vertex->buildData.pos[VX];
-                        pos[VY] = cur->vertex->buildData.pos[VY] + next->vertex->buildData.pos[VY];
+                        pos[VX] = cur->vertex->origin[VX] + next->vertex->origin[VX];
+                        pos[VY] = cur->vertex->origin[VY] + next->vertex->origin[VY];
                         pos[VX] /= 2;
                         pos[VY] /= 2;
 
@@ -494,9 +492,9 @@ struct Partitioner::Instance
                         if(!cur->selfRef && !next->selfRef)
                         {
                             LOG_DEBUG("Sector mismatch (#%d [%1.1f, %1.1f] != #%d [%1.1f, %1.1f]).")
-                                    << cur->after->buildData.index << cur->vertex->buildData.pos[VX]
-                                    << cur->vertex->buildData.pos[VY] << next->before->buildData.index
-                                    << next->vertex->buildData.pos[VX] << next->vertex->buildData.pos[VY];
+                                    << cur->after->buildData.index << cur->vertex->origin[VX]
+                                    << cur->vertex->origin[VY] << next->before->buildData.index
+                                    << next->vertex->origin[VX] << next->vertex->origin[VY];
                         }
 
                         // Choose the non-self-referencing sector when we can.
@@ -534,8 +532,8 @@ struct Partitioner::Instance
 
         Vertex* newVert = newVertex(point);
         { HEdgeInfo& oldInfo = hedgeInfo(*oldHEdge);
-        addHEdgeTip(newVert, M_SlopeToAngle(-oldInfo.pDX, -oldInfo.pDY), oldHEdge, oldHEdge->twin);
-        addHEdgeTip(newVert, M_SlopeToAngle( oldInfo.pDX,  oldInfo.pDY), oldHEdge->twin, oldHEdge);
+        addHEdgeTip(newVert, M_DirectionToAngleXY(-oldInfo.direction[VX], -oldInfo.direction[VY]), oldHEdge, oldHEdge->twin);
+        addHEdgeTip(newVert, M_DirectionToAngleXY( oldInfo.direction[VX],  oldInfo.direction[VY]), oldHEdge->twin, oldHEdge);
         }
 
         HEdge* newHEdge = cloneHEdge(*oldHEdge);
@@ -621,8 +619,8 @@ struct Partitioner::Instance
 
             // Direction (vs that of the partition plane) determines in which subset
             // this half-edge belongs.
-            if(hInfo.pDX * partitionInfo.pDX +
-               hInfo.pDY * partitionInfo.pDY < 0)
+            if(hInfo.direction[VX] * partitionInfo.direction[VX] +
+               hInfo.direction[VY] * partitionInfo.direction[VY] < 0)
             {
                 linkHEdgeInSuperBlockmap(leftList, hedge);
             }
@@ -774,10 +772,8 @@ struct Partitioner::Instance
         }
         else
         {
-            a = M_PerpDist(partInfo.pDX, partInfo.pDY, partInfo.pPerp, partInfo.pLength,
-                           hInfo.pSX, hInfo.pSY);
-            b = M_PerpDist(partInfo.pDX, partInfo.pDY, partInfo.pPerp, partInfo.pLength,
-                           hInfo.pEX, hInfo.pEY);
+            a = V2d_PointLinePerpDistance(hInfo.start, partInfo.direction, partInfo.pPerp, partInfo.pLength);
+            b = V2d_PointLinePerpDistance(hInfo.end,   partInfo.direction, partInfo.pPerp, partInfo.pLength);
 
             fa = fabs(a);
             fb = fabs(b);
@@ -788,7 +784,7 @@ struct Partitioner::Instance
         {
             // This half-edge runs along the same line as the partition.
             // hedge whether it goes in the same direction or the opposite.
-            if(hInfo.pDX * partInfo.pDX + hInfo.pDY * partInfo.pDY < 0)
+            if(hInfo.direction[VX] * partInfo.direction[VX] + hInfo.direction[VY] * partInfo.direction[VY] < 0)
             {
                 ADD_LEFT();
             }
@@ -901,22 +897,34 @@ struct Partitioner::Instance
          * box do we need to go deeper into it.
          */
         const HEdgeInfo& hInfo = hedgeInfo(*hedge);
-        int side = P_BoxOnLineSide3(&block.bounds(), hInfo.pSX, hInfo.pSY,
-                                    hInfo.pDX, hInfo.pDY, hInfo.pPerp,
-                                    hInfo.pLength, DIST_EPSILON);
+        const AABox& blockBounds = block.bounds();
+        AABoxd bounds;
 
-        if(side < 0)
-        {
-            // Left.
-            cost.realLeft += block.realHEdgeCount();
-            cost.miniLeft += block.miniHEdgeCount();
-            return true;
-        }
-        else if(side > 0)
+        /// @todo Why are we extending the bounding box for this test? Also, there is
+        ///       no need to changed from integer to floating-point each time this is
+        ///       tested. (If we intend to do this with floating-point then we should
+        ///       return that representation in SuperBlock::bounds() ).
+        bounds.minX = (double)blockBounds.minX - SHORT_HEDGE_EPSILON * 1.5;
+        bounds.minY = (double)blockBounds.minY - SHORT_HEDGE_EPSILON * 1.5;
+        bounds.maxX = (double)blockBounds.maxX + SHORT_HEDGE_EPSILON * 1.5;
+        bounds.maxY = (double)blockBounds.maxY + SHORT_HEDGE_EPSILON * 1.5;
+
+        int side = M_BoxOnLineSide2(&bounds, hInfo.start[VX], hInfo.start[VY],
+                                    hInfo.direction, hInfo.pPerp, hInfo.pLength,
+                                    DIST_EPSILON);
+
+        if(side > 0)
         {
             // Right.
             cost.realRight += block.realHEdgeCount();
             cost.miniRight += block.miniHEdgeCount();
+            return true;
+        }
+        else if(side < 0)
+        {
+            // Left.
+            cost.realLeft += block.realHEdgeCount();
+            cost.miniLeft += block.miniHEdgeCount();
             return true;
         }
 
@@ -997,7 +1005,7 @@ struct Partitioner::Instance
         // Another little twist, here we show a slight preference for partition
         // lines that lie either purely horizontally or purely vertically.
         const HEdgeInfo& hInfo = hedgeInfo(*hedge);
-        if(!FEQUAL(hInfo.pDX, 0) && !FEQUAL(hInfo.pDY, 0))
+        if(!FEQUAL(hInfo.direction[VX], 0) && !FEQUAL(hInfo.direction[VY], 0))
             cost.total += 25;
 
         //LOG_DEBUG("evalPartition: %p: splits=%d iffy=%d near=%d left=%d+%d right=%d+%d cost=%d.%02d")
@@ -1022,8 +1030,8 @@ struct Partitioner::Instance
             //LOG_DEBUG("chooseNextPartitionFromSuperBlock: %shedge %p sector:%d [%1.1f, %1.1f] -> [%1.1f, %1.1f]")
             //    << (lineDef? "" : "mini-") << hedge
             //    << (hedge->bspBuildInfo->sector? hedge->bspBuildInfo->sector->index : -1)
-            //    << hedge->v[0]->V_pos[VX] << hedge->v[0]->V_pos[VY]
-            //    << hedge->v[1]->V_pos[VX] << hedge->v[1]->V_pos[VY];
+            //    << hedge->v[0]->pos[VX] << hedge->v[0]->pos[VY]
+            //    << hedge->v[1]->pos[VX] << hedge->v[1]->pos[VY];
 
             // Only test half-edges from the same linedef once per round of
             // partition picking (they are collinear).
@@ -1174,7 +1182,7 @@ struct Partitioner::Instance
         rightHEdges->findHEdgeBounds(rightHEdgesBounds);
         leftHEdges->findHEdgeBounds(leftHEdgesBounds);
 
-        BspNode* node = newBspNode(partition->origin(), partition->angle(),
+        BspNode* node = newBspNode(partition->origin(), partition->direction(),
                                    &rightHEdgesBounds, &leftHEdgesBounds);
 
         *subtree = new BspTreeNode(reinterpret_cast<runtime_mapdata_header_t*>(node));
@@ -1218,7 +1226,7 @@ struct Partitioner::Instance
         initForMap();
 
         // Find maximal vertexes.
-        AABoxf mapBounds;
+        AABoxd mapBounds;
         findMapBounds(&mapBounds);
 
         LOG_VERBOSE("Map bounds:")
@@ -1260,8 +1268,7 @@ struct Partitioner::Instance
     {
         Q_ASSERT(vertex);
         const HEdgeInfo& info = partitionInfo;
-        return M_ParallelDist(info.pDX, info.pDY, info.pPara, info.pLength,
-                              vertex->buildData.pos[VX], vertex->buildData.pos[VY]);
+        return V2d_PointLineParaDistance(vertex->origin, info.direction, info.pPara, info.pLength);
     }
 
     /**
@@ -1275,8 +1282,8 @@ struct Partitioner::Instance
         Q_ASSERT(hedge);
         const HEdgeInfo& pInfo = partitionInfo;
         const HEdgeInfo& hInfo = hedgeInfo(*hedge);
-        return M_PerpDist(pInfo.pDX, pInfo.pDY, pInfo.pPerp, pInfo.pLength,
-                          end? hInfo.pEX : hInfo.pSX, end? hInfo.pEY : hInfo.pSY);
+        return V2d_PointLinePerpDistance(end? hInfo.end : hInfo.start,
+                                         pInfo.direction, pInfo.pPerp, pInfo.pLength);
     }
 
     /**
@@ -1292,31 +1299,31 @@ struct Partitioner::Instance
         const HEdgeInfo& hInfo = hedgeInfo(*hedge);
 
         // Horizontal partition against vertical half-edge.
-        if(partitionInfo.pDY == 0 && hInfo.pDX == 0)
+        if(partitionInfo.direction[VY] == 0 && hInfo.direction[VX] == 0)
         {
-            V2d_Set(point, hInfo.pSX, partitionInfo.pSY);
+            V2d_Set(point, hInfo.start[VX], partitionInfo.start[VY]);
             return;
         }
 
         // Vertical partition against horizontal half-edge.
-        if(partitionInfo.pDX == 0 && hInfo.pDY == 0)
+        if(partitionInfo.direction[VX] == 0 && hInfo.direction[VY] == 0)
         {
-            V2d_Set(point, partitionInfo.pSX, hInfo.pSY);
+            V2d_Set(point, partitionInfo.start[VX], hInfo.start[VY]);
             return;
         }
 
         // 0 = start, 1 = end.
         coord_t ds = perpC / (perpC - perpD);
 
-        if(hInfo.pDX == 0)
-            point[VX] = hInfo.pSX;
+        if(hInfo.direction[VX] == 0)
+            point[VX] = hInfo.start[VX];
         else
-            point[VX] = hInfo.pSX + (hInfo.pDX * ds);
+            point[VX] = hInfo.start[VX] + (hInfo.direction[VX] * ds);
 
-        if(hInfo.pDY == 0)
-            point[VY] = hInfo.pSY;
+        if(hInfo.direction[VY] == 0)
+            point[VY] = hInfo.start[VY];
         else
-            point[VY] = hInfo.pSY + (hInfo.pDY * ds);
+            point[VY] = hInfo.start[VY] + (hInfo.direction[VY] * ds);
     }
 
     void clearPartitionIntercepts()
@@ -1344,13 +1351,13 @@ struct Partitioner::Instance
 
         const Vertex* from = lineDef->L_v(hedge->side);
         const Vertex* to   = lineDef->L_v(hedge->side^1);
-        partition->setOrigin(from->buildData.pos);
+        partition->setOrigin(from->origin);
 
-        vec2d_t angle; V2d_Subtract(angle, to->buildData.pos, from->buildData.pos);
-        partition->setAngle(angle);
+        vec2d_t angle; V2d_Subtract(angle, to->origin, from->origin);
+        partition->setDirection(angle);
 
         //LOG_DEBUG("Partitioner::configureHPlane: hedge %p [%1.1f, %1.1f] -> [%1.1f, %1.1f].")
-        //    << best << from->buildData.pos[VX] << from->buildData.pos[VY]
+        //    << best << from->origin[VX] << from->origin[VY]
         //    << angle[VX] << angle[VY];
 
         return true;
@@ -1377,10 +1384,10 @@ struct Partitioner::Instance
             {
                 HEdge* a = *it;
                 HEdge* b = *next;
-                coord_t angle1 = M_SlopeToAngle(a->v[0]->buildData.pos[VX] - point[VX],
-                                                a->v[0]->buildData.pos[VY] - point[VY]);
-                coord_t angle2 = M_SlopeToAngle(b->v[0]->buildData.pos[VX] - point[VX],
-                                                b->v[0]->buildData.pos[VY] - point[VY]);
+                coord_t angle1 = M_DirectionToAngleXY(a->v[0]->origin[VX] - point[VX],
+                                                a->v[0]->origin[VY] - point[VY]);
+                coord_t angle2 = M_DirectionToAngleXY(b->v[0]->origin[VX] - point[VX],
+                                                b->v[0]->origin[VY] - point[VY]);
 
                 if(angle1 + ANG_EPSILON < angle2)
                 {
@@ -1445,7 +1452,7 @@ struct Partitioner::Instance
         LOG_DEBUG("Sorted half-edges around [%1.1f, %1.1f]" << point[VX] << point[VY];
         for(hedge = leaf.hedge; hedge; hedge = hedge->next)
         {
-            coord_t angle = M_SlopeToAngle(hedge->v[0]->V_pos[VX] - point[VX],
+            coord_t angle = M_DirectionToAngleXY(hedge->v[0]->V_pos[VX] - point[VX],
                                            hedge->v[0]->V_pos[VY] - point[VY]);
 
             LOG_DEBUG("  half-edge %p: Angle %1.6f [%1.1f, %1.1f] -> [%1.1f, %1.1f]")
@@ -1627,7 +1634,7 @@ struct Partitioner::Instance
         mergeIntersections();
 
         LOG_TRACE("Building HEdges along partition [%1.1f, %1.1f] > [%1.1f, %1.1f]")
-                << partitionInfo.pSX << partitionInfo.pSY << partitionInfo.pDX << partitionInfo.pDY;
+                << partitionInfo.start[VX] << partitionInfo.start[VY] << partitionInfo.direction[VX] << partitionInfo.direction[VY];
 
         // Find connections in the intersections.
         buildHEdgesAtIntersectionGaps(rightList, leftList);
@@ -1665,8 +1672,8 @@ struct Partitioner::Instance
         inter->vertex = vertex;
         inter->selfRef = lineDefIsSelfReferencing;
 
-        inter->before = openSectorAtAngle(vertex, M_SlopeToAngle(-partitionInfo.pDX, -partitionInfo.pDY));
-        inter->after  = openSectorAtAngle(vertex, M_SlopeToAngle( partitionInfo.pDX,  partitionInfo.pDY));
+        inter->before = openSectorAtAngle(vertex, M_DirectionToAngleXY(-partitionInfo.direction[VX], -partitionInfo.direction[VY]));
+        inter->after  = openSectorAtAngle(vertex, M_DirectionToAngleXY( partitionInfo.direction[VX],  partitionInfo.direction[VY]));
 
         return inter;
     }
@@ -1835,7 +1842,7 @@ struct Partitioner::Instance
      * @param point  Origin of the vertex in the map coordinate space.
      * @return  Newly created Vertex.
      */
-    Vertex* newVertex(const_pvec2d_t point)
+    Vertex* newVertex(const_pvec2d_t origin)
     {
         Vertex* vtx;
 
@@ -1849,9 +1856,9 @@ struct Partitioner::Instance
         numVertexes += 1;
         vertexInfos.push_back(VertexInfo());
 
-        if(point)
+        if(origin)
         {
-            V2d_Copy(vtx->buildData.pos, point);
+            V2d_Copy(vtx->origin, origin);
         }
         return vtx;
     }
@@ -2174,8 +2181,8 @@ struct Partitioner::Instance
         do
         {
             HEdge* next = hedge->next;
-            if(hedge->v[1]->buildData.pos[VX] != next->v[0]->buildData.pos[VX] ||
-               hedge->v[1]->buildData.pos[VY] != next->v[0]->buildData.pos[VY])
+            if(!FEQUAL(hedge->v[1]->origin[VX], next->v[0]->origin[VX]) ||
+               !FEQUAL(hedge->v[1]->origin[VY], next->v[0]->origin[VY]))
             {
                 gaps++;
             }
@@ -2215,11 +2222,11 @@ struct Partitioner::Instance
         /// @todo Implement something better!
         if(migrant->lineDef)
             LOG_WARNING("Sector #%d has HEdge facing #%d (line #%d).")
-                    << sector->buildData.index << migrant->sector->buildData.index
-                    << migrant->lineDef->buildData.index;
+                    << sector->buildData.index - 1 << migrant->sector->buildData.index - 1
+                    << migrant->lineDef->buildData.index - 1;
         else
             LOG_WARNING("Sector #%d has HEdge facing #%d.")
-                    << sector->buildData.index << migrant->sector->buildData.index;
+                    << sector->buildData.index - 1 << migrant->sector->buildData.index - 1;
 
         return true;
     }
@@ -2460,8 +2467,8 @@ static bool findBspLeafCenter(BspLeaf const& leaf, pvec2d_t center)
 
     for(HEdge* hedge = leaf.hedge; hedge; hedge = hedge->next)
     {
-        V2d_Sum(avg, avg, hedge->v[0]->buildData.pos);
-        V2d_Sum(avg, avg, hedge->v[1]->buildData.pos);
+        V2d_Sum(avg, avg, hedge->v[0]->origin);
+        V2d_Sum(avg, avg, hedge->v[1]->origin);
         numPoints += 2;
     }
 
@@ -2480,10 +2487,10 @@ static int printSuperBlockHEdgesWorker(SuperBlock* block, void* /*parameters*/)
     return false; // Continue iteration.
 })
 
-static void initAABoxFromEditableLineDefVertexes(AABoxf* aaBox, const LineDef* line)
+static void initAABoxFromEditableLineDefVertexes(AABoxd* aaBox, const LineDef* line)
 {
-    const coord_t* from = line->L_v1->buildData.pos;
-    const coord_t* to   = line->L_v2->buildData.pos;
+    const coord_t* from = line->L_v1origin;
+    const coord_t* to   = line->L_v2origin;
     aaBox->minX = MIN_OF(from[VX], to[VX]);
     aaBox->minY = MIN_OF(from[VY], to[VY]);
     aaBox->maxX = MAX_OF(from[VX], to[VX]);

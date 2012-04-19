@@ -284,7 +284,7 @@ boolean S_IsRepeating(int idFlags)
  * @return              Non-zero if a sound was started.
  */
 int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t* origin,
-                             float* fixedPos, float volume)
+                             coord_t* point, float volume)
 {
     int                 soundId = (soundIdAndFlags & ~DDSF_FLAG_MASK);
     sfxsample_t*        sample;
@@ -322,8 +322,9 @@ int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t* origin,
        !(soundIdAndFlags & DDSF_NO_ATTENUATION))
     {
         // If origin is too far, don't even think about playing the sound.
-        if(P_MobjPointDistancef(S_GetListenerMobj(), origin, fixedPos) >
-           soundMaxDist)
+        coord_t* fixPoint = origin? origin->origin : point;
+
+        if(Mobj_ApproxPointDistance(S_GetListenerMobj(), fixPoint) > soundMaxDist)
             return false;
     }
 
@@ -360,7 +361,7 @@ int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t* origin,
 
     // Let's play it.
     result =
-        Sfx_StartSound(sample, volume, freq, origin, fixedPos,
+        Sfx_StartSound(sample, volume, freq, origin, point,
                        ((info->flags & SF_NO_ATTENUATION) ||
                         (soundIdAndFlags & DDSF_NO_ATTENUATION) ?
                         SF_NO_ATTENUATION : 0) | (isRepeating ? SF_REPEAT : 0)
@@ -398,7 +399,7 @@ int S_LocalSound(int soundID, mobj_t* origin)
  *
  * @return              Non-zero if a sound was started.
  */
-int S_LocalSoundFrom(int soundID, float* fixedPos)
+int S_LocalSoundFrom(int soundID, coord_t* fixedPos)
 {
     return S_LocalSoundAtVolumeFrom(soundID, NULL, fixedPos, 1);
 }
@@ -581,11 +582,10 @@ void S_Drawer(void)
  */
 D_CMD(PlaySound)
 {
-    int                 id = 0;
-    float               volume = 1;
-    float               fixedPos[3];
-    int                 p;
-    boolean             useFixedPos = false;
+    coord_t fixedPos[3];
+    boolean useFixedPos = false;
+    float volume = 1;
+    int p, id = 0;
 
     if(argc < 2)
     {

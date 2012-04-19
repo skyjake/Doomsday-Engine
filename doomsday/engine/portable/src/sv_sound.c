@@ -62,39 +62,39 @@ void Sv_Sound(int sound_id, mobj_t *origin, int toPlr)
 }
 
 /**
- * Finds the sector/polyobj to whom the origin mobj belong.
+ * Finds the sector/polyobj to whom the base mobj belong.
  */
-static void Sv_IdentifySoundOrigin(mobj_t** origin, Sector** sector, Polyobj** poly)
+static void Sv_IdentifySoundBase(mobj_t** base, Sector** sector, Polyobj** poly)
 {
     *sector = NULL;
     *poly = NULL;
 
-    if(*origin && !(*origin)->thinker.id)
+    if(*base && !(*base)->thinker.id)
     {
         // No mobj ID => it's not a real mobj.
 
-        *poly = GameMap_PolyobjByOrigin(theMap, *origin);
+        *poly = GameMap_PolyobjByBase(theMap, *base);
         if(!*poly)
         {
             // It wasn't a polyobj.
             // Try the sectors instead.
-            *sector = GameMap_SectorByOrigin(theMap, *origin);
+            *sector = GameMap_SectorByBase(theMap, *base);
         }
 
 #ifdef _DEBUG
         if(!*poly && !*sector)
         {
-            Con_Error("Sv_IdentifySoundOrigin: Bad mobj.\n");
+            Con_Error("Sv_IdentifySoundBase: Bad mobj.\n");
         }
 #endif
-        *origin = NULL;
+        *base = NULL;
     }
 }
 
 /**
  * Tell clients to play a sound.
  */
-void Sv_SoundAtVolume(int soundIDAndFlags, mobj_t *origin, float volume,
+void Sv_SoundAtVolume(int soundIDAndFlags, mobj_t* origin, float volume,
                       int toPlr)
 {
     int                 soundID = (soundIDAndFlags & ~DDSF_FLAG_MASK);
@@ -105,7 +105,7 @@ void Sv_SoundAtVolume(int soundIDAndFlags, mobj_t *origin, float volume,
     if(isClient || !soundID)
         return;
 
-    Sv_IdentifySoundOrigin(&origin, &sector, &poly);
+    Sv_IdentifySoundBase(&origin, &sector, &poly);
 
     if(toPlr & SVSF_TO_ALL)
     {
@@ -147,7 +147,7 @@ void Sv_StopSound(int sound_id, mobj_t *origin)
     if(isClient)
         return;
 
-    Sv_IdentifySoundOrigin(&origin, &sector, &poly);
+    Sv_IdentifySoundBase(&origin, &sector, &poly);
 
     /*#ifdef _DEBUG
        Con_Printf("Sv_StopSound: id=%i origin=%i(%p) sec=%i poly=%i\n",

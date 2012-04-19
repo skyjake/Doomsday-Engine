@@ -63,10 +63,8 @@ typedef struct affection_s {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-void         SB_EvalPoint(float light[4],
-                          vertexillum_t* illum,
-                          biasaffection_t* affectedSources,
-                          const float* point, const float* normal);
+void SB_EvalPoint(float light[4], vertexillum_t* illum, biasaffection_t* affectedSources,
+    const coord_t* point, const float* normal);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -206,7 +204,7 @@ void SB_DestroySurface(biassurface_t* bsuf)
  *
  * @return              The id of the newly created bias light source else -1.
  */
-int SB_NewSourceAt(float x, float y, float z, float size, float minLight,
+int SB_NewSourceAt(coord_t x, coord_t y, coord_t z, float size, float minLight,
                    float maxLight, float* rgb)
 {
     source_t*           src;
@@ -219,9 +217,9 @@ int SB_NewSourceAt(float x, float y, float z, float size, float minLight,
     // New lights are automatically locked.
     src->flags = BLF_CHANGED | BLF_LOCKED;
 
-    src->pos[VX] = x;
-    src->pos[VY] = y;
-    src->pos[VZ] = z;
+    src->origin[VX] = x;
+    src->origin[VY] = y;
+    src->origin[VZ] = z;
 
     SB_SetColor(src->color,rgb);
 
@@ -238,22 +236,21 @@ int SB_NewSourceAt(float x, float y, float z, float size, float minLight,
 }
 
 /**
- * Same as above really but for updating an existing source.
+ * Same as above but for updating an existing source.
  */
-void SB_UpdateSource(int which, float x, float y, float z, float size,
-                     float minLight, float maxLight, float *rgb)
+void SB_UpdateSource(int which, coord_t x, coord_t y, coord_t z, float size,
+    float minLight, float maxLight, float *rgb)
 {
-    source_t*           src;
+    source_t* src;
 
-    if(which < 0 || which >= numSources)
-        return;
+    if(which < 0 || which >= numSources) return;
 
     src = &sources[which];
 
     // Position change?
-    src->pos[VX] = x;
-    src->pos[VY] = y;
-    src->pos[VZ] = z;
+    src->origin[VX] = x;
+    src->origin[VY] = y;
+    src->origin[VZ] = z;
 
     SB_SetColor(src->color, rgb);
 
@@ -264,7 +261,7 @@ void SB_UpdateSource(int which, float x, float y, float z, float size,
 }
 
 /**
- * @return              Ptr to the bias light source for the given id.
+ * @return  Ptr to the bias light source for the given id.
  */
 source_t* SB_GetSource(int which)
 {
@@ -532,8 +529,7 @@ void SB_InitVertexIllum(vertexillum_t* villum)
 
 void SB_SurfaceInit(biassurface_t* bsuf)
 {
-    uint                i;
-
+    uint i;
     for(i = 0; i < bsuf->size; ++i)
     {
         SB_InitVertexIllum(&bsuf->illum[i]);
@@ -542,37 +538,35 @@ void SB_SurfaceInit(biassurface_t* bsuf)
 
 void SB_SurfaceMoved(biassurface_t* bsuf)
 {
-    int                 i;
-
+    int i;
     for(i = 0; i < MAX_BIAS_AFFECTED && bsuf->affected[i].source >= 0; ++i)
     {
         sources[bsuf->affected[i].source].flags |= BLF_CHANGED;
     }
 }
 
-static float SB_Dot(source_t* src, const vectorcompf_t* point,
-                    const vectorcompf_t* normal)
+static float SB_Dot(source_t* src, const coord_t* point, const vectorcompf_t* normal)
 {
-    float               delta[3];
+    coord_t delta[3];
 
     // Delta vector between source and given point.
-    V3f_Subtract(delta, src->pos, point);
+    V3d_Subtract(delta, src->origin, point);
 
     // Calculate the distance.
-    V3f_Normalize(delta);
+    V3d_Normalize(delta);
 
-    return V3f_DotProduct(delta, normal);
+    return V3d_DotProductf(delta, normal);
 }
 
-static void updateAffected(biassurface_t* bsuf, float const from[2],
-                           float const to[2], const vectorcompf_t* normal)
+static void updateAffected(biassurface_t* bsuf, coord_t const from[2],
+                           coord_t const to[2], const vectorcompf_t* normal)
 {
-    int                 i, k;
-    vec2f_t             delta;
-    source_t*           src;
-    float               distance = 0, len;
-    float               intensity;
-    affection_t         aff;
+    int i, k;
+    vec2f_t delta;
+    source_t* src;
+    float distance = 0, len;
+    float intensity;
+    affection_t aff;
 
     // If the data is already up to date, nothing needs to be done.
     if(bsuf->updated == lastChangeOnFrame)
@@ -592,18 +586,18 @@ static void updateAffected(biassurface_t* bsuf, float const from[2],
         for(i = 0; i < 2; ++i)
         {
             if(!i)
-                V2f_Set(delta, from[VX] - src->pos[VX],
-                               from[VY] - src->pos[VY]);
+                V2f_Set(delta, from[VX] - src->origin[VX],
+                               from[VY] - src->origin[VY]);
             else
-                V2f_Set(delta, to[VX] - src->pos[VX],
-                               to[VY] - src->pos[VY]);
+                V2f_Set(delta, to[VX] - src->origin[VX],
+                               to[VY] - src->origin[VY]);
             len = V2f_Normalize(delta);
 
             if(i == 0 || len < distance)
                 distance = len;
         }
 
-        if(M_DotProduct(delta, normal) >= 0)
+        if(V3f_DotProduct(delta, normal) >= 0)
             continue;
 
         if(distance < 1)
@@ -620,16 +614,15 @@ static void updateAffected(biassurface_t* bsuf, float const from[2],
 }
 
 static void updateAffected2(biassurface_t* bsuf, const struct rvertex_s* rvertices,
-                            size_t numVertices, const vectorcompf_t* point,
-                            const vectorcompf_t* normal)
+    size_t numVertices, const coord_t* point, const vectorcompf_t* normal)
 {
-    int                 i;
-    uint                k;
-    vec2f_t             delta;
-    source_t*           src;
-    float               distance = 0, len, dot;
-    float               intensity;
-    affection_t         aff;
+    int i;
+    uint k;
+    coord_t delta[2];
+    source_t* src;
+    coord_t distance = 0, len;
+    float dot, intensity;
+    affection_t aff;
 
     // If the data is already up to date, nothing needs to be done.
     if(bsuf->updated == lastChangeOnFrame)
@@ -649,9 +642,9 @@ static void updateAffected2(biassurface_t* bsuf, const struct rvertex_s* rvertic
         /// @fixme This is probably too accurate an estimate.
         for(k = 0; k < bsuf->size; ++k)
         {
-            V2f_Set(delta, rvertices[k].pos[VX] - src->pos[VX],
-                           rvertices[k].pos[VY] - src->pos[VY]);
-            len = V2f_Length(delta);
+            V2d_Set(delta, rvertices[k].pos[VX] - src->origin[VX],
+                           rvertices[k].pos[VY] - src->origin[VY]);
+            len = V2d_Length(delta);
 
             if(k == 0 || len < distance)
                 distance = len;
@@ -779,12 +772,12 @@ BEGIN_PROF( PROF_BIAS_UPDATE );
     {
         if(s->sectorLevel[1] > 0 || s->sectorLevel[0] > 0)
         {
-            float               minLevel = s->sectorLevel[0];
-            float               maxLevel = s->sectorLevel[1];
-            Sector*             sector;
-            float               oldIntensity = s->intensity;
+            float minLevel = s->sectorLevel[0];
+            float maxLevel = s->sectorLevel[1];
+            Sector* sector;
+            float oldIntensity = s->intensity;
 
-            sector = P_BspLeafAtPointXY(s->pos[VX], s->pos[VY])->sector;
+            sector = P_BspLeafAtPoint(s->origin)->sector;
 
             // The lower intensities are useless for light emission.
             if(sector->lightLevel >= maxLevel)
@@ -969,14 +962,14 @@ void SB_RendPoly(struct ColorRawf_s* rcolors, biassurface_t* bsuf,
         {
             HEdge* hedge = (HEdge*) mapObject;
 
-            updateAffected(bsuf, hedge->HE_v1pos, hedge->HE_v2pos, normal);
+            updateAffected(bsuf, hedge->HE_v1origin, hedge->HE_v2origin, normal);
         }
         else
         {
             BspLeaf* bspLeaf = (BspLeaf*) mapObject;
-            vec3f_t point;
+            vec3d_t point;
 
-            V3f_Set(point, bspLeaf->midPoint[VX], bspLeaf->midPoint[VY],
+            V3d_Set(point, bspLeaf->midPoint[VX], bspLeaf->midPoint[VY],
                            bspLeaf->sector->planes[elmIdx]->height);
 
             updateAffected2(bsuf, rvertices, numVertices, point, normal);
@@ -995,9 +988,12 @@ void SB_RendPoly(struct ColorRawf_s* rcolors, biassurface_t* bsuf,
     else
 #endif*/
     {
+        vec3d_t point;
         for(i = 0; i < numVertices; ++i)
-            SB_EvalPoint(rcolors[i].rgba, &bsuf->illum[i], bsuf->affected,
-                         rvertices[i].pos, normal);
+        {
+            V3d_Copyf(point, rvertices[i].pos);
+            SB_EvalPoint(rcolors[i].rgba, &bsuf->illum[i], bsuf->affected, point, normal);
+        }
     }
 
 //    colorOverride = SB_CheckColorOverride(affected);
@@ -1095,10 +1091,10 @@ float* SB_GetCasted(vertexillum_t* illum, int sourceIndex,
 /**
  * Add ambient light.
  */
-void SB_AmbientLight(const float* point, float* light)
+void SB_AmbientLight(coord_t const* point, float* light)
 {
     // Add grid light (represents ambient lighting).
-    float               color[3];
+    float color[3];
 
     LG_Evaluate(point, color);
     SB_AddLight(light, color, 1.0f);
@@ -1110,19 +1106,19 @@ void SB_AmbientLight(const float* point, float* light)
  * point have changed.  This is needed when there has been world geometry
  * changes. 'illum' is allowed to be NULL.
  *
- * \fixme Only recalculate the changed lights.  The colors contributed
- * by the others can be saved with the 'affected' array.
+ * @fixme Only recalculate the changed lights.  The colors contributed
+ *        by the others can be saved with the 'affected' array.
  */
 void SB_EvalPoint(float light[4], vertexillum_t* illum,
-                  biasaffection_t* affectedSources, const float* point,
+                  biasaffection_t* affectedSources, const coord_t* point,
                   const float* normal)
 {
 #define COLOR_CHANGE_THRESHOLD  0.1f
 
     float               newColor[3];
     float               dot;
-    vec3f_t             delta, surfacePoint;
-    float               distance;
+    coord_t             delta[3], surfacePoint[3];
+    coord_t             distance;
     float               level;
     uint                i;
     int                 idx;
@@ -1219,12 +1215,12 @@ void SB_EvalPoint(float light[4], vertexillum_t* illum,
         else
             casted = NULL;
 
-        V3f_Subtract(delta, s->pos, point);
-        V3f_Copy(surfacePoint, delta);
-        V3f_Scale(surfacePoint, 1.f / 100);
-        V3f_Sum(surfacePoint, surfacePoint, point);
+        V3d_Subtract(delta, s->origin, point);
+        V3d_Copy(surfacePoint, delta);
+        V3d_Scale(surfacePoint, 1.f / 100);
+        V3d_Sum(surfacePoint, surfacePoint, point);
 
-        if(useSightCheck && !P_CheckLineSight(s->pos, surfacePoint, -1, 1, 0))
+        if(useSightCheck && !P_CheckLineSight(s->origin, surfacePoint, -1, 1, 0))
         {
             // LOS fail.
             if(casted)
@@ -1237,8 +1233,8 @@ void SB_EvalPoint(float light[4], vertexillum_t* illum,
         }
         else
         {
-            distance = V3f_Normalize(delta);
-            dot = V3f_DotProduct(delta, normal);
+            distance = V3d_Normalize(delta);
+            dot = V3d_DotProductf(delta, normal);
 
             // The surface faces away from the light.
             if(dot <= 0)

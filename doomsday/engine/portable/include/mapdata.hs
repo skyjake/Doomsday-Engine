@@ -2,7 +2,7 @@
 # Runtime map data defitions. Processed by the makedmt.py script.
 
 public
-#define DMT_VERTEX_POS  DDVT_FLOAT
+#define DMT_VERTEX_ORIGIN  DDVT_DOUBLE
 end
 
 internal
@@ -10,8 +10,8 @@ internal
 #define LO_next     link[1]
 
 typedef struct shadowvert_s {
-    float           inner[2];
-    float           extended[2];
+    coord_t         inner[2];
+    coord_t         extended[2];
 } shadowvert_t;
 
 typedef struct lineowner_s {
@@ -33,14 +33,11 @@ typedef struct mvertex_s {
     // Usually NULL, unless this vertex occupies the same location as a
     // previous vertex. Only used during the pruning phase.
     struct vertex_s* equiv;
-
-// Final data.
-    coord_t pos[2];
 } mvertex_t;
 end
 
 struct Vertex
-    -       float[2]    pos
+    -       coord_t[2]  origin
     -       uint        numLineOwners // Number of line owners.
     -       lineowner_t* lineOwners // Lineowner base ptr [numlineowners] size. A doubly, circularly linked list. The base is the line with the lowest angle and the next-most with the largest angle.
     -       mvertex_t   buildData
@@ -52,13 +49,13 @@ internal
 #define BACK  1
 
 #define HE_v(n)                   v[(n)? 1:0]
-#define HE_vpos(n)                HE_v(n)->pos
+#define HE_vorigin(n)             HE_v(n)->origin
 
 #define HE_v1                     HE_v(0)
-#define HE_v1pos                  HE_v(0)->pos
+#define HE_v1origin               HE_v(0)->origin
 
 #define HE_v2                     HE_v(1)
-#define HE_v2pos                  HE_v(1)->pos
+#define HE_v2origin               HE_v(1)->origin
 
 #define HEDGE_BACK_SECTOR(h)      ((h)->twin ? (h)->twin->sector : NULL)
 #define HEDGE_SIDEDEF(h)          ((h)->lineDef->sideDefs[(h)->side])
@@ -91,8 +88,8 @@ struct HEdge
     PTR     sector_s*   sector
     ANGLE   angle_t     angle
     BYTE    byte        side        // 0=front, 1=back
-    FLOAT   float       length      // Accurate length of the segment (v1 -> v2).
-    FLOAT   float       offset
+    DOUBLE  coord_t     length      // Accurate length of the segment (v1 -> v2).
+    DOUBLE  coord_t     offset
     -       biassurface_t*[3] bsuf // 0=middle, 1=top, 2=bottom
     -       short       frameFlags
     -       uint        index /// Unique. Set when saving the BSP.
@@ -107,9 +104,9 @@ struct BspLeaf
     -       int         addSpriteCount // frame number of last R_AddSprites
     -       int         validCount
     -       uint[NUM_REVERB_DATA] reverb
-    -       AABoxf      aaBox // Min and max points.
-    -       float[2]    worldGridOffset // Offset to align the top left of the bBox to the world grid.
-    -       float[2]    midPoint /// Center of vertices.
+    -       AABoxd      aaBox // Min and max points.
+    -       coord_t[2]  worldGridOffset // Offset to align the top left of the bBox to the world grid.
+    -       coord_t[2]  midPoint /// Center of vertices.
     -       hedge_s*    fanBase /// HEdge whose vertex to use as the base for a trifan. If @c NULL then midPoint is used instead.
     -       shadowlink_s* shadows
     -       biassurface_s** bsuf // [sector->planeCount] size.
@@ -170,7 +167,7 @@ internal
 #define SUIF_UPDATE_DECORATIONS 0x8000
 
 typedef struct surfacedecor_s {
-    float               pos[3]; // World coordinates of the decoration.
+    coord_t             origin[3]; // World coordinates of the decoration.
     BspLeaf*		bspLeaf;
     const struct ded_decorlight_s* def;
 } surfacedecor_t;
@@ -186,13 +183,13 @@ struct Surface
     FLOAT   float[3]    bitangent
     FLOAT   float[3]    normal
     FLOAT   float[2]    offset // [X, Y] Planar offset to surface material origin.
-	-		float[2][2] oldOffset
+    -       float[2][2] oldOffset
     -       float[2]    visOffset
     -       float[2]    visOffsetDelta
     FLOAT   float[4]    rgba // Surface color tint
     -       short       inFlags // SUIF_* flags
     -       uint        numDecorations
-    -       surfacedecor_t *decorations
+    -       surfacedecor_t* decorations
 end
 
 internal
@@ -217,15 +214,15 @@ internal
 end
 
 struct Plane
-    PTR     ddmobj_base_t origin
+    PTR     ddmobj_base_t base
     PTR     sector_s*   sector // Owner of the plane (temp)
     -       Surface     surface
-    FLOAT   float       height // Current height
-    -       float[2]    oldHeight
-    FLOAT   float       target // Target height
+    DOUBLE  coord_t     height // Current height
+    -       coord_t[2]  oldHeight
+    DOUBLE  coord_t     target // Target height
     FLOAT   float       speed // Move speed
-    -       float       visHeight // Visible plane height (smoothed)
-    -       float       visHeightDelta
+    -       coord_t     visHeight // Visible plane height (smoothed)
+    -       coord_t     visHeightDelta
     -       planetype_t type // PLN_* type.
     -       int         planeID
 end
@@ -294,8 +291,8 @@ end
 struct Sector
     -       int         frameFlags
     INT     int         validCount // if == validCount, already checked.
-    -       AABox       aaBox // Bounding box for the sector.
-    -       float       roughArea // Rough approximation of sector area.
+    -       AABoxd      aaBox // Bounding box for the sector.
+    -       coord_t     roughArea // Rough approximation of sector area.
     FLOAT   float       lightLevel
     -       float       oldLightLevel
     FLOAT   float[3]    rgb
@@ -307,7 +304,7 @@ struct Sector
     PTR     bspleaf_s** bspLeafs // [bspLeafCount+1] size.
     -       uint        numReverbBspLeafAttributors
     -       bspleaf_s** reverbBspLeafs // [numReverbBspLeafAttributors] size.
-    PTR     ddmobj_base_t origin
+    PTR     ddmobj_base_t base
     UINT    uint        planeCount
     -       plane_s**   planes // [planeCount+1] size.
     -       uint        blockCount // Number of gridblocks in the sector.
@@ -407,13 +404,13 @@ end
 internal
 // Helper macros for accessing linedef data elements.
 #define L_v(n)                  v[(n)? 1:0]
-#define L_vpos(n)               v[(n)]->pos
+#define L_vorigin(n)            v[(n)]->origin
 
 #define L_v1                    L_v(0)
-#define L_v1pos                 L_v(0)->pos
+#define L_v1origin              L_v(0)->origin
 
 #define L_v2                    L_v(1)
-#define L_v2pos                 L_v(1)->pos
+#define L_v2origin              L_v(1)->origin
 
 #define L_vo(n)                 vo[(n)? 1:0]
 #define L_vo1                   L_vo(0)
@@ -450,7 +447,9 @@ end
 
 public
 #define DMT_LINEDEF_SEC    DDVT_PTR
-#define DMT_LINEDEF_AABOX  DDVT_FLOAT
+#define DMT_LINEDEF_DX     DDVT_DOUBLE
+#define DMT_LINEDEF_DY     DDVT_DOUBLE
+#define DMT_LINEDEF_AABOX  DDVT_DOUBLE
 end
 
 struct LineDef
@@ -462,10 +461,9 @@ struct LineDef
     INT     slopetype_t slopeType
     INT     int         validCount
     -       binangle_t  angle       // Calculated from front side's normal
-    FLOAT   float       dX
-    FLOAT   float       dY
-    -       float       length      // Accurate length
-    -       AABox       aaBox
+    -       coord_t[2]  direction
+    -       coord_t     length      // Accurate length
+    -       AABoxd      aaBox
     -       boolean[DDMAXPLAYERS] mapped // Whether the line has been mapped by each player yet.
     -       mlinedef_t  buildData
     -       ushort[2]   shadowVisFrame // Framecount of last time shadows were drawn for this line, for each side [right, left].
@@ -479,18 +477,18 @@ internal
  * An infinite line of the form point + direction vectors. 
  */
 typedef struct partition_s {
-    float x, y;
-    float dX, dY;
+    coord_t origin[2];
+    coord_t direction[2];
 } partition_t;
 end
 
 public
-#define DMT_BSPNODE_AABOX  DDVT_FLOAT
+#define DMT_BSPNODE_AABOX  DDVT_DOUBLE
 end
 
 struct BspNode
     -       partition_t partition
-    -       AABoxf[2]   aaBox    // Bounding box for each child.
+    -       AABoxd[2]   aaBox    // Bounding box for each child.
     PTR     runtime_mapdata_header_t*[2] children
     -       uint        index /// Unique. Set when saving the BSP.
 end

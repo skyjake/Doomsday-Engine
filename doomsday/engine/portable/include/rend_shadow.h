@@ -47,7 +47,7 @@ typedef struct {
     uint lastIdx;
     const rvertex_t* rvertices;
     uint numVertices, realNumVertices;
-    const float* texTL, *texBR;
+    const coord_t* texTL, *texBR;
     boolean isWall;
     const walldiv_t* divs;
 } rendershadowprojectionparams_t;

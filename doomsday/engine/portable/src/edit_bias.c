@@ -108,12 +108,12 @@ void SBE_Register(void)
  * Editor Functionality:
  */
 
-static void SBE_GetHand(float pos[3])
+static void SBE_GetHand(coord_t pos[3])
 {
     const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
-    pos[0] = vx + viewData->frontVec[VX] * editDistance;
-    pos[1] = vz + viewData->frontVec[VZ] * editDistance;
-    pos[2] = vy + viewData->frontVec[VY] * editDistance;
+    pos[VX] = vx + viewData->frontVec[VX] * editDistance;
+    pos[VY] = vz + viewData->frontVec[VZ] * editDistance;
+    pos[VZ] = vy + viewData->frontVec[VY] * editDistance;
 }
 
 static source_t* SBE_GrabSource(int index)
@@ -143,9 +143,9 @@ static source_t* SBE_GetGrabbed(void)
 
 static source_t* SBE_GetNearest(void)
 {
-    float hand[3];
+    coord_t hand[3];
     source_t* nearest = NULL, *s;
-    float minDist = 0, len;
+    coord_t minDist = 0, len;
     int i;
 
     SBE_GetHand(hand);
@@ -153,7 +153,7 @@ static source_t* SBE_GetNearest(void)
     s = SB_GetSource(0);
     for(i = 0; i < numSources; ++i, s++)
     {
-        len = M_Distance(hand, s->pos);
+        len = V3d_Distance(hand, s->origin);
         if(i == 0 || len < minDist)
         {
             minDist = len;
@@ -173,7 +173,7 @@ static void SBE_GetHueColor(float* color, float* angle, float* sat)
     vec3f_t h, proj;
     const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
 
-    dot = M_DotProduct(viewData->frontVec, hueOrigin);
+    dot = V3f_DotProduct(viewData->frontVec, hueOrigin);
     saturation = (acos(dot) - minAngle) / range;
 
    saturation = MINMAX_OF(0, saturation, 1);
@@ -190,8 +190,9 @@ static void SBE_GetHueColor(float* color, float* angle, float* sat)
 
     // Calculate hue angle by projecting the current viewfront to the
     // hue circle plane.  Project onto the normal and subtract.
-    scale = M_DotProduct(viewData->frontVec, hueOrigin) / M_DotProduct(hueOrigin, hueOrigin);
-    M_Scale(h, hueOrigin, scale);
+    scale = V3f_DotProduct(viewData->frontVec, hueOrigin) / V3f_DotProduct(hueOrigin, hueOrigin);
+    V3f_Copy(h, hueOrigin);
+    V3f_Scale(h, scale);
 
     for(i = 0; i < 3; ++i)
     {
@@ -200,11 +201,11 @@ static void SBE_GetHueColor(float* color, float* angle, float* sat)
 
     // Now we have the projected view vector on the circle's plane.
     // Normalize the projected vector.
-    M_Normalize(proj);
+    V3f_Normalize(proj);
 
-    hue = acos(M_DotProduct(proj, hueUp));
+    hue = acos(V3f_DotProduct(proj, hueUp));
 
-    if(M_DotProduct(proj, hueSide) > 0)
+    if(V3f_DotProduct(proj, hueSide) > 0)
         hue = 2*PI - hue;
 
     hue /= (float) (2*PI);
@@ -237,7 +238,7 @@ void SBE_EndFrame(void)
         if(!(src->flags & BLF_LOCKED))
         {
             // Update source properties.
-            SBE_GetHand(src->pos);
+            SBE_GetHand(src->origin);
         }
 
         if(memcmp(&old, src, sizeof(old)))
@@ -388,7 +389,7 @@ static boolean SBE_Save(const char* name)
         fprintf(file, "\nLight {\n");
         fprintf(file, "  Map = \"%s\"\n", uid);
         fprintf(file, "  Origin { %g %g %g }\n",
-                s->pos[0], s->pos[1], s->pos[2]);
+                s->origin[0], s->origin[1], s->origin[2]);
         fprintf(file, "  Color { %g %g %g }\n",
                 s->color[0], s->color[1], s->color[2]);
         fprintf(file, "  Intensity = %g\n", s->primaryIntensity);
@@ -617,7 +618,7 @@ static void SBE_InfoBox(source_t* s, int rightX, char* title, float alpha)
     Point2Raw origin;
     Size2Raw size;
     char buf[80];
-    float eye[3];
+    coord_t eye[3];
     int th;
 
     FR_SetFont(fontFixed);
@@ -662,11 +663,11 @@ static void SBE_InfoBox(source_t* s, int rightX, char* title, float alpha)
     UI_TextOutEx2(buf, &origin, UI_Color(UIC_TEXT), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
     origin.y += th;
 
-    sprintf(buf, "(%+06.0f,%+06.0f,%+06.0f)", s->pos[0], s->pos[1], s->pos[2]);
+    sprintf(buf, "(%+06.0f,%+06.0f,%+06.0f)", s->origin[0], s->origin[1], s->origin[2]);
     UI_TextOutEx2(buf, &origin, UI_Color(UIC_TEXT), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
     origin.y += th;
 
-    sprintf(buf, "Distance:%-.0f", M_Distance(eye, s->pos));
+    sprintf(buf, "Distance:%-.0f", V3d_Distance(eye, s->origin));
     UI_TextOutEx2(buf, &origin, UI_Color(UIC_TEXT), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
     origin.y += th;
 
@@ -706,7 +707,7 @@ static void SBE_DrawLevelGauge(const Point2Raw* origin, int height)
     else
         src = SBE_GetNearest();
 
-    bspLeaf = P_BspLeafAtPointXY(src->pos[VX], src->pos[VY]);
+    bspLeaf = P_BspLeafAtPoint(src->origin);
     if(!bspLeaf) return;
 
     sector = bspLeaf->sector;
@@ -859,7 +860,7 @@ void SBE_DrawHUD(void)
     glPopMatrix();
 }
 
-void SBE_DrawStar(float pos[3], float size, float color[4])
+void SBE_DrawStar(coord_t pos[3], float size, float color[4])
 {
     float black[4] = { 0, 0, 0, 0 };
 
@@ -891,22 +892,20 @@ void SBE_DrawStar(float pos[3], float size, float color[4])
 static void SBE_DrawIndex(source_t* src)
 {
     const Point2Raw origin = { 2, 2 };
-    float eye[3], scale;
+    coord_t eye[3], scale;
     char buf[80];
 
     if(!editShowIndices) return;
 
-    eye[0] = vx;
-    eye[1] = vz;
-    eye[2] = vy;
-    scale = M_Distance(src->pos, eye) / (Window_Width(theWindow) / 2);
+    V3d_Set(eye, vx, vz, vy);
+    scale = V3d_Distance(src->origin, eye) / (Window_Width(theWindow) / 2);
 
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_2D);
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-    glTranslatef(src->pos[VX], src->pos[VZ], src->pos[VY]);
+    glTranslatef(src->origin[VX], src->origin[VZ], src->origin[VY]);
     glRotatef(-vang + 180, 0, 1, 0);
     glRotatef(vpitch, 1, 0, 0);
     glScalef(-scale, -scale, 1);
@@ -917,7 +916,7 @@ static void SBE_DrawIndex(source_t* src)
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
-    UI_TextOutEx(buf, &origin, UI_Color(UIC_TITLE), 1 - M_Distance(src->pos, eye)/2000);
+    UI_TextOutEx(buf, &origin, UI_Color(UIC_TITLE), 1 - V3d_Distance(src->origin, eye)/2000);
 
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
@@ -928,7 +927,8 @@ static void SBE_DrawIndex(source_t* src)
 
 static void SBE_DrawSource(source_t* src)
 {
-    float col[4], d, eye[3];
+    float col[4];
+    coord_t d, eye[3];
 
     eye[0] = vx;
     eye[1] = vz;
@@ -938,11 +938,11 @@ static void SBE_DrawSource(source_t* src)
     col[1] = src->color[1];
     col[2] = src->color[2];
 
-    d = (M_Distance(eye, src->pos) - 100) / 1000;
+    d = (V3d_Distance(eye, src->origin) - 100) / 1000;
     if(d < 1) d = 1;
     col[3] = 1.0f / d;
 
-    SBE_DrawStar(src->pos, 25 + src->intensity/20, col);
+    SBE_DrawStar(src->origin, 25 + src->intensity/20, col);
     SBE_DrawIndex(src);
 }
 
@@ -1070,9 +1070,11 @@ void SBE_DrawCursor(void)
 
     double t = Sys_GetRealTime()/100.0f;
     source_t* s;
-    float hand[3];
-    float size = 10000, distance;
-    float col[4], eye[3];
+    coord_t hand[3];
+    float size = 10000;
+    coord_t distance;
+    float col[4];
+    coord_t eye[3];
 
     if(!editActive || !numSources || editHidden || freezeRLs)
         return;
@@ -1101,26 +1103,26 @@ void SBE_DrawCursor(void)
     }
 
     SBE_GetHand(hand);
-    if((distance = M_Distance(s->pos, hand)) > 2 * editDistance)
+    if((distance = V3d_Distance(s->origin, hand)) > 2 * editDistance)
     {
         // Show where it is.
         glDisable(GL_DEPTH_TEST);
     }
 
-    SBE_DrawStar(s->pos, size, col);
+    SBE_DrawStar(s->origin, size, col);
     SBE_DrawIndex(s);
 
     // Show if the source is locked.
     if(s->flags & BLF_LOCKED)
     {
-        float lock = 2 + M_Distance(eye, s->pos)/100;
+        coord_t lock = 2 + V3d_Distance(eye, s->origin)/100;
 
         glColor4f(1, 1, 1, 1);
 
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
 
-        glTranslatef(s->pos[VX], s->pos[VZ], s->pos[VY]);
+        glTranslatef(s->origin[VX], s->origin[VZ], s->origin[VY]);
 
         glRotatef(t/2, 0, 0, 1);
         glRotatef(t, 1, 0, 0);

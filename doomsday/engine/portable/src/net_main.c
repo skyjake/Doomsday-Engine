@@ -432,16 +432,16 @@ static void Net_DoUpdate(void)
 
         Msg_Begin(PKT_COORDS);
         Writer_WriteFloat(msgWriter, gameTime);
-        Writer_WriteFloat(msgWriter, mo->pos[VX]);
-        Writer_WriteFloat(msgWriter, mo->pos[VY]);
-        if(mo->pos[VZ] == mo->floorZ)
+        Writer_WriteFloat(msgWriter, mo->origin[VX]);
+        Writer_WriteFloat(msgWriter, mo->origin[VY]);
+        if(mo->origin[VZ] == mo->floorZ)
         {
             // This'll keep us on the floor even in fast moving sectors.
             Writer_WriteInt32(msgWriter, DDMININT);
         }
         else
         {
-            Writer_WriteInt32(msgWriter, FLT2FIX(mo->pos[VZ]));
+            Writer_WriteInt32(msgWriter, FLT2FIX(mo->origin[VZ]));
         }
         // Also include angles.
         Writer_WriteUInt16(msgWriter, mo->angle >> 16);
@@ -1096,9 +1096,9 @@ D_CMD(MakeCamera)
        Sv_InitPoolForClient(cp);
        mo = Z_Malloc(sizeof(mobj_t), PU_MAP, 0);
        memset(mo, 0, sizeof(*mo));
-       mo->pos[VX] = conp->mo->pos[VX];
-       mo->pos[VY] = conp->mo->pos[VY];
-       mo->pos[VZ] = conp->mo->pos[VZ];
+       mo->origin[VX] = conp->mo->origin[VX];
+       mo->origin[VY] = conp->mo->origin[VY];
+       mo->origin[VZ] = conp->mo->origin[VZ];
        mo->bspLeaf = conp->mo->bspLeaf;
        ddPlayers[cp].mo = mo;
        displayPlayer = cp; */

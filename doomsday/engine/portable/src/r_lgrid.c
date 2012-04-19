@@ -93,7 +93,7 @@ static int      lgShowDebug = false;
 static float    lgDebugSize = 1.5f;
 
 static int      lgBlockSize = 31;
-static float    lgOrigin[3];
+static coord_t  lgOrigin[3];
 static int      lgBlockWidth;
 static int      lgBlockHeight;
 static gridblock_t *grid;
@@ -154,14 +154,14 @@ void LG_InitForMap(void)
 
 #define MSFACTORS 7
     typedef struct lgsamplepoint_s {
-        float   pos[3];
+        coord_t origin[3];
     } lgsamplepoint_t;
     // Diagonal in maze arrangement of natural numbers.
     // Up to 65 samples per-block(!)
     static int  multisample[] = {1, 5, 9, 17, 25, 37, 49, 65};
 
-    float       max[3];
-    float       width, height;
+    coord_t     max[3];
+    coord_t     width, height;
     int         i = 0;
     int         a, b, x, y;
     int         count;
@@ -173,7 +173,7 @@ void LG_InitForMap(void)
     int        *sampleResults = 0;
     int         n, size, numSamples, center, best;
     uint        s;
-    float       off[2];
+    coord_t     off[2];
     lgsamplepoint_t *samplePoints = 0, sample;
 
     Sector    **ssamples;
@@ -253,16 +253,16 @@ void LG_InitForMap(void)
     // Construct the sample point offset array.
     // This way we can use addition only during calculation of:
     // (lgBlockHeight*lgBlockWidth)*numSamples
-
     if(center == 0)
-    {   // Zero is the center so do that first.
-        samplePoints[0].pos[VX] = lgBlockSize / 2;
-        samplePoints[0].pos[VY] = lgBlockSize / 2;
+    {
+        // Zero is the center so do that first.
+        samplePoints[0].origin[VX] = lgBlockSize / 2;
+        samplePoints[0].origin[VY] = lgBlockSize / 2;
     }
 
     if(numSamples > 1)
     {
-        float       bSize = (float) lgBlockSize / (size-1);
+        coord_t bSize = (coord_t) lgBlockSize / (size-1);
 
         // Is there an offset?
         if(center == 0)
@@ -273,8 +273,8 @@ void LG_InitForMap(void)
         for(y = 0; y < size; ++y)
             for(x = 0; x < size; ++x, ++n)
             {
-                samplePoints[n].pos[VX] = ROUND(x * bSize);
-                samplePoints[n].pos[VY] = ROUND(y * bSize);
+                samplePoints[n].origin[VX] = ROUND(x * bSize);
+                samplePoints[n].origin[VY] = ROUND(y * bSize);
             }
     }
 
@@ -293,8 +293,8 @@ void LG_InitForMap(void)
         off[VY] = y * lgBlockSize;
         for(x = 0; x < lgBlockWidth; ++x)
         {
-            int         blk = (x + y * lgBlockWidth);
-            int         idx;
+            int blk = (x + y * lgBlockWidth);
+            int idx;
 
             off[VX] = x * lgBlockSize;
 
@@ -305,12 +305,11 @@ void LG_InitForMap(void)
                 // of the samples for this block).
                 idx = blk * (numSamples);
 
-                sample.pos[VX] = lgOrigin[VX] + off[VX] + samplePoints[0].pos[VX];
-                sample.pos[VY] = lgOrigin[VY] + off[VY] + samplePoints[0].pos[VY];
+                sample.origin[VX] = lgOrigin[VX] + off[VX] + samplePoints[0].origin[VX];
+                sample.origin[VY] = lgOrigin[VY] + off[VY] + samplePoints[0].origin[VY];
 
-                ssamples[idx] =
-                    P_BspLeafAtPointXY(sample.pos[VX], sample.pos[VY])->sector;
-                if(!P_IsPointXYInSector(sample.pos[VX], sample.pos[VY], ssamples[idx]))
+                ssamples[idx] = P_BspLeafAtPoint(sample.origin)->sector;
+                if(!P_IsPointInSector(sample.origin, ssamples[idx]))
                    ssamples[idx] = NULL;
 
                 n++; // Offset the index in the samplePoints array bellow.
@@ -328,10 +327,11 @@ void LG_InitForMap(void)
                         idx += blk + 1;
 
                     if(numSamples > 1 && ((x > 0 && a == 0) || (y > 0 && b == 0)))
-                    {   // We have already sampled this point.
+                    {
+                        // We have already sampled this point.
                         // Get the previous result.
-                        int         prevX, prevY, prevA, prevB;
-                        int         previdx;
+                        int prevX, prevY, prevA, prevB;
+                        int previdx;
 
                         prevX = x; prevY = y; prevA = a; prevB = b;
                         if(x > 0 && a == 0)
@@ -353,13 +353,13 @@ void LG_InitForMap(void)
                         ssamples[idx] = ssamples[previdx];
                     }
                     else
-                    {   // We haven't sampled this point yet.
-                        sample.pos[VX] = lgOrigin[VX] + off[VX] + samplePoints[n].pos[VX];
-                        sample.pos[VY] = lgOrigin[VY] + off[VY] + samplePoints[n].pos[VY];
+                    {
+                        // We haven't sampled this point yet.
+                        sample.origin[VX] = lgOrigin[VX] + off[VX] + samplePoints[n].origin[VX];
+                        sample.origin[VY] = lgOrigin[VY] + off[VY] + samplePoints[n].origin[VY];
 
-                        ssamples[idx] =
-                            P_BspLeafAtPointXY(sample.pos[VX], sample.pos[VY])->sector;
-                        if(!P_IsPointXYInSector(sample.pos[VX], sample.pos[VY], ssamples[idx]))
+                        ssamples[idx] = P_BspLeafAtPoint(sample.origin)->sector;
+                        if(!P_IsPointInSector(sample.origin, ssamples[idx]))
                            ssamples[idx] = NULL;
                     }
                 }
@@ -598,11 +598,8 @@ static void LG_ApplySector(gridblock_t *block, const float *color, float level,
  */
 void LG_SectorChanged(Sector* sector)
 {
-    if(!lgInited)
-        return;
-
-    if(0 == sector->changedBlockCount && 0 == sector->blockCount)
-        return;
+    if(!lgInited) return;
+    if(!sector || 0 == sector->changedBlockCount && 0 == sector->blockCount) return;
 
     // Mark changed blocks and contributors.
     { uint i;
@@ -870,7 +867,7 @@ BEGIN_PROF( PROF_GRID_UPDATE );
 END_PROF( PROF_GRID_UPDATE );
 }
 
-void LG_Evaluate(const vectorcompf_t point[3], float color[3])
+void LG_Evaluate(coord_t const point[3], float color[3])
 {
     int x, y, i;
     //float dz = 0, dimming;
@@ -964,11 +961,11 @@ void LG_Evaluate(const vectorcompf_t point[3], float color[3])
     }
 }
 
-float LG_EvaluateLightLevel(const vectorcompf_t point[3])
+float LG_EvaluateLightLevel(coord_t const point[3])
 {
     float color[3];
     LG_Evaluate(point, color);
-    /// \todo Do not do this at evaluation time; store into another grid.
+    /// @todo Do not do this at evaluation time; store into another grid.
     return (color[CR] + color[CG] + color[CB]) / 3;
 }
 
@@ -994,8 +991,8 @@ void LG_Debug(void)
     if(ddpl)
     {
         blink++;
-        vx = ROUND((ddpl->mo->pos[VX] - lgOrigin[VX]) / lgBlockSize);
-        vy = ROUND((ddpl->mo->pos[VY] - lgOrigin[VY]) / lgBlockSize);
+        vx = ROUND((ddpl->mo->origin[VX] - lgOrigin[VX]) / lgBlockSize);
+        vy = ROUND((ddpl->mo->origin[VY] - lgOrigin[VY]) / lgBlockSize);
         vx = MINMAX_OF(1, vx, lgBlockWidth - 2);
         vy = MINMAX_OF(1, vy, lgBlockHeight - 2);
         vIdx = vy * lgBlockWidth + vx;

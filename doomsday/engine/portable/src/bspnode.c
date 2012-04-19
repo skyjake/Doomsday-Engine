@@ -25,16 +25,14 @@
 #include "de_play.h"
 #include "de_misc.h"
 
-BspNode* BspNode_New(coord_t const origin[2], coord_t const angle[2])
+BspNode* BspNode_New(coord_t const partitionOrigin[], coord_t const partitionDirection[])
 {
     BspNode* node = (BspNode*)Z_Malloc(sizeof *node, PU_MAP, 0);
     if(!node) Con_Error("BspNode_New: Failed on allocation of %lu bytes for new BspNode.", (unsigned long) sizeof *node);
 
     node->header.type = DMU_BSPNODE;
-    node->partition.x = (float)origin[0];
-    node->partition.y = (float)origin[1];
-    node->partition.dX = (float)angle[0];
-    node->partition.dY = (float)angle[1];
+    V2d_Copy(node->partition.origin, partitionOrigin);
+    V2d_Copy(node->partition.direction, partitionDirection);
 
     node->children[RIGHT] = NULL;
     node->children[LEFT] = NULL;
@@ -63,15 +61,15 @@ BspNode* BspNode_SetChildBounds(BspNode* node, int left, AABoxd* bounds)
     assert(node);
     if(bounds)
     {
-        AABoxf* dst = &node->aaBox[left? LEFT:RIGHT];
-        V2f_CopyBoxd(dst->arvec2, bounds->arvec2);
+        AABoxd* dst = &node->aaBox[left? LEFT:RIGHT];
+        V2d_CopyBox(dst->arvec2, bounds->arvec2);
     }
     else
     {
         // Clear.
-        AABoxf* dst = &node->aaBox[left? LEFT:RIGHT];
-        V2f_Set(dst->min, DDMAXFLOAT, DDMAXFLOAT);
-        V2f_Set(dst->max, DDMINFLOAT, DDMINFLOAT);
+        AABoxd* dst = &node->aaBox[left? LEFT:RIGHT];
+        V2d_Set(dst->min, DDMAXFLOAT, DDMAXFLOAT);
+        V2d_Set(dst->max, DDMINFLOAT, DDMINFLOAT);
     }
     return node;
 }

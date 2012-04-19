@@ -31,22 +31,22 @@ void Sector_UpdateAABox(Sector* sec)
     LineDef* line;
     assert(sec);
 
-    V2f_Set(sec->aaBox.min, DDMAXFLOAT, DDMAXFLOAT);
-    V2f_Set(sec->aaBox.max, DDMINFLOAT, DDMINFLOAT);
+    V2d_Set(sec->aaBox.min, DDMAXFLOAT, DDMAXFLOAT);
+    V2d_Set(sec->aaBox.max, DDMINFLOAT, DDMINFLOAT);
 
     lineIter = sec->lineDefs;
     if(!lineIter) return;
 
     line = *lineIter;
-    V2f_InitBox(sec->aaBox.arvec2, line->aaBox.min);
-    V2f_AddToBox(sec->aaBox.arvec2, line->aaBox.max);
+    V2d_InitBox(sec->aaBox.arvec2, line->aaBox.min);
+    V2d_AddToBox(sec->aaBox.arvec2, line->aaBox.max);
     lineIter++;
 
     for(; *lineIter; lineIter++)
     {
         line = *lineIter;
-        V2f_AddToBox(sec->aaBox.arvec2, line->aaBox.min);
-        V2f_AddToBox(sec->aaBox.arvec2, line->aaBox.max);
+        V2d_AddToBox(sec->aaBox.arvec2, line->aaBox.min);
+        V2d_AddToBox(sec->aaBox.arvec2, line->aaBox.max);
     }
 }
 
@@ -58,12 +58,12 @@ void Sector_UpdateArea(Sector* sec)
                      ((sec->aaBox.maxY - sec->aaBox.minY) / 128);
 }
 
-void Sector_UpdateOrigin(Sector* sec)
+void Sector_UpdateBase(Sector* sec)
 {
     assert(sec);
-    sec->origin.pos[VX] = (sec->aaBox.minX + sec->aaBox.maxX) / 2;
-    sec->origin.pos[VY] = (sec->aaBox.minY + sec->aaBox.maxY) / 2;
-    sec->origin.pos[VZ] = (sec->SP_floorheight + sec->SP_ceilheight) / 2;
+    sec->base.origin[VX] = (sec->aaBox.minX + sec->aaBox.maxX) / 2;
+    sec->base.origin[VY] = (sec->aaBox.minY + sec->aaBox.maxY) / 2;
+    sec->base.origin[VZ] = (sec->SP_floorheight + sec->SP_ceilheight) / 2;
 }
 
 int Sector_SetProperty(Sector* sec, const setargs_t* args)
@@ -118,9 +118,9 @@ int Sector_GetProperty(const Sector* sec, setargs_t* args)
     case DMU_COLOR_BLUE:
         DMU_GetValue(DMT_SECTOR_RGB, &sec->rgb[2], args, 0);
         break;
-    case DMU_ORIGIN: {
-        const ddmobj_base_t* dmo = &sec->origin;
-        DMU_GetValue(DMT_SECTOR_ORIGIN, &dmo, args, 0);
+    case DMU_BASE: {
+        const ddmobj_base_t* base = &sec->base;
+        DMU_GetValue(DMT_SECTOR_BASE, &base, args, 0);
         break; }
     case DMU_LINEDEF_COUNT: {
         int val = (int) sec->lineDefCount;

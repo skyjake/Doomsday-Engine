@@ -53,7 +53,7 @@ byte useParticles = true;
 int maxParticles = 0; // Unlimited.
 float particleSpawnRate = 1; // Unmodified.
 
-static AABoxf mbox;
+static AABoxd mbox;
 static fixed_t tmpz, tmprad, tmpx1, tmpx2, tmpy1, tmpy2;
 static boolean tmcross;
 static LineDef* ptcHitLine;
@@ -448,15 +448,16 @@ static void P_SetParticleAngles(particle_t* pt, int flags)
 
 static void P_ParticleSound(fixed_t pos[3], ded_embsound_t* sound)
 {
-    int                 i;
-    float               orig[3];
+    coord_t orig[3];
+    int i;
 
     // Is there any sound to play?
-    if(!sound->id || sound->volume <= 0)
-        return;
+    if(!sound->id || sound->volume <= 0) return;
 
     for(i = 0; i < 3; ++i)
+    {
         orig[i] = FIX2FLT(pos[i]);
+    }
 
     S_LocalSoundAtVolumeFrom(sound->id, NULL, orig, sound->volume);
 }
@@ -467,13 +468,13 @@ static void P_ParticleSound(fixed_t pos[3], ded_embsound_t* sound)
 static void P_NewParticle(ptcgen_t* gen)
 {
     const ded_ptcgen_t* def = gen->def;
-    particle_t*         pt;
-    int                 i;
-    fixed_t             uncertain, len;
-    angle_t             ang, ang2;
-    BspLeaf*        subsec;
-    float               inter = -1;
-    modeldef_t*         mf = 0, *nextmf = 0;
+    particle_t* pt;
+    int i;
+    fixed_t uncertain, len;
+    angle_t ang, ang2;
+    BspLeaf* subsec;
+    float inter = -1;
+    modeldef_t* mf = 0, *nextmf = 0;
 
     // Check for model-only generators.
     if(gen->source)
@@ -518,9 +519,8 @@ static void P_NewParticle(ptcgen_t* gen)
     // Set proper speed.
     uncertain = FLT2FIX(
         def->speed * (1 - def->speedVariance * RNG_RandFloat()));
-    len = FLT2FIX(P_ApproxDistance(
-        P_ApproxDistance(FIX2FLT(pt->mov[VX]), FIX2FLT(pt->mov[VY])),
-                                   FIX2FLT(pt->mov[VZ])));
+    len = FLT2FIX(M_ApproxDistancef(
+        M_ApproxDistancef(FIX2FLT(pt->mov[VX]), FIX2FLT(pt->mov[VY])), FIX2FLT(pt->mov[VZ])));
     if(!len)
         len = FRACUNIT;
     len = FixedDiv(uncertain, len);
@@ -535,16 +535,15 @@ static void P_NewParticle(ptcgen_t* gen)
         if(gen->flags & PGF_RELATIVE_VECTOR)
         {
             // Rotate the vector using the source angle.
-            float               temp[3];
+            float temp[3];
 
             temp[VX] = FIX2FLT(pt->mov[VX]);
             temp[VY] = FIX2FLT(pt->mov[VY]);
             temp[VZ] = 0;
 
             // Player visangles have some problems, let's not use them.
-            M_RotateVector(temp,
-                           gen->source->angle / (float) ANG180 * -180 + 90,
-                           0);
+            M_RotateVector(temp, gen->source->angle / (float) ANG180 * -180 + 90, 0);
+
             pt->mov[VX] = FLT2FIX(temp[VX]);
             pt->mov[VY] = FLT2FIX(temp[VY]);
         }
@@ -556,23 +555,22 @@ static void P_NewParticle(ptcgen_t* gen)
             pt->mov[VZ] += FLT2FIX(gen->source->mom[MZ]);
         }
 
-        // Position.
-        pt->pos[VX] = FLT2FIX(gen->source->pos[VX]);
-        pt->pos[VY] = FLT2FIX(gen->source->pos[VY]);
-        pt->pos[VZ] = FLT2FIX(gen->source->pos[VZ] - gen->source->floorClip);
+        // Origin.
+        pt->origin[VX] = FLT2FIX(gen->source->origin[VX]);
+        pt->origin[VY] = FLT2FIX(gen->source->origin[VY]);
+        pt->origin[VZ] = FLT2FIX(gen->source->origin[VZ] - gen->source->floorClip);
 
-        P_Uncertain(pt->pos, FLT2FIX(def->spawnRadiusMin),
-                    FLT2FIX(def->spawnRadius));
+        P_Uncertain(pt->origin, FLT2FIX(def->spawnRadiusMin), FLT2FIX(def->spawnRadius));
 
         // Offset to the real center.
-        pt->pos[VZ] += gen->center[VZ];
+        pt->origin[VZ] += gen->center[VZ];
 
         // Calculate XY center with mobj angle.
         ang = Mobj_AngleSmoothed(gen->source) + (fixed_t) (FIX2FLT(gen->center[VY]) / 180.0f * ANG180);
         ang2 = (ang + ANG90) >> ANGLETOFINESHIFT;
         ang >>= ANGLETOFINESHIFT;
-        pt->pos[VX] += FixedMul(fineCosine[ang], gen->center[VX]);
-        pt->pos[VY] += FixedMul(finesine[ang], gen->center[VX]);
+        pt->origin[VX] += FixedMul(fineCosine[ang], gen->center[VX]);
+        pt->origin[VY] += FixedMul(finesine[ang], gen->center[VX]);
 
         // There might be an offset from the model of the mobj.
         if(mf &&
@@ -604,11 +602,11 @@ static void P_NewParticle(ptcgen_t* gen)
             off[VZ] += mf->ptcOffset[subidx][VZ];
 
             // Apply it to the particle coords.
-            pt->pos[VX] += FixedMul(fineCosine[ang], FLT2FIX(off[VX]));
-            pt->pos[VX] += FixedMul(fineCosine[ang2], FLT2FIX(off[VZ]));
-            pt->pos[VY] += FixedMul(finesine[ang], FLT2FIX(off[VX]));
-            pt->pos[VY] += FixedMul(finesine[ang2], FLT2FIX(off[VZ]));
-            pt->pos[VZ] += FLT2FIX(off[VY]);
+            pt->origin[VX] += FixedMul(fineCosine[ang], FLT2FIX(off[VX]));
+            pt->origin[VX] += FixedMul(fineCosine[ang2], FLT2FIX(off[VZ]));
+            pt->origin[VY] += FixedMul(finesine[ang], FLT2FIX(off[VX]));
+            pt->origin[VY] += FixedMul(finesine[ang2], FLT2FIX(off[VZ]));
+            pt->origin[VZ] += FLT2FIX(off[VY]);
         }
     }
     else if(gen->plane)
@@ -620,7 +618,7 @@ static void P_NewParticle(ptcgen_t* gen)
         // Choose a random spot inside the sector, on the spawn plane.
         if(gen->flags & PGF_SPACE_SPAWN)
         {
-            pt->pos[VZ] =
+            pt->origin[VZ] =
                 FLT2FIX(sector->SP_floorheight) + radius +
                 FixedMul(RNG_RandByte() << 8,
                          FLT2FIX(sector->SP_ceilheight -
@@ -631,12 +629,12 @@ static void P_NewParticle(ptcgen_t* gen)
                 plane->type == PLN_FLOOR))
         {
             // Spawn on the floor.
-            pt->pos[VZ] = FLT2FIX(plane->height) + radius;
+            pt->origin[VZ] = FLT2FIX(plane->height) + radius;
         }
         else
         {
             // Spawn on the ceiling.
-            pt->pos[VZ] = FLT2FIX(plane->height) - radius;
+            pt->origin[VZ] = FLT2FIX(plane->height) - radius;
         }
 
         /**
@@ -669,8 +667,8 @@ static void P_NewParticle(ptcgen_t* gen)
             float               y = subsec->aaBox.minY +
                 RNG_RandFloat() * (subsec->aaBox.maxY - subsec->aaBox.minY);
 
-            pt->pos[VX] = FLT2FIX(x);
-            pt->pos[VY] = FLT2FIX(y);
+            pt->origin[VX] = FLT2FIX(x);
+            pt->origin[VY] = FLT2FIX(y);
 
             if(P_BspLeafAtPointXY(x, y) == subsec)
                 break; // This is a good place.
@@ -686,10 +684,10 @@ static void P_NewParticle(ptcgen_t* gen)
     else if(gen->flags & PGF_UNTRIGGERED)
     {
         // The center position is the spawn origin.
-        pt->pos[VX] = gen->center[VX];
-        pt->pos[VY] = gen->center[VY];
-        pt->pos[VZ] = gen->center[VZ];
-        P_Uncertain(pt->pos, FLT2FIX(def->spawnRadiusMin),
+        pt->origin[VX] = gen->center[VX];
+        pt->origin[VY] = gen->center[VY];
+        pt->origin[VZ] = gen->center[VZ];
+        P_Uncertain(pt->origin, FLT2FIX(def->spawnRadiusMin),
                     FLT2FIX(def->spawnRadius));
     }
 
@@ -701,11 +699,11 @@ static void P_NewParticle(ptcgen_t* gen)
     if(gen->plane)
         pt->sector = gen->plane->sector;
     else
-        pt->sector = P_BspLeafAtPointXY(FIX2FLT(pt->pos[VX]),
-                                        FIX2FLT(pt->pos[VY]))->sector;
+        pt->sector = P_BspLeafAtPointXY(FIX2FLT(pt->origin[VX]),
+                                        FIX2FLT(pt->origin[VY]))->sector;
 
     // Play a stage sound?
-    P_ParticleSound(pt->pos, &def->stages[pt->stage].sound);
+    P_ParticleSound(pt->origin, &def->stages[pt->stage].sound);
 }
 
 /**
@@ -752,10 +750,10 @@ static int manyNewParticles(thinker_t* th, void* context)
     return false; // Continue iteration.
 }
 
-int PIT_CheckLinePtc(LineDef* ld, void* data)
+int PIT_CheckLinePtc(LineDef* ld, void* parameters)
 {
-    fixed_t             ceil, floor;
-    Sector*             front, *back;
+    fixed_t ceil, floor;
+    Sector* front, *back;
 
     if(mbox.maxX <= ld->aaBox.minX || mbox.minX >= ld->aaBox.maxX ||
        mbox.maxY <= ld->aaBox.minY || mbox.minY >= ld->aaBox.maxY)
@@ -764,8 +762,8 @@ int PIT_CheckLinePtc(LineDef* ld, void* data)
     }
 
     // Movement must cross the line.
-    if(P_PointXYOnLineDefSide(FIX2FLT(tmpx1), FIX2FLT(tmpy1), ld) ==
-       P_PointXYOnLineDefSide(FIX2FLT(tmpx2), FIX2FLT(tmpy2), ld))
+    if(LineDef_PointXYOnSide(ld, FIX2FLT(tmpx1), FIX2FLT(tmpy1)) < 0 ==
+       LineDef_PointXYOnSide(ld, FIX2FLT(tmpx2), FIX2FLT(tmpy2)) < 0)
         return false;
 
     // We are possibly hitting something here.
@@ -804,7 +802,7 @@ static int P_TouchParticle(particle_t* pt, ptcstage_t* stage,
                            ded_ptcstage_t* stageDef, boolean touchWall)
 {
     // Play a hit sound.
-    P_ParticleSound(pt->pos, &stageDef->hitSound);
+    P_ParticleSound(pt->origin, &stageDef->hitSound);
 
     if(stage->flags & PTCF_DIE_TOUCH)
     {
@@ -864,12 +862,12 @@ float P_GetParticleRadius(const ded_ptcstage_t* def, int ptcIDX)
 
 float P_GetParticleZ(const particle_t* pt)
 {
-    if(pt->pos[VZ] == DDMAXINT)
+    if(pt->origin[VZ] == DDMAXINT)
         return pt->sector->SP_ceilvisheight - 2;
-    else if(pt->pos[VZ] == DDMININT)
+    else if(pt->origin[VZ] == DDMININT)
         return (pt->sector->SP_floorvisheight + 2);
 
-    return FIX2FLT(pt->pos[VZ]);
+    return FIX2FLT(pt->origin[VZ]);
 }
 
 static void P_SpinParticle(ptcgen_t* gen, particle_t* pt)
@@ -909,7 +907,7 @@ static void P_MoveParticle(ptcgen_t* gen, particle_t* pt)
     ptcstage_t*         st = &gen->stages[pt->stage];
     ded_ptcstage_t*     stDef = &gen->def->stages[pt->stage];
     boolean             zBounce = false, hitFloor = false;
-    vec2f_t             point;
+    vec2d_t             point;
     fixed_t             x, y, z, hardRadius = st->radius / 2;
 
     // Particle rotates according to spin speed.
@@ -935,20 +933,20 @@ static void P_MoveParticle(ptcgen_t* gen, particle_t* pt)
     if((st->flags & PTCF_SPHERE_FORCE) &&
        (gen->source || gen->flags & PGF_UNTRIGGERED))
     {
-        int                 i;
-        float               delta[3], dist;
+        int i;
+        float delta[3], dist;
 
         if(gen->source)
         {
-            delta[VX] = FIX2FLT(pt->pos[VX]) - gen->source->pos[VX];
-            delta[VY] = FIX2FLT(pt->pos[VY]) - gen->source->pos[VY];
-            delta[VZ] = P_GetParticleZ(pt) - (gen->source->pos[VZ] +
+            delta[VX] = FIX2FLT(pt->origin[VX]) - gen->source->origin[VX];
+            delta[VY] = FIX2FLT(pt->origin[VY]) - gen->source->origin[VY];
+            delta[VZ] = P_GetParticleZ(pt) - (gen->source->origin[VZ] +
                 FIX2FLT(gen->center[VZ]));
         }
         else
         {
             for(i = 0; i < 3; ++i)
-                delta[i] = FIX2FLT(pt->pos[i] - gen->center[i]);
+                delta[i] = FIX2FLT(pt->origin[i] - gen->center[i]);
         }
 
         // Apply the offset (to source coords).
@@ -958,9 +956,8 @@ static void P_MoveParticle(ptcgen_t* gen, particle_t* pt)
         // Counter the aspect ratio of old times.
         delta[VZ] *= 1.2f;
 
-        dist =
-            P_ApproxDistance(P_ApproxDistance(delta[VX], delta[VY]),
-                             delta[VZ]);
+        dist = M_ApproxDistancef(M_ApproxDistancef(delta[VX], delta[VY]), delta[VZ]);
+
         if(dist != 0)
         {
             // Radial force pushes the particles on the surface of a sphere.
@@ -978,9 +975,9 @@ static void P_MoveParticle(ptcgen_t* gen, particle_t* pt)
             if(gen->def->forceAxis[VX] || gen->def->forceAxis[VY] ||
                gen->def->forceAxis[VZ])
             {
-                float               cross[3];
+                float cross[3];
 
-                M_CrossProduct(gen->def->forceAxis, delta, cross);
+                V3f_CrossProduct(cross, gen->def->forceAxis, delta);
                 for(i = 0; i < 3; ++i)
                     pt->mov[i] += FLT2FIX(cross[i]) >> 8;
             }
@@ -1004,8 +1001,8 @@ static void P_MoveParticle(ptcgen_t* gen, particle_t* pt)
         hardRadius = FRACUNIT;
 
     // Check the new Z position only if not stuck to a plane.
-    z = pt->pos[VZ] + pt->mov[VZ];
-    if(pt->pos[VZ] != DDMININT && pt->pos[VZ] != DDMAXINT && pt->sector)
+    z = pt->origin[VZ] + pt->mov[VZ];
+    if(pt->origin[VZ] != DDMININT && pt->origin[VZ] != DDMAXINT && pt->sector)
     {
         if(z > FLT2FIX(pt->sector->SP_ceilheight) - hardRadius)
         {
@@ -1059,15 +1056,15 @@ static void P_MoveParticle(ptcgen_t* gen, particle_t* pt)
         }
 
         // Move to the new Z coordinate.
-        pt->pos[VZ] = z;
+        pt->origin[VZ] = z;
     }
 
     // Now check the XY direction.
     // - Check if the movement crosses any solid lines.
     // - If it does, quit when first one contacted and apply appropriate
     //   bounce (result depends on the angle of the contacted wall).
-    x = pt->pos[VX] + pt->mov[VX];
-    y = pt->pos[VY] + pt->mov[VY];
+    x = pt->origin[VX] + pt->mov[VX];
+    y = pt->origin[VY] + pt->mov[VY];
 
     tmcross = false; // Has crossed potential sector boundary?
 
@@ -1079,17 +1076,17 @@ static void P_MoveParticle(ptcgen_t* gen, particle_t* pt)
         // particle should be killed (if it's moving slowly at max).
         if(pt->contact)
         {
-            Sector*             front, *back;
+            Sector* front, *back;
 
             front = (pt->contact->L_frontside? pt->contact->L_frontsector : NULL);
             back = (pt->contact->L_backside? pt->contact->L_backsector : NULL);
 
             if(front && back && abs(pt->mov[VZ]) < FRACUNIT / 2)
             {
-                float               pz = P_GetParticleZ(pt);
-                float               fz, cz;
+                coord_t pz = P_GetParticleZ(pt);
+                coord_t fz, cz;
 
-                //// \fixme $nplanes
+                /// @fixme $nplanes
                 if(front->SP_floorheight > back->SP_floorheight)
                     fz = front->SP_floorheight;
                 else
@@ -1122,23 +1119,23 @@ static void P_MoveParticle(ptcgen_t* gen, particle_t* pt)
     // Bounding box of the movement line.
     tmpz = z;
     tmprad = hardRadius;
-    tmpx1 = pt->pos[VX];
+    tmpx1 = pt->origin[VX];
     tmpx2 = x;
-    tmpy1 = pt->pos[VY];
+    tmpy1 = pt->origin[VY];
     tmpy2 = y;
-    V2f_Set(point, FIX2FLT(MIN_OF(x, pt->pos[VX]) - st->radius),
-                   FIX2FLT(MIN_OF(y, pt->pos[VY]) - st->radius));
-    V2f_InitBox(mbox.arvec2, point);
-    V2f_Set(point, FIX2FLT(MAX_OF(x, pt->pos[VX]) + st->radius),
-                   FIX2FLT(MAX_OF(y, pt->pos[VY]) + st->radius));
-    V2f_AddToBox(mbox.arvec2, point);
+    V2d_Set(point, FIX2FLT(MIN_OF(x, pt->origin[VX]) - st->radius),
+                   FIX2FLT(MIN_OF(y, pt->origin[VY]) - st->radius));
+    V2d_InitBox(mbox.arvec2, point);
+    V2d_Set(point, FIX2FLT(MAX_OF(x, pt->origin[VX]) + st->radius),
+                   FIX2FLT(MAX_OF(y, pt->origin[VY]) + st->radius));
+    V2d_AddToBox(mbox.arvec2, point);
 
     // Iterate the lines in the contacted blocks.
 
     validCount++;
     if(P_AllLinesBoxIterator(&mbox, PIT_CheckLinePtc, 0))
     {
-        fixed_t             normal[2], dotp;
+        fixed_t normal[2], dotp;
 
         // Must survive the touch.
         if(!P_TouchParticle(pt, st, stDef, true))
@@ -1151,8 +1148,8 @@ static void P_MoveParticle(ptcgen_t* gen, particle_t* pt)
         // - Multiply with bounce.
 
         // Calculate the normal.
-        normal[VX] = -FLT2FIX(ptcHitLine->dX);
-        normal[VY] = -FLT2FIX(ptcHitLine->dY);
+        normal[VX] = -FLT2FIX(ptcHitLine->direction[VX]);
+        normal[VY] = -FLT2FIX(ptcHitLine->direction[VY]);
 
         if(!normal[VX] && !normal[VY])
             goto quit_iteration;
@@ -1166,8 +1163,8 @@ static void P_MoveParticle(ptcgen_t* gen, particle_t* pt)
         VECMUL(pt->mov, st->bounce);
 
         // Continue from the old position.
-        x = pt->pos[VX];
-        y = pt->pos[VY];
+        x = pt->origin[VX];
+        y = pt->origin[VY];
         tmcross = false; // Sector can't change if XY doesn't.
 
         // This line is the latest contacted line.
@@ -1177,8 +1174,8 @@ static void P_MoveParticle(ptcgen_t* gen, particle_t* pt)
 
   quit_iteration:
     // The move is now OK.
-    pt->pos[VX] = x;
-    pt->pos[VY] = y;
+    pt->origin[VX] = x;
+    pt->origin[VY] = y;
 
     // Should we update the sector pointer?
     if(tmcross)
@@ -1270,7 +1267,7 @@ void P_PtcGenThinker(ptcgen_t* gen)
             P_SetParticleAngles(pt, def->stages[pt->stage].flags);
 
             // A sound?
-            P_ParticleSound(pt->pos, &def->stages[pt->stage].sound);
+            P_ParticleSound(pt->origin, &def->stages[pt->stage].sound);
         }
 
         // Try to move.
@@ -1361,14 +1358,14 @@ void P_SpawnDamageParticleGen(mobj_t* mo, mobj_t* inflictor, int amount)
         gen->spawnRateMultiplier = MAX_OF(amount, 1);
 
         // Calculate appropriate center coordinates.
-        gen->center[VX] += FLT2FIX(mo->pos[VX]);
-        gen->center[VY] += FLT2FIX(mo->pos[VY]);
-        gen->center[VZ] += FLT2FIX(mo->pos[VZ] + mo->height / 2);
+        gen->center[VX] += FLT2FIX(mo->origin[VX]);
+        gen->center[VY] += FLT2FIX(mo->origin[VY]);
+        gen->center[VZ] += FLT2FIX(mo->origin[VZ] + mo->height / 2);
 
         // Calculate launch vector.
-        V3f_Set(vecDelta, inflictor->pos[VX] - mo->pos[VX],
-                inflictor->pos[VY] - mo->pos[VY],
-                (inflictor->pos[VZ] - inflictor->height / 2) - (mo->pos[VZ] + mo->height / 2));
+        V3f_Set(vecDelta, inflictor->origin[VX] - mo->origin[VX],
+                inflictor->origin[VY] - mo->origin[VY],
+                (inflictor->origin[VZ] - inflictor->height / 2) - (mo->origin[VZ] + mo->height / 2));
 
         V3f_SetFixed(vector, gen->vector[VX], gen->vector[VY], gen->vector[VZ]);
         V3f_Sum(vector, vector, vecDelta);

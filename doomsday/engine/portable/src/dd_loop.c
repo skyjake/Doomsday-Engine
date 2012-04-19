@@ -373,13 +373,13 @@ static void baseTicker(timespan_t time)
                 static float prevPos[3] = { 0, 0, 0 };
                 static float prevSpeed = 0;
                 float speed = V2f_Length(mo->mom);
-                float actualMom[2] = { mo->pos[0] - prevPos[0], mo->pos[1] - prevPos[1] };
+                float actualMom[2] = { mo->origin[0] - prevPos[0], mo->origin[1] - prevPos[1] };
                 float actualSpeed = V2f_Length(actualMom);
 
                 Con_Message("%i,%f,%f,%f,%f\n", SECONDS_TO_TICKS(sysTime + time),
                             ddPlayers[0].shared.forwardMove, speed, actualSpeed, speed - prevSpeed);
 
-                V3f_Copy(prevPos, mo->pos);
+                V3f_Copy(prevPos, mo->origin);
                 prevSpeed = speed;
             }
 #endif

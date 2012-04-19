@@ -29,6 +29,8 @@
 #ifndef LIBDENG_REFRESH_MOBJ_SHADOW_H
 #define LIBDENG_REFRESH_MOBJ_SHADOW_H
 
+#include "dd_types.h"
+
 struct mobj_s;
 
 /**
@@ -50,7 +52,7 @@ void R_InitShadowProjectionListsForMap(void);
  */
 void R_InitShadowProjectionListsForNewFrame(void);
 
-float R_ShadowAttenuationFactor(float distance);
+float R_ShadowAttenuationFactor(coord_t distance);
 
 /**
  * Project all mobj shadows affecting the given quad (world space), calculate
@@ -71,7 +73,7 @@ float R_ShadowAttenuationFactor(float distance);
  * @return  Projection list identifier if surface is lit else @c 0.
  */
 uint R_ProjectShadowsToSurface(BspLeaf* bspLeaf, float blendFactor,
-    vec3f_t topLeft, vec3f_t bottomRight, vec3f_t tangent, vec3f_t bitangent, vec3f_t normal);
+    coord_t topLeft[3], coord_t bottomRight[3], float tangent[3], float bitangent[3], float normal[3]);
 
 /**
  * Iterate over projections in the identified shadow-projection list, making

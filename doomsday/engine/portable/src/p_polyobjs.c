@@ -86,18 +86,18 @@ Polyobj* P_PolyobjByTag(int tag)
 Polyobj* P_PolyobjByOrigin(void* ddMobjBase)
 {
     if(!theMap) return NULL;
-    return GameMap_PolyobjByOrigin(theMap, ddMobjBase);
+    return GameMap_PolyobjByBase(theMap, ddMobjBase);
 }
 
 /// @note Part of the Doomsday public API
-boolean P_PolyobjMove(Polyobj* po, float xy[2])
+boolean P_PolyobjMove(Polyobj* po, coord_t xy[2])
 {
     if(!po) return false;
     return Polyobj_Move(po, xy);
 }
 
 /// @note Part of the Doomsday public API
-boolean P_PolyobjMoveXY(Polyobj* po, float x, float y)
+boolean P_PolyobjMoveXY(Polyobj* po, coord_t x, coord_t y)
 {
     if(!po) return false;
     return Polyobj_MoveXY(po, x, y);

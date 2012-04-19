@@ -63,7 +63,7 @@ typedef struct gamemap_s {
     Uri* uri;
     char uniqueId[256];
 
-    float bBox[4];
+    AABoxd aaBox;
 
     struct thinkers_s {
         int idtable[2048]; // 65536 bits telling which IDs are in use.
@@ -125,8 +125,8 @@ typedef struct gamemap_s {
     nodepile_t mobjNodes, lineNodes; // All kinds of wacky links.
     nodeindex_t* lineLinks; // Indices to roots.
 
-    float globalGravity; // The defined gravity for this map.
-    float effectiveGravity; // The effective gravity for this map.
+    coord_t globalGravity; // The defined gravity for this map.
+    coord_t effectiveGravity; // The effective gravity for this map.
 
     int ambientLightLevel; // Ambient lightlevel for the current map.
 
@@ -147,7 +147,7 @@ const Uri* GameMap_Uri(GameMap* map);
 /// @return  The old 'unique' identifier of the map.
 const char* GameMap_OldUniqueId(GameMap* map);
 
-void GameMap_Bounds(GameMap* map, float* min, float* max);
+void GameMap_Bounds(GameMap* map, coord_t* min, coord_t* max);
 
 /**
  * Retrieve the current effective gravity multiplier for this map.
@@ -155,7 +155,7 @@ void GameMap_Bounds(GameMap* map, float* min, float* max);
  * @param map  GameMap instance.
  * @return  Effective gravity multiplier for this map.
  */
-float GameMap_Gravity(GameMap* map);
+coord_t GameMap_Gravity(GameMap* map);
 
 /**
  * Change the effective gravity multiplier for this map.
@@ -164,7 +164,7 @@ float GameMap_Gravity(GameMap* map);
  * @param gravity  New gravity multiplier.
  * @return  Same as @a map for caller convenience.
  */
-GameMap* GameMap_SetGravity(GameMap* map, float gravity);
+GameMap* GameMap_SetGravity(GameMap* map, coord_t gravity);
 
 /**
  * Return the effective gravity multiplier to that originally defined for this map.
@@ -270,7 +270,7 @@ Sector* GameMap_Sector(GameMap* map, uint idx);
  *
  * @return  Found Sector instance else @c NULL.
  */
-Sector* GameMap_SectorByOrigin(GameMap* map, const void* ddMobjBase);
+Sector* GameMap_SectorByBase(GameMap* map, const void* ddMobjBase);
 
 /**
  * Lookup a BspLeaf by its unique index.
@@ -452,7 +452,7 @@ Polyobj* GameMap_PolyobjByTag(GameMap* map, int tag);
  *
  * @return  Found Polyobj instance else @c NULL.
  */
-Polyobj* GameMap_PolyobjByOrigin(GameMap* map, void* ddMobjBase);
+Polyobj* GameMap_PolyobjByBase(GameMap* map, void* ddMobjBase);
 
 /**
  * Have the thinker lists been initialized yet?
@@ -632,7 +632,7 @@ void GameMap_LinkMobj(GameMap* map, struct mobj_s* mobj);
  */
 boolean GameMap_UnlinkMobj(GameMap* map, struct mobj_s* mobj);
 
-int GameMap_MobjsBoxIterator(GameMap* map, const AABoxf* box,
+int GameMap_MobjsBoxIterator(GameMap* map, const AABoxd* box,
     int (*callback) (struct mobj_s*, void*), void* parameters);
 
 /**
@@ -645,10 +645,10 @@ void GameMap_LinkLineDef(GameMap* map, LineDef* lineDef);
 
 int GameMap_LineDefIterator(GameMap* map, int (*callback) (LineDef*, void*), void* parameters);
 
-int GameMap_LineDefsBoxIterator(GameMap* map, const AABoxf* box,
+int GameMap_LineDefsBoxIterator(GameMap* map, const AABoxd* box,
     int (*callback) (LineDef*, void*), void* parameters);
 
-int GameMap_PolyobjLinesBoxIterator(GameMap* map, const AABoxf* box,
+int GameMap_PolyobjLinesBoxIterator(GameMap* map, const AABoxd* box,
     int (*callback) (LineDef*, void*), void* parameters);
 
 /**
@@ -658,7 +658,7 @@ int GameMap_PolyobjLinesBoxIterator(GameMap* map, const AABoxf* box,
  *       Otherwise LineDefs marked with a validCount equal to this will be skipped over (can
  *       be used to avoid processing a LineDef multiple times during complex / non-linear traversals.
  */
-int GameMap_AllLineDefsBoxIterator(GameMap* map, const AABoxf* box,
+int GameMap_AllLineDefsBoxIterator(GameMap* map, const AABoxd* box,
     int (*callback) (LineDef*, void*), void* parameters);
 
 /**
@@ -669,7 +669,7 @@ int GameMap_AllLineDefsBoxIterator(GameMap* map, const AABoxf* box,
  */
 void GameMap_LinkBspLeaf(GameMap* map, BspLeaf* bspLeaf);
 
-int GameMap_BspLeafsBoxIterator(GameMap* map, const AABoxf* box, Sector* sector,
+int GameMap_BspLeafsBoxIterator(GameMap* map, const AABoxd* box, Sector* sector,
     int (*callback) (BspLeaf*, void*), void* parameters);
 
 int GameMap_BspLeafIterator(GameMap* map, int (*callback) (BspLeaf*, void*), void* parameters);
@@ -697,7 +697,7 @@ void  GameMap_UnlinkPolyobj(GameMap* map, Polyobj* polyobj);
  *       Otherwise LineDefs marked with a validCount equal to this will be skipped over (can
  *       be used to avoid processing a LineDef multiple times during complex / non-linear traversals.
  */
-int GameMap_PolyobjsBoxIterator(GameMap* map, const AABoxf* box,
+int GameMap_PolyobjsBoxIterator(GameMap* map, const AABoxd* box,
     int (*callback) (struct polyobj_s*, void*), void* parameters);
 
 int GameMap_PolyobjIterator(GameMap* map, int (*callback) (Polyobj*, void*), void* parameters);
@@ -717,14 +717,14 @@ int GameMap_BspNodeIterator(GameMap* map, int (*callback) (BspNode*, void*), voi
  * interceptable object linked within Blockmap cells which cover the path this
  * defines.
  */
-int GameMap_PathTraverse2(GameMap* map, float const from[2], float const to[2],
+int GameMap_PathTraverse2(GameMap* map, coord_t const from[2], coord_t const to[2],
     int flags, traverser_t callback, void* parameters);
-int GameMap_PathTraverse(GameMap* map, float const from[2], float const to[2],
+int GameMap_PathTraverse(GameMap* map, coord_t const from[2], coord_t const to[2],
     int flags, traverser_t callback/* void* parameters=NULL*/);
 
-int GameMap_PathXYTraverse2(GameMap* map, float fromX, float fromY, float toX, float toY,
+int GameMap_PathXYTraverse2(GameMap* map, coord_t fromX, coord_t fromY, coord_t toX, coord_t toY,
     int flags, traverser_t callback, void* parameters);
-int GameMap_PathXYTraverse(GameMap* map, float fromX, float fromY, float toX, float toY,
+int GameMap_PathXYTraverse(GameMap* map, coord_t fromX, coord_t fromY, coord_t toX, coord_t toY,
     int flags, traverser_t callback);
 
 /**
@@ -739,8 +739,8 @@ int GameMap_PathXYTraverse(GameMap* map, float fromX, float fromY, float toX, fl
  * @param y  Y coordinate of the point to test.
  * @return  BspLeaf instance for that BSP node's leaf.
  */
-BspLeaf* GameMap_BspLeafAtPoint(GameMap* map, float point[2]);
-BspLeaf* GameMap_BspLeafAtPointXY(GameMap* map, float x, float y);
+BspLeaf* GameMap_BspLeafAtPoint(GameMap* map, coord_t const point[2]);
+BspLeaf* GameMap_BspLeafAtPointXY(GameMap* map, coord_t x, coord_t y);
 
 /**
  * Private member functions:
@@ -752,7 +752,7 @@ BspLeaf* GameMap_BspLeafAtPointXY(GameMap* map, float x, float y);
  * @param min  Minimal coordinates for the map.
  * @param max  Maximal coordinates for the map.
  */
-void GameMap_InitMobjBlockmap(GameMap* map, const_pvec2f_t min, const_pvec2f_t max);
+void GameMap_InitMobjBlockmap(GameMap* map, const_pvec2d_t min, const_pvec2d_t max);
 
 /**
  * Construct an initial (empty) LineDef Blockmap for this map.
@@ -760,7 +760,7 @@ void GameMap_InitMobjBlockmap(GameMap* map, const_pvec2f_t min, const_pvec2f_t m
  * @param min  Minimal coordinates for the map.
  * @param max  Maximal coordinates for the map.
  */
-void GameMap_InitLineDefBlockmap(GameMap* map, const_pvec2f_t min, const_pvec2f_t max);
+void GameMap_InitLineDefBlockmap(GameMap* map, const_pvec2d_t min, const_pvec2d_t max);
 
 /**
  * Construct an initial (empty) BspLeaf Blockmap for this map.
@@ -768,7 +768,7 @@ void GameMap_InitLineDefBlockmap(GameMap* map, const_pvec2f_t min, const_pvec2f_
  * @param min  Minimal coordinates for the map.
  * @param max  Maximal coordinates for the map.
  */
-void GameMap_InitBspLeafBlockmap(GameMap* map, const_pvec2f_t min, const_pvec2f_t max);
+void GameMap_InitBspLeafBlockmap(GameMap* map, const_pvec2d_t min, const_pvec2d_t max);
 
 /**
  * Construct an initial (empty) Polyobj Blockmap for this map.
@@ -776,7 +776,7 @@ void GameMap_InitBspLeafBlockmap(GameMap* map, const_pvec2f_t min, const_pvec2f_
  * @param min  Minimal coordinates for the map.
  * @param max  Maximal coordinates for the map.
  */
-void GameMap_InitPolyobjBlockmap(GameMap* map, const_pvec2f_t min, const_pvec2f_t max);
+void GameMap_InitPolyobjBlockmap(GameMap* map, const_pvec2d_t min, const_pvec2d_t max);
 
 #ifdef __cplusplus
 } // extern "C"

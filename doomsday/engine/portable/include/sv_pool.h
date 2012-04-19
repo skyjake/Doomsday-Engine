@@ -62,10 +62,10 @@ typedef enum {
 
 // Mobj delta flags. These are used to determine what a delta contains.
 // (Which parts of a delta mobj_t are used.)
-#define MDF_POS_X               0x0001
-#define MDF_POS_Y               0x0002
-#define MDF_POS_Z               0x0004
-#define MDF_POS                 0x0007
+#define MDF_ORIGIN_X               0x0001
+#define MDF_ORIGIN_Y               0x0002
+#define MDF_ORIGIN_Z               0x0004
+#define MDF_ORIGIN                 0x0007
 #define MDF_MOM_X               0x0008
 #define MDF_MOM_Y               0x0010
 #define MDF_MOM_Z               0x0020
@@ -80,7 +80,7 @@ typedef enum {
 #define MDF_HEIGHT              0x2000
 #define MDF_FLAGS               0x4000
 #define MDF_FLOORCLIP           0x8000
-#define MDF_EVERYTHING          (MDF_POS | MDF_MOM | MDF_ANGLE | MDF_SELECTOR | MDF_STATE |\
+#define MDF_EVERYTHING          (MDF_ORIGIN | MDF_MOM | MDF_ANGLE | MDF_SELECTOR | MDF_STATE |\
                                  MDF_RADIUS | MDF_HEIGHT | MDF_FLAGS | MDF_HEALTH | MDF_FLOORCLIP)
 
 // Mobj Delta Control flags (not included directly in the frame).
@@ -236,7 +236,7 @@ typedef struct {
     char            sideMove;
     int             angle;
     int             turnDelta;
-    float           friction;
+    coord_t         friction;
     int             extraLight;
     int             fixedColorMap;
     int             filter;
@@ -258,9 +258,9 @@ typedef struct {
 
 typedef struct {
     dt_surface_t    surface;
-    float           height;
-    float           target; // Target height.
-    float           speed; // Move speed.
+    coord_t         height;
+    coord_t         target; // Target height.
+    coord_t         speed; // Move speed.
 } dt_plane_t;
 
 typedef struct {
@@ -347,7 +347,7 @@ typedef struct deltalink_s {
  */
 typedef struct ownerinfo_s {
     struct pool_s*  pool;
-    float           pos[3]; // Distance is the most important factor
+    coord_t         origin[3]; // Distance is the most important factor
     angle_t         angle; // Angle can change rapidly => not very important
     float           speed;
     uint            ackThreshold; // Expected ack time in milliseconds

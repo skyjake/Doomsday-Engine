@@ -38,20 +38,20 @@ typedef const_GridmapCell const_BlockmapCell;
 
 typedef GridmapCellBlock BlockmapCellBlock;
 
-Blockmap* Blockmap_New(const pvec2f_t min, const pvec2f_t max, uint cellWidth, uint cellHeight);
+Blockmap* Blockmap_New(coord_t const min[2], coord_t const max[2], uint cellWidth, uint cellHeight);
 
 /**
  * @param blockmap      Blockmap instance.
  * @return  "Origin" map space point for the Blockmap (minimal [x,y]).
  */
-const pvec2f_t Blockmap_Origin(Blockmap* blockmap);
+const pvec2d_t Blockmap_Origin(Blockmap* blockmap);
 
 /**
  * Retrieve the extremal map space points covered by the Blockmap.
  *
  * @param blockmap      Blockmap instance.
  */
-const AABoxf* Blockmap_Bounds(Blockmap* blockmap);
+const AABoxd* Blockmap_Bounds(Blockmap* blockmap);
 
 /**
  * @param blockmap      Blockmap instance.
@@ -76,19 +76,19 @@ void Blockmap_Size(Blockmap* blockmap, BlockmapCoord widthHeight[2]);
  * @param blockmap      Blockmap instance.
  * @return  Width of a Blockmap cell in map space units.
  */
-float Blockmap_CellWidth(Blockmap* blockmap);
+coord_t Blockmap_CellWidth(Blockmap* blockmap);
 
 /**
  * @param blockmap      Blockmap instance.
  * @return  Height of a Blockmap cell in map space units.
  */
-float Blockmap_CellHeight(Blockmap* blockmap);
+coord_t Blockmap_CellHeight(Blockmap* blockmap);
 
 /**
  * @param blockmap      Blockmap instance.
  * @return  Size [width,height] of a Blockmap cell in map space units.
  */
-const pvec2f_t Blockmap_CellSize(Blockmap* blockmap);
+const pvec2d_t Blockmap_CellSize(Blockmap* blockmap);
 
 /**
  * Given map space X coordinate @a x, return the corresponding cell coordinate.
@@ -100,7 +100,7 @@ const pvec2f_t Blockmap_CellSize(Blockmap* blockmap);
  *
  * @return  Translated Blockmap cell X coordinate.
  */
-BlockmapCoord Blockmap_CellX(Blockmap* blockmap, float x);
+BlockmapCoord Blockmap_CellX(Blockmap* blockmap, coord_t x);
 
 /**
  * Given map space Y coordinate @a y, return the corresponding cell coordinate.
@@ -112,13 +112,13 @@ BlockmapCoord Blockmap_CellX(Blockmap* blockmap, float x);
  *
  * @return  Translated Blockmap cell Y coordinate.
  */
-BlockmapCoord Blockmap_CellY(Blockmap* blockmap, float y);
+BlockmapCoord Blockmap_CellY(Blockmap* blockmap, coord_t y);
 
 /**
  * Same as @a Blockmap_CellX() with alternative semantics for when the caller
  * needs to know if the coordinate specified was inside/outside the Blockmap.
  */
-boolean Blockmap_ClipCellX(Blockmap* blockmap, BlockmapCoord* outX, float x);
+boolean Blockmap_ClipCellX(Blockmap* blockmap, BlockmapCoord* outX, coord_t x);
 
 /**
  * Same as @ref Blockmap_CellY() with alternative semantics for when the caller
@@ -130,7 +130,7 @@ boolean Blockmap_ClipCellX(Blockmap* blockmap, BlockmapCoord* outX, float x);
  *
  * @return  @c true iff clamping was necessary.
  */
-boolean Blockmap_ClipCellY(Blockmap* blockmap, BlockmapCoord* outY, float y);
+boolean Blockmap_ClipCellY(Blockmap* blockmap, BlockmapCoord* outY, coord_t y);
 
 /**
  * Given map space XY coordinates @a pos, output the Blockmap cell[x, y] it
@@ -143,7 +143,7 @@ boolean Blockmap_ClipCellY(Blockmap* blockmap, BlockmapCoord* outY, float y);
  *
  * @return  @c true iff clamping was necessary.
  */
-boolean Blockmap_Cell(Blockmap* blockmap, BlockmapCell cell, float const pos[2]);
+boolean Blockmap_Cell(Blockmap* blockmap, BlockmapCell cell, coord_t const pos[2]);
 
 /**
  * Given map space box XY coordinates @a box, output the blockmap cells[x, y]
@@ -156,7 +156,7 @@ boolean Blockmap_Cell(Blockmap* blockmap, BlockmapCell cell, float const pos[2])
  *
  * @return  @c true iff Clamping was necessary.
  */
-boolean Blockmap_CellBlock(Blockmap* blockmap, BlockmapCellBlock* cellBlock, const AABoxf* box);
+boolean Blockmap_CellBlock(Blockmap* blockmap, BlockmapCellBlock* cellBlock, const AABoxd* box);
 
 /**
  * Retrieve the number objects linked in the specified @a cell.

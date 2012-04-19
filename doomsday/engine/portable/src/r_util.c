@@ -26,119 +26,91 @@
  * Refresh Utility Routines.
  */
 
-// HEADER FILES ------------------------------------------------------------
-
 #include <math.h>
 
 #include "de_base.h"
 #include "de_console.h"
 #include "de_refresh.h"
 #include "de_play.h"
+#include "de_misc.h"
 
-// MACROS ------------------------------------------------------------------
-
-#define SLOPERANGE      2048
-#define SLOPEBITS       11
-#define DBITS           (FRACBITS-SLOPEBITS)
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-extern int tantoangle[SLOPERANGE + 1];  // get from tables.c
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
-
-/**
- * Which side of the partition does the point lie?
- *
- * @param x  X coordinate to test.
- * @param y  Y coordinate to test.
- * @return int  @c 0 = front, else @c 1 = back.
- */
-int P_PointOnPartitionSide(const float x, const float y, const partition_t *par)
+int Partition_PointXYOnSide(const partition_t* par, coord_t x, coord_t y)
 {
-    float dx, dy;
-    float left, right;
+    coord_t delta[2];
+    coord_t left, right;
 
-    if(!par->dX)
+    if(!par->direction[VX])
     {
-        if(x <= par->x)
-            return (par->dY > 0? 1:0);
+        if(x <= par->origin[VX])
+            return (par->direction[VY] > 0? 1:0);
         else
-            return (par->dY < 0? 1:0);
+            return (par->direction[VY] < 0? 1:0);
     }
-    if(!par->dY)
+    if(!par->direction[VY])
     {
-        if(y <= par->y)
-            return (par->dX < 0? 1:0);
+        if(y <= par->origin[VY])
+            return (par->direction[VX] < 0? 1:0);
         else
-            return (par->dX > 0? 1:0);
+            return (par->direction[VX] > 0? 1:0);
     }
 
-    dx = (x - par->x);
-    dy = (y - par->y);
+    delta[VX] = (x - par->origin[VX]);
+    delta[VY] = (y - par->origin[VY]);
 
     // Try to quickly decide by looking at the signs.
-    if(par->dX < 0)
+    if(par->direction[VX] < 0)
     {
-        if(par->dY < 0)
+        if(par->direction[VY] < 0)
         {
-            if(dx < 0)
+            if(delta[VX] < 0)
             {
-                if(dy >= 0)
-                    return 0;
+                if(delta[VY] >= 0) return 0;
             }
-            else if(dy < 0)
+            else if(delta[VY] < 0)
+            {
                 return 1;
+            }
         }
         else
         {
-            if(dx < 0)
+            if(delta[VX] < 0)
             {
-                if(dy < 0)
-                    return 1;
+                if(delta[VY] < 0) return 1;
             }
-            else if(dy >= 0)
+            else if(delta[VY] >= 0)
+            {
                 return 0;
+            }
         }
     }
     else
     {
-        if(par->dY < 0)
+        if(par->direction[VY] < 0)
         {
-            if(dx < 0)
+            if(delta[VX] < 0)
             {
-                if(dy < 0)
-                    return 0;
+                if(delta[VY] < 0) return 0;
             }
-            else if(dy >= 0)
+            else if(delta[VY] >= 0)
+            {
                 return 1;
+            }
         }
         else
         {
-            if(dx < 0)
+            if(delta[VX] < 0)
             {
-                if(dy >= 0)
-                    return 1;
+                if(delta[VY] >= 0) return 1;
             }
-            else if(dy < 0)
+            else if(delta[VY] < 0)
+            {
                 return 0;
+            }
         }
     }
 
-    left = par->dY * dx;
-    right = dy * par->dX;
+    left = par->direction[VY] * delta[VX];
+    right = delta[VY] * par->direction[VX];
 
     if(right < left)
         return 0; // front side
@@ -146,114 +118,59 @@ int P_PointOnPartitionSide(const float x, const float y, const partition_t *par)
         return 1; // back side
 }
 
-int R_SlopeDiv(unsigned num, unsigned den)
+int Partition_PointOnSide(const partition_t* par, coord_t const point[2])
 {
-    unsigned int        ans;
-
-    if(den < 512)
-        return SLOPERANGE;
-    ans = (num << 3) / (den >> 8);
-    return ans <= SLOPERANGE ? ans : SLOPERANGE;
+    return Partition_PointXYOnSide(par, point[VX], point[VY]);
 }
 
-static angle_t pointToAngle(float x, float y)
-{
-    fixed_t pos[2];
-
-    if(x == 0 && y == 0)
-        return 0;
-
-    pos[VX] = FLT2FIX(x);
-    pos[VY] = FLT2FIX(y);
-
-    if(pos[VX] >= 0)
-    {   // x >=0
-        if(pos[VY] >= 0)
-        {   // y>= 0
-            if(pos[VX] > pos[VY])
-                return tantoangle[R_SlopeDiv(pos[VY], pos[VX])]; // octant 0
-
-            return ANG90 - 1 - tantoangle[R_SlopeDiv(pos[VX], pos[VY])]; // octant 1
-        }
-
-        // y<0
-        pos[VY] = -pos[VY];
-        if(pos[VX] > pos[VY])
-            return -tantoangle[R_SlopeDiv(pos[VY], pos[VX])]; // octant 8
-
-        return ANG270 + tantoangle[R_SlopeDiv(pos[VX], pos[VY])]; // octant 7
-    }
-
-    // x<0
-    pos[VX] = -pos[VX];
-    if(pos[VY] >= 0)
-    {   // y>= 0
-        if(pos[VX] > pos[VY])
-            return ANG180 - 1 - tantoangle[R_SlopeDiv(pos[VY], pos[VX])]; // octant 3
-
-        return ANG90 + tantoangle[R_SlopeDiv(pos[VX], pos[VY])]; // octant 2
-    }
-
-    // y<0
-    pos[VY] = -pos[VY];
-    if(pos[VX] > pos[VY])
-        return ANG180 + tantoangle[R_SlopeDiv(pos[VY], pos[VX])]; // octant 4
-
-    return ANG270 - 1 - tantoangle[R_SlopeDiv(pos[VX], pos[VY])]; // octant 5
-}
-
-/**
- * To get a global angle from cartesian coordinates, the coordinates are
- * flipped until they are in the first octant of the coordinate system, then
- * the y (<=x) is scaled and divided by x to get a tangent (slope) value
- * which is looked up in the tantoangle[] table.  The +1 size is to handle
- * the case when x==y without additional checking.
- *
- * @param   x           X coordinate to test.
- * @param   y           Y coordinate to test.
- *
- * @return  angle_t     Angle between the test point and view x,y.
- */
-angle_t R_PointToAngle(float x, float y)
+angle_t R_ViewPointXYToAngle(coord_t x, coord_t y)
 {
     const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
-
-    x -= viewData->current.pos[VX];
-    y -= viewData->current.pos[VY];
-
-    return pointToAngle(x, y);
+    x -= viewData->current.origin[VX];
+    y -= viewData->current.origin[VY];
+    return M_PointXYToAngle(x, y);
 }
 
-angle_t R_PointToAngle2(float x1, float y1, float x2, float y2)
-{
-    x2 -= x1;
-    y2 -= y1;
-
-    return pointToAngle(x2, y2);
-}
-
-float R_PointToDist(const float x, const float y)
+coord_t R_ViewPointXYDistance(coord_t x, coord_t y)
 {
     const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
-    float dx, dy, temp, dist;
-    uint angle;
+    coord_t point[2] = { x, y };
+    return M_PointDistance(viewData->current.origin, point);
+}
 
-    dx = fabs(x - viewData->current.pos[VX]);
-    dy = fabs(y - viewData->current.pos[VY]);
+void R_ProjectViewRelativeLine2D(coord_t const center[2], boolean alignToViewPlane,
+    coord_t width, coord_t offset, coord_t start[2], coord_t end[2])
+{
+    const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
+    float sinrv, cosrv;
 
-    if(dy > dx)
+    if(alignToViewPlane)
     {
-        temp = dx;
-        dx = dy;
-        dy = temp;
+        // Should be fully aligned to view plane.
+        sinrv = -viewData->viewCos;
+        cosrv = viewData->viewSin;
+    }
+    else
+    {
+        coord_t trX, trY;
+        float thangle;
+
+        // Transform the origin point.
+        trX = center[VX] - viewData->current.origin[VX];
+        trY = center[VY] - viewData->current.origin[VY];
+
+        thangle = BANG2RAD(bamsAtan2(trY * 10, trX * 10)) - PI / 2;
+        sinrv = sin(thangle);
+        cosrv = cos(thangle);
     }
 
-    angle =
-        (tantoangle[FLT2FIX(dy / dx) >> DBITS] + ANG90) >> ANGLETOFINESHIFT;
+    start[VX] = center[VX];
+    start[VY] = center[VY];
 
-    dist = dx / FIX2FLT(finesine[angle]); // Use as cosine
-
-    return dist;
+    start[VX] -= cosrv * ((width / 2) + offset);
+    start[VY] -= sinrv * ((width / 2) + offset);
+    end[VX] = start[VX] + cosrv * width;
+    end[VY] = start[VY] + sinrv * width;
 }
 
 void R_AmplifyColor(float rgb[3])
@@ -361,22 +278,22 @@ void R_HSVToRGB(float* rgb, float h, float s, float v)
     }
 }
 
-boolean R_GenerateTexCoords(pvec2f_t s, pvec2f_t t, const_pvec3f_t point, float xScale, float yScale,
-    const_pvec3f_t v1, const_pvec3f_t v2, const_pvec3f_t tangent, const_pvec3f_t bitangent)
+boolean R_GenerateTexCoords(pvec2f_t s, pvec2f_t t, const_pvec3d_t point, float xScale, float yScale,
+    const_pvec3d_t v1, const_pvec3d_t v2, const_pvec3f_t tangent, const_pvec3f_t bitangent)
 {
-    vec3f_t vToPoint;
+    vec3d_t vToPoint;
 
-    V3f_Subtract(vToPoint, v1, point);
-    s[0] = V3f_DotProduct(vToPoint, tangent)   * xScale + .5f;
-    t[0] = V3f_DotProduct(vToPoint, bitangent) * yScale + .5f;
+    V3d_Subtract(vToPoint, v1, point);
+    s[0] = V3d_DotProductf(vToPoint, tangent)   * xScale + .5f;
+    t[0] = V3d_DotProductf(vToPoint, bitangent) * yScale + .5f;
 
     // Is the origin point visible?
     if(s[0] >= 1 || t[0] >= 1)
         return false; // Right on the X axis or below on the Y axis.
 
-    V3f_Subtract(vToPoint, v2, point);
-    s[1] = V3f_DotProduct(vToPoint, tangent)   * xScale + .5f;
-    t[1] = V3f_DotProduct(vToPoint, bitangent) * yScale + .5f;
+    V3d_Subtract(vToPoint, v2, point);
+    s[1] = V3d_DotProductf(vToPoint, tangent)   * xScale + .5f;
+    t[1] = V3d_DotProductf(vToPoint, bitangent) * yScale + .5f;
 
     // Is the end point visible?
     if(s[1] <= 0 || t[1] <= 0)
@@ -385,7 +302,7 @@ boolean R_GenerateTexCoords(pvec2f_t s, pvec2f_t t, const_pvec3f_t point, float 
     return true;
 }
 
-/// \note Part of the Doomsday public API.
+/// @note Part of the Doomsday public API.
 boolean R_ChooseAlignModeAndScaleFactor(float* scale, int width, int height,
     int availWidth, int availHeight, scalemode_t scaleMode)
 {
@@ -427,7 +344,7 @@ boolean R_ChooseAlignModeAndScaleFactor(float* scale, int width, int height,
     }
 }
 
-/// \note Part of the Doomsday public API.
+/// @note Part of the Doomsday public API.
 scalemode_t R_ChooseScaleMode2(int width, int height, int availWidth, int availHeight,
     scalemode_t overrideMode, float stretchEpsilon)
 {
@@ -445,7 +362,7 @@ scalemode_t R_ChooseScaleMode2(int width, int height, int availWidth, int availH
     return INRANGE_OF(availRatio, origRatio, stretchEpsilon)? SCALEMODE_STRETCH : SCALEMODE_NO_STRETCH;
 }
 
-/// \note Part of the Doomsday public API.
+/// @note Part of the Doomsday public API.
 scalemode_t R_ChooseScaleMode(int width, int height, int availWidth, int availHeight,
     scalemode_t overrideMode)
 {

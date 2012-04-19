@@ -20,6 +20,12 @@
  * 02110-1301 USA</small>
  */
 
+/**
+ * @todo Why are we not making use of the blockmap here? It would be much more
+ *       efficient to use the blockmap, taking advantage of the inherent locality
+ *       in the data structure.
+ */
+
 #include <math.h>
 
 #include "de_base.h"
@@ -33,8 +39,8 @@ typedef struct losdata_s {
     float startZ; // Eye z of looker.
     float topSlope; // Slope to top of target.
     float bottomSlope; // Slope to bottom of target.
-    float bBox[4];
-    float to[3];
+    AABoxd aaBox;
+    coord_t to[3];
 } losdata_t;
 
 static boolean interceptLineDef(const LineDef* li, losdata_t* los, divline_t* dl)
@@ -42,14 +48,14 @@ static boolean interceptLineDef(const LineDef* li, losdata_t* los, divline_t* dl
     divline_t localDL, *dlPtr;
 
     // Try a quick, bounding-box rejection.
-    if(li->aaBox.minX > los->bBox[BOXRIGHT] ||
-       li->aaBox.maxX < los->bBox[BOXLEFT] ||
-       li->aaBox.minY > los->bBox[BOXTOP] ||
-       li->aaBox.maxY < los->bBox[BOXBOTTOM])
+    if(li->aaBox.minX > los->aaBox.maxX ||
+       li->aaBox.maxX < los->aaBox.minX ||
+       li->aaBox.minY > los->aaBox.maxY ||
+       li->aaBox.maxY < los->aaBox.minY)
         return false;
 
-    if(P_PointOnDivlineSide(li->L_v1pos[VX], li->L_v1pos[VY], &los->trace) ==
-       P_PointOnDivlineSide(li->L_v2pos[VX], li->L_v2pos[VY], &los->trace))
+    if(Divline_PointOnSide(&los->trace, li->L_v1origin) ==
+       Divline_PointOnSide(&los->trace, li->L_v2origin))
         return false; // Not crossed.
 
     if(dl)
@@ -57,10 +63,10 @@ static boolean interceptLineDef(const LineDef* li, losdata_t* los, divline_t* dl
     else
         dlPtr = &localDL;
 
-    P_MakeDivline(li, dlPtr);
+    LineDef_SetDivline(li, dlPtr);
 
-    if(P_PointOnDivlineSide(FIX2FLT(los->trace.pos[VX]), FIX2FLT(los->trace.pos[VY]), dlPtr) ==
-       P_PointOnDivlineSide(los->to[VX], los->to[VY], dlPtr))
+    if(Divline_PointXYOnSide(dlPtr, FIX2FLT(los->trace.origin[VX]), FIX2FLT(los->trace.origin[VY])) ==
+       Divline_PointOnSide(dlPtr, los->to))
         return false; // Not crossed.
 
     return true; // Crossed.
@@ -95,8 +101,8 @@ static boolean crossLineDef(const LineDef* li, byte side, losdata_t* los)
     if(noBack)
     {
         if((los->flags & LS_PASSLEFT) &&
-           P_PointXYOnLineDefSide(FIX2FLT(los->trace.pos[VX]),
-                                  FIX2FLT(los->trace.pos[VY]), li))
+           LineDef_PointXYOnSide(li, FIX2FLT(los->trace.origin[VX]),
+                                     FIX2FLT(los->trace.origin[VY])) < 0)
             return true; // Ray does not intercept hedge from left to right.
 
         if(!(los->flags & (LS_PASSOVER | LS_PASSUNDER)))
@@ -119,7 +125,7 @@ static boolean crossLineDef(const LineDef* li, byte side, losdata_t* los)
     if(!ranges)
         return true;
 
-    frac = P_InterceptVector(&los->trace, &dl);
+    frac = FIX2FLT(Divline_Intersection(&dl, &los->trace));
 
     if((los->flags & LS_PASSOVER) &&
        los->bottomSlope > (fsec->SP_ceilheight - los->startZ) / frac)
@@ -213,11 +219,11 @@ static boolean crossBspNode(GameMap* map, runtime_mapdata_header_t* bspPtr, losd
     while(bspPtr->type != DMU_BSPLEAF)
     {
         const BspNode* node = (BspNode*)bspPtr;
-        int side = P_PointOnPartitionSide(FIX2FLT(los->trace.pos[VX]), FIX2FLT(los->trace.pos[VY]),
-                                          &node->partition);
+        int side = Partition_PointXYOnSide(&node->partition,
+                                         FIX2FLT(los->trace.origin[VX]), FIX2FLT(los->trace.origin[VY]));
 
         // Would the trace completely cross this partition?
-        if(side == P_PointOnPartitionSide(los->to[VX], los->to[VY], &node->partition))
+        if(side == Partition_PointOnSide(&node->partition, los->to))
         {
             // Yes, descend!
             bspPtr = node->children[side];
@@ -235,8 +241,8 @@ static boolean crossBspNode(GameMap* map, runtime_mapdata_header_t* bspPtr, losd
     return crossBspLeaf(map, (BspLeaf*)bspPtr, los);
 }
 
-boolean GameMap_CheckLineSight(GameMap* map, const float from[3], const float to[3],
-    float bottomSlope, float topSlope, int flags)
+boolean GameMap_CheckLineSight(GameMap* map, const coord_t from[3], const coord_t to[3],
+    coord_t bottomSlope, coord_t topSlope, int flags)
 {
     losdata_t los;
     assert(map);
@@ -245,34 +251,34 @@ boolean GameMap_CheckLineSight(GameMap* map, const float from[3], const float to
     los.startZ = from[VZ];
     los.topSlope = to[VZ] + topSlope - los.startZ;
     los.bottomSlope = to[VZ] + bottomSlope - los.startZ;
-    los.trace.pos[VX] = FLT2FIX(from[VX]);
-    los.trace.pos[VY] = FLT2FIX(from[VY]);
-    los.trace.dX = FLT2FIX(to[VX] - from[VX]);
-    los.trace.dY = FLT2FIX(to[VY] - from[VY]);
+    los.trace.origin[VX] = FLT2FIX((float)from[VX]);
+    los.trace.origin[VY] = FLT2FIX((float)from[VY]);
+    los.trace.direction[VX] = FLT2FIX((float)(to[VX] - from[VX]));
+    los.trace.direction[VY] = FLT2FIX((float)(to[VY] - from[VY]));
     los.to[VX] = to[VX];
     los.to[VY] = to[VY];
     los.to[VZ] = to[VZ];
 
     if(from[VX] > to[VX])
     {
-        los.bBox[BOXRIGHT]  = from[VX];
-        los.bBox[BOXLEFT]   = to[VX];
+        los.aaBox.maxX = from[VX];
+        los.aaBox.minX = to[VX];
     }
     else
     {
-        los.bBox[BOXRIGHT]  = to[VX];
-        los.bBox[BOXLEFT]   = from[VX];
+        los.aaBox.maxX = to[VX];
+        los.aaBox.minX = from[VX];
     }
 
     if(from[VY] > to[VY])
     {
-        los.bBox[BOXTOP]    = from[VY];
-        los.bBox[BOXBOTTOM] = to[VY];
+        los.aaBox.maxY = from[VY];
+        los.aaBox.minY = to[VY];
     }
     else
     {
-        los.bBox[BOXTOP]    = to[VY];
-        los.bBox[BOXBOTTOM] = from[VY];
+        los.aaBox.maxY = to[VY];
+        los.aaBox.minY = from[VY];
     }
 
     validCount++;

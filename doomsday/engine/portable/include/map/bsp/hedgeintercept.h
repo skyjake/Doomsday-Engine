@@ -61,8 +61,8 @@ struct HEdgeIntercept
     {
         LOG_INFO("Vertex #%i [x:%f, y:%f] beforeSector: #%d afterSector: #%d %s")
             << inst.vertex->buildData.index
-            << inst.vertex->buildData.pos[VX]
-            << inst.vertex->buildData.pos[VY]
+            << inst.vertex->origin[VX]
+            << inst.vertex->origin[VY]
             << (inst.before? inst.before->buildData.index : -1)
             << (inst.after? inst.after->buildData.index : -1)
             << (inst.selfRef? "SELFREF" : "");

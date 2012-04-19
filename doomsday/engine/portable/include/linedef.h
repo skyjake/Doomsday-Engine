@@ -27,14 +27,32 @@
 #include "p_dmu.h"
 
 /**
+ * On which side of this LineDef does the specified box lie?
+ *
+ * @return  @c <0= bbox is wholly on the left side.
+ *          @c  0= line intersects bbox.
+ *          @c >0= bbox wholly on the right side.
+ */
+int LineDef_BoxOnSide(LineDef* lineDef, const AABoxd* box);
+
+/**
+ * @param offset  Returns the position of the nearest point along the line [0..1].
+ */
+coord_t LineDef_PointDistance(LineDef* lineDef, coord_t const point[2], coord_t* offset);
+coord_t LineDef_PointXYDistance(LineDef* lineDef, coord_t x, coord_t y, coord_t* offset);
+
+/**
  * On which side of this LineDef does the specified point lie?
  *
  * @param lineDef  LineDef instance.
  * @param xy  Map space point to test.
- * @return  Zero if the point is on the right side.
+ *
+ * @return @c <0 Point is to the left/back of the line.
+ *         @c =0 Point lies directly on the line.
+ *         @c >0 Point is to the right/front of the line.
  */
-int LineDef_PointOnSide(const LineDef* lineDef, float const xy[2]);
-int LineDef_PointXYOnSide(const LineDef* lineDef, float x, float y);
+coord_t LineDef_PointOnSide(const LineDef* lineDef, coord_t const point[2]);
+coord_t LineDef_PointXYOnSide(const LineDef* lineDef, coord_t x, coord_t y);
 
 /**
  * Configure the specified divline_t by setting the origin point to this LineDef's
@@ -157,7 +175,7 @@ boolean LineDef_MiddleMaterialCoversOpening(const LineDef* lineDef, int side, bo
  * @return  @c true iff the middle Material is visible (in the opening).
  */
 int LineDef_MiddleMaterialCoords(const LineDef* lineDef, int side,
-    float* bottomLeft, float* bottomRight, float* topLeft, float* topRight, float* texOffY,
+    coord_t* bottomLeft, coord_t* bottomRight, coord_t* topLeft, coord_t* topRight, float* texOffY,
     boolean lowerUnpeg, boolean clipTop, boolean clipBottom);
 
 /**

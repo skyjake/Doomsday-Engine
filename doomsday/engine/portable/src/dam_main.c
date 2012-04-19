@@ -539,7 +539,7 @@ boolean DAM_AttemptMapLoad(const Uri* uri)
         if(loadedOK)
         {
             ded_sky_t* skyDef = NULL;
-            vec2f_t min, max;
+            vec2d_t min, max;
             uint i;
 
             // Do any initialization/error checking work we need to do.
@@ -558,8 +558,7 @@ boolean DAM_AttemptMapLoad(const Uri* uri)
             Rend_DecorInit();
 
             // Init blockmap for searching BSP leafs.
-            V2f_Set(min, map->bBox[BOXLEFT],  map->bBox[BOXBOTTOM]);
-            V2f_Set(max, map->bBox[BOXRIGHT], map->bBox[BOXTOP]);
+            GameMap_Bounds(map, min, max);
             GameMap_InitBspLeafBlockmap(map, min, max);
             for(i = 0; i < map->numBspLeafs; ++i)
             {

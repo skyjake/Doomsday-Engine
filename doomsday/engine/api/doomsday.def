@@ -1,7 +1,7 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 837 <--
-; Other free ordinals: none
+; Highest ordinal is currently: --> 841 <--
+; Other free ordinals: 57
 
 NAME                            "DOOMSDAY"
 
@@ -437,18 +437,19 @@ EXPORTS
     Sv_CanTrustClientPos        @587 NONAME
 
 ; Play.
-    P_AccurateDistance          @57 NONAME
-    P_ApproxDistance            @58 NONAME
-    P_ApproxDistance3           @243 NONAME
-    P_PointOnLineDefSide        @695 NONAME
-    P_PointXYOnLineDefSide      @59 NONAME
-    P_BoxOnLineSide             @60 NONAME
-    P_MakeDivline               @61 NONAME
-    P_PointOnDivlineSide        @62 NONAME
-    P_InterceptVector           @63 NONAME
+    LineDef_BoxOnSide           @60 NONAME
+    LineDef_PointDistance       @208 NONAME
+    LineDef_PointXYDistance     @209 NONAME
+    LineDef_PointOnSide         @695 NONAME
+    LineDef_PointXYOnSide       @59 NONAME
+    LineDef_SetDivline          @61 NONAME
+    Divline_PointOnSide         @838 NONAME
+    Divline_PointXYOnSide       @62 NONAME
+    Divline_Intersection        @63 NONAME
     P_TraceLOS                  @829 NONAME
     P_TraceOpening              @828 NONAME
     P_SetTraceOpening           @64 NONAME
+    P_BspLeafAtPoint            @841 NONAME
     P_BspLeafAtPointXY          @102 NONAME
     P_MobjsBoxIterator          @346 NONAME
     P_LinesBoxIterator          @435 NONAME
@@ -581,7 +582,7 @@ EXPORTS
     P_RegisterMapObjProperty    @412 NONAME
 
 ; Play: Mobjs.
-    P_MobjCreate                @357 NONAME
+    P_MobjCreateXYZ                @357 NONAME
     P_MobjDestroy               @358 NONAME
     P_MobjLink                  @66 NONAME
     P_MobjUnlink                @67 NONAME
@@ -659,7 +660,6 @@ EXPORTS
     R_CreateAnimGroup           @241 NONAME
     R_AddAnimGroupFrame         @242 NONAME
 
-    R_PointToAngle2             @101 NONAME
     R_HSVToRGB                  @439 NONAME
 
     R_CreateColorPalette        @444 NONAME
@@ -859,8 +859,6 @@ EXPORTS
     M_IsStringValidInt          @20 NONAME
     M_IsStringValidByte         @23 NONAME
     M_IsStringValidFloat        @30 NONAME
-    M_ClearBox                  @208 NONAME
-    M_AddToBox                  @209 NONAME
     M_ScreenShot                @210 NONAME
     M_CeilPow2                  @422 NONAME
     M_NumDigits                 @143 NONAME
@@ -873,15 +871,20 @@ EXPORTS
     bamsAtan2                   @145 NONAME
 
     ; Vectors.
-    V2f_Sum                     @54 NONAME
-    V2f_Subtract                @341 NONAME
-    V2f_Rotate                  @344 NONAME
-    V2f_Intersection            @349 NONAME
+    V2d_Sum                     @54 NONAME
+    V2d_Subtract                @341 NONAME
+    V2d_Rotate                  @344 NONAME
+    V2d_PointOnLineSide         @376 NONAME
+    V2d_PointLineDistance       @442 NONAME
+    V2d_ProjectOnLine           @443 NONAME
+    V2d_Intersection            @349 NONAME
 
     ; Utilities.
-    M_PointLineDistance         @442 NONAME
-    M_ProjectPointOnLine        @443 NONAME
-    P_PointOnLineSide           @376 NONAME
+    M_ApproxDistance            @58 NONAME
+    M_ApproxDistance3           @243 NONAME
+    M_PointXYToAngle            @839 NONAME
+    M_PointToAngle2             @840 NONAME
+    M_PointXYToAngle2           @101 NONAME
 
 ; Miscellaneous: Command line.
     ArgAbbreviate               @146 NONAME

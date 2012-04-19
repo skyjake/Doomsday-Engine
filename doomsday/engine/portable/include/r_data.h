@@ -144,7 +144,7 @@ typedef struct glcommand_vertex_s {
 #define RL_MAX_DIVS         64
 typedef struct walldiv_s {
     unsigned int    num;
-    float           pos[RL_MAX_DIVS];
+    coord_t         pos[RL_MAX_DIVS];
 } walldiv_t;
 
 typedef struct rvertex_s {

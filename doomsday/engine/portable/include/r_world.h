@@ -88,12 +88,12 @@ void R_MapInitSurfaceLists(void);
 void            R_OrderVertices(const LineDef* line, const Sector* sector,
                                 Vertex* verts[2]);
 boolean         R_FindBottomTop(LineDef* lineDef, int side, sidedefsection_t section,
-                                float matOffsetX, float matOffsetY,
+                                coord_t matOffsetX, coord_t matOffsetY,
                                 const Plane* ffloor, const Plane* fceil,
                                 const Plane* bfloor, const Plane* bceil,
                                 boolean unpegBottom, boolean unpegTop,
                                 boolean stretchMiddle, boolean isSelfRef,
-                                float* bottom, float* top, float texOffset[2]);
+                                coord_t* bottom, coord_t* top, float texOffset[2]);
 Plane*          R_NewPlaneForSector(Sector* sec);
 void            R_DestroyPlaneOfSector(uint id, Sector* sec);
 

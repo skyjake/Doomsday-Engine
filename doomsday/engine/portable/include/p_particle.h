@@ -90,7 +90,7 @@ typedef enum {
 typedef struct {
     int             stage; // -1 => particle doesn't exist
     short           tics;
-    fixed_t         pos[3]; // Coordinates.
+    fixed_t         origin[3]; // Coordinates.
     fixed_t         mov[3]; // Momentum.
     Sector*         sector; // Updated when needed.
     LineDef*        contact; // Updated when lines hit/avoided.

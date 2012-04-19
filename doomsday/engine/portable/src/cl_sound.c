@@ -133,11 +133,11 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
     {
         // Should we use a specific origin?
         if(flags & SNDDF_FLOOR)
-            emitter = (mobj_t*) &sector->planes[PLN_FLOOR]->origin;
+            emitter = (mobj_t*) &sector->planes[PLN_FLOOR]->base;
         else if(flags & SNDDF_CEILING)
-            emitter = (mobj_t*) &sector->planes[PLN_CEILING]->origin;
+            emitter = (mobj_t*) &sector->planes[PLN_CEILING]->base;
         else
-            emitter = (mobj_t*) &sector->origin;
+            emitter = (mobj_t*) &sector->base;
     }
 
     if(flags & SNDDF_VOLUME)
@@ -253,11 +253,11 @@ else Con_Printf("\n");
  */
 void Cl_Sound(void)
 {
-    int         sound, volume = 127;
-    float       pos[3];
-    byte        flags;
-    uint        num;
-    mobj_t     *mo = NULL;
+    int sound, volume = 127;
+    coord_t pos[3];
+    byte flags;
+    uint num;
+    mobj_t* mo = NULL;
 
     flags = Reader_ReadByte(msgReader);
 
@@ -307,7 +307,7 @@ void Cl_Sound(void)
             Con_Message("Cl_Sound: Invalid sector number %i.\n", num);
             return;
         }
-        mo = (mobj_t*) &SECTOR_PTR(num)->origin;
+        mo = (mobj_t*) &SECTOR_PTR(num)->base;
         //S_StopSound(0, mo);
         S_LocalSoundAtVolume(sound, mo, volume / 127.0f);
     }

@@ -51,7 +51,7 @@ void Sector_UpdateArea(Sector* sector);
  *
  * @param sector  Sector instance.
  */
-void Sector_UpdateOrigin(Sector* sector);
+void Sector_UpdateBase(Sector* sector);
 
 /**
  * Get a property value, selected by DMU_* name.

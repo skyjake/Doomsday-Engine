@@ -3256,7 +3256,7 @@ font_t* R_CreateFontFromDef(ded_compositefont_t* def)
 
 boolean R_DrawVLightVector(const vlight_t* light, void* context)
 {
-    float distFromViewer = fabs(*((float*)context));
+    coord_t distFromViewer = fabs(*((coord_t*)context));
     if(distFromViewer < 1600-8)
     {
         float alpha = 1 - distFromViewer / 1600, scale = 100;

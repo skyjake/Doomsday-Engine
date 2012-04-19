@@ -29,6 +29,7 @@
 #define LIBDENG_BSP_HEDGEINFO
 
 #include "m_misc.h"
+#include "m_vector.h"
 #include "p_mapdata.h"
 
 namespace de {
@@ -42,11 +43,11 @@ class SuperBlock;
  */
 struct HEdgeInfo
 {
-    // Precomputed data for faster calculations.
-    coord_t pSX, pSY;
-    coord_t pEX, pEY;
-    coord_t pDX, pDY;
+    coord_t start[2];
+    coord_t end[2];
+    coord_t direction[2];
 
+    // Precomputed data for faster calculations.
     coord_t pLength;
     coord_t pAngle;
     coord_t pPara;
@@ -65,24 +66,25 @@ struct HEdgeInfo
     LineDef* sourceLineDef;
 
     HEdgeInfo()
-        : pSX(0), pSY(0), pEX(0), pEY(0), pDX(0), pDY(0), pLength(0), pAngle(0), pPara(0), pPerp(0),
+        : pLength(0), pAngle(0), pPara(0), pPerp(0),
           nextOnSide(0), prevOnSide(0), bmapBlock(0), sourceLineDef(0)
-    {}
+    {
+        V2d_Set(start, 0, 0);
+        V2d_Set(end, 0, 0);
+        V2d_Set(direction, 0, 0);
+    }
 
     HEdgeInfo& initFromHEdge(const HEdge& hedge)
     {
-        pSX = hedge.v[0]->buildData.pos[VX];
-        pSY = hedge.v[0]->buildData.pos[VY];
-        pEX = hedge.v[1]->buildData.pos[VX];
-        pEY = hedge.v[1]->buildData.pos[VY];
-        pDX = pEX - pSX;
-        pDY = pEY - pSY;
+        V2d_Copy(start, hedge.v[0]->origin);
+        V2d_Copy(end,   hedge.v[1]->origin);
+        V2d_Subtract(direction, end, start);
 
-        pLength = M_Length(pDX, pDY);
-        pAngle  = M_SlopeToAngle(pDX, pDY);
+        pLength = V2d_Length(direction);
+        pAngle  = M_DirectionToAngle(direction);
 
-        pPerp =  pSY * pDX - pSX * pDY;
-        pPara = -pSX * pDX - pSY * pDY;
+        pPerp =  start[VY] * direction[VX] - start[VX] * direction[VY];
+        pPara = -start[VX] * direction[VX] - start[VY] * direction[VY];
 
         Q_ASSERT(pLength > 0);
         return *this;

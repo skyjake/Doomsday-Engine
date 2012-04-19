@@ -41,8 +41,8 @@ static int rendMobj(mobj_t* mo, void* parameters)
     if(mo->validCount != validCount)
     {
         vec2f_t start, end;
-        V2f_Set(start, mo->pos[VX] - mo->radius, mo->pos[VY] - mo->radius);
-        V2f_Set(end,   mo->pos[VX] + mo->radius, mo->pos[VY] + mo->radius);
+        V2f_Set(start, mo->origin[VX] - mo->radius, mo->origin[VY] - mo->radius);
+        V2f_Set(end,   mo->origin[VX] + mo->radius, mo->origin[VY] + mo->radius);
         glVertex2f(start[VX], start[VY]);
         glVertex2f(  end[VX], start[VY]);
         glVertex2f(  end[VX],   end[VY]);
@@ -57,8 +57,8 @@ static int rendLineDef(LineDef* line, void* parameters)
 {
     if(line->validCount != validCount)
     {
-        glVertex2f(line->L_v1pos[VX], line->L_v1pos[VY]);
-        glVertex2f(line->L_v2pos[VX], line->L_v2pos[VY]);
+        glVertex2f(line->L_v1origin[VX], line->L_v1origin[VY]);
+        glVertex2f(line->L_v2origin[VX], line->L_v2origin[VY]);
 
         line->validCount = validCount;
     }
@@ -80,8 +80,8 @@ static int rendBspLeaf(BspLeaf* bspLeaf, void* parameters)
             hedge = bspLeaf->hedge;
             do
             {
-                V2f_Set(start, hedge->HE_v1pos[VX], hedge->HE_v1pos[VY]);
-                V2f_Set(end,   hedge->HE_v2pos[VX], hedge->HE_v2pos[VY]);
+                V2f_Set(start, hedge->HE_v1origin[VX], hedge->HE_v1origin[VY]);
+                V2f_Set(end,   hedge->HE_v2origin[VX], hedge->HE_v2origin[VY]);
 
                 glBegin(GL_LINES);
                     glVertex2fv(start);
@@ -329,15 +329,15 @@ static void rendBlockmap(Blockmap* blockmap, mobj_t* followMobj,
     BlockmapCellBlock vCellBlock;
     BlockmapCell vCell, cell;
     BlockmapCoord dimensions[2];
-    vec2f_t start, end, cellSize;
+    vec2d_t start, end, cellSize;
 
     Blockmap_Size(blockmap, dimensions);
-    V2f_Copy(cellSize, Blockmap_CellSize(blockmap));
+    V2d_Copy(cellSize, Blockmap_CellSize(blockmap));
 
     if(followMobj)
     {
         // Determine the followed Mobj's blockmap coords.
-        if(Blockmap_Cell(blockmap, vCell, followMobj->pos))
+        if(Blockmap_Cell(blockmap, vCell, followMobj->origin))
             followMobj = NULL; // Outside the blockmap.
 
         if(followMobj)
@@ -345,11 +345,11 @@ static void rendBlockmap(Blockmap* blockmap, mobj_t* followMobj,
             // Determine the extended blockmap coords for the followed
             // Mobj's "touch" range.
             const float radius = followMobj->radius + DDMOBJ_RADIUS_MAX * 2;
-            AABoxf aaBox;
-            V2f_Set(start, followMobj->pos[VX] - radius, followMobj->pos[VY] - radius);
-            V2f_Set(end,   followMobj->pos[VX] + radius, followMobj->pos[VY] + radius);
-            V2f_InitBox(aaBox.arvec2, start);
-            V2f_AddToBox(aaBox.arvec2, end);
+            AABoxd aaBox;
+            V2d_Set(start, followMobj->origin[VX] - radius, followMobj->origin[VY] - radius);
+            V2d_Set(end,   followMobj->origin[VX] + radius, followMobj->origin[VY] + radius);
+            V2d_InitBox(aaBox.arvec2, start);
+            V2d_AddToBox(aaBox.arvec2, end);
             Blockmap_CellBlock(blockmap, &vCellBlock, &aaBox);
         }
     }
@@ -357,14 +357,14 @@ static void rendBlockmap(Blockmap* blockmap, mobj_t* followMobj,
     if(followMobj)
     {
         // Orient on the center of the followed Mobj.
-        V2f_Set(start, vCell[VX] * cellSize[VX],
-                      vCell[VY] * cellSize[VY]);
-        glTranslatef(-start[VX], -start[VY], 0);
+        V2d_Set(start, vCell[VX] * cellSize[VX],
+                       vCell[VY] * cellSize[VY]);
+        glTranslated(-start[VX], -start[VY], 0);
     }
     else
     {
         // Orient on center of the Blockmap.
-        glTranslatef(-(cellSize[VX] * dimensions[VX])/2,
+        glTranslated(-(cellSize[VX] * dimensions[VX])/2,
                      -(cellSize[VY] * dimensions[VY])/2, 0);
     }
 
@@ -389,14 +389,14 @@ static void rendBlockmap(Blockmap* blockmap, mobj_t* followMobj,
                 glColor4f(.33f, .33f, .66f, .33f);
             }
 
-            V2f_Set(start, cell[VX] * cellSize[VX], cell[VY] * cellSize[VY]);
-            V2f_Set(end, cellSize[VX], cellSize[VY]);
-            V2f_Sum(end, end, start);
+            V2d_Set(start, cell[VX] * cellSize[VX], cell[VY] * cellSize[VY]);
+            V2d_Set(end, cellSize[VX], cellSize[VY]);
+            V2d_Sum(end, end, start);
 
-            glVertex2f(start[VX], start[VY]);
-            glVertex2f(  end[VX], start[VY]);
-            glVertex2f(  end[VX],   end[VY]);
-            glVertex2f(start[VX],   end[VY]);
+            glVertex2d(start[VX], start[VY]);
+            glVertex2d(  end[VX], start[VY]);
+            glVertex2d(  end[VX],   end[VY]);
+            glVertex2d(start[VX],   end[VY]);
         }
 
         glEnd();
@@ -409,7 +409,7 @@ static void rendBlockmap(Blockmap* blockmap, mobj_t* followMobj,
      */
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-    glScalef(cellSize[VX], cellSize[VY], 1);
+    glScaled(cellSize[VX], cellSize[VY], 1);
 
     Gridmap_DebugDrawer(Blockmap_Gridmap(blockmap));
 
@@ -423,7 +423,7 @@ static void rendBlockmap(Blockmap* blockmap, mobj_t* followMobj,
      */
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-    glTranslatef(-Blockmap_Origin(blockmap)[VX], -Blockmap_Origin(blockmap)[VY], 0);
+    glTranslated(-Blockmap_Origin(blockmap)[VX], -Blockmap_Origin(blockmap)[VY], 0);
 
     if(cellDrawer)
     {
@@ -589,7 +589,7 @@ void Rend_BlockmapDebug(void)
     {
         // About the cell the followed Mobj is in.
         BlockmapCell cell;
-        if(!Blockmap_Cell(blockmap, cell, followMobj->pos))
+        if(!Blockmap_Cell(blockmap, cell, followMobj->origin))
         {
             origin.x = Window_Width(theWindow) / 2;
             origin.y = 30;

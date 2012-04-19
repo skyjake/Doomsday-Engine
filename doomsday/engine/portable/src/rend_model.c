@@ -959,11 +959,11 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     glPushMatrix();
 
     // Model space => World space
-    glTranslatef(params->center[VX] + params->srvo[VX] +
+    glTranslatef(params->origin[VX] + params->srvo[VX] +
                    Mod_Lerp(mf->offset[VX], mfNext->offset[VX], inter),
-                 params->center[VZ] + params->srvo[VZ] +
+                 params->origin[VZ] + params->srvo[VZ] +
                    Mod_Lerp(mf->offset[VY], mfNext->offset[VY], inter),
-                 params->center[VY] + params->srvo[VY] + zSign *
+                 params->origin[VY] + params->srvo[VY] + zSign *
                    Mod_Lerp(mf->offset[VZ], mfNext->offset[VZ], inter));
 
     if(params->extraYawAngle || params->extraPitchAngle)
@@ -1031,9 +1031,9 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     }
 
     // Coordinates to the center of the model (game coords).
-    modelCenter[VX] = params->center[VX] + params->srvo[VX] + mf->offset[VX];
-    modelCenter[VY] = params->center[VY] + params->srvo[VY] + mf->offset[VZ];
-    modelCenter[VZ] = ((params->center[VZ] + params->gzt) * 2) + params->srvo[VZ] +
+    modelCenter[VX] = params->origin[VX] + params->srvo[VX] + mf->offset[VX];
+    modelCenter[VY] = params->origin[VY] + params->srvo[VY] + mf->offset[VZ];
+    modelCenter[VZ] = ((params->origin[VZ] + params->gzt) * 2) + params->srvo[VZ] +
                         mf->offset[VY];
 
     // Calculate lighting.
@@ -1384,9 +1384,9 @@ void Rend_RenderModel(const rendmodelparams_t* params)
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
 
-        glTranslatef(params->center[VX], params->center[VZ], params->center[VY]);
+        glTranslatef(params->origin[VX], params->origin[VZ], params->origin[VY]);
 
-        VL_ListIterator(params->vLightListIdx, (float*)&params->distance, R_DrawVLightVector);
+        VL_ListIterator(params->vLightListIdx, (void*)&params->distance, R_DrawVLightVector);
 
         glMatrixMode(GL_MODELVIEW);
         glPopMatrix();

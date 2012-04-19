@@ -35,7 +35,7 @@
  * @return              @c true if the traverser function returns @c true
  *                      for all visited lines.
  */
-boolean GameMap_CheckLineSight(GameMap* map, const float from[3], const float to[3],
-    float bottomSlope, float topSlope, int flags);
+boolean GameMap_CheckLineSight(GameMap* map, const coord_t from[3], const coord_t to[3],
+    coord_t bottomSlope, coord_t topSlope, int flags);
 
 #endif /// LIBDENG_MAP_GAMEMAP_SIGHT_H

@@ -63,7 +63,7 @@ void BspLeaf_ChooseFanBase(BspLeaf* leaf)
                     a = other->HE_v1;
                     b = other->HE_v2;
 
-                    if(M_TriangleArea(baseVtx->pos, a->pos, b->pos) <= MIN_TRIANGLE_EPSILON)
+                    if(M_TriangleArea(baseVtx->origin, a->origin, b->origin) <= MIN_TRIANGLE_EPSILON)
                     {
                         // No good. We'll move on to the next vertex.
                         baseVtx = NULL;
@@ -119,8 +119,8 @@ void BspLeaf_PrepareFan(const BspLeaf* leaf, boolean antiClockwise, float height
     // If this is a trifan the first vertex is always the midpoint.
     if(!leaf->fanBase)
     {
-        rvertices[n].pos[VX] = leaf->midPoint[VX];
-        rvertices[n].pos[VY] = leaf->midPoint[VY];
+        rvertices[n].pos[VX] = float(leaf->midPoint[VX]);
+        rvertices[n].pos[VY] = float(leaf->midPoint[VY]);
         rvertices[n].pos[VZ] = height;
         n++;
     }
@@ -130,8 +130,8 @@ void BspLeaf_PrepareFan(const BspLeaf* leaf, boolean antiClockwise, float height
     HEdge* hedge = baseHEdge;
     do
     {
-        rvertices[n].pos[VX] = hedge->HE_v1pos[VX];
-        rvertices[n].pos[VY] = hedge->HE_v1pos[VY];
+        rvertices[n].pos[VX] = float(hedge->HE_v1origin[VX]);
+        rvertices[n].pos[VY] = float(hedge->HE_v1origin[VY]);
         rvertices[n].pos[VZ] = height;
         n++;
     } while((hedge = antiClockwise? hedge->prev : hedge->next) != baseHEdge);
@@ -139,8 +139,8 @@ void BspLeaf_PrepareFan(const BspLeaf* leaf, boolean antiClockwise, float height
     // The last vertex is always equal to the first.
     if(!leaf->fanBase)
     {
-        rvertices[n].pos[VX] = leaf->hedge->HE_v1pos[VX];
-        rvertices[n].pos[VY] = leaf->hedge->HE_v1pos[VY];
+        rvertices[n].pos[VX] = float(leaf->hedge->HE_v1origin[VX]);
+        rvertices[n].pos[VY] = float(leaf->hedge->HE_v1origin[VY]);
         rvertices[n].pos[VZ] = height;
     }
 }
@@ -189,17 +189,17 @@ void BspLeaf_UpdateAABox(BspLeaf* leaf)
 {
     Q_ASSERT(leaf);
 
-    V2f_Set(leaf->aaBox.min, DDMAXFLOAT, DDMAXFLOAT);
-    V2f_Set(leaf->aaBox.max, DDMINFLOAT, DDMINFLOAT);
+    V2d_Set(leaf->aaBox.min, DDMAXFLOAT, DDMAXFLOAT);
+    V2d_Set(leaf->aaBox.max, DDMINFLOAT, DDMINFLOAT);
 
     if(!leaf->hedge) return; // Very odd...
 
     HEdge* hedge = leaf->hedge;
-    V2f_InitBox(leaf->aaBox.arvec2, hedge->HE_v1pos);
+    V2d_InitBox(leaf->aaBox.arvec2, hedge->HE_v1origin);
 
     while((hedge = hedge->next) != leaf->hedge)
     {
-        V2f_AddToBox(leaf->aaBox.arvec2, hedge->HE_v1pos);
+        V2d_AddToBox(leaf->aaBox.arvec2, hedge->HE_v1origin);
     }
 }
 

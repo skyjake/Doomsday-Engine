@@ -157,12 +157,12 @@ uint SuperBlock::hedgeCount(bool addReal, bool addMini) const
 static void initAABoxFromHEdgeVertexes(AABoxd* aaBox, const HEdge* hedge)
 {
     assert(aaBox && hedge);
-    const coord_t* from = hedge->v[0]->buildData.pos;
-    const coord_t* to   = hedge->v[1]->buildData.pos;
-    aaBox->minX = MIN_OF(from[0], to[0]);
-    aaBox->minY = MIN_OF(from[1], to[1]);
-    aaBox->maxX = MAX_OF(from[0], to[0]);
-    aaBox->maxY = MAX_OF(from[1], to[1]);
+    const coord_t* from = hedge->HE_v1origin;
+    const coord_t* to   = hedge->HE_v2origin;
+    aaBox->minX = MIN_OF(from[VX], to[VX]);
+    aaBox->minY = MIN_OF(from[VY], to[VY]);
+    aaBox->maxX = MAX_OF(from[VX], to[VX]);
+    aaBox->maxY = MAX_OF(from[VY], to[VY]);
 }
 
 /// @todo Optimize: Cache this result.
@@ -212,16 +212,16 @@ SuperBlock& SuperBlock::push(HEdge& hedge)
         {
             // Wider than tall.
             int midPoint = (sb->bounds().minX + sb->bounds().maxX) / 2;
-            p1 = hedge.v[0]->buildData.pos[0] >= midPoint? LEFT : RIGHT;
-            p2 = hedge.v[1]->buildData.pos[0] >= midPoint? LEFT : RIGHT;
+            p1 = hedge.v[0]->origin[VX] >= midPoint? LEFT : RIGHT;
+            p2 = hedge.v[1]->origin[VX] >= midPoint? LEFT : RIGHT;
             splitVertical = false;
         }
         else
         {
             // Taller than wide.
             int midPoint = (sb->bounds().minY + sb->bounds().maxY) / 2;
-            p1 = hedge.v[0]->buildData.pos[1] >= midPoint? LEFT : RIGHT;
-            p2 = hedge.v[1]->buildData.pos[1] >= midPoint? LEFT : RIGHT;
+            p1 = hedge.v[0]->origin[VY] >= midPoint? LEFT : RIGHT;
+            p2 = hedge.v[1]->origin[VY] >= midPoint? LEFT : RIGHT;
             splitVertical = true;
         }
 

@@ -47,6 +47,11 @@ typedef const double const_pvec2d_t[2];
 typedef vectorcompd_t* pvec2d_t;
 typedef vec2d_t* arvec2d_t;
 
+fixed_t V2x_Intersection(fixed_t const v1[2], fixed_t const v1Delta[2],
+    fixed_t const v2[2], fixed_t const v2Delta[2]);
+
+int V2x_PointOnLineSide(fixed_t const point[2], fixed_t const lineOrigin[2], fixed_t const lineDirection[2]);
+
 /**
  * Set the vector's x and y components.
  */
@@ -57,7 +62,7 @@ void V2f_SetFixed(pvec2f_t vec, fixed_t x, fixed_t y);
 /**
  * 2-dimensional vector length.
  */
-float V2f_Length(const pvec2f_t vector);
+float V2f_Length(float const vector[2]);
 
 /**
  * The distance between two points.
@@ -75,6 +80,7 @@ float V2f_Normalize(pvec2f_t vec);
  * Make a copy of the source vector.
  */
 void V2f_Copy(pvec2f_t dest, const_pvec2f_t src);
+void V2f_Copyd(pvec2f_t dest, const_pvec2d_t src);
 
 /**
  * Multiply the vector by the scalar.
@@ -110,7 +116,7 @@ float V2f_ScalarProject(const pvec2f_t a, const pvec2f_t b);
  * Project 'a' onto 'b' and store the resulting vector to 'dest':
  * dot(a,b)/dot(b,b)*b
  */
-void V2f_Project(pvec2f_t dest, const pvec2f_t a, const pvec2f_t b);
+float V2f_Project(pvec2f_t dest, const pvec2f_t a, const pvec2f_t b);
 
 /**
  * @return  @c true, if the two vectors are parallel.
@@ -121,6 +127,11 @@ boolean V2f_IsParallel(const pvec2f_t a, const pvec2f_t b);
  * @return  @c true, if the vector is a zero vector.
  */
 boolean V2f_IsZero(const pvec2f_t vec);
+
+/**
+ * The line must be exactly one unit long!
+ */
+float V2f_PointUnitLineDistance(float const point[2], float const linePoint[2], float const lineDirection[2]);
 
 /**
  * Determine where the two lines cross each other.  Notice that the
@@ -209,9 +220,57 @@ void V2d_Sum(pvec2d_t dest, const_pvec2d_t src1, const_pvec2d_t src2);
 void V2d_Subtract(pvec2d_t dest, const_pvec2d_t src1, const_pvec2d_t src2);
 
 /**
+ * Distance from the line to a point.
+ */
+double V2d_PointLineDistance(double const point[2], double const linePoint[2],
+    double const lineDirection[2], double* offset);
+
+/**
+ * Compute the parallel distance from the line to a point.
+ */
+double V2d_PointLineParaDistance(double const point[2], double const lineDirection[2],
+    double linePara, double lineLength);
+
+/**
+ * Compute the perpendicular distance from the line to a point.
+ */
+double V2d_PointLinePerpDistance(double const point[2], double const lineDirection[2],
+    double linePerp, double lineLength);
+
+/**
+ * Determines on which side of line the point is.
+ *
+ * @param point  The point.
+ * @param lineOrigin  Point on the line (origin).
+ * @param lineDirection  Line angle delta (from origin -> out).
+ *
+ * @return @c <0 Point is to the left of the line.
+ *         @c =0 Point lies directly on the line.
+ *         @c >0 Point is to the right of the line.
+ */
+double V2d_PointOnLineSide(double const point[2], double const lineOrigin[2],
+    double const lineDirection[2]);
+
+/**
+ * Determines on which side of line the point is.
+ *
+ * @param point  The point.
+ * @param lineDirection  Line angle delta (from origin -> out).
+ * @param linePerp  Perpendicular d of the line.
+ * @param lineLength  Length of the line.
+ * @param epsilon  Distance within which @a point is considered on top of the line.
+ *
+ * @return @c <0 Point is to the left of the line.
+ *         @c =0 Point lies directly on the line.
+ *         @c >0 Point is to the right of the line.
+ */
+double V2d_PointOnLineSide2(double const point[2], double const lineDirection[2],
+    double linePerp, double lineLength, double epsilon);
+
+/**
  * Calculate the dot product of the two vectors.
  */
-double V2d_DotProduct(const pvec2d_t a, const pvec2d_t b);
+double V2d_DotProduct(double const a[2], double const b[2]);
 
 /**
  * Calculate the scalar projection of 'a' onto 'b': dot(a,b)/len(b)
@@ -222,7 +281,10 @@ double V2d_ScalarProject(const pvec2d_t a, const pvec2d_t b);
  * Project 'a' onto 'b' and store the resulting vector to 'dest':
  * dot(a,b)/dot(b,b)*b
  */
-void V2d_Project(pvec2d_t dest, const pvec2d_t a, const pvec2d_t b);
+double V2d_Project(double dest[2], double const a[2], double const b[2]);
+
+double V2d_ProjectOnLine(double dest[2], double const point[2],
+    double const lineOrigin[2], double const lineDirection[2]);
 
 /**
  * @return  @c true, if the two vectors are parallel.
@@ -342,8 +404,8 @@ float V3f_DotProduct(const_pvec3f_t a, const_pvec3f_t b);
  * @param src1  First vector.
  * @param src2  Second vector.
  */
-void V3f_CrossProduct(pvec3f_t dest, const_pvec3f_t src1, const_pvec3f_t src2);
-void V3f_CrossProductd(pvec3f_t dest, const_pvec3d_t src1d, const_pvec3d_t src2d);
+void V3f_CrossProduct(pvec3f_t dest, const_pvec3f_t a, const_pvec3f_t b);
+void V3f_CrossProductd(pvec3f_t dest, const_pvec3d_t ad, const_pvec3d_t bd);
 
 /**
  * Cross product of two vectors composed of three points.
@@ -473,6 +535,7 @@ void V3d_PointCrossProduct(pvec3d_t dest, const pvec3d_t v1, const pvec3d_t v2, 
  * @return  Distance from the closest point on the plane to the specified arbitary point.
  */
 double V3d_ClosestPointOnPlane(pvec3d_t dest, const_pvec3d_t planeNormal, const_pvec3d_t planePoint, const_pvec3d_t arbPoint);
+double V3d_ClosestPointOnPlanef(pvec3d_t dest, const_pvec3f_t planeNormalf, const_pvec3d_t planePoint, const_pvec3d_t arbPoint);
 
 /**
  * Determine which axis of the given vector is the major.

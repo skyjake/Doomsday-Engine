@@ -336,13 +336,13 @@ int Sfx_CountPlaying(int id)
 /**
  * The priority of a sound is affected by distance, volume and age.
  */
-float Sfx_Priority(mobj_t* emitter, float* fixPos, float volume, int startTic)
+float Sfx_Priority(mobj_t* emitter, coord_t* point, float volume, int startTic)
 {
     // In five seconds all priority of a sound is gone.
     float timeoff = 1000 * (Sys_GetTime() - startTic) / (5.0f * TICSPERSEC);
-    float orig[3];
+    coord_t* origin;
 
-    if(!listener || (!emitter && !fixPos))
+    if(!listener || (!emitter && !point))
     {
         // The sound does not have an origin.
         return 1000 * volume - timeoff;
@@ -351,15 +351,15 @@ float Sfx_Priority(mobj_t* emitter, float* fixPos, float volume, int startTic)
     // The sound has an origin, base the points on distance.
     if(emitter)
     {
-        memcpy(orig, emitter->pos, sizeof(orig));
+        origin = emitter->origin;
     }
     else
     {
         // No emitter mobj, use the fixed source position.
-        memcpy(orig, fixPos, sizeof(orig));
+        origin = point;
     }
 
-    return 1000 * volume - P_MobjPointDistancef(listener, 0, orig) / 2 - timeoff;
+    return 1000 * volume - Mobj_ApproxPointDistance(listener, origin) / 2 - timeoff;
 }
 
 /**
@@ -376,21 +376,20 @@ float Sfx_ChannelPriority(sfxchannel_t* ch)
         return Sfx_Priority(0, 0, ch->volume, ch->startTime);
 
     // ch->pos is set to emitter->xyz during updates.
-    return Sfx_Priority(0, ch->pos, ch->volume, ch->startTime);
+    return Sfx_Priority(0, ch->origin, ch->volume, ch->startTime);
 }
 
 /**
- * @return              The actual 3D coordinates of the listener.
+ * @return  The actual 3D coordinates of the listener.
  */
-void Sfx_GetListenerXYZ(float* pos)
+void Sfx_GetListenerXYZ(float* origin)
 {
-    if(!listener)
-        return;
+    if(!listener) return;
 
-    // \fixme Make it exactly eye-level! (viewheight).
-    pos[VX] = listener->pos[VX];
-    pos[VY] = listener->pos[VY];
-    pos[VZ] = listener->pos[VZ] + listener->height - 5;
+    /// @fixme Make it exactly eye-level! (viewheight).
+    origin[VX] = listener->origin[VX];
+    origin[VY] = listener->origin[VY];
+    origin[VZ] = listener->origin[VZ] + listener->height - 5;
 }
 
 /**
@@ -400,8 +399,8 @@ void Sfx_GetListenerXYZ(float* pos)
  */
 void Sfx_ChannelUpdate(sfxchannel_t* ch)
 {
-    sfxbuffer_t*        buf = ch->buffer;
-    float               normdist, dist, pan, angle, vec[3];
+    sfxbuffer_t* buf = ch->buffer;
+    float normdist, dist, pan, angle, vec[3];
 
     if(!buf || (ch->flags & SFXCF_NO_UPDATE))
         return;
@@ -409,15 +408,15 @@ void Sfx_ChannelUpdate(sfxchannel_t* ch)
     // Copy the emitter's position (if any), to the pos coord array.
     if(ch->emitter)
     {
-        ch->pos[VX] = ch->emitter->pos[VX];
-        ch->pos[VY] = ch->emitter->pos[VY];
-        ch->pos[VZ] = ch->emitter->pos[VZ];
+        ch->origin[VX] = ch->emitter->origin[VX];
+        ch->origin[VY] = ch->emitter->origin[VY];
+        ch->origin[VZ] = ch->emitter->origin[VZ];
 
         // If this is a mobj, center the Z pos.
         if(P_IsMobjThinker(ch->emitter->thinker.function))
         {
             // Sounds originate from the center.
-            ch->pos[VZ] += ch->emitter->height / 2;
+            ch->origin[VZ] += ch->emitter->height / 2;
         }
     }
 
@@ -438,9 +437,11 @@ void Sfx_ChannelUpdate(sfxchannel_t* ch)
         }
         else
         {
-            // Use the channel's real position.
+            // Use the channel's map space origin.
+            float origin[3];
+            V3f_Copyd(origin, ch->origin);
             AudioDriver_SFX()->Set(buf, SFXBP_RELATIVE_MODE, false);
-            AudioDriver_SFX()->Setv(buf, SFXBP_POSITION, ch->pos);
+            AudioDriver_SFX()->Setv(buf, SFXBP_POSITION, origin);
         }
 
         // If the sound is emitted by the listener, speed is zero.
@@ -470,7 +471,7 @@ void Sfx_ChannelUpdate(sfxchannel_t* ch)
         else
         {
             // Calculate roll-off attenuation. [.125/(.125+x), x=0..1]
-            dist = P_MobjPointDistancef(listener, 0, ch->pos);
+            dist = Mobj_ApproxPointDistance(listener, ch->origin);
             if(dist < soundMinDist || (ch->flags & SFXCF_NO_ATTENUATION))
             {
                 // No distance attenuation.
@@ -493,15 +494,12 @@ void Sfx_ChannelUpdate(sfxchannel_t* ch)
             // And pan, too. Calculate angle from listener to emitter.
             if(listener)
             {
-                angle =
-                    (R_PointToAngle2(listener->pos[VX],
-                                     listener->pos[VY],
-                                     ch->pos[VX],
-                                     ch->pos[VY]) -
-                     listener->angle) / (float) ANGLE_MAX *360;
+                angle = (M_PointToAngle2(listener->origin, ch->origin) - listener->angle) / (float) ANGLE_MAX *360;
+
                 // We want a signed angle.
                 if(angle > 180)
                     angle -= 360;
+
                 // Front half.
                 if(angle <= 90 && angle >= -90)
                 {
@@ -659,14 +657,14 @@ sfxchannel_t* Sfx_ChannelFindVacant(boolean use3D, int bytes, int rate,
  * @return              @c true, if a sound is started.
  */
 int Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
-                   mobj_t* emitter, float* fixedPos, int flags)
+                   mobj_t* emitter, coord_t* fixedOrigin, int flags)
 {
-    sfxchannel_t*       ch, *selCh, *prioCh;
-    sfxinfo_t*          info;
-    int                 i, count, nowTime;
-    float               myPrio, lowPrio = 0, channelPrios[SFX_MAX_CHANNELS];
-    boolean             haveChannelPrios = false;
-    boolean             play3D = sfx3D && (emitter || fixedPos);
+    sfxchannel_t* ch, *selCh, *prioCh;
+    sfxinfo_t* info;
+    int i, count, nowTime;
+    float myPrio, lowPrio = 0, channelPrios[SFX_MAX_CHANNELS];
+    boolean haveChannelPrios = false;
+    boolean play3D = sfx3D && (emitter || fixedOrigin);
 
     if(!sfxAvail || sample->id < 1 || sample->id >= defs.count.sounds.num ||
        volume <= 0 || !sample->size)
@@ -687,7 +685,7 @@ int Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
 
     // Calculate the new sound's priority.
     nowTime = Sys_GetTime();
-    myPrio = Sfx_Priority(emitter, fixedPos, volume, nowTime);
+    myPrio = Sfx_Priority(emitter, fixedOrigin, volume, nowTime);
 
     // Ensure there aren't already too many channels playing this sample.
     info = sounds + sample->id;
@@ -840,7 +838,7 @@ int Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
     selCh->flags &= ~(SFXCF_NO_ORIGIN | SFXCF_NO_ATTENUATION | SFXCF_NO_UPDATE);
     selCh->volume = volume;
     selCh->frequency = freq;
-    if(!emitter && !fixedPos)
+    if(!emitter && !fixedOrigin)
     {
         selCh->flags |= SFXCF_NO_ORIGIN;
         selCh->emitter = NULL;
@@ -848,8 +846,8 @@ int Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
     else
     {
         selCh->emitter = emitter;
-        if(fixedPos)
-            memcpy(selCh->pos, fixedPos, sizeof(selCh->pos));
+        if(fixedOrigin)
+            memcpy(selCh->origin, fixedOrigin, sizeof(selCh->origin));
     }
 
     if(flags & SF_NO_ATTENUATION)

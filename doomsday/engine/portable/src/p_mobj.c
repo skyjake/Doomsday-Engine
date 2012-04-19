@@ -76,18 +76,18 @@ void P_InitUnusedMobjList(void)
 /**
  * All mobjs must be allocated through this routine. Part of the public API.
  */
-mobj_t* P_MobjCreate(think_t function, float x, float y, float z,
-                     angle_t angle, float radius, float height, int ddflags)
+mobj_t* P_MobjCreate(think_t function, coord_t const pos[3], angle_t angle,
+    coord_t radius, coord_t height, int ddflags)
 {
     mobj_t* mo;
 
     if(!function)
-        Con_Error("P_MobjCreate: Think function invalid, cannot create mobj.");
+        Con_Error("P_MobjCreateXYZ: Think function invalid, cannot create mobj.");
 
 #ifdef _DEBUG
     if(isClient)
     {
-        VERBOSE2( Con_Message("P_MobjCreate: Client creating mobj at %f,%f\n", x, y) );
+        VERBOSE2( Con_Message("P_MobjCreate: Client creating mobj at [x:%f, y:%f, z:%f]\n", pos[VX], pos[VY], pos[VZ]) );
     }
 #endif
 
@@ -99,13 +99,12 @@ mobj_t* P_MobjCreate(think_t function, float x, float y, float z,
         memset(mo, 0, MOBJ_SIZE);
     }
     else
-    {   // No, we need to allocate another.
+    {
+        // No, we need to allocate another.
         mo = Z_Calloc(MOBJ_SIZE, PU_MAP, NULL);
     }
 
-    mo->pos[VX] = x;
-    mo->pos[VY] = y;
-    mo->pos[VZ] = z;
+    V3d_Copy(mo->origin, pos);
     mo->angle = angle;
     mo->visAngle = mo->angle >> 16; // "angle-servo"; smooth actor turning.
     mo->radius = radius;
@@ -118,6 +117,14 @@ mobj_t* P_MobjCreate(think_t function, float x, float y, float z,
     }
 
     return mo;
+}
+
+mobj_t* P_MobjCreateXYZ(think_t function, coord_t x, coord_t y, coord_t z,
+    angle_t angle, coord_t radius, coord_t height, int ddflags)
+{
+    coord_t pos[3];
+    V3d_Set(pos, x, y, z);
+    return P_MobjCreate(function, pos, angle, radius, height, ddflags);
 }
 
 /**
@@ -196,41 +203,33 @@ void P_MobjSetState(mobj_t* mobj, int statenum)
     }
 }
 
-/**
- * Sets a mobj's position.
- *
- * @return  @c true if successful, @c false otherwise. The object's position is
- *          not changed if the move fails.
- *
- * @note  Internal to the engine.
- */
-boolean P_MobjSetPos(struct mobj_s* mo, float x, float y, float z)
+boolean P_MobjSetOrigin(struct mobj_s* mo, coord_t x, coord_t y, coord_t z)
 {
-    if(!gx.MobjTryMove3f)
+    if(!gx.MobjTryMoveXYZ)
     {
         return false;
     }
-    return gx.MobjTryMove3f(mo, x, y, z);
+    return gx.MobjTryMoveXYZ(mo, x, y, z);
 }
 
-void Mobj_OriginSmoothed(mobj_t* mo, float origin[3])
+void Mobj_OriginSmoothed(mobj_t* mo, coord_t origin[3])
 {
     if(!origin) return;
 
-    V3f_Set(origin, 0, 0, 0);
+    V3d_Set(origin, 0, 0, 0);
     if(!mo) return;
 
-    V3f_Copy(origin, mo->pos);
+    V3d_Copy(origin, mo->origin);
 
     // Apply a Short Range Visual Offset?
     if(useSRVO && mo->state && mo->tics >= 0)
     {
-        const float mul = mo->tics / (float) mo->state->tics;
-        vec3f_t srvo;
+        const double mul = mo->tics / (float) mo->state->tics;
+        vec3d_t srvo;
 
-        V3f_Copy(srvo, mo->srvo);
-        V3f_Scale(srvo, mul);
-        V3f_Sum(origin, origin, srvo);
+        V3d_Copy(srvo, mo->srvo);
+        V3d_Scale(srvo, mul);
+        V3d_Sum(origin, origin, srvo);
     }
 
     if(mo->dPlayer)
@@ -239,7 +238,7 @@ void Mobj_OriginSmoothed(mobj_t* mo, float origin[3])
         if(P_GetDDPlayerIdx(mo->dPlayer) == consolePlayer)
         {
             const viewdata_t* vd = R_ViewData(consolePlayer);
-            V3f_Copy(origin, vd->current.pos);
+            V3d_Copy(origin, vd->current.origin);
         }
         // The client may have a Smoother for this object.
         else if(isClient)
@@ -270,6 +269,14 @@ angle_t Mobj_AngleSmoothed(mobj_t* mo)
     }
 
     return mo->angle;
+}
+
+coord_t Mobj_ApproxPointDistance(mobj_t* mo, coord_t const* point)
+{
+    if(!mo || !point) return 0;
+    return M_ApproxDistance(point[VZ] - mo->origin[VZ],
+                            M_ApproxDistance(point[VX] - mo->origin[VX],
+                                             point[VY] - mo->origin[VY]));
 }
 
 D_CMD(InspectMobj)
@@ -316,7 +323,7 @@ D_CMD(InspectMobj)
     Con_Printf("Height:%f Radius:%f\n", mo->height, mo->radius);
     Con_Printf("Angle:%x Pos:(%f,%f,%f) Mom:(%f,%f,%f)\n",
                mo->angle,
-               mo->pos[0], mo->pos[1], mo->pos[2],
+               mo->origin[0], mo->origin[1], mo->origin[2],
                mo->mom[0], mo->mom[1], mo->mom[2]);
     Con_Printf("FloorZ:%f CeilingZ:%f\n", mo->floorZ, mo->ceilingZ);
     if(mo->bspLeaf)

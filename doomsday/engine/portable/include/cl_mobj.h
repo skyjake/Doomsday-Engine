@@ -79,8 +79,8 @@ void            ClMobj_Destroy(mobj_t *mo);
 clmoinfo_t     *ClMobj_GetInfo(mobj_t* mo);
 struct mobj_s  *ClMobj_Find(thid_t id);
 mobj_t         *ClMobj_MobjForInfo(clmoinfo_t* info);
-void            ClMobj_UnsetPosition(mobj_t *cmo); // needed?
-void            ClMobj_SetPosition(mobj_t *cmo); // needed?
+void            ClMobj_Unlink(mobj_t *cmo); // needed?
+void            ClMobj_Link(mobj_t *cmo); // needed?
 void            ClMobj_SetState(mobj_t *mo, int stnum); // needed?
 void            ClMobj_CheckPlanes(mobj_t *mo, boolean justCreated);
 
