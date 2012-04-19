@@ -792,7 +792,7 @@ void NetSv_SendGameState(int flags, int to)
             | (cfg.jumpEnabled? 0x10 : 0));
 
         Writer_WriteByte(writer, gameSkill & 0x7);
-        Writer_WriteFloat(writer, P_GetGravity());
+        Writer_WriteFloat(writer, (float)P_GetGravity());
 
         if(flags & GSF_CAMERA_INIT)
         {

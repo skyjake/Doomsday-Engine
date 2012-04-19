@@ -82,7 +82,7 @@ void P_HandleSectorHeightChange(int sectorIdx);
 float P_AimLineAttack(mobj_t* t1, angle_t angle, coord_t distance);
 void P_LineAttack(mobj_t* t1, angle_t angle, coord_t distance, coord_t slope, int damage);
 
-float P_GetGravity(void);
+coord_t P_GetGravity(void);
 
 boolean P_CheckSides(mobj_t* actor, coord_t x, coord_t y);
 
