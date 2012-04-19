@@ -111,6 +111,7 @@ typedef struct {
     byte            weaponAutoSwitch;
     byte            noWeaponAutoSwitchIfFiring;
     byte            ammoAutoSwitch;
+    byte            allowMonsterFloatOverBlocking; // if true, floating mobjs are allowed to climb over mobjs blocking the way.
     byte            weaponCycleSequential; // if true multiple next/prev weapon impulses can be chained to allow the user to "count-click-switch".
     int             weaponOrder[NUM_WEAPON_TYPES];
     byte            weaponNextMode; // if true use the weaponOrder for next/previous.

@@ -144,6 +144,7 @@ cvartemplate_t gameCVars[] = {
     {"game-player-wallrun-northonly", 0, CVT_BYTE, &cfg.wallRunNorthOnly, 0, 1},
     {"game-objects-falloff", 0, CVT_BYTE, &cfg.fallOff, 0, 1},
     {"game-zclip", 0, CVT_BYTE, &cfg.moveCheckZ, 0, 1},
+    {"game-monsters-floatoverblocking", 0, CVT_BYTE, &cfg.allowMonsterFloatOverBlocking, 0, 1},
     {"game-corpse-sliding", 0, CVT_BYTE, &cfg.slidingCorpses, 0, 1},
     {"server-game-maulotaur-fixfloorfire", 0, CVT_BYTE, &cfg.fixFloorFire, 0, 1},
     {"server-game-plane-fixmaterialscroll", 0, CVT_BYTE, &cfg.fixPlaneScrollMaterialsEastOnly, 0, 1},

@@ -1182,9 +1182,14 @@ desc = 1=Default to fullscreen.
 [vid-bpp]
 desc = Default color depth (bits per pixel), 16 or 32.
 
+
 #
 # CONSOLE VARIABLES: libcommon
+# @todo  Move these to a 'commonhelp.txt' under plugins/common/data.
 #
 
 [game-pause-focuslost]
 desc = Pause the game when game window loses focus.
+
+[game-monsters-floatoverblocking]
+desc = 1=Allow floating monsters to attempt floating over blocking things (avoids getting stuck).

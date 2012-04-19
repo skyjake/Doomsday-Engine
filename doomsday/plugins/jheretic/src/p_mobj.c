@@ -346,7 +346,8 @@ void P_MobjMoveXY(mobj_t* mo)
     if(FEQUAL(mom[MX], 0) && FEQUAL(mom[MY], 0))
     {
         if(mo->flags & MF_SKULLFLY)
-        {   // A flying mobj slammed into something.
+        {
+            // A flying mobj slammed into something.
             mo->flags &= ~MF_SKULLFLY;
             mo->mom[MX] = mo->mom[MY] = mo->mom[MZ] = 0;
             P_MobjChangeState(mo, P_GetState(mo->type, SN_SEE));
@@ -492,15 +493,17 @@ void P_MobjMoveZ(mobj_t *mo)
         // Float down towards target if too close.
         if(!(mo->flags & MF_SKULLFLY) && !(mo->flags & MF_INFLOAT))
         {
+            float oldZ = mo->pos[VZ];
+
             dist = P_ApproxDistance(mo->pos[VX] - mo->target->pos[VX],
                                     mo->pos[VY] - mo->target->pos[VY]);
 
-            delta = (mo->target->pos[VZ] + mo->target->height /2) -
-                    (mo->pos[VZ] + mo->height /2);
+            delta = (mo->target->pos[VZ] + mo->target->height / 2) - (mo->pos[VZ] + mo->height / 2);
 
             if(dist < mo->radius + mo->target->radius &&
-               fabs(delta) < mo->height + mo->target->height)
-            {   // Don't go INTO the target.
+                    fabs(delta) < mo->height + mo->target->height)
+            {
+                // Don't go INTO the target.
                 delta = 0;
             }
 
@@ -513,6 +516,31 @@ void P_MobjMoveZ(mobj_t *mo)
             {
                 mo->pos[VZ] += FLOATSPEED;
                 P_MobjSetSRVOZ(mo, FLOATSPEED);
+            }            
+            if(delta)
+            {
+                // Where did we end up?
+                if(!P_CheckPosition3fv(mo, mo->pos))
+                {
+                    // Not a valid position; undo the move.
+                    mo->pos[VZ] = oldZ;
+                    P_MobjSetSRVOZ(mo, 0);
+                }
+            }
+        }
+    }
+
+    if(cfg.allowMonsterFloatOverBlocking && (mo->flags & MF_FLOAT) && !mo->player && !(mo->flags & MF_SKULLFLY))
+    {
+        if(!P_CheckPosition3fv(mo, mo->pos))
+        {
+#ifdef _DEBUG
+            Con_Message("Floating thing %i has gotten stuck! onmobj=%i z=%f flz=%f tmfz=%f\n",
+                        mo->thinker.id, mo->onMobj? mo->onMobj->thinker.id : 0, mo->pos[VZ], mo->floorZ, tmFloorZ);
+#endif
+            if(mo->pos[VZ] < tmFloorZ)
+            {
+                mo->pos[VZ] = mo->floorZ = tmFloorZ;
             }
         }
     }
@@ -827,8 +855,7 @@ void P_MobjThinker(mobj_t *mobj)
     P_UpdateHealthBits(mobj);
 
     // Handle X and Y momentums.
-    if(!FEQUAL(mobj->mom[MX], 0) || !FEQUAL(mobj->mom[MY], 0) ||
-       (mobj->flags & MF_SKULLFLY))
+    if(!FEQUAL(mobj->mom[MX], 0) || !FEQUAL(mobj->mom[MY], 0) || (mobj->flags & MF_SKULLFLY))
     {
         P_MobjMoveXY(mobj);
 

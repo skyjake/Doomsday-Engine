@@ -180,6 +180,7 @@ cvartemplate_t gameCVars[] = {
     {"game-objects-falloff", 0, CVT_BYTE, &cfg.fallOff, 0, 1},
     {"game-zclip", 0, CVT_BYTE, &cfg.moveCheckZ, 0, 1},
     {"game-corpse-sliding", 0, CVT_BYTE, &cfg.slidingCorpses, 0, 1},
+    {"game-monsters-floatoverblocking", 0, CVT_BYTE, &cfg.allowMonsterFloatOverBlocking, 0, 1},
 
 // Game state
     {"game-fastmonsters", 0, CVT_BYTE, &fastParm, 0, 1},

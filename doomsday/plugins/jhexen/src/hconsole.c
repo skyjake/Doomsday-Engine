@@ -133,6 +133,7 @@ cvartemplate_t gameCVars[] = {
 
 // Compatibility options
     {"game-icecorpse", 0, CVT_INT, &cfg.translucentIceCorpse, 0, 1},
+    //{"game-monsters-floatoverblocking", 0, CVT_BYTE, &cfg.allowMonsterFloatOverBlocking, 0, 1},
 
 // Game state
     {"game-fastmonsters", 0, CVT_BYTE, &cfg.fastMonsters, 0, 1},
