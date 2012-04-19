@@ -153,33 +153,37 @@ double M_PointDistance(double const a[2], double const b[2]);
 double M_PointXYDistance(double aX, double aY, double bX, double bY);
 
 /**
- * Considers the line to be infinite.
+ * Check the spatial relationship between the given box and a partitioning line.
+ *
+ * @param box            Box being tested.
+ * @param linePoint      Point on the line.
+ * @param lineDirection  Direction of the line (slope).
  *
  * @return  @c <0= bbox is wholly on the left side.
  *          @c  0= line intersects bbox.
  *          @c >0= bbox wholly on the right side.
  */
-int M_BoxOnLineSide(double xl, double xh, double yl, double yh, double const lineOrigin[2],
-    double const lineDirection[2]);
+int M_BoxOnLineSide(const struct aaboxd_s* box, double const linePoint[2], double const lineDirection[2]);
 
 /**
  * Check the spatial relationship between the given box and a partitioning line.
  *
- * @param bbox          Ptr to the box being tested.
- * @param lineOriginX    X coordinate of the start of the line.
- * @param lineOriginY    Y coordinate of the end of the line.
- * @param lineDirection Direction of the line (slope).
- * @param linePerp      Perpendicular d of the line.
- * @param lineLength    Length of the line.
- * @param epsilon       Points within this distance will be considered equal.
+ * An alternative version of M_BoxOnLineSide() which allows specifying many of the
+ * intermediate values used in the calculation a priori for performance reasons.
+ *
+ * @param box            Box being tested.
+ * @param linePoint      Point on the line.
+ * @param lineDirection  Direction of the line (slope).
+ * @param linePerp       Perpendicular distance of the line.
+ * @param lineLength     Length of the line.
+ * @param epsilon        Points within this distance will be considered equal.
  *
  * @return  @c <0= bbox is wholly on the left side.
  *          @c  0= line intersects bbox.
  *          @c >0= bbox wholly on the right side.
  */
-int M_BoxOnLineSide2(const struct aaboxd_s* box, double lineOriginX, double lineOriginY,
-    double const lineDirection[2], double linePerp, double lineLength,
-    double epsilon);
+int M_BoxOnLineSide2(const struct aaboxd_s* box, double const linePoint[2],
+    double const lineDirection[2], double linePerp, double lineLength, double epsilon);
 
 /**
  * Area of a triangle.

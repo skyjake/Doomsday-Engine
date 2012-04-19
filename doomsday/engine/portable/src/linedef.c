@@ -86,7 +86,7 @@ coord_t LineDef_PointXYOnSide(const LineDef* line, coord_t x, coord_t y)
 int LineDef_BoxOnSide(LineDef* line, const AABoxd* box)
 {
     assert(line);
-    return M_BoxOnLineSide(box->minX, box->maxX, box->minY, box->maxY, line->L_v1origin, line->direction);
+    return M_BoxOnLineSide(box, line->L_v1origin, line->direction);
 }
 
 void LineDef_SetDivline(const LineDef* line, divline_t* dl)

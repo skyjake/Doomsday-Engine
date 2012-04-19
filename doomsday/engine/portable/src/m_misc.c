@@ -569,8 +569,7 @@ void M_RotateVector(float vec[3], float degYaw, float degPitch)
     }
 }
 
-int M_BoxOnLineSide(double xl, double xh, double yl, double yh,
-    double const lineOrigin[], double const lineDirection[])
+int M_BoxOnLineSide(const AABoxd* box, double const linePoint[], double const lineDirection[])
 {
     int a, b;
 
@@ -578,8 +577,8 @@ int M_BoxOnLineSide(double xl, double xh, double yl, double yh,
     {
     default: // Shut up compiler.
     case ST_HORIZONTAL:
-        a = yh > lineOrigin[VY]? -1 : 1;
-        b = yl > lineOrigin[VY]? -1 : 1;
+        a = box->maxY > linePoint[VY]? -1 : 1;
+        b = box->minY > linePoint[VY]? -1 : 1;
         if(lineDirection[VX] < 0)
         {
             a = -a;
@@ -588,8 +587,8 @@ int M_BoxOnLineSide(double xl, double xh, double yl, double yh,
         break;
 
     case ST_VERTICAL:
-        a = xh < lineOrigin[VX]? -1 : 1;
-        b = xl < lineOrigin[VX]? -1 : 1;
+        a = box->maxX < linePoint[VX]? -1 : 1;
+        b = box->minX < linePoint[VX]? -1 : 1;
         if(lineDirection[VY] < 0)
         {
             a = -a;
@@ -598,27 +597,24 @@ int M_BoxOnLineSide(double xl, double xh, double yl, double yh,
         break;
 
     case ST_POSITIVE: {
-        double topLeft[2]     = { xl, yh };
-        double bottomRight[2] = { xh, yl };
-        a = V2d_PointOnLineSide(topLeft,     lineOrigin, lineDirection) < 0 ? -1 : 1;
-        b = V2d_PointOnLineSide(bottomRight, lineOrigin, lineDirection) < 0 ? -1 : 1;
+        double topLeft[2]     = { box->minX, box->maxY };
+        double bottomRight[2] = { box->maxX, box->minY };
+        a = V2d_PointOnLineSide(topLeft,     linePoint, lineDirection) < 0 ? -1 : 1;
+        b = V2d_PointOnLineSide(bottomRight, linePoint, lineDirection) < 0 ? -1 : 1;
         break; }
 
-    case ST_NEGATIVE: {
-        double topRight[2]   = { xh, yh };
-        double bottomLeft[2] = { xl, yl };
-        a = V2d_PointOnLineSide(topRight,   lineOrigin, lineDirection) < 0 ? -1 : 1;
-        b = V2d_PointOnLineSide(bottomLeft, lineOrigin, lineDirection) < 0 ? -1 : 1;
-        break; }
+    case ST_NEGATIVE:
+        a = V2d_PointOnLineSide(box->max, linePoint, lineDirection) < 0 ? -1 : 1;
+        b = V2d_PointOnLineSide(box->min, linePoint, lineDirection) < 0 ? -1 : 1;
+        break;
     }
 
     if(a == b) return a;
     return 0;
 }
 
-int M_BoxOnLineSide2(const AABoxd* box, double lineOriginX, double lineOriginY,
-    double const lineDirection[], double linePerp, double lineLength,
-    double epsilon)
+int M_BoxOnLineSide2(const AABoxd* box, double const linePoint[], double const lineDirection[],
+    double linePerp, double lineLength, double epsilon)
 {
     int a, b;
 
@@ -626,8 +622,8 @@ int M_BoxOnLineSide2(const AABoxd* box, double lineOriginX, double lineOriginY,
     {
     default: // Shut up compiler.
     case ST_HORIZONTAL:
-        a = box->maxY > lineOriginY? -1 : 1;
-        b = box->minY > lineOriginY? -1 : 1;
+        a = box->maxY > linePoint[VY]? -1 : 1;
+        b = box->minY > linePoint[VY]? -1 : 1;
         if(lineDirection[VX] < 0)
         {
             a = -a;
@@ -636,8 +632,8 @@ int M_BoxOnLineSide2(const AABoxd* box, double lineOriginX, double lineOriginY,
         break;
 
     case ST_VERTICAL:
-        a = box->maxX < lineOriginX? -1 : 1;
-        b = box->minX < lineOriginX? -1 : 1;
+        a = box->maxX < linePoint[VX]? -1 : 1;
+        b = box->minX < linePoint[VX]? -1 : 1;
         if(lineDirection[VY] < 0)
         {
             a = -a;

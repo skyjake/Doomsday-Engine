@@ -909,9 +909,8 @@ struct Partitioner::Instance
         bounds.maxX = (double)blockBounds.maxX + SHORT_HEDGE_EPSILON * 1.5;
         bounds.maxY = (double)blockBounds.maxY + SHORT_HEDGE_EPSILON * 1.5;
 
-        int side = M_BoxOnLineSide2(&bounds, hInfo.start[VX], hInfo.start[VY],
-                                    hInfo.direction, hInfo.pPerp, hInfo.pLength,
-                                    DIST_EPSILON);
+        int side = M_BoxOnLineSide2(&bounds, hInfo.start, hInfo.direction, hInfo.pPerp,
+                                    hInfo.pLength, DIST_EPSILON);
 
         if(side > 0)
         {
