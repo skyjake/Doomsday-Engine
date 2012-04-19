@@ -360,22 +360,22 @@ void C_DECL A_Raise(player_t *player, pspdef_t *psp)
     P_SetPsprite(player, ps_weapon, newstate);
 }
 
-void C_DECL A_GunFlash(player_t *player, pspdef_t *psp)
+void C_DECL A_GunFlash(player_t* player, pspdef_t* psp)
 {
     P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class_)->attackEndState);
     P_SetPsprite(player, ps_flash, weaponInfo[player->readyWeapon][player->class_].mode[0].states[WSN_FLASH]);
 }
 
-void C_DECL A_Punch(player_t *player, pspdef_t *psp)
+void C_DECL A_Punch(player_t* player, pspdef_t* psp)
 {
-    angle_t             angle;
-    int                 damage;
-    float               slope;
+    angle_t angle;
+    int damage;
+    float slope;
 
     P_ShotAmmo(player);
     player->update |= PSF_AMMO;
-    if(IS_CLIENT)
-        return;
+
+    if(IS_CLIENT) return;
 
     damage = (float) (P_Random() % 10 + 1) * 2;
 
@@ -392,20 +392,16 @@ void C_DECL A_Punch(player_t *player, pspdef_t *psp)
     {
         S_StartSound(SFX_PUNCH, player->plr->mo);
 
-        player->plr->mo->angle =
-            R_PointToAngle2(player->plr->mo->pos[VX],
-                            player->plr->mo->pos[VY],
-                            lineTarget->pos[VX],
-                            lineTarget->pos[VY]);
+        player->plr->mo->angle = M_PointToAngle2(player->plr->mo->origin, lineTarget->origin);
         player->plr->flags |= DDPF_FIXANGLES;
     }
 }
 
-void C_DECL A_Saw(player_t *player, pspdef_t *psp)
+void C_DECL A_Saw(player_t* player, pspdef_t* psp)
 {
-    angle_t             angle;
-    int                 damage;
-    float               slope;
+    angle_t angle;
+    int damage;
+    float slope;
 
     P_ShotAmmo(player);
     player->update |= PSF_AMMO;
@@ -426,12 +422,10 @@ void C_DECL A_Saw(player_t *player, pspdef_t *psp)
 
     S_StartSoundEx(SFX_SAWHIT, player->plr->mo);
 
-    if(IS_CLIENT)
-        return;
+    if(IS_CLIENT) return;
 
     // Turn to face target.
-    angle = R_PointToAngle2(player->plr->mo->pos[VX], player->plr->mo->pos[VY],
-                            lineTarget->pos[VX], lineTarget->pos[VY]);
+    angle = M_PointToAngle2(player->plr->mo->origin, lineTarget->origin);
     if(angle - player->plr->mo->angle > ANG180)
     {
         if(angle - player->plr->mo->angle < -ANG90 / 20)
@@ -449,12 +443,12 @@ void C_DECL A_Saw(player_t *player, pspdef_t *psp)
     player->plr->mo->flags |= MF_JUSTATTACKED;
 }
 
-void C_DECL A_FireMissile(player_t *player, pspdef_t *psp)
+void C_DECL A_FireMissile(player_t* player, pspdef_t* psp)
 {
     P_ShotAmmo(player);
     player->update |= PSF_AMMO;
-    if(IS_CLIENT)
-        return;
+
+    if(IS_CLIENT) return;
 
     P_SpawnMissile(MT_ROCKET, player->plr->mo, NULL);
 }
@@ -463,8 +457,8 @@ void C_DECL A_FireBFG(player_t *player, pspdef_t *psp)
 {
     P_ShotAmmo(player);
     player->update |= PSF_AMMO;
-    if(IS_CLIENT)
-        return;
+
+    if(IS_CLIENT) return;
 
     P_SpawnMissile(MT_BFG, player->plr->mo, NULL);
 }
@@ -663,10 +657,10 @@ void C_DECL A_Light2(player_t *player, pspdef_t *psp)
 /**
  * Spawn a BFG explosion on every monster in view.
  */
-void C_DECL A_BFGSpray(mobj_t *mo)
+void C_DECL A_BFGSpray(mobj_t* mo)
 {
-    int                 i, j, damage;
-    angle_t             angle;
+    int i, j, damage;
+    angle_t angle;
 
     // Offset angles from its attack angle.
     for(i = 0; i < 40; ++i)
@@ -676,13 +670,12 @@ void C_DECL A_BFGSpray(mobj_t *mo)
         // mo->target is the originator (player) of the missile.
         P_AimLineAttack(mo->target, angle, 16 * 64);
 
-        if(!lineTarget)
-            continue;
+        if(!lineTarget) continue;
 
-        P_SpawnMobj3f(MT_EXTRABFG,
-                      lineTarget->pos[VX], lineTarget->pos[VY],
-                      lineTarget->pos[VZ] + lineTarget->height / 2,
-                      angle + ANG180, 0);
+        P_SpawnMobjXYZ(MT_EXTRABFG,
+                       lineTarget->origin[VX], lineTarget->origin[VY],
+                       lineTarget->origin[VZ] + lineTarget->height / 2,
+                       angle + ANG180, 0);
 
         damage = 0;
         for(j = 0; j < 15; ++j)

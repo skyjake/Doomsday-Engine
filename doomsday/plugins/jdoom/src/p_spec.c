@@ -799,7 +799,7 @@ void P_PlayerInSpecialSector(player_t* player)
     if(IS_CLIENT) return;
 
     // Falling, not all the way down yet?
-    if(player->plr->mo->pos[VZ] != P_GetFloatp(sector, DMU_FLOOR_HEIGHT))
+    if(!FEQUAL(player->plr->mo->origin[VZ], P_GetDoublep(sector, DMU_FLOOR_HEIGHT)))
         return;
 
     // Has hitten ground.
@@ -866,8 +866,8 @@ void P_PlayerInSpecialSector(player_t* player)
  */
 void P_UpdateSpecials(void)
 {
-    LineDef*            line;
-    SideDef*            side;
+    LineDef* line;
+    SideDef* side;
 
     // Extended lines and sectors.
     XG_Ticker();
@@ -875,13 +875,13 @@ void P_UpdateSpecials(void)
     // Animate line specials.
     if(IterList_Size(linespecials))
     {
-        float               x, offset;
+        float x, offset;
 
         IterList_SetIteratorDirection(linespecials, ITERLIST_BACKWARD);
         IterList_RewindIterator(linespecials);
         while((line = IterList_MoveIterator(linespecials)) != NULL)
         {
-            xline_t            *xline = P_ToXLine(line);
+            xline_t* xline = P_ToXLine(line);
 
             switch(xline->special)
             {

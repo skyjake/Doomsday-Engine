@@ -521,9 +521,9 @@ int Cht_MyPosFunc(const int* args, int player)
 
     sprintf(buf, "ang=0x%x;x,y,z=(%g,%g,%g)",
             players[CONSOLEPLAYER].plr->mo->angle,
-            players[CONSOLEPLAYER].plr->mo->pos[VX],
-            players[CONSOLEPLAYER].plr->mo->pos[VY],
-            players[CONSOLEPLAYER].plr->mo->pos[VZ]);
+            players[CONSOLEPLAYER].plr->mo->origin[VX],
+            players[CONSOLEPLAYER].plr->mo->origin[VY],
+            players[CONSOLEPLAYER].plr->mo->origin[VZ]);
     P_SetMessage(plr, buf, false);
     return true;
 }
@@ -541,8 +541,8 @@ static void printDebugInfo(player_t* plr)
     mapUri = G_ComposeMapUri(gameEpisode, gameMap);
     mapPath = Uri_ToString(mapUri);
     sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
-            Str_Text(mapPath), plr->plr->mo->pos[VX], plr->plr->mo->pos[VY],
-            plr->plr->mo->pos[VZ]);
+            Str_Text(mapPath), plr->plr->mo->origin[VX], plr->plr->mo->origin[VY],
+            plr->plr->mo->origin[VZ]);
     P_SetMessage(plr, textBuffer, false);
     Str_Delete(mapPath);
     Uri_Delete(mapUri);
@@ -554,13 +554,13 @@ static void printDebugInfo(player_t* plr)
 
     uri = Materials_ComposeUri(P_GetIntp(sub, DMU_FLOOR_MATERIAL));
     path = Uri_ToString(uri);
-    Con_Message("  FloorZ:%g Material:%s\n", P_GetFloatp(sub, DMU_FLOOR_HEIGHT), Str_Text(path));
+    Con_Message("  FloorZ:%g Material:%s\n", P_GetDoublep(sub, DMU_FLOOR_HEIGHT), Str_Text(path));
     Str_Delete(path);
     Uri_Delete(uri);
 
     uri = Materials_ComposeUri(P_GetIntp(sub, DMU_CEILING_MATERIAL));
     path = Uri_ToString(uri);
-    Con_Message("  CeilingZ:%g Material:%s\n", P_GetFloatp(sub, DMU_CEILING_HEIGHT), Str_Text(path));
+    Con_Message("  CeilingZ:%g Material:%s\n", P_GetDoublep(sub, DMU_CEILING_HEIGHT), Str_Text(path));
     Str_Delete(path);
     Uri_Delete(uri);
 

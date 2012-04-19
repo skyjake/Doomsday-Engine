@@ -71,15 +71,15 @@ braindata_t brain; // Global state of boss brain.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static mobj_t *corpseHit;
-static mobj_t *vileObj;
-static float vileTry[3];
+static mobj_t* corpseHit;
+static mobj_t* vileObj;
+static coord_t vileTry[3];
 
-static float dropoffDelta[2], floorZ;
+static coord_t dropoffDelta[2], floorZ;
 
 // Eight directional movement speeds.
-#define MOVESPEED_DIAGONAL      (0.71716309f)
-static const float dirSpeed[8][2] =
+#define MOVESPEED_DIAGONAL      (0.71716309)
+static const coord_t dirSpeed[8][2] =
 {
     {1, 0},
     {MOVESPEED_DIAGONAL, MOVESPEED_DIAGONAL},
@@ -98,27 +98,29 @@ static const float dirSpeed[8][2] =
  * If a monster yells at a player, it will alert other monsters to the
  * player's whereabouts.
  */
-void P_NoiseAlert(mobj_t *target, mobj_t *emitter)
+void P_NoiseAlert(mobj_t* target, mobj_t* emitter)
 {
     VALIDCOUNT++;
     P_RecursiveSound(target, P_GetPtrp(emitter->bspLeaf, DMU_SECTOR), 0);
 }
 
-static boolean checkMeleeRange(mobj_t *actor)
+static boolean checkMeleeRange(mobj_t* actor)
 {
-    mobj_t             *pl;
-    float               dist, range;
+    mobj_t* pl;
+    coord_t dist, range;
 
     if(!actor->target)
         return false;
 
     pl = actor->target;
-    dist = P_ApproxDistance(pl->pos[VX] - actor->pos[VX],
-                            pl->pos[VY] - actor->pos[VY]);
+    dist = M_ApproxDistance(pl->origin[VX] - actor->origin[VX],
+                            pl->origin[VY] - actor->origin[VY]);
+
     if(!cfg.netNoMaxZMonsterMeleeAttack)
-    {   // Account for Z height difference.
-        if(pl->pos[VZ] > actor->pos[VZ] + actor->height ||
-           pl->pos[VZ] + pl->height < actor->pos[VZ])
+    {
+        // Account for Z height difference.
+        if(pl->origin[VZ] > actor->origin[VZ] + actor->height ||
+           pl->origin[VZ] + pl->height < actor->origin[VZ])
             return false;
     }
 
@@ -132,9 +134,9 @@ static boolean checkMeleeRange(mobj_t *actor)
     return true;
 }
 
-static boolean checkMissileRange(mobj_t *actor)
+static boolean checkMissileRange(mobj_t* actor)
 {
-    float               dist;
+    coord_t dist;
 
     if(!P_CheckSight(actor, actor->target))
         return false;
@@ -149,9 +151,8 @@ static boolean checkMissileRange(mobj_t *actor)
     if(actor->reactionTime)
         return false; // Do not attack yet.
 
-    dist =
-        P_ApproxDistance(actor->pos[VX] - actor->target->pos[VX],
-                         actor->pos[VY] - actor->target->pos[VY]) - 64;
+    dist = M_ApproxDistance(actor->origin[VX] - actor->target->origin[VX],
+                            actor->origin[VY] - actor->target->origin[VY]) - 64;
 
     if(P_GetState(actor->type, SN_MELEE) == S_NULL)
         dist -= 128; // No melee attack, so fire more.
@@ -181,7 +182,7 @@ static boolean checkMissileRange(mobj_t *actor)
     if(actor->type == MT_CYBORG && dist > 160)
         dist = 160;
 
-    if((float) P_Random() < dist)
+    if((coord_t) P_Random() < dist)
         return false;
 
     return true;
@@ -194,7 +195,7 @@ static boolean checkMissileRange(mobj_t *actor)
  */
 static boolean moveMobj(mobj_t* actor, boolean dropoff)
 {
-    float pos[3], step[3];
+    coord_t pos[3], step[3];
     LineDef* ld;
     boolean good;
 
@@ -206,19 +207,19 @@ static boolean moveMobj(mobj_t* actor, boolean dropoff)
 
     step[VX] = actor->info->speed * dirSpeed[actor->moveDir][MX];
     step[VY] = actor->info->speed * dirSpeed[actor->moveDir][MY];
-    pos[VX] = actor->pos[VX] + step[VX];
-    pos[VY] = actor->pos[VY] + step[VY];
+    pos[VX] = actor->origin[VX] + step[VX];
+    pos[VY] = actor->origin[VY] + step[VY];
 
     // $dropoff_fix
-    if(!P_TryMove(actor, pos[VX], pos[VY], dropoff, false))
+    if(!P_TryMoveXY(actor, pos[VX], pos[VY], dropoff, false))
     {
         // Float up and down to the contacted floor height.
         if((actor->flags & MF_FLOAT) && floatOk)
         {
-            if(actor->pos[VZ] < tmFloorZ)
-                actor->pos[VZ] += FLOATSPEED;
+            if(actor->origin[VZ] < tmFloorZ)
+                actor->origin[VZ] += FLOATSPEED;
             else
-                actor->pos[VZ] -= FLOATSPEED;
+                actor->origin[VZ] -= FLOATSPEED;
 
             // What if we just floated into another mobj??
             actor->flags |= MF_INFLOAT;
@@ -270,10 +271,10 @@ static boolean moveMobj(mobj_t* actor, boolean dropoff)
     // $dropoff_fix: fall more slowly, under gravity, if fellDown==true
     if(!(actor->flags & MF_FLOAT) && !fellDown)
     {
-        if(actor->pos[VZ] > actor->floorZ)
+        if(actor->origin[VZ] > actor->floorZ)
             P_HitFloor(actor);
 
-        actor->pos[VZ] = actor->floorZ;
+        actor->origin[VZ] = actor->floorZ;
     }
 
     return true;
@@ -297,17 +298,17 @@ static boolean tryMoveMobj(mobj_t *actor)
     return true;
 }
 
-static void doNewChaseDir(mobj_t *actor, float deltaX, float deltaY)
+static void doNewChaseDir(mobj_t *actor, coord_t deltaX, coord_t deltaY)
 {
-    dirtype_t           xdir, ydir, tdir;
-    dirtype_t           olddir = actor->moveDir;
-    dirtype_t           turnaround = olddir;
+    dirtype_t xdir, ydir, tdir;
+    dirtype_t olddir = actor->moveDir;
+    dirtype_t turnaround = olddir;
 
     if(turnaround != DI_NODIR) // Find reverse direction.
         turnaround ^= 4;
 
-    xdir = (deltaX > 10 ? DI_EAST : deltaX < -10 ? DI_WEST : DI_NODIR);
-    ydir = (deltaY < -10 ? DI_SOUTH : deltaY > 10 ? DI_NORTH : DI_NODIR);
+    xdir = (deltaX > 10  ? DI_EAST  : deltaX < -10 ? DI_WEST  : DI_NODIR);
+    ydir = (deltaY < -10 ? DI_SOUTH : deltaY > 10  ? DI_NORTH : DI_NODIR);
 
     // Try direct route.
     if(xdir != DI_NODIR && ydir != DI_NODIR &&
@@ -363,13 +364,13 @@ static void doNewChaseDir(mobj_t *actor, float deltaX, float deltaY)
  *
  * In Doom, they were never allowed to hang over dropoffs, and would remain
  * stuck if involuntarily forced over one. This logic, combined with
- * p_map.c::P_TryMove(), allows monsters to free themselves without making
+ * p_map.c::P_TryMoveXY(), allows monsters to free themselves without making
  * them tend to hang over dropoffs.
  */
 static int PIT_AvoidDropoff(LineDef* line, void* data)
 {
     Sector* backsector = P_GetPtrp(line, DMU_BACK_SECTOR);
-    AABoxf* aaBox = P_GetPtrp(line, DMU_BOUNDING_BOX);
+    AABoxd* aaBox = P_GetPtrp(line, DMU_BOUNDING_BOX);
 
     if(backsector &&
        // Linedef must be contacted
@@ -377,28 +378,27 @@ static int PIT_AvoidDropoff(LineDef* line, void* data)
        tmBox.maxX > aaBox->minX &&
        tmBox.minY < aaBox->maxY &&
        tmBox.maxY > aaBox->minY &&
-       P_BoxOnLineSide(&tmBox, line) == -1)
+       !LineDef_BoxOnSide(line, &tmBox))
     {
-        Sector*             frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
-        float               front = P_GetFloatp(frontsector, DMU_FLOOR_HEIGHT);
-        float               back = P_GetFloatp(backsector, DMU_FLOOR_HEIGHT);
-        float               d1[2];
-        angle_t             angle;
+        Sector* frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
+        coord_t front = P_GetDoublep(frontsector, DMU_FLOOR_HEIGHT);
+        coord_t back  = P_GetDoublep(backsector, DMU_FLOOR_HEIGHT);
+        coord_t d1[2];
+        angle_t angle;
 
-        P_GetFloatpv(line, DMU_DXY, d1);
+        P_GetDoublepv(line, DMU_DXY, d1);
 
         // The monster must contact one of the two floors, and the other
         // must be a tall drop off (more than 24).
         if(back == floorZ && front < floorZ - 24)
         {
-            angle = R_PointToAngle2(0, 0, d1[0], d1[1]); // Front side drop off.
+            angle = M_PointXYToAngle2(0, 0, d1[0], d1[1]); // Front side drop off.
         }
         else
         {
             if(front == floorZ && back < floorZ - 24)
-                angle = R_PointToAngle2(d1[0], d1[1], 0, 0); // Back side drop off.
-            else
-                return false;
+                angle = M_PointXYToAngle2(d1[0], d1[1], 0, 0); // Back side drop off.
+            return false;
         }
 
         // Move away from drop off at a standard speed.
@@ -413,9 +413,9 @@ static int PIT_AvoidDropoff(LineDef* line, void* data)
 /**
  * Driver for above.
  */
-static boolean avoidDropoff(mobj_t *actor)
+static boolean avoidDropoff(mobj_t* actor)
 {
-    floorZ = actor->pos[VZ]; // Remember floor height.
+    floorZ = actor->origin[VZ]; // Remember floor height.
 
     dropoffDelta[VX] = dropoffDelta[VY] = 0;
 
@@ -428,14 +428,14 @@ static boolean avoidDropoff(mobj_t *actor)
     return !(FEQUAL(dropoffDelta[VX], 0) || FEQUAL(dropoffDelta[VY], 0));
 }
 
-static void newChaseDir(mobj_t *actor)
+static void newChaseDir(mobj_t* actor)
 {
-    mobj_t             *target = actor->target;
-    float               deltaX = target->pos[VX] - actor->pos[VX];
-    float               deltaY = target->pos[VY] - actor->pos[VY];
+    mobj_t* target = actor->target;
+    coord_t deltaX = target->origin[VX] - actor->origin[VX];
+    coord_t deltaY = target->origin[VY] - actor->origin[VY];
 
     if(actor->floorZ - actor->dropOffZ > 24 &&
-       actor->pos[VZ] <= actor->floorZ &&
+       actor->origin[VZ] <= actor->floorZ &&
        !(actor->flags & (MF_DROPOFF | MF_FLOAT)) &&
        !cfg.avoidDropoffs && avoidDropoff(actor))
     {
@@ -703,22 +703,19 @@ void C_DECL A_FaceTarget(mobj_t *actor)
 
     actor->turnTime = true; // $visangle-facetarget
     actor->flags &= ~MF_AMBUSH;
-    actor->angle =
-        R_PointToAngle2(actor->pos[VX], actor->pos[VY],
-                        actor->target->pos[VX], actor->target->pos[VY]);
+    actor->angle = M_PointToAngle2(actor->origin, actor->target->origin);
 
     if(actor->target->flags & MF_SHADOW)
         actor->angle += (P_Random() - P_Random()) << 21;
 }
 
-void C_DECL A_PosAttack(mobj_t *actor)
+void C_DECL A_PosAttack(mobj_t* actor)
 {
-    int                 damage;
-    angle_t             angle;
-    float               slope;
+    int damage;
+    angle_t angle;
+    float slope;
 
-    if(!actor->target)
-        return;
+    if(!actor->target) return;
 
     A_FaceTarget(actor);
     angle = actor->angle;
@@ -730,14 +727,13 @@ void C_DECL A_PosAttack(mobj_t *actor)
     P_LineAttack(actor, angle, MISSILERANGE, slope, damage);
 }
 
-void C_DECL A_SPosAttack(mobj_t *actor)
+void C_DECL A_SPosAttack(mobj_t* actor)
 {
-    int                 i, damage;
-    angle_t             angle, bangle;
-    float               slope;
+    int i, damage;
+    angle_t angle, bangle;
+    float slope;
 
-    if(!actor->target)
-        return;
+    if(!actor->target) return;
 
     S_StartSound(SFX_SHOTGN, actor);
     A_FaceTarget(actor);
@@ -896,42 +892,40 @@ void C_DECL A_BruisAttack(mobj_t *actor)
     P_SpawnMissile(MT_BRUISERSHOT, actor, actor->target);
 }
 
-void C_DECL A_SkelMissile(mobj_t *actor)
+void C_DECL A_SkelMissile(mobj_t* actor)
 {
-    mobj_t             *mo;
+    mobj_t* mo;
 
-    if(!actor->target)
-        return;
+    if(!actor->target) return;
 
     A_FaceTarget(actor);
 
     mo = P_SpawnMissile(MT_TRACER, actor, actor->target);
     if(mo)
     {
-        mo->pos[VX] += mo->mom[MX];
-        mo->pos[VY] += mo->mom[MY];
+        mo->origin[VX] += mo->mom[MX];
+        mo->origin[VY] += mo->mom[MY];
         mo->tracer = actor->target;
     }
 }
 
 void C_DECL A_Tracer(mobj_t* actor)
 {
-    uint                an;
-    angle_t             angle;
-    float               dist;
-    float               slope;
-    mobj_t*             dest, *th;
+    uint an;
+    angle_t angle;
+    coord_t dist;
+    float slope;
+    mobj_t* dest, *th;
 
-    if((int) GAMETIC & 3)
-        return;
+    if((int) GAMETIC & 3) return;
 
     // Spawn a puff of smoke behind the rocket.
-    P_SpawnCustomPuff(MT_ROCKETPUFF, actor->pos[VX],
-                      actor->pos[VY],
-                      actor->pos[VZ], actor->angle + ANG180);
+    P_SpawnCustomPuff(MT_ROCKETPUFF, actor->origin[VX],
+                      actor->origin[VY],
+                      actor->origin[VZ], actor->angle + ANG180);
 
-    if((th = P_SpawnMobj3f(MT_SMOKE, actor->pos[VX] - actor->mom[MX],
-                           actor->pos[VY] - actor->mom[MY], actor->pos[VZ],
+    if((th = P_SpawnMobjXYZ(MT_SMOKE, actor->origin[VX] - actor->mom[MX],
+                           actor->origin[VY] - actor->mom[MY], actor->origin[VZ],
                            actor->angle + ANG180, 0)))
     {
         th->mom[MZ] = FIX2FLT(FRACUNIT);
@@ -947,8 +941,7 @@ void C_DECL A_Tracer(mobj_t* actor)
         return;
 
     // Change angle.
-    angle = R_PointToAngle2(actor->pos[VX], actor->pos[VY],
-                            dest->pos[VX], dest->pos[VY]);
+    angle = M_PointToAngle2(actor->origin, dest->origin);
 
     if(angle != actor->angle)
     {
@@ -971,13 +964,13 @@ void C_DECL A_Tracer(mobj_t* actor)
     actor->mom[MY] = actor->info->speed * FIX2FLT(finesine[an]);
 
     // Change slope.
-    dist = P_ApproxDistance(dest->pos[VX] - actor->pos[VX],
-                            dest->pos[VY] - actor->pos[VY]);
+    dist = M_ApproxDistance(dest->origin[VX] - actor->origin[VX],
+                            dest->origin[VY] - actor->origin[VY]);
     dist /= actor->info->speed;
 
     if(dist < 1)
         dist = 1;
-    slope = (dest->pos[VZ] + 40 - actor->pos[VZ]) / dist;
+    slope = (dest->origin[VZ] + 40 - actor->origin[VZ]) / dist;
 
     if(slope < actor->mom[MZ])
         actor->mom[MZ] -= FIX2FLT(FRACUNIT / 8);
@@ -985,21 +978,19 @@ void C_DECL A_Tracer(mobj_t* actor)
         actor->mom[MZ] += FIX2FLT(FRACUNIT / 8);
 }
 
-void C_DECL A_SkelWhoosh(mobj_t *actor)
+void C_DECL A_SkelWhoosh(mobj_t* actor)
 {
-    if(!actor->target)
-        return;
+    if(!actor->target) return;
 
     A_FaceTarget(actor);
     S_StartSound(SFX_SKESWG, actor);
 }
 
-void C_DECL A_SkelFist(mobj_t *actor)
+void C_DECL A_SkelFist(mobj_t* actor)
 {
-    int                 damage;
+    int damage;
 
-    if(!actor->target)
-        return;
+    if(!actor->target) return;
 
     A_FaceTarget(actor);
     if(checkMeleeRange(actor))
@@ -1013,10 +1004,10 @@ void C_DECL A_SkelFist(mobj_t *actor)
 /**
  * Detect a corpse that could be raised.
  */
-int PIT_VileCheck(mobj_t *thing, void *data)
+int PIT_VileCheck(mobj_t* thing, void* data)
 {
-    float               maxdist;
-    boolean             check;
+    coord_t maxdist;
+    boolean check;
 
     if(!(thing->flags & MF_CORPSE))
         return false; // Not a monster.
@@ -1029,8 +1020,8 @@ int PIT_VileCheck(mobj_t *thing, void *data)
 
     maxdist = thing->info->radius + MOBJINFO[MT_VILE].radius;
 
-    if(fabs(thing->pos[VX] - vileTry[VX]) > maxdist ||
-       fabs(thing->pos[VY] - vileTry[VY]) > maxdist)
+    if(fabs(thing->origin[VX] - vileTry[VX]) > maxdist ||
+       fabs(thing->origin[VY] - vileTry[VY]) > maxdist)
         return false; // Not actually touching.
 
     corpseHit = thing;
@@ -1041,12 +1032,12 @@ int PIT_VileCheck(mobj_t *thing, void *data)
     if(cfg.raiseGhosts)
     {
         corpseHit->height *= 2*2;
-        check = P_CheckPosition2f(corpseHit, corpseHit->pos[VX], corpseHit->pos[VY]);
+        check = P_CheckPositionXY(corpseHit, corpseHit->origin[VX], corpseHit->origin[VY]);
         corpseHit->height /= 2*2;
     }
     else
     {
-        float       radius, height;
+        coord_t radius, height;
 
         height = corpseHit->height; // Save temporarily.
         radius = corpseHit->radius; // Save temporarily.
@@ -1054,7 +1045,7 @@ int PIT_VileCheck(mobj_t *thing, void *data)
         corpseHit->radius = corpseHit->info->radius;
         corpseHit->flags |= MF_SOLID;
 
-        check = P_CheckPosition2f(corpseHit, corpseHit->pos[VX], corpseHit->pos[VY]);
+        check = P_CheckPositionXY(corpseHit, corpseHit->origin[VX], corpseHit->origin[VY]);
 
         corpseHit->height = height; // Restore.
         corpseHit->radius = radius; // Restore.
@@ -1075,13 +1066,13 @@ void C_DECL A_VileChase(mobj_t *actor)
 {
     mobjinfo_t* info;
     mobj_t* temp;
-    AABoxf box;
+    AABoxd box;
 
     if(actor->moveDir != DI_NODIR)
     {
         // Check for corpses to raise.
-        vileTry[VX] = actor->pos[VX] + actor->info->speed * dirSpeed[actor->moveDir][VX];
-        vileTry[VY] = actor->pos[VY] + actor->info->speed * dirSpeed[actor->moveDir][VY];
+        vileTry[VX] = actor->origin[VX] + actor->info->speed * dirSpeed[actor->moveDir][VX];
+        vileTry[VY] = actor->origin[VY] + actor->info->speed * dirSpeed[actor->moveDir][VY];
 
         box.minX = vileTry[VX] - MAXRADIUS * 2;
         box.minY = vileTry[VY] - MAXRADIUS * 2;
@@ -1134,13 +1125,13 @@ void C_DECL A_VileStart(mobj_t *actor)
     S_StartSound(SFX_VILATK, actor);
 }
 
-void C_DECL A_StartFire(mobj_t *actor)
+void C_DECL A_StartFire(mobj_t* actor)
 {
     S_StartSound(SFX_FLAMST, actor);
     A_Fire(actor);
 }
 
-void C_DECL A_FireCrackle(mobj_t *actor)
+void C_DECL A_FireCrackle(mobj_t* actor)
 {
     S_StartSound(SFX_FLAME, actor);
     A_Fire(actor);
@@ -1149,26 +1140,24 @@ void C_DECL A_FireCrackle(mobj_t *actor)
 /**
  * Keep fire in front of player unless out of sight.
  */
-void C_DECL A_Fire(mobj_t *actor)
+void C_DECL A_Fire(mobj_t* actor)
 {
-    mobj_t             *dest;
-    uint                an;
+    mobj_t* dest;
+    uint an;
 
     dest = actor->tracer;
-    if(!dest)
-        return;
+    if(!dest) return;
 
     // Don't move it if the vile lost sight.
-    if(!P_CheckSight(actor->target, dest))
-        return;
+    if(!P_CheckSight(actor->target, dest)) return;
 
     an = dest->angle >> ANGLETOFINESHIFT;
 
-    P_MobjUnsetPosition(actor);
-    memcpy(actor->pos, dest->pos, sizeof(actor->pos));
-    actor->pos[VX] += 24 * FIX2FLT(finecosine[an]);
-    actor->pos[VY] += 24 * FIX2FLT(finesine[an]);
-    P_MobjSetPosition(actor);
+    P_MobjUnsetOrigin(actor);
+    memcpy(actor->origin, dest->origin, sizeof(actor->origin));
+    actor->origin[VX] += 24 * FIX2FLT(finecosine[an]);
+    actor->origin[VY] += 24 * FIX2FLT(finesine[an]);
+    P_MobjSetOrigin(actor);
 }
 
 /**
@@ -1176,15 +1165,14 @@ void C_DECL A_Fire(mobj_t *actor)
  */
 void C_DECL A_VileTarget(mobj_t* actor)
 {
-    mobj_t*             fog;
+    mobj_t* fog;
 
-    if(!actor->target)
-        return;
+    if(!actor->target) return;
 
     A_FaceTarget(actor);
 
-    if((fog = P_SpawnMobj3fv(MT_FIRE, actor->target->pos,
-                             actor->target->angle + ANG180, 0)))
+    if((fog = P_SpawnMobj(MT_FIRE, actor->target->origin,
+                          actor->target->angle + ANG180, 0)))
     {
         actor->tracer = fog;
         fog->target = actor;
@@ -1195,16 +1183,14 @@ void C_DECL A_VileTarget(mobj_t* actor)
 
 void C_DECL A_VileAttack(mobj_t* actor)
 {
-    mobj_t*             fire;
-    uint                an;
+    mobj_t* fire;
+    uint an;
 
-    if(!actor->target)
-        return;
+    if(!actor->target) return;
 
     A_FaceTarget(actor);
 
-    if(!P_CheckSight(actor, actor->target))
-        return;
+    if(!P_CheckSight(actor, actor->target)) return;
 
     S_StartSound(SFX_BAREXP, actor);
     P_DamageMobj(actor->target, actor, actor, 20, false);
@@ -1218,8 +1204,8 @@ void C_DECL A_VileAttack(mobj_t* actor)
         return;
 
     // Move the fire between the Vile and the player.
-    fire->pos[VX] = actor->target->pos[VX] - 24 * FIX2FLT(finecosine[an]);
-    fire->pos[VY] = actor->target->pos[VY] - 24 * FIX2FLT(finesine[an]);
+    fire->origin[VX] = actor->target->origin[VX] - 24 * FIX2FLT(finecosine[an]);
+    fire->origin[VY] = actor->target->origin[VY] - 24 * FIX2FLT(finesine[an]);
     P_RadiusAttack(fire, actor, 70, 69);
 }
 
@@ -1301,14 +1287,13 @@ void C_DECL A_FatAttack3(mobj_t *actor)
 /**
  * LostSoul Attack: Fly at the player like a missile.
  */
-void C_DECL A_SkullAttack(mobj_t *actor)
+void C_DECL A_SkullAttack(mobj_t* actor)
 {
-    mobj_t             *dest;
-    uint                an;
-    float               dist;
+    mobj_t* dest;
+    uint an;
+    coord_t dist;
 
-    if(!actor->target)
-        return;
+    if(!actor->target) return;
 
     dest = actor->target;
     actor->flags |= MF_SKULLFLY;
@@ -1320,14 +1305,13 @@ void C_DECL A_SkullAttack(mobj_t *actor)
     actor->mom[MX] = SKULLSPEED * FIX2FLT(finecosine[an]);
     actor->mom[MY] = SKULLSPEED * FIX2FLT(finesine[an]);
 
-    dist = P_ApproxDistance(dest->pos[VX] - actor->pos[VX],
-                            dest->pos[VY] - actor->pos[VY]);
+    dist = M_ApproxDistance(dest->origin[VX] - actor->origin[VX],
+                            dest->origin[VY] - actor->origin[VY]);
     dist /= SKULLSPEED;
 
     if(dist < 1)
         dist = 1;
-    actor->mom[MZ] =
-        (dest->pos[VZ] + (dest->height / 2) - actor->pos[VZ]) / dist;
+    actor->mom[MZ] = (dest->origin[VZ] + (dest->height / 2) - actor->origin[VZ]) / dist;
 }
 
 /**
@@ -1335,14 +1319,15 @@ void C_DECL A_SkullAttack(mobj_t *actor)
  */
 void C_DECL A_PainShootSkull(mobj_t* actor, angle_t angle)
 {
-    float               pos[3];
-    mobj_t*             newmobj;
-    uint                an;
-    float               prestep;
-    Sector*             sec;
+    coord_t pos[3];
+    mobj_t* newmobj;
+    uint an;
+    coord_t prestep;
+    Sector* sec;
 
     if(cfg.maxSkulls)
-    {   // Limit the number of MT_SKULL's we should spawn.
+    {
+        // Limit the number of MT_SKULL's we should spawn.
         countmobjoftypeparams_t params;
 
         // Count total number currently on the map.
@@ -1359,7 +1344,7 @@ void C_DECL A_PainShootSkull(mobj_t* actor, angle_t angle)
     prestep = 4 +
         3 * ((actor->info->radius + MOBJINFO[MT_SKULL].radius) / 2);
 
-    memcpy(pos, actor->pos, sizeof(pos));
+    memcpy(pos, actor->origin, sizeof(pos));
     pos[VX] += prestep * FIX2FLT(finecosine[an]);
     pos[VY] += prestep * FIX2FLT(finesine[an]);
     pos[VZ] += 8;
@@ -1376,16 +1361,15 @@ void C_DECL A_PainShootSkull(mobj_t* actor, angle_t angle)
         if(P_CheckSides(actor, pos[VX], pos[VY]))
             return;
 
-        if(!(newmobj = P_SpawnMobj3fv(MT_SKULL, pos, angle, 0)))
+        if(!(newmobj = P_SpawnMobj(MT_SKULL, pos, angle, 0)))
             return;
 
         sec = P_GetPtrp(newmobj->bspLeaf, DMU_SECTOR);
 
         // Check to see if the new Lost Soul's z value is above the
         // ceiling of its new sector, or below the floor. If so, kill it.
-        if((newmobj->pos[VZ] >
-              (P_GetFloatp(sec, DMU_CEILING_HEIGHT) - newmobj->height)) ||
-           (newmobj->pos[VZ] < P_GetFloatp(sec, DMU_FLOOR_HEIGHT)))
+        if((newmobj->origin[VZ] > (P_GetDoublep(sec, DMU_CEILING_HEIGHT) - newmobj->height)) ||
+           (newmobj->origin[VZ] < P_GetDoublep(sec, DMU_FLOOR_HEIGHT)))
         {
             // Kill it immediately.
             P_DamageMobj(newmobj, actor, actor, 10000, false);
@@ -1394,12 +1378,12 @@ void C_DECL A_PainShootSkull(mobj_t* actor, angle_t angle)
     }
     else
     {   // Use the original DOOM method.
-        if(!(newmobj = P_SpawnMobj3fv(MT_SKULL, pos, angle, 0)))
+        if(!(newmobj = P_SpawnMobj(MT_SKULL, pos, angle, 0)))
             return;
     }
 
     // Check for movements, $dropoff_fix.
-    if(!P_TryMove(newmobj, newmobj->pos[VX], newmobj->pos[VY], false, false))
+    if(!P_TryMoveXY(newmobj, newmobj->origin[VX], newmobj->origin[VY], false, false))
     {
         // Kill it immediately.
         P_DamageMobj(newmobj, actor, actor, 10000, false);
@@ -1751,18 +1735,18 @@ void C_DECL A_BrainPain(mobj_t* mo)
 
 void C_DECL A_BrainScream(mobj_t* mo)
 {
-    float               pos[3];
+    coord_t pos[3];
 
-    pos[VY] = mo->pos[VY] - 320;
+    pos[VY] = mo->origin[VY] - 320;
 
-    for(pos[VX] = mo->pos[VX] - 196; pos[VX] < mo->pos[VX] + 320;
+    for(pos[VX] = mo->origin[VX] - 196; pos[VX] < mo->origin[VX] + 320;
         pos[VX] += 8)
     {
-        mobj_t*             th;
+        mobj_t* th;
 
         pos[VZ] = 128 + (P_Random() * 2);
 
-        if((th = P_SpawnMobj3fv(MT_ROCKET, pos, P_Random() << 24, 0)))
+        if((th = P_SpawnMobj(MT_ROCKET, pos, P_Random() << 24, 0)))
         {
             th->mom[MZ] = FIX2FLT(P_Random() * 512);
 
@@ -1779,14 +1763,14 @@ void C_DECL A_BrainScream(mobj_t* mo)
 
 void C_DECL A_BrainExplode(mobj_t* mo)
 {
-    float               pos[3];
-    mobj_t*             th;
+    coord_t pos[3];
+    mobj_t* th;
 
-    pos[VX] = mo->pos[VX] + FIX2FLT((P_Random() - P_Random()) * 2048);
-    pos[VY] = mo->pos[VY];
+    pos[VX] = mo->origin[VX] + FIX2FLT((P_Random() - P_Random()) * 2048);
+    pos[VY] = mo->origin[VY];
     pos[VZ] = 128 + (P_Random() * 2);
 
-    if((th = P_SpawnMobj3fv(MT_ROCKET, pos, P_Random() << 24, 0)))
+    if((th = P_SpawnMobj(MT_ROCKET, pos, P_Random() << 24, 0)))
     {
         th->mom[MZ] = FIX2FLT(P_Random() * 512);
 
@@ -1798,15 +1782,15 @@ void C_DECL A_BrainExplode(mobj_t* mo)
     }
 }
 
-void C_DECL A_BrainDie(mobj_t *mo)
+void C_DECL A_BrainDie(mobj_t* mo)
 {
     G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
 }
 
-void C_DECL A_BrainSpit(mobj_t *mo)
+void C_DECL A_BrainSpit(mobj_t* mo)
 {
-    mobj_t             *targ;
-    mobj_t             *newmobj;
+    mobj_t* targ;
+    mobj_t* newmobj;
 
     if(!brain.numTargets)
         return; // Ignore if no targets.
@@ -1825,7 +1809,7 @@ void C_DECL A_BrainSpit(mobj_t *mo)
     {
         newmobj->target = targ;
         newmobj->reactionTime =
-            ((targ->pos[VY] - mo->pos[VY]) / newmobj->mom[MY]) / newmobj->state->tics;
+            ((targ->origin[VY] - mo->origin[VY]) / newmobj->mom[MY]) / newmobj->state->tics;
     }
 
     S_StartSound(SFX_BOSPIT, NULL);
@@ -1854,7 +1838,7 @@ void C_DECL A_SpawnFly(mobj_t *mo)
     targ = mo->target;
 
     // First spawn teleport fog.
-    if((fog = P_SpawnMobj3fv(MT_SPAWNFIRE, targ->pos, targ->angle + ANG180, 0)))
+    if((fog = P_SpawnMobj(MT_SPAWNFIRE, targ->origin, targ->angle + ANG180, 0)))
         S_StartSound(SFX_TELEPT, fog);
 
     // Randomly select monster to spawn.
@@ -1884,13 +1868,13 @@ void C_DECL A_SpawnFly(mobj_t *mo)
     else
         type = MT_BRUISER;
 
-    if((newmobj = P_SpawnMobj3fv(type, targ->pos, P_Random() << 24, 0)))
+    if((newmobj = P_SpawnMobj(type, targ->origin, P_Random() << 24, 0)))
     {
         if(Mobj_LookForPlayers(newmobj, true))
             P_MobjChangeState(newmobj, P_GetState(newmobj->type, SN_SEE));
 
         // Telefrag anything in this spot.
-        P_TeleportMove(newmobj, newmobj->pos[VX], newmobj->pos[VY], false);
+        P_TeleportMove(newmobj, newmobj->origin[VX], newmobj->origin[VY], false);
     }
 
     // Remove self (i.e., cube).

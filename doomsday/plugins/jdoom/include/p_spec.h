@@ -72,12 +72,12 @@ typedef enum {
     pastdest
 } result_e;
 
-result_e    T_MovePlane(Sector* sector, float speed, float dest,
-                        int crush, int floorOrCeiling, int direction);
+result_e T_MovePlane(Sector* sector, float speed, coord_t dest, int crush,
+    int floorOrCeiling, int direction);
 
 
-int         EV_BuildStairs(LineDef* line, stair_e type);
+int EV_BuildStairs(LineDef* line, stair_e type);
 
-boolean     P_UseSpecialLine2(mobj_t* mo, LineDef* line, int side);
+boolean P_UseSpecialLine2(mobj_t* mo, LineDef* line, int side);
 
 #endif

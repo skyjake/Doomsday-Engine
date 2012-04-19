@@ -157,7 +157,7 @@ typedef struct jdoom_config_s {
     byte            anyBossDeath;
     byte            monstersStuckInDoors;
     byte            avoidDropoffs;
-    byte            moveBlock; // Dont handle large negative movement in P_TryMove.
+    byte            moveBlock; // Dont handle large negative movement in P_TryMoveXY.
     byte            wallRunNorthOnly; // If handle large make exception for wallrunning
     byte            zombiesCanExit; // Zombie players can exit levels.
     byte            fallOff; // Objects fall under their own weight.

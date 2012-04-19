@@ -62,7 +62,7 @@ typedef struct xsector_s {
     byte            seqType;       // NOT USED ATM
 
     struct {
-        float       origHeight;
+        coord_t     origHeight;
     } planes[2];    // {floor, ceiling}
 
     float           origLight;
