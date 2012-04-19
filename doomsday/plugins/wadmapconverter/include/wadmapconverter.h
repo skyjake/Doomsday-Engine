@@ -106,7 +106,7 @@ typedef struct msector_s {
 } msector_t;
 
 typedef struct mthing_s {
-    int16_t         pos[3];
+    int16_t         origin[3];
     angle_t         angle;
     int16_t         doomEdNum;
     int32_t         flags;

@@ -38,8 +38,8 @@ DD_BASE_POLYOBJ_ELEMENTS()
  * @param polyobj  Polyobj instance.
  * @param delta  Movement delta on the X|Y plane of the map coordinate space.
  */
-boolean Polyobj_Move(Polyobj* po, float delta[2]);
-boolean Polyobj_MoveXY(Polyobj* po, float x, float y);
+boolean Polyobj_Move(Polyobj* po, coord_t delta[2]);
+boolean Polyobj_MoveXY(Polyobj* po, coord_t x, coord_t y);
 
 /**
  * Rotate in the map coordinate space.

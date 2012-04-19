@@ -79,7 +79,7 @@ void S_SectorSound(Sector* sec, int origin, int id)
 {
     mobj_t* centerOrigin, *floorOrigin, *ceilingOrigin;
 
-    centerOrigin  = (mobj_t*) P_GetPtrp(sec, DMU_ORIGIN);
+    centerOrigin  = (mobj_t*) P_GetPtrp(sec, DMU_BASE);
     floorOrigin   = (mobj_t*) P_GetPtrp(sec, DMU_FLOOR_ORIGIN);
     ceilingOrigin = (mobj_t*) P_GetPtrp(sec, DMU_CEILING_ORIGIN);
 

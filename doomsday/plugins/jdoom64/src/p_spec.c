@@ -882,14 +882,14 @@ void P_ShootSpecialLine(mobj_t *thing, LineDef *line)
 /**
  * Called every tic frame that the player origin is in a special sector
  */
-void P_PlayerInSpecialSector(player_t *player)
+void P_PlayerInSpecialSector(player_t* player)
 {
-    Sector *sector = P_GetPtrp(player->plr->mo->bspLeaf, DMU_SECTOR);
+    Sector* sector = P_GetPtrp(player->plr->mo->bspLeaf, DMU_SECTOR);
 
     if(IS_CLIENT) return;
 
     // Falling, not all the way down yet?
-    if(player->plr->mo->pos[VZ] != P_GetFixedp(sector, DMU_FLOOR_HEIGHT))
+    if(!FEQUAL(player->plr->mo->origin[VZ], P_GetDoublep(sector, DMU_FLOOR_HEIGHT)))
         return;
 
     // Has hitten ground.
@@ -953,9 +953,9 @@ void P_PlayerInSpecialSector(player_t *player)
  */
 void P_UpdateSpecials(void)
 {
-    float               x, y; // jd64 added @c y,
-    LineDef*            line;
-    SideDef*            side;
+    float x, y;
+    LineDef* line;
+    SideDef* side;
 
     // Extended lines and sectors.
     XG_Ticker();
@@ -1086,7 +1086,7 @@ void P_ThunderSector(void)
         if(!(mapTime & 32))
         {
             P_SetFloatp(sec, DMU_LIGHT_LEVEL, 1);
-            S_StartSound(SFX_SSSIT, P_GetPtrp(sec, DMU_ORIGIN));
+            S_StartSound(SFX_SSSIT, P_GetPtrp(sec, DMU_BASE));
         }
     }
 }

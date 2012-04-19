@@ -75,11 +75,11 @@
 void P_CalcHeight(player_t* plr)
 {
     int plrNum = plr - players;
-    boolean         airborne;
-    boolean         morphed = false;
-    ddplayer_t*     ddplr = plr->plr;
-    mobj_t*         pmo = ddplr->mo;
-    float           target, step;
+    boolean airborne;
+    boolean morphed = false;
+    ddplayer_t* ddplr = plr->plr;
+    mobj_t* pmo = ddplr->mo;
+    coord_t target, step;
 
     // Regular movement bobbing (needs to be calculated for gun swing even
     // if not on ground).
@@ -89,10 +89,10 @@ void P_CalcHeight(player_t* plr)
         plr->bob = MAXBOB;
 
     // When flying, don't bob the view.
-    if((pmo->flags2 & MF2_FLY) && pmo->pos[VZ] > pmo->floorZ)
+    if((pmo->flags2 & MF2_FLY) && pmo->origin[VZ] > pmo->floorZ)
     {
 #ifdef _DEBUG
-        Con_Message("Flying! z=%f flz=%f\n", pmo->pos[VZ], pmo->floorZ);
+        Con_Message("Flying! z=%f flz=%f\n", pmo->origin[VZ], pmo->floorZ);
 #endif
         plr->bob = 1.0f / 2;
     }
@@ -107,7 +107,7 @@ void P_CalcHeight(player_t* plr)
     if(Get(DD_PLAYBACK))
         airborne = !plr->viewHeight;
     else
-        airborne = pmo->pos[VZ] > pmo->floorZ; // Truly in the air?
+        airborne = pmo->origin[VZ] > pmo->floorZ; // Truly in the air?
 
     // Morphed players don't bob their view.
     if(P_MobjIsCamera(ddplr->mo) /*$democam*/ ||
@@ -140,7 +140,7 @@ void P_CalcHeight(player_t* plr)
         // Foot clipping is done for living players.
         if(plr->playerState != PST_DEAD)
         {
-            if(pmo->floorClip && pmo->pos[VZ] <= pmo->floorZ)
+            if(pmo->floorClip && pmo->origin[VZ] <= pmo->floorZ)
             {
                 target /*plr->viewZ*/ -= pmo->floorClip;
             }
@@ -200,15 +200,15 @@ void P_CalcHeight(player_t* plr)
     }
 
     // Set the plr's eye-level Z coordinate.
-    plr->viewZ = pmo->pos[VZ] + (P_MobjIsCamera(pmo)? 0 : plr->viewHeight);
+    plr->viewZ = pmo->origin[VZ] + (P_MobjIsCamera(pmo)? 0 : plr->viewHeight);
 
 #if __JHEXEN__
     // How about a bit of quake?
     if(localQuakeHappening[plrNum] && !P_IsPaused())
     {
         int intensity = localQuakeHappening[plrNum];
-        plr->viewOffset[VX] = (float) ((M_Random() % (intensity << 2)) - (intensity << 1));
-        plr->viewOffset[VY] = (float) ((M_Random() % (intensity << 2)) - (intensity << 1));
+        plr->viewOffset[VX] = (coord_t) ((M_Random() % (intensity << 2)) - (intensity << 1));
+        plr->viewOffset[VY] = (coord_t) ((M_Random() % (intensity << 2)) - (intensity << 1));
     }
     else
     {

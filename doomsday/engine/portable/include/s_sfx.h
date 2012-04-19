@@ -49,7 +49,7 @@ typedef struct sfxchannel_s {
     int             flags;
     sfxbuffer_t*    buffer;
     mobj_t*         emitter; // Mobj that is emitting the sound.
-    float           pos[3]; // Emit from here (synced with emitter).
+    coord_t         origin[3]; // Emit from here (synced with emitter).
     float           volume; // Sound volume: 1.0 is max.
     float           frequency; // Frequency adjustment: 1.0 is normal.
     int             startTime; // When was the channel last started?
@@ -73,7 +73,7 @@ void            Sfx_EndFrame(void);
 void            Sfx_PurgeCache(void);
 void            Sfx_RefreshChannels(void);
 int             Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
-                               mobj_t* emitter, float* fixedpos, int flags);
+                               mobj_t* emitter, coord_t* fixedpos, int flags);
 int             Sfx_StopSound(int id, mobj_t* emitter);
 int             Sfx_StopSoundWithLowerPriority(int id, mobj_t* emitter, ddboolean_t byPriority);
 void            Sfx_StopSoundGroup(int group, mobj_t* emitter);

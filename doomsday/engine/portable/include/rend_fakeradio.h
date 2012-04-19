@@ -30,9 +30,9 @@ typedef struct {
     float shadowSize;
     const shadowcorner_t* botCn, *topCn, *sideCn;
     const edgespan_t* spans;
-    const float* segOffset;
-    const float* segLength;
-    const float* linedefLength;
+    const coord_t* segOffset;
+    const coord_t* segLength;
+    const coord_t* linedefLength;
     const Sector* frontSec, *backSec;
 } rendsegradio_params_t;
 
@@ -63,4 +63,4 @@ void Rend_RadioBspLeafEdges(BspLeaf* bspLeaf);
  */
 void Rend_DrawShadowOffsetVerts(void);
 
-#endif /* LIBDENG_RENDER_FAKERADIO_H */
+#endif /// LIBDENG_RENDER_FAKERADIO_H

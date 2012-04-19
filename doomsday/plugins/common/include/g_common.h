@@ -55,7 +55,7 @@ boolean G_QuitInProgress(void);
 
 int             P_CameraXYMovement(mobj_t* mo);
 int             P_CameraZMovement(mobj_t* mo);
-void            P_Thrust3D(struct player_s* player, angle_t angle, float lookdir, float forwardMove, float sideMove);
+void            P_Thrust3D(struct player_s* player, angle_t angle, float lookdir, coord_t forwardMove, coord_t sideMove);
 
 D_CMD( CCmdMakeLocal );
 D_CMD( CCmdSetCamera );

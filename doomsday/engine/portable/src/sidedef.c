@@ -25,15 +25,6 @@
 #include "de_refresh.h"
 #include "de_play.h"
 
-void SideDef_UpdateOrigin(SideDef* side)
-{
-    assert(side);
-
-    // The side must be owned by a line.
-    if(!side->line) return;
-
-}
-
 void SideDef_UpdateSurfaceTangents(SideDef* side)
 {
     Surface* surface = &side->SW_topsurface;
@@ -44,8 +35,8 @@ void SideDef_UpdateSurfaceTangents(SideDef* side)
     if(!line) return;
 
     sid = line->L_frontside == side? FRONT : BACK;
-    surface->normal[VY] = (line->L_vpos(sid  )[VX] - line->L_vpos(sid^1)[VX]) / line->length;
-    surface->normal[VX] = (line->L_vpos(sid^1)[VY] - line->L_vpos(sid  )[VY]) / line->length;
+    surface->normal[VY] = (line->L_vorigin(sid  )[VX] - line->L_vorigin(sid^1)[VX]) / line->length;
+    surface->normal[VX] = (line->L_vorigin(sid^1)[VY] - line->L_vorigin(sid  )[VY]) / line->length;
     surface->normal[VZ] = 0;
     V3f_BuildTangents(surface->tangent, surface->bitangent, surface->normal);
 

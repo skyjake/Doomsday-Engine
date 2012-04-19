@@ -75,7 +75,7 @@ extern LineDef *blockLine; // $unstuck: blocking linedef
 
 // Eight directional movement speeds.
 #define MOVESPEED_DIAGONAL      (0.71716309f)
-static const float dirSpeed[8][2] =
+static const coord_t dirSpeed[8][2] =
 {
     {1, 0},
     {MOVESPEED_DIAGONAL, MOVESPEED_DIAGONAL},
@@ -93,7 +93,7 @@ int bodyqueslot;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static float dropoffDelta[2], floorZ;
+static coord_t dropoffDelta[2], floorZ;
 
 // CODE --------------------------------------------------------------------
 
@@ -107,27 +107,29 @@ void P_ClearBodyQueue(void)
  * If a monster yells at a player, it will alert other monsters to the
  * player's whereabouts.
  */
-void P_NoiseAlert(mobj_t *target, mobj_t *emitter)
+void P_NoiseAlert(mobj_t* target, mobj_t* emitter)
 {
     VALIDCOUNT++;
     P_RecursiveSound(target, P_GetPtrp(emitter->bspLeaf, DMU_SECTOR), 0);
 }
 
-boolean P_CheckMeleeRange(mobj_t *actor)
+boolean P_CheckMeleeRange(mobj_t* actor)
 {
-    mobj_t             *pl;
-    float               dist, range;
+    mobj_t* pl;
+    coord_t dist, range;
 
     if(!actor->target)
         return false;
 
     pl = actor->target;
-    dist = P_ApproxDistance(pl->pos[VX] - actor->pos[VX],
-                            pl->pos[VY] - actor->pos[VY]);
+    dist = M_ApproxDistance(pl->origin[VX] - actor->origin[VX],
+                            pl->origin[VY] - actor->origin[VY]);
+
     if(!cfg.netNoMaxZMonsterMeleeAttack)
-    {   // Account for Z height difference.
-        if(pl->pos[VZ] > actor->pos[VZ] + actor->height ||
-           pl->pos[VZ] + pl->height < actor->pos[VZ])
+    {
+        // Account for Z height difference.
+        if(pl->origin[VZ] > actor->origin[VZ] + actor->height ||
+           pl->origin[VZ] + pl->height < actor->origin[VZ])
             return false;
     }
 
@@ -141,9 +143,9 @@ boolean P_CheckMeleeRange(mobj_t *actor)
     return true;
 }
 
-boolean P_CheckMissileRange(mobj_t *actor)
+boolean P_CheckMissileRange(mobj_t* actor)
 {
-    float       dist;
+    coord_t dist;
 
     if(!P_CheckSight(actor, actor->target))
         return false;
@@ -157,10 +159,8 @@ boolean P_CheckMissileRange(mobj_t *actor)
     if(actor->reactionTime)
         return false; // Don't attack yet
 
-    dist =
-        (P_ApproxDistance
-         (actor->pos[VX] - actor->target->pos[VX],
-          actor->pos[VY] - actor->target->pos[VY])) - 64;
+    dist = M_ApproxDistance(actor->origin[VX] - actor->target->origin[VX],
+                            actor->origin[VY] - actor->target->origin[VY]) - 64;
 
     if(P_GetState(actor->type, SN_MELEE) == S_NULL)
         dist -= 128; // No melee attack, so fire more frequently.
@@ -183,11 +183,11 @@ boolean P_CheckMissileRange(mobj_t *actor)
  *
  * @return                  @c false, if the move is blocked.
  */
-boolean P_Move(mobj_t *actor, boolean dropoff)
+boolean P_Move(mobj_t* actor, boolean dropoff)
 {
-    float       pos[2], step[2];
-    LineDef    *ld;
-    boolean     good;
+    coord_t pos[2], step[2];
+    LineDef* ld;
+    boolean good;
 
     if(actor->moveDir == DI_NODIR)
         return false;
@@ -197,24 +197,24 @@ boolean P_Move(mobj_t *actor, boolean dropoff)
 
     step[VX] = actor->info->speed * dirSpeed[actor->moveDir][VX];
     step[VY] = actor->info->speed * dirSpeed[actor->moveDir][VY];
-    pos[VX] = actor->pos[VX] + step[VX];
-    pos[VY] = actor->pos[VY] + step[VY];
+    pos[VX] = actor->origin[VX] + step[VX];
+    pos[VY] = actor->origin[VY] + step[VY];
 
     // killough $dropoff_fix.
-    if(!P_TryMove(actor, pos[VX], pos[VY], dropoff, false))
+    if(!P_TryMoveXY(actor, pos[VX], pos[VY], dropoff, false))
     {
         // Float up and down to the contacted floor height.
         if((actor->flags & MF_FLOAT) && floatOk)
         {
             // Must adjust height.
-            float oldZ = actor->pos[VZ];
-            if(actor->pos[VZ] < tmFloorZ)
-                actor->pos[VZ] += FLOATSPEED;
+            coord_t oldZ = actor->origin[VZ];
+            if(actor->origin[VZ] < tmFloorZ)
+                actor->origin[VZ] += FLOATSPEED;
             else
-                actor->pos[VZ] -= FLOATSPEED;
+                actor->origin[VZ] -= FLOATSPEED;
 
             // What if we just floated into another mobj?
-            if(P_CheckPosition3fv(actor, actor->pos))
+            if(P_CheckPosition(actor, actor->origin))
             {
                 // Looks ok: floated to an unoccupied spot.
                 actor->flags |= MF_INFLOAT;
@@ -222,7 +222,7 @@ boolean P_Move(mobj_t *actor, boolean dropoff)
             else
             {
                 // Let's not do this; undo the float.
-                actor->pos[VZ] = oldZ;
+                actor->origin[VZ] = oldZ;
             }
             return true;
         }
@@ -274,10 +274,10 @@ boolean P_Move(mobj_t *actor, boolean dropoff)
     // $dropoff_fix: fall more slowly, under gravity, if fellDown==true
     if(!(actor->flags & MF_FLOAT) && !fellDown)
     {
-        if(actor->pos[VZ] > actor->floorZ)
+        if(actor->origin[VZ] > actor->floorZ)
             P_HitFloor(actor);
 
-        actor->pos[VZ] = actor->floorZ;
+        actor->origin[VZ] = actor->floorZ;
     }
 
     return true;
@@ -289,7 +289,7 @@ boolean P_Move(mobj_t *actor, boolean dropoff)
  * If move is either clear of block only by a door, returns TRUE and sets.
  * If a door is in the way, an OpenDoor call is made to start it opening.
  */
-boolean P_TryWalk(mobj_t *actor)
+boolean P_TryWalk(mobj_t* actor)
 {
     // $dropoff_fix
     if(!P_Move(actor, false))
@@ -299,7 +299,7 @@ boolean P_TryWalk(mobj_t *actor)
     return true;
 }
 
-static void newChaseDir(mobj_t *actor, float deltaX, float deltaY)
+static void newChaseDir(mobj_t* actor, coord_t deltaX, coord_t deltaY)
 {
     dirtype_t xdir, ydir, tdir;
     dirtype_t olddir = actor->moveDir;
@@ -365,13 +365,13 @@ static void newChaseDir(mobj_t *actor, float deltaX, float deltaY)
  *
  * In Doom, they were never allowed to hang over dropoffs, and would remain
  * stuck if involuntarily forced over one. This logic, combined with
- * p_map.c::P_TryMove(), allows monsters to free themselves without making
+ * p_map.c::P_TryMoveXY(), allows monsters to free themselves without making
  * them tend to hang over dropoffs.
  */
-static int PIT_AvoidDropoff(LineDef* line, void* data)
+static int PIT_AvoidDropoff(LineDef* line, void* parameters)
 {
     Sector* backsector = P_GetPtrp(line, DMU_BACK_SECTOR);
-    AABoxf* aaBox = P_GetPtrp(line, DMU_BOUNDING_BOX);
+    AABoxd* aaBox = P_GetPtrp(line, DMU_BOUNDING_BOX);
 
     if(backsector &&
        // Linedef must be contacted
@@ -379,28 +379,27 @@ static int PIT_AvoidDropoff(LineDef* line, void* data)
        tmBox.maxX > aaBox->minX &&
        tmBox.minY < aaBox->maxY &&
        tmBox.maxY > aaBox->minY &&
-       P_BoxOnLineSide(&tmBox, line) == -1)
+       !LineDef_BoxOnSide(line, &tmBox))
     {
-        Sector*             frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
-        float               front = P_GetFloatp(frontsector, DMU_FLOOR_HEIGHT);
-        float               back = P_GetFloatp(backsector, DMU_FLOOR_HEIGHT);
-        float               d1[2];
-        angle_t             angle;
+        Sector* frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
+        coord_t front = P_GetDoublep(frontsector, DMU_FLOOR_HEIGHT);
+        coord_t back  = P_GetDoublep(backsector, DMU_FLOOR_HEIGHT);
+        coord_t d1[2];
+        angle_t angle;
 
-        P_GetFloatpv(line, DMU_DXY, d1);
+        P_GetDoublepv(line, DMU_DXY, d1);
 
         // The monster must contact one of the two floors, and the other
         // must be a tall drop off (more than 24).
         if(back == floorZ && front < floorZ - 24)
         {
-            angle = R_PointToAngle2(0, 0, d1[0], d1[1]); // front side drop off
+            angle = M_PointXYToAngle2(0, 0, d1[0], d1[1]); // front side drop off
         }
         else
         {
             if(front == floorZ && back < floorZ - 24)
-                angle = R_PointToAngle2(d1[0], d1[1], 0, 0); // back side drop off
-            else
-                return false;
+                angle = M_PointXYToAngle2(d1[0], d1[1], 0, 0); // back side drop off
+            return false;
         }
 
         // Move away from drop off at a standard speed.
@@ -414,9 +413,9 @@ static int PIT_AvoidDropoff(LineDef* line, void* data)
 /**
  * Driver for above
  */
-static float P_AvoidDropoff(mobj_t *actor)
+static coord_t P_AvoidDropoff(mobj_t* actor)
 {
-    floorZ = actor->pos[VZ]; // Remember floor height.
+    floorZ = actor->origin[VZ]; // Remember floor height.
 
     dropoffDelta[VX] = dropoffDelta[VY] = 0;
 
@@ -429,18 +428,18 @@ static float P_AvoidDropoff(mobj_t *actor)
     return !(FEQUAL(dropoffDelta[VX], 0) || FEQUAL(dropoffDelta[VY], 0));
 }
 
-void P_NewChaseDir(mobj_t *actor)
+void P_NewChaseDir(mobj_t* actor)
 {
-    float       delta[2];
+    coord_t delta[2];
 
     if(!actor->target)
         Con_Error("P_NewChaseDir: called with no target");
 
-    delta[VX] = actor->target->pos[VX] - actor->pos[VX];
-    delta[VY] = actor->target->pos[VY] - actor->pos[VY];
+    delta[VX] = actor->target->origin[VX] - actor->origin[VX];
+    delta[VY] = actor->target->origin[VY] - actor->origin[VY];
 
     if(actor->floorZ - actor->dropOffZ > 24 &&
-       actor->pos[VZ] <= actor->floorZ &&
+       actor->origin[VZ] <= actor->floorZ &&
        !(actor->flags & (MF_DROPOFF | MF_FLOAT)) &&
        !cfg.avoidDropoffs && P_AvoidDropoff(actor))
     {
@@ -463,8 +462,8 @@ typedef struct {
     size_t              maxTries;
     mobj_t*             notThis;
     mobj_t*             foundMobj;
-    float               origin[2];
-    float               maxDistance;
+    coord_t             origin[2];
+    coord_t             maxDistance;
     int                 minHealth;
     int                 compFlags;
     boolean             checkLOS;
@@ -490,8 +489,8 @@ static int findMobj(thinker_t* th, void* context)
 
     // Out of range?
     if(params->maxDistance > 0 &&
-       P_ApproxDistance(params->origin[VX] - mo->pos[VX],
-                        params->origin[VY] - mo->pos[VY]) >
+       M_ApproxDistance(params->origin[VX] - mo->origin[VX],
+                        params->origin[VY] - mo->origin[VY]) >
        params->maxDistance)
         return false; // Continue iteration.
 
@@ -521,8 +520,8 @@ boolean P_LookForMonsters(mobj_t* mo)
 
     params.count = 0;
     params.notThis = mo;
-    params.origin[VX] = mo->pos[VX];
-    params.origin[VY] = mo->pos[VY];
+    params.origin[VX] = mo->origin[VX];
+    params.origin[VY] = mo->origin[VY];
     params.foundMobj = NULL;
     params.maxDistance = MONS_LOOK_RANGE;
     params.maxTries = MONS_LOOK_LIMIT;
@@ -557,7 +556,7 @@ boolean P_LookForPlayers(mobj_t* actor, boolean allAround)
 /**
  * Stay in state until a player is sighted.
  */
-void C_DECL A_Look(mobj_t *actor)
+void C_DECL A_Look(mobj_t* actor)
 {
     mobj_t     *targ;
     Sector     *sec;
@@ -710,17 +709,14 @@ void C_DECL A_Chase(mobj_t* actor)
     }
 }
 
-void C_DECL A_FaceTarget(mobj_t *actor)
+void C_DECL A_FaceTarget(mobj_t* actor)
 {
-    if(!actor->target)
-        return;
+    if(!actor->target) return;
 
     actor->turnTime = true; // $visangle-facetarget
     actor->flags &= ~MF_AMBUSH;
 
-    actor->angle =
-        R_PointToAngle2(actor->pos[VX], actor->pos[VY],
-                        actor->target->pos[VX], actor->target->pos[VY]);
+    actor->angle = M_PointToAngle2(actor->origin, actor->target->origin);
 
     // Is target a ghost?
     if(actor->target->flags & MF_SHADOW)
@@ -729,20 +725,19 @@ void C_DECL A_FaceTarget(mobj_t *actor)
     }
 }
 
-void C_DECL A_Pain(mobj_t *actor)
+void C_DECL A_Pain(mobj_t* actor)
 {
     if(actor->info->painSound)
         S_StartSound(actor->info->painSound, actor);
 }
 
-void C_DECL A_DripBlood(mobj_t *actor)
+void C_DECL A_DripBlood(mobj_t* actor)
 {
-    mobj_t*             mo;
+    mobj_t* mo;
 
-    if((mo = P_SpawnMobj3f(MT_BLOOD,
-                           actor->pos[VX] + FIX2FLT((P_Random() - P_Random()) << 11),
-                           actor->pos[VY] + FIX2FLT((P_Random() - P_Random()) << 11),
-                           actor->pos[VZ], P_Random() << 24, 0)))
+    if((mo = P_SpawnMobjXYZ(MT_BLOOD, actor->origin[VX] + FIX2FLT((P_Random() - P_Random()) << 11),
+                                      actor->origin[VY] + FIX2FLT((P_Random() - P_Random()) << 11),
+                                      actor->origin[VZ], P_Random() << 24, 0)))
     {
         mo->mom[MX] = FIX2FLT((P_Random() - P_Random()) << 10);
         mo->mom[MY] = FIX2FLT((P_Random() - P_Random()) << 10);
@@ -751,7 +746,7 @@ void C_DECL A_DripBlood(mobj_t *actor)
     }
 }
 
-void C_DECL A_KnightAttack(mobj_t *actor)
+void C_DECL A_KnightAttack(mobj_t* actor)
 {
     if(!actor->target)
         return;
@@ -778,16 +773,16 @@ void C_DECL A_KnightAttack(mobj_t *actor)
 
 void C_DECL A_ImpExplode(mobj_t* actor)
 {
-    mobj_t*             mo;
+    mobj_t* mo;
 
-    if((mo = P_SpawnMobj3fv(MT_IMPCHUNK1, actor->pos, P_Random() << 24, 0)))
+    if((mo = P_SpawnMobj(MT_IMPCHUNK1, actor->origin, P_Random() << 24, 0)))
     {
         mo->mom[MX] = FIX2FLT((P_Random() - P_Random()) << 10);
         mo->mom[MY] = FIX2FLT((P_Random() - P_Random()) << 10);
         mo->mom[MZ] = 9;
     }
 
-    if((mo = P_SpawnMobj3fv(MT_IMPCHUNK2, actor->pos, P_Random() << 24, 0)))
+    if((mo = P_SpawnMobj(MT_IMPCHUNK2, actor->origin, P_Random() << 24, 0)))
     {
         mo->mom[MX] = FIX2FLT((P_Random() - P_Random()) << 10);
         mo->mom[MY] = FIX2FLT((P_Random() - P_Random()) << 10);
@@ -802,10 +797,10 @@ void C_DECL A_BeastPuff(mobj_t* actor)
 {
     if(P_Random() > 64)
     {
-        P_SpawnMobj3f(MT_PUFFY,
-                      actor->pos[VX] + FIX2FLT((P_Random() - P_Random()) << 10),
-                      actor->pos[VY] + FIX2FLT((P_Random() - P_Random()) << 10),
-                      actor->pos[VZ] + FIX2FLT((P_Random() - P_Random()) << 10),
+        P_SpawnMobjXYZ(MT_PUFFY,
+                      actor->origin[VX] + FIX2FLT((P_Random() - P_Random()) << 10),
+                      actor->origin[VY] + FIX2FLT((P_Random() - P_Random()) << 10),
+                      actor->origin[VZ] + FIX2FLT((P_Random() - P_Random()) << 10),
                       P_Random() << 24, 0);
     }
 }
@@ -825,9 +820,9 @@ void C_DECL A_ImpMeAttack(mobj_t* actor)
 
 void C_DECL A_ImpMsAttack(mobj_t* actor)
 {
-    mobj_t*             dest;
-    uint                an;
-    int                 dist;
+    mobj_t* dest;
+    uint an;
+    int dist;
 
     if(!actor->target || P_Random() > 64)
     {
@@ -846,19 +841,19 @@ void C_DECL A_ImpMsAttack(mobj_t* actor)
     actor->mom[MX] = 12 * FIX2FLT(finecosine[an]);
     actor->mom[MY] = 12 * FIX2FLT(finesine[an]);
 
-    dist = P_ApproxDistance(dest->pos[VX] - actor->pos[VX],
-                            dest->pos[VY] - actor->pos[VY]);
+    dist = M_ApproxDistance(dest->origin[VX] - actor->origin[VX],
+                            dest->origin[VY] - actor->origin[VY]);
     dist /= 12;
     if(dist < 1)
         dist = 1;
 
-    actor->mom[MZ] = (dest->pos[VZ] + (dest->height /2) - actor->pos[VZ]) / dist;
+    actor->mom[MZ] = (dest->origin[VZ] + (dest->height /2) - actor->origin[VZ]) / dist;
 }
 
 /**
  * Fireball attack of the imp leader.
  */
-void C_DECL A_ImpMsAttack2(mobj_t *actor)
+void C_DECL A_ImpMsAttack2(mobj_t* actor)
 {
     if(!actor->target)
         return;
@@ -874,16 +869,16 @@ void C_DECL A_ImpMsAttack2(mobj_t *actor)
     P_SpawnMissile(MT_IMPBALL, actor, actor->target, true);
 }
 
-void C_DECL A_ImpDeath(mobj_t *actor)
+void C_DECL A_ImpDeath(mobj_t* actor)
 {
     actor->flags &= ~MF_SOLID;
     actor->flags2 |= MF2_FLOORCLIP;
 
-    if(actor->pos[VZ] <= actor->floorZ)
+    if(actor->origin[VZ] <= actor->floorZ)
         P_MobjChangeState(actor, S_IMP_CRASH1);
 }
 
-void C_DECL A_ImpXDeath1(mobj_t *actor)
+void C_DECL A_ImpXDeath1(mobj_t* actor)
 {
     actor->flags &= ~MF_SOLID;
     actor->flags |= MF_NOGRAVITY;
@@ -892,24 +887,24 @@ void C_DECL A_ImpXDeath1(mobj_t *actor)
     actor->special1 = 666; // Flag the crash routine.
 }
 
-void C_DECL A_ImpXDeath2(mobj_t *actor)
+void C_DECL A_ImpXDeath2(mobj_t* actor)
 {
     actor->flags &= ~MF_NOGRAVITY;
 
-    if(actor->pos[VZ] <= actor->floorZ)
+    if(actor->origin[VZ] <= actor->floorZ)
         P_MobjChangeState(actor, S_IMP_CRASH1);
 }
 
 /**
  * @return          @c true, if the chicken morphs.
  */
-boolean P_UpdateChicken(mobj_t *actor, int tics)
+boolean P_UpdateChicken(mobj_t* actor, int tics)
 {
-    mobj_t     *fog;
-    float       pos[3];
-    mobjtype_t  moType;
-    mobj_t     *mo;
-    mobj_t      oldChicken;
+    mobj_t* fog;
+    coord_t pos[3];
+    mobjtype_t moType;
+    mobj_t* mo;
+    mobj_t oldChicken;
 
     actor->special1 -= tics;
 
@@ -918,21 +913,22 @@ boolean P_UpdateChicken(mobj_t *actor, int tics)
 
     moType = actor->special2;
 
-    memcpy(pos, actor->pos, sizeof(pos));
+    memcpy(pos, actor->origin, sizeof(pos));
 
     //// \fixme Do this properly!
     memcpy(&oldChicken, actor, sizeof(oldChicken));
 
-    if(!(mo = P_SpawnMobj3fv(moType, pos, oldChicken.angle, 0)))
+    if(!(mo = P_SpawnMobj(moType, pos, oldChicken.angle, 0)))
         return false;
 
     P_MobjChangeState(actor, S_FREETARGMOBJ);
 
     if(P_TestMobjLocation(mo) == false)
-    {   // Didn't fit.
+    {
+        // Didn't fit.
         P_MobjRemove(mo, true);
 
-        if((mo = P_SpawnMobj3fv(MT_CHICKEN, pos, oldChicken.angle, 0)))
+        if((mo = P_SpawnMobj(MT_CHICKEN, pos, oldChicken.angle, 0)))
         {
             mo->flags = oldChicken.flags;
             mo->health = oldChicken.health;
@@ -947,14 +943,14 @@ boolean P_UpdateChicken(mobj_t *actor, int tics)
 
     mo->target = oldChicken.target;
 
-    if((fog = P_SpawnMobj3f(MT_TFOG, pos[VX], pos[VY],
+    if((fog = P_SpawnMobjXYZ(MT_TFOG, pos[VX], pos[VY],
                             pos[VZ] + TELEFOGHEIGHT, mo->angle + ANG180, 0)))
         S_StartSound(SFX_TELEPT, fog);
 
     return true;
 }
 
-void C_DECL A_ChicAttack(mobj_t *actor)
+void C_DECL A_ChicAttack(mobj_t* actor)
 {
     if(P_UpdateChicken(actor, 18))
         return;
@@ -966,7 +962,7 @@ void C_DECL A_ChicAttack(mobj_t *actor)
         P_DamageMobj(actor->target, actor, actor, 1 + (P_Random() & 1), false);
 }
 
-void C_DECL A_ChicLook(mobj_t *actor)
+void C_DECL A_ChicLook(mobj_t* actor)
 {
     if(P_UpdateChicken(actor, 10))
         return;
@@ -974,7 +970,7 @@ void C_DECL A_ChicLook(mobj_t *actor)
     A_Look(actor);
 }
 
-void C_DECL A_ChicChase(mobj_t *actor)
+void C_DECL A_ChicChase(mobj_t* actor)
 {
     if(P_UpdateChicken(actor, 3))
         return;
@@ -982,7 +978,7 @@ void C_DECL A_ChicChase(mobj_t *actor)
     A_Chase(actor);
 }
 
-void C_DECL A_ChicPain(mobj_t *actor)
+void C_DECL A_ChicPain(mobj_t* actor)
 {
     if(P_UpdateChicken(actor, 10))
         return;
@@ -990,7 +986,7 @@ void C_DECL A_ChicPain(mobj_t *actor)
     S_StartSound(actor->info->painSound, actor);
 }
 
-void C_DECL A_Feathers(mobj_t *actor)
+void C_DECL A_Feathers(mobj_t* actor)
 {
     int         i, count;
     mobj_t     *mo;
@@ -1003,9 +999,9 @@ void C_DECL A_Feathers(mobj_t *actor)
 
     for(i = 0; i < count; ++i)
     {
-        if((mo = P_SpawnMobj3f(MT_FEATHER,
-                               actor->pos[VX], actor->pos[VY],
-                               actor->pos[VZ] + 20, P_Random() << 24, 0)))
+        if((mo = P_SpawnMobjXYZ(MT_FEATHER,
+                               actor->origin[VX], actor->origin[VY],
+                               actor->origin[VZ] + 20, P_Random() << 24, 0)))
         {
             mo->target = actor;
 
@@ -1018,7 +1014,7 @@ void C_DECL A_Feathers(mobj_t *actor)
     }
 }
 
-void C_DECL A_MummyAttack(mobj_t *actor)
+void C_DECL A_MummyAttack(mobj_t* actor)
 {
     if(!actor->target)
         return;
@@ -1038,7 +1034,7 @@ void C_DECL A_MummyAttack(mobj_t *actor)
 /**
  * Mummy leader missile attack.
  */
-void C_DECL A_MummyAttack2(mobj_t *actor)
+void C_DECL A_MummyAttack2(mobj_t* actor)
 {
     mobj_t *mo;
 
@@ -1064,11 +1060,12 @@ void C_DECL A_MummyFX1Seek(mobj_t* actor)
 
 void C_DECL A_MummySoul(mobj_t* mummy)
 {
-    mobj_t*             mo;
+    mobj_t* mo;
 
-    if((mo = P_SpawnMobj3f(MT_MUMMYSOUL,
-                           mummy->pos[VX], mummy->pos[VY], mummy->pos[VZ] + 10,
-                           mummy->angle, 0)))
+    if((mo = P_SpawnMobjXYZ(MT_MUMMYSOUL, mummy->origin[VX],
+                                          mummy->origin[VY],
+                                          mummy->origin[VZ] + 10,
+                                          mummy->angle, 0)))
     {
         mo->mom[MZ] = 1;
     }
@@ -1080,7 +1077,7 @@ void C_DECL A_Sor1Pain(mobj_t* actor)
     A_Pain(actor);
 }
 
-void C_DECL A_Sor1Chase(mobj_t *actor)
+void C_DECL A_Sor1Chase(mobj_t* actor)
 {
     if(actor->special1)
     {
@@ -1094,7 +1091,7 @@ void C_DECL A_Sor1Chase(mobj_t *actor)
 /**
  * Sorcerer demon attack.
  */
-void C_DECL A_Srcr1Attack(mobj_t *actor)
+void C_DECL A_Srcr1Attack(mobj_t* actor)
 {
     mobj_t     *mo;
     angle_t     angle;
@@ -1149,7 +1146,7 @@ void C_DECL A_SorcererRise(mobj_t* actor)
     mobj_t*             mo;
 
     actor->flags &= ~MF_SOLID;
-    if((mo = P_SpawnMobj3fv(MT_SORCERER2, actor->pos, actor->angle, 0)))
+    if((mo = P_SpawnMobj(MT_SORCERER2, actor->origin, actor->angle, 0)))
     {
         P_MobjChangeState(mo, S_SOR2_RISE1);
         mo->target = actor->target;
@@ -1161,8 +1158,8 @@ void P_DSparilTeleport(mobj_t* actor)
     // No spots?
     if(bossSpotCount > 0)
     {
-        int                 i, tries;
-        const mapspot_t*    dest;
+        int i, tries;
+        const mapspot_t* dest;
 
         i = P_Random();
         tries = bossSpotCount;
@@ -1170,25 +1167,25 @@ void P_DSparilTeleport(mobj_t* actor)
         do
         {
             dest = &mapSpots[bossSpots[++i % bossSpotCount]];
-            if(P_ApproxDistance(actor->pos[VX] - dest->pos[VX],
-                                actor->pos[VY] - dest->pos[VY]) >= 128)
-            {   // A suitable teleport destination is available.
-                float               prevpos[3];
-                angle_t             oldAngle;
+            if(M_ApproxDistance(actor->origin[VX] - dest->origin[VX],
+                                actor->origin[VY] - dest->origin[VY]) >= 128)
+            {
+                // A suitable teleport destination is available.
+                coord_t prevpos[3];
+                angle_t oldAngle;
 
-                memcpy(prevpos, actor->pos, sizeof(prevpos));
+                memcpy(prevpos, actor->origin, sizeof(prevpos));
                 oldAngle = actor->angle;
 
-                if(P_TeleportMove(actor, dest->pos[VX], dest->pos[VY], false))
+                if(P_TeleportMove(actor, dest->origin[VX], dest->origin[VY], false))
                 {
-                    mobj_t*             mo;
+                    mobj_t* mo;
 
-                    if((mo = P_SpawnMobj3fv(MT_SOR2TELEFADE, prevpos,
-                                            oldAngle + ANG180, 0)))
+                    if((mo = P_SpawnMobj(MT_SOR2TELEFADE, prevpos, oldAngle + ANG180, 0)))
                         S_StartSound(SFX_TELEPT, mo);
 
                     P_MobjChangeState(actor, S_SOR2_TELE1);
-                    actor->pos[VZ] = actor->floorZ;
+                    actor->origin[VZ] = actor->floorZ;
                     actor->angle = dest->angle;
                     actor->mom[MX] = actor->mom[MY] = actor->mom[MZ] = 0;
                     S_StartSound(SFX_TELEPT, actor);
@@ -1200,15 +1197,14 @@ void P_DSparilTeleport(mobj_t* actor)
     }
 }
 
-void C_DECL A_Srcr2Decide(mobj_t *actor)
+void C_DECL A_Srcr2Decide(mobj_t* actor)
 {
     static int chance[] = {
         192, 120, 120, 120, 64, 64, 32, 16, 0
     };
 
     // No spots?
-    if(!bossSpotCount)
-        return;
+    if(!bossSpotCount) return;
 
     if(P_Random() < chance[actor->health / (actor->info->spawnHealth / 8)])
     {
@@ -1216,12 +1212,11 @@ void C_DECL A_Srcr2Decide(mobj_t *actor)
     }
 }
 
-void C_DECL A_Srcr2Attack(mobj_t *actor)
+void C_DECL A_Srcr2Attack(mobj_t* actor)
 {
-    int     chance;
+    int chance;
 
-    if(!actor->target)
-        return;
+    if(!actor->target) return;
 
     S_StartSound(actor->info->attackSound, NULL);
 
@@ -1247,13 +1242,13 @@ void C_DECL A_Srcr2Attack(mobj_t *actor)
 
 void C_DECL A_BlueSpark(mobj_t* actor)
 {
-    int                 i;
+    int i;
 
     for(i = 0; i < 2; ++i)
     {
-        mobj_t*             mo;
+        mobj_t* mo;
 
-        if((mo = P_SpawnMobj3fv(MT_SOR2FXSPARK, actor->pos, P_Random() << 24, 0)))
+        if((mo = P_SpawnMobj(MT_SOR2FXSPARK, actor->origin, P_Random() << 24, 0)))
         {
             mo->mom[MX] = FIX2FLT((P_Random() - P_Random()) << 9);
             mo->mom[MY] = FIX2FLT((P_Random() - P_Random()) << 9);
@@ -1264,11 +1259,11 @@ void C_DECL A_BlueSpark(mobj_t* actor)
 
 void C_DECL A_GenWizard(mobj_t* actor)
 {
-    mobj_t*             mo, *fog;
+    mobj_t* mo, *fog;
 
-    if(!(mo = P_SpawnMobj3f(MT_WIZARD, actor->pos[VX], actor->pos[VY],
-                            actor->pos[VZ] - (MOBJINFO[MT_WIZARD].height / 2),
-                            actor->angle, 0)))
+    if(!(mo = P_SpawnMobjXYZ(MT_WIZARD, actor->origin[VX], actor->origin[VY],
+                                        actor->origin[VZ] - (MOBJINFO[MT_WIZARD].height / 2),
+                                        actor->angle, 0)))
         return;
 
     if(P_TestMobjLocation(mo) == false)
@@ -1283,11 +1278,11 @@ void C_DECL A_GenWizard(mobj_t* actor)
 
     actor->flags &= ~MF_MISSILE;
 
-    if((fog = P_SpawnMobj3fv(MT_TFOG, actor->pos, actor->angle + ANG180, 0)))
+    if((fog = P_SpawnMobj(MT_TFOG, actor->origin, actor->angle + ANG180, 0)))
         S_StartSound(SFX_TELEPT, fog);
 }
 
-void C_DECL A_Sor2DthInit(mobj_t *actor)
+void C_DECL A_Sor2DthInit(mobj_t* actor)
 {
     // Set the animation loop counter.
     actor->special1 = 7;
@@ -1296,7 +1291,7 @@ void C_DECL A_Sor2DthInit(mobj_t *actor)
     P_Massacre();
 }
 
-void C_DECL A_Sor2DthLoop(mobj_t *actor)
+void C_DECL A_Sor2DthLoop(mobj_t* actor)
 {
     if(--actor->special1)
     {   // Need to loop.
@@ -1307,27 +1302,27 @@ void C_DECL A_Sor2DthLoop(mobj_t *actor)
 /**
  * D'Sparil Sound Routines.
  */
-void C_DECL A_SorZap(mobj_t *actor)
+void C_DECL A_SorZap(mobj_t* actor)
 {
     S_StartSound(SFX_SORZAP, NULL);
 }
 
-void C_DECL A_SorRise(mobj_t *actor)
+void C_DECL A_SorRise(mobj_t* actor)
 {
     S_StartSound(SFX_SORRISE, NULL);
 }
 
-void C_DECL A_SorDSph(mobj_t *actor)
+void C_DECL A_SorDSph(mobj_t* actor)
 {
     S_StartSound(SFX_SORDSPH, NULL);
 }
 
-void C_DECL A_SorDExp(mobj_t *actor)
+void C_DECL A_SorDExp(mobj_t* actor)
 {
     S_StartSound(SFX_SORDEXP, NULL);
 }
 
-void C_DECL A_SorDBon(mobj_t *actor)
+void C_DECL A_SorDBon(mobj_t* actor)
 {
     S_StartSound(SFX_SORDBON, NULL);
 }
@@ -1366,23 +1361,23 @@ void C_DECL A_MinotaurAtk1(mobj_t* actor)
  */
 void C_DECL A_MinotaurDecide(mobj_t* actor)
 {
-    uint                an;
-    mobj_t*             target;
-    float               dist;
+    uint an;
+    mobj_t* target;
+    coord_t dist;
 
     target = actor->target;
-    if(!target)
-        return;
+    if(!target) return;
 
     S_StartSound(SFX_MINSIT, actor);
 
-    dist = P_ApproxDistance(actor->pos[VX] - target->pos[VX],
-                            actor->pos[VY] - target->pos[VY]);
+    dist = M_ApproxDistance(actor->origin[VX] - target->origin[VX],
+                            actor->origin[VY] - target->origin[VY]);
 
-    if(target->pos[VZ] + target->height > actor->pos[VZ] &&
-       target->pos[VZ] + target->height < actor->pos[VZ] + actor->height &&
+    if(target->origin[VZ] + target->height > actor->origin[VZ] &&
+       target->origin[VZ] + target->height < actor->origin[VZ] + actor->height &&
        dist < 8 * 64 && dist > 1 * 64 && P_Random() < 150)
-    {   // Charge attack.
+    {
+        // Charge attack.
         // Don't call the state function right away.
         P_SetMobjStateNF(actor, S_MNTR_ATK4_1);
         actor->flags |= MF_SKULLFLY;
@@ -1396,7 +1391,7 @@ void C_DECL A_MinotaurDecide(mobj_t* actor)
         // Charge duration.
         actor->special1 = 35 / 2;
     }
-    else if(target->pos[VZ] == target->floorZ && dist < 9 * 64 &&
+    else if(target->origin[VZ] == target->floorZ && dist < 9 * 64 &&
             P_Random() < 220)
     {
         // Floor fire attack.
@@ -1418,7 +1413,7 @@ void C_DECL A_MinotaurCharge(mobj_t* actor)
 
     if(actor->special1)
     {
-        if((puff = P_SpawnMobj3fv(MT_PHOENIXPUFF, actor->pos,
+        if((puff = P_SpawnMobj(MT_PHOENIXPUFF, actor->origin,
                                   P_Random() << 24, 0)))
             puff->mom[MZ] = 2;
         actor->special1--;
@@ -1435,10 +1430,9 @@ void C_DECL A_MinotaurCharge(mobj_t* actor)
  */
 void C_DECL A_MinotaurAtk2(mobj_t* actor)
 {
-    mobj_t*             mo;
+    mobj_t* mo;
 
-    if(!actor->target)
-        return;
+    if(!actor->target) return;
 
     S_StartSound(SFX_MINAT2, actor);
 
@@ -1451,8 +1445,8 @@ void C_DECL A_MinotaurAtk2(mobj_t* actor)
     mo = P_SpawnMissile(MT_MNTRFX1, actor, actor->target, true);
     if(mo)
     {
-        angle_t             angle = mo->angle;
-        float               momZ = mo->mom[MZ];
+        angle_t angle = mo->angle;
+        coord_t momZ = mo->mom[MZ];
 
         S_StartSound(SFX_MINAT2, mo);
 
@@ -1486,9 +1480,8 @@ void C_DECL A_MinotaurAtk3(mobj_t* actor)
     }
     else
     {
-        mobj_t*             mo;
-        boolean             fixFloorFire = (!cfg.fixFloorFire &&
-            actor->floorClip > 0);
+        mobj_t* mo;
+        boolean fixFloorFire = (!cfg.fixFloorFire && actor->floorClip > 0);
 
         /**
          * Original Heretic bug:
@@ -1500,7 +1493,7 @@ void C_DECL A_MinotaurAtk3(mobj_t* actor)
          * z != ONFLOORZ, so rather than being set to the height of the
          * floor it is left at 2146838915 (float: 32758.162).
          *
-         * This in turn means that when P_TryMove is called (via
+         * This in turn means that when P_TryMoveXY is called (via
          * P_CheckMissileSpawn), the test which is there to check whether a
          * missile hits an upper sidedef section will return true
          * (ceilingheight - thingz > thingheight).
@@ -1519,9 +1512,9 @@ void C_DECL A_MinotaurAtk3(mobj_t* actor)
         {
             if(fixFloorFire)
             {
-                mo->pos[VX] += mo->mom[MX] / 2;
-                mo->pos[VY] += mo->mom[MY] / 2;
-                mo->pos[VZ] += mo->mom[MZ] / 2;
+                mo->origin[VX] += mo->mom[MX] / 2;
+                mo->origin[VY] += mo->mom[MY] / 2;
+                mo->origin[VZ] += mo->mom[MZ] / 2;
 
                 P_ExplodeMissile(mo);
             }
@@ -1541,24 +1534,23 @@ void C_DECL A_MinotaurAtk3(mobj_t* actor)
 
 void C_DECL A_MntrFloorFire(mobj_t* actor)
 {
-    mobj_t*             mo;
-    float               pos[3];
-    angle_t             angle;
+    mobj_t* mo;
+    coord_t pos[3];
+    angle_t angle;
 
     // Make sure we are on the floor.
-    actor->pos[VZ] = actor->floorZ;
+    actor->origin[VZ] = actor->floorZ;
 
-    pos[VX] = actor->pos[VX];
-    pos[VY] = actor->pos[VY];
+    pos[VX] = actor->origin[VX];
+    pos[VY] = actor->origin[VY];
     pos[VZ] = 0;
 
     pos[VX] += FIX2FLT((P_Random() - P_Random()) << 10);
     pos[VY] += FIX2FLT((P_Random() - P_Random()) << 10);
 
-    angle = R_PointToAngle2(actor->pos[VX], actor->pos[VY],
-                            pos[VX], pos[VY]);
+    angle = M_PointToAngle2(actor->origin, pos);
 
-    if((mo = P_SpawnMobj3fv(MT_MNTRFX3, pos, angle, MSF_Z_FLOOR)))
+    if((mo = P_SpawnMobj(MT_MNTRFX3, pos, angle, MSF_Z_FLOOR)))
     {
         mo->target = actor->target;
         mo->mom[MX] = FIX2FLT(1); // Force block checking.
@@ -1583,14 +1575,14 @@ void C_DECL A_BeastAttack(mobj_t* actor)
     P_SpawnMissile(MT_BEASTBALL, actor, actor->target, true);
 }
 
-void C_DECL A_HeadAttack(mobj_t *actor)
+void C_DECL A_HeadAttack(mobj_t* actor)
 {
-    int         i;
-    mobj_t     *fire, *baseFire, *mo, *target;
-    int         randAttack;
     static int atkResolve1[] = { 50, 150 };
     static int atkResolve2[] = { 150, 200 };
-    float       dist;
+    mobj_t* fire, *baseFire, *mo, *target;
+    int randAttack;
+    coord_t dist;
+    int i;
 
     // Ice ball     (close 20% : far 60%)
     // Fire column  (close 40% : far 20%)
@@ -1609,9 +1601,8 @@ void C_DECL A_HeadAttack(mobj_t *actor)
         return;
     }
 
-    dist =
-        P_ApproxDistance(actor->pos[VX] - target->pos[VX],
-                         actor->pos[VY] - target->pos[VY]) > 8 * 64;
+    dist = M_ApproxDistance(actor->origin[VX] - target->origin[VX],
+                            actor->origin[VY] - target->origin[VY]) > 8 * 64;
 
     randAttack = P_Random();
     if(randAttack < atkResolve1[(FLT2FIX(dist) != 0)? 1 : 0])
@@ -1629,8 +1620,8 @@ void C_DECL A_HeadAttack(mobj_t *actor)
             P_MobjChangeState(baseFire, S_HEADFX3_4);  // Don't grow
             for(i = 0; i < 5; ++i)
             {
-                if((fire = P_SpawnMobj3fv(MT_HEADFX3, baseFire->pos,
-                                          baseFire->angle, 0)))
+                if((fire = P_SpawnMobj(MT_HEADFX3, baseFire->origin,
+                                                   baseFire->angle, 0)))
                 {
                     if(i == 0)
                         S_StartSound(SFX_HEDAT1, actor);
@@ -1652,7 +1643,7 @@ void C_DECL A_HeadAttack(mobj_t *actor)
         // Whirlwind.
         if((mo = P_SpawnMissile(MT_WHIRLWIND, actor, target, true)))
         {
-            mo->pos[VZ] -= 32;
+            mo->origin[VZ] -= 32;
             mo->tracer = target;
             mo->special1 = 60;
             mo->special2 = 50; // Timer for active sound.
@@ -1663,7 +1654,7 @@ void C_DECL A_HeadAttack(mobj_t *actor)
     }
 }
 
-void C_DECL A_WhirlwindSeek(mobj_t *actor)
+void C_DECL A_WhirlwindSeek(mobj_t* actor)
 {
     actor->special3 -= 3;
     if(actor->special3 < 0)
@@ -1686,18 +1677,18 @@ void C_DECL A_WhirlwindSeek(mobj_t *actor)
     P_SeekerMissile(actor, ANGLE_1 * 10, ANGLE_1 * 30);
 }
 
-void C_DECL A_HeadIceImpact(mobj_t *ice)
+void C_DECL A_HeadIceImpact(mobj_t* ice)
 {
-    int                 i;
+    int i;
 
     for(i = 0; i < 8; ++i)
     {
-        mobj_t*             shard;
-        angle_t             angle = i * ANG45;
+        mobj_t* shard;
+        angle_t angle = i * ANG45;
 
-        if((shard = P_SpawnMobj3fv(MT_HEADFX2, ice->pos, angle, 0)))
+        if((shard = P_SpawnMobj(MT_HEADFX2, ice->origin, angle, 0)))
         {
-            unsigned int        an = angle >> ANGLETOFINESHIFT;
+            unsigned int an = angle >> ANGLETOFINESHIFT;
 
             shard->target = ice->target;
             shard->mom[MX] = shard->info->speed * FIX2FLT(finecosine[an]);
@@ -1709,10 +1700,10 @@ void C_DECL A_HeadIceImpact(mobj_t *ice)
     }
 }
 
-void C_DECL A_HeadFireGrow(mobj_t *fire)
+void C_DECL A_HeadFireGrow(mobj_t* fire)
 {
     fire->special3--;
-    fire->pos[VZ] += 9;
+    fire->origin[VZ] += 9;
 
     if(fire->special3 == 0)
     {
@@ -1721,7 +1712,7 @@ void C_DECL A_HeadFireGrow(mobj_t *fire)
     }
 }
 
-void C_DECL A_SnakeAttack(mobj_t *actor)
+void C_DECL A_SnakeAttack(mobj_t* actor)
 {
     if(!actor->target)
     {
@@ -1734,7 +1725,7 @@ void C_DECL A_SnakeAttack(mobj_t *actor)
     P_SpawnMissile(MT_SNAKEPRO_A, actor, actor->target, true);
 }
 
-void C_DECL A_SnakeAttack2(mobj_t *actor)
+void C_DECL A_SnakeAttack2(mobj_t* actor)
 {
     if(!actor->target)
     {
@@ -1747,7 +1738,7 @@ void C_DECL A_SnakeAttack2(mobj_t *actor)
     P_SpawnMissile(MT_SNAKEPRO_B, actor, actor->target, true);
 }
 
-void C_DECL A_ClinkAttack(mobj_t *actor)
+void C_DECL A_ClinkAttack(mobj_t* actor)
 {
     int     damage;
 
@@ -1762,28 +1753,28 @@ void C_DECL A_ClinkAttack(mobj_t *actor)
     }
 }
 
-void C_DECL A_GhostOff(mobj_t *actor)
+void C_DECL A_GhostOff(mobj_t* actor)
 {
     actor->flags &= ~MF_SHADOW;
 }
 
-void C_DECL A_WizAtk1(mobj_t *actor)
+void C_DECL A_WizAtk1(mobj_t* actor)
 {
     A_FaceTarget(actor);
     actor->flags &= ~MF_SHADOW;
 }
 
-void C_DECL A_WizAtk2(mobj_t *actor)
+void C_DECL A_WizAtk2(mobj_t* actor)
 {
     A_FaceTarget(actor);
     actor->flags |= MF_SHADOW;
 }
 
-void C_DECL A_WizAtk3(mobj_t *actor)
+void C_DECL A_WizAtk3(mobj_t* actor)
 {
-    mobj_t     *mo;
-    angle_t     angle;
-    float       momZ;
+    mobj_t* mo;
+    angle_t angle;
+    coord_t momZ;
 
     actor->flags &= ~MF_SHADOW;
 
@@ -1809,7 +1800,7 @@ void C_DECL A_WizAtk3(mobj_t *actor)
     }
 }
 
-void C_DECL A_Scream(mobj_t *actor)
+void C_DECL A_Scream(mobj_t* actor)
 {
     switch(actor->type)
     {
@@ -1852,13 +1843,13 @@ void C_DECL A_Scream(mobj_t *actor)
 
 mobj_t* P_DropItem(mobjtype_t type, mobj_t* source, int special, int chance)
 {
-    mobj_t*             mo;
+    mobj_t* mo;
 
     if(P_Random() > chance)
         return NULL;
 
-    if((mo = P_SpawnMobj3f(type, source->pos[VX], source->pos[VY],
-                           source->pos[VZ] + source->height / 2, source->angle, 0)))
+    if((mo = P_SpawnMobjXYZ(type, source->origin[VX], source->origin[VY],
+                                  source->origin[VZ] + source->height / 2, source->angle, 0)))
     {
         mo->mom[MX] = FIX2FLT((P_Random() - P_Random()) << 8);
         mo->mom[MY] = FIX2FLT((P_Random() - P_Random()) << 8);
@@ -1872,7 +1863,7 @@ mobj_t* P_DropItem(mobjtype_t type, mobj_t* source, int special, int chance)
     return mo;
 }
 
-void C_DECL A_NoBlocking(mobj_t *actor)
+void C_DECL A_NoBlocking(mobj_t* actor)
 {
     actor->flags &= ~MF_SOLID;
 
@@ -1932,7 +1923,7 @@ void C_DECL A_Explode(mobj_t* actor)
     {
     case MT_FIREBOMB:
         // Time Bombs.
-        actor->pos[VZ] += 32;
+        actor->origin[VZ] += 32;
         actor->flags &= ~MF_SHADOW;
         actor->flags |= MF_BRIGHTSHADOW | MF_VIEWALIGN;
         break;
@@ -1955,7 +1946,7 @@ void C_DECL A_Explode(mobj_t* actor)
     P_HitFloor(actor);
 }
 
-void C_DECL A_PodPain(mobj_t *actor)
+void C_DECL A_PodPain(mobj_t* actor)
 {
     int                 i, count, chance;
 
@@ -1972,8 +1963,8 @@ void C_DECL A_PodPain(mobj_t *actor)
     {
         mobj_t*             goo;
 
-        if((goo = P_SpawnMobj3f(MT_PODGOO, actor->pos[VX], actor->pos[VY],
-                                actor->pos[VZ] + 48, actor->angle, 0)))
+        if((goo = P_SpawnMobjXYZ(MT_PODGOO, actor->origin[VX], actor->origin[VY],
+                                actor->origin[VZ] + 48, actor->angle, 0)))
         {
             goo->target = actor;
             goo->mom[MX] = FIX2FLT((P_Random() - P_Random()) << 9);
@@ -2002,11 +1993,11 @@ void C_DECL A_MakePod(mobj_t* actor)
     if(actor->special1 == MAX_GEN_PODS)
         return;
 
-    if(!(mo = P_SpawnMobj3f(MT_POD, actor->pos[VX], actor->pos[VY], 0,
+    if(!(mo = P_SpawnMobjXYZ(MT_POD, actor->origin[VX], actor->origin[VY], 0,
                             actor->angle, MSF_Z_FLOOR)))
         return;
 
-    if(P_CheckPosition2f(mo, mo->pos[VX], mo->pos[VY]) == false)
+    if(P_CheckPositionXY(mo, mo->origin[VX], mo->origin[VY]) == false)
     {
         // Didn't fit.
         P_MobjRemove(mo, true);
@@ -2140,15 +2131,13 @@ void C_DECL A_ESound(mobj_t *mo)
 
 void C_DECL A_SpawnTeleGlitter(mobj_t* actor)
 {
-    mobj_t*             mo;
+    mobj_t* mo;
+    if(!actor) return;
 
-    if(!actor)
-        return;
-
-    if((mo = P_SpawnMobj3f(MT_TELEGLITTER,
-                           actor->pos[VX] + ((P_Random() & 31) - 16),
-                           actor->pos[VY] + ((P_Random() & 31) - 16),
-                           P_GetFloatp(actor->bspLeaf, DMU_FLOOR_HEIGHT),
+    if((mo = P_SpawnMobjXYZ(MT_TELEGLITTER,
+                           actor->origin[VX] + ((P_Random() & 31) - 16),
+                           actor->origin[VY] + ((P_Random() & 31) - 16),
+                           P_GetDoublep(actor->bspLeaf, DMU_FLOOR_HEIGHT),
                            P_Random() << 24, 0)))
     {
         mo->mom[MZ] = 1.0f / 4;
@@ -2158,15 +2147,14 @@ void C_DECL A_SpawnTeleGlitter(mobj_t* actor)
 
 void C_DECL A_SpawnTeleGlitter2(mobj_t* actor)
 {
-    mobj_t*             mo;
+    mobj_t* mo;
 
-    if(!actor)
-        return;
+    if(!actor) return;
 
-    if((mo = P_SpawnMobj3f(MT_TELEGLITTER2,
-                           actor->pos[VX] + ((P_Random() & 31) - 16),
-                           actor->pos[VY] + ((P_Random() & 31) - 16),
-                           P_GetFloatp(actor->bspLeaf, DMU_FLOOR_HEIGHT),
+    if((mo = P_SpawnMobjXYZ(MT_TELEGLITTER2,
+                           actor->origin[VX] + ((P_Random() & 31) - 16),
+                           actor->origin[VY] + ((P_Random() & 31) - 16),
+                           P_GetDoublep(actor->bspLeaf, DMU_FLOOR_HEIGHT),
                            P_Random() << 24, 0)))
     {
         mo->mom[MZ] = 1.0f / 4;
@@ -2174,16 +2162,16 @@ void C_DECL A_SpawnTeleGlitter2(mobj_t* actor)
     }
 }
 
-void C_DECL A_AccTeleGlitter(mobj_t *actor)
+void C_DECL A_AccTeleGlitter(mobj_t* actor)
 {
     if(++actor->special3 > 35)
         actor->mom[MZ] += actor->mom[MZ] / 2;
 }
 
-void C_DECL A_InitKeyGizmo(mobj_t *gizmo)
+void C_DECL A_InitKeyGizmo(mobj_t* gizmo)
 {
-    mobj_t*             mo;
-    statenum_t      state;
+    mobj_t* mo;
+    statenum_t state;
 
     switch(gizmo->type)
     {
@@ -2203,9 +2191,9 @@ void C_DECL A_InitKeyGizmo(mobj_t *gizmo)
         return;
     }
 
-    if((mo = P_SpawnMobj3f(MT_KEYGIZMOFLOAT,
-                           gizmo->pos[VX], gizmo->pos[VY], gizmo->pos[VZ] + 60,
-                           gizmo->angle, 0)))
+    if((mo = P_SpawnMobjXYZ(MT_KEYGIZMOFLOAT,
+                            gizmo->origin[VX], gizmo->origin[VY], gizmo->origin[VZ] + 60,
+                            gizmo->angle, 0)))
     {
         P_MobjChangeState(mo, state);
     }
@@ -2218,17 +2206,17 @@ void C_DECL A_VolcanoSet(mobj_t* volcano)
 
 void C_DECL A_VolcanoBlast(mobj_t* volcano)
 {
-    int                 i, count;
+    int i, count;
 
     count = 1 + (P_Random() % 3);
     for(i = 0; i < count; i++)
     {
-        mobj_t*             blast;
-        unsigned int        an;
+        mobj_t* blast;
+        unsigned int an;
 
-        if((blast = P_SpawnMobj3f(MT_VOLCANOBLAST,
-                                  volcano->pos[VX], volcano->pos[VY],
-                                  volcano->pos[VZ] + 44, P_Random() << 24, 0)))
+        if((blast = P_SpawnMobjXYZ(MT_VOLCANOBLAST,
+                                   volcano->origin[VX], volcano->origin[VY],
+                                   volcano->origin[VZ] + 44, P_Random() << 24, 0)))
         {
             blast->target = volcano;
 
@@ -2245,23 +2233,23 @@ void C_DECL A_VolcanoBlast(mobj_t* volcano)
 
 void C_DECL A_VolcBallImpact(mobj_t* ball)
 {
-    int                 i;
+    int i;
 
-    if(ball->pos[VZ] <= ball->floorZ)
+    if(ball->origin[VZ] <= ball->floorZ)
     {
         ball->flags |= MF_NOGRAVITY;
         ball->flags2 &= ~MF2_LOGRAV;
-        ball->pos[VZ] += 28;
+        ball->origin[VZ] += 28;
     }
 
     P_RadiusAttack(ball, ball->target, 25, 24);
     for(i = 0; i < 4; ++i)
     {
-        mobj_t*             tiny;
+        mobj_t* tiny;
 
-        if((tiny = P_SpawnMobj3fv(MT_VOLCANOTBLAST, ball->pos, i * ANG90, 0)))
+        if((tiny = P_SpawnMobj(MT_VOLCANOTBLAST, ball->origin, i * ANG90, 0)))
         {
-            unsigned int        an = tiny->angle >> ANGLETOFINESHIFT;
+            unsigned int  an = tiny->angle >> ANGLETOFINESHIFT;
 
             tiny->target = ball;
             tiny->mom[MX] = .7f * FIX2FLT(finecosine[an]);
@@ -2275,10 +2263,10 @@ void C_DECL A_VolcBallImpact(mobj_t* ball)
 
 void C_DECL A_SkullPop(mobj_t* actor)
 {
-    mobj_t*             mo;
+    mobj_t* mo;
 
-    if((mo = P_SpawnMobj3f(MT_BLOODYSKULL, actor->pos[VX], actor->pos[VY],
-                           actor->pos[VZ] + 48, actor->angle, 0)))
+    if((mo = P_SpawnMobjXYZ(MT_BLOODYSKULL, actor->origin[VX], actor->origin[VY],
+                           actor->origin[VZ] + 48, actor->angle, 0)))
     {
         player_t* player;
 
@@ -2305,19 +2293,19 @@ void C_DECL A_SkullPop(mobj_t* actor)
     }
 }
 
-void C_DECL A_CheckSkullFloor(mobj_t *actor)
+void C_DECL A_CheckSkullFloor(mobj_t* actor)
 {
-    if(actor->pos[VZ] <= actor->floorZ)
+    if(actor->origin[VZ] <= actor->floorZ)
         P_MobjChangeState(actor, S_BLOODYSKULLX1);
 }
 
-void C_DECL A_CheckSkullDone(mobj_t *actor)
+void C_DECL A_CheckSkullDone(mobj_t* actor)
 {
     if(actor->special2 == 666)
         P_MobjChangeState(actor, S_BLOODYSKULLX2);
 }
 
-void C_DECL A_CheckBurnGone(mobj_t *actor)
+void C_DECL A_CheckBurnGone(mobj_t* actor)
 {
     if(actor->special2 == 666)
         P_MobjChangeState(actor, S_PLAY_FDTH20);
@@ -2326,7 +2314,7 @@ void C_DECL A_CheckBurnGone(mobj_t *actor)
 void C_DECL A_FreeTargMobj(mobj_t *mo)
 {
     mo->mom[MX] = mo->mom[MY] = mo->mom[MZ] = 0;
-    mo->pos[VZ] = mo->ceilingZ + 4;
+    mo->origin[VZ] = mo->ceilingZ + 4;
 
     mo->flags &= ~(MF_SHOOTABLE | MF_FLOAT | MF_SKULLFLY | MF_SOLID);
     mo->flags |= MF_CORPSE | MF_DROPOFF | MF_NOGRAVITY;
@@ -2336,7 +2324,7 @@ void C_DECL A_FreeTargMobj(mobj_t *mo)
     mo->dPlayer = NULL;
 }
 
-void C_DECL A_AddPlayerCorpse(mobj_t *actor)
+void C_DECL A_AddPlayerCorpse(mobj_t* actor)
 {
     // Too many player corpses?
     if(bodyqueslot >= BODYQUESIZE)
@@ -2349,19 +2337,19 @@ void C_DECL A_AddPlayerCorpse(mobj_t *actor)
     bodyqueslot++;
 }
 
-void C_DECL A_FlameSnd(mobj_t *actor)
+void C_DECL A_FlameSnd(mobj_t* actor)
 {
     S_StartSound(SFX_HEDAT1, actor); // Burn sound.
 }
 
-void C_DECL A_HideThing(mobj_t *actor)
+void C_DECL A_HideThing(mobj_t* actor)
 {
-    //P_MobjUnsetPosition(actor);
+    //P_MobjUnsetOrigin(actor);
     actor->flags2 |= MF2_DONTDRAW;
 }
 
-void C_DECL A_UnHideThing(mobj_t *actor)
+void C_DECL A_UnHideThing(mobj_t* actor)
 {
-    //P_MobjSetPosition(actor);
+    //P_MobjSetOrigin(actor);
     actor->flags2 &= ~MF2_DONTDRAW;
 }

@@ -76,10 +76,10 @@ void PO_StopSequence(Polyobj* po)
     SN_StopSequence((mobj_t*) po);
 }
 
-void PO_SetDestination(Polyobj* po, float dist, uint an, float speed)
+void PO_SetDestination(Polyobj* po, coord_t dist, uint an, float speed)
 {
-    po->dest[VX] = po->pos[VX] + dist * FIX2FLT(finecosine[an]);
-    po->dest[VY] = po->pos[VY] + dist * FIX2FLT(finesine[an]);
+    po->dest[VX] = po->origin[VX] + dist * FIX2FLT(finecosine[an]);
+    po->dest[VY] = po->origin[VY] + dist * FIX2FLT(finesine[an]);
     po->speed = speed;
 }
 
@@ -573,7 +573,7 @@ static void thrustMobj(struct mobj_s* mo, void* linep, void* pop)
 {
     LineDef* line = (LineDef*) linep;
     Polyobj* po = (Polyobj*) pop;
-    float thrust[2], force;
+    coord_t thrust[2], force;
     polyevent_t* pe;
     uint thrustAn;
 
@@ -613,7 +613,7 @@ static void thrustMobj(struct mobj_s* mo, void* linep, void* pop)
 
     if(po->crush)
     {
-        if(!P_CheckPosition2f(mo, mo->pos[VX] + thrust[VX], mo->pos[VY] + thrust[VY]))
+        if(!P_CheckPositionXY(mo, mo->origin[VX] + thrust[VX], mo->origin[VY] + thrust[VY]))
         {
             P_DamageMobj(mo, NULL, NULL, 3, false);
         }
@@ -633,9 +633,9 @@ void PO_InitForMap(void)
     P_SetPolyobjCallback(thrustMobj);
     for(i = 0; i < numpolyobjs; ++i)
     {
-        uint                j;
-        const mapspot_t*    spot;
-        Polyobj*            po;
+        uint j;
+        const mapspot_t* spot;
+        Polyobj* po;
 
         po = P_GetPolyobj(i | 0x80000000);
 
@@ -650,7 +650,8 @@ void PO_InitForMap(void)
             if((mapSpots[j].doomEdNum == PO_SPAWN_DOOMEDNUM ||
                 mapSpots[j].doomEdNum == PO_SPAWNCRUSH_DOOMEDNUM) &&
                mapSpots[j].angle == po->tag)
-            {   // Polyobj mapspot.
+            {
+                // Polyobj mapspot.
                 spot = &mapSpots[j];
             }
             else
@@ -662,8 +663,8 @@ void PO_InitForMap(void)
         if(spot)
         {
             po->crush = (spot->doomEdNum == PO_SPAWNCRUSH_DOOMEDNUM? 1 : 0);
-            P_PolyobjMoveXY(po, -po->pos[VX] + spot->pos[VX],
-                                -po->pos[VY] + spot->pos[VY]);
+            P_PolyobjMoveXY(po, -po->origin[VX] + spot->origin[VX],
+                                -po->origin[VY] + spot->origin[VY]);
         }
         else
         {

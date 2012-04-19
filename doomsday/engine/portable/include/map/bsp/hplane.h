@@ -29,29 +29,27 @@
 #define LIBDENG_BSP_HPLANE
 
 #include "dd_types.h"
+#include "m_vector.h"
 #include <list>
 
 namespace de {
 namespace bsp {
 
-struct HPlanePartition {
+struct HPlanePartition
+{
     coord_t origin[2];
-    coord_t angle[2];
+    coord_t direction[2];
 
     HPlanePartition(coord_t x=0, coord_t y=0, coord_t dX=0, coord_t dY=0)
     {
-        origin[0] = x;
-        origin[1] = y;
-        angle[0] = dX;
-        angle[1] = dY;
+        V2d_Set(origin, x, y);
+        V2d_Set(direction, dX, dY);
     }
 
-    HPlanePartition(coord_t const _origin[2], coord_t const _angle[2])
+    HPlanePartition(coord_t const _origin[2], coord_t const _direction[2])
     {
-        origin[0] = _origin[0];
-        origin[1] = _origin[1];
-        angle[0] = _angle[0];
-        angle[1] = _angle[1];
+        V2d_Copy(origin, _origin);
+        V2d_Copy(direction, _direction);
     }
 };
 
@@ -97,25 +95,25 @@ public:
     typedef std::list<HPlaneIntercept> Intercepts;
 
     HPlane() : partition(), intercepts(0){}
-    HPlane(coord_t const origin[2], coord_t const angle[2]) :
-        partition(origin, angle), intercepts(0) {}
+    HPlane(coord_t const origin[2], coord_t const direction[2]) :
+        partition(origin, direction), intercepts(0) {}
 
     ~HPlane() { clear(); }
 
     const coord_t* origin() { return partition.origin; }
-    coord_t x() { return partition.origin[0]; }
-    coord_t y() { return partition.origin[1]; }
+    coord_t x() { return partition.origin[VX]; }
+    coord_t y() { return partition.origin[VY]; }
 
     HPlane* setOrigin(coord_t const origin[2]);
     HPlane* setXY(coord_t x, coord_t y);
     HPlane* setX(coord_t x);
     HPlane* setY(coord_t y);
 
-    const coord_t* angle() { return partition.angle; }
-    coord_t dX() { return partition.angle[0]; }
-    coord_t dY() { return partition.angle[1]; }
+    const coord_t* direction() { return partition.direction; }
+    coord_t dX() { return partition.direction[VX]; }
+    coord_t dY() { return partition.direction[VY]; }
 
-    HPlane* setAngle(coord_t const angle[2]);
+    HPlane* setDirection(coord_t const direction[2]);
     HPlane* setDXY(coord_t x, coord_t y);
     HPlane* setDX(coord_t dx);
     HPlane* setDY(coord_t dy);

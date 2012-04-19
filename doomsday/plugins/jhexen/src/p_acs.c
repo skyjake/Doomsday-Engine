@@ -1668,7 +1668,7 @@ static int CmdSectorSound(void)
         Sector*             front =
             P_GetPtrp(ACScript->line, DMU_FRONT_SECTOR);
 
-        mobj = P_GetPtrp(front, DMU_ORIGIN);
+        mobj = P_GetPtrp(front, DMU_BASE);
     }
     volume = Pop();
 
@@ -1711,10 +1711,10 @@ static int CmdAmbientSound(void)
     {
         // SpawnMobj calls P_Random. We don't want that
         // the random generator gets out of sync.
-        if((mobj = P_SpawnMobj3f(MT_CAMERA,
-                                 plrmo->pos[VX] + (((M_Random() - 127) * 2) << FRACBITS),
-                                 plrmo->pos[VY] + (((M_Random() - 127) * 2) << FRACBITS),
-                                 plrmo->pos[VZ] + (((M_Random() - 127) * 2) << FRACBITS),
+        if((mobj = P_SpawnMobjXYZ(MT_CAMERA,
+                                 plrmo->origin[VX] + (((M_Random() - 127) * 2) << FRACBITS),
+                                 plrmo->origin[VY] + (((M_Random() - 127) * 2) << FRACBITS),
+                                 plrmo->origin[VZ] + (((M_Random() - 127) * 2) << FRACBITS),
                                  0, 0))) // A camera's a good temporary source.
             mobj->tics = 5 * TICSPERSEC; // Five seconds should be enough.
     }
@@ -1735,7 +1735,7 @@ static int CmdSoundSequence(void)
         Sector*             front =
             P_GetPtrp(ACScript->line, DMU_FRONT_SECTOR);
 
-        mobj = P_GetPtrp(front, DMU_ORIGIN);
+        mobj = P_GetPtrp(front, DMU_BASE);
     }
     SN_StartSequenceName(mobj, GetACString(Pop()));
 

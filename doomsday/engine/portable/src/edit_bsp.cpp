@@ -139,16 +139,14 @@ static void finishHEdges(GameMap* map)
             if(ldef->L_side(hedge->side))
                 hedge->sector = ldef->L_side(hedge->side)->sector;
 
-            hedge->offset = P_AccurateDistance(hedge->HE_v1pos[VX] - vtx->pos[VX],
-                                               hedge->HE_v1pos[VY] - vtx->pos[VY]);
+            hedge->offset = V2d_Distance(hedge->HE_v1origin, vtx->origin);
         }
 
-        hedge->angle = bamsAtan2((int) (hedge->HE_v2pos[VY] - hedge->HE_v1pos[VY]),
-                                 (int) (hedge->HE_v2pos[VX] - hedge->HE_v1pos[VX])) << FRACBITS;
+        hedge->angle = bamsAtan2((int) (hedge->HE_v2origin[VY] - hedge->HE_v1origin[VY]),
+                                 (int) (hedge->HE_v2origin[VX] - hedge->HE_v1origin[VX])) << FRACBITS;
 
         // Calculate the length of the segment.
-        hedge->length = P_AccurateDistance(hedge->HE_v2pos[VX] - hedge->HE_v1pos[VX],
-                                           hedge->HE_v2pos[VY] - hedge->HE_v1pos[VY]);
+        hedge->length = V2d_Distance(hedge->HE_v2origin, hedge->HE_v1origin);
 
         if(hedge->length == 0)
             hedge->length = 0.01f; // Hmm...
@@ -249,17 +247,13 @@ static void hardenBSP(BspBuilder& builder, GameMap* dest)
 
 static void copyVertex(Vertex& vtx, Vertex const& other)
 {
+    V2d_Copy(vtx.origin, other.origin);
     vtx.numLineOwners = other.numLineOwners;
     vtx.lineOwners = other.lineOwners;
 
     vtx.buildData.index = other.buildData.index;
     vtx.buildData.refCount = other.buildData.refCount;
     vtx.buildData.equiv = other.buildData.equiv;
-    V2d_Copy(vtx.buildData.pos, other.buildData.pos);
-
-    // Apply the final coordinates.
-    vtx.pos[VX] = float(vtx.buildData.pos[VX]);
-    vtx.pos[VY] = float(vtx.buildData.pos[VY]);
 }
 
 static void hardenVertexes(BspBuilder& builder, GameMap* map,

@@ -150,7 +150,7 @@ typedef struct jheretic_config_s {
      */
     byte            monstersStuckInDoors;
     byte            avoidDropoffs;
-    byte            moveBlock; // Dont handle large negative movement in P_TryMove.
+    byte            moveBlock; // Dont handle large negative movement in P_TryMoveXY.
     byte            wallRunNorthOnly; // If handle large make exception for wallrunning
 
     byte            fallOff; // Objects fall under their own weight.

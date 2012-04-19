@@ -31,16 +31,16 @@ struct texturevariantspecification_s;
 /// @todo Split this large inflexible structure into logical subcomponent pieces.
 typedef struct rendmodelparams_s {
 // Animation, frame interpolation.
-    struct modeldef_s *mf, *nextMF;
+    struct modeldef_s* mf, *nextMF;
     float           inter;
     boolean         alwaysInterpolate;
     int             id; // For a unique skin offset.
     int             selector;
 
 // Position/Orientation/Scale
-    float           center[3], gzt; // The real center point and global top z for silhouette clipping.
-    float           srvo[3]; // Short-range visual offset.
-    float           distance; // Distance from viewer.
+    coord_t         origin[3], gzt; // The real center point and global top z for silhouette clipping.
+    coord_t         srvo[3]; // Short-range visual offset.
+    coord_t         distance; // Distance from viewer.
     float           yaw, extraYawAngle, yawAngleOffset; ///< @todo We do not need three sets of angles...
     float           pitch, extraPitchAngle, pitchAngleOffset;
 

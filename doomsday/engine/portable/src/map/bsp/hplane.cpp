@@ -51,32 +51,29 @@ HPlane* HPlane::setOrigin(coord_t const newOrigin[2])
 
 HPlane* HPlane::setXY(coord_t newX, coord_t newY)
 {
-    coord_t newOrigin[2];
-    newOrigin[0] = newX;
-    newOrigin[1] = newY;
+    coord_t newOrigin[2] = { newX, newY };
     return setOrigin(newOrigin);
 }
 
 HPlane* HPlane::setX(coord_t newX)
 {
-    partition.origin[0] = newX;
+    partition.origin[VX] = newX;
     clear();
     return this;
 }
 
 HPlane* HPlane::setY(coord_t newY)
 {
-    partition.origin[1] = newY;
+    partition.origin[VY] = newY;
     clear();
     return this;
 }
 
-HPlane* HPlane::setAngle(coord_t const newAngle[2])
+HPlane* HPlane::setDirection(coord_t const newDirection[2])
 {
-    if(newAngle)
+    if(newDirection)
     {
-        partition.angle[0] = newAngle[0];
-        partition.angle[1] = newAngle[1];
+        V2d_Copy(partition.direction, newDirection);
         clear();
     }
     return this;
@@ -84,22 +81,20 @@ HPlane* HPlane::setAngle(coord_t const newAngle[2])
 
 HPlane* HPlane::setDXY(coord_t newDX, coord_t newDY)
 {
-    coord_t newAngle[2];
-    newAngle[0] = newDX;
-    newAngle[1] = newDY;
-    return setAngle(newAngle);
+    coord_t newDirection[2] = { newDX, newDY };
+    return setDirection(newDirection);
 }
 
 HPlane* HPlane::setDX(coord_t newDX)
 {
-    partition.angle[0] = newDX;
+    partition.direction[VX] = newDX;
     clear();
     return this;
 }
 
 HPlane* HPlane::setDY(coord_t newDY)
 {
-    partition.angle[1] = newDY;
+    partition.direction[VY] = newDY;
     clear();
     return this;
 }

@@ -170,19 +170,19 @@ boolean P_IsInVoid(player_t* player)
             if(Surface_IsSkyMasked(&sec->SP_ceilsurface))
             {
                 const float skyCeil = GameMap_SkyFixCeiling(theMap);
-                if(skyCeil < DDMAXFLOAT && ddpl->mo->pos[VZ] > skyCeil - 4)
+                if(skyCeil < DDMAXFLOAT && ddpl->mo->origin[VZ] > skyCeil - 4)
                     return true;
             }
-            else if(ddpl->mo->pos[VZ] > sec->SP_ceilvisheight - 4)
+            else if(ddpl->mo->origin[VZ] > sec->SP_ceilvisheight - 4)
                 return true;
 
             if(Surface_IsSkyMasked(&sec->SP_floorsurface))
             {
                 const float skyFloor = GameMap_SkyFixFloor(theMap);
-                if(skyFloor > DDMINFLOAT && ddpl->mo->pos[VZ] < skyFloor + 4)
+                if(skyFloor > DDMINFLOAT && ddpl->mo->origin[VZ] < skyFloor + 4)
                     return true;
             }
-            else if(ddpl->mo->pos[VZ] < sec->SP_floorvisheight + 4)
+            else if(ddpl->mo->origin[VZ] < sec->SP_floorvisheight + 4)
                 return true;
         }
     }

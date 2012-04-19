@@ -66,8 +66,8 @@ Polyobj* P_PolyobjByOrigin(void* ddMobjBase);
 /**
  * Translate the origin of @a polyobj in the map coordinate space.
  */
-boolean P_PolyobjMove(Polyobj* polyobj, float xy[2]);
-boolean P_PolyobjMoveXY(Polyobj* polyobj, float x, float y);
+boolean P_PolyobjMove(Polyobj* polyobj, coord_t xy[]);
+boolean P_PolyobjMoveXY(Polyobj* polyobj, coord_t x, coord_t y);
 
 /**
  * Rotate @a polyobj in the map coordinate space.

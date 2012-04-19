@@ -515,9 +515,9 @@ static void loadMapSpots(void)
     {
         mapspot_t* spot = &mapSpots[i];
 
-        spot->pos[VX] = P_GetGMOFloat(MO_THING, i, MO_X);
-        spot->pos[VY] = P_GetGMOFloat(MO_THING, i, MO_Y);
-        spot->pos[VZ] = P_GetGMOFloat(MO_THING, i, MO_Z);
+        spot->origin[VX] = P_GetGMOFloat(MO_THING, i, MO_X);
+        spot->origin[VY] = P_GetGMOFloat(MO_THING, i, MO_Y);
+        spot->origin[VZ] = P_GetGMOFloat(MO_THING, i, MO_Z);
 
         spot->doomEdNum = P_GetGMOInt(MO_THING, i, MO_DOOMEDNUM);
         spot->skillModes = P_GetGMOInt(MO_THING, i, MO_SKILLMODES);
@@ -545,7 +545,7 @@ static void loadMapSpots(void)
         // Sound sequence origin?
         if(spot->doomEdNum >= 1400 && spot->doomEdNum < 1410)
         {
-            BspLeaf* bspLeaf = P_BspLeafAtPointXY(spot->pos[VX], spot->pos[VY]);
+            BspLeaf* bspLeaf = P_BspLeafAtPoint(spot->origin);
             xsector_t* xsector = P_ToXSector(P_GetPtrp(bspLeaf, DMU_SECTOR));
 
             xsector->seqType = spot->doomEdNum - 1400;
@@ -663,7 +663,7 @@ static void spawnMapObjects(void)
                     spot->doomedNum, spot->flags);
 #endif*/
 
-            if((mo = P_SpawnMobj3fv(type, spot->pos, spot->angle, spot->flags)))
+            if((mo = P_SpawnMobj(type, spot->origin, spot->angle, spot->flags)))
             {
                 if(mo->tics > 0)
                     mo->tics = 1 + (P_Random() % mo->tics);
@@ -680,7 +680,7 @@ static void spawnMapObjects(void)
 
 #if __JHEXEN__
                 if(mo->flags2 & MF2_FLOATBOB)
-                    mo->special1 = FLT2FIX(spot->pos[VZ]);
+                    mo->special1 = FLT2FIX(spot->origin[VZ]);
 #endif
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
@@ -694,7 +694,7 @@ static void spawnMapObjects(void)
         else
         {
             Con_Message("Warning: Unknown DoomEdNum %i at [%g, %g, %g].\n", spot->doomEdNum,
-                spot->pos[VX], spot->pos[VY], spot->pos[VZ]);
+                        spot->origin[VX], spot->origin[VY], spot->origin[VZ]);
         }
     }
 
@@ -706,8 +706,8 @@ static void spawnMapObjects(void)
         {
             const mapspot_t* spot = &mapSpots[maceSpots[P_Random() % maceSpotCount]];
 
-            P_SpawnMobj3f(MT_WMACE, spot->pos[VX], spot->pos[VY], 0,
-                          spot->angle, MSF_Z_FLOOR);
+            P_SpawnMobjXYZ(MT_WMACE, spot->origin[VX], spot->origin[VY], 0,
+                           spot->angle, MSF_Z_FLOOR);
         }
     }
 #endif

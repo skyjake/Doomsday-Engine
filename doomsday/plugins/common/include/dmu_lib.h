@@ -69,7 +69,7 @@
 #define DMU_FLOOR_TARGET_HEIGHT (DMU_FLOOR_OF_SECTOR | DMU_TARGET_HEIGHT)
 #define DMU_FLOOR_SPEED         (DMU_FLOOR_OF_SECTOR | DMU_SPEED)
 #define DMU_FLOOR_MATERIAL      (DMU_FLOOR_OF_SECTOR | DMU_MATERIAL)
-#define DMU_FLOOR_ORIGIN        (DMU_FLOOR_OF_SECTOR | DMU_ORIGIN)
+#define DMU_FLOOR_ORIGIN        (DMU_FLOOR_OF_SECTOR | DMU_BASE)
 #define DMU_FLOOR_FLAGS         (DMU_FLOOR_OF_SECTOR | DMU_FLAGS)
 #define DMU_FLOOR_COLOR         (DMU_FLOOR_OF_SECTOR | DMU_COLOR)
 #define DMU_FLOOR_COLOR_RED     (DMU_FLOOR_OF_SECTOR | DMU_COLOR_RED)
@@ -95,7 +95,7 @@
 #define DMU_CEILING_TARGET_HEIGHT (DMU_CEILING_OF_SECTOR | DMU_TARGET_HEIGHT)
 #define DMU_CEILING_SPEED       (DMU_CEILING_OF_SECTOR | DMU_SPEED)
 #define DMU_CEILING_MATERIAL    (DMU_CEILING_OF_SECTOR | DMU_MATERIAL)
-#define DMU_CEILING_ORIGIN      (DMU_CEILING_OF_SECTOR | DMU_ORIGIN)
+#define DMU_CEILING_ORIGIN      (DMU_CEILING_OF_SECTOR | DMU_BASE)
 #define DMU_CEILING_FLAGS       (DMU_CEILING_OF_SECTOR | DMU_FLAGS)
 #define DMU_CEILING_COLOR       (DMU_CEILING_OF_SECTOR | DMU_COLOR)
 #define DMU_CEILING_COLOR_RED   (DMU_CEILING_OF_SECTOR | DMU_COLOR_RED)
@@ -147,44 +147,44 @@ Sector* P_GetNextSector(LineDef* line, Sector* sec);
 typedef struct findextremalplaneheightparams_s {
     Sector* baseSec;
     byte flags;
-    float val;
+    coord_t val;
     Sector* foundSec;
 } findextremalplaneheightparams_t;
 
 /// Find the sector with the lowest floor height in surrounding sectors.
-Sector* P_FindSectorSurroundingLowestFloor(Sector* sector, float max, float* val);
+Sector* P_FindSectorSurroundingLowestFloor(Sector* sector, coord_t max, coord_t* val);
 
 /// Find the sector with the highest floor height in surrounding sectors.
-Sector* P_FindSectorSurroundingHighestFloor(Sector* sector, float min, float* val);
+Sector* P_FindSectorSurroundingHighestFloor(Sector* sector, coord_t min, coord_t* val);
 
 /// Find lowest ceiling in the surrounding sector.
-Sector* P_FindSectorSurroundingLowestCeiling(Sector* sector, float max, float* val);
+Sector* P_FindSectorSurroundingLowestCeiling(Sector* sector, coord_t max, coord_t* val);
 
 /// Find highest ceiling in the surrounding sectors.
-Sector* P_FindSectorSurroundingHighestCeiling(Sector* sector, float min, float* val);
+Sector* P_FindSectorSurroundingHighestCeiling(Sector* sector, coord_t min, coord_t* val);
 
 #define FNPHF_FLOOR             0x1 // Get floors, if not set get ceilings.
 #define FNPHF_ABOVE             0x2 // Get next above, if not set get next below.
 
 typedef struct findnextplaneheightparams_s {
     Sector* baseSec;
-    float baseHeight;
+    coord_t baseHeight;
     byte flags;
-    float val;
+    coord_t val;
     Sector* foundSec;
 } findnextplaneheightparams_t;
 
 /// Find the sector with the next highest floor in surrounding sectors.
-Sector* P_FindSectorSurroundingNextHighestFloor(Sector* sector, float baseHeight, float* val);
+Sector* P_FindSectorSurroundingNextHighestFloor(Sector* sector, coord_t baseHeight, coord_t* val);
 
 /// Find the sector with the next lowest floor in surrounding sectors.
-Sector* P_FindSectorSurroundingNextLowestFloor(Sector* sector, float baseHeight, float* val);
+Sector* P_FindSectorSurroundingNextLowestFloor(Sector* sector, coord_t baseHeight, coord_t* val);
 
 /// Find the sector with the next highest ceiling in surrounding sectors.
-Sector* P_FindSectorSurroundingNextHighestCeiling(Sector* sector, float baseHeight, float* val);
+Sector* P_FindSectorSurroundingNextHighestCeiling(Sector* sector, coord_t baseHeight, coord_t* val);
 
 /// Find the sector with the next lowest ceiling in surrounding sectors.
-Sector* P_FindSectorSurroundingNextLowestCeiling(Sector* sector, float baseHeight, float* val);
+Sector* P_FindSectorSurroundingNextLowestCeiling(Sector* sector, coord_t baseHeight, coord_t* val);
 
 #define FELLF_MIN               0x1 /// Get minimum. If not set, get maximum.
 

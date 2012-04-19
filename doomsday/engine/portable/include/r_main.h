@@ -41,7 +41,7 @@ typedef struct viewport_s {
 } viewport_t;
 
 typedef struct viewer_s {
-    float pos[3];
+    coord_t origin[3];
     angle_t angle;
     float pitch;
 } viewer_t;
@@ -116,8 +116,31 @@ boolean R_SetViewGrid(int numCols, int numRows);
 
 void R_SetupDefaultViewWindow(int consoleNum);
 
-void R_SetViewOrigin(int consoleNum, float const origin[3]);
+/**
+ * Update the view origin position for player @a consoleNum.
+ *
+ * @param consoleNum  Console number.
+ *
+ * @note Part of the Doomsday public API.
+ */
+void R_SetViewOrigin(int consoleNum, coord_t const origin[3]);
+
+/**
+ * Update the view yaw angle for player @a consoleNum.
+ *
+ * @param consoleNum  Console number.
+ *
+ * @note Part of the Doomsday public API.
+ */
 void R_SetViewAngle(int consoleNum, angle_t angle);
+
+/**
+ * Update the view pitch angle for player @a consoleNum.
+ *
+ * @param consoleNum  Console number.
+ *
+ * @note Part of the Doomsday public API.
+ */
 void R_SetViewPitch(int consoleNum, float pitch);
 
 int R_ViewWindowGeometry(int consoleNum, RectRaw* geometry);

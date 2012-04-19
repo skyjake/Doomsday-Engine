@@ -42,7 +42,7 @@
  * Timed 3D point in space.
  */
 typedef struct pos_s {
-    float xyz[3];
+    coord_t xyz[3];
     float time;
     boolean onFloor;    // Special Z handling: should be on the floor.
 } pos_t;
@@ -56,12 +56,12 @@ typedef struct pos_s {
  * It is assumed that time always moves forward.
  */
 struct smoother_s {
-    pos_t   points[SM_NUM_POINTS];  // Future points.
-    pos_t   past, now;  // Current interpolation.
-    float   at;         // Current position in time for the smoother.
+    pos_t points[SM_NUM_POINTS];  // Future points.
+    pos_t past, now;  // Current interpolation.
+    float at;         // Current position in time for the smoother.
 
 #ifdef _DEBUG
-    float   prevEval[2], prevAt;
+    float prevEval[2], prevAt;
 #endif
 };
 
@@ -101,7 +101,7 @@ void Smoother_Clear(Smoother* sm)
     memset(sm, 0, sizeof(*sm));
 }
 
-void Smoother_AddPos(Smoother* sm, float time, float x, float y, float z, boolean onFloor)
+void Smoother_AddPos(Smoother* sm, float time, coord_t x, coord_t y, coord_t z, boolean onFloor)
 {
     pos_t* last;
     assert(sm);
@@ -128,7 +128,7 @@ void Smoother_AddPos(Smoother* sm, float time, float x, float y, float z, boolea
     // the current interpolation into the future.
     if(Smoother_IsValid(sm) && sm->points[0].time > sm->now.time)
     {
-        float mid[3];
+        coord_t mid[3];
         float remaining;
 
         // Move the past forward in time so that the interpolation remains continuous.
@@ -163,7 +163,7 @@ void Smoother_AddPos(Smoother* sm, float time, float x, float y, float z, boolea
     }
 }
 
-boolean Smoother_Evaluate(const Smoother* sm, float* xyz)
+boolean Smoother_Evaluate(const Smoother* sm, coord_t* xyz)
 {
     const pos_t* past;
     const pos_t* now;

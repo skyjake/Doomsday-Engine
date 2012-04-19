@@ -95,17 +95,16 @@ typedef struct {
     floorstate_e    state;
     int             newSpecial;
     material_t*     material;
-    float           floorDestHeight;
+    coord_t         floorDestHeight;
     float           speed;
 #if __JHEXEN__
     int             delayCount;
     int             delayTotal;
-    float           stairsDelayHeight;
-    float           stairsDelayHeightDelta;
-    float           resetHeight;
+    coord_t         stairsDelayHeight;
+    coord_t         stairsDelayHeightDelta;
+    coord_t         resetHeight;
     short           resetDelay;
     short           resetDelayCount;
-//    byte            textureChange;
 #endif
 } floor_t;
 

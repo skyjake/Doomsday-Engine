@@ -134,9 +134,9 @@ static void renderSkyModels(void)
         memset(&params, 0, sizeof(params));
 
         params.distance = 1;
-        params.center[VX] = pos[0];
-        params.center[VY] = pos[2];
-        params.center[VZ] = params.gzt = pos[1];
+        params.origin[VX] = pos[0];
+        params.origin[VY] = pos[2];
+        params.origin[VZ] = params.gzt = pos[1];
         params.extraYawAngle = params.yawAngleOffset = sky->def->rotate[0];
         params.extraPitchAngle = params.pitchAngleOffset = sky->def->rotate[1];
         params.inter = inter;

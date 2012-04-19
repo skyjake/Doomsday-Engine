@@ -124,24 +124,23 @@ void P_CopyLine(LineDef* dest, LineDef* src)
 #else
         {
         float temp[4];
-        float itemp[2];
+        coord_t itemp[2];
 
         P_SetPtrp(sideto, DMU_TOP_MATERIAL, P_GetPtrp(sidefrom, DMU_TOP_MATERIAL));
-        P_GetFloatpv(sidefrom, DMU_TOP_MATERIAL_OFFSET_XY, itemp);
-        P_SetFloatpv(sideto, DMU_TOP_MATERIAL_OFFSET_XY, itemp);
+        P_GetDoublepv(sidefrom, DMU_TOP_MATERIAL_OFFSET_XY, itemp);
+        P_SetDoublepv(sideto, DMU_TOP_MATERIAL_OFFSET_XY, itemp);
         P_GetFloatpv(sidefrom, DMU_TOP_COLOR, temp);
         P_SetFloatpv(sideto, DMU_TOP_COLOR, temp);
 
         P_SetPtrp(sideto, DMU_MIDDLE_MATERIAL, P_GetPtrp(sidefrom, DMU_MIDDLE_MATERIAL));
-        P_GetFloatpv(sidefrom, DMU_MIDDLE_COLOR, temp);
-        P_GetFloatpv(sidefrom, DMU_MIDDLE_MATERIAL_OFFSET_XY, itemp);
-        P_SetFloatpv(sideto, DMU_MIDDLE_MATERIAL_OFFSET_XY, itemp);
+        P_GetDoublepv(sidefrom, DMU_MIDDLE_MATERIAL_OFFSET_XY, itemp);
+        P_SetDoublepv(sideto, DMU_MIDDLE_MATERIAL_OFFSET_XY, itemp);
         P_SetFloatpv(sideto, DMU_MIDDLE_COLOR, temp);
         P_SetIntp(sideto, DMU_MIDDLE_BLENDMODE, P_GetIntp(sidefrom, DMU_MIDDLE_BLENDMODE));
 
         P_SetPtrp(sideto, DMU_BOTTOM_MATERIAL, P_GetPtrp(sidefrom, DMU_BOTTOM_MATERIAL));
-        P_GetFloatpv(sidefrom, DMU_BOTTOM_MATERIAL_OFFSET_XY, itemp);
-        P_SetFloatpv(sideto, DMU_BOTTOM_MATERIAL_OFFSET_XY, itemp);
+        P_GetDoublepv(sidefrom, DMU_BOTTOM_MATERIAL_OFFSET_XY, itemp);
+        P_SetDoublepv(sideto, DMU_BOTTOM_MATERIAL_OFFSET_XY, itemp);
         P_GetFloatpv(sidefrom, DMU_BOTTOM_COLOR, temp);
         P_SetFloatpv(sideto, DMU_BOTTOM_COLOR, temp);
         }
@@ -195,28 +194,29 @@ void P_CopySector(Sector* dest, Sector* src)
 #else
     {
     float ftemp[4];
+    coord_t dtemp[2];
 
     P_SetFloatp(dest, DMU_LIGHT_LEVEL, P_GetFloatp(src, DMU_LIGHT_LEVEL));
     P_GetFloatpv(src, DMU_COLOR, ftemp);
     P_SetFloatpv(dest, DMU_COLOR, ftemp);
 
-    P_SetFloatp(dest, DMU_FLOOR_HEIGHT, P_GetFloatp(src, DMU_FLOOR_HEIGHT));
+    P_SetDoublep(dest, DMU_FLOOR_HEIGHT, P_GetDoublep(src, DMU_FLOOR_HEIGHT));
     P_SetPtrp(dest, DMU_FLOOR_MATERIAL, P_GetPtrp(src, DMU_FLOOR_MATERIAL));
     P_GetFloatpv(src, DMU_FLOOR_COLOR, ftemp);
     P_SetFloatpv(dest, DMU_FLOOR_COLOR, ftemp);
-    P_GetFloatpv(src, DMU_FLOOR_MATERIAL_OFFSET_XY, ftemp);
-    P_SetFloatpv(dest, DMU_FLOOR_MATERIAL_OFFSET_XY, ftemp);
+    P_GetDoublepv(src, DMU_FLOOR_MATERIAL_OFFSET_XY, dtemp);
+    P_SetDoublepv(dest, DMU_FLOOR_MATERIAL_OFFSET_XY, dtemp);
     P_SetIntp(dest, DMU_FLOOR_SPEED, P_GetIntp(src, DMU_FLOOR_SPEED));
-    P_SetFloatp(dest, DMU_FLOOR_TARGET_HEIGHT, P_GetFloatp(src, DMU_FLOOR_TARGET_HEIGHT));
+    P_SetDoublep(dest, DMU_FLOOR_TARGET_HEIGHT, P_GetFloatp(src, DMU_FLOOR_TARGET_HEIGHT));
 
-    P_SetFloatp(dest, DMU_CEILING_HEIGHT, P_GetFloatp(src, DMU_CEILING_HEIGHT));
+    P_SetDoublep(dest, DMU_CEILING_HEIGHT, P_GetDoublep(src, DMU_CEILING_HEIGHT));
     P_SetPtrp(dest, DMU_CEILING_MATERIAL, P_GetPtrp(src, DMU_CEILING_MATERIAL));
     P_GetFloatpv(src, DMU_CEILING_COLOR, ftemp);
     P_SetFloatpv(dest, DMU_CEILING_COLOR, ftemp);
-    P_GetFloatpv(src, DMU_CEILING_MATERIAL_OFFSET_XY, ftemp);
-    P_SetFloatpv(dest, DMU_CEILING_MATERIAL_OFFSET_XY, ftemp);
+    P_GetDoublepv(src, DMU_CEILING_MATERIAL_OFFSET_XY, dtemp);
+    P_SetDoublepv(dest, DMU_CEILING_MATERIAL_OFFSET_XY, dtemp);
     P_SetIntp(dest, DMU_CEILING_SPEED, P_GetIntp(src, DMU_CEILING_SPEED));
-    P_SetFloatp(dest, DMU_CEILING_TARGET_HEIGHT, P_GetFloatp(src, DMU_CEILING_TARGET_HEIGHT));
+    P_SetDoublep(dest, DMU_CEILING_TARGET_HEIGHT, P_GetFloatp(src, DMU_CEILING_TARGET_HEIGHT));
     }
 #endif
 
@@ -457,12 +457,12 @@ int findExtremalPlaneHeight(void* ptr, void* context)
 {
     findextremalplaneheightparams_t* params = (findextremalplaneheightparams_t*) context;
     Sector* other = P_GetNextSector((LineDef*) ptr, params->baseSec);
-    float height;
+    coord_t height;
 
     if(!other)
         return false; // Continue iteration.
 
-    height = P_GetFloatp(other, ((params->flags & FEPHF_FLOOR)? DMU_FLOOR_HEIGHT : DMU_CEILING_HEIGHT));
+    height = P_GetDoublep(other, ((params->flags & FEPHF_FLOOR)? DMU_FLOOR_HEIGHT : DMU_CEILING_HEIGHT));
     if(params->flags & FEPHF_MIN)
     {
         if(height < params->val)
@@ -480,7 +480,7 @@ int findExtremalPlaneHeight(void* ptr, void* context)
     return false; // Continue iteration.
 }
 
-Sector* P_FindSectorSurroundingLowestFloor(Sector* sec, float max, float* val)
+Sector* P_FindSectorSurroundingLowestFloor(Sector* sec, coord_t max, coord_t* val)
 {
     findextremalplaneheightparams_t params;
     params.flags = FEPHF_MIN | FEPHF_FLOOR;
@@ -493,7 +493,7 @@ Sector* P_FindSectorSurroundingLowestFloor(Sector* sec, float max, float* val)
     return params.foundSec;
 }
 
-Sector* P_FindSectorSurroundingHighestFloor(Sector* sec, float min, float* val)
+Sector* P_FindSectorSurroundingHighestFloor(Sector* sec, coord_t min, coord_t* val)
 {
     findextremalplaneheightparams_t params;
     params.flags = FEPHF_FLOOR;
@@ -506,7 +506,7 @@ Sector* P_FindSectorSurroundingHighestFloor(Sector* sec, float min, float* val)
     return params.foundSec;
 }
 
-Sector* P_FindSectorSurroundingLowestCeiling(Sector* sec, float max, float* val)
+Sector* P_FindSectorSurroundingLowestCeiling(Sector* sec, coord_t max, coord_t* val)
 {
     findextremalplaneheightparams_t params;
     params.flags = FEPHF_MIN;
@@ -519,7 +519,7 @@ Sector* P_FindSectorSurroundingLowestCeiling(Sector* sec, float max, float* val)
     return params.foundSec;
 }
 
-Sector* P_FindSectorSurroundingHighestCeiling(Sector* sec, float min, float* val)
+Sector* P_FindSectorSurroundingHighestCeiling(Sector* sec, coord_t min, coord_t* val)
 {
     findextremalplaneheightparams_t params;
     params.flags = 0;
@@ -536,12 +536,12 @@ int findNextPlaneHeight(void* ptr, void* context)
 {
     findnextplaneheightparams_t* params = (findnextplaneheightparams_t*) context;
     Sector* other = P_GetNextSector((LineDef*) ptr, params->baseSec);
-    float otherHeight;
+    coord_t otherHeight;
 
     if(!other)
         return false; // Continue iteration.
 
-    otherHeight = P_GetFloatp(other, ((params->flags & FNPHF_FLOOR)? DMU_FLOOR_HEIGHT : DMU_CEILING_HEIGHT));
+    otherHeight = P_GetDoublep(other, ((params->flags & FNPHF_FLOOR)? DMU_FLOOR_HEIGHT : DMU_CEILING_HEIGHT));
     if(params->flags & FNPHF_ABOVE)
     {
         if(otherHeight < params->val && otherHeight > params->baseHeight)
@@ -558,7 +558,7 @@ int findNextPlaneHeight(void* ptr, void* context)
     return false; // Continue iteration.
 }
 
-Sector* P_FindSectorSurroundingNextHighestFloor(Sector* sec, float baseHeight, float* val)
+Sector* P_FindSectorSurroundingNextHighestFloor(Sector* sec, coord_t baseHeight, coord_t* val)
 {
     findnextplaneheightparams_t params;
 
@@ -573,7 +573,7 @@ Sector* P_FindSectorSurroundingNextHighestFloor(Sector* sec, float baseHeight, f
     return params.foundSec;
 }
 
-Sector* P_FindSectorSurroundingNextHighestCeiling(Sector* sec, float baseHeight, float* val)
+Sector* P_FindSectorSurroundingNextHighestCeiling(Sector* sec, coord_t baseHeight, coord_t* val)
 {
     findnextplaneheightparams_t params;
     params.flags = FNPHF_ABOVE;
@@ -587,7 +587,7 @@ Sector* P_FindSectorSurroundingNextHighestCeiling(Sector* sec, float baseHeight,
     return params.foundSec;
 }
 
-Sector* P_FindSectorSurroundingNextLowestFloor(Sector* sec, float baseHeight, float* val)
+Sector* P_FindSectorSurroundingNextLowestFloor(Sector* sec, coord_t baseHeight, coord_t* val)
 {
     findnextplaneheightparams_t params;
     params.flags = FNPHF_FLOOR;
@@ -601,7 +601,7 @@ Sector* P_FindSectorSurroundingNextLowestFloor(Sector* sec, float baseHeight, fl
     return params.foundSec;
 }
 
-Sector* P_FindSectorSurroundingNextLowestCeiling(Sector* sec, float baseHeight, float* val)
+Sector* P_FindSectorSurroundingNextLowestCeiling(Sector* sec, coord_t baseHeight, coord_t* val)
 {
     findnextplaneheightparams_t params;
     params.flags = 0;
@@ -638,7 +638,7 @@ void P_SectorModifyLightx(Sector* sector, fixed_t value)
 
 void* P_SectorOrigin(Sector* sec)
 {
-    return P_GetPtrp(sec, DMU_ORIGIN);
+    return P_GetPtrp(sec, DMU_BASE);
 }
 
 const terraintype_t* P_PlaneMaterialTerrainType(Sector* sec, int plane)

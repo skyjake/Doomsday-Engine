@@ -77,7 +77,7 @@ typedef struct vlightlist_s {
 } vlightlist_t;
 
 typedef struct {
-    vec3f_t         pos;
+    vec3d_t         origin;
     boolean         haveList;
     uint            listIdx;
 } vlightiterparams_t;
@@ -687,7 +687,7 @@ static modeldef_t* currentModelDefForMobj(mobj_t* mo)
     return NULL;
 }
 
-float R_VisualRadius(mobj_t* mo)
+coord_t R_VisualRadius(mobj_t* mo)
 {
     material_t* material;
     modeldef_t* mf;
@@ -730,7 +730,7 @@ float R_ShadowStrength(mobj_t* mo)
     if(useBias)
     {
         // Evaluate in the light grid.
-        vec3f_t point; V3f_Set(point, mo->pos[VX], mo->pos[VY], mo->pos[VZ]);
+        vec3d_t point; V3d_Set(point, mo->origin[VX], mo->origin[VY], mo->origin[VZ]);
         ambientLightLevel = LG_EvaluateLightLevel(point);
     }
     else
@@ -892,7 +892,7 @@ void R_ProjectPlayerSprites(void)
             spr->data.model.bspLeaf = ddpl->mo->bspLeaf;
             spr->data.model.flags = 0;
             // 32 is the raised weapon height.
-            spr->data.model.gzt = viewData->current.pos[VZ];
+            spr->data.model.gzt = viewData->current.origin[VZ];
             spr->data.model.secFloor = ddpl->mo->bspLeaf->sector->SP_floorvisheight;
             spr->data.model.secCeil = ddpl->mo->bspLeaf->sector->SP_ceilvisheight;
             spr->data.model.pClass = 0;
@@ -902,9 +902,9 @@ void R_ProjectPlayerSprites(void)
             spr->data.model.nextMF = nextmf;
             spr->data.model.inter = inter;
             spr->data.model.viewAligned = true;
-            spr->center[VX] = viewData->current.pos[VX];
-            spr->center[VY] = viewData->current.pos[VY];
-            spr->center[VZ] = viewData->current.pos[VZ];
+            spr->origin[VX] = viewData->current.origin[VX];
+            spr->origin[VY] = viewData->current.origin[VY];
+            spr->origin[VZ] = viewData->current.origin[VZ];
 
             // Offsets to rotation angles.
             spr->data.model.yawAngleOffset = psp->pos[VX] * weaponOffsetScale - 90;
@@ -927,9 +927,9 @@ void R_ProjectPlayerSprites(void)
             spr->type = VPSPR_SPRITE;
 
             // Adjust the center slightly so an angle can be calculated.
-            spr->center[VX] = viewData->current.pos[VX];
-            spr->center[VY] = viewData->current.pos[VY];
-            spr->center[VZ] = viewData->current.pos[VZ];
+            spr->origin[VX] = viewData->current.origin[VX];
+            spr->origin[VY] = viewData->current.origin[VY];
+            spr->origin[VZ] = viewData->current.origin[VZ];
 
             spr->data.sprite.bspLeaf = ddpl->mo->bspLeaf;
             spr->data.sprite.alpha = psp->alpha;
@@ -938,23 +938,33 @@ void R_ProjectPlayerSprites(void)
     }
 }
 
-float R_MovementYaw(float momx, float momy)
+float R_MovementYaw(float const mom[])
 {
     // Multiply by 100 to get some artificial accuracy in bamsAtan2.
-    return BANG2DEG(bamsAtan2(-100 * momy, 100 * momx));
+    return BANG2DEG(bamsAtan2(-100 * mom[MY], 100 * mom[MX]));
 }
 
-float R_MovementPitch(float momx, float momy, float momz)
+float R_MovementXYYaw(float momx, float momy)
 {
-    return
-        BANG2DEG(bamsAtan2
-                 (100 * momz, 100 * P_AccurateDistance(momx, momy)));
+    float mom[2] = { momx, momy };
+    return R_MovementYaw(mom);
+}
+
+float R_MovementPitch(float const mom[])
+{
+    return BANG2DEG(bamsAtan2 (100 * mom[MZ], 100 * V2f_Length(mom)));
+}
+
+float R_MovementXYZPitch(float momx, float momy, float momz)
+{
+    float mom[3] = { momx, momy, momz };
+    return R_MovementPitch(mom);
 }
 
 typedef struct {
-    vissprite_t*        vis;
-    const mobj_t*       mo;
-    boolean             floorAdjust;
+    vissprite_t* vis;
+    const mobj_t* mo;
+    boolean floorAdjust;
 } vismobjzparams_t;
 
 /**
@@ -962,22 +972,20 @@ typedef struct {
  * may be slightly different than the actual Z coordinate due to smoothed
  * plane movement.
  */
-int RIT_VisMobjZ(Sector* sector, void* data)
+int RIT_VisMobjZ(Sector* sector, void* parameters)
 {
-    vismobjzparams_t*   params;
+    vismobjzparams_t* p = (vismobjzparams_t*) parameters;
+    assert(sector);
+    assert(p);
 
-    assert(sector != NULL);
-    assert(data != NULL);
-    params = (vismobjzparams_t*) data;
-
-    if(params->floorAdjust && params->mo->pos[VZ] == sector->SP_floorheight)
+    if(p->floorAdjust && p->mo->origin[VZ] == sector->SP_floorheight)
     {
-        params->vis->center[VZ] = sector->SP_floorvisheight;
+        p->vis->origin[VZ] = sector->SP_floorvisheight;
     }
 
-    if(params->mo->pos[VZ] + params->mo->height == sector->SP_ceilheight)
+    if(p->mo->origin[VZ] + p->mo->height == sector->SP_ceilheight)
     {
-        params->vis->center[VZ] = sector->SP_ceilvisheight - params->mo->height;
+        p->vis->origin[VZ] = sector->SP_ceilvisheight - p->mo->height;
     }
 
     return false; // Continue iteration.
@@ -1048,9 +1056,9 @@ void setupModelParamsForVisSprite(rendmodelparams_t *params,
     params->selector = selector;
     params->flags = mobjDDFlags;
     params->tmap = tmap;
-    params->center[VX] = x;
-    params->center[VY] = y;
-    params->center[VZ] = z;
+    params->origin[VX] = x;
+    params->origin[VY] = y;
+    params->origin[VZ] = z;
     params->srvo[VX] = visOffX;
     params->srvo[VY] = visOffY;
     params->srvo[VZ] = visOffZ;
@@ -1078,9 +1086,8 @@ void setupModelParamsForVisSprite(rendmodelparams_t *params,
     params->vLightListIdx = vLightListIdx;
 }
 
-void getLightingParams(float x, float y, float z, BspLeaf* bspLeaf,
-                       float distance, boolean fullBright,
-                       float ambientColor[3], uint* vLightListIdx)
+void getLightingParams(coord_t x, coord_t y, coord_t z, BspLeaf* bspLeaf,
+    coord_t distance, boolean fullBright, float ambientColor[3], uint* vLightListIdx)
 {
     if(fullBright)
     {
@@ -1093,10 +1100,10 @@ void getLightingParams(float x, float y, float z, BspLeaf* bspLeaf,
 
         if(useBias)
         {
-            vec3f_t point;
+            vec3d_t point;
 
             // Evaluate the position in the light grid.
-            V3f_Set(point, x, y, z);
+            V3d_Set(point, x, y, z);
             LG_Evaluate(point, ambientColor);
         }
         else
@@ -1127,9 +1134,9 @@ void getLightingParams(float x, float y, float z, BspLeaf* bspLeaf,
         Rend_ApplyTorchLight(ambientColor, distance);
 
         lparams.starkLight = false;
-        lparams.center[VX] = x;
-        lparams.center[VY] = y;
-        lparams.center[VZ] = z;
+        lparams.origin[VX] = x;
+        lparams.origin[VY] = y;
+        lparams.origin[VZ] = z;
         lparams.bspLeaf = bspLeaf;
         lparams.ambientColor = ambientColor;
 
@@ -1145,7 +1152,7 @@ void R_ProjectSprite(mobj_t* mo)
     Sector* sect = mo->bspLeaf->sector;
     float thangle = 0, alpha, floorClip, secFloor, secCeil;
     float pos[2], yaw = 0, pitch = 0;
-    vec3f_t visOff;
+    vec3d_t visOff;
     spritedef_t* sprDef;
     spriteframe_t* sprFrame = NULL;
     int tmap = 0, tclass = 0;
@@ -1153,7 +1160,8 @@ void R_ProjectSprite(mobj_t* mo)
     vissprite_t* vis;
     boolean align, fullBright, viewAlign, floorAdjust;
     modeldef_t* mf = NULL, *nextmf = NULL;
-    float interp = 0, distance, gzt;
+    float interp = 0;
+    coord_t distance, gzt;
     patchtex_t* pTex;
     vismobjzparams_t params;
     visspritetype_t visType = VSPR_SPRITE;
@@ -1163,7 +1171,7 @@ void R_ProjectSprite(mobj_t* mo)
     const materialvariantspecification_t* spec;
     const materialsnapshot_t* ms;
     const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
-    float moPos[3];
+    coord_t moPos[3];
 
     // Never make a vissprite when DDMF_DONTDRAW is set or when
     // when the mo hasn't got a valid state.
@@ -1175,9 +1183,9 @@ void R_ProjectSprite(mobj_t* mo)
     // Never make a vissprite when the mobj is fully transparent.
     if(alpha <= 0) return;
 
-    moPos[VX] = mo->pos[VX];
-    moPos[VY] = mo->pos[VY];
-    moPos[VZ] = mo->pos[VZ];
+    moPos[VX] = mo->origin[VX];
+    moPos[VY] = mo->origin[VY];
+    moPos[VZ] = mo->origin[VZ];
 
     // The client may have a Smoother for this object.
     if(isClient && mo->dPlayer && P_GetDDPlayerIdx(mo->dPlayer) != consolePlayer)
@@ -1186,8 +1194,8 @@ void R_ProjectSprite(mobj_t* mo)
     }
 
     // Transform the origin point.
-    pos[VX] = moPos[VX] - viewData->current.pos[VX];
-    pos[VY] = moPos[VY] - viewData->current.pos[VY];
+    pos[VX] = moPos[VX] - viewData->current.origin[VX];
+    pos[VY] = moPos[VY] - viewData->current.origin[VY];
 
     // Decide which patch to use for sprite relative to player.
 
@@ -1223,7 +1231,7 @@ void R_ProjectSprite(mobj_t* mo)
 
     if(sprFrame->rotate && !mf)
     {   // Choose a different rotation based on player view.
-        angle_t ang = R_PointToAngle(mo->pos[VX], mo->pos[VY]);
+        angle_t ang = R_ViewPointXYToAngle(mo->origin[VX], mo->origin[VY]);
         uint rot = (ang - mo->angle + (unsigned) (ANG45 / 2) * 9) >> 29;
         mat = sprFrame->mats[rot];
         matFlipS = (boolean) sprFrame->flip[rot];
@@ -1259,19 +1267,19 @@ void R_ProjectSprite(mobj_t* mo)
     // Perform visibility checking.
     /// @fixme R_VisualRadius() does not consider sprite rotation.
     {
-    float center[2], v1[2], v2[2];
-    float width = R_VisualRadius(mo)*2, offset = 0;
+    coord_t center[2], v1[2], v2[2];
+    coord_t width = R_VisualRadius(mo)*2, offset = 0;
 
     if(!mf)
     {
-        offset = (float) -pTex->offX - (width / 2);
+        offset = (coord_t) -pTex->offX - (width / 2);
     }
 
     // Project a line segment relative to the view in 2D, then check
     // if not entirely clipped away in the 360 degree angle clipper.
     center[VX] = moPos[VX];
     center[VY] = moPos[VY];
-    M_ProjectViewRelativeLine2D(center, mf || (align || alwaysAlign == 3),
+    R_ProjectViewRelativeLine2D(center, mf || (align || alwaysAlign == 3),
                                 width, offset, v1, v2);
 
     // Check for visibility.
@@ -1283,8 +1291,8 @@ void R_ProjectSprite(mobj_t* mo)
             // If the model is close to the viewpoint we will need to
             // draw it. Otherwise large models are likely to disappear
             // too early.
-            if(P_ApproxDistance(distance, moPos[VZ] + (mo->height / 2) -
-                                          viewData->current.pos[VZ]) > MAX_OBJECT_RADIUS)
+            if(M_ApproxDistance(distance, moPos[VZ] + (mo->height / 2) -
+                                          viewData->current.origin[VZ]) > MAX_OBJECT_RADIUS)
             {
                 return; // Can't be visible.
             }
@@ -1313,9 +1321,9 @@ void R_ProjectSprite(mobj_t* mo)
     // Store information in a vissprite.
     vis = R_NewVisSprite();
     vis->type = visType;
-    vis->center[VX] = moPos[VX];
-    vis->center[VY] = moPos[VY];
-    vis->center[VZ] = moPos[VZ];
+    vis->origin[VX] = moPos[VX];
+    vis->origin[VY] = moPos[VY];
+    vis->origin[VZ] = moPos[VZ];
     vis->distance = distance;
 
     floorAdjust = (fabs(sect->SP_floorvisheight - sect->SP_floorheight) < 8);
@@ -1331,7 +1339,7 @@ void R_ProjectSprite(mobj_t* mo)
     params.floorAdjust = floorAdjust;
     P_MobjSectorsIterator(mo, RIT_VisMobjZ, &params);
 
-    gzt = vis->center[VZ] + ((float) -pTex->offY);
+    gzt = vis->origin[VZ] + ((float) -pTex->offY);
 
     viewAlign = (align || alwaysAlign == 3)? true : false;
     fullBright = ((mo->state->flags & STF_FULLBRIGHT) || levelFullBright)? true : false;
@@ -1360,7 +1368,7 @@ void R_ProjectSprite(mobj_t* mo)
         }
         else if(mf->sub[0].flags & MFF_MOVEMENT_YAW)
         {
-            yaw = R_MovementYaw(mo->mom[MX], mo->mom[MY]);
+            yaw = R_MovementXYYaw(mo->mom[MX], mo->mom[MY]);
         }
         else
         {
@@ -1377,39 +1385,41 @@ void R_ProjectSprite(mobj_t* mo)
         if(mf->sub[0].flags & MFF_ALIGN_PITCH)
         {
             pitch = -BANG2DEG(bamsAtan2
-                (((vis->center[VZ] + gzt) / 2 - viewData->current.pos[VZ]) * 10,
+                (((vis->origin[VZ] + gzt) / 2 - viewData->current.origin[VZ]) * 10,
                               distance * 10));
         }
         else if(mf->sub[0].flags & MFF_MOVEMENT_PITCH)
         {
-            pitch = R_MovementPitch(mo->mom[MX], mo->mom[MY], mo->mom[MZ]);
+            pitch = R_MovementXYZPitch(mo->mom[MX], mo->mom[MY], mo->mom[MZ]);
         }
         else
+        {
             pitch = 0;
+        }
     }
 
     // Determine possible short-range visual offset.
-    V3f_Set(visOff, 0, 0, 0);
+    V3d_Set(visOff, 0, 0, 0);
 
     if((mf && useSRVO > 0) || (!mf && useSRVO > 1))
     {
         if(mo->state && mo->tics >= 0)
         {
-            V3f_Set(visOff, mo->srvo[VX], mo->srvo[VY], mo->srvo[VZ]);
-            V3f_Scale(visOff, (mo->tics - frameTimePos) / (float) mo->state->tics);
+            V3d_Set(visOff, mo->srvo[VX], mo->srvo[VY], mo->srvo[VZ]);
+            V3d_Scale(visOff, (mo->tics - frameTimePos) / (float) mo->state->tics);
         }
 
         if(!INRANGE_OF(mo->mom[MX], 0, NOMOMENTUM_THRESHOLD) ||
            !INRANGE_OF(mo->mom[MY], 0, NOMOMENTUM_THRESHOLD) ||
            !INRANGE_OF(mo->mom[MZ], 0, NOMOMENTUM_THRESHOLD))
         {
-            vec3f_t             tmp;
+            vec3d_t tmp;
 
             // Use the object's speed to calculate a short-range offset.
-            V3f_Set(tmp, mo->mom[MX], mo->mom[MY], mo->mom[MZ]);
-            V3f_Scale(tmp, frameTimePos);
+            V3d_Set(tmp, mo->mom[MX], mo->mom[MY], mo->mom[MZ]);
+            V3d_Scale(tmp, frameTimePos);
 
-            V3f_Sum(visOff, visOff, tmp);
+            V3d_Sum(visOff, visOff, tmp);
         }
     }
 
@@ -1448,13 +1458,13 @@ void R_ProjectSprite(mobj_t* mo)
         // Adjust by the floor clip.
         gzt -= floorClip;
 
-        getLightingParams(vis->center[VX], vis->center[VY],
+        getLightingParams(vis->origin[VX], vis->origin[VY],
                           gzt - ms->size.height / 2.0f,
                           mo->bspLeaf, vis->distance, fullBright,
                           ambientColor, &vLightListIdx);
 
         setupSpriteParamsForVisSprite(&vis->data.sprite,
-                                      vis->center[VX], vis->center[VY],
+                                      vis->origin[VX], vis->origin[VY],
                                       gzt - ms->size.height / 2.0f,
                                       vis->distance,
                                       visOff[VX], visOff[VY], visOff[VZ],
@@ -1472,12 +1482,12 @@ void R_ProjectSprite(mobj_t* mo)
     }
     else
     {
-        getLightingParams(vis->center[VX], vis->center[VY], vis->center[VZ],
+        getLightingParams(vis->origin[VX], vis->origin[VY], vis->origin[VZ],
                           mo->bspLeaf, vis->distance, fullBright,
                           ambientColor, &vLightListIdx);
 
         setupModelParamsForVisSprite(&vis->data.model,
-                                     vis->center[VX], vis->center[VY], vis->center[VZ], vis->distance,
+                                     vis->origin[VX], vis->origin[VY], vis->origin[VZ], vis->distance,
                                      visOff[VX], visOff[VY], visOff[VZ] - floorClip, gzt, yaw, 0, pitch, 0,
                                      mf, nextmf, interp,
                                      ambientColor[CR], ambientColor[CG], ambientColor[CB], alpha,
@@ -1507,7 +1517,7 @@ void R_ProjectSprite(mobj_t* mo)
         sprFrame = &sprDef->spriteFrames[mo->frame];
         if(sprFrame->rotate)
         {
-            mat = sprFrame->mats[(R_PointToAngle(moPos[VX], moPos[VY]) - mo->angle + (unsigned) (ANG45 / 2) * 9) >> 29];
+            mat = sprFrame->mats[(R_ViewPointXYToAngle(moPos[VX], moPos[VY]) - mo->angle + (unsigned) (ANG45 / 2) * 9) >> 29];
         }
         else
         {
@@ -1537,8 +1547,8 @@ void R_ProjectSprite(mobj_t* mo)
         vis->distance = distance;
 
         // Determine the exact center of the flare.
-        V3f_Sum(vis->center, moPos, visOff);
-        vis->center[VZ] += LUM_OMNI(lum)->zOff;
+        V3d_Sum(vis->origin, moPos, visOff);
+        vis->origin[VZ] += LUM_OMNI(lum)->zOff;
 
         flareSize = pl->brightMul;
         // X offset to the flare position.
@@ -1606,10 +1616,10 @@ int RIT_AddSprite(void* ptr, void* paramaters)
         if(mat && Surface_IsSkyMasked(&sec->SP_ceilsurface))
         {
             if(!(mo->dPlayer && mo->dPlayer->flags & DDPF_CAMERA) && // Cameramen don't exist!
-               mo->pos[VZ] <= sec->SP_ceilheight &&
-               mo->pos[VZ] >= sec->SP_floorheight)
+               mo->origin[VZ] <= sec->SP_ceilheight &&
+               mo->origin[VZ] >= sec->SP_floorheight)
             {
-                float visibleTop = mo->pos[VZ] + Material_Height(mat);
+                float visibleTop = mo->origin[VZ] + Material_Height(mat);
                 if(visibleTop > GameMap_SkyFixCeiling(map))
                 {
                     // Raise skyfix ceiling.
@@ -1638,16 +1648,15 @@ void R_AddSprites(BspLeaf* bspLeaf)
 
 void R_SortVisSprites(void)
 {
-    int                 i, count;
-    vissprite_t*        ds, *best = 0;
-    vissprite_t         unsorted;
-    float               bestdist;
+    int i, count;
+    vissprite_t* ds, *best = 0;
+    vissprite_t unsorted;
+    coord_t bestdist;
 
     count = visSpriteP - visSprites;
 
     unsorted.next = unsorted.prev = &unsorted;
-    if(!count)
-        return;
+    if(!count) return;
 
     for(ds = visSprites; ds < visSpriteP; ds++)
     {
@@ -1665,8 +1674,8 @@ void R_SortVisSprites(void)
     /**
      * \todo
      * Oprofile results from nuts.wad show over 25% of total execution time
-     * was spent sorting vissprites (nuts.wad map01 is a perfect
-     * pathological test case).
+     * was spent sorting vissprites (nuts.wad map01 is a perfect pathological
+     * test case).
      *
      * Rather than try to speed up the sort, it would make more sense to
      * actually construct the vissprites in z order if it can be done in
@@ -1705,11 +1714,12 @@ static void scaleFloatRGB(float* out, const float* in, float mul)
 /**
  * Iterator for processing light sources around a vissprite.
  */
-int RIT_VisSpriteLightIterator(const lumobj_t* lum, float xyDist, void* paramaters)
+int RIT_VisSpriteLightIterator(const lumobj_t* lum, coord_t xyDist, void* paramaters)
 {
     vlightiterparams_t* params = (vlightiterparams_t*)paramaters;
     boolean addLight = false;
-    float dist, intensity;
+    coord_t dist;
+    float intensity;
 
     if(!(lum->type == LT_OMNI || lum->type == LT_PLANE))
         return 0; // Continue iteration.
@@ -1718,11 +1728,11 @@ int RIT_VisSpriteLightIterator(const lumobj_t* lum, float xyDist, void* paramate
     switch(lum->type)
     {
     case LT_OMNI: {
-        float zDist = params->pos[VZ] - lum->pos[VZ] + LUM_OMNI(lum)->zOff;
+        coord_t zDist = params->origin[VZ] - lum->origin[VZ] + LUM_OMNI(lum)->zOff;
 
-        dist = P_ApproxDistance(xyDist, zDist);
+        dist = M_ApproxDistance(xyDist, zDist);
 
-        if(dist < (float) loMaxRadius)
+        if(dist < (coord_t) loMaxRadius)
         {
             // The intensity of the light.
             intensity = MINMAX_OF(0, (1 - dist / LUM_OMNI(lum)->radius) * 2, 1);
@@ -1741,17 +1751,15 @@ int RIT_VisSpriteLightIterator(const lumobj_t* lum, float xyDist, void* paramate
             // Don't make too small or too large glows.
             if(glowHeight > 2)
             {
-                float delta[3];
+                coord_t delta[3];
 
                 if(glowHeight > glowHeightMax)
                     glowHeight = glowHeightMax;
 
-                delta[VX] = params->pos[VX] - lum->pos[VX];
-                delta[VY] = params->pos[VY] - lum->pos[VY];
-                delta[VZ] = params->pos[VZ] - lum->pos[VZ];
-
-                if(!((dist = M_DotProduct(delta, LUM_PLANE(lum)->normal)) < 0))
-                {   // Is on the front of the glow plane.
+                V3d_Subtract(delta, params->origin, lum->origin);
+                if(!((dist = V3d_DotProductf(delta, LUM_PLANE(lum)->normal)) < 0))
+                {
+                    // Is on the front of the glow plane.
                     addLight = true;
                     intensity = 1 - dist / glowHeight;
                 }
@@ -1783,9 +1791,9 @@ int RIT_VisSpriteLightIterator(const lumobj_t* lum, float xyDist, void* paramate
 
                 // Calculate the normalized direction vector, pointing out of
                 // the light origin.
-                vlight->vector[VX] = (lum->pos[VX] - params->pos[VX]) / dist;
-                vlight->vector[VY] = (lum->pos[VY] - params->pos[VY]) / dist;
-                vlight->vector[VZ] = (lum->pos[VZ] + LUM_OMNI(lum)->zOff - params->pos[VZ]) / dist;
+                vlight->vector[VX] = (lum->origin[VX] - params->origin[VX]) / dist;
+                vlight->vector[VY] = (lum->origin[VY] - params->origin[VY]) / dist;
+                vlight->vector[VZ] = (lum->origin[VZ] + LUM_OMNI(lum)->zOff - params->origin[VZ]) / dist;
 
                 vlight->color[CR] = LUM_OMNI(lum)->color[CR] * intensity;
                 vlight->color[CG] = LUM_OMNI(lum)->color[CG] * intensity;
@@ -1802,11 +1810,12 @@ int RIT_VisSpriteLightIterator(const lumobj_t* lum, float xyDist, void* paramate
                 /**
                  * Calculate the normalized direction vector, pointing out of
                  * the vissprite.
-                 * \fixme Project the nearest point on the surface to
-                 * determine the real direction vector.
+                 *
+                 * @fixme Project the nearest point on the surface to determine
+                 *        the real direction vector.
                  */
-                vlight->vector[VX] = LUM_PLANE(lum)->normal[VX];
-                vlight->vector[VY] = LUM_PLANE(lum)->normal[VY];
+                vlight->vector[VX] =  LUM_PLANE(lum)->normal[VX];
+                vlight->vector[VY] =  LUM_PLANE(lum)->normal[VY];
                 vlight->vector[VZ] = -LUM_PLANE(lum)->normal[VZ];
 
                 vlight->color[CR] = LUM_PLANE(lum)->color[CR] * intensity;
@@ -1877,13 +1886,11 @@ uint R_CollectAffectingLights(const collectaffectinglights_params_t* params)
     {
         vlightiterparams_t vars;
 
-        vars.pos[VX] = params->center[VX];
-        vars.pos[VY] = params->center[VY];
-        vars.pos[VZ] = params->center[VZ];
+        V3d_Copy(vars.origin, params->origin);
         vars.haveList = true;
         vars.listIdx = vLightListIdx;
 
-        LO_LumobjsRadiusIterator2(params->bspLeaf, params->center[VX], params->center[VY],
+        LO_LumobjsRadiusIterator2(params->bspLeaf, params->origin[VX], params->origin[VY],
             (float) loMaxRadius, RIT_VisSpriteLightIterator, (void*)&vars);
     }
 
@@ -1920,13 +1927,12 @@ boolean VL_ListIterator(uint listIdx, void* data, boolean (*func) (const vlight_
  * @return              The current floatbob offset for the mobj, if the mobj
  *                      is flagged for bobbing, else @c 0.
  */
-float R_GetBobOffset(mobj_t* mo)
+coord_t R_GetBobOffset(mobj_t* mo)
 {
     if(mo->ddFlags & DDMF_BOB)
     {
         return (sin(MOBJ_TO_ID(mo) + ddMapTime / 1.8286 * 2 * PI) * 8);
     }
-
     return 0;
 }
 

@@ -44,11 +44,11 @@ typedef struct {
 /// Orientation is toward the projectee.
 typedef struct {
     float blendFactor; /// Multiplied with projection alpha.
-    pvec3f_t v1; /// Top left vertex of the surface being projected to.
-    pvec3f_t v2; /// Bottom right vertex of the surface being projected to.
-    pvec3f_t tangent; /// Normalized tangent of the surface being projected to.
-    pvec3f_t bitangent; /// Normalized bitangent of the surface being projected to.
-    pvec3f_t normal; /// Normalized normal of the surface being projected to.
+    coord_t* v1; /// Top left vertex of the surface being projected to.
+    coord_t* v2; /// Bottom right vertex of the surface being projected to.
+    float* tangent; /// Normalized tangent of the surface being projected to.
+    float* bitangent; /// Normalized bitangent of the surface being projected to.
+    float* normal; /// Normalized normal of the surface being projected to.
 } shadowprojectparams_t;
 
 // List nodes.
@@ -124,7 +124,7 @@ static listnode_t* newListNode(void)
     return node;
 }
 
-static listnode_t* newProjection(const float s[2], const float t[2], float alpha)
+static listnode_t* newProjection(float const s[2], float const t[2], float alpha)
 {
     assert(s && t);
     {
@@ -159,19 +159,19 @@ static listnode_t* linkProjectionToList(listnode_t* node, shadowprojectionlist_t
  * @param t  GL texture coordinates on the T axis [bottom, top] in texture space.
  * @param alpha  Alpha attributed to the new projection.
  */
-static void newShadowProjection(uint* listIdx, const float s[2], const float t[2], float alpha)
+static void newShadowProjection(uint* listIdx, float const s[2], float const t[2], float alpha)
 {
     linkProjectionToList(newProjection(s, t, alpha), getList(listIdx));
 }
 
-static boolean genTexCoords(pvec2f_t s, pvec2f_t t, const_pvec3f_t point, float scale,
-    const_pvec3f_t v1, const_pvec3f_t v2, const_pvec3f_t tangent, const_pvec3f_t bitangent)
+static boolean genTexCoords(float s[2], float t[2], coord_t const point[3], float scale,
+    coord_t const v1[3], coord_t const v2[3], float const tangent[2], float const bitangent[2])
 {
     // Counteract aspect correction slightly (not too round mind).
     return R_GenerateTexCoords(s, t, point, scale, scale * 1.08f, v1, v2, tangent, bitangent);
 }
 
-float R_ShadowAttenuationFactor(float distance)
+float R_ShadowAttenuationFactor(coord_t distance)
 {
     if(shadowMaxDistance > 0 && distance > 3 * shadowMaxDistance / 4)
     {
@@ -201,9 +201,9 @@ int RIT_ProjectShadowToSurfaceIterator(void* obj, void* paramaters)
     mobj_t* mo = (mobj_t*)obj;
     projectshadowonsurfaceiteratorparams_t* p = (projectshadowonsurfaceiteratorparams_t*)paramaters;
     shadowprojectparams_t* spParams = &p->spParams;
-    float distanceFromViewer = 0, mobjHeight, halfMobjHeight, distanceFromSurface, scale;
-    float shadowRadius, shadowStrength;
-    vec3f_t mobjOrigin, point;
+    coord_t distanceFromViewer = 0, mobjHeight, halfMobjHeight, distanceFromSurface;
+    float scale, shadowRadius, shadowStrength;
+    coord_t mobjOrigin[3], point[3];
     vec2f_t s, t;
 
     Mobj_OriginSmoothed(mo, mobjOrigin);
@@ -238,13 +238,13 @@ int RIT_ProjectShadowToSurfaceIterator(void* obj, void* paramaters)
     // in the opposite direction (inward toward the mobj's origin), therefore this
     // has "volume/depth".
     //
-    // vec3f_t vToMobj;
-    // V3f_Subtract(vToMobj, spParams->v1, mobjOrigin);
-    // if(V3f_DotProduct(vToMobj, spParams->normal) > 0) return false; // Continue iteration
+    // vec3d_t vToMobj;
+    // V3d_Subtract(vToMobj, spParams->v1, mobjOrigin);
+    // if(V3d_DotProductf(vToMobj, spParams->normal) > 0) return false; // Continue iteration
 
     // Calculate 3D distance between surface and mobj.
-    V3f_ClosestPointOnPlane(point, spParams->normal, spParams->v1, mobjOrigin);
-    distanceFromSurface = V3f_Distance(point, mobjOrigin);
+    V3d_ClosestPointOnPlanef(point, spParams->normal, spParams->v1, mobjOrigin);
+    distanceFromSurface = V3d_Distance(point, mobjOrigin);
 
     // Too far above or below the shadowed surface?
     if(distanceFromSurface > mo->height) return false; // Continue iteration.
@@ -309,8 +309,8 @@ void R_InitShadowProjectionListsForNewFrame(void)
     }
 }
 
-uint R_ProjectShadowsToSurface(BspLeaf* bspLeaf, float blendFactor,
-    vec3f_t topLeft, vec3f_t bottomRight, vec3f_t tangent, vec3f_t bitangent, vec3f_t normal)
+uint R_ProjectShadowsToSurface(BspLeaf* bspLeaf, float blendFactor, coord_t topLeft[3],
+    coord_t bottomRight[3], float tangent[3], float bitangent[3], float normal[3])
 {
     projectshadowonsurfaceiteratorparams_t p;
 

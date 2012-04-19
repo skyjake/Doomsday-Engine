@@ -476,9 +476,9 @@ void Cl_Ticker(timespan_t ticLength)
             if(ddPlayers[i].shared.mo)
             {
                 Smoother_AddPos(clients[i].smoother, Cl_FrameGameTime(),
-                                ddPlayers[i].shared.mo->pos[VX],
-                                ddPlayers[i].shared.mo->pos[VY],
-                                ddPlayers[i].shared.mo->pos[VZ],
+                                ddPlayers[i].shared.mo->origin[VX],
+                                ddPlayers[i].shared.mo->origin[VY],
+                                ddPlayers[i].shared.mo->origin[VZ],
                                 false);
             }
 
@@ -487,7 +487,7 @@ void Cl_Ticker(timespan_t ticLength)
         }
 
         ClPlayer_ApplyPendingFixes(i);
-        ClPlayer_UpdatePos(i);
+        ClPlayer_UpdateOrigin(i);
 
 #ifdef _DEBUG
         Cl_Assertions(i);

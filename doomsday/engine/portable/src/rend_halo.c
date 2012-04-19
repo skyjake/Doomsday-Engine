@@ -139,8 +139,8 @@ void H_SetupState(boolean dosetup)
  *
  * @return          @c true, if a halo was rendered.
  */
-boolean H_RenderHalo(float x, float y, float z, float size, DGLuint tex,
-                     const float color[3], float distanceToViewer,
+boolean H_RenderHalo(coord_t x, coord_t y, coord_t z, float size, DGLuint tex,
+                     const float color[3], coord_t distanceToViewer,
                      float occlusionFactor, float brightnessFactor,
                      float viewXOffset, boolean primary,
                      boolean viewRelativeRotate)
@@ -200,25 +200,25 @@ boolean H_RenderHalo(float x, float y, float z, float size, DGLuint tex,
 
     for(i = 0; i < 3; ++i)
         normalViewToCenter[i] = viewToCenter[i] = center[i] - viewPos[i];
-    M_Normalize(normalViewToCenter);
+    V3f_Normalize(normalViewToCenter);
 
     // Calculate the dimming factor for secondary flares.
-    secDimFactor = M_DotProduct(normalViewToCenter, viewData->frontVec);
+    secDimFactor = V3f_DotProduct(normalViewToCenter, viewData->frontVec);
 
-    scale = M_DotProduct(viewToCenter, viewData->frontVec) / M_DotProduct(viewData->frontVec, viewData->frontVec);
+    scale = V3f_DotProduct(viewToCenter, viewData->frontVec) / V3f_DotProduct(viewData->frontVec, viewData->frontVec);
 
     for(i = 0; i < 3; ++i)
         haloPos[i] = mirror[i] = (viewData->frontVec[i] * scale - viewToCenter[i]) * 2;
     // Now adding 'mirror' to a position will mirror it.
 
     // Calculate texture turn angle.
-    if(M_Normalize(haloPos))
+    if(V3f_Normalize(haloPos))
     {
         // Now halopos is a normalized version of the mirror vector.
         // Both vectors are on the view plane.
         if(viewRelativeRotate)
         {
-            turnAngle = M_DotProduct(haloPos, viewData->upVec);
+            turnAngle = V3f_DotProduct(haloPos, viewData->upVec);
             if(turnAngle > 1)
                 turnAngle = 1;
             else if(turnAngle < -1)
@@ -232,7 +232,7 @@ boolean H_RenderHalo(float x, float y, float z, float size, DGLuint tex,
                 turnAngle = acos(turnAngle);
 
             // On which side of the up vector (left or right)?
-            if(M_DotProduct(haloPos, viewData->sideVec) < 0)
+            if(V3f_DotProduct(haloPos, viewData->sideVec) < 0)
                 turnAngle = -turnAngle;
         }
         else

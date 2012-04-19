@@ -58,16 +58,16 @@ typedef struct {
 } objlinkblock_t;
 
 typedef struct {
-    float origin[2]; /// Origin of the blockmap in world coordinates [x,y].
+    coord_t origin[2]; /// Origin of the blockmap in world coordinates [x,y].
     Gridmap* gridmap;
 } objlinkblockmap_t;
 
 typedef struct {
     void* obj;
     objtype_t objType;
-    vec3f_t objPos;
-    float objRadius;
-    float box[4];
+    coord_t objOrigin[3];
+    coord_t objRadius;
+    coord_t box[4];
 } contactfinderparams_t;
 
 typedef struct objcontact_s {
@@ -100,16 +100,16 @@ static __inline objlinkblockmap_t* chooseObjlinkBlockmap(objtype_t type)
     return blockmaps + (int)type;
 }
 
-static __inline uint toObjlinkBlockmapX(objlinkblockmap_t* obm, float x)
+static __inline uint toObjlinkBlockmapX(objlinkblockmap_t* obm, coord_t x)
 {
     assert(obm && x >= obm->origin[0]);
-    return (uint)((x - obm->origin[0]) / (float)BLOCK_WIDTH);
+    return (uint)((x - obm->origin[0]) / (coord_t)BLOCK_WIDTH);
 }
 
-static __inline uint toObjlinkBlockmapY(objlinkblockmap_t* obm, float y)
+static __inline uint toObjlinkBlockmapY(objlinkblockmap_t* obm, coord_t y)
 {
     assert(obm && y >= obm->origin[1]);
-    return (uint)((y - obm->origin[1]) / (float)BLOCK_HEIGHT);
+    return (uint)((y - obm->origin[1]) / (coord_t)BLOCK_HEIGHT);
 }
 
 /**
@@ -120,10 +120,10 @@ static __inline uint toObjlinkBlockmapY(objlinkblockmap_t* obm, float y)
  * @return  @c true if the coordinates specified had to be adjusted.
  */
 static boolean toObjlinkBlockmapCell(objlinkblockmap_t* obm, uint coords[2],
-    float x, float y)
+    coord_t x, coord_t y)
 {
     boolean adjusted = false;
-    float max[2];
+    coord_t max[2];
     uint size[2];
     assert(obm);
 
@@ -227,21 +227,21 @@ static objlink_t* allocObjlink(void)
 void R_InitObjlinkBlockmapForMap(void)
 {
     GameMap* map = theMap;
-    float min[2], max[2];
+    coord_t min[2], max[2];
     uint width, height;
     int i;
 
     // Determine the dimensions of the objlink blockmaps in blocks.
-    GameMap_Bounds(map, &min[0], &max[0]);
-    width  = (uint)ceil((max[0] - min[0]) / (float)BLOCK_WIDTH);
-    height = (uint)ceil((max[1] - min[1]) / (float)BLOCK_HEIGHT);
+    GameMap_Bounds(map, min, max);
+    width  = (uint)ceil((max[VX] - min[VX]) / (coord_t)BLOCK_WIDTH);
+    height = (uint)ceil((max[VY] - min[VY]) / (coord_t)BLOCK_HEIGHT);
 
     // Create the blockmaps.
     for(i = 0; i < NUM_OBJ_TYPES; ++i)
     {
         objlinkblockmap_t* obm = chooseObjlinkBlockmap((objtype_t)i);
-        obm->origin[0] = min[0];
-        obm->origin[1] = min[1];
+        obm->origin[0] = min[VX];
+        obm->origin[1] = min[VY];
         obm->gridmap = Gridmap_New(width, height, sizeof(objlinkblock_t), PU_MAPSTATIC);
     }
 
@@ -347,7 +347,7 @@ static void processSeg(HEdge* hedge, void* paramaters)
     contactfinderparams_t* p = (contactfinderparams_t*) paramaters;
     linkobjtobspleafparams_t loParams;
     BspLeaf* source, *dest;
-    float distance;
+    coord_t distance;
     Vertex* vtx;
 
     // HEdge must be between two different BspLeafs.
@@ -400,11 +400,11 @@ static void processSeg(HEdge* hedge, void* paramaters)
 
     // Calculate 2D distance to hedge.
     {
-    const float dx = hedge->HE_v2pos[VX] - hedge->HE_v1pos[VX];
-    const float dy = hedge->HE_v2pos[VY] - hedge->HE_v1pos[VY];
+    const coord_t dx = hedge->HE_v2origin[VX] - hedge->HE_v1origin[VX];
+    const coord_t dy = hedge->HE_v2origin[VY] - hedge->HE_v1origin[VY];
     vtx = hedge->HE_v1;
-    distance = ((vtx->pos[VY] - p->objPos[VY]) * dx -
-                (vtx->pos[VX] - p->objPos[VX]) * dy) / hedge->length;
+    distance = ((vtx->origin[VY] - p->objOrigin[VY]) * dx -
+                (vtx->origin[VX] - p->objOrigin[VX]) * dy) / hedge->length;
     }
 
     if(hedge->lineDef)
@@ -446,8 +446,8 @@ static void findContacts(objlink_t* link)
 {
     contactfinderparams_t cfParams;
     linkobjtobspleafparams_t loParams;
-    float radius;
-    pvec3f_t pos;
+    coord_t radius;
+    pvec3d_t origin;
     BspLeaf** ssecAdr;
 
     switch(link->type)
@@ -457,7 +457,7 @@ static void findContacts(objlink_t* link)
         // Only omni lights spread.
         if(lum->type != LT_OMNI) return;
 
-        pos = lum->pos;
+        origin = lum->origin;
         radius = LUM_OMNI(lum)->radius;
         ssecAdr = &lum->bspLeaf;
         break;
@@ -465,7 +465,7 @@ static void findContacts(objlink_t* link)
     case OT_MOBJ: {
         mobj_t* mo = (mobj_t*) link->obj;
 
-        pos = mo->pos;
+        origin = mo->origin;
         radius = R_VisualRadius(mo);
         ssecAdr = &mo->bspLeaf;
         break;
@@ -480,14 +480,14 @@ static void findContacts(objlink_t* link)
 
     cfParams.obj = link->obj;
     cfParams.objType = link->type;
-    V3f_Copy(cfParams.objPos, pos);
+    V3d_Copy(cfParams.objOrigin, origin);
     // Use a slightly smaller radius than what the obj really is.
     cfParams.objRadius = radius * .98f;
 
-    cfParams.box[BOXLEFT]   = cfParams.objPos[VX] - radius;
-    cfParams.box[BOXRIGHT]  = cfParams.objPos[VX] + radius;
-    cfParams.box[BOXBOTTOM] = cfParams.objPos[VY] - radius;
-    cfParams.box[BOXTOP]    = cfParams.objPos[VY] + radius;
+    cfParams.box[BOXLEFT]   = cfParams.objOrigin[VX] - radius;
+    cfParams.box[BOXRIGHT]  = cfParams.objOrigin[VX] + radius;
+    cfParams.box[BOXBOTTOM] = cfParams.objOrigin[VY] - radius;
+    cfParams.box[BOXTOP]    = cfParams.objOrigin[VY] + radius;
 
     // Always contact the obj's own BspLeaf.
     loParams.obj = link->obj;
@@ -571,7 +571,7 @@ void R_LinkObjs(void)
     objlinkblockmap_t* obm;
     objlink_t* link;
     uint block[2];
-    pvec3f_t pos;
+    pvec3d_t origin;
 
 BEGIN_PROF( PROF_OBJLINK_LINK );
 
@@ -581,15 +581,15 @@ BEGIN_PROF( PROF_OBJLINK_LINK );
     {
         switch(link->type)
         {
-        case OT_LUMOBJ:     pos = ((lumobj_t*)link->obj)->pos; break;
-        case OT_MOBJ:       pos = ((mobj_t*)link->obj)->pos; break;
+        case OT_LUMOBJ:     origin = ((lumobj_t*)link->obj)->origin; break;
+        case OT_MOBJ:       origin = ((mobj_t*)link->obj)->origin; break;
         default:
             Con_Error("R_LinkObjs: Invalid objtype %i.", (int) link->type);
             exit(1); // Unreachable.
         }
 
         obm = chooseObjlinkBlockmap(link->type);
-        if(!toObjlinkBlockmapCell(obm, block, pos[VX], pos[VY]))
+        if(!toObjlinkBlockmapCell(obm, block, origin[VX], origin[VY]))
         {
             linkObjlinkInBlockmap(obm, link, block);
         }

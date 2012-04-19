@@ -29,6 +29,10 @@
 #ifndef LIBDENG_REFRESH_LUMINOUS_H
 #define LIBDENG_REFRESH_LUMINOUS_H
 
+#include "dd_types.h"
+#include "m_vector.h"
+#include "p_mapdata.h"
+
 // Lumobject types.
 typedef enum {
     LT_OMNI, ///< Omni (spherical) light.
@@ -41,16 +45,16 @@ typedef enum {
 
 typedef struct lumobj_s {
     lumtype_t type;
-    float pos[3]; // Center of the obj.
+    coord_t origin[3]; // Center of the obj.
     BspLeaf* bspLeaf;
-    float maxDistance;
+    coord_t maxDistance;
     void* decorSource; // decorsource_t ptr, else @c NULL.
 
     union lumobj_data_u {
         struct lumobj_omni_s {
             float color[3];
-            float radius; // Radius for this omnilight source.
-            float zOff; // Offset to center from pos[VZ].
+            coord_t radius; // Radius for this omnilight source.
+            coord_t zOff; // Offset to center from pos[VZ].
             DGLuint tex; // Lightmap texture.
             DGLuint floorTex, ceilTex; // Lightmaps for floor/ceil.
         } omni;
@@ -133,7 +137,7 @@ boolean LO_IsClipped(uint idx, int i);
 boolean LO_IsHidden(uint idx, int i);
 
 /// @return  Approximated distance between the lumobj and the viewer.
-float LO_DistanceToViewer(uint idx, int i);
+coord_t LO_DistanceToViewer(uint idx, int i);
 
 /**
  * Calculate a distance attentuation factor for a lumobj.
@@ -141,9 +145,9 @@ float LO_DistanceToViewer(uint idx, int i);
  * @param idx  Logical index associated with the lumobj.
  * @param distance  Distance between the lumobj and the viewer.
  *
- * @return  Attentuation factor [0...1]
+ * @return  Attentuation factor [0..1]
  */
-float LO_AttenuationFactor(uint idx, float distance);
+float LO_AttenuationFactor(uint idx, coord_t distance);
 
 /**
  * Clip lumobj, omni lights in the given BspLeaf.
@@ -175,10 +179,10 @@ void LO_ClipInBspLeafBySight(uint bspLeafIdx);
  *
  * @return  @c 0 iff iteration completed wholly.
  */
-int LO_LumobjsRadiusIterator2(BspLeaf* bspLeaf, float x, float y, float radius,
-    int (*callback) (const lumobj_t* lum, float distance, void* paramaters), void* paramaters);
-int LO_LumobjsRadiusIterator(BspLeaf* bspLeaf, float x, float y, float radius,
-    int (*callback) (const lumobj_t* lum, float distance, void* paramaters)); /* paramaters = NULL */
+int LO_LumobjsRadiusIterator2(BspLeaf* bspLeaf, coord_t x, coord_t y, coord_t radius,
+    int (*callback) (const lumobj_t* lum, coord_t distance, void* paramaters), void* paramaters);
+int LO_LumobjsRadiusIterator(BspLeaf* bspLeaf, coord_t x, coord_t y, coord_t radius,
+    int (*callback) (const lumobj_t* lum, coord_t distance, void* paramaters)); /* paramaters = NULL */
 
 /**
  * @defgroup projectLightFlags  Flags for LO_ProjectToSurface.
@@ -212,7 +216,7 @@ int LO_LumobjsRadiusIterator(BspLeaf* bspLeaf, float x, float y, float radius,
  * @return  Projection list identifier if surface is lit else @c 0.
  */
 uint LO_ProjectToSurface(int flags, BspLeaf* bspLeaf, float blendFactor,
-    vec3f_t topLeft, vec3f_t bottomRight, vec3f_t tangent, vec3f_t bitangent, vec3f_t normal);
+    vec3d_t topLeft, vec3d_t bottomRight, vec3f_t tangent, vec3f_t bitangent, vec3f_t normal);
 
 /**
  * Iterate over projections in the identified surface-projection list, making
@@ -226,8 +230,8 @@ uint LO_ProjectToSurface(int flags, BspLeaf* bspLeaf, float blendFactor,
  * @return  @c 0 iff iteration completed wholly.
  */
 int LO_IterateProjections2(uint listIdx, int (*callback) (const dynlight_t*, void*), void* paramaters);
-int LO_IterateProjections(uint listIdx, int (*callback) (const dynlight_t*, void*)); /* paramaters = NULL */
+int LO_IterateProjections(uint listIdx, int (*callback) (const dynlight_t*, void*)/* paramaters=NULL*/);
 
 void LO_DrawLumobjs(void);
 
-#endif /* LIBDENG_REFRESH_LUMINOUS_H */
+#endif /// LIBDENG_REFRESH_LUMINOUS_H

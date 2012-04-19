@@ -257,7 +257,7 @@ static void SV_ReadMobj(void)
     /**
      * We now have all the information we need to create the mobj.
      */
-    mo = P_MobjCreate(P_MobjThinker, pos[VX], pos[VY], pos[VZ], angle,
+    mo = P_MobjCreateXYZ(P_MobjThinker, pos[VX], pos[VY], pos[VZ], angle,
                       radius, height, ddflags);
 
     mo->sprite = sprite;
@@ -306,9 +306,9 @@ static void SV_ReadMobj(void)
     mo->lastLook = SV_ReadLong();
 
     // For nightmare respawn.
-    mo->spawnSpot.pos[VX] = (float) SV_ReadShort();
-    mo->spawnSpot.pos[VY] = (float) SV_ReadShort();
-    mo->spawnSpot.pos[VZ] = 0; // Initialize with "something".
+    mo->spawnSpot.origin[VX] = (float) SV_ReadShort();
+    mo->spawnSpot.origin[VY] = (float) SV_ReadShort();
+    mo->spawnSpot.origin[VZ] = 0; // Initialize with "something".
     mo->spawnSpot.angle = (angle_t) (ANG45 * ((int)SV_ReadShort() / 45));
     /* mo->spawnSpot.type = (int) */ SV_ReadShort();
 
@@ -337,14 +337,14 @@ static void SV_ReadMobj(void)
         //mo->dPlayer->clAngle = mo->angle; /* $unifiedangles */
         mo->dPlayer->lookDir = 0; /* $unifiedangles */
     }
-    P_MobjSetPosition(mo);
-    mo->floorZ   = P_GetFloatp(mo->bspLeaf, DMU_FLOOR_HEIGHT);
-    mo->ceilingZ = P_GetFloatp(mo->bspLeaf, DMU_CEILING_HEIGHT);
+    P_MobjSetOrigin(mo);
+    mo->floorZ   = P_GetDoublep(mo->bspLeaf, DMU_FLOOR_HEIGHT);
+    mo->ceilingZ = P_GetDoublep(mo->bspLeaf, DMU_CEILING_HEIGHT);
 }
 
 void P_v19_UnArchivePlayers(void)
 {
-    int                 i, j;
+    int i, j;
 
     for(i = 0; i < 4; ++i)
     {
@@ -388,8 +388,8 @@ void P_v19_UnArchiveWorld(void)
         sec = P_ToPtr(DMU_SECTOR, i);
         xsec = P_ToXSector(sec);
 
-        P_SetFloatp(sec, DMU_FLOOR_HEIGHT, (float) (*get++));
-        P_SetFloatp(sec, DMU_CEILING_HEIGHT, (float) (*get++));
+        P_SetDoublep(sec, DMU_FLOOR_HEIGHT,   (coord_t) (*get++));
+        P_SetDoublep(sec, DMU_CEILING_HEIGHT, (coord_t) (*get++));
         P_SetPtrp(sec, DMU_FLOOR_MATERIAL,   P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_FLATS, *get++)));
         P_SetPtrp(sec, DMU_CEILING_MATERIAL, P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_FLATS, *get++)));
 
@@ -414,8 +414,7 @@ void P_v19_UnArchiveWorld(void)
         {
             SideDef* sdef = P_GetPtrp(line, (j? DMU_SIDEDEF1:DMU_SIDEDEF0));
 
-            if(!sdef)
-                continue;
+            if(!sdef) continue;
 
             matOffset[VX] = (float) (*get++);
             matOffset[VY] = (float) (*get++);

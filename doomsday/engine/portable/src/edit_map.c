@@ -235,10 +235,10 @@ static int C_DECL vertexCompare(const void* p1, const void* p2)
 
     if(a == b) return 0;
 
-    if((int) a->buildData.pos[VX] != (int) b->buildData.pos[VX])
-        return (int) a->buildData.pos[VX] - (int) b->buildData.pos[VX];
+    if((int) a->origin[VX] != (int) b->origin[VX])
+        return (int) a->origin[VX] - (int) b->origin[VX];
 
-    return (int) a->buildData.pos[VY] - (int) b->buildData.pos[VY];
+    return (int) a->origin[VY] - (int) b->origin[VY];
 }
 
 void MPE_DetectDuplicateVertices(editmap_t* map)
@@ -648,7 +648,7 @@ static void finishSectors(GameMap* map)
 
         Sector_UpdateAABox(sec);
         Sector_UpdateArea(sec);
-        Sector_UpdateOrigin(sec);
+        Sector_UpdateBase(sec);
 
         // Set the position of the sound origin for all plane sound origins.
         // Set target heights for all planes.
@@ -656,9 +656,9 @@ static void finishSectors(GameMap* map)
         {
             Plane* plane = sec->planes[k];
 
-            plane->origin.pos[VX] = sec->origin.pos[VX];
-            plane->origin.pos[VY] = sec->origin.pos[VY];
-            plane->origin.pos[VZ] = plane->height;
+            plane->base.origin[VX] = sec->base.origin[VX];
+            plane->base.origin[VY] = sec->base.origin[VY];
+            plane->base.origin[VZ] = plane->height;
 
             plane->target = plane->height;
         }
@@ -698,18 +698,9 @@ static void finishLineDefs(GameMap* map)
         LineDef_UpdateSlope(ld);
         LineDef_UpdateAABox(ld);
 
-        ld->length = P_AccurateDistance(ld->dX, ld->dY);
-        ld->angle = bamsAtan2((int) ld->dY, (int) ld->dX);
+        ld->length = V2d_Length(ld->direction);
+        ld->angle = bamsAtan2((int) ld->direction[VY], (int) ld->direction[VX]);
     }
-}
-
-static void initBBoxFromAABoxf(float bBox[4], const AABoxf* aaBox)
-{
-    assert(bBox && aaBox);
-    bBox[BOXLEFT]   = aaBox->minX;
-    bBox[BOXRIGHT]  = aaBox->maxX;
-    bBox[BOXBOTTOM] = aaBox->minY;
-    bBox[BOXTOP]    = aaBox->maxY;
 }
 
 /**
@@ -718,11 +709,8 @@ static void initBBoxFromAABoxf(float bBox[4], const AABoxf* aaBox)
 static void updateMapBounds(GameMap* map)
 {
     boolean isFirst = true;
-    float bBox[4];
     uint i;
     assert(map);
-
-    memset(map->bBox, 0, sizeof(map->bBox));
 
     for(i = 0; i < map->numSectors; ++i)
     {
@@ -730,16 +718,15 @@ static void updateMapBounds(GameMap* map)
 
         if(!sec->lineDefCount) continue;
 
-        initBBoxFromAABoxf(bBox, &sec->aaBox);
         if(isFirst)
         {
             // The first sector is used as is.
-            memcpy(map->bBox, bBox, sizeof(map->bBox));
+            V2d_CopyBox(map->aaBox.arvec2, sec->aaBox.arvec2);
         }
         else
         {
             // Expand the bounding box.
-            M_JoinBoxes(map->bBox, bBox);
+            V2d_UniteBox(map->aaBox.arvec2, sec->aaBox.arvec2);
         }
         isFirst = false;
     }
@@ -788,8 +775,8 @@ static int C_DECL lineAngleSorter(const void* a, const void* b)
             line = own[i]->lineDef;
             otherVtx = line->L_v(line->L_v1 == rootVtx? 1:0);
 
-            dx = otherVtx->pos[VX] - rootVtx->pos[VX];
-            dy = otherVtx->pos[VY] - rootVtx->pos[VY];
+            dx = otherVtx->origin[VX] - rootVtx->origin[VX];
+            dy = otherVtx->origin[VY] - rootVtx->origin[VY];
 
             own[i]->angle = angles[i] = bamsAtan2(-100 *dx, 100 * dy);
 
@@ -1163,8 +1150,8 @@ static void hardenPolyobjs(GameMap* dest, editmap_t* src)
         destP->crush = srcP->crush;
         destP->tag = srcP->tag;
         destP->seqType = srcP->seqType;
-        destP->pos[VX] = srcP->pos[VX];
-        destP->pos[VY] = srcP->pos[VY];
+        destP->origin[VX] = srcP->origin[VX];
+        destP->origin[VY] = srcP->origin[VY];
 
         destP->lineCount = srcP->lineCount;
 
@@ -1179,16 +1166,13 @@ static void hardenPolyobjs(GameMap* dest, editmap_t* src)
         {
             LineDef* line = &dest->lineDefs[srcP->lines[j]->buildData.index - 1];
             HEdge* hedge = &hedges[j];
-            float dx, dy;
 
             // This line belongs to a polyobj.
             line->inFlags |= LF_POLYOBJ;
 
             hedge->header.type = DMU_HEDGE;
             hedge->lineDef = line;
-            dx = line->L_v2pos[VX] - line->L_v1pos[VX];
-            dy = line->L_v2pos[VY] - line->L_v1pos[VY];
-            hedge->length = P_AccurateDistance(dx, dy);
+            hedge->length = V2d_Distance(line->L_v2origin, line->L_v1origin);
             hedge->twin = NULL;
             hedge->bspLeaf = NULL;
             hedge->sector = line->L_frontsector;
@@ -1223,11 +1207,11 @@ static void testForWindowEffect(editmap_t* map, LineDef* l)
     Sector* frontOpen = NULL;
     LineDef* frontLine = NULL, *backLine = NULL;
 
-    mX = (l->v[0]->buildData.pos[VX] + l->v[1]->buildData.pos[VX]) / 2.0;
-    mY = (l->v[0]->buildData.pos[VY] + l->v[1]->buildData.pos[VY]) / 2.0;
+    mX = (l->L_v1origin[VX] + l->L_v2origin[VX]) / 2.0;
+    mY = (l->L_v1origin[VY] + l->L_v2origin[VY]) / 2.0;
 
-    dX = l->v[1]->buildData.pos[VX] - l->v[0]->buildData.pos[VX];
-    dY = l->v[1]->buildData.pos[VY] - l->v[0]->buildData.pos[VY];
+    dX = l->L_v2origin[VX] - l->L_v1origin[VX];
+    dY = l->L_v2origin[VY] - l->L_v1origin[VY];
 
     castHoriz = (fabs(dX) < fabs(dY)? true : false);
 
@@ -1244,20 +1228,21 @@ static void testForWindowEffect(editmap_t* map, LineDef* l)
         if(n->inFlags & LF_POLYOBJ)
             continue;
 
-        dX2 = n->v[1]->buildData.pos[VX] - n->v[0]->buildData.pos[VX];
-        dY2 = n->v[1]->buildData.pos[VY] - n->v[0]->buildData.pos[VY];
+        dX2 = n->L_v2origin[VX] - n->L_v1origin[VX];
+        dY2 = n->L_v2origin[VY] - n->L_v1origin[VY];
 
         if(castHoriz)
-        {   // Horizontal.
+        {
+            // Horizontal.
             if(fabs(dY2) < DIST_EPSILON)
                 continue;
 
-            if((MAX_OF(n->v[0]->buildData.pos[VY], n->v[1]->buildData.pos[VY]) < mY - DIST_EPSILON) ||
-               (MIN_OF(n->v[0]->buildData.pos[VY], n->v[1]->buildData.pos[VY]) > mY + DIST_EPSILON))
+            if((MAX_OF(n->L_v1origin[VY], n->L_v2origin[VY]) < mY - DIST_EPSILON) ||
+               (MIN_OF(n->L_v1origin[VY], n->L_v2origin[VY]) > mY + DIST_EPSILON))
                 continue;
 
-            dist = (n->v[0]->buildData.pos[VX] +
-                (mY - n->v[0]->buildData.pos[VY]) * dX2 / dY2) - mX;
+            dist = (n->L_v1origin[VX] +
+                (mY - n->L_v1origin[VY]) * dX2 / dY2) - mX;
 
             isFront = (((dY > 0) != (dist > 0)) ? true : false);
 
@@ -1272,12 +1257,12 @@ static void testForWindowEffect(editmap_t* map, LineDef* l)
             if(fabs(dX2) < DIST_EPSILON)
                 continue;
 
-            if((MAX_OF(n->v[0]->buildData.pos[VX], n->v[1]->buildData.pos[VX]) < mX - DIST_EPSILON) ||
-               (MIN_OF(n->v[0]->buildData.pos[VX], n->v[1]->buildData.pos[VX]) > mX + DIST_EPSILON))
+            if((MAX_OF(n->L_v1origin[VX], n->L_v2origin[VX]) < mX - DIST_EPSILON) ||
+               (MIN_OF(n->L_v1origin[VX], n->L_v2origin[VX]) > mX + DIST_EPSILON))
                 continue;
 
-            dist = (n->v[0]->buildData.pos[VY] +
-                (mX - n->v[0]->buildData.pos[VX]) * dY2 / dX2) - mY;
+            dist = (n->L_v1origin[VY] +
+                (mX - n->L_v1origin[VX]) * dY2 / dX2) - mY;
 
             isFront = (((dX > 0) == (dist > 0)) ? true : false);
 
@@ -1510,9 +1495,9 @@ void MPE_DetectOverlappingLines(GameMap* map)
  * @param min  Minimal coordinates will be written here.
  * @param max  Maximal coordinates will be written here.
  */
-static void findBounds(Vertex const** vertexes, uint numVertexes, vec2f_t min, vec2f_t max)
+static void findBounds(Vertex const** vertexes, uint numVertexes, vec2d_t min, vec2d_t max)
 {
-    vec2f_t bounds[2], point;
+    vec2d_t bounds[2], point;
     const Vertex* vtx;
     uint i;
 
@@ -1520,28 +1505,28 @@ static void findBounds(Vertex const** vertexes, uint numVertexes, vec2f_t min, v
 
     if(!vertexes || !numVertexes)
     {
-        V2f_Set(min, DDMAXFLOAT, DDMAXFLOAT);
-        V2f_Set(max, DDMINFLOAT, DDMINFLOAT);
+        V2d_Set(min, DDMAXFLOAT, DDMAXFLOAT);
+        V2d_Set(max, DDMINFLOAT, DDMINFLOAT);
         return;
     }
 
     for(i = 0; i < numVertexes; ++i)
     {
         vtx = vertexes[i];
-        V2f_Set(point, vtx->pos[VX], vtx->pos[VY]);
+        V2d_Set(point, vtx->origin[VX], vtx->origin[VY]);
         if(!i)
-            V2f_InitBox(bounds, point);
+            V2d_InitBox(bounds, point);
         else
-            V2f_AddToBox(bounds, point);
+            V2d_AddToBox(bounds, point);
     }
 
     if(min)
     {
-        V2f_Set(min, bounds[0][VX], bounds[0][VY]);
+        V2d_Set(min, bounds[0][VX], bounds[0][VY]);
     }
     if(max)
     {
-        V2f_Set(max, bounds[1][VX], bounds[1][VY]);
+        V2d_Set(max, bounds[1][VX], bounds[1][VY]);
     }
 }
 
@@ -1581,7 +1566,7 @@ boolean MPE_End(void)
 {
     GameMap* gamemap;
     boolean builtOK;
-    vec2f_t min, max;
+    vec2d_t min, max;
     uint i;
 
     if(!editMapInited)
@@ -1664,8 +1649,8 @@ boolean MPE_End(void)
 
             // The original Pts are based off the anchor Pt, and are unique
             // to each hedge, not each linedef.
-            po->originalPts[n].pos[VX] = line->L_v1pos[VX] - po->pos[VX];
-            po->originalPts[n].pos[VY] = line->L_v1pos[VY] - po->pos[VY];
+            po->originalPts[n].origin[VX] = line->L_v1origin[VX] - po->origin[VX];
+            po->originalPts[n].origin[VY] = line->L_v1origin[VY] - po->origin[VY];
         }
     }
 
@@ -1758,10 +1743,8 @@ uint MPE_VertexCreate(coord_t x, coord_t y)
     if(!editMapInited) return 0;
 
     v = createVertex();
-    v->buildData.pos[VX] = x;
-    v->buildData.pos[VY] = y;
-    v->pos[VX] = (float)v->buildData.pos[VX];
-    v->pos[VY] = (float)v->buildData.pos[VY];
+    v->origin[VX] = x;
+    v->origin[VY] = y;
 
     return v->buildData.index;
 }
@@ -1779,10 +1762,8 @@ boolean MPE_VertexCreatev(size_t num, coord_t* values, uint* indices)
         Vertex* v;
 
         v = createVertex();
-        v->buildData.pos[VX] = values[n * 2];
-        v->buildData.pos[VY] = values[n * 2 + 1];
-        v->pos[VX] = (float)v->buildData.pos[VX];
-        v->pos[VY] = (float)v->buildData.pos[VY];
+        v->origin[VX] = values[n * 2];
+        v->origin[VY] = values[n * 2 + 1];
 
         if(indices)
             indices[n] = v->buildData.index;
@@ -1857,8 +1838,7 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide, int flag
     // Next, check the length is not zero.
     vtx1 = map->vertexes[v1 - 1];
     vtx2 = map->vertexes[v2 - 1];
-    length = P_AccurateDistance(vtx2->pos[VX] - vtx1->pos[VX],
-                                vtx2->pos[VY] - vtx1->pos[VY]);
+    length = V2d_Distance(vtx2->origin, vtx1->origin);
     if(!(length > 0)) return 0;
 
     if(frontSide > 0)
@@ -1885,7 +1865,7 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide, int flag
     LineDef_UpdateSlope(l);
     LineDef_UpdateAABox(l);
 
-    l->angle = bamsAtan2((int) l->dY, (int) l->dX);
+    l->angle = bamsAtan2((int) l->direction[VY], (int) l->direction[VX]);
 
     // Remember the number of unique references.
     if(l->L_frontside)
@@ -1993,8 +1973,8 @@ uint MPE_PolyobjCreate(uint* lines, uint lineCount, int tag, int sequenceType,
     po = createPolyobj();
     po->tag = tag;
     po->seqType = sequenceType;
-    po->pos[VX] = anchorX;
-    po->pos[VY] = anchorY;
+    po->origin[VX] = anchorX;
+    po->origin[VY] = anchorY;
 
     po->lineCount = lineCount;
     po->lines = M_Calloc(sizeof(LineDef*) * (po->lineCount+1));

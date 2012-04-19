@@ -894,7 +894,7 @@ static void findPolyobjs(void)
         if(thing->doomEdNum == PO_ANCHOR_DOOMEDNUM)
         {   // A polyobj anchor.
             int tag = thing->angle;
-            findAndCreatePolyobj(tag, thing->pos[VX], thing->pos[VY]);
+            findAndCreatePolyobj(tag, thing->origin[VX], thing->origin[VY]);
         }
     }
 }
@@ -1462,9 +1462,9 @@ static boolean loadThings(const uint8_t* buf, size_t len)
         {
             mthing_t* t = &map->things[n];
 
-            t->pos[VX] = SHORT(*((const int16_t*) (ptr)));
-            t->pos[VY] = SHORT(*((const int16_t*) (ptr+2)));
-            t->pos[VZ] = 0;
+            t->origin[VX] = SHORT(*((const int16_t*) (ptr)));
+            t->origin[VY] = SHORT(*((const int16_t*) (ptr+2)));
+            t->origin[VZ] = 0;
             t->angle = ANG45 * (SHORT(*((const int16_t*) (ptr+4))) / 45);
             t->doomEdNum = SHORT(*((const int16_t*) (ptr+6)));
             t->flags = SHORT(*((const int16_t*) (ptr+8)));
@@ -1516,9 +1516,9 @@ static boolean loadThings(const uint8_t* buf, size_t len)
         {
             mthing_t* t = &map->things[n];
 
-            t->pos[VX] = SHORT(*((const int16_t*) (ptr)));
-            t->pos[VY] = SHORT(*((const int16_t*) (ptr+2)));
-            t->pos[VZ] = SHORT(*((const int16_t*) (ptr+4)));
+            t->origin[VX] = SHORT(*((const int16_t*) (ptr)));
+            t->origin[VY] = SHORT(*((const int16_t*) (ptr+2)));
+            t->origin[VZ] = SHORT(*((const int16_t*) (ptr+4)));
             t->angle = ANG45 * (SHORT(*((const int16_t*) (ptr+6))) / 45);
             t->doomEdNum = SHORT(*((const int16_t*) (ptr+8)));
 
@@ -1582,9 +1582,9 @@ static boolean loadThings(const uint8_t* buf, size_t len)
             mthing_t* t = &map->things[n];
 
             t->xTID = SHORT(*((const int16_t*) (ptr)));
-            t->pos[VX] = SHORT(*((const int16_t*) (ptr+2)));
-            t->pos[VY] = SHORT(*((const int16_t*) (ptr+4)));
-            t->pos[VZ] = SHORT(*((const int16_t*) (ptr+6)));
+            t->origin[VX] = SHORT(*((const int16_t*) (ptr+2)));
+            t->origin[VY] = SHORT(*((const int16_t*) (ptr+4)));
+            t->origin[VZ] = SHORT(*((const int16_t*) (ptr+6)));
             t->angle = SHORT(*((const int16_t*) (ptr+8)));
             t->doomEdNum = SHORT(*((const int16_t*) (ptr+10)));
             /**
@@ -1910,9 +1910,9 @@ boolean TransferMap(void)
     {
         mthing_t*           th = &map->things[i];
 
-        MPE_GameObjProperty("Thing", i, "X", DDVT_SHORT, &th->pos[VX]);
-        MPE_GameObjProperty("Thing", i, "Y", DDVT_SHORT, &th->pos[VY]);
-        MPE_GameObjProperty("Thing", i, "Z", DDVT_SHORT, &th->pos[VZ]);
+        MPE_GameObjProperty("Thing", i, "X", DDVT_SHORT, &th->origin[VX]);
+        MPE_GameObjProperty("Thing", i, "Y", DDVT_SHORT, &th->origin[VY]);
+        MPE_GameObjProperty("Thing", i, "Z", DDVT_SHORT, &th->origin[VZ]);
         MPE_GameObjProperty("Thing", i, "Angle", DDVT_ANGLE, &th->angle);
         MPE_GameObjProperty("Thing", i, "DoomEdNum", DDVT_SHORT, &th->doomEdNum);
         MPE_GameObjProperty("Thing", i, "SkillModes", DDVT_INT, &th->skillModes);

@@ -80,7 +80,7 @@ typedef enum {
     build16 // Slowly build by 16.
 } stair_e;
 
-result_e        T_MovePlane(Sector* sector, float speed, float dest,
+result_e        T_MovePlane(Sector* sector, float speed, coord_t dest,
                             int crush, int floorOrCeiling, int direction);
 
 int             EV_BuildStairs(LineDef* line, stair_e type);

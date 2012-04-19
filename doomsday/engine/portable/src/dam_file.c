@@ -160,17 +160,17 @@ static void endSegment(void)
     writeLong(DAMSEG_END);
 }
 
-static void writeVertex(const GameMap *map, uint idx)
+static void writeVertex(const GameMap* map, uint idx)
 {
-    Vertex             *v = &map->vertexes[idx];
+    Vertex* v = &map->vertexes[idx];
 
-    writeFloat(v->pos[VX]);
-    writeFloat(v->pos[VY]);
+    writeFloat(v->origin[VX]);
+    writeFloat(v->origin[VY]);
     writeLong((long) v->numLineOwners);
 
     if(v->numLineOwners > 0)
     {
-        lineowner_t        *own, *base;
+        lineowner_t* own, *base;
 
         own = base = (v->lineOwners)->LO_prev;
         do
@@ -182,18 +182,18 @@ static void writeVertex(const GameMap *map, uint idx)
     }
 }
 
-static void readVertex(const GameMap *map, uint idx)
+static void readVertex(const GameMap* map, uint idx)
 {
-    uint                i;
-    Vertex             *v = &map->vertexes[idx];
+    uint i;
+    Vertex* v = &map->vertexes[idx];
 
-    v->pos[VX] = readFloat();
-    v->pos[VY] = readFloat();
+    v->origin[VX] = readFloat();
+    v->origin[VY] = readFloat();
     v->numLineOwners = (uint) readLong();
 
     if(v->numLineOwners > 0)
     {
-        lineowner_t        *own;
+        lineowner_t* own;
 
         v->lineOwners = NULL;
         for(i = 0; i < v->numLineOwners; ++i)
@@ -244,18 +244,17 @@ static void archiveVertexes(GameMap *map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
-static void writeLine(const GameMap *map, uint idx)
+static void writeLine(const GameMap* map, uint idx)
 {
-    int                 i;
-    LineDef            *l = &map->lineDefs[idx];
+    int i;
+    LineDef* l = &map->lineDefs[idx];
 
     writeLong((long) ((l->v[0] - map->vertexes) + 1));
     writeLong((long) ((l->v[1] - map->vertexes) + 1));
     writeLong(l->flags);
     writeByte(l->inFlags);
-    writeFloat(l->dX);
-    writeFloat(l->dY);
-    writeLong((long) l->slopeType);
+    writeFloat(l->direction[VX]);
+    writeFloat(l->direction[VY]);
     writeLong((long) (l->sideDefs[0]? ((l->sideDefs[0] - map->sideDefs) + 1) : 0));
     writeLong((long) (l->sideDefs[1]? ((l->sideDefs[1] - map->sideDefs) + 1) : 0));
     writeFloat(l->aaBox.minX);
@@ -268,19 +267,19 @@ static void writeLine(const GameMap *map, uint idx)
         writeByte(l->mapped[i]? 1 : 0);
 }
 
-static void readLine(const GameMap *map, uint idx)
+static void readLine(const GameMap* map, uint idx)
 {
-    int                 i;
-    long                sideIdx;
-    LineDef            *l = &map->lineDefs[idx];
+    int i;
+    long sideIdx;
+    LineDef* l = &map->lineDefs[idx];
 
     l->v[0] = &map->vertexes[(unsigned) (readLong() - 1)];
     l->v[1] = &map->vertexes[(unsigned) (readLong() - 1)];
     l->flags = (int) readLong();
     l->inFlags = readByte();
-    l->dX = readFloat();
-    l->dY = readFloat();
-    l->slopeType = (slopetype_t) readLong();
+    l->direction[VX] = readFloat();
+    l->direction[VY] = readFloat();
+    l->slopeType = M_SlopeType(l->direction);
     sideIdx = readLong();
     l->sideDefs[0] = (sideIdx == 0? NULL : &map->sideDefs[sideIdx-1]);
     sideIdx = readLong();
@@ -523,14 +522,14 @@ static void readSector(GameMap* map, uint idx)
     s->aaBox.maxX = readFloat();
     s->aaBox.maxY = readFloat();
 
-    Sector_UpdateOrigin(s);
+    Sector_UpdateBase(s);
 
     for(i = 0; i < numPlanes; ++i)
     {
         Plane* p = s->planes[i];
-        p->origin.pos[VX] = s->origin.pos[VX];
-        p->origin.pos[VY] = s->origin.pos[VY];
-        p->origin.pos[VZ] = p->height;
+        p->base.origin[VX] = s->base.origin[VX];
+        p->base.origin[VY] = s->base.origin[VY];
+        p->base.origin[VZ] = p->height;
     }
 
     for(i = 0; i < NUM_REVERB_DATA; ++i)
@@ -799,10 +798,10 @@ static runtime_mapdata_header_t* readBspReference(GameMap* map)
 static void writeNode(GameMap* map, BspNode* n)
 {
     assert(n);
-    writeFloat(n->partition.x);
-    writeFloat(n->partition.y);
-    writeFloat(n->partition.dX);
-    writeFloat(n->partition.dY);
+    writeFloat(n->partition.origin[VX]);
+    writeFloat(n->partition.origin[VY]);
+    writeFloat(n->partition.direction[VX]);
+    writeFloat(n->partition.direction[VY]);
     writeFloat(n->aaBox[RIGHT].minX);
     writeFloat(n->aaBox[RIGHT].minY);
     writeFloat(n->aaBox[RIGHT].maxX);
@@ -818,10 +817,10 @@ static void writeNode(GameMap* map, BspNode* n)
 static void readNode(GameMap* map, BspNode* n)
 {
     assert(n);
-    n->partition.x = readFloat();
-    n->partition.y = readFloat();
-    n->partition.dX = readFloat();
-    n->partition.dY = readFloat();
+    n->partition.origin[VX] = readFloat();
+    n->partition.origin[VY] = readFloat();
+    n->partition.direction[VX] = readFloat();
+    n->partition.direction[VY] = readFloat();
     n->aaBox[RIGHT].minX = readFloat();
     n->aaBox[RIGHT].minY = readFloat();
     n->aaBox[RIGHT].maxX = readFloat();
@@ -894,9 +893,9 @@ static void writePolyobj(GameMap* map, uint idx)
     uint i;
 
     writeLong((long) p->idx);
-    writeFloat(p->pos[VX]);
-    writeFloat(p->pos[VY]);
-    writeFloat(p->pos[VZ]);
+    writeFloat(p->origin[VX]);
+    writeFloat(p->origin[VY]);
+    writeFloat(p->origin[VZ]);
     writeLong((long) p->angle);
     writeLong((long) p->tag);
     writeFloat(p->aaBox.minX);
@@ -936,9 +935,9 @@ static void readPolyobj(GameMap* map, uint idx)
     uint i;
 
     p->idx = (uint) readLong();
-    p->pos[VX] = readFloat();
-    p->pos[VY] = readFloat();
-    p->pos[VZ] = readFloat();
+    p->origin[VX] = readFloat();
+    p->origin[VY] = readFloat();
+    p->origin[VZ] = readFloat();
     p->angle = (angle_t) readLong();
     p->tag = (int) readLong();
     p->aaBox.minX = readFloat();

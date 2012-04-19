@@ -2095,6 +2095,7 @@ void* DD_GetVariable(int ddvalue)
 {
     static uint valueU;
     static float valueF;
+    static double valueD;
 
     switch(ddvalue)
     {
@@ -2170,28 +2171,28 @@ void* DD_GetVariable(int ddvalue)
     case DD_MAP_MIN_X:
         if(theMap)
         {
-            return &theMap->bBox[BOXLEFT];
+            return &theMap->aaBox.minX;
         }
         return NULL;
 
     case DD_MAP_MIN_Y:
         if(theMap)
         {
-            return &theMap->bBox[BOXBOTTOM];
+            return &theMap->aaBox.minY;
         }
         return NULL;
 
     case DD_MAP_MAX_X:
         if(theMap)
         {
-            return &theMap->bBox[BOXRIGHT];
+            return &theMap->aaBox.maxX;
         }
         return NULL;
 
     case DD_MAP_MAX_Y:
         if(theMap)
         {
-            return &theMap->bBox[BOXTOP];
+            return &theMap->aaBox.maxY;
         }
         return NULL;
 
@@ -2208,8 +2209,8 @@ void* DD_GetVariable(int ddvalue)
         return &cplrThrustMul;*/
 
     case DD_GRAVITY:
-        valueF = theMap? GameMap_Gravity(theMap) : 0;
-        return &valueF;
+        valueD = theMap? GameMap_Gravity(theMap) : 0;
+        return &valueD;
 
     case DD_TORCH_RED:
         return &torchColor[CR];
@@ -2284,7 +2285,7 @@ void DD_SetVariable(int ddvalue, void *parm)
             return;*/
 
         case DD_GRAVITY:
-            if(theMap) GameMap_SetGravity(theMap, *(float*) parm);
+            if(theMap) GameMap_SetGravity(theMap, *(coord_t*) parm);
             return;
 
         case DD_PSPRITE_OFFSET_X:

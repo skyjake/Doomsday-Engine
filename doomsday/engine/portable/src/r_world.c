@@ -579,10 +579,8 @@ Plane* R_NewPlaneForSector(Sector* sec)
     plane->sector = sec;
     plane->height = plane->oldHeight[0] = plane->oldHeight[1] = 0;
     plane->visHeight = plane->visHeightDelta = 0;
-    plane->origin.pos[VX] = sec->origin.pos[VX];
-    plane->origin.pos[VY] = sec->origin.pos[VY];
-    plane->origin.pos[VZ] = sec->origin.pos[VZ];
-    memset(&plane->origin.thinker, 0, sizeof(plane->origin.thinker));
+    V3d_Copy(plane->base.origin, sec->base.origin);
+    memset(&plane->base.thinker, 0, sizeof(plane->base.thinker));
     plane->speed = 0;
     plane->target = 0;
     plane->type = PLN_MID;
@@ -596,7 +594,7 @@ Plane* R_NewPlaneForSector(Sector* sec)
     V3f_BuildTangents(suf->tangent, suf->bitangent, suf->normal);
 
     suf->owner = (void*) plane;
-    // \todo The initial material should be the "unknown" material.
+    /// @todo The initial material should be the "unknown" material.
     Surface_SetMaterial(suf, NULL);
     Surface_SetMaterialOrigin(suf, 0, 0);
     Surface_SetColorAndAlpha(suf, 1, 1, 1, 1);
@@ -795,7 +793,7 @@ void GameMap_UpdateSkyFixForSector(GameMap* map, Sector* sec)
         // Check that all the mobjs in the sector fit in.
         for(mo = sec->mobjList; mo; mo = mo->sNext)
         {
-            float extent = mo->pos[VZ] + mo->height;
+            float extent = mo->origin[VZ] + mo->height;
 
             if(extent > map->skyFix[PLN_CEILING].height)
             {
@@ -1319,10 +1317,10 @@ void R_SetupMap(int mode, int flags)
             ddpl->inVoid = true;
             if(ddpl->mo)
             {
-                BspLeaf* bspLeaf = P_BspLeafAtPointXY(ddpl->mo->pos[VX], ddpl->mo->pos[VY]);
+                BspLeaf* bspLeaf = P_BspLeafAtPoint(ddpl->mo->origin);
 
                 /// @fixme $nplanes
-                if(bspLeaf && ddpl->mo->pos[VZ] >= bspLeaf->sector->SP_floorvisheight && ddpl->mo->pos[VZ] < bspLeaf->sector->SP_ceilvisheight - 4)
+                if(bspLeaf && ddpl->mo->origin[VZ] >= bspLeaf->sector->SP_floorvisheight && ddpl->mo->origin[VZ] < bspLeaf->sector->SP_ceilvisheight - 4)
                    ddpl->inVoid = false;
             }
         }
@@ -1549,14 +1547,14 @@ boolean R_UpdatePlane(Plane* pln, boolean forceUpdate)
 
             //// \fixme $nplanes
             if((ddpl->flags & DDPF_CAMERA) && ddpl->mo->bspLeaf->sector == sec &&
-               (ddpl->mo->pos[VZ] > sec->SP_ceilheight - 4 || ddpl->mo->pos[VZ] < sec->SP_floorheight))
+               (ddpl->mo->origin[VZ] > sec->SP_ceilheight - 4 || ddpl->mo->origin[VZ] < sec->SP_floorheight))
             {
                 ddpl->inVoid = true;
             }
         }}
 
         // Update the z position of the degenmobj for this plane.
-        pln->origin.pos[VZ] = pln->height;
+        pln->base.origin[VZ] = pln->height;
 
         // Inform the shadow bias of changed geometry.
         if(sec->bspLeafs && *sec->bspLeafs)
@@ -1641,7 +1639,7 @@ boolean R_UpdateSector(Sector* sec, boolean forceUpdate)
 
     if(planeChanged)
     {
-        sec->origin.pos[VZ] = (sec->SP_ceilheight - sec->SP_floorheight) / 2;
+        sec->base.origin[VZ] = (sec->SP_ceilheight - sec->SP_floorheight) / 2;
         R_UpdateLinedefsOfSector(sec);
         S_CalcSectorReverb(sec);
 

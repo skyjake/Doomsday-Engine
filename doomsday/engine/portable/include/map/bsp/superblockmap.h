@@ -245,8 +245,8 @@ public:
             LOG_DEBUG("Build: %s %p sector: %d [%1.1f, %1.1f] -> [%1.1f, %1.1f]")
                     << (hedge->lineDef? "NORM" : "MINI")
                     << hedge << hedge->sector->buildData.index
-                    << hedge->v[0]->buildData.pos[VX] << hedge->v[0]->buildData.pos[VY]
-                    << hedge->v[1]->buildData.pos[VX] << hedge->v[1]->buildData.pos[VY];
+                    << hedge->v[0]->origin[VX] << hedge->v[0]->origin[VY]
+                    << hedge->v[1]->origin[VX] << hedge->v[1]->origin[VY];
         }
     })
 

@@ -1,4 +1,4 @@
-/**\file
+/**\file p_ceiling.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -24,11 +24,11 @@
  */
 
 /**
- * p_ceiling.h: Common playsim routines relating to ceilings.
+ * Common playsim routines relating to ceilings.
  */
 
-#ifndef __COMMON_THINKER_CEILING_H__
-#define __COMMON_THINKER_CEILING_H__
+#ifndef LIBCOMMON_THINKER_CEILING_H
+#define LIBCOMMON_THINKER_CEILING_H
 
 typedef enum {
     CS_DOWN,
@@ -59,30 +59,32 @@ typedef enum {
 } ceilingtype_e;
 
 typedef struct {
-    thinker_t       thinker;
-    ceilingtype_e   type;
-    Sector*         sector;
-    float           bottomHeight;
-    float           topHeight;
-    float           speed;
-    boolean         crush;
-    ceilingstate_e  state;
-    ceilingstate_e  oldState;
-    int             tag; // id.
+    thinker_t thinker;
+    ceilingtype_e type;
+    Sector* sector;
+    coord_t bottomHeight;
+    coord_t topHeight;
+    float speed;
+    boolean crush;
+    ceilingstate_e state;
+    ceilingstate_e oldState;
+    int tag; // id.
 } ceiling_t;
 
 #define CEILSPEED           (1)
 #define CEILWAIT            (150)
 
-void        T_MoveCeiling(ceiling_t* c);
-#if __JHEXEN__
-int         EV_DoCeiling(LineDef* line, byte* args, ceilingtype_e type);
-#else
-int         EV_DoCeiling(LineDef* li, ceilingtype_e type);
-#endif
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-int         P_CeilingActivate(short tag);
-#endif
-int         P_CeilingDeactivate(short tag);
+void T_MoveCeiling(ceiling_t* c);
 
+#if __JHEXEN__
+int EV_DoCeiling(LineDef* line, byte* args, ceilingtype_e type);
+#else
+int EV_DoCeiling(LineDef* li, ceilingtype_e type);
 #endif
+
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+int P_CeilingActivate(short tag);
+#endif
+int P_CeilingDeactivate(short tag);
+
+#endif /// LIBCOMMON_THINKER_CEILING_H

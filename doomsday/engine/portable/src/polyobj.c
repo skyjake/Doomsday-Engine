@@ -26,7 +26,7 @@
 #include "de_refresh.h"
 #include "de_misc.h"
 
-static void rotatePoint(int an, float* x, float* y, float startSpotX, float startSpotY);
+static void rotatePoint(int an, coord_t* x, coord_t* y, coord_t startSpotX, coord_t startSpotY);
 static boolean checkMobjBlocking(LineDef* line, Polyobj* po);
 
 void Polyobj_UpdateAABox(Polyobj* po)
@@ -39,13 +39,13 @@ void Polyobj_UpdateAABox(Polyobj* po)
     if(!*lineIter) return; // Very odd...
 
     line = *lineIter;
-    V2f_InitBox(po->aaBox.arvec2, line->L_v1pos);
+    V2d_InitBox(po->aaBox.arvec2, line->L_v1origin);
     lineIter++;
 
     while(*lineIter)
     {
         line = *lineIter;
-        V2f_AddToBox(po->aaBox.arvec2, line->L_v1pos);
+        V2d_AddToBox(po->aaBox.arvec2, line->L_v1origin);
         lineIter++;
     }
 }
@@ -84,7 +84,7 @@ static boolean mobjIsBlockingPolyobj(Polyobj* po)
     return false;
 }
 
-boolean Polyobj_Move(Polyobj* po, float delta[2])
+boolean Polyobj_Move(Polyobj* po, coord_t delta[2])
 {
     povertex_t* prevPts;
     LineDef** lineIter;
@@ -110,12 +110,12 @@ boolean Polyobj_Move(Polyobj* po, float delta[2])
 
         if(veryTempLine == lineIter)
         {
-            line->L_v1pos[VX] += delta[VX];
-            line->L_v1pos[VY] += delta[VY];
+            line->L_v1origin[VX] += delta[VX];
+            line->L_v1origin[VY] += delta[VY];
         }
 
-        (*prevPts).pos[VX] += delta[VX]; // Previous points are unique for each hedge.
-        (*prevPts).pos[VY] += delta[VY];
+        (*prevPts).origin[VX] += delta[VX]; // Previous points are unique for each hedge.
+        (*prevPts).origin[VY] += delta[VY];
     }
 
     lineIter = po->lines;
@@ -124,8 +124,8 @@ boolean Polyobj_Move(Polyobj* po, float delta[2])
         LineDef* line = *lineIter;
         LineDef_UpdateAABox(line);
     }
-    po->pos[VX] += delta[VX];
-    po->pos[VY] += delta[VY];
+    po->origin[VX] += delta[VX];
+    po->origin[VY] += delta[VY];
     Polyobj_UpdateAABox(po);
 
     // With translation applied now determine if we collided with anything.
@@ -153,12 +153,12 @@ boolean Polyobj_Move(Polyobj* po, float delta[2])
 
             if(veryTempLine == lineIter)
             {
-                line->L_v1pos[VX] -= delta[VX];
-                line->L_v1pos[VY] -= delta[VY];
+                line->L_v1origin[VX] -= delta[VX];
+                line->L_v1origin[VY] -= delta[VY];
             }
 
-            (*prevPts).pos[VX] -= delta[VX];
-            (*prevPts).pos[VY] -= delta[VY];
+            (*prevPts).origin[VX] -= delta[VX];
+            (*prevPts).origin[VY] -= delta[VY];
         }
 
         lineIter = po->lines;
@@ -167,8 +167,8 @@ boolean Polyobj_Move(Polyobj* po, float delta[2])
             LineDef* line = *lineIter;
             LineDef_UpdateAABox(line);
         }
-        po->pos[VX] -= delta[VX];
-        po->pos[VY] -= delta[VY];
+        po->origin[VX] -= delta[VX];
+        po->origin[VY] -= delta[VY];
         Polyobj_UpdateAABox(po);
 
         P_PolyobjLink(po);
@@ -181,17 +181,17 @@ boolean Polyobj_Move(Polyobj* po, float delta[2])
     return true;
 }
 
-boolean Polyobj_MoveXY(Polyobj* po, float x, float y)
+boolean Polyobj_MoveXY(Polyobj* po, coord_t x, coord_t y)
 {
-    float delta[2];
+    coord_t delta[2];
     delta[VX] = x;
     delta[VY] = y;
     return Polyobj_Move(po, delta);
 }
 
-static void rotatePoint2d(float point[2], const float origin[2], uint fineAngle)
+static void rotatePoint2d(coord_t point[2], coord_t const origin[2], uint fineAngle)
 {
-    float orig[2], rotated[2];
+    coord_t orig[2], rotated[2];
 
     orig[VX] = point[VX];
     orig[VY] = point[VY];
@@ -224,12 +224,10 @@ boolean Polyobj_Rotate(Polyobj* po, angle_t angle)
         LineDef* line = *lineIter;
         Vertex* vtx = line->L_v1;
 
-        prevPts->pos[VX] = vtx->pos[VX];
-        prevPts->pos[VY] = vtx->pos[VY];
-        vtx->pos[VX] = originalPts->pos[VX];
-        vtx->pos[VY] = originalPts->pos[VY];
+        V2d_Copy(prevPts->origin, vtx->origin);
+        V2d_Copy(vtx->origin, originalPts->origin);
 
-        rotatePoint2d(vtx->pos, po->pos, fineAngle);
+        rotatePoint2d(vtx->origin, po->origin, fineAngle);
     }
 
     lineIter = po->lines;
@@ -260,8 +258,7 @@ boolean Polyobj_Rotate(Polyobj* po, angle_t angle)
         {
             LineDef* line = *lineIter;
             Vertex* vtx = line->L_v1;
-            vtx->pos[VX] = prevPts->pos[VX];
-            vtx->pos[VY] = prevPts->pos[VY];
+            V2d_Copy(vtx->origin, prevPts->origin);
         }
 
         lineIter = po->lines;
@@ -302,19 +299,19 @@ int PTR_checkMobjBlocking(mobj_t* mo, void* data)
        (mo->dPlayer && !(mo->dPlayer->flags & DDPF_CAMERA)))
     {
         ptrmobjblockingparams_t* params = data;
-        AABoxf moBox;
+        AABoxd moBox;
 
-        moBox.minX = mo->pos[VX] - mo->radius;
-        moBox.minY = mo->pos[VY] - mo->radius;
-        moBox.maxX = mo->pos[VX] + mo->radius;
-        moBox.maxY = mo->pos[VY] + mo->radius;
+        moBox.minX = mo->origin[VX] - mo->radius;
+        moBox.minY = mo->origin[VY] - mo->radius;
+        moBox.maxX = mo->origin[VX] + mo->radius;
+        moBox.maxY = mo->origin[VY] + mo->radius;
 
         if(!(moBox.maxX <= params->line->aaBox.minX ||
              moBox.minX >= params->line->aaBox.maxX ||
              moBox.maxY <= params->line->aaBox.minY ||
              moBox.minY >= params->line->aaBox.maxY))
         {
-            if(P_BoxOnLineSide(&moBox, params->line) == -1)
+            if(!LineDef_BoxOnSide(params->line, &moBox))
             {
                 P_PolyobjCallback(mo, params->line, params->polyobj);
 
@@ -329,7 +326,7 @@ int PTR_checkMobjBlocking(mobj_t* mo, void* data)
 static boolean checkMobjBlocking(LineDef* line, Polyobj* po)
 {
     ptrmobjblockingparams_t params;
-    AABoxf aaBox;
+    AABoxd aaBox;
 
     params.isBlocked = false;
     params.line = line;

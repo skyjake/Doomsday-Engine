@@ -89,8 +89,8 @@ static boolean isPtcGenVisible(const ptcgen_t* gen)
 static float pointDist(fixed_t c[3])
 {
     const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
-    float dist = ((viewData->current.pos[VY] - FIX2FLT(c[VY])) * -viewData->viewSin) -
-        ((viewData->current.pos[VX] - FIX2FLT(c[VX])) * viewData->viewCos);
+    float dist = ((viewData->current.origin[VY] - FIX2FLT(c[VY])) * -viewData->viewSin) -
+        ((viewData->current.origin[VX] - FIX2FLT(c[VX])) * viewData->viewCos);
 
     if(dist < 0)
         return -dist; // Always return positive.
@@ -284,7 +284,7 @@ static int populateSortBuffer(ptcgen_t* gen, void* parameters)
             continue; // No; this particle can't be seen.
 
         // Don't allow zero distance.
-        dist = MAX_OF(pointDist(pt->pos), 1);
+        dist = MAX_OF(pointDist(pt->origin), 1);
         if(def->maxDist != 0 && dist > def->maxDist)
             continue; // Too far.
         if(dist < (float) particleNearLimit)
@@ -366,17 +366,17 @@ static int listVisibleParticles(void)
 
 static void setupModelParamsForParticle(rendmodelparams_t* params,
     const particle_t* pt, const ptcstage_t* st, const ded_ptcstage_t* dst,
-    float* center, float dist, float size, float mark, float alpha)
+    float* origin, float dist, float size, float mark, float alpha)
 {
     BspLeaf* bspLeaf;
     int frame;
 
     // Render the particle as a model.
-    params->center[VX] = center[VX];
-    params->center[VY] = center[VZ];
-    params->center[VZ] = params->gzt = center[VY];
+    params->origin[VX] = origin[VX];
+    params->origin[VY] = origin[VZ];
+    params->origin[VZ] = params->gzt = origin[VY];
     params->distance = dist;
-    bspLeaf = P_BspLeafAtPointXY(center[VX], center[VZ]);
+    bspLeaf = P_BspLeafAtPointXY(origin[VX], origin[VY]);
 
     params->extraScale = size; // Extra scaling factor.
     params->mf = &modefs[dst->model];
@@ -397,7 +397,7 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
     // Set the correct orientation for the particle.
     if(params->mf->sub[0].flags & MFF_MOVEMENT_YAW)
     {
-        params->yaw = R_MovementYaw(FIX2FLT(pt->mov[0]), FIX2FLT(pt->mov[1]));
+        params->yaw = R_MovementXYYaw(FIX2FLT(pt->mov[0]), FIX2FLT(pt->mov[1]));
     }
     else
     {
@@ -406,7 +406,7 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
 
     if(params->mf->sub[0].flags & MFF_MOVEMENT_PITCH)
     {
-        params->pitch = R_MovementPitch(pt->mov[0], pt->mov[1], pt->mov[2]);
+        params->pitch = R_MovementXYZPitch(FIX2FLT(pt->mov[0]), FIX2FLT(pt->mov[1]), FIX2FLT(pt->mov[2]));
     }
     else
     {
@@ -426,7 +426,7 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
 
         if(useBias)
         {
-            LG_Evaluate(params->center, params->ambientColor);
+            LG_Evaluate(params->origin, params->ambientColor);
         }
         else
         {
@@ -450,9 +450,9 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
         Rend_ApplyTorchLight(params->ambientColor, params->distance);
 
         lparams.starkLight = false;
-        lparams.center[VX] = params->center[VX];
-        lparams.center[VY] = params->center[VY];
-        lparams.center[VZ] = params->center[VZ];
+        lparams.origin[VX] = params->origin[VX];
+        lparams.origin[VY] = params->origin[VY];
+        lparams.origin[VZ] = params->origin[VZ];
         lparams.bspLeaf = bspLeaf;
         lparams.ambientColor = params->ambientColor;
 
@@ -530,7 +530,7 @@ static void renderParticles(int rtype, boolean withBlend)
         const ptcstage_t* st;
         const ded_ptcstage_t* dst, *nextDst;
         float size, color[4], center[3], mark, invMark;
-        float dist, maxdist, projected[2];
+        float dist, maxdist;
         boolean flatOnPlane = false, flatOnWall = false, nearPlane, nearWall;
         short stageType;
 
@@ -630,8 +630,8 @@ static void renderParticles(int rtype, boolean withBlend)
         glColor4fv(color);
 
         nearPlane = (pt->sector &&
-                     (FLT2FIX(pt->sector->SP_floorheight) + 2 * FRACUNIT >= pt->pos[VZ] ||
-                      FLT2FIX(pt->sector->SP_ceilheight)  - 2 * FRACUNIT <= pt->pos[VZ]));
+                     (FLT2FIX(pt->sector->SP_floorheight) + 2 * FRACUNIT >= pt->origin[VZ] ||
+                      FLT2FIX(pt->sector->SP_ceilheight)  - 2 * FRACUNIT <= pt->origin[VZ]));
         nearWall = (pt->contact && !pt->mov[VX] && !pt->mov[VY]);
 
         if(stageType == PTC_POINT || (stageType >= PTC_TEXTURE && stageType < PTC_TEXTURE + MAX_PTC_TEXTURES))
@@ -642,8 +642,8 @@ static void renderParticles(int rtype, boolean withBlend)
                 flatOnWall = true;
         }
 
-        center[VX] = FIX2FLT(pt->pos[VX]);
-        center[VZ] = FIX2FLT(pt->pos[VY]);
+        center[VX] = FIX2FLT(pt->origin[VX]);
+        center[VZ] = FIX2FLT(pt->origin[VY]);
         center[VY] = P_GetParticleZ(pt);
 
         if(!flatOnPlane && !flatOnWall)
@@ -688,40 +688,45 @@ static void renderParticles(int rtype, boolean withBlend)
             // Flat against a wall, then?
             else if(flatOnWall)
             {
-                float line[2], pos[2];
-                Vertex* vtx;
-
-                line[0] = pt->contact->dX;
-                line[1] = pt->contact->dY;
-                vtx = pt->contact->L_v1;
+                vec2d_t origin, projected;
+                float line[2];
 
                 // There will be a slight approximation on the XY plane since
                 // the particles aren't that accurate when it comes to wall
                 // collisions.
 
                 // Calculate a new center point (project onto the wall).
-                // Also move 1 unit away from the wall to avoid the worst
-                // Z-fighting.
-                pos[VX] = FIX2FLT(pt->pos[VX]);
-                pos[VY] = FIX2FLT(pt->pos[VY]);
-                M_ProjectPointOnLine(pos, &vtx->pos[VX], line, 1, projected);
+                V2d_Set(origin, FIX2FLT(pt->origin[VX]), FIX2FLT(pt->origin[VY]));
+                V2d_ProjectOnLine(projected, origin, pt->contact->L_v1origin, pt->contact->direction);
+
+                // Move away from the wall to avoid the worst Z-fighting.
+                {
+                const double gap = -1; // 1 map unit.
+                double diff[2], dist;
+                V2d_Subtract(diff, projected, origin);
+                if((dist = V2d_Length(diff)) != 0)
+                {
+                    projected[VX] += diff[VX] / dist * gap;
+                    projected[VY] += diff[VY] / dist * gap;
+                }
+                }
 
                 LineDef_UnitVector(pt->contact, line);
 
                 glTexCoord2f(0, 0);
-                glVertex3f(projected[VX] - size * line[VX], center[VY] - size,
+                glVertex3d(projected[VX] - size * line[VX], center[VY] - size,
                            projected[VY] - size * line[VY]);
 
                 glTexCoord2f(1, 0);
-                glVertex3f(projected[VX] - size * line[VX], center[VY] + size,
+                glVertex3d(projected[VX] - size * line[VX], center[VY] + size,
                            projected[VY] - size * line[VY]);
 
                 glTexCoord2f(1, 1);
-                glVertex3f(projected[VX] + size * line[VX], center[VY] + size,
+                glVertex3d(projected[VX] + size * line[VX], center[VY] + size,
                            projected[VY] + size * line[VY]);
 
                 glTexCoord2f(0, 1);
-                glVertex3f(projected[VX] + size * line[VX], center[VY] - size,
+                glVertex3d(projected[VX] + size * line[VX], center[VY] - size,
                            projected[VY] + size * line[VY]);
             }
             else
@@ -846,9 +851,8 @@ static int drawGeneratorOrigin(ptcgen_t* gen, void* parameters)
 
         if(gen->source)
         {
-            pos[VX] = gen->source->pos[VX];
-            pos[VY] = gen->source->pos[VY];
-            pos[VZ] = gen->source->pos[VZ] - gen->source->floorClip + FIX2FLT(gen->center[VZ]);
+            V3f_Copyd(pos, gen->source->origin);
+            pos[VZ] -= gen->source->floorClip + FIX2FLT(gen->center[VZ]);
         }
         else
         {
@@ -857,7 +861,7 @@ static int drawGeneratorOrigin(ptcgen_t* gen, void* parameters)
             pos[VZ] = FIX2FLT(gen->center[VZ]);
         }
 
-        dist = M_Distance(pos, eye);
+        dist = V3f_Distance(pos, eye);
         alpha = 1 - MIN_OF(dist, MAX_GENERATOR_DIST) / MAX_GENERATOR_DIST;
 
         if(alpha > 0)

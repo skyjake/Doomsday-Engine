@@ -1,4 +1,4 @@
-/**\file
+/**\file p_mobj.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -25,11 +25,11 @@
  */
 
 /**
- * p_mobj.h: Map Objects, Mobj, definition and handling jDoom64 - specific.
+ * Map Objects, Mobj, definition and handling jDoom64 - specific.
  */
 
-#ifndef __P_MOBJ__
-#define __P_MOBJ__
+#ifndef LIBDOOM64_P_MOBJ_H
+#define LIBDOOM64_P_MOBJ_H
 
 #ifndef __JDOOM64__
 #  error "Using jDoom64 headers without __JDOOM64__"
@@ -42,15 +42,15 @@
 #include "d_think.h"
 #include "info.h"
 
-#define NOMOM_THRESHOLD     (0.00000001f) // (integer) 0
-#define DROPOFFMOM_THRESHOLD (0.25f) // FRACUNIT/4
+#define NOMOM_THRESHOLD     (0.0001) // (integer) 0
+#define DROPOFFMOM_THRESHOLD (0.25) // FRACUNIT/4
 #define MAXMOM              (30) // 30*FRACUNIT
 #define MAXMOMSTEP          (15) // 30*FRACUNIT/2
 
-#define FRICTION_LOW        (0.97265625f) // 0xf900
-#define FRICTION_FLY        (0.91796875f) // 0xeb00
-#define FRICTION_NORMAL     (0.90625000f) // 0xe800
-#define FRICTION_HIGH       (0.41992187f) // 0xd700/2
+#define FRICTION_LOW        (0.97265625) // 0xf900
+#define FRICTION_FLY        (0.91796875) // 0xeb00
+#define FRICTION_NORMAL     (0.90625000) // 0xe800
+#define FRICTION_HIGH       (0.41992187) // 0xd700/2
 
 // Player radius for movement checking.
 #define PLAYERRADIUS        (25)
@@ -272,33 +272,33 @@ typedef struct mobj_s {
 
     // Thing being chased/attacked (or NULL),
     // also the originator for missiles.
-    struct mobj_s  *target;
+    struct mobj_s* target;
 
     // If >0, the target will be chased
     // no matter what (even if shot)
     int             threshold;
 
     int             intFlags;       // internal flags
-    float           dropOffZ;       // $dropoff_fix
+    coord_t         dropOffZ;       // $dropoff_fix
     short           gear;           // used in torque simulation
     boolean         wallRun;        // true = last move was the result of a wallrun
 
     // Additional info record for player avatars only.
     // Only valid if type == MT_PLAYER
-    struct player_s *player;
+    struct player_s* player;
 
     // Player number last looked for.
     int             lastLook;
 
     // For nightmare/multiplayer respawn.
     struct {
-        float           pos[3];
+        coord_t         origin[3];
         angle_t         angle;
         int             flags; // MSF_* flags
     } spawnSpot;
 
     // Thing being chased/attacked for tracers.
-    struct mobj_s  *tracer;
+    struct mobj_s* tracer;
 
     int             turnTime;       // $visangle-facetarget
     int             corpseTics;     // $vanish: how long has this been dead?
@@ -312,32 +312,51 @@ typedef struct polyobj_s {
     // Doom64-specific data:
 } Polyobj;
 
-void            P_ExplodeMissile(mobj_t* mo);
-float           P_MobjGetFriction(mobj_t* mo);
-mobj_t*         P_SPMAngle(mobjtype_t type, mobj_t* source,
-                           angle_t angle);
+void P_ExplodeMissile(mobj_t* mo);
 
-mobj_t*         P_SpawnMobj3f(mobjtype_t type, float x, float y,
-                              float z, angle_t angle, int spawnFlags);
-mobj_t*         P_SpawnMobj3fv(mobjtype_t type, const float pos[3],
-                               angle_t angle, int spawnFlags);
+coord_t P_MobjGetFriction(mobj_t* mo);
 
-void            P_SpawnPuff(float x, float y, float z, angle_t angle);
-mobj_t*         P_SpawnCustomPuff(mobjtype_t type, float x, float y,
-                                  float z, angle_t angle);
-void            P_SpawnBlood(float x, float y, float z, int damage,
-                             angle_t angle);
-mobj_t*         P_SpawnMissile(mobjtype_t type, mobj_t* source,
-                               mobj_t* dest);
-mobj_t*         P_SpawnTeleFog(float x, float y, angle_t angle);
-mobj_t*         P_SpawnMotherMissile(mobjtype_t type, float x, float y,
-                                     float z, mobj_t* source,
-                                     mobj_t* dest);
+mobj_t* P_SPMAngle(mobjtype_t type, mobj_t* source, angle_t angle);
 
-boolean         P_MobjChangeState(mobj_t* mo, statenum_t state);
-void            P_MobjThinker(mobj_t* mo);
+/**
+ * Spawns a mobj of "type" at the specified position.
+ */
+mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t angle, int spawnFlags);
+mobj_t* P_SpawnMobj(mobjtype_t type, coord_t const pos[3], angle_t angle, int spawnFlags);
+
+void P_SpawnPuff(coord_t x, coord_t y, coord_t z, angle_t angle);
+
+mobj_t* P_SpawnCustomPuff(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t angle);
+
+void P_SpawnBlood(coord_t x, coord_t y, coord_t z, int damage, angle_t angle);
+
+/**
+ * Tries to aim at a nearby monster if source is a player. Else aim is
+ * taken at dest.
+ *
+ * @param source        The mobj doing the shooting.
+ * @param dest          The mobj being shot at. Can be @c NULL if source
+ *                      is a player.
+ * @param type          The type of mobj to be shot.
+ *
+ * @return              Pointer to the newly spawned missile.
+ */
+mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest);
+
+mobj_t* P_SpawnTeleFog(coord_t x, coord_t y, angle_t angle);
+
+mobj_t* P_SpawnMotherMissile(mobjtype_t type, coord_t x, coord_t y, coord_t z, mobj_t* source, mobj_t* dest);
+
+boolean P_MobjChangeState(mobj_t* mo, statenum_t state);
+
+void P_MobjThinker(mobj_t* mo);
+
 const terraintype_t* P_MobjGetFloorTerrainType(mobj_t* mo);
-void            P_RipperBlood(mobj_t* mo);
-void            P_SetDoomsdayFlags(mobj_t* mo);
-void            P_HitFloor(mobj_t* mo);
-#endif
+
+void P_RipperBlood(mobj_t* mo);
+
+void P_SetDoomsdayFlags(mobj_t* mo);
+
+void P_HitFloor(mobj_t* mo);
+
+#endif /// LIBDOOM64_P_MOBJ_H

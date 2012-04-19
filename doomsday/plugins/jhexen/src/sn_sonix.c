@@ -304,13 +304,13 @@ void SN_StartSequence(mobj_t* mobj, int sequence)
 
 void SN_StartSequenceInSec(Sector* sector, int seqBase)
 {
-    SN_StartSequence(P_GetPtrp(sector, DMU_ORIGIN),
+    SN_StartSequence(P_GetPtrp(sector, DMU_BASE),
                      seqBase + P_ToXSector(sector)->seqType);
 }
 
 void SN_StopSequenceInSec(Sector* sector)
 {
-    SN_StopSequence(P_GetPtrp(sector, DMU_ORIGIN));
+    SN_StopSequence(P_GetPtrp(sector, DMU_BASE));
 }
 
 void SN_StartSequenceName(mobj_t* mobj, const char* name)

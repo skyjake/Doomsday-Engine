@@ -223,39 +223,21 @@ void R_LoadSystemFonts(void)
     Con_SetFont(fontFixed);
 }
 
-/**
- * Update the view origin position for player @a consoleNum.
- *
- * @param consoleNum  Console number.
- *
- * \note Part of the Doomsday public API.
- */
-void R_SetViewOrigin(int consoleNum, float const origin[3])
+/// @note Part of the Doomsday public API.
+void R_SetViewOrigin(int consoleNum, coord_t const origin[3])
 {
     if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
-    V3f_Copy(viewDataOfConsole[consoleNum].latest.pos, origin);
+    V3d_Copy(viewDataOfConsole[consoleNum].latest.origin, origin);
 }
 
-/**
- * Update the view yaw angle for player @a consoleNum.
- *
- * @param consoleNum  Console number.
- *
- * \note Part of the Doomsday public API.
- */
+/// @note Part of the Doomsday public API.
 void R_SetViewAngle(int consoleNum, angle_t angle)
 {
     if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
     viewDataOfConsole[consoleNum].latest.angle = angle;
 }
 
-/**
- * Update the view pitch angle for player @a consoleNum.
- *
- * @param consoleNum  Console number.
- *
- * \note Part of the Doomsday public API.
- */
+/// @note Part of the Doomsday public API.
 void R_SetViewPitch(int consoleNum, float pitch)
 {
     if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
@@ -655,9 +637,9 @@ void R_InterpolateViewer(viewer_t* start, viewer_t* end, float pos, viewer_t* ou
     float inv = 1 - pos;
     int delta;
 
-    out->pos[VX] = inv * start->pos[VX] + pos * end->pos[VX];
-    out->pos[VY] = inv * start->pos[VY] + pos * end->pos[VY];
-    out->pos[VZ] = inv * start->pos[VZ] + pos * end->pos[VZ];
+    out->origin[VX] = inv * start->origin[VX] + pos * end->origin[VX];
+    out->origin[VY] = inv * start->origin[VY] + pos * end->origin[VY];
+    out->origin[VZ] = inv * start->origin[VZ] + pos * end->origin[VZ];
 
     delta = (int)end->angle - (int)start->angle;
     out->angle = start->angle + (int)(pos * delta);
@@ -666,7 +648,7 @@ void R_InterpolateViewer(viewer_t* start, viewer_t* end, float pos, viewer_t* ou
 
 void R_CopyViewer(viewer_t* dst, const viewer_t* src)
 {
-    V3f_Copy(dst->pos, src->pos);
+    V3d_Copy(dst->origin, src->origin);
     dst->angle = src->angle;
     dst->pitch = src->pitch;
 }
@@ -685,11 +667,14 @@ void R_CheckViewerLimits(viewer_t* src, viewer_t* dst)
 {
 #define MAXMOVE 32
 
-    if(fabs(dst->pos[VX] - src->pos[VX]) > MAXMOVE ||
-       fabs(dst->pos[VY] - src->pos[VY]) > MAXMOVE)
+    /// @todo Remove this snapping. The game should determine this and disable the
+    ///       the interpolation as required.
+    if(fabs(dst->origin[VX] - src->origin[VX]) > MAXMOVE ||
+       fabs(dst->origin[VY] - src->origin[VY]) > MAXMOVE)
     {
-        V3f_Copy(src->pos, dst->pos);
+        V3d_Copy(src->origin, dst->origin);
     }
+
     if(abs((int) dst->angle - (int) src->angle) >= ANGLE_45)
     {
 #ifdef _DEBUG
@@ -697,6 +682,7 @@ void R_CheckViewerLimits(viewer_t* src, viewer_t* dst)
 #endif
         src->angle = dst->angle;
     }
+
 #undef MAXMOVE
 }
 
@@ -727,23 +713,23 @@ void R_GetSharpView(viewer_t* view, player_t* player)
         angle = view->angle >> ANGLETOFINESHIFT;
         pitch >>= ANGLETOFINESHIFT;
 
-        view->pos[VX] -= distance * FIX2FLT(fineCosine[angle]);
-        view->pos[VY] -= distance * FIX2FLT(finesine[angle]);
-        view->pos[VZ] -= distance * FIX2FLT(finesine[pitch]);
+        view->origin[VX] -= distance * FIX2FLT(fineCosine[angle]);
+        view->origin[VY] -= distance * FIX2FLT(finesine[angle]);
+        view->origin[VZ] -= distance * FIX2FLT(finesine[pitch]);
     }
 
     // Check that the viewZ doesn't go too high or low.
     // Cameras are not restricted.
     if(!(ddpl->flags & DDPF_CAMERA))
     {
-        if(view->pos[VZ] > ddpl->mo->ceilingZ - 4)
+        if(view->origin[VZ] > ddpl->mo->ceilingZ - 4)
         {
-            view->pos[VZ] = ddpl->mo->ceilingZ - 4;
+            view->origin[VZ] = ddpl->mo->ceilingZ - 4;
         }
 
-        if(view->pos[VZ] < ddpl->mo->floorZ + 4)
+        if(view->origin[VZ] < ddpl->mo->floorZ + 4)
         {
-            view->pos[VZ] = ddpl->mo->floorZ + 4;
+            view->origin[VZ] = ddpl->mo->floorZ + 4;
         }
     }
 }
@@ -888,7 +874,7 @@ void R_UpdateViewer(int consoleNum)
     R_GetSharpView(&sharpView, player);
 
     if(resetNextViewer ||
-       V3f_Distance(vd->current.pos, sharpView.pos) > VIEWPOS_MAX_SMOOTHDISTANCE)
+       V3d_Distance(vd->current.origin, sharpView.origin) > VIEWPOS_MAX_SMOOTHDISTANCE)
     {
         // Keep reseting until a new sharp world has arrived.
         if(resetNextViewer > 1)
@@ -963,15 +949,15 @@ void R_UpdateViewer(int consoleNum)
                         SECONDS_TO_TICKS(gameTime),
                         frameTimePos,
                         sysTime - old->time,
-                        smoothView.pos[0] - old->x,
-                        smoothView.pos[1] - old->y,
-                        smoothView.pos[2] - old->z,
-                        (smoothView.pos[0] - old->x) / (sysTime - old->time),
-                        (smoothView.pos[1] - old->y) / (sysTime - old->time));
+                        smoothView.origin[0] - old->x,
+                        smoothView.origin[1] - old->y,
+                        smoothView.origin[2] - old->z,
+                        (smoothView.origin[0] - old->x) / (sysTime - old->time),
+                        (smoothView.origin[1] - old->y) / (sysTime - old->time));
 
-            old->x = smoothView.pos[VX];
-            old->y = smoothView.pos[VY];
-            old->z = smoothView.pos[VZ];
+            old->x = smoothView.origin[VX];
+            old->y = smoothView.origin[VY];
+            old->z = smoothView.origin[VZ];
             old->time = sysTime;
         }
     }
@@ -996,7 +982,7 @@ void R_UpdateViewer(int consoleNum)
     vd->upVec[VY] = cos(pitchRad);
 
     // The side vector is the cross product of the front and up vectors.
-    M_CrossProduct(vd->frontVec, vd->upVec, vd->sideVec);
+    V3f_CrossProduct(vd->sideVec, vd->frontVec, vd->upVec);
 
 #undef VIEWPOS_MAX_SMOOTHDISTANCE
 }
@@ -1285,7 +1271,7 @@ void R_RenderViewPorts(void)
             displayPlayer = vp->console;
             R_UseViewPort(vp);
 
-            if(displayPlayer < 0 || (ddPlayers[displayPlayer].shared.flags & DDPF_UNDEFINED_POS))
+            if(displayPlayer < 0 || (ddPlayers[displayPlayer].shared.flags & DDPF_UNDEFINED_ORIGIN))
             {
                 R_RenderBlankView();
                 continue;

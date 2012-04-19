@@ -175,11 +175,11 @@ if(!(mobj->mo.ddFlags & DDMF_MISSILE))
 
     // Exclude each axis separately. If no change in momentum, exclude coord.
     if(!(mobj->delta.flags & MDF_MOM_X))
-        exclude |= MDF_POS_X;
+        exclude |= MDF_ORIGIN_X;
     if(!(mobj->delta.flags & MDF_MOM_Y))
-        exclude |= MDF_POS_Y;
+        exclude |= MDF_ORIGIN_Y;
     if(!(mobj->delta.flags & MDF_MOM_Z))
-        exclude |= MDF_POS_Z;
+        exclude |= MDF_ORIGIN_Z;
 
     return exclude;
 }

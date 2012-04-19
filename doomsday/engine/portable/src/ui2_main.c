@@ -819,9 +819,9 @@ static void setupModelParamsForFIObject(rendmodelparams_t* params, const char* m
         return;
 
     params->mf = mf;
-    params->center[VX] = worldOffset[VX] + pos[VX];
-    params->center[VY] = worldOffset[VZ] + pos[VZ];
-    params->center[VZ] = worldOffset[VY] + pos[VY];
+    params->origin[VX] = worldOffset[VX] + pos[VX];
+    params->origin[VY] = worldOffset[VZ] + pos[VZ];
+    params->origin[VZ] = worldOffset[VY] + pos[VY];
     params->distance = -10; /// \fixme inherit depth.
     params->yawAngleOffset   = (SCREENWIDTH/2  - pos[VX]) * weaponOffsetScale + 90;
     params->pitchAngleOffset = (SCREENHEIGHT/2 - pos[VY]) * weaponOffsetScale * weaponOffsetScaleY / 1000.0f;

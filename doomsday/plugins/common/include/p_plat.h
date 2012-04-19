@@ -64,8 +64,8 @@ typedef struct plat_s {
     thinker_t       thinker;
     Sector*         sector;
     float           speed;
-    float           low;
-    float           high;
+    coord_t         low;
+    coord_t         high;
     int             wait;
     int             count;
     platstate_e     state;

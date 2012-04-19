@@ -23,11 +23,14 @@
  */
 
 /**
- * Ambient world lighting (smoothed sector lighting).
+ * Smoothed ambient sector lighting.
  */
 
 #ifndef LIBDENG_REFRESH_LIGHT_GRID_H
 #define LIBDENG_REFRESH_LIGHT_GRID_H
+
+#include "dd_types.h"
+#include "p_mapdata.h"
 
 void LG_Register(void);
 void LG_InitForMap(void);
@@ -46,7 +49,7 @@ void LG_SectorChanged(Sector* sector);
  * @param point  3D point.
  * @param color  Evaluated color of the point (return value).
  */
-void LG_Evaluate(const vectorcompf_t point[3], vectorcompf_t destColor[3]);
+void LG_Evaluate(coord_t const point[3], float destColor[3]);
 
 /**
  * Calculate the light level for a 3D point in the world.
@@ -54,8 +57,8 @@ void LG_Evaluate(const vectorcompf_t point[3], vectorcompf_t destColor[3]);
  * @param point  3D point.
  * @return  Evaluated light level of the point.
  */
-float LG_EvaluateLightLevel(const vectorcompf_t point[3]);
+float LG_EvaluateLightLevel(coord_t const point[3]);
 
 void LG_Debug(void);
 
-#endif/* LIBDENG_REFRESH_LIGHT_GRID_H */
+#endif /// LIBDENG_REFRESH_LIGHT_GRID_H

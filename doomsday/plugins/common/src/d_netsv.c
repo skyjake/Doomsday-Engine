@@ -641,8 +641,8 @@ void NetSv_NewPlayerEnters(int plrNum)
         if((start = P_GetPlayerStart(nextMapEntryPoint, plrNum, false)))
         {
             const mapspot_t* spot = &mapSpots[start->spot];
-            P_SpawnPlayer(plrNum, pClass, spot->pos[VX], spot->pos[VY],
-                          spot->pos[VZ], spot->angle, spot->flags,
+            P_SpawnPlayer(plrNum, pClass, spot->origin[VX], spot->origin[VY],
+                          spot->origin[VZ], spot->angle, spot->flags,
                           false, true);
         }
         else
@@ -650,7 +650,7 @@ void NetSv_NewPlayerEnters(int plrNum)
             P_SpawnPlayer(plrNum, pClass, 0, 0, 0, 0, MSF_Z_FLOOR, true, true);
         }
 
-        //// \fixme Spawn a telefog in front of the player.
+        /// @fixme Spawn a telefog in front of the player.
     }
 
     // Get rid of anybody at the starting spot.
@@ -663,8 +663,7 @@ void NetSv_Intermission(int flags, int state, int time)
 {
     Writer* msg;
 
-    if(IS_CLIENT)
-        return;
+    if(IS_CLIENT) return;
 
     msg = D_NetWrite();
     Writer_WriteByte(msg, flags);
@@ -798,9 +797,9 @@ void NetSv_SendGameState(int flags, int to)
         if(flags & GSF_CAMERA_INIT)
         {
             mobj_t *mo = players[i].plr->mo;
-            Writer_WriteFloat(writer, mo->pos[VX]);
-            Writer_WriteFloat(writer, mo->pos[VY]);
-            Writer_WriteFloat(writer, mo->pos[VZ]);
+            Writer_WriteFloat(writer, mo->origin[VX]);
+            Writer_WriteFloat(writer, mo->origin[VY]);
+            Writer_WriteFloat(writer, mo->origin[VZ]);
             Writer_WriteUInt32(writer, mo->angle);
         }
 
@@ -1332,21 +1331,21 @@ void NetSv_DoCheat(int player, Reader* msg)
  * Calls @a callback on @a thing while it is temporarily placed at the
  * specified position and angle. Afterwards the thing's old position is restored.
  */
-void NetSv_TemporaryPlacedCallback(mobj_t* thing, void* param, float temporaryPos[3],
-                                   angle_t angle, void (*callback)(mobj_t*,void*))
+void NetSv_TemporaryPlacedCallback(mobj_t* thing, void* param, coord_t tempOrigin[3],
+                                   angle_t angle, void (*callback)(mobj_t*, void*))
 {
-    float oldPos[3] = { thing->pos[VX], thing->pos[VY], thing->pos[VZ] };
-    float oldFloorZ = thing->floorZ;
-    float oldCeilingZ = thing->ceilingZ;
+    coord_t oldOrigin[3] = { thing->origin[VX], thing->origin[VY], thing->origin[VZ] };
+    coord_t oldFloorZ = thing->floorZ;
+    coord_t oldCeilingZ = thing->ceilingZ;
     angle_t oldAngle = thing->angle;
 
     // We will temporarily move the object to the temp coords.
-    if(P_CheckPosition3fv(thing, temporaryPos))
+    if(P_CheckPosition(thing, tempOrigin))
     {
         P_MobjUnlink(thing);
-        thing->pos[VX] = temporaryPos[VX];
-        thing->pos[VY] = temporaryPos[VY];
-        thing->pos[VZ] = temporaryPos[VZ];
+        thing->origin[VX] = tempOrigin[VX];
+        thing->origin[VY] = tempOrigin[VY];
+        thing->origin[VZ] = tempOrigin[VZ];
         P_MobjLink(thing, DDLINK_SECTOR | DDLINK_BLOCKMAP);
         thing->floorZ = tmFloorZ;
         thing->ceilingZ = tmCeilingZ;
@@ -1357,9 +1356,9 @@ void NetSv_TemporaryPlacedCallback(mobj_t* thing, void* param, float temporaryPo
 
     // Restore the old position.
     P_MobjUnlink(thing);
-    thing->pos[VX] = oldPos[VX];
-    thing->pos[VY] = oldPos[VY];
-    thing->pos[VZ] = oldPos[VZ];
+    thing->origin[VX] = oldOrigin[VX];
+    thing->origin[VY] = oldOrigin[VY];
+    thing->origin[VZ] = oldOrigin[VZ];
     P_MobjLink(thing, DDLINK_SECTOR | DDLINK_BLOCKMAP);
     thing->floorZ = oldFloorZ;
     thing->ceilingZ = oldCeilingZ;
@@ -1388,8 +1387,8 @@ void NetSv_DoFloorHit(int player, Reader* msg)
 {
     player_t* plr = &players[player];
     mobj_t* mo;
-    float pos[3];
-    float mom[3];
+    coord_t pos[3];
+    coord_t mom[3];
 
     if(player < 0 || player >= MAXPLAYERS)
         return;
@@ -1414,12 +1413,12 @@ void NetSv_DoFloorHit(int player, Reader* msg)
  */
 void NetSv_DoAction(int player, Reader* msg)
 {
-    int         type = 0;
-    float       pos[3];
-    angle_t     angle = 0;
-    float       lookDir = 0;
-    int         actionParam = 0;
-    player_t   *pl = &players[player];
+    int type = 0;
+    coord_t pos[3];
+    angle_t angle = 0;
+    float lookDir = 0;
+    int actionParam = 0;
+    player_t* pl = &players[player];
 
     type = Reader_ReadInt32(msg);
     pos[VX] = Reader_ReadFloat(msg);
@@ -1471,17 +1470,17 @@ void NetSv_DoAction(int player, Reader* msg)
                                           type == GPA_USE? NetSv_UseActionCallback : NetSv_FireWeaponCallback);
             /*
             mobj_t* mo = pl->plr->mo;
-            float oldPos[3] = { mo->pos[VX], mo->pos[VY], mo->pos[VZ] };
-            float oldFloorZ = mo->floorZ;
-            float oldCeilingZ = mo->ceilingZ;
+            coord_t oldPos[3] = { mo->origin[VX], mo->origin[VY], mo->origin[VZ] };
+            coord_t oldFloorZ = mo->floorZ;
+            coord_t oldCeilingZ = mo->ceilingZ;
 
             // We will temporarily move the object to the action coords.
-            if(P_CheckPosition3fv(mo, pos))
+            if(P_CheckPosition(mo, pos))
             {
                 P_MobjUnlink(mo);
-                mo->pos[VX] = pos[VX];
-                mo->pos[VY] = pos[VY];
-                mo->pos[VZ] = pos[VZ];
+                mo->origin[VX] = pos[VX];
+                mo->origin[VY] = pos[VY];
+                mo->origin[VZ] = pos[VZ];
                 P_MobjLink(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
                 mo->floorZ = tmFloorZ;
                 mo->ceilingZ = tmCeilingZ;
@@ -1495,9 +1494,9 @@ void NetSv_DoAction(int player, Reader* msg)
 
             // Restore the old position.
             P_MobjUnlink(mo);
-            mo->pos[VX] = oldPos[VX];
-            mo->pos[VY] = oldPos[VY];
-            mo->pos[VZ] = oldPos[VZ];
+            mo->origin[VX] = oldPos[VX];
+            mo->origin[VY] = oldPos[VY];
+            mo->origin[VZ] = oldPos[VZ];
             P_MobjLink(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
             mo->floorZ = oldFloorZ;
             mo->ceilingZ = oldCeilingZ;*/
@@ -1656,7 +1655,7 @@ void NetSv_SendLocalMobjState(mobj_t* mobj, const char* stateName)
 
 void P_Telefrag(mobj_t *thing)
 {
-    P_TeleportMove(thing, thing->pos[VX], thing->pos[VY], false);
+    P_TeleportMove(thing, thing->origin[VX], thing->origin[VY], false);
 }
 
 /**

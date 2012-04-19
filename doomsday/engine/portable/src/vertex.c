@@ -37,14 +37,14 @@ int Vertex_GetProperty(const Vertex* vtx, setargs_t* args)
     switch(args->prop)
     {
     case DMU_X:
-        DMU_GetValue(DMT_VERTEX_POS, &vtx->pos[VX], args, 0);
+        DMU_GetValue(DMT_VERTEX_ORIGIN, &vtx->origin[VX], args, 0);
         break;
     case DMU_Y:
-        DMU_GetValue(DMT_VERTEX_POS, &vtx->pos[VY], args, 0);
+        DMU_GetValue(DMT_VERTEX_ORIGIN, &vtx->origin[VY], args, 0);
         break;
     case DMU_XY:
-        DMU_GetValue(DMT_VERTEX_POS, &vtx->pos[VX], args, 0);
-        DMU_GetValue(DMT_VERTEX_POS, &vtx->pos[VY], args, 1);
+        DMU_GetValue(DMT_VERTEX_ORIGIN, &vtx->origin[VX], args, 0);
+        DMU_GetValue(DMT_VERTEX_ORIGIN, &vtx->origin[VY], args, 1);
         break;
     default:
         Con_Error("Vertex_GetProperty: Has no property %s.\n", DMU_Str(args->prop));
