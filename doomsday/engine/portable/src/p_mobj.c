@@ -203,7 +203,7 @@ void P_MobjSetState(mobj_t* mobj, int statenum)
     }
 }
 
-boolean P_MobjSetOrigin(struct mobj_s* mo, coord_t x, coord_t y, coord_t z)
+boolean Mobj_SetOrigin(struct mobj_s* mo, coord_t x, coord_t y, coord_t z)
 {
     if(!gx.MobjTryMoveXYZ)
     {

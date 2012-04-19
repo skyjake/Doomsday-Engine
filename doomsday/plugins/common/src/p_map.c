@@ -946,6 +946,17 @@ int PIT_CheckThing(mobj_t* thing, void* data)
             return false;
         }
     }
+    else if(!tmThing->player && solid)
+    {
+        // A non-player object is contacting a solid object.
+        if(cfg.allowMonsterFloatOverBlocking && (tmThing->flags & MF_FLOAT) && !thing->player)
+        {
+            float top = thing->origin[VZ] + thing->height;
+            tmThing->onMobj = thing;
+            tmFloorZ = MAX_OF(tmFloorZ, top);
+            return false;
+        }
+    }
 #endif
 
     return solid;

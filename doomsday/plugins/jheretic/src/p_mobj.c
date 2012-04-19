@@ -43,6 +43,8 @@
 #include "p_player.h"
 #include "p_tick.h"
 
+#include <assert.h>
+
 // MACROS ------------------------------------------------------------------
 
 #define VANISHTICS              (2*TICSPERSEC)
@@ -51,16 +53,6 @@
 
 #define NOMOMENTUM_THRESHOLD    (0.000001f)
 #define WALKSTOP_THRESHOLD      (0.062484741f) // FIX2FLT(0x1000-1)
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -481,6 +473,7 @@ void P_MobjMoveZ(mobj_t* mo)
 
     // Adjust height.
     mo->origin[VZ] += mo->mom[MZ];
+
     if((mo->flags2 & MF2_FLY) &&
        mo->onMobj && mo->origin[VZ] > mo->onMobj->origin[VZ] + mo->onMobj->height)
         mo->onMobj = NULL; // We were on a mobj, we are NOT now.
@@ -490,6 +483,8 @@ void P_MobjMoveZ(mobj_t* mo)
         // Float down towards target if too close.
         if(!(mo->flags & MF_SKULLFLY) && !(mo->flags & MF_INFLOAT))
         {
+            float oldZ = mo->origin[VZ];
+
             dist = M_ApproxDistance(mo->origin[VX] - mo->target->origin[VX],
                                     mo->origin[VY] - mo->target->origin[VY]);
 
@@ -512,6 +507,31 @@ void P_MobjMoveZ(mobj_t* mo)
             {
                 mo->origin[VZ] += FLOATSPEED;
                 P_MobjSetSRVOZ(mo, FLOATSPEED);
+            }            
+            if(delta)
+            {
+                // Where did we end up?
+                if(!P_CheckPosition(mo, mo->origin))
+                {
+                    // Not a valid position; undo the move.
+                    mo->origin[VZ] = oldZ;
+                    P_MobjSetSRVOZ(mo, 0);
+                }
+            }
+        }
+    }
+
+    if(cfg.allowMonsterFloatOverBlocking && (mo->flags & MF_FLOAT) && !mo->player && !(mo->flags & MF_SKULLFLY))
+    {
+        if(!P_CheckPosition(mo, mo->origin))
+        {
+#ifdef _DEBUG
+            Con_Message("Floating thing %i has gotten stuck! onmobj=%i z=%f flz=%f tmfz=%f\n",
+                        mo->thinker.id, mo->onMobj? mo->onMobj->thinker.id : 0, mo->origin[VZ], mo->floorZ, tmFloorZ);
+#endif
+            if(mo->origin[VZ] < tmFloorZ)
+            {
+                mo->origin[VZ] = mo->floorZ = tmFloorZ;
             }
         }
     }
@@ -827,10 +847,18 @@ void P_MobjThinker(mobj_t* mobj)
     P_UpdateHealthBits(mobj);
 
     // Handle X and Y momentums.
-    if(!FEQUAL(mobj->mom[MX], 0) || !FEQUAL(mobj->mom[MY], 0) ||
-       (mobj->flags & MF_SKULLFLY))
+    if(!FEQUAL(mobj->mom[MX], 0) || !FEQUAL(mobj->mom[MY], 0) || (mobj->flags & MF_SKULLFLY))
     {
+        // Detect moves into invalid positions.
+        /*
+#if _DEBUG
+        boolean beforeOk = P_CheckPosition(mobj, mobj->origin);
+#endif
+        */
+
         P_MobjMoveXY(mobj);
+
+        //assert(!beforeOk || P_CheckPosition(mobj, mobj->origin));
 
         //// \fixme decent NOP/NULL/Nil function pointer please.
         if(mobj->thinker.function == NOPFUNC)
@@ -852,9 +880,24 @@ void P_MobjThinker(mobj_t* mobj)
     }
     else if(!FEQUAL(mobj->origin[VZ], mobj->floorZ) || !FEQUAL(mobj->mom[MZ], 0))
     {
+        float oldZ = mobj->origin[VZ];
+
         P_MobjMoveZ(mobj);
         if(mobj->thinker.function != P_MobjThinker)
             return; // mobj was removed
+
+        /**
+         * @todo Instead of this post-move check, we should fix the root cause why
+         * the SKULLFLYer is ending up in an invalid position during P_MobjMoveZ().
+         * If only the movement validity checks weren't so convoluted... -jk
+         */
+        if((mobj->flags & MF_SKULLFLY) && !P_CheckPosition(mobj, mobj->origin))
+        {
+            // Let's not get stuck.
+            if(mobj->origin[VZ] > oldZ && mobj->mom[VZ] > 0) mobj->mom[VZ] = 0;
+            if(mobj->origin[VZ] < oldZ && mobj->mom[VZ] < 0) mobj->mom[VZ] = 0;
+            mobj->origin[VZ] = oldZ;
+        }
     }
     // Non-sentient objects at rest.
     else if(!(!FEQUAL(mobj->mom[MX], 0) || !FEQUAL(mobj->mom[MY], 0)) && !sentient(mobj) &&

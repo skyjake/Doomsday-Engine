@@ -70,7 +70,7 @@ void P_MobjSetState(mobj_t* mobj, int statenum);
  *
  * @note Internal to the engine.
  */
-boolean P_MobjSetOrigin(mobj_t* mobj, coord_t x, coord_t y, coord_t z);
+boolean Mobj_SetOrigin(mobj_t* mobj, coord_t x, coord_t y, coord_t z);
 
 /**
  * Calculate the visible @a origin of @a mobj in world space, including
