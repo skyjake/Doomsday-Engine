@@ -43,6 +43,8 @@
 #include "p_player.h"
 #include "p_tick.h"
 
+#include <assert.h>
+
 // MACROS ------------------------------------------------------------------
 
 #define VANISHTICS              (2*TICSPERSEC)
@@ -51,14 +53,6 @@
 
 #define NOMOMENTUM_THRESHOLD    (0.000001f)
 #define WALKSTOP_THRESHOLD      (0.062484741f) // FIX2FLT(0x1000-1)
-// TYPES -------------------------------------------------------------------
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -484,6 +478,7 @@ void P_MobjMoveZ(mobj_t *mo)
 
     // Adjust height.
     mo->pos[VZ] += mo->mom[MZ];
+
     if((mo->flags2 & MF2_FLY) &&
        mo->onMobj && mo->pos[VZ] > mo->onMobj->pos[VZ] + mo->onMobj->height)
         mo->onMobj = NULL; // We were on a mobj, we are NOT now.
@@ -857,7 +852,16 @@ void P_MobjThinker(mobj_t *mobj)
     // Handle X and Y momentums.
     if(!FEQUAL(mobj->mom[MX], 0) || !FEQUAL(mobj->mom[MY], 0) || (mobj->flags & MF_SKULLFLY))
     {
+        // Detect moves into invalid positions.
+        /*
+#if _DEBUG
+        boolean beforeOk = P_CheckPosition3fv(mobj, mobj->pos);
+#endif
+        */
+
         P_MobjMoveXY(mobj);
+
+        //assert(!beforeOk || P_CheckPosition3fv(mobj, mobj->pos));
 
         //// \fixme decent NOP/NULL/Nil function pointer please.
         if(mobj->thinker.function == NOPFUNC)
@@ -879,9 +883,19 @@ void P_MobjThinker(mobj_t *mobj)
     }
     else if(!FEQUAL(mobj->pos[VZ], mobj->floorZ) || !FEQUAL(mobj->mom[MZ], 0))
     {
+        float oldZ = mobj->pos[VZ];
+
         P_MobjMoveZ(mobj);
         if(mobj->thinker.function != P_MobjThinker)
             return; // mobj was removed
+
+        if((mobj->flags & MF_SKULLFLY) && !P_CheckPosition3fv(mobj, mobj->pos))
+        {
+            // Let's not get stuck.
+            if(mobj->pos[VZ] > oldZ && mobj->mom[VZ] > 0) mobj->mom[VZ] = 0;
+            if(mobj->pos[VZ] < oldZ && mobj->mom[VZ] < 0) mobj->mom[VZ] = 0;
+            mobj->pos[VZ] = oldZ;
+        }
     }
     // Non-sentient objects at rest.
     else if(!(!FEQUAL(mobj->mom[MX], 0) || !FEQUAL(mobj->mom[MY], 0)) && !sentient(mobj) &&
