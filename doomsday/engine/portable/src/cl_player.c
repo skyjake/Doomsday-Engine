@@ -212,7 +212,7 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
                     state->pendingOriginFix[VX], state->pendingOriginFix[VY], state->pendingOriginFix[VZ],
                     mo, clmo->thinker.id);
 #endif
-        P_MobjSetOrigin(mo, state->pendingOriginFix[VX], state->pendingOriginFix[VY], state->pendingOriginFix[VZ]);
+        Mobj_SetOrigin(mo, state->pendingOriginFix[VX], state->pendingOriginFix[VY], state->pendingOriginFix[VZ]);
         mo->reactionTime = 18;
 
         // The position is now known.
