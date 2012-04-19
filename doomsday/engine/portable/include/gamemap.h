@@ -556,7 +556,7 @@ boolean GameMap_ClMobjIterator(GameMap* map, boolean (*callback) (struct mobj_s*
  * @return  The new mover or @c NULL if arguments are invalid.
  */
 struct clplane_s* GameMap_NewClPlane(GameMap* map, uint sectornum, clplanetype_t type,
-    float dest, float speed);
+    coord_t dest, float speed);
 
 /**
  * Retrieve a pointer to the Generators collection for this map.

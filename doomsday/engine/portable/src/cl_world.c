@@ -46,7 +46,7 @@ typedef struct clplane_s {
     clplanetype_t type;
     int         property; // floor or ceiling
     int         dmuPlane;
-    float       destination;
+    coord_t     destination;
     float       speed;
 } clplane_t;
 
@@ -315,7 +315,7 @@ void GameMap_DeleteClPolyobj(GameMap* map, clpolyobj_t* mover)
 void Cl_MoverThinker(clplane_t* mover)
 {
     GameMap* map = theMap; /// @fixme Do not assume mover is from the CURRENT map.
-    float original;
+    coord_t original;
     boolean remove = false;
     boolean freeMove;
     float fspeed;
@@ -335,23 +335,23 @@ void Cl_MoverThinker(clplane_t* mover)
     fspeed = mover->speed;
 
     // How's the gap?
-    original = P_GetFloat(DMU_SECTOR, mover->sectorIndex, mover->property);
+    original = P_GetDouble(DMU_SECTOR, mover->sectorIndex, mover->property);
     if(fabs(fspeed) > 0 && fabs(mover->destination - original) > fabs(fspeed))
     {
         // Do the move.
-        P_SetFloat(DMU_SECTOR, mover->sectorIndex, mover->property, original + fspeed);
+        P_SetDouble(DMU_SECTOR, mover->sectorIndex, mover->property, original + fspeed);
     }
     else
     {
         // We have reached the destination.
-        P_SetFloat(DMU_SECTOR, mover->sectorIndex, mover->property, mover->destination);
+        P_SetDouble(DMU_SECTOR, mover->sectorIndex, mover->property, mover->destination);
 
         // This thinker can now be removed.
         remove = true;
     }
 
     DEBUG_VERBOSE2_Message(("Cl_MoverThinker: plane height %f in sector #%i\n",
-                            P_GetFloat(DMU_SECTOR, mover->sectorIndex, mover->property),
+                            P_GetDouble(DMU_SECTOR, mover->sectorIndex, mover->property),
                             mover->sectorIndex));
 
     // Let the game know of this.
@@ -366,7 +366,7 @@ void Cl_MoverThinker(clplane_t* mover)
         DEBUG_Message(("Cl_MoverThinker: move blocked in sector %i, undoing\n", mover->sectorIndex));
 
         // Something was blocking the way! Go back to original height.
-        P_SetFloat(DMU_SECTOR, mover->sectorIndex, mover->property, original);
+        P_SetDouble(DMU_SECTOR, mover->sectorIndex, mover->property, original);
 
         if(gx.SectorHeightChangeNotification)
         {
@@ -381,14 +381,14 @@ void Cl_MoverThinker(clplane_t* mover)
             DEBUG_Message(("Cl_MoverThinker: finished in %i\n", mover->sectorIndex));
 
             // It stops.
-            P_SetFloat(DMU_SECTOR, mover->sectorIndex, mover->dmuPlane | DMU_SPEED, 0);
+            P_SetDouble(DMU_SECTOR, mover->sectorIndex, mover->dmuPlane | DMU_SPEED, 0);
 
             GameMap_DeleteClPlane(map, mover);
         }
     }
 }
 
-clplane_t* GameMap_NewClPlane(GameMap* map, uint sectorIndex, clplanetype_t type, float dest, float speed)
+clplane_t* GameMap_NewClPlane(GameMap* map, uint sectorIndex, clplanetype_t type, coord_t dest, float speed)
 {
     int dmuPlane = (type == CPT_FLOOR ? DMU_FLOOR_OF_SECTOR : DMU_CEILING_OF_SECTOR);
     clplane_t* mov;
@@ -436,11 +436,11 @@ clplane_t* GameMap_NewClPlane(GameMap* map, uint sectorIndex, clplanetype_t type
         mov->dmuPlane = dmuPlane;
 
         // Set the right sign for speed.
-        if(mov->destination < P_GetFloat(DMU_SECTOR, sectorIndex, mov->property))
+        if(mov->destination < P_GetDouble(DMU_SECTOR, sectorIndex, mov->property))
             mov->speed = -mov->speed;
 
         // Update speed and target height.
-        P_SetFloat(DMU_SECTOR, sectorIndex, dmuPlane | DMU_TARGET_HEIGHT, dest);
+        P_SetDouble(DMU_SECTOR, sectorIndex, dmuPlane | DMU_TARGET_HEIGHT, dest);
         P_SetFloat(DMU_SECTOR, sectorIndex, dmuPlane | DMU_SPEED, speed);
 
         GameMap_ThinkerAdd(map, &mov->thinker, false /*not public*/);
