@@ -1890,7 +1890,7 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide, int flag
     return l->buildData.index;
 }
 
-uint MPE_PlaneCreate(uint sector, float height, materialid_t material, float matOffsetX,
+uint MPE_PlaneCreate(uint sector, coord_t height, materialid_t material, float matOffsetX,
     float matOffsetY, float r, float g, float b, float a, float normalX, float normalY, float normalZ)
 {
     Plane** newList, *pln;

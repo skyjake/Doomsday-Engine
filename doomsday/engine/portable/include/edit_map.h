@@ -96,7 +96,7 @@ uint            MPE_SidedefCreate(uint sector, short flags,
 uint            MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide,
                                   int flags);
 uint            MPE_SectorCreate(float lightlevel, float red, float green, float blue);
-uint            MPE_PlaneCreate(uint sector, float height,
+uint            MPE_PlaneCreate(uint sector, coord_t height,
                                 materialid_t material,
                                 float matOffsetX, float matOffsetY,
                                 float r, float g, float b, float a,
