@@ -61,7 +61,7 @@ Polyobj* P_PolyobjByTag(int tag);
  * @param tag  Tag associated with the Polyobj to be found.
  * @return  Found Polyobj instance else @c NULL.
  */
-Polyobj* P_PolyobjByOrigin(void* ddMobjBase);
+Polyobj* P_PolyobjByBase(void* ddMobjBase);
 
 /**
  * Translate the origin of @a polyobj in the map coordinate space.

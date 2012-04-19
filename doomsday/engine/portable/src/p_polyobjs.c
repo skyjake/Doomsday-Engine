@@ -83,7 +83,7 @@ Polyobj* P_PolyobjByTag(int tag)
 }
 
 /// @note Part of the Doomsday public API
-Polyobj* P_PolyobjByOrigin(void* ddMobjBase)
+Polyobj* P_PolyobjByBase(void* ddMobjBase)
 {
     if(!theMap) return NULL;
     return GameMap_PolyobjByBase(theMap, ddMobjBase);
