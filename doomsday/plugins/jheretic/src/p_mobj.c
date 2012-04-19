@@ -483,7 +483,7 @@ void P_MobjMoveZ(mobj_t* mo)
         // Float down towards target if too close.
         if(!(mo->flags & MF_SKULLFLY) && !(mo->flags & MF_INFLOAT))
         {
-            float oldZ = mo->origin[VZ];
+            coord_t oldZ = mo->origin[VZ];
 
             dist = M_ApproxDistance(mo->origin[VX] - mo->target->origin[VX],
                                     mo->origin[VY] - mo->target->origin[VY]);
