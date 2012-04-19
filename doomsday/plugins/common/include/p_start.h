@@ -151,9 +151,29 @@ void P_Update(void);
 
 void P_Shutdown(void);
 
+/**
+ * Reset all requested player class changes.
+ */
+void P_ResetPlayerRespawnClasses(void);
+
+/**
+ * Sets a new player class for a player. It will be applied when the player
+ * respawns.
+ */
+void P_SetPlayerRespawnClass(int plrNum, playerclass_t pc);
+
+/**
+ * Returns the class of a player when respawning.
+ *
+ * @param plrNum  Player number.
+ * @param clear   @c true when the change request should be cleared.
+ *
+ * @return  Current/updated class for the player.
+ */
+playerclass_t P_ClassForPlayerWhenRespawning(int plrNum, boolean clear);
+
 mobjtype_t P_DoomEdNumToMobjType(int doomEdNum);
 void P_SpawnPlayers(void);
-
 #if __JHERETIC__ || __JHEXEN__
 void P_MoveThingsOutOfWalls(void);
 #endif

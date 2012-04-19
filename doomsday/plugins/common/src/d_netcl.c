@@ -30,6 +30,7 @@
 #include "d_netsv.h"
 #include "p_player.h"
 #include "p_map.h"
+#include "p_start.h"
 #include "g_common.h"
 #include "p_actor.h"
 #include "p_inventory.h"
@@ -821,9 +822,9 @@ void NetCl_SendPlayerInfo()
     msg = D_NetWrite();
 
     Writer_WriteByte(msg, cfg.netColor);
-#if __JHEXEN__
+#ifdef __JHEXEN__
     Writer_WriteByte(msg, cfg.netClass);
-#elif __JHERETIC__
+#else
     Writer_WriteByte(msg, PCLASS_PLAYER);
 #endif
 

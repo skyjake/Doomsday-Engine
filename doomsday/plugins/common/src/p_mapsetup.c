@@ -337,32 +337,22 @@ static boolean checkMapSpotSpawnFlags(const mapspot_t* spot)
 
 #if __JHEXEN__
     // Check current character classes with spawn flags.
-    if(IS_NETGAME == false)
-    {   // Single player.
-        if((spot->flags & classFlags[cfg.playerClass[0]]) == 0)
+    if(!IS_NETGAME)
+    {
+        // Single player.
+        if((spot->flags & classFlags[P_ClassForPlayerWhenRespawning(0, false)]) == 0)
         {   // Not for current class.
             return false;
         }
     }
-    else if(deathmatch == false)
-    {   // Cooperative.
-        int i, spawnMask = 0;
-
-        for(i = 0; i < MAXPLAYERS; ++i)
-        {
-            if(players[i].plr->inGame)
-            {
-                spawnMask |= classFlags[cfg.playerClass[i]];
-            }
-        }
+    else if(!deathmatch)
+    {
+        // Cooperative mode.
 
         // No players are in the game when a dedicated server is started.
-        // In this case, we'll be generous and spawn stuff for all the
-        // classes.
-        if(!spawnMask)
-        {
-            spawnMask |= MSF_FIGHTER | MSF_CLERIC | MSF_MAGE;
-        }
+        // Also, players with new classes may join a game at any time.
+        // Thus we will be generous and spawn stuff for all the classes.
+        int spawnMask = MSF_FIGHTER | MSF_CLERIC | MSF_MAGE;
 
         if((spot->flags & spawnMask) == 0)
         {

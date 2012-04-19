@@ -81,7 +81,9 @@ struct OccNode
 
 static void C_CutOcclusionRange(binangle_t startAngle, binangle_t endAngle);
 static int C_SafeCheckRange(binangle_t startAngle, binangle_t endAngle);
+#if 0
 static ClipNode* C_AngleClippedBy(binangle_t bang);
+#endif
 
 #if _DEBUG
 static void C_OrangeRanger(int mark);
@@ -1060,6 +1062,7 @@ static boolean C_IsSegOccluded(coord_t relv1[3], coord_t relv2[3], coord_t relto
     return (occAngle >= endAngle);
 }
 
+#if 0
 /**
  * @note Unused and untested. Almost certainly doesn't work correctly.
  * @return  @c =true if the segment is visible according to the current clipnode
@@ -1102,6 +1105,7 @@ static boolean C_CheckSeg(coord_t* v1, coord_t* v2, coord_t top, coord_t bottom)
     return !C_IsSegOccluded(relv1, relv2, reltop, relbottom, start, BANG_MAX)
         || !C_IsSegOccluded(relv1, relv2, reltop, relbottom, 0, end);
 }
+#endif
 
 /**
  * The specified range must be safe!
@@ -1155,6 +1159,7 @@ boolean C_IsAngleVisible(binangle_t bang)
     return true;
 }
 
+#if 0
 static ClipNode* C_AngleClippedBy(binangle_t bang)
 {
     for(ClipNode* ci = clipHead; ci; ci = ci->next)
@@ -1165,6 +1170,7 @@ static ClipNode* C_AngleClippedBy(binangle_t bang)
     // No one clipped this angle.
     return 0;
 }
+#endif
 
 int C_CheckBspLeaf(BspLeaf* leaf)
 {

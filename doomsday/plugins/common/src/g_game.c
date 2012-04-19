@@ -1916,11 +1916,7 @@ void G_PlayerReborn(int player)
     p->worldTimer = worldTimer;
     p->colorMap = cfg.playerColor[player];
 #endif
-#if __JHEXEN__
-    p->class_ = cfg.playerClass[player];
-#else
-    p->class_ = PCLASS_PLAYER;
-#endif
+    p->class_ = P_ClassForPlayerWhenRespawning(player, false);
     p->useDown = p->attackDown = true; // Don't do anything immediately.
     p->playerState = PST_LIVE;
     p->health = maxHealth;
@@ -3476,6 +3472,12 @@ D_CMD(SaveGame)
     int slot;
 
     if(G_QuitInProgress()) return false;
+
+    if(IS_CLIENT || IS_NETWORK_SERVER)
+    {
+        Con_Message("Network savegames are not supported at the moment.\n");
+        return false;
+    }
 
     if(player->playerState == PST_DEAD || Get(DD_PLAYBACK))
     {

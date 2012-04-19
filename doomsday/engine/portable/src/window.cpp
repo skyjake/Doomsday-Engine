@@ -230,7 +230,8 @@ struct ddwindow_s
             if(widget->isVisible())
             {
                 needShowFullscreen = !widget->isFullScreen();
-#ifdef WIN32
+
+#if defined(WIN32) || defined(Q_WS_X11)
                 if(widget->isFullScreen())
                 {
                     needShowFullscreen = false;
@@ -1306,7 +1307,7 @@ boolean Window_IsMouseTrapped(const Window* wnd)
 
 boolean Window_ShouldRepaintManually(const Window* wnd)
 {
-#ifdef WIN32
+#if defined(WIN32) || defined(Q_WS_X11)
     DENG_UNUSED(wnd);
     return false;
 #else

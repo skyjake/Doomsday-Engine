@@ -124,7 +124,7 @@ static void checkWin32Keymap()
     //keymap[VK_SEPARATOR] = ;
     keymap[VK_SUBTRACT] = DDKEY_SUBTRACT;
     keymap[VK_DECIMAL] = DDKEY_DECIMAL;
-    keymap[VK_DIVIDE] = '/';
+    keymap[VK_DIVIDE] = DDKEY_DIVIDE;
     keymap[VK_F1] = DDKEY_F1;
     keymap[VK_F2] = DDKEY_F2;
     keymap[VK_F3] = DDKEY_F3;

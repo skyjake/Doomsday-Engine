@@ -38,8 +38,8 @@ struct material_s;
 extern "C" {
 #endif
 
-#define SV_VERSION          20
-#define SV_WELCOME_STRING   "Doomsday "DOOMSDAY_VERSION_TEXT" Server (R20)"
+#define SV_VERSION          21
+#define SV_WELCOME_STRING   "Doomsday "DOOMSDAY_VERSION_TEXT" Server (R21)"
 
 // Anything closer than this is always taken into consideration when
 // deltas are being generated.

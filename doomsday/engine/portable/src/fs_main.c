@@ -1699,6 +1699,8 @@ static DFile* tryOpenFile2(const char* path, const char* mode, size_t baseOffset
     F_FixSlashes(&searchPath, &searchPath);
     F_ExpandBasePath(&searchPath, &searchPath);
 
+    DEBUG_VERBOSE2_Message(("tryOpenFile2: trying to open %s\n", Str_Text(&searchPath)));
+
     // First check for lumps?
     if(!reqRealFile)
     {

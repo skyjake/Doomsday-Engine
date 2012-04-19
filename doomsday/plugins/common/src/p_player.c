@@ -772,6 +772,7 @@ void P_PlayerChangeClass(player_t* player, playerclass_t newClass)
 
     player->class_ = newClass;
     cfg.playerClass[player - players] = newClass;
+    P_ClassForPlayerWhenRespawning(player - players, true /*clear change request*/);
 
     // Take away armor.
     for(i = 0; i < NUMARMOR; ++i)
