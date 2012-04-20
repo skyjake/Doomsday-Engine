@@ -106,10 +106,14 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 
     /// Weight values for sorting of Packages.
     private static $packageWeights = array(
-        'DistributionPackage'            =>0,
-        'PluginPackage'                  =>1,
-        'UnstableDistributionPackage'    =>2,
-        'UnstablePluginPackage'          =>3
+        'DistributionPackage'                =>0,
+        'DistributionBuilderPackage'         =>0,
+        'PluginPackage'                      =>1,
+        'PluginBuilderPackage'               =>1,
+        'DistributionUnstablePackage'        =>2,
+        'DistributionUnstableBuilderPackage' =>2,
+        'PluginUnstablePackage'              =>3,
+        'PluginUnstableBuilderPackage'       =>3
     );
 
     /// @return  Plugin name.
@@ -201,8 +205,10 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         if($packA === $packB) return 0;
         $a = self::packageWeight($packA);
         $b = self::packageWeight($packB);
-        if($a === $b) return 0;
-        return $a < $b? -1 : 1;
+        if($a !== $b) return $a < $b? -1 : 1;
+
+        // Lastly by package title.
+        return strcasecmp($packA->title(), $packB->title());
     }
 
     /**
