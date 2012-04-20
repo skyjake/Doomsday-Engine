@@ -1792,9 +1792,11 @@ void P_PlayerThinkUpdateControls(player_t* player)
     P_GetControlState(playerNum, CTL_WALK, &vel, &off);
     brain->forwardMove = off * offsetSensitivity + vel;
     P_GetControlState(playerNum, CTL_SIDESTEP, &vel, &off);
-    // Saturate sidestep.
-    vel = (vel > 0? 1 : vel < 0? -1 : 0);
     brain->sideMove = off * offsetSensitivity + vel;
+
+    // Clamp.
+    brain->forwardMove = MINMAX_OF(-1.f, brain->forwardMove, 1.f);
+    brain->sideMove    = MINMAX_OF(-1.f, brain->sideMove,    1.f);
 
     // Let the engine know these.
     dp->forwardMove = brain->forwardMove;
