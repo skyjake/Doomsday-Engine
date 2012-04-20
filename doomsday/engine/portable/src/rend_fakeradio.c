@@ -1487,8 +1487,8 @@ static void radioBspLeafEdges(const BspLeaf* bspLeaf)
     // Any need to continue?
     if(!(shadowDark > .0001f)) return;
 
-    vec[VX] = vx - bspLeaf->midPoint[VX];
-    vec[VY] = vz - bspLeaf->midPoint[VY];
+    vec[VX] = vOrigin[VX] - bspLeaf->midPoint[VX];
+    vec[VY] = vOrigin[VZ] - bspLeaf->midPoint[VY];
     vec[VZ] = 0;
 
     // Do we need to enlarge the size of the doPlanes array?
@@ -1510,7 +1510,7 @@ static void radioBspLeafEdges(const BspLeaf* bspLeaf)
     {
         const Plane* plane = bspLeaf->sector->planes[pln];
 
-        vec[VZ] = vy - plane->visHeight;
+        vec[VZ] = vOrigin[VY] - plane->visHeight;
 
         // Don't bother with planes facing away from the camera.
         if(V3f_DotProduct(vec, plane->PS_normal) < 0)
@@ -1550,9 +1550,9 @@ static void drawPoint(coord_t pos[3], int radius, const float color[4])
     float scale, radX, radY;
     int i;
 
-    viewPos[VX] = vx;
-    viewPos[VY] = vy;
-    viewPos[VZ] = vz;
+    viewPos[VX] = vOrigin[VX];
+    viewPos[VY] = vOrigin[VY];
+    viewPos[VZ] = vOrigin[VZ];
 
     // viewSideVec is to the left.
     for(i = 0; i < 3; ++i)

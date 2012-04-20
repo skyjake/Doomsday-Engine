@@ -1283,7 +1283,7 @@ void R_ProjectSprite(mobj_t* mo)
                                 width, offset, v1, v2);
 
     // Check for visibility.
-    if(!C_CheckViewRelSeg(v1[VX], v1[VY], v2[VX], v2[VY]))
+    if(!C_CheckRangeFromViewRelPoints(v1, v2))
     {
         // Isn't visible.
         if(mf)

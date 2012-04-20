@@ -76,7 +76,7 @@ float shadowFactor = 1.2f;
 int shadowMaxRadius = 80;
 int shadowMaxDistance = 1000;
 
-coord_t vx, vy, vz;
+coord_t vOrigin[3];
 float vang, vpitch;
 float viewsidex, viewsidey;
 
@@ -186,7 +186,7 @@ void Rend_Register(void)
  */
 coord_t Rend_PointDist3D(coord_t const point[3])
 {
-    return M_ApproxDistance3(vx - point[VX], vz - point[VY], 1.2 * (vy - point[VZ]));
+    return M_ApproxDistance3(vOrigin[VX] - point[VX], vOrigin[VZ] - point[VY], 1.2 * (vOrigin[VY] - point[VZ]));
 }
 
 void Rend_Init(void)
@@ -216,9 +216,9 @@ void Rend_ModelViewMatrix(boolean useAngles)
 {
     const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
 
-    vx = viewData->current.origin[VX];
-    vy = viewData->current.origin[VZ];
-    vz = viewData->current.origin[VY];
+    vOrigin[VX] = viewData->current.origin[VX];
+    vOrigin[VY] = viewData->current.origin[VZ];
+    vOrigin[VZ] = viewData->current.origin[VY];
     vang = viewData->current.angle / (float) ANGLE_MAX *360 - 90;
     vpitch = viewData->current.pitch * 85.0 / 110.0;
 
@@ -233,13 +233,13 @@ void Rend_ModelViewMatrix(boolean useAngles)
         glRotatef(vang, 0, 1, 0);
     }
     glScalef(1, 1.2f, 1);      // This is the aspect correction.
-    glTranslatef(-vx, -vy, -vz);
+    glTranslatef(-vOrigin[VX], -vOrigin[VY], -vOrigin[VZ]);
 }
 
-static __inline double segFacingViewerDot(coord_t v1[2], coord_t v2[2])
+static __inline double viewFacingDot(coord_t v1[2], coord_t v2[2])
 {
     // The dot product.
-    return (v1[VY] - v2[VY]) * (v1[VX] - vx) + (v2[VX] - v1[VX]) * (v1[VY] - vz);
+    return (v1[VY] - v2[VY]) * (v1[VX] - vOrigin[VX]) + (v2[VX] - v1[VX]) * (v1[VY] - vOrigin[VZ]);
 }
 
 static int C_DECL DivSortAscend(const void* e1, const void* e2)
@@ -802,8 +802,8 @@ static void quadShinyTexCoords(rtexcoord_t* tc, const rvertex_t* topLeft,
     for(i = 0; i < 2; ++i)
     {
         // View vector.
-        V2f_Set(view, vx - (i == 0? topLeft->pos[VX] : bottomRight->pos[VX]),
-                      vz - (i == 0? topLeft->pos[VY] : bottomRight->pos[VY]));
+        V2f_Set(view, vOrigin[VX] - (i == 0? topLeft->pos[VX] : bottomRight->pos[VX]),
+                      vOrigin[VZ] - (i == 0? topLeft->pos[VY] : bottomRight->pos[VY]));
 
         distance = V2f_Normalize(view);
 
@@ -833,11 +833,11 @@ static void quadShinyTexCoords(rtexcoord_t* tc, const rvertex_t* topLeft,
             angle + .3f; /*acos(-dot)/PI*/
 
         tc[ (i == 0 ? 0 : 2) ].st[1] =
-            shinyVertical(vy - bottomRight->pos[VZ], distance);
+            shinyVertical(vOrigin[VY] - bottomRight->pos[VZ], distance);
 
         // Vertical coordinates.
         tc[ (i == 0 ? 1 : 3) ].st[1] =
-            shinyVertical(vy - topLeft->pos[VZ], distance);
+            shinyVertical(vOrigin[VY] - topLeft->pos[VZ], distance);
     }
 }
 
@@ -847,7 +847,7 @@ static void flatShinyTexCoords(rtexcoord_t* tc, const float xyz[3])
     vec2f_t view, start;
 
     // View vector.
-    V2f_Set(view, vx - xyz[VX], vz - xyz[VY]);
+    V2f_Set(view, vOrigin[VX] - xyz[VX], vOrigin[VZ] - xyz[VY]);
 
     distance = V2f_Normalize(view);
     if(distance < 10)
@@ -858,13 +858,13 @@ static void flatShinyTexCoords(rtexcoord_t* tc, const float xyz[3])
     }
 
     // Offset from the normal view plane.
-    V2f_Set(start, vx, vz);
+    V2f_Set(start, vOrigin[VX], vOrigin[VZ]);
 
     offset = ((start[VY] - xyz[VY]) * sin(.4f)/*viewFrontVec[VX]*/ -
               (start[VX] - xyz[VX]) * cos(.4f)/*viewFrontVec[VZ]*/);
 
     tc->st[0] = ((shinyVertical(offset, distance) - .5f) * 2) + .5f;
-    tc->st[1] = shinyVertical(vy - xyz[VZ], distance);
+    tc->st[1] = shinyVertical(vOrigin[VY] - xyz[VZ], distance);
 }
 
 static float getSnapshots(const materialsnapshot_t** msA,
@@ -1689,7 +1689,7 @@ static void Rend_RenderPlane(BspLeaf* bspLeaf, planetype_t type, coord_t height,
     // Must have a visible surface.
     if(!inMat || !Material_IsDrawable(inMat)) return;
 
-    V3f_Set(vec, vx - bspLeaf->midPoint[VX], vz - bspLeaf->midPoint[VY], vy - height);
+    V3f_Set(vec, vOrigin[VX] - bspLeaf->midPoint[VX], vOrigin[VZ] - bspLeaf->midPoint[VY], vOrigin[VY] - height);
 
     /**
      * Flip surface tangent space vectors according to the z positon of the viewer relative
@@ -2294,7 +2294,7 @@ static void Rend_MarkSegsFacingFront(BspLeaf* leaf)
             if(hedge->lineDef)
             {
                 // Which way should it be facing?
-                if(!(segFacingViewerDot(hedge->HE_v1origin, hedge->HE_v2origin) < 0))
+                if(!(viewFacingDot(hedge->HE_v1origin, hedge->HE_v2origin) < 0))
                     hedge->frameFlags |= HEDGEINF_FACINGFRONT;
                 else
                     hedge->frameFlags &= ~HEDGEINF_FACINGFRONT;
@@ -2315,7 +2315,7 @@ static void Rend_MarkSegsFacingFront(BspLeaf* leaf)
             hedge = line->L_frontside->hedgeLeft;
 
             // Which way should it be facing?
-            if(!(segFacingViewerDot(hedge->HE_v1origin, hedge->HE_v2origin) < 0))
+            if(!(viewFacingDot(hedge->HE_v1origin, hedge->HE_v2origin) < 0))
                 hedge->frameFlags |= HEDGEINF_FACINGFRONT;
             else
                 hedge->frameFlags &= ~HEDGEINF_FACINGFRONT;
@@ -2334,8 +2334,7 @@ static void occludeFrontFacingSegsInBspLeaf(const BspLeaf* bspLeaf)
         {
             if(!hedge->lineDef || !(hedge->frameFlags & HEDGEINF_FACINGFRONT)) continue;
 
-            if(!C_CheckViewRelSeg(hedge->HE_v1origin[VX], hedge->HE_v1origin[VY],
-                                  hedge->HE_v2origin[VX], hedge->HE_v2origin[VY]))
+            if(!C_CheckRangeFromViewRelPoints(hedge->HE_v1origin, hedge->HE_v2origin))
             {
                 hedge->frameFlags &= ~HEDGEINF_FACINGFRONT;
             }
@@ -2355,8 +2354,7 @@ static void occludeFrontFacingSegsInBspLeaf(const BspLeaf* bspLeaf)
 
             if(!(hedge->frameFlags & HEDGEINF_FACINGFRONT)) continue;
 
-            if(!C_CheckViewRelSeg(hedge->HE_v1origin[VX], hedge->HE_v1origin[VY],
-                                  hedge->HE_v2origin[VX], hedge->HE_v2origin[VY]))
+            if(!C_CheckRangeFromViewRelPoints(hedge->HE_v1origin, hedge->HE_v2origin))
             {
                 hedge->frameFlags &= ~HEDGEINF_FACINGFRONT;
             }
@@ -2666,8 +2664,8 @@ static void occludeBspLeaf(const BspLeaf* bspLeaf, boolean forwardFacing)
                !Surface_IsSkyMasked(&front->SP_floorsurface))
             {
                 // Do the floors create an occlusion?
-                if((bFloor > fFloor && vy <= bFloor) ||
-                   (bFloor < fFloor && vy >= fFloor))
+                if((bFloor > fFloor && vOrigin[VY] <= bFloor) ||
+                   (bFloor < fFloor && vOrigin[VY] >= fFloor))
                 {
                     // Occlude down.
                     C_AddViewRelOcclusion(startv, endv, MAX_OF(fFloor, bFloor), false);
@@ -2679,8 +2677,8 @@ static void occludeBspLeaf(const BspLeaf* bspLeaf, boolean forwardFacing)
                !Surface_IsSkyMasked(&front->SP_ceilsurface))
             {
                 // Do the ceilings create an occlusion?
-                if((bCeil < fCeil && vy >= bCeil) ||
-                   (bCeil > fCeil && vy <= fCeil))
+                if((bCeil < fCeil && vOrigin[VY] >= bCeil) ||
+                   (bCeil > fCeil && vOrigin[VY] <= fCeil))
                 {
                     // Occlude up.
                     C_AddViewRelOcclusion(startv, endv, MIN_OF(fCeil, bCeil), true);
@@ -2778,8 +2776,7 @@ static void Rend_RenderBspLeaf(BspLeaf* bspLeaf)
                 // When the viewer is in the void no wall is "solid".
                 if(solid && !P_IsInVoid(viewPlayer))
                 {
-                    C_AddViewRelSeg(hedge->HE_v1origin[VX], hedge->HE_v1origin[VY],
-                                    hedge->HE_v2origin[VX], hedge->HE_v2origin[VY]);
+                    C_AddRangeFromViewRelPoints(hedge->HE_v1origin, hedge->HE_v2origin);
                 }
             }
         } while((hedge = hedge->next) != bspLeaf->hedge);
@@ -2801,8 +2798,7 @@ static void Rend_RenderBspLeaf(BspLeaf* bspLeaf)
                 boolean solid = Rend_RenderHEdge(hedge, bspLeaf);
                 if(solid)
                 {
-                    C_AddViewRelSeg(hedge->HE_v1origin[VX], hedge->HE_v1origin[VY],
-                                    hedge->HE_v2origin[VX], hedge->HE_v2origin[VY]);
+                    C_AddRangeFromViewRelPoints(hedge->HE_v1origin, hedge->HE_v2origin);
                 }
             }
         }
@@ -3146,7 +3142,7 @@ static int drawVertex1(LineDef* li, void* context)
 {
     Vertex* vtx = li->L_v1;
     Polyobj* po = context;
-    coord_t dist2D = M_ApproxDistance(vx - vtx->origin[VX], vz - vtx->origin[VY]);
+    coord_t dist2D = M_ApproxDistance(vOrigin[VX] - vtx->origin[VX], vOrigin[VZ] - vtx->origin[VY]);
 
     if(dist2D < MAX_VERTEX_POINT_DIST)
     {
@@ -3168,9 +3164,9 @@ static int drawVertex1(LineDef* li, void* context)
     {
         coord_t eye[3], pos[3], dist3D;
 
-        eye[VX] = vx;
-        eye[VY] = vz;
-        eye[VZ] = vy;
+        eye[VX] = vOrigin[VX];
+        eye[VY] = vOrigin[VZ];
+        eye[VZ] = vOrigin[VY];
 
         pos[VX] = vtx->origin[VX];
         pos[VY] = vtx->origin[VY];
@@ -3222,7 +3218,7 @@ void Rend_Vertexes(void)
             if(vtx->lineOwners[0].lineDef->inFlags & LF_POLYOBJ)
                 continue; // A polyobj linedef vertex.
 
-            alpha = 1 - M_ApproxDistance(vx - vtx->origin[VX], vz - vtx->origin[VY]) / MAX_VERTEX_POINT_DIST;
+            alpha = 1 - M_ApproxDistance(vOrigin[VX] - vtx->origin[VX], vOrigin[VZ] - vtx->origin[VY]) / MAX_VERTEX_POINT_DIST;
             alpha = MIN_OF(alpha, .15f);
 
             if(alpha > 0)
@@ -3253,7 +3249,7 @@ void Rend_Vertexes(void)
         if(vtx->lineOwners[0].lineDef->inFlags & LF_POLYOBJ)
             continue; // A polyobj linedef vertex.
 
-        dist = M_ApproxDistance(vx - vtx->origin[VX], vz - vtx->origin[VY]);
+        dist = M_ApproxDistance(vOrigin[VX] - vtx->origin[VX], vOrigin[VZ] - vtx->origin[VY]);
 
         if(dist < MAX_VERTEX_POINT_DIST)
         {
@@ -3271,9 +3267,9 @@ void Rend_Vertexes(void)
     {
         coord_t eye[3];
 
-        eye[VX] = vx;
-        eye[VY] = vz;
-        eye[VZ] = vy;
+        eye[VX] = vOrigin[VX];
+        eye[VY] = vOrigin[VZ];
+        eye[VZ] = vOrigin[VY];
 
         for(i = 0; i < NUM_VERTEXES; ++i)
         {
@@ -3303,10 +3299,10 @@ void Rend_Vertexes(void)
     }
 
     // Next, the vertexes of all nearby polyobjs.
-    box.minX = vx - MAX_VERTEX_POINT_DIST;
-    box.minY = vy - MAX_VERTEX_POINT_DIST;
-    box.maxX = vx + MAX_VERTEX_POINT_DIST;
-    box.maxY = vy + MAX_VERTEX_POINT_DIST;
+    box.minX = vOrigin[VX] - MAX_VERTEX_POINT_DIST;
+    box.minY = vOrigin[VY] - MAX_VERTEX_POINT_DIST;
+    box.maxX = vOrigin[VX] + MAX_VERTEX_POINT_DIST;
+    box.maxY = vOrigin[VY] + MAX_VERTEX_POINT_DIST;
     P_PolyobjsBoxIterator(&box, drawPolyObjVertexes, NULL);
 
     // Restore previous state.
@@ -3698,7 +3694,7 @@ static int drawMobjBBox(thinker_t* th, void* context)
     if(!(mo->bspLeaf && mo->bspLeaf->sector->frameFlags & SIF_VISIBLE))
         return false; // Continue iteration.
 
-    V3d_Set(eye, vx, vz, vy);
+    V3d_Set(eye, vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
 
     alpha = 1 - ((V3d_Distance(mo->origin, eye) / (Window_Width(theWindow)/2)) / 4);
     if(alpha < .25f)
@@ -3747,9 +3743,9 @@ static void Rend_RenderBoundingBoxes(void)
     if(!dlBBox)
         dlBBox = constructBBox(0, .08f);
 
-    eye[VX] = vx;
-    eye[VY] = vz;
-    eye[VZ] = vy;
+    eye[VX] = vOrigin[VX];
+    eye[VY] = vOrigin[VZ];
+    eye[VZ] = vOrigin[VY];
 
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_2D);

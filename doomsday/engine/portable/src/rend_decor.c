@@ -176,9 +176,9 @@ static void projectDecoration(decorsource_t* src)
     {
         float vector[3], dot;
 
-        V3f_Set(vector, src->origin[VX] - vx,
-                        src->origin[VY] - vz,
-                        src->origin[VZ] - vy);
+        V3f_Set(vector, src->origin[VX] - vOrigin[VX],
+                        src->origin[VY] - vOrigin[VZ],
+                        src->origin[VZ] - vOrigin[VY]);
         V3f_Normalize(vector);
         dot = -(src->surface->normal[VX] * vector[VX] +
                 src->surface->normal[VY] * vector[VY] +

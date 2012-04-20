@@ -1669,9 +1669,9 @@ if(numTexUnits < 2)
             glPushMatrix();
 
             // Scale towards the viewpoint to avoid Z-fighting.
-            glTranslatef(vx, vy, vz);
+            glTranslatef(vOrigin[VX], vOrigin[VY], vOrigin[VZ]);
             glScalef(.99f, .99f, .99f);
-            glTranslatef(-vx, -vy, -vz);
+            glTranslatef(-vOrigin[VX], -vOrigin[VY], -vOrigin[VZ]);
         }
         return 0;
 

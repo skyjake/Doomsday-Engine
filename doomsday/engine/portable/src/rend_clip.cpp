@@ -794,15 +794,23 @@ int C_SafeAddRange(binangle_t startAngle, binangle_t endAngle)
     return true;
 }
 
-void C_AddViewRelSeg(coord_t x1, coord_t y1, coord_t x2, coord_t y2)
+void C_AddRangeFromViewRelPoints(coord_t const from[], coord_t const to[])
 {
-    coord_t dx1 = x1 - vx;
-    coord_t dy1 = y1 - vz;
-    coord_t dx2 = x2 - vx;
-    coord_t dy2 = y2 - vz;
+    vec2d_t eye, fromDir, toDir;
 
-    C_SafeAddRange(bamsAtan2((int) (dy2 * 100), (int) (dx2 * 100)),
-                   bamsAtan2((int) (dy1 * 100), (int) (dx1 * 100)));
+    V2d_Set(eye, vOrigin[VX], vOrigin[VZ]);
+    V2d_Subtract(fromDir, from, eye);
+    V2d_Subtract(toDir, to, eye);
+
+    C_SafeAddRange(bamsAtan2((int) (  toDir[VY] * 100), (int) (  toDir[VX] * 100)),
+                   bamsAtan2((int) (fromDir[VY] * 100), (int) (fromDir[VX] * 100)));
+}
+
+void C_AddRangeFromViewRelPointsXY(coord_t x1, coord_t y1, coord_t x2, coord_t y2)
+{
+    vec2d_t from = { x1, y1 };
+    vec2d_t to   = { x2, y2 };
+    C_AddRangeFromViewRelPoints(from, to);
 }
 
 /**
@@ -842,8 +850,8 @@ void C_AddViewRelOcclusion(coord_t const* v1, coord_t const* v2, coord_t height,
     // Calculate the occlusion plane normal.
     // We'll use the game's coordinate system (left-handed, but Y and Z are swapped).
     vec3d_t viewtov1, viewtov2;
-    V3d_Set(viewtov1, v1[VX] - vx, v1[VY] - vz, height - vy);
-    V3d_Set(viewtov2, v2[VX] - vx, v2[VY] - vz, height - vy);
+    V3d_Set(viewtov1, v1[VX] - vOrigin[VX], v1[VY] - vOrigin[VZ], height - vOrigin[VY]);
+    V3d_Set(viewtov2, v2[VX] - vOrigin[VX], v2[VY] - vOrigin[VZ], height - vOrigin[VY]);
 
     // The normal points to the half we want to occlude.
     vec3f_t normal;
@@ -857,7 +865,7 @@ void C_AddViewRelOcclusion(coord_t const* v1, coord_t const* v2, coord_t height,
     if(V3f_DotProduct(testPos, normal) < 0)
     {
         Con_Error("C_AddViewRelOcclusion: Wrong side - [%g,%g]>[%g,%g] "
-                  "view[%g,%g]!\n", v1[VX], v1[VY], v2[VX], v2[VY], vx, vz);
+                  "view[%g,%g]!\n", v1[VX], v1[VY], v2[VX], v2[VY], vOrigin[VX], vOrigin[VZ]);
     }
 #endif
 
@@ -896,9 +904,9 @@ boolean C_IsPointVisible(coord_t x, coord_t y, coord_t height)
     coord_t point[3];
     binangle_t angle;
 
-    point[0] = x - vx;
-    point[1] = y - vz;
-    point[2] = height - vy;
+    point[0] = x - vOrigin[VX];
+    point[1] = y - vOrigin[VZ];
+    point[2] = height - vOrigin[VY];
     angle = C_PointToAngle(point);
 
     if(!C_IsAngleVisible(angle))
@@ -1071,15 +1079,15 @@ static boolean C_IsSegOccluded(coord_t relv1[3], coord_t relv2[3], coord_t relto
 static boolean C_CheckSeg(coord_t* v1, coord_t* v2, coord_t top, coord_t bottom)
 {
     coord_t relv1[3], relv2[3];
-    coord_t reltop = top - vy, relbottom = bottom - vy;
+    coord_t reltop = top - vOrigin[VY], relbottom = bottom - vOrigin[VY];
     binangle_t start, end;
 
-    relv1[VX] = v1[VX] - vx;
-    relv1[VY] = v1[VY] - vz;
+    relv1[VX] = v1[VX] - vOrigin[VX];
+    relv1[VY] = v1[VY] - vOrigin[VZ];
     relv1[VZ] = 0;
 
-    relv2[VX] = v2[VX] - vx;
-    relv2[VY] = v2[VY] - vz;
+    relv2[VX] = v2[VX] - vOrigin[VX];
+    relv2[VY] = v2[VY] - vOrigin[VZ];
     relv2[VZ] = 0;
 
     // Determine the range.
@@ -1135,17 +1143,25 @@ static int C_SafeCheckRange(binangle_t startAngle, binangle_t endAngle)
     return C_IsRangeVisible(startAngle, endAngle);
 }
 
-int C_CheckViewRelSeg(coord_t x1, coord_t y1, coord_t x2, coord_t y2)
+int C_CheckRangeFromViewRelPoints(coord_t const from[], coord_t const to[])
 {
-    coord_t dx1 = x1 - vx;
-    coord_t dy1 = y1 - vz;
-    coord_t dx2 = x2 - vx;
-    coord_t dy2 = y2 - vz;
+    vec2d_t eye, fromDir, toDir;
 
     if(devNoCulling) return 1;
 
-    return C_SafeCheckRange(bamsAtan2((int) (dy2 * 1000), (int) (dx2 * 1000)) - BANG_45/90,
-                            bamsAtan2((int) (dy1 * 1000), (int) (dx1 * 1000)) + BANG_45/90);
+    V2d_Set(eye, vOrigin[VX], vOrigin[VZ]);
+    V2d_Subtract(fromDir, from, eye);
+    V2d_Subtract(toDir, to, eye);
+
+    return C_SafeCheckRange(bamsAtan2((int) (  toDir[VY] * 1000), (int) (  toDir[VX] * 1000)) - BANG_45/90,
+                            bamsAtan2((int) (fromDir[VY] * 1000), (int) (fromDir[VX] * 1000)) + BANG_45/90);
+}
+
+int C_CheckRangeFromViewRelPointsXY(coord_t x1, coord_t y1, coord_t x2, coord_t y2)
+{
+    vec2d_t from = { x1, y1 };
+    vec2d_t to   = { x2, y2 };
+    return C_CheckRangeFromViewRelPoints(from, to);
 }
 
 boolean C_IsAngleVisible(binangle_t bang)
@@ -1194,8 +1210,8 @@ int C_CheckBspLeaf(BspLeaf* leaf)
     {
         Vertex* vtx = hedge->HE_v1;
         // Shift for more accuracy.
-        anglist[n++] = bamsAtan2((int) ((vtx->origin[VY] - vz) * 100),
-                                 (int) ((vtx->origin[VX] - vx) * 100));
+        anglist[n++] = bamsAtan2((int) ((vtx->origin[VY] - vOrigin[VZ]) * 100),
+                                 (int) ((vtx->origin[VX] - vOrigin[VX]) * 100));
 
     } while((hedge = hedge->next) != leaf->hedge);
 

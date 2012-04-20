@@ -66,7 +66,8 @@ boolean C_IsAngleVisible(binangle_t bang);
 /**
  * Add a segment relative to the current viewpoint.
  */
-void C_AddViewRelSeg(coord_t x1, coord_t y1, coord_t x2, coord_t y2);
+void C_AddRangeFromViewRelPoints(coord_t const from[2], coord_t const to[2]);
+void C_AddRangeFromViewRelPointsXY(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY);
 
 /**
  * Add an occlusion segment relative to the current viewpoint.
@@ -76,7 +77,8 @@ void C_AddViewRelOcclusion(coord_t const* v1, coord_t const* v2, coord_t height,
 /**
  * Check a segment relative to the current viewpoint.
  */
-int C_CheckViewRelSeg(coord_t x1, coord_t y1, coord_t x2, coord_t y2);
+int C_CheckRangeFromViewRelPoints(coord_t const from[2], coord_t const to[2]);
+int C_CheckRangeFromViewRelPointsXY(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY);
 
 /**
  * @return  @c =1 if the specified @a angle is visible, else @c 0.

@@ -173,9 +173,9 @@ void Rend_DrawThinkerIds(void)
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_2D);
 
-    eye[VX] = vx;
-    eye[VY] = vz;
-    eye[VZ] = vy;
+    eye[VX] = vOrigin[VX];
+    eye[VY] = vOrigin[VZ];
+    eye[VZ] = vOrigin[VY];
 
     GameMap_IterateThinkers(theMap, NULL, 0x1 | 0x2, drawThinkerId, eye);
 
@@ -1061,10 +1061,10 @@ glEnd();
 
             if(alwaysAlign == 2)
             {   // Restricted camera alignment.
-                float dx = spriteCenter[VX] - vx;
-                float dy = spriteCenter[VY] - vz;
+                float dx = spriteCenter[VX] - vOrigin[VX];
+                float dy = spriteCenter[VY] - vOrigin[VZ];
                 float spriteAngle = BANG2DEG(
-                    bamsAtan2(spriteCenter[VZ] - vy, sqrt(dx * dx + dy * dy)));
+                    bamsAtan2(spriteCenter[VZ] - vOrigin[VY], sqrt(dx * dx + dy * dy)));
 
                 if(spriteAngle > 180)
                     spriteAngle -= 360;

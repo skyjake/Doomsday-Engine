@@ -907,9 +907,9 @@ void Rend_RenderGenerators(void)
     gens = GameMap_Generators(theMap);
     if(!gens) return;
 
-    eye[VX] = vx;
-    eye[VY] = vz;
-    eye[VZ] = vy;
+    eye[VX] = vOrigin[VX];
+    eye[VY] = vOrigin[VZ];
+    eye[VZ] = vOrigin[VY];
 
     glDisable(GL_DEPTH_TEST);
 

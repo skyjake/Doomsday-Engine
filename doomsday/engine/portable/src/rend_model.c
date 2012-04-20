@@ -1106,15 +1106,15 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
         }
         else
         {
-            delta[VX] = modelCenter[VX] - vx;
-            delta[VY] = modelCenter[VY] - vz;
-            delta[VZ] = modelCenter[VZ] - vy;
+            delta[VX] = modelCenter[VX] - vOrigin[VX];
+            delta[VY] = modelCenter[VY] - vOrigin[VZ];
+            delta[VZ] = modelCenter[VZ] - vOrigin[VY];
 
             if(params->shineTranslateWithViewerPos)
             {
-                delta[VX] += vx;
-                delta[VY] += vz;
-                delta[VZ] += vy;
+                delta[VX] += vOrigin[VX];
+                delta[VY] += vOrigin[VZ];
+                delta[VZ] += vOrigin[VY];
             }
 
             shinyAng = QATAN2(delta[VZ], M_ApproxDistancef(delta[VX], delta[VY])) / PI + 0.5f; // shinyAng is [0,1]

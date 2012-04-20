@@ -43,7 +43,7 @@ extern "C" {
 
 #define SHADOW_SURFACE_LUMINOSITY_ATTRIBUTION_MIN (.05f)
 
-extern coord_t vx, vy, vz;
+extern coord_t vOrigin[3];
 extern float vang, vpitch, fieldOfView, yfov;
 extern byte smoothTexAnim, devMobjVLights;
 extern float viewsidex, viewsidey;
@@ -77,7 +77,7 @@ void Rend_Reset(void);
 void            Rend_RenderMap(void);
 void            Rend_ModelViewMatrix(boolean use_angles);
 
-#define Rend_PointDist2D(c) (fabs((vz-c[VY])*viewsidex - (vx-c[VX])*viewsidey))
+#define Rend_PointDist2D(c) (fabs((vOrigin[VZ]-c[VY])*viewsidex - (vOrigin[VX]-c[VX])*viewsidey))
 
 coord_t         Rend_PointDist3D(coord_t const point[3]);
 void            Rend_ApplyTorchLight(float* color, float distance);

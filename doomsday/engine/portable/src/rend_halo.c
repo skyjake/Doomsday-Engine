@@ -194,9 +194,9 @@ boolean H_RenderHalo(coord_t x, coord_t y, coord_t z, float size, DGLuint tex,
 
     // Calculate the mirrored position.
     // Project viewtocenter vector onto viewSideVec.
-    viewPos[VX] = vx;
-    viewPos[VY] = vy;
-    viewPos[VZ] = vz;
+    viewPos[VX] = vOrigin[VX];
+    viewPos[VY] = vOrigin[VY];
+    viewPos[VZ] = vOrigin[VZ];
 
     for(i = 0; i < 3; ++i)
         normalViewToCenter[i] = viewToCenter[i] = center[i] - viewPos[i];

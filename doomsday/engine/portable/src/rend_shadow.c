@@ -129,7 +129,7 @@ static void processMobjShadow(mobj_t* mo)
     if(plane->visHeight >= moz + mo->height) return;
 
     // View height might prevent us from seeing the shadow.
-    if(vy < plane->visHeight) return;
+    if(vOrigin[VY] < plane->visHeight) return;
 
     // Glowing planes inversely diminish shadow strength.
     shadowStrength *= (1 - MIN_OF(1, R_GlowStrength(plane)));

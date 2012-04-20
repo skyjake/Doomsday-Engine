@@ -111,9 +111,9 @@ void SBE_Register(void)
 static void SBE_GetHand(coord_t pos[3])
 {
     const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
-    pos[VX] = vx + viewData->frontVec[VX] * editDistance;
-    pos[VY] = vz + viewData->frontVec[VZ] * editDistance;
-    pos[VZ] = vy + viewData->frontVec[VY] * editDistance;
+    pos[VX] = viewData->current.origin[VX] + viewData->frontVec[VX] * editDistance;
+    pos[VY] = viewData->current.origin[VZ] + viewData->frontVec[VZ] * editDistance;
+    pos[VZ] = viewData->current.origin[VY] + viewData->frontVec[VY] * editDistance;
 }
 
 static source_t* SBE_GrabSource(int index)
@@ -630,9 +630,9 @@ static void SBE_InfoBox(source_t* s, int rightX, char* title, float alpha)
     origin.x = Window_Width(theWindow)  - 10 - size.width - rightX;
     origin.y = Window_Height(theWindow) - 10 - size.height;
 
-    eye[0] = vx;
-    eye[1] = vz;
-    eye[2] = vy;
+    eye[VX] = vOrigin[VX];
+    eye[VY] = vOrigin[VZ];
+    eye[VZ] = vOrigin[VY];
 
     color.red   = s->color[CR];
     color.green = s->color[CG];
@@ -897,7 +897,7 @@ static void SBE_DrawIndex(source_t* src)
 
     if(!editShowIndices) return;
 
-    V3d_Set(eye, vx, vz, vy);
+    V3d_Set(eye, vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
     scale = V3d_Distance(src->origin, eye) / (Window_Width(theWindow) / 2);
 
     glDisable(GL_DEPTH_TEST);
@@ -930,9 +930,9 @@ static void SBE_DrawSource(source_t* src)
     float col[4];
     coord_t d, eye[3];
 
-    eye[0] = vx;
-    eye[1] = vz;
-    eye[2] = vy;
+    eye[0] = vOrigin[VX];
+    eye[1] = vOrigin[VZ];
+    eye[2] = vOrigin[VY];
 
     col[0] = src->color[0];
     col[1] = src->color[1];
@@ -962,9 +962,9 @@ static void SBE_DrawHue(void)
     float color[4], sel[4], hue, saturation;
     int i;
 
-    eye[0] = vx;
-    eye[1] = vy;
-    eye[2] = vz;
+    eye[0] = vOrigin[VX];
+    eye[1] = vOrigin[VY];
+    eye[2] = vOrigin[VZ];
 
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
@@ -972,9 +972,9 @@ static void SBE_DrawHue(void)
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
 
-    glTranslatef(vx, vy, vz);
+    glTranslatef(vOrigin[VX], vOrigin[VY], vOrigin[VZ]);
     glScalef(1, 1.0f/1.2f, 1);
-    glTranslatef(-vx, -vy, -vz);
+    glTranslatef(-vOrigin[VX], -vOrigin[VY], -vOrigin[VZ]);
 
     // The origin of the circle.
     for(i = 0; i < 3; ++i)
@@ -1079,9 +1079,9 @@ void SBE_DrawCursor(void)
     if(!editActive || !numSources || editHidden || freezeRLs)
         return;
 
-    eye[0] = vx;
-    eye[1] = vz;
-    eye[2] = vy;
+    eye[0] = vOrigin[VX];
+    eye[1] = vOrigin[VZ];
+    eye[2] = vOrigin[VY];
 
     if(editHueCircle && SBE_GetGrabbed())
         SBE_DrawHue();

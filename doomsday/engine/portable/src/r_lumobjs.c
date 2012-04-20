@@ -1127,7 +1127,7 @@ boolean LOIT_ClipLumObj(void* data, void* context)
     {
         vec3d_t eye;
 
-        V3d_Set(eye, vx, vz, vy);
+        V3d_Set(eye, vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
 
         luminousClipped[lumIdx] = 1;
         if(P_CheckLineSight(eye, origin, -1, 1, LS_PASSLEFT | LS_PASSOVER | LS_PASSUNDER))
@@ -1158,7 +1158,7 @@ boolean LOIT_ClipLumObjBySight(void* data, void* context)
         vec2d_t eye;
         uint i;
 
-        V2d_Set(eye, vx, vz);
+        V2d_Set(eye, vOrigin[VX], vOrigin[VZ]);
 
         // We need to figure out if any of the polyobj's segments lies
         // between the viewpoint and the lumobj.
