@@ -148,19 +148,19 @@ static void scanNeighbor(boolean scanTop, const LineDef* line, uint side,
 {
 #define SEP             (10)
 
-    LineDef*            iter;
-    lineowner_t*        own;
-    binangle_t          diff = 0;
-    float               lengthDelta = 0, gap = 0;
-    float               iFFloor, iFCeil;
-    float               iBFloor, iBCeil;
-    int                 scanSecSide = side;
-    Sector*             startSector = line->L_sector(side);
-    Sector*             scanSector;
-    boolean             clockwise = toLeft;
-    boolean             stopScan = false;
-    boolean             closed;
-    float               fCeil, fFloor;
+    LineDef* iter;
+    lineowner_t* own;
+    binangle_t diff = 0;
+    coord_t lengthDelta = 0, gap = 0;
+    coord_t iFFloor, iFCeil;
+    coord_t iBFloor, iBCeil;
+    int scanSecSide = side;
+    Sector* startSector = line->L_sector(side);
+    Sector* scanSector;
+    boolean clockwise = toLeft;
+    boolean stopScan = false;
+    boolean closed;
+    coord_t fCeil, fFloor;
 
     fFloor = line->L_sector(side)->SP_floorvisheight;
     fCeil = line->L_sector(side)->SP_ceilvisheight;
@@ -365,17 +365,15 @@ static void scanNeighbor(boolean scanTop, const LineDef* line, uint side,
 }
 
 static void scanNeighbors(shadowcorner_t top[2], shadowcorner_t bottom[2],
-                          const LineDef* line, uint side,
-                          edgespan_t spans[2], boolean toLeft)
+    const LineDef* line, uint side, edgespan_t spans[2], boolean toLeft)
 {
-    uint                i;
-    edge_t              edges[2], *edge; // {bottom, top}
-    edgespan_t*         span;
-    shadowcorner_t*     corner;
-    float               fCeil, fFloor;
+    uint i;
+    edge_t edges[2], *edge; // {bottom, top}
+    edgespan_t* span;
+    shadowcorner_t* corner;
+    coord_t fCeil, fFloor;
 
-    if(LINE_SELFREF(line))
-        return;
+    if(LINE_SELFREF(line)) return;
 
     fFloor = line->L_sector(side)->SP_floorvisheight;
     fCeil = line->L_sector(side)->SP_ceilvisheight;
@@ -510,7 +508,9 @@ static void scanEdges(shadowcorner_t topCorners[2],
             }
         }
         else
+        {
             sideCorners[i].corner = 0;
+        }
 
         scanNeighbors(topCorners, bottomCorners, line, sid, spans, !i);
     }
@@ -1378,7 +1378,8 @@ static void processEdgeShadow(const BspLeaf* bspLeaf, const LineDef* lineDef,
         if(neighbor != lineDef && !neighbor->L_backside &&
            neighbor->buildData.windowEffect &&
            neighbor->L_frontsector != bspLeaf->sector)
-        {   // A one-way window, edgeOpen side.
+        {
+            // A one-way window, edgeOpen side.
             sideOpen[i] = 1;
         }
         else if(!(neighbor == lineDef || !neighbor->L_backside))

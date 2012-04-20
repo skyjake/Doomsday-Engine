@@ -713,7 +713,7 @@ void Rend_AddMaskedPoly(const rvertex_t* rvertices, const ColorRawf* rcolors,
 
         // Choose an appropriate variant.
         /// @fixme Can result in multiple variants being prepared.
-        ///        This decision should be made earlier (in rendSegSection()).
+        ///        This decision should be made earlier (in rendHEdgeSection()).
         material = Materials_ChooseVariant(MaterialVariant_GeneralCase(material),
                                            mapSurfaceMaterialSpec(wrapS, wrapT), true, true);
     }
@@ -1503,7 +1503,15 @@ static boolean doRenderSeg(HEdge* hedge,
             radioParams.segOffset = &hedge->offset;
             radioParams.segLength = &hedge->length;
             radioParams.frontSec = hedge->sector;
-            radioParams.backSec = (!isTwosidedMiddle? HEDGE_BACK_SECTOR(hedge) : NULL);
+
+            if(!isTwosidedMiddle && !(hedge->twin && !HEDGE_SIDEDEF(hedge->twin)))
+            {
+                radioParams.backSec = HEDGE_BACK_SECTOR(hedge);
+            }
+            else
+            {
+                radioParams.backSec = NULL;
+            }
 
             /// @kludge Revert the vertex coords as they may have been changed
             ///         due to height divisions.
@@ -1715,13 +1723,10 @@ static void Rend_RenderPlane(BspLeaf* bspLeaf, planetype_t type, coord_t height,
     }
 }
 
-static boolean rendSegSection(BspLeaf* bspLeaf, HEdge* hedge,
-                              sidedefsection_t section, Surface* surface,
-                              coord_t const from[2], coord_t const to[2],
-                              coord_t bottom, coord_t top,
-                              float const texOffset[2],
-                              Sector* frontsec, boolean softSurface,
-                              boolean addDLights, boolean addMobjShadows, short sideFlags)
+static boolean rendHEdgeSection(HEdge* hedge, BspLeaf* bspLeaf, sidedefsection_t section,
+    Surface* surface, coord_t const from[2], coord_t const to[2], coord_t bottom, coord_t top,
+    float const texOffset[2], Sector* frontsec, boolean softSurface, boolean addDLights,
+    boolean addMobjShadows, short sideFlags)
 {
     boolean solidSeg = true;
     float alpha;
@@ -1933,68 +1938,64 @@ static boolean rendSegSection(BspLeaf* bspLeaf, HEdge* hedge,
     return solidSeg;
 }
 
-/**
- * Renders the given single-sided hedge into the world.
- */
-static boolean Rend_RenderSeg(BspLeaf* bspLeaf, HEdge* hedge)
+static void reportLineDefDrawn(LineDef* line)
 {
-    boolean solidSeg = true;
-    SideDef* side;
-    LineDef* ldef;
-    coord_t ffloor, fceil;
-    boolean backSide;
-    Sector* frontsec;
     int pid;
+    if(!line) return;
 
-    side = HEDGE_SIDEDEF(hedge);
-    if(!side) return false; // A one-way window?
-
-    frontsec = bspLeaf->sector;
-    backSide = hedge->side;
-    ldef = hedge->lineDef;
-
+    // Already been here?
     pid = viewPlayer - ddPlayers;
-    if(!ldef->mapped[pid])
+    if(line->mapped[pid]) return;
+
+    // Mark as drawn.
+    line->mapped[pid] = true;
+
+    // Send a status report.
+    if(gx.HandleMapObjectStatusReport)
     {
-        ldef->mapped[pid] = true; // This line is now seen in the map.
-
-        // Send a status report.
-        if(gx.HandleMapObjectStatusReport)
-            gx.HandleMapObjectStatusReport(DMUSC_LINE_FIRSTRENDERED,
-                                           GET_LINE_IDX(ldef),
-                                           DMU_LINEDEF, &pid);
+        gx.HandleMapObjectStatusReport(DMUSC_LINE_FIRSTRENDERED, GET_LINE_IDX(line), DMU_LINEDEF, &pid);
     }
+}
 
+/**
+ * @param hedge  HEdge to draw wall surfaces for.
+ * @param bspLeaf  BSP leaf from which to derive plane heights. May not be the
+ *                 same as the leaf linked to the half-edge itself (in the case
+ *                 of polyobject half-edges).
+ */
+static boolean Rend_RenderHEdge(HEdge* hedge, BspLeaf* bspLeaf)
+{
+    SideDef* side = HEDGE_SIDEDEF(hedge);
+    coord_t ffloor, fceil;
+    Surface* surface;
+    float texOffset[2];
+    boolean solid;
+
+    assert(side);
+    if(!(side->SW_middleinflags & SUIF_PVIS)) return false;
+
+    // Only a "middle" section.
+    assert(bspLeaf);
     ffloor = bspLeaf->sector->SP_floorvisheight;
     fceil = bspLeaf->sector->SP_ceilvisheight;
+    surface = &side->SW_middlesurface;
 
-    // Create the wall sections.
+    texOffset[0] = surface->visOffset[0] + (float)(hedge->offset);
+    texOffset[1] = surface->visOffset[1];
+    if(hedge->lineDef->flags & DDLF_DONTPEGBOTTOM)
+        texOffset[1] += -(fceil - ffloor);
 
-    // Middle section.
-    if(side->SW_middleinflags & SUIF_PVIS)
-    {
-        float texOffset[2];
-        Surface* surface = &side->SW_middlesurface;
+    Rend_RadioUpdateLinedef(hedge->lineDef, hedge->side);
 
-        texOffset[0] = (float)(surface->visOffset[0] + hedge->offset);
-        texOffset[1] = (float)(surface->visOffset[1]);
+    solid = rendHEdgeSection(hedge, bspLeaf, SS_MIDDLE, &side->SW_middlesurface,
+                             hedge->HE_v1origin, hedge->HE_v2origin, ffloor, fceil,
+                             texOffset,
+                             /*temp >*/ bspLeaf->sector, /*< temp*/
+                             false, true, true, side->flags);
 
-        if(ldef->flags & DDLF_DONTPEGBOTTOM)
-            texOffset[1] += -(fceil - ffloor);
+    reportLineDefDrawn(hedge->lineDef);
 
-        Rend_RadioUpdateLinedef(hedge->lineDef, hedge->side);
-
-        solidSeg = rendSegSection(bspLeaf, hedge, SS_MIDDLE, &side->SW_middlesurface,
-                                  hedge->HE_v1origin, hedge->HE_v2origin, ffloor, fceil,
-                                  texOffset,
-                                  /*temp >*/ frontsec, /*< temp*/
-                                  false, true, true, side->flags);
-    }
-
-    if(P_IsInVoid(viewPlayer))
-        solidSeg = false;
-
-    return solidSeg;
+    return solid;
 }
 
 boolean R_FindBottomTop(LineDef* lineDef, int side, sidedefsection_t section,
@@ -2115,9 +2116,8 @@ boolean R_FindBottomTop(LineDef* lineDef, int side, sidedefsection_t section,
 /**
  * Render wall sections for a HEdge belonging to a two-sided LineDef.
  */
-static boolean Rend_RenderSegTwosided(BspLeaf* bspLeaf, HEdge* hedge)
+static boolean Rend_RenderHEdgeTwosided(HEdge* hedge, BspLeaf* bspLeaf)
 {
-    int pid = viewPlayer - ddPlayers;
     coord_t bottom, top;
     float texOffset[2];
     Sector* frontSec, *backSec;
@@ -2132,16 +2132,7 @@ static boolean Rend_RenderSegTwosided(BspLeaf* bspLeaf, HEdge* hedge)
     backSec = backSide->sector;
     line = hedge->lineDef;
 
-    if(!line->mapped[pid])
-    {
-        line->mapped[pid] = true; // This line is now seen in the map.
-
-        // Send a status report.
-        if(gx.HandleMapObjectStatusReport)
-            gx.HandleMapObjectStatusReport(DMUSC_LINE_FIRSTRENDERED,
-                                           GET_LINE_IDX(line),
-                                           DMU_LINEDEF, &pid);
-    }
+    reportLineDefDrawn(line);
 
     if(backSec == frontSec &&
        !frontSide->SW_topmaterial && !frontSide->SW_bottommaterial &&
@@ -2179,12 +2170,12 @@ static boolean Rend_RenderSegTwosided(BspLeaf* bspLeaf, HEdge* hedge)
                            LINE_SELFREF(line)? true : false,
                            &bottom, &top, texOffset))
         {
-            solidSeg = rendSegSection(bspLeaf, hedge, SS_MIDDLE, suf,
-                                      hedge->HE_v1origin, hedge->HE_v2origin, bottom, top, texOffset,
-                                      frontSec,
-                                      (((viewPlayer->shared.flags & (DDPF_NOCLIP|DDPF_CAMERA)) ||
-                                        !(line->flags & DDLF_BLOCKING))? true : false),
-                                      true, false, frontSide->flags);
+            solidSeg = rendHEdgeSection(hedge, bspLeaf, SS_MIDDLE, suf,
+                                        hedge->HE_v1origin, hedge->HE_v2origin, bottom, top, texOffset,
+                                        frontSec,
+                                        (((viewPlayer->shared.flags & (DDPF_NOCLIP|DDPF_CAMERA)) ||
+                                         !(line->flags & DDLF_BLOCKING))? true : false),
+                                        true, false, frontSide->flags);
             if(solidSeg)
             {
                 coord_t xbottom, xtop;
@@ -2225,9 +2216,9 @@ static boolean Rend_RenderSegTwosided(BspLeaf* bspLeaf, HEdge* hedge)
                            LINE_SELFREF(line)? true : false,
                            &bottom, &top, texOffset))
         {
-            rendSegSection(bspLeaf, hedge, SS_TOP, suf,
-                           hedge->HE_v1origin, hedge->HE_v2origin, bottom, top, texOffset,
-                           frontSec, false, true, true, frontSide->flags);
+            rendHEdgeSection(hedge, bspLeaf, SS_TOP, suf,
+                             hedge->HE_v1origin, hedge->HE_v2origin, bottom, top, texOffset,
+                             frontSec, false, true, true, frontSide->flags);
         }
     }
 
@@ -2245,9 +2236,9 @@ static boolean Rend_RenderSegTwosided(BspLeaf* bspLeaf, HEdge* hedge)
                            LINE_SELFREF(line)? true : false,
                            &bottom, &top, texOffset))
         {
-            rendSegSection(bspLeaf, hedge, SS_BOTTOM, suf,
-                           hedge->HE_v1origin, hedge->HE_v2origin, bottom, top, texOffset,
-                           frontSec, false, true, true, frontSide->flags);
+            rendHEdgeSection(hedge, bspLeaf, SS_BOTTOM, suf,
+                             hedge->HE_v1origin, hedge->HE_v2origin, bottom, top, texOffset,
+                             frontSec, false, true, true, frontSide->flags);
         }
     }
 
@@ -2773,16 +2764,19 @@ static void Rend_RenderBspLeaf(BspLeaf* bspLeaf)
         do
         {
             if(hedge->lineDef && // "minisegs" have no linedefs.
-               !(hedge->lineDef->inFlags & LF_POLYOBJ) && // Not handled here.
+               HEDGE_SIDEDEF(hedge) && // "windows" have no sidedef.
                (hedge->frameFlags & HEDGEINF_FACINGFRONT))
             {
                 boolean solid;
-                if(!hedge->sector || !HEDGE_BACK_SECTOR(hedge))
-                    solid = Rend_RenderSeg(bspLeaf, hedge);
-                else
-                    solid = Rend_RenderSegTwosided(bspLeaf, hedge);
 
-                if(solid)
+                if(!hedge->sector || !HEDGE_BACK_SECTOR(hedge) ||
+                   (hedge->twin && !HEDGE_SIDEDEF(hedge->twin)) /* front side of a "window" */)
+                    solid = Rend_RenderHEdge(hedge, bspLeaf);
+                else
+                    solid = Rend_RenderHEdgeTwosided(hedge, bspLeaf);
+
+                // When the viewer is in the void no wall is "solid".
+                if(solid && !P_IsInVoid(viewPlayer))
                 {
                     C_AddViewRelSeg(hedge->HE_v1origin[VX], hedge->HE_v1origin[VY],
                                     hedge->HE_v2origin[VX], hedge->HE_v2origin[VY]);
@@ -2804,7 +2798,7 @@ static void Rend_RenderBspLeaf(BspLeaf* bspLeaf)
             // Let's first check which way this hedge is facing.
             if(hedge->frameFlags & HEDGEINF_FACINGFRONT)
             {
-                boolean solid = Rend_RenderSeg(bspLeaf, hedge);
+                boolean solid = Rend_RenderHEdge(hedge, bspLeaf);
                 if(solid)
                 {
                     C_AddViewRelSeg(hedge->HE_v1origin[VX], hedge->HE_v1origin[VY],

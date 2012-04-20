@@ -950,17 +950,14 @@ LineDef *R_FindLineNeighbor(const Sector *sector, const LineDef *line,
     return R_FindLineNeighbor(sector, line, cown, antiClockwise, diff);
 }
 
-LineDef* R_FindSolidLineNeighbor(const Sector* sector,
-                                 const LineDef* line,
-                                 const lineowner_t* own,
-                                 boolean antiClockwise, binangle_t* diff)
+LineDef* R_FindSolidLineNeighbor(const Sector* sector, const LineDef* line,
+    const lineowner_t* own, boolean antiClockwise, binangle_t* diff)
 {
-    lineowner_t*        cown = own->link[!antiClockwise];
-    LineDef*            other = cown->lineDef;
-    int                 side;
+    lineowner_t* cown = own->link[!antiClockwise];
+    LineDef* other = cown->lineDef;
+    int side;
 
-    if(other == line)
-        return NULL;
+    if(other == line) return NULL;
 
     if(diff) *diff += (antiClockwise? cown->angle : own->angle);
 
