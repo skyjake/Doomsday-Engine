@@ -955,16 +955,11 @@ static void SBE_HueOffset(double angle, float *offset)
 
 static void SBE_DrawHue(void)
 {
-    vec3f_t eye;
     vec3f_t center, off, off2;
     float steps = 32, inner = 10, outer = 30, s;
     double angle;
     float color[4], sel[4], hue, saturation;
     int i;
-
-    eye[0] = vOrigin[VX];
-    eye[1] = vOrigin[VY];
-    eye[2] = vOrigin[VZ];
 
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
@@ -978,7 +973,9 @@ static void SBE_DrawHue(void)
 
     // The origin of the circle.
     for(i = 0; i < 3; ++i)
-        center[i] = eye[i] + hueOrigin[i] * hueDistance;
+    {
+        center[i] = (float)(vOrigin[i]) + hueOrigin[i] * hueDistance;
+    }
 
     // Draw the circle.
     glBegin(GL_QUAD_STRIP);

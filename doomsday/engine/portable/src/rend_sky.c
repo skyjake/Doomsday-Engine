@@ -99,7 +99,6 @@ static void renderSkyModels(void)
 {
     rendmodelparams_t params;
     skymodel_t* sky;
-    float pos[3];
     float inter;
     int i, c;
 
@@ -124,19 +123,17 @@ static void renderSkyModels(void)
             continue;
         }
 
-        // Calculate the coordinates for the model.
-        pos[0] = vOrigin[VX] * -sky->def->coordFactor[0];
-        pos[1] = vOrigin[VY] * -sky->def->coordFactor[1];
-        pos[2] = vOrigin[VZ] * -sky->def->coordFactor[2];
-
         inter = (sky->maxTimer > 0 ? sky->timer / (float) sky->maxTimer : 0);
 
         memset(&params, 0, sizeof(params));
 
+        // Calculate the coordinates for the model.
+        params.origin[VX] = vOrigin[VX] * -sky->def->coordFactor[VX];
+        params.origin[VY] = vOrigin[VZ] * -sky->def->coordFactor[VZ];
+        params.origin[VZ] = vOrigin[VY] * -sky->def->coordFactor[VY];
+        params.gzt = params.origin[VZ];
         params.distance = 1;
-        params.origin[VX] = pos[0];
-        params.origin[VY] = pos[2];
-        params.origin[VZ] = params.gzt = pos[1];
+
         params.extraYawAngle = params.yawAngleOffset = sky->def->rotate[0];
         params.extraPitchAngle = params.pitchAngleOffset = sky->def->rotate[1];
         params.inter = inter;

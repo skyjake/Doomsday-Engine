@@ -146,7 +146,6 @@ boolean H_RenderHalo(coord_t x, coord_t y, coord_t z, float size, DGLuint tex,
                      boolean viewRelativeRotate)
 {
     int i, k;
-    float viewPos[3];
     float viewToCenter[3], mirror[3], normalViewToCenter[3];
     float leftOff[3], rightOff[3], center[3], radius;
     float haloPos[3];
@@ -194,12 +193,10 @@ boolean H_RenderHalo(coord_t x, coord_t y, coord_t z, float size, DGLuint tex,
 
     // Calculate the mirrored position.
     // Project viewtocenter vector onto viewSideVec.
-    viewPos[VX] = vOrigin[VX];
-    viewPos[VY] = vOrigin[VY];
-    viewPos[VZ] = vOrigin[VZ];
-
     for(i = 0; i < 3; ++i)
-        normalViewToCenter[i] = viewToCenter[i] = center[i] - viewPos[i];
+    {
+        normalViewToCenter[i] = viewToCenter[i] = center[i] - (float)(vOrigin[i]);
+    }
     V3f_Normalize(normalViewToCenter);
 
     // Calculate the dimming factor for secondary flares.

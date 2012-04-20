@@ -1546,21 +1546,17 @@ void Rend_RadioBspLeafEdges(BspLeaf* bspLeaf)
 static void drawPoint(coord_t pos[3], int radius, const float color[4])
 {
     const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
-    coord_t viewPos[3], viewToCenter[3], finalPos[3], leftOff[3], rightOff[3];
+    coord_t viewToCenter[3], finalPos[3], leftOff[3], rightOff[3];
     float scale, radX, radY;
     int i;
-
-    viewPos[VX] = vOrigin[VX];
-    viewPos[VY] = vOrigin[VY];
-    viewPos[VZ] = vOrigin[VZ];
 
     // viewSideVec is to the left.
     for(i = 0; i < 3; ++i)
     {
-        leftOff[i] = viewData->upVec[i] + viewData->sideVec[i];
+        leftOff[i]  = viewData->upVec[i] + viewData->sideVec[i];
         rightOff[i] = viewData->upVec[i] - viewData->sideVec[i];
 
-        viewToCenter[i] = pos[i] - viewPos[i];
+        viewToCenter[i] = pos[i] - vOrigin[i];
     }
 
     scale = (float) V3d_DotProductf(viewToCenter, viewData->frontVec) /
