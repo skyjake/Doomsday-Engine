@@ -589,6 +589,7 @@ static void I_UpdateAxis(inputdev_t *dev, uint axis, float pos, timespan_t ticLe
 
     if(a->filter > 0)
     {
+        /// @todo Apply a filtering.
         pos = a->realPosition;
     }
     else
