@@ -192,12 +192,12 @@ static int linkGeneratorParticles(ptcgen_t* gen, void* parameters)
 {
     Generators* gens = (Generators*)parameters;
     int i;
-    /// @fixme Overkill?
+    /// @todo Overkill?
     for(i = 0; i < gen->count; ++i)
     {
         if(gen->ptcs[i].stage < 0) continue;
 
-        /// @fixme Do not assume sector is from the CURRENT map.
+        /// @todo Do not assume sector is from the CURRENT map.
         Generators_LinkToList(gens, gen, GameMap_SectorIndex(theMap, gen->ptcs[i].sector));
     }
     return false; // Continue iteration.
