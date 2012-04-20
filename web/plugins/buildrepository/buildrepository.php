@@ -1114,11 +1114,20 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 
             // Determine issue level (think defcon).
             if($errors > 0 || !$pack->hasDirectDownloadUri())
+            {
                 $issueLevel = 'major';
+                $issueTooltip = "$errors major errors occurred during the build";
+            }
             else if($warnings > 0)
+            {
                 $issueLevel = 'minor';
+                $issueTooltip = "$warnings warnings occurred during the build";
+            }
             else
+            {
                 $issueLevel = 'no';
+                $issueTooltip = 'Build completed without issue';
+            }
 
             // Ouput HTML for the package.
 ?><tr>
@@ -1149,7 +1158,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 ?>txt.gz<?php
             }
 
-?></td><td class="issue_level <?php echo htmlspecialchars($issueLevel.'_issue'); ?>"><?php echo htmlspecialchars($issues); ?></td>
+?></td><td><div class="issue_level <?php echo htmlspecialchars($issueLevel.'_issue'); ?>" title="<?php echo htmlspecialchars($issueTooltip); ?>"><?php echo htmlspecialchars($issues); ?></div></td>
 </tr><?php
 
             $lastPlatId = $pack->platformId();

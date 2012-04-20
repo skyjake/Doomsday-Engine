@@ -88,6 +88,13 @@ span.hidden {
     display: none;
 }
 
+.issue_level {
+    text-align: center;
+    width: 50%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
 .major_issue {
     background-color:#ff4444; /* red */
 }
@@ -976,10 +983,6 @@ span.metadata {
 
 .buildevent table tr th {
     text-align:left;
-}
-
-.buildevent table td.issue_level {
-    text-align:center;
 }
 
 .buildevents_outer {
