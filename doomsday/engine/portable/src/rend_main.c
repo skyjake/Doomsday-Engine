@@ -1743,10 +1743,9 @@ static boolean rendHEdgeSection(HEdge* hedge, BspLeaf* bspLeaf, sidedefsection_t
 
         /**
          * Can the player walk through this surface?
-         * If the player is close enough we should NOT add a
-         * solid hedge otherwise they'd get HOM when they are
-         * directly on top of the line (eg passing through an
-         * opaque waterfall).
+         * If the player is close enough we should NOT add a solid hedge otherwise HOM
+         * would occur when they are directly on top of the line (e.g., passing through
+         * an opaque waterfall).
          */
 
         if(viewData->current.origin[VZ] > bottom &&
@@ -1762,7 +1761,7 @@ static boolean rendHEdgeSection(HEdge* hedge, BspLeaf* bspLeaf, sidedefsection_t
                 coord_t delta[2];
 
                 V2d_Subtract(delta, mo->origin, result);
-                distance = M_ApproxDistance(lineDef->direction[VX], lineDef->direction[VY]);
+                distance = M_ApproxDistance(delta[VX], delta[VY]);
 
                 if(distance < minDistance)
                 {
