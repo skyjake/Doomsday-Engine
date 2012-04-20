@@ -2128,7 +2128,6 @@ static boolean Rend_RenderSegTwosided(BspLeaf* bspLeaf, HEdge* hedge)
 
     frontSide = HEDGE_SIDEDEF(hedge);
     backSide = HEDGE_SIDEDEF(hedge->twin);
-    if(!frontSide || !backSide) return false; /// @todo fix properly -jk
     frontSec = frontSide->sector;
     backSec = backSide->sector;
     line = hedge->lineDef;
