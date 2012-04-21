@@ -60,11 +60,6 @@ int Plane_GetProperty(const Plane* pln, setargs_t* args)
     case DMU_HEIGHT:
         DMU_GetValue(DMT_PLANE_HEIGHT, &pln->height, args, 0);
         break;
-    case DMU_BASE: {
-        const ddmobj_base_t* base = &pln->base;
-        DMU_GetValue(DMT_PLANE_BASE, &base, args, 0);
-        break;
-      }
     case DMU_TARGET_HEIGHT:
         DMU_GetValue(DMT_PLANE_TARGET, &pln->target, args, 0);
         break;

@@ -1577,6 +1577,7 @@ static int getProperty(void* obj, void* context)
         case DMU_ALPHA:
         case DMU_BLENDMODE:
         case DMU_FLAGS:
+        case DMU_BASE:
             obj = &((Plane*) obj)->surface;
             args->type = DMU_SURFACE;
             break;

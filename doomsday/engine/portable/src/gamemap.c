@@ -189,7 +189,7 @@ Sector* GameMap_SectorByBase(GameMap* map, const void* ddMobjBase)
         // Check the planes of this sector
         for(k = 0; k < sec->planeCount; ++k)
         {
-            if(ddMobjBase == &sec->planes[k]->base)
+            if(ddMobjBase == &sec->SP_plane(k)->PS_base)
             {
                 return sec;
             }

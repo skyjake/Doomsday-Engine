@@ -174,6 +174,7 @@ typedef struct surfacedecor_s {
 end
 
 struct Surface
+    PTR     ddmobj_base_t base
     -       void*       owner // Either @c DMU_SIDEDEF, or @c DMU_PLANE
     INT     int         flags // SUF_ flags
     -       int         oldFlags
@@ -202,6 +203,7 @@ typedef enum {
 end
 
 internal
+#define PS_base                 surface.base
 #define PS_tangent              surface.tangent
 #define PS_bitangent            surface.bitangent
 #define PS_normal               surface.normal
@@ -214,7 +216,6 @@ internal
 end
 
 struct Plane
-    PTR     ddmobj_base_t base
     PTR     sector_s*   sector // Owner of the plane (temp)
     -       Surface     surface
     DOUBLE  coord_t     height // Current height
@@ -241,7 +242,6 @@ internal
 #define SP_planergb(n)          SP_plane(n)->surface.rgba
 #define SP_planetarget(n)       SP_plane(n)->target
 #define SP_planespeed(n)        SP_plane(n)->speed
-#define SP_planeorigin(n)       SP_plane(n)->origin
 #define SP_planevisheight(n)    SP_plane(n)->visHeight
 
 #define SP_ceilsurface          SP_planesurface(PLN_CEILING)
@@ -254,7 +254,6 @@ internal
 #define SP_ceilrgb              SP_planergb(PLN_CEILING)
 #define SP_ceiltarget           SP_planetarget(PLN_CEILING)
 #define SP_ceilspeed            SP_planespeed(PLN_CEILING)
-#define SP_ceilorigin           SP_planeorigin(PLN_CEILING)
 #define SP_ceilvisheight        SP_planevisheight(PLN_CEILING)
 
 #define SP_floorsurface         SP_planesurface(PLN_FLOOR)
@@ -267,7 +266,6 @@ internal
 #define SP_floorrgb             SP_planergb(PLN_FLOOR)
 #define SP_floortarget          SP_planetarget(PLN_FLOOR)
 #define SP_floorspeed           SP_planespeed(PLN_FLOOR)
-#define SP_floororigin          SP_planeorigin(PLN_FLOOR)
 #define SP_floorvisheight       SP_planevisheight(PLN_FLOOR)
 
 #define S_skyfix(n)             skyFix[(n)? 1:0]

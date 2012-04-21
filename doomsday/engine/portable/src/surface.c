@@ -334,13 +334,16 @@ int Surface_GetProperty(const Surface* suf, setargs_t* args)
 {
     switch(args->prop)
     {
+    case DMU_BASE: {
+        const ddmobj_base_t* base = &suf->base;
+        DMU_GetValue(DMT_SURFACE_BASE, &base, args, 0);
+        break; }
     case DMU_MATERIAL: {
         material_t* mat = suf->material;
         if(suf->inFlags & SUIF_FIX_MISSING_MATERIAL)
             mat = NULL;
         DMU_GetValue(DMT_SURFACE_MATERIAL, &mat, args, 0);
-        break;
-      }
+        break; }
     case DMU_OFFSET_X:
         DMU_GetValue(DMT_SURFACE_OFFSET, &suf->offset[VX], args, 0);
         break;

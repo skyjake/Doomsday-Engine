@@ -579,8 +579,8 @@ Plane* R_NewPlaneForSector(Sector* sec)
     plane->sector = sec;
     plane->height = plane->oldHeight[0] = plane->oldHeight[1] = 0;
     plane->visHeight = plane->visHeightDelta = 0;
-    V3d_Copy(plane->base.origin, sec->base.origin);
-    memset(&plane->base.thinker, 0, sizeof(plane->base.thinker));
+    V3d_Copy(plane->PS_base.origin, sec->base.origin);
+    memset(&plane->PS_base.thinker, 0, sizeof(plane->PS_base.thinker));
     plane->speed = 0;
     plane->target = 0;
     plane->type = PLN_MID;
@@ -1551,7 +1551,7 @@ boolean R_UpdatePlane(Plane* pln, boolean forceUpdate)
         }}
 
         // Update the z position of the degenmobj for this plane.
-        pln->base.origin[VZ] = pln->height;
+        pln->PS_base.origin[VZ] = pln->height;
 
         // Inform the shadow bias of changed geometry.
         if(sec->bspLeafs && *sec->bspLeafs)

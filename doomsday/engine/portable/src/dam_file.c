@@ -527,9 +527,9 @@ static void readSector(GameMap* map, uint idx)
     for(i = 0; i < numPlanes; ++i)
     {
         Plane* p = s->planes[i];
-        p->base.origin[VX] = s->base.origin[VX];
-        p->base.origin[VY] = s->base.origin[VY];
-        p->base.origin[VZ] = p->height;
+        p->PS_base.origin[VX] = s->base.origin[VX];
+        p->PS_base.origin[VY] = s->base.origin[VY];
+        p->PS_base.origin[VZ] = p->height;
     }
 
     for(i = 0; i < NUM_REVERB_DATA; ++i)

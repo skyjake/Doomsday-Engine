@@ -656,9 +656,9 @@ static void finishSectors(GameMap* map)
         {
             Plane* plane = sec->planes[k];
 
-            plane->base.origin[VX] = sec->base.origin[VX];
-            plane->base.origin[VY] = sec->base.origin[VY];
-            plane->base.origin[VZ] = plane->height;
+            plane->PS_base.origin[VX] = sec->base.origin[VX];
+            plane->PS_base.origin[VY] = sec->base.origin[VY];
+            plane->PS_base.origin[VZ] = plane->height;
 
             plane->target = plane->height;
         }

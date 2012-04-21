@@ -2304,17 +2304,16 @@ void Sv_NewPolyDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
  * there is no need for comparing or to have a register.
  * Set 'volume' to zero to create a sound-stopping delta.
  *
- * \assume: No two sounds with the same ID play at the same time from the
+ * @assume: No two sounds with the same ID play at the same time from the
  *          same origin.
  */
 void Sv_NewSoundDelta(int soundId, mobj_t* emitter, Sector* sourceSector,
-                      Polyobj* sourcePoly, float volume,
-                      boolean isRepeating, int clientsMask)
+    Polyobj* sourcePoly, float volume, boolean isRepeating, int clientsMask)
 {
-    pool_t*             targets[DDMAXPLAYERS + 1];
-    sounddelta_t        soundDelta;
-    int                 type = DT_SOUND, df = 0;
-    uint                id = soundId;
+    pool_t* targets[DDMAXPLAYERS + 1];
+    sounddelta_t soundDelta;
+    int type = DT_SOUND, df = 0;
+    uint id = soundId;
 
     // Determine the target pools.
     Sv_GetTargetPools(targets, clientsMask);
@@ -2327,9 +2326,9 @@ void Sv_NewSoundDelta(int soundId, mobj_t* emitter, Sector* sourceSector,
         // Clients need to know which emitter to use.
         if(emitter)
         {
-            if(emitter == (mobj_t*) &sourceSector->planes[PLN_FLOOR]->base)
+            if(emitter == (mobj_t*) &sourceSector->SP_floorsurface.base)
                 df |= SNDDF_FLOOR;
-            else if(emitter == (mobj_t*) &sourceSector->planes[PLN_CEILING]->base)
+            else if(emitter == (mobj_t*) &sourceSector->SP_ceilsurface.base)
                 df |= SNDDF_CEILING;
             // else client assumes sector->soundOrg
         }
