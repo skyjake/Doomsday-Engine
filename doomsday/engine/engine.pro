@@ -609,7 +609,7 @@ SOURCES += \
     portable/src/sv_main.c \
     portable/src/sv_missile.c \
     portable/src/sv_pool.c \
-    portable/src/sv_sound.c \
+    portable/src/sv_sound.cpp \
     portable/src/svg.c \
     portable/src/sys_audiod_dummy.c \
     portable/src/sys_direc.c \

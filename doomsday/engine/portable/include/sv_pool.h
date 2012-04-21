@@ -34,6 +34,10 @@
 #include "r_data.h"
 #include "materials.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Prefer adding new flags inside the deltas instead of adding new delta types.
 typedef enum {
     DT_MOBJ = 0,
@@ -406,5 +410,9 @@ void            Sv_NewSoundDelta(int soundId, mobj_t* emitter,
                                  Sector* sourceSector, Polyobj* sourcePoly,
                                  float volume, boolean isRepeating,
                                  int clientsMask);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif
