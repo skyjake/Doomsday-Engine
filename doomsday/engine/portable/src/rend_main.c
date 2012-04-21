@@ -48,6 +48,16 @@
 #define SVF_BITANGENT           0x02
 #define SVF_NORMAL              0x04
 
+/**
+ * @defgroup soundOriginFlags  Sound Origin Flags
+ * Flags for use with the sound origin debug display.
+ */
+///@{
+#define SOF_SECTOR              0x01
+#define SOF_PLANE               0x02
+#define SOF_SIDEDEF             0x04
+///@}
+
 void Rend_DrawBBox(coord_t const pos[3], coord_t w, coord_t l, coord_t h, float a,
     float const color[3], float alpha, float br, boolean alignToBase);
 
@@ -118,6 +128,7 @@ DGLuint dlBBox = 0; // Display list: active-textured bbox model.
 
 byte devVertexIndices = 0; // @c 1= Draw world vertex indices (for debug).
 byte devVertexBars = 0; // @c 1= Draw world vertex position bars.
+byte devSoundOrigins = 0; ///< cvar @c 1= Draw sound origin debug display.
 byte devSurfaceVectors = 0;
 byte devNoTexFix = 0;
 
@@ -167,6 +178,7 @@ void Rend_Register(void)
     C_VAR_BYTE("rend-dev-vertex-show-indices", &devVertexIndices, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE("rend-dev-vertex-show-bars", &devVertexBars, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE("rend-dev-surface-show-vectors", &devSurfaceVectors, CVF_NO_ARCHIVE, 0, 7);
+    C_VAR_BYTE("rend-dev-soundorigins", &devSoundOrigins, CVF_NO_ARCHIVE, 0, 7);
 
     RL_Register();
     LO_Register();
@@ -3043,6 +3055,109 @@ void Rend_RenderSurfaceVectors(void)
     glEnable(GL_CULL_FACE);
 }
 
+static void drawSoundOrigin(coord_t const origin[3], const char* label, coord_t const eye[3])
+{
+#define MAX_SOUNDORIGIN_DIST    384 ///< Maximum distance from origin to eye in map coordinates.
+
+    const Point2Raw labelOrigin = { 2, 2 };
+    coord_t dist;
+    float alpha;
+
+    if(!origin || !label || !eye) return;
+
+    dist = V3d_Distance(origin, eye);
+    alpha = 1.f - MIN_OF(dist, MAX_SOUNDORIGIN_DIST) / MAX_SOUNDORIGIN_DIST;
+
+    if(alpha > 0)
+    {
+        float scale = dist / (Window_Width(theWindow) / 2);
+
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+
+        glTranslatef(origin[VX], origin[VZ], origin[VY]);
+        glRotatef(-vang + 180, 0, 1, 0);
+        glRotatef(vpitch, 1, 0, 0);
+        glScalef(-scale, -scale, 1);
+
+        UI_TextOutEx(label, &labelOrigin, UI_Color(UIC_TITLE), alpha);
+
+        glMatrixMode(GL_MODELVIEW);
+        glPopMatrix();
+    }
+
+#undef MAX_SOUNDORIGIN_DIST
+}
+
+static int drawSideDefSoundOrigins(SideDef* side, void* parameters)
+{
+    uint idx = GameMap_SideDefIndex(theMap, side); /// @fixme Do not assume current map.
+    char buf[80];
+
+    dd_snprintf(buf, 80, "Side #%i (middle)", idx);
+    drawSoundOrigin(side->SW_middlesurface.base.origin, buf, parameters);
+
+    dd_snprintf(buf, 80, "Side #%i (bottom)", idx);
+    drawSoundOrigin(side->SW_bottomsurface.base.origin, buf, parameters);
+
+    dd_snprintf(buf, 80, "Side #%i (top)", idx);
+    drawSoundOrigin(side->SW_topsurface.base.origin, buf, parameters);
+    return false; // Continue iteration.
+}
+
+static int drawSectorSoundOrigins(Sector* sec, void* parameters)
+{
+    uint idx = GameMap_SectorIndex(theMap, sec); /// @fixme Do not assume current map.
+    char buf[80];
+
+    if(devSoundOrigins & SOF_PLANE)
+    {
+        uint i;
+        for(i = 0; i < sec->planeCount; ++i)
+        {
+            Plane* pln = sec->SP_plane(i);
+            dd_snprintf(buf, 80, "Sector #%i (pln:%i)", idx, i);
+            drawSoundOrigin(pln->PS_base.origin, buf, parameters);
+        }
+    }
+
+    if(devSoundOrigins & SOF_SECTOR)
+    {
+        dd_snprintf(buf, 80, "Sector #%i", idx);
+        drawSoundOrigin(sec->base.origin, buf, parameters);
+    }
+
+    return false; // Continue iteration.
+}
+
+/**
+ * Debugging aid for visualizing sound origins.
+ */
+void Rend_RenderSoundOrigins(void)
+{
+    coord_t eye[3];
+
+    if(!devSoundOrigins || !theMap) return;
+
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_TEXTURE_2D);
+
+    V3d_Set(eye, vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
+
+    if(devSoundOrigins & SOF_SIDEDEF)
+    {
+        GameMap_SideDefIterator(theMap, drawSideDefSoundOrigins, eye);
+    }
+
+    if(devSoundOrigins & (SOF_SECTOR|SOF_PLANE))
+    {
+        GameMap_SectorIterator(theMap, drawSectorSoundOrigins, eye);
+    }
+
+    // Restore previous state.
+    glEnable(GL_DEPTH_TEST);
+}
+
 static void getVertexPlaneMinMax(const Vertex* vtx, coord_t* min, coord_t* max)
 {
     lineowner_t* vo, *base;
@@ -3395,8 +3510,9 @@ void Rend_RenderMap(void)
     Rend_RenderSurfaceVectors();
     LO_DrawLumobjs(); // Lumobjs.
     Rend_RenderBoundingBoxes(); // Mobj bounding boxes.
-    Rend_Vertexes(); // World vertex positions/indices.
-    Rend_RenderGenerators(); // Particle generator origins.
+    Rend_Vertexes();
+    Rend_RenderSoundOrigins();
+    Rend_RenderGenerators();
 
     // Draw the Source Bias Editor's draw that identifies the current light.
     SBE_DrawCursor();

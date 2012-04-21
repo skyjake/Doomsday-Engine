@@ -648,6 +648,9 @@ desc = Scale multiplier for the blockmap debug display.
 [rend-dev-nosprite]
 desc = 1=Disable drawing of all sprites and masked walls.
 
+[rend-dev-soundorigins]
+desc = 3-bit bitfield. Show sound origins (for debug): 0x1= Sector, 0x2= Plane, 0x4= SideDef.
+
 [rend-info-lums]
 desc = 1=Print lumobj count after rendering a frame.
 

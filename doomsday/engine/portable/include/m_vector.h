@@ -469,7 +469,7 @@ double V3d_Length(const pvec3d_t vec);
 /**
  * The distance between two points.
  */
-double V3d_Distance(const pvec3d_t a, const pvec3d_t b);
+double V3d_Distance(double const a[3], double const b[3]);
 
 /**
  * Normalize a 3-dimensional vector.
