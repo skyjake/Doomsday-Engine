@@ -32,6 +32,24 @@
  */
 void Surface_Update(Surface* surface);
 
+/**
+ * Update the Surface's map space base origin according to relevant points in
+ * the owning object.
+ *
+ * If this surface is owned by a SideDef then the origin is updated using the
+ * points defined by the associated LineDef's vertices and the plane heights of
+ * the Sector on that SideDef's side.
+ *
+ * If this surface is owned by a Plane then the origin is updated using the
+ * points defined the center of the Plane's Sector (on the XY plane) and the Z
+ * height of the plane.
+ *
+ * If no owner is presently associated this is a no-op.
+ *
+ * @param surface  Surface instance.
+ */
+void Surface_UpdateBaseOrigin(Surface* surface);
+
 /// @return @c true= is drawable (i.e., a drawable Material is bound).
 boolean Surface_IsDrawable(Surface* surface);
 

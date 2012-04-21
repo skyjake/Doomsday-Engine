@@ -2298,17 +2298,9 @@ void Sv_NewPolyDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
     }
 }
 
-/**
- * Adds a new sound delta to the appropriate pools.
- * Because the starting of a sound is in itself a 'delta-like' event,
- * there is no need for comparing or to have a register.
- * Set 'volume' to zero to create a sound-stopping delta.
- *
- * @assume: No two sounds with the same ID play at the same time from the
- *          same origin.
- */
 void Sv_NewSoundDelta(int soundId, mobj_t* emitter, Sector* sourceSector,
-    Polyobj* sourcePoly, float volume, boolean isRepeating, int clientsMask)
+    Polyobj* sourcePoly, Surface* sourceSurface, float volume, boolean isRepeating,
+    int clientsMask)
 {
     pool_t* targets[DDMAXPLAYERS + 1];
     sounddelta_t soundDelta;
@@ -2318,22 +2310,72 @@ void Sv_NewSoundDelta(int soundId, mobj_t* emitter, Sector* sourceSector,
     // Determine the target pools.
     Sv_GetTargetPools(targets, clientsMask);
 
-    if(sourceSector != NULL)
+    if(sourceSector)
     {
         type = DT_SECTOR_SOUND;
-        id = GET_SECTOR_IDX(sourceSector);
-
-        // Clients need to know which emitter to use.
-        if(emitter)
+        id = GameMap_SectorIndex(theMap, sourceSector);
+        // Client assumes the sector's sound origin.
+    }
+    else if(sourceSurface)
+    {
+        type = DT_SECTOR_SOUND;
+        switch(DMU_GetType(sourceSurface->owner))
         {
-            if(emitter == (mobj_t*) &sourceSector->SP_floorsurface.base)
-                df |= SNDDF_FLOOR;
-            else if(emitter == (mobj_t*) &sourceSector->SP_ceilsurface.base)
-                df |= SNDDF_CEILING;
-            // else client assumes sector->soundOrg
+        case DMU_PLANE: {
+            Plane* pln = (Plane*)sourceSurface->owner;
+
+            // Clients need to know which emitter to use.
+            if(emitter)
+            {
+                if(pln == pln->sector->SP_plane(PLN_FLOOR))
+                {
+                    if(emitter == (mobj_t*) &sourceSurface->base)
+                        df |= SNDDF_PLANE_FLOOR;
+                }
+                else if(pln == pln->sector->SP_plane(PLN_CEILING))
+                {
+                    if(emitter == (mobj_t*) &sourceSurface->base)
+                        df |= SNDDF_PLANE_CEILING;
+                }
+            }
+            // else client assumes the sector's sound origin.
+
+            id = GameMap_SectorIndex(theMap, pln->sector);
+            break; }
+
+        /*case DMU_SIDEDEF: {
+            SideDef* side = (SideDef*)sourceSurface->owner;
+
+            // Clients need to know which emitter to use.
+            if(emitter)
+            {
+                if(side->SW_middlesurface == sourceSurface)
+                {
+                    if(emitter == (mobj_t*) &sourceSurface->base)
+                        df |= SNDDF_WALL_MIDDLE;
+                }
+                else if(side->SW_bottomsurface == sourceSurface)
+                {
+                    if(emitter == (mobj_t*) &sourceSurface->base)
+                        df |= SNDDF_WALL_BOTTOM;
+                }
+                else if(side->SW_topsurface == sourceSurface)
+                {
+                    if(emitter == (mobj_t*) &sourceSurface->base)
+                        df |= SNDDF_WALL_TOP;
+                }
+            }
+
+            id = GameMap_SideDefIndex(theMap, side);
+            break; } */
+
+        default:
+            DEBUG_Message(("Sv_NewSoundDelta: Invalid DMU type %s for sourceSurface object %p. Sector origin will be used.",
+                           DMU_Str(DMU_GetType(sourceSurface->owner)), sourceSurface->owner));
+            return;
         }
     }
-    else if(sourcePoly != NULL)
+    else if(sourcePoly)
     {
         type = DT_POLY_SOUND;
         id = sourcePoly->idx;

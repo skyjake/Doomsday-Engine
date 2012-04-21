@@ -25,6 +25,15 @@
 #include "de_refresh.h"
 #include "de_play.h"
 
+void SideDef_UpdateBaseOrigins(SideDef* side)
+{
+    assert(side);
+    if(!side->line) return;
+    Surface_UpdateBaseOrigin(&side->SW_middlesurface);
+    Surface_UpdateBaseOrigin(&side->SW_bottomsurface);
+    Surface_UpdateBaseOrigin(&side->SW_topsurface);
+}
+
 void SideDef_UpdateSurfaceTangents(SideDef* side)
 {
     Surface* surface = &side->SW_topsurface;
@@ -50,41 +59,41 @@ void SideDef_UpdateSurfaceTangents(SideDef* side)
     memcpy(side->SW_bottomnormal, surface->normal, sizeof(surface->normal));
 }
 
-int SideDef_SetProperty(SideDef* sid, const setargs_t* args)
+int SideDef_SetProperty(SideDef* side, const setargs_t* args)
 {
+    assert(side);
     switch(args->prop)
     {
     case DMU_FLAGS:
-        DMU_SetValue(DMT_SIDEDEF_FLAGS, &sid->flags, args, 0);
+        DMU_SetValue(DMT_SIDEDEF_FLAGS, &side->flags, args, 0);
         break;
 
     case DMU_LINEDEF:
-        DMU_SetValue(DMT_SIDEDEF_LINE, &sid->line, args, 0);
+        DMU_SetValue(DMT_SIDEDEF_LINE, &side->line, args, 0);
         break;
 
     default:
         Con_Error("SideDef_SetProperty: Property %s is not writable.\n", DMU_Str(args->prop));
     }
-
     return false; // Continue iteration.
 }
 
-int SideDef_GetProperty(const SideDef* sid, setargs_t* args)
+int SideDef_GetProperty(const SideDef* side, setargs_t* args)
 {
+    assert(side);
     switch(args->prop)
     {
     case DMU_SECTOR:
-        DMU_GetValue(DMT_SIDEDEF_SECTOR, &sid->sector, args, 0);
+        DMU_GetValue(DMT_SIDEDEF_SECTOR, &side->sector, args, 0);
         break;
     case DMU_LINEDEF:
-        DMU_GetValue(DMT_SIDEDEF_LINE, &sid->line, args, 0);
+        DMU_GetValue(DMT_SIDEDEF_LINE, &side->line, args, 0);
         break;
     case DMU_FLAGS:
-        DMU_GetValue(DMT_SIDEDEF_FLAGS, &sid->flags, args, 0);
+        DMU_GetValue(DMT_SIDEDEF_FLAGS, &side->flags, args, 0);
         break;
     default:
         Con_Error("SideDef_GetProperty: Has no property %s.\n", DMU_Str(args->prop));
     }
-
     return false; // Continue iteration.
 }

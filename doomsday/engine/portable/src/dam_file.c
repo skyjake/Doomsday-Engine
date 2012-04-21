@@ -383,6 +383,8 @@ static void readSide(GameMap* map, uint idx)
     s->flags = readShort();
     s->hedgeLeft  = GameMap_HEdge(map, (unsigned) readLong() - 1);
     s->hedgeRight = GameMap_HEdge(map, (unsigned) readLong() - 1);
+
+    SideDef_UpdateBaseOrigins(s);
 }
 
 static void archiveSides(GameMap *map, boolean write)
@@ -522,14 +524,11 @@ static void readSector(GameMap* map, uint idx)
     s->aaBox.maxX = readFloat();
     s->aaBox.maxY = readFloat();
 
-    Sector_UpdateBase(s);
-
+    Sector_UpdateBaseOrigin(s);
     for(i = 0; i < numPlanes; ++i)
     {
-        Plane* p = s->planes[i];
-        p->PS_base.origin[VX] = s->base.origin[VX];
-        p->PS_base.origin[VY] = s->base.origin[VY];
-        p->PS_base.origin[VZ] = p->height;
+        Plane* pln = s->planes[i];
+        Surface_UpdateBaseOrigin(&pln->surface);
     }
 
     for(i = 0; i < NUM_REVERB_DATA; ++i)
