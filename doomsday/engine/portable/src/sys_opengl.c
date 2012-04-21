@@ -126,7 +126,7 @@ static void initialize(void)
         GL_state.features.texFilterAniso = false;
 
     GL_state.extensions.texNonPowTwo = query("GL_ARB_texture_non_power_of_two");
-    if(ArgExists("-notexnonpow2") || ArgExists("-notexnonpowtwo"))
+    if(!GL_state.extensions.texNonPowTwo || ArgExists("-notexnonpow2") || ArgExists("-notexnonpowtwo"))
         GL_state.features.texNonPowTwo = false;
 
     if(0 != (GL_state.extensions.blendSub = query("GL_EXT_blend_subtract")))
