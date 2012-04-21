@@ -161,6 +161,7 @@ typedef struct surfacedecor_s {
 
 typedef struct surface_s {
     runtime_mapdata_header_t header;
+    ddmobj_base_t       base;
     void*               owner;         // Either @c DMU_SIDEDEF, or @c DMU_PLANE
     int                 flags;         // SUF_ flags
     int                 oldFlags;
@@ -186,6 +187,7 @@ typedef enum {
     NUM_PLANE_TYPES
 } planetype_t;
 
+#define PS_base                 surface.base
 #define PS_tangent              surface.tangent
 #define PS_bitangent            surface.bitangent
 #define PS_normal               surface.normal
@@ -198,7 +200,6 @@ typedef enum {
 
 typedef struct plane_s {
     runtime_mapdata_header_t header;
-    ddmobj_base_t       base;
     struct sector_s*    sector;        // Owner of the plane (temp)
     Surface             surface;
     coord_t             height;        // Current height

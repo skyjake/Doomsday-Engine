@@ -579,8 +579,7 @@ Plane* R_NewPlaneForSector(Sector* sec)
     plane->sector = sec;
     plane->height = plane->oldHeight[0] = plane->oldHeight[1] = 0;
     plane->visHeight = plane->visHeightDelta = 0;
-    V3d_Copy(plane->base.origin, sec->base.origin);
-    memset(&plane->base.thinker, 0, sizeof(plane->base.thinker));
+    memset(&plane->PS_base.thinker, 0, sizeof(plane->PS_base.thinker));
     plane->speed = 0;
     plane->target = 0;
     plane->type = PLN_MID;
@@ -599,6 +598,7 @@ Plane* R_NewPlaneForSector(Sector* sec)
     Surface_SetMaterialOrigin(suf, 0, 0);
     Surface_SetColorAndAlpha(suf, 1, 1, 1, 1);
     Surface_SetBlendMode(suf, BM_NORMAL);
+    Surface_UpdateBaseOrigin(suf);
 
     /**
      * Resize the biassurface lists for the BSP leaf planes.
@@ -1542,7 +1542,7 @@ boolean R_UpdatePlane(Plane* pln, boolean forceUpdate)
             if(!ddpl->inGame || !ddpl->mo || !ddpl->mo->bspLeaf)
                 continue;
 
-            //// \fixme $nplanes
+            /// @fixme $nplanes
             if((ddpl->flags & DDPF_CAMERA) && ddpl->mo->bspLeaf->sector == sec &&
                (ddpl->mo->origin[VZ] > sec->SP_ceilheight - 4 || ddpl->mo->origin[VZ] < sec->SP_floorheight))
             {
@@ -1550,8 +1550,18 @@ boolean R_UpdatePlane(Plane* pln, boolean forceUpdate)
             }
         }}
 
-        // Update the z position of the degenmobj for this plane.
-        pln->base.origin[VZ] = pln->height;
+        // Update the base origins for this plane and all relevant sidedef surfaces.
+        Surface_UpdateBaseOrigin(&pln->surface);
+        { uint i;
+        for(i = 0; i < sec->lineDefCount; ++i)
+        {
+            LineDef* line = sec->lineDefs[i];
+            SideDef_UpdateBaseOrigins(line->L_frontside);
+            if(line->L_backside)
+            {
+                SideDef_UpdateBaseOrigins(line->L_backside);
+            }
+        }}
 
         // Inform the shadow bias of changed geometry.
         if(sec->bspLeafs && *sec->bspLeafs)
@@ -1636,7 +1646,7 @@ boolean R_UpdateSector(Sector* sec, boolean forceUpdate)
 
     if(planeChanged)
     {
-        sec->base.origin[VZ] = (sec->SP_ceilheight - sec->SP_floorheight) / 2;
+        Sector_UpdateBaseOrigin(sec);
         R_UpdateLinedefsOfSector(sec);
         S_CalcSectorReverb(sec);
 

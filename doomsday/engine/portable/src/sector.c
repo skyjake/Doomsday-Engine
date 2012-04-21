@@ -58,7 +58,7 @@ void Sector_UpdateArea(Sector* sec)
                      ((sec->aaBox.maxY - sec->aaBox.minY) / 128);
 }
 
-void Sector_UpdateBase(Sector* sec)
+void Sector_UpdateBaseOrigin(Sector* sec)
 {
     assert(sec);
     sec->base.origin[VX] = (sec->aaBox.minX + sec->aaBox.maxX) / 2;

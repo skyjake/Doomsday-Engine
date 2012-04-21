@@ -34,6 +34,10 @@
 #include "r_data.h"
 #include "materials.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Prefer adding new flags inside the deltas instead of adding new delta types.
 typedef enum {
     DT_MOBJ = 0,
@@ -181,8 +185,8 @@ typedef enum {
 
 #define SNDDF_VOLUME            0x01 // 0=stop, 1=full, >1=no att.
 #define SNDDF_REPEAT            0x02 // Start repeating sound.
-#define SNDDF_FLOOR             0x04 // Play sound from floor.
-#define SNDDF_CEILING           0x08 // Play sound from ceiling.
+#define SNDDF_PLANE_FLOOR       0x04 // Play sound from floor.
+#define SNDDF_PLANE_CEILING     0x08 // Play sound from ceiling.
 
 typedef enum deltastate_e {
     DELTA_NEW,
@@ -402,9 +406,23 @@ delta_t*        Sv_PoolQueueExtract(pool_t* pool);
 void            Sv_AckDeltaSet(uint clientNumber, int set, byte resent);
 uint            Sv_CountUnackedDeltas(uint clientNumber);
 
-void            Sv_NewSoundDelta(int soundId, mobj_t* emitter,
-                                 Sector* sourceSector, Polyobj* sourcePoly,
-                                 float volume, boolean isRepeating,
-                                 int clientsMask);
+/**
+ * Adds a new sound delta to the selected client pools. As the starting of a
+ * sound is in itself a 'delta-like' event, there is no need for comparing or
+ * to have a register.
+ *
+ * @important: Assumes no two sounds with the same ID play at the same time
+ *             from the same origin at once.
+ *
+ * @param volume  Volume at which to play the sound, or zero for stop-sound.
+ * @param clientsMask  -1= all clients.
+ */
+void Sv_NewSoundDelta(int soundId, mobj_t* emitter, Sector* sourceSector,
+    Polyobj* sourcePoly, Surface* sourceSurface, float volume, boolean isRepeating,
+    int clientsMask);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

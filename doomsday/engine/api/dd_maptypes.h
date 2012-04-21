@@ -28,6 +28,7 @@
 #define DMT_MATERIAL_WIDTH DDVT_INT
 #define DMT_MATERIAL_HEIGHT DDVT_INT
 
+#define DMT_SURFACE_BASE DDVT_PTR
 #define DMT_SURFACE_FLAGS DDVT_INT     // SUF_ flags
 #define DMT_SURFACE_MATERIAL DDVT_PTR
 #define DMT_SURFACE_BLENDMODE DDVT_BLENDMODE
@@ -37,7 +38,6 @@
 #define DMT_SURFACE_OFFSET DDVT_FLOAT     // [X, Y] Planar offset to surface material origin.
 #define DMT_SURFACE_RGBA DDVT_FLOAT    // Surface color tint
 
-#define DMT_PLANE_BASE DDVT_PTR
 #define DMT_PLANE_SECTOR DDVT_PTR      // Owner of the plane (temp)
 #define DMT_PLANE_HEIGHT DDVT_DOUBLE   // Current height
 #define DMT_PLANE_GLOW DDVT_FLOAT      // Glow amount

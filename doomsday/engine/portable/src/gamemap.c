@@ -175,26 +175,56 @@ Sector* GameMap_Sector(GameMap* map, uint idx)
 
 Sector* GameMap_SectorByBase(GameMap* map, const void* ddMobjBase)
 {
-    uint i, k;
+    uint i;
     assert(map);
     for(i = 0; i < map->numSectors; ++i)
     {
         Sector* sec = &map->sectors[i];
-
         if(ddMobjBase == &sec->base)
         {
             return sec;
         }
+    }
+    return NULL;
+}
 
-        // Check the planes of this sector
+Surface* GameMap_SurfaceByBase(GameMap* map, const void* ddMobjBase)
+{
+    uint i, k;
+    assert(map);
+
+    // First try plane surfaces.
+    for(i = 0; i < map->numSectors; ++i)
+    {
+        Sector* sec = &map->sectors[i];
         for(k = 0; k < sec->planeCount; ++k)
         {
-            if(ddMobjBase == &sec->planes[k]->base)
+            Plane* pln = sec->SP_plane(k);
+            if(ddMobjBase == &pln->surface.base)
             {
-                return sec;
+                return &pln->surface;
             }
         }
     }
+
+    // Perhaps a sidedef surface?
+    for(i = 0; i < map->numSideDefs; ++i)
+    {
+        SideDef* side = &map->sideDefs[i];
+        if(ddMobjBase == &side->SW_middlesurface.base)
+        {
+            return &side->SW_middlesurface;
+        }
+        if(ddMobjBase == &side->SW_bottomsurface.base)
+        {
+            return &side->SW_bottomsurface;
+        }
+        if(ddMobjBase == &side->SW_topsurface.base)
+        {
+            return &side->SW_topsurface;
+        }
+    }
+
     return NULL;
 }
 

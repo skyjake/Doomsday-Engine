@@ -35,6 +35,10 @@
 #include "m_nodepile.h"
 #include "m_vector.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define GET_VERTEX_IDX(vtx)     GameMap_VertexIndex(theMap, vtx)
 #define GET_LINE_IDX(li)        GameMap_LineDefIndex(theMap, li)
 #define GET_SIDE_IDX(si)        GameMap_SideDefIndex(theMap, si)
@@ -284,5 +288,9 @@ int P_GetGMOInt(int identifier, uint elmIdx, int propIdentifier);
 fixed_t P_GetGMOFixed(int identifier, uint elmIdx, int propIdentifier);
 angle_t P_GetGMOAngle(int identifier, uint elmIdx, int propIdentifier);
 float P_GetGMOFloat(int identifier, uint elmIdx, int propIdentifier);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /// LIBDENG_PLAY_MAPDATA_H

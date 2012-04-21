@@ -156,10 +156,12 @@ ptcgen_t* Generators_LinkToList(Generators* gens, ptcgen_t* gen, uint listIndex)
 {
     listnode_t* link, *it;
     assert(gens);
+
     // Sanity check - generator is one from this collection.
     assert(Generators_GeneratorId(gens, gen) >= 0);
 
     // Must check that it isn't already there...
+    assert(listIndex < gens->listsSize);
     for(it = gens->lists[listIndex]; it; it = it->next)
     {
         if(it->gen == gen) return gen; // No, no...

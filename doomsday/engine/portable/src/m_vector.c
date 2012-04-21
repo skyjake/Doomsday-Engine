@@ -886,7 +886,7 @@ double V3d_Length(const pvec3d_t vec)
     return sqrt(vec[VX] * vec[VX] + vec[VY] * vec[VY] + vec[VZ] * vec[VZ]);
 }
 
-double V3d_Distance(const pvec3d_t a, const pvec3d_t b)
+double V3d_Distance(double const a[], double const b[])
 {
     vec3d_t vec;
     V3d_Subtract(vec, b, a);

@@ -27,6 +27,15 @@
 #include "p_dmu.h"
 
 /**
+ * Update the SideDef's map space surface base origins according to the points
+ * defined by the associated LineDef's vertices and the plane heights of the
+ * Sector on this side. If no LineDef is presently associated this is a no-op.
+ *
+ * @param sideDef  SideDef instance.
+ */
+void SideDef_UpdateBaseOrigins(SideDef* side);
+
+/**
  * Update the SideDef's map space surface tangents according to the points
  * defined by the associated LineDef's vertices. If no LineDef is presently
  * associated this is a no-op.

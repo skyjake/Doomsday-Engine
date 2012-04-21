@@ -273,6 +273,16 @@ Sector* GameMap_Sector(GameMap* map, uint idx);
 Sector* GameMap_SectorByBase(GameMap* map, const void* ddMobjBase);
 
 /**
+ * Lookup a Surface in the map by origin.
+ *
+ * @param map  GameMap instance.
+ * @param ddMobjBase  ddmobj_base_t to search for.
+ *
+ * @return  Found Surface instance else @c NULL.
+ */
+Surface* GameMap_SurfaceByBase(GameMap* map, const void* ddMobjBase);
+
+/**
  * Lookup a BspLeaf by its unique index.
  *
  * @param map  GameMap instance.

@@ -267,7 +267,7 @@ static boolean calcBspLeafReverb(BspLeaf* bspLeaf)
     float total = 0;
     uint i, v;
 
-    if(!bspLeaf->sector)
+    if(!bspLeaf->sector || isDedicated)
     {
         bspLeaf->reverb[SRD_SPACE] = bspLeaf->reverb[SRD_VOLUME] =
             bspLeaf->reverb[SRD_DECAY] = bspLeaf->reverb[SRD_DAMPING] = 0;

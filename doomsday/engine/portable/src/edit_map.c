@@ -648,19 +648,16 @@ static void finishSectors(GameMap* map)
 
         Sector_UpdateAABox(sec);
         Sector_UpdateArea(sec);
-        Sector_UpdateBase(sec);
+        Sector_UpdateBaseOrigin(sec);
 
         // Set the position of the sound origin for all plane sound origins.
         // Set target heights for all planes.
         for(k = 0; k < sec->planeCount; ++k)
         {
-            Plane* plane = sec->planes[k];
+            Plane* pln = sec->planes[k];
 
-            plane->base.origin[VX] = sec->base.origin[VX];
-            plane->base.origin[VY] = sec->base.origin[VY];
-            plane->base.origin[VZ] = plane->height;
-
-            plane->target = plane->height;
+            Surface_UpdateBaseOrigin(&pln->surface);
+            pln->target = pln->height;
         }
     }
 }
@@ -673,6 +670,7 @@ static void finishSideDefs(GameMap* map)
     {
         SideDef* side = &map->sideDefs[i];
         SideDef_UpdateSurfaceTangents(side);
+        SideDef_UpdateBaseOrigins(side);
     }
 }
 
