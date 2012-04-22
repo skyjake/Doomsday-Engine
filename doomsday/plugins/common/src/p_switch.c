@@ -36,6 +36,7 @@
 #include "d_net.h"
 #include "dmu_lib.h"
 #include "p_plat.h"
+#include "p_sound.h"
 #include "p_switch.h"
 
 /**
@@ -297,11 +298,9 @@ void T_MaterialChanger(materialchanger_t* mchanger)
         P_SetPtrp(mchanger->side, sectionFlags | DMU_MATERIAL, mchanger->material);
 
 #if __JDOOM__ || __JDOOM64__
-        S_StartSound(SFX_SWTCHN, P_GetPtrp(
-            P_GetPtrp(mchanger->side, DMU_SECTOR), DMU_BASE));
+        S_SectorSound(P_GetPtrp(mchanger->side, DMU_SECTOR), SFX_SWTCHN);
 #elif __JHERETIC__
-        S_StartSound(SFX_SWITCH, P_GetPtrp(
-            P_GetPtrp(mchanger->side, DMU_SECTOR), DMU_BASE));
+        S_SectorSound(P_GetPtrp(mchanger->side, DMU_SECTOR), SFX_SWITCH);
 #endif
 
         DD_ThinkerRemove(&mchanger->thinker);
@@ -386,7 +385,7 @@ boolean P_ToggleSwitch2(SideDef* side, SideDefSection section, int sound,
                 sound = chooseDefaultSound(info);
             }
 
-            S_StartSound(sound, P_GetPtrp(P_GetPtrp(side, DMU_SECTOR), DMU_BASE));
+            S_SectorSound(P_GetPtrp(side, DMU_SECTOR), sound);
         }
 
         P_SetPtrp(side, sectionFlags | DMU_MATERIAL, mat);
