@@ -35,6 +35,7 @@
 #include "p_map.h"
 #include "p_mapsetup.h"
 #include "p_mapspec.h"
+#include "p_sound.h"
 
 // MACROS ------------------------------------------------------------------
 

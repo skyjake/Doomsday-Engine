@@ -53,7 +53,6 @@ HEADERS += \
     include/p_pillar.h \
     include/p_pspr.h \
     include/p_setup.h \
-    include/p_sound.h \
     include/p_spec.h \
     include/p_telept.h \
     include/p_things.h \
@@ -99,7 +98,6 @@ SOURCES += \
     src/p_pillar.c \
     src/p_pspr.c \
     src/p_setup.c \
-    src/p_sound.c \
     src/p_spec.c \
     src/p_telept.c \
     src/p_things.c \

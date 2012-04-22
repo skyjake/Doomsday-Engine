@@ -51,6 +51,7 @@
 #include "g_common.h"
 #include "p_map.h"
 #include "p_mapspec.h"
+#include "p_sound.h"
 #include "p_terraintype.h"
 #include "p_tick.h"
 
@@ -431,14 +432,18 @@ void XS_Init(void)
     }
 }
 
-void XS_SectorSound(Sector *sec, int origin, int snd)
+void XS_SectorSound(Sector* sec, int soundId)
 {
-    if(!snd)
-        return;
+    if(!sec || !soundId) return;
+    XG_Dev("XS_SectorSound: Play Sound ID (%i) in Sector ID (%i)", soundId, P_ToIndex(sec));
+    S_SectorSound(sec, soundId);
+}
 
-    XG_Dev("XS_SectorSound: Play Sound ID (%i) in Sector ID (%i)",
-            snd, P_ToIndex(sec));
-    S_SectorSound(sec, origin, snd);
+void XS_PlaneSound(Plane* pln, int soundId)
+{
+    if(!pln || !soundId) return;
+    XG_Dev("XS_PlaneSound: Play Sound ID (%i) in Sector ID (%i)", soundId, P_ToIndex(P_GetPtrp(pln, DMU_SECTOR)));
+    S_PlaneSound(pln, soundId);
 }
 
 void XS_MoverStopped(xgplanemover_t *mover, boolean done)
@@ -510,13 +515,13 @@ void XS_PlaneMover(xgplanemover_t* mover)
         {
             mover->flags &= ~PMF_WAIT;
             // Play a sound.
-            XS_SectorSound(mover->sector, SORG_FLOOR + mover->ceiling,
-                           mover->startSound);
+            XS_PlaneSound(P_GetPtrp(mover->sector, mover->ceiling? DMU_CEILING_PLANE : DMU_FLOOR_PLANE),
+                          mover->startSound);
         }
 
         mover->timer = XG_RandomInt(mover->minInterval, mover->maxInterval);
-        XS_SectorSound(mover->sector, SORG_FLOOR + mover->ceiling,
-                       mover->moveSound);
+        XS_PlaneSound(P_GetPtrp(mover->sector, mover->ceiling? DMU_CEILING_PLANE : DMU_FLOOR_PLANE),
+                      mover->moveSound);
     }
 
     // Are we waiting?
@@ -578,8 +583,8 @@ void XS_PlaneMover(xgplanemover_t* mover)
         }
 
         // Play sound?
-        XS_SectorSound(mover->sector, SORG_FLOOR + mover->ceiling,
-                       mover->endSound);
+        XS_PlaneSound(P_GetPtrp(mover->sector, mover->ceiling? DMU_CEILING_PLANE : DMU_FLOOR_PLANE),
+                      mover->endSound);
     }
     else if(res == crushed)
     {
@@ -1454,7 +1459,8 @@ int C_DECL XSTrav_MovePlane(Sector *sector, boolean ceiling, void *context,
 
     // Do start stuff. Play sound?
     if(playsound)
-        XS_SectorSound(sector, SORG_FLOOR + ceiling, info->iparm[4]);
+        XS_PlaneSound(P_GetPtrp(sector, ceiling? DMU_CEILING_PLANE : DMU_FLOOR_PLANE),
+                      info->iparm[4]);
 
     // Change texture at start?
     if(info->iparm[7] == SPREF_NONE || info->iparm[7] == SPREF_SPECIAL)
@@ -1575,14 +1581,16 @@ boolean XS_DoBuild(Sector* sector, boolean ceiling, LineDef* origin,
     {
         mover->timer = XG_RandomInt(mover->minInterval, mover->maxInterval);
         // Play step start sound immediately.
-        XS_SectorSound(sector, SORG_FLOOR + ceiling, info->iparm[5]);
+        XS_PlaneSound(P_GetPtrp(sector, ceiling? DMU_CEILING_PLANE : DMU_FLOOR_PLANE),
+                      info->iparm[5]);
     }
 
     // Do start stuff. Play sound?
     if(stepcount != 0)
     {
         // Start building start sound.
-        XS_SectorSound(sector, SORG_FLOOR + ceiling, info->iparm[4]);
+        XS_PlaneSound(P_GetPtrp(sector, ceiling? DMU_CEILING_PLANE : DMU_FLOOR_PLANE),
+                      info->iparm[4]);
     }
 
     return true; // Building has begun!
@@ -1877,19 +1885,24 @@ int C_DECL XSTrav_BuildStairs(Sector* sector, boolean ceiling,
     return true; // Continue searching for planes...
 }
 
-int C_DECL XSTrav_SectorSound(struct sector_s *sec, boolean ceiling,
-                              void *context, void *context2,
-                              mobj_t *activator)
+int C_DECL XSTrav_SectorSound(Sector* sec, boolean ceiling, void* context,
+    void* context2, mobj_t* activator)
 {
-    int         originid;
-    linetype_t *info = context2;
+    linetype_t* info = context2;
 
-    if(info->iparm[3])
-        originid = info->iparm[3];
+    /// @c 0= sector
+    /// @c 1= floor plane
+    /// @c 2= ceiling plane
+    if(!info->iparm[3])
+    {
+        XS_SectorSound(sec, info->iparm[2]);
+    }
     else
-        originid = SORG_CENTER;
+    {
+        Plane* plane = P_GetPtrp(sec, info->iparm[3] == 2? DMU_CEILING_PLANE : DMU_FLOOR_PLANE);
+        XS_PlaneSound(plane, info->iparm[2]);
+    }
 
-    XS_SectorSound(sec, originid, info->iparm[2]);
     return true;
 }
 
@@ -2946,7 +2959,7 @@ void XS_Thinker(xsthinker_t* xs)
             {
                 xg->timer = XG_RandomInt(FLT2TIC(xg->info.soundInterval[0]),
                                          FLT2TIC(xg->info.soundInterval[1]));
-                S_SectorSound(sector, SORG_CENTER, xg->info.ambientSound);
+                S_SectorSound(sector, xg->info.ambientSound);
             }
         }
     }

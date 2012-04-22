@@ -33,6 +33,7 @@
 #include <assert.h>
 
 #include "common.h"
+#include "p_sound.h"
 #include "p_tick.h"
 #include "hu_log.h"
 #include "am_map.h"
