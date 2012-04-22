@@ -586,6 +586,17 @@ static void createPackagesResourceNamespace(void)
     FileDirectory* directory;
     Uri** searchPaths;
 
+#ifdef UNIX
+    {
+        // Check the system-level config files.
+        filename_t fn;
+        if(DD_Unix_GetConfigValue("paths", "iwaddir", fn, FILENAME_T_MAXLEN))
+        {
+            doomWadDir = Str_Set(Str_New(), fn);
+        }
+    }
+#endif
+
     // Is the DOOMWADPATH environment variable in use?
     if(!ArgCheck("-nodoomwadpath") && getenv("DOOMWADPATH"))
     {
@@ -646,7 +657,7 @@ static void createPackagesResourceNamespace(void)
     }
 
     // Is the DOOMWADDIR environment variable in use?
-    if(!ArgCheck("-nodoomwaddir") && getenv("DOOMWADDIR"))
+    if(!doomWadDir && !ArgCheck("-nodoomwaddir") && getenv("DOOMWADDIR"))
     {
         doomWadDir = Str_New(); Str_Set(doomWadDir, getenv("DOOMWADDIR"));
         Str_Strip(doomWadDir);
