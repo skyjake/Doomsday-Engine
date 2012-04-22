@@ -234,7 +234,7 @@ void P_ArtiTele(player_t* player)
         {   // Teleporting away will undo any morph effects (pig)
             P_UndoPlayerMorph(player);
         }
-        //S_StartSound(NULL, SFX_WPNUP); // Full volume laugh
+        //S_StartSound(SFX_WPNUP, NULL); // Full volume laugh
 #else
         /*S_StartSound(SFX_WPNUP, NULL); // Full volume laugh
            NetSv_Sound(NULL, SFX_WPNUP, player-players); */

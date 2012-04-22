@@ -296,13 +296,6 @@ typedef struct sector_s {
     msector_t           buildData;
 } Sector;
 
-// Sidedef sections.
-typedef enum sidedefsection_e {
-    SS_MIDDLE,
-    SS_TOP,
-    SS_BOTTOM
-} sidedefsection_t;
-
 // Helper macros for accessing sidedef top/middle/bottom section data elements.
 #define SW_surface(n)           sections[(n)]
 #define SW_surfaceflags(n)      SW_surface(n).flags

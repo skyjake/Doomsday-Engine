@@ -67,7 +67,7 @@ void T_BuildPillar(pillar_t *pillar)
     if(res1 == pastdest && res2 == pastdest)
     {
         P_ToXSector(pillar->sector)->specialData = NULL;
-        SN_StopSequence(P_GetPtrp(pillar->sector, DMU_BASE));
+        SN_StopSequenceInSec(pillar->sector);
         P_TagFinished(P_ToXSector(pillar->sector)->tag);
         DD_ThinkerRemove(&pillar->thinker);
     }

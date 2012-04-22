@@ -59,6 +59,7 @@
 #include "p_mapspec.h"
 #include "p_terraintype.h"
 #include "p_tick.h"
+#include "p_sound.h"
 #include "p_switch.h"
 
 // MACROS ------------------------------------------------------------------
@@ -2021,17 +2022,12 @@ void XL_Message(mobj_t* act, char* msg, boolean global)
     P_SetMessage(pl, msg, false);
 }
 
-/**
- * XL_ActivateLine
- */
 void XL_ActivateLine(boolean activating, linetype_t* info, LineDef* line,
-                     int sidenum, mobj_t* data, int evtype)
+    int sidenum, mobj_t* data, int evtype)
 {
-    byte                rgba[4] = { 0, 0, 0, 0 };
-    xgline_t*           xg;
-    Sector*             frontsector;
-    mobj_t*             activator_thing = (mobj_t *) data;
-    ddmobj_base_t*      soundOrg = 0;
+    byte rgba[4] = { 0, 0, 0, 0 };
+    xgline_t* xg;
+    mobj_t* activator_thing = (mobj_t*) data;
 
     xg = P_ToXLine(line)->xg;
 
@@ -2053,10 +2049,6 @@ void XL_ActivateLine(boolean activating, linetype_t* info, LineDef* line,
     }
 
     // Activation should happen on the front side.
-    frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
-    if(frontsector)
-        soundOrg = P_GetPtrp(frontsector, DMU_BASE);
-
     // Let the line know who's activating it.
     xg->activator = data;
 
@@ -2125,7 +2117,9 @@ void XL_ActivateLine(boolean activating, linetype_t* info, LineDef* line,
                    (info->flags2 & LTF2_GLOBAL_A_MSG) != 0);
 
         if(info->actSound)
-            S_StartSound(info->actSound, (mobj_t *) soundOrg);
+        {
+            S_SectorSound(P_GetPtrp(line, DMU_FRONT_SECTOR), info->actSound);
+        }
 
         // Change the texture of the line if asked to.
         if(info->wallSection && info->actMaterial != NOMATERIALID)
@@ -2142,7 +2136,9 @@ void XL_ActivateLine(boolean activating, linetype_t* info, LineDef* line,
                    (info->flags2 & LTF2_GLOBAL_D_MSG) != 0);
 
         if(info->deactSound)
-            S_StartSound(info->deactSound, (mobj_t *) soundOrg);
+        {
+            S_SectorSound(P_GetPtrp(line, DMU_FRONT_SECTOR), info->deactSound);
+        }
 
         // Change the texture of the line if asked to.
         if(info->wallSection && info->deactMaterial != NOMATERIALID)

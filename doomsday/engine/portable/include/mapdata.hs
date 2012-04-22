@@ -286,6 +286,11 @@ typedef struct msector_s {
 } msector_t;
 end
 
+public
+#define DMT_SECTOR_FLOORPLANE DDVT_PTR
+#define DMT_SECTOR_CEILINGPLANE DDVT_PTR
+end
+
 struct Sector
     -       int         frameFlags
     INT     int         validCount // if == validCount, already checked.
@@ -313,13 +318,6 @@ struct Sector
 end
 
 internal
-// Sections of a sidedef
-typedef enum sidedefsection_e {
-    SS_MIDDLE,
-    SS_TOP,
-    SS_BOTTOM
-} sidedefsection_t;
-
 // Helper macros for accessing sidedef top/middle/bottom section data elements.
 #define SW_surface(n)           sections[(n)]
 #define SW_surfaceflags(n)      SW_surface(n).flags

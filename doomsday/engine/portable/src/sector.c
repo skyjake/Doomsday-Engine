@@ -132,6 +132,14 @@ int Sector_GetProperty(const Sector* sec, setargs_t* args)
     case DMU_VALID_COUNT:
         DMU_GetValue(DMT_SECTOR_VALIDCOUNT, &sec->validCount, args, 0);
         break;
+    case DMU_FLOOR_PLANE: {
+        Plane* pln = sec->planes[PLN_FLOOR];
+        DMU_GetValue(DMT_SECTOR_FLOORPLANE, &pln, args, 0);
+        break; }
+    case DMU_CEILING_PLANE: {
+        Plane* pln = sec->planes[PLN_CEILING];
+        DMU_GetValue(DMT_SECTOR_CEILINGPLANE, &pln, args, 0);
+        break; }
     default:
         Con_Error("Sector_GetProperty: No property %s.\n", DMU_Str(args->prop));
     }

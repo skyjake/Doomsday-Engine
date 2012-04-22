@@ -329,7 +329,7 @@ static void writeSide(GameMap* map, uint idx)
 
     for(i = 0; i < 3; ++i)
     {
-        Surface* suf = &s->sections[3];
+        Surface* suf = &s->sections[i];
 
         writeLong(suf->flags);
         //writeLong(getMaterialDictID(materialDict, suf->material));
@@ -359,7 +359,7 @@ static void readSide(GameMap* map, uint idx)
 
     for(i = 0; i < 3; ++i)
     {
-        Surface* suf = &s->sections[3];
+        Surface* suf = &s->sections[i];
 
         suf->flags = (int) readLong();
         //Surface_SetMaterial(suf, lookupMaterialFromDict(materialDict, readLong()));

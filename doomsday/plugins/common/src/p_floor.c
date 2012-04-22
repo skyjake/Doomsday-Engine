@@ -51,6 +51,7 @@
 #if __JHEXEN__ || __JDOOM64__
 #include "p_ceiling.h"
 #endif
+#include "p_sound.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -359,7 +360,7 @@ void T_MoveFloor(floor_t* floor)
 
 #if !__JHEXEN__
     if(!(mapTime & 7))
-        S_SectorSound(floor->sector, SORG_FLOOR, SFX_FLOORMOVE);
+        S_PlaneSound(P_GetPtrp(floor->sector, DMU_FLOOR_PLANE), SFX_FLOORMOVE);
 #endif
 
     if(res == pastdest)
@@ -373,7 +374,7 @@ void T_MoveFloor(floor_t* floor)
 #  if __JHERETIC__
         if(floor->type == FT_RAISEBUILDSTEP)
 #  endif
-            S_SectorSound(floor->sector, SORG_FLOOR, SFX_PSTOP);
+            S_PlaneSound(P_GetPtrp(floor->sector, DMU_FLOOR_PLANE), SFX_PSTOP);
 
 #endif
 #if __JHEXEN__

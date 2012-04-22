@@ -3743,7 +3743,7 @@ static void SV_WriteMaterialChanger(const materialchanger_t* mchanger)
     SV_WriteByte(0);
     SV_WriteLong(mchanger->timer);
     SV_WriteLong(P_ToIndex(mchanger->side));
-    SV_WriteByte((byte) mchanger->ssurfaceID);
+    SV_WriteByte((byte) mchanger->section);
     SV_WriteShort(MaterialArchive_FindUniqueSerialId(materialArchive, mchanger->material));
 }
 
@@ -3759,7 +3759,7 @@ static int SV_ReadMaterialChanger(materialchanger_t* mchanger)
     if(!side)
         Con_Error("t_materialchanger: bad sidedef number\n");
     mchanger->side = side;
-    mchanger->ssurfaceID = (sidedefsurfaceid_t) SV_ReadByte();
+    mchanger->section = (SideDefSection) SV_ReadByte();
     mchanger->material = SV_GetArchiveMaterial(SV_ReadShort(), 0);
 
     mchanger->thinker.function = T_MaterialChanger;

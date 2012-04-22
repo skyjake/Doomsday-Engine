@@ -47,6 +47,7 @@
 #include "p_mapspec.h"
 #include "p_tick.h"
 #include "p_plat.h"
+#include "p_sound.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -118,14 +119,14 @@ void T_PlatRaise(plat_t* plat)
         // Play a "while-moving" sound?
 #if __JHERETIC__
         if(!(mapTime & 31))
-            S_SectorSound(plat->sector, SORG_FLOOR, SFX_PLATFORMMOVE);
+            S_PlaneSound(P_GetPtrp(plat->sector, DMU_FLOOR_PLANE), SFX_PLATFORMMOVE);
 #endif
 #if __JDOOM__ || __JDOOM64__
         if(plat->type == PT_RAISEANDCHANGE ||
            plat->type == PT_RAISETONEARESTANDCHANGE)
         {
             if(!(mapTime & 7))
-                S_SectorSound(plat->sector, SORG_FLOOR, SFX_PLATFORMMOVE);
+                S_PlaneSound(P_GetPtrp(plat->sector, DMU_FLOOR_PLANE), SFX_PLATFORMMOVE);
         }
 #endif
         if(res == crushed && (!plat->crush))
@@ -138,7 +139,7 @@ void T_PlatRaise(plat_t* plat)
 # if __JDOOM64__
             if(plat->type != PT_DOWNWAITUPDOOR) // jd64 added test
 # endif
-                S_SectorSound(plat->sector, SORG_FLOOR, SFX_PLATFORMSTART);
+                S_PlaneSound(P_GetPtrp(plat->sector, DMU_FLOOR_PLANE), SFX_PLATFORMSTART);
 #endif
         }
         else
@@ -150,7 +151,7 @@ void T_PlatRaise(plat_t* plat)
 #if __JHEXEN__
                 SN_StopSequenceInSec(plat->sector);
 #else
-                S_SectorSound(plat->sector, SORG_FLOOR, SFX_PLATFORMSTOP);
+                S_PlaneSound(P_GetPtrp(plat->sector, DMU_FLOOR_PLANE), SFX_PLATFORMSTOP);
 #endif
                 switch(plat->type)
                 {
@@ -205,7 +206,7 @@ void T_PlatRaise(plat_t* plat)
 #if __JHEXEN__
             SN_StopSequenceInSec(plat->sector);
 #else
-            S_SectorSound(plat->sector, SORG_FLOOR, SFX_PLATFORMSTOP);
+            S_PlaneSound(P_GetPtrp(plat->sector, DMU_FLOOR_PLANE), SFX_PLATFORMSTOP);
 #endif
         }
         else
@@ -213,7 +214,7 @@ void T_PlatRaise(plat_t* plat)
             // Play a "while-moving" sound?
 #if __JHERETIC__
             if(!(mapTime & 31))
-                S_SectorSound(plat->sector, SORG_FLOOR, SFX_PLATFORMMOVE);
+                S_PlaneSound(P_GetPtrp(plat->sector, DMU_FLOOR_PLANE), SFX_PLATFORMMOVE);
 #endif
         }
         break;
@@ -228,7 +229,7 @@ void T_PlatRaise(plat_t* plat)
 #if __JHEXEN__
             SN_StartSequenceInSec(plat->sector, SEQ_PLATFORM);
 #else
-            S_SectorSound(plat->sector, SORG_FLOOR, SFX_PLATFORMSTART);
+            S_PlaneSound(P_GetPtrp(plat->sector, DMU_FLOOR_PLANE), SFX_PLATFORMSTART);
 #endif
         }
         break;
@@ -305,7 +306,7 @@ static int doPlat(LineDef* line, int tag, plattype_e type, int amount)
             plat->state = PS_UP;
             // No more damage if applicable.
             xsec->special = 0;
-            S_SectorSound(sec, SORG_FLOOR, SFX_PLATFORMMOVE);
+            S_PlaneSound(P_GetPtrp(sec, DMU_FLOOR_PLANE), SFX_PLATFORMMOVE);
             break;
 
         case PT_RAISEANDCHANGE:
@@ -317,7 +318,7 @@ static int doPlat(LineDef* line, int tag, plattype_e type, int amount)
             plat->high = floorHeight + amount;
             plat->wait = 0;
             plat->state = PS_UP;
-            S_SectorSound(sec, SORG_FLOOR, SFX_PLATFORMMOVE);
+            S_PlaneSound(P_GetPtrp(sec, DMU_FLOOR_PLANE), SFX_PLATFORMMOVE);
             break;
 #endif
         case PT_DOWNWAITUPSTAY:
@@ -339,7 +340,7 @@ static int doPlat(LineDef* line, int tag, plattype_e type, int amount)
             plat->wait = PLATWAIT * TICSPERSEC;
 #endif
 #if !__JHEXEN__
-            S_SectorSound(sec, SORG_FLOOR, SFX_PLATFORMSTART);
+            S_PlaneSound(P_GetPtrp(sec, DMU_FLOOR_PLANE), SFX_PLATFORMSTART);
 #endif
             break;
 
@@ -359,7 +360,7 @@ static int doPlat(LineDef* line, int tag, plattype_e type, int amount)
 # endif
 # if __JDOOM64__
             plat->speed = PLATSPEED * 8;
-            S_SectorSound(sec, SORG_FLOOR, SFX_PLATFORMSTART);
+            S_PlaneSound(P_GetPtrp(sec, DMU_FLOOR_PLANE), SFX_PLATFORMSTART);
 # endif
             break;
 #endif
@@ -410,7 +411,7 @@ static int doPlat(LineDef* line, int tag, plattype_e type, int amount)
             plat->high = floorHeight;
             plat->wait = PLATWAIT * TICSPERSEC;
             plat->state = PS_DOWN;
-            S_SectorSound(sec, SORG_FLOOR, SFX_PLATFORMSTART);
+            S_PlaneSound(P_GetPtrp(sec, DMU_FLOOR_PLANE), SFX_PLATFORMSTART);
             break;
 #endif
         case PT_PERPETUALRAISE:
@@ -436,7 +437,7 @@ static int doPlat(LineDef* line, int tag, plattype_e type, int amount)
             plat->wait = PLATWAIT * TICSPERSEC;
 #endif
 #if !__JHEXEN__
-            S_SectorSound(sec, SORG_FLOOR, SFX_PLATFORMSTART);
+            S_PlaneSound(P_GetPtrp(sec, DMU_FLOOR_PLANE), SFX_PLATFORMSTART);
 #endif
             break;
 

@@ -52,6 +52,7 @@
 #include "fi_lib.h"
 #include "hu_lib.h"
 #include "p_saveg.h"
+#include "p_sound.h"
 #include "g_controls.h"
 #include "g_eventsequence.h"
 #include "p_mapsetup.h"
