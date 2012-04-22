@@ -3264,7 +3264,7 @@ void Hu_MenuDrawSkillPage(mn_page_t* page, const Point2Raw* origin)
 
     DGL_Disable(DGL_TEXTURE_2D);
 #elif __JHEXEN__
-    Hu_MenuDrawPageTitle("Choose Skill Level:", origin->x - 46, origin->y - 28);
+    Hu_MenuDrawPageTitle("Choose Skill Level:", origin->x + 36, origin->y - 28);
 #endif
 }
 
