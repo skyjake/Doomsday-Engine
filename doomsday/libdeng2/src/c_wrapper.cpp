@@ -296,7 +296,7 @@ int Info_FindValue(Info* info, const char* path, char* buffer, size_t bufSize)
 
     DENG2_SELF(Info, info);
     const de::Info::Element* element = self->findByPath(path);
-    if(!element->isKey()) return false;
+    if(!element || !element->isKey()) return false;
     QString value = static_cast<const de::Info::KeyElement*>(element)->value();
     if(buffer)
     {

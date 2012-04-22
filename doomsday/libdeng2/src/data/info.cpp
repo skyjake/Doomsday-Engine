@@ -73,7 +73,7 @@ struct Info::Instance
         if(cursor >= content.size())
         {
             // No more characters to read.
-            throw EndOfFile(QString("EOF on line %i").arg(currentLine));
+            throw EndOfFile(QString("EOF on line %1").arg(currentLine));
         }
         if(currentChar == '\n') currentLine++;
         currentChar = content[cursor];
