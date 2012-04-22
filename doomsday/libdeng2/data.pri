@@ -8,6 +8,7 @@ HEADERS += \
     include/de/Guard \
     include/de/IBlock \
     include/de/IByteArray \
+    include/de/Info \
     include/de/IReadable \
     include/de/ISerializable \
     include/de/IWritable \
@@ -26,6 +27,7 @@ HEADERS += \
     include/de/data/huffman.h \
     include/de/data/iblock.h \
     include/de/data/ibytearray.h \
+    include/de/data/info.h \
     include/de/data/ireadable.h \
     include/de/data/iserializable.h \
     include/de/data/iwritable.h \
@@ -42,10 +44,11 @@ SOURCES += \
     src/data/bytesubarray.cpp \
     src/data/date.cpp \
     src/data/fixedbytearray.cpp \
-    src/data/huffman.cpp \
     src/data/guard.cpp \
+    src/data/huffman.cpp \
+    src/data/info.cpp \
     src/data/lockable.cpp \
-    src/data/string.cpp \
     src/data/reader.cpp \
+    src/data/string.cpp \
     src/data/time.cpp \
     src/data/writer.cpp
