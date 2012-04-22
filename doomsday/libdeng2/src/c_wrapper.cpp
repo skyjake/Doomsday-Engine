@@ -24,6 +24,8 @@
 #include "de/ByteRefArray"
 #include "de/Block"
 #include "de/LogBuffer"
+#include "de/Info"
+#include <QFile>
 #include <cstring>
 #include <stdarg.h>
 
@@ -39,7 +41,8 @@ void LegacyCore_Delete(LegacyCore* lc)
     if(lc)
     {
         // It gets stopped automatically.
-        delete reinterpret_cast<de::LegacyCore*>(lc);
+        DENG2_SELF(LegacyCore, lc);
+        delete self;
     }
 }
 
@@ -251,4 +254,58 @@ int LegacyNetwork_SocketSet_Activity(int set)
 {
     if(!set) return 0;
     return DENG2_LEGACYNETWORK().checkSetForActivity(set);
+}
+
+Info* Info_NewFromString(const char* utf8text)
+{
+    try
+    {
+        QScopedPointer<de::Info> self(new de::Info);
+        self->parse(QString::fromUtf8(utf8text));
+        return reinterpret_cast<Info*>(self.take());
+    }
+    catch(de::Error& er)
+    {
+        LOG_WARNING(er.asText());
+    }
+    return 0;
+}
+
+Info* Info_NewFromFile(const char* nativePath)
+{
+    QFile file(nativePath);
+    if(file.open(QFile::ReadOnly | QFile::Text))
+    {
+        return Info_NewFromString(file.readAll().constData());
+    }
+    return 0;
+}
+
+void Info_Delete(Info* info)
+{
+    if(info)
+    {
+        DENG2_SELF(Info, info);
+        delete self;
+    }
+}
+
+int Info_FindValue(Info* info, const char* path, char* buffer, size_t bufSize)
+{
+    if(!info) return false;
+
+    DENG2_SELF(Info, info);
+    const de::Info::Element* element = self->findByPath(path);
+    if(!element->isKey()) return false;
+    QString value = static_cast<const de::Info::KeyElement*>(element)->value();
+    if(buffer)
+    {
+        qstrncpy(buffer, value.toUtf8().constData(), bufSize);
+        return true;
+    }
+    else
+    {
+        // Just return the size of the value.
+        return value.size();
+    }
 }

@@ -450,10 +450,37 @@ void Info::BlockElement::clear()
     _contentsInOrder.clear();
 }
 
-Info::Info(const String& infoSource)
+Info::Element* Info::BlockElement::findByPath(const String &path) const
+{
+    String name;
+    String remainder;
+    int pos = path.indexOf(':');
+    if(pos >= 0)
+    {
+        name = path.left(pos);
+        remainder = path.right(pos + 1);
+    }
+    else
+    {
+        name = path;
+    }
+    name.trimmed();
+
+    // Does this element exist?
+    Element* e = find(name);
+    if(!e) return 0;
+
+    if(e->isBlock())
+    {
+        // Descend into sub-blocks.
+        return static_cast<BlockElement*>(e)->findByPath(remainder);
+    }
+    return e;
+}
+
+Info::Info()
 {
     d = new Instance;
-    d->parse(infoSource);
 }
 
 Info::~Info()
@@ -461,7 +488,18 @@ Info::~Info()
     delete d;
 }
 
-const Info::BlockElement &Info::root() const
+void Info::parse(const String &infoSource)
+{
+    d->parse(infoSource);
+}
+
+const Info::BlockElement& Info::root() const
 {
     return d->rootBlock;
+}
+
+const Info::Element* Info::findByPath(const String &path) const
+{
+    if(path.isEmpty()) return &d->rootBlock;
+    return d->rootBlock.findByPath(path);
 }

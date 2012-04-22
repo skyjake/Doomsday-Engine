@@ -96,9 +96,7 @@ public:
     class ListElement : public Element {
     public:
         ListElement(const String& name) : Element(List, name) {}
-
         void add(const String& v) { _values << v; }
-
         QStringList values() const { return _values; }
 
     private:
@@ -117,13 +115,21 @@ public:
         typedef QHash<String, Element*> Contents;
         typedef QList<Element*> ContentsInOrder;
 
+    public:
         BlockElement(const String& bType, const String& name) : Element(Block, name) {
             setBlockType(bType);
         }
         ~BlockElement();
 
+        /**
+         * The root block is the only one that does not have a block type.
+         */
+        bool isRootBlock() const { return _blockType.isEmpty(); }
+
         const String& blockType() const { return _blockType; }
+
         const ContentsInOrder& contentsInOrder() const { return _contentsInOrder; }
+
         const Contents& contents() const { return _contents; }
 
         QStringList values() const {
@@ -132,10 +138,13 @@ public:
         }
 
         int size() const { return _contents.size(); }
+
         bool contains(const String& name) { return _contents.contains(name); }
 
         void setBlockType(const String& bType) { _blockType = bType.toLower(); }
+
         void clear();
+
         void add(Element* elem) {
             DENG2_ASSERT(elem != 0);
             _contentsInOrder.append(elem);
@@ -160,6 +169,17 @@ public:
             return static_cast<KeyElement*>(e)->value();
         }
 
+        /**
+         * Looks for an element based on a path where a colon ':' is used to
+         * separate element names. Whitespace before and after a separator is
+         * ignored.
+         *
+         * @param path  Name path.
+         *
+         * @return  The located element, or @c NULL.
+         */
+        Element* findByPath(const String& path) const;
+
     private:
         String _blockType;
         Contents _contents;
@@ -172,17 +192,18 @@ public:
 
 public:
     Info();
+    ~Info();
 
     /**
-     * Deserializes the key/value data from text.
+     * Parses the Info contents from a text string.
      *
      * @param infoSource  Info text.
      */
-    Info(const String& infoSource);
-
-    ~Info();
+    void parse(const String& infoSource);
 
     const BlockElement& root() const;
+
+    const Element* findByPath(const String& path) const;
 
 private:
     struct Instance;

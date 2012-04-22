@@ -96,6 +96,16 @@ DENG2_PUBLIC void LegacyNetwork_SocketSet_Add(int set, int socket);
 DENG2_PUBLIC void LegacyNetwork_SocketSet_Remove(int set, int socket);
 DENG2_PUBLIC int LegacyNetwork_SocketSet_Activity(int set);
 
+/*
+ * Info
+ */
+DENG2_OPAQUE(Info)
+
+DENG2_PUBLIC Info* Info_NewFromString(const char* utf8text);
+DENG2_PUBLIC Info* Info_NewFromFile(const char* nativePath);
+DENG2_PUBLIC void Info_Delete(Info* info);
+DENG2_PUBLIC int Info_FindValue(Info* info, const char* path, char* buffer, size_t bufSize);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif
