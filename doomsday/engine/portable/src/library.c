@@ -75,17 +75,23 @@ static void getBundlePath(char* path, size_t len)
         return;
     }
 
+    /*
 #ifdef MACOSX
     // This is the default location where bundles are.
     dd_snprintf(path, len, "%s/Bundles", appDir);
 #endif
+    */
+
 #ifdef UNIX
-#ifdef DENG_LIBRARY_DIR
+# ifdef DENG_LIBRARY_DIR
     strncpy(path, DENG_LIBRARY_DIR, len);
-#else
+# else
     // Assume they are in the cwd.
     strncpy(path, appDir, len);
-#endif
+# endif
+
+    // Check Unix-specific config files.
+    DD_Unix_GetConfigValue("paths", "libdir", path, len);
 #endif
 }
 #endif

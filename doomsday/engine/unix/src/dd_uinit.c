@@ -310,6 +310,8 @@ static void determineGlobalPaths(application_t* app)
 #else
         strncpy(ddBasePath, DENG_BASE_DIR, FILENAME_T_MAXLEN);
 #endif
+        // Also check the system config files.
+        DD_Unix_GetConfigValue("paths", "basedir", ddBasePath, FILENAME_T_MAXLEN);
     }
     Dir_CleanPath(ddBasePath, FILENAME_T_MAXLEN);
     Dir_MakeAbsolutePath(ddBasePath, FILENAME_T_MAXLEN);
@@ -426,4 +428,46 @@ void DD_Shutdown(void)
     unloadAllPlugins(&app);
     Library_Shutdown();
     DisplayMode_Shutdown();
+}
+
+boolean DD_Unix_GetConfigValue(const char* configFile, const char* key, char* dest, size_t destLen)
+{
+    Info* info;
+    char buf[512];
+    ddstring_t* p;    
+    boolean success = false;
+
+    // Maybe it is in the user's .doomsday dir.
+    p = Str_New();
+    Str_Appendf(p, "~/.doomsday/%s", configFile);
+    F_MakeAbsolute(p, p);
+    info = Info_NewFromFile(Str_Text(p));
+    if(info)
+    {
+        if(Info_FindValue(info, key, buf, sizeof(buf)))
+        {
+            strncpy(dest, buf, destLen);
+            success = true;
+            goto cleanup;
+        }
+    }
+
+    // Check for a config file for the library path.
+    Str_Clear(p);
+    Str_Appendf(p, "/etc/doomsday/%s", configFile);
+    info = Info_NewFromFile(Str_Text(p));
+    if(info)
+    {
+        if(Info_FindValue(info, key, buf, sizeof(buf)))
+        {
+            strncpy(dest, buf, destLen);
+            success = true;
+            goto cleanup;
+        }
+    }
+
+cleanup:
+    Info_Delete(info);
+    Str_Delete(p);
+    return success;
 }
