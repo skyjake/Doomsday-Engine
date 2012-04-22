@@ -1207,9 +1207,8 @@ typedef struct {
  */
 ///@{
 #define SSF_SECTOR                  0x1 ///< Stop sounds from the sector's emitter.
-#define SSF_SECTOR_LINKED_PLANES    0x2 ///< Stop sounds from plane emitters in the same sector.
-#define SSF_SECTOR_LINKED_SIDEDEFS  0x4 ///< Stop sounds from sidedef emitters in the same sector.
-#define SSF_ALL_SECTOR              (SSF_SECTOR | SSF_SECTOR_LINKED_PLANES | SSF_SECTOR_LINKED_SIDEDEFS)
+#define SSF_SECTOR_LINKED_SURFACES  0x2 ///< Stop sounds from surface emitters in the same sector.
+#define SSF_ALL_SECTOR              (SSF_SECTOR | SSF_SECTOR_LINKED_SURFACES)
 ///@}
 
 typedef struct {

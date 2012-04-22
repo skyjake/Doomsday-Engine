@@ -473,41 +473,25 @@ int S_ConsoleSound(int soundID, mobj_t* origin, int targetConsole)
  * @param soundID  Unique identifier of the sound to be stopped. @c= 0 (do not match).
  * @param flags  @ref soundStopFlags
  */
-static void stopSectorSounds(Sector* sec, int soundID, int flags)
+static void stopSectorSounds(ddmobj_base_t* sectorEmitter, int soundID, int flags)
 {
     ddmobj_base_t* base;
 
-    if(!sec || !flags) return;
+    if(!sectorEmitter || !flags) return;
 
-    base = &sec->base;
     // Are we stopping with this sector's emitter?
     if(flags & SSF_SECTOR)
     {
-        S_StopSound(soundID, (mobj_t*)base);
+        S_StopSound(soundID, (mobj_t*)sectorEmitter);
     }
 
     // Are we stopping with linked emitters?
-    if(!(flags & (SSF_SECTOR_LINKED_PLANES | SSF_SECTOR_LINKED_SIDEDEFS))) return;
+    if(!(flags & SSF_SECTOR_LINKED_SURFACES)) return;
 
     // Process the rest of the emitter chain.
+    base = (ddmobj_base_t*)sectorEmitter;
     while((base = (ddmobj_base_t*)base->thinker.next))
     {
-        // Are we excluding one or more emitter types?
-        if(!(flags & SSF_SECTOR_LINKED_PLANES) || !(flags & SSF_SECTOR_LINKED_SIDEDEFS))
-        {
-            switch(DMU_GetType(base))
-            {
-            case DMU_PLANE:   if(!(flags & SSF_SECTOR_LINKED_PLANES)) continue;
-                break;
-            case DMU_SIDEDEF: if(!(flags & SSF_SECTOR_LINKED_SIDEDEFS)) continue;
-                break;
-            default:
-                DEBUG_Message(("stopSectorSounds: Invalid DMU type %s for ddmobj_base_t owner object %p.",
-                               DMU_Str(DMU_GetType(base)), base));
-                continue;
-            }
-        }
-
         // Stop sounds from this emitter.
         S_StopSound(soundID, (mobj_t*)base);
     }
@@ -534,46 +518,20 @@ void S_StopSound2(int soundID, mobj_t* emitter, int flags)
     // Are we performing any special stop behaviors?
     if(emitter && flags)
     {
-        Sector* sector = 0;
-
         if(emitter->thinker.id)
         {
             // Emitter is a real Mobj.
-            sector = emitter->bspLeaf->sector;
+            Sector* sector = emitter->bspLeaf->sector;
+            stopSectorSounds((ddmobj_base_t*)&sector->base, soundID, flags);
+            return;
         }
-        else
+
+        // The head of the chain is the sector. Find it.
+        while(emitter->thinker.prev)
         {
-            switch(DMU_GetType(emitter))
-            {
-            case DMU_SECTOR:
-                // Emitter is a sector.
-                sector = (Sector*)emitter;
-                break;
-
-            case DMU_SURFACE: {
-                // Emitter is a map surface.
-                Surface* suf = (Surface*)emitter;
-                assert(suf->owner);
-                switch(DMU_GetType(suf->owner))
-                {
-                case DMU_PLANE:   sector = ((Plane*)suf->owner)->sector;   break;
-                case DMU_SIDEDEF: sector = ((SideDef*)suf->owner)->sector; break;
-                default:
-                    DEBUG_Message(("S_StopSound2: Invalid DMU type %s for Surface owner object %p, ignoring.",
-                                   DMU_Str(DMU_GetType(suf->owner)), suf->owner));
-                }
-                break; }
-
-            default:
-                DEBUG_Message(("S_StopSound2: Invalid DMU type %s for emitter object %p, ignoring.",
-                               DMU_Str(DMU_GetType(emitter)), emitter));
-            }
+            emitter = (mobj_t*)emitter->thinker.prev;
         }
-
-        if(sector)
-        {
-            stopSectorSounds(sector, soundID, flags);
-        }
+        stopSectorSounds((ddmobj_base_t*)emitter, soundID, flags);
         return;
     }
 
