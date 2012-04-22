@@ -3277,11 +3277,11 @@ void ST_SetAutomapCameraRotation(int player, boolean on)
 
 void ST_ToggleAutomapPanMode(int player)
 {
-    uiwidget_t* obj = ST_UIAutomapForPlayer(player);
-    if(!obj) return;
-    if(UIAutomap_SetPanMode(obj, !UIAutomap_PanMode(obj)))
+    uiwidget_t* ob = ST_UIAutomapForPlayer(player);
+    if(!ob) return;
+    if(UIAutomap_SetPanMode(ob, !UIAutomap_PanMode(ob)))
     {
-        P_SetMessage(&players[player], (UIAutomap_PanMode(obj)? AMSTR_FOLLOWON : AMSTR_FOLLOWOFF), true);
+        P_SetMessage(&players[player], (UIAutomap_PanMode(ob)? AMSTR_FOLLOWOFF : AMSTR_FOLLOWON), true);
     }
 }
 
