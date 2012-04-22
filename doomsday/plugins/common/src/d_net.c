@@ -394,7 +394,7 @@ int D_NetWorldEvent(int type, int parm, void* data)
         if(parm & 0xffff)
             S_SectorSound(P_ToPtr(DMU_SECTOR, parm >> 16), parm & 0xffff);
         else
-            S_StopSound(0, (mobj_t*) P_GetPtr(DMU_SECTOR, parm >> 16, DMU_BASE));
+            S_SectorStopSounds(P_ToPtr(DMU_SECTOR, parm >> 16));
 
         break;
 

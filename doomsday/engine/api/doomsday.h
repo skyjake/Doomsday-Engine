@@ -701,7 +701,10 @@ int S_StartSound(int soundId, struct mobj_s* origin);
 int S_StartSoundEx(int soundId, struct mobj_s* origin);
 int S_StartSoundAtVolume(int soundID, struct mobj_s* origin, float volume);
 int S_ConsoleSound(int soundID, struct mobj_s* origin, int targetConsole);
-void S_StopSound(int soundID, struct mobj_s* origin);
+
+void S_StopSound2(int soundID, struct mobj_s* origin, int flags);
+void S_StopSound(int soundID, struct mobj_s* origin/*,flags=0*/);
+
 int S_IsPlaying(int soundID, struct mobj_s* origin);
 int S_StartMusic(const char* musicID, boolean looped);
 int S_StartMusicNum(int id, boolean looped);

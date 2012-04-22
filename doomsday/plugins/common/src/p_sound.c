@@ -75,12 +75,9 @@ void S_SectorStopSounds(Sector* sec)
 {
     if(!sec) return;
 
-    S_StopSound(0, (mobj_t*) P_GetPtrp(sec, DMU_BASE));
-
     // Stop other sounds playing from origins in this sector.
     /// @todo Add a compatibility option allowing origins to work independently?
-    S_StopSound(0, (mobj_t*) P_GetPtrp(sec, DMU_FLOOR_BASE));
-    S_StopSound(0, (mobj_t*) P_GetPtrp(sec, DMU_CEILING_BASE));
+    S_StopSound2(0, (mobj_t*) P_GetPtrp(sec, DMU_BASE), SSF_ALL_SECTOR);
 }
 
 void S_PlaneSound(Plane* pln, int id)
