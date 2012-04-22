@@ -1069,15 +1069,13 @@ void P_UpdateSpecials(void)
  */
 void P_ThunderSector(void)
 {
-    Sector             *sec = NULL;
-    iterlist_t         *list;
+    Sector* sec = NULL;
+    iterlist_t* list;
 
-    if(!(P_Random() < 10))
-        return;
+    if(!(P_Random() < 10)) return;
 
     list = P_GetSectorIterListForTag(20000, false);
-    if(!list)
-        return;
+    if(!list) return;
 
     IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
     IterList_RewindIterator(list);
@@ -1086,9 +1084,10 @@ void P_ThunderSector(void)
         if(!(mapTime & 32))
         {
             P_SetFloatp(sec, DMU_LIGHT_LEVEL, 1);
-            S_StartSound(SFX_SSSIT, P_GetPtrp(sec, DMU_BASE));
         }
     }
+
+    S_StartSound(SFX_SSSIT | DDSF_NO_ATTENUATION, NULL);
 }
 
 /**

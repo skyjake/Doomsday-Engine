@@ -88,7 +88,7 @@ void S_PlaneSound(Plane* pln, int id)
     if(!pln) return;
 
     S_SectorStopSounds((Sector*) P_GetPtrp(pln, DMU_SECTOR));
-    S_StartSound(id, (mobj_t*)P_GetPtrp(pln, DMU_BASE));
+    S_StartSound(id, (mobj_t*) P_GetPtrp(pln, DMU_BASE));
 }
 
 #ifdef __JHEXEN__
