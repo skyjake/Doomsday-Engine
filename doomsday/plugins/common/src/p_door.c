@@ -298,7 +298,7 @@ void T_Door(door_t* door)
 #endif
                 DD_ThinkerRemove(&door->thinker); // Unlink and free.
 #if __JHERETIC__
-                S_StopSound(0, (mobj_t*) P_GetPtrp(door->sector, DMU_CEILING_ORIGIN));
+                S_StopSound(0, (mobj_t*) P_GetPtrp(door->sector, DMU_CEILING_BASE));
 #endif
                 break;
 

@@ -83,8 +83,8 @@ void S_SectorSound(Sector *sec, int origin, int id)
     mobj_t* centerorigin, *floororigin, *ceilingorigin;
 
     centerorigin  = (mobj_t*) P_GetPtrp(sec, DMU_BASE);
-    floororigin   = (mobj_t*) P_GetPtrp(sec, DMU_FLOOR_ORIGIN);
-    ceilingorigin = (mobj_t*) P_GetPtrp(sec, DMU_CEILING_ORIGIN);
+    floororigin   = (mobj_t*) P_GetPtrp(sec, DMU_FLOOR_BASE);
+    ceilingorigin = (mobj_t*) P_GetPtrp(sec, DMU_CEILING_BASE);
 
     S_StopSound(0, centerorigin);
     S_StopSound(0, floororigin);
