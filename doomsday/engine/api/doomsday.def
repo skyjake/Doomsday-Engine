@@ -1,6 +1,6 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 841 <--
+; Highest ordinal is currently: --> 842 <--
 ; Other free ordinals: 57
 
 NAME                            "DOOMSDAY"
@@ -846,6 +846,7 @@ EXPORTS
     S_StartSoundAtVolume        @224 NONAME
     S_ConsoleSound              @218 NONAME
     S_StopSound                 @223 NONAME
+    S_StopSound2                @842 NONAME
     S_IsPlaying                 @110 NONAME
     S_StartMusic                @219 NONAME
     S_StartMusicNum             @222 NONAME

@@ -662,6 +662,69 @@ static void finishSectors(GameMap* map)
     }
 }
 
+/**
+ * @param sector  Sector in which to link @a base.
+ * @param base  Mobj base to link in @a sector. Caller should ensure that the
+ *              same object is not linked multiple times into the chain.
+ */
+static void linkBaseToSectorChain(Sector* sector, ddmobj_base_t* base)
+{
+    if(!sector || !base) return;
+
+    // The sector's base is always head of the chain, so link the other after it.
+    base->thinker.prev = &sector->base.thinker;
+    base->thinker.next = sector->base.thinker.next;
+    if(base->thinker.next)
+        base->thinker.next->prev = &base->thinker;
+    sector->base.thinker.next = &base->thinker;
+}
+
+/**
+ * Chain together the ddmobj_base_t objects owned by all Surfaces in all sectors.
+ * These chains are used for efficiently traversing all of the base objects in a
+ * sector, for example; stopping sounds emitted from all origins within a sector.
+ */
+static void chainSectorBases(GameMap* map)
+{
+    uint i;
+    for(i = 0; i < map->numSectors; ++i)
+    {
+        Sector* sec = GameMap_Sector(map, i);
+        ddmobj_base_t* base = &sec->base;
+        uint j;
+
+        // Clear the chain head.
+        base->thinker.next = base->thinker.prev = 0;
+
+        // Add all plane base mobjs.
+        for(j = 0; j < sec->planeCount; ++j)
+        {
+            Plane* pln = sec->SP_plane(j);
+            linkBaseToSectorChain(sec, &pln->PS_base);
+        }
+
+        // Add all sidedef base mobjs.
+        for(j = 0; j < sec->lineDefCount; ++j)
+        {
+            LineDef* line = sec->lineDefs[j];
+            if(line->L_frontsector == sec)
+            {
+                SideDef* side = line->L_frontside;
+                linkBaseToSectorChain(sec, &side->SW_middlesurface.base);
+                linkBaseToSectorChain(sec, &side->SW_bottomsurface.base);
+                linkBaseToSectorChain(sec, &side->SW_topsurface.base);
+            }
+            if(line->L_backside && line->L_backsector == sec)
+            {
+                SideDef* side = line->L_backside;
+                linkBaseToSectorChain(sec, &side->SW_middlesurface.base);
+                linkBaseToSectorChain(sec, &side->SW_bottomsurface.base);
+                linkBaseToSectorChain(sec, &side->SW_topsurface.base);
+            }
+        }
+    }
+}
+
 static void finishSideDefs(GameMap* map)
 {
     uint i;
@@ -1680,6 +1743,8 @@ boolean MPE_End(void)
     finishSideDefs(gamemap);
     finishLineDefs(gamemap);
     finishSectors(gamemap);
+    chainSectorBases(gamemap);
+
     updateMapBounds(gamemap);
     S_DetermineBspLeafsAffectingSectorReverb(gamemap);
     prepareBspLeafs(gamemap);
