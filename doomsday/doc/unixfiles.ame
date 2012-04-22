@@ -1,6 +1,16 @@
 @deflist{
+    
+@item{@file{/etc/doomsday/paths}} System-level paths configuration (basedir,
+libdir, iwaddir). This is checked after @file{~/.doomsday/paths}. See the 
+Doomsday Wiki for a description of the syntax.
 
+@item{@file{/usr/share/doomsday/}} Read-only files for the launcher, engine
+and game plugins.
+    
 @item{@file{~/.doomsday/}} Location for the user-specific files.
+
+@item{@file{~/.doomsday/paths}} User's paths configuration (basedir, libdir,
+iwaddir).
 
 @item{@file{~/.doomsday/addons/}} Directory where to put addons (WAD, PK3,
 Snowberry @file{.addon}, etc.) so that they appear in the launcher's list.
@@ -14,8 +24,5 @@ identifier, for instance if you're getting a @dquote{duplicate ID} error.
 
 @item{@file{~/.doomsday/runtime/configs/}} Saved values for console variables
 and control bindings.
-
-@item{@file{/usr/share/doomsday/}} Read-only files for the launcher, engine
-and game plugins.
 
 }
