@@ -72,7 +72,7 @@ typedef struct decorsource_s {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void updateSideSectionDecorations(SideDef* side, sidedefsection_t section);
+static void updateSideSectionDecorations(SideDef* side, SideDefSection section);
 static void updatePlaneDecorations(Plane* pln);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -560,7 +560,7 @@ static void updatePlaneDecorations(Plane* pln)
     updateSurfaceDecorations2(suf, offsetS, offsetT, v1, v2, sec, suf->material? true : false);
 }
 
-static void updateSideSectionDecorations(SideDef* side, sidedefsection_t section)
+static void updateSideSectionDecorations(SideDef* side, SideDefSection section)
 {
     LineDef* line;
     Surface* suf;

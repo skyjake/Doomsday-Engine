@@ -1427,7 +1427,7 @@ boolean R_SectorContainsSkySurfaces(const Sector* sec)
  * Non-animated materials are preferred.
  * Sky materials are ignored.
  */
-static material_t* chooseFixMaterial(SideDef* s, sidedefsection_t section)
+static material_t* chooseFixMaterial(SideDef* s, SideDefSection section)
 {
     material_t* choice1 = NULL, *choice2 = NULL;
 
@@ -1462,9 +1462,9 @@ static material_t* chooseFixMaterial(SideDef* s, sidedefsection_t section)
     return NULL;
 }
 
-static void updateSidedefSection(SideDef* s, sidedefsection_t section)
+static void updateSidedefSection(SideDef* s, SideDefSection section)
 {
-    Surface*            suf;
+    Surface* suf;
 
     if(section == SS_MIDDLE)
         return; // Not applicable.

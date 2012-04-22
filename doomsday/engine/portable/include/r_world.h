@@ -87,7 +87,7 @@ void R_MapInitSurfaceLists(void);
 
 void            R_OrderVertices(const LineDef* line, const Sector* sector,
                                 Vertex* verts[2]);
-boolean         R_FindBottomTop(LineDef* lineDef, int side, sidedefsection_t section,
+boolean         R_FindBottomTop(LineDef* lineDef, int side, SideDefSection section,
                                 coord_t matOffsetX, coord_t matOffsetY,
                                 const Plane* ffloor, const Plane* fceil,
                                 const Plane* bfloor, const Plane* bceil,

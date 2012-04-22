@@ -804,6 +804,18 @@ enum {
     NUM_REVERB_DATA
 };
 
+/// SideDef section indices. @ingroup map
+typedef enum sidedefsection_e {
+    SS_MIDDLE,
+    SS_BOTTOM,
+    SS_TOP
+} SideDefSection;
+
+/// Helper macro for converting SideDefSection indices to their associated DMU flag. @ingroup map
+#define DMU_FLAG_FOR_SIDEDEFSECTION(s) (\
+    (s) == SS_MIDDLE? DMU_MIDDLE_OF_SIDEDEF : \
+    (s) == SS_BOTTOM? DMU_BOTTOM_OF_SIDEDEF : DMU_TOP_OF_SIDEDEF)
+
 typedef struct {
     fixed_t origin[2];
     fixed_t direction[2];

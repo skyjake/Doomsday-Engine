@@ -596,7 +596,7 @@ static void applyWallHeightDivision(walldiv_t* divs, const HEdge* hedge,
 }
 
 static void selectSurfaceColors(const float** topColor,
-    const float** bottomColor, SideDef* side, sidedefsection_t section)
+    const float** bottomColor, SideDef* side, SideDefSection section)
 {
     switch(section)
     {
@@ -1735,7 +1735,7 @@ static void Rend_RenderPlane(BspLeaf* bspLeaf, planetype_t type, coord_t height,
     }
 }
 
-static boolean rendHEdgeSection(HEdge* hedge, BspLeaf* bspLeaf, sidedefsection_t section,
+static boolean rendHEdgeSection(HEdge* hedge, BspLeaf* bspLeaf, SideDefSection section,
     Surface* surface, coord_t const from[2], coord_t const to[2], coord_t bottom, coord_t top,
     float const texOffset[2], Sector* frontsec, boolean softSurface, boolean addDLights,
     boolean addMobjShadows, short sideFlags)
@@ -2009,7 +2009,7 @@ static boolean Rend_RenderHEdge(HEdge* hedge, BspLeaf* bspLeaf)
     return solid;
 }
 
-boolean R_FindBottomTop(LineDef* lineDef, int side, sidedefsection_t section,
+boolean R_FindBottomTop(LineDef* lineDef, int side, SideDefSection section,
     coord_t matOffsetX, coord_t matOffsetY,
     const Plane* ffloor, const Plane* fceil,
     const Plane* bfloor, const Plane* bceil,
