@@ -286,6 +286,11 @@ typedef struct msector_s {
 } msector_t;
 end
 
+public
+#define DMT_SECTOR_FLOORPLANE DDVT_PTR
+#define DMT_SECTOR_CEILINGPLANE DDVT_PTR
+end
+
 struct Sector
     -       int         frameFlags
     INT     int         validCount // if == validCount, already checked.

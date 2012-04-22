@@ -45,6 +45,9 @@
 #define DMT_PLANE_TARGET DDVT_DOUBLE   // Target height
 #define DMT_PLANE_SPEED DDVT_DOUBLE    // Move speed
 
+#define DMT_SECTOR_FLOORPLANE DDVT_PTR
+#define DMT_SECTOR_CEILINGPLANE DDVT_PTR
+
 #define DMT_SECTOR_VALIDCOUNT DDVT_INT // if == validCount, already checked.
 #define DMT_SECTOR_LIGHTLEVEL DDVT_FLOAT
 #define DMT_SECTOR_RGB DDVT_FLOAT
