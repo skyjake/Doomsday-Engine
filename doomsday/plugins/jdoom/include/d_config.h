@@ -74,7 +74,6 @@ typedef enum {
 
 typedef struct jdoom_config_s {
     float           playerMoveSpeed;
-    int             useMLook;      // Mouse look (mouse Y => viewpitch)
     int             useJLook;      // Joy look (joy Y => viewpitch)
     int             alwaysRun;     // Always run.
     int             noAutoAim;     // No auto-aiming?

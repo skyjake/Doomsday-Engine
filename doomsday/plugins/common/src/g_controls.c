@@ -147,8 +147,6 @@ cvartemplate_t controlCVars[] = {
     {"ctl-look-speed", 0, CVT_FLOAT, &cfg.lookSpeed, 1, 5},
     {"ctl-look-spring", 0, CVT_INT, &cfg.lookSpring, 0, 1},
 
-    {"ctl-look-mouse", 0, CVT_INT, &cfg.useMLook, 0, 1},
-
     {"ctl-look-pov", 0, CVT_BYTE, &cfg.povLookAround, 0, 1},
     {"ctl-look-joy", 0, CVT_INT, &cfg.useJLook, 0, 1},
     {"ctl-look-joy-delta", 0, CVT_INT, &cfg.jLookDeltaMode, 0, 1},

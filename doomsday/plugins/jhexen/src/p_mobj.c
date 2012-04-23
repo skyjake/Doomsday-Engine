@@ -858,7 +858,7 @@ void P_MobjMoveZ(mobj_t* mo)
                             S_StartSound(SFX_PLAYER_LAND, mo);
                     }
 
-                    if(!cfg.useMLook && cfg.lookSpring)
+                    if(cfg.lookSpring)
                         mo->player->centering = true;
                 }
             }
@@ -993,8 +993,7 @@ static void landedOnThing(mobj_t* mo)
         S_StartSound(SFX_PLAYER_LAND, mo);
     }
 
-    // Lookspring is stupid when mouselook is on (and not in demo).
-    if(!cfg.useMLook && cfg.lookSpring) // || demorecording || demoplayback)
+    if(cfg.lookSpring) // || demorecording || demoplayback)
         mo->player->centering = true;
 }
 
