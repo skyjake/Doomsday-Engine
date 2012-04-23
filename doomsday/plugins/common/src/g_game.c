@@ -1261,9 +1261,6 @@ void G_DoLoadMap(void)
 
     Z_CheckHeap();
 
-    // Clear cmd building stuff.
-    G_ResetMousePos();
-
     sendPause = paused = false;
 
     G_ControlReset(-1); // Clear all controls for all local players.

@@ -154,7 +154,6 @@ void        G_RegisterBindClasses(void);
 void        G_LookAround(int pnum);
 void        G_SetPause(boolean yes);
 
-void        G_ResetMousePos(void);
 void        G_ControlReset(int pnum);
 
 float       G_GetLookOffset(int pnum);

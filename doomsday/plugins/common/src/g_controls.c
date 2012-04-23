@@ -1233,15 +1233,6 @@ void G_ControlReset(int player)
 */
 
 /**
- * Resets the mouse position to 0,0
- * Called e.g. when starting a new map.
- */
-void G_ResetMousePos(void)
-{
-    mousex = mousey = 0.f;
-}
-
-/**
  * Resets the look offsets.
  * Called e.g. when starting a new map.
  */
