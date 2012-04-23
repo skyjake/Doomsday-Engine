@@ -152,7 +152,6 @@ typedef struct {
     float           sndReverbFactor;
     byte            reverbDebug;
 
-    int             dclickUse;
     int             plrViewHeight;
     byte            mapTitle, hideIWADAuthor;
     int             hudFog;

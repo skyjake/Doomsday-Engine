@@ -182,7 +182,6 @@ void D_PreInit(void)
     // but these will be used no such files are found.
     memset(&cfg, 0, sizeof(cfg));
     cfg.playerMoveSpeed = 1;
-    cfg.dclickUse = false;
     cfg.povLookAround = true;
     cfg.screenBlocks = cfg.setBlocks = 10;
     cfg.echoMsg = true;

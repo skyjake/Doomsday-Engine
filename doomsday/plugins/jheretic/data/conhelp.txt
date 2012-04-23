@@ -626,9 +626,6 @@ desc = The speed of turning left/right.
 [ctl-run]
 desc = 1=Always run.
 
-[ctl-use-dclick]
-desc = 1=Doubleclick forward/strafe equals use key.
-
 [ctl-inventory-mode]
 desc = Inventory selection mode 0=cursor, 1=scroll.
 

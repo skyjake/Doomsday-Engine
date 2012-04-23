@@ -137,7 +137,6 @@ cvartemplate_t controlCVars[] = {
     {"ctl-turn-speed", 0, CVT_FLOAT, &cfg.turnSpeed, 1, 5},
     {"ctl-run", 0, CVT_INT, &cfg.alwaysRun, 0, 1},
 
-    {"ctl-use-dclick", 0, CVT_INT, &cfg.dclickUse, 0, 1},
 #if __JHERETIC__ || __JHEXEN__
     {"ctl-inventory-mode", 0, CVT_BYTE, &cfg.inventorySelectMode, 0, 1},
     {"ctl-inventory-wrap", 0, CVT_BYTE, &cfg.inventoryWrap, 0, 1},

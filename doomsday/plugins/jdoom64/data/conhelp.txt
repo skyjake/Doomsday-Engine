@@ -598,9 +598,6 @@ desc = The speed of turning left/right.
 [ctl-run]
 desc = 1=Always run.
 
-[ctl-use-dclick]
-desc = 1=Doubleclick forward/strafe equals use key.
-
 [ctl-look-speed]
 desc = The speed of looking up/down.
 

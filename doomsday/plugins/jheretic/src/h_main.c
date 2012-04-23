@@ -184,7 +184,6 @@ void H_PreInit(void)
     // but these will be used no such files are found.
     memset(&cfg, 0, sizeof(cfg));
     cfg.playerMoveSpeed = 1;
-    cfg.dclickUse = false;
     cfg.povLookAround = true;
     cfg.statusbarScale = 1;
     cfg.screenBlocks = cfg.setBlocks = 10;
