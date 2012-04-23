@@ -205,12 +205,9 @@ void LogBuffer::flush()
 #ifdef _DEBUG
             // Debug builds include a timestamp and msg type indicator.
             const duint MAX_LENGTH = 110;
-            const duint SIMPLE_INDENT = 25;
 #else
             const duint MAX_LENGTH = 89;
-            const duint SIMPLE_INDENT = 4;
 #endif
-            const duint RULER_LENGTH = MAX_LENGTH - SIMPLE_INDENT - 1;
 
             DENG2_FOR_EACH(i, _toBeFlushed, EntryList::iterator)
             {
@@ -225,13 +222,17 @@ void LogBuffer::flush()
                 String message = (*i)->asText(LogEntry::Simple);
 #endif
 
+                // The wrap indentatin will be determined dynamically based on the content
+                // of the line.
+                int wrapIndent = -1;
+
                 // Print line by line.
                 String::size_type pos = 0;
                 while(pos != String::npos)
                 {
                     String::size_type next = message.indexOf('\n', pos);
                     duint lineLen = (next == String::npos? message.size() - pos : next - pos);
-                    const duint maxLen = (pos > 0? MAX_LENGTH - SIMPLE_INDENT : MAX_LENGTH);
+                    const duint maxLen = (pos > 0? MAX_LENGTH - wrapIndent : MAX_LENGTH);
                     if(lineLen > maxLen)
                     {
                         // Wrap overly long lines.
@@ -244,7 +245,10 @@ void LogBuffer::flush()
                         {
                             if(message[checkPos].isSpace() ||
                                     (message[checkPos].isPunct() && message[checkPos] != '.' &&
-                                     message[checkPos] != ',' && message[checkPos] != '-'))
+                                     message[checkPos] != ',' && message[checkPos] != '-' &&
+                                     message[checkPos] != '\'' && message[checkPos] != '"' &&
+                                     message[checkPos] != '[' && message[checkPos] != ']' &&
+                                     message[checkPos] != '_'))
                             {
                                 if(!message[checkPos].isSpace())
                                 {
@@ -261,19 +265,43 @@ void LogBuffer::flush()
                         }
                     }
 
+                    String lineText = message.substr(pos, lineLen);
+                    if(pos > 0 && lineText.isEmpty()) break; // Skip empty remainder.
+
+                    // The wrap indent for this paragraph depends on the first line's content.
+                    if(wrapIndent < 0)
+                    {
+#ifdef _DEBUG
+                        const int minimum = 25;
+#else
+                        const int minimum = 0;
+#endif
+                        int w = minimum;
+                        int firstNonSpace = -1;
+                        for(; w < lineText.size(); ++w)
+                        {
+                            if(firstNonSpace < 0 && !lineText[w].isSpace())
+                                firstNonSpace = w;
+
+                            // Indent to colons automatically (but not too deeply).
+                            if(lineText[w] == ':' && w < lineText.size() - 1 && lineText[w + 1].isSpace())
+                                firstNonSpace = (w < int(MAX_LENGTH)/2? -1 : minimum);
+                        }
+
+                        wrapIndent = qMax(0, firstNonSpace);
+                    }
+
+                    // Check for formatting symbols.
+                    lineText.replace("$R", String(MAX_LENGTH - wrapIndent - 1, '-'));
+
                     // For lines other than the first one, print an indentation.
                     if(pos > 0)
                     {
                         foreach(IOutputStream* stream, os)
                         {
-                            if(stream) *stream << QString(SIMPLE_INDENT, QChar(' '));
+                            if(stream) *stream << QString(wrapIndent, QChar(' '));
                         }
                     }
-
-                    String lineText = message.substr(pos, lineLen);
-
-                    // Check for formatting symbols.
-                    lineText.replace("$R", String(RULER_LENGTH, '-'));
 
                     foreach(IOutputStream* stream, os)
                     {
