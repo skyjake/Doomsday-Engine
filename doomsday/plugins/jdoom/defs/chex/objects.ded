@@ -24,6 +24,62 @@ Thing Mods "SKULL" {
   Height = 0;
 }
 
+Thing Mods "TROOPSHOT" {
+  Flags = dropoff | missile | noblockmap | nogravity;
+}
+
+Thing Mods "PLASMA" {
+  Flags = noblockmap | missile | dropoff | nogravity | brightshadow | brightexplode;
+}
+
+State Mods "TBALL1" {
+  Flags = ;
+}
+
+State Mods "TBALL2" {
+  Flags = ;
+}
+
+State Mods "TBALLX1" {
+  Flags = ;
+}
+
+State Mods "TBALLX2" {
+  Flags = ;
+}
+
+State Mods "TBALLX3" {
+  Flags = ;
+}
+
+State Mods "POSS_ATK2" {
+  Flags = ;
+}
+
+State Mods "SPOS_ATK2" {
+  Flags = ;
+}
+
+State Mods "BRBALL1" {
+  Flags = ;
+}
+
+State Mods "BRBALL2" {
+  Flags = ;
+}
+
+State Mods "BRBALLX1" {
+  Flags = ;
+}
+
+State Mods "BRBALLX2" {
+  Flags = ;
+}
+
+State Mods "BRBALLX3" {
+  Flags = ;
+}
+
 State Mods "BOSS_ATK1" {
   Tics = 3;
 }
@@ -49,27 +105,27 @@ State Mods "YKEY2" {
 }
 
 State Mods "BON1" {
-  Flags = "";
+  Flags = ;
 }
 
 State Mods "BON1A" {
-  Flags = "";
+  Flags = ;
 }
 
 State Mods "BON1B" {
-  Flags = "";
+  Flags = ;
 }
 
 State Mods "BON1C" {
-  Flags = "";
+  Flags = ;
 }
 
 State Mods "BON1D" {
-  Flags = "";
+  Flags = ;
 }
 
 State Mods "BON1E" {
-  Flags = "";
+  Flags = ;
 }
 
 State Mods "SOUL" {
@@ -97,11 +153,11 @@ State Mods "SOUL6" {
 }
 
 State Mods "CANDLESTIK" {
-  Flags = "";
+  Flags = ;
 }
 
 State Mods "CANDELABRA" {
-  Flags = "";
+  Flags = ;
 }
 
 State Mods "PMAP" {
@@ -133,65 +189,65 @@ State Mods "SUIT" {
 }
 
 State Mods "BLUETORCH" {
-  Flags = "";
+  Flags = ;
 }
 
 State Mods "BLUETORCH2" {
-  Flags = "";
+  Flags = ;
 }
 
 State Mods "BLUETORCH3" {
-  Flags = "";
+  Flags = ;
 }
 
 State Mods "BLUETORCH4" {
-  Flags = "";
+  Flags = ;
 }
 
 State Mods "GREENTORCH" {
-  Flags = "";
+  Flags = ;
 }
 
 State Mods "GREENTORCH2" {
-  Flags = "";
+  Flags = ;
 }
 
 State Mods "GREENTORCH3" {
-  Flags = "";
+  Flags = ;
 }
 
 State Mods "GREENTORCH4" {
-  Flags = "";
+  Flags = ;
 }
 
 State Mods "GTORCHSHRT" {
-  Flags = "";
+  Flags = ;
 }
 
 State Mods "GTORCHSHRT2" {
-  Flags = "";
+  Flags = ;
 }
 
 State Mods "GTORCHSHRT3" {
-  Flags = "";
+  Flags = ;
 }
 
 State Mods "GTORCHSHRT4" {
-  Flags = "";
+  Flags = ;
 }
 
 State Mods "RTORCHSHRT" {
-  Flags = "";
+  Flags = ;
 }
 
 State Mods "RTORCHSHRT2" {
-  Flags = "";
+  Flags = ;
 }
 
 State Mods "RTORCHSHRT3" {
-  Flags = "";
+  Flags = ;
 }
 
 State Mods "RTORCHSHRT4" {
-  Flags = "";
+  Flags = ;
 }
