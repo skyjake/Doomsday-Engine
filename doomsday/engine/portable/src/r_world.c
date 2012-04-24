@@ -1430,35 +1430,56 @@ boolean R_SectorContainsSkySurfaces(const Sector* sec)
 static material_t* chooseFixMaterial(SideDef* s, SideDefSection section)
 {
     material_t* choice1 = NULL, *choice2 = NULL;
+    Sector* frontSec, *backSec;
+    byte sid;
 
-    if(section == SS_BOTTOM || section == SS_TOP)
+    // Section is applicable?
+    if(section == SS_MIDDLE) return NULL;
+
+    sid = (s->line->L_frontside == s? FRONT : BACK);
+    frontSec = s->line->L_sector(sid);
+    backSec  = s->line->L_sector(sid^1);
+
+    // Our first choice is a material in the other sector.
+    if(backSec)
     {
-        byte sid = (s->line->L_frontside == s? 0 : 1);
-        Sector* frontSec = s->line->L_sector(sid);
-        Sector* backSec = s->line->L_sector(sid^1);
-        Surface* suf;
-
-        if(backSec && ((section == SS_BOTTOM && frontSec->SP_floorheight < backSec->SP_floorheight && frontSec->SP_ceilheight  > backSec->SP_floorheight) ||
-                       (section == SS_TOP    && frontSec->SP_ceilheight  > backSec->SP_ceilheight  && frontSec->SP_floorheight < backSec->SP_ceilheight)))
+        if(section == SS_BOTTOM)
         {
-            suf = &backSec->SP_plane(section == SS_BOTTOM? PLN_FLOOR : PLN_CEILING)->surface;
-            if(suf->material && !Surface_IsSkyMasked(suf))
-                choice1 = suf->material;
+            if(frontSec->SP_floorheight < backSec->SP_floorheight &&
+               frontSec->SP_ceilheight  > backSec->SP_floorheight)
+            {
+                choice1 = backSec->SP_floormaterial;
+            }
         }
-
-        suf = &frontSec->SP_plane(section == SS_BOTTOM? PLN_FLOOR : PLN_CEILING)->surface;
-        if(suf->material && !Surface_IsSkyMasked(suf))
-            choice2 = suf->material;
+        else /* section == SS_TOP */
+        {
+            if(frontSec->SP_ceilheight  > backSec->SP_ceilheight &&
+               frontSec->SP_floorheight < backSec->SP_ceilheight)
+            {
+                choice1 = backSec->SP_ceilmaterial;
+            }
+        }
     }
 
-    if(choice1 && !Material_IsGroupAnimated(choice1))
+    // Our second choice is a material from this sector.
+    choice2 = frontSec->SP_plane(section == SS_BOTTOM? PLN_FLOOR : PLN_CEILING)->PS_material;
+
+    // Prefer a non-animated, non-masked material.
+    if(choice1 && !Material_IsGroupAnimated(choice1) && !Material_IsSkyMasked(choice1))
         return choice1;
-    if(choice2 && !Material_IsGroupAnimated(choice2))
+    if(choice2 && !Material_IsGroupAnimated(choice2) && !Material_IsSkyMasked(choice2))
         return choice2;
-    if(choice1)
+
+    // Prefer a non-masked material.
+    if(choice1 && !Material_IsSkyMasked(choice1))
         return choice1;
-    if(choice2)
+    if(choice2 && !Material_IsSkyMasked(choice2))
         return choice2;
+
+    // At this point we'll accept anything if it means avoiding HOM.
+    if(choice1) return choice1;
+    if(choice2) return choice2;
+
     return NULL;
 }
 
@@ -1466,34 +1487,46 @@ static void updateSidedefSection(SideDef* s, SideDefSection section)
 {
     Surface* suf;
 
-    if(section == SS_MIDDLE)
-        return; // Not applicable.
+    // Section is applicable?
+    if(section == SS_MIDDLE) return;
 
+    // A material must be missing for this test to apply.
     suf = &s->sections[section];
-    if(!suf->material /*&&
-       !Surface_IsSkyMasked(&s->sector->
-            SP_plane(section == SS_BOTTOM? PLN_FLOOR : PLN_CEILING)->
-                surface)*/)
+    if(suf->material) return;
+
+    // Look for a suitable replacement.
+    Surface_SetMaterial(suf, chooseFixMaterial(s, section));
+    suf->inFlags |= SUIF_FIX_MISSING_MATERIAL;
+
+    // During map load we log missing materials.
+    if(ddMapSetup)
     {
-        Surface_SetMaterial(suf, chooseFixMaterial(s, section));
-        suf->inFlags |= SUIF_FIX_MISSING_MATERIAL;
+        VERBOSE(
+            Uri* uri = suf->material? Materials_ComposeUri(Materials_Id(suf->material)) : 0;
+            ddstring_t* path = uri? Uri_ToString(uri) : 0;
+            Con_Message("Warning: SideDef #%u is missing a material for the %s section.\n"
+                        "  %s was chosen to complete the definition.\n", s->buildData.index-1,
+                        section == SS_TOP? "top" : "bottom", path? Str_Text(path) : "<null>");
+            if(path) Str_Delete(path);
+            if(uri) Uri_Delete(uri);
+        )
     }
 }
 
 void R_UpdateLinedefsOfSector(Sector* sec)
 {
-    uint                i;
+    uint i;
+
+    if(!sec) return;
 
     for(i = 0; i < sec->lineDefCount; ++i)
     {
-        LineDef*            li = sec->lineDefs[i];
-        SideDef*            front, *back;
-        Sector*             frontSec, *backSec;
+        LineDef* li = sec->lineDefs[i];
+        SideDef* front, *back;
+        Sector* frontSec, *backSec;
 
-        if(!li->L_frontside || !li->L_backside)
-            continue;
-        if(LINE_SELFREF(li))
-            continue;
+        if(!li->L_frontside || !li->L_backside) continue;
+        if(LINE_SELFREF(li)) continue;
 
         front = li->L_frontside;
         back  = li->L_backside;
