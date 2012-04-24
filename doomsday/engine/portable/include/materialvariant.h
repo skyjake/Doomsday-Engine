@@ -26,6 +26,10 @@
 
 #include "r_data.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct texturevariant_s;
 struct texturevariantspecification_s;
 struct materialvariant_s;
@@ -162,5 +166,9 @@ void MaterialVariant_SetTranslation(materialvariant_t* mat,
  * @param inter  Translation point.
  */
 void MaterialVariant_SetTranslationPoint(materialvariant_t* mat, float inter);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_MATERIALVARIANT_H */

@@ -26,6 +26,10 @@
 #include "r_data.h"
 #include "p_dmu.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Mark the surface as requiring a full update. To be called
  * during engine reset.
@@ -140,5 +144,9 @@ int Surface_GetProperty(const Surface* surface, setargs_t* args);
  * @return  Always @c 0 (can be used as an iterator).
  */
 int Surface_SetProperty(Surface* surface, const setargs_t* args);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /// LIBDENG_MAP_SURFACE
