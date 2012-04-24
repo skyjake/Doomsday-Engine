@@ -157,6 +157,7 @@ void S_MapChange(void)
     Sfx_InitLogical();
 
     Sfx_MapChange();
+    S_ResetReverb();
 }
 
 void S_SetupForChangedMap(void)
@@ -198,6 +199,7 @@ BEGIN_PROF( PROF_SOUND_STARTFRAME );
 
     Sfx_StartFrame();
     Mus_StartFrame();
+    S_UpdateReverb();
 
     // Remove stopped sounds from the LSM.
     Sfx_PurgeLogical();
