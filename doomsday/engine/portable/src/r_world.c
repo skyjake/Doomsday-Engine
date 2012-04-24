@@ -1429,20 +1429,14 @@ boolean R_SectorContainsSkySurfaces(const Sector* sec)
  */
 static material_t* chooseFixMaterial(SideDef* s, SideDefSection section)
 {
-    material_t* choice1 = NULL, *choice2 = NULL;
-    Sector* frontSec, *backSec;
-    byte sid;
+    material_t* choice1 = 0, *choice2 = 0;
+    byte sid = (s->line->L_frontside == s? FRONT : BACK);
+    Sector* frontSec = s->line->L_sector(sid);
+    Sector* backSec  = s->line->L_side(sid^1)? s->line->L_sector(sid^1) : 0;
 
-    // Section is applicable?
-    if(section == SS_MIDDLE) return NULL;
-
-    sid = (s->line->L_frontside == s? FRONT : BACK);
-    frontSec = s->line->L_sector(sid);
-    backSec  = s->line->L_sector(sid^1);
-
-    // Our first choice is a material in the other sector.
     if(backSec)
     {
+        // Our first choice is a material in the other sector.
         if(section == SS_BOTTOM)
         {
             if(frontSec->SP_floorheight < backSec->SP_floorheight)
@@ -1450,7 +1444,7 @@ static material_t* chooseFixMaterial(SideDef* s, SideDefSection section)
                 choice1 = backSec->SP_floormaterial;
             }
         }
-        else /* section == SS_TOP */
+        else if(section == SS_TOP)
         {
             if(frontSec->SP_ceilheight  > backSec->SP_ceilheight)
             {
@@ -1463,6 +1457,41 @@ static material_t* chooseFixMaterial(SideDef* s, SideDefSection section)
         if(choice1 && Material_IsSkyMasked(choice1))
         {
             return choice1;
+        }
+    }
+    else
+    {
+        // Our first choice is a material on an adjacent wall section.
+        // Try the left neighbor first.
+        LineDef* other = R_FindLineNeighbor(frontSec, s->line, s->line->L_vo(sid),
+                                            false /*next clockwise*/, NULL/*angle delta is irrelevant*/);
+        if(!other)
+            // Try the right neighbor.
+            other = R_FindLineNeighbor(frontSec, s->line, s->line->L_vo(sid^1),
+                                       true /*next anti-clockwise*/, NULL/*angle delta is irrelevant*/);
+
+        if(other)
+        {
+            if(!other->L_backside)
+            {
+                // Our choice is clear - the middle material.
+                choice1 = other->L_frontside->SW_middlematerial;
+            }
+            else
+            {
+                // Compare the relative heights to decide.
+                SideDef* otherSide = other->L_side(other->L_frontsector == frontSec? FRONT : BACK);
+                Sector* otherSec = other->L_sector(other->L_frontsector == frontSec? BACK  : FRONT);
+                if(otherSec->SP_ceilheight <= frontSec->SP_floorheight)
+                    choice1 = otherSide->SW_topmaterial;
+                else if(otherSec->SP_floorheight >= frontSec->SP_ceilheight)
+                    choice1 = otherSide->SW_bottommaterial;
+                else if(otherSec->SP_ceilheight < frontSec->SP_ceilheight)
+                    choice1 = otherSide->SW_topmaterial;
+                else if(otherSec->SP_floorheight > frontSec->SP_floorheight)
+                    choice1 = otherSide->SW_bottommaterial;
+                // else we'll settle for a plane material.
+            }
         }
     }
 
@@ -1485,15 +1514,13 @@ static material_t* chooseFixMaterial(SideDef* s, SideDefSection section)
     if(choice1) return choice1;
     if(choice2) return choice2;
 
-    return NULL;
+    // We'll assign the special "missing" material...
+    return Materials_ToMaterial(Materials_ResolveUriCString(MN_SYSTEM_NAME":missing"));
 }
 
-static void updateSidedefSection(SideDef* s, SideDefSection section)
+static void addMissingMaterial(SideDef* s, SideDefSection section)
 {
     Surface* suf;
-
-    // Section is applicable?
-    if(section == SS_MIDDLE) return;
 
     // A material must be missing for this test to apply.
     suf = &s->sections[section];
@@ -1511,7 +1538,8 @@ static void updateSidedefSection(SideDef* s, SideDefSection section)
             ddstring_t* path = uri? Uri_ToString(uri) : 0;
             Con_Message("Warning: SideDef #%u is missing a material for the %s section.\n"
                         "  %s was chosen to complete the definition.\n", s->buildData.index-1,
-                        section == SS_TOP? "top" : "bottom", path? Str_Text(path) : "<null>");
+                        (section == SS_MIDDLE? "middle" : section == SS_TOP? "top" : "bottom"),
+                        path? Str_Text(path) : "<null>");
             if(path) Str_Delete(path);
             if(uri) Uri_Delete(uri);
         )
@@ -1530,7 +1558,6 @@ void R_UpdateLinedefsOfSector(Sector* sec)
         SideDef* front, *back;
         Sector* frontSec, *backSec;
 
-        if(!li->L_frontside || !li->L_backside) continue;
         if(LINE_SELFREF(li)) continue;
 
         front = li->L_frontside;
@@ -1538,23 +1565,34 @@ void R_UpdateLinedefsOfSector(Sector* sec)
         frontSec = front->sector;
         backSec = li->L_backside? back->sector : NULL;
 
+        // Do not fix "windows".
+        if(!front || (!back && backSec)) continue;
+
         /**
          * Do as in the original Doom if the texture has not been defined -
          * extend the floor/ceiling to fill the space (unless it is skymasked),
          * or if there is a midtexture use that instead.
          */
 
-        // Check for missing lowers.
-        if(frontSec->SP_floorheight < backSec->SP_floorheight)
-            updateSidedefSection(front, SS_BOTTOM);
-        else if(frontSec->SP_floorheight > backSec->SP_floorheight)
-            updateSidedefSection(back, SS_BOTTOM);
+        if(backSec)
+        {
+            // Bottom section.
+            if(frontSec->SP_floorheight < backSec->SP_floorheight)
+                addMissingMaterial(front, SS_BOTTOM);
+            else if(frontSec->SP_floorheight > backSec->SP_floorheight)
+                addMissingMaterial(back, SS_BOTTOM);
 
-        // Check for missing uppers.
-        if(backSec->SP_ceilheight < frontSec->SP_ceilheight)
-            updateSidedefSection(front, SS_TOP);
-        else if(backSec->SP_ceilheight > frontSec->SP_ceilheight)
-            updateSidedefSection(back, SS_TOP);
+            // Top section.
+            if(backSec->SP_ceilheight < frontSec->SP_ceilheight)
+                addMissingMaterial(front, SS_TOP);
+            else if(backSec->SP_ceilheight > frontSec->SP_ceilheight)
+                addMissingMaterial(back, SS_TOP);
+        }
+        else
+        {
+            // Middle section.
+            addMissingMaterial(front, SS_MIDDLE);
+        }
     }
 }
 
