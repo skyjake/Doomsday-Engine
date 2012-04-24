@@ -395,13 +395,13 @@ static void markSideDefSectionsPVisible(HEdge* hedge)
 
     // Top.
     if((!devRendSkyMode && Surface_IsSkyMasked(&fceil->surface) && Surface_IsSkyMasked(&bceil->surface)) ||
-       (!devRendSkyMode && Surface_IsSkyMasked(&bceil->surface) && (side->SW_topsurface.inFlags & SUIF_FIX_MISSING_MATERIAL)) ||
+       //(!devRendSkyMode && Surface_IsSkyMasked(&bceil->surface) && (side->SW_topsurface.inFlags & SUIF_FIX_MISSING_MATERIAL)) ||
        (fceil->visHeight <= bceil->visHeight))
         side->SW_topsurface   .inFlags &= ~SUIF_PVIS;
 
     // Bottom.
     if((!devRendSkyMode && Surface_IsSkyMasked(&ffloor->surface) && Surface_IsSkyMasked(&bfloor->surface)) ||
-       (!devRendSkyMode && Surface_IsSkyMasked(&bfloor->surface) && (side->SW_bottomsurface.inFlags & SUIF_FIX_MISSING_MATERIAL)) ||
+       //(!devRendSkyMode && Surface_IsSkyMasked(&bfloor->surface) && (side->SW_bottomsurface.inFlags & SUIF_FIX_MISSING_MATERIAL)) ||
        (ffloor->visHeight >= bfloor->visHeight))
         side->SW_bottomsurface.inFlags &= ~SUIF_PVIS;
 }
@@ -1418,7 +1418,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
     if(shinyColors)
         R_FreeRendColors(shinyColors);
 
-    return (p->forceOpaque ||
+    return (p->forceOpaque || (p->flags & RPF_SKYMASK) ||
         !(p->alpha < 1 || !msA->isOpaque || p->blendMode > 0));
 }
 

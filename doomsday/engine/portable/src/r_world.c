@@ -1445,19 +1445,24 @@ static material_t* chooseFixMaterial(SideDef* s, SideDefSection section)
     {
         if(section == SS_BOTTOM)
         {
-            if(frontSec->SP_floorheight < backSec->SP_floorheight &&
-               frontSec->SP_ceilheight  > backSec->SP_floorheight)
+            if(frontSec->SP_floorheight < backSec->SP_floorheight)
             {
                 choice1 = backSec->SP_floormaterial;
             }
         }
         else /* section == SS_TOP */
         {
-            if(frontSec->SP_ceilheight  > backSec->SP_ceilheight &&
-               frontSec->SP_floorheight < backSec->SP_ceilheight)
+            if(frontSec->SP_ceilheight  > backSec->SP_ceilheight)
             {
                 choice1 = backSec->SP_ceilmaterial;
             }
+        }
+
+        // In the special case of sky mask on the back plane, our best
+        // choice is always this material.
+        if(choice1 && Material_IsSkyMasked(choice1))
+        {
+            return choice1;
         }
     }
 
