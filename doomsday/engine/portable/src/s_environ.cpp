@@ -1,38 +1,30 @@
-/**\file s_environ.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * Environmental Sound Effects.
+ * @file s_environ.cpp
+ * Environmental sound effects. @ingroup audio
  *
  * Calculation of the aural properties of sectors.
+ *
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
-
 
 #include <ctype.h>
 #include <string.h>
+#include <set>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -43,28 +35,12 @@
 
 #include "materialvariant.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
 typedef struct {
     const char  name[9];    // Material type name.
     int         volumeMul;
     int         decayMul;
     int         dampingMul;
 } materialenvinfo_t;
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static materialenvinfo_t matInfo[NUM_MATERIAL_ENV_CLASSES] = {
     {"Metal",     255,     255,    25},
@@ -75,7 +51,8 @@ static materialenvinfo_t matInfo[NUM_MATERIAL_ENV_CLASSES] = {
 
 static ownernode_t *unusedNodeList = NULL;
 
-// CODE --------------------------------------------------------------------
+typedef std::set<Sector*> ReverbUpdateRequested;
+ReverbUpdateRequested reverbUpdateRequested;
 
 const char* S_MaterialEnvClassName(material_env_class_t mclass)
 {
@@ -104,7 +81,7 @@ material_env_class_t S_MaterialEnvClassForUri(const Uri* uri)
                 for(k = 0; k < NUM_MATERIAL_ENV_CLASSES; ++k)
                 {
                     if(!stricmp(env->id, matInfo[k].name))
-                        return MEC_FIRST + k;
+                        return material_env_class_t(MEC_FIRST + k);
                 }
                 return MEC_UNKNOWN;
             }
@@ -127,7 +104,7 @@ static ownernode_t* newOwnerNode(void)
     }
     else
     {   // Need to allocate another.
-        node = M_Malloc(sizeof(ownernode_t));
+        node = (ownernode_t*) M_Malloc(sizeof(ownernode_t));
     }
 
     return node;
@@ -196,9 +173,8 @@ static void findBspLeafsAffectingSector(GameMap* map, uint secIDX)
     {
         BspLeaf **ptr;
 
-        sec->reverbBspLeafs =
-            Z_Malloc((sec->numReverbBspLeafAttributors + 1) * sizeof(BspLeaf*),
-                     PU_MAPSTATIC, 0);
+        sec->reverbBspLeafs = (BspLeaf**)
+            Z_Malloc((sec->numReverbBspLeafAttributors + 1) * sizeof(BspLeaf*), PU_MAPSTATIC, 0);
 
         for(i = 0, ptr = sec->reverbBspLeafs, node = bspLeafOwnerList.head;
             i < sec->numReverbBspLeafAttributors; ++i, ptr++)
@@ -223,12 +199,6 @@ static void findBspLeafsAffectingSector(GameMap* map, uint secIDX)
     }
 }
 
-/**
- * Called during map init to determine which BSP leafs affect the reverb
- * properties of each sector. Given that BSP leafs do not change shape (in
- * two dimensions at least), they do not move and are not created/destroyed
- * once the map has been loaded; this step can be pre-processed.
- */
 void S_DetermineBspLeafsAffectingSectorReverb(GameMap* map)
 {
     uint i, startTime;
@@ -340,22 +310,13 @@ static boolean calcBspLeafReverb(BspLeaf* bspLeaf)
     return true;
 }
 
-/**
- * Re-calculate the reverb properties of the given sector. Should be called
- * whenever any of the properties governing reverb properties have changed
- * (i.e. hedge/plane texture or plane height changes).
- *
- * PRE: BspLeaf attributors must have been determined first.
- *
- * @param sec  Ptr to the sector to calculate reverb properties of.
- */
-void S_CalcSectorReverb(Sector* sec)
+static void Sector_CalculateReverb(Sector* sec)
 {
     BspLeaf* sub;
     float spaceScatter;
     uint sectorSpace;
 
-    if(!sec || 0 == sec->lineDefCount) return;
+    if(!sec || !sec->lineDefCount) return;
 
     sectorSpace = (int) (sec->SP_ceilheight - sec->SP_floorheight) *
         (sec->aaBox.maxX - sec->aaBox.minX) *
@@ -431,4 +392,25 @@ void S_CalcSectorReverb(Sector* sec)
 
     if(sec->reverb[SRD_VOLUME] > 1)
         sec->reverb[SRD_VOLUME] = 1;
+}
+
+void S_ResetReverb(void)
+{
+    reverbUpdateRequested.clear();
+}
+
+void S_UpdateReverb(void)
+{
+    if(reverbUpdateRequested.empty()) return;
+
+    for(ReverbUpdateRequested::iterator i = reverbUpdateRequested.begin(); i != reverbUpdateRequested.end(); ++i)
+    {
+        Sector_CalculateReverb(*i);
+    }
+    reverbUpdateRequested.clear();
+}
+
+void S_CalcSectorReverb(Sector* sec)
+{
+    reverbUpdateRequested.insert(sec);
 }

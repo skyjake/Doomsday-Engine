@@ -591,7 +591,7 @@ SOURCES += \
     portable/src/rend_sprite.c \
     portable/src/resourcenamespace.c \
     portable/src/s_cache.c \
-    portable/src/s_environ.c \
+    portable/src/s_environ.cpp \
     portable/src/s_logic.c \
     portable/src/s_main.c \
     portable/src/s_mus.c \
