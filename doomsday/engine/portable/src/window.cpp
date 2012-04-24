@@ -1307,10 +1307,9 @@ boolean Window_IsMouseTrapped(const Window* wnd)
 
 boolean Window_ShouldRepaintManually(const Window* wnd)
 {
-#if defined(WIN32) || defined(Q_WS_X11)
     DENG_UNUSED(wnd);
     return false;
-#else
+#if 0
     // When mouse is trapped, we update the screen during the main loop
     // iteration rather than waiting for the windowing system to send an update
     // event.
