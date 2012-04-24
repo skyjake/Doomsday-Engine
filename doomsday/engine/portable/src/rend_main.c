@@ -2482,11 +2482,11 @@ static void skyFixZCoords(HEdge* hedge, int skyCap, coord_t* bottom, coord_t* to
     if(skyCap & SKYCAP_UPPER)
     {
         if(top)    *top    = skyFixCeilZ(fceil, bceil);
-        if(bottom) *bottom = MAX_OF((backSec && Surface_IsSkyMasked(&bceil->surface))? bceil->visHeight : fceil->visHeight, ffloor->visHeight);
+        if(bottom) *bottom = MAX_OF((backSec && Surface_IsSkyMasked(&bceil->surface)  && bfloor->visHeight < fceil->visHeight )? bceil->visHeight  : fceil->visHeight,  ffloor->visHeight);
     }
     else
     {
-        if(top)    *top    = MIN_OF((backSec && Surface_IsSkyMasked(&bfloor->surface)? bfloor->visHeight : ffloor->visHeight), fceil->visHeight);
+        if(top)    *top    = MIN_OF((backSec && Surface_IsSkyMasked(&bfloor->surface) && bceil->visHeight  > ffloor->visHeight)? bfloor->visHeight : ffloor->visHeight, fceil->visHeight);
         if(bottom) *bottom = skyFixFloorZ(ffloor, bfloor);
     }
 }
