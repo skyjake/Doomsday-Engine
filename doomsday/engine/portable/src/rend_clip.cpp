@@ -415,8 +415,8 @@ static void C_AddRange(binangle_t startAngle, binangle_t endAngle)
     }
 }
 
-static OccNode* C_NewOcclusionRange(binangle_t stAng, binangle_t endAng, float* normal,
-    boolean topHalf)
+static OccNode* C_NewOcclusionRange(binangle_t stAng, binangle_t endAng,
+    float const normal[3], boolean topHalf)
 {
     OccNode* node = reinterpret_cast<OccNode*>(C_RoverGet(&occNodes));
     if(!node)
@@ -429,7 +429,8 @@ static OccNode* C_NewOcclusionRange(binangle_t stAng, binangle_t endAng, float* 
     node->flags = (topHalf ? OCNF_TOPHALF : 0);
     node->start = stAng;
     node->end = endAng;
-    memcpy(node->normal, normal, sizeof(node->normal));
+    V3f_Copy(node->normal, normal);
+
     return node;
 }
 
@@ -450,7 +451,7 @@ static void C_RemoveOcclusionRange(OccNode* orange)
 /**
  * The given range must be safe.
  */
-static void C_AddOcclusionRange(binangle_t start, binangle_t end, float* normal,
+static void C_AddOcclusionRange(binangle_t start, binangle_t end, float const normal[3],
     boolean topHalf)
 {
     // Is the range valid?
@@ -813,8 +814,7 @@ static void C_SafeAddOcclusionRange(binangle_t startAngle, binangle_t endAngle,
     float* normal, boolean tophalf)
 {
     // Is this range already clipped?
-    if(!C_SafeCheckRange(startAngle, endAngle))
-        return;
+    if(!C_SafeCheckRange(startAngle, endAngle)) return;
 
     if(startAngle > endAngle)
     {
@@ -846,6 +846,11 @@ void C_AddViewRelOcclusion(coord_t const* v1, coord_t const* v2, coord_t height,
     V3d_Set(viewToV1, v1[VX] - vOrigin[VX], v1[VY] - vOrigin[VZ], height - vOrigin[VY]);
     V3d_Set(viewToV2, v2[VX] - vOrigin[VX], v2[VY] - vOrigin[VZ], height - vOrigin[VY]);
 
+    // Do not attempt to occlude with a zero-length range.
+    binangle_t startAngle = C_PointToAngle(viewToV2);
+    binangle_t endAngle   = C_PointToAngle(viewToV1);
+    if(startAngle == endAngle) return;
+
     // The normal points to the half we want to occlude.
     vec3f_t normal;
     V3f_CrossProductd(normal, topHalf ? viewToV2 : viewToV1,
@@ -854,19 +859,18 @@ void C_AddViewRelOcclusion(coord_t const* v1, coord_t const* v2, coord_t height,
 #if _DEBUG
     vec3f_t testPos;
     V3f_Set(testPos, 0, 0, (topHalf ? 1000 : -1000));
-    if(V3f_DotProduct(testPos, normal) < 0)
+    if(bool Failed_C_AddViewRelOcclusion_SideTest = V3f_DotProduct(testPos, normal) < 0)
     {
         // Uh-oh.
         LOG_WARNING("C_AddViewRelOcclusion: Wrong side v1[x:%f, y:%f] v2[x:%f, y:%f] view[x:%f, y:%f]!")
                 << v1[VX] << v1[VY] << v2[VX] << v2[VY]
                 << vOrigin[VX] << vOrigin[VZ];
-        //assert(0);
-        return;
+        assert(!Failed_C_AddViewRelOcclusion_SideTest);
     }
 #endif
 
-    C_SafeAddOcclusionRange(C_PointToAngle(viewToV2), C_PointToAngle(viewToV1),
-                            normal, topHalf);
+    // Try to add this range.
+    C_SafeAddOcclusionRange(startAngle, endAngle, normal, topHalf);
 }
 
 /**
