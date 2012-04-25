@@ -616,6 +616,9 @@ int M_BoxOnLineSide(const AABoxd* box, double const linePoint[], double const li
 int M_BoxOnLineSide2(const AABoxd* box, double const linePoint[], double const lineDirection[],
     double linePerp, double lineLength, double epsilon)
 {
+#define NORMALIZE(v)        ((v) < 0? -1 : (v) > 0? 1 : 0)
+
+    double delta;
     int a, b;
 
     switch(M_SlopeType(lineDirection))
@@ -644,18 +647,27 @@ int M_BoxOnLineSide2(const AABoxd* box, double const linePoint[], double const l
     case ST_POSITIVE: {
         double topLeft[2]       = { box->minX, box->maxY };
         double bottomRight[2]   = { box->maxX, box->minY };
-        a = V2d_PointOnLineSide2(topLeft,     lineDirection, linePerp, lineLength, epsilon) < 0;
-        b = V2d_PointOnLineSide2(bottomRight, lineDirection, linePerp, lineLength, epsilon) < 0;
+
+        delta = V2d_PointOnLineSide2(topLeft,     lineDirection, linePerp, lineLength, epsilon);
+        a = NORMALIZE(delta);
+
+        delta = V2d_PointOnLineSide2(bottomRight, lineDirection, linePerp, lineLength, epsilon);
+        b = NORMALIZE(delta);
         break; }
 
     case ST_NEGATIVE:
-        a = V2d_PointOnLineSide2(box->max, lineDirection, linePerp, lineLength, epsilon) < 0;
-        b = V2d_PointOnLineSide2(box->min, lineDirection, linePerp, lineLength, epsilon) < 0;
+        delta = V2d_PointOnLineSide2(box->max, lineDirection, linePerp, lineLength, epsilon);
+        a = NORMALIZE(delta);
+
+        delta = V2d_PointOnLineSide2(box->min, lineDirection, linePerp, lineLength, epsilon);
+        b = NORMALIZE(delta);
         break;
     }
 
     if(a == b) return a;
     return 0;
+
+#undef NORMALIZE
 }
 
 float M_BoundingBoxDiff(const float in[4], const float out[4])
