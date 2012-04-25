@@ -2040,7 +2040,7 @@ boolean R_FindBottomTop(LineDef* lineDef, int side, SideDefSection section,
         break;
 
     case SS_BOTTOM: {
-        float t = bfloor->visHeight;
+        coord_t t = bfloor->visHeight;
 
         *bottom = ffloor->visHeight;
         // Can't go over the back ceiling, would induce polygon flaws.
@@ -2048,7 +2048,10 @@ boolean R_FindBottomTop(LineDef* lineDef, int side, SideDefSection section,
             t = bceil->visHeight;
 
         // Can't go over front ceiling, would induce polygon flaws.
-        if(t > fceil->visHeight)
+        // In the special case of a sky masked upper we must extend the bottom
+        // section up to the height of the back floor.
+        if(t > fceil->visHeight &&
+           !(Surface_IsSkyMasked(&fceil->surface) && Surface_IsSkyMasked(&bceil->surface) && fceil->visHeight < bceil->visHeight))
             t = fceil->visHeight;
         *top = t;
 
@@ -2482,11 +2485,11 @@ static void skyFixZCoords(HEdge* hedge, int skyCap, coord_t* bottom, coord_t* to
     if(skyCap & SKYCAP_UPPER)
     {
         if(top)    *top    = skyFixCeilZ(fceil, bceil);
-        if(bottom) *bottom = MAX_OF((backSec && Surface_IsSkyMasked(&bceil->surface)  && bfloor->visHeight < fceil->visHeight )? bceil->visHeight  : fceil->visHeight,  ffloor->visHeight);
+        if(bottom) *bottom = MAX_OF((backSec && Surface_IsSkyMasked(&bceil->surface) )? bceil->visHeight  : fceil->visHeight,  ffloor->visHeight);
     }
     else
     {
-        if(top)    *top    = MIN_OF((backSec && Surface_IsSkyMasked(&bfloor->surface) && bceil->visHeight  > ffloor->visHeight)? bfloor->visHeight : ffloor->visHeight, fceil->visHeight);
+        if(top)    *top    = MIN_OF((backSec && Surface_IsSkyMasked(&bfloor->surface))? bfloor->visHeight : ffloor->visHeight, fceil->visHeight);
         if(bottom) *bottom = skyFixFloorZ(ffloor, bfloor);
     }
 }

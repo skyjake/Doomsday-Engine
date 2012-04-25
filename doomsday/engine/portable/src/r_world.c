@@ -772,7 +772,7 @@ void GameMap_UpdateSkyFixForSector(GameMap* map, Sector* sec)
     boolean skyFloor, skyCeil;
     assert(map);
 
-    if(!sec || 0 == sec->lineDefCount || sec->SP_ceilvisheight <= sec->SP_floorvisheight) return;
+    if(!sec || 0 == sec->lineDefCount) return;
 
     skyFloor = Surface_IsSkyMasked(&sec->SP_floorsurface);
     skyCeil  = Surface_IsSkyMasked(&sec->SP_ceilsurface);
