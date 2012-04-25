@@ -2434,7 +2434,7 @@ static int chooseHEdgeSkyFixes(HEdge* hedge)
 
                     if(hasClosedBack || (!Surface_IsSkyMasked(&bfloor->surface) || P_IsInVoid(viewPlayer)))
                     {
-                        const Plane* floor = (bfloor && Surface_IsSkyMasked(&bfloor->surface) && ffloor < bfloor? bfloor : ffloor);
+                        const Plane* floor = (bfloor && Surface_IsSkyMasked(&bfloor->surface) && ffloor->visHeight < bfloor->visHeight? bfloor : ffloor);
                         if(floor->visHeight > skyZ)
                             fixes |= SKYCAP_LOWER;
                     }
@@ -2449,7 +2449,7 @@ static int chooseHEdgeSkyFixes(HEdge* hedge)
 
                     if(hasClosedBack || (!Surface_IsSkyMasked(&bceil->surface) || P_IsInVoid(viewPlayer)))
                     {
-                        const Plane* ceil = (bceil && Surface_IsSkyMasked(&bceil->surface) && fceil > bceil? bceil : fceil);
+                        const Plane* ceil = (bceil && Surface_IsSkyMasked(&bceil->surface) && fceil->visHeight > bceil->visHeight? bceil : fceil);
                         if(ceil->visHeight < skyZ)
                             fixes |= SKYCAP_UPPER;
                     }
