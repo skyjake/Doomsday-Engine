@@ -2408,7 +2408,7 @@ static __inline coord_t skyFixCeilZ(const Plane* frontCeil, const Plane* backCei
  * @param hedge  HEdge to be evaluated.
  * @return  @see skyCapFlags
  */
-static int segSkyFixes(HEdge* hedge)
+static int chooseHEdgeSkyFixes(HEdge* hedge)
 {
     int fixes = 0;
     if(hedge && hedge->lineDef) // "minisegs" have no linedefs.
@@ -2434,7 +2434,7 @@ static int segSkyFixes(HEdge* hedge)
 
                     if(hasClosedBack || (!Surface_IsSkyMasked(&bfloor->surface) || P_IsInVoid(viewPlayer)))
                     {
-                        const Plane* floor = (bfloor && Surface_IsSkyMasked(&bfloor->surface)? bfloor : ffloor);
+                        const Plane* floor = (bfloor && Surface_IsSkyMasked(&bfloor->surface) && ffloor < bfloor? bfloor : ffloor);
                         if(floor->visHeight > skyZ)
                             fixes |= SKYCAP_LOWER;
                     }
@@ -2449,7 +2449,7 @@ static int segSkyFixes(HEdge* hedge)
 
                     if(hasClosedBack || (!Surface_IsSkyMasked(&bceil->surface) || P_IsInVoid(viewPlayer)))
                     {
-                        const Plane* ceil = (bceil && Surface_IsSkyMasked(&bceil->surface)? bceil : fceil);
+                        const Plane* ceil = (bceil && Surface_IsSkyMasked(&bceil->surface) && fceil > bceil? bceil : fceil);
                         if(ceil->visHeight < skyZ)
                             fixes |= SKYCAP_UPPER;
                     }
@@ -2505,7 +2505,7 @@ static void writeSkyFixGeometry(BspLeaf* bspLeaf, int skyCap, int rendPolyFlags)
     do
     {
         // Is a fix or two necessary for this hedge?
-        segSkyCapFlags = segSkyFixes(hedge);
+        segSkyCapFlags = chooseHEdgeSkyFixes(hedge);
         if(!(segSkyCapFlags & (SKYCAP_LOWER|SKYCAP_UPPER))) continue;
 
         /**
