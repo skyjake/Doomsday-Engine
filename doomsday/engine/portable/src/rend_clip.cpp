@@ -115,14 +115,7 @@ static binangle_t C_PointToAngle(coord_t* point)
     return bamsAtan2((int) (point[VY] * 100), (int) (point[VX] * 100));
 }
 
-static binangle_t C_PointToAngle(float* pointf)
-{
-    vec2d_t point;
-    V2d_Copyf(point, pointf);
-    return C_PointToAngle(point);
-}
-
-#if _DEBUG
+#if 0 // Unused.
 static uint C_CountNodes(void)
 {
     uint count = 0;
@@ -825,7 +818,7 @@ static void C_SafeAddOcclusionRange(binangle_t startAngle, binangle_t endAngle,
 
     if(startAngle > endAngle)
     {
-        // The range has to added in two parts.
+        // The range has to be added in two parts.
         C_AddOcclusionRange(startAngle, BANG_MAX, normal, tophalf);
 
         DENG_DEBUG_ONLY(C_OrangeRanger(3));
@@ -843,34 +836,37 @@ static void C_SafeAddOcclusionRange(binangle_t startAngle, binangle_t endAngle,
     }
 }
 
-void C_AddViewRelOcclusion(coord_t const* v1, coord_t const* v2, coord_t height, boolean tophalf)
+void C_AddViewRelOcclusion(coord_t const* v1, coord_t const* v2, coord_t height, boolean topHalf)
 {
     /// @optimize: Check if the given line is already occluded?
 
     // Calculate the occlusion plane normal.
     // We'll use the game's coordinate system (left-handed, but Y and Z are swapped).
-    vec3d_t viewtov1, viewtov2;
-    V3d_Set(viewtov1, v1[VX] - vOrigin[VX], v1[VY] - vOrigin[VZ], height - vOrigin[VY]);
-    V3d_Set(viewtov2, v2[VX] - vOrigin[VX], v2[VY] - vOrigin[VZ], height - vOrigin[VY]);
+    vec3d_t viewToV1, viewToV2;
+    V3d_Set(viewToV1, v1[VX] - vOrigin[VX], v1[VY] - vOrigin[VZ], height - vOrigin[VY]);
+    V3d_Set(viewToV2, v2[VX] - vOrigin[VX], v2[VY] - vOrigin[VZ], height - vOrigin[VY]);
 
     // The normal points to the half we want to occlude.
     vec3f_t normal;
-    V3f_CrossProductd(normal, tophalf ? viewtov2 : viewtov1,
-                              tophalf ? viewtov1 : viewtov2);
+    V3f_CrossProductd(normal, topHalf ? viewToV2 : viewToV1,
+                              topHalf ? viewToV1 : viewToV2);
 
 #if _DEBUG
     vec3f_t testPos;
-    V3f_Set(testPos, 0, 0, (tophalf ? 1000 : -1000));
-
+    V3f_Set(testPos, 0, 0, (topHalf ? 1000 : -1000));
     if(V3f_DotProduct(testPos, normal) < 0)
     {
-        Con_Error("C_AddViewRelOcclusion: Wrong side - [%g,%g]>[%g,%g] "
-                  "view[%g,%g]!\n", v1[VX], v1[VY], v2[VX], v2[VY], vOrigin[VX], vOrigin[VZ]);
+        // Uh-oh.
+        LOG_WARNING("C_AddViewRelOcclusion: Wrong side v1[x:%f, y:%f] v2[x:%f, y:%f] view[x:%f, y:%f]!")
+                << v1[VX] << v1[VY] << v2[VX] << v2[VY]
+                << vOrigin[VX] << vOrigin[VZ];
+        //assert(0);
+        return;
     }
 #endif
 
-    C_SafeAddOcclusionRange(C_PointToAngle(viewtov2), C_PointToAngle(viewtov1),
-                            normal, tophalf);
+    C_SafeAddOcclusionRange(C_PointToAngle(viewToV2), C_PointToAngle(viewToV1),
+                            normal, topHalf);
 }
 
 /**
@@ -920,6 +916,7 @@ boolean C_IsPointVisible(coord_t x, coord_t y, coord_t height)
 /**
  * @note Unused and untested. Almost certainly doesn't work correctly.
  */
+#if 0
 static boolean C_IsSegOccluded(coord_t relv1[3], coord_t relv2[3], coord_t reltop, coord_t relbottom,
     binangle_t startAngle, binangle_t endAngle)
 {
@@ -1070,7 +1067,6 @@ static boolean C_IsSegOccluded(coord_t relv1[3], coord_t relv2[3], coord_t relto
     return (occAngle >= endAngle);
 }
 
-#if 0
 /**
  * @note Unused and untested. Almost certainly doesn't work correctly.
  * @return  @c =true if the segment is visible according to the current clipnode
@@ -1262,7 +1258,10 @@ static void C_OrangeRanger(int mark)
     for(OccNode* orange = occHead; orange; orange = orange->next)
     {
         if(orange->prev && orange->prev->start > orange->start)
+        {
+            C_OcclusionLister();
             Con_Error("C_OrangeRanger(%i): Orange order has failed.\n", mark);
+        }
     }
 }
 
