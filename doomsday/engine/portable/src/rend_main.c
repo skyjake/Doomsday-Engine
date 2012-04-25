@@ -2040,6 +2040,7 @@ boolean R_FindBottomTop(LineDef* lineDef, int side, SideDefSection section,
         break;
 
     case SS_BOTTOM: {
+        const boolean raiseToBackFloor = (Surface_IsSkyMasked(&fceil->surface) && Surface_IsSkyMasked(&bceil->surface) && fceil->visHeight < bceil->visHeight);
         coord_t t = bfloor->visHeight;
 
         *bottom = ffloor->visHeight;
@@ -2050,8 +2051,7 @@ boolean R_FindBottomTop(LineDef* lineDef, int side, SideDefSection section,
         // Can't go over front ceiling, would induce polygon flaws.
         // In the special case of a sky masked upper we must extend the bottom
         // section up to the height of the back floor.
-        if(t > fceil->visHeight &&
-           !(Surface_IsSkyMasked(&fceil->surface) && Surface_IsSkyMasked(&bceil->surface) && fceil->visHeight < bceil->visHeight))
+        if(t > fceil->visHeight && !raiseToBackFloor)
             t = fceil->visHeight;
         *top = t;
 
@@ -2061,11 +2061,11 @@ boolean R_FindBottomTop(LineDef* lineDef, int side, SideDefSection section,
             texOffset[VY] = matOffsetY;
 
             if(bfloor->visHeight > fceil->visHeight)
-                texOffset[VY] += -(fceil->visHeight - bfloor->visHeight);
+                texOffset[VY] += -((raiseToBackFloor? t : fceil->visHeight) - bfloor->visHeight);
 
             // Align with normal middle texture?
             if(unpegBottom)
-                texOffset[VY] += fceil->visHeight - bfloor->visHeight;
+                texOffset[VY] += (raiseToBackFloor? t : fceil->visHeight) - bfloor->visHeight;
 
             return true;
         }
