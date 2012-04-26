@@ -38,7 +38,6 @@
 
 #ifdef UNIX
 #  include <ctype.h>
-#  include <SDL.h>
 #endif
 
 #include "de_base.h"

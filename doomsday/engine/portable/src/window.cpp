@@ -29,7 +29,6 @@
 #include <stdio.h>
 #ifdef UNIX
 #  include "m_args.h"
-#  include <SDL.h>
 #endif
 
 #ifdef MACOSX

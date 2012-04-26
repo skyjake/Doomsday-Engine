@@ -1,3 +1,6 @@
+deng_nosdl: DEFINES += DENG_NO_SDL
+!deng_nosdl {
+
 # Build configuration for SDL (core library).
 win32 {
     isEmpty(SDL_DIR) {
@@ -59,4 +62,6 @@ else {
     else {
         LIBS += -lSDL_mixer
     }
+}
+
 }

@@ -36,7 +36,9 @@
 #include <string.h>
 #include <limits.h>
 #include <locale.h>
-#include <SDL.h>
+#ifndef DENG_NO_SDL
+#  include <SDL.h>
+#endif
 
 #include <de/c_wrapper.h>
 
@@ -424,7 +426,10 @@ void DD_Shutdown(void)
     // Shutdown all subsystems.
     DD_ShutdownAll();
 
+#ifndef DENG_NO_SDL
     SDL_Quit();
+#endif
+    
     unloadAllPlugins(&app);
     Library_Shutdown();
     DisplayMode_Shutdown();

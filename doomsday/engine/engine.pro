@@ -635,7 +635,7 @@ SOURCES += \
     portable/src/writer.c \
     portable/src/zipfile.c
 
-!deng_nosdlmixer {
+!deng_nosdlmixer:!deng_nosdl {
     HEADERS += portable/include/sys_audiod_sdlmixer.h
     SOURCES += portable/src/sys_audiod_sdlmixer.c
 }
@@ -683,9 +683,11 @@ macx {
     # the frameworks manually.
     doPostLink("rm -rf \"$${OUT_PWD}/doomsday.app/Contents/Frameworks\"")
     doPostLink("mkdir \"$${OUT_PWD}/doomsday.app/Contents/Frameworks\"")
-    doPostLink("cp -fRp \"$${SDL_FRAMEWORK_DIR}/SDL.framework\" \"$${OUT_PWD}/doomsday.app/Contents/Frameworks/\"")
-    !deng_nosdlmixer {
-        doPostLink("cp -fRp \"$${SDL_FRAMEWORK_DIR}/SDL_mixer.framework\" \"$${OUT_PWD}/doomsday.app/Contents/Frameworks/\"")
+    !deng_nosdl {
+        doPostLink("cp -fRp \"$${SDL_FRAMEWORK_DIR}/SDL.framework\" \"$${OUT_PWD}/doomsday.app/Contents/Frameworks/\"")
+        !deng_nosdlmixer {
+            doPostLink("cp -fRp \"$${SDL_FRAMEWORK_DIR}/SDL_mixer.framework\" \"$${OUT_PWD}/doomsday.app/Contents/Frameworks/\"")
+        }
     }
 
     res.path = Contents/Resources

@@ -25,7 +25,9 @@
  */
 
 #include <stdlib.h>
-#include <SDL.h>
+#ifndef DENG_NO_SDL
+#  include <SDL.h>
+#endif
 
 #include "de_base.h"
 #include "de_console.h"
@@ -39,15 +41,21 @@ byte    usejoystick = false;    // Joystick input enabled? (cvar)
 
 static boolean joyInited;
 static byte useJoystick; // Input enabled from a source?
-static SDL_Joystick *joy;
 static boolean joyButtonWasDown[IJOY_MAXBUTTONS];
+
+#ifndef DENG_NO_SDL
+static SDL_Joystick *joy;
+#endif
 
 void Joystick_Register(void)
 {
+#ifndef DENG_NO_SDL
     C_VAR_INT("input-joy-device", &joydevice, CVF_NO_MAX | CVF_PROTECTED, 0, 0);
     C_VAR_BYTE("input-joy", &usejoystick, 0, 0, 1);
+#endif
 }
 
+#ifndef DENG_NO_SDL
 static void initialize(void)
 {
     int joycount;
@@ -106,18 +114,22 @@ static void initialize(void)
         useJoystick = false;
     }
 }
+#endif
 
 boolean Joystick_Init(void)
 {
+#ifndef DENG_NO_SDL
     if(joyInited) return true; // Already initialized.
 
     initialize();
     joyInited = true;
+#endif
     return true;
 }
 
 void Joystick_Shutdown(void)
 {
+#ifndef DENG_NO_SDL
     if(!joyInited) return; // Not initialized.
 
     if(joy)
@@ -127,6 +139,7 @@ void Joystick_Shutdown(void)
     }
 
     joyInited = false;
+#endif
 }
 
 boolean Joystick_IsPresent(void)
@@ -136,6 +149,7 @@ boolean Joystick_IsPresent(void)
 
 void Joystick_GetState(joystate_t *state)
 {
+#ifndef DENG_NO_SDL
     int         i, pov;
 
     memset(state, 0, sizeof(*state));
@@ -218,4 +232,7 @@ void Joystick_GetState(joystate_t *state)
                 state->hatAngle[i] = IJOY_POV_CENTER;
         }
     }
+#else
+    memset(state, 0, sizeof(*state));
+#endif
 }
