@@ -6,6 +6,9 @@ include(../config.pri)
 
 TEMPLATE = subdirs
 
+# We are not building any binaries here; disable stripping.
+QMAKE_STRIP = true
+
 # The host is not installed by default.
 deng_host {
     INSTALLS += host

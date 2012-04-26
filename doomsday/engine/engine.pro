@@ -679,17 +679,6 @@ startupgfx.files = \
     data/graphics/logo.png
 
 macx {
-    # Since qmake is unable to copy directories as bundle data, let's copy
-    # the frameworks manually.
-    doPostLink("rm -rf \"$${OUT_PWD}/doomsday.app/Contents/Frameworks\"")
-    doPostLink("mkdir \"$${OUT_PWD}/doomsday.app/Contents/Frameworks\"")
-    !deng_nosdl {
-        doPostLink("cp -fRp \"$${SDL_FRAMEWORK_DIR}/SDL.framework\" \"$${OUT_PWD}/doomsday.app/Contents/Frameworks/\"")
-        !deng_nosdlmixer {
-            doPostLink("cp -fRp \"$${SDL_FRAMEWORK_DIR}/SDL_mixer.framework\" \"$${OUT_PWD}/doomsday.app/Contents/Frameworks/\"")
-        }
-    }
-
     res.path = Contents/Resources
     res.files = \
         mac/res/English.lproj \
@@ -709,8 +698,10 @@ macx {
     FW_DIR = \"$${OUT_PWD}/doomsday.app/Contents/Frameworks/\"
     doPostLink("rm -rf $$FW_DIR")
     doPostLink("mkdir $$FW_DIR")
-    doPostLink("cp -fRp $${SDL_FRAMEWORK_DIR}/SDL.framework $$FW_DIR")
-    doPostLink("cp -fRp $${SDL_FRAMEWORK_DIR}/SDL_mixer.framework $$FW_DIR")
+    !deng_nosdl {
+        doPostLink("cp -fRp $${SDL_FRAMEWORK_DIR}/SDL.framework $$FW_DIR")
+        !deng_nosdlmixer: doPostLink("cp -fRp $${SDL_FRAMEWORK_DIR}/SDL_mixer.framework $$FW_DIR")
+    }
 
     # libdeng2 dynamic library.
     doPostLink("cp -fRp $$OUT_PWD/../libdeng2/libdeng2*dylib $$FW_DIR")

@@ -3,4 +3,5 @@
 
 TEMPLATE = subdirs
 CONFIG += ordered
-SUBDIRS = build libdeng2 engine plugins host
+SUBDIRS = build libdeng2 engine plugins host postbuild
+
