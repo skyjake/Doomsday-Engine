@@ -7,7 +7,8 @@ include(../common/common.pri)
 include(../../dep_lzss.pri)
 
 TEMPLATE = lib
-TARGET = jdoom
+win32|macx: TARGET = jDoom
+      else: TARGET = jdoom
 
 DEFINES += __JDOOM__
 

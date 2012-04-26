@@ -5,7 +5,8 @@
 include(../config_plugin.pri)
 
 TEMPLATE = lib
-TARGET = dpwadmapconverter
+win32|macx: TARGET = dpWadMapConverter
+      else: TARGET = dpwadmapconverter
 
 VERSION = $$WADMAPCONVERTER_VERSION
 

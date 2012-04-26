@@ -7,7 +7,8 @@ include(../common/common.pri)
 include(../../dep_lzss.pri)
 
 TEMPLATE = lib
-TARGET = jheretic
+win32|macx: TARGET = jHeretic
+      else: TARGET = jheretic
 
 DEFINES += __JHERETIC__
 

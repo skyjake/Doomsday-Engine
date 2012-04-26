@@ -5,7 +5,9 @@
 include(../config_plugin.pri)
 
 TEMPLATE = lib
-TARGET = dpdehread
+
+win32|macx: TARGET = dpDehRead
+      else: TARGET = dpdehread
 
 VERSION = $$DEHREAD_VERSION
 

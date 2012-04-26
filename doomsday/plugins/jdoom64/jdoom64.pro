@@ -7,7 +7,8 @@ include(../common/common.pri)
 include(../../dep_lzss.pri)
 
 TEMPLATE = lib
-TARGET = jdoom64
+win32|macx: TARGET = jDoom64
+      else: TARGET = jdoom64
 
 DEFINES += __JDOOM64__
 

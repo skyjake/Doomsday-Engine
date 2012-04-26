@@ -3,7 +3,8 @@
 # Copyright (c) 2011-2012 Daniel Swanson <danij@dengine.net>
 
 TEMPLATE = app
-TARGET = doomsday
+win32|macx: TARGET = Doomsday
+      else: TARGET = doomsday
 
 # Build Configuration --------------------------------------------------------
 
@@ -693,9 +694,9 @@ macx {
         mac/res/deng.icns
 
     data.path = $$res.path
-    startupdata.path = $${res.path}/Data
-    startupfonts.path = $${res.path}/Data/Fonts
-    startupgfx.path = $${res.path}/Data/Graphics
+    startupdata.path = $${res.path}/data
+    startupfonts.path = $${res.path}/data/fonts
+    startupgfx.path = $${res.path}/data/graphics
 
     QMAKE_BUNDLE_DATA += res data startupfonts startupdata startupgfx
 

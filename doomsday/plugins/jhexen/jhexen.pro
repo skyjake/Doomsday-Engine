@@ -7,7 +7,8 @@ include(../common/common.pri)
 include(../../dep_lzss.pri)
 
 TEMPLATE = lib
-TARGET = jhexen
+win32|macx: TARGET = jHexen
+      else: TARGET = jhexen
 
 DEFINES += __JHEXEN__
 

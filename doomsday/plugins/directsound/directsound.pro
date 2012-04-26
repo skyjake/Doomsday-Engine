@@ -11,7 +11,7 @@ include(../../dep_eax.pri)
 }
 
 TEMPLATE = lib
-TARGET = dsdirectsound
+TARGET = dsDirectSound
 
 VERSION = $$DIRECTSOUND_VERSION
 

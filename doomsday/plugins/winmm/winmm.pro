@@ -9,7 +9,7 @@ include(../config_plugin.pri)
 }
 
 TEMPLATE = lib
-TARGET = dswinmm
+TARGET = dsWinMM
 
 VERSION = $$WINMM_VERSION
 

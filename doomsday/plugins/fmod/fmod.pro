@@ -5,7 +5,8 @@ include(../config_plugin.pri)
 include(../../dep_fmod.pri)
 
 TEMPLATE = lib
-TARGET = dsfmod
+win32|macx: TARGET = dsFMOD
+      else: TARGET = dsfmod
 
 VERSION = $$FMOD_VERSION
 
