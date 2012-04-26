@@ -1,4 +1,3 @@
-deng_nosdl: DEFINES += DENG_NO_SDL
 !deng_nosdl {
 
 # Build configuration for SDL (core library).

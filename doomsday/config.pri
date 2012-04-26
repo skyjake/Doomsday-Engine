@@ -117,6 +117,9 @@ deng_nofixedasm {
 !deng_rangecheck {
     DEFINES += DENG_NO_RANGECHECKING
 }
-deng_nosdlmixer {
+deng_nosdlmixer|deng_nosdl {
     DEFINES += DENG_DISABLE_SDLMIXER
+}
+deng_nosdl {
+    DEFINES += DENG_NO_SDL
 }
