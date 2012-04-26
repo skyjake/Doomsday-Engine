@@ -850,6 +850,11 @@ static void windowFocusChanged(Canvas& canvas, bool focus)
         I_ResetAllDevices();
         Window_TrapMouse(wnd, false);
     }
+    else if(Window_IsFullscreen(wnd))
+    {
+        // Trap the mouse again in fullscreen mode.
+        Window_TrapMouse(wnd, true);
+    }
 
     // Generate an event about this.
     ddevent_t ev;
