@@ -202,8 +202,7 @@ def mac_release():
     remkdir(MAC_WORK_DIR)
     os.chdir(MAC_WORK_DIR)
     if os.system('qmake -r -spec macx-g++ CONFIG+=release DENG_BUILD=%s ' % (DOOMSDAY_BUILD_NUMBER) +
-                 '../doomsday/doomsday.pro && make -w ' +
-                 '&& ../doomsday/build/mac/bundleapp.sh ../doomsday'):
+                 '../doomsday/doomsday.pro && make -w'):
         raise Exception("Failed to build from source.")
 
     # Now we can proceed to packaging.
