@@ -461,11 +461,11 @@ struct ddwindow_s
             // Update for busy mode.
             R_UseViewPort(0);
         }
+        R_LoadSystemFonts();
         if(UI_IsActive())
         {
             UI_UpdatePageLayout();
         }
-        R_LoadSystemFonts();
     }
 };
 
