@@ -221,6 +221,7 @@ void BspLeaf_UpdateWorldGridOffset(BspLeaf* leaf)
 int BspLeaf_SetProperty(BspLeaf* leaf, const setargs_t* args)
 {
     Q_ASSERT(leaf);
+    DENG_UNUSED(leaf);
     Con_Error("BspLeaf::SetProperty: Property %s is not writable.\n", DMU_Str(args->prop));
     exit(1); // Unreachable.
 }
