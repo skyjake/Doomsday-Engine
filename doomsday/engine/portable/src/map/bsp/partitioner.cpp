@@ -65,7 +65,7 @@ static const coord_t DIST_EPSILON = (1.0 / 128.0);
 /// Smallest difference between two angles before being considered equal (in degrees).
 static const coord_t ANG_EPSILON = (1.0 / 1024.0);
 
-DENG_DEBUG_ONLY(static int printSuperBlockHEdgesWorker(SuperBlock* block, void* /*parameters*/));
+//DENG_DEBUG_ONLY(static int printSuperBlockHEdgesWorker(SuperBlock* block, void* /*parameters*/));
 
 static bool findBspLeafCenter(BspLeaf const& leaf, pvec2d_t midPoint);
 static void initAABoxFromEditableLineDefVertexes(AABoxd* aaBox, const LineDef* line);
@@ -2479,12 +2479,14 @@ static bool findBspLeafCenter(BspLeaf const& leaf, pvec2d_t center)
     return true;
 }
 
+#if 0
 DENG_DEBUG_ONLY(
 static int printSuperBlockHEdgesWorker(SuperBlock* block, void* /*parameters*/)
 {
     SuperBlock::DebugPrint(*block);
     return false; // Continue iteration.
 })
+#endif
 
 static void initAABoxFromEditableLineDefVertexes(AABoxd* aaBox, const LineDef* line)
 {
