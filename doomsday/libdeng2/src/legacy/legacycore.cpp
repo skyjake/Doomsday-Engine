@@ -142,10 +142,8 @@ void LegacyCore::popLoop()
 
     LOG_DEBUG("Loop function popped, now %p.") << dintptr(d->loop.func);
 
-    if(!d->loop.paused)
-    {
-        resumeLoop();
-    }
+    d->loop.paused = true; // Force resume.
+    resumeLoop();
 }
 
 void LegacyCore::pauseLoop()
@@ -163,8 +161,6 @@ void LegacyCore::resumeLoop()
     d->loop.paused = false;
     if(d->loop.func)
     {
-        DENG2_ASSERT(!d->loopTimer->isActive());
-
         // Start the periodic callback calls.
         d->loopTimer->start(d->loop.interval);
     }
