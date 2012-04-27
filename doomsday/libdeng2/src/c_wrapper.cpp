@@ -82,6 +82,18 @@ void LegacyCore_PopLoop(LegacyCore* lc)
     self->popLoop();
 }
 
+void LegacyCore_PauseLoop(LegacyCore* lc)
+{
+    DENG2_SELF(LegacyCore, lc);
+    self->pauseLoop();
+}
+
+void LegacyCore_ResumeLoop(LegacyCore* lc)
+{
+    DENG2_SELF(LegacyCore, lc);
+    self->resumeLoop();
+}
+
 void LegacyCore_Timer(LegacyCore* lc, unsigned int milliseconds, void (*callback)(void))
 {
     DENG2_SELF(LegacyCore, lc);

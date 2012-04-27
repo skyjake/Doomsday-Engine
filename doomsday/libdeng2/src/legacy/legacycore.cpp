@@ -40,13 +40,15 @@ struct LegacyCore::Instance
 {
     struct Loop {
         int interval;
+        bool paused;
         void (*func)(void);
-        Loop() : interval(1), func(0) {}
+        Loop() : interval(1), paused(false), func(0) {}
     };
     QList<Loop> loopStack;
     void (*terminateFunc)(const char*);
 
     App* app;
+    QTimer* loopTimer;
     LegacyNetwork network;
     Loop loop;
     LogBuffer logBuffer;
@@ -77,6 +79,10 @@ LegacyCore::LegacyCore(App* dengApp)
     d->logBuffer.enable(Log::DEBUG);
 #endif
     //d->logBuffer.enable(Log::TRACE);
+
+    // This will trigger loop callbacks.
+    d->loopTimer = new QTimer(this);
+    connect(d->loopTimer, SIGNAL(timeout()), this, SLOT(callback()));
 }
 
 LegacyCore::~LegacyCore()
@@ -103,13 +109,18 @@ void LegacyCore::setLoopFunc(void (*func)(void))
 {
     LOG_DEBUG("Loop function changed from %p set to %p.") << dintptr(d->loop.func) << dintptr(func);
 
+    d->loopTimer->stop();
+
     // Set up a timer to periodically call the provided callback function.
     d->loop.func = func;
+
+    // Auto-resume.
+    d->loop.paused = false;
 
     if(func)
     {
         // Start the periodic callback calls.
-        QTimer::singleShot(d->loop.interval, this, SLOT(callback()));
+        d->loopTimer->start(d->loop.interval);
     }
 }
 
@@ -131,10 +142,31 @@ void LegacyCore::popLoop()
 
     LOG_DEBUG("Loop function popped, now %p.") << dintptr(d->loop.func);
 
+    if(!d->loop.paused)
+    {
+        resumeLoop();
+    }
+}
+
+void LegacyCore::pauseLoop()
+{
+    if(d->loop.paused) return;
+
+    d->loop.paused = true;
+    d->loopTimer->stop();
+}
+
+void LegacyCore::resumeLoop()
+{
+    if(!d->loop.paused) return;
+
+    d->loop.paused = false;
     if(d->loop.func)
     {
+        DENG2_ASSERT(!d->loopTimer->isActive());
+
         // Start the periodic callback calls.
-        QTimer::singleShot(d->loop.interval, this, SLOT(callback()));
+        d->loopTimer->start(d->loop.interval);
     }
 }
 
@@ -158,11 +190,17 @@ void LegacyCore::setLoopRate(int freqHz)
     if(oldInterval != d->loop.interval)
     {
         LOG_DEBUG("Loop interval changed to %i ms.") << d->loop.interval;
+        if(!d->loop.paused)
+        {
+            d->loopTimer->stop();
+            d->loopTimer->start(d->loop.interval);
+        }
     }
 }
 
 void LegacyCore::stop(int exitCode)
 {
+    d->loopTimer->stop();
     d->app->exit(exitCode);
 }
 
@@ -206,8 +244,6 @@ void LegacyCore::callback()
     if(d->loop.func)
     {
         d->loop.func();
-
-        QTimer::singleShot(d->loop.interval, this, SLOT(callback()));
     }
 }
 

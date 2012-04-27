@@ -833,6 +833,8 @@ static void drawCanvasWithCallback(Canvas& canvas)
     {
         win->drawFunc();
     }
+    // Now we can continue with the main loop.
+    LegacyCore_ResumeLoop(de2LegacyCore);
 }
 
 static void windowFocusChanged(Canvas& canvas, bool focus)
@@ -1154,6 +1156,9 @@ void Window_Draw(Window* win)
     }
     else
     {
+        // We want no further iterations of the main loop until the frame has been drawn.
+        LegacyCore_PauseLoop(de2LegacyCore);
+
         // Request repaint at the earliest convenience.
         win->widget->canvas().update();
     }

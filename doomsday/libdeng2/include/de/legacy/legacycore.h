@@ -85,6 +85,16 @@ public:
     void popLoop();
 
     /**
+     * Pauses the loop function callback.
+     */
+    void pauseLoop();
+
+    /**
+     * Resumes calls to the loop function callback.
+     */
+    void resumeLoop();
+
+    /**
      * Stops the event loop. This is automatically called when the core is
      * destroyed.
      */
