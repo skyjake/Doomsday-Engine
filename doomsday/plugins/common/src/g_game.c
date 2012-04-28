@@ -1028,7 +1028,7 @@ int G_UIResponder(event_t* ev)
     if(!(ev->type == EV_KEY || ev->type == EV_MOUSE_BUTTON || ev->type == EV_JOY_BUTTON))
         return false;
 
-    if(!Hu_MenuIsActive())
+    if(!Hu_MenuIsActive() && !DD_GetInteger(DD_SHIFT_DOWN))
     {
         // Any key/button down pops up menu if in demos.
         if((G_GameAction() == GA_NONE && !singledemo && Get(DD_PLAYBACK)) ||

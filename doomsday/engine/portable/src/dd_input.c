@@ -614,6 +614,11 @@ static void I_UpdateAxis(inputdev_t *dev, uint axis, float pos, timespan_t ticLe
     }*/
 }
 
+boolean I_ShiftDown(void)
+{
+    return shiftDown;
+}
+
 /**
  * Update the input device state table.
  */
