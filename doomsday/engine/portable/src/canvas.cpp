@@ -47,11 +47,15 @@
 #include "keycode.h"
 #include "canvas.h"
 
+#ifdef MACOS_10_4
+#  include <ApplicationServices/ApplicationServices.h>
+#endif
+
 #if (QT_VERSION < QT_VERSION_CHECK(4, 7, 0))
 #  define constBits bits
 #endif
 
-#ifdef LIBDENG_CANVAS_XWARPPOINTER
+#if defined(LIBDENG_CANVAS_XWARPPOINTER) || defined(MACOS_10_4)
 static const int MOUSE_TRACK_INTERVAL = 10; // ms
 #else
 static const int MOUSE_TRACK_INTERVAL = 1; // ms
@@ -103,6 +107,10 @@ struct Canvas::Instance
         QTimer::singleShot(MOUSE_TRACK_INTERVAL, self, SLOT(trackMousePosition()));
 #endif
 #endif
+
+#ifdef MACOSX
+	//CGAssociateMouseAndMouseCursorPosition(false);
+#endif
     }
 
     void ungrabMouse()
@@ -116,7 +124,9 @@ struct Canvas::Instance
         qApp->restoreOverrideCursor();
         self->setCursor(QCursor(Qt::ArrowCursor)); // Default cursor.
 #endif
-
+#ifdef MACOSX
+	//CGAssociateMouseAndMouseCursorPosition(true);
+#endif
         // Tell the mouse driver that the mouse is untrapepd.
         mouseGrabbed = false;
         Mouse_Trap(false);
@@ -443,12 +453,29 @@ void Canvas::mouseMoveEvent(QMouseEvent* ev)
     if(!delta.isNull())
     {
         Mouse_Qt_SubmitMotion(IMA_POINTER, delta.x(), delta.y());
+
+        d->prevMousePos = ev->pos();
+	
+	QTimer::singleShot(1, this, SLOT(recenterMouse()));
     }
+}
 
-    QCursor::setPos(mapToGlobal(rect().center()));
-
+void Canvas::recenterMouse()
+{
     // Ignore the next event, which is caused by the forced cursor move.
-    d->prevMousePos = QPoint();
+    d->prevMousePos = QPoint();    
+
+    QPoint screenPoint = mapToGlobal(rect().center()); 
+
+#ifdef MACOS_10_4
+    CGSetLocalEventsSuppressionInterval(0.0);
+#endif
+
+    QCursor::setPos(screenPoint);
+
+#ifdef MACOS_10_4
+    CGSetLocalEventsSuppressionInterval(0.25);
+#endif
 }
 #endif
 
