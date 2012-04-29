@@ -2001,7 +2001,7 @@ void Rend_AllInputDeviceStateVisuals(void)
     static inputdev_layout_control_t keyGroup11[] = {
         { IDC_KEY, 144 }, // numlock
         { IDC_KEY, 172 }, // divide
-        { IDC_KEY,  42 }, // multiply
+        { IDC_KEY, DDKEY_MULTIPLY }, // multiply
         { IDC_KEY, 168 }  // subtract
     };
     static inputdev_layout_control_t keyGroup12[] = {
