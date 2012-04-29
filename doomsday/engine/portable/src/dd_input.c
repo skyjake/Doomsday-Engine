@@ -352,8 +352,10 @@ void I_ShutdownInputDevices(void)
 
 void I_DeviceReset(uint ident)
 {
-    inputdev_t*         dev = &inputDevices[ident];
-    int                 k;
+    inputdev_t* dev = &inputDevices[ident];
+    int k;
+
+    DEBUG_Message(("I_DeviceReset: %s.\n", Str_Text(I_DeviceNameStr(ident))));
 
     if(ident == IDEV_KEYBOARD)
     {
@@ -455,6 +457,21 @@ inputdev_t *I_GetDeviceByName(const char *name, boolean ifactive)
     }
 
     return dev;
+}
+
+const ddstring_t* I_DeviceNameStr(uint ident)
+{
+    static const ddstring_t names[1+NUM_INPUT_DEVICES] = {
+        { "(invalid-identifier)" },
+        { "keyboard" },
+        { "mouse" },
+        { "joystick" },
+        { "joystick2" },
+        { "joystick3" },
+        { "joystick4" }
+    };
+    if(ident >= NUM_INPUT_DEVICES) return &names[0];
+    return &names[1+ident];
 }
 
 inputdevaxis_t* I_GetAxisByID(inputdev_t* device, uint id)
@@ -642,9 +659,15 @@ void I_TrackInput(ddevent_t *ev, timespan_t ticLength)
         else if(ev->toggle.id == DDKEY_RALT)
         {
             if(ev->toggle.state == ETOG_DOWN)
+            {
                 altDown = true;
+                DEBUG_Message(("I_TrackInput: Alt down\n"));
+            }
             else if(ev->toggle.state == ETOG_UP)
+            {
                 altDown = false;
+                DEBUG_Message(("I_TrackInput: Alt up\n"));
+            }
         }
     }
 
@@ -811,9 +834,7 @@ boolean DD_IgnoreInput(boolean ignore)
 {
     boolean old = ignoreInput;
     ignoreInput = ignore;
-#ifdef _DEBUG
-    Con_Message("DD_IgnoreInput: ignoring=%i\n", ignore);
-#endif
+    DEBUG_Message(("DD_IgnoreInput: ignoring=%i\n", ignore));
     if(!ignore)
     {
         // Clear all the event buffers.

@@ -35,6 +35,7 @@ extern "C" {
 
 #define NUMKKEYS            256
 
+#include "dd_string.h"
 #if _DEBUG
 #  include "point.h" // For the debug visual.
 #endif
@@ -220,6 +221,15 @@ void        I_ResetAllDevices(void);
 
 inputdev_t* I_GetDevice(uint ident, boolean ifactive);
 inputdev_t* I_GetDeviceByName(const char* name, boolean ifactive);
+
+/**
+ * Retrieve the user-friendly, print-ready, name for the device associated with
+ * unique identifier @a ident.
+ *
+ * @return  String containing the name for this device. Always valid. This string
+ *          should never be free'd by the caller.
+ */
+const ddstring_t* I_DeviceNameStr(uint ident);
 
 float I_TransformAxis(inputdev_t* dev, uint axis, float rawPos);
 
