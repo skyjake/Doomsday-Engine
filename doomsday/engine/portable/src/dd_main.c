@@ -2038,6 +2038,9 @@ int DD_GetInteger(int ddvalue)
 {
     switch(ddvalue)
     {
+    case DD_SHIFT_DOWN:
+        return I_ShiftDown();
+
     case DD_WINDOW_WIDTH:
         return Window_Width(theWindow);
 

@@ -93,9 +93,7 @@ static void postEvents(timespan_t ticLength);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-#ifdef OLD_FILTER
-int     mouseFilter = 0;        // Filtering off by default.
-#endif
+int mouseFilter = 0;        // Filtering off by default.
 
 // The initial and secondary repeater delays (tics).
 int     repWait1 = 15, repWait2 = 3;
@@ -151,8 +149,8 @@ void DD_RegisterInput(void)
     C_VAR_INT("input-key-delay2", &keyRepeatDelay2, CVF_NO_MAX, 20, 0);
     C_VAR_BYTE("input-toggle-sharp", &useSharpToggleEvents, 0, 0, 1);
 
-#ifdef OLD_FILTER
     C_VAR_INT("input-mouse-filter", &mouseFilter, 0, 0, MAX_AXIS_FILTER - 1);
+#if 0
     C_VAR_INT("input-mouse-frequency", &mouseFreq, CVF_NO_MAX, 0, 0);
 #endif
 
@@ -631,6 +629,11 @@ static void I_UpdateAxis(inputdev_t *dev, uint axis, float pos, timespan_t ticLe
         Con_Message("I_UpdateAxis: device=%s axis=%i pos=%f\n",
                     dev->name, axis, pos);
     }*/
+}
+
+boolean I_ShiftDown(void)
+{
+    return shiftDown;
 }
 
 /**
@@ -1282,7 +1285,6 @@ void DD_ReadKeyboard(void)
     }
 }
 
-#ifdef OLD_FILTER
 static float I_FilterMouse(float pos, float* accumulation, float ticLength)
 {
     float   target;
@@ -1318,7 +1320,6 @@ static float I_FilterMouse(float pos, float* accumulation, float ticLength)
     // This is the new (filtered) axis position.
     return dir * used;
 }
-#endif
 
 /**
  * Change between normal and UI mousing modes.
@@ -1399,7 +1400,6 @@ void DD_ReadMouse(timespan_t ticLength)
     {
         ev.axis.type = EAXIS_RELATIVE;
 
-#ifdef OLD_FILTER
         if(ticLength > 0 && mouseFilter > 0)
         {
             // Filtering ensures that events are sent more evenly on each frame.
@@ -1407,7 +1407,6 @@ void DD_ReadMouse(timespan_t ticLength)
             xpos = I_FilterMouse(xpos, &accumulation[0], ticLength);
             ypos = I_FilterMouse(ypos, &accumulation[1], ticLength);
         }
-#endif
 
         ypos = -ypos;
     }
