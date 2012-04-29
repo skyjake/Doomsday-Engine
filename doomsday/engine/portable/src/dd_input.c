@@ -355,11 +355,6 @@ void I_DeviceReset(uint ident)
 
     DEBUG_Message(("I_DeviceReset: %s.\n", Str_Text(I_DeviceNameStr(ident))));
 
-    if(ident == IDEV_KEYBOARD)
-    {
-        altDown = shiftDown = false;
-    }
-
     for(k = 0; k < (int)dev->numKeys && dev->keys; ++k)
     {
         if(dev->keys[k].isDown)
@@ -381,6 +376,12 @@ void I_DeviceReset(uint ident)
             // Clear the accumulation.
             dev->axes[k].position = 0;
         }
+    }
+
+    if(ident == IDEV_KEYBOARD)
+    {
+        altDown = shiftDown = false;
+        DD_ClearKeyRepeaters();
     }
 }
 
