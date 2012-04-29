@@ -1149,6 +1149,10 @@ byte DD_ModKey(byte key)
     {
         return '.';
     }
+    else if(key == DDKEY_MULTIPLY)
+    {
+        return '*';
+    }
 
     return key;
 }
