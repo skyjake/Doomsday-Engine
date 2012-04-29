@@ -53,6 +53,7 @@ public:
     void setMoveFunc(void (*func)(CanvasWindow&));
 
     // Events.
+    bool event(QEvent* ev);
     void closeEvent(QCloseEvent* ev);
     void moveEvent(QMoveEvent* ev);
     void hideEvent(QHideEvent* ev);

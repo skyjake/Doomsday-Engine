@@ -72,6 +72,9 @@ struct Canvas::Instance
     void (*resizedCallback)(Canvas&);
     void (*focusCallback)(Canvas&, bool);
     bool mouseGrabbed;
+#ifdef WIN32
+    bool altIsDown;
+#endif
     QPoint prevMousePos;
     QTime prevWheelAt;
     int wheelDir[2];
@@ -85,6 +88,9 @@ struct Canvas::Instance
           mouseGrabbed(false)
     {
         wheelDir[0] = wheelDir[1] = 0;
+#ifdef WIN32
+        altIsDown = false;
+#endif
     }
 
     void grabMouse()
@@ -364,8 +370,10 @@ void Keyboard_SubmitQtEvent(int evType, const QKeyEvent* ev)
     /// @todo Use the Unicode text instead.
 }
 
-void Canvas::keyPressEvent(QKeyEvent *ev)
+void Canvas::keyPressEvent(QKeyEvent* ev)
 {
+    //LOG_AS("Canvas");
+
     ev->accept();
     if(ev->isAutoRepeat()) return; // Ignore repeats, we do our own.
 
@@ -376,11 +384,23 @@ void Canvas::keyPressEvent(QKeyEvent *ev)
              << "scancode:" << ev->nativeScanCode();
     */
 
+#ifdef WIN32
+    // We must track the state of the alt key ourselves as the OS grabs the up event...
+    if(ev->type() == QEvent::KeyPress && ev->key() == Qt::Key_Alt)
+    {
+        if(d->altIsDown) return; // Ignore repeat down events(!)?
+        d->altIsDown = true;
+        //LOG_DEBUG("Alt is down.");
+    }
+#endif
+
     Keyboard_SubmitQtEvent(IKE_DOWN, ev);
 }
 
-void Canvas::keyReleaseEvent(QKeyEvent *ev)
+void Canvas::keyReleaseEvent(QKeyEvent* ev)
 {
+    //LOG_AS("Canvas");
+
     ev->accept();
     if(ev->isAutoRepeat()) return; // Ignore repeats, we do our own.
 
@@ -388,6 +408,20 @@ void Canvas::keyReleaseEvent(QKeyEvent *ev)
     qDebug() << "Canvas: key release" << ev->key() << "text:" << ev->text()
              << "native:" << ev->nativeVirtualKey();
     */
+
+#ifdef WIN32
+    // We must track the state of the alt key ourselves as the OS grabs the up event...
+    if(ev->type() == QEvent::KeyRelease && ev->key() == Qt::Key_Alt)
+    {
+        if(!d->altIsDown)
+        {
+            LOG_DEBUG("Ignoring repeat alt up.");
+            return; // Ignore repeat up events.
+        }
+        d->altIsDown = false;
+        //LOG_DEBUG("Alt is up.");
+    }
+#endif
 
     Keyboard_SubmitQtEvent(IKE_UP, ev);
 }

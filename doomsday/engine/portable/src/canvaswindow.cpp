@@ -20,6 +20,7 @@
  * 02110-1301 USA</small>
  */
 
+#include <QApplication>
 #include <QGLFormat>
 #include <QMoveEvent>
 #include <de/Log>
@@ -134,6 +135,17 @@ bool CanvasWindow::ownsCanvas(Canvas *c) const
 void CanvasWindow::setMoveFunc(void (*func)(CanvasWindow&))
 {
     d->moveFunc = func;
+}
+
+bool CanvasWindow::event(QEvent* ev)
+{
+    if(ev->type() == QEvent::ActivationChange)
+    {
+        //LOG_DEBUG("CanvasWindow: Forwarding QEvent::KeyRelease, Qt::Key_Alt");
+        QKeyEvent keyEvent = QKeyEvent(QEvent::KeyRelease, Qt::Key_Alt, Qt::NoModifier);
+        return QApplication::sendEvent(&canvas(), &keyEvent);
+    }
+    return QMainWindow::event(ev);
 }
 
 void CanvasWindow::closeEvent(QCloseEvent* ev)
