@@ -397,8 +397,6 @@ D_CMD(DefaultGameBinds)
         "bindevent shortcut:key-f9 quickload",
         "bindevent shortcut:key-f10 quit",
         //"bindevent shortcut:key-f11 togglegamma",
-        "bindevent shortcut:key-f11+key-alt-down releasemouse",
-        "bindevent shortcut:key-f11 togglefullscreen",
         "bindevent shortcut:key-print screenshot",
         "bindevent shortcut:key-f12 screenshot",
 

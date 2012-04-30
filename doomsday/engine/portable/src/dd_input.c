@@ -1054,10 +1054,10 @@ static void dispatchEvents(eventqueue_t* q, timespan_t ticLength)
                 continue;
         }
 
-        if(UI_Responder(ddev)) continue;
-        if(Con_Responder(ddev)) continue;
+        if(UI_Responder(ddev)) continue; /// @todo: use the bindings system (deui context fallback)
+        if(Con_Responder(ddev)) continue; /// @todo refactor: use the bindings system
 
-        if(callGameResponders)
+        if(callGameResponders) /// @todo refactor: use the bindings system (chat context fallback)
         {
             // The game's normal responder only returns true if the bindings can't
             // be used (like when chatting).

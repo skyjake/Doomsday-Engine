@@ -215,6 +215,13 @@ void B_Init(void)
 
     // UI doesn't let anything past it.
     B_AcquireAll(B_NewContext(UI_BINDING_CONTEXT_NAME), true);
+
+    // Top-level context that is always active and overrides every other context.
+    // To be used only for system-level functionality.
+    bc = B_NewContext(GLOBAL_BINDING_CONTEXT_NAME);
+    bc->flags |= BCF_PROTECTED;
+    B_ActivateContext(bc, true);
+
 /*
     B_BindCommand("joy-hat-angle3", "print {angle 3}");
     B_BindCommand("joy-hat-center", "print center");
@@ -244,13 +251,34 @@ void B_Init(void)
     // Bind all the defaults for the engine only.
     B_BindDefaults();
 
-    // Enable the contexts for the initial state.
+    B_InitialContextActivations();
+}
+
+void B_InitialContextActivations(void)
+{
+    int i;
+
+    // Disable all contexts.
+    for(i = 0; i < B_ContextCount(); ++i)
+    {
+        B_ActivateContext(B_ContextByPos(i), false);
+   }
+
+    // These are the contexts active by default.
+    B_ActivateContext(B_ContextByName(GLOBAL_BINDING_CONTEXT_NAME), true);
     B_ActivateContext(B_ContextByName(DEFAULT_BINDING_CONTEXT_NAME), true);
+
+    if(Con_IsActive())
+    {
+        B_ActivateContext(B_ContextByName(CONSOLE_BINDING_CONTEXT_NAME), true);
+    }
 }
 
 void B_BindDefaults(void)
 {
     // Engine's highest priority context: opening control panel, opening the console.
+    B_BindCommand("global:key-f11-down + key-alt-down", "releasemouse");
+    B_BindCommand("global:key-f11-down", "togglefullscreen");
 
     // Console bindings (when open).
 
