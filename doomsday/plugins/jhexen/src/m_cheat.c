@@ -374,6 +374,12 @@ int Cht_WarpFunc(const int* args, int player)
     if(IS_NETGAME)
         return false;
 
+    if(G_GameState() == GS_MAP && plr->playerState == PST_DEAD)
+    {
+        Con_Message("Cannot warp while dead.\n");
+        return false;
+    }
+
     tens = args[0] - '0';
     ones = args[1] - '0';
     if(tens < 0 || tens > 9 || ones < 0 || ones > 9)
