@@ -2866,7 +2866,7 @@ static void Rend_RenderBspLeaf(BspLeaf* bspLeaf)
         // Inverted.
         texOffset[VY] = -texOffset[VY];
 
-        texScale[VX] = ((suf->flags & DDSUF_MATERIAL_FLIPH)? -1 : 1);
+        texScale[VX] = (((suf->flags & DDSUF_MATERIAL_FLIPH) || (texMode == 1 && (i == PLN_CEILING)))? -1 : 1);
         texScale[VY] = ((suf->flags & DDSUF_MATERIAL_FLIPV)? -1 : 1);
 
         Rend_RenderPlane(bspLeaf, plane->type, plane->visHeight, suf->tangent, suf->bitangent, suf->normal,
