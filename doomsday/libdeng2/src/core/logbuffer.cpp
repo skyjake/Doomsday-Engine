@@ -243,10 +243,12 @@ void LogBuffer::flush()
                         int checkPos = pos + maxLen;
                         while(checkPos > pos)
                         {
+                            /// @todo remove isPunct() and just check for the breaking chars
                             if(message[checkPos].isSpace() ||
                                     (message[checkPos].isPunct() && message[checkPos] != '.' &&
                                      message[checkPos] != ',' && message[checkPos] != '-' &&
                                      message[checkPos] != '\'' && message[checkPos] != '"' &&
+                                     message[checkPos] != '(' && message[checkPos] != ')' &&
                                      message[checkPos] != '[' && message[checkPos] != ']' &&
                                      message[checkPos] != '_'))
                             {
