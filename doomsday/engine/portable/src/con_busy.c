@@ -361,7 +361,7 @@ static void preBusySetup(void)
     LegacyCore_PushLoop(de2LegacyCore);
 
     // Set up loop for busy mode.
-    LegacyCore_SetLoopRate(de2LegacyCore, 30);
+    LegacyCore_SetLoopRate(de2LegacyCore, 60);
     LegacyCore_SetLoopFunc(de2LegacyCore, NULL); // don't call main loop's func while busy
 
     Window_SetDrawFunc(Window_Main(), 0);
