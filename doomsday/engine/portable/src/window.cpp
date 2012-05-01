@@ -1141,6 +1141,8 @@ void Window_Draw(Window* win)
 
     if(Window_ShouldRepaintManually(win))
     {
+        // We will perform the drawing manually right away.
+        LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
         win->widget->canvas().repaint();
     }
     else
@@ -1305,13 +1307,14 @@ boolean Window_IsMouseTrapped(const Window* wnd)
 
 boolean Window_ShouldRepaintManually(const Window* wnd)
 {
-    DENG_UNUSED(wnd);
-    return false;
-#if 0
+#ifdef MACOSX
     // When mouse is trapped, we update the screen during the main loop
     // iteration rather than waiting for the windowing system to send an update
     // event.
     return Window_IsMouseTrapped(wnd);
+#else
+    DENG_UNUSED(wnd);
+    return false;
 #endif
 }
 
@@ -1335,6 +1338,8 @@ void Window_GLActivate(Window* wnd)
     if(wnd->type == WT_CONSOLE) return;
     wnd->assertWindow();
     wnd->widget->canvas().makeCurrent();
+
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 }
 
 void Window_GLDone(Window* wnd)
