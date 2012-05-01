@@ -5,7 +5,7 @@
     <title>jDRP (packaged)</title>
     <version>1.01</version>
     <description>DOOM Resource Pack</description>
-    <notes><![CDATA[<em>Unzip</em> this pack into the Snowberry addon folder]]></notes>
+    <notes><![CDATA[Unzip this pack into the Snowberry addon folder]]></notes>
     <games>
         <game>doom1</game>
         <game>doom1-share</game>
@@ -20,7 +20,7 @@
     <title>DOOM Classic Music</title>
     <version>2008.09.30</version>
     <description>DOOM Music Recorded from a genuine Roland Sound Canvas SC-155</description>
-    <notes><![CDATA[<em>Move</em> this pack into the Snowberry addon folder]]></notes>
+    <notes><![CDATA[Move this pack into the Snowberry addon folder]]></notes>
     <games>
         <game>doom1</game>
         <game>doom1-share</game>
@@ -32,7 +32,7 @@
     <title>DOOM2 Classic Music</title>
     <version>2008.09.30</version>
     <description>DOOM2 Music Recorded from a genuine Roland Sound Canvas SC-155</description>
-    <notes><![CDATA[<em>Move</em> this pack into the Snowberry addon folder]]></notes>
+    <notes><![CDATA[Move this pack into the Snowberry addon folder]]></notes>
     <games>
         <game>doom2</game>
     </games>
@@ -42,7 +42,7 @@
     <title>TNT Lorcan Remix</title>
     <version>2007.12.25</version>
     <description>TNT Music Remixed by Lorcan</description>
-    <notes><![CDATA[<em>Move</em> this pack into the Snowberry addon folder]]></notes>
+    <notes><![CDATA[Move this pack into the Snowberry addon folder]]></notes>
     <games>
         <game>doom2-tnt</game>
     </games>
@@ -52,7 +52,7 @@
     <title>Sycraft Remixes</title>
     <version>4</version>
     <description>DOOM, DOOMII and Final DOOM music remastered by Sycraft</description>
-    <notes><![CDATA[<em>Move</em> this pack into the Snowberry addon folder]]></notes>
+    <notes><![CDATA[Move this pack into the Snowberry addon folder]]></notes>
     <games>
         <game>doom1</game>
         <game>doom1-share</game>
@@ -80,7 +80,7 @@
     <title>DOOM High-resolution User interface Pack</title>
     <version>2012.02.23</version>
     <description>DOOM High-resolution User interface Pack</description>
-    <notes><![CDATA[<em>Move</em> this pack into the Snowberry addon folder]]></notes>
+    <notes><![CDATA[Move this pack into the Snowberry addon folder]]></notes>
     <games>
         <game>doom1</game>
         <game>doom1-share</game>
@@ -95,7 +95,7 @@
     <title>DOOM High-quality sound pack</title>
     <version>2010.01.09</version>
     <description>Compiled by Per Kristian Risvik</description>
-    <notes><![CDATA[<em>Move</em> this pack into the Snowberry addon folder]]></notes>
+    <notes><![CDATA[Move this pack into the Snowberry addon folder]]></notes>
     <games>
         <game>doom1</game>
         <game>doom1-share</game>
@@ -109,7 +109,7 @@
     <downloadUri>http://files.dengine.net/tracker/torrents/slide-skyboxes.torrent</downloadUri>
     <title>Slide's Skyboxes</title>
     <description>Created by slide for all the DOOM games</description>
-    <notes><![CDATA[<em>Move</em> these packs into the Snowberry addon folder]]></notes>
+    <notes><![CDATA[Move these packs into the Snowberry addon folder]]></notes>
     <games>
         <game>doom1</game>
         <game>doom1-share</game>
@@ -124,7 +124,7 @@
     <title>jHRP (packaged)</title>
     <version>2009.07.03</version>
     <description>3D Models, hi-res interface elements and textures</description>
-    <notes><![CDATA[<em>Move</em> this pack into the Snowberry addon folder]]></notes>
+    <notes><![CDATA[Move this pack into the Snowberry addon folder]]></notes>
     <games>
         <game>heretic</game>
         <game>heretic-share</game>
@@ -136,7 +136,7 @@
     <title>xHTP (packaged)</title>
     <version>2010.07.14</version>
     <description>High resolution texture pack</description>
-    <notes><![CDATA[<em>Move</em> this pack into the Snowberry addon folder]]></notes>
+    <notes><![CDATA[Move this pack into the Snowberry addon folder]]></notes>
     <games>
         <game>hexen</game>
         <game>hexen-dk</game>

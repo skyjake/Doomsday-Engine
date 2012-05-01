@@ -1,6 +1,6 @@
 /**
  * @file audiodriver.c
- * Audio driver loading and interface management implementation. @ingroup audio
+ * Audio driver loading and interface management. @ingroup audio
  *
  * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2012 Daniel Swanson <danij@dengine.net>
@@ -408,16 +408,16 @@ void AudioDriver_Shutdown(void)
     iCD = 0;
 }
 
-audiodriver_t* AudioDriver_Interface(void* sfxMusicOrCd)
+audiodriver_t* AudioDriver_Interface(void* audioInterface)
 {
     int i;
 
     for(i = 0; i < AUDIODRIVER_COUNT; ++i)
     {
         driver_t* d = &drivers[i];
-        if((void*)&d->sfx   == sfxMusicOrCd ||
-           (void*)&d->music == sfxMusicOrCd ||
-           (void*)&d->cd    == sfxMusicOrCd)
+        if((void*)&d->sfx   == audioInterface ||
+           (void*)&d->music == audioInterface ||
+           (void*)&d->cd    == audioInterface)
         {
             return &d->interface;
         }

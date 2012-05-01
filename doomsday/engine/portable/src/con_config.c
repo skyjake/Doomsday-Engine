@@ -51,6 +51,7 @@
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 static filename_t cfgFile;
+static int flagsAllow = 0;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -155,6 +156,8 @@ static boolean writeConsoleState(const char* fileName)
     FILE* file;
     if(!fileName || !fileName[0]) return false;
 
+    VERBOSE(Con_Message("Writing state to \"%s\"...\n", fileName));
+
     Str_Init(&nativePath);
     Str_Set(&nativePath, fileName);
     F_ToNativeSlashes(&nativePath, &nativePath);
@@ -191,6 +194,8 @@ static boolean writeBindingsState(const char* fileName)
     FILE* file;
     if(!fileName || !fileName[0]) return false;
 
+    VERBOSE(Con_Message("Writing bindings to \"%s\"...\n", fileName));
+
     Str_Init(&nativePath);
     Str_Set(&nativePath, fileName);
     F_ToNativeSlashes(&nativePath, &nativePath);
@@ -217,10 +222,16 @@ static boolean writeBindingsState(const char* fileName)
     return false;
 }
 
-boolean Con_ParseCommands(const char* fileName, boolean setdefault)
+boolean Con_ParseCommands(const char* fileName)
+{
+    return Con_ParseCommands2(fileName, 0);
+}
+
+boolean Con_ParseCommands2(const char* fileName, int flags)
 {
     DFile* file;
     char buff[512];
+    boolean setdefault = (flags & CPCF_SET_DEFAULT) != 0;
 
     // Is this supposed to be the default?
     if(setdefault)
@@ -228,6 +239,9 @@ boolean Con_ParseCommands(const char* fileName, boolean setdefault)
         strncpy(cfgFile, fileName, FILENAME_T_MAXLEN);
         cfgFile[FILENAME_T_LASTINDEX] = '\0';
     }
+
+    // Update the allowed operations.
+    flagsAllow |= flags & (CPCF_ALLOW_SAVE_STATE | CPCF_ALLOW_SAVE_BINDINGS);
 
     // Open the file.
     file = F_Open(fileName, "rt");
@@ -253,6 +267,7 @@ boolean Con_ParseCommands(const char* fileName, boolean setdefault)
     }}
 
     F_Delete(file);
+
     return true;
 }
 
@@ -262,18 +277,12 @@ boolean Con_ParseCommands(const char* fileName, boolean setdefault)
  */
 boolean Con_WriteState(const char* fileName, const char* bindingsFileName)
 {
-    if(fileName || bindingsFileName)
+    if(fileName && (flagsAllow & CPCF_ALLOW_SAVE_STATE))
     {
-        VERBOSE(
-            Con_Printf("Writing");
-            if(fileName)
-                Con_Printf(" state:\"%s\"", fileName);
-            if(bindingsFileName)
-                Con_Printf(" bindings:\"%s\"", bindingsFileName);
-            Con_Printf("...\n")
-        )
-
         writeConsoleState(fileName);
+    }
+    if(bindingsFileName && (flagsAllow & CPCF_ALLOW_SAVE_BINDINGS))
+    {
         // Bindings go into a separate file.
         writeBindingsState(bindingsFileName);
     }

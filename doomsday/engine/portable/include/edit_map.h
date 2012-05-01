@@ -29,33 +29,58 @@
 #define __DOOMSDAY_MAP_EDITOR_H__
 
 #include "p_mapdata.h"
-#include "m_binarytree.h"
+#include "binarytree.h"
 #include "materials.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 // Editable map.
 typedef struct editmap_s {
     uint numVertexes;
-    vertex_t** vertexes;
+    Vertex** vertexes;
     uint numLineDefs;
-    linedef_t** lineDefs;
+    LineDef** lineDefs;
     uint numSideDefs;
-    sidedef_t** sideDefs;
+    SideDef** sideDefs;
     uint numSectors;
-    sector_t** sectors;
+    Sector** sectors;
     uint numPolyObjs;
-    polyobj_t** polyObjs;
+    Polyobj** polyObjs;
 
     // The following is for game-specific map object data.
     gameobjdata_t gameObjData;
 } editmap_t;
 
-editmap_t editMap;
+//extern editmap_t editMap;
 
 boolean         MPE_Begin(const char* mapUri);
 boolean         MPE_End(void);
 
-uint            MPE_VertexCreate(float x, float y);
-boolean         MPE_VertexCreatev(size_t num, float *values, uint *indices);
+/**
+ * Create a new vertex in currently loaded editable map.
+ *
+ * @param x  X map space coordinate of the new vertex.
+ * @param y  Y map space coordinate of the new vertex.
+ *
+ * @return  Index number of the newly created vertex else @c =0 if the vertex
+ *          could not be created for some reason.
+ */
+uint MPE_VertexCreate(coord_t x, coord_t y);
+
+/**
+ * Create many new vertexs in the currently loaded editable map.
+ *
+ * @param num  Number of vertexes to be created.
+ * @param values  Array containing the coordinates for all vertexes to be
+ *                created [v0:X, vo:Y, v1:X, v1:Y, ..]
+ * @param indices  If not @c =NULL, the indices of the newly created vertexes
+ *                 will be written back here.
+ * @return  @c =true iff all vertexes were created successfully.
+ */
+boolean MPE_VertexCreatev(size_t num, coord_t* values, uint* indices);
+
 uint            MPE_SidedefCreate(uint sector, short flags,
                                   materialid_t topMaterial,
                                   float topOffsetX, float topOffsetY, float topRed,
@@ -71,13 +96,13 @@ uint            MPE_SidedefCreate(uint sector, short flags,
 uint            MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide,
                                   int flags);
 uint            MPE_SectorCreate(float lightlevel, float red, float green, float blue);
-uint            MPE_PlaneCreate(uint sector, float height,
+uint            MPE_PlaneCreate(uint sector, coord_t height,
                                 materialid_t material,
                                 float matOffsetX, float matOffsetY,
                                 float r, float g, float b, float a,
                                 float normalX, float normalY, float normalZ);
 uint            MPE_PolyobjCreate(uint *lines, uint linecount,
-                                  int tag, int sequenceType, float startX, float startY);
+                                  int tag, int sequenceType, coord_t originX, coord_t originY);
 
 boolean         MPE_GameObjProperty(const char *objName, uint idx,
                                     const char *propName, valuetype_t type,
@@ -93,10 +118,10 @@ boolean         MPE_GameObjProperty(const char *objName, uint idx,
 
 void            MPE_PruneRedundantMapData(editmap_t* map, int flags);
 
-boolean         MPE_RegisterUnclosedSectorNear(sector_t* sec, double x, double y);
-void            MPE_PrintUnclosedSectorList(void);
-void            MPE_FreeUnclosedSectorList(void);
+GameMap*        MPE_GetLastBuiltMap(void);
 
-gamemap_t*     MPE_GetLastBuiltMap(void);
-vertex_t*      createVertex(void);
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
 #endif

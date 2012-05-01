@@ -31,9 +31,16 @@ class BuildEvent
     private $startDate;
     private $authorName;
     private $authorEmail;
-    private $releaseType;
+    private $releaseTypeId;
+    private $releaseNotesUri = NULL;
 
-    /// \todo Collections should be private but allow public iteration.
+    // Event chains:
+    private $prevForStartDate = NULL;
+    private $nextForStartDate = NULL;
+    private $prevForVersion = NULL;
+    private $nextForVersion = NULL;
+
+    /// @todo Collections should be private but allow public iteration.
     public $packages = array();
     public $commits = array();
 
@@ -42,16 +49,16 @@ class BuildEvent
      * @param startDate  (string) Unix timestamp when build commenced.
      * @param authorName (string)
      * @param authorEmail (string)
-     * @param releaseType (integer)
+     * @param releaseTypeId (integer)
      */
     public function __construct($uniqueId, $startDate, $authorName, $authorEmail,
-        $releaseType=RT_UNSTABLE)
+        $releaseTypeId=RT_UNKNOWN)
     {
         $this->uniqueId = $uniqueId;
         $this->startDate = $startDate;
         $this->authorName = $authorName;
         $this->authorEmail = $authorEmail;
-        $this->releaseType = $releaseType;
+        $this->releaseTypeId = $releaseTypeId;
     }
 
     public function uniqueId()
@@ -59,9 +66,15 @@ class BuildEvent
         return $this->uniqueId;
     }
 
-    public function composeName()
+    public function composeName($includeReleaseType=false)
     {
-        return "Build$this->uniqueId";
+        $name = "Build$this->uniqueId";
+        if($includeReleaseType && $this->releaseTypeId !== RT_UNKNOWN)
+        {
+            $releaseType = BuildRepositoryPlugin::releaseType($this->releaseTypeId);
+            $name .= ' ('. $releaseType['nicename'] .')';
+        }
+        return $name;
     }
 
     public function &startDate()
@@ -74,14 +87,89 @@ class BuildEvent
         return "build$this->uniqueId";
     }
 
-    public function releaseType()
+    public function releaseTypeId()
     {
-        return $this->releaseType;
+        return $this->releaseTypeId;
+    }
+
+    public function hasReleaseNotesUri()
+    {
+        return !is_null($this->releaseNotesUri);
+    }
+
+    public function releaseNotesUri()
+    {
+        return $this->releaseNotesUri;
+    }
+
+    public function setReleaseNotesUri($newUri)
+    {
+        $this->releaseNotesUri = "$newUri";
     }
 
     public function addPackage(&$package)
     {
         $this->packages[] = $package;
+    }
+
+    public function prevForStartDate()
+    {
+        return $this->prevForStartDate;
+    }
+
+    public function setPrevForStartDate(&$event)
+    {
+        if(!$event instanceof BuildEvent)
+        {
+            $this->prevForStartDate = NULL;
+            return;
+        }
+        $this->prevForStartDate = $event;
+    }
+
+    public function nextForStartDate()
+    {
+        return $this->nextForStartDate;
+    }
+
+    public function setNextForStartDate(&$event)
+    {
+        if(!$event instanceof BuildEvent)
+        {
+            $this->nextForStartDate = NULL;
+            return;
+        }
+        $this->nextForStartDate = $event;
+    }
+
+    public function prevForVersion()
+    {
+        return $this->prevForVersion;
+    }
+
+    public function setPrevForVersion(&$event)
+    {
+        if(!$event instanceof BuildEvent)
+        {
+            $this->prevForVersion = NULL;
+            return;
+        }
+        $this->prevForVersion = $event;
+    }
+
+    public function nextForVersion()
+    {
+        return $this->nextForVersion;
+    }
+
+    public function setNextForVersion(&$event)
+    {
+        if(!$event instanceof BuildEvent)
+        {
+            $this->nextForVersion = NULL;
+            return;
+        }
+        $this->nextForVersion = $event;
     }
 
     /**
@@ -110,6 +198,45 @@ class BuildEvent
         $html = '<a href="'.$this->composeBuildUri().'" title="'.$buildUriTitle.'">'.
             $this->composeName() .'</a>';
         return '<div class="build_news">'.$html.'</div>';
+    }
+
+    public function genFancyBadge($isActive=TRUE)
+    {
+        $name = "Build$this->uniqueId";
+        $releaseType = BuildRepositoryPlugin::releaseType($this->releaseTypeId);
+        $isActive = (boolean)$isActive;
+
+        $cssClass = 'buildevent_badge';
+        if($this->releaseTypeId !== RT_UNKNOWN)
+        {
+            $cssClass .= " {$releaseType['name']}";
+            if(!$isActive || $this->uniqueId <= 0) $cssClass .= '_disabled';
+        }
+
+        $html = '';
+
+        if($isActive && $this->uniqueId > 0)
+        {
+            $inspectBuildUri = $name;
+            $inspectBuildLabel = htmlspecialchars("Read more about {$releaseType['nicename']} {$name}");
+
+            $html .= "<a href=\"{$inspectBuildUri}\" title=\"{$inspectBuildLabel}\">";
+        }
+        else
+        {
+            $html .= "<a href=\"\\\" style=\"cursor:default;pointer-events:none\">";
+        }
+
+        $html .= "<div class=\"{$cssClass}\">"
+                . ($this->uniqueId > 0? htmlspecialchars($this->uniqueId) : '&nbsp;')
+                ."<span class=\"startdate\">". htmlspecialchars(date('d M Y', $this->startDate)) .'</span></div>';
+
+        //if($isActive && $this->uniqueId > 0)
+        {
+            $html .= '</a>';
+        }
+
+        return $html;
     }
 
     public function __toString()

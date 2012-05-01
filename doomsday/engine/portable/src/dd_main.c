@@ -38,7 +38,6 @@
 
 #ifdef UNIX
 #  include <ctype.h>
-#  include <SDL.h>
 #endif
 
 #include "de_base.h"
@@ -59,7 +58,7 @@
 #include "m_misc.h"
 #include "m_args.h"
 #include "texture.h"
-#include "huffman.h"
+#include "displaymode.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -102,7 +101,7 @@ filename_t ddRuntimePath, ddBinPath;
 int isDedicated = false;
 
 int verbose = 0; // For debug messages (-verbose).
-FILE* outFile; // Output file for console messages.
+//FILE* outFile; // Output file for console messages.
 
 // List of file names, whitespace seperating (written to .cfg).
 char* gameStartupFiles = "";
@@ -146,7 +145,7 @@ void DD_Register(void)
     I_Register();
     H_Register();
     DAM_Register();
-    BSP_Register();
+    BspBuilder_Register();
     UI_Register();
     Demo_Register();
     P_ControlRegister();
@@ -460,8 +459,8 @@ void DD_StartTitle(void)
     Str_Init(&setupCmds);
 
     // Configure the predefined fonts (all normal, variable width).
-    fontName = R_ChooseVariableFont(FS_NORMAL, theWindow->geometry.size.width,
-                                               theWindow->geometry.size.height);
+    fontName = R_ChooseVariableFont(FS_NORMAL, Window_Width(theWindow),
+                                               Window_Height(theWindow));
     for(i = 1; i <= FIPAGE_NUM_PREDEFINED_FONTS; ++i)
     {
         Str_Appendf(&setupCmds, "prefont %i "FN_SYSTEM_NAME":%s\n", i, fontName);
@@ -529,31 +528,37 @@ static boolean recognizeZIP(const char* filePath, void* data)
 static int validateResource(AbstractResource* rec, void* paramaters)
 {
     int validated = false;
-    const ddstring_t* path = AbstractResource_ResolvedPath(rec, true/*can locate resources*/);
 
-    if(path)
+    if(AbstractResource_ResourceClass(rec) == RC_PACKAGE)
     {
-        switch(AbstractResource_ResourceClass(rec))
+        Uri* const* uriList = AbstractResource_SearchPaths(rec);
+        Uri* const* ptr;
+        int i = 0;
+        for(ptr = uriList; *ptr; ptr++, i++)
         {
-        case RC_PACKAGE:
+            const ddstring_t* path;
+            path = AbstractResource_ResolvedPathWithIndex(rec, i, true/*locate resources*/);
+            if(!path) continue;
+
             if(recognizeWAD(Str_Text(path), (void*)AbstractResource_IdentityKeys(rec)))
             {
                 validated = true;
+                break;
             }
             else if(recognizeZIP(Str_Text(path), (void*)AbstractResource_IdentityKeys(rec)))
             {
                 validated = true;
+                break;
             }
-            break;
-        default:
-            // Other resource types are not validated.
-            validated = true;
-            break;
         }
+    }
+    else
+    {
+        // Other resource types are not validated.
+        validated = true;
     }
 
     AbstractResource_MarkAsFound(rec, validated);
-
     return validated;
 }
 
@@ -994,7 +999,7 @@ static int DD_ActivateGameWorker(void* paramaters)
     }
 
     Con_Message("Parsing primary config \"%s\"...\n", F_PrettyPath(Str_Text(configFileName)));
-    Con_ParseCommands(Str_Text(configFileName), true);
+    Con_ParseCommands2(Str_Text(configFileName), CPCF_SET_DEFAULT | CPCF_ALLOW_SAVE_STATE);
     if(configFileName == &tmp)
         Str_Free(&tmp);
     }
@@ -1005,7 +1010,7 @@ static int DD_ActivateGameWorker(void* paramaters)
         B_BindGameDefaults();
 
         // Read bindings for this game and merge with the working set.
-        Con_ParseCommands(Str_Text(Game_BindingConfig(theGame)), false);
+        Con_ParseCommands2(Str_Text(Game_BindingConfig(theGame)), CPCF_ALLOW_SAVE_BINDINGS);
     }
 
     if(p->initiatedBusyMode)
@@ -1102,9 +1107,10 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
         R_DestroyObjlinkBlockmap();
         R_ClearAnimGroups();
 
-        P_PtcShutdown();
         P_ControlShutdown();
         Con_Execute(CMDS_DDAY, "clearbindings", true, false);
+        B_BindDefaults();
+        B_InitialContextActivations();
 
         for(i = 0; i < DDMAXPLAYERS; ++i)
         {
@@ -1123,11 +1129,18 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
             ddpl->extraLight = 0;
         }
 
-        Z_FreeTags(PU_GAMESTATIC, PU_PURGELEVEL - 1);
         // If a map was loaded; unload it.
+        if(theMap)
+        {
+            GameMap_ClMobjReset(theMap);
+        }
+        // Clear player data, too, since we just lost all clmobjs.
+        Cl_InitPlayers();
+
         P_SetCurrentMap(0);
+        Z_FreeTags(PU_GAMESTATIC, PU_PURGELEVEL - 1);
+
         P_ShutdownGameMapObjDefs();
-        Cl_Reset();
 
         R_ShutdownSvgs();
         R_DestroyColorPalettes();
@@ -1136,7 +1149,12 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
         Textures_ClearRuntime();
 
         Sfx_InitLogical();
-        P_InitThinkerLists(0x1|0x2);
+
+        /// @fixme Why is this being done here?
+        if(theMap)
+        {
+            GameMap_InitThinkerLists(theMap, 0x1|0x2);
+        }
 
         Con_ClearDatabases();
 
@@ -1183,7 +1201,7 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
     Library_ReleaseGames();
 
     DD_ComposeMainWindowTitle(buf);
-    Sys_SetWindowTitle(windowIDX, buf);
+    Window_SetTitle(theWindow, buf);
 
     if(!DD_IsShuttingDown())
     {
@@ -1196,14 +1214,13 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
 
         Materials_Init();
         FI_Init();
-        P_PtcInit(); /// @todo not needed in this mode.
     }
 
     // This is now the current game.
     theGame = game;
 
     DD_ComposeMainWindowTitle(buf);
-    Sys_SetWindowTitle(windowIDX, buf);
+    Window_SetTitle(theWindow, buf);
 
     /**
      * If we aren't shutting down then we are either loading a game or switching
@@ -1364,10 +1381,7 @@ int DD_EarlyInit(void)
     verbose = ArgExists("-verbose");
 
     // The memory zone must be online before the console module.
-    if(!Z_Init())
-    {
-        DD_ErrorBox(true, "Error initializing memory zone.");
-    }
+    Z_Init();
 
     // Bring the console online as soon as we can.
     DD_ConsoleInit();
@@ -1427,15 +1441,54 @@ static int DD_LocateAllGameResourcesWorker(void* paramaters)
 }
 
 /**
- * Engine initialization. When complete, starts the "game loop".
+ * This gets called when the main window is ready for GL init. The application
+ * event loop is already running.
  */
-int DD_Main(void)
+void DD_FinishInitializationAfterWindowReady(void)
+{    
+#ifdef WIN32
+    // Now we can get the color transfer table as the window is available.
+    DisplayMode_SaveOriginalColorTransfer();
+#endif
+
+    if(!Sys_GLInitialize())
+    {
+        Con_Error("Error initializing OpenGL.\n");
+    }
+    else
+    {
+        char buf[256];
+        DD_ComposeMainWindowTitle(buf);
+        Window_SetTitle(theWindow, buf);
+    }
+
+    // Now we can start executing the engine's main loop.
+    LegacyCore_SetLoopFunc(de2LegacyCore, DD_GameLoopCallback);
+
+    // Initialize engine subsystems and initial state.
+    if(!DD_Init())
+    {
+        exit(2); // Cannot continue...
+        return;
+    }
+
+    // Start drawing with the game loop drawer.
+    Window_SetDrawFunc(Window_Main(), DD_GameLoopDrawer);
+}
+
+/**
+ * Engine initialization. After completed, the game loop is ready to be started.
+ * Called from the app entrypoint function.
+ *
+ * @return  @c true on success, @c false if an error occurred.
+ */
+boolean DD_Init(void)
 {
     // By default, use the resolution defined in (default).cfg.
-    int winWidth = defResX, winHeight = defResY, winBPP = defBPP, winX = 0, winY = 0;
-    uint winFlags = DDWF_VISIBLE | DDWF_CENTER | (defFullscreen? DDWF_FULLSCREEN : 0);
-    boolean noCenter = false;
-    int i, exitCode = 0;
+    //int winWidth = defResX, winHeight = defResY, winBPP = defBPP, winX = 0, winY = 0;
+    //uint winFlags = DDWF_VISIBLE | DDWF_CENTER | (defFullscreen? DDWF_FULLSCREEN : 0);
+    //boolean noCenter = false;
+    //int i; //, exitCode = 0;
 
 #ifdef _DEBUG
     // Type size check.
@@ -1456,47 +1509,14 @@ int DD_Main(void)
     }
 #endif
 
-    // Check for command line options modifying the defaults.
-    if(ArgCheckWith("-width", 1))
-        winWidth = atoi(ArgNext());
-    if(ArgCheckWith("-height", 1))
-        winHeight = atoi(ArgNext());
-    if(ArgCheckWith("-winsize", 2))
-    {
-        winWidth = atoi(ArgNext());
-        winHeight = atoi(ArgNext());
-    }
-    if(ArgCheckWith("-bpp", 1))
-        winBPP = atoi(ArgNext());
-    if(winBPP != 16 && winBPP != 32)
-        winBPP = 32;
-    if(ArgCheck("-nocenter"))
-        noCenter = true;
-    if(ArgCheckWith("-xpos", 1))
-    {
-        winX = atoi(ArgNext());
-        noCenter = true;
-    }
-    if(ArgCheckWith("-ypos", 1))
-    {
-        winY = atoi(ArgNext());
-        noCenter = true;
-    }
-    if(noCenter)
-        winFlags &= ~DDWF_CENTER;
-
-    if(ArgExists("-nofullscreen") || ArgExists("-window"))
-        winFlags &= ~DDWF_FULLSCREEN;
-
-    if(!Sys_SetWindow(windowIDX, winX, winY, winWidth, winHeight, winBPP, winFlags, 0))
-        return -1;
-
     if(!GL_EarlyInit())
     {
         Sys_CriticalMessage("GL_EarlyInit() failed.");
-        return -1;
+        return false;
     }
 
+    /*
+    assert(!Sys_GLCheckError());
     if(!novideo)
     {
         // Render a few black frames before we continue. This will help to
@@ -1509,14 +1529,16 @@ int DD_Main(void)
             GL_DoUpdate();
         }
     }
+    assert(!Sys_GLCheckError());
+*/
 
     // Initialize the subsystems needed prior to entering busy mode for the first time.
     Sys_Init();
     F_Init();
-    Huffman_Init();
 
     Fonts_Init();
     FR_Init();
+    DD_InitInput();
 
     // Enter busy mode until startup complete.
     Con_InitProgress2(200, 0, .25f); // First half.
@@ -1566,6 +1588,7 @@ int DD_Main(void)
     Con_Busy(BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
              "Locating game resources...", DD_LocateAllGameResourcesWorker, 0);
 
+    /*
     // Unless we reenter busy-mode due to automatic game selection, we won't be
     // drawing anything further until DD_GameLoop; so lets clean up.
     if(!novideo)
@@ -1573,6 +1596,7 @@ int DD_Main(void)
         glClear(GL_COLOR_BUFFER_BIT);
         GL_DoUpdate();
     }
+    */
 
     // Attempt automatic game selection.
     if(!ArgExists("-noautoselect"))
@@ -1630,7 +1654,7 @@ int DD_Main(void)
     // Try to load the autoexec file. This is done here to make sure everything is
     // initialized: the user can do here anything that s/he'd be able to do in-game
     // provided a game was loaded during startup.
-    Con_ParseCommands("autoexec.cfg", false);
+    Con_ParseCommands("autoexec.cfg");
 
     // Read additional config files that should be processed post engine init.
     if(ArgCheckWith("-parse", 1))
@@ -1644,7 +1668,7 @@ int DD_Main(void)
             if(!arg || arg[0] == '-') break;
 
             Con_Message("  Processing \"%s\"...\n", F_PrettyPath(arg));
-            Con_ParseCommands(arg, false);
+            Con_ParseCommands(arg);
         }
         VERBOSE( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
     }
@@ -1724,14 +1748,7 @@ int DD_Main(void)
         Con_Execute(CMDS_DDAY, "listgames", false, false);
     }
 
-    // Start the game loop.
-    exitCode = DD_GameLoop();
-
-    // Time to shutdown.
-    Sys_Shutdown();
-
-    // Bye!
-    return exitCode;
+    return true;
 }
 
 static void DD_InitResourceSystem(void)
@@ -1753,9 +1770,6 @@ static int DD_StartupWorker(void* parm)
     // Initialize COM for this thread (needed for DirectInput).
     CoInitialize(NULL);
 #endif
-
-    // Initialize the key mappings.
-    DD_InitInput();
 
     Con_SetProgress(10);
 
@@ -1790,7 +1804,7 @@ static int DD_StartupWorker(void* parm)
             if(!arg || arg[0] == '-')
                 break;
             Con_Message("  Processing \"%s\"...\n", F_PrettyPath(arg));
-            Con_ParseCommands(arg, false);
+            Con_ParseCommands(arg);
         }
         VERBOSE( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
     }
@@ -1814,7 +1828,7 @@ static int DD_StartupWorker(void* parm)
     Con_SetProgress(60);
 
     // Execute the startup script (Startup.cfg).
-    Con_ParseCommands("startup.cfg", false);
+    Con_ParseCommands("startup.cfg");
 
     // Get the material manager up and running.
     Con_SetProgress(90);
@@ -1843,7 +1857,12 @@ static int DD_StartupWorker(void* parm)
     // In dedicated mode the console must be opened, so all input events
     // will be handled by it.
     if(isDedicated)
+    {
         Con_Open(true);
+
+        // Also make sure the game loop isn't running needlessly often.
+        LegacyCore_SetLoopRate(de2LegacyCore, 35);
+    }
 
     Con_SetProgress(199);
 
@@ -2021,11 +2040,14 @@ int DD_GetInteger(int ddvalue)
 {
     switch(ddvalue)
     {
+    case DD_SHIFT_DOWN:
+        return I_ShiftDown();
+
     case DD_WINDOW_WIDTH:
-        return theWindow->geometry.size.width;
+        return Window_Width(theWindow);
 
     case DD_WINDOW_HEIGHT:
-        return theWindow->geometry.size.height;
+        return Window_Height(theWindow);
 
     case DD_DYNLIGHT_TEXTURE:
         return (int) GL_PrepareLSTexture(LST_DYNAMIC);
@@ -2037,10 +2059,16 @@ int DD_GetInteger(int ddvalue)
         return Cl_CurrentFinale();
 
     case DD_MAP_MUSIC: {
-        gamemap_t* map = P_GetCurrentMap();
-        ded_mapinfo_t* mapInfo = Def_GetMapInfo(P_MapUri(map));
-        if(!mapInfo) return -1;
-        return Def_GetMusicNum(mapInfo->music);
+        GameMap* map = theMap;
+        if(map)
+        {
+            ded_mapinfo_t* mapInfo = Def_GetMapInfo(GameMap_Uri(map));
+            if(mapInfo)
+            {
+                return Def_GetMusicNum(mapInfo->music);
+            }
+        }
+        return -1;
       }
     default: break;
     }
@@ -2069,96 +2097,109 @@ void DD_SetInteger(int ddvalue, int parm)
  */
 void* DD_GetVariable(int ddvalue)
 {
+    static uint valueU;
+    static float valueF;
+    static double valueD;
+
     switch(ddvalue)
     {
     case DD_GAME_EXPORTS:
         return &gx;
 
     case DD_SECTOR_COUNT:
-        return &numSectors;
+        valueU = theMap? GameMap_SectorCount(theMap) : 0;
+        return &valueU;
 
     case DD_LINE_COUNT:
-        return &numLineDefs;
+        valueU = theMap? GameMap_LineDefCount(theMap) : 0;
+        return &valueU;
 
     case DD_SIDE_COUNT:
-        return &numSideDefs;
+        valueU = theMap? GameMap_SideDefCount(theMap) : 0;
+        return &valueU;
 
     case DD_VERTEX_COUNT:
-        return &numVertexes;
+        valueU = theMap? GameMap_VertexCount(theMap) : 0;
+        return &valueU;
 
     case DD_POLYOBJ_COUNT:
-        return &numPolyObjs;
+        valueU = theMap? GameMap_PolyobjCount(theMap) : 0;
+        return &valueU;
 
-    case DD_SEG_COUNT:
-        return &numSegs;
+    case DD_HEDGE_COUNT:
+        valueU = theMap? GameMap_HEdgeCount(theMap) : 0;
+        return &valueU;
 
-    case DD_SUBSECTOR_COUNT:
-        return &numSSectors;
+    case DD_BSPLEAF_COUNT:
+        valueU = theMap? GameMap_BspLeafCount(theMap) : 0;
+        return &valueU;
 
-    case DD_NODE_COUNT:
-        return &numNodes;
+    case DD_BSPNODE_COUNT:
+        valueU = theMap? GameMap_BspNodeCount(theMap) : 0;
+        return &valueU;
 
-    case DD_MATERIAL_COUNT: {
-        static uint value;
-        value = Materials_Size();
-        return &value;
-      }
     case DD_TRACE_ADDRESS:
-        return &traceLOS;
+        /// @fixme Do not cast away const.
+        return (void*)P_TraceLOS();
 
     case DD_TRANSLATIONTABLES_ADDRESS:
         return translationTables;
 
-    case DD_MAP_NAME: {
-        gamemap_t* map = P_GetCurrentMap();
-        ded_mapinfo_t* mapInfo = Def_GetMapInfo(P_MapUri(map));
-        if(mapInfo && mapInfo->name[0])
+    case DD_MAP_NAME:
+        if(theMap)
         {
-            int id = Def_Get(DD_DEF_TEXT, mapInfo->name, NULL);
-            if(id != -1)
+            ded_mapinfo_t* mapInfo = Def_GetMapInfo(GameMap_Uri(theMap));
+            if(mapInfo && mapInfo->name[0])
             {
-                return defs.text[id].text;
+                int id = Def_Get(DD_DEF_TEXT, mapInfo->name, NULL);
+                if(id != -1)
+                {
+                    return defs.text[id].text;
+                }
+                return mapInfo->name;
             }
-            return mapInfo->name;
         }
-        break;
-      }
-    case DD_MAP_AUTHOR: {
-        gamemap_t* map = P_GetCurrentMap();
-        ded_mapinfo_t* mapInfo = Def_GetMapInfo(P_MapUri(map));
+        return NULL;
 
-        if(mapInfo && mapInfo->author[0])
-            return mapInfo->author;
-        break;
-      }
-    case DD_MAP_MIN_X: {
-        gamemap_t* map = P_GetCurrentMap();
-        if(map)
-            return &map->bBox[BOXLEFT];
-        else
-            return NULL;
-      }
-    case DD_MAP_MIN_Y: {
-        gamemap_t* map = P_GetCurrentMap();
-        if(map)
-            return &map->bBox[BOXBOTTOM];
-        else
-            return NULL;
-      }
-    case DD_MAP_MAX_X: {
-        gamemap_t* map = P_GetCurrentMap();
-        if(map)
-            return &map->bBox[BOXRIGHT];
-        else
-            return NULL;
-      }
-    case DD_MAP_MAX_Y: {
-        gamemap_t* map = P_GetCurrentMap();
-        if(map)
-            return &map->bBox[BOXTOP];
-        else
-            return NULL;
-      }
+    case DD_MAP_AUTHOR:
+        if(theMap)
+        {
+            ded_mapinfo_t* mapInfo = Def_GetMapInfo(GameMap_Uri(theMap));
+            if(mapInfo && mapInfo->author[0])
+            {
+                return mapInfo->author;
+            }
+        }
+        return NULL;
+
+    case DD_MAP_MIN_X:
+        if(theMap)
+        {
+            return &theMap->aaBox.minX;
+        }
+        return NULL;
+
+    case DD_MAP_MIN_Y:
+        if(theMap)
+        {
+            return &theMap->aaBox.minY;
+        }
+        return NULL;
+
+    case DD_MAP_MAX_X:
+        if(theMap)
+        {
+            return &theMap->aaBox.maxX;
+        }
+        return NULL;
+
+    case DD_MAP_MAX_Y:
+        if(theMap)
+        {
+            return &theMap->aaBox.maxY;
+        }
+        return NULL;
+
     case DD_PSPRITE_OFFSET_X:
         return &pspOffset[VX];
 
@@ -2172,7 +2213,8 @@ void* DD_GetVariable(int ddvalue)
         return &cplrThrustMul;*/
 
     case DD_GRAVITY:
-        return &mapGravity;
+        valueD = theMap? GameMap_Gravity(theMap) : 0;
+        return &valueD;
 
     case DD_TORCH_RED:
         return &torchColor[CR];
@@ -2185,34 +2227,43 @@ void* DD_GetVariable(int ddvalue)
 
     case DD_TORCH_ADDITIVE:
         return &torchAdditive;
+
 #ifdef WIN32
     case DD_WINDOW_HANDLE:
-        return Sys_GetWindowHandle(windowIDX);
+        return Window_NativeHandle(Window_Main());
 #endif
 
     // We have to separately calculate the 35 Hz ticks.
     case DD_GAMETIC: {
         static timespan_t       fracTic;
         fracTic = gameTime * TICSPERSEC;
-        return &fracTic;
-      }
-    case DD_OPENRANGE:
-        return &openrange;
+        return &fracTic; }
 
-    case DD_OPENTOP:
-        return &opentop;
+    case DD_OPENRANGE: {
+        const TraceOpening* open = P_TraceOpening();
+        valueF = open->range;
+        return &valueF; }
 
-    case DD_OPENBOTTOM:
-        return &openbottom;
+    case DD_OPENTOP: {
+        const TraceOpening* open = P_TraceOpening();
+        valueF = open->top;
+        return &valueF; }
 
-    case DD_LOWFLOOR:
-        return &lowfloor;
+    case DD_OPENBOTTOM: {
+        const TraceOpening* open = P_TraceOpening();
+        valueF = open->bottom;
+        return &valueF; }
+
+    case DD_LOWFLOOR: {
+        const TraceOpening* open = P_TraceOpening();
+        valueF = open->lowFloor;
+        return &valueF; }
 
     case DD_NUMLUMPS: {
         static int count;
         count = F_LumpCount();
-        return &count;
-      }
+        return &count; }
+
     default: break;
     }
 
@@ -2238,7 +2289,7 @@ void DD_SetVariable(int ddvalue, void *parm)
             return;*/
 
         case DD_GRAVITY:
-            mapGravity = *(float*) parm;
+            if(theMap) GameMap_SetGravity(theMap, *(coord_t*) parm);
             return;
 
         case DD_PSPRITE_OFFSET_X:
@@ -2358,6 +2409,7 @@ const char* value_Str(int val)
         { DDVT_FIXED, "DDVT_FIXED" },
         { DDVT_ANGLE, "DDVT_ANGLE" },
         { DDVT_FLOAT, "DDVT_FLOAT" },
+        { DDVT_DOUBLE, "DDVT_DOUBLE" },
         { DDVT_LONG, "DDVT_LONG" },
         { DDVT_ULONG, "DDVT_ULONG" },
         { DDVT_PTR, "DDVT_PTR" },

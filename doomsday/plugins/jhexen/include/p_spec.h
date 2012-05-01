@@ -37,9 +37,9 @@ void        P_InitLava(void);
 void        P_SpawnSpecials(void);
 void        P_UpdateSpecials(void);
 
-boolean     P_ExecuteLineSpecial(int special, byte *args, linedef_t *line,
+boolean     P_ExecuteLineSpecial(int special, byte *args, LineDef *line,
                                  int side, mobj_t *mo);
-boolean     P_ActivateLine(linedef_t *ld, mobj_t *mo, int side,
+boolean     P_ActivateLine(LineDef *ld, mobj_t *mo, int side,
                            int activationType);
 
 void        P_PlayerInSpecialSector(player_t *plr);
@@ -67,17 +67,16 @@ typedef enum {
     STAIRS_PHASED
 } stairs_e;
 
-result_e    T_MovePlane(sector_t *sector, float speed, float dest,
+result_e    T_MovePlane(Sector *sector, float speed, coord_t dest,
                         int crush, int floorOrCeiling, int direction);
 
-int         EV_BuildStairs(linedef_t *line, byte *args, int direction,
+int         EV_BuildStairs(LineDef *line, byte *args, int direction,
                            stairs_e type);
-int         EV_FloorCrushStop(linedef_t *line, byte *args);
+int         EV_FloorCrushStop(LineDef *line, byte *args);
 
 #define TELEFOGHEIGHTF          (32)
 
-boolean     P_Teleport(mobj_t *mo, float x, float y, angle_t angle,
-                       boolean useFog);
+boolean     P_Teleport(mobj_t* mo, coord_t x, coord_t y, angle_t angle, boolean useFog);
 boolean     EV_Teleport(int tid, mobj_t *thing, boolean fog);
 void        P_ArtiTele(player_t *player);
 

@@ -374,6 +374,12 @@ int Cht_WarpFunc(const int* args, int player)
     if(IS_NETGAME)
         return false;
 
+    if(G_GameState() == GS_MAP && plr->playerState == PST_DEAD)
+    {
+        Con_Message("Cannot warp while dead.\n");
+        return false;
+    }
+
     tens = args[0] - '0';
     ones = args[1] - '0';
     if(tens < 0 || tens > 9 || ones < 0 || ones > 9)
@@ -463,7 +469,7 @@ static void printDebugInfo(int player)
 {
     player_t* plr = &players[player];
     char textBuffer[256];
-    subsector_t* sub;
+    BspLeaf* sub;
     ddstring_t* path, *mapPath;
     Uri* uri, *mapUri;
 
@@ -473,26 +479,26 @@ static void printDebugInfo(int player)
     mapUri = G_ComposeMapUri(gameEpisode, gameMap);
     mapPath = Uri_ToString(mapUri);
     sprintf(textBuffer, "Map [%s]  x:%g  y:%g  z:%g",
-            Str_Text(mapPath), plr->plr->mo->pos[VX], plr->plr->mo->pos[VY],
-            plr->plr->mo->pos[VZ]);
+            Str_Text(mapPath), plr->plr->mo->origin[VX], plr->plr->mo->origin[VY],
+            plr->plr->mo->origin[VZ]);
     P_SetMessage(plr, textBuffer, false);
     Str_Delete(mapPath);
     Uri_Delete(mapUri);
 
     // Also print some information to the console.
     Con_Message("%s", textBuffer);
-    sub = plr->plr->mo->subsector;
-    Con_Message("\nSubsector %i:\n", P_ToIndex(sub));
+    sub = plr->plr->mo->bspLeaf;
+    Con_Message("\nBspLeaf %i:\n", P_ToIndex(sub));
 
     uri = Materials_ComposeUri(P_GetIntp(sub, DMU_FLOOR_MATERIAL));
     path = Uri_ToString(uri);
-    Con_Message("  FloorZ:%g Material:%s\n", P_GetFloatp(sub, DMU_FLOOR_HEIGHT), Str_Text(path));
+    Con_Message("  FloorZ:%g Material:%s\n", P_GetDoublep(sub, DMU_FLOOR_HEIGHT), Str_Text(path));
     Str_Delete(path);
     Uri_Delete(uri);
 
     uri = Materials_ComposeUri(P_GetIntp(sub, DMU_CEILING_MATERIAL));
     path = Uri_ToString(uri);
-    Con_Message("  CeilingZ:%g Material:%s\n", P_GetFloatp(sub, DMU_CEILING_HEIGHT), Str_Text(path));
+    Con_Message("  CeilingZ:%g Material:%s\n", P_GetDoublep(sub, DMU_CEILING_HEIGHT), Str_Text(path));
     Str_Delete(path);
     Uri_Delete(uri);
 

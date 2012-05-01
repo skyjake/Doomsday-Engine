@@ -246,12 +246,12 @@ static int newTorchDelta[MAXPLAYERS];
 /**
  * Moves the given origin along a given angle.
  */
-void P_Thrust(player_t *player, angle_t angle, float move)
+void P_Thrust(player_t *player, angle_t angle, coord_t move)
 {
     mobj_t* mo = player->plr->mo;
     uint an = angle >> ANGLETOFINESHIFT;
 
-    /*float xmul=1, ymul=1;
+    /*coord_t xmul=1, ymul=1;
     // How about Quake-flying? -- jk
     if(quakeFly)
     {
@@ -260,10 +260,10 @@ void P_Thrust(player_t *player, angle_t angle, float move)
         mo->mom[MZ] += sin(ang) * move;
     }*/
 
-    if(!(player->powers[PT_FLIGHT] && !(mo->pos[VZ] <= mo->floorZ)))
+    if(!(player->powers[PT_FLIGHT] && !(mo->origin[VZ] <= mo->floorZ)))
     {
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-        sector_t* sec = P_GetPtrp(mo->subsector, DMU_SECTOR);
+        Sector* sec = P_GetPtrp(mo->bspLeaf, DMU_SECTOR);
 #endif
 #if __JHEXEN__
         const terraintype_t* tt = P_MobjGetFloorTerrainType(mo);
@@ -296,22 +296,21 @@ void P_Thrust(player_t *player, angle_t angle, float move)
  * Returns true if the player is currently standing on ground
  * or on top of another mobj.
  */
-boolean P_IsPlayerOnGround(player_t *player)
+boolean P_IsPlayerOnGround(player_t* player)
 {
-    boolean onground =
-        (player->plr->mo->pos[VZ] <= player->plr->mo->floorZ);
+    boolean onground = (player->plr->mo->origin[VZ] <= player->plr->mo->floorZ);
 
 #if __JHEXEN__
     if((player->plr->mo->onMobj) && !onground)
     {
-        onground = true; //(player->plr->mo->pos[VZ] <= on->pos[VZ] + on->height);
+        onground = true; //(player->plr->mo->origin[VZ] <= on->pos[VZ] + on->height);
     }
 #else
     if(player->plr->mo->onMobj && !onground && !(player->plr->mo->flags2 & MF2_FLY))
     {
         mobj_t *on = player->plr->mo->onMobj;
 
-        onground = (player->plr->mo->pos[VZ] <= on->pos[VZ] + on->height);
+        onground = (player->plr->mo->origin[VZ] <= on->origin[VZ] + on->height);
     }
 #endif
 
@@ -322,9 +321,9 @@ boolean P_IsPlayerOnGround(player_t *player)
  * Will make the player jump if the latest command so instructs,
  * providing that jumping is possible.
  */
-void P_CheckPlayerJump(player_t *player)
+void P_CheckPlayerJump(player_t* player)
 {
-    float       power = (IS_CLIENT ? netJumpPower : cfg.jumpPower);
+    float power = (IS_CLIENT ? netJumpPower : cfg.jumpPower);
 
     if(player->plr->flags & DDPF_CAMERA)
         return; // Cameras don't jump.
@@ -358,7 +357,7 @@ void P_PlayerRemoteMove(player_t* player)
     ddplayer_t* ddpl = player->plr;
     Smoother* smoother = Net_PlayerSmoother(plrNum);
     mobj_t* mo = player->plr->mo;
-    float xyz[3];
+    coord_t xyz[3];
 
     /*
 #ifdef _DEBUG
@@ -399,30 +398,30 @@ void P_PlayerRemoteMove(player_t* player)
         // On the server, the move must trigger all the usual player movement side-effects
         // (e.g., teleporting).
 
-        if(P_TryMove3f(mo, xyz[VX], xyz[VY], xyz[VZ]))
+        if(P_TryMoveXYZ(mo, xyz[VX], xyz[VY], xyz[VZ]))
         {
-            if(INRANGE_OF(mo->pos[VX], xyz[VX], .001f) &&
-               INRANGE_OF(mo->pos[VY], xyz[VY], .001f))
+            if(INRANGE_OF(mo->origin[VX], xyz[VX], .001f) &&
+               INRANGE_OF(mo->origin[VY], xyz[VY], .001f))
             {
                 if(Smoother_IsOnFloor(smoother))
                 {
                     // It successfully moved to the right XY coords.
-                    mo->pos[VZ] = mo->floorZ;
+                    mo->origin[VZ] = mo->floorZ;
 #ifdef _DEBUG
                     VERBOSE2( Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f (floorz)\n",
-                                         plrNum, mo->pos[VX], mo->pos[VY], mo->pos[VZ]) );
+                                         plrNum, mo->origin[VX], mo->origin[VY], mo->origin[VZ]) );
 #endif
                 }
                 else
                 {
 #ifdef _DEBUG
                     VERBOSE2( Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f\n",
-                                          plrNum, mo->pos[VX], mo->pos[VY], mo->pos[VZ]) );
+                                          plrNum, mo->origin[VX], mo->origin[VY], mo->origin[VZ]) );
 #endif
                 }
             }
 
-            if(players[plrNum].plr->flags & DDPF_FIXPOS)
+            if(players[plrNum].plr->flags & DDPF_FIXORIGIN)
             {
                 // The player must have teleported.
 #ifdef _DEBUG
@@ -435,7 +434,7 @@ void P_PlayerRemoteMove(player_t* player)
         {
     #ifdef _DEBUG
             Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f FAILED!\n",
-                        plrNum, mo->pos[VX], mo->pos[VY], mo->pos[VZ]);
+                        plrNum, mo->origin[VX], mo->origin[VY], mo->origin[VZ]);
     #endif
         }
     }
@@ -450,11 +449,11 @@ void P_PlayerRemoteMove(player_t* player)
         /*
         // Clientside moves have no side-effects.
         P_MobjUnlink(mo);
-        mo->pos[VX] = xyz[VX];
-        mo->pos[VY] = xyz[VY];
-        mo->pos[VZ] = xyz[VZ];
+        mo->origin[VX] = xyz[VX];
+        mo->origin[VY] = xyz[VY];
+        mo->origin[VZ] = xyz[VZ];
         P_MobjLink(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
-        P_CheckPosition3fv(mo, xyz);
+        P_CheckPosition(mo, xyz);
         mo->floorZ = tmFloorZ;
         mo->ceilingZ = tmCeilingZ;
         */
@@ -468,8 +467,8 @@ void P_MovePlayer(player_t *player)
     playerbrain_t *brain = &player->brain;
     classinfo_t* pClassInfo = PCLASS_INFO(player->class_);
     int speed;
-    float forwardMove;
-    float sideMove;
+    coord_t forwardMove;
+    coord_t sideMove;
 
     if(!plrmo) return;
 
@@ -514,7 +513,7 @@ void P_MovePlayer(player_t *player)
     onground = P_IsPlayerOnGround(player);
     if(dp->flags & DDPF_CAMERA)    // $democam
     {
-        static const float cameraSpeed[2] = { FIX2FLT(0x19), FIX2FLT(0x54) };
+        static const coord_t cameraSpeed[2] = { FIX2FLT(0x19), FIX2FLT(0x54) };
         int moveMul = 2048;
 
         // Cameramen have a 3D thrusters!
@@ -526,7 +525,7 @@ void P_MovePlayer(player_t *player)
     {
         // 'Move while in air' hack (server doesn't know about this!!).
         // Movement while in air traditionally disabled.
-        float maxMove = FIX2FLT(pClassInfo->maxMove);
+        coord_t maxMove = FIX2FLT(pClassInfo->maxMove);
         int movemul = (onground || (plrmo->flags2 & MF2_FLY))? pClassInfo->moveMul :
                 (cfg.airborneMovement? cfg.airborneMovement * 64 : 0);
 
@@ -545,8 +544,9 @@ void P_MovePlayer(player_t *player)
 #endif
             // Players can opt to reduce their maximum possible movement speed.
             if((int) cfg.playerMoveSpeed != 1)
-            {   // A divsor has been specified, apply it.
-                float m = MINMAX_OF(0.f, cfg.playerMoveSpeed, 1.f);
+            {
+                // A divsor has been specified, apply it.
+                coord_t m = MINMAX_OF(0.f, cfg.playerMoveSpeed, 1.f);
                 forwardMove *= m;
                 sideMove    *= m;
             }
@@ -616,7 +616,7 @@ void P_DeathThink(player_t* player)
 
     P_MovePsprites(player);
 
-    onground = (player->plr->mo->pos[VZ] <= player->plr->mo->floorZ);
+    onground = (player->plr->mo->origin[VZ] <= player->plr->mo->floorZ);
 #if __JDOOM__ || __JDOOM64__
     if(cfg.deathLookUp)
 #elif __JHERETIC__
@@ -707,10 +707,7 @@ void P_DeathThink(player_t* player)
         else
             player->plr->mo->angle -= delta; // Turn counter clockwise
 #else
-        angle =
-            R_PointToAngle2(player->plr->mo->pos[VX], player->plr->mo->pos[VY],
-                            player->attacker->pos[VX], player->attacker->pos[VY]);
-
+        angle = M_PointToAngle2(player->plr->mo->origin, player->attacker->origin);
         delta = angle - player->plr->mo->angle;
 
         if(delta < ANG5 || delta > (unsigned) -ANG5)
@@ -832,7 +829,7 @@ void P_MorphThink(player_t *player)
 /*    }
     if(!IS_NETGAME || !IS_CLIENT)
     {*/
-        if(pmo->pos[VZ] <= pmo->floorZ && (P_Random() < 32))
+        if(pmo->origin[VZ] <= pmo->floorZ && (P_Random() < 32))
         {   // Jump and noise
             pmo->mom[MZ] += 1;
             P_MobjChangeState(pmo, S_CHICPLAY_PAIN);
@@ -847,15 +844,15 @@ void P_MorphThink(player_t *player)
 # endif
 }
 
-boolean P_UndoPlayerMorph(player_t *player)
+boolean P_UndoPlayerMorph(player_t* player)
 {
-    mobj_t*             fog = 0, *mo = 0, *pmo = 0;
-    float               pos[3];
-    unsigned int        an;
-    angle_t             angle;
-    int                 playerNum;
-    weapontype_t        weapon;
-    int                 oldFlags, oldFlags2, oldBeast;
+    mobj_t* fog = 0, *mo = 0, *pmo = 0;
+    coord_t pos[3];
+    unsigned int an;
+    angle_t angle;
+    int playerNum;
+    weapontype_t weapon;
+    int oldFlags, oldFlags2, oldBeast;
 
     if(IS_CLIENT) return false;
 
@@ -864,7 +861,7 @@ boolean P_UndoPlayerMorph(player_t *player)
 # endif
 
     pmo = player->plr->mo;
-    memcpy(pos, pmo->pos, sizeof(pos));
+    memcpy(pos, pmo->origin, sizeof(pos));
 
     angle = pmo->angle;
     weapon = pmo->special1;
@@ -879,19 +876,20 @@ boolean P_UndoPlayerMorph(player_t *player)
 
     playerNum = P_GetPlayerNum(player);
 # if __JHEXEN__
-    mo = P_SpawnMobj3fv(PCLASS_INFO(cfg.playerClass[playerNum])->mobjType,
+    mo = P_SpawnMobj(PCLASS_INFO(cfg.playerClass[playerNum])->mobjType,
                         pos, angle, 0);
 # else
-    mo = P_SpawnMobj3fv(MT_PLAYER, pos, angle, 0);
+    mo = P_SpawnMobj(MT_PLAYER, pos, angle, 0);
 # endif
 
     if(!mo)
         return false;
 
     if(P_TestMobjLocation(mo) == false)
-    {   // Didn't fit
+    {
+        // Didn't fit
         P_MobjRemove(mo, false);
-        if((mo = P_SpawnMobj3fv(oldBeast, pos, angle, 0)))
+        if((mo = P_SpawnMobj(oldBeast, pos, angle, 0)))
         {
             mo->health = player->health;
             mo->special1 = weapon;
@@ -946,7 +944,7 @@ boolean P_UndoPlayerMorph(player_t *player)
 # endif
     an = angle >> ANGLETOFINESHIFT;
 
-    if((fog = P_SpawnMobj3f(MT_TFOG,
+    if((fog = P_SpawnMobjXYZ(MT_TFOG,
                             pos[VX] + 20 * FIX2FLT(finecosine[an]),
                             pos[VY] + 20 * FIX2FLT(finesine[an]),
                             pos[VZ] + TELEFOGHEIGHT, angle + ANG180, 0)))
@@ -960,17 +958,17 @@ boolean P_UndoPlayerMorph(player_t *player)
     P_PostMorphWeapon(player, weapon);
 
     player->update |= PSF_MORPH_TIME | PSF_HEALTH;
-    player->plr->flags |= DDPF_FIXPOS | DDPF_FIXMOM;
+    player->plr->flags |= DDPF_FIXORIGIN | DDPF_FIXMOM;
 
     return true;
 }
 #endif
 
-void P_PlayerThinkState(player_t *player)
+void P_PlayerThinkState(player_t* player)
 {
     if(player->plr->mo)
     {
-        mobj_t             *plrmo = player->plr->mo;
+        mobj_t* plrmo = player->plr->mo;
 
         // jDoom
         // Selector 0 = Generic (used by default)
@@ -1079,12 +1077,12 @@ void P_PlayerThinkMove(player_t *player)
 #if __JHEXEN__
         plrmo = player->plr->mo;
         if(player->powers[PT_SPEED] && !(mapTime & 1) &&
-           P_ApproxDistance(plrmo->mom[MX], plrmo->mom[MY]) > 12)
+           M_ApproxDistance(plrmo->mom[MX], plrmo->mom[MY]) > 12)
         {
             mobj_t*             speedMo;
             int                 playerNum;
 
-            if((speedMo = P_SpawnMobj3fv(MT_PLAYER_SPEED, plrmo->pos,
+            if((speedMo = P_SpawnMobj(MT_PLAYER_SPEED, plrmo->origin,
                                          plrmo->angle, 0)))
             {
                 playerNum = P_GetPlayerNum(player);
@@ -1162,7 +1160,7 @@ void P_PlayerThinkFly(player_t *player)
     // Apply Z momentum based on flight speed.
     if(plrmo->flags2 & MF2_FLY)
     {
-        plrmo->mom[MZ] = (float) player->flyHeight;
+        plrmo->mom[MZ] = (coord_t) player->flyHeight;
         if(player->flyHeight)
         {
             player->flyHeight /= 2;
@@ -1195,7 +1193,7 @@ void P_PlayerThinkSpecial(player_t* player)
 {
     if(!player->plr->mo) return;
 
-    if(P_ToXSector(P_GetPtrp(player->plr->mo->subsector, DMU_SECTOR))->special)
+    if(P_ToXSector(P_GetPtrp(player->plr->mo->bspLeaf, DMU_SECTOR))->special)
         P_PlayerInSpecialSector(player);
 
 #if __JHEXEN__
@@ -1467,7 +1465,7 @@ void P_PlayerThinkMap(player_t* player)
     if(brain->mapMarkAdd)
     {
         mobj_t* pmo = player->plr->mo;
-        ST_AutomapAddPoint(playerIdx, pmo->pos[VX], pmo->pos[VY], pmo->pos[VZ]);
+        ST_AutomapAddPoint(playerIdx, pmo->origin[VX], pmo->origin[VY], pmo->origin[VZ]);
     }
 
     if(brain->mapMarkClearAll)
@@ -1518,7 +1516,7 @@ void P_PlayerThinkPowers(player_t* player)
     {
         if(!--player->powers[PT_FLIGHT])
         {
-            if(player->plr->mo->pos[VZ] != player->plr->mo->floorZ && cfg.lookSpring)
+            if(player->plr->mo->origin[VZ] != player->plr->mo->floorZ && cfg.lookSpring)
             {
                 player->centering = true;
             }
@@ -1792,9 +1790,11 @@ void P_PlayerThinkUpdateControls(player_t* player)
     P_GetControlState(playerNum, CTL_WALK, &vel, &off);
     brain->forwardMove = off * offsetSensitivity + vel;
     P_GetControlState(playerNum, CTL_SIDESTEP, &vel, &off);
-    // Saturate sidestep.
-    vel = (vel > 0? 1 : vel < 0? -1 : 0);
     brain->sideMove = off * offsetSensitivity + vel;
+
+    // Clamp.
+    brain->forwardMove = MINMAX_OF(-1.f, brain->forwardMove, 1.f);
+    brain->sideMove    = MINMAX_OF(-1.f, brain->sideMove,    1.f);
 
     // Let the engine know these.
     dp->forwardMove = brain->forwardMove;
@@ -1986,9 +1986,6 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
 
     P_PlayerThinkState(player);
 
-    // Adjust turn angles and look direction. This is done in fractional time.
-    P_PlayerThinkLookPitch(player, ticLength);
-
     P_PlayerRemoteMove(player);
 
     if(!DD_IsSharpTick())
@@ -2000,6 +1997,9 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
 #if __JHEXEN__
     player->worldTimer++;
 #endif
+
+    // Adjust turn angles and look direction. This is done in fractional time.
+    P_PlayerThinkLookPitch(player, 1.0/35.0 /*ticLength*/);
 
     P_PlayerThinkLookYaw(player);
     P_PlayerThinkUpdateControls(player);

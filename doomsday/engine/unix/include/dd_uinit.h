@@ -32,6 +32,10 @@
 #include "dd_pinit.h"
 #include "library.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct {
     Library* hInstPlug[MAX_PLUGS];
     GETGAMEAPI GetGameAPI;
@@ -44,9 +48,22 @@ typedef struct {
 #endif
 } application_t;
 
-extern uint windowIDX; // Main window.
 extern application_t app;
 
+boolean DD_Unix_Init(int argc, char** argv);
 void DD_Shutdown(void);
+
+/**
+ * @note This implementation re-parses the entire config file on each call, so
+ * it is not useful for performance-critical or high volume usage.
+ *
+ * @return @c true, if the found config value was written to @a dest, otherwise
+ * @c false.
+ */
+boolean DD_Unix_GetConfigValue(const char* configFile, const char* key, char* dest, size_t destLen);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* LIBDENG_UINIT_H */

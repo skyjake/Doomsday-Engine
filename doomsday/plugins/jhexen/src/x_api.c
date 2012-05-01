@@ -77,7 +77,10 @@ int G_RegisterGames(int hookType, int param, void* data)
         "hexen", DATAPATH, DEFSPATH, CONFIGDIR, "Hexen", "Raven Software"
     };
     const GameDef hexenDemoDef = {
-        "hexen-demo", DATAPATH, DEFSPATH, CONFIGDIR, "Hexen 4-map Beta Demo", "Raven Software"
+        "hexen-demo", DATAPATH, DEFSPATH, CONFIGDIR, "Hexen 4-map Demo", "Raven Software"
+    };
+    const GameDef hexenBetaDemoDef = {
+        "hexen-betademo", DATAPATH, DEFSPATH, CONFIGDIR, "Hexen 4-map Beta Demo", "Raven Software"
     };
 
     /* Hexen (Death Kings) */
@@ -95,9 +98,15 @@ int G_RegisterGames(int hookType, int param, void* data)
 
     /* Hexen (Demo) */
     gameIds[hexen_demo] = DD_DefineGame(&hexenDemoDef);
-    DD_AddGameResource(GID(hexen_demo), RC_PACKAGE, RF_STARTUP, "hexen.wad", "MAP01;MAP04;TINTTAB;FOGMAP;TRANTBLA;DARTA1;ARTIPORK;SKYFOG;TALLYTOP;GROVER");
+    DD_AddGameResource(GID(hexen_demo), RC_PACKAGE, RF_STARTUP, "hexendemo.wad;machexendemo.wad;hexen.wad", "MAP01;MAP04;TINTTAB;FOGMAP;DARTA1;ARTIPORK;DEMO3==18150");
     DD_AddGameResource(GID(hexen_demo), RC_PACKAGE, RF_STARTUP, STARTUPPK3, 0);
     DD_AddGameResource(GID(hexen_demo), RC_DEFINITION, 0, "hexen-demo.ded", 0);
+
+    /* Hexen (Beta Demo) */
+    gameIds[hexen_betademo] = DD_DefineGame(&hexenBetaDemoDef);
+    DD_AddGameResource(GID(hexen_betademo), RC_PACKAGE, RF_STARTUP, "hexendemo.wad;machexendemo.wad;hexenbeta.wad;hexen.wad", "MAP01;MAP04;TINTTAB;FOGMAP;DARTA1;ARTIPORK;AFLYA0;DEMO3==13866");
+    DD_AddGameResource(GID(hexen_betademo), RC_PACKAGE, RF_STARTUP, STARTUPPK3, 0);
+    DD_AddGameResource(GID(hexen_betademo), RC_DEFINITION, 0, "hexen-demo.ded", 0);
     return true;
 
 #undef STARTUPPK3
@@ -115,6 +124,7 @@ void DP_Load(void)
     gameIds[hexen_deathkings] = DD_GameIdForKey("hexen-dk");
     gameIds[hexen]            = DD_GameIdForKey("hexen");
     gameIds[hexen_demo]       = DD_GameIdForKey("hexen-demo");
+    gameIds[hexen_betademo]   = DD_GameIdForKey("hexen-betademo");
 
     Plug_AddHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
 }
@@ -186,9 +196,9 @@ game_export_t* GetGameAPI(game_import_t* imports)
     gx.Responder = G_Responder;
     gx.EndFrame = X_EndFrame;
     gx.MobjThinker = P_MobjThinker;
-    gx.MobjFriction = (float (*)(void *)) P_MobjGetFriction;
-    gx.MobjCheckPosition3f = P_CheckPosition3f;
-    gx.MobjTryMove3f = P_TryMove3f;
+    gx.MobjFriction = (coord_t (*)(void *)) P_MobjGetFriction;
+    gx.MobjCheckPositionXYZ = P_CheckPositionXYZ;
+    gx.MobjTryMoveXYZ = P_TryMoveXYZ;
     gx.SectorHeightChangeNotification = P_HandleSectorHeightChange;
     gx.UpdateState = G_UpdateState;
     gx.GetInteger = X_GetInteger;
@@ -204,7 +214,7 @@ game_export_t* GetGameAPI(game_import_t* imports)
 
     // Data structure sizes.
     gx.mobjSize = sizeof(mobj_t);
-    gx.polyobjSize = sizeof(polyobj_t);
+    gx.polyobjSize = sizeof(Polyobj);
 
     gx.SetupForMapData = P_SetupForMapData;
 

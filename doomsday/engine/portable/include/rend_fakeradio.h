@@ -30,10 +30,10 @@ typedef struct {
     float shadowSize;
     const shadowcorner_t* botCn, *topCn, *sideCn;
     const edgespan_t* spans;
-    const float* segOffset;
-    const float* segLength;
-    const float* linedefLength;
-    const sector_t* frontSec, *backSec;
+    const coord_t* segOffset;
+    const coord_t* segLength;
+    const coord_t* linedefLength;
+    const Sector* frontSec, *backSec;
 } rendsegradio_params_t;
 
 /// Register the console commands, variables, etc..., of this module.
@@ -45,22 +45,22 @@ float Rend_RadioCalcShadowDarkness(float lightLevel);
  * Called to update the shadow properties used when doing FakeRadio for the
  * given linedef.
  */
-void Rend_RadioUpdateLinedef(linedef_t* line, boolean backSide);
+void Rend_RadioUpdateLinedef(LineDef* line, boolean backSide);
 
 /**
- * Render FakeRadio for the given seg section.
+ * Render FakeRadio for the given hedge section.
  */
 void Rend_RadioSegSection(const rvertex_t* rvertices, const walldiv_t* divs,
     const rendsegradio_params_t* params);
 
 /**
- * Render FakeRadio for the given subsector.
+ * Render FakeRadio for the given BSP leaf.
  */
-void Rend_RadioSubsectorEdges(subsector_t* subsector);
+void Rend_RadioBspLeafEdges(BspLeaf* bspLeaf);
 
 /**
  * Render the shadow poly vertices, for debug.
  */
 void Rend_DrawShadowOffsetVerts(void);
 
-#endif /* LIBDENG_RENDER_FAKERADIO_H */
+#endif /// LIBDENG_RENDER_FAKERADIO_H

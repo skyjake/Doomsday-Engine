@@ -34,5 +34,5 @@ distributed with Doomsday: @plugin{libdoom} (previously called jDoom),
 
 @caption{* = has a 4th episode @br ** = has episodes 4 and 5}
 
-For example, textures meant only for Final Doom: Plutonia Experiment would be
-placed in the directory @file{ data/jdoom/textures/doom2-plut/ }.
+To help @plugin{libhexen} recognize the IWAD of the 4-level
+Hexen (beta) demo, you should rename the IWAD to @file{hexendemo.wad}.

@@ -54,7 +54,6 @@
 #include "../../jdoom/include/p_oldsvg.h"
 #include "../../jdoom/include/p_pspr.h"
 #include "../../jdoom/include/p_setup.h"
-#include "../../jdoom/include/p_sound.h"
 #include "../../jdoom/include/p_spec.h"
 #include "../../jdoom/include/p_telept.h"
 #include "../../jdoom/include/r_defs.h"

@@ -48,19 +48,23 @@ class Feed implements Visual, Iterator, Countable
 
     public function __construct($feedURL, $maxItems=5)
     {
-        $this->_feedUri = $feedURL;
-        $this->_maxItems = intval($maxItems);
+        $this->feedUri = $feedURL;
+        $this->maxItems = intval($maxItems);
+        $this->feedFormat = 'RSS';
+        $this->position = 0;
 
-        $this->_feed = fetch_rss($this->_feedUri);
-        $this->_feedFormat = 'RSS';
-        $this->_position = 0;
+        $this->feed = fetch_rss($this->feedUri);
+        if(!$this->feed || $this->feed->ERROR)
+        {
+            $this->feed = NULL;
+        }
     }
 
     public function setTitle($title, $labelSpanClass=NULL)
     {
-        $this->_title = "$title";
+        $this->title = "$title";
         if(!is_null($labelSpanClass))
-            $this->_labelSpanClass = "$labelSpanClass";
+            $this->labelSpanClass = "$labelSpanClass";
     }
 
     public function setGenerateElementHtmlCallback($funcName, $params=NULL)
@@ -78,7 +82,7 @@ class Feed implements Visual, Iterator, Countable
      */
     public function displayOptions()
     {
-        return $this->_displayOptions;
+        return $this->displayOptions;
     }
 
     private function generateElementHtml(&$item)
@@ -99,35 +103,41 @@ class Feed implements Visual, Iterator, Countable
 
     public function generateHtml()
     {
-        if(count($this) <= 0) return;
+        $feedTitle = "$this->title via $this->feedFormat";
 
-        $feedTitle = "$this->_title via $this->_feedFormat";
+?><a href="<?php echo preg_replace('/(&)/', '&amp;', $this->feedUri); ?>" class="link-rss" title="<?php echo htmlspecialchars($feedTitle); ?>"><span class="hidden"><?php echo htmlspecialchars($this->feedFormat); ?></span></a><?php
 
-?><a href="<?php echo preg_replace('/(&)/', '&amp;', $this->_feedUri); ?>" class="link-rss" title="<?php echo htmlspecialchars($feedTitle); ?>"><span class="hidden"><?php echo htmlspecialchars($this->_feedFormat); ?></span></a><?php
-
-        if(!is_null($this->_labelSpanClass))
+        if(!is_null($this->labelSpanClass))
         {
-?>&nbsp;<span class="<?php echo $this->_labelSpanClass; ?>"><?php
+?>&nbsp;<span class="<?php echo $this->labelSpanClass; ?>"><?php
         }
-
 
         echo htmlspecialchars($feedTitle);
 
-        if(!is_null($this->_labelSpanClass))
+        if(!is_null($this->labelSpanClass))
         {
 ?></span><?php
         }
 
 ?><ul><?php
 
-        $n = (integer) 0;
-        foreach($this as $item)
+        if(is_object($this->feed) && count($this) > 0)
         {
-            $elementHtml = $this->generateElementHtml($item);
+            $n = (integer) 0;
+            foreach($this as $item)
+            {
+                $elementHtml = $this->generateElementHtml($item);
 
 ?><li><?php echo $elementHtml; ?></li><?php
 
-            if(++$n >= $this->_maxItems) break;
+                if(++$n >= $this->maxItems) break;
+            }
+        }
+        else
+        {
+
+?><li class="feed-error">...presently unavailable</li><?php
+
         }
 
 ?></ul><?php
@@ -135,7 +145,7 @@ class Feed implements Visual, Iterator, Countable
 
     public function url()
     {
-        return $this->_feedUri;
+        return $this->feedUri;
     }
 
     /**
@@ -143,8 +153,8 @@ class Feed implements Visual, Iterator, Countable
      */
     public function count()
     {
-        if(is_object($this->_feed) && is_array($this->_feed->items))
-            return sizeof($this->_feed->items);
+        if(is_object($this->feed) && is_array($this->feed->items))
+            return sizeof($this->feed->items);
         return 0;
     }
 
@@ -153,28 +163,28 @@ class Feed implements Visual, Iterator, Countable
      */
     public function rewind()
     {
-        reset($this->_feed->items);
-        $this->_position = key($this->_feed->items);
+        reset($this->feed->items);
+        $this->position = key($this->feed->items);
     }
 
     public function current()
     {
-        return $this->_feed->items[$this->_position];
+        return $this->feed->items[$this->position];
     }
 
     public function key()
     {
-        return $this->_position;
+        return $this->position;
     }
 
     public function next()
     {
-        next($this->_feed->items);
-        $this->_position = key($this->_feed->items);
+        next($this->feed->items);
+        $this->position = key($this->feed->items);
     }
 
     public function valid()
     {
-        return isset($this->_feed->items[$this->_position]);
+        return isset($this->feed->items[$this->position]);
     }
 }

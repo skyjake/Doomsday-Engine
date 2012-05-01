@@ -223,12 +223,12 @@ static void SV_v13_ReadPlayer(player_t* pl)
 
 static void SV_v13_ReadMobj(void)
 {
-    angle_t         angle;
-    spritenum_t     sprite;
-    int             frame, valid, type, ddflags = 0;
-    float           pos[3], mom[3], floorz, ceilingz, radius, height;
-    mobj_t         *mo;
-    mobjinfo_t*     info;
+    angle_t angle;
+    spritenum_t sprite;
+    int frame, valid, type, ddflags = 0;
+    coord_t pos[3], mom[3], floorz, ceilingz, radius, height;
+    mobj_t* mo;
+    mobjinfo_t* info;
 
     // The thinker was 3 ints long.
     SV_v13_ReadLong();
@@ -252,7 +252,7 @@ static void SV_v13_ReadMobj(void)
     SV_v13_ReadLong();
     SV_v13_ReadLong();
 
-    // Subsector.
+    // BspLeaf.
     SV_v13_ReadLong();
 
     floorz = FIX2FLT(SV_v13_ReadLong());
@@ -274,7 +274,7 @@ static void SV_v13_ReadMobj(void)
     /**
      * We now have all the information we need to create the mobj.
      */
-    mo = P_MobjCreate(P_MobjThinker, pos[VX], pos[VY], pos[VZ], angle,
+    mo = P_MobjCreateXYZ(P_MobjThinker, pos[VX], pos[VY], pos[VZ], angle,
                       radius, height, ddflags);
 
     mo->sprite = sprite;
@@ -330,9 +330,9 @@ static void SV_v13_ReadMobj(void)
     mo->player = (player_t *) SV_v13_ReadLong();
     mo->lastLook = SV_v13_ReadLong();
 
-    mo->spawnSpot.pos[VX] = (float) SV_v13_ReadLong();
-    mo->spawnSpot.pos[VY] = (float) SV_v13_ReadLong();
-    mo->spawnSpot.pos[VZ] = 0; // Initialize with "something".
+    mo->spawnSpot.origin[VX] = (coord_t) SV_v13_ReadLong();
+    mo->spawnSpot.origin[VY] = (coord_t) SV_v13_ReadLong();
+    mo->spawnSpot.origin[VZ] = 0; // Initialize with "something".
     mo->spawnSpot.angle = (angle_t) (ANG45 * (SV_v13_ReadLong() / 45));
     /*mo->spawnSpot.type = (int)*/ SV_v13_ReadLong();
 
@@ -354,14 +354,14 @@ static void SV_v13_ReadMobj(void)
         mo->player->plr->mo = mo;
         mo->player->plr->mo->dPlayer = mo->player->plr;
     }
-    P_MobjSetPosition(mo);
-    mo->floorZ = P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT);
-    mo->ceilingZ = P_GetFloatp(mo->subsector, DMU_CEILING_HEIGHT);
+    P_MobjSetOrigin(mo);
+    mo->floorZ   = P_GetDoublep(mo->bspLeaf, DMU_FLOOR_HEIGHT);
+    mo->ceilingZ = P_GetDoublep(mo->bspLeaf, DMU_CEILING_HEIGHT);
 }
 
 void P_v13_UnArchivePlayers(void)
 {
-    int         i, j;
+    int i, j;
 
     for(i = 0; i < 4; ++i)
     {
@@ -373,7 +373,7 @@ void P_v13_UnArchivePlayers(void)
         players[i].attacker = NULL;
         for(j = 0; j < NUMPSPRITES; ++j)
         {
-            player_t       *plr = &players[i];
+            player_t* plr = &players[i];
 
             if(plr->pSprites[j].state)
             {
@@ -389,9 +389,9 @@ void P_v13_UnArchiveWorld(void)
     uint                i, j;
     fixed_t             offx, offy;
     short*              get;
-    sector_t*           sec;
+    Sector*             sec;
     xsector_t*          xsec;
-    linedef_t*          line;
+    LineDef*            line;
     xline_t*            xline;
 
     get = (short *) save_p;
@@ -402,8 +402,8 @@ void P_v13_UnArchiveWorld(void)
         sec = P_ToPtr(DMU_SECTOR, i);
         xsec = P_ToXSector(sec);
 
-        P_SetFixedp(sec, DMU_FLOOR_HEIGHT, *get++ << FRACBITS);
-        P_SetFixedp(sec, DMU_CEILING_HEIGHT, *get++ << FRACBITS);
+        P_SetDoublep(sec, DMU_FLOOR_HEIGHT,   (coord_t)*get++);
+        P_SetDoublep(sec, DMU_CEILING_HEIGHT, (coord_t)*get++);
         P_SetPtrp(sec, DMU_FLOOR_MATERIAL,   P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_FLATS, *get++)));
         P_SetPtrp(sec, DMU_CEILING_MATERIAL, P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_FLATS, *get++)));
         P_SetFloatp(sec, DMU_LIGHT_LEVEL, (float) (*get++) / 255.0f);
@@ -425,7 +425,7 @@ void P_v13_UnArchiveWorld(void)
 
         for(j = 0; j < 2; j++)
         {
-            sidedef_t* sdef;
+            SideDef* sdef;
 
             if(j == 0)
                 sdef = P_GetPtrp(line, DMU_SIDEDEF0);
@@ -500,7 +500,7 @@ static int SV_ReadCeiling(ceiling_t *ceiling)
 typedef struct {
     thinker_t   thinker;        // was 12 bytes
     ceilingtype_e   type;           // was 32bit int
-    sector_t    *sector;
+    Sector     *sector;
     fixed_t     bottomheight, topheight;
     fixed_t     speed;
     boolean     crush;
@@ -544,7 +544,7 @@ static int SV_ReadDoor(door_t *door)
 typedef struct {
     thinker_t   thinker;        // was 12 bytes
     doortype_e  type;           // was 32bit int
-    sector_t    *sector;
+    Sector     *sector;
     fixed_t     topheight;
     fixed_t     speed;
     int         direction;      // 1 = up, 0 = waiting at top, -1 = down
@@ -583,7 +583,7 @@ typedef struct {
     thinker_t   thinker;        // was 12 bytes
     floortype_e type;           // was 32bit int
     boolean     crush;
-    sector_t    *sector;
+    Sector     *sector;
     int         direction;
     int         newspecial;
     short       texture;
@@ -620,7 +620,7 @@ static int SV_ReadPlat(plat_t *plat)
 /* Original Heretic format:
 typedef struct {
     thinker_t   thinker;        // was 12 bytes
-    sector_t    *sector;
+    Sector     *sector;
     fixed_t     speed;
     fixed_t     low;
     fixed_t     high;
@@ -667,7 +667,7 @@ static int SV_ReadFlash(lightflash_t *flash)
 /* Original Heretic format:
 typedef struct {
     thinker_t   thinker;        // was 12 bytes
-    sector_t    *sector;
+    Sector     *sector;
     int         count;
     int         maxLight;
     int         minLight;
@@ -699,7 +699,7 @@ static int SV_ReadStrobe(strobe_t *strobe)
 /* Original Heretic format:
 typedef struct {
     thinker_t   thinker;        // was 12 bytes
-    sector_t    *sector;
+    Sector     *sector;
     int         count;
     int         minLight;
     int         maxLight;
@@ -731,7 +731,7 @@ static int SV_ReadGlow(glow_t *glow)
 /* Original Heretic format:
 typedef struct {
     thinker_t   thinker;        // was 12 bytes
-    sector_t    *sector;
+    Sector     *sector;
     int         minLight;
     int         maxLight;
     int         direction;
@@ -757,13 +757,13 @@ typedef struct {
 /**
  * Things to handle:
  *
- * T_MoveCeiling, (ceiling_t: sector_t * swizzle), - active list
- * T_Door, (door_t: sector_t * swizzle),
- * T_MoveFloor, (floor_t: sector_t * swizzle),
- * T_LightFlash, (lightflash_t: sector_t * swizzle),
- * T_StrobeFlash, (strobe_t: sector_t *),
- * T_Glow, (glow_t: sector_t *),
- * T_PlatRaise, (plat_t: sector_t *), - active list
+ * T_MoveCeiling, (ceiling_t: Sector * swizzle), - active list
+ * T_Door, (door_t: Sector * swizzle),
+ * T_MoveFloor, (floor_t: Sector * swizzle),
+ * T_LightFlash, (lightflash_t: Sector * swizzle),
+ * T_StrobeFlash, (strobe_t: Sector *),
+ * T_Glow, (glow_t: Sector *),
+ * T_PlatRaise, (plat_t: Sector *), - active list
  */
 void P_v13_UnArchiveSpecials(void)
 {

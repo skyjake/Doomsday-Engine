@@ -99,17 +99,17 @@ static void renderSkyModels(void)
 {
     rendmodelparams_t params;
     skymodel_t* sky;
-    float pos[3];
     float inter;
     int i, c;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
 
     // Setup basic translation.
-    glTranslatef(vx, vy, vz);
+    glTranslatef(vOrigin[VX], vOrigin[VY], vOrigin[VZ]);
 
     for(i = 0, sky = skyModels; i < NUM_SKY_MODELS; ++i, sky++)
     {
@@ -123,19 +123,17 @@ static void renderSkyModels(void)
             continue;
         }
 
-        // Calculate the coordinates for the model.
-        pos[0] = vx * -sky->def->coordFactor[0];
-        pos[1] = vy * -sky->def->coordFactor[1];
-        pos[2] = vz * -sky->def->coordFactor[2];
-
         inter = (sky->maxTimer > 0 ? sky->timer / (float) sky->maxTimer : 0);
 
         memset(&params, 0, sizeof(params));
 
+        // Calculate the coordinates for the model.
+        params.origin[VX] = vOrigin[VX] * -sky->def->coordFactor[VX];
+        params.origin[VY] = vOrigin[VZ] * -sky->def->coordFactor[VZ];
+        params.origin[VZ] = vOrigin[VY] * -sky->def->coordFactor[VY];
+        params.gzt = params.origin[VZ];
         params.distance = 1;
-        params.center[VX] = pos[0];
-        params.center[VY] = pos[2];
-        params.center[VZ] = params.gzt = pos[1];
+
         params.extraYawAngle = params.yawAngleOffset = sky->def->rotate[0];
         params.extraPitchAngle = params.pitchAngleOffset = sky->def->rotate[1];
         params.inter = inter;
@@ -297,7 +295,7 @@ static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t se
             if(!avgLineColor)
                 Con_Error("configureRenderHemisphereStateForLayer: Texture id:%u has no %s analysis.", Textures_Id(MSU_texture(ms, MTU_PRIMARY)), (setupCap == HC_TOP? "TA_LINE_TOP_COLOR" : "TA_LINE_BOTTOM_COLOR"));
 
-            V3_Copy(rs.capColor.rgb, avgLineColor->color.rgb);
+            V3f_Copy(rs.capColor.rgb, avgLineColor->color.rgb);
             // Is the colored fadeout in use?
             rs.fadeout = (rs.capColor.red   >= fadeoutLimit ||
                           rs.capColor.green >= fadeoutLimit ||
@@ -312,7 +310,7 @@ static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t se
     if(setupCap != HC_NONE && !rs.fadeout)
     {
         // Default color is black.
-        V3_Set(rs.capColor.rgb, 0, 0, 0);
+        V3f_Set(rs.capColor.rgb, 0, 0, 0);
     }
 }
 
@@ -399,7 +397,7 @@ void Rend_RenderSky(void)
         // Setup a proper matrix.
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
-        glTranslatef(vx, vy, vz);
+        glTranslatef(vOrigin[VX], vOrigin[VY], vOrigin[VZ]);
         glScalef(skyDistance, skyDistance, skyDistance);
 
         // Always draw both hemispheres.

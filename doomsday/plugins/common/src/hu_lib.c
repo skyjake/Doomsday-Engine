@@ -2512,8 +2512,6 @@ int MNButton_CommandResponder(mn_object_t* obj, menucommand_e cmd)
         else
         {
             // Stay-down buttons change state.
-            S_LocalSound(SFX_MENU_CYCLE, NULL);
-
             if(!justActivated)
                 obj->_flags ^= MNF_ACTIVE;
 

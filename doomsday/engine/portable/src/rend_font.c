@@ -584,6 +584,7 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
     if(renderWireframe > 1)
     {
         LIBDENG_ASSERT_IN_MAIN_THREAD();
+        LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         glDisable(GL_TEXTURE_2D);
@@ -1182,6 +1183,7 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
     float origColor[4];
     short textFlags;
     char* str, *end;
+    boolean escaped = false;
 
     errorIfNotInited("FR_DrawText");
 
@@ -1197,6 +1199,7 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
         FR_TextSize(&textSize, text);
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // We need to change the current color, so remember for restore.
     glGetFloatv(GL_CURRENT_COLOR, origColor);
@@ -1222,7 +1225,13 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
         str = (char*)text;
         while(*str)
         {
-            if(*str == '{') // Paramaters included?
+            if(*str == FR_FORMAT_ESCAPE_CHAR)
+            {
+                escaped = true;
+                ++str;
+                continue;
+            }
+            if(!escaped && *str == '{') // Paramaters included?
             {
                 fontid_t lastFont = state.fontNum;
                 int lastTracking = state.tracking;
@@ -1265,7 +1274,7 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
                     FR_SetCaseScale(state.caseScale);
             }
 
-            for(end = str; *end && *end != '{';)
+            for(end = str; *end && *end != FR_FORMAT_ESCAPE_CHAR && (escaped || *end != '{');)
             {
                 int newlines = 0, fragmentAlignFlags;
                 float alignx = 0;
@@ -1275,8 +1284,11 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
                 {
                     curCase = -1;
                     // Select a substring with characters of the same case (or whitespace).
-                    for(; *end && *end != '{' && *end != '\n'; end++)
+                    for(; *end && *end != FR_FORMAT_ESCAPE_CHAR && (escaped || *end != '{') &&
+                        *end != '\n'; end++)
                     {
+                        escaped = false;
+
                         // We can skip whitespace.
                         if(isspace(*end))
                             continue;
@@ -1290,8 +1302,12 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
                 else
                 {
                     curCase = 0;
-                    for(; *end && *end != '{' && *end != '\n'; end++);
+                    for(; *end && *end != FR_FORMAT_ESCAPE_CHAR && (escaped || *end != '{') &&
+                        *end != '\n'; end++) { escaped = false; }
                 }
+
+                // No longer escaped.
+                escaped = false;
 
                 { char* buffer = enlargeTextBuffer(end - str);
                 memcpy(buffer, str, end - str);
@@ -1422,7 +1438,7 @@ void FR_TextSize(Size2Raw* size, const char* text)
 int FR_TextWidth(const char* string)
 {
     int w, maxWidth = -1;
-    boolean skip = false;
+    boolean skipping = false, escaped = false;
     const char* ch;
     size_t i, len;
 
@@ -1431,6 +1447,8 @@ int FR_TextWidth(const char* string)
     if(!string || !string[0])
         return 0;
 
+    /// @todo All visual format parsing should be done in one place.
+
     w = 0;
     len = strlen(string);
     ch = string;
@@ -1438,18 +1456,25 @@ int FR_TextWidth(const char* string)
     {
         unsigned char c = *ch;
 
-        if(c == '{')
+        if(c == FR_FORMAT_ESCAPE_CHAR)
         {
-            skip = true;
+            escaped = true;
+            continue;
         }
-        else if(c == '}')
+        if(!escaped && c == '{')
         {
-            skip = false;
+            skipping = true;
+        }
+        else if(skipping && c == '}')
+        {
+            skipping = false;
             continue;
         }
 
-        if(skip)
+        if(skipping)
             continue;
+
+        escaped = false;
 
         if(c == '\n')
         {

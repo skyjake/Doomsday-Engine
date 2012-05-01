@@ -35,6 +35,7 @@
 #include "p_map.h"
 #include "p_mapsetup.h"
 #include "p_mapspec.h"
+#include "p_sound.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -210,31 +211,32 @@ static char ErrorMsg[128];
 
 static int (*PCodeCmds[]) (void) =
 {
-CmdNOP, CmdTerminate, CmdSuspend, CmdPushNumber, CmdLSpec1, CmdLSpec2,
-        CmdLSpec3, CmdLSpec4, CmdLSpec5, CmdLSpec1Direct, CmdLSpec2Direct,
-        CmdLSpec3Direct, CmdLSpec4Direct, CmdLSpec5Direct, CmdAdd,
-        CmdSubtract, CmdMultiply, CmdDivide, CmdModulus, CmdEQ, CmdNE,
-        CmdLT, CmdGT, CmdLE, CmdGE, CmdAssignScriptVar, CmdAssignMapVar,
-        CmdAssignWorldVar, CmdPushScriptVar, CmdPushMapVar,
-        CmdPushWorldVar, CmdAddScriptVar, CmdAddMapVar, CmdAddWorldVar,
-        CmdSubScriptVar, CmdSubMapVar, CmdSubWorldVar, CmdMulScriptVar,
-        CmdMulMapVar, CmdMulWorldVar, CmdDivScriptVar, CmdDivMapVar,
-        CmdDivWorldVar, CmdModScriptVar, CmdModMapVar, CmdModWorldVar,
-        CmdIncScriptVar, CmdIncMapVar, CmdIncWorldVar, CmdDecScriptVar,
-        CmdDecMapVar, CmdDecWorldVar, CmdGoto, CmdIfGoto, CmdDrop,
-        CmdDelay, CmdDelayDirect, CmdRandom, CmdRandomDirect,
-        CmdThingCount, CmdThingCountDirect, CmdTagWait, CmdTagWaitDirect,
-        CmdPolyWait, CmdPolyWaitDirect, CmdChangeFloor,
-        CmdChangeFloorDirect, CmdChangeCeiling, CmdChangeCeilingDirect,
-        CmdRestart, CmdAndLogical, CmdOrLogical, CmdAndBitwise,
-        CmdOrBitwise, CmdEorBitwise, CmdNegateLogical, CmdLShift,
-        CmdRShift, CmdUnaryMinus, CmdIfNotGoto, CmdLineSide, CmdScriptWait,
-        CmdScriptWaitDirect, CmdClearLineSpecial, CmdCaseGoto,
-        CmdBeginPrint, CmdEndPrint, CmdPrintString, CmdPrintNumber,
-        CmdPrintCharacter, CmdPlayerCount, CmdGameType, CmdGameSkill,
-        CmdTimer, CmdSectorSound, CmdAmbientSound, CmdSoundSequence,
-        CmdSetLineTexture, CmdSetLineBlocking, CmdSetLineSpecial,
-        CmdThingSound, CmdEndPrintBold};
+    CmdNOP, CmdTerminate, CmdSuspend, CmdPushNumber, CmdLSpec1, CmdLSpec2,
+    CmdLSpec3, CmdLSpec4, CmdLSpec5, CmdLSpec1Direct, CmdLSpec2Direct,
+    CmdLSpec3Direct, CmdLSpec4Direct, CmdLSpec5Direct, CmdAdd,
+    CmdSubtract, CmdMultiply, CmdDivide, CmdModulus, CmdEQ, CmdNE,
+    CmdLT, CmdGT, CmdLE, CmdGE, CmdAssignScriptVar, CmdAssignMapVar,
+    CmdAssignWorldVar, CmdPushScriptVar, CmdPushMapVar,
+    CmdPushWorldVar, CmdAddScriptVar, CmdAddMapVar, CmdAddWorldVar,
+    CmdSubScriptVar, CmdSubMapVar, CmdSubWorldVar, CmdMulScriptVar,
+    CmdMulMapVar, CmdMulWorldVar, CmdDivScriptVar, CmdDivMapVar,
+    CmdDivWorldVar, CmdModScriptVar, CmdModMapVar, CmdModWorldVar,
+    CmdIncScriptVar, CmdIncMapVar, CmdIncWorldVar, CmdDecScriptVar,
+    CmdDecMapVar, CmdDecWorldVar, CmdGoto, CmdIfGoto, CmdDrop,
+    CmdDelay, CmdDelayDirect, CmdRandom, CmdRandomDirect,
+    CmdThingCount, CmdThingCountDirect, CmdTagWait, CmdTagWaitDirect,
+    CmdPolyWait, CmdPolyWaitDirect, CmdChangeFloor,
+    CmdChangeFloorDirect, CmdChangeCeiling, CmdChangeCeilingDirect,
+    CmdRestart, CmdAndLogical, CmdOrLogical, CmdAndBitwise,
+    CmdOrBitwise, CmdEorBitwise, CmdNegateLogical, CmdLShift,
+    CmdRShift, CmdUnaryMinus, CmdIfNotGoto, CmdLineSide, CmdScriptWait,
+    CmdScriptWaitDirect, CmdClearLineSpecial, CmdCaseGoto,
+    CmdBeginPrint, CmdEndPrint, CmdPrintString, CmdPrintNumber,
+    CmdPrintCharacter, CmdPlayerCount, CmdGameType, CmdGameSkill,
+    CmdTimer, CmdSectorSound, CmdAmbientSound, CmdSoundSequence,
+    CmdSetLineTexture, CmdSetLineBlocking, CmdSetLineSpecial,
+    CmdThingSound, CmdEndPrintBold
+};
 
 // CODE --------------------------------------------------------------------
 
@@ -367,7 +369,7 @@ void P_CheckACSStore(uint map)
  *                      map to start on (will be deferred).
  */
 boolean P_StartACS(int number, uint map, byte* args, mobj_t* activator,
-                   linedef_t* line, int side)
+                   LineDef* line, int side)
 {
     int                 i, infoIndex;
     acs_t*              script;
@@ -462,7 +464,7 @@ static boolean AddToACSStore(uint map, int number, const byte* args)
     return true;
 }
 
-boolean P_StartLockedACS(linedef_t *line, byte *args, mobj_t *mo, int side)
+boolean P_StartLockedACS(LineDef *line, byte *args, mobj_t *mo, int side)
 {
     int         i;
     int         lock;
@@ -642,7 +644,7 @@ static void ScriptFinished(int number)
 static boolean TagBusy(int tag)
 {
     uint                k;
-    sector_t*           sec;
+    Sector*             sec;
     xsector_t*          xsec;
 
     // NOTE: We can't use the sector tag lists here as we might already be
@@ -1288,7 +1290,7 @@ static int CmdPolyWaitDirect(void)
 
 static int CmdChangeFloor(void)
 {
-    sector_t* sec = NULL;
+    Sector* sec = NULL;
     iterlist_t* list;
     material_t* mat;
     ddstring_t path;
@@ -1322,7 +1324,7 @@ static int CmdChangeFloor(void)
 
 static int CmdChangeFloorDirect(void)
 {
-    sector_t* sec = NULL;
+    Sector* sec = NULL;
     material_t* mat;
     iterlist_t* list;
     ddstring_t path;
@@ -1355,7 +1357,7 @@ static int CmdChangeFloorDirect(void)
 
 static int CmdChangeCeiling(void)
 {
-    sector_t* sec = NULL;
+    Sector* sec = NULL;
     material_t* mat;
     iterlist_t* list;
     ddstring_t path;
@@ -1389,7 +1391,7 @@ static int CmdChangeCeiling(void)
 
 static int CmdChangeCeilingDirect(void)
 {
-    sector_t* sec = NULL;
+    Sector* sec = NULL;
     material_t* mat;
     iterlist_t* list;
     ddstring_t path;
@@ -1664,10 +1666,10 @@ static int CmdSectorSound(void)
     mobj = NULL;
     if(ACScript->line)
     {
-        sector_t*           front =
+        Sector*             front =
             P_GetPtrp(ACScript->line, DMU_FRONT_SECTOR);
 
-        mobj = P_GetPtrp(front, DMU_SOUND_ORIGIN);
+        mobj = P_GetPtrp(front, DMU_BASE);
     }
     volume = Pop();
 
@@ -1710,10 +1712,10 @@ static int CmdAmbientSound(void)
     {
         // SpawnMobj calls P_Random. We don't want that
         // the random generator gets out of sync.
-        if((mobj = P_SpawnMobj3f(MT_CAMERA,
-                                 plrmo->pos[VX] + (((M_Random() - 127) * 2) << FRACBITS),
-                                 plrmo->pos[VY] + (((M_Random() - 127) * 2) << FRACBITS),
-                                 plrmo->pos[VZ] + (((M_Random() - 127) * 2) << FRACBITS),
+        if((mobj = P_SpawnMobjXYZ(MT_CAMERA,
+                                 plrmo->origin[VX] + (((M_Random() - 127) * 2) << FRACBITS),
+                                 plrmo->origin[VY] + (((M_Random() - 127) * 2) << FRACBITS),
+                                 plrmo->origin[VZ] + (((M_Random() - 127) * 2) << FRACBITS),
                                  0, 0))) // A camera's a good temporary source.
             mobj->tics = 5 * TICSPERSEC; // Five seconds should be enough.
     }
@@ -1731,10 +1733,10 @@ static int CmdSoundSequence(void)
     mobj = NULL;
     if(ACScript->line)
     {
-        sector_t*           front =
+        Sector*             front =
             P_GetPtrp(ACScript->line, DMU_FRONT_SECTOR);
 
-        mobj = P_GetPtrp(front, DMU_SOUND_ORIGIN);
+        mobj = P_GetPtrp(front, DMU_BASE);
     }
     SN_StartSequenceName(mobj, GetACString(Pop()));
 
@@ -1745,7 +1747,7 @@ static int CmdSetLineTexture(void)
 {
     int lineTag, side, position;
     material_t* mat;
-    linedef_t* line;
+    LineDef* line;
     iterlist_t* list;
     ddstring_t path;
     Uri* uri;
@@ -1770,7 +1772,7 @@ static int CmdSetLineTexture(void)
         IterList_RewindIterator(list);
         while((line = IterList_MoveIterator(list)) != NULL)
         {
-            sidedef_t*          sdef =
+            SideDef*            sdef =
                 P_GetPtrp(line, (side == 0? DMU_SIDEDEF0 : DMU_SIDEDEF1));
 
             if(position == TEXTURE_MIDDLE)
@@ -1793,7 +1795,7 @@ static int CmdSetLineTexture(void)
 
 static int CmdSetLineBlocking(void)
 {
-    linedef_t*          line;
+    LineDef*            line;
     int                 lineTag;
     boolean             blocking;
     iterlist_t*         list;
@@ -1818,7 +1820,7 @@ static int CmdSetLineBlocking(void)
 
 static int CmdSetLineSpecial(void)
 {
-    linedef_t*          line;
+    LineDef*            line;
     int                 lineTag;
     int                 special, arg1, arg2, arg3, arg4, arg5;
     iterlist_t*         list;

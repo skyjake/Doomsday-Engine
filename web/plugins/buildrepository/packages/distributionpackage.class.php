@@ -24,7 +24,10 @@
 
 includeGuard('DistributionPackage');
 
-require_once('abstractpackage.class.php');
+require_once('abstractbuilderpackage.class.php');
 
 class DistributionPackage extends AbstractPackage
+{}
+
+class DistributionBuilderPackage extends AbstractBuilderPackage
 {}

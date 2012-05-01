@@ -57,6 +57,7 @@
 #include "de_defs.h"
 #include "de_filesys.h"
 
+#include "displaymode.h"
 #include "cbuffer.h"
 #include "font.h"
 
@@ -259,7 +260,7 @@ void Con_ResizeHistoryBuffer(void)
         cw = (FR_TextWidth("AA") * consoleFontScale[0]) / 2;
         if(0 != cw)
         {
-            maxLength = MIN_OF(theWindow->geometry.size.width / cw - 2, 250);
+            maxLength = MIN_OF(Window_Width(theWindow) / cw - 2, 250);
         }
     }
 
@@ -1445,7 +1446,7 @@ static void updateDedicatedConsoleCmdLine(void)
     if(cmdInsMode)
         flags |= CLF_CURSOR_LARGE;
 
-    Sys_SetConWindowCmdLine(windowIDX, cmdLine, cmdCursor+1, flags);
+    Sys_SetConWindowCmdLine(mainWindowIdx, cmdLine, cmdCursor+1, flags);
 }
 
 void Con_Open(int yes)
@@ -1478,6 +1479,37 @@ void Con_Resize(void)
     if(!ConsoleInited) return;
     Con_ResizeHistoryBuffer();
     Rend_ConsoleResize(true/*force*/);
+}
+
+static void insertOnCommandLine(byte ch)
+{
+    size_t len = strlen(cmdLine);
+
+    // If not in insert mode, push the rest of the command-line forward.
+    if(!cmdInsMode)
+    {
+        assert(len <= CMDLINE_SIZE);
+        if(len == CMDLINE_SIZE)
+            return; // Can't place character.
+
+        if(cmdCursor < len)
+        {
+            memmove(cmdLine + cmdCursor + 1, cmdLine + cmdCursor, CMDLINE_SIZE - cmdCursor);
+
+            // The last char is always zero, though.
+            cmdLine[CMDLINE_SIZE] = 0;
+        }
+    }
+
+    cmdLine[cmdCursor] = ch;
+    if(cmdCursor < CMDLINE_SIZE)
+    {
+        ++cmdCursor;
+        // Do we need to replace the terminator?
+        if(cmdCursor == len + 1)
+            cmdLine[cmdCursor] = 0;
+    }
+    complPos = cmdCursor;
 }
 
 boolean Con_Responder(ddevent_t* ev)
@@ -1529,7 +1561,16 @@ boolean Con_Responder(ddevent_t* ev)
     if(!IS_KEY_PRESS(ev))
         return false;
 
-    // In this case the console is active and operational.
+    // The console is active and operational.
+
+    // Temporary kludge: since bindings are not presently accessible when the
+    // console is open, use some hardcoded keys.
+    if(ev->toggle.id == DDKEY_F11)
+    {
+        DD_Execute(true, altDown? "releasemouse" : "togglefullscreen");
+        return true;
+    }
+
     // Check the shutdown key.
     if(!conInputLock)
     {
@@ -1773,19 +1814,14 @@ boolean Con_Responder(ddevent_t* ev)
         break;
 
     default: { // Check for a character.
-        byte ch;
-        size_t len;
+        int i;
 
         if(conInputLock)
             break;
 
-        ch = ev->toggle.id;
-        ch = DD_ModKey(ch);
-        if(ch < 32 || (ch > 127 && ch < DD_HIGHEST_KEYCODE))
-            return true;
-
-        if(ch == 'c' && altDown) // if alt + c clear the current cmdline
+        if(ev->toggle.id == 'c' && altDown) // Alt+C: clear the current cmdline
         {
+            /// @todo  Make this a binding?
             memset(cmdLine, 0, sizeof(cmdLine));
             cmdCursor = 0;
             complPos = 0;
@@ -1794,38 +1830,26 @@ boolean Con_Responder(ddevent_t* ev)
             return true;
         }
 
-        len = strlen(cmdLine);
-
-        // If not in insert mode, push the rest of the command-line forward.
-        if(!cmdInsMode)
+        if(ev->toggle.text[0])
         {
-            if(!(len < CMDLINE_SIZE))
-                return true; // Can't place character.
-
-            if(cmdCursor < len)
+            // Insert any text specified in the event.
+            for(i = 0; ev->toggle.text[i]; ++i)
             {
-                memmove(cmdLine + cmdCursor + 1, cmdLine + cmdCursor,
-                        CMDLINE_SIZE - cmdCursor);
-
-                // The last char is always zero, though.
-                cmdLine[CMDLINE_SIZE] = 0;
+                insertOnCommandLine(ev->toggle.text[i]);
             }
-        }
 
-        cmdLine[cmdCursor] = ch;
-        if(cmdCursor < CMDLINE_SIZE)
-        {
-            ++cmdCursor;
-            // Do we need to replace the terminator?
-            if(cmdCursor == len+1)
-                cmdLine[cmdCursor] = 0;
+            Rend_ConsoleCursorResetBlink();
+            updateDedicatedConsoleCmdLine();
         }
-        complPos = cmdCursor;
-        Rend_ConsoleCursorResetBlink();
-        updateDedicatedConsoleCmdLine();
         return true;
-      }
-    }
+
+#if 0 // old mapping
+        ch = ev->toggle.id;
+        ch = DD_ModKey(ch);
+        if(ch < 32 || (ch > 127 && ch < DD_HIGHEST_KEYCODE))
+            return true;
+#endif
+    }}
     // The console is very hungry for keys...
     return true;
 }
@@ -1840,16 +1864,17 @@ void Con_PrintRuler(void)
     if(consoleDump)
     {
         // A 70 characters long line.
-        int i;
-        for(i = 0; i < 7; ++i)
-        {
-            fprintf(outFile, "----------");
-            if(isDedicated)
-                Sys_ConPrint(windowIDX, "----------", 0);
-        }
-        fprintf(outFile, "\n");
         if(isDedicated)
-            Sys_ConPrint(windowIDX, "\n", 0);
+        {
+            int i;
+            for(i = 0; i < 7; ++i)
+            {
+                Sys_ConPrint(mainWindowIdx, "----------", 0);
+            }
+            Sys_ConPrint(mainWindowIdx, "\n", 0);
+        }
+
+        LegacyCore_PrintLogFragment(de2LegacyCore, "$R\n");
     }
 }
 
@@ -1868,12 +1893,10 @@ static void conPrintf(int flags, const char* format, va_list args)
         text = prbuff;
 
         if(consoleDump)
-            fprintf(outFile, "%s", text);
+        {
+            LegacyCore_PrintLogFragment(de2LegacyCore, prbuff);
+        }
     }
-
-#if defined(_DEBUG) && defined(WIN32)
-    fprintf(stderr, "%s", prbuff);
-#endif
 
     // Servers might have to send the text to a number of clients.
     if(isServer)
@@ -1886,7 +1909,7 @@ static void conPrintf(int flags, const char* format, va_list args)
 
     if(isDedicated)
     {
-        Sys_ConPrint(windowIDX, text, flags);
+        Sys_ConPrint(mainWindowIdx, text, flags);
     }
     else
     {
@@ -2001,18 +2024,13 @@ void Con_Message(const char *message, ...)
         dd_vsnprintf(buffer, PRBUFF_SIZE, message, argptr);
         va_end(argptr);
 
-#ifdef UNIX
-        if(!isDedicated)
-        {
-            // These messages are supposed to be visible in the real console.
-            fprintf(stderr, "%s", buffer);
-        }
-#endif
-
         // These messages are always dumped. If consoleDump is set,
         // Con_Printf() will dump the message for us.
         if(!consoleDump)
-            printf("%s", buffer);
+        {
+            //printf("%s", buffer);
+            LegacyCore_PrintLogFragment(de2LegacyCore, buffer);
+        }
 
         // Also print in the console.
         Con_Printf("%s", buffer);
@@ -2028,15 +2046,21 @@ void Con_Error(const char* error, ...)
     char        buff[2048], err[256];
     va_list     argptr;
 
+    Window_TrapMouse(Window_Main(), false);
+
     // Already in an error?
     if(!ConsoleInited || errorInProgress)
     {
-        fprintf(outFile, "Con_Error: Stack overflow imminent, aborting...\n");
+        DisplayMode_Shutdown();
 
         va_start(argptr, error);
         dd_vsnprintf(buff, sizeof(buff), error, argptr);
         va_end(argptr);
-        Sys_MessageBox(buff, true);
+
+        if(!Con_InBusyWorker())
+        {
+            Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, buff, 0);
+        }
 
         // Exit immediately, lest we go into an infinite loop.
         exit(1);
@@ -2051,7 +2075,9 @@ void Con_Error(const char* error, ...)
     va_start(argptr, error);
     dd_vsnprintf(err, sizeof(err), error, argptr);
     va_end(argptr);
-    fprintf(outFile, "%s\n", err);
+    //fprintf(outFile, "%s\n", err);
+    LegacyCore_PrintLogFragment(de2LegacyCore, err);
+    LegacyCore_PrintLogFragment(de2LegacyCore, "\n");
 
     strcpy(buff, "");
     if(histBuf != NULL)
@@ -2073,14 +2099,10 @@ void Con_Error(const char* error, ...)
     if(Con_IsBusy())
     {
         Con_BusyWorkerError(buff);
-
         if(Con_InBusyWorker())
         {
-            for(;;)
-            {
-                // We'll stop here. The main thread will shut down the process.
-                Sys_Sleep(500);
-            }
+            // We should not continue to execute the worker any more.
+            for(;;) Thread_Sleep(10000);
         }
     }
     else
@@ -2092,24 +2114,28 @@ void Con_Error(const char* error, ...)
 void Con_AbnormalShutdown(const char* message)
 {
     Sys_Shutdown();
-
-#ifdef WIN32
-    ChangeDisplaySettings(0, 0); // Restore original mode, just in case.
-#endif
+    DisplayMode_Shutdown();
 
     // Be a bit more graphic.
-    Sys_ShowCursor(true);
-    Sys_ShowCursor(true);
+    Window_TrapMouse(Window_Main(), false);
+    //Sys_ShowCursor(true);
+
     if(message) // Only show if a message given.
     {
-        Sys_MessageBox(message, true);
+        // Make sure all the buffered stuff goes into the file.
+        LogBuffer_Flush();
+
+        /// @todo Get the actual output filename (might be a custom one).
+        Sys_MessageBoxWithDetailsFromFile(MBT_ERROR, DOOMSDAY_NICENAME, message,
+                                          "See Details for complete messsage log contents.",
+                                          LegacyCore_LogFile(de2LegacyCore));
     }
 
     DD_Shutdown();
 
     // Open Doomsday.out in a text editor.
-    fflush(outFile); // Make sure all the buffered stuff goes into the file.
-    Sys_OpenTextEditor("doomsday.out");
+    //fflush(outFile); // Make sure all the buffered stuff goes into the file.
+    //Sys_OpenTextEditor("doomsday.out");
 
     // Get outta here.
     exit(1);
@@ -2148,12 +2174,17 @@ static void Con_Alias(char *aName, char *command)
 }
 
 D_CMD(Help)
-{
+{      
+    char actKeyName[40];
+
+    strcpy(actKeyName, B_ShortNameForKey(consoleActiveKey));
+    actKeyName[0] = toupper(actKeyName[0]);
+
     Con_PrintRuler();
     Con_FPrintf(CPF_YELLOW | CPF_CENTER, "-=- " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT " Console -=-\n");
     Con_Printf("Keys:\n");
-    Con_Printf("Tilde          Open/close the console.\n");
-    Con_Printf("Alt-Tilde      Switch between half and full screen mode.\n");
+    Con_Printf("%-14s Open/close the console.\n", actKeyName);
+    Con_Printf("Alt-%-10s Switch between half and full screen mode.\n", actKeyName);
     Con_Printf("F5             Clear the buffer.\n");
     Con_Printf("Alt-C          Clear the command line.\n");
     Con_Printf("Insert         Switch between replace and insert modes.\n");
@@ -2228,7 +2259,7 @@ D_CMD(Parse)
     for(i = 1; i < argc; ++i)
     {
         Con_Printf("Parsing %s.\n", argv[i]);
-        Con_ParseCommands(argv[i], false);
+        Con_ParseCommands(argv[i]);
     }
     return true;
 }

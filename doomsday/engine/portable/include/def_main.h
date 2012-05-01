@@ -26,6 +26,10 @@
 #include "def_data.h"
 #include "stringarray.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct sfxinfo_s {
     void* data; /// Pointer to sound data.
     lumpnum_t lumpNum;
@@ -121,5 +125,9 @@ StringArray* Def_ListMobjTypeIDs(void);
 StringArray* Def_ListStateIDs(void);
 
 D_CMD(ListMobjs);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_DEFINITIONS_MAIN_H */

@@ -20,6 +20,15 @@
  * 02110-1301 USA</small>
  */
 
+#ifdef UNIX
+#  include <sys/types.h>
+#  include <unistd.h>
+#  include <dirent.h>
+#  include <dlfcn.h>
+#  include <string.h>
+#  include <stdbool.h>
+#endif
+
 #include "de_base.h"
 #include "de_filesys.h"
 #include "m_misc.h"
@@ -27,14 +36,6 @@
 
 #ifdef WIN32
 #  include "de_platform.h"
-#endif
-
-#ifdef UNIX
-#  include <sys/types.h>
-#  include <unistd.h>
-#  include <dirent.h>
-#  include <dlfcn.h>
-#  include <string.h>
 #endif
 
 #define MAX_LIBRARIES   64  /// @todo  Replace with a dynamic list.
@@ -74,17 +75,23 @@ static void getBundlePath(char* path, size_t len)
         return;
     }
 
+    /*
 #ifdef MACOSX
     // This is the default location where bundles are.
     dd_snprintf(path, len, "%s/Bundles", appDir);
 #endif
+    */
+
 #ifdef UNIX
-#ifdef DENG_LIBRARY_DIR
+# ifdef DENG_LIBRARY_DIR
     strncpy(path, DENG_LIBRARY_DIR, len);
-#else
+# else
     // Assume they are in the cwd.
     strncpy(path, appDir, len);
-#endif
+# endif
+
+    // Check Unix-specific config files.
+    DD_Unix_GetConfigValue("paths", "libdir", path, len);
 #endif
 }
 #endif
@@ -146,9 +153,9 @@ void Library_ReleaseGames(void)
         if(!lib) continue;
         if(lib->isGamePlugin && lib->handle)
         {
-#ifdef _DEBUG
-            fprintf(stderr, "Library_ReleaseGames: Closing '%s'\n", Str_Text(lib->path));
-#endif
+            LegacyCore_PrintfLogFragmentAtLevel(de2LegacyCore, DE2_LOG_DEBUG,
+                    "Library_ReleaseGames: Closing '%s'\n", Str_Text(lib->path));
+
             dlclose(lib->handle);
             lib->handle = 0;
         }
@@ -162,9 +169,9 @@ static void reopenLibraryIfNeeded(Library* lib)
     assert(lib);
     if(!lib->handle)
     {
-#ifdef _DEBUG
-        fprintf(stderr, "reopenLibraryIfNeeded: Opening '%s'\n", Str_Text(lib->path));
-#endif
+        LegacyCore_PrintfLogFragmentAtLevel(de2LegacyCore, DE2_LOG_DEBUG,
+                "reopenLibraryIfNeeded: Opening '%s'\n", Str_Text(lib->path));
+
         lib->handle = dlopen(Str_Text(lib->path), RTLD_NOW);
         assert(lib->handle);
     }

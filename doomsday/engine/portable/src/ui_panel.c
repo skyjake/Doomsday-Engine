@@ -37,13 +37,14 @@
 #include "de_render.h"
 #include "de_ui.h"
 
+#include "displaymode.h"
 #include "rend_main.h"
 
 // MACROS ------------------------------------------------------------------
 
 #define NUM_CP_BUTTONS  11
 #define NUMITEMS(x)     (sizeof(x)/sizeof(uidata_listitem_t))
-#define RES(x, y)       (x | (y<<16))
+#define RES(x, y)       ((x) | ((y) << 16))
 #define CPID_FRAME      (UIF_ID0 | UIF_ID1)
 #define CPID_RES_X      UIF_ID0
 #define CPID_RES_Y      UIF_ID1
@@ -219,7 +220,7 @@ uidata_list_t lst_blend = {
     lstit_blend, NUMITEMS(lstit_blend), "rend-light-blend"
 };
 
-uidata_listitem_t lstit_resolution[] = {
+uidata_listitem_t* lstit_resolution; /* = {
     // 5:4
     {"1280 x 1024 (5:4 SXGA)", RES(1280, 1024)},
     {"2560 x 2048 (5:4 QSXGA)", RES(2560, 2048)},
@@ -253,9 +254,10 @@ uidata_listitem_t lstit_resolution[] = {
     {"854 x 480 (16:9 WVGA)", RES(854, 480)},
     {"1280 x 720 (16:9 WXGA/HD720)", RES(1280, 720)},
     {"1920 x 1080 (16:9 HD1080)", RES(1920, 1080)}
-};
+};*/
 uidata_list_t lst_resolution = {
-    lstit_resolution, NUMITEMS(lstit_resolution)
+    NULL, 0 // dynamically populated
+    //   lstit_resolution, NUMITEMS(lstit_resolution)
 };
 
 uidata_slider_t sld_con_alpha = { 0, 1, 0, .01f, true, "con-alpha" };
@@ -871,16 +873,15 @@ void CP_VideoModeInfo(ui_object_t* ob)
     }
     else
     {
-        boolean fullscreen;
-        if(!Sys_GetWindowFullscreen(windowIDX, &fullscreen))
-            return;
+        boolean fullscreen = Window_IsFullscreen(Window_Main());
 
-        sprintf(buf, "%i x %i x %i (%s)", theWindow->geometry.size.width,
-            theWindow->geometry.size.height, theWindow->normal.bpp,
+        sprintf(buf, "%i x %i x %i (%s)", Window_Width(theWindow),
+            Window_Height(theWindow), Window_ColorDepthBits(theWindow),
             (fullscreen? "fullscreen" : "windowed"));
     }
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glEnable(GL_TEXTURE_2D);
     FR_SetFont(fontVariable[FS_LIGHT]);
@@ -897,10 +898,8 @@ void CP_VideoModeInfo(ui_object_t* ob)
 
 void CP_UpdateSetVidModeButton(int w, int h, int bpp, boolean fullscreen)
 {
-    boolean cFullscreen;
+    boolean cFullscreen = Window_IsFullscreen(Window_Main());
     ui_object_t* ob;
-
-    if(!Sys_GetWindowFullscreen(windowIDX, &cFullscreen)) return;
 
     ob = UI_FindObject(ob_panel, CPG_VIDEO, CPID_SET_RES);
 
@@ -908,9 +907,8 @@ void CP_UpdateSetVidModeButton(int w, int h, int bpp, boolean fullscreen)
     sprintf(ob->text, "%i x %i x %i (%s)", w, h, bpp,
             fullscreen? "fullscreen" : "windowed");
 
-    if(w == theWindow->geometry.size.width && h == theWindow->geometry.size.height &&
-       bpp == theWindow->normal.bpp &&
-       fullscreen == cFullscreen)
+    if(w == Window_Width(theWindow) && h == Window_Height(theWindow) &&
+       bpp == Window_ColorDepthBits(theWindow) && fullscreen == cFullscreen)
         ob->flags |= UIF_DISABLED;
     else
         ob->flags &= ~UIF_DISABLED;
@@ -951,9 +949,16 @@ void CP_SetVidMode(ui_object_t* ob)
 
     ob->flags |= UIF_DISABLED;
 
-    Sys_SetWindow(windowIDX, 0, 0, x, y, bpp,
-                 (panel_fullscreen? DDWF_FULLSCREEN : 0),
-                 DDSW_NOVISIBLE|DDSW_NOCENTER);
+    {
+        int attribs[] = {
+            DDWA_WIDTH, x,
+            DDWA_HEIGHT, y,
+            DDWA_COLOR_DEPTH_BITS, bpp,
+            DDWA_FULLSCREEN, panel_fullscreen != 0,
+            DDWA_END
+        };
+        Window_ChangeAttributes(Window_Main(), attribs);
+    }
 }
 
 void CP_VidModeChanged(ui_object_t *ob)
@@ -1181,6 +1186,36 @@ void CP_InitCvarSliders(ui_object_t *ob)
     }
 }
 
+static void populateDisplayResolutions(void)
+{
+    int i, k, p = 0;
+
+    lstit_resolution = Z_Recalloc(lstit_resolution,
+                                  sizeof(*lstit_resolution) * DisplayMode_Count(),
+                                  PU_APPSTATIC);
+
+    for(i = 0; i < DisplayMode_Count(); ++i)
+    {
+        const DisplayMode* mode = DisplayMode_ByIndex(i);
+        int spec = RES(mode->width, mode->height);
+
+        // Make sure we haven't added this size yet (many with different refresh rates).
+        for(k = 0; k < p; ++k)
+        {
+            if(lstit_resolution[k].data == spec) break;
+        }
+        if(k < p) continue; // Already got it.
+
+        dd_snprintf(lstit_resolution[p].text, sizeof(lstit_resolution[p].text),
+                    "%i x %i (%i:%i)", mode->width, mode->height, mode->ratioX, mode->ratioY);
+        lstit_resolution[p].data = spec;
+        ++p;
+    }
+
+    lst_resolution.items = lstit_resolution;
+    lst_resolution.count = p;
+}
+
 /**
  * Initialize and open the Control Panel.
  */
@@ -1192,6 +1227,8 @@ D_CMD(OpenPanel)
     int i;
 
     Con_Execute(CMDS_DDAY, "conclose", true, false);
+
+    populateDisplayResolutions();
 
     // The help window is hidden.
     panel_help_active = false;
@@ -1278,20 +1315,19 @@ D_CMD(OpenPanel)
 
     // Update width the current resolution.
     {
-        boolean cFullscreen = true;
-        Sys_GetWindowFullscreen(windowIDX, &cFullscreen);
+        boolean cFullscreen = Window_IsFullscreen(Window_Main());
 
         ob = UI_FindObject(ob_panel, CPG_VIDEO, CPID_RES_LIST);
         list = ob->data;
         list->selection = UI_ListFindItem(ob,
-            RES(theWindow->geometry.size.width, theWindow->geometry.size.height));
+            RES(Window_Width(theWindow), Window_Height(theWindow)));
         if(list->selection == -1)
         {
             // Then use a reasonable default.
             list->selection = UI_ListFindItem(ob, RES(640, 480));
         }
         panel_fullscreen = cFullscreen;
-        panel_bpp = (theWindow->normal.bpp == 32? 1 : 0);
+        panel_bpp = (Window_ColorDepthBits(theWindow) == 32? 1 : 0);
         CP_ResolutionList(ob);
     }
 

@@ -157,6 +157,7 @@ void S_MapChange(void)
     Sfx_InitLogical();
 
     Sfx_MapChange();
+    S_ResetReverb();
 }
 
 void S_SetupForChangedMap(void)
@@ -198,6 +199,7 @@ BEGIN_PROF( PROF_SOUND_STARTFRAME );
 
     Sfx_StartFrame();
     Mus_StartFrame();
+    S_UpdateReverb();
 
     // Remove stopped sounds from the LSM.
     Sfx_PurgeLogical();
@@ -230,7 +232,7 @@ sfxinfo_t* S_GetSoundInfo(int soundID, float* freq, float* volume)
     sfxinfo_t*          info;
     int                 i;
 
-    if(soundID <= 0)
+    if(soundID <= 0 || soundID >= defs.count.sounds.num)
         return NULL;
 
     if(!freq)
@@ -249,6 +251,8 @@ sfxinfo_t* S_GetSoundInfo(int soundID, float* freq, float* volume)
         (info->linkPitch > 0 ? info->linkPitch / 128.0f : *freq), *volume +=
         (info->linkVolume != -1 ? info->linkVolume / 127.0f : 0), soundID =
         info - sounds, i++);
+
+    assert(soundID < defs.count.sounds.num);
 
     return info;
 }
@@ -282,7 +286,7 @@ boolean S_IsRepeating(int idFlags)
  * @return              Non-zero if a sound was started.
  */
 int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t* origin,
-                             float* fixedPos, float volume)
+                             coord_t* point, float volume)
 {
     int                 soundId = (soundIdAndFlags & ~DDSF_FLAG_MASK);
     sfxsample_t*        sample;
@@ -320,8 +324,9 @@ int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t* origin,
        !(soundIdAndFlags & DDSF_NO_ATTENUATION))
     {
         // If origin is too far, don't even think about playing the sound.
-        if(P_MobjPointDistancef(S_GetListenerMobj(), origin, fixedPos) >
-           soundMaxDist)
+        coord_t* fixPoint = origin? origin->origin : point;
+
+        if(Mobj_ApproxPointDistance(S_GetListenerMobj(), fixPoint) > soundMaxDist)
             return false;
     }
 
@@ -358,7 +363,7 @@ int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t* origin,
 
     // Let's play it.
     result =
-        Sfx_StartSound(sample, volume, freq, origin, fixedPos,
+        Sfx_StartSound(sample, volume, freq, origin, point,
                        ((info->flags & SF_NO_ATTENUATION) ||
                         (soundIdAndFlags & DDSF_NO_ATTENUATION) ?
                         SF_NO_ATTENUATION : 0) | (isRepeating ? SF_REPEAT : 0)
@@ -396,7 +401,7 @@ int S_LocalSound(int soundID, mobj_t* origin)
  *
  * @return              Non-zero if a sound was started.
  */
-int S_LocalSoundFrom(int soundID, float* fixedPos)
+int S_LocalSoundFrom(int soundID, coord_t* fixedPos)
 {
     return S_LocalSoundAtVolumeFrom(soundID, NULL, fixedPos, 1);
 }
@@ -466,12 +471,37 @@ int S_ConsoleSound(int soundID, mobj_t* origin, int targetConsole)
 }
 
 /**
- * @param soundID       @c 0 = stops all sounds of the origin.
- * @param origin        @c NULL = stops all sounds with the ID.
- *                      Otherwise both ID and origin must match.
+ * @param sec  Sector in which to stop sounds.
+ * @param soundID  Unique identifier of the sound to be stopped. @c= 0 (do not match).
+ * @param flags  @ref soundStopFlags
  */
+static void stopSectorSounds(ddmobj_base_t* sectorEmitter, int soundID, int flags)
+{
+    ddmobj_base_t* base;
+
+    if(!sectorEmitter || !flags) return;
+
+    // Are we stopping with this sector's emitter?
+    if(flags & SSF_SECTOR)
+    {
+        S_StopSound(soundID, (mobj_t*)sectorEmitter);
+    }
+
+    // Are we stopping with linked emitters?
+    if(!(flags & SSF_SECTOR_LINKED_SURFACES)) return;
+
+    // Process the rest of the emitter chain.
+    base = (ddmobj_base_t*)sectorEmitter;
+    while((base = (ddmobj_base_t*)base->thinker.next))
+    {
+        // Stop sounds from this emitter.
+        S_StopSound(soundID, (mobj_t*)base);
+    }
+}
+
 void S_StopSound(int soundID, mobj_t* emitter)
 {
+    // No special stop behavior.
     // Sfx provides a routine for this.
     Sfx_StopSound(soundID, emitter);
 
@@ -483,6 +513,32 @@ void S_StopSound(int soundID, mobj_t* emitter)
         // stopped somewhere in the world.
         Sv_StopSound(soundID, emitter);
     }
+}
+
+void S_StopSound2(int soundID, mobj_t* emitter, int flags)
+{
+    // Are we performing any special stop behaviors?
+    if(emitter && flags)
+    {
+        if(emitter->thinker.id)
+        {
+            // Emitter is a real Mobj.
+            Sector* sector = emitter->bspLeaf->sector;
+            stopSectorSounds((ddmobj_base_t*)&sector->base, soundID, flags);
+            return;
+        }
+
+        // The head of the chain is the sector. Find it.
+        while(emitter->thinker.prev)
+        {
+            emitter = (mobj_t*)emitter->thinker.prev;
+        }
+        stopSectorSounds((ddmobj_base_t*)emitter, soundID, flags);
+        return;
+    }
+
+    // A regular stop.
+    S_StopSound(soundID, emitter);
 }
 
 /**
@@ -559,12 +615,13 @@ void S_Drawer(void)
     if(!showSoundInfo) return;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Go into screen projection mode.
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, theWindow->geometry.size.width, theWindow->geometry.size.height, 0, -1, 1);
+    glOrtho(0, Window_Width(theWindow), Window_Height(theWindow), 0, -1, 1);
 
     Sfx_DebugInfo();
 
@@ -578,11 +635,10 @@ void S_Drawer(void)
  */
 D_CMD(PlaySound)
 {
-    int                 id = 0;
-    float               volume = 1;
-    float               fixedPos[3];
-    int                 p;
-    boolean             useFixedPos = false;
+    coord_t fixedPos[3];
+    boolean useFixedPos = false;
+    float volume = 1;
+    int p, id = 0;
 
     if(argc < 2)
     {

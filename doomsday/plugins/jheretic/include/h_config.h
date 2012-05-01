@@ -75,8 +75,6 @@ typedef enum {
 
 typedef struct jheretic_config_s {
     float           playerMoveSpeed;
-    int             dclickUse;
-    int             useMLook;      // Mouse look (mouse Y => viewpitch)
     int             useJLook;      // Joy look (joy Y => viewpitch)
     int             alwaysRun;     // Always run.
     int             noAutoAim;     // No auto-aiming?
@@ -124,6 +122,7 @@ typedef struct jheretic_config_s {
     float           hudTimer; // Number of seconds until the hud/statusbar auto-hides.
     byte            hudUnHide[NUMHUDUNHIDEEVENTS]; // when the hud/statusbar unhides.
     byte            moveCheckZ;    // if true, mobjs can move over/under each other.
+    byte            allowMonsterFloatOverBlocking; // if true, floating mobjs are allowed to climb over mobjs blocking the way.
     byte            weaponAutoSwitch;
     byte            noWeaponAutoSwitchIfFiring;
     byte            ammoAutoSwitch;
@@ -138,11 +137,6 @@ typedef struct jheretic_config_s {
     byte            noTeamDamage;
     byte            respawnMonstersNightmare;
 
-
-
-
-
-
     float           statusbarScale;
     float           statusbarOpacity;
     float           statusbarCounterAlpha;
@@ -154,7 +148,7 @@ typedef struct jheretic_config_s {
      */
     byte            monstersStuckInDoors;
     byte            avoidDropoffs;
-    byte            moveBlock; // Dont handle large negative movement in P_TryMove.
+    byte            moveBlock; // Dont handle large negative movement in P_TryMoveXY.
     byte            wallRunNorthOnly; // If handle large make exception for wallrunning
 
     byte            fallOff; // Objects fall under their own weight.

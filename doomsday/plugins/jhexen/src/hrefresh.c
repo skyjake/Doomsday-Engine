@@ -213,7 +213,7 @@ static void rendPlayerView(int player)
 
     // Check for the sector special 200: use sky2.
     // I wonder where this is used?
-    if(P_ToXSectorOfSubsector(plr->plr->mo->subsector)->special == 200)
+    if(P_ToXSectorOfBspLeaf(plr->plr->mo->bspLeaf)->special == 200)
     {
         special200 = true;
         R_SkyParams(0, DD_DISABLE, NULL);

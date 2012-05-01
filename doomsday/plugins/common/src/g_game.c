@@ -52,6 +52,7 @@
 #include "fi_lib.h"
 #include "hu_lib.h"
 #include "p_saveg.h"
+#include "p_sound.h"
 #include "g_controls.h"
 #include "g_eventsequence.h"
 #include "p_mapsetup.h"
@@ -262,6 +263,8 @@ int gsvAmmo[NUM_AMMO_TYPES];
 
 char *gsvMapName = NOTAMAPNAME;
 
+int gamePauseWhenFocusLost;
+
 #if __JHERETIC__ || __JHEXEN__ || __JDOOM64__
 int gsvInvItems[NUM_INVENTORYITEM_TYPES];
 #endif
@@ -277,6 +280,8 @@ cvartemplate_t gamestatusCVars[] = {
    {"game-state-map", READONLYCVAR, CVT_INT, &gsvInMap, 0, 0},
    {"game-paused", READONLYCVAR, CVT_INT, &paused, 0, 0},
    {"game-skill", READONLYCVAR, CVT_INT, &gameSkill, 0, 0},
+
+   {"game-pause-focuslost", 0, CVT_INT, &gamePauseWhenFocusLost, 0, 1},
 
    {"map-id", READONLYCVAR, CVT_INT, &gameMap, 0, 0},
    {"map-name", READONLYCVAR, CVT_CHARPTR, &gsvMapName, 0, 0},
@@ -444,6 +449,9 @@ static boolean quitInProgress;
 void G_Register(void)
 {
     int i;
+
+    // Default values (overridden by values from .cfg files).
+    gamePauseWhenFocusLost = true;
 
     for(i = 0; gamestatusCVars[i].path; ++i)
         Con_AddVariable(gamestatusCVars + i);
@@ -1020,7 +1028,7 @@ int G_UIResponder(event_t* ev)
     if(!(ev->type == EV_KEY || ev->type == EV_MOUSE_BUTTON || ev->type == EV_JOY_BUTTON))
         return false;
 
-    if(!Hu_MenuIsActive())
+    if(!Hu_MenuIsActive() && !DD_GetInteger(DD_SHIFT_DOWN))
     {
         // Any key/button down pops up menu if in demos.
         if((G_GameAction() == GA_NONE && !singledemo && Get(DD_PLAYBACK)) ||
@@ -1253,9 +1261,6 @@ void G_DoLoadMap(void)
 
     Z_CheckHeap();
 
-    // Clear cmd building stuff.
-    G_ResetMousePos();
-
     sendPause = paused = false;
 
     G_ControlReset(-1); // Clear all controls for all local players.
@@ -1310,14 +1315,27 @@ int G_Responder(event_t* ev)
     // Eat all events once shutdown has begun.
     if(G_QuitInProgress()) return true;
 
-    // With the menu active, none of these should respond to input events.
-    if(G_GameState() == GS_MAP && !Hu_MenuIsActive() && !Hu_IsMessageActive())
+    if(G_GameState() == GS_MAP)
     {
-        if(ST_Responder(ev))
-            return true;
+        if(ev->type == EV_FOCUS)
+        {
+            if(gamePauseWhenFocusLost)
+            {
+                // Pause when focus lost.
+                G_SetPause(!ev->data1);
+            }
+            return false; // others might be interested
+        }
 
-        if(G_EventSequenceResponder(ev))
-            return true;
+        // With the menu active, none of these should respond to input events.
+        if(!Hu_MenuIsActive() && !Hu_IsMessageActive())
+        {
+            if(ST_Responder(ev))
+                return true;
+
+            if(G_EventSequenceResponder(ev))
+                return true;
+        }
     }
 
     return Hu_MenuResponder(ev);
@@ -1584,8 +1602,8 @@ void G_Ticker(timespan_t ticLength)
             {
                 if(!IS_CLIENT)
                 {
-                    P_SpawnTeleFog(plr->plr->mo->pos[VX],
-                                   plr->plr->mo->pos[VY],
+                    P_SpawnTeleFog(plr->plr->mo->origin[VX],
+                                   plr->plr->mo->origin[VY],
                                    plr->plr->mo->angle + ANG180);
                 }
 
@@ -1837,7 +1855,7 @@ void ClearPlayer(player_t *p)
     ddplayer->fixAcked = acked;
 
     ddplayer->fixCounter.angles++;
-    ddplayer->fixCounter.pos++;
+    ddplayer->fixCounter.origin++;
     ddplayer->fixCounter.mom++;
 }
 
@@ -1896,11 +1914,7 @@ void G_PlayerReborn(int player)
     p->worldTimer = worldTimer;
     p->colorMap = cfg.playerColor[player];
 #endif
-#if __JHEXEN__
-    p->class_ = cfg.playerClass[player];
-#else
-    p->class_ = PCLASS_PLAYER;
-#endif
+    p->class_ = P_ClassForPlayerWhenRespawning(player, false);
     p->useDown = p->attackDown = true; // Don't do anything immediately.
     p->playerState = PST_LIVE;
     p->health = maxHealth;
@@ -2055,7 +2069,7 @@ void G_LeaveMap(uint newMap, uint _entryPoint, boolean _secretExit)
     if(IS_CLIENT || (cyclingMaps && mapCycleNoExit)) return;
 
 #if __JHEXEN__
-    if(gameMode == hexen_demo && newMap != DDMAXINT && newMap > 3)
+    if((gameMode == hexen_betademo || gameMode == hexen_demo) && newMap != DDMAXINT && newMap > 3)
     {   // Not possible in the 4-map demo.
         P_SetMessage(&players[CONSOLEPLAYER], "PORTAL INACTIVE -- DEMO", false);
         return;
@@ -2703,6 +2717,14 @@ void G_QuitGame(void)
     const char* endString;
     if(G_QuitInProgress()) return;
 
+    if(Hu_IsMessageActiveWithCallback(G_QuitGameResponse))
+    {
+        // User has re-tried to quit with "quit" when the question is one the
+        // screen. Apparently we should quit...
+        DD_Execute(true, "quit!");
+        return;
+    }
+
 #if __JDOOM__ || __JDOOM64__
     endString = endmsg[((int) GAMETIC % (NUM_QUITMESSAGES + 1))];
 #else
@@ -3289,7 +3311,7 @@ static ddstring_t* composeScreenshotFileName(void)
     { int i;
     for(i = 0; i < 1e6; ++i) // Stop eventually...
     {
-        Str_Appendf(name, "%03i.tga", i);
+        Str_Appendf(name, "%03i.png", i);
         if(!F_FileExists(Str_Text(name)))
             break;
         Str_Truncate(name, numPos);
@@ -3306,9 +3328,13 @@ void G_DoScreenShot(void)
         return;
     }
 
-    if(0 != M_ScreenShot(Str_Text(name), 24))
+    if(M_ScreenShot(Str_Text(name), 24))
     {
-        Con_Message("Wrote screenshot \"%s\"\n", F_PrettyPath(Str_Text(name)));
+        Con_Message("Wrote screenshot: %s\n", F_PrettyPath(Str_Text(name)));
+    }
+    else
+    {
+        Con_Message("Failed to write screenshot \"%s\".\n", F_PrettyPath(Str_Text(name)));
     }
     Str_Delete(name);
 }
@@ -3444,6 +3470,12 @@ D_CMD(SaveGame)
     int slot;
 
     if(G_QuitInProgress()) return false;
+
+    if(IS_CLIENT || IS_NETWORK_SERVER)
+    {
+        Con_Message("Network savegames are not supported at the moment.\n");
+        return false;
+    }
 
     if(player->playerState == PST_DEAD || Get(DD_PLAYBACK))
     {

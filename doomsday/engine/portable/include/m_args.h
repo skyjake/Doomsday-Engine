@@ -29,6 +29,10 @@
 #ifndef LIBDENG_LINE_ARGS_H
 #define LIBDENG_LINE_ARGS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void            ArgInit(const char* cmdline);
 void            ArgShutdown(void);
 void            ArgAbbreviate(const char* longname, const char* shortname);
@@ -42,5 +46,9 @@ int             ArgCheckWith(const char* check, int num);
 int             ArgExists(const char* check);
 int             ArgIsOption(int i);
 int             ArgRecognize(const char* first, const char* second);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* LIBDENG_LINE_ARGS_H */

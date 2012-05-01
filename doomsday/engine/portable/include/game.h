@@ -28,7 +28,7 @@
 #include "dd_string.h"
 
 struct AbstractResource_s;
-struct GameDef;
+struct gamedef_s;
 
 /**
  * Game.  Used to record top-level game configurations registered by

@@ -1,5 +1,4 @@
 body {
-    background: rgb(255,255,255) url(http://code.iki.fi/dengine.net/images/background.png) repeat-x;
     font-family: georgia, serif; /* Use a serif font for the main content as its easier to read in blocks */
     font-size: 100%;
     margin-top: 0;
@@ -8,6 +7,14 @@ body {
     margin-right: 10px;
     color: #807970;
     text-align: center;
+    background: #EDEFEF;
+    background: #EDEFEF url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/Pgo8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgdmlld0JveD0iMCAwIDEgMSIgcHJlc2VydmVBc3BlY3RSYXRpbz0ibm9uZSI+CiAgPGxpbmVhckdyYWRpZW50IGlkPSJncmFkLXVjZ2ctZ2VuZXJhdGVkIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgeDE9IjAlIiB5MT0iMCUiIHgyPSIwJSIgeTI9IjEwMCUiPgogICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2JiYmZiYyIgc3RvcC1vcGFjaXR5PSIxIi8+CiAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNlZGVmZWYiIHN0b3Atb3BhY2l0eT0iMSIvPgogIDwvbGluZWFyR3JhZGllbnQ+CiAgPHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjEiIGhlaWdodD0iMSIgZmlsbD0idXJsKCNncmFkLXVjZ2ctZ2VuZXJhdGVkKSIgLz4KPC9zdmc+) repeat-x;
+    background: #EDEFEF -moz-linear-gradient(top, #C7CCC9 0%, #EDEFEF 100%) repeat-x;
+    background: #EDEFEF -webkit-gradient(linear, left top, left bottom, color-stop(0%,#C7CCC9), color-stop(100%,#EDEFEF)) repeat-x;
+    background: #EDEFEF -o-linear-gradient(top, #C7CCC9 0%,#EDEFEF 100%) repeat-x;
+    background: #EDEFEF -ms-linear-gradient(top, #C7CCC9 0%,#EDEFEF 100%) repeat-x;
+    background: #EDEFEF linear-gradient(top, #C7CCC9 0%,#EDEFEF 100%) repeat-x;
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#c7ccc9', endColorstr='#edefef',GradientType=0 );
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -35,7 +42,7 @@ a {
 
 a:hover {
     text-decoration: underline;
-    color: #ff8a00;
+    color: #FFCB0F;
 }
 
 a[class ="jump"] {
@@ -60,7 +67,7 @@ a[class ="link-definition"]:after {
     position:absolute;
     text-decoration: none;
     color:#5f5fff;
-    font-size: .83em;
+    font-size: .6em;
     font-family: georgia, serif;
     font-weight: normal;
     content:"?";
@@ -74,10 +81,18 @@ a[class ="link-external"] {
 a[class ="link-rss"] {
     padding-left: 13px;
     background: transparent url(http://code.iki.fi/dengine.net/images/rssicon.png) no-repeat center left;
+    background-size: 13px 12px;
 }
 
 span.hidden {
     display: none;
+}
+
+.issue_level {
+    text-align: center;
+    width: 50%;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .major_issue {
@@ -108,6 +123,11 @@ table.directory {
     border-style: hidden;
     border-collapse: separate;
     padding: inherit;
+}
+
+table tr th {
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    padding-bottom:.5em;
 }
 
 table.directory th {
@@ -176,13 +196,7 @@ div.hnav ul {
 }
 
 div.hnav li {
-    list-style-type: none;
-    padding: 0.25em 1em;
-    display: inline
-}
-
-div.hnav li:first-child {
-    border: none;
+    display: inline-block;
 }
 
 div.jumplist_wrapper {
@@ -196,6 +210,10 @@ ol.jumplist {
     vertical-align:top;
     margin:0;
     padding:0 1em;
+}
+
+ol.jumplist li {
+    padding-right:1.8em;
 }
 
 .centered {
@@ -238,7 +256,7 @@ ol.jumplist {
     top: 0;
     left: 0;
     width: 100%;
-    min-width: 640px;
+    min-width: 649px;
     z-index: 0;
     overflow: hidden;
 }
@@ -269,30 +287,25 @@ ol.jumplist {
     cursor: pointer;
 }
 
-/*------------- Graphical Outer Border ------------*/
-
-.t {background: url(http://code.iki.fi/dengine.net/images/tc02.png) 0 0 repeat-x;}
-.b {background: url(http://code.iki.fi/dengine.net/images/tc08.png) 0 100% repeat-x;}
-.l {background: url(http://code.iki.fi/dengine.net/images/tc04.png) 0 0 repeat-y;}
-.r {background: url(http://code.iki.fi/dengine.net/images/tc06.png) 100% 0 repeat-y;}
-.bl {background: url(http://code.iki.fi/dengine.net/images/tc07.gif) 0 100% no-repeat;}
-.br {background: url(http://code.iki.fi/dengine.net/images/tc09.gif) 100% 100% no-repeat;}
-.tl {background: url(http://code.iki.fi/dengine.net/images/tc01.gif) 0 0 no-repeat;}
-.tr {background: url(http://code.iki.fi/dengine.net/images/tc03.gif) 100% 0 no-repeat; padding:7px;}
-
 /*---------------- Main site frame ----------------*/
 
 #mainouter {
     max-width: 1280px;
     height: auto;
     clear: both;
-    min-width: 624px;
+    min-width: 649px;
     margin-top: 52px;
     margin-bottom: 0px;
     margin-left: auto;
     margin-right: auto;
     z-index: 1;
     text-align: left;
+}
+
+#main {
+    border: 2px solid #A6B9AA;
+    border-radius: 10px;
+    box-shadow: 0 0 20px 10px rgba(0, 0, 0, .1);
 }
 
 #maininner {
@@ -308,27 +321,19 @@ ol.jumplist {
 
 /*---------------- Navigation Bar -----------------*/
 
-#menudiv {
+#menuouter {
     position:relative;
-    top:-8px;
-    border-top: 0;
-    border-left: 0;
-    border-right: 0;
+    z-index: 4;
     width: 100%;
-    z-index: 3;
+    height:0;
 }
 
 #menu {
-    position:relative;
-    margin-top: 0;
-    margin-bottom: 0;
-    padding-left: 0;
-    padding-right: 0;
-    z-index: 4;
-    background: url(http://code.iki.fi/dengine.net/images/navbar.png);
-    background-position: 0 -8px;
-    width: 100%;
     font-family: Verdana, Arial, Helvetica, sans-serif;
+    font-weight: bold;
+    box-shadow: 0 16px 8px 0 rgb(199, 220, 215) inset;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
 }
 
 #menu ul {
@@ -339,7 +344,7 @@ ol.jumplist {
 
 #menu section {
     display: inline-block;
-    min-width: 12em;
+    min-width: 13em;
     text-align: right;
 }
 
@@ -372,6 +377,7 @@ ol.jumplist {
     padding-bottom: 8px;
     padding-left: 5px;
     padding-right: 4px;
+    color: white;
 }
 
 #menu li.logo a {
@@ -379,18 +385,21 @@ ol.jumplist {
 }
 
 #menu a.paddle_left, span.paddle_left_select {
-    border-left: solid 1px #627f7f;
+    border-left: solid 2px #A6B9AA;
 }
 
 #menu a.paddle_right, span.paddle_right_select {
-    border-right: solid 1px #627f7f;
+    border-right: solid 2px #A6B9AA;
 }
 
-#menu span.paddle_left_select, span.paddle_right_select, a[class = "paddle_left"]:hover, navigation a[class = "paddle_left"]:visited:hover, a[class = "paddle_right"]:hover, navigation a[class = "paddle_right"]:visited:hover {
-    color: #ffffff;
-    background: url(http://code.iki.fi/dengine.net/images/navbarhover.png);
-    background-position: 0 2px;
+#menu span.paddle_left_select,
+      span.paddle_right_select,
+      a[class = "paddle_left"]:hover,
+      navigation a[class = "paddle_left"]:visited:hover,
+      a[class = "paddle_right"]:hover,
+      navigation a[class = "paddle_right"]:visited:hover {
     margin-left: 0px;
+    box-shadow: 0 5px 10px 5px rgba(0, 0, 0, .2) inset;
 }
 
 #menu span.paddle_left_select, span.paddle_right_select {
@@ -403,26 +412,28 @@ ol.jumplist {
     margin: 0;
     padding: 0;
     border: 0;
-    background: url(http://code.iki.fi/dengine.net/images/navbar.png);
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    box-shadow: 0 4px 6px 0 rgba(186, 196, 189, 260) inset;
 }
 
 #divider2 {
     width: 100%;
     height: 8px;
-    background: url(http://code.iki.fi/dengine.net/images/navbar.png);
-    background-position: 0 16px;
-    border-bottom: solid 1px #627f7f;
+    box-shadow: 0 -6px 8px -4px rgb(205, 220, 213) inset;
 }
 
 /*-------------------- Top Panel -------------------*/
 
 #framepanel_top {
     position: absolute;
-    background: rgb(51, 64, 72);
+    background: #CDDCD5;
     width: 100%;
-    height: 282px;
+    height: 300px;
     padding: 0;
     margin: 0;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
 }
 
 #panorama {
@@ -430,9 +441,13 @@ ol.jumplist {
     left:50%;
     margin-left:-650px;
     top: 0;
-    height: 282px;
+    height: 300px;
     width: 1300px;
     background: #282D2B url(panoramarotator) no-repeat;
+    box-shadow: 0 -20px 10px 0 rgba(250, 250, 250, 1) inset;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    margin-top: 10px;
 }
 
 /*------------------- Bottom Panel -----------------*/
@@ -440,37 +455,54 @@ ol.jumplist {
 #framepanel_bottom {
     float: right;
     clear: both;
-    margin-top: 282px;
+    margin-top: 300px;
     margin-left: 0;
     margin-right: 0;
     margin-bottom: 0;
     width: 100%;
+    background: #FAFAFA;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
 }
 
-#pageheading {
+#pageheading,
+#latestversion {
     position: relative;
-    float: left;
-    margin-top: -5.4em;
+    margin-top: -4.4em;
     white-space: nowrap;
+    color: white;
     z-index: 1;
 }
 
-#pageheading h1 {
-    color: #ffffff;
+#pageheading {
+    float: left;
+}
+
+#latestversion {
+    float: right;
+}
+
+#pageheading h1,
+#latestversion h1 {
     font-size: 280%;
+    margin-top: 0;
+}
+
+#pageheading h1 {
     margin-left: .4em;
 }
 
-#contentbox, #contentbox2 {
-    background: #ffffff;
-    padding-left: .6em;
-    padding-right: .4em;
-    padding-top: .4em;
-    padding-bottom: .2em;
+#latestversion h1 {
+    margin-right: .25em;
 }
 
-#contentbox {
-    border-right: 18em #e7eeeb solid; /* Border is width of download box + padding */
+#contentbox, #contentbox2 {
+    padding-left: .6em;
+    padding-right: .4em;
+    padding-top: .2em;
+    padding-bottom: .6em;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
 }
 
 /*----------------------- Footer ----------------------*/
@@ -501,13 +533,13 @@ p.legal a {
 
 #projectnews {
     position: relative;
-    top: -282px; /* minus image height */
+    top: -275px; /* minus (image height - divider height) */
     min-width: 201px;
     padding-left: .5em;
     padding-top: .5em;
     float: left;
     text-align: left;
-    color: #ff8a00;
+    color: #FFCB0F;
     font-size: xx-small;
     font-family: Verdana, Arial, Helvetica, sans-serif;
     font-weight: lighter;
@@ -526,8 +558,12 @@ p.legal a {
     min-height: 1.6em;
 }
 
+#projectnews ul li.feed-error {
+    color: grey;
+}
+
 #projectnews a {
-    color: #ff8a00;
+    color: #FFCB0F;
 }
 
 #projectnews .new-label {
@@ -535,13 +571,13 @@ p.legal a {
     font-weight: bold;
 }
 
-#projectnews a:hover, #projectnews a:visited:hover {
+#projectnews ul li a:hover, #projectnews ul li a:visited:hover {
     color: #ffffff;
     font-size: x-small;
 }
 
 .projectnews-label {
-    color: #ffffff;
+    color: white;
     font-weight: bold;
     min-height: 139px;
 }
@@ -549,19 +585,23 @@ p.legal a {
 /*-------------------- GameServers -------------------*/
 
 #servers-label {
-    color: #ffffff;
+    color: white;
     font-weight: bold;
+}
+
+#servers-timestamp {
+    color: white;
 }
 
 #servers {
     position: relative;
+    top: -275px; /* minus (image height - divider height) */
     min-width: 201px;
-    top: -282px; /* minus image height */
-    padding-right: .5em;
+    padding-right: 1.3em;
     padding-top: .5em;
     float: right;
     text-align: right;
-    color: #ff8a00;
+    color: #FFCB0F;
     font-size: xx-small;
     font-family: Verdana, Arial, Helvetica, sans-serif;
     min-height: 139px;
@@ -569,12 +609,30 @@ p.legal a {
     background-position: top right;
 }
 
-.server {
-    margin-right: .7em;
+#servers ul {
+    padding: 0;
+    margin-top: .4em;
 }
 
-.server img {
-    margin-top: .5em;
+#servers ul li {
+    list-style-type: none;
+    min-height: 1.6em;
+}
+
+#servers .name {
+    font-weight: bold;
+}
+
+#servers a {
+    color: #FFCB0F;
+}
+
+#servers a:hover, #servers a:visited:hover {
+    color: white;
+}
+
+#servers .player-summary, #servers .game-mode {
+    color: white;
 }
 
 #servers ul li {
@@ -583,14 +641,28 @@ p.legal a {
 
 /*----------------- Get It Now Panel ---------------*/
 
-#downloadbox {
-    width: 17em;
-    background: #e7eeeb;
+.asideboxgroup {
     float: right;
-    padding: 0.5em;
+}
+
+.asidebox {
+    width: 16.5em;
+    background: #F6F9F8;
+    padding: 0.8em;
     display: block;
     font-family: Verdana, Arial, Helvetica, sans-serif;
+    margin:.8em;
+    border-radius: 10px;
+    box-shadow: 4px 4px 10px 0 rgba(0, 0, 0, .1);
+    border: 2px solid #E0EBE7;
+}
+
+#downloadbox, #socialbookmarkbox {
     text-align: center;
+}
+
+#downloadbox div.hnav ul {
+    margin-top: 0;
 }
 
 #downloadbox div.hnav ul li, div.platform_buttons ul li {
@@ -611,56 +683,38 @@ p.legal a {
 
 #downloadbox ul li {
     margin-bottom: .4em;
+    list-style-type: none;
 }
 
 #downloadbox a.windows_icon {
-    background-image: url(http://code.iki.fi/dengine.net/images/windowslogo.png);
+    background-image: url(images/windowslogo.gif);
     background-position: 0 0;
 }
 
 #downloadbox a.macos_icon {
-    background-image: url(http://code.iki.fi/dengine.net/images/macosxlogo.png);
+    background-image: url(images/macosxlogo.gif);
     background-position: 0 0;
 }
 
 #downloadbox a.ubuntu_icon {
-    background-image: url(images/ubuntulogo.png);
+    background-image: url(images/ubuntulogo.gif);
     background-position: 0 0;
 }
 
 #downloadbox a.linux_icon {
-    background-image: url(http://code.iki.fi/dengine.net/images/linuxlogo.png);
+    background-image: url(images/linuxlogo.gif);
     background-position: 0 0;
 }
 
 #downloadbox div.project_links {
-    margin-top:2em;
-    padding-left:.8em;
-    text-align:left;
-}
-
-#downloadbox div.socialbookmark_buttons {
-    margin-left:-.4em;
-    margin-right:-.4em;
-}
-
-#downloadbox div.package_links {
-    font-size: xx-small;
-}
-
-#downloadbox div.platform_buttons ul, div.package_links ul {
-    margin-top:0;
-}
-
-#downloadbox div.package_links ul li {
-    list-style-type: none;
-    padding-left:1em;
+    margin-top: 1.8em;
+    padding-left: 1.5em;
+    text-align: left;
 }
 
 .getitnow-label {
     font-size: x-large;
     text-align:center;
-    margin-left:-1em;
 }
 
 .getitnow-label a, a:hover, a:visited:hover {
@@ -672,12 +726,17 @@ p.legal a {
     font-size: medium;
 }
 
-.getitnow-label span.version-label {
-    padding-left: 1em;
+#socialbookmarkbox div.hnav ul {
+    margin-top: .4em;
+    margin-bottom: 0;
+}
+
+.sf-button {
+    position:relative;
+    top:-3px;
 }
 
 .fb-like {
-    margin-top: 1em;
     padding-left: .1em;
 }
 
@@ -689,7 +748,6 @@ p.legal a {
 /*-------------------- Addons ---------------------*/
 
 #addons {
-    background: #ffffff;
     padding:.5em 1em;
 }
 
@@ -760,26 +818,77 @@ p.legal a {
 
 /* Panel */
 #builds {
-    background: #ffffff;
     padding:.5em 1em;
 }
 
 /* Stream navigation widget */
 #buildsnav {
     font-family: Verdana, Arial, Helvetica, sans-serif;
-    margin:1em 0;
 }
 
-#buildsnav span.title {
+#buildsnav h3 {
     font-size:small;
 }
 
-#buildsnav ul {
-    margin:.5em;
+#buildsnav h3 span {
+    color:lightgrey;
+    padding:0 1em;
 }
 
-#buildsnav ul li {
-    padding:.25em 3em;
+#buildoverview {
+    text-align:center;
+}
+
+#buildpackagelist {
+}
+
+#buildpackagelist table tr.platform {
+    padding-bottom:1em;
+}
+
+#buildeventmetadata {
+    vertical-align:top;
+    position:relative;
+    margin-right:2em;
+}
+
+#buildcommits hr {
+    visibility:hidden;
+    margin:0;
+}
+
+#buildcommits ul li {
+    list-style-type:none;
+}
+
+#buildcommits ul {
+    padding-left:0;
+}
+
+#buildcommits ol {
+    padding-top: 1em;
+    padding-bottom: 1em;
+}
+
+#buildcommits ol li {
+    list-style-type:circle;
+}
+
+#buildcommits ol li.more {
+    list-style-type:disc;
+}
+
+#buildcommits ol.jumplist li {
+    list-style-type:none;
+}
+
+#buildcommits ol.jumplist a {
+    color:#558866;
+}
+
+#buildcommits ol.jumplist a:hover {
+    text-decoration: underline;
+    color: #FFCB0F;
 }
 
 .buildnews_list {
@@ -797,34 +906,11 @@ p.legal a {
     padding-left:.5em;
 }
 
-.commit_list ul {
-    padding-left:0;
-}
-
-.commit_list ul li {
-    list-style-type:none;
-}
-
-.commit_list ol {
-    padding-top: 1em;
-    padding-bottom: 1em;
-}
-
-.commit_list ol li {
-    list-style-type:circle;
-}
-
-.commit_list ol li.more {
-    list-style-type:disc;
-}
-
-.commit_list hr {
-    visibility:hidden;
-    margin:0;
+.commit_list {
 }
 
 .commit_list p.collapsible:hover {
-    color: #ff8a00;
+    color: #FFCB0F;
 }
 
 .commit_list .tag {
@@ -836,17 +922,17 @@ p.legal a {
     margin-right:.8em;
 }
 
-.commit_list ol.jumplist li {
-    list-style-type:none;
+div.hnav span.commit-count {
+    float:none;
+    left:initial;
 }
 
-.commit_list ol.jumplist a {
-    color:#558866;
-}
-
-.commit_list ol.jumplist a:hover {
-    text-decoration: underline;
-    color: #ff8a00;
+span.commit-count {
+    padding-right:.5em;
+    color:#aaa;
+    position:relative;
+    left:-100%;
+    float:right;
 }
 
 .commit span.heading,
@@ -891,24 +977,199 @@ span.metadata {
 .buildevent table {
     border-collapse:separate;
     border-spacing:.5em;
-    margin-top:1em;
-    margin-left:auto;
-    margin-right:auto;
-}
-
-.buildevent table tr th {
-    font-family: Verdana, Arial, Helvetica, sans-serif;
+    display:inline-block;
     text-align:left;
 }
 
-.buildevent table td.issue_level {
+.buildevent table tr th {
+    text-align:left;
+}
+
+.buildevents_outer {
+    float:left;
+    padding-right:.5em;
+}
+
+.buildevents_outer table thead {
     text-align:center;
+}
+
+.buildevents_outer table tbody {
+    vertical-align:top;
+}
+
+.buildstreaminfo {
+    padding:1.2em 0;
+}
+
+#roadmap_badge {
+    padding-bottom:.5em;
+    font-size:large;
+    font-weight:bold;
+    font-family:Verdana, Arial, Helvetica, sans-serif;
+}
+
+.buildstreamlist {
+    border:2px solid #EEE;
+    display:inline-block;
+    background:white;
+}
+
+.buildstream {
+    float:left;
+    overflow:hidden;
+    text-align:center;
+}
+
+.buildstream ul {
+    margin:0;
+    padding:0;
+}
+
+.buildstream ul li {
+    min-width: 3.2em;
+    list-style-type:none;
+    padding:0 .5em;
+    vertical-align:top;
+}
+
+.buildstream ul li.current {
+    background-color: #F2FBF2;
+    border:1px solid #F2FBF2;
+}
+
+.release-badge {
+    padding-bottom:.5em;
+    font-size:large;
+    font-weight:bold;
+    font-family:Verdana, Arial, Helvetica, sans-serif;
+}
+
+.buildevent_badge {
+    width:2.5em;
+    margin-left:auto;
+    margin-right:auto;
+    padding:.3em .2em;
+    border:3px solid;
+    margin-top:.25em;
+    margin-bottom:1em;
+    border-top-left-radius:40px 10px;
+    border-top-right-radius:40px 10px;
+    border-bottom-left-radius:40px 10px;
+    border-bottom-right-radius:40px 10px;
+    font-family: Helvetica;
+    font-weight: bolder;
+}
+
+.buildevent_badge .startdate {
+    position:relative;
+    bottom:-.6em;
+    display:block;
+    margin-bottom:-1.4em;
+    white-space:nowrap;
+    font-size:60%;
+    left:-1em;
+}
+
+.buildevent_badge .startdate,
+.buildevent_badge a[class = "startdate"]:hover,
+.buildevent_badge a[class = "startdate"]:visited:hover {
+    color:grey;
+}
+
+.stable,
+.stable_disabled {
+    color:#EEE;
+    background-color:#78E;
+    border-color:#56D;
+    box-shadow:0px -10px 5px 0px rgba(30,100,230,.5) inset;
+}
+
+.stable:hover,
+.stable:visited:hover {
+    color:#EEE;
+    background-color:#9AF;
+    border-color:#56D;
+}
+
+.candidate,
+.candidate_disabled {
+    color:#555;
+    background-color:#FBA000;
+    border-color:#D71;
+    box-shadow:0px -10px 5px 0px rgba(200,80,0,.5) inset;
+}
+
+.candidate:hover,
+.candidate:visited:hover {
+    color:#555;
+    background-color:#FFC400;
+    border-color:#D71;
+}
+
+.unstable,
+.unstable_disabled {
+    color:#860;
+    background-color:#FFE400;
+    border-color:#FC6;
+    box-shadow:0px -10px 5px 0px rgba(250,140,10,.5) inset;
+}
+
+.unstable:hover,
+.unstable:visited:hover {
+    color:#860;
+    background-color:#FF3;
+    border-color:#FC6;
+}
+
+#buildEventLegend {
+    padding:1em 0;
+    margin:0;
+    margin-right:1em;
+    margin-top:.3em;
+}
+
+#buildEventLegend legend {
+    margin-left:.5em;
+    margin-right:4em;
+}
+
+#buildEventLegend dl {
+    padding:0 .5em;
+}
+
+#buildEventLegend dl dt {
+    display:inline-block;
+    float:left;
+    margin-right:.5em;
+}
+
+#buildEventLegend dl dd {
+    margin-left:0;
+    margin-bottom:.8em;
+    font-size:small;
+}
+
+#buildEventLegend div.buildevent_badge {
+    margin-top:0;
+    margin-bottom:0;
+    width:1em;
+    height:.6em;
+    padding:0;
+    border-top-left-radius:10px 2px;
+    border-top-right-radius:10px 2px;
+    border-bottom-left-radius:10px 2px;
+    border-bottom-right-radius:10px 2px;
+    border-width:2px;
+}
+
+.buildsoverview {
+    margin-top:2.2em;
 }
 
 /*----------------- Master Server ------------------*/
 
 #masterbrowser {
-    background: #ffffff;
     padding:.5em 1em;
 }
 
@@ -1031,7 +1292,6 @@ span.port {
 /*------------------ Screens Page ------------------*/
 
 #screenshots {
-    background: #ffffff;
     padding:.5em 1em;
 }
 
@@ -1093,7 +1353,8 @@ ul.games_list li a.game_badge span {
 
 .downloads_list {
     vertical-align:top;
-    margin:0 3em;
+    display: inline-block;
+    margin-right:1em;
 }
 
 .downloads_list ul {
@@ -1114,7 +1375,7 @@ ul.games_list li a.game_badge span {
     background-color: transparent;
     background: url(http://code.iki.fi/dengine.net/images/download_badge.png) no-repeat;
     height: 60px;
-    width: 320px;
+    min-width: 320px;
     padding-top: 1.5em;
     padding-bottom: 0;
     padding-left: 0;

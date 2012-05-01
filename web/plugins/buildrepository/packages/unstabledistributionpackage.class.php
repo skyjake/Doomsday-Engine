@@ -22,9 +22,12 @@
  * @author Copyright &copy; 2009-2012 Daniel Swanson <danij@dengine.net>
  */
 
-includeGuard('UnstableDistributionPackage');
+includeGuard('DistributionUnstablePackage');
 
-require_once('abstractunstablepackage.class.php');
+require_once('abstractunstablebuilderpackage.class.php');
 
-class UnstableDistributionPackage extends AbstractUnstablePackage
+class DistributionUnstablePackage extends AbstractUnstablePackage
+{}
+
+class DistributionUnstableBuilderPackage extends AbstractUnstableBuilderPackage
 {}

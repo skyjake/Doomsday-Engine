@@ -7,7 +7,8 @@ include(../common/common.pri)
 include(../../dep_lzss.pri)
 
 TEMPLATE = lib
-TARGET = jdoom
+win32|macx: TARGET = jDoom
+      else: TARGET = jdoom
 
 DEFINES += __JDOOM__
 
@@ -20,7 +21,7 @@ macx {
 
     QMAKE_BUNDLE_DATA += gamedata
 }
-else: {
+else {
     INSTALLS += target gamedata
 
     target.path = $$DENG_LIB_DIR
@@ -61,7 +62,6 @@ HEADERS += \
     include/p_oldsvg.h \
     include/p_pspr.h \
     include/p_setup.h \
-    include/p_sound.h \
     include/p_spec.h \
     include/p_telept.h \
     include/r_defs.h \
@@ -100,7 +100,6 @@ HEADERS += \
     include/p_oldsvg.h \
     include/p_pspr.h \
     include/p_setup.h \
-    include/p_sound.h \
     include/p_spec.h \
     include/p_telept.h \
     include/r_defs.h \
@@ -127,7 +126,6 @@ SOURCES += \
     src/p_oldsvg.c \
     src/p_pspr.c \
     src/p_setup.c \
-    src/p_sound.c \
     src/p_spec.c \
     src/p_telept.c \
     src/st_stuff.c \

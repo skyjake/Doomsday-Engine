@@ -86,9 +86,9 @@ typedef struct rendmaskedwallparams_s {
 
 typedef struct rendspriteparams_s {
 // Position/Orientation/Scale
-    float           center[3]; // The real center point.
-    float           srvo[3]; // Short-range visual offset.
-    float           distance; // Distance from viewer.
+    coord_t         center[3]; // The real center point.
+    coord_t         srvo[3]; // Short-range visual offset.
+    coord_t         distance; // Distance from viewer.
     boolean         viewAligned;
 
 // Appearance
@@ -104,7 +104,7 @@ typedef struct rendspriteparams_s {
     uint            vLightListIdx;
 
 // Misc
-    struct subsector_s* subsector;
+    struct bspleaf_s* bspLeaf;
 } rendspriteparams_t;
 
 /** @name rendFlareFlags */
@@ -135,8 +135,8 @@ typedef struct rendflareparams_s {
 typedef struct vissprite_s {
     struct vissprite_s* prev, *next;
     visspritetype_t type; // VSPR_* type of vissprite.
-    float           distance; // Vissprites are sorted by distance.
-    float           center[3];
+    coord_t         distance; // Vissprites are sorted by distance.
+    coord_t         origin[3];
 
     // An anonymous union for the data.
     union vissprite_data_u {
@@ -160,27 +160,27 @@ typedef enum {
 typedef struct vispsprite_s {
     vispspritetype_t type;
     ddpsprite_t*    psp;
-    float           center[3];
+    coord_t         origin[3];
 
     union vispsprite_data_u {
         struct vispsprite_sprite_s {
-            subsector_t*    subsector;
+            BspLeaf*        bspLeaf;
             float           alpha;
             boolean         isFullBright;
         } sprite;
         struct vispsprite_model_s {
-            subsector_t*    subsector;
-            float           gzt; // global top for silhouette clipping
+            BspLeaf*        bspLeaf;
+            coord_t         gzt; // global top for silhouette clipping
             int             flags; // for color translation and shadow draw
             uint            id;
             int             selector;
             int             pClass; // player class (used in translation)
-            float           floorClip;
+            coord_t         floorClip;
             boolean         stateFullBright;
             boolean         viewAligned;    // Align to view plane.
-            float           secFloor, secCeil;
+            coord_t         secFloor, secCeil;
             float           alpha;
-            float           visOff[3]; // Last-minute offset to coords.
+            coord_t         visOff[3]; // Last-minute offset to coords.
             boolean         floorAdjust; // Allow moving sprite to match visible floor.
 
             struct modeldef_s* mf, *nextMF;
@@ -193,9 +193,9 @@ typedef struct vispsprite_s {
 } vispsprite_t;
 
 typedef struct collectaffectinglights_params_s {
-    float           center[3];
+    coord_t         origin[3];
     float*          ambientColor;
-    subsector_t*    subsector;
+    BspLeaf*        bspLeaf;
     boolean         starkLight; // World light has a more pronounced effect.
 } collectaffectinglights_params_t;
 
@@ -217,26 +217,32 @@ material_t*     R_GetMaterialForSprite(int sprite, int frame);
 boolean         R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* sprinfo);
 
 /// @return  Radius of the mobj as it would visually appear to be.
-float R_VisualRadius(struct mobj_s* mo);
+coord_t R_VisualRadius(struct mobj_s* mo);
 
 /**
  * Calculate the strength of the shadow this mobj should cast.
- * \note Implemented using a greatly simplified version of the lighting equation;
- * no light diminishing or light range compression.
+ *
+ * @note Implemented using a greatly simplified version of the lighting equation;
+ *       no light diminishing or light range compression.
  */
 float R_ShadowStrength(struct mobj_s* mo);
 
 float R_Alpha(struct mobj_s* mo);
 
-float           R_GetBobOffset(struct mobj_s* mo);
-float           R_MovementYaw(float momx, float momy);
-float           R_MovementPitch(float momx, float momy, float momz);
-void            R_ProjectSprite(struct mobj_s* mobj);
-void            R_ProjectPlayerSprites(void);
+coord_t R_GetBobOffset(struct mobj_s* mo);
+
+float R_MovementYaw(float const mom[2]);
+float R_MovementXYYaw(float momx, float momy);
+
+float R_MovementPitch(float const mom[3]);
+float R_MovementXYZPitch(float momx, float momy, float momz);
+
+void R_ProjectSprite(struct mobj_s* mobj);
+void R_ProjectPlayerSprites(void);
 
 void R_SortVisSprites(void);
 vissprite_t* R_NewVisSprite(void);
-void R_AddSprites(subsector_t* ssec);
+void R_AddSprites(BspLeaf* bspLeaf);
 
 /// To be called at the start of the current render frame to clear the vissprite list.
 void R_ClearVisSprites(void);

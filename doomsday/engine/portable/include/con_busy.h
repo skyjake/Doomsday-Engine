@@ -1,8 +1,6 @@
 /**
  * @file con_busy.h
- * Console Busy Mode
- *
- * @ingroup console
+ * Console Busy Mode @ingroup console
  *
  * The Busy Mode is intended for long-running tasks that would otherwise block
  * the main engine (UI) thread. During busy mode, a progress screen is shown by
@@ -10,6 +8,11 @@
  * normal Doomsday UI cannot be interacted with while the task is running. The
  * busy mode can be configured to show a progress bar, the console output,
  * and/or a description of the task being carried out.
+ *
+ * @todo Refactor: Remove the busy mode loop to prevent the app UI from
+ * freezing while busy mode is running. Instead, busy mode should run in the
+ * regular application event loop. During busy mode, the game loop callback
+ * should not be called.
  *
  * @authors Copyright &copy; 2009-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2009-2012 Daniel Swanson <danij@dengine.net>
@@ -32,6 +35,12 @@
 #ifndef LIBDENG_CONSOLE_BUSY_H
 #define LIBDENG_CONSOLE_BUSY_H
 
+#include "dd_share.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /// Busy mode worker function.
 typedef int (C_DECL *busyworkerfunc_t) (void* parm);
 
@@ -48,7 +57,10 @@ typedef struct {
     float progressStart;
     float progressEnd;
 
-    int retVal; ///< Worker return value.
+    // Internal state:
+    timespan_t _startTime;
+    boolean _willAnimateTransition;
+    boolean _wasIgnoringInput;
 } BusyTask;
 
 /// Busy mode transition style.
@@ -66,22 +78,10 @@ extern int rTransitionTics;
 /**
  * Process a single work task in Busy Mode.
  *
- * Caller relinquishes ownership of the task until busy mode completes,
- * (therefore it should NOT be accessed in the worker).
- *
- * @param task          Task to be performed.
- *
- * @return  Return value of the worker.
- */
-int Con_Busy2(BusyTask* task);
-
-/**
- * Process a single work task in Busy Mode.
- *
  * @param mode          Busy mode flags @ref busyModeFlags
+ * @param taskName      Optional task name (drawn with the progress bar).
  * @param worker        Worker thread that does processing while in busy mode.
  * @param workerData    Data context for the worker thread.
- * @param taskName      Optional task name (drawn with the progress bar).
  *
  * @return  Return value of the worker.
  */
@@ -127,5 +127,15 @@ boolean Con_TransitionInProgress(void);
 
 void Con_TransitionTicker(timespan_t ticLength);
 void Con_DrawTransition(void);
+
+// Private methods:
+int BusyTask_Run(int mode, const char* taskName, busyworkerfunc_t worker, void* workerData);
+void BusyTask_Begin(BusyTask* task);
+void BusyTask_End(BusyTask* task);
+void BusyTask_StopEventLoopWithValue(int result);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /// LIBDENG_CONSOLE_BUSY

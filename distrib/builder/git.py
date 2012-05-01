@@ -18,9 +18,9 @@ def git_checkout(ident):
 
 def git_pull():
     """Updates the source with a git pull."""
-    print 'Updating source...'
+    print 'Updating source from branch %s...' % builder.config.BRANCH
     os.chdir(builder.config.DISTRIB_DIR)
-    run_git("git checkout master")
+    run_git("git checkout " + builder.config.BRANCH)
     run_git("git pull")
     
     

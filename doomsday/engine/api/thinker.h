@@ -42,32 +42,18 @@ typedef struct thinker_s {
     thid_t          id; ///< Only used for mobjs (zero is not an ID).
 } thinker_t;
 
-void            DD_InitThinkers(void);
-void            DD_RunThinkers(void);
-void            DD_ThinkerAdd(thinker_t* th);
-void            DD_ThinkerRemove(thinker_t* th);
-void            DD_ThinkerSetStasis(thinker_t* th, boolean on);
-int             DD_IterateThinkers(think_t func, int (*callback) (thinker_t*, void*),
-                                   void* context);
+void DD_InitThinkers(void);
+void DD_RunThinkers(void);
+void DD_ThinkerAdd(thinker_t* th);
+void DD_ThinkerRemove(thinker_t* th);
+void DD_ThinkerSetStasis(thinker_t* th, boolean on);
+int DD_IterateThinkers(think_t func, int (*callback) (thinker_t*, void*), void* context);
 
 ///@}
 
 /// Not part of the public API.
 ///@{
-boolean         P_ThinkerListInited(void);
-
-void            P_InitThinkerLists(byte flags);
-int             P_IterateThinkers(think_t type, byte flags,
-                                  int (*callback) (thinker_t* th, void*),
-                                  void* context);
-
-void            P_ThinkerAdd(thinker_t* th, boolean makePublic);
-void            P_ThinkerRemove(thinker_t* th);
-
-void            P_SetMobjID(thid_t id, boolean state);
-boolean         P_IsUsedMobjID(thid_t id);
-boolean         P_IsMobjThinker(think_t thinker);
-struct mobj_s*  P_MobjForID(int id);
+boolean P_IsMobjThinker(think_t thinker);
 ///@}
 
 #endif // LIBDENG_THINKER_H

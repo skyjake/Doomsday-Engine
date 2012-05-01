@@ -41,6 +41,10 @@
  */
 #if defined(WIN32)
 
+#if __cplusplus
+#  include <QIODevice> // must be included before anything that defines open
+#endif
+
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <io.h>

@@ -31,6 +31,10 @@
 
 #include "dd_types.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if BAMS_BITS == 32
 
 // Some predefined angles.
@@ -92,5 +96,9 @@
 
 void            bamsInit(void);        // Fill in the tables.
 binangle_t      bamsAtan2(int y, int x);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

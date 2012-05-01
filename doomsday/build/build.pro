@@ -12,7 +12,7 @@ include(../config.pri)
 QMAKE_STRIP = true
 
 # Update the PK3 files.
-deng_packres {
+!deng_nopackres {
     system(cd $$PWD/scripts/ && python packres.py --quiet \"$$OUT_PWD/..\")
 }
 

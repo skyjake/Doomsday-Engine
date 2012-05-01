@@ -44,19 +44,19 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct dummysidedef_s {
-    sidedef_t sideDef; // Side data.
+    SideDef sideDef; // Side data.
     void* extraData; // Pointer to user data.
     boolean inUse; // true, if the dummy is being used.
 } dummysidedef_t;
 
 typedef struct dummyline_s {
-    linedef_t line; // Line data.
+    LineDef line; // Line data.
     void* extraData; // Pointer to user data.
     boolean inUse; // true, if the dummy is being used.
 } dummyline_t;
 
 typedef struct dummysector_s {
-    sector_t sector; // Sector data.
+    Sector sector; // Sector data.
     void* extraData; // Pointer to user data.
     boolean inUse; // true, if the dummy is being used.
 } dummysector_t;
@@ -97,11 +97,11 @@ const char* DMU_Str(uint prop)
     {
         { DMU_NONE, "(invalid)" },
         { DMU_VERTEX, "DMU_VERTEX" },
-        { DMU_SEG, "DMU_SEG" },
+        { DMU_HEDGE, "DMU_HEDGE" },
         { DMU_LINEDEF, "DMU_LINEDEF" },
         { DMU_SIDEDEF, "DMU_SIDEDEF" },
-        { DMU_NODE, "DMU_NODE" },
-        { DMU_SUBSECTOR, "DMU_SUBSECTOR" },
+        { DMU_BSPNODE, "DMU_BSPNODE" },
+        { DMU_BSPLEAF, "DMU_BSPLEAF" },
         { DMU_SECTOR, "DMU_SECTOR" },
         { DMU_PLANE, "DMU_PLANE" },
         { DMU_MATERIAL, "DMU_MATERIAL" },
@@ -135,7 +135,7 @@ const char* DMU_Str(uint prop)
         { DMU_DY, "DMU_DY" },
         { DMU_DXY, "DMU_DXY" },
         { DMU_LENGTH, "DMU_LENGTH" },
-        { DMU_SLOPE_TYPE, "DMU_SLOPE_TYPE" },
+        { DMU_SLOPETYPE, "DMU_SLOPETYPE" },
         { DMU_ANGLE, "DMU_ANGLE" },
         { DMU_OFFSET, "DMU_OFFSET" },
         { DMU_OFFSET_X, "DMU_OFFSET_X" },
@@ -152,11 +152,11 @@ const char* DMU_Str(uint prop)
         { DMU_LIGHT_LEVEL, "DMU_LIGHT_LEVEL" },
         { DMT_MOBJS, "DMT_MOBJS" },
         { DMU_BOUNDING_BOX, "DMU_BOUNDING_BOX" },
-        { DMU_SOUND_ORIGIN, "DMU_SOUND_ORIGIN" },
+        { DMU_BASE, "DMU_BASE" },
         { DMU_WIDTH, "DMU_WIDTH" },
         { DMU_HEIGHT, "DMU_HEIGHT" },
         { DMU_TARGET_HEIGHT, "DMU_TARGET_HEIGHT" },
-        { DMU_SEG_COUNT, "DMU_SEG_COUNT" },
+        { DMU_HEDGE_COUNT, "DMU_HEDGE_COUNT" },
         { DMU_SPEED, "DMU_SPEED" },
         { 0, NULL }
     };
@@ -189,13 +189,13 @@ int DMU_GetType(const void* ptr)
     switch(type)
     {
         case DMU_VERTEX:
-        case DMU_SEG:
+        case DMU_HEDGE:
         case DMU_LINEDEF:
         case DMU_SIDEDEF:
-        case DMU_SUBSECTOR:
+        case DMU_BSPLEAF:
         case DMU_SECTOR:
         case DMU_PLANE:
-        case DMU_NODE:
+        case DMU_BSPNODE:
         case DMU_MATERIAL:
             return type;
 
@@ -422,28 +422,28 @@ uint P_ToIndex(const void* ptr)
     switch(DMU_GetType(ptr))
     {
     case DMU_VERTEX:
-        return GET_VERTEX_IDX((vertex_t*) ptr);
+        return GET_VERTEX_IDX((Vertex*) ptr);
 
-    case DMU_SEG:
-        return GET_SEG_IDX((seg_t*) ptr);
+    case DMU_HEDGE:
+        return GET_HEDGE_IDX((HEdge*) ptr);
 
     case DMU_LINEDEF:
-        return GET_LINE_IDX((linedef_t*) ptr);
+        return GET_LINE_IDX((LineDef*) ptr);
 
     case DMU_SIDEDEF:
-        return GET_SIDE_IDX((sidedef_t*) ptr);
+        return GET_SIDE_IDX((SideDef*) ptr);
 
-    case DMU_SUBSECTOR:
-        return GET_SUBSECTOR_IDX((subsector_t*) ptr);
+    case DMU_BSPLEAF:
+        return GET_BSPLEAF_IDX((BspLeaf*) ptr);
 
     case DMU_SECTOR:
-        return GET_SECTOR_IDX((sector_t*) ptr);
+        return GET_SECTOR_IDX((Sector*) ptr);
 
-    case DMU_NODE:
-        return GET_NODE_IDX((node_t*) ptr);
+    case DMU_BSPNODE:
+        return GET_BSPNODE_IDX((BspNode*) ptr);
 
     case DMU_PLANE:
-        return GET_PLANE_IDX((plane_t*) ptr);
+        return GET_PLANE_IDX((Plane*) ptr);
 
     case DMU_MATERIAL:
         return Materials_Id((material_t*) ptr);
@@ -464,8 +464,8 @@ void* P_ToPtr(int type, uint index)
     case DMU_VERTEX:
         return VERTEX_PTR(index);
 
-    case DMU_SEG:
-        return SEG_PTR(index);
+    case DMU_HEDGE:
+        return HEDGE_PTR(index);
 
     case DMU_LINEDEF:
         return LINE_PTR(index);
@@ -473,14 +473,14 @@ void* P_ToPtr(int type, uint index)
     case DMU_SIDEDEF:
         return SIDE_PTR(index);
 
-    case DMU_SUBSECTOR:
-        return SUBSECTOR_PTR(index);
+    case DMU_BSPLEAF:
+        return BSPLEAF_PTR(index);
 
     case DMU_SECTOR:
         return SECTOR_PTR(index);
 
-    case DMU_NODE:
-        return NODE_PTR(index);
+    case DMU_BSPNODE:
+        return BSPNODE_PTR(index);
 
     case DMU_PLANE:
         Con_Error("P_ToPtr: Cannot convert %s to a ptr (sector is unknown).\n",
@@ -507,12 +507,12 @@ int P_Iteratep(void *ptr, uint prop, void* context, int (*callback) (void* p, vo
         {
         case DMU_LINEDEF:
             {
-            sector_t*           sec = (sector_t*) ptr;
+            Sector*             sec = (Sector*) ptr;
             int                 result = false; // Continue iteration.
 
             if(sec->lineDefs)
             {
-                linedef_t** linePtr = sec->lineDefs;
+                LineDef** linePtr = sec->lineDefs;
                 while(*linePtr && !(result = callback(*linePtr, context)))
                     linePtr++;
             }
@@ -520,27 +520,27 @@ int P_Iteratep(void *ptr, uint prop, void* context, int (*callback) (void* p, vo
           }
         case DMU_PLANE:
             {
-            sector_t*           sec = (sector_t*) ptr;
+            Sector*             sec = (Sector*) ptr;
             int                 result = false; // Continue iteration.
 
             if(sec->planes)
             {
-                plane_t** planePtr = sec->planes;
+                Plane** planePtr = sec->planes;
                 while(*planePtr && !(result = callback(*planePtr, context)))
                     planePtr++;
             }
             return result;
           }
-        case DMU_SUBSECTOR:
+        case DMU_BSPLEAF:
             {
-            sector_t*           sec = (sector_t*) ptr;
+            Sector*             sec = (Sector*) ptr;
             int                 result = false; // Continue iteration.
 
-            if(sec->ssectors)
+            if(sec->bspLeafs)
             {
-                subsector_t** ssecPtr = sec->ssectors;
-                while(*ssecPtr && !(result = callback(*ssecPtr, context)))
-                    ssecPtr++;
+                BspLeaf** ssecIter = sec->bspLeafs;
+                while(*ssecIter && !(result = callback(*ssecIter, context)))
+                    ssecIter++;
             }
             return result;
           }
@@ -548,22 +548,23 @@ int P_Iteratep(void *ptr, uint prop, void* context, int (*callback) (void* p, vo
             Con_Error("P_Iteratep: Property %s unknown/not vector.\n", DMU_Str(prop));
         }
         break;
-    case DMU_SUBSECTOR:
+    case DMU_BSPLEAF:
         switch(prop)
         {
-        case DMU_SEG:
+        case DMU_HEDGE: {
+            BspLeaf* bspLeaf = (BspLeaf*) ptr;
+            int result = false; // Continue iteration.
+            if(bspLeaf->hedge)
             {
-            subsector_t*        ssec = (subsector_t*) ptr;
-            int                 result = false; // Continue iteration.
-
-            if(ssec->segs)
-            {
-                seg_t** segPtr = ssec->segs;
-                while(*segPtr && !(result = callback(*segPtr, context)))
-                    segPtr++;
+                HEdge* hedge = bspLeaf->hedge;
+                do
+                {
+                    result = callback(hedge, context);
+                    if(result) break;
+                } while((hedge = hedge->next) != bspLeaf->hedge);
             }
-            return result;
-          }
+            return result; }
+
         default:
             Con_Error("P_Iteratep: Property %s unknown/not vector.\n", DMU_Str(prop));
         }
@@ -596,37 +597,37 @@ int P_Callback(int type, uint index, void* context,
     switch(type)
     {
     case DMU_VERTEX:
-        if(index < numVertexes)
+        if(index < NUM_VERTEXES)
             return callback(VERTEX_PTR(index), context);
         break;
 
-    case DMU_SEG:
-        if(index < numSegs)
-            return callback(SEG_PTR(index), context);
+    case DMU_HEDGE:
+        if(index < NUM_HEDGES)
+            return callback(HEDGE_PTR(index), context);
         break;
 
     case DMU_LINEDEF:
-        if(index < numLineDefs)
+        if(index < NUM_LINEDEFS)
             return callback(LINE_PTR(index), context);
         break;
 
     case DMU_SIDEDEF:
-        if(index < numSideDefs)
+        if(index < NUM_SIDEDEFS)
             return callback(SIDE_PTR(index), context);
         break;
 
-    case DMU_NODE:
-        if(index < numNodes)
-            return callback(NODE_PTR(index), context);
+    case DMU_BSPNODE:
+        if(index < NUM_BSPNODES)
+            return callback(BSPNODE_PTR(index), context);
         break;
 
-    case DMU_SUBSECTOR:
-        if(index < numSSectors)
-            return callback(SUBSECTOR_PTR(index), context);
+    case DMU_BSPLEAF:
+        if(index < NUM_BSPLEAFS)
+            return callback(BSPLEAF_PTR(index), context);
         break;
 
     case DMU_SECTOR:
-        if(index < numSectors)
+        if(index < NUM_SECTORS)
             return callback(SECTOR_PTR(index), context);
         break;
 
@@ -646,7 +647,7 @@ int P_Callback(int type, uint index, void* context,
     case DMU_SECTOR_BY_ACT_TAG:
         Con_Error("P_Callback: Type %s not implemented yet.\n", DMU_Str(type));
         /*
-        for(i = 0; i < numLineDefs; ++i)
+        for(i = 0; i < NUM_LINEDEFS; ++i)
         {
             if(!callback(LINE_PTR(i), context)) return false;
         }
@@ -671,11 +672,11 @@ int P_Callbackp(int type, void* ptr, void* context,
     switch(type)
     {
     case DMU_VERTEX:
-    case DMU_SEG:
+    case DMU_HEDGE:
     case DMU_LINEDEF:
     case DMU_SIDEDEF:
-    case DMU_NODE:
-    case DMU_SUBSECTOR:
+    case DMU_BSPNODE:
+    case DMU_BSPLEAF:
     case DMU_SECTOR:
     case DMU_PLANE:
     case DMU_MATERIAL:
@@ -732,6 +733,9 @@ void DMU_SetValue(valuetype_t valueType, void* dst, const setargs_t* args,
         case DDVT_FLOAT:
             *d = FLT2FIX(args->floatValues[index]);
             break;
+        case DDVT_DOUBLE:
+            *d = FLT2FIX(args->doubleValues[index]);
+            break;
         default:
             Con_Error("SetValue: DDVT_FIXED incompatible with value type %s.\n",
                       value_Str(args->valueType));
@@ -755,8 +759,37 @@ void DMU_SetValue(valuetype_t valueType, void* dst, const setargs_t* args,
         case DDVT_FLOAT:
             *d = args->floatValues[index];
             break;
+        case DDVT_DOUBLE:
+            *d = (float)args->doubleValues[index];
+            break;
         default:
             Con_Error("SetValue: DDVT_FLOAT incompatible with value type %s.\n",
+                      value_Str(args->valueType));
+        }
+    }
+    else if(valueType == DDVT_DOUBLE)
+    {
+        double* d = dst;
+
+        switch(args->valueType)
+        {
+        case DDVT_BYTE:
+            *d = args->byteValues[index];
+            break;
+        case DDVT_INT:
+            *d = args->intValues[index];
+            break;
+        case DDVT_FIXED:
+            *d = FIX2FLT(args->fixedValues[index]);
+            break;
+        case DDVT_FLOAT:
+            *d = args->floatValues[index];
+            break;
+        case DDVT_DOUBLE:
+            *d = args->doubleValues[index];
+            break;
+        default:
+            Con_Error("SetValue: DDVT_DOUBLE incompatible with value type %s.\n",
                       value_Str(args->valueType));
         }
     }
@@ -792,6 +825,9 @@ void DMU_SetValue(valuetype_t valueType, void* dst, const setargs_t* args,
         case DDVT_FLOAT:
             *d = (byte) args->floatValues[index];
             break;
+        case DDVT_DOUBLE:
+            *d = (byte) args->doubleValues[index];
+            break;
         default:
             Con_Error("SetValue: DDVT_BYTE incompatible with value type %s.\n",
                       value_Str(args->valueType));
@@ -814,6 +850,9 @@ void DMU_SetValue(valuetype_t valueType, void* dst, const setargs_t* args,
             break;
         case DDVT_FLOAT:
             *d = args->floatValues[index];
+            break;
+        case DDVT_DOUBLE:
+            *d = args->doubleValues[index];
             break;
         case DDVT_FIXED:
             *d = (args->fixedValues[index] >> FRACBITS);
@@ -840,6 +879,9 @@ void DMU_SetValue(valuetype_t valueType, void* dst, const setargs_t* args,
             break;
         case DDVT_FLOAT:
             *d = args->floatValues[index];
+            break;
+        case DDVT_DOUBLE:
+            *d = args->doubleValues[index];
             break;
         case DDVT_FIXED:
             *d = (args->fixedValues[index] >> FRACBITS);
@@ -912,12 +954,12 @@ void DMU_SetValue(valuetype_t valueType, void* dst, const setargs_t* args,
 static int setProperty(void* obj, void* context)
 {
     setargs_t*          args = (setargs_t*) context;
-    sector_t*           updateSector1 = NULL, *updateSector2 = NULL;
-    plane_t*            updatePlane = NULL;
-    linedef_t*          updateLinedef = NULL;
-    sidedef_t*          updateSidedef = NULL;
-    surface_t*          updateSurface = NULL;
-    // subsector_t*        updateSubSector = NULL;
+    Sector*             updateSector1 = NULL, *updateSector2 = NULL;
+    Plane*              updatePlane = NULL;
+    LineDef*            updateLinedef = NULL;
+    SideDef*            updateSidedef = NULL;
+    Surface*            updateSurface = NULL;
+    // BspLeaf*           updateBspLeaf = NULL;
 
     /**
      * \algorithm:
@@ -936,35 +978,35 @@ static int setProperty(void* obj, void* context)
      */
 
     // Dereference where necessary. Note the order, these cascade.
-    if(args->type == DMU_SUBSECTOR)
+    if(args->type == DMU_BSPLEAF)
     {
-        // updateSubSector = (subsector_t*) obj;
+        // updateBspLeaf = (BspLeaf*) obj;
 
         if(args->modifiers & DMU_FLOOR_OF_SECTOR)
         {
-            obj = ((subsector_t*) obj)->sector;
+            obj = ((BspLeaf*) obj)->sector;
             args->type = DMU_SECTOR;
         }
         else if(args->modifiers & DMU_CEILING_OF_SECTOR)
         {
-            obj = ((subsector_t*) obj)->sector;
+            obj = ((BspLeaf*) obj)->sector;
             args->type = DMU_SECTOR;
         }
     }
 
     if(args->type == DMU_SECTOR)
     {
-        updateSector1 = (sector_t*) obj;
+        updateSector1 = (Sector*) obj;
 
         if(args->modifiers & DMU_FLOOR_OF_SECTOR)
         {
-            sector_t           *sec = (sector_t*) obj;
+            Sector             *sec = (Sector*) obj;
             obj = sec->SP_plane(PLN_FLOOR);
             args->type = DMU_PLANE;
         }
         else if(args->modifiers & DMU_CEILING_OF_SECTOR)
         {
-            sector_t           *sec = (sector_t*) obj;
+            Sector             *sec = (Sector*) obj;
             obj = sec->SP_plane(PLN_CEILING);
             args->type = DMU_PLANE;
         }
@@ -972,16 +1014,16 @@ static int setProperty(void* obj, void* context)
 
     if(args->type == DMU_LINEDEF)
     {
-        updateLinedef = (linedef_t*) obj;
+        updateLinedef = (LineDef*) obj;
 
         if(args->modifiers & DMU_SIDEDEF0_OF_LINE)
         {
-            obj = ((linedef_t*) obj)->L_frontside;
+            obj = ((LineDef*) obj)->L_frontside;
             args->type = DMU_SIDEDEF;
         }
         else if(args->modifiers & DMU_SIDEDEF1_OF_LINE)
         {
-            linedef_t          *li = ((linedef_t*) obj);
+            LineDef* li = ((LineDef*) obj);
             if(!li->L_backside)
                 Con_Error("DMU_setProperty: Linedef %i has no back side.\n",
                           P_ToIndex(li));
@@ -993,28 +1035,28 @@ static int setProperty(void* obj, void* context)
 
     if(args->type == DMU_SIDEDEF)
     {
-        updateSidedef = (sidedef_t*) obj;
+        updateSidedef = (SideDef*) obj;
 
         if(args->modifiers & DMU_TOP_OF_SIDEDEF)
         {
-            obj = &((sidedef_t*) obj)->SW_topsurface;
+            obj = &((SideDef*) obj)->SW_topsurface;
             args->type = DMU_SURFACE;
         }
         else if(args->modifiers & DMU_MIDDLE_OF_SIDEDEF)
         {
-            obj = &((sidedef_t*) obj)->SW_middlesurface;
+            obj = &((SideDef*) obj)->SW_middlesurface;
             args->type = DMU_SURFACE;
         }
         else if(args->modifiers & DMU_BOTTOM_OF_SIDEDEF)
         {
-            obj = &((sidedef_t*) obj)->SW_bottomsurface;
+            obj = &((SideDef*) obj)->SW_bottomsurface;
             args->type = DMU_SURFACE;
         }
     }
 
     if(args->type == DMU_PLANE)
     {
-        updatePlane = (plane_t*) obj;
+        updatePlane = (Plane*) obj;
 
         switch(args->prop)
         {
@@ -1041,7 +1083,7 @@ static int setProperty(void* obj, void* context)
         case DMU_ALPHA:
         case DMU_BLENDMODE:
         case DMU_FLAGS:
-            obj = &((plane_t*) obj)->surface;
+            obj = &((Plane*) obj)->surface;
             args->type = DMU_SURFACE;
             break;
 
@@ -1052,13 +1094,13 @@ static int setProperty(void* obj, void* context)
 
     if(args->type == DMU_SURFACE)
     {
-        updateSurface = (surface_t*) obj;
+        updateSurface = (Surface*) obj;
 /*
         // Resolve implicit references to properties of the surface's material.
         switch(args->prop)
         {
         case UNKNOWN1:
-            obj = &((surface_t*) obj)->material;
+            obj = &((Surface*) obj)->material;
             args->type = DMU_MATERIAL;
             break;
 
@@ -1081,8 +1123,8 @@ static int setProperty(void* obj, void* context)
         Vertex_SetProperty(obj, args);
         break;
 
-    case DMU_SEG:
-        Seg_SetProperty(obj, args);
+    case DMU_HEDGE:
+        HEdge_SetProperty(obj, args);
         break;
 
     case DMU_LINEDEF:
@@ -1093,8 +1135,8 @@ static int setProperty(void* obj, void* context)
         SideDef_SetProperty(obj, args);
         break;
 
-    case DMU_SUBSECTOR:
-        Subsector_SetProperty(obj, args);
+    case DMU_BSPLEAF:
+        BspLeaf_SetProperty(obj, args);
         break;
 
     case DMU_SECTOR:
@@ -1105,8 +1147,8 @@ static int setProperty(void* obj, void* context)
         DMU_SetMaterialProperty(obj, args);
         break;
 
-    case DMU_NODE:
-        Con_Error("SetProperty: Property %s is not writable in DMU_NODE.\n",
+    case DMU_BSPNODE:
+        Con_Error("SetProperty: Property %s is not writable in DMU_BSPNODE.\n",
                   DMU_Str(args->prop));
         break;
 
@@ -1165,9 +1207,9 @@ static int setProperty(void* obj, void* context)
         R_UpdateSector(updateSector2, false);
     }
 
-/*  if(updateSubSector)
+/*  if(updateBspLeaf)
     {
-        R_UpdateSubSector(updateSubSector, false);
+        R_UpdateBspLeaf(updateBspLeaf, false);
     } */
 
     return true; // Continue iteration.
@@ -1224,6 +1266,9 @@ void DMU_GetValue(valuetype_t valueType, const void* src, setargs_t* args,
         case DDVT_FLOAT:
             args->floatValues[index] = FIX2FLT(*s);
             break;
+        case DDVT_DOUBLE:
+            args->doubleValues[index] = FIX2FLT(*s);
+            break;
         default:
             Con_Error("GetValue: DDVT_FIXED incompatible with value type %s.\n",
                       value_Str(args->valueType));
@@ -1247,8 +1292,37 @@ void DMU_GetValue(valuetype_t valueType, const void* src, setargs_t* args,
         case DDVT_FLOAT:
             args->floatValues[index] = *s;
             break;
+        case DDVT_DOUBLE:
+            args->doubleValues[index] = (double)*s;
+            break;
         default:
             Con_Error("GetValue: DDVT_FLOAT incompatible with value type %s.\n",
+                      value_Str(args->valueType));
+        }
+    }
+    else if(valueType == DDVT_DOUBLE)
+    {
+        const double* s = src;
+
+        switch(args->valueType)
+        {
+        case DDVT_BYTE:
+            args->byteValues[index] = (byte)*s;
+            break;
+        case DDVT_INT:
+            args->intValues[index] = (int) *s;
+            break;
+        case DDVT_FIXED:
+            args->fixedValues[index] = FLT2FIX(*s);
+            break;
+        case DDVT_FLOAT:
+            args->floatValues[index] = (float)*s;
+            break;
+        case DDVT_DOUBLE:
+            args->doubleValues[index] = *s;
+            break;
+        default:
+            Con_Error("GetValue: DDVT_DOUBLE incompatible with value type %s.\n",
                       value_Str(args->valueType));
         }
     }
@@ -1284,6 +1358,9 @@ void DMU_GetValue(valuetype_t valueType, const void* src, setargs_t* args,
         case DDVT_FLOAT:
             args->floatValues[index] = *s;
             break;
+        case DDVT_DOUBLE:
+            args->doubleValues[index] = *s;
+            break;
         default:
             Con_Error("GetValue: DDVT_BYTE incompatible with value type %s.\n",
                       value_Str(args->valueType));
@@ -1306,6 +1383,9 @@ void DMU_GetValue(valuetype_t valueType, const void* src, setargs_t* args,
             break;
         case DDVT_FLOAT:
             args->floatValues[index] = *s;
+            break;
+        case DDVT_DOUBLE:
+            args->doubleValues[index] = *s;
             break;
         case DDVT_FIXED:
             args->fixedValues[index] = (*s << FRACBITS);
@@ -1332,6 +1412,9 @@ void DMU_GetValue(valuetype_t valueType, const void* src, setargs_t* args,
             break;
         case DDVT_FLOAT:
             args->floatValues[index] = *s;
+            break;
+        case DDVT_DOUBLE:
+            args->doubleValues[index] = *s;
             break;
         case DDVT_FIXED:
             args->fixedValues[index] = (*s << FRACBITS);
@@ -1399,16 +1482,16 @@ static int getProperty(void* obj, void* context)
     setargs_t*          args = (setargs_t*) context;
 
     // Dereference where necessary. Note the order, these cascade.
-    if(args->type == DMU_SUBSECTOR)
+    if(args->type == DMU_BSPLEAF)
     {
         if(args->modifiers & DMU_FLOOR_OF_SECTOR)
         {
-            obj = ((subsector_t*) obj)->sector;
+            obj = ((BspLeaf*) obj)->sector;
             args->type = DMU_SECTOR;
         }
         else if(args->modifiers & DMU_CEILING_OF_SECTOR)
         {
-            obj = ((subsector_t*) obj)->sector;
+            obj = ((BspLeaf*) obj)->sector;
             args->type = DMU_SECTOR;
         }
     }
@@ -1417,13 +1500,13 @@ static int getProperty(void* obj, void* context)
     {
         if(args->modifiers & DMU_FLOOR_OF_SECTOR)
         {
-            sector_t           *sec = (sector_t*) obj;
+            Sector             *sec = (Sector*) obj;
             obj = sec->SP_plane(PLN_FLOOR);
             args->type = DMU_PLANE;
         }
         else if(args->modifiers & DMU_CEILING_OF_SECTOR)
         {
-            sector_t           *sec = (sector_t*) obj;
+            Sector             *sec = (Sector*) obj;
             obj = sec->SP_plane(PLN_CEILING);
             args->type = DMU_PLANE;
         }
@@ -1433,12 +1516,12 @@ static int getProperty(void* obj, void* context)
     {
         if(args->modifiers & DMU_SIDEDEF0_OF_LINE)
         {
-            obj = ((linedef_t*) obj)->L_frontside;
+            obj = ((LineDef*) obj)->L_frontside;
             args->type = DMU_SIDEDEF;
         }
         else if(args->modifiers & DMU_SIDEDEF1_OF_LINE)
         {
-            linedef_t          *li = ((linedef_t*) obj);
+            LineDef* li = ((LineDef*) obj);
             if(!li->L_backside)
                 Con_Error("DMU_setProperty: Linedef %i has no back side.\n",
                           P_ToIndex(li));
@@ -1452,17 +1535,17 @@ static int getProperty(void* obj, void* context)
     {
         if(args->modifiers & DMU_TOP_OF_SIDEDEF)
         {
-            obj = &((sidedef_t*) obj)->SW_topsurface;
+            obj = &((SideDef*) obj)->SW_topsurface;
             args->type = DMU_SURFACE;
         }
         else if(args->modifiers & DMU_MIDDLE_OF_SIDEDEF)
         {
-            obj = &((sidedef_t*) obj)->SW_middlesurface;
+            obj = &((SideDef*) obj)->SW_middlesurface;
             args->type = DMU_SURFACE;
         }
         else if(args->modifiers & DMU_BOTTOM_OF_SIDEDEF)
         {
-            obj = &((sidedef_t*) obj)->SW_bottomsurface;
+            obj = &((SideDef*) obj)->SW_bottomsurface;
             args->type = DMU_SURFACE;
         }
     }
@@ -1494,7 +1577,8 @@ static int getProperty(void* obj, void* context)
         case DMU_ALPHA:
         case DMU_BLENDMODE:
         case DMU_FLAGS:
-            obj = &((plane_t*) obj)->surface;
+        case DMU_BASE:
+            obj = &((Plane*) obj)->surface;
             args->type = DMU_SURFACE;
             break;
 
@@ -1510,7 +1594,7 @@ static int getProperty(void* obj, void* context)
         switch(args->prop)
         {
         case UNKNOWN1:
-            obj = &((surface_t*) obj)->material;
+            obj = &((Surface*) obj)->material;
             args->type = DMU_MATERIAL;
             break;
 
@@ -1526,8 +1610,8 @@ static int getProperty(void* obj, void* context)
         Vertex_GetProperty(obj, args);
         break;
 
-    case DMU_SEG:
-        Seg_GetProperty(obj, args);
+    case DMU_HEDGE:
+        HEdge_GetProperty(obj, args);
         break;
 
     case DMU_LINEDEF:
@@ -1550,8 +1634,8 @@ static int getProperty(void* obj, void* context)
         SideDef_GetProperty(obj, args);
         break;
 
-    case DMU_SUBSECTOR:
-        Subsector_GetProperty(obj, args);
+    case DMU_BSPLEAF:
+        BspLeaf_GetProperty(obj, args);
         break;
 
     case DMU_MATERIAL:
@@ -1628,6 +1712,16 @@ void P_SetFloat(int type, uint index, uint prop, float param)
     P_Callback(type, index, &args, setProperty);
 }
 
+void P_SetDouble(int type, uint index, uint prop, double param)
+{
+    setargs_t           args;
+
+    initArgs(&args, type, prop);
+    args.valueType = DDVT_DOUBLE;
+    args.doubleValues = &param;
+    P_Callback(type, index, &args, setProperty);
+}
+
 void P_SetPtr(int type, uint index, uint prop, void* param)
 {
     setargs_t           args;
@@ -1695,6 +1789,16 @@ void P_SetFloatv(int type, uint index, uint prop, float* params)
     initArgs(&args, type, prop);
     args.valueType = DDVT_FLOAT;
     args.floatValues = params;
+    P_Callback(type, index, &args, setProperty);
+}
+
+void P_SetDoublev(int type, uint index, uint prop, double* params)
+{
+    setargs_t           args;
+
+    initArgs(&args, type, prop);
+    args.valueType = DDVT_DOUBLE;
+    args.doubleValues = params;
     P_Callback(type, index, &args, setProperty);
 }
 
@@ -1772,6 +1876,16 @@ void P_SetFloatp(void* ptr, uint prop, float param)
     P_Callbackp(args.type, ptr, &args, setProperty);
 }
 
+void P_SetDoublep(void* ptr, uint prop, double param)
+{
+    setargs_t           args;
+
+    initArgs(&args, DMU_GetType(ptr), prop);
+    args.valueType = DDVT_DOUBLE;
+    args.doubleValues = &param;
+    P_Callbackp(args.type, ptr, &args, setProperty);
+}
+
 void P_SetPtrp(void* ptr, uint prop, void* param)
 {
     setargs_t           args;
@@ -1839,6 +1953,16 @@ void P_SetFloatpv(void* ptr, uint prop, float* params)
     initArgs(&args, DMU_GetType(ptr), prop);
     args.valueType = DDVT_FLOAT;
     args.floatValues = params;
+    P_Callbackp(args.type, ptr, &args, setProperty);
+}
+
+void P_SetDoublepv(void* ptr, uint prop, double* params)
+{
+    setargs_t           args;
+
+    initArgs(&args, DMU_GetType(ptr), prop);
+    args.valueType = DDVT_DOUBLE;
+    args.doubleValues = params;
     P_Callbackp(args.type, ptr, &args, setProperty);
 }
 
@@ -1926,6 +2050,18 @@ float P_GetFloat(int type, uint index, uint prop)
     return returnValue;
 }
 
+double P_GetDouble(int type, uint index, uint prop)
+{
+    setargs_t           args;
+    double              returnValue = 0;
+
+    initArgs(&args, type, prop);
+    args.valueType = DDVT_DOUBLE;
+    args.doubleValues = &returnValue;
+    P_Callback(type, index, &args, getProperty);
+    return returnValue;
+}
+
 void* P_GetPtr(int type, uint index, uint prop)
 {
     setargs_t           args;
@@ -1995,6 +2131,16 @@ void P_GetFloatv(int type, uint index, uint prop, float* params)
     initArgs(&args, type, prop);
     args.valueType = DDVT_FLOAT;
     args.floatValues = params;
+    P_Callback(type, index, &args, getProperty);
+}
+
+void P_GetDoublev(int type, uint index, uint prop, double* params)
+{
+    setargs_t           args;
+
+    initArgs(&args, type, prop);
+    args.valueType = DDVT_DOUBLE;
+    args.doubleValues = params;
     P_Callback(type, index, &args, getProperty);
 }
 
@@ -2106,6 +2252,22 @@ float P_GetFloatp(void* ptr, uint prop)
     return returnValue;
 }
 
+double P_GetDoublep(void* ptr, uint prop)
+{
+    setargs_t           args;
+    double              returnValue = 0;
+
+    if(ptr)
+    {
+        initArgs(&args, DMU_GetType(ptr), prop);
+        args.valueType = DDVT_DOUBLE;
+        args.doubleValues = &returnValue;
+        P_Callbackp(args.type, ptr, &args, getProperty);
+    }
+
+    return returnValue;
+}
+
 void* P_GetPtrp(void* ptr, uint prop)
 {
     setargs_t           args;
@@ -2196,6 +2358,19 @@ void P_GetFloatpv(void* ptr, uint prop, float* params)
         initArgs(&args, DMU_GetType(ptr), prop);
         args.valueType = DDVT_FLOAT;
         args.floatValues = params;
+        P_Callbackp(args.type, ptr, &args, getProperty);
+    }
+}
+
+void P_GetDoublepv(void* ptr, uint prop, double* params)
+{
+    setargs_t           args;
+
+    if(ptr)
+    {
+        initArgs(&args, DMU_GetType(ptr), prop);
+        args.valueType = DDVT_DOUBLE;
+        args.doubleValues = params;
         P_Callbackp(args.type, ptr, &args, getProperty);
     }
 }

@@ -26,6 +26,10 @@
 
 #include "r_data.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct texturevariant_s;
 struct texturevariantspecification_s;
 struct materialvariant_s;
@@ -60,7 +64,7 @@ typedef struct materialsnapshot_s {
     float glowing;
 
     /// Minimum sector light color for shiny texturing.
-    vec3_t shinyMinColor;
+    vec3f_t shinyMinColor;
 
     /// Textures used on each texture unit.
     struct texturevariant_s* textures[NUM_MATERIAL_TEXTURE_UNITS];
@@ -162,5 +166,9 @@ void MaterialVariant_SetTranslation(materialvariant_t* mat,
  * @param inter  Translation point.
  */
 void MaterialVariant_SetTranslationPoint(materialvariant_t* mat, float inter);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_MATERIALVARIANT_H */

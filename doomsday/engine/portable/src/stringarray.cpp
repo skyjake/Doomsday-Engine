@@ -29,14 +29,10 @@ struct stringarray_s {
     typedef std::vector<de::Str*> Strings;
     Strings array;
 
-#ifdef _DEBUG
-    inline void assertValidIndex(int i) const {
+    inline void assertValidIndex(int DENG_DEBUG_ONLY(i)) const {
         assert(i >= 0);
         assert(i < int(array.size()));
     }
-#else
-    inline void assertValidIndex(int) const {}
-#endif
 
     inline void assertValidRange(int from, int count) const {
         assertValidIndex(from);

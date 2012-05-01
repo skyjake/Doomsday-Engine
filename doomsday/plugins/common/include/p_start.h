@@ -37,7 +37,7 @@
 
 /**
  * Map Spot Flags (MSF):
- * \todo Commonize these flags and introduce translations where needed.
+ * @todo Commonize these flags and introduce translations where needed.
  */
 #define MSF_UNUSED1         0x00000001 // Appears in easy skill modes.
 #define MSF_UNUSED2         0x00000002 // Appears in medium skill modes.
@@ -103,29 +103,29 @@
 
 typedef struct {
 #if __JHEXEN__
-    short           tid;
+    short tid;
 #endif
-    float           pos[3];
-    angle_t         angle;
-    int             doomEdNum;
-    int             skillModes;
-    int             flags;
+    coord_t origin[3];
+    angle_t angle;
+    int doomEdNum;
+    int skillModes;
+    int flags;
 #if __JHEXEN__
-    byte            special;
-    byte            arg1;
-    byte            arg2;
-    byte            arg3;
-    byte            arg4;
-    byte            arg5;
+    byte special;
+    byte arg1;
+    byte arg2;
+    byte arg3;
+    byte arg4;
+    byte arg5;
 #endif
 } mapspot_t;
 
 typedef uint mapspotid_t;
 
 typedef struct {
-    int             plrNum;
-    uint            entryPoint;
-    mapspotid_t     spot;
+    int plrNum;
+    uint entryPoint;
+    mapspotid_t spot;
 } playerstart_t;
 
 extern uint numMapSpots;
@@ -151,36 +151,59 @@ void P_Update(void);
 
 void P_Shutdown(void);
 
-mobjtype_t      P_DoomEdNumToMobjType(int doomEdNum);
-void            P_SpawnPlayers(void);
+/**
+ * Reset all requested player class changes.
+ */
+void P_ResetPlayerRespawnClasses(void);
 
+/**
+ * Sets a new player class for a player. It will be applied when the player
+ * respawns.
+ */
+void P_SetPlayerRespawnClass(int plrNum, playerclass_t pc);
+
+/**
+ * Returns the class of a player when respawning.
+ *
+ * @param plrNum  Player number.
+ * @param clear   @c true when the change request should be cleared.
+ *
+ * @return  Current/updated class for the player.
+ */
+playerclass_t P_ClassForPlayerWhenRespawning(int plrNum, boolean clear);
+
+mobjtype_t P_DoomEdNumToMobjType(int doomEdNum);
+void P_SpawnPlayers(void);
 #if __JHERETIC__ || __JHEXEN__
 void P_MoveThingsOutOfWalls(void);
 #endif
 
 #if __JHERETIC__
-void            P_TurnGizmosAwayFromDoors(void);
+void P_TurnGizmosAwayFromDoors(void);
 #endif
 
 #if __JHERETIC__
-void            P_AddMaceSpot(mapspotid_t id);
-void            P_AddBossSpot(mapspotid_t id);
+void P_AddMaceSpot(mapspotid_t id);
+void P_AddBossSpot(mapspotid_t id);
 #endif
 
-void            P_CreatePlayerStart(int defaultPlrNum, uint entryPoint,
-                                    boolean deathmatch, mapspotid_t spot);
-void            P_DestroyPlayerStarts(void);
-uint            P_GetNumPlayerStarts(boolean deathmatch);
+void P_CreatePlayerStart(int defaultPlrNum, uint entryPoint, boolean deathmatch, mapspotid_t spot);
+void P_DestroyPlayerStarts(void);
+uint P_GetNumPlayerStarts(boolean deathmatch);
 
-const playerstart_t* P_GetPlayerStart(uint entryPoint, int pnum,
-                                      boolean deathmatch);
-void            P_DealPlayerStarts(uint entryPoint);
+const playerstart_t* P_GetPlayerStart(uint entryPoint, int pnum, boolean deathmatch);
+void P_DealPlayerStarts(uint entryPoint);
 
-void            P_SpawnPlayer(int plrNum, playerclass_t pClass, float x,
-                              float y, float z, angle_t angle,
-                              int spawnFlags, boolean makeCamera, boolean pickupItems);
-void            G_DeathMatchSpawnPlayer(int playernum);
-void            P_RebornPlayer(int plrNum);
+void P_SpawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y, coord_t z,
+    angle_t angle, int spawnFlags, boolean makeCamera, boolean pickupItems);
 
-boolean         P_CheckSpot(float x, float y);
-#endif /* LIBCOMMON_PLAYSTART_H */
+void G_DeathMatchSpawnPlayer(int playernum);
+void P_RebornPlayer(int plrNum);
+
+/**
+ * @return  @c false if the player cannot be respawned at the
+ *          given location because something is occupying it.
+ */
+boolean P_CheckSpot(coord_t x, coord_t y);
+
+#endif /// LIBCOMMON_PLAYSTART_H

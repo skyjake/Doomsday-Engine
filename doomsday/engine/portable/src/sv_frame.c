@@ -98,7 +98,7 @@ void Sv_TransmitFrame(void)
     int                 i, cTime, numInGame, pCount;
 
     // Obviously clients don't transmit anything.
-    if(!allowFrames || isClient)
+    if(!allowFrames || isClient || Sys_IsShuttingDown())
     {
         return;
     }
@@ -257,11 +257,11 @@ void Sv_WriteMobjDelta(const void* deltaPtr)
 
     /*
     // Floor/ceiling z?
-    if(df & MDF_POS_Z)
+    if(df & MDF_ORIGIN_Z)
     {
         if(d->pos[VZ] == DDMINFLOAT || d->pos[VZ] == DDMAXFLOAT)
         {
-            df &= ~MDF_POS_Z;
+            df &= ~MDF_ORIGIN_Z;
             df |= MDF_MORE_FLAGS;
             moreFlags |= (d->pos[VZ] == DDMINFLOAT ? MDFE_Z_FLOOR : MDFE_Z_CEILING);
         }
@@ -290,24 +290,24 @@ void Sv_WriteMobjDelta(const void* deltaPtr)
     }
 
     // Coordinates with three bytes.
-    if(df & MDF_POS_X)
+    if(df & MDF_ORIGIN_X)
     {
-        fixed_t vx = FLT2FIX(d->pos[VX]);
+        fixed_t vx = FLT2FIX(d->origin[VX]);
 
         Writer_WriteInt16(msgWriter, vx >> FRACBITS);
         Writer_WriteByte(msgWriter, vx >> 8);
     }
-    if(df & MDF_POS_Y)
+    if(df & MDF_ORIGIN_Y)
     {
-        fixed_t vy = FLT2FIX(d->pos[VY]);
+        fixed_t vy = FLT2FIX(d->origin[VY]);
 
         Writer_WriteInt16(msgWriter, vy >> FRACBITS);
         Writer_WriteByte(msgWriter, vy >> 8);
     }
 
-    if(df & MDF_POS_Z)
+    if(df & MDF_ORIGIN_Z)
     {
-        fixed_t vz = FLT2FIX(d->pos[VZ]);
+        fixed_t vz = FLT2FIX(d->origin[VZ]);
         Writer_WriteInt16(msgWriter, vz >> FRACBITS);
         Writer_WriteByte(msgWriter, vz >> 8);
 
@@ -641,9 +641,9 @@ void Sv_WritePolyDelta(const void* deltaPtr)
     Writer_WriteByte(msgWriter, df & 0xff);
 
     if(df & PODF_DEST_X)
-        Writer_WriteFloat(msgWriter, d->dest.pos[VX]);
+        Writer_WriteFloat(msgWriter, d->dest[VX]);
     if(df & PODF_DEST_Y)
-        Writer_WriteFloat(msgWriter, d->dest.pos[VY]);
+        Writer_WriteFloat(msgWriter, d->dest[VY]);
     if(df & PODF_SPEED)
         Writer_WriteFloat(msgWriter, d->speed);
     if(df & PODF_DEST_ANGLE)
@@ -834,8 +834,8 @@ size_t Sv_GetMaxFrameSize(int playerNumber)
     size_t              size = MINIMUM_FRAME_SIZE + FRAME_SIZE_FACTOR * clients[playerNumber].bandwidthRating;
 
     // What about the communications medium?
-    if(size > maxDatagramSize)
-        size = maxDatagramSize;
+    if(size > PROTOCOL_MAX_DATAGRAM_SIZE)
+        size = PROTOCOL_MAX_DATAGRAM_SIZE;
 
     return size;
 }

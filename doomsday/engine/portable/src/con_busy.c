@@ -1,29 +1,25 @@
-/**\file con_busy.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file con_busy.c
+ * Console Busy Mode @ingroup console
  *
- *\author Copyright © 2007-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ * @authors Copyright © 2007-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
 
@@ -43,35 +39,20 @@
 #include "cbuffer.h"
 #include "font.h"
 
-// MACROS ------------------------------------------------------------------
-
+#if 0
 #define SCREENSHOT_TEXTURE_SIZE 512
+#endif
 
 #define DOOMWIPESINE_NUMSAMPLES 320
 
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-static void Con_BusyLoop(void);
-static void Con_BusyDrawer(void);
+static void BusyTask_Loop(void);
+static void BusyTask_Drawer(void);
 static void Con_BusyPrepareResources(void);
-static void Con_BusyDeleteTextures(void);
-
+static void deleteBusyTextures(void);
 static void seedDoomWipeSine(void);
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 int rTransition = (int) TS_CROSSFADE;
 int rTransitionTics = 28;
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean busyInited;
 static BusyTask* busyTask; // Current task.
@@ -80,7 +61,8 @@ static timespan_t busyTime;
 static timespan_t accumulatedBusyTime; // Never cleared.
 static volatile boolean busyDone;
 static volatile boolean busyDoneCopy;
-static volatile const char* busyError = NULL;
+static boolean busyTaskEndedWithError;
+static char busyError[256];
 static fontid_t busyFont = 0;
 static int busyFontHgt; // Height of the font.
 static mutex_t busy_Mutex; // To prevent Data races in the busy thread.
@@ -96,33 +78,26 @@ static float transitionPosition;
 static float doomWipeSine[DOOMWIPESINE_NUMSAMPLES];
 static float doomWipeSamples[SCREENWIDTH+1];
 
-// CODE --------------------------------------------------------------------
-
 static boolean animatedTransitionActive(int busyMode)
 {
     return (!isDedicated && !netGame && !(busyMode & BUSYF_STARTUP) &&
             rTransitionTics > 0 && (busyMode & BUSYF_TRANSITION));
 }
 
-int Con_Busy2(BusyTask* task)
+/**
+ * Sets up module state for running a busy task. After this the busy mode event
+ * loop is started. The loop will run until the worker thread exits.
+ *
+ * @todo Refactor: Should be private and static (currently needed in busytask.cpp)
+ */
+void BusyTask_Begin(BusyTask* task)
 {
-    boolean willAnimateTransition;
-    boolean wasIgnoringInput;
-    int result;
-
-    if(!task) return 0;
-
-    if(novideo)
-    {
-        // Don't bother to go into busy mode.
-        return task->retVal = task->worker(task->workerData);
-    }
+    if(!task) return;
 
     if(!busyInited)
     {
         busy_Mutex = Sys_CreateMutex("BUSY_MUTEX");
     }
-
     if(busyInited)
     {
         Con_Error("Con_Busy: Already busy.\n");
@@ -130,17 +105,18 @@ int Con_Busy2(BusyTask* task)
 
     // Discard input events so that any and all accumulated input
     // events are ignored.
-    wasIgnoringInput = DD_IgnoreInput(true);
+    task->_wasIgnoringInput = DD_IgnoreInput(true);
 
     Sys_Lock(busy_Mutex);
     busyDone = false;
     busyTask = task;
-    willAnimateTransition = animatedTransitionActive(busyTask->mode);
+    task->_willAnimateTransition = animatedTransitionActive(busyTask->mode);
     Sys_Unlock(busy_Mutex);
 
     // Load any textures needed in this mode.
     Con_BusyPrepareResources();
 
+    busyTaskEndedWithError = false;
     busyInited = true;
 
     // Start the busy worker thread, which will proces things in the
@@ -148,7 +124,7 @@ int Con_Busy2(BusyTask* task)
     busyThread = Sys_StartThread(busyTask->worker, busyTask->workerData);
 
     // Are we doing a transition effect?
-    if(willAnimateTransition)
+    if(task->_willAnimateTransition)
     {
         transitionStyle = rTransition;
         if(transitionStyle == TS_DOOM || transitionStyle == TS_DOOMSMOOTH)
@@ -156,15 +132,56 @@ int Con_Busy2(BusyTask* task)
         transitionInProgress = true;
     }
 
-    // Wait for the busy thread to stop.
-    Con_BusyLoop();
+    // Switch the engine loop and window to the busy mode.
+    LegacyCore_SetLoopFunc(de2LegacyCore, BusyTask_Loop);
 
-    // Free resources.
-    Con_BusyDeleteTextures();
+    Window_SetDrawFunc(Window_Main(), BusyTask_Drawer);
 
-    if(busyError)
+    task->_startTime = Sys_GetRealSeconds();
+}
+
+/**
+ * Exits the busy mode event loop. Called in the main thread, does not return
+ * until the worker thread is stopped.
+ */
+static void BusyTask_Exit(void)
+{
+    int result;
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
+    busyDone = true;
+
+    // Make sure the worker finishes before we continue.
+    result = Sys_WaitThread(busyThread, busyTaskEndedWithError? 100 : 5000);
+    busyThread = NULL;
+
+    BusyTask_StopEventLoopWithValue(result);
+}
+
+/**
+ * Called after the busy mode worker thread and the event (sub-)loop has been stopped.
+ *
+ * @todo Refactor: Should be private and static (currently needed in busytask.cpp)
+ */
+void BusyTask_End(BusyTask* task)
+{
+    if(verbose)
     {
-        Con_AbnormalShutdown((const char*) busyError);
+        Con_Message("Con_Busy: Was busy for %.2lf seconds.\n", busyTime);
+    }
+
+#if 0
+    // Free resources.
+    deleteBusyTextures();
+#endif
+
+    // The window drawer will be restored later to the appropriate function.
+    Window_SetDrawFunc(Window_Main(), 0);
+
+    if(busyTaskEndedWithError)
+    {
+        Con_AbnormalShutdown(busyError);
     }
 
     if(transitionInProgress)
@@ -173,106 +190,23 @@ int Con_Busy2(BusyTask* task)
         transitionPosition = 0;
     }
 
-    // Make sure the worker finishes before we continue.
-    result = Sys_WaitThread(busyThread);
-    busyThread = NULL;
-    Sys_DestroyMutex(busy_Mutex);
-    busyInited = false;
-
-    task->retVal = result;
-
     // Make sure that any remaining deferred content gets uploaded.
-    if(!(isDedicated || (task->mode & BUSYF_NO_UPLOADS)))
+    if(!(task->mode & BUSYF_NO_UPLOADS))
     {
         GL_ProcessDeferredTasks(0);
     }
 
-    DD_IgnoreInput(wasIgnoringInput);
+    Sys_DestroyMutex(busy_Mutex);
+    busyInited = false;
+
+    DD_IgnoreInput(task->_wasIgnoringInput);
     DD_ResetTimer();
-
-    return result;
-}
-
-int Con_Busy(int mode, const char* _taskName, busyworkerfunc_t worker, void* workerData)
-{
-    char* taskName = NULL;
-    BusyTask task;
-
-    // Take a copy of the task name.
-    if(_taskName && _taskName[0])
-    {
-        size_t len = strlen(_taskName);
-        taskName = calloc(1, len + 1);
-        dd_snprintf(taskName, len+1, "%s", _taskName);
-    }
-
-    // Initialize the task.
-    memset(&task, 0, sizeof(task));
-    task.worker = worker;
-    task.workerData = workerData;
-    task.name = taskName;
-    task.mode = mode;
-
-    // Lets get busy!
-    Con_Busy2(&task);
-
-    if(taskName)
-    {
-        free(taskName);
-        taskName = NULL;
-    }
-
-    return task.retVal;
-}
-
-void Con_BusyList(BusyTask* tasks, int numTasks)
-{
-    const char* currentTaskName = NULL;
-    BusyTask* task;
-    int i, mode;
-
-    if(!tasks) return; // Hmm, no work?
-
-    // Process tasks.
-    task = tasks;
-    for(i = 0; i < numTasks; ++i, task++)
-    {
-        // If no name is specified for this task, continue using the name of the
-        // the previous task.
-        if(task->name)
-        {
-            if(task->name[0])
-                currentTaskName = task->name;
-            else // Clear the name.
-                currentTaskName = NULL;
-        }
-
-        if(!task->worker)
-        {
-            // Null tasks are not processed; so signal success.
-            task->retVal = 0;
-            continue;
-        }
-
-        // Process the work.
-
-        // Is the worker updating its progress?
-        if(task->maxProgress > 0)
-            Con_InitProgress2(task->maxProgress, task->progressStart, task->progressEnd);
-
-        /// @kludge Force BUSYF_STARTUP here so that the animation of one task is
-        ///         not drawn on top of the last frame of the previous.
-        mode = task->mode | BUSYF_STARTUP;
-        // kludge end
-
-        // Busy mode invokes the worker on our behalf in a new thread.
-        task->retVal = Con_Busy(mode, currentTaskName, task->worker, task->workerData);
-    }
 }
 
 void Con_BusyWorkerError(const char* message)
 {
-    busyError = message;
+    busyTaskEndedWithError = true;
+    strncpy(busyError, message, sizeof(busyError) - 1);
     Con_BusyWorkerEnd();
 }
 
@@ -312,26 +246,6 @@ static void Con_BusyPrepareResources(void)
         Con_AcquireScreenshotTexture();
     }
 
-    // Need to load the progress indicator?
-    if(busyTask->mode & (BUSYF_ACTIVITY | BUSYF_PROGRESS_BAR))
-    {
-        image_t image;
-
-        // These must be real files in the base dir because virtual files haven't
-        // been loaded yet when engine startup is done.
-        if(GL_LoadImage(&image, "}data/graphics/loading1.png"))
-        {
-            texLoading[0] = GL_NewTextureWithParams(DGL_RGBA, image.size.width, image.size.height, image.pixels, TXCF_NEVER_DEFER);
-            GL_DestroyImage(&image);
-        }
-
-        if(GL_LoadImage(&image, "}data/graphics/loading2.png"))
-        {
-            texLoading[1] = GL_NewTextureWithParams(DGL_RGBA, image.size.width, image.size.height, image.pixels, TXCF_NEVER_DEFER);
-            GL_DestroyImage(&image);
-        }
-    }
-
     // Need to load any fonts for log messages etc?
     if((busyTask->mode & BUSYF_CONSOLE_OUTPUT) || busyTask->name)
     {
@@ -344,7 +258,7 @@ static void Con_BusyPrepareResources(void)
             { FN_SYSTEM_NAME":normal12", "}data/fonts/normal12.dfn" },
             { FN_SYSTEM_NAME":normal18", "}data/fonts/normal18.dfn" }
         };
-        int fontIdx = !(theWindow->geometry.size.width > 640)? 0 : 1;
+        int fontIdx = !(Window_Width(theWindow) > 640)? 0 : 1;
         Uri* uri = Uri_NewWithPath2(fonts[fontIdx].name, RC_NULL);
         font_t* font = R_CreateFontFromFile(uri, fonts[fontIdx].path);
         Uri_Delete(uri);
@@ -358,9 +272,9 @@ static void Con_BusyPrepareResources(void)
     }
 }
 
-static void Con_BusyDeleteTextures(void)
+static void deleteBusyTextures(void)
 {
-    if(isDedicated)
+    if(novideo)
         return;
 
     glDeleteTextures(2, (const GLuint*) texLoading);
@@ -378,33 +292,39 @@ static void Con_BusyDeleteTextures(void)
  */
 void Con_AcquireScreenshotTexture(void)
 {
+#if 0
     int oldMaxTexSize = GL_state.maxTexSize;
     uint8_t* frame;
 #ifdef _DEBUG
     timespan_t startTime;
 #endif
+#endif
+    //timespan_t startTime = Sys_GetRealSeconds();
 
     if(texScreenshot)
     {
         Con_ReleaseScreenshotTexture();
     }
+    texScreenshot = Window_GrabAsTexture(Window_Main(), true /*halfsized*/);
 
+    //Con_Message("Acquired screenshot texture %i in %f seconds.", texScreenshot, Sys_GetRealSeconds() - startTime));
+
+#if 0
 #ifdef _DEBUG
     startTime = Sys_GetRealSeconds();
 #endif
-
-    frame = malloc(theWindow->geometry.size.width * theWindow->geometry.size.height * 3);
-    GL_Grab(0, 0, theWindow->geometry.size.width, theWindow->geometry.size.height, DGL_RGB, frame);
+    frame = malloc(Window_Width(theWindow) * Window_Height(theWindow) * 3);
+    GL_Grab(0, 0, Window_Width(theWindow), Window_Height(theWindow), DGL_RGB, frame);
     GL_state.maxTexSize = SCREENSHOT_TEXTURE_SIZE; // A bit of a hack, but don't use too large a texture.
-    texScreenshot = GL_NewTextureWithParams2(DGL_RGB, theWindow->geometry.size.width, theWindow->geometry.size.height,
+    texScreenshot = GL_NewTextureWithParams2(DGL_RGB, Window_Width(theWindow), Window_Height(theWindow),
         frame, TXCF_NEVER_DEFER|TXCF_NO_COMPRESSION|TXCF_UPLOAD_ARG_NOSMARTFILTER, 0, GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/,
         GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
     GL_state.maxTexSize = oldMaxTexSize;
     free(frame);
-
 #ifdef _DEBUG
     printf("Con_AcquireScreenshotTexture: Took %.2f seconds.\n",
            Sys_GetRealSeconds() - startTime);
+#endif
 #endif
 }
 
@@ -414,76 +334,166 @@ void Con_ReleaseScreenshotTexture(void)
     texScreenshot = 0;
 }
 
-/**
- * The busy thread main function. Runs until busyDone set to true.
- */
-static void Con_BusyLoop(void)
+static void loadBusyTextures(void)
 {
-    boolean canDraw = !(isDedicated || novideo);
-    boolean canUpload = (canDraw && !(busyTask->mode & BUSYF_NO_UPLOADS));
-    timespan_t startTime = Sys_GetRealSeconds();
+    image_t image;
+
+    if(novideo) return;
+
+    if(GL_LoadImage(&image, "}data/graphics/loading1.png"))
+    {
+        texLoading[0] = GL_NewTextureWithParams(DGL_RGBA, image.size.width, image.size.height, image.pixels, TXCF_NEVER_DEFER);
+        GL_DestroyImage(&image);
+    }
+
+    if(GL_LoadImage(&image, "}data/graphics/loading2.png"))
+    {
+        texLoading[1] = GL_NewTextureWithParams(DGL_RGBA, image.size.width, image.size.height, image.pixels, TXCF_NEVER_DEFER);
+        GL_DestroyImage(&image);
+    }
+}
+
+static void preBusySetup(void)
+{
+    loadBusyTextures();
+
+    // Save the present loop.
+    LegacyCore_PushLoop(de2LegacyCore);
+
+    // Set up loop for busy mode.
+    LegacyCore_SetLoopRate(de2LegacyCore, 60);
+    LegacyCore_SetLoopFunc(de2LegacyCore, NULL); // don't call main loop's func while busy
+
+    Window_SetDrawFunc(Window_Main(), 0);
+}
+
+static void postBusyCleanup(void)
+{
+    deleteBusyTextures();
+
+    // Restore old loop.
+    LegacyCore_PopLoop(de2LegacyCore);
+
+    // Resume drawing with the game loop drawer.
+    Window_SetDrawFunc(Window_Main(), !Sys_IsShuttingDown()? DD_GameLoopDrawer : 0);
+}
+
+static int doBusy(int mode, const char* taskName, busyworkerfunc_t worker, void* workerData)
+{
+    if(novideo)
+    {
+        // Don't bother to start a thread -- non-GUI mode.
+        return worker(workerData);
+    }
+    return BusyTask_Run(mode, taskName, worker, workerData);
+}
+
+int Con_Busy(int mode, const char* taskName, busyworkerfunc_t worker, void* workerData)
+{
+    int result;
+
+    preBusySetup();
+    result = doBusy(mode, taskName, worker, workerData);
+    postBusyCleanup();
+    return result;
+}
+
+void Con_BusyList(BusyTask* tasks, int numTasks)
+{
+    const char* currentTaskName = NULL;
+    BusyTask* task;
+    int i, mode;
+
+    if(!tasks) return; // Hmm, no work?
+
+    preBusySetup();
+
+    // Process tasks.
+    task = tasks;
+    for(i = 0; i < numTasks; ++i, task++)
+    {
+        // If no name is specified for this task, continue using the name of the
+        // the previous task.
+        if(task->name)
+        {
+            if(task->name[0])
+                currentTaskName = task->name;
+            else // Clear the name.
+                currentTaskName = NULL;
+        }
+
+        if(!task->worker)
+        {
+            // Null tasks are not processed; so signal success.
+            //task->retVal = 0;
+            continue;
+        }
+
+        // Process the work.
+
+        // Is the worker updating its progress?
+        if(task->maxProgress > 0)
+            Con_InitProgress2(task->maxProgress, task->progressStart, task->progressEnd);
+
+        /// @kludge Force BUSYF_STARTUP here so that the animation of one task is
+        ///         not drawn on top of the last frame of the previous.
+        mode = task->mode | BUSYF_STARTUP;
+        // kludge end
+
+        // Busy mode invokes the worker on our behalf in a new thread.
+        doBusy(mode, currentTaskName, task->worker, task->workerData);
+    }
+
+    postBusyCleanup();
+}
+
+/**
+ * The busy loop callback function. Called periodically in the main (UI) thread
+ * while the busy worker is running.
+ */
+static void BusyTask_Loop(void)
+{
+    boolean canUpload = !(busyTask->mode & BUSYF_NO_UPLOADS);
     timespan_t oldTime;
 
-    if(canDraw)
-    {
-        LIBDENG_ASSERT_IN_MAIN_THREAD();
+    // Post and discard all input events.
+    DD_ProcessEvents(0);
+    DD_ProcessSharpEvents(0);
 
-        glMatrixMode(GL_PROJECTION);
-        glPushMatrix();
-        glLoadIdentity();
-        glOrtho(0, theWindow->geometry.size.width, theWindow->geometry.size.height, 0, -1, 1);
+    if(canUpload)
+    {
+        Window_GLActivate(Window_Main());
+
+        // Any deferred content needs to get uploaded.
+        GL_ProcessDeferredTasks(15);
+    }
+
+    // Make sure the audio system gets regularly updated.
+    S_EndFrame();
+
+    // We accumulate time in the busy loop so that the animation of a task
+    // sequence doesn't jump around but remains continuous.
+    oldTime = busyTime;
+    busyTime = Sys_GetRealSeconds() - busyTask->_startTime;
+    if(busyTime > oldTime)
+    {
+        accumulatedBusyTime += busyTime - oldTime;
     }
 
     Sys_Lock(busy_Mutex);
     busyDoneCopy = busyDone;
     Sys_Unlock(busy_Mutex);
 
-    while(!busyDoneCopy || (canUpload && GL_DeferredTaskCount() > 0) ||
-          !Con_IsProgressAnimationCompleted())
+    if(!busyDoneCopy || (canUpload && GL_DeferredTaskCount() > 0) ||
+       !Con_IsProgressAnimationCompleted())
     {
-        Sys_Lock(busy_Mutex);
-        busyDoneCopy = busyDone;
-        Sys_Unlock(busy_Mutex);
-
-        // Post and discard all input events.
-        DD_ProcessEvents(0);
-        DD_ProcessSharpEvents(0);
-
-        Sys_Sleep(20);
-
-        if(canUpload)
-        {   // Make sure that any deferred content gets uploaded.
-            GL_ProcessDeferredTasks(15);
-        }
-
-        // Update the time.
-        oldTime = busyTime;
-        busyTime = Sys_GetRealSeconds() - startTime;
-        if(busyTime > oldTime)
-        {
-            accumulatedBusyTime += busyTime - oldTime;
-        }
-
-        // Time for an update?
-        if(canDraw)
-            Con_BusyDrawer();
-
-        // Make sure the audio system gets regularly updated.
-        S_EndFrame();
+        // Let's keep running the busy loop.
+        Window_Draw(Window_Main());
+        return;
     }
 
-    if(verbose)
-    {
-        Con_Message("Con_Busy: Was busy for %.2lf seconds.\n", busyTime);
-    }
-
-    if(canDraw)
-    {
-        LIBDENG_ASSERT_IN_MAIN_THREAD();
-
-        glMatrixMode(GL_PROJECTION);
-        glPopMatrix();
-    }
+    // Stop the loop.
+    BusyTask_Exit();
 }
 
 /**
@@ -495,19 +505,21 @@ static void Con_DrawScreenshotBackground(float x, float y, float width, float he
     if(texScreenshot)
     {
         LIBDENG_ASSERT_IN_MAIN_THREAD();
+        LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-        GL_BindTextureUnmanaged(texScreenshot, GL_LINEAR);
+        //GL_BindTextureUnmanaged(texScreenshot, GL_LINEAR);
+        glBindTexture(GL_TEXTURE_2D, texScreenshot);
         glEnable(GL_TEXTURE_2D);
 
         glColor3ub(255, 255, 255);
         glBegin(GL_QUADS);
-            glTexCoord2f(0, 1);
-            glVertex2f(x, y);
-            glTexCoord2f(1, 1);
-            glVertex2f(x + width, y);
-            glTexCoord2f(1, 0);
-            glVertex2f(x + width, y + height);
             glTexCoord2f(0, 0);
+            glVertex2f(x, y);
+            glTexCoord2f(1, 0);
+            glVertex2f(x + width, y);
+            glTexCoord2f(1, 1);
+            glVertex2f(x + width, y + height);
+            glTexCoord2f(0, 1);
             glVertex2f(x, y + height);
         glEnd();
 
@@ -518,6 +530,17 @@ static void Con_DrawScreenshotBackground(float x, float y, float width, float he
         glClear(GL_COLOR_BUFFER_BIT);
     }
 }
+
+#ifdef _DEBUG
+#define _assertTexture(tex) { \
+    GLint p; \
+    glGetIntegerv(GL_TEXTURE_BINDING_2D, &p); \
+    Sys_GLCheckError(); \
+    assert(p == tex); \
+}
+#else
+#define _assertTexture(tex)
+#endif
 
 /**
  * @param 0...1, to indicate how far things have progressed.
@@ -534,6 +557,7 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
     edgeCount = MAX_OF(1, pos * 30);
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Draw a background.
     GL_BlendMode(BM_NORMAL);
@@ -563,6 +587,7 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
     glEnable(GL_TEXTURE_2D);
 
     GL_BindTextureUnmanaged(texLoading[0], GL_LINEAR);
+    _assertTexture(texLoading[0]);
     glColor4fv(col);
     GL_DrawRectf2(x - radius, y - radius, radius*2, radius*2);
 
@@ -576,7 +601,9 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
 
     // Draw a fan.
     glColor4f(col[0], col[1], col[2], .5f);
+    _assertTexture(texLoading[0]);
     GL_BindTextureUnmanaged(texLoading[1], GL_LINEAR);
+    _assertTexture(texLoading[1]);
     glBegin(GL_TRIANGLE_FAN);
     // Center.
     glTexCoord2f(.5f, .5f);
@@ -589,6 +616,7 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
         glVertex2f(x + cos(angle)*radius*1.05f, y + sin(angle)*radius*1.05f);
     }
     glEnd();
+    _assertTexture(texLoading[1]);
 
     glMatrixMode(GL_TEXTURE);
     glPopMatrix();
@@ -659,6 +687,8 @@ void Con_BusyDrawConsoleOutput(void)
     uint                i, newCount;
 
     buffer = Con_HistoryBuffer();
+    if(!buffer) return;
+
     newCount = GetBufLines(buffer, visibleBusyLines);
     nowTime = Sys_GetRealSeconds();
     if(newCount > 0)
@@ -691,18 +721,18 @@ void Con_BusyDrawConsoleOutput(void)
     // Dark gradient as background.
     glBegin(GL_QUADS);
     glColor4ub(0, 0, 0, 0);
-    y = theWindow->geometry.size.height - (LINE_COUNT + 3) * busyFontHgt;
+    y = Window_Height(theWindow) - (LINE_COUNT + 3) * busyFontHgt;
     glVertex2f(0, y);
-    glVertex2f(theWindow->geometry.size.width, y);
+    glVertex2f(Window_Width(theWindow), y);
     glColor4ub(0, 0, 0, 128);
-    glVertex2f(theWindow->geometry.size.width, theWindow->geometry.size.height);
-    glVertex2f(0, theWindow->geometry.size.height);
+    glVertex2f(Window_Width(theWindow), Window_Height(theWindow));
+    glVertex2f(0, Window_Height(theWindow));
     glEnd();
 
     glEnable(GL_TEXTURE_2D);
 
     // The text lines.
-    topY = y = theWindow->geometry.size.height - busyFontHgt * (2 * LINE_COUNT + .5f);
+    topY = y = Window_Height(theWindow) - busyFontHgt * (2 * LINE_COUNT + .5f);
     if(newCount > 0 ||
        (nowTime >= scrollStartTime && nowTime < scrollEndTime && scrollEndTime > scrollStartTime))
     {
@@ -730,7 +760,7 @@ void Con_BusyDrawConsoleOutput(void)
             alpha = 1 - (alpha - LINE_COUNT);
 
         FR_SetAlpha(alpha);
-        FR_DrawTextXY3(line->text, theWindow->geometry.size.width/2, y, ALIGN_TOP, DTF_ONLY_SHADOW);
+        FR_DrawTextXY3(line->text, Window_Width(theWindow)/2, y, ALIGN_TOP, DTF_ONLY_SHADOW);
     }
 
     glDisable(GL_TEXTURE_2D);
@@ -741,11 +771,19 @@ void Con_BusyDrawConsoleOutput(void)
 /**
  * Busy drawer function. The entire frame is drawn here.
  */
-static void Con_BusyDrawer(void)
+static void BusyTask_Drawer(void)
 {
     float pos = 0;
 
-    Con_DrawScreenshotBackground(0, 0, theWindow->geometry.size.width, theWindow->geometry.size.height);
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, Window_Width(theWindow), Window_Height(theWindow), 0, -1, 1);
+
+    Con_DrawScreenshotBackground(0, 0, Window_Width(theWindow), Window_Height(theWindow));
 
     // Indefinite activity?
     if((busyTask->mode & BUSYF_ACTIVITY) || (busyTask->mode & BUSYF_PROGRESS_BAR))
@@ -755,9 +793,9 @@ static void Con_BusyDrawer(void)
         else // The progress is animated elsewhere.
             pos = Con_GetProgress();
 
-        Con_BusyDrawIndicator(theWindow->geometry.size.width/2,
-                              theWindow->geometry.size.height/2,
-                              theWindow->geometry.size.height/12, pos);
+        Con_BusyDrawIndicator(Window_Width(theWindow)/2,
+                              Window_Height(theWindow)/2,
+                              Window_Height(theWindow)/12, pos);
     }
 
     // Output from the console?
@@ -770,7 +808,11 @@ static void Con_BusyDrawer(void)
     Z_DebugDrawer();
 #endif
 
-    Sys_UpdateWindow(windowIDX);
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+
+    // The frame is ready to be shown.
+    Window_SwapBuffers(Window_Main());
 }
 
 boolean Con_TransitionInProgress(void)
@@ -829,6 +871,7 @@ void Con_DrawTransition(void)
     if(!Con_TransitionInProgress()) return;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
@@ -859,9 +902,9 @@ void Con_DrawTransition(void)
             y = doomWipeSamples[i];
 
             glColor4f(1, 1, 1, topAlpha);
-            glTexCoord2f(s, 1); glVertex2i(x, y);
+            glTexCoord2f(s, 0); glVertex2i(x, y);
             glColor4f(1, 1, 1, 1);
-            glTexCoord2f(s, div); glVertex2i(x, y + h);
+            glTexCoord2f(s, 1-div); glVertex2i(x, y + h);
         }
         glEnd();
 
@@ -874,8 +917,8 @@ void Con_DrawTransition(void)
         {
             y = doomWipeSamples[i] + h;
 
-            glTexCoord2f(s, div); glVertex2i(x, y);
-            glTexCoord2f(s, 0); glVertex2i(x, y + (SCREENHEIGHT - h));
+            glTexCoord2f(s, 1-div); glVertex2i(x, y);
+            glTexCoord2f(s, 1); glVertex2i(x, y + (SCREENHEIGHT - h));
         }
         glEnd();
         break;
@@ -893,10 +936,10 @@ void Con_DrawTransition(void)
         {
             y = doomWipeSamples[i];
 
-            glTexCoord2f(s, 1); glVertex2i(x, y);
-            glTexCoord2f(s+colWidth, 1); glVertex2i(x+1, y);
-            glTexCoord2f(s+colWidth, 0); glVertex2i(x+1, y+SCREENHEIGHT);
-            glTexCoord2f(s, 0); glVertex2i(x, y+SCREENHEIGHT);
+            glTexCoord2f(s, 0); glVertex2i(x, y);
+            glTexCoord2f(s+colWidth, 0); glVertex2i(x+1, y);
+            glTexCoord2f(s+colWidth, 1); glVertex2i(x+1, y+SCREENHEIGHT);
+            glTexCoord2f(s, 1); glVertex2i(x, y+SCREENHEIGHT);
         }
         glEnd();
         break;
@@ -905,10 +948,10 @@ void Con_DrawTransition(void)
         glColor4f(1, 1, 1, 1 - transitionPosition);
 
         glBegin(GL_QUADS);
-            glTexCoord2f(0, 1); glVertex2f(0, 0);
-            glTexCoord2f(0, 0); glVertex2f(0, SCREENHEIGHT);
-            glTexCoord2f(1, 0); glVertex2f(SCREENWIDTH, SCREENHEIGHT);
-            glTexCoord2f(1, 1); glVertex2f(SCREENWIDTH, 0);
+            glTexCoord2f(0, 0); glVertex2f(0, 0);
+            glTexCoord2f(0, 1); glVertex2f(0, SCREENHEIGHT);
+            glTexCoord2f(1, 1); glVertex2f(SCREENWIDTH, SCREENHEIGHT);
+            glTexCoord2f(1, 0); glVertex2f(SCREENWIDTH, 0);
         glEnd();
         break;
     }

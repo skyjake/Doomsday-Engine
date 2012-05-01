@@ -307,7 +307,7 @@ enum // Line.data references
 
 typedef struct {
     thinker_t       thinker;
-    linedef_t*      line;
+    LineDef*        line;
 } xlthinker_t;
 
 // State data for each line.

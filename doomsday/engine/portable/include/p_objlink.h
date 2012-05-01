@@ -25,7 +25,7 @@
 /**
  * p_objlink.c: Objlink management.
  *
- * Object => Subsector contacts and object => Subsector spreading.
+ * Object => BspLeaf contacts and object => BspLeaf spreading.
  */
 
 #ifndef LIBDENG_OBJLINK_BLOCKMAP_H
@@ -56,7 +56,7 @@ void R_DestroyObjlinkBlockmap(void);
 void R_InitObjlinkBlockmapForMap(void);
 
 /**
- * Initialize the object => Subsector contact lists, ready for linking to
+ * Initialize the object => BspLeaf contact lists, ready for linking to
  * objects. To be called at the beginning of a new world frame.
  */
 void R_InitForNewFrame(void);
@@ -79,32 +79,32 @@ void R_ObjlinkCreate(void* object, objtype_t type);
 void R_LinkObjs(void);
 
 /**
- * Spread object => Subsector links for the given @a subsector. Note that
+ * Spread object => BspLeaf links for the given @a BspLeaf. Note that
  * all object types will be spread at this time.
  */
-void R_InitForSubsector(subsector_t* subsector);
+void R_InitForBspLeaf(BspLeaf* bspLeaf);
 
 typedef struct {
     void* obj;
     objtype_t type;
-} linkobjtossecparams_t;
+} linkobjtobspleafparams_t;
 
 /**
- * Create a new object => Subsector contact in the objlink blockmap.
+ * Create a new object => BspLeaf contact in the objlink blockmap.
  * Can be used as an iterator.
  *
- * @params paramaters  @see linkobjtossecparams_t
+ * @params paramaters  @see linkobjtobspleafparams_t
  * @return  @c false (always).
  */
-int RIT_LinkObjToSubsector(subsector_t* subsector, void* paramaters);
+int RIT_LinkObjToBspLeaf(BspLeaf* bspLeaf, void* paramaters);
 
 /**
  * Traverse the list of objects of the specified @a type which have been linked
- * with @a subsector for the current render frame.
+ * with @a bspLeaf for the current render frame.
  */
-int R_IterateSubsectorContacts2(subsector_t* subsector, objtype_t type,
+int R_IterateBspLeafContacts2(BspLeaf* bspLeaf, objtype_t type,
     int (*func) (void* object, void* paramaters), void* paramaters);
-int R_IterateSubsectorContacts(subsector_t* subsector, objtype_t type,
+int R_IterateBspLeafContacts(BspLeaf* bspLeaf, objtype_t type,
     int (*func) (void* object, void* paramaters)); /*paramaters=NULL*/
 
 #endif /* LIBDENG_OBJLINK_BLOCKMAP_H */

@@ -29,18 +29,26 @@
 #ifndef LIBDENG_WINIT_H
 #define LIBDENG_WINIT_H
 
+#define WIN32_LEAN_AND_MEAN
+
 #include "dd_pinit.h"
 #include <windows.h>
 
-#define MAINWCLASS          "DoomsdayMainWClass"
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+//#define MAINWCLASS          "DoomsdayMainWClass"
 
 typedef struct {
     HINSTANCE hInstance;
+/*
 #ifdef UNICODE
     LPCWSTR className;
 #else
     LPCSTR className;
 #endif
+*/
     /// @c true = We are using a custom user dir specified on the command line.
     BOOL usingUserDir;
 
@@ -48,9 +56,9 @@ typedef struct {
     GETGAMEAPI GetGameAPI;
 } application_t;
 
-extern uint windowIDX; // Main window.
 extern application_t app;
 
+boolean DD_Win32_Init(void);
 void DD_Shutdown(void);
 
 const char* DD_Win32_GetLastErrorMessage(void);
@@ -63,6 +71,10 @@ LPCSTR  ToAnsiString(const wchar_t* wstr);
 #else
 #  define WIN_STRING(s)     (s)
 #  define UTF_STRING(ws)    (ws)
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* LIBDENG_WINIT_H */

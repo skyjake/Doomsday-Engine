@@ -135,9 +135,9 @@ void R_Register(void)
 
 const char* R_ChooseFixedFont(void)
 {
-    if(theWindow->geometry.size.width < 300)
+    if(Window_Width(theWindow) < 300)
         return "console11";
-    if(theWindow->geometry.size.width > 768)
+    if(Window_Width(theWindow) > 768)
         return "console18";
     return "console14";
 }
@@ -180,7 +180,7 @@ static fontid_t loadSystemFont(const char* name)
     // Compose the resource data path.
     // \todo This is currently rather awkward due
     Str_Init(&resourcePath);
-    Str_Appendf(&resourcePath, "}data/"FONTS_RESOURCE_NAMESPACE_NAME"/%s.dfn", name);    
+    Str_Appendf(&resourcePath, "}data/"FONTS_RESOURCE_NAMESPACE_NAME"/%s.dfn", name);
 #if defined(UNIX) && !defined(MACOSX)
     // Case-sensitive file system.
     /// @todo Unkludge this: handle in a more generic manner.
@@ -202,56 +202,42 @@ static fontid_t loadSystemFont(const char* name)
     return Fonts_Id(font);
 }
 
+static void loadFontIfNeeded(const char* uri, fontid_t* fid)
+{
+    *fid = Fonts_ResolveUriCString(uri);
+    if(*fid == NOFONTID)
+    {
+        *fid = loadSystemFont(uri);
+    }
+}
+
 void R_LoadSystemFonts(void)
 {
-    if(isDedicated) return;
+    if(!Fonts_IsInitialized() || isDedicated) return;
 
-    fontFixed = loadSystemFont(R_ChooseFixedFont());
-    fontVariable[FS_NORMAL] = loadSystemFont(R_ChooseVariableFont(FS_NORMAL, theWindow->geometry.size.width, theWindow->geometry.size.height));
-    fontVariable[FS_BOLD]   = loadSystemFont(R_ChooseVariableFont(FS_BOLD,   theWindow->geometry.size.width, theWindow->geometry.size.height));
-    fontVariable[FS_LIGHT]  = loadSystemFont(R_ChooseVariableFont(FS_LIGHT,  theWindow->geometry.size.width, theWindow->geometry.size.height));
+    loadFontIfNeeded(R_ChooseFixedFont(), &fontFixed);
+    loadFontIfNeeded(R_ChooseVariableFont(FS_NORMAL, Window_Width(theWindow), Window_Height(theWindow)), &fontVariable[FS_NORMAL]);
+    loadFontIfNeeded(R_ChooseVariableFont(FS_BOLD,   Window_Width(theWindow), Window_Height(theWindow)), &fontVariable[FS_BOLD]);
+    loadFontIfNeeded(R_ChooseVariableFont(FS_LIGHT,  Window_Width(theWindow), Window_Height(theWindow)), &fontVariable[FS_LIGHT]);
 
     Con_SetFont(fontFixed);
 }
 
-boolean R_IsSkySurface(const surface_t* suf)
-{
-    return (suf && suf->material && Material_IsSkyMasked(suf->material));
-}
-
-/**
- * Update the view origin position for player @a consoleNum.
- *
- * @param consoleNum  Console number.
- *
- * \note Part of the Doomsday public API.
- */
-void R_SetViewOrigin(int consoleNum, float const origin[3])
+/// @note Part of the Doomsday public API.
+void R_SetViewOrigin(int consoleNum, coord_t const origin[3])
 {
     if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
-    V3_Copy(viewDataOfConsole[consoleNum].latest.pos, origin);
+    V3d_Copy(viewDataOfConsole[consoleNum].latest.origin, origin);
 }
 
-/**
- * Update the view yaw angle for player @a consoleNum.
- *
- * @param consoleNum  Console number.
- *
- * \note Part of the Doomsday public API.
- */
+/// @note Part of the Doomsday public API.
 void R_SetViewAngle(int consoleNum, angle_t angle)
 {
     if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
     viewDataOfConsole[consoleNum].latest.angle = angle;
 }
 
-/**
- * Update the view pitch angle for player @a consoleNum.
- *
- * @param consoleNum  Console number.
- *
- * \note Part of the Doomsday public API.
- */
+/// @note Part of the Doomsday public API.
 void R_SetViewPitch(int consoleNum, float pitch)
 {
     if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
@@ -259,14 +245,14 @@ void R_SetViewPitch(int consoleNum, float pitch)
 }
 
 void R_SetupDefaultViewWindow(int consoleNum)
-{    
+{
     viewdata_t* vd = &viewDataOfConsole[consoleNum];
     if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
 
     vd->window.origin.x = vd->windowOld.origin.x = vd->windowTarget.origin.x = 0;
     vd->window.origin.y = vd->windowOld.origin.y = vd->windowTarget.origin.y = 0;
-    vd->window.size.width  = vd->windowOld.size.width  = vd->windowTarget.size.width  = theWindow->geometry.size.width;
-    vd->window.size.height = vd->windowOld.size.height = vd->windowTarget.size.height = theWindow->geometry.size.height;
+    vd->window.size.width  = vd->windowOld.size.width  = vd->windowTarget.size.width  = Window_Width(theWindow);
+    vd->window.size.height = vd->windowOld.size.height = vd->windowTarget.size.height = Window_Height(theWindow);
     vd->windowInter = 1;
 }
 
@@ -446,10 +432,10 @@ void R_UpdateViewPortGeometry(viewport_t* port, int col, int row)
     assert(port);
     {
     RectRaw* rect = &port->geometry;
-    const int x = col * theWindow->geometry.size.width  / gridCols;
-    const int y = row * theWindow->geometry.size.height / gridRows;
-    const int width  = (col+1) * theWindow->geometry.size.width  / gridCols - x;
-    const int height = (row+1) * theWindow->geometry.size.height / gridRows - y;
+    const int x = col * Window_Width(theWindow)  / gridCols;
+    const int y = row * Window_Height(theWindow) / gridRows;
+    const int width  = (col+1) * Window_Width(theWindow)  / gridCols - x;
+    const int height = (row+1) * Window_Height(theWindow) / gridRows - y;
     ddhook_viewport_reshape_t p;
     boolean doReshape = false;
 
@@ -537,7 +523,6 @@ void R_Init(void)
     R_SkyInit();
     Rend_Init();
     frameCount = 0;
-    P_PtcInit();
 }
 
 /**
@@ -571,39 +556,41 @@ void R_Update(void)
         ddpl->pSprites[0].statePtr = ddpl->pSprites[1].statePtr = NULL;
     }}
 
-    // Update all world surfaces.
-    { uint i;
-    for(i = 0; i < numSectors; ++i)
+    if(theMap)
     {
-        sector_t* sec = &sectors[i];
-        uint j;
-        for(j = 0; j < sec->planeCount; ++j)
-            Surface_Update(&sec->SP_planesurface(j));
-    }}
+        uint i;
 
-    { uint i;
-    for(i = 0; i < numSideDefs; ++i)
-    {
-        sidedef_t* side = &sideDefs[i];
-        Surface_Update(&side->SW_topsurface);
-        Surface_Update(&side->SW_middlesurface);
-        Surface_Update(&side->SW_bottomsurface);
-    }}
-
-    { uint i;
-    for(i = 0; i < numPolyObjs; ++i)
-    {
-        polyobj_t* po = polyObjs[i];
-        seg_t** segPtr = po->segs;
-        while(*segPtr)
+        // Update all world surfaces.
+        for(i = 0; i < NUM_SECTORS; ++i)
         {
-            sidedef_t* side = SEG_SIDEDEF(*segPtr);
-            Surface_Update(&side->SW_middlesurface);
-            segPtr++;
+            Sector* sec = &sectors[i];
+            uint j;
+            for(j = 0; j < sec->planeCount; ++j)
+                Surface_Update(&sec->SP_planesurface(j));
         }
-    }}
 
-    R_MapInitSurfaceLists();
+        for(i = 0; i < NUM_SIDEDEFS; ++i)
+        {
+            SideDef* side = &sideDefs[i];
+            Surface_Update(&side->SW_topsurface);
+            Surface_Update(&side->SW_middlesurface);
+            Surface_Update(&side->SW_bottomsurface);
+        }
+
+        for(i = 0; i < NUM_POLYOBJS; ++i)
+        {
+            Polyobj* po = polyObjs[i];
+            LineDef** lineIter;
+            for(lineIter = po->lines; *lineIter; lineIter++)
+            {
+                LineDef* line = *lineIter;
+                SideDef* side = line->L_frontside;
+                Surface_Update(&side->SW_middlesurface);
+            }
+        }
+
+        R_MapInitSurfaceLists();
+    }
 
     // The rendering lists have persistent data that has changed during
     // the re-initialization.
@@ -650,9 +637,9 @@ void R_InterpolateViewer(viewer_t* start, viewer_t* end, float pos, viewer_t* ou
     float inv = 1 - pos;
     int delta;
 
-    out->pos[VX] = inv * start->pos[VX] + pos * end->pos[VX];
-    out->pos[VY] = inv * start->pos[VY] + pos * end->pos[VY];
-    out->pos[VZ] = inv * start->pos[VZ] + pos * end->pos[VZ];
+    out->origin[VX] = inv * start->origin[VX] + pos * end->origin[VX];
+    out->origin[VY] = inv * start->origin[VY] + pos * end->origin[VY];
+    out->origin[VZ] = inv * start->origin[VZ] + pos * end->origin[VZ];
 
     delta = (int)end->angle - (int)start->angle;
     out->angle = start->angle + (int)(pos * delta);
@@ -661,7 +648,7 @@ void R_InterpolateViewer(viewer_t* start, viewer_t* end, float pos, viewer_t* ou
 
 void R_CopyViewer(viewer_t* dst, const viewer_t* src)
 {
-    V3_Copy(dst->pos, src->pos);
+    V3d_Copy(dst->origin, src->origin);
     dst->angle = src->angle;
     dst->pitch = src->pitch;
 }
@@ -680,11 +667,14 @@ void R_CheckViewerLimits(viewer_t* src, viewer_t* dst)
 {
 #define MAXMOVE 32
 
-    if(fabs(dst->pos[VX] - src->pos[VX]) > MAXMOVE ||
-       fabs(dst->pos[VY] - src->pos[VY]) > MAXMOVE)
+    /// @todo Remove this snapping. The game should determine this and disable the
+    ///       the interpolation as required.
+    if(fabs(dst->origin[VX] - src->origin[VX]) > MAXMOVE ||
+       fabs(dst->origin[VY] - src->origin[VY]) > MAXMOVE)
     {
-        V3_Copy(src->pos, dst->pos);
+        V3d_Copy(src->origin, dst->origin);
     }
+
     if(abs((int) dst->angle - (int) src->angle) >= ANGLE_45)
     {
 #ifdef _DEBUG
@@ -692,6 +682,7 @@ void R_CheckViewerLimits(viewer_t* src, viewer_t* dst)
 #endif
         src->angle = dst->angle;
     }
+
 #undef MAXMOVE
 }
 
@@ -722,23 +713,23 @@ void R_GetSharpView(viewer_t* view, player_t* player)
         angle = view->angle >> ANGLETOFINESHIFT;
         pitch >>= ANGLETOFINESHIFT;
 
-        view->pos[VX] -= distance * FIX2FLT(fineCosine[angle]);
-        view->pos[VY] -= distance * FIX2FLT(finesine[angle]);
-        view->pos[VZ] -= distance * FIX2FLT(finesine[pitch]);
+        view->origin[VX] -= distance * FIX2FLT(fineCosine[angle]);
+        view->origin[VY] -= distance * FIX2FLT(finesine[angle]);
+        view->origin[VZ] -= distance * FIX2FLT(finesine[pitch]);
     }
 
     // Check that the viewZ doesn't go too high or low.
     // Cameras are not restricted.
     if(!(ddpl->flags & DDPF_CAMERA))
     {
-        if(view->pos[VZ] > ddpl->mo->ceilingZ - 4)
+        if(view->origin[VZ] > ddpl->mo->ceilingZ - 4)
         {
-            view->pos[VZ] = ddpl->mo->ceilingZ - 4;
+            view->origin[VZ] = ddpl->mo->ceilingZ - 4;
         }
 
-        if(view->pos[VZ] < ddpl->mo->floorZ + 4)
+        if(view->origin[VZ] < ddpl->mo->floorZ + 4)
         {
-            view->pos[VZ] = ddpl->mo->floorZ + 4;
+            view->origin[VZ] = ddpl->mo->floorZ + 4;
         }
     }
 }
@@ -781,14 +772,14 @@ void R_NewSharpWorld(void)
         R_CheckViewerLimits(vd->lastSharp, &sharpView);
     }
 
-    R_UpdateWatchedPlanes(watchedPlaneList);
-    R_UpdateMovingSurfaces();
+    R_UpdateTrackedPlanes();
+    R_UpdateSurfaceScroll();
 }
 
 void R_CreateMobjLinks(void)
 {
     uint                i;
-    sector_t*           seciter;
+    Sector*             seciter;
 #ifdef DD_PROFILE
     static int          p;
 
@@ -801,7 +792,7 @@ void R_CreateMobjLinks(void)
 
 BEGIN_PROF( PROF_MOBJ_INIT_ADD );
 
-    for(i = 0, seciter = sectors; i < numSectors; seciter++, ++i)
+    for(i = 0, seciter = sectors; i < NUM_SECTORS; seciter++, ++i)
     {
         mobj_t*             iter;
 
@@ -821,8 +812,8 @@ void R_BeginWorldFrame(void)
 {
     R_ClearSectorFlags();
 
-    R_InterpolateWatchedPlanes(watchedPlaneList, resetNextViewer);
-    R_InterpolateMovingSurfaces(resetNextViewer);
+    R_InterpolateTrackedPlanes(resetNextViewer);
+    R_InterpolateSurfaceScroll(resetNextViewer);
 
     if(!freezeRLs)
     {
@@ -883,7 +874,7 @@ void R_UpdateViewer(int consoleNum)
     R_GetSharpView(&sharpView, player);
 
     if(resetNextViewer ||
-       V3_Distance(vd->current.pos, sharpView.pos) > VIEWPOS_MAX_SMOOTHDISTANCE)
+       V3d_Distance(vd->current.origin, sharpView.origin) > VIEWPOS_MAX_SMOOTHDISTANCE)
     {
         // Keep reseting until a new sharp world has arrived.
         if(resetNextViewer > 1)
@@ -910,8 +901,8 @@ void R_UpdateViewer(int consoleNum)
         // For example, view locking (dead or camera setlock).
         /*if(!(player->shared.flags & DDPF_INTERYAW))
             smoothView.angle = sharpView.angle;*/
-        if(!(player->shared.flags & DDPF_INTERPITCH))
-            smoothView.pitch = sharpView.pitch;
+        /*if(!(player->shared.flags & DDPF_INTERPITCH))
+            smoothView.pitch = sharpView.pitch;*/
 
         R_CopyViewer(&vd->current, &smoothView);
 
@@ -958,15 +949,15 @@ void R_UpdateViewer(int consoleNum)
                         SECONDS_TO_TICKS(gameTime),
                         frameTimePos,
                         sysTime - old->time,
-                        smoothView.pos[0] - old->x,
-                        smoothView.pos[1] - old->y,
-                        smoothView.pos[2] - old->z,
-                        (smoothView.pos[0] - old->x) / (sysTime - old->time),
-                        (smoothView.pos[1] - old->y) / (sysTime - old->time));
+                        smoothView.origin[0] - old->x,
+                        smoothView.origin[1] - old->y,
+                        smoothView.origin[2] - old->z,
+                        (smoothView.origin[0] - old->x) / (sysTime - old->time),
+                        (smoothView.origin[1] - old->y) / (sysTime - old->time));
 
-            old->x = smoothView.pos[VX];
-            old->y = smoothView.pos[VY];
-            old->z = smoothView.pos[VZ];
+            old->x = smoothView.origin[VX];
+            old->y = smoothView.origin[VY];
+            old->z = smoothView.origin[VZ];
             old->time = sysTime;
         }
     }
@@ -991,7 +982,7 @@ void R_UpdateViewer(int consoleNum)
     vd->upVec[VY] = cos(pitchRad);
 
     // The side vector is the cross product of the front and up vectors.
-    M_CrossProduct(vd->frontVec, vd->upVec, vd->sideVec);
+    V3f_CrossProduct(vd->sideVec, vd->frontVec, vd->upVec);
 
 #undef VIEWPOS_MAX_SMOOTHDISTANCE
 }
@@ -1057,12 +1048,13 @@ void R_RenderPlayerViewBorder(void)
 void R_UseViewPort(viewport_t* vp)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(!vp)
     {
         currentViewport = NULL;
-        glViewport(0, FLIP(0 + theWindow->geometry.size.height - 1),
-            theWindow->geometry.size.width, theWindow->geometry.size.height);
+        glViewport(0, FLIP(0 + Window_Height(theWindow) - 1),
+            Window_Width(theWindow), Window_Height(theWindow));
     }
     else
     {
@@ -1198,14 +1190,14 @@ void R_RenderPlayerView(int num)
         static float prevTime;
         float delta[2] = { vd->current.pos[VX] - prevPos[VX],
                            vd->current.pos[VY] - prevPos[VY] };
-        float speed = V2_Length(delta);
+        float speed = V2f_Length(delta);
         float time = sysTime - devCameraMovementStartTime;
         float elapsed = time - prevTime;
 
         Con_Message("%f,%f,%f,%f,%f\n", Sys_GetRealSeconds() - devCameraMovementStartTimeRealSecs,
                     time, elapsed, speed/elapsed, speed/elapsed - prevSpeed);
 
-        V3_Copy(prevPos, vd->current.pos);
+        V3f_Copy(prevPos, vd->current.pos);
         prevSpeed = speed/elapsed;
         prevTime = time;
     }
@@ -1264,6 +1256,7 @@ void R_RenderViewPorts(void)
     }
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // This is all the clearing we'll do.
     glClear(bits);
@@ -1278,7 +1271,7 @@ void R_RenderViewPorts(void)
             displayPlayer = vp->console;
             R_UseViewPort(vp);
 
-            if(displayPlayer < 0 || (ddPlayers[displayPlayer].shared.flags & DDPF_UNDEFINED_POS))
+            if(displayPlayer < 0 || (ddPlayers[displayPlayer].shared.flags & DDPF_UNDEFINED_ORIGIN))
             {
                 R_RenderBlankView();
                 continue;

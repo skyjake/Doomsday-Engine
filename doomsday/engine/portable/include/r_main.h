@@ -31,13 +31,17 @@
 
 #include "rect.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct viewport_s {
     int console;
     RectRaw geometry;
 } viewport_t;
 
 typedef struct viewer_s {
-    float pos[3];
+    coord_t origin[3];
     angle_t angle;
     float pitch;
 } viewer_t;
@@ -98,6 +102,8 @@ void R_RenderPlayerViewBorder(void);
 /// @return  Current viewport else @c NULL.
 const viewport_t* R_CurrentViewPort(void);
 
+void R_UseViewPort(viewport_t* vp);
+
 const viewdata_t* R_ViewData(int consoleNum);
 
 void R_UpdateViewer(int consoleNum);
@@ -110,8 +116,31 @@ boolean R_SetViewGrid(int numCols, int numRows);
 
 void R_SetupDefaultViewWindow(int consoleNum);
 
-void R_SetViewOrigin(int consoleNum, float const origin[3]);
+/**
+ * Update the view origin position for player @a consoleNum.
+ *
+ * @param consoleNum  Console number.
+ *
+ * @note Part of the Doomsday public API.
+ */
+void R_SetViewOrigin(int consoleNum, coord_t const origin[3]);
+
+/**
+ * Update the view yaw angle for player @a consoleNum.
+ *
+ * @param consoleNum  Console number.
+ *
+ * @note Part of the Doomsday public API.
+ */
 void R_SetViewAngle(int consoleNum, angle_t angle);
+
+/**
+ * Update the view pitch angle for player @a consoleNum.
+ *
+ * @param consoleNum  Console number.
+ *
+ * @note Part of the Doomsday public API.
+ */
 void R_SetViewPitch(int consoleNum, float pitch);
 
 int R_ViewWindowGeometry(int consoleNum, RectRaw* geometry);
@@ -135,5 +164,9 @@ void R_LoadSystemFonts(void);
 
 const char* R_ChooseFixedFont(void);
 const char* R_ChooseVariableFont(fontstyle_t style, int resX, int resY);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_REFRESH_MAIN_H */

@@ -26,11 +26,13 @@
 #ifndef LIBDENG_SMOOTHER_H
 #define LIBDENG_SMOOTHER_H
 
+#include "dd_types.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define SMOOTHER_MOVE_EPSILON           .001f
+#define SMOOTHER_MOVE_EPSILON           .001
 
 struct smoother_s; // The smoother instance (opaque).
 
@@ -73,7 +75,7 @@ void Smoother_Clear(Smoother* sm);
  * @param z     Cooordinate.
  * @param onFloor  @c true if the z coordinate should be on the floor plane.
  */
-void Smoother_AddPos(Smoother* sm, float time, float x, float y, float z, boolean onFloor);
+void Smoother_AddPos(Smoother* sm, float time, coord_t x, coord_t y, coord_t z, boolean onFloor);
 
 /**
  * Calculates the coordinates for the current point in time.
@@ -86,7 +88,7 @@ void Smoother_AddPos(Smoother* sm, float time, float x, float y, float z, boolea
  *
  * @see Smoother_Advance()
  */
-boolean Smoother_Evaluate(const Smoother* sm, float* xyz);
+boolean Smoother_Evaluate(const Smoother* sm, coord_t* xyz);
 
 /**
  * Determines whether the smoother's Z coordinate is currently on the floor plane.

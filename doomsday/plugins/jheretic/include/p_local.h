@@ -104,7 +104,6 @@ void            P_PostMorphWeapon(player_t* player, weapontype_t weapon);
 void            P_UpdateBeak(player_t* player, pspdef_t* psp);
 void            P_FireWeapon(player_t* player);
 
-void            P_Thrust(player_t* player, angle_t angle, float move);
 boolean         P_UndoPlayerMorph(player_t* player);
 
 extern mobjtype_t puffType;
@@ -112,22 +111,16 @@ extern mobj_t* missileMobj;
 
 boolean     P_MobjChangeState(mobj_t* mo, statenum_t state);
 boolean     P_SetMobjStateNF(mobj_t* mo, statenum_t state);
-void        P_ThrustMobj(mobj_t* mo, angle_t angle, float move);
+void        P_ThrustMobj(mobj_t* mo, angle_t angle, coord_t move);
 void        P_WindThrust(mobj_t* mo);
 int         P_FaceMobj(mobj_t* source, mobj_t* target, angle_t* delta);
 boolean     P_SeekerMissile(mobj_t* actor, angle_t thresh, angle_t turnMax);
 void        P_MobjThinker(mobj_t* mo);
-void        P_SpawnBloodSplatter(float x, float y, float z, mobj_t* originator);
 void        P_RipperBlood(mobj_t* mo);
 boolean     P_HitFloor(mobj_t* thing);
 boolean     P_CheckMissileSpawn(mobj_t* missile);
 void        P_MobjMoveZ(mobj_t* mo);
 void        P_ExplodeMissile(mobj_t* mo);
-
-#define OPENRANGE           (*(float*) DD_GetVariable(DD_OPENRANGE))
-#define OPENTOP             (*(float*) DD_GetVariable(DD_OPENTOP))
-#define OPENBOTTOM          (*(float*) DD_GetVariable(DD_OPENBOTTOM))
-#define LOWFLOOR            (*(float*) DD_GetVariable(DD_LOWFLOOR))
 
 const char*     P_GetMapName(uint episode, uint map);
 const char*     P_GetShortMapName(uint episode, uint map);

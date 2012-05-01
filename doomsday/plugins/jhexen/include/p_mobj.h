@@ -1,4 +1,4 @@
-/**\file
+/**\file p_mobj.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,11 +23,11 @@
  */
 
 /**
- * p_mobj.h: Map Objects, MObj, definition and handling.
+ * Map Objects, MObj, definition and handling.
  */
 
-#ifndef __P_MOBJ_H__
-#define __P_MOBJ_H__
+#ifndef LIBHEXEN_P_MOBJ_H
+#define LIBHEXEN_P_MOBJ_H
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -35,16 +35,16 @@
 
 #include "p_terraintype.h"
 
-#define NOMOM_THRESHOLD     (0.00000001f) // (integer) 0
-#define WALKSTOP_THRESHOLD  (0.062484741f) // FIX2FLT(0x1000-1)
-#define DROPOFFMOM_THRESHOLD (0.25f) // FRACUNIT/4
+#define NOMOM_THRESHOLD     (0.0001) // (integer) 0
+#define WALKSTOP_THRESHOLD  (0.062484741) // FIX2FLT(0x1000-1)
+#define DROPOFFMOM_THRESHOLD (0.25) // FRACUNIT/4
 #define MAXMOM              (30) // 30*FRACUNIT
 #define MAXMOMSTEP          (15) // 30*FRACUNIT/2
 
-#define FRICTION_LOW        (0.97265625f) // 0xf900
-#define FRICTION_FLY        (0.91796875f) // 0xeb00
-#define FRICTION_NORMAL     (0.90625000f) // 0xe800
-#define FRICTION_HIGH       (0.41992187f) // 0xd700/2
+#define FRICTION_LOW        (0.97265625) // 0xf900
+#define FRICTION_FLY        (0.91796875) // 0xeb00
+#define FRICTION_NORMAL     (0.90625000) // 0xe800
+#define FRICTION_HIGH       (0.41992187) // 0xd700/2
 
 /**
  * Mobj flags
@@ -178,7 +178,7 @@ typedef struct mobj_s {
     DD_BASE_MOBJ_ELEMENTS()
 
     // Hexen-specific data:
-    struct player_s *player; // Only valid if type == MT_PLAYER
+    struct player_s* player; // Only valid if type == MT_PLAYER
     int             damage; // For missiles
     int             special1; // Special info
     int             special2; // Special info
@@ -207,30 +207,35 @@ typedef struct mobj_s {
     struct mobj_s*  lastEnemy;
 } mobj_t;
 
-mobj_t*     P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
-                          angle_t angle, int spawnFlags);
-mobj_t*     P_SpawnMobj3fv(mobjtype_t type, const float pos[3],
-                           angle_t angle, int spawnFlags);
+mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t angle, int spawnFlags);
+mobj_t* P_SpawnMobj(mobjtype_t type, coord_t const pos[3], angle_t angle, int spawnFlags);
 
-void        P_SpawnPuff(float x, float y, float z, angle_t angle);
-void        P_SpawnBlood(float x, float y, float z, int damage,
-                         angle_t angle);
-mobj_t*     P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest);
-mobj_t*     P_SpawnMissileXYZ(mobjtype_t type, float x, float y, float z,
-                               mobj_t* source, mobj_t* dest);
-mobj_t*     P_SpawnMissileAngle(mobjtype_t type, mobj_t* source,
-                                 angle_t angle, float momZ);
-mobj_t*     P_SpawnMissileAngleSpeed(mobjtype_t type, mobj_t* source,
-                                     angle_t angle, float momZ, float speed);
-mobj_t*     P_SpawnPlayerMissile(mobjtype_t type, mobj_t* source);
-mobj_t*     P_SPMAngle(mobjtype_t type, mobj_t* source, angle_t angle);
-mobj_t*     P_SPMAngleXYZ(mobjtype_t type, float x, float y, float z,
-                            mobj_t* source, angle_t angle);
-mobj_t*     P_SpawnTeleFog(float x, float y, angle_t angle);
-mobj_t*     P_SpawnKoraxMissile(mobjtype_t type, float x, float y, float z,
-                                 mobj_t* source, mobj_t* dest);
-void        P_SpawnDirt(mobj_t* actor, float radius);
+void P_SpawnPuff(coord_t x, coord_t y, coord_t z, angle_t angle);
+void P_SpawnBlood(coord_t x, coord_t y, coord_t z, int damage, angle_t angle);
 
-void        P_ExplodeMissile(mobj_t* mo);
+void P_SpawnDirt(mobj_t* actor, coord_t radius);
 
-#endif
+void P_SpawnBloodSplatter(coord_t x, coord_t y, coord_t z, mobj_t* origin);
+void P_SpawnBloodSplatter2(coord_t x, coord_t y, coord_t z, mobj_t* origin);
+
+/**
+ * @return  @c NULL, if the missile exploded immediately, otherwise returns a
+ *          mobj_t pointer to the spawned missile.
+ */
+mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest);
+mobj_t* P_SpawnMissileXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, mobj_t* source, mobj_t* dest);
+mobj_t* P_SpawnMissileAngle(mobjtype_t type, mobj_t* source, angle_t angle, coord_t momZ);
+mobj_t* P_SpawnMissileAngleSpeed(mobjtype_t type, mobj_t* source, angle_t angle, coord_t momZ, float speed);
+
+mobj_t* P_SpawnPlayerMissile(mobjtype_t type, mobj_t* source);
+
+mobj_t* P_SPMAngle(mobjtype_t type, mobj_t* source, angle_t angle);
+mobj_t* P_SPMAngleXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, mobj_t* source, angle_t angle);
+
+mobj_t* P_SpawnTeleFog(coord_t x, coord_t y, angle_t angle);
+
+mobj_t* P_SpawnKoraxMissile(mobjtype_t type, coord_t x, coord_t y, coord_t z, mobj_t* source, mobj_t* dest);
+
+void P_ExplodeMissile(mobj_t* mo);
+
+#endif /// LIBHEXEN_P_MOBJ_H

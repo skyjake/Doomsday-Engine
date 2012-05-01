@@ -29,6 +29,10 @@
 #ifndef LIBDENG_GRAPHICS_H
 #define LIBDENG_GRAPHICS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "r_main.h"
 
 struct colorpalette_s;
@@ -50,11 +54,19 @@ extern int      numTexUnits;
 extern boolean  envModAdd;
 extern int      defResX, defResY, defBPP, defFullscreen;
 extern int      viewph, viewpw, viewpx, viewpy;
-extern int      r_framecounter;
+//extern int      r_framecounter;
 extern float    vid_gamma, vid_bright, vid_contrast;
 extern int      r_detail;
 
 boolean         GL_IsInited(void);
+
+#ifdef _DEBUG
+#  define LIBDENG_ASSERT_GL_CONTEXT_ACTIVE()  {GL_AssertContextActive();}
+#else
+#  define LIBDENG_ASSERT_GL_CONTEXT_ACTIVE()
+#endif
+
+void GL_AssertContextActive(void);
 
 void            GL_Register(void);
 boolean         GL_EarlyInit(void);
@@ -77,15 +89,32 @@ void            GL_UseFog(int yes);
 void            GL_LowRes(void);
 
 void            GL_ModulateTexture(int mode);
-void            GL_SetVSync(boolean on);
-void            GL_SetMultisample(boolean on);
+
+/**
+ * Enables or disables vsync. Changes the value of the vid-vsync variable.
+ * May cause the OpenGL surface to be recreated.
+ *
+ * @param on  @c true to enable vsync, @c false to disable.
+ */
+void GL_SetVSync(boolean on);
+
+/**
+ * Enables or disables multisampling when FSAA is available (vid-fsaa 1). You
+ * cannot enable multisampling if vid-fsaa is 0. Never causes the GL surface or
+ * pixel format to be modified; can be called at any time during the rendering
+ * of a frame.
+ *
+ * @param on  @c true to enable multisampling, @c false to disable.
+ */
+void GL_SetMultisample(boolean on);
+
 void            GL_BlendOp(int op);
 boolean         GL_NewList(DGLuint list, int mode);
 DGLuint         GL_EndList(void);
 void            GL_CallList(DGLuint list);
 void            GL_DeleteLists(DGLuint list, int range);
-boolean         GL_Grab(int x, int y, int width, int height,
-                        dgltexformat_t format, void* buffer);
+/*boolean         GL_Grab(int x, int y, int width, int height,
+                        dgltexformat_t format, void* buffer);*/
 
 void GL_SetMaterialUI2(struct material_s* mat, int wrapS, int wrapT);
 void GL_SetMaterialUI(struct material_s* mat);
@@ -159,5 +188,9 @@ void GL_CalcLuminance(const uint8_t* buffer, int width, int height, int comps,
 
 // Console commands.
 D_CMD(UpdateGammaRamp);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* LIBDENG_GRAPHICS_H */

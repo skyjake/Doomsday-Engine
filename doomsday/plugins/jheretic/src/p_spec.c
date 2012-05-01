@@ -51,6 +51,7 @@
 #include "p_door.h"
 #include "p_floor.h"
 #include "p_plat.h"
+#include "p_user.h"
 #include "p_switch.h"
 #include "d_netsv.h"
 
@@ -92,8 +93,8 @@ typedef struct animdef_s {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void P_CrossSpecialLine(linedef_t* line, int side, mobj_t* thing);
-static void P_ShootSpecialLine(mobj_t* thing, linedef_t* line);
+static void P_CrossSpecialLine(LineDef* line, int side, mobj_t* thing);
+static void P_ShootSpecialLine(mobj_t* thing, LineDef* line);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -385,7 +386,7 @@ void P_InitPicAnims(void)
     loadAnimDefs(anims, false);
 }
 
-boolean P_ActivateLine(linedef_t *ld, mobj_t *mo, int side, int actType)
+boolean P_ActivateLine(LineDef *ld, mobj_t *mo, int side, int actType)
 {
     if(IS_CLIENT)
     {
@@ -418,7 +419,7 @@ boolean P_ActivateLine(linedef_t *ld, mobj_t *mo, int side, int actType)
  * Called every time a thing origin is about to cross a line with
  * a non 0 special.
  */
-static void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
+static void P_CrossSpecialLine(LineDef *line, int side, mobj_t *thing)
 {
     int                 ok;
     xline_t*            xline;
@@ -909,7 +910,7 @@ static void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 /**
  * Called when a thing shoots a special line.
  */
-static void P_ShootSpecialLine(mobj_t* thing, linedef_t* line)
+static void P_ShootSpecialLine(mobj_t* thing, LineDef* line)
 {
     xline_t*            xline = P_ToXLine(line);
 
@@ -957,12 +958,12 @@ static void P_ShootSpecialLine(mobj_t* thing, linedef_t* line)
 /**
  * Called every tic frame that the player origin is in a special sector.
  */
-void P_PlayerInSpecialSector(player_t *player)
+void P_PlayerInSpecialSector(player_t* player)
 {
-    sector_t *sector = P_GetPtrp(player->plr->mo->subsector, DMU_SECTOR);
+    Sector *sector = P_GetPtrp(player->plr->mo->bspLeaf, DMU_SECTOR);
 
     // Falling, not all the way down yet?
-    if(player->plr->mo->pos[VZ] != P_GetFloatp(sector, DMU_FLOOR_HEIGHT))
+    if(!FEQUAL(player->plr->mo->origin[VZ], P_GetDoublep(sector, DMU_FLOOR_HEIGHT)))
         return;
 
     // Has hitten ground.
@@ -1059,10 +1060,10 @@ void P_UpdateSpecials(void)
 {
 #define PLANE_MATERIAL_SCROLLUNIT (8.f/35*2)
 
-    uint                i;
-    float               x;
-    linedef_t*          line;
-    sidedef_t*          side;
+    uint i;
+    float x;
+    LineDef* line;
+    SideDef* side;
 
     // Extended lines and sectors.
     XG_Ticker();
@@ -1070,8 +1071,8 @@ void P_UpdateSpecials(void)
     // Update scrolling plane materials.
     for(i = 0; i < numsectors; ++i)
     {
-        xsector_t*          sect = P_ToXSector(P_ToPtr(DMU_SECTOR, i));
-        float               texOff[2];
+        xsector_t* sect = P_ToXSector(P_ToPtr(DMU_SECTOR, i));
+        float texOff[2];
 
         switch(sect->special)
         {
@@ -1181,10 +1182,10 @@ void P_UpdateSpecials(void)
 void P_SpawnSpecials(void)
 {
     uint        i;
-    linedef_t     *line;
+    LineDef    *line;
     xline_t    *xline;
     iterlist_t *list;
-    sector_t   *sec;
+    Sector     *sec;
     xsector_t  *xsec;
 
     // Init special SECTORs.
@@ -1325,14 +1326,14 @@ void P_InitLava(void)
 
 void P_PlayerInWindSector(player_t* player)
 {
-    static const float pushTab[5] = {
+    static const coord_t pushTab[5] = {
         2048.0 / FRACUNIT * 5,
         2048.0 / FRACUNIT * 10,
         2048.0 / FRACUNIT * 25,
         2048.0 / FRACUNIT * 30,
         2048.0 / FRACUNIT * 35
     };
-    sector_t* sector = P_GetPtrp(player->plr->mo->subsector, DMU_SECTOR);
+    Sector* sector = P_GetPtrp(player->plr->mo->bspLeaf, DMU_SECTOR);
     xsector_t* xsector = P_ToXSector(sector);
 
     switch(xsector->special)
@@ -1465,7 +1466,7 @@ void P_AmbientSound(void)
     } while(done == false);
 }
 
-boolean P_UseSpecialLine2(mobj_t* mo, linedef_t* line, int side)
+boolean P_UseSpecialLine2(mobj_t* mo, LineDef* line, int side)
 {
     xline_t            *xline = P_ToXLine(line);
 

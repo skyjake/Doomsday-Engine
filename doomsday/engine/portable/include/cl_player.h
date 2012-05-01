@@ -1,4 +1,4 @@
-/**\file
+/**\file cl_player.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,11 +23,11 @@
  */
 
 /**
- * cl_player.h: Clientside Player Management
+ * Clientside Player Management
  */
 
-#ifndef __DOOMSDAY_CLIENT_PLAYER_H__
-#define __DOOMSDAY_CLIENT_PLAYER_H__
+#ifndef LIBDENG_CLIENT_PLAYER_H
+#define LIBDENG_CLIENT_PLAYER_H
 
 #include "cl_mobj.h"
 
@@ -45,16 +45,30 @@ typedef struct clplayerstate_s {
     thid_t          pendingFixTargetClMobjId;
     angle_t         pendingAngleFix;
     float           pendingLookDirFix;
-    float           pendingPosFix[3];
-    float           pendingMomFix[3];
+    coord_t         pendingOriginFix[3];
+    coord_t         pendingMomFix[3];
 } clplayerstate_t;
 
 extern float pspMoveSpeed;
 extern float cplrThrustMul;
 
 void            Cl_InitPlayers(void);
-void            ClPlayer_MoveLocal(float dx, float dy, float dz, boolean onground);
-void            ClPlayer_UpdatePos(int plrnum);
+
+/**
+ * Used in DEMOS. (Not in regular netgames.)
+ * Applies the given dx and dy to the local player's coordinates.
+ *
+ * @param z             Absolute viewpoint height.
+ * @param onground      If @c true the mobj's Z will be set to floorz, and
+ *                      the player's viewheight is set so that the viewpoint
+ *                      height is param 'z'.
+ *                      If @c false the mobj's Z will be param 'z' and
+ *                      viewheight is zero.
+ */
+void ClPlayer_MoveLocal(coord_t dx, coord_t dy, coord_t dz, boolean onground);
+
+void ClPlayer_UpdateOrigin(int plrnum);
+
 //void            ClPlayer_CoordsReceived(void);
 void            ClPlayer_HandleFix(void);
 void            ClPlayer_ApplyPendingFixes(int plrNum);
@@ -64,4 +78,4 @@ mobj_t         *ClPlayer_LocalGameMobj(int plrNum);
 struct mobj_s  *ClPlayer_ClMobj(int plrNum);
 boolean         ClPlayer_IsFreeToMove(int plrnum);
 
-#endif
+#endif /// LIBDENG_CLIENT_PLAYER_H

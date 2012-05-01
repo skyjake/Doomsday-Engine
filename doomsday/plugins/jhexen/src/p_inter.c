@@ -590,7 +590,7 @@ boolean P_GivePower(player_t *plr, powertype_t power)
             plr->powers[power] = FLIGHTTICS;
             plr->plr->mo->flags2 |= MF2_FLY;
             plr->plr->mo->flags |= MF_NOGRAVITY;
-            if(plr->plr->mo->pos[VZ] <= plr->plr->mo->floorZ)
+            if(plr->plr->mo->origin[VZ] <= plr->plr->mo->floorZ)
             {
                 plr->flyHeight = 10; // Thrust the plr in the air a bit.
                 plr->plr->flags |= DDPF_FIXMOM;
@@ -1195,23 +1195,21 @@ static boolean giveItem(player_t* plr, itemtype_t item)
 
 void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
 {
-    player_t*           player;
-    float               delta;
-    itemtype_t          item;
-    boolean             wasUsed = false, removeItem = false;
+    player_t* player;
+    coord_t delta;
+    itemtype_t item;
+    boolean wasUsed = false, removeItem = false;
 
-    if(IS_CLIENT)
-        return;
+    if(IS_CLIENT) return;
 
-    delta = special->pos[VZ] - toucher->pos[VZ];
+    delta = special->origin[VZ] - toucher->origin[VZ];
     if(delta > toucher->height || delta < -32)
     {   // Out of reach.
         return;
     }
 
     // Dead thing touching (can happen with a sliding player corpse).
-    if(toucher->health <= 0)
-        return;
+    if(toucher->health <= 0) return;
 
     player = toucher->player;
 
@@ -1621,7 +1619,7 @@ void P_KillMobj(mobj_t* source, mobj_t* target)
     {   // Normal death.
         if((state = P_GetState(target->type, SN_XDEATH)) != S_NULL &&
            target->type == MT_FIREDEMON &&
-           target->pos[VZ] <= target->floorZ + 2)
+           target->origin[VZ] <= target->floorZ + 2)
         {
             // This is to fix the imps' staying in fall state.
             P_MobjChangeState(target, state);
@@ -1638,12 +1636,12 @@ void P_KillMobj(mobj_t* source, mobj_t* target)
 /**
  * @return              @c true, if the player gets turned into a pig.
  */
-boolean P_MorphPlayer(player_t *player)
+boolean P_MorphPlayer(player_t* player)
 {
-    mobj_t         *pmo, *fog, *beastMo;
-    float           pos[3];
-    angle_t         angle;
-    int             oldFlags2;
+    mobj_t* pmo, *fog, *beastMo;
+    coord_t pos[3];
+    angle_t angle;
+    int oldFlags2;
 
     if(player->powers[PT_INVULNERABILITY])
         return false; // Immune when invulnerable.
@@ -1653,18 +1651,18 @@ boolean P_MorphPlayer(player_t *player)
 
     pmo = player->plr->mo;
 
-    pos[VX] = pmo->pos[VX];
-    pos[VY] = pmo->pos[VY];
-    pos[VZ] = pmo->pos[VZ];
+    pos[VX] = pmo->origin[VX];
+    pos[VY] = pmo->origin[VY];
+    pos[VZ] = pmo->origin[VZ];
     angle = pmo->angle;
     oldFlags2 = pmo->flags2;
 
-    if(!(beastMo = P_SpawnMobj3fv(MT_PIGPLAYER, pos, angle, 0)))
+    if(!(beastMo = P_SpawnMobj(MT_PIGPLAYER, pos, angle, 0)))
         return false;
 
     P_MobjChangeState(pmo, S_FREETARGMOBJ);
 
-    if((fog = P_SpawnMobj3f(MT_TFOG, pos[VX], pos[VY],
+    if((fog = P_SpawnMobjXYZ(MT_TFOG, pos[VX], pos[VY],
                             pos[VZ] + TELEFOGHEIGHT, angle + ANG180, 0)))
         S_StartSound(SFX_TELEPORT, fog);
 
@@ -1682,18 +1680,18 @@ boolean P_MorphPlayer(player_t *player)
 
     player->morphTics = MORPHTICS;
     player->update |= PSF_MORPH_TIME | PSF_HEALTH;
-    player->plr->flags |= DDPF_FIXPOS | DDPF_FIXMOM;
+    player->plr->flags |= DDPF_FIXORIGIN | DDPF_FIXMOM;
     P_ActivateMorphWeapon(player);
     return true;
 }
 
-boolean P_MorphMonster(mobj_t *actor)
+boolean P_MorphMonster(mobj_t* actor)
 {
-    mobj_t*         master, *monster, *fog;
-    mobjtype_t      moType;
-    float           pos[3];
-    mobj_t          oldMonster;
-    angle_t         oldAngle;
+    mobj_t* master, *monster, *fog;
+    mobjtype_t moType;
+    coord_t pos[3];
+    mobj_t oldMonster;
+    angle_t oldAngle;
 
     if(actor->player)
         return (false);
@@ -1715,21 +1713,21 @@ boolean P_MorphMonster(mobj_t *actor)
         break;
     }
 
-    //// \fixme Do this properly!
+    /// @fixme Do this properly!
     oldMonster = *actor;
 
-    pos[VX] = actor->pos[VX];
-    pos[VY] = actor->pos[VY];
-    pos[VZ] = actor->pos[VZ];
+    pos[VX] = actor->origin[VX];
+    pos[VY] = actor->origin[VY];
+    pos[VZ] = actor->origin[VZ];
     oldAngle = actor->angle;
 
-    if(!(monster = P_SpawnMobj3fv(MT_PIG, pos, oldMonster.angle, 0)))
+    if(!(monster = P_SpawnMobj(MT_PIG, pos, oldMonster.angle, 0)))
         return false;
 
     P_MobjRemoveFromTIDList(actor);
     P_MobjChangeState(actor, S_FREETARGMOBJ);
 
-    if((fog = P_SpawnMobj3f(MT_TFOG, pos[VX], pos[VY],
+    if((fog = P_SpawnMobjXYZ(MT_TFOG, pos[VX], pos[VY],
                             pos[VZ] + TELEFOGHEIGHT, oldAngle + ANG180, 0)))
         S_StartSound(SFX_TELEPORT, fog);
 
@@ -1760,14 +1758,14 @@ boolean P_MorphMonster(mobj_t *actor)
 
 void P_AutoUseHealth(player_t* player, int saveHealth)
 {
-    uint                i, count;
-    int                 plrnum = player - players;
-    int                 normalCount = P_InventoryCount(plrnum, IIT_HEALTH);
-    int                 superCount = P_InventoryCount(plrnum, IIT_SUPERHEALTH);
+    uint i, count;
+    int plrnum = player - players;
+    int normalCount = P_InventoryCount(plrnum, IIT_HEALTH);
+    int superCount = P_InventoryCount(plrnum, IIT_SUPERHEALTH);
 
     if(!player->plr->mo) return;
 
-    //// \todo Do this in the inventory code?
+    /// @todo Do this in the inventory code?
     if(gameSkill == SM_BABY && normalCount * 25 >= saveHealth)
     {
         // Use quartz flasks.
@@ -1835,7 +1833,7 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
 
 /**
  * Damages both enemies and players
- * \note 'source' and 'inflictor' are the same for melee attacks.
+ * @note 'source' and 'inflictor' are the same for melee attacks.
  * 'source' can be NULL for slime, barrel explosions and other environmental
  * stuff.
  *
@@ -1844,19 +1842,19 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
  * @param source            Is the mobj to target after taking damage
  *                          creature or @c NULL.
  */
-int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
-                  int damageP, boolean stomping, boolean skipNetworkCheck)
+int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damageP,
+    boolean stomping, boolean skipNetworkCheck)
 {
-    uint            an;
-    angle_t         angle;
-    int             i, temp, originalHealth;
-    float           thrust, saved, savedPercent;
-    player_t*       player;
-    mobj_t*         master;
-    int             damage;
+    uint an;
+    angle_t angle;
+    int i, temp, originalHealth;
+    coord_t thrust;
+    float saved, savedPercent;
+    player_t* player;
+    mobj_t* master;
+    int damage;
 
-    if(!target)
-        return 0; // Wha?
+    if(!target) return 0; // Wha?
 
     originalHealth = target->health;
 
@@ -2003,14 +2001,14 @@ int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
 
         case MT_MINOTAUR:
             if(inflictor->flags & MF_SKULLFLY)
-            {   // Slam only when in charge mode.
-                uint            an;
-                int             damageDone;
-                angle_t         angle;
-                float           thrust;
+            {
+                // Slam only when in charge mode.
+                uint an;
+                int damageDone;
+                angle_t angle;
+                coord_t thrust;
 
-                angle = R_PointToAngle2(inflictor->pos[VX], inflictor->pos[VY],
-                                        target->pos[VX], target->pos[VY]);
+                angle = M_PointToAngle2(inflictor->origin, target->origin);
 
                 an = angle >> ANGLETOFINESHIFT;
                 thrust = 16 + FIX2FLT(P_Random() << 10);
@@ -2110,9 +2108,7 @@ int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
     if(inflictor && (!source || !source->player) &&
        !(inflictor->flags2 & MF2_NODMGTHRUST))
     {
-        angle =
-            R_PointToAngle2(inflictor->pos[VX], inflictor->pos[VY],
-                            target->pos[VX], target->pos[VY]);
+        angle = M_PointToAngle2(inflictor->origin, target->origin);
 
         if(!target->info->mass)
             Con_Error("P_DamageMobj: No target->info->mass!\n");
@@ -2121,7 +2117,7 @@ int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
 
         // Make fall forwards sometimes.
         if((damage < 40) && (damage > target->health) &&
-           (target->pos[VZ] - inflictor->pos[VZ] > 64) && (P_Random() & 1))
+           (target->origin[VZ] - inflictor->origin[VZ] > 64) && (P_Random() & 1))
         {
             angle += ANG180;
             thrust *= 4;
@@ -2339,10 +2335,10 @@ int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
     return originalHealth - target->health;
 }
 
-int P_FallingDamage(player_t *player)
+int P_FallingDamage(player_t* player)
 {
-    int             damage;
-    float           mom, dist;
+    int damage;
+    coord_t mom, dist;
 
     mom = fabs(player->plr->mo->mom[MZ]);
     dist = mom * (16.0f / 23);

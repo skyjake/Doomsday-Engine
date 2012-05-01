@@ -109,14 +109,11 @@ int PIT_MobjTargetable(mobj_t *mo, void *data)
 
             if(P_CheckSight(params->source, mo))
             {
-                angle_t             angle;
-                mobj_t             *master;
+                angle_t angle;
+                mobj_t* master;
 
                 master = params->source->target;
-                angle =
-                    R_PointToAngle2(master->pos[VX], master->pos[VY],
-                                    mo->pos[VY], mo->pos[VY]) -
-                                    master->angle;
+                angle = M_PointToAngle2(master->origin, mo->origin) - master->angle;
                 angle >>= 24;
                 if(angle > 226 || angle < 30)
                 {
@@ -153,19 +150,19 @@ int PIT_MobjTargetable(mobj_t *mo, void *data)
  *
  * @return              Ptr to the targeted mobj if found, ELSE @c NULL;
  */
-mobj_t* P_RoughMonsterSearch(mobj_t *mo, int distance)
+mobj_t* P_RoughMonsterSearch(mobj_t* mo, int distance)
 {
 #define MAPBLOCKUNITS       128
 #define MAPBLOCKSHIFT       (FRACBITS+7)
 
-    int             i, block[2], startBlock[2];
-    int             count;
-    float           mapOrigin[2];
-    AABoxf box;
+    int i, block[2], startBlock[2];
+    int count;
+    coord_t mapOrigin[2];
+    AABoxd box;
     mobjtargetableparams_t params;
 
-    mapOrigin[VX] = *((float*) DD_GetVariable(DD_MAP_MIN_X));
-    mapOrigin[VY] = *((float*) DD_GetVariable(DD_MAP_MIN_Y));
+    mapOrigin[VX] = *((coord_t*) DD_GetVariable(DD_MAP_MIN_X));
+    mapOrigin[VY] = *((coord_t*) DD_GetVariable(DD_MAP_MIN_Y));
 
     // The original blockmap generator added a border of 8 units.
     mapOrigin[VX] -= 8;
@@ -178,8 +175,8 @@ mobj_t* P_RoughMonsterSearch(mobj_t *mo, int distance)
     distance /= MAPBLOCKUNITS;
 
     // Determine the start block.
-    startBlock[VX] = FLT2FIX(mo->pos[VX] - mapOrigin[VX]) >> MAPBLOCKSHIFT;
-    startBlock[VY] = FLT2FIX(mo->pos[VY] - mapOrigin[VY]) >> MAPBLOCKSHIFT;
+    startBlock[VX] = FLT2FIX(mo->origin[VX] - mapOrigin[VX]) >> MAPBLOCKSHIFT;
+    startBlock[VY] = FLT2FIX(mo->origin[VY] - mapOrigin[VY]) >> MAPBLOCKSHIFT;
 
     box.minX = mapOrigin[VX] + startBlock[VX] * MAPBLOCKUNITS;
     box.minY = mapOrigin[VY] + startBlock[VY] * MAPBLOCKUNITS;
@@ -189,7 +186,8 @@ mobj_t* P_RoughMonsterSearch(mobj_t *mo, int distance)
     // Check the first block.
     VALIDCOUNT++;
     if(P_MobjsBoxIterator(&box, PIT_MobjTargetable, &params))
-    {   // Found a target right away!
+    {
+        // Found a target right away!
         return params.target;
     }
 

@@ -52,7 +52,7 @@ extern int armorClass[4];
 
 extern classinfo_t classInfo[];
 
-void            P_Thrust(player_t *player, angle_t angle, float move);
+void            P_Thrust(player_t *player, angle_t angle, coord_t move);
 boolean         P_IsPlayerOnGround(player_t *player);
 void            P_CheckPlayerJump(player_t *player);
 void            P_MovePlayer(player_t *player);

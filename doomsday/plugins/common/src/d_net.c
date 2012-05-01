@@ -154,8 +154,7 @@ int D_NetServerStarted(int before)
 {
     uint netMap, netEpisode;
 
-    if(before)
-        return true;
+    if(before) return true;
 
     G_StopDemo();
 
@@ -167,6 +166,7 @@ int D_NetServerStarted(int before)
 #elif __JHERETIC__
     cfg.playerClass[0] = PCLASS_PLAYER;
 #endif
+    P_ResetPlayerRespawnClasses();
 
     // Set the game parameters.
     deathmatch = cfg.netDeathmatch;
@@ -212,6 +212,8 @@ int D_NetServerClose(int before)
 {
     if(!before)
     {
+        P_ResetPlayerRespawnClasses();
+
         // Restore normal game state.
         deathmatch = false;
         noMonstersParm = false;
@@ -228,8 +230,7 @@ int D_NetServerClose(int before)
 int D_NetConnect(int before)
 {
     // We do nothing before the actual connection is made.
-    if(before)
-        return true;
+    if(before) return true;
 
     // After connecting we tell the server a bit about ourselves.
     NetCl_SendPlayerInfo();
@@ -329,7 +330,14 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
     {
         int oldecho = cfg.echoMsg;
 
-        dd_snprintf(msgBuff, NETBUFFER_MAXMESSAGE, "%s: %s", Net_GetPlayerName(plrNumber), (const char *) data);
+        if(plrNumber > 0)
+        {
+            dd_snprintf(msgBuff, NETBUFFER_MAXMESSAGE, "%s: %s", Net_GetPlayerName(plrNumber), (const char *) data);
+        }
+        else
+        {
+            dd_snprintf(msgBuff, NETBUFFER_MAXMESSAGE, "[sysop] %s", (const char *) data);
+        }
 
         // The chat message is already echoed by the console.
         cfg.echoMsg = false;
@@ -384,10 +392,9 @@ int D_NetWorldEvent(int type, int parm, void* data)
     case DDWE_SECTOR_SOUND:
         // High word: sector number, low word: sound id.
         if(parm & 0xffff)
-            S_StartSound(parm & 0xffff, (mobj_t*) P_GetPtr(DMU_SECTOR, parm >> 16, DMU_SOUND_ORIGIN));
+            S_SectorSound(P_ToPtr(DMU_SECTOR, parm >> 16), parm & 0xffff);
         else
-            S_StopSound(0, (mobj_t *) P_GetPtr(DMU_SECTOR, parm >> 16,
-                                               DMU_SOUND_ORIGIN));
+            S_SectorStopSounds(P_ToPtr(DMU_SECTOR, parm >> 16));
 
         break;
 
@@ -780,7 +787,7 @@ D_CMD(SetColor)
 #if __JHEXEN__
 D_CMD(SetClass)
 {
-    playerclass_t       newClass = atoi(argv[1]);
+    playerclass_t newClass = atoi(argv[1]);
 
     if(!(newClass < NUM_PLAYER_CLASSES))
         return false;
@@ -788,14 +795,16 @@ D_CMD(SetClass)
     if(!PCLASS_INFO(newClass)->userSelectable)
         return false;
 
-    cfg.netClass = newClass;
+    cfg.netClass = newClass; // Stored as a cvar.
+
     if(IS_CLIENT)
     {
-        // Tell the server that we've changed our class.
+        // Tell the server that we want to change our class.
         NetCl_SendPlayerInfo();
     }
     else
     {
+        // On the server (or singleplayer) we can do an immediate change.
         P_PlayerChangeClass(&players[CONSOLEPLAYER], cfg.netClass);
     }
 

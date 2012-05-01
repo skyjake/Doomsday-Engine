@@ -38,24 +38,26 @@
 #include "p_map.h"
 #include "dmu_lib.h"
 
-#define DROPOFFMOMENTUM_THRESHOLD (1.0f / 4)
+#define DROPOFFMOMENTUM_THRESHOLD (1.0 / 4)
 
 /// Threshold for killing momentum of a freely moving object affected by friction.
-#define WALKSTOP_THRESHOLD      (0.062484741f) // FIX2FLT(0x1000-1)
+#define WALKSTOP_THRESHOLD      (0.062484741) // FIX2FLT(0x1000-1)
 
 /// Threshold for stopping walk animation.
-#define STANDSPEED              (1.0f/2)       // FIX2FLT(0x8000)
+#define STANDSPEED              (1.0 / 2) // FIX2FLT(0x8000)
 
-static float getFriction(mobj_t* mo)
+static coord_t getFriction(mobj_t* mo)
 {
-    if((mo->flags2 & MF2_FLY) && !(mo->pos[VZ] <= mo->floorZ) && !mo->onMobj)
-    {   // Airborne friction.
+    if((mo->flags2 & MF2_FLY) && !(mo->origin[VZ] <= mo->floorZ) && !mo->onMobj)
+    {
+        // Airborne "friction".
         return FRICTION_FLY;
     }
 
 #ifdef __JHERETIC__
-    if(P_ToXSector(P_GetPtrp(mo->subsector, DMU_SECTOR))->special == 15)
-    {   // Friction_Low
+    if(P_ToXSector(P_GetPtrp(mo->bspLeaf, DMU_SECTOR))->special == 15)
+    {
+        // Low friction.
         return FRICTION_LOW;
     }
 #endif
@@ -81,12 +83,14 @@ void Mobj_XYMoveStopping(mobj_t* mo)
     }
 
     if(mo->flags & (MF_MISSILE | MF_SKULLFLY))
-    {   // No friction for missiles.
+    {
+        // No friction for missiles.
         return;
     }
 
-    if(mo->pos[VZ] > mo->floorZ && !mo->onMobj && !(mo->flags2 & MF2_FLY))
-    {   // No friction when falling.
+    if(mo->origin[VZ] > mo->floorZ && !mo->onMobj && !(mo->flags2 & MF2_FLY))
+    {
+        // No friction when falling.
         return;
     }
 
@@ -103,7 +107,7 @@ void Mobj_XYMoveStopping(mobj_t* mo)
             if(!INRANGE_OF(mo->mom[MX], 0, DROPOFFMOMENTUM_THRESHOLD) ||
                !INRANGE_OF(mo->mom[MY], 0, DROPOFFMOMENTUM_THRESHOLD))
             {
-                if(mo->floorZ != P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT))
+                if(!FEQUAL(mo->floorZ, P_GetDoublep(mo->bspLeaf, DMU_FLOOR_HEIGHT)))
                     return;
             }
         }
@@ -147,7 +151,7 @@ void Mobj_XYMoveStopping(mobj_t* mo)
     }
     else
     {
-        float friction = getFriction(mo);
+        coord_t friction = getFriction(mo);
         mo->mom[MX] *= friction;
         mo->mom[MY] *= friction;
     }
@@ -200,15 +204,14 @@ boolean Mobj_LookForPlayers(mobj_t* mo, boolean allAround)
 
         if(!allAround)
         {
-            angle_t an = R_PointToAngle2(mo->pos[VX], mo->pos[VY],
-                                         plrmo->pos[VX], plrmo->pos[VY]);
+            angle_t an = M_PointToAngle2(mo->origin, plrmo->origin);
             an -= mo->angle;
 
             if(an > ANG90 && an < ANG270)
             {
                 // If real close, react anyway.
-                float dist = P_ApproxDistance(plrmo->pos[VX] - mo->pos[VX],
-                                              plrmo->pos[VY] - mo->pos[VY]);
+                coord_t dist = M_ApproxDistance(plrmo->origin[VX] - mo->origin[VX],
+                                                plrmo->origin[VY] - mo->origin[VY]);
                 // Behind us?
                 if(dist > MELEERANGE) continue;
             }
@@ -218,9 +221,9 @@ boolean Mobj_LookForPlayers(mobj_t* mo, boolean allAround)
         // If player is invisible we may not detect if too far or randomly.
         if(plrmo->flags & MF_SHADOW)
         {
-            if((P_ApproxDistance(plrmo->pos[VX] - mo->pos[VX],
-                                 plrmo->pos[VY] - mo->pos[VY]) > 2 * MELEERANGE) &&
-               P_ApproxDistance(plrmo->mom[MX], plrmo->mom[MY]) < 5)
+            if((M_ApproxDistance(plrmo->origin[VX] - mo->origin[VX],
+                                 plrmo->origin[VY] - mo->origin[VY]) > 2 * MELEERANGE) &&
+               M_ApproxDistance(plrmo->mom[MX], plrmo->mom[MY]) < 5)
             {
                 // Too far; can't detect.
                 continue;

@@ -26,30 +26,11 @@
 includeGuard('AbstractUnstablePackage');
 
 require_once('abstractpackage.class.php');
-require_once(dirname(__FILE__) . '/../builderproduct.interface.php');
 
-abstract class AbstractUnstablePackage extends AbstractPackage implements iBuilderProduct
+abstract class AbstractUnstablePackage extends AbstractPackage
 {
-    protected $buildId = 0; /// Unique.
-
-    protected $compileLogUri;
-    protected $compileWarnCount;
-    protected $compileErrorCount;
-
-    public function __construct($platformId=PID_ANY, $title=NULL, $version=NULL,
-        $downloadUri=NULL, $compileLogUri=NULL, $compileWarnCount=0, $compileErrorCount=0)
-    {
-        parent::__construct($platformId, $title, $version, $downloadUri);
-
-        if(!is_null($compileLogUri))
-            $this->compileLogUri = "$compileLogUri";
-
-        $this->compileWarnCount  = intval($compileWarnCount);
-        $this->compileErrorCount = intval($compileErrorCount);
-    }
-
     // Override implementation in AbstractPackage.
-    public function composeFullTitle($includeVersion=true, $includePlatformName=true, $includeBuildId=true)
+    public function composeFullTitle($includeVersion=true, $includePlatformName=true)
     {
         $includeVersion = (boolean) $includeVersion;
         $includeBuildId = (boolean) $includeBuildId;
@@ -57,8 +38,6 @@ abstract class AbstractUnstablePackage extends AbstractPackage implements iBuild
         $title = $this->title;
         if($includeVersion && isset($this->version))
             $title .= ' '. $this->version;
-        if($includeBuildId && $this->buildId !== 0)
-            $title .= ' Build'. $this->buildId;
         if($includePlatformName && $this->platformId !== PID_ANY)
         {
             $plat = &BuildRepositoryPlugin::platform($this->platformId);
@@ -77,43 +56,5 @@ abstract class AbstractUnstablePackage extends AbstractPackage implements iBuild
 
         parent::populateGraphTemplate($tpl);
         $tpl['is_unstable'] = true;
-
-        $build = $FrontController->findPlugin('BuildRepository')->buildByUniqueId($this->buildId);
-        $tpl['build_startdate'] = date(DATE_ATOM, $build->startDate());
-        $tpl['build_uniqueid'] = $this->buildId;
-
-        $tpl['compile_loguri'] = $this->compileLogUri;
-        $tpl['compile_errorcount'] = $this->compileErrorCount;
-        $tpl['compile_warncount'] = $this->compileWarnCount;
-    }
-
-    // Implements iBuilderProduct.
-    public function setBuildUniqueId($id)
-    {
-        $this->buildId = intval($id);
-    }
-
-    // Implements iBuilderProduct.
-    public function buildUniqueId()
-    {
-        return $this->buildId;
-    }
-
-    // Implements iBuilderProduct.
-    public function &compileLogUri()
-    {
-        return $this->compileLogUri;
-    }
-
-    // Implements iBuilderProduct.
-    public function compileWarnCount()
-    {
-        return $this->compileWarnCount;
-    }
-
-    // Implements iBuilderProduct.
-    public function compileErrorCount()
-    {
-        return $this->compileErrorCount;
     }
 }

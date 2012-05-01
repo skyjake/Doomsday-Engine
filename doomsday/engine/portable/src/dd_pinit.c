@@ -47,7 +47,6 @@
 
 #include "m_args.h"
 #include "def_main.h"
-#include "huffman.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -83,28 +82,6 @@ int DD_CheckArg(char* tag, const char** value)
     if(value && next)
         *value = next;
     return 1;
-}
-
-void DD_ErrorBox(boolean error, char* format, ...)
-{
-    char buff[200];
-    va_list args;
-
-    va_start(args, format);
-    dd_vsnprintf(buff, sizeof(buff), format, args);
-    va_end(args);
-
-#ifdef WIN32
-    DD_Win32_SuspendMessagePump(true);
-    MessageBox(NULL, WIN_STRING(buff),
-               TEXT(DOOMSDAY_NICENAME) DOOMSDAY_VERSION_TEXT_WSTR,
-               (UINT) (MB_OK | (error ? MB_ICONERROR : MB_ICONWARNING)));
-    DD_Win32_SuspendMessagePump(false);
-#endif
-
-#ifdef UNIX
-    fputs(buff, stderr);
-#endif
 }
 
 /**
@@ -191,40 +168,35 @@ void DD_ConsoleInit(void)
 {
     const char* outFileName = "doomsday.out";
     ddstring_t nativePath;
+    boolean outFileOk;
 
     DD_CheckArg("-out", &outFileName);
     Str_Init(&nativePath); Str_Set(&nativePath, outFileName);
     F_ToNativeSlashes(&nativePath, &nativePath);
 
     // We'll redirect stdout to a log file.
-    outFile = fopen(Str_Text(&nativePath), "w");
+    outFileOk = LegacyCore_SetLogFile(de2LegacyCore, Str_Text(&nativePath));
+    //outFile = fopen(Str_Text(&nativePath), "w");
     Str_Free(&nativePath);
-    if(!outFile)
+
+    if(!outFileOk)
     {
-        DD_ErrorBox(false, "Couldn't open message output file.");
+        Sys_MessageBoxf(MBT_WARNING, "Console", "Couldn't open message output file: %s",
+                        LegacyCore_LogFile(de2LegacyCore));
     }
-    else
+
+    // Get the console online ASAP.
+    Con_Init();
+
+    Con_Message("Executable: " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_FULLTEXT ".\n");
+
+    // Print the used command line.
+    if(verbose)
     {
-        setbuf(outFile, NULL); // Don't buffer much.
-
-        // Get the console online ASAP.
-        if(!Con_Init())
-        {
-            DD_ErrorBox(true, "Error initializing console.");
-        }
-        else
-        {
-            Con_Message("Executable: " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_FULLTEXT ".\n");
-
-            // Print the used command line.
-            if(verbose)
-            {
-                int p;
-                Con_Message("Command line (%i strings):\n", Argc());
-                for(p = 0; p < Argc(); ++p)
-                    Con_Message("  %i: %s\n", p, Argv(p));
-            }
-        }
+        int p;
+        Con_Message("Command line (%i strings):\n", Argc());
+        for(p = 0; p < Argc(); ++p)
+            Con_Message("  %i: %s\n", p, Argv(p));
     }
 }
 
@@ -256,15 +228,16 @@ void DD_ShutdownAll(void)
     Def_Destroy();
     F_ShutdownResourceLocator();
     F_Shutdown();
-    Huffman_Shutdown();
     ArgShutdown();
     Z_Shutdown();
     Sys_ShutdownWindowManager();
 
+    /*
     // Close the message output file.
     if(outFile)
     {
         fclose(outFile);
         outFile = NULL;
     }
+    */
 }

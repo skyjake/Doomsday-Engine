@@ -61,55 +61,55 @@ static zblockset_t *shadowLinksBlockSet;
  * from line2, while also being the nearest point to the origin (in
  * case the lines are parallel).
  */
-void R_CornerNormalPoint(const pvec2_t line1, float dist1,
-                         const pvec2_t line2, float dist2, pvec2_t point,
-                         pvec2_t lp)
+void R_CornerNormalPoint(const pvec2d_t line1, double dist1,
+                         const pvec2d_t line2, double dist2, pvec2d_t point,
+                         pvec2d_t lp)
 {
-    float               len1, len2;
-    vec2_t              norm1, norm2;
+    double len1, len2;
+    vec2d_t norm1, norm2;
 
     // Length of both lines.
-    len1 = V2_Length(line1);
-    len2 = V2_Length(line2);
+    len1 = V2d_Length(line1);
+    len2 = V2d_Length(line2);
 
     // Calculate normals for both lines.
-    V2_Set(norm1, -line1[VY] / len1 * dist1, line1[VX] / len1 * dist1);
-    V2_Set(norm2, line2[VY] / len2 * dist2, -line2[VX] / len2 * dist2);
+    V2d_Set(norm1, -line1[VY] / len1 * dist1, line1[VX] / len1 * dist1);
+    V2d_Set(norm2, line2[VY] / len2 * dist2, -line2[VX] / len2 * dist2);
 
     // Do we need to calculate the extended points, too?  Check that
     // the extension does not bleed too badly outside the legal shadow
     // area.
     if(lp)
     {
-        V2_Set(lp, line2[VX] / len2 * dist2, line2[VY] / len2 * dist2);
+        V2d_Set(lp, line2[VX] / len2 * dist2, line2[VY] / len2 * dist2);
     }
 
     // Are the lines parallel?  If so, they won't connect at any
     // point, and it will be impossible to determine a corner point.
-    if(V2_IsParallel(line1, line2))
+    if(V2d_IsParallel(line1, line2))
     {
         // Just use a normal as the point.
         if(point)
-            V2_Copy(point, norm1);
+            V2d_Copy(point, norm1);
         return;
     }
 
     // Find the intersection of normal-shifted lines.  That'll be our
     // corner point.
     if(point)
-        V2_Intersection(norm1, line1, norm2, line2, point);
+        V2d_Intersection(norm1, line1, norm2, line2, point);
 }
 
 /**
  * @return          The width (world units) of the shadow edge.
  *                  It is scaled depending on the length of the edge.
  */
-float R_ShadowEdgeWidth(const pvec2_t edge)
+double R_ShadowEdgeWidth(const pvec2d_t edge)
 {
-    float       length = V2_Length(edge);
-    float       normalWidth = 20;   //16;
-    float       maxWidth = 60;
-    float       w;
+    double length = V2d_Length(edge);
+    double normalWidth = 20;   //16;
+    double maxWidth = 60;
+    double w;
 
     // A long edge?
     if(length > 600)
@@ -130,44 +130,44 @@ float R_ShadowEdgeWidth(const pvec2_t edge)
  *
  * @param vtx           Ptr to the vertex being updated.
  */
-void R_UpdateVertexShadowOffsets(vertex_t *vtx)
+void R_UpdateVertexShadowOffsets(Vertex* vtx)
 {
-    vec2_t              left, right;
+    vec2d_t left, right;
 
     if(vtx->numLineOwners > 0)
     {
-        lineowner_t        *own, *base;
+        lineowner_t* own, *base;
 
         own = base = vtx->lineOwners;
         do
         {
-            linedef_t          *lineB = own->lineDef;
-            linedef_t          *lineA = own->LO_next->lineDef;
+            LineDef* lineB = own->lineDef;
+            LineDef* lineA = own->LO_next->lineDef;
 
             if(lineB->L_v1 == vtx)
             {
-                right[VX] = lineB->dX;
-                right[VY] = lineB->dY;
+                right[VX] = lineB->direction[VX];
+                right[VY] = lineB->direction[VY];
             }
             else
             {
-                right[VX] = -lineB->dX;
-                right[VY] = -lineB->dY;
+                right[VX] = -lineB->direction[VX];
+                right[VY] = -lineB->direction[VY];
             }
 
             if(lineA->L_v1 == vtx)
             {
-                left[VX] = -lineA->dX;
-                left[VY] = -lineA->dY;
+                left[VX] = -lineA->direction[VX];
+                left[VY] = -lineA->direction[VY];
             }
             else
             {
-                left[VX] = lineA->dX;
-                left[VY] = lineA->dY;
+                left[VX] = lineA->direction[VX];
+                left[VY] = lineA->direction[VY];
             }
 
             // The left side is always flipped.
-            V2_Scale(left, -1);
+            V2d_Scale(left, -1);
 
             R_CornerNormalPoint(left, R_ShadowEdgeWidth(left), right,
                                 R_ShadowEdgeWidth(right),
@@ -180,51 +180,49 @@ void R_UpdateVertexShadowOffsets(vertex_t *vtx)
 }
 
 /**
- * Link a seg to an arbitary subsector for the purposes of shadowing.
+ * Link a half-edge to an arbitary BSP leaf for the purposes of shadowing.
  */
-static void linkShadowLineDefToSSec(linedef_t *line, byte side,
-                                    subsector_t *subsector)
+static void linkShadowLineDefToSSec(LineDef *line, byte side, BspLeaf* bspLeaf)
 {
-    shadowlink_t           *link;
+    shadowlink_t* link;
 
 #ifdef _DEBUG
-// Check the links for dupes!
-{
-shadowlink_t *i;
-
-for(i = subsector->shadows; i; i = i->next)
-    if(i->lineDef == line && i->side == side)
-        Con_Error("R_LinkShadow: Already here!!\n");
-}
+    // Check the links for dupes!
+    { shadowlink_t* i;
+    for(i = bspLeaf->shadows; i; i = i->next)
+    {
+        if(i->lineDef == line && i->side == side)
+            Con_Error("R_LinkShadow: Already here!!\n");
+    }}
 #endif
 
     // We'll need to allocate a new link.
     link = ZBlockSet_Allocate(shadowLinksBlockSet);
 
     // The links are stored into a linked list.
-    link->next = subsector->shadows;
-    subsector->shadows = link;
+    link->next = bspLeaf->shadows;
+    bspLeaf->shadows = link;
     link->lineDef = line;
     link->side = side;
 }
 
 typedef struct shadowlinkerparms_s {
-    linedef_t* lineDef;
+    LineDef* lineDef;
     byte side;
 } shadowlinkerparms_t;
 
 /**
- * If the shadow polygon (parm) contacts the subsector, link the poly
- * to the subsector's shadow list.
+ * If the shadow polygon (parm) contacts the BspLeaf, link the poly
+ * to the BspLeaf's shadow list.
  */
-int RIT_ShadowSubsectorLinker(subsector_t* subsector, void *parm)
+int RIT_ShadowBspLeafLinker(BspLeaf* bspLeaf, void* parm)
 {
     shadowlinkerparms_t* data = (shadowlinkerparms_t*) parm;
-    linkShadowLineDefToSSec(data->lineDef, data->side, subsector);
+    linkShadowLineDefToSSec(data->lineDef, data->side, bspLeaf);
     return false; // Continue iteration.
 }
 
-boolean R_IsShadowingLinedef(linedef_t* line)
+boolean R_IsShadowingLinedef(LineDef* line)
 {
     if(line)
     {
@@ -244,13 +242,13 @@ void R_InitFakeRadioForMap(void)
     uint startTime = Sys_GetRealTime();
 
     shadowlinkerparms_t data;
-    vertex_t* vtx0, *vtx1;
+    Vertex* vtx0, *vtx1;
     lineowner_t* vo0, *vo1;
-    AABoxf bounds;
-    vec2_t point;
+    AABoxd bounds;
+    vec2d_t point;
     uint i, j;
 
-    for(i = 0; i < numVertexes; ++i)
+    for(i = 0; i < NUM_VERTEXES; ++i)
     {
         R_UpdateVertexShadowOffsets(VERTEX_PTR(i));
     }
@@ -258,20 +256,20 @@ void R_InitFakeRadioForMap(void)
     /**
      * The algorithm:
      *
-     * 1. Use the subsector blockmap to look for all the blocks that are
+     * 1. Use the BSP leaf blockmap to look for all the blocks that are
      *    within the linedef's shadow bounding box.
      *
-     * 2. Check the subsectors whose sector is the same as the linedef.
+     * 2. Check the BspLeafs whose sector is the same as the linedef.
      *
-     * 3. If any of the shadow points are in the subsector, or any of the
-     *    shadow edges cross one of the subsector's edges (not parallel),
-     *    link the linedef to the subsector.
+     * 3. If any of the shadow points are in the BSP leaf, or any of the
+     *    shadow edges cross one of the BSP leaf's edges (not parallel),
+     *    link the linedef to the BspLeaf.
      */
     shadowLinksBlockSet = ZBlockSet_New(sizeof(shadowlink_t), 1024, PU_MAP);
 
-    for(i = 0; i < numLineDefs; ++i)
+    for(i = 0; i < NUM_LINEDEFS; ++i)
     {
-        linedef_t* line = LINE_PTR(i);
+        LineDef* line = LINE_PTR(i);
         if(!R_IsShadowingLinedef(line)) continue;
 
         for(j = 0; j < 2; ++j)
@@ -284,22 +282,22 @@ void R_InitFakeRadioForMap(void)
             vo1 = line->L_vo(j^1)->LO_prev;
 
             // Use the extended points, they are wider than inoffsets.
-            V2_Set(point, vtx0->V_pos[VX], vtx0->V_pos[VY]);
-            V2_InitBox(bounds.arvec2, point);
+            V2d_Copy(point, vtx0->origin);
+            V2d_InitBox(bounds.arvec2, point);
 
-            V2_Sum(point, point, vo0->shadowOffsets.extended);
-            V2_AddToBox(bounds.arvec2, point);
+            V2d_Sum(point, point, vo0->shadowOffsets.extended);
+            V2d_AddToBox(bounds.arvec2, point);
 
-            V2_Set(point, vtx1->V_pos[VX], vtx1->V_pos[VY]);
-            V2_AddToBox(bounds.arvec2, point);
+            V2d_Copy(point, vtx1->origin);
+            V2d_AddToBox(bounds.arvec2, point);
 
-            V2_Sum(point, point, vo1->shadowOffsets.extended);
-            V2_AddToBox(bounds.arvec2, point);
+            V2d_Sum(point, point, vo1->shadowOffsets.extended);
+            V2d_AddToBox(bounds.arvec2, point);
 
             data.lineDef = line;
             data.side = j;
 
-            P_SubsectorsBoxIterator(&bounds, line->L_sector(j), RIT_ShadowSubsectorLinker, &data);
+            P_BspLeafsBoxIterator(&bounds, line->L_sector(j), RIT_ShadowBspLeafLinker, &data);
         }
     }
 

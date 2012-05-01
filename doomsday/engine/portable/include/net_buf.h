@@ -25,6 +25,10 @@
 
 #include "dd_types.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Send Packet flags:
 #define SPF_REBOUND     0x00020000 // Write only to local loopback
 #define SPF_DONT_SEND   0x00040000 // Don't really send out anything
@@ -80,5 +84,9 @@ void            N_PrintBufferInfo(void);
 void            N_PrintTransmissionStats(void);
 void            N_PostMessage(netmessage_t *msg);
 void            N_AddSentBytes(size_t bytes);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* LIBDENG_NETWORK_BUFFER_H */

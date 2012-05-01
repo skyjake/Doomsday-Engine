@@ -29,7 +29,6 @@
 // HEADER FILES ------------------------------------------------------------
 
 #ifdef UNIX
-#  include <SDL.h>
 #  include "library.h"
 #endif
 

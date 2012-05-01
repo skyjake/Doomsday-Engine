@@ -22,6 +22,8 @@
  * Boston, MA  02110-1301  USA
  */
 
+#include <ctype.h>
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_filesys.h"
@@ -785,7 +787,8 @@ static ddstring_t* PathDirectory_ConstructPath(PathDirectory* pd, const PathDire
     assert(Str_Length(constructedPath) == parm.length);
 
 #ifdef LIBDENG_STACK_MONITOR
-    fprintf(stderr, "pathConstructor: max stack depth: %u bytes\n", (uint)maxStackDepth);
+    LegacyCore_PrintfLogFragmentAtLevel(de2LegacyCore, DE2_LOG_INFO,
+            "pathConstructor: max stack depth: %u bytes\n", (uint)maxStackDepth);
 #endif
 
     return constructedPath;

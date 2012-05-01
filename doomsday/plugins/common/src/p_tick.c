@@ -126,7 +126,7 @@ void P_DoTick(void)
     P_ThunderSector();
 #endif
 
-    P_DoDeferredSpawns();
+    P_ProcessDeferredSpawns();
 
 #if __JHERETIC__
     P_AmbientSound();

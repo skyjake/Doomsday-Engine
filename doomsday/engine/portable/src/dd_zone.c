@@ -229,8 +229,8 @@ void Z_Shutdown(void)
         M_Free(vol);
     }
 
-    printf("Z_Shutdown: Used %i volumes, total %lu bytes.\n",
-           numVolumes, (long unsigned int) totalMemory);
+    LegacyCore_PrintfLogFragmentAtLevel(de2LegacyCore, DE2_LOG_INFO,
+            "Z_Shutdown: Used %i volumes, total %u bytes.\n", numVolumes, totalMemory);
 
     Sys_DestroyMutex(zoneMutex);
     zoneMutex = 0;
@@ -260,9 +260,13 @@ memblock_t *Z_GetBlock(void *ptr)
 #endif
 
 /**
- * Free memory that was allocated with Z_Malloc.
+ * Frees a block of memory allocated with Z_Malloc.
+ *
+ * @param ptr      Memory area to free.
+ * @param tracked  Pointer to a tracked memory block. Will be updated
+ *                 if affected by the operation.
  */
-void Z_Free(void *ptr)
+static void freeBlock(void* ptr, memblock_t** tracked)
 {
     memblock_t     *block, *other;
     memvolume_t    *volume;
@@ -320,7 +324,8 @@ void Z_Free(void *ptr)
 
     other = block->prev;
     if(!other->user)
-    {   // Merge with previous free block.
+    {
+        // Merge with previous free block.
         other->size += block->size;
         other->next = block->next;
         other->next->prev = other;
@@ -329,11 +334,18 @@ void Z_Free(void *ptr)
         if(block == volume->zone->staticRover)
             volume->zone->staticRover = other;
         block = other;
+
+        // Keep track of what happens to the referenced block.
+        if(tracked && *tracked == block)
+        {
+            *tracked = other;
+        }
     }
 
     other = block->next;
     if(!other->user)
-    {   // Merge the next free block onto the end.
+    {
+        // Merge the next free block onto the end.
         block->size += other->size;
         block->next = other->next;
         block->next->prev = block;
@@ -341,9 +353,20 @@ void Z_Free(void *ptr)
             volume->zone->rover = block;
         if(other == volume->zone->staticRover)
             volume->zone->staticRover = block;
+
+        // Keep track of what happens to the referenced block.
+        if(tracked && *tracked == other)
+        {
+            *tracked = block;
+        }
     }
 
     unlockZone();
+}
+
+void Z_Free(void *ptr)
+{
+    freeBlock(ptr, 0);
 }
 
 static __inline boolean isFreeBlock(memblock_t* block)
@@ -536,9 +559,9 @@ void *Z_Malloc(size_t size, int tag, void *user)
                     memblock_t* old = iter;
                     iter = iter->prev; // Step back.
 #ifdef FAKE_MEMORY_ZONE
-                    Z_Free(old->area);
+                    freeBlock(old->area, &start);
 #else
-                    Z_Free((byte *) old + sizeof(memblock_t));
+                    freeBlock((byte *) old + sizeof(memblock_t), &start);
 #endif
                 }
                 else
@@ -555,13 +578,17 @@ void *Z_Malloc(size_t size, int tag, void *user)
             // Move to the next block.
             iter = advanceBlock(volume, iter);
 
+            // Ensure that iter will eventually touch start.
+            assert(!start->seqFirst || start->seqFirst == start ||
+                   !start->seqFirst->prev->seqFirst ||
+                   start->seqFirst->prev->seqFirst == start->seqFirst->prev->seqLast);
+
             if(iter == start && numChecked > 0)
             {
                 // Scanned all the way through, no suitable space found.
                 gotoNextVolume = true;
-#ifdef _DEBUG
-                fprintf(stderr, "Z_Malloc: gave up on volume after %i checks\n", numChecked);
-#endif
+                LegacyCore_PrintfLogFragmentAtLevel(de2LegacyCore, DE2_LOG_DEBUG,
+                        "Z_Malloc: gave up on volume after %i checks\n", numChecked);
                 break;
             }
         }
@@ -1241,6 +1268,7 @@ void Z_DebugDrawer(void)
     if(!ArgExists("-zonedebug")) return;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glDisable(GL_CULL_FACE);
     glDisable(GL_DEPTH_TEST);
@@ -1249,7 +1277,7 @@ void Z_DebugDrawer(void)
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, theWindow->geometry.size.width, theWindow->geometry.size.height, 0, -1, 1);
+    glOrtho(0, Window_Width(theWindow), Window_Height(theWindow), 0, -1, 1);
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
@@ -1261,19 +1289,19 @@ void Z_DebugDrawer(void)
     // Make sure all the volumes fit vertically.
     volCount = Z_VolumeCount();
     h = 200;
-    if(h * volCount + 10*(volCount - 1) > theWindow->geometry.size.height)
+    if(h * volCount + 10*(volCount - 1) > Window_Height(theWindow))
     {
-        h = (theWindow->geometry.size.height - 10*(volCount - 1))/volCount;
+        h = (Window_Height(theWindow) - 10*(volCount - 1))/volCount;
     }
 
     i = 0;
     for(volume = volumeRoot; volume; volume = volume->next, ++i)
     {
         RectRaw rect;
-        rect.size.width = MIN_OF(400, theWindow->geometry.size.width);
+        rect.size.width = MIN_OF(400, Window_Width(theWindow));
         rect.size.height = h;
-        rect.origin.x = theWindow->geometry.size.width - rect.size.width - 1;
-        rect.origin.y = theWindow->geometry.size.height - rect.size.height*(i+1) - 10*i - 1;
+        rect.origin.x = Window_Width(theWindow) - rect.size.width - 1;
+        rect.origin.y = Window_Height(theWindow) - rect.size.height*(i+1) - 10*i - 1;
         Z_DebugDrawVolume(volume, &rect);
     }
 

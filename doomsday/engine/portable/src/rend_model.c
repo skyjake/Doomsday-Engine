@@ -197,6 +197,7 @@ static void Mod_EnableArrays(int vertices, int colors, int coords)
     int i;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(vertices)
     {
@@ -238,6 +239,7 @@ static void Mod_DisableArrays(int vertices, int colors, int coords)
     int i;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(vertices)
     {
@@ -278,6 +280,7 @@ static void Mod_DisableArrays(int vertices, int colors, int coords)
 static __inline void enableTexUnit(byte id)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glActiveTexture(GL_TEXTURE0 + id);
     glEnable(GL_TEXTURE_2D);
@@ -286,6 +289,7 @@ static __inline void enableTexUnit(byte id)
 static __inline void disableTexUnit(byte id)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glActiveTexture(GL_TEXTURE0 + id);
     glDisable(GL_TEXTURE_2D);
@@ -325,6 +329,7 @@ static void Mod_Arrays(void* vertices, void* colors, int numCoords,
     int i;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(vertices)
     {
@@ -335,7 +340,6 @@ static void Mod_Arrays(void* vertices, void* colors, int numCoords,
         }
         else
         {
-            LIBDENG_ASSERT_IN_MAIN_THREAD();
             glEnableClientState(GL_VERTEX_ARRAY);
             glVertexPointer(3, GL_FLOAT, 16, vertices);
         }
@@ -385,6 +389,7 @@ static void Mod_Arrays(void* vertices, void* colors, int numCoords,
 static void Mod_UnlockArrays(void)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(!GL_state.features.elementArrays) return;
 
@@ -395,6 +400,7 @@ static void Mod_UnlockArrays(void)
 static void Mod_ArrayElement(int index)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(GL_state.features.elementArrays)
     {
@@ -425,6 +431,7 @@ static void Mod_DrawElements(dglprimtype_t type, int count, const uint* indices)
                        type == DGL_TRIANGLE_STRIP ? GL_TRIANGLE_STRIP : GL_TRIANGLES);
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(GL_state.features.elementArrays)
     {
@@ -494,6 +501,7 @@ static void Mod_RenderCommands(rendcmd_t mode, void* glCommands, /*uint numVerti
     byte* pos;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Disable all vertex arrays.
     Mod_DisableArrays(true, true, DDMAXINT);
@@ -865,6 +873,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     int zSign = (params->mirror? -1 : 1);
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Do not bother with infinitely small models...
     if(mf->scale[VX] == 0 && (int)mf->scale[VY] == 0 && mf->scale[VZ] == 0) return;
@@ -950,11 +959,11 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     glPushMatrix();
 
     // Model space => World space
-    glTranslatef(params->center[VX] + params->srvo[VX] +
+    glTranslatef(params->origin[VX] + params->srvo[VX] +
                    Mod_Lerp(mf->offset[VX], mfNext->offset[VX], inter),
-                 params->center[VZ] + params->srvo[VZ] +
+                 params->origin[VZ] + params->srvo[VZ] +
                    Mod_Lerp(mf->offset[VY], mfNext->offset[VY], inter),
-                 params->center[VY] + params->srvo[VY] + zSign *
+                 params->origin[VY] + params->srvo[VY] + zSign *
                    Mod_Lerp(mf->offset[VZ], mfNext->offset[VZ], inter));
 
     if(params->extraYawAngle || params->extraPitchAngle)
@@ -992,7 +1001,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     {
         float lodFactor;
 
-        lodFactor = rend_model_lod * theWindow->geometry.size.width / 640.0f / (fieldOfView / 90.0f);
+        lodFactor = rend_model_lod * Window_Width(theWindow) / 640.0f / (fieldOfView / 90.0f);
         if(lodFactor)
             lodFactor = 1 / lodFactor;
 
@@ -1022,9 +1031,9 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     }
 
     // Coordinates to the center of the model (game coords).
-    modelCenter[VX] = params->center[VX] + params->srvo[VX] + mf->offset[VX];
-    modelCenter[VY] = params->center[VY] + params->srvo[VY] + mf->offset[VZ];
-    modelCenter[VZ] = ((params->center[VZ] + params->gzt) * 2) + params->srvo[VZ] +
+    modelCenter[VX] = params->origin[VX] + params->srvo[VX] + mf->offset[VX];
+    modelCenter[VY] = params->origin[VY] + params->srvo[VY] + mf->offset[VZ];
+    modelCenter[VZ] = ((params->origin[VZ] + params->gzt) * 2) + params->srvo[VZ] +
                         mf->offset[VY];
 
     // Calculate lighting.
@@ -1097,15 +1106,15 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
         }
         else
         {
-            delta[VX] = modelCenter[VX] - vx;
-            delta[VY] = modelCenter[VY] - vz;
-            delta[VZ] = modelCenter[VZ] - vy;
+            delta[VX] = modelCenter[VX] - vOrigin[VX];
+            delta[VY] = modelCenter[VY] - vOrigin[VZ];
+            delta[VZ] = modelCenter[VZ] - vOrigin[VY];
 
             if(params->shineTranslateWithViewerPos)
             {
-                delta[VX] += vx;
-                delta[VY] += vz;
-                delta[VZ] += vy;
+                delta[VX] += vOrigin[VX];
+                delta[VY] += vOrigin[VZ];
+                delta[VZ] += vOrigin[VY];
             }
 
             shinyAng = QATAN2(delta[VZ], M_ApproxDistancef(delta[VX], delta[VY])) / PI + 0.5f; // shinyAng is [0,1]
@@ -1342,6 +1351,7 @@ void Rend_RenderModel(const rendmodelparams_t* params)
     uint i;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     errorIfNotInited("Rend_RenderModel");
 
@@ -1374,9 +1384,9 @@ void Rend_RenderModel(const rendmodelparams_t* params)
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
 
-        glTranslatef(params->center[VX], params->center[VZ], params->center[VY]);
+        glTranslatef(params->origin[VX], params->origin[VZ], params->origin[VY]);
 
-        VL_ListIterator(params->vLightListIdx, (float*)&params->distance, R_DrawVLightVector);
+        VL_ListIterator(params->vLightListIdx, (void*)&params->distance, R_DrawVLightVector);
 
         glMatrixMode(GL_MODELVIEW);
         glPopMatrix();

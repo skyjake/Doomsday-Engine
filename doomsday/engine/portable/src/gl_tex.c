@@ -878,7 +878,7 @@ void FindAverageLineColorIdx(const uint8_t* data, int w, int h, int line,
 
     if(w <= 0 || h <= 0)
     {
-        V3_Set(color->rgb, 0, 0, 0);
+        V3f_Set(color->rgb, 0, 0, 0);
         return;
     }
 
@@ -887,7 +887,7 @@ void FindAverageLineColorIdx(const uint8_t* data, int w, int h, int line,
 #if _DEBUG
         Con_Error("FindAverageLineColorIdx: Attempted to average outside valid area (height=%i line=%i).", h, line);
 #endif
-        V3_Set(color->rgb, 0, 0, 0);
+        V3f_Set(color->rgb, 0, 0, 0);
         return;
     }
 
@@ -910,9 +910,9 @@ void FindAverageLineColorIdx(const uint8_t* data, int w, int h, int line,
     // All transparent? Sorry...
     if(!count) return;
 
-    V3_Set(color->rgb, avg[CR] / count * reciprocal255,
-                       avg[CG] / count * reciprocal255,
-                       avg[CB] / count * reciprocal255);
+    V3f_Set(color->rgb, avg[CR] / count * reciprocal255,
+                        avg[CG] / count * reciprocal255,
+                        avg[CB] / count * reciprocal255);
 }
 
 void FindAverageLineColor(const uint8_t* pixels, int width, int height,
@@ -925,7 +925,7 @@ void FindAverageLineColor(const uint8_t* pixels, int width, int height,
 
     if(width <= 0 || height <= 0)
     {
-        V3_Set(color->rgb, 0, 0, 0);
+        V3f_Set(color->rgb, 0, 0, 0);
         return;
     }
 
@@ -934,7 +934,7 @@ void FindAverageLineColor(const uint8_t* pixels, int width, int height,
 #if _DEBUG
         Con_Error("FindAverageLineColor: Attempted to average outside valid area (height=%i line=%i).", height, line);
 #endif
-        V3_Set(color->rgb, 0, 0, 0);
+        V3f_Set(color->rgb, 0, 0, 0);
         return;
     }
 
@@ -946,9 +946,9 @@ void FindAverageLineColor(const uint8_t* pixels, int width, int height,
         avg[CB] += src[CB];
     }
 
-    V3_Set(color->rgb, avg[CR] / width * reciprocal255,
-                       avg[CG] / width * reciprocal255,
-                       avg[CB] / width * reciprocal255);
+    V3f_Set(color->rgb, avg[CR] / width * reciprocal255,
+                        avg[CG] / width * reciprocal255,
+                        avg[CB] / width * reciprocal255);
 }
 
 void FindAverageColor(const uint8_t* pixels, int width, int height,
@@ -960,7 +960,7 @@ void FindAverageColor(const uint8_t* pixels, int width, int height,
 
     if(width <= 0 || height <= 0)
     {
-        V3_Set(color->rgb, 0, 0, 0);
+        V3f_Set(color->rgb, 0, 0, 0);
         return;
     }
 
@@ -969,7 +969,7 @@ void FindAverageColor(const uint8_t* pixels, int width, int height,
 #if _DEBUG
         Con_Error("FindAverageColor: Attempted on non-rgb(a) image (pixelSize=%i).", pixelSize);
 #endif
-        V3_Set(color->rgb, 0, 0, 0);
+        V3f_Set(color->rgb, 0, 0, 0);
         return;
     }
 
@@ -982,9 +982,9 @@ void FindAverageColor(const uint8_t* pixels, int width, int height,
         avg[CB] += src[CB];
     }
 
-    V3_Set(color->rgb, avg[CR] / numpels * reciprocal255,
-                       avg[CG] / numpels * reciprocal255,
-                       avg[CB] / numpels * reciprocal255);
+    V3f_Set(color->rgb, avg[CR] / numpels * reciprocal255,
+                        avg[CG] / numpels * reciprocal255,
+                        avg[CB] / numpels * reciprocal255);
 }
 
 void FindAverageColorIdx(const uint8_t* data, int w, int h, const colorpalette_t* palette,
@@ -997,7 +997,7 @@ void FindAverageColorIdx(const uint8_t* data, int w, int h, const colorpalette_t
 
     if(w <= 0 || h <= 0)
     {
-        V3_Set(color->rgb, 0, 0, 0);
+        V3f_Set(color->rgb, 0, 0, 0);
         return;
     }
 
@@ -1019,9 +1019,9 @@ void FindAverageColorIdx(const uint8_t* data, int w, int h, const colorpalette_t
     // All transparent? Sorry...
     if(0 == count) return;
 
-    V3_Set(color->rgb, avg[CR] / count * reciprocal255,
-                       avg[CG] / count * reciprocal255,
-                       avg[CB] / count * reciprocal255);
+    V3f_Set(color->rgb, avg[CR] / count * reciprocal255,
+                        avg[CG] / count * reciprocal255,
+                        avg[CB] / count * reciprocal255);
 }
 
 void FindAverageAlpha(const uint8_t* pixels, int width, int height,

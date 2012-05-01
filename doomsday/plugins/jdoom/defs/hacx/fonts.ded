@@ -160,7 +160,7 @@ Composite BitmapFont {
 
 Composite BitmapFont {
   ID = "game:b";
-  # 032 { Texture = "BIGFN032"; } # ' '
+  032 { Texture = "BIGFN032"; } # ' '
   033 { Texture = "BIGFN033"; } # !
   034 { Texture = "BIGFN034"; } # "
   035 { Texture = "BIGFN035"; } # #

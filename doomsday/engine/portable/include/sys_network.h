@@ -30,11 +30,13 @@
 #include "monitor.h"
 
 #ifdef __cplusplus
-extern          "C" {
+extern "C" {
 #endif
 
 #define DEFAULT_TCP_PORT    13209
 #define DEFAULT_UDP_PORT    13209
+
+    typedef void (*expectedresponder_t)(int, const byte*, int);
 
     // If a master action fails, the action queue is emptied.
     typedef enum {
@@ -43,7 +45,6 @@ extern          "C" {
         MAC_LIST // Print the server list in the console.
     } masteraction_t;
 
-    extern size_t   maxDatagramSize;
     extern boolean  allowSending;
     extern int      maxQueuePackets;
 
@@ -67,9 +68,11 @@ extern          "C" {
     void            N_ShutdownService(void);
     boolean         N_IsAvailable(void);
     boolean         N_UsingInternet(void);
-    boolean         N_LookForHosts(const char *address, int port);
+    void            N_PrintInfo(void);
+    boolean         N_LookForHosts(const char *address, int port, expectedresponder_t responder);
+    void            N_ClientHandleResponseToInfoQuery(int nodeId, const byte *data, int size);
     void            N_Listen(void);
-    void            N_ListenUnjoinedNodes(void);
+    void            N_ListenNodes(void);
 
     boolean         N_Connect(int index);
     boolean         N_Disconnect(void);
@@ -78,7 +81,7 @@ extern          "C" {
 
     void            N_TerminateNode(nodeid_t id);
 
-    void*           N_GetNodeSocket(nodeid_t id);
+    int             N_GetNodeSocket(nodeid_t id);
     boolean         N_HasNodeJoined(nodeid_t id);
     boolean         N_GetNodeName(nodeid_t id, char *name);
     const char     *N_GetProtocolName(void);
@@ -91,4 +94,5 @@ extern          "C" {
 #ifdef __cplusplus
 }
 #endif
+
 #endif /* LIBDENG_SYSTEM_NETWORK_H */

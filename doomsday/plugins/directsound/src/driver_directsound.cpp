@@ -709,6 +709,7 @@ void DS_SFX_Stop(sfxbuffer_t* buf)
     buf->flags |= SFXBF_RELOAD;
 }
 
+/*
 static boolean InRange(uint pos, uint start, uint end)
 {
     if(end > start)
@@ -723,6 +724,7 @@ static boolean InRange(uint pos, uint start, uint end)
     // of the buffer. (The range is split in two.)
     return (pos >= start || pos <= end);
 }
+*/
 
 /**
  * Buffer streamer. Called by the Sfx refresh thread.

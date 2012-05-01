@@ -43,11 +43,12 @@
 #ifndef LIBDENG_REFRESH_TEXTURES_H
 #define LIBDENG_REFRESH_TEXTURES_H
 
-#include "dd_string.h"
-#include "uri.h"
-
 /// Unique identifier associated with each texture name in the collection.
 typedef uint textureid_t;
+
+#include "dd_string.h"
+#include "dd_share.h"
+#include "uri.h"
 
 /// Special value used to signify an invalid texture id.
 #define NOTEXTUREID                 0
@@ -55,7 +56,7 @@ typedef uint textureid_t;
 /// Components within a Texture path hierarchy are delimited by this character.
 #define TEXTURES_PATH_DELIMITER     '/'
 
-enum texturenamespaceid_t; // Defined in dd_share.h
+enum texturenamespaceid_e; // Defined in dd_share.h
 struct texture_s;
 
 /// Register the console commands, variables, etc..., of this module.

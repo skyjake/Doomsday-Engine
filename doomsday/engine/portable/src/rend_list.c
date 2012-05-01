@@ -397,6 +397,7 @@ static void rlBindTo(int unit, const rendlist_texmapunit_t* tmu)
     if(!unitHasTexture(&tmu->texture)) return;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glActiveTexture(GL_TEXTURE0 + (byte)unit);
     rlBind(tmu);
@@ -1260,6 +1261,7 @@ static void drawPrimitives(int conditions, uint coords[MAX_TEX_UNITS],
         return;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(unitHasTexture(&TU(list, TU_INTER)->texture))
     {
@@ -1426,6 +1428,7 @@ static void selectTexUnits(int count)
     int i;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     for(i = numTexUnits - 1; i >= count; i--)
     {
@@ -1451,6 +1454,7 @@ static void selectTexUnits(int count)
 static int setupListState(listmode_t mode, rendlist_t* list)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     switch(mode)
     {
@@ -1665,9 +1669,9 @@ if(numTexUnits < 2)
             glPushMatrix();
 
             // Scale towards the viewpoint to avoid Z-fighting.
-            glTranslatef(vx, vy, vz);
+            glTranslatef(vOrigin[VX], vOrigin[VY], vOrigin[VZ]);
             glScalef(.99f, .99f, .99f);
-            glTranslatef(-vx, -vy, -vz);
+            glTranslatef(-vOrigin[VX], -vOrigin[VY], -vOrigin[VZ]);
         }
         return 0;
 
@@ -2106,6 +2110,7 @@ void RL_RenderAllLists(void)
 
     assert(!Sys_GLCheckError());
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
 BEGIN_PROF( PROF_RL_RENDER_ALL );
 

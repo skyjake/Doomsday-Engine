@@ -29,10 +29,12 @@
 #ifndef LIBDENG_FONT_RENDERER
 #define LIBDENG_FONT_RENDERER
 
-#define DEFAULT_INITIALCOUNT        (0) /// Used for animating type-in effects.
+#define DEFAULT_INITIALCOUNT        (0) ///< Used for animating type-in effects.
 
 #define DEFAULT_ALIGNFLAGS          (ALIGN_TOPLEFT)
 #define DEFAULT_DRAWFLAGS           (DTF_NO_EFFECTS)
+
+#define FR_FORMAT_ESCAPE_CHAR       ((char)0x10) ///< ASCII data link escape
 
 /**
  * Rendering formatted text requires a temporary working buffer in order

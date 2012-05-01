@@ -138,14 +138,12 @@ function array_casekey_exists($key, $search)
 
 function clean_text($text, $length = 0)
 {
-    $html = html_entity_decode($text, ENT_QUOTES, 'UTF-8');
-    $text = strip_tags($html);
+    $text = html_entity_decode($text, ENT_QUOTES, 'UTF-8');
     if($length > 0 && strlen($text) > $length)
     {
         $cut_point = strrpos(substr($text, 0, $length), ' ');
         $text = substr($text, 0, $cut_point) . '…';
     }
-    $text = htmlentities($text, ENT_QUOTES, 'UTF-8');
     return $text;
 }
 
@@ -228,4 +226,32 @@ function json_encode_clean(&$array, $flags=0, $indent_level=0)
     }
 
     return $result;
+}
+
+function generateHyperlinkHTML($uri, $maxLength=40, $cssClass=NULL)
+{
+    $uri = strval($uri);
+    $maxLength = (integer)$maxLength;
+    if($maxLength < 0) $maxLength = 0;
+    if(!is_null($cssClass))
+    {
+        $cssClass = strval($cssClass);
+    }
+    else
+    {
+        $cssClass = '';
+    }
+
+    if($maxLength > 0 && strlen($uri) > $maxLength)
+        $shortUri = substr($uri, 0, $maxLength).'...';
+    else
+        $shortUri = $uri;
+
+    $html = '<a';
+    if(strlen($cssClass) > 0)
+    {
+        $html .= " class={$cssClass}";
+    }
+    $html .= " href=\"{$uri}\">". htmlspecialchars($shortUri) .'</a>';
+    return $html;
 }

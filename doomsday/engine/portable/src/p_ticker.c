@@ -121,14 +121,13 @@ void P_Ticker(timespan_t time)
     P_ControlTicker(time);
     Materials_Ticker(time);
 
-    if(!P_ThinkerListInited())
-        return; // Not initialized yet.
+    if(!theMap || !GameMap_ThinkerListInited(theMap)) return; // Not initialized yet.
 
     if(DD_IsSharpTick())
     {
         R_SkyTicker();
 
         // Check all mobjs (always public).
-        P_IterateThinkers(gx.MobjThinker, 0x1, P_MobjTicker, NULL);
+        GameMap_IterateThinkers(theMap, gx.MobjThinker, 0x1, P_MobjTicker, NULL);
     }
 }

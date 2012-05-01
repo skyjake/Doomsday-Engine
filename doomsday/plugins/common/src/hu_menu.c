@@ -167,6 +167,7 @@ cvarbutton_t mnCVarButtons[] = {
 #endif
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     { 0, "game-monsters-stuckindoors" },
+    { 0, "game-monsters-floatoverblocking" },
     { 0, "game-objects-clipping" },
     { 0, "game-objects-falloff" },
     { 0, "game-objects-neverhangoverledges" },
@@ -1049,7 +1050,7 @@ mn_object_t AutomapMenuObjects[] = {
 
 mndata_text_t txt_gameplay_always_run = { "Always Run" };
 mndata_text_t txt_gameplay_use_lookspring = { "Use LookSpring" };
-mndata_text_t txt_gameplay_use_autoaim = { "Use AutoAim" };
+mndata_text_t txt_gameplay_use_noautoaim = { "Disable AutoAim" };
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
 mndata_text_t txt_gameplay_allow_jumping = { "Allow Jumping" };
 #endif
@@ -1067,6 +1068,7 @@ mndata_text_t txt_gameplay_painelemental_limit_lostsouls = { "PE Limited To 21 L
 mndata_text_t txt_gameplay_lostsouls_stuck = { "LS Can Get Stuck Inside Walls" };
 # endif
 mndata_text_t txt_gameplay_monsters_stuck_in_doors = { "Monsters Can Get Stuck In Doors" };
+mndata_text_t txt_gameplay_monsters_float_over_blocking = { "Monsters Fly Over Obstacles" };
 mndata_text_t txt_gameplay_never_hang_over_ledges = { "Some Objects Never Hang Over Ledges" };
 mndata_text_t txt_gameplay_fall_under_own_weight = { "Objects Fall Under Own Weight" };
 mndata_text_t txt_gameplay_corpse_stair_slide = { "Corpses Slide Down Stairs" };
@@ -1081,7 +1083,7 @@ mndata_text_t txt_gameplay_fix_weapon_slot = { "Fix Weapon Slot Display" };
 
 mndata_button_t btn_gameplay_always_run = { true, "ctl-run" };
 mndata_button_t btn_gameplay_use_lookspring = { true, "ctl-look-spring" };
-mndata_button_t btn_gameplay_use_autoaim = { true, "ctl-aim-noauto" };
+mndata_button_t btn_gameplay_use_noautoaim = { true, "ctl-aim-noauto" };
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
 mndata_button_t btn_gameplay_allow_jumping = { true, "player-jump" };
 #endif
@@ -1089,6 +1091,7 @@ mndata_button_t btn_gameplay_allow_jumping = { true, "player-jump" };
 mndata_button_t btn_gameplay_weapon_recoil = { true, "player-weapon-recoil" };
 #endif
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+mndata_button_t btn_gameplay_monsters_float_over_blocking = { true, "game-monsters-floatoverblocking" };
 # if __JDOOM__ || __JDOOM64__
 mndata_button_t btn_gameplay_any_boss_trigger_666 = { true, "game-anybossdeath666" };
 #  if !__JDOOM64__
@@ -1115,8 +1118,8 @@ static mn_object_t GameplayMenuObjects[] = {
     { MN_BUTTON,    0,  0,  { 0, 0 }, 'r',MENU_FONT1, MENU_COLOR3, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_gameplay_always_run },
     { MN_TEXT,      0,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_gameplay_use_lookspring },
     { MN_BUTTON,    0,  0,  { 0, 0 }, 'l',MENU_FONT1, MENU_COLOR3, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_gameplay_use_lookspring },
-    { MN_TEXT,      0,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_gameplay_use_autoaim },
-    { MN_BUTTON,    0,  0,  { 0, 0 }, 'a',MENU_FONT1, MENU_COLOR3, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_gameplay_use_autoaim },
+    { MN_TEXT,      0,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_gameplay_use_noautoaim },
+    { MN_BUTTON,    0,  0,  { 0, 0 }, 'a',MENU_FONT1, MENU_COLOR3, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_gameplay_use_noautoaim },
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     { MN_TEXT,      0,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_gameplay_allow_jumping },
     { MN_BUTTON,    0,  0,  { 0, 0 }, 'j',MENU_FONT1, MENU_COLOR3, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_gameplay_allow_jumping },
@@ -1140,6 +1143,8 @@ static mn_object_t GameplayMenuObjects[] = {
     { MN_TEXT,      1,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_gameplay_lostsouls_stuck },
     { MN_BUTTON,    1,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR3, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_gameplay_lostsouls_stuck },
 # endif
+    { MN_TEXT,      1,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_gameplay_monsters_float_over_blocking },
+    { MN_BUTTON,    1,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR3, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_gameplay_monsters_float_over_blocking },
     { MN_TEXT,      1,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_gameplay_monsters_stuck_in_doors },
     { MN_BUTTON,    1,  0,  { 0, 0 }, 'd',MENU_FONT1, MENU_COLOR3, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_gameplay_monsters_stuck_in_doors },
     { MN_TEXT,      1,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_gameplay_never_hang_over_ledges },
@@ -3259,7 +3264,7 @@ void Hu_MenuDrawSkillPage(mn_page_t* page, const Point2Raw* origin)
 
     DGL_Disable(DGL_TEXTURE_2D);
 #elif __JHEXEN__
-    Hu_MenuDrawPageTitle("Choose Skill Level:", origin->x - 46, origin->y - 28);
+    Hu_MenuDrawPageTitle("Choose Skill Level:", origin->x + 36, origin->y - 28);
 #endif
 }
 

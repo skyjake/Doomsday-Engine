@@ -1,4 +1,4 @@
-/**\file
+/**\file p_telept.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,12 +23,6 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * p_telept.c:
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include <string.h>
 
 #include "jheretic.h"
@@ -39,38 +33,20 @@
 #include "p_mapspec.h"
 #include "p_terraintype.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
-
-mobj_t* P_SpawnTeleFog(float x, float y, angle_t angle)
+mobj_t* P_SpawnTeleFog(coord_t x, coord_t y, angle_t angle)
 {
-    return P_SpawnMobj3f(MT_TFOG, x, y, TELEFOGHEIGHT, angle, MSF_Z_FLOOR);
+    return P_SpawnMobjXYZ(MT_TFOG, x, y, TELEFOGHEIGHT, angle, MSF_Z_FLOOR);
 }
 
-boolean P_Teleport(mobj_t* mo, float x, float y, angle_t angle, boolean spawnFog)
+boolean P_Teleport(mobj_t* mo, coord_t x, coord_t y, angle_t angle, boolean spawnFog)
 {
-    float oldpos[3], aboveFloor, fogDelta;
+    coord_t oldpos[3], aboveFloor, fogDelta;
     angle_t oldAngle;
     mobj_t* fog;
     uint an;
 
-    memcpy(oldpos, mo->pos, sizeof(oldpos));
-    aboveFloor = mo->pos[VZ] - mo->floorZ;
+    memcpy(oldpos, mo->origin, sizeof(oldpos));
+    aboveFloor = mo->origin[VZ] - mo->floorZ;
     oldAngle = mo->angle;
     if(!P_TeleportMove(mo, x, y, false))
     {
@@ -83,52 +59,52 @@ boolean P_Teleport(mobj_t* mo, float x, float y, angle_t angle, boolean spawnFog
         player_t* player = mo->player;
         if(player->powers[PT_FLIGHT] && aboveFloor > 0)
         {
-            mo->pos[VZ] = mo->floorZ + aboveFloor;
-            if(mo->pos[VZ] + mo->height > mo->ceilingZ)
+            mo->origin[VZ] = mo->floorZ + aboveFloor;
+            if(mo->origin[VZ] + mo->height > mo->ceilingZ)
             {
-                mo->pos[VZ] = mo->ceilingZ - mo->height;
+                mo->origin[VZ] = mo->ceilingZ - mo->height;
             }
-            player->viewZ = mo->pos[VZ] + player->viewHeight;
+            player->viewZ = mo->origin[VZ] + player->viewHeight;
         }
         else
         {
             //player->plr->clLookDir = 0; /* $unifiedangles */
             player->plr->lookDir = 0;
-            mo->pos[VZ] = mo->floorZ;
+            mo->origin[VZ] = mo->floorZ;
         }
 
-        player->viewHeight = (float) cfg.plrViewHeight;
+        player->viewHeight = (coord_t) cfg.plrViewHeight;
         player->viewHeightDelta = 0;
-        player->viewZ = mo->pos[VZ] + player->viewHeight;
+        player->viewZ = mo->origin[VZ] + player->viewHeight;
         player->viewOffset[VX] = player->viewOffset[VY] = player->viewOffset[VZ] = 0;
         player->bob = 0;
 
         //player->plr->clAngle = angle; /* $unifiedangles */
-        player->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
+        player->plr->flags |= DDPF_FIXANGLES | DDPF_FIXORIGIN | DDPF_FIXMOM;
     }
     else if(mo->flags & MF_MISSILE)
     {
-        mo->pos[VZ] = mo->floorZ + aboveFloor;
-        if(mo->pos[VZ] + mo->height > mo->ceilingZ)
+        mo->origin[VZ] = mo->floorZ + aboveFloor;
+        if(mo->origin[VZ] + mo->height > mo->ceilingZ)
         {
-            mo->pos[VZ] = mo->ceilingZ - mo->height;
+            mo->origin[VZ] = mo->ceilingZ - mo->height;
         }
     }
     else
     {
-        mo->pos[VZ] = mo->floorZ;
+        mo->origin[VZ] = mo->floorZ;
     }
 
     if(spawnFog)
     {
         // Spawn teleport fog at source and destination
         fogDelta = ((mo->flags & MF_MISSILE)? 0 : TELEFOGHEIGHT);
-        if((fog = P_SpawnMobj3f(MT_TFOG, oldpos[VX], oldpos[VY], oldpos[VZ] + fogDelta, oldAngle + ANG180, 0)))
+        if((fog = P_SpawnMobjXYZ(MT_TFOG, oldpos[VX], oldpos[VY], oldpos[VZ] + fogDelta, oldAngle + ANG180, 0)))
             S_StartSound(SFX_TELEPT, fog);
 
         an = angle >> ANGLETOFINESHIFT;
 
-        if((fog = P_SpawnMobj3f(MT_TFOG, x + 20 * FIX2FLT(finecosine[an]), y + 20 * FIX2FLT(finesine[an]), mo->pos[VZ] + fogDelta, angle + ANG180, 0)))
+        if((fog = P_SpawnMobjXYZ(MT_TFOG, x + 20 * FIX2FLT(finecosine[an]), y + 20 * FIX2FLT(finesine[an]), mo->origin[VZ] + fogDelta, angle + ANG180, 0)))
             S_StartSound(SFX_TELEPT, fog);
     }
 
@@ -142,11 +118,9 @@ boolean P_Teleport(mobj_t* mo, float x, float y, angle_t angle, boolean spawnFog
     {
         mo->floorClip = 0;
 
-        if(mo->pos[VZ] ==
-           P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT))
+        if(FEQUAL(mo->origin[VZ], P_GetDoublep(mo->bspLeaf, DMU_FLOOR_HEIGHT)))
         {
             const terraintype_t* tt = P_MobjGetFloorTerrainType(mo);
-
             if(tt->flags & TTF_FLOORCLIP)
             {
                 mo->floorClip = 10;
@@ -170,15 +144,15 @@ boolean P_Teleport(mobj_t* mo, float x, float y, angle_t angle, boolean spawnFog
 }
 
 typedef struct {
-    sector_t*           sec;
-    mobjtype_t          type;
-    mobj_t*             foundMobj;
+    Sector* sec;
+    mobjtype_t type;
+    mobj_t* foundMobj;
 } findmobjparams_t;
 
 static int findMobj(thinker_t* th, void* context)
 {
-    findmobjparams_t*   params = (findmobjparams_t*) context;
-    mobj_t*             mo = (mobj_t *) th;
+    findmobjparams_t* params = (findmobjparams_t*) context;
+    mobj_t* mo = (mobj_t *) th;
 
     // Must be of the correct type?
     if(params->type >= 0 && params->type != mo->type)
@@ -186,7 +160,7 @@ static int findMobj(thinker_t* th, void* context)
 
     // Must be in the specified sector?
     if(params->sec &&
-       params->sec != P_GetPtrp(mo->subsector, DMU_SECTOR))
+       params->sec != P_GetPtrp(mo->bspLeaf, DMU_SECTOR))
         return false; // Continue iteration.
 
     // Found it!
@@ -196,13 +170,13 @@ static int findMobj(thinker_t* th, void* context)
 
 static mobj_t* getTeleportDestination(short tag)
 {
-    iterlist_t*         list;
+    iterlist_t* list;
 
     list = P_GetSectorIterListForTag(tag, false);
     if(list)
     {
-        sector_t*           sec = NULL;
-        findmobjparams_t    params;
+        Sector* sec = NULL;
+        findmobjparams_t params;
 
         params.type = MT_TELEPORTMAN;
         params.foundMobj = NULL;
@@ -223,25 +197,22 @@ static mobj_t* getTeleportDestination(short tag)
     return NULL;
 }
 
-boolean EV_Teleport(linedef_t* line, int side, mobj_t* mo, boolean spawnFog)
+boolean EV_Teleport(LineDef* line, int side, mobj_t* mo, boolean spawnFog)
 {
-    mobj_t*             dest;
+    mobj_t* dest;
 
     // Clients cannot teleport on their own.
-    if(IS_CLIENT)
-        return 0;
+    if(IS_CLIENT) return 0;
 
-    if(mo->flags2 & MF2_NOTELEPORT)
-        return false;
+    // Are we allowed to teleport this?
+    if(mo->flags2 & MF2_NOTELEPORT) return false;
 
     // Don't teleport if hit back of line, so you can get out of teleporter.
-    if(side == 1)
-        return false;
+    if(side == 1) return false;
 
     if((dest = getTeleportDestination(P_ToXLine(line)->tag)) != NULL)
     {
-        return P_Teleport(mo, dest->pos[VX], dest->pos[VY], dest->angle,
-                          spawnFog);
+        return P_Teleport(mo, dest->origin[VX], dest->origin[VY], dest->angle, spawnFog);
     }
 
     return false;
@@ -256,14 +227,14 @@ void P_ArtiTele(player_t* player)
     if((start = P_GetPlayerStart(0, deathmatch? -1 : 0, deathmatch)))
     {
         const mapspot_t* spot = &mapSpots[start->spot];
-        P_Teleport(player->plr->mo, spot->pos[VX], spot->pos[VY], spot->angle, true);
+        P_Teleport(player->plr->mo, spot->origin[VX], spot->origin[VY], spot->angle, true);
 
 #if __JHEXEN__
         if(player->morphTics)
         {   // Teleporting away will undo any morph effects (pig)
             P_UndoPlayerMorph(player);
         }
-        //S_StartSound(NULL, SFX_WPNUP); // Full volume laugh
+        //S_StartSound(SFX_WPNUP, NULL); // Full volume laugh
 #else
         /*S_StartSound(SFX_WPNUP, NULL); // Full volume laugh
            NetSv_Sound(NULL, SFX_WPNUP, player-players); */

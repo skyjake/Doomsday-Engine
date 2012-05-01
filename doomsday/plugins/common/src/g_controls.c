@@ -137,7 +137,6 @@ cvartemplate_t controlCVars[] = {
     {"ctl-turn-speed", 0, CVT_FLOAT, &cfg.turnSpeed, 1, 5},
     {"ctl-run", 0, CVT_INT, &cfg.alwaysRun, 0, 1},
 
-    {"ctl-use-dclick", 0, CVT_INT, &cfg.dclickUse, 0, 1},
 #if __JHERETIC__ || __JHEXEN__
     {"ctl-inventory-mode", 0, CVT_BYTE, &cfg.inventorySelectMode, 0, 1},
     {"ctl-inventory-wrap", 0, CVT_BYTE, &cfg.inventoryWrap, 0, 1},
@@ -147,8 +146,6 @@ cvartemplate_t controlCVars[] = {
 
     {"ctl-look-speed", 0, CVT_FLOAT, &cfg.lookSpeed, 1, 5},
     {"ctl-look-spring", 0, CVT_INT, &cfg.lookSpring, 0, 1},
-
-    {"ctl-look-mouse", 0, CVT_INT, &cfg.useMLook, 0, 1},
 
     {"ctl-look-pov", 0, CVT_BYTE, &cfg.povLookAround, 0, 1},
     {"ctl-look-joy", 0, CVT_INT, &cfg.useJLook, 0, 1},
@@ -399,7 +396,7 @@ D_CMD(DefaultGameBinds)
         "bindevent shortcut:key-f8 {toggle msg-show}",
         "bindevent shortcut:key-f9 quickload",
         "bindevent shortcut:key-f10 quit",
-        "bindevent shortcut:key-f11 togglegamma",
+        //"bindevent shortcut:key-f11 togglegamma",
         "bindevent shortcut:key-print screenshot",
         "bindevent shortcut:key-f12 screenshot",
 
@@ -1232,15 +1229,6 @@ void G_ControlReset(int player)
     }
 }
 */
-
-/**
- * Resets the mouse position to 0,0
- * Called e.g. when starting a new map.
- */
-void G_ResetMousePos(void)
-{
-    mousex = mousey = 0.f;
-}
 
 /**
  * Resets the look offsets.

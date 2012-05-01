@@ -95,7 +95,7 @@ boolean mapSetup;
 /**
  * Converts a line to an xline.
  */
-xline_t* P_ToXLine(linedef_t* line)
+xline_t* P_ToXLine(LineDef* line)
 {
     if(!line)
         return NULL;
@@ -119,7 +119,7 @@ xline_t* P_GetXLine(uint idx)
 
 void P_SetLinedefAutomapVisibility(int player, uint lineIdx, boolean visible)
 {
-    linedef_t* line = P_ToPtr(DMU_LINEDEF, lineIdx);
+    LineDef* line = P_ToPtr(DMU_LINEDEF, lineIdx);
     xline_t* xline;
     if(NULL == line || P_IsDummy(line)) return;
 
@@ -133,7 +133,7 @@ void P_SetLinedefAutomapVisibility(int player, uint lineIdx, boolean visible)
 /**
  * Converts a sector to an xsector.
  */
-xsector_t* P_ToXSector(sector_t* sector)
+xsector_t* P_ToXSector(Sector* sector)
 {
     if(!sector)
         return NULL;
@@ -150,16 +150,15 @@ xsector_t* P_ToXSector(sector_t* sector)
 }
 
 /**
- * Given a subsector - find its parent xsector.
+ * Given a BSP leaf - find its parent xsector.
  */
-xsector_t* P_ToXSectorOfSubsector(subsector_t* sub)
+xsector_t* P_ToXSectorOfBspLeaf(BspLeaf* bspLeaf)
 {
-    sector_t*           sec;
+    Sector* sec;
 
-    if(!sub)
-        return NULL;
+    if(!bspLeaf) return NULL;
 
-    sec = P_GetPtrp(sub, DMU_SECTOR);
+    sec = P_GetPtrp(bspLeaf, DMU_SECTOR);
 
     // Is it a dummy?
     if(P_IsDummy(sec))
@@ -229,7 +228,7 @@ static void getSurfaceColor(uint idx, float rgba[4])
 }
 
 typedef struct applysurfacecolorparams_s {
-    sector_t*       frontSec;
+    Sector*         frontSec;
     float           topColor[4];
     float           bottomColor[4];
 } applysurfacecolorparams_t;
@@ -242,7 +241,7 @@ int applySurfaceColor(void* obj, void* context)
 
 #define LTF_SWAPCOLORS      4
 
-    linedef_t*          li = (linedef_t*) obj;
+    LineDef*            li = (LineDef*) obj;
     applysurfacecolorparams_t* params =
         (applysurfacecolorparams_t*) context;
     byte                dFlags =
@@ -253,7 +252,7 @@ int applySurfaceColor(void* obj, void* context)
     if((dFlags & LDF_BLEND) &&
        params->frontSec == P_GetPtrp(li, DMU_FRONT_SECTOR))
     {
-        sidedef_t*          side = P_GetPtrp(li, DMU_SIDEDEF0);
+        SideDef*            side = P_GetPtrp(li, DMU_SIDEDEF0);
 
         if(side)
         {
@@ -281,7 +280,7 @@ int applySurfaceColor(void* obj, void* context)
     if((dFlags & LDF_BLEND) &&
        params->frontSec == P_GetPtrp(li, DMU_BACK_SECTOR))
     {
-        sidedef_t*          side = P_GetPtrp(li, DMU_SIDEDEF1);
+        SideDef*            side = P_GetPtrp(li, DMU_SIDEDEF1);
 
         if(side)
         {
@@ -338,32 +337,22 @@ static boolean checkMapSpotSpawnFlags(const mapspot_t* spot)
 
 #if __JHEXEN__
     // Check current character classes with spawn flags.
-    if(IS_NETGAME == false)
-    {   // Single player.
-        if((spot->flags & classFlags[cfg.playerClass[0]]) == 0)
+    if(!IS_NETGAME)
+    {
+        // Single player.
+        if((spot->flags & classFlags[P_ClassForPlayerWhenRespawning(0, false)]) == 0)
         {   // Not for current class.
             return false;
         }
     }
-    else if(deathmatch == false)
-    {   // Cooperative.
-        int i, spawnMask = 0;
-
-        for(i = 0; i < MAXPLAYERS; ++i)
-        {
-            if(players[i].plr->inGame)
-            {
-                spawnMask |= classFlags[cfg.playerClass[i]];
-            }
-        }
+    else if(!deathmatch)
+    {
+        // Cooperative mode.
 
         // No players are in the game when a dedicated server is started.
-        // In this case, we'll be generous and spawn stuff for all the
-        // classes.
-        if(!spawnMask)
-        {
-            spawnMask |= MSF_FIGHTER | MSF_CLERIC | MSF_MAGE;
-        }
+        // Also, players with new classes may join a game at any time.
+        // Thus we will be generous and spawn stuff for all the classes.
+        int spawnMask = MSF_FIGHTER | MSF_CLERIC | MSF_MAGE;
 
         if((spot->flags & spawnMask) == 0)
         {
@@ -487,7 +476,7 @@ static void initXSectors(void)
         {
         applysurfacecolorparams_t params;
         float rgba[4];
-        sector_t* sec = P_ToPtr(DMU_SECTOR, i);
+        Sector* sec = P_ToPtr(DMU_SECTOR, i);
 
         getSurfaceColor(TOLIGHTIDX(
             P_GetGMOShort(MO_XSECTOR, i, MO_FLOORCOLOR)), rgba);
@@ -526,9 +515,9 @@ static void loadMapSpots(void)
     {
         mapspot_t* spot = &mapSpots[i];
 
-        spot->pos[VX] = P_GetGMOFloat(MO_THING, i, MO_X);
-        spot->pos[VY] = P_GetGMOFloat(MO_THING, i, MO_Y);
-        spot->pos[VZ] = P_GetGMOFloat(MO_THING, i, MO_Z);
+        spot->origin[VX] = P_GetGMOFloat(MO_THING, i, MO_X);
+        spot->origin[VY] = P_GetGMOFloat(MO_THING, i, MO_Y);
+        spot->origin[VZ] = P_GetGMOFloat(MO_THING, i, MO_Z);
 
         spot->doomEdNum = P_GetGMOInt(MO_THING, i, MO_DOOMEDNUM);
         spot->skillModes = P_GetGMOInt(MO_THING, i, MO_SKILLMODES);
@@ -556,8 +545,8 @@ static void loadMapSpots(void)
         // Sound sequence origin?
         if(spot->doomEdNum >= 1400 && spot->doomEdNum < 1410)
         {
-            subsector_t* ssec = R_PointInSubsector(spot->pos[VX], spot->pos[VY]);
-            xsector_t* xsector = P_ToXSector(P_GetPtrp(ssec, DMU_SECTOR));
+            BspLeaf* bspLeaf = P_BspLeafAtPoint(spot->origin);
+            xsector_t* xsector = P_ToXSector(P_GetPtrp(bspLeaf, DMU_SECTOR));
 
             xsector->seqType = spot->doomEdNum - 1400;
             continue;
@@ -674,7 +663,7 @@ static void spawnMapObjects(void)
                     spot->doomedNum, spot->flags);
 #endif*/
 
-            if((mo = P_SpawnMobj3fv(type, spot->pos, spot->angle, spot->flags)))
+            if((mo = P_SpawnMobj(type, spot->origin, spot->angle, spot->flags)))
             {
                 if(mo->tics > 0)
                     mo->tics = 1 + (P_Random() % mo->tics);
@@ -691,7 +680,7 @@ static void spawnMapObjects(void)
 
 #if __JHEXEN__
                 if(mo->flags2 & MF2_FLOATBOB)
-                    mo->special1 = FLT2FIX(spot->pos[VZ]);
+                    mo->special1 = FLT2FIX(spot->origin[VZ]);
 #endif
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
@@ -705,7 +694,7 @@ static void spawnMapObjects(void)
         else
         {
             Con_Message("Warning: Unknown DoomEdNum %i at [%g, %g, %g].\n", spot->doomEdNum,
-                spot->pos[VX], spot->pos[VY], spot->pos[VZ]);
+                        spot->origin[VX], spot->origin[VY], spot->origin[VZ]);
         }
     }
 
@@ -717,8 +706,8 @@ static void spawnMapObjects(void)
         {
             const mapspot_t* spot = &mapSpots[maceSpots[P_Random() % maceSpotCount]];
 
-            P_SpawnMobj3f(MT_WMACE, spot->pos[VX], spot->pos[VY], 0,
-                          spot->angle, MSF_Z_FLOOR);
+            P_SpawnMobjXYZ(MT_WMACE, spot->origin[VX], spot->origin[VY], 0,
+                           spot->angle, MSF_Z_FLOOR);
         }
     }
 #endif
@@ -754,8 +743,6 @@ int P_SetupMapWorker(void* paramaters)
 
     // Initialize The Logical Sound Manager.
     S_MapChange();
-
-    Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
 
 #if __JHERETIC__ || __JHEXEN__
     // The pointers in the body queue just became invalid.
@@ -994,8 +981,8 @@ static void P_FinalizeMap(void)
         material_t* mat = P_ToPtr(DMU_MATERIAL, Materials_ResolveUriCString(MN_TEXTURES_NAME":NUKE24"));
         material_t* bottomMat, *midMat;
         float yoff;
-        sidedef_t* sidedef;
-        linedef_t* line;
+        SideDef* sidedef;
+        LineDef* line;
 
         for(i = 0; i < numlines; ++i)
         {

@@ -10,11 +10,11 @@ The following branches are currently active in the repository.
 
 - **master**: Main code base. This is where releases are made from on a biweekly basis. Bug fixing is done in this branch, while larger development efforts occur in separate work branches.
 - **stable**: Latest stable release. Patch releases can be made from this branch when necessary.
+- **stable-x.y.z**: Stable release x.y.z.
 - **legacy**: Old stable code base. Currently at the 1.8.6 release.
 
 Other branches (not very active):
 
-- **remove-sdlnet**: On-going work to remove SDL_net and the rest of SDL in favor of Qt. However, currently waiting for the stable 1.9.7 release, after which this work will be the basis for a new branch for full removal of SDL. This branch also introduces a revised and trimmed version of libdeng2 (based on the hawthorn branch).
 - **replacing-innosetup-with-wixtoolset**: Reimplementing the Windows installer with WiX Toolset.
 
 Other notable branches:

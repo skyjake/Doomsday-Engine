@@ -29,11 +29,6 @@
 #ifndef __DOOMSDAY_CLIENT_WORLD_H__
 #define __DOOMSDAY_CLIENT_WORLD_H__
 
-typedef enum {
-    MVT_FLOOR,
-    MVT_CEILING
-} clmovertype_t;
-
 void            Cl_WorldInit(void);
 void            Cl_WorldReset(void);
 
@@ -57,8 +52,6 @@ int Cl_LocalMobjType(int serverMobjType);
 int Cl_LocalMobjState(int serverMobjState);
 
 void            Cl_SetPolyMover(uint number, int move, int rotate);
-void            Cl_AddMover(uint sectornum, clmovertype_t type, float dest,
-                            float speed);
 
 void            Cl_ReadSectorDelta2(int deltaType, boolean skip);
 void            Cl_ReadSideDelta2(int deltaType, boolean skip);

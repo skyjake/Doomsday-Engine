@@ -139,9 +139,9 @@ int P_GetDDPlayerIdx(ddplayer_t* ddpl)
 /**
  * Do we THINK the given (camera) player is currently in the void.
  * The method used to test this is to compare the position of the mobj
- * each time it is linked into a subsector.
+ * each time it is linked into a BSP leaf.
  *
- * \note Cannot be 100% accurate so best not to use it for anything critical...
+ * @note Cannot be 100% accurate so best not to use it for anything critical...
  *
  * @param player        The player to test.
  *
@@ -163,24 +163,26 @@ boolean P_IsInVoid(player_t* player)
         if(ddpl->inVoid)
             return true;
 
-        if(ddpl->mo && ddpl->mo->subsector)
+        if(ddpl->mo && ddpl->mo->bspLeaf)
         {
-            sector_t* sec = ddpl->mo->subsector->sector;
+            Sector* sec = ddpl->mo->bspLeaf->sector;
 
-            if(R_IsSkySurface(&sec->SP_ceilsurface))
+            if(Surface_IsSkyMasked(&sec->SP_ceilsurface))
             {
-               if(skyFix[PLN_CEILING].height < DDMAXFLOAT && ddpl->mo->pos[VZ] > skyFix[PLN_CEILING].height - 4)
-                   return true;
-            }
-            else if(ddpl->mo->pos[VZ] > sec->SP_ceilvisheight - 4)
-                return true;
-
-            if(R_IsSkySurface(&sec->SP_floorsurface))
-            {
-                if(skyFix[PLN_FLOOR].height > DDMINFLOAT && ddpl->mo->pos[VZ] < skyFix[PLN_FLOOR].height + 4)
+                const coord_t skyCeil = GameMap_SkyFixCeiling(theMap);
+                if(skyCeil < DDMAXFLOAT && ddpl->mo->origin[VZ] > skyCeil - 4)
                     return true;
             }
-            else if(ddpl->mo->pos[VZ] < sec->SP_floorvisheight + 4)
+            else if(ddpl->mo->origin[VZ] > sec->SP_ceilvisheight - 4)
+                return true;
+
+            if(Surface_IsSkyMasked(&sec->SP_floorsurface))
+            {
+                const coord_t skyFloor = GameMap_SkyFixFloor(theMap);
+                if(skyFloor > DDMINFLOAT && ddpl->mo->origin[VZ] < skyFloor + 4)
+                    return true;
+            }
+            else if(ddpl->mo->origin[VZ] < sec->SP_floorvisheight + 4)
                 return true;
         }
     }

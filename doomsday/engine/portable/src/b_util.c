@@ -495,6 +495,17 @@ boolean B_CheckCondition(statecondition_t* cond, int localNum, bcontext_t* conte
     return !fulfilled;
 }
 
+boolean B_EqualConditions(const statecondition_t* a, const statecondition_t* b)
+{
+    return (a->device == b->device &&
+            a->type == b->type &&
+            a->id == b->id &&
+            a->state == b->state &&
+            FEQUAL(a->pos, b->pos) &&
+            a->flags.negate == b->flags.negate &&
+            a->flags.multiplayer == b->flags.multiplayer);
+}
+
 void B_AppendDeviceDescToString(uint device, ddeventtype_t type, int id, ddstring_t* str)
 {
     inputdev_t* dev = I_GetDevice(device, false);

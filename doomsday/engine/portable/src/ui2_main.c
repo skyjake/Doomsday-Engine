@@ -539,7 +539,7 @@ static void useColor(const animator_t* color, int components)
 static void drawPageBackground(fi_page_t* p, float x, float y, float width, float height,
     float light, float alpha)
 {
-    vec3_t topColor, bottomColor;
+    vec3f_t topColor, bottomColor;
     float topAlpha, bottomAlpha;
 
     if(p->_bg.material)
@@ -552,10 +552,10 @@ static void drawPageBackground(fi_page_t* p, float x, float y, float width, floa
         glEnable(GL_TEXTURE_2D);
     }
 
-    V3_Set(topColor,    p->_bg.topColor   [0].value * light, p->_bg.topColor   [1].value * light, p->_bg.topColor   [2].value * light);
+    V3f_Set(topColor,    p->_bg.topColor   [0].value * light, p->_bg.topColor   [1].value * light, p->_bg.topColor   [2].value * light);
     topAlpha = p->_bg.topColor[3].value * alpha;
 
-    V3_Set(bottomColor, p->_bg.bottomColor[0].value * light, p->_bg.bottomColor[1].value * light, p->_bg.bottomColor[2].value * light);
+    V3f_Set(bottomColor, p->_bg.bottomColor[0].value * light, p->_bg.bottomColor[1].value * light, p->_bg.bottomColor[2].value * light);
     bottomAlpha = p->_bg.bottomColor[3].value * alpha;
 
     if(p->_bg.material || topAlpha < 1.0 || bottomAlpha < 1.0)
@@ -608,10 +608,10 @@ void FIPage_Drawer(fi_page_t* p)
     //glEnable(GL_CULL_FACE);
     glEnable(GL_ALPHA_TEST);
 
-    {vec3_t worldOrigin;
-    V3_Set(worldOrigin, /*-SCREENWIDTH/2*/ - p->_offset[VX].value,
-                        /*-SCREENHEIGHT/2*/ - p->_offset[VY].value,
-                        0/*.05f - p->_offset[VZ].value*/);
+    {vec3f_t worldOrigin;
+    V3f_Set(worldOrigin, /*-SCREENWIDTH/2*/ - p->_offset[VX].value,
+                         /*-SCREENHEIGHT/2*/ - p->_offset[VY].value,
+                         0/*.05f - p->_offset[VZ].value*/);
     objectsDraw(&p->_objects, FI_NONE/* treated as 'any' */, worldOrigin);
 
     /*{rendmodelparams_t params;
@@ -819,9 +819,9 @@ static void setupModelParamsForFIObject(rendmodelparams_t* params, const char* m
         return;
 
     params->mf = mf;
-    params->center[VX] = worldOffset[VX] + pos[VX];
-    params->center[VY] = worldOffset[VZ] + pos[VZ];
-    params->center[VZ] = worldOffset[VY] + pos[VY];
+    params->origin[VX] = worldOffset[VX] + pos[VX];
+    params->origin[VY] = worldOffset[VZ] + pos[VZ];
+    params->origin[VZ] = worldOffset[VY] + pos[VY];
     params->distance = -10; /// \fixme inherit depth.
     params->yawAngleOffset   = (SCREENWIDTH/2  - pos[VX]) * weaponOffsetScale + 90;
     params->pitchAngleOffset = (SCREENHEIGHT/2 - pos[VY]) * weaponOffsetScale * weaponOffsetScaleY / 1000.0f;
@@ -941,20 +941,20 @@ static size_t buildGeometry(const float dimensions[3], boolean flipTextureS,
     static ColorRawf rcolors[4];
     static rtexcoord_t rcoords[4];
 
-    V3_Set(rvertices[0].pos, 0, 0, 0);
-    V3_Set(rvertices[1].pos, 1, 0, 0);
-    V3_Set(rvertices[2].pos, 0, 1, 0);
-    V3_Set(rvertices[3].pos, 1, 1, 0);
+    V3f_Set(rvertices[0].pos, 0, 0, 0);
+    V3f_Set(rvertices[1].pos, 1, 0, 0);
+    V3f_Set(rvertices[2].pos, 0, 1, 0);
+    V3f_Set(rvertices[3].pos, 1, 1, 0);
 
-    V2_Set(rcoords[0].st, (flipTextureS? 1:0), 0);
-    V2_Set(rcoords[1].st, (flipTextureS? 0:1), 0);
-    V2_Set(rcoords[2].st, (flipTextureS? 1:0), 1);
-    V2_Set(rcoords[3].st, (flipTextureS? 0:1), 1);
+    V2f_Set(rcoords[0].st, (flipTextureS? 1:0), 0);
+    V2f_Set(rcoords[1].st, (flipTextureS? 0:1), 0);
+    V2f_Set(rcoords[2].st, (flipTextureS? 1:0), 1);
+    V2f_Set(rcoords[3].st, (flipTextureS? 0:1), 1);
 
-    V4_Copy(rcolors[0].rgba, rgba);
-    V4_Copy(rcolors[1].rgba, rgba);
-    V4_Copy(rcolors[2].rgba, rgba2);
-    V4_Copy(rcolors[3].rgba, rgba2);
+    V4f_Copy(rcolors[0].rgba, rgba);
+    V4f_Copy(rcolors[1].rgba, rgba);
+    V4f_Copy(rcolors[2].rgba, rgba2);
+    V4f_Copy(rcolors[3].rgba, rgba2);
 
     *verts = rvertices;
     *coords = rcoords;
@@ -981,8 +981,8 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
     /*const*/ float scale[3], const float rgba[4], const float rgba2[4], float angle,
     const float worldOffset[3])
 {
-    vec3_t offset = { 0, 0, 0 }, dimensions, origin, originOffset, center;
-    vec2_t texScale = { 1, 1 };
+    vec3f_t offset = { 0, 0, 0 }, dimensions, origin, originOffset, center;
+    vec2f_t texScale = { 1, 1 };
     boolean showEdges = true, flipTextureS = false;
     boolean mustPopTextureMatrix = false;
     boolean textureEnabled = false;
@@ -1005,10 +1005,10 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
             if(rawTex)
             {
                 DGLuint glName = GL_PrepareRawTexture(rawTex);
-                V3_Set(offset, 0, 0, 0);
+                V3f_Set(offset, 0, 0, 0);
                 // Raw images are always considered to have a logical size of 320x200
                 // even though the actual texture resolution may be different.
-                V3_Set(dimensions, 320 /*rawTex->width*/, 200 /*rawTex->height*/, 0);
+                V3f_Set(dimensions, 320 /*rawTex->width*/, 200 /*rawTex->height*/, 0);
                 GL_BindTextureUnmanaged(glName, (filterUI ? GL_LINEAR : GL_NEAREST));
                 if(glName)
                 {
@@ -1021,8 +1021,8 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
             break;
           }
         case PFT_XIMAGE:
-            V3_Set(offset, 0, 0, 0);
-            V3_Set(dimensions, 1, 1, 0);
+            V3f_Set(offset, 0, 0, 0);
+            V3f_Set(dimensions, 1, 1, 0);
             GL_BindTextureUnmanaged(f->texRef.tex, (filterUI ? GL_LINEAR : GL_NEAREST));
             if(f->texRef.tex)
             {
@@ -1048,7 +1048,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
                 const texturevariantspecification_t* spec = MSU_texturespec(ms, MTU_PRIMARY);
 
                 /// \todo Utilize *all* properties of the Material.
-                V3_Set(dimensions, ms->size.width  + TS_GENERAL(spec)->border*2,
+                V3f_Set(dimensions, ms->size.width  + TS_GENERAL(spec)->border*2,
                        ms->size.height + TS_GENERAL(spec)->border*2, 0);
                 TextureVariant_Coords(MST(ms, MTU_PRIMARY), &texScale[VX], &texScale[VY]);
 
@@ -1058,13 +1058,13 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
                     patchtex_t* sTex = (patchtex_t*)Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
                     if(sTex)
                     {
-                        V3_Set(offset, sTex->offX, sTex->offY, 0);
+                        V3f_Set(offset, sTex->offX, sTex->offY, 0);
                         break;
                     }
                   }
                     // Fall through.
                 default:
-                    V3_Set(offset, 0, 0, 0);
+                    V3f_Set(offset, 0, 0, 0);
                     break;
                 }
                 }
@@ -1083,8 +1083,8 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
                 {
                 patchtex_t* pTex = (patchtex_t*)Texture_UserData(texture);
                 assert(pTex);
-                V3_Set(offset, pTex->offX, pTex->offY, 0);
-                V3_Set(dimensions, Texture_Width(texture), Texture_Height(texture), 0);
+                V3f_Set(offset, pTex->offX, pTex->offY, 0);
+                V3f_Set(dimensions, Texture_Width(texture), Texture_Height(texture), 0);
                 }
             }
             break;
@@ -1098,19 +1098,19 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
     /// @fixme This is some seriously funky logic... refactor or remove.
     if(!textureEnabled)
     {
-        V3_Copy(dimensions, scale);
-        V3_Set(scale, 1, 1, 1);
+        V3f_Copy(dimensions, scale);
+        V3f_Set(scale, 1, 1, 1);
     }
 
-    V3_Set(center, dimensions[VX] / 2, dimensions[VY] / 2, dimensions[VZ] / 2);
+    V3f_Set(center, dimensions[VX] / 2, dimensions[VY] / 2, dimensions[VZ] / 2);
 
-    V3_Sum(origin, _origin, center);
-    V3_Subtract(origin, origin, offset);
-    V3_Sum(origin, origin, worldOffset);
+    V3f_Sum(origin, _origin, center);
+    V3f_Subtract(origin, origin, offset);
+    V3f_Sum(origin, origin, worldOffset);
 
-    V3_Subtract(originOffset, offset, center);
+    V3f_Subtract(originOffset, offset, center);
     offset[VX] *= scale[VX]; offset[VY] *= scale[VY]; offset[VZ] *= scale[VZ];
-    V3_Sum(originOffset, originOffset, offset);
+    V3f_Sum(originOffset, originOffset, offset);
 
     numVerts = buildGeometry(dimensions, flipTextureS, rgba, rgba2, &rvertices, &rcolors, &rcoords);
 
@@ -1186,18 +1186,18 @@ void FIData_PicDraw(fi_object_t* obj, const float offset[3])
     if(!obj || obj->type != FI_PIC) Con_Error("FIData_PicDraw: Not a FI_PIC.");
 
     {
-    vec3_t scale, origin;
-    vec4_t rgba, rgba2;
+    vec3f_t scale, origin;
+    vec4f_t rgba, rgba2;
 
     // Fully transparent pics will not be drawn.
     if(!(p->color[CA].value > 0))
         return;
 
-    V3_Set(origin, p->pos[VX].value, p->pos[VY].value, p->pos[VZ].value);
-    V3_Set(scale, p->scale[VX].value, p->scale[VY].value, p->scale[VZ].value);
-    V4_Set(rgba, p->color[CR].value, p->color[CG].value, p->color[CB].value, p->color[CA].value);
+    V3f_Set(origin, p->pos[VX].value, p->pos[VY].value, p->pos[VZ].value);
+    V3f_Set(scale, p->scale[VX].value, p->scale[VY].value, p->scale[VZ].value);
+    V4f_Set(rgba, p->color[CR].value, p->color[CG].value, p->color[CB].value, p->color[CA].value);
     if(p->numFrames == 0)
-        V4_Set(rgba2, p->otherColor[CR].value, p->otherColor[CG].value, p->otherColor[CB].value, p->otherColor[CA].value);
+        V4f_Set(rgba2, p->otherColor[CR].value, p->otherColor[CG].value, p->otherColor[CB].value, p->otherColor[CA].value);
 
     drawPicFrame(p, p->curFrame, origin, scale, rgba, (p->numFrames==0? rgba2 : rgba), p->angle.value, offset);
     }
@@ -1319,6 +1319,7 @@ void FIData_TextDraw(fi_object_t* obj, const float offset[3])
     if(!t->text) return;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();

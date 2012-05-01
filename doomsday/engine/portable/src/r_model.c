@@ -149,10 +149,11 @@ static void R_VertexNormals(model_t *mdl)
         {
             tri = mdl->lods[0].triangles + k;
             // First calculate surface normals, combine them to vertex ones.
-            M_PointCrossProduct(list[tri->vertexIndices[0]].vertex,
-            list[tri->vertexIndices[2]].vertex,
-            list[tri->vertexIndices[1]].vertex, normals[k].pos);
-            M_Normalize(normals[k].pos);
+            V3f_PointCrossProduct(normals[k].pos,
+                                  list[tri->vertexIndices[0]].vertex,
+                                  list[tri->vertexIndices[2]].vertex,
+                                  list[tri->vertexIndices[1]].vertex);
+            V3f_Normalize(normals[k].pos);
         }
 
         for(k = 0; k < verts; ++k)
@@ -179,7 +180,7 @@ static void R_VertexNormals(model_t *mdl)
                 norm.pos[n] /= cnt;
 
             // Normalize it.
-            M_Normalize(norm.pos);
+            V3f_Normalize(norm.pos);
             memcpy(list[k].normal, norm.pos, sizeof(norm.pos));
         }
     }
@@ -1304,8 +1305,11 @@ void R_ShutdownModels(void)
 
     clearModelList();
 
-    StringPool_Delete(modelRepository);
-    modelRepository = 0;
+    if(modelRepository)
+    {
+        StringPool_Delete(modelRepository);
+        modelRepository = 0;
+    }
 }
 
 void R_SetModelFrame(modeldef_t* modef, int frame)

@@ -32,7 +32,7 @@ struct texturevariantspecification_s;
 struct materialvariant_s;
 struct materialsnapshot_s;
 
-enum materialnamespaceid_t; // Defined in dd_share.h
+enum materialnamespaceid_e; // Defined in dd_share.h
 
 /// Material (Usage) Context identifiers.
 typedef enum {
@@ -85,16 +85,16 @@ void Materials_ClearDefinitionLinks(void);
  * not valid (i.e., equal to NULL or is a zero-length string) then the special identifier
  * @c MN_ANY is returned. Otherwise @c MN_INVALID.
  */
-materialnamespaceid_t Materials_ParseNamespace(const char* str);
+enum materialnamespaceid_e Materials_ParseNamespace(const char* str);
 
 /// @return  Name associated with the identified @a namespaceId else a zero-length string.
-const ddstring_t* Materials_NamespaceName(materialnamespaceid_t namespaceId);
+const ddstring_t* Materials_NamespaceName(enum materialnamespaceid_e namespaceId);
 
 /// @return  Total number of unique Materials in the collection.
 uint Materials_Size(void);
 
 /// @return  Number of unique Materials in the identified @a namespaceId.
-uint Materials_Count(materialnamespaceid_t namespaceId);
+uint Materials_Count(enum materialnamespaceid_e namespaceId);
 
 /// @return  Unique identifier associated with @a material else @c 0.
 materialid_t Materials_Id(material_t* material);
@@ -103,7 +103,7 @@ materialid_t Materials_Id(material_t* material);
 material_t* Materials_ToMaterial(materialid_t materialId);
 
 /// @return  Unique identifier of the namespace this material is in.
-materialnamespaceid_t Materials_Namespace(materialid_t materialId);
+enum materialnamespaceid_e Materials_Namespace(materialid_t materialId);
 
 /// @return  Symbolic name/path-to this material. Must be destroyed with Str_Delete().
 ddstring_t* Materials_ComposePath(materialid_t materialId);

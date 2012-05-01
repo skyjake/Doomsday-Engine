@@ -50,12 +50,14 @@
 #include "texturecontent.h"
 #include "texturevariant.h"
 #include "materialvariant.h"
+#include "displaymode.h"
 
+/*
 #if defined(WIN32) && defined(WIN32_GAMMA)
-#  include <icm.h>
-#  include <math.h>
 #endif
+*/
 
+/*
 // SDL's gamma settings seem more robust.
 #if 0
 #if defined(UNIX) && defined(HAVE_X11_EXTENSIONS_XF86VMODE_H)
@@ -65,16 +67,18 @@
 #endif
 #endif
 
-#if !defined(WIN32_GAMMA) && !defined(XFREE_GAMMA)
-#  define SDL_GAMMA
-#  include <SDL.h>
-#endif
+#ifdef MACOSX
+#  define MAC_GAMMA
+#else
+#  if !defined(WIN32_GAMMA) && !defined(XFREE_GAMMA)
+#    define SDL_GAMMA
+#    include <SDL.h>
+#  endif
+#endif*/
 
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
-
-typedef unsigned short gramp_t[3 * 256];
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -83,7 +87,11 @@ typedef unsigned short gramp_t[3 * 256];
 D_CMD(Fog);
 D_CMD(SetBPP);
 D_CMD(SetRes);
+D_CMD(SetFullRes);
+D_CMD(SetWinRes);
 D_CMD(ToggleFullscreen);
+D_CMD(DisplayModeInfo);
+D_CMD(ListDisplayModes);
 
 void    GL_SetGamma(void);
 
@@ -102,7 +110,7 @@ int     defFullscreen = true;
 int numTexUnits = 1;
 boolean envModAdd;              // TexEnv: modulate and add is available.
 int     test3dfx = 0;
-int     r_framecounter;         // Used only for statistics.
+//int     r_framecounter;         // Used only for statistics.
 int     r_detail = true;        // Render detail textures (if available).
 
 float   vid_gamma = 1.0f, vid_bright = 0, vid_contrast = 1.0f;
@@ -111,20 +119,43 @@ float   glNearClip, glFarClip;
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean initGLOk = false;
-static gramp_t original_gamma_ramp;
+//static gramp_t original_gamma_ramp;
 static boolean gamma_support = false;
 static float oldgamma, oldcontrast, oldbright;
 static int fogModeDefault = 0;
+static byte fsaaEnabled = true;
+static byte vsyncEnabled = true;
 
 static viewport_t currentView;
 
 // CODE --------------------------------------------------------------------
 
+static void videoFSAAChanged(void)
+{
+    if(!novideo && Window_Main())
+    {
+        Window_UpdateCanvasFormat(Window_Main());
+    }
+}
+
+static void videoVsyncChanged(void)
+{
+    if(!novideo && Window_Main())
+    {
+#if defined(WIN32) || defined(MACOSX)
+        GL_SetVSync(Con_GetByte("vid-vsync") != 0);
+#else
+        Window_UpdateCanvasFormat(Window_Main());
+#endif
+    }
+}
+
 void GL_Register(void)
 {
     // Cvars
-    C_VAR_INT("rend-dev-wireframe", &renderWireframe, 0, 0, 2);
+    C_VAR_INT("rend-dev-wireframe", &renderWireframe, CVF_NO_ARCHIVE, 0, 2);
     C_VAR_INT("rend-fog-default", &fogModeDefault, 0, 0, 2);
+
     // * Render-HUD
     C_VAR_FLOAT("rend-hud-offset-scale", &weaponOffsetScale, CVF_NO_MAX,
                 0, 0);
@@ -136,20 +167,27 @@ void GL_Register(void)
     C_VAR_INT("rend-mobj-smooth-turn", &useSRVOAngle, 0, 0, 1);
 
     // * video
-    C_VAR_INT("vid-res-x", &defResX, CVF_NO_MAX, 320, 0);
-    C_VAR_INT("vid-res-y", &defResY, CVF_NO_MAX, 240, 0);
-    C_VAR_INT("vid-bpp", &defBPP, 0, 16, 32);
-    C_VAR_INT("vid-fullscreen", &defFullscreen, 0, 0, 1);
+    C_VAR_BYTE2("vid-vsync", &vsyncEnabled, 0, 0, 1, videoVsyncChanged);
+    C_VAR_BYTE2("vid-fsaa", &fsaaEnabled, 0, 0, 1, videoFSAAChanged);
+    C_VAR_INT("vid-res-x", &defResX, CVF_NO_MAX|CVF_READ_ONLY|CVF_NO_ARCHIVE, 320, 0);
+    C_VAR_INT("vid-res-y", &defResY, CVF_NO_MAX|CVF_READ_ONLY|CVF_NO_ARCHIVE, 240, 0);
+    C_VAR_INT("vid-bpp", &defBPP, CVF_READ_ONLY|CVF_NO_ARCHIVE, 16, 32);
+    C_VAR_INT("vid-fullscreen", &defFullscreen, CVF_READ_ONLY|CVF_NO_ARCHIVE, 0, 1);
     C_VAR_FLOAT("vid-gamma", &vid_gamma, 0, 0.1f, 6);
     C_VAR_FLOAT("vid-contrast", &vid_contrast, 0, 0, 10);
     C_VAR_FLOAT("vid-bright", &vid_bright, 0, -2, 2);
 
     // Ccmds
     C_CMD_FLAGS("fog", NULL, Fog, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("displaymode", "", DisplayModeInfo, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("listdisplaymodes", "", ListDisplayModes, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("setcolordepth", "i", SetBPP, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("setbpp", "i", SetBPP, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("setres", "ii", SetRes, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("setfullres", "ii", SetFullRes, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("setwinres", "ii", SetWinRes, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("setvidramp", "", UpdateGammaRamp, CMDF_NO_DEDICATED);
-    C_CMD("togglefullscreen", "", ToggleFullscreen);
+    C_CMD_FLAGS("togglefullscreen", "", ToggleFullscreen, CMDF_NO_DEDICATED);
 
     GL_TexRegister();
 }
@@ -158,6 +196,17 @@ boolean GL_IsInited(void)
 {
     return initGLOk;
 }
+
+#if defined(WIN32) || defined(MACOSX)
+void GL_AssertContextActive(void)
+{
+#ifdef WIN32
+    assert(wglGetCurrentContext() != 0);
+#else
+    assert(CGLGetCurrentContext() != 0);
+#endif
+}
+#endif
 
 /**
  * Swaps buffers / blits the back buffer to the front.
@@ -170,33 +219,27 @@ void GL_DoUpdate(void)
         GL_SetGamma();
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    // Tell GL to finish drawing right now.
-    glFinish();
-
-    // Wait until the right time to show the frame so that the realized
-    // frame rate is exactly right.
-    DD_WaitForOptimalUpdateTime();
-
-    // Blit screen to video.
-    Sys_UpdateWindow(windowIDX);
-
-    // Increment frame counter.
-    r_framecounter++;
-}
-
-/**
- * On Win32, use the gamma ramp functions in the Win32 API. On Linux, use
- * the XFree86-VidMode extension.
- */
-void GL_GetGammaRamp(unsigned short *ramp)
-{
-    if(ArgCheck("-noramp"))
+    if(Window_ShouldRepaintManually(Window_Main()))
     {
-        gamma_support = false;
-        return;
+        // Wait until the right time to show the frame so that the realized
+        // frame rate is exactly right.
+        glFlush();
+        DD_WaitForOptimalUpdateTime();
     }
 
+    // Blit screen to video.
+    Window_SwapBuffers(theWindow);
+}
+
+void GL_GetGammaRamp(displaycolortransfer_t *ramp)
+{
+    if(!gamma_support) return;
+
+    DisplayMode_GetColorTransfer(ramp);
+
+    /*
 #ifdef SDL_GAMMA
     gamma_support = true;
     if(SDL_GetGammaRamp(ramp, ramp + 256, ramp + 512) < 0)
@@ -204,141 +247,37 @@ void GL_GetGammaRamp(unsigned short *ramp)
         gamma_support = false;
     }
 #endif
+    */
 
-#if defined(WIN32) && defined(WIN32_GAMMA)
-    {
-        HWND    hWnd = Sys_GetWindowHandle(windowIDX);
-        HDC     hDC;
-
-        if(!hWnd)
-        {
-            DD_Win32_SuspendMessagePump(true);
-            MessageBox(HWND_DESKTOP,
-                       TEXT("GL_GetGammaRamp: Main window not available."), NULL,
-                       MB_ICONERROR | MB_OK);
-            DD_Win32_SuspendMessagePump(false);
-        }
-        else
-        {
-            hDC = GetDC(hWnd);
-
-            if(!hDC)
-            {
-                Con_Message("GL_GetGammaRamp: Failed getting device context.");
-                gamma_support = false;
-            }
-            else
-            {
-                gamma_support = false;
-                if(GetDeviceGammaRamp(hDC, (void*) ramp))
-                {
-                    gamma_support = true;
-                }
-                ReleaseDC(hWnd, hDC);
-            }
-        }
-    }
-#endif
-
-#ifdef XFREE_GAMMA
-    {
-        Display *dpy = XOpenDisplay(NULL);
-        int screen = DefaultScreen(dpy);
-        int event = 0, error = 0;
-        int rampSize = 0;
-
-        Con_Message("GL_GetGammaRamp:\n");
-        if(!dpy || !XF86VidModeQueryExtension(dpy, &event, &error))
-        {
-            Con_Message("  XFree86-VidModeExtension not available.\n");
-            gamma_support = false;
-            return;
-        }
-        VERBOSE(Con_Message("  XFree86-VidModeExtension: event# %i "
-                            "error# %i\n", event, error));
-        XF86VidModeGetGammaRampSize(dpy, screen, &rampSize);
-        Con_Message("  Gamma ramp size: %i\n", rampSize);
-        if(rampSize != 256)
-        {
-            Con_Message("  This implementation only understands ramp size "
-                        "256.\n  Please complain to the developer.\n");
-            gamma_support = false;
-            XCloseDisplay(dpy);
-            return;
-        }
-
-        // Get the current ramps.
-        XF86VidModeGetGammaRamp(dpy, screen, rampSize, ramp, ramp + 256,
-                                ramp + 512);
-        XCloseDisplay(dpy);
-
-        gamma_support = true;
-    }
-#endif
 }
 
-void GL_SetGammaRamp(unsigned short* ramp)
+void GL_SetGammaRamp(const displaycolortransfer_t* ramp)
 {
-    if(!gamma_support)
-        return;
+    if(!gamma_support) return;
 
+    DisplayMode_SetColorTransfer(ramp);
+
+    /*
 #ifdef SDL_GAMMA
-    SDL_SetGammaRamp(ramp, ramp + 256, ramp + 512);
-#endif
-
-#if defined(WIN32) && defined(WIN32_GAMMA)
-    { HWND hWnd;
-    if((hWnd = Sys_GetWindowHandle(windowIDX)))
+    if(SDL_SetGammaRamp(ramp, ramp + 256, ramp + 512) < 0)
     {
-        HDC hDC;
-        if((hDC = GetDC(hWnd)))
-        {
-            SetDeviceGammaRamp(hDC, (void*) ramp);
-            ReleaseDC(hWnd, hDC);
-        }
-        else
-        {
-            Con_Message("GL_SetGammaRamp: Failed getting device context.");
-            gamma_support = false;
-        }
+        Con_Message("Failed to set gamma with SDL.\n");
     }
-    else
-    {
-        DD_Win32_SuspendMessagePump(true);
-        MessageBox(HWND_DESKTOP, TEXT("GL_SetGammaRamp: Main window not available."), 0, MB_ICONERROR | MB_OK);
-        DD_Win32_SuspendMessagePump(false);
-    }}
 #endif
-
-#ifdef XFREE_GAMMA
-    { Display* dpy;
-    if((dpy = XOpenDisplay(0)))
-    {
-        int screen = DefaultScreen(dpy);
-        // We assume that the gamme ramp size actually is 256.
-        XF86VidModeSetGammaRamp(dpy, screen, 256, ramp, ramp + 256, ramp + 512);
-        XCloseDisplay(dpy);
-    }
-    else
-    {
-        Con_Message("GL_SetGammaRamp: Failed acquiring Display handle.");
-        gamma_support = false;
-    }}
-#endif
+    */
 }
 
 /**
  * Calculate a gamma ramp and write the result to the location pointed to.
  *
- * PRE: 'ramp' must point to a ushort[256] area of memory.
+ * @todo  Allow for finer control of the curves (separate red, green, blue).
  *
- * @param ramp          Ptr to the ramp table to write to.
+ * @param ramp          Ptr to the ramp table to write to. Must point to a ushort[768] area of memory.
  * @param gamma         Non-linear factor (curvature; >1.0 multiplies).
  * @param contrast      Steepness.
  * @param bright        Brightness, uniform offset.
  */
-void GL_MakeGammaRamp(unsigned short *ramp, float gamma, float contrast,
-                      float bright)
+void GL_MakeGammaRamp(unsigned short *ramp, float gamma, float contrast, float bright)
 {
     int         i;
     double      ideal[256]; // After processing clamped to unsigned short.
@@ -387,14 +326,14 @@ void GL_MakeGammaRamp(unsigned short *ramp, float gamma, float contrast,
  */
 void GL_SetGamma(void)
 {
-    gramp_t myramp;
+    displaycolortransfer_t myramp;
 
     oldgamma = vid_gamma;
     oldcontrast = vid_contrast;
     oldbright = vid_bright;
 
-    GL_MakeGammaRamp(myramp, vid_gamma, vid_contrast, vid_bright);
-    GL_SetGammaRamp(myramp);
+    GL_MakeGammaRamp(myramp.table, vid_gamma, vid_contrast, vid_bright);
+    GL_SetGammaRamp(&myramp);
 }
 
 static void printConfiguration(void)
@@ -423,13 +362,12 @@ static void printConfiguration(void)
  */
 boolean GL_EarlyInit(void)
 {
-    if(isDedicated) return true;
+    if(novideo) return true;
     if(initGLOk) return true; // Already initialized.
 
     Con_Message("Initializing Render subsystem...\n");
 
-    // Get the original gamma ramp and check if ramps are supported.
-    GL_GetGammaRamp(original_gamma_ramp);
+    gamma_support = !ArgCheck("-noramp");
 
     // We are simple people; two texture units is enough.
     numTexUnits = MIN_OF(GL_state.maxTexUnits, MAX_TEX_UNITS);
@@ -444,15 +382,8 @@ boolean GL_EarlyInit(void)
     // Check the maximum texture size.
     if(GL_state.maxTexSize == 256)
     {
-        int bpp;
-
         Con_Message("Using restricted texture w/h ratio (1:8).\n");
         ratioLimit = 8;
-        Sys_GetWindowBPP(windowIDX, &bpp);
-        if(bpp == 32)
-        {
-            Con_Message("Warning: Are you sure your video card accelerates a 32 bit mode?\n");
-        }
     }
     // Set a custom maximum size?
     if(ArgCheckWith("-maxtex", 1))
@@ -535,6 +466,7 @@ void GL_Shutdown(void)
         return; // Not yet initialized fully.
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // We won't be drawing anything further but we don't want to shutdown
     // with the previous frame still visible as this can lead to unwanted
@@ -560,11 +492,13 @@ void GL_Shutdown(void)
     // Shutdown OpenGL.
     Sys_GLShutdown();
 
+    /*
     // Restore original gamma.
     if(!ArgExists("-leaveramp"))
     {
         GL_SetGammaRamp(original_gamma_ramp);
     }
+    */
 
     initGLOk = false;
 }
@@ -579,6 +513,7 @@ void GL_Init2DState(void)
     glFarClip = 16500;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Here we configure the OpenGL state and set the projection matrix.
     glDisable(GL_CULL_FACE);
@@ -612,6 +547,7 @@ void GL_Init2DState(void)
 void GL_SwitchTo3DState(boolean push_state, const viewport_t* port, const viewdata_t* viewData)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(push_state)
     {
@@ -640,6 +576,7 @@ void GL_SwitchTo3DState(boolean push_state, const viewport_t* port, const viewda
 void GL_Restore2DState(int step, const viewport_t* port, const viewdata_t* viewData)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     switch(step)
     {
@@ -713,6 +650,7 @@ void GL_ProjectionMatrix(void)
     float aspect = viewpw / (float) viewph;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -753,7 +691,7 @@ void GL_TotalReset(void)
 void GL_TotalRestore(void)
 {
     ded_mapinfo_t* mapInfo = NULL;
-    gamemap_t* map;
+    GameMap* map;
 
     if(isDedicated) return;
 
@@ -765,10 +703,10 @@ void GL_TotalRestore(void)
     R_LoadSystemFonts();
     Con_Resize();
 
-    map = P_GetCurrentMap();
+    map = theMap;
     if(map)
     {
-        mapInfo = Def_GetMapInfo(P_MapUri(map));
+        mapInfo = Def_GetMapInfo(GameMap_Uri(map));
     }
 
     // Restore map's fog settings.
@@ -793,8 +731,9 @@ unsigned char* GL_GrabScreen(void)
 
     if(!isDedicated && !novideo)
     {
-        const int width  = theWindow->geometry.size.width;
-        const int height = theWindow->geometry.size.height;
+        /*
+        const int width  = Window_Width(theWindow);
+        const int height = Window_Height(theWindow);
 
         buffer = (unsigned char*) malloc(width * height * 3);
         if(!buffer)
@@ -807,7 +746,7 @@ unsigned char* GL_GrabScreen(void)
 #if _DEBUG
             Con_Message("Warning:GL_GrabScreen: Failed copying frame buffer content.\n");
 #endif
-        }
+        }*/
     }
     return buffer;
 }
@@ -818,6 +757,7 @@ unsigned char* GL_GrabScreen(void)
 void GL_BlendMode(blendmode_t mode)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     switch(mode)
     {
@@ -970,6 +910,7 @@ void GL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT)
     if(rawTex)
     {
         LIBDENG_ASSERT_IN_MAIN_THREAD();
+        LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
         GL_BindTextureUnmanaged(GL_PrepareRawTexture(rawTex), (filterUI ? GL_LINEAR : GL_NEAREST));
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapS);
@@ -979,14 +920,14 @@ void GL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT)
 
 void GL_BindTextureUnmanaged(DGLuint glName, int magMode)
 {
-    if(Con_InBusyWorker()) return;
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+
     if(glName == 0)
     {
         GL_SetNoTexture();
         return;
     }
-
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     glBindTexture(GL_TEXTURE_2D, glName);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magMode);
@@ -997,6 +938,7 @@ void GL_BindTextureUnmanaged(DGLuint glName, int magMode)
 void GL_SetNoTexture(void)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     /// @todo Don't actually change the current binding.
     ///       Simply disable any currently enabled texture types.
@@ -1285,24 +1227,99 @@ void GL_CalcLuminance(const uint8_t* buffer, int width, int height, int pixelSiz
  */
 D_CMD(SetRes)
 {
-    int                 width = atoi(argv[1]), height = atoi(argv[2]);
+    int attribs[] = {
+        DDWA_WIDTH, atoi(argv[1]),
+        DDWA_HEIGHT, atoi(argv[2]),
+        DDWA_END
+    };
+    return Window_ChangeAttributes(Window_Main(), attribs);
+}
 
-    return Sys_SetWindow(windowIDX, 0, 0, width, height, 0, 0,
-                         DDSW_NOVISIBLE|DDSW_NOCENTER|DDSW_NOFULLSCREEN|
-                         DDSW_NOBPP);
+D_CMD(SetFullRes)
+{
+    int attribs[] = {
+        DDWA_WIDTH, atoi(argv[1]),
+        DDWA_HEIGHT, atoi(argv[2]),
+        DDWA_FULLSCREEN, true,
+        DDWA_END
+    };
+    return Window_ChangeAttributes(Window_Main(), attribs);
+}
+
+D_CMD(SetWinRes)
+{
+    int attribs[] = {
+        DDWA_WIDTH, atoi(argv[1]),
+        DDWA_HEIGHT, atoi(argv[2]),
+        DDWA_FULLSCREEN, false,
+        DDWA_END
+    };
+    return Window_ChangeAttributes(Window_Main(), attribs);
 }
 
 D_CMD(ToggleFullscreen)
 {
-    boolean             fullscreen;
+    /// @todo Currently not supported: the window should be recreated when
+    /// switching at runtime so that its frameless flag has the appropriate
+    /// effect.
+#if 1
+    int attribs[] = {
+        DDWA_FULLSCREEN, !Window_IsFullscreen(Window_Main()),
+        DDWA_END
+    };
+    return Window_ChangeAttributes(Window_Main(), attribs);
+#endif
+    return false;
+}
 
-    if(!Sys_GetWindowFullscreen(windowIDX, &fullscreen))
-        Con_Message("CCmd 'ToggleFullscreen': Failed acquiring window "
-                    "fullscreen");
-    else
-        Sys_SetWindow(windowIDX, 0, 0, 0, 0, 0,
-                      (!fullscreen? DDWF_FULLSCREEN : 0),
-                      DDSW_NOCENTER|DDSW_NOSIZE|DDSW_NOBPP|DDSW_NOVISIBLE);
+D_CMD(SetBPP)
+{
+    int attribs[] = {
+        DDWA_COLOR_DEPTH_BITS, atoi(argv[1]),
+        DDWA_END
+    };
+    return Window_ChangeAttributes(Window_Main(), attribs);
+}
+
+D_CMD(DisplayModeInfo)
+{
+    const Window* wnd = Window_Main();
+    const DisplayMode* mode = DisplayMode_Current();
+
+    Con_Message("Current display mode: %i x %i x %i (%i:%i",
+                mode->width, mode->height, mode->depth, mode->ratioX, mode->ratioY);
+    if(mode->refreshRate > 0)
+    {
+        Con_Message(", refresh: %.1f Hz", mode->refreshRate);
+    }
+    Con_Message(")\nMain window: (%i,%i) %ix%i fullscreen:%s centered:%s maximized:%s\n",
+                Window_X(wnd), Window_Y(wnd), Window_Width(wnd), Window_Height(wnd),
+                Window_IsFullscreen(wnd)? "yes" : "no",
+                Window_IsCentered(wnd)? "yes" : "no",
+                Window_IsMaximized(wnd)? "yes" : "no");
+    return true;
+}
+
+D_CMD(ListDisplayModes)
+{
+    const DisplayMode* mode;
+    int i;
+
+    Con_Message("There are %i display modes available:\n", DisplayMode_Count());
+    for(i = 0; i < DisplayMode_Count(); ++i)
+    {
+        mode = DisplayMode_ByIndex(i);
+        if(mode->refreshRate > 0)
+        {
+            Con_Message("  %i x %i x %i (%i:%i, refresh: %.1f Hz)\n", mode->width, mode->height,
+                        mode->depth, mode->ratioX, mode->ratioY, mode->refreshRate);
+        }
+        else
+        {
+            Con_Message("  %i x %i x %i (%i:%i)\n", mode->width, mode->height,
+                        mode->depth, mode->ratioX, mode->ratioY);
+        }
+    }
     return true;
 }
 
@@ -1311,21 +1328,6 @@ D_CMD(UpdateGammaRamp)
     GL_SetGamma();
     Con_Printf("Gamma ramp set.\n");
     return true;
-}
-
-D_CMD(SetBPP)
-{
-    int                 bpp = atoi(argv[1]);
-
-    if(bpp != 16 && bpp != 32)
-    {
-        bpp = 32;
-        Con_Printf("%d not valid for bits per pixel, setting to 32.\n", bpp);
-    }
-
-    return Sys_SetWindow(windowIDX, 0, 0, 0, 0, bpp, 0,
-                        DDSW_NOCENTER|DDSW_NOSIZE|DDSW_NOFULLSCREEN|
-                        DDSW_NOVISIBLE);
 }
 
 D_CMD(Fog)

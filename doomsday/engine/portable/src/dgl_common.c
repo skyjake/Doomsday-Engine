@@ -57,6 +57,7 @@
 void envAddColoredAlpha(int activate, GLenum addFactor)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(activate)
     {
@@ -110,6 +111,7 @@ void envAddColoredAlpha(int activate, GLenum addFactor)
 void envModMultiTex(int activate)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Setup TU 2: The modulated texture.
     glActiveTexture(GL_TEXTURE1);
@@ -137,6 +139,7 @@ void envModMultiTex(int activate)
 void GL_ModulateTexture(int mode)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     switch(mode)
     {
@@ -326,10 +329,12 @@ void GL_BlendOp(int op)
         return;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glBlendEquationEXT(op);
 }
 
+/*
 boolean GL_Grab(int x, int y, int width, int height, dgltexformat_t format, void *buffer)
 {
     if(format != DGL_RGB) return false;
@@ -341,6 +346,7 @@ boolean GL_Grab(int x, int y, int width, int height, dgltexformat_t format, void
     glReadPixels(x, FLIP(y + height - 1), width, height, GL_RGB, GL_UNSIGNED_BYTE, buffer);
     return true;
 }
+*/
 
 void GL_SetVSync(boolean on)
 {
@@ -364,7 +370,11 @@ void GL_SetVSync(boolean on)
         assert(context != 0);
         if(context)
         {
+#ifdef MACOS_10_4
+            long params[1] = { on? 1 : 0 };
+#else
             GLint params[1] = { on? 1 : 0 };
+#endif
             CGLSetParameter(context, kCGLCPSwapInterval, params);
         }
     }
@@ -376,10 +386,14 @@ void GL_SetMultisample(boolean on)
     if(!GL_state.features.multisample) return;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-#if WIN32
+#if defined(WIN32)
     if(on) glEnable(GL_MULTISAMPLE_ARB);
     else  glDisable(GL_MULTISAMPLE_ARB);
+#else
+    if(on) glEnable(GL_MULTISAMPLE);
+    else  glDisable(GL_MULTISAMPLE);
 #endif
 }
 
@@ -388,6 +402,7 @@ void DGL_SetScissor(const RectRaw* rect)
     if(!rect) return;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glScissor(rect->origin.x, FLIP(rect->origin.y + rect->size.height - 1), rect->size.width, rect->size.height);
 }
@@ -409,6 +424,7 @@ void DGL_Scissor(RectRaw* rect)
     if(!rect) return;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glGetIntegerv(GL_SCISSOR_BOX, (GLint*)v);
     // Y is flipped.
@@ -426,6 +442,7 @@ boolean DGL_GetIntegerv(int name, int* v)
     int i;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     switch(name)
     {
@@ -485,6 +502,7 @@ int DGL_GetInteger(int name)
 boolean DGL_SetInteger(int name, int value)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     switch(name)
     {
@@ -508,6 +526,7 @@ boolean DGL_GetFloatv(int name, float* v)
     float color[4];
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     switch(name)
     {
@@ -564,6 +583,7 @@ float DGL_GetFloat(int name)
 boolean DGL_SetFloat(int name, float value)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     switch(name)
     {
@@ -587,6 +607,7 @@ boolean DGL_SetFloat(int name, float value)
 int DGL_Enable(int cap)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     switch(cap)
     {
@@ -623,6 +644,7 @@ int DGL_Enable(int cap)
 void DGL_Disable(int cap)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     switch(cap)
     {
@@ -662,6 +684,7 @@ void DGL_BlendOp(int op)
 void DGL_BlendFunc(int param1, int param2)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glBlendFunc(param1 == DGL_ZERO ? GL_ZERO : param1 ==
                 DGL_ONE ? GL_ONE : param1 ==
@@ -692,6 +715,7 @@ void DGL_BlendMode(blendmode_t mode)
 void DGL_MatrixMode(int mode)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glMatrixMode(mode == DGL_PROJECTION ? GL_PROJECTION :
                  mode == DGL_TEXTURE ? GL_TEXTURE :
@@ -701,6 +725,7 @@ void DGL_MatrixMode(int mode)
 void DGL_PushMatrix(void)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glPushMatrix();
 
@@ -758,6 +783,7 @@ void DGL_SetRawImage(lumpnum_t lumpNum, DGLint wrapS, DGLint wrapT)
 void DGL_PopMatrix(void)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glPopMatrix();
 
@@ -770,6 +796,7 @@ if(glGetError() == GL_STACK_UNDERFLOW)
 void DGL_LoadIdentity(void)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glLoadIdentity();
 }
@@ -777,6 +804,7 @@ void DGL_LoadIdentity(void)
 void DGL_Translatef(float x, float y, float z)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glTranslatef(x, y, z);
 }
@@ -784,6 +812,7 @@ void DGL_Translatef(float x, float y, float z)
 void DGL_Rotatef(float angle, float x, float y, float z)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glRotatef(angle, x, y, z);
 }
@@ -791,6 +820,7 @@ void DGL_Rotatef(float angle, float x, float y, float z)
 void DGL_Scalef(float x, float y, float z)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glScalef(x, y, z);
 }
@@ -799,6 +829,7 @@ void DGL_Ortho(float left, float top, float right, float bottom, float znear,
                float zfar)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glOrtho(left, right, bottom, top, znear, zfar);
 }

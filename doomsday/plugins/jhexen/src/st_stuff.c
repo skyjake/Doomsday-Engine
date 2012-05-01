@@ -2905,10 +2905,10 @@ static void initAutomapForCurrentMap(uiwidget_t* obj)
     UIAutomap_Reset(obj);
 
     UIAutomap_SetMinScale(obj, 2 * PLAYERRADIUS);
-    UIAutomap_SetWorldBounds(obj, *((float*) DD_GetVariable(DD_MAP_MIN_X)),
-                                  *((float*) DD_GetVariable(DD_MAP_MAX_X)),
-                                  *((float*) DD_GetVariable(DD_MAP_MIN_Y)),
-                                  *((float*) DD_GetVariable(DD_MAP_MAX_Y)));
+    UIAutomap_SetWorldBounds(obj, *((coord_t*) DD_GetVariable(DD_MAP_MIN_X)),
+                                  *((coord_t*) DD_GetVariable(DD_MAP_MAX_X)),
+                                  *((coord_t*) DD_GetVariable(DD_MAP_MIN_Y)),
+                                  *((coord_t*) DD_GetVariable(DD_MAP_MAX_Y)));
 
     mcfg = UIAutomap_Config(obj);
 
@@ -2935,7 +2935,7 @@ static void initAutomapForCurrentMap(uiwidget_t* obj)
     followMobj = UIAutomap_FollowMobj(obj);
     if(followMobj)
     {
-        UIAutomap_SetCameraOrigin(obj, followMobj->pos[VX], followMobj->pos[VY]);
+        UIAutomap_SetCameraOrigin(obj, followMobj->origin[VX], followMobj->origin[VY]);
     }
 
     if(IS_NETGAME)
@@ -3317,7 +3317,7 @@ void ST_AutomapClearPoints(int player)
 /**
  * Adds a marker at the specified X/Y location.
  */
-int ST_AutomapAddPoint(int player, float x, float y, float z)
+int ST_AutomapAddPoint(int player, coord_t x, coord_t y, coord_t z)
 {
     static char buffer[20];
     uiwidget_t* obj = ST_UIAutomapForPlayer(player);
@@ -3334,7 +3334,7 @@ int ST_AutomapAddPoint(int player, float x, float y, float z)
     return newPoint;
 }
 
-boolean ST_AutomapPointOrigin(int player, int point, float* x, float* y, float* z)
+boolean ST_AutomapPointOrigin(int player, int point, coord_t* x, coord_t* y, coord_t* z)
 {
     uiwidget_t* obj = ST_UIAutomapForPlayer(player);
     if(!obj) return false;
@@ -3367,11 +3367,11 @@ void ST_SetAutomapCameraRotation(int player, boolean on)
 
 void ST_ToggleAutomapPanMode(int player)
 {
-    uiwidget_t* obj = ST_UIAutomapForPlayer(player);
-    if(!obj) return;
-    if(UIAutomap_SetPanMode(obj, !UIAutomap_PanMode(obj)))
+    uiwidget_t* ob = ST_UIAutomapForPlayer(player);
+    if(!ob) return;
+    if(UIAutomap_SetPanMode(ob, !UIAutomap_PanMode(ob)))
     {
-        P_SetMessage(&players[player], (UIAutomap_PanMode(obj)? AMSTR_FOLLOWON : AMSTR_FOLLOWOFF), true);
+        P_SetMessage(&players[player], (UIAutomap_PanMode(ob)? AMSTR_FOLLOWOFF : AMSTR_FOLLOWON), true);
     }
 }
 
@@ -3427,7 +3427,7 @@ void ST_FlashCurrentItem(int player)
     if(player < 0 || player >= MAXPLAYERS) return;
 
     plr = &players[player];
-    if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame)) return;
+    if(!(/*(plr->plr->flags & DDPF_LOCAL) &&*/ plr->plr->inGame)) return;
 
     hud = &hudStates[player];
     hud->readyItemFlashCounter = 4;

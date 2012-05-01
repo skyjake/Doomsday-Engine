@@ -372,6 +372,11 @@ static int destroyFontAndRecord(PathDirectoryNode* node, void* paramaters)
     return 0; // Continue iteration.
 }
 
+boolean Fonts_IsInitialized(void)
+{
+    return emptyUri != 0;
+}
+
 void Fonts_Init(void)
 {
     int i;

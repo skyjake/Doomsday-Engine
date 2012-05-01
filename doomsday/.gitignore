@@ -5,6 +5,5 @@ mybuild
 myrelease
 .kdev4
 doomsday.kdev4
-libdeng2
 *.user
 config_user.pri

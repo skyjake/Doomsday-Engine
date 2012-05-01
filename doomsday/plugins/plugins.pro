@@ -13,7 +13,7 @@ SUBDIRS += jdoom jheretic jhexen
 SUBDIRS += jdoom64
 
 # Optional plugins.
-deng_openal {
+deng_openal:!deng_noopenal {
     SUBDIRS += openal
 }
 deng_fmod {

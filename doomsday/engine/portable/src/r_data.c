@@ -2659,9 +2659,9 @@ void R_PrecacheForMap(void)
             MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
         uint i, j;
 
-        for(i = 0; i < numSideDefs; ++i)
+        for(i = 0; i < NUM_SIDEDEFS; ++i)
         {
-            sidedef_t* side = SIDE_PTR(i);
+            SideDef* side = SIDE_PTR(i);
 
             if(side->SW_middlematerial)
                 Materials_Precache(side->SW_middlematerial, spec, true);
@@ -2673,9 +2673,9 @@ void R_PrecacheForMap(void)
                 Materials_Precache(side->SW_bottommaterial, spec, true);
         }
 
-        for(i = 0; i < numSectors; ++i)
+        for(i = 0; i < NUM_SECTORS; ++i)
         {
-            sector_t* sec = SECTOR_PTR(i);
+            Sector* sec = SECTOR_PTR(i);
             if(!sec->lineDefCount) continue;
             for(j = 0; j < sec->planeCount; ++j)
             {
@@ -2689,12 +2689,15 @@ void R_PrecacheForMap(void)
         const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
             MC_SPRITE, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false);
         int i;
+
         for(i = 0; i < numSprites; ++i)
         {
             spritedef_t* sprDef = &sprites[i];
 
-            if(P_IterateThinkers(gx.MobjThinker, 0x1/* All mobjs are public*/, findSpriteOwner, sprDef))
-            {   // This sprite is used by some state of at least one mobj.
+            if(GameMap_IterateThinkers(theMap, gx.MobjThinker, 0x1/* All mobjs are public*/,
+                                       findSpriteOwner, sprDef))
+            {
+                // This sprite is used by some state of at least one mobj.
                 int j;
 
                 // Precache all the frames.
@@ -2716,7 +2719,7 @@ void R_PrecacheForMap(void)
     if(useModels && precacheSkins)
     {
         // All mobjs are public.
-        P_IterateThinkers(gx.MobjThinker, 0x1, R_PrecacheModelsForMobj, NULL);
+        GameMap_IterateThinkers(theMap, gx.MobjThinker, 0x1, R_PrecacheModelsForMobj, NULL);
     }
 }
 
@@ -3253,12 +3256,13 @@ font_t* R_CreateFontFromDef(ded_compositefont_t* def)
 
 boolean R_DrawVLightVector(const vlight_t* light, void* context)
 {
-    float distFromViewer = fabs(*((float*)context));
+    coord_t distFromViewer = fabs(*((coord_t*)context));
     if(distFromViewer < 1600-8)
     {
         float alpha = 1 - distFromViewer / 1600, scale = 100;
 
         LIBDENG_ASSERT_IN_MAIN_THREAD();
+        LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
         glBegin(GL_LINES);
             glColor4f(light->color[CR], light->color[CG], light->color[CB], alpha);

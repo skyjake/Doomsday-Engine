@@ -65,7 +65,7 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+//LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -73,7 +73,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-uint windowIDX = 0; // Main window.
 application_t app;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -300,6 +299,7 @@ static BOOL initDGL(void)
 
 static BOOL initApplication(application_t* app)
 {
+#if 0
     WNDCLASSEX wcex;
     assert(app);
 
@@ -321,6 +321,8 @@ static BOOL initApplication(application_t* app)
 
     // Register our window class.
     return RegisterClassEx(&wcex);
+#endif
+    return TRUE;
 }
 
 static void determineGlobalPaths(application_t* app)
@@ -405,32 +407,30 @@ static void determineGlobalPaths(application_t* app)
     F_AppendMissingSlashCString(ddBasePath, FILENAME_T_MAXLEN);
 }
 
+/*
 static BOOL createMainWindow(int lnCmdShow)
 {
     char buf[256];
     Point2Raw origin = { 0, 0 };
     Size2Raw size = { 640, 480 };
     DD_ComposeMainWindowTitle(buf);
-    windowIDX = Sys_CreateWindow(&app, 0, &origin, &size, 32, 0,
-        (isDedicated ? WT_CONSOLE : WT_NORMAL), buf, &lnCmdShow);
-    return windowIDX != 0;
+    mainWindowIdx = Window_Create(&app, &origin, &size, 32, 0,
+                                  (isDedicated ? WT_CONSOLE : WT_NORMAL), buf, &lnCmdShow);
+    return mainWindowIdx != 0;
 }
+*/
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+boolean DD_Win32_Init(void)
 {
-    BOOL doShutdown = TRUE;
-    int exitCode = 0;
-    int lnCmdShow = nCmdShow;
+    BOOL failed = TRUE;
+    //int lnCmdShow = SW_SHOWNORMAL; // nCmdShow;
 
     memset(&app, 0, sizeof(app));
-    app.hInstance = hInstance;
+    app.hInstance = GetModuleHandle(NULL);
+#if 0
     app.className = TEXT(MAINWCLASS);
+#endif
 
-    if(!initApplication(&app))
-    {
-        DD_ErrorBox(true, "Failed to initialize application.");
-    }
-    else
     {
         // Initialize COM.
         CoInitialize(NULL);
@@ -449,62 +449,42 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
         if(!DD_EarlyInit())
         {
-            DD_ErrorBox(true, "Error during early init.");
+            Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, "Error during early init.", 0);
         }
         else if(!initTimingSystem())
         {
-            DD_ErrorBox(true, "Error initalizing timing system.");
+            Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, "Error initalizing timing system.", 0);
         }
         else if(!initPluginSystem())
         {
-            DD_ErrorBox(true, "Error initializing plugin system.");
+            Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, "Error initializing plugin system.", 0);
         }
         else if(!initDGL())
         {
-            DD_ErrorBox(true, "Error initializing DGL.");
+            Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, "Error initializing DGL.", 0);
         }
         else if(!loadAllPlugins(&app))
         {
-            DD_ErrorBox(true, "Error loading plugins.");
-        }
-        else if(!createMainWindow(lnCmdShow))
-        {
-            DD_ErrorBox(true, "Error creating main window.");
-        }
-        else if(!Sys_GLInitialize())
-        {
-            DD_ErrorBox(true, "Error initializing OpenGL.");
+            Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, "Error loading plugins.", 0);
         }
         else
         {   // All initialization complete.
-            doShutdown = FALSE;
-
-            { char buf[256];
-            DD_ComposeMainWindowTitle(buf);
-            Sys_SetWindowTitle(windowIDX, buf);
-            }
-
-           // SetForegroundWindow(win->hWnd);
-           // SetFocus(win->hWnd);
+            failed = FALSE;
         }
     }
 
-    if(!doShutdown)
-    {   // Fire up the engine. The game loop will also act as the message pump.
-        exitCode = DD_Main();
+    // No Windows system keys?
+    if(ArgCheck("-nowsk"))
+    {
+        // Disable Alt-Tab, Alt-Esc, Ctrl-Alt-Del.  A bit of a hack...
+        SystemParametersInfo(SPI_SETSCREENSAVERRUNNING, TRUE, 0, 0);
+        Con_Message("Windows system keys disabled.\n");
     }
-    DD_Shutdown();
 
-    // No more use of COM beyond this point.
-    CoUninitialize();
-
-    // Unregister our window class.
-    UnregisterClass(app.className, app.hInstance);
-
-    // Bye!
-    return exitCode;
+    return !failed;
 }
 
+#if 0
 /**
  * All messages go to the default window message processor.
  */
@@ -522,7 +502,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             switch(wParam)
             {
             case SIZE_MAXIMIZED:
-                Sys_SetWindow(windowIDX, 0, 0, 0, 0, 0, DDWF_FULLSCREEN, DDSW_NOBPP|DDSW_NOSIZE|DDSW_NOMOVE|DDSW_NOCENTER);
+                Sys_SetWindow(mainWindowIdx, 0, 0, 0, 0, 0, DDWF_FULLSCREEN, DDSW_NOBPP|DDSW_NOSIZE|DDSW_NOMOVE|DDSW_NOCENTER);
                 forwardMsg = FALSE;
                 break;
 
@@ -631,6 +611,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
     return result;
 }
+#endif
 
 /**
  * Shuts down the engine.
@@ -645,6 +626,14 @@ void DD_Shutdown(void)
     free(convBuf); convBuf = 0;
     free(utf8ConvBuf); utf8ConvBuf = 0;
 #endif
+
+    // No more use of COM beyond, this point.
+    CoUninitialize();
+
+#if 0
+    // Unregister our window class.
+    UnregisterClass(app.className, app.hInstance);
+#endif
 }
 
 /**
@@ -656,7 +645,7 @@ const char* strcasestr(const char *text, const char *sub)
     int subLen = strlen(sub);
     int i;
 
-    for(i = 0; i < textLen - subLen; ++i)
+    for(i = 0; i <= textLen - subLen; ++i)
     {
         const char* start = text + i;
         if(!strnicmp(start, sub, subLen)) return start;

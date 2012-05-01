@@ -1123,7 +1123,7 @@ static void SV_ReadPlayer(player_t* p)
         }
 
     // Mark the player for fixpos and fixangles.
-    dp->flags |= DDPF_FIXPOS | DDPF_FIXANGLES | DDPF_FIXMOM;
+    dp->flags |= DDPF_FIXORIGIN | DDPF_FIXANGLES | DDPF_FIXMOM;
     p->update |= PSF_REBORN;
 }
 
@@ -1192,9 +1192,9 @@ static void SV_WriteMobj(const mobj_t* original)
     SV_WriteShort(SV_ThingArchiveNum(mo->onMobj));
 
     // Info for drawing: position.
-    SV_WriteLong(FLT2FIX(mo->pos[VX]));
-    SV_WriteLong(FLT2FIX(mo->pos[VY]));
-    SV_WriteLong(FLT2FIX(mo->pos[VZ]));
+    SV_WriteLong(FLT2FIX(mo->origin[VX]));
+    SV_WriteLong(FLT2FIX(mo->origin[VY]));
+    SV_WriteLong(FLT2FIX(mo->origin[VZ]));
 
     //More drawing info: to determine current sprite.
     SV_WriteLong(mo->angle); // Orientation.
@@ -1283,9 +1283,9 @@ static void SV_WriteMobj(const mobj_t* original)
 
 #if !__JHEXEN__
     // For nightmare/multiplayer respawn.
-    SV_WriteLong(FLT2FIX(mo->spawnSpot.pos[VX]));
-    SV_WriteLong(FLT2FIX(mo->spawnSpot.pos[VY]));
-    SV_WriteLong(FLT2FIX(mo->spawnSpot.pos[VZ]));
+    SV_WriteLong(FLT2FIX(mo->spawnSpot.origin[VX]));
+    SV_WriteLong(FLT2FIX(mo->spawnSpot.origin[VY]));
+    SV_WriteLong(FLT2FIX(mo->spawnSpot.origin[VZ]));
     SV_WriteLong(mo->spawnSpot.angle);
     SV_WriteLong(mo->spawnSpot.flags);
 
@@ -1461,11 +1461,9 @@ static void RestoreMobj(mobj_t *mo, int ver)
         SV_UpdateReadMobjFlags(mo, ver);
 #endif
 
-    P_MobjSetPosition(mo);
-    mo->floorZ =
-        P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT);
-    mo->ceilingZ =
-        P_GetFloatp(mo->subsector, DMU_CEILING_HEIGHT);
+    P_MobjSetOrigin(mo);
+    mo->floorZ   = P_GetDoublep(mo->bspLeaf, DMU_FLOOR_HEIGHT);
+    mo->ceilingZ = P_GetDoublep(mo->bspLeaf, DMU_CEILING_HEIGHT);
 
     return;
 }
@@ -1474,10 +1472,10 @@ static void RestoreMobj(mobj_t *mo, int ver)
  * Always returns @c false as a thinker will have already been allocated in
  * the mobj creation process.
  */
-static int SV_ReadMobj(thinker_t *th)
+static int SV_ReadMobj(thinker_t* th)
 {
-    int         ver;
-    mobj_t     *mo = (mobj_t*) th;
+    int ver;
+    mobj_t* mo = (mobj_t*) th;
 
     ver = SV_ReadByte();
 
@@ -1515,9 +1513,9 @@ static int SV_ReadMobj(thinker_t *th)
     }
 
     // Info for drawing: position.
-    mo->pos[VX] = FIX2FLT(SV_ReadLong());
-    mo->pos[VY] = FIX2FLT(SV_ReadLong());
-    mo->pos[VZ] = FIX2FLT(SV_ReadLong());
+    mo->origin[VX] = FIX2FLT(SV_ReadLong());
+    mo->origin[VY] = FIX2FLT(SV_ReadLong());
+    mo->origin[VZ] = FIX2FLT(SV_ReadLong());
 
     //More drawing info: to determine current sprite.
     mo->angle = SV_ReadLong();  // orientation
@@ -1636,9 +1634,9 @@ static int SV_ReadMobj(thinker_t *th)
     // For nightmare respawn.
     if(ver >= 6)
     {
-        mo->spawnSpot.pos[VX] = FIX2FLT(SV_ReadLong());
-        mo->spawnSpot.pos[VY] = FIX2FLT(SV_ReadLong());
-        mo->spawnSpot.pos[VZ] = FIX2FLT(SV_ReadLong());
+        mo->spawnSpot.origin[VX] = FIX2FLT(SV_ReadLong());
+        mo->spawnSpot.origin[VY] = FIX2FLT(SV_ReadLong());
+        mo->spawnSpot.origin[VZ] = FIX2FLT(SV_ReadLong());
         mo->spawnSpot.angle = SV_ReadLong();
         if(ver < 10)
         /* mo->spawnSpot.type = */ SV_ReadLong();
@@ -1646,9 +1644,9 @@ static int SV_ReadMobj(thinker_t *th)
     }
     else
     {
-        mo->spawnSpot.pos[VX] = (float) SV_ReadShort();
-        mo->spawnSpot.pos[VY] = (float) SV_ReadShort();
-        mo->spawnSpot.pos[VZ] = 0; // Initialize with "something".
+        mo->spawnSpot.origin[VX] = (float) SV_ReadShort();
+        mo->spawnSpot.origin[VY] = (float) SV_ReadShort();
+        mo->spawnSpot.origin[VZ] = 0; // Initialize with "something".
         mo->spawnSpot.angle = (angle_t) (ANG45 * (SV_ReadShort() / 45));
         /*mo->spawnSpot.type = (int)*/ SV_ReadShort();
         mo->spawnSpot.flags = (int) SV_ReadShort();
@@ -1911,22 +1909,22 @@ Con_Printf("P_UnArchivePlayers: Saved %i is now %i.\n", i, j);
     }
 }
 
-static void SV_WriteSector(sector_t *sec)
+static void SV_WriteSector(Sector *sec)
 {
-    int         i, type;
-    float       flooroffx = P_GetFloatp(sec, DMU_FLOOR_MATERIAL_OFFSET_X);
-    float       flooroffy = P_GetFloatp(sec, DMU_FLOOR_MATERIAL_OFFSET_Y);
-    float       ceiloffx = P_GetFloatp(sec, DMU_CEILING_MATERIAL_OFFSET_X);
-    float       ceiloffy = P_GetFloatp(sec, DMU_CEILING_MATERIAL_OFFSET_Y);
-    byte        lightlevel = (byte) (255.f * P_GetFloatp(sec, DMU_LIGHT_LEVEL));
-    short       floorheight = (short) P_GetIntp(sec, DMU_FLOOR_HEIGHT);
-    short       ceilingheight = (short) P_GetIntp(sec, DMU_CEILING_HEIGHT);
-    short       floorFlags = (short) P_GetIntp(sec, DMU_FLOOR_FLAGS);
-    short       ceilingFlags = (short) P_GetIntp(sec, DMU_CEILING_FLAGS);
+    int i, type;
+    float flooroffx = P_GetFloatp(sec, DMU_FLOOR_MATERIAL_OFFSET_X);
+    float flooroffy = P_GetFloatp(sec, DMU_FLOOR_MATERIAL_OFFSET_Y);
+    float ceiloffx = P_GetFloatp(sec, DMU_CEILING_MATERIAL_OFFSET_X);
+    float ceiloffy = P_GetFloatp(sec, DMU_CEILING_MATERIAL_OFFSET_Y);
+    byte lightlevel = (byte) (255.f * P_GetFloatp(sec, DMU_LIGHT_LEVEL));
+    short floorheight = (short) P_GetIntp(sec, DMU_FLOOR_HEIGHT);
+    short ceilingheight = (short) P_GetIntp(sec, DMU_CEILING_HEIGHT);
+    short floorFlags = (short) P_GetIntp(sec, DMU_FLOOR_FLAGS);
+    short ceilingFlags = (short) P_GetIntp(sec, DMU_CEILING_FLAGS);
     material_t* floorMaterial = P_GetPtrp(sec, DMU_FLOOR_MATERIAL);
     material_t* ceilingMaterial = P_GetPtrp(sec, DMU_CEILING_MATERIAL);
-    xsector_t*  xsec = P_ToXSector(sec);
-    float       rgb[3];
+    xsector_t* xsec = P_ToXSector(sec);
+    float rgb[3];
 
 #if !__JHEXEN__
     // Determine type.
@@ -1934,7 +1932,7 @@ static void SV_WriteSector(sector_t *sec)
         type = sc_xg1;
     else
 #endif
-        if(flooroffx || flooroffy || ceiloffx || ceiloffy)
+        if(!FEQUAL(flooroffx, 0) || !FEQUAL(flooroffy, 0) || !FEQUAL(ceiloffx, 0) || !FEQUAL(ceiloffy, 0))
         type = sc_ploff;
     else
         type = sc_normal;
@@ -2006,7 +2004,7 @@ static void SV_WriteSector(sector_t *sec)
  * Reads all versions of archived sectors.
  * Including the old Ver1.
  */
-static void SV_ReadSector(sector_t* sec)
+static void SV_ReadSector(Sector* sec)
 {
     int i, ver = 1;
     int type = 0;
@@ -2145,7 +2143,7 @@ static void SV_ReadSector(sector_t* sec)
     xsec->soundTarget = 0;
 }
 
-static void SV_WriteLine(linedef_t* li)
+static void SV_WriteLine(LineDef* li)
 {
     uint                i, j;
     float               rgba[4];
@@ -2189,7 +2187,7 @@ static void SV_WriteLine(linedef_t* li)
     // For each side
     for(i = 0; i < 2; ++i)
     {
-        sidedef_t *si = P_GetPtrp(li, (i? DMU_SIDEDEF1:DMU_SIDEDEF0));
+        SideDef *si = P_GetPtrp(li, (i? DMU_SIDEDEF1:DMU_SIDEDEF0));
         if(!si)
             continue;
 
@@ -2237,7 +2235,7 @@ static void SV_WriteLine(linedef_t* li)
  * Reads all versions of archived lines.
  * Including the old Ver1.
  */
-static void SV_ReadLine(linedef_t* li)
+static void SV_ReadLine(LineDef* li)
 {
     int i, j;
     lineclass_t type;
@@ -2337,7 +2335,7 @@ static void SV_ReadLine(linedef_t* li)
     // For each side
     for(i = 0; i < 2; ++i)
     {
-        sidedef_t* si = P_GetPtrp(li, (i? DMU_SIDEDEF1:DMU_SIDEDEF0));
+        SideDef* si = P_GetPtrp(li, (i? DMU_SIDEDEF1:DMU_SIDEDEF0));
 
         if(!si)
             continue;
@@ -2422,21 +2420,21 @@ static void SV_ReadLine(linedef_t* li)
 }
 
 #if __JHEXEN__
-static void SV_WritePolyObj(polyobj_t* po)
+static void SV_WritePolyObj(Polyobj* po)
 {
     SV_WriteByte(1); // write a version byte.
 
     SV_WriteLong(po->tag);
     SV_WriteLong(po->angle);
-    SV_WriteLong(FLT2FIX(po->pos[VX]));
-    SV_WriteLong(FLT2FIX(po->pos[VY]));
+    SV_WriteLong(FLT2FIX(po->origin[VX]));
+    SV_WriteLong(FLT2FIX(po->origin[VY]));
 }
 
 static int SV_ReadPolyObj(void)
 {
     float deltaX, deltaY;
     angle_t angle;
-    polyobj_t* po;
+    Polyobj* po;
     int ver;
 
     if(saveVersion >= 3)
@@ -2448,8 +2446,8 @@ static int SV_ReadPolyObj(void)
     angle = (angle_t) SV_ReadLong();
     P_PolyobjRotate(po, angle);
     po->destAngle = angle;
-    deltaX = FIX2FLT(SV_ReadLong()) - po->pos[VX];
-    deltaY = FIX2FLT(SV_ReadLong()) - po->pos[VY];
+    deltaX = FIX2FLT(SV_ReadLong()) - po->origin[VX];
+    deltaY = FIX2FLT(SV_ReadLong()) - po->origin[VY];
     P_PolyobjMoveXY(po, deltaX, deltaY);
 
     /// @fixme What about speed? It isn't saved at all?
@@ -2540,7 +2538,7 @@ static void SV_WriteCeiling(const ceiling_t* ceiling)
 
 static int SV_ReadCeiling(ceiling_t* ceiling)
 {
-    sector_t*           sector;
+    Sector*             sector;
 
 #if __JHEXEN__
     if(saveVersion >= 4)
@@ -2653,7 +2651,7 @@ static void SV_WriteDoor(const door_t *door)
 
 static int SV_ReadDoor(door_t *door)
 {
-    sector_t *sector;
+    Sector *sector;
 
 #if __JHEXEN__
     if(saveVersion >= 4)
@@ -2751,7 +2749,7 @@ static void SV_WriteFloor(const floor_t *floor)
 
 static int SV_ReadFloor(floor_t* floor)
 {
-    sector_t*           sector;
+    Sector*             sector;
 
 #if __JHEXEN__
     if(saveVersion >= 4)
@@ -2890,7 +2888,7 @@ static void SV_WritePlat(const plat_t *plat)
 
 static int SV_ReadPlat(plat_t *plat)
 {
-    sector_t *sector;
+    Sector *sector;
 
 #if __JHEXEN__
     if(saveVersion >= 4)
@@ -2991,7 +2989,7 @@ static void SV_WriteLight(const light_t* th)
 
 static int SV_ReadLight(light_t* th)
 {
-    sector_t*           sector;
+    Sector*             sector;
 
     if(saveVersion >= 4)
     {
@@ -3052,7 +3050,7 @@ static void SV_WritePhase(const phase_t* th)
 
 static int SV_ReadPhase(phase_t* th)
 {
-    sector_t*           sector;
+    Sector*             sector;
 
     if(saveVersion >= 4)
     {
@@ -3358,7 +3356,7 @@ static void SV_WritePillar(const pillar_t* th)
 
 static int SV_ReadPillar(pillar_t* th)
 {
-    sector_t*           sector;
+    Sector*             sector;
 
     if(saveVersion >= 4)
     {
@@ -3427,7 +3425,7 @@ static void SV_WriteFloorWaggle(const waggle_t* th)
 
 static int SV_ReadFloorWaggle(waggle_t* th)
 {
-    sector_t*           sector;
+    Sector*             sector;
 
     if(saveVersion >= 4)
     {
@@ -3498,7 +3496,7 @@ static void SV_WriteFlash(const lightflash_t* flash)
 
 static int SV_ReadFlash(lightflash_t* flash)
 {
-    sector_t*           sector;
+    Sector*             sector;
 
     if(hdr.version >= 5)
     {   // Note: the thinker class byte has already been read.
@@ -3558,7 +3556,7 @@ static void SV_WriteStrobe(const strobe_t* strobe)
 
 static int SV_ReadStrobe(strobe_t* strobe)
 {
-    sector_t*           sector;
+    Sector*             sector;
 
     if(hdr.version >= 5)
     {   // Note: the thinker class byte has already been read.
@@ -3615,7 +3613,7 @@ static void SV_WriteGlow(const glow_t* glow)
 
 static int SV_ReadGlow(glow_t* glow)
 {
-    sector_t*           sector;
+    Sector*             sector;
 
     if(hdr.version >= 5)
     {   // Note: the thinker class byte has already been read.
@@ -3672,7 +3670,7 @@ static void SV_WriteFlicker(const fireflicker_t* flicker)
  */
 static int SV_ReadFlicker(fireflicker_t* flicker)
 {
-    sector_t*           sector;
+    Sector*             sector;
     /*int ver =*/ SV_ReadByte(); // version byte.
 
     // Note: the thinker class byte has already been read.
@@ -3712,7 +3710,7 @@ static void SV_WriteBlink(const lightblink_t* blink)
  */
 static int SV_ReadBlink(lightblink_t* blink)
 {
-    sector_t* sector;
+    Sector* sector;
     /*int ver =*/ SV_ReadByte(); // version byte.
 
     // Note: the thinker class byte has already been read.
@@ -3745,13 +3743,13 @@ static void SV_WriteMaterialChanger(const materialchanger_t* mchanger)
     SV_WriteByte(0);
     SV_WriteLong(mchanger->timer);
     SV_WriteLong(P_ToIndex(mchanger->side));
-    SV_WriteByte((byte) mchanger->ssurfaceID);
+    SV_WriteByte((byte) mchanger->section);
     SV_WriteShort(MaterialArchive_FindUniqueSerialId(materialArchive, mchanger->material));
 }
 
 static int SV_ReadMaterialChanger(materialchanger_t* mchanger)
 {
-    sidedef_t* side;
+    SideDef* side;
     /*int ver =*/ SV_ReadByte(); // version byte.
 
     SV_ReadByte(); // Type byte.
@@ -3761,7 +3759,7 @@ static int SV_ReadMaterialChanger(materialchanger_t* mchanger)
     if(!side)
         Con_Error("t_materialchanger: bad sidedef number\n");
     mchanger->side = side;
-    mchanger->ssurfaceID = (sidedefsurfaceid_t) SV_ReadByte();
+    mchanger->section = (SideDefSection) SV_ReadByte();
     mchanger->material = SV_GetArchiveMaterial(SV_ReadShort(), 0);
 
     mchanger->thinker.function = T_MaterialChanger;
@@ -4004,7 +4002,7 @@ static void P_UnArchiveThinkers(void)
                     if(thInfo->thinkclass == TC_MOBJ)
                     {
                         th = (thinker_t*)
-                            P_MobjCreate(P_MobjThinker, 0, 0, 0, 0, 64, 64, 0);
+                            P_MobjCreateXYZ(P_MobjThinker, 0, 0, 0, 0, 64, 64, 0);
                     }
                     else
                     {
@@ -4172,7 +4170,7 @@ static void P_ArchiveSounds(void)
     uint                i;
     int                 difference;
     seqnode_t*          node;
-    sector_t*           sec;
+    Sector*             sec;
 
     // Save the sound sequences.
     SV_BeginSegment(ASEG_SOUNDS);
@@ -4201,8 +4199,7 @@ static void P_ArchiveSounds(void)
 
         if(i == numpolyobjs)
         {   // Sound is attached to a sector, not a polyobj.
-            sec = P_GetPtrp(R_PointInSubsector(node->mobj->pos[VX], node->mobj->pos[VY]),
-                            DMU_SECTOR);
+            sec = P_GetPtrp(P_BspLeafAtPoint(node->mobj->origin), DMU_SECTOR);
             difference = P_ToIndex(sec);
             SV_WriteLong(0); // 0 -- sector sound origin.
         }
@@ -4243,11 +4240,11 @@ static void P_UnArchiveSounds(void)
         secNum = SV_ReadLong();
         if(!polySnd)
         {
-            sndMobj = P_GetPtr(DMU_SECTOR, secNum, DMU_SOUND_ORIGIN);
+            sndMobj = P_GetPtr(DMU_SECTOR, secNum, DMU_BASE);
         }
         else
         {
-            polyobj_t* po = P_PolyobjByID(secNum);
+            Polyobj* po = P_PolyobjByID(secNum);
             if(po) sndMobj = (mobj_t*) po;
         }
 
@@ -4939,9 +4936,9 @@ void SV_SaveClient(uint gameId)
 
     // Some important information.
     // Our position and look angles.
-    SV_WriteLong(FLT2FIX(mo->pos[VX]));
-    SV_WriteLong(FLT2FIX(mo->pos[VY]));
-    SV_WriteLong(FLT2FIX(mo->pos[VZ]));
+    SV_WriteLong(FLT2FIX(mo->origin[VX]));
+    SV_WriteLong(FLT2FIX(mo->origin[VY]));
+    SV_WriteLong(FLT2FIX(mo->origin[VZ]));
     SV_WriteLong(FLT2FIX(mo->floorZ));
     SV_WriteLong(FLT2FIX(mo->ceilingZ));
     SV_WriteLong(mo->angle); /* $unifiedangles */
@@ -5016,11 +5013,11 @@ void SV_LoadClient(uint gameId)
     }
     mapTime = hdr.mapTime;
 
-    P_MobjUnsetPosition(mo);
-    mo->pos[VX] = FIX2FLT(SV_ReadLong());
-    mo->pos[VY] = FIX2FLT(SV_ReadLong());
-    mo->pos[VZ] = FIX2FLT(SV_ReadLong());
-    P_MobjSetPosition(mo);
+    P_MobjUnsetOrigin(mo);
+    mo->origin[VX] = FIX2FLT(SV_ReadLong());
+    mo->origin[VY] = FIX2FLT(SV_ReadLong());
+    mo->origin[VZ] = FIX2FLT(SV_ReadLong());
+    P_MobjSetOrigin(mo);
     mo->floorZ = FIX2FLT(SV_ReadLong());
     mo->ceilingZ = FIX2FLT(SV_ReadLong());
     mo->angle = SV_ReadLong(); /* $unifiedangles */
@@ -5447,8 +5444,8 @@ void SV_MapTeleport(uint map, uint position)
             if((start = P_GetPlayerStart(position, i, false)))
             {
                 const mapspot_t* spot = &mapSpots[start->spot];
-                P_SpawnPlayer(i, cfg.playerClass[i], spot->pos[VX],
-                              spot->pos[VY], spot->pos[VZ], spot->angle,
+                P_SpawnPlayer(i, cfg.playerClass[i], spot->origin[VX],
+                              spot->origin[VY], spot->origin[VZ], spot->angle,
                               spot->flags, false, true);
             }
             else
@@ -5459,7 +5456,8 @@ void SV_MapTeleport(uint map, uint position)
         }
 
         if(playerWasReborn && IS_NETGAME && !deathmatch)
-        {   // Restore keys and weapons when reborn in co-op
+        {
+            // Restore keys and weapons when reborn in co-op
             players[i].keys = oldKeys;
             players[i].pieces = oldPieces;
             for(bestWeapon = 0, j = 0; j < NUM_WEAPON_TYPES; ++j)
@@ -5511,8 +5509,8 @@ void SV_MapTeleport(uint map, uint position)
     {
         if(players[i].plr->inGame)
         {
-            P_TeleportMove(players[i].plr->mo, players[i].plr->mo->pos[VX],
-                           players[i].plr->mo->pos[VY], true);
+            P_TeleportMove(players[i].plr->mo, players[i].plr->mo->origin[VX],
+                           players[i].plr->mo->origin[VY], true);
         }
     }
 

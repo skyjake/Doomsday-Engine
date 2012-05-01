@@ -1035,25 +1035,29 @@ static void pushVariantCacheQueue(material_t* mat, const materialvariantspecific
 void Materials_Precache2(material_t* mat, const materialvariantspecification_t* spec,
     boolean smooth, boolean cacheGroup)
 {
-    variantcachequeue_node_t* node;
-    assert(mat && spec);
-
     errorIfNotInited("Materials::Precache");
 
-    // Don't precache when playing demo.
-    if(isDedicated || playback)
+    if(!mat || ! spec)
+    {
+        DEBUG_Message(("Materials_Precache: Invalid arguments mat:%p, spec:%p, ignoring.\n", mat, spec));
         return;
+    }
+
+    // Don't precache when playing demo.
+    if(isDedicated || playback) return;
 
     // Already in the queue?
+    { variantcachequeue_node_t* node;
     for(node = variantCacheQueue; node; node = node->next)
     {
         if(mat == node->mat && spec == node->spec) return;
-    }
+    }}
 
     pushVariantCacheQueue(mat, spec, smooth);
 
     if(cacheGroup && Material_IsGroupAnimated(mat))
-    {   // Material belongs in one or more animgroups; precache the group.
+    {
+        // Material belongs in one or more animgroups; precache the group.
         int i, k;
         for(i = 0; i < numgroups; ++i)
         {
@@ -1075,7 +1079,7 @@ void Materials_Ticker(timespan_t time)
     materiallist_node_t* node;
 
     // The animation will only progress when the game is not paused.
-    if(clientPaused) return;
+    if(clientPaused || novideo) return;
 
     node = materials;
     while(node)
@@ -1145,8 +1149,8 @@ static void setTexUnit(materialsnapshot_t* ms, byte unit, TextureVariant* textur
     tu->texture.variant = texture;
     tu->texture.flags = TUF_TEXTURE_IS_MANAGED;
     tu->blendMode = blendMode;
-    V2_Set(tu->scale, sScale, tScale);
-    V2_Set(tu->offset, sOffset, tOffset);
+    V2f_Set(tu->scale, sScale, tScale);
+    V2f_Set(tu->offset, sOffset, tOffset);
     tu->opacity = MINMAX_OF(0, opacity, 1);
 }
 
@@ -1165,7 +1169,7 @@ void Materials_InitSnapshot(materialsnapshot_t* ms)
     ms->size.width = ms->size.height = 0;
     ms->glowing = 0;
     ms->isOpaque = true;
-    V3_Set(ms->shinyMinColor, 0, 0, 0);
+    V3f_Set(ms->shinyMinColor, 0, 0, 0);
 }
 
 /// @return  Same as @a snapshot for caller convenience.

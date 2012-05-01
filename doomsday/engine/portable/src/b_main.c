@@ -144,12 +144,14 @@ static const keyname_t keyNames[] = {
     {DDKEY_NUMPAD9,     "pad9"},
     {DDKEY_DECIMAL,     "decimal"},
     {DDKEY_DECIMAL,     "padcomma"},
-    {DDKEY_SUBTRACT,    "padminus"}, // not really used
-    {DDKEY_ADD,         "padplus"}, // not really used
+    {DDKEY_SUBTRACT,    "padminus"},
+    {DDKEY_ADD,         "padplus"},
     {DDKEY_PRINT,       "print"},
     {DDKEY_PRINT,       "prtsc"},
     {DDKEY_ENTER,       "enter"},
     {DDKEY_DIVIDE,      "divide"},
+    {DDKEY_MULTIPLY,    "multiply"},
+    {DDKEY_SECTION,     "section"},
     {0, NULL} // The terminator
 };
 
@@ -213,6 +215,13 @@ void B_Init(void)
 
     // UI doesn't let anything past it.
     B_AcquireAll(B_NewContext(UI_BINDING_CONTEXT_NAME), true);
+
+    // Top-level context that is always active and overrides every other context.
+    // To be used only for system-level functionality.
+    bc = B_NewContext(GLOBAL_BINDING_CONTEXT_NAME);
+    bc->flags |= BCF_PROTECTED;
+    B_ActivateContext(bc, true);
+
 /*
     B_BindCommand("joy-hat-angle3", "print {angle 3}");
     B_BindCommand("joy-hat-center", "print center");
@@ -242,13 +251,34 @@ void B_Init(void)
     // Bind all the defaults for the engine only.
     B_BindDefaults();
 
-    // Enable the contexts for the initial state.
+    B_InitialContextActivations();
+}
+
+void B_InitialContextActivations(void)
+{
+    int i;
+
+    // Disable all contexts.
+    for(i = 0; i < B_ContextCount(); ++i)
+    {
+        B_ActivateContext(B_ContextByPos(i), false);
+   }
+
+    // These are the contexts active by default.
+    B_ActivateContext(B_ContextByName(GLOBAL_BINDING_CONTEXT_NAME), true);
     B_ActivateContext(B_ContextByName(DEFAULT_BINDING_CONTEXT_NAME), true);
+
+    if(Con_IsActive())
+    {
+        B_ActivateContext(B_ContextByName(CONSOLE_BINDING_CONTEXT_NAME), true);
+    }
 }
 
 void B_BindDefaults(void)
 {
     // Engine's highest priority context: opening control panel, opening the console.
+    B_BindCommand("global:key-f11-down + key-alt-down", "releasemouse");
+    B_BindCommand("global:key-f11-down", "togglefullscreen");
 
     // Console bindings (when open).
 
@@ -312,7 +342,7 @@ void B_DeleteMatching(bcontext_t* bc, evbinding_t* eventBinding,
     while(B_FindMatchingBinding(bc, eventBinding, deviceBinding, &evb, &devb))
     {
         // Only either evb or devb is returned as non-NULL.
-        int                 bid = (evb? evb->bid : (devb? devb->bid : 0));
+        int bid = (evb? evb->bid : (devb? devb->bid : 0));
 
         if(bid)
         {
@@ -775,6 +805,8 @@ static bindcontrol_t* B_GetBindControlForEvent(ddevent_t* ev)
  */
 boolean B_Responder(ddevent_t* ev)
 {
+    if(ev->type == E_FOCUS) return false; // Cannot be bound.
+
     if(symbolicEchoMode && ev->type != E_SYMBOLIC)
     {
         // Make an echo.

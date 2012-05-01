@@ -6,7 +6,8 @@ include(../config_plugin.pri)
 include(../../dep_openal.pri)
 
 TEMPLATE = lib
-TARGET = dsopenal
+win32|macx: TARGET = dsOpenAL
+      else: TARGET = dsopenal
 
 VERSION = $$OPENAL_VERSION
 

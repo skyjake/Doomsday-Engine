@@ -1,3 +1,5 @@
+!deng_nosdl {
+
 # Build configuration for SDL (core library).
 win32 {
     isEmpty(SDL_DIR) {
@@ -11,16 +13,6 @@ win32 {
     INSTALLS += sdllibs
     sdllibs.files = $$SDL_DIR/lib/SDL.dll
     sdllibs.path = $$DENG_LIB_DIR
-
-    # Also check SDL_net.
-    isEmpty(SDL_NET_DIR) {
-        echo("dep_sdl: SDL_net path not defined, check your config_user.pri")
-        CONFIG += deng_sdlnetdummy
-    } else {
-        INCLUDEPATH += $$SDL_NET_DIR/include
-        LIBS += -L$$SDL_NET_DIR/lib -lsdl_net
-        sdllibs.files += $$SDL_NET_DIR/lib/SDL_net.dll
-    }
 }
 else:macx {
     # Mac OS X.
@@ -32,22 +24,13 @@ else:macx {
     QMAKE_LFLAGS += -F$${SDL_FRAMEWORK_DIR}
 
     LIBS += -framework SDL
-
-    deng_32bitonly|!deng_snowleopard {
-        # Also include SDL_net.
-        INCLUDEPATH += $${SDL_FRAMEWORK_DIR}/SDL_net.framework/Headers
-        LIBS += -framework SDL_net
-    } else {
-        CONFIG += deng_sdlnetdummy
-    }
 }
 else {
     # Generic Unix.
-    QMAKE_CFLAGS += $$system(pkg-config sdl --cflags)
+    sdlflags = $$system(pkg-config sdl --cflags)
+    QMAKE_CFLAGS += $$sdlflags
+    QMAKE_CXXFLAGS += $$sdlflags
     LIBS += $$system(pkg-config sdl --libs)
-
-    # Also include SDL_net.
-    LIBS += -lSDL_net
 }
 
 # Should we include SDL_mixer in the build, too?
@@ -80,8 +63,4 @@ else {
     }
 }
 
-# Should we use the SDL_net dummy implementation?
-deng_sdlnetdummy {
-    warning("dep_sdl: Using dummy implementation for SDL_net")
-    DEFINES += DENG_SDLNET_DUMMY
 }

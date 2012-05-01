@@ -108,17 +108,14 @@ extern int iquetail;
 
 extern mobjtype_t PuffType;
 extern mobj_t* MissileMobj;
-extern float* FloatBobOffset;
+extern coord_t* FloatBobOffset;
 
-void        P_Thrust(player_t* plr, angle_t angle, float move);
-void        P_ThrustMobj(mobj_t* mo, angle_t angle, float move);
+void        P_ThrustMobj(mobj_t* mo, angle_t angle, coord_t move);
 int         P_FaceMobj(mobj_t* source, mobj_t* target, angle_t* delta);
 boolean     P_SeekerMissile(mobj_t* mo, angle_t thresh, angle_t turnMax);
 void        P_MobjThinker(mobj_t* mo);
 boolean     P_HealRadius(player_t* plr);
 void        P_BlastRadius(player_t* plr);
-void        P_SpawnBloodSplatter(float x, float y, float z, mobj_t* origin);
-void        P_SpawnBloodSplatter2(float x, float y, float z, mobj_t* origin);
 
 void        P_CreateTIDList(void);
 
@@ -130,7 +127,7 @@ void        P_MobjInsertIntoTIDList(mobj_t* mo, int tid);
 mobj_t*     P_FindMobjFromTID(int tid, int* searchPosition);
 
 boolean     P_CheckMissileSpawn(mobj_t* mo);
-float       P_MobjGetFriction(mobj_t* mo);
+coord_t     P_MobjGetFriction(mobj_t* mo);
 void        P_RipperBlood(mobj_t* mo);
 const terraintype_t* P_MobjGetFloorTerrainType(mobj_t* mo);
 boolean     P_HitFloor(mobj_t* mo);
@@ -144,11 +141,6 @@ void        P_AddCorpsesToQueue(void);
 mobj_t*     P_RoughMonsterSearch(mobj_t* mo, int distance);
 
 void        P_Validate();
-
-#define OPENRANGE           (*(float*) DD_GetVariable(DD_OPENRANGE))
-#define OPENTOP             (*(float*) DD_GetVariable(DD_OPENTOP))
-#define OPENBOTTOM          (*(float*) DD_GetVariable(DD_OPENBOTTOM))
-#define LOWFLOOR            (*(float*) DD_GetVariable(DD_LOWFLOOR))
 
 extern int clipmana[NUM_AMMO_TYPES];
 

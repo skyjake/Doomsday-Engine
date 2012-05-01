@@ -32,6 +32,7 @@
 #define DEFAULT_BINDING_CONTEXT_NAME    "game"
 #define CONSOLE_BINDING_CONTEXT_NAME    "console"
 #define UI_BINDING_CONTEXT_NAME         "deui"
+#define GLOBAL_BINDING_CONTEXT_NAME     "global"
 
 void            B_Register(void);
 void            B_Init(void);
@@ -39,6 +40,11 @@ void            B_Shutdown(void);
 boolean         B_Delete(int bid);
 boolean         B_Responder(ddevent_t* ev);
 void            B_WriteToFile(FILE* file);
+
+/**
+ * Enable the contexts for the initial state.
+ */
+void B_InitialContextActivations(void);
 
 void B_BindDefaults(void);
 void B_BindGameDefaults(void);

@@ -1379,7 +1379,7 @@ void GL_ReleaseTextures(void)
 void GL_PruneTextureVariantSpecifications(void)
 {
     int numPruned = 0;
-    if(!initedOk) return;
+    if(!initedOk || Sys_IsShuttingDown()) return;
 
     numPruned += pruneUnusedVariantSpecifications(TST_GENERAL);
     numPruned += pruneUnusedVariantSpecifications(TST_DETAIL);
@@ -1549,7 +1549,8 @@ void GL_DestroyImage(image_t* img)
 {
     assert(img);
     if(!img->pixels) return;
-    free(img->pixels), img->pixels = NULL;
+    free(img->pixels);
+    img->pixels = NULL;
 }
 
 static int BytesPerPixelFmt(dgltexformat_t format)
@@ -1753,6 +1754,7 @@ boolean GL_UploadTexture(int glFormat, int loadFormat, const uint8_t* pixels,
     }
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Automatic mipmap generation?
     if(GL_state.extensions.genMipmapSGIS && genMipmaps)
@@ -2022,6 +2024,7 @@ void GL_UploadTextureContent(const texturecontent_t* content)
     }
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glBindTexture(GL_TEXTURE_2D, content->name);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, content->minFilter);
@@ -2878,6 +2881,7 @@ void GL_SetRawTextureParams(int minMode)
         if(r->tex) // Is the texture loaded?
         {
             LIBDENG_ASSERT_IN_MAIN_THREAD();
+            LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
             glBindTexture(GL_TEXTURE_2D, r->tex);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minMode);
@@ -3049,9 +3053,9 @@ static void performImageAnalyses(Texture* tex, const image_t* image,
     }
 
     // Average alpha?
-    if(TST_GENERAL == spec->type &&
-       (TC_SPRITE_DIFFUSE == TS_GENERAL(spec)->context) ||
-       (TC_UI == TS_GENERAL(spec)->context))
+    if(spec->type == TST_GENERAL &&
+       (TS_GENERAL(spec)->context == TC_SPRITE_DIFFUSE) ||
+       (TS_GENERAL(spec)->context == TC_UI))
     {
         averagealpha_analysis_t* aa = (averagealpha_analysis_t*) Texture_Analysis(tex, TA_ALPHA);
         boolean firstInit = (!aa);
@@ -3066,15 +3070,24 @@ static void performImageAnalyses(Texture* tex, const image_t* image,
 
         if(firstInit || forceUpdate)
         {
-            if(0 == image->paletteId)
+            if(!image->paletteId)
             {
                 FindAverageAlpha(image->pixels, image->size.width, image->size.height,
                                  image->pixelSize, &aa->alpha, &aa->coverage);
             }
             else
             {
-                FindAverageAlphaIdx(image->pixels, image->size.width, image->size.height,
-                                    R_ToColorPalette(image->paletteId), &aa->alpha, &aa->coverage);
+                if(image->flags & IMGF_IS_MASKED)
+                {
+                    FindAverageAlphaIdx(image->pixels, image->size.width, image->size.height,
+                                        R_ToColorPalette(image->paletteId), &aa->alpha, &aa->coverage);
+                }
+                else
+                {
+                    // It has no mask, so it must be opaque.
+                    aa->alpha = 1;
+                    aa->coverage = 0;
+                }
             }
         }
     }
@@ -3417,6 +3430,7 @@ void GL_BindTexture(TextureVariant* tex)
     }
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glBindTexture(GL_TEXTURE_2D, TextureVariant_GLName(tex));
     Sys_GLCheckError();

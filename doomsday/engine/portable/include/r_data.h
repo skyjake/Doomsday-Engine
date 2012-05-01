@@ -35,6 +35,7 @@
 #include "thinker.h"
 #include "m_nodepile.h"
 #include "def_data.h"
+#include "textures.h"
 
 struct texture_s;
 struct font_s;
@@ -90,10 +91,10 @@ typedef struct rtexmapuint_s {
     float opacity;
 
     /// Texture-space scale multiplier.
-    vec2_t scale;
+    vec2f_t scale;
 
     /// Texture-space origin translation (unscaled).
-    vec2_t offset;
+    vec2f_t offset;
 } rtexmapunit_t;
 
 /// Manipulators, for convenience.
@@ -143,7 +144,7 @@ typedef struct glcommand_vertex_s {
 #define RL_MAX_DIVS         64
 typedef struct walldiv_s {
     unsigned int    num;
-    float           pos[RL_MAX_DIVS];
+    coord_t         pos[RL_MAX_DIVS];
 } walldiv_t;
 
 typedef struct rvertex_s {
@@ -183,7 +184,7 @@ typedef struct rtexcoord_s {
 
 typedef struct shadowlink_s {
     struct shadowlink_s* next;
-    linedef_t*      lineDef;
+    LineDef*        lineDef;
     byte            side;
 } shadowlink_t;
 
@@ -276,10 +277,8 @@ typedef struct {
 
 extern colorpaletteid_t defaultColorPalette;
 
-extern nodeindex_t* linelinks;
-extern nodepile_t* mobjNodes, *lineNodes;
-
 extern int levelFullBright;
+
 extern byte rendInfoRPolys;
 extern byte precacheMapMaterials, precacheSprites, precacheSkins;
 
@@ -452,7 +451,7 @@ void R_GetColorPaletteRGBf(colorpaletteid_t id, int colorIdx, float rgb[3], bool
  */
 boolean R_SetDefaultColorPalette(colorpaletteid_t id);
 
-//boolean         R_UpdateSubSector(struct subsector_t* ssec, boolean forceUpdate);
+//boolean         R_UpdateBspLeaf(struct BspLeaf* bspLeaf, boolean forceUpdate);
 boolean         R_UpdateSector(struct sector_s* sec, boolean forceUpdate);
 boolean         R_UpdateLinedef(struct linedef_s* line, boolean forceUpdate);
 boolean         R_UpdateSidedef(struct sidedef_s* side, boolean forceUpdate);

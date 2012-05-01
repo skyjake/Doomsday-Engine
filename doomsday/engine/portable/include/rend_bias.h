@@ -1,4 +1,4 @@
-/**\file
+/**\file rend_bias.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,11 +23,11 @@
  */
 
 /**
- * rend_bias.h: Light/Shadow Bias
+ * Light/Shadow Bias
  */
 
-#ifndef __DOOMSDAY_RENDER_SHADOW_BIAS_H__
-#define __DOOMSDAY_RENDER_SHADOW_BIAS_H__
+#ifndef LIBDENG_RENDER_SHADOWBIAS_H
+#define LIBDENG_RENDER_SHADOWBIAS_H
 
 #include "m_vector.h"
 
@@ -67,7 +67,7 @@ typedef struct biasaffection_s {
 
 typedef struct source_s {
     int             flags;
-    float           pos[3];
+    coord_t         origin[3];
     float           color[3];
     float           intensity;
     float           primaryIntensity;
@@ -95,14 +95,14 @@ void            SB_BeginFrame(void);
 void            SB_RendPoly(struct ColorRawf_s* rcolors,
                             struct biassurface_s* bsuf,
                             const struct rvertex_s* rvertices,
-                            size_t numVertices, const vectorcomp_t* normal,
+                            size_t numVertices, const vectorcompf_t* normal,
                             float sectorLightLevel,
-                            void* mapObject, uint elmIdx, boolean isSeg);
+                            void* mapObject, uint elmIdx, boolean isHEdge);
 void            SB_EndFrame(void);
 
-int             SB_NewSourceAt(float x, float y, float z, float size, float minLight,
+int             SB_NewSourceAt(coord_t x, coord_t y, coord_t z, float size, float minLight,
                                float maxLight, float* rgb);
-void            SB_UpdateSource(int which, float x, float y, float z, float size,
+void            SB_UpdateSource(int which, coord_t x, coord_t y, coord_t z, float size,
                                 float minLight, float maxLight, float* rgb);
 void            SB_Delete(int which);
 void            SB_Clear(void);
@@ -112,4 +112,4 @@ int             SB_ToIndex(source_t* source);
 
 void            SB_SetColor(float* dest, float* src);
 
-#endif
+#endif /// LIBDENG_RENDER_SHADOWBIAS_H

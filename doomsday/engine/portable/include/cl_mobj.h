@@ -72,10 +72,6 @@ typedef struct clmoinfo_s {
     uint            endMagic;       // The client mobj magic number (CLM_MAGIC2).
 } clmoinfo_t;
 
-void            Cl_InitClientMobjs(void);
-void            Cl_Reset(void);
-void            Cl_DestroyClientMobjs(void);
-void            Cl_ExpireMobjs(void);
 void            Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int flags, boolean onFloor);
 
 mobj_t         *ClMobj_Create(thid_t id);
@@ -83,9 +79,8 @@ void            ClMobj_Destroy(mobj_t *mo);
 clmoinfo_t     *ClMobj_GetInfo(mobj_t* mo);
 struct mobj_s  *ClMobj_Find(thid_t id);
 mobj_t         *ClMobj_MobjForInfo(clmoinfo_t* info);
-boolean         ClMobj_Iterator(boolean (*callback) (mobj_t *, void *), void *parm);
-void            ClMobj_UnsetPosition(mobj_t *cmo); // needed?
-void            ClMobj_SetPosition(mobj_t *cmo); // needed?
+void            ClMobj_Unlink(mobj_t *cmo); // needed?
+void            ClMobj_Link(mobj_t *cmo); // needed?
 void            ClMobj_SetState(mobj_t *mo, int stnum); // needed?
 void            ClMobj_CheckPlanes(mobj_t *mo, boolean justCreated);
 

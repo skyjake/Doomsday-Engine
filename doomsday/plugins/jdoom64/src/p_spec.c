@@ -83,8 +83,8 @@ typedef struct animdef_s {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing);
-static void P_ShootSpecialLine(mobj_t *thing, linedef_t *line);
+static void P_CrossSpecialLine(LineDef *line, int side, mobj_t *thing);
+static void P_ShootSpecialLine(mobj_t *thing, LineDef *line);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -238,7 +238,7 @@ void P_InitPicAnims(void)
     loadAnimDefs(animsShared, false);
 }
 
-boolean P_ActivateLine(linedef_t *ld, mobj_t *mo, int side, int actType)
+boolean P_ActivateLine(LineDef *ld, mobj_t *mo, int side, int actType)
 {
     if(IS_CLIENT)
     {
@@ -271,7 +271,7 @@ boolean P_ActivateLine(linedef_t *ld, mobj_t *mo, int side, int actType)
  * Called every time a thing origin is about to cross a line with
  * a non 0 special.
  */
-void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
+void P_CrossSpecialLine(LineDef *line, int side, mobj_t *thing)
 {
     int                 ok;
     xline_t            *xline;
@@ -829,7 +829,7 @@ void P_CrossSpecialLine(linedef_t *line, int side, mobj_t *thing)
 /**
  * Called when a thing shoots a special line.
  */
-void P_ShootSpecialLine(mobj_t *thing, linedef_t *line)
+void P_ShootSpecialLine(mobj_t *thing, LineDef *line)
 {
     int                 ok;
     xline_t*            xline = P_ToXLine(line);
@@ -882,14 +882,14 @@ void P_ShootSpecialLine(mobj_t *thing, linedef_t *line)
 /**
  * Called every tic frame that the player origin is in a special sector
  */
-void P_PlayerInSpecialSector(player_t *player)
+void P_PlayerInSpecialSector(player_t* player)
 {
-    sector_t *sector = P_GetPtrp(player->plr->mo->subsector, DMU_SECTOR);
+    Sector* sector = P_GetPtrp(player->plr->mo->bspLeaf, DMU_SECTOR);
 
     if(IS_CLIENT) return;
 
     // Falling, not all the way down yet?
-    if(player->plr->mo->pos[VZ] != P_GetFixedp(sector, DMU_FLOOR_HEIGHT))
+    if(!FEQUAL(player->plr->mo->origin[VZ], P_GetDoublep(sector, DMU_FLOOR_HEIGHT)))
         return;
 
     // Has hitten ground.
@@ -953,9 +953,9 @@ void P_PlayerInSpecialSector(player_t *player)
  */
 void P_UpdateSpecials(void)
 {
-    float               x, y; // jd64 added @c y,
-    linedef_t*          line;
-    sidedef_t*          side;
+    float x, y;
+    LineDef* line;
+    SideDef* side;
 
     // Extended lines and sectors.
     XG_Ticker();
@@ -1069,15 +1069,13 @@ void P_UpdateSpecials(void)
  */
 void P_ThunderSector(void)
 {
-    sector_t           *sec = NULL;
-    iterlist_t         *list;
+    Sector* sec = NULL;
+    iterlist_t* list;
 
-    if(!(P_Random() < 10))
-        return;
+    if(!(P_Random() < 10)) return;
 
     list = P_GetSectorIterListForTag(20000, false);
-    if(!list)
-        return;
+    if(!list) return;
 
     IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
     IterList_RewindIterator(list);
@@ -1086,9 +1084,10 @@ void P_ThunderSector(void)
         if(!(mapTime & 32))
         {
             P_SetFloatp(sec, DMU_LIGHT_LEVEL, 1);
-            S_StartSound(SFX_SSSIT, P_GetPtrp(sec, DMU_SOUND_ORIGIN));
         }
     }
+
+    S_StartSound(SFX_SSSIT | DDSF_NO_ATTENUATION, NULL);
 }
 
 /**
@@ -1097,10 +1096,10 @@ void P_ThunderSector(void)
 void P_SpawnSpecials(void)
 {
     uint                i;
-    linedef_t          *line;
+    LineDef            *line;
     xline_t            *xline;
     iterlist_t         *list;
-    sector_t           *sec;
+    Sector             *sec;
     xsector_t          *xsec;
 
     // Init special SECTORs.
@@ -1257,7 +1256,7 @@ void P_SpawnSpecials(void)
     XG_Init();
 }
 
-boolean P_UseSpecialLine2(mobj_t* mo, linedef_t* line, int side)
+boolean P_UseSpecialLine2(mobj_t* mo, LineDef* line, int side)
 {
     xline_t*            xline = P_ToXLine(line);
 

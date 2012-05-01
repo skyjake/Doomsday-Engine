@@ -63,7 +63,13 @@ class DirState:
 
 
 def sys_id():
-    return "%s-%s" % (sys.platform, platform.architecture()[0])
+    bits = platform.architecture()[0]
+    
+    # Special case: the Snow Leopard builder targets 64-bit.
+    if sys.platform == 'darwin' and platform.mac_ver()[0][:4] == '10.6':
+        bits = '64bit'
+        
+    return "%s-%s" % (sys.platform, bits)
 
 
 def remote_copy(src, dst):
@@ -101,7 +107,7 @@ def aptrepo_by_time():
 
 def aptrepo_find_latest_tag():    
     debs = aptrepo_by_time()
-    if not debs: return 'master'
+    if not debs: return config.BRANCH
     arch = deb_arch()
     biggest = 0
     for deb in debs:
@@ -118,7 +124,8 @@ def count_log_word(fn, word):
         pos = txt.find(unicode(word), pos)
         if pos < 0: break 
         if txt[pos-1] not in '/\\_'+string.ascii_letters and txt[pos+len(word)] != 's' and \
-            txt[pos-11:pos] != 'shlibdeps: ':
+            txt[pos-11:pos] != 'shlibdeps: ' and txt[pos-12:pos] != 'genchanges: ' and \
+            txt[pos-12:pos] != 'cc1objplus: ':
             count += 1            
         pos += len(word)
     return count

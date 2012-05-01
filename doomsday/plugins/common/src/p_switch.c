@@ -1,35 +1,27 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
- *\author Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
- *\author Copyright © 1993-1996 by id Software, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * p_switch.c: Switches, buttons. Two-state animation. Exits.
+ * @file p_switch.c
+ * Common playsim routines relating to switches.
+ *
+ * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 1999 Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
+ * @authors Copyright &copy; 1999-2000 Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
+ * @authors Copyright &copy; 1993-1996 id Software, Inc.
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #if __JDOOM__
 #  include "jdoom.h"
@@ -44,21 +36,25 @@
 #include "d_net.h"
 #include "dmu_lib.h"
 #include "p_plat.h"
+#include "p_sound.h"
 #include "p_switch.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
+/**
+ * This struct is used to provide byte offsets when reading a custom
+ * SWITCHES lump thus it must be packed and cannot be altered.
+ */
+#pragma pack(1)
+typedef struct {
+    /* Do NOT change these members in any way! */
+    char name1[9];
+    char name2[9];
+#if __JHEXEN__
+    int soundID;
+#else
+    short episode;
+#endif
+} switchlist_t;
+#pragma pack()
 
 #if __JHEXEN__
 switchlist_t switchInfo[] = {
@@ -146,20 +142,10 @@ switchlist_t switchInfo[] = {
 };
 #endif
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static material_t** switchlist;
 static int max_numswitches;
 static int numswitches;
 
-// CODE --------------------------------------------------------------------
-
-/**
- * Called at game initialization or when the engine's state must be updated
- * (eg a new WAD is loaded at runtime). This routine will populate the list
- * of known switches and buttons. This enables their texture to change when
- * activated, and in the case of buttons, change back after a timeout.
- */
 #if __JHEXEN__
 void P_InitSwitchList(void)
 {
@@ -195,13 +181,7 @@ void P_InitSwitchList(void)
     switchlist[index] = 0;
 }
 #else
-
 /**
- * Called at game initialization or when the engine's state must be updated
- * (eg a new WAD is loaded at runtime). This routine will populate the list
- * of known switches and buttons. This enables their texture to change when
- * activated, and in the case of buttons, change back after a timeout.
- *
  * This routine modified to read its data from a predefined lump or
  * PWAD lump called SWITCHES rather than a static table in this module to
  * allow wad designers to insert or modify switches.
@@ -211,11 +191,8 @@ void P_InitSwitchList(void)
  * text source file using SWANTBLS.EXE, distributed with the BOOM utils.
  * The standard list of switches and animations is contained in the example
  * source text file DEFSWANI.DAT also in the BOOM util distribution.
- */
-
-/*
- * DJS - We'll support this BOOM extension but we should discourage it's use
- *       and instead implement a better method for creating new switches.
+ *
+ * @todo Implement a better method for creating new switches.
  */
 void P_InitSwitchList(void)
 {
@@ -292,20 +269,19 @@ void P_InitSwitchList(void)
 }
 #endif
 
-material_t* P_GetSwitch(material_t* mat, const switchlist_t** info)
+static material_t* findSwitch(material_t* mat, const switchlist_t** info)
 {
-    int                 i;
-
-    if(!mat)
-        return NULL;
+    int i;
+    if(!mat) return NULL;
 
     for(i = 0; i < numswitches * 2; ++i)
     {
         if(switchlist[i] == mat)
         {
             if(info)
+            {
                 *info = &switchInfo[i / 2];
-
+            }
             return switchlist[i^1];
         }
     }
@@ -317,117 +293,109 @@ void T_MaterialChanger(materialchanger_t* mchanger)
 {
     if(!(--mchanger->timer))
     {
-        P_SetPtrp(mchanger->side,
-                  mchanger->ssurfaceID == SID_MIDDLE? DMU_MIDDLE_MATERIAL :
-                  mchanger->ssurfaceID == SID_TOP? DMU_TOP_MATERIAL :
-                  DMU_BOTTOM_MATERIAL, mchanger->material);
+        const int sectionFlags = DMU_FLAG_FOR_SIDEDEFSECTION(mchanger->section);
+
+        P_SetPtrp(mchanger->side, sectionFlags | DMU_MATERIAL, mchanger->material);
+
 #if __JDOOM__ || __JDOOM64__
-        S_StartSound(SFX_SWTCHN, P_GetPtrp(
-            P_GetPtrp(mchanger->side, DMU_SECTOR), DMU_SOUND_ORIGIN));
+        S_SectorSound(P_GetPtrp(mchanger->side, DMU_SECTOR), SFX_SWTCHN);
 #elif __JHERETIC__
-        S_StartSound(SFX_SWITCH, P_GetPtrp(
-            P_GetPtrp(mchanger->side, DMU_SECTOR), DMU_SOUND_ORIGIN));
+        S_SectorSound(P_GetPtrp(mchanger->side, DMU_SECTOR), SFX_SWITCH);
 #endif
 
         DD_ThinkerRemove(&mchanger->thinker);
     }
 }
 
-void P_SpawnMaterialChanger(sidedef_t* side, sidedefsurfaceid_t ssurfaceID,
-                            material_t* mat, int tics)
+static void spawnMaterialChanger(SideDef* side, SideDefSection section,
+    material_t* mat, int tics)
 {
-    materialchanger_t*  mchanger;
+    materialchanger_t* mchanger;
 
     mchanger = Z_Calloc(sizeof(*mchanger), PU_MAP, 0);
     mchanger->thinker.function = T_MaterialChanger;
     DD_ThinkerAdd(&mchanger->thinker);
 
     mchanger->side = side;
-    mchanger->ssurfaceID = ssurfaceID;
+    mchanger->section = section;
     mchanger->material = mat;
     mchanger->timer = tics;
 }
 
 typedef struct {
-    sidedef_t*          side;
-    sidedefsurfaceid_t  ssurfaceID;
+    SideDef* side;
+    SideDefSection section;
 } findmaterialchangerparams_t;
 
-int findMaterialChanger(thinker_t* th, void* data)
+static int findMaterialChanger(thinker_t* th, void* parameters)
 {
-    materialchanger_t*  mchanger = (materialchanger_t*) th;
-    findmaterialchangerparams_t* params =
-        (findmaterialchangerparams_t*) data;
+    materialchanger_t* mchanger = (materialchanger_t*) th;
+    findmaterialchangerparams_t* params = (findmaterialchangerparams_t*) parameters;
 
     if(mchanger->side == params->side &&
-       mchanger->ssurfaceID == params->ssurfaceID)
+       mchanger->section == params->section)
         return true; // Stop iteration.
 
     return false; // Keep looking.
 }
 
-void P_StartButton(sidedef_t* side, sidedefsurfaceid_t ssurfaceID,
-                   material_t* mat, int tics)
+static void startButton(SideDef* side, SideDefSection section,
+    material_t* mat, int tics)
 {
     findmaterialchangerparams_t params;
 
     params.side = side;
-    params.ssurfaceID = ssurfaceID;
+    params.section = section;
 
     // See if a material change has already been queued.
     if(DD_IterateThinkers(T_MaterialChanger, findMaterialChanger, &params))
         return;
 
-    P_SpawnMaterialChanger(side, ssurfaceID, mat, tics);
+    spawnMaterialChanger(side, section, mat, tics);
 }
 
-/**
- * @param side          Sidedef where the surface to be changed is found.
- * @param ssurfaceID    Id of the sidedef surface to be changed.
- * @param sound         If non-zero, play this sound, ELSE the sound to
- *                      play will be taken from the switchinfo. Note that
- *                      a sound will play iff a switch state change occurs
- *                      and param silent is non-zero.
- * @param silent        @c true = no sound will be played.
- * @param tics          @c <= 0 = A permanent change.
- *                      @c  > 0 = Change back after this many tics.
- */
-boolean P_ToggleSwitch2(sidedef_t* side, sidedefsurfaceid_t ssurfaceID,
-                        int sound, boolean silent, int tics)
+static int chooseDefaultSound(switchlist_t const* info)
 {
-    material_t*         mat, *current;
+    /// @todo Get these defaults from switchinfo.
+#if __JHEXEN__
+    return info->soundID;
+#elif __JHERETIC__
+    return SFX_SWITCH;
+#else
+    return SFX_SWTCHN;
+#endif
+}
+
+boolean P_ToggleSwitch2(SideDef* side, SideDefSection section, int sound,
+    boolean silent, int tics)
+{
+    const int sectionFlags = DMU_FLAG_FOR_SIDEDEFSECTION(section);
+    material_t* mat, *current;
     const switchlist_t* info;
 
-    current = P_GetPtrp(side,
-                        ssurfaceID == SID_MIDDLE? DMU_MIDDLE_MATERIAL :
-                        ssurfaceID == SID_TOP? DMU_TOP_MATERIAL :
-                        DMU_BOTTOM_MATERIAL);
+    current = P_GetPtrp(side, sectionFlags | DMU_MATERIAL);
 
-    if((mat = P_GetSwitch(current, &info)))
+    mat = findSwitch(current, &info);
+    if(mat)
     {
         if(!silent)
         {
-            // \todo Get these defaults from switchinfo.
             if(!sound)
             {
-#if __JHEXEN__
-                sound = info->soundID;
-#elif __JHERETIC__
-                sound = SFX_SWITCH;
-#else
-                sound = SFX_SWTCHN;
-#endif
+                sound = chooseDefaultSound(info);
             }
 
-            S_StartSound(sound, P_GetPtrp(P_GetPtrp(side, DMU_SECTOR),
-                                          DMU_SOUND_ORIGIN));
+            S_SectorSound(P_GetPtrp(side, DMU_SECTOR), sound);
         }
 
-        P_SetPtrp(side, ssurfaceID == SID_MIDDLE? DMU_MIDDLE_MATERIAL :
-                        ssurfaceID == SID_TOP? DMU_TOP_MATERIAL :
-                        DMU_BOTTOM_MATERIAL, mat);
+        P_SetPtrp(side, sectionFlags | DMU_MATERIAL, mat);
+
+        // Are we changing it back again?
         if(tics > 0)
-            P_StartButton(side, ssurfaceID, current, tics);
+        {
+            // Spawn a deferred material change thinker.
+            startButton(side, section, current, tics);
+        }
 
         return true;
     }
@@ -435,40 +403,29 @@ boolean P_ToggleSwitch2(sidedef_t* side, sidedefsurfaceid_t ssurfaceID,
     return false;
 }
 
-/**
- * @param side          Sidedef where the switch to be changed is found.
- * @param sound         If non-zero, play this sound, ELSE the sound to
- *                      play will be taken from the switchinfo. Note that
- *                      a sound will play iff a switch state change occurs
- *                      and param silent is non-zero.
- * @param silent        @c true = no sound will be played.
- * @param tics          @c <= 0 = A permanent change.
- *                      @c  > 0 = Change back after this many tics.
- */
-boolean P_ToggleSwitch(sidedef_t* side, int sound, boolean silent, int tics)
+boolean P_ToggleSwitch(SideDef* side, int sound, boolean silent, int tics)
 {
-    if(P_ToggleSwitch2(side, SID_TOP, sound, silent, tics))
+    if(P_ToggleSwitch2(side, SS_TOP, sound, silent, tics))
         return true;
 
-    if(P_ToggleSwitch2(side, SID_MIDDLE, sound, silent, tics))
+    if(P_ToggleSwitch2(side, SS_MIDDLE, sound, silent, tics))
         return true;
 
-    if(P_ToggleSwitch2(side, SID_BOTTOM, sound, silent, tics))
+    if(P_ToggleSwitch2(side, SS_BOTTOM, sound, silent, tics))
         return true;
 
     return false;
 }
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-/**
- * Called when a mobj "uses" a linedef.
- */
-boolean P_UseSpecialLine(mobj_t* mo, linedef_t* line, int side)
+boolean P_UseSpecialLine(mobj_t* activator, LineDef* line, int side)
 {
     // Extended functionality overrides old.
-    if(XL_UseLine(line, side, mo))
+    if(XL_UseLine(line, side, activator))
+    {
         return true;
+    }
 
-    return P_UseSpecialLine2(mo, line, side);
+    return P_UseSpecialLine2(activator, line, side);
 }
 #endif

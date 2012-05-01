@@ -26,7 +26,7 @@
 /**
  * m_fixed.c: Fixed-point math.
  *
- * Define NO_FIXED_ASM to disable the assembler version.
+ * Define DENG_NO_FIXED_ASM to disable the assembler version.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -53,7 +53,7 @@
 
 // CODE --------------------------------------------------------------------
 
-#ifdef NO_FIXED_ASM
+#ifdef DENG_NO_FIXED_ASM
 
 fixed_t FixedMul(fixed_t a, fixed_t b)
 {

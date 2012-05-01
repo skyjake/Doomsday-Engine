@@ -32,7 +32,14 @@
 #include <stdio.h>
 
 #include "dd_types.h"
+#include "m_vector.h"
 #include "dfile.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+struct aaboxd_s;
 
 #define ISSPACE(c)  ((c) == 0 || (c) == ' ' || (c) == '\t' || (c) == '\n' ||\
                      (c) == '\r')
@@ -102,38 +109,94 @@ byte            RNG_RandByte(void);
 float           RNG_RandFloat(void);
 void            RNG_Reset(void);
 
-// Math routines.
-float           M_ApproxDistancef(float dx, float dy);
-float           M_ApproxDistance3(const float delta[3]);
-float           M_ApproxDistance3f(float dx, float dy, float dz);
-float           M_PointLineDistance(const float* a, const float* b, const float* c);
-float           M_PointUnitLineDistance(const float* a, const float* b, const float* c);
-float           M_Normalize(float* a);
-float           M_Distance(const float* a, const float* b);
-void            M_Scale(float* dest, const float* a, float scale);
-float           M_DotProduct(const float* a, const float* b);
-void            M_CrossProduct(const float* a, const float* b, float* out);
-void            M_PointCrossProduct(const float* v1, const float* v2,
-                                    const float* v3, float* out);
-float           M_TriangleArea(const float* v1, const float* v2,
-                               const float* v3);
-void            M_RotateVector(float vec[3], float degYaw, float degPitch);
-float           M_ProjectPointOnLine(const float* point, const float* linepoint,
-                                     const float* delta, float gap,
-                                     float* result);
-void            M_ProjectViewRelativeLine2D(const float center[2],
-                                            boolean alignToViewPlane,
-                                            float width, float offset,
-                                            float start[2], float end[2]);
-double          M_ParallelDist(double lineDX, double lineDY, double linePara,
-                               double lineLength, double x, double y);
-double          M_PerpDist(double lineDX, double lineDY, double linePerp,
-                           double lineLength, double x, double y);
-int             M_CeilPow2(int num);
-int             M_FloorPow2(int num);
-int             M_RoundPow2(int num);
-int             M_WeightPow2(int num, float weight);
-float           M_CycleIntoRange(float value, float length);
+/**
+ * Math routines.
+ */
+
+/**
+ * Gives an estimation of distance (not exact).
+ */
+double M_ApproxDistance(double dx, double dy);
+float M_ApproxDistancef(float dx, float dy);
+
+/**
+ * Gives an estimation of 3D distance (not exact).
+ */
+double M_ApproxDistance3(double dx, double dy, double dz);
+float M_ApproxDistance3f(float dx, float dy, float dz);
+
+/**
+ * To get a global angle from Cartesian coordinates, the coordinates are
+ * flipped until they are in the first octant of the coordinate system, then
+ * the y (<=x) is scaled and divided by x to get a tangent (slope) value
+ * which is looked up in the tantoangle[] table.  The +1 size is to handle
+ * the case when x==y without additional checking.
+ *
+ * @param x   X coordinate to test.
+ * @param y   Y coordinate to test.
+ *
+ * @return  Angle between the test point and [0, 0].
+ */
+angle_t M_PointToAngle(double const point[2]);
+angle_t M_PointXYToAngle(double x, double y);
+
+/**
+ * Translate a direction into an angle value (degrees).
+ */
+double M_DirectionToAngle(double const direction[2]);
+double M_DirectionToAngleXY(double directionX, double directionY);
+
+angle_t M_PointToAngle2(double const a[], double const b[]);
+angle_t M_PointXYToAngle2(double aX, double aY, double bX, double bY);
+
+double M_PointDistance(double const a[2], double const b[2]);
+double M_PointXYDistance(double aX, double aY, double bX, double bY);
+
+/**
+ * Check the spatial relationship between the given box and a partitioning line.
+ *
+ * @param box            Box being tested.
+ * @param linePoint      Point on the line.
+ * @param lineDirection  Direction of the line (slope).
+ *
+ * @return  @c <0= bbox is wholly on the left side.
+ *          @c  0= line intersects bbox.
+ *          @c >0= bbox wholly on the right side.
+ */
+int M_BoxOnLineSide(const struct aaboxd_s* box, double const linePoint[2], double const lineDirection[2]);
+
+/**
+ * Check the spatial relationship between the given box and a partitioning line.
+ *
+ * An alternative version of M_BoxOnLineSide() which allows specifying many of the
+ * intermediate values used in the calculation a priori for performance reasons.
+ *
+ * @param box            Box being tested.
+ * @param linePoint      Point on the line.
+ * @param lineDirection  Direction of the line (slope).
+ * @param linePerp       Perpendicular distance of the line.
+ * @param lineLength     Length of the line.
+ * @param epsilon        Points within this distance will be considered equal.
+ *
+ * @return  @c <0= bbox is wholly on the left side.
+ *          @c  0= line intersects bbox.
+ *          @c >0= bbox wholly on the right side.
+ */
+int M_BoxOnLineSide2(const struct aaboxd_s* box, double const linePoint[2],
+    double const lineDirection[2], double linePerp, double lineLength, double epsilon);
+
+/**
+ * Area of a triangle.
+ */
+double M_TriangleArea(double const v1[2], double const v2[2], double const v3[2]);
+
+void M_RotateVector(float vec[3], float degYaw, float degPitch);
+
+int M_CeilPow2(int num);
+int M_FloorPow2(int num);
+int M_RoundPow2(int num);
+int M_WeightPow2(int num, float weight);
+float M_CycleIntoRange(float value, float length);
 
 /**
  * Using Euclid's Algorithm reduce the given numerator and denominator by
@@ -144,9 +207,10 @@ float           M_CycleIntoRange(float value, float length);
  */
 int M_RatioReduce(int* numerator, int* denominator);
 
-double          M_SlopeToAngle(double dx, double dy);
-double          M_Length(double x, double y);
-int             M_NumDigits(int num);
+slopetype_t M_SlopeType(double const direction[2]);
+slopetype_t M_SlopeTypeXY(double directionX, double directionY);
+
+int M_NumDigits(int num);
 
 typedef struct trigger_s {
     timespan_t duration;
@@ -191,4 +255,8 @@ uint M_CRC32(byte* data, uint length);
  */
 int M_ScreenShot(const char* filePath, int bits);
 
-#endif /* LIBDENG_M_MISC_H */
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
+#endif /// LIBDENG_M_MISC_H

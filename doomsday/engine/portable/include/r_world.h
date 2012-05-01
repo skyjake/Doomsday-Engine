@@ -31,7 +31,7 @@
 
 #include "r_data.h"
 
-// Used for vertex sector owners, side line owners and reverb subsectors.
+// Used for vertex sector owners, side line owners and reverb BSP leafs.
 typedef struct ownernode_s {
     void*           data;
     struct ownernode_s* next;
@@ -42,16 +42,11 @@ typedef struct {
     uint            count;
 } ownerlist_t;
 
-typedef struct skyfix_s {
-    float           height;
-} skyfix_t;
-
 extern float rendSkyLight; // cvar
 extern byte rendSkyLightAuto; // cvar
 extern float rendLightWallAngle;
 extern byte rendLightWallAngleSmooth;
 extern boolean ddMapSetup;
-extern skyfix_t skyFix[2]; // [floor, ceiling]
 
 // Sky flags.
 #define SIF_DRAW_SPHERE     0x1 // Always draw the sky sphere.
@@ -61,15 +56,13 @@ extern skyfix_t skyFix[2]; // [floor, ceiling]
  */
 void R_SetupMap(int mode, int flags);
 
-void            R_InitLinks(gamemap_t* map);
-void            R_PolygonizeMap(gamemap_t* map);
 void            R_SetupFog(float start, float end, float density, float* rgb);
 void            R_SetupFogDefaults(void);
 
 /**
  * Sector light color may be affected by the sky light color.
  */
-const float* R_GetSectorLightColor(const sector_t* sector);
+const float* R_GetSectorLightColor(const Sector* sector);
 
 float           R_DistAttenuateLightLevel(float distToViewer, float lightLevel);
 
@@ -86,46 +79,35 @@ float R_ExtraLightDelta(void);
  */
 float R_CheckSectorLight(float lightlevel, float min, float max);
 
-/**
- * Will the specified surface be added to the sky mask?
- *
- * @param suf  Ptr to the surface to test.
- * @return boolean  @c true, iff the surface will be masked.
- */
-boolean R_IsSkySurface(const surface_t* suf);
-
-boolean R_SectorContainsSkySurfaces(const sector_t* sec);
+boolean R_SectorContainsSkySurfaces(const Sector* sec);
 
 void R_UpdatePlanes(void);
 void R_ClearSectorFlags(void);
-void R_InitSkyFix(void);
 void R_MapInitSurfaceLists(void);
 
-void            R_UpdateSkyFixForSec(const sector_t* sec);
-void            R_OrderVertices(const linedef_t* line, const sector_t* sector,
-                                vertex_t* verts[2]);
-boolean         R_FindBottomTop(linedef_t* lineDef, int side, segsection_t section,
-                                float matOffsetX, float matOffsetY,
-                                const plane_t* ffloor, const plane_t* fceil,
-                                const plane_t* bfloor, const plane_t* bceil,
+void            R_OrderVertices(const LineDef* line, const Sector* sector,
+                                Vertex* verts[2]);
+boolean         R_FindBottomTop(LineDef* lineDef, int side, SideDefSection section,
+                                coord_t matOffsetX, coord_t matOffsetY,
+                                const Plane* ffloor, const Plane* fceil,
+                                const Plane* bfloor, const Plane* bceil,
                                 boolean unpegBottom, boolean unpegTop,
                                 boolean stretchMiddle, boolean isSelfRef,
-                                float* bottom, float* top, float texOffset[2]);
-plane_t*        R_NewPlaneForSector(sector_t* sec);
-void            R_DestroyPlaneOfSector(uint id, sector_t* sec);
+                                coord_t* bottom, coord_t* top, float texOffset[2]);
+Plane*          R_NewPlaneForSector(Sector* sec);
+void            R_DestroyPlaneOfSector(uint id, Sector* sec);
 
-surfacedecor_t* R_CreateSurfaceDecoration(surface_t* suf);
-void            R_ClearSurfaceDecorations(surface_t* suf);
+surfacedecor_t* R_CreateSurfaceDecoration(Surface* suf);
+void            R_ClearSurfaceDecorations(Surface* suf);
 
-void            R_UpdateWatchedPlanes(watchedplanelist_t* wpl);
-void            R_InterpolateWatchedPlanes(watchedplanelist_t* wpl,
-                                           boolean resetNextViewer);
-void            R_AddWatchedPlane(watchedplanelist_t* wpl, plane_t* pln);
-boolean         R_RemoveWatchedPlane(watchedplanelist_t* wpl,
-                                     const plane_t* pln);
+void            R_UpdateTrackedPlanes(void);
+void            R_InterpolateTrackedPlanes(boolean resetNextViewer);
 
-void            R_UpdateMovingSurfaces(void);
-void            R_InterpolateMovingSurfaces(boolean resetNextViewer);
+void            R_AddTrackedPlane(planelist_t* plist, Plane* pln);
+boolean         R_RemoveTrackedPlane(planelist_t* plist, const Plane* pln);
+
+void            R_UpdateSurfaceScroll(void);
+void            R_InterpolateSurfaceScroll(boolean resetNextViewer);
 
 /**
  * Adds the surface to the given surface list.
@@ -133,8 +115,8 @@ void            R_InterpolateMovingSurfaces(boolean resetNextViewer);
  * @param sl  The surface list to add the surface to.
  * @param suf  The surface to add to the list.
  */
-void R_SurfaceListAdd(surfacelist_t* sl, surface_t* suf);
-boolean R_SurfaceListRemove(surfacelist_t* sl, const surface_t* suf);
+void R_SurfaceListAdd(surfacelist_t* sl, Surface* suf);
+boolean R_SurfaceListRemove(surfacelist_t* sl, const Surface* suf);
 void R_SurfaceListClear(surfacelist_t* sl);
 
 /**
@@ -144,9 +126,9 @@ void R_SurfaceListClear(surfacelist_t* sl);
  *      a callback returns a zero value.
  * @param context  Is passed to the callback function.
  */
-boolean R_SurfaceListIterate(surfacelist_t* sl, boolean (*callback) (surface_t* suf, void*), void* context);
+boolean R_SurfaceListIterate(surfacelist_t* sl, boolean (*callback) (Surface* suf, void*), void* context);
 
-void            R_MarkDependantSurfacesForDecorationUpdate(plane_t* pln);
+void            R_MarkDependantSurfacesForDecorationUpdate(Plane* pln);
 
 /**
  * To be called in response to a Material property changing which may
@@ -155,22 +137,22 @@ void            R_MarkDependantSurfacesForDecorationUpdate(plane_t* pln);
 void R_UpdateMapSurfacesOnMaterialChange(material_t* material);
 
 /// @return  @c true= @a plane is non-glowing (i.e. not glowing or a sky).
-boolean R_IsGlowingPlane(const plane_t* plane);
+boolean R_IsGlowingPlane(const Plane* plane);
 
-float R_GlowStrength(const plane_t* pln);
+float R_GlowStrength(const Plane* pln);
 
-lineowner_t*    R_GetVtxLineOwner(const vertex_t* vtx, const linedef_t* line);
-linedef_t*      R_FindLineNeighbor(const sector_t* sector,
-                                   const linedef_t* line,
+lineowner_t*    R_GetVtxLineOwner(const Vertex* vtx, const LineDef* line);
+LineDef*        R_FindLineNeighbor(const Sector* sector,
+                                   const LineDef* line,
                                    const lineowner_t* own,
                                    boolean antiClockwise, binangle_t* diff);
-linedef_t*      R_FindSolidLineNeighbor(const sector_t* sector,
-                                        const linedef_t* line,
+LineDef*        R_FindSolidLineNeighbor(const Sector* sector,
+                                        const LineDef* line,
                                         const lineowner_t* own,
                                         boolean antiClockwise,
                                         binangle_t* diff);
-linedef_t*      R_FindLineBackNeighbor(const sector_t* sector,
-                                       const linedef_t* line,
+LineDef*        R_FindLineBackNeighbor(const Sector* sector,
+                                       const LineDef* line,
                                        const lineowner_t* own,
                                        boolean antiClockwise,
                                        binangle_t* diff);

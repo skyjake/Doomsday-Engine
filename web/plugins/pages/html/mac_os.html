@@ -1,7 +1,7 @@
 <h2>Install Packages</h2>
 <p>Select the package you wish to install by clicking on it. You will then be directed to our primary download server and after a few moments your download should begin automatically. Once downloaded, run the install package and follow the onsreen instructions to complete the install.</p>
-<div id="downloads_list1" class="downloads_list">
-</div>
+<div id="downloads_list1" class="downloads_list"></div>
+<div id="downloads_list2" class="downloads_list"></div>
 <h3>Minimum System Requirements</h3>
 <ul>
 <li>Mac OS X version 10.4 (or later).</li>
@@ -62,7 +62,16 @@ function genPackageBadgeHTML(json, downloadUri)
             cleanTitle += ' (Unstable)';
         }
     }
-    metaData += /*json.platform_name + */'Mac OS X 10.4+</span>';
+
+    if(json.platform_name == 'mac10_6-x86-x86_64')
+    {
+        metaData += 'Mac OS 10.6+';
+    }
+    else
+    {
+        metaData += 'Mac OS 10.4+';
+    }
+    metaData += '</span>';
 
     return $('<div class="package_badge"><a class="package_name" href="' + downloadUri + '" title="Download ' + json.fulltitle + '">' + cleanTitle + '</a><br />' + metaData + '</div>');
 }
@@ -71,12 +80,13 @@ function genPackageBadgeHTML(json, downloadUri)
  * Called upon receipt of a new JSON package object graph to add it
  * to the global list of packages.
  */
-function addPackages(json, downloadUri)
+function addPackages(json, downloadUri, packageListElementId)
 {
     var record = new Array();
     var json_copy = json;
-    record["json"] = json_copy;
-    record["downloadUri"] = downloadUri;
+    record['json'] = json_copy;
+    record['downloadUri'] = downloadUri;
+    record['packageListElementId'] = packageListElementId;
     packages.push(record);
 }
 
@@ -85,15 +95,21 @@ function addPackages(json, downloadUri)
  */
 function recordSorter(recordA, recordB)
 {
-    var a = recordA["json"];
+    var a = recordA['json'];
     var a_is_unstable = a.hasOwnProperty('is_unstable');
-    var b = recordB["json"];
+    var b = recordB['json'];
     var b_is_unstable = b.hasOwnProperty('is_unstable');
 
     // Order stable packages first.
     if(a_is_unstable != b_is_unstable)
     {
         return a_is_unstable? 1 : -1;
+    }
+
+    // Platform ids are arranged such that latest appears last.
+    if(a.platform_id != b.platform_id)
+    {
+        return a.platform_id > b.platform_id? 1 : -1;
     }
 
     // Use the lexicographical difference between titles.
@@ -103,17 +119,16 @@ function recordSorter(recordA, recordB)
 /**
  * Update the identified DOM element attaching new HTML for each package.
  */
-function populatePackages(elementId)
+function populatePackages()
 {
     // Order packages
     packages.sort(recordSorter);
 
     // Update the named DOM element attaching new HTML for each package.
-    removeAllChildren(elementId);
     for(var i in packages)
     {
         var record = packages[i];
-        genPackageBadgeHTML(record["json"], record["downloadUri"]).appendTo(elementId);
+        genPackageBadgeHTML(record['json'], record['downloadUri']).appendTo(record['packageListElementId']);
     }
 }
 
@@ -121,7 +136,7 @@ function populatePackages(elementId)
  * Query the latest packages, generate HTML badges and append
  * them to the specified DOM object.
  */
-function updateLatestPackages(requests, elementId)
+function updateLatestPackages(requests)
 {
     // Clear the packages staging area.
     packages = [];
@@ -134,13 +149,14 @@ function updateLatestPackages(requests, elementId)
 
         // Request!
         var deferred = $.ajax({
-            url: task["request"],
-            data: task["data"],
+            url: task['request'],
+            data: task['data'],
             context: {
-                lt: task["downloadUri"]
+                downloadUri: task['downloadUri'],
+                packageListElementId: task['packageListElementId']
             },
             success: function(json){
-                addPackages(json, this.lt);
+                addPackages(json, this.downloadUri, this.packageListElementId);
             }
         });
 
@@ -151,7 +167,7 @@ function updateLatestPackages(requests, elementId)
     // When all requests complete populate the package list.
     $.when.apply(null, allDeferred).then(function()
     {
-        populatePackages(elementId);
+        populatePackages();
     });
 }
 
@@ -166,6 +182,7 @@ task['data'] = {
     platform: 'mac10_4-x86-ppc'
 };
 task['downloadUri'] = 'latestbuild?' + 'platform=mac10_4-x86-ppc';
+task['packageListElementId'] = '#downloads_list1';
 requests.push(task);
 
 // Latest unstable packages.
@@ -177,7 +194,21 @@ task['data'] = {
     unstable: 'yes'
 };
 task['downloadUri'] = 'latestbuild?' + 'platform=mac10_4-x86-ppc' + '&unstable';
+task['packageListElementId'] = '#downloads_list2';
 requests.push(task);
 
-updateLatestPackages(requests, '#downloads_list1');
+task = new Array();
+task['request'] = 'latestbuild?';
+task['data'] = {
+    graph: 'json',
+    platform: 'mac10_6-x86-x86_64',
+    unstable: 'yes'
+};
+task['downloadUri'] = 'latestbuild?' + 'platform=mac10_6-x86-x86_64' + '&unstable';
+task['packageListElementId'] = '#downloads_list2';
+requests.push(task);
+
+removeAllChildren('#downloads_list1');
+removeAllChildren('#downloads_list2');
+updateLatestPackages(requests);
 </script>
