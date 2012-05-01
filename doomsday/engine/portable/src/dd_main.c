@@ -1109,6 +1109,8 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
 
         P_ControlShutdown();
         Con_Execute(CMDS_DDAY, "clearbindings", true, false);
+        B_BindDefaults();
+        B_InitialContextActivations();
 
         for(i = 0; i < DDMAXPLAYERS; ++i)
         {

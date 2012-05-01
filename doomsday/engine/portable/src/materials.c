@@ -1035,25 +1035,29 @@ static void pushVariantCacheQueue(material_t* mat, const materialvariantspecific
 void Materials_Precache2(material_t* mat, const materialvariantspecification_t* spec,
     boolean smooth, boolean cacheGroup)
 {
-    variantcachequeue_node_t* node;
-    assert(mat && spec);
-
     errorIfNotInited("Materials::Precache");
 
-    // Don't precache when playing demo.
-    if(isDedicated || playback)
+    if(!mat || ! spec)
+    {
+        DEBUG_Message(("Materials_Precache: Invalid arguments mat:%p, spec:%p, ignoring.\n", mat, spec));
         return;
+    }
+
+    // Don't precache when playing demo.
+    if(isDedicated || playback) return;
 
     // Already in the queue?
+    { variantcachequeue_node_t* node;
     for(node = variantCacheQueue; node; node = node->next)
     {
         if(mat == node->mat && spec == node->spec) return;
-    }
+    }}
 
     pushVariantCacheQueue(mat, spec, smooth);
 
     if(cacheGroup && Material_IsGroupAnimated(mat))
-    {   // Material belongs in one or more animgroups; precache the group.
+    {
+        // Material belongs in one or more animgroups; precache the group.
         int i, k;
         for(i = 0; i < numgroups; ++i)
         {

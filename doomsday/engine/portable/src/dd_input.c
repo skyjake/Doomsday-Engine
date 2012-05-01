@@ -1054,10 +1054,10 @@ static void dispatchEvents(eventqueue_t* q, timespan_t ticLength)
                 continue;
         }
 
-        if(UI_Responder(ddev)) continue;
-        if(Con_Responder(ddev)) continue;
+        if(UI_Responder(ddev)) continue; /// @todo: use the bindings system (deui context fallback)
+        if(Con_Responder(ddev)) continue; /// @todo refactor: use the bindings system
 
-        if(callGameResponders)
+        if(callGameResponders) /// @todo refactor: use the bindings system (chat context fallback)
         {
             // The game's normal responder only returns true if the bindings can't
             // be used (like when chatting).
@@ -1148,6 +1148,10 @@ byte DD_ModKey(byte key)
     else if(key == DDKEY_DECIMAL)
     {
         return '.';
+    }
+    else if(key == DDKEY_MULTIPLY)
+    {
+        return '*';
     }
 
     return key;
@@ -2001,7 +2005,7 @@ void Rend_AllInputDeviceStateVisuals(void)
     static inputdev_layout_control_t keyGroup11[] = {
         { IDC_KEY, 144 }, // numlock
         { IDC_KEY, 172 }, // divide
-        { IDC_KEY,  42 }, // multiply
+        { IDC_KEY, DDKEY_MULTIPLY }, // multiply
         { IDC_KEY, 168 }  // subtract
     };
     static inputdev_layout_control_t keyGroup12[] = {
