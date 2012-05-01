@@ -127,32 +127,36 @@ void DD_GameLoopCallback(void)
             if(ddPlayers[i].shared.inGame) count++;
 
         LegacyCore_SetLoopRate(de2LegacyCore, count? 35 : 3);
+
+        runTics();
+
+        // Update clients at regular intervals.
+        Sv_TransmitFrame();
     }
-
-    // We may be performing GL operations.
-    Window_GLActivate(Window_Main());
-
-    // Run at least one (fractional) tic.
-    runTics();
-
-    // We may have received a Quit message from the windowing system
-    // during events/tics processing.
-    if(Sys_IsShuttingDown())
-        return;
-
-    // Update clients at regular intervals.
-    Sv_TransmitFrame();
-
-    if(!novideo)
+    else
     {
+        // Normal client-side/singleplayer mode.
+        assert(!novideo);
+
+        // We may be performing GL operations.
+        Window_GLActivate(Window_Main());
+
+        // Run at least one (fractional) tic.
+        runTics();
+
+        // We may have received a Quit message from the windowing system
+        // during events/tics processing.
+        if(Sys_IsShuttingDown())
+            return;
+
+        GL_ProcessDeferredTasks(FRAME_DEFERRED_UPLOAD_TIMEOUT);
+
         // Request update of window contents.
         Window_Draw(Window_Main());
 
-        GL_ProcessDeferredTasks(FRAME_DEFERRED_UPLOAD_TIMEOUT);
+        // After the first frame, start timedemo.
+        DD_CheckTimeDemo();
     }
-
-    // After the first frame, start timedemo.
-    DD_CheckTimeDemo();
 }
 
 void DD_GameLoopDrawer(void)

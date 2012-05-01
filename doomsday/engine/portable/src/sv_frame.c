@@ -98,7 +98,7 @@ void Sv_TransmitFrame(void)
     int                 i, cTime, numInGame, pCount;
 
     // Obviously clients don't transmit anything.
-    if(!allowFrames || isClient)
+    if(!allowFrames || isClient || Sys_IsShuttingDown())
     {
         return;
     }
