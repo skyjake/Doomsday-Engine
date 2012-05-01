@@ -1216,7 +1216,7 @@ int LOIT_UnlinkMobjLumobj(thinker_t* th, void* context)
 
 void LO_UnlinkMobjLumobjs(void)
 {
-    if(!useDynlights && theMap)
+    if(!useDynlights)
     {
         // Mobjs are always public.
         P_IterateThinkers(gx.MobjThinker, 0x1, LOIT_UnlinkMobjLumobj, NULL);
