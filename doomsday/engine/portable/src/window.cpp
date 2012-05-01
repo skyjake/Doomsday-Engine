@@ -1310,7 +1310,7 @@ boolean Window_ShouldRepaintManually(const Window* wnd)
     DENG_UNUSED(wnd);
     return false;
 
-#ifdef 0
+#if 0
     // When mouse is trapped, we update the screen during the main loop
     // iteration rather than waiting for the windowing system to send an update
     // event.
