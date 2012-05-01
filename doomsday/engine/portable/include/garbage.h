@@ -33,20 +33,30 @@
 extern "C" {
 #endif
 
+/**
+ * Recycles all collected garbage and deletes the collectors. Called at engine
+ * shutdown. Should be called in the main thread.
+ */
 void Garbage_Shutdown(void);
 
+/**
+ * Recycles all garbage of the current thread and deletes the thread's garbage
+ * collector. Should be called right before the thread ends.
+ */
 void Garbage_ClearForThread(void);
 
 /**
- * Puts a region of allocated memory up for garbage collection. The memory
- * will be available for use until Garbage_Recycle() is called.
+ * Puts a region of allocated memory up for garbage collection in the current
+ * thread. The memory will be available for use until Garbage_Recycle() is
+ * called.
  *
  * @param ptr  Pointer to memory. Can be allocated with malloc() or Z_Malloc().
  */
 void Garbage_Trash(void* ptr);
 
 /**
- * Determines whether a memory pointer has been trashed.
+ * Determines whether a memory pointer has been trashed. Only the current
+ * thread's collector is searched.
  *
  * @param ptr  Pointer to memory.
  *
@@ -55,16 +65,16 @@ void Garbage_Trash(void* ptr);
 boolean Garbage_IsTrashed(const void* ptr);
 
 /**
- * Removes a region from the trash, if it is still there.
- * @warning Do not call this if there is a chance that the pointer has
- * already been freed.
+ * Removes a region from the current thread's collector, if it is still there.
+ * @warning Do not call this if there is a chance that the pointer has already
+ * been freed.
  *
  * @param ptr  Pointer to memory allocated from the @ref memzone.
  */
 void Garbage_Untrash(void* ptr);
 
 /**
- * Frees all pointers given over to the garbage collector.
+ * Frees all pointers given over to the current thread's garbage collector.
  */
 void Garbage_Recycle(void);
 
