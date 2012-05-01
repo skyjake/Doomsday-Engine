@@ -114,6 +114,9 @@ mobj_t* ClMobj_MobjForInfo(clmoinfo_t* info)
     assert(info->startMagic == CLM_MAGIC1);
     assert(info->endMagic == CLM_MAGIC2);
 
+    if(info->startMagic != CLM_MAGIC1 || info->endMagic != CLM_MAGIC2)
+        return 0; // Not a clmobj info.
+
     return (mobj_t*) ((char*)info + sizeof(clmoinfo_t));
 }
 
