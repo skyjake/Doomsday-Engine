@@ -456,6 +456,8 @@ static void BusyTask_Loop(void)
     boolean canUpload = !(busyTask->mode & BUSYF_NO_UPLOADS);
     timespan_t oldTime;
 
+    Garbage_Recycle();
+
     // Post and discard all input events.
     DD_ProcessEvents(0);
     DD_ProcessSharpEvents(0);

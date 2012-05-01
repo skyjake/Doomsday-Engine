@@ -119,6 +119,8 @@ void DD_GameLoopCallback(void)
     if(Sys_IsShuttingDown())
         return; // Shouldn't run this while shutting down.
 
+    Garbage_Recycle();
+
     if(isDedicated)
     {
         // Adjust loop rate depending on whether players are in game.
