@@ -4,7 +4,8 @@
  *
  * Stores pointers to unnecessary areas of memory and frees them later. Garbage
  * collection must be requested manually, e.g., at the end of the frame once
- * per second.
+ * per second. Garbage is also thread-specific; recycling must be done
+ * separately in each thread.
  *
  * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -26,9 +27,19 @@
 #ifndef LIBDENG_GARBAGE_COLLECTOR_H
 #define LIBDENG_GARBAGE_COLLECTOR_H
 
+#include "dd_types.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void Garbage_Shutdown(void);
+
+void Garbage_ClearForThread(void);
+
 /**
  * Puts a region of allocated memory up for garbage collection. The memory
- * will be available for use until M_RecycleGarbage() is called.
+ * will be available for use until Garbage_Recycle() is called.
  *
  * @param ptr  Pointer to memory. Can be allocated with malloc() or Z_Malloc().
  */
@@ -41,7 +52,7 @@ void Garbage_Trash(void* ptr);
  *
  * @return @c true if the pointer is in the trash.
  */
-boolean Garbage_IsTrashed(void* ptr);
+boolean Garbage_IsTrashed(const void* ptr);
 
 /**
  * Removes a region from the trash, if it is still there.
@@ -56,5 +67,9 @@ void Garbage_Untrash(void* ptr);
  * Frees all pointers given over to the garbage collector.
  */
 void Garbage_Recycle(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // LIBDENG_GARBAGE_COLLECTOR_H

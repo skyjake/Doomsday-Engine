@@ -496,6 +496,7 @@ SOURCES += \
     portable/src/fs_util.c \
     portable/src/game.c \
     portable/src/gamemap.c \
+    portable/src/garbage.cpp \
     portable/src/generators.c \
     portable/src/gl_defer.c \
     portable/src/gl_deferredapi.c \

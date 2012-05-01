@@ -895,7 +895,7 @@ int Z_GetTag(void *ptr)
     return block->tag;
 }
 
-boolean Z_InZone(void* ptr)
+boolean Z_Contains(void* ptr)
 {
     memvolume_t* volume;
     memblock_t* block = Z_GetBlock(ptr);
