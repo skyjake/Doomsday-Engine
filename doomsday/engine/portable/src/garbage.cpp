@@ -26,6 +26,7 @@
 #include <assert.h>
 #include <map>
 #include <set>
+#include <de/Log>
 
 struct Garbage
 {
@@ -62,6 +63,7 @@ static Garbage* garbageForThread(uint thread)
     Garbages::iterator i = garbages.find(thread);
     if(i != garbages.end()) return i->second;
 
+    // Allocate a new one.
     Garbage* g = new Garbage;
     garbages[thread] = g;
     return g;
