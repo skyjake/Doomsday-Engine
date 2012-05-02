@@ -992,7 +992,7 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
                     CVar_SetString(cvar, argptr);
                     break;
                 case CVT_URIPTR: {
-                    /// \fixme Sanitize and validate against known schemas.
+                    /// @todo Sanitize and validate against known schemas.
                     Uri* uri = Uri_NewWithPath2(argptr, RC_NULL);
                     CVar_SetUri(cvar, uri);
                     Uri_Delete(uri);

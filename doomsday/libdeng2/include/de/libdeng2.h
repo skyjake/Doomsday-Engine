@@ -21,7 +21,7 @@
 #define LIBDENG2_H
 
 /**
- * @file Common definitions for libdeng2.
+ * @file libdeng2.h  Common definitions for libdeng2.
  */
 
 #ifdef __cplusplus
@@ -43,8 +43,8 @@
 #include <assert.h>
 
 /*
- * The DENG2_PUBLIC macro is used to declare symbols for exporting. It must
- * be applied in all exported classes and functions. DEF files are not used for
+ * The DENG2_PUBLIC macro is used for declaring exported symbols. It must be
+ * applied in all exported classes and functions. DEF files are not used for
  * exporting symbols out of libdeng2.
  */
 #if defined(_WIN32) && defined(_MSC_VER)

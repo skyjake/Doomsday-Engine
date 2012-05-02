@@ -388,7 +388,7 @@ static boolean joinNode(nodeid_t id, int clientProtocol, const char *name)
     LegacyNetwork_SocketSet_Remove(sockSet, node->sock);
     LegacyNetwork_SocketSet_Add(joinedSockSet, node->sock);
 
-    // \fixme We should use more discretion with the name. It has
+    // @todo We should use more discretion with the name. It has
     // been provided by an untrusted source.
     strncpy(node->name, name, sizeof(node->name) - 1);
 

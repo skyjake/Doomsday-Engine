@@ -332,7 +332,7 @@ void UILog_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     }
 
     FR_SetFont(obj->font);
-    /// \fixme Query line height from the font.
+    /// @todo Query line height from the font.
     lineHeight = FR_CharHeight('Q')+1;
 
     // Scroll offset is calculated using the timeout of the first visible message.
@@ -461,7 +461,7 @@ void UILog_UpdateGeometry(uiwidget_t* obj)
     }
 
     FR_SetFont(FID(GF_FONTA));
-    /// \fixme Query line height from the font.
+    /// @todo Query line height from the font.
     lineHeight = FR_CharHeight('Q')+1;
 
     // Scroll offset is calculated using the timeout of the first visible message.

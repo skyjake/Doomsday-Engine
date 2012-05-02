@@ -36,6 +36,10 @@ typedef void* sem_t;
 
 #include <QThread>
 
+/**
+ * Thread that runs a user-specified callback function. Exceptions from the callback
+ * function are caught.
+ */
 class CallbackThread : public QThread
 {
     Q_OBJECT

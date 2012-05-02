@@ -731,7 +731,7 @@ float R_CheckModelFor(mobj_t* mo, modeldef_t** modef, modeldef_t** nextmodef)
                 if(max-- <= 0)
                     stopScan = true;
             }
-            // \fixme What about max == -1? What should 'it' be then?
+            // @todo What about max == -1? What should 'it' be then?
         }
 
         if(!foundNext)
@@ -1292,7 +1292,7 @@ if(closest)
 
 /**
  * Frees all memory allocated for models.
- * \fixme Why only centralized memory deallocation? Bad design...
+ * @todo Why only centralized memory deallocation? Bad design...
  */
 void R_ShutdownModels(void)
 {

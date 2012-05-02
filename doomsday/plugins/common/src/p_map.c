@@ -2553,7 +2553,7 @@ int PTR_SlideTraverse(const intercept_t* in, void* paramaters)
 }
 
 /**
- * \fixme The momx / momy move is bad, so try to slide along a wall.
+ * @todo The momx / momy move is bad, so try to slide along a wall.
  * Find the first line hit, move flush to it, and slide along it
  *
  * This is a kludgy mess.

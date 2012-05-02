@@ -464,11 +464,14 @@ void UI_SetPage(ui_page_t* page)
             dat->numvis = (ob->geometry.size.height - 2 * UI_BORDER) / listItemHeight(dat);
             if(dat->selection >= 0)
             {
+                // There is a selected item, make sure it is visible.
                 if(dat->selection < dat->first)
                     dat->first = dat->selection;
                 if(dat->selection > dat->first + dat->numvis - 1)
                     dat->first = dat->selection - dat->numvis + 1;
             }
+            // Check that the visible range is ok.
+            dat->first = MIN_OF(dat->first, dat->count - dat->numvis);
             UI_InitColumns(ob);
         }
     }

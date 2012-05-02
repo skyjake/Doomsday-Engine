@@ -860,7 +860,7 @@ void P_MobjThinker(mobj_t* mobj)
 
         //assert(!beforeOk || P_CheckPosition(mobj, mobj->origin));
 
-        //// \fixme decent NOP/NULL/Nil function pointer please.
+        //// @todo decent NOP/NULL/Nil function pointer please.
         if(mobj->thinker.function == NOPFUNC)
             return; // Mobj was removed.
     }

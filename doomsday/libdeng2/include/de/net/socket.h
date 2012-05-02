@@ -108,7 +108,7 @@ public:
      * a temporary buffer before sending. The data is sent on the current
      * sending channel.
      *
-     * @param data  Data to send.
+     * @param packet  Data to send.
      */
     void send(const IByteArray &packet);
 

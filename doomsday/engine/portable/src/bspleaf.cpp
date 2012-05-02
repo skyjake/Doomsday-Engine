@@ -1,5 +1,5 @@
 /**
- * @file bspleaf.c
+ * @file bspleaf.cpp
  * BspLeaf implementation. @ingroup map
  *
  * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>

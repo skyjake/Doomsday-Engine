@@ -78,30 +78,49 @@ BspLeaf* P_BspLeafAtPoint(coord_t const point[2]);
 BspLeaf* P_BspLeafAtPointXY(coord_t x, coord_t y);
 
 /**
- * Is the point inside the sector, according to the edge lines of the BspLeaf.
+ * Is the point inside the sector, according to the edge lines of the BspLeaf?
  *
- * @param  X coordinate to test.
- * @param  Y coordinate to test.
- * @param  Sector to test.
+ * @param point   XY coordinate to test.
+ * @param sector  Sector to test.
  *
  * @return  @c true, if the point is inside the sector.
  */
 boolean P_IsPointInSector(coord_t const point[2], const Sector* sector);
+
+/**
+ * Is the point inside the sector, according to the edge lines of the BspLeaf?
+ *
+ * @param x       X coordinate to test.
+ * @param y       Y coordinate to test.
+ * @param sector  Sector to test.
+ *
+ * @return  @c true, if the point is inside the sector.
+ */
 boolean P_IsPointXYInSector(coord_t x, coord_t y, const Sector* sector);
 
 /**
- * Is the point inside the BspLeaf (according to the edges).
+ * Is the point inside the BspLeaf (according to the edges)?
  *
- * @algorithm Uses the well-known algorithm described here:
- * http://www.alienryderflex.com/polygon/
+ * Uses the well-known algorithm described here: http://www.alienryderflex.com/polygon/
  *
- * @param x  X coordinate to test.
- * @param y  Y coordinate to test.
+ * @param point    XY coordinate to test.
  * @param bspLeaf  BspLeaf to test.
  *
  * @return  @c true, if the point is inside the BspLeaf.
  */
 boolean P_IsPointInBspLeaf(coord_t const point[2], const BspLeaf* bspLeaf);
+
+/**
+ * Is the point inside the BspLeaf (according to the edges)?
+ *
+ * Uses the well-known algorithm described here: http://www.alienryderflex.com/polygon/
+ *
+ * @param x        X coordinate to test.
+ * @param y        Y coordinate to test.
+ * @param bspLeaf  BspLeaf to test.
+ *
+ * @return  @c true, if the point is inside the BspLeaf.
+ */
 boolean P_IsPointXYInBspLeaf(coord_t x, coord_t y, const BspLeaf* bspLeaf);
 
 void P_MobjLink(mobj_t* mo, byte flags);
@@ -119,7 +138,7 @@ void P_LinkMobjToLineDefs(mobj_t* mo);
 boolean P_UnlinkMobjFromLineDefs(mobj_t* mo);
 
 /**
- * @important The mobj must be currently unlinked.
+ * @note  The mobj must be currently unlinked.
  */
 void P_LinkMobjInBlockmap(mobj_t* mo);
 

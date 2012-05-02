@@ -1015,7 +1015,7 @@ static uploadcontentmethod_t prepareVariantFromImage(TextureVariant* tex, image_
      * coordinates are calculated as width/CeilPow2(width), or 1 if larger
      * than the maximum texture size.
      *
-     * \fixme Image dimensions may not be the same as the final uploaded texture!
+     * @todo Image dimensions may not be the same as the final uploaded texture!
      */
     if((flags & TXCF_UPLOAD_ARG_NOSTRETCH) &&
        (!GL_state.features.texNonPowTwo || spec->mipmapped))
@@ -2276,7 +2276,7 @@ static void loadDoomPatch(uint8_t* buffer, int texwidth, int texheight,
 
                     if(trans >= 0)
                     {
-                        /// \fixme Check bounds!
+                        /// @todo Check bounds!
                         palidx = *(translationTables + trans + palidx);
                     }
 
@@ -2333,7 +2333,7 @@ TexSource GL_LoadDetailTextureLump(image_t* image, DFile* file)
         GL_InitImage(image);
 
         /**
-         * \fixme Do not fatal error here if the not a known format!
+         * @todo Do not fatal error here if the not a known format!
          * Perform this check much earlier, when the definitions are
          * read and mark which are valid.
          */
@@ -2383,7 +2383,7 @@ TexSource GL_LoadFlatLump(image_t* image, DFile* file)
 
         GL_InitImage(image);
 
-        /// \fixme not all flats are 64x64!
+        /// @todo not all flats are 64x64!
         image->size.width  = FLAT_WIDTH;
         image->size.height = FLAT_HEIGHT;
         image->pixelSize = 1;

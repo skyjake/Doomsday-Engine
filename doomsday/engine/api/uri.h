@@ -75,9 +75,9 @@ Uri* Uri_New(void);
  * Constructs a Uri instance from @a path. The uri should be destroyed with
  * Uri_Delete() once it is no longer needed.
  *
- * @param path           Path to be parsed. Assumed to be in percent-encoded representation.
- * @param resourceClass  If no scheme is defined in @a path and this is not @c RC_NULL,
- *                       look for an appropriate default scheme for this class of resource.
+ * @param path  Path to be parsed. Assumed to be in percent-encoded representation.
+ * @param defaultResourceClass  If no scheme is defined in @a path and this is not @c RC_NULL,
+ *      look for an appropriate default scheme for this class of resource.
  */
 Uri* Uri_NewWithPath2(const char* path, resourceclass_t defaultResourceClass);
 Uri* Uri_NewWithPath(const char* path);
@@ -151,12 +151,14 @@ const ddstring_t* Uri_Scheme(const Uri* uri);
 const ddstring_t* Uri_Path(const Uri* uri);
 
 /**
- * @param path  New scheme to be parsed.
+ * @param uri     Uri instance.
+ * @param scheme  New scheme to be parsed.
  * @return  Same as @a uri, for caller convenience.
  */
 Uri* Uri_SetScheme(Uri* uri, const char* scheme);
 
 /**
+ * @param uri   Uri instance.
  * @param path  New path to be parsed.
  * @return  Same as @a uri, for caller convenience.
  */
@@ -165,10 +167,11 @@ Uri* Uri_SetPath(Uri* uri, const char* path);
 /**
  * Update uri by parsing new values from the specified arguments.
  *
- * @param uri            Uri instance.
- * @param path           Path to be parsed. Assumed to be in percent-encoded representation.
- * @param resourceClass  If no scheme is defined in @a path and this is not @c RC_NULL,
- *                       look for an appropriate default scheme for this class of resource.
+ * @param uri   Uri instance.
+ * @param path  Path to be parsed. Assumed to be in percent-encoded representation.
+ * @param defaultResourceClass  If no scheme is defined in @a path and this is not
+ *              @c RC_NULL, look for an appropriate default scheme for this class
+ *              of resource.
  *
  * @return  Same as @a uri, for caller convenience.
  */
@@ -215,6 +218,7 @@ boolean Uri_Equality(const Uri* uri, const Uri* other);
  * @note Scheme should only be omitted when it can be unambiguously deduced from context.
  *
  * @param uri  Uri instance.
+ * @param writer  Writer instance.
  * @param omitComponents  @ref uriComponentFlags
  */
 void Uri_Write2(const Uri* uri, Writer* writer, int omitComponents);

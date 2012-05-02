@@ -915,7 +915,7 @@ boolean P_UpdateChicken(mobj_t* actor, int tics)
 
     memcpy(pos, actor->origin, sizeof(pos));
 
-    //// \fixme Do this properly!
+    //// @todo Do this properly!
     memcpy(&oldChicken, actor, sizeof(oldChicken));
 
     if(!(mo = P_SpawnMobj(moType, pos, oldChicken.angle, 0)))

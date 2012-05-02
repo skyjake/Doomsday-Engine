@@ -648,7 +648,7 @@ static uint searchBindListForControlID(binding_t** list, uint num,
     found = false;
     while(i < num && !found)
     {
-        // \fixme Use a faster than O(n) linear search.
+        // @todo Use a faster than O(n) linear search.
         if(controlID == (*list)[i].controlID)
             found = true;
         else
@@ -1496,7 +1496,7 @@ static void queEventsForHeldControls(uint deviceID, uint classID)
                 // We're only interested in bindings for axes which are
                 // currently outside their dead zone, that have a binding in the
                 // context being enabled/disabled (classID)
-                // \fixme Actually check the zone!
+                // @todo Actually check the zone!
                 if(!dev->axes[axis->playercontrol].position)
                     continue;
                 break;
@@ -1731,7 +1731,7 @@ static uint writeBindList(FILE *file, binding_t *list, uint num,
             bindaxis_t *axis = &ctrl->data.axiscontrol;
 
             formEventString(buffer, deviceID, bnd->controlID, true, 0);
-            // \fixme Using "after" is a hack...
+            // @todo Using "after" is a hack...
             fprintf(file, "after 1 { bindaxis %s %s ",
                     bindContexts[bindContext].name, buffer);
             if(axis->invert)

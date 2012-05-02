@@ -68,11 +68,11 @@ char* _fullpath(char* full, const char* original, int maxLen)
 {
     char* cwd, *buf;
 
-    // \fixme Check for '~'.
+    // @todo Check for '~'.
 
     if(original[0] != DIR_SEP_CHAR) // A relative path?
     {
-        /// \fixme Check for ERANGE.
+        /// @todo Check for ERANGE.
         cwd = getcwd(NULL, 0);
         if(NULL == cwd)
         {

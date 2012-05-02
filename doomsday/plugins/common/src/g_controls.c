@@ -751,7 +751,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
         lspeed = 2;
 
     // Return the max speed for the player's class.
-    //// \fixme the Turbo movement multiplier should happen server-side!
+    //// @todo the Turbo movement multiplier should happen server-side!
     sideMoveSpeed = pClassInfo->sidemove[speed] * turboMul;
     fwdMoveSpeed = pClassInfo->forwardmove[speed] * turboMul;
     turnSpeed = pClassInfo->turnSpeed[(cstate->turnheld < SLOWTURNTICS ? 2 : speed)];

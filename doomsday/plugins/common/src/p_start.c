@@ -918,8 +918,8 @@ void P_RebornPlayer(int plrNum)
             }
         }
 
-        p->ammo[AT_BLUEMANA].owned = 25; //// \fixme values.ded
-        p->ammo[AT_GREENMANA].owned = 25; //// \fixme values.ded
+        p->ammo[AT_BLUEMANA].owned = 25; //// @todo values.ded
+        p->ammo[AT_GREENMANA].owned = 25; //// @todo values.ded
         if(bestWeapon)
         {   // Bring up the best weapon.
             p->pendingWeapon = bestWeapon;

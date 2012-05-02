@@ -412,7 +412,7 @@ void SBarChain_UpdateGeometry(uiwidget_t* obj)
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
 
-    /// \fixme Calculate dimensions properly.
+    /// @todo Calculate dimensions properly.
     Rect_SetWidthHeight(obj->geometry, (ST_WIDTH - 21 - 28) * cfg.statusbarScale,
                                        8 * cfg.statusbarScale);
 }
@@ -669,7 +669,7 @@ void SBarInventory_UpdateGeometry(uiwidget_t* obj)
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
 
-    // \fixme calculate dimensions properly!
+    // @todo calculate dimensions properly!
     Rect_SetWidthHeight(obj->geometry, (ST_WIDTH-(43*2)) * cfg.statusbarScale,
                                        41 * cfg.statusbarScale);
 }
@@ -1262,7 +1262,7 @@ void SBarReadyItem_UpdateGeometry(uiwidget_t* obj)
     if(item->patchId == 0) return;
     if(!R_GetPatchInfo(item->patchId, &info)) return;
 
-    // \fixme Calculate dimensions properly!
+    // @todo Calculate dimensions properly!
     Rect_SetWidthHeight(obj->geometry, info.geometry.size.width  * cfg.statusbarScale,
                                        info.geometry.size.height * cfg.statusbarScale);
 }
@@ -1382,7 +1382,7 @@ void Flight_UpdateGeometry(uiwidget_t* obj)
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
     if(plr->powers[PT_FLIGHT] <= 0) return;
 
-    /// \fixme Calculate dimensions properly!
+    /// @todo Calculate dimensions properly!
     Rect_SetWidthHeight(obj->geometry, 32 * cfg.hudScale, 32 * cfg.hudScale);
 }
 
@@ -1491,7 +1491,7 @@ void Tome_UpdateGeometry(uiwidget_t* obj)
 
     if(tome->patchId != 0)
     {
-        // \fixme Determine the actual center point of the animation at widget creation time.
+        // @todo Determine the actual center point of the animation at widget creation time.
         Rect_SetWidthHeight(obj->geometry, 26 * cfg.hudScale, 26 * cfg.hudScale);
     }
     else
@@ -2027,7 +2027,7 @@ void Inventory_UpdateGeometry(uiwidget_t* obj)
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
 
-    /// \fixme Calculate the visual dimensions properly!
+    /// @todo Calculate the visual dimensions properly!
     Rect_SetWidthHeight(obj->geometry, (31*7+16*2) * EXTRA_SCALE * cfg.hudScale,
                                        INVENTORY_HEIGHT * EXTRA_SCALE * cfg.hudScale);
 

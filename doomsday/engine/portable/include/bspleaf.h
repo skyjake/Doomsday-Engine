@@ -43,11 +43,11 @@ void BspLeaf_Delete(BspLeaf* bspLeaf);
  * We are assured by the node build process that BspLeaf->hedges has been ordered
  * by angle, clockwise starting from the smallest angle.
  *
- * @algorithm:
- * For each vertex
+ * @par Algorithm
+ * <pre>For each vertex
  *    For each triangle
  *        if area is not greater than minimum bound, move to next vertex
- *    Vertex is suitable
+ *    Vertex is suitable</pre>
  *
  * If a vertex exists which results in no zero-area triangles it is suitable for
  * use as the center of our trifan. If a suitable vertex is not found then the
