@@ -55,6 +55,20 @@ void Garbage_ClearForThread(void);
 void Garbage_Trash(void* ptr);
 
 /**
+ * Pointer to an instance destructor;
+ */
+typedef void (*GarbageDestructor)(void*);
+
+/**
+ * Puts an object up for garbage collection in the current thread. The object
+ * will be available for use until Garbage_Recycle() is called.
+ *
+ * @param ptr  Pointer to the object.
+ * @param destructor  Function that destroys the object.
+ */
+void Garbage_TrashInstance(void* ptr, GarbageDestructor destructor);
+
+/**
  * Determines whether a memory pointer has been trashed. Only the current
  * thread's collector is searched.
  *
@@ -72,6 +86,14 @@ boolean Garbage_IsTrashed(const void* ptr);
  * @param ptr  Pointer to memory allocated from the @ref memzone.
  */
 void Garbage_Untrash(void* ptr);
+
+/**
+ * Removes a pointer from the garbage. This needs to be called if the
+ * previously trashed memory was manually freed.
+ *
+ * @param ptr  Pointer to memory.
+ */
+void Garbage_RemoveIfTrashed(void* ptr);
 
 /**
  * Frees all pointers given over to the current thread's garbage collector.

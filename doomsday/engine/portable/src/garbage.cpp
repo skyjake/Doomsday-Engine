@@ -29,12 +29,7 @@
 
 struct Garbage
 {
-    enum AllocType {
-        Standard,
-        Zone
-    };
-
-    typedef std::map<void*, AllocType> Allocs;
+    typedef std::map<void*, GarbageDestructor> Allocs; // O(log n) search
     Allocs allocs;
 
     ~Garbage()
@@ -52,15 +47,8 @@ struct Garbage
     {
         for(Allocs::iterator i = allocs.begin(); i != allocs.end(); ++i)
         {
-            switch(i->second)
-            {
-            case Standard:
-                free(i->first);
-                break;
-            case Zone:
-                Z_Free(i->first);
-                break;
-            }
+            assert(i->second);
+            i->second(i->first);
         }
         allocs.clear();
     }
@@ -101,7 +89,13 @@ void Garbage_ClearForThread(void)
 void Garbage_Trash(void* ptr)
 {
     Garbage* g = garbageForThread(Sys_CurrentThreadId());
-    g->allocs[ptr] = Z_Contains(ptr)? Garbage::Zone : Garbage::Standard;
+    g->allocs[ptr] = Z_Contains(ptr)? Z_Free : free;
+}
+
+void Garbage_TrashInstance(void* ptr, GarbageDestructor destructor)
+{
+    Garbage* g = garbageForThread(Sys_CurrentThreadId());
+    g->allocs[ptr] = destructor;
 }
 
 boolean Garbage_IsTrashed(const void* ptr)
@@ -115,6 +109,16 @@ void Garbage_Untrash(void* ptr)
     Garbage* g = garbageForThread(Sys_CurrentThreadId());
     assert(g->contains(ptr));
     g->allocs.erase(ptr);
+}
+
+void Garbage_RemoveIfTrashed(void* ptr)
+{
+    Garbage* g = garbageForThread(Sys_CurrentThreadId());
+    Garbage::Allocs::iterator found = g->allocs.find(ptr);
+    if(found != g->allocs.end())
+    {
+        g->allocs.erase(found);
+    }
 }
 
 void Garbage_Recycle(void)
