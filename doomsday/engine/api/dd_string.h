@@ -9,8 +9,6 @@
  * malloc.
  *
  * @todo Rename to Str? (str.h)
- * @todo AutoStr for automatically garbage-collected strings (good for return values,
- *       temporary variables when printing).
  * @todo Make this opaque for better forward compatibility -- prevents initialization
  *       with static C strings, though (which is probably for the better anyway).
  * @todo Derive from Qt::QString
@@ -66,6 +64,15 @@ typedef struct ddstring_s {
     void* (*memAlloc)(size_t n);
     void* (*memCalloc)(size_t n);
 } ddstring_t;
+
+/**
+ * An alias for ddstring_t that is used with the convention of automatically
+ * trashing the string during construction so that it gets deleted during the
+ * next recycling. Thus it is useful for strings restricted to the local scope
+ * or for return values in cases when caller is not always required to take
+ * ownership.
+ */
+typedef ddstring_t AutoStr;
 
 // Format checking for Str_Appendf in GCC2
 #if defined(__GNUC__) && __GNUC__ >= 2
