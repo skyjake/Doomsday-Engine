@@ -1,5 +1,5 @@
 /**
- * @file bsp_map.cpp
+ * @file edit_bsp.cpp
  * BSP Builder. @ingroup map
  *
  * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>

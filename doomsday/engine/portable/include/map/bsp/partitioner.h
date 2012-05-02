@@ -51,14 +51,14 @@ public:
     /**
      * Build the BSP for the given map.
      *
-     * @algorithm High-level description (courtesy of Raphael Quinet)
-     *   1 - Create one Seg for each SideDef: pick each LineDef in turn.  If it
-     *       has a "first" SideDef, then create a normal Seg.  If it has a
-     *       "second" SideDef, then create a flipped Seg.
-     *   2 - Call CreateNodes with the current list of Segs.  The list of Segs is
-     *       the only argument to CreateNodes.
-     *   3 - Save the Nodes, Segs and BspLeafs to disk.  Start with the leaves of
-     *       the Nodes tree and continue up to the root (last Node).
+     * High-level description (courtesy of Raphael Quinet):
+     *   1. Create one Seg for each SideDef: pick each LineDef in turn.  If it
+     *      has a "first" SideDef, then create a normal Seg.  If it has a
+     *      "second" SideDef, then create a flipped Seg.
+     *   2. Call CreateNodes with the current list of Segs.  The list of Segs is
+     *      the only argument to CreateNodes.
+     *   3. Save the Nodes, Segs and BspLeafs to disk.  Start with the leaves of
+     *      the Nodes tree and continue up to the root (last Node).
      *
      * @return  @c true= iff completed successfully.
      */
