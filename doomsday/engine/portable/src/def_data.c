@@ -25,7 +25,7 @@
 /**
  * Doomsday Engine Definition Files
  *
- * \fixme Needs to be redesigned.
+ * @todo Needs to be redesigned.
  */
 
 #include <stdio.h>

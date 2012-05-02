@@ -629,7 +629,7 @@ void Textures_Release(Texture* tex)
 {
     /// Stub.
     GL_ReleaseGLTexturesByTexture(tex);
-    /// \fixme Update any Materials (and thus Surfaces) which reference this.
+    /// @todo Update any Materials (and thus Surfaces) which reference this.
 }
 
 Texture* Textures_ToTexture(textureid_t id)
@@ -925,7 +925,7 @@ Texture* Textures_CreateWithSize(textureid_t id, int flags, const Size2Raw* size
         Texture_SetFlags(tex, flags);
         Texture_SetSize(tex, size);
         Texture_AttachUserData(tex, userData);
-        /// \fixme Materials and Surfaces should be notified of this!
+        /// @todo Materials and Surfaces should be notified of this!
         return tex;
     }
 

@@ -595,7 +595,7 @@ int F_Reset(void)
 #endif
 
     // Reset file IDs so previously seen files can be processed again.
-    /// \fixme this releases the ID of startup files too but given the
+    /// @todo this releases the ID of startup files too but given the
     /// only startup file is doomsday.pk3 which we never attempt to load
     /// again post engine startup, this isn't an immediate problem.
     F_ResetFileIds();

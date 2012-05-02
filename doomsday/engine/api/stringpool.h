@@ -218,9 +218,9 @@ boolean StringPool_RemoveById(StringPool* pool, StringPoolId id);
  * Iterate over all strings in the pool making a callback for each. Iteration
  * ends when all strings have been processed or a callback returns non-zero.
  *
- * @param pool  StringPool instance.
+ * @param pool      StringPool instance.
  * @param callback  Callback to make for each iteration.
- * @param parameters  User data to be passed to the callback.
+ * @param data      User data to be passed to the callback.
  *
  * @return  @c 0 iff iteration completed wholly. Otherwise the non-zero value returned
  *          by @a callback.

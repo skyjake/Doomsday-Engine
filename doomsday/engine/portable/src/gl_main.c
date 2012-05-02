@@ -878,7 +878,7 @@ void GL_SetMaterialUI2(material_t* mat, int wrapS, int wrapT)
     const materialvariantspecification_t* spec;
     const materialsnapshot_t* ms;
 
-    if(!mat) return; // \fixme we need a "NULL material".
+    if(!mat) return; // @todo we need a "NULL material".
 
     spec = Materials_VariantSpecificationForContext(MC_UI, 0, 1, 0, 0,
         wrapS, wrapT, 0, 1, 0, false, false, false, false);
@@ -896,7 +896,7 @@ void GL_SetPSprite(material_t* mat, int tClass, int tMap)
     const materialvariantspecification_t* spec;
     const materialsnapshot_t* ms;
 
-    if(!mat) return; // \fixme we need a "NULL material".
+    if(!mat) return; // @todo we need a "NULL material".
 
     spec = Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, tClass,
         tMap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, true, true, false);

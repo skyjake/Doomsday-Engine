@@ -67,7 +67,7 @@ END_PROF_TIMERS()
 // Number of extra bytes to keep allocated in the end of each rendering list.
 #define LIST_DATA_PADDING   16
 
-// \fixme Rlist allocation could be dynamic.
+// @todo Rlist allocation could be dynamic.
 #define MAX_RLISTS          1024
 
 #define MTEX_DETAILS_ENABLED (r_detail && useMultiTexDetails && \
@@ -612,7 +612,7 @@ void RL_ClearLists(void)
     // Clear the vertex array.
     clearVertices();
 
-    // \fixme Does this belong here?
+    // @todo Does this belong here?
     rDrawSky = false;
 }
 

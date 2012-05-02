@@ -338,7 +338,7 @@ boolean P_GiveMana(player_t *plr, ammotype_t ammo, int num)
         plr->ammo[ammo].owned += num;
     plr->update |= PSF_AMMO;
 
-    //// \fixme - DJS: This shouldn't be actioned from here.
+    //// @todo - DJS: This shouldn't be actioned from here.
     if(plr->class_ == PCLASS_FIGHTER && plr->readyWeapon == WT_SECOND &&
        ammo == AT_BLUEMANA && prevMana <= 0)
     {
@@ -2226,7 +2226,7 @@ int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damageP
                 }
                 else
                 {   // "electrocute" the target.
-    //// \fixme make fullbright for this frame -->
+    //// @todo make fullbright for this frame -->
                     //target->frame |= FF_FULLBRIGHT;
     // <-- fixme
                     if((target->flags & MF_COUNTKILL) && P_Random() < 128 &&

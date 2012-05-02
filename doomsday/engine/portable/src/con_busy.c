@@ -670,7 +670,7 @@ lineIsNotNew:;
 
 /**
  * Draws a number of console output to the bottom of the screen.
- * \fixme: Wow. I had some weird time hacking the smooth scrolling. Cleanup would be
+ * @todo: Wow. I had some weird time hacking the smooth scrolling. Cleanup would be
  *         good some day. -jk
  */
 void Con_BusyDrawConsoleOutput(void)

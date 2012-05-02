@@ -405,7 +405,7 @@ int PIT_ChangeMobjFlags(thinker_t* th, void* context)
  * kaiser - removes things in tagged sector!
  * DJS - actually, no it doesn't at least not directly.
  *
- * \fixme: It appears the MF_TELEPORT flag has been hijacked.
+ * @todo: It appears the MF_TELEPORT flag has been hijacked.
  */
 int EV_FadeAway(LineDef* line, mobj_t* thing)
 {

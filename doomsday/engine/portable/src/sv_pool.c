@@ -446,7 +446,7 @@ void Sv_RegisterSector(dt_sector_t* reg, uint number)
 
     reg->lightLevel = sec->lightLevel;
     memcpy(reg->rgb, sec->rgb, sizeof(reg->rgb));
-    // \fixme $nplanes
+    // @todo $nplanes
     for(i = 0; i < 2; ++i) // number of planes in sector.
     {
         // Plane properties

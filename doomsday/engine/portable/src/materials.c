@@ -1718,7 +1718,7 @@ boolean Materials_HasDecorations(material_t* mat)
     if(novideo) return false;
 
     assert(mat);
-    /// \fixme We should not need to prepare to determine this.
+    /// @todo We should not need to prepare to determine this.
     /// Nor should we need to process the group each time. Cache this decision.
     if(Materials_DecorationDef(mat)) return true;
     if(Material_IsGroupAnimated(mat))

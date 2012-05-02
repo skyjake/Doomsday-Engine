@@ -23,12 +23,15 @@
 #include "libdeng2.h"
 
 /**
- * @file Defines the C wrapper API for libdeng2 classes. Legacy code can use
- * this wrapper API to access libdeng2 functionality. Note that the identifiers
- * in this file are not in the de namespace.
+ * @file c_wrapper.h
+ * libdeng2 C wrapper.
  *
- * @note The basic de data types (e.g., dint32) are not available for the C API;
- * instead, only the standard C data types should be used.
+ * Defines a C wrapper API for (some of the) libdeng2 classes. Legacy code
+ * can use this wrapper API to access libdeng2 functionality. Note that the
+ * identifiers in this file are not in the de namespace.
+ *
+ * @note The basic de data types (e.g., dint32) are not available for the C
+ * API; instead, only the standard C data types should be used.
  */
 
 #ifdef __cplusplus

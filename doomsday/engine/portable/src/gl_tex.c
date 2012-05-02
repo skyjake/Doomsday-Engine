@@ -55,7 +55,7 @@ static uint8_t* GetScratchBuffer(size_t size)
  * pixel, or rather the number of bytes per pixel (3 or 4). The strides must
  * be byte-aligned anyway, though; not in pixels.
  *
- * \fixme Probably could be optimized.
+ * @todo Probably could be optimized.
  */
 static void scaleLine(const uint8_t* in, int inStride, uint8_t* out, int outStride,
     int outLen, int inLen, int comps)

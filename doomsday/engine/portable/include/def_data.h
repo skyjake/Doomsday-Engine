@@ -25,7 +25,7 @@
 /**
  * Engine Definition Files
  *
- * \fixme Needs to be redesigned.
+ * @todo Needs to be redesigned.
  */
 
 #ifndef LIBDENG_DEFINITION_FILE_H

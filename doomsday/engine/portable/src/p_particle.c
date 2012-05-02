@@ -1,5 +1,5 @@
 /**
- * @file particle.c
+ * @file p_particle.c
  * Generator (particles) management. @ingroup map
  *
  * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>

@@ -231,7 +231,7 @@ void Texture_SetFlags(Texture* tex, int flags)
 {
     assert(tex);
     tex->flags = flags;
-    /// \fixme Update any Materials (and thus Surfaces) which reference this.
+    /// @todo Update any Materials (and thus Surfaces) which reference this.
 }
 
 int Texture_Width(const Texture* tex)
@@ -244,7 +244,7 @@ void Texture_SetWidth(Texture* tex, int width)
 {
     assert(tex);
     Size2_SetWidth(tex->size, width);
-    /// \fixme Update any Materials (and thus Surfaces) which reference this.
+    /// @todo Update any Materials (and thus Surfaces) which reference this.
 }
 
 int Texture_Height(const Texture* tex)
@@ -257,7 +257,7 @@ void Texture_SetHeight(Texture* tex, int height)
 {
     assert(tex);
     Size2_SetHeight(tex->size, height);
-    /// \fixme Update any Materials (and thus Surfaces) which reference this.
+    /// @todo Update any Materials (and thus Surfaces) which reference this.
 }
 
 const Size2* Texture_Size(const Texture* tex)
@@ -270,7 +270,7 @@ void Texture_SetSize(Texture* tex, const Size2Raw* size)
 {
     assert(tex && size);
     Size2_SetWidthHeight(tex->size, size->width, size->height);
-    /// \fixme Update any Materials (and thus Surfaces) which reference this.
+    /// @todo Update any Materials (and thus Surfaces) which reference this.
 }
 
 int Texture_IterateVariants(Texture* tex,

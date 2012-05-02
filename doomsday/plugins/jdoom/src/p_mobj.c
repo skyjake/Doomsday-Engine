@@ -644,7 +644,7 @@ void P_MobjThinker(mobj_t* mo)
     {
         P_MobjMoveZ(mo);
 
-        //// \fixme decent NOP/NULL/Nil function pointer please.
+        //// @todo decent NOP/NULL/Nil function pointer please.
         if(mo->thinker.function == NOPFUNC)
             return; // Mobj was removed.
     }

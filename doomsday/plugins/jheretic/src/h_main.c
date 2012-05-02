@@ -379,7 +379,7 @@ void H_PostInit(void)
     int p;
 
     /// \kludge Shareware WAD has different border background.
-    /// \fixme Do this properly!
+    /// @todo Do this properly!
     if(gameMode == heretic_shareware)
         borderGraphics[0] = "Flats:FLOOR04";
     else

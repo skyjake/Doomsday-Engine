@@ -123,7 +123,7 @@ LPCSTR ToAnsiString(const wchar_t* wstr)
  */
 const char* DD_Win32_GetLastErrorMessage(void)
 {
-    static char* buffer = 0; /// \fixme Never free'd!
+    static char* buffer = 0; /// @todo Never free'd!
     static size_t currentBufferSize = 0;
 
     LPVOID lpMsgBuf;

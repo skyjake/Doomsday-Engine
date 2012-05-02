@@ -213,7 +213,7 @@ boolean Material_HasGlow(material_t* mat)
     if(novideo) return false;
 
     {
-    /// \fixme We should not need to prepare to determine this.
+    /// @todo We should not need to prepare to determine this.
     const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
         MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
     const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true);

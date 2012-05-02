@@ -1177,7 +1177,7 @@ patchid_t R_DeclarePatch(const char* name)
     if(upscaleAndSharpenPatches) p->flags |= PF_UPSCALE_AND_SHARPEN;
 
     /**
-     * \fixme: Cannot be sure this is in Patch format until a load attempt
+     * @todo: Cannot be sure this is in Patch format until a load attempt
      * is made. We should not read this info here!
      */
     fsObject = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
@@ -1423,7 +1423,7 @@ static patchname_t* loadPatchNames(lumpnum_t lumpNum, int* num)
     name = names;
     for(i = 0; i < numNames; ++i)
     {
-        /// \fixme Some filtering of invalid characters wouldn't go amiss...
+        /// @todo Some filtering of invalid characters wouldn't go amiss...
         strncpy(*name, (const char*) (lump + 4 + i * 8), 8);
         name++;
     }
@@ -2330,7 +2330,7 @@ void R_InitSpriteTextures(void)
     stack = Stack_New();
     numLumps = F_LumpCount();
 
-    /// \fixme Order here does not respect id tech1 logic.
+    /// @todo Order here does not respect id tech1 logic.
     for(i = 0; i < numLumps; ++i)
     {
         const char* lumpName = F_LumpName((lumpnum_t)i);

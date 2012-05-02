@@ -31,7 +31,7 @@
 #include "de_graphics.h"
 #include "m_misc.h"
 
-static char* lastErrorMsg = 0; /// \fixme potentially never free'd
+static char* lastErrorMsg = 0; /// @todo potentially never free'd
 
 static void setLastError(const char* msg)
 {
@@ -152,7 +152,7 @@ uint8_t* PNG_Load(DFile* file, int* width, int* height, int* pixelSize)
                             *pixelSize = 4; // With alpha channel.
 
                         // OK, let's copy it into Doomsday's buffer.
-                        // \fixme Why not load directly into it?
+                        // @todo Why not load directly into it?
                         retbuf = M_Malloc(4 * png_get_image_width(png_ptr, png_info) *
                                           png_get_image_height(png_ptr, png_info));
                         rows = png_get_rows(png_ptr, png_info);
