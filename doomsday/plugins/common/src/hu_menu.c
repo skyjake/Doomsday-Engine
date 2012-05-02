@@ -880,7 +880,7 @@ mndata_listitem_t listit_weapons_order[NUM_WEAPON_TYPES] = {
     { (const char*)TXT_TXT_WPNGAUNTLETS,    WT_EIGHTH }
 #elif __JHEXEN__
     /**
-     * \fixme We should allow different weapon preferences per player-class.
+     * @todo We should allow different weapon preferences per player-class.
      */
     { "First",  WT_FIRST },
     { "Second", WT_SECOND },
@@ -1829,7 +1829,7 @@ mn_page_t* MNPage_New(const Point2Raw* origin, int flags,
     page->colors[1] = 1;
     page->colors[2] = 2;
 
-    page->focus = -1; /// \fixme Make this a page flag.
+    page->focus = -1; /// @todo Make this a page flag.
     page->geometry = Rect_New();
 
     return page;
@@ -3437,7 +3437,7 @@ int Hu_MenuCvarEdit(mn_object_t* obj, mn_actionid_t action, void* paramaters)
         Con_SetString2(edit->data1, MNEdit_Text(obj), SVF_WRITE_OVERRIDE);
         break;
     case CVT_URIPTR: {
-        /// \fixme Sanitize and validate against known schemas.
+        /// @todo Sanitize and validate against known schemas.
         Uri* uri = Uri_NewWithPath2(MNEdit_Text(obj), RC_NULL);
         Con_SetUri2(edit->data1, uri, SVF_WRITE_OVERRIDE);
         Uri_Delete(uri);

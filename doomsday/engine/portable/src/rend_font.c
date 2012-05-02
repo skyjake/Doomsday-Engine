@@ -743,7 +743,7 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
     // Restore previous GL-state.
     if(renderWireframe > 1)
     {
-        /// \fixme do not assume previous state.
+        /// @todo do not assume previous state.
         glEnable(GL_TEXTURE_2D);
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
@@ -1345,7 +1345,7 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
                 {
                     // The origin is the specified (x,y) for the patch.
                     // We'll undo the aspect ratio (otherwise the result would be skewed).
-                    /// \fixme Do not assume the aspect ratio and therefore whether
+                    /// @todo Do not assume the aspect ratio and therefore whether
                     // correction is even needed.
                     glTranslatef((float)origin.x, (float)origin.y, 0);
                     glScalef(1, 200.0f / 240.0f, 1);
