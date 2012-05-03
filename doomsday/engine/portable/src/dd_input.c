@@ -620,12 +620,7 @@ static float filterAxis(int grade, float* accumulation, float ticLength)
     }
 
     // This is the new (filtered) axis position.
-    /**
-     * @todo Why is it necessary to multiply by 5 to get a roughly similar
-     * sensitivity compared to unfiltered? Could this be somehow frame rate
-     * dependent? -jk
-     */
-    return dir * used * 5;
+    return dir * used;
 }
 
 /**
@@ -1084,7 +1079,7 @@ static void dispatchEvents(eventqueue_t* q, timespan_t ticLength)
 {
     const boolean callGameResponders = DD_GameLoaded();
     ddevent_t* ddev;
-    int i, k;
+    int i;
 
     while((ddev = nextFromQueue(q)))
     {
@@ -1135,6 +1130,7 @@ static void dispatchEvents(eventqueue_t* q, timespan_t ticLength)
     // Input events have modified input device state: update the axis positions.
     for(i = 0; i < NUM_INPUT_DEVICES; ++i)
     {
+        uint k;
         for(k = 0; k < inputDevices[i].numAxes; ++k)
         {
             I_UpdateAxis(&inputDevices[i], k, ticLength);

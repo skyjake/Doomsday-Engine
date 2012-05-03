@@ -336,8 +336,7 @@ void* Window_NativeHandle(const Window* wnd);
 } // extern "C"
 
 // C++ API
-
-#include <QWidget>
+class QWidget;
 
 /**
  * Returns the window's native widget, if one exists.

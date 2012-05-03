@@ -28,6 +28,7 @@
 #include "mouse_qt.h"
 #include <string.h>
 
+#include <QWidget>
 #include <QPoint>
 #include <QCursor>
 

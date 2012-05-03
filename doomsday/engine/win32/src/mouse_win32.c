@@ -147,6 +147,11 @@ static void Mouse_Win32_GetState(mousestate_t *state)
     state->axis[IMA_POINTER].x = (int) mstate.lX;
     state->axis[IMA_POINTER].y = (int) mstate.lY;
 
+    // If this is called again before re-polling, we don't want to return
+    // these deltas again.
+    mstate.lX = 0;
+    mstate.lY = 0;
+
     /**
      * We need to map the mouse buttons as follows:
      *         DX  : Deng
