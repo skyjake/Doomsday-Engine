@@ -376,7 +376,7 @@ win32 {
 
     SOURCES += \
         win32/src/dd_winit.c \
-        win32/src/directinput.c \
+        win32/src/directinput.cpp \
         win32/src/sys_console.c \
         win32/src/sys_findfile.c \
         win32/src/joystick_win32.cpp \

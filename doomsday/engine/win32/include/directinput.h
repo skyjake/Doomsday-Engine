@@ -21,16 +21,72 @@ void DirectInput_Shutdown(void);
 
 LPDIRECTINPUT8 DirectInput_Instance();
 
-void DirectInput_KillDevice(LPDIRECTINPUTDEVICE8 *dev);
-
-HRESULT DirectInput_SetProperty(LPDIRECTINPUTDEVICE8 dev, REFGUID property, DWORD how, DWORD obj, DWORD data);
-
-HRESULT DirectInput_SetRangeProperty(LPDIRECTINPUTDEVICE8 dev, REFGUID property, DWORD how, DWORD obj, int min, int max);
+void DirectInput_KillDevice(LPDIRECTINPUTDEVICE8* dev);
 
 const char* DirectInput_ErrorMsg(HRESULT hr);
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
+
+#ifdef __cplusplus
+/**
+ * A handy adaptor for manipulating a DIPROPDWORD structure.
+ */
+struct DIPropDWord : DIPROPDWORD
+{
+    DIPropDWord(DWORD how=0, DWORD object=0, DWORD data=0)
+    {
+        initHeader();
+        setHow(how);
+        setObject(object);
+        setData(data);
+    }
+
+    operator DIPROPHEADER*() { return &diph; }
+    operator const DIPROPHEADER*() const { return &diph; }
+
+    inline DIPropDWord& setHow(DWORD how)    { diph.dwHow = how;  return *this; }
+    inline DIPropDWord& setObject(DWORD obj) { diph.dwObj = obj;  return *this; }
+    inline DIPropDWord& setData(DWORD data)  {     dwData = data; return *this; }
+
+private:
+    void initHeader()
+    {
+        diph.dwSize = sizeof(DIPROPDWORD);
+        diph.dwHeaderSize = sizeof(diph);
+    }
+};
+
+/**
+ * A handy adaptor for manipulating a DIPROPRANGE structure.
+ */
+struct DIPropRange : DIPROPRANGE
+{
+    DIPropRange(DWORD how=0, DWORD object=0, int min=0, int max=0)
+    {
+        initHeader();
+        setHow(how);
+        setObject(object);
+        setMin(min);
+        setMax(max);
+    }
+
+    operator DIPROPHEADER*() { return &diph; }
+    operator const DIPROPHEADER*() const { return &diph; }
+
+    inline DIPropRange& setHow(DWORD how)    { diph.dwHow = how; return *this; }
+    inline DIPropRange& setObject(DWORD obj) { diph.dwObj = obj; return *this; }
+    inline DIPropRange& setMin(int min)      {       lMin = min; return *this; }
+    inline DIPropRange& setMax(int max)      {       lMax = max; return *this; }
+
+private:
+    void initHeader()
+    {
+        diph.dwSize = sizeof(DIPROPRANGE);
+        diph.dwHeaderSize = sizeof(diph);
+    }
+};
+#endif // __cplusplus
 
 #endif // LIBDENG_DIRECTINPUT_H

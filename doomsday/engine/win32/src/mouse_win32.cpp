@@ -34,23 +34,18 @@ static DIMOUSESTATE2 mstate; ///< Polled state.
 
 static int Mouse_Win32_Init(void)
 {
-    HWND hWnd;
-    HRESULT hr;
-    LPDIRECTINPUT8 dInput;
+    if(ArgCheck("-nomouse") || novideo) return false;
 
-    if(ArgCheck("-nomouse") || novideo)
-        return false;
-
-    hWnd = (HWND) Window_NativeHandle(Window_Main());
+    HWND hWnd = (HWND) Window_NativeHandle(Window_Main());
     if(!hWnd)
     {
         Con_Error("I_InitMouse: Main window not available, cannot init mouse.");
         return false;
     }
 
-    dInput = DirectInput_Instance();
+    LPDIRECTINPUT8 dInput = DirectInput_Instance();
 
-    hr = IDirectInput_CreateDevice(dInput, GUID_SysMouse, &didMouse, 0);
+    HRESULT hr = dInput->CreateDevice(GUID_SysMouse, &didMouse, 0);
     if(FAILED(hr))
     {
         Con_Message("I_InitMouse: Failed to create device (0x%x).\n", hr);
@@ -58,16 +53,15 @@ static int Mouse_Win32_Init(void)
     }
 
     // Set data format.
-    hr = IDirectInputDevice_SetDataFormat(didMouse, &c_dfDIMouse2);
+    hr = didMouse->SetDataFormat(&c_dfDIMouse2);
     if(FAILED(hr))
     {
         Con_Message("I_InitMouse: Failed to set data format (0x%x).\n", hr);
         goto kill_mouse;
     }
 
-    // Set behaviour.
-    hr = IDirectInputDevice_SetCooperativeLevel(didMouse, hWnd,
-                                                DISCL_FOREGROUND | DISCL_EXCLUSIVE);
+    // Set behavior.
+    hr = didMouse->SetCooperativeLevel(hWnd, DISCL_FOREGROUND | DISCL_EXCLUSIVE);
     if(FAILED(hr))
     {
         Con_Message("I_InitMouse: Failed to set co-op level (0x%x).\n", hr);
@@ -75,7 +69,7 @@ static int Mouse_Win32_Init(void)
     }
 
     // Acquire the device.
-    //IDirectInputDevice_Acquire(didMouse);
+    //didMouse->Acquire();
     //mouseTrapped = true;
 
     // We will be told when to trap the mouse.
@@ -96,10 +90,6 @@ static void Mouse_Win32_Shutdown(void)
 
 static void Mouse_Win32_Poll(void)
 {
-    int             tries;
-    BOOL            acquired;
-    HRESULT         hr;
-
     if(!mouseTrapped)
     {
         // We are not supposed to be reading the mouse right now.
@@ -107,11 +97,11 @@ static void Mouse_Win32_Poll(void)
     }
 
     // Try to get the mouse state.
-    tries = 1;
-    acquired = false;
+    int tries = 1;
+    BOOL acquired = false;
     while(!acquired && tries > 0)
     {
-        hr = IDirectInputDevice_GetDeviceState(didMouse, sizeof(mstate), &mstate);
+        HRESULT hr = didMouse->GetDeviceState(sizeof(mstate), &mstate);
         if(SUCCEEDED(hr))
         {
             acquired = true;
@@ -119,10 +109,11 @@ static void Mouse_Win32_Poll(void)
         else if(tries > 0)
         {
             // Try to reacquire.
-            IDirectInputDevice_Acquire(didMouse);
+            didMouse->Acquire();
             tries--;
         }
     }
+
     if(!acquired)
     {
         // The operation is a failure.
@@ -130,11 +121,23 @@ static void Mouse_Win32_Poll(void)
     }
 }
 
-static void Mouse_Win32_GetState(mousestate_t *state)
+static void Mouse_Win32_GetState(mousestate_t* state)
 {
-    static BOOL     oldButtons[8];
-    static int      oldZ;
-    DWORD           i;
+    /**
+     * We need to map the mouse buttons as follows:
+     *         DX  : Deng
+     * (left)   0  >  0
+     * (right)  1  >  2
+     * (center) 2  >  1
+     * (b4)     3  >  5
+     * (b5)     4  >  6
+     * (b6)     5  >  7
+     * (b7)     6  >  8
+     * (b8)     7  >  9
+     */
+    static const int buttonMap[] = { 0, 2, 1, 5, 6, 7, 8, 9 };
+    static BOOL oldButtons[8];
+    static int oldZ;
 
     memset(state, 0, sizeof(*state));
     if(!mouseTrapped)
@@ -152,23 +155,7 @@ static void Mouse_Win32_GetState(mousestate_t *state)
     mstate.lX = 0;
     mstate.lY = 0;
 
-    /**
-     * We need to map the mouse buttons as follows:
-     *         DX  : Deng
-     * (left)   0  >  0
-     * (right)  1  >  2
-     * (center) 2  >  1
-     * (b4)     3  >  5
-     * (b5)     4  >  6
-     * (b6)     5  >  7
-     * (b7)     6  >  8
-     * (b8)     7  >  9
-     */
-
-    {
-    static const int buttonMap[] = { 0, 2, 1, 5, 6, 7, 8, 9 };
-
-    for(i = 0; i < 8; ++i)
+    for(DWORD i = 0; i < 8; ++i)
     {
         BOOL isDown = (mstate.rgbButtons[i] & 0x80? TRUE : FALSE);
         int id;
@@ -212,7 +199,6 @@ static void Mouse_Win32_GetState(mousestate_t *state)
     }
 
     oldZ = (int) mstate.lZ;
-    }
 }
 
 static void Mouse_Win32_Trap(boolean enabled)
@@ -222,11 +208,11 @@ static void Mouse_Win32_Trap(boolean enabled)
     mouseTrapped = (enabled != 0);
     if(enabled)
     {
-        IDirectInputDevice_Acquire(didMouse);
+        didMouse->Acquire();
     }
     else
     {
-        IDirectInputDevice_Unacquire(didMouse);
+        didMouse->Unacquire();
     }
 }
 
