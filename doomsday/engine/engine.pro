@@ -379,7 +379,7 @@ win32 {
         win32/src/directinput.c \
         win32/src/sys_console.c \
         win32/src/sys_findfile.c \
-        win32/src/joystick.c \
+        win32/src/joystick_win32.cpp \
         win32/src/mouse_win32.cpp
 
     !deng_nodisplaymode: SOURCES += win32/src/displaymode_win32.cpp
