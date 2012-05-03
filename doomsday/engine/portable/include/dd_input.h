@@ -201,7 +201,7 @@ void        DD_StopInput(void);
 boolean     DD_IgnoreInput(boolean ignore);
 
 void        DD_ReadKeyboard(void);
-void        DD_ReadMouse(timespan_t ticLength);
+void        DD_ReadMouse(void);
 void        DD_ReadJoystick(void);
 
 void        DD_PostEvent(ddevent_t *ev);
@@ -298,7 +298,7 @@ boolean I_IsKeyDown(inputdev_t* device, uint id);
 inputdevhat_t* I_GetHatByID(inputdev_t* device, uint id);
 
 void        I_SetUIMouseMode(boolean on);
-void        I_TrackInput(ddevent_t *ev, timespan_t ticLength);
+void        I_TrackInput(ddevent_t *ev);
 
 #if _DEBUG
 /**

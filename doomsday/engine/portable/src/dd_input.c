@@ -87,13 +87,15 @@ D_CMD(ReleaseMouse);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void postEvents(timespan_t ticLength);
+static void postEvents(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
+#if 0
 int mouseFilter = 0;        // Filtering off by default.
+#endif
 
 // The initial and secondary repeater delays (tics).
 int     repWait1 = 15, repWait2 = 3;
@@ -149,8 +151,8 @@ void DD_RegisterInput(void)
     C_VAR_INT("input-key-delay2", &keyRepeatDelay2, CVF_NO_MAX, 20, 0);
     C_VAR_BYTE("input-toggle-sharp", &useSharpToggleEvents, 0, 0, 1);
 
-    C_VAR_INT("input-mouse-filter", &mouseFilter, 0, 0, MAX_AXIS_FILTER - 1);
 #if 0
+    C_VAR_INT("input-mouse-filter", &mouseFilter, 0, 0, MAX_AXIS_FILTER - 1);
     C_VAR_INT("input-mouse-frequency", &mouseFreq, CVF_NO_MAX, 0, 0);
 #endif
 
@@ -260,7 +262,7 @@ void I_InitVirtualInputDevices(void)
     axis->scale = 1.f/1000;
 
     axis = I_DeviceNewAxis(dev, "y", IDAT_POINTER);
-    axis->filter = 1; // On by default.
+    //axis->filter = 1; // On by default.
     axis->scale = 1.f/1000;
 
     // Register console variables for the axis settings.
@@ -269,6 +271,7 @@ void I_InitVirtualInputDevices(void)
     C_VAR_INT("input-mouse-x-flags", &dev->axes[0].flags, 0, 0, 3);
     C_VAR_FLOAT("input-mouse-y-scale", &dev->axes[1].scale, CVF_NO_MAX, 0, 0);
     C_VAR_INT("input-mouse-y-flags", &dev->axes[1].flags, 0, 0, 3);
+    C_VAR_INT("input-mouse-filter", &dev->axes[0].filter, 0, 0, MAX_AXIS_FILTER - 1); // note: same filter used for Y axis
 
     if(Mouse_IsPresent())
         dev->flags = ID_ACTIVE;
@@ -585,10 +588,50 @@ float I_TransformAxis(inputdev_t* dev, uint axis, float rawPos)
     return pos;
 }
 
+static float filterAxis(int grade, float* accumulation, float ticLength)
+{
+    float   target;
+    float   avail;
+    float   used;
+    int     dir;
+
+    dir = SIGN_OF(*accumulation);
+    avail = fabs(*accumulation);
+
+    // Determine the target velocity.
+    target = avail * (MAX_AXIS_FILTER - MINMAX_OF(1, grade, 39));
+
+    // Determine the amount of mickeys to send. It depends on the
+    // current mouse velocity, and how much time has passed.
+    used = target * ticLength;
+
+    // Don't go past the available motion.
+    if(used > avail)
+    {
+        *accumulation = 0;
+        used = avail;
+    }
+    else
+    {
+        if(*accumulation > 0)
+            *accumulation -= used;
+        else
+            *accumulation += used;
+    }
+
+    // This is the new (filtered) axis position.
+    /**
+     * @todo Why is it necessary to multiply by 5 to get a roughly similar
+     * sensitivity compared to unfiltered? Could this be somehow frame rate
+     * dependent? -jk
+     */
+    return dir * used * 5;
+}
+
 /**
  * Update an input device axis.  Transformation is applied.
  */
-static void I_UpdateAxis(inputdev_t *dev, uint axis, float pos, timespan_t ticLength)
+static void I_ApplyRealPositionToAxis(inputdev_t* dev, uint axis, float pos)
 {
     inputdevaxis_t *a = &dev->axes[axis];
     float oldRealPos = a->realPosition;
@@ -603,33 +646,48 @@ static void I_UpdateAxis(inputdev_t *dev, uint axis, float pos, timespan_t ticLe
         a->time = Sys_GetRealTime();
     }
 
-    if(a->filter > 0)
+    if(a->type == IDAT_STICK)
     {
-        /// @todo Apply a filtering.
-        pos = a->realPosition;
+        a->position = a->realPosition;
     }
-    else
+    else // Cumulative.
     {
-        // This is the new axis position.
-        pos = a->realPosition;
+        a->accumulation += a->realPosition;
+    }
+}
+
+static void I_UpdateAxis(inputdev_t *dev, uint axis, timespan_t ticLength)
+{
+    inputdevaxis_t *a = &dev->axes[axis];
+    int filter = a->filter;
+
+    if(dev == I_GetDevice(IDEV_MOUSE, false))
+    {
+        // Special case: both mouse axes use the same filter.
+        filter = dev->axes[0].filter;
     }
 
-    if(a->type == IDAT_STICK)
-        a->position = pos; //a->realPosition;
-    else if(!ignoreInput) // Cumulative.
-        a->position += pos; //a->realPosition;
+    // Apply relative accumulation.
+    if(a->type == IDAT_POINTER)
+    {
+        // Filtering ensures that events are sent more evenly on each frame.
+        if(filter > 0)
+        {
+            a->position = filterAxis(filter, &a->accumulation, ticLength);
+        }
+        else
+        {
+            // Unfiltered, use all of the accumulation at once.
+            a->position += a->accumulation;
+            a->accumulation = 0;
+        }
+    }
 
     // We can clear the expiration when it returns to default state.
-    if(!a->position || a->type == IDAT_POINTER)
+    if(FEQUAL(a->position, 0) || a->type == IDAT_POINTER)
     {
         a->assoc.flags &= ~IDAF_EXPIRED;
     }
-
-/*    if(verbose > 3)
-    {
-        Con_Message("I_UpdateAxis: device=%s axis=%i pos=%f\n",
-                    dev->name, axis, pos);
-    }*/
 }
 
 boolean I_ShiftDown(void)
@@ -640,7 +698,7 @@ boolean I_ShiftDown(void)
 /**
  * Update the input device state table.
  */
-void I_TrackInput(ddevent_t *ev, timespan_t ticLength)
+void I_TrackInput(ddevent_t *ev)
 {
     inputdev_t *dev;
 
@@ -678,7 +736,7 @@ void I_TrackInput(ddevent_t *ev, timespan_t ticLength)
     // Update the state table.
     if(ev->type == E_AXIS)
     {
-        I_UpdateAxis(dev, ev->axis.id, ev->axis.pos, ticLength);
+        I_ApplyRealPositionToAxis(dev, ev->axis.id, ev->axis.pos);
     }
     else if(ev->type == E_TOGGLE)
     {
@@ -842,7 +900,7 @@ boolean DD_IgnoreInput(boolean ignore)
     if(!ignore)
     {
         // Clear all the event buffers.
-        postEvents(0);
+        postEvents();
         DD_ClearEvents();
         DD_ClearKeyRepeaters();
     }
@@ -1026,13 +1084,14 @@ static void dispatchEvents(eventqueue_t* q, timespan_t ticLength)
 {
     const boolean callGameResponders = DD_GameLoaded();
     ddevent_t* ddev;
+    int i, k;
 
     while((ddev = nextFromQueue(q)))
     {
         event_t ev;
 
         // Update the state of the input device tracking table.
-        I_TrackInput(ddev, ticLength);
+        I_TrackInput(ddev);
 
         if(ignoreInput && ddev->type != E_FOCUS)
             continue;
@@ -1072,12 +1131,21 @@ static void dispatchEvents(eventqueue_t* q, timespan_t ticLength)
         if(callGameResponders && gx.FallbackResponder)
             gx.FallbackResponder(&ev);
     }
+
+    // Input events have modified input device state: update the axis positions.
+    for(i = 0; i < NUM_INPUT_DEVICES; ++i)
+    {
+        for(k = 0; k < inputDevices[i].numAxes; ++k)
+        {
+            I_UpdateAxis(&inputDevices[i], k, ticLength);
+        }
+    }
 }
 
 /**
  * Poll all event sources (i.e., input devices) and post events.
  */
-static void postEvents(timespan_t ticLength)
+static void postEvents(void)
 {
     if(inputDisabledFully) return;
 
@@ -1086,10 +1154,32 @@ static void postEvents(timespan_t ticLength)
     // In dedicated mode, we don't do mice or joysticks.
     if(!isDedicated)
     {
-        DD_ReadMouse(ticLength);
+        DD_ReadMouse();
         DD_ReadJoystick();
     }
 }
+
+/*
+void DD_PollInputAndPostEvents(void)
+{
+    static timespan_t lastTime = 0;
+    timespan_t nowTime;
+    timespan_t elapsed;
+
+    Mouse_Poll();
+
+    nowTime = Sys_GetSeconds();
+    elapsed = nowTime - lastTime;
+    if(elapsed > 0.5)
+    {
+        // Seems awfully long time ago.
+        elapsed = 0;
+    }
+    lastTime = nowTime;
+
+    postEvents(elapsed);
+}
+*/
 
 /**
  * Process all incoming input for the given timestamp.
@@ -1101,7 +1191,7 @@ static void postEvents(timespan_t ticLength)
 void DD_ProcessEvents(timespan_t ticLength)
 {
     // Poll all event sources (i.e., input devices) and post events.
-    postEvents(ticLength);
+    postEvents();
 
     // Dispatch all accumulated events down the responder chain.
     dispatchEvents(&queue, ticLength);
@@ -1290,42 +1380,6 @@ void DD_ReadKeyboard(void)
     }
 }
 
-static float I_FilterMouse(float pos, float* accumulation, float ticLength)
-{
-    float   target;
-    int     dir;
-    float   avail;
-    int     used;
-
-    *accumulation += pos;
-    dir = SIGN_OF(*accumulation);
-    avail = fabs(*accumulation);
-
-    // Determine the target velocity.
-    target = avail * (MAX_AXIS_FILTER - mouseFilter);
-
-    // Determine the amount of mickeys to send. It depends on the
-    // current mouse velocity, and how much time has passed.
-    used = target * ticLength;
-
-    // Don't go over the available number of update frames.
-    if(used > avail)
-    {
-        *accumulation = 0;
-        used = avail;
-    }
-    else
-    {
-        if(*accumulation > 0)
-            *accumulation -= used;
-        else
-            *accumulation += used;
-    }
-
-    // This is the new (filtered) axis position.
-    return dir * used;
-}
-
 /**
  * Change between normal and UI mousing modes.
  */
@@ -1356,7 +1410,7 @@ void I_SetUIMouseMode(boolean on)
  * Checks the current mouse state (axis, buttons and wheel).
  * Generates events and mickeys and posts them.
  */
-void DD_ReadMouse(timespan_t ticLength)
+void DD_ReadMouse(void)
 {
     ddevent_t       ev;
     mousestate_t    mouse;
@@ -1404,15 +1458,6 @@ void DD_ReadMouse(timespan_t ticLength)
     else
     {
         ev.axis.type = EAXIS_RELATIVE;
-
-        if(ticLength > 0 && mouseFilter > 0)
-        {
-            // Filtering ensures that events are sent more evenly on each frame.
-            static float accumulation[2] = { 0, 0 };
-            xpos = I_FilterMouse(xpos, &accumulation[0], ticLength);
-            ypos = I_FilterMouse(ypos, &accumulation[1], ticLength);
-        }
-
         ypos = -ypos;
     }
 
@@ -1455,13 +1500,13 @@ void DD_ReadMouse(timespan_t ticLength)
             if(mouse.buttonDowns[i]-- > 0)
             {
                 ev.toggle.state = ETOG_DOWN;
-                DEBUG_Message(("mb %i down\n", i));
+                DEBUG_VERBOSE2_Message(("mb %i down\n", i));
                 DD_PostEvent(&ev);
             }
             if(mouse.buttonUps[i]-- > 0)
             {
                 ev.toggle.state = ETOG_UP;
-                DEBUG_Message(("mb %i up\n", i));
+                DEBUG_VERBOSE2_Message(("mb %i up\n", i));
                 DD_PostEvent(&ev);
             }
         }
