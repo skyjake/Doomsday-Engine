@@ -117,7 +117,7 @@ struct Canvas::Instance
 #endif
 
 #ifdef MACOSX
-	//CGAssociateMouseAndMouseCursorPosition(false);
+        //CGAssociateMouseAndMouseCursorPosition(false);
 #endif
     }
 
@@ -133,7 +133,7 @@ struct Canvas::Instance
         self->setCursor(QCursor(Qt::ArrowCursor)); // Default cursor.
 #endif
 #ifdef MACOSX
-	//CGAssociateMouseAndMouseCursorPosition(true);
+        //CGAssociateMouseAndMouseCursorPosition(true);
 #endif
         // Tell the mouse driver that the mouse is untrapped.
         mouseGrabbed = false;
@@ -283,41 +283,6 @@ void Canvas::notifyInit()
         d->initCallback(*this);
     }
 }
-
-/*
-#ifndef LIBDENG_CANVAS_TRACK_WITH_MOUSE_MOVE_EVENTS
-void Canvas::trackMousePosition(bool keepTracking)
-{
-    if(d->mouseGrabbed)
-    {
-        QPoint curPos = mapFromGlobal(QCursor::pos());
-        if(!d->prevMousePos.isNull())
-        {
-            QPoint delta = curPos - d->prevMousePos;
-            if(!delta.isNull())
-            {
-                Mouse_Qt_SubmitMotion(IMA_POINTER, delta.x(), delta.y());
-
-                // Keep the cursor centered.
-                QPoint mid = rect().center();
-                QCursor::setPos(mapToGlobal(mid));
-                d->prevMousePos = mid;
-            }
-        }
-        else
-        {
-            d->prevMousePos = curPos;
-        }
-        if(keepTracking) QTimer::singleShot(1, this, SLOT(trackMousePosition()));
-    }
-    else
-    {
-        // Mouse was ungrabbed; reset the tracking.
-        d->prevMousePos = QPoint();
-    }
-}
-#endif
-*/
 
 void Canvas::paintGL()
 {
