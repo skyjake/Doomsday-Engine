@@ -43,14 +43,14 @@ int DirectInput_Init(void)
 
     if(dInput || dInput3) return true;
 
-    // We'll create the DirectInput object.
+    // Create the DirectInput interface instance. Try version 8 first.
     if(FAILED(hr = CoCreateInstance(CLSID_DirectInput8, NULL, CLSCTX_INPROC_SERVER,
                                     IID_IDirectInput8, (LPVOID*)&dInput)) ||
        FAILED(hr = dInput->Initialize(app.hInstance, DIRECTINPUT_VERSION)))
     {
         Con_Message("DirectInput 8 init failed (0x%x).\n", hr);
 
-        // Try DInput3 instead.
+        // Try the older version 3 interface instead.
         // I'm not sure if this works correctly.
         if(FAILED(hr = CoCreateInstance(CLSID_DirectInput, NULL, CLSCTX_INPROC_SERVER,
                                         IID_IDirectInput2W, (LPVOID*)&dInput3)) ||
@@ -74,9 +74,6 @@ int DirectInput_Init(void)
 
 void DirectInput_Shutdown(void)
 {
-    if(!dInput && !dInput3) return;
-
-    // Release DirectInput.
     if(dInput)
     {
         IDirectInput_Release(dInput);
@@ -89,14 +86,18 @@ void DirectInput_Shutdown(void)
     }
 }
 
-LPDIRECTINPUT8 DirectInput_Instance()
+LPDIRECTINPUT8 DirectInput_IVersion8()
 {
-    assert(dInput != 0 || dInput3 != 0);
-    return dInput? dInput : (LPDIRECTINPUT8)dInput3;
+    return dInput;
+}
+
+LPDIRECTINPUT DirectInput_IVersion3()
+{
+    return dInput3;
 }
 
 void DirectInput_KillDevice(LPDIRECTINPUTDEVICE8* dev)
 {
-    if(*dev) IDirectInputDevice8_Unacquire(*dev);
+    if(*dev) (*dev)->Unacquire();
     I_SAFE_RELEASE(*dev);
 }

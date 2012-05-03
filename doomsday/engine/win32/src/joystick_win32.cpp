@@ -77,11 +77,16 @@ boolean Joystick_Init(void)
     HWND hWnd = (HWND) Window_NativeHandle(Window_Main());
     if(!hWnd)
     {
-        Con_Error("Joystick_Init: Main window not available, cannot init joystick.");
+        Con_Error("Joystick_Init: Main window not available, cannot continue.");
         return false;
     }
 
-    LPDIRECTINPUT8 dInput = DirectInput_Instance();
+    LPDIRECTINPUT8 dInput = DirectInput_IVersion8();
+    if(!dInput)
+    {
+        Con_Message("Joystick_Init: DirectInput version 8 interface not available, cannot continue.\n");
+        return false;
+    }
 
     // ddi will contain info for the joystick device.
     DIDEVICEINSTANCE ddi;
@@ -99,19 +104,19 @@ boolean Joystick_Init(void)
         if(!firstJoystick.dwSize)
             return false; // Not found.
 
-        Con_Message("I_InitJoystick: joydevice = %i, out of range.\n", joyDevice);
+        Con_Message("Joystick_Init: joydevice = %i, out of range.\n", joyDevice);
         // Use the first joystick that was found.
         memcpy(&ddi, &firstJoystick, sizeof(ddi));
     }
 
     // Show some info.
-    Con_Message("I_InitJoystick: %s\n", ddi.tszProductName);
+    Con_Message("Joystick_Init: %s\n", ddi.tszProductName);
 
     // Create the joystick device.
     HRESULT hr = dInput->CreateDevice(ddi.guidInstance, &didJoy, 0);
     if(FAILED(hr))
     {
-        Con_Message("I_InitJoystick: Failed to create device (0x%x).\n", hr);
+        Con_Message("Joystick_Init: Failed to create device (0x%x).\n", hr);
         return false;
     }
 
@@ -119,7 +124,7 @@ boolean Joystick_Init(void)
     hr = didJoy->SetDataFormat(&c_dfDIJoystick);
     if(FAILED(hr))
     {
-        Con_Message("I_InitJoystick: Failed to set data format (0x%x).\n", hr);
+        Con_Message("Joystick_Init: Failed to set data format (0x%x).\n", hr);
         goto kill_joy;
     }
 
@@ -127,7 +132,7 @@ boolean Joystick_Init(void)
     hr = didJoy->SetCooperativeLevel(hWnd, DISCL_NONEXCLUSIVE | DISCL_FOREGROUND);
     if(FAILED(hr))
     {
-        Con_Message("I_InitJoystick: Failed to set co-op level (0x%x: %s).\n",
+        Con_Message("Joystick_Init: Failed to set co-op level (0x%x: %s).\n",
                     hr, DirectInput_ErrorMsg(hr));
         goto kill_joy;
     }
@@ -139,16 +144,16 @@ boolean Joystick_Init(void)
         if(FAILED(hr))
         {
             if(verbose)
-                Con_Message("I_InitJoystick: Failed to set %s "
-                            "range (0x%x: %s).\n", axisName[i], hr, DirectInput_ErrorMsg(hr));
+                Con_Message("Joystick_Init: Failed to set axis '%s' range (0x%x: %s).\n",
+                            axisName[i], hr, DirectInput_ErrorMsg(hr));
         }
     }
 
-    // Set no dead zone.
+    // Set no dead zone. We'll handle this ourselves thanks...
     hr = didJoy->SetProperty(DIPROP_DEADZONE, DIPropDWord(DIPH_DEVICE));
     if(FAILED(hr))
     {
-        Con_Message("I_InitJoystick: Failed to set dead zone (0x%x: %s).\n",
+        Con_Message("Joystick_Init: Failed to set dead zone (0x%x: %s).\n",
                     hr, DirectInput_ErrorMsg(hr));
     }
 
@@ -156,7 +161,7 @@ boolean Joystick_Init(void)
     hr = didJoy->SetProperty(DIPROP_AXISMODE, DIPropDWord(DIPH_DEVICE, 0, DIPROPAXISMODE_ABS));
     if(FAILED(hr))
     {
-        Con_Message("I_InitJoystick: Failed to set absolute axis mode (0x%x: %s).\n",
+        Con_Message("Joystick_Init: Failed to set absolute axis mode (0x%x: %s).\n",
                     hr, DirectInput_ErrorMsg(hr));
     }
 

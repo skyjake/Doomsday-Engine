@@ -36,19 +36,29 @@ static int Mouse_Win32_Init(void)
 {
     if(ArgCheck("-nomouse") || novideo) return false;
 
+    // We'll need a window handle for this.
     HWND hWnd = (HWND) Window_NativeHandle(Window_Main());
     if(!hWnd)
     {
-        Con_Error("I_InitMouse: Main window not available, cannot init mouse.");
+        Con_Error("Mouse_Init: Main window not available, cannot init mouse.");
         return false;
     }
 
-    LPDIRECTINPUT8 dInput = DirectInput_Instance();
+    HRESULT hr = -1;
+    // Prefer the newer version 8 interface if available.
+    if(LPDIRECTINPUT8 dInput = DirectInput_IVersion8())
+    {
+        hr = dInput->CreateDevice(GUID_SysMouse, &didMouse, 0);
+    }
+    else if(LPDIRECTINPUT dInput = DirectInput_IVersion3())
+    {
+        hr = dInput->CreateDevice(GUID_SysMouse, (LPDIRECTINPUTDEVICE*) &didMouse, 0);
+    }
 
-    HRESULT hr = dInput->CreateDevice(GUID_SysMouse, &didMouse, 0);
     if(FAILED(hr))
     {
-        Con_Message("I_InitMouse: Failed to create device (0x%x).\n", hr);
+        Con_Message("Mouse_Init: Failed to create device (0x%x: %s).\n",
+                    hr, DirectInput_ErrorMsg(hr));
         return false;
     }
 
@@ -56,15 +66,17 @@ static int Mouse_Win32_Init(void)
     hr = didMouse->SetDataFormat(&c_dfDIMouse2);
     if(FAILED(hr))
     {
-        Con_Message("I_InitMouse: Failed to set data format (0x%x).\n", hr);
+        Con_Message("Mouse_Init: Failed to set data format (0x%x: %s).\n",
+                    hr, DirectInput_ErrorMsg(hr));
         goto kill_mouse;
     }
 
     // Set behavior.
-    hr = didMouse->SetCooperativeLevel(hWnd, DISCL_FOREGROUND | DISCL_EXCLUSIVE);
+    hr = didMouse->SetCooperativeLevel(hWnd, DISCL_EXCLUSIVE | DISCL_FOREGROUND);
     if(FAILED(hr))
     {
-        Con_Message("I_InitMouse: Failed to set co-op level (0x%x).\n", hr);
+        Con_Message("Mouse_Init: Failed to set co-op level (0x%x: %s).\n",
+                    hr, DirectInput_ErrorMsg(hr));
         goto kill_mouse;
     }
 
