@@ -1,5 +1,5 @@
 /**
- * @file mouse_win32.c
+ * @file mouse_win32.cpp
  * Mouse driver that gets mouse input from DirectInput on Windows.
  * @ingroup input
  *
@@ -50,7 +50,7 @@ static int Mouse_Win32_Init(void)
 
     dInput = DirectInput_Instance();
 
-    hr = IDirectInput_CreateDevice(dInput, &GUID_SysMouse, &didMouse, 0);
+    hr = IDirectInput_CreateDevice(dInput, GUID_SysMouse, &didMouse, 0);
     if(FAILED(hr))
     {
         Con_Message("I_InitMouse: Failed to create device (0x%x).\n", hr);
@@ -231,6 +231,7 @@ static void Mouse_Win32_Trap(boolean enabled)
 }
 
 // The global interface.
+extern "C" {
 mouseinterface_t win32Mouse = {
     Mouse_Win32_Init,
     Mouse_Win32_Shutdown,
@@ -238,3 +239,4 @@ mouseinterface_t win32Mouse = {
     Mouse_Win32_GetState,
     Mouse_Win32_Trap
 };
+}
