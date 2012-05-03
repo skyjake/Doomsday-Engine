@@ -134,7 +134,7 @@ static float oldPOV = IJOY_POV_CENTER;
 static char* eventStrings[MAXEVENTS];
 static boolean uiMouseMode = false; // Can mouse data be modified?
 
-static byte useSharpToggleEvents = true; ///< cvar
+static byte useSharpInputEvents = true; ///< cvar
 
 #if _DEBUG
 static byte devRendKeyState = false; ///< cvar
@@ -149,7 +149,7 @@ void DD_RegisterInput(void)
     // Cvars
     C_VAR_INT("input-key-delay1", &keyRepeatDelay1, CVF_NO_MAX, 50, 0);
     C_VAR_INT("input-key-delay2", &keyRepeatDelay2, CVF_NO_MAX, 20, 0);
-    C_VAR_BYTE("input-toggle-sharp", &useSharpToggleEvents, 0, 0, 1);
+    C_VAR_BYTE("input-sharp", &useSharpInputEvents, 0, 0, 1);
 
 #if 0
     C_VAR_INT("input-mouse-filter", &mouseFilter, 0, 0, MAX_AXIS_FILTER - 1);
@@ -601,6 +601,13 @@ static float filterAxis(int grade, float* accumulation, float ticLength)
     // Determine the target velocity.
     target = avail * (MAX_AXIS_FILTER - MINMAX_OF(1, grade, 39));
 
+    /*
+    // test: clamp
+    if(target < -.7) target = -.7;
+    else if(target > .7) target = .7;
+    else target = 0;
+    */
+
     // Determine the amount of mickeys to send. It depends on the
     // current mouse velocity, and how much time has passed.
     used = target * ticLength;
@@ -665,10 +672,10 @@ static void I_UpdateAxis(inputdev_t *dev, uint axis, timespan_t ticLength)
     // Apply relative accumulation.
     if(a->type == IDAT_POINTER)
     {
-        // Filtering ensures that events are sent more evenly on each frame.
         if(filter > 0)
         {
-            a->position = filterAxis(filter, &a->accumulation, ticLength);
+            // Filtering ensures that events are sent more evenly on each frame.
+            a->position += filterAxis(filter, &a->accumulation, ticLength);
         }
         else
         {
@@ -933,7 +940,8 @@ static void postToQueue(eventqueue_t* q, ddevent_t* ev)
 void DD_PostEvent(ddevent_t *ev)
 {
     eventqueue_t* q = &queue;
-    if(useSharpToggleEvents && ev->type == E_TOGGLE)
+    if(useSharpInputEvents && (ev->type == E_TOGGLE || ev->type == E_AXIS ||
+                               ev->type == E_ANGLE))
     {
         q = &sharpQueue;
     }
@@ -1075,7 +1083,7 @@ void DD_ConvertEvent(const ddevent_t* ddEvent, event_t* ev)
 /**
  * Send all the events of the given timestamp down the responder chain.
  */
-static void dispatchEvents(eventqueue_t* q, timespan_t ticLength)
+static void dispatchEvents(eventqueue_t* q, timespan_t ticLength, boolean updateAxes)
 {
     const boolean callGameResponders = DD_GameLoaded();
     ddevent_t* ddev;
@@ -1127,13 +1135,16 @@ static void dispatchEvents(eventqueue_t* q, timespan_t ticLength)
             gx.FallbackResponder(&ev);
     }
 
-    // Input events have modified input device state: update the axis positions.
-    for(i = 0; i < NUM_INPUT_DEVICES; ++i)
+    if(updateAxes)
     {
-        uint k;
-        for(k = 0; k < inputDevices[i].numAxes; ++k)
+        // Input events have modified input device state: update the axis positions.
+        for(i = 0; i < NUM_INPUT_DEVICES; ++i)
         {
-            I_UpdateAxis(&inputDevices[i], k, ticLength);
+            uint k;
+            for(k = 0; k < inputDevices[i].numAxes; ++k)
+            {
+                I_UpdateAxis(&inputDevices[i], k, ticLength);
+            }
         }
     }
 }
@@ -1190,7 +1201,7 @@ void DD_ProcessEvents(timespan_t ticLength)
     postEvents();
 
     // Dispatch all accumulated events down the responder chain.
-    dispatchEvents(&queue, ticLength);
+    dispatchEvents(&queue, ticLength, !useSharpInputEvents);
 }
 
 void DD_ProcessSharpEvents(timespan_t ticLength)
@@ -1198,7 +1209,7 @@ void DD_ProcessSharpEvents(timespan_t ticLength)
     // Sharp ticks may have some events queued on the side.
     if(DD_IsSharpTick() || !DD_IsFrameTimeAdvancing())
     {
-        dispatchEvents(&sharpQueue, ticLength);
+        dispatchEvents(&sharpQueue, DD_IsFrameTimeAdvancing()? SECONDSPERTIC : ticLength, true);
     }
 }
 
