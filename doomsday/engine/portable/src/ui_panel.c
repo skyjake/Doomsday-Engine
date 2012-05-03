@@ -479,7 +479,7 @@ ui_object_t ob_panel[] =
     { UI_SLIDER,    0,  UIF_FADE_AWAY,  680, 610, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_light_ambient },
     { UI_TEXT,      0,  UIF_FADE_AWAY,  300, 670, 0, 55,    "Light range compression", UIText_Drawer },
     { UI_SLIDER,    0,  UIF_FADE_AWAY,  680, 670, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_light_compression },
-    { UI_TEXT,      0,  0,              300, 730, 0, 55,    "Material glow strength", UIText_Drawer },
+    { UI_TEXT,      0,  UIF_FADE_AWAY,  300, 730, 0, 55,    "Material glow strength", UIText_Drawer },
     { UI_SLIDER,    0,  UIF_FADE_AWAY,  680, 730, 300, 55,  "rend-glow", UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_light_glow_strength },
     { UI_TEXT,      0,  0,              300, 790, 0, 55,    "Floor/ceiling glow on walls", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 790, 70, 55,   "rend-glow-wall", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
