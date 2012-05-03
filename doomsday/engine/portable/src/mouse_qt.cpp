@@ -25,27 +25,63 @@
 #include "con_main.h"
 #include "sys_input.h"
 #include "window.h"
+#include "mouse_qt.h"
 #include <string.h>
+
+#include <QPoint>
+#include <QCursor>
 
 typedef struct clicker_s {
     int down;                   // Count for down events.
     int up;                     // Count for up events.
 } clicker_t;
 
-static int mousePosX, mousePosY; // Window position.
+//static int mousePosX, mousePosY; // Window position.
 static struct { int dx, dy; } mouseDelta[IMA_MAXAXES];
 static clicker_t mouseClickers[IMB_MAXBUTTONS];
+static bool mouseTrapped = false;
+static QPoint prevMousePos;
 
 static int Mouse_Qt_Init(void)
 {
     memset(&mouseDelta, 0, sizeof(mouseDelta));
     memset(&mouseClickers, 0, sizeof(mouseClickers));
+    mouseTrapped = false;
+    prevMousePos = QPoint();
     return true;
 }
 
 static void Mouse_Qt_Shutdown(void)
 {
     // nothing to do
+}
+
+static void Mouse_Qt_Poll(void)
+{
+    if(!mouseTrapped) return;
+
+    QWidget* widget = Window_Widget(Window_Main());
+    if(!widget) return; // Hmm?
+
+    QPoint curPos = widget->mapFromGlobal(QCursor::pos());
+    if(!prevMousePos.isNull())
+    {
+        QPoint delta = curPos - prevMousePos;
+        if(!delta.isNull())
+        {
+            Mouse_Qt_SubmitMotion(IMA_POINTER, delta.x(), delta.y());
+
+            // Keep the cursor centered.
+            const Size2Raw* size = Window_Size(Window_Main());
+            QPoint mid = QPoint(size->width/2, size->height/2);
+            QCursor::setPos(widget->mapToGlobal(mid));
+            prevMousePos = mid;
+        }
+    }
+    else
+    {
+        prevMousePos = curPos;
+    }
 }
 
 static void Mouse_Qt_GetState(mousestate_t *state)
@@ -77,8 +113,8 @@ static void Mouse_Qt_GetState(mousestate_t *state)
 
 static void Mouse_Qt_Trap(boolean enabled)
 {
-    // nothing to do -- the window will submit input to us when trapped
-    DENG_UNUSED(enabled);
+    mouseTrapped = enabled;
+    prevMousePos = QPoint();
 }
 
 void Mouse_Qt_SubmitButton(int button, boolean isDown)
@@ -125,6 +161,7 @@ void Mouse_Qt_SubmitWindowPosition(int x, int y)
 mouseinterface_t qtMouse = {
     Mouse_Qt_Init,
     Mouse_Qt_Shutdown,
+    Mouse_Qt_Poll,
     Mouse_Qt_GetState,
     Mouse_Qt_Trap
 };

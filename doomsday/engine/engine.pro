@@ -533,7 +533,7 @@ SOURCES += \
     portable/src/materials.c \
     portable/src/materialvariant.c \
     portable/src/monitor.c \
-    portable/src/mouse_qt.c \
+    portable/src/mouse_qt.cpp \
     portable/src/nativeui.cpp \
     portable/src/net_buf.c \
     portable/src/net_demo.c \

@@ -136,7 +136,7 @@ protected:
 protected slots:
     void notifyInit();
 #ifndef LIBDENG_CANVAS_TRACK_WITH_MOUSE_MOVE_EVENTS
-    void trackMousePosition(bool keepTracking = true);
+    //void trackMousePosition(bool keepTracking = true);
 #else
     void recenterMouse();
 #endif

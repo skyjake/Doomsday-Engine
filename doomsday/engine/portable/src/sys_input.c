@@ -213,6 +213,14 @@ boolean Mouse_IsPresent(void)
     return useMouse;
 }
 
+void Mouse_Poll(void)
+{
+    if(useMouse)
+    {
+        iMouse->poll();
+    }
+}
+
 void Mouse_GetState(mousestate_t *state)
 {
     if(useMouse)

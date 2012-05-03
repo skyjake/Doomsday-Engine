@@ -30,6 +30,7 @@
 
 static LPDIRECTINPUTDEVICE8 didMouse;
 static boolean mouseTrapped;
+static DIMOUSESTATE2 mstate; ///< Polled state.
 
 static int Mouse_Win32_Init(void)
 {
@@ -93,18 +94,11 @@ static void Mouse_Win32_Shutdown(void)
     DirectInput_KillDevice(&didMouse);
 }
 
-static void Mouse_Win32_GetState(mousestate_t *state)
+static void Mouse_Win32_Poll(void)
 {
-    static BOOL     oldButtons[8];
-    static int      oldZ;
-
-    DIMOUSESTATE2   mstate;
-    DWORD           i;
     int             tries;
     BOOL            acquired;
     HRESULT         hr;
-
-    memset(state, 0, sizeof(*state));
 
     if(!mouseTrapped)
     {
@@ -130,7 +124,24 @@ static void Mouse_Win32_GetState(mousestate_t *state)
         }
     }
     if(!acquired)
-        return; // The operation is a failure.
+    {
+        // The operation is a failure.
+        memset(&mstate, 0, sizeof(mstate));
+    }
+}
+
+static void Mouse_Win32_GetState(mousestate_t *state)
+{
+    static BOOL     oldButtons[8];
+    static int      oldZ;
+    DWORD           i;
+
+    memset(state, 0, sizeof(*state));
+    if(!mouseTrapped)
+    {
+        // We are not supposed to be reading the mouse right now.
+        return;
+    }
 
     // Fill in the state structure.
     state->axis[IMA_POINTER].x = (int) mstate.lX;
@@ -218,6 +229,7 @@ static void Mouse_Win32_Trap(boolean enabled)
 mouseinterface_t win32Mouse = {
     Mouse_Win32_Init,
     Mouse_Win32_Shutdown,
+    Mouse_Win32_Poll,
     Mouse_Win32_GetState,
     Mouse_Win32_Trap
 };

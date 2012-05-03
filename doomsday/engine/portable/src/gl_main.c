@@ -231,6 +231,10 @@ void GL_DoUpdate(void)
 
     // Blit screen to video.
     Window_SwapBuffers(theWindow);
+
+    // We will arrive here always at the same time in relation to the displayed
+    // frame: it is a good time to update the mouse state.
+    Mouse_Poll();
 }
 
 void GL_GetGammaRamp(displaycolortransfer_t *ramp)

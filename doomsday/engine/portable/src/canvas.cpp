@@ -109,9 +109,11 @@ struct Canvas::Instance
         self->grabMouse();
         self->setCursor(QCursor(Qt::BlankCursor));
         qApp->setOverrideCursor(QCursor(Qt::BlankCursor));
+        /*
 #ifndef LIBDENG_CANVAS_TRACK_WITH_MOUSE_MOVE_EVENTS
         QTimer::singleShot(MOUSE_TRACK_INTERVAL, self, SLOT(trackMousePosition()));
 #endif
+        */
 #endif
 
 #ifdef MACOSX
@@ -133,7 +135,7 @@ struct Canvas::Instance
 #ifdef MACOSX
 	//CGAssociateMouseAndMouseCursorPosition(true);
 #endif
-        // Tell the mouse driver that the mouse is untrapepd.
+        // Tell the mouse driver that the mouse is untrapped.
         mouseGrabbed = false;
         Mouse_Trap(false);
     }
@@ -282,6 +284,7 @@ void Canvas::notifyInit()
     }
 }
 
+/*
 #ifndef LIBDENG_CANVAS_TRACK_WITH_MOUSE_MOVE_EVENTS
 void Canvas::trackMousePosition(bool keepTracking)
 {
@@ -314,6 +317,7 @@ void Canvas::trackMousePosition(bool keepTracking)
     }
 }
 #endif
+*/
 
 void Canvas::paintGL()
 {
