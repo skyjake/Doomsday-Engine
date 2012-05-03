@@ -541,6 +541,12 @@ void DD_WaitForOptimalUpdateTime(void)
     timeDeltaStatistics((int)elapsed - (int)optimalDelta);
 }
 
+timespan_t DD_LatestRunTicsStartTime(void)
+{
+    if(Con_IsBusy()) return Sys_GetSeconds();
+    return lastRunTicsTime;
+}
+
 /**
  * Runs one or more tics depending on how much time has passed since the
  * previous call to this function. This gets called once per each main loop

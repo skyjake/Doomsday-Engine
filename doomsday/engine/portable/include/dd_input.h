@@ -29,15 +29,16 @@
 #ifndef LIBDENG_CORE_INPUT_H
 #define LIBDENG_CORE_INPUT_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define NUMKKEYS            256
 
+#include "smoother.h"
 #include "dd_string.h"
 #if _DEBUG
 #  include "point.h" // For the debug visual.
+#endif
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 // Input devices.
@@ -151,12 +152,15 @@ typedef struct inputdevaxis_s {
     char    name[20];       // Symbolic name of the axis.
     int     type;           // Type of the axis (pointer or stick).
     int     flags;
-    float   position;       // Current translated position of the axis (-1..1) including any filtering.
-    float   realPosition;   // The actual position of the axis (-1..1).
+    coord_t position;       // Current translated position of the axis (-1..1) including any filtering.
+    coord_t realPosition;   // The actual position of the axis (-1..1).
     float   scale;          // Scaling factor for real input values.
     float   deadZone;       // Dead zone, in (0..1) range.
-    int     filter;         // Filter grade.
-    float   accumulation;   // Position accumulator for the filter.
+    //int     filter;         // Filter grade.
+    //float   accumulation;   // Position accumulator for the filter.
+    coord_t sharpPosition;
+    Smoother* smoother;     // Smoother for the input values.
+    coord_t prevSmoothPos;
     uint    time;           // Timestamp for the latest update that changed the position.
     inputdevassoc_t assoc;  // Binding association.
 } inputdevaxis_t;

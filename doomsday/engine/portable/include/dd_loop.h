@@ -23,6 +23,8 @@
 #ifndef __DOOMSDAY_BASELOOP_H__
 #define __DOOMSDAY_BASELOOP_H__
 
+#include "dd_types.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -87,6 +89,12 @@ boolean DD_IsSharpTick(void);
  * Determines whether frame time is advancing.
  */
 boolean DD_IsFrameTimeAdvancing(void);
+
+/**
+ * Returns the real time in seconds when the latest iteration of runTics() was
+ * started.
+ */
+timespan_t DD_LatestRunTicsStartTime(void);
 
 /**
  * Sets the exit code for the main loop. Does not cause the main loop
