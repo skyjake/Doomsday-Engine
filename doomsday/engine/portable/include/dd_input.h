@@ -149,20 +149,18 @@ enum
 #define IDA_INVERT 0x2      // Real input data should be inverted.
 
 typedef struct inputdevaxis_s {
-    char    name[20];       // Symbolic name of the axis.
-    int     type;           // Type of the axis (pointer or stick).
+    char    name[20];       ///< Symbolic name of the axis.
+    int     type;           ///< Type of the axis (pointer or stick).
     int     flags;
-    coord_t position;       // Current translated position of the axis (-1..1) including any filtering.
-    coord_t realPosition;   // The actual position of the axis (-1..1).
-    float   scale;          // Scaling factor for real input values.
-    float   deadZone;       // Dead zone, in (0..1) range.
-    //int     filter;         // Filter grade.
-    //float   accumulation;   // Position accumulator for the filter.
-    coord_t sharpPosition;
-    Smoother* smoother;     // Smoother for the input values.
-    coord_t prevSmoothPos;
-    uint    time;           // Timestamp for the latest update that changed the position.
-    inputdevassoc_t assoc;  // Binding association.
+    coord_t position;       ///< Current translated position of the axis (-1..1) including any filtering.
+    coord_t realPosition;   ///< The actual latest position of the axis (-1..1).
+    float   scale;          ///< Scaling factor for real input values.
+    float   deadZone;       ///< Dead zone, in (0..1) range.
+    coord_t sharpPosition;  ///< Current sharp (accumulated) position, entered into the Smoother.
+    Smoother* smoother;     ///< Smoother for the input values.
+    coord_t prevSmoothPos;  ///< Previous evaluated smooth position (needed for producing deltas).
+    uint    time;           ///< Timestamp for the latest update that changed the position.
+    inputdevassoc_t assoc;  ///< Binding association.
 } inputdevaxis_t;
 
 typedef struct inputdevkey_s {

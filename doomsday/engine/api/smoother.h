@@ -108,6 +108,18 @@ void Smoother_AddPosXY(Smoother* sm, float time, coord_t x, coord_t y);
  */
 boolean Smoother_Evaluate(const Smoother* sm, coord_t* xyz);
 
+/**
+ * Calculates a coordinate for the current point in time.
+ *
+ * @param sm         Smoother instance.
+ * @param component  The component to evaluate (0..2).
+ * @param v          The evaluated coordinate value is written here. Must have room for 1 value.
+ *
+ * @return  @c true if the evaluation was successful. When @c false is returned,
+ *          the value in @a v is not valid.
+ *
+ * @see Smoother_Advance()
+ */
 boolean Smoother_EvaluateComponent(const Smoother* sm, int component, coord_t* v);
 
 /**
