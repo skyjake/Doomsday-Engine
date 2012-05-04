@@ -502,12 +502,6 @@ void DD_WaitForOptimalUpdateTime(void)
     // accuracy, so we can't use fractions of a millisecond.
     const uint optimalDelta = (maxFrameRate > 0? 1000/maxFrameRate : 1);
 
-    // If vsync is on, this is unnecessary.
-    /// @todo check the rend-vsync cvar
-//#if defined(MACOSX) || defined(WIN32)
-//    return;
-//#endif
-
     if(Sys_IsShuttingDown()) return; // No need for finesse.
 
     // This is when we would ideally like to make the update.
