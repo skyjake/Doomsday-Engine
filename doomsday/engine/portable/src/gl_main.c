@@ -221,13 +221,10 @@ void GL_DoUpdate(void)
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    if(Window_ShouldRepaintManually(Window_Main()))
-    {
-        // Wait until the right time to show the frame so that the realized
-        // frame rate is exactly right.
-        glFlush();
-        DD_WaitForOptimalUpdateTime();
-    }
+    // Wait until the right time to show the frame so that the realized
+    // frame rate is exactly right.
+    glFlush();
+    DD_WaitForOptimalUpdateTime();
 
     // Blit screen to video.
     Window_SwapBuffers(theWindow);
