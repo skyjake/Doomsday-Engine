@@ -1,32 +1,24 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * dd_input.c: System Independent Input
+ * @file dd_input.c
+ * Platform-independent input subsystem. @ingroup input
+ *
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <ctype.h>
 #include <math.h>
@@ -48,16 +40,12 @@
 
 #include "con_busy.h"
 
-// MACROS ------------------------------------------------------------------
-
 #define DEFAULT_JOYSTICK_DEADZONE .05f // 5%
 
 #define MAX_AXIS_FILTER 40
 
 #define KBDQUESIZE      32
 #define MAX_DOWNKEYS    16      // Most keyboards support 6 or 7.
-
-// TYPES -------------------------------------------------------------------
 
 typedef struct repeater_s {
     int key;                // The DDKEY code (0 if not in use).
@@ -73,29 +61,17 @@ typedef struct {
     int tail;
 } eventqueue_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
+#if 0
 D_CMD(AxisPrintConfig);
 D_CMD(AxisChangeOption);
 D_CMD(AxisChangeValue);
+#endif
 D_CMD(DumpKeyMap);
 D_CMD(KeyMap);
 D_CMD(ListInputDevices);
 D_CMD(ReleaseMouse);
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
 static void postEvents(void);
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-#if 0
-int mouseFilter = 0;        // Filtering off by default.
-#endif
 
 // The initial and secondary repeater delays (tics).
 int     repWait1 = 15, repWait2 = 3;
@@ -105,7 +81,7 @@ boolean shiftDown = false, altDown = false;
 
 inputdev_t inputDevices[NUM_INPUT_DEVICES];
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
+//-------------------------------------------------------------------------
 
 static boolean inputDisabledFully = false;
 static boolean ignoreInput = false;
@@ -142,7 +118,7 @@ static byte devRendMouseState = false; ///< cvar
 static byte devRendJoyState = false; ///< cvar
 #endif
 
-// CODE --------------------------------------------------------------------
+//-------------------------------------------------------------------------
 
 void DD_RegisterInput(void)
 {
@@ -150,11 +126,6 @@ void DD_RegisterInput(void)
     C_VAR_INT("input-key-delay1", &keyRepeatDelay1, CVF_NO_MAX, 50, 0);
     C_VAR_INT("input-key-delay2", &keyRepeatDelay2, CVF_NO_MAX, 20, 0);
     C_VAR_BYTE("input-sharp", &useSharpInputEvents, 0, 0, 1);
-
-#if 0
-    C_VAR_INT("input-mouse-filter", &mouseFilter, 0, 0, MAX_AXIS_FILTER - 1);
-    C_VAR_INT("input-mouse-frequency", &mouseFreq, CVF_NO_MAX, 0, 0);
-#endif
 
 #if _DEBUG
     C_VAR_BYTE("rend-dev-input-joy-state", &devRendJoyState, CVF_NO_ARCHIVE, 0, 1);
@@ -204,8 +175,9 @@ static inputdevaxis_t *I_DeviceNewAxis(inputdev_t *dev, const char *name, uint t
     axis = &dev->axes[dev->numAxes - 1];
     memset(axis, 0, sizeof(*axis));
     strcpy(axis->name, name);
-
     axis->type = type;
+    axis->smoother = Smoother_New();
+    Smoother_SetMaximumPastNowDelta(axis->smoother, 2*SECONDSPERTIC);
 
     // Set reasonable defaults. The user's settings will be restored
     // later.
@@ -258,7 +230,7 @@ void I_InitVirtualInputDevices(void)
     // The mouse wheel is translated to keys, so there is no need to
     // create an axis for it.
     axis = I_DeviceNewAxis(dev, "x", IDAT_POINTER);
-    axis->filter = 1; // On by default.
+    //axis->filter = 1; // On by default.
     axis->scale = 1.f/1000;
 
     axis = I_DeviceNewAxis(dev, "y", IDAT_POINTER);
@@ -271,7 +243,7 @@ void I_InitVirtualInputDevices(void)
     C_VAR_INT("input-mouse-x-flags", &dev->axes[0].flags, 0, 0, 3);
     C_VAR_FLOAT("input-mouse-y-scale", &dev->axes[1].scale, CVF_NO_MAX, 0, 0);
     C_VAR_INT("input-mouse-y-flags", &dev->axes[1].flags, 0, 0, 3);
-    C_VAR_INT("input-mouse-filter", &dev->axes[0].filter, 0, 0, MAX_AXIS_FILTER - 1); // note: same filter used for Y axis
+    //C_VAR_INT("input-mouse-filter", &dev->axes[0].filter, 0, 0, MAX_AXIS_FILTER - 1); // note: same filter used for Y axis
 
     if(Mouse_IsPresent())
         dev->flags = ID_ACTIVE;
@@ -330,24 +302,34 @@ void I_InitVirtualInputDevices(void)
  */
 void I_ShutdownInputDevices(void)
 {
-    uint                i;
-    inputdev_t*         dev;
+    uint i, k;
+    inputdev_t* dev;
 
     for(i = 0; i < NUM_INPUT_DEVICES; ++i)
     {
         dev = &inputDevices[i];
 
         if(dev->keys)
+        {
             M_Free(dev->keys);
-        dev->keys = 0;
+            dev->keys = 0;
+        }
 
         if(dev->axes)
+        {
+            for(k = 0; k < dev->numAxes; ++k)
+            {
+                Smoother_Delete(dev->axes[k].smoother);
+            }
             M_Free(dev->axes);
-        dev->axes = 0;
+            dev->axes = 0;
+        }
 
         if(dev->hats)
+        {
             M_Free(dev->hats);
-        dev->hats = 0;
+            dev->hats = 0;
+        }
     }
 }
 
@@ -378,7 +360,10 @@ void I_DeviceReset(uint ident)
         {
             // Clear the accumulation.
             dev->axes[k].position = 0;
+            dev->axes[k].sharpPosition = 0;
+            dev->axes[k].prevSmoothPos = 0;
         }
+        Smoother_Clear(dev->axes[k].smoother);
     }
 
     if(ident == IDEV_KEYBOARD)
@@ -588,6 +573,7 @@ float I_TransformAxis(inputdev_t* dev, uint axis, float rawPos)
     return pos;
 }
 
+#if 0
 static float filterAxis(int grade, float* accumulation, float ticLength)
 {
     float   target;
@@ -629,6 +615,7 @@ static float filterAxis(int grade, float* accumulation, float ticLength)
     // This is the new (filtered) axis position.
     return dir * used;
 }
+#endif
 
 /**
  * Update an input device axis.  Transformation is applied.
@@ -645,44 +632,40 @@ static void I_ApplyRealPositionToAxis(inputdev_t* dev, uint axis, float pos)
     if(oldRealPos != a->realPosition)
     {
         // Mark down the time of the change.
-        a->time = Sys_GetRealTime();
+        a->time = DD_LatestRunTicsStartTime();
     }
 
     if(a->type == IDAT_STICK)
     {
-        a->position = a->realPosition;
+        a->sharpPosition = a->realPosition;
     }
     else // Cumulative.
     {
-        a->accumulation += a->realPosition;
+        // Convert the delta to an absolute position for smoothing.
+        a->sharpPosition += a->realPosition;
     }
+
+    Smoother_AddPosXY(a->smoother, DD_LatestRunTicsStartTime(), a->sharpPosition, 0);
 }
 
 static void I_UpdateAxis(inputdev_t *dev, uint axis, timespan_t ticLength)
 {
     inputdevaxis_t *a = &dev->axes[axis];
-    int filter = a->filter;
 
-    if(dev == I_GetDevice(IDEV_MOUSE, false))
+    Smoother_Advance(a->smoother, ticLength);
+
+    if(a->type == IDAT_STICK)
     {
-        // Special case: both mouse axes use the same filter.
-        filter = dev->axes[0].filter;
+        // Absolute positions are straightforward to evaluate.
+        Smoother_EvaluateComponent(a->smoother, 0, &a->position);
     }
-
-    // Apply relative accumulation.
-    if(a->type == IDAT_POINTER)
+    else if(a->type == IDAT_POINTER)
     {
-        if(filter > 0)
-        {
-            // Filtering ensures that events are sent more evenly on each frame.
-            a->position += filterAxis(filter, &a->accumulation, ticLength);
-        }
-        else
-        {
-            // Unfiltered, use all of the accumulation at once.
-            a->position += a->accumulation;
-            a->accumulation = 0;
-        }
+        // Convert back into a delta.
+        coord_t smoothPos = a->prevSmoothPos;
+        Smoother_EvaluateComponent(a->smoother, 0, &smoothPos);
+        a->position += smoothPos - a->prevSmoothPos;
+        a->prevSmoothPos = smoothPos;
     }
 
     // We can clear the expiration when it returns to default state.
@@ -1165,28 +1148,6 @@ static void postEvents(void)
         DD_ReadJoystick();
     }
 }
-
-/*
-void DD_PollInputAndPostEvents(void)
-{
-    static timespan_t lastTime = 0;
-    timespan_t nowTime;
-    timespan_t elapsed;
-
-    Mouse_Poll();
-
-    nowTime = Sys_GetSeconds();
-    elapsed = nowTime - lastTime;
-    if(elapsed > 0.5)
-    {
-        // Seems awfully long time ago.
-        elapsed = 0;
-    }
-    lastTime = nowTime;
-
-    postEvents(elapsed);
-}
-*/
 
 /**
  * Process all incoming input for the given timestamp.
@@ -2277,17 +2238,19 @@ static void I_PrintAxisConfig(inputdev_t* device, inputdevaxis_t* axis)
 {
     Con_Printf("%s-%s Config:\n"
                "  Type: %s\n"
-               "  Filter: %i\n"
+               //"  Filter: %i\n"
                "  Dead Zone: %g\n"
                "  Scale: %g\n"
                "  Flags: (%s%s)\n",
                device->name, axis->name,
                (axis->type == IDAT_STICK? "STICK" : "POINTER"),
-               axis->filter, axis->deadZone, axis->scale,
+               /*axis->filter,*/
+               axis->deadZone, axis->scale,
                ((axis->flags & IDA_DISABLED)? "|disabled":""),
                ((axis->flags & IDA_INVERT)? "|inverted":""));
 }
 
+#if 0
 D_CMD(AxisPrintConfig)
 {
     uint deviceID, axisID;
@@ -2374,6 +2337,7 @@ D_CMD(AxisChangeValue)
     // Unknown value name?
     return true;
 }
+#endif
 
 /**
  * Console command to list all of the available input devices+axes.

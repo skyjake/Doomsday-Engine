@@ -26,6 +26,7 @@
 #include "sys_input.h"
 #include "window.h"
 #include "mouse_qt.h"
+#include "canvas.h"
 #include <string.h>
 
 #include <QWidget>
@@ -61,6 +62,7 @@ static void Mouse_Qt_Poll(void)
 {
     if(!mouseTrapped) return;
 
+#ifndef LIBDENG_CANVAS_TRACK_WITH_MOUSE_MOVE_EVENTS
     QWidget* widget = Window_Widget(Window_Main());
     if(!widget) return; // Hmm?
 
@@ -83,6 +85,7 @@ static void Mouse_Qt_Poll(void)
     {
         prevMousePos = curPos;
     }
+#endif
 }
 
 static void Mouse_Qt_GetState(mousestate_t *state)
