@@ -1331,13 +1331,12 @@ void EqualizeLuma(uint8_t* pixels, int width, int height, float* rBaMul,
         for(i = 0, pix = pixels; i < numpels; ++i, pix += 1)
         {
             // First balance.
-            *pix = (uint8_t) MINMAX_OF(0, ((float)*pix) * baMul, 255);
-
+            float val = baMul * (*pix);
             // Now amplify.
-            if(*pix > 127)
-                *pix = (uint8_t) MINMAX_OF(0, ((float)*pix) * hiMul, 255);
-            else
-                *pix = (uint8_t) MINMAX_OF(0, ((float)*pix) * loMul, 255);
+            if(val > 127) val *= hiMul;
+            else          val *= loMul;
+
+            *pix = (uint8_t) MINMAX_OF(0, val, 255);
         }
     }
 
