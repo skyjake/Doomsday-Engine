@@ -1347,3 +1347,9 @@ void Window_GLDone(Window* wnd)
     wnd->assertWindow();
     wnd->widget->canvas().doneCurrent();
 }
+
+QWidget* Window_Widget(Window* wnd)
+{
+    if(!wnd || wnd->type == WT_CONSOLE) return 0;
+    return wnd->widget;
+}

@@ -57,6 +57,14 @@ Smoother* Smoother_New();
 void Smoother_Delete(Smoother* sm);
 
 /**
+ * If the difference between the smoother's past and now times is larger than
+ * @a delta, the smoother gets automatically advanced to the present. This may
+ * occur if the smoother keeps being advanced but no new values are inserted.
+ * The assumption is that new values are being inserted at a semi-regular rate.
+ */
+void Smoother_SetMaximumPastNowDelta(Smoother* sm, float delta);
+
+/**
  * Resets the smoother instance. More than one discrete input point is needed before
  * output values can be calculated again. After calling Smoother_Clear() the state
  * of the Smoother is the same as right after construction.
@@ -78,6 +86,16 @@ void Smoother_Clear(Smoother* sm);
 void Smoother_AddPos(Smoother* sm, float time, coord_t x, coord_t y, coord_t z, boolean onFloor);
 
 /**
+ * Defines a new XY input point in the future of the smoother.
+ *
+ * @param sm    Smoother instance.
+ * @param time  Point in time (game tick).
+ * @param x     Cooordinate.
+ * @param y     Cooordinate.
+ */
+void Smoother_AddPosXY(Smoother* sm, float time, coord_t x, coord_t y);
+
+/**
  * Calculates the coordinates for the current point in time.
  *
  * @param sm   Smoother instance.
@@ -89,6 +107,20 @@ void Smoother_AddPos(Smoother* sm, float time, coord_t x, coord_t y, coord_t z, 
  * @see Smoother_Advance()
  */
 boolean Smoother_Evaluate(const Smoother* sm, coord_t* xyz);
+
+/**
+ * Calculates a coordinate for the current point in time.
+ *
+ * @param sm         Smoother instance.
+ * @param component  The component to evaluate (0..2).
+ * @param v          The evaluated coordinate value is written here. Must have room for 1 value.
+ *
+ * @return  @c true if the evaluation was successful. When @c false is returned,
+ *          the value in @a v is not valid.
+ *
+ * @see Smoother_Advance()
+ */
+boolean Smoother_EvaluateComponent(const Smoother* sm, int component, coord_t* v);
 
 /**
  * Determines whether the smoother's Z coordinate is currently on the floor plane.

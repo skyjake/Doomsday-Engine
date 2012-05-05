@@ -37,10 +37,10 @@
 #define CONVCONST       ((IJOY_AXISMAX - IJOY_AXISMIN) / 65535.0)
 
 int     joydevice = 0;          // Joystick index to use (cvar)
-byte    usejoystick = false;    // Joystick input enabled? (cvar)
+byte    useJoystickCvar = true; // Joystick input enabled? (cvar)
 
 static boolean joyInited;
-static byte useJoystick; // Input enabled from a source?
+static byte joyAvailable; // Input enabled from a source?
 static boolean joyButtonWasDown[IJOY_MAXBUTTONS];
 
 #ifndef DENG_NO_SDL
@@ -51,7 +51,7 @@ void Joystick_Register(void)
 {
 #ifndef DENG_NO_SDL
     C_VAR_INT("input-joy-device", &joydevice, CVF_NO_MAX | CVF_PROTECTED, 0, 0);
-    C_VAR_BYTE("input-joy", &usejoystick, 0, 0, 1);
+    C_VAR_BYTE("input-joy", &useJoystickCvar, 0, 0, 1);
 #endif
 }
 
@@ -106,12 +106,12 @@ static void initialize(void)
                         SDL_JoystickNumBalls(joy));
         }
 
-        useJoystick = true;
+        joyAvailable = true;
     }
     else
     {
         Con_Message("I_InitJoystick: No joysticks found\n");
-        useJoystick = false;
+        joyAvailable = false;
     }
 }
 #endif
@@ -144,7 +144,7 @@ void Joystick_Shutdown(void)
 
 boolean Joystick_IsPresent(void)
 {
-    return useJoystick;
+    return joyAvailable;
 }
 
 void Joystick_GetState(joystate_t *state)
@@ -155,7 +155,7 @@ void Joystick_GetState(joystate_t *state)
     memset(state, 0, sizeof(*state));
 
     // Initialization has not been done.
-    if(!Joystick_IsPresent() || !usejoystick || !joyInited)
+    if(!Joystick_IsPresent() || !useJoystickCvar || !joyInited)
         return;
 
     // Update joysticks

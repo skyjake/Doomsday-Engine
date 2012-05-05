@@ -471,7 +471,7 @@ void UI_SetPage(ui_page_t* page)
                     dat->first = dat->selection - dat->numvis + 1;
             }
             // Check that the visible range is ok.
-            dat->first = MIN_OF(dat->first, dat->count - dat->numvis);
+            dat->first = MAX_OF(0, MIN_OF(dat->first, dat->count - dat->numvis));
             UI_InitColumns(ob);
         }
     }

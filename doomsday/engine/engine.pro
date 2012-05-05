@@ -377,11 +377,11 @@ win32 {
 
     SOURCES += \
         win32/src/dd_winit.c \
-        win32/src/directinput.c \
+        win32/src/directinput.cpp \
         win32/src/sys_console.c \
         win32/src/sys_findfile.c \
-        win32/src/joystick.c \
-        win32/src/mouse_win32.c
+        win32/src/joystick_win32.cpp \
+        win32/src/mouse_win32.cpp
 
     !deng_nodisplaymode: SOURCES += win32/src/displaymode_win32.cpp
 }
@@ -535,7 +535,7 @@ SOURCES += \
     portable/src/materials.c \
     portable/src/materialvariant.c \
     portable/src/monitor.c \
-    portable/src/mouse_qt.c \
+    portable/src/mouse_qt.cpp \
     portable/src/nativeui.cpp \
     portable/src/net_buf.c \
     portable/src/net_demo.c \
