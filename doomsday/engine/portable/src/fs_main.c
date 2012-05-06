@@ -2228,9 +2228,9 @@ void F_AddVirtualDirectoryMapping(const char* source, const char* destination)
     Str_Init(&src); Str_Set(&src, source);
     Str_Strip(&src);
     F_FixSlashes(&src, &src);
-    F_AppendMissingSlash(&src);
     F_ExpandBasePath(&src, &src);
     F_PrependWorkPath(&src, &src);
+    F_AppendMissingSlash(&src);
 
     // Have already mapped this source path?
     vdm = findVDMappingForSourcePath(Str_Text(&src));
@@ -2259,9 +2259,9 @@ void F_AddVirtualDirectoryMapping(const char* source, const char* destination)
     Str_Set(&vdm->destination, destination);
     Str_Strip(&vdm->destination);
     F_FixSlashes(&vdm->destination, &vdm->destination);
-    F_AppendMissingSlash(&vdm->destination);
     F_ExpandBasePath(&vdm->destination, &vdm->destination);
     F_PrependWorkPath(&vdm->destination, &vdm->destination);
+    F_AppendMissingSlash(&vdm->destination);
 
     VERBOSE(Con_Message("Resources in \"%s\" now mapped to \"%s\"\n", F_PrettyPath(Str_Text(&vdm->source)), F_PrettyPath(Str_Text(&vdm->destination))) );
 }
