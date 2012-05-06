@@ -2315,6 +2315,7 @@ static void printVFDirectory(const ddstring_t* path)
 
     Str_Init(&dir); Str_Set(&dir, Str_Text(path));
     Str_Strip(&dir);
+    F_FixSlashes(&dir, &dir);
     // Make sure it ends in a directory separator character.
     F_AppendMissingSlash(&dir);
     if(!F_ExpandBasePath(&dir, &dir))
