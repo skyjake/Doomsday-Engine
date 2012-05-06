@@ -275,7 +275,7 @@ static void endFrame(void)
     rFrameCount++;
 
     // Count the frames every other second.
-    if(nowTime - 2000 >= lastFpsTime)
+    if(nowTime - 2500 >= lastFpsTime)
     {
         fps = (rFrameCount - lastFrameCount) / ((nowTime - lastFpsTime)/1000.0f);
         lastFpsTime = nowTime;

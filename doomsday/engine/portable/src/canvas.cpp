@@ -247,6 +247,12 @@ bool Canvas::isMouseTrapped() const
     return d->mouseGrabbed;
 }
 
+void Canvas::forceImmediateRepaint()
+{
+    QPaintEvent ev(rect());
+    paintEvent(&ev);
+}
+
 void Canvas::initializeGL()
 {
     Sys_GLConfigureDefaultState();

@@ -223,7 +223,7 @@ void GL_DoUpdate(void)
 
     // Wait until the right time to show the frame so that the realized
     // frame rate is exactly right.
-    glFlush();
+    glFinish();
     DD_WaitForOptimalUpdateTime();
 
     // Blit screen to video.

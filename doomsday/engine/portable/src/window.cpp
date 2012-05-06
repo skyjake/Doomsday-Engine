@@ -22,6 +22,7 @@
 
 #include <QWidget>
 #include <QApplication>
+#include <QPaintEvent>
 #include <QDesktopWidget>
 #include <QSettings>
 #include <stdlib.h>
@@ -821,7 +822,7 @@ static void drawCanvasWithCallback(Canvas& canvas)
     {
         win->drawFunc();
     }
-    // Now we can continue with the main loop.
+    // Now we can continue with the main loop (if it was paused).
     LegacyCore_ResumeLoop(de2LegacyCore);
 }
 
@@ -1140,13 +1141,14 @@ void Window_Draw(Window* win)
 
     if(Window_ShouldRepaintManually(win))
     {
-        // We will perform the drawing manually right away.
         LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
-        win->widget->canvas().repaint();
+
+        // We will perform the drawing manually right away.
+        win->widget->canvas().forceImmediateRepaint();
     }
     else
     {
-        // We want no further iterations of the main loop until the frame has been drawn.
+        // Don't run the main loop until after the paint event has been dealt with.
         LegacyCore_PauseLoop(de2LegacyCore);
 
         // Request repaint at the earliest convenience.
@@ -1306,14 +1308,13 @@ boolean Window_IsMouseTrapped(const Window* wnd)
 
 boolean Window_ShouldRepaintManually(const Window* wnd)
 {
+#if defined(WIN32) || defined(MACOSX)
+    // We want complete control over timing when in fullscreen mode.
+    return Window_IsFullscreen(wnd);
+#else
+    // X11 does not like manual repainting.
     DENG_UNUSED(wnd);
     return false;
-
-#if 0
-    // When mouse is trapped, we update the screen during the main loop
-    // iteration rather than waiting for the windowing system to send an update
-    // event.
-    return Window_IsMouseTrapped(wnd);
 #endif
 }
 
