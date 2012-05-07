@@ -2,10 +2,10 @@
 @INCLUDE = ../doomsday.doxy
 
 PROJECT_NAME        = "Doomsday Engine"
-PROJECT_NUMBER      = 1.9.7
+PROJECT_NUMBER      = 1.9.8
 PROJECT_BRIEF       = "Internal documentation (Windows)"
 OUTPUT_DIRECTORY    = ../apidoc/win32/
 
 INPUT               = api portable win32
 
-PREDEFINED          = __DOOMSDAY__ WIN32
+PREDEFINED          = __DOOMSDAY__ WIN32 __cplusplus
