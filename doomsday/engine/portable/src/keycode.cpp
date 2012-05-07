@@ -206,6 +206,7 @@ int Keycode_TranslateFromQt(int qtKey, int nativeVirtualKey, int nativeScanCode)
     {
     case Qt::Key_Escape:        return DDKEY_ESCAPE;
     case Qt::Key_Tab:           return DDKEY_TAB;
+    case Qt::Key_Backtab:       return DDKEY_TAB; // Shift detected separately
     case Qt::Key_Backspace:     return DDKEY_BACKSPACE;
     case Qt::Key_Space:         return ' ';
     case Qt::Key_Pause:         return DDKEY_PAUSE;
