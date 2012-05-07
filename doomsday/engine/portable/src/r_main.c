@@ -80,7 +80,6 @@ extern boolean firstFrameAfterLoad;
 int validCount = 1; // Increment every time a check is made.
 int frameCount; // Just for profiling purposes.
 int rendInfoTris = 0;
-int useVSync = 0;
 
 // Precalculated math tables.
 fixed_t* fineCosine = &finesine[FINEANGLES / 4];
@@ -125,8 +124,6 @@ void R_Register(void)
     C_VAR_BYTE("rend-info-frametime", &showFrameTimePos, 0, 0, 1);
     C_VAR_BYTE("rend-info-rendpolys", &rendInfoRPolys, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_INT("rend-info-tris", &rendInfoTris, 0, 0, 1);
-
-//    C_VAR_INT("rend-vsync", &useVSync, 0, 0, 1);
 
     C_CMD("viewgrid", "ii", ViewGrid);
 
