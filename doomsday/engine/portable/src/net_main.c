@@ -362,8 +362,7 @@ void Net_ResetTimer(void)
 }
 
 /**
- * @return @c true, if the specified player is a real, local
- *         player.
+ * @return @c true, if the specified player is a real, local player.
  */
 boolean Net_IsLocalPlayer(int plrNum)
 {
