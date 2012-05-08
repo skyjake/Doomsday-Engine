@@ -426,11 +426,6 @@ boolean LineDef_BackClosed(const LineDef* lineDef, int side, boolean ignoreOpaci
     assert(lineDef);
 
     if(!lineDef->L_side(side^1)) return true;
-
-    /// @todo What is the correct behavior here? Linedef with a null back side
-    /// in Hexen map08. -jk
-    if(!lineDef->L_side(side)) return true;
-
     if(lineDef->L_backsector == lineDef->L_frontsector) return false; // Never.
 
     frontSec = lineDef->L_sector(side);
