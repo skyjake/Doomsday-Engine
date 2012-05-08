@@ -61,6 +61,28 @@ static cmhash_t* ClMobj_Hash(thid_t id)
     return GameMap_ClMobjHash(theMap, id);
 }
 
+#ifdef _DEBUG
+void checkMobjHash(void)
+{
+    int i;
+    assert(theMap != 0);
+    for(i = 0; i < CLIENT_MOBJ_HASH_SIZE; ++i)
+    {
+        int count1 = 0, count2 = 0;
+        clmoinfo_t* info;
+        for(info = theMap->clMobjHash[i].first; info; info = info->next, count1++)
+        {
+            assert(ClMobj_MobjForInfo(info) != 0);
+        }
+        for(info = theMap->clMobjHash[i].last; info; info = info->prev, count2++)
+        {
+            assert(ClMobj_MobjForInfo(info) != 0);
+        }
+        assert(count1 == count2);
+    }
+}
+#endif
+
 /**
  * Links the clmobj into the client mobj hash table.
  */
@@ -71,6 +93,10 @@ static void ClMobj_LinkInHash(mobj_t* mo, thid_t id)
     clmoinfo_t* info = ClMobj_GetInfo(mo);
 
     CL_ASSERT_CLMOBJ(mo);
+
+#ifdef _DEBUG
+    checkMobjHash();
+#endif
 
     // Set the ID.
     mo->thinker.id = id;
@@ -87,6 +113,10 @@ static void ClMobj_LinkInHash(mobj_t* mo, thid_t id)
     {
         hash->first = info;
     }
+
+#ifdef _DEBUG
+    checkMobjHash();
+#endif
 }
 
 /**
@@ -99,6 +129,10 @@ static void ClMobj_UnlinkInHash(mobj_t* mo)
 
     CL_ASSERT_CLMOBJ(mo);
 
+#ifdef _DEBUG
+    checkMobjHash();
+#endif
+
     if(hash->first == info)
         hash->first = info->next;
     if(hash->last == info)
@@ -107,15 +141,16 @@ static void ClMobj_UnlinkInHash(mobj_t* mo)
         info->next->prev = info->prev;
     if(info->prev)
         info->prev->next = info->next;
+
+#ifdef _DEBUG
+    checkMobjHash();
+#endif
 }
 
 mobj_t* ClMobj_MobjForInfo(clmoinfo_t* info)
 {
     assert(info->startMagic == CLM_MAGIC1);
     assert(info->endMagic == CLM_MAGIC2);
-
-    if(info->startMagic != CLM_MAGIC1 || info->endMagic != CLM_MAGIC2)
-        return 0; // Not a clmobj info.
 
     return (mobj_t*) ((char*)info + sizeof(clmoinfo_t));
 }
@@ -533,6 +568,10 @@ void ClMobj_Destroy(mobj_t* mo)
 {
     clmoinfo_t* info = 0;
 
+#ifdef _DEBUG
+    checkMobjHash();
+#endif
+
     DEBUG_VERBOSE2_Message(("ClMobj_Destroy: mobj %i being destroyed.\n", mo->thinker.id));
 
     CL_ASSERT_CLMOBJ(mo);
@@ -543,11 +582,15 @@ void ClMobj_Destroy(mobj_t* mo)
 
     // The ID is free once again.
     GameMap_SetMobjID(theMap, mo->thinker.id, false);
-    ClMobj_Unlink(mo);
-    ClMobj_Unlink(mo);
+    ClMobj_UnlinkInHash(mo);
+    ClMobj_Unlink(mo); // from block/sector
 
     // This will free the entire mobj + info.
     Z_Free(info);
+
+#ifdef _DEBUG
+    checkMobjHash();
+#endif
 }
 
 /**
@@ -1018,4 +1061,8 @@ void ClMobj_ReadNullDelta2(boolean skip)
     // The mobj will soon time out and be permanently removed.
     info->time = Sys_GetRealTime();
     info->flags |= CLMF_UNPREDICTABLE | CLMF_NULLED;
+
+#ifdef _DEBUG
+    checkMobjHash();
+#endif
 }
