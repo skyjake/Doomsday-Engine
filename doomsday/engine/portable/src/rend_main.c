@@ -2810,7 +2810,9 @@ static void Rend_RenderBspLeaf(BspLeaf* bspLeaf)
             if(hedge->frameFlags & HEDGEINF_FACINGFRONT)
             {
                 boolean solid = Rend_RenderHEdge(hedge, bspLeaf);
-                if(solid)
+
+                // When the viewer is in the void no wall is "solid".
+                if(solid && !P_IsInVoid(viewPlayer))
                 {
                     C_AddRangeFromViewRelPoints(hedge->HE_v1origin, hedge->HE_v2origin);
                 }
