@@ -419,26 +419,27 @@ Plane* LineDef_CeilingMax(const LineDef* lineDef)
                lineDef->L_backsector->SP_plane(PLN_CEILING) : lineDef->L_frontsector->SP_plane(PLN_CEILING);
 }
 
+/// @todo This logic does not belong as a member of LineDef. -dj
 boolean LineDef_BackClosed(const LineDef* lineDef, int side, boolean ignoreOpacity)
 {
     Sector* frontSec;
     Sector* backSec;
     assert(lineDef);
 
+    if(!lineDef->L_side(side))   return false;
     if(!lineDef->L_side(side^1)) return true;
-
-    /// @todo What is the correct behavior here? Linedef with a null back side
-    /// in Hexen map08. -jk
-    if(!lineDef->L_side(side)) return true;
-
-    if(lineDef->L_backsector == lineDef->L_frontsector) return false; // Never.
 
     frontSec = lineDef->L_sector(side);
     backSec  = lineDef->L_sector(side^1);
+    if(frontSec == backSec) return false; // Never.
 
-    if(backSec->SP_floorvisheight >= backSec->SP_ceilvisheight) return true;
-    if(backSec->SP_ceilvisheight  <= frontSec->SP_floorvisheight) return true;
-    if(backSec->SP_floorvisheight >= frontSec->SP_ceilvisheight) return true;
+    if(frontSec && backSec)
+    {
+        if(backSec->SP_floorvisheight >= backSec->SP_ceilvisheight)   return true;
+        if(backSec->SP_ceilvisheight  <= frontSec->SP_floorvisheight) return true;
+        if(backSec->SP_floorvisheight >= frontSec->SP_ceilvisheight)  return true;
+    }
+
     return LineDef_MiddleMaterialCoversOpening(lineDef, side, ignoreOpacity);
 }
 
