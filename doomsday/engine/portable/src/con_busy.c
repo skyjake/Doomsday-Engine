@@ -51,8 +51,8 @@ static void Con_BusyPrepareResources(void);
 static void deleteBusyTextures(void);
 static void seedDoomWipeSine(void);
 
-int rTransition = (int) TS_CROSSFADE;
-int rTransitionTics = 28;
+int rTransition = (int) TS_CROSSFADE; ///< cvar Default transition style.
+int rTransitionTics = 28; ///< cvar Default transition duration (in tics).
 
 static boolean busyInited;
 static BusyTask* busyTask; // Current task.
@@ -70,10 +70,15 @@ static mutex_t busy_Mutex; // To prevent Data races in the busy thread.
 static DGLuint texLoading[2];
 static DGLuint texScreenshot; // Captured screenshot of the latest frame.
 
-static boolean transitionInProgress = false;
-static transitionstyle_t transitionStyle = 0;
-static uint transitionStartTime = 0;
-static float transitionPosition;
+typedef struct {
+    boolean inProgress; /// @c true= a transition is presently being animated.
+    transitionstyle_t style; /// Style of transition (cross-fade, wipe, etc...).
+    uint startTime; /// Time at the moment the transition began (in 35hz tics).
+    uint tics; /// Time duration of the animation.
+    float position; /// Animation interpolation point [0..1].
+} transitionstate_t;
+
+static transitionstate_t transition;
 
 static float doomWipeSine[DOOMWIPESINE_NUMSAMPLES];
 static float doomWipeSamples[SCREENWIDTH+1];
@@ -119,17 +124,18 @@ void BusyTask_Begin(BusyTask* task)
     busyTaskEndedWithError = false;
     busyInited = true;
 
-    // Start the busy worker thread, which will proces things in the
+    // Start the busy worker thread, which will process the task in the
     // background while we keep the user occupied with nice animations.
     busyThread = Sys_StartThread(busyTask->worker, busyTask->workerData);
 
     // Are we doing a transition effect?
     if(task->_willAnimateTransition)
     {
-        transitionStyle = rTransition;
-        if(transitionStyle == TS_DOOM || transitionStyle == TS_DOOMSMOOTH)
+        transition.tics = rTransitionTics;
+        transition.style = rTransition;
+        if(transition.style == TS_DOOM || transition.style == TS_DOOMSMOOTH)
             seedDoomWipeSine();
-        transitionInProgress = true;
+        transition.inProgress = true;
     }
 
     // Switch the engine loop and window to the busy mode.
@@ -184,10 +190,10 @@ void BusyTask_End(BusyTask* task)
         Con_AbnormalShutdown(busyError);
     }
 
-    if(transitionInProgress)
+    if(transition.inProgress)
     {
-        transitionStartTime = Sys_GetTime();
-        transitionPosition = 0;
+        transition.startTime = Sys_GetTime();
+        transition.position = 0;
     }
 
     // Make sure that any remaining deferred content gets uploaded.
@@ -274,14 +280,13 @@ static void Con_BusyPrepareResources(void)
 
 static void deleteBusyTextures(void)
 {
-    if(novideo)
-        return;
+    if(novideo) return;
 
     glDeleteTextures(2, (const GLuint*) texLoading);
     texLoading[0] = texLoading[1] = 0;
 
-    // Don't release this yet if doing a transition.
-    if(!transitionInProgress)
+    // Don't release yet if doing a transition.
+    if(!transition.inProgress)
         Con_ReleaseScreenshotTexture();
 
     busyFont = 0;
@@ -817,7 +822,19 @@ static void BusyTask_Drawer(void)
 
 boolean Con_TransitionInProgress(void)
 {
-    return transitionInProgress;
+    return transition.inProgress;
+}
+
+static void Con_EndTransition(void)
+{
+    if(!transition.inProgress) return;
+
+    // Clear any input events that might have accumulated during the transition.
+    DD_ClearEvents();
+    B_ActivateContext(B_ContextByName(UI_BINDING_CONTEXT_NAME), false);
+
+    Con_ReleaseScreenshotTexture();
+    transition.inProgress = false;
 }
 
 void Con_TransitionTicker(timespan_t ticLength)
@@ -825,15 +842,10 @@ void Con_TransitionTicker(timespan_t ticLength)
     if(isDedicated) return;
     if(!Con_TransitionInProgress()) return;
 
-    transitionPosition = (float)(Sys_GetTime() - transitionStartTime) / rTransitionTics;
-    if(transitionPosition >= 1)
+    transition.position = (float)(Sys_GetTime() - transition.startTime) / transition.tics;
+    if(transition.position >= 1)
     {
-        // Clear any input events that might have accumulated during the transition.
-        DD_ClearEvents();
-        B_ActivateContext(B_ContextByName(UI_BINDING_CONTEXT_NAME), false);
-
-        Con_ReleaseScreenshotTexture();
-        transitionInProgress = false;
+        Con_EndTransition();
     }
 }
 
@@ -852,8 +864,8 @@ static void seedDoomWipeSine(void)
 static float sampleDoomWipeSine(float point)
 {
     float sample = doomWipeSine[(uint)ROUND((DOOMWIPESINE_NUMSAMPLES-1) * MINMAX_OF(0, point, 1))];
-    float offset = SCREENHEIGHT * transitionPosition * transitionPosition;
-    return offset + (SCREENHEIGHT/2) * (transitionPosition + sample) * transitionPosition * transitionPosition;
+    float offset = SCREENHEIGHT * transition.position * transition.position;
+    return offset + (SCREENHEIGHT/2) * (transition.position + sample) * transition.position * transition.position;
 }
 
 static void sampleDoomWipe(void)
@@ -881,15 +893,15 @@ void Con_DrawTransition(void)
     GL_BindTextureUnmanaged(texScreenshot, GL_LINEAR);
     glEnable(GL_TEXTURE_2D);
 
-    switch(transitionStyle)
+    switch(transition.style)
     {
     case TS_DOOMSMOOTH: {
         float topAlpha, s, div, colWidth = 1.f / SCREENWIDTH;
         int x, y, h, i;
 
         sampleDoomWipe();
-        div = 1 - .25f * transitionPosition;
-        topAlpha = 1 - transitionPosition;
+        div = 1 - .25f * transition.position;
+        topAlpha = 1 - transition.position;
         topAlpha *= topAlpha;
 
         h = SCREENHEIGHT * (1 - div);
@@ -945,7 +957,7 @@ void Con_DrawTransition(void)
         break;
       }
     case TS_CROSSFADE:
-        glColor4f(1, 1, 1, 1 - transitionPosition);
+        glColor4f(1, 1, 1, 1 - transition.position);
 
         glBegin(GL_QUADS);
             glTexCoord2f(0, 0); glVertex2f(0, 0);
