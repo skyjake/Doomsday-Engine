@@ -1919,9 +1919,20 @@ static boolean rendHEdgeSection(HEdge* hedge, BspLeaf* bspLeaf, SideDefSection s
         }
 
         {
+        SideDef* frontSide = HEDGE_SIDEDEF(hedge);
         float deltaL, deltaR, diff;
 
-        LineDef_LightLevelDelta(hedge->lineDef, hedge->side, &deltaL, &deltaR);
+        // Do not apply an angle based lighting delta if this surface's material
+        // has been chosen as a HOM fix (we must remain consistent with the lighting
+        // applied to the back plane (on this half-edge's back side)).
+        if(frontSide && isTwoSided && section != SS_MIDDLE && (surface->inFlags & SUIF_FIX_MISSING_MATERIAL))
+        {
+            deltaL = deltaR = 0;
+        }
+        else
+        {
+            LineDef_LightLevelDelta(hedge->lineDef, hedge->side, &deltaL, &deltaR);
+        }
 
         // Linear interpolation of the linedef light deltas to the edges of the hedge.
         diff = deltaR - deltaL;
