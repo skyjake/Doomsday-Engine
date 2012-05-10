@@ -2275,8 +2275,6 @@ static boolean Rend_RenderHEdgeTwosided(HEdge* hedge, BspLeaf* bspLeaf)
        line->L_frontsector == line->L_backsector)
        return false;
 
-    /// @fixme Most of these cases are now irrelevant and can be removed.
-
     if(!solidSeg) // We'll have to determine whether we can...
     {
         if(backSec == frontSec)
@@ -2289,9 +2287,25 @@ static boolean Rend_RenderHEdgeTwosided(HEdge* hedge, BspLeaf* bspLeaf)
                 (bfloor->visHeight >= fceil->visHeight &&
                     (frontSide->SW_bottommaterial || frontSide->SW_middlematerial)))
         {
-            // A closed gap.
-            solidSeg = true;
+            // A closed gap?
+            if(FEQUAL(fceil->visHeight, bfloor->visHeight))
+            {
+                solidSeg = (bceil->visHeight <= bfloor->visHeight) ||
+                           !(Surface_IsSkyMasked(&fceil->surface) &&
+                             Surface_IsSkyMasked(&bceil->surface));
+            }
+            else if(FEQUAL(ffloor->visHeight, bceil->visHeight))
+            {
+                solidSeg = (bfloor->visHeight >= bceil->visHeight) ||
+                           !(Surface_IsSkyMasked(&ffloor->surface) &&
+                             Surface_IsSkyMasked(&bfloor->surface));
+            }
+            else
+            {
+                solidSeg = true;
+            }
         }
+        /// @todo Is this still necessary?
         else if(bceil->visHeight <= bfloor->visHeight ||
                 (!(bceil->visHeight - bfloor->visHeight > 0) && bfloor->visHeight > ffloor->visHeight && bceil->visHeight < fceil->visHeight &&
                 (frontSide->SW_topmaterial /*&& !(frontSide->flags & SDF_MIDTEXUPPER)*/) &&
