@@ -967,7 +967,7 @@ void ClMobj_ReadDelta2(boolean skip)
     // different than the server-side floor.
     if(!d->dPlayer && onFloor && gx.MobjCheckPositionXYZ)
     {
-        float* floorZ = gx.GetVariable(DD_TM_FLOOR_Z);
+        coord_t* floorZ = gx.GetVariable(DD_TM_FLOOR_Z);
         if(floorZ)
         {
             gx.MobjCheckPositionXYZ(d, d->origin[VX], d->origin[VY], DDMAXFLOAT);
