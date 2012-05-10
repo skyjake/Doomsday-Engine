@@ -524,6 +524,9 @@ void GL_Init2DState(void)
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_TEXTURE_CUBE_MAP);
 
+    // Default, full area viewport.
+    glViewport(0, 0, Window_Width(theWindow), Window_Height(theWindow));
+
     // The projection matrix.
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -533,8 +536,7 @@ void GL_Init2DState(void)
     usingFog = false;
     glDisable(GL_FOG);
     glFogi(GL_FOG_MODE, (fogModeDefault == 0 ? GL_LINEAR :
-                          fogModeDefault == 1 ? GL_EXP :
-                          GL_EXP2));
+                         fogModeDefault == 1 ? GL_EXP    : GL_EXP2));
     glFogf(GL_FOG_START, DEFAULT_FOG_START);
     glFogf(GL_FOG_END, DEFAULT_FOG_END);
     glFogf(GL_FOG_DENSITY, DEFAULT_FOG_DENSITY);
