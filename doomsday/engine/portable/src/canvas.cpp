@@ -95,6 +95,8 @@ struct Canvas::Instance
 
     void grabMouse()
     {
+        if(!self->isVisible()) return;
+
         LOG_DEBUG("grabbing mouse (already grabbed? %b)") << mouseGrabbed;
 
         if(mouseGrabbed) return;
@@ -123,6 +125,8 @@ struct Canvas::Instance
 
     void ungrabMouse()
     {
+        if(!self->isVisible()) return;
+
         LOG_DEBUG("ungrabbing mouse (presently grabbed? %b)") << mouseGrabbed;
 
         if(!mouseGrabbed) return;

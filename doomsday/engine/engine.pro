@@ -58,6 +58,14 @@ else {
 
     # DisplayMode uses the Xrandr and XFree86-VideoMode extensions.
     !deng_nodisplaymode {
+        # Check that the X11 extensions exist.
+        !system(pkg-config --exists xxf86vm) {
+            error(Missing dependency: X11 XFree86 video mode extension library (development headers). Alternatively disable display mode functionality with: CONFIG+=deng_nodisplaymode)
+        }
+        !system(pkg-config --exists xrandr) {
+            error(Missing dependency: X11 RandR extension library (development headers). Alternatively disable display mode functionality with: CONFIG+=deng_nodisplaymode)
+        }
+
         QMAKE_CXXFLAGS += $$system(pkg-config xrandr xxf86vm --cflags)
                   LIBS += $$system(pkg-config xrandr xxf86vm --libs)
     }
