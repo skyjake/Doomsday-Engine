@@ -1143,15 +1143,15 @@ void Window_Draw(Window* win)
     {
         LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-        // We will perform the drawing manually right away.
-        win->widget->canvas().forceImmediateRepaint();
+        // Perform the drawing manually right away.
+        win->widget->canvas().updateGL();
     }
     else
     {
         // Don't run the main loop until after the paint event has been dealt with.
         LegacyCore_PauseLoop(de2LegacyCore);
 
-        // Request repaint at the earliest convenience.
+        // Request update at the earliest convenience.
         win->widget->canvas().update();
     }
 }
@@ -1308,14 +1308,17 @@ boolean Window_IsMouseTrapped(const Window* wnd)
 
 boolean Window_ShouldRepaintManually(const Window* wnd)
 {
-#if defined(WIN32) || defined(MACOSX)
-    // We want complete control over timing when in fullscreen mode.
-    return Window_IsFullscreen(wnd);
-#else
+//#if defined(WIN32) || defined(MACOSX)
+
+    // When the pointer is not grabbed, allow the system to regulate window
+    // updates (e.g., for window manipulation).
+    return !Mouse_IsPresent() || Window_IsMouseTrapped(wnd);
+
+/*#else
     // X11 does not like manual repainting.
     DENG_UNUSED(wnd);
     return false;
-#endif
+#endif*/
 }
 
 void Window_UpdateCanvasFormat(Window* wnd)
