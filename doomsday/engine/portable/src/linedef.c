@@ -43,11 +43,42 @@ static float lightLevelDelta(const pvec2f_t normal)
     return (1.0f / 255) * (normal[VX] * 18) * rendLightWallAngle;
 }
 
+/**
+ * @param lineDef  LineDef instance.
+ * @param ignoreOpacity  @c true= do not consider Material opacity.
+ * @return  @c true if this LineDef's side is considered "closed" (i.e.,
+ *     there is no opening through which the back Sector can be seen).
+ *     Tests consider all Planes which interface with this and the "middle"
+ *     Material used on the relative front side (if any).
+ */
+static boolean backClosedForBlendNeighbor(const LineDef* lineDef, int side, boolean ignoreOpacity)
+{
+    Sector* frontSec;
+    Sector* backSec;
+    assert(lineDef);
+
+    if(!lineDef->L_side(side))   return false;
+    if(!lineDef->L_side(side^1)) return true;
+
+    frontSec = lineDef->L_sector(side);
+    backSec  = lineDef->L_sector(side^1);
+    if(frontSec == backSec) return false; // Never.
+
+    if(frontSec && backSec)
+    {
+        if(backSec->SP_floorvisheight >= backSec->SP_ceilvisheight)   return true;
+        if(backSec->SP_ceilvisheight  <= frontSec->SP_floorvisheight) return true;
+        if(backSec->SP_floorvisheight >= frontSec->SP_ceilvisheight)  return true;
+    }
+
+    return LineDef_MiddleMaterialCoversOpening(lineDef, side, ignoreOpacity);
+}
+
 static LineDef* findBlendNeighbor(const LineDef* l, byte side, byte right,
     binangle_t* diff)
 {
     const lineowner_t* farVertOwner = l->L_vo(right^side);
-    if(LineDef_BackClosed(l, side, true/*ignore opacity*/))
+    if(backClosedForBlendNeighbor(l, side, true/*ignore opacity*/))
     {
         return R_FindSolidLineNeighbor(l->L_sector(side), l, farVertOwner, right, diff);
     }
@@ -417,30 +448,6 @@ Plane* LineDef_CeilingMax(const LineDef* lineDef)
         return lineDef->L_frontsector->SP_plane(PLN_CEILING);
     return lineDef->L_backsector->SP_ceilvisheight > lineDef->L_frontsector->SP_ceilvisheight?
                lineDef->L_backsector->SP_plane(PLN_CEILING) : lineDef->L_frontsector->SP_plane(PLN_CEILING);
-}
-
-/// @todo This logic does not belong as a member of LineDef. -dj
-boolean LineDef_BackClosed(const LineDef* lineDef, int side, boolean ignoreOpacity)
-{
-    Sector* frontSec;
-    Sector* backSec;
-    assert(lineDef);
-
-    if(!lineDef->L_side(side))   return false;
-    if(!lineDef->L_side(side^1)) return true;
-
-    frontSec = lineDef->L_sector(side);
-    backSec  = lineDef->L_sector(side^1);
-    if(frontSec == backSec) return false; // Never.
-
-    if(frontSec && backSec)
-    {
-        if(backSec->SP_floorvisheight >= backSec->SP_ceilvisheight)   return true;
-        if(backSec->SP_ceilvisheight  <= frontSec->SP_floorvisheight) return true;
-        if(backSec->SP_floorvisheight >= frontSec->SP_ceilvisheight)  return true;
-    }
-
-    return LineDef_MiddleMaterialCoversOpening(lineDef, side, ignoreOpacity);
 }
 
 int LineDef_SetProperty(LineDef* lin, const setargs_t* args)

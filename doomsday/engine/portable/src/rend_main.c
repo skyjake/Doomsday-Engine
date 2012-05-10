@@ -2418,6 +2418,41 @@ static __inline coord_t skyFixCeilZ(const Plane* frontCeil, const Plane* backCei
 }
 
 /**
+ * @param ignoreOpacity  @c true= do not consider Material opacity.
+ * @return  @c true if this half-edge is considered "closed" (i.e.,
+ *     there is no opening through which the back Sector can be seen).
+ *     Tests consider all Planes which interface with this and the "middle"
+ *     Material used on the relative front side (if any).
+ */
+static boolean hedgeBackClosedForSkyFix(const HEdge* hedge, boolean ignoreOpacity)
+{
+    LineDef* lineDef;
+    Sector* frontSec;
+    Sector* backSec;
+    byte side;
+    assert(hedge && hedge->lineDef);
+
+    lineDef = hedge->lineDef;
+    side = hedge->side;
+
+    if(!lineDef->L_side(side))   return false;
+    if(!lineDef->L_side(side^1)) return true;
+
+    frontSec = lineDef->L_sector(side);
+    backSec  = lineDef->L_sector(side^1);
+    if(frontSec == backSec) return false; // Never.
+
+    if(frontSec && backSec)
+    {
+        if(backSec->SP_floorvisheight >= backSec->SP_ceilvisheight)   return true;
+        if(backSec->SP_ceilvisheight  <= frontSec->SP_floorvisheight) return true;
+        if(backSec->SP_floorvisheight >= frontSec->SP_ceilvisheight)  return true;
+    }
+
+    return LineDef_MiddleMaterialCoversOpening(lineDef, side, ignoreOpacity);
+}
+
+/**
  * Determine which sky fixes are necessary for the specified @a hedge.
  * @param hedge  HEdge to be evaluated.
  * @return  @see skyCapFlags
@@ -2437,7 +2472,7 @@ static int chooseHEdgeSkyFixes(HEdge* hedge)
 
             if(hasSkyFloor || hasSkyCeiling)
             {
-                const boolean hasClosedBack = LineDef_BackClosed(hedge->lineDef, hedge->side, true/*ignore opacity*/);
+                const boolean hasClosedBack = hedgeBackClosedForSkyFix(hedge, true/*ignore opacity*/);
 
                 // Lower fix?
                 if(hasSkyFloor)

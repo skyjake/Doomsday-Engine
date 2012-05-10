@@ -131,16 +131,6 @@ Plane* LineDef_CeilingMin(const LineDef* lineDef);
 Plane* LineDef_CeilingMax(const LineDef* lineDef);
 
 /**
- * @param lineDef  LineDef instance.
- * @param ignoreOpacity  @c true= do not consider Material opacity.
- * @return  @c true if this LineDef's side is considered "closed" (i.e.,
- *     there is no opening through which the back Sector can be seen).
- *     Tests consider all Planes which interface with this and the "middle"
- *     Material used on the relative front side (if any).
- */
-boolean LineDef_BackClosed(const LineDef* lineDef, int side, boolean ignoreOpacity);
-
-/**
  * The DOOM lighting model applies a sector light level delta when drawing
  * line segments based on their 2D world angle.
  *
