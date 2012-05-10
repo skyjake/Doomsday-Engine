@@ -1308,17 +1308,10 @@ boolean Window_IsMouseTrapped(const Window* wnd)
 
 boolean Window_ShouldRepaintManually(const Window* wnd)
 {
-//#if defined(WIN32) || defined(MACOSX)
-
     // When the pointer is not grabbed, allow the system to regulate window
     // updates (e.g., for window manipulation).
+    if(Window_IsFullscreen(wnd)) return true;
     return !Mouse_IsPresent() || Window_IsMouseTrapped(wnd);
-
-/*#else
-    // X11 does not like manual repainting.
-    DENG_UNUSED(wnd);
-    return false;
-#endif*/
 }
 
 void Window_UpdateCanvasFormat(Window* wnd)
