@@ -134,6 +134,11 @@ public:
     bool isMouseTrapped() const;
 
     /**
+     * Determines if the mouse cursor is currently visible or not.
+     */
+    bool isCursorVisible() const;
+
+    /**
      * Redraws the Canvas contents immediately. Does not return until the frame
      * has been swapped to the screen. This means if vsync is enabled, this
      * function will block for several milliseconds. The draw callback is
