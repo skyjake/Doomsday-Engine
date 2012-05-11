@@ -22,7 +22,9 @@ win32 {
 
     QMAKE_LFLAGS += /DEF:\"$$PWD/api/dsopenal.def\"
     OTHER_FILES += api/dsopenal.def
+}
 
+!macx {
     INSTALLS += target
     target.path = $$DENG_LIB_DIR
 }
