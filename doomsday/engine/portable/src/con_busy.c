@@ -464,7 +464,6 @@ static void BusyTask_Loop(void)
     // Post and discard all input events.
     DD_ProcessEvents(0);
     DD_ProcessSharpEvents(0);
-    DD_ProcessLateSharpEvents();
 
     if(canUpload)
     {
