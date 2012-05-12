@@ -62,7 +62,6 @@ enum {
     VG_XHAIR3,
     VG_XHAIR4,
     VG_XHAIR5,
-    VG_XHAIR6,
     NUM_VECTOR_GRAPHICS
 }; /* svgid_t*/
 

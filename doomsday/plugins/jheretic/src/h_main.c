@@ -220,6 +220,7 @@ void H_PreInit(void)
     cfg.hudColor[2] = .278f;
     cfg.hudColor[3] = 1;
     cfg.hudIconAlpha = 1;
+    cfg.xhairAngle = 0;
     cfg.xhairSize = .5f;
     cfg.xhairVitality = false;
     cfg.xhairColor[0] = 1;

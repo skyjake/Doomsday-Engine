@@ -202,6 +202,7 @@ void X_PreInit(void)
     }
     cfg.lookSpeed = 3;
     cfg.turnSpeed = 1;
+    cfg.xhairAngle = 0;
     cfg.xhairSize = .5f;
     cfg.xhairVitality = false;
     cfg.xhairColor[0] = 1;

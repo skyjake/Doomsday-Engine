@@ -253,6 +253,9 @@ desc = 1=Slam the menu when opening.
 [xg-dev]
 desc = 1=Print XG debug messages.
 
+[view-cross-angle]
+desc = Rotation angle for the crosshair [0..1] (1=360 degrees).
+
 [view-cross-type]
 desc = The current crosshair.
 

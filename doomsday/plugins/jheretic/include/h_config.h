@@ -201,6 +201,7 @@ typedef struct jheretic_config_s {
 
     // Crosshair.
     int             xhair;
+    float           xhairAngle;
     float           xhairSize;
     byte            xhairVitality;
     float           xhairColor[4];
