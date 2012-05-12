@@ -1063,6 +1063,19 @@ void DD_ConvertEvent(const ddevent_t* ddEvent, event_t* ev)
     }
 }
 
+static void updateDeviceAxes(timespan_t ticLength)
+{
+    int i;
+    for(i = 0; i < NUM_INPUT_DEVICES; ++i)
+    {
+        uint k;
+        for(k = 0; k < inputDevices[i].numAxes; ++k)
+        {
+            I_UpdateAxis(&inputDevices[i], k, ticLength);
+        }
+    }
+}
+
 /**
  * Send all the events of the given timestamp down the responder chain.
  */
@@ -1070,7 +1083,6 @@ static void dispatchEvents(eventqueue_t* q, timespan_t ticLength, boolean update
 {
     const boolean callGameResponders = DD_GameLoaded();
     ddevent_t* ddev;
-    int i;
 
     while((ddev = nextFromQueue(q)))
     {
@@ -1121,14 +1133,7 @@ static void dispatchEvents(eventqueue_t* q, timespan_t ticLength, boolean update
     if(updateAxes)
     {
         // Input events have modified input device state: update the axis positions.
-        for(i = 0; i < NUM_INPUT_DEVICES; ++i)
-        {
-            uint k;
-            for(k = 0; k < inputDevices[i].numAxes; ++k)
-            {
-                I_UpdateAxis(&inputDevices[i], k, ticLength);
-            }
-        }
+        updateDeviceAxes(ticLength);
     }
 }
 
