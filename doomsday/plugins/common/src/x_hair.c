@@ -78,7 +78,8 @@ static float currentOpacity(player_t* player)
     if(player->plr->flags & DDPF_DEAD)
     {
         // Make use of the reborn timer to implement the fade out.
-        if(player->rebornWait > 0 && player->rebornWait < PLAYER_REBORN_TICS)
+        if(player->rebornWait <= 0) return 0;
+        if(player->rebornWait < PLAYER_REBORN_TICS)
         {
             opacity *= (float)player->rebornWait / PLAYER_REBORN_TICS;
         }
