@@ -97,7 +97,8 @@ struct Canvas::Instance
 
     void showCursor(bool yes)
     {
-        LOG_DEBUG("showing cursor %b (presently visible? %b)") << yes << !cursorHidden;
+        LOG_DEBUG("%s cursor (presently visible? %b)")
+                << (yes? "showing" : "hiding") << !cursorHidden;
 
         if(!yes && !cursorHidden)
         {
