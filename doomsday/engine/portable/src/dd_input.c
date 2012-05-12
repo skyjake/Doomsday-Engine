@@ -78,6 +78,7 @@ int     repWait1 = 15, repWait2 = 3;
 int     keyRepeatDelay1 = 430, keyRepeatDelay2 = 85;    // milliseconds
 unsigned int  mouseFreq = 0;
 boolean shiftDown = false, altDown = false;
+byte    processSharpTogglesAfterTickers = true;
 
 inputdev_t inputDevices[NUM_INPUT_DEVICES];
 
@@ -89,7 +90,8 @@ static boolean ignoreInput = false;
 static byte shiftKeyMappings[NUMKKEYS], altKeyMappings[NUMKKEYS];
 
 static eventqueue_t queue;
-static eventqueue_t sharpQueue;
+static eventqueue_t sharpQueue;     // for axes/angles
+static eventqueue_t lateSharpQueue; // for toggles
 
 static char defaultShiftTable[96] = // Contains characters 32 to 127.
 {
@@ -126,6 +128,7 @@ void DD_RegisterInput(void)
     C_VAR_INT("input-key-delay1", &keyRepeatDelay1, CVF_NO_MAX, 50, 0);
     C_VAR_INT("input-key-delay2", &keyRepeatDelay2, CVF_NO_MAX, 20, 0);
     C_VAR_BYTE("input-sharp", &useSharpInputEvents, 0, 0, 1);
+    C_VAR_BYTE("input-sharp-lateprocessing", &processSharpTogglesAfterTickers, 0, 0, 1);
 
 #if _DEBUG
     C_VAR_BYTE("rend-dev-input-joy-state", &devRendJoyState, CVF_NO_ARCHIVE, 0, 1);
@@ -899,6 +902,7 @@ void DD_ClearEvents(void)
 {
     clearQueue(&queue);
     clearQueue(&sharpQueue);
+    clearQueue(&lateSharpQueue);
 
     DD_ClearEventStrings();
 }
@@ -926,7 +930,10 @@ void DD_PostEvent(ddevent_t *ev)
     if(useSharpInputEvents && (ev->type == E_TOGGLE || ev->type == E_AXIS ||
                                ev->type == E_ANGLE))
     {
-        q = &sharpQueue;
+        if(ev->type == E_TOGGLE && processSharpTogglesAfterTickers)
+            q = &lateSharpQueue;
+        else
+            q = &sharpQueue;
     }
 
     // Cleanup: make sure only keyboard toggles can have a text insert.
@@ -1079,7 +1086,7 @@ static void updateDeviceAxes(timespan_t ticLength)
 /**
  * Send all the events of the given timestamp down the responder chain.
  */
-static void dispatchEvents(eventqueue_t* q, timespan_t ticLength, boolean updateAxes)
+static void dispatchEvents(eventqueue_t* q)
 {
     const boolean callGameResponders = DD_GameLoaded();
     ddevent_t* ddev;
@@ -1129,12 +1136,6 @@ static void dispatchEvents(eventqueue_t* q, timespan_t ticLength, boolean update
         if(callGameResponders && gx.FallbackResponder)
             gx.FallbackResponder(&ev);
     }
-
-    if(updateAxes)
-    {
-        // Input events have modified input device state: update the axis positions.
-        updateDeviceAxes(ticLength);
-    }
 }
 
 /**
@@ -1167,7 +1168,13 @@ void DD_ProcessEvents(timespan_t ticLength)
     postEvents();
 
     // Dispatch all accumulated events down the responder chain.
-    dispatchEvents(&queue, ticLength, !useSharpInputEvents);
+    dispatchEvents(&queue);
+
+    if(!useSharpInputEvents)
+    {
+        // Input events have modified input device state: update the axis positions.
+        updateDeviceAxes(ticLength);
+    }
 }
 
 void DD_ProcessSharpEvents(timespan_t ticLength)
@@ -1175,7 +1182,22 @@ void DD_ProcessSharpEvents(timespan_t ticLength)
     // Sharp ticks may have some events queued on the side.
     if(DD_IsSharpTick() || !DD_IsFrameTimeAdvancing())
     {
-        dispatchEvents(&sharpQueue, DD_IsFrameTimeAdvancing()? SECONDSPERTIC : ticLength, true);
+        dispatchEvents(&sharpQueue);
+
+        if(useSharpInputEvents)
+        {
+            // Input events have modified input device state: update the axis positions.
+            updateDeviceAxes(DD_IsFrameTimeAdvancing()? SECONDSPERTIC : ticLength);
+        }
+    }
+}
+
+void DD_ProcessLateSharpEvents(void)
+{
+    // Sharp ticks may have some events queued on the side.
+    if(DD_IsSharpTick() || !DD_IsFrameTimeAdvancing())
+    {
+        dispatchEvents(&lateSharpQueue);
     }
 }
 
