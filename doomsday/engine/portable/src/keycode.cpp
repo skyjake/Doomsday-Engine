@@ -90,6 +90,7 @@ static void checkWin32Keymap()
     keymap[VK_OEM_6] = ']';
     keymap[VK_OEM_7] = '#';
     keymap[VK_OEM_8] = '`';
+    keymap[VK_OEM_102] = '`';
     keymap[VK_PRIOR] = DDKEY_PGUP;
     keymap[VK_NEXT] = DDKEY_PGDN;
     keymap[VK_END] = DDKEY_END;
@@ -253,6 +254,8 @@ int Keycode_TranslateFromQt(int qtKey, int nativeVirtualKey, int nativeScanCode)
     /// -- the insertion text is provided outside this mapping.
 
 #ifdef WIN32
+    /// @todo Would the native scancodes be more appropriate than virtual keys?
+    /// (no influence from language settings)
     checkWin32Keymap();
     if(win32Keymap[nativeVirtualKey] > 0)
     {
@@ -335,7 +338,8 @@ int Keycode_TranslateFromQt(int qtKey, int nativeVirtualKey, int nativeScanCode)
 
     // Not supported.
     qDebug() << "Keycode" << qtKey << QString("0x%1").arg(qtKey, 0, 16)
-             << "virtualKey" << nativeVirtualKey << "not translated.";
+             << "virtualKey" << nativeVirtualKey << "scancode" << nativeScanCode
+             << "not translated.";
 
     return 0;
 }
