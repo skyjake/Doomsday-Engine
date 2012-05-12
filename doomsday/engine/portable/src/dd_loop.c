@@ -60,6 +60,7 @@ int maxFrameRate = 120; // Zero means 'unlimited'.
 // Refresh frame count (independant of the viewport-specific frameCount).
 int rFrameCount = 0;
 byte devShowFrameTimeDeltas = false;
+byte processSharpEventsAfterTickers = true;
 
 timespan_t sysTime, gameTime, demoTime, ddMapTime;
 //timespan_t frameStartTime;
@@ -91,8 +92,10 @@ static void runTics(void);
 
 void DD_RegisterLoop(void)
 {
+    C_VAR_BYTE("input-sharp-lateprocessing", &processSharpEventsAfterTickers, 0, 0, 1);
     C_VAR_INT("refresh-rate-maximum", &maxFrameRate, 0, 35, 1000);
-    C_VAR_INT("rend-dev-framecount", &rFrameCount, CVF_NO_ARCHIVE | CVF_PROTECTED, 0, 0);
+    C_VAR_INT("rend-dev-framecount", &rFrameCount,
+              CVF_NO_ARCHIVE | CVF_PROTECTED, 0, 0);
     C_VAR_BYTE("rend-info-deltas-frametime", &devShowFrameTimeDeltas, CVF_NO_ARCHIVE, 0, 1);
 }
 
@@ -581,14 +584,20 @@ static void runTics(void)
 
         // Process input events.
         DD_ProcessEvents(ticLength);
-        DD_ProcessSharpEvents(ticLength); // only on sharp 35 Hz ticks
+        if(!processSharpEventsAfterTickers)
+        {
+            // We are allowed to process sharp events before tickers.
+            DD_ProcessSharpEvents(ticLength);
+        }
 
         // Call all the tickers.
         baseTicker(ticLength);
 
-        // This is done after tickers for compatibility with ye olde game logic.
-        // (cvar: input-sharp-lateprocessing)
-        DD_ProcessLateSharpEvents(); // only on sharp 35 Hz ticks
+        if(processSharpEventsAfterTickers)
+        {
+            // This is done after tickers for compatibility with ye olde game logic.
+            DD_ProcessSharpEvents(ticLength);
+        }
 
         // Various global variables are used for counting time.
         advanceTime(ticLength);
