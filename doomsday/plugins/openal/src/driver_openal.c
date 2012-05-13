@@ -1,42 +1,34 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- *
- * \bug Not 64bit clean: In function 'DS_SFX_CreateBuffer': cast to pointer from integer of different size
- * \bug Not 64bit clean: In function 'DS_SFX_DestroyBuffer': cast to pointer from integer of different size
- * \bug Not 64bit clean: In function 'DS_SFX_Play': cast to pointer from integer of different size
- * \bug Not 64bit clean: In function 'DS_SFX_Stop': cast to pointer from integer of different size
- * \bug Not 64bit clean: In function 'DS_SFX_Refresh': cast to pointer from integer of different size
- * \bug Not 64bit clean: In function 'DS_SFX_Set': cast to pointer from integer of different size
- * \bug Not 64bit clean: In function 'DS_SFX_Setv': cast to pointer from integer of different size
- */
-
 /**
- * driver_openal.c: OpenAL Doomsday Sfx Driver.
+ * @file driver_openal.c
+ * OpenAL audio plugin. @ingroup dsopenal
  *
- * Link with openal32.lib (and doomsday.lib).
+ * Win32: Link with openal32.lib (and doomsday.lib).
+ *
+ * @bug Not 64bit clean: In function 'DS_SFX_CreateBuffer': cast to pointer from integer of different size
+ * @bug Not 64bit clean: In function 'DS_SFX_DestroyBuffer': cast to pointer from integer of different size
+ * @bug Not 64bit clean: In function 'DS_SFX_Play': cast to pointer from integer of different size
+ * @bug Not 64bit clean: In function 'DS_SFX_Stop': cast to pointer from integer of different size
+ * @bug Not 64bit clean: In function 'DS_SFX_Refresh': cast to pointer from integer of different size
+ * @bug Not 64bit clean: In function 'DS_SFX_Set': cast to pointer from integer of different size
+ * @bug Not 64bit clean: In function 'DS_SFX_Setv': cast to pointer from integer of different size
+ *
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #ifdef WIN32
 #  define WIN32_LEAN_AND_MEAN
@@ -61,18 +53,12 @@
 #include "sys_audiod.h"
 #include "sys_audiod_sfx.h"
 
-// MACROS ------------------------------------------------------------------
+#define PI 3.141592654
 
-#define PI          3.141592654
-
-#define SRC(buf)    ((ALuint)buf->ptr3D)
-#define BUF(buf)    ((ALuint)buf->ptr)
-
-// TYPES -------------------------------------------------------------------
+#define SRC(buf) ((ALuint)buf->ptr3D)
+#define BUF(buf) ((ALuint)buf->ptr)
 
 enum { VX, VY, VZ };
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 #ifdef WIN32
 ALenum(*EAXGet) (const struct _GUID* propertySetID, ALuint prop,
@@ -81,41 +67,31 @@ ALenum(*EAXSet) (const struct _GUID* propertySetID, ALuint prop,
                  ALuint source, ALvoid *value, ALuint size);
 #endif
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+int DS_Init(void);
+void DS_Shutdown(void);
+void DS_Event(int type);
 
-int         DS_Init(void);
-void        DS_Shutdown(void);
-void        DS_Event(int type);
-
-int         DS_SFX_Init(void);
+int DS_SFX_Init(void);
 sfxbuffer_t* DS_SFX_CreateBuffer(int flags, int bits, int rate);
-void        DS_SFX_DestroyBuffer(sfxbuffer_t* buf);
-void        DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample);
-void        DS_SFX_Reset(sfxbuffer_t* buf);
-void        DS_SFX_Play(sfxbuffer_t* buf);
-void        DS_SFX_Stop(sfxbuffer_t* buf);
-void        DS_SFX_Refresh(sfxbuffer_t* buf);
-void        DS_SFX_Set(sfxbuffer_t* buf, int prop, float value);
-void        DS_SFX_Setv(sfxbuffer_t* buf, int prop, float* values);
-void        DS_SFX_Listener(int prop, float value);
-void        DS_SFX_Listenerv(int prop, float* values);
-int         DS_SFX_Getv(int prop, void* values);
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
+void DS_SFX_DestroyBuffer(sfxbuffer_t* buf);
+void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample);
+void DS_SFX_Reset(sfxbuffer_t* buf);
+void DS_SFX_Play(sfxbuffer_t* buf);
+void DS_SFX_Stop(sfxbuffer_t* buf);
+void DS_SFX_Refresh(sfxbuffer_t* buf);
+void DS_SFX_Set(sfxbuffer_t* buf, int prop, float value);
+void DS_SFX_Setv(sfxbuffer_t* buf, int prop, float* values);
+void DS_SFX_Listener(int prop, float value);
+void DS_SFX_Listenerv(int prop, float* values);
+int DS_SFX_Getv(int prop, void* values);
 
 #ifdef WIN32
 // EAX 2.0 GUIDs
-struct _GUID DSPROPSETID_EAX20_ListenerProperties =
-    { 0x306a6a8, 0xb224, 0x11d2, {0x99, 0xe5, 0x0, 0x0, 0xe8, 0xd8, 0xc7,
-                                  0x22}
+struct _GUID DSPROPSETID_EAX20_ListenerProperties = {
+    0x306a6a8, 0xb224, 0x11d2, {0x99, 0xe5, 0x0, 0x0, 0xe8, 0xd8, 0xc7, 0x22}
 };
-struct _GUID DSPROPSETID_EAX20_BufferProperties =
-    { 0x306a6a7, 0xb224, 0x11d2, {0x99, 0xe5, 0x0, 0x0, 0xe8, 0xd8, 0xc7,
-                                  0x22}
+struct _GUID DSPROPSETID_EAX20_BufferProperties = {
+    0x306a6a7, 0xb224, 0x11d2, {0x99, 0xe5, 0x0, 0x0, 0xe8, 0xd8, 0xc7, 0x22}
 };
 #endif
 
@@ -126,16 +102,10 @@ float headYaw, headPitch; // In radians.
 ALCdevice* device = 0;
 ALCcontext* context = 0;
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
-
 static int error(const char* what, const char* msg)
 {
-    ALenum              code = alGetError();
-
-    if(code == AL_NO_ERROR)
-        return false;
+    ALenum code = alGetError();
+    if(code == AL_NO_ERROR) return false;
 
     Con_Message("DS_%s(OpenAL): %s [%s]\n", what, msg, alGetString(code));
     return true;
@@ -143,15 +113,14 @@ static int error(const char* what, const char* msg)
 
 int DS_Init(void)
 {
-    if(initOk)
-        return true;
+    if(initOk) return true;
 
     // Are we in verbose mode?
     if((verbose = ArgExists("-verbose")))
         Con_Message("DS_Init(OpenAL): Starting OpenAL...\n");
 
     // Open device.
-    if(!(device = alcOpenDevice((ALubyte *) "DirectSound3D")))
+    if(!(device = alcOpenDevice((ALubyte*) "DirectSound3D")))
     {
         Con_Message("Failed to initialize OpenAL (DS3D).\n");
         return false;
@@ -164,7 +133,8 @@ int DS_Init(void)
 
 #ifdef WIN32
     // Check for EAX 2.0.
-    if((hasEAX = alIsExtensionPresent((ALubyte *) "EAX2.0")))
+    hasEAX = alIsExtensionPresent((ALubyte*) "EAX2.0");
+    if(hasEAX)
     {
         if(!(EAXGet = alGetProcAddress("EAXGet")))
             hasEAX = false;
@@ -190,8 +160,7 @@ int DS_Init(void)
 
 void DS_Shutdown(void)
 {
-    if(!initOk)
-        return;
+    if(!initOk) return;
 
     alcMakeContextCurrent(NULL);
     alcDestroyContext(context);
@@ -214,8 +183,8 @@ int DS_SFX_Init(void)
 
 sfxbuffer_t* DS_SFX_CreateBuffer(int flags, int bits, int rate)
 {
-    sfxbuffer_t*        buf;
-    ALuint              bufName, srcName;
+    sfxbuffer_t* buf;
+    ALuint bufName, srcName;
 
     // Create a new buffer and a new source.
     alGenBuffers(1, &bufName);
@@ -234,7 +203,8 @@ sfxbuffer_t* DS_SFX_CreateBuffer(int flags, int bits, int rate)
     error("CreateBuffer", "Source BUFFER");
 
     if(!(flags & SFXBF_3D))
-    {   // 2D sounds are around the listener.
+    {
+        // 2D sounds are around the listener.
         alSourcei(srcName, AL_SOURCE_RELATIVE, AL_TRUE);
         alSourcef(srcName, AL_ROLLOFF_FACTOR, 0);
     }
@@ -242,8 +212,8 @@ sfxbuffer_t* DS_SFX_CreateBuffer(int flags, int bits, int rate)
     // Create the buffer object.
     buf = Z_Calloc(sizeof(*buf), PU_APPSTATIC, 0);
 
-    buf->ptr = (void *) bufName;
-    buf->ptr3D = (void *) srcName;
+    buf->ptr = (void*) bufName;
+    buf->ptr3D = (void*) srcName;
     buf->bytes = bits / 8;
     buf->rate = rate;
     buf->flags = flags;
@@ -254,10 +224,9 @@ sfxbuffer_t* DS_SFX_CreateBuffer(int flags, int bits, int rate)
 
 void DS_SFX_DestroyBuffer(sfxbuffer_t* buf)
 {
-    ALuint             srcName, bufName;
+    ALuint srcName, bufName;
 
-    if(!buf)
-        return;
+    if(!buf) return;
 
     srcName = SRC(buf);
     bufName = BUF(buf);
@@ -270,8 +239,7 @@ void DS_SFX_DestroyBuffer(sfxbuffer_t* buf)
 
 void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
 {
-    if(!buf || !sample)
-        return;
+    if(!buf || !sample) return;
 
     // Does the buffer already have a sample loaded?
     if(buf->sample)
@@ -294,8 +262,7 @@ void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
  */
 void DS_SFX_Reset(sfxbuffer_t* buf)
 {
-    if(!buf)
-        return;
+    if(!buf) return;
 
     DS_SFX_Stop(buf);
     buf->sample = NULL;
@@ -303,19 +270,18 @@ void DS_SFX_Reset(sfxbuffer_t* buf)
 
 void DS_SFX_Play(sfxbuffer_t* buf)
 {
-    ALuint              source;
+    ALuint source;
 
     // Playing is quite impossible without a sample.
-    if(!buf || !buf->sample)
-        return;
+    if(!buf || !buf->sample) return;
 
     source = SRC(buf);
 
 /*#if _DEBUG
-alGetSourcei(source, AL_BUFFER, &bn);
-Con_Message("Buffer = %x\n", bn);
-if(bn != BUF(buf))
-    Con_Message("Not the same!\n");
+    alGetSourcei(source, AL_BUFFER, &bn);
+    Con_Message("Buffer = %x\n", bn);
+    if(bn != BUF(buf))
+        Con_Message("Not the same!\n");
 #endif*/
 
     alSourcei(source, AL_BUFFER, BUF(buf));
@@ -330,8 +296,7 @@ if(bn != BUF(buf))
 
 void DS_SFX_Stop(sfxbuffer_t* buf)
 {
-    if(!buf || !buf->sample)
-        return;
+    if(!buf || !buf->sample) return;
 
     alSourceRewind(SRC(buf));
     buf->flags &= ~SFXBF_PLAYING;
@@ -339,10 +304,9 @@ void DS_SFX_Stop(sfxbuffer_t* buf)
 
 void DS_SFX_Refresh(sfxbuffer_t* buf)
 {
-    ALint               state;
+    ALint state;
 
-    if(!buf || !buf->sample)
-        return;
+    if(!buf || !buf->sample) return;
 
     alGetSourcei(SRC(buf), AL_SOURCE_STATE, &state);
     if(state == AL_STOPPED)
@@ -382,7 +346,7 @@ static void vectors(float yaw, float pitch, float* front, float* up)
  */
 static void setPan(ALuint source, float pan)
 {
-    float               pos[3];
+    float pos[3];
 
     vectors((float) (headYaw - pan * PI / 2), headPitch, pos, 0);
     alSourcefv(source, AL_POSITION, pos);
@@ -390,11 +354,9 @@ static void setPan(ALuint source, float pan)
 
 void DS_SFX_Set(sfxbuffer_t* buf, int prop, float value)
 {
-    unsigned int        dw;
-    ALuint              source;
+    ALuint source;
 
-    if(!buf)
-        return;
+    if(!buf) return;
 
     source = SRC(buf);
 
@@ -404,14 +366,14 @@ void DS_SFX_Set(sfxbuffer_t* buf, int prop, float value)
         alSourcef(source, AL_GAIN, value);
         break;
 
-    case SFXBP_FREQUENCY:
-        dw = (int) (buf->rate * value);
+    case SFXBP_FREQUENCY: {
+        unsigned int dw = (int) (buf->rate * value);
         if(dw != buf->freq) // Don't set redundantly.
         {
             buf->freq = dw;
             alSourcef(source, AL_PITCH, value);
         }
-        break;
+        break; }
 
     case SFXBP_PAN:
         setPan(source, value);
@@ -429,17 +391,15 @@ void DS_SFX_Set(sfxbuffer_t* buf, int prop, float value)
         alSourcei(source, AL_SOURCE_RELATIVE, value ? AL_TRUE : AL_FALSE);
         break;
 
-    default:
-        break;
+    default: break;
     }
 }
 
 void DS_SFX_Setv(sfxbuffer_t* buf, int prop, float* values)
 {
-    ALuint              source;
+    ALuint source;
 
-    if(!buf || !values)
-        return;
+    if(!buf || !values) return;
 
     source = SRC(buf);
 
@@ -455,8 +415,7 @@ void DS_SFX_Setv(sfxbuffer_t* buf, int prop, float* values)
                    values[VZ] / unitsPerMeter, values[VY] / unitsPerMeter);
         break;
 
-    default:
-        break;
+    default: break;
     }
 }
 
@@ -472,17 +431,15 @@ void DS_SFX_Listener(int prop, float value)
         alDopplerFactor(value);
         break;
 
-    default:
-        break;
+    default: break;
     }
 }
 
 void DS_SFX_Listenerv(int prop, float* values)
 {
-    float               ori[6];
+    float ori[6];
 
-    if(!values)
-        return;
+    if(!values) return;
 
     switch(prop)
     {
