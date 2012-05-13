@@ -44,12 +44,15 @@
    #include <openal/al.h>
    #include <openal/alc.h>
 #endif
-#include <string.h>
-#include <math.h>
+#include <stdio.h>
+#include <cassert>
+#include <iostream>
+#include <cstring>
+#include <cmath>
 
-#include "doomsday.h"
 #include "sys_audiod.h"
 #include "sys_audiod_sfx.h"
+#include "doomsday.h"
 
 #define PI 3.141592654
 
@@ -92,41 +95,30 @@ struct _GUID DSPROPSETID_EAX20_BufferProperties = {
 #endif
 
 boolean initOk = false, hasEAX = false;
-int verbose;
 float unitsPerMeter = 1;
 float headYaw, headPitch; // In radians.
 ALCdevice* device = 0;
 ALCcontext* context = 0;
 
-static int error(const char* what, const char* msg)
-{
-    ALenum code = alGetError();
-    if(code == AL_NO_ERROR) return false;
+#ifdef DENG_DSOPENAL_DEBUG
+#  define DSOPENAL_TRACE(args)  std::cerr << "[dsOpenAL] " << args << std::endl;
+#else
+#  define DSOPENAL_TRACE(args)
+#endif
 
-    Con_Message("DS_%s(OpenAL): %s [%s]\n", what, msg, alGetString(code));
+#define DSOPENAL_ERRCHECK(errorcode) \
+    error(errorcode, __FILE__, __LINE__)
+
+static int error(ALenum errorCode, const char* file, int line)
+{
+    if(errorCode == AL_NO_ERROR) return false;
+    std::cerr << "[dsOpenAL] Error at " << file << ", line " << line
+              << ": (" << (int)errorCode << ") " << (const char*)alGetString(errorCode);
     return true;
 }
 
-int DS_Init(void)
+static void loadExtensions(void)
 {
-    if(initOk) return true;
-
-    // Are we in verbose mode?
-    if((verbose = ArgExists("-verbose")))
-        Con_Message("DS_Init(OpenAL): Starting OpenAL...\n");
-
-    // Open device.
-    if(!(device = alcOpenDevice((ALCchar*) "DirectSound3D")))
-    {
-        Con_Message("Failed to initialize OpenAL (DS3D).\n");
-        return false;
-    }
-    // Create a context.
-    alcMakeContextCurrent(context = alcCreateContext(device, NULL));
-
-    // Clear error message.
-    alGetError();
-
 #ifdef WIN32
     // Check for EAX 2.0.
     hasEAX = alIsExtensionPresent((ALchar*) "EAX2.0");
@@ -134,23 +126,43 @@ int DS_Init(void)
     {
         EAXGet = (ALenum (*)(const struct _GUID*, ALuint, ALuint, ALvoid*, ALuint))alGetProcAddress("EAXGet");
         EAXSet = (ALenum (*)(const struct _GUID*, ALuint, ALuint, ALvoid*, ALuint))alGetProcAddress("EAXSet");
-
         if(!EAXGet || !EAXSet)
             hasEAX = false;
     }
-
-    if(hasEAX && verbose)
-        Con_Message("DS_Init(OpenAL): EAX 2.0 available.\n");
 #else
     hasEAX = false;
 #endif
+}
 
+int DS_Init(void)
+{
+    // Already initialized?
+    if(initOk) return true;
+
+    // Open a playback device.
+    /// @todo Shouldn't we use the system default device?
+    device = alcOpenDevice((ALCchar*) "DirectSound3D");
+    if(!device)
+    {
+        Con_Message("OpenAL init failed (device: DirectSound3D).\n");
+        return false;
+    }
+
+    // Create and make current a new context.
+    alcMakeContextCurrent(context = alcCreateContext(device, NULL));
+    DSOPENAL_ERRCHECK(alGetError());
+
+    // Attempt to load and configure the EAX extensions.
+    loadExtensions();
+
+    // Configure the listener and global OpenAL properties/state.
     alListenerf(AL_GAIN, 1);
     alDistanceModel(AL_INVERSE_DISTANCE_CLAMPED);
     headYaw = headPitch = 0;
     unitsPerMeter = 36;
 
     // Everything is OK.
+    DSOPENAL_TRACE("DS_Init: OpenAL initialized%s." << hasEAX? " (EAX 2.0 available)" : "");
     initOk = true;
     return true;
 }
@@ -185,11 +197,11 @@ sfxbuffer_t* DS_SFX_CreateBuffer(int flags, int bits, int rate)
 
     // Create a new buffer and a new source.
     alGenBuffers(1, &bufName);
-    if(error("CreateBuffer", "GenBuffers"))
+    if(DSOPENAL_ERRCHECK(alGetError()))
         return NULL;
 
     alGenSources(1, &srcName);
-    if(error("CreateBuffer", "GenSources"))
+    if(DSOPENAL_ERRCHECK(alGetError()))
     {
         alDeleteBuffers(1, &bufName);
         return NULL;
@@ -197,7 +209,12 @@ sfxbuffer_t* DS_SFX_CreateBuffer(int flags, int bits, int rate)
 
     // Attach the buffer to the source.
     alSourcei(srcName, AL_BUFFER, bufName);
-    error("CreateBuffer", "Source BUFFER");
+    if(DSOPENAL_ERRCHECK(alGetError()))
+    {
+        alDeleteSources(1, &srcName);
+        alDeleteBuffers(1, &bufName);
+        return NULL;
+    }
 
     if(!(flags & SFXBF_3D))
     {
@@ -250,7 +267,10 @@ void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
                  sample->bytesPer == 1 ? AL_FORMAT_MONO8 : AL_FORMAT_MONO16,
                  sample->data, sample->size, sample->rate);
 
-    error("Load", "BufferData");
+    if(DSOPENAL_ERRCHECK(alGetError()))
+    {
+        /// @fixme What to do?
+    }
     buf->sample = sample;
 }
 
@@ -284,8 +304,7 @@ void DS_SFX_Play(sfxbuffer_t* buf)
     alSourcei(source, AL_BUFFER, BUF(buf));
     alSourcei(source, AL_LOOPING, (buf->flags & SFXBF_REPEAT) != 0);
     alSourcePlay(source);
-    error("Play", "SourcePlay");
-    error("Play", "Get state");
+    DSOPENAL_ERRCHECK(alGetError());
 
     // The buffer is now playing.
     buf->flags |= SFXBF_PLAYING;

@@ -11,6 +11,8 @@ win32|macx: TARGET = dsOpenAL
 
 VERSION = $$OPENAL_VERSION
 
+#DEFINES += DENG_DSOPENAL_DEBUG
+
 INCLUDEPATH += include
 
 HEADERS += include/version.h
