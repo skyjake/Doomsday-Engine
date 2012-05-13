@@ -162,7 +162,7 @@ int DS_Init(void)
     unitsPerMeter = 36;
 
     // Everything is OK.
-    DSOPENAL_TRACE("DS_Init: OpenAL initialized%s." << hasEAX? " (EAX 2.0 available)" : "");
+    DSOPENAL_TRACE("DS_Init: OpenAL initialized%s." << (hasEAX? " (EAX 2.0 available)" : ""));
     initOk = true;
     return true;
 }
