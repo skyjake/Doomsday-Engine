@@ -33,6 +33,10 @@ function get_ident($info)
 {
     if(!is_array($info))
         throw new Exception('Invalid info argument, array expected.');
+    if(!isset($info['at']))
+        throw new Exception('Invalid info, parameter \'at\' not specified.');
+    if(!isset($info['port']))
+        throw new Exception('Invalid info, parameter \'port\' not specified.');
 
     return $info['at'] . ":" . $info['port'];
 }
@@ -52,24 +56,29 @@ class MasterServer
     public $servers;
     public $lastUpdate;
 
-    private $writable;
+    private $isWritable;
     private $file;
 
     public function __construct($writable=false)
     {
-        global $HTTP_SERVER_VARS;
-        $this->writable = $writable;
-        $this->file = fopen_recursive(self::DATA_FILE, $writable? 'r+' : 'r');
+        $this->isWritable = $writable;
+        $this->file = fopen_recursive(self::DATA_FILE, $this->isWritable? 'r+' : 'r');
         if(!$this->file) die();
         $this->lastUpdate = @filemtime(self::DATA_FILE);
         $this->dbLock();
         $this->load();
-        if(!$writable) $this->dbUnlock();
+        if(!$this->isWritable) $this->dbUnlock();
+    }
+
+    public function __destruct()
+    {
+        // If writable and the data file is open; save it and/or close.
+        $this->close();
     }
 
     private function dbLock()
     {
-        flock($this->file, $this->writable? 2 : 1);
+        flock($this->file, $this->isWritable? 2 : 1);
     }
 
     private function dbUnlock()
@@ -121,18 +130,30 @@ class MasterServer
 
     function insert($info)
     {
-        $this->servers[get_ident($info)] = $info;
+        try
+        {
+            $this->servers[get_ident($info)] = $info;
+        }
+        catch(Exception $e)
+        {
+            $errorMsg = 'Unhandled exception "'. $e->getMessage() .'" in '. __CLASS__ .'::'. __METHOD__ .'().';
+            trigger_error($errorMsg);
+        }
     }
 
     function close()
     {
-        if($this->writable)
+        if(!$this->file) return;
+
+        if($this->isWritable)
         {
             $this->save();
             $this->dbUnlock();
-            $this->writable = false;
+            $this->isWritable = false;
         }
+
         fclose($this->file);
+        $this->file = 0;
     }
 
     /**
@@ -255,8 +276,6 @@ class MasterServer
         flock($logFile, 3);
         fclose($logFile);
 
-        $this->close();
-
         return TRUE;
     }
 
@@ -275,10 +294,10 @@ class MasterServer
         }
         catch(Exception $e)
         {
-            // @todo log the error.
+            $errorMsg = 'Unhandled exception "'. $e->getMessage() .'" in '. __CLASS__ .'::'. __METHOD__ .'().';
+            trigger_error($errorMsg);
             return false;
         }
-
         return self::XML_LOG_FILE;
     }
 }
