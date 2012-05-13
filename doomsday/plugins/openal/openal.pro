@@ -15,7 +15,7 @@ INCLUDEPATH += include
 
 HEADERS += include/version.h
 
-SOURCES += src/driver_openal.c
+SOURCES += src/driver_openal.cpp
 
 win32 {
     RC_FILE = res/openal.rc

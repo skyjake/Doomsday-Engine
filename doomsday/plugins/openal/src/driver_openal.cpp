@@ -1,8 +1,6 @@
 /**
- * @file driver_openal.c
+ * @file driver_openal.cpp
  * OpenAL audio plugin. @ingroup dsopenal
- *
- * Win32: Link with openal32.lib (and doomsday.lib).
  *
  * @bug Not 64bit clean: In function 'DS_SFX_CreateBuffer': cast to pointer from integer of different size
  * @bug Not 64bit clean: In function 'DS_SFX_DestroyBuffer': cast to pointer from integer of different size
@@ -61,10 +59,8 @@
 enum { VX, VY, VZ };
 
 #ifdef WIN32
-ALenum(*EAXGet) (const struct _GUID* propertySetID, ALuint prop,
-                 ALuint source, ALvoid* value, ALuint size);
-ALenum(*EAXSet) (const struct _GUID* propertySetID, ALuint prop,
-                 ALuint source, ALvoid *value, ALuint size);
+ALenum(*EAXGet) (const struct _GUID* propertySetID, ALuint prop, ALuint source, ALvoid* value, ALuint size);
+ALenum(*EAXSet) (const struct _GUID* propertySetID, ALuint prop, ALuint source, ALvoid* value, ALuint size);
 #endif
 
 int DS_Init(void);
@@ -120,7 +116,7 @@ int DS_Init(void)
         Con_Message("DS_Init(OpenAL): Starting OpenAL...\n");
 
     // Open device.
-    if(!(device = alcOpenDevice((ALubyte*) "DirectSound3D")))
+    if(!(device = alcOpenDevice((ALCchar*) "DirectSound3D")))
     {
         Con_Message("Failed to initialize OpenAL (DS3D).\n");
         return false;
@@ -133,12 +129,13 @@ int DS_Init(void)
 
 #ifdef WIN32
     // Check for EAX 2.0.
-    hasEAX = alIsExtensionPresent((ALubyte*) "EAX2.0");
+    hasEAX = alIsExtensionPresent((ALchar*) "EAX2.0");
     if(hasEAX)
     {
-        if(!(EAXGet = alGetProcAddress("EAXGet")))
-            hasEAX = false;
-        if(!(EAXSet = alGetProcAddress("EAXSet")))
+        EAXGet = (ALenum (*)(const struct _GUID*, ALuint, ALuint, ALvoid*, ALuint))alGetProcAddress("EAXGet");
+        EAXSet = (ALenum (*)(const struct _GUID*, ALuint, ALuint, ALvoid*, ALuint))alGetProcAddress("EAXSet");
+
+        if(!EAXGet || !EAXSet)
             hasEAX = false;
     }
 
@@ -171,7 +168,7 @@ void DS_Shutdown(void)
     initOk = false;
 }
 
-void DS_Event(int type)
+void DS_Event(int /*type*/)
 {
     // Not supported.
 }
@@ -210,7 +207,7 @@ sfxbuffer_t* DS_SFX_CreateBuffer(int flags, int bits, int rate)
     }
 
     // Create the buffer object.
-    buf = Z_Calloc(sizeof(*buf), PU_APPSTATIC, 0);
+    buf = static_cast<sfxbuffer_t*>(Z_Calloc(sizeof(*buf), PU_APPSTATIC, 0));
 
     buf->ptr = (void*) bufName;
     buf->ptr3D = (void*) srcName;
@@ -473,7 +470,7 @@ void DS_SFX_Listenerv(int prop, float* values)
     }
 }
 
-int DS_SFX_Getv(int prop, void* values)
+int DS_SFX_Getv(int /*prop*/, void* /*values*/)
 {
     // Stub.
     return 0;
