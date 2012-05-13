@@ -79,7 +79,7 @@ void CanvasWindow::initCanvasAfterRecreation(Canvas& canvas)
     self->d->canvas->makeCurrent();
     GL_Init2DState();
     self->d->canvas->doneCurrent();
-    self->d->canvas->update();
+    self->d->canvas->updateGL();
 
     // Reacquire the focus.
     self->d->canvas->setFocus();
