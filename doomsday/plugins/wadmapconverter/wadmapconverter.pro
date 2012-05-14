@@ -1,11 +1,12 @@
 # The Doomsday Engine Project
-# Copyright (c) 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
-# Copyright (c) 2011 Daniel Swanson <danij@dengine.net>
+# Copyright (c) 2011-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+# Copyright (c) 2011-2012 Daniel Swanson <danij@dengine.net>
 
 include(../config_plugin.pri)
 
 TEMPLATE = lib
-TARGET = dpwadmapconverter
+win32|macx: TARGET = dpWadMapConverter
+      else: TARGET = dpwadmapconverter
 
 VERSION = $$WADMAPCONVERTER_VERSION
 

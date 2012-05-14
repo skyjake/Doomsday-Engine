@@ -86,7 +86,9 @@ cvartemplate_t gameCVars[] = {
 
     // Items
     {"server-game-nobfg", 0, CVT_BYTE, &cfg.noNetBFG, 0, 1},
-    {"server-game-coop-nothing", 0, CVT_BYTE, &cfg.noCoopAnything, 0, 1},
+#if 0
+    {"server-game-coop-nothing", 0, CVT_BYTE, &cfg.noCoopAnything, 0, 1}, // not implemented atm, see P_SpawnMobjXYZ
+#endif
     {"server-game-coop-respawn-items", 0, CVT_BYTE,
         &cfg.coopRespawnItems, 0, 1},
     {"server-game-coop-noweapons", 0, CVT_BYTE, &cfg.noCoopWeapons, 0, 1},
@@ -158,6 +160,7 @@ cvartemplate_t gameCVars[] = {
     {"game-player-wallrun-northonly", 0, CVT_BYTE, &cfg.wallRunNorthOnly, 0, 1},
     {"game-objects-falloff", 0, CVT_BYTE, &cfg.fallOff, 0, 1},
     {"game-zclip", 0, CVT_BYTE, &cfg.moveCheckZ, 0, 1},
+    {"game-monsters-floatoverblocking", 0, CVT_BYTE, &cfg.allowMonsterFloatOverBlocking, 0, 1},
     {"game-corpse-sliding", 0, CVT_BYTE, &cfg.slidingCorpses, 0, 1},
 
 // Game state

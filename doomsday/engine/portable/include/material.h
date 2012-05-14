@@ -27,6 +27,10 @@
 #include "p_maptypes.h"
 #include "p_dmu.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct materialvariant_s;
 
 /**
@@ -233,5 +237,9 @@ struct texture_s* Material_ShinyMaskTexture(material_t* mat);
  * @param tex  Texture to be linked with.
  */
 void Material_SetShinyMaskTexture(material_t* mat, struct texture_s* tex);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_MATERIAL_H */

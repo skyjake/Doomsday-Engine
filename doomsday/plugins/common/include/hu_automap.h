@@ -59,7 +59,7 @@ extern boolean freezeMapRLs;
 
 // Mapped point of interest.
 typedef struct {
-    float pos[3];
+    coord_t pos[3];
 } guidata_automap_point_t;
 
 typedef struct {
@@ -90,7 +90,7 @@ typedef struct {
 
 // Map bounds:
     float minScale;
-    float bounds[4];
+    coord_t bounds[4];
 
 // Paramaters for render:
     float alpha, targetAlpha, oldAlpha;
@@ -98,11 +98,11 @@ typedef struct {
 
 // Viewer location on the map:
     float viewTimer;
-    float viewX, viewY; // Current.
-    float targetViewX, targetViewY; // Should be at.
-    float oldViewX, oldViewY; // Previous.
+    coord_t viewX, viewY; // Current.
+    coord_t targetViewX, targetViewY; // Should be at.
+    coord_t oldViewX, oldViewY; // Previous.
     // For the parallax layer.
-    float viewPLX, viewPLY; // Current.
+    coord_t viewPLX, viewPLY; // Current.
 
 // View frame scale:
     float viewScaleTimer;
@@ -121,13 +121,13 @@ typedef struct {
 
     // Axis-aligned bounding box of the potentially visible area
     // (rotation-aware) in map coordinates.
-    float viewAABB[4];
+    coord_t viewAABB[4];
 
     // Bounding box of the actual visible area in map coordinates.
-    float topLeft[2], bottomRight[2], topRight[2], bottomLeft[2];
+    coord_t topLeft[2], bottomRight[2], topRight[2], bottomLeft[2];
 
 // Misc:
-    float maxViewPositionDelta;
+    coord_t maxViewPositionDelta;
     boolean updateViewScale;
 
 // Mapped points of interest:
@@ -163,8 +163,8 @@ boolean UIAutomap_SetReveal(uiwidget_t* obj, boolean on);
 /**
  * Add a point of interest at this location.
  */
-int UIAutomap_AddPoint(uiwidget_t* obj, float x, float y, float z);
-boolean UIAutomap_PointOrigin(const uiwidget_t* obj, int pointIdx, float* x, float* y, float* z);
+int UIAutomap_AddPoint(uiwidget_t* obj, coord_t x, coord_t y, coord_t z);
+boolean UIAutomap_PointOrigin(const uiwidget_t* obj, int pointIdx, coord_t* x, coord_t* y, coord_t* z);
 int UIAutomap_PointCount(const uiwidget_t* obj);
 void UIAutomap_ClearPoints(uiwidget_t* obj);
 
@@ -175,19 +175,19 @@ int UIAutomap_Flags(const uiwidget_t* obj);
  */
 void UIAutomap_SetFlags(uiwidget_t* obj, int flags);
 
-void UIAutomap_SetWorldBounds(uiwidget_t* obj, float lowX, float hiX, float lowY, float hiY);
+void UIAutomap_SetWorldBounds(uiwidget_t* obj, coord_t lowX, coord_t hiX, coord_t lowY, coord_t hiY);
 void UIAutomap_SetMinScale(uiwidget_t* obj, const float scale);
 
-void UIAutomap_CameraOrigin(uiwidget_t* obj, float* x, float* y);
-boolean UIAutomap_SetCameraOrigin(uiwidget_t* obj, float x, float y /*, boolean forceInstantly=false*/);
-boolean UIAutomap_SetCameraOrigin2(uiwidget_t* obj, float x, float y, boolean forceInstantly);
-boolean UIAutomap_TranslateCameraOrigin(uiwidget_t* obj, float x, float y /*, boolean forceInstantly=false*/);
-boolean UIAutomap_TranslateCameraOrigin2(uiwidget_t* obj, float x, float y, boolean forceInstantly);
+void UIAutomap_CameraOrigin(uiwidget_t* obj, coord_t* x, coord_t* y);
+boolean UIAutomap_SetCameraOrigin(uiwidget_t* obj, coord_t x, coord_t y /*, boolean forceInstantly=false*/);
+boolean UIAutomap_SetCameraOrigin2(uiwidget_t* obj, coord_t x, coord_t y, boolean forceInstantly);
+boolean UIAutomap_TranslateCameraOrigin(uiwidget_t* obj, coord_t x, coord_t y /*, boolean forceInstantly=false*/);
+boolean UIAutomap_TranslateCameraOrigin2(uiwidget_t* obj, coord_t x, coord_t y, boolean forceInstantly);
 
 /**
  * @param max  Maximum view position delta in world units.
  */
-void UIAutomap_SetCameraOriginFollowMoveDelta(uiwidget_t* obj, float max);
+void UIAutomap_SetCameraOriginFollowMoveDelta(uiwidget_t* obj, coord_t max);
 
 float UIAutomap_CameraAngle(uiwidget_t* obj);
 boolean UIAutomap_SetCameraAngle(uiwidget_t* obj, float angle);
@@ -207,8 +207,8 @@ float UIAutomap_FrameToMap(uiwidget_t* obj, float val);
 /// Scale from map to automap window coordinates.
 float UIAutomap_MapToFrame(uiwidget_t* obj, float val);
 
-void UIAutomap_VisibleBounds(const uiwidget_t* obj, float topLeft[2], float bottomRight[2], float topRight[2], float bottomLeft[2]);
-void UIAutomap_PVisibleAABounds(const uiwidget_t* obj, float* lowX, float* hiX, float* lowY, float* hiY);
+void UIAutomap_VisibleBounds(const uiwidget_t* obj, coord_t topLeft[2], coord_t bottomRight[2], coord_t topRight[2], coord_t bottomLeft[2]);
+void UIAutomap_PVisibleAABounds(const uiwidget_t* obj, coord_t* lowX, coord_t* hiX, coord_t* lowY, coord_t* hiY);
 
 boolean UIAutomap_CameraRotation(uiwidget_t* obj);
 boolean UIAutomap_SetCameraRotation(uiwidget_t* obj, boolean on);
@@ -221,7 +221,7 @@ mobj_t* UIAutomap_FollowMobj(uiwidget_t* obj);
 boolean UIAutomap_ZoomMax(uiwidget_t* obj);
 boolean UIAutomap_SetZoomMax(uiwidget_t* obj, boolean on);
 
-void UIAutomap_ParallaxLayerOrigin(uiwidget_t* obj, float* x, float* y);
+void UIAutomap_ParallaxLayerOrigin(uiwidget_t* obj, coord_t* x, coord_t* y);
 
 #ifdef __cplusplus
 }

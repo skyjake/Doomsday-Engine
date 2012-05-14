@@ -20,6 +20,15 @@
  * 02110-1301 USA</small>
  */
 
+#ifdef UNIX
+#  include <sys/types.h>
+#  include <unistd.h>
+#  include <dirent.h>
+#  include <dlfcn.h>
+#  include <string.h>
+#  include <stdbool.h>
+#endif
+
 #include "de_base.h"
 #include "de_filesys.h"
 #include "m_misc.h"
@@ -27,14 +36,6 @@
 
 #ifdef WIN32
 #  include "de_platform.h"
-#endif
-
-#ifdef UNIX
-#  include <sys/types.h>
-#  include <unistd.h>
-#  include <dirent.h>
-#  include <dlfcn.h>
-#  include <string.h>
 #endif
 
 #define MAX_LIBRARIES   64  /// @todo  Replace with a dynamic list.
@@ -74,17 +75,23 @@ static void getBundlePath(char* path, size_t len)
         return;
     }
 
+    /*
 #ifdef MACOSX
     // This is the default location where bundles are.
     dd_snprintf(path, len, "%s/Bundles", appDir);
 #endif
+    */
+
 #ifdef UNIX
-#ifdef DENG_LIBRARY_DIR
+# ifdef DENG_LIBRARY_DIR
     strncpy(path, DENG_LIBRARY_DIR, len);
-#else
+# else
     // Assume they are in the cwd.
     strncpy(path, appDir, len);
-#endif
+# endif
+
+    // Check Unix-specific config files.
+    DD_Unix_GetConfigValue("paths", "libdir", path, len);
 #endif
 }
 #endif
@@ -146,9 +153,9 @@ void Library_ReleaseGames(void)
         if(!lib) continue;
         if(lib->isGamePlugin && lib->handle)
         {
-#ifdef _DEBUG
-            fprintf(stderr, "Library_ReleaseGames: Closing '%s'\n", Str_Text(lib->path));
-#endif
+            LegacyCore_PrintfLogFragmentAtLevel(de2LegacyCore, DE2_LOG_DEBUG,
+                    "Library_ReleaseGames: Closing '%s'\n", Str_Text(lib->path));
+
             dlclose(lib->handle);
             lib->handle = 0;
         }
@@ -162,9 +169,9 @@ static void reopenLibraryIfNeeded(Library* lib)
     assert(lib);
     if(!lib->handle)
     {
-#ifdef _DEBUG
-        fprintf(stderr, "reopenLibraryIfNeeded: Opening '%s'\n", Str_Text(lib->path));
-#endif
+        LegacyCore_PrintfLogFragmentAtLevel(de2LegacyCore, DE2_LOG_DEBUG,
+                "reopenLibraryIfNeeded: Opening '%s'\n", Str_Text(lib->path));
+
         lib->handle = dlopen(Str_Text(lib->path), RTLD_NOW);
         assert(lib->handle);
     }
@@ -214,12 +221,26 @@ Library* Library_New(const char *fileName)
     }
 #endif
 
+#ifdef WIN32
+    Str_Clear(lastError);
+    handle = LoadLibrary(WIN_STRING(fileName));
+    if(!handle)
+    {
+        Str_Set(lastError, DD_Win32_GetLastErrorMessage());
+        printf("Library_New: Error opening \"%s\" (%s).\n", fileName, Library_LastError());
+        return 0;
+    }
+#endif
+
     // Create the Library instance.
     lib = calloc(1, sizeof(*lib));
     lib->handle = handle;
     lib->path = Str_NewStd();
 #ifdef UNIX
     Str_Set(lib->path, bundlePath);
+#endif
+#ifdef WIN32
+    Str_Set(lib->path, fileName);
 #endif
 
     addToLoaded(lib);
@@ -243,6 +264,9 @@ void Library_Delete(Library *lib)
 #ifdef UNIX
         dlclose(lib->handle);
 #endif
+#ifdef WIN32
+        FreeLibrary(lib->handle);
+#endif
     }
     Str_Delete(lib->path);
     removeFromLoaded(lib);
@@ -260,6 +284,13 @@ void* Library_Symbol(Library* lib, const char* symbolName)
     if(!ptr)
     {
         Str_Set(lastError, dlerror());
+    }
+#endif
+#ifdef WIN32
+    ptr = (void*)GetProcAddress(lib->handle, symbolName);
+    if(!ptr)
+    {
+        Str_Set(lastError, DD_Win32_GetLastErrorMessage());
     }
 #endif
     return ptr;
@@ -309,5 +340,10 @@ int Library_IterateAvailableLibraries(int (*func)(const char *, void *), void *d
     }
     closedir(dir);
 #endif
+
+#ifdef WIN32
+    printf("TODO: a similar routine should be in dd_winit.c; move the code here\n");
+#endif
+
     return 0;
 }

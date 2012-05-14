@@ -64,7 +64,7 @@
 
 // CODE --------------------------------------------------------------------
 
-void SV_WriteXGLine(linedef_t *li)
+void SV_WriteXGLine(LineDef *li)
 {
     xgline_t *xg;
     linetype_t *info;
@@ -96,7 +96,7 @@ void SV_WriteXGLine(linedef_t *li)
     SV_WriteFloat(xg->chTimer);
 }
 
-void SV_ReadXGLine(linedef_t *li)
+void SV_ReadXGLine(LineDef *li)
 {
     xgline_t *xg;
     xline_t *xline = P_ToXLine(li);

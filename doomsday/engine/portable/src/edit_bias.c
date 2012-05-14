@@ -1,33 +1,25 @@
-/**\file edit_bias.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2006-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * Bias light source editor.
+ * @file edit_bias.c
+ * Bias light source editor. @ingroup base
+ *
+ * @authors Copyright &copy; 2006-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
 #include "de_edit.h"
@@ -43,52 +35,30 @@
 
 #include <math.h>
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
 D_CMD(BLEditor);
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-void SBE_MenuSave(ui_object_t *ob);
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
+void SBE_MenuSave(ui_object_t* ob);
 
 extern int gameDrawHUD;
 extern int numSources;
 extern byte freezeRLs;
 
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
+const char* saveFile = NULL;
 
-const char *saveFile = NULL;
-
+// Bias editor menu:
 static ui_page_t page_bias;
-
-static ui_object_t ob_bias[] = {    // bias editor page
-    {UI_BUTTON, 0, UIF_DEFAULT, 400, 450, 180, 70, "Save", UIButton_Drawer,
-     UIButton_Responder, 0, SBE_MenuSave},
-
+static ui_object_t ob_bias[] = {
+    {UI_BUTTON, 0, UIF_DEFAULT, 400, 450, 180, 70, "Save", UIButton_Drawer, UIButton_Responder, 0, SBE_MenuSave},
     {UI_NONE}
 };
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 /**
  * Editing variables:
- *
- * edit-bias-blink: keep blinking the nearest light (unless a light is grabbed)
- * edit-bias-grab-distance: how far the light is when grabbed
- * edit-bias-{red,green,blue,intensity}: RGBI of the light
  */
-static int editBlink = false;
-static float editDistance = 300;
-static float editColor[3];
-static float editIntensity;
+static int editBlink = false; ///< cvar Keep blinking the nearest light (unless a light is grabbed).
+static float editDistance = 300; ///< cvar How far the light is when grabbed.
+static float editColor[3]; ///< cvar Color of the currently grabbed light.
+static float editIntensity; ///< cvar Intensity of the currently grabbed light.
 
 /**
  * Editor status.
@@ -100,14 +70,8 @@ static int editShowAll = false;
 static int editShowIndices = true;
 static int editHueCircle = false;
 static float hueDistance = 100;
-static vec3_t hueOrigin, hueSide, hueUp;
+static vec3f_t hueOrigin, hueSide, hueUp;
 
-
-// CODE --------------------------------------------------------------------
-
-/**
- * Register console variables for Shadow Bias.
- */
 void SBE_Register(void)
 {
     // Editing variables.
@@ -144,18 +108,18 @@ void SBE_Register(void)
  * Editor Functionality:
  */
 
-static void SBE_GetHand(float pos[3])
+static void SBE_GetHand(coord_t pos[3])
 {
     const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
-    pos[0] = vx + viewData->frontVec[VX] * editDistance;
-    pos[1] = vz + viewData->frontVec[VZ] * editDistance;
-    pos[2] = vy + viewData->frontVec[VY] * editDistance;
+    pos[VX] = viewData->current.origin[VX] + viewData->frontVec[VX] * editDistance;
+    pos[VY] = viewData->current.origin[VZ] + viewData->frontVec[VZ] * editDistance;
+    pos[VZ] = viewData->current.origin[VY] + viewData->frontVec[VY] * editDistance;
 }
 
-static source_t *SBE_GrabSource(int index)
+static source_t* SBE_GrabSource(int index)
 {
-    source_t           *s;
-    int                 i;
+    source_t* s;
+    int i;
 
     editGrabbed = index;
     s = SB_GetSource(index);
@@ -168,7 +132,7 @@ static source_t *SBE_GrabSource(int index)
     return s;
 }
 
-static source_t *SBE_GetGrabbed(void)
+static source_t* SBE_GetGrabbed(void)
 {
     if(editGrabbed >= 0 && editGrabbed < numSources)
     {
@@ -177,19 +141,19 @@ static source_t *SBE_GetGrabbed(void)
     return NULL;
 }
 
-static source_t *SBE_GetNearest(void)
+static source_t* SBE_GetNearest(void)
 {
-    float               hand[3];
-    source_t           *nearest = NULL, *s;
-    float               minDist = 0, len;
-    int                 i;
+    coord_t hand[3];
+    source_t* nearest = NULL, *s;
+    coord_t minDist = 0, len;
+    int i;
 
     SBE_GetHand(hand);
 
     s = SB_GetSource(0);
     for(i = 0; i < numSources; ++i, s++)
     {
-        len = M_Distance(hand, s->pos);
+        len = V3d_Distance(hand, s->origin);
         if(i == 0 || len < minDist)
         {
             minDist = len;
@@ -200,31 +164,25 @@ static source_t *SBE_GetNearest(void)
     return nearest;
 }
 
-static void SBE_GetHueColor(float *color, float *angle, float *sat)
+static void SBE_GetHueColor(float* color, float* angle, float* sat)
 {
     int i;
     float dot;
     float saturation, hue, scale;
     float minAngle = 0.1f, range = 0.19f;
-    vec3_t h, proj;
+    vec3f_t h, proj;
     const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
 
-    dot = M_DotProduct(viewData->frontVec, hueOrigin);
+    dot = V3f_DotProduct(viewData->frontVec, hueOrigin);
     saturation = (acos(dot) - minAngle) / range;
 
-    if(saturation < 0)
-        saturation = 0;
-    if(saturation > 1)
-        saturation = 1;
-    if(sat)
-        *sat = saturation;
+   saturation = MINMAX_OF(0, saturation, 1);
+   if(sat) *sat = saturation;
 
     if(saturation == 0 || dot > .999f)
     {
-        if(angle)
-            *angle = 0;
-        if(sat)
-            *sat = 0;
+        if(angle) *angle = 0;
+        if(sat) *sat = 0;
 
         R_HSVToRGB(color, 0, 0, 1);
         return;
@@ -232,41 +190,40 @@ static void SBE_GetHueColor(float *color, float *angle, float *sat)
 
     // Calculate hue angle by projecting the current viewfront to the
     // hue circle plane.  Project onto the normal and subtract.
-    scale = M_DotProduct(viewData->frontVec, hueOrigin) /
-        M_DotProduct(hueOrigin, hueOrigin);
-    M_Scale(h, hueOrigin, scale);
+    scale = V3f_DotProduct(viewData->frontVec, hueOrigin) / V3f_DotProduct(hueOrigin, hueOrigin);
+    V3f_Copy(h, hueOrigin);
+    V3f_Scale(h, scale);
 
     for(i = 0; i < 3; ++i)
+    {
         proj[i] = viewData->frontVec[i] - h[i];
+    }
 
     // Now we have the projected view vector on the circle's plane.
     // Normalize the projected vector.
-    M_Normalize(proj);
+    V3f_Normalize(proj);
 
-    hue = acos(M_DotProduct(proj, hueUp));
+    hue = acos(V3f_DotProduct(proj, hueUp));
 
-    if(M_DotProduct(proj, hueSide) > 0)
+    if(V3f_DotProduct(proj, hueSide) > 0)
         hue = 2*PI - hue;
 
     hue /= (float) (2*PI);
     hue += 0.25;
 
-    if(angle)
-        *angle = hue;
-
-    //Con_Printf("sat=%f, hue=%f\n", saturation, hue);
+    if(angle) *angle = hue;
 
     R_HSVToRGB(color, hue, saturation, 1);
 }
 
 void SBE_EndFrame(void)
 {
-    source_t           *src;
+    source_t* src;
 
     // Update the grabbed light.
     if(editActive && (src = SBE_GetGrabbed()) != NULL)
     {
-        source_t            old;
+        source_t old;
 
         memcpy(&old, src, sizeof(old));
 
@@ -281,7 +238,7 @@ void SBE_EndFrame(void)
         if(!(src->flags & BLF_LOCKED))
         {
             // Update source properties.
-            SBE_GetHand(src->pos);
+            SBE_GetHand(src->origin);
         }
 
         if(memcmp(&old, src, sizeof(old)))
@@ -313,7 +270,7 @@ static void SBE_End(void)
 
 static boolean SBE_New(void)
 {
-    source_t           *s;
+    source_t* s;
 
     if(numSources == MAX_BIAS_LIGHTS)
         return false;
@@ -366,9 +323,9 @@ static void SBE_Grab(int which)
 
 static void SBE_Dupe(int which)
 {
-    source_t           *orig = SB_GetSource(which);
-    source_t           *s;
-    int                 i;
+    source_t* orig = SB_GetSource(which);
+    source_t* s;
+    int i;
 
     if(SBE_New())
     {
@@ -384,8 +341,8 @@ static void SBE_Dupe(int which)
 
 static boolean SBE_Save(const char* name)
 {
-    gamemap_t* map = P_GetCurrentMap();
-    const char* uid = P_GetUniqueMapId(map);
+    GameMap* map = theMap;
+    const char* uid = GameMap_OldUniqueId(map);
     ddstring_t fileName;
     source_t* s;
     FILE* file;
@@ -393,7 +350,7 @@ static boolean SBE_Save(const char* name)
     Str_Init(&fileName);
     if(!name || !name[0])
     {
-        ddstring_t* mapPath = Uri_Resolved(P_MapUri(map));
+        ddstring_t* mapPath = Uri_Resolved(GameMap_Uri(map));
         Str_Appendf(&fileName, "%s.ded", Str_Text(mapPath));
         Str_Delete(mapPath);
     }
@@ -412,7 +369,7 @@ static boolean SBE_Save(const char* name)
     file = fopen(Str_Text(&fileName), "wt");
     if(!file)
     {
-        Con_Message("Warning failed to open \"%s\" for writing. Bias Lights not saved.\n", F_PrettyPath(Str_Text(&fileName)));
+        Con_Message("Warning: Failed opening \"%s\" for write. Bias Lights not saved.\n", F_PrettyPath(Str_Text(&fileName)));
         Str_Free(&fileName);
         return false;
     }
@@ -432,7 +389,7 @@ static boolean SBE_Save(const char* name)
         fprintf(file, "\nLight {\n");
         fprintf(file, "  Map = \"%s\"\n", uid);
         fprintf(file, "  Origin { %g %g %g }\n",
-                s->pos[0], s->pos[1], s->pos[2]);
+                s->origin[0], s->origin[1], s->origin[2]);
         fprintf(file, "  Color { %g %g %g }\n",
                 s->color[0], s->color[1], s->color[2]);
         fprintf(file, "  Intensity = %g\n", s->primaryIntensity);
@@ -446,7 +403,7 @@ static boolean SBE_Save(const char* name)
     return true;
 }
 
-void SBE_MenuSave(ui_object_t *ob)
+void SBE_MenuSave(ui_object_t* ob)
 {
     SBE_Save(saveFile);
 }
@@ -477,9 +434,6 @@ void SBE_SetHueCircle(boolean activate)
     }
 }
 
-/**
- * Returns true if the console player is currently using the HueCircle.
- */
 boolean SBE_UsingHueCircle(void)
 {
     return (editActive && editHueCircle);
@@ -490,8 +444,8 @@ boolean SBE_UsingHueCircle(void)
  */
 D_CMD(BLEditor)
 {
-    char               *cmd = argv[0] + 2;
-    int                 which;
+    char* cmd = argv[0] + 2;
+    int which;
 
     if(!stricmp(cmd, "edit"))
     {
@@ -558,8 +512,8 @@ D_CMD(BLEditor)
 
     if(!stricmp(cmd, "c") && numSources > 0)
     {
-        source_t           *src = SB_GetSource(which);
-        float               r = 1, g = 1, b = 1;
+        source_t* src = SB_GetSource(which);
+        float r = 1, g = 1, b = 1;
 
         if(argc >= 4)
         {
@@ -578,7 +532,7 @@ D_CMD(BLEditor)
 
     if(!stricmp(cmd, "i") && numSources > 0)
     {
-        source_t           *src = SB_GetSource(which);
+        source_t* src = SB_GetSource(which);
 
         if(argc >= 3)
         {
@@ -664,7 +618,7 @@ static void SBE_InfoBox(source_t* s, int rightX, char* title, float alpha)
     Point2Raw origin;
     Size2Raw size;
     char buf[80];
-    float eye[3];
+    coord_t eye[3];
     int th;
 
     FR_SetFont(fontFixed);
@@ -673,12 +627,12 @@ static void SBE_InfoBox(source_t* s, int rightX, char* title, float alpha)
     th = FR_SingleLineHeight("Info");
     size.height = 16 + th * 6;
 
-    origin.x = theWindow->geometry.size.width  - 10 - size.width - rightX;
-    origin.y = theWindow->geometry.size.height - 10 - size.height;
+    origin.x = Window_Width(theWindow)  - 10 - size.width - rightX;
+    origin.y = Window_Height(theWindow) - 10 - size.height;
 
-    eye[0] = vx;
-    eye[1] = vz;
-    eye[2] = vy;
+    eye[VX] = vOrigin[VX];
+    eye[VY] = vOrigin[VZ];
+    eye[VZ] = vOrigin[VY];
 
     color.red   = s->color[CR];
     color.green = s->color[CG];
@@ -709,11 +663,11 @@ static void SBE_InfoBox(source_t* s, int rightX, char* title, float alpha)
     UI_TextOutEx2(buf, &origin, UI_Color(UIC_TEXT), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
     origin.y += th;
 
-    sprintf(buf, "(%+06.0f,%+06.0f,%+06.0f)", s->pos[0], s->pos[1], s->pos[2]);
+    sprintf(buf, "(%+06.0f,%+06.0f,%+06.0f)", s->origin[0], s->origin[1], s->origin[2]);
     UI_TextOutEx2(buf, &origin, UI_Color(UIC_TEXT), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
     origin.y += th;
 
-    sprintf(buf, "Distance:%-.0f", M_Distance(eye, s->pos));
+    sprintf(buf, "Distance:%-.0f", V3d_Distance(eye, s->origin));
     UI_TextOutEx2(buf, &origin, UI_Color(UIC_TEXT), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
     origin.y += th;
 
@@ -737,13 +691,13 @@ static void SBE_InfoBox(source_t* s, int rightX, char* title, float alpha)
 
 static void SBE_DrawLevelGauge(const Point2Raw* origin, int height)
 {
-    static sector_t* lastSector = NULL;
+    static Sector* lastSector = NULL;
     static float minLevel = 0, maxLevel = 0;
 
     int off, secY, p, minY = 0, maxY = 0;
     Point2Raw labelOrigin;
-    subsector_t* ssec;
-    sector_t* sector;
+    BspLeaf* bspLeaf;
+    Sector* sector;
     source_t* src;
     char buf[80];
     assert(origin);
@@ -753,10 +707,10 @@ static void SBE_DrawLevelGauge(const Point2Raw* origin, int height)
     else
         src = SBE_GetNearest();
 
-    ssec = R_PointInSubsector(src->pos[VX], src->pos[VY]);
-    if(!ssec) return;
+    bspLeaf = P_BspLeafAtPoint(src->origin);
+    if(!bspLeaf) return;
 
-    sector = ssec->sector;
+    sector = bspLeaf->sector;
 
     if(lastSector != sector)
     {
@@ -839,11 +793,11 @@ void SBE_DrawHUD(void)
     Point2Raw origin;
     Size2Raw size;
     char buf[80];
-    gamemap_t* map = P_GetCurrentMap();
+    GameMap* map = theMap;
     source_t* s;
     int top;
 
-    if(!editActive || editHidden) return;
+    if(!editActive || editHidden || !map) return;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
 
@@ -851,7 +805,7 @@ void SBE_DrawHUD(void)
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, theWindow->geometry.size.width, theWindow->geometry.size.height, 0, -1, 1);
+    glOrtho(0, Window_Width(theWindow), Window_Height(theWindow), 0, -1, 1);
 
     glEnable(GL_TEXTURE_2D);
 
@@ -864,7 +818,7 @@ void SBE_DrawHUD(void)
 
     size.width  = FR_TextWidth(buf) + 16;
     size.height = FR_SingleLineHeight(buf) + 16;
-    top = theWindow->geometry.size.height - 10 - size.height;
+    top = Window_Height(theWindow) - 10 - size.height;
 
     origin.x = 10;
     origin.y = top;
@@ -876,7 +830,7 @@ void SBE_DrawHUD(void)
 
     // The map ID.
     origin.y = top - size.height / 2;
-    UI_TextOutEx2(P_GetUniqueMapId(map), &origin, UI_Color(UIC_TITLE), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
+    UI_TextOutEx2(GameMap_OldUniqueId(map), &origin, UI_Color(UIC_TITLE), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
 
     glDisable(GL_TEXTURE_2D);
 
@@ -898,7 +852,7 @@ void SBE_DrawHUD(void)
     if(SBE_GetGrabbed() || SBE_GetNearest())
     {
         origin.x = 20;
-        origin.y = theWindow->geometry.size.height/2 - 255/2;
+        origin.y = Window_Height(theWindow)/2 - 255/2;
         SBE_DrawLevelGauge(&origin, 255);
     }
 
@@ -906,7 +860,7 @@ void SBE_DrawHUD(void)
     glPopMatrix();
 }
 
-void SBE_DrawStar(float pos[3], float size, float color[4])
+void SBE_DrawStar(coord_t pos[3], float size, float color[4])
 {
     float black[4] = { 0, 0, 0, 0 };
 
@@ -938,22 +892,20 @@ void SBE_DrawStar(float pos[3], float size, float color[4])
 static void SBE_DrawIndex(source_t* src)
 {
     const Point2Raw origin = { 2, 2 };
-    float eye[3], scale;
+    coord_t eye[3], scale;
     char buf[80];
 
     if(!editShowIndices) return;
 
-    eye[0] = vx;
-    eye[1] = vz;
-    eye[2] = vy;
-    scale = M_Distance(src->pos, eye) / (theWindow->geometry.size.width / 2);
+    V3d_Set(eye, vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
+    scale = V3d_Distance(src->origin, eye) / (Window_Width(theWindow) / 2);
 
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_2D);
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-    glTranslatef(src->pos[VX], src->pos[VZ], src->pos[VY]);
+    glTranslatef(src->origin[VX], src->origin[VZ], src->origin[VY]);
     glRotatef(-vang + 180, 0, 1, 0);
     glRotatef(vpitch, 1, 0, 0);
     glScalef(-scale, -scale, 1);
@@ -964,7 +916,7 @@ static void SBE_DrawIndex(source_t* src)
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
-    UI_TextOutEx(buf, &origin, UI_Color(UIC_TITLE), 1 - M_Distance(src->pos, eye)/2000);
+    UI_TextOutEx(buf, &origin, UI_Color(UIC_TITLE), 1 - V3d_Distance(src->origin, eye)/2000);
 
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
@@ -975,21 +927,22 @@ static void SBE_DrawIndex(source_t* src)
 
 static void SBE_DrawSource(source_t* src)
 {
-    float col[4], d, eye[3];
+    float col[4];
+    coord_t d, eye[3];
 
-    eye[0] = vx;
-    eye[1] = vz;
-    eye[2] = vy;
+    eye[0] = vOrigin[VX];
+    eye[1] = vOrigin[VZ];
+    eye[2] = vOrigin[VY];
 
     col[0] = src->color[0];
     col[1] = src->color[1];
     col[2] = src->color[2];
 
-    d = (M_Distance(eye, src->pos) - 100) / 1000;
+    d = (V3d_Distance(eye, src->origin) - 100) / 1000;
     if(d < 1) d = 1;
     col[3] = 1.0f / d;
 
-    SBE_DrawStar(src->pos, 25 + src->intensity/20, col);
+    SBE_DrawStar(src->origin, 25 + src->intensity/20, col);
     SBE_DrawIndex(src);
 }
 
@@ -1002,16 +955,11 @@ static void SBE_HueOffset(double angle, float *offset)
 
 static void SBE_DrawHue(void)
 {
-    vec3_t              eye;
-    vec3_t              center, off, off2;
-    float               steps = 32, inner = 10, outer = 30, s;
-    double              angle;
-    float               color[4], sel[4], hue, saturation;
-    int                 i;
-
-    eye[0] = vx;
-    eye[1] = vy;
-    eye[2] = vz;
+    vec3f_t center, off, off2;
+    float steps = 32, inner = 10, outer = 30, s;
+    double angle;
+    float color[4], sel[4], hue, saturation;
+    int i;
 
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
@@ -1019,13 +967,15 @@ static void SBE_DrawHue(void)
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
 
-    glTranslatef(vx, vy, vz);
+    glTranslatef(vOrigin[VX], vOrigin[VY], vOrigin[VZ]);
     glScalef(1, 1.0f/1.2f, 1);
-    glTranslatef(-vx, -vy, -vz);
+    glTranslatef(-vOrigin[VX], -vOrigin[VY], -vOrigin[VZ]);
 
     // The origin of the circle.
     for(i = 0; i < 3; ++i)
-        center[i] = eye[i] + hueOrigin[i] * hueDistance;
+    {
+        center[i] = (float)(vOrigin[i]) + hueOrigin[i] * hueDistance;
+    }
 
     // Draw the circle.
     glBegin(GL_QUAD_STRIP);
@@ -1115,18 +1065,20 @@ void SBE_DrawCursor(void)
 {
 #define SET_COL(x, r, g, b, a) {x[0]=(r); x[1]=(g); x[2]=(b); x[3]=(a);}
 
-    double              t = Sys_GetRealTime()/100.0f;
-    source_t           *s;
-    float               hand[3];
-    float               size = 10000, distance;
-    float               col[4], eye[3];
+    double t = Sys_GetRealTime()/100.0f;
+    source_t* s;
+    coord_t hand[3];
+    float size = 10000;
+    coord_t distance;
+    float col[4];
+    coord_t eye[3];
 
     if(!editActive || !numSources || editHidden || freezeRLs)
         return;
 
-    eye[0] = vx;
-    eye[1] = vz;
-    eye[2] = vy;
+    eye[0] = vOrigin[VX];
+    eye[1] = vOrigin[VZ];
+    eye[2] = vOrigin[VY];
 
     if(editHueCircle && SBE_GetGrabbed())
         SBE_DrawHue();
@@ -1148,26 +1100,26 @@ void SBE_DrawCursor(void)
     }
 
     SBE_GetHand(hand);
-    if((distance = M_Distance(s->pos, hand)) > 2 * editDistance)
+    if((distance = V3d_Distance(s->origin, hand)) > 2 * editDistance)
     {
         // Show where it is.
         glDisable(GL_DEPTH_TEST);
     }
 
-    SBE_DrawStar(s->pos, size, col);
+    SBE_DrawStar(s->origin, size, col);
     SBE_DrawIndex(s);
 
     // Show if the source is locked.
     if(s->flags & BLF_LOCKED)
     {
-        float lock = 2 + M_Distance(eye, s->pos)/100;
+        coord_t lock = 2 + V3d_Distance(eye, s->origin)/100;
 
         glColor4f(1, 1, 1, 1);
 
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
 
-        glTranslatef(s->pos[VX], s->pos[VZ], s->pos[VY]);
+        glTranslatef(s->origin[VX], s->origin[VZ], s->origin[VY]);
 
         glRotatef(t/2, 0, 0, 1);
         glRotatef(t, 1, 0, 0);
@@ -1200,14 +1152,13 @@ void SBE_DrawCursor(void)
     if(editShowAll)
     {
         int i;
-        source_t *src;
+        source_t* src;
 
         glDisable(GL_DEPTH_TEST);
         src = SB_GetSource(0);
         for(i = 0; i < numSources; ++i, src++)
         {
-            if(s == src)
-                continue;
+            if(s == src) continue;
 
             SBE_DrawSource(src);
         }

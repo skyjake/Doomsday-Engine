@@ -1,32 +1,32 @@
-/**\file dd_zone.h
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file dd_zone.h
+ * Memory zone. @ingroup memzone
  *
  *\author Copyright © 1999-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not: http://www.opensource.org/
- */
-
-/**
- * Memory Zone
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #ifndef LIBDENG_ZONE_H
 #define LIBDENG_ZONE_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * @def FAKE_MEMORY_ZONE
@@ -50,7 +50,12 @@ int Z_Init(void);
 
 void            Z_Shutdown(void);
 void*           Z_Malloc(size_t size, int tag, void* ptr);
-void            Z_Free(void* ptr);
+
+/**
+ * Free memory that was allocated with Z_Malloc.
+ */
+void Z_Free(void* ptr);
+
 void            Z_FreeTags(int lowTag, int highTag);
 void            Z_CheckHeap(void);
 void            Z_ChangeTag2(void* ptr, int tag);
@@ -63,6 +68,16 @@ void*           Z_Recalloc(void* ptr, size_t n, int callocTag);
 size_t          Z_FreeMemory(void);
 void            Z_PrintStatus(void);
 void            Z_DebugDrawer(void);
+
+/**
+ * Copies @a text into a buffer allocated from the zone.
+ * Similar to strdup().
+ *
+ * @param text  Null-terminated C string.
+ *
+ * @return  Copy of the string (in the zone).
+ */
+char* Z_StrDup(const char* text);
 
 typedef struct memblock_s {
     size_t          size; // Including header and possibly tiny fragments.
@@ -153,5 +168,8 @@ Z_ChangeTag2(p,t); \
 };
 #endif
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_ZONE_H */

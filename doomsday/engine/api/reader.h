@@ -1,5 +1,5 @@
 /**
- * @file reader.h
+ * @file api/reader.h
  * Deserializer for reading values and data from a byte array.
  *
  * @ingroup base

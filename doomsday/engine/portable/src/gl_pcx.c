@@ -48,7 +48,7 @@ typedef struct {
 } header_t;
 #pragma pack()
 
-static char* lastErrorMsg = 0; /// \fixme potentially never free'd
+static char* lastErrorMsg = 0; /// @todo potentially never free'd
 
 static void setLastError(const char* msg)
 {

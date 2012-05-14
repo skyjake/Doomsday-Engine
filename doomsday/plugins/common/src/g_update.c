@@ -47,6 +47,7 @@
 #include "hu_stuff.h"
 #include "hu_automap.h"
 #include "p_inventory.h"
+#include "p_sound.h"
 #include "p_start.h"
 #if __JHEXEN__
 #  include "m_cheat.h"

@@ -44,11 +44,11 @@ typedef struct {
 /// Orientation is toward the projectee.
 typedef struct {
     float blendFactor; /// Multiplied with projection alpha.
-    pvec3_t v1; /// Top left vertex of the surface being projected to.
-    pvec3_t v2; /// Bottom right vertex of the surface being projected to.
-    pvec3_t tangent; /// Normalized tangent of the surface being projected to.
-    pvec3_t bitangent; /// Normalized bitangent of the surface being projected to.
-    pvec3_t normal; /// Normalized normal of the surface being projected to.
+    coord_t* v1; /// Top left vertex of the surface being projected to.
+    coord_t* v2; /// Bottom right vertex of the surface being projected to.
+    float* tangent; /// Normalized tangent of the surface being projected to.
+    float* bitangent; /// Normalized bitangent of the surface being projected to.
+    float* normal; /// Normalized normal of the surface being projected to.
 } shadowprojectparams_t;
 
 // List nodes.
@@ -124,7 +124,7 @@ static listnode_t* newListNode(void)
     return node;
 }
 
-static listnode_t* newProjection(const float s[2], const float t[2], float alpha)
+static listnode_t* newProjection(float const s[2], float const t[2], float alpha)
 {
     assert(s && t);
     {
@@ -159,19 +159,19 @@ static listnode_t* linkProjectionToList(listnode_t* node, shadowprojectionlist_t
  * @param t  GL texture coordinates on the T axis [bottom, top] in texture space.
  * @param alpha  Alpha attributed to the new projection.
  */
-static void newShadowProjection(uint* listIdx, const float s[2], const float t[2], float alpha)
+static void newShadowProjection(uint* listIdx, float const s[2], float const t[2], float alpha)
 {
     linkProjectionToList(newProjection(s, t, alpha), getList(listIdx));
 }
 
-static boolean genTexCoords(pvec2_t s, pvec2_t t, const_pvec3_t point, float scale,
-    const_pvec3_t v1, const_pvec3_t v2, const_pvec3_t tangent, const_pvec3_t bitangent)
+static boolean genTexCoords(float s[2], float t[2], coord_t const point[3], float scale,
+    coord_t const v1[3], coord_t const v2[3], float const tangent[2], float const bitangent[2])
 {
     // Counteract aspect correction slightly (not too round mind).
     return R_GenerateTexCoords(s, t, point, scale, scale * 1.08f, v1, v2, tangent, bitangent);
 }
 
-float R_ShadowAttenuationFactor(float distance)
+float R_ShadowAttenuationFactor(coord_t distance)
 {
     if(shadowMaxDistance > 0 && distance > 3 * shadowMaxDistance / 4)
     {
@@ -201,10 +201,10 @@ int RIT_ProjectShadowToSurfaceIterator(void* obj, void* paramaters)
     mobj_t* mo = (mobj_t*)obj;
     projectshadowonsurfaceiteratorparams_t* p = (projectshadowonsurfaceiteratorparams_t*)paramaters;
     shadowprojectparams_t* spParams = &p->spParams;
-    float distanceFromViewer = 0, mobjHeight, halfMobjHeight, distanceFromSurface, scale;
-    float shadowRadius, shadowStrength;
-    vec3_t mobjOrigin, point;
-    vec2_t s, t;
+    coord_t distanceFromViewer = 0, mobjHeight, halfMobjHeight, distanceFromSurface;
+    float scale, shadowRadius, shadowStrength;
+    coord_t mobjOrigin[3], point[3];
+    vec2f_t s, t;
 
     Mobj_OriginSmoothed(mo, mobjOrigin);
 
@@ -238,13 +238,13 @@ int RIT_ProjectShadowToSurfaceIterator(void* obj, void* paramaters)
     // in the opposite direction (inward toward the mobj's origin), therefore this
     // has "volume/depth".
     //
-    // vec3_t vToMobj;
-    // V3_Subtract(vToMobj, spParams->v1, mobjOrigin);
-    // if(V3_DotProduct(vToMobj, spParams->normal) > 0) return false; // Continue iteration
+    // vec3d_t vToMobj;
+    // V3d_Subtract(vToMobj, spParams->v1, mobjOrigin);
+    // if(V3d_DotProductf(vToMobj, spParams->normal) > 0) return false; // Continue iteration
 
     // Calculate 3D distance between surface and mobj.
-    V3_ClosestPointOnPlane(point, spParams->normal, spParams->v1, mobjOrigin);
-    distanceFromSurface = V3_Distance(point, mobjOrigin);
+    V3d_ClosestPointOnPlanef(point, spParams->normal, spParams->v1, mobjOrigin);
+    distanceFromSurface = V3d_Distance(point, mobjOrigin);
 
     // Too far above or below the shadowed surface?
     if(distanceFromSurface > mo->height) return false; // Continue iteration.
@@ -309,8 +309,8 @@ void R_InitShadowProjectionListsForNewFrame(void)
     }
 }
 
-uint R_ProjectShadowsToSurface(subsector_t* ssec, float blendFactor,
-    vec3_t topLeft, vec3_t bottomRight, vec3_t tangent, vec3_t bitangent, vec3_t normal)
+uint R_ProjectShadowsToSurface(BspLeaf* bspLeaf, float blendFactor, coord_t topLeft[3],
+    coord_t bottomRight[3], float tangent[3], float bitangent[3], float normal[3])
 {
     projectshadowonsurfaceiteratorparams_t p;
 
@@ -325,7 +325,7 @@ uint R_ProjectShadowsToSurface(subsector_t* ssec, float blendFactor,
     p.spParams.bitangent = bitangent;
     p.spParams.normal = normal;
 
-    R_IterateSubsectorContacts2(ssec, OT_MOBJ, RIT_ProjectShadowToSurfaceIterator, (void*)&p);
+    R_IterateBspLeafContacts2(bspLeaf, OT_MOBJ, RIT_ProjectShadowToSurfaceIterator, (void*)&p);
     // Did we produce a projection list?
     return p.listIdx;
 }
@@ -351,22 +351,22 @@ int R_IterateShadowProjections(uint listIdx, int (*callback) (const shadowprojec
     return R_IterateShadowProjections2(listIdx, callback, NULL);
 }
 
-int RIT_FindShadowPlaneIterator(sector_t* sector, void* paramaters)
+int RIT_FindShadowPlaneIterator(Sector* sector, void* paramaters)
 {
-    plane_t** highest = (plane_t**)paramaters;
-    plane_t* compare = sector->SP_plane(PLN_FLOOR);
+    Plane** highest = (Plane**)paramaters;
+    Plane* compare = sector->SP_plane(PLN_FLOOR);
     if(compare->visHeight > (*highest)->visHeight)
         *highest = compare;
     return false; // Continue iteration.
 }
 
-plane_t* R_FindShadowPlane(mobj_t* mo)
+Plane* R_FindShadowPlane(mobj_t* mo)
 {
-    plane_t* plane = NULL;
+    Plane* plane = NULL;
     assert(mo);
-    if(mo->subsector)
+    if(mo->bspLeaf)
     {
-        plane = mo->subsector->sector->SP_plane(PLN_FLOOR);
+        plane = mo->bspLeaf->sector->SP_plane(PLN_FLOOR);
         P_MobjSectorsIterator(mo, RIT_FindShadowPlaneIterator, (void*)&plane);
     }
     return plane;

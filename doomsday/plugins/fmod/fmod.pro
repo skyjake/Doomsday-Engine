@@ -1,11 +1,12 @@
 # The Doomsday Engine Project
-# Copyright (c) 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+# Copyright (c) 2011-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 include(../config_plugin.pri)
 include(../../dep_fmod.pri)
 
 TEMPLATE = lib
-TARGET = dsfmod
+win32|macx: TARGET = dsFMOD
+      else: TARGET = dsfmod
 
 VERSION = $$FMOD_VERSION
 

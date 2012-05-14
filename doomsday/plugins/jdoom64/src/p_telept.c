@@ -1,4 +1,4 @@
-/**\file
+/**\file p_telept.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -24,12 +24,6 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * p_telept.c:
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include <stdio.h>
 #include <string.h>
 
@@ -42,39 +36,21 @@
 #include "p_terraintype.h"
 #include "p_start.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
-
-mobj_t* P_SpawnTeleFog(float x, float y, angle_t angle)
+mobj_t* P_SpawnTeleFog(coord_t x, coord_t y, angle_t angle)
 {
-    return P_SpawnMobj3f(MT_TFOG, x, y, TELEFOGHEIGHT, angle, MSF_Z_FLOOR);
+    return P_SpawnMobjXYZ(MT_TFOG, x, y, TELEFOGHEIGHT, angle, MSF_Z_FLOOR);
 }
 
 typedef struct {
-    sector_t*           sec;
-    mobjtype_t          type;
-    mobj_t*             foundMobj;
+    Sector* sec;
+    mobjtype_t type;
+    mobj_t* foundMobj;
 } findmobjparams_t;
 
 static int findMobj(thinker_t* th, void* context)
 {
-    findmobjparams_t*   params = (findmobjparams_t*) context;
-    mobj_t*             mo = (mobj_t *) th;
+    findmobjparams_t* params = (findmobjparams_t*) context;
+    mobj_t* mo = (mobj_t*) th;
 
     // Must be of the correct type?
     if(params->type >= 0 && params->type != mo->type)
@@ -82,7 +58,7 @@ static int findMobj(thinker_t* th, void* context)
 
     // Must be in the specified sector?
     if(params->sec &&
-       params->sec != P_GetPtrp(mo->subsector, DMU_SECTOR))
+       params->sec != P_GetPtrp(mo->bspLeaf, DMU_SECTOR))
         return false; // Continue iteration.
 
     // Found it!
@@ -92,13 +68,13 @@ static int findMobj(thinker_t* th, void* context)
 
 static mobj_t* getTeleportDestination(short tag)
 {
-    iterlist_t*         list;
+    iterlist_t* list;
 
     list = P_GetSectorIterListForTag(tag, false);
     if(list)
     {
-        sector_t*           sec = NULL;
-        findmobjparams_t    params;
+        Sector* sec = NULL;
+        findmobjparams_t params;
 
         params.type = MT_TELEPORTMAN;
         params.foundMobj = NULL;
@@ -119,49 +95,45 @@ static mobj_t* getTeleportDestination(short tag)
     return NULL;
 }
 
-int EV_Teleport(linedef_t* line, int side, mobj_t* mo, boolean spawnFog)
+int EV_Teleport(LineDef* line, int side, mobj_t* mo, boolean spawnFog)
 {
-    mobj_t*             dest;
+    mobj_t* dest;
 
     // Clients cannot teleport on their own.
-    if(IS_CLIENT)
-        return 0;
+    if(IS_CLIENT) return 0;
 
-    if(mo->flags2 & MF2_NOTELEPORT)
-        return 0;
+    if(mo->flags2 & MF2_NOTELEPORT) return 0;
 
     // Don't teleport if hit back of line, so you can get out of teleporter.
-    if(side == 1)
-        return 0;
+    if(side == 1) return 0;
 
     if((dest = getTeleportDestination(P_ToXLine(line)->tag)) != NULL)
-    {   // A suitable destination has been found.
-        mobj_t*             fog;
-        uint                an;
-        float               oldPos[3];
-        float               aboveFloor;
-        angle_t             oldAngle;
+    {
+        // A suitable destination has been found.
+        coord_t oldPos[3], aboveFloor;
+        angle_t oldAngle;
+        mobj_t* fog;
+        uint an;
 
-        memcpy(oldPos, mo->pos, sizeof(mo->pos));
+        memcpy(oldPos, mo->origin, sizeof(mo->origin));
         oldAngle = mo->angle;
-        aboveFloor = mo->pos[VZ] - mo->floorZ;
+        aboveFloor = mo->origin[VZ] - mo->floorZ;
 
-        if(!P_TeleportMove(mo, dest->pos[VX], dest->pos[VY], false))
+        if(!P_TeleportMove(mo, dest->origin[VX], dest->origin[VY], false))
             return 0;
 
-        mo->pos[VZ] = mo->floorZ;
+        mo->origin[VZ] = mo->floorZ;
 
         if(spawnFog)
         {
             // Spawn teleport fog at source and destination.
-            if((fog = P_SpawnMobj3fv(MT_TFOG, oldPos, oldAngle + ANG180, 0)))
+            if((fog = P_SpawnMobj(MT_TFOG, oldPos, oldAngle + ANG180, 0)))
                 S_StartSound(SFX_TELEPT, fog);
 
             an = dest->angle >> ANGLETOFINESHIFT;
-            if((fog = P_SpawnMobj3f(MT_TFOG,
-                                    dest->pos[VX] + 20 * FIX2FLT(finecosine[an]),
-                                    dest->pos[VY] + 20 * FIX2FLT(finesine[an]),
-                                    mo->pos[VZ], dest->angle + ANG180, 0)))
+            if((fog = P_SpawnMobjXYZ(MT_TFOG, dest->origin[VX] + 20 * FIX2FLT(finecosine[an]),
+                                              dest->origin[VY] + 20 * FIX2FLT(finesine[an]),
+                                              mo->origin[VZ], dest->angle + ANG180, 0)))
             {
                 // Emit sound, where?
                 S_StartSound(SFX_TELEPT, fog);
@@ -173,7 +145,7 @@ int EV_Teleport(linedef_t* line, int side, mobj_t* mo, boolean spawnFog)
         {
             mo->floorClip = 0;
 
-            if(mo->pos[VZ] == P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT))
+            if(FEQUAL(mo->origin[VZ], P_GetDoublep(mo->bspLeaf, DMU_FLOOR_HEIGHT)))
             {
                 const terraintype_t* tt = P_MobjGetFloorTerrainType(mo);
 
@@ -192,10 +164,10 @@ int EV_Teleport(linedef_t* line, int side, mobj_t* mo, boolean spawnFog)
             mo->reactionTime = 18; // Don't move for a bit.
             if(mo->player->powers[PT_FLIGHT] && aboveFloor > 0)
             {
-                mo->pos[VZ] = mo->floorZ + aboveFloor;
-                if(mo->pos[VZ] + mo->height > mo->ceilingZ)
+                mo->origin[VZ] = mo->floorZ + aboveFloor;
+                if(mo->origin[VZ] + mo->height > mo->ceilingZ)
                 {
-                    mo->pos[VZ] = mo->ceilingZ - mo->height;
+                    mo->origin[VZ] = mo->ceilingZ - mo->height;
                 }
             }
             else
@@ -203,14 +175,14 @@ int EV_Teleport(linedef_t* line, int side, mobj_t* mo, boolean spawnFog)
                 //mo->dPlayer->clLookDir = 0; /* $unifiedangles */
                 mo->dPlayer->lookDir = 0;
             }
-            mo->player->viewHeight = (float) cfg.plrViewHeight;
+            mo->player->viewHeight = (coord_t) cfg.plrViewHeight;
             mo->player->viewHeightDelta = 0;
-            mo->player->viewZ = mo->pos[VZ] + mo->player->viewHeight;
+            mo->player->viewZ = mo->origin[VZ] + mo->player->viewHeight;
             mo->player->viewOffset[VX] = mo->player->viewOffset[VY] = mo->player->viewOffset[VZ] = 0;
             mo->player->bob = 0;
 
             //mo->dPlayer->clAngle = mo->angle; /* $unifiedangles */
-            mo->dPlayer->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
+            mo->dPlayer->flags |= DDPF_FIXANGLES | DDPF_FIXORIGIN | DDPF_FIXMOM;
         }
 
         return 1;
@@ -230,8 +202,8 @@ int EV_Teleport(linedef_t* line, int side, mobj_t* mo, boolean spawnFog)
 static mobjtype_t isFadeSpawner(int doomEdNum)
 {
     typedef struct fadespawner_s {
-        int             doomEdNum;
-        mobjtype_t      type;
+        int doomEdNum;
+        mobjtype_t type;
     } fadespawner_t;
 
     static const fadespawner_t  spawners[] =
@@ -302,36 +274,36 @@ static mobjtype_t isFadeSpawner(int doomEdNum)
 }
 
 typedef struct {
-    sector_t*           sec;
-    float               spawnHeight;
+    Sector* sec;
+    coord_t spawnHeight;
 } fadespawnparams_t;
 
 static int fadeSpawn(thinker_t* th, void* context)
 {
-    fadespawnparams_t*  params = (fadespawnparams_t*) context;
-    mobj_t*             origin = (mobj_t *) th;
-    mobjtype_t          spawntype;
+    fadespawnparams_t* params = (fadespawnparams_t*) context;
+    mobj_t* origin = (mobj_t *) th;
+    mobjtype_t spawntype;
 
     if(params->sec &&
-       params->sec != P_GetPtrp(origin->subsector, DMU_SECTOR))
+       params->sec != P_GetPtrp(origin->bspLeaf, DMU_SECTOR))
         return false; // Continue iteration.
 
     // Only fade spawn origins of a certain type.
     spawntype = isFadeSpawner(origin->info->doomEdNum);
     if(spawntype != -1)
     {
-        angle_t             an;
-        mobj_t*             mo;
-        float               pos[3];
+        coord_t pos[3];
+        angle_t an;
+        mobj_t* mo;
 
         an = origin->angle >> ANGLETOFINESHIFT;
 
-        memcpy(pos, origin->pos, sizeof(pos));
+        memcpy(pos, origin->origin, sizeof(pos));
         pos[VX] += 20 * FIX2FLT(finecosine[an]);
         pos[VY] += 20 * FIX2FLT(finesine[an]);
         pos[VZ] = params->spawnHeight;
 
-        if((mo = P_SpawnMobj3fv(spawntype, pos, origin->angle, 0)))
+        if((mo = P_SpawnMobj(spawntype, pos, origin->angle, 0)))
         {
             mo->translucency = 255;
             mo->spawnFadeTics = 0;
@@ -355,17 +327,17 @@ static int fadeSpawn(thinker_t* th, void* context)
  * \todo DJS - This is not a good design. There must be a better way
  *       to do this using a new thing flag (MF_NOTSPAWNONSTART?).
  */
-int EV_FadeSpawn(linedef_t* li, mobj_t* mo)
+int EV_FadeSpawn(LineDef* li, mobj_t* mo)
 {
     iterlist_t*         list;
 
     list = P_GetSectorIterListForTag(P_ToXLine(li)->tag, false);
     if(list)
     {
-        sector_t*           sec;
+        Sector*             sec;
         fadespawnparams_t   params;
 
-        params.spawnHeight = mo->pos[VZ];
+        params.spawnHeight = mo->origin[VZ];
 
         IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
         IterList_RewindIterator(list);
@@ -387,7 +359,7 @@ typedef enum {
 } bitwiseop_t;
 
 typedef struct {
-    sector_t*           sec;
+    Sector*             sec;
     boolean             notPlayers;
     int                 flags;
     bitwiseop_t         op;
@@ -400,7 +372,7 @@ int PIT_ChangeMobjFlags(thinker_t* th, void* context)
     mobj_t*             mo = (mobj_t*) th;
 
     if(params->sec &&
-       params->sec != P_GetPtrp(mo->subsector, DMU_SECTOR))
+       params->sec != P_GetPtrp(mo->bspLeaf, DMU_SECTOR))
         return false; // Continue iteration.
 
     if(params->notPlayers && mo->player)
@@ -433,11 +405,11 @@ int PIT_ChangeMobjFlags(thinker_t* th, void* context)
  * kaiser - removes things in tagged sector!
  * DJS - actually, no it doesn't at least not directly.
  *
- * \fixme: It appears the MF_TELEPORT flag has been hijacked.
+ * @todo: It appears the MF_TELEPORT flag has been hijacked.
  */
-int EV_FadeAway(linedef_t* line, mobj_t* thing)
+int EV_FadeAway(LineDef* line, mobj_t* thing)
 {
-    sector_t*           sec = NULL;
+    Sector*             sec = NULL;
     iterlist_t*         list;
 
     list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);

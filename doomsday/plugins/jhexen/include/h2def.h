@@ -99,6 +99,7 @@ typedef enum {
     hexen_demo,
     hexen,
     hexen_deathkings,
+    hexen_betademo, // hexen_demo with some bugs
     NUM_GAME_MODES
 } gamemode_t;
 
@@ -106,8 +107,9 @@ typedef enum {
 #define GM_HEXEN_DEMO       0x1
 #define GM_HEXEN            0x2
 #define GM_HEXEN_DEATHKINGS 0x4
+#define GM_HEXEN_BETA       0x8
 
-#define GM_ANY              (GM_HEXEN_DEMO|GM_HEXEN|GM_HEXEN_DEATHKINGS)
+#define GM_ANY              (GM_HEXEN_DEMO|GM_HEXEN|GM_HEXEN_DEATHKINGS|GM_HEXEN_BETA)
 
 #define SCREENWIDTH         320
 #define SCREENHEIGHT        200

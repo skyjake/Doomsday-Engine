@@ -24,7 +24,7 @@
 #include "de_console.h"
 #include "de_filesys.h"
 
-#include "sys_timer.h"
+#include "timer.h"
 
 #include "filedirectory.h"
 
@@ -241,7 +241,7 @@ static void resolveSearchPathsAndAddNodes(FileDirectory* fd,
 
     for(i = 0; i < searchPathsCount; ++i)
     {
-        ddstring_t* searchPath = Uri_Resolved(searchPaths[i]);
+        const ddstring_t* searchPath = Uri_ResolvedConst(searchPaths[i]);
         addpathworker_paramaters_t p;
         if(!searchPath) continue;
 
@@ -253,8 +253,6 @@ static void resolveSearchPathsAndAddNodes(FileDirectory* fd,
 
         // Add new nodes on this path and/or re-process previously seen nodes.
         addPathNodesAndMaybeDescendBranch(0/*do descend*/, searchPath, PT_BRANCH, (void*)&p);
-
-        Str_Delete(searchPath);
     }
 
 /*#if _DEBUG

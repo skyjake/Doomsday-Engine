@@ -91,21 +91,20 @@ typedef struct {
     thinker_t       thinker;
     floortype_e     type;
     boolean         crush;
-    sector_t*       sector;
+    Sector*         sector;
     floorstate_e    state;
     int             newSpecial;
     material_t*     material;
-    float           floorDestHeight;
+    coord_t         floorDestHeight;
     float           speed;
 #if __JHEXEN__
     int             delayCount;
     int             delayTotal;
-    float           stairsDelayHeight;
-    float           stairsDelayHeightDelta;
-    float           resetHeight;
+    coord_t         stairsDelayHeight;
+    coord_t         stairsDelayHeightDelta;
+    coord_t         resetHeight;
     short           resetDelay;
     short           resetDelayCount;
-//    byte            textureChange;
 #endif
 } floor_t;
 
@@ -113,15 +112,15 @@ typedef struct {
 
 void        T_MoveFloor(floor_t* floor);
 #if __JHEXEN__
-int         EV_DoFloor(linedef_t* li, byte* args, floortype_e type);
+int         EV_DoFloor(LineDef* li, byte* args, floortype_e type);
 #else
-int         EV_DoFloor(linedef_t* li, floortype_e type);
+int         EV_DoFloor(LineDef* li, floortype_e type);
 #endif
 
 #if __JHEXEN__
-int         EV_DoFloorAndCeiling(linedef_t* li, byte* args, int ftype, int ctype);
+int         EV_DoFloorAndCeiling(LineDef* li, byte* args, int ftype, int ctype);
 #elif __JDOOM64__
-int         EV_DoFloorAndCeiling(linedef_t* li, int ftype, int ctype);
+int         EV_DoFloorAndCeiling(LineDef* li, int ftype, int ctype);
 #endif
 
 #endif

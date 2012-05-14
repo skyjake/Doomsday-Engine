@@ -60,11 +60,14 @@
 /// Components within a Font path hierarchy are delimited by this character.
 #define FONTS_PATH_DELIMITER        '/'
 
-enum fontnamespaceid_t; // Defined in dd_share.h
+enum fontnamespaceid_e; // Defined in dd_share.h
 struct font_s;
 
 /// Register the console commands, variables, etc..., of this module.
 void Fonts_Register(void);
+
+/// Determines whether the fonts collection has been initialized.
+boolean Fonts_IsInitialized(void);
 
 /// Initialize this module.
 void Fonts_Init(void);

@@ -35,8 +35,8 @@ typedef struct {
     rtexcoord_t texCoords[4];
 } shadowprim_t;
 
-/// \optimize This global shadow primitive is used to avoid repeated local
-/// instantiation in drawShadowPrimitive()
+/// @optimize This global shadow primitive is used to avoid repeated local
+///           instantiation in drawShadowPrimitive()
 static shadowprim_t rshadow, *rs = &rshadow;
 
 boolean Rend_MobjShadowsEnabled(void)
@@ -44,12 +44,12 @@ boolean Rend_MobjShadowsEnabled(void)
     return (useShadows && !levelFullBright);
 }
 
-static void drawShadowPrimitive(const vectorcomp_t pos[3], float radius, float alpha)
+static void drawShadowPrimitive(coord_t const pos[3], coord_t radius, float alpha)
 {
     alpha = MINMAX_OF(0, alpha, 1);
     if(alpha <= 0) return;
 
-    radius = MIN_OF(radius, (float) shadowMaxRadius);
+    radius = MIN_OF(radius, (coord_t) shadowMaxRadius);
     if(radius <= 0) return;
 
     rs->vertices[0].pos[VX] = pos[VX] - radius;
@@ -78,9 +78,10 @@ static void drawShadowPrimitive(const vectorcomp_t pos[3], float radius, float a
 
 static void processMobjShadow(mobj_t* mo)
 {
-    float moz, moh, halfmoh, heightFromSurface, distanceFromViewer = 0;
-    float mobjOrigin[3], shadowRadius, shadowStrength;
-    plane_t* plane;
+    coord_t moz, moh, halfmoh, heightFromSurface, distanceFromViewer = 0;
+    coord_t mobjOrigin[3], shadowRadius;
+    float shadowStrength;
+    Plane* plane;
 
     Mobj_OriginSmoothed(mo, mobjOrigin);
 
@@ -99,7 +100,7 @@ static void processMobjShadow(mobj_t* mo)
     if(shadowRadius <= 0) return;
 
     // Check the height.
-    moz = mo->pos[VZ] - mo->floorClip;
+    moz = mo->origin[VZ] - mo->floorClip;
     if(mo->ddFlags & DDMF_BOB)
         moz -= R_GetBobOffset(mo);
     heightFromSurface = moz - mo->floorZ;
@@ -128,7 +129,7 @@ static void processMobjShadow(mobj_t* mo)
     if(plane->visHeight >= moz + mo->height) return;
 
     // View height might prevent us from seeing the shadow.
-    if(vy < plane->visHeight) return;
+    if(vOrigin[VY] < plane->visHeight) return;
 
     // Glowing planes inversely diminish shadow strength.
     shadowStrength *= (1 - MIN_OF(1, R_GlowStrength(plane)));
@@ -165,7 +166,7 @@ static void initShadowPrimitive(void)
 
 void Rend_RenderMobjShadows(void)
 {
-    const sector_t* sec;
+    const Sector* sec;
     mobj_t* mo;
     uint i;
 
@@ -180,7 +181,7 @@ void Rend_RenderMobjShadows(void)
     initShadowPrimitive();
 
     // Process all sectors:
-    for(i = 0; i < numSectors; ++i)
+    for(i = 0; i < NUM_SECTORS; ++i)
     {
         sec = sectors + i;
 

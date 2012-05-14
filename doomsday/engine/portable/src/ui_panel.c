@@ -37,13 +37,14 @@
 #include "de_render.h"
 #include "de_ui.h"
 
+#include "displaymode.h"
 #include "rend_main.h"
 
 // MACROS ------------------------------------------------------------------
 
 #define NUM_CP_BUTTONS  11
 #define NUMITEMS(x)     (sizeof(x)/sizeof(uidata_listitem_t))
-#define RES(x, y)       (x | (y<<16))
+#define RES(x, y)       ((x) | ((y) << 16))
 #define CPID_FRAME      (UIF_ID0 | UIF_ID1)
 #define CPID_RES_X      UIF_ID0
 #define CPID_RES_Y      UIF_ID1
@@ -116,6 +117,8 @@ cvarbutton_t cvarbuttons[] = {
     {0, "sound-16bit"},
     {0, "sound-3d"},
     {0, "sound-info"},
+    {0, "vid-vsync", "VSync on", "VSync off"},
+    {0, "vid-fsaa", "Antialias", "No antialias"},
     {0, "rend-particle"},
     {0, "rend-camera-smooth"},
     {0, "rend-mobj-smooth-turn"},
@@ -219,7 +222,7 @@ uidata_list_t lst_blend = {
     lstit_blend, NUMITEMS(lstit_blend), "rend-light-blend"
 };
 
-uidata_listitem_t lstit_resolution[] = {
+uidata_listitem_t* lstit_resolution; /* = {
     // 5:4
     {"1280 x 1024 (5:4 SXGA)", RES(1280, 1024)},
     {"2560 x 2048 (5:4 QSXGA)", RES(2560, 2048)},
@@ -253,9 +256,10 @@ uidata_listitem_t lstit_resolution[] = {
     {"854 x 480 (16:9 WVGA)", RES(854, 480)},
     {"1280 x 720 (16:9 WXGA/HD720)", RES(1280, 720)},
     {"1920 x 1080 (16:9 HD1080)", RES(1920, 1080)}
-};
+};*/
 uidata_list_t lst_resolution = {
-    lstit_resolution, NUMITEMS(lstit_resolution)
+    NULL, 0 // dynamically populated
+    //   lstit_resolution, NUMITEMS(lstit_resolution)
 };
 
 uidata_slider_t sld_con_alpha = { 0, 1, 0, .01f, true, "con-alpha" };
@@ -368,27 +372,30 @@ ui_object_t ob_panel[] =
 
     { UI_META,      2 },
     { UI_TEXT,      0,  0,              280, 0, 0, 50,      "Video Options", UIText_BrightDrawer },
-    { UI_TEXT,      0,  UIF_FADE_AWAY,  300, 70, 0, 55,     "Gamma correction", UIText_Drawer },
-    { UI_SLIDER,    0,  UIF_FADE_AWAY,  680, 70, 300, 55,   "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_vid_gamma },
-    { UI_TEXT,      0,  UIF_FADE_AWAY,  300, 130, 0, 55,    "Display contrast", UIText_Drawer },
-    { UI_SLIDER,    0,  UIF_FADE_AWAY,  680, 130, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_vid_contrast },
-    { UI_TEXT,      0,  UIF_FADE_AWAY,  300, 190, 0, 55,    "Display brightness", UIText_Drawer },
-    { UI_SLIDER,    0,  UIF_FADE_AWAY,  680, 190, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_vid_bright },
-    { UI_TEXT,      0,  0,              300, 250, 0, 55,    "Current video mode", UIText_Drawer },
-    { UI_BOX,       0,  0,              680, 250, 0, 60,    "current",  CP_VideoModeInfo },
-    { UI_TEXT,      0,  0,              300, 310, 0, 55,    "Resolution", UIText_Drawer },
-    { UI_LIST,      0,  CPID_RES_LIST,  680, 310, 300, 175, "",         UIList_Drawer, UIList_Responder, UIList_Ticker, CP_ResolutionList, &lst_resolution },
-    { UI_TEXT,      0,  0,              300, 490, 0, 55,    "Custom resolution", UIText_Drawer },
-    { UI_EDIT,      0,  CPID_RES_X,     680, 490, 130, 55,   "",         UIEdit_Drawer, UIEdit_Responder, 0, CP_VidModeChanged, &ed_res_x },
-    { UI_TEXT,      0,  0,              826, 490, 0, 55,    "x", UIText_Drawer },
-    { UI_EDIT,      0,  CPID_RES_Y,     850, 490, 130, 55,   "",         UIEdit_Drawer, UIEdit_Responder, 0, CP_VidModeChanged, &ed_res_y },
-    { UI_TEXT,      0,  0,              300, 550, 0, 55,    "Fullscreen", UIText_Drawer },
-    { UI_BUTTON2EX, 0,  0,              680, 550, 130, 55,  "",    UIButton_Drawer, UIButton_Responder, 0, CP_VidModeChanged, &btn_fullscreen },
-    { UI_TEXT,      0,  0,              300, 610, 0, 55,    "Color depth", UIText_Drawer },
-    { UI_BUTTON2EX, 0,  0,              680, 610, 130, 55,  "",         UIButton_Drawer, UIButton_Responder, 0, CP_VidModeChanged, &btn_bpp },
-    { UI_TEXT,      0,  0,              300, 670, 0, 55,    "Default video mode", UIText_Drawer },
-    { UI_BOX,       0,  0,              680, 670, 0, 55,    "default",  CP_VideoModeInfo },
-    { UI_BUTTON,    0,  0,              680, 730, 170, 60,  "Set Default", UIButton_Drawer, UIButton_Responder, 0, CP_SetDefaultVidMode },
+    { UI_TEXT,      0,  0,              300, 70, 0, 55,     "Quality",  UIText_Drawer },
+    { UI_BUTTON2,   0,  0,              680, 70, 145, 55,   "vid-fsaa", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
+    { UI_BUTTON2,   0,  0,              830, 70, 145, 55,   "vid-vsync", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
+    { UI_TEXT,      0,  UIF_FADE_AWAY,  300, 130, 0, 55,    "Gamma correction", UIText_Drawer },
+    { UI_SLIDER,    0,  UIF_FADE_AWAY,  680, 130, 300, 55,   "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_vid_gamma },
+    { UI_TEXT,      0,  UIF_FADE_AWAY,  300, 190, 0, 55,    "Display contrast", UIText_Drawer },
+    { UI_SLIDER,    0,  UIF_FADE_AWAY,  680, 190, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_vid_contrast },
+    { UI_TEXT,      0,  UIF_FADE_AWAY,  300, 250, 0, 55,    "Display brightness", UIText_Drawer },
+    { UI_SLIDER,    0,  UIF_FADE_AWAY,  680, 250, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_vid_bright },
+    { UI_TEXT,      0,  0,              300, 310, 0, 55,    "Current video mode", UIText_Drawer },
+    { UI_BOX,       0,  0,              680, 310, 0, 60,    "current",  CP_VideoModeInfo },
+    { UI_TEXT,      0,  0,              300, 370, 0, 55,    "Resolution", UIText_Drawer },
+    { UI_LIST,      0,  CPID_RES_LIST,  680, 370, 300, 175, "",         UIList_Drawer, UIList_Responder, UIList_Ticker, CP_ResolutionList, &lst_resolution },
+    { UI_TEXT,      0,  0,              300, 550, 0, 55,    "Custom resolution", UIText_Drawer },
+    { UI_EDIT,      0,  CPID_RES_X,     680, 550, 130, 55,  "",         UIEdit_Drawer, UIEdit_Responder, 0, CP_VidModeChanged, &ed_res_x },
+    { UI_TEXT,      0,  0,              826, 550, 0, 55,    "x", UIText_Drawer },
+    { UI_EDIT,      0,  CPID_RES_Y,     850, 550, 130, 55,  "",         UIEdit_Drawer, UIEdit_Responder, 0, CP_VidModeChanged, &ed_res_y },
+    { UI_TEXT,      0,  0,              300, 610, 0, 55,    "Fullscreen", UIText_Drawer },
+    { UI_BUTTON2EX, 0,  0,              680, 610, 130, 55,  "",    UIButton_Drawer, UIButton_Responder, 0, CP_VidModeChanged, &btn_fullscreen },
+    { UI_TEXT,      0,  0,              300, 670, 0, 55,    "Color depth", UIText_Drawer },
+    { UI_BUTTON2EX, 0,  0,              680, 670, 130, 55,  "",         UIButton_Drawer, UIButton_Responder, 0, CP_VidModeChanged, &btn_bpp },
+    { UI_TEXT,      0,  0,              300, 730, 0, 55,    "Default video mode", UIText_Drawer },
+    { UI_BOX,       0,  0,              680, 730, 0, 55,    "default",  CP_VideoModeInfo },
+    { UI_BUTTON,    0,  0,              680, 790, 170, 60,  "Set Default", UIButton_Drawer, UIButton_Responder, 0, CP_SetDefaultVidMode },
     { UI_TEXT,      0,  0,              300, 910, 0, 55,    "Change to", UIText_Drawer },
     { UI_BUTTON,    0,  CPID_SET_RES,   680, 910, 300, 60,  "",         UIButton_Drawer, UIButton_Responder, 0, CP_SetVidMode },
 
@@ -477,7 +484,7 @@ ui_object_t ob_panel[] =
     { UI_SLIDER,    0,  UIF_FADE_AWAY,  680, 610, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_light_ambient },
     { UI_TEXT,      0,  UIF_FADE_AWAY,  300, 670, 0, 55,    "Light range compression", UIText_Drawer },
     { UI_SLIDER,    0,  UIF_FADE_AWAY,  680, 670, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_light_compression },
-    { UI_TEXT,      0,  0,              300, 730, 0, 55,    "Material glow strength", UIText_Drawer },
+    { UI_TEXT,      0,  UIF_FADE_AWAY,  300, 730, 0, 55,    "Material glow strength", UIText_Drawer },
     { UI_SLIDER,    0,  UIF_FADE_AWAY,  680, 730, 300, 55,  "rend-glow", UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_light_glow_strength },
     { UI_TEXT,      0,  0,              300, 790, 0, 55,    "Floor/ceiling glow on walls", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 790, 70, 55,   "rend-glow-wall", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
@@ -871,16 +878,15 @@ void CP_VideoModeInfo(ui_object_t* ob)
     }
     else
     {
-        boolean fullscreen;
-        if(!Sys_GetWindowFullscreen(windowIDX, &fullscreen))
-            return;
+        boolean fullscreen = Window_IsFullscreen(Window_Main());
 
-        sprintf(buf, "%i x %i x %i (%s)", theWindow->geometry.size.width,
-            theWindow->geometry.size.height, theWindow->normal.bpp,
+        sprintf(buf, "%i x %i x %i (%s)", Window_Width(theWindow),
+            Window_Height(theWindow), Window_ColorDepthBits(theWindow),
             (fullscreen? "fullscreen" : "windowed"));
     }
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glEnable(GL_TEXTURE_2D);
     FR_SetFont(fontVariable[FS_LIGHT]);
@@ -897,10 +903,8 @@ void CP_VideoModeInfo(ui_object_t* ob)
 
 void CP_UpdateSetVidModeButton(int w, int h, int bpp, boolean fullscreen)
 {
-    boolean cFullscreen;
+    boolean cFullscreen = Window_IsFullscreen(Window_Main());
     ui_object_t* ob;
-
-    if(!Sys_GetWindowFullscreen(windowIDX, &cFullscreen)) return;
 
     ob = UI_FindObject(ob_panel, CPG_VIDEO, CPID_SET_RES);
 
@@ -908,9 +912,8 @@ void CP_UpdateSetVidModeButton(int w, int h, int bpp, boolean fullscreen)
     sprintf(ob->text, "%i x %i x %i (%s)", w, h, bpp,
             fullscreen? "fullscreen" : "windowed");
 
-    if(w == theWindow->geometry.size.width && h == theWindow->geometry.size.height &&
-       bpp == theWindow->normal.bpp &&
-       fullscreen == cFullscreen)
+    if(w == Window_Width(theWindow) && h == Window_Height(theWindow) &&
+       bpp == Window_ColorDepthBits(theWindow) && fullscreen == cFullscreen)
         ob->flags |= UIF_DISABLED;
     else
         ob->flags &= ~UIF_DISABLED;
@@ -951,9 +954,16 @@ void CP_SetVidMode(ui_object_t* ob)
 
     ob->flags |= UIF_DISABLED;
 
-    Sys_SetWindow(windowIDX, 0, 0, x, y, bpp,
-                 (panel_fullscreen? DDWF_FULLSCREEN : 0),
-                 DDSW_NOVISIBLE|DDSW_NOCENTER);
+    {
+        int attribs[] = {
+            DDWA_WIDTH, x,
+            DDWA_HEIGHT, y,
+            DDWA_COLOR_DEPTH_BITS, bpp,
+            DDWA_FULLSCREEN, panel_fullscreen != 0,
+            DDWA_END
+        };
+        Window_ChangeAttributes(Window_Main(), attribs);
+    }
 }
 
 void CP_VidModeChanged(ui_object_t *ob)
@@ -1181,6 +1191,36 @@ void CP_InitCvarSliders(ui_object_t *ob)
     }
 }
 
+static void populateDisplayResolutions(void)
+{
+    int i, k, p = 0;
+
+    lstit_resolution = Z_Recalloc(lstit_resolution,
+                                  sizeof(*lstit_resolution) * DisplayMode_Count(),
+                                  PU_APPSTATIC);
+
+    for(i = 0; i < DisplayMode_Count(); ++i)
+    {
+        const DisplayMode* mode = DisplayMode_ByIndex(i);
+        int spec = RES(mode->width, mode->height);
+
+        // Make sure we haven't added this size yet (many with different refresh rates).
+        for(k = 0; k < p; ++k)
+        {
+            if(lstit_resolution[k].data == spec) break;
+        }
+        if(k < p) continue; // Already got it.
+
+        dd_snprintf(lstit_resolution[p].text, sizeof(lstit_resolution[p].text),
+                    "%i x %i (%i:%i)", mode->width, mode->height, mode->ratioX, mode->ratioY);
+        lstit_resolution[p].data = spec;
+        ++p;
+    }
+
+    lst_resolution.items = lstit_resolution;
+    lst_resolution.count = p;
+}
+
 /**
  * Initialize and open the Control Panel.
  */
@@ -1192,6 +1232,8 @@ D_CMD(OpenPanel)
     int i;
 
     Con_Execute(CMDS_DDAY, "conclose", true, false);
+
+    populateDisplayResolutions();
 
     // The help window is hidden.
     panel_help_active = false;
@@ -1278,20 +1320,19 @@ D_CMD(OpenPanel)
 
     // Update width the current resolution.
     {
-        boolean cFullscreen = true;
-        Sys_GetWindowFullscreen(windowIDX, &cFullscreen);
+        boolean cFullscreen = Window_IsFullscreen(Window_Main());
 
         ob = UI_FindObject(ob_panel, CPG_VIDEO, CPID_RES_LIST);
         list = ob->data;
         list->selection = UI_ListFindItem(ob,
-            RES(theWindow->geometry.size.width, theWindow->geometry.size.height));
+            RES(Window_Width(theWindow), Window_Height(theWindow)));
         if(list->selection == -1)
         {
             // Then use a reasonable default.
             list->selection = UI_ListFindItem(ob, RES(640, 480));
         }
         panel_fullscreen = cFullscreen;
-        panel_bpp = (theWindow->normal.bpp == 32? 1 : 0);
+        panel_bpp = (Window_ColorDepthBits(theWindow) == 32? 1 : 0);
         CP_ResolutionList(ob);
     }
 

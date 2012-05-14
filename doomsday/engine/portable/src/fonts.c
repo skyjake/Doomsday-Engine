@@ -372,6 +372,11 @@ static int destroyFontAndRecord(PathDirectoryNode* node, void* paramaters)
     return 0; // Continue iteration.
 }
 
+boolean Fonts_IsInitialized(void)
+{
+    return emptyUri != 0;
+}
+
 void Fonts_Init(void)
 {
     int i;
@@ -717,7 +722,7 @@ fontid_t Fonts_ResolveUri2(const Uri* uri, boolean quiet)
     {
 #if _DEBUG
         ddstring_t* uriStr = Uri_ToString(uri);
-        Con_Message("Warning:Fonts::ResolveUri: Uri \"%s\" failed to validate, returing NULL.\n", Str_Text(uriStr));
+        Con_Message("Warning:Fonts::ResolveUri: Uri \"%s\" failed to validate, returning NULL.\n", Str_Text(uriStr));
         Str_Delete(uriStr);
 #endif
         return NOFONTID;

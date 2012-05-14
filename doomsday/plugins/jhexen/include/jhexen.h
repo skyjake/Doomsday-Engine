@@ -51,7 +51,6 @@
 #include "../../jhexen/include/p_pillar.h"
 #include "../../jhexen/include/p_pspr.h"
 #include "../../jhexen/include/p_setup.h"
-#include "../../jhexen/include/p_sound.h"
 #include "../../jhexen/include/p_spec.h"
 #include "../../jhexen/include/p_telept.h"
 #include "../../jhexen/include/p_things.h"

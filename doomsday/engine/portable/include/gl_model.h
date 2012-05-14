@@ -36,7 +36,7 @@
 
 #define MD2_MAGIC           0x32504449
 #define NUMVERTEXNORMALS    162
-#define MAX_MODELS          768
+//#define MAX_MODELS          768
 
 // "DMDM" = Doomsday/Detailed MoDel Magic
 #define DMD_MAGIC           0x4D444D44
@@ -194,18 +194,18 @@ typedef struct model_frame_s {
 
 typedef struct model_s {
     boolean loaded;
-    char fileName[256]; /// Name of the md2 file.
+    const char* fileName; ///< Name of the md2 file.
     dmd_header_t header;
     dmd_info_t info;
     dmd_skin_t* skins;
     model_frame_t* frames;
     dmd_levelOfDetail_t lodInfo[MAX_LODS];
     dmd_lod_t lods[MAX_LODS];
-    char* vertexUsage; /// Bitfield for each vertex.
-    boolean allowTexComp; /// Allow texture compression with this.
+    char* vertexUsage; ///< Bitfield for each vertex.
+    boolean allowTexComp; ///< Allow texture compression with this.
 } model_t;
 
-extern model_t* modellist[MAX_MODELS];
+//extern model_t* modellist[MAX_MODELS];
 extern float avertexnormals[NUMVERTEXNORMALS][3];
 
 #endif /* LIBDENG_MODEL_H */

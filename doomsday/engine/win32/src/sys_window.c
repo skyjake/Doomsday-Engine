@@ -1,3 +1,5 @@
+// OBSOLETE: see window.cpp (GUI) and sys_console.c (text-mode)
+
 /**\file sys_window.c
  *\section License
  * License: GPL
@@ -54,14 +56,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define WINDOWEDSTYLE (WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | \
-                       WS_CLIPCHILDREN | WS_CLIPSIBLINGS)
-#define FULLSCREENSTYLE (WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS)
-
-#define LINELEN         80
-#define TEXT_ATTRIB     (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE)
-#define CMDLINE_ATTRIB  (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY)
-
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -74,9 +68,6 @@ static void destroyWindow(ddwindow_t *win);
 static boolean setDDWindow(ddwindow_t *win, int newX, int newY, int newWidth,
                            int newHeight, int newBPP, int wFlags,
                            int uFlags);
-
-static void setConWindowCmdLine(ddwindow_t *win, const char *text,
-                                uint cursorPos, int flags);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -105,232 +96,6 @@ static __inline ddwindow_t *getWindow(uint idx)
         return NULL;
 
     return windows[idx];
-}
-
-static void setCmdLineCursor(ddwindow_t *win, int x, int y)
-{
-    COORD       pos;
-
-    pos.X = x;
-    pos.Y = y;
-    SetConsoleCursorPosition(win->console.hcScreen, pos);
-}
-
-static void scrollLine(ddwindow_t *win)
-{
-    SMALL_RECT  src;
-    COORD       dest;
-    CHAR_INFO   fill;
-
-    src.Left = 0;
-    src.Right = win->console.cbInfo.dwSize.X - 1;
-    src.Top = 1;
-    src.Bottom = win->console.cbInfo.dwSize.Y - 2;
-    dest.X = 0;
-    dest.Y = 0;
-    fill.Attributes = TEXT_ATTRIB;
-#ifdef UNICODE
-    fill.Char.UnicodeChar = L' ';
-#else
-    fill.Char.AsciiChar = ' ';
-#endif
-
-    ScrollConsoleScreenBuffer(win->console.hcScreen, &src, NULL, dest, &fill);
-}
-
-/**
- * @param flags  @see consolePrintFlags
- */
-static void setAttrib(ddwindow_t* win, int flags)
-{
-    win->console.attrib = 0;
-    if(flags & CPF_WHITE)
-        win->console.attrib = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
-    if(flags & CPF_BLUE)
-        win->console.attrib = FOREGROUND_BLUE;
-    if(flags & CPF_GREEN)
-        win->console.attrib = FOREGROUND_GREEN;
-    if(flags & CPF_CYAN)
-        win->console.attrib = FOREGROUND_BLUE | FOREGROUND_GREEN;
-    if(flags & CPF_RED)
-        win->console.attrib = FOREGROUND_RED;
-    if(flags & CPF_MAGENTA)
-        win->console.attrib = FOREGROUND_RED | FOREGROUND_BLUE;
-    if(flags & CPF_YELLOW)
-        win->console.attrib = FOREGROUND_RED | FOREGROUND_GREEN;
-    if(flags & CPF_LIGHT)
-        win->console.attrib |= FOREGROUND_INTENSITY;
-    if((flags & CPF_WHITE) != CPF_WHITE)
-        win->console.attrib |= FOREGROUND_INTENSITY;
-
-    SetConsoleTextAttribute(win->console.hcScreen, win->console.attrib);
-}
-
-/**
- * Writes the text at the (cx,cy).
- */
-static void writeText(ddwindow_t *win, CHAR_INFO *line, int len)
-{
-    COORD       linesize;
-    COORD       from = {0, 0};
-    SMALL_RECT  rect;
-
-    linesize.X = len;
-    linesize.Y = 1;
-    rect.Left = win->console.cx;
-    rect.Right = win->console.cx + len;
-    rect.Top = win->console.cy;
-    rect.Bottom = win->console.cy;
-
-    WriteConsoleOutput(win->console.hcScreen, line, linesize, from, &rect);
-}
-
-void Sys_ConPrint(uint idx, const char* text, int flags)
-{
-    ddwindow_t* win;
-    unsigned int i;
-    int linestart, bpos;
-    const char* ptr = text;
-    CHAR_INFO line[LINELEN];
-    size_t len;
-    char ch;
-#ifdef UNICODE
-    wchar_t wch;
-#endif
-
-    if(!winManagerInited || !text)
-        return;
-
-    win = getWindow(idx - 1);
-    if(!win || win->type != WT_CONSOLE)
-        return;
-
-    if(win->console.needNewLine)
-    {   // Need to make some room.
-        win->console.cx = 0;
-        win->console.cy++;
-        if(win->console.cy == win->console.cbInfo.dwSize.Y - 1)
-        {
-            win->console.cy--;
-            scrollLine(win);
-        }
-        win->console.needNewLine = false;
-    }
-
-    bpos = linestart = win->console.cx;
-    setAttrib(win, flags);
-    len = strlen(text);
-    for(i = 0; i < len; i++, ptr++)
-    {
-        ch = *ptr;
-        if(ch != '\n' && bpos < LINELEN)
-        {
-            line[bpos].Attributes = win->console.attrib;
-#ifdef UNICODE
-            mbtowc(&wch, &ch, MB_CUR_MAX);
-            line[bpos].Char.UnicodeChar = wch;
-#else
-            line[bpos].Char.AsciiChar = ch;
-#endif
-            bpos++;
-        }
-
-        // Time for newline?
-        if(ch == '\n' || bpos == LINELEN)
-        {
-            writeText(win, line + linestart, bpos - linestart);
-            win->console.cx += bpos - linestart;
-            bpos = 0;
-            linestart = 0;
-            if(i < len - 1)
-            {   // Not the last character.
-                win->console.needNewLine = false;
-                win->console.cx = 0;
-                win->console.cy++;
-                if(win->console.cy == win->console.cbInfo.dwSize.Y - 1)
-                {
-                    scrollLine(win);
-                    win->console.cy--;
-                }
-            }
-            else
-            {
-                win->console.needNewLine = true;
-            }
-        }
-    }
-
-    // Something left in the buffer?
-    if(bpos - linestart)
-    {
-        writeText(win, line + linestart, bpos - linestart);
-        win->console.cx += bpos - linestart;
-    }
-}
-
-void Sys_SetConWindowCmdLine(uint idx, const char* text, uint cursorPos, int flags)
-{
-    ddwindow_t* win;
-
-    if(!winManagerInited) return;
-
-    win = getWindow(idx - 1);
-    if(!win || win->type != WT_CONSOLE) return;
-
-    setConWindowCmdLine(win, text, cursorPos, flags);
-}
-
-static void setConWindowCmdLine(ddwindow_t* win, const char* text, uint cursorPos, int flags)
-{
-    CHAR_INFO line[LINELEN], *ch;
-    COORD linesize = {LINELEN, 1};
-    COORD from = {0, 0};
-    SMALL_RECT rect;
-    uint i;
-#ifdef UNICODE
-    wchar_t wch;
-#endif
-
-    // Do we need to change the look of the cursor?
-    if((flags & CLF_CURSOR_LARGE) !=
-        (win->console.cmdline.flags & CLF_CURSOR_LARGE))
-    {
-        CONSOLE_CURSOR_INFO curInfo;
-
-        curInfo.bVisible = TRUE;
-        curInfo.dwSize = ((flags & CLF_CURSOR_LARGE)? 100 : 10);
-
-        SetConsoleCursorInfo(win->console.hcScreen, &curInfo);
-        win->console.cmdline.flags ^= CLF_CURSOR_LARGE;
-    }
-
-#ifdef UNICODE
-    line[0].Char.UnicodeChar = L'>';
-#else
-    line[0].Char.AsciiChar = '>';
-#endif
-    line[0].Attributes = CMDLINE_ATTRIB;
-    for(i = 0, ch = line + 1; i < LINELEN - 1; ++i, ch++)
-    {
-#ifdef UNICODE
-        if(i < strlen(text))
-            mbtowc(&wch, &text[i], MB_CUR_MAX);
-        else
-            wch = L' ';
-        ch->Char.UnicodeChar = wch;
-#else
-        ch->Char.AsciiChar = (i < strlen(text)? text[i] : ' ');
-#endif
-        // Gray color.
-        ch->Attributes = CMDLINE_ATTRIB;
-    }
-
-    rect.Left = 0;
-    rect.Right = LINELEN - 1;
-    rect.Top = win->console.cbInfo.dwSize.Y - 1;
-    rect.Bottom = win->console.cbInfo.dwSize.Y - 1;
-    WriteConsoleOutput(win->console.hcScreen, line, linesize, from, &rect);
-    setCmdLineCursor(win, cursorPos, win->console.cbInfo.dwSize.Y - 1);
 }
 
 /**
@@ -720,88 +485,6 @@ static ddwindow_t* createGLWindow(application_t* app, uint parentIdx,
     return win;
 }
 
-static ddwindow_t* createConsoleWindow(application_t* app, uint parentIdx,
-    const Point2Raw* origin, const Size2Raw* size, int bpp, int flags,
-    const char* title)
-{
-    ddwindow_t* win, *pWin = NULL;
-    uint i;
-    HWND phWnd = NULL;
-    boolean ok = true;
-    HANDLE hcScreen;
-
-    // We only support one dedicated console.
-    for(i = 0; i < numWindows; ++i)
-    {
-        ddwindow_t* other = windows[i];
-
-        if(other && other->type == WT_CONSOLE)
-        {
-            Con_Message("createWindow: maxConsoles limit reached.\n");
-            return NULL;
-        }
-    }
-
-    if(parentIdx)
-    {
-        pWin = getWindow(parentIdx - 1);
-        if(pWin) phWnd = pWin->hWnd;
-    }
-
-    win = (ddwindow_t*) calloc(1, sizeof *win);
-    if(!win) return NULL;
-
-    if(!AllocConsole())
-    {
-        Con_Error("createWindow: Couldn't allocate a console! error %i\n", GetLastError());
-    }
-
-    win->hWnd = GetConsoleWindow();
-    if(!win->hWnd)
-    {
-        win->hWnd = NULL;
-        ok = false;
-    }
-    else  // Initialize.
-    {
-        if(!SetWindowText(win->hWnd, WIN_STRING(title)))
-            Con_Error("createWindow: Setting console title: error %i\n",
-                      GetLastError());
-
-        hcScreen = GetStdHandle(STD_OUTPUT_HANDLE);
-        if(hcScreen == INVALID_HANDLE_VALUE)
-            Con_Error("createWindow: Bad output handle\n");
-
-        win->type = WT_CONSOLE;
-
-        win->console.hcScreen = hcScreen;
-        GetConsoleScreenBufferInfo(hcScreen, &win->console.cbInfo);
-
-        // This is the location of the print cursor.
-        win->console.cx = 0;
-        win->console.cy = win->console.cbInfo.dwSize.Y - 2;
-
-        setConWindowCmdLine(win, "", 1, 0);
-
-        // We'll be needing the console input handler.
-        Sys_ConInputInit();
-    }
-
-    setDDWindow(win, origin->x, origin->y, size->width, size->height, bpp, flags,
-                DDSW_NOVISIBLE | DDSW_NOCENTER | DDSW_NOFULLSCREEN);
-
-    // Ensure new windows are hidden on creation.
-    ShowWindow(win->hWnd, SW_HIDE);
-
-    if(!ok)
-    {   // Damn, something went wrong... clean up.
-        destroyWindow(win);
-        return NULL;
-    }
-
-    return win;
-}
-
 uint Sys_CreateWindow(application_t* app, uint parentIdx, const Point2Raw* origin,
     const Size2Raw* size, int bpp, int flags, ddwindowtype_t type, const char* title,
     void* userData)
@@ -873,17 +556,6 @@ static boolean destroyGLWindow(ddwindow_t *window)
     return true;
 }
 
-static boolean destroyConsoleWindow(ddwindow_t *window)
-{
-    // We no longer need the input handler.
-    Sys_ConInputShutdown();
-
-    // Detach the console for this process.
-    if(!FreeConsole())
-        return false;
-
-    return true;
-}
 
 static void destroyWindow(ddwindow_t *window)
 {

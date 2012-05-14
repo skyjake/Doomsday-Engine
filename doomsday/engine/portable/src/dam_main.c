@@ -31,6 +31,7 @@
 #include "de_console.h"
 #include "de_dam.h"
 #include "de_misc.h"
+#include "de_network.h"
 #include "de_refresh.h"
 #include "de_render.h"
 #include "de_defs.h"
@@ -423,15 +424,15 @@ ddstring_t* DAM_ComposeCacheDir(const char* sourcePath)
     return path;
 }
 
-static boolean loadMap(gamemap_t** map, archivedmap_t* dam)
+static boolean loadMap(GameMap** map, archivedmap_t* dam)
 {
-    *map = (gamemap_t*) Z_Calloc(sizeof(**map), PU_MAPSTATIC, 0);
+    *map = (GameMap*) Z_Calloc(sizeof(**map), PU_MAPSTATIC, 0);
     if(NULL == *map)
         Con_Error("loadMap: Failed on allocation of %lu bytes for new Map.", (unsigned long) sizeof(**map));
     return DAM_MapRead(*map, Str_Text(&dam->cachedMapPath));
 }
 
-static boolean convertMap(gamemap_t** map, archivedmap_t* dam)
+static boolean convertMap(GameMap** map, archivedmap_t* dam)
 {
     boolean converted = false;
 
@@ -517,18 +518,20 @@ boolean DAM_AttemptMapLoad(const Uri* uri)
     // Load it in.
     if(!dam->lastLoadAttemptFailed)
     {
-        gamemap_t* map = NULL;
+        GameMap* map = NULL;
         ded_mapinfo_t* mapInfo;
 
         Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
 
         if(mapCache && dam->cachedMapFound)
-        {   // Attempt to load the cached map data.
+        {
+            // Attempt to load the cached map data.
             if(loadMap(&map, dam))
                 loadedOK = true;
         }
         else
-        {   // Try a JIT conversion with the help of a plugin.
+        {
+            // Try a JIT conversion with the help of a plugin.
             if(convertMap(&map, dam))
                 loadedOK = true;
         }
@@ -536,7 +539,7 @@ boolean DAM_AttemptMapLoad(const Uri* uri)
         if(loadedOK)
         {
             ded_sky_t* skyDef = NULL;
-            vec2_t min, max;
+            vec2d_t min, max;
             uint i;
 
             // Do any initialization/error checking work we need to do.
@@ -544,17 +547,22 @@ boolean DAM_AttemptMapLoad(const Uri* uri)
             P_InitUnusedMobjList();
 
             // Must be called before any mobjs are spawned.
-            R_InitLinks(map);
+            GameMap_InitNodePiles(map);
+
+            // Prepare the client-side data.
+            if(isClient)
+            {
+                GameMap_InitClMobjs(map);
+            }
 
             Rend_DecorInit();
 
-            // Init blockmap for searching subsectors.
-            V2_Set(min, map->bBox[BOXLEFT],  map->bBox[BOXBOTTOM]);
-            V2_Set(max, map->bBox[BOXRIGHT], map->bBox[BOXTOP]);
-            Map_InitSubsectorBlockmap(map, min, max);
-            for(i = 0; i < map->numSSectors; ++i)
+            // Init blockmap for searching BSP leafs.
+            GameMap_Bounds(map, min, max);
+            GameMap_InitBspLeafBlockmap(map, min, max);
+            for(i = 0; i < map->numBspLeafs; ++i)
             {
-                Map_LinkSubsectorInBlockmap(map, map->ssectors + i);
+                GameMap_LinkBspLeaf(map, GameMap_BspLeaf(map, i));
             }
 
             map->uri = Uri_NewCopy(dam->uri);
@@ -591,15 +599,17 @@ boolean DAM_AttemptMapLoad(const Uri* uri)
                 map->ambientLightLevel = 0;
             }
 
-            // \todo should be called from P_LoadMap() but R_InitMap requires the
-            // currentMap to be set first.
+            map->effectiveGravity = map->globalGravity;
+
+            // @todo should be called from P_LoadMap() but R_InitMap requires the
+            //       theMap to be set first.
             P_SetCurrentMap(map);
 
             R_InitFakeRadioForMap();
 
             { uint startTime = Sys_GetRealTime();
-            R_InitSkyFix();
-            VERBOSE2( Con_Message("R_InitSkyFix: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
+            GameMap_InitSkyFix(map);
+            VERBOSE2( Con_Message("Initial sky fix done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
             }
         }
     }

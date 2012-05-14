@@ -34,6 +34,8 @@
 #include "de_misc.h"
 #include "de_play.h"
 
+#include <de/c_wrapper.h>
+
 #include "zipfile.h" // uses compression for packet contents
 
 #define MSG_MUTEX_NAME  "MsgQueueMutex"
@@ -66,9 +68,11 @@ void N_Init(void)
 
     allowSending = false;
 
-    N_SockInit();
+    //N_SockInit();
     N_MasterInit();
     N_SystemInit();             // Platform dependent stuff.
+
+    N_InitService(false /* client mode by default */);
 }
 
 /**
@@ -79,7 +83,7 @@ void N_Shutdown(void)
 {
     N_SystemShutdown();
     N_MasterShutdown();
-    N_SockShutdown();
+    //N_SockShutdown();
 
     allowSending = false;
 
@@ -104,9 +108,9 @@ boolean N_LockQueue(boolean doAcquire)
 
 /**
  * Adds the given netmessage_s to the queue of received messages.
- * Before calling this, allocate the message using malloc().  We use a
- * mutex to synchronize access to the message queue.  This is called
- * in the network receiver thread.
+ * We use a mutex to synchronize access to the message queue.
+ *
+ * @note This is called in the network receiver thread.
  */
 void N_PostMessage(netmessage_t *msg)
 {
@@ -198,7 +202,7 @@ void N_ReleaseMessage(netmessage_t *msg)
 {
     if(msg->handle)
     {
-        Protocol_FreeBuffer(msg->handle);
+        LegacyNetwork_FreeBuffer(msg->handle);
         msg->handle = 0;
     }
     M_Free(msg);

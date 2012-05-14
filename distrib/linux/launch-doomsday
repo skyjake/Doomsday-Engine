@@ -1,0 +1,6 @@
+#!PYTHON
+import os, sys
+os.chdir('SB_DIR')
+sys.path += '.'
+
+import snowberry

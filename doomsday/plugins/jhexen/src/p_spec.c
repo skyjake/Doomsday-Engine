@@ -45,6 +45,7 @@
 #include "p_plat.h"
 #include "p_floor.h"
 #include "p_switch.h"
+#include "p_user.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -143,7 +144,7 @@ void P_InitSky(uint map)
 boolean EV_SectorSoundChange(byte* args)
 {
     boolean             rtn = false;
-    sector_t*           sec = NULL;
+    Sector*             sec = NULL;
     iterlist_t*         list;
 
     if(!args[0])
@@ -188,7 +189,7 @@ static boolean CheckedLockedDoor(mobj_t* mo, byte lock)
     return true;
 }
 
-boolean EV_LineSearchForPuzzleItem(linedef_t* line, byte* args, mobj_t* mo)
+boolean EV_LineSearchForPuzzleItem(LineDef* line, byte* args, mobj_t* mo)
 {
     inventoryitemtype_t  type;
 
@@ -204,7 +205,7 @@ boolean EV_LineSearchForPuzzleItem(linedef_t* line, byte* args, mobj_t* mo)
     return P_InventoryUse(mo->player - players, type, false);
 }
 
-boolean P_ExecuteLineSpecial(int special, byte* args, linedef_t* line,
+boolean P_ExecuteLineSpecial(int special, byte* args, LineDef* line,
                              int side, mobj_t* mo)
 {
     boolean             success;
@@ -610,7 +611,7 @@ boolean P_ExecuteLineSpecial(int special, byte* args, linedef_t* line,
     return success;
 }
 
-boolean P_ActivateLine(linedef_t *line, mobj_t *mo, int side, int activationType)
+boolean P_ActivateLine(LineDef *line, mobj_t *mo, int side, int activationType)
 {
     int             lineActivation;
     boolean         repeat;
@@ -663,15 +664,15 @@ boolean P_ActivateLine(linedef_t *line, mobj_t *mo, int side, int activationType
  */
 void P_PlayerInSpecialSector(player_t* player)
 {
-    static const float pushTab[3] = {
+    static const coord_t pushTab[3] = {
         1.0 / 32 * 5,
         1.0 / 32 * 10,
         1.0 / 32 * 25
     };
-    sector_t* sector = P_GetPtrp(player->plr->mo->subsector, DMU_SECTOR);
+    Sector* sector = P_GetPtrp(player->plr->mo->bspLeaf, DMU_SECTOR);
     xsector_t* xsector;
 
-    if(player->plr->mo->pos[VZ] != P_GetFloatp(sector, DMU_FLOOR_HEIGHT))
+    if(!FEQUAL(player->plr->mo->origin[VZ], P_GetDoublep(sector, DMU_FLOOR_HEIGHT)))
         return; // Player is not touching the floor
 
     xsector = P_ToXSector(sector);
@@ -771,8 +772,8 @@ void P_PlayerOnSpecialFloor(player_t* player)
     if(!(tt->flags & TTF_DAMAGING))
         return;
 
-    if(player->plr->mo->pos[VZ] >
-       P_GetFloatp(player->plr->mo->subsector, DMU_FLOOR_HEIGHT))
+    if(player->plr->mo->origin[VZ] >
+       P_GetDoublep(player->plr->mo->bspLeaf, DMU_FLOOR_HEIGHT))
     {
         return; // Player is not touching the floor
     }
@@ -795,10 +796,10 @@ void P_UpdateSpecials(void)
 void P_SpawnSpecials(void)
 {
     uint        i;
-    linedef_t     *line;
+    LineDef    *line;
     xline_t    *xline;
     iterlist_t *list;
-    sector_t   *sec;
+    Sector     *sec;
     xsector_t  *xsec;
 
     // Init special SECTORs.
@@ -871,7 +872,7 @@ void P_AnimateSurfaces(void)
 #define PLANE_MATERIAL_SCROLLUNIT (8.f/35*2)
 
     uint                i;
-    linedef_t*          line;
+    LineDef*            line;
 
     // Update scrolling plane materials.
     for(i = 0; i < numsectors; ++i)
@@ -964,7 +965,7 @@ void P_AnimateSurfaces(void)
         IterList_RewindIterator(linespecials);
         while((line = IterList_MoveIterator(linespecials)) != NULL)
         {
-            sidedef_t*          side = 0;
+            SideDef*            side = 0;
             fixed_t             texOff[2];
             xline_t*            xline = P_ToXLine(line);
 
@@ -1025,7 +1026,7 @@ void P_AnimateSurfaces(void)
 #undef PLANE_MATERIAL_SCROLLUNIT
 }
 
-static boolean isLightningSector(sector_t* sec)
+static boolean isLightningSector(Sector* sec)
 {
     xsector_t*              xsec = P_ToXSector(sec);
 
@@ -1060,7 +1061,7 @@ static void P_LightningFlash(void)
         {
             for(i = 0; i < numsectors; ++i)
             {
-                sector_t*               sec = P_ToPtr(DMU_SECTOR, i);
+                Sector*                 sec = P_ToPtr(DMU_SECTOR, i);
 
                 if(isLightningSector(sec))
                 {
@@ -1079,7 +1080,7 @@ static void P_LightningFlash(void)
         {   // Remove the alternate lightning flash special.
             for(i = 0; i < numsectors; ++i)
             {
-                sector_t*               sec = P_ToPtr(DMU_SECTOR, i);
+                Sector*                 sec = P_ToPtr(DMU_SECTOR, i);
 
                 if(isLightningSector(sec))
                 {
@@ -1101,7 +1102,7 @@ static void P_LightningFlash(void)
     foundSec = false;
     for(i = 0; i < numsectors; ++i)
     {
-        sector_t*           sec = P_ToPtr(DMU_SECTOR, i);
+        Sector*             sec = P_ToPtr(DMU_SECTOR, i);
 
         if(isLightningSector(sec))
         {
@@ -1150,9 +1151,9 @@ static void P_LightningFlash(void)
         if(cfg.snd3D && plrmo && !IS_NETGAME)
         {
             if((crashOrigin =
-                P_SpawnMobj3f(plrmo->pos[VX] + (16 * (M_Random() - 127) << FRACBITS),
-                              plrmo->pos[VY] + (16 * (M_Random() - 127) << FRACBITS),
-                              plrmo->pos[VZ] + (4000 << FRACBITS), MT_CAMERA,
+                P_SpawnMobjXYZ(plrmo->origin[VX] + (16 * (M_Random() - 127) << FRACBITS),
+                              plrmo->origin[VY] + (16 * (M_Random() - 127) << FRACBITS),
+                              plrmo->origin[VZ] + (4000 << FRACBITS), MT_CAMERA,
                               0, 0)))
                 crashOrigin->tics = 5 * TICSPERSEC; // Five seconds will do.
         }
@@ -1202,7 +1203,7 @@ void P_InitLightning(void)
     secCount = 0;
     for(i = 0; i < numsectors; ++i)
     {
-        sector_t*           sec = P_ToPtr(DMU_SECTOR, i);
+        Sector*             sec = P_ToPtr(DMU_SECTOR, i);
 
         if(isLightningSector(sec))
         {

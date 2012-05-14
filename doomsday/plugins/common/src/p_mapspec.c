@@ -68,16 +68,16 @@ iterlist_t* spechit = 0; /// For crossed line specials.
 int spreadSoundToNeighbors(void* ptr, void* context)
 {
     spreadsoundtoneighborsparams_t* params = (spreadsoundtoneighborsparams_t*) context;
-    linedef_t* li = (linedef_t*) ptr;
-    sector_t* frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR);
-    sector_t* backSec = P_GetPtrp(li, DMU_BACK_SECTOR);
-    sector_t* other;
+    LineDef* li = (LineDef*) ptr;
+    Sector* frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR);
+    Sector* backSec = P_GetPtrp(li, DMU_BACK_SECTOR);
+    Sector* other;
     xline_t* xline;
 
     if(!(frontSec && backSec)) return false; // Continue iteration.
 
-    P_LineOpening(li);
-    if(!(OPENRANGE > 0)) return false; // Continue iteration.
+    P_SetTraceOpening(li);
+    if(!(P_TraceOpening()->range > 0)) return false; // Continue iteration.
 
     other = (frontSec == params->baseSec? backSec : frontSec);
     xline = P_ToXLine(li);
@@ -96,7 +96,7 @@ int spreadSoundToNeighbors(void* ptr, void* context)
     return false; // Continue iteration.
 }
 
-void P_RecursiveSound(struct mobj_s* soundTarget, sector_t* sec, int soundBlocks)
+void P_RecursiveSound(struct mobj_s* soundTarget, Sector* sec, int soundBlocks)
 {
     spreadsoundtoneighborsparams_t params;
     xsector_t* xsec = P_ToXSector(sec);

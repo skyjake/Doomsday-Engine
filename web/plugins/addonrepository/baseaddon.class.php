@@ -232,28 +232,30 @@ class Addon extends BaseAddon
         if($this->hasDownloadUri())
         {
             $downloadUri = htmlspecialchars($this->downloadUri);
+            $title = htmlspecialchars($this->title);
 
-            $html .= '<div class="icon">
-                        <a href="'. $downloadUri
-                       .'" title="'. ("Download $this->title")
-                               .'">
-                        <img src="images/packageicon.png" alt="Package icon" /></a></div>';
+            $html .= "<div class=\"icon\">"
+                        ."<a href=\"{$downloadUri}\""
+                          ." title=\"Download {$title}\">"
+                        ."<img src=\"images/packageicon.png\" alt=\"Package icon\" /></a></div>";
 
-            $html .= '<a href="'. $downloadUri
-                    .'" title="'. ("Download $this->title")
-                            .'">';
+            $html .= "<a href=\"{$downloadUri}\""
+                      ." title=\"Download {$title}\">";
         }
         else if($this->hasHomepageUri())
         {
-            $html .= '<a href="'. htmlspecialchars($this->homepageUri())
-                    .'" title="'. ("Visit $this->title homepage")
-                            .'">';
+            $title = htmlspecialchars($this->title);
+            $homepageUri = htmlspecialchars($this->homepageUri());
+            $homepageUriLabel = htmlspecialchars("Visit {$this->title} homepage");
+
+            $html .= "<a href=\"{$homepageUri}\""
+                      ." title=\"{$homepageUriLabel}\">";
         }
 
         $html .= '<span class="name">'. htmlspecialchars($this->title()) .'</span>';
         if($this->hasDescription())
         {
-            $html .= '<span class="description">'. $this->description() .'</span>';
+            $html .= '<span class="description">'. htmlspecialchars($this->description()) .'</span>';
         }
 
         if($this->hasDownloadUri() || $this->hasHomepageUri())
@@ -265,7 +267,7 @@ class Addon extends BaseAddon
 
         if($this->hasDownloadUri())
         {
-            $html .= '<span class="version">Version: '. $this->version() .'</span>';
+            $html .= '<span class="version">Version: '. htmlspecialchars($this->version()) .'</span>';
 
             if(!isset($this->games))
             {
@@ -285,7 +287,7 @@ class Addon extends BaseAddon
             }
             else
             {
-                $gameString = '<label title="For use with these games only">'. implode_keys('|', $this->games) .'</label>';
+                $gameString = '<label title="For use with these games only">'. htmlspecialchars(implode_keys('|', $this->games)) .'</label>';
             }
             $html .= '<br /><span class="games">Games: '. $gameString .'</span>';
         }

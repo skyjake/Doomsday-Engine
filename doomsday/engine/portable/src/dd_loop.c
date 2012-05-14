@@ -4,8 +4,8 @@
  *
  * The engine's main loop.
  *
- * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright Â© 2003-2012 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ * @authors Copyright Â© 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -78,6 +78,7 @@ static float fps;
 static int lastFrameCount;
 static boolean firstTic = true;
 static boolean tickIsSharp = false;
+static boolean noninteractive = false;
 
 #define NUM_FRAMETIME_DELTAS    200
 static int timeDeltas[NUM_FRAMETIME_DELTAS];
@@ -88,7 +89,6 @@ static float realFrameTimePos = 0;
 static void startFrame(void);
 static void endFrame(void);
 static void runTics(void);
-static void drawAndUpdate(void);
 
 void DD_RegisterLoop(void)
 {
@@ -104,63 +104,75 @@ void DD_SetGameLoopExitCode(int code)
     gameLoopExitCode = code;
 }
 
+int DD_GameLoopExitCode(void)
+{
+    return gameLoopExitCode;
+}
+
 int DD_GameLoop(void)
 {
-    // Limit the frame rate to 35 when running in dedicated mode.
+    noninteractive = ArgExists("-noinput");
+
+    // Start the deng2 event loop.
+    return LegacyCore_RunEventLoop(de2LegacyCore);
+}
+
+void DD_GameLoopCallback(void)
+{
+    if(Sys_IsShuttingDown())
+        return; // Shouldn't run this while shutting down.
+
     if(isDedicated)
     {
-        maxFrameRate = 35;
+        // Adjust loop rate depending on whether players are in game.
+        int i, count = 0;
+        for(i = 1; i < DDMAXPLAYERS; ++i)
+            if(ddPlayers[i].shared.inGame) count++;
+
+        LegacyCore_SetLoopRate(de2LegacyCore, count || !noninteractive? 35 : 3);
+
+        runTics();
+
+        // Update clients at regular intervals.
+        Sv_TransmitFrame();
     }
-
-    while(!Sys_IsShuttingDown())
+    else
     {
-        // Frame syncronous I/O operations.
-        startFrame();
+        // Normal client-side/singleplayer mode.
+        assert(!novideo);
 
-        // Run at least one tic. If no tics are available (maxfps interval
-        // not reached yet), the function blocks.
+        // We may be performing GL operations.
+        Window_GLActivate(Window_Main());
+
+        // Run at least one (fractional) tic.
         runTics();
 
         // We may have received a Quit message from the windowing system
         // during events/tics processing.
         if(Sys_IsShuttingDown())
-            continue;
+            return;
 
-        // Update clients.
-        Sv_TransmitFrame();
+        GL_ProcessDeferredTasks(FRAME_DEFERRED_UPLOAD_TIMEOUT);
 
-        // Finish the refresh frame.
-        endFrame();
-
-        // Draw the frame.
-        drawAndUpdate();
+        // Request update of window contents.
+        Window_Draw(Window_Main());
 
         // After the first frame, start timedemo.
         DD_CheckTimeDemo();
     }
-
-    return gameLoopExitCode;
 }
 
-/**
- * Drawing anything outside this routine is frowned upon.
- * Seriously frowned! (Don't do it.)
- */
-static void drawAndUpdate(void)
+void DD_GameLoopDrawer(void)
 {
-    if(novideo)
-    {
-        // Just wait to reach the maximum FPS.
-        DD_WaitForOptimalUpdateTime();
-        return;
-    }
+    if(novideo || Sys_IsShuttingDown()) return;
 
-    if(Con_IsBusy())
-    {
-        Con_Error("DD_DrawAndBlit: Console is busy, can't draw!\n");
-    }
+    assert(!Con_IsBusy()); // Busy mode has its own drawer.
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+
+    // Frame syncronous I/O operations.
+    startFrame();
 
     if(renderWireframe)
     {
@@ -174,7 +186,10 @@ static void drawAndUpdate(void)
         if(DD_GameLoaded())
         {
             // Interpolate the world ready for drawing view(s) of it.
-            R_BeginWorldFrame();
+            if(theMap)
+            {
+                R_BeginWorldFrame();
+            }
             R_RenderViewPorts();
         }
         else if(titleFinale == 0)
@@ -197,7 +212,7 @@ static void drawAndUpdate(void)
 
             // Draw any full window game graphics.
             if(DD_GameLoaded() && gx.DrawWindow)
-                gx.DrawWindow(&theWindow->geometry.size);
+                gx.DrawWindow(Window_Size(theWindow));
         }
     }
 
@@ -226,16 +241,18 @@ static void drawAndUpdate(void)
     // End any open DGL sequence.
     DGL_End();
 
-    // Flush buffered stuff to screen (blits everything).
+    // Finish GL drawing and swap it on to the screen.
     GL_DoUpdate();
+
+    // Finish the refresh frame.
+    endFrame();
 }
+
+//static uint frameStartAt;
 
 static void startFrame(void)
 {
-    if(!novideo)
-    {
-        GL_ProcessDeferredTasks(FRAME_DEFERRED_UPLOAD_TIMEOUT);
-    }
+    //frameStartAt = Sys_GetRealTime();
 
     S_StartFrame();
     if(gx.BeginFrame)
@@ -244,17 +261,24 @@ static void startFrame(void)
     }
 }
 
+static uint lastShowAt;
+
 static void endFrame(void)
 {
     static uint lastFpsTime = 0;
 
     uint nowTime = Sys_GetRealTime();
 
+    /*
+    Con_Message("endFrame with %i ms (%i render)\n", nowTime - lastShowAt, nowTime - frameStartAt);
+    lastShowAt = nowTime;
+    */
+
     // Increment the (local) frame counter.
     rFrameCount++;
 
     // Count the frames every other second.
-    if(nowTime - 2000 >= lastFpsTime)
+    if(nowTime - 2500 >= lastFpsTime)
     {
         fps = (rFrameCount - lastFrameCount) / ((nowTime - lastFpsTime)/1000.0f);
         lastFpsTime = nowTime;
@@ -353,16 +377,16 @@ static void baseTicker(timespan_t time)
             if(ddPlayers[0].shared.inGame && ddPlayers[0].shared.mo)
             {
                 mobj_t* mo = ddPlayers[0].shared.mo;
-                static float prevPos[3] = { 0, 0, 0 };
-                static float prevSpeed = 0;
-                float speed = V2_Length(mo->mom);
-                float actualMom[2] = { mo->pos[0] - prevPos[0], mo->pos[1] - prevPos[1] };
-                float actualSpeed = V2_Length(actualMom);
+                static coord_t prevPos[3] = { 0, 0, 0 };
+                static coord_t prevSpeed = 0;
+                coord_t speed = V2d_Length(mo->mom);
+                coord_t actualMom[2] = { mo->origin[0] - prevPos[0], mo->origin[1] - prevPos[1] };
+                coord_t actualSpeed = V2d_Length(actualMom);
 
                 Con_Message("%i,%f,%f,%f,%f\n", SECONDS_TO_TICKS(sysTime + time),
                             ddPlayers[0].shared.forwardMove, speed, actualSpeed, speed - prevSpeed);
 
-                V3_Copy(prevPos, mo->pos);
+                V3d_Copy(prevPos, mo->origin);
                 prevSpeed = speed;
             }
 #endif
@@ -472,8 +496,6 @@ static void timeDeltaStatistics(int deltaMs)
 
 void DD_WaitForOptimalUpdateTime(void)
 {
-    /// @todo This would benefit from microsecond-accurate timing.
-
     // All times are in milliseconds.
     static uint prevUpdateTime = 0;
     uint nowTime, elapsed = 0;
@@ -514,6 +536,12 @@ void DD_WaitForOptimalUpdateTime(void)
     prevUpdateTime = nowTime;
 
     timeDeltaStatistics((int)elapsed - (int)optimalDelta);
+}
+
+timespan_t DD_LatestRunTicsStartTime(void)
+{
+    if(Con_IsBusy()) return Sys_GetSeconds();
+    return lastRunTicsTime;
 }
 
 /**

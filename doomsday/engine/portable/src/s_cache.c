@@ -573,7 +573,7 @@ static sfxsample_t* cacheSample(int id, const sfxinfo_t* info)
          * If the sound has an invalid lumpname, search external anyway.
          * If the original sound is from a PWAD, we won't look for an
          * external resource (probably a custom sound).
-         * \fixme should be a cvar.
+         * @todo should be a cvar.
          */
         if(info->lumpNum < 0 || !F_LumpIsCustom(info->lumpNum))
         {

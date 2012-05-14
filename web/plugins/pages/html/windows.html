@@ -1,8 +1,8 @@
 <p>The Doomsday Engine can be run on all modern Windows operating systems and the same auto-install package is used on both 32bit and 64bit variants.</p>
 <h2>Install Packages</h2>
 <p>Select the package you wish to install by clicking on it. You will then be directed to our primary download server and after a few moments your download should begin automatically. Once downloaded, run the install package and follow the onsreen instructions to complete the install.</p>
-<div id="downloads_list1" class="downloads_list">
-</div>
+<div id="downloads_list1" class="downloads_list"></div>
+<div id="downloads_list2" class="downloads_list"></div>
 <h3>Minimum System Requirements</h3>
 <ul>
 <li>Windows XP, Vista or 7 running <a href="http://www.microsoft.com/directx" rel="nofollow" class="link-external" title="http://www.microsoft.com/directx">DirectX 8</a> (or later).</li>
@@ -12,8 +12,38 @@
 </ul>
 
 <script type="text/javascript">
-// Generate a fancy HTML badge for this package.
-function genPackageBadgeHTML(json, query) {
+
+var packages = new Array();
+
+/// @return  @c true if @a object is a string.
+function is_string(object)
+{
+    return typeof(object) == 'string';
+}
+
+/**
+ * Remove all DOM child elements of @a elementId.
+ */
+function removeAllChildren(elementId)
+{
+    if(!is_string(elementId))
+        elementId = elementId.toString();
+
+    var element = document.getElementById(elementId);
+    if(element && element.hasChildNodes())
+    {
+        while(element.childNodes.length)
+        {
+            element.removeChild(element.firstChild);
+        }
+    }
+}
+
+/**
+ * Generate a fancy HTML badge for this package.
+ */
+function genPackageBadgeHTML(json, downloadUri)
+{
     // Compose badge title.
     var cleanTitle = json.title + ' ' + json.version;
 
@@ -22,8 +52,8 @@ function genPackageBadgeHTML(json, query) {
     if(json.hasOwnProperty('is_unstable'))
     {
         var isUnstable = json.is_unstable;
-
         var buildId = '';
+
         if(json.hasOwnProperty('build_uniqueid'))
         {
             buildId += ' build' + json.build_uniqueid;
@@ -31,35 +61,136 @@ function genPackageBadgeHTML(json, query) {
 
         if(isUnstable)
         {
-            metaData += '(Unstable' + buildId + ') ';
+            cleanTitle += ' (Unstable)';
         }
     }
     metaData += /*json.platform_name + */'Windows XP sp2+</span>';
 
-    var downloadUri = query; //json.download_uri;
-
-    return $('<div class="package_badge"><a class="package_name" href="' + downloadUri  + '" title="Download ' + json.fulltitle + '">' + cleanTitle + '</a><br />' + metaData + '</div>');
+    return $('<div class="package_badge"><a class="package_name" href="' + downloadUri + '" title="Download ' + json.fulltitle + '">' + cleanTitle + '</a><br />' + metaData + '</div>');
 }
 
-// Query packages, generate HTML badges and append them to
-// the specified DOM object.
-function populatePackages(query, objectName) {
-    $.getJSON(query + "&graph", function(json) {
-        genPackageBadgeHTML(json, query).appendTo(objectName);
+/**
+ * Called upon receipt of a new JSON package object graph to add it
+ * to the global list of packages.
+ */
+function addPackages(json, downloadUri, packageListElementId)
+{
+    var record = new Array();
+    var json_copy = json;
+    record['json'] = json_copy;
+    record['downloadUri'] = downloadUri;
+    record['packageListElementId'] = packageListElementId;
+    packages.push(record);
+}
+
+/**
+ * Sort comparator for JSON graph data.
+ */
+function recordSorter(recordA, recordB)
+{
+    var a = recordA['json'];
+    var a_is_unstable = a.hasOwnProperty('is_unstable');
+    var b = recordB['json'];
+    var b_is_unstable = b.hasOwnProperty('is_unstable');
+
+    // Order stable packages first.
+    if(a_is_unstable != b_is_unstable)
+    {
+        return a_is_unstable? 1 : -1;
+    }
+
+    // Platform ids are arranged such that latest appears last.
+    if(a.platform_id != b.platform_id)
+    {
+        return a.platform_id > b.platform_id? 1 : -1;
+    }
+
+    // Use the lexicographical difference between titles.
+    return a.title - b.title;
+}
+
+/**
+ * Update the identified DOM element attaching new HTML for each package.
+ */
+function populatePackages()
+{
+    // Order packages
+    packages.sort(recordSorter);
+
+    // Update the named DOM element attaching new HTML for each package.
+    for(var i in packages)
+    {
+        var record = packages[i];
+        genPackageBadgeHTML(record['json'], record['downloadUri']).appendTo(record['packageListElementId']);
+    }
+}
+
+/**
+ * Query the latest packages, generate HTML badges and append
+ * them to the specified DOM object.
+ */
+function updateLatestPackages(requests)
+{
+    // Clear the packages staging area.
+    packages = [];
+
+    // Fire the requests and compose the deferreds collection.
+    var allDeferred = new Array();
+    for(var i in requests)
+    {
+        var task = requests[i];
+
+        // Request!
+        var deferred = $.ajax({
+            url: task['request'],
+            data: task['data'],
+            context: {
+                downloadUri: task['downloadUri'],
+                packageListElementId: task['packageListElementId']
+            },
+            success: function(json){
+                addPackages(json, this.downloadUri, this.packageListElementId);
+            }
+        });
+
+        // Add this Deferred to the collection.
+        allDeferred.push(deferred);
+    }
+
+    // When all requests complete populate the package list.
+    $.when.apply(null, allDeferred).then(function()
+    {
+        populatePackages();
     });
 }
 
-// Query the latest packages, generate HTML badges and append
-// them to the specified DOM object.
-function populateAllPackages(platformName, objectName) {
-    var args = 'latestbuild?platform=' + platformName;
+// Construct the request queue.
+requests = new Array();
 
-    // First the latest stable packages.
-    populatePackages(args, objectName);
+// Latest stable packages.
+task = new Array();
+task['request'] = 'latestbuild?';
+task['data'] = {
+    graph: 'json',
+    platform: 'win-x86'
+};
+task['downloadUri'] = 'latestbuild?' + 'platform=win-x86';
+task['packageListElementId'] = '#downloads_list1';
+requests.push(task);
 
-    // Followed by the latest unstable packages.
-    populatePackages(args + '&unstable', objectName);
-}
+// Latest unstable packages.
+task = new Array();
+task['request'] = 'latestbuild?';
+task['data'] = {
+    graph: 'json',
+    platform: 'win-x86',
+    unstable: 'yes'
+};
+task['downloadUri'] = 'latestbuild?' + 'platform=win-x86' + '&unstable';
+task['packageListElementId'] = '#downloads_list2';
+requests.push(task);
 
-populateAllPackages('win-x86', '#downloads_list1');
+removeAllChildren('#downloads_list1');
+removeAllChildren('#downloads_list2');
+updateLatestPackages(requests);
 </script>

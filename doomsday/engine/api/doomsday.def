@@ -1,7 +1,7 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 827 <--
-; Other free ordinals: none
+; Highest ordinal is currently: --> 842 <--
+; Other free ordinals: 57
 
 NAME                            "DOOMSDAY"
 
@@ -437,27 +437,31 @@ EXPORTS
     Sv_CanTrustClientPos        @587 NONAME
 
 ; Play.
-    P_AccurateDistance          @57 NONAME
-    P_ApproxDistance            @58 NONAME
-    P_ApproxDistance3           @243 NONAME
-    P_PointOnLinedefSide        @695 NONAME
-    P_PointOnLinedefSideXY      @59 NONAME
-    P_BoxOnLineSide             @60 NONAME
-    P_MakeDivline               @61 NONAME
-    P_PointOnDivlineSide        @62 NONAME
-    P_InterceptVector           @63 NONAME
-    P_LineOpening               @64 NONAME
+    LineDef_BoxOnSide           @60 NONAME
+    LineDef_PointDistance       @208 NONAME
+    LineDef_PointXYDistance     @209 NONAME
+    LineDef_PointOnSide         @695 NONAME
+    LineDef_PointXYOnSide       @59 NONAME
+    LineDef_SetDivline          @61 NONAME
+    Divline_PointOnSide         @838 NONAME
+    Divline_PointXYOnSide       @62 NONAME
+    Divline_Intersection        @63 NONAME
+    P_TraceLOS                  @829 NONAME
+    P_TraceOpening              @828 NONAME
+    P_SetTraceOpening           @64 NONAME
+    P_BspLeafAtPoint            @841 NONAME
+    P_BspLeafAtPointXY          @102 NONAME
     P_MobjsBoxIterator          @346 NONAME
     P_LinesBoxIterator          @435 NONAME
     P_AllLinesBoxIterator       @347 NONAME
     P_PolyobjsBoxIterator       @348 NONAME
-    P_SubsectorsBoxIterator     @345 NONAME
+    P_BspLeafsBoxIterator       @345 NONAME
     P_LineMobjsIterator         @73 NONAME
     P_SectorTouchingMobjsIterator @74 NONAME
     P_PathTraverse              @692 NONAME
     P_PathTraverse2             @693 NONAME
-    P_PathTraverseXY            @75 NONAME
-    P_PathTraverseXY2           @694 NONAME
+    P_PathXYTraverse            @75 NONAME
+    P_PathXYTraverse2           @694 NONAME
     P_CheckLineSight            @76 NONAME
     P_MobjSetState              @207 NONAME
     P_SpawnDamageParticleGen    @233 NONAME
@@ -496,6 +500,7 @@ EXPORTS
     P_SetFixed                  @263 NONAME
     P_SetAngle                  @264 NONAME
     P_SetFloat                  @265 NONAME
+    P_SetDouble                 @830 NONAME
     P_SetPtr                    @267 NONAME
 
     P_SetBoolv                  @268 NONAME
@@ -504,6 +509,7 @@ EXPORTS
     P_SetFixedv                 @271 NONAME
     P_SetAnglev                 @272 NONAME
     P_SetFloatv                 @273 NONAME
+    P_SetDoublev                @831 NONAME
     P_SetPtrv                   @274 NONAME
 
     ; pointer-based write functions
@@ -513,6 +519,7 @@ EXPORTS
     P_SetFixedp                 @278 NONAME
     P_SetAnglep                 @279 NONAME
     P_SetFloatp                 @280 NONAME
+    P_SetDoublep                @832 NONAME
     P_SetPtrp                   @281 NONAME
 
     P_SetBoolpv                 @282 NONAME
@@ -521,6 +528,7 @@ EXPORTS
     P_SetFixedpv                @285 NONAME
     P_SetAnglepv                @286 NONAME
     P_SetFloatpv                @287 NONAME
+    P_SetDoublepv               @833 NONAME
     P_SetPtrpv                  @288 NONAME
 
     ; index-based read functions
@@ -530,6 +538,7 @@ EXPORTS
     P_GetFixed                  @292 NONAME
     P_GetAngle                  @293 NONAME
     P_GetFloat                  @294 NONAME
+    P_GetDouble                 @834 NONAME
     P_GetPtr                    @295 NONAME
 
     P_GetBoolv                  @296 NONAME
@@ -538,6 +547,7 @@ EXPORTS
     P_GetFixedv                 @299 NONAME
     P_GetAnglev                 @300 NONAME
     P_GetFloatv                 @301 NONAME
+    P_GetDoublev                @835 NONAME
     P_GetPtrv                   @302 NONAME
 
     ; pointer-based read functions
@@ -547,6 +557,7 @@ EXPORTS
     P_GetFixedp                 @306 NONAME
     P_GetAnglep                 @307 NONAME
     P_GetFloatp                 @308 NONAME
+    P_GetDoublep                @836 NONAME
     P_GetPtrp                   @309 NONAME
 
     P_GetBoolpv                 @310 NONAME
@@ -555,6 +566,7 @@ EXPORTS
     P_GetFixedpv                @313 NONAME
     P_GetAnglepv                @314 NONAME
     P_GetFloatpv                @315 NONAME
+    P_GetDoublepv               @837 NONAME
     P_GetPtrpv                  @316 NONAME
 
     P_CountGameMapObjs          @414 NONAME
@@ -570,7 +582,7 @@ EXPORTS
     P_RegisterMapObjProperty    @412 NONAME
 
 ; Play: Mobjs.
-    P_MobjCreate                @357 NONAME
+    P_MobjCreateXYZ                @357 NONAME
     P_MobjDestroy               @358 NONAME
     P_MobjLink                  @66 NONAME
     P_MobjUnlink                @67 NONAME
@@ -648,8 +660,6 @@ EXPORTS
     R_CreateAnimGroup           @241 NONAME
     R_AddAnimGroupFrame         @242 NONAME
 
-    R_PointToAngle2             @101 NONAME
-    R_PointInSubsector          @102 NONAME
     R_HSVToRGB                  @439 NONAME
 
     R_CreateColorPalette        @444 NONAME
@@ -836,6 +846,7 @@ EXPORTS
     S_StartSoundAtVolume        @224 NONAME
     S_ConsoleSound              @218 NONAME
     S_StopSound                 @223 NONAME
+    S_StopSound2                @842 NONAME
     S_IsPlaying                 @110 NONAME
     S_StartMusic                @219 NONAME
     S_StartMusicNum             @222 NONAME
@@ -849,8 +860,6 @@ EXPORTS
     M_IsStringValidInt          @20 NONAME
     M_IsStringValidByte         @23 NONAME
     M_IsStringValidFloat        @30 NONAME
-    M_ClearBox                  @208 NONAME
-    M_AddToBox                  @209 NONAME
     M_ScreenShot                @210 NONAME
     M_CeilPow2                  @422 NONAME
     M_NumDigits                 @143 NONAME
@@ -863,15 +872,20 @@ EXPORTS
     bamsAtan2                   @145 NONAME
 
     ; Vectors.
-    V2_Sum                      @54 NONAME
-    V2_Subtract                 @341 NONAME
-    V2_Rotate                   @344 NONAME
-    V2_Intersection             @349 NONAME
+    V2d_Sum                     @54 NONAME
+    V2d_Subtract                @341 NONAME
+    V2d_Rotate                  @344 NONAME
+    V2d_PointOnLineSide         @376 NONAME
+    V2d_PointLineDistance       @442 NONAME
+    V2d_ProjectOnLine           @443 NONAME
+    V2d_Intersection            @349 NONAME
 
     ; Utilities.
-    M_PointLineDistance         @442 NONAME
-    M_ProjectPointOnLine        @443 NONAME
-    P_PointOnLineSide           @376 NONAME
+    M_ApproxDistance            @58 NONAME
+    M_ApproxDistance3           @243 NONAME
+    M_PointXYToAngle            @839 NONAME
+    M_PointToAngle2             @840 NONAME
+    M_PointXYToAngle2           @101 NONAME
 
 ; Miscellaneous: Command line.
     ArgAbbreviate               @146 NONAME

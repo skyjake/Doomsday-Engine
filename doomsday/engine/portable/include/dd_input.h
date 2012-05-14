@@ -31,8 +31,14 @@
 
 #define NUMKKEYS            256
 
+#include "smoother.h"
+#include "dd_string.h"
 #if _DEBUG
 #  include "point.h" // For the debug visual.
+#endif
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 // Input devices.
@@ -59,7 +65,8 @@ typedef enum ddeventtype_e {
     E_TOGGLE,               // Two-state device
     E_AXIS,                 // Axis position
     E_ANGLE,                // Hat angle
-    E_SYMBOLIC              // Symbolic event
+    E_SYMBOLIC,             // Symbolic event
+    E_FOCUS                 // Window focus
 } ddeventtype_t;
 
 typedef enum ddeevent_togglestate_e {
@@ -82,6 +89,7 @@ typedef struct ddevent_s {
         struct {
             int             id;         // Button/key index number
             ddevent_togglestate_t state;// State of the toggle
+            char            text[8];    // For characters, latin1-encoded text to insert (or empty).
         } toggle;
         struct {
             int             id;         // Axis index number
@@ -96,6 +104,10 @@ typedef struct ddevent_s {
             int             id;         // Console that originated the event.
             const char*     name;       // Symbolic name of the event.
         } symbolic;
+        struct {
+            boolean         gained;     // Gained or lost focus.
+            int             inWindow;   // Window where the focus change occurred (index).
+        } focus;
     };
 } ddevent_t;
 
@@ -137,17 +149,18 @@ enum
 #define IDA_INVERT 0x2      // Real input data should be inverted.
 
 typedef struct inputdevaxis_s {
-    char    name[20];       // Symbolic name of the axis.
-    int     type;           // Type of the axis (pointer or stick).
+    char    name[20];       ///< Symbolic name of the axis.
+    int     type;           ///< Type of the axis (pointer or stick).
     int     flags;
-    float   position;       // Current translated position of the axis (-1..1) including any filtering.
-    float   realPosition;   // The actual position of the axis (-1..1).
-    float   scale;          // Scaling factor for real input values.
-    float   deadZone;       // Dead zone, in (0..1) range.
-    int     filter;         // Filter grade.
-    float   accumulation;   // Position accumulator for the filter.
-    uint    time;           // Timestamp for the latest update that changed the position.
-    inputdevassoc_t assoc;  // Binding association.
+    coord_t position;       ///< Current translated position of the axis (-1..1) including any filtering.
+    coord_t realPosition;   ///< The actual latest position of the axis (-1..1).
+    float   scale;          ///< Scaling factor for real input values.
+    float   deadZone;       ///< Dead zone, in (0..1) range.
+    coord_t sharpPosition;  ///< Current sharp (accumulated) position, entered into the Smoother.
+    Smoother* smoother;     ///< Smoother for the input values.
+    coord_t prevSmoothPos;  ///< Previous evaluated smooth position (needed for producing deltas).
+    uint    time;           ///< Timestamp for the latest update that changed the position.
+    inputdevassoc_t assoc;  ///< Binding association.
 } inputdevaxis_t;
 
 typedef struct inputdevkey_s {
@@ -189,14 +202,8 @@ void        DD_StartInput(void);
 void        DD_StopInput(void);
 boolean     DD_IgnoreInput(boolean ignore);
 
-#ifdef WIN32
-void        DD_Win32_SuspendMessagePump(boolean suspend);
-#else
-#  define   DD_Win32_SuspendMessagePump(s)  // nop
-#endif
-
 void        DD_ReadKeyboard(void);
-void        DD_ReadMouse(timespan_t ticLength);
+void        DD_ReadMouse(void);
 void        DD_ReadJoystick(void);
 
 void        DD_PostEvent(ddevent_t *ev);
@@ -204,7 +211,7 @@ void        DD_ProcessEvents(timespan_t ticLength);
 void        DD_ProcessSharpEvents(timespan_t ticLength);
 void        DD_ClearEvents(void);
 void        DD_ClearKeyRepeaters(void);
-void        DD_ClearKeyRepeaterForKey(int key);
+void        DD_ClearKeyRepeaterForKey(int ddkey, int native);
 byte        DD_ModKey(byte key);
 void        DD_ConvertEvent(const ddevent_t* ddEvent, event_t* ev);
 
@@ -212,9 +219,20 @@ void        I_InitVirtualInputDevices(void);
 void        I_ShutdownInputDevices(void);
 void        I_ClearDeviceContextAssociations(void);
 void        I_DeviceReset(uint ident);
+void        I_ResetAllDevices(void);
+boolean     I_ShiftDown(void);
 
 inputdev_t* I_GetDevice(uint ident, boolean ifactive);
 inputdev_t* I_GetDeviceByName(const char* name, boolean ifactive);
+
+/**
+ * Retrieve the user-friendly, print-ready, name for the device associated with
+ * unique identifier @a ident.
+ *
+ * @return  String containing the name for this device. Always valid. This string
+ *          should never be free'd by the caller.
+ */
+const ddstring_t* I_DeviceNameStr(uint ident);
 
 float I_TransformAxis(inputdev_t* dev, uint axis, float rawPos);
 
@@ -282,7 +300,7 @@ boolean I_IsKeyDown(inputdev_t* device, uint id);
 inputdevhat_t* I_GetHatByID(inputdev_t* device, uint id);
 
 void        I_SetUIMouseMode(boolean on);
-void        I_TrackInput(ddevent_t *ev, timespan_t ticLength);
+void        I_TrackInput(ddevent_t *ev);
 
 #if _DEBUG
 /**
@@ -291,6 +309,10 @@ void        I_TrackInput(ddevent_t *ev, timespan_t ticLength);
 void Rend_AllInputDeviceStateVisuals(void);
 #else
 #  define Rend_AllInputDeviceStateVisuals()
+#endif
+
+#ifdef __cplusplus
+} // extern "C"
 #endif
 
 #endif /* LIBDENG_CORE_INPUT_H */

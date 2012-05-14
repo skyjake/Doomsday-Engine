@@ -30,22 +30,40 @@
 #define LIBDENG_REFRESH_UTIL_H
 
 #include "m_vector.h"
+#include "p_mapdata.h"
 
-int             R_PointOnSide(const float x, const float y,
-                              const partition_t* par);
-angle_t         R_PointToAngle(float x, float y);
-angle_t         R_PointToAngle2(float x1, float y1,
-                                float x2, float y2);
-float           R_PointToDist(const float x, const float y);
-linedef_t*      R_GetLineForSide(const uint sideIDX);
-subsector_t*    R_PointInSubsector(const float x, const float y);
-boolean         R_IsPointInSector(const float x, const float y,
-                                  const sector_t* sector);
-boolean         R_IsPointInSector2(const float x, const float y,
-                                   const sector_t* sector);
-boolean         R_IsPointInSubsector(const float x, const float y,
-                                     const subsector_t* ssec);
-sector_t*       R_GetSectorForOrigin(const void* ddMobjBase);
+/**
+ * Which side of the partition does the point lie?
+ *
+ * @param x  X coordinate to test.
+ * @param y  Y coordinate to test.
+ * @return int  @c 0 = front, else @c 1 = back.
+ */
+int Partition_PointOnSide(const partition_t* par, coord_t const point[2]);
+int Partition_PointXYOnSide(const partition_t* par, coord_t x, coord_t y);
+
+/**
+ * Get a global angle from Cartesian coordinates relative to the viewer.
+ *
+ * @param x   X coordinate to test.
+ * @param y   Y coordinate to test.
+ *
+ * @return  Angle between the test point and view x,y.
+ */
+angle_t R_ViewPointXYToAngle(coord_t x, coord_t y);
+
+/**
+ * Determine distance to the specified point relative to the viewer.
+ *
+ * @param x   X coordinate to test.
+ * @param y   Y coordinate to test.
+ *
+ * @return  Distance from the viewer to the test point.
+ */
+coord_t R_ViewPointXYDistance(coord_t x, coord_t y);
+
+void R_ProjectViewRelativeLine2D(coord_t const center[2], boolean alignToViewPlane,
+    coord_t width, coord_t offset, coord_t start[2], coord_t end[2]);
 
 /**
  * Scale @a color uniformly so that the highest component becomes one.
@@ -71,8 +89,8 @@ void R_HSVToRGB(float* rgb, float h, float s, float v);
  *
  * @return  @c true if the generated coords are within bounds.
  */
-boolean R_GenerateTexCoords(pvec2_t s, pvec2_t t, const_pvec3_t point, float xScale, float yScale,
-    const_pvec3_t v1, const_pvec3_t v2, const_pvec3_t tangent, const_pvec3_t bitangent);
+boolean R_GenerateTexCoords(pvec2f_t s, pvec2f_t t, const_pvec3d_t point, float xScale, float yScale,
+    const_pvec3d_t v1, const_pvec3d_t v2, const_pvec3f_t tangent, const_pvec3f_t bitangent);
 
 /**
  * Choose an alignment mode and/or calculate the appropriate scaling factor

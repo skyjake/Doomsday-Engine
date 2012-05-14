@@ -29,8 +29,17 @@
 #ifndef LIBDENG_CONSOLE_CONFIG_H
 #define LIBDENG_CONSOLE_CONFIG_H
 
-boolean Con_ParseCommands(const char* fileName, boolean setdefault);
+// Flags for Con_ParseCommands2.
+#define CPCF_SET_DEFAULT            0x1
+#define CPCF_ALLOW_SAVE_STATE       0x2
+#define CPCF_ALLOW_SAVE_BINDINGS    0x4
+
+boolean Con_ParseCommands(const char* fileName);
+
+boolean Con_ParseCommands2(const char* fileName, int flags);
+
 void Con_SaveDefaults(void);
+
 boolean Con_WriteState(const char* fileName, const char* bindingsFileName);
 
 D_CMD(WriteConsole);

@@ -43,6 +43,7 @@
 #include "dd_input.h"
 #include "dd_loop.h"
 #include "dd_help.h"
+#include "nativeui.h"
 #include "library.h"
 #include "reader.h"
 #include "writer.h"

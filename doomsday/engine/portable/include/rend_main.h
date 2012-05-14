@@ -33,13 +33,18 @@
 #include "rend_list.h"
 #include "r_things.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define GLOW_HEIGHT_MAX                     (1024.f) /// Absolute maximum
 
 #define OMNILIGHT_SURFACE_LUMINOSITY_ATTRIBUTION_MIN (.05f)
 
 #define SHADOW_SURFACE_LUMINOSITY_ATTRIBUTION_MIN (.05f)
 
-extern float vx, vy, vz, vang, vpitch, fieldOfView, yfov;
+extern coord_t vOrigin[3];
+extern float vang, vpitch, fieldOfView, yfov;
 extern byte smoothTexAnim, devMobjVLights;
 extern float viewsidex, viewsidey;
 extern boolean usingFog;
@@ -72,9 +77,9 @@ void Rend_Reset(void);
 void            Rend_RenderMap(void);
 void            Rend_ModelViewMatrix(boolean use_angles);
 
-#define Rend_PointDist2D(c) (fabs((vz-c[VY])*viewsidex - (vx-c[VX])*viewsidey))
+#define Rend_PointDist2D(c) (fabs((vOrigin[VZ]-c[VY])*viewsidex - (vOrigin[VX]-c[VX])*viewsidey))
 
-float           Rend_PointDist3D(const float c[3]);
+coord_t         Rend_PointDist3D(coord_t const point[3]);
 void            Rend_ApplyTorchLight(float* color, float distance);
 
 /**
@@ -87,5 +92,9 @@ void Rend_ApplyLightAdaptation(float* lightValue);
 float Rend_LightAdaptationDelta(float lightvalue);
 
 void            Rend_CalcLightModRange(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_REND_MAIN_H */

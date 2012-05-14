@@ -29,6 +29,10 @@
 #ifndef __DOOMSDAY_PLAYERS_H__
 #define __DOOMSDAY_PLAYERS_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct player_s {
     byte                extraLightCounter; // Num tics to go till extraLight is disabled.
     int                 extraLight, targetExtraLight;
@@ -47,5 +51,9 @@ int             P_GetDDPlayerIdx(ddplayer_t *ddpl);
 boolean         P_IsInVoid(player_t *p);
 short           P_LookDirToShort(float lookDir);
 float           P_ShortToLookDir(short s);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

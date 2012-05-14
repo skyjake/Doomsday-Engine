@@ -1981,7 +1981,7 @@ StringArray* Def_ListStateIDs(void)
 
 /**
  * Prints a list of all the registered mobjs to the console.
- * \fixme Does this belong here?
+ * @todo Does this belong here?
  */
 D_CMD(ListMobjs)
 {

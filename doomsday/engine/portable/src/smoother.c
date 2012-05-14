@@ -42,7 +42,7 @@
  * Timed 3D point in space.
  */
 typedef struct pos_s {
-    float xyz[3];
+    coord_t xyz[3];
     float time;
     boolean onFloor;    // Special Z handling: should be on the floor.
 } pos_t;
@@ -56,12 +56,13 @@ typedef struct pos_s {
  * It is assumed that time always moves forward.
  */
 struct smoother_s {
-    pos_t   points[SM_NUM_POINTS];  // Future points.
-    pos_t   past, now;  // Current interpolation.
-    float   at;         // Current position in time for the smoother.
+    pos_t points[SM_NUM_POINTS];  // Future points.
+    pos_t past, now;  // Current interpolation.
+    float at;         // Current position in time for the smoother.
+    float maxDeltaBetweenPastAndNow;
 
 #ifdef _DEBUG
-    float   prevEval[2], prevAt;
+    float prevEval[2], prevAt;
 #endif
 };
 
@@ -69,6 +70,12 @@ Smoother* Smoother_New()
 {
     Smoother* sm = calloc(sizeof(Smoother), 1);
     return sm;
+}
+
+void Smoother_SetMaximumPastNowDelta(Smoother* sm, float delta)
+{
+    assert(sm);
+    sm->maxDeltaBetweenPastAndNow = delta;
 }
 
 void Smoother_Delete(Smoother* sm)
@@ -97,21 +104,37 @@ static boolean Smoother_IsValid(const Smoother* sm)
 
 void Smoother_Clear(Smoother* sm)
 {
+    float maxDelta;
+
     assert(sm);
+
+    maxDelta = sm->maxDeltaBetweenPastAndNow;
     memset(sm, 0, sizeof(*sm));
+    sm->maxDeltaBetweenPastAndNow = maxDelta;
 }
 
-void Smoother_AddPos(Smoother* sm, float time, float x, float y, float z, boolean onFloor)
+void Smoother_AddPosXY(Smoother* sm, float time, coord_t x, coord_t y)
+{
+    Smoother_AddPos(sm, time, x, y, 0, false);
+}
+
+void Smoother_AddPos(Smoother* sm, float time, coord_t x, coord_t y, coord_t z, boolean onFloor)
 {
     pos_t* last;
     assert(sm);
 
     // Is it the same point?
     last = &sm->points[SM_NUM_POINTS - 1];
-    if(last->time == time && last->xyz[VX] == x && last->xyz[VY] == y && last->xyz[VZ] == z)
+    if(last->time == time)
     {
-        // Ignore it.
-        return;
+        if(last->xyz[VX] == x && last->xyz[VY] == y && last->xyz[VZ] == z)
+        {
+            // Ignore it.
+            return;
+        }
+
+        // Readjusting a previously set value?
+        goto replaceLastPoint;
     }
 
     if(time <= sm->now.time)
@@ -128,7 +151,7 @@ void Smoother_AddPos(Smoother* sm, float time, float x, float y, float z, boolea
     // the current interpolation into the future.
     if(Smoother_IsValid(sm) && sm->points[0].time > sm->now.time)
     {
-        float mid[3];
+        coord_t mid[3];
         float remaining;
 
         // Move the past forward in time so that the interpolation remains continuous.
@@ -147,6 +170,7 @@ void Smoother_AddPos(Smoother* sm, float time, float x, float y, float z, boolea
     // Rotate the old points.
     memmove(&sm->points[0], &sm->points[1], sizeof(pos_t) * (SM_NUM_POINTS - 1));
 
+replaceLastPoint:
     last = &sm->points[SM_NUM_POINTS - 1];
     last->time = time;
     last->xyz[VX] = x;
@@ -163,7 +187,20 @@ void Smoother_AddPos(Smoother* sm, float time, float x, float y, float z, boolea
     }
 }
 
-boolean Smoother_Evaluate(const Smoother* sm, float* xyz)
+boolean Smoother_EvaluateComponent(const Smoother* sm, int component, coord_t* v)
+{
+    coord_t xyz[3];
+
+    assert(component >= 0 && component < 3);
+    assert(v != 0);
+
+    if(!Smoother_Evaluate(sm, xyz)) return false;
+
+    *v = xyz[component];
+    return true;
+}
+
+boolean Smoother_Evaluate(const Smoother* sm, coord_t* xyz)
 {
     const pos_t* past;
     const pos_t* now;
@@ -302,6 +339,13 @@ void Smoother_Advance(Smoother* sm, float period)
         {
             memcpy(&sm->now, &sm->points[j], sizeof(pos_t));
         }
+    }
+
+    if(sm->maxDeltaBetweenPastAndNow > 0 &&
+       sm->now.time - sm->past.time > sm->maxDeltaBetweenPastAndNow)
+    {
+        // Refresh the past.
+        sm->past.time = sm->now.time;
     }
 
     if(sm->at < sm->past.time)

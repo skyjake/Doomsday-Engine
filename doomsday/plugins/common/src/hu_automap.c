@@ -135,10 +135,10 @@ void UIAutomap_Register(void)
     Con_AddVariableList(cvars);
 }
 
-static void rotate2D(float* x, float* y, float angle)
+static void rotate2D(coord_t* x, coord_t* y, float angle)
 {
-    float tmpx = (float) ((*x * cos(angle/180 * PI)) - (*y * sin(angle/180 * PI)));
-    *y = (float) ((*x * sin(angle/180 * PI)) + (*y * cos(angle/180 * PI)));
+    coord_t tmpx = (coord_t) ((*x * cos(angle/180 * PI)) - (*y * sin(angle/180 * PI)));
+    *y = (coord_t) ((*x * sin(angle/180 * PI)) + (*y * cos(angle/180 * PI)));
     *x = tmpx;
 }
 
@@ -152,13 +152,13 @@ static void rotate2D(float* x, float* y, float angle)
 static void calcViewScaleFactors(uiwidget_t* obj)
 {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    float dx, dy, dist, a, b;
-    float oldMinScale = am->minScaleMTOF;
+    coord_t dx, dy, dist;
+    float a, b, oldMinScale = am->minScaleMTOF;
     assert(obj->type == GUI_AUTOMAP);
 
     dx = am->bounds[BOXRIGHT] - am->bounds[BOXLEFT];
     dy = am->bounds[BOXTOP]   - am->bounds[BOXBOTTOM];
-    dist = (float) sqrt(dx * dx + dy * dy);
+    dist = (coord_t) sqrt(dx * dx + dy * dy);
     if(dist < 0)
         dist = -dist;
 
@@ -579,21 +579,21 @@ static void rendLine2(uiwidget_t* obj, float x1, float y1, float x2, float y2,
     }
 }
 
-static int rendSeg(void* seg_, void* data)
+static int rendSeg(void* hedge_, void* data)
 {
-    assert(NULL != seg_ && NULL != data && ((uiwidget_t*)data)->type == GUI_AUTOMAP);
+    assert(NULL != hedge_ && NULL != data && ((uiwidget_t*)data)->type == GUI_AUTOMAP);
     {
-    seg_t* seg = (seg_t*) seg_;
+    HEdge* hedge = (HEdge*) hedge_;
     uiwidget_t* obj = (uiwidget_t*)data;
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    sector_t* frontSector, *backSector;
+    Sector* frontSector, *backSector;
     const automapcfg_lineinfo_t* info;
     player_t* plr = rs.plr;
     float v1[2], v2[2];
-    linedef_t* line;
+    LineDef* line;
     xline_t* xLine;
 
-    line = P_GetPtrp(seg, DMU_LINEDEF);
+    line = P_GetPtrp(hedge, DMU_LINEDEF);
     if(!line) return false;
 
     xLine = P_ToXLine(line);
@@ -615,7 +615,8 @@ static int rendSeg(void* seg_, void* data)
         // Perhaps this is a specially colored line?
         info = AM_GetInfoForSpecialLine(UIAutomap_Config(obj), xLine->special, frontSector, backSector, UIAutomap_Flags(obj));
         if(rs.objType != -1 && !info)
-        {   // Perhaps a default colored line?
+        {
+            // Perhaps a default colored line?
             if(!(frontSector && backSector) || (xLine->flags & ML_SECRET))
             {
                 // solid wall (well probably anyway...)
@@ -623,14 +624,14 @@ static int rendSeg(void* seg_, void* data)
             }
             else
             {
-                if(P_GetFloatp(backSector, DMU_FLOOR_HEIGHT) !=
-                   P_GetFloatp(frontSector, DMU_FLOOR_HEIGHT))
+                if(!FEQUAL(P_GetDoublep(backSector, DMU_FLOOR_HEIGHT),
+                           P_GetDoublep(frontSector, DMU_FLOOR_HEIGHT)))
                 {
                     // Floor level change.
                     info = AM_GetInfoForLine(UIAutomap_Config(obj), AMO_FLOORCHANGELINE);
                 }
-                else if(P_GetFloatp(backSector, DMU_CEILING_HEIGHT) !=
-                        P_GetFloatp(frontSector, DMU_CEILING_HEIGHT))
+                else if(!FEQUAL(P_GetDoublep(backSector, DMU_CEILING_HEIGHT),
+                                P_GetDoublep(frontSector, DMU_CEILING_HEIGHT)))
                 {
                     // Ceiling level change.
                     info = AM_GetInfoForLine(UIAutomap_Config(obj), AMO_CEILINGCHANGELINE);
@@ -675,9 +676,9 @@ static int rendSeg(void* seg_, void* data)
     }
 }
 
-static int rendSegsOfSubsector(subsector_t* ssec, void* context)
+static int rendBspLeafHEdges(BspLeaf* bspLeaf, void* context)
 {
-    return P_Iteratep(ssec, DMU_SEG, context, rendSeg);
+    return P_Iteratep(bspLeaf, DMU_HEDGE, context, rendSeg);
 }
 
 /**
@@ -701,21 +702,21 @@ static void renderWalls(uiwidget_t* obj, int objType, boolean addToLists)
     // Can we use the automap's in-view bounding box to cull out of view objects?
     if(!addToLists)
     {
-        AABoxf aaBox;
+        AABoxd aaBox;
         UIAutomap_PVisibleAABounds(obj, &aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
-        P_SubsectorsBoxIterator(&aaBox, NULL, rendSegsOfSubsector, obj);
+        P_BspLeafsBoxIterator(&aaBox, NULL, rendBspLeafHEdges, obj);
     }
     else
     {   // No. As the map lists are considered static we want them to contain all
         // walls, not just those visible *now* (note rotation).
-        for(i = 0; i < numsubsectors; ++i)
+        for(i = 0; i < numbspleafs; ++i)
         {
-            P_Iteratep(P_ToPtr(DMU_SUBSECTOR, i), DMU_SEG, obj, rendSeg);
+            P_Iteratep(P_ToPtr(DMU_BSPLEAF, i), DMU_HEDGE, obj, rendSeg);
         }
     }
 }
 
-static void rendLinedef(linedef_t* line, float r, float g, float b, float a,
+static void rendLinedef(LineDef* line, float r, float g, float b, float a,
     blendmode_t blendMode, boolean drawNormal)
 {
     float length = P_GetFloatp(line, DMU_LENGTH);
@@ -774,21 +775,20 @@ static void rendLinedef(linedef_t* line, float r, float g, float b, float a,
 }
 
 /**
- * Rather than draw the segs instead this will draw the linedef of which
- * the seg is a part.
+ * Rather than draw the instead this will draw the linedef of which
+ * the hedge is a part.
  */
-int rendPolyobjSeg(void* segPtr, void* context)
+int rendPolyobjLine(void* linePtr, void* context)
 {
-    seg_t* seg = (seg_t*)segPtr;
+    LineDef* line = (LineDef*)linePtr;
     uiwidget_t* obj = (uiwidget_t*)context;
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     const float alpha = uiRendState->pageAlpha;
     const automapcfg_lineinfo_t* info;
     automapcfg_objectname_t amo;
-    linedef_t* line;
     xline_t* xLine;
 
-    if(!(line = P_GetPtrp(seg, DMU_LINEDEF)) || !(xLine = P_ToXLine(line))) return false;
+    if(!(xLine = P_ToXLine(line))) return false;
 
     // Already processed this frame?
     if(xLine->validCount == VALIDCOUNT) return false;
@@ -809,8 +809,8 @@ int rendPolyobjSeg(void* segPtr, void* context)
     if(info)
     {
         rendLinedef(line, info->rgba[0], info->rgba[1], info->rgba[2],
-                      info->rgba[3] * cfg.automapLineAlpha * alpha, info->blendMode,
-                      (am->flags & AMF_REND_LINE_NORMALS)? true : false);
+                    info->rgba[3] * cfg.automapLineAlpha * alpha, info->blendMode,
+                    (am->flags & AMF_REND_LINE_NORMALS)? true : false);
     }
 
     xLine->validCount = VALIDCOUNT; // Mark as processed this frame.
@@ -818,20 +818,20 @@ int rendPolyobjSeg(void* segPtr, void* context)
     return false; // Continue iteration.
 }
 
-int rendSegsOfPolyobj(polyobj_t* po, void* context)
+int rendLinesOfPolyobj(Polyobj* po, void* context)
 {
     int result = false; // Continue iteration.
-    seg_t** segPtr = po->segs;
-    while(*segPtr && !(result = rendPolyobjSeg(*segPtr, context)))
-        segPtr++;
+    LineDef** lineIter = po->lines;
+    while(*lineIter && !(result = rendPolyobjLine(*lineIter, context)))
+        lineIter++;
     return result;
 }
 
-static void rendPolyobjs(uiwidget_t* obj)
+static void rendPolyobjs(uiwidget_t* ob)
 {
-    //guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    AABoxf aaBox;
-    assert(obj && obj->type == GUI_AUTOMAP);
+    //guidata_automap_t* am = (guidata_automap_t*)ob->typedata;
+    AABoxd aaBox;
+    assert(ob && ob->type == GUI_AUTOMAP);
 
     // VALIDCOUNT is used to track which lines have been drawn this frame.
     VALIDCOUNT++;
@@ -840,12 +840,12 @@ static void rendPolyobjs(uiwidget_t* obj)
     rs.objType = MOL_LINEDEF;
 
     // Draw any polyobjects in view.
-    UIAutomap_PVisibleAABounds(obj, &aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
-    P_PolyobjsBoxIterator(&aaBox, rendSegsOfPolyobj, obj);
+    UIAutomap_PVisibleAABounds(ob, &aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
+    P_PolyobjsBoxIterator(&aaBox, rendLinesOfPolyobj, ob);
 }
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-int rendXGLinedef(linedef_t* line, void* context)
+int rendXGLinedef(LineDef* line, void* context)
 {
     assert(line && context && ((uiwidget_t*)context)->type == GUI_AUTOMAP);
     {
@@ -871,7 +871,7 @@ int rendXGLinedef(linedef_t* line, void* context)
 static void rendXGLinedefs(uiwidget_t* obj)
 {
     //guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    AABoxf aaBox;
+    AABoxd aaBox;
     assert(obj->type == GUI_AUTOMAP);
 
     // VALIDCOUNT is used to track which lines have been drawn this frame.
@@ -886,7 +886,7 @@ static void rendXGLinedefs(uiwidget_t* obj)
 }
 #endif
 
-static void drawVectorGraphic(svgid_t vgId, float x, float y, float angle,
+static void drawVectorGraphic(svgid_t vgId, coord_t x, coord_t y, float angle,
     float scale, const float color[3], float alpha, blendmode_t blendmode)
 {
     Point2Rawf origin;
@@ -921,7 +921,8 @@ static void drawPlayerMarker(int consoleNum, automapcfg_t* config)
     player_t* player = players + consoleNum;
     mobj_t* mo = player->plr->mo;
     svgid_t svgId;
-    float origin[3], angle, radius, color[3], alpha;
+    coord_t origin[3];
+    float color[3], alpha, angle, radius;
 
     if(!player->plr->inGame || !mo) return;
 
@@ -1030,8 +1031,8 @@ static int rendThingPoint(mobj_t* mo, void* context)
         if(isVisible)
         {
             /* $unifiedangles */
-            const float radius = 16;
-            float origin[3];
+            const coord_t radius = 16;
+            coord_t origin[3];
             Mobj_OriginSmoothed(mo, origin);
 
             drawVectorGraphic(vgId, origin[VX], origin[VY], angle, radius,
@@ -1047,7 +1048,7 @@ static void rendThingPoints(uiwidget_t* obj)
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     const float alpha = uiRendState->pageAlpha;
     renderthing_params_t params;
-    AABoxf aaBox;
+    AABoxd aaBox;
     assert(obj->type == GUI_AUTOMAP);
 
     params.flags = UIAutomap_Flags(obj);
@@ -1060,26 +1061,24 @@ static void rendThingPoints(uiwidget_t* obj)
     P_MobjsBoxIterator(&aaBox, rendThingPoint, &params);
 }
 
-static boolean interceptEdge(float point[2], const float fromA[2], const float toA[2],
-    const float fromB[2], const float toB[2])
+static boolean interceptEdge(coord_t point[2], coord_t const startA[2], coord_t const endA[2],
+    coord_t const startB[2], coord_t const endB[2])
 {
-    float deltaA[2];
-    deltaA[0] = toA[0] - fromA[0];
-    deltaA[1] = toA[1] - fromA[1];
-    if(P_PointOnLineSide(point[0], point[1], fromA[0], fromA[1], deltaA[0], deltaA[1]))
+    coord_t directionA[2];
+    V2d_Subtract(directionA, endA, startA);
+    if(V2d_PointOnLineSide(point, startA, directionA) >= 0)
     {
-        float deltaB[2];
-        deltaB[0] = toB[0] - fromB[0];
-        deltaB[1] = toB[1] - fromB[1];
-        V2_Intersection(fromA, deltaA, fromB, deltaB, point);
+        coord_t directionB[2];
+        V2d_Subtract(directionB, endB, startB);
+        V2d_Intersection(startA, directionA, startB, directionB, point);
         return true;
     }
     return false;
 }
 
-static void positionPointInView(uiwidget_t* obj, float point[2],
-    const float topLeft[2], const float topRight[2], const float bottomRight[2],
-    const float bottomLeft[2], const float viewPoint[2])
+static void positionPointInView(uiwidget_t* ob, coord_t point[2],
+    coord_t const topLeft[2], coord_t const topRight[2], coord_t const bottomRight[2],
+    coord_t const bottomLeft[2], coord_t const viewPoint[2])
 {
     // Trace a vector from the view location to the marked point and intercept
     // vs the edges of the rotated view window.
@@ -1096,8 +1095,8 @@ static void drawMarkedPoints(uiwidget_t* obj, float scale)
 {
     //guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     const float alpha = uiRendState->pageAlpha;
-    float bottomLeft[2], topLeft[2], bottomRight[2], topRight[2];
-    float viewPoint[2], angle;
+    coord_t bottomLeft[2], topLeft[2], bottomRight[2], topRight[2], viewPoint[2];
+    float angle;
     uint i, pointCount = UIAutomap_PointCount(obj);
     const Point2Raw origin = { 0, 0 };
     assert(obj->type == GUI_AUTOMAP);
@@ -1118,7 +1117,7 @@ static void drawMarkedPoints(uiwidget_t* obj, float scale)
 
     for(i = 0; i < pointCount; ++i)
     {
-        float point[2];
+        coord_t point[2];
         char label[10];
 
         if(!UIAutomap_PointOrigin(obj, i, &point[0], &point[1], NULL)) continue;
@@ -1160,7 +1159,8 @@ static void setupGLStateForMap(uiwidget_t* obj)
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     const float alpha = uiRendState->pageAlpha;
     int player = UIWidget_Player(obj);
-    float angle, plx, ply, bgColor[3];
+    float angle, bgColor[3];
+    coord_t plx, ply;
     RectRaw geometry;
     assert(obj->type == GUI_AUTOMAP);
 
@@ -1398,12 +1398,13 @@ void UIAutomap_Rebuild(uiwidget_t* obj)
  */
 void UIAutomap_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
-    static int updateWait = 0; /// \fixme should be an instance var of UIAutomap
+    static int updateWait = 0; /// @todo should be an instance var of UIAutomap
 
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     const float alpha = uiRendState->pageAlpha;
     player_t* plr = &players[UIWidget_Player(obj)];
-    float vx, vy, angle, oldLineWidth;
+    coord_t vx, vy;
+    float angle, oldLineWidth;
     RectRaw geometry;
     int i;
     assert(obj->type == GUI_AUTOMAP);
@@ -1438,7 +1439,7 @@ void UIAutomap_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     DGL_Translatef(-vx, -vy, 0);
 
     oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
-    DGL_SetFloat(DGL_LINE_WIDTH, MAX_OF(.5f, cfg.automapLineWidth * aspectScale));
+    DGL_SetFloat(DGL_LINE_WIDTH, MINMAX_OF(.5f, cfg.automapLineWidth * aspectScale, 3.f));
 
 /*#if _DEBUG
 { // Draw the rectangle described by the visible bounds.
@@ -1580,7 +1581,7 @@ boolean UIAutomap_Open(uiwidget_t* obj, boolean yes, boolean fast)
         if(!mo)
         {
             // Set viewer target to the center of the map.
-            float aabb[4];
+            coord_t aabb[4];
             UIAutomap_PVisibleAABounds(obj, &aabb[BOXLEFT], &aabb[BOXRIGHT], &aabb[BOXBOTTOM], &aabb[BOXTOP]);
             UIAutomap_SetCameraOrigin(obj, (aabb[BOXRIGHT] - aabb[BOXLEFT]) / 2, (aabb[BOXTOP] - aabb[BOXBOTTOM]) / 2);
             UIAutomap_SetCameraAngle(obj, 0);
@@ -1590,7 +1591,7 @@ boolean UIAutomap_Open(uiwidget_t* obj, boolean yes, boolean fast)
             // The map's target player is available.
             if(!(am->pan && !cfg.automapPanResetOnOpen))
             {
-                float origin[3];
+                coord_t origin[3];
                 Mobj_OriginSmoothed(mo, origin);
                 UIAutomap_SetCameraOrigin(obj, origin[VX], origin[VY]);
             }
@@ -1662,7 +1663,8 @@ void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength)
     // Map camera panning control.
     if(am->pan || NULL == mo)
     {
-        float panUnitsPerSecond, xy[2] = { 0, 0 }; // deltas
+        float panUnitsPerSecond;
+        coord_t xy[2] = { 0, 0 }; // deltas
 
         // DOOM.EXE pans the automap at 140 fixed pixels per second (VGA: 200 pixels tall).
         /// @todo This needs resolution-independent units. (The "frame" units are screen pixels.)
@@ -1674,7 +1676,7 @@ void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength)
 
         xy[VX] = panX[0] * panUnitsPerSecond * ticLength + panX[1];
         xy[VY] = panY[0] * panUnitsPerSecond * ticLength + panY[1];
-        V2_Rotate(xy, am->angle / 360 * 2 * PI);
+        V2d_Rotate(xy, am->angle / 360 * 2 * PI);
 
         if(xy[VX] || xy[VY])
         {
@@ -1685,7 +1687,7 @@ void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength)
     {
         /* $unifiedangles */
         const float angle = (am->rotate? (mo->angle - ANGLE_90) / (float) ANGLE_MAX * 360 : 0);
-        float origin[3];
+        coord_t origin[3];
 
         Mobj_OriginSmoothed(mo, origin);
         UIAutomap_SetCameraOrigin(obj, origin[VX], origin[VY]);
@@ -1766,7 +1768,8 @@ void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength)
      */
     // Determine fixed to screen space scaling factors.
     {
-    float viewPoint[2], rads, viewWidth, viewHeight;
+    coord_t viewPoint[2];
+    float rads, viewWidth, viewHeight;
     const int border = .5f + UIAUTOMAP_BORDER * aspectScale;
 
     viewWidth  = UIAutomap_FrameToMap(obj, Rect_Width(obj->geometry)  - border*2);
@@ -1778,17 +1781,17 @@ void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength)
 
     // Apply rotation.
     rads = (float)(am->angle / 360 * 2 * PI);
-    V2_Rotate(am->topLeft,     rads);
-    V2_Rotate(am->bottomRight, rads);
-    V2_Rotate(am->bottomLeft,  rads);
-    V2_Rotate(am->topRight,    rads);
+    V2d_Rotate(am->topLeft,     rads);
+    V2d_Rotate(am->bottomRight, rads);
+    V2d_Rotate(am->bottomLeft,  rads);
+    V2d_Rotate(am->topRight,    rads);
 
     // Translate to the view point.
     UIAutomap_CameraOrigin(obj, &viewPoint[0], &viewPoint[1]);
-    V2_Sum(am->topLeft,     am->topLeft,     viewPoint);
-    V2_Sum(am->bottomRight, am->bottomRight, viewPoint);
-    V2_Sum(am->bottomLeft,  am->bottomLeft,  viewPoint);
-    V2_Sum(am->topRight,    am->topRight,    viewPoint);
+    V2d_Sum(am->topLeft,     am->topLeft,     viewPoint);
+    V2d_Sum(am->bottomRight, am->bottomRight, viewPoint);
+    V2d_Sum(am->bottomLeft,  am->bottomLeft,  viewPoint);
+    V2d_Sum(am->topRight,    am->topRight,    viewPoint);
     }
 
     width  = UIAutomap_FrameToMap(obj, Rect_Width(obj->geometry));
@@ -1805,7 +1808,8 @@ void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength)
     else if((y) > (b)[BOXTOP]) \
         (b)[BOXTOP] = (y);
 
-    float angle, v[2];
+    float angle;
+    coord_t v[2];
 
     angle = am->angle;
 
@@ -1890,7 +1894,7 @@ void UIAutomap_UpdateGeometry(uiwidget_t* obj)
     }
 }
 
-void UIAutomap_CameraOrigin(uiwidget_t* obj, float* x, float* y)
+void UIAutomap_CameraOrigin(uiwidget_t* obj, coord_t* x, coord_t* y)
 {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     assert(obj->type == GUI_AUTOMAP);
@@ -1899,12 +1903,12 @@ void UIAutomap_CameraOrigin(uiwidget_t* obj, float* x, float* y)
     if(y) *y = am->viewY;
 }
 
-boolean UIAutomap_SetCameraOrigin(uiwidget_t* obj, float x, float y)
+boolean UIAutomap_SetCameraOrigin(uiwidget_t* obj, coord_t x, coord_t y)
 {
     return UIAutomap_SetCameraOrigin2(obj, x, y, false);
 }
 
-boolean UIAutomap_SetCameraOrigin2(uiwidget_t* obj, float x, float y, boolean forceInstantly)
+boolean UIAutomap_SetCameraOrigin2(uiwidget_t* obj, coord_t x, coord_t y, boolean forceInstantly)
 {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     boolean instantChange = forceInstantly;
@@ -1916,11 +1920,11 @@ boolean UIAutomap_SetCameraOrigin2(uiwidget_t* obj, float x, float y, boolean fo
 
     if(!forceInstantly && am->maxViewPositionDelta > 0)
     {
-        float dx, dy, dist;
+        coord_t dx, dy, dist;
 
         dx = am->viewX - x;
         dy = am->viewY - y;
-        dist = (float) sqrt(dx * dx + dy * dy);
+        dist = (coord_t) sqrt(dx * dx + dy * dy);
         if(dist < 0)
             dist = -dist;
 
@@ -1945,12 +1949,12 @@ boolean UIAutomap_SetCameraOrigin2(uiwidget_t* obj, float x, float y, boolean fo
     return true;
 }
 
-boolean UIAutomap_TranslateCameraOrigin(uiwidget_t* obj, float x, float y)
+boolean UIAutomap_TranslateCameraOrigin(uiwidget_t* obj, coord_t x, coord_t y)
 {
     return UIAutomap_TranslateCameraOrigin2(obj, x, y, false);
 }
 
-boolean UIAutomap_TranslateCameraOrigin2(uiwidget_t* obj, float x, float y, boolean forceInstantly)
+boolean UIAutomap_TranslateCameraOrigin2(uiwidget_t* obj, coord_t x, coord_t y, boolean forceInstantly)
 {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     assert(obj->type == GUI_AUTOMAP);
@@ -1958,7 +1962,7 @@ boolean UIAutomap_TranslateCameraOrigin2(uiwidget_t* obj, float x, float y, bool
     return UIAutomap_SetCameraOrigin2(obj, am->viewX + x, am->viewY + y, forceInstantly);
 }
 
-void UIAutomap_ParallaxLayerOrigin(uiwidget_t* obj, float* x, float* y)
+void UIAutomap_ParallaxLayerOrigin(uiwidget_t* obj, coord_t* x, coord_t* y)
 {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     assert(obj->type == GUI_AUTOMAP);
@@ -2041,8 +2045,8 @@ boolean UIAutomap_SetReveal(uiwidget_t* obj, boolean yes)
     return false;
 }
 
-void UIAutomap_PVisibleAABounds(const uiwidget_t* obj, float* lowX, float* hiX,
-    float* lowY, float* hiY)
+void UIAutomap_PVisibleAABounds(const uiwidget_t* obj, coord_t* lowX, coord_t* hiX,
+    coord_t* lowY, coord_t* hiY)
 {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     assert(obj->type == GUI_AUTOMAP);
@@ -2053,8 +2057,8 @@ void UIAutomap_PVisibleAABounds(const uiwidget_t* obj, float* lowX, float* hiX,
     if(hiY)  *hiY  = am->viewAABB[BOXTOP];
 }
 
-void UIAutomap_VisibleBounds(const uiwidget_t* obj, float topLeft[2],
-    float bottomRight[2], float topRight[2], float bottomLeft[2])
+void UIAutomap_VisibleBounds(const uiwidget_t* obj, coord_t topLeft[2],
+    coord_t bottomRight[2], coord_t topRight[2], coord_t bottomLeft[2])
 {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     assert(obj->type == GUI_AUTOMAP);
@@ -2108,7 +2112,7 @@ int UIAutomap_PointCount(const uiwidget_t* obj)
     return used;
 }
 
-int UIAutomap_AddPoint(uiwidget_t* obj, float x, float y, float z)
+int UIAutomap_AddPoint(uiwidget_t* obj, coord_t x, coord_t y, coord_t z)
 {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     unsigned int newIdx;
@@ -2126,7 +2130,7 @@ int UIAutomap_AddPoint(uiwidget_t* obj, float x, float y, float z)
     return newIdx;
 }
 
-boolean UIAutomap_PointOrigin(const uiwidget_t* obj, int pointIdx, float* x, float* y, float* z)
+boolean UIAutomap_PointOrigin(const uiwidget_t* obj, int pointIdx, coord_t* x, coord_t* y, coord_t* z)
 {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     assert(obj->type == GUI_AUTOMAP);
@@ -2266,7 +2270,7 @@ void UIAutomap_SetFlags(uiwidget_t* obj, int flags)
     UIAutomap_Rebuild(obj);
 }
 
-void UIAutomap_SetWorldBounds(uiwidget_t* obj, float lowX, float hiX, float lowY, float hiY)
+void UIAutomap_SetWorldBounds(uiwidget_t* obj, coord_t lowX, coord_t hiX, coord_t lowY, coord_t hiY)
 {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     assert(obj->type == GUI_AUTOMAP);
@@ -2298,7 +2302,7 @@ void UIAutomap_SetMinScale(uiwidget_t* obj, const float scale)
     am->updateViewScale = true;
 }
 
-void UIAutomap_SetCameraOriginFollowMoveDelta(uiwidget_t* obj, float max)
+void UIAutomap_SetCameraOriginFollowMoveDelta(uiwidget_t* obj, coord_t max)
 {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     assert(obj->type == GUI_AUTOMAP);

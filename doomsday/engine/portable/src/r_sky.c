@@ -79,7 +79,7 @@ static void configureDefaultSky(void)
 
     skyAmbientColorDefined = false;
     needUpdateSkyAmbientColor = true;
-    V3_Set(skyAmbientColor.rgb, 1.0f, 1.0f, 1.0f);
+    V3f_Set(skyAmbientColor.rgb, 1.0f, 1.0f, 1.0f);
 
     for(i = 0; i < MAX_SKY_LAYERS; ++i)
     {
@@ -105,7 +105,7 @@ static void calculateSkyAmbientColor(void)
     if(!needUpdateSkyAmbientColor) return;
     needUpdateSkyAmbientColor = false;
 
-    V3_Set(skyAmbientColor.rgb, 1.0f, 1.0f, 1.0f);
+    V3f_Set(skyAmbientColor.rgb, 1.0f, 1.0f, 1.0f);
     if(skyModelsInited && !alwaysDrawSphere) return;
 
     /**
@@ -145,16 +145,16 @@ static void calculateSkyAmbientColor(void)
                     Texture_Analysis(tex, TA_LINE_TOP_COLOR);
                 if(!avgLineColor)
                     Con_Error("calculateSkyAmbientColor: Texture id:%u has no TA_LINE_TOP_COLOR analysis.", Textures_Id(MSU_texture(ms, MTU_PRIMARY)));
-                V3_Copy(topCapColor.rgb, avgLineColor->color.rgb);
+                V3f_Copy(topCapColor.rgb, avgLineColor->color.rgb);
 
                 avgLineColor = (const averagecolor_analysis_t*)
                     Texture_Analysis(tex, TA_LINE_BOTTOM_COLOR);
                 if(!avgLineColor)
                     Con_Error("calculateSkyAmbientColor: Texture id:%u has no TA_LINE_BOTTOM_COLOR analysis.", Textures_Id(MSU_texture(ms, MTU_PRIMARY)));
-                V3_Copy(bottomCapColor.rgb, avgLineColor->color.rgb);
+                V3f_Copy(bottomCapColor.rgb, avgLineColor->color.rgb);
             }
 
-            V3_Sum(avgMaterialColor.rgb, avgMaterialColor.rgb, avgColor->color.rgb);
+            V3f_Sum(avgMaterialColor.rgb, avgMaterialColor.rgb, avgColor->color.rgb);
             ++avgCount;
         }
     }
@@ -162,11 +162,11 @@ static void calculateSkyAmbientColor(void)
     if(avgCount != 0)
     {
         // The caps cover a large amount of the sky sphere, so factor it in too.
-        vec3_t capSum;
-        V3_Sum(capSum, topCapColor.rgb, bottomCapColor.rgb);
-        V3_Sum(skyAmbientColor.rgb, avgMaterialColor.rgb, capSum);
+        vec3f_t capSum;
+        V3f_Sum(capSum, topCapColor.rgb, bottomCapColor.rgb);
+        V3f_Sum(skyAmbientColor.rgb, avgMaterialColor.rgb, capSum);
         avgCount += 2; // Each cap is another unit.
-        V3_Scale(skyAmbientColor.rgb, 1.f / avgCount);
+        V3f_Scale(skyAmbientColor.rgb, 1.f / avgCount);
     }
 }
 
@@ -223,7 +223,7 @@ void R_SetupSky(ded_sky_t* def)
     if(def->color[CR] > 0 || def->color[CG] > 0 || def->color[CB] > 0)
     {
         skyAmbientColorDefined = true;
-        V3_Set(skyAmbientColor.rgb, def->color[CR], def->color[CG], def->color[CB]);
+        V3f_Set(skyAmbientColor.rgb, def->color[CR], def->color[CG], def->color[CB]);
     }
 
     // Any sky models to setup? Models will override the normal sphere by default.

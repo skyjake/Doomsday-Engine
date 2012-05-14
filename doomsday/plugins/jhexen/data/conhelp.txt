@@ -272,6 +272,9 @@ desc = Menu text shadow darkness.
 [menu-slam]
 desc = 1=Slam the menu when opening.
 
+[view-cross-angle]
+desc = Rotation angle for the crosshair [0..1] (1=360 degrees).
+
 [view-cross-type]
 desc = The current crosshair.
 
@@ -701,9 +704,6 @@ desc = The speed of turning left/right.
 [ctl-run]
 desc = 1=Always run.
 
-[ctl-use-dclick]
-desc = 1=Doubleclick forward/strafe equals use key.
-
 [ctl-inventory-mode]
 desc = Inventory selection mode 0=cursor, 1=scroll.
 
@@ -721,12 +721,6 @@ desc = The speed of looking up/down.
 
 [ctl-look-spring]
 desc = 1=Lookspring active.
-
-[ctl-look-mouse]
-desc = 1=Mouse look active.
-
-[ctl-look-mouse-inverse]
-desc = 1=Inverse mouse look Y axis.
 
 [ctl-look-pov]
 desc = 1=Look around using the POV hat.

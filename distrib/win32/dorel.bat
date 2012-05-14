@@ -21,7 +21,7 @@ SET BUILDFAILURE=0
 rd/s/q work
 md work
 cd work
-qmake ..\..\..\doomsday\doomsday.pro CONFIG+="release deng_packres" DENG_BUILD=%DOOMSDAY_BUILD%
+qmake -spec win32-msvc2010 ..\..\..\doomsday\doomsday.pro CONFIG+=release DENG_BUILD=%DOOMSDAY_BUILD%
 IF NOT %ERRORLEVEL% == 0 SET BUILDFAILURE=1
 %JOM%
 IF NOT %ERRORLEVEL% == 0 SET BUILDFAILURE=1

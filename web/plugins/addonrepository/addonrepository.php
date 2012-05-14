@@ -99,20 +99,20 @@ class AddonRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 
         if($addon->hasDownloadUri())
         {
-?><a href="<?php echo $addon->downloadUri(); ?>" title="Download <?php echo $addonFullTitle; ?>" rel="nofollow"><?php echo $addonFullTitle; ?></a><?php
+?><a href="<?php echo $addon->downloadUri(); ?>" title="Download <?php echo htmlspecialchars($addonFullTitle); ?>" rel="nofollow"><?php echo htmlspecialchars($addonFullTitle); ?></a><?php
         }
         else if($addon->hasHomepageUri())
         {
-?><a href="<?php echo $addon->homepageUri(); ?>" title="Visit homepage for <?php echo $addonFullTitle; ?>" rel="nofollow"><?php echo $addonFullTitle; ?></a><?php
+?><a href="<?php echo $addon->homepageUri(); ?>" title="Visit homepage for <?php echo htmlspecialchars($addonFullTitle); ?>" rel="nofollow"><?php echo htmlspecialchars($addonFullTitle); ?></a><?php
         }
         else
         {
-            echo $addonFullTitle;
+            echo htmlspecialchars($addonFullTitle);
         }
 
 ?></td>
-<td><?php if($addon->hasDescription()) echo $addon->description(); ?></td>
-<td><?php if($addon->hasNotes()) echo $addon->notes(); ?></td></tr><?
+<td><?php if($addon->hasDescription()) echo htmlspecialchars($addon->description()); ?></td>
+<td><?php if($addon->hasNotes()) echo htmlspecialchars($addon->notes()); ?></td></tr><?
     }
 
     /**
@@ -188,10 +188,6 @@ class AddonRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 <?php
 
         $this->outputAddonList(self::$hexenGameModes);
-
-?><hr /><?php
-
-        includeHTML('instructions', self::$name);
     }
 
     public static function packageSorter($packA, $packB)

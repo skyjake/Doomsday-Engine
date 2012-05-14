@@ -27,7 +27,7 @@ includeGuard('ContentCache');
 
 class ContentInfo
 {
-    public $modifiedTime; // Unix timestamp.
+    public $modifiedTime = NULL; // Unix timestamp.
 }
 
 class ContentCache
@@ -62,12 +62,14 @@ class ContentCache
                 $fh = fopen($file, 'w');
             }
 
-            if(fwrite($fh, $content) === false)
-                throw new Exception(sprintf('failed writing to file %s.', $file));
-
             if(!$fh)
                 throw new Exception(sprintf('failed opening file %s.', $file));
 
+            if(!flock($fh, LOCK_EX))
+                throw new Exception(sprintf('failed obtaining write lock on file %s.', $file));
+
+            fwrite($fh, $content);
+            flock($fh, LOCK_UN);
             fclose($fh);
         /*}
         catch(Exception $e)
@@ -81,59 +83,68 @@ class ContentCache
     /**
      * Is the specified content element present in the cache?
      *
-     * @param file  (String) File name to look up.
+     * @param relPath  (String) File name to look up.
      * @return  (Boolean) TRUE iff the content element is available.
      */
-    public function isPresent($file)
+    public function isPresent($relPath)
     {
-        return (bool) file_exists(FrontController::nativePath($this->_docRoot."/$file"));
+        return (bool) file_exists(FrontController::nativePath($this->_docRoot."/$relPath"));
     }
 
     /**
      * Attempt to retrieve a content element from the cache, copying
      * its contents into a string.
      *
-     * @param file  (String) File name to retrieve.
+     * @param relPath  (String) File name to retrieve.
      * @return  (Boolean) FALSE if the content element could not be
      *     found, else the content as a string.
      */
-    public function retrieve($file)
+    public function retrieve($relPath)
     {
-        $file = FrontController::nativePath($this->_docRoot."/$file");
+        $path = FrontController::nativePath($this->_docRoot."/$relPath");
 
-        if(!file_exists($file))
-            throw new Exception(sprintf('file %s not present in content cache.', $file));
+        if(!$path || !file_exists($path))
+            throw new Exception(sprintf('file %s not present in content cache.', $relPath));
 
-        return file_get_contents($file);
+        if($stream = fopen($path, 'r'))
+        {
+            $contents = stream_get_contents($stream);
+            fclose($stream);
+            return $contents;
+        }
+        return "";
     }
 
     /**
      * Retrieve info about a file in the cache.
      *
-     * @param file  (String) Name of the file to get info for.
+     * @param relPath  (String) Name of the file to get info for.
+     * @param info  (ContentInfo) Info record to be populated.
      * @return  (Boolean) FALSE if the specified file does not exist.
      */
-    public function getInfo($file, &$ContentInfo)
+    public function getInfo($relPath, &$info)
     {
-        $file = FrontController::nativePath($this->_docRoot."/$file");
-        if(!file_exists($file)) return FALSE;
+        if(!$info instanceof ContentInfo) return FALSE;
 
-        $ContentInfo->modifiedTime = filemtime($file);
+        $path = FrontController::nativePath($this->_docRoot."/$relPath");
+        if(!$path || !file_exists($path)) return FALSE;
+
+        $info->modifiedTime = filemtime($path);
         return TRUE;
     }
 
     /**
      * Touch a file in the cache (update modified time).
      *
-     * @param file  (String) Name of the file to touch.
+     * @param relPath  (String) Name of the file to touch.
      * @return  (Boolean) FALSE if the specified file does not exist.
      */
-    public function touch($file)
+    public function touch($relPath)
     {
-        $file = FrontController::nativePath($this->_docRoot."/$file");
-        if(!file_exists($file)) return FALSE;
+        $path = FrontController::nativePath($this->_docRoot."/$relPath");
+        if(!$path || !file_exists($path)) return FALSE;
 
-        touch($file);
+        touch($path);
         return TRUE;
     }
 
@@ -141,16 +152,16 @@ class ContentCache
      * Attempt to import a content element from the cache, outputting
      * its contents straight to the output buffer.
      *
-     * @param file  (String) File name to retrieve.
+     * @param relPath  (String) File name to retrieve.
      * @return  (Boolean) TRUE iff the content element was imported.
      */
-    public function import($file)
+    public function import($relPath)
     {
-        $file = FrontController::nativePath($this->_docRoot."/$file");
+        $path = FrontController::nativePath($this->_docRoot."/$relPath");
 
-        if(!file_exists($file))
-            throw new Exception(sprintf('file %s not present in content cache.', $file));
+        if(!$path || !file_exists($path))
+            throw new Exception(sprintf('file %s not present in content cache.', $relPath));
 
-        return @readfile($file);
+        return @readfile($path);
     }
 }

@@ -50,7 +50,7 @@ typedef enum {
 
 typedef struct {
     thinker_t       thinker;
-    sector_t*       sector;
+    Sector*         sector;
     lighttype_t     type;
     float           value1;
     float           value2;
@@ -61,17 +61,17 @@ typedef struct {
 
 typedef struct {
     thinker_t       thinker;
-    sector_t*       sector;
+    Sector*         sector;
     int             index;
     float           baseValue;
 } phase_t;
 
 void            T_Phase(phase_t* phase);
-void            P_SpawnPhasedLight(sector_t* sec, float base, int index);
+void            P_SpawnPhasedLight(Sector* sec, float base, int index);
 
 void            T_Light(light_t* light);
-void            P_SpawnLightSequence(sector_t* sec, int indexStep);
+void            P_SpawnLightSequence(Sector* sec, int indexStep);
 
-boolean         EV_SpawnLight(linedef_t* line, byte* arg, lighttype_t type);
+boolean         EV_SpawnLight(LineDef* line, byte* arg, lighttype_t type);
 
 #endif

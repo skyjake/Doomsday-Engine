@@ -30,7 +30,7 @@
 #define __DOOMSDAY_MISC_PROFILER_H__
 
 #include "dd_types.h"
-#include "sys_timer.h"
+#include "timer.h"
 
 /*
  * This header defines some handy macros for profiling.

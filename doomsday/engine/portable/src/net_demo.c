@@ -39,7 +39,7 @@
 #include "de_play.h"
 
 #include "r_main.h"
-#include "gl_main.h" // For r_framecounter.
+//#include "gl_main.h" // For r_framecounter.
 
 // MACROS ------------------------------------------------------------------
 
@@ -353,15 +353,17 @@ boolean Demo_BeginPlayback(const char* fileName)
     demoStartTic = DEMOTIC;
     memset(posDelta, 0, sizeof(posDelta));
     // Start counting frames from here.
+    /*
     if(ArgCheck("-timedemo"))
         r_framecounter = 0;
+        */
 
     return true;
 }
 
 void Demo_StopPlayback(void)
 {
-    float           diff;
+    //float           diff;
 
     if(!playback)
         return;
@@ -376,6 +378,7 @@ void Demo_StopPlayback(void)
     fieldOfView = startFOV;
     Net_StopGame();
 
+    /*
     if(ArgCheck("-timedemo"))
     {
         diff = Sys_GetSeconds() - netConnectTime;
@@ -387,6 +390,7 @@ void Demo_StopPlayback(void)
         Con_Message("%f FPS\n", r_framecounter / diff);
         Sys_Quit();
     }
+    */
 
     // "Play demo once" mode?
     if(ArgCheck("-playdemo"))
@@ -460,7 +464,7 @@ void Demo_WriteLocalCamera(int plrNum)
 
     Msg_Begin(clients[plrNum].recordPaused ? PKT_DEMOCAM_RESUME : PKT_DEMOCAM);
     // Flags.
-    flags = (mo->pos[VZ] <= mo->floorZ ? LCAMF_ONGROUND : 0)  // On ground?
+    flags = (mo->origin[VZ] <= mo->floorZ ? LCAMF_ONGROUND : 0)  // On ground?
         | (incfov ? LCAMF_FOV : 0);
     if(ddpl->flags & DDPF_CAMERA)
     {
@@ -470,14 +474,14 @@ void Demo_WriteLocalCamera(int plrNum)
     Writer_WriteByte(msgWriter, flags);
 
     // Coordinates.
-    x = FLT2FIX(mo->pos[VX]);
-    y = FLT2FIX(mo->pos[VY]);
+    x = FLT2FIX(mo->origin[VX]);
+    y = FLT2FIX(mo->origin[VY]);
     Writer_WriteInt16(msgWriter, x >> 16);
     Writer_WriteByte(msgWriter, x >> 8);
     Writer_WriteInt16(msgWriter, y >> 16);
     Writer_WriteByte(msgWriter, y >> 8);
 
-    z = FLT2FIX(mo->pos[VZ] + viewData->current.pos[VZ]);
+    z = FLT2FIX(mo->origin[VZ] + viewData->current.origin[VZ]);
     Writer_WriteInt16(msgWriter, z >> 16);
     Writer_WriteByte(msgWriter, z >> 8);
 
@@ -527,9 +531,9 @@ void Demo_ReadLocalCamera(void)
 
     // X and Y coordinates are easy. Calculate deltas to the new coords.
     posDelta[VX] =
-        (FIX2FLT((Reader_ReadInt16(msgReader) << 16) + (Reader_ReadByte(msgReader) << 8)) - mo->pos[VX]) / intertics;
+        (FIX2FLT((Reader_ReadInt16(msgReader) << 16) + (Reader_ReadByte(msgReader) << 8)) - mo->origin[VX]) / intertics;
     posDelta[VY] =
-        (FIX2FLT((Reader_ReadInt16(msgReader) << 16) + (Reader_ReadByte(msgReader) << 8)) - mo->pos[VY]) / intertics;
+        (FIX2FLT((Reader_ReadInt16(msgReader) << 16) + (Reader_ReadByte(msgReader) << 8)) - mo->origin[VY]) / intertics;
 
     // The Z coordinate is a bit trickier. We are tracking the *camera's*
     // Z coordinate (z+viewheight), not the player mobj's Z.

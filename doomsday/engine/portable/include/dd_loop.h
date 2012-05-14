@@ -23,6 +23,12 @@
 #ifndef __DOOMSDAY_BASELOOP_H__
 #define __DOOMSDAY_BASELOOP_H__
 
+#include "dd_types.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern int rFrameCount;
 extern timespan_t sysTime, gameTime, demoTime, ddMapTime;
 extern boolean tickFrame;
@@ -33,15 +39,32 @@ extern boolean tickFrame;
 void DD_RegisterLoop(void);
 
 /**
- * This is the refresh thread (the main thread).
+ * Starts the game loop.
  */
 int DD_GameLoop(void);
+
+/**
+ * Called periodically while the game loop is running.
+ */
+void DD_GameLoopCallback(void);
+
+/**
+ * Window drawing callback.
+ *
+ * Drawing anything outside this routine is frowned upon.
+ * Seriously frowned! (Don't do it.)
+ */
+void DD_GameLoopDrawer(void);
 
 /**
  * Waits until it's time to show the drawn frame on screen. The frame must be
  * ready before this is called. Ideally the updates would appear at a fixed
  * frequency; in practice, inaccuracies due to time measurement and background
  * processes may result in varying update intervals.
+ *
+ * Note that if the maximum refresh rate has been set to a value higher than
+ * the vsync rate, this function does nothing but update the statistisc on
+ * frame timing.
  */
 void DD_WaitForOptimalUpdateTime(void);
 
@@ -68,9 +91,24 @@ boolean DD_IsSharpTick(void);
 boolean DD_IsFrameTimeAdvancing(void);
 
 /**
+ * Returns the real time in seconds when the latest iteration of runTics() was
+ * started.
+ */
+timespan_t DD_LatestRunTicsStartTime(void);
+
+/**
  * Sets the exit code for the main loop. Does not cause the main loop
  * to stop; you need to call Sys_Quit() to do that.
  */
 void DD_SetGameLoopExitCode(int code);
+
+/**
+ * @return Game loop exit code.
+ */
+int DD_GameLoopExitCode(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

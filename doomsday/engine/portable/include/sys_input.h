@@ -1,81 +1,126 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * sys_input.h: Game Controllers
+ * @file sys_input.h
+ * Keyboard and mouse input pre-processing. @ingroup input
+ *
+ * @see joystick.h
+ *
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-#ifndef __DOOMSDAY_INPUT_H__
-#define __DOOMSDAY_INPUT_H__
+#ifndef LIBDENG_SYSTEM_INPUT_H
+#define LIBDENG_SYSTEM_INPUT_H
+
+#include "joystick.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 // Key event types.
-#define IKE_NONE        0
-#define IKE_KEY_DOWN    0x1
-#define IKE_KEY_UP      0x2
+enum {
+    IKE_NONE,
+    IKE_DOWN,
+    IKE_UP
+};
 
-// Mouse buttons. (1=left, 2=middle, 3=right, 4=wheel up, 5=wheel down)
-#define IMB_MAXBUTTONS  16
+// Mouse buttons.
+enum {
+    IMB_LEFT,
+    IMB_MIDDLE,
+    IMB_RIGHT,
+    IMB_MWHEELUP,           // virtual button
+    IMB_MWHEELDOWN,         // virtual button
+    // ...other buttons...
+    IMB_MWHEELLEFT = 14,    // virtual button
+    IMB_MWHEELRIGHT = 15,   // virtual button
 
-// Joystick.
-#define IJOY_AXISMIN    -10000
-#define IJOY_AXISMAX    10000
-#define IJOY_MAXAXES    32
-#define IJOY_MAXBUTTONS 32
-#define IJOY_MAXHATS    4
-#define IJOY_POV_CENTER -1
+    IMB_MAXBUTTONS = 16
+};
+
+// Mouse axes.
+enum {
+    IMA_POINTER,
+    IMA_WHEEL,
+    IMA_MAXAXES
+};
 
 typedef struct keyevent_s {
-    char            event; // Type of the event.
-    byte            ddkey; // The scancode (extended, corresponds DD_KEYs).
+    byte type;          ///< Type of the event.
+    int ddkey;          ///< DDKEY code.
+    int native;         ///< Native code (use this to check for physically equivalent keys).
+    char text[8];       ///< For characters, latin1-encoded text to insert. /// @todo Unicode
 } keyevent_t;
 
 typedef struct mousestate_s {
-    int             x, y; // Relative X and Y mickeys since last call.
-    int             buttonDowns[IMB_MAXBUTTONS]; // Button down count.
-    int             buttonUps[IMB_MAXBUTTONS]; // Button up count.
+    struct {
+        int x;
+        int y;
+    } axis[IMA_MAXAXES];                ///< Relative X and Y.
+    int buttonDowns[IMB_MAXBUTTONS];    ///< Button down count.
+    int buttonUps[IMB_MAXBUTTONS];      ///< Button up count.
 } mousestate_t;
 
-typedef struct joystate_s {
-    int             numAxes;        // Number of axes present.
-    int             numButtons;     // Number of buttons present.
-    int             numHats;        // Number of hats present.
-    int             axis[IJOY_MAXAXES];
-    int             buttonDowns[IJOY_MAXBUTTONS]; // Button down count.
-    int             buttonUps[IJOY_MAXBUTTONS]; // Button up count.
-    float           hatAngle[IJOY_MAXHATS];    // 0 - 359 degrees.
-} joystate_t;
+typedef struct mouseinterface_s {
+    int (*init)(void);      ///< Initialize the mouse.
+    void (*shutdown)(void);
+    void (*poll)(void);     ///< Polls the current state of the mouse.
+    void (*getState)(mousestate_t*);
+    void (*trap)(boolean);  ///< Enable or disable mouse grabbing.
+} mouseinterface_t;
 
-extern byte     usejoystick;
+void I_Register(void);
 
-void            I_Register(void);
-boolean         I_Init(void);
-void            I_Shutdown(void);
-boolean         I_MousePresent(void);
-boolean         I_JoystickPresent(void);
-size_t          I_GetKeyEvents(keyevent_t *evbuf, size_t bufsize);
-void            I_GetMouseState(mousestate_t *state);
-void            I_GetJoystickState(joystate_t * state);
+/**
+ * Initialize input.
+ *
+ * @return @c true, if successful.
+ */
+boolean I_Init(void);
+
+void I_Shutdown(void);
+
+/**
+ * Submits a new key event for preprocessing. The event has likely just been
+ * received from the windowing system.
+ *
+ * @param type    Type of the event (IKE_*).
+ * @param ddKey   DDKEY code.
+ * @param native  Native code. Identifies the physical key.
+ * @param text    For characters, latin1-encoded text to insert. Otherwise @c NULL.
+ */
+void Keyboard_Submit(int type, int ddKey, int native, const char* text);
+
+size_t Keyboard_GetEvents(keyevent_t *evbuf, size_t bufsize);
+
+boolean Mouse_IsPresent(void);
+
+void Mouse_Trap(boolean enabled);
+
+/**
+ * Polls the current state of the mouse. This is called at regular intervals.
+ */
+void Mouse_Poll(void);
+
+void Mouse_GetState(mousestate_t *state);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

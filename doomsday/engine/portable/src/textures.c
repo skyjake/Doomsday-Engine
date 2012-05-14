@@ -629,7 +629,7 @@ void Textures_Release(Texture* tex)
 {
     /// Stub.
     GL_ReleaseGLTexturesByTexture(tex);
-    /// \fixme Update any Materials (and thus Surfaces) which reference this.
+    /// @todo Update any Materials (and thus Surfaces) which reference this.
 }
 
 Texture* Textures_ToTexture(textureid_t id)
@@ -726,7 +726,7 @@ textureid_t Textures_ResolveUri2(const Uri* uri, boolean quiet)
     {
 #if _DEBUG
         ddstring_t* uriStr = Uri_ToString(uri);
-        Con_Message("Warning:Textures::ResolveUri: Uri \"%s\" failed to validate, returing NULL.\n", Str_Text(uriStr));
+        Con_Message("Warning:Textures::ResolveUri: Uri \"%s\" failed to validate, returning NULL.\n", Str_Text(uriStr));
         Str_Delete(uriStr);
 #endif
         return NOTEXTUREID;
@@ -925,7 +925,7 @@ Texture* Textures_CreateWithSize(textureid_t id, int flags, const Size2Raw* size
         Texture_SetFlags(tex, flags);
         Texture_SetSize(tex, size);
         Texture_AttachUserData(tex, userData);
-        /// \fixme Materials and Surfaces should be notified of this!
+        /// @todo Materials and Surfaces should be notified of this!
         return tex;
     }
 

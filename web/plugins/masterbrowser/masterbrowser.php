@@ -54,7 +54,7 @@ class MasterBrowserPlugin extends Plugin implements Actioner, RequestInterpreter
         $this->db = new MasterServer();
 
         $cacheInfo = new ContentInfo();
-        $FrontController->contentCache()->getInfo(self::$serverSummaryCacheName, &$cacheInfo);
+        $FrontController->contentCache()->getInfo(self::$serverSummaryCacheName, $cacheInfo);
         return ($this->db->lastUpdate > $cacheInfo->modifiedTime);
     }
 
@@ -89,7 +89,7 @@ class MasterBrowserPlugin extends Plugin implements Actioner, RequestInterpreter
 
         // Begin html generation.
         $html = '<span class="game-mode">'. htmlspecialchars($info['mode']) .'</span>'.
-                '<div class="wrapper"><hgroup class="heading collapsible" title="Toggle server info display">'.
+                '<div class="wrapper"><div class="heading collapsible" title="Toggle server info display">'.
                 '<div class="player-summary">'.
                     '<span class="player-count"><label title="'. htmlspecialchars($playerCountLabel) .'">'. htmlspecialchars($info['nump']) .'</label></span>/'.
                     '<span class="player-max"><label title="'. htmlspecialchars($playerMaxLabel) .'">'. htmlspecialchars($info['maxp']) .'</label></span>'.
@@ -97,14 +97,14 @@ class MasterBrowserPlugin extends Plugin implements Actioner, RequestInterpreter
                 '<span class="name">'. htmlspecialchars($info['name']) .'</span>'.
                 '<div class="server-metadata">'.
                      '<span class="address"><label title="'. htmlspecialchars($addressLabel) .'">'. htmlspecialchars($info['at']) .'<span class="port" '. (((integer)$info['port']) === 0? 'style="color:red;"' : '') .'>'. htmlspecialchars($info['port']) .'</span></label></span>'.
-                     '<label title="'. htmlspecialchars($openStatusLabel) .'"><div class="'. ($info['open']? 'lock-off' : 'lock-on') .'"></div></label>'.
+                     '<div class="'. ($info['open']? 'lock-off' : 'lock-on') .'" title="'. htmlspecialchars($openStatusLabel) .'"></div>'.
                 '</div>'.
                 '<div class="game-metadata">'.
                     'Setup: <span class="game-setup">'. htmlspecialchars($setupStr) .'</span>'.
                     'Current Map: <span class="game-current-map">'. htmlspecialchars($info['map']) .'</span>'.
-                '</div></hgroup>';
+                '</div></div>';
 
-        $html .='<div class="extended-info"><blockquote class="game-info">'. htmlspecialchars($info['info']) .'</blockquote>';
+        $html .='<div class="extended-info"><blockquote class="game-info"><p>'. htmlspecialchars($info['info']) .'</p></blockquote>';
 
         // Any required addons?.
         if(count($addonArr))

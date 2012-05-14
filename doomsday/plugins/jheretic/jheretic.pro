@@ -1,13 +1,14 @@
 # The Doomsday Engine Project
-# Copyright (c) 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
-# Copyright (c) 2011 Daniel Swanson <danij@dengine.net>
+# Copyright (c) 2011-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+# Copyright (c) 2011-2012 Daniel Swanson <danij@dengine.net>
 
 include(../config_plugin.pri)
 include(../common/common.pri)
 include(../../dep_lzss.pri)
 
 TEMPLATE = lib
-TARGET = jheretic
+win32|macx: TARGET = jHeretic
+      else: TARGET = jheretic
 
 DEFINES += __JHERETIC__
 
@@ -20,7 +21,7 @@ macx {
 
     QMAKE_BUNDLE_DATA += gamedata
 }
-else: {
+else {
     INSTALLS += target gamedata
 
     target.path = $$DENG_LIB_DIR
@@ -61,7 +62,6 @@ HEADERS += \
     include/p_oldsvg.h \
     include/p_pspr.h \
     include/p_setup.h \
-    include/p_sound.h \
     include/p_spec.h \
     include/p_telept.h \
     include/r_data.h \
@@ -90,7 +90,6 @@ SOURCES += \
     src/p_oldsvg.c \
     src/p_pspr.c \
     src/p_setup.c \
-    src/p_sound.c \
     src/p_spec.c \
     src/p_telept.c \
     src/st_stuff.c \

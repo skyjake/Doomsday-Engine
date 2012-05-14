@@ -35,9 +35,9 @@ extern float    haloFadeMax, haloFadeMin, minHaloSize;
 
 void            H_Register(void);
 void            H_SetupState(boolean dosetup);
-boolean         H_RenderHalo(float x, float y, float z, float size,
+boolean         H_RenderHalo(coord_t x, coord_t y, coord_t z, float size,
                              DGLuint tex, const float color[3],
-                             float distanceToViewer, float occlusionFactor,
+                             coord_t distanceToViewer, float occlusionFactor,
                              float brightnessFactor, float viewXOffset,
                              boolean primary, boolean viewRelativeRotate);
 

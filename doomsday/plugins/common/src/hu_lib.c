@@ -1043,7 +1043,7 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
     DGL_Translatef(page->origin.x, page->origin.y, 0);
 
     // Apply page scroll?
-    if(focusObj)
+    if(!(page->flags & MPF_NEVER_SCROLL) && focusObj)
     {
         RectRaw pageGeometry, viewRegion;
         Rect_Raw(page->geometry, &pageGeometry);
@@ -2512,8 +2512,6 @@ int MNButton_CommandResponder(mn_object_t* obj, menucommand_e cmd)
         else
         {
             // Stay-down buttons change state.
-            S_LocalSound(SFX_MENU_CYCLE, NULL);
-
             if(!justActivated)
                 obj->_flags ^= MNF_ACTIVE;
 

@@ -35,14 +35,16 @@ class Event:
         self.packageName = {'doomsday': 'Doomsday',
                             'fmod':     'FMOD Ex Audio Plugin'}
         
-        # Platforms:  Name                         File ext     sys_id()
-        self.oses = [('Windows (x86)',             '.exe',      'win32-32bit'),
-                     ('Mac OS X 10.4+ (i386/ppc)', '.dmg',      'darwin-32bit'),
-                     ('Ubuntu (x86)',              'i386.deb',  'linux2-32bit'),
-                     ('Ubuntu (x86_64)',           'amd64.deb', 'linux2-64bit')]
+        # Platforms:  Name                            File ext     sys_id()
+        self.oses = [('Windows (x86)',                '.exe',      'win32-32bit'),
+                     ('Mac OS X 10.4+ (ppc/i386)',    '.dmg',      'darwin-32bit'),
+                     ('Mac OS X 10.6+ (x86_64/i386)', '64bit.dmg', 'darwin-64bit'),
+                     ('Ubuntu (x86)',                 'i386.deb',  'linux2-32bit'),
+                     ('Ubuntu (x86_64)',              'amd64.deb', 'linux2-64bit')]
 
         self.platId = {'win32-32bit':  'win-x86',
                        'darwin-32bit': 'mac10_4-x86-ppc',
+                       'darwin-64bit': 'mac10_6-x86-x86_64',
                        'linux2-32bit': 'linux-x86',
                        'linux2-64bit': 'linux-x86_64'}
 
@@ -63,12 +65,21 @@ class Event:
             return 'doomsday'        
     
     def os_from_filename(self, name):
+        found = None
         for n, ext, ident in self.oses:
             if name.endswith(ext) or ident in name:
-                return (n, ext, ident)
-        return None
-        
+                found = (n, ext, ident)
+        return found
+                
     def version_from_filename(self, name):
+        ver = self.extract_version_from_filename(name)
+        if not ver and self.package_from_filename(name) == 'doomsday':
+            # Fall back to the event version, if it exists.
+            ev = self.version()
+            if ev: return ev
+        return ver
+
+    def extract_version_from_filename(self, name):
         pos = name.find('_')
         if pos < 0: return None
         dash = name.find('-', pos + 1)
@@ -83,6 +94,11 @@ class Event:
         
     def tag(self):
         return self.name
+        
+    def version(self):
+        fn = self.file_path('version.txt')
+        if os.path.exists(fn): return file(fn).read().strip()
+        return None
         
     def name(self):
         return self.name
@@ -117,8 +133,8 @@ class Event:
 
         for fn in os.listdir(self.buildDir):
             t = os.stat(os.path.join(self.buildDir, fn))
-            if int(t.st_ctime) < oldest:
-                oldest = int(t.st_ctime)
+            if int(t.st_mtime) < oldest:
+                oldest = int(t.st_mtime)
 
         return oldest        
         
@@ -224,7 +240,7 @@ class Event:
             # Find the binaries for this OS.
             binaries = []
             for f in files:
-                if osExt in f:
+                if self.os_from_filename(f)[2] == osIdent:
                     binaries.append(f)
 
             if not binaries:
@@ -283,6 +299,9 @@ class Event:
         msg += '<compileWarnCount>%i</compileWarnCount>' % warnings
         msg += '<compileErrorCount>%i</compileErrorCount>' % errors
         return msg
+    
+    def release_notes_uri(self, version):
+        return "http://dengine.net/dew/index.php?title=Doomsday_version_" + version
         
     def xml_description(self):
         msg = '<build>'
@@ -297,6 +316,8 @@ class Event:
         # These logs were already linked to.
         includedLogs = []
         
+        distribVersion = None
+        
         # Packages.
         for fn in files:
             msg += '<package type="%s">' % self.package_type(fn)
@@ -309,6 +330,9 @@ class Event:
                 msg += self.xml_log(logName)
                 includedLogs.append(logName)
             msg += '</package>'
+            
+            if distribVersion is None:
+                distribVersion = self.version_from_filename(fn)
 
         # Any other logs we might want to include?
         for osName, osExt, osIdent in self.oses:
@@ -318,9 +342,16 @@ class Event:
                     # Add an entry for this.
                     msg += '<package type="%s">' % self.package_type(logName)
                     msg += '<name>%s</name>' % self.packageName[pkg]
+                    if self.version_from_filename(logName):
+                        msg += '<version>%s</version>' % self.version_from_filename(logName)
+                        if distribVersion is None:
+                            distribVersion = self.version_from_filename(logName)
                     msg += '<platform>%s</platform>' % self.platId[osIdent]
                     msg += self.xml_log(logName)
                     msg += '</package>'
+                            
+        if distribVersion:
+            msg += '<releaseNotes>%s</releaseNotes>' % self.release_notes_uri(distribVersion)
         
         # Commits.
         chgFn = self.file_path('changes.xml')

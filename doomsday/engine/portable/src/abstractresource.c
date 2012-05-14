@@ -215,6 +215,24 @@ const ddstring_t* AbstractResource_ResolvedPath(AbstractResource* r, boolean can
     return 0;
 }
 
+const ddstring_t* AbstractResource_ResolvedPathWithIndex(AbstractResource* r, int searchPathIndex, boolean canLocate)
+{
+    const Uri* list[2] = { AbstractResource_SearchPaths(r)[searchPathIndex], NULL };
+
+    assert(r);
+    if(canLocate)
+    {
+        int found = F_FindResourceForRecord2(r, &r->foundPath, list);
+        if(found) r->searchPathUsed = searchPathIndex + 1;
+    }
+    /// @todo Move resource validation here.
+    if(r->searchPathUsed != 0)
+    {
+        return &r->foundPath;
+    }
+    return 0;
+}
+
 resourceclass_t AbstractResource_ResourceClass(AbstractResource* r)
 {
     assert(r);

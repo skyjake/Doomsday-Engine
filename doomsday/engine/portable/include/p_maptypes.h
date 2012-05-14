@@ -9,8 +9,8 @@
 #define LO_next     link[1]
 
 typedef struct shadowvert_s {
-    float           inner[2];
-    float           extended[2];
+    coord_t         inner[2];
+    coord_t         extended[2];
 } shadowvert_t;
 
 typedef struct lineowner_s {
@@ -19,8 +19,6 @@ typedef struct lineowner_s {
     binangle_t      angle;          // between this and next clockwise.
     shadowvert_t    shadowOffsets;
 } lineowner_t;
-
-#define V_pos                   v.pos
 
 typedef struct mvertex_s {
     // Vertex index. Always valid after loading and pruning of unused
@@ -33,84 +31,82 @@ typedef struct mvertex_s {
 
     // Usually NULL, unless this vertex occupies the same location as a
     // previous vertex. Only used during the pruning phase.
-    struct vertex_s *equiv;
-
-    struct edgetip_s *tipSet; // Set of wall_tips.
-
-// Final data.
-    double      pos[2];
+    struct vertex_s* equiv;
 } mvertex_t;
 
 typedef struct vertex_s {
     runtime_mapdata_header_t header;
+    coord_t             origin[2];
     unsigned int        numLineOwners; // Number of line owners.
     lineowner_t*        lineOwners;    // Lineowner base ptr [numlineowners] size. A doubly, circularly linked list. The base is the line with the lowest angle and the next-most with the largest angle.
-    fvertex_t           v;
     mvertex_t           buildData;
-} vertex_t;
+} Vertex;
 
-// Helper macros for accessing seg data elements.
+// Helper macros for accessing hedge data elements.
 #define FRONT 0
 #define BACK  1
 
-#define SG_v(n)                 v[(n)]
-#define SG_vpos(n)              SG_v(n)->V_pos
+#define HE_v(n)                   v[(n)? 1:0]
+#define HE_vorigin(n)             HE_v(n)->origin
 
-#define SG_v1                   SG_v(0)
-#define SG_v1pos                SG_v(0)->V_pos
+#define HE_v1                     HE_v(0)
+#define HE_v1origin               HE_v(0)->origin
 
-#define SG_v2                   SG_v(1)
-#define SG_v2pos                SG_v(1)->V_pos
+#define HE_v2                     HE_v(1)
+#define HE_v2origin               HE_v(1)->origin
 
-#define SG_sector(n)            sec[(n)]
-#define SG_frontsector          SG_sector(FRONT)
-#define SG_backsector           SG_sector(BACK)
+#define HEDGE_BACK_SECTOR(h)      ((h)->twin ? (h)->twin->sector : NULL)
+#define HEDGE_SIDEDEF(h)          ((h)->lineDef->sideDefs[(h)->side])
 
-#define SEG_SIDEDEF(s)          ((s)->lineDef->sideDefs[(s)->side])
+// HEdge frame flags
+#define HEDGEINF_FACINGFRONT      0x0001
 
-// Seg flags
-#define SEGF_POLYOBJ            0x1 // Seg is part of a poly object.
+/// @todo Refactor me away.
+typedef struct mhedge_s {
+    uint                index;
+} mhedge_t;
 
-// Seg frame flags
-#define SEGINF_FACINGFRONT      0x0001
-
-typedef struct seg_s {
+typedef struct hedge_s {
     runtime_mapdata_header_t header;
     struct vertex_s*    v[2];          // [Start, End] of the segment.
+    struct hedge_s*     next;
+    struct hedge_s*     prev;
+
+    // Half-edge on the other side, or NULL if one-sided. This relationship
+    // is always one-to-one -- if one of the half-edges is split, the twin
+    // must also be split.
+    struct hedge_s*     twin;
+    struct bspleaf_s*   bspLeaf;
+
     struct linedef_s*   lineDef;
-    struct sector_s*    sec[2];
-    struct subsector_s* subsector;
-    struct seg_s*       backSeg;
+    struct sector_s*    sector;
     angle_t             angle;
     byte                side;          // 0=front, 1=back
-    byte                flags;
-    float               length;        // Accurate length of the segment (v1 -> v2).
-    float               offset;
+    coord_t             length;        // Accurate length of the segment (v1 -> v2).
+    coord_t             offset;
     biassurface_t*      bsuf[3];       // 0=middle, 1=top, 2=bottom
     short               frameFlags;
-} seg_t;
+    uint                index; /// Unique. Set when saving the BSP.
+    mhedge_t            buildData;
+} HEdge;
 
-#define SUBF_MIDPOINT         0x80    // Midpoint is tri-fan centre.
-
-typedef struct subsector_s {
+typedef struct bspleaf_s {
     runtime_mapdata_header_t header;
-    unsigned int        segCount;
-    struct seg_s**      segs;          // [segcount] size.
+    unsigned int        hedgeCount;
+    struct hedge_s*     hedge;
     struct polyobj_s*   polyObj;       // NULL, if there is no polyobj.
     struct sector_s*    sector;
     int                 addSpriteCount; // frame number of last R_AddSprites
-    unsigned int        inSectorID;
-    int                 flags;
     int                 validCount;
     unsigned int        reverb[NUM_REVERB_DATA];
-    AABoxf              aaBox;         // Min and max points.
-    float               worldGridOffset[2]; // Offset to align the top left of the bBox to the world grid.
-    fvertex_t           midPoint;      // Center of vertices.
-    unsigned short      numVertices;
-    struct fvertex_s**  vertices;      // [numvertices] size
+    AABoxd              aaBox;         // Min and max points.
+    coord_t             worldGridOffset[2]; // Offset to align the top left of the bBox to the world grid.
+    coord_t             midPoint[2]; /// Center of vertices.
+    struct hedge_s*     fanBase; /// HEdge whose vertex to use as the base for a trifan. If @c NULL then midPoint is used instead.
     struct shadowlink_s* shadows;
     struct biassurface_s** bsuf;       // [sector->planeCount] size.
-} subsector_t;
+    uint                index; /// Unique. Set when saving the BSP.
+} BspLeaf;
 
 typedef enum {
     MEC_UNKNOWN = -1,
@@ -158,13 +154,14 @@ typedef struct material_s {
 #define SUIF_UPDATE_DECORATIONS 0x8000
 
 typedef struct surfacedecor_s {
-    float               pos[3]; // World coordinates of the decoration.
-    subsector_t*		subsector;
+    coord_t             origin[3]; // World coordinates of the decoration.
+    BspLeaf*		bspLeaf;
     const struct ded_decorlight_s* def;
 } surfacedecor_t;
 
 typedef struct surface_s {
     runtime_mapdata_header_t header;
+    ddmobj_base_t       base;
     void*               owner;         // Either @c DMU_SIDEDEF, or @c DMU_PLANE
     int                 flags;         // SUF_ flags
     int                 oldFlags;
@@ -181,7 +178,7 @@ typedef struct surface_s {
     short               inFlags;       // SUIF_* flags
     unsigned int        numDecorations;
     surfacedecor_t      *decorations;
-} surface_t;
+} Surface;
 
 typedef enum {
     PLN_FLOOR,
@@ -190,6 +187,7 @@ typedef enum {
     NUM_PLANE_TYPES
 } planetype_t;
 
+#define PS_base                 surface.base
 #define PS_tangent              surface.tangent
 #define PS_bitangent            surface.bitangent
 #define PS_normal               surface.normal
@@ -197,23 +195,22 @@ typedef enum {
 #define PS_offset               surface.offset
 #define PS_visoffset            surface.visOffset
 #define PS_rgba                 surface.rgba
-#define	PS_flags				surface.flags
-#define	PS_inflags				surface.inFlags
+#define PS_flags                surface.flags
+#define PS_inflags              surface.inFlags
 
 typedef struct plane_s {
     runtime_mapdata_header_t header;
-    ddmobj_base_t       soundOrg;      // Sound origin for plane
     struct sector_s*    sector;        // Owner of the plane (temp)
-    surface_t           surface;
-    float               height;        // Current height
-    float               oldHeight[2];
-    float               target;        // Target height
-    float               speed;         // Move speed
-    float               visHeight;     // Visible plane height (smoothed)
-    float               visHeightDelta;
+    Surface             surface;
+    coord_t             height;        // Current height
+    coord_t             oldHeight[2];
+    coord_t             target;        // Target height
+    coord_t             speed;         // Move speed
+    coord_t             visHeight;     // Visible plane height (smoothed)
+    coord_t             visHeightDelta;
     planetype_t         type;          // PLN_* type.
     int                 planeID;
-} plane_t;
+} Plane;
 
 // Helper macros for accessing sector floor/ceiling plane data elements.
 #define SP_plane(n)             planes[(n)]
@@ -228,7 +225,7 @@ typedef struct plane_s {
 #define SP_planergb(n)          SP_plane(n)->surface.rgba
 #define SP_planetarget(n)       SP_plane(n)->target
 #define SP_planespeed(n)        SP_plane(n)->speed
-#define SP_planesoundorg(n)     SP_plane(n)->soundOrg
+#define SP_planeorigin(n)       SP_plane(n)->origin
 #define SP_planevisheight(n)    SP_plane(n)->visHeight
 
 #define SP_ceilsurface          SP_planesurface(PLN_CEILING)
@@ -241,7 +238,7 @@ typedef struct plane_s {
 #define SP_ceilrgb              SP_planergb(PLN_CEILING)
 #define SP_ceiltarget           SP_planetarget(PLN_CEILING)
 #define SP_ceilspeed            SP_planespeed(PLN_CEILING)
-#define SP_ceilsoundorg         SP_planesoundorg(PLN_CEILING)
+#define SP_ceilorigin           SP_planeorigin(PLN_CEILING)
 #define SP_ceilvisheight        SP_planevisheight(PLN_CEILING)
 
 #define SP_floorsurface         SP_planesurface(PLN_FLOOR)
@@ -254,7 +251,7 @@ typedef struct plane_s {
 #define SP_floorrgb             SP_planergb(PLN_FLOOR)
 #define SP_floortarget          SP_planetarget(PLN_FLOOR)
 #define SP_floorspeed           SP_planespeed(PLN_FLOOR)
-#define SP_floorsoundorg        SP_planesoundorg(PLN_FLOOR)
+#define SP_floororigin          SP_planeorigin(PLN_FLOOR)
 #define SP_floorvisheight       SP_planevisheight(PLN_FLOOR)
 
 #define S_skyfix(n)             skyFix[(n)]
@@ -266,25 +263,18 @@ typedef struct plane_s {
 #define SIF_FRAME_CLEAR     0x1     // Flags to clear before each frame.
 #define SIF_LIGHT_CHANGED   0x2
 
-// Sector flags.
-#define SECF_UNCLOSED       0x1     // An unclosed sector (some sort of fancy hack).
-
 typedef struct msector_s {
     // Sector index. Always valid after loading & pruning.
-    int         index;
-
-    // Suppress superfluous mini warnings.
-    int         warnedFacing;
-    int			refCount;
+    int index;
+    int	refCount;
 } msector_t;
 
 typedef struct sector_s {
     runtime_mapdata_header_t header;
     int                 frameFlags;
     int                 validCount;    // if == validCount, already checked.
-    int                 flags;
-    float               bBox[4];       // Bounding box for the sector.
-    float               approxArea;    // Rough approximation of sector area.
+    AABoxd              aaBox;         // Bounding box for the sector.
+    coord_t             roughArea;    // Rough approximation of sector area.
     float               lightLevel;
     float               oldLightLevel;
     float               rgb[3];
@@ -292,11 +282,11 @@ typedef struct sector_s {
     struct mobj_s*      mobjList;      // List of mobjs in the sector.
     unsigned int        lineDefCount;
     struct linedef_s**  lineDefs;      // [lineDefCount+1] size.
-    unsigned int        ssectorCount;
-    struct subsector_s** ssectors;     // [ssectorCount+1] size.
-    unsigned int        numReverbSSecAttributors;
-    struct subsector_s** reverbSSecs;  // [numReverbSSecAttributors] size.
-    ddmobj_base_t       soundOrg;
+    unsigned int        bspLeafCount;
+    struct bspleaf_s**  bspLeafs;     // [bspLeafCount+1] size.
+    unsigned int        numReverbBspLeafAttributors;
+    struct bspleaf_s**  reverbBspLeafs;  // [numReverbBspLeafAttributors] size.
+    ddmobj_base_t       base;
     unsigned int        planeCount;
     struct plane_s**    planes;        // [planeCount+1] size.
     unsigned int        blockCount;    // Number of gridblocks in the sector.
@@ -304,14 +294,7 @@ typedef struct sector_s {
     unsigned short*     blocks;        // Light grid block indices.
     float               reverb[NUM_REVERB_DATA];
     msector_t           buildData;
-} sector_t;
-
-// Parts of a wall segment.
-typedef enum segsection_e {
-    SEG_MIDDLE,
-    SEG_TOP,
-    SEG_BOTTOM
-} segsection_t;
+} Sector;
 
 // Helper macros for accessing sidedef top/middle/bottom section data elements.
 #define SW_surface(n)           sections[(n)]
@@ -326,57 +309,57 @@ typedef enum segsection_e {
 #define SW_surfacergba(n)       SW_surface(n).rgba
 #define SW_surfaceblendmode(n)  SW_surface(n).blendMode
 
-#define SW_middlesurface        SW_surface(SEG_MIDDLE)
-#define SW_middleflags          SW_surfaceflags(SEG_MIDDLE)
-#define SW_middleinflags        SW_surfaceinflags(SEG_MIDDLE)
-#define SW_middlematerial       SW_surfacematerial(SEG_MIDDLE)
-#define SW_middletangent        SW_surfacetangent(SEG_MIDDLE)
-#define SW_middlebitangent      SW_surfacebitangent(SEG_MIDDLE)
-#define SW_middlenormal         SW_surfacenormal(SEG_MIDDLE)
-#define SW_middletexmove        SW_surfacetexmove(SEG_MIDDLE)
-#define SW_middleoffset         SW_surfaceoffset(SEG_MIDDLE)
-#define SW_middlevisoffset      SW_surfacevisoffset(SEG_MIDDLE)
-#define SW_middlergba           SW_surfacergba(SEG_MIDDLE)
-#define SW_middleblendmode      SW_surfaceblendmode(SEG_MIDDLE)
+#define SW_middlesurface        SW_surface(SS_MIDDLE)
+#define SW_middleflags          SW_surfaceflags(SS_MIDDLE)
+#define SW_middleinflags        SW_surfaceinflags(SS_MIDDLE)
+#define SW_middlematerial       SW_surfacematerial(SS_MIDDLE)
+#define SW_middletangent        SW_surfacetangent(SS_MIDDLE)
+#define SW_middlebitangent      SW_surfacebitangent(SS_MIDDLE)
+#define SW_middlenormal         SW_surfacenormal(SS_MIDDLE)
+#define SW_middletexmove        SW_surfacetexmove(SS_MIDDLE)
+#define SW_middleoffset         SW_surfaceoffset(SS_MIDDLE)
+#define SW_middlevisoffset      SW_surfacevisoffset(SS_MIDDLE)
+#define SW_middlergba           SW_surfacergba(SS_MIDDLE)
+#define SW_middleblendmode      SW_surfaceblendmode(SS_MIDDLE)
 
-#define SW_topsurface           SW_surface(SEG_TOP)
-#define SW_topflags             SW_surfaceflags(SEG_TOP)
-#define SW_topinflags           SW_surfaceinflags(SEG_TOP)
-#define SW_topmaterial          SW_surfacematerial(SEG_TOP)
-#define SW_toptangent           SW_surfacetangent(SEG_TOP)
-#define SW_topbitangent         SW_surfacebitangent(SEG_TOP)
-#define SW_topnormal            SW_surfacenormal(SEG_TOP)
-#define SW_toptexmove           SW_surfacetexmove(SEG_TOP)
-#define SW_topoffset            SW_surfaceoffset(SEG_TOP)
-#define SW_topvisoffset         SW_surfacevisoffset(SEG_TOP)
-#define SW_toprgba              SW_surfacergba(SEG_TOP)
+#define SW_topsurface           SW_surface(SS_TOP)
+#define SW_topflags             SW_surfaceflags(SS_TOP)
+#define SW_topinflags           SW_surfaceinflags(SS_TOP)
+#define SW_topmaterial          SW_surfacematerial(SS_TOP)
+#define SW_toptangent           SW_surfacetangent(SS_TOP)
+#define SW_topbitangent         SW_surfacebitangent(SS_TOP)
+#define SW_topnormal            SW_surfacenormal(SS_TOP)
+#define SW_toptexmove           SW_surfacetexmove(SS_TOP)
+#define SW_topoffset            SW_surfaceoffset(SS_TOP)
+#define SW_topvisoffset         SW_surfacevisoffset(SS_TOP)
+#define SW_toprgba              SW_surfacergba(SS_TOP)
 
-#define SW_bottomsurface        SW_surface(SEG_BOTTOM)
-#define SW_bottomflags          SW_surfaceflags(SEG_BOTTOM)
-#define SW_bottominflags        SW_surfaceinflags(SEG_BOTTOM)
-#define SW_bottommaterial       SW_surfacematerial(SEG_BOTTOM)
-#define SW_bottomtangent        SW_surfacetangent(SEG_BOTTOM)
-#define SW_bottombitangent      SW_surfacebitangent(SEG_BOTTOM)
-#define SW_bottomnormal         SW_surfacenormal(SEG_BOTTOM)
-#define SW_bottomtexmove        SW_surfacetexmove(SEG_BOTTOM)
-#define SW_bottomoffset         SW_surfaceoffset(SEG_BOTTOM)
-#define SW_bottomvisoffset      SW_surfacevisoffset(SEG_BOTTOM)
-#define SW_bottomrgba           SW_surfacergba(SEG_BOTTOM)
+#define SW_bottomsurface        SW_surface(SS_BOTTOM)
+#define SW_bottomflags          SW_surfaceflags(SS_BOTTOM)
+#define SW_bottominflags        SW_surfaceinflags(SS_BOTTOM)
+#define SW_bottommaterial       SW_surfacematerial(SS_BOTTOM)
+#define SW_bottomtangent        SW_surfacetangent(SS_BOTTOM)
+#define SW_bottombitangent      SW_surfacebitangent(SS_BOTTOM)
+#define SW_bottomnormal         SW_surfacenormal(SS_BOTTOM)
+#define SW_bottomtexmove        SW_surfacetexmove(SS_BOTTOM)
+#define SW_bottomoffset         SW_surfaceoffset(SS_BOTTOM)
+#define SW_bottomvisoffset      SW_surfacevisoffset(SS_BOTTOM)
+#define SW_bottomrgba           SW_surfacergba(SS_BOTTOM)
 
 #define FRONT                   0
 #define BACK                    1
 
 typedef struct msidedef_s {
     // Sidedef index. Always valid after loading & pruning.
-    int         index;
-    int			refCount;
+    int index;
+    int refCount;
 } msidedef_t;
 
 typedef struct sidedef_s {
     runtime_mapdata_header_t header;
-    surface_t           sections[3];
-    unsigned int        segCount;
-    struct seg_s**      segs;          // [segcount] size, segs arranged left>right
+    Surface             sections[3];
+    struct hedge_s*     hedgeLeft;  /// Left-most HEdge on this SideDef's side of the owning LineDef
+    struct hedge_s*     hedgeRight; /// Right-most HEdge on this SideDef's side of the owning LineDef
     struct linedef_s*   line;
     struct sector_s*    sector;
     short               flags;
@@ -386,17 +369,17 @@ typedef struct sidedef_s {
     shadowcorner_t      bottomCorners[2];
     shadowcorner_t      sideCorners[2];
     edgespan_t          spans[2];      // [left, right]
-} sidedef_t;
+} SideDef;
 
 // Helper macros for accessing linedef data elements.
 #define L_v(n)                  v[(n)? 1:0]
-#define L_vpos(n)               v[(n)? 1:0]->V_pos
+#define L_vorigin(n)            v[(n)? 1:0]->origin
 
 #define L_v1                    L_v(0)
-#define L_v1pos                 L_v(0)->V_pos
+#define L_v1origin              L_v(0)->origin
 
 #define L_v2                    L_v(1)
-#define L_v2pos                 L_v(1)->V_pos
+#define L_v2origin              L_v(1)->origin
 
 #define L_vo(n)                 vo[(n)? 1:0]
 #define L_vo1                   L_vo(0)
@@ -410,31 +393,22 @@ typedef struct sidedef_s {
 #define L_backsector            L_sector(BACK)
 
 // Is this line self-referencing (front sec == back sec)?
-#define LINE_SELFREF(l)			((l)->L_frontside && (l)->L_backside && \
-								 (l)->L_frontsector == (l)->L_backsector)
+#define LINE_SELFREF(l)         ((l)->L_frontside && (l)->L_backside && \
+                                 (l)->L_frontsector == (l)->L_backsector)
 
 // Internal flags:
-#define LF_POLYOBJ				0x1 // Line is part of a polyobject.
-
-#define MLF_TWOSIDED            0x1 // Line is marked two-sided.
-#define MLF_ZEROLENGTH          0x2 // Zero length (line should be totally ignored).
-#define MLF_SELFREF             0x4 // Sector is the same on both sides.
-#define MLF_POLYOBJ             0x8 // Line is part of a polyobj.
+#define LF_POLYOBJ              0x1 // Line is part of a polyobject.
 
 typedef struct mlinedef_s {
     // Linedef index. Always valid after loading & pruning of zero
     // length lines has occurred.
-    int         index;
-    int         mlFlags; // MLF_* flags.
+    int index;
 
     // One-sided linedef used for a special effect (windows).
     // The value refers to the opposite sector on the back side.
-    struct sector_s *windowEffect;
-
-    // Normally NULL, except when this linedef directly overlaps an earlier
-    // one (a rarely-used trick to create higher mid-masked textures).
-    // No segs should be created for these overlapping linedefs.
-    struct linedef_s *overlap;
+    /// @todo Refactor so this information is represented using the
+    ///       BSP data objects.
+    struct sector_s* windowEffect;
 } mlinedef_t;
 
 typedef struct linedef_s {
@@ -447,14 +421,13 @@ typedef struct linedef_s {
     slopetype_t         slopeType;
     int                 validCount;
     binangle_t          angle;         // Calculated from front side's normal
-    float               dX;
-    float               dY;
-    float               length;        // Accurate length
-    AABoxf              aaBox;
+    coord_t             direction[2];
+    coord_t             length;        // Accurate length
+    AABoxd              aaBox;
     boolean             mapped[DDMAXPLAYERS]; // Whether the line has been mapped by each player yet.
     mlinedef_t          buildData;
     unsigned short      shadowVisFrame[2]; // Framecount of last time shadows were drawn for this line, for each side [right, left].
-} linedef_t;
+} LineDef;
 
 #define RIGHT                   0
 #define LEFT                    1
@@ -463,15 +436,16 @@ typedef struct linedef_s {
  * An infinite line of the form point + direction vectors.
  */
 typedef struct partition_s {
-	float				x, y;
-	float				dX, dY;
+    coord_t origin[2];
+    coord_t direction[2];
 } partition_t;
 
-typedef struct node_s {
+typedef struct bspnode_s {
     runtime_mapdata_header_t header;
     partition_t         partition;
-    float               bBox[2][4];    // Bounding box for each child.
-    unsigned int        children[2];   // If NF_SUBSECTOR it's a subsector.
-} node_t;
+    AABoxd              aaBox[2];      // Bounding box for each child.
+    runtime_mapdata_header_t* children[2];
+    uint                index; /// Unique. Set when saving the BSP.
+} BspNode;
 
 #endif

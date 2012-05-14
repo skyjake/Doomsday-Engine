@@ -9,20 +9,23 @@ SkipIf -nodefaultfx;
 
 Values {
   Patch Replacement {
-    M_NGAME  = "{tracking=-1}New{scalex=.5} {scalex=1}game";
-    M_OPTION = "{tracking=-1}Options";
-    M_LOADG  = "{tracking=-1}Load{scalex=.5} {scalex=1}game";
-    M_SAVEG  = "{tracking=-1}Save{scalex=.5} {scalex=1}game";
-    M_QUITG  = "{tracking=-1}Leave{scalex=.5} {scalex=1}game";
+    M_NGAME  = "{tracking=-1;x=-3}New game";
+    M_OPTION = "{tracking=-1;x=-3}Options";
+    M_LOADG  = "{tracking=-1;x=-3}Load game";
+    M_SAVEG  = "{tracking=-1;x=-3}Save game";
+    M_RDTHIS = "{tracking=-1;x=-3}Help'n'Info";
+    M_QUITG  = "{tracking=-1;x=-3}Leave game";
 
-    M_NEWG   = "{tracking=-1}New{scalex=.5} {scalex=1}Game";
-    M_OPTTTL = "{tracking=-1}Options";
+    M_NEWG   = "{tracking=-1;x=-3;y=-3}New Game";
+    M_OPTTTL = "{tracking=-1;x=-3;y=-3}Options";
+    M_SGTTL  = "{tracking=-1;x=-3;y=-3}Save a game";
+    M_LGTTL  = "{tracking=-1;x=-3;y=-3}Load a game";
 
-    M_SKILL  = "{tracking=-1}Choose{scalex=.5} {scalex=1}difficulty{scalex=.5} {scalex=1}level:";
-    M_JKILL  = "{tracking=-1}Please{scalex=.5} {scalex=1}don't{scalex=.5} {scalex=1}shoot!";
-    M_ROUGH  = "{tracking=-1}Arrrgh,{scalex=.5} {scalex=1}I{scalex=.5} {scalex=1}need{scalex=.5} {scalex=1}health!";
-    M_HURT   = "{tracking=-1}Let's{scalex=.5} {scalex=1}rip{scalex=.5} {scalex=1}them{scalex=.5} {scalex=1}apart!";
-    M_ULTRA  = "{tracking=-1}I{scalex=.5} {scalex=1}am{scalex=.5} {scalex=1}immortal";
-    M_NMARE  = "{tracking=-1}Insanity!";
+    M_SKILL  = "{tracking=-1;x=-45}Choose difficulty level:";
+    M_JKILL  = "{tracking=-1;x=-3;y=-3}Please don't shoot!";
+    M_ROUGH  = "{tracking=-1;x=-3;y=-3}Arrrgh, I need health!";
+    M_HURT   = "{tracking=-1;x=-3;y=-3}Let's rip them apart!";
+    M_ULTRA  = "{tracking=-1;x=-3;y=-3}I am immortal";
+    M_NMARE  = "{tracking=-1;x=-3;y=-3}Insanity!";
   };
 }

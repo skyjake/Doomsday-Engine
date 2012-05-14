@@ -29,9 +29,10 @@
 #include "sys_console.h"
 #include "sys_input.h"
 #include "sys_network.h"
-#include "sys_sock.h"
-#include "sys_master.h"
-#include "sys_timer.h"
+#include "masterserver.h"
+//#include "sys_sock.h" // obsolete
+#include "timer.h"
+#include "concurrency.h"
 #include "sys_opengl.h"
 
 // Use SDL for window management under *nix
@@ -40,6 +41,6 @@
 #  include "../../unix/include/sys_path.h"
 #endif
 
-#include "sys_window.h"
+#include "window.h"
 
 #endif /* LIBDENG_SYSTEM_H */

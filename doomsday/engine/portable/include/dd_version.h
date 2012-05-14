@@ -49,8 +49,8 @@
  * Revision number increases with each small (maintenance) release.
  */
 
-#define DOOMSDAY_VERSION_BASE   "1.9.7"
-#define DOOMSDAY_VERSION_NUMBER 1,9,7,1 // For WIN32 version info.
+#define DOOMSDAY_VERSION_BASE   "1.9.8"
+#define DOOMSDAY_VERSION_NUMBER 1,9,8,0 // For WIN32 version info.
 //#define DOOMSDAY_RELEASE_NAME   "Example"
 
 /**
@@ -58,8 +58,8 @@
  * Possible values are "Unstable", "Candidate" and "Stable".
  */
 //#define DOOMSDAY_RELEASE_TYPE   "Unstable"
-//#define DOOMSDAY_RELEASE_TYPE   "Candidate"
-#define DOOMSDAY_RELEASE_TYPE   "Stable"
+#define DOOMSDAY_RELEASE_TYPE   "Candidate"
+//#define DOOMSDAY_RELEASE_TYPE   "Stable"
 
 /**
  * Version constants.  The Game module can use DOOMSDAY_VERSION to
@@ -68,18 +68,23 @@
  */
 #define DOOMSDAY_VERSION        10907 // Don't touch; see above.
 
-#if defined(DOOMSDAY_BUILD_TEXT)
+#if !defined(DENG_STABLE) && defined(DOOMSDAY_BUILD_TEXT)
 /** The build number is included only for non-Stable builds. */
+#  define DOOMSDAY_VERSION_TEXT             DOOMSDAY_VERSION_BASE " [#" DOOMSDAY_BUILD_TEXT "]"
 #  if defined(WIN32) && defined(UNICODE)
-#    define DOOMSDAY_VERSION_TEXT_WSTR  TEXT(DOOMSDAY_VERSION_BASE) TEXT(" [#") TEXT(DOOMSDAY_BUILD_TEXT) TEXT("]")
+#    define DOOMSDAY_VERSION_TEXT_WSTR      TEXT(DOOMSDAY_VERSION_BASE) TEXT(" [#") TEXT(DOOMSDAY_BUILD_TEXT) TEXT("]")
 #  endif
-#  define DOOMSDAY_VERSION_TEXT DOOMSDAY_VERSION_BASE " [#" DOOMSDAY_BUILD_TEXT "]"
+
 #elif defined(DOOMSDAY_RELEASE_NAME)
-#  define DOOMSDAY_VERSION_TEXT (DOOMSDAY_VERSION_BASE "-" DOOMSDAY_RELEASE_NAME)
-#else
-#  define DOOMSDAY_VERSION_TEXT         DOOMSDAY_VERSION_BASE
+#  define DOOMSDAY_VERSION_TEXT             (DOOMSDAY_VERSION_BASE "-" DOOMSDAY_RELEASE_NAME)
 #  if defined(WIN32) && defined(UNICODE)
-#    define DOOMSDAY_VERSION_TEXT_WSTR    TEXT(DOOMSDAY_VERSION_BASE)
+#    define DOOMSDAY_VERSION_TEXT_WSTR      TEXT(DOOMSDAY_VERSION_BASE) TEXT("-") TEXT(DOOMSDAY_RELEASE_NAME)
+#  endif
+
+#else
+#  define DOOMSDAY_VERSION_TEXT             DOOMSDAY_VERSION_BASE
+#  if defined(WIN32) && defined(UNICODE)
+#    define DOOMSDAY_VERSION_TEXT_WSTR      TEXT(DOOMSDAY_VERSION_BASE)
 #  endif
 #endif
 

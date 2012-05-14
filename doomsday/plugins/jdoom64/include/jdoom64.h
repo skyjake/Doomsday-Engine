@@ -50,7 +50,6 @@
 #include "../../jdoom64/include/p_maputl.h"
 #include "../../jdoom64/include/p_pspr.h"
 #include "../../jdoom64/include/p_setup.h"
-#include "../../jdoom64/include/p_sound.h"
 #include "../../jdoom64/include/p_spec.h"
 #include "../../jdoom64/include/p_telept.h"
 #include "../../jdoom64/include/r_defs.h"

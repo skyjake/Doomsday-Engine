@@ -333,6 +333,7 @@ typedef enum {
  */
 ///@{
 #define MPF_LAYOUT_FIXED            0x1 ///< Page uses a fixed layout.
+#define MPF_NEVER_SCROLL            0x2 ///< Page scrolling is disabled.
 ///@}
 
 typedef struct mn_page_s {

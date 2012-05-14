@@ -107,6 +107,11 @@ int             dd_vsnprintf(char* str, size_t size, const char* format,
 #   define PRINTF_F(f,v)
 #endif
 
+/**
+ * Macro for hiding the warning about an unused parameter.
+ */
+#define DENG_UNUSED(x)      (void)x
+
 int16_t         ShortSwap(int16_t);
 int32_t         LongSwap(int32_t);
 float           FloatSwap(float);
@@ -158,6 +163,7 @@ typedef enum {
     DDVT_FIXED,
     DDVT_ANGLE,
     DDVT_FLOAT,
+    DDVT_DOUBLE,
     DDVT_LONG,
     DDVT_ULONG,
     DDVT_PTR,
@@ -257,7 +263,7 @@ enum {
 
     // Non-integer/special values for Set/Get
     DD_TRANSLATIONTABLES_ADDRESS,
-    DD_TRACE_ADDRESS, ///< divline 'trace' used by PathTraverse.
+    DD_TRACE_ADDRESS, ///< obsolete divline 'trace' used by PathTraverse.
     DD_SPRITE_REPLACEMENT, ///< Sprite <-> model replacement.
     DD_ACTION_LINK, ///< State action routine addresses.
     DD_MAP_NAME,
@@ -276,18 +282,17 @@ enum {
     DD_LINE_COUNT,
     DD_SIDE_COUNT,
     DD_VERTEX_COUNT,
-    DD_SEG_COUNT,
-    DD_SUBSECTOR_COUNT,
-    DD_NODE_COUNT,
+    DD_HEDGE_COUNT,
+    DD_BSPLEAF_COUNT,
+    DD_BSPNODE_COUNT,
     DD_POLYOBJ_COUNT,
-    DD_MATERIAL_COUNT,
     DD_XGFUNC_LINK, ///< XG line classes
     DD_SHARED_FIXED_TRIGGER_OBSOLETE, ///< obsolete
     DD_GAMETIC,
-    DD_OPENRANGE,
-    DD_OPENTOP,
-    DD_OPENBOTTOM,
-    DD_LOWFLOOR,
+    DD_OPENRANGE, ///< obsolete
+    DD_OPENTOP, ///< obsolete
+    DD_OPENBOTTOM, ///< obsolete
+    DD_LOWFLOOR, ///< obsolete
     DD_CPLAYER_THRUST_MUL_OBSOLETE, ///< obsolete
     DD_GRAVITY,
     DD_PSPRITE_OFFSET_X, ///< 10x
@@ -297,8 +302,9 @@ enum {
     DD_TORCH_GREEN,
     DD_TORCH_BLUE,
     DD_TORCH_ADDITIVE,
-    DD_TM_FLOOR_Z,  ///< output from P_CheckPosition
-    DD_TM_CEILING_Z ///< output from P_CheckPosition
+    DD_TM_FLOOR_Z,      ///< output from P_CheckPosition
+    DD_TM_CEILING_Z,    ///< output from P_CheckPosition
+    DD_SHIFT_DOWN
 };
 
 /// Bounding box coordinates.
@@ -419,7 +425,7 @@ typedef struct gameinfo_s {
 #define Q_FIX2FLT(x)    ( (float)((x)>>FRACBITS) )
 #define FLT2FIX(x)      ( (fixed_t) ((x)*FRACUNIT) )
 
-#if !defined( NO_FIXED_ASM ) && !defined( GNU_X86_FIXED_ASM )
+#if !defined( DENG_NO_FIXED_ASM ) && !defined( GNU_X86_FIXED_ASM )
 
     __inline fixed_t FixedMul(fixed_t a, fixed_t b) {
         __asm {
@@ -532,6 +538,8 @@ enum {
     DDKEY_PRINT,
     DDKEY_ENTER, ///< on the numeric keypad.
     DDKEY_DIVIDE, ///< '/' on numeric keypad.
+    DDKEY_MULTIPLY, ///< '*' on the numeric keypad.
+    DDKEY_SECTION, ///< §
     DD_HIGHEST_KEYCODE
 };
 ///@}
@@ -552,6 +560,7 @@ typedef enum {
     EV_JOY_BUTTON,
     EV_POV,
     EV_SYMBOLIC,    ///< Symbol text pointed to by data1+data2.
+    EV_FOCUS,       ///< Change in game window focus (data1=gained, data2=windowID).
     NUM_EVENT_TYPES
 } evtype_t;
 
@@ -579,16 +588,6 @@ typedef struct event_s {
 #define DD_MWHEEL_UP        3
 #define DD_MWHEEL_DOWN      4
 #define DD_MICKEY_ACCURACY  1000
-
-/*
-/// Controller classes. @ingroup input
-typedef enum {
-    CC_AXIS,        ///< Axis controller, e.g., a joystick or mouse axis.
-    CC_TOGGLE,      ///< Toggle controller, e.g., a keyboard key.
-    CC_IMPULSE,
-    NUM_CONTROL_CLASSES
-} ctlclass_t;
-*/
 
 //------------------------------------------------------------------------
 //
@@ -653,11 +652,11 @@ enum {
     DMU_NONE = 0,
 
     DMU_VERTEX = 1,
-    DMU_SEG,
+    DMU_HEDGE,
     DMU_LINEDEF,
     DMU_SIDEDEF,
-    DMU_NODE,
-    DMU_SUBSECTOR,
+    DMU_BSPNODE,
+    DMU_BSPLEAF,
     DMU_SECTOR,
     DMU_PLANE,
     DMU_SURFACE,
@@ -700,7 +699,7 @@ enum {
     DMU_DY,
     DMU_DXY,
     DMU_LENGTH,
-    DMU_SLOPE_TYPE,
+    DMU_SLOPETYPE,
     DMU_ANGLE,
     DMU_OFFSET,
 
@@ -718,13 +717,15 @@ enum {
     DMU_BLENDMODE,
     DMU_LIGHT_LEVEL,
     DMT_MOBJS, ///< pointer to start of sector mobjList
-    DMU_BOUNDING_BOX, ///< float[4]
-    DMU_SOUND_ORIGIN,
+    DMU_BOUNDING_BOX, ///< AABoxd
+    DMU_BASE,
     DMU_WIDTH,
     DMU_HEIGHT,
     DMU_TARGET_HEIGHT,
     DMU_SPEED,
-    DMU_SEG_COUNT
+    DMU_HEDGE_COUNT,
+    DMU_FLOOR_PLANE,
+    DMU_CEILING_PLANE
 };
 
 /**
@@ -778,28 +779,16 @@ enum { /* Do NOT change the numerical values of the constants. */
 /// @ingroup mobj
 #define DD_BASE_DDMOBJ_ELEMENTS() \
     thinker_t       thinker;            /* thinker node */ \
-    float           pos[3];             /* position [x,y,z] */
+    coord_t         origin[3];          /* origin [x,y,z] */
 
 /**
  * All map think-able objects must use this as a base. Also used for sound
- * origin purposes for all of: mobj_t, polyobj_t, sector_t/plane_t
+ * origin purposes for all of: mobj_t, Polyobj, Sector/Plane
  * @ingroup mobj
  */
 typedef struct ddmobj_base_s {
     DD_BASE_DDMOBJ_ELEMENTS()
 } ddmobj_base_t;
-
-/// Fixed-point vertex position. Utility struct for the game, not used by
-/// the engine. @ingroup map
-typedef struct ddvertex_s {
-    fixed_t         pos[2];
-} ddvertex_t;
-
-/// Floating-point vertex position. Utility struct for the game, not used
-/// by the engine. @ingroup map
-typedef struct ddvertexf_s {
-    float           pos[2];
-} ddvertexf_t;
 
 /// R_SetupMap() modes. @ingroup map
 enum {
@@ -818,12 +807,26 @@ enum {
     NUM_REVERB_DATA
 };
 
+/// SideDef section indices. @ingroup map
+typedef enum sidedefsection_e {
+    SS_MIDDLE,
+    SS_BOTTOM,
+    SS_TOP
+} SideDefSection;
+
+/// Helper macro for converting SideDefSection indices to their associated DMU flag. @ingroup map
+#define DMU_FLAG_FOR_SIDEDEFSECTION(s) (\
+    (s) == SS_MIDDLE? DMU_MIDDLE_OF_SIDEDEF : \
+    (s) == SS_BOTTOM? DMU_BOTTOM_OF_SIDEDEF : DMU_TOP_OF_SIDEDEF)
+
 typedef struct {
-    fixed_t         pos[2], dX, dY;
+    fixed_t origin[2];
+    fixed_t direction[2];
 } divline_t;
 
 typedef struct {
-    float           pos[2], dX, dY;
+    float origin[2];
+    float direction[2];
 } fdivline_t;
 
 /**
@@ -834,13 +837,6 @@ typedef struct {
 #define PT_ADDLINES            1 ///< Intercept with LineDefs.
 #define PT_ADDMOBJS            2 ///< Intercept with Mobjs.
 ///@}
-
-typedef enum {
-    ST_HORIZONTAL,
-    ST_VERTICAL,
-    ST_POSITIVE,
-    ST_NEGATIVE
-} slopetype_t;
 
 /**
  * @defgroup lineSightFlags Line Sight Flags
@@ -874,7 +870,20 @@ typedef struct intercept_s {
 
 typedef int (*traverser_t) (const intercept_t* intercept, void* paramaters);
 
-#define NO_INDEX            0xffffffff
+/**
+ * A simple POD data structure for representing line trace openings.
+ */
+typedef struct {
+    /// Top and bottom z of the opening.
+    float top, bottom;
+
+    /// Distance from top to bottom.
+    float range;
+
+    /// Z height of the lowest Plane at the opening on the X|Y axis.
+    /// @todo Does not belong here?
+    float lowFloor;
+} TraceOpening;
 
 //------------------------------------------------------------------------
 //
@@ -986,8 +995,6 @@ typedef struct aabox_s {
 /**
  * Axis-aligned bounding box with floating-point precision.
  * Handy POD structure for manipulation of bounding boxes. @ingroup map
- *
- * @todo Switch precision to double?
  */
 typedef struct aaboxf_s {
     union {
@@ -1010,6 +1017,31 @@ typedef struct aaboxf_s {
     };
 } AABoxf;
 
+/**
+ * Axis-aligned bounding box with double floating-point precision.
+ * Handy POD structure for manipulation of bounding boxes. @ingroup map
+ */
+typedef struct aaboxd_s {
+    union {
+        struct {
+            double vec4[4];
+        };
+        struct {
+            double arvec2[2][2];
+        };
+        struct {
+            double min[2];
+            double max[2];
+        };
+        struct {
+            double minX;
+            double minY;
+            double maxX;
+            double maxY;
+        };
+    };
+} AABoxd;
+
 /// Base mobj_t elements. Games MUST use this as the basis for mobj_t. @ingroup mobj
 #define DD_BASE_MOBJ_ELEMENTS() \
     DD_BASE_DDMOBJ_ELEMENTS() \
@@ -1017,25 +1049,25 @@ typedef struct aaboxf_s {
     nodeindex_t     lineRoot; /* lines to which this is linked */ \
     struct mobj_s*  sNext, **sPrev; /* links in sector (if needed) */ \
 \
-    struct subsector_s* subsector; /* subsector in which this resides */ \
-    float           mom[3]; \
+    struct bspleaf_s* bspLeaf; /* bspLeaf in which this resides */ \
+    coord_t         mom[3]; \
     angle_t         angle; \
     spritenum_t     sprite; /* used to find patch_t and flip value */ \
     int             frame; \
-    float           radius; \
-    float           height; \
+    coord_t         radius; \
+    coord_t         height; \
     int             ddFlags; /* Doomsday mobj flags (DDMF_*) */ \
-    float           floorClip; /* value to use for floor clipping */ \
+    coord_t         floorClip; /* value to use for floor clipping */ \
     int             valid; /* if == valid, already checked */ \
     int             type; /* mobj type */ \
     struct state_s* state; \
     int             tics; /* state tic counter */ \
-    float           floorZ; /* highest contacted floor */ \
-    float           ceilingZ; /* lowest contacted ceiling */ \
+    coord_t         floorZ; /* highest contacted floor */ \
+    coord_t         ceilingZ; /* lowest contacted ceiling */ \
     struct mobj_s*  onMobj; /* the mobj this one is on top of. */ \
     boolean         wallHit; /* the mobj is hitting a wall. */ \
     struct ddplayer_s* dPlayer; /* NULL if not a player mobj. */ \
-    float           srvo[3]; /* short-range visual offset (xyz) */ \
+    coord_t         srvo[3]; /* short-range visual offset (xyz) */ \
     short           visAngle; /* visual angle ("angle-servo") */ \
     int             selector; /* multipurpose info */ \
     int             validCount; /* used in iterating */ \
@@ -1053,30 +1085,32 @@ typedef struct aaboxf_s {
     int             health;\
     mobjinfo_t     *info; /* &mobjinfo[mobj->type] */
 
-/// Base polyobj_t elements. Games MUST use this as the basis for polyobj_t. @ingroup map
+typedef struct povertex_s {
+    coord_t         origin[2];
+} povertex_t;
+
+/// Base Polyobj elements. Games MUST use this as the basis for Polyobj. @ingroup map
 #define DD_BASE_POLYOBJ_ELEMENTS() \
     DD_BASE_DDMOBJ_ELEMENTS() \
 \
-    struct subsector_s* subsector; /* subsector in which this resides */ \
+    struct bspleaf_s* bspLeaf; /* bspLeaf in which this resides */ \
     unsigned int    idx; /* Idx of polyobject. */ \
     int             tag; /* Reference tag. */ \
     int             validCount; \
-    AABoxf           aaBox; \
-    float           dest[2]; /* Destination XY. */ \
+    AABoxd          aaBox; \
+    coord_t         dest[2]; /* Destination XY. */ \
     angle_t         angle; \
     angle_t         destAngle; /* Destination angle. */ \
     angle_t         angleSpeed; /* Rotation speed. */ \
-    unsigned int    numSegs; \
-    struct seg_s**  segs; \
-    struct fvertex_s* originalPts; /* Used as the base for the rotations. */ \
-    struct fvertex_s* prevPts; /* Use to restore the old point values. */ \
-    float           speed; /* Movement speed. */ \
+    struct linedef_s** lines; \
+    unsigned int    lineCount; \
+    struct povertex_s* originalPts; /* Used as the base for the rotations. */ \
+    struct povertex_s* prevPts; /* Use to restore the old point values. */ \
+    double          speed; /* Movement speed. */ \
     boolean         crush; /* Should the polyobj attempt to crush mobjs? */ \
     int             seqType; \
     struct { \
         int         index; \
-        unsigned int lineCount; \
-        struct linedef_s** lineDefs; \
     } buildData;
 
 //------------------------------------------------------------------------
@@ -1156,9 +1190,27 @@ typedef struct {
 //
 //------------------------------------------------------------------------
 
+/**
+ * @defgroup soundFlags  Sound Flags
+ * @ingroup apiFlags
+ * Flags specifying the logical behavior of a sound.
+ */
+///@{
 #define DDSF_FLAG_MASK      0xff000000
 #define DDSF_NO_ATTENUATION 0x80000000
 #define DDSF_REPEAT         0x40000000
+///@}
+
+/**
+ * @defgroup soundStopFlags  Sound Stop Flags
+ * @ingroup apiFlags
+ * Flags for use with S_StopSound()
+ */
+///@{
+#define SSF_SECTOR                  0x1 ///< Stop sounds from the sector's emitter.
+#define SSF_SECTOR_LINKED_SURFACES  0x2 ///< Stop sounds from surface emitters in the same sector.
+#define SSF_ALL_SECTOR              (SSF_SECTOR | SSF_SECTOR_LINKED_SURFACES)
+///@}
 
 typedef struct {
     float           volume; // 0..1
@@ -1227,7 +1279,7 @@ typedef struct {
 #define MN_SPRITES_NAME         "Sprites"
 /**@}*/
 
-typedef enum {
+typedef enum materialnamespaceid_e {
     MN_ANY = -1,
     MATERIALNAMESPACE_FIRST = 1000,
     MN_SYSTEM = MATERIALNAMESPACE_FIRST,
@@ -1267,7 +1319,7 @@ typedef enum {
 ///@}
 
 /// Texture namespace identifiers. @ingroup namespace
-typedef enum {
+typedef enum texturenamespaceid_e {
     TN_ANY = -1,
     TEXTURENAMESPACE_FIRST = 2000,
     TN_SYSTEM = TEXTURENAMESPACE_FIRST,
@@ -1305,7 +1357,7 @@ typedef enum {
 ///@}
 
 /// Font namespace identifier. @ingroup namespace
-typedef enum {
+typedef enum fontnamespaceid_e {
     FN_ANY = -1,
     FONTNAMESPACE_FIRST = 3000,
     FN_SYSTEM = FONTNAMESPACE_FIRST,
@@ -1727,7 +1779,7 @@ typedef enum controltype_e {
  */
 #define DDPF_FIXANGLES          0x0001 ///< Server: send angle/pitch to client.
 //#define DDPF_FILTER             0x0002 // Server: send filter to client.
-#define DDPF_FIXPOS             0x0004 ///< Server: send coords to client.
+#define DDPF_FIXORIGIN          0x0004 ///< Server: send coords to client.
 #define DDPF_DEAD               0x0008 ///< Cl & Sv: player is dead.
 #define DDPF_CAMERA             0x0010 ///< Player is a cameraman.
 #define DDPF_LOCAL              0x0020 ///< Player is local (e.g. player zero).
@@ -1739,7 +1791,7 @@ typedef enum controltype_e {
 #define DDPF_VIEW_FILTER        0x0800 ///< Cl & Sv: Draw the current view filter.
 #define DDPF_REMOTE_VIEW_FILTER 0x1000 ///< Client: Draw the view filter (has been set remotely).
 #define DDPF_USE_VIEW_FILTER    (DDPF_VIEW_FILTER | DDPF_REMOTE_VIEW_FILTER)
-#define DDPF_UNDEFINED_POS      0x2000 ///< Position of the player is undefined (view not drawn).
+#define DDPF_UNDEFINED_ORIGIN   0x2000 ///< Origin of the player is undefined (view not drawn).
 #define DDPF_UNDEFINED_WEAPON   0x4000 ///< Weapon of the player is undefined (not sent yet).
 ///@}
 
@@ -1786,7 +1838,7 @@ struct polyobj_s;
 
     typedef struct fixcounters_s {
         int             angles;
-        int             pos;
+        int             origin;
         int             mom;
     } fixcounters_t;
 
@@ -1811,7 +1863,7 @@ struct polyobj_s;
     } ddplayer_t;
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif /* LIBDENG_SHARED_H */

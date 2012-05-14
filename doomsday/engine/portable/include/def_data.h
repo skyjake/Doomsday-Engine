@@ -25,21 +25,20 @@
 /**
  * Engine Definition Files
  *
- * \fixme Needs to be redesigned.
+ * @todo Needs to be redesigned.
  */
 
 #ifndef LIBDENG_DEFINITION_FILE_H
 #define LIBDENG_DEFINITION_FILE_H
 
 #ifdef __cplusplus
-extern          "C" {
+extern "C" {
 #endif
 
 #include "def_share.h"
-#include "p_mapdata.h"
 #include "uri.h"
 
-    // Version 6 does not require semicolons.
+// Version 6 does not require semicolons.
 #define DED_VERSION         6
 
 #define DED_SPRITEID_LEN    4
@@ -60,6 +59,36 @@ typedef ded_stringid_t ded_funcid_t;
 typedef char ded_func_t[DED_FUNC_LEN + 1];
 typedef int ded_flags_t;
 typedef char* ded_anystring_t;
+
+// Embedded sound information.
+typedef struct ded_embsound_s {
+    ded_string_t    name;
+    int             id; // Figured out at runtime.
+    float           volume;
+} ded_embsound_t;
+
+typedef struct ded_ptcstage_s {
+    ded_flags_t     type;
+    int             tics;
+    float           variance; // Stage variance (time).
+    float           color[4]; // RGBA
+    float           radius;
+    float           radiusVariance;
+    ded_flags_t     flags;
+    float           bounce;
+    float           resistance; // Air resistance.
+    float           gravity;
+    float           vectorForce[3];
+    float           spin[2]; // Yaw and pitch.
+    float           spinResistance[2]; // Yaw and pitch.
+    int             model;
+    ded_string_t    frameName; // For model particles.
+    ded_string_t    endFrameName;
+    short           frame, endFrame;
+    ded_embsound_t  sound, hitSound;
+} ded_ptcstage_t;
+
+#include "p_mapdata.h"
 
 typedef struct ded_count_s {
     int             num, max;
@@ -339,34 +368,6 @@ typedef struct ded_detailtexture_s {
     float           strength;
     float           maxDist;
 } ded_detailtexture_t;
-
-// Embedded sound information.
-typedef struct ded_embsound_s {
-    ded_string_t    name;
-    int             id; // Figured out at runtime.
-    float           volume;
-} ded_embsound_t;
-
-typedef struct {
-    ded_flags_t     type;
-    int             tics;
-    float           variance; // Stage variance (time).
-    float           color[4]; // RGBA
-    float           radius;
-    float           radiusVariance;
-    ded_flags_t     flags;
-    float           bounce;
-    float           resistance; // Air resistance.
-    float           gravity;
-    float           vectorForce[3];
-    float           spin[2]; // Yaw and pitch.
-    float           spinResistance[2]; // Yaw and pitch.
-    int             model;
-    ded_string_t    frameName; // For model particles.
-    ded_string_t    endFrameName;
-    short           frame, endFrame;
-    ded_embsound_t  sound, hitSound;
-} ded_ptcstage_t;
 
 typedef struct ded_ptcgen_s {
     struct ded_ptcgen_s* stateNext; // List of generators for a state.

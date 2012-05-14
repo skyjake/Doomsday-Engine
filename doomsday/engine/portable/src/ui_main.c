@@ -172,8 +172,8 @@ void UI_PageInit(boolean halttime, boolean tckui, boolean tckframe, boolean drwg
     allowEscape = !noescape;
 
     // Init cursor to the center of the screen.
-    uiCX = theWindow->geometry.size.width / 2;
-    uiCY = theWindow->geometry.size.height / 2;
+    uiCX = Window_Width(theWindow) / 2;
+    uiCY = Window_Height(theWindow) / 2;
     uiMoved = false;
 }
 
@@ -381,12 +381,12 @@ void UI_InitPage(ui_page_t* page, ui_object_t* objects)
 
 int UI_AvailableWidth(void)
 {
-    return theWindow->geometry.size.width - UI_BORDER * 4;
+    return Window_Width(theWindow) - UI_BORDER * 4;
 }
 
 int UI_AvailableHeight(void)
 {
-    return theWindow->geometry.size.height - UI_BORDER * 4;
+    return Window_Height(theWindow) - UI_BORDER * 4;
 }
 
 int UI_ScreenX(int relx)
@@ -407,6 +407,13 @@ int UI_ScreenW(int relw)
 int UI_ScreenH(int relh)
 {
     return (relh / UI_HEIGHT) * UI_AvailableHeight();
+}
+
+void UI_UpdatePageLayout(void)
+{
+    if(!uiCurrentPage) return;
+    uiFontHgt = FR_SingleLineHeight("UI");
+    UI_SetPage(uiCurrentPage);
 }
 
 void UI_SetPage(ui_page_t* page)
@@ -457,11 +464,14 @@ void UI_SetPage(ui_page_t* page)
             dat->numvis = (ob->geometry.size.height - 2 * UI_BORDER) / listItemHeight(dat);
             if(dat->selection >= 0)
             {
+                // There is a selected item, make sure it is visible.
                 if(dat->selection < dat->first)
                     dat->first = dat->selection;
                 if(dat->selection > dat->first + dat->numvis - 1)
                     dat->first = dat->selection - dat->numvis + 1;
             }
+            // Check that the visible range is ok.
+            dat->first = MAX_OF(0, MIN_OF(dat->first, dat->count - dat->numvis));
             UI_InitColumns(ob);
         }
     }
@@ -485,16 +495,16 @@ int UI_Responder(ddevent_t* ev)
             uiCX += ev->axis.pos;
             if(uiCX < 0)
                 uiCX = 0;
-            if(uiCX >= theWindow->geometry.size.width)
-                uiCX = theWindow->geometry.size.width - 1;
+            if(uiCX >= Window_Width(theWindow))
+                uiCX = Window_Width(theWindow) - 1;
         }
         else if(ev->axis.id == 1) // yaxis.
         {
             uiCY += ev->axis.pos;
             if(uiCY < 0)
                 uiCY = 0;
-            if(uiCY >= theWindow->geometry.size.height)
-                uiCY = theWindow->geometry.size.height - 1;
+            if(uiCY >= Window_Height(theWindow))
+                uiCY = Window_Height(theWindow) - 1;
         }
     }
 
@@ -546,12 +556,13 @@ void UI_Drawer(void)
     if(!uiActive || !uiCurrentPage) return;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Go into screen projection mode.
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, theWindow->geometry.size.width, theWindow->geometry.size.height, 0, -1, 1);
+    glOrtho(0, Window_Width(theWindow), Window_Height(theWindow), 0, -1, 1);
 
     // Call the active page's drawer.
     uiCurrentPage->drawer(uiCurrentPage);
@@ -563,12 +574,12 @@ void UI_Drawer(void)
         Size2Raw size;
         float scale;
 
-        if(theWindow->geometry.size.width >= theWindow->geometry.size.height)
-            scale = (theWindow->geometry.size.width  / UI_WIDTH)  *
-                    (theWindow->geometry.size.height / (float) theWindow->geometry.size.width);
+        if(Window_Width(theWindow) >= Window_Height(theWindow))
+            scale = (Window_Width(theWindow)  / UI_WIDTH)  *
+                    (Window_Height(theWindow) / (float) Window_Width(theWindow));
         else
-            scale = (theWindow->geometry.size.height / UI_HEIGHT) *
-                    (theWindow->geometry.size.width  / (float) theWindow->geometry.size.height);
+            scale = (Window_Height(theWindow) / UI_HEIGHT) *
+                    (Window_Width(theWindow)  / (float) Window_Height(theWindow));
 
         origin.x = uiCX - 1;
         origin.y = uiCY - 1;
@@ -837,7 +848,7 @@ void UIPage_Drawer(ui_page_t* page)
     if(page->flags.showBackground)
     {
         Point2Raw origin = { 0, 0 };
-        UI_DrawDDBackground(&origin, &theWindow->geometry.size, uiAlpha);
+        UI_DrawDDBackground(&origin, Window_Size(theWindow), uiAlpha);
     }
 
     // Draw each object, unless they're hidden.
@@ -1095,6 +1106,7 @@ int UIEdit_Responder(ui_object_t* ob, ddevent_t* ev)
             break;
 
         default:
+            /// @todo  Use the text included in the event instead of DD_ModKey().
             if((int) strlen(ob->text) < dat->maxlen && ev->toggle.id >= 32 &&
                (DD_ModKey(ev->toggle.id) <= 127 || DD_ModKey(ev->toggle.id) >= DD_HIGHEST_KEYCODE))
             {

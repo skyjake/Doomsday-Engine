@@ -25,6 +25,7 @@
  */
 
 #include <stdlib.h>
+#include <ctype.h>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -594,7 +595,7 @@ int F_Reset(void)
 #endif
 
     // Reset file IDs so previously seen files can be processed again.
-    /// \fixme this releases the ID of startup files too but given the
+    /// @todo this releases the ID of startup files too but given the
     /// only startup file is doomsday.pk3 which we never attempt to load
     /// again post engine startup, this isn't an immediate problem.
     F_ResetFileIds();
@@ -614,19 +615,82 @@ boolean F_IsValidLumpNum(lumpnum_t absoluteLumpNum)
     return LumpDirectory_IsValidIndex(ActiveWadLumpDirectory, lumpNum);
 }
 
+typedef enum lumpsizecondition_e {
+    LSCOND_NONE,
+    LSCOND_EQUAL,
+    LSCOND_GREATER_OR_EQUAL,
+    LSCOND_LESS_OR_EQUAL
+} lumpsizecondition_t;
+
+/**
+ * Modifies the name so that the size condition is removed.
+ */
+static void checkSizeConditionInName(ddstring_t* name, lumpsizecondition_t* pCond, size_t* pSize)
+{
+    int i;
+    int len = Str_Length(name);
+    const char* txt = Str_Text(name);
+    int argPos = 0;
+
+    assert(pCond != 0);
+    assert(pSize != 0);
+
+    *pCond = LSCOND_NONE;
+    *pSize = 0;
+
+    for(i = 0; i < len - 2; ++i, ++txt)
+    {
+        if(!strncmp(txt, "==", 2))
+        {
+            *pCond = LSCOND_EQUAL;
+            argPos = i + 2;
+            break;
+        }
+        if(!strncmp(txt, ">=", 2))
+        {
+            *pCond = LSCOND_GREATER_OR_EQUAL;
+            argPos = i + 2;
+            break;
+        }
+        if(!strncmp(txt, "<=", 2))
+        {
+            *pCond = LSCOND_LESS_OR_EQUAL;
+            argPos = i + 2;
+            break;
+        }
+    }
+    if(!argPos) return;
+
+    // Get the argument.
+    *pSize = strtoul(txt + 2, NULL, 10);
+
+    // Remove it from the name.
+    Str_Truncate(name, i);
+}
+
 lumpnum_t F_CheckLumpNumForName2(const char* name, boolean silent)
 {
     lumpnum_t lumpNum = -1;
+    lumpsizecondition_t sizeCond;
+    size_t lumpSize = 0;
+    size_t refSize;
+
     errorIfNotInited("F_CheckLumpNumForName");
+
     if(name && name[0])
     {
         ddstring_t searchPath;
 
         Str_Init(&searchPath); Str_Set(&searchPath, name);
+
+        // The name may contain a size condition (==, >=, <=).
+        checkSizeConditionInName(&searchPath, &sizeCond, &refSize);
+
         // Append a .lmp extension if none is specified.
         if(!F_FindFileExtension(name))
+        {
             Str_Append(&searchPath, ".lmp");
-        //F_PrependBasePath(&searchPath, &searchPath);
+        }
 
         // We have to check both the primary and auxiliary caches because
         // we've only got a name and don't know where it is located. Start with
@@ -634,6 +698,12 @@ lumpnum_t F_CheckLumpNumForName2(const char* name, boolean silent)
         if(useAuxiliaryWadLumpDirectory())
         {
             lumpNum = LumpDirectory_IndexForPath(ActiveWadLumpDirectory, Str_Text(&searchPath));
+
+            if(lumpNum >= 0 && sizeCond != LSCOND_NONE)
+            {
+                // Get the size as well for the condition check.
+                lumpSize = LumpDirectory_LumpInfo(ActiveWadLumpDirectory, lumpNum)->size;
+            }
         }
 
         // Found it yet?
@@ -641,10 +711,47 @@ lumpnum_t F_CheckLumpNumForName2(const char* name, boolean silent)
         {
             usePrimaryWadLumpDirectory();
             lumpNum = LumpDirectory_IndexForPath(ActiveWadLumpDirectory, Str_Text(&searchPath));
+
+            if(lumpNum >= 0 && sizeCond != LSCOND_NONE)
+            {
+                // Get the size as well for the condition check.
+                lumpSize = LumpDirectory_LumpInfo(ActiveWadLumpDirectory, lumpNum)->size;
+            }
         }
 
+        // Check the condition.
+        switch(sizeCond)
+        {
+        case LSCOND_EQUAL:
+            if(lumpSize != refSize) lumpNum = -1;
+            break;
+
+        case LSCOND_GREATER_OR_EQUAL:
+            if(lumpSize < refSize) lumpNum = -1;
+            break;
+
+        case LSCOND_LESS_OR_EQUAL:
+            if(lumpSize > refSize) lumpNum = -1;
+            break;
+
+        default:
+            break;
+        }
+
+        // If still not found, warn the user.
         if(!silent && lumpNum < 0)
-            Con_Message("Warning: F_CheckLumpNumForName: Lump \"%s\" not found.\n", name);
+        {
+            if(sizeCond == LSCOND_NONE)
+            {
+                Con_Message("Warning: F_CheckLumpNumForName: Lump \"%s\" not found.\n", name);
+            }
+            else
+            {
+                Con_Message("Warning: F_CheckLumpNumForName: Lump \"%s\" with size%s%i not found.\n",
+                            Str_Text(&searchPath), sizeCond==LSCOND_EQUAL? "==" :
+                            sizeCond==LSCOND_GREATER_OR_EQUAL? ">=" : "<=", (int)refSize);
+            }
+        }
 
         Str_Free(&searchPath);
     }
@@ -1592,6 +1699,8 @@ static DFile* tryOpenFile2(const char* path, const char* mode, size_t baseOffset
     F_FixSlashes(&searchPath, &searchPath);
     F_ExpandBasePath(&searchPath, &searchPath);
 
+    DEBUG_VERBOSE2_Message(("tryOpenFile2: trying to open %s\n", Str_Text(&searchPath)));
+
     // First check for lumps?
     if(!reqRealFile)
     {
@@ -2119,9 +2228,9 @@ void F_AddVirtualDirectoryMapping(const char* source, const char* destination)
     Str_Init(&src); Str_Set(&src, source);
     Str_Strip(&src);
     F_FixSlashes(&src, &src);
-    F_AppendMissingSlash(&src);
     F_ExpandBasePath(&src, &src);
     F_PrependWorkPath(&src, &src);
+    F_AppendMissingSlash(&src);
 
     // Have already mapped this source path?
     vdm = findVDMappingForSourcePath(Str_Text(&src));
@@ -2150,9 +2259,9 @@ void F_AddVirtualDirectoryMapping(const char* source, const char* destination)
     Str_Set(&vdm->destination, destination);
     Str_Strip(&vdm->destination);
     F_FixSlashes(&vdm->destination, &vdm->destination);
-    F_AppendMissingSlash(&vdm->destination);
     F_ExpandBasePath(&vdm->destination, &vdm->destination);
     F_PrependWorkPath(&vdm->destination, &vdm->destination);
+    F_AppendMissingSlash(&vdm->destination);
 
     VERBOSE(Con_Message("Resources in \"%s\" now mapped to \"%s\"\n", F_PrettyPath(Str_Text(&vdm->source)), F_PrettyPath(Str_Text(&vdm->destination))) );
 }
@@ -2206,6 +2315,7 @@ static void printVFDirectory(const ddstring_t* path)
 
     Str_Init(&dir); Str_Set(&dir, Str_Text(path));
     Str_Strip(&dir);
+    F_FixSlashes(&dir, &dir);
     // Make sure it ends in a directory separator character.
     F_AppendMissingSlash(&dir);
     if(!F_ExpandBasePath(&dir, &dir))

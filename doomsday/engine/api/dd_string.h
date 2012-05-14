@@ -140,9 +140,33 @@ void Str_Delete(ddstring_t* ds);
 void Str_Clear(ddstring_t* ds);
 
 void Str_Reserve(ddstring_t* ds, int length);
+
+/**
+ * Reserves memory for the string. There will be at least @a length bytes
+ * allocated for the string after this. If the string needs to be resized, its
+ * contents are @em not preserved.
+ */
+void Str_ReserveNotPreserving(ddstring_t* str, int length);
+
 ddstring_t* Str_Set(ddstring_t* ds, const char* text);
 ddstring_t* Str_Append(ddstring_t* ds, const char* appendText);
 ddstring_t* Str_AppendChar(ddstring_t* ds, char ch);
+
+/**
+ * Appends the contents of another string. Enough memory must already be
+ * reserved before calling this. Use in situations where good performance is
+ * critical.
+ */
+ddstring_t* Str_AppendWithoutAllocs(ddstring_t* str, const ddstring_t* append);
+
+/**
+ * Appends a single character. Enough memory must already be reserved before
+ * calling this. Use in situations where good performance is critical.
+ *
+ * @param str  String.
+ * @param ch   Character to append. Cannot be 0.
+ */
+ddstring_t* Str_AppendCharWithoutAllocs(ddstring_t* str, char ch);
 
 /**
  * Append formated text.
@@ -209,6 +233,9 @@ ddstring_t* Str_Strip(ddstring_t* ds);
 
 /**
  * Extract a line of text from the source.
+ *
+ * @param ds   String instance where to put the extracted line.
+ * @param src  Source string. Must be @c NULL terminated.
  */
 const char* Str_GetLine(ddstring_t* ds, const char* src);
 
@@ -226,7 +253,7 @@ const char* Str_GetLine(ddstring_t* ds, const char* src);
  * @param dest          Destination string.
  * @param src           Source string.
  * @param delimiter     Delimiter character.
- * @param flags         @ref copyDelimiterFlags
+ * @param cdflags       @ref copyDelimiterFlags
  *
  * @return              Pointer to the character within @a src where copy stopped
  *                      else @c NULL if the end was reached.
@@ -284,7 +311,7 @@ ddstring_t* Str_PercentEncode(ddstring_t* str);
  *                      @a excludeChars). @c 0 terminated.
  * @return              Same as @a str.
  */
-ddstring_t* Str_PercentEncode2(ddstring_t* str, const char* excludeChars, const char* includeCars);
+ddstring_t* Str_PercentEncode2(ddstring_t* str, const char* excludeChars, const char* includeChars);
 
 /**
  * Decode the percent-encoded string. Will match codes for the unicode

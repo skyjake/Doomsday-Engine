@@ -58,21 +58,21 @@ extern "C" {
 /**
  * Public definitions of the internal map data pointers.  These can be
  * accessed externally, but only as identifiers to data instances.
- * For example, a game could use sector_t to identify to sector to
+ * For example, a game could use Sector to identify to sector to
  * change with the Map Update API.
  *
  * Define @c __INTERNAL_MAP_DATA_ACCESS__ if access to the internal map data
  * structures is needed.
  */
 #ifndef __INTERNAL_MAP_DATA_ACCESS__
-    typedef struct node_s { int type; } node_t;
-    typedef struct vertex_s {int type; } vertex_t;
-    typedef struct linedef_s { int type; } linedef_t;
-    typedef struct sidedef_s { int type; } sidedef_t;
-    typedef struct seg_s { int type; } seg_t;
-    typedef struct subsector_s { int type; } subsector_t;
-    typedef struct sector_s { int type; } sector_t;
-    typedef struct plane_s { int type; } plane_t;
+    typedef struct bspnode_s { int type; } BspNode;
+    typedef struct vertex_s {int type; } Vertex;
+    typedef struct linedef_s { int type; } LineDef;
+    typedef struct sidedef_s { int type; } SideDef;
+    typedef struct hedge_s { int type; } HEdge;
+    typedef struct bspleaf_s { int type; } BspLeaf;
+    typedef struct sector_s { int type; } Sector;
+    typedef struct plane_s { int type; } Plane;
     typedef struct material_s { int type; } material_t;
 #endif
 
@@ -313,13 +313,13 @@ void Con_SetPrintFilter(con_textfilter_t filter);
 boolean MPE_Begin(const char* mapUri);
 boolean MPE_End(void);
 
-    uint            MPE_VertexCreate(float x, float y);
-    boolean         MPE_VertexCreatev(size_t num, float* values, uint* indices);
+    uint            MPE_VertexCreate(coord_t x, coord_t y);
+    boolean         MPE_VertexCreatev(size_t num, coord_t* values, uint* indices);
     uint            MPE_SidedefCreate(uint sector, short flags, materialid_t topMaterial, float topOffsetX, float topOffsetY, float topRed, float topGreen, float topBlue, materialid_t middleMaterial, float middleOffsetX, float middleOffsetY, float middleRed, float middleGreen, float middleBlue, float middleAlpha, materialid_t bottomMaterial, float bottomOffsetX, float bottomOffsetY, float bottomRed, float bottomGreen, float bottomBlue);
     uint            MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide, int flags);
     uint            MPE_SectorCreate(float lightlevel, float red, float green, float blue);
-    uint            MPE_PlaneCreate(uint sector, float height, materialid_t materialId, float matOffsetX, float matOffsetY, float r, float g, float b, float a, float normalX, float normalY, float normalZ);
-    uint            MPE_PolyobjCreate(uint* lines, uint linecount, int tag, int sequenceType, float anchorX, float anchorY);
+    uint            MPE_PlaneCreate(uint sector, coord_t height, materialid_t materialId, float matOffsetX, float matOffsetY, float r, float g, float b, float a, float normalX, float normalY, float normalZ);
+    uint            MPE_PolyobjCreate(uint* lines, uint linecount, int tag, int sequenceType, coord_t originX, coord_t originY);
     boolean         MPE_GameObjProperty(const char* objName, uint idx, const char* propName, valuetype_t type, void* data);
 ///@}
 
@@ -371,9 +371,9 @@ Smoother* Net_PlayerSmoother(int player);
 boolean Sv_CanTrustClientPos(int player);
 
 /**
- * Searches through the client mobj hash table and returns the clmobj
- * with the specified ID, if that exists. Note that client mobjs
- * are also linked to the thinkers list.
+ * Searches through the client mobj hash table for the CURRENT map and
+ * returns the clmobj with the specified ID, if that exists. Note that
+ * client mobjs are also linked to the thinkers list.
  *
  * @param id  Mobj identifier.
  *
@@ -402,58 +402,59 @@ boolean ClMobj_LocalActionsEnabled(struct mobj_s* mo);
 //
 //------------------------------------------------------------------------
 
-/// @addtogroup math
-///@{
-    float           P_AccurateDistance(float dx, float dy);
-    float           P_ApproxDistance(float dx, float dy);
-    float           P_ApproxDistance3(float dx, float dy, float dz);
-///@}
-
 /**
  * @defgroup playsim Playsim
  * @ingroup game
  */
 ///@{
 
-    int             P_PointOnLinedefSide(float xy[2], const struct linedef_s* lineDef);
-    int             P_PointOnLinedefSideXY(float x, float y, const struct linedef_s* lineDef);
-    int             P_BoxOnLineSide(const AABoxf* box, const struct linedef_s* ld);
-    void            P_MakeDivline(struct linedef_s* li, divline_t* dl);
-    int             P_PointOnDivlineSide(float x, float y, const divline_t* line);
-    float           P_InterceptVector(divline_t* v2, divline_t* v1);
-    void            P_LineOpening(struct linedef_s* linedef);
+int LineDef_BoxOnSide(LineDef* line, const AABoxd* box);
 
-    // Object in bounding box iterators.
-    int             P_MobjsBoxIterator(const AABoxf* box,
-                                       int (*func) (struct mobj_s*, void*),
-                                       void* data);
-    int             P_LinesBoxIterator(const AABoxf* box,
-                                       int (*func) (struct linedef_s*, void*),
-                                       void* data);
-    int             P_AllLinesBoxIterator(const AABoxf* box,
-                                          int (*func) (struct linedef_s*, void*),
-                                          void* data);
-    int             P_SubsectorsBoxIterator(const AABoxf* box, sector_t* sector,
-                                           int (*func) (subsector_t*, void*),
-                                           void* data);
-    int             P_PolyobjsBoxIterator(const AABoxf* box,
-                                          int (*func) (struct polyobj_s*, void*),
-                                          void* data);
+coord_t LineDef_PointDistance(LineDef* lineDef, coord_t const point[2], coord_t* offset);
+coord_t LineDef_PointXYDistance(LineDef* lineDef, coord_t x, coord_t y, coord_t* offset);
 
-    // Object type touching mobjs iterators.
-    int             P_LineMobjsIterator(struct linedef_s* line,
-                                        int (*func) (struct mobj_s*, void *), void* data);
-    int             P_SectorTouchingMobjsIterator
-                        (sector_t* sector, int (*func) (struct mobj_s*, void*),
-                         void* data);
+coord_t LineDef_PointOnSide(LineDef* lineDef, coord_t const point[2]);
+coord_t LineDef_PointXYOnSide(LineDef* lineDef, coord_t x, coord_t y);
 
-    int             P_PathTraverse(float const from[2], float const to[2], int flags, traverser_t callback); /*paramaters=NULL*/
-    int             P_PathTraverse2(float const from[2], float const to[2], int flags, traverser_t callback, void* paramaters);
+void LineDef_SetDivline(LineDef* lineDef, divline_t* dl);
 
-    int             P_PathTraverseXY(float fromX, float fromY, float toX, float toY, int flags, traverser_t callback); /*paramaters=NULL*/
-    int             P_PathTraverseXY2(float fromX, float fromY, float toX, float toY, int flags, traverser_t callback, void* paramaters);
+int Divline_PointOnSide(const divline_t* line, coord_t const point[2]);
+int Divline_PointXYOnSide(const divline_t* line, coord_t x, coord_t y);
 
-    boolean         P_CheckLineSight(const float from[3], const float to[3], float bottomSlope, float topSlope, int flags);
+fixed_t Divline_Intersection(divline_t* v1, divline_t* v2);
+
+const divline_t* P_TraceLOS(void);
+
+TraceOpening* P_TraceOpening(void);
+
+void P_SetTraceOpening(struct linedef_s* linedef);
+
+BspLeaf* P_BspLeafAtPoint(coord_t const point[2]);
+BspLeaf* P_BspLeafAtPointXY(coord_t x, coord_t y);
+
+// Object in bounding box iterators.
+int P_MobjsBoxIterator(const AABoxd* box, int (*callback) (struct mobj_s*, void*), void* parameters);
+
+int P_LinesBoxIterator(const AABoxd* box, int (*callback) (struct linedef_s*, void*), void* parameters);
+
+int P_AllLinesBoxIterator(const AABoxd* box, int (*callback) (struct linedef_s*, void*), void* parameters);
+
+int P_BspLeafsBoxIterator(const AABoxd* box, Sector* sector, int (*callback) (struct bspleaf_s*, void*), void* parameters);
+
+int P_PolyobjsBoxIterator(const AABoxd* box, int (*callback) (struct polyobj_s*, void*), void* parameters);
+
+// Object type touching mobjs iterators.
+int P_LineMobjsIterator(struct linedef_s* line, int (*callback) (struct mobj_s*, void *), void* parameters);
+
+int P_SectorTouchingMobjsIterator(struct sector_s* sector, int (*callback) (struct mobj_s*, void*), void* parameters);
+
+int P_PathTraverse2(coord_t const from[2], coord_t const to[2], int flags, traverser_t callback, void* parameters);
+int P_PathTraverse(coord_t const from[2], coord_t const to[2], int flags, traverser_t callback/*parameters=NULL*/);
+
+int P_PathXYTraverse2(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags, traverser_t callback, void* parameters);
+int P_PathXYTraverse(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags, traverser_t callback/*parameters=NULL*/);
+
+boolean P_CheckLineSight(coord_t const from[3], coord_t const to[3], coord_t bottomSlope, coord_t topSlope, int flags);
 ///@}
 
 /**
@@ -461,11 +462,11 @@ boolean ClMobj_LocalActionsEnabled(struct mobj_s* mo);
  * @ingroup input
  */
 ///@{
-    // Play: Controls.
-    void            P_NewPlayerControl(int id, controltype_t type, const char* name, const char* bindContext);
-    void            P_GetControlState(int playerNum, int control, float* pos, float* relativeOffset);
-    int             P_GetImpulseControlState(int playerNum, int control);
-    void            P_Impulse(int playerNum, int control);
+// Play: Controls.
+void P_NewPlayerControl(int id, controltype_t type, const char* name, const char* bindContext);
+void P_GetControlState(int playerNum, int control, float* pos, float* relativeOffset);
+int P_GetImpulseControlState(int playerNum, int control);
+void P_Impulse(int playerNum, int control);
 ///@}
 
 /// @addtogroup map
@@ -484,30 +485,37 @@ boolean P_LoadMap(const char* uri);
 /// @addtogroup playsim
 ///@{
 // Play: Misc.
-void            P_SpawnDamageParticleGen(struct mobj_s* mo, struct mobj_s* inflictor, int amount);
+void P_SpawnDamageParticleGen(struct mobj_s* mo, struct mobj_s* inflictor, int amount);
 ///@}
 
 /// @addtogroup mobj
 ///@{
-    // Play: Mobjs.
-    struct mobj_s*  P_MobjCreate(think_t function, float x, float y, float z, angle_t angle, float radius, float height, int ddflags);
-    void            P_MobjDestroy(struct mobj_s* mo);
-    void            P_MobjSetState(struct mobj_s* mo, int statenum);
-    void            P_MobjLink(struct mobj_s* mo, byte flags);
-    int             P_MobjUnlink(struct mobj_s* mo);
-    struct mobj_s*  P_MobjForID(int id);
-    void            Mobj_OriginSmoothed(struct mobj_s* mobj, float origin[3]);
-    angle_t         Mobj_AngleSmoothed(struct mobj_s* mobj);
-    boolean         ClMobj_IsValid(struct mobj_s* mo);
-    struct mobj_s*  ClPlayer_ClMobj(int plrNum);
+// Play: Mobjs.
+struct mobj_s* P_MobjCreateXYZ(think_t function, coord_t x, coord_t y, coord_t z, angle_t angle, coord_t radius, coord_t height, int ddflags);
 
-    // Mobj linked object iterators.
-    int             P_MobjLinesIterator(struct mobj_s* mo,
-                                        int (*func) (struct linedef_s*,
-                                                          void*), void*);
-    int             P_MobjSectorsIterator(struct mobj_s* mo,
-                                          int (*func) (sector_t*, void*),
-                                          void* data);
+void P_MobjDestroy(struct mobj_s* mo);
+
+void P_MobjSetState(struct mobj_s* mo, int statenum);
+
+void P_MobjLink(struct mobj_s* mo, byte flags);
+
+int P_MobjUnlink(struct mobj_s* mo);
+
+struct mobj_s* P_MobjForID(int id);
+
+void Mobj_OriginSmoothed(struct mobj_s* mobj, coord_t origin[3]);
+
+angle_t Mobj_AngleSmoothed(struct mobj_s* mobj);
+
+boolean ClMobj_IsValid(struct mobj_s* mo);
+
+struct mobj_s* ClPlayer_ClMobj(int plrNum);
+
+// Mobj linked object iterators.
+int P_MobjLinesIterator(struct mobj_s* mo, int (*callback) (struct linedef_s*, void*), void* parameters);
+
+int P_MobjSectorsIterator(struct mobj_s* mo, int (*callback) (Sector*, void*), void* parameters);
+
 ///@}
 
 /**
@@ -517,7 +525,7 @@ void            P_SpawnDamageParticleGen(struct mobj_s* mo, struct mobj_s* infli
 ///@{
 
 // Play: Polyobjs.
-boolean P_PolyobjMoveXY(struct polyobj_s* po, float x, float y);
+boolean P_PolyobjMoveXY(struct polyobj_s* po, coord_t x, coord_t y);
 boolean P_PolyobjRotate(struct polyobj_s* po, angle_t angle);
 void P_PolyobjLink(struct polyobj_s* po);
 void P_PolyobjUnlink(struct polyobj_s* po);
@@ -584,7 +592,7 @@ void R_PrecacheModelsForState(int stateIndex);
 
 void R_RenderPlayerView(int num);
 
-void R_SetViewOrigin(int player, float const origin[3]);
+void R_SetViewOrigin(int player, coord_t const origin[3]);
 void R_SetViewAngle(int player, angle_t angle);
 void R_SetViewPitch(int player, float pitch);
 
@@ -639,9 +647,6 @@ void R_GetColorPaletteRGBf(colorpaletteid_t id, int colorIdx, float rgb[3], bool
 
 void R_HSVToRGB(float* rgb, float h, float s, float v);
 
-angle_t R_PointToAngle2(float x1, float y1, float x2, float y2);
-struct subsector_s* R_PointInSubsector(float x, float y);
-
 ///@}
 
 //------------------------------------------------------------------------
@@ -653,7 +658,7 @@ struct subsector_s* R_PointInSubsector(float x, float y);
 /// @addtogroup render
 ///@{
 
-    void            R_SkyParams(int layer, int param, void* data);
+void R_SkyParams(int layer, int param, void* data);
 
 ///@}
 
@@ -666,10 +671,10 @@ struct subsector_s* R_PointInSubsector(float x, float y);
 /// @addtogroup gl
 ///@{
 
-    void            GL_UseFog(int yes);
-    byte*           GL_GrabScreen(void);
-    void            GL_SetFilter(boolean enable);
-    void            GL_SetFilterColor(float r, float g, float b, float a);
+void GL_UseFog(int yes);
+byte* GL_GrabScreen(void);
+void GL_SetFilter(boolean enable);
+void GL_SetFilterColor(float r, float g, float b, float a);
 
 void GL_ConfigureBorderedProjection2(borderedprojectionstate_t* bp, int flags, int width, int height, int availWidth, int availHeight, scalemode_t overrideMode, float stretchEpsilon);
 void GL_ConfigureBorderedProjection(borderedprojectionstate_t* bp, int flags, int width, int height, int availWidth, int availHeight, scalemode_t overrideMode);
@@ -687,21 +692,24 @@ void GL_EndBorderedProjection(borderedprojectionstate_t* bp);
 /// @addtogroup audio
 ///@{
 
-    void            S_MapChange(void);
-    int             S_LocalSoundAtVolumeFrom(int sound_id, struct mobj_s* origin, float* pos, float volume);
-    int             S_LocalSoundAtVolume(int soundID, struct mobj_s* origin, float volume);
-    int             S_LocalSound(int soundID, struct mobj_s* origin);
-    int             S_LocalSoundFrom(int soundID, float* fixedpos);
-    int             S_StartSound(int soundId, struct mobj_s* origin);
-    int             S_StartSoundEx(int soundId, struct mobj_s* origin);
-    int             S_StartSoundAtVolume(int soundID, struct mobj_s* origin, float volume);
-    int             S_ConsoleSound(int soundID, struct mobj_s* origin, int targetConsole);
-    void            S_StopSound(int soundID, struct mobj_s* origin);
-    int             S_IsPlaying(int soundID, struct mobj_s* origin);
-    int             S_StartMusic(const char* musicID, boolean looped);
-    int             S_StartMusicNum(int id, boolean looped);
-    void            S_StopMusic(void);
-    void            S_PauseMusic(boolean doPause);
+void S_MapChange(void);
+int S_LocalSoundAtVolumeFrom(int sound_id, struct mobj_s* origin, coord_t* pos, float volume);
+int S_LocalSoundAtVolume(int soundID, struct mobj_s* origin, float volume);
+int S_LocalSound(int soundID, struct mobj_s* origin);
+int S_LocalSoundFrom(int soundID, coord_t* fixedpos);
+int S_StartSound(int soundId, struct mobj_s* origin);
+int S_StartSoundEx(int soundId, struct mobj_s* origin);
+int S_StartSoundAtVolume(int soundID, struct mobj_s* origin, float volume);
+int S_ConsoleSound(int soundID, struct mobj_s* origin, int targetConsole);
+
+void S_StopSound2(int soundID, struct mobj_s* origin, int flags);
+void S_StopSound(int soundID, struct mobj_s* origin/*,flags=0*/);
+
+int S_IsPlaying(int soundID, struct mobj_s* origin);
+int S_StartMusic(const char* musicID, boolean looped);
+int S_StartMusicNum(int id, boolean looped);
+void S_StopMusic(void);
+void S_PauseMusic(boolean doPause);
 
 ///@}
 
@@ -731,27 +739,27 @@ boolean M_IsStringValidFloat(const char* str);
 /// @addtogroup math
 ///@{
 
-    void            M_ClearBox(fixed_t* box);
-    void            M_AddToBox(fixed_t* box, fixed_t x, fixed_t y);
-    int             M_CeilPow2(int num);
-    int             M_NumDigits(int value);
-    int             M_RatioReduce(int* numerator, int* denominator);
+double M_ApproxDistance(double dx, double dy);
+double M_ApproxDistance3(double dx, double dy, double dz);
 
-    // Miscellaneous: Random Number Generator facilities.
-    byte            RNG_RandByte(void);
-    float           RNG_RandFloat(void);
+angle_t M_PointXYToAngle(double x, double y);
 
-    // Miscellaneous: Math.
-    void            V2_Sum(float dest[2], const float* srcA, const float* srcB);
-    void            V2_Subtract(float dest[2], const float* srcA, const float* srcB);
-    void            V2_Rotate(float vec[2], float radians);
-    float           V2_Intersection(const float* p1, const float* delta1, const float* p2, const float* delta2, float point[2]);
+angle_t M_PointToAngle2(double const a[2], double const b[2]);
+angle_t M_PointXYToAngle2(double x1, double y1, double x2, double y2);
 
-    int             P_PointOnLineSide(float x, float y, float lX, float lY, float lDX, float lDY);
-    float           M_PointLineDistance(const float* a, const float* b, const float* c);
-    float           M_ProjectPointOnLine(const float* point, const float* linepoint, const float* delta, float gap, float* result);
+void V2d_Sum(double dest[2], double const a[2], double const b[2]);
+void V2d_Subtract(double dest[2], double const a[2], double const b[2]);
+void V2d_Rotate(double vec[2], double radians);
+double V2d_PointOnLineSide(double const point[2], double const lineOrigin[2], double const lineDirection[2]);
+double V2d_PointLineDistance(double const point[2], double const linePoint[2], double const lineDirection[2], double* offset);
+double V2d_ProjectOnLine(double dest[2], double const point[2], double const lineOrigin[2], double const lineDirection[2]);
+double V2d_Intersection(double const linePointA[2], double const lineDirectionA[2], double const linePointB[2], double const lineDirectionB[2], double point[2]);
 
-    binangle_t      bamsAtan2(int y, int x);
+int M_RatioReduce(int* numerator, int* denominator);
+int M_CeilPow2(int num);
+int M_NumDigits(int value);
+
+binangle_t bamsAtan2(int y, int x);
 
 ///@}
 
@@ -769,9 +777,14 @@ boolean M_IsStringValidFloat(const char* str);
     int _DECALL     ArgExists(const char* check);
     int _DECALL     ArgIsOption(int i);
 
+    // Miscellaneous: Random Number Generator facilities.
+    byte            RNG_RandByte(void);
+    float           RNG_RandFloat(void);
+
 ///@}
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
+
 #endif /* LIBDENG_EXPORTS_H */

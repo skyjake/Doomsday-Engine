@@ -290,6 +290,11 @@ boolean Hu_IsMessageActive(void)
     return messageToPrint;
 }
 
+boolean Hu_IsMessageActiveWithCallback(msgfunc_t callback)
+{
+    return messageToPrint && msgCallback == callback;
+}
+
 /**
  * Begin a new message.
  */

@@ -188,8 +188,7 @@ int FR_TextHeight(const char* text);
  * Draw a character.
  *
  * @param ch  Character to be drawn.
- * @param x  X origin/offset at which to begin drawing.
- * @param y  Y origin/offset at which to begin drawing.
+ * @param origin  Origin/offset at which to begin drawing.
  * @param alignFlags  @ref alignmentFlags
  * @param flags  @ref drawTextFlags
  */

@@ -29,6 +29,10 @@
 #ifndef LIBDENG_UI_MAIN_H
 #define LIBDENG_UI_MAIN_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "rect.h"
 
 #define IS_ACTKEY(x)    (x == ' ' || x == DDKEY_RETURN)
@@ -229,6 +233,9 @@ void UI_InitPage(ui_page_t* page, ui_object_t* objects);
 /// Change and prepare the active page.
 void UI_SetPage(ui_page_t* page);
 
+/// Update active page's layout for a new window size.
+void UI_UpdatePageLayout(void);
+
 /// Directs events through the ui and current page if active.
 int UI_Responder(ddevent_t* ev);
 
@@ -397,5 +404,9 @@ int UI_TextOutWrap(const char* text, const Point2Raw* origin, const Size2Raw* si
  */
 int UI_TextOutWrapEx(const char* text, const Point2Raw* origin, const Size2Raw* size, ui_color_t* color, float alpha);
 void UI_DrawHelpBox(const Point2Raw* origin, const Size2Raw* size, float alpha, char* text);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* LIBDENG_UI_MAIN_H */

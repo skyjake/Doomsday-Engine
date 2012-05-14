@@ -219,6 +219,9 @@ inf = Params: after (tics) (cmd)\nFor example, 'after 35 "echo End"'.
 [alias]
 desc = Create aliases for a (set of) console commands.
 
+[apropos]
+desc = Summarize all help containing a search term.
+
 [bindevent]
 desc = Bind a console command to an event.
 inf = Params: bindevent (event-descriptor) (command)\nExamples:\n  bindevent "key-M-down" {print "M was pressed"}\n  bindevent "mouse-right-up + key-shift" {print "RMB released while Shift down"}
@@ -571,7 +574,7 @@ desc = 1=Dump all console messages to Doomsday.out.
 desc = 1=Show FPS counter on screen.
 
 [con-key-activate]
-desc = Key to activate the console (ASCII code, default is tilde, 96).
+desc = Key to activate the console (DDKEY code; default is tilde, 96).
 
 [con-move-speed]
 desc = Speed of console opening/closing.
@@ -637,13 +640,16 @@ desc = 1=Display lumobj debug display.
 desc = 1=Display particle generator indices.
 
 [rend-dev-blockmap]
-desc = Enable drawing of the blockmap debug display: 1=Mobjs, 2=Linedefs, 3=Subsectors, 4=Polyobjs.
+desc = Enable drawing of the blockmap debug display: 1=Mobjs, 2=Linedefs, 3=BspLeafs, 4=Polyobjs.
 
 [rend-dev-blockmap-size]
 desc = Scale multiplier for the blockmap debug display.
 
 [rend-dev-nosprite]
 desc = 1=Disable drawing of all sprites and masked walls.
+
+[rend-dev-soundorigins]
+desc = 3-bit bitfield. Show sound origins (for debug): 0x1= Sector, 0x2= Plane, 0x4= SideDef.
 
 [rend-info-lums]
 desc = 1=Print lumobj count after rendering a frame.
@@ -930,6 +936,9 @@ desc = Sound effects sample rate (11025, 22050, 44100).
 [sound-16bit]
 desc = 1=16-bit sound effects/resampling.
 
+[sound-overlap-stop]
+desc = 1=Only allow one sound per emitter object (as in traditional Doom).
+
 [sound-3d]
 desc = 1=Play sound effects in 3D.
 
@@ -1045,7 +1054,7 @@ desc = 1=Filter camera movement between game tics (OBSOLETE).
 desc = 1=Load generated GL nodes data from the bspcache directory. 0=Always generate new GL data.
 
 [bsp-factor]
-desc = glBSP: changes the cost assigned to SEG splits (default: 7).
+desc = glBSP: changes the cost assigned to edge splits (default: 7).
 
 [con-show-during-setup]
 desc = 1=Show console when a map is being loaded.
@@ -1071,8 +1080,8 @@ desc = Halo dimming relative end distance.
 [rend-dev-freeze]
 desc = 1=Stop updating rendering lists.
 
-[rend-dev-cull-subsectors]
-desc = 1=Disable non-visible subsector culling.
+[rend-dev-cull-leafs]
+desc = 1=Disable non-visible bsp leaf culling.
 
 [rend-dev-mobj-bbox]
 desc = 1=Render mobj bounding boxes (as used for collision detection).
@@ -1175,3 +1184,15 @@ desc = 1=Default to fullscreen.
 
 [vid-bpp]
 desc = Default color depth (bits per pixel), 16 or 32.
+
+
+#
+# CONSOLE VARIABLES: libcommon
+# @todo  Move these to a 'commonhelp.txt' under plugins/common/data.
+#
+
+[game-pause-focuslost]
+desc = Pause the game when game window loses focus.
+
+[game-monsters-floatoverblocking]
+desc = 1=Allow floating monsters to attempt floating over blocking things (avoids getting stuck).

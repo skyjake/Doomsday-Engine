@@ -26,6 +26,11 @@
 #define LIBDENG_IMAGE_H
 
 #include "dfile.h"
+#include "size.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * @defgroup imageConversionFlags Image Conversion Flags.
@@ -48,7 +53,7 @@ typedef struct image_s {
     int flags;
 
     /// Indentifier of the color palette used/assumed or @c 0 if none (1-based).
-    colorpaletteid_t paletteId;
+    unsigned int paletteId;
 
     /// Size of the image in pixels.
     Size2Raw size;
@@ -89,5 +94,9 @@ void GL_ConvertToAlpha(image_t* image, boolean makeWhite);
  * Converts the image data to grayscale luminance in-place.
  */
 void GL_ConvertToLuminance(image_t* image, boolean retainAlpha);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* LIBDENG_IMAGE_H */

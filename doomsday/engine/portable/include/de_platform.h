@@ -41,6 +41,10 @@
  */
 #if defined(WIN32)
 
+#if __cplusplus
+#  include <QIODevice> // must be included before anything that defines open
+#endif
+
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <io.h>
@@ -63,6 +67,8 @@
 #define strupr _strupr
 #define strdup _strdup
 #define spawnlp _spawnlp
+
+const char* strcasestr(const char* text, const char* sub);
 
 #endif                          // WIN32
 

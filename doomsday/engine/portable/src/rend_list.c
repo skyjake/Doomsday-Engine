@@ -67,7 +67,7 @@ END_PROF_TIMERS()
 // Number of extra bytes to keep allocated in the end of each rendering list.
 #define LIST_DATA_PADDING   16
 
-// \fixme Rlist allocation could be dynamic.
+// @todo Rlist allocation could be dynamic.
 #define MAX_RLISTS          1024
 
 #define MTEX_DETAILS_ENABLED (r_detail && useMultiTexDetails && \
@@ -397,6 +397,7 @@ static void rlBindTo(int unit, const rendlist_texmapunit_t* tmu)
     if(!unitHasTexture(&tmu->texture)) return;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glActiveTexture(GL_TEXTURE0 + (byte)unit);
     rlBind(tmu);
@@ -611,7 +612,7 @@ void RL_ClearLists(void)
     // Clear the vertex array.
     clearVertices();
 
-    // \fixme Does this belong here?
+    // @todo Does this belong here?
     rDrawSky = false;
 }
 
@@ -1260,6 +1261,7 @@ static void drawPrimitives(int conditions, uint coords[MAX_TEX_UNITS],
         return;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(unitHasTexture(&TU(list, TU_INTER)->texture))
     {
@@ -1426,6 +1428,7 @@ static void selectTexUnits(int count)
     int i;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     for(i = numTexUnits - 1; i >= count; i--)
     {
@@ -1451,6 +1454,7 @@ static void selectTexUnits(int count)
 static int setupListState(listmode_t mode, rendlist_t* list)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     switch(mode)
     {
@@ -1665,9 +1669,9 @@ if(numTexUnits < 2)
             glPushMatrix();
 
             // Scale towards the viewpoint to avoid Z-fighting.
-            glTranslatef(vx, vy, vz);
+            glTranslatef(vOrigin[VX], vOrigin[VY], vOrigin[VZ]);
             glScalef(.99f, .99f, .99f);
-            glTranslatef(-vx, -vy, -vz);
+            glTranslatef(-vOrigin[VX], -vOrigin[VY], -vOrigin[VZ]);
         }
         return 0;
 
@@ -2106,6 +2110,7 @@ void RL_RenderAllLists(void)
 
     assert(!Sys_GLCheckError());
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
 BEGIN_PROF( PROF_RL_RENDER_ALL );
 

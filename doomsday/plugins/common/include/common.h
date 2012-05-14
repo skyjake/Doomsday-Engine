@@ -21,8 +21,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef __COMMON_GAME_INCLUDES__
-#define __COMMON_GAME_INCLUDES__
+#ifndef LIBCOMMON_GAME_INCLUDES
+#define LIBCOMMON_GAME_INCLUDES
 
 #define WEAPONBOTTOM            (128)   // from p_pspr.c
 
@@ -36,8 +36,6 @@
 #  include "jheretic.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
-#elif __JSTRIFE__
-#  include "jstrife.h"
 #endif
 
-#endif // __COMMON_GAME_INCLUDES__
+#endif /// LIBCOMMON_GAME_INCLUDES

@@ -55,7 +55,6 @@
 #include "../../jheretic/include/p_oldsvg.h"
 #include "../../jheretic/include/p_pspr.h"
 #include "../../jheretic/include/p_setup.h"
-#include "../../jheretic/include/p_sound.h"
 #include "../../jheretic/include/p_spec.h"
 #include "../../jheretic/include/p_telept.h"
 #include "../../jheretic/include/r_defs.h"

@@ -44,34 +44,49 @@ extern int      showSoundInfo;
 extern int      soundMinDist, soundMaxDist;
 extern int      sfxVolume, musVolume;
 
-extern audiodriver_t* audioDriver;
-
 void            S_Register(void);
 boolean         S_Init(void);
 void            S_Shutdown(void);
 void            S_MapChange(void);
+
+/**
+ * Must be called after the map has been changed.
+ */
+void S_SetupForChangedMap(void);
+
 void            S_Reset(void);
 void            S_StartFrame(void);
 void            S_EndFrame(void);
 sfxinfo_t*      S_GetSoundInfo(int sound_id, float* freq, float* volume);
 mobj_t*         S_GetListenerMobj(void);
 int             S_LocalSoundAtVolumeFrom(int sound_id, mobj_t* origin,
-                                         float* fixedpos, float volume);
+                                         coord_t* fixedpos, float volume);
 int             S_LocalSoundAtVolume(int sound_id, mobj_t* origin,
                                      float volume);
 int             S_LocalSound(int sound_id, mobj_t* origin);
-int             S_LocalSoundFrom(int sound_id, float* fixedpos);
+int             S_LocalSoundFrom(int sound_id, coord_t* fixedpos);
 int             S_StartSound(int soundId, mobj_t* origin);
 int             S_StartSoundEx(int soundId, mobj_t* origin);
 int             S_StartSoundAtVolume(int sound_id, mobj_t* origin,
                                      float volume);
 int             S_ConsoleSound(int sound_id, mobj_t* origin,
                                int target_console);
-void            S_StopSound(int sound_id, mobj_t* origin);
+
+/**
+ * Stop playing sound(s), either by their unique identifier or by their emitter(s).
+ *
+ * @param soundID       @c 0= stops all sounds emitted from the targeted origin(s).
+ * @param origin        @c NULL= stops all sounds with the ID.
+ *                      Otherwise both ID and origin must match.
+ * @param flags         @ref soundStopFlags
+ */
+void S_StopSound2(int sound_id, mobj_t* origin, int flags);
+void S_StopSound(int sound_id, mobj_t* origin/*flags=0*/);
+
 int             S_IsPlaying(int sound_id, mobj_t* emitter);
 int             S_StartMusic(const char* musicid, boolean looped);
 void            S_StopMusic(void);
 void            S_PauseMusic(boolean paused);
 void            S_Drawer(void);
 
-#endif /* LIBDENG_SOUND_MAIN_H */
+#endif /// LIBDENG_SOUND_MAIN_H

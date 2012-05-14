@@ -99,7 +99,7 @@ void Rend_ConsoleRegister(void)
 
 static float calcConsoleTitleBarHeight(void)
 {
-    int oldFont, border = theWindow->geometry.size.width / 120, height;
+    int oldFont, border = Window_Width(theWindow) / 120, height;
     assert(inited);
 
     oldFont = FR_Font();
@@ -112,7 +112,7 @@ static float calcConsoleTitleBarHeight(void)
 static __inline int calcConsoleMinHeight(void)
 {
     assert(inited);
-    return fontSy * 1.5f + calcConsoleTitleBarHeight() / theWindow->geometry.size.height * SCREENHEIGHT;
+    return fontSy * 1.5f + calcConsoleTitleBarHeight() / Window_Height(theWindow) * SCREENHEIGHT;
 }
 
 void Rend_ConsoleInit(void)
@@ -166,7 +166,7 @@ boolean Rend_ConsoleResize(boolean force)
         FR_LoadDefaultAttrib();
         FR_SetTracking(Con_FontTracking());
 
-        gtosMulY = theWindow->geometry.size.height / 200.0f;
+        gtosMulY = Window_Height(theWindow) / 200.0f;
         lineHeight = FR_SingleLineHeight("Con");
         Con_FontScale(&scale[0], &scale[1]);
 
@@ -471,6 +471,7 @@ void Rend_ConsoleFPS(const Point2Raw* origin)
     size.height = FR_SingleLineHeight(buf)  + 16;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glEnable(GL_TEXTURE_2D);
 
@@ -498,10 +499,11 @@ static void drawConsoleTitleBar(float alpha)
 
     if(alpha < .0001f) return;
 
-    border = theWindow->geometry.size.width / 120;
+    border = Window_Width(theWindow) / 120;
     barHeight = calcConsoleTitleBarHeight();
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
@@ -509,19 +511,19 @@ static void drawConsoleTitleBar(float alpha)
 
     origin.x = 0;
     origin.y = 0;
-    size.width  = theWindow->geometry.size.width;
+    size.width  = Window_Width(theWindow);
     size.height = barHeight;
     UI_Gradient(&origin, &size, UI_Color(UIC_BG_MEDIUM), UI_Color(UIC_BG_LIGHT), .8f * alpha, alpha);
 
     origin.x = 0;
     origin.y = barHeight;
-    size.width  = theWindow->geometry.size.width;
+    size.width  = Window_Width(theWindow);
     size.height = border;
     UI_Gradient(&origin, &size, UI_Color(UIC_SHADOW), UI_Color(UIC_BG_DARK), .6f * alpha, 0);
 
     origin.x = 0;
     origin.y = barHeight;
-    size.width  = theWindow->geometry.size.width;
+    size.width  = Window_Width(theWindow);
     size.height = border*2;
     UI_Gradient(&origin, &size, UI_Color(UIC_BG_DARK), UI_Color(UIC_SHADOW), .2f * alpha, 0);
 
@@ -545,7 +547,7 @@ static void drawConsoleTitleBar(float alpha)
     if(statusText[0])
     {
         FR_SetFont(fontVariable[FS_LIGHT]);
-        origin.x = theWindow->geometry.size.width - border;
+        origin.x = Window_Width(theWindow) - border;
         origin.y = barHeight / 2;
         UI_TextOutEx2(statusText, &origin, UI_Color(UIC_TEXT), .75f * alpha, ALIGN_RIGHT, DTF_ONLY_SHADOW);
     }
@@ -606,7 +608,7 @@ static void drawConsoleBackground(const Point2Raw* origin, const Size2Raw* size,
  */
 static void drawSideText(const char* text, int line, float alpha)
 {
-    float gtosMulY = theWindow->geometry.size.height / 200.0f, fontScaledY, y, scale[2];
+    float gtosMulY = Window_Height(theWindow) / 200.0f, fontScaledY, y, scale[2];
     char buf[300];
     int ssw;
     assert(inited);
@@ -623,7 +625,7 @@ static void drawSideText(const char* text, int line, float alpha)
         con_textfilter_t printFilter = Con_PrintFilter();
 
         // Scaled screen width.
-        ssw = (int) (theWindow->geometry.size.width / scale[0]);
+        ssw = (int) (Window_Width(theWindow) / scale[0]);
 
         if(printFilter)
         {
@@ -637,6 +639,38 @@ static void drawSideText(const char* text, int line, float alpha)
     }
 
     FR_PopAttrib();
+}
+
+static void escapeFormatting(ddstring_t* dest, const char* src, int maxSourceLen)
+{
+    int i = 0;
+
+    if(!src) return;
+    Str_Clear(dest);
+    for(; *src; ++src, ++i)
+    {
+        if(maxSourceLen && i == maxSourceLen) break;
+        if(*src == '{')
+        {
+            Str_AppendChar(dest, FR_FORMAT_ESCAPE_CHAR);
+        }
+        Str_AppendChar(dest, *src);
+    }
+}
+
+static void applyFilter(char* buff)
+{
+    con_textfilter_t printFilter = Con_PrintFilter();
+    ddstring_t* escaped = Str_New();
+
+    escapeFormatting(escaped, buff, 0);
+    strcpy(buff, Str_Text(escaped));
+    Str_Delete(escaped);
+
+    if(printFilter)
+    {
+        printFilter(buff);
+    }
 }
 
 /**
@@ -655,17 +689,17 @@ static void drawConsole(float consoleAlpha)
     CBuffer* buffer = Con_HistoryBuffer();
     uint cmdCursor = Con_CommandLineCursorPosition();
     char* cmdLine = Con_CommandLine();
-    float scale[2], y, fontScaledY, gtosMulY = theWindow->geometry.size.height / 200.0f;
+    float scale[2], y, fontScaledY, gtosMulY = Window_Height(theWindow) / 200.0f;
     char buff[LOCALBUFFSIZE];
     font_t* cfont;
     int lineHeight, textOffsetY;
-    con_textfilter_t printFilter = Con_PrintFilter();
     uint reqLines, maxLineLength;
     Point2Raw origin;
     Size2Raw size;
     assert(inited);
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     FR_SetFont(Con_Font());
     FR_PushAttrib();
@@ -681,28 +715,28 @@ static void drawConsole(float consoleAlpha)
 
     origin.x = XORIGIN;
     origin.y = YORIGIN + (int) (ConsoleY * gtosMulY);
-    size.width  = theWindow->geometry.size.width;
-    size.height = -theWindow->geometry.size.height;
+    size.width  = Window_Width(theWindow);
+    size.height = -Window_Height(theWindow);
     drawConsoleBackground(&origin, &size, consoleAlpha);
 
     // The border.
     origin.x = XORIGIN;
     origin.y = YORIGIN + (int) ((ConsoleY - 10) * gtosMulY);
-    size.width  = theWindow->geometry.size.width;
+    size.width  = Window_Width(theWindow);
     size.height = 10 * gtosMulY;
     UI_Gradient(&origin, &size, UI_Color(UIC_BG_DARK), UI_Color(UIC_BRD_HI), 0,
                 consoleAlpha * consoleBackgroundAlpha * .06f);
 
     origin.x = XORIGIN;
     origin.y = YORIGIN + (int) (ConsoleY * gtosMulY);
-    size.width  = theWindow->geometry.size.width;
+    size.width  = Window_Width(theWindow);
     size.height = 2;
     UI_Gradient(&origin, &size, UI_Color(UIC_BG_LIGHT), UI_Color(UIC_BG_LIGHT),
                 consoleAlpha * consoleBackgroundAlpha, -1);
 
     origin.x = XORIGIN;
     origin.y = YORIGIN + (int) (ConsoleY * gtosMulY);
-    size.width  = theWindow->geometry.size.width;
+    size.width  = Window_Width(theWindow);
     size.height = 2 * gtosMulY;
     UI_Gradient(&origin, &size, UI_Color(UIC_SHADOW), UI_Color(UIC_SHADOW),
                 consoleAlpha * consoleBackgroundAlpha * .75f, 0);
@@ -742,10 +776,11 @@ static void drawConsole(float consoleAlpha)
                 const cbline_t* line = lines[i];
 
                 if(line->flags & CBLF_RULER)
-                {   // Draw a ruler here, and nothing else.
+                {
+                    // Draw a ruler here, and nothing else.
                     drawRuler(XORIGIN + PADDING, (YORIGIN + y) / scale[1],
-                               theWindow->geometry.size.width / scale[0] - PADDING*2, lineHeight,
-                               consoleAlpha);
+                              Window_Width(theWindow) / scale[0] - PADDING*2, lineHeight,
+                              consoleAlpha);
                 }
                 else
                 {
@@ -759,7 +794,7 @@ static void drawConsole(float consoleAlpha)
                     if(line->flags & CBLF_CENTER)
                     {
                         alignFlags |= ALIGN_TOP;
-                        xOffset = (theWindow->geometry.size.width / scale[0]) / 2;
+                        xOffset = (Window_Width(theWindow) / scale[0]) / 2;
                     }
                     else
                     {
@@ -767,8 +802,8 @@ static void drawConsole(float consoleAlpha)
                         xOffset = 0;
                     }
 
-                    if(printFilter)
-                        printFilter(buff);
+                    // Escape any visual formatting characters in the text.
+                    applyFilter(buff);
 
                     // Set the color.
                     if(Font_Flags(cfont) & FF_COLORIZE)
@@ -817,13 +852,20 @@ static void drawConsole(float consoleAlpha)
         }
     }
 
-    dd_snprintf(buff, LOCALBUFFSIZE -1/*terminator*/, ">%s%.*s%s",
-        abbrevLeft?  "{alpha=.5}[...]{alpha=1}" : "",
-        maxLineLength, cmdLine + offset,
-        abbrevRight? "{alpha=.5}[...]" : "");
+    // Apply filtering.
+    /// @todo Clean this up; use a common applyFilter() function.
+    {
+        ddstring_t* escaped = Str_New();
+        escapeFormatting(escaped, cmdLine + offset, maxLineLength);
 
-    if(printFilter)
-        printFilter(buff);
+        dd_snprintf(buff, LOCALBUFFSIZE - 1/*terminator*/, ">%s%s%s",
+                    abbrevLeft?  "{alpha=.5}[...]{alpha=1}" : "",
+                    Str_Text(escaped),
+                    abbrevRight? "{alpha=.5}[...]" : "");
+
+        Str_Delete(escaped);
+        if(Con_PrintFilter()) (Con_PrintFilter())(buff);
+    }
 
     glEnable(GL_TEXTURE_2D);
     if(Font_Flags(cfont) & FF_COLORIZE)
@@ -847,7 +889,11 @@ static void drawConsole(float consoleAlpha)
 
         // Where is the cursor?
         memset(temp, 0, sizeof(temp));
-        strncpy(temp, buff, MIN_OF(LOCALBUFFSIZE -1/*prompt length*/ -1/*vis clamp*/, cmdCursor-offset + (abbrevLeft? 24/*abbrev length*/:0) + 1));
+        //strncpy(temp, cmdLine + offset, MIN_OF(LOCALBUFFSIZE -1/*prompt length*/ /*-1*//*vis clamp*/, cmdCursor-offset + (abbrevLeft? 24/*abbrev length*/:0) + 1));
+        strcpy(temp, ">");
+        if(abbrevLeft) strcat(temp, "[...]");
+        strncat(temp, cmdLine + offset, MIN_OF(LOCALBUFFSIZE - 1, cmdCursor - offset));
+        applyFilter(temp);
         xOffset = FR_TextWidth(temp);
         if(Con_InputMode())
         {
@@ -866,7 +912,7 @@ static void drawConsole(float consoleAlpha)
         glColor4f(CcolYellow[0], CcolYellow[1], CcolYellow[2],
                   consoleAlpha * (((int) ConsoleBlink) & 0x10 ? .2f : .5f));
         GL_DrawRectf2(XORIGIN + PADDING + xOffset, (int)((YORIGIN + y + yOffset) / scale[1]),
-                    (int)width, MAX_OF(1, (int)(height / scale[1])));
+                      (int)width, MAX_OF(1, (int)(height / scale[1])));
     }
 
     FR_PopAttrib();
@@ -897,7 +943,7 @@ void Rend_Console(void)
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, theWindow->geometry.size.width, theWindow->geometry.size.height, 0, -1, 1);
+    glOrtho(0, Window_Width(theWindow), Window_Height(theWindow), 0, -1, 1);
 
     if(consoleShow)
     {
@@ -908,7 +954,7 @@ void Rend_Console(void)
     if(consoleShowFPS && !UI_IsActive())
     {
         Point2Raw origin;
-        origin.x = theWindow->geometry.size.width - 10;
+        origin.x = Window_Width(theWindow) - 10;
         origin.y = 10 + (ConsoleY > 0? ROUND(consoleAlpha * calcConsoleTitleBarHeight()) : 0);
         Rend_ConsoleFPS(&origin);
     }

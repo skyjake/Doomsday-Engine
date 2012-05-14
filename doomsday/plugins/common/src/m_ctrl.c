@@ -615,6 +615,13 @@ int MNBindings_CommandResponder(mn_object_t* obj, menucommand_e cmd)
         }
 
         iterateBindings(binds, buf, 0, NULL, deleteBinding);
+
+        // If deleting the menuselect binding, automatically rebind it Return;
+        // otherwise the user would be stuck without a way to make further bindings.
+        if(binds->command && !strcmp(binds->command, "menuselect"))
+        {
+            DD_Execute(true, "bindevent menu:key-return menuselect");
+        }
         return true;
       }
     case MCMD_SELECT:
@@ -704,6 +711,13 @@ int MNBindings_PrivilegedResponder(mn_object_t* obj, event_t* ev)
         if(binds->bindContext)
         {
             bindContext = binds->bindContext;
+
+            if((!strcmp(bindContext, "menu") || !strcmp(bindContext, "shortcut")) &&
+               !strcmp(symbol + 5, "key-delete-down"))
+            {
+                Con_Message("The Delete key in the Menu context is reserved for deleting bindings.\n");
+                return false;
+            }
         }
 
         if(binds->command)

@@ -1,32 +1,24 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * dd_input.c: System Independent Input
+ * @file dd_input.c
+ * Platform-independent input subsystem. @ingroup input
+ *
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <ctype.h>
 #include <math.h>
@@ -48,8 +40,6 @@
 
 #include "con_busy.h"
 
-// MACROS ------------------------------------------------------------------
-
 #define DEFAULT_JOYSTICK_DEADZONE .05f // 5%
 
 #define MAX_AXIS_FILTER 40
@@ -57,12 +47,12 @@
 #define KBDQUESIZE      32
 #define MAX_DOWNKEYS    16      // Most keyboards support 6 or 7.
 
-// TYPES -------------------------------------------------------------------
-
 typedef struct repeater_s {
-    int     key;                // The DDKEY code (0 if not in use).
-    timespan_t timer;           // How's the time?
-    int     count;              // How many times has been repeated?
+    int key;                // The DDKEY code (0 if not in use).
+    int native;             // Used to determine which key is repeating.
+    char text[8];           // Text to insert.
+    timespan_t timer;       // How's the time?
+    int count;              // How many times has been repeated?
 } repeater_t;
 
 typedef struct {
@@ -71,26 +61,17 @@ typedef struct {
     int tail;
 } eventqueue_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
+#if 0
 D_CMD(AxisPrintConfig);
 D_CMD(AxisChangeOption);
 D_CMD(AxisChangeValue);
+#endif
 D_CMD(DumpKeyMap);
 D_CMD(KeyMap);
 D_CMD(ListInputDevices);
+D_CMD(ReleaseMouse);
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-static void postEvents(timespan_t ticLength);
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-int     mouseFilter = 1;        // Filtering on by default.
+static void postEvents(void);
 
 // The initial and secondary repeater delays (tics).
 int     repWait1 = 15, repWait2 = 3;
@@ -100,12 +81,9 @@ boolean shiftDown = false, altDown = false;
 
 inputdev_t inputDevices[NUM_INPUT_DEVICES];
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
+//-------------------------------------------------------------------------
 
-#ifdef WIN32
-static boolean suspendMsgPump = false; // Set to true to disable checking windows msgs.
-#endif
-
+static boolean inputDisabledFully = false;
 static boolean ignoreInput = false;
 
 static byte shiftKeyMappings[NUMKKEYS], altKeyMappings[NUMKKEYS];
@@ -121,7 +99,7 @@ static char defaultShiftTable[96] = // Contains characters 32 to 127.
 /* 60 */    0, '+', 0, 0, 0, 'a', 'b', 'c', 'd', 'e',
 /* 70 */    'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
 /* 80 */    'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y',
-/* 90 */    'z', '{', '|', '}', 0, 0, 0, 'A', 'B', 'C',
+/* 90 */    'z', '{', '|', '}', 0, 0, '~', 'A', 'B', 'C',
 /* 100 */   'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
 /* 110 */   'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W',
 /* 120 */   'X', 'Y', 'Z', 0, 0, 0, 0, 0
@@ -132,7 +110,7 @@ static float oldPOV = IJOY_POV_CENTER;
 static char* eventStrings[MAXEVENTS];
 static boolean uiMouseMode = false; // Can mouse data be modified?
 
-static byte useSharpToggleEvents = true; ///< cvar
+static byte useSharpInputEvents = true; ///< cvar
 
 #if _DEBUG
 static byte devRendKeyState = false; ///< cvar
@@ -140,17 +118,14 @@ static byte devRendMouseState = false; ///< cvar
 static byte devRendJoyState = false; ///< cvar
 #endif
 
-// CODE --------------------------------------------------------------------
+//-------------------------------------------------------------------------
 
 void DD_RegisterInput(void)
 {
     // Cvars
     C_VAR_INT("input-key-delay1", &keyRepeatDelay1, CVF_NO_MAX, 50, 0);
     C_VAR_INT("input-key-delay2", &keyRepeatDelay2, CVF_NO_MAX, 20, 0);
-    C_VAR_BYTE("input-toggle-sharp", &useSharpToggleEvents, 0, 0, 1);
-
-    C_VAR_INT("input-mouse-filter", &mouseFilter, 0, 0, MAX_AXIS_FILTER - 1);
-    C_VAR_INT("input-mouse-frequency", &mouseFreq, CVF_NO_MAX, 0, 0);
+    C_VAR_BYTE("input-sharp", &useSharpInputEvents, 0, 0, 1);
 
 #if _DEBUG
     C_VAR_BYTE("rend-dev-input-joy-state", &devRendJoyState, CVF_NO_ARCHIVE, 0, 1);
@@ -164,6 +139,8 @@ void DD_RegisterInput(void)
     C_CMD("keymap", "s", KeyMap);
 #endif
     C_CMD("listinputdevices", "", ListInputDevices);
+
+    C_CMD("releasemouse", "", ReleaseMouse);
 
     //C_CMD_FLAGS("setaxis", "s",      AxisPrintConfig, CMDF_NO_DEDICATED);
     //C_CMD_FLAGS("setaxis", "ss",     AxisChangeOption, CMDF_NO_DEDICATED);
@@ -198,8 +175,9 @@ static inputdevaxis_t *I_DeviceNewAxis(inputdev_t *dev, const char *name, uint t
     axis = &dev->axes[dev->numAxes - 1];
     memset(axis, 0, sizeof(*axis));
     strcpy(axis->name, name);
-
     axis->type = type;
+    axis->smoother = Smoother_New();
+    Smoother_SetMaximumPastNowDelta(axis->smoother, 2*SECONDSPERTIC);
 
     // Set reasonable defaults. The user's settings will be restored
     // later.
@@ -240,21 +218,23 @@ void I_InitVirtualInputDevices(void)
     strcpy(dev->name, "mouse");
     I_DeviceAllocKeys(dev, IMB_MAXBUTTONS);
 
-    // The first five mouse buttons have symbolic names.
-    dev->keys[0].name = "left";
-    dev->keys[1].name = "middle";
-    dev->keys[2].name = "right";
-    dev->keys[3].name = "wheelup";
-    dev->keys[4].name = "wheeldown";
+    // Some of the mouse buttons have symbolic names.
+    dev->keys[IMB_LEFT].name = "left";
+    dev->keys[IMB_MIDDLE].name = "middle";
+    dev->keys[IMB_RIGHT].name = "right";
+    dev->keys[IMB_MWHEELUP].name = "wheelup";
+    dev->keys[IMB_MWHEELDOWN].name = "wheeldown";
+    dev->keys[IMB_MWHEELLEFT].name = "wheelleft";
+    dev->keys[IMB_MWHEELRIGHT].name = "wheelright";
 
     // The mouse wheel is translated to keys, so there is no need to
     // create an axis for it.
     axis = I_DeviceNewAxis(dev, "x", IDAT_POINTER);
-    axis->filter = 1; // On by default.
+    //axis->filter = 1; // On by default.
     axis->scale = 1.f/1000;
 
     axis = I_DeviceNewAxis(dev, "y", IDAT_POINTER);
-    axis->filter = 1; // On by default.
+    //axis->filter = 1; // On by default.
     axis->scale = 1.f/1000;
 
     // Register console variables for the axis settings.
@@ -263,8 +243,9 @@ void I_InitVirtualInputDevices(void)
     C_VAR_INT("input-mouse-x-flags", &dev->axes[0].flags, 0, 0, 3);
     C_VAR_FLOAT("input-mouse-y-scale", &dev->axes[1].scale, CVF_NO_MAX, 0, 0);
     C_VAR_INT("input-mouse-y-flags", &dev->axes[1].flags, 0, 0, 3);
+    //C_VAR_INT("input-mouse-filter", &dev->axes[0].filter, 0, 0, MAX_AXIS_FILTER - 1); // note: same filter used for Y axis
 
-    if(I_MousePresent())
+    if(Mouse_IsPresent())
         dev->flags = ID_ACTIVE;
 
     // TODO: Add support for several joysticks.
@@ -312,7 +293,7 @@ void I_InitVirtualInputDevices(void)
     }
 
     // The joystick may not be active.
-    if(I_JoystickPresent())
+    if(Joystick_IsPresent())
         dev->flags = ID_ACTIVE;
 }
 
@@ -321,39 +302,83 @@ void I_InitVirtualInputDevices(void)
  */
 void I_ShutdownInputDevices(void)
 {
-    uint                i;
-    inputdev_t*         dev;
+    uint i, k;
+    inputdev_t* dev;
 
     for(i = 0; i < NUM_INPUT_DEVICES; ++i)
     {
         dev = &inputDevices[i];
 
         if(dev->keys)
+        {
             M_Free(dev->keys);
-        dev->keys = 0;
+            dev->keys = 0;
+        }
 
         if(dev->axes)
+        {
+            for(k = 0; k < dev->numAxes; ++k)
+            {
+                Smoother_Delete(dev->axes[k].smoother);
+            }
             M_Free(dev->axes);
-        dev->axes = 0;
+            dev->axes = 0;
+        }
 
         if(dev->hats)
+        {
             M_Free(dev->hats);
-        dev->hats = 0;
+            dev->hats = 0;
+        }
     }
 }
 
 void I_DeviceReset(uint ident)
 {
-    inputdev_t*         dev = &inputDevices[ident];
-    int                 k;
+    inputdev_t* dev = &inputDevices[ident];
+    int k;
 
-    for(k = 0; k < (int)dev->numAxes; ++k)
+    DEBUG_Message(("I_DeviceReset: %s.\n", Str_Text(I_DeviceNameStr(ident))));
+
+    for(k = 0; k < (int)dev->numKeys && dev->keys; ++k)
+    {
+        if(dev->keys[k].isDown)
+        {
+            dev->keys[k].assoc.flags |= IDAF_EXPIRED;
+        }
+        else
+        {
+            dev->keys[k].isDown = false;
+            dev->keys[k].time = 0;
+            dev->keys[k].assoc.flags &= ~(IDAF_TRIGGERED | IDAF_EXPIRED);
+        }
+    }
+
+    for(k = 0; k < (int)dev->numAxes && dev->axes; ++k)
     {
         if(dev->axes[k].type == IDAT_POINTER)
         {
             // Clear the accumulation.
             dev->axes[k].position = 0;
+            dev->axes[k].sharpPosition = 0;
+            dev->axes[k].prevSmoothPos = 0;
         }
+        Smoother_Clear(dev->axes[k].smoother);
+    }
+
+    if(ident == IDEV_KEYBOARD)
+    {
+        altDown = shiftDown = false;
+        DD_ClearKeyRepeaters();
+    }
+}
+
+void I_ResetAllDevices(void)
+{
+    uint i;
+    for(i = 0; i < NUM_INPUT_DEVICES; ++i)
+    {
+        I_DeviceReset(i);
     }
 }
 
@@ -419,6 +444,21 @@ inputdev_t *I_GetDeviceByName(const char *name, boolean ifactive)
     }
 
     return dev;
+}
+
+const ddstring_t* I_DeviceNameStr(uint ident)
+{
+    static const ddstring_t names[1+NUM_INPUT_DEVICES] = {
+        { "(invalid-identifier)" },
+        { "keyboard" },
+        { "mouse" },
+        { "joystick" },
+        { "joystick2" },
+        { "joystick3" },
+        { "joystick4" }
+    };
+    if(ident >= NUM_INPUT_DEVICES) return &names[0];
+    return &names[1+ident];
 }
 
 inputdevaxis_t* I_GetAxisByID(inputdev_t* device, uint id)
@@ -533,10 +573,54 @@ float I_TransformAxis(inputdev_t* dev, uint axis, float rawPos)
     return pos;
 }
 
+#if 0
+static float filterAxis(int grade, float* accumulation, float ticLength)
+{
+    float   target;
+    float   avail;
+    float   used;
+    int     dir;
+
+    dir = SIGN_OF(*accumulation);
+    avail = fabs(*accumulation);
+
+    // Determine the target velocity.
+    target = avail * (MAX_AXIS_FILTER - MINMAX_OF(1, grade, 39));
+
+    /*
+    // test: clamp
+    if(target < -.7) target = -.7;
+    else if(target > .7) target = .7;
+    else target = 0;
+    */
+
+    // Determine the amount of mickeys to send. It depends on the
+    // current mouse velocity, and how much time has passed.
+    used = target * ticLength;
+
+    // Don't go past the available motion.
+    if(used > avail)
+    {
+        *accumulation = 0;
+        used = avail;
+    }
+    else
+    {
+        if(*accumulation > 0)
+            *accumulation -= used;
+        else
+            *accumulation += used;
+    }
+
+    // This is the new (filtered) axis position.
+    return dir * used;
+}
+#endif
+
 /**
  * Update an input device axis.  Transformation is applied.
  */
-static void I_UpdateAxis(inputdev_t *dev, uint axis, float pos, timespan_t ticLength)
+static void I_ApplyRealPositionToAxis(inputdev_t* dev, uint axis, float pos)
 {
     inputdevaxis_t *a = &dev->axes[axis];
     float oldRealPos = a->realPosition;
@@ -548,43 +632,63 @@ static void I_UpdateAxis(inputdev_t *dev, uint axis, float pos, timespan_t ticLe
     if(oldRealPos != a->realPosition)
     {
         // Mark down the time of the change.
-        a->time = Sys_GetRealTime();
-    }
-
-    if(a->filter > 0)
-    {
-        pos = a->realPosition;
-    }
-    else
-    {
-        // This is the new axis position.
-        pos = a->realPosition;
+        a->time = DD_LatestRunTicsStartTime();
     }
 
     if(a->type == IDAT_STICK)
-        a->position = pos; //a->realPosition;
-    else if(!ignoreInput) // Cumulative.
-        a->position += pos; //a->realPosition;
+    {
+        a->sharpPosition = a->realPosition;
+    }
+    else // Cumulative.
+    {
+        // Convert the delta to an absolute position for smoothing.
+        a->sharpPosition += a->realPosition;
+    }
+
+    Smoother_AddPosXY(a->smoother, DD_LatestRunTicsStartTime(), a->sharpPosition, 0);
+}
+
+static void I_UpdateAxis(inputdev_t *dev, uint axis, timespan_t ticLength)
+{
+    inputdevaxis_t *a = &dev->axes[axis];
+
+    Smoother_Advance(a->smoother, ticLength);
+
+    if(a->type == IDAT_STICK)
+    {
+        // Absolute positions are straightforward to evaluate.
+        Smoother_EvaluateComponent(a->smoother, 0, &a->position);
+    }
+    else if(a->type == IDAT_POINTER)
+    {
+        // Convert back into a delta.
+        coord_t smoothPos = a->prevSmoothPos;
+        Smoother_EvaluateComponent(a->smoother, 0, &smoothPos);
+        a->position += smoothPos - a->prevSmoothPos;
+        a->prevSmoothPos = smoothPos;
+    }
 
     // We can clear the expiration when it returns to default state.
-    if(!a->position || a->type == IDAT_POINTER)
+    if(FEQUAL(a->position, 0) || a->type == IDAT_POINTER)
     {
         a->assoc.flags &= ~IDAF_EXPIRED;
     }
+}
 
-/*    if(verbose > 3)
-    {
-        Con_Message("I_UpdateAxis: device=%s axis=%i pos=%f\n",
-                    dev->name, axis, pos);
-    }*/
+boolean I_ShiftDown(void)
+{
+    return shiftDown;
 }
 
 /**
  * Update the input device state table.
  */
-void I_TrackInput(ddevent_t *ev, timespan_t ticLength)
+void I_TrackInput(ddevent_t *ev)
 {
     inputdev_t *dev;
+
+    if(ev->type == E_FOCUS || ev->type == E_SYMBOLIC)
+        return; // Not a tracked device state.
 
     if((dev = I_GetDevice(ev->device, true)) == NULL)
         return;
@@ -602,16 +706,22 @@ void I_TrackInput(ddevent_t *ev, timespan_t ticLength)
         else if(ev->toggle.id == DDKEY_RALT)
         {
             if(ev->toggle.state == ETOG_DOWN)
+            {
                 altDown = true;
+                DEBUG_Message(("I_TrackInput: Alt down\n"));
+            }
             else if(ev->toggle.state == ETOG_UP)
+            {
                 altDown = false;
+                DEBUG_Message(("I_TrackInput: Alt up\n"));
+            }
         }
     }
 
     // Update the state table.
     if(ev->type == E_AXIS)
     {
-        I_UpdateAxis(dev, ev->axis.id, ev->axis.pos, ticLength);
+        I_ApplyRealPositionToAxis(dev, ev->axis.id, ev->axis.pos);
     }
     else if(ev->type == E_TOGGLE)
     {
@@ -715,6 +825,9 @@ int DD_KeyOrCode(char* token)
 void DD_InitInput(void)
 {
     int i;
+
+    inputDisabledFully = ArgExists("-noinput");
+
     for(i = 0; i < 256; ++i)
     {
         if(i >= 32 && i <= 127)
@@ -725,6 +838,14 @@ void DD_InitInput(void)
     }
 }
 
+/**
+ * Returns a copy of the string @a str. The caller does not get ownership of
+ * the string. The string is valid until it gets overwritten by a new
+ * allocation. There are at most MAXEVENTS strings allocated at a time.
+ *
+ * These are intended for strings in ddevent_t that are valid during the
+ * processing of an event.
+ */
 const char* DD_AllocEventString(const char* str)
 {
     static int eventStringRover = 0;
@@ -760,13 +881,11 @@ boolean DD_IgnoreInput(boolean ignore)
 {
     boolean old = ignoreInput;
     ignoreInput = ignore;
-#ifdef _DEBUG
-    Con_Message("DD_IgnoreInput: ignoring=%i\n", ignore);
-#endif
+    DEBUG_Message(("DD_IgnoreInput: ignoring=%i\n", ignore));
     if(!ignore)
     {
         // Clear all the event buffers.
-        postEvents(0);
+        postEvents();
         DD_ClearEvents();
         DD_ClearKeyRepeaters();
     }
@@ -804,9 +923,16 @@ static void postToQueue(eventqueue_t* q, ddevent_t* ev)
 void DD_PostEvent(ddevent_t *ev)
 {
     eventqueue_t* q = &queue;
-    if(useSharpToggleEvents && ev->type == E_TOGGLE)
+    if(useSharpInputEvents && (ev->type == E_TOGGLE || ev->type == E_AXIS ||
+                               ev->type == E_ANGLE))
     {
         q = &sharpQueue;
+    }
+
+    // Cleanup: make sure only keyboard toggles can have a text insert.
+    if(ev->type == E_TOGGLE && ev->device != IDEV_KEYBOARD)
+    {
+        memset(ev->toggle.text, 0, sizeof(ev->toggle.text));
     }
 
     postToQueue(q, ev);
@@ -849,7 +975,7 @@ void DD_ConvertEvent(const ddevent_t* ddEvent, event_t* ev)
     //
     /// @todo This is probably broken! (DD_MICKEY_ACCURACY=1000 no longer used...)
     //
-    memset(ev, 0, sizeof(ev));
+    memset(ev, 0, sizeof(*ev));
     if(ddEvent->type == E_SYMBOLIC)
     {
         ev->type = EV_SYMBOLIC;
@@ -863,6 +989,12 @@ void DD_ConvertEvent(const ddevent_t* ddEvent, event_t* ev)
         ev->data1 = (int) ddEvent->symbolic.name;
         ev->data2 = 0;
 #endif
+    }
+    else if(ddEvent->type == E_FOCUS)
+    {
+        ev->type = EV_FOCUS;
+        ev->data1 = ddEvent->focus.gained;
+        ev->data2 = ddEvent->focus.inWindow;
     }
     else
     {
@@ -931,10 +1063,23 @@ void DD_ConvertEvent(const ddevent_t* ddEvent, event_t* ev)
     }
 }
 
+static void updateDeviceAxes(timespan_t ticLength)
+{
+    int i;
+    for(i = 0; i < NUM_INPUT_DEVICES; ++i)
+    {
+        uint k;
+        for(k = 0; k < inputDevices[i].numAxes; ++k)
+        {
+            I_UpdateAxis(&inputDevices[i], k, ticLength);
+        }
+    }
+}
+
 /**
  * Send all the events of the given timestamp down the responder chain.
  */
-static void dispatchEvents(eventqueue_t* q, timespan_t ticLength)
+static void dispatchEvents(eventqueue_t* q, timespan_t ticLength, boolean updateAxes)
 {
     const boolean callGameResponders = DD_GameLoaded();
     ddevent_t* ddev;
@@ -944,9 +1089,9 @@ static void dispatchEvents(eventqueue_t* q, timespan_t ticLength)
         event_t ev;
 
         // Update the state of the input device tracking table.
-        I_TrackInput(ddev, ticLength);
+        I_TrackInput(ddev);
 
-        if(ignoreInput)
+        if(ignoreInput && ddev->type != E_FOCUS)
             continue;
 
         DD_ConvertEvent(ddev, &ev);
@@ -966,14 +1111,14 @@ static void dispatchEvents(eventqueue_t* q, timespan_t ticLength)
                 continue;
         }
 
-        if(UI_Responder(ddev)) continue;
-        if(Con_Responder(ddev)) continue;
+        if(UI_Responder(ddev)) continue; /// @todo: use the bindings system (deui context fallback)
+        if(Con_Responder(ddev)) continue; /// @todo refactor: use the bindings system
 
-        if(callGameResponders)
+        if(callGameResponders) /// @todo refactor: use the bindings system (chat context fallback)
         {
             // The game's normal responder only returns true if the bindings can't
             // be used (like when chatting).
-            if(gx.Responder(&ev))
+            if(gx.Responder && gx.Responder(&ev))
                 continue;
         }
 
@@ -984,56 +1129,27 @@ static void dispatchEvents(eventqueue_t* q, timespan_t ticLength)
         if(callGameResponders && gx.FallbackResponder)
             gx.FallbackResponder(&ev);
     }
-}
 
-#ifdef WIN32
-void DD_Win32_SuspendMessagePump(boolean suspend)
-{
-    suspendMsgPump = suspend;
+    if(updateAxes)
+    {
+        // Input events have modified input device state: update the axis positions.
+        updateDeviceAxes(ticLength);
+    }
 }
-#endif
 
 /**
  * Poll all event sources (i.e., input devices) and post events.
  */
-static void postEvents(timespan_t ticLength)
+static void postEvents(void)
 {
-#ifdef WIN32
-    if(!Con_InBusyWorker())
-    {
-        MSG msg;
-
-        /**
-         * Checking native Windows messages. This must be in the same thread as
-         * that which registered the window it is handling messages for (main
-         * thread).
-         */
-        while(!suspendMsgPump &&
-              PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) > 0)
-        {
-            if(msg.message == WM_QUIT)
-            {
-                DD_Win32_SuspendMessagePump(true);
-                DD_SetGameLoopExitCode(msg.wParam);
-                Sys_Quit();
-            }
-            else
-            {
-                TranslateMessage(&msg);
-                DispatchMessage(&msg);
-            }
-        }
-    }
-#endif
-
-    if(ArgExists("-noinput")) return;
+    if(inputDisabledFully) return;
 
     DD_ReadKeyboard();
 
     // In dedicated mode, we don't do mice or joysticks.
     if(!isDedicated)
     {
-        DD_ReadMouse(ticLength);
+        DD_ReadMouse();
         DD_ReadJoystick();
     }
 }
@@ -1048,10 +1164,10 @@ static void postEvents(timespan_t ticLength)
 void DD_ProcessEvents(timespan_t ticLength)
 {
     // Poll all event sources (i.e., input devices) and post events.
-    postEvents(ticLength);
+    postEvents();
 
     // Dispatch all accumulated events down the responder chain.
-    dispatchEvents(&queue, ticLength);
+    dispatchEvents(&queue, ticLength, !useSharpInputEvents);
 }
 
 void DD_ProcessSharpEvents(timespan_t ticLength)
@@ -1059,7 +1175,7 @@ void DD_ProcessSharpEvents(timespan_t ticLength)
     // Sharp ticks may have some events queued on the side.
     if(DD_IsSharpTick() || !DD_IsFrameTimeAdvancing())
     {
-        dispatchEvents(&sharpQueue, ticLength);
+        dispatchEvents(&sharpQueue, DD_IsFrameTimeAdvancing()? SECONDSPERTIC : ticLength, true);
     }
 }
 
@@ -1096,6 +1212,10 @@ byte DD_ModKey(byte key)
     {
         return '.';
     }
+    else if(key == DDKEY_MULTIPLY)
+    {
+        return '*';
+    }
 
     return key;
 }
@@ -1108,14 +1228,29 @@ void DD_ClearKeyRepeaters(void)
     memset(keyReps, 0, sizeof(keyReps));
 }
 
-void DD_ClearKeyRepeaterForKey(int key)
+void DD_ClearKeyRepeaterForKey(int ddkey, int native)
 {
     int k;
 
     // Clear any repeaters with this key.
     for(k = 0; k < MAX_DOWNKEYS; ++k)
-        if(keyReps[k].key == key)
-            keyReps[k].key = 0;
+    {
+        // Check the native code first, if provided.
+        if(native >= 0)
+        {
+            if(native != keyReps[k].native)
+                continue;
+        }
+        else
+        {
+            if(keyReps[k].key != ddkey) continue;
+        }
+
+        // Clear this.
+        keyReps[k].native = -1;
+        keyReps[k].key = 0;
+        memset(keyReps[k].text, 0, sizeof(keyReps[k].text));
+    }
 }
 
 /**
@@ -1134,6 +1269,8 @@ void DD_ReadKeyboard(void)
     ev.type = E_TOGGLE;
     ev.toggle.state = ETOG_REPEAT;
 
+    // Post key repeat events.
+    /// @todo Move this to a ticker function?
     for(i = 0; i < MAX_DOWNKEYS; ++i)
     {
         repeater_t *rep = keyReps + i;
@@ -1141,6 +1278,7 @@ void DD_ReadKeyboard(void)
             continue;
 
         ev.toggle.id = rep->key;
+        memcpy(ev.toggle.text, rep->text, sizeof(ev.toggle.text));
 
         if(!rep->count && sysTime - rep->timer >= keyRepeatDelay1 / 1000.0)
         {
@@ -1162,27 +1300,33 @@ void DD_ReadKeyboard(void)
     }
 
     // Read the new keyboard events.
-    if(isDedicated)
+    if(novideo)
         numkeyevs = I_GetConsoleKeyEvents(keyevs, KBDQUESIZE);
     else
-        numkeyevs = I_GetKeyEvents(keyevs, KBDQUESIZE);
+        numkeyevs = Keyboard_GetEvents(keyevs, KBDQUESIZE);
 
     // Convert to ddevents and post them.
     for(n = 0; n < numkeyevs; ++n)
     {
-        keyevent_t     *ke = &keyevs[n];
+        keyevent_t *ke = &keyevs[n];
 
         // Check the type of the event.
-        if(ke->event == IKE_KEY_DOWN)   // Key pressed?
+        if(ke->type == IKE_DOWN)   // Key pressed?
         {
             ev.toggle.state = ETOG_DOWN;
         }
-        else if(ke->event == IKE_KEY_UP) // Key released?
+        else if(ke->type == IKE_UP) // Key released?
         {
             ev.toggle.state = ETOG_UP;
         }
 
         ev.toggle.id = ke->ddkey;
+
+        // Text content to insert?
+        assert(sizeof(ev.toggle.text) == sizeof(ke->text));
+        memcpy(ev.toggle.text, ke->text, sizeof(ev.toggle.text));
+
+        DEBUG_VERBOSE2_Message(("toggle.id: %i/%c [%s:%u]\n", ev.toggle.id, ev.toggle.id, ev.toggle.text, (uint)strlen(ev.toggle.text)));
 
         // Maintain the repeater table.
         if(ev.toggle.state == ETOG_DOWN)
@@ -1192,6 +1336,8 @@ void DD_ReadKeyboard(void)
                 if(!keyReps[k].key)
                 {
                     keyReps[k].key = ev.toggle.id;
+                    keyReps[k].native = ke->native;
+                    memcpy(keyReps[k].text, ev.toggle.text, sizeof(ev.toggle.text));
                     keyReps[k].timer = sysTime;
                     keyReps[k].count = 0;
                     break;
@@ -1199,48 +1345,12 @@ void DD_ReadKeyboard(void)
         }
         else if(ev.toggle.state == ETOG_UP)
         {
-            DD_ClearKeyRepeaterForKey(ev.toggle.id);
+            DD_ClearKeyRepeaterForKey(ev.toggle.id, ke->native);
         }
 
         // Post the event.
         DD_PostEvent(&ev);
     }
-}
-
-float I_FilterMouse(float pos, float* accumulation, float ticLength)
-{
-    float   target;
-    int     dir;
-    float   avail;
-    int     used;
-
-    *accumulation += pos;
-    dir = SIGN_OF(*accumulation);
-    avail = fabs(*accumulation);
-
-    // Determine the target velocity.
-    target = avail * (MAX_AXIS_FILTER - mouseFilter);
-
-    // Determine the amount of mickeys to send. It depends on the
-    // current mouse velocity, and how much time has passed.
-    used = target * ticLength;
-
-    // Don't go over the available number of update frames.
-    if(used > avail)
-    {
-        *accumulation = 0;
-        used = avail;
-    }
-    else
-    {
-        if(*accumulation > 0)
-            *accumulation -= used;
-        else
-            *accumulation += used;
-    }
-
-    // This is the new (filtered) axis position.
-    return dir * used;
 }
 
 /**
@@ -1250,11 +1360,15 @@ void I_SetUIMouseMode(boolean on)
 {
     uiMouseMode = on;
 
+    /// @todo  Update this after the Qt window management is working.
+
+#if 0
 #ifdef UNIX
-    if(I_MousePresent())
+    if(Mouse_IsPresent())
     {
         // Release mouse grab when in windowed mode.
         boolean isFullScreen = true;
+
         Sys_GetWindowFullscreen(1, &isFullScreen);
         if(!isFullScreen)
         {
@@ -1262,22 +1376,24 @@ void I_SetUIMouseMode(boolean on)
         }
     }
 #endif
+#endif
 }
 
 /**
  * Checks the current mouse state (axis, buttons and wheel).
  * Generates events and mickeys and posts them.
  */
-void DD_ReadMouse(timespan_t ticLength)
+void DD_ReadMouse(void)
 {
     ddevent_t       ev;
     mousestate_t    mouse;
     float           xpos, ypos;
     int             i;
 
-    if(!I_MousePresent())
+    if(!Mouse_IsPresent())
         return;
 
+#ifdef OLD_FILTER
     // Should we test the mouse input frequency?
     if(mouseFreq > 0)
     {
@@ -1292,49 +1408,29 @@ void DD_ReadMouse(timespan_t ticLength)
         else
         {
             lastTime = nowTime;
-            I_GetMouseState(&mouse);
+            Mouse_GetState(&mouse);
         }
     }
     else
+#endif
     {
         // Get the mouse state.
-        I_GetMouseState(&mouse);
+        Mouse_GetState(&mouse);
     }
 
     ev.device = IDEV_MOUSE;
     ev.type = E_AXIS;
-    ev.axis.type = EAXIS_RELATIVE;
-    xpos = mouse.x;
-    ypos = mouse.y;
 
-    if(ticLength > 0 && mouseFilter > 0)
-    {
-        // Filtering ensures that events are sent more evenly on each frame.
-        static float accumulation[2] = { 0, 0 };
-        xpos = I_FilterMouse(xpos, &accumulation[0], ticLength);
-        ypos = I_FilterMouse(ypos, &accumulation[1], ticLength);
-    }
+    xpos = mouse.axis[IMA_POINTER].x;
+    ypos = mouse.axis[IMA_POINTER].y;
 
-    // Mouse axis data may be modified if not in UI mode.
-/*
     if(uiMouseMode)
     {
-        if(mouseDisableX)
-            xpos = 0;
-        if(mouseDisableY)
-            ypos = 0;
-        if(!mouseInverseY)
-            ypos = -ypos;
-    }
-    */
-    if(uiMouseMode)
-    {
-        // Scale the movement depending on screen resolution.
-        xpos *= MAX_OF(1, theWindow->geometry.size.width / 800.0f);
-        ypos *= MAX_OF(1, theWindow->geometry.size.height / 600.0f);
+        ev.axis.type = EAXIS_ABSOLUTE;
     }
     else
     {
+        ev.axis.type = EAXIS_RELATIVE;
         ypos = -ypos;
     }
 
@@ -1377,11 +1473,13 @@ void DD_ReadMouse(timespan_t ticLength)
             if(mouse.buttonDowns[i]-- > 0)
             {
                 ev.toggle.state = ETOG_DOWN;
+                DEBUG_VERBOSE2_Message(("mb %i down\n", i));
                 DD_PostEvent(&ev);
             }
             if(mouse.buttonUps[i]-- > 0)
             {
                 ev.toggle.state = ETOG_UP;
+                DEBUG_VERBOSE2_Message(("mb %i up\n", i));
                 DD_PostEvent(&ev);
             }
         }
@@ -1399,10 +1497,10 @@ void DD_ReadJoystick(void)
     ddevent_t       ev;
     joystate_t      state;
 
-    if(!I_JoystickPresent())
+    if(!Joystick_IsPresent())
         return;
 
-    I_GetJoystickState(&state);
+    Joystick_GetState(&state);
 
     // Joystick buttons.
     ev.device = IDEV_JOY1;
@@ -1417,11 +1515,13 @@ void DD_ReadJoystick(void)
             {
                 ev.toggle.state = ETOG_DOWN;
                 DD_PostEvent(&ev);
+                DEBUG_VERBOSE2_Message(("Joy button %i down\n", i));
             }
             if(state.buttonUps[i]-- > 0)
             {
                 ev.toggle.state = ETOG_UP;
                 DD_PostEvent(&ev);
+                DEBUG_VERBOSE2_Message(("Joy button %i up\n", i));
             }
         }
     }
@@ -1442,7 +1542,7 @@ void DD_ReadJoystick(void)
             else
             {
                 // The new angle becomes active.
-                ev.angle.pos = (int) (state.hatAngle[0] / 45 + .5); // Round off correctly w/.5.
+                ev.angle.pos = ROUND(state.hatAngle[0] / 45);
             }
             DD_PostEvent(&ev);
 
@@ -1739,6 +1839,7 @@ void Rend_RenderInputDeviceStateVisual(inputdev_t* device, const inputdev_layout
     uint i;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(retVisualDimensions)
     {
@@ -1922,7 +2023,7 @@ void Rend_AllInputDeviceStateVisuals(void)
     static inputdev_layout_control_t keyGroup11[] = {
         { IDC_KEY, 144 }, // numlock
         { IDC_KEY, 172 }, // divide
-        { IDC_KEY,  42 }, // multiply
+        { IDC_KEY, DDKEY_MULTIPLY }, // multiply
         { IDC_KEY, 168 }  // subtract
     };
     static inputdev_layout_control_t keyGroup12[] = {
@@ -2100,9 +2201,10 @@ void Rend_AllInputDeviceStateVisuals(void)
     Point2Raw origin = { 2, 2 };
     Size2Raw dimensions;
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-
     if(novideo || isDedicated) return; // Not for us.
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Disabled?
     if(!devRendKeyState && !devRendMouseState && !devRendJoyState) return;
@@ -2110,7 +2212,7 @@ void Rend_AllInputDeviceStateVisuals(void)
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, theWindow->geometry.size.width, theWindow->geometry.size.height, 0, -1, 1);
+    glOrtho(0, Window_Width(theWindow), Window_Height(theWindow), 0, -1, 1);
 
     if(devRendKeyState)
     {
@@ -2141,17 +2243,19 @@ static void I_PrintAxisConfig(inputdev_t* device, inputdevaxis_t* axis)
 {
     Con_Printf("%s-%s Config:\n"
                "  Type: %s\n"
-               "  Filter: %i\n"
+               //"  Filter: %i\n"
                "  Dead Zone: %g\n"
                "  Scale: %g\n"
                "  Flags: (%s%s)\n",
                device->name, axis->name,
                (axis->type == IDAT_STICK? "STICK" : "POINTER"),
-               axis->filter, axis->deadZone, axis->scale,
+               /*axis->filter,*/
+               axis->deadZone, axis->scale,
                ((axis->flags & IDA_DISABLED)? "|disabled":""),
                ((axis->flags & IDA_INVERT)? "|inverted":""));
 }
 
+#if 0
 D_CMD(AxisPrintConfig)
 {
     uint deviceID, axisID;
@@ -2238,6 +2342,7 @@ D_CMD(AxisChangeValue)
     // Unknown value name?
     return true;
 }
+#endif
 
 /**
  * Console command to list all of the available input devices+axes.
@@ -2262,5 +2367,11 @@ D_CMD(ListInputDevices)
             I_PrintAxisConfig(dev, &dev->axes[j]);
         }
     }
+    return true;
+}
+
+D_CMD(ReleaseMouse)
+{
+    Window_TrapMouse(Window_Main(), false);
     return true;
 }

@@ -1,36 +1,27 @@
-/**\file r_model.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * 3D Model Resources
+ * @file r_model.c
+ * 3D Model Resources. @ingroup resource
  *
  * MD2/DMD2 loading and setup.
- * My variable naming convention is a bit incoherent.
+ *
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include "de_platform.h"
 
@@ -47,33 +38,22 @@
 #include "de_misc.h"
 
 #include "def_main.h"
+#include "stringpool.h"
 #include "texture.h"
 #include "texturevariant.h"
 #include "materialvariant.h"
-
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
 
 typedef struct {
     float           pos[3];
 } vector_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
 float rModelAspectMod = 1 / 1.2f; //.833334f;
 
+static StringPool* modelRepository; // owns model_t instances
+
 // The dummy is used for model zero.
-model_t dummy = { true, "Dummy-Dummy" };
-model_t* modellist[MAX_MODELS] = { &dummy };
+//model_t dummy = { true, "Dummy-Dummy" };
+//model_t* modellist[MAX_MODELS] = { &dummy };
 byte useModels = true;
 
 modeldef_t* modefs = NULL;
@@ -83,21 +63,17 @@ float avertexnormals[NUMVERTEXNORMALS][3] = {
 #include "tab_anorms.h"
 };
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static int maxModelDefs;
 static modeldef_t** stateModefs;
-
-// CODE --------------------------------------------------------------------
 
 /**
  * Packed: pppppppy yyyyyyyy. Yaw is on the XY plane.
  */
 static void UnpackVector(unsigned short packed, float vec[3])
 {
-    float               yaw = (packed & 511) / 512.0f * 2 * PI;
-    float               pitch = ((packed >> 9) / 127.0f - 0.5f) * PI;
-    float               cosp = (float) cos(pitch);
+    float yaw = (packed & 511) / 512.0f * 2 * PI;
+    float pitch = ((packed >> 9) / 127.0f - 0.5f) * PI;
+    float cosp = (float) cos(pitch);
 
     vec[VX] = (float) cos(yaw) * cosp;
     vec[VY] = (float) sin(yaw) * cosp;
@@ -105,24 +81,29 @@ static void UnpackVector(unsigned short packed, float vec[3])
 }
 
 /**
- * Returns an index if the specified model has already been loaded.
+ * Returns an id if the specified model has already been loaded.
+ * Otherwise returns 0.
  */
-static int R_FindModelFor(const char* filename)
+static uint findModelFor(const ddstring_t* filename)
 {
+    return StringPool_IsInterned(modelRepository, filename);
+
+    /*
     int                 i;
 
     for(i = 0; i < MAX_MODELS; ++i)
         if(modellist[i] && !stricmp(modellist[i]->fileName, filename))
             return i;
-    return -1;
+    return -1;*/
+
 }
 
 /**
- * Allocates a new model. Returns the index.
+ * Allocates a new model. Returns the id.
  */
-static int R_NewModelFor(void /*const char *filename*/)
+static uint newModelFor(const ddstring_t* filename)
 {
-    int                 i;
+/*    int                 i;
 
     // Take the first empty spot.
     for(i = 0; i < MAX_MODELS; ++i)
@@ -132,7 +113,13 @@ static int R_NewModelFor(void /*const char *filename*/)
             return i;
         }
     // Dang, we're out of models.
-    return -1;
+    return -1;*/
+
+    StringPoolId id = StringPool_Intern(modelRepository, filename);
+    assert(StringPool_UserPointer(modelRepository, id) == NULL);
+
+    StringPool_SetUserPointer(modelRepository, id, M_Calloc(sizeof(model_t)));
+    return id;
 }
 
 /**
@@ -162,10 +149,11 @@ static void R_VertexNormals(model_t *mdl)
         {
             tri = mdl->lods[0].triangles + k;
             // First calculate surface normals, combine them to vertex ones.
-            M_PointCrossProduct(list[tri->vertexIndices[0]].vertex,
-            list[tri->vertexIndices[2]].vertex,
-            list[tri->vertexIndices[1]].vertex, normals[k].pos);
-            M_Normalize(normals[k].pos);
+            V3f_PointCrossProduct(normals[k].pos,
+                                  list[tri->vertexIndices[0]].vertex,
+                                  list[tri->vertexIndices[2]].vertex,
+                                  list[tri->vertexIndices[1]].vertex);
+            V3f_Normalize(normals[k].pos);
         }
 
         for(k = 0; k < verts; ++k)
@@ -192,7 +180,7 @@ static void R_VertexNormals(model_t *mdl)
                 norm.pos[n] /= cnt;
 
             // Normalize it.
-            M_Normalize(norm.pos);
+            V3f_Normalize(norm.pos);
             memcpy(list[k].normal, norm.pos, sizeof(norm.pos));
         }
     }
@@ -438,6 +426,12 @@ static void registerModelSkin(model_t* mdl, int index)
     }
 }
 
+model_t* R_ModelForId(uint modelRepositoryId)
+{
+    assert(modelRepository);
+    return StringPool_UserPointer(modelRepository, modelRepositoryId);
+}
+
 /**
  * Finds the existing model or loads in a new one.
  */
@@ -447,7 +441,8 @@ static int R_LoadModel(const Uri* uri)
     ddstring_t foundPath;
     DFile* file = NULL;
     model_t* mdl;
-    int i, index;
+    int i;
+    uint index;
 
     if(!uri) return 0;
     searchPath = Str_Text(Uri_Path(uri));
@@ -457,8 +452,8 @@ static int R_LoadModel(const Uri* uri)
     if(F_FindResource2(RC_MODEL, searchPath, &foundPath) != 0)
     {
         // Has this been already loaded?
-        index = R_FindModelFor(Str_Text(&foundPath));
-        if(index < 0)
+        index = findModelFor(&foundPath);
+        if(!index)
         {
             // Not loaded yet, try to open the file.
             file = F_Open(Str_Text(&foundPath), "rb");
@@ -470,8 +465,8 @@ static int R_LoadModel(const Uri* uri)
             }
 
             // Allocate a new model_t.
-            index = R_NewModelFor(/*Str_Text(&foundPath)*/);
-            if(index < 0)
+            index = newModelFor(&foundPath);
+            if(!index)
             {
                 F_Delete(file);
                 Str_Free(&foundPath);
@@ -486,7 +481,7 @@ static int R_LoadModel(const Uri* uri)
         return 0;
     }
 
-    mdl = modellist[index];
+    mdl = StringPool_UserPointer(modelRepository, index);
     if(mdl->loaded)
     {
         if(file) F_Delete(file);
@@ -511,7 +506,8 @@ static int R_LoadModel(const Uri* uri)
     {
         // Cancel the loading.
         M_Free(mdl);
-        modellist[index] = 0;
+        StringPool_SetUserPointer(modelRepository, index, 0);
+        //modellist[index] = 0;
         F_Delete(file);
         Str_Free(&foundPath);
         return 0;
@@ -521,7 +517,8 @@ static int R_LoadModel(const Uri* uri)
     mdl->loaded = true;
     mdl->allowTexComp = true;
     F_Delete(file);
-    strncpy(mdl->fileName, Str_Text(&foundPath), FILENAME_T_MAXLEN);
+    //strncpy(mdl->fileName, Str_Text(&foundPath), FILENAME_T_MAXLEN);
+    mdl->fileName = Str_Text(StringPool_String(modelRepository, index));
 
     // Determine the actual (full) paths.
     for(i = 0; i < mdl->info.numSkins; ++i)
@@ -547,7 +544,7 @@ int R_ModelFrameNumForName(int modelnum, char* fname)
 
     if(!modelnum) return 0;
 
-    mdl = modellist[modelnum];
+    mdl = R_ModelForId(modelnum);
     for(i = 0; i < mdl->info.numFrames; ++i)
     {
         if(!stricmp(mdl->frames[i].name, fname))
@@ -734,7 +731,7 @@ float R_CheckModelFor(mobj_t* mo, modeldef_t** modef, modeldef_t** nextmodef)
                 if(max-- <= 0)
                     stopScan = true;
             }
-            // \fixme What about max == -1? What should 'it' be then?
+            // @todo What about max == -1? What should 'it' be then?
         }
 
         if(!foundNext)
@@ -753,7 +750,9 @@ float R_CheckModelFor(mobj_t* mo, modeldef_t** modef, modeldef_t** nextmodef)
 
 static model_frame_t* R_GetModelFrame(int model, int frame)
 {
-    return modellist[model]->frames + frame;
+    model_t* ptr = R_ModelForId(model);
+    assert(ptr != 0);
+    return ptr->frames + frame;
 }
 
 static void R_GetModelBounds(int model, int frame, float min[3], float max[3])
@@ -1062,7 +1061,7 @@ static void setupModel(ded_model_t* def)
         if(subdef->skinFilename && !Str_IsEmpty(Uri_Path(subdef->skinFilename)))
         {
             // A specific file name has been given for the skin.
-            sub->skin = R_NewModelSkin(modellist[sub->model], subdef->skinFilename);
+            sub->skin = R_NewModelSkin(R_ModelForId(sub->model), subdef->skinFilename);
         }
         else
         {
@@ -1078,13 +1077,13 @@ static void setupModel(ded_model_t* def)
         for(k = 0; k < 3; ++k)
             sub->offset[k] = subdef->offset[k];
 
-        sub->shinySkin = R_RegisterModelSkin(NULL, subdef->shinySkin, modellist[sub->model]->fileName, true);
+        sub->shinySkin = R_RegisterModelSkin(NULL, subdef->shinySkin, R_ModelForId(sub->model)->fileName, true);
 
         // Should we allow texture compression with this model?
         if(sub->flags & MFF_NO_TEXCOMP)
         {
             // All skins of this model will no longer use compression.
-            modellist[sub->model]->allowTexComp = false;
+            R_ModelForId(sub->model)->allowTexComp = false;
         }
     }
 
@@ -1159,33 +1158,36 @@ static void setupModel(ded_model_t* def)
     }
 }
 
-static void R_ClearModelList(void)
+static int destroyModelInRepository(StringPoolId id, void* parm)
 {
-    int i, k;
-    model_t* m;
-    for(i = 1; i < MAX_MODELS; ++i)
+    model_t* m = StringPool_UserPointer(modelRepository, id);
+    int k;
+
+    M_Free(m->skins);
+    //M_Free(modellist[i]->texCoords);
+    for(k = 0; k < m->info.numFrames; ++k)
     {
-        if(!(m = modellist[i]))
-            continue;
-
-        M_Free(m->skins);
-        //M_Free(modellist[i]->texCoords);
-        for(k = 0; k < m->info.numFrames; ++k)
-        {
-            M_Free(m->frames[k].vertices);
-            M_Free(m->frames[k].normals);
-        }
-        M_Free(m->frames);
-
-        for(k = 0; k < m->info.numLODs; ++k)
-        {
-            //M_Free(modellist[i]->lods[k].triangles);
-            M_Free(m->lods[k].glCommands);
-        }
-        M_Free(m->vertexUsage);
-        M_Free(m);
-        modellist[i] = NULL;
+        M_Free(m->frames[k].vertices);
+        M_Free(m->frames[k].normals);
     }
+    M_Free(m->frames);
+
+    for(k = 0; k < m->info.numLODs; ++k)
+    {
+        //M_Free(modellist[i]->lods[k].triangles);
+        M_Free(m->lods[k].glCommands);
+    }
+    M_Free(m->vertexUsage);
+    M_Free(m);
+
+    return 0;
+}
+
+static void clearModelList(void)
+{
+    if(!modelRepository) return;
+
+    StringPool_Iterate(modelRepository, destroyModelInRepository, 0);
 }
 
 /**
@@ -1202,10 +1204,12 @@ void R_InitModels(void)
     if(isDedicated || ArgCheck("-nomd2"))
         return;
 
+    modelRepository = StringPool_New();
+
     VERBOSE( Con_Message("Initializing Models...\n") )
     usedTime = Sys_GetRealTime();
 
-    R_ClearModelList();
+    clearModelList();
     if(modefs)
         M_Free(modefs);
 
@@ -1223,7 +1227,12 @@ void R_InitModels(void)
     // Use the latest definition available for each sprite ID.
     for(i = defs.count.models.num - 1; i >= 0; --i)
     {
-        //Con_Progress(1, PBARF_DONTSHOW);
+        if(!(i % 100))
+        {
+            // This may take a while, so keep updating the progress.
+            Con_SetProgress(130 + 70*(defs.count.models.num - i)/defs.count.models.num);
+        }
+
         setupModel(defs.models + i);
     }
 
@@ -1283,7 +1292,7 @@ if(closest)
 
 /**
  * Frees all memory allocated for models.
- * \fixme Why only centralized memory deallocation? Bad design...
+ * @todo Why only centralized memory deallocation? Bad design...
  */
 void R_ShutdownModels(void)
 {
@@ -1294,7 +1303,13 @@ void R_ShutdownModels(void)
         M_Free(stateModefs);
     stateModefs = NULL;
 
-    R_ClearModelList();
+    clearModelList();
+
+    if(modelRepository)
+    {
+        StringPool_Delete(modelRepository);
+        modelRepository = 0;
+    }
 }
 
 void R_SetModelFrame(modeldef_t* modef, int frame)
@@ -1307,7 +1322,7 @@ void R_SetModelFrame(modeldef_t* modef, int frame)
         if(!modef->sub[k].model)
             continue;
 
-        mdl = modellist[modef->sub[k].model];
+        mdl = R_ModelForId(modef->sub[k].model);
         // Modify the modeldef itself: set the current frame.
         modef->sub[k].frame = frame % mdl->info.numFrames;
     }
@@ -1325,7 +1340,7 @@ void R_PrecacheModel(modeldef_t* modef)
 
         if(!modef->sub[sub].model) continue;
 
-        mdl = modellist[modef->sub[sub].model];
+        mdl = R_ModelForId(modef->sub[sub].model);
         // Load all skins.
         for(k = 0; k < mdl->info.numSkins; ++k)
         {

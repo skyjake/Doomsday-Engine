@@ -113,14 +113,17 @@ class FrontController
         error_reporting(E_ALL);
         ini_set('display_errors', (bool) $this->_visibleErrors);
         ini_set('display_startup_errors', (bool) $this->_visibleErrors);
-        set_error_handler(array(&$this,'ErrorHandler'));
+        set_error_handler(array(&$this,"ErrorHandler"));
 
         // Locate plugins.
         $this->_plugins = new Plugins(DIR_PLUGINS);
 
         // Construct the Request
-        $url = $_SERVER['SERVER_PORT'] == '443' ? 'https' : 'http'
-            .'://'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
+        $url = ($_SERVER['SERVER_PORT'] == '443' ? 'https' : 'http') .'://';
+        if(isset($_SERVER['HTTP_HOST']))
+            $url .= $_SERVER['HTTP_HOST'];
+        if(isset($_SERVER['REQUEST_URI']))
+            $url .= $_SERVER['REQUEST_URI'];
 
         $this->_request = new Request($url, $_POST);
         $this->_actions = new Actions();
@@ -275,12 +278,114 @@ class FrontController
         $feed->generateHTML();
     }
 
-    private function outputServerStatus()
+    /**
+     * Generate HTML markup for a summary of this server.
+     */
+    private function generateServerSummary(&$info)
     {
-        /*require_once(DIR_CLASSES.'/gameservers.class.php');
+        if(!is_array($info))
+            throw new Exception('Invalid info argument, array expected.');
 
-        $GameServers = new GameServers('http://dengine.net/master.php?list=1');
-        $GameServers->generateHTML();*/
+        $serverMetadataLabel = 'Address: '. htmlspecialchars($info['at']).':'. htmlspecialchars($info['port'])
+                              .' Open: '. ($info['open']? 'yes':'no');
+                              // Should we include the extra info?
+                              /*.' Info: '. htmlspecialchars($info['info']);*/
+
+        // Any required addons?.
+        $addonArr = array_filter(explode(';', $info['pwads']));
+        if(count($addonArr))
+        {
+            $serverMetadataLabel .= 'Add-ons: '. implode(' ', $addonArr);
+        }
+
+        // Format the game setup label.
+        $setupArr = array_filter(explode(' ', $info['setup']));
+        $gameMetadataLabel = 'Map: '. htmlspecialchars($info['map']) .' Setup: '. htmlspecialchars(implode(' ', $setupArr));
+
+        $playerCountLabel = 'Number of players currently in-game';
+        $playerMaxLabel = 'Maximum number of players';
+
+        // Begin html generation.
+        $html = '<span class="player-summary"><label title="'. htmlspecialchars($playerCountLabel) .'">'. htmlspecialchars($info['nump']) .'</label> / <label title="'. htmlspecialchars($playerMaxLabel) .'">'. htmlspecialchars($info['maxp']) .'</label></span> '
+               .'<label title="'. htmlspecialchars($serverMetadataLabel) .'"><span class="name">'. htmlspecialchars($info['name']) .'</span></label> '
+               .'<label title="'. htmlspecialchars($gameMetadataLabel) .'"><span class="game-mode">'. htmlspecialchars($info['mode']) .'</span></label>';
+
+        // Wrap it in the container used for styling and visual element ordering.
+        return '<span class="server">'. $html .'</span>';
+    }
+
+    public static function serverSorter($b, $a)
+    {
+        // Open servers are grouped together.
+        $diff = (integer)($b['open'] - $a['open']);
+        if($diff) return $diff;
+
+        // Servers with active players get priority
+        $diff = (integer)($b['nump'] - $a['nump']);
+        if($diff) return -($diff);
+
+        // Order by lexicographical difference in the server name.
+        $diff = strcmp($b['mode'], $a['mode']);
+        if($diff) return $diff;
+
+        // Order by lexicographical difference in the server name.
+        return strcmp($b['name'], $a['name']);
+    }
+
+    private function outputMasterStatus()
+    {
+        // Maximum number of servers listed in the summary.
+        $limit = 3;
+
+        $content = '';
+
+        /**
+         * @todo We do NOT need to interface with the master server. We are able
+         *       to implement all expected functionality by simply parsing the
+         *       XML feed output.
+         */
+        require_once(DIR_CLASSES.'/masterserver.class.php');
+        $db = new MasterServer();
+
+        // Build the servers collection.
+        $servers = array();
+        while(list($ident, $info) = each($db->servers))
+        {
+            if(!is_array($info)) continue;
+            $servers[] = $info;
+        }
+
+        // Sort the collection.
+        uasort($servers, array('self', 'serverSorter'));
+        $serverCount = count($servers);
+
+        // Generate the content.
+        $content .= '<span id="servers-label">'. ($serverCount > 0? 'Most Active Servers':'No Active Servers') .'</span><br />';
+        if($serverCount)
+        {
+            $playerCount = (integer)0;
+            foreach($servers as &$server)
+            {
+                $playerCount += $server['nump'];
+            }
+
+            $content .= '<ul>';
+
+            $n = (integer)0;
+            foreach($servers as &$server)
+            {
+                if($limit !== 0 && $n++ == $limit) break;
+
+                $content .= '<li>'. $this->generateServerSummary($server) .'</li>';
+            }
+
+            $content .= '</ul>';
+            $content .= '<span id="summary"><a href="/masterserver" title="Click here to see the complete server listing">'. ("$serverCount ". ($serverCount === 1? 'server':'servers') ." in total, {$playerCount} active ". ($playerCount === 1? 'player':'players')) .'</a></span>';
+        }
+
+        $content .= '<br /><span id="servers-timestamp">'. date("d-M-y H:i:s T" /*DATE_RFC850*/, time()). '</span>';
+
+        echo $content;
     }
 
     private function outputTopPanel()
@@ -351,7 +456,8 @@ class FrontController
         $rightTabs[] = array('page'=>'/masterserver', 'label'=>'Servers', 'tooltip'=>'Doomsday Engine Master Server');
 
 ?>
-        <div id="menu" class="hnav">
+        <div id="menuouter"><div id="menu" class="hnav">
+        <div id="divider"></div>
             <ul><section class="left">
 <?php
             echo $this->buildTabs($leftTabs, $page, "paddle_left", "paddle_left_select");
@@ -361,7 +467,8 @@ class FrontController
             echo $this->buildTabs($rightTabs, $page, "paddle_right", "paddle_right_select");
 ?></section>
             </ul>
-        </div>
+        <div id="divider2"></div>
+        </div></div>
 <?php
     }
 
@@ -370,12 +477,12 @@ class FrontController
 ?>
 <body>
 <div id="mainouter">
-    <div class="t"><div class="b"><div class="l"><div class="r"><div class="bl"><div class="br"><div class="tl"><div class="tr">
-        <div id="divider"></div>
+    <div id="main">
 <?php
+
         $this->outputMainMenu($page);
+
 ?>
-        <div id="divider2"></div>
         <div id="maininner">
             <div id="framepanel_bottom">
                 <div id="pageheading">
@@ -412,7 +519,7 @@ class FrontController
 
 ?>              <div id="servers"><?php
 
-        $this->outputServerStatus();
+        $this->outputMasterStatus();
 
 ?>              </div><?php
 
@@ -420,7 +527,7 @@ class FrontController
             </div>
         </div>
     </div>
-</div></div></div></div></div></div></div></div>
+</div>
 <div id="footer">
 <?php
 
@@ -598,6 +705,7 @@ class FrontController
         {
         case E_NOTICE:
         case E_USER_NOTICE:
+        case E_USER_WARNING:
         case E_STRICT:
             return true;
 

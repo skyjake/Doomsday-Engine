@@ -238,7 +238,7 @@ void B_UpdateDeviceStateAssociations(void)
                 // No longer valid.
                 dev->keys[j].assoc.flags |= IDAF_EXPIRED;
                 dev->keys[j].assoc.flags &= ~IDAF_TRIGGERED; // Not any more.
-                DD_ClearKeyRepeaterForKey(j);
+                DD_ClearKeyRepeaterForKey(j, -1);
             }
         }
 
@@ -348,11 +348,7 @@ void B_ActivateContext(bcontext_t* bc, boolean doActivate)
 
     if(bc->flags & BCF_ACQUIRE_ALL)
     {
-        int i;
-        for(i = 0; i < NUM_INPUT_DEVICES; ++i)
-        {
-            I_DeviceReset(i);
-        }
+        I_ResetAllDevices();
     }
 }
 
@@ -716,6 +712,34 @@ int B_BindingsForControl(int localPlayer, const char* controlName,
     return numFound;
 }
 
+boolean B_AreConditionsEqual(int count1, const statecondition_t* conds1,
+                             int count2, const statecondition_t* conds2)
+{
+    int i, k;
+
+    // Quick test (assumes there are no duplicated conditions).
+    if(count1 != count2) return false;
+
+    for(i = 0; i < count1; ++i)
+    {
+        boolean found = false;
+        for(k = 0; k < count2; ++k)
+        {
+            if(B_EqualConditions(conds1 + i, conds2 + k))
+            {
+                found = true;
+                break;
+            }
+        }
+        if(!found) return false;
+    }
+    return true;
+}
+
+/**
+ * Looks through context @a bc and looks for a binding that matches either
+ * @a match1 or @a match2.
+ */
 boolean B_FindMatchingBinding(bcontext_t* bc, evbinding_t* match1,
                               dbinding_t* match2, evbinding_t** evResult,
                               dbinding_t** dResult)
@@ -730,15 +754,11 @@ boolean B_FindMatchingBinding(bcontext_t* bc, evbinding_t* match1,
 
     for(e = bc->commandBinds.next; e != &bc->commandBinds; e = e->next)
     {
-        // TODO: A bit lazy here, should also match all the conditions.
-        // Now we just consider all bindings with conditions unique...
-        if(e->numConds)
-            continue;
-
         if(match1 && match1->bid != e->bid)
         {
-            if(match1->device == e->device && match1->id == e->id &&
-               match1->type == e->type && match1->state == e->state)
+            if(B_AreConditionsEqual(match1->numConds, match1->conds, e->numConds, e->conds) &&
+                    match1->device == e->device && match1->id == e->id &&
+                    match1->type == e->type && match1->state == e->state)
             {
                 *evResult = e;
                 return true;
@@ -746,8 +766,9 @@ boolean B_FindMatchingBinding(bcontext_t* bc, evbinding_t* match1,
         }
         if(match2)
         {
-            if(match2->device == e->device && match2->id == e->id &&
-               match2->type == e->type)
+            if(B_AreConditionsEqual(match2->numConds, match2->conds, e->numConds, e->conds) &&
+                    match2->device == e->device && match2->id == e->id &&
+                    match2->type == e->type)
             {
                 *evResult = e;
                 return true;
@@ -761,15 +782,11 @@ boolean B_FindMatchingBinding(bcontext_t* bc, evbinding_t* match1,
         {
             for(d = c->deviceBinds[i].next; d != &c->deviceBinds[i]; d = d->next)
             {
-                // Should also match all the conditions, now we just
-                // consider all bindings with conditions unique...
-                if(d->numConds)
-                    continue;
-
                 if(match1)
                 {
-                    if(match1->device == d->device && match1->id == d->id &&
-                       match1->type == d->type)
+                    if(B_AreConditionsEqual(match1->numConds, match1->conds, d->numConds, d->conds) &&
+                            match1->device == d->device && match1->id == d->id &&
+                            match1->type == d->type)
                     {
                         *dResult = d;
                         return true;
@@ -778,8 +795,9 @@ boolean B_FindMatchingBinding(bcontext_t* bc, evbinding_t* match1,
 
                 if(match2 && match2->bid != d->bid)
                 {
-                    if(match2->device == d->device && match2->id == d->id &&
-                       match2->type == d->type)
+                    if(B_AreConditionsEqual(match2->numConds, match2->conds, d->numConds, d->conds) &&
+                            match2->device == d->device && match2->id == d->id &&
+                            match2->type == d->type)
                     {
                         *dResult = d;
                         return true;

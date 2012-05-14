@@ -815,7 +815,7 @@ Sound {
   ID = "WIND";
   Name = "Wind";
   Priority = 1;
-  Max channels = 2;
+  Max channels = 1;
   Flags = "sf_shift";
 }
 

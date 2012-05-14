@@ -183,7 +183,7 @@ automapcfg_t* ST_AutomapConfig(void);
 void AM_GetMapColor(float* rgb, const float* uColor, int palidx, boolean customPal);
 
 const automapcfg_lineinfo_t* AM_GetInfoForLine(automapcfg_t* mcfg, automapcfg_objectname_t name);
-const automapcfg_lineinfo_t* AM_GetInfoForSpecialLine(automapcfg_t* mcfg, int special, const sector_t* frontsector, const sector_t* backsector, int automapFlags);
+const automapcfg_lineinfo_t* AM_GetInfoForSpecialLine(automapcfg_t* mcfg, int special, const Sector* frontsector, const Sector* backsector, int automapFlags);
 
 void AM_GetColorAndOpacity(automapcfg_t* mcfg, automapcfg_objectname_t name, float* r, float* g, float* b, float* a);
 void AM_SetColorAndOpacity(automapcfg_t* mcfg, automapcfg_objectname_t name, float r, float g, float b, float a);

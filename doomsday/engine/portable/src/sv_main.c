@@ -71,9 +71,10 @@ static MaterialArchive* materialDict;
  */
 void Sv_GetInfo(serverinfo_t* info)
 {
-    gamemap_t* currentMap = P_GetCurrentMap();
     ddstring_t* mapPath;
     int i;
+
+    assert(theMap);
 
     memset(info, 0, sizeof(*info));
 
@@ -96,7 +97,7 @@ void Sv_GetInfo(serverinfo_t* info)
     info->canJoin = (isServer != 0 && Sv_GetNumPlayers() < svMaxPlayers);
 
     // Identifier of the current map.
-    mapPath = Uri_Resolved(P_MapUri(currentMap));
+    mapPath = Uri_Resolved(GameMap_Uri(theMap));
     strncpy(info->map, Str_Text(mapPath), sizeof(info->map) - 1);
     Str_Delete(mapPath);
 
@@ -629,27 +630,25 @@ void Sv_GetPackets(void)
             }
             break;
 
-        case PCL_ACK_PLAYER_FIX:
-        {
-            player_t               *plr = &ddPlayers[netBuffer.player];
-            ddplayer_t             *ddpl = &plr->shared;
-            fixcounters_t          *acked = &ddpl->fixAcked;
+        case PCL_ACK_PLAYER_FIX: {
+            player_t* plr = &ddPlayers[netBuffer.player];
+            ddplayer_t* ddpl = &plr->shared;
+            fixcounters_t* acked = &ddpl->fixAcked;
 
             acked->angles = Reader_ReadInt32(msgReader);
-            acked->pos = Reader_ReadInt32(msgReader);
+            acked->origin = Reader_ReadInt32(msgReader);
             acked->mom = Reader_ReadInt32(msgReader);
 #ifdef _DEBUG
             Con_Message("PCL_ACK_PLAYER_FIX: (%i) Angles %i (%i), pos %i (%i), mom %i (%i).\n",
                         netBuffer.player,
                         acked->angles,
                         ddpl->fixCounter.angles,
-                        acked->pos,
-                        ddpl->fixCounter.pos,
+                        acked->origin,
+                        ddpl->fixCounter.origin,
                         acked->mom,
                         ddpl->fixCounter.mom);
 #endif
-            break;
-        }
+            break; }
 
         case PKT_PING:
             Net_PingResponse();
@@ -715,7 +714,7 @@ boolean Sv_PlayerArrives(unsigned int nodeID, char *name)
             strncpy(cl->name, name, PLAYERNAMELEN);
 
             ddpl->fixAcked.angles =
-                ddpl->fixAcked.pos =
+                ddpl->fixAcked.origin =
                 ddpl->fixAcked.mom = -1;
 
             Sv_InitPoolForClient(i);
@@ -870,7 +869,7 @@ void Sv_Handshake(int plrNum, boolean newPlayer)
         Sv_InitPoolForClient(plrNum);
     }
 
-    ddPlayers[plrNum].shared.flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
+    ddPlayers[plrNum].shared.flags |= DDPF_FIXANGLES | DDPF_FIXORIGIN | DDPF_FIXMOM;
 }
 
 void Sv_StartNetGame(void)
@@ -982,7 +981,7 @@ void Sv_SendPlayerFixes(int plrNum)
     player_t           *plr = &ddPlayers[plrNum];
     ddplayer_t         *ddpl = &plr->shared;
 
-    if(!(ddpl->flags & (DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM)))
+    if(!(ddpl->flags & (DDPF_FIXANGLES | DDPF_FIXORIGIN | DDPF_FIXMOM)))
     {
         // Nothing to fix.
         return;
@@ -996,7 +995,7 @@ void Sv_SendPlayerFixes(int plrNum)
 
     // Indicate what is included in the message.
     if(ddpl->flags & DDPF_FIXANGLES) fixes |= 1;
-    if(ddpl->flags & DDPF_FIXPOS) fixes |= 2;
+    if(ddpl->flags & DDPF_FIXORIGIN) fixes |= 2;
     if(ddpl->flags & DDPF_FIXMOM) fixes |= 4;
 
     Writer_WriteUInt32(msgWriter, fixes);
@@ -1016,17 +1015,17 @@ Con_Message("Sv_SendPlayerFixes: Sent angles (%i): angle=%f lookdir=%f\n",
 #endif
     }
 
-    if(ddpl->flags & DDPF_FIXPOS)
+    if(ddpl->flags & DDPF_FIXORIGIN)
     {
-        Writer_WriteInt32(msgWriter, ++ddpl->fixCounter.pos);
-        Writer_WriteFloat(msgWriter, ddpl->mo->pos[VX]);
-        Writer_WriteFloat(msgWriter, ddpl->mo->pos[VY]);
-        Writer_WriteFloat(msgWriter, ddpl->mo->pos[VZ]);
+        Writer_WriteInt32(msgWriter, ++ddpl->fixCounter.origin);
+        Writer_WriteFloat(msgWriter, ddpl->mo->origin[VX]);
+        Writer_WriteFloat(msgWriter, ddpl->mo->origin[VY]);
+        Writer_WriteFloat(msgWriter, ddpl->mo->origin[VZ]);
 
 #ifdef _DEBUG
 Con_Message("Sv_SendPlayerFixes: Sent position (%i): %f, %f, %f\n",
-            ddpl->fixCounter.pos,
-            ddpl->mo->pos[VX], ddpl->mo->pos[VY], ddpl->mo->pos[VZ]);
+            ddpl->fixCounter.origin,
+            ddpl->mo->origin[VX], ddpl->mo->origin[VY], ddpl->mo->origin[VZ]);
 #endif
     }
 
@@ -1049,7 +1048,7 @@ Con_Message("Sv_SendPlayerFixes: Sent momentum (%i): %f, %f, %f\n",
     // Send the fix message to everyone.
     Net_SendBuffer(DDSP_ALL_PLAYERS, 0);
 
-    ddpl->flags &= ~(DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM);
+    ddpl->flags &= ~(DDPF_FIXANGLES | DDPF_FIXORIGIN | DDPF_FIXMOM);
 #ifdef _DEBUG
     Con_Message("Sv_SendPlayerFixes: Cleared FIX flags of player %i.\n", plrNum);
 #endif
@@ -1064,6 +1063,8 @@ Con_Message("Sv_SendPlayerFixes: Sent momentum (%i): %f, %f, %f\n",
 void Sv_Ticker(timespan_t ticLength)
 {
     int i;
+
+    if(!isDedicated) return;
 
     // Note last angles for all players.
     for(i = 0; i < DDMAXPLAYERS; ++i)
@@ -1260,7 +1261,7 @@ boolean Sv_CanTrustClientPos(int plrNum)
     player_t* plr = &ddPlayers[plrNum];
     ddplayer_t* ddpl = &plr->shared;
 
-    if(ddpl->fixCounter.pos == ddpl->fixAcked.pos && !(ddpl->flags & DDPF_FIXPOS))
+    if(ddpl->fixCounter.origin == ddpl->fixAcked.origin && !(ddpl->flags & DDPF_FIXORIGIN))
     {
         return true;
     }

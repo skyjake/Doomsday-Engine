@@ -14,6 +14,7 @@ def encodedText(logText):
     logText = logText.encode('utf-8')
     logText = logText.replace('<', '&lt;')
     logText = logText.replace('>', '&gt;')
+    logText = filter(lambda c: c in string.whitespace or c > ' ', logText)
     return logText
 
 
@@ -28,13 +29,19 @@ class Entry:
         self._message = ''
         self.tags = []
         self.guessedTags = []
+        self.reverted = False
         
     def set_subject(self, subject):
         self.extra = ''
         
+        # Check for a revert.
+        if subject.startswith('Revert "') and subject[-1] == '"':
+            self.reverted = True
+            subject = subject[8:-1]
+        
         # Remote tags from the subject.
-        pos = subject.find(':')
-        if subject[pos + 1] in string.whitespace:
+        pos = subject.find(': ')
+        if pos > 0:
             for tag in subject[:pos].split('|'):
                 self.tags.append(tag.strip())
             subject = subject[pos + 1:].strip()
@@ -74,8 +81,8 @@ class Changes:
         self.parse()
         
     def should_ignore(self, subject):
-        if subject.startswith("Merge branch '%s' of" % config.BRANCH):
-            # Same-branch merges are not listed.
+        if subject.startswith("Merge branch") or subject.startswith("Merge commit"):
+            # Branch merges are not listed.
             return True
         return False
         
@@ -141,6 +148,7 @@ class Changes:
                 self.entries.append(entry)
 
         self.deduce_tags()
+        self.remove_reverts()
                 
     def all_tags(self):
         # These words are always considered to be valid tags.
@@ -150,6 +158,15 @@ class Changes:
                 if t not in tags: 
                     tags.append(t)
         return tags
+
+    def is_reverted(self, entry):
+        for e in self.entries:
+            if e.reverted and e.subject == entry.subject and e.tags == entry.tags:
+                return True
+        return False
+
+    def remove_reverts(self):
+        self.entries = filter(lambda e: not self.is_reverted(e), self.entries)
 
     def deduce_tags(self):
         # Look for known tags in untagged titles.
@@ -269,7 +286,10 @@ class Changes:
             os.chdir(os.path.join(config.DISTRIB_DIR, 'linux'))
 
             # First we need to update the version.
-            debVersion = build_version.DOOMSDAY_VERSION_FULL_PLAIN + '-' + Event().tag()
+            if build_version.DOOMSDAY_RELEASE_TYPE == 'Stable':
+                debVersion = build_version.DOOMSDAY_VERSION_FULL
+            else:
+                debVersion = build_version.DOOMSDAY_VERSION_FULL + '-' + Event().tag()
 
             # Always make one entry.
             print 'Marking new version...'

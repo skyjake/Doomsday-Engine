@@ -29,6 +29,8 @@
 #ifndef LIBDENG_REFRESH_MOBJ_SHADOW_H
 #define LIBDENG_REFRESH_MOBJ_SHADOW_H
 
+#include "dd_types.h"
+
 struct mobj_s;
 
 /**
@@ -50,17 +52,17 @@ void R_InitShadowProjectionListsForMap(void);
  */
 void R_InitShadowProjectionListsForNewFrame(void);
 
-float R_ShadowAttenuationFactor(float distance);
+float R_ShadowAttenuationFactor(coord_t distance);
 
 /**
  * Project all mobj shadows affecting the given quad (world space), calculate
  * coordinates (in texture space) then store into a new list of projections.
  *
- * \assume The coordinates of the given quad must be contained wholly within
- * the subsector specified. This is due to an optimization within the mobj
+ * @assume The coordinates of the given quad must be contained wholly within
+ * the BSP leaf specified. This is due to an optimization within the mobj
  * management which separates them according to their position in the BSP.
  *
- * @param ssec  Subsector within which the quad wholly resides.
+ * @param bspLeaf BspLeaf within which the quad wholly resides.
  * @param blendFactor  Multiplied with projection alpha.
  * @param topLeft  Top left coordinates of the surface being projected to.
  * @param bottomRight  Bottom right coordinates of the surface being projected to.
@@ -70,8 +72,8 @@ float R_ShadowAttenuationFactor(float distance);
  *
  * @return  Projection list identifier if surface is lit else @c 0.
  */
-uint R_ProjectShadowsToSurface(subsector_t* ssec, float blendFactor,
-    vec3_t topLeft, vec3_t bottomRight, vec3_t tangent, vec3_t bitangent, vec3_t normal);
+uint R_ProjectShadowsToSurface(BspLeaf* bspLeaf, float blendFactor,
+    coord_t topLeft[3], coord_t bottomRight[3], float tangent[3], float bitangent[3], float normal[3]);
 
 /**
  * Iterate over projections in the identified shadow-projection list, making
@@ -93,6 +95,6 @@ int R_IterateShadowProjections(uint listIdx, int (*callback) (const shadowprojec
  *
  * @return  Found plane else @c NULL if @a mobj is not presently sector-linked.
  */
-plane_t* R_FindShadowPlane(struct mobj_s* mobj);
+Plane* R_FindShadowPlane(struct mobj_s* mobj);
 
 #endif /* LIBDENG_REFRESH_SHADOW_H */

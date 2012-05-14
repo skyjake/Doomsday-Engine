@@ -97,6 +97,7 @@ void Rend_SpriteRegister(void)
 static __inline void renderQuad(dgl_vertex_t *v, dgl_color_t *c, dgl_texcoord_t *tc)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glBegin(GL_QUADS);
         glColor4ubv(c[0].rgba);
@@ -130,16 +131,16 @@ static int drawThinkerId(thinker_t* thinker, void* context)
     if(!P_IsMobjThinker(thinker->function)) return false;
 
     mo = (mobj_t*)thinker;
-    pos[VX] = mo->pos[VX];
-    pos[VY] = mo->pos[VY];
-    pos[VZ] = mo->pos[VZ] + mo->height/2;
+    pos[VX] = mo->origin[VX];
+    pos[VY] = mo->origin[VY];
+    pos[VZ] = mo->origin[VZ] + mo->height/2;
 
-    dist = M_Distance(pos, eye);
+    dist = V3f_Distance(pos, eye);
     alpha = 1.f - MIN_OF(dist, MAX_THINKER_DIST) / MAX_THINKER_DIST;
 
     if(alpha > 0)
     {
-        float scale = dist / (theWindow->geometry.size.width / 2);
+        float scale = dist / (Window_Width(theWindow) / 2);
 
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
@@ -167,17 +168,16 @@ void Rend_DrawThinkerIds(void)
 {
     float eye[3];
 
-    if(!devThinkerIds)
-        return;
+    if(!devThinkerIds || !theMap) return;
 
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_2D);
 
-    eye[VX] = vx;
-    eye[VY] = vz;
-    eye[VZ] = vy;
+    eye[VX] = vOrigin[VX];
+    eye[VY] = vOrigin[VZ];
+    eye[VZ] = vOrigin[VY];
 
-    P_IterateThinkers(NULL, 0x1 | 0x2, drawThinkerId, eye);
+    GameMap_IterateThinkers(theMap, NULL, 0x1 | 0x2, drawThinkerId, eye);
 
     // Restore previous state.
     glEnable(GL_DEPTH_TEST);
@@ -185,7 +185,7 @@ void Rend_DrawThinkerIds(void)
 
 void Rend_Draw3DPlayerSprites(void)
 {
-    int                 i;
+    int i;
 
     // Setup the modelview matrix.
     Rend_ModelViewMatrix(false);
@@ -381,16 +381,16 @@ static void setupPSpriteParams(rendpspriteparams_t* params, vispsprite_t* spr)
         if(useBias)
         {
             // Evaluate the position in the light grid.
-            LG_Evaluate(spr->center, params->ambientColor);
+            LG_Evaluate(spr->origin, params->ambientColor);
         }
         else
         {
             float               lightLevel;
             const float*        secColor =
-                R_GetSectorLightColor(spr->data.sprite.subsector->sector);
+                R_GetSectorLightColor(spr->data.sprite.bspLeaf->sector);
 
             // No need for distance attentuation.
-            lightLevel = spr->data.sprite.subsector->sector->lightLevel;
+            lightLevel = spr->data.sprite.bspLeaf->sector->lightLevel;
 
             // Add extra light plus bonus.
             lightLevel += R_ExtraLightDelta();
@@ -407,10 +407,10 @@ static void setupPSpriteParams(rendpspriteparams_t* params, vispsprite_t* spr)
         Rend_ApplyTorchLight(params->ambientColor, 0);
 
         lparams.starkLight = false;
-        lparams.center[VX] = spr->center[VX];
-        lparams.center[VY] = spr->center[VY];
-        lparams.center[VZ] = spr->center[VZ];
-        lparams.subsector = spr->data.sprite.subsector;
+        lparams.origin[VX] = spr->origin[VX];
+        lparams.origin[VY] = spr->origin[VY];
+        lparams.origin[VZ] = spr->origin[VZ];
+        lparams.bspLeaf = spr->data.sprite.bspLeaf;
         lparams.ambientColor = params->ambientColor;
 
         params->vLightListIdx = R_CollectAffectingLights(&lparams);
@@ -457,7 +457,7 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
     v4[VY] = params->pos[VY] + params->height;
 
     // All psprite vertices are co-plannar, so just copy the view front vector.
-    // \fixme: Can we do something better here?
+    // @todo: Can we do something better here?
     {
     const float* frontVec = R_ViewData(viewPlayer - ddPlayers)->frontVec;
     for(i = 0; i < 4; ++i)
@@ -733,9 +733,9 @@ static void setupModelParamsForVisPSprite(rendmodelparams_t* params,
     params->id = spr->data.model.id;
     params->selector = spr->data.model.selector;
     params->flags = spr->data.model.flags;
-    params->center[VX] = spr->center[VX];
-    params->center[VY] = spr->center[VY];
-    params->center[VZ] = spr->center[VZ];
+    params->origin[VX] = spr->origin[VX];
+    params->origin[VY] = spr->origin[VY];
+    params->origin[VZ] = spr->origin[VZ];
     params->srvo[VX] = spr->data.model.visOff[VX];
     params->srvo[VY] = spr->data.model.visOff[VY];
     params->srvo[VZ] = spr->data.model.visOff[VZ] - spr->data.model.floorClip;
@@ -769,16 +769,16 @@ static void setupModelParamsForVisPSprite(rendmodelparams_t* params,
 
         if(useBias)
         {
-            LG_Evaluate(params->center, params->ambientColor);
+            LG_Evaluate(params->origin, params->ambientColor);
         }
         else
         {
             float               lightLevel;
             const float*        secColor =
-                R_GetSectorLightColor(spr->data.model.subsector->sector);
+                R_GetSectorLightColor(spr->data.model.bspLeaf->sector);
 
             // Diminished light (with compression).
-            lightLevel = spr->data.model.subsector->sector->lightLevel;
+            lightLevel = spr->data.model.bspLeaf->sector->lightLevel;
 
             // No need for distance attentuation.
 
@@ -798,10 +798,10 @@ static void setupModelParamsForVisPSprite(rendmodelparams_t* params,
         Rend_ApplyTorchLight(params->ambientColor, params->distance);
 
         lparams.starkLight = true;
-        lparams.center[VX] = spr->center[VX];
-        lparams.center[VY] = spr->center[VY];
-        lparams.center[VZ] = spr->center[VZ];
-        lparams.subsector = spr->data.model.subsector;
+        lparams.origin[VX] = spr->origin[VX];
+        lparams.origin[VY] = spr->origin[VY];
+        lparams.origin[VZ] = spr->origin[VZ];
+        lparams.bspLeaf = spr->data.model.bspLeaf;
         lparams.ambientColor = params->ambientColor;
 
         params->vLightListIdx = R_CollectAffectingLights(&lparams);
@@ -827,7 +827,7 @@ static boolean generateHaloForVisSprite(const vissprite_t* spr, boolean primary)
     else
         occlussionFactor = (spr->data.flare.factor & 0x7f) / 127.0f;
 
-    return H_RenderHalo(spr->center[VX], spr->center[VY], spr->center[VZ],
+    return H_RenderHalo(spr->origin[VX], spr->origin[VY], spr->origin[VZ],
                         spr->data.flare.size,
                         spr->data.flare.tex,
                         spr->data.flare.color,
@@ -937,15 +937,15 @@ static materialvariant_t* chooseSpriteMaterial(const rendspriteparams_t* p)
 
 void Rend_RenderSprite(const rendspriteparams_t* params)
 {
-    float v1[3], v2[3], v3[3], v4[3];
+    coord_t v1[3], v2[3], v3[3], v4[3];
     Point2Rawf viewOffset = { 0, 0 }; ///< View-aligned offset to center point.
     Size2Rawf size = { 0, 0 };
     dgl_color_t quadColors[4];
     dgl_vertex_t quadNormals[4];
     boolean restoreMatrix = false;
     boolean restoreZ = false;
-    float spriteCenter[3];
-    float surfaceNormal[3];
+    coord_t spriteCenter[3];
+    coord_t surfaceNormal[3];
     materialvariant_t* mat = NULL;
     const materialsnapshot_t* ms = NULL;
     float s = 1, t = 1; ///< Bottom right coords.
@@ -998,7 +998,7 @@ void Rend_RenderSprite(const rendspriteparams_t* params)
     spriteCenter[VY] = params->center[VY] + params->srvo[VY];
     spriteCenter[VZ] = params->center[VZ] + params->srvo[VZ];
 
-    M_ProjectViewRelativeLine2D(spriteCenter, params->viewAligned,
+    R_ProjectViewRelativeLine2D(spriteCenter, params->viewAligned,
                                 size.width, viewOffset.x, v1, v4);
 
     v2[VX] = v1[VX];
@@ -1010,8 +1010,8 @@ void Rend_RenderSprite(const rendspriteparams_t* params)
     v2[VZ] = v3[VZ] = spriteCenter[VZ] + size.height / 2 + viewOffset.y;
 
     // Calculate the surface normal.
-    M_PointCrossProduct(v2, v1, v3, surfaceNormal);
-    M_Normalize(surfaceNormal);
+    V3d_PointCrossProduct(surfaceNormal, v2, v1, v3);
+    V3d_Normalize(surfaceNormal);
 
 /*#if _DEBUG
 // Draw the surface normal.
@@ -1026,9 +1026,11 @@ glEnd();
 #endif*/
 
     // All sprite vertices are co-plannar, so just copy the surface normal.
-    // \fixme: Can we do something better here?
+    // @todo: Can we do something better here?
     for(i = 0; i < 4; ++i)
-        memcpy(quadNormals[i].xyz, surfaceNormal, sizeof(surfaceNormal));
+    {
+        V3f_Copyd(quadNormals[i].xyz, surfaceNormal);
+    }
 
     if(!params->vLightListIdx)
     {
@@ -1059,10 +1061,10 @@ glEnd();
 
             if(alwaysAlign == 2)
             {   // Restricted camera alignment.
-                float dx = spriteCenter[VX] - vx;
-                float dy = spriteCenter[VY] - vz;
+                float dx = spriteCenter[VX] - vOrigin[VX];
+                float dy = spriteCenter[VY] - vOrigin[VZ];
                 float spriteAngle = BANG2DEG(
-                    bamsAtan2(spriteCenter[VZ] - vy, sqrt(dx * dx + dy * dy)));
+                    bamsAtan2(spriteCenter[VZ] - vOrigin[VY], sqrt(dx * dx + dy * dy)));
 
                 if(spriteAngle > 180)
                     spriteAngle -= 360;
@@ -1151,7 +1153,7 @@ glEnd();
 
         glTranslatef(params->center[VX], params->center[VZ], params->center[VY]);
 
-        VL_ListIterator(params->vLightListIdx, (float*)&params->distance, R_DrawVLightVector);
+        VL_ListIterator(params->vLightListIdx, (void*)&params->distance, R_DrawVLightVector);
 
         glMatrixMode(GL_MODELVIEW);
         glPopMatrix();

@@ -30,9 +30,17 @@
 #define LIBDENG_MAIN_H
 
 #include "dd_types.h"
-#include "game.h"
+#include "dd_plugin.h"
+#ifndef __cplusplus // Kludge: these aren't yet C++ compatible
+#  include "game.h"
+#  include "textures.h"
+#endif
 #include "sys_direc.h"
-#include "textures.h"
+#include "de/c_wrapper.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 // Verbose messages.
 #define VERBOSE(code)   { if(verbose >= 1) { code; } }
@@ -48,8 +56,10 @@
 #  define DEBUG_VERBOSE2_Message(code)
 #endif
 
+extern LegacyCore* de2LegacyCore;
+
 extern int verbose;
-extern FILE* outFile; // Output file for console messages.
+//extern FILE* outFile; // Output file for console messages.
 
 extern filename_t ddBasePath;
 extern filename_t ddRuntimePath, ddBinPath;
@@ -65,10 +75,11 @@ extern GETGAMEAPI GetGameAPI;
 #endif
 
 /// Currently active game.
-extern Game* theGame;
+extern struct Game_s* theGame;
 
 int DD_EarlyInit(void);
-int DD_Main(void);
+void DD_FinishInitializationAfterWindowReady(void);
+boolean DD_Init(void);
 
 /// @return  @c true if shutdown is in progress.
 boolean DD_IsShuttingDown(void);
@@ -121,18 +132,18 @@ int DD_GameCount(void);
 /**
  * @return  Game associated with unique index @a idx else @c NULL.
  */
-Game* DD_GameByIndex(int idx);
+struct Game_s* DD_GameByIndex(int idx);
 
 /**
  * @return  Game associated with @a identityKey else @c NULL.
  */
-Game* DD_GameByIdentityKey(const char* identityKey);
+struct Game_s* DD_GameByIdentityKey(const char* identityKey);
 
 /**
  * Is this the special "null-game" object (not a real playable game).
  * \todo Implement a proper null-game object for this.
  */
-boolean DD_IsNullGame(const Game* game);
+boolean DD_IsNullGame(const struct Game_s* game);
 
 /**
  * @defgroup printGameFlags  Print Game Flags.
@@ -151,7 +162,7 @@ boolean DD_IsNullGame(const Game* game);
  * @param info  Game record to be printed.
  * @param flags  &see printGameFlags
  */
-void DD_PrintGame(Game* game, int flags);
+void DD_PrintGame(struct Game_s* game, int flags);
 
 /**
  * Frees the info structures for all registered games.
@@ -163,5 +174,9 @@ D_CMD(Unload);
 D_CMD(Reset);
 D_CMD(ReloadGame);
 D_CMD(ListGames);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_MAIN_H */

@@ -119,6 +119,16 @@ typedef uint16_t        nodeindex_t;
 typedef uint16_t        thid_t;
 typedef double          timespan_t;
 
+/// All points in the map coordinate space should be defined using this type.
+typedef double          coord_t;
+
+typedef enum slopetype_e {
+    ST_HORIZONTAL,
+    ST_VERTICAL,
+    ST_POSITIVE,
+    ST_NEGATIVE
+} slopetype_t;
+
 /// \todo Should be a public typedef of a type defined by de::LumpDirectory.
 typedef int32_t         lumpnum_t;
 #define LUMPNAME_T_MAXLEN 9
@@ -164,13 +174,15 @@ typedef enum {
 
 #ifndef __BYTEBOOL__
 #define __BYTEBOOL__
-#  ifdef __cplusplus
-typedef bool                ddboolean_t; // Use builtin type in C++
-#  else // Plain C.
-#  define false             0
-#  define true              (!false)
-typedef int                 ddboolean_t;
+#  ifndef __cplusplus
+#    undef false
+#    define false           0
+#    undef true
+#    define true            1
+#  else
+#    define CPP_BOOL(x)     ((x) != 0)
 #  endif
+typedef int                 ddboolean_t;
 #endif
 #define boolean             ddboolean_t
 
@@ -202,14 +214,20 @@ typedef unsigned char binangle_t;
 #define DDMINLONG   ((int32_t)0x80000000)
 #define DDMINFLOAT  ((float)-(1E+37))
 
+#ifdef _DEBUG
+#  define DENG_DEBUG_ONLY(x)    x
+#else
+#  define DENG_DEBUG_ONLY(x)
+#endif
+
 // Forward declarations for map data types. The contents of these structs is
 // declared in p_maptypes.h.
-struct node_s;
+struct bspnode_s;
 struct vertex_s;
 struct linedef_s;
 struct side_s;
-struct seg_s;
-struct subsector_s;
+struct hedge_s;
+struct bspleaf_s;
 struct sector_s;
 struct polyblock_s;
 struct polyobj_s;
@@ -221,4 +239,3 @@ struct material_s;
 #include "uri.h"
 
 #endif /* LIBDENG_TYPES_H */
-

@@ -115,7 +115,11 @@ void Cl_CleanUp(void)
     clientPaused = false;
     handshakeReceived = false;
 
-    Cl_DestroyClientMobjs();
+    if(theMap)
+    {
+        GameMap_DestroyClMobjs(theMap);
+    }
+
     Cl_InitPlayers();
     Cl_WorldReset();
     GL_SetFilter(false);
@@ -175,9 +179,16 @@ void Cl_AnswerHandshake(void)
     gameTime = remoteGameTime;
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
+        /// @todo With multiple local players, must clear only the appropriate flags.
+        ddPlayers[i].shared.flags &= ~DDPF_LOCAL;
+
         ddPlayers[i].shared.inGame = (playersInGame & (1 << i)) != 0;
     }
     consolePlayer = displayPlayer = myConsole;
+    clients[consolePlayer].viewConsole = consolePlayer;
+
+    // Mark us as the only local player.
+    ddPlayers[consolePlayer].shared.flags |= DDPF_LOCAL;
 
     Smoother_Clear(clients[consolePlayer].smoother);
 
@@ -206,7 +217,7 @@ void Cl_AnswerHandshake(void)
     gx.NetPlayerEvent(consolePlayer, DDPE_ARRIVAL, 0);
 
     // Prepare the client-side data.
-    Cl_InitClientMobjs();
+    Cl_InitPlayers();
     Cl_WorldInit();
 
     // Get ready for ticking.
@@ -472,9 +483,9 @@ void Cl_Ticker(timespan_t ticLength)
             if(ddPlayers[i].shared.mo)
             {
                 Smoother_AddPos(clients[i].smoother, Cl_FrameGameTime(),
-                                ddPlayers[i].shared.mo->pos[VX],
-                                ddPlayers[i].shared.mo->pos[VY],
-                                ddPlayers[i].shared.mo->pos[VZ],
+                                ddPlayers[i].shared.mo->origin[VX],
+                                ddPlayers[i].shared.mo->origin[VY],
+                                ddPlayers[i].shared.mo->origin[VZ],
                                 false);
             }
 
@@ -483,14 +494,17 @@ void Cl_Ticker(timespan_t ticLength)
         }
 
         ClPlayer_ApplyPendingFixes(i);
-        ClPlayer_UpdatePos(i);
+        ClPlayer_UpdateOrigin(i);
 
 #ifdef _DEBUG
         Cl_Assertions(i);
 #endif
     }
 
-    Cl_ExpireMobjs();
+    if(theMap)
+    {
+        GameMap_ExpireClMobjs(theMap);
+    }
 }
 
 /**

@@ -302,15 +302,15 @@ void SN_StartSequence(mobj_t* mobj, int sequence)
     ActiveSequences++;
 }
 
-void SN_StartSequenceInSec(sector_t* sector, int seqBase)
+void SN_StartSequenceInSec(Sector* sector, int seqBase)
 {
-    SN_StartSequence(P_GetPtrp(sector, DMU_SOUND_ORIGIN),
+    SN_StartSequence(P_GetPtrp(sector, DMU_BASE),
                      seqBase + P_ToXSector(sector)->seqType);
 }
 
-void SN_StopSequenceInSec(sector_t* sector)
+void SN_StopSequenceInSec(Sector* sector)
 {
-    SN_StopSequence(P_GetPtrp(sector, DMU_SOUND_ORIGIN));
+    SN_StopSequence(P_GetPtrp(sector, DMU_BASE));
 }
 
 void SN_StartSequenceName(mobj_t* mobj, const char* name)

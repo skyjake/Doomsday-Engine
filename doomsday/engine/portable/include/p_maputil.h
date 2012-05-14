@@ -1,118 +1,198 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * p_maputil.h: Map Utility Routines
+ * @file p_maputil.h
+ * Map Utility Routines.
+ *
+ * @ingroup map
+ *
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-#ifndef __DOOMSDAY_MAP_UTILITIES_H__
-#define __DOOMSDAY_MAP_UTILITIES_H__
+#ifndef LIBDENG_MAP_UTILITIES_H
+#define LIBDENG_MAP_UTILITIES_H
 
 #include "m_vector.h"
 #include "p_object.h"
 
-#define MAXINTERCEPTS   128
-
-#define IS_SECTOR_LINKED(mo)    ((mo)->sPrev != NULL)
-#define IS_BLOCK_LINKED(mo)     ((mo)->bNext != NULL)
-
-extern float  opentop, openbottom, openrange, lowfloor;
-extern divline_t traceLOS;
-
-float           P_AccurateDistanceFixed(fixed_t dx, fixed_t dy);
-float           P_AccurateDistance(float dx, float dy);
-float           P_ApproxDistance(float dx, float dy);
-float           P_ApproxDistance3(float dx, float dy, float dz);
-void            P_LineUnitVector(linedef_t *line, float *unitvec);
-float           P_MobjPointDistancef(mobj_t *start, mobj_t *end,
-                                     float *fixpoint);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
- * @return  Non-zero if the point is on the right side of the specified line.
+ * @return  @c 0 if point is in front of the line, else @c 1.
  */
-int P_PointOnLinedefSide(float xy[2], const linedef_t* lineDef);
-int P_PointOnLinedefSideXY(float x, float y, const linedef_t* lineDef);
+int Divline_PointOnSide(const divline_t* line, coord_t const point[2]);
+int Divline_PointXYOnSide(const divline_t* line, coord_t x, coord_t y);
 
-int             P_PointOnLinedefSide2(double pointX, double pointY,
-                                   double lineDX, double lineDY,
-                                   double linePerp, double lineLength,
-                                   double epsilon);
+/**
+ * @return  Fractional intercept point along the first divline.
+ */
+fixed_t Divline_Intersection(const divline_t* v1, const divline_t* v2);
 
-int             P_BoxOnLineSide(const AABoxf* box, const linedef_t* ld);
-int             P_BoxOnLineSide2(float xl, float xh, float yl, float yh,
-                                 const linedef_t *ld);
-int             P_BoxOnLineSide3(const int bbox[4], double lineSX,
-                                 double lineSY, double lineDX, double lineDY,
-                                 double linePerp, double lineLength,
-                                 double epsilon);
-void            P_MakeDivline(const linedef_t* li, divline_t* dl);
-int             P_PointOnDivlineSide(float x, float y, const divline_t* line);
-float           P_InterceptVector(const divline_t* v2, const divline_t* v1);
-int             P_PointOnDivLineSidef(fvertex_t *pnt, fdivline_t *dline);
-float           P_FloatInterceptVertex(fvertex_t *start, fvertex_t *end,
-                                       fdivline_t *fdiv, fvertex_t *inter);
-void            P_LineOpening(linedef_t* linedef);
-void            P_MobjLink(mobj_t* mo, byte flags);
-int             P_MobjUnlink(mobj_t* mo);
+/**
+ * Retrieve an immutable copy of the LOS trace line for the CURRENT map.
+ *
+ * @note Always returns a valid divline_t even if there is no current map.
+ */
+const divline_t* P_TraceLOS(void);
 
-int PIT_AddLineDefIntercepts(linedef_t* ld, void* paramaters);
-int PIT_AddMobjIntercepts(mobj_t* mobj, void* paramaters);
+/**
+ * Retrieve an immutable copy of the TraceOpening state for the CURRENT map.
+ *
+ * @note Always returns a valid TraceOpening even if there is no current map.
+ */
+const TraceOpening* P_TraceOpening(void);
 
-int             P_MobjLinesIterator(mobj_t *mo,
-                                    int (*func) (linedef_t *, void *),
-                                    void *);
-int             P_MobjSectorsIterator(mobj_t *mo,
-                                      int (*func) (sector_t *, void *),
-                                      void *data);
-int             P_LineMobjsIterator(linedef_t *line,
-                                    int (*func) (mobj_t *, void *),
-                                    void *data);
-int             P_SectorTouchingMobjsIterator(sector_t *sector,
-                                              int (*func) (mobj_t *,
-                                                               void *),
-                                              void *data);
+/**
+ * Update the TraceOpening state for the CURRENT map according to the opening
+ * defined by the inner-minimal planes heights which intercept @a linedef
+ */
+void P_SetTraceOpening(LineDef* linedef);
 
-int P_MobjsBoxIterator(const AABoxf* box, int (*callback) (mobj_t*, void*), void* paramaters);
+/**
+ * Determine the BSP leaf on the back side of the BS partition that lies in
+ * front of the specified point within the CURRENT map's coordinate space.
+ *
+ * @note Always returns a valid BspLeaf although the point may not actually lay
+ *       within it (however it is on the same side of the space partition)!
+ *
+ * @param x  X coordinate of the point to test.
+ * @param y  Y coordinate of the point to test.
+ * @return  BspLeaf instance for that BSP node's leaf.
+ */
+BspLeaf* P_BspLeafAtPoint(coord_t const point[2]);
+BspLeaf* P_BspLeafAtPointXY(coord_t x, coord_t y);
 
-int P_LinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, void*), void* paramaters);
+/**
+ * Is the point inside the sector, according to the edge lines of the BspLeaf?
+ *
+ * @param point   XY coordinate to test.
+ * @param sector  Sector to test.
+ *
+ * @return  @c true, if the point is inside the sector.
+ */
+boolean P_IsPointInSector(coord_t const point[2], const Sector* sector);
 
-int P_PolyobjsBoxIterator(const AABoxf* box, int (*callback) (polyobj_t*, void*), void* paramaters);
+/**
+ * Is the point inside the sector, according to the edge lines of the BspLeaf?
+ *
+ * @param x       X coordinate to test.
+ * @param y       Y coordinate to test.
+ * @param sector  Sector to test.
+ *
+ * @return  @c true, if the point is inside the sector.
+ */
+boolean P_IsPointXYInSector(coord_t x, coord_t y, const Sector* sector);
 
-int P_PolyobjLinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, void*), void* paramaters);
+/**
+ * Is the point inside the BspLeaf (according to the edges)?
+ *
+ * Uses the well-known algorithm described here: http://www.alienryderflex.com/polygon/
+ *
+ * @param point    XY coordinate to test.
+ * @param bspLeaf  BspLeaf to test.
+ *
+ * @return  @c true, if the point is inside the BspLeaf.
+ */
+boolean P_IsPointInBspLeaf(coord_t const point[2], const BspLeaf* bspLeaf);
 
-// LineDefs and Polyobj in LineDefs (note Polyobj LineDefs are iterated first).
-int P_AllLinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, void*), void* paramaters);
+/**
+ * Is the point inside the BspLeaf (according to the edges)?
+ *
+ * Uses the well-known algorithm described here: http://www.alienryderflex.com/polygon/
+ *
+ * @param x        X coordinate to test.
+ * @param y        Y coordinate to test.
+ * @param bspLeaf  BspLeaf to test.
+ *
+ * @return  @c true, if the point is inside the BspLeaf.
+ */
+boolean P_IsPointXYInBspLeaf(coord_t x, coord_t y, const BspLeaf* bspLeaf);
 
-int P_SubsectorsBoxIterator(const AABoxf* box, sector_t *sector, int (*callback) (subsector_t*, void*), void* paramaters);
+void P_MobjLink(mobj_t* mo, byte flags);
+int P_MobjUnlink(mobj_t* mo);
 
-int P_PathTraverse(float const from[2], float const to[2], int flags, traverser_t callback);
-int P_PathTraverse2(float const from[2], float const to[2], int flags, traverser_t callback, void* paramaters);
+/**
+ * @important Caller must ensure that the mobj is currently unlinked.
+ */
+void P_LinkMobjToLineDefs(mobj_t* mo);
+
+/**
+ * Unlinks the mobj from all the lines it's been linked to. Can be called
+ * without checking that the list does indeed contain lines.
+ */
+boolean P_UnlinkMobjFromLineDefs(mobj_t* mo);
+
+/**
+ * @note  The mobj must be currently unlinked.
+ */
+void P_LinkMobjInBlockmap(mobj_t* mo);
+
+boolean P_UnlinkMobjFromBlockmap(mobj_t* mo);
+
+int PIT_AddLineDefIntercepts(LineDef* ld, void* parameters);
+int PIT_AddMobjIntercepts(mobj_t* mobj, void* parameters);
+
+int P_MobjLinesIterator(mobj_t* mo, int (*callback) (LineDef*, void*), void* parameters);
+
+int P_MobjSectorsIterator(mobj_t* mo, int (*callback) (Sector*, void*), void* parameters);
+
+int P_LineMobjsIterator(LineDef* lineDef, int (*callback) (mobj_t*, void*), void* parameters);
+
+int P_SectorTouchingMobjsIterator(Sector* sector, int (*callback) (mobj_t*, void*), void *parameters);
+
+int P_MobjsBoxIterator(const AABoxd* box, int (*callback) (mobj_t*, void*), void* parameters);
+
+int P_LinesBoxIterator(const AABoxd* box, int (*callback) (LineDef*, void*), void* parameters);
+
+/**
+ * The validCount flags are used to avoid checking polys that are marked in
+ * multiple mapblocks, so increment validCount before the first call, then
+ * make one or more calls to it.
+ */
+int P_PolyobjsBoxIterator(const AABoxd* box, int (*callback) (Polyobj*, void*), void* parameters);
+
+int P_PolyobjLinesBoxIterator(const AABoxd* box, int (*callback) (LineDef*, void*), void* parameters);
+
+/**
+ * LineDefs and Polyobj LineDefs (note Polyobj LineDefs are iterated first).
+ *
+ * The validCount flags are used to avoid checking lines that are marked
+ * in multiple mapblocks, so increment validCount before the first call
+ * to GameMap_IterateCellLineDefs(), then make one or more calls to it.
+ */
+int P_AllLinesBoxIterator(const AABoxd* box, int (*callback) (LineDef*, void*), void* parameters);
+
+int P_BspLeafsBoxIterator(const AABoxd* box, Sector* sector, int (*callback) (BspLeaf*, void*), void* parameters);
+
+int P_PathTraverse2(coord_t const from[2], coord_t const to[2], int flags, traverser_t callback, void* parameters);
+int P_PathTraverse(coord_t const from[2], coord_t const to[2], int flags, traverser_t callback/*parameters=NULL*/);
 
 /**
  * Same as P_PathTraverse except 'from' and 'to' arguments are specified
  * as two sets of separate X and Y map space coordinates.
  */
-int P_PathTraverseXY(float fromX, float fromY, float toX, float toY, int flags, traverser_t callback);
-int P_PathTraverseXY2(float fromX, float fromY, float toX, float toY, int flags, traverser_t callback, void* paramaters);
+int P_PathXYTraverse2(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags, traverser_t callback, void* paramaters);
+int P_PathXYTraverse(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags, traverser_t callback/*parameters=NULL*/);
+
+boolean P_CheckLineSight(coord_t const from[3], coord_t const to[3], coord_t bottomSlope, coord_t topSlope, int flags);
+
+#ifdef __cplusplus
+} // extern "C"
 #endif
+
+#endif /// LIBDENG_MAP_UTILITIES_H

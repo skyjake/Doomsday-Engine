@@ -29,6 +29,7 @@
 #ifndef __DOOMSDAY_AUDIO__
 #define __DOOMSDAY_AUDIO__
 
+#include "audiodriver.h"
 #include "s_main.h"
 #include "s_environ.h"
 #include "s_sfx.h"

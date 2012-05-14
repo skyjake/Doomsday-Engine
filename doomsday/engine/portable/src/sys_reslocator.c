@@ -34,6 +34,8 @@
 #  include <sys/stat.h>
 #endif
 
+#include <ctype.h>
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_filesys.h"
@@ -584,6 +586,17 @@ static void createPackagesResourceNamespace(void)
     FileDirectory* directory;
     Uri** searchPaths;
 
+#ifdef UNIX
+    {
+        // Check the system-level config files.
+        filename_t fn;
+        if(DD_Unix_GetConfigValue("paths", "iwaddir", fn, FILENAME_T_MAXLEN))
+        {
+            doomWadDir = Str_Set(Str_New(), fn);
+        }
+    }
+#endif
+
     // Is the DOOMWADPATH environment variable in use?
     if(!ArgCheck("-nodoomwadpath") && getenv("DOOMWADPATH"))
     {
@@ -644,7 +657,7 @@ static void createPackagesResourceNamespace(void)
     }
 
     // Is the DOOMWADDIR environment variable in use?
-    if(!ArgCheck("-nodoomwaddir") && getenv("DOOMWADDIR"))
+    if(!doomWadDir && !ArgCheck("-nodoomwaddir") && getenv("DOOMWADDIR"))
     {
         doomWadDir = Str_New(); Str_Set(doomWadDir, getenv("DOOMWADDIR"));
         Str_Strip(doomWadDir);
@@ -1145,11 +1158,16 @@ uint F_FindResourceStr4(resourceclass_t rclass, const ddstring_t* searchPaths,
     return result;
 }
 
-uint F_FindResourceForRecord(AbstractResource* rec, ddstring_t* foundPath)
+uint F_FindResourceForRecord2(AbstractResource* rec, ddstring_t* foundPath, const Uri* const* searchPaths)
 {
     return findResource(AbstractResource_ResourceClass(rec),
-                        (const Uri* const*) AbstractResource_SearchPaths(rec),
-                        foundPath, RLF_DEFAULT, NULL/*no optional suffix*/);
+                        searchPaths, foundPath, RLF_DEFAULT, NULL/*no optional suffix*/);
+}
+
+uint F_FindResourceForRecord(AbstractResource* rec, ddstring_t* foundPath)
+{
+    return F_FindResourceForRecord2(rec, foundPath,
+                                    (const Uri* const*) AbstractResource_SearchPaths(rec));
 }
 
 uint F_FindResourceStr3(resourceclass_t rclass, const ddstring_t* searchPaths,

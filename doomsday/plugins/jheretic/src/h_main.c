@@ -184,7 +184,6 @@ void H_PreInit(void)
     // but these will be used no such files are found.
     memset(&cfg, 0, sizeof(cfg));
     cfg.playerMoveSpeed = 1;
-    cfg.dclickUse = false;
     cfg.povLookAround = true;
     cfg.statusbarScale = 1;
     cfg.screenBlocks = cfg.setBlocks = 10;
@@ -221,6 +220,7 @@ void H_PreInit(void)
     cfg.hudColor[2] = .278f;
     cfg.hudColor[3] = 1;
     cfg.hudIconAlpha = 1;
+    cfg.xhairAngle = 0;
     cfg.xhairSize = .5f;
     cfg.xhairVitality = false;
     cfg.xhairColor[0] = 1;
@@ -380,7 +380,7 @@ void H_PostInit(void)
     int p;
 
     /// \kludge Shareware WAD has different border background.
-    /// \fixme Do this properly!
+    /// @todo Do this properly!
     if(gameMode == heretic_shareware)
         borderGraphics[0] = "Flats:FLOOR04";
     else

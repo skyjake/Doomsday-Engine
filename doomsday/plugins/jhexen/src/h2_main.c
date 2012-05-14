@@ -41,9 +41,10 @@
 #include "g_defs.h"
 #include "m_argv.h"
 #include "p_inventory.h"
+#include "p_map.h"
 #include "p_player.h"
 #include "p_saveg.h"
-#include "p_map.h"
+#include "p_sound.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -190,7 +191,6 @@ void X_PreInit(void)
     }
     cfg.playerMoveSpeed = 1;
     cfg.statusbarScale = 1;
-    cfg.dclickUse = false;
     cfg.screenBlocks = cfg.setBlocks = 10;
     cfg.hudShown[HUD_MANA] = true;
     cfg.hudShown[HUD_HEALTH] = true;
@@ -202,6 +202,7 @@ void X_PreInit(void)
     }
     cfg.lookSpeed = 3;
     cfg.turnSpeed = 1;
+    cfg.xhairAngle = 0;
     cfg.xhairSize = .5f;
     cfg.xhairVitality = false;
     cfg.xhairColor[0] = 1;

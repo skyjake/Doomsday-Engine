@@ -641,13 +641,12 @@ void C_DECL A_Raise(player_t *plr, pspdef_t *psp)
     }
 }
 
-void AdjustPlayerAngle(mobj_t *pmo)
+void AdjustPlayerAngle(mobj_t* pmo)
 {
     angle_t angle;
-    int     difference;
+    int difference;
 
-    angle = R_PointToAngle2(pmo->pos[VX], pmo->pos[VY],
-                            lineTarget->pos[VX], lineTarget->pos[VY]);
+    angle = M_PointToAngle2(pmo->origin, lineTarget->origin);
     difference = (int) angle - (int) pmo->angle;
     if(abs(difference) > MAX_ANGLE_ADJUST)
     {
@@ -660,11 +659,11 @@ void AdjustPlayerAngle(mobj_t *pmo)
     pmo->player->plr->flags |= DDPF_FIXANGLES;
 }
 
-void C_DECL A_SnoutAttack(player_t *plr, pspdef_t *psp)
+void C_DECL A_SnoutAttack(player_t* plr, pspdef_t* psp)
 {
-    angle_t     angle;
-    int         damage;
-    float       slope;
+    angle_t angle;
+    int damage;
+    float slope;
 
     damage = 3 + (P_Random() & 3);
     angle = plr->plr->mo->angle;
@@ -776,22 +775,22 @@ void C_DECL A_FSwordAttack(player_t *plr, pspdef_t *psp)
     P_ShotAmmo(plr);
 
     mo = plr->plr->mo;
-    P_SPMAngleXYZ(MT_FSWORD_MISSILE, mo->pos[VX], mo->pos[VY], mo->pos[VZ] - 10,
+    P_SPMAngleXYZ(MT_FSWORD_MISSILE, mo->origin[VX], mo->origin[VY], mo->origin[VZ] - 10,
                   mo, mo->angle + ANG45 / 4);
-    P_SPMAngleXYZ(MT_FSWORD_MISSILE, mo->pos[VX], mo->pos[VY], mo->pos[VZ] - 5,
+    P_SPMAngleXYZ(MT_FSWORD_MISSILE, mo->origin[VX], mo->origin[VY], mo->origin[VZ] - 5,
                   mo, mo->angle + ANG45 / 8);
-    P_SPMAngleXYZ(MT_FSWORD_MISSILE, mo->pos[VX], mo->pos[VY], mo->pos[VZ],
+    P_SPMAngleXYZ(MT_FSWORD_MISSILE, mo->origin[VX], mo->origin[VY], mo->origin[VZ],
                   mo, mo->angle);
-    P_SPMAngleXYZ(MT_FSWORD_MISSILE, mo->pos[VX], mo->pos[VY], mo->pos[VZ] + 5,
+    P_SPMAngleXYZ(MT_FSWORD_MISSILE, mo->origin[VX], mo->origin[VY], mo->origin[VZ] + 5,
                   mo, mo->angle - ANG45 / 8);
-    P_SPMAngleXYZ(MT_FSWORD_MISSILE, mo->pos[VX], mo->pos[VY], mo->pos[VZ] + 10,
+    P_SPMAngleXYZ(MT_FSWORD_MISSILE, mo->origin[VX], mo->origin[VY], mo->origin[VZ] + 10,
                   mo, mo->angle - ANG45 / 4);
     S_StartSound(SFX_FIGHTER_SWORD_FIRE, mo);
 }
 
-void C_DECL A_FSwordAttack2(mobj_t *mo)
+void C_DECL A_FSwordAttack2(mobj_t* mo)
 {
-    angle_t         angle = mo->angle;
+    angle_t angle = mo->angle;
 
     P_SpawnMissileAngle(MT_FSWORD_MISSILE, mo, angle + ANG45 / 4, 0);
     P_SpawnMissileAngle(MT_FSWORD_MISSILE, mo, angle + ANG45 / 8, 0);
@@ -801,24 +800,24 @@ void C_DECL A_FSwordAttack2(mobj_t *mo)
     S_StartSound(SFX_FIGHTER_SWORD_FIRE, mo);
 }
 
-void C_DECL A_FSwordFlames(mobj_t *mo)
+void C_DECL A_FSwordFlames(mobj_t* mo)
 {
-    int             i;
-    angle_t         angle;
-    float           pos[3];
+    coord_t pos[3];
+    angle_t angle;
+    int i;
 
     for(i = 1 + (P_Random() & 3); i; i--)
     {
-        pos[VX] = mo->pos[VX] + FIX2FLT((P_Random() - 128) << 12);
-        pos[VY] = mo->pos[VY] + FIX2FLT((P_Random() - 128) << 12);
-        pos[VZ] = mo->pos[VZ] + FIX2FLT((P_Random() - 128) << 11);
-        angle = R_PointToAngle2(mo->pos[VX], mo->pos[VY], pos[VX], pos[VY]);
+        pos[VX] = mo->origin[VX] + FIX2FLT((P_Random() - 128) << 12);
+        pos[VY] = mo->origin[VY] + FIX2FLT((P_Random() - 128) << 12);
+        pos[VZ] = mo->origin[VZ] + FIX2FLT((P_Random() - 128) << 11);
+        angle = M_PointToAngle2(mo->origin, pos);
 
-        P_SpawnMobj3fv(MT_FSWORD_FLAME, pos, angle, 0);
+        P_SpawnMobj(MT_FSWORD_FLAME, pos, angle, 0);
     }
 }
 
-void C_DECL A_MWandAttack(player_t *plr, pspdef_t *psp)
+void C_DECL A_MWandAttack(player_t* plr, pspdef_t* psp)
 {
     if(IS_CLIENT) return;
 
@@ -826,7 +825,7 @@ void C_DECL A_MWandAttack(player_t *plr, pspdef_t *psp)
     S_StartSound(SFX_MAGE_WAND_FIRE, plr->plr->mo);
 }
 
-void C_DECL A_LightningReady(player_t *plr, pspdef_t *psp)
+void C_DECL A_LightningReady(player_t* plr, pspdef_t* psp)
 {
     A_WeaponReady(plr, psp);
     if(P_Random() < 160)
@@ -842,12 +841,12 @@ void C_DECL A_LightningClip(mobj_t *mo)
 
     if(mo->type == MT_LIGHTNING_FLOOR)
     {
-        mo->pos[VZ] = mo->floorZ;
+        mo->origin[VZ] = mo->floorZ;
         target = mo->lastEnemy->tracer;
     }
     else if(mo->type == MT_LIGHTNING_CEILING)
     {
-        mo->pos[VZ] = mo->ceilingZ - mo->height;
+        mo->origin[VZ] = mo->ceilingZ - mo->height;
         target = mo->tracer;
     }
 
@@ -883,18 +882,17 @@ void C_DECL A_LightningClip(mobj_t *mo)
         }
         else
         {
-            mo->angle = R_PointToAngle2(mo->pos[VX], mo->pos[VY],
-                                        target->pos[VX], target->pos[VY]);
+            mo->angle = M_PointToAngle2(mo->origin, target->origin);
             mo->mom[MX] = mo->mom[MY] = 0;
             P_ThrustMobj(mo, mo->angle, mo->info->speed / 2);
         }
     }
 }
 
-void C_DECL A_LightningZap(mobj_t *mo)
+void C_DECL A_LightningZap(mobj_t* mo)
 {
-    mobj_t         *pmo;
-    float           deltaZ;
+    mobj_t* pmo;
+    coord_t deltaZ;
 
     A_LightningClip(mo);
 
@@ -914,10 +912,10 @@ void C_DECL A_LightningZap(mobj_t *mo)
         deltaZ = -10;
     }
 
-    if((pmo = P_SpawnMobj3f(MT_LIGHTNING_ZAP,
-                            mo->pos[VX] + (FIX2FLT(P_Random() - 128) * mo->radius / 256),
-                            mo->pos[VY] + (FIX2FLT(P_Random() - 128) * mo->radius / 256),
-                            mo->pos[VZ] + deltaZ, P_Random() << 24, 0)))
+    if((pmo = P_SpawnMobjXYZ(MT_LIGHTNING_ZAP,
+                             mo->origin[VX] + (FIX2FLT(P_Random() - 128) * mo->radius / 256),
+                             mo->origin[VY] + (FIX2FLT(P_Random() - 128) * mo->radius / 256),
+                             mo->origin[VZ] + deltaZ, P_Random() << 24, 0)))
     {
         pmo->lastEnemy = mo;
         pmo->mom[MX] = mo->mom[MX];
@@ -991,7 +989,7 @@ void C_DECL A_LastZap(mobj_t* mo)
 {
     mobj_t*             pmo;
 
-    if((pmo = P_SpawnMobj3fv(MT_LIGHTNING_ZAP, mo->pos, P_Random() << 24, 0)))
+    if((pmo = P_SpawnMobj(MT_LIGHTNING_ZAP, mo->origin, P_Random() << 24, 0)))
     {
         P_MobjChangeState(pmo, S_LIGHTNING_ZAP_X1);
         pmo->mom[MZ] = 40;
@@ -1075,18 +1073,18 @@ void C_DECL A_MStaffPalette(player_t* plr, pspdef_t* psp)
     }
 }
 
-void C_DECL A_MStaffWeave(mobj_t *mo)
+void C_DECL A_MStaffWeave(mobj_t* mo)
 {
-    float       pos[2];
-    uint        weaveXY, weaveZ;
-    uint        an;
+    coord_t pos[2];
+    uint weaveXY, weaveZ;
+    uint an;
 
     weaveXY = mo->special2 >> 16;
     weaveZ = mo->special2 & 0xFFFF;
     an = (mo->angle + ANG90) >> ANGLETOFINESHIFT;
 
-    pos[VX] = mo->pos[VX];
-    pos[VY] = mo->pos[VY];
+    pos[VX] = mo->origin[VX];
+    pos[VY] = mo->origin[VY];
 
     pos[VX] -= FIX2FLT(finecosine[an]) * (FLOATBOBOFFSET(weaveXY) * 4);
     pos[VY] -= FIX2FLT(finesine[an]) * (FLOATBOBOFFSET(weaveXY) * 4);
@@ -1095,14 +1093,14 @@ void C_DECL A_MStaffWeave(mobj_t *mo)
     pos[VX] += FIX2FLT(finecosine[an]) * (FLOATBOBOFFSET(weaveXY) * 4);
     pos[VY] += FIX2FLT(finesine[an]) * (FLOATBOBOFFSET(weaveXY) * 4);
 
-    P_TryMove(mo, pos[VX], pos[VY]);
-    mo->pos[VZ] -= FLOATBOBOFFSET(weaveZ) * 2;
+    P_TryMoveXY(mo, pos[VX], pos[VY]);
+    mo->origin[VZ] -= FLOATBOBOFFSET(weaveZ) * 2;
     weaveZ = (weaveZ + 3) & 63;
-    mo->pos[VZ] += FLOATBOBOFFSET(weaveZ) * 2;
+    mo->origin[VZ] += FLOATBOBOFFSET(weaveZ) * 2;
 
-    if(mo->pos[VZ] <= mo->floorZ)
+    if(mo->origin[VZ] <= mo->floorZ)
     {
-        mo->pos[VZ] = mo->floorZ + 1;
+        mo->origin[VZ] = mo->floorZ + 1;
     }
     mo->special2 = weaveZ + (weaveXY << 16);
 }
@@ -1338,13 +1336,13 @@ void C_DECL A_CMaceAttack(player_t *plr, pspdef_t *psp)
     return;
 }
 
-void C_DECL A_CStaffCheck(player_t *plr, pspdef_t *psp)
+void C_DECL A_CStaffCheck(player_t* plr, pspdef_t* psp)
 {
-    int         i;
-    mobj_t     *pmo;
-    int         damage, newLife;
-    angle_t     angle;
-    float       slope;
+    int i;
+    mobj_t* pmo;
+    int damage, newLife;
+    angle_t angle;
+    float slope;
 
     pmo = plr->plr->mo;
     damage = 20 + (P_Random() & 15);
@@ -1357,9 +1355,7 @@ void C_DECL A_CStaffCheck(player_t *plr, pspdef_t *psp)
         {
             P_LineAttack(pmo, angle, 1.5 * MELEERANGE, slope, damage);
 
-            pmo->angle =
-                R_PointToAngle2(pmo->pos[VX], pmo->pos[VY],
-                                lineTarget->pos[VX], lineTarget->pos[VY]);
+            pmo->angle = M_PointToAngle2(pmo->origin, lineTarget->origin);
 
             if((lineTarget->player || (lineTarget->flags & MF_COUNTKILL)) &&
                (!(lineTarget->flags2 & (MF2_DORMANT + MF2_INVULNERABLE))))
@@ -1380,9 +1376,8 @@ void C_DECL A_CStaffCheck(player_t *plr, pspdef_t *psp)
         if(lineTarget)
         {
             P_LineAttack(pmo, angle, 1.5 * MELEERANGE, slope, damage);
-            pmo->angle =
-                R_PointToAngle2(pmo->pos[VX], pmo->pos[VY],
-                                lineTarget->pos[VX], lineTarget->pos[VY]);
+            pmo->angle = M_PointToAngle2(pmo->origin, lineTarget->origin);
+
             if(lineTarget->player || (lineTarget->flags & MF_COUNTKILL))
             {
                 newLife = plr->health + (damage >> 4);
@@ -1419,16 +1414,16 @@ void C_DECL A_CStaffAttack(player_t *plr, pspdef_t *psp)
     S_StartSound(SFX_CLERIC_CSTAFF_FIRE, plr->plr->mo);
 }
 
-void C_DECL A_CStaffMissileSlither(mobj_t *actor)
+void C_DECL A_CStaffMissileSlither(mobj_t* actor)
 {
-    float       pos[2];
-    uint        an, weaveXY;
+    coord_t pos[2];
+    uint an, weaveXY;
 
     weaveXY = actor->special2;
     an = (actor->angle + ANG90) >> ANGLETOFINESHIFT;
 
-    pos[VX] = actor->pos[VX];
-    pos[VY] = actor->pos[VY];
+    pos[VX] = actor->origin[VX];
+    pos[VY] = actor->origin[VY];
 
     pos[VX] -= FIX2FLT(finecosine[an]) * FLOATBOBOFFSET(weaveXY);
     pos[VY] -= FIX2FLT(finesine[an]) * FLOATBOBOFFSET(weaveXY);
@@ -1437,7 +1432,7 @@ void C_DECL A_CStaffMissileSlither(mobj_t *actor)
     pos[VX] += FIX2FLT(finecosine[an]) * FLOATBOBOFFSET(weaveXY);
     pos[VY] += FIX2FLT(finesine[an]) * FLOATBOBOFFSET(weaveXY);
 
-    P_TryMove(actor, pos[VX], pos[VY]);
+    P_TryMoveXY(actor, pos[VX], pos[VY]);
     actor->special2 = weaveXY;
 }
 
@@ -1481,13 +1476,12 @@ void C_DECL A_CFlamePuff(mobj_t* mo)
 
 void C_DECL A_CFlameMissile(mobj_t* mo)
 {
-    int                 i;
-    uint                an, an90;
-    float               dist;
-    mobj_t*             pmo;
+    int i;
+    uint an, an90;
+    coord_t dist;
+    mobj_t* pmo;
 
-    if(!mo)
-        return;
+    if(!mo) return;
 
     A_UnHideThing(mo);
     S_StartSound(SFX_CLERIC_FLAME_EXPLODE, mo);
@@ -1501,11 +1495,11 @@ void C_DECL A_CFlameMissile(mobj_t* mo)
             an = (i * ANG45) >> ANGLETOFINESHIFT;
             an90 = (i * ANG45 + ANG90) >> ANGLETOFINESHIFT;
 
-            if((pmo = P_SpawnMobj3f(MT_CIRCLEFLAME,
-                                    blockingMobj->pos[VX] + dist * FIX2FLT(finecosine[an]),
-                                    blockingMobj->pos[VY] + dist * FIX2FLT(finesine[an]),
-                                    blockingMobj->pos[VZ] + 5,
-                                    (angle_t) an << ANGLETOFINESHIFT, 0)))
+            if((pmo = P_SpawnMobjXYZ(MT_CIRCLEFLAME,
+                                     blockingMobj->origin[VX] + dist * FIX2FLT(finecosine[an]),
+                                     blockingMobj->origin[VY] + dist * FIX2FLT(finesine[an]),
+                                     blockingMobj->origin[VZ] + 5,
+                                     (angle_t) an << ANGLETOFINESHIFT, 0)))
             {
                 pmo->target = mo->target;
                 pmo->mom[MX] = FLAMESPEED * FIX2FLT(finecosine[an]);
@@ -1516,11 +1510,11 @@ void C_DECL A_CFlameMissile(mobj_t* mo)
                 pmo->tics -= P_Random() & 3;
             }
 
-            if((pmo = P_SpawnMobj3f(MT_CIRCLEFLAME,
-                                blockingMobj->pos[VX] - dist * FIX2FLT(finecosine[an]),
-                                blockingMobj->pos[VY] - dist * FIX2FLT(finesine[an]),
-                                blockingMobj->pos[VZ] + 5,
-                                (angle_t) (ANG180 + (an << ANGLETOFINESHIFT)), 0)))
+            if((pmo = P_SpawnMobjXYZ(MT_CIRCLEFLAME,
+                                     blockingMobj->origin[VX] - dist * FIX2FLT(finecosine[an]),
+                                     blockingMobj->origin[VY] - dist * FIX2FLT(finesine[an]),
+                                     blockingMobj->origin[VZ] + 5,
+                                     (angle_t) (ANG180 + (an << ANGLETOFINESHIFT)), 0)))
             {
                 pmo->target = mo->target;
                 pmo->mom[MX] = -FLAMESPEED * FIX2FLT(finecosine[an]);
@@ -1570,7 +1564,7 @@ void C_DECL A_CHolyAttack2(mobj_t* mo)
         angle_t             angle = mo->angle + (ANGLE_45 + ANGLE_45 / 2) -
             ANGLE_45 * i;
 
-        if(!(pmo = P_SpawnMobj3fv(MT_HOLY_FX, mo->pos, angle, 0)))
+        if(!(pmo = P_SpawnMobj(MT_HOLY_FX, mo->origin, angle, 0)))
             continue;
 
         switch(i) // float bob index
@@ -1593,7 +1587,7 @@ void C_DECL A_CHolyAttack2(mobj_t* mo)
             break;
         }
 
-        pmo->pos[VZ] = mo->pos[VZ];
+        pmo->origin[VZ] = mo->origin[VZ];
         P_ThrustMobj(pmo, pmo->angle, pmo->info->speed);
         pmo->target = mo->target;
         pmo->args[0] = 10; // Initial turn value.
@@ -1610,13 +1604,13 @@ void C_DECL A_CHolyAttack2(mobj_t* mo)
             pmo->flags &= ~MF_MISSILE;
         }
 
-        if((tail = P_SpawnMobj3fv(MT_HOLY_TAIL, pmo->pos,
+        if((tail = P_SpawnMobj(MT_HOLY_TAIL, pmo->origin,
                                   pmo->angle + ANG180, 0)))
         {
             tail->target = pmo; // Parent.
             for(j = 1; j < 3; ++j)
             {
-                if((next = P_SpawnMobj3fv(MT_HOLY_TAIL, pmo->pos,
+                if((next = P_SpawnMobj(MT_HOLY_TAIL, pmo->origin,
                                           pmo->angle + ANG180, 0)))
                 {
                     P_MobjChangeState(next, P_GetState(next->type, SN_SPAWN) + 1);
@@ -1694,23 +1688,21 @@ static void CHolyFindTarget(mobj_t* mo)
 /**
  * Similar to P_SeekerMissile, but seeks to a random Z on the target
  */
-static void CHolySeekerMissile(mobj_t *mo, angle_t thresh, angle_t turnMax)
+static void CHolySeekerMissile(mobj_t* mo, angle_t thresh, angle_t turnMax)
 {
-    int         dir;
-    uint        an;
-    angle_t     delta;
-    mobj_t     *target;
-    float       dist, newZ, deltaZ;
+    int dir;
+    uint an;
+    angle_t delta;
+    mobj_t* target;
+    coord_t dist, newZ, deltaZ;
 
     target = mo->tracer;
-    if(target == NULL)
-    {
-        return;
-    }
+    if(!target) return;
 
     if(!(target->flags & MF_SHOOTABLE) ||
        (!(target->flags & MF_COUNTKILL) && !target->player))
-    {   // Target died/target isn't a player or creature
+    {
+        // Target died/target isn't a player or creature
         mo->tracer = NULL;
         mo->flags &= ~(MF_NOCLIP | MF_SKULLFLY);
         mo->flags |= MF_MISSILE;
@@ -1742,12 +1734,12 @@ static void CHolySeekerMissile(mobj_t *mo, angle_t thresh, angle_t turnMax)
     mo->mom[MY] = mo->info->speed * FIX2FLT(finesine[an]);
 
     if(!(mapTime & 15) ||
-       mo->pos[VZ] > target->pos[VZ] + target->height ||
-       mo->pos[VZ] + mo->height < target->pos[VZ])
+       mo->origin[VZ] > target->origin[VZ] + target->height ||
+       mo->origin[VZ] + mo->height < target->origin[VZ])
     {
-        newZ = target->pos[VZ];
+        newZ = target->origin[VZ];
         newZ += FIX2FLT((P_Random() * FLT2FIX(target->height)) >> 8);
-        deltaZ = newZ - mo->pos[VZ];
+        deltaZ = newZ - mo->origin[VZ];
 
         if(fabs(deltaZ) > 15)
         {
@@ -1761,8 +1753,8 @@ static void CHolySeekerMissile(mobj_t *mo, angle_t thresh, angle_t turnMax)
             }
         }
 
-        dist = P_ApproxDistance(target->pos[VX] - mo->pos[VX],
-                                target->pos[VX] - mo->pos[VY]);
+        dist = M_ApproxDistance(target->origin[VX] - mo->origin[VX],
+                                target->origin[VX] - mo->origin[VY]);
         dist /= mo->info->speed;
         if(dist < 1)
         {
@@ -1772,27 +1764,27 @@ static void CHolySeekerMissile(mobj_t *mo, angle_t thresh, angle_t turnMax)
     }
 }
 
-static void CHolyWeave(mobj_t *mo)
+static void CHolyWeave(mobj_t* mo)
 {
-    float       pos[2];
-    int         weaveXY, weaveZ;
-    int         angle;
+    coord_t pos[2];
+    int weaveXY, weaveZ;
+    int angle;
 
     weaveXY = mo->special2 >> 16;
     weaveZ = mo->special2 & 0xFFFF;
     angle = (mo->angle + ANG90) >> ANGLETOFINESHIFT;
 
-    pos[VX] = mo->pos[VX] - (FIX2FLT(finecosine[angle]) * (FLOATBOBOFFSET(weaveXY) * 4));
-    pos[VY] = mo->pos[VY] - (FIX2FLT(finesine[angle]) * (FLOATBOBOFFSET(weaveXY) * 4));
+    pos[VX] = mo->origin[VX] - (FIX2FLT(finecosine[angle]) * (FLOATBOBOFFSET(weaveXY) * 4));
+    pos[VY] = mo->origin[VY] - (FIX2FLT(finesine[angle]) * (FLOATBOBOFFSET(weaveXY) * 4));
 
     weaveXY = (weaveXY + (P_Random() % 5)) & 63;
     pos[VX] += FIX2FLT(finecosine[angle]) * (FLOATBOBOFFSET(weaveXY) * 4);
     pos[VY] += FIX2FLT(finesine[angle]) * (FLOATBOBOFFSET(weaveXY) * 4);
 
-    P_TryMove(mo, pos[VX], pos[VY]);
-    mo->pos[VZ] -= FLOATBOBOFFSET(weaveZ) * 2;
+    P_TryMoveXY(mo, pos[VX], pos[VY]);
+    mo->origin[VZ] -= FLOATBOBOFFSET(weaveZ) * 2;
     weaveZ = (weaveZ + (P_Random() % 5)) & 63;
-    mo->pos[VZ] += FLOATBOBOFFSET(weaveZ) * 2;
+    mo->origin[VZ] += FLOATBOBOFFSET(weaveZ) * 2;
 
     mo->special2 = weaveZ + (weaveXY << 16);
 }
@@ -1822,44 +1814,41 @@ void C_DECL A_CHolySeek(mobj_t* mo)
     CHolyWeave(mo);
 }
 
-static void CHolyTailFollow(mobj_t* mo, float dist)
+static void CHolyTailFollow(mobj_t* mo, coord_t dist)
 {
-    uint                an;
-    angle_t             angle;
-    mobj_t*             child;
-    float               oldDistance, newDistance;
+    uint an;
+    angle_t angle;
+    mobj_t* child;
+    coord_t oldDistance, newDistance;
 
     child = mo->tracer;
     if(child)
     {
-        angle = R_PointToAngle2(mo->pos[VX], mo->pos[VY],
-                                child->pos[VX], child->pos[VY]);
+        angle = M_PointToAngle2(mo->origin, child->origin);
         an = angle >> ANGLETOFINESHIFT;
-        oldDistance =
-            P_ApproxDistance(child->pos[VX] - mo->pos[VX],
-                             child->pos[VY] - mo->pos[VY]);
-        if(P_TryMove(child,
-                     mo->pos[VX] + dist * FIX2FLT(finecosine[an]),
-                     mo->pos[VY] + dist * FIX2FLT(finesine[an])))
+        oldDistance = M_ApproxDistance(child->origin[VX] - mo->origin[VX],
+                                       child->origin[VY] - mo->origin[VY]);
+
+        if(P_TryMoveXY(child, mo->origin[VX] + dist * FIX2FLT(finecosine[an]),
+                              mo->origin[VY] + dist * FIX2FLT(finesine[an])))
         {
-            newDistance =
-                P_ApproxDistance(child->pos[VX] - mo->pos[VX],
-                                 child->pos[VY] - mo->pos[VY]) - 1;
+            newDistance = M_ApproxDistance(child->origin[VX] - mo->origin[VX],
+                                           child->origin[VY] - mo->origin[VY]) - 1;
             if(oldDistance < 1)
             {
-                if(child->pos[VZ] < mo->pos[VZ])
+                if(child->origin[VZ] < mo->origin[VZ])
                 {
-                    child->pos[VZ] = mo->pos[VZ] - dist;
+                    child->origin[VZ] = mo->origin[VZ] - dist;
                 }
                 else
                 {
-                    child->pos[VZ] = mo->pos[VZ] + dist;
+                    child->origin[VZ] = mo->origin[VZ] + dist;
                 }
             }
             else
             {
-                child->pos[VZ] = mo->pos[VZ] +
-                    (newDistance / oldDistance) * (child->pos[VZ] - mo->pos[VZ]);
+                child->origin[VZ] = mo->origin[VZ] +
+                    (newDistance / oldDistance) * (child->origin[VZ] - mo->origin[VZ]);
             }
         }
         CHolyTailFollow(child, dist - 1);
@@ -1879,26 +1868,26 @@ static void CHolyTailRemove(mobj_t *mo)
     P_MobjRemove(mo, false);
 }
 
-void C_DECL A_CHolyTail(mobj_t *mo)
+void C_DECL A_CHolyTail(mobj_t* mo)
 {
-    mobj_t     *parent;
+    mobj_t* parent;
 
     parent = mo->target;
     if(parent)
     {
         if(parent->state >= &STATES[P_GetState(parent->type, SN_DEATH)])
-        {   // Ghost removed, so remove all tail parts.
+        {
+            // Ghost removed, so remove all tail parts.
             CHolyTailRemove(mo);
         }
         else
         {
-            uint        an = parent->angle >> ANGLETOFINESHIFT;
+            uint an = parent->angle >> ANGLETOFINESHIFT;
 
-            if(P_TryMove(mo,
-                         parent->pos[VX] - (14 * FIX2FLT(finecosine[an])),
-                         parent->pos[VY] - (14 * FIX2FLT(finesine[an]))))
+            if(P_TryMoveXY(mo, parent->origin[VX] - (14 * FIX2FLT(finecosine[an])),
+                               parent->origin[VY] - (14 * FIX2FLT(finesine[an]))))
             {
-                mo->pos[VZ] = parent->pos[VZ] - 5;
+                mo->origin[VZ] = parent->origin[VZ] - 5;
             }
 
             CHolyTailFollow(mo, 10);
@@ -1906,7 +1895,7 @@ void C_DECL A_CHolyTail(mobj_t *mo)
     }
 }
 
-void C_DECL A_CHolyCheckScream(mobj_t *mo)
+void C_DECL A_CHolyCheckScream(mobj_t* mo)
 {
     A_CHolySeek(mo);
     if(P_Random() < 20)
@@ -1922,7 +1911,7 @@ void C_DECL A_CHolyCheckScream(mobj_t *mo)
 
 void C_DECL A_CHolySpawnPuff(mobj_t *mo)
 {
-    P_SpawnMobj3fv(MT_HOLY_MISSILE_PUFF, mo->pos, P_Random() << 24, 0);
+    P_SpawnMobj(MT_HOLY_MISSILE_PUFF, mo->origin, P_Random() << 24, 0);
 }
 
 void C_DECL A_FireConePL1(player_t *plr, pspdef_t *psp)
@@ -2018,7 +2007,7 @@ void C_DECL A_ShedShard(mobj_t *mo)
         if(pmo)
         {
             pmo->mom[MZ] = mo->mom[MZ];
-            pmo->pos[VZ] += 8;
+            pmo->origin[VZ] += 8;
             if(spermcount & 1) // Every other reproduction.
                 pmo->special1 =
                     SHARDSPAWN_UP | SHARDSPAWN_LEFT | SHARDSPAWN_RIGHT;
@@ -2037,7 +2026,7 @@ void C_DECL A_ShedShard(mobj_t *mo)
         if(pmo)
         {
             pmo->mom[MZ] = mo->mom[MZ];
-            pmo->pos[VZ] -= 4;
+            pmo->origin[VZ] -= 4;
             if(spermcount & 1) // Every other reproduction.
                 pmo->special1 =
                     SHARDSPAWN_DOWN | SHARDSPAWN_LEFT | SHARDSPAWN_RIGHT;
@@ -2106,47 +2095,46 @@ void P_MovePsprites(player_t *plr)
 
 void C_DECL A_PoisonBag(mobj_t* mo)
 {
-    player_t*       player;
-    mobj_t*         bag;
-    float           pos[3];
-    angle_t         angle;
-    mobjtype_t      type;
+    player_t* player;
+    mobjtype_t type;
+    coord_t pos[3];
+    angle_t angle;
+    mobj_t* bag;
 
-    if(!mo->player)
-        return;
+    if(!mo->player) return;
     player = mo->player;
 
     if(player->class_ == PCLASS_FIGHTER || player->class_ == PCLASS_PIG)
     {
         type = MT_THROWINGBOMB;
-        pos[VX] = mo->pos[VX];
-        pos[VY] = mo->pos[VY];
-        pos[VZ] = mo->pos[VZ] - mo->floorClip + 35;
+        pos[VX] = mo->origin[VX];
+        pos[VY] = mo->origin[VY];
+        pos[VZ] = mo->origin[VZ] - mo->floorClip + 35;
         angle = mo->angle + (((P_Random() & 7) - 4) << 24);
     }
     else
     {
-        uint                an = mo->angle >> ANGLETOFINESHIFT;
+        uint an = mo->angle >> ANGLETOFINESHIFT;
 
         if(player->class_ == PCLASS_CLERIC)
             type = MT_POISONBAG;
         else
             type = MT_FIREBOMB;
-        pos[VX] = mo->pos[VX] + 16 * FIX2FLT(finecosine[an]);
-        pos[VY] = mo->pos[VY] + 24 * FIX2FLT(finesine[an]);
-        pos[VZ] = mo->pos[VZ] - mo->floorClip + 8;
+
+        pos[VX] = mo->origin[VX] + 16 * FIX2FLT(finecosine[an]);
+        pos[VY] = mo->origin[VY] + 24 * FIX2FLT(finesine[an]);
+        pos[VZ] = mo->origin[VZ] - mo->floorClip + 8;
         angle = mo->angle;
     }
 
-    if((bag = P_SpawnMobj3fv(type, pos, angle, 0)))
+    if((bag = P_SpawnMobj(type, pos, angle, 0)))
     {
         bag->target = mo;
 
         if(type == MT_THROWINGBOMB)
         {
-            bag->mom[MZ] =
-                4 + FIX2FLT(((int) player->plr->lookDir) << (FRACBITS - 4));
-            bag->pos[VZ] += FIX2FLT(((int) player->plr->lookDir) << (FRACBITS - 4));
+            bag->mom[MZ] = 4 + FIX2FLT(((int) player->plr->lookDir) << (FRACBITS - 4));
+            bag->origin[VZ] += FIX2FLT(((int) player->plr->lookDir) << (FRACBITS - 4));
 
             P_ThrustMobj(bag, bag->angle, bag->info->speed);
 

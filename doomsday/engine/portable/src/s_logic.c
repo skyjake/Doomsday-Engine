@@ -38,7 +38,7 @@
 #include "de_console.h"
 #include "de_audio.h"
 
-#include "sys_timer.h"
+#include "timer.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -151,6 +151,12 @@ void Sfx_StartLogical(int id, mobj_t *origin, boolean isRepeating)
     {
         // This is not a valid sound.
         return;
+    }
+
+    if(origin && sfxOneSoundPerEmitter)
+    {
+        // Stop all previous sounds from this origin (only one per origin).
+        Sfx_StopLogical(0, origin);
     }
 
     id &= ~DDSF_FLAG_MASK;
