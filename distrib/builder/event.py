@@ -95,6 +95,11 @@ class Event:
     def tag(self):
         return self.name
         
+    def version_base(self):
+        ver = self.version()
+        if '-' in ver: ver = ver[:ver.find('-')]
+        return ver
+        
     def version(self):
         fn = self.file_path('version.txt')
         if os.path.exists(fn): return file(fn).read().strip()
@@ -188,7 +193,7 @@ class Event:
         if self.number() >= 350 and (fn.endswith('.exe') or fn.endswith('.deb') or fn.endswith('.dmg')):
             if self.release_type() == 'stable':
                 return "http://sourceforge.net/projects/deng/files/Doomsday%%20Engine/%s/%s/download" \
-                    % (self.extract_version_from_filename(fn), fn)
+                    % (self.version_base(), fn)
             else:
                 return "http://sourceforge.net/projects/deng/files/Doomsday%%20Engine/Builds/%s/download" % fn
         # Default to the old location.
