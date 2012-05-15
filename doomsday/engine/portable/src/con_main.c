@@ -1512,7 +1512,7 @@ static void insertOnCommandLine(byte ch)
     complPos = cmdCursor;
 }
 
-boolean Con_Responder(ddevent_t* ev)
+boolean Con_Responder(const ddevent_t* ev)
 {
     // The console is only interested in keyboard toggle events.
     if(!IS_KEY_TOGGLE(ev))
