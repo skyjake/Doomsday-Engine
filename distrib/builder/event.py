@@ -310,7 +310,10 @@ class Event:
         return msg
     
     def release_notes_uri(self, version):
-        return "http://dengine.net/dew/index.php?title=Doomsday_version_" + version
+		if self.release_type() == 'stable':
+			return "http://dengine.net/dew/index.php?title=Doomsday_version_" + version
+		else:
+			return "http://dengine.net/" + self.name()
         
     def xml_description(self):
         msg = '<build>'
