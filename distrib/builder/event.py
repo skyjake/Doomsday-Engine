@@ -310,11 +310,14 @@ class Event:
         return msg
     
     def release_notes_uri(self, version):
-		if self.release_type() == 'stable':
-			return "http://dengine.net/dew/index.php?title=Doomsday_version_" + version
-		else:
-			return "http://dengine.net/" + self.name()
+        return "http://dengine.net/dew/index.php?title=Doomsday_version_" + version
         
+    def changelog_uri(self, version):
+        if self.release_type() == 'stable':
+            return self.release_notes_uri(self, version)
+        else:
+            return "http://dengine.net/" + self.name()          
+
     def xml_description(self):
         msg = '<build>'
         msg += '<uniqueId>%i</uniqueId>' % self.number()
@@ -364,6 +367,7 @@ class Event:
                             
         if distribVersion:
             msg += '<releaseNotes>%s</releaseNotes>' % self.release_notes_uri(distribVersion)
+            msg += '<changeLog>%s</changeLog>' % self.changelog_uri(distribVersion)
         
         # Commits.
         chgFn = self.file_path('changes.xml')
