@@ -314,9 +314,9 @@ class Event:
         
     def changelog_uri(self, version):
         if self.release_type() == 'stable':
-            return self.release_notes_uri(self, version)
+            return self.release_notes_uri(version)
         else:
-            return "http://dengine.net/" + self.name()          
+            return "http://dengine.net/" + self.name          
 
     def xml_description(self):
         msg = '<build>'
