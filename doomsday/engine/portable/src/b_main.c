@@ -214,37 +214,35 @@ static int globalContextFallback(const ddevent_t* ddev)
  */
 void B_Init(void)
 {
-    bcontext_t*         bc = 0;
+    bcontext_t* bc = 0;
 
-    if(isDedicated)
+    // In dedicated mode we have fewer binding contexts available.
+    if(!isDedicated)
     {
-        // Why sir, we are but poor folk! Them bindings are too good for us.
-        return;
+        // The contexts are defined in reverse order, with the context of lowest
+        // priority defined first.
+
+        B_NewContext(DEFAULT_BINDING_CONTEXT_NAME);
+
+        // Game contexts.
+        /// @todo Game binding context setup obviously belong to the game plugin, so shouldn't be here.
+        B_NewContext("map");
+        B_NewContext("map-freepan");
+        B_NewContext("finale"); // uses a fallback responder to handle script events
+        B_AcquireAll(B_NewContext("menu"), true);
+        B_NewContext("gameui");
+        B_NewContext("shortcut");
+        B_AcquireKeyboard(B_NewContext("chat"), true);
+        B_AcquireAll(B_NewContext("message"), true);
+
+        // Binding context for the console.
+        bc = B_NewContext(CONSOLE_BINDING_CONTEXT_NAME);
+        bc->flags |= BCF_PROTECTED; // Only we can (de)activate.
+        B_AcquireKeyboard(bc, true); // Console takes over all keyboard events.
+
+        // UI doesn't let anything past it.
+        B_AcquireAll(bc = B_NewContext(UI_BINDING_CONTEXT_NAME), true);
     }
-
-    // The contexts are defined in reverse order, with the context of lowest
-    // priority defined first.
-
-    B_NewContext(DEFAULT_BINDING_CONTEXT_NAME);
-
-    // Game contexts.
-    /// @todo Game binding context setup obviously belong to the game plugin, so shouldn't be here.
-    B_NewContext("map");
-    B_NewContext("map-freepan");
-    B_NewContext("finale"); // uses a fallback responder to handle script events
-    B_AcquireAll(B_NewContext("menu"), true);
-    B_NewContext("gameui");
-    B_NewContext("shortcut");
-    B_AcquireKeyboard(B_NewContext("chat"), true);
-    B_AcquireAll(B_NewContext("message"), true);
-
-    // Binding context for the console.
-    bc = B_NewContext(CONSOLE_BINDING_CONTEXT_NAME);
-    bc->flags |= BCF_PROTECTED; // Only we can (de)activate.
-    B_AcquireKeyboard(bc, true); // Console takes over all keyboard events.
-
-    // UI doesn't let anything past it.
-    B_AcquireAll(bc = B_NewContext(UI_BINDING_CONTEXT_NAME), true);
 
     // Top-level context that is always active and overrides every other context.
     // To be used only for system-level functionality.
