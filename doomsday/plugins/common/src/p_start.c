@@ -1257,7 +1257,7 @@ static int turnMobjToNearestLine(thinker_t* th, void* context)
     else
     {
 #ifdef _DEBUG
-        VERBOSE( Con_Message(" => no nearest list found\n") );
+        VERBOSE( Con_Message("turnMobjToNearestLine: mo=%i => no nearest line found\n", mo->thinker.id) );
 #endif
     }
 
