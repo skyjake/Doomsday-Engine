@@ -1,5 +1,6 @@
 # The Doomsday Engine Project
 # Copyright (c) 2011-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+# Copyright (c) 2011-2012 Daniel Swanson <danij@dengine.net>
 
 TEMPLATE = lib
 TARGET = deng2
@@ -45,6 +46,7 @@ HEADERS += \
     include/de/c_wrapper.h \
     include/de/error.h \
     include/de/libdeng2.h \
+    include/de/version.h \
     include/de/core/app.h \
     include/de/core/log.h \
     include/de/core/logbuffer.h
@@ -82,4 +84,8 @@ macx {
 !macx {
     INSTALLS += target
     target.path = $$DENG_LIB_DIR
+}
+
+win32 {
+    RC_FILE = res/win32/deng2.rc
 }
