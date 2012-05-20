@@ -107,11 +107,6 @@ public:
         return mid(position, n);
     }
 
-    /// Returns the string as a UTF-8 C-string.
-    const char* c_str() const {
-        return toUtf8().constData();
-    }
-
     /// Does a path concatenation on this string and the argument.
     String concatenatePath(const String& path, QChar dirChar = '/') const;
 
