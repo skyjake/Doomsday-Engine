@@ -166,7 +166,7 @@ int Argc(void)
 
 const char* Argv(int i)
 {
-    return (const char*) (DENG2_COMMANDLINE().argv() + i);
+    return *(DENG2_COMMANDLINE().argv() + i);
 }
 
 static int argLastMatch = 0; // used only in ArgCheck/ArgNext (not thread-safe)
@@ -188,7 +188,7 @@ int ArgCheck(const char* check)
 
 int ArgCheckWith(const char* check, int num)
 {
-    return DENG2_COMMANDLINE().check(check, num);
+    return argLastMatch = DENG2_COMMANDLINE().check(check, num);
 }
 
 int ArgExists(const char* check)

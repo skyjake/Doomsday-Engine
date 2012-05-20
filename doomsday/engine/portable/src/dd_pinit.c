@@ -230,7 +230,6 @@ void DD_ShutdownAll(void)
     Def_Destroy();
     F_ShutdownResourceLocator();
     F_Shutdown();
-    ArgShutdown();
     Z_Shutdown();
     Sys_ShutdownWindowManager();
 

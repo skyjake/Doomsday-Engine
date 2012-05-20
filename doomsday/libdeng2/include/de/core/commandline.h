@@ -130,7 +130,7 @@ namespace de
          */
         static bool isOption(const String& arg);
 
-        const String& at(duint pos) const;
+        const String at(duint pos) const;
 
         /**
          * Returns a list of pointers to the arguments. The list contains
@@ -175,13 +175,13 @@ namespace de
         void execute(char** envs) const;
         
     private:
-        typedef std::vector<String> Arguments;
+        typedef std::vector<std::string> Arguments;
         Arguments _arguments;
     
         typedef std::vector<const char*> ArgumentPointers;
         ArgumentPointers _pointers;
         
-        typedef std::map<String, Arguments> Aliases;
+        typedef std::map<std::string, Arguments> Aliases;
         Aliases _aliases;
     };
 }
