@@ -47,7 +47,7 @@ int DD_CheckArg(char* tag, const char** value);
 void DD_ComposeMainWindowTitle(char* title);
 void DD_ConsoleInit(void);
 void DD_InitAPI(void);
-void DD_InitCommandLine(const char* cmdLine);
+void DD_InitCommandLine(void);
 
 extern game_import_t gi;
 extern game_export_t gx;

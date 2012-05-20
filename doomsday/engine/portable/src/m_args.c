@@ -311,10 +311,6 @@ const char* ArgNext(void)
     return args[++lastMatch];
 }
 
-/**
- * @return              @c true, iff the two parameters are equivalent
- *                      according to the abbreviations.
- */
 int ArgRecognize(const char* first, const char* second)
 {
     int                 k;

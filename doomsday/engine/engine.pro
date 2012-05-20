@@ -248,7 +248,6 @@ DENG_HEADERS += \
     portable/include/lumpdirectory.h \
     portable/include/lumpfile.h \
     portable/include/lumpinfo.h \
-    portable/include/m_args.h \
     portable/include/m_bams.h \
     portable/include/m_decomp64.h \
     portable/include/m_linkedlist.h \
@@ -524,7 +523,6 @@ SOURCES += \
     portable/src/linedef.c \
     portable/src/lumpdirectory.c \
     portable/src/lumpfile.c \
-    portable/src/m_args.c \
     portable/src/m_bams.c \
     portable/src/m_decomp64.c \
     portable/src/m_linkedlist.c \

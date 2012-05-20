@@ -167,6 +167,11 @@ bool CommandLine::isOption(const String& arg)
     return !(arg.empty() || arg[0] != '-');
 }
 
+const String &CommandLine::at(duint pos) const
+{
+    return _arguments.at(pos);
+}
+
 const char* const* CommandLine::argv() const
 {
     DENG2_ASSERT(*_pointers.rbegin() == 0);

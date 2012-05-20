@@ -130,7 +130,7 @@ namespace de
          */
         static bool isOption(const String& arg);
 
-        const String& at(duint pos) const { return _arguments.at(pos); }
+        const String& at(duint pos) const;
 
         /**
          * Returns a list of pointers to the arguments. The list contains
@@ -159,6 +159,10 @@ namespace de
          */
         void alias(const String& full, const String& alias);
 
+        /**
+         * @return @c true, iff the two parameters are equivalent according to
+         * the abbreviations.
+         */
         bool matches(const String& full, const String& fullOrAlias) const;
         
         /**

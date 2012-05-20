@@ -131,9 +131,11 @@ void DD_InitAPI(void)
     }
 }
 
-void DD_InitCommandLine(const char* cmdLine)
+void DD_InitCommandLine(void)
 {
+#if 0
     ArgInit(cmdLine);
+#endif
 
     // Register some abbreviations for command line options.
     ArgAbbreviate("-game", "-g");

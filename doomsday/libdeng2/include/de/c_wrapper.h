@@ -28,7 +28,7 @@
  *
  * Defines a C wrapper API for (some of the) libdeng2 classes. Legacy code
  * can use this wrapper API to access libdeng2 functionality. Note that the
- * identifiers in this file are not in the de namespace.
+ * identifiers in this file are _not_ in the de namespace.
  *
  * @note The basic de data types (e.g., dint32) are not available for the C
  * API; instead, only the standard C data types should be used.
@@ -71,6 +71,19 @@ DENG2_PUBLIC const char* LegacyCore_LogFile(LegacyCore* lc);
 DENG2_PUBLIC void LegacyCore_PrintLogFragment(LegacyCore* lc, const char* text);
 DENG2_PUBLIC void LegacyCore_PrintfLogFragmentAtLevel(LegacyCore* lc, legacycore_loglevel_t level, const char* format, ...);
 DENG2_PUBLIC void LegacyCore_SetTerminateFunc(LegacyCore* lc, void (*func)(const char*));
+
+/*
+ * CommandLine
+ */
+DENG2_PUBLIC void ArgAbbreviate(const char* longname, const char* shortname);
+DENG2_PUBLIC int Argc(void);
+DENG2_PUBLIC const char* Argv(int i);
+DENG2_PUBLIC const char* ArgNext(void);
+DENG2_PUBLIC int ArgCheck(const char* check);
+DENG2_PUBLIC int ArgCheckWith(const char* check, int num);
+DENG2_PUBLIC int ArgExists(const char* check);
+DENG2_PUBLIC int ArgIsOption(int i);
+DENG2_PUBLIC int ArgRecognize(const char* first, const char* second);
 
 /*
  * LogBuffer
