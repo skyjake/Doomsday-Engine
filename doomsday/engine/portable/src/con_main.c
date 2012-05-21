@@ -1855,7 +1855,7 @@ void Con_PrintRuler(void)
     if(consoleDump)
     {
         // A 70 characters long line.
-        if(isDedicated)
+        if(isDedicated || novideo)
         {
             int i;
             for(i = 0; i < 7; ++i)
@@ -1901,7 +1901,7 @@ static void conPrintf(int flags, const char* format, va_list args)
             Sv_SendText(netRemoteUser, flags | SV_CONSOLE_PRINT_FLAGS, text);
     }
 
-    if(isDedicated)
+    if(isDedicated || novideo)
     {
         Sys_ConPrint(mainWindowIdx, text, flags);
     }
