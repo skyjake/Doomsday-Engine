@@ -234,12 +234,6 @@ int BspLeaf_GetProperty(const BspLeaf* leaf, setargs_t* args)
     case DMU_SECTOR:
         DMU_GetValue(DMT_BSPLEAF_SECTOR, &leaf->sector, args, 0);
         break;
-    case DMU_LIGHT_LEVEL:
-        DMU_GetValue(DMT_SECTOR_LIGHTLEVEL, &leaf->sector->lightLevel, args, 0);
-        break;
-    case DMT_MOBJS:
-        DMU_GetValue(DMT_SECTOR_MOBJLIST, &leaf->sector->mobjList, args, 0);
-        break;
     case DMU_HEDGE_COUNT: {
         int val = (int) leaf->hedgeCount;
         DMU_GetValue(DDVT_INT, &val, args, 0);
