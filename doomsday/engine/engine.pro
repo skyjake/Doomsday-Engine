@@ -516,7 +516,7 @@ SOURCES += \
     portable/src/gl_texmanager.c \
     portable/src/gl_tga.c \
     portable/src/gridmap.c \
-    portable/src/hedge.c \
+    portable/src/hedge.cpp \
     portable/src/image.c \
     portable/src/kdtree.c \
     portable/src/keycode.cpp \

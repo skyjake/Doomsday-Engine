@@ -25,6 +25,10 @@
 #ifndef LIBDENG_RENDER_FAKERADIO_H
 #define LIBDENG_RENDER_FAKERADIO_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct {
     float shadowRGB[3], shadowDark;
     float shadowSize;
@@ -62,5 +66,9 @@ void Rend_RadioBspLeafEdges(BspLeaf* bspLeaf);
  * Render the shadow poly vertices, for debug.
  */
 void Rend_DrawShadowOffsetVerts(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /// LIBDENG_RENDER_FAKERADIO_H
