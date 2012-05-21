@@ -1886,6 +1886,9 @@ static void conPrintf(int flags, const char* format, va_list args)
         if(consoleDump)
         {
             LegacyCore_PrintLogFragment(de2LegacyCore, prbuff);
+#ifdef _DEBUG
+            LogBuffer_Flush();
+#endif
         }
     }
 
@@ -2021,6 +2024,9 @@ void Con_Message(const char *message, ...)
         {
             //printf("%s", buffer);
             LegacyCore_PrintLogFragment(de2LegacyCore, buffer);
+#ifdef _DEBUG
+            LogBuffer_Flush();
+#endif
         }
 
         // Also print in the console.
