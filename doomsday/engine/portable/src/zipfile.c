@@ -795,6 +795,9 @@ boolean ZipFile_UncompressRaw(uint8_t* in, size_t inSize, uint8_t* out, size_t o
     return true;
 }
 
+/**
+ * @param buffer  Must be large enough to hold the entire uncompressed data lump.
+ */
 static size_t ZipFile_BufferLump(ZipFile* zip, const zipfile_lumprecord_t* lumpRecord,
     uint8_t* buffer)
 {
@@ -811,8 +814,11 @@ static size_t ZipFile_BufferLump(ZipFile* zip, const zipfile_lumprecord_t* lumpR
 
         // Read the compressed data into a temporary buffer for decompression.
         DFile_Read(zip->base._file, compressedData, lumpRecord->info.compressedSize);
+
+        // Uncompress into the buffer provided by the caller.
         result = ZipFile_UncompressRaw(compressedData, lumpRecord->info.compressedSize,
                                        buffer, lumpRecord->info.size);
+
         free(compressedData);
         if(!result) return 0; // Inflate failed.
     }
@@ -828,22 +834,23 @@ size_t ZipFile_ReadLumpSection2(ZipFile* zip, int lumpIdx, uint8_t* buffer,
     size_t startOffset, size_t length, boolean tryCache)
 {
     const zipfile_lumprecord_t* lumpRecord = ZipFile_LumpRecord(zip, lumpIdx);
+    size_t readBytes;
+
     if(!lumpRecord) return 0;
 
     VERBOSE2(
         ddstring_t* path = ZipFile_ComposeLumpPath(zip, lumpIdx, '/');
         Con_Printf("ZipFile::ReadLumpSection: \"%s:%s\" (%lu bytes%s) [%lu +%lu]",
-                F_PrettyPath(Str_Text(AbstractFile_Path((abstractfile_t*)zip))),
-                F_PrettyPath(Str_Text(path)), (unsigned long) lumpRecord->info.size,
-                (lumpRecord->info.compressedSize != lumpRecord->info.size? ", compressed" : ""),
-                (unsigned long) startOffset, (unsigned long)length);
+                   F_PrettyPath(Str_Text(AbstractFile_Path((abstractfile_t*)zip))),
+                   F_PrettyPath(Str_Text(path)), (unsigned long) lumpRecord->info.size,
+                   (lumpRecord->info.compressedSize != lumpRecord->info.size? ", compressed" : ""),
+                   (unsigned long) startOffset, (unsigned long)length);
         Str_Delete(path);
     )
 
     // Try to avoid a file system read by checking for a cached copy.
     if(tryCache && zip->lumpCache)
     {
-        size_t readBytes;
         boolean isCached;
         void** cachePtr;
 
@@ -867,9 +874,40 @@ size_t ZipFile_ReadLumpSection2(ZipFile* zip, int lumpIdx, uint8_t* buffer,
             return readBytes;
         }
     }
-
     VERBOSE2( Con_Printf("\n") )
-    return ZipFile_BufferLump(zip, lumpRecord, buffer);
+
+    if(!startOffset && length == lumpRecord->info.size)
+    {
+        // Read it straight to the caller's data buffer.
+        readBytes = ZipFile_BufferLump(zip, lumpRecord, buffer);
+    }
+    else
+    {
+        // Allocate a temporary buffer and read the whole lump into it(!).
+        uint8_t* lumpData = (uint8_t*)malloc(lumpRecord->info.size);
+        if(!lumpData)
+            Con_Error("ZipFile::ReadLumpSection: Failed on allocation of %lu bytes for work buffer.", lumpRecord->info.size);
+
+        if(ZipFile_BufferLump(zip, lumpRecord, lumpData))
+        {
+            readBytes = MIN_OF(lumpRecord->info.size, length);
+            memcpy(buffer, lumpData + startOffset, readBytes);
+        }
+        else
+        {
+            readBytes = 0;
+        }
+        free(lumpData);
+    }
+
+    if(readBytes < MIN_OF(lumpRecord->info.size, length))
+    {
+        /// @todo Do not do this here.
+        Con_Error("ZipFile::ReadLumpSection: Only read %lu of %lu bytes of lump #%i.",
+                  (unsigned long) readBytes, (unsigned long) length, lumpIdx);
+    }
+
+    return readBytes;
 }
 
 size_t ZipFile_ReadLumpSection(ZipFile* zip, int lumpIdx, uint8_t* buffer,
