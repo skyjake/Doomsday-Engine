@@ -1,5 +1,5 @@
 /**
- * @file p_data.h
+ * @file p_data.c
  * Playsim Data Structures. @ingroup play
  *
  * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>

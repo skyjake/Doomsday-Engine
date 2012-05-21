@@ -48,9 +48,9 @@ BspBuilder_c* BspBuilder_SetSplitCostFactor(BspBuilder_c* builder, int factor);
 /**
  * Build the BSP for the given map.
  *
- * @param map  The map to build the BSP for.
+ * @param builder  BSP builder instance.
  *
- * @return  @c true= iff completed successfully.
+ * @return  @c true, iff completed successfully.
  */
 boolean BspBuilder_Build(BspBuilder_c* builder);
 

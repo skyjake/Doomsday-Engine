@@ -77,8 +77,9 @@ typedef struct mousestate_s {
 } mousestate_t;
 
 typedef struct mouseinterface_s {
-    int (*init)(void);  ///< Initialize the mouse.
+    int (*init)(void);      ///< Initialize the mouse.
     void (*shutdown)(void);
+    void (*poll)(void);     ///< Polls the current state of the mouse.
     void (*getState)(mousestate_t*);
     void (*trap)(boolean);  ///< Enable or disable mouse grabbing.
 } mouseinterface_t;
@@ -110,6 +111,11 @@ size_t Keyboard_GetEvents(keyevent_t *evbuf, size_t bufsize);
 boolean Mouse_IsPresent(void);
 
 void Mouse_Trap(boolean enabled);
+
+/**
+ * Polls the current state of the mouse. This is called at regular intervals.
+ */
+void Mouse_Poll(void);
 
 void Mouse_GetState(mousestate_t *state);
 

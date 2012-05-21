@@ -109,7 +109,7 @@ void Sv_SoundAtVolume(int soundIDAndFlags, mobj_t* origin, float volume, int toP
         }
     }
 
-    LOG_DEBUG("Sv_SoundAtVolume: id: #%i volume: %f targets: %x")
+    LOG_TRACE("Sv_SoundAtVolume: id: #%i volume: %f targets: %x")
             << soundID << volume << targetPlayers;
 
     Sv_NewSoundDelta(soundID, origin, sector, poly, surface, volume,
@@ -125,7 +125,7 @@ void Sv_StopSound(int soundId, mobj_t* origin)
     Surface* surface;
     Sv_IdentifySoundBase(&origin, &sector, &poly, &surface);
 
-    LOG_DEBUG("Sv_StopSound: id: #%i origin: %i(%p) sec: %p poly: %p surface: %p")
+    LOG_TRACE("Sv_StopSound: id: #%i origin: %i(%p) sec: %p poly: %p surface: %p")
             << soundId << (origin? origin->thinker.id : 0)
             << origin << sector << poly << surface;
 

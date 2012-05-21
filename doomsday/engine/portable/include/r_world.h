@@ -31,6 +31,10 @@
 
 #include "r_data.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Used for vertex sector owners, side line owners and reverb BSP leafs.
 typedef struct ownernode_s {
     void*           data;
@@ -156,4 +160,19 @@ LineDef*        R_FindLineBackNeighbor(const Sector* sector,
                                        const lineowner_t* own,
                                        boolean antiClockwise,
                                        binangle_t* diff);
+
+/**
+ * @defgroup skyCapFlags  Sky Cap Flags
+ */
+///@{
+#define SKYCAP_LOWER                0x1
+#define SKYCAP_UPPER                0x2
+///@}
+
+coord_t R_SkyCapZ(BspLeaf* bspLeaf, int skyCap);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* LIBDENG_REFRESH_WORLD_H */

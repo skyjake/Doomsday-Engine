@@ -297,6 +297,7 @@ void D_PreInit(void)
 
     cfg.hudFog = 1;
     cfg.hudIconAlpha = 1;
+    cfg.xhairAngle = 0;
     cfg.xhairSize = .5f;
     cfg.xhairVitality = false;
     cfg.xhairColor[0] = 1;
@@ -444,7 +445,7 @@ void D_PostInit(void)
     int p;
 
     /// \kludge Border background is different in DOOM2.
-    /// \fixme Do this properly!
+    /// @todo Do this properly!
     if(gameModeBits & GM_ANY_DOOM2)
         borderGraphics[0] = "Flats:GRNROCK";
     else

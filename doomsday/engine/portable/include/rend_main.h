@@ -54,7 +54,7 @@ extern float rendLightDistanceAttentuation;
 extern float lightModRange[255];
 extern int devRendSkyMode;
 
-extern int useDynlights;
+extern int useDynLights;
 extern float dynlightFactor, dynlightFogBright;
 
 extern int useWallGlow;
@@ -92,6 +92,11 @@ void Rend_ApplyLightAdaptation(float* lightValue);
 float Rend_LightAdaptationDelta(float lightvalue);
 
 void            Rend_CalcLightModRange(void);
+
+/**
+ * Number of vertices needed for this leaf's trifan.
+ */
+uint Rend_NumFanVerticesForBspLeaf(BspLeaf* bspLeaf);
 
 #ifdef __cplusplus
 } // extern "C"

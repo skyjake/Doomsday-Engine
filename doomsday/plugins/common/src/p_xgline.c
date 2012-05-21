@@ -1552,7 +1552,7 @@ int C_DECL XLTrav_Music(LineDef* line, boolean dummy, void* context,
         }
     }
 
-    //// \fixme Add code to validate song id here.
+    //// @todo Add code to validate song id here.
 
     if(song)
     {
@@ -2166,7 +2166,7 @@ boolean XL_CheckKeys(mobj_t* mo, int flags2, boolean doMsg, boolean doSfx)
     boolean*            keys = act->keys;
     int                 badsound = SFX_PLROOF;
 #elif __JSTRIFE__
-//// \fixme FIXME!!!
+//// @todo FIXME!!!
     int                 num = 3;
     int*                keys = (int *) act->keys;
     int                 badsound = SFX_NONE;

@@ -46,7 +46,7 @@
 
 void F_FileDir(ddstring_t* dst, const ddstring_t* src)
 {
-    /// \fixme Potentially truncates @a src to FILENAME_T_MAXLEN
+    /// @todo Potentially truncates @a src to FILENAME_T_MAXLEN
     directory_t* dir = Dir_ConstructFromPathDir(Str_Text(src));
     Str_Set(dst, Dir_Path(dir));
     Dir_Delete(dir);
@@ -568,7 +568,7 @@ const char* F_PrettyPath(const char* path)
 {
 #define NUM_BUFS            8
 
-    static ddstring_t buffers[NUM_BUFS]; // \fixme: never free'd!
+    static ddstring_t buffers[NUM_BUFS]; // @todo: never free'd!
     static uint index = 0;
     ddstring_t* buf = NULL;
     int len;

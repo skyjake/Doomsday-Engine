@@ -874,7 +874,7 @@ static uploadcontentmethod_t prepareVariantFromImage(TextureVariant* tex, image_
     boolean noCompression = (spec->flags & TSF_NO_COMPRESSION) != 0;
     boolean scaleSharp    = (spec->flags & TSF_UPSCALE_AND_SHARPEN) != 0;
     int wrapS = spec->wrapS, wrapT = spec->wrapT;
-    int magFilter, minFilter, anisoFilter, grayMipmap = 0, flags = 0;
+    int magFilter, minFilter, anisoFilter, flags = 0;
     boolean noSmartFilter = false;
     dgltexformat_t dglFormat;
     texturecontent_t c;
@@ -1015,7 +1015,7 @@ static uploadcontentmethod_t prepareVariantFromImage(TextureVariant* tex, image_
      * coordinates are calculated as width/CeilPow2(width), or 1 if larger
      * than the maximum texture size.
      *
-     * \fixme Image dimensions may not be the same as the final uploaded texture!
+     * @todo Image dimensions may not be the same as the final uploaded texture!
      */
     if((flags & TXCF_UPLOAD_ARG_NOSTRETCH) &&
        (!GL_state.features.texNonPowTwo || spec->mipmapped))
@@ -1045,7 +1045,6 @@ static uploadcontentmethod_t prepareVariantFromImage(TextureVariant* tex, image_
     c.anisoFilter = anisoFilter;
     c.wrap[0] = wrapS;
     c.wrap[1] = wrapT;
-    c.grayMipmap = grayMipmap;
 
     return uploadContentForVariant(chooseContentUploadMethod(&c), &c, tex);
 }
@@ -1054,23 +1053,37 @@ static uploadcontentmethod_t prepareDetailVariantFromImage(TextureVariant* tex, 
 {
     const detailvariantspecification_t* spec = TS_DETAIL(TextureVariant_Spec(tex));
     float baMul, hiMul, loMul, s, t;
-    int pw, ph, flags = 0;
+    int grayMipmapFactor, pw, ph, flags = 0;
     texturecontent_t c;
     assert(image);
 
+    grayMipmapFactor = spec->contrast;
+
+    // We only want a luminance map.
     if(image->pixelSize > 2)
     {
         GL_ConvertToLuminance(image, false);
     }
 
+    // Try to normalize the luminance data so it works expectedly as a detail texture.
     EqualizeLuma(image->pixels, image->size.width, image->size.height, &baMul, &hiMul, &loMul);
-    if(verbose && (baMul != 1 || hiMul != 1 || loMul != 1))
+    if(baMul != 1 || hiMul != 1 || loMul != 1)
     {
-        Uri* uri = Textures_ComposeUri(Textures_Id(TextureVariant_GeneralCase(tex)));
-        ddstring_t* path = Uri_ToString(uri);
-        Con_Message("Equalized TextureVariant \"%s\" (balance: %g, high amp: %g, low amp: %g).\n", Str_Text(path), baMul, hiMul, loMul);
-        Str_Delete(path);
-        Uri_Delete(uri);
+        // Integrate the normalization factor with contrast.
+        const float hiContrast = 1 - 1. / hiMul;
+        const float loContrast = 1 - loMul;
+        const float shift = ((hiContrast + loContrast) / 2);
+        grayMipmapFactor = (uint8_t)(255 * MINMAX_OF(0, spec->contrast / 255.f - shift, 1));
+
+        // Announce the normalization.
+        VERBOSE(
+            Uri* uri = Textures_ComposeUri(Textures_Id(TextureVariant_GeneralCase(tex)));
+            ddstring_t* path = Uri_ToString(uri);
+            Con_Message("Normalized detail texture \"%s\" (balance: %g, high amp: %g, low amp: %g).\n",
+                        Str_Text(path), baMul, hiMul, loMul);
+            Str_Delete(path);
+            Uri_Delete(uri);
+        )
     }
 
     // Disable compression?
@@ -1088,7 +1101,7 @@ static uploadcontentmethod_t prepareDetailVariantFromImage(TextureVariant* tex, 
     c.name = TextureVariant_GLName(tex);
     c.format = DGL_LUMINANCE;
     c.flags = flags | TXCF_GRAY_MIPMAP | TXCF_UPLOAD_ARG_NOSMARTFILTER;
-    c.grayMipmap = spec->contrast;
+    c.grayMipmap = grayMipmapFactor;
     c.width = image->size.width;
     c.height = image->size.height;
     c.pixels = image->pixels;
@@ -2052,14 +2065,15 @@ void GL_UploadTextureContent(const texturecontent_t* content)
         glFormat = ChooseTextureFormat(dglFormat, !noCompression);
 
         if(!GL_UploadTexture(glFormat, loadFormat, loadPixels, loadWidth, loadHeight,
-                generateMipmaps ? true : false))
+                             generateMipmaps ? true : false))
         {
             Con_Error("GL_UploadTextureContent: TexImage failed (%u:%ix%i fmt%i).",
-                content->name, loadWidth, loadHeight, (int) dglFormat);
+                      content->name, loadWidth, loadHeight, (int) dglFormat);
         }
     }
     else
-    {   // Special fade-to-gray luminance texture (used for details).
+    {
+        // Special fade-to-gray luminance texture (used for details).
         GLint glFormat, loadFormat;
 
         switch(dglFormat)
@@ -2074,10 +2088,10 @@ void GL_UploadTextureContent(const texturecontent_t* content)
         glFormat = ChooseTextureFormat(DGL_LUMINANCE, !noCompression);
 
         if(!GL_UploadTextureGrayMipmap(glFormat, loadFormat, loadPixels, loadWidth, loadHeight,
-                content->grayMipmap * reciprocal255))
+                                       content->grayMipmap * reciprocal255))
         {
             Con_Error("GL_UploadTextureContent: TexImageGrayMipmap failed (%u:%ix%i fmt%i).",
-                content->name, loadWidth, loadHeight, (int) dglFormat);
+                      content->name, loadWidth, loadHeight, (int) dglFormat);
         }
     }
 
@@ -2276,7 +2290,7 @@ static void loadDoomPatch(uint8_t* buffer, int texwidth, int texheight,
 
                     if(trans >= 0)
                     {
-                        /// \fixme Check bounds!
+                        /// @todo Check bounds!
                         palidx = *(translationTables + trans + palidx);
                     }
 
@@ -2333,7 +2347,7 @@ TexSource GL_LoadDetailTextureLump(image_t* image, DFile* file)
         GL_InitImage(image);
 
         /**
-         * \fixme Do not fatal error here if the not a known format!
+         * @todo Do not fatal error here if the not a known format!
          * Perform this check much earlier, when the definitions are
          * read and mark which are valid.
          */
@@ -2383,7 +2397,7 @@ TexSource GL_LoadFlatLump(image_t* image, DFile* file)
 
         GL_InitImage(image);
 
-        /// \fixme not all flats are 64x64!
+        /// @todo not all flats are 64x64!
         image->size.width  = FLAT_WIDTH;
         image->size.height = FLAT_HEIGHT;
         image->pixelSize = 1;

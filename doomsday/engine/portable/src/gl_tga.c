@@ -78,7 +78,7 @@ typedef struct {
 } tga_imagespec_t;
 #pragma pack()
 
-static char* lastErrorMsg = 0; /// \fixme potentially never free'd
+static char* lastErrorMsg = 0; /// @todo potentially never free'd
 
 #ifdef __BIG_ENDIAN__
 static int16_t shortSwap(int16_t n)

@@ -1477,22 +1477,34 @@ void DMU_GetValue(valuetype_t valueType, const void* src, setargs_t* args,
     }
 }
 
-static int getProperty(void* obj, void* context)
+static int getProperty(void* ob, void* context)
 {
-    setargs_t*          args = (setargs_t*) context;
+    setargs_t* args = (setargs_t*) context;
 
     // Dereference where necessary. Note the order, these cascade.
     if(args->type == DMU_BSPLEAF)
     {
         if(args->modifiers & DMU_FLOOR_OF_SECTOR)
         {
-            obj = ((BspLeaf*) obj)->sector;
+            ob = ((BspLeaf*)ob)->sector;
             args->type = DMU_SECTOR;
         }
         else if(args->modifiers & DMU_CEILING_OF_SECTOR)
         {
-            obj = ((BspLeaf*) obj)->sector;
+            ob = ((BspLeaf*)ob)->sector;
             args->type = DMU_SECTOR;
+        }
+        else
+        {
+            switch(args->prop)
+            {
+            case DMU_LIGHT_LEVEL:
+            case DMT_MOBJS:
+                ob = ((BspLeaf*)ob)->sector;
+                args->type = DMU_SECTOR;
+                break;
+            default: break;
+            }
         }
     }
 
@@ -1500,14 +1512,14 @@ static int getProperty(void* obj, void* context)
     {
         if(args->modifiers & DMU_FLOOR_OF_SECTOR)
         {
-            Sector             *sec = (Sector*) obj;
-            obj = sec->SP_plane(PLN_FLOOR);
+            Sector* sec = (Sector*)ob;
+            ob = sec->SP_plane(PLN_FLOOR);
             args->type = DMU_PLANE;
         }
         else if(args->modifiers & DMU_CEILING_OF_SECTOR)
         {
-            Sector             *sec = (Sector*) obj;
-            obj = sec->SP_plane(PLN_CEILING);
+            Sector* sec = (Sector*)ob;
+            ob = sec->SP_plane(PLN_CEILING);
             args->type = DMU_PLANE;
         }
     }
@@ -1516,17 +1528,16 @@ static int getProperty(void* obj, void* context)
     {
         if(args->modifiers & DMU_SIDEDEF0_OF_LINE)
         {
-            obj = ((LineDef*) obj)->L_frontside;
+            ob = ((LineDef*)ob)->L_frontside;
             args->type = DMU_SIDEDEF;
         }
         else if(args->modifiers & DMU_SIDEDEF1_OF_LINE)
         {
-            LineDef* li = ((LineDef*) obj);
+            LineDef* li = ((LineDef*)ob);
             if(!li->L_backside)
-                Con_Error("DMU_setProperty: Linedef %i has no back side.\n",
-                          P_ToIndex(li));
+                Con_Error("DMU_setProperty: Linedef %i has no back side.\n", P_ToIndex(li));
 
-            obj = li->L_backside;
+            ob = li->L_backside;
             args->type = DMU_SIDEDEF;
         }
     }
@@ -1535,17 +1546,17 @@ static int getProperty(void* obj, void* context)
     {
         if(args->modifiers & DMU_TOP_OF_SIDEDEF)
         {
-            obj = &((SideDef*) obj)->SW_topsurface;
+            ob = &((SideDef*)ob)->SW_topsurface;
             args->type = DMU_SURFACE;
         }
         else if(args->modifiers & DMU_MIDDLE_OF_SIDEDEF)
         {
-            obj = &((SideDef*) obj)->SW_middlesurface;
+            ob = &((SideDef*)ob)->SW_middlesurface;
             args->type = DMU_SURFACE;
         }
         else if(args->modifiers & DMU_BOTTOM_OF_SIDEDEF)
         {
-            obj = &((SideDef*) obj)->SW_bottomsurface;
+            ob = &((SideDef*)ob)->SW_bottomsurface;
             args->type = DMU_SURFACE;
         }
     }
@@ -1578,7 +1589,7 @@ static int getProperty(void* obj, void* context)
         case DMU_BLENDMODE:
         case DMU_FLAGS:
         case DMU_BASE:
-            obj = &((Plane*) obj)->surface;
+            ob = &((Plane*)ob)->surface;
             args->type = DMU_SURFACE;
             break;
 
@@ -1594,7 +1605,7 @@ static int getProperty(void* obj, void* context)
         switch(args->prop)
         {
         case UNKNOWN1:
-            obj = &((Surface*) obj)->material;
+            ob = &((Surface*)ob)->material;
             args->type = DMU_MATERIAL;
             break;
 
@@ -1607,39 +1618,39 @@ static int getProperty(void* obj, void* context)
     switch(args->type)
     {
     case DMU_VERTEX:
-        Vertex_GetProperty(obj, args);
+        Vertex_GetProperty(ob, args);
         break;
 
     case DMU_HEDGE:
-        HEdge_GetProperty(obj, args);
+        HEdge_GetProperty(ob, args);
         break;
 
     case DMU_LINEDEF:
-        LineDef_GetProperty(obj, args);
+        LineDef_GetProperty(ob, args);
         break;
 
     case DMU_SURFACE:
-        Surface_GetProperty(obj, args);
+        Surface_GetProperty(ob, args);
         break;
 
     case DMU_PLANE:
-        Plane_GetProperty(obj, args);
+        Plane_GetProperty(ob, args);
         break;
 
     case DMU_SECTOR:
-        Sector_GetProperty(obj, args);
+        Sector_GetProperty(ob, args);
         break;
 
     case DMU_SIDEDEF:
-        SideDef_GetProperty(obj, args);
+        SideDef_GetProperty(ob, args);
         break;
 
     case DMU_BSPLEAF:
-        BspLeaf_GetProperty(obj, args);
+        BspLeaf_GetProperty(ob, args);
         break;
 
     case DMU_MATERIAL:
-        DMU_GetMaterialProperty(obj, args);
+        DMU_GetMaterialProperty(ob, args);
         break;
 
     default:

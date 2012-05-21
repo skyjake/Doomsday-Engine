@@ -1,5 +1,5 @@
 /**
- * @file mouse_win32.c
+ * @file mouse_win32.cpp
  * Mouse driver that gets mouse input from DirectInput on Windows.
  * @ingroup input
  *
@@ -30,51 +30,58 @@
 
 static LPDIRECTINPUTDEVICE8 didMouse;
 static boolean mouseTrapped;
+static DIMOUSESTATE2 mstate; ///< Polled state.
 
 static int Mouse_Win32_Init(void)
 {
-    HWND hWnd;
-    HRESULT hr;
-    LPDIRECTINPUT8 dInput;
+    if(ArgCheck("-nomouse") || novideo) return false;
 
-    if(ArgCheck("-nomouse") || novideo)
-        return false;
-
-    hWnd = (HWND) Window_NativeHandle(Window_Main());
+    // We'll need a window handle for this.
+    HWND hWnd = (HWND) Window_NativeHandle(Window_Main());
     if(!hWnd)
     {
-        Con_Error("I_InitMouse: Main window not available, cannot init mouse.");
+        Con_Error("Mouse_Init: Main window not available, cannot init mouse.");
         return false;
     }
 
-    dInput = DirectInput_Instance();
+    HRESULT hr = -1;
+    // Prefer the newer version 8 interface if available.
+    if(LPDIRECTINPUT8 dInput = DirectInput_IVersion8())
+    {
+        hr = dInput->CreateDevice(GUID_SysMouse, &didMouse, 0);
+    }
+    else if(LPDIRECTINPUT dInput = DirectInput_IVersion3())
+    {
+        hr = dInput->CreateDevice(GUID_SysMouse, (LPDIRECTINPUTDEVICE*) &didMouse, 0);
+    }
 
-    hr = IDirectInput_CreateDevice(dInput, &GUID_SysMouse, &didMouse, 0);
     if(FAILED(hr))
     {
-        Con_Message("I_InitMouse: Failed to create device (0x%x).\n", hr);
+        Con_Message("Mouse_Init: Failed to create device (0x%x: %s).\n",
+                    hr, DirectInput_ErrorMsg(hr));
         return false;
     }
 
     // Set data format.
-    hr = IDirectInputDevice_SetDataFormat(didMouse, &c_dfDIMouse2);
+    hr = didMouse->SetDataFormat(&c_dfDIMouse2);
     if(FAILED(hr))
     {
-        Con_Message("I_InitMouse: Failed to set data format (0x%x).\n", hr);
+        Con_Message("Mouse_Init: Failed to set data format (0x%x: %s).\n",
+                    hr, DirectInput_ErrorMsg(hr));
         goto kill_mouse;
     }
 
-    // Set behaviour.
-    hr = IDirectInputDevice_SetCooperativeLevel(didMouse, hWnd,
-                                                DISCL_FOREGROUND | DISCL_EXCLUSIVE);
+    // Set behavior.
+    hr = didMouse->SetCooperativeLevel(hWnd, DISCL_EXCLUSIVE | DISCL_FOREGROUND);
     if(FAILED(hr))
     {
-        Con_Message("I_InitMouse: Failed to set co-op level (0x%x).\n", hr);
+        Con_Message("Mouse_Init: Failed to set co-op level (0x%x: %s).\n",
+                    hr, DirectInput_ErrorMsg(hr));
         goto kill_mouse;
     }
 
     // Acquire the device.
-    //IDirectInputDevice_Acquire(didMouse);
+    //didMouse->Acquire();
     //mouseTrapped = true;
 
     // We will be told when to trap the mouse.
@@ -93,19 +100,8 @@ static void Mouse_Win32_Shutdown(void)
     DirectInput_KillDevice(&didMouse);
 }
 
-static void Mouse_Win32_GetState(mousestate_t *state)
+static void Mouse_Win32_Poll(void)
 {
-    static BOOL     oldButtons[8];
-    static int      oldZ;
-
-    DIMOUSESTATE2   mstate;
-    DWORD           i;
-    int             tries;
-    BOOL            acquired;
-    HRESULT         hr;
-
-    memset(state, 0, sizeof(*state));
-
     if(!mouseTrapped)
     {
         // We are not supposed to be reading the mouse right now.
@@ -113,11 +109,11 @@ static void Mouse_Win32_GetState(mousestate_t *state)
     }
 
     // Try to get the mouse state.
-    tries = 1;
-    acquired = false;
+    int tries = 1;
+    BOOL acquired = false;
     while(!acquired && tries > 0)
     {
-        hr = IDirectInputDevice_GetDeviceState(didMouse, sizeof(mstate), &mstate);
+        HRESULT hr = didMouse->GetDeviceState(sizeof(mstate), &mstate);
         if(SUCCEEDED(hr))
         {
             acquired = true;
@@ -125,17 +121,20 @@ static void Mouse_Win32_GetState(mousestate_t *state)
         else if(tries > 0)
         {
             // Try to reacquire.
-            IDirectInputDevice_Acquire(didMouse);
+            didMouse->Acquire();
             tries--;
         }
     }
+
     if(!acquired)
-        return; // The operation is a failure.
+    {
+        // The operation is a failure.
+        memset(&mstate, 0, sizeof(mstate));
+    }
+}
 
-    // Fill in the state structure.
-    state->axis[IMA_POINTER].x = (int) mstate.lX;
-    state->axis[IMA_POINTER].y = (int) mstate.lY;
-
+static void Mouse_Win32_GetState(mousestate_t* state)
+{
     /**
      * We need to map the mouse buttons as follows:
      *         DX  : Deng
@@ -148,11 +147,27 @@ static void Mouse_Win32_GetState(mousestate_t *state)
      * (b7)     6  >  8
      * (b8)     7  >  9
      */
-
-    {
     static const int buttonMap[] = { 0, 2, 1, 5, 6, 7, 8, 9 };
+    static BOOL oldButtons[8];
+    static int oldZ;
 
-    for(i = 0; i < 8; ++i)
+    memset(state, 0, sizeof(*state));
+    if(!mouseTrapped)
+    {
+        // We are not supposed to be reading the mouse right now.
+        return;
+    }
+
+    // Fill in the state structure.
+    state->axis[IMA_POINTER].x = (int) mstate.lX;
+    state->axis[IMA_POINTER].y = (int) mstate.lY;
+
+    // If this is called again before re-polling, we don't want to return
+    // these deltas again.
+    mstate.lX = 0;
+    mstate.lY = 0;
+
+    for(DWORD i = 0; i < 8; ++i)
     {
         BOOL isDown = (mstate.rgbButtons[i] & 0x80? TRUE : FALSE);
         int id;
@@ -196,7 +211,6 @@ static void Mouse_Win32_GetState(mousestate_t *state)
     }
 
     oldZ = (int) mstate.lZ;
-    }
 }
 
 static void Mouse_Win32_Trap(boolean enabled)
@@ -206,18 +220,21 @@ static void Mouse_Win32_Trap(boolean enabled)
     mouseTrapped = (enabled != 0);
     if(enabled)
     {
-        IDirectInputDevice_Acquire(didMouse);
+        didMouse->Acquire();
     }
     else
     {
-        IDirectInputDevice_Unacquire(didMouse);
+        didMouse->Unacquire();
     }
 }
 
 // The global interface.
+extern "C" {
 mouseinterface_t win32Mouse = {
     Mouse_Win32_Init,
     Mouse_Win32_Shutdown,
+    Mouse_Win32_Poll,
     Mouse_Win32_GetState,
     Mouse_Win32_Trap
 };
+}

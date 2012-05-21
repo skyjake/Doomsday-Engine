@@ -918,8 +918,8 @@ void P_RebornPlayer(int plrNum)
             }
         }
 
-        p->ammo[AT_BLUEMANA].owned = 25; //// \fixme values.ded
-        p->ammo[AT_GREENMANA].owned = 25; //// \fixme values.ded
+        p->ammo[AT_BLUEMANA].owned = 25; //// @todo values.ded
+        p->ammo[AT_GREENMANA].owned = 25; //// @todo values.ded
         if(bestWeapon)
         {   // Bring up the best weapon.
             p->pendingWeapon = bestWeapon;
@@ -1257,7 +1257,7 @@ static int turnMobjToNearestLine(thinker_t* th, void* context)
     else
     {
 #ifdef _DEBUG
-        VERBOSE( Con_Message(" => no nearest list found\n") );
+        VERBOSE( Con_Message("turnMobjToNearestLine: mo=%i => no nearest line found\n", mo->thinker.id) );
 #endif
     }
 

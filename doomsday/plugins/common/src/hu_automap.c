@@ -1398,7 +1398,7 @@ void UIAutomap_Rebuild(uiwidget_t* obj)
  */
 void UIAutomap_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
-    static int updateWait = 0; /// \fixme should be an instance var of UIAutomap
+    static int updateWait = 0; /// @todo should be an instance var of UIAutomap
 
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     const float alpha = uiRendState->pageAlpha;

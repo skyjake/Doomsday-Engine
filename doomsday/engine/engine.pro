@@ -58,6 +58,14 @@ else {
 
     # DisplayMode uses the Xrandr and XFree86-VideoMode extensions.
     !deng_nodisplaymode {
+        # Check that the X11 extensions exist.
+        !system(pkg-config --exists xxf86vm) {
+            error(Missing dependency: X11 XFree86 video mode extension library (development headers). Alternatively disable display mode functionality with: CONFIG+=deng_nodisplaymode)
+        }
+        !system(pkg-config --exists xrandr) {
+            error(Missing dependency: X11 RandR extension library (development headers). Alternatively disable display mode functionality with: CONFIG+=deng_nodisplaymode)
+        }
+
         QMAKE_CXXFLAGS += $$system(pkg-config xrandr xxf86vm --cflags)
                   LIBS += $$system(pkg-config xrandr xxf86vm --libs)
     }
@@ -377,11 +385,11 @@ win32 {
 
     SOURCES += \
         win32/src/dd_winit.c \
-        win32/src/directinput.c \
+        win32/src/directinput.cpp \
         win32/src/sys_console.c \
         win32/src/sys_findfile.c \
-        win32/src/joystick.c \
-        win32/src/mouse_win32.c
+        win32/src/joystick_win32.cpp \
+        win32/src/mouse_win32.cpp
 
     !deng_nodisplaymode: SOURCES += win32/src/displaymode_win32.cpp
 }
@@ -509,7 +517,7 @@ SOURCES += \
     portable/src/gl_texmanager.c \
     portable/src/gl_tga.c \
     portable/src/gridmap.c \
-    portable/src/hedge.c \
+    portable/src/hedge.cpp \
     portable/src/image.c \
     portable/src/kdtree.c \
     portable/src/keycode.cpp \
@@ -534,7 +542,7 @@ SOURCES += \
     portable/src/materials.c \
     portable/src/materialvariant.c \
     portable/src/monitor.c \
-    portable/src/mouse_qt.c \
+    portable/src/mouse_qt.cpp \
     portable/src/nativeui.cpp \
     portable/src/net_buf.c \
     portable/src/net_demo.c \

@@ -55,7 +55,7 @@ static uint8_t* GetScratchBuffer(size_t size)
  * pixel, or rather the number of bytes per pixel (3 or 4). The strides must
  * be byte-aligned anyway, though; not in pixels.
  *
- * \fixme Probably could be optimized.
+ * @todo Probably could be optimized.
  */
 static void scaleLine(const uint8_t* in, int inStride, uint8_t* out, int outStride,
     int outLen, int inLen, int comps)
@@ -1331,13 +1331,12 @@ void EqualizeLuma(uint8_t* pixels, int width, int height, float* rBaMul,
         for(i = 0, pix = pixels; i < numpels; ++i, pix += 1)
         {
             // First balance.
-            *pix = (uint8_t) MINMAX_OF(0, ((float)*pix) * baMul, 255);
-
+            float val = baMul * (*pix);
             // Now amplify.
-            if(*pix > 127)
-                *pix = (uint8_t) MINMAX_OF(0, ((float)*pix) * hiMul, 255);
-            else
-                *pix = (uint8_t) MINMAX_OF(0, ((float)*pix) * loMul, 255);
+            if(val > 127) val *= hiMul;
+            else          val *= loMul;
+
+            *pix = (uint8_t) MINMAX_OF(0, val, 255);
         }
     }
 

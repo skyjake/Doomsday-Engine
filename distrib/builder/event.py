@@ -90,10 +90,15 @@ class Event:
             return name[pos+1:us]
         elif dash > 0 and us > 0:
             return name[pos+1:min(dash, us)]
-        return name[pos+1:name.find('.', pos)]
+        return name[pos+1:name.rfind('.', pos)]
         
     def tag(self):
         return self.name
+        
+    def version_base(self):
+        ver = self.version()
+        if '-' in ver: ver = ver[:ver.find('-')]
+        return ver
         
     def version(self):
         fn = self.file_path('version.txt')
@@ -186,7 +191,11 @@ class Event:
     def download_uri(self, fn):
         # Available on SourceForge?
         if self.number() >= 350 and (fn.endswith('.exe') or fn.endswith('.deb') or fn.endswith('.dmg')):
-            return "http://sourceforge.net/projects/deng/files/Doomsday%%20Engine/Builds/%s/download" % fn
+            if self.release_type() == 'stable':
+                return "http://sourceforge.net/projects/deng/files/Doomsday%%20Engine/%s/%s/download" \
+                    % (self.version_base(), fn)
+            else:
+                return "http://sourceforge.net/projects/deng/files/Doomsday%%20Engine/Builds/%s/download" % fn
         # Default to the old location.
         return "%s/%s/%s" % (config.BUILD_URI, self.name, fn)
                 
@@ -303,6 +312,12 @@ class Event:
     def release_notes_uri(self, version):
         return "http://dengine.net/dew/index.php?title=Doomsday_version_" + version
         
+    def changelog_uri(self, version):
+        if self.release_type() == 'stable':
+            return self.release_notes_uri(version)
+        else:
+            return "http://dengine.net/" + self.name          
+
     def xml_description(self):
         msg = '<build>'
         msg += '<uniqueId>%i</uniqueId>' % self.number()
@@ -352,6 +367,7 @@ class Event:
                             
         if distribVersion:
             msg += '<releaseNotes>%s</releaseNotes>' % self.release_notes_uri(distribVersion)
+            msg += '<changeLog>%s</changeLog>' % self.changelog_uri(distribVersion)
         
         # Commits.
         chgFn = self.file_path('changes.xml')

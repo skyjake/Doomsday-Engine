@@ -464,11 +464,14 @@ void UI_SetPage(ui_page_t* page)
             dat->numvis = (ob->geometry.size.height - 2 * UI_BORDER) / listItemHeight(dat);
             if(dat->selection >= 0)
             {
+                // There is a selected item, make sure it is visible.
                 if(dat->selection < dat->first)
                     dat->first = dat->selection;
                 if(dat->selection > dat->first + dat->numvis - 1)
                     dat->first = dat->selection - dat->numvis + 1;
             }
+            // Check that the visible range is ok.
+            dat->first = MAX_OF(0, MIN_OF(dat->first, dat->count - dat->numvis));
             UI_InitColumns(ob);
         }
     }
@@ -476,7 +479,7 @@ void UI_SetPage(ui_page_t* page)
     uiMoved = false;
 }
 
-int UI_Responder(ddevent_t* ev)
+int UI_Responder(const ddevent_t* ev)
 {
     if(!uiActive)
         return false;
@@ -506,7 +509,7 @@ int UI_Responder(ddevent_t* ev)
     }
 
     // Call the page's responder.
-    uiCurrentPage->responder(uiCurrentPage, ev);
+    uiCurrentPage->responder(uiCurrentPage, (ddevent_t*) ev);
     // If the UI is active, all events are eaten by it.
 
     return true;

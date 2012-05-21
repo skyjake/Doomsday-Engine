@@ -822,7 +822,7 @@ static void setupModelParamsForFIObject(rendmodelparams_t* params, const char* m
     params->origin[VX] = worldOffset[VX] + pos[VX];
     params->origin[VY] = worldOffset[VZ] + pos[VZ];
     params->origin[VZ] = worldOffset[VY] + pos[VY];
-    params->distance = -10; /// \fixme inherit depth.
+    params->distance = -10; /// @todo inherit depth.
     params->yawAngleOffset   = (SCREENWIDTH/2  - pos[VX]) * weaponOffsetScale + 90;
     params->pitchAngleOffset = (SCREENHEIGHT/2 - pos[VY]) * weaponOffsetScale * weaponOffsetScaleY / 1000.0f;
     params->yaw = params->yawAngleOffset + 180;
@@ -833,7 +833,7 @@ static void setupModelParamsForFIObject(rendmodelparams_t* params, const char* m
     params->ambientColor[CR] = params->ambientColor[CG] = params->ambientColor[CB] = 1;
     params->ambientColor[CA] = 1;
     /**
-     * \fixme This additional scale multiplier is necessary for the model
+     * @todo This additional scale multiplier is necessary for the model
      * to be drawn at a scale consistent with the other object types
      * (e.g., Model compared to Pic).
      *
@@ -860,7 +860,7 @@ void UI2_Drawer(void)
         return;
     }
 
-    /// \fixme need to refactor.
+    /// @todo need to refactor.
     /*bordered = (FI_ScriptActive() && FI_ScriptCmdExecuted());
     if(bordered)
     {   // Draw using the special bordered projection.

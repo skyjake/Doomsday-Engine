@@ -103,8 +103,8 @@ public:
     /**
      * Registers a new single-shot timer that will do a callback.
      *
-     * @param milliseconds   Time to wait.
-     * @param timerCallback  Callback to call.
+     * @param milliseconds  Time to wait.
+     * @param func  Callback to call.
      */
     void timer(duint32 milliseconds, void (*func)(void));
 

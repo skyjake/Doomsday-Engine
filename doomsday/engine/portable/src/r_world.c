@@ -630,7 +630,7 @@ Plane* R_NewPlaneForSector(Sector* sec)
             {
                 biassurface_t* bsuf = SB_CreateSurface();
 
-                bsuf->size = BspLeaf_NumFanVertices(bspLeaf);
+                bsuf->size = Rend_NumFanVerticesForBspLeaf(bspLeaf);
                 bsuf->illum = Z_Calloc(sizeof(vertexillum_t) * bsuf->size, PU_MAP, 0);
 
                 { uint i;
@@ -660,7 +660,6 @@ Plane* R_NewPlaneForSector(Sector* sec)
 void R_DestroyPlaneOfSector(uint id, Sector* sec)
 {
     Plane* plane, **newList = NULL;
-    BspLeaf** ssecIter;
     surfacelist_t* slist;
     planelist_t* plist;
     uint i;
@@ -707,15 +706,14 @@ void R_DestroyPlaneOfSector(uint id, Sector* sec)
     if(slist) R_SurfaceListRemove(slist, &plane->surface);
 
     // Destroy the biassurfaces for this plane.
-    ssecIter = sec->bspLeafs;
-    while(*ssecIter)
+    { BspLeaf** bspLeafIter;
+    for(bspLeafIter = sec->bspLeafs; *bspLeafIter; bspLeafIter++)
     {
-        BspLeaf* bspLeaf = *ssecIter;
+        BspLeaf* bspLeaf = *bspLeafIter;
         SB_DestroySurface(bspLeaf->bsuf[id]);
         if(id < sec->planeCount)
             memmove(bspLeaf->bsuf + id, bspLeaf->bsuf + id + 1, sizeof(biassurface_t*));
-        ssecIter++;
-    }
+    }}
 
     // Destroy the specified plane.
     Z_Free(plane);
@@ -1371,7 +1369,7 @@ void R_ClearSectorFlags(void)
 
 boolean R_IsGlowingPlane(const Plane* pln)
 {
-    /// \fixme We should not need to prepare to determine this.
+    /// @todo We should not need to prepare to determine this.
     material_t* mat = pln->surface.material;
     const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
         MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
@@ -1387,7 +1385,7 @@ float R_GlowStrength(const Plane* pln)
     {
         if(Material_IsDrawable(mat) && !Surface_IsSkyMasked(&pln->surface))
         {
-            /// \fixme We should not need to prepare to determine this.
+            /// @todo We should not need to prepare to determine this.
             const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
                 MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
             const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true);
@@ -1604,8 +1602,6 @@ boolean R_UpdatePlane(Plane* pln, boolean forceUpdate)
     // Geometry change?
     if(forceUpdate || pln->height != pln->oldHeight[1])
     {
-        BspLeaf** ssecIter;
-
         // Check if there are any camera players in this sector. If their
         // height is now above the ceiling/below the floor they are now in
         // the void.
@@ -1642,11 +1638,10 @@ boolean R_UpdatePlane(Plane* pln, boolean forceUpdate)
         // Inform the shadow bias of changed geometry.
         if(sec->bspLeafs && *sec->bspLeafs)
         {
-            uint i;
-            ssecIter = sec->bspLeafs;
-            do
+            BspLeaf** bspLeafIter = sec->bspLeafs;
+            for(; *bspLeafIter; bspLeafIter++)
             {
-                BspLeaf* bspLeaf = *ssecIter;
+                BspLeaf* bspLeaf = *bspLeafIter;
                 if(bspLeaf->hedge)
                 {
                     HEdge* hedge = bspLeaf->hedge;
@@ -1654,6 +1649,7 @@ boolean R_UpdatePlane(Plane* pln, boolean forceUpdate)
                     {
                         if(hedge->lineDef)
                         {
+                            uint i;
                             for(i = 0; i < 3; ++i)
                             {
                                 SB_SurfaceMoved(hedge->bsuf[i]);
@@ -1663,8 +1659,7 @@ boolean R_UpdatePlane(Plane* pln, boolean forceUpdate)
                 }
 
                 SB_SurfaceMoved(bspLeaf->bsuf[pln->planeID]);
-                ssecIter++;
-            } while(*ssecIter);
+            }
         }
 
         // We need the decorations updated.
@@ -1834,4 +1829,12 @@ const float* R_GetSectorLightColor(const Sector* sector)
     }
     // A non-skylight sector (i.e., everything else!)
     return sector->rgb; // The sector's ambient light color.
+}
+
+coord_t R_SkyCapZ(BspLeaf* bspLeaf, int skyCap)
+{
+    const planetype_t plane = (skyCap & SKYCAP_UPPER)? PLN_CEILING : PLN_FLOOR;
+    if(!bspLeaf) Con_Error("R_SkyCapZ: Invalid bspLeaf argument (=NULL).");
+    if(!bspLeaf->sector || !P_IsInVoid(viewPlayer)) return GameMap_SkyFix(theMap, plane == PLN_CEILING);
+    return bspLeaf->sector->SP_planevisheight(plane);
 }

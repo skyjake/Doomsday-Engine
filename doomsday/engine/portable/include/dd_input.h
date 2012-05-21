@@ -29,15 +29,16 @@
 #ifndef LIBDENG_CORE_INPUT_H
 #define LIBDENG_CORE_INPUT_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define NUMKKEYS            256
 
+#include "smoother.h"
 #include "dd_string.h"
 #if _DEBUG
 #  include "point.h" // For the debug visual.
+#endif
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 // Input devices.
@@ -148,17 +149,18 @@ enum
 #define IDA_INVERT 0x2      // Real input data should be inverted.
 
 typedef struct inputdevaxis_s {
-    char    name[20];       // Symbolic name of the axis.
-    int     type;           // Type of the axis (pointer or stick).
+    char    name[20];       ///< Symbolic name of the axis.
+    int     type;           ///< Type of the axis (pointer or stick).
     int     flags;
-    float   position;       // Current translated position of the axis (-1..1) including any filtering.
-    float   realPosition;   // The actual position of the axis (-1..1).
-    float   scale;          // Scaling factor for real input values.
-    float   deadZone;       // Dead zone, in (0..1) range.
-    int     filter;         // Filter grade.
-    float   accumulation;   // Position accumulator for the filter.
-    uint    time;           // Timestamp for the latest update that changed the position.
-    inputdevassoc_t assoc;  // Binding association.
+    coord_t position;       ///< Current translated position of the axis (-1..1) including any filtering.
+    coord_t realPosition;   ///< The actual latest position of the axis (-1..1).
+    float   scale;          ///< Scaling factor for real input values.
+    float   deadZone;       ///< Dead zone, in (0..1) range.
+    coord_t sharpPosition;  ///< Current sharp (accumulated) position, entered into the Smoother.
+    Smoother* smoother;     ///< Smoother for the input values.
+    coord_t prevSmoothPos;  ///< Previous evaluated smooth position (needed for producing deltas).
+    uint    time;           ///< Timestamp for the latest update that changed the position.
+    inputdevassoc_t assoc;  ///< Binding association.
 } inputdevaxis_t;
 
 typedef struct inputdevkey_s {
@@ -201,7 +203,7 @@ void        DD_StopInput(void);
 boolean     DD_IgnoreInput(boolean ignore);
 
 void        DD_ReadKeyboard(void);
-void        DD_ReadMouse(timespan_t ticLength);
+void        DD_ReadMouse(void);
 void        DD_ReadJoystick(void);
 
 void        DD_PostEvent(ddevent_t *ev);
@@ -298,7 +300,7 @@ boolean I_IsKeyDown(inputdev_t* device, uint id);
 inputdevhat_t* I_GetHatByID(inputdev_t* device, uint id);
 
 void        I_SetUIMouseMode(boolean on);
-void        I_TrackInput(ddevent_t *ev, timespan_t ticLength);
+void        I_TrackInput(ddevent_t *ev);
 
 #if _DEBUG
 /**

@@ -1009,7 +1009,7 @@ void SBarInventory_UpdateGeometry(uiwidget_t* obj)
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
 
-    // \fixme calculate dimensions properly!
+    // @todo calculate dimensions properly!
     Rect_SetWidthHeight(obj->geometry, (ST_WIDTH-(43*2)) * cfg.statusbarScale,
                                        41 * cfg.statusbarScale);
 }

@@ -779,7 +779,7 @@ int P_SetupMapWorker(void* paramaters)
     { lumpname_t mapId;
     G_MapId(param->episode, param->map, mapId);
     Con_Message("Load ACS scripts\n");
-    // \fixme Should be interpreted by the map converter.
+    // @todo Should be interpreted by the map converter.
     P_LoadACScripts(W_GetLumpNumForName(mapId) + 11 /*ML_BEHAVIOR*/); // ACS object code
     }
 #endif

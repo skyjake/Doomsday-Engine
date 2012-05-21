@@ -5468,8 +5468,8 @@ void SV_MapTeleport(uint map, uint position)
                     players[i].weapons[j].owned = true;
                 }
             }
-            players[i].ammo[AT_BLUEMANA].owned = 25; //// \fixme values.ded
-            players[i].ammo[AT_GREENMANA].owned = 25; //// \fixme values.ded
+            players[i].ammo[AT_BLUEMANA].owned = 25; //// @todo values.ded
+            players[i].ammo[AT_GREENMANA].owned = 25; //// @todo values.ded
             if(bestWeapon)
             {   // Bring up the best weapon
                 players[i].pendingWeapon = bestWeapon;
@@ -5483,7 +5483,7 @@ void SV_MapTeleport(uint map, uint position)
     }
     randomClassParm = rClass;
 
-    //// \fixme Redirect anything targeting a player mobj
+    //// @todo Redirect anything targeting a player mobj
     //// FIXME! This only supports single player games!!
     if(targetPlayerAddrs)
     {

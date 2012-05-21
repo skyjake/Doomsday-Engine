@@ -32,7 +32,8 @@ typedef struct {
     uint numVertices, realNumVertices;
     const coord_t* texTL, *texBR;
     boolean isWall;
-    const walldiv_t* divs;
+    const walldiv_t* leftWallDivs;
+    const walldiv_t* rightWallDivs;
 } renderlightprojectionparams_t;
 
 /**

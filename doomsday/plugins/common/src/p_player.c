@@ -559,7 +559,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
                     continue;
 
                 /**
-                 * \fixme Have we got enough of ALL used ammo types?
+                 * @todo Have we got enough of ALL used ammo types?
                  * Problem, since the ammo has not been given yet (could
                  * be an object that gives several ammo types eg backpack)
                  * we can't test for this with what we know!
@@ -850,7 +850,7 @@ void P_SetYellowMessage(player_t* pl, const char* msg, boolean noHide)
         Con_FPrintf(CPF_CYAN, "%s\n", msg);
 
     // Servers are responsible for sending these messages to the clients.
-    /// \fixme We shouldn't need to send the format string along with every
+    /// @todo We shouldn't need to send the format string along with every
     /// important game message. Instead flag a bit in the packet and then
     /// reconstruct on the other end.
     NetSv_SendMessage(pl - players, Str_Text(&buf));
@@ -1080,7 +1080,7 @@ int P_PlayerGiveArmorBonus(player_t* plr, armortype_t type, int points)
     oldPoints = *current;
     if(points > 0)
     {
-        delta = points; /// \fixme No upper limit?
+        delta = points; /// @todo No upper limit?
     }
     else
     {
@@ -1217,7 +1217,7 @@ D_CMD(PrintPlayerCoords)
 
 D_CMD(CycleSpy)
 {
-    //// \fixme The engine should do this.
+    //// @todo The engine should do this.
     Con_Printf("Spying not allowed.\n");
 #if 0
     if(G_GameState() == GS_MAP && !deathmatch)

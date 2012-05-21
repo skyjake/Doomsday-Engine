@@ -444,7 +444,7 @@ void MPE_PruneRedundantMapData(editmap_t* map, int flags)
 {
 #if 0
     /**
-     * \fixme Pruning cannot be done as game map data object properties
+     * @todo Pruning cannot be done as game map data object properties
      * are currently indexed by their original indices as determined by the
      * position in the map data. The same problem occurs within ACS scripts
      * and XG line/sector references.
@@ -1713,12 +1713,6 @@ boolean MPE_End(void)
             po->originalPts[n].origin[VX] = line->L_v1origin[VX] - po->origin[VX];
             po->originalPts[n].origin[VY] = line->L_v1origin[VY] - po->origin[VY];
         }
-    }
-
-    for(i = 0; i < gamemap->numBspLeafs; ++i)
-    {
-        BspLeaf* leaf = GameMap_BspLeaf(gamemap, i);
-        BspLeaf_ChooseFanBase(leaf);
     }
 
     buildSectorBspLeafLists(gamemap);

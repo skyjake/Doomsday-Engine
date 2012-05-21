@@ -22,6 +22,7 @@
 
 #include <QWidget>
 #include <QApplication>
+#include <QPaintEvent>
 #include <QDesktopWidget>
 #include <QSettings>
 #include <stdlib.h>
@@ -190,7 +191,6 @@ struct ddwindow_s
             {
                 geometry.size.width = DisplayMode_Current()->width;
                 geometry.size.height = DisplayMode_Current()->height;
-
 #ifdef MACOSX
                 // Pull the window again over the shield after the mode change.
                 DisplayMode_Native_Raise(Window_NativeHandle(this));
@@ -822,7 +822,7 @@ static void drawCanvasWithCallback(Canvas& canvas)
     {
         win->drawFunc();
     }
-    // Now we can continue with the main loop.
+    // Now we can continue with the main loop (if it was paused).
     LegacyCore_ResumeLoop(de2LegacyCore);
 }
 
@@ -1141,16 +1141,17 @@ void Window_Draw(Window* win)
 
     if(Window_ShouldRepaintManually(win))
     {
-        // We will perform the drawing manually right away.
         LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
-        win->widget->canvas().repaint();
+
+        // Perform the drawing manually right away.
+        win->widget->canvas().updateGL();
     }
     else
     {
-        // We want no further iterations of the main loop until the frame has been drawn.
+        // Don't run the main loop until after the paint event has been dealt with.
         LegacyCore_PauseLoop(de2LegacyCore);
 
-        // Request repaint at the earliest convenience.
+        // Request update at the earliest convenience.
         win->widget->canvas().update();
     }
 }
@@ -1307,15 +1308,10 @@ boolean Window_IsMouseTrapped(const Window* wnd)
 
 boolean Window_ShouldRepaintManually(const Window* wnd)
 {
-    DENG_UNUSED(wnd);
-    return false;
-
-#if 0
-    // When mouse is trapped, we update the screen during the main loop
-    // iteration rather than waiting for the windowing system to send an update
-    // event.
-    return Window_IsMouseTrapped(wnd);
-#endif
+    // When the pointer is not grabbed, allow the system to regulate window
+    // updates (e.g., for window manipulation).
+    if(Window_IsFullscreen(wnd)) return true;
+    return !Mouse_IsPresent() || Window_IsMouseTrapped(wnd);
 }
 
 void Window_UpdateCanvasFormat(Window* wnd)
@@ -1347,4 +1343,10 @@ void Window_GLDone(Window* wnd)
     if(wnd->type == WT_CONSOLE) return;
     wnd->assertWindow();
     wnd->widget->canvas().doneCurrent();
+}
+
+QWidget* Window_Widget(Window* wnd)
+{
+    if(!wnd || wnd->type == WT_CONSOLE) return 0;
+    return wnd->widget;
 }

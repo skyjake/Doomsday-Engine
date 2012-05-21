@@ -326,9 +326,9 @@ int RIT_LinkObjToBspLeaf(BspLeaf* bspLeaf, void* paramaters)
  * BspLeaf and into the (relative) back BspLeaf.
  *
  * @param bspLeaf  BspLeaf to attempt to spread over to.
- * @param data  @see contactfinderparams_t
+ * @param parameters  @see contactfinderparams_t
  *
- * @return  @c true (always - this function is also used as an iterator).
+ * @return  Always @c true. (This function is also used as an iterator.)
  */
 static void spreadInBspLeaf(BspLeaf* bspLeaf, void* paramaters)
 {
@@ -501,10 +501,11 @@ static void findContacts(objlink_t* link)
  * Spread contacts in the object => BspLeaf objlink blockmap to all
  * other BspLeafs within the block.
  *
- * @param bspLeaf  BspLeaf to spread the contacts of.
+ * @param obm        Objlink blockmap.
+ * @param bspLeaf    BspLeaf to spread the contacts of.
+ * @param maxRadius  Maximum radius for the spread.
  */
-void R_ObjlinkBlockmapSpreadInBspLeaf(objlinkblockmap_t* obm,
-    const BspLeaf* bspLeaf, float maxRadius)
+void R_ObjlinkBlockmapSpreadInBspLeaf(objlinkblockmap_t* obm, const BspLeaf* bspLeaf, float maxRadius)
 {
     uint minBlock[2], maxBlock[2], x, y;
     objlink_t* iter;

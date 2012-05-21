@@ -50,7 +50,8 @@ public:
         };
 
         /**
-         * @param name   Case-independent name of the element.
+         * @param t  Type of the element.
+         * @param n  Case-independent name of the element.
          */
         Element(Type t = None, const String& n = "") : _type(t) { setName(n); }
         virtual ~Element() {}

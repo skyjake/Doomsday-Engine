@@ -1681,7 +1681,7 @@ void P_PlayerThinkLookYaw(player_t* player)
     int playerNum = player - players;
     ddplayer_t* plr = player->plr;
     classinfo_t* pClassInfo = PCLASS_INFO(player->class_);
-    float offsetSensitivity = 100; /// \fixme Should be done engine-side, mouse sensitivity!
+    float offsetSensitivity = 100; /// @todo Should be done engine-side, mouse sensitivity!
     float vel, off, turnSpeedPerTic;
 
     if(!plr->mo || player->playerState == PST_DEAD || player->viewLock)
@@ -1721,7 +1721,7 @@ void P_PlayerThinkLookPitch(player_t* player, timespan_t ticLength)
     int playerNum = player - players;
     ddplayer_t* plr = player->plr;
     float vel, off;
-    float offsetSensitivity = 100; /// \fixme Should be done engine-side, mouse sensitivity!
+    float offsetSensitivity = 100; /// @todo Should be done engine-side, mouse sensitivity!
 
     if(!plr->mo || player->playerState == PST_DEAD || player->viewLock)
         return; // Nothing to control.

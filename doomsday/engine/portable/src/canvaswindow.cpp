@@ -79,7 +79,7 @@ void CanvasWindow::initCanvasAfterRecreation(Canvas& canvas)
     self->d->canvas->makeCurrent();
     GL_Init2DState();
     self->d->canvas->doneCurrent();
-    self->d->canvas->update();
+    self->d->canvas->updateGL();
 
     // Reacquire the focus.
     self->d->canvas->setFocus();
@@ -93,6 +93,14 @@ void CanvasWindow::initCanvasAfterRecreation(Canvas& canvas)
 
 void CanvasWindow::recreateCanvas()
 {
+    // Update the GL format for subsequently created Canvases.
+    setDefaultGLFormat();
+
+#if 0
+    canvas().setFormat(QGLFormat::defaultFormat());
+    LOG_DEBUG("Updated Canvas GL format.");
+
+#else
     /// @todo Instead of recreating, there is also the option of modifying the
     /// existing QGLContext -- however, changing its format causes it to be
     /// reset. We are doing it this way because we wish to retain the current
@@ -106,9 +114,6 @@ void CanvasWindow::recreateCanvas()
     d->mouseWasTrapped = canvas().isMouseTrapped();
     canvas().trapMouse(false);
 
-    // Update the GL format for subsequently created Canvases.
-    setDefaultGLFormat();
-
     // Create the replacement Canvas. Once it's created and visible, we'll
     // finish the switch-over.
     d->recreated = new Canvas(this, d->canvas);
@@ -118,6 +123,7 @@ void CanvasWindow::recreateCanvas()
     d->recreated->show();
 
     LOG_DEBUG("Canvas recreated, old one still exists");
+#endif
 }
 
 Canvas& CanvasWindow::canvas()

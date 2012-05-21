@@ -237,7 +237,7 @@ void UI_SetPage(ui_page_t* page);
 void UI_UpdatePageLayout(void);
 
 /// Directs events through the ui and current page if active.
-int UI_Responder(ddevent_t* ev);
+int UI_Responder(const ddevent_t* ev);
 
 void UI_Ticker(timespan_t time);
 

@@ -333,7 +333,16 @@ void Window_GLDone(Window* wnd);
 void* Window_NativeHandle(const Window* wnd);
 
 #ifdef __cplusplus
-}
-#endif
+} // extern "C"
+
+// C++ API
+class QWidget;
+
+/**
+ * Returns the window's native widget, if one exists.
+ */
+QWidget* Window_Widget(Window* wnd);
+
+#endif // __cplusplus
 
 #endif /* LIBDENG_SYS_WINDOW_H */

@@ -101,15 +101,14 @@ ushort PathDirectory_HashPath(const char* path, size_t len, char delimiter)
     const char* c = path + len - 1;
     ushort key = 0;
     int op = 0;
-    size_t i;
 
     assert(path);
 
     // Skip over any trailing delimiters.
-    for(i = len; *c && *c == delimiter && i-- > 0; c--) {}
+    while(c >= path && *c && *c == delimiter) c--;
 
     // Compose the hash.
-    for(; *c && *c != delimiter && i-- > 0; c--)
+    for(; c >= path && *c && *c != delimiter; c--)
     {
         switch(op)
         {

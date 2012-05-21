@@ -221,16 +221,17 @@ void GL_DoUpdate(void)
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    if(Window_ShouldRepaintManually(Window_Main()))
-    {
-        // Wait until the right time to show the frame so that the realized
-        // frame rate is exactly right.
-        glFlush();
-        DD_WaitForOptimalUpdateTime();
-    }
+    // Wait until the right time to show the frame so that the realized
+    // frame rate is exactly right.
+    glFlush();
+    DD_WaitForOptimalUpdateTime();
 
     // Blit screen to video.
     Window_SwapBuffers(theWindow);
+
+    // We will arrive here always at the same time in relation to the displayed
+    // frame: it is a good time to update the mouse state.
+    Mouse_Poll();
 }
 
 void GL_GetGammaRamp(displaycolortransfer_t *ramp)
@@ -523,6 +524,9 @@ void GL_Init2DState(void)
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_TEXTURE_CUBE_MAP);
 
+    // Default, full area viewport.
+    glViewport(0, 0, Window_Width(theWindow), Window_Height(theWindow));
+
     // The projection matrix.
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -532,8 +536,7 @@ void GL_Init2DState(void)
     usingFog = false;
     glDisable(GL_FOG);
     glFogi(GL_FOG_MODE, (fogModeDefault == 0 ? GL_LINEAR :
-                          fogModeDefault == 1 ? GL_EXP :
-                          GL_EXP2));
+                         fogModeDefault == 1 ? GL_EXP    : GL_EXP2));
     glFogf(GL_FOG_START, DEFAULT_FOG_START);
     glFogf(GL_FOG_END, DEFAULT_FOG_END);
     glFogf(GL_FOG_DENSITY, DEFAULT_FOG_DENSITY);
@@ -878,7 +881,7 @@ void GL_SetMaterialUI2(material_t* mat, int wrapS, int wrapT)
     const materialvariantspecification_t* spec;
     const materialsnapshot_t* ms;
 
-    if(!mat) return; // \fixme we need a "NULL material".
+    if(!mat) return; // @todo we need a "NULL material".
 
     spec = Materials_VariantSpecificationForContext(MC_UI, 0, 1, 0, 0,
         wrapS, wrapT, 0, 1, 0, false, false, false, false);
@@ -896,7 +899,7 @@ void GL_SetPSprite(material_t* mat, int tClass, int tMap)
     const materialvariantspecification_t* spec;
     const materialsnapshot_t* ms;
 
-    if(!mat) return; // \fixme we need a "NULL material".
+    if(!mat) return; // @todo we need a "NULL material".
 
     spec = Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, tClass,
         tMap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, true, true, false);

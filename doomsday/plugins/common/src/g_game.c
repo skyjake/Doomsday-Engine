@@ -787,13 +787,13 @@ void R_LoadVectorGraphics(void)
         { 2, &crossPoints[4] },
         { 2, &crossPoints[6] }
     };
-    const Point2Rawf dblanglePoints[] = { // > <
+    const Point2Rawf twinanglesPoints[] = { // > <
         {-R, -R * 10 / 14}, {-(R - (R * 10 / 14)), 0}, {-R,  R * 10 / 14}, // >
         { R, -R * 10 / 14}, {  R - (R * 10 / 14) , 0}, { R,  R * 10 / 14}, // <
     };
-    const def_svgline_t dblangle[] = {
-        { 3, &dblanglePoints[0] },
-        { 3, &dblanglePoints[3] }
+    const def_svgline_t twinangles[] = {
+        { 3, &twinanglesPoints[0] },
+        { 3, &twinanglesPoints[3] }
     };
     const Point2Rawf squarePoints[] = { // square
         {-R, -R}, {-R,  R},
@@ -815,14 +815,6 @@ void R_LoadVectorGraphics(void)
         { 3, &squarecornersPoints[ 6] },
         { 3, &squarecornersPoints[ 9] }
     };
-    const Point2Rawf diamondPoints[] = { // diamond
-        { 0, -R}, { R,  0},
-        { 0,  R}, {-R,  0},
-        { 0, -R}
-    };
-    const def_svgline_t diamond[] = {
-        { 5, diamondPoints }
-    };
     const Point2Rawf anglePoints[] = { // v
         {-R, -R}, { 0,  0}, { R, -R}
     };
@@ -837,11 +829,10 @@ void R_LoadVectorGraphics(void)
     R_NewSvg(VG_CHEATARROW, cheatarrow, NUMITEMS(cheatarrow));
 #endif
     R_NewSvg(VG_XHAIR1, cross, NUMITEMS(cross));
-    R_NewSvg(VG_XHAIR2, dblangle, NUMITEMS(dblangle));
+    R_NewSvg(VG_XHAIR2, twinangles, NUMITEMS(twinangles));
     R_NewSvg(VG_XHAIR3, square, NUMITEMS(square));
     R_NewSvg(VG_XHAIR4, squarecorners, NUMITEMS(squarecorners));
-    R_NewSvg(VG_XHAIR5, diamond, NUMITEMS(diamond));
-    R_NewSvg(VG_XHAIR6, angle, NUMITEMS(angle));
+    R_NewSvg(VG_XHAIR5, angle, NUMITEMS(angle));
 
 #undef NUMITEMS
 #undef R

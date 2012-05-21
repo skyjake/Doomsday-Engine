@@ -105,7 +105,7 @@ void Sfx_UpdateReverb(void)
  * buffer for each channel, which means the refresh must be done often
  * enough to keep them filled.
  *
- * \fixme Use a real mutex, will you?
+ * @todo Use a real mutex, will you?
  */
 int C_DECL Sfx_ChannelRefreshThread(void* parm)
 {
@@ -1112,7 +1112,7 @@ boolean Sfx_Init(void)
 
     // This is based on the scientific calculations that if the DOOM marine
     // is 56 units tall, 60 is about two meters.
-    //// \fixme Derive from the viewheight.
+    //// @todo Derive from the viewheight.
     AudioDriver_SFX()->Listener(SFXLP_UNITS_PER_METER, 30);
     AudioDriver_SFX()->Listener(SFXLP_DOPPLER, 1.5f);
 

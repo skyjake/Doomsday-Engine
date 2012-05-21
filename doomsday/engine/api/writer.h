@@ -1,5 +1,5 @@
 /**
- * @file writer.h
+ * @file api/writer.h
  * Serializer for writing values and data into a byte array.
  *
  * @ingroup base

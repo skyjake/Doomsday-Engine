@@ -102,7 +102,7 @@ void N_MasterAnnounceServer(boolean isOpen);
 void N_MasterRequestList(void);
 
 /**
- * Returns information about the server #N.
+ * Returns information about the server @em N.
  *
  * @return @c 0, if communication with the master is currently in progress. If
  * param info is @c NULL, will return the number of known servers ELSE, will

@@ -1064,6 +1064,8 @@ void Sv_Ticker(timespan_t ticLength)
 {
     int i;
 
+    if(!isDedicated) return;
+
     // Note last angles for all players.
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {

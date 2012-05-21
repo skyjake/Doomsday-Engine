@@ -457,7 +457,7 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
     v4[VY] = params->pos[VY] + params->height;
 
     // All psprite vertices are co-plannar, so just copy the view front vector.
-    // \fixme: Can we do something better here?
+    // @todo: Can we do something better here?
     {
     const float* frontVec = R_ViewData(viewPlayer - ddPlayers)->frontVec;
     for(i = 0; i < 4; ++i)
@@ -1026,7 +1026,7 @@ glEnd();
 #endif*/
 
     // All sprite vertices are co-plannar, so just copy the surface normal.
-    // \fixme: Can we do something better here?
+    // @todo: Can we do something better here?
     for(i = 0; i < 4; ++i)
     {
         V3f_Copyd(quadNormals[i].xyz, surfaceNormal);

@@ -253,7 +253,7 @@ const char* Str_GetLine(ddstring_t* ds, const char* src);
  * @param dest          Destination string.
  * @param src           Source string.
  * @param delimiter     Delimiter character.
- * @param flags         @ref copyDelimiterFlags
+ * @param cdflags       @ref copyDelimiterFlags
  *
  * @return              Pointer to the character within @a src where copy stopped
  *                      else @c NULL if the end was reached.
@@ -311,7 +311,7 @@ ddstring_t* Str_PercentEncode(ddstring_t* str);
  *                      @a excludeChars). @c 0 terminated.
  * @return              Same as @a str.
  */
-ddstring_t* Str_PercentEncode2(ddstring_t* str, const char* excludeChars, const char* includeCars);
+ddstring_t* Str_PercentEncode2(ddstring_t* str, const char* excludeChars, const char* includeChars);
 
 /**
  * Decode the percent-encoded string. Will match codes for the unicode

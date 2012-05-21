@@ -272,6 +272,9 @@ desc = Menu text shadow darkness.
 [menu-slam]
 desc = 1=Slam the menu when opening.
 
+[view-cross-angle]
+desc = Rotation angle for the crosshair [0..1] (1=360 degrees).
+
 [view-cross-type]
 desc = The current crosshair.
 
