@@ -964,16 +964,19 @@ static void quadTexCoords(rtexcoord_t* tc, const rvertex_t* rverts,
     tc[0].st[1] = tc[3].st[1] + (rverts[3].pos[VZ] - rverts[2].pos[VZ]) / texHeight;
 }
 
-static void renderShadowSeg(const rvertex_t* origVertices, const walldiv_t* divs,
-    const rendershadowseg_params_t* p, const float shadowRGB[3], float shadowDark)
+static void renderShadowSeg(const rvertex_t* origVertices, const walldiv_t* leftWallDivs,
+    const walldiv_t* rightWallDivs, const rendershadowseg_params_t* p,
+    const float shadowRGB[3], float shadowDark)
 {
     float texOrigin[2][3];
     ColorRawf* rcolors;
     rtexcoord_t* rtexcoords;
     uint realNumVertices = 4;
 
-    if(divs)
-        realNumVertices = 3 + divs[0].num + 3 + divs[1].num;
+    if(leftWallDivs->num > 2 || rightWallDivs->num > 2)
+        realNumVertices = 1 + leftWallDivs->num + 1 + rightWallDivs->num;
+    else
+        realNumVertices = 4;
 
     // Top left.
     texOrigin[0][VX] = origVertices[1].pos[VX];
@@ -1001,7 +1004,7 @@ static void renderShadowSeg(const rvertex_t* origVertices, const walldiv_t* divs
         RL_LoadDefaultRtus();
         RL_Rtu_SetTextureUnmanaged(RTU_PRIMARY, GL_PrepareLSTexture(p->texture));
 
-        if(divs)
+        if(leftWallDivs->num > 2 || rightWallDivs->num > 2)
         {
             float bL, tL, bR, tR;
             rvertex_t* rvertices;
@@ -1024,15 +1027,15 @@ static void renderShadowSeg(const rvertex_t* origVertices, const walldiv_t* divs
             bR = origVertices[2].pos[VZ];
             tR = origVertices[3].pos[VZ];
 
-            R_DivVerts(rvertices, origVertices, divs);
-            R_DivTexCoords(rtexcoords, origTexCoords, divs, bL, tL, bR, tR);
-            R_DivVertColors(rcolors, origColors, divs, bL, tL, bR, tR);
+            R_DivVerts(rvertices, origVertices, leftWallDivs, rightWallDivs);
+            R_DivTexCoords(rtexcoords, origTexCoords, leftWallDivs, rightWallDivs, bL, tL, bR, tR);
+            R_DivVertColors(rcolors, origColors, leftWallDivs, rightWallDivs, bL, tL, bR, tR);
 
             RL_AddPolyWithCoords(PT_FAN, RPF_DEFAULT|RPF_SHADOW,
-                3 + divs[1].num, rvertices + 3 + divs[0].num, rcolors + 3 + divs[0].num,
-                rtexcoords + 3 + divs[0].num, NULL);
+                1 + rightWallDivs->num, rvertices + 1 + leftWallDivs->num, rcolors + 1 + leftWallDivs->num,
+                rtexcoords + 1 + leftWallDivs->num, NULL);
             RL_AddPolyWithCoords(PT_FAN, RPF_DEFAULT|RPF_SHADOW,
-                3 + divs[0].num, rvertices, rcolors, rtexcoords, NULL);
+                1 + leftWallDivs->num, rvertices, rcolors, rtexcoords, NULL);
 
             R_FreeRendVertices(rvertices);
         }
@@ -1050,7 +1053,8 @@ static void renderShadowSeg(const rvertex_t* origVertices, const walldiv_t* divs
 /**
  * Create the appropriate FakeRadio shadow polygons for the wall segment.
  */
-static void rendRadioSegSection(const rvertex_t* rvertices, const walldiv_t* divs,
+static void rendRadioSegSection(const rvertex_t* rvertices,
+    const walldiv_t* leftWallDivs, const walldiv_t* rightWallDivs,
     const rendsegradio_params_t* p)
 {
     const coord_t* fFloor, *fCeil, *bFloor, *bCeil;
@@ -1084,7 +1088,7 @@ static void rendRadioSegSection(const rvertex_t* rvertices, const walldiv_t* div
             setTopShadowParams(&params, p->shadowSize, rvertices[1].pos[VZ],
                                p->segOffset, p->segLength, fFloor, fCeil,
                                p->botCn, p->topCn, p->sideCn, p->spans);
-            renderShadowSeg(rvertices, divs, &params, p->shadowRGB, p->shadowDark);
+            renderShadowSeg(rvertices, leftWallDivs, rightWallDivs, &params, p->shadowRGB, p->shadowDark);
         }
     }
 
@@ -1101,7 +1105,7 @@ static void rendRadioSegSection(const rvertex_t* rvertices, const walldiv_t* div
             setBottomShadowParams(&params, p->shadowSize, rvertices[1].pos[VZ],
                                   p->segOffset, p->segLength, fFloor, fCeil,
                                   p->botCn, p->topCn, p->sideCn, p->spans);
-            renderShadowSeg(rvertices, divs, &params, p->shadowRGB, p->shadowDark);
+            renderShadowSeg(rvertices, leftWallDivs, rightWallDivs, &params, p->shadowRGB, p->shadowDark);
         }
     }
 
@@ -1122,7 +1126,7 @@ static void rendRadioSegSection(const rvertex_t* rvertices, const walldiv_t* div
                             bottomGlow, topGlow, p->segOffset, p->segLength,
                             fFloor, fCeil, bFloor, bCeil, p->linedefLength,
                             p->sideCn);
-        renderShadowSeg(rvertices, divs, &params, p->shadowRGB, p->shadowDark);
+        renderShadowSeg(rvertices, leftWallDivs, rightWallDivs, &params, p->shadowRGB, p->shadowDark);
     }
 
     /*
@@ -1138,18 +1142,18 @@ static void rendRadioSegSection(const rvertex_t* rvertices, const walldiv_t* div
                             bottomGlow, topGlow, p->segOffset, p->segLength,
                             fFloor, fCeil, bFloor, bCeil, p->linedefLength,
                             p->sideCn);
-        renderShadowSeg(rvertices, divs, &params, p->shadowRGB, p->shadowDark);
+        renderShadowSeg(rvertices, leftWallDivs, rightWallDivs, &params, p->shadowRGB, p->shadowDark);
     }
 }
 
-void Rend_RadioSegSection(const rvertex_t* rvertices, const walldiv_t* divs,
-    const rendsegradio_params_t* params)
+void Rend_RadioSegSection(const rvertex_t* rvertices, const walldiv_t* leftWallDivs,
+    const walldiv_t* rightWallDivs, const rendsegradio_params_t* params)
 {
-    if(!rendFakeRadio || levelFullBright) // Disabled?
-        return;
-    if(!rvertices || !params)
-        return; // Wha?
-    rendRadioSegSection(rvertices, divs, params);
+    if(!rvertices || !params) return;
+    // Disabled?
+    if(!rendFakeRadio || levelFullBright) return;
+
+    rendRadioSegSection(rvertices, leftWallDivs, rightWallDivs, params);
 }
 
 /**

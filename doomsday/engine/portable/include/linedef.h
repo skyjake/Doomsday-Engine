@@ -26,6 +26,10 @@
 #include "r_data.h"
 #include "p_dmu.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * On which side of this LineDef does the specified box lie?
  *
@@ -185,5 +189,9 @@ int LineDef_GetProperty(const LineDef* lineDef, setargs_t* args);
  * @return  Always @c 0 (can be used as an iterator).
  */
 int LineDef_SetProperty(LineDef* lineDef, const setargs_t* args);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /// LIBDENG_MAP_LINEDEF

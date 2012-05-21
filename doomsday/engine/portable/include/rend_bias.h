@@ -31,6 +31,10 @@
 
 #include "m_vector.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct rendpoly_s;
 struct rvertex_s;
 struct ColorRawf_s;
@@ -111,5 +115,9 @@ source_t*       SB_GetSource(int which);
 int             SB_ToIndex(source_t* source);
 
 void            SB_SetColor(float* dest, float* src);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /// LIBDENG_RENDER_SHADOWBIAS_H

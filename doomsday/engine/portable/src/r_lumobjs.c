@@ -890,7 +890,7 @@ void LO_BeginFrame(void)
     const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
     uint i;
 
-    if(useDynlights || useLightDecorations)
+    if(useDynLights || useLightDecorations)
     {
         /**
          * Clear the projected dynlight lists. This is done here as
@@ -1021,11 +1021,11 @@ static boolean createGlowLightForSurface(Surface* suf, void* paramaters)
 
 void LO_AddLuminousMobjs(void)
 {
-    if(!useDynlights && !useWallGlow) return;
+    if(!useDynLights && !useWallGlow) return;
 
 BEGIN_PROF( PROF_LUMOBJ_INIT_ADD );
 
-    if(useDynlights)
+    if(useDynLights)
     {
         Sector* seciter;
         uint i;
@@ -1217,7 +1217,7 @@ int LOIT_UnlinkMobjLumobj(thinker_t* th, void* context)
 
 void LO_UnlinkMobjLumobjs(void)
 {
-    if(!useDynlights && theMap)
+    if(!useDynLights && theMap)
     {
         // Mobjs are always public.
         GameMap_IterateThinkers(theMap, gx.MobjThinker, 0x1, LOIT_UnlinkMobjLumobj, NULL);

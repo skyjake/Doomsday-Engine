@@ -74,7 +74,7 @@ public
 end
 
 struct HEdge
-    PTR     vertex_s*[2] v          // [Start, End] of the segment.
+    PTR     vertex_s*[2] v /// [Start, End] of the segment.
     PTR     hedge_s*    next
     PTR     hedge_s*    prev
 
@@ -87,30 +87,41 @@ struct HEdge
     PTR     linedef_s*  lineDef
     PTR     sector_s*   sector
     ANGLE   angle_t     angle
-    BYTE    byte        side        // 0=front, 1=back
-    DOUBLE  coord_t     length      // Accurate length of the segment (v1 -> v2).
+    BYTE    byte        side /// On which side of the LineDef (0=front, 1=back)?
+    DOUBLE  coord_t     length /// Accurate length of the segment (v1 -> v2).
     DOUBLE  coord_t     offset
-    -       biassurface_t*[3] bsuf // 0=middle, 1=top, 2=bottom
+    -       biassurface_t*[3] bsuf /// For each @ref SideDefSection.
     -       short       frameFlags
     -       uint        index /// Unique. Set when saving the BSP.
     -       mhedge_t    buildData
 end
 
+internal
+/**
+ * @defgroup bspLeafFlags  Bsp Leaf Flags
+ * @addtogroup map
+ */
+///@{
+#define BLF_UPDATE_FANBASE      0x1 ///< The tri-fan base requires an update.
+///@}
+end
+
 struct BspLeaf
-    UINT    uint        hedgeCount
-    PTR     hedge_s*    hedge
-    PTR     polyobj_s*  polyObj // NULL, if there is no polyobj.
-    PTR     sector_s*   sector
-    -       int         addSpriteCount // frame number of last R_AddSprites
+    PTR     hedge_s*    hedge /// First HEdge in this leaf.
+    -       int         flags /// @ref BspLeafFlags.
+    -       uint        index /// Unique. Set when saving the BSP.
+    -       int         addSpriteCount /// Frame number of last R_AddSprites.
     -       int         validCount
-    -       uint[NUM_REVERB_DATA] reverb
-    -       AABoxd      aaBox // Min and max points.
-    -       coord_t[2]  worldGridOffset // Offset to align the top left of the bBox to the world grid.
-    -       coord_t[2]  midPoint /// Center of vertices.
+    UINT    uint        hedgeCount /// Number of HEdge's in this leaf.
+    PTR     sector_s*   sector
+    PTR     polyobj_s*  polyObj /// First polyobj in this leaf. Can be @c NULL.
     -       hedge_s*    fanBase /// HEdge whose vertex to use as the base for a trifan. If @c NULL then midPoint is used instead.
     -       shadowlink_s* shadows
-    -       biassurface_s** bsuf // [sector->planeCount] size.
-    -       uint        index /// Unique. Set when saving the BSP.
+    -       AABoxd      aaBox /// HEdge Vertex bounding box in the map coordinate space.
+    -       coord_t[2]  midPoint /// Center of vertices.
+    -       coord_t[2]  worldGridOffset /// Offset to align the top left of materials in the built geometry to the map coordinate space grid.
+    -       biassurface_t** bsuf /// [sector->planeCount] size.
+    -       uint[NUM_REVERB_DATA] reverb
 end
 
 internal

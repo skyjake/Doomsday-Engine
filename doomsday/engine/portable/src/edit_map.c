@@ -1715,12 +1715,6 @@ boolean MPE_End(void)
         }
     }
 
-    for(i = 0; i < gamemap->numBspLeafs; ++i)
-    {
-        BspLeaf* leaf = GameMap_BspLeaf(gamemap, i);
-        BspLeaf_ChooseFanBase(leaf);
-    }
-
     buildSectorBspLeafLists(gamemap);
 
     // Map must be polygonized and sector->bspLeafs must be built before

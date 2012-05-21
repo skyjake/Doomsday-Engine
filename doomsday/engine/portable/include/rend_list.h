@@ -31,6 +31,10 @@
 
 #include "r_data.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Multiplicative blending for dynamic lights?
 #define IS_MUL              (dynlightBlend != 1 && !usingFog)
 
@@ -177,5 +181,9 @@ void RL_AddPoly(primtype_t primType, int flags, uint numElements,
     const rvertex_t* vertices, const ColorRawf* colors);
 
 void RL_RenderAllLists(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* LIBDENG_REND_LIST_H */
