@@ -1107,7 +1107,16 @@ boolean Window_IsMaximized(const Window* wnd)
 
 void* Window_NativeHandle(const Window* wnd)
 {
-    if(!wnd || !wnd->widget) return 0;
+    if(!wnd) return 0;
+
+#ifdef WIN32
+    if(wnd->type == WT_CONSOLE)
+    {
+        return reinterpret_cast<void*>(wnd->console.hWnd);
+    }
+#endif
+
+    if(!wnd->widget) return 0;
     return reinterpret_cast<void*>(wnd->widget->winId());
 }
 
