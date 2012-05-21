@@ -139,7 +139,7 @@ void DD_GameLoopCallback(void)
     else
     {
         // Normal client-side/singleplayer mode.
-        assert(!novideo);
+        //assert(!novideo);
 
         // We may be performing GL operations.
         Window_GLActivate(Window_Main());
