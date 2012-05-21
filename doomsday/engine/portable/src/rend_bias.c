@@ -398,8 +398,7 @@ void SB_InitForMap(const char* uniqueID)
         HEdge* hedge = GameMap_HEdge(theMap, i);
         int j;
 
-        if(!hedge->lineDef)
-            continue;
+        if(!hedge->lineDef) continue;
 
         for(j = 0; j < 3; ++j)
         {
@@ -418,10 +417,10 @@ void SB_InitForMap(const char* uniqueID)
         Sector* sec = &sectors[i];
         if(sec->bspLeafs && *sec->bspLeafs)
         {
-            BspLeaf** leafIter = sec->bspLeafs;
-            do
+            BspLeaf** bspLeafIter = sec->bspLeafs;
+            for(; *bspLeafIter; bspLeafIter++)
             {
-                BspLeaf* leaf = *leafIter;
+                BspLeaf* leaf = *bspLeafIter;
                 uint j;
 
                 for(j = 0; j < sec->planeCount; ++j)
@@ -434,8 +433,7 @@ void SB_InitForMap(const char* uniqueID)
 
                     leaf->bsuf[j] = bsuf;
                 }
-                leafIter++;
-            } while(*leafIter);
+            }
         }
     }
 

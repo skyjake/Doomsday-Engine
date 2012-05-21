@@ -660,7 +660,6 @@ Plane* R_NewPlaneForSector(Sector* sec)
 void R_DestroyPlaneOfSector(uint id, Sector* sec)
 {
     Plane* plane, **newList = NULL;
-    BspLeaf** ssecIter;
     surfacelist_t* slist;
     planelist_t* plist;
     uint i;
@@ -707,15 +706,14 @@ void R_DestroyPlaneOfSector(uint id, Sector* sec)
     if(slist) R_SurfaceListRemove(slist, &plane->surface);
 
     // Destroy the biassurfaces for this plane.
-    ssecIter = sec->bspLeafs;
-    while(*ssecIter)
+    { BspLeaf** bspLeafIter;
+    for(bspLeafIter = sec->bspLeafs; *bspLeafIter; bspLeafIter++)
     {
-        BspLeaf* bspLeaf = *ssecIter;
+        BspLeaf* bspLeaf = *bspLeafIter;
         SB_DestroySurface(bspLeaf->bsuf[id]);
         if(id < sec->planeCount)
             memmove(bspLeaf->bsuf + id, bspLeaf->bsuf + id + 1, sizeof(biassurface_t*));
-        ssecIter++;
-    }
+    }}
 
     // Destroy the specified plane.
     Z_Free(plane);
@@ -1604,8 +1602,6 @@ boolean R_UpdatePlane(Plane* pln, boolean forceUpdate)
     // Geometry change?
     if(forceUpdate || pln->height != pln->oldHeight[1])
     {
-        BspLeaf** ssecIter;
-
         // Check if there are any camera players in this sector. If their
         // height is now above the ceiling/below the floor they are now in
         // the void.
@@ -1642,11 +1638,10 @@ boolean R_UpdatePlane(Plane* pln, boolean forceUpdate)
         // Inform the shadow bias of changed geometry.
         if(sec->bspLeafs && *sec->bspLeafs)
         {
-            uint i;
-            ssecIter = sec->bspLeafs;
-            do
+            BspLeaf** bspLeafIter = sec->bspLeafs;
+            for(; *bspLeafIter; bspLeafIter++)
             {
-                BspLeaf* bspLeaf = *ssecIter;
+                BspLeaf* bspLeaf = *bspLeafIter;
                 if(bspLeaf->hedge)
                 {
                     HEdge* hedge = bspLeaf->hedge;
@@ -1654,6 +1649,7 @@ boolean R_UpdatePlane(Plane* pln, boolean forceUpdate)
                     {
                         if(hedge->lineDef)
                         {
+                            uint i;
                             for(i = 0; i < 3; ++i)
                             {
                                 SB_SurfaceMoved(hedge->bsuf[i]);
@@ -1663,8 +1659,7 @@ boolean R_UpdatePlane(Plane* pln, boolean forceUpdate)
                 }
 
                 SB_SurfaceMoved(bspLeaf->bsuf[pln->planeID]);
-                ssecIter++;
-            } while(*ssecIter);
+            }
         }
 
         // We need the decorations updated.
