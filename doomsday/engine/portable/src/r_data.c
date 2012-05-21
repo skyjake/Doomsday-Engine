@@ -896,26 +896,30 @@ void Rtu_TranslateOffsetv(rtexmapunit_t* rtu, float const st[2])
     Rtu_TranslateOffset(rtu, st[0], st[1]);
 }
 
-void R_DivVerts(rvertex_t* dst, const rvertex_t* src, const walldiv_t* divs)
+void R_DivVerts(rvertex_t* dst, const rvertex_t* src, const walldiv_t* leftDivs,
+    const walldiv_t* rightDivs)
 {
 #define COPYVERT(d, s)  (d)->pos[VX] = (s)->pos[VX]; \
     (d)->pos[VY] = (s)->pos[VY]; \
     (d)->pos[VZ] = (s)->pos[VZ];
 
-    uint                i;
-    uint                numL = 3 + divs[0].num;
-    uint                numR = 3 + divs[1].num;
+    uint i, numL, numR;
+
+    assert(leftDivs && rightDivs);
+
+    numL = 1 + leftDivs->num;
+    numR = 1 + rightDivs->num;
 
     // Right fan:
     COPYVERT(&dst[numL + 0], &src[0])
     COPYVERT(&dst[numL + 1], &src[3]);
     COPYVERT(&dst[numL + numR - 1], &src[2]);
 
-    for(i = 0; i < divs[1].num; ++i)
+    for(i = 0; i < rightDivs->num - 2; ++i)
     {
         dst[numL + 2 + i].pos[VX] = src[2].pos[VX];
         dst[numL + 2 + i].pos[VY] = src[2].pos[VY];
-        dst[numL + 2 + i].pos[VZ] = divs[1].pos[i];
+        dst[numL + 2 + i].pos[VZ] = rightDivs->pos[1 + i];
     }
 
     // Left fan:
@@ -923,27 +927,29 @@ void R_DivVerts(rvertex_t* dst, const rvertex_t* src, const walldiv_t* divs)
     COPYVERT(&dst[1], &src[0]);
     COPYVERT(&dst[numL - 1], &src[1]);
 
-    for(i = 0; i < divs[0].num; ++i)
+    for(i = 0; i < leftDivs->num - 2; ++i)
     {
         dst[2 + i].pos[VX] = src[0].pos[VX];
         dst[2 + i].pos[VY] = src[0].pos[VY];
-        dst[2 + i].pos[VZ] = divs[0].pos[i];
+        dst[2 + i].pos[VZ] = leftDivs->pos[1 + i];
     }
 
 #undef COPYVERT
 }
 
-void R_DivTexCoords(rtexcoord_t* dst, const rtexcoord_t* src,
-                    const walldiv_t* divs, float bL, float tL, float bR,
-                    float tR)
+void R_DivTexCoords(rtexcoord_t* dst, const rtexcoord_t* src, const walldiv_t* leftDivs,
+    const walldiv_t* rightDivs, float bL, float tL, float bR, float tR)
 {
 #define COPYTEXCOORD(d, s)    (d)->st[0] = (s)->st[0]; \
     (d)->st[1] = (s)->st[1];
 
-    uint                i;
-    uint                numL = 3 + divs[0].num;
-    uint                numR = 3 + divs[1].num;
-    float               height;
+    uint i, numL, numR;
+    float height;
+
+    assert(leftDivs && rightDivs);
+
+    numL = 1 + leftDivs->num;
+    numR = 1 + rightDivs->num;
 
     // Right fan:
     COPYTEXCOORD(&dst[numL + 0], &src[0]);
@@ -951,9 +957,9 @@ void R_DivTexCoords(rtexcoord_t* dst, const rtexcoord_t* src,
     COPYTEXCOORD(&dst[numL + numR-1], &src[2]);
 
     height = tR - bR;
-    for(i = 0; i < divs[1].num; ++i)
+    for(i = 0; i < rightDivs->num - 2; ++i)
     {
-        float               inter = (divs[1].pos[i] - bR) / height;
+        float inter = (rightDivs->pos[1 + i] - bR) / height;
 
         dst[numL + 2 + i].st[0] = src[3].st[0];
         dst[numL + 2 + i].st[1] = src[2].st[1] +
@@ -966,9 +972,9 @@ void R_DivTexCoords(rtexcoord_t* dst, const rtexcoord_t* src,
     COPYTEXCOORD(&dst[numL - 1], &src[1]);
 
     height = tL - bL;
-    for(i = 0; i < divs[0].num; ++i)
+    for(i = 0; i < leftDivs->num - 2; ++i)
     {
-        float               inter = (divs[0].pos[i] - bL) / height;
+        float inter = (leftDivs->pos[1 + i] - bL) / height;
 
         dst[2 + i].st[0] = src[0].st[0];
         dst[2 + i].st[1] = src[0].st[1] +
@@ -978,19 +984,21 @@ void R_DivTexCoords(rtexcoord_t* dst, const rtexcoord_t* src,
 #undef COPYTEXCOORD
 }
 
-void R_DivVertColors(ColorRawf* dst, const ColorRawf* src,
-                     const walldiv_t* divs, float bL, float tL, float bR,
-                     float tR)
+void R_DivVertColors(ColorRawf* dst, const ColorRawf* src, const walldiv_t* leftDivs,
+    const walldiv_t* rightDivs, float bL, float tL, float bR, float tR)
 {
 #define COPYVCOLOR(d, s)    (d)->rgba[CR] = (s)->rgba[CR]; \
     (d)->rgba[CG] = (s)->rgba[CG]; \
     (d)->rgba[CB] = (s)->rgba[CB]; \
     (d)->rgba[CA] = (s)->rgba[CA];
 
-    uint                i;
-    uint                numL = 3 + divs[0].num;
-    uint                numR = 3 + divs[1].num;
-    float               height;
+    uint i, numL, numR = 3 + (rightDivs->num-2);
+    float height;
+
+    assert(leftDivs && rightDivs);
+
+    numL = 1 + leftDivs->num;
+    numR = 1 + rightDivs->num;
 
     // Right fan:
     COPYVCOLOR(&dst[numL + 0], &src[0]);
@@ -998,10 +1006,10 @@ void R_DivVertColors(ColorRawf* dst, const ColorRawf* src,
     COPYVCOLOR(&dst[numL + numR-1], &src[2]);
 
     height = tR - bR;
-    for(i = 0; i < divs[1].num; ++i)
+    for(i = 0; i < rightDivs->num - 2; ++i)
     {
-        uint                c;
-        float               inter = (divs[1].pos[i] - bR) / height;
+        uint c;
+        float inter = (rightDivs->pos[1 + i] - bR) / height;
 
         for(c = 0; c < 4; ++c)
         {
@@ -1016,10 +1024,10 @@ void R_DivVertColors(ColorRawf* dst, const ColorRawf* src,
     COPYVCOLOR(&dst[numL - 1], &src[1]);
 
     height = tL - bL;
-    for(i = 0; i < divs[0].num; ++i)
+    for(i = 0; i < leftDivs->num - 2; ++i)
     {
-        uint                c;
-        float               inter = (divs[0].pos[i] - bL) / height;
+        uint c;
+        float inter = (leftDivs->pos[1 + i] - bL) / height;
 
         for(c = 0; c < 4; ++c)
         {

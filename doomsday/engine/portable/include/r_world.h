@@ -161,6 +161,16 @@ LineDef*        R_FindLineBackNeighbor(const Sector* sector,
                                        boolean antiClockwise,
                                        binangle_t* diff);
 
+/**
+ * @defgroup skyCapFlags  Sky Cap Flags
+ */
+///@{
+#define SKYCAP_LOWER                0x1
+#define SKYCAP_UPPER                0x2
+///@}
+
+coord_t R_SkyCapZ(BspLeaf* bspLeaf, int skyCap);
+
 #ifdef __cplusplus
 }
 #endif

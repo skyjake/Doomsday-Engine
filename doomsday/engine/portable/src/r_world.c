@@ -630,7 +630,7 @@ Plane* R_NewPlaneForSector(Sector* sec)
             {
                 biassurface_t* bsuf = SB_CreateSurface();
 
-                bsuf->size = BspLeaf_NumFanVertices(bspLeaf);
+                bsuf->size = Rend_NumFanVerticesForBspLeaf(bspLeaf);
                 bsuf->illum = Z_Calloc(sizeof(vertexillum_t) * bsuf->size, PU_MAP, 0);
 
                 { uint i;
@@ -1829,4 +1829,12 @@ const float* R_GetSectorLightColor(const Sector* sector)
     }
     // A non-skylight sector (i.e., everything else!)
     return sector->rgb; // The sector's ambient light color.
+}
+
+coord_t R_SkyCapZ(BspLeaf* bspLeaf, int skyCap)
+{
+    const planetype_t plane = (skyCap & SKYCAP_UPPER)? PLN_CEILING : PLN_FLOOR;
+    if(!bspLeaf) Con_Error("R_SkyCapZ: Invalid bspLeaf argument (=NULL).");
+    if(!bspLeaf->sector || !P_IsInVoid(viewPlayer)) return GameMap_SkyFix(theMap, plane == PLN_CEILING);
+    return bspLeaf->sector->SP_planevisheight(plane);
 }

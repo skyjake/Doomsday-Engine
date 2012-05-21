@@ -54,7 +54,8 @@ void Rend_RadioUpdateLinedef(LineDef* line, boolean backSide);
 /**
  * Render FakeRadio for the given hedge section.
  */
-void Rend_RadioSegSection(const rvertex_t* rvertices, const walldiv_t* divs,
+void Rend_RadioSegSection(const rvertex_t* rvertices,
+    const walldiv_t* leftWallDivs, const walldiv_t* rightWallDivs,
     const rendsegradio_params_t* params);
 
 /**

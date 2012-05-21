@@ -371,13 +371,12 @@ void SB_InitForMap(const char* uniqueID)
         Sector* sec = &sectors[i];
         if(sec->bspLeafs && *sec->bspLeafs)
         {
-            BspLeaf** leafIter = sec->bspLeafs;
-            do
+            BspLeaf** bspLeafIter = sec->bspLeafs;
+            for(; *bspLeafIter; bspLeafIter++)
             {
-                BspLeaf* leaf = *leafIter;
-                numVertIllums += BspLeaf_NumFanVertices(leaf) * sec->planeCount;
-                leafIter++;
-            } while(*leafIter);
+                BspLeaf* leaf = *bspLeafIter;
+                numVertIllums += Rend_NumFanVerticesForBspLeaf(leaf) * sec->planeCount;
+            }
         }
     }
 
@@ -427,7 +426,7 @@ void SB_InitForMap(const char* uniqueID)
                 {
                     biassurface_t* bsuf = SB_CreateSurface();
 
-                    bsuf->size = BspLeaf_NumFanVertices(leaf);
+                    bsuf->size = Rend_NumFanVerticesForBspLeaf(leaf);
                     bsuf->illum = illums;
                     illums += bsuf->size;
 
