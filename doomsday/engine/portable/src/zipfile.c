@@ -796,11 +796,14 @@ boolean ZipFile_UncompressRaw(uint8_t* in, size_t inSize, uint8_t* out, size_t o
 }
 
 static size_t ZipFile_BufferLump(ZipFile* zip, const zipfile_lumprecord_t* lumpRecord,
-    uint8_t* buffer)
+    uint8_t* buffer, size_t bufferSize)
 {
     assert(zip && lumpRecord && buffer);
 
     DFile_Seek(zip->base._file, lumpRecord->baseOffset, SEEK_SET);
+
+    // Must have enough room in the buffer.
+    assert(bufferSize >= lumpRecord->info.size);
 
     if(lumpRecord->info.compressedSize != lumpRecord->info.size)
     {
@@ -811,8 +814,11 @@ static size_t ZipFile_BufferLump(ZipFile* zip, const zipfile_lumprecord_t* lumpR
 
         // Read the compressed data into a temporary buffer for decompression.
         DFile_Read(zip->base._file, compressedData, lumpRecord->info.compressedSize);
+
+        // Uncompress into the buffer provided by the caller.
         result = ZipFile_UncompressRaw(compressedData, lumpRecord->info.compressedSize,
                                        buffer, lumpRecord->info.size);
+
         free(compressedData);
         if(!result) return 0; // Inflate failed.
     }
@@ -869,7 +875,7 @@ size_t ZipFile_ReadLumpSection2(ZipFile* zip, int lumpIdx, uint8_t* buffer,
     }
 
     VERBOSE2( Con_Printf("\n") )
-    return ZipFile_BufferLump(zip, lumpRecord, buffer);
+    return ZipFile_BufferLump(zip, lumpRecord, buffer, length);
 }
 
 size_t ZipFile_ReadLumpSection(ZipFile* zip, int lumpIdx, uint8_t* buffer,
