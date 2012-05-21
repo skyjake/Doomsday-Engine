@@ -11,18 +11,22 @@ win32|macx: TARGET = dsOpenAL
 
 VERSION = $$OPENAL_VERSION
 
+#DEFINES += DENG_DSOPENAL_DEBUG
+
 INCLUDEPATH += include
 
 HEADERS += include/version.h
 
-SOURCES += src/driver_openal.c
+SOURCES += src/driver_openal.cpp
 
 win32 {
     RC_FILE = res/openal.rc
 
     QMAKE_LFLAGS += /DEF:\"$$PWD/api/dsopenal.def\"
     OTHER_FILES += api/dsopenal.def
+}
 
+!macx {
     INSTALLS += target
     target.path = $$DENG_LIB_DIR
 }

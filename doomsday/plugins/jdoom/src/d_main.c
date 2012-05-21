@@ -297,6 +297,7 @@ void D_PreInit(void)
 
     cfg.hudFog = 1;
     cfg.hudIconAlpha = 1;
+    cfg.xhairAngle = 0;
     cfg.xhairSize = .5f;
     cfg.xhairVitality = false;
     cfg.xhairColor[0] = 1;

@@ -70,14 +70,25 @@ public:
     void setDrawFunc(void (*canvasDrawFunc)(Canvas&));
 
     /**
-     * Sets a callback function that gets called after the size of the canvas changes.
+     * Sets the callback function that is called after the size of the canvas changes.
      *
      * @param canvasResizedFunc  Callback.
      */
     void setResizedFunc(void (*canvasResizedFunc)(Canvas&));
 
+    /**
+     * Sets the callback function that is called when the window's focus state changes.
+     * The callback is given @c true or @c false as argument, with
+     *  - @c true   Focus was gained.
+     *  - @c false  Focus was lost.
+     */
     void setFocusFunc(void (*canvasFocusChanged)(Canvas&, bool));
 
+    /**
+     * Copies the callback functions of another Canvas to this one.
+     *
+     * @param other  Canvas to copy callbacks from.
+     */
     void useCallbacksFrom(Canvas& other);
 
     /**
@@ -111,9 +122,29 @@ public:
      */
     void grab(struct image_s* img, const QSize& outputSize = QSize());
 
+    /**
+     * When the mouse is trapped, all mouse input is grabbed, the mouse cursor
+     * is hidden, and mouse movement is submitted as deltas to the input
+     * subsystem.
+     *
+     * @param trap  Enable or disable the mouse trap.
+     */
     void trapMouse(bool trap = true);
 
     bool isMouseTrapped() const;
+
+    /**
+     * Determines if the mouse cursor is currently visible or not.
+     */
+    bool isCursorVisible() const;
+
+    /**
+     * Redraws the Canvas contents immediately. Does not return until the frame
+     * has been swapped to the screen. This means if vsync is enabled, this
+     * function will block for several milliseconds. The draw callback is
+     * called during the execution of this function.
+     */
+    void forceImmediateRepaint();
 
 protected:
     void initializeGL();

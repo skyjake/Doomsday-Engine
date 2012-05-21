@@ -77,12 +77,13 @@ static void C_DECL handler(int s)
  */
 void Sys_Init(void)
 {
-    uint startTime = (verbose >= 2? Sys_GetRealTime() : 0);
+    uint startTime;
 
     Con_Message("Setting up platform state...\n");
 
     VERBOSE( Con_Message("Initializing Timing subsystem...\n") )
     Sys_InitTimer();
+    startTime = (verbose >= 2? Sys_GetRealTime() : 0);
 
     if(!isDedicated)
     {

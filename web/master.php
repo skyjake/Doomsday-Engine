@@ -26,27 +26,13 @@
 
 require_once('classes/masterserver.class.php');
 
-// Global Master Server instance.
-$ms = NULL;
-
-function MasterServer_inst()
-{
-    global $ms;
-    if(is_null($ms))
-    {
-        $ms = new MasterServer(true);
-    }
-    return $ms;
-}
-
 function write_server($info)
 {
     // We will not write empty infos.
     if(count($info) <= 10) return;
 
-    $ms = MasterServer_inst();
+    $ms = new MasterServer(true/*writable*/);
     $ms->insert($info);
-    $ms->close();
 }
 
 function update_server($announcement, $addr)
@@ -87,8 +73,7 @@ function update_server($announcement, $addr)
 
 function answer_request()
 {
-    $ms = MasterServer_inst();
-
+    $ms = new MasterServer();
     while(list($ident, $info) = each($ms->servers))
     {
         while(list($label, $value) = each($info))
@@ -98,10 +83,27 @@ function answer_request()
         // An empty line ends the server.
         print "\n";
     }
-    $ms->close();
 }
 
-$query  = $HTTP_SERVER_VARS['QUERY_STRING'];
+function return_xmllog()
+{
+    $ms = new MasterServer();
+    // Update the log if necessary.
+    $logPath = $ms->xmlLogFile();
+
+    if($logPath !== false)
+    {
+        $result = file_get_contents_utf8($logPath, 'text/xml', 'utf-8');
+        if($result !== false)
+        {
+            // Return the log to the client.
+            header("Content-Type: text/xml; charset=utf-8");
+            echo mb_ereg_replace('http', 'https', $result);
+        }
+    }
+}
+
+$query = $HTTP_SERVER_VARS['QUERY_STRING'];
 
 // There are four operating modes:
 // 1. Server announcement processing.
@@ -111,9 +113,10 @@ $query  = $HTTP_SERVER_VARS['QUERY_STRING'];
 
 if(isset($GLOBALS['HTTP_RAW_POST_DATA']) && !$query)
 {
+    $announcement = $GLOBALS['HTTP_RAW_POST_DATA'];
     $remote = $HTTP_SERVER_VARS['REMOTE_ADDR'];
 
-    update_server($GLOBALS['HTTP_RAW_POST_DATA'], $remote);
+    update_server($announcement, $remote);
 }
 else if($query == 'list')
 {
@@ -121,17 +124,7 @@ else if($query == 'list')
 }
 else if($query == 'xml')
 {
-    $ms = MasterServer_inst();
-
-    $logPath = $ms->xmlLogFile();
-    if($logPath === false) exit;
-
-    $result = file_get_contents_utf8($logPath, 'text/xml', 'utf-8');
-    if($result === false) exit; // Most peculiar...
-
-    // Return the log to the client.
-    header("Content-Type: text/xml; charset=utf-8");
-    echo mb_ereg_replace('http', 'https', $result);
+    return_xmllog();
 }
 else
 {

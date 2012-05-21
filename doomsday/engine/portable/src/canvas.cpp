@@ -71,6 +71,7 @@ struct Canvas::Instance
     void (*drawCallback)(Canvas&);
     void (*resizedCallback)(Canvas&);
     void (*focusCallback)(Canvas&, bool);
+    bool cursorHidden;
     bool mouseGrabbed;
 #ifdef WIN32
     bool altIsDown;
@@ -85,6 +86,7 @@ struct Canvas::Instance
           drawCallback(0),
           resizedCallback(0),
           focusCallback(0),
+          cursorHidden(false),
           mouseGrabbed(false)
     {
         wheelDir[0] = wheelDir[1] = 0;
@@ -93,8 +95,29 @@ struct Canvas::Instance
 #endif
     }
 
+    void showCursor(bool yes)
+    {
+        LOG_DEBUG("%s cursor (presently visible? %b)")
+                << (yes? "showing" : "hiding") << !cursorHidden;
+
+        if(!yes && !cursorHidden)
+        {
+            cursorHidden = true;
+            self->setCursor(QCursor(Qt::BlankCursor));
+            qApp->setOverrideCursor(QCursor(Qt::BlankCursor));
+        }
+        else if(yes && cursorHidden)
+        {
+            cursorHidden = false;
+            qApp->restoreOverrideCursor();
+            self->setCursor(QCursor(Qt::ArrowCursor)); // Default cursor.
+        }
+    }
+
     void grabMouse()
     {
+        if(!self->isVisible()) return;
+
         LOG_DEBUG("grabbing mouse (already grabbed? %b)") << mouseGrabbed;
 
         if(mouseGrabbed) return;
@@ -107,13 +130,7 @@ struct Canvas::Instance
         // Start tracking the mouse now.
         QCursor::setPos(self->mapToGlobal(self->rect().center()));
         self->grabMouse();
-        self->setCursor(QCursor(Qt::BlankCursor));
-        qApp->setOverrideCursor(QCursor(Qt::BlankCursor));
-        /*
-#ifndef LIBDENG_CANVAS_TRACK_WITH_MOUSE_MOVE_EVENTS
-        QTimer::singleShot(MOUSE_TRACK_INTERVAL, self, SLOT(trackMousePosition()));
-#endif
-        */
+        showCursor(false);
 #endif
 
 #ifdef MACOSX
@@ -123,14 +140,15 @@ struct Canvas::Instance
 
     void ungrabMouse()
     {
+        if(!self->isVisible()) return;
+
         LOG_DEBUG("ungrabbing mouse (presently grabbed? %b)") << mouseGrabbed;
 
         if(!mouseGrabbed) return;
 
 #ifndef WIN32
         self->releaseMouse();
-        qApp->restoreOverrideCursor();
-        self->setCursor(QCursor(Qt::ArrowCursor)); // Default cursor.
+        showCursor(true);
 #endif
 #ifdef MACOSX
         //CGAssociateMouseAndMouseCursorPosition(true);
@@ -245,6 +263,17 @@ void Canvas::trapMouse(bool trap)
 bool Canvas::isMouseTrapped() const
 {
     return d->mouseGrabbed;
+}
+
+bool Canvas::isCursorVisible() const
+{
+    return !d->cursorHidden;
+}
+
+void Canvas::forceImmediateRepaint()
+{
+    QPaintEvent ev(rect());
+    paintEvent(&ev);
 }
 
 void Canvas::initializeGL()

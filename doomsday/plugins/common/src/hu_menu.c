@@ -521,6 +521,7 @@ mndata_slider_t sld_hud_viewsize = { 3, 13, 0, 1, false, "view-size" };
 #endif
 mndata_slider_t sld_hud_uptime = { 0, 60, 0, 1.f, true, "hud-timer", "Disabled", NULL, " second", " seconds" };
 mndata_slider_t sld_hud_xhair_size = { 0, 1, 0, .1f, true, "view-cross-size" };
+mndata_slider_t sld_hud_xhair_angle = { 0, 1, 0, .0625f, true, "view-cross-angle" };
 mndata_slider_t sld_hud_xhair_opacity = { 0, 1, 0, .1f, true, "view-cross-a" };
 mndata_slider_t sld_hud_size = { 0, 1, 0, .1f, true, "hud-scale" };
 mndata_slider_t sld_hud_cntr_size = { 0, 1, 0, .1f, true, "hud-cheat-counter-scale" };
@@ -542,11 +543,10 @@ mndata_colorbox_t cbox_hud_msg_color = {
 mndata_listitem_t listit_hud_xhair_symbols[] = {
     { "None", 0 },
     { "Cross", 1 },
-    { "Angles", 2 },
+    { "Twin Angles", 2 },
     { "Square", 3 },
     { "Open Square", 4 },
-    { "Diamond", 5 },
-    { "V", 6 }
+    { "Angle", 5 }
 };
 mndata_list_t list_hud_xhair_symbol = {
     listit_hud_xhair_symbols, NUMLISTITEMS(listit_hud_xhair_symbols), "view-cross-type"
@@ -625,6 +625,7 @@ mndata_text_t txt_hud_msg_uptime = { "Uptime" };
 mndata_text_t txt_hud_crosshair = { "Crosshair" };
 mndata_text_t txt_hud_xhair_symbol = { "Symbol" };
 mndata_text_t txt_hud_xhair_size = { "Size" };
+mndata_text_t txt_hud_xhair_angle = { "Angle" };
 mndata_text_t txt_hud_xhair_opacity = { "Opacity" };
 mndata_text_t txt_hud_xhair_vitality_color = { "Vitality Color" };
 mndata_text_t txt_hud_xhair_color = { "Color" };
@@ -751,6 +752,8 @@ static mn_object_t HudMenuObjects[] = {
     { MN_LISTINLINE, 3, 0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR3, MNListInline_Ticker, MNListInline_UpdateGeometry, MNListInline_Drawer, { Hu_MenuCvarList, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNListInline_CommandResponder, NULL, NULL, &list_hud_xhair_symbol },
     { MN_TEXT,      3,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_xhair_size },
     { MN_SLIDER,    3,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNSlider_Ticker, MNSlider_UpdateGeometry, MNSlider_Drawer, { Hu_MenuCvarSlider, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_hud_xhair_size },
+    { MN_TEXT,      3,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_xhair_angle },
+    { MN_SLIDER,    3,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNSlider_Ticker, MNSlider_UpdateGeometry, MNSlider_Drawer, { Hu_MenuCvarSlider, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_hud_xhair_angle },
     { MN_TEXT,      3,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_xhair_opacity },
     { MN_SLIDER,    3,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNSlider_Ticker, MNSlider_UpdateGeometry, MNSlider_Drawer, { Hu_MenuCvarSlider, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_hud_xhair_opacity },
     { MN_TEXT,      3,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_xhair_vitality_color },

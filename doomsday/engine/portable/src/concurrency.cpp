@@ -36,7 +36,7 @@ static uint mainThreadId = 0; ///< ID of the main thread.
 CallbackThread::CallbackThread(systhreadfunc_t func, void* param)
     : _callback(func), _parm(param), _returnValue(0)
 {
-    qDebug() << "CallbackThread:" << this << "created.";
+    //qDebug() << "CallbackThread:" << this << "created.";
 
     // Only used if the thread needs to be shut down forcibly.
     setTerminationEnabled(true);
@@ -49,13 +49,13 @@ CallbackThread::~CallbackThread()
 {
     if(isRunning())
     {
-        qDebug() << "CallbackThread:" << this << "forcibly stopping, deleting.";
+        //qDebug() << "CallbackThread:" << this << "forcibly stopping, deleting.";
         terminate();
         wait(1000);
     }
     else
     {
-        qDebug() << "CallbackThread:" << this << "deleted.";
+        //qDebug() << "CallbackThread:" << this << "deleted.";
     }
 }
 

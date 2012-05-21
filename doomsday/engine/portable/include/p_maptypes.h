@@ -68,7 +68,7 @@ typedef struct mhedge_s {
 
 typedef struct hedge_s {
     runtime_mapdata_header_t header;
-    struct vertex_s*    v[2];          // [Start, End] of the segment.
+    struct vertex_s*    v[2]; /// [Start, End] of the segment.
     struct hedge_s*     next;
     struct hedge_s*     prev;
 
@@ -81,31 +81,40 @@ typedef struct hedge_s {
     struct linedef_s*   lineDef;
     struct sector_s*    sector;
     angle_t             angle;
-    byte                side;          // 0=front, 1=back
-    coord_t             length;        // Accurate length of the segment (v1 -> v2).
+    byte                side; /// On which side of the LineDef (0=front, 1=back)?
+    coord_t             length; /// Accurate length of the segment (v1 -> v2).
     coord_t             offset;
-    biassurface_t*      bsuf[3];       // 0=middle, 1=top, 2=bottom
+    biassurface_t*      bsuf[3]; /// For each @ref SideDefSection.
     short               frameFlags;
     uint                index; /// Unique. Set when saving the BSP.
     mhedge_t            buildData;
 } HEdge;
 
+/**
+ * @defgroup bspLeafFlags  Bsp Leaf Flags
+ * @addtogroup map
+ */
+///@{
+#define BLF_UPDATE_FANBASE      0x1 ///< The tri-fan base requires an update.
+///@}
+
 typedef struct bspleaf_s {
     runtime_mapdata_header_t header;
-    unsigned int        hedgeCount;
-    struct hedge_s*     hedge;
-    struct polyobj_s*   polyObj;       // NULL, if there is no polyobj.
-    struct sector_s*    sector;
-    int                 addSpriteCount; // frame number of last R_AddSprites
+    struct hedge_s*     hedge; /// First HEdge in this leaf.
+    int                 flags; /// @ref BspLeafFlags.
+    uint                index; /// Unique. Set when saving the BSP.
+    int                 addSpriteCount; /// Frame number of last R_AddSprites.
     int                 validCount;
-    unsigned int        reverb[NUM_REVERB_DATA];
-    AABoxd              aaBox;         // Min and max points.
-    coord_t             worldGridOffset[2]; // Offset to align the top left of the bBox to the world grid.
-    coord_t             midPoint[2]; /// Center of vertices.
+    uint                hedgeCount; /// Number of HEdge's in this leaf.
+    struct sector_s*    sector;
+    struct polyobj_s*   polyObj; /// First polyobj in this leaf. Can be @c NULL.
     struct hedge_s*     fanBase; /// HEdge whose vertex to use as the base for a trifan. If @c NULL then midPoint is used instead.
     struct shadowlink_s* shadows;
-    struct biassurface_s** bsuf;       // [sector->planeCount] size.
-    uint                index; /// Unique. Set when saving the BSP.
+    AABoxd              aaBox; /// HEdge Vertex bounding box in the map coordinate space.
+    coord_t             midPoint[2]; /// Center of vertices.
+    coord_t             worldGridOffset[2]; /// Offset to align the top left of materials in the built geometry to the map coordinate space grid.
+    struct biassurface_s** bsuf; /// [sector->planeCount] size.
+    unsigned int        reverb[NUM_REVERB_DATA];
 } BspLeaf;
 
 typedef enum {

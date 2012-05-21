@@ -38,6 +38,7 @@
 
 #include "b_command.h"
 #include "p_control.h"
+#include "ui_main.h"
 
 #include <ctype.h>
 
@@ -180,46 +181,74 @@ void B_Register(void)
 }
 
 /**
+ * Binding context fallback for the "global" context.
+ *
+ * @param ddev  Event being processed.
+ *
+ * @return @c true, if the event was eaten and can be processed by the rest of
+ * the binding context stack.
+ */
+static int globalContextFallback(const ddevent_t* ddev)
+{
+    if(UI_Responder(ddev)) return true;     // Eaten.
+    if(Con_Responder(ddev)) return true;    // Eaten.
+
+    if(DD_GameLoaded())
+    {
+        event_t ev;
+        DD_ConvertEvent(ddev, &ev);
+
+        // The game's normal responder only returns true if the bindings can't
+        // be used (like when chatting). Note that if the event is eaten here,
+        // the rest of the bindings contexts won't get a chance to process the
+        // event.
+        if(gx.Responder && gx.Responder(&ev))
+            return true;
+    }
+
+    return false;
+}
+
+/**
  * Called once on init.
  */
 void B_Init(void)
 {
-    bcontext_t*         bc = 0;
+    bcontext_t* bc = 0;
 
-    if(isDedicated)
+    // In dedicated mode we have fewer binding contexts available.
+    if(!isDedicated)
     {
-        // Why sir, we are but poor folk! Them bindings are too good for us.
-        return;
+        // The contexts are defined in reverse order, with the context of lowest
+        // priority defined first.
+
+        B_NewContext(DEFAULT_BINDING_CONTEXT_NAME);
+
+        // Game contexts.
+        /// @todo Game binding context setup obviously belong to the game plugin, so shouldn't be here.
+        B_NewContext("map");
+        B_NewContext("map-freepan");
+        B_NewContext("finale"); // uses a fallback responder to handle script events
+        B_AcquireAll(B_NewContext("menu"), true);
+        B_NewContext("gameui");
+        B_NewContext("shortcut");
+        B_AcquireKeyboard(B_NewContext("chat"), true);
+        B_AcquireAll(B_NewContext("message"), true);
+
+        // Binding context for the console.
+        bc = B_NewContext(CONSOLE_BINDING_CONTEXT_NAME);
+        bc->flags |= BCF_PROTECTED; // Only we can (de)activate.
+        B_AcquireKeyboard(bc, true); // Console takes over all keyboard events.
+
+        // UI doesn't let anything past it.
+        B_AcquireAll(bc = B_NewContext(UI_BINDING_CONTEXT_NAME), true);
     }
-
-    // The contexts are defined in reverse order, with the context of lowest
-    // priority defined first.
-
-    B_NewContext(DEFAULT_BINDING_CONTEXT_NAME);
-
-    // Game contexts.
-    /// @todo Game binding context setup obviously belong to the game plugin, so shouldn't be here.
-    B_NewContext("map");
-    B_NewContext("map-freepan");
-    B_NewContext("finale"); // uses a fallback responder to handle script events
-    B_AcquireAll(B_NewContext("menu"), true);
-    B_NewContext("gameui");
-    B_NewContext("shortcut");
-    B_AcquireKeyboard(B_NewContext("chat"), true);
-    B_AcquireAll(B_NewContext("message"), true);
-
-    // Binding context for the console.
-    bc = B_NewContext(CONSOLE_BINDING_CONTEXT_NAME);
-    bc->flags |= BCF_PROTECTED; // Only we can (de)activate.
-    B_AcquireKeyboard(bc, true); // Console takes over all keyboard events.
-
-    // UI doesn't let anything past it.
-    B_AcquireAll(B_NewContext(UI_BINDING_CONTEXT_NAME), true);
 
     // Top-level context that is always active and overrides every other context.
     // To be used only for system-level functionality.
     bc = B_NewContext(GLOBAL_BINDING_CONTEXT_NAME);
     bc->flags |= BCF_PROTECTED;
+    bc->ddFallbackResponder = globalContextFallback;
     B_ActivateContext(bc, true);
 
 /*
@@ -805,8 +834,6 @@ static bindcontrol_t* B_GetBindControlForEvent(ddevent_t* ev)
  */
 boolean B_Responder(ddevent_t* ev)
 {
-    if(ev->type == E_FOCUS) return false; // Cannot be bound.
-
     if(symbolicEchoMode && ev->type != E_SYMBOLIC)
     {
         // Make an echo.

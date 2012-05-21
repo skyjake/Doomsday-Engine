@@ -78,6 +78,7 @@ static float fps;
 static int lastFrameCount;
 static boolean firstTic = true;
 static boolean tickIsSharp = false;
+static boolean noninteractive = false;
 
 #define NUM_FRAMETIME_DELTAS    200
 static int timeDeltas[NUM_FRAMETIME_DELTAS];
@@ -110,6 +111,8 @@ int DD_GameLoopExitCode(void)
 
 int DD_GameLoop(void)
 {
+    noninteractive = ArgExists("-noinput");
+
     // Start the deng2 event loop.
     return LegacyCore_RunEventLoop(de2LegacyCore);
 }
@@ -128,7 +131,7 @@ void DD_GameLoopCallback(void)
         for(i = 1; i < DDMAXPLAYERS; ++i)
             if(ddPlayers[i].shared.inGame) count++;
 
-        LegacyCore_SetLoopRate(de2LegacyCore, count? 35 : 3);
+        LegacyCore_SetLoopRate(de2LegacyCore, count || !noninteractive? 35 : 3);
 
         runTics();
 
@@ -277,7 +280,7 @@ static void endFrame(void)
     rFrameCount++;
 
     // Count the frames every other second.
-    if(nowTime - 2000 >= lastFpsTime)
+    if(nowTime - 2500 >= lastFpsTime)
     {
         fps = (rFrameCount - lastFrameCount) / ((nowTime - lastFpsTime)/1000.0f);
         lastFpsTime = nowTime;

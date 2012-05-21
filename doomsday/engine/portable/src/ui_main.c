@@ -479,7 +479,7 @@ void UI_SetPage(ui_page_t* page)
     uiMoved = false;
 }
 
-int UI_Responder(ddevent_t* ev)
+int UI_Responder(const ddevent_t* ev)
 {
     if(!uiActive)
         return false;
@@ -509,7 +509,7 @@ int UI_Responder(ddevent_t* ev)
     }
 
     // Call the page's responder.
-    uiCurrentPage->responder(uiCurrentPage, ev);
+    uiCurrentPage->responder(uiCurrentPage, (ddevent_t*) ev);
     // If the UI is active, all events are eaten by it.
 
     return true;

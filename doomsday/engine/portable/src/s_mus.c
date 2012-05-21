@@ -121,6 +121,7 @@ boolean Mus_Init(void)
 
     interfaces[0].ip = (audiointerface_music_generic_t*) AudioDriver_Music();
     interfaces[1].ip = (audiointerface_music_generic_t*) AudioDriver_CD();
+    currentSong = -1;
 
     for(i = 0; i < NUM_INTERFACES; ++i)
     {
@@ -141,21 +142,25 @@ boolean Mus_Init(void)
         {
             if(!interfaces[i].ip)
                 strcpy(buf, "N/A");
-            else if( !interfaces[i].ip->Get(MUSIP_ID, buf))
+            else if(!interfaces[i].ip->Get(MUSIP_ID, buf))
                 strcpy(buf, "?");
             Con_Message("  %-5s: %s\n", interfaces[i].name, buf);
         }
     }
 
-    if(AudioDriver_Interface(AudioDriver_Music())->Set)
+    if(!AudioDriver_Music() && !AudioDriver_CD())
+    {
+        // No interface for Music playback.
+        return false;
+    }
+
+    if(AudioDriver_Music() && AudioDriver_Interface(AudioDriver_Music())->Set)
     {
         // Tell the audio driver about our soundfont config.
         AudioDriver_Interface(AudioDriver_Music())->Set(AUDIOP_SOUNDFONT_FILENAME, soundFontPath);
     }
 
-    currentSong = -1;
     musAvail = true;
-
     return true;
 }
 

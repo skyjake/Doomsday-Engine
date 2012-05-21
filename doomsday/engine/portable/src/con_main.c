@@ -1512,7 +1512,7 @@ static void insertOnCommandLine(byte ch)
     complPos = cmdCursor;
 }
 
-boolean Con_Responder(ddevent_t* ev)
+boolean Con_Responder(const ddevent_t* ev)
 {
     // The console is only interested in keyboard toggle events.
     if(!IS_KEY_TOGGLE(ev))
@@ -1561,16 +1561,7 @@ boolean Con_Responder(ddevent_t* ev)
     if(!IS_KEY_PRESS(ev))
         return false;
 
-    // The console is active and operational.
-
-    // Temporary kludge: since bindings are not presently accessible when the
-    // console is open, use some hardcoded keys.
-    if(ev->toggle.id == DDKEY_F11)
-    {
-        DD_Execute(true, altDown? "releasemouse" : "togglefullscreen");
-        return true;
-    }
-
+    // In this case the console is active and operational.
     // Check the shutdown key.
     if(!conInputLock)
     {

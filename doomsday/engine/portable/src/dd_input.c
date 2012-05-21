@@ -1063,6 +1063,19 @@ void DD_ConvertEvent(const ddevent_t* ddEvent, event_t* ev)
     }
 }
 
+static void updateDeviceAxes(timespan_t ticLength)
+{
+    int i;
+    for(i = 0; i < NUM_INPUT_DEVICES; ++i)
+    {
+        uint k;
+        for(k = 0; k < inputDevices[i].numAxes; ++k)
+        {
+            I_UpdateAxis(&inputDevices[i], k, ticLength);
+        }
+    }
+}
+
 /**
  * Send all the events of the given timestamp down the responder chain.
  */
@@ -1070,7 +1083,6 @@ static void dispatchEvents(eventqueue_t* q, timespan_t ticLength, boolean update
 {
     const boolean callGameResponders = DD_GameLoaded();
     ddevent_t* ddev;
-    int i;
 
     while((ddev = nextFromQueue(q)))
     {
@@ -1084,29 +1096,12 @@ static void dispatchEvents(eventqueue_t* q, timespan_t ticLength, boolean update
 
         DD_ConvertEvent(ddev, &ev);
 
-        /**
-         * @todo Refactor: all event processing should occur within the binding
-         * context stack. Convert all of these special case handlers to context
-         * fallbacks (may require adding new contexts).
-         */
-
         if(callGameResponders)
         {
             // Does the game's special responder use this event? This is
             // intended for grabbing events when creating bindings in the
             // Controls menu.
             if(gx.PrivilegedResponder && gx.PrivilegedResponder(&ev))
-                continue;
-        }
-
-        if(UI_Responder(ddev)) continue; /// @todo: use the bindings system (deui context fallback)
-        if(Con_Responder(ddev)) continue; /// @todo refactor: use the bindings system
-
-        if(callGameResponders) /// @todo refactor: use the bindings system (chat context fallback)
-        {
-            // The game's normal responder only returns true if the bindings can't
-            // be used (like when chatting).
-            if(gx.Responder && gx.Responder(&ev))
                 continue;
         }
 
@@ -1121,14 +1116,7 @@ static void dispatchEvents(eventqueue_t* q, timespan_t ticLength, boolean update
     if(updateAxes)
     {
         // Input events have modified input device state: update the axis positions.
-        for(i = 0; i < NUM_INPUT_DEVICES; ++i)
-        {
-            uint k;
-            for(k = 0; k < inputDevices[i].numAxes; ++k)
-            {
-                I_UpdateAxis(&inputDevices[i], k, ticLength);
-            }
-        }
+        updateDeviceAxes(ticLength);
     }
 }
 

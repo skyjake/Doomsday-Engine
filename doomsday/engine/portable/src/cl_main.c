@@ -179,9 +179,16 @@ void Cl_AnswerHandshake(void)
     gameTime = remoteGameTime;
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
+        /// @todo With multiple local players, must clear only the appropriate flags.
+        ddPlayers[i].shared.flags &= ~DDPF_LOCAL;
+
         ddPlayers[i].shared.inGame = (playersInGame & (1 << i)) != 0;
     }
     consolePlayer = displayPlayer = myConsole;
+    clients[consolePlayer].viewConsole = consolePlayer;
+
+    // Mark us as the only local player.
+    ddPlayers[consolePlayer].shared.flags |= DDPF_LOCAL;
 
     Smoother_Clear(clients[consolePlayer].smoother);
 
