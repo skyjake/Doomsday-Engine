@@ -293,7 +293,7 @@ void HEdge_Delete(HEdge* hedge)
 
 int HEdge_SetProperty(HEdge* hedge, const setargs_t* args)
 {
-    assert(hedge);
+    DENG_UNUSED(hedge);
     Con_Error("HEdge_SetProperty: Property %s is not writable.\n", DMU_Str(args->prop));
     return false; // Continue iteration.
 }
