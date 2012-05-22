@@ -31,4 +31,11 @@ macx {
         # 3: path to Frameworks/
         doPostLink("install_name_tool -change $$2 @executable_path/$$3/Frameworks/$$2 $$1")
     }
+    defineTest(linkToBundledLibdeng2) {
+        fixInstallName($${1}.bundle/$$1, libdeng2.2.dylib, ..)
+        fixInstallName($${1}.bundle/$$1, QtCore.framework/Versions/4/QtCore, ..)
+        fixInstallName($${1}.bundle/$$1, QtNetwork.framework/Versions/4/QtNetwork, ..)
+        fixInstallName($${1}.bundle/$$1, QtGui.framework/Versions/4/QtGui, ..)
+        fixInstallName($${1}.bundle/$$1, QtOpenGL.framework/Versions/4/QtOpenGL, ..)
+    }
 }
