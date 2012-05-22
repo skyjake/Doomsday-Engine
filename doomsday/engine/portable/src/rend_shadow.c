@@ -228,7 +228,7 @@ int RIT_RenderShadowProjectionIterator(const shadowprojection_t* sp, void* param
         rtexcoords[3].st[0] = rtexcoords[2].st[0] = sp->s[1];
         rtexcoords[2].st[1] = rtexcoords[0].st[1] = sp->t[1];
 
-        if(p->divs)
+        if(p->leftWallDivs->num > 2 || p->rightWallDivs->num > 2)
         {
             // We need to subdivide the projection quad.
             float bL, tL, bR, tR;
@@ -251,9 +251,9 @@ int RIT_RenderShadowProjectionIterator(const shadowprojection_t* sp, void* param
             bR = p->rvertices[2].pos[VZ];
             tR = p->rvertices[3].pos[VZ];
 
-            R_DivVerts(rvertices, origVerts, p->divs);
-            R_DivTexCoords(rtexcoords, origTexCoords, p->divs, bL, tL, bR, tR);
-            R_DivVertColors(rcolors, origColors, p->divs, bL, tL, bR, tR);
+            R_DivVerts(rvertices, origVerts, p->leftWallDivs, p->rightWallDivs);
+            R_DivTexCoords(rtexcoords, origTexCoords, p->leftWallDivs, p->rightWallDivs, bL, tL, bR, tR);
+            R_DivVertColors(rcolors, origColors, p->leftWallDivs, p->rightWallDivs, bL, tL, bR, tR);
         }
         else
         {
@@ -280,13 +280,13 @@ int RIT_RenderShadowProjectionIterator(const shadowprojection_t* sp, void* param
         memcpy(rvertices, p->rvertices, sizeof(rvertex_t) * p->numVertices);
     }
 
-    if(p->isWall && p->divs)
+    if(p->isWall && (p->leftWallDivs->num > 2 || p->rightWallDivs->num > 2))
     {
         RL_AddPolyWithCoords(PT_FAN, RPF_DEFAULT|RPF_SHADOW,
-            3 + p->divs[1].num, rvertices + 3 + p->divs[0].num,
-            rcolors + 3 + p->divs[0].num, rtexcoords + 3 + p->divs[0].num, NULL);
+            1 + p->rightWallDivs->num, rvertices + 1 + p->leftWallDivs->num,
+            rcolors + 1 + p->leftWallDivs->num, rtexcoords + 1 + p->leftWallDivs->num, NULL);
         RL_AddPolyWithCoords(PT_FAN, RPF_DEFAULT|RPF_SHADOW,
-            3 + p->divs[0].num, rvertices, rcolors, rtexcoords, NULL);
+            1 + p->leftWallDivs->num, rvertices, rcolors, rtexcoords, NULL);
     }
     else
     {

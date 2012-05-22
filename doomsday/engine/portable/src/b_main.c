@@ -345,7 +345,7 @@ int B_NewIdentifier(void)
 
 const char* B_ParseContext(const char* desc, bcontext_t** bc)
 {
-    ddstring_t* str;
+    AutoStr* str;
 
     *bc = 0;
     if(!strchr(desc, ':'))
@@ -354,10 +354,9 @@ const char* B_ParseContext(const char* desc, bcontext_t** bc)
         return desc;
     }
 
-    str = Str_New();
+    str = AutoStr_New();
     desc = Str_CopyDelim(str, desc, ':');
     *bc = B_ContextByName(Str_Text(str));
-    Str_Delete(str);
 
     return desc;
 }
@@ -416,7 +415,7 @@ dbinding_t* B_BindControl(const char* controlDesc, const char* device)
     int                 localNum = 0;
     controlbinding_t*   conBin = 0;
     dbinding_t*         devBin = 0;
-    ddstring_t*         str = 0;
+    AutoStr*            str = 0;
     const char*         ptr = 0;
     playercontrol_t*    control = 0;
     boolean             justCreated = false;
@@ -425,7 +424,7 @@ dbinding_t* B_BindControl(const char* controlDesc, const char* device)
         return NULL;
 
     // The control description may begin with the local player number.
-    str = Str_New();
+    str = AutoStr_New();
     ptr = Str_CopyDelim(str, controlDesc, '-');
     if(!strncasecmp(Str_Text(str), "local", 5) && Str_Length(str) > 5)
     {
@@ -433,7 +432,7 @@ dbinding_t* B_BindControl(const char* controlDesc, const char* device)
         if(localNum < 0 || localNum >= DDMAXPLAYERS)
         {
             Con_Message("B_BindControl: Local player number %i is invalid.\n", localNum);
-            goto finished;
+            return NULL;
         }
 
         // Skip past it.
@@ -446,7 +445,7 @@ dbinding_t* B_BindControl(const char* controlDesc, const char* device)
     if(!control)
     {
         Con_Message("B_BindControl: Player control \"%s\" not defined.\n", Str_Text(str));
-        goto finished;
+        return NULL;
     }
 
     bc = B_ContextByName(control->bindContextName);
@@ -471,7 +470,7 @@ dbinding_t* B_BindControl(const char* controlDesc, const char* device)
             B_DestroyControlBinding(conBin);
         }
         conBin = 0;
-        goto finished;
+        return NULL;
     }
 
     /**
@@ -481,8 +480,6 @@ dbinding_t* B_BindControl(const char* controlDesc, const char* device)
     B_DeleteMatching(bc, NULL, devBin);
     B_UpdateDeviceStateAssociations();
 
-finished:
-    Str_Delete(str);
     return devBin;
 }
 

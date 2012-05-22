@@ -207,6 +207,17 @@ static boolean initDriver(audiodriver_e id)
         break;
 #endif
 
+#ifdef MACOSX
+    case AUDIOD_OPENAL:
+        if(!loadAudioDriver(d, "OpenAL"))
+            return false;
+        break;
+
+    case AUDIOD_FMOD:
+        if(!loadAudioDriver(d, "FMOD"))
+            return false;
+        break;
+#else
     case AUDIOD_OPENAL:
         if(!loadAudioDriver(d, "openal"))
             return false;
@@ -216,6 +227,7 @@ static boolean initDriver(audiodriver_e id)
         if(!loadAudioDriver(d, "fmod"))
             return false;
         break;
+#endif
 
 #ifdef WIN32
     case AUDIOD_DSOUND:

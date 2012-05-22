@@ -96,8 +96,7 @@ void B_DestroyDeviceBindingList(dbinding_t* listRoot)
 
 boolean B_ParseDevice(dbinding_t* cb, const char* desc)
 {
-    boolean successful = false;
-    ddstring_t* str = Str_New();
+    AutoStr* str = AutoStr_New();
     ddeventtype_t type;
 
     // First, the device name.
@@ -111,7 +110,7 @@ boolean B_ParseDevice(dbinding_t* cb, const char* desc)
         desc = Str_CopyDelim(str, desc, '-');
         if(!B_ParseKeyId(Str_Text(str), &cb->id))
         {
-            goto parseEnded;
+            return false;
         }
     }
     else if(!Str_CompareIgnoreCase(str, "mouse"))
@@ -121,7 +120,7 @@ boolean B_ParseDevice(dbinding_t* cb, const char* desc)
         desc = Str_CopyDelim(str, desc, '-');
         if(!B_ParseMouseTypeAndId(Str_Text(str), &type, &cb->id))
         {
-            goto parseEnded;
+            return false;
         }
         cb->type = EVTYPE_TO_CBDTYPE(type);
     }
@@ -133,7 +132,7 @@ boolean B_ParseDevice(dbinding_t* cb, const char* desc)
         desc = Str_CopyDelim(str, desc, '-');
         if(!B_ParseJoystickTypeAndId(cb->device, Str_Text(str), &type, &cb->id))
         {
-            goto parseEnded;
+            return false;
         }
         cb->type = EVTYPE_TO_CBDTYPE(type);
 
@@ -143,7 +142,7 @@ boolean B_ParseDevice(dbinding_t* cb, const char* desc)
             desc = Str_CopyDelim(str, desc, '-');
             if(!B_ParseAnglePosition(Str_Text(str), &cb->angle))
             {
-                goto parseEnded;
+                return false;
             }
         }
     }
@@ -163,22 +162,16 @@ boolean B_ParseDevice(dbinding_t* cb, const char* desc)
         else
         {
             Con_Message("B_ParseEvent: Unrecognized \"%s\".\n", desc);
-            goto parseEnded;
+            return false;
         }
     }
 
-    // Success.
-    successful = true;
-
-parseEnded:
-    Str_Delete(str);
-    return successful;
+    return true;
 }
 
 boolean B_ParseDeviceDescriptor(dbinding_t* cb, const char* desc)
 {
-    boolean successful = false;
-    ddstring_t* str = Str_New();
+    AutoStr* str = AutoStr_New();
 
     // The first part specifies the device state.
     desc = Str_CopyDelim(str, desc, '+');
@@ -186,7 +179,7 @@ boolean B_ParseDeviceDescriptor(dbinding_t* cb, const char* desc)
     if(!B_ParseDevice(cb, Str_Text(str)))
     {
         // Failure in parsing the device.
-        goto parseEnded;
+        return false;
     }
 
     // Any conditions?
@@ -201,16 +194,12 @@ boolean B_ParseDeviceDescriptor(dbinding_t* cb, const char* desc)
         if(!B_ParseStateCondition(cond, Str_Text(str)))
         {
             // Failure parusing the condition.
-            goto parseEnded;
+            return false;
         }
     }
 
     // Success.
-    successful = true;
-
-parseEnded:
-    Str_Delete(str);
-    return successful;
+    return true;
 }
 
 dbinding_t* B_NewDeviceBinding(dbinding_t* listRoot, const char* deviceDesc)

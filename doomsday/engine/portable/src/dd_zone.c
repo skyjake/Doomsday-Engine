@@ -895,6 +895,27 @@ int Z_GetTag(void *ptr)
     return block->tag;
 }
 
+boolean Z_Contains(void* ptr)
+{
+    memvolume_t* volume;
+    memblock_t* block = Z_GetBlock(ptr);
+    if(block->id != ZONEID)
+    {
+        // Could be in the zone, but does not look like an allocated block.
+        return false;
+    }
+    // Check which volume is it.
+    for(volume = volumeRoot; volume; volume = volume->next)
+    {
+        if((char*)ptr > (char*)volume->zone && (char*)ptr < (char*)volume->zone + volume->size)
+        {
+            // There it is.
+            return true;
+        }
+    }
+    return false;
+}
+
 /**
  * Memory allocation utility: malloc and clear.
  */

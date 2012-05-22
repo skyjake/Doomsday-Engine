@@ -47,5 +47,6 @@
 #include "library.h"
 #include "reader.h"
 #include "writer.h"
+#include "garbage.h"
 
 #endif /* LIBDENG_BASE_H */

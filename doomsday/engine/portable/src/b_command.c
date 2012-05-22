@@ -96,8 +96,7 @@ static statecondition_t* B_AllocCommandBindingCondition(evbinding_t* eb)
  */
 boolean B_ParseEvent(evbinding_t* eb, const char* desc)
 {
-    boolean successful = false;
-    ddstring_t* str = Str_New();
+    AutoStr* str = AutoStr_New();
 
     // First, we expect to encounter a device name.
     desc = Str_CopyDelim(str, desc, '-');
@@ -111,14 +110,14 @@ boolean B_ParseEvent(evbinding_t* eb, const char* desc)
         desc = Str_CopyDelim(str, desc, '-');
         if(!B_ParseKeyId(Str_Text(str), &eb->id))
         {
-            goto parseEnded;
+            return false;
         }
 
         // The final part of a key event is the state of the key toggle.
         desc = Str_CopyDelim(str, desc, '-');
         if(!B_ParseToggleState(Str_Text(str), &eb->state))
         {
-            goto parseEnded;
+            return false;
         }
     }
     else if(!Str_CompareIgnoreCase(str, "mouse"))
@@ -129,7 +128,7 @@ boolean B_ParseEvent(evbinding_t* eb, const char* desc)
         desc = Str_CopyDelim(str, desc, '-');
         if(!B_ParseMouseTypeAndId(Str_Text(str), &eb->type, &eb->id))
         {
-            goto parseEnded;
+            return false;
         }
 
         // The last part determines the toggle state or the axis position.
@@ -138,14 +137,14 @@ boolean B_ParseEvent(evbinding_t* eb, const char* desc)
         {
             if(!B_ParseToggleState(Str_Text(str), &eb->state))
             {
-                goto parseEnded;
+                return false;
             }
         }
         else // Axis position.
         {
             if(!B_ParseAxisPosition(Str_Text(str), &eb->state, &eb->pos))
             {
-                goto parseEnded;
+                return false;
             }
         }
     }
@@ -157,7 +156,7 @@ boolean B_ParseEvent(evbinding_t* eb, const char* desc)
         desc = Str_CopyDelim(str, desc, '-');
         if(!B_ParseJoystickTypeAndId(eb->device, Str_Text(str), &eb->type, &eb->id))
         {
-            goto parseEnded;
+            return false;
         }
 
         // What is the state of the toggle, axis, or hat?
@@ -166,21 +165,21 @@ boolean B_ParseEvent(evbinding_t* eb, const char* desc)
         {
             if(!B_ParseToggleState(Str_Text(str), &eb->state))
             {
-                goto parseEnded;
+                return false;
             }
         }
         else if(eb->type == E_AXIS)
         {
             if(!B_ParseAxisPosition(Str_Text(str), &eb->state, &eb->pos))
             {
-                goto parseEnded;
+                return false;
             }
         }
         else // Angle.
         {
             if(!B_ParseAnglePosition(Str_Text(str), &eb->pos))
             {
-                goto parseEnded;
+                return false;
             }
         }
     }
@@ -195,22 +194,18 @@ boolean B_ParseEvent(evbinding_t* eb, const char* desc)
     else
     {
         Con_Message("B_ParseEvent: Device \"%s\" unknown.\n", Str_Text(str));
-        goto parseEnded;
+        return false;
     }
 
     // Anything left that wasn't used?
     if(desc)
     {
         Con_Message("B_ParseEvent: Unrecognized \"%s\".\n", desc);
-        goto parseEnded;
+        return false;
     }
 
     // No errors detected.
-    successful = true;
-
-parseEnded:
-    Str_Delete(str);
-    return successful;
+    return true;
 }
 
 /**
@@ -224,8 +219,7 @@ parseEnded:
  */
 boolean B_ParseEventDescriptor(evbinding_t* eb, const char* desc)
 {
-    boolean successful = false;
-    ddstring_t* str = Str_New();
+    AutoStr* str = AutoStr_New();
 
     // The main part, i.e., the first part.
     desc = Str_CopyDelim(str, desc, '+');
@@ -233,7 +227,7 @@ boolean B_ParseEventDescriptor(evbinding_t* eb, const char* desc)
     if(!B_ParseEvent(eb, Str_Text(str)))
     {
         // Failure parsing the event.
-        goto parseEnded;
+        return false;
     }
 
     // Any conditions?
@@ -247,17 +241,13 @@ boolean B_ParseEventDescriptor(evbinding_t* eb, const char* desc)
         cond = B_AllocCommandBindingCondition(eb);
         if(!B_ParseStateCondition(cond, Str_Text(str)))
         {
-            // Failure parusing the condition.
-            goto parseEnded;
+            // Failure parsing the condition.
+            return false;
         }
     }
 
     // Success.
-    successful = true;
-
-parseEnded:
-    Str_Delete(str);
-    return successful;
+    return true;
 }
 
 /**

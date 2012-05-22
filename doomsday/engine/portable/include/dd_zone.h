@@ -62,6 +62,15 @@ void            Z_ChangeTag2(void* ptr, int tag);
 void            Z_ChangeUser(void* ptr, void* newUser);
 void*           Z_GetUser(void* ptr);
 int             Z_GetTag(void* ptr);
+
+/**
+ * Checks if @a ptr points to memory inside the memory zone.
+ * @param ptr  Pointer.
+ * @return @c true, if @a ptr points to a valid allocated memory block
+ * inside the zone.
+ */
+boolean         Z_Contains(void* ptr);
+
 void*           Z_Realloc(void* ptr, size_t n, int mallocTag);
 void*           Z_Calloc(size_t size, int tag, void* user);
 void*           Z_Recalloc(void* ptr, size_t n, int callocTag);

@@ -809,3 +809,25 @@ void Str_Read(ddstring_t* str, Reader* reader)
     Str_Set(str, buf);
     free(buf);
 }
+
+AutoStr* AutoStr_New(void)
+{
+    return AutoStr_FromStr(Str_New());
+}
+
+AutoStr* AutoStr_NewStd(void)
+{
+    return AutoStr_FromStr(Str_NewStd());
+}
+
+AutoStr* AutoStr_FromStr(ddstring_t* str)
+{
+    Garbage_TrashInstance(str, (GarbageDestructor) Str_Delete);
+    return str;
+}
+
+ddstring_t* Str_FromAutoStr(AutoStr* as)
+{
+    Garbage_Untrash(as);
+    return as;
+}

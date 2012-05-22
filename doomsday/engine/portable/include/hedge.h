@@ -38,6 +38,10 @@ HEdge* HEdge_NewCopy(const HEdge* other);
 
 void HEdge_Delete(HEdge* hedge);
 
+boolean HEdge_PrepareWallDivs(HEdge* hedge, SideDefSection section,
+    Sector* frontSector, Sector* backSector,
+    walldiv_t* leftWallDivs, walldiv_t* rightWallDivs, float matOffset[2]);
+
 /**
  * Get a property value, selected by DMU_* name.
  *

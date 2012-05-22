@@ -5,12 +5,21 @@
  * Simple dynamic string management. @ingroup base
  *
  * Uses @ref memzone or standard malloc for memory allocation, chosen during
- * initialization of a string. The string itself is always allocated with
- * malloc.
+ * initialization of a string. The string instance itself is always allocated
+ * with malloc.
+ *
+ * AutoStr is a variant of ddstring_t that is automatically put up for garbage
+ * collection. You may create an AutoStr instance either by converting an
+ * existing string to one with AutoStr_FromStr() or by allocating a new
+ * instance with AutoStr_New(). You are @em not allowed to manually delete an
+ * AutoStr instance; it will be deleted automatically during the next garbage
+ * recycling.
+ *
+ * Using AutoStr instances is recommended when you have a dynamic string as a
+ * return value from a function, or when you have strings with a limited scope
+ * that need to be deleted after exiting the scope.
  *
  * @todo Rename to Str? (str.h)
- * @todo AutoStr for automatically garbage-collected strings (good for return values,
- *       temporary variables when printing).
  * @todo Make this opaque for better forward compatibility -- prevents initialization
  *       with static C strings, though (which is probably for the better anyway).
  * @todo Derive from Qt::QString
@@ -66,6 +75,15 @@ typedef struct ddstring_s {
     void* (*memAlloc)(size_t n);
     void* (*memCalloc)(size_t n);
 } ddstring_t;
+
+/**
+ * An alias for ddstring_t that is used with the convention of automatically
+ * trashing the string during construction so that it gets deleted during the
+ * next recycling. Thus it is useful for strings restricted to the local scope
+ * or for return values in cases when caller is not always required to take
+ * ownership.
+ */
+typedef ddstring_t AutoStr;
 
 // Format checking for Str_Appendf in GCC2
 #if defined(__GNUC__) && __GNUC__ >= 2
@@ -325,6 +343,39 @@ ddstring_t* Str_PercentDecode(ddstring_t* str);
 void Str_Write(const ddstring_t* str, Writer* writer);
 
 void Str_Read(ddstring_t* str, Reader* reader);
+
+/*
+ * AutoStr
+ */
+AutoStr* AutoStr_New(void);
+AutoStr* AutoStr_NewStd(void);
+
+/**
+ * Converts a ddstring to an AutoStr. After this you are not allowed
+ * to call Str_Delete() manually on the string; the garbage collector
+ * will destroy the string during the next recycling.
+ *
+ * No memory allocations are done in this function.
+ *
+ * @param str  String instance.
+ *
+ * @return  AutoStr instance. The returned instance is @a str after
+ * having been trashed.
+ */
+AutoStr* AutoStr_FromStr(ddstring_t* str);
+
+/**
+ * Converts an AutoStr to a normal ddstring. You must call Str_Delete()
+ * on the returned string manually to destroy it.
+ *
+ * No memory allocations are done in this function.
+ *
+ * @param as  AutoStr instance.
+ *
+ * @return  ddstring instance. The returned instance is @a as after
+ * having been taken out of the garbage.
+ */
+ddstring_t* Str_FromAutoStr(AutoStr* as);
 
 #ifdef __cplusplus
 } // extern "C"

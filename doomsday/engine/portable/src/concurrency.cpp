@@ -22,6 +22,7 @@
  */
 
 #include "concurrency.h"
+#include "garbage.h"
 #include "dd_types.h"
 #include <QMutex>
 #include <QApplication>
@@ -78,6 +79,8 @@ void CallbackThread::run()
         LOG_ERROR(QString("Uncaught exception: ") + error.what());
         _returnValue = -1;
     }
+
+    Garbage_ClearForThread();
 }
 
 int CallbackThread::exitValue() const

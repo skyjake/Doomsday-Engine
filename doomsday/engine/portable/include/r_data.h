@@ -37,6 +37,10 @@
 #include "def_data.h"
 #include "textures.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct texture_s;
 struct font_s;
 
@@ -294,13 +298,14 @@ void            R_FreeRendColors(ColorRawf* rcolors);
 void            R_FreeRendTexCoords(rtexcoord_t* rtexcoords);
 void            R_InfoRendVerticesPool(void);
 
-void R_DivVerts(rvertex_t* dst, const rvertex_t* src, const walldiv_t* divs);
+void R_DivVerts(rvertex_t* dst, const rvertex_t* src, const walldiv_t* leftDivs,
+    const walldiv_t* rightDivs);
 
-void R_DivVertColors(ColorRawf* dst, const ColorRawf* src, const walldiv_t* divs,
-    float bL, float tL, float bR, float tR);
+void R_DivVertColors(ColorRawf* dst, const ColorRawf* src, const walldiv_t* leftDivs,
+    const walldiv_t* rightDivs, float bL, float tL, float bR, float tR);
 
-void R_DivTexCoords(rtexcoord_t* dst, const rtexcoord_t* src, const walldiv_t* divs,
-    float bL, float tL, float bR, float tR);
+void R_DivTexCoords(rtexcoord_t* dst, const rtexcoord_t* src, const walldiv_t* leftDivs,
+    const walldiv_t* rightDivs, float bL, float tL, float bR, float tR);
 
 void R_InitTranslationTables(void);
 void R_UpdateTranslationTables(void);
@@ -545,4 +550,8 @@ boolean R_IsTextureInAnimGroup(const Uri* texture, int animGroupNum);
 struct font_s* R_CreateFontFromFile(const Uri* uri, const char* resourcePath);
 struct font_s* R_CreateFontFromDef(ded_compositefont_t* def);
 
-#endif /* LIBDENG_REFRESH_DATA_H */
+#ifdef __cplusplus
+}
+#endif
+
+#endif /// LIBDENG_REFRESH_DATA_H
