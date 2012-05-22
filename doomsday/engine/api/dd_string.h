@@ -8,6 +8,17 @@
  * initialization of a string. The string itself is always allocated with
  * malloc.
  *
+ * AutoStr is a variant of ddstring_t that is automatically put up for garbage
+ * collection. You may create an AutoStr instance either by converting an
+ * existing string to one with AutoStr_FromStr() or by allocating a new
+ * instance with AutoStr_New(). You are @em not allowed to manually delete an
+ * AutoStr instance; it will be deleted automatically during the next garbage
+ * recycling.
+ *
+ * Using AutoStr instances is recommended when you have a dynamic string as a
+ * return value from a function, or when you have strings with a limited scope
+ * that need to be deleted after exiting the scope.
+ *
  * @todo Rename to Str? (str.h)
  * @todo Make this opaque for better forward compatibility -- prevents initialization
  *       with static C strings, though (which is probably for the better anyway).
