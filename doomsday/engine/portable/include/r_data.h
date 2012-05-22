@@ -145,18 +145,6 @@ typedef struct glcommand_vertex_s {
     int             index;
 } glcommand_vertex_t;
 
-/// Maximum number of walldivnode_ts in a walldivs_t dataset.
-#define WALLDIVS_MAX_NODES          64
-
-typedef struct walldivnode_s {
-    coord_t height;
-} walldivnode_t;
-
-typedef struct walldivs_s {
-    uint num;
-    walldivnode_t nodes[WALLDIVS_MAX_NODES];
-} walldivs_t;
-
 typedef struct rvertex_s {
     float           pos[3];
 } rvertex_t;
