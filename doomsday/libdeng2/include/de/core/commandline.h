@@ -56,7 +56,9 @@ namespace de
          */
         CommandLine(int argc, char** args);
 
-        CommandLine(const CommandLine& other);        
+        CommandLine(const CommandLine& other);
+
+        virtual ~CommandLine();
 
         /**
          * Returns the number of arguments. This includes the program name, which
@@ -180,15 +182,19 @@ namespace de
          * @param envs  Environment variables passed to the new process.
          */
         void execute(char** envs) const;
+
+    protected:
+        void appendArg(const char* cStr);
         
     private:
-        typedef std::vector<std::string> Arguments;
+        typedef std::vector<std::string*> Arguments;
         Arguments _arguments;
     
         typedef std::vector<const char*> ArgumentPointers;
         ArgumentPointers _pointers;
         
-        typedef std::map<std::string, Arguments> Aliases;
+        typedef std::vector<String> ArgumentStrings;
+        typedef std::map<std::string, ArgumentStrings> Aliases;
         Aliases _aliases;
     };
 }

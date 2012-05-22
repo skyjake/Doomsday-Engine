@@ -41,24 +41,22 @@ CommandLine::CommandLine(int argc, char** v)
         }
         else
         {
-            _arguments.push_back(v[i]);
-            _pointers.push_back(_arguments[i].c_str());
+            appendArg(v[i]);
         }
     }
-
-    // The pointers list is kept null terminated.
-    _pointers.push_back(0);
 }
 
 CommandLine::CommandLine(const CommandLine& other)
-    : _arguments(other._arguments)
 {
-    // Use pointers to the already copied strings.
-    DENG2_FOR_EACH(i, _arguments, Arguments::iterator)
+    DENG2_FOR_EACH(i, other._arguments, Arguments::const_iterator)
     {
-        _pointers.push_back(i->c_str());
+        appendArg((*i)->c_str());
     }
-    _pointers.push_back(0);
+}
+
+CommandLine::~CommandLine()
+{
+    clear();
 }
 
 dint CommandLine::count() const
@@ -68,6 +66,7 @@ dint CommandLine::count() const
 
 void CommandLine::clear()
 {
+    DENG2_FOR_EACH(i, _arguments, Arguments::iterator) delete *i;
     _arguments.clear();
     _pointers.clear();
     _pointers.push_back(0);
@@ -75,8 +74,7 @@ void CommandLine::clear()
 
 void CommandLine::append(const String& arg)
 {
-    _arguments.push_back(arg.toStdString());
-    _pointers.insert(_pointers.end() - 1, _arguments.rbegin()->c_str());
+    appendArg(arg.toStdString().c_str());
 }
 
 void CommandLine::insert(duint pos, const String& arg)
@@ -86,8 +84,10 @@ void CommandLine::insert(duint pos, const String& arg)
         /// @throw OutOfRangeError @a pos is out of range.
         throw OutOfRangeError("CommandLine::insert", "Index out of range");
     }
-    _arguments.insert(_arguments.begin() + pos, arg.toStdString());
-    _pointers.insert(_pointers.begin() + pos, _arguments[pos].c_str());
+    _arguments.insert(_arguments.begin() + pos, new std::string(arg.toStdString()));
+    _pointers.insert(_pointers.begin() + pos, _arguments[pos]->c_str());
+
+    DENG2_ASSERT(_pointers.back() == 0);
 }
 
 void CommandLine::remove(duint pos)
@@ -97,15 +97,19 @@ void CommandLine::remove(duint pos)
         /// @throw OutOfRangeError @a pos is out of range.
         throw OutOfRangeError("CommandLine::remove", "Index out of range");
     }
+
+    delete _arguments[pos];
     _arguments.erase(_arguments.begin() + pos);
     _pointers.erase(_pointers.begin() + pos);
+
+    DENG2_ASSERT(_pointers.back() == 0);
 }
 
 dint CommandLine::check(const String& arg, dint numParams) const
 {
     // Do a search for arg.
     Arguments::const_iterator i = _arguments.begin();
-    for(; i != _arguments.end() && !matches(arg, String::fromStdString(*i)); ++i) {}
+    for(; i != _arguments.end() && !matches(arg, String::fromStdString(**i)); ++i) {}
     
     if(i == _arguments.end())
     {
@@ -117,7 +121,7 @@ dint CommandLine::check(const String& arg, dint numParams) const
     Arguments::const_iterator k = i;
     while(numParams-- > 0)
     {
-        if(++k == _arguments.end() || isOption(String::fromStdString(*k)))
+        if(++k == _arguments.end() || isOption(String::fromStdString(**k)))
         {
             // Ran out of arguments, or encountered an option.
             return 0;
@@ -144,7 +148,7 @@ dint CommandLine::has(const String& arg) const
     
     DENG2_FOR_EACH(i, _arguments, Arguments::const_iterator)
     {
-        if(matches(arg, String::fromStdString(*i)))
+        if(matches(arg, String::fromStdString(**i)))
         {
             howMany++;
         }
@@ -159,8 +163,8 @@ bool CommandLine::isOption(duint pos) const
         /// @throw OutOfRangeError @a pos is out of range.
         throw OutOfRangeError("CommandLine::isOption", "Index out of range");
     }
-    DENG2_ASSERT(!_arguments[pos].empty());
-    return isOption(String::fromStdString(_arguments[pos]));
+    DENG2_ASSERT(!_arguments[pos]->empty());
+    return isOption(String::fromStdString(*_arguments[pos]));
 }
 
 bool CommandLine::isOption(const String& arg)
@@ -170,7 +174,7 @@ bool CommandLine::isOption(const String& arg)
 
 const String CommandLine::at(duint pos) const
 {
-    return String::fromStdString(_arguments.at(pos));
+    return String::fromStdString(*_arguments.at(pos));
 }
 
 const char* const* CommandLine::argv() const
@@ -268,15 +272,14 @@ void CommandLine::parse(const String& cmdLine)
         }
         else if(!word.empty()) // Make sure there *is* a word.
         {
-            _arguments.push_back(word.toStdString());
-            _pointers.push_back(_arguments.rbegin()->c_str());
+            appendArg(word.toStdString().c_str());
         }
     }
 }
 
 void CommandLine::alias(const String& full, const String& alias)
 {
-    _aliases[full.toStdString()].push_back(alias.toStdString());
+    _aliases[full.toStdString()].push_back(alias);
 }
 
 bool CommandLine::matches(const String& full, const String& fullOrAlias) const
@@ -290,10 +293,9 @@ bool CommandLine::matches(const String& full, const String& fullOrAlias) const
     Aliases::const_iterator found = _aliases.find(full.toStdString());
     if(found != _aliases.end())
     {
-        DENG2_FOR_EACH(i, found->second, Arguments::const_iterator)
+        DENG2_FOR_EACH(i, found->second, ArgumentStrings::const_iterator)
         {
-            String s = String::fromStdString(*i);
-            if(!s.compareWithoutCase(fullOrAlias))
+            if(!i->compareWithoutCase(fullOrAlias))
             {
                 // Found it among the aliases.
                 return true;
@@ -347,4 +349,20 @@ void CommandLine::execute(char** /*envs*/) const
     }
 #endif
     */
+}
+
+void CommandLine::appendArg(const char *cStr)
+{
+    _arguments.push_back(new std::string(cStr));
+    if(_pointers.empty())
+    {
+        _pointers.push_back(_arguments.back()->c_str());
+        _pointers.push_back(0); // Keep null-terminated.
+    }
+    else
+    {
+        // Insert before the NULL.
+        _pointers.insert(_pointers.end() - 1, _arguments.back()->c_str());
+    }
+    DENG2_ASSERT(_pointers.back() == 0);
 }
