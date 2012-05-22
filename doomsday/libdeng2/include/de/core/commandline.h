@@ -137,9 +137,16 @@ namespace de
          * count() strings and is NULL-terminated.
          */
         const char* const* argv() const;
-        
+
         /**
-         * Breaks down a single string containing the arguments.
+         * Reads a native file and parses its contents using parse().
+         *
+         * @param nativePath  File to parse.
+         */
+        void parseResponseFile(const String& nativePath);
+
+        /**
+         * Breaks down a single string containing arguments.
          *
          * Examples of behavior:
          * - -cmd "echo ""this is a command""" => [-cmd] [echo "this is a command"]

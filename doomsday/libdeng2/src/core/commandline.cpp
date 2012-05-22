@@ -37,7 +37,7 @@ CommandLine::CommandLine(int argc, char** v)
         if(v[i][0] == '@')
         {
             // This is a response file or something else that requires parsing.
-            parse(v[i]);
+            parseResponseFile(v[i] + 1);
         }
         else
         {
@@ -179,6 +179,21 @@ const char* const* CommandLine::argv() const
     return &_pointers[0];
 }
 
+void CommandLine::parseResponseFile(const String& nativePath)
+{
+    /// @todo Symbols like ~ should be expanded in @a nativePath.
+
+    QFile response(nativePath);
+    if(response.open(QFile::ReadOnly | QFile::Text))
+    {
+        parse(QString::fromUtf8(response.readAll().constData()));
+    }
+    else
+    {
+        qWarning() << "Failed to open response file:" << nativePath;
+    }
+}
+
 void CommandLine::parse(const String& cmdLine)
 {
     String::const_iterator i = cmdLine.begin();
@@ -245,12 +260,7 @@ void CommandLine::parse(const String& cmdLine)
         // Word has been extracted, examine it.
         if(isResponse) // Response file?
         {
-            // This will quietly ignore missing response files.
-            QFile response(word);
-            if(response.open(QFile::ReadOnly | QFile::Text))
-            {
-                parse(QString::fromUtf8(response.readAll().constData()));
-            }
+            parseResponseFile(word);
         }
         else if(word == "--") // End of arguments.
         {

@@ -166,6 +166,8 @@ int Argc(void)
 
 const char* Argv(int i)
 {
+    DENG2_ASSERT(i >= 0);
+    DENG2_ASSERT(i < DENG2_COMMANDLINE().count());
     return *(DENG2_COMMANDLINE().argv() + i);
 }
 
