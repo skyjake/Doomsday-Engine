@@ -171,8 +171,7 @@ boolean B_ParseDevice(dbinding_t* cb, const char* desc)
 
 boolean B_ParseDeviceDescriptor(dbinding_t* cb, const char* desc)
 {
-    boolean successful = false;
-    ddstring_t* str = Str_New();
+    AutoStr* str = AutoStr_New();
 
     // The first part specifies the device state.
     desc = Str_CopyDelim(str, desc, '+');
@@ -180,7 +179,7 @@ boolean B_ParseDeviceDescriptor(dbinding_t* cb, const char* desc)
     if(!B_ParseDevice(cb, Str_Text(str)))
     {
         // Failure in parsing the device.
-        goto parseEnded;
+        return false;
     }
 
     // Any conditions?
@@ -195,16 +194,12 @@ boolean B_ParseDeviceDescriptor(dbinding_t* cb, const char* desc)
         if(!B_ParseStateCondition(cond, Str_Text(str)))
         {
             // Failure parusing the condition.
-            goto parseEnded;
+            return false;
         }
     }
 
     // Success.
-    successful = true;
-
-parseEnded:
-    Str_Delete(str);
-    return successful;
+    return true;
 }
 
 dbinding_t* B_NewDeviceBinding(dbinding_t* listRoot, const char* deviceDesc)

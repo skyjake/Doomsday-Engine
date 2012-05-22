@@ -833,7 +833,7 @@ void B_PrintAllBindings(void)
     evbinding_t*        e;
     controlbinding_t*   c;
     dbinding_t*         d;
-    ddstring_t*         str = Str_New();
+    AutoStr*            str = AutoStr_New();
 
     Con_Printf("%i binding contexts defined.\n", bindContextCount);
 
@@ -889,8 +889,6 @@ void B_PrintAllBindings(void)
             }
         }
     }
-
-    Str_Delete(str);
 }
 
 void B_WriteContextToFile(const bcontext_t* bc, FILE* file)
@@ -899,7 +897,7 @@ void B_WriteContextToFile(const bcontext_t* bc, FILE* file)
     controlbinding_t*   c;
     dbinding_t*         d;
     int                 k;
-    ddstring_t*         str = Str_New();
+    AutoStr*            str = AutoStr_New();
 
     // Commands.
     for(e = bc->commandBinds.next; e != &bc->commandBinds; e = e->next)
@@ -913,8 +911,7 @@ void B_WriteContextToFile(const bcontext_t* bc, FILE* file)
     // Controls.
     for(c = bc->controlBinds.next; c != &bc->controlBinds; c = c->next)
     {
-        const char*         controlName =
-            P_PlayerControlById(c->control)->name;
+        const char* controlName = P_PlayerControlById(c->control)->name;
 
         for(k = 0; k < DDMAXPLAYERS; ++k)
         {
@@ -926,6 +923,4 @@ void B_WriteContextToFile(const bcontext_t* bc, FILE* file)
             }
         }
     }
-
-    Str_Delete(str);
 }
