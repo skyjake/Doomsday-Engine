@@ -122,7 +122,7 @@ void DD_GameLoopCallback(void)
     if(Sys_IsShuttingDown())
         return; // Shouldn't run this while shutting down.
 
-    if(isDedicated)
+    if(isDedicated || novideo)
     {
         // Adjust loop rate depending on whether players are in game.
         int i, count = 0;
@@ -139,7 +139,7 @@ void DD_GameLoopCallback(void)
     else
     {
         // Normal client-side/singleplayer mode.
-        //assert(!novideo);
+        assert(!novideo);
 
         // We may be performing GL operations.
         Window_GLActivate(Window_Main());
