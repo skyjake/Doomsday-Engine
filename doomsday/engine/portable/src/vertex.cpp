@@ -1,8 +1,8 @@
 /**
- * @file vertex.c
+ * @file vertex.cpp
  * Logical map vertex. @ingroup map
  *
- * @authors Copyright &copy; 2003-2012 Jaakko Ker√§nen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2003-2012 Jaakko Ker‰nen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -22,10 +22,9 @@
 
 #include "de_base.h"
 #include "de_console.h"
-#include "de_refresh.h"
 #include "de_play.h"
 
-int Vertex_SetProperty(Vertex *vtx, const setargs_t *args)
+int Vertex_SetProperty(Vertex* /*vtx*/, const setargs_t* /*args*/)
 {
     // Vertices are not writable through DMU.
     Con_Error("Vertex_SetProperty: Is not writable.\n");

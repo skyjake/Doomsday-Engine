@@ -639,7 +639,7 @@ SOURCES += \
     portable/src/ui_mpi.c \
     portable/src/ui_panel.c \
     portable/src/uri.c \
-    portable/src/vertex.c \
+    portable/src/vertex.cpp \
     portable/src/wadfile.c \
     portable/src/window.cpp \
     portable/src/writer.c \

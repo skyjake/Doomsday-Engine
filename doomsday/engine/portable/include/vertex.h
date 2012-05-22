@@ -26,6 +26,10 @@
 #include "r_data.h"
 #include "p_dmu.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Get a property value, selected by DMU_* name.
  *
@@ -43,5 +47,9 @@ int Vertex_GetProperty(const Vertex* vertex, setargs_t* args);
  * @return  Always @c 0 (can be used as an iterator).
  */
 int Vertex_SetProperty(Vertex* vertex, const setargs_t* args);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /// LIBDENG_MAP_VERTEX
