@@ -32,7 +32,6 @@
 #include "de_base.h"
 #include "de_filesys.h"
 #include "m_misc.h"
-#include "m_args.h"
 
 #ifdef WIN32
 #  include "de_platform.h"

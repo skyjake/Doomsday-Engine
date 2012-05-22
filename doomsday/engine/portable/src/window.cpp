@@ -48,8 +48,8 @@
 #include "con_busy.h"
 #include "gl_main.h"
 #include "ui_main.h"
-#include "m_args.h"
 
+#include <de/c_wrapper.h>
 #include <de/Log>
 #include <QDebug>
 

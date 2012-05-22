@@ -37,7 +37,6 @@
 #include "de_console.h"
 
 #include "cbuffer.h"
-#include "m_args.h"
 #include "m_misc.h"
 #include "blockset.h"
 #include "pathdirectory.h"

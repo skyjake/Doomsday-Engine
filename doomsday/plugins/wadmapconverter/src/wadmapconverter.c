@@ -33,6 +33,7 @@
 #include <stdarg.h>
 #include <string.h>
 
+#include <de/c_wrapper.h>
 #include "doomsday.h"
 #include "dd_api.h"
 

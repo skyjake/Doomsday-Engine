@@ -24,11 +24,11 @@
 #include <QGLFormat>
 #include <QMoveEvent>
 #include <de/Log>
+#include <de/c_wrapper.h>
 
 #include "de_platform.h"
 #include "con_main.h"
 #include "gl_main.h"
-#include "m_args.h"
 #include "canvaswindow.h"
 #include <assert.h>
 

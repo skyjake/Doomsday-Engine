@@ -28,9 +28,7 @@
 #include "de_console.h"
 #include "de_filesys.h"
 
-#include "m_args.h"
 #include "pathdirectory.h"
-
 #include "resourcenamespace.h"
 
 typedef struct {

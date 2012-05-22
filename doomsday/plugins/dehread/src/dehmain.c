@@ -53,6 +53,8 @@ struct font_s;
 #define __INTERNAL_MAP_DATA_ACCESS__
 #include <doomsday.h>
 
+#include <de/c_wrapper.h> // libdeng2
+
 #define OFF_STATE   0x04000000
 #define OFF_SOUND   0x08000000
 #define OFF_FIXED   0x10000000

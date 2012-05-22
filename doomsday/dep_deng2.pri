@@ -13,7 +13,7 @@ QT += core network gui opengl
 
 win32 {
     # Install the required Qt DLLs into the products dir.
-    INSTALLS += qtlibs
+    INSTALLS *= qtlibs
     deng_debug: qtver = "d4"
     else:       qtver = "4"
     qtlibs.files += \
@@ -22,4 +22,13 @@ win32 {
         $$[QT_INSTALL_BINS]/QtGui$${qtver}.dll \
         $$[QT_INSTALL_BINS]/QtOpenGL$${qtver}.dll
     qtlibs.path = $$DENG_LIB_DIR
+}
+
+macx {
+    defineTest(fixInstallName) {
+        # 1: binary file
+        # 2: library name
+        # 3: path to Frameworks/
+        doPostLink("install_name_tool -change $$2 @executable_path/$$3/Frameworks/$$2 $$1")
+    }
 }

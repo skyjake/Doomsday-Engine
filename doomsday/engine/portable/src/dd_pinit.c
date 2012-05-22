@@ -45,7 +45,6 @@
 #include "de_ui.h"
 #include "de_filesys.h"
 
-#include "m_args.h"
 #include "def_main.h"
 
 // MACROS ------------------------------------------------------------------

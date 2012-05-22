@@ -26,7 +26,6 @@
 #include "de_play.h"
 #include "de_filesys.h"
 
-#include "m_args.h"
 #include "resourcenamespace.h"
 #include "uri.h"
 
