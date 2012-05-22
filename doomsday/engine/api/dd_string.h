@@ -5,8 +5,8 @@
  * Simple dynamic string management. @ingroup base
  *
  * Uses @ref memzone or standard malloc for memory allocation, chosen during
- * initialization of a string. The string itself is always allocated with
- * malloc.
+ * initialization of a string. The string instance itself is always allocated
+ * with malloc.
  *
  * AutoStr is a variant of ddstring_t that is automatically put up for garbage
  * collection. You may create an AutoStr instance either by converting an
