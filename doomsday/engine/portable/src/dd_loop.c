@@ -124,7 +124,7 @@ void DD_GameLoopCallback(void)
 
     Garbage_Recycle();
 
-    if(isDedicated)
+    if(isDedicated || novideo)
     {
         // Adjust loop rate depending on whether players are in game.
         int i, count = 0;
