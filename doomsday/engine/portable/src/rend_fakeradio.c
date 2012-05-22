@@ -964,8 +964,8 @@ static void quadTexCoords(rtexcoord_t* tc, const rvertex_t* rverts,
     tc[0].st[1] = tc[3].st[1] + (rverts[3].pos[VZ] - rverts[2].pos[VZ]) / texHeight;
 }
 
-static void renderShadowSeg(const rvertex_t* origVertices, const walldiv_t* leftWallDivs,
-    const walldiv_t* rightWallDivs, const rendershadowseg_params_t* p,
+static void renderShadowSeg(const rvertex_t* origVertices, const walldivs_t* leftWallDivs,
+    const walldivs_t* rightWallDivs, const rendershadowseg_params_t* p,
     const float shadowRGB[3], float shadowDark)
 {
     float texOrigin[2][3];
@@ -1054,7 +1054,7 @@ static void renderShadowSeg(const rvertex_t* origVertices, const walldiv_t* left
  * Create the appropriate FakeRadio shadow polygons for the wall segment.
  */
 static void rendRadioSegSection(const rvertex_t* rvertices,
-    const walldiv_t* leftWallDivs, const walldiv_t* rightWallDivs,
+    const walldivs_t* leftWallDivs, const walldivs_t* rightWallDivs,
     const rendsegradio_params_t* p)
 {
     const coord_t* fFloor, *fCeil, *bFloor, *bCeil;
@@ -1146,8 +1146,8 @@ static void rendRadioSegSection(const rvertex_t* rvertices,
     }
 }
 
-void Rend_RadioSegSection(const rvertex_t* rvertices, const walldiv_t* leftWallDivs,
-    const walldiv_t* rightWallDivs, const rendsegradio_params_t* params)
+void Rend_RadioSegSection(const rvertex_t* rvertices, const walldivs_t* leftWallDivs,
+    const walldivs_t* rightWallDivs, const rendsegradio_params_t* params)
 {
     if(!rvertices || !params) return;
     // Disabled?

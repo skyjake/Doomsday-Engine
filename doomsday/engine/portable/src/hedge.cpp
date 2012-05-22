@@ -27,25 +27,26 @@
 
 static int C_DECL sortWallDivNode(const void* e1, const void* e2)
 {
-    const coord_t f1 = *(coord_t*)e1;
-    const coord_t f2 = *(coord_t*)e2;
-    if(f1 > f2) return  1;
-    if(f2 > f1) return -1;
+    const coord_t h1 = ((walldivnode_t*)e1)->height;
+    const coord_t h2 = ((walldivnode_t*)e2)->height;
+    if(h1 > h2) return  1;
+    if(h2 > h1) return -1;
     return 0;
 }
 
-static coord_t* findWallDivNodeByZOrigin(walldiv_t* wallDivs, float height)
+static walldivnode_t* findWallDivNodeByZOrigin(walldivs_t* wallDivs, float height)
 {
     Q_ASSERT(wallDivs);
     for(uint i = 0; i < wallDivs->num; ++i)
     {
-        if(wallDivs->pos[i] == height)
-            return &wallDivs->pos[i];
+        walldivnode_t* node = &wallDivs->nodes[i];
+        if(node->height == height)
+            return node;
     }
     return NULL;
 }
 
-static void addWallDivNodesForPlaneIntercepts(HEdge* hedge, walldiv_t* wallDivs,
+static void addWallDivNodesForPlaneIntercepts(HEdge* hedge, walldivs_t* wallDivs,
     SideDefSection section, coord_t bottomZ, coord_t topZ, boolean doRight)
 {
     const boolean isTwoSided = (hedge->lineDef && hedge->lineDef->L_frontside && hedge->lineDef->L_backside)? true:false;
@@ -109,10 +110,10 @@ static void addWallDivNodesForPlaneIntercepts(HEdge* hedge, walldiv_t* wallDivs,
                             {
                                 if(!findWallDivNodeByZOrigin(wallDivs, pln->visHeight))
                                 {
-                                    wallDivs->pos[wallDivs->num++] = pln->visHeight;
+                                    wallDivs->nodes[wallDivs->num++].height = pln->visHeight;
 
                                     // Have we reached the div limit?
-                                    if(wallDivs->num == RL_MAX_DIVS)
+                                    if(wallDivs->num == WALLDIVS_MAX_NODES)
                                         stopScan = true;
                                 }
                             }
@@ -146,10 +147,10 @@ static void addWallDivNodesForPlaneIntercepts(HEdge* hedge, walldiv_t* wallDivs,
                         {
                             if(!findWallDivNodeByZOrigin(wallDivs, z))
                             {
-                                wallDivs->pos[wallDivs->num++] = z;
+                                wallDivs->nodes[wallDivs->num++].height = z;
 
                                 // Have we reached the div limit?
-                                if(wallDivs->num == RL_MAX_DIVS)
+                                if(wallDivs->num == WALLDIVS_MAX_NODES)
                                     stopScan = true;
                             }
                         }
@@ -164,34 +165,34 @@ static void addWallDivNodesForPlaneIntercepts(HEdge* hedge, walldiv_t* wallDivs,
     } while(!stopScan);
 }
 
-static void buildWallDiv(walldiv_t* wallDivs, HEdge* hedge,
+static void buildWallDiv(walldivs_t* wallDivs, HEdge* hedge,
    SideDefSection section, coord_t bottomZ, coord_t topZ, boolean doRight)
 {
     wallDivs->num = 0;
 
     // Add the first node.
-    wallDivs->pos[wallDivs->num++] = bottomZ;
+    wallDivs->nodes[wallDivs->num++].height = bottomZ;
 
     // Add nodes for intercepts.
     addWallDivNodesForPlaneIntercepts(hedge, wallDivs, section, bottomZ, topZ, doRight);
 
     // Add the last node.
-    wallDivs->pos[wallDivs->num++] = topZ;
+    wallDivs->nodes[wallDivs->num++].height = topZ;
 
     if(!(wallDivs->num > 2)) return;
     
     // Sorting is required. This shouldn't take too long...
     // There seldom are more than two or three nodes.
-    qsort(wallDivs->pos, wallDivs->num, sizeof(*wallDivs->pos), sortWallDivNode);
+    qsort(wallDivs->nodes, wallDivs->num, sizeof(*wallDivs->nodes), sortWallDivNode);
 
 #ifdef RANGECHECK
     for(uint i = 1; i < wallDivs->num - 1; ++i)
     {
-        const coord_t pos = wallDivs->pos[i];
-        if(pos > topZ || pos < bottomZ)
+        const walldivnode_t* node = &wallDivs->nodes[i];
+        if(node->height > topZ || node->height < bottomZ)
         {
             Con_Error("WallDiv node #%i pos (%f) <> hi (%f), low (%f), num=%i\n",
-                      i, pos, topZ, bottomZ, wallDivs->num);
+                      i, node->height, topZ, bottomZ, wallDivs->num);
         }
     }
 #endif
@@ -199,7 +200,7 @@ static void buildWallDiv(walldiv_t* wallDivs, HEdge* hedge,
 
 boolean HEdge_PrepareWallDivs(HEdge* hedge, SideDefSection section,
     Sector* frontSec, Sector* backSec,
-    walldiv_t* leftWallDivs, walldiv_t* rightWallDivs, float matOffset[2])
+    walldivs_t* leftWallDivs, walldivs_t* rightWallDivs, float matOffset[2])
 {
     Q_ASSERT(hedge);
     SideDef* frontSide = HEDGE_SIDEDEF(hedge);

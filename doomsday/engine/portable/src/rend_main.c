@@ -754,7 +754,7 @@ typedef struct {
 } rendworldpoly_params_t;
 
 static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
-    const walldiv_t* leftWallDivs, const walldiv_t* rightWallDivs,
+    const walldivs_t* leftWallDivs, const walldivs_t* rightWallDivs,
     const rendworldpoly_params_t* p, const materialsnapshot_t* msA, float inter,
     const materialsnapshot_t* msB)
 {
@@ -1238,7 +1238,7 @@ static boolean doRenderHEdge(HEdge* hedge,
                            const float* lightColor,
                            uint lightListIdx,
                            uint shadowListIdx,
-                           const walldiv_t* leftWallDivs, const walldiv_t* rightWallDivs,
+                           const walldivs_t* leftWallDivs, const walldivs_t* rightWallDivs,
                            boolean skyMask,
                            boolean addFakeRadio,
                            vec3d_t texTL, vec3d_t texBR,
@@ -1297,19 +1297,19 @@ static boolean doRenderHEdge(HEdge* hedge,
     // Vertex coords.
     // Bottom Left.
     V2f_Copyd(rvertices[0].pos, hedge->HE_v1origin);
-    rvertices[0].pos[VZ] = (float)leftWallDivs->pos[0];
+    rvertices[0].pos[VZ] = (float)leftWallDivs->nodes[0].height;
 
     // Top Left.
     V2f_Copyd(rvertices[1].pos, hedge->HE_v1origin);
-    rvertices[1].pos[VZ] = (float)leftWallDivs->pos[leftWallDivs->num-1];
+    rvertices[1].pos[VZ] = (float)leftWallDivs->nodes[leftWallDivs->num-1].height;
 
     // Bottom Right.
     V2f_Copyd(rvertices[2].pos, hedge->HE_v2origin);
-    rvertices[2].pos[VZ] = (float)rightWallDivs->pos[0];
+    rvertices[2].pos[VZ] = (float)rightWallDivs->nodes[0].height;
 
     // Top Right.
     V2f_Copyd(rvertices[3].pos, hedge->HE_v2origin);
-    rvertices[3].pos[VZ] = (float)rightWallDivs->pos[rightWallDivs->num-1];
+    rvertices[3].pos[VZ] = (float)rightWallDivs->nodes[rightWallDivs->num-1].height;
 
     // Draw this hedge.
     if(renderWorldPoly(rvertices, 4, leftWallDivs, rightWallDivs, &params, msA, inter, msB))
@@ -1343,19 +1343,19 @@ static boolean doRenderHEdge(HEdge* hedge,
 
             // Bottom Left.
             V2f_Copyd(rvertices[0].pos, hedge->HE_v1origin);
-            rvertices[0].pos[VZ] = (float)leftWallDivs->pos[0];
+            rvertices[0].pos[VZ] = (float)leftWallDivs->nodes[0].height;
 
             // Top Left.
             V2f_Copyd(rvertices[1].pos, hedge->HE_v1origin);
-            rvertices[1].pos[VZ] = (float)leftWallDivs->pos[leftWallDivs->num-1];
+            rvertices[1].pos[VZ] = (float)leftWallDivs->nodes[leftWallDivs->num-1].height;
 
             // Bottom Right.
             V2f_Copyd(rvertices[2].pos, hedge->HE_v2origin);
-            rvertices[2].pos[VZ] = (float)rightWallDivs->pos[0];
+            rvertices[2].pos[VZ] = (float)rightWallDivs->nodes[0].height;
 
             // Top Right.
             V2f_Copyd(rvertices[3].pos, hedge->HE_v2origin);
-            rvertices[3].pos[VZ] = (float)rightWallDivs->pos[rightWallDivs->num-1];
+            rvertices[3].pos[VZ] = (float)rightWallDivs->nodes[rightWallDivs->num-1].height;
 
             // kludge end.
 
@@ -1558,7 +1558,8 @@ static void Rend_RenderPlane(planetype_t type, coord_t height,
 
 static boolean rendHEdgeSection(HEdge* hedge, SideDefSection section,
     int flags, float lightLevel, const float* lightColor,
-    const walldiv_t* leftWallDivs, const walldiv_t* rightWallDivs, float const matOffset[2])
+    const walldivs_t* leftWallDivs, const walldivs_t* rightWallDivs,
+    float const matOffset[2])
 {
     SideDef* frontSide = HEDGE_SIDEDEF(hedge);
     Surface* surface = &frontSide->SW_surface(section);
@@ -1566,7 +1567,7 @@ static boolean rendHEdgeSection(HEdge* hedge, SideDefSection section,
     float alpha;
 
     if(!Surface_IsDrawable(surface)) return false;
-    if(leftWallDivs->pos[0] >= rightWallDivs->pos[rightWallDivs->num-1]) return true;
+    if(leftWallDivs->nodes[0].height >= rightWallDivs->nodes[rightWallDivs->num-1].height) return true;
 
     alpha = (section == SS_MIDDLE? surface->rgba[3] : 1.0f);
 
@@ -1582,8 +1583,8 @@ static boolean rendHEdgeSection(HEdge* hedge, SideDefSection section,
          * an opaque waterfall).
          */
 
-        if(viewData->current.origin[VZ] >  leftWallDivs->pos[0] &&
-           viewData->current.origin[VZ] < rightWallDivs->pos[rightWallDivs->num-1])
+        if(viewData->current.origin[VZ] >  leftWallDivs->nodes[0].height &&
+           viewData->current.origin[VZ] < rightWallDivs->nodes[rightWallDivs->num-1].height)
         {
             LineDef* lineDef = hedge->lineDef;
             vec2d_t result;
@@ -1626,10 +1627,10 @@ static boolean rendHEdgeSection(HEdge* hedge, SideDefSection section,
         texScale[1] = ((surface->flags & DDSUF_MATERIAL_FLIPV)? -1 : 1);
 
         V2d_Copy(texTL,  hedge->HE_v1origin);
-        texTL[VZ] =  leftWallDivs->pos[leftWallDivs->num-1];
+        texTL[VZ] =  leftWallDivs->nodes[leftWallDivs->num-1].height;
 
         V2d_Copy(texBR, hedge->HE_v2origin);
-        texBR[VZ] = rightWallDivs->pos[0];
+        texBR[VZ] = rightWallDivs->nodes[0].height;
 
         // Determine which Material to use.
         if(devRendSkyMode && HEDGE_BACK_SECTOR(hedge) &&
@@ -1801,7 +1802,7 @@ static boolean Rend_RenderHEdge(HEdge* hedge)
     // Only a "middle" section.
     if(frontSide->SW_middleinflags & SUIF_PVIS)
     {
-        walldiv_t leftWallDivs, rightWallDivs;
+        walldivs_t leftWallDivs, rightWallDivs;
         float matOffset[2];
         boolean opaque = false;
 
@@ -1979,7 +1980,7 @@ static boolean Rend_RenderHEdgeTwosided(HEdge* hedge)
     // Middle section.
     if(frontSide->SW_middleinflags & SUIF_PVIS)
     {
-        walldiv_t leftWallDivs, rightWallDivs;
+        walldivs_t leftWallDivs, rightWallDivs;
         float matOffset[2];
 
         if(HEdge_PrepareWallDivs(hedge, SS_MIDDLE, leaf->sector, HEDGE_BACK_SECTOR(hedge),
@@ -2013,8 +2014,8 @@ static boolean Rend_RenderHEdgeTwosided(HEdge* hedge)
                 xtop    += suf->visOffset[VY];
 
                 // Can we make this a solid segment?
-                if(!(rightWallDivs.pos[0] >= xtop &&
-                      leftWallDivs.pos[0] <= xbottom))
+                if(!(rightWallDivs.nodes[rightWallDivs.num-1].height >= xtop &&
+                      leftWallDivs.nodes[0].height <= xbottom))
                      solidSeg = false;
             }
         }
@@ -2023,7 +2024,7 @@ static boolean Rend_RenderHEdgeTwosided(HEdge* hedge)
     // Upper section.
     if(frontSide->SW_topinflags & SUIF_PVIS)
     {
-        walldiv_t leftWallDivs, rightWallDivs;
+        walldivs_t leftWallDivs, rightWallDivs;
         float matOffset[2];
 
         if(HEdge_PrepareWallDivs(hedge, SS_TOP, leaf->sector, HEDGE_BACK_SECTOR(hedge),
@@ -2039,7 +2040,7 @@ static boolean Rend_RenderHEdgeTwosided(HEdge* hedge)
     // Lower section.
     if(frontSide->SW_bottominflags & SUIF_PVIS)
     {
-        walldiv_t leftWallDivs, rightWallDivs;
+        walldivs_t leftWallDivs, rightWallDivs;
         float matOffset[2];
 
         if(HEdge_PrepareWallDivs(hedge, SS_BOTTOM, leaf->sector, HEDGE_BACK_SECTOR(hedge),
