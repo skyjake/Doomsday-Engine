@@ -919,7 +919,7 @@ void R_DivVerts(rvertex_t* dst, const rvertex_t* src, const walldiv_t* leftDivs,
     {
         dst[numL + 2 + i].pos[VX] = src[2].pos[VX];
         dst[numL + 2 + i].pos[VY] = src[2].pos[VY];
-        dst[numL + 2 + i].pos[VZ] = rightDivs->pos[1 + i];
+        dst[numL + 2 + i].pos[VZ] = rightDivs->pos[rightDivs->num-1 - 1 - i];
     }
 
     // Left fan:
@@ -959,7 +959,7 @@ void R_DivTexCoords(rtexcoord_t* dst, const rtexcoord_t* src, const walldiv_t* l
     height = tR - bR;
     for(i = 0; i < rightDivs->num - 2; ++i)
     {
-        float inter = (rightDivs->pos[1 + i] - bR) / height;
+        float inter = (rightDivs->pos[rightDivs->num-1 - 1 - i] - bR) / height;
 
         dst[numL + 2 + i].st[0] = src[3].st[0];
         dst[numL + 2 + i].st[1] = src[2].st[1] +
@@ -1009,7 +1009,7 @@ void R_DivVertColors(ColorRawf* dst, const ColorRawf* src, const walldiv_t* left
     for(i = 0; i < rightDivs->num - 2; ++i)
     {
         uint c;
-        float inter = (rightDivs->pos[1 + i] - bR) / height;
+        float inter = (rightDivs->pos[rightDivs->num-1 - 1 - i] - bR) / height;
 
         for(c = 0; c < 4; ++c)
         {

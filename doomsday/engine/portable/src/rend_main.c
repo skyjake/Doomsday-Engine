@@ -1305,11 +1305,11 @@ static boolean doRenderHEdge(HEdge* hedge,
 
     // Bottom Right.
     V2f_Copyd(rvertices[2].pos, hedge->HE_v2origin);
-    rvertices[2].pos[VZ] = (float)rightWallDivs->pos[rightWallDivs->num-1];
+    rvertices[2].pos[VZ] = (float)rightWallDivs->pos[0];
 
     // Top Right.
     V2f_Copyd(rvertices[3].pos, hedge->HE_v2origin);
-    rvertices[3].pos[VZ] = (float)rightWallDivs->pos[0];
+    rvertices[3].pos[VZ] = (float)rightWallDivs->pos[rightWallDivs->num-1];
 
     // Draw this hedge.
     if(renderWorldPoly(rvertices, 4, leftWallDivs, rightWallDivs, &params, msA, inter, msB))
@@ -1351,11 +1351,11 @@ static boolean doRenderHEdge(HEdge* hedge,
 
             // Bottom Right.
             V2f_Copyd(rvertices[2].pos, hedge->HE_v2origin);
-            rvertices[2].pos[VZ] = (float)rightWallDivs->pos[rightWallDivs->num-1];
+            rvertices[2].pos[VZ] = (float)rightWallDivs->pos[0];
 
             // Top Right.
             V2f_Copyd(rvertices[3].pos, hedge->HE_v2origin);
-            rvertices[3].pos[VZ] = (float)rightWallDivs->pos[0];
+            rvertices[3].pos[VZ] = (float)rightWallDivs->pos[rightWallDivs->num-1];
 
             // kludge end.
 
@@ -1566,7 +1566,7 @@ static boolean rendHEdgeSection(HEdge* hedge, SideDefSection section,
     float alpha;
 
     if(!Surface_IsDrawable(surface)) return false;
-    if(leftWallDivs->pos[0] >= rightWallDivs->pos[0]) return true;
+    if(leftWallDivs->pos[0] >= rightWallDivs->pos[rightWallDivs->num-1]) return true;
 
     alpha = (section == SS_MIDDLE? surface->rgba[3] : 1.0f);
 
@@ -1583,7 +1583,7 @@ static boolean rendHEdgeSection(HEdge* hedge, SideDefSection section,
          */
 
         if(viewData->current.origin[VZ] >  leftWallDivs->pos[0] &&
-           viewData->current.origin[VZ] < rightWallDivs->pos[0])
+           viewData->current.origin[VZ] < rightWallDivs->pos[rightWallDivs->num-1])
         {
             LineDef* lineDef = hedge->lineDef;
             vec2d_t result;
@@ -1626,10 +1626,10 @@ static boolean rendHEdgeSection(HEdge* hedge, SideDefSection section,
         texScale[1] = ((surface->flags & DDSUF_MATERIAL_FLIPV)? -1 : 1);
 
         V2d_Copy(texTL,  hedge->HE_v1origin);
-        texTL[VZ] =  leftWallDivs->pos[ leftWallDivs->num-1];
+        texTL[VZ] =  leftWallDivs->pos[leftWallDivs->num-1];
 
         V2d_Copy(texBR, hedge->HE_v2origin);
-        texBR[VZ] = rightWallDivs->pos[rightWallDivs->num-1];
+        texBR[VZ] = rightWallDivs->pos[0];
 
         // Determine which Material to use.
         if(devRendSkyMode && HEDGE_BACK_SECTOR(hedge) &&

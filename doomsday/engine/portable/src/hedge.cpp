@@ -25,21 +25,12 @@
 #include "de_play.h"
 #include "de_refresh.h"
 
-static int C_DECL sortWallDivNodeAsc(const void* e1, const void* e2)
+static int C_DECL sortWallDivNode(const void* e1, const void* e2)
 {
     const coord_t f1 = *(coord_t*)e1;
     const coord_t f2 = *(coord_t*)e2;
     if(f1 > f2) return  1;
     if(f2 > f1) return -1;
-    return 0;
-}
-
-static int C_DECL sortWallDivNodeDsc(const void* e1, const void* e2)
-{
-    const coord_t f1 = *(coord_t*)e1;
-    const coord_t f2 = *(coord_t*)e2;
-    if(f1 > f2) return -1;
-    if(f2 > f1) return  1;
     return 0;
 }
 
@@ -179,20 +170,19 @@ static void buildWallDiv(walldiv_t* wallDivs, HEdge* hedge,
     wallDivs->num = 0;
 
     // Add the first node.
-    wallDivs->pos[wallDivs->num++] = doRight? topZ : bottomZ;
+    wallDivs->pos[wallDivs->num++] = bottomZ;
 
     // Add nodes for intercepts.
     addWallDivNodesForPlaneIntercepts(hedge, wallDivs, section, bottomZ, topZ, doRight);
 
     // Add the last node.
-    wallDivs->pos[wallDivs->num++] = doRight? bottomZ : topZ;
+    wallDivs->pos[wallDivs->num++] = topZ;
 
     if(!(wallDivs->num > 2)) return;
     
     // Sorting is required. This shouldn't take too long...
     // There seldom are more than two or three nodes.
-    qsort(wallDivs->pos, wallDivs->num, sizeof(*wallDivs->pos),
-          doRight? sortWallDivNodeDsc : sortWallDivNodeAsc);
+    qsort(wallDivs->pos, wallDivs->num, sizeof(*wallDivs->pos), sortWallDivNode);
 
 #ifdef RANGECHECK
     for(uint i = 1; i < wallDivs->num - 1; ++i)
