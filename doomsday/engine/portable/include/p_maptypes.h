@@ -20,17 +20,28 @@ typedef struct lineowner_s {
     shadowvert_t    shadowOffsets;
 } lineowner_t;
 
-/// Maximum number of walldivnode_ts in a walldivs_t dataset.
-#define WALLDIVS_MAX_NODES          64
+struct walldivs_s;
 
 typedef struct walldivnode_s {
+    struct walldivs_s* divs;
     coord_t height;
 } walldivnode_t;
 
+coord_t WallDivNode_Height(walldivnode_t* node);
+walldivnode_t* WallDivNode_Next(walldivnode_t* node);
+walldivnode_t* WallDivNode_Prev(walldivnode_t* node);
+
+/// Maximum number of walldivnode_ts in a walldivs_t dataset.
+#define WALLDIVS_MAX_NODES          64
+
 typedef struct walldivs_s {
     uint num;
-    walldivnode_t nodes[WALLDIVS_MAX_NODES];
+    struct walldivnode_s nodes[WALLDIVS_MAX_NODES];
 } walldivs_t;
+
+uint WallDivs_Size(const walldivs_t* wallDivs);
+walldivnode_t* WallDivs_First(walldivs_t* wallDivs);
+walldivnode_t* WallDivs_Last(walldivs_t* wallDivs);
 
 typedef struct mvertex_s {
     // Vertex index. Always valid after loading and pruning of unused

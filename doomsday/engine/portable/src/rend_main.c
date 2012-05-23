@@ -748,19 +748,28 @@ typedef struct {
     uint            elmIdx;
     biassurface_t*  bsuf;
 
-// Wall only (todo).
-    const coord_t*  segLength;
-    const float*    surfaceColor2; // Secondary color.
+// Wall only:
+    struct {
+        const coord_t*  segLength;
+        const float*    surfaceColor2; // Secondary color.
+        struct {
+            walldivnode_t* firstDiv;
+            uint divCount;
+        } left;
+        struct {
+            walldivnode_t* firstDiv;
+            uint divCount;
+        } right;
+    } wall;
 } rendworldpoly_params_t;
 
 static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
-    const walldivs_t* leftWallDivs, const walldivs_t* rightWallDivs,
     const rendworldpoly_params_t* p, const materialsnapshot_t* msA, float inter,
     const materialsnapshot_t* msB)
 {
     boolean useLights = false, useShadows = false, hasDynlights = false;
     rtexcoord_t* primaryCoords = NULL, *interCoords = NULL, *modCoords = NULL;
-    uint realNumVertices = ((p->isWall && (leftWallDivs->num > 2 || rightWallDivs->num > 2))? 1 + leftWallDivs->num + 1 + rightWallDivs->num : numVertices);
+    uint realNumVertices = ((p->isWall && (p->wall.left.divCount || p->wall.right.divCount))? 3 + p->wall.left.divCount + 3 + p->wall.right.divCount : numVertices);
     ColorRawf* rcolors;
     ColorRawf* shinyColors = NULL;
     rtexcoord_t* shinyTexCoords = NULL;
@@ -832,15 +841,15 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
     if(p->isWall)
     {
         // Primary texture coordinates.
-        quadTexCoords(primaryCoords, rvertices, *p->segLength, p->texTL);
+        quadTexCoords(primaryCoords, rvertices, *p->wall.segLength, p->texTL);
 
         // Blend texture coordinates.
         if(interRTU && !drawAsVisSprite)
-            quadTexCoords(interCoords, rvertices, *p->segLength, p->texTL);
+            quadTexCoords(interCoords, rvertices, *p->wall.segLength, p->texTL);
 
         // Shiny texture coordinates.
         if(shinyRTU && !drawAsVisSprite)
-            quadShinyTexCoords(shinyTexCoords, &rvertices[1], &rvertices[2], *p->segLength);
+            quadShinyTexCoords(shinyTexCoords, &rvertices[1], &rvertices[2], *p->wall.segLength);
 
         // First light texture coordinates.
         if(modTex && RL_IsMTexLights())
@@ -965,14 +974,14 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
                 }
 
                 // Bottom color (if different from top)?
-                if(p->isWall && p->surfaceColor2)
+                if(p->isWall && p->wall.surfaceColor2)
                 {
                     float vColor[4];
 
                     // Blend sector light+color+surfacecolor
-                    vColor[CR] = p->surfaceColor2[CR] * p->sectorLightColor[CR];
-                    vColor[CG] = p->surfaceColor2[CG] * p->sectorLightColor[CG];
-                    vColor[CB] = p->surfaceColor2[CB] * p->sectorLightColor[CB];
+                    vColor[CR] = p->wall.surfaceColor2[CR] * p->sectorLightColor[CR];
+                    vColor[CG] = p->wall.surfaceColor2[CG] * p->sectorLightColor[CG];
+                    vColor[CB] = p->wall.surfaceColor2[CB] * p->sectorLightColor[CB];
                     vColor[CA] = 1;
 
                     lightVertex(&rcolors[0], &rvertices[0], llL, vColor);
@@ -1037,7 +1046,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
          * This is needed because all masked polys must be sorted (sprites
          * are masked polys). Otherwise there will be artifacts.
          */
-        Rend_AddMaskedPoly(rvertices, rcolors, *p->segLength, msA->material,
+        Rend_AddMaskedPoly(rvertices, rcolors, *p->wall.segLength, msA->material,
                            p->texOffset, p->blendMode, p->lightListIdx, glowing);
 
         R_FreeRendTexCoords(primaryCoords);
@@ -1060,11 +1069,16 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
         params.numVertices = numVertices;
         params.realNumVertices = realNumVertices;
         params.lastIdx = 0;
-        params.isWall = p->isWall;
-        params.leftWallDivs  = leftWallDivs;
-        params.rightWallDivs = rightWallDivs;
         params.texTL = p->texTL;
         params.texBR = p->texBR;
+        params.isWall = p->isWall;
+        if(p->isWall)
+        {
+            params.wall.left.firstDiv = p->wall.left.firstDiv;
+            params.wall.left.divCount = p->wall.left.divCount;
+            params.wall.right.firstDiv = p->wall.right.firstDiv;
+            params.wall.right.divCount = p->wall.right.divCount;
+        }
 
         hasDynlights = (0 != Rend_RenderLightProjections(p->lightListIdx, &params));
     }
@@ -1077,11 +1091,16 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
         params.rvertices = rvertices;
         params.numVertices = numVertices;
         params.realNumVertices = realNumVertices;
-        params.isWall = p->isWall;
-        params.leftWallDivs  = leftWallDivs;
-        params.rightWallDivs = rightWallDivs;
         params.texTL = p->texTL;
         params.texBR = p->texBR;
+        params.isWall = p->isWall;
+        if(p->isWall)
+        {
+            params.wall.left.firstDiv = p->wall.left.firstDiv;
+            params.wall.left.divCount = p->wall.left.divCount;
+            params.wall.right.firstDiv = p->wall.right.firstDiv;
+            params.wall.right.divCount = p->wall.right.divCount;
+        }
 
         Rend_RenderShadowProjections(p->shadowListIdx, &params);
     }
@@ -1136,7 +1155,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
     }
 
     // Write multiple polys depending on rend params.
-    if(p->isWall && (leftWallDivs->num > 2 || rightWallDivs->num > 2))
+    if(p->isWall && (p->wall.left.divCount || p->wall.right.divCount))
     {
         float bL, tL, bR, tR;
         rvertex_t origVerts[4];
@@ -1158,16 +1177,16 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
         bR = origVerts[2].pos[VZ];
         tR = origVerts[3].pos[VZ];
 
-        R_DivVerts(rvertices, origVerts, leftWallDivs, rightWallDivs);
-        R_DivTexCoords(primaryCoords, origTexCoords, leftWallDivs, rightWallDivs, bL, tL, bR, tR);
-        R_DivVertColors(rcolors, origColors, leftWallDivs, rightWallDivs, bL, tL, bR, tR);
+        R_DivVerts(rvertices, origVerts, p->wall.left.firstDiv, p->wall.left.divCount, p->wall.right.firstDiv, p->wall.right.divCount);
+        R_DivTexCoords(primaryCoords, origTexCoords, p->wall.left.firstDiv, p->wall.left.divCount, p->wall.right.firstDiv, p->wall.right.divCount, bL, tL, bR, tR);
+        R_DivVertColors(rcolors, origColors, p->wall.left.firstDiv, p->wall.left.divCount, p->wall.right.firstDiv, p->wall.right.divCount, bL, tL, bR, tR);
 
         if(interCoords)
         {
             rtexcoord_t origTexCoords2[4];
 
             memcpy(origTexCoords2, interCoords, sizeof(rtexcoord_t) * 4);
-            R_DivTexCoords(interCoords, origTexCoords2, leftWallDivs, rightWallDivs, bL, tL, bR, tR);
+            R_DivTexCoords(interCoords, origTexCoords2, p->wall.left.firstDiv, p->wall.left.divCount, p->wall.right.firstDiv, p->wall.right.divCount, bL, tL, bR, tR);
         }
 
         if(modCoords)
@@ -1175,7 +1194,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
             rtexcoord_t origTexCoords5[4];
 
             memcpy(origTexCoords5, modCoords, sizeof(rtexcoord_t) * 4);
-            R_DivTexCoords(modCoords, origTexCoords5, leftWallDivs, rightWallDivs, bL, tL, bR, tR);
+            R_DivTexCoords(modCoords, origTexCoords5, p->wall.left.firstDiv, p->wall.left.divCount, p->wall.right.firstDiv, p->wall.right.divCount, bL, tL, bR, tR);
         }
 
         if(shinyTexCoords)
@@ -1183,25 +1202,25 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
             rtexcoord_t origShinyTexCoords[4];
 
             memcpy(origShinyTexCoords, shinyTexCoords, sizeof(rtexcoord_t) * 4);
-            R_DivTexCoords(shinyTexCoords, origShinyTexCoords, leftWallDivs, rightWallDivs, bL, tL, bR, tR);
+            R_DivTexCoords(shinyTexCoords, origShinyTexCoords, p->wall.left.firstDiv, p->wall.left.divCount, p->wall.right.firstDiv, p->wall.right.divCount, bL, tL, bR, tR);
         }
 
         if(shinyColors)
         {
             ColorRawf origShinyColors[4];
             memcpy(origShinyColors, shinyColors, sizeof(ColorRawf) * 4);
-            R_DivVertColors(shinyColors, origShinyColors, leftWallDivs, rightWallDivs, bL, tL, bR, tR);
+            R_DivVertColors(shinyColors, origShinyColors, p->wall.left.firstDiv, p->wall.left.divCount, p->wall.right.firstDiv, p->wall.right.divCount, bL, tL, bR, tR);
         }
 
         RL_AddPolyWithCoordsModulationReflection(PT_FAN, p->flags | (hasDynlights? RPF_HAS_DYNLIGHTS : 0),
-            1 + rightWallDivs->num, rvertices + 1 + leftWallDivs->num, rcolors + 1 + leftWallDivs->num,
-            primaryCoords + 1 + leftWallDivs->num, interCoords? interCoords + 1 + leftWallDivs->num : NULL,
-            modTex, &modColor, modCoords? modCoords + 1 + leftWallDivs->num : NULL,
-            shinyColors + 1 + leftWallDivs->num, shinyTexCoords? shinyTexCoords + 1 + leftWallDivs->num : NULL,
-            shinyMaskRTU? primaryCoords + 1 + leftWallDivs->num : NULL);
+            3 + p->wall.right.divCount, rvertices + 3 + p->wall.left.divCount, rcolors + 3 + p->wall.left.divCount,
+            primaryCoords + 3 + p->wall.left.divCount, interCoords? interCoords + 3 + p->wall.left.divCount : NULL,
+            modTex, &modColor, modCoords? modCoords + 3 + p->wall.left.divCount : NULL,
+            shinyColors + 3 + p->wall.left.divCount, shinyTexCoords? shinyTexCoords + 3 + p->wall.left.divCount : NULL,
+            shinyMaskRTU? primaryCoords + 3 + p->wall.left.divCount : NULL);
 
         RL_AddPolyWithCoordsModulationReflection(PT_FAN, p->flags | (hasDynlights? RPF_HAS_DYNLIGHTS : 0),
-            1 + leftWallDivs->num, rvertices, rcolors,
+            3 + p->wall.left.divCount, rvertices, rcolors,
             primaryCoords, interCoords,
             modTex, &modColor, modCoords,
             shinyColors, shinyTexCoords, shinyMaskRTU? primaryCoords : NULL);
@@ -1230,37 +1249,27 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
         !(p->alpha < 1 || !msA->isOpaque || p->blendMode > 0));
 }
 
-static boolean doRenderHEdge(HEdge* hedge,
-                           const pvec3f_t normal,
-                           float alpha,
-                           float lightLevel, float lightLevelDL,
-                           float lightLevelDR,
-                           const float* lightColor,
-                           uint lightListIdx,
-                           uint shadowListIdx,
-                           const walldivs_t* leftWallDivs, const walldivs_t* rightWallDivs,
-                           boolean skyMask,
-                           boolean addFakeRadio,
-                           vec3d_t texTL, vec3d_t texBR,
-                           float const texOffset[2],
-                           float const texScale[2],
-                           blendmode_t blendMode,
-                           const float* color, const float* color2,
-                           biassurface_t* bsuf, uint elmIdx /*tmp*/,
-                           const materialsnapshot_t* msA, float inter,
-                           const materialsnapshot_t* msB,
-                           boolean isTwosidedMiddle)
+static boolean doRenderHEdge(HEdge* hedge, const pvec3f_t normal,
+    float alpha, float lightLevel, float lightLevelDL, float lightLevelDR,
+    const float* lightColor, uint lightListIdx, uint shadowListIdx,
+    walldivs_t* leftWallDivs, walldivs_t* rightWallDivs,
+    boolean skyMask, boolean addFakeRadio, vec3d_t texTL, vec3d_t texBR,
+    float const texOffset[2], float const texScale[2],
+    blendmode_t blendMode, const float* color, const float* color2,
+    biassurface_t* bsuf, uint elmIdx /*tmp*/,
+    const materialsnapshot_t* msA, float inter, const materialsnapshot_t* msB,
+    boolean isTwosidedMiddle)
 {
     rendworldpoly_params_t params;
-    SideDef*            side = (hedge->lineDef? HEDGE_SIDEDEF(hedge) : NULL);
-    rvertex_t*          rvertices;
+    SideDef* side = (hedge->lineDef? HEDGE_SIDEDEF(hedge) : NULL);
+    rvertex_t* rvertices;
 
     // Init the params.
     memset(&params, 0, sizeof(params));
 
     params.flags = RPF_DEFAULT | (skyMask? RPF_SKYMASK : 0);
     params.isWall = true;
-    params.segLength = &hedge->length;
+    params.wall.segLength = &hedge->length;
     params.forceOpaque = (alpha < 0? true : false);
     params.alpha = (alpha < 0? 1 : alpha);
     params.mapObject = hedge;
@@ -1274,19 +1283,23 @@ static boolean doRenderHEdge(HEdge* hedge,
     params.surfaceLightLevelDR = lightLevelDR;
     params.sectorLightColor = lightColor;
     params.surfaceColor = color;
-    params.surfaceColor2 = color2;
+    params.wall.surfaceColor2 = color2;
     params.glowing = msA? msA->glowing : 0;
     params.blendMode = blendMode;
     params.texOffset = texOffset;
     params.texScale = texScale;
     params.lightListIdx = lightListIdx;
     params.shadowListIdx = shadowListIdx;
+    params.wall.left.firstDiv = WallDivNode_Next(WallDivs_First(leftWallDivs)); // Step over first node.
+    params.wall.left.divCount = WallDivs_Size(leftWallDivs)-2;
+    params.wall.right.firstDiv = WallDivNode_Prev(WallDivs_Last(rightWallDivs)); // Step over last node.
+    params.wall.right.divCount = WallDivs_Size(rightWallDivs)-2;
 
     // Allocate enough vertices for the divisions too.
-    if(leftWallDivs->num > 2 || rightWallDivs->num > 2)
+    if(WallDivs_Size(leftWallDivs) > 2 || WallDivs_Size(rightWallDivs) > 2)
     {
         // Use two fans.
-        rvertices = R_AllocRendVertices(1 + leftWallDivs->num + 1 + rightWallDivs->num);
+        rvertices = R_AllocRendVertices(1 + WallDivs_Size(leftWallDivs) + 1 + WallDivs_Size(rightWallDivs));
     }
     else
     {
@@ -1297,22 +1310,22 @@ static boolean doRenderHEdge(HEdge* hedge,
     // Vertex coords.
     // Bottom Left.
     V2f_Copyd(rvertices[0].pos, hedge->HE_v1origin);
-    rvertices[0].pos[VZ] = (float)leftWallDivs->nodes[0].height;
+    rvertices[0].pos[VZ] = (float)WallDivNode_Height(WallDivs_First(leftWallDivs));
 
     // Top Left.
     V2f_Copyd(rvertices[1].pos, hedge->HE_v1origin);
-    rvertices[1].pos[VZ] = (float)leftWallDivs->nodes[leftWallDivs->num-1].height;
+    rvertices[1].pos[VZ] = (float)WallDivNode_Height(WallDivs_Last(leftWallDivs));
 
     // Bottom Right.
     V2f_Copyd(rvertices[2].pos, hedge->HE_v2origin);
-    rvertices[2].pos[VZ] = (float)rightWallDivs->nodes[0].height;
+    rvertices[2].pos[VZ] = (float)WallDivNode_Height(WallDivs_First(rightWallDivs));
 
     // Top Right.
     V2f_Copyd(rvertices[3].pos, hedge->HE_v2origin);
-    rvertices[3].pos[VZ] = (float)rightWallDivs->nodes[rightWallDivs->num-1].height;
+    rvertices[3].pos[VZ] = (float)WallDivNode_Height(WallDivs_Last(rightWallDivs));
 
     // Draw this hedge.
-    if(renderWorldPoly(rvertices, 4, leftWallDivs, rightWallDivs, &params, msA, inter, msB))
+    if(renderWorldPoly(rvertices, 4, &params, msA, inter, msB))
     {   // Drawn poly was opaque.
         // Render Fakeradio polys for this hedge?
         if(!(params.flags & RPF_SKYMASK) && addFakeRadio)
@@ -1328,6 +1341,10 @@ static boolean doRenderHEdge(HEdge* hedge,
             radioParams.segOffset = &hedge->offset;
             radioParams.segLength = &hedge->length;
             radioParams.frontSec = hedge->sector;
+            radioParams.wall.left.firstDiv = params.wall.left.firstDiv;
+            radioParams.wall.left.divCount = params.wall.left.divCount;
+            radioParams.wall.right.firstDiv = params.wall.right.firstDiv;
+            radioParams.wall.right.divCount = params.wall.right.divCount;
 
             if(!isTwosidedMiddle && !(hedge->twin && !HEDGE_SIDEDEF(hedge->twin)))
             {
@@ -1343,19 +1360,19 @@ static boolean doRenderHEdge(HEdge* hedge,
 
             // Bottom Left.
             V2f_Copyd(rvertices[0].pos, hedge->HE_v1origin);
-            rvertices[0].pos[VZ] = (float)leftWallDivs->nodes[0].height;
+            rvertices[0].pos[VZ] = (float)WallDivNode_Height(WallDivs_First(leftWallDivs));
 
             // Top Left.
             V2f_Copyd(rvertices[1].pos, hedge->HE_v1origin);
-            rvertices[1].pos[VZ] = (float)leftWallDivs->nodes[leftWallDivs->num-1].height;
+            rvertices[1].pos[VZ] = (float)WallDivNode_Height(WallDivs_Last(leftWallDivs));
 
             // Bottom Right.
             V2f_Copyd(rvertices[2].pos, hedge->HE_v2origin);
-            rvertices[2].pos[VZ] = (float)rightWallDivs->nodes[0].height;
+            rvertices[2].pos[VZ] = (float)WallDivNode_Height(WallDivs_First(rightWallDivs));
 
             // Top Right.
             V2f_Copyd(rvertices[3].pos, hedge->HE_v2origin);
-            rvertices[3].pos[VZ] = (float)rightWallDivs->nodes[rightWallDivs->num-1].height;
+            rvertices[3].pos[VZ] = (float)WallDivNode_Height(WallDivs_Last(rightWallDivs));
 
             // kludge end.
 
@@ -1372,7 +1389,7 @@ static boolean doRenderHEdge(HEdge* hedge,
                 {
                     // Shadows are black.
                     radioParams.shadowRGB[CR] = radioParams.shadowRGB[CG] = radioParams.shadowRGB[CB] = 0;
-                    Rend_RadioSegSection(rvertices, leftWallDivs, rightWallDivs, &radioParams);
+                    Rend_RadioSegSection(rvertices, &radioParams);
                 }
             }
         }
@@ -1498,7 +1515,7 @@ static void renderPlane(BspLeaf* bspLeaf, planetype_t type, coord_t height,
         }
     }
 
-    renderWorldPoly(rvertices, numVertices, NULL, NULL, &params, msA, inter, blended? msB : NULL);
+    renderWorldPoly(rvertices, numVertices, &params, msA, inter, blended? msB : NULL);
 
     R_FreeRendVertices(rvertices);
 }
@@ -1558,7 +1575,7 @@ static void Rend_RenderPlane(planetype_t type, coord_t height,
 
 static boolean rendHEdgeSection(HEdge* hedge, SideDefSection section,
     int flags, float lightLevel, const float* lightColor,
-    const walldivs_t* leftWallDivs, const walldivs_t* rightWallDivs,
+    walldivs_t* leftWallDivs, walldivs_t* rightWallDivs,
     float const matOffset[2])
 {
     SideDef* frontSide = HEDGE_SIDEDEF(hedge);
@@ -1567,7 +1584,8 @@ static boolean rendHEdgeSection(HEdge* hedge, SideDefSection section,
     float alpha;
 
     if(!Surface_IsDrawable(surface)) return false;
-    if(leftWallDivs->nodes[0].height >= rightWallDivs->nodes[rightWallDivs->num-1].height) return true;
+    if(WallDivNode_Height(WallDivs_First(leftWallDivs)) >=
+       WallDivNode_Height(WallDivs_Last(rightWallDivs))) return true;
 
     alpha = (section == SS_MIDDLE? surface->rgba[3] : 1.0f);
 
@@ -1583,8 +1601,8 @@ static boolean rendHEdgeSection(HEdge* hedge, SideDefSection section,
          * an opaque waterfall).
          */
 
-        if(viewData->current.origin[VZ] >  leftWallDivs->nodes[0].height &&
-           viewData->current.origin[VZ] < rightWallDivs->nodes[rightWallDivs->num-1].height)
+        if(viewData->current.origin[VZ] >  WallDivNode_Height(WallDivs_First(leftWallDivs)) &&
+           viewData->current.origin[VZ] < WallDivNode_Height(WallDivs_Last(rightWallDivs)))
         {
             LineDef* lineDef = hedge->lineDef;
             vec2d_t result;
@@ -1627,10 +1645,10 @@ static boolean rendHEdgeSection(HEdge* hedge, SideDefSection section,
         texScale[1] = ((surface->flags & DDSUF_MATERIAL_FLIPV)? -1 : 1);
 
         V2d_Copy(texTL,  hedge->HE_v1origin);
-        texTL[VZ] =  leftWallDivs->nodes[leftWallDivs->num-1].height;
+        texTL[VZ] =  WallDivNode_Height(WallDivs_Last(leftWallDivs));
 
         V2d_Copy(texBR, hedge->HE_v2origin);
-        texBR[VZ] = rightWallDivs->nodes[0].height;
+        texBR[VZ] = WallDivNode_Height(WallDivs_First(rightWallDivs));
 
         // Determine which Material to use.
         if(devRendSkyMode && HEDGE_BACK_SECTOR(hedge) &&
@@ -1750,13 +1768,10 @@ static boolean rendHEdgeSection(HEdge* hedge, SideDefSection section,
 
         opaque = doRenderHEdge(hedge,
                                surface->normal, ((flags & RHF_FORCE_OPAQUE)? -1 : alpha),
-                               lightLevel,
-                               deltaL, deltaR,
-                               lightColor,
+                               lightLevel, deltaL, deltaR, lightColor,
                                lightListIdx, shadowListIdx,
                                leftWallDivs, rightWallDivs,
-                               !!(rpFlags & RPF_SKYMASK),
-                               !!(flags & RHF_ADD_RADIO),
+                               !!(rpFlags & RPF_SKYMASK), !!(flags & RHF_ADD_RADIO),
                                texTL, texBR, matOffset, texScale, blendMode,
                                color, color2,
                                hedge->bsuf[section], (uint) section,
@@ -1896,8 +1911,8 @@ static boolean Rend_RenderHEdgeTwosided(HEdge* hedge)
                 xtop    += suf->visOffset[VY];
 
                 // Can we make this a solid segment?
-                if(!(rightWallDivs.nodes[rightWallDivs.num-1].height >= xtop &&
-                      leftWallDivs.nodes[0].height <= xbottom))
+                if(!(WallDivNode_Height(WallDivs_Last(&rightWallDivs)) >= xtop &&
+                     WallDivNode_Height(WallDivs_First(&leftWallDivs)) <= xbottom))
                      solidSeg = false;
             }
         }

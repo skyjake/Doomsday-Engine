@@ -228,7 +228,7 @@ int RIT_RenderShadowProjectionIterator(const shadowprojection_t* sp, void* param
         rtexcoords[3].st[0] = rtexcoords[2].st[0] = sp->s[1];
         rtexcoords[2].st[1] = rtexcoords[0].st[1] = sp->t[1];
 
-        if(p->leftWallDivs->num > 2 || p->rightWallDivs->num > 2)
+        if(p->wall.left.divCount || p->wall.right.divCount)
         {
             // We need to subdivide the projection quad.
             float bL, tL, bR, tR;
@@ -251,9 +251,9 @@ int RIT_RenderShadowProjectionIterator(const shadowprojection_t* sp, void* param
             bR = p->rvertices[2].pos[VZ];
             tR = p->rvertices[3].pos[VZ];
 
-            R_DivVerts(rvertices, origVerts, p->leftWallDivs, p->rightWallDivs);
-            R_DivTexCoords(rtexcoords, origTexCoords, p->leftWallDivs, p->rightWallDivs, bL, tL, bR, tR);
-            R_DivVertColors(rcolors, origColors, p->leftWallDivs, p->rightWallDivs, bL, tL, bR, tR);
+            R_DivVerts(rvertices, origVerts, p->wall.left.firstDiv, p->wall.left.divCount, p->wall.right.firstDiv, p->wall.right.divCount);
+            R_DivTexCoords(rtexcoords, origTexCoords, p->wall.left.firstDiv, p->wall.left.divCount, p->wall.right.firstDiv, p->wall.right.divCount, bL, tL, bR, tR);
+            R_DivVertColors(rcolors, origColors, p->wall.left.firstDiv, p->wall.left.divCount, p->wall.right.firstDiv, p->wall.right.divCount, bL, tL, bR, tR);
         }
         else
         {
@@ -280,13 +280,13 @@ int RIT_RenderShadowProjectionIterator(const shadowprojection_t* sp, void* param
         memcpy(rvertices, p->rvertices, sizeof(rvertex_t) * p->numVertices);
     }
 
-    if(p->isWall && (p->leftWallDivs->num > 2 || p->rightWallDivs->num > 2))
+    if(p->isWall && (p->wall.left.divCount || p->wall.right.divCount))
     {
         RL_AddPolyWithCoords(PT_FAN, RPF_DEFAULT|RPF_SHADOW,
-            1 + p->rightWallDivs->num, rvertices + 1 + p->leftWallDivs->num,
-            rcolors + 1 + p->leftWallDivs->num, rtexcoords + 1 + p->leftWallDivs->num, NULL);
+            3 + p->wall.right.divCount, rvertices + 3 + p->wall.left.divCount,
+            rcolors + 3 + p->wall.left.divCount, rtexcoords + 3 + p->wall.left.divCount, NULL);
         RL_AddPolyWithCoords(PT_FAN, RPF_DEFAULT|RPF_SHADOW,
-            1 + p->leftWallDivs->num, rvertices, rcolors, rtexcoords, NULL);
+            3 + p->wall.left.divCount, rvertices, rcolors, rtexcoords, NULL);
     }
     else
     {

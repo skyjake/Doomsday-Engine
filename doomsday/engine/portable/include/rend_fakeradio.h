@@ -38,6 +38,16 @@ typedef struct {
     const coord_t* segLength;
     const coord_t* linedefLength;
     const Sector* frontSec, *backSec;
+    struct {
+        struct {
+            walldivnode_t* firstDiv;
+            uint divCount;
+        } left;
+        struct {
+            walldivnode_t* firstDiv;
+            uint divCount;
+        } right;
+    } wall;
 } rendsegradio_params_t;
 
 /// Register the console commands, variables, etc..., of this module.
@@ -54,9 +64,7 @@ void Rend_RadioUpdateLinedef(LineDef* line, boolean backSide);
 /**
  * Render FakeRadio for the given hedge section.
  */
-void Rend_RadioSegSection(const rvertex_t* rvertices,
-    const walldivs_t* leftWallDivs, const walldivs_t* rightWallDivs,
-    const rendsegradio_params_t* params);
+void Rend_RadioSegSection(const rvertex_t* rvertices, const rendsegradio_params_t* params);
 
 /**
  * Render FakeRadio for the given BSP leaf.

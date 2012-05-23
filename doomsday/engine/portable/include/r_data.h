@@ -292,14 +292,16 @@ void            R_FreeRendColors(ColorRawf* rcolors);
 void            R_FreeRendTexCoords(rtexcoord_t* rtexcoords);
 void            R_InfoRendVerticesPool(void);
 
-void R_DivVerts(rvertex_t* dst, const rvertex_t* src, const walldivs_t* leftDivs,
-    const walldivs_t* rightDivs);
+void R_DivVerts(rvertex_t* dst, const rvertex_t* src,
+    walldivnode_t* leftDivFirst, uint leftDivCount, walldivnode_t* rightDivFirst, uint rightDivCount);
 
-void R_DivVertColors(ColorRawf* dst, const ColorRawf* src, const walldivs_t* leftDivs,
-    const walldivs_t* rightDivs, float bL, float tL, float bR, float tR);
+void R_DivTexCoords(rtexcoord_t* dst, const rtexcoord_t* src,
+    walldivnode_t* leftDivFirst, uint leftDivCount, walldivnode_t* rightDivFirst, uint rightDivCount,
+    float bL, float tL, float bR, float tR);
 
-void R_DivTexCoords(rtexcoord_t* dst, const rtexcoord_t* src, const walldivs_t* leftDivs,
-    const walldivs_t* rightDivs, float bL, float tL, float bR, float tR);
+void R_DivVertColors(ColorRawf* dst, const ColorRawf* src,
+    walldivnode_t* leftDivFirst, uint leftDivCount, walldivnode_t* rightDivFirst, uint rightDivCount,
+    float bL, float tL, float bR, float tR);
 
 void R_InitTranslationTables(void);
 void R_UpdateTranslationTables(void);

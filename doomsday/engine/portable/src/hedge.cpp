@@ -25,6 +25,46 @@
 #include "de_play.h"
 #include "de_refresh.h"
 
+coord_t WallDivNode_Height(walldivnode_t* node)
+{
+    assert(node);
+    return node->height;
+}
+
+walldivnode_t* WallDivNode_Next(walldivnode_t* node)
+{
+    assert(node);
+    uint idx = node - node->divs->nodes;
+    if(idx+1 >= node->divs->num) return 0;
+    return &node->divs->nodes[idx+1];
+}
+
+walldivnode_t* WallDivNode_Prev(walldivnode_t* node)
+{
+    assert(node);
+    uint idx = node - node->divs->nodes;
+    if(idx == 0) return 0;
+    return &node->divs->nodes[idx-1];
+}
+
+uint WallDivs_Size(const walldivs_t* wd)
+{
+    assert(wd);
+    return wd->num;
+}
+
+walldivnode_t* WallDivs_First(walldivs_t* wd)
+{
+    assert(wd);
+    return &wd->nodes[0];
+}
+
+walldivnode_t* WallDivs_Last(walldivs_t* wd)
+{
+    assert(wd);
+    return &wd->nodes[wd->num-1];
+}
+
 static int C_DECL sortWallDivNode(const void* e1, const void* e2)
 {
     const coord_t h1 = ((walldivnode_t*)e1)->height;
@@ -34,7 +74,15 @@ static int C_DECL sortWallDivNode(const void* e1, const void* e2)
     return 0;
 }
 
-static walldivnode_t* findWallDivNodeByZOrigin(walldivs_t* wallDivs, float height)
+static void addWallDivNode(walldivs_t* wd, coord_t height)
+{
+    assert(wd);
+    struct walldivnode_s* node = &wd->nodes[wd->num++];
+    node->divs = wd;
+    node->height = height;
+}
+
+static walldivnode_t* findWallDivNodeByZOrigin(walldivs_t* wallDivs, coord_t height)
 {
     Q_ASSERT(wallDivs);
     for(uint i = 0; i < wallDivs->num; ++i)
@@ -110,7 +158,7 @@ static void addWallDivNodesForPlaneIntercepts(HEdge* hedge, walldivs_t* wallDivs
                             {
                                 if(!findWallDivNodeByZOrigin(wallDivs, pln->visHeight))
                                 {
-                                    wallDivs->nodes[wallDivs->num++].height = pln->visHeight;
+                                    addWallDivNode(wallDivs, pln->visHeight);
 
                                     // Have we reached the div limit?
                                     if(wallDivs->num == WALLDIVS_MAX_NODES)
@@ -147,7 +195,7 @@ static void addWallDivNodesForPlaneIntercepts(HEdge* hedge, walldivs_t* wallDivs
                         {
                             if(!findWallDivNodeByZOrigin(wallDivs, z))
                             {
-                                wallDivs->nodes[wallDivs->num++].height = z;
+                                addWallDivNode(wallDivs, z);
 
                                 // Have we reached the div limit?
                                 if(wallDivs->num == WALLDIVS_MAX_NODES)
@@ -170,14 +218,15 @@ static void buildWallDiv(walldivs_t* wallDivs, HEdge* hedge,
 {
     wallDivs->num = 0;
 
-    // Add the first node.
-    wallDivs->nodes[wallDivs->num++].height = bottomZ;
+    // Nodes are arranged according to their Z axis height in ascending order.
+    // The first node is the bottom.
+    addWallDivNode(wallDivs, bottomZ);
 
     // Add nodes for intercepts.
     addWallDivNodesForPlaneIntercepts(hedge, wallDivs, section, bottomZ, topZ, doRight);
 
-    // Add the last node.
-    wallDivs->nodes[wallDivs->num++].height = topZ;
+    // The last node is the top.
+    addWallDivNode(wallDivs, topZ);
 
     if(!(wallDivs->num > 2)) return;
     

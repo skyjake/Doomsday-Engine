@@ -42,19 +42,27 @@ boolean Rend_MobjShadowsEnabled(void);
  */
 void Rend_RenderMobjShadows(void);
 
-/// Paramaters for Rend_RenderShadowProjections (POD).
+/// Parameters for Rend_RenderShadowProjections (POD).
 typedef struct {
     uint lastIdx;
     const rvertex_t* rvertices;
     uint numVertices, realNumVertices;
     const coord_t* texTL, *texBR;
     boolean isWall;
-    const walldivs_t* leftWallDivs;
-    const walldivs_t* rightWallDivs;
+    struct {
+        struct {
+            walldivnode_t* firstDiv;
+            uint divCount;
+        } left;
+        struct {
+            walldivnode_t* firstDiv;
+            uint divCount;
+        } right;
+    } wall;
 } rendershadowprojectionparams_t;
 
 /**
- * Render all shadows in projection list @a listIdx according to @a paramaters
+ * Render all shadows in projection list @a listIdx according to @a parameters
  * writing them to the renderering lists for the current frame.
  */
 void Rend_RenderShadowProjections(uint listIdx, rendershadowprojectionparams_t* paramaters);
