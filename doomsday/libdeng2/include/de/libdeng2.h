@@ -24,7 +24,7 @@
  * @file libdeng2.h  Common definitions for libdeng2.
  */
 
-#ifdef __cplusplus
+#if defined(__cplusplus) && !defined(DENG2_C_API_ONLY)
 #  define DENG2_USE_QT
 #endif
 
@@ -98,7 +98,7 @@
 #define DENG2_FOR_EACH(Iter, ContainerRef, IterClass) \
     for(IterClass Iter = (ContainerRef).begin(); Iter != (ContainerRef).end(); ++Iter)
 
-#ifdef __cplusplus
+#if defined(__cplusplus) && !defined(DENG2_C_API_ONLY)
 namespace de {
 
 /**

@@ -28,8 +28,10 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include <math.h>
+#define DENG2_C_API_ONLY
 #include <de/c_wrapper.h>
+
+#include <math.h>
 
 #include "dswinmm.h"
 #include "midistream.h"
