@@ -1564,7 +1564,7 @@ boolean DD_Init(void)
 
         while(++p != CommandLine_Count() && !CommandLine_IsOption(p))
         {
-            const char* filePath = CommandLine_At(p);
+            const char* filePath = CommandLine_PathAt(p);
             directory_t* dir;
             Uri* searchPath;
 
@@ -1615,7 +1615,7 @@ boolean DD_Init(void)
 
                 while(++p != CommandLine_Count() && !CommandLine_IsOption(p))
                 {
-                    addToPathList(&gameResourceFileList, &numGameResourceFileList, CommandLine_At(p));
+                    addToPathList(&gameResourceFileList, &numGameResourceFileList, CommandLine_PathAt(p));
                 }
 
                 p--;/* For ArgIsOption(p) necessary, for p==Argc() harmless */

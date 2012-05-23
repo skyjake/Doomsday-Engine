@@ -793,7 +793,7 @@ void F_CreateNamespacesForFileResourcePaths(void)
 
         if(def->optOverridePath && CommandLine_CheckWith(def->optOverridePath, 1))
         {
-            const char* path = CommandLine_Next();
+            const char* path = CommandLine_NextAsPath();
             ddstring_t path2;
 
             // Override paths are added in reverse order.
@@ -810,7 +810,7 @@ void F_CreateNamespacesForFileResourcePaths(void)
 
         if(def->optFallbackPath && CommandLine_CheckWith(def->optFallbackPath, 1))
         {
-            Uri_SetUri3(uri, CommandLine_Next(), RC_NULL);
+            Uri_SetUri3(uri, CommandLine_NextAsPath(), RC_NULL);
             ResourceNamespace_AddSearchPath(rnamespace, def->searchPathFlags, uri, SPG_FALLBACK);
         }
     }}

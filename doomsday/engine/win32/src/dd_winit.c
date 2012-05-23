@@ -370,7 +370,7 @@ static void determineGlobalPaths(application_t* app)
         filename_t runtimePath;
         directory_t* temp;
 
-        strncpy(runtimePath, CommandLine_Next(), FILENAME_T_MAXLEN);
+        strncpy(runtimePath, CommandLine_NextAsPath(), FILENAME_T_MAXLEN);
         Dir_CleanPath(runtimePath, FILENAME_T_MAXLEN);
         // Ensure the path is closed with a directory separator.
         F_AppendMissingSlashCString(runtimePath, FILENAME_T_MAXLEN);

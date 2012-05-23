@@ -869,11 +869,12 @@ static void readAllDefinitions(void)
     for(p = 0; p < CommandLine_Count(); ++p)
     {
         const char* arg = CommandLine_At(p);
-        if(!CommandLine_IsMatchingAlias("-def", arg) && !CommandLine_IsMatchingAlias("-defs", arg)) continue;
+        if(!CommandLine_IsMatchingAlias("-def", arg) &&
+           !CommandLine_IsMatchingAlias("-defs", arg)) continue;
 
         while(++p != CommandLine_Count() && !CommandLine_IsOption(p))
         {
-            const char* searchPath = CommandLine_At(p);
+            const char* searchPath = CommandLine_PathAt(p);
 
             Con_Message("  Processing '%s'...\n", F_PrettyPath(searchPath));
 
