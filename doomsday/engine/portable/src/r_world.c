@@ -916,6 +916,131 @@ void R_OrderVertices(const LineDef *line, const Sector *sector, Vertex *verts[2]
     verts[1] = line->L_v(edge^1);
 }
 
+boolean R_FindBottomTop(LineDef* lineDef, int side, SideDefSection section,
+    coord_t matOffsetX, coord_t matOffsetY,
+    const Plane* ffloor, const Plane* fceil,
+    const Plane* bfloor, const Plane* bceil,
+    boolean unpegBottom, boolean unpegTop,
+    boolean stretchMiddle, boolean isSelfRef,
+    coord_t* bottom, coord_t* top, float texOffset[2])
+{
+    switch(section)
+    {
+    case SS_TOP:
+        *top = fceil->visHeight;
+        // Can't go over front ceiling, would induce polygon flaws.
+        if(bceil->visHeight < ffloor->visHeight)
+            *bottom = ffloor->visHeight;
+        else
+            *bottom = bceil->visHeight;
+        if(*top > *bottom)
+        {
+            if(texOffset)
+            {
+                texOffset[VX] = matOffsetX;
+                texOffset[VY] = matOffsetY;
+
+                // Align with normal middle texture?
+                if(!unpegTop)
+                    texOffset[VY] += -(fceil->visHeight - bceil->visHeight);
+            }
+            return true;
+        }
+        break;
+
+    case SS_BOTTOM: {
+        const boolean raiseToBackFloor = (Surface_IsSkyMasked(&fceil->surface) && Surface_IsSkyMasked(&bceil->surface) && fceil->visHeight < bceil->visHeight);
+        coord_t t = bfloor->visHeight;
+
+        *bottom = ffloor->visHeight;
+        // Can't go over the back ceiling, would induce polygon flaws.
+        if(bfloor->visHeight > bceil->visHeight)
+            t = bceil->visHeight;
+
+        // Can't go over front ceiling, would induce polygon flaws.
+        // In the special case of a sky masked upper we must extend the bottom
+        // section up to the height of the back floor.
+        if(t > fceil->visHeight && !raiseToBackFloor)
+            t = fceil->visHeight;
+        *top = t;
+
+        if(*top > *bottom)
+        {
+            if(texOffset)
+            {
+                texOffset[VX] = matOffsetX;
+                texOffset[VY] = matOffsetY;
+
+                if(bfloor->visHeight > fceil->visHeight)
+                    texOffset[VY] += -((raiseToBackFloor? t : fceil->visHeight) - bfloor->visHeight);
+
+                // Align with normal middle texture?
+                if(unpegBottom)
+                    texOffset[VY] += (raiseToBackFloor? t : fceil->visHeight) - bfloor->visHeight;
+            }
+            return true;
+        }
+        break; }
+
+    case SS_MIDDLE: {
+        coord_t ftop, fbottom, vR_ZBottom, vR_ZTop;
+
+        if(isSelfRef)
+        {
+            fbottom = MIN_OF(bfloor->visHeight, ffloor->visHeight);
+            ftop    = MAX_OF(bceil->visHeight, fceil->visHeight);
+        }
+        else
+        {
+            fbottom = MAX_OF(bfloor->visHeight, ffloor->visHeight);
+            ftop    = MIN_OF(bceil->visHeight, fceil->visHeight);
+        }
+
+        *bottom = vR_ZBottom = fbottom;
+        *top    = vR_ZTop    = ftop;
+
+        if(stretchMiddle)
+        {
+            if(*top > *bottom)
+            {
+                if(texOffset)
+                {
+                    texOffset[VX] = matOffsetX;
+                    texOffset[VY] = 0;
+                }
+                return true;
+            }
+        }
+        else
+        {
+            boolean clipBottom = true, clipTop = true;
+
+            if(!P_IsInVoid(viewPlayer))
+            {
+                if(Surface_IsSkyMasked(&ffloor->surface) && Surface_IsSkyMasked(&bfloor->surface))
+                    clipBottom = false;
+                if(Surface_IsSkyMasked(&fceil->surface)  && Surface_IsSkyMasked(&bceil->surface))
+                    clipTop = false;
+            }
+
+            if(LineDef_MiddleMaterialCoords(lineDef, side, bottom, &vR_ZBottom, top,
+                                            &vR_ZTop, texOffset? &texOffset[VY] : NULL, unpegBottom,
+                                            clipTop, clipBottom))
+            {
+                if(texOffset)
+                {
+                    texOffset[VX] = matOffsetX;
+                    if(!clipTop) texOffset[VY] = 0;
+                }
+                return true;
+            }
+        }
+        break; }
+    }
+
+    return false;
+}
+
 /**
  * A neighbour is a line that shares a vertex with 'line', and faces the
  * specified sector.
