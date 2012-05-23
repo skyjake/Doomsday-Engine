@@ -1,14 +1,6 @@
-# Build configuration for using libdeng2.
-INCLUDEPATH += $$PWD/libdeng2/include
+include(dep_deng2_cwrapper.pri)
 
-# Use the appropriate library path.
-!useLibDir($$OUT_PWD/../libdeng2) {
-    useLibDir($$OUT_PWD/../../libdeng2)
-}
-
-LIBS += -ldeng2
-
-# libdeng2 requires the following Qt modules.
+# libdeng2's C++ API requires the following Qt modules.
 QT += core network gui opengl
 
 win32 {
@@ -25,12 +17,6 @@ win32 {
 }
 
 macx {
-    defineTest(fixInstallName) {
-        # 1: binary file
-        # 2: library name
-        # 3: path to Frameworks/
-        doPostLink("install_name_tool -change $$2 @executable_path/$$3/Frameworks/$$2 $$1")
-    }
     defineTest(linkToBundledLibdeng2) {
         fixInstallName($${1}.bundle/$$1, libdeng2.2.dylib, ..)
         fixInstallName($${1}.bundle/$$1, QtCore.framework/Versions/4/QtCore, ..)
