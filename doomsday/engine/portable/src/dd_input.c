@@ -826,7 +826,7 @@ void DD_InitInput(void)
 {
     int i;
 
-    inputDisabledFully = ArgExists("-noinput");
+    inputDisabledFully = CommandLine_Exists("-noinput");
 
     for(i = 0; i < 256; ++i)
     {

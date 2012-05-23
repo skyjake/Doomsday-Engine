@@ -368,23 +368,23 @@ void X_PostInit(void)
     /* None */
 
     // Command line options.
-    noMonstersParm = ArgExists("-nomonsters");
-    respawnParm = ArgExists("-respawn");
-    randomClassParm = ArgExists("-randclass");
-    devParm = ArgExists("-devparm");
+    noMonstersParm = CommandLine_Exists("-nomonsters");
+    respawnParm = CommandLine_Exists("-respawn");
+    randomClassParm = CommandLine_Exists("-randclass");
+    devParm = CommandLine_Exists("-devparm");
 
-    cfg.netDeathmatch = ArgExists("-deathmatch");
+    cfg.netDeathmatch = CommandLine_Exists("-deathmatch");
 
     // Turbo movement option.
-    p = ArgCheck("-turbo");
+    p = CommandLine_Check("-turbo");
     turboMul = 1.0f;
     if(p)
     {
         int scale = 200;
 
         turboParm = true;
-        if(p < Argc() - 1)
-            scale = atoi(Argv(p + 1));
+        if(p < CommandLine_Count() - 1)
+            scale = atoi(CommandLine_At(p + 1));
         if(scale < 10)
             scale = 10;
         if(scale > 400)
@@ -394,10 +394,10 @@ void X_PostInit(void)
         turboMul = scale / 100.f;
     }
 
-    if((p = ArgCheckWith("-scripts", 1)) != 0)
+    if((p = CommandLine_CheckWith("-scripts", 1)) != 0)
     {
         sc_FileScripts = true;
-        sc_ScriptsDir = Argv(p + 1);
+        sc_ScriptsDir = CommandLine_At(p + 1);
     }
 
     P_InitMapMusicInfo(); // Init music fields in mapinfo.
@@ -409,25 +409,25 @@ void X_PostInit(void)
     SN_InitSequenceScript();
 
     // Load a saved game?
-    p = ArgCheckWith("-loadgame", 1);
+    p = CommandLine_CheckWith("-loadgame", 1);
     if(p != 0)
     {
-        if(G_LoadGame(atoi(Argv(p + 1))))
+        if(G_LoadGame(atoi(CommandLine_At(p + 1))))
         {
             // No further initialization is to be done.
             return;
         }
     }
 
-    if((p = ArgCheckWith("-skill", 1)) != 0)
+    if((p = CommandLine_CheckWith("-skill", 1)) != 0)
     {
-        startSkill = (skillmode_t)(Argv(p + 1)[0] - '1');
+        startSkill = (skillmode_t)(CommandLine_At(p + 1)[0] - '1');
         autoStart = true;
     }
 
-    if((p = ArgCheck("-class")) != 0)
+    if((p = CommandLine_Check("-class")) != 0)
     {
-        playerclass_t pClass = (playerclass_t)atoi(Argv(p + 1));
+        playerclass_t pClass = (playerclass_t)atoi(CommandLine_At(p + 1));
         if(!VALID_PLAYER_CLASS(pClass))
         {
             Con_Message("Warning: Invalid player class id=%d specified with -class, ignoring.\n", (int)pClass);
@@ -450,10 +450,10 @@ void X_PostInit(void)
     }
 
     // Check for command line warping.
-    p = ArgCheck("-warp");
-    if(p && p < Argc() - 1)
+    p = CommandLine_Check("-warp");
+    if(p && p < CommandLine_Count() - 1)
     {
-        warpMap = atoi(Argv(p + 1)) - 1;
+        warpMap = atoi(CommandLine_At(p + 1)) - 1;
         startMap = P_TranslateMap(warpMap);
         autoStart = true;
     }

@@ -2446,7 +2446,7 @@ int DefsHook(int hook_type, int parm, void* data)
 {
     int i;
 
-    verbose = ArgExists("-verbose");
+    verbose = CommandLine_Exists("-verbose");
     ded = (ded_t*) data;
 
     // Check for a DEHACKED lumps.
@@ -2456,19 +2456,19 @@ int DefsHook(int hook_type, int parm, void* data)
         {
             ReadDehackedLump(i);
             // We'll only continue this if the -alldehs option is given.
-            if(!ArgCheck("-alldehs")) break;
+            if(!CommandLine_Check("-alldehs")) break;
         }
     }
 
     // How about the -deh option?
-    if(ArgCheckWith("-deh", 1))
+    if(CommandLine_CheckWith("-deh", 1))
     {
         ddstring_t buf;
         const char* fn;
 
         // Aha! At least one DEH specified. Let's read all of 'em.
         Str_Init(&buf);
-        while(NULL != (fn = ArgNext()) && '-' != fn[0])
+        while(NULL != (fn = CommandLine_Next()) && '-' != fn[0])
         {
             Str_Set(&buf, fn);
             Str_Strip(&buf);

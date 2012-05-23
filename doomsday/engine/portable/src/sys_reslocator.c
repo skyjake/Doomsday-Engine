@@ -597,7 +597,7 @@ static void createPackagesResourceNamespace(void)
 #endif
 
     // Is the DOOMWADPATH environment variable in use?
-    if(!ArgCheck("-nodoomwadpath") && getenv("DOOMWADPATH"))
+    if(!CommandLine_Check("-nodoomwadpath") && getenv("DOOMWADPATH"))
     {
 #if WIN32
 # define PATH_DELIMITER_CHAR    ';'
@@ -656,7 +656,7 @@ static void createPackagesResourceNamespace(void)
     }
 
     // Is the DOOMWADDIR environment variable in use?
-    if(!doomWadDir && !ArgCheck("-nodoomwaddir") && getenv("DOOMWADDIR"))
+    if(!doomWadDir && !CommandLine_Check("-nodoomwaddir") && getenv("DOOMWADDIR"))
     {
         doomWadDir = Str_New(); Str_Set(doomWadDir, getenv("DOOMWADDIR"));
         Str_Strip(doomWadDir);
@@ -791,9 +791,9 @@ void F_CreateNamespacesForFileResourcePaths(void)
             ResourceNamespace_AddSearchPath(rnamespace, def->searchPathFlags, uri, SPG_DEFAULT);
         }
 
-        if(def->optOverridePath && ArgCheckWith(def->optOverridePath, 1))
+        if(def->optOverridePath && CommandLine_CheckWith(def->optOverridePath, 1))
         {
-            const char* path = ArgNext();
+            const char* path = CommandLine_Next();
             ddstring_t path2;
 
             // Override paths are added in reverse order.
@@ -808,9 +808,9 @@ void F_CreateNamespacesForFileResourcePaths(void)
             Str_Free(&path2);
         }
 
-        if(def->optFallbackPath && ArgCheckWith(def->optFallbackPath, 1))
+        if(def->optFallbackPath && CommandLine_CheckWith(def->optFallbackPath, 1))
         {
-            Uri_SetUri3(uri, ArgNext(), RC_NULL);
+            Uri_SetUri3(uri, CommandLine_Next(), RC_NULL);
             ResourceNamespace_AddSearchPath(rnamespace, def->searchPathFlags, uri, SPG_FALLBACK);
         }
     }}

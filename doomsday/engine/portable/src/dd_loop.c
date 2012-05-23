@@ -111,7 +111,7 @@ int DD_GameLoopExitCode(void)
 
 int DD_GameLoop(void)
 {
-    noninteractive = ArgExists("-noinput");
+    noninteractive = CommandLine_Exists("-noinput");
 
     // Start the deng2 event loop.
     return LegacyCore_RunEventLoop(de2LegacyCore);

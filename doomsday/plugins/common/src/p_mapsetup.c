@@ -944,10 +944,10 @@ static void P_ResetWorldState(void)
     timerGame = 0;
     if(deathmatch)
     {
-        parm = ArgCheck("-timer");
-        if(parm && parm < Argc() - 1)
+        parm = CommandLine_Check("-timer");
+        if(parm && parm < CommandLine_Count() - 1)
         {
-            timerGame = atoi(Argv(parm + 1)) * 35 * 60;
+            timerGame = atoi(CommandLine_At(parm + 1)) * 35 * 60;
         }
     }
 

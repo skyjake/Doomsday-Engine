@@ -111,65 +111,65 @@ struct ddwindow_s
      */
     void modifyAccordingToOptions()
     {
-        if(ArgCheckWith("-width", 1))
+        if(CommandLine_CheckWith("-width", 1))
         {
-            geometry.size.width = qMax(WINDOW_MIN_WIDTH, atoi(ArgNext()));
+            geometry.size.width = qMax(WINDOW_MIN_WIDTH, atoi(CommandLine_Next()));
         }
 
-        if(ArgCheckWith("-height", 1))
+        if(CommandLine_CheckWith("-height", 1))
         {
-            geometry.size.height = qMax(WINDOW_MIN_HEIGHT, atoi(ArgNext()));
+            geometry.size.height = qMax(WINDOW_MIN_HEIGHT, atoi(CommandLine_Next()));
         }
 
-        if(ArgCheckWith("-winsize", 2))
+        if(CommandLine_CheckWith("-winsize", 2))
         {
-            geometry.size.width = qMax(WINDOW_MIN_WIDTH, atoi(ArgNext()));
-            geometry.size.height = qMax(WINDOW_MIN_HEIGHT, atoi(ArgNext()));
+            geometry.size.width = qMax(WINDOW_MIN_WIDTH, atoi(CommandLine_Next()));
+            geometry.size.height = qMax(WINDOW_MIN_HEIGHT, atoi(CommandLine_Next()));
         }
 
-        if(ArgCheckWith("-colordepth", 1) || ArgCheckWith("-bpp", 1))
+        if(CommandLine_CheckWith("-colordepth", 1) || CommandLine_CheckWith("-bpp", 1))
         {
-            colorDepthBits = qBound(8, atoi(ArgNext()), 32);
+            colorDepthBits = qBound(8, atoi(CommandLine_Next()), 32);
         }
 
-        if(ArgCheck("-nocenter"))
+        if(CommandLine_Check("-nocenter"))
         {
             setFlag(DDWF_CENTER, false);
         }
 
-        if(ArgCheckWith("-xpos", 1))
+        if(CommandLine_CheckWith("-xpos", 1))
         {
-            geometry.origin.x = atoi(ArgNext());
+            geometry.origin.x = atoi(CommandLine_Next());
             setFlag(DDWF_CENTER | DDWF_MAXIMIZE, false);
         }
 
-        if(ArgCheckWith("-ypos", 1))
+        if(CommandLine_CheckWith("-ypos", 1))
         {
-            geometry.origin.y = atoi(ArgNext());
+            geometry.origin.y = atoi(CommandLine_Next());
             setFlag(DDWF_CENTER | DDWF_MAXIMIZE, false);
         }
 
-        if(ArgCheck("-center"))
+        if(CommandLine_Check("-center"))
         {
             setFlag(DDWF_CENTER);
         }
 
-        if(ArgCheck("-maximize"))
+        if(CommandLine_Check("-maximize"))
         {
             setFlag(DDWF_MAXIMIZE);
         }
 
-        if(ArgCheck("-nomaximize"))
+        if(CommandLine_Check("-nomaximize"))
         {
             setFlag(DDWF_MAXIMIZE, false);
         }
 
-        if(ArgExists("-nofullscreen") || ArgExists("-window"))
+        if(CommandLine_Exists("-nofullscreen") || CommandLine_Exists("-window"))
         {
             setFlag(DDWF_FULLSCREEN, false);
         }
 
-        if(ArgExists("-fullscreen") || ArgExists("-nowindow"))
+        if(CommandLine_Exists("-fullscreen") || CommandLine_Exists("-nowindow"))
         {
             setFlag(DDWF_FULLSCREEN);
         }

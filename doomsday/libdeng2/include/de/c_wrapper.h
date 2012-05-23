@@ -75,15 +75,15 @@ DENG2_PUBLIC void LegacyCore_SetTerminateFunc(LegacyCore* lc, void (*func)(const
 /*
  * CommandLine
  */
-DENG2_PUBLIC void ArgAbbreviate(const char* longname, const char* shortname);
-DENG2_PUBLIC int Argc(void);
-DENG2_PUBLIC const char* Argv(int i);
-DENG2_PUBLIC const char* ArgNext(void);
-DENG2_PUBLIC int ArgCheck(const char* check);
-DENG2_PUBLIC int ArgCheckWith(const char* check, int num);
-DENG2_PUBLIC int ArgExists(const char* check);
-DENG2_PUBLIC int ArgIsOption(int i);
-DENG2_PUBLIC int ArgRecognize(const char* first, const char* second);
+DENG2_PUBLIC void CommandLine_Alias(const char* longname, const char* shortname);
+DENG2_PUBLIC int CommandLine_Count(void);
+DENG2_PUBLIC const char* CommandLine_At(int i);
+DENG2_PUBLIC const char* CommandLine_Next(void);
+DENG2_PUBLIC int CommandLine_Check(const char* check);
+DENG2_PUBLIC int CommandLine_CheckWith(const char* check, int num);
+DENG2_PUBLIC int CommandLine_Exists(const char* check);
+DENG2_PUBLIC int CommandLine_IsOption(int i);
+DENG2_PUBLIC int CommandLine_IsMatchingAlias(const char* original, const char* originalOrAlias);
 
 /*
  * LogBuffer

@@ -72,7 +72,7 @@ boolean Joystick_Init(void)
         "X", "Y", "Z", "RX", "RY", "RZ", "Slider 1", "Slider 2"
     };
 
-    if(isDedicated || ArgCheck("-nojoy")) return false;
+    if(isDedicated || CommandLine_Check("-nojoy")) return false;
 
     HWND hWnd = (HWND) Window_NativeHandle(Window_Main());
     if(!hWnd)

@@ -256,27 +256,27 @@ static boolean initDriver(audiodriver_e id)
 static audiodriver_e chooseAudioDriver(void)
 {
     // No audio output?
-    if(isDedicated || ArgExists("-dummy"))
+    if(isDedicated || CommandLine_Exists("-dummy"))
         return AUDIOD_DUMMY;
 
-    if(ArgExists("-fmod"))
+    if(CommandLine_Exists("-fmod"))
         return AUDIOD_FMOD;
 
-    if(ArgExists("-oal"))
+    if(CommandLine_Exists("-oal"))
         return AUDIOD_OPENAL;
 
 #ifdef WIN32
     // DirectSound with 3D sound support, EAX effects?
-    if(ArgExists("-dsound"))
+    if(CommandLine_Exists("-dsound"))
         return AUDIOD_DSOUND;
 
     // Windows Multimedia?
-    if(ArgExists("-winmm"))
+    if(CommandLine_Exists("-winmm"))
         return AUDIOD_WINMM;
 #endif
 
 #ifndef DENG_DISABLE_SDLMIXER
-    if(ArgExists("-sdlmixer"))
+    if(CommandLine_Exists("-sdlmixer"))
         return AUDIOD_SDL_MIXER;
 #endif
 
@@ -310,9 +310,9 @@ static void selectInterfaces(audiodriver_e defaultDriverId)
     if(defaultDriver->cd.gen.Init) iCD = &defaultDriver->cd;
 
     // Check for SFX override.
-    if((p = ArgCheckWith("-isfx", 1)) > 0)
+    if((p = CommandLine_CheckWith("-isfx", 1)) > 0)
     {
-        drvId = initDriverIfNeeded(Argv(p + 1));
+        drvId = initDriverIfNeeded(CommandLine_At(p + 1));
         if(!drivers[drvId].sfx.gen.Init)
         {
             Con_Error("Audio driver '%s' does not provide an SFX interface.\n",
@@ -322,9 +322,9 @@ static void selectInterfaces(audiodriver_e defaultDriverId)
     }
 
     // Check for Music override.
-    if((p = ArgCheckWith("-imusic", 1)) > 0)
+    if((p = CommandLine_CheckWith("-imusic", 1)) > 0)
     {
-        drvId = initDriverIfNeeded(Argv(p + 1));
+        drvId = initDriverIfNeeded(CommandLine_At(p + 1));
         if(!drivers[drvId].music.gen.Init)
         {
             Con_Error("Audio driver '%s' does not provide a Music interface.\n",
@@ -334,9 +334,9 @@ static void selectInterfaces(audiodriver_e defaultDriverId)
     }
 
     // Check for Music override.
-    if((p = ArgCheckWith("-icd", 1)) > 0)
+    if((p = CommandLine_CheckWith("-icd", 1)) > 0)
     {
-        drvId = initDriverIfNeeded(Argv(p + 1));
+        drvId = initDriverIfNeeded(CommandLine_At(p + 1));
         if(!drivers[drvId].cd.gen.Init)
         {
             Con_Error("Audio driver '%s' does not provide a CD interface.\n",
@@ -369,7 +369,7 @@ boolean AudioDriver_Init(void)
     audiodriver_e defaultDriverId;
     boolean ok = false;
 
-    if(ArgExists("-nosound")) return false;
+    if(CommandLine_Exists("-nosound")) return false;
 
     defaultDriverId = chooseAudioDriver();
     ok = initDriver(defaultDriverId);

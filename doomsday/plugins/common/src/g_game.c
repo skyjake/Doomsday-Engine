@@ -487,7 +487,7 @@ void G_CommonPreInit(void)
     int i, j;
 
     quitInProgress = false;
-    verbose = ArgExists("-verbose");
+    verbose = CommandLine_Exists("-verbose");
 
     // Register hooks.
     Plug_AddHook(HOOK_DEMO_STOP, Hook_DemoStop);
@@ -2558,7 +2558,7 @@ void G_DoNewGame(void)
     {
         deathmatch = false;
         respawnMonsters = false;
-        noMonstersParm = ArgExists("-nomonsters")? true : false;
+        noMonstersParm = CommandLine_Exists("-nomonsters")? true : false;
     }
     G_InitNew(dSkill, dEpisode, dMap);
 #else

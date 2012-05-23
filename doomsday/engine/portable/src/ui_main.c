@@ -166,7 +166,7 @@ void UI_PageInit(boolean halttime, boolean tckui, boolean tckframe, boolean drwg
     uiFontHgt = FR_SingleLineHeight("UI");
 
     // Should the mouse cursor be visible?
-    uiShowMouse = !ArgExists("-nomouse");
+    uiShowMouse = !CommandLine_Exists("-nomouse");
 
     // Allow use of the escape key to exit the ui?
     allowEscape = !noescape;

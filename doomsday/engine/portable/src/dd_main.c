@@ -986,9 +986,9 @@ static int DD_ActivateGameWorker(void* paramaters)
      */
     { const ddstring_t* configFileName = 0;
     ddstring_t tmp;
-    if(ArgCheckWith("-config", 1))
+    if(CommandLine_CheckWith("-config", 1))
     {
-        Str_Init(&tmp); Str_Set(&tmp, ArgNext());
+        Str_Init(&tmp); Str_Set(&tmp, CommandLine_Next());
         F_FixSlashes(&tmp, &tmp);
         configFileName = &tmp;
     }
@@ -1349,9 +1349,9 @@ static Game* findFirstPlayableGame(void)
  */
 Game* DD_AutoselectGame(void)
 {
-    if(ArgCheckWith("-game", 1))
+    if(CommandLine_CheckWith("-game", 1))
     {
-        const char* identityKey = ArgNext();
+        const char* identityKey = CommandLine_Next();
         Game* game = findGameForIdentityKey(identityKey);
 
         if(game && allGameStartupResourcesFound(game))
@@ -1377,7 +1377,7 @@ int DD_EarlyInit(void)
     Sys_MarkAsMainThread();
 
     // Determine the requested degree of verbosity.
-    verbose = ArgExists("-verbose");
+    verbose = CommandLine_Exists("-verbose");
 
     // The memory zone must be online before the console module.
     Z_Init();
@@ -1557,14 +1557,14 @@ boolean DD_Init(void)
     { resourcenamespaceid_t rnId = F_DefaultResourceNamespaceForClass(RC_PACKAGE);
     int p;
 
-    for(p = 0; p < Argc(); ++p)
+    for(p = 0; p < CommandLine_Count(); ++p)
     {
-        if(!ArgRecognize("-iwad", Argv(p)))
+        if(!CommandLine_IsMatchingAlias("-iwad", CommandLine_At(p)))
             continue;
 
-        while(++p != Argc() && !ArgIsOption(p))
+        while(++p != CommandLine_Count() && !CommandLine_IsOption(p))
         {
-            const char* filePath = Argv(p);
+            const char* filePath = CommandLine_At(p);
             directory_t* dir;
             Uri* searchPath;
 
@@ -1598,7 +1598,7 @@ boolean DD_Init(void)
     */
 
     // Attempt automatic game selection.
-    if(!ArgExists("-noautoselect"))
+    if(!CommandLine_Exists("-noautoselect"))
     {
         Game* game = DD_AutoselectGame();
 
@@ -1609,13 +1609,13 @@ boolean DD_Init(void)
 
             // Add all resources specified using -file options on the command line
             // to the list for this session.
-            for(p = 0; p < Argc(); ++p)
+            for(p = 0; p < CommandLine_Count(); ++p)
             {
-                if(!ArgRecognize("-file", Argv(p))) continue;
+                if(!CommandLine_IsMatchingAlias("-file", CommandLine_At(p))) continue;
 
-                while(++p != Argc() && !ArgIsOption(p))
+                while(++p != CommandLine_Count() && !CommandLine_IsOption(p))
                 {
-                    addToPathList(&gameResourceFileList, &numGameResourceFileList, Argv(p));
+                    addToPathList(&gameResourceFileList, &numGameResourceFileList, CommandLine_At(p));
                 }
 
                 p--;/* For ArgIsOption(p) necessary, for p==Argc() harmless */
@@ -1635,9 +1635,9 @@ boolean DD_Init(void)
     F_ResetAllResourceNamespaces();
 
     // One-time execution of various command line features available during startup.
-    if(ArgCheckWith("-dumplump", 1))
+    if(CommandLine_CheckWith("-dumplump", 1))
     {
-        const char* name = ArgNext();
+        const char* name = CommandLine_Next();
         lumpnum_t absoluteLumpNum = F_CheckLumpNumForName(name);
         if(absoluteLumpNum >= 0)
         {
@@ -1645,7 +1645,7 @@ boolean DD_Init(void)
         }
     }
 
-    if(ArgCheck("-dumpwaddir"))
+    if(CommandLine_Check("-dumpwaddir"))
     {
         F_PrintLumpDirectory();
     }
@@ -1656,14 +1656,14 @@ boolean DD_Init(void)
     Con_ParseCommands("autoexec.cfg");
 
     // Read additional config files that should be processed post engine init.
-    if(ArgCheckWith("-parse", 1))
+    if(CommandLine_CheckWith("-parse", 1))
     {
         uint startTime;
         Con_Message("Parsing additional (pre-init) config files:\n");
         startTime = Sys_GetRealTime();
         for(;;)
         {
-            const char* arg = ArgNext();
+            const char* arg = CommandLine_Next();
             if(!arg || arg[0] == '-') break;
 
             Con_Message("  Processing \"%s\"...\n", F_PrettyPath(arg));
@@ -1674,14 +1674,14 @@ boolean DD_Init(void)
 
     // A console command on the command line?
     { int p;
-    for(p = 1; p < Argc() - 1; p++)
+    for(p = 1; p < CommandLine_Count() - 1; p++)
     {
-        if(stricmp(Argv(p), "-command") && stricmp(Argv(p), "-cmd"))
+        if(stricmp(CommandLine_At(p), "-command") && stricmp(CommandLine_At(p), "-cmd"))
             continue;
 
-        for(++p; p < Argc(); p++)
+        for(++p; p < CommandLine_Count(); p++)
         {
-            const char* arg = Argv(p);
+            const char* arg = CommandLine_At(p);
 
             if(arg[0] == '-')
             {
@@ -1699,16 +1699,16 @@ boolean DD_Init(void)
     if(DD_GameLoaded())
     {
         // Client connection command.
-        if(ArgCheckWith("-connect", 1))
-            Con_Executef(CMDS_CMDLINE, false, "connect %s", ArgNext());
+        if(CommandLine_CheckWith("-connect", 1))
+            Con_Executef(CMDS_CMDLINE, false, "connect %s", CommandLine_Next());
 
         // Incoming TCP port.
-        if(ArgCheckWith("-port", 1))
-            Con_Executef(CMDS_CMDLINE, false, "net-ip-port %s", ArgNext());
+        if(CommandLine_CheckWith("-port", 1))
+            Con_Executef(CMDS_CMDLINE, false, "net-ip-port %s", CommandLine_Next());
 
         // Server start command.
         // (shortcut for -command "net init tcpip; net server start").
-        if(ArgExists("-server"))
+        if(CommandLine_Exists("-server"))
         {
             if(!N_InitService(true))
                 Con_Message("Can't start server: network init failed.\n");
@@ -1742,7 +1742,7 @@ boolean DD_Init(void)
 
         // We'll open the console and print a list of the known games too.
         Con_Execute(CMDS_DDAY, "conopen", true, false);
-        if(!ArgExists("-noautoselect"))
+        if(!CommandLine_Exists("-noautoselect"))
             Con_Message("Automatic game selection failed.\n");
         Con_Execute(CMDS_DDAY, "listgames", false, false);
     }
@@ -1778,7 +1778,7 @@ static int DD_StartupWorker(void* parm)
     Con_SetProgress(20);
 
     // Was the change to userdir OK?
-    if(ArgCheckWith("-userdir", 1) && !app.usingUserDir)
+    if(CommandLine_CheckWith("-userdir", 1) && !app.usingUserDir)
         Con_Message("--(!)-- User directory not found (check -userdir).\n");
 
     bamsInit(); // Binary angle calculations.
@@ -1792,14 +1792,14 @@ static int DD_StartupWorker(void* parm)
     Sys_HideMouse();
 
     // Read config files that should be read BEFORE engine init.
-    if(ArgCheckWith("-cparse", 1))
+    if(CommandLine_CheckWith("-cparse", 1))
     {
         uint startTime;
         Con_Message("Parsing additional (pre-init) config files:\n");
         startTime = Sys_GetRealTime();
         for(;;)
         {
-            const char* arg = ArgNext();
+            const char* arg = CommandLine_Next();
             if(!arg || arg[0] == '-')
                 break;
             Con_Message("  Processing \"%s\"...\n", F_PrettyPath(arg));
@@ -1896,12 +1896,12 @@ void DD_CheckTimeDemo(void)
     if(!checked)
     {
         checked = true;
-        if(ArgCheckWith("-timedemo", 1) || // Timedemo mode.
-           ArgCheckWith("-playdemo", 1)) // Play-once mode.
+        if(CommandLine_CheckWith("-timedemo", 1) || // Timedemo mode.
+           CommandLine_CheckWith("-playdemo", 1)) // Play-once mode.
         {
             char            buf[200];
 
-            sprintf(buf, "playdemo %s", ArgNext());
+            sprintf(buf, "playdemo %s", CommandLine_Next());
             Con_Execute(CMDS_CMDLINE, buf, false, false);
         }
     }

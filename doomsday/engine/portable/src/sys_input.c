@@ -128,7 +128,7 @@ void I_PollEvents(void)
 
 static void Mouse_Init(void)
 {
-    if(ArgCheck("-nomouse") || novideo)
+    if(CommandLine_Check("-nomouse") || novideo)
         return;
 
     assert(iMouse);

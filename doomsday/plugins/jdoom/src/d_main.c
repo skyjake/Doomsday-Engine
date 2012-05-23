@@ -470,20 +470,20 @@ void D_PostInit(void)
     autoStart = false;
 
     // Command line options.
-    noMonstersParm = ArgCheck("-nomonsters")? true : false;
-    respawnParm = ArgCheck("-respawn")? true : false;
-    fastParm = ArgCheck("-fast")? true : false;
-    devParm = ArgCheck("-devparm")? true : false;
+    noMonstersParm = CommandLine_Check("-nomonsters")? true : false;
+    respawnParm = CommandLine_Check("-respawn")? true : false;
+    fastParm = CommandLine_Check("-fast")? true : false;
+    devParm = CommandLine_Check("-devparm")? true : false;
 
-    if(ArgCheck("-altdeath"))
+    if(CommandLine_Check("-altdeath"))
         cfg.netDeathmatch = 2;
-    else if(ArgCheck("-deathmatch"))
+    else if(CommandLine_Check("-deathmatch"))
         cfg.netDeathmatch = 1;
 
-    p = ArgCheck("-timer");
+    p = CommandLine_Check("-timer");
     if(p && p < myargc - 1 && deathmatch)
     {
-        int time = atoi(Argv(p + 1));
+        int time = atoi(CommandLine_At(p + 1));
         Con_Message("Maps will end after %d minute", time);
         if(time > 1)
             Con_Message("s");
@@ -491,7 +491,7 @@ void D_PostInit(void)
     }
 
     // Turbo option.
-    p = ArgCheck("-turbo");
+    p = CommandLine_Check("-turbo");
     turboMul = 1.0f;
     if(p)
     {
@@ -499,7 +499,7 @@ void D_PostInit(void)
 
         turboParm = true;
         if(p < myargc - 1)
-            scale = atoi(Argv(p + 1));
+            scale = atoi(CommandLine_At(p + 1));
         if(scale < 10)
             scale = 10;
         if(scale > 400)
@@ -510,10 +510,10 @@ void D_PostInit(void)
     }
 
     // Load a saved game?
-    p = ArgCheck("-loadgame");
+    p = CommandLine_Check("-loadgame");
     if(p && p < myargc - 1)
     {
-        const int saveSlot = Argv(p + 1)[0] - '0';
+        const int saveSlot = CommandLine_At(p + 1)[0] - '0';
         if(G_LoadGame(saveSlot))
         {
             // No further initialization is to be done.
@@ -521,33 +521,33 @@ void D_PostInit(void)
         }
     }
 
-    p = ArgCheck("-skill");
+    p = CommandLine_Check("-skill");
     if(p && p < myargc - 1)
     {
-        startSkill = Argv(p + 1)[0] - '1';
+        startSkill = CommandLine_At(p + 1)[0] - '1';
         autoStart = true;
     }
 
-    p = ArgCheck("-episode");
+    p = CommandLine_Check("-episode");
     if(p && p < myargc - 1)
     {
-        startEpisode = Argv(p + 1)[0] - '1';
+        startEpisode = CommandLine_At(p + 1)[0] - '1';
         startMap = 0;
         autoStart = true;
     }
 
-    p = ArgCheck("-warp");
+    p = CommandLine_Check("-warp");
     if(p && p < myargc - 1)
     {
         if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
         {
-            startMap = atoi(Argv(p + 1)) - 1;
+            startMap = atoi(CommandLine_At(p + 1)) - 1;
             autoStart = true;
         }
         else if(p < myargc - 2)
         {
-            startEpisode = Argv(p + 1)[0] - '1';
-            startMap = Argv(p + 2)[0] - '1';
+            startEpisode = CommandLine_At(p + 1)[0] - '1';
+            startMap = CommandLine_At(p + 2)[0] - '1';
             autoStart = true;
         }
     }

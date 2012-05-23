@@ -115,18 +115,18 @@ static void initialize(void)
             GL_state.features.elementArrays = false;
 #endif
     }
-    if(ArgExists("-vtxar") && !ArgExists("-novtxar"))
+    if(CommandLine_Exists("-vtxar") && !CommandLine_Exists("-novtxar"))
         GL_state.features.elementArrays = true;
 
     if(0 != (GL_state.extensions.texFilterAniso = query("GL_EXT_texture_filter_anisotropic")))
     {
         glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, (GLint*) &GL_state.maxTexFilterAniso);
     }
-    if(ArgExists("-noanifilter"))
+    if(CommandLine_Exists("-noanifilter"))
         GL_state.features.texFilterAniso = false;
 
     GL_state.extensions.texNonPowTwo = query("GL_ARB_texture_non_power_of_two");
-    if(!GL_state.extensions.texNonPowTwo || ArgExists("-notexnonpow2") || ArgExists("-notexnonpowtwo"))
+    if(!GL_state.extensions.texNonPowTwo || CommandLine_Exists("-notexnonpow2") || CommandLine_Exists("-notexnonpowtwo"))
         GL_state.features.texNonPowTwo = false;
 
     if(0 != (GL_state.extensions.blendSub = query("GL_EXT_blend_subtract")))
@@ -164,7 +164,7 @@ static void initialize(void)
 #else
     GL_state.features.texCompression = false;
 #endif
-    if(ArgExists("-notexcomp"))
+    if(CommandLine_Exists("-notexcomp"))
         GL_state.features.texCompression = false;
 
 #ifdef WIN32
@@ -177,7 +177,7 @@ static void initialize(void)
 
     // Automatic mipmap generation.
     GL_state.extensions.genMipmapSGIS = query("GL_SGIS_generate_mipmap");
-    if(0 == GL_state.extensions.genMipmapSGIS || ArgExists("-nosgm"))
+    if(0 == GL_state.extensions.genMipmapSGIS || CommandLine_Exists("-nosgm"))
         GL_state.features.genMipmap = false;
 
 #ifdef WIN32
@@ -424,7 +424,7 @@ boolean Sys_GLPreInit(void)
 
     memset(&GL_state.extensions, 0, sizeof(GL_state.extensions));
     // Init assuming ideal configuration.
-    GL_state.forceFinishBeforeSwap = ArgExists("-glfinish");
+    GL_state.forceFinishBeforeSwap = CommandLine_Exists("-glfinish");
     GL_state.maxTexFilterAniso = 4;
     GL_state.maxTexSize = 4096;
     GL_state.maxTexUnits = 1;
@@ -478,7 +478,7 @@ boolean Sys_GLInitialize(void)
         }
         else if(version < 1.4)
         {
-            if(!ArgExists("-noglcheck"))
+            if(!CommandLine_Exists("-noglcheck"))
             {
                 Sys_CriticalMessagef("OpenGL implementation is too old!\n"
                                      "  Driver version: %s\n"

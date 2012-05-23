@@ -2268,7 +2268,7 @@ void F_AddVirtualDirectoryMapping(const char* source, const char* destination)
 
 void F_InitVirtualDirectoryMappings(void)
 {
-    int i, argC = Argc();
+    int i, argC = CommandLine_Count();
 
     clearVDMappings();
 
@@ -2277,12 +2277,12 @@ void F_InitVirtualDirectoryMappings(void)
     // Create virtual directory mappings by processing all -vdmap options.
     for(i = 0; i < argC; ++i)
     {
-        if(strnicmp("-vdmap", Argv(i), 6))
+        if(strnicmp("-vdmap", CommandLine_At(i), 6))
             continue; // This is not the option we're looking for.
 
-        if(i < argC - 1 && !ArgIsOption(i + 1) && !ArgIsOption(i + 2))
+        if(i < argC - 1 && !CommandLine_IsOption(i + 1) && !CommandLine_IsOption(i + 2))
         {
-            F_AddVirtualDirectoryMapping(Argv(i + 1), Argv(i + 2));
+            F_AddVirtualDirectoryMapping(CommandLine_At(i + 1), CommandLine_At(i + 2));
             i += 2;
         }
     }

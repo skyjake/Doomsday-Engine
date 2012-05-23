@@ -136,7 +136,7 @@ static void R_VertexNormals(model_t *mdl)
     dmd_triangle_t *tri;
 
     // Renormalizing?
-    if(!ArgCheck("-renorm"))
+    if(!CommandLine_Check("-renorm"))
         return;
 
     normals = Z_Malloc(sizeof(vector_t) * tris, PU_APPSTATIC, 0);
@@ -1201,7 +1201,7 @@ void R_InitModels(void)
     uint usedTime;
 
     // Dedicated servers do nothing with models.
-    if(isDedicated || ArgCheck("-nomd2"))
+    if(isDedicated || CommandLine_Check("-nomd2"))
         return;
 
     modelRepository = StringPool_New();

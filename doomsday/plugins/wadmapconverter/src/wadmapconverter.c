@@ -54,7 +54,7 @@ int ConvertMapHook(int hookType, int param, void *data)
 {
     lumpnum_t* lumpList = (int*) data;
 
-    DENG_PLUGIN_GLOBAL(verbose) = ArgExists("-verbose");
+    DENG_PLUGIN_GLOBAL(verbose) = CommandLine_Exists("-verbose");
 
     memset(DENG_PLUGIN_GLOBAL(map), 0, sizeof(*DENG_PLUGIN_GLOBAL(map)));
 

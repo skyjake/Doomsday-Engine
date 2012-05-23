@@ -60,7 +60,7 @@ static void initialize(void)
 {
     int joycount;
 
-    if(isDedicated || ArgCheck("-nojoy"))
+    if(isDedicated || CommandLine_Check("-nojoy"))
         return;
 
 #ifdef SOLARIS

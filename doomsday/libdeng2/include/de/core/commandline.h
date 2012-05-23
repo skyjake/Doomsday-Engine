@@ -105,7 +105,8 @@ namespace de
         /**
          * Gets the parameter for an argument.
          *
-         * @param arg  Argument to look for. Don't use aliases here.
+         * @param arg    Argument to look for. Don't use aliases here. Defines
+         *               aliases will be checked for matches.
          * @param param  The parameter is returned here, if found.
          *
          * @return  @c true, if parameter was successfully returned.

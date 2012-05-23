@@ -113,9 +113,9 @@ const char* SV_ClientSavePath(void)
 static ddstring_t* composeSaveDir(void)
 {
     ddstring_t* dir = Str_New();
-    if(ArgCheckWith("-savedir", 1))
+    if(CommandLine_CheckWith("-savedir", 1))
     {
-        Str_Set(dir, ArgNext());
+        Str_Set(dir, CommandLine_Next());
         // Add a trailing backslash is necessary.
         if(Str_RAt(dir, 0) != '/')
             Str_AppendChar(dir, '/');

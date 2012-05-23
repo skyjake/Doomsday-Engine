@@ -112,7 +112,7 @@ boolean S_Init(void)
 {
     boolean ok = false, sfxOK, musOK;
 
-    if(ArgExists("-nosound") || ArgExists("-noaudio"))
+    if(CommandLine_Exists("-nosound") || CommandLine_Exists("-noaudio"))
         return true;
 
     // Try to load the audio driver plugin(s).
@@ -123,7 +123,7 @@ boolean S_Init(void)
     }
 
     // Disable random pitch changes?
-    noRndPitch = ArgExists("-norndpitch");
+    noRndPitch = CommandLine_Exists("-norndpitch");
 
     sfxOK = Sfx_Init();
     musOK = Mus_Init();

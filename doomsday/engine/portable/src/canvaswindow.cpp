@@ -186,7 +186,7 @@ void CanvasWindow::setDefaultGLFormat() // static
     fmt.setStencilBufferSize(8);
     fmt.setDoubleBuffer(true);
 
-    if(ArgExists("-novsync") || !Con_GetByte("vid-vsync"))
+    if(CommandLine_Exists("-novsync") || !Con_GetByte("vid-vsync"))
     {
         fmt.setSwapInterval(0); // vsync off
     }
@@ -195,7 +195,7 @@ void CanvasWindow::setDefaultGLFormat() // static
         fmt.setSwapInterval(1);
     }
 
-    if(ArgExists("-nofsaa") || !Con_GetByte("vid-fsaa"))
+    if(CommandLine_Exists("-nofsaa") || !Con_GetByte("vid-fsaa"))
     {
         fmt.setSampleBuffers(false);
     }

@@ -1265,7 +1265,7 @@ void Z_DebugDrawer(void)
     memvolume_t* volume;
     int i, volCount, h;
 
-    if(!ArgExists("-zonedebug")) return;
+    if(!CommandLine_Exists("-zonedebug")) return;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();

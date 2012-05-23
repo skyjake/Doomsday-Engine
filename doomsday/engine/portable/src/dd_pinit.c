@@ -73,8 +73,8 @@ game_export_t __gx;
 
 int DD_CheckArg(char* tag, const char** value)
 {
-    int                 i = ArgCheck(tag);
-    const char*         next = ArgNext();
+    int                 i = CommandLine_Check(tag);
+    const char*         next = CommandLine_Next();
 
     if(!i)
         return 0;
@@ -132,33 +132,29 @@ void DD_InitAPI(void)
 
 void DD_InitCommandLine(void)
 {
-#if 0
-    ArgInit(cmdLine);
-#endif
-
     // Register some abbreviations for command line options.
-    ArgAbbreviate("-game", "-g");
-    ArgAbbreviate("-defs", "-d");
-    ArgAbbreviate("-width", "-w");
-    ArgAbbreviate("-height", "-h");
-    ArgAbbreviate("-winsize", "-wh");
-    ArgAbbreviate("-bpp", "-b");
-    ArgAbbreviate("-window", "-wnd");
-    ArgAbbreviate("-nocenter", "-noc");
-    ArgAbbreviate("-file", "-f");
-    ArgAbbreviate("-config", "-cfg");
-    ArgAbbreviate("-parse", "-p");
-    ArgAbbreviate("-cparse", "-cp");
-    ArgAbbreviate("-command", "-cmd");
-    ArgAbbreviate("-fontdir", "-fd");
-    ArgAbbreviate("-modeldir", "-md");
-    ArgAbbreviate("-basedir", "-bd");
-    ArgAbbreviate("-stdbasedir", "-sbd");
-    ArgAbbreviate("-userdir", "-ud");
-    ArgAbbreviate("-texdir", "-td");
-    ArgAbbreviate("-texdir2", "-td2");
-    ArgAbbreviate("-anifilter", "-ani");
-    ArgAbbreviate("-verbose", "-v");
+    CommandLine_Alias("-game", "-g");
+    CommandLine_Alias("-defs", "-d");
+    CommandLine_Alias("-width", "-w");
+    CommandLine_Alias("-height", "-h");
+    CommandLine_Alias("-winsize", "-wh");
+    CommandLine_Alias("-bpp", "-b");
+    CommandLine_Alias("-window", "-wnd");
+    CommandLine_Alias("-nocenter", "-noc");
+    CommandLine_Alias("-file", "-f");
+    CommandLine_Alias("-config", "-cfg");
+    CommandLine_Alias("-parse", "-p");
+    CommandLine_Alias("-cparse", "-cp");
+    CommandLine_Alias("-command", "-cmd");
+    CommandLine_Alias("-fontdir", "-fd");
+    CommandLine_Alias("-modeldir", "-md");
+    CommandLine_Alias("-basedir", "-bd");
+    CommandLine_Alias("-stdbasedir", "-sbd");
+    CommandLine_Alias("-userdir", "-ud");
+    CommandLine_Alias("-texdir", "-td");
+    CommandLine_Alias("-texdir2", "-td2");
+    CommandLine_Alias("-anifilter", "-ani");
+    CommandLine_Alias("-verbose", "-v");
 }
 
 /**
@@ -195,9 +191,9 @@ void DD_ConsoleInit(void)
     if(verbose)
     {
         int p;
-        Con_Message("Command line (%i strings):\n", Argc());
-        for(p = 0; p < Argc(); ++p)
-            Con_Message("  %i: %s\n", p, Argv(p));
+        Con_Message("Command line (%i strings):\n", CommandLine_Count());
+        for(p = 0; p < CommandLine_Count(); ++p)
+            Con_Message("  %i: %s\n", p, CommandLine_At(p));
     }
 }
 

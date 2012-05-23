@@ -259,7 +259,7 @@ static void Sys_ConInputInit(void)
 
 Window* Sys_ConInit(const char* title)
 {
-    if(!ArgExists("-daemon"))
+    if(!CommandLine_Exists("-daemon"))
     {
         int maxPos[2];
 

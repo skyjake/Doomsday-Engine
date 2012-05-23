@@ -222,7 +222,7 @@ static int initMixer(void)
     MIXERCAPS   mixerCaps;
     int         num = mixerGetNumDevs(); // Number of mixer devices.
 
-    if(initMixerOk || ArgCheck("-nomixer"))
+    if(initMixerOk || CommandLine_Check("-nomixer"))
         return true;
 
     if(verbose)
@@ -284,7 +284,7 @@ static void shutdownMixer(void)
 int DS_Init(void)
 {
     // Are we in verbose mode?
-    verbose = ArgExists("-verbose");
+    verbose = CommandLine_Exists("-verbose");
 
     initMixer();
 
@@ -333,7 +333,7 @@ int DM_Music_Init(void)
         return false;
 
     // Double output volume?
-    MIDIStreamer->volumeShift = ArgExists("-mdvol") ? 1 : 0;
+    MIDIStreamer->volumeShift = CommandLine_Exists("-mdvol") ? 1 : 0;
 
     // Now the MIDI is available.
     Con_Message("DM_WinMusInit: MIDI initialized.\n");

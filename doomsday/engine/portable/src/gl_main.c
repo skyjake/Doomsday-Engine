@@ -368,7 +368,7 @@ boolean GL_EarlyInit(void)
 
     Con_Message("Initializing Render subsystem...\n");
 
-    gamma_support = !ArgCheck("-noramp");
+    gamma_support = !CommandLine_Check("-noramp");
 
     // We are simple people; two texture units is enough.
     numTexUnits = MIN_OF(GL_state.maxTexUnits, MAX_TEX_UNITS);
@@ -387,22 +387,22 @@ boolean GL_EarlyInit(void)
         ratioLimit = 8;
     }
     // Set a custom maximum size?
-    if(ArgCheckWith("-maxtex", 1))
+    if(CommandLine_CheckWith("-maxtex", 1))
     {
-        int customSize = M_CeilPow2(strtol(ArgNext(), 0, 0));
+        int customSize = M_CeilPow2(strtol(CommandLine_Next(), 0, 0));
 
         if(GL_state.maxTexSize < customSize)
             customSize = GL_state.maxTexSize;
         GL_state.maxTexSize = customSize;
         Con_Message("Using maximum texture size of %i x %i.\n", GL_state.maxTexSize, GL_state.maxTexSize);
     }
-    if(ArgCheck("-outlines"))
+    if(CommandLine_Check("-outlines"))
     {
         fillOutlines = false;
         Con_Message("Textures have outlines.\n");
     }
 
-    renderTextures = !ArgExists("-notex");
+    renderTextures = !CommandLine_Exists("-notex");
 
     VERBOSE( printConfiguration() );
 
@@ -495,7 +495,7 @@ void GL_Shutdown(void)
 
     /*
     // Restore original gamma.
-    if(!ArgExists("-leaveramp"))
+    if(!CommandLine_Exists("-leaveramp"))
     {
         GL_SetGammaRamp(original_gamma_ramp);
     }

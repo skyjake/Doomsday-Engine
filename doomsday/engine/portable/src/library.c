@@ -62,15 +62,15 @@ static Library* loadedLibs[MAX_LIBRARIES];
 #ifdef UNIX
 static void getBundlePath(char* path, size_t len)
 {
-    if(ArgCheckWith("-libdir", 1))
+    if(CommandLine_CheckWith("-libdir", 1))
     {
-        strncpy(path, ArgNext(), len);
+        strncpy(path, CommandLine_Next(), len);
         return;
     }
 
-    if(ArgCheckWith("-appdir", 1))
+    if(CommandLine_CheckWith("-appdir", 1))
     {
-        dd_snprintf(path, len, "%s/%s", appDir, ArgNext());
+        dd_snprintf(path, len, "%s/%s", appDir, CommandLine_Next());
         return;
     }
 

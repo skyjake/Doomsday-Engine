@@ -382,20 +382,20 @@ void D_PostInit(void)
     // None.
 
     // Command line options
-    noMonstersParm = ArgCheck("-nomonsters");
-    respawnParm = ArgCheck("-respawn");
-    fastParm = ArgCheck("-fast");
-    devParm = ArgCheck("-devparm");
+    noMonstersParm = CommandLine_Check("-nomonsters");
+    respawnParm = CommandLine_Check("-respawn");
+    fastParm = CommandLine_Check("-fast");
+    devParm = CommandLine_Check("-devparm");
 
-    if(ArgCheck("-altdeath"))
+    if(CommandLine_Check("-altdeath"))
         cfg.netDeathmatch = 2;
-    else if(ArgCheck("-deathmatch"))
+    else if(CommandLine_Check("-deathmatch"))
         cfg.netDeathmatch = 1;
 
-    p = ArgCheck("-timer");
+    p = CommandLine_Check("-timer");
     if(p && p < myargc - 1 && deathmatch)
     {
-        int time = atoi(Argv(p + 1));
+        int time = atoi(CommandLine_At(p + 1));
         Con_Message("Levels will end after %d minute", time);
         if(time > 1)
             Con_Message("s");
@@ -403,7 +403,7 @@ void D_PostInit(void)
     }
 
     // Turbo option.
-    p = ArgCheck("-turbo");
+    p = CommandLine_Check("-turbo");
     turboMul = 1.0f;
     if(p)
     {
@@ -411,7 +411,7 @@ void D_PostInit(void)
 
         turboParm = true;
         if(p < myargc - 1)
-            scale = atoi(Argv(p + 1));
+            scale = atoi(CommandLine_At(p + 1));
         if(scale < 10)
             scale = 10;
         if(scale > 400)
@@ -422,10 +422,10 @@ void D_PostInit(void)
     }
 
     // Load a saved game?
-    p = ArgCheck("-loadgame");
+    p = CommandLine_Check("-loadgame");
     if(p && p < myargc - 1)
     {
-        const int saveSlot = Argv(p + 1)[0] - '0';
+        const int saveSlot = CommandLine_At(p + 1)[0] - '0';
         if(G_LoadGame(saveSlot))
         {
             // No further initialization is to be done.
@@ -433,17 +433,17 @@ void D_PostInit(void)
         }
     }
 
-    p = ArgCheck("-skill");
+    p = CommandLine_Check("-skill");
     if(p && p < myargc - 1)
     {
-        startSkill = Argv(p + 1)[0] - '1';
+        startSkill = CommandLine_At(p + 1)[0] - '1';
         autoStart = true;
     }
 
-    p = ArgCheck("-warp");
+    p = CommandLine_Check("-warp");
     if(p && p < myargc - 1)
     {
-        startMap = atoi(Argv(p + 1)) - '1';
+        startMap = atoi(CommandLine_At(p + 1)) - '1';
         autoStart = true;
     }
 

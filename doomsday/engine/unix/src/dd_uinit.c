@@ -262,12 +262,12 @@ static void determineGlobalPaths(application_t* app)
 #endif
 
     // The -userdir option sets the working directory.
-    if(ArgCheckWith("-userdir", 1))
+    if(CommandLine_CheckWith("-userdir", 1))
     {
         filename_t runtimePath;
         directory_t* temp;
 
-        strncpy(runtimePath, ArgNext(), FILENAME_T_MAXLEN);
+        strncpy(runtimePath, CommandLine_Next(), FILENAME_T_MAXLEN);
         Dir_CleanPath(runtimePath, FILENAME_T_MAXLEN);
         // Ensure the path is closed with a directory separator.
         F_AppendMissingSlashCString(runtimePath, FILENAME_T_MAXLEN);
@@ -301,9 +301,9 @@ static void determineGlobalPaths(application_t* app)
      * determined according to the the build configuration.
      * Usually this is something like "/usr/share/deng/".
      */
-    if(ArgCheckWith("-basedir", 1))
+    if(CommandLine_CheckWith("-basedir", 1))
     {
-        strncpy(ddBasePath, ArgNext(), FILENAME_T_MAXLEN);
+        strncpy(ddBasePath, CommandLine_Next(), FILENAME_T_MAXLEN);
     }
     else
     {
@@ -384,8 +384,8 @@ boolean DD_Unix_Init(int argc, char** argv)
     DD_InitCommandLine();
 
     // First order of business: are we running in dedicated mode?
-    isDedicated = ArgCheck("-dedicated");
-    novideo = ArgCheck("-novideo") || isDedicated;
+    isDedicated = CommandLine_Check("-dedicated");
+    novideo = CommandLine_Check("-novideo") || isDedicated;
 
     Library_Init();
 

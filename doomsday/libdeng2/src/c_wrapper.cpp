@@ -154,17 +154,17 @@ void LegacyCore_SetTerminateFunc(LegacyCore* lc, void (*func)(const char*))
     self->setTerminateFunc(func);
 }
 
-void ArgAbbreviate(const char* longname, const char* shortname)
+void CommandLine_Alias(const char* longname, const char* shortname)
 {
     DENG2_COMMANDLINE().alias(longname, shortname);
 }
 
-int Argc(void)
+int CommandLine_Count(void)
 {
     return DENG2_COMMANDLINE().count();
 }
 
-const char* Argv(int i)
+const char* CommandLine_At(int i)
 {
     DENG2_ASSERT(i >= 0);
     DENG2_ASSERT(i < DENG2_COMMANDLINE().count());
@@ -173,39 +173,39 @@ const char* Argv(int i)
 
 static int argLastMatch = 0; // used only in ArgCheck/ArgNext (not thread-safe)
 
-const char* ArgNext(void)
+const char* CommandLine_Next(void)
 {
-    if(!argLastMatch || argLastMatch >= Argc() - 1)
+    if(!argLastMatch || argLastMatch >= CommandLine_Count() - 1)
     {
         // No more arguments following the last match.
         return 0;
     }
-    return Argv(++argLastMatch);
+    return CommandLine_At(++argLastMatch);
 }
 
-int ArgCheck(const char* check)
+int CommandLine_Check(const char* check)
 {
     return argLastMatch = DENG2_COMMANDLINE().check(check);
 }
 
-int ArgCheckWith(const char* check, int num)
+int CommandLine_CheckWith(const char* check, int num)
 {
     return argLastMatch = DENG2_COMMANDLINE().check(check, num);
 }
 
-int ArgExists(const char* check)
+int CommandLine_Exists(const char* check)
 {
     return DENG2_COMMANDLINE().has(check);
 }
 
-int ArgIsOption(int i)
+int CommandLine_IsOption(int i)
 {
     return DENG2_COMMANDLINE().isOption(i);
 }
 
-int ArgRecognize(const char* first, const char* second)
+int CommandLine_IsMatchingAlias(const char* original, const char* originalOrAlias)
 {
-    return DENG2_COMMANDLINE().matches(first, second);
+    return DENG2_COMMANDLINE().matches(original, originalOrAlias);
 }
 
 void LogBuffer_Flush(void)

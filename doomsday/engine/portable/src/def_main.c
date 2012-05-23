@@ -855,7 +855,7 @@ static void readAllDefinitions(void)
     }
 
     // Next up are definition files in the /auto directory.
-    if(!ArgExists("-noauto"))
+    if(!CommandLine_Exists("-noauto"))
     {
         ddstring_t pattern;
         Str_Init(&pattern);
@@ -866,14 +866,14 @@ static void readAllDefinitions(void)
 
     // Any definition files on the command line?
     Str_Init(&buf);
-    for(p = 0; p < Argc(); ++p)
+    for(p = 0; p < CommandLine_Count(); ++p)
     {
-        const char* arg = Argv(p);
-        if(!ArgRecognize("-def", arg) && !ArgRecognize("-defs", arg)) continue;
+        const char* arg = CommandLine_At(p);
+        if(!CommandLine_IsMatchingAlias("-def", arg) && !CommandLine_IsMatchingAlias("-defs", arg)) continue;
 
-        while(++p != Argc() && !ArgIsOption(p))
+        while(++p != CommandLine_Count() && !CommandLine_IsOption(p))
         {
-            const char* searchPath = Argv(p);
+            const char* searchPath = CommandLine_At(p);
 
             Con_Message("  Processing '%s'...\n", F_PrettyPath(searchPath));
 

@@ -1134,11 +1134,11 @@ void GL_InitTextureManager(void)
     }
 
     // Disable the use of 'high resolution' textures and/or patches?
-    noHighResTex = ArgExists("-nohightex");
-    noHighResPatches = ArgExists("-nohighpat");
+    noHighResTex = CommandLine_Exists("-nohightex");
+    noHighResPatches = CommandLine_Exists("-nohighpat");
 
     // Should we allow using external resources with PWAD textures?
-    highResWithPWAD = ArgExists("-pwadtex");
+    highResWithPWAD = CommandLine_Exists("-pwadtex");
 
     // System textures loaded in GL_LoadSystemTextures.
     memset(sysFlareTextures, 0, sizeof(sysFlareTextures));

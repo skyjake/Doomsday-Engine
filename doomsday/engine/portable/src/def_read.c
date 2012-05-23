@@ -693,7 +693,7 @@ static boolean DED_CheckCondition(const char* cond, boolean expected)
 
     if(cond[0] == '-')
     {   // A command line option.
-        value = (ArgCheck(token) != 0);
+        value = (CommandLine_Check(token) != 0);
     }
     else if(isalnum(cond[0]))
     {   // A game mode.

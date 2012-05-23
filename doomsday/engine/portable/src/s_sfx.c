@@ -1026,9 +1026,9 @@ void Sfx_InitChannels(void)
     numChannels = sfxMaxChannels;
 
     // The -sfxchan option can be used to change the number of channels.
-    if(ArgCheckWith("-sfxchan", 1))
+    if(CommandLine_CheckWith("-sfxchan", 1))
     {
-        numChannels = strtol(ArgNext(), 0, 0);
+        numChannels = strtol(CommandLine_Next(), 0, 0);
         if(numChannels < 1)
             numChannels = 1;
         if(numChannels > SFX_MAX_CHANNELS)
@@ -1097,7 +1097,7 @@ boolean Sfx_Init(void)
         return true; // Already initialized.
 
     // Check if sound has been disabled with a command line option.
-    if(ArgExists("-nosfx"))
+    if(CommandLine_Exists("-nosfx"))
     {
         Con_Message("Sound Effects disabled.\n");
         return true;

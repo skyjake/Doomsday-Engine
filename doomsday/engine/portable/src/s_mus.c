@@ -111,7 +111,7 @@ boolean Mus_Init(void)
     if(musAvail)
         return true; // Already initialized.
 
-    if(isDedicated || ArgExists("-nomusic"))
+    if(isDedicated || CommandLine_Exists("-nomusic"))
     {
         Con_Message("Music disabled.\n");
         return true;

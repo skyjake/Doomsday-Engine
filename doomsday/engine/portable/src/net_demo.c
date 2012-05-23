@@ -393,7 +393,7 @@ void Demo_StopPlayback(void)
     */
 
     // "Play demo once" mode?
-    if(ArgCheck("-playdemo"))
+    if(CommandLine_Check("-playdemo"))
         Sys_Quit();
 }
 
