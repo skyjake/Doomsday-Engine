@@ -19,6 +19,7 @@
 
 #include "de/CommandLine"
 #include "de/String"
+#include "de/Log"
 
 #include <QFile>
 #include <QDir>
@@ -242,6 +243,40 @@ const char* const* CommandLine::argv() const
 {
     DENG2_ASSERT(*d->pointers.rbegin() == 0);
     return &d->pointers[0];
+}
+
+void CommandLine::makeAbsolutePath(duint pos)
+{
+    if(pos >= d->arguments.size())
+    {
+        /// @throw OutOfRangeError @a pos is out of range.
+        throw OutOfRangeError("CommandLine::makeAbsolutePath", "Index out of range");
+    }
+
+    std::string* arg = d->arguments[pos];
+
+    if(!QDir::isAbsolutePath(arg->c_str()))
+    {
+        // The path expansion logic here should match the native shell's behavior.
+        QDir oldDir = QDir::current();
+        QDir::setCurrent(d->initialDir.path());
+
+        QDir dir(arg->c_str());
+#ifdef UNIX
+        if(dir.path().startsWith("~/"))
+        {
+            dir.setPath(QDir::home().filePath(dir.path().mid(2)));
+        }
+#endif
+        *arg = dir.absolutePath().toStdString();
+
+        d->pointers[pos] = arg->c_str();
+
+        LOG_DEBUG("Argument %i converted to absolute path: \"%s\"") << pos << d->pointers[pos];
+
+        // Restore previous current directory.
+        QDir::setCurrent(oldDir.path());
+    }
 }
 
 void CommandLine::parseResponseFile(const String& nativePath)

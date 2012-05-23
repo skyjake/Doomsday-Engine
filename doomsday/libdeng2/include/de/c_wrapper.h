@@ -78,7 +78,9 @@ DENG2_PUBLIC void LegacyCore_SetTerminateFunc(LegacyCore* lc, void (*func)(const
 DENG2_PUBLIC void CommandLine_Alias(const char* longname, const char* shortname);
 DENG2_PUBLIC int CommandLine_Count(void);
 DENG2_PUBLIC const char* CommandLine_At(int i);
+DENG2_PUBLIC const char* CommandLine_PathAt(int i);
 DENG2_PUBLIC const char* CommandLine_Next(void);
+DENG2_PUBLIC const char* CommandLine_NextAsPath(void);
 DENG2_PUBLIC int CommandLine_Check(const char* check);
 DENG2_PUBLIC int CommandLine_CheckWith(const char* check, int num);
 DENG2_PUBLIC int CommandLine_Exists(const char* check);

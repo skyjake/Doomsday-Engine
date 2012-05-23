@@ -171,6 +171,12 @@ const char* CommandLine_At(int i)
     return *(DENG2_COMMANDLINE().argv() + i);
 }
 
+const char* CommandLine_PathAt(int i)
+{
+    DENG2_COMMANDLINE().makeAbsolutePath(i);
+    return CommandLine_At(i);
+}
+
 static int argLastMatch = 0; // used only in ArgCheck/ArgNext (not thread-safe)
 
 const char* CommandLine_Next(void)
@@ -181,6 +187,17 @@ const char* CommandLine_Next(void)
         return 0;
     }
     return CommandLine_At(++argLastMatch);
+}
+
+const char* CommandLine_NextAsPath(void)
+{
+    if(!argLastMatch || argLastMatch >= CommandLine_Count() - 1)
+    {
+        // No more arguments following the last match.
+        return 0;
+    }
+    DENG2_COMMANDLINE().makeAbsolutePath(argLastMatch + 1);
+    return CommandLine_Next();
 }
 
 int CommandLine_Check(const char* check)

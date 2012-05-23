@@ -142,6 +142,15 @@ namespace de
         const char* const* argv() const;
 
         /**
+         * Converts the argument at position @a pos into an absolute path.
+         * Relative paths are converted relative to the directory that was
+         * current at the time the CommandLine was created.
+         *
+         * @param pos  Argument index.
+         */
+        void makeAbsolutePath(duint pos);
+
+        /**
          * Reads a native file and parses its contents using parse().
          *
          * @param nativePath  File to parse.
