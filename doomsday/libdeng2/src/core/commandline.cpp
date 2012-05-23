@@ -21,6 +21,7 @@
 #include "de/String"
 
 #include <QFile>
+#include <QDir>
 #include <QProcess>
 #include <QDebug>
 
@@ -30,8 +31,87 @@
 
 using namespace de;
 
+struct CommandLine::Instance
+{
+    QDir initialDir;
+
+    typedef std::vector<std::string*> Arguments;
+    Arguments arguments;
+
+    typedef std::vector<const char*> ArgumentPointers;
+    ArgumentPointers pointers;
+
+    typedef std::vector<String> ArgumentStrings;
+    typedef std::map<std::string, ArgumentStrings> Aliases;
+    Aliases aliases;
+
+    Instance()
+    {
+        initialDir = QDir::current();
+    }
+
+    ~Instance()
+    {
+        clear();
+    }
+
+    void clear()
+    {
+        DENG2_FOR_EACH(i, arguments, Arguments::iterator) delete *i;
+        arguments.clear();
+        pointers.clear();
+        pointers.push_back(0);
+    }
+
+    void appendArg(const char* cStr)
+    {
+        arguments.push_back(new std::string(cStr));
+        if(pointers.empty())
+        {
+            pointers.push_back(arguments.back()->c_str());
+            pointers.push_back(0); // Keep null-terminated.
+        }
+        else
+        {
+            // Insert before the NULL.
+            pointers.insert(pointers.end() - 1, arguments.back()->c_str());
+        }
+        DENG2_ASSERT(pointers.back() == 0);
+    }
+
+    void insert(duint pos, const String& arg)
+    {
+        if(pos > arguments.size())
+        {
+            /// @throw OutOfRangeError @a pos is out of range.
+            throw OutOfRangeError("CommandLine::insert", "Index out of range");
+        }
+        arguments.insert(arguments.begin() + pos, new std::string(arg.toStdString()));
+        pointers.insert(pointers.begin() + pos, arguments[pos]->c_str());
+
+        DENG2_ASSERT(pointers.back() == 0);
+    }
+
+    void remove(duint pos)
+    {
+        if(pos >= arguments.size())
+        {
+            /// @throw OutOfRangeError @a pos is out of range.
+            throw OutOfRangeError("CommandLine::remove", "Index out of range");
+        }
+
+        delete arguments[pos];
+        arguments.erase(arguments.begin() + pos);
+        pointers.erase(pointers.begin() + pos);
+
+        DENG2_ASSERT(pointers.back() == 0);
+    }
+};
+
 CommandLine::CommandLine(int argc, char** v)
 {
+    d = new Instance;
+
     for(int i = 0; i < argc; ++i)
     {
         if(v[i][0] == '@')
@@ -41,94 +121,75 @@ CommandLine::CommandLine(int argc, char** v)
         }
         else
         {
-            appendArg(v[i]);
+            d->appendArg(v[i]);
         }
     }
 }
 
 CommandLine::CommandLine(const CommandLine& other)
 {
-    DENG2_FOR_EACH(i, other._arguments, Arguments::const_iterator)
+    d = new Instance;
+
+    DENG2_FOR_EACH(i, other.d->arguments, Instance::Arguments::const_iterator)
     {
-        appendArg((*i)->c_str());
+        d->appendArg((*i)->c_str());
     }
 }
 
 CommandLine::~CommandLine()
 {
-    clear();
+    delete d;
 }
 
 dint CommandLine::count() const
 {
-    return _arguments.size();
+    return d->arguments.size();
 }
 
 void CommandLine::clear()
 {
-    DENG2_FOR_EACH(i, _arguments, Arguments::iterator) delete *i;
-    _arguments.clear();
-    _pointers.clear();
-    _pointers.push_back(0);
+    d->clear();
 }
 
 void CommandLine::append(const String& arg)
 {
-    appendArg(arg.toStdString().c_str());
+    d->appendArg(arg.toStdString().c_str());
 }
 
 void CommandLine::insert(duint pos, const String& arg)
 {
-    if(pos > _arguments.size())
-    {
-        /// @throw OutOfRangeError @a pos is out of range.
-        throw OutOfRangeError("CommandLine::insert", "Index out of range");
-    }
-    _arguments.insert(_arguments.begin() + pos, new std::string(arg.toStdString()));
-    _pointers.insert(_pointers.begin() + pos, _arguments[pos]->c_str());
-
-    DENG2_ASSERT(_pointers.back() == 0);
+    d->insert(pos, arg);
 }
 
 void CommandLine::remove(duint pos)
 {
-    if(pos >= _arguments.size())
-    {
-        /// @throw OutOfRangeError @a pos is out of range.
-        throw OutOfRangeError("CommandLine::remove", "Index out of range");
-    }
-
-    delete _arguments[pos];
-    _arguments.erase(_arguments.begin() + pos);
-    _pointers.erase(_pointers.begin() + pos);
-
-    DENG2_ASSERT(_pointers.back() == 0);
+    d->remove(pos);
 }
 
 dint CommandLine::check(const String& arg, dint numParams) const
 {
     // Do a search for arg.
-    Arguments::const_iterator i = _arguments.begin();
-    for(; i != _arguments.end() && !matches(arg, String::fromStdString(**i)); ++i) {}
+    Instance::Arguments::const_iterator i = d->arguments.begin();
+    for(; i != d->arguments.end() && !matches(arg, String::fromStdString(**i)); ++i) {}
     
-    if(i == _arguments.end())
+    if(i == d->arguments.end())
     {
         // Not found.
         return 0;
     }
 
     // It was found, check for the number of non-option parameters.
-    Arguments::const_iterator k = i;
+    Instance::Arguments::const_iterator k = i;
     while(numParams-- > 0)
     {
-        if(++k == _arguments.end() || isOption(String::fromStdString(**k)))
+        if(++k == d->arguments.end() || isOption(String::fromStdString(**k)))
         {
             // Ran out of arguments, or encountered an option.
             return 0;
         }
     }
     
-    return i - _arguments.begin();
+    return i - d->arguments.begin();
 }
 
 bool CommandLine::getParameter(const String& arg, String& param) const
@@ -146,7 +207,7 @@ dint CommandLine::has(const String& arg) const
 {
     dint howMany = 0;
     
-    DENG2_FOR_EACH(i, _arguments, Arguments::const_iterator)
+    DENG2_FOR_EACH(i, d->arguments, Instance::Arguments::const_iterator)
     {
         if(matches(arg, String::fromStdString(**i)))
         {
@@ -158,13 +219,13 @@ dint CommandLine::has(const String& arg) const
 
 bool CommandLine::isOption(duint pos) const
 {
-    if(pos >= _arguments.size())
+    if(pos >= d->arguments.size())
     {
         /// @throw OutOfRangeError @a pos is out of range.
         throw OutOfRangeError("CommandLine::isOption", "Index out of range");
     }
-    DENG2_ASSERT(!_arguments[pos]->empty());
-    return isOption(String::fromStdString(*_arguments[pos]));
+    DENG2_ASSERT(!d->arguments[pos]->empty());
+    return isOption(String::fromStdString(*d->arguments[pos]));
 }
 
 bool CommandLine::isOption(const String& arg)
@@ -174,13 +235,13 @@ bool CommandLine::isOption(const String& arg)
 
 const String CommandLine::at(duint pos) const
 {
-    return String::fromStdString(*_arguments.at(pos));
+    return String::fromStdString(*d->arguments.at(pos));
 }
 
 const char* const* CommandLine::argv() const
 {
-    DENG2_ASSERT(*_pointers.rbegin() == 0);
-    return &_pointers[0];
+    DENG2_ASSERT(*d->pointers.rbegin() == 0);
+    return &d->pointers[0];
 }
 
 void CommandLine::parseResponseFile(const String& nativePath)
@@ -272,14 +333,14 @@ void CommandLine::parse(const String& cmdLine)
         }
         else if(!word.empty()) // Make sure there *is* a word.
         {
-            appendArg(word.toStdString().c_str());
+            d->appendArg(word.toStdString().c_str());
         }
     }
 }
 
 void CommandLine::alias(const String& full, const String& alias)
 {
-    _aliases[full.toStdString()].push_back(alias);
+    d->aliases[full.toStdString()].push_back(alias);
 }
 
 bool CommandLine::matches(const String& full, const String& fullOrAlias) const
@@ -290,10 +351,10 @@ bool CommandLine::matches(const String& full, const String& fullOrAlias) const
         return true;
     }
     
-    Aliases::const_iterator found = _aliases.find(full.toStdString());
-    if(found != _aliases.end())
+    Instance::Aliases::const_iterator found = d->aliases.find(full.toStdString());
+    if(found != d->aliases.end())
     {
-        DENG2_FOR_EACH(i, found->second, ArgumentStrings::const_iterator)
+        DENG2_FOR_EACH(i, found->second, Instance::ArgumentStrings::const_iterator)
         {
             if(!i->compareWithoutCase(fullOrAlias))
             {
@@ -349,20 +410,4 @@ void CommandLine::execute(char** /*envs*/) const
     }
 #endif
     */
-}
-
-void CommandLine::appendArg(const char *cStr)
-{
-    _arguments.push_back(new std::string(cStr));
-    if(_pointers.empty())
-    {
-        _pointers.push_back(_arguments.back()->c_str());
-        _pointers.push_back(0); // Keep null-terminated.
-    }
-    else
-    {
-        // Insert before the NULL.
-        _pointers.insert(_pointers.end() - 1, _arguments.back()->c_str());
-    }
-    DENG2_ASSERT(_pointers.back() == 0);
 }

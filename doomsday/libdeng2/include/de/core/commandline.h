@@ -183,20 +183,10 @@ namespace de
          * @param envs  Environment variables passed to the new process.
          */
         void execute(char** envs) const;
-
-    protected:
-        void appendArg(const char* cStr);
         
     private:
-        typedef std::vector<std::string*> Arguments;
-        Arguments _arguments;
-    
-        typedef std::vector<const char*> ArgumentPointers;
-        ArgumentPointers _pointers;
-        
-        typedef std::vector<String> ArgumentStrings;
-        typedef std::map<std::string, ArgumentStrings> Aliases;
-        Aliases _aliases;
+        struct Instance;
+        Instance* d;
     };
 }
 
