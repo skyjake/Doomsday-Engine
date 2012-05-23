@@ -48,3 +48,5 @@ else {
     INSTALLS += target
     target.path = $$DENG_LIB_DIR
 }
+
+macx: linkToBundledLibdeng2(dsFMOD)

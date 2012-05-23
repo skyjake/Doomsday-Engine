@@ -56,6 +56,7 @@
 
 #include "fs_util.h"
 #include "dd_winit.h"
+#include "displaymode.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -436,7 +437,7 @@ boolean DD_Win32_Init(void)
         CoInitialize(NULL);
 
         // Prepare the command line arguments.
-        DD_InitCommandLine(UTF_STRING(GetCommandLine()));
+        DD_InitCommandLine(/*UTF_STRING(GetCommandLine())*/);
 
         // First order of business: are we running in dedicated mode?
         isDedicated = ArgCheck("-dedicated");
@@ -634,6 +635,8 @@ void DD_Shutdown(void)
     // Unregister our window class.
     UnregisterClass(app.className, app.hInstance);
 #endif
+
+    DisplayMode_Shutdown();
 }
 
 /**

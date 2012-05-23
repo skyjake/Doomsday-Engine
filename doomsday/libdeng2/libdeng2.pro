@@ -38,6 +38,7 @@ include(network.pri)
 # Convenience headers.
 HEADERS += \
     include/de/App \
+    include/de/CommandLine \
     include/de/Error \
     include/de/Log \
     include/de/LogBuffer \
@@ -48,6 +49,7 @@ HEADERS += \
     include/de/libdeng2.h \
     include/de/version.h \
     include/de/core/app.h \
+    include/de/core/commandline.h \
     include/de/core/log.h \
     include/de/core/logbuffer.h
 
@@ -59,6 +61,7 @@ HEADERS += \
 SOURCES += \
     src/c_wrapper.cpp \
     src/core/app.cpp \
+    src/core/commandline.cpp \
     src/core/callbacktimer.cpp \
     src/core/log.cpp \
     src/core/logbuffer.cpp \

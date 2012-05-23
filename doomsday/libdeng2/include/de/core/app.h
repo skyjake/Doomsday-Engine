@@ -21,6 +21,7 @@
 #define LIBDENG2_APP_H
 
 #include "../libdeng2.h"
+#include "../CommandLine"
 #include <QApplication>
 
 namespace de
@@ -35,10 +36,19 @@ namespace de
 
     public:
         App(int& argc, char** argv, bool useGUI);
+
         bool notify(QObject* receiver, QEvent* event);
+
+        /**
+         * Returns the command line used to start the application.
+         */
+        CommandLine& commandLine();
 
     signals:
         void uncaughtException(QString message);
+
+    private:
+        CommandLine _cmdLine;
     };
 }
 

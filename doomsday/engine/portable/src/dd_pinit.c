@@ -45,7 +45,6 @@
 #include "de_ui.h"
 #include "de_filesys.h"
 
-#include "m_args.h"
 #include "def_main.h"
 
 // MACROS ------------------------------------------------------------------
@@ -131,9 +130,11 @@ void DD_InitAPI(void)
     }
 }
 
-void DD_InitCommandLine(const char* cmdLine)
+void DD_InitCommandLine(void)
 {
+#if 0
     ArgInit(cmdLine);
+#endif
 
     // Register some abbreviations for command line options.
     ArgAbbreviate("-game", "-g");
@@ -228,8 +229,7 @@ void DD_ShutdownAll(void)
     Def_Destroy();
     F_ShutdownResourceLocator();
     F_Shutdown();
-    ArgShutdown();
-    Garbage_Shutdown();
+    Garbage_Shutdown(); // before memzone
     Z_Shutdown();
     Sys_ShutdownWindowManager();
 

@@ -24,9 +24,9 @@
 #include "directinput.h"
 #include "sys_input.h"
 #include "sys_system.h"
-#include "m_args.h"
 #include "con_main.h"
 #include "window.h"
+#include <de/c_wrapper.h>
 
 static LPDIRECTINPUTDEVICE8 didMouse;
 static boolean mouseTrapped;

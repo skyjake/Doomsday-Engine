@@ -29,6 +29,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
+#include <de/c_wrapper.h>
 
 #include "dswinmm.h"
 #include "midistream.h"

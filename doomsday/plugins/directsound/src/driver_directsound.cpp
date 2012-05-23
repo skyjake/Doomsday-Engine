@@ -44,6 +44,7 @@
 
 #pragma warning (disable: 4035 4244)
 
+#include <de/c_wrapper.h>
 #include "doomsday.h"
 #include "sys_audiod.h"
 #include "sys_audiod_sfx.h"

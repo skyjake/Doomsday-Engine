@@ -49,4 +49,6 @@
 #include "writer.h"
 #include "garbage.h"
 
+#include <de/c_wrapper.h>
+
 #endif /* LIBDENG_BASE_H */

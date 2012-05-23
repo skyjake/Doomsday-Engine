@@ -766,17 +766,6 @@ binangle_t bamsAtan2(int y, int x);
 /// @addtogroup base
 ///@{
 
-    // Miscellaneous: Command line.
-    void _DECALL    ArgAbbreviate(const char* longName, const char* shortName);
-    int _DECALL     Argc(void);
-    const char* _DECALL Argv(int i);
-    const char* const* _DECALL ArgvPtr(int i);
-    const char* _DECALL ArgNext(void);
-    int _DECALL     ArgCheck(const char* check);
-    int _DECALL     ArgCheckWith(const char* check, int num);
-    int _DECALL     ArgExists(const char* check);
-    int _DECALL     ArgIsOption(int i);
-
     // Miscellaneous: Random Number Generator facilities.
     byte            RNG_RandByte(void);
     float           RNG_RandFloat(void);

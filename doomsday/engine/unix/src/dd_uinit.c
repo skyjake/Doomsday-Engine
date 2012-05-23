@@ -321,6 +321,7 @@ static void determineGlobalPaths(application_t* app)
     F_AppendMissingSlashCString(ddBasePath, FILENAME_T_MAXLEN);
 }
 
+#if 0
 static char* buildCommandLineString(int argc, char** argv)
 {
     char* cmdLine;
@@ -345,6 +346,7 @@ static char* buildCommandLineString(int argc, char** argv)
     }
     return cmdLine;
 }
+#endif
 
 /*
 static int createMainWindow(void)
@@ -362,7 +364,6 @@ static int createMainWindow(void)
 boolean DD_Unix_Init(int argc, char** argv)
 {
     boolean failed = true;
-    //int exitCode = 0;
 
     memset(&app, 0, sizeof(app));
 
@@ -374,11 +375,13 @@ boolean DD_Unix_Init(int argc, char** argv)
     setenv("SDL_DISABLE_LOCK_KEYS", "1", true);
 #endif
 
-    {       
+#if 0
     // Prepare the command line arguments.
     char* cmdLine = buildCommandLineString(argc, argv);
-    DD_InitCommandLine(cmdLine);
     M_Free(cmdLine);
+#endif
+
+    DD_InitCommandLine();
 
     // First order of business: are we running in dedicated mode?
     isDedicated = ArgCheck("-dedicated");
@@ -413,7 +416,7 @@ boolean DD_Unix_Init(int argc, char** argv)
     {
         // Everything okay so far.
         failed = false;
-    }}
+    }
 
     return !failed;
 }

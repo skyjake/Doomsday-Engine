@@ -29,6 +29,7 @@
 #include <cstring>
 #include <stdarg.h>
 
+#define DENG2_COMMANDLINE()     static_cast<de::App*>(qApp)->commandLine()
 #define DENG2_LEGACYNETWORK()   de::LegacyCore::instance().network()
 
 LegacyCore* LegacyCore_New(void* dengApp)
@@ -151,6 +152,60 @@ void LegacyCore_SetTerminateFunc(LegacyCore* lc, void (*func)(const char*))
 {
     DENG2_SELF(LegacyCore, lc);
     self->setTerminateFunc(func);
+}
+
+void ArgAbbreviate(const char* longname, const char* shortname)
+{
+    DENG2_COMMANDLINE().alias(longname, shortname);
+}
+
+int Argc(void)
+{
+    return DENG2_COMMANDLINE().count();
+}
+
+const char* Argv(int i)
+{
+    DENG2_ASSERT(i >= 0);
+    DENG2_ASSERT(i < DENG2_COMMANDLINE().count());
+    return *(DENG2_COMMANDLINE().argv() + i);
+}
+
+static int argLastMatch = 0; // used only in ArgCheck/ArgNext (not thread-safe)
+
+const char* ArgNext(void)
+{
+    if(!argLastMatch || argLastMatch >= Argc() - 1)
+    {
+        // No more arguments following the last match.
+        return 0;
+    }
+    return Argv(++argLastMatch);
+}
+
+int ArgCheck(const char* check)
+{
+    return argLastMatch = DENG2_COMMANDLINE().check(check);
+}
+
+int ArgCheckWith(const char* check, int num)
+{
+    return argLastMatch = DENG2_COMMANDLINE().check(check, num);
+}
+
+int ArgExists(const char* check)
+{
+    return DENG2_COMMANDLINE().has(check);
+}
+
+int ArgIsOption(int i)
+{
+    return DENG2_COMMANDLINE().isOption(i);
+}
+
+int ArgRecognize(const char* first, const char* second)
+{
+    return DENG2_COMMANDLINE().matches(first, second);
 }
 
 void LogBuffer_Flush(void)

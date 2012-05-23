@@ -28,9 +28,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#ifdef UNIX
-#  include "m_args.h"
-#endif
 
 #ifdef MACOSX
 #  include "displaymode_native.h"
@@ -48,8 +45,8 @@
 #include "con_busy.h"
 #include "gl_main.h"
 #include "ui_main.h"
-#include "m_args.h"
 
+#include <de/c_wrapper.h>
 #include <de/Log>
 #include <QDebug>
 

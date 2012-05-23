@@ -888,15 +888,15 @@ EXPORTS
     M_PointXYToAngle2           @101 NONAME
 
 ; Miscellaneous: Command line.
-    ArgAbbreviate               @146 NONAME
-    Argc                        @147 NONAME
-    Argv                        @148 NONAME
-    ArgvPtr                     @149 NONAME
-    ArgNext                     @150 NONAME
-    ArgCheck                    @151 NONAME
-    ArgCheckWith                @152 NONAME
-    ArgExists                   @153 NONAME
-    ArgIsOption                 @154 NONAME
+;   ArgAbbreviate               @146 NONAME
+;   Argc                        @147 NONAME
+;   Argv                        @148 NONAME
+;   ArgvPtr                     @149 NONAME
+;   ArgNext                     @150 NONAME
+;   ArgCheck                    @151 NONAME
+;   ArgCheckWith                @152 NONAME
+;   ArgExists                   @153 NONAME
+;   ArgIsOption                 @154 NONAME
 
 ; Doomsday Engine Definitions.
     DED_Init                    @155 NONAME

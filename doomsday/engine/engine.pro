@@ -249,7 +249,6 @@ DENG_HEADERS += \
     portable/include/lumpdirectory.h \
     portable/include/lumpfile.h \
     portable/include/lumpinfo.h \
-    portable/include/m_args.h \
     portable/include/m_bams.h \
     portable/include/m_decomp64.h \
     portable/include/m_linkedlist.h \
@@ -526,7 +525,6 @@ SOURCES += \
     portable/src/linedef.c \
     portable/src/lumpdirectory.c \
     portable/src/lumpfile.c \
-    portable/src/m_args.c \
     portable/src/m_bams.c \
     portable/src/m_decomp64.c \
     portable/src/m_linkedlist.c \
@@ -705,7 +703,7 @@ macx {
 
     # Since qmake is unable to copy directories as bundle data, let's copy
     # the frameworks manually.
-    FW_DIR = \"$${OUT_PWD}/doomsday.app/Contents/Frameworks/\"
+    FW_DIR = \"$${OUT_PWD}/Doomsday.app/Contents/Frameworks/\"
     doPostLink("rm -rf $$FW_DIR")
     doPostLink("mkdir $$FW_DIR")
     !deng_nosdl {
@@ -716,11 +714,8 @@ macx {
     # libdeng2 dynamic library.
     doPostLink("cp -fRp $$OUT_PWD/../libdeng2/libdeng2*dylib $$FW_DIR")
 
-    # Fix the dynamic linker paths so they point to ../Frameworks/.
-    defineTest(fixInstallName) {
-        doPostLink("install_name_tool -change $$1 @executable_path/../Frameworks/$$1 doomsday.app/Contents/MacOS/doomsday")
-    }
-    fixInstallName("libdeng2.2.dylib")
+    # Fix the dynamic linker paths so they point to ../Frameworks/ inside the bundle.
+    fixInstallName("Doomsday.app/Contents/MacOS/Doomsday", "libdeng2.2.dylib", "..")
 
     # Clean up previous deployment.
     doPostLink("rm -rf Doomsday.app/Contents/PlugIns/")
