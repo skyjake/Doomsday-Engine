@@ -29,66 +29,92 @@
 /**
  * JSON parser. Not exposed outside this source file; use parseJSON() instead.
  */
-class JSONParser {
+class JSONParser
+{
     const QString& source;
     int pos;
 
 public:
-    JSONParser(const QString& s) : source(s), pos(0) {
+    JSONParser(const QString& s) : source(s), pos(0)
+    {
         skipWhite();
     }
-    void advance() {
+
+    void advance()
+    {
         pos++;
         skipWhite();
     }
-    void skipWhite() {
+
+    void skipWhite()
+    {
         while(!atEnd() && source[pos].isSpace()) pos++;
     }
-    bool atEnd() const {
+
+    bool atEnd() const
+    {
         return pos >= source.size();
     }
-    QChar peek() const {
+
+    QChar peek() const
+    {
         if(atEnd()) return 0;
         return source[pos];
     }
-    QChar next() {
+
+    QChar next()
+    {
         if(atEnd()) return 0;
         QChar c = source[pos];
         advance();
         return c;
     }
-    QChar nextNoSkip() {
+
+    QChar nextNoSkip()
+    {
         if(atEnd()) return 0;
         return source[pos++];
     }
-    void error(const QString& message) {
+
+    void error(const QString& message)
+    {
         throw de::Error("JSONParser", de::String("Error at position %1: %2").arg(pos).arg(message));
     }
-    QVariant parse() {
+
+    QVariant parse()
+    {
         LOG_AS("JSONParser");
         if(atEnd()) return QVariant();
         QChar c = peek();
-        if(c == '{') {
+        if(c == '{')
+        {
             return parseObject();
         }
-        else if(c == '[') {
+        else if(c == '[')
+        {
             return parseArray();
         }
-        else if(c == '\"') {
+        else if(c == '\"')
+        {
             return parseString();
         }
-        else if(c == '-' || c.isDigit()) {
+        else if(c == '-' || c.isDigit())
+        {
             return parseNumber();
         }
-        else {
+        else
+        {
             return parseKeyword();
         }
     }
-    QVariant parseObject() {
+
+    QVariant parseObject()
+    {
         QVariantMap result;
         QChar c = next();
         DENG2_ASSERT(c == '{');
-        forever {
+        forever
+        {
             QString name = parseString().toString();
             c = next();
             if(c != ':') error("object keys and values must be separated by a colon");
@@ -97,18 +123,22 @@ public:
             result.insert(name, value);
             // Move forward.
             c = next();
-            if(c == '}') {
+            if(c == '}')
+            {
                 // End of object.
                 break;
             }
-            else if(c != ',') {
+            else if(c != ',')
+            {
                 LOG_DEBUG(de::String("got %1 instead of ,").arg(c));
                 error("key/value pairs must be separated by comma");
             }
         }
         return result;
     }
-    QVariant parseArray() {
+
+    QVariant parseArray()
+    {
         QVariantList result;
         QChar c = next();
         DENG2_ASSERT(c == '[');
@@ -118,27 +148,34 @@ public:
             next();
             return result;
         }
-        forever {
+        forever
+        {
             result << parse();
             c = next();
-            if(c == ']') {
+            if(c == ']')
+            {
                 // End of array.
                 break;
             }
-            else if(c != ',') {
+            else if(c != ',')
+            {
                 // What?
                 error("array items must be separated by comma");
             }
         }
         return result;
     }
-    QVariant parseString() {
+
+    QVariant parseString()
+    {
         QVarLengthArray<QChar, 1024> result;
         QChar c = next();
         DENG2_ASSERT(c == '\"');
-        forever {
+        forever
+        {
             c = nextNoSkip();
-            if(c == '\\') {
+            if(c == '\\')
+            {
                 // Escape.
                 c = nextNoSkip();
                 if(c == '\"' || c == '\\' || c == '/')
@@ -153,14 +190,16 @@ public:
                     result.append('\r');
                 else if(c == 't')
                     result.append('\t');
-                else if(c == 'u') {
+                else if(c == 'u')
+                {
                     QString code = source.mid(pos, 4);
                     pos += 4;
                     result.append(QChar(ushort(code.toLong(0, 16))));
                 }
                 else error("unknown escape sequence in string");
             }
-            else if(c == '\"') {
+            else if(c == '\"')
+            {
                 // End of string.
                 break;
             }
@@ -172,34 +211,43 @@ public:
         result.append(0);
         return QString(result.constData());
     }
-    QVariant parseNumber() {
+
+    QVariant parseNumber()
+    {
         QVarLengthArray<QChar> str;
         QChar c = next();
-        if(c == '-') {
+        if(c == '-')
+        {
             str.append(c);
             c = next();
         }
-        for(; c.isDigit(); c = next()) {
+        for(; c.isDigit(); c = next())
+        {
             str.append(c);
         }
         bool hasDecimal = false;
-        if(c == '.') {
+        if(c == '.')
+        {
             str.append(c);
             hasDecimal = true;
             c = next();
-            for(; c.isDigit(); c = next()) {
+            for(; c.isDigit(); c = next())
+            {
                 str.append(c);
             }
         }
-        if(c == 'e' || c == 'E') {
+        if(c == 'e' || c == 'E')
+        {
             // Exponent.
             str.append(c);
             c = next();
-            if(c == '+' || c == '-') {
+            if(c == '+' || c == '-')
+            {
                 str.append(c);
                 c = next();
             }
-            for(; c.isDigit(); c = next()) {
+            for(; c.isDigit(); c = next())
+            {
                 str.append(c);
             }
         }
@@ -207,27 +255,35 @@ public:
         pos--;
         str.append(0);
         double value = QString(str.constData()).toDouble();
-        if(hasDecimal) {
+        if(hasDecimal)
+        {
             return QVariant(value);
         }
-        else {
+        else
+        {
             return QVariant(int(value));
         }
     }
-    QVariant parseKeyword() {
-        if(source.mid(pos, 4) == "true") {
+
+    QVariant parseKeyword()
+    {
+        if(source.mid(pos, 4) == "true")
+        {
             pos += 4;
             return QVariant(true);
         }
-        else if(source.mid(pos, 5) == "false") {
+        else if(source.mid(pos, 5) == "false")
+        {
             pos += 5;
             return QVariant(false);
         }
-        else if(source.mid(pos, 4) == "null") {
+        else if(source.mid(pos, 4) == "null")
+        {
             pos += 4;
             return QVariant(0);
         }
-        else {
+        else
+        {
             error("unknown keyword");
         }
         return QVariant();
