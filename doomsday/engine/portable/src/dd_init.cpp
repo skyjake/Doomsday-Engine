@@ -133,6 +133,9 @@ int main(int argc, char** argv)
     // Override the system locale (affects number/time formatting).
     QLocale::setDefault(QLocale("en_US.UTF-8"));
 
+    // Use the host system's proxy configuration.
+    QNetworkProxyFactory::setUseSystemConfiguration(true);
+
     // Metadata.
     QApplication::setOrganizationDomain("dengine.net");
     QApplication::setOrganizationName("Deng Team");
