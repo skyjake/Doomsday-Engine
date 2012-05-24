@@ -317,7 +317,7 @@ static void* packImage(int components, const float* tempOut, GLint typeOut,
 
 /**
  * Originally from the Mesa 3-D graphics library version 3.4
- * \license GNU Library General Public License (or later)
+ * @note License: GNU Library General Public License (or later)
  * Copyright (C) 1995-2000  Brian Paul.
  */
 void* GL_ScaleBufferEx(const void* dataIn, int widthIn, int heightIn, int bpp,

@@ -531,7 +531,7 @@ void Rend_AddMaskedPoly(const rvertex_t* rvertices, const ColorRawf* rcolors,
         }
 
         // Choose an appropriate variant.
-        /// @fixme Can result in multiple variants being prepared.
+        /// @todo Can result in multiple variants being prepared.
         ///        This decision should be made earlier (in rendHEdgeSection()).
         material = Materials_ChooseVariant(MaterialVariant_GeneralCase(material),
                                            mapSurfaceMaterialSpec(wrapS, wrapT), true, true);
@@ -553,7 +553,7 @@ void Rend_AddMaskedPoly(const rvertex_t* rvertices, const ColorRawf* rcolors,
         }
     }
 
-    /// @fixme Semitransparent masked polys arn't lit atm
+    /// @todo Semitransparent masked polys arn't lit atm
     if(glow < 1 && lightListIdx && numTexUnits > 1 && envModAdd &&
        !(rcolors[0].rgba[CA] < 1))
     {
@@ -1381,7 +1381,7 @@ static boolean doRenderHEdge(HEdge* hedge, const pvec3f_t normal,
             if(ll > 0)
             {
                 // Determine the shadow properties.
-                /// @fixme Make cvars out of constants.
+                /// @todo Make cvars out of constants.
                 radioParams.shadowSize = 2 * (8 + 16 - ll * 16);
                 radioParams.shadowDark = Rend_RadioCalcShadowDarkness(ll);
 
@@ -2396,11 +2396,11 @@ static void Rend_WriteBspLeafSkyFixGeometry(BspLeaf* leaf, int skyFix)
  * We are assured by the node build process that BspLeaf->hedges has been ordered
  * by angle, clockwise starting from the smallest angle.
  *
- * @algorithm:
- * For each vertex
+ * @par Algorithm
+ * <pre>For each vertex
  *    For each triangle
  *        if area is not greater than minimum bound, move to next vertex
- *    Vertex is suitable
+ *    Vertex is suitable</pre>
  *
  * If a vertex exists which results in no zero-area triangles it is suitable for
  * use as the center of our trifan. If a suitable vertex is not found then the
@@ -3104,7 +3104,7 @@ static void drawSoundOrigin(coord_t const origin[3], const char* label, coord_t 
 
 static int drawSideDefSoundOrigins(SideDef* side, void* parameters)
 {
-    uint idx = GameMap_SideDefIndex(theMap, side); /// @fixme Do not assume current map.
+    uint idx = GameMap_SideDefIndex(theMap, side); /// @todo Do not assume current map.
     char buf[80];
 
     dd_snprintf(buf, 80, "Side #%i (middle)", idx);
@@ -3120,7 +3120,7 @@ static int drawSideDefSoundOrigins(SideDef* side, void* parameters)
 
 static int drawSectorSoundOrigins(Sector* sec, void* parameters)
 {
-    uint idx = GameMap_SectorIndex(theMap, sec); /// @fixme Do not assume current map.
+    uint idx = GameMap_SectorIndex(theMap, sec); /// @todo Do not assume current map.
     char buf[80];
 
     if(devSoundOrigins & SOF_PLANE)

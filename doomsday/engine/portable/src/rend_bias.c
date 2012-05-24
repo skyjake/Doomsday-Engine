@@ -636,7 +636,7 @@ static void updateAffected2(biassurface_t* bsuf, const struct rvertex_s* rvertic
             continue;
 
         // Calculate minimum 2D distance to the BSP leaf.
-        /// @fixme This is probably too accurate an estimate.
+        /// @todo This is probably too accurate an estimate.
         for(k = 0; k < bsuf->size; ++k)
         {
             V2d_Set(delta, rvertices[k].pos[VX] - src->origin[VX],
@@ -1103,7 +1103,7 @@ void SB_AmbientLight(coord_t const* point, float* light)
  * point have changed.  This is needed when there has been world geometry
  * changes. 'illum' is allowed to be NULL.
  *
- * @fixme Only recalculate the changed lights.  The colors contributed
+ * @todo Only recalculate the changed lights.  The colors contributed
  *        by the others can be saved with the 'affected' array.
  */
 void SB_EvalPoint(float light[4], vertexillum_t* illum,

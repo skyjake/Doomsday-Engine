@@ -108,7 +108,7 @@ static uint anglistSize = 0;
 static binangle_t *anglist;
 
 /**
- * @important The point should be view-relative!
+ * @note The point should be view-relative!
  */
 static binangle_t C_PointToAngle(coord_t* point)
 {
@@ -536,7 +536,7 @@ static int C_TryMergeOccludes(OccNode* orange, OccNode* other)
     if(crossAngle >= orange->start && crossAngle <= orange->end)
         return 0; // Inside the range, can't do a thing.
 
-    /// @fixme Isn't it possible to consistently determine which direction
+    /// @todo Isn't it possible to consistently determine which direction
     ///        the cross vector is pointing to?
     crossAngle += BANG_180;
     if(crossAngle >= orange->start && crossAngle <= orange->end)
@@ -1047,7 +1047,7 @@ static boolean C_IsSegOccluded(coord_t relv1[3], coord_t relv2[3], coord_t relto
 
         // Remember, side2 has a smaller angle.
 
-        /// @fixme What about trueStart/trueEnd!!! and isSafe! it must have
+        /// @todo What about trueStart/trueEnd!!! and isSafe! it must have
         ///        an effect on this...
 
         if(side2)

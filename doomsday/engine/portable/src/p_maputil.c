@@ -98,7 +98,7 @@ void P_SetTraceOpening(LineDef* lineDef)
         DEBUG_Message(("Warning: P_SetTraceOpening() attempted with no current map, ignoring."));
         return;
     }
-    /// @fixme Do not assume linedef is from the CURRENT map.
+    /// @todo Do not assume linedef is from the CURRENT map.
     GameMap_SetTraceOpening(theMap, lineDef);
 }
 
@@ -152,7 +152,7 @@ boolean P_IsPointXYInSector(coord_t x, coord_t y, const Sector* sector)
     BspLeaf* bspLeaf;
     if(!sector) return false; // I guess?
 
-    /// @fixme Do not assume @a sector is from the current map.
+    /// @todo Do not assume @a sector is from the current map.
     bspLeaf = GameMap_BspLeafAtPointXY(theMap, x, y);
     if(bspLeaf->sector != sector) return false;
 
@@ -242,7 +242,7 @@ boolean GameMap_UnlinkMobjFromLineDefs(GameMap* map, mobj_t* mo)
 }
 
 /**
- * @important Caller must ensure a mobj is linked only once to any given linedef.
+ * @note Caller must ensure a mobj is linked only once to any given linedef.
  *
  * @param map  GameMap instance.
  * @param mo  Mobj to be linked.
@@ -301,7 +301,7 @@ int PIT_LinkToLines(LineDef* ld, void* parameters)
 }
 
 /**
- * @important Caller must ensure that the mobj is currently unlinked.
+ * @note Caller must ensure that the mobj is currently unlinked.
  */
 void GameMap_LinkMobjToLineDefs(GameMap* map, mobj_t* mo)
 {
@@ -554,7 +554,7 @@ int GameMap_SectorTouchingMobjsIterator(GameMap* map, Sector* sector,
  */
 int PIT_AddLineDefIntercepts(LineDef* lineDef, void* parameters)
 {
-    /// @fixme Do not assume lineDef is from the current map.
+    /// @todo Do not assume lineDef is from the current map.
     const divline_t* traceLOS = GameMap_TraceLOS(theMap);
     float distance;
     divline_t dl;
@@ -600,7 +600,7 @@ int PIT_AddMobjIntercepts(mobj_t* mo, void* paramaters)
         return false; // $democam: ssshh, keep going, we're not here...
 
     // Check a corner to corner crossection for hit.
-    /// @fixme Do not assume mobj is from the current map.
+    /// @todo Do not assume mobj is from the current map.
     traceLOS = GameMap_TraceLOS(theMap);
     if((traceLOS->direction[VX] ^ traceLOS->direction[VY]) > 0)
     {
@@ -641,28 +641,28 @@ int PIT_AddMobjIntercepts(mobj_t* mo, void* paramaters)
 
 void P_LinkMobjInBlockmap(mobj_t* mo)
 {
-    /// @fixme Do not assume mobj is from the current map.
+    /// @todo Do not assume mobj is from the current map.
     if(!theMap) return;
     GameMap_LinkMobj(theMap, mo);
 }
 
 boolean P_UnlinkMobjFromBlockmap(mobj_t* mo)
 {
-    /// @fixme Do not assume mobj is from the current map.
+    /// @todo Do not assume mobj is from the current map.
     if(!theMap) return false;
     return GameMap_UnlinkMobj(theMap, mo);
 }
 
 void P_LinkMobjToLineDefs(mobj_t* mo)
 {
-    /// @fixme Do not assume mobj is from the current map.
+    /// @todo Do not assume mobj is from the current map.
     if(!theMap) return;
     GameMap_LinkMobjToLineDefs(theMap, mo);
 }
 
 boolean P_UnlinkMobjFromLineDefs(mobj_t* mo)
 {
-    /// @fixme Do not assume mobj is from the current map.
+    /// @todo Do not assume mobj is from the current map.
     if(!theMap) return false;
     return GameMap_UnlinkMobjFromLineDefs(theMap, mo);
 }
@@ -673,7 +673,7 @@ boolean P_UnlinkMobjFromLineDefs(mobj_t* mo)
  */
 int P_MobjLinesIterator(mobj_t* mo, int (*callback) (LineDef*, void*), void* parameters)
 {
-    /// @fixme Do not assume mobj is in the current map.
+    /// @todo Do not assume mobj is in the current map.
     if(!theMap) return false; // Continue iteration.
     return GameMap_MobjLinesIterator(theMap, mo, callback, parameters);
 }
@@ -686,14 +686,14 @@ int P_MobjLinesIterator(mobj_t* mo, int (*callback) (LineDef*, void*), void* par
  */
 int P_MobjSectorsIterator(mobj_t* mo, int (*callback) (Sector*, void*), void* parameters)
 {
-    /// @fixme Do not assume mobj is in the current map.
+    /// @todo Do not assume mobj is in the current map.
     if(!theMap) return false; // Continue iteration.
     return GameMap_MobjSectorsIterator(theMap, mo, callback, parameters);
 }
 
 int P_LineMobjsIterator(LineDef* lineDef, int (*callback) (mobj_t*, void*), void* parameters)
 {
-    /// @fixme Do not assume lineDef is in the current map.
+    /// @todo Do not assume lineDef is in the current map.
     if(!theMap) return false; // Continue iteration.
     return GameMap_LineMobjsIterator(theMap, lineDef, callback, parameters);
 }
@@ -708,7 +708,7 @@ int P_LineMobjsIterator(LineDef* lineDef, int (*callback) (mobj_t*, void*), void
  */
 int P_SectorTouchingMobjsIterator(Sector* sector, int (*callback) (mobj_t*, void*), void* parameters)
 {
-    /// @fixme Do not assume sector is in the current map.
+    /// @todo Do not assume sector is in the current map.
     if(!theMap) return false; // Continue iteration.
     return GameMap_SectorTouchingMobjsIterator(theMap, sector, callback, parameters);
 }

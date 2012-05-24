@@ -2292,7 +2292,7 @@ static void initPageObjects(mn_page_t* page)
             if(btn->text && (PTR2INT(btn->text) > 0 && PTR2INT(btn->text) < NUMTEXT))
             {
                 btn->text = GET_TXT(PTR2INT(btn->text));
-                /// @fixme Should not be done here.
+                /// @todo Should not be done here.
                 MNObject_SetShortcut(ob, btn->text[0]);
             }
             break; }
@@ -3150,7 +3150,7 @@ void Hu_MenuPlayerClassBackgroundTicker(mn_object_t* ob)
     assert(ob);
 
     // Determine our selection according to the current focus object.
-    /// @fixme Do not search for the focus object, flag the "random"
+    /// @todo Do not search for the focus object, flag the "random"
     ///        state through a focus action.
     mop = MNPage_FocusObject(MNObject_Page(ob));
     if(mop)
@@ -3163,7 +3163,7 @@ void Hu_MenuPlayerClassBackgroundTicker(mn_object_t* ob)
             pClass = (menuTime / 5);
         }
 
-        /// @fixme Only change here if in the "random" state.
+        /// @todo Only change here if in the "random" state.
         pClass %= 3; // Number of user-selectable classes.
 
         MNRect_SetBackgroundPatch(ob, pPlayerClassBG[pClass]);
@@ -3183,7 +3183,7 @@ void Hu_MenuPlayerClassPreviewTicker(mn_object_t* ob)
     assert(ob);
 
     // Determine our selection according to the current focus object.
-    /// @fixme Do not search for the focus object, flag the "random"
+    /// @todo Do not search for the focus object, flag the "random"
     ///        state through a focus action.
     mop = MNPage_FocusObject(MNObject_Page(ob));
     if(mop)

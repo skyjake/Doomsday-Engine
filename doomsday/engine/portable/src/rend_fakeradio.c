@@ -1481,7 +1481,7 @@ static void radioBspLeafEdges(const BspLeaf* bspLeaf)
         return; // No point drawing shadows in a PITCH black sector.
 
     // Determine the shadow properties.
-    /// @fixme Make cvars out of constants.
+    /// @todo Make cvars out of constants.
     shadowWallSize = 2 * (8 + 16 - sectorlight * 16);
     shadowDark = Rend_RadioCalcShadowDarkness(sectorlight);
 

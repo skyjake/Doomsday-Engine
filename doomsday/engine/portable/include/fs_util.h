@@ -157,7 +157,7 @@ boolean F_MakeAbsolute(ddstring_t* dst, const ddstring_t* src);
 boolean F_TranslatePath(ddstring_t* dst, const ddstring_t* src);
 
 /**
- * @important Not thread-safe!
+ * @warning Not thread-safe!
  * @return  A prettier copy of the original path.
  */
 const char* F_PrettyPath(const char* path);

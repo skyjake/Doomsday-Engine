@@ -198,7 +198,7 @@ int LO_LumobjsRadiusIterator(BspLeaf* bspLeaf, coord_t x, coord_t y, coord_t rad
  * Project all lights affecting the given quad (world space), calculate
  * coordinates (in texture space) then store into a new list of projections.
  *
- * @assume The coordinates of the given quad must be contained wholly within
+ * @pre The coordinates of the given quad must be contained wholly within
  * the BSP leaf specified. This is due to an optimization within the lumobj
  * management which separates them according to their position in the BSP.
  *

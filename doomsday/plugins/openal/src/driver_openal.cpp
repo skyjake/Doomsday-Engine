@@ -269,7 +269,7 @@ void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
 
     if(DSOPENAL_ERRCHECK(alGetError()))
     {
-        /// @fixme What to do?
+        /// @todo What to do?
     }
     buf->sample = sample;
 }

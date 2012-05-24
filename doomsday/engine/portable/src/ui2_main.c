@@ -195,7 +195,7 @@ static fi_object_t* objectsAdd(fi_object_collection_t* c, fi_object_t* obj)
 }
 
 /**
- * \assume There is at most one reference to the object in this collection.
+ * @pre There is at most one reference to the object in this collection.
  */
 static fi_object_t* objectsRemove(fi_object_collection_t* c, fi_object_t* obj)
 {
@@ -1095,7 +1095,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
     }
 
     // If we've not chosen a texture by now set some defaults.
-    /// @fixme This is some seriously funky logic... refactor or remove.
+    /// @todo This is some seriously funky logic... refactor or remove.
     if(!textureEnabled)
     {
         V3f_Copy(dimensions, scale);

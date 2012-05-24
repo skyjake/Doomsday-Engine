@@ -20,8 +20,8 @@ extern "C" {
  * the version 8 interface (if available on the host system) and if unsuccessful,
  * then the older version 3 interface.
  *
- * @important  The caller must ensure that COM has been initialized else this
- *             will fail and false will be returned.
+ * @note The caller must ensure that COM has been initialized else this will
+ *       fail and false will be returned.
  *
  * @return  @c true if an interface was initialized successfully.
  */

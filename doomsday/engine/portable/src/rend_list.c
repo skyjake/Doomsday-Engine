@@ -886,7 +886,7 @@ static void writePrimitive(const rendlist_t* list, uint base,
 
 /**
  * Adds one or more polys the render lists depending on configuration.
- * \assume Caller knows what they are doing. Arguments are not validity checked.
+ * @pre Caller knows what they are doing. Arguments are not validity checked.
  */
 static void writePoly2(primtype_t type, rendpolytype_t polyType, int flags,
     uint numElements, const rvertex_t* vertices, const ColorRawf* colors,
@@ -1047,7 +1047,7 @@ static __inline boolean isWriteStateRTU(const rtexmapunit_t* ptr)
 }
 
 /**
- * If the identified @idx texture unit of the primitive writer has been
+ * If the identified @a idx texture unit of the primitive writer has been
  * mapped to an external address, insert a copy of it into our internal
  * write state.
  *

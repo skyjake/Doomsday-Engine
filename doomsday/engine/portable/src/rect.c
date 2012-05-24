@@ -284,7 +284,7 @@ RectRaw* Rect_Normalized(const Rect* rect, RectRaw* normalized)
     return normalized;
 }
 
-/// \assume  This and @a other have been normalized.
+/// @pre  This and @a other have been normalized.
 static Rect* Rect_UniteRaw2(Rect* r, const RectRaw* other)
 {
     Point2Raw oldOrigin;
@@ -607,7 +607,7 @@ RectRawf* Rectf_Normalized(const Rectf* rect, RectRawf* normalized)
     return normalized;
 }
 
-/// \assume  This and @a other have been normalized.
+/// @pre  This and @a other have been normalized.
 static Rectf* Rectf_UniteRaw2(Rectf* r, const RectRawf* other)
 {
     Point2Rawf oldOrigin;

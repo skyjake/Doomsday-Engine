@@ -65,7 +65,7 @@ boolean Surface_SetMaterial(Surface* suf, material_t* mat)
 
             if(!ddMapSetup)
             {
-                GameMap* map = theMap; /// @fixme Do not assume surface is from the CURRENT map.
+                GameMap* map = theMap; /// @todo Do not assume surface is from the CURRENT map.
 
                 // If this plane's surface is in the decorated list, remove it.
                 R_SurfaceListRemove(GameMap_DecoratedSurfaces(map), suf);
@@ -107,7 +107,7 @@ boolean Surface_SetMaterialOriginX(Surface* suf, float x)
             suf->inFlags |= SUIF_UPDATE_DECORATIONS;
             if(!ddMapSetup)
             {
-                /// @fixme Do not assume surface is from the CURRENT map.
+                /// @todo Do not assume surface is from the CURRENT map.
                 R_SurfaceListAdd(GameMap_ScrollingSurfaces(theMap), suf);
             }
         }
@@ -126,7 +126,7 @@ boolean Surface_SetMaterialOriginY(Surface* suf, float y)
             suf->inFlags |= SUIF_UPDATE_DECORATIONS;
             if(!ddMapSetup)
             {
-                /// @fixme Do not assume surface is from the CURRENT map.
+                /// @todo Do not assume surface is from the CURRENT map.
                 R_SurfaceListAdd(GameMap_ScrollingSurfaces(theMap), suf);
             }
         }
@@ -146,7 +146,7 @@ boolean Surface_SetMaterialOrigin(Surface* suf, float x, float y)
             suf->inFlags |= SUIF_UPDATE_DECORATIONS;
             if(!ddMapSetup)
             {
-                /// @fixme Do not assume surface is from the CURRENT map.
+                /// @todo Do not assume surface is from the CURRENT map.
                 R_SurfaceListAdd(GameMap_ScrollingSurfaces(theMap), suf);
             }
         }

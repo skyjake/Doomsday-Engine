@@ -1494,7 +1494,7 @@ coord_t Sv_MobjDistance(const mobj_t* mo, const ownerinfo_t* info, boolean isRea
 {
     coord_t z;
 
-    /// @fixme Do not assume mobj is from the CURRENT map.
+    /// @todo Do not assume mobj is from the CURRENT map.
     if(isReal && !GameMap_IsUsedMobjID(theMap, mo->thinker.id))
     {
         // This mobj does not exist any more!
@@ -2058,7 +2058,7 @@ void Sv_NewNullDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
             // This reg_mobj_t might be removed.
             next = obj->next;
 
-            /// @fixme Do not assume mobj is from the CURRENT map.
+            /// @todo Do not assume mobj is from the CURRENT map.
             if(!GameMap_IsUsedMobjID(theMap, obj->mo.thinker.id))
             {
                 // This object no longer exists!
@@ -2710,7 +2710,7 @@ boolean Sv_RateDelta(void* deltaPtr, ownerinfo_t* info)
     // Deltas become more important with age (milliseconds).
     score *= 1 + age / (ageScoreDouble * 1000.0f);
 
-    /// @fixme Consider viewpoint speed and angle.
+    /// @todo Consider viewpoint speed and angle.
 
     // Priority bonuses based on the contents of the delta.
     if(delta->type == DT_MOBJ)

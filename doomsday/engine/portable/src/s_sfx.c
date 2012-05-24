@@ -386,7 +386,7 @@ void Sfx_GetListenerXYZ(float* origin)
 {
     if(!listener) return;
 
-    /// @fixme Make it exactly eye-level! (viewheight).
+    /// @todo Make it exactly eye-level! (viewheight).
     origin[VX] = listener->origin[VX];
     origin[VY] = listener->origin[VY];
     origin[VZ] = listener->origin[VZ] + listener->height - 5;

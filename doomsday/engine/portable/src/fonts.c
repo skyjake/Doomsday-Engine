@@ -157,7 +157,7 @@ static Uri* composeUriForDirectoryNode(const PathDirectoryNode* node)
     return uri;
 }
 
-/// \assume fontIdMap has been initialized and is large enough!
+/// @pre fontIdMap has been initialized and is large enough!
 static void unlinkDirectoryNodeFromBindIdMap(const PathDirectoryNode* node)
 {
     fontid_t id = findBindIdForDirectoryNode(node);
@@ -165,7 +165,7 @@ static void unlinkDirectoryNodeFromBindIdMap(const PathDirectoryNode* node)
     fontIdMap[id - 1/*1-based index*/] = NULL;
 }
 
-/// \assume uniqueIdMap has been initialized and is large enough!
+/// @pre uniqueIdMap has been initialized and is large enough!
 static int linkRecordInUniqueIdMap(PathDirectoryNode* node, void* paramaters)
 {
     const fontrecord_t* record = (fontrecord_t*)PathDirectoryNode_UserData(node);
@@ -175,7 +175,7 @@ static int linkRecordInUniqueIdMap(PathDirectoryNode* node, void* paramaters)
     return 0; // Continue iteration.
 }
 
-/// \assume uniqueIdMap is large enough if initialized!
+/// @pre uniqueIdMap is large enough if initialized!
 static int unlinkRecordInUniqueIdMap(PathDirectoryNode* node, void* paramaters)
 {
     const fontrecord_t* record = (fontrecord_t*)PathDirectoryNode_UserData(node);
@@ -262,7 +262,7 @@ static PathDirectoryNode* findDirectoryNodeForPath(PathDirectory* directory, con
     return PathDirectory_Find(directory, PCF_NO_BRANCH|PCF_MATCH_FULL, path, FONTS_PATH_DELIMITER);
 }
 
-/// \assume @a uri has already been validated and is well-formed.
+/// @pre @a uri has already been validated and is well-formed.
 static PathDirectoryNode* findDirectoryNodeForUri(const Uri* uri)
 {
     fontnamespaceid_t namespaceId;

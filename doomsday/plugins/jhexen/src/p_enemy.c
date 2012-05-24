@@ -753,7 +753,7 @@ boolean P_UpdateMorphedMonster(mobj_t* actor, int tics)
     }
     memcpy(pos, actor->origin, sizeof(pos));
 
-    /// @fixme Do this properly!
+    /// @todo Do this properly!
     oldMonster = *actor; // Save pig vars.
 
     P_MobjRemoveFromTIDList(actor);
@@ -3155,7 +3155,7 @@ void C_DECL A_IceGuyLook(mobj_t* mo)
         an = angle >> ANGLETOFINESHIFT;
 
         /**
-         * @fixme We should not be selecting mobj types by their original
+         * @todo We should not be selecting mobj types by their original
          *        indices! Instead, use a fixed table here.
          */
         P_SpawnMobjXYZ(MT_ICEGUY_WISP1 + (P_Random() & 1),
@@ -3180,7 +3180,7 @@ void C_DECL A_IceGuyChase(mobj_t* actor)
         an = angle >> ANGLETOFINESHIFT;
 
         /**
-         * @fixme We should not be selecting mobj types by their original
+         * @todo We should not be selecting mobj types by their original
          *        indices! Instead, use a fixed table here.
          */
         if((mo = P_SpawnMobjXYZ(MT_ICEGUY_WISP1 + (P_Random() & 1),

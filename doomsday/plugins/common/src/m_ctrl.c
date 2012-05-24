@@ -641,7 +641,7 @@ int MNBindings_CommandResponder(mn_object_t* obj, menucommand_e cmd)
 
 void MNBindings_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
 {
-    // @fixme calculate visible dimensions properly!
+    // @todo calculate visible dimensions properly!
     assert(obj);
     Rect_SetWidthHeight(obj->_geometry, 60, 10 * SMALL_SCALE);
 }

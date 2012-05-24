@@ -127,7 +127,7 @@ void P_MobjLink(mobj_t* mo, byte flags);
 int P_MobjUnlink(mobj_t* mo);
 
 /**
- * @important Caller must ensure that the mobj is currently unlinked.
+ * @note Caller must ensure that the mobj is currently unlinked.
  */
 void P_LinkMobjToLineDefs(mobj_t* mo);
 

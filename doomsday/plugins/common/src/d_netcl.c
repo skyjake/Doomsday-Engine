@@ -140,7 +140,7 @@ void NetCl_UpdateGameState(Reader* msg)
     }
 
     // Set gravity.
-    /// @fixme This is a map-property, not a global property.
+    /// @todo This is a map-property, not a global property.
     DD_SetVariable(DD_GRAVITY, &gsGravity);
 
     // Camera init included?
@@ -675,7 +675,7 @@ void NetCl_Intermission(Reader* msg)
         SN_StopAllSequences();
 #endif
 
-        // @fixme jHeretic does not transmit the intermission info!
+        // @todo jHeretic does not transmit the intermission info!
 #if __JDOOM__ || __JDOOM64__
         wmInfo.maxKills = Reader_ReadUInt16(msg);
         wmInfo.maxItems = Reader_ReadUInt16(msg);

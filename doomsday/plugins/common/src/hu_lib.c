@@ -1173,7 +1173,7 @@ static mn_object_t* MNPage_ObjectByIndex(mn_page_t* page, int idx)
     return page->objects + idx;
 }
 
-/// @assume @a ob is a child of @a page.
+/// @pre @a ob is a child of @a page.
 static void MNPage_GiveChildFocus(mn_page_t* page, mn_object_t* ob, boolean allowRefocus)
 {
     assert(page && ob);
@@ -1580,7 +1580,7 @@ int MNObject_ExecAction(mn_object_t* ob, mn_actionid_t id, void* paramaters)
 #if _DEBUG
     Con_Error("MNObject::ExecAction: Attempt to execute non-existent action #%i on object %p.", (int) id, ob);
 #endif
-    /// @fixme Need an error handling mechanic.
+    /// @todo Need an error handling mechanic.
     return -1; // NOP
 }
 
@@ -1748,7 +1748,7 @@ void MNText_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
     mndata_text_t* txt = (mndata_text_t*)obj->_typedata;
     Size2Raw size;
     assert(obj->_type == MN_TEXT);
-    /// @fixme What if patch replacement is disabled?
+    /// @todo What if patch replacement is disabled?
     if(txt->patch != 0)
     {
         patchinfo_t info;
@@ -2047,7 +2047,7 @@ int MNEdit_Responder(mn_object_t* obj, event_t* ev)
 
 void MNEdit_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
 {
-    // @fixme calculate visible dimensions properly.
+    // @todo calculate visible dimensions properly.
     assert(obj);
     Rect_SetWidthHeight(obj->_geometry, 170, 14);
 }
@@ -2553,7 +2553,7 @@ void MNButton_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
     const char* text = btn->text;
     Size2Raw size;
 
-    // @fixme What if patch replacement is disabled?
+    // @todo What if patch replacement is disabled?
     if(btn->patch)
     {
         if(!(btn->flags & MNBUTTON_NO_ALTTEXT))
@@ -3479,7 +3479,7 @@ void MNMobjPreview_Drawer(mn_object_t* ob, const Point2Raw* offset)
 
 void MNMobjPreview_UpdateGeometry(mn_object_t* ob, mn_page_t* page)
 {
-    // @fixme calculate visible dimensions properly!
+    // @todo calculate visible dimensions properly!
     assert(ob && ob->_type == MN_MOBJPREVIEW);
     Rect_SetWidthHeight(ob->_geometry, MNDATA_MOBJPREVIEW_WIDTH, MNDATA_MOBJPREVIEW_HEIGHT);
 }

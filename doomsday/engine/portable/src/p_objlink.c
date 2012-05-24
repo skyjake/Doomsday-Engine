@@ -557,7 +557,7 @@ BEGIN_PROF( PROF_OBJLINK_SPREAD );
 END_PROF( PROF_OBJLINK_SPREAD );
 }
 
-/// @assume  Coordinates held by @a blockXY are within valid range.
+/// @pre  Coordinates held by @a blockXY are within valid range.
 static void linkObjlinkInBlockmap(objlinkblockmap_t* obm, objlink_t* link, uint blockXY[2])
 {
     objlinkblock_t* block;

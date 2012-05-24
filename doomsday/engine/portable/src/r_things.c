@@ -1265,7 +1265,7 @@ void R_ProjectSprite(mobj_t* mo)
         align = true;
 
     // Perform visibility checking.
-    /// @fixme R_VisualRadius() does not consider sprite rotation.
+    /// @todo R_VisualRadius() does not consider sprite rotation.
     {
     coord_t center[2], v1[2], v2[2];
     coord_t width = R_VisualRadius(mo)*2, offset = 0;
@@ -1601,7 +1601,7 @@ int RIT_AddSprite(void* ptr, void* paramaters)
     mobj_t* mo = (mobj_t*) ptr;
     addspriteparams_t* params = (addspriteparams_t*)paramaters;
     Sector* sec = params->bspLeaf->sector;
-    GameMap* map = theMap; /// @fixme Do not assume mobj is from the CURRENT map.
+    GameMap* map = theMap; /// @todo Do not assume mobj is from the CURRENT map.
 
     if(mo->addFrameCount != frameCount)
     {
@@ -1811,7 +1811,7 @@ int RIT_VisSpriteLightIterator(const lumobj_t* lum, coord_t xyDist, void* parama
                  * Calculate the normalized direction vector, pointing out of
                  * the vissprite.
                  *
-                 * @fixme Project the nearest point on the surface to determine
+                 * @todo Project the nearest point on the surface to determine
                  *        the real direction vector.
                  */
                 vlight->vector[VX] =  LUM_PLANE(lum)->normal[VX];

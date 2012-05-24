@@ -348,7 +348,7 @@ int LineDef_MiddleMaterialCoords(const LineDef* lineDef, int side,
 }
 
 /**
- * @fixme No need to do this each frame. Set a flag in SideDef->flags to
+ * @todo No need to do this each frame. Set a flag in SideDef->flags to
  * denote this. Is sensitive to plane heights, surface properties
  * (e.g. alpha) and surface texture properties.
  */

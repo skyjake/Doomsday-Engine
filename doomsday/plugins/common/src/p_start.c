@@ -480,7 +480,7 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y, coord
     if(p->playerState == PST_REBORN)
         G_PlayerReborn(plrNum);
 
-    /// @fixme Should this not occur before the reborn?
+    /// @todo Should this not occur before the reborn?
     p->class_ = pClass;
 
     // On clients, mark the remote players.

@@ -110,7 +110,7 @@ void RL_LoadDefaultRtus(void);
 void RL_MapRtu(uint idx, const rtexmapunit_t* rtu);
 
 /**
- * Copy the configuration for the identified @idx texture unit of
+ * Copy the configuration for the identified @a idx texture unit of
  * the primitive writer's internal state from @a rtu.
  *
  * @param idx  Logical index of the texture unit being configured.
@@ -134,7 +134,7 @@ void RL_Rtu_SetOffsetv(uint idx, float const st[2]);
 void RL_Rtu_TranslateOffset(uint idx, float s, float t);
 void RL_Rtu_TranslateOffsetv(uint idx, float const st[2]);
 
-/// Change the texture assigned to the identified @idx texture unit.
+/// Change the texture assigned to the identified @a idx texture unit.
 void RL_Rtu_SetTextureUnmanaged(uint idx, DGLuint glName);
 
 /**

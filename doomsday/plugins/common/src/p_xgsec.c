@@ -205,12 +205,11 @@ void XF_Init(Sector *sec, function_t *fn, char *func, int min, int max,
     if(func[0] == '+')
     {
         /**
-         * \important
-         * The original value ranges must be maintained due to the cross linking
+         * @note The original value ranges must be maintained due to the cross linking
          * between sector function types i.e:
-         * RGB = 0 > 254
-         * light = 0 > 254
-         * planeheight = -32768 > 32768
+         * - RGB = 0 > 254
+         * - light = 0 > 254
+         * - planeheight = -32768 > 32768
          */
         switch(func[1])
         {

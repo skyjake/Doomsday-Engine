@@ -106,7 +106,7 @@ float ST_AutomapOpacity(int player);
 
 /**
  * Does the player's automap obscure this region completely?
- * \assume: Window dimensions use the fixed coordinate space {x} 0 - 320, {y} 0 - 200.
+ * @pre Window dimensions use the fixed coordinate space {x} 0 - 320, {y} 0 - 200.
  *
  * @param player  Local player number whose automap to check.
  * @param region  Window region.

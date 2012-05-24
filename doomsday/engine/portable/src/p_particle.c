@@ -78,7 +78,7 @@ void PtcGen_Delete(ptcgen_t* gen)
 
 static int destroyGenerator(ptcgen_t* gen, void* parameters)
 {
-    GameMap* map = theMap; /// @fixme Do not assume generator is from the CURRENT map.
+    GameMap* map = theMap; /// @todo Do not assume generator is from the CURRENT map.
 
     Generators_Unlink(GameMap_Generators(map), gen);
     GameMap_ThinkerRemove(map, &gen->thinker);
@@ -300,7 +300,7 @@ void P_SpawnMobjParticleGen(const ded_ptcgen_t* def, mobj_t* source)
 
     if(isDedicated || !useParticles)return;
 
-    /// @fixme Do not assume the source mobj is from the CURRENT map.
+    /// @todo Do not assume the source mobj is from the CURRENT map.
     gen = P_NewGenerator();
     if(!gen) return;
 
@@ -346,7 +346,7 @@ static int generatorByPlaneIterator(ptcgen_t* gen, void* parameters)
 
 static ptcgen_t* generatorByPlane(Plane* plane)
 {
-    GameMap* map = theMap; /// @fixme Do not assume plane is from the CURRENT map.
+    GameMap* map = theMap; /// @todo Do not assume plane is from the CURRENT map.
     Generators* gens = GameMap_Generators(map);
     generatorbyplaneiterator_params_t parm;
     parm.plane = plane;
@@ -641,7 +641,7 @@ static void P_NewParticle(ptcgen_t* gen)
          * Choosing the XY spot is a bit more difficult.
          * But we must be fast and only sufficiently accurate.
          *
-         * @fixme Nothing prevents spawning on the wrong side (or inside)
+         * @todo Nothing prevents spawning on the wrong side (or inside)
          * of one-sided walls (large diagonal BSP leafs!).
          */
         for(i = 0; i < 5; ++i) // Try a couple of times (max).
@@ -875,7 +875,7 @@ static void P_SpinParticle(ptcgen_t* gen, particle_t* pt)
     static const int yawSigns[4]   = { 1,  1, -1, -1 };
     static const int pitchSigns[4] = { 1, -1,  1, -1 };
 
-    Generators* gens = GameMap_Generators(theMap); /// @fixme Do not assume generator is from the CURRENT map.
+    Generators* gens = GameMap_Generators(theMap); /// @todo Do not assume generator is from the CURRENT map.
     ded_ptcstage_t* stDef = &gen->def->stages[pt->stage];
     uint index = pt - &gen->ptcs[Generators_GeneratorId(gens, gen) / 8];
     int yawSign, pitchSign;
@@ -914,7 +914,7 @@ static void P_MoveParticle(ptcgen_t* gen, particle_t* pt)
     P_SpinParticle(gen, pt);
 
     // Changes to momentum.
-    /// @fixme Do not assume generator is from the CURRENT map.
+    /// @todo Do not assume generator is from the CURRENT map.
     pt->mov[VZ] -= FixedMul(FLT2FIX(GameMap_Gravity(theMap)), st->gravity);
 
     // Vector force.
@@ -1086,7 +1086,7 @@ static void P_MoveParticle(ptcgen_t* gen, particle_t* pt)
                 coord_t pz = P_GetParticleZ(pt);
                 coord_t fz, cz;
 
-                /// @fixme $nplanes
+                /// @todo $nplanes
                 if(front->SP_floorheight > back->SP_floorheight)
                     fz = front->SP_floorheight;
                 else

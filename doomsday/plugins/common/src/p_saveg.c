@@ -2450,7 +2450,7 @@ static int SV_ReadPolyObj(void)
     deltaY = FIX2FLT(SV_ReadLong()) - po->origin[VY];
     P_PolyobjMoveXY(po, deltaX, deltaY);
 
-    /// @fixme What about speed? It isn't saved at all?
+    /// @todo What about speed? It isn't saved at all?
 
     return true;
 }
@@ -5028,7 +5028,7 @@ void SV_LoadClient(uint gameId)
     /**
      * Create and populate the MaterialArchive.
      *
-     * @fixme Does this really need to be done at all as a client?
+     * @todo Does this really need to be done at all as a client?
      * When the client connects to the server it should send a copy
      * of the map upon joining, so why are we reading it here?
      */

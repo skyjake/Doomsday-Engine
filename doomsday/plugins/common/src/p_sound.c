@@ -147,7 +147,7 @@ void S_ParseSndInfoLump(void)
     for(i = 0; i < Get(DD_NUMSOUNDS); ++i)
     {
         /// @kludge This uses a kludge to traverse the entire sound list.
-        /// @fixme Implement a mechanism for walking the Def databases.
+        /// @todo Implement a mechanism for walking the Def databases.
         Def_Get(DD_DEF_SOUND_LUMPNAME, (char*) &i, buf);
         if(!strcmp(buf, ""))
             Def_Set(DD_DEF_SOUND, i, DD_LUMP, "default");
