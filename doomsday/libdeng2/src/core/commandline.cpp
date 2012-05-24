@@ -255,7 +255,8 @@ void CommandLine::makeAbsolutePath(duint pos)
 
     std::string* arg = d->arguments[pos];
 
-    if(!QDir::isAbsolutePath(arg->c_str()))
+    if(!isOption(pos) && !QDir::isAbsolutePath(arg->c_str()) &&
+       !String::fromStdString(*arg).startsWith("}"))
     {
         // The path expansion logic here should match the native shell's behavior.
         QDir oldDir = QDir::current();

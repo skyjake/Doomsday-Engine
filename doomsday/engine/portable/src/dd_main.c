@@ -1799,7 +1799,7 @@ static int DD_StartupWorker(void* parm)
         startTime = Sys_GetRealTime();
         for(;;)
         {
-            const char* arg = CommandLine_Next();
+            const char* arg = CommandLine_NextAsPath();
             if(!arg || arg[0] == '-')
                 break;
             Con_Message("  Processing \"%s\"...\n", F_PrettyPath(arg));

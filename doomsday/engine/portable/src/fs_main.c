@@ -2282,7 +2282,7 @@ void F_InitVirtualDirectoryMappings(void)
 
         if(i < argC - 1 && !CommandLine_IsOption(i + 1) && !CommandLine_IsOption(i + 2))
         {
-            F_AddVirtualDirectoryMapping(CommandLine_At(i + 1), CommandLine_At(i + 2));
+            F_AddVirtualDirectoryMapping(CommandLine_PathAt(i + 1), CommandLine_At(i + 2));
             i += 2;
         }
     }
