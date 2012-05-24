@@ -590,7 +590,7 @@ static lumobj_t* allocLumobj(void)
     lumobj_t* lum;
 
     // Only allocate memory when it's needed.
-    /// @fixme No upper limit?
+    /// @todo No upper limit?
     if(++numLuminous > maxLuminous)
     {
         uint i, newMax = maxLuminous + LUMOBJ_BATCH_SIZE;
@@ -1108,7 +1108,7 @@ boolean LOIT_ClipLumObj(void* data, void* context)
 
     luminousClipped[lumIdx] = 0;
 
-    /// @fixme Determine the exact centerpoint of the light in addLuminous!
+    /// @todo Determine the exact centerpoint of the light in addLuminous!
     V3d_Set(origin, lum->origin[VX], lum->origin[VY], lum->origin[VZ] + LUM_OMNI(lum)->zOff);
 
     /**

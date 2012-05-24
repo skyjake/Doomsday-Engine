@@ -413,7 +413,7 @@ static fi_object_t* addObjectToNamespace(fi_namespace_t* names, const char* name
 }
 
 /**
- * \assume There is at most one reference to the object in this scope.
+ * @pre There is at most one reference to the object in this scope.
  */
 static fi_object_t* removeObjectInNamespace(fi_namespace_t* names, fi_object_t* obj)
 {

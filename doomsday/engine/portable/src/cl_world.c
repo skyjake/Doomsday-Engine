@@ -314,7 +314,7 @@ void GameMap_DeleteClPolyobj(GameMap* map, clpolyobj_t* mover)
  */
 void Cl_MoverThinker(clplane_t* mover)
 {
-    GameMap* map = theMap; /// @fixme Do not assume mover is from the CURRENT map.
+    GameMap* map = theMap; /// @todo Do not assume mover is from the CURRENT map.
     coord_t original;
     boolean remove = false;
     boolean freeMove;
@@ -516,7 +516,7 @@ void Cl_PolyMoverThinker(clpolyobj_t* mover)
     // Can we get rid of this mover?
     if(!mover->move && !mover->rotate)
     {
-        /// @fixme Do not assume the move is from the CURRENT map.
+        /// @todo Do not assume the move is from the CURRENT map.
         GameMap_DeleteClPolyobj(theMap, mover);
     }
 }
@@ -536,7 +536,7 @@ clpolyobj_t* GameMap_ClPolyobjByPolyobjIndex(GameMap* map, uint index)
 }
 
 /**
- * @important Assumes there is no existing ClPolyobj for Polyobj @a index.
+ * @note Assumes there is no existing ClPolyobj for Polyobj @a index.
  */
 clpolyobj_t* GameMap_NewClPolyobj(GameMap* map, uint polyobjIndex)
 {
@@ -614,7 +614,7 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
     static Plane* dummyPlaneArray[2];
     static Plane dummyPlanes[2];
 
-    GameMap* map = theMap; /// @fixme Do not assume the CURRENT map.
+    GameMap* map = theMap; /// @todo Do not assume the CURRENT map.
     unsigned short num;
     Sector* sec;
     int df;

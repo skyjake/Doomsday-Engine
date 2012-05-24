@@ -411,8 +411,8 @@ uint            Sv_CountUnackedDeltas(uint clientNumber);
  * sound is in itself a 'delta-like' event, there is no need for comparing or
  * to have a register.
  *
- * @important: Assumes no two sounds with the same ID play at the same time
- *             from the same origin at once.
+ * @note Assumes no two sounds with the same ID play at the same time
+ *       from the same origin at once.
  *
  * @param volume  Volume at which to play the sound, or zero for stop-sound.
  * @param clientsMask  -1= all clients.

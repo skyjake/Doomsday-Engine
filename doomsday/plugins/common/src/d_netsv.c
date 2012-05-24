@@ -650,7 +650,7 @@ void NetSv_NewPlayerEnters(int plrNum)
             P_SpawnPlayer(plrNum, pClass, 0, 0, 0, 0, MSF_Z_FLOOR, true, true);
         }
 
-        /// @fixme Spawn a telefog in front of the player.
+        /// @todo Spawn a telefog in front of the player.
     }
 
     // Get rid of anybody at the starting spot.

@@ -1371,7 +1371,8 @@ struct Partitioner::Instance
     {
         Q_ASSERT(point);
 
-        /// @algorithm "double bubble"
+        /// @par Algorithm
+        /// "double bubble"
         bool done = false;
         while(begin != end && !done)
         {
@@ -1544,9 +1545,9 @@ struct Partitioner::Instance
      * Traverse the BSP tree and sort all half-edges in each BSP leaf into a
      * clockwise order.
      *
-     * @important This cannot be done during Partitioner::buildNodes() as
-     * splitting a half-edge with a twin will result in another half-edge being
-     * inserted into that twin's leaf (usually in the wrong place order-wise).
+     * @note This cannot be done during Partitioner::buildNodes() as splitting
+     * a half-edge with a twin will result in another half-edge being inserted
+     * into that twin's leaf (usually in the wrong place order-wise).
      */
     void windLeafs()
     {

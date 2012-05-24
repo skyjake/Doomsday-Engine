@@ -66,7 +66,7 @@ static uint indexForSvg(Svg* svg)
 
 /**
  * Link @a svg into the global collection.
- * \assume Not presently linked.
+ * @pre Not presently linked.
  */
 static Svg* insertSvg(Svg* svg)
 {

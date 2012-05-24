@@ -1149,7 +1149,7 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
 
         Sfx_InitLogical();
 
-        /// @fixme Why is this being done here?
+        /// @todo Why is this being done here?
         if(theMap)
         {
             GameMap_InitThinkerLists(theMap, 0x1|0x2);
@@ -1173,7 +1173,7 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
         R_InitSvgs();
         R_InitViewWindow();
 
-        /// @fixme Assumes we only cache lumps from non-startup wads.
+        /// @todo Assumes we only cache lumps from non-startup wads.
         Z_FreeTags(PU_CACHE, PU_CACHE);
 
         F_Reset();
@@ -1183,7 +1183,7 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
     FI_Shutdown();
     titleFinale = 0; // If the title finale was in progress it isn't now.
 
-    /// @fixme Materials database should not be shutdown during a reload.
+    /// @todo Materials database should not be shutdown during a reload.
     Materials_Shutdown();
 
     VERBOSE(
@@ -2138,7 +2138,7 @@ void* DD_GetVariable(int ddvalue)
         return &valueU;
 
     case DD_TRACE_ADDRESS:
-        /// @fixme Do not cast away const.
+        /// @todo Do not cast away const.
         return (void*)P_TraceLOS();
 
     case DD_TRANSLATIONTABLES_ADDRESS:

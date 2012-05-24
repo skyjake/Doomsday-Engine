@@ -1589,7 +1589,7 @@ static DFile* openAsLumpFile(abstractfile_t* container, int lumpIdx,
     }
 
     // Get a handle to the lump we intend to open.
-    /// @fixme The way this buffering works is nonsensical it should not be done here
+    /// @todo The way this buffering works is nonsensical it should not be done here
     ///        but should instead be deferred until the content of the lump is read.
     hndl = DFileBuilder_NewFromAbstractFileLump(container, lumpIdx, false/*dontBuffer*/);
 
@@ -2085,9 +2085,9 @@ static boolean parseLDMapping(lumpname_t lumpName, ddstring_t* path, const char*
 }
 
 /**
- * LUMPNAM0 \Path\In\The\Base.ext
+ * <pre>LUMPNAM0 \Path\In\The\Base.ext
  * LUMPNAM1 Path\In\The\RuntimeDir.ext
- *  :
+ *  :</pre>
  */
 static boolean parseLDMappingList(const char* buffer)
 {

@@ -962,19 +962,17 @@ static int setProperty(void* obj, void* context)
     // BspLeaf*           updateBspLeaf = NULL;
 
     /**
-     * \algorithm:
-     *
+     * @par Algorithm
      * When setting a property, reference resolution is done hierarchically so
      * that we can update all owner's of the objects being manipulated should
      * the DMU object's Set routine suggest that a change occured (which other
      * DMU objects may wish/need to respond to).
-     *
-     * 1) Collect references to all current owners of the object.
-     * 2) Pass the change delta on to the object.
-     * 3) Object responds:
-     *      @c true = update owners, ELSE @c false.
-     * 4) If num collected references > 0
-     *        recurse, Object = owners[n]
+     * <ol>
+     * <li> Collect references to all current owners of the object.
+     * <li> Pass the change delta on to the object.
+     * <li> Object responds: @c true = update owners, ELSE @c false.
+     * <li> If num collected references > 0: recurse, Object = owners[n]
+     * </ol>
      */
 
     // Dereference where necessary. Note the order, these cascade.

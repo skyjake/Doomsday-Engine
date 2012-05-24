@@ -650,7 +650,7 @@ int Def_GetTextNumForName(const char* name)
 }
 
 /**
- * Escape sequences are un-escaped (\n, \r, \t, \s, \_).
+ * Escape sequences are un-escaped (\\n, \\r, \\t, \\s, \\_).
  */
 void Def_InitTextDef(ddtext_t* txt, char* str)
 {

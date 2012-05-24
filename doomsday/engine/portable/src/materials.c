@@ -531,7 +531,7 @@ static material_t* allocMaterial(void)
 
 /**
  * Link the material into the global list of materials.
- * \assume material is NOT already present in the global list.
+ * @pre material is NOT already present in the global list.
  */
 static material_t* linkMaterialToGlobalList(material_t* mat)
 {
@@ -839,7 +839,7 @@ static materialbind_t* findMaterialBindForPath(PathDirectory* matDirectory, cons
     return NULL; // Not found.
 }
 
-/// \assume @a uri has already been validated and is well-formed.
+/// @pre @a uri has already been validated and is well-formed.
 static materialbind_t* findMaterialBindForUri(const Uri* uri)
 {
     materialnamespaceid_t namespaceId = Materials_ParseNamespace(Str_Text(Uri_Scheme(uri)));

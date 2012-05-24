@@ -438,7 +438,7 @@ static void pruneUnusedSectors(editmap_t* map)
 #endif
 
 /**
- * @important Order here is critical!
+ * @warning Order here is critical!
  */
 void MPE_PruneRedundantMapData(editmap_t* map, int flags)
 {
@@ -1251,8 +1251,9 @@ static void hardenPolyobjs(GameMap* dest, editmap_t* src)
 }
 
 /**
- * @algorithm Cast a line horizontally or vertically and see what we hit.
- *           (OUCH, we have to iterate over all linedefs!).
+ * @par Algorithm
+ * Cast a line horizontally or vertically and see what we hit.
+ * (OUCH, we have to iterate over all linedefs!).
  */
 static void testForWindowEffect(editmap_t* map, LineDef* l)
 {
@@ -1401,7 +1402,8 @@ static void countVertexLineOwners(Vertex* vtx, uint* oneSided, uint* twoSided)
 }
 
 /**
- * @algorithm Scan the linedef list looking for possible candidates, checking for
+ * @par Algorithm
+ * Scan the linedef list looking for possible candidates, checking for
  * an odd number of one-sided linedefs connected to a single vertex. This idea
  * courtesy of Graham Jackson.
  */

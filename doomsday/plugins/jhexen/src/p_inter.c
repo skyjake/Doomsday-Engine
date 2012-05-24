@@ -1713,7 +1713,7 @@ boolean P_MorphMonster(mobj_t* actor)
         break;
     }
 
-    /// @fixme Do this properly!
+    /// @todo Do this properly!
     oldMonster = *actor;
 
     pos[VX] = actor->origin[VX];

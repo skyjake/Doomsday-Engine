@@ -135,7 +135,7 @@ static void projectDecoration(decorsource_t* src)
     if(distance > src->maxDistance)
         return;
 
-    /// @fixme dj: Why is LO_GetLuminous returning NULL given a supposedly valid index?
+    /// @todo dj: Why is LO_GetLuminous returning NULL given a supposedly valid index?
     if(!LO_GetLuminous(src->lumIdx))
         return;
 

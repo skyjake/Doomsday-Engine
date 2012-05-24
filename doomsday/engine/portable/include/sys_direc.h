@@ -85,7 +85,7 @@ void Dir_CleanPathStr(ddstring_t* str);
 char* Dir_CurrentPath(void);
 
 /**
- * Extract just the file name including any extension from @path.
+ * Extract just the file name including any extension from @a path.
  */
 void Dir_FileName(char* name, const char* path, size_t len);
 

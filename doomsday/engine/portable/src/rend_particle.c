@@ -205,7 +205,7 @@ void Rend_ParticleMarkInSectorVisible(Sector* sector)
 {
     if(!useParticles || !theMap || !sector) return;
 
-    /// @fixme Do the assume sector is from the CURRENT map.
+    /// @todo Do the assume sector is from the CURRENT map.
     gens = GameMap_Generators(theMap);
     if(!gens) return;
 

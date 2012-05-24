@@ -84,6 +84,7 @@ void FileDirectory_Clear(FileDirectory* fd);
 /**
  * Resolve and collate all paths in the directory into a list.
  *
+ * @param fd    FileDirectory instance.
  * @param type  If a valid type, only paths of this type will be visited.
  * @param count  Number of visited paths is written back here.
  *
@@ -95,6 +96,7 @@ ddstring_t* FileDirectory_AllPaths(FileDirectory* fd, pathdirectorynode_type_t t
 /**
  * Add a new set of paths. Duplicates are automatically pruned.
  *
+ * @param fd    FileDirectory instance.
  * @param flags  @see searchPathFlags
  * @param paths  One or more paths.
  * @param pathsCount  Number of elements in @a paths.
@@ -110,6 +112,7 @@ void FileDirectory_AddPaths(FileDirectory* fd,  int flags, const Uri* const* pat
 /**
  * Add a new set of paths from a path list. Duplicates are automatically pruned.
  *
+ * @param fd    FileDirectory instance.
  * @param flags  @see searchPathFlags
  * @param pathList  One or more paths separated by semicolons.
  * @param callback  Callback function ptr.
@@ -124,6 +127,7 @@ void FileDirectory_AddPathList(FileDirectory* fd, int flags, const char* pathLis
 /**
  * Find a path in the directory.
  *
+ * @param fd    FileDirectory instance.
  * @param type  If a valid path type only consider nodes of this type.
  * @param searchPath  Relative or absolute path.
  * @param searchDelimiter  Fragments of @a searchPath are delimited by this character.
@@ -139,6 +143,7 @@ boolean FileDirectory_Find(FileDirectory* fd, pathdirectorynode_type_t type,
  * Iterate over nodes in the directory making a callback for each.
  * Iteration ends when all nodes have been visited or a callback returns non-zero.
  *
+ * @param fd    FileDirectory instance.
  * @param type  If a valid path type only process nodes of this type.
  * @param parent  If not @c NULL, only process child nodes of this node.
  * @param callback  Callback function ptr.

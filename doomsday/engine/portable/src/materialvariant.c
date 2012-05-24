@@ -146,7 +146,7 @@ void MaterialVariant_Ticker(materialvariant_t* mat, timespan_t time)
         }
         else
         {
-            /// @fixme Should reset this to the non-stage animated texture here.
+            /// @todo Should reset this to the non-stage animated texture here.
             //layer->tex = 0;
             //generalCase->inter = 0;
         }}*/

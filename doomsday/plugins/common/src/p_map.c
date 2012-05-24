@@ -1456,7 +1456,7 @@ static boolean P_TryMove2(mobj_t* thing, coord_t x, coord_t y, boolean dropoff)
 #endif
 
 #if __JDOOM64__
-        /// @fixme D64 Mother demon fire attack.
+        /// @todo D64 Mother demon fire attack.
         if(!(thing->flags & MF_TELEPORT) /*&& thing->type != MT_SPAWNFIRE*/
             && !isRemotePlayer
             && tmFloorZ - thing->origin[VZ] > 24)
@@ -1650,7 +1650,7 @@ boolean P_TryMoveXYZ(mobj_t* thing, coord_t x, coord_t y, coord_t z)
 }
 
 /**
- * @fixme This routine has gotten way too big, split if(in->isaline)
+ * @todo This routine has gotten way too big, split if(in->isaline)
  *        to a seperate routine?
  */
 int PTR_ShootTraverse(const intercept_t* in, void* parameters)
@@ -2968,7 +2968,7 @@ mobj_t* P_CheckOnMobj(mobj_t* thing)
         return NULL;
     }
 
-    /// @fixme Do this properly! Consolidate with how jDoom/jHeretic do on-mobj checks?
+    /// @todo Do this properly! Consolidate with how jDoom/jHeretic do on-mobj checks?
 
     tmThing = thing;
     oldMo = *thing; // Save the old mobj before the fake z movement.

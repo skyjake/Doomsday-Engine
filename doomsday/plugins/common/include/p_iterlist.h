@@ -35,7 +35,7 @@ typedef enum {
  * IterList. A LIFO stack of pointers with facilities for bidirectional
  * iteration through the use of an integral iterator (thus scopeless).
  *
- * \important Not thread safe!
+ * @warning Not thread safe!
  */
 typedef struct iterlist_s {
     /// Direction of traversal.

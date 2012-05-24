@@ -272,7 +272,7 @@ boolean resetSurfaceScroll(Surface* suf, void* context)
     suf->oldOffset[1][0] = suf->oldOffset[1][1] = suf->offset[1];
 
     Surface_Update(suf);
-    /// @fixme Do not assume surface is from the CURRENT map.
+    /// @todo Do not assume surface is from the CURRENT map.
     R_SurfaceListRemove(GameMap_ScrollingSurfaces(theMap), suf);
 
     return true;
@@ -299,7 +299,7 @@ boolean interpSurfaceScroll(Surface* suf, void* context)
     // Has this material reached its destination?
     if(suf->visOffset[0] == suf->offset[0] && suf->visOffset[1] == suf->offset[1])
     {
-        /// @fixme Do not assume surface is from the CURRENT map.
+        /// @todo Do not assume surface is from the CURRENT map.
         R_SurfaceListRemove(GameMap_ScrollingSurfaces(theMap), suf);
     }
 
@@ -1439,7 +1439,7 @@ void R_SetupMap(int mode, int flags)
             {
                 BspLeaf* bspLeaf = P_BspLeafAtPoint(ddpl->mo->origin);
 
-                /// @fixme $nplanes
+                /// @todo $nplanes
                 if(bspLeaf && ddpl->mo->origin[VZ] >= bspLeaf->sector->SP_floorvisheight && ddpl->mo->origin[VZ] < bspLeaf->sector->SP_ceilvisheight - 4)
                    ddpl->inVoid = false;
             }
@@ -1739,7 +1739,7 @@ boolean R_UpdatePlane(Plane* pln, boolean forceUpdate)
             if(!ddpl->inGame || !ddpl->mo || !ddpl->mo->bspLeaf)
                 continue;
 
-            /// @fixme $nplanes
+            /// @todo $nplanes
             if((ddpl->flags & DDPF_CAMERA) && ddpl->mo->bspLeaf->sector == sec &&
                (ddpl->mo->origin[VZ] > sec->SP_ceilheight - 4 || ddpl->mo->origin[VZ] < sec->SP_floorheight))
             {

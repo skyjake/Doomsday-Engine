@@ -88,7 +88,7 @@ void checkMobjHash(void)
  */
 static void ClMobj_LinkInHash(mobj_t* mo, thid_t id)
 {
-    /// @fixme Do not assume the CURRENT map.
+    /// @todo Do not assume the CURRENT map.
     cmhash_t* hash = GameMap_ClMobjHash(theMap, id);
     clmoinfo_t* info = ClMobj_GetInfo(mo);
 

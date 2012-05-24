@@ -234,7 +234,7 @@ void Mobj_OriginSmoothed(mobj_t* mo, coord_t origin[3])
 
     if(mo->dPlayer)
     {
-        /// @fixme What about splitscreen? We have smoothed coords for all local players.
+        /// @todo What about splitscreen? We have smoothed coords for all local players.
         if(P_GetDDPlayerIdx(mo->dPlayer) == consolePlayer)
         {
             const viewdata_t* vd = R_ViewData(consolePlayer);
@@ -254,7 +254,7 @@ angle_t Mobj_AngleSmoothed(mobj_t* mo)
 
     if(mo->dPlayer)
     {
-        /// @fixme What about splitscreen? We have smoothed angles for all local players.
+        /// @todo What about splitscreen? We have smoothed angles for all local players.
         if(P_GetDDPlayerIdx(mo->dPlayer) == consolePlayer)
         {
             const viewdata_t* vd = R_ViewData(consolePlayer);

@@ -1587,7 +1587,7 @@ static int BytesPerPixelFmt(dgltexformat_t format)
 
 /**
  * Given a pixel format return the number of bytes to store one pixel.
- * \assume Input data is of GL_UNSIGNED_BYTE type.
+ * @pre Input data is of GL_UNSIGNED_BYTE type.
  */
 static int BytesPerPixel(GLint format)
 {
@@ -1850,7 +1850,7 @@ boolean GL_UploadTexture(int glFormat, int loadFormat, const uint8_t* pixels,
     return true;
 }
 
-/// \important Texture parameters will NOT be set here!
+/// @note Texture parameters will NOT be set here!
 void GL_UploadTextureContent(const texturecontent_t* content)
 {
     assert(content);
@@ -2224,7 +2224,7 @@ static boolean validPatch(const uint8_t* buffer, size_t len)
 }
 
 /**
- * \important: The buffer must have room for the new alpha data!
+ * @note The buffer must have room for the new alpha data!
  *
  * @param dstBuf  The destination buffer the patch will be drawn to.
  * @param texwidth  Width of the dst buffer in pixels.
@@ -3017,7 +3017,7 @@ static int setVariantMinFilterWorker(Texture* tex, void* paramaters)
 void GL_SetAllTexturesMinFilter(int minFilter)
 {
     int localMinFilter = minFilter;
-    /// @fixme This is no longer correct logic. Changing the global minification
+    /// @todo This is no longer correct logic. Changing the global minification
     ///        filter should not modify the uploaded texture content.
 #if 0
     Textures_Iterate2(TN_ANY, setVariantMinFilterWorker, (void*)&localMinFilter);

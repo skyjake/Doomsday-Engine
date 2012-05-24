@@ -58,7 +58,7 @@ float R_ShadowAttenuationFactor(coord_t distance);
  * Project all mobj shadows affecting the given quad (world space), calculate
  * coordinates (in texture space) then store into a new list of projections.
  *
- * @assume The coordinates of the given quad must be contained wholly within
+ * @pre The coordinates of the given quad must be contained wholly within
  * the BSP leaf specified. This is due to an optimization within the mobj
  * management which separates them according to their position in the BSP.
  *

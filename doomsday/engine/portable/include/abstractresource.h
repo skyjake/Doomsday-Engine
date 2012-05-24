@@ -42,6 +42,7 @@ void AbstractResource_Delete(AbstractResource* resource);
 /**
  * Add a new symbolic name to the list of names for this.
  *
+ * @param resource  AbstractResource instance.
  * @param name  New name for this resource. Newer names have precedence.
  */
 void AbstractResource_AddName(AbstractResource* resource, const ddstring_t* name);
@@ -49,12 +50,14 @@ void AbstractResource_AddName(AbstractResource* resource, const ddstring_t* name
 /**
  * Add a new sub-resource identity key to the list for this.
  *
+ * @param resource  AbstractResource instance.
  * @param identityKey  New identity key (e.g., a lump/file name).
  */
 void AbstractResource_AddIdentityKey(AbstractResource* resource, const ddstring_t* identityKey);
 
 /**
  * Attempt to resolve a path to this resource.
+ * @param resource  AbstractResource instance.
  *
  * @return  Found path.
  */

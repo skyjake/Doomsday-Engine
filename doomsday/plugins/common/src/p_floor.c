@@ -517,7 +517,7 @@ LineDef* P_FindLineInSectorSmallestBottomMaterial(Sector *sec, int *val)
  * DOOM.exe In addition, this algorithm was further broken in Heretic as the
  * test which compares floor heights was removed.
  *
- * @important DO NOT USE THIS ANYWHERE ELSE!
+ * @warning DO NOT USE THIS ANYWHERE ELSE!
  */
 
 typedef struct findfirstneighbouratfloorheightparams_s {
@@ -991,7 +991,7 @@ static int findSectorNeighborsForStairBuild(void* ptr, void* context)
  * DOOM.exe In addition, this algorithm was further broken in Heretic as the
  * test which compares floor heights was removed.
  *
- * @important DO NOT USE THIS ANYWHERE ELSE!
+ * @warning DO NOT USE THIS ANYWHERE ELSE!
  */
 typedef struct spreadsectorparams_s {
     Sector* baseSec;

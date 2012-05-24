@@ -2243,7 +2243,7 @@ void G_DoMapCompleted(void)
     Con_Busy(BUSYF_TRANSITION, NULL, prepareIntermission, NULL);
 
 #if __JHERETIC__
-    // @fixme is this necessary at this time?
+    // @todo is this necessary at this time?
     NetSv_SendGameState(0, DDSP_ALL_PLAYERS);
 #endif
 
@@ -3333,7 +3333,7 @@ void G_DoScreenShot(void)
 static void openLoadMenu(void)
 {
     Hu_MenuCommand(MCMD_OPEN);
-    /// @fixme This should be called automatically when opening the page
+    /// @todo This should be called automatically when opening the page
     /// thus making this function redundant.
     Hu_MenuUpdateGameSaveWidgets();
     Hu_MenuSetActivePage(Hu_MenuFindPageByName("LoadGame"));
@@ -3342,7 +3342,7 @@ static void openLoadMenu(void)
 static void openSaveMenu(void)
 {
     Hu_MenuCommand(MCMD_OPEN);
-    /// @fixme This should be called automatically when opening the page
+    /// @todo This should be called automatically when opening the page
     /// thus making this function redundant.
     Hu_MenuUpdateGameSaveWidgets();
     Hu_MenuSetActivePage(Hu_MenuFindPageByName("SaveGame"));

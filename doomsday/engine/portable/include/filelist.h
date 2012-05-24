@@ -118,7 +118,7 @@ DFile* FileList_RemoveFront(FileList* fl);
 DFile* FileList_RemoveBack(FileList* fl);
 
 /**
- * Remove file reference at position @idx.
+ * Remove file reference at position @a idx.
  *
  * @param idx  Index of the reference to be removed. Negative indexes allowed.
  * @return  Ptr to file referenced by the removed node if successful else @c NULL.

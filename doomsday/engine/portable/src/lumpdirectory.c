@@ -121,7 +121,7 @@ int LumpDirectory_Size(LumpDirectory* ld)
 
 /**
  * Moves @a count lumps starting beginning at @a from.
- * \assume LumpDirectory::records is large enough for this operation!
+ * @pre LumpDirectory::records is large enough for this operation!
  */
 static void LumpDirectory_Move(LumpDirectory* ld, uint from, uint count, int offset)
 {

@@ -172,7 +172,7 @@ void FR_Ticker(timespan_t ticLength)
         return;
 
     // Restricted to fixed 35 Hz ticks.
-    /// @fixme We should not be synced to the games' fixed "sharp" timing.
+    /// @todo We should not be synced to the games' fixed "sharp" timing.
     ///        This font renderer is used by the engine's UI also.
     if(!DD_IsSharpTick())
         return; // It's too soon.
@@ -820,8 +820,8 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
     switch(Font_Type(font))
     {
     case FT_BITMAP:
-        /// @fixme Filtering should be determined at a higher level.
-        /// @fixme We should not need to re-bind this texture here.
+        /// @todo Filtering should be determined at a higher level.
+        /// @todo We should not need to re-bind this texture here.
         GL_BindTextureUnmanaged(BitmapFont_GLTextureName(font), filterUI? GL_LINEAR : GL_NEAREST);
 
         memcpy(&geometry, BitmapFont_CharGeometry(font, ch), sizeof(geometry));

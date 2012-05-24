@@ -227,7 +227,7 @@ void C_DECL A_LeafSpawn(mobj_t* actor)
         pos[VY] += FIX2FLT((P_Random() - P_Random()) << 14);
         pos[VZ] += FIX2FLT(P_Random() << 14);
 
-        /// @fixme  We should not be using the original indices to determine
+        /// @todo  We should not be using the original indices to determine
         ///         the mobjtype. Use a local table instead.
         if((mo = P_SpawnMobj(MT_LEAF1 + (P_Random() & 1), pos,
                                 actor->angle, 0)))
