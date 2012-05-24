@@ -25,9 +25,10 @@
 #include <QVarLengthArray>
 #include <de/Log>
 #include <de/Error>
+#include <QDebug>
 
 /**
- * JSON parser. Not exposed outside this source file; use parseJSON() instead.
+ * Not exposed outside this source file; use parseJSON() instead.
  */
 class JSONParser
 {
@@ -78,7 +79,8 @@ public:
 
     void error(const QString& message)
     {
-        throw de::Error("JSONParser", de::String("Error at position %1: %2").arg(pos).arg(message));
+        throw de::Error("JSONParser", de::String("Error at position %1 (%2^%3): %4")
+                        .arg(pos).arg(source.mid(pos - 4, 4)).arg(source.mid(pos, 4)).arg(message));
     }
 
     QVariant parse()
@@ -219,9 +221,9 @@ public:
         if(c == '-')
         {
             str.append(c);
-            c = next();
+            c = nextNoSkip();
         }
-        for(; c.isDigit(); c = next())
+        for(; c.isDigit(); c = nextNoSkip())
         {
             str.append(c);
         }
@@ -230,8 +232,8 @@ public:
         {
             str.append(c);
             hasDecimal = true;
-            c = next();
-            for(; c.isDigit(); c = next())
+            c = nextNoSkip();
+            for(; c.isDigit(); c = nextNoSkip())
             {
                 str.append(c);
             }
@@ -240,13 +242,13 @@ public:
         {
             // Exponent.
             str.append(c);
-            c = next();
+            c = nextNoSkip();
             if(c == '+' || c == '-')
             {
                 str.append(c);
-                c = next();
+                c = nextNoSkip();
             }
-            for(; c.isDigit(); c = next())
+            for(; c.isDigit(); c = nextNoSkip())
             {
                 str.append(c);
             }
@@ -270,16 +272,19 @@ public:
         if(source.mid(pos, 4) == "true")
         {
             pos += 4;
+            skipWhite();
             return QVariant(true);
         }
         else if(source.mid(pos, 5) == "false")
         {
             pos += 5;
+            skipWhite();
             return QVariant(false);
         }
         else if(source.mid(pos, 4) == "null")
         {
             pos += 4;
+            skipWhite();
             return QVariant(0);
         }
         else
