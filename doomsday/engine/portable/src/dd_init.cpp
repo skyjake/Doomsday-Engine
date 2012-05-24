@@ -58,6 +58,7 @@
 
 #include <QApplication>
 #include <QSettings>
+#include <QNetworkProxyFactory>
 #include <QDebug>
 #include <stdlib.h>
 #include <de/App>
@@ -68,6 +69,7 @@
 #include "con_main.h"
 #include "window.h"
 #include "displaymode.h"
+#include "updater.h"
 #include "sys_system.h"
 
 extern "C" {
@@ -92,6 +94,9 @@ LegacyCore* de2LegacyCore;
 
 static void continueInitWithEventLoopRunning(void)
 {
+    // Check for updates automatically.
+    Updater_Init();
+
     // This function only needs to be called once, so clear the callback.
     LegacyCore_SetLoopFunc(de2LegacyCore, 0);
 
