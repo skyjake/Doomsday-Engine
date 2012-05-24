@@ -81,10 +81,14 @@ struct Updater::Instance
     Channel channel;        ///< What kind of updates to check for.
     QDateTime lastCheckTime;///< Time of last check (automatic or manual).
     bool onlyCheckManually; ///< Should only check when manually requested.
-    bool deleteAfterUpdate;  ///< Downloaded file is deleted afterwards.
+    bool deleteAfterUpdate; ///< Downloaded file is deleted afterwards.
     QString downloadPath;   ///< Path where the downloaded file is saved.
+    QString latestVersion;
+    int latestBuild;
+    QString latestPackageUri;
+    QString latestNotesUri;
 
-    Instance(Updater* up) : self(up)
+    Instance(Updater* up) : self(up), latestBuild(0)
     {
         // Fetch the current settings.
         QSettings st;
@@ -133,7 +137,19 @@ struct Updater::Instance
         reply->deleteLater(); // make sure it gets deleted
 
         QVariant result = parseJSON(QString::fromUtf8(reply->readAll()));
-        qDebug() << result;
+        if(!result.isValid()) return;
+
+        QVariantMap map = result.toMap();
+        latestBuild = map["build_uniqueid"].toInt();
+        latestVersion = map["version"].toString();
+        latestPackageUri = map["direct_download_uri"].toString();
+        latestNotesUri = map["release_notesuri"].toString();
+
+        LOG_VERBOSE("Received latest version information:\n"
+                    " - version: %s build %i\n"
+                    " - package: %s\n"
+                    " - notes: %s")
+                << latestVersion << latestBuild << latestPackageUri << latestNotesUri;
     }
 };
 
