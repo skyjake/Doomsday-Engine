@@ -225,11 +225,18 @@ void LogBuffer::flush()
                 // The wrap indentatin will be determined dynamically based on the content
                 // of the line.
                 int wrapIndent = -1;
+                int nextWrapIndent = -1;
 
                 // Print line by line.
                 String::size_type pos = 0;
                 while(pos != String::npos)
                 {
+#ifdef _DEBUG
+                    const int minimumIndent = 25;
+#else
+                    const int minimumIndent = 0;
+#endif
+
                     String::size_type next = message.indexOf('\n', pos);
                     duint lineLen = (next == String::npos? message.size() - pos : next - pos);
                     const duint maxLen = (pos > 0? MAX_LENGTH - wrapIndent : MAX_LENGTH);
@@ -246,10 +253,10 @@ void LogBuffer::flush()
                             /// @todo remove isPunct() and just check for the breaking chars
                             if(message[checkPos].isSpace() ||
                                     (message[checkPos].isPunct() && message[checkPos] != '.' &&
-                                     message[checkPos] != ',' && message[checkPos] != '-' &&
-                                     message[checkPos] != '\'' && message[checkPos] != '"' &&
-                                     message[checkPos] != '(' && message[checkPos] != ')' &&
-                                     message[checkPos] != '[' && message[checkPos] != ']' &&
+                                     message[checkPos] != ','    && message[checkPos] != '-' &&
+                                     message[checkPos] != '\''   && message[checkPos] != '"' &&
+                                     message[checkPos] != '('    && message[checkPos] != ')' &&
+                                     message[checkPos] != '['    && message[checkPos] != ']' &&
                                      message[checkPos] != '_'))
                             {
                                 if(!message[checkPos].isSpace())
@@ -270,15 +277,16 @@ void LogBuffer::flush()
                     String lineText = message.substr(pos, lineLen);
                     if(pos > 0 && lineText.isEmpty()) break; // Skip empty remainder.
 
-                    // The wrap indent for this paragraph depends on the first line's content.
-                    if(wrapIndent < 0)
+                    // For lines other than the first one, print an indentation.
+                    if(pos > 0)
                     {
-#ifdef _DEBUG
-                        const int minimum = 25;
-#else
-                        const int minimum = 0;
-#endif
-                        int w = minimum;
+                        lineText = QString(wrapIndent, QChar(' ')) + lineText;
+                    }
+
+                    // The wrap indent for this paragraph depends on the first line's content.
+                    if(nextWrapIndent < 0)
+                    {
+                        int w = minimumIndent;
                         int firstNonSpace = -1;
                         for(; w < lineText.size(); ++w)
                         {
@@ -287,31 +295,31 @@ void LogBuffer::flush()
 
                             // Indent to colons automatically (but not too deeply).
                             if(lineText[w] == ':' && w < lineText.size() - 1 && lineText[w + 1].isSpace())
-                                firstNonSpace = (w < int(MAX_LENGTH)/2? -1 : minimum);
+                                firstNonSpace = (w < int(MAX_LENGTH)*2/3? -1 : minimumIndent);
                         }
 
-                        wrapIndent = qMax(0, firstNonSpace);
+                        nextWrapIndent = qMax(minimumIndent, firstNonSpace);
                     }
 
                     // Check for formatting symbols.
-                    lineText.replace("$R", String(MAX_LENGTH - wrapIndent - 1, '-'));
-
-                    // For lines other than the first one, print an indentation.
-                    if(pos > 0)
-                    {
-                        foreach(IOutputStream* stream, os)
-                        {
-                            if(stream) *stream << QString(wrapIndent, QChar(' '));
-                        }
-                    }
+                    lineText.replace("$R", String(maxLen - minimumIndent, '-'));
 
                     foreach(IOutputStream* stream, os)
                     {
                         if(stream) *stream << lineText;
                     }
 
+                    wrapIndent = nextWrapIndent;
                     pos = next;
-                    if(pos != String::npos && message[pos].isSpace()) pos++; // Skip whitespace.
+                    if(pos != String::npos && message[pos].isSpace())
+                    {
+                        if(message[pos] == '\n')
+                        {
+                            nextWrapIndent = -1;
+                            wrapIndent = minimumIndent;
+                        }
+                        pos++; // Skip whitespace.
+                    }
 
                     foreach(IOutputStream* stream, os)
                     {
