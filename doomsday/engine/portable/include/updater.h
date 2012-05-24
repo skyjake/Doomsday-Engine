@@ -1,0 +1,71 @@
+/**
+ * @file updater.h
+ * Automatic updater that works with dengine.net. @ingroup base
+ *
+ * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
+ */
+
+#ifndef LIBDENG_UPDATER_H
+#define LIBDENG_UPDATER_H
+
+#ifdef __cplusplus
+
+#include <QObject>
+#include <QNetworkReply>
+
+/**
+ * Automatic updater. Communicates with dengine.net and coordinates the
+ * download and reinstall procedure.
+ */
+class Updater : public QObject
+{
+public:
+    explicit Updater(QObject* parent = 0);
+    ~Updater();
+
+public slots:
+    void gotReply(QNetworkReply*);
+
+private:
+    struct Instance;
+    Instance* d;
+};
+
+#endif // __cplusplus
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ * Initializes the automatic updater. If it is time to check for an update,
+ * queries the latest version from http://dengine.net/ and determines the need
+ * to update.
+ */
+void Updater_Init(void);
+
+/**
+ * Shuts down the automatic updater. Must be called at engine shutdown.
+ */
+void Updater_Shutdown(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
+#endif // LIBDENG_UPDATER_H
