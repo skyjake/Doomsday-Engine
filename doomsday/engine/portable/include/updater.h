@@ -34,6 +34,8 @@
  */
 class Updater : public QObject
 {
+    Q_OBJECT
+
 public:
     explicit Updater(QObject* parent = 0);
     ~Updater();
