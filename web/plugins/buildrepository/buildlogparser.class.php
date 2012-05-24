@@ -109,6 +109,10 @@ class BuildLogParser
                             {
                                 $pack->setReleaseNotesUri($build->releaseNotesUri());
                             }
+                            if($build->hasReleaseChangeLogUri())
+                            {
+                                $pack->setReleaseChangeLogUri($build->releaseChangeLogUri());
+                            }
 
                             $build->addPackage($pack);
                         }
@@ -226,6 +230,10 @@ class BuildLogParser
         if(!empty($log_event->releaseNotes))
         {
             $event->setReleaseNotesUri(clean_text($log_event->releaseNotes));
+        }
+        if(!empty($log_event->changeLog))
+        {
+            $event->setReleaseChangeLogUri(clean_text($log_event->changeLog));
         }
 
         return $event;

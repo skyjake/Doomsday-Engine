@@ -31,8 +31,10 @@ class BuildEvent
     private $startDate;
     private $authorName;
     private $authorEmail;
+
     private $releaseTypeId;
     private $releaseNotesUri = NULL;
+    private $releaseChangeLogUri = NULL;
 
     // Event chains:
     private $prevForStartDate = NULL;
@@ -105,6 +107,21 @@ class BuildEvent
     public function setReleaseNotesUri($newUri)
     {
         $this->releaseNotesUri = "$newUri";
+    }
+
+    public function hasReleaseChangeLogUri()
+    {
+        return !is_null($this->releaseChangeLogUri);
+    }
+
+    public function releaseChangeLogUri()
+    {
+        return $this->releaseChangeLogUri;
+    }
+
+    public function setReleaseChangeLogUri($newUri)
+    {
+        $this->releaseChangeLogUri = "$newUri";
     }
 
     public function addPackage(&$package)
