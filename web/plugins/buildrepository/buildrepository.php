@@ -592,6 +592,10 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                 {
                     $build->setReleaseNotesUri($pack->releaseNotesUri());
                 }
+                if($pack->hasReleaseChangeLogUri())
+                {
+                    $build->setReleaseChangeLogUri($pack->releaseChangeLogUri());
+                }
                 $build->addPackage($pack);
             }
 
@@ -1296,6 +1300,10 @@ jQuery(document).ready(function() {
                 if($pack->hasReleaseNotesUri())
                 {
                     $build->setReleaseNotesUri($pack->releaseNotesUri());
+                }
+                if($pack->hasReleaseChangeLogUri())
+                {
+                    $build->setReleaseChangeLogUri($pack->releaseChangeLogUri());
                 }
                 $build->addPackage($pack);
             }

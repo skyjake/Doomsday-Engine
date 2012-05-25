@@ -25,15 +25,17 @@
 #include "de_play.h"
 #include "de_refresh.h"
 
+#include <de/Log>
+
 coord_t WallDivNode_Height(walldivnode_t* node)
 {
-    assert(node);
+    Q_ASSERT(node);
     return node->height;
 }
 
 walldivnode_t* WallDivNode_Next(walldivnode_t* node)
 {
-    assert(node);
+    Q_ASSERT(node);
     uint idx = node - node->divs->nodes;
     if(idx+1 >= node->divs->num) return 0;
     return &node->divs->nodes[idx+1];
@@ -41,7 +43,7 @@ walldivnode_t* WallDivNode_Next(walldivnode_t* node)
 
 walldivnode_t* WallDivNode_Prev(walldivnode_t* node)
 {
-    assert(node);
+    Q_ASSERT(node);
     uint idx = node - node->divs->nodes;
     if(idx == 0) return 0;
     return &node->divs->nodes[idx-1];
@@ -49,38 +51,80 @@ walldivnode_t* WallDivNode_Prev(walldivnode_t* node)
 
 uint WallDivs_Size(const walldivs_t* wd)
 {
-    assert(wd);
+    Q_ASSERT(wd);
     return wd->num;
 }
 
 walldivnode_t* WallDivs_First(walldivs_t* wd)
 {
-    assert(wd);
+    Q_ASSERT(wd);
     return &wd->nodes[0];
 }
 
 walldivnode_t* WallDivs_Last(walldivs_t* wd)
 {
-    assert(wd);
+    Q_ASSERT(wd);
     return &wd->nodes[wd->num-1];
 }
 
-static int C_DECL sortWallDivNode(const void* e1, const void* e2)
+walldivs_t* WallDivs_Append(walldivs_t* wd, coord_t height)
 {
-    const coord_t h1 = ((walldivnode_t*)e1)->height;
-    const coord_t h2 = ((walldivnode_t*)e2)->height;
-    if(h1 > h2) return  1;
-    if(h2 > h1) return -1;
-    return 0;
-}
-
-static void addWallDivNode(walldivs_t* wd, coord_t height)
-{
-    assert(wd);
+    Q_ASSERT(wd);
     struct walldivnode_s* node = &wd->nodes[wd->num++];
     node->divs = wd;
     node->height = height;
+    return wd;
 }
+
+/**
+ * Ensure the divisions are sorted (in ascending Z order).
+ */
+void WallDivs_AssertSorted(walldivs_t* wd)
+{
+#if _DEBUG
+    walldivnode_t* node = WallDivs_First(wd);
+    coord_t highest = WallDivNode_Height(node);
+    for(uint i = 0; i < wd->num; ++i, node = WallDivNode_Next(node))
+    {
+        Q_ASSERT(node->height <= highest);
+        highest = node->height;
+    }
+#else
+    DENG_UNUSED(wd);
+#endif
+}
+
+/**
+ * Ensure the divisions do not exceed the specified range.
+ */
+void WallDivs_AssertInRange(walldivs_t* wd, coord_t low, coord_t hi)
+{
+#if _DEBUG
+    Q_ASSERT(wd);
+    walldivnode_t* node = WallDivs_First(wd);
+    for(uint i = 0; i < wd->num; ++i, node = WallDivNode_Next(node))
+    {
+        Q_ASSERT(node->height >= low && node->height <= hi);
+    }
+#else
+    DENG_UNUSED(wd);
+    DENG_UNUSED(low);
+    DENG_UNUSED(hi);
+#endif
+}
+
+#if _DEBUG
+void WallDivs_DebugPrint(walldivs_t* wd)
+{
+    Q_ASSERT(wd);
+    LOG_DEBUG("WallDivs [%p]:") << wd;
+    for(uint i = 0; i < wd->num; ++i)
+    {
+        walldivnode_t* node = &wd->nodes[i];
+        LOG_DEBUG("  %i: %f") << i << node->height;
+    }
+}
+#endif
 
 static walldivnode_t* findWallDivNodeByZOrigin(walldivs_t* wallDivs, coord_t height)
 {
@@ -158,7 +202,7 @@ static void addWallDivNodesForPlaneIntercepts(HEdge* hedge, walldivs_t* wallDivs
                             {
                                 if(!findWallDivNodeByZOrigin(wallDivs, pln->visHeight))
                                 {
-                                    addWallDivNode(wallDivs, pln->visHeight);
+                                    WallDivs_Append(wallDivs, pln->visHeight);
 
                                     // Have we reached the div limit?
                                     if(wallDivs->num == WALLDIVS_MAX_NODES)
@@ -195,11 +239,10 @@ static void addWallDivNodesForPlaneIntercepts(HEdge* hedge, walldivs_t* wallDivs
                         {
                             if(!findWallDivNodeByZOrigin(wallDivs, z))
                             {
-                                addWallDivNode(wallDivs, z);
+                                WallDivs_Append(wallDivs, z);
 
-                                // Have we reached the div limit?
-                                if(wallDivs->num == WALLDIVS_MAX_NODES)
-                                    stopScan = true;
+                                // All clipped away.
+                                stopScan = true;
                             }
                         }
                     }
@@ -213,6 +256,15 @@ static void addWallDivNodesForPlaneIntercepts(HEdge* hedge, walldivs_t* wallDivs
     } while(!stopScan);
 }
 
+static int C_DECL sortWallDivNode(const void* e1, const void* e2)
+{
+    const coord_t h1 = ((walldivnode_t*)e1)->height;
+    const coord_t h2 = ((walldivnode_t*)e2)->height;
+    if(h1 > h2) return  1;
+    if(h2 > h1) return -1;
+    return 0;
+}
+
 static void buildWallDiv(walldivs_t* wallDivs, HEdge* hedge,
    SideDefSection section, coord_t bottomZ, coord_t topZ, boolean doRight)
 {
@@ -220,13 +272,13 @@ static void buildWallDiv(walldivs_t* wallDivs, HEdge* hedge,
 
     // Nodes are arranged according to their Z axis height in ascending order.
     // The first node is the bottom.
-    addWallDivNode(wallDivs, bottomZ);
+    WallDivs_Append(wallDivs, bottomZ);
 
     // Add nodes for intercepts.
     addWallDivNodesForPlaneIntercepts(hedge, wallDivs, section, bottomZ, topZ, doRight);
 
     // The last node is the top.
-    addWallDivNode(wallDivs, topZ);
+    WallDivs_Append(wallDivs, topZ);
 
     if(!(wallDivs->num > 2)) return;
     
@@ -234,17 +286,8 @@ static void buildWallDiv(walldivs_t* wallDivs, HEdge* hedge,
     // There seldom are more than two or three nodes.
     qsort(wallDivs->nodes, wallDivs->num, sizeof(*wallDivs->nodes), sortWallDivNode);
 
-#ifdef RANGECHECK
-    for(uint i = 1; i < wallDivs->num - 1; ++i)
-    {
-        const walldivnode_t* node = &wallDivs->nodes[i];
-        if(node->height > topZ || node->height < bottomZ)
-        {
-            Con_Error("WallDiv node #%i pos (%f) <> hi (%f), low (%f), num=%i\n",
-                      i, node->height, topZ, bottomZ, wallDivs->num);
-        }
-    }
-#endif
+    WallDivs_AssertSorted(wallDivs);
+    WallDivs_AssertInRange(wallDivs, bottomZ, topZ);
 }
 
 boolean HEdge_PrepareWallDivs(HEdge* hedge, SideDefSection section,

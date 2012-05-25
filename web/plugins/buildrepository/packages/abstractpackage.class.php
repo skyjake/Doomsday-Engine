@@ -32,6 +32,7 @@ abstract class AbstractPackage extends BasePackage implements iDownloadable
 
     protected $directDownloadUri = NULL;
     protected $releaseNotesUri = NULL;
+    protected $releaseChangeLogUri = NULL;
 
     protected $compileLogUri = NULL;
     protected $compileWarnCount = NULL;
@@ -56,6 +57,9 @@ abstract class AbstractPackage extends BasePackage implements iDownloadable
         parent::populateGraphTemplate($tpl);
 
         $tpl['direct_download_uri'] = $this->directDownloadUri();
+
+        if($this->hasReleaseChangeLogUri())
+            $tpl['release_changeloguri'] = $this->releaseChangeLogUri;
 
         if($this->hasReleaseNotesUri())
             $tpl['release_notesuri'] = $this->releaseNotesUri;
@@ -83,6 +87,21 @@ abstract class AbstractPackage extends BasePackage implements iDownloadable
     public function setReleaseNotesUri($newUri)
     {
         $this->releaseNotesUri = "$newUri";
+    }
+
+    public function hasReleaseChangeLogUri()
+    {
+        return !is_null($this->releaseChangeLogUri);
+    }
+
+    public function releaseChangeLogUri()
+    {
+        return $this->releaseChangeLogUri;
+    }
+
+    public function setReleaseChangeLogUri($newUri)
+    {
+        $this->releaseChangeLogUri = "$newUri";
     }
 
     public function hasCompileLogUri()
