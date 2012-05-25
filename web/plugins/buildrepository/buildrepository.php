@@ -900,7 +900,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         {
             // Filtered out?
             if($pack === $notThisPack) continue;
-            if($unstable != -1 && (boolean)$unstable != ($pack instanceof AbstractUnstablePackage)) continue;
+            if($unstable != -1 && (boolean)$unstable == ($pack instanceof AbstractUnstablePackage)) continue;
             if($downloadable != -1 && (boolean)$downloadable != ($pack instanceof iDownloadable && $pack->hasDirectDownloadUri())) continue;
             if(!is_null($chosenPlatformId) && $pack->platformId() === $chosenPlatformId) continue;
 
