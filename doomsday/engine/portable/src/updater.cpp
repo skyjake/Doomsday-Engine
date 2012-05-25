@@ -24,7 +24,9 @@
 #include "dd_version.h"
 #include "dd_types.h"
 #include "json.h"
+#include <de/Time>
 #include <de/Log>
+#include <QStringList>
 #include <QDateTime>
 #include <QDesktopServices>
 #include <QNetworkAccessManager>
@@ -74,6 +76,87 @@ struct Updater::Instance
         Unstable = 1
     };
 
+    struct VersionInfo
+    {
+        int major;
+        int minor;
+        int revision;
+        int patch;
+        int build;
+
+        /**
+         * Version information.
+         * @todo Could be useful as a generic utility class.
+         */
+        VersionInfo() : patch(0), build(de::Time().asBuildNumber())
+        {
+            parseVersionString(DOOMSDAY_VERSION_BASE);
+#ifdef DOOMSDAY_BUILD_TEXT
+            build = de::String(DOOMSDAY_BUILD_TEXT).toInt();
+#endif
+        }
+
+        VersionInfo(const de::String& version, int buildNumber) : build(buildNumber)
+        {
+            parseVersionString(version);
+        }
+
+        QString asText() const
+        {
+            if(patch > 0)
+            {
+                return QString("%1.%2.%3-%4 Build %5").arg(major).arg(minor).arg(revision).arg(patch).arg(build);
+            }
+            return QString("%1.%2.%3 Build %4").arg(major).arg(minor).arg(revision).arg(build);
+        }
+
+        void parseVersionString(const de::String& version)
+        {
+            QStringList parts = version.split('.');
+            major = parts[0].toInt();
+            minor = parts[1].toInt();
+            if(parts[2].contains('-'))
+            {
+                QStringList rev = parts[2].split('-');
+                revision = rev[0].toInt();
+                patch = rev[1].toInt();
+            }
+            else
+            {
+                revision = parts[2].toInt();
+                patch = 0;
+            }
+        }
+
+        bool operator < (const VersionInfo& other) const
+        {
+            if(major == other.major)
+            {
+                if(minor == other.minor)
+                {
+                    if(revision == other.revision)
+                    {
+                        return build < other.build;
+                    }
+                    return revision < other.revision;
+                }
+                return minor < other.minor;
+            }
+            return major < other.major;
+        }
+
+        bool operator == (const VersionInfo& other) const
+        {
+            return major == other.major && minor == other.minor &&
+                    revision == other.revision && build == other.build;
+        }
+
+        bool operator > (const VersionInfo& other) const
+        {
+            return !(*this < other || *this == other);
+        }
+    };
+
     Updater* self;
     QNetworkAccessManager* network;
 
@@ -83,12 +166,11 @@ struct Updater::Instance
     bool onlyCheckManually; ///< Should only check when manually requested.
     bool deleteAfterUpdate; ///< Downloaded file is deleted afterwards.
     QString downloadPath;   ///< Path where the downloaded file is saved.
-    QString latestVersion;
-    int latestBuild;
+    VersionInfo latestVersion;
     QString latestPackageUri;
-    QString latestNotesUri;
+    QString latestLogUri;
 
-    Instance(Updater* up) : self(up), latestBuild(0)
+    Instance(Updater* up) : self(up)
     {
         // Fetch the current settings.
         QSettings st;
@@ -140,16 +222,21 @@ struct Updater::Instance
         if(!result.isValid()) return;
 
         QVariantMap map = result.toMap();
-        latestBuild = map["build_uniqueid"].toInt();
-        latestVersion = map["version"].toString();
         latestPackageUri = map["direct_download_uri"].toString();
-        latestNotesUri = map["release_notesuri"].toString();
+        latestLogUri = map["release_changeloguri"].toString();
+
+        latestVersion = VersionInfo(map["version"].toString(), map["build_uniqueid"].toInt());
 
         LOG_VERBOSE("Received latest version information:\n"
-                    " - version: %s build %i\n"
+                    " - version: %s (running %s)\n"
                     " - package: %s\n"
-                    " - notes: %s")
-                << latestVersion << latestBuild << latestPackageUri << latestNotesUri;
+                    " - change log: %s")
+                << latestVersion.asText()
+                << VersionInfo().asText()
+                << latestPackageUri << latestLogUri;
+
+        // Is this newer than what we're running?
+
     }
 };
 

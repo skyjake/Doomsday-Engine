@@ -104,6 +104,11 @@ Time::Delta Time::operator - (const Time& earlierTime) const
 #endif
 }
 
+dint Time::asBuildNumber() const
+{
+    return QDate(2011, 1, 1).daysTo(_time.date()) + 1;
+}
+
 String Time::asText(Format format) const
 {
     if(format == ISOFormat)
@@ -112,7 +117,7 @@ String Time::asText(Format format) const
     }
     else
     {
-        return QString("#%1 ").arg(QDate(2011, 1, 1).daysTo(_time.date()) + 1, -4) +
+        return QString("#%1 ").arg(asBuildNumber(), -4) +
                 _time.toString("hh:mm:ss.zzz");
     }
 }

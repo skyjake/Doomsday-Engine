@@ -204,6 +204,11 @@ public:
      */
     Date asDate() const;
 
+    /**
+     * Converts the time to a build number.
+     */
+    dint asBuildNumber() const;
+
     // Implements ISerializable.
     void operator >> (Writer& to) const;
     void operator << (Reader& from);
