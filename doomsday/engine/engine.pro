@@ -48,8 +48,8 @@ else:macx {
 }
 else {
     # Generic Unix.
-    DEFINES += DENG_BASE_DIR=\\\"$${DENG_BASE_DIR}/\\\"
-    DEFINES += DENG_LIBRARY_DIR=\\\"$${DENG_LIB_DIR}/\\\"
+    DEFINES += DENG_BASE_DIR=\"\\\"$${DENG_BASE_DIR}/\\\"\"
+    DEFINES += DENG_LIBRARY_DIR=\"\\\"$${DENG_LIB_DIR}/\\\"\"
 
     QMAKE_LFLAGS += -rdynamic
 
