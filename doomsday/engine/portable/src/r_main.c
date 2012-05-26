@@ -581,7 +581,7 @@ void R_Update(void)
             for(lineIter = po->lines; *lineIter; lineIter++)
             {
                 LineDef* line = *lineIter;
-                SideDef* side = line->L_frontside;
+                SideDef* side = line->L_frontsidedef;
                 Surface_Update(&side->SW_middlesurface);
             }
         }

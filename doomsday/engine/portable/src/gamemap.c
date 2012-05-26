@@ -368,15 +368,15 @@ static void initPolyobj(Polyobj* po)
     for(lineIter = po->lines; *lineIter; lineIter++)
     {
         LineDef* line = *lineIter;
-        SideDef* front = line->L_frontside;
+        SideDef* front = line->L_frontsidedef;
 
         front->SW_topinflags |= SUIF_NO_RADIO;
         front->SW_middleinflags |= SUIF_NO_RADIO;
         front->SW_bottominflags |= SUIF_NO_RADIO;
 
-        if(line->L_backside)
+        if(line->L_backsidedef)
         {
-            SideDef* back = line->L_backside;
+            SideDef* back = line->L_backsidedef;
 
             back->SW_topinflags |= SUIF_NO_RADIO;
             back->SW_middleinflags |= SUIF_NO_RADIO;

@@ -167,11 +167,11 @@ struct Partitioner::Instance
                (fabs(start->origin[VY] - end->origin[VY]) < DIST_EPSILON))
                 info.flags |= LineDefInfo::ZEROLENGTH;
 
-            if(l->sideDefs[BACK] && l->sideDefs[FRONT])
+            if(l->L_backsidedef && l->L_frontsidedef)
             {
                 info.flags |= LineDefInfo::TWOSIDED;
 
-                if(l->sideDefs[BACK]->sector == l->sideDefs[FRONT]->sector)
+                if(l->L_backsector == l->L_frontsector)
                     info.flags |= LineDefInfo::SELFREF;
             }
         }
@@ -263,14 +263,12 @@ struct Partitioner::Instance
                     }
                 }
 
-                if(line->sideDefs[FRONT])
+                if(line->L_frontsidedef)
                 {
-                    SideDef* side = line->sideDefs[FRONT];
-
-                    if(!side->sector)
+                    if(!line->L_frontsector)
                         LOG_INFO("Bad SideDef on LineDef #%d.") << line->buildData.index;
 
-                    front = newHEdge(line, line, line->L_v1, line->L_v2, side->sector, false);
+                    front = newHEdge(line, line, line->L_v1, line->L_v2, line->L_frontsector, false);
                     linkHEdgeInSuperBlockmap(hedgeList, front);
                 }
                 else
@@ -278,14 +276,12 @@ struct Partitioner::Instance
                     LOG_INFO("LineDef #%d has no front SideDef!") << line->buildData.index;
                 }
 
-                if(line->sideDefs[BACK])
+                if(line->L_backsidedef)
                 {
-                    SideDef* side = line->sideDefs[BACK];
-
-                    if(!side->sector)
+                    if(!line->L_backsector)
                         LOG_INFO("Bad SideDef on LineDef #%d.") << line->buildData.index;
 
-                    back = newHEdge(line, line, line->L_v2, line->L_v1, side->sector, true);
+                    back = newHEdge(line, line, line->L_v2, line->L_v1, line->L_backsector, true);
                     linkHEdgeInSuperBlockmap(hedgeList, back);
 
                     if(front)
@@ -307,8 +303,8 @@ struct Partitioner::Instance
                     // Handle the 'One-Sided Window' trick.
                     if(line->buildData.windowEffect && front)
                     {
-                        HEdge* other = newHEdge(front->lineDef, line,
-                                                line->L_v2, line->L_v1, line->buildData.windowEffect, true);
+                        HEdge* other = newHEdge(front->lineDef, line, line->L_v2, line->L_v1,
+                                                line->buildData.windowEffect, true);
 
                         linkHEdgeInSuperBlockmap(hedgeList, other);
 
@@ -1483,9 +1479,9 @@ struct Partitioner::Instance
                 /// @kludge This should not be done here!
                 if(hedge->lineDef)
                 {
-                    SideDef* side = HEDGE_SIDEDEF(hedge);
+                    lineside_t* side = HEDGE_SIDE(hedge);
                     // Already processed?
-                    if(side && !side->hedgeLeft)
+                    if(!side->hedgeLeft)
                     {
                         side->hedgeLeft = hedge;
                         // Find the left-most hedge.
@@ -1519,10 +1515,9 @@ struct Partitioner::Instance
             hedge = leaf->hedge;
             do
             {
-                if(hedge->lineDef && hedge->lineDef->sideDefs[hedge->side])
+                if(hedge->lineDef)
                 {
-                    SideDef* side = hedge->lineDef->sideDefs[hedge->side];
-                    leaf->sector = side->sector;
+                    leaf->sector = hedge->lineDef->L_sector(hedge->side);
                 }
             } while(!leaf->sector && (hedge = hedge->next) != leaf->hedge);
         }

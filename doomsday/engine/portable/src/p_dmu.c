@@ -275,7 +275,6 @@ void* P_AllocDummy(int type, void* extraData)
                 dummySideDefs[i].inUse = true;
                 dummySideDefs[i].extraData = extraData;
                 dummySideDefs[i].sideDef.header.type = DMU_SIDEDEF;
-                dummySideDefs[i].sideDef.sector = 0;
                 dummySideDefs[i].sideDef.line = 0;
                 return &dummySideDefs[i];
             }
@@ -290,8 +289,14 @@ void* P_AllocDummy(int type, void* extraData)
                 dummyLines[i].inUse = true;
                 dummyLines[i].extraData = extraData;
                 dummyLines[i].line.header.type = DMU_LINEDEF;
-                dummyLines[i].line.L_frontside =
-                    dummyLines[i].line.L_backside = 0;
+                dummyLines[i].line.L_frontsidedef =
+                    dummyLines[i].line.L_backsidedef = 0;
+                dummyLines[i].line.L_frontsector = 0;
+                dummyLines[i].line.L_frontside.hedgeLeft =
+                    dummyLines[i].line.L_frontside.hedgeRight =0;
+                dummyLines[i].line.L_backsector = 0;
+                dummyLines[i].line.L_backside.hedgeLeft =
+                    dummyLines[i].line.L_backside.hedgeRight =0;
                 return &dummyLines[i];
             }
         }
@@ -1016,17 +1021,17 @@ static int setProperty(void* obj, void* context)
 
         if(args->modifiers & DMU_SIDEDEF0_OF_LINE)
         {
-            obj = ((LineDef*) obj)->L_frontside;
+            obj = ((LineDef*) obj)->L_frontsidedef;
             args->type = DMU_SIDEDEF;
         }
         else if(args->modifiers & DMU_SIDEDEF1_OF_LINE)
         {
             LineDef* li = ((LineDef*) obj);
-            if(!li->L_backside)
+            if(!li->L_backsidedef)
                 Con_Error("DMU_setProperty: Linedef %i has no back side.\n",
                           P_ToIndex(li));
 
-            obj = li->L_backside;
+            obj = li->L_backsidedef;
             args->type = DMU_SIDEDEF;
         }
     }
@@ -1184,8 +1189,8 @@ static int setProperty(void* obj, void* context)
     {
         if(R_UpdateLinedef(updateLinedef, false))
         {
-            updateSector1 = updateLinedef->L_frontside->sector;
-            updateSector2 = updateLinedef->L_backside->sector;
+            updateSector1 = updateLinedef->L_frontsector;
+            updateSector2 = updateLinedef->L_backsector;
         }
     }
 
@@ -1526,16 +1531,16 @@ static int getProperty(void* ob, void* context)
     {
         if(args->modifiers & DMU_SIDEDEF0_OF_LINE)
         {
-            ob = ((LineDef*)ob)->L_frontside;
+            ob = ((LineDef*)ob)->L_frontsidedef;
             args->type = DMU_SIDEDEF;
         }
         else if(args->modifiers & DMU_SIDEDEF1_OF_LINE)
         {
             LineDef* li = ((LineDef*)ob);
-            if(!li->L_backside)
+            if(!li->L_backsidedef)
                 Con_Error("DMU_setProperty: Linedef %i has no back side.\n", P_ToIndex(li));
 
-            ob = li->L_backside;
+            ob = li->L_backsidedef;
             args->type = DMU_SIDEDEF;
         }
     }

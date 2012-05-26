@@ -45,7 +45,7 @@ void P_PolyobjChanged(Polyobj* po)
     for(lineIter = po->lines; *lineIter; lineIter++)
     {
         LineDef* line = *lineIter;
-        HEdge* hedge = line->L_frontside->hedgeLeft;
+        HEdge* hedge = line->L_frontside.hedgeLeft;
         int i;
 
         // Shadow bias must be told.

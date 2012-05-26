@@ -86,12 +86,12 @@ static boolean crossLineDef(const LineDef* li, byte side, losdata_t* los)
     if(!interceptLineDef(li, los, &dl))
         return true; // Ray does not intercept hedge on the X/Y plane.
 
-    if(!li->L_side(side))
+    if(!li->L_sidedef(side))
         return true; // HEdge is on the back side of a one-sided window.
 
     fsec = li->L_sector(side);
-    bsec  = (li->L_backside? li->L_sector(side^1) : NULL);
-    noBack = li->L_backside? false : true;
+    bsec  = (li->L_backsidedef? li->L_sector(side^1) : NULL);
+    noBack = li->L_backsidedef? false : true;
 
     if(!noBack && !(los->flags & LS_PASSLEFT) &&
        (!(bsec->SP_floorheight < fsec->SP_ceilheight) ||

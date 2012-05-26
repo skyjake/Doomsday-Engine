@@ -86,7 +86,7 @@ void WallDivs_AssertSorted(walldivs_t* wd)
     coord_t highest = WallDivNode_Height(node);
     for(uint i = 0; i < wd->num; ++i, node = WallDivNode_Next(node))
     {
-        Q_ASSERT(node->height <= highest);
+        Q_ASSERT(node->height >= highest);
         highest = node->height;
     }
 #else
@@ -141,23 +141,22 @@ static walldivnode_t* findWallDivNodeByZOrigin(walldivs_t* wallDivs, coord_t hei
 static void addWallDivNodesForPlaneIntercepts(HEdge* hedge, walldivs_t* wallDivs,
     SideDefSection section, coord_t bottomZ, coord_t topZ, boolean doRight)
 {
-    const boolean isTwoSided = (hedge->lineDef && hedge->lineDef->L_frontside && hedge->lineDef->L_backside)? true:false;
+    const boolean isTwoSided = (hedge->lineDef && hedge->lineDef->L_frontsidedef && hedge->lineDef->L_backsidedef)? true:false;
     const boolean clockwise = !doRight;
     const LineDef* line = hedge->lineDef;
-    SideDef* frontSide = HEDGE_SIDEDEF(hedge);
-    Sector* frontSec = frontSide->sector;
+    Sector* frontSec = line->L_sector(hedge->side);
 
     // Check for neighborhood division?
     if(section == SS_MIDDLE && isTwoSided) return;
-    if(hedge->lineDef->inFlags & LF_POLYOBJ) return;
     if(!hedge->lineDef) return;
+    if(hedge->lineDef->inFlags & LF_POLYOBJ) return;
 
     // Polyobj edges are never split.
     if(hedge->lineDef && (hedge->lineDef->inFlags & LF_POLYOBJ)) return;
 
     // Only edges at sidedef ends can/should be split.
-    if(!((hedge == frontSide->hedgeLeft  && !doRight) ||
-         (hedge == frontSide->hedgeRight &&  doRight)))
+    if(!((hedge == HEDGE_SIDE(hedge)->hedgeLeft  && !doRight) ||
+         (hedge == HEDGE_SIDE(hedge)->hedgeRight &&  doRight)))
         return;
 
     if(bottomZ >= topZ) return; // Obviously no division.
@@ -185,9 +184,9 @@ static void addWallDivNodesForPlaneIntercepts(HEdge* hedge, walldivs_t* wallDivs
             do
             {   // First front, then back.
                 Sector* scanSec = NULL;
-                if(!i && iter->L_frontside && iter->L_frontsector != frontSec)
+                if(!i && iter->L_frontsidedef && iter->L_frontsector != frontSec)
                     scanSec = iter->L_frontsector;
-                else if(i && iter->L_backside && iter->L_backsector != frontSec)
+                else if(i && iter->L_backsidedef && iter->L_backsector != frontSec)
                     scanSec = iter->L_backsector;
 
                 if(scanSec)
@@ -250,7 +249,7 @@ static void addWallDivNodesForPlaneIntercepts(HEdge* hedge, walldivs_t* wallDivs
             } while(!stopScan && ++i < 2);
 
             // Stop the scan when a single sided line is reached.
-            if(!iter->L_frontside || !iter->L_backside)
+            if(!iter->L_frontsidedef || !iter->L_backsidedef)
                 stopScan = true;
         }
     } while(!stopScan);
@@ -397,22 +396,21 @@ int HEdge_GetProperty(const HEdge* hedge, setargs_t* args)
     case DMU_OFFSET:
         DMU_GetValue(DMT_HEDGE_OFFSET, &hedge->offset, args, 0);
         break;
-    case DMU_SIDEDEF:
-        DMU_GetValue(DMT_HEDGE_SIDEDEF, &HEDGE_SIDEDEF(hedge), args, 0);
-        break;
+    case DMU_SIDEDEF: {
+        SideDef* side = HEDGE_SIDEDEF(hedge);
+        DMU_GetValue(DMT_HEDGE_SIDEDEF, &side, args, 0);
+        break; }
     case DMU_LINEDEF:
         DMU_GetValue(DMT_HEDGE_LINEDEF, &hedge->lineDef, args, 0);
         break;
     case DMU_FRONT_SECTOR: {
         Sector* sec = hedge->sector? hedge->sector : NULL;
         DMU_GetValue(DMT_HEDGE_SECTOR, &sec, args, 0);
-        break;
-      }
+        break; }
     case DMU_BACK_SECTOR: {
         Sector* sec = HEDGE_BACK_SECTOR(hedge);
         DMU_GetValue(DMT_HEDGE_SECTOR, &sec, args, 0);
-        break;
-      }
+        break; }
     case DMU_ANGLE:
         DMU_GetValue(DMT_HEDGE_ANGLE, &hedge->angle, args, 0);
         break;

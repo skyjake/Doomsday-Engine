@@ -356,15 +356,15 @@ static void markSideDefSectionsPVisible(HEdge* hedge)
     SideDef* side;
     uint i;
 
-    if(!hedge->lineDef || !hedge->lineDef->L_side(hedge->side)) return;
-    side = hedge->lineDef->L_side(hedge->side);
+    if(!hedge->lineDef || !hedge->lineDef->L_sidedef(hedge->side)) return;
+    side = hedge->lineDef->L_sidedef(hedge->side);
 
     for(i = 0; i < 3; ++i)
     {
         side->sections[i].inFlags |= SUIF_PVIS;
     }
 
-    if(!hedge->lineDef->L_backside)
+    if(!hedge->lineDef->L_backsidedef)
     {
         side->SW_topsurface   .inFlags &= ~SUIF_PVIS;
         side->SW_bottomsurface.inFlags &= ~SUIF_PVIS;
@@ -1636,7 +1636,7 @@ static boolean rendHEdgeSection(HEdge* hedge, SideDefSection section,
         float texScale[2], inter = 0;
         material_t* mat = NULL;
         int rpFlags = RPF_DEFAULT;
-        boolean isTwoSided = (hedge->lineDef && hedge->lineDef->L_frontside && hedge->lineDef->L_backside)? true:false;
+        boolean isTwoSided = (hedge->lineDef && hedge->lineDef->L_frontsidedef && hedge->lineDef->L_backsidedef)? true:false;
         blendmode_t blendMode = BM_NORMAL;
         const float* color = NULL, *color2 = NULL;
         const materialsnapshot_t* msA = NULL, *msB = NULL;
@@ -1849,11 +1849,13 @@ static boolean Rend_RenderHEdgeTwosided(HEdge* hedge)
     LineDef* line;
     int solidSeg = false;
 
+    line = hedge->lineDef;
+    if(!line) return false;
+
     frontSide = HEDGE_SIDEDEF(hedge);
     backSide = HEDGE_SIDEDEF(hedge->twin);
-    frontSec = frontSide->sector;
-    backSec = backSide->sector;
-    line = hedge->lineDef;
+    frontSec = line->L_sector(hedge->side);
+    backSec  = line->L_sector(hedge->side^1);
 
     reportLineDefDrawn(line);
 
@@ -1954,7 +1956,7 @@ static boolean Rend_RenderHEdgeTwosided(HEdge* hedge)
     if(solidSeg == -1)
         return false; // NEVER (we have a hole we couldn't fix).
 
-    if(line->L_frontside && line->L_backside &&
+    if(line->L_frontsidedef && line->L_backsidedef &&
        line->L_frontsector == line->L_backsector)
        return false;
 
@@ -2034,7 +2036,7 @@ static void Rend_MarkSegsFacingFront(BspLeaf* leaf)
         for(i = 0; i < leaf->polyObj->lineCount; ++i)
         {
             line = leaf->polyObj->lines[i];
-            hedge = line->L_frontside->hedgeLeft;
+            hedge = line->L_frontside.hedgeLeft;
 
             // Which way should it be facing?
             if(!(viewFacingDot(hedge->HE_v1origin, hedge->HE_v2origin) < 0))
@@ -2073,7 +2075,7 @@ static void occludeFrontFacingSegsInBspLeaf(const BspLeaf* bspLeaf)
         for(i = 0; i < po->lineCount; ++i)
         {
             line = po->lines[i];
-            hedge = line->L_frontside->hedgeLeft;
+            hedge = line->L_frontside.hedgeLeft;
 
             if(!(hedge->frameFlags & HEDGEINF_FACINGFRONT)) continue;
 
@@ -2150,8 +2152,8 @@ static boolean hedgeBackClosedForSkyFix(const HEdge* hedge, boolean ignoreOpacit
     lineDef = hedge->lineDef;
     side = hedge->side;
 
-    if(!lineDef->L_side(side))   return false;
-    if(!lineDef->L_side(side^1)) return true;
+    if(!lineDef->L_sidedef(side))   return false;
+    if(!lineDef->L_sidedef(side^1)) return true;
 
     frontSec = lineDef->L_sector(side);
     backSec  = lineDef->L_sector(side^1);
@@ -2650,7 +2652,7 @@ static void Rend_RenderPolyobjs(void)
     for(i = 0; i < leaf->polyObj->lineCount; ++i)
     {
         line = leaf->polyObj->lines[i];
-        hedge = line->L_frontside->hedgeLeft;
+        hedge = line->L_frontside.hedgeLeft;
 
         // Let's first check which way this hedge is facing.
         if(hedge->frameFlags & HEDGEINF_FACINGFRONT)
@@ -2965,7 +2967,7 @@ void Rend_RenderSurfaceVectors(void)
         HEdge* hedge = GameMap_HEdge(theMap, i);
         float x, y, bottom, top;
         Sector* backSec;
-        SideDef* side;
+        LineDef* line;
         Surface* suf;
         vec3f_t origin;
 
@@ -2973,22 +2975,23 @@ void Rend_RenderSurfaceVectors(void)
            (hedge->lineDef->inFlags & LF_POLYOBJ))
             continue;
 
-        side = HEDGE_SIDEDEF(hedge);
+        line = hedge->lineDef;
         x = hedge->HE_v1origin[VX] + (hedge->HE_v2origin[VX] - hedge->HE_v1origin[VX]) / 2;
         y = hedge->HE_v1origin[VY] + (hedge->HE_v2origin[VY] - hedge->HE_v1origin[VY]) / 2;
 
         backSec = HEDGE_BACK_SECTOR(hedge);
         if(!backSec)
         {
-            bottom = side->sector->SP_floorvisheight;
-            top = side->sector->SP_ceilvisheight;
-            suf = &side->SW_middlesurface;
+            bottom = hedge->sector->SP_floorvisheight;
+            top = hedge->sector->SP_ceilvisheight;
+            suf = &HEDGE_SIDEDEF(hedge)->SW_middlesurface;
 
             V3f_Set(origin, x, y, bottom + (top - bottom) / 2);
             drawSurfaceTangentSpaceVectors(suf, origin);
         }
         else
         {
+            SideDef* side = HEDGE_SIDEDEF(hedge);
             if(side->SW_middlesurface.material)
             {
                 top = hedge->sector->SP_ceilvisheight;
@@ -3061,7 +3064,7 @@ void Rend_RenderSurfaceVectors(void)
 
             V3f_Set(origin, (line->L_v2origin[VX] + line->L_v1origin[VX])/2,
                             (line->L_v2origin[VY] + line->L_v1origin[VY])/2, zPos);
-            drawSurfaceTangentSpaceVectors(&line->L_frontside->SW_middlesurface, origin);
+            drawSurfaceTangentSpaceVectors(&line->L_frontsidedef->SW_middlesurface, origin);
         }
     }
 
@@ -3183,7 +3186,7 @@ static void getVertexPlaneMinMax(const Vertex* vtx, coord_t* min, coord_t* max)
     {
         LineDef* li = vo->lineDef;
 
-        if(li->L_frontside)
+        if(li->L_frontsidedef)
         {
             if(min && li->L_frontsector->SP_floorvisheight < *min)
                 *min = li->L_frontsector->SP_floorvisheight;
@@ -3192,7 +3195,7 @@ static void getVertexPlaneMinMax(const Vertex* vtx, coord_t* min, coord_t* max)
                 *max = li->L_frontsector->SP_ceilvisheight;
         }
 
-        if(li->L_backside)
+        if(li->L_backsidedef)
         {
             if(min && li->L_backsector->SP_floorvisheight < *min)
                 *min = li->L_backsector->SP_floorvisheight;

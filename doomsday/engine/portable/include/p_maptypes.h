@@ -79,7 +79,9 @@ typedef struct vertex_s {
 #define HE_v2origin               HE_v(1)->origin
 
 #define HEDGE_BACK_SECTOR(h)      ((h)->twin ? (h)->twin->sector : NULL)
-#define HEDGE_SIDEDEF(h)          ((h)->lineDef->sideDefs[(h)->side])
+
+#define HEDGE_SIDE(h)             ((h)->lineDef ? &(h)->lineDef->L_side((h)->side) : NULL)
+#define HEDGE_SIDEDEF(h)          ((h)->lineDef ? (h)->lineDef->L_sidedef((h)->side) : NULL)
 
 // HEdge frame flags
 #define HEDGEINF_FACINGFRONT      0x0001
@@ -232,15 +234,15 @@ typedef enum {
 
 typedef struct plane_s {
     runtime_mapdata_header_t header;
-    struct sector_s*    sector;        // Owner of the plane (temp)
+    struct sector_s*    sector;        /// Owner of the plane.
     Surface             surface;
-    coord_t             height;        // Current height
+    coord_t             height;        /// Current height.
     coord_t             oldHeight[2];
-    coord_t             target;        // Target height
-    coord_t             speed;         // Move speed
-    coord_t             visHeight;     // Visible plane height (smoothed)
+    coord_t             target;        /// Target height.
+    coord_t             speed;         /// Move speed.
+    coord_t             visHeight;     /// Visible plane height (smoothed).
     coord_t             visHeightDelta;
-    planetype_t         type;          // PLN_* type.
+    planetype_t         type;          /// PLN_* type.
     int                 planeID;
 } Plane;
 
@@ -390,10 +392,7 @@ typedef struct msidedef_s {
 typedef struct sidedef_s {
     runtime_mapdata_header_t header;
     Surface             sections[3];
-    struct hedge_s*     hedgeLeft;  /// Left-most HEdge on this SideDef's side of the owning LineDef
-    struct hedge_s*     hedgeRight; /// Right-most HEdge on this SideDef's side of the owning LineDef
     struct linedef_s*   line;
-    struct sector_s*    sector;
     short               flags;
     msidedef_t          buildData;
     int                 fakeRadioUpdateCount; // frame number of last update
@@ -417,15 +416,20 @@ typedef struct sidedef_s {
 #define L_vo1                   L_vo(0)
 #define L_vo2                   L_vo(1)
 
-#define L_side(n)               sideDefs[(n)? 1:0]
-#define L_frontside             L_side(FRONT)
-#define L_backside              L_side(BACK)
-#define L_sector(n)             sideDefs[(n)? 1:0]->sector
+#define L_frontside             sides[0]
+#define L_backside              sides[1]
+#define L_side(n)               sides[(n)? 1:0]
+
+#define L_sidedef(n)            L_side(n).sideDef
+#define L_frontsidedef          L_sidedef(FRONT)
+#define L_backsidedef           L_sidedef(BACK)
+
+#define L_sector(n)             L_side(n).sector
 #define L_frontsector           L_sector(FRONT)
 #define L_backsector            L_sector(BACK)
 
 // Is this line self-referencing (front sec == back sec)?
-#define LINE_SELFREF(l)         ((l)->L_frontside && (l)->L_backside && \
+#define LINE_SELFREF(l)         ((l)->L_frontsidedef && (l)->L_backsidedef && \
                                  (l)->L_frontsector == (l)->L_backsector)
 
 // Internal flags:
@@ -443,22 +447,29 @@ typedef struct mlinedef_s {
     struct sector_s* windowEffect;
 } mlinedef_t;
 
+typedef struct lineside_s {
+    struct sector_s* sector; /// Sector on this side.
+    struct sidedef_s* sideDef; /// SideDef on this side.
+    struct hedge_s* hedgeLeft;  /// Left-most HEdge on this side.
+    struct hedge_s* hedgeRight; /// Right-most HEdge on this side.
+    unsigned short shadowVisFrame; /// Framecount of last time shadows were drawn for this side.
+} lineside_t;
+
 typedef struct linedef_s {
     runtime_mapdata_header_t header;
     struct vertex_s*    v[2];
-    struct lineowner_s* vo[2];         // Links to vertex line owner nodes [left, right]
-    struct sidedef_s*   sideDefs[2];
-    int                 flags;         // Public DDLF_* flags.
-    byte                inFlags;       // Internal LF_* flags
+    struct lineowner_s* vo[2]; /// Links to vertex line owner nodes [left, right].
+    lineside_t          sides[2];
+    int                 flags; /// Public DDLF_* flags.
+    byte                inFlags; /// Internal LF_* flags.
     slopetype_t         slopeType;
     int                 validCount;
-    binangle_t          angle;         // Calculated from front side's normal
+    binangle_t          angle; /// Calculated from front side's normal.
     coord_t             direction[2];
-    coord_t             length;        // Accurate length
+    coord_t             length; /// Accurate length.
     AABoxd              aaBox;
-    boolean             mapped[DDMAXPLAYERS]; // Whether the line has been mapped by each player yet.
+    boolean             mapped[DDMAXPLAYERS]; /// Whether the line has been mapped by each player yet.
     mlinedef_t          buildData;
-    unsigned short      shadowVisFrame[2]; // Framecount of last time shadows were drawn for this line, for each side [right, left].
 } LineDef;
 
 #define RIGHT                   0
@@ -475,7 +486,7 @@ typedef struct partition_s {
 typedef struct bspnode_s {
     runtime_mapdata_header_t header;
     partition_t         partition;
-    AABoxd              aaBox[2];      // Bounding box for each child.
+    AABoxd              aaBox[2]; /// Bounding box for each child.
     runtime_mapdata_header_t* children[2];
     uint                index; /// Unique. Set when saving the BSP.
 } BspNode;

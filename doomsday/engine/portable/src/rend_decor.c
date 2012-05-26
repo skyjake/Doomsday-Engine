@@ -72,7 +72,7 @@ typedef struct decorsource_s {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void updateSideSectionDecorations(SideDef* side, SideDefSection section);
+static void updateSideSectionDecorations(LineDef* lineDef, byte side, SideDefSection section);
 static void updatePlaneDecorations(Plane* pln);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -377,12 +377,13 @@ boolean R_ProjectSurfaceDecorations(Surface* suf, void* context)
 
         switch(DMU_GetType(suf->owner))
         {
-        case DMU_SIDEDEF:
-            {
-            SideDef* side = (SideDef*)suf->owner;
-            updateSideSectionDecorations(side, &side->SW_middlesurface == suf? SS_MIDDLE : &side->SW_bottomsurface == suf? SS_BOTTOM : SS_TOP);
-            break;
-            }
+        case DMU_SIDEDEF: {
+            SideDef* sideDef = (SideDef*)suf->owner;
+            LineDef* line = sideDef->line;
+            updateSideSectionDecorations(line, sideDef == line->L_frontsidedef? FRONT : BACK,
+                                         &sideDef->SW_middlesurface == suf? SS_MIDDLE :
+                                         &sideDef->SW_bottomsurface == suf? SS_BOTTOM : SS_TOP);
+            break; }
         case DMU_PLANE:
             updatePlaneDecorations((Plane*)suf->owner);
             break;
@@ -560,37 +561,35 @@ static void updatePlaneDecorations(Plane* pln)
     updateSurfaceDecorations2(suf, offsetS, offsetT, v1, v2, sec, suf->material? true : false);
 }
 
-static void updateSideSectionDecorations(SideDef* side, SideDefSection section)
+static void updateSideSectionDecorations(LineDef* line, byte side, SideDefSection section)
 {
-    LineDef* line;
     Surface* suf;
     vec3d_t v1, v2;
-    int sid;
     float offsetS = 0, offsetT = 0;
     boolean visible = false;
     const Plane* frontCeil, *frontFloor, *backCeil = NULL, *backFloor = NULL;
     coord_t bottom, top;
+    SideDef* sideDef;
 
-    if(!side->hedgeLeft) return;
+    if(!line || !line->L_side(side).hedgeLeft) return;
 
-    line = side->hedgeLeft->lineDef;
-    sid = (line->L_backside && line->L_backside == side)? 1 : 0;
-    frontCeil  = line->L_sector(sid)->SP_plane(PLN_CEILING);
-    frontFloor = line->L_sector(sid)->SP_plane(PLN_FLOOR);
+    sideDef = line->L_sidedef(side);
+    frontCeil  = line->L_sector(side)->SP_plane(PLN_CEILING);
+    frontFloor = line->L_sector(side)->SP_plane(PLN_FLOOR);
 
-    if(line->L_backside)
+    if(line->L_backsidedef)
     {
-        backCeil  = line->L_sector(sid^1)->SP_plane(PLN_CEILING);
-        backFloor = line->L_sector(sid^1)->SP_plane(PLN_FLOOR);
+        backCeil  = line->L_sector(side^1)->SP_plane(PLN_CEILING);
+        backFloor = line->L_sector(side^1)->SP_plane(PLN_FLOOR);
     }
 
     switch(section)
     {
     case SS_MIDDLE:
-        suf = &side->SW_middlesurface;
+        suf = &sideDef->SW_middlesurface;
         if(suf->material)
         {
-            if(!line->L_backside)
+            if(!line->L_backsidedef)
             {
                 top = frontCeil->visHeight;
                 bottom = frontFloor->visHeight;
@@ -601,11 +600,11 @@ static void updateSideSectionDecorations(SideDef* side, SideDefSection section)
             else
             {
                 float texOffset[2];
-                if(R_FindBottomTop(line, sid, SS_MIDDLE, suf->visOffset[VX], suf->visOffset[VY],
+                if(R_FindBottomTop(line, side, SS_MIDDLE, suf->visOffset[VX], suf->visOffset[VY],
                              frontFloor, frontCeil, backFloor, backCeil,
                              (line->flags & DDLF_DONTPEGBOTTOM)? true : false,
                              (line->flags & DDLF_DONTPEGTOP)? true : false,
-                             (side->flags & SDF_MIDDLE_STRETCH)? true : false,
+                             (sideDef->flags & SDF_MIDDLE_STRETCH)? true : false,
                              LINE_SELFREF(line)? true : false,
                              &bottom, &top, texOffset))
                 {
@@ -619,9 +618,9 @@ static void updateSideSectionDecorations(SideDef* side, SideDefSection section)
         break;
 
     case SS_TOP:
-        suf = &side->SW_topsurface;
+        suf = &sideDef->SW_topsurface;
         if(suf->material)
-            if(line->L_backside && backCeil->visHeight < frontCeil->visHeight &&
+            if(line->L_backsidedef && backCeil->visHeight < frontCeil->visHeight &&
                (!Surface_IsSkyMasked(&backCeil->surface) || !Surface_IsSkyMasked(&frontCeil->surface)))
             {
                 top = frontCeil->visHeight;
@@ -633,9 +632,9 @@ static void updateSideSectionDecorations(SideDef* side, SideDefSection section)
         break;
 
     case SS_BOTTOM:
-        suf = &side->SW_bottomsurface;
+        suf = &sideDef->SW_bottomsurface;
         if(suf->material)
-            if(line->L_backside && backFloor->visHeight > frontFloor->visHeight &&
+            if(line->L_backsidedef && backFloor->visHeight > frontFloor->visHeight &&
                (!Surface_IsSkyMasked(&backFloor->surface) || !Surface_IsSkyMasked(&frontFloor->surface)))
             {
                 top = backFloor->visHeight;
@@ -649,8 +648,8 @@ static void updateSideSectionDecorations(SideDef* side, SideDefSection section)
 
     if(visible)
     {
-        V3d_Set(v1, line->L_vorigin(sid  )[VX], line->L_vorigin(sid  )[VY], top);
-        V3d_Set(v2, line->L_vorigin(sid^1)[VX], line->L_vorigin(sid^1)[VY], bottom);
+        V3d_Set(v1, line->L_vorigin(side  )[VX], line->L_vorigin(side  )[VY], top);
+        V3d_Set(v2, line->L_vorigin(side^1)[VX], line->L_vorigin(side^1)[VY], bottom);
     }
 
     updateSurfaceDecorations2(suf, offsetS, offsetT, v1, v2, NULL, visible);
