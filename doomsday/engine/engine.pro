@@ -363,7 +363,10 @@ DENG_HEADERS += \
     portable/include/vertex.h \
     portable/include/wadfile.h \
     portable/include/window.h \
-    portable/include/zipfile.h
+    portable/include/zipfile.h \
+    portable/src/updater/updateavailabledialog.h \
+    portable/src/updater/updatersettings.h \
+    portable/src/updater/versioninfo.h
 
 INCLUDEPATH += \
     $$DENG_INCLUDE_DIR \
@@ -640,6 +643,8 @@ SOURCES += \
     portable/src/ui_mpi.c \
     portable/src/ui_panel.c \
     portable/src/updater.cpp \
+    portable/src/updater/updateavailabledialog.cpp \
+    portable/src/updater/updatersettings.cpp \
     portable/src/uri.c \
     portable/src/vertex.cpp \
     portable/src/wadfile.c \

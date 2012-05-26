@@ -24,6 +24,9 @@
 #include "dd_version.h"
 #include "dd_types.h"
 #include "json.h"
+#include "updater/updateavailabledialog.h"
+#include "updater/updatersettings.h"
+#include "updater/versioninfo.h"
 #include <de/Time>
 #include <de/Log>
 #include <QStringList>
@@ -34,13 +37,6 @@
 #include <QDebug>
 
 static Updater* updater = 0;
-
-#define STK_FREQUENCY       "updater/frequency"
-#define STK_CHANNEL         "updater/channel"
-#define STK_LAST_CHECKED    "updater/lastChecked"
-#define STK_ONLY_MANUAL     "updater/onlyManually"
-#define STK_DELETE          "updater/delete"
-#define STK_DOWNLOAD_PATH   "updater/downloadPath"
 
 /// @todo The platform ID should come from the Builder.
 #if defined(WIN32)
@@ -63,145 +59,28 @@ static Updater* updater = 0;
 
 struct Updater::Instance
 {
-    enum Frequency
-    {
-        Daily    = 0,
-        Biweekly = 1,   // 3.5 days
-        Weekly   = 2,   // 7 days
-        Monthly  = 3    // 30 days
-    };
-    enum Channel
-    {
-        Stable   = 0,
-        Unstable = 1
-    };
-
-    struct VersionInfo
-    {
-        int major;
-        int minor;
-        int revision;
-        int patch;
-        int build;
-
-        /**
-         * Version information.
-         * @todo Could be useful as a generic utility class.
-         */
-        VersionInfo() : patch(0), build(de::Time().asBuildNumber())
-        {
-            parseVersionString(DOOMSDAY_VERSION_BASE);
-#ifdef DOOMSDAY_BUILD_TEXT
-            build = de::String(DOOMSDAY_BUILD_TEXT).toInt();
-#endif
-        }
-
-        VersionInfo(const de::String& version, int buildNumber) : build(buildNumber)
-        {
-            parseVersionString(version);
-        }
-
-        QString asText() const
-        {
-            if(patch > 0)
-            {
-                return QString("%1.%2.%3-%4 Build %5").arg(major).arg(minor).arg(revision).arg(patch).arg(build);
-            }
-            return QString("%1.%2.%3 Build %4").arg(major).arg(minor).arg(revision).arg(build);
-        }
-
-        void parseVersionString(const de::String& version)
-        {
-            QStringList parts = version.split('.');
-            major = parts[0].toInt();
-            minor = parts[1].toInt();
-            if(parts[2].contains('-'))
-            {
-                QStringList rev = parts[2].split('-');
-                revision = rev[0].toInt();
-                patch = rev[1].toInt();
-            }
-            else
-            {
-                revision = parts[2].toInt();
-                patch = 0;
-            }
-        }
-
-        bool operator < (const VersionInfo& other) const
-        {
-            if(major == other.major)
-            {
-                if(minor == other.minor)
-                {
-                    if(revision == other.revision)
-                    {
-                        return build < other.build;
-                    }
-                    return revision < other.revision;
-                }
-                return minor < other.minor;
-            }
-            return major < other.major;
-        }
-
-        bool operator == (const VersionInfo& other) const
-        {
-            return major == other.major && minor == other.minor &&
-                    revision == other.revision && build == other.build;
-        }
-
-        bool operator > (const VersionInfo& other) const
-        {
-            return !(*this < other || *this == other);
-        }
-    };
-
     Updater* self;
     QNetworkAccessManager* network;
 
-    Frequency checkFrequency;
-    Channel channel;        ///< What kind of updates to check for.
-    QDateTime lastCheckTime;///< Time of last check (automatic or manual).
-    bool onlyCheckManually; ///< Should only check when manually requested.
-    bool deleteAfterUpdate; ///< Downloaded file is deleted afterwards.
-    QString downloadPath;   ///< Path where the downloaded file is saved.
     VersionInfo latestVersion;
     QString latestPackageUri;
     QString latestLogUri;
 
     Instance(Updater* up) : self(up)
     {
-        // Fetch the current settings.
-        QSettings st;
-        checkFrequency = Frequency(st.value(STK_FREQUENCY, Weekly).toInt());
-        channel = Channel(st.value(STK_CHANNEL, QString(DOOMSDAY_RELEASE_TYPE) == "Stable"? Stable : Unstable).toInt());
-        lastCheckTime = st.value(STK_LAST_CHECKED).toDateTime();
-        onlyCheckManually = st.value(STK_ONLY_MANUAL, false).toBool();
-        deleteAfterUpdate = st.value(STK_DELETE, true).toBool();
-        downloadPath = st.value(STK_DOWNLOAD_PATH,
-                QDesktopServices::storageLocation(QDesktopServices::TempLocation)).toString();
-
         network = new QNetworkAccessManager(self);
     }
 
     ~Instance()
     {
-        // Save settings.
-        QSettings st;
-        st.setValue(STK_FREQUENCY, int(checkFrequency));
-        st.setValue(STK_CHANNEL, int(channel));
-        st.setValue(STK_LAST_CHECKED, lastCheckTime);
-        st.setValue(STK_ONLY_MANUAL, onlyCheckManually);
-        st.setValue(STK_DELETE, deleteAfterUpdate);
-        st.setValue(STK_DOWNLOAD_PATH, downloadPath);
     }
 
     QString composeCheckUri()
     {
+        UpdaterSettings st;
         QString uri = QString(DOOMSDAY_HOMEURL) + "/latestbuild?";
         uri += QString("platform=") + PLATFORM_ID;
-        uri += (channel == Stable? "&stable" : "&unstable");
+        uri += (st.channel() == UpdaterSettings::Stable? "&stable" : "&unstable");
         uri += "&graph";
 
         LOG_DEBUG("Check URI: ") << uri;
@@ -210,7 +89,7 @@ struct Updater::Instance
 
     void queryLatestVersion()
     {
-        lastCheckTime = QDateTime::currentDateTime();
+        UpdaterSettings().setLastCheckTime(de::Time());
         network->get(QNetworkRequest(composeCheckUri()));
     }
 
@@ -236,7 +115,11 @@ struct Updater::Instance
                 << latestPackageUri << latestLogUri;
 
         // Is this newer than what we're running?
+        UpdateAvailableDialog* dlg = new UpdateAvailableDialog;
 
+        dlg->exec();
+
+        delete dlg;
     }
 };
 
