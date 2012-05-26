@@ -1885,9 +1885,11 @@ static boolean Rend_RenderHEdgeTwosided(HEdge* hedge)
         if(HEdge_PrepareWallDivs(hedge, SS_MIDDLE, leaf->sector, HEDGE_BACK_SECTOR(hedge),
                                  &leftWallDivs, &rightWallDivs, matOffset))
         {
-            int rhFlags = RHF_ADD_DYNLIGHTS|RHF_ADD_DYNSHADOWS|RHF_ADD_RADIO|
-                            ((viewPlayer->shared.flags & (DDPF_NOCLIP|DDPF_CAMERA)) ||
-                              !(line->flags & DDLF_BLOCKING))? RHF_VIEWER_NEAR_BLEND : 0;
+            int rhFlags = RHF_ADD_DYNLIGHTS|RHF_ADD_DYNSHADOWS|RHF_ADD_RADIO;
+
+            if((viewPlayer->shared.flags & (DDPF_NOCLIP|DDPF_CAMERA)) ||
+               !(line->flags & DDLF_BLOCKING))
+                rhFlags |= RHF_VIEWER_NEAR_BLEND;
 
             Rend_RadioUpdateLinedef(hedge->lineDef, hedge->side);
             solidSeg = rendHEdgeSection(hedge, SS_MIDDLE, rhFlags,
