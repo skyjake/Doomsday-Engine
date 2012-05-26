@@ -2,6 +2,8 @@
 #include "updatersettings.h"
 #include "versioninfo.h"
 #include <de/Log>
+#include <QUrl>
+#include <QDesktopServices>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QDialogButtonBox>
@@ -15,6 +17,7 @@ struct UpdateAvailableDialog::Instance
     UpdateAvailableDialog* self;
     QLabel* info;
     VersionInfo latestVersion;
+    de::String changeLog;
 
     Instance(UpdateAvailableDialog* d) : self(d)
     {
@@ -28,7 +31,7 @@ struct UpdateAvailableDialog::Instance
         de::String channel = UpdaterSettings().channel() == UpdaterSettings::Stable? "stable" : "unstable";
         bool askUpgrade = false;
 
-        if(!(latestVersion > currentVersion))
+        if(latestVersion > currentVersion)
         {
             askUpgrade = true;
             info->setText(QString("<span style=\"font-weight:bold; font-size:%1pt;\">"
@@ -58,11 +61,14 @@ struct UpdateAvailableDialog::Instance
         if(!askUpgrade)
         {
             QPushButton* ok = bbox->addButton("Ok", QDialogButtonBox::AcceptRole);
+            QObject::connect(ok, SIGNAL(clicked()), self, SLOT(accept()));
         }
         else
         {
             QPushButton* yes = bbox->addButton("Download and install", QDialogButtonBox::YesRole);
             QPushButton* no = bbox->addButton("Not now", QDialogButtonBox::NoRole);
+            QObject::connect(yes, SIGNAL(clicked()), self, SLOT(accept()));
+            QObject::connect(no, SIGNAL(clicked()), self, SLOT(reject()));
         }
 
         QPushButton* cfg = bbox->addButton("Settings...", QDialogButtonBox::ActionRole);
@@ -71,6 +77,7 @@ struct UpdateAvailableDialog::Instance
         if(askUpgrade)
         {
             QPushButton* whatsNew = bbox->addButton("What's new?", QDialogButtonBox::HelpRole);
+            QObject::connect(whatsNew, SIGNAL(clicked()), self, SLOT(showWhatsNew()));
             whatsNew->setAutoDefault(false);
         }
 
@@ -80,11 +87,13 @@ struct UpdateAvailableDialog::Instance
     }
 };
 
-UpdateAvailableDialog::UpdateAvailableDialog(const VersionInfo& latestVersion, QWidget *parent)
+UpdateAvailableDialog::UpdateAvailableDialog(const VersionInfo& latestVersion, de::String changeLogUri,
+                                             QWidget *parent)
     : QDialog(parent)
 {
     d = new Instance(this);
     d->latestVersion = latestVersion;
+    d->changeLog = changeLogUri;
 }
 
 UpdateAvailableDialog::~UpdateAvailableDialog()
@@ -96,4 +105,9 @@ void UpdateAvailableDialog::neverCheckToggled(bool set)
 {
     LOG_DEBUG("Never check for updates: %b") << set;
     UpdaterSettings().setOnlyCheckManually(set);
+}
+
+void UpdateAvailableDialog::showWhatsNew()
+{
+    QDesktopServices::openUrl(QUrl(d->changeLog));
 }
