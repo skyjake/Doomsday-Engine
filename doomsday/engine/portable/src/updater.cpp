@@ -115,7 +115,7 @@ struct Updater::Instance
                 << latestPackageUri << latestLogUri;
 
         // Is this newer than what we're running?
-        UpdateAvailableDialog* dlg = new UpdateAvailableDialog;
+        UpdateAvailableDialog* dlg = new UpdateAvailableDialog(latestVersion);
 
         dlg->exec();
 

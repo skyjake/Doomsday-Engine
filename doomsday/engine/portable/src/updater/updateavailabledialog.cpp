@@ -1,5 +1,7 @@
 #include "updateavailabledialog.h"
+#include "updatersettings.h"
 #include "versioninfo.h"
+#include <de/Log>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QDialogButtonBox>
@@ -11,34 +13,66 @@
 struct UpdateAvailableDialog::Instance
 {
     UpdateAvailableDialog* self;
-
     QLabel* info;
+    VersionInfo latestVersion;
 
     Instance(UpdateAvailableDialog* d) : self(d)
     {
         QVBoxLayout* mainLayout = new QVBoxLayout(self);
         self->setLayout(mainLayout);
-        //mainLayout->setMargin(12);
 
         info = new QLabel;
         info->setTextFormat(Qt::RichText);
-        info->setText(QString("<span style=\"font-weight:bold; font-size:%1pt;\">You are up to date.</span>"
-                              "<p>The installed version %2 is the latest available stable build.")
-                      .arg(int(self->font().pointSize() * 1.2))
-                      .arg(VersionInfo().asText()));
+        VersionInfo currentVersion;
+        int bigFontSize = self->font().pointSize() * 1.2;
+        de::String channel = UpdaterSettings().channel() == UpdaterSettings::Stable? "stable" : "unstable";
+        bool askUpgrade = false;
+
+        if(!(latestVersion > currentVersion))
+        {
+            askUpgrade = true;
+            info->setText(QString("<span style=\"font-weight:bold; font-size:%1pt;\">"
+                                  "There is an update available.</span>"
+                                  "<p>The latest %2 release is %3, while you are "
+                                  "running %4.")
+                          .arg(bigFontSize)
+                          .arg(channel)
+                          .arg(latestVersion.asText())
+                          .arg(currentVersion.asText()));
+        }
+        else
+        {
+            info->setText(QString("<span style=\"font-weight:bold; font-size:%1pt;\">You are up to date.</span>"
+                                  "<p>The installed version %2 is the latest available %3 build.")
+                          .arg(bigFontSize)
+                          .arg(currentVersion.asText())
+                          .arg(channel));
+        }
 
         QCheckBox* neverCheck = new QCheckBox("Never check for updates automatically");
+        neverCheck->setChecked(UpdaterSettings().onlyCheckManually());
+        QObject::connect(neverCheck, SIGNAL(toggled(bool)), self, SLOT(neverCheckToggled(bool)));
 
         QDialogButtonBox* bbox = new QDialogButtonBox;
 
-        QPushButton* ok = bbox->addButton("Ok", QDialogButtonBox::AcceptRole);
-        ok->setDefault(true);
+        if(!askUpgrade)
+        {
+            QPushButton* ok = bbox->addButton("Ok", QDialogButtonBox::AcceptRole);
+        }
+        else
+        {
+            QPushButton* yes = bbox->addButton("Download and install", QDialogButtonBox::YesRole);
+            QPushButton* no = bbox->addButton("Not now", QDialogButtonBox::NoRole);
+        }
 
         QPushButton* cfg = bbox->addButton("Settings...", QDialogButtonBox::ActionRole);
         cfg->setAutoDefault(false);
-        cfg->setDefault(false);
 
-        //QPushButton* whatsNew = bbox->addButton("What's new?", QDialogButtonBox::HelpRole);
+        if(askUpgrade)
+        {
+            QPushButton* whatsNew = bbox->addButton("What's new?", QDialogButtonBox::HelpRole);
+            whatsNew->setAutoDefault(false);
+        }
 
         mainLayout->addWidget(info);
         mainLayout->addWidget(neverCheck);
@@ -46,13 +80,20 @@ struct UpdateAvailableDialog::Instance
     }
 };
 
-UpdateAvailableDialog::UpdateAvailableDialog(QWidget *parent)
+UpdateAvailableDialog::UpdateAvailableDialog(const VersionInfo& latestVersion, QWidget *parent)
     : QDialog(parent)
 {
     d = new Instance(this);
+    d->latestVersion = latestVersion;
 }
 
 UpdateAvailableDialog::~UpdateAvailableDialog()
 {
     delete d;
+}
+
+void UpdateAvailableDialog::neverCheckToggled(bool set)
+{
+    LOG_DEBUG("Never check for updates: %b") << set;
+    UpdaterSettings().setOnlyCheckManually(set);
 }
