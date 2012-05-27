@@ -11,11 +11,6 @@
 #define STK_DELETE          "updater/delete"
 #define STK_DOWNLOAD_PATH   "updater/downloadPath"
 
-static de::String defaultDownloadPath()
-{
-    return QDesktopServices::storageLocation(QDesktopServices::TempLocation);
-}
-
 UpdaterSettings::UpdaterSettings()
 {}
 
@@ -61,7 +56,7 @@ void UpdaterSettings::setFrequency(UpdaterSettings::Frequency freq)
     QSettings().setValue(STK_FREQUENCY, int(freq));
 }
 
-void UpdaterSettings::channel(UpdaterSettings::Channel channel)
+void UpdaterSettings::setChannel(UpdaterSettings::Channel channel)
 {
     QSettings().setValue(STK_CHANNEL, int(channel));
 }
@@ -89,4 +84,9 @@ void UpdaterSettings::setDownloadPath(de::String downloadPath)
 void UpdaterSettings::useDefaultDownloadPath()
 {
     setDownloadPath(defaultDownloadPath());
+}
+
+de::String UpdaterSettings::defaultDownloadPath()
+{
+    return QDesktopServices::storageLocation(QDesktopServices::TempLocation);
 }

@@ -27,11 +27,6 @@ struct UpdaterSettingsDialog::Instance
         QFormLayout* form = new QFormLayout;
         mainLayout->addLayout(form);
 
-/*
-    bool deleteAfterUpdate() const;
-    bool isDefaultDownloadPath() const;
-    de::String downloadPath() const;
-*/
         neverCheck = new QCheckBox("Never check for updates automatically");
         form->addRow(neverCheck);
 
@@ -49,7 +44,7 @@ struct UpdaterSettingsDialog::Instance
 
         pathList = new QComboBox;
         pathList->addItem(QDesktopServices::displayName(QDesktopServices::TempLocation),
-                          QDesktopServices::storageLocation(QDesktopServices::TempLocation));
+                          UpdaterSettings::defaultDownloadPath());
         pathList->addItem("Select folder...", "");
         form->addRow("Download location:", pathList);
 
@@ -60,7 +55,6 @@ struct UpdaterSettingsDialog::Instance
         mainLayout->addWidget(bbox);
 
         // Buttons.
-        //QPushButton* apply = bbox->addButton(QDialogButtonBox::Apply);
         QPushButton* ok = bbox->addButton(QDialogButtonBox::Ok);
         QPushButton* cancel = bbox->addButton(QDialogButtonBox::Cancel);
 
@@ -69,12 +63,8 @@ struct UpdaterSettingsDialog::Instance
         // Connections.
         QObject::connect(neverCheck, SIGNAL(toggled(bool)), self, SLOT(neverCheckToggled(bool)));
         QObject::connect(pathList, SIGNAL(activated(int)), self, SLOT(pathActivated(int)));
+        QObject::connect(ok, SIGNAL(clicked()), self, SLOT(accept()));
         QObject::connect(cancel, SIGNAL(clicked()), self, SLOT(reject()));
-    }
-
-    ~Instance()
-    {
-
     }
 
     void fetch()
@@ -83,12 +73,44 @@ struct UpdaterSettingsDialog::Instance
         freqList->setEnabled(!UpdaterSettings().onlyCheckManually());
         freqList->setCurrentIndex(freqList->findData(UpdaterSettings().frequency()));
         channelList->setCurrentIndex(channelList->findData(UpdaterSettings().channel()));
+        setDownloadPath(UpdaterSettings().downloadPath());
         deleteAfter->setChecked(UpdaterSettings().deleteAfterUpdate());
     }
 
     void apply()
     {
+        UpdaterSettings st;
+        st.setOnlyCheckManually(neverCheck->isChecked());
+        int sel = freqList->currentIndex();
+        if(sel >= 0)
+        {
+            st.setFrequency(UpdaterSettings::Frequency(freqList->itemData(sel).toInt()));
+        }
+        sel = channelList->currentIndex();
+        if(sel >= 0)
+        {
+            st.setChannel(UpdaterSettings::Channel(channelList->itemData(sel).toInt()));
+        }
+        st.setDownloadPath(pathList->itemData(pathList->currentIndex()).toString());
+        st.setDeleteAfterUpdate(deleteAfter->isChecked());
+    }
 
+    void setDownloadPath(const QString& dir)
+    {
+        if(dir != UpdaterSettings::defaultDownloadPath())
+        {
+            // Remove extra items.
+            while(pathList->count() > 2)
+            {
+                pathList->removeItem(0);
+            }
+            pathList->insertItem(0, QDir(dir).dirName(), dir);
+            pathList->setCurrentIndex(0);
+        }
+        else
+        {
+            pathList->setCurrentIndex(pathList->findData(dir));
+        }
     }
 };
 
@@ -101,6 +123,12 @@ UpdaterSettingsDialog::UpdaterSettingsDialog(QWidget *parent)
 UpdaterSettingsDialog::~UpdaterSettingsDialog()
 {
     delete d;
+}
+
+void UpdaterSettingsDialog::accept()
+{
+    d->apply();
+    QDialog::accept();
 }
 
 void UpdaterSettingsDialog::neverCheckToggled(bool set)
@@ -116,12 +144,11 @@ void UpdaterSettingsDialog::pathActivated(int index)
         QString dir = QFileDialog::getExistingDirectory(this, "Download Folder", QDir::homePath());
         if(!dir.isEmpty())
         {
-            // Remove extra items.
-            while(d->pathList->count() > 2)
-                d->pathList->removeItem(0);
-
-            d->pathList->insertItem(0, QDir(dir).dirName(), dir);
-            d->pathList->setCurrentIndex(0);
+            d->setDownloadPath(dir);
+        }
+        else
+        {
+            d->setDownloadPath(UpdaterSettings::defaultDownloadPath());
         }
     }
 }

@@ -32,12 +32,14 @@ public:
     de::String downloadPath() const;
 
     void setFrequency(Frequency freq);
-    void channel(Channel channel);
+    void setChannel(Channel channel);
     void setLastCheckTime(const de::Time& time);
     void setOnlyCheckManually(bool onlyManually);
     void setDeleteAfterUpdate(bool deleteAfter);
     void setDownloadPath(de::String downloadPath);
     void useDefaultDownloadPath();
+
+    static de::String defaultDownloadPath();
 };
 
 #endif // LIBDENG_UPDATERSETTINGS_H
