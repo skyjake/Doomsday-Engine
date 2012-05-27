@@ -48,7 +48,21 @@ bool UpdaterSettings::isDefaultDownloadPath() const
 
 de::String UpdaterSettings::downloadPath() const
 {
-    return QSettings().value(STK_DOWNLOAD_PATH, defaultDownloadPath()).toString();
+    de::String dir = QSettings().value(STK_DOWNLOAD_PATH, defaultDownloadPath()).toString();
+    if(dir == "${DEFAULT}")
+    {
+        dir = defaultDownloadPath();
+    }
+    return dir;
+}
+
+void UpdaterSettings::setDownloadPath(de::String downloadPath)
+{
+    if(downloadPath == defaultDownloadPath())
+    {
+        downloadPath = "${DEFAULT}";
+    }
+    QSettings().setValue(STK_DOWNLOAD_PATH, downloadPath);
 }
 
 void UpdaterSettings::setFrequency(UpdaterSettings::Frequency freq)
@@ -74,11 +88,6 @@ void UpdaterSettings::setOnlyCheckManually(bool onlyManually)
 void UpdaterSettings::setDeleteAfterUpdate(bool deleteAfter)
 {
     QSettings().setValue(STK_DELETE, deleteAfter);
-}
-
-void UpdaterSettings::setDownloadPath(de::String downloadPath)
-{
-    QSettings().setValue(STK_DOWNLOAD_PATH, downloadPath);
 }
 
 void UpdaterSettings::useDefaultDownloadPath()
