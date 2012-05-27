@@ -1165,7 +1165,7 @@ boolean LOIT_ClipLumObjBySight(void* data, void* context)
         for(i = 0; i < bspLeaf->polyObj->lineCount; ++i)
         {
             LineDef* line = bspLeaf->polyObj->lines[i];
-            HEdge* hedge = line->L_frontside->hedgeLeft;
+            HEdge* hedge = line->L_frontside.hedgeLeft;
 
             // Ignore hedges facing the wrong way.
             if(hedge->frameFlags & HEDGEINF_FACINGFRONT)

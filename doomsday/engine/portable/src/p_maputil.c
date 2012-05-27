@@ -294,7 +294,7 @@ int PIT_LinkToLines(LineDef* ld, void* parameters)
     if(LineDef_BoxOnSide(ld, &p->box)) return false;
 
     // One sided lines will not be linked to because a mobj can't legally cross one.
-    if(!ld->L_frontside || !ld->L_backside) return false;
+    if(!ld->L_frontsidedef || !ld->L_backsidedef) return false;
 
     GameMap_LinkMobjToLineDef(p->map, p->mo, ld);
     return false;
@@ -454,7 +454,7 @@ int GameMap_MobjSectorsIterator(GameMap* map, mobj_t* mo,
             }
 
             // And then the back side.
-            if(ld->L_backside)
+            if(ld->L_backsidedef)
             {
                 sec = ld->L_backsector;
                 if(sec->validCount != validCount)

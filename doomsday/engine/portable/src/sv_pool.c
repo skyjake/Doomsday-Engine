@@ -1568,9 +1568,10 @@ coord_t Sv_DeltaDistance(const void* deltaPtr, const ownerinfo_t* info)
     if(delta->type == DT_SIDE)
     {
         SideDef* sideDef = &sideDefs[delta->id];
+        LineDef* line = sideDef->line;
         vec2d_t origin;
-        V2d_Set(origin, sideDef->line->L_v1origin[VX] + sideDef->line->direction[VX] / 2,
-                        sideDef->line->L_v1origin[VY] + sideDef->line->direction[VY] / 2);
+        V2d_Set(origin, line->L_v1origin[VX] + line->direction[VX] / 2,
+                        line->L_v1origin[VY] + line->direction[VY] / 2);
         return M_ApproxDistance(info->origin[VX] - origin[VX],
                                 info->origin[VY] - origin[VY]);
     }
@@ -2240,9 +2241,9 @@ void Sv_NewSectorDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
  */
 void Sv_NewSideDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
 {
-    static uint         numShifts = 2, shift = 0;
-    sidedelta_t         delta;
-    uint                i, start, end;
+    static uint numShifts = 2, shift = 0;
+    sidedelta_t delta;
+    uint i, start, end;
 
     // When comparing against an initial register, always compare all
     // sides (since the comparing is only done once, not continuously).

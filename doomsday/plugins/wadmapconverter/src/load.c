@@ -1822,8 +1822,7 @@ boolean TransferMap(void)
         if(front)
         {
             frontIdx =
-                MPE_SidedefCreate(front->sector,
-                                  (map->format == MF_DOOM64? SDF_MIDDLE_STRETCH : 0),
+                MPE_SidedefCreate((map->format == MF_DOOM64? SDF_MIDDLE_STRETCH : 0),
                                   front->topMaterial->id,
                                   front->offset[VX], front->offset[VY], 1, 1, 1,
                                   front->middleMaterial->id,
@@ -1836,8 +1835,7 @@ boolean TransferMap(void)
         if(back)
         {
             backIdx =
-                MPE_SidedefCreate(back->sector,
-                                  (map->format == MF_DOOM64? SDF_MIDDLE_STRETCH : 0),
+                MPE_SidedefCreate((map->format == MF_DOOM64? SDF_MIDDLE_STRETCH : 0),
                                   back->topMaterial->id,
                                   back->offset[VX], back->offset[VY], 1, 1, 1,
                                   back->middleMaterial->id,
@@ -1846,7 +1844,8 @@ boolean TransferMap(void)
                                   back->offset[VX], back->offset[VY], 1, 1, 1);
         }
 
-        MPE_LinedefCreate(l->v[0], l->v[1], frontIdx, backIdx, l->ddFlags);
+        MPE_LinedefCreate(l->v[0], l->v[1], front? front->sector : 0,
+                          back? back->sector : 0, frontIdx, backIdx, l->ddFlags);
 
         MPE_GameObjProperty("XLinedef", i, "Flags", DDVT_SHORT, &l->flags);
 

@@ -60,36 +60,44 @@ struct Garbage
 };
 
 typedef std::map<uint, Garbage*> Garbages; // threadId => Garbage
-static Garbages garbages;
+static Garbages* garbages;
 
 static Garbage* garbageForThread(uint thread)
 {
-    Garbages::iterator i = garbages.find(thread);
-    if(i != garbages.end()) return i->second;
+    Garbages::iterator i = garbages->find(thread);
+    if(i != garbages->end()) return i->second;
 
     // Allocate a new one.
     Garbage* g = new Garbage;
-    garbages[thread] = g;
+    (*garbages)[thread] = g;
     return g;
+}
+
+void Garbage_Init(void)
+{
+    DENG2_ASSERT(garbages == 0);
+    garbages = new Garbages;
 }
 
 void Garbage_Shutdown(void)
 {
-    for(Garbages::iterator i = garbages.begin(); i != garbages.end(); ++i)
+    DENG2_ASSERT(garbages != 0);
+    for(Garbages::iterator i = garbages->begin(); i != garbages->end(); ++i)
     {
         delete i->second;
     }
-    garbages.clear();
+    delete garbages;
+    garbages = 0;
 }
 
 void Garbage_ClearForThread(void)
 {
-    Garbages::iterator i = garbages.find(Sys_CurrentThreadId());
-    if(i == garbages.end()) return;
+    Garbages::iterator i = garbages->find(Sys_CurrentThreadId());
+    if(i == garbages->end()) return;
 
     Garbage* g = i->second;
     delete g;
-    garbages.erase(i);
+    garbages->erase(i);
 }
 
 void Garbage_Trash(void* ptr)

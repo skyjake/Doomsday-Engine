@@ -768,7 +768,7 @@ int PIT_CheckLinePtc(LineDef* ld, void* parameters)
 
     // We are possibly hitting something here.
     ptcHitLine = ld;
-    if(!ld->L_backside)
+    if(!ld->L_backsidedef)
         return true; // Boing!
 
     // Determine the opening we have here.
@@ -1078,8 +1078,8 @@ static void P_MoveParticle(ptcgen_t* gen, particle_t* pt)
         {
             Sector* front, *back;
 
-            front = (pt->contact->L_frontside? pt->contact->L_frontsector : NULL);
-            back = (pt->contact->L_backside? pt->contact->L_backsector : NULL);
+            front = (pt->contact->L_frontsidedef? pt->contact->L_frontsector : NULL);
+            back = (pt->contact->L_backsidedef? pt->contact->L_backsector : NULL);
 
             if(front && back && abs(pt->mov[VZ]) < FRACUNIT / 2)
             {

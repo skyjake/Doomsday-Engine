@@ -57,8 +57,8 @@ static boolean backClosedForBlendNeighbor(const LineDef* lineDef, int side, bool
     Sector* backSec;
     assert(lineDef);
 
-    if(!lineDef->L_side(side))   return false;
-    if(!lineDef->L_side(side^1)) return true;
+    if(!lineDef->L_frontsidedef)   return false;
+    if(!lineDef->L_backsidedef) return true;
 
     frontSec = lineDef->L_sector(side);
     backSec  = lineDef->L_sector(side^1);
@@ -139,7 +139,7 @@ void LineDef_SetTraceOpening(const LineDef* line, TraceOpening* opening)
 
     if(!opening) return;
 
-    if(!line->L_backside)
+    if(!line->L_backsidedef)
     {
         opening->range = 0;
         return;
@@ -288,7 +288,7 @@ int LineDef_MiddleMaterialCoords(const LineDef* lineDef, int side,
 
     if(texOffY)  *texOffY  = 0;
 
-    sideDef = lineDef->L_side(side);
+    sideDef = lineDef->L_sidedef(side);
     if(!sideDef || !sideDef->SW_middlematerial) return false;
 
     texHeight = Material_Height(sideDef->SW_middlematerial);
@@ -322,12 +322,19 @@ int LineDef_MiddleMaterialCoords(const LineDef* lineDef, int side,
         }
     }
 
-    if(texOffY && (*top[0] > openingTop[0] || *top[1] > openingTop[1]))
+    if(texOffY)
     {
-        if(*top[1] > *top[0])
-            *texOffY += *top[1] - openingTop[1];
+        if(*top[0] > openingTop[0] || *top[1] > openingTop[1])
+        {
+            if(*top[1] > *top[0])
+                *texOffY += *top[1] - openingTop[1];
+            else
+                *texOffY += *top[0] - openingTop[0];
+        }
         else
-            *texOffY += *top[0] - openingTop[0];
+        {
+            *texOffY = 0;
+        }
     }
 
     // Clip it.
@@ -356,9 +363,9 @@ boolean LineDef_MiddleMaterialCoversOpening(const LineDef *line, int side,
     boolean ignoreOpacity)
 {
     assert(line);
-    if(line->L_backside)
+    if(line->L_backsidedef)
     {
-        SideDef* sideDef = line->L_side(side);
+        SideDef* sideDef = line->L_sidedef(side);
         Sector* frontSec = line->L_sector(side);
         Sector*  backSec = line->L_sector(side^1);
 
@@ -414,7 +421,7 @@ Plane* LineDef_FloorMin(const LineDef* lineDef)
 {
     assert(lineDef);
     if(!lineDef->L_frontsector) return NULL; // No interfaces.
-    if(!lineDef->L_backside || lineDef->L_backsector == lineDef->L_frontsector)
+    if(!lineDef->L_backsidedef || lineDef->L_backsector == lineDef->L_frontsector)
         return lineDef->L_frontsector->SP_plane(PLN_FLOOR);
     return lineDef->L_backsector->SP_floorvisheight < lineDef->L_frontsector->SP_floorvisheight?
                lineDef->L_backsector->SP_plane(PLN_FLOOR) : lineDef->L_frontsector->SP_plane(PLN_FLOOR);
@@ -424,7 +431,7 @@ Plane* LineDef_FloorMax(const LineDef* lineDef)
 {
     assert(lineDef);
     if(!lineDef->L_frontsector) return NULL; // No interfaces.
-    if(!lineDef->L_backside || lineDef->L_backsector == lineDef->L_frontsector)
+    if(!lineDef->L_backsidedef || lineDef->L_backsector == lineDef->L_frontsector)
         return lineDef->L_frontsector->SP_plane(PLN_FLOOR);
     return lineDef->L_backsector->SP_floorvisheight > lineDef->L_frontsector->SP_floorvisheight?
                lineDef->L_backsector->SP_plane(PLN_FLOOR) : lineDef->L_frontsector->SP_plane(PLN_FLOOR);
@@ -434,7 +441,7 @@ Plane* LineDef_CeilingMin(const LineDef* lineDef)
 {
     assert(lineDef);
     if(!lineDef->L_frontsector) return NULL; // No interfaces.
-    if(!lineDef->L_backside || lineDef->L_backsector == lineDef->L_frontsector)
+    if(!lineDef->L_backsidedef || lineDef->L_backsector == lineDef->L_frontsector)
         return lineDef->L_frontsector->SP_plane(PLN_CEILING);
     return lineDef->L_backsector->SP_ceilvisheight < lineDef->L_frontsector->SP_ceilvisheight?
                lineDef->L_backsector->SP_plane(PLN_CEILING) : lineDef->L_frontsector->SP_plane(PLN_CEILING);
@@ -444,7 +451,7 @@ Plane* LineDef_CeilingMax(const LineDef* lineDef)
 {
     assert(lineDef);
     if(!lineDef->L_frontsector) return NULL; // No interfaces.
-    if(!lineDef->L_backside || lineDef->L_backsector == lineDef->L_frontsector)
+    if(!lineDef->L_backsidedef || lineDef->L_backsector == lineDef->L_frontsector)
         return lineDef->L_frontsector->SP_plane(PLN_CEILING);
     return lineDef->L_backsector->SP_ceilvisheight > lineDef->L_frontsector->SP_ceilvisheight?
                lineDef->L_backsector->SP_plane(PLN_CEILING) : lineDef->L_frontsector->SP_plane(PLN_CEILING);
@@ -455,16 +462,16 @@ int LineDef_SetProperty(LineDef* lin, const setargs_t* args)
     switch(args->prop)
     {
     case DMU_FRONT_SECTOR:
-        DMU_SetValue(DMT_LINEDEF_SEC, &lin->L_frontsector, args, 0);
+        DMU_SetValue(DMT_LINEDEF_SECTOR, &lin->L_frontsector, args, 0);
         break;
     case DMU_BACK_SECTOR:
-        DMU_SetValue(DMT_LINEDEF_SEC, &lin->L_backsector, args, 0);
+        DMU_SetValue(DMT_LINEDEF_SECTOR, &lin->L_backsector, args, 0);
         break;
     case DMU_SIDEDEF0:
-        DMU_SetValue(DMT_LINEDEF_SIDEDEFS, &lin->L_frontside, args, 0);
+        DMU_SetValue(DMT_LINEDEF_SIDEDEF, &lin->L_frontsidedef, args, 0);
         break;
     case DMU_SIDEDEF1:
-        DMU_SetValue(DMT_LINEDEF_SIDEDEFS, &lin->L_backside, args, 0);
+        DMU_SetValue(DMT_LINEDEF_SIDEDEF, &lin->L_backsidedef, args, 0);
         break;
     case DMU_VALID_COUNT:
         DMU_SetValue(DMT_LINEDEF_VALIDCOUNT, &lin->validCount, args, 0);
@@ -474,13 +481,13 @@ int LineDef_SetProperty(LineDef* lin, const setargs_t* args)
 
         DMU_SetValue(DMT_LINEDEF_FLAGS, &lin->flags, args, 0);
 
-        s = lin->L_frontside;
+        s = lin->L_frontsidedef;
         Surface_Update(&s->SW_topsurface);
         Surface_Update(&s->SW_bottomsurface);
         Surface_Update(&s->SW_middlesurface);
-        if(lin->L_backside)
+        if(lin->L_backsidedef)
         {
-            s = lin->L_backside;
+            s = lin->L_backsidedef;
             Surface_Update(&s->SW_topsurface);
             Surface_Update(&s->SW_bottomsurface);
             Surface_Update(&s->SW_middlesurface);
@@ -526,23 +533,23 @@ int LineDef_GetProperty(const LineDef* lin, setargs_t* args)
         DMU_GetValue(DMT_LINEDEF_SLOPETYPE, &lin->slopeType, args, 0);
         break;
     case DMU_FRONT_SECTOR: {
-        Sector* sec = (lin->L_frontside? lin->L_frontsector : NULL);
-        DMU_GetValue(DMT_LINEDEF_SEC, &sec, args, 0);
+        Sector* sec = (lin->L_frontsidedef? lin->L_frontsector : NULL);
+        DMU_GetValue(DMT_LINEDEF_SECTOR, &sec, args, 0);
         break;
       }
     case DMU_BACK_SECTOR: {
-        Sector* sec = (lin->L_backside? lin->L_backsector : NULL);
-        DMU_GetValue(DMT_LINEDEF_SEC, &sec, args, 0);
+        Sector* sec = (lin->L_backsidedef? lin->L_backsector : NULL);
+        DMU_GetValue(DMT_LINEDEF_SECTOR, &sec, args, 0);
         break;
       }
     case DMU_FLAGS:
         DMU_GetValue(DMT_LINEDEF_FLAGS, &lin->flags, args, 0);
         break;
     case DMU_SIDEDEF0:
-        DMU_GetValue(DDVT_PTR, &lin->L_frontside, args, 0);
+        DMU_GetValue(DDVT_PTR, &lin->L_frontsidedef, args, 0);
         break;
     case DMU_SIDEDEF1:
-        DMU_GetValue(DDVT_PTR, &lin->L_backside, args, 0);
+        DMU_GetValue(DDVT_PTR, &lin->L_backsidedef, args, 0);
         break;
     case DMU_BOUNDING_BOX:
         if(args->valueType == DDVT_PTR)

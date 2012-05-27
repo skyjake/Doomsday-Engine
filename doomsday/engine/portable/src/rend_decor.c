@@ -72,7 +72,7 @@ typedef struct decorsource_s {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void updateSideSectionDecorations(SideDef* side, SideDefSection section);
+static void updateSideSectionDecorations(LineDef* lineDef, byte side, SideDefSection section);
 static void updatePlaneDecorations(Plane* pln);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -377,12 +377,13 @@ boolean R_ProjectSurfaceDecorations(Surface* suf, void* context)
 
         switch(DMU_GetType(suf->owner))
         {
-        case DMU_SIDEDEF:
-            {
-            SideDef* side = (SideDef*)suf->owner;
-            updateSideSectionDecorations(side, &side->SW_middlesurface == suf? SS_MIDDLE : &side->SW_bottomsurface == suf? SS_BOTTOM : SS_TOP);
-            break;
-            }
+        case DMU_SIDEDEF: {
+            SideDef* sideDef = (SideDef*)suf->owner;
+            LineDef* line = sideDef->line;
+            updateSideSectionDecorations(line, sideDef == line->L_frontsidedef? FRONT : BACK,
+                                         &sideDef->SW_middlesurface == suf? SS_MIDDLE :
+                                         &sideDef->SW_bottomsurface == suf? SS_BOTTOM : SS_TOP);
+            break; }
         case DMU_PLANE:
             updatePlaneDecorations((Plane*)suf->owner);
             break;
@@ -443,13 +444,13 @@ static uint generateDecorLights(const ded_decorlight_t* def, Surface* suf,
     V3d_Sum(originBase, originBase, v1);
 
     // Let's see where the top left light is.
-    s = M_CycleIntoRange(def->pos[0] - suf->visOffset[0] -
+    s = M_CycleIntoRange(def->pos[0] -
                          Material_Width(mat) * def->patternOffset[0] +
                          offsetS, patternW);
     num = 0;
     for(; s < width; s += patternW)
     {
-        t = M_CycleIntoRange(def->pos[1] - suf->visOffset[1] -
+        t = M_CycleIntoRange(def->pos[1] -
                              Material_Height(mat) * def->patternOffset[1] +
                              offsetT, patternH);
 
@@ -554,106 +555,36 @@ static void updatePlaneDecorations(Plane* pln)
         V3d_Set(v2, sec->aaBox.maxX, sec->aaBox.maxY, pln->visHeight);
     }
 
-    offsetS = -fmod(sec->aaBox.minX, 64);
-    offsetT = -fmod(sec->aaBox.minY, 64);
+    offsetS = -fmod(sec->aaBox.minX, 64) - suf->visOffset[0];
+    offsetT = -fmod(sec->aaBox.minY, 64) - suf->visOffset[1];
 
     updateSurfaceDecorations2(suf, offsetS, offsetT, v1, v2, sec, suf->material? true : false);
 }
 
-static void updateSideSectionDecorations(SideDef* side, SideDefSection section)
+static void updateSideSectionDecorations(LineDef* line, byte side, SideDefSection section)
 {
-    LineDef* line;
-    Surface* suf;
+    Surface* surface;
+    float matOffset[2];
     vec3d_t v1, v2;
-    int sid;
-    float offsetS = 0, offsetT = 0;
     boolean visible = false;
-    const Plane* frontCeil, *frontFloor, *backCeil = NULL, *backFloor = NULL;
-    coord_t bottom, top;
 
-    if(!side->hedgeLeft) return;
+    if(!line || !line->L_sidedef(side)) return;
 
-    line = side->hedgeLeft->lineDef;
-    sid = (line->L_backside && line->L_backside == side)? 1 : 0;
-    frontCeil  = line->L_sector(sid)->SP_plane(PLN_CEILING);
-    frontFloor = line->L_sector(sid)->SP_plane(PLN_FLOOR);
-
-    if(line->L_backside)
+    surface = &line->L_sidedef(side)->SW_surface(section);
+    if(surface->material)
     {
-        backCeil  = line->L_sector(sid^1)->SP_plane(PLN_CEILING);
-        backFloor = line->L_sector(sid^1)->SP_plane(PLN_FLOOR);
-    }
-
-    switch(section)
-    {
-    case SS_MIDDLE:
-        suf = &side->SW_middlesurface;
-        if(suf->material)
+        coord_t low, hi;
+        visible = R_FindBottomTop(line, side, section,
+                                  line->L_sector(side), line->L_sector(side^1), line->L_sidedef(side),
+                                  &low, &hi, matOffset);
+        if(visible)
         {
-            if(!line->L_backside)
-            {
-                top = frontCeil->visHeight;
-                bottom = frontFloor->visHeight;
-                if(line->flags & DDLF_DONTPEGBOTTOM)
-                    offsetT += frontCeil->visHeight - frontFloor->visHeight;
-                visible = true;
-            }
-            else
-            {
-                float texOffset[2];
-                if(R_FindBottomTop(line, sid, SS_MIDDLE, suf->visOffset[VX], suf->visOffset[VY],
-                             frontFloor, frontCeil, backFloor, backCeil,
-                             (line->flags & DDLF_DONTPEGBOTTOM)? true : false,
-                             (line->flags & DDLF_DONTPEGTOP)? true : false,
-                             (side->flags & SDF_MIDDLE_STRETCH)? true : false,
-                             LINE_SELFREF(line)? true : false,
-                             &bottom, &top, texOffset))
-                {
-                    //offsetS = texOffset[VX];
-                    // Counteract surface material offset (interpreted as geometry offset).
-                    offsetT = suf->visOffset[VY];
-                    visible = true;
-                }
-            }
+            V3d_Set(v1, line->L_vorigin(side  )[VX], line->L_vorigin(side  )[VY], hi);
+            V3d_Set(v2, line->L_vorigin(side^1)[VX], line->L_vorigin(side^1)[VY], low);
         }
-        break;
-
-    case SS_TOP:
-        suf = &side->SW_topsurface;
-        if(suf->material)
-            if(line->L_backside && backCeil->visHeight < frontCeil->visHeight &&
-               (!Surface_IsSkyMasked(&backCeil->surface) || !Surface_IsSkyMasked(&frontCeil->surface)))
-            {
-                top = frontCeil->visHeight;
-                bottom  = backCeil->visHeight;
-                if(!(line->flags & DDLF_DONTPEGTOP))
-                    offsetT += frontCeil->visHeight - backCeil->visHeight;
-                visible = true;
-            }
-        break;
-
-    case SS_BOTTOM:
-        suf = &side->SW_bottomsurface;
-        if(suf->material)
-            if(line->L_backside && backFloor->visHeight > frontFloor->visHeight &&
-               (!Surface_IsSkyMasked(&backFloor->surface) || !Surface_IsSkyMasked(&frontFloor->surface)))
-            {
-                top = backFloor->visHeight;
-                bottom  = frontFloor->visHeight;
-                if(line->flags & DDLF_DONTPEGBOTTOM)
-                    offsetT -= frontCeil->visHeight - backFloor->visHeight;
-                visible = true;
-            }
-        break;
     }
 
-    if(visible)
-    {
-        V3d_Set(v1, line->L_vorigin(sid  )[VX], line->L_vorigin(sid  )[VY], top);
-        V3d_Set(v2, line->L_vorigin(sid^1)[VX], line->L_vorigin(sid^1)[VY], bottom);
-    }
-
-    updateSurfaceDecorations2(suf, offsetS, offsetT, v1, v2, NULL, visible);
+    updateSurfaceDecorations2(surface, -matOffset[0], -matOffset[1], v1, v2, NULL, visible);
 }
 
 /**

@@ -93,13 +93,11 @@ void            R_OrderVertices(const LineDef* line, const Sector* sector,
                                 Vertex* verts[2]);
 
 /**
- * @param texOffset  Can be @c NULL.
+ * @param matOffset  Can be @c NULL.
  */
-boolean R_FindBottomTop(LineDef* lineDef, int side, SideDefSection section,
-    coord_t matOffsetX, coord_t matOffsetY,
-    const Plane* ffloor, const Plane* fceil, const Plane* bfloor, const Plane* bceil,
-    boolean unpegBottom, boolean unpegTop, boolean stretchMiddle, boolean isSelfRef,
-    coord_t* bottom, coord_t* top, float texOffset[2]);
+boolean R_FindBottomTop(LineDef* line, int side, SideDefSection section,
+    Sector* frontSec, Sector* backSec, SideDef* frontSideDef,
+    coord_t* low, coord_t* hi, float matOffset[2]);
 
 Plane*          R_NewPlaneForSector(Sector* sec);
 void            R_DestroyPlaneOfSector(uint id, Sector* sec);
@@ -148,21 +146,33 @@ boolean R_IsGlowingPlane(const Plane* plane);
 
 float R_GlowStrength(const Plane* pln);
 
-lineowner_t*    R_GetVtxLineOwner(const Vertex* vtx, const LineDef* line);
-LineDef*        R_FindLineNeighbor(const Sector* sector,
-                                   const LineDef* line,
-                                   const lineowner_t* own,
-                                   boolean antiClockwise, binangle_t* diff);
-LineDef*        R_FindSolidLineNeighbor(const Sector* sector,
-                                        const LineDef* line,
-                                        const lineowner_t* own,
-                                        boolean antiClockwise,
-                                        binangle_t* diff);
-LineDef*        R_FindLineBackNeighbor(const Sector* sector,
-                                       const LineDef* line,
-                                       const lineowner_t* own,
-                                       boolean antiClockwise,
-                                       binangle_t* diff);
+lineowner_t* R_GetVtxLineOwner(const Vertex* vtx, const LineDef* line);
+
+/**
+ * A neighbour is a line that shares a vertex with 'line', and faces the
+ * specified sector.
+ */
+LineDef* R_FindLineNeighbor(const Sector* sector, const LineDef* line,
+    const lineowner_t* own, boolean antiClockwise, binangle_t* diff);
+
+LineDef* R_FindSolidLineNeighbor(const Sector* sector, const LineDef* line,
+    const lineowner_t* own, boolean antiClockwise, binangle_t* diff);
+
+/**
+ * A line's align neighbor is a line that shares a vertex with 'line' and
+ * whos orientation is aligned with it (thus, making it unnecessary to have
+ * a shadow between them. In practice, they would be considered a single,
+ * long sidedef by the shadow generator).
+ */
+LineDef* R_FindLineAlignNeighbor(const Sector* sec, const LineDef* line,
+    const lineowner_t* own, boolean antiClockwise, int alignment);
+
+/**
+ * Find a backneighbour for the given line. They are the neighbouring line
+ * in the backsector of the imediate line neighbor.
+ */
+LineDef* R_FindLineBackNeighbor(const Sector* sector, const LineDef* line,
+    const lineowner_t* own, boolean antiClockwise, binangle_t* diff);
 
 /**
  * @defgroup skyCapFlags  Sky Cap Flags

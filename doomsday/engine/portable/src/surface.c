@@ -276,7 +276,7 @@ void Surface_UpdateBaseOrigin(Surface* suf)
         suf->base.origin[VX] = (line->L_v1origin[VX] + line->L_v2origin[VX]) / 2;
         suf->base.origin[VY] = (line->L_v1origin[VY] + line->L_v2origin[VY]) / 2;
 
-        sec = line->L_sector(side == line->L_frontside? FRONT:BACK);
+        sec = line->L_sector(side == line->L_frontsidedef? FRONT:BACK);
         if(sec)
         {
             const coord_t ffloor = sec->SP_floorheight;
@@ -284,7 +284,7 @@ void Surface_UpdateBaseOrigin(Surface* suf)
 
             if(suf == &side->SW_middlesurface)
             {
-                if(!line->L_backside || LINE_SELFREF(line))
+                if(!line->L_backsidedef || LINE_SELFREF(line))
                     suf->base.origin[VZ] = (ffloor + fceil) / 2;
                 else
                     suf->base.origin[VZ] = (MAX_OF(ffloor, line->L_backsector->SP_floorheight) +
@@ -293,7 +293,7 @@ void Surface_UpdateBaseOrigin(Surface* suf)
             }
             else if(suf == &side->SW_bottomsurface)
             {
-                if(!line->L_backside || LINE_SELFREF(line) ||
+                if(!line->L_backsidedef || LINE_SELFREF(line) ||
                    line->L_backsector->SP_floorheight <= ffloor)
                     suf->base.origin[VZ] = ffloor;
                 else
@@ -302,7 +302,7 @@ void Surface_UpdateBaseOrigin(Surface* suf)
             }
             else if(suf == &side->SW_topsurface)
             {
-                if(!line->L_backside || LINE_SELFREF(line) ||
+                if(!line->L_backsidedef || LINE_SELFREF(line) ||
                    line->L_backsector->SP_ceilheight >= fceil)
                     suf->base.origin[VZ] = fceil;
                 else

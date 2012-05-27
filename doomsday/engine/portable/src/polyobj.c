@@ -59,10 +59,10 @@ void Polyobj_UpdateSurfaceTangents(Polyobj* po)
     {
         LineDef* line = *lineIter;
 
-        SideDef_UpdateSurfaceTangents(line->L_frontside);
-        if(line->L_backside)
+        SideDef_UpdateSurfaceTangents(line->L_frontsidedef);
+        if(line->L_backsidedef)
         {
-            SideDef_UpdateSurfaceTangents(line->L_backside);
+            SideDef_UpdateSurfaceTangents(line->L_backsidedef);
         }
     }
 }
@@ -240,7 +240,7 @@ boolean Polyobj_Rotate(Polyobj* po, angle_t angle)
         line->angle += ANGLE_TO_BANG(angle);
 
         // HEdge angle must be kept in sync.
-        line->L_frontside->hedgeLeft->angle = BANG_TO_ANGLE(line->angle);
+        line->L_frontside.hedgeLeft->angle = BANG_TO_ANGLE(line->angle);
     }
     Polyobj_UpdateAABox(po);
     po->angle += angle;
@@ -271,7 +271,7 @@ boolean Polyobj_Rotate(Polyobj* po, angle_t angle)
             line->angle -= ANGLE_TO_BANG(angle);
 
             // HEdge angle must be kept in sync.
-            line->L_frontside->hedgeLeft->angle = BANG_TO_ANGLE(line->angle);
+            line->L_frontside.hedgeLeft->angle = BANG_TO_ANGLE(line->angle);
         }
         Polyobj_UpdateAABox(po);
         po->angle -= angle;
