@@ -294,50 +294,11 @@ boolean HEdge_PrepareWallDivs(HEdge* hedge, SideDefSection section,
     walldivs_t* leftWallDivs, walldivs_t* rightWallDivs, float matOffset[2])
 {
     Q_ASSERT(hedge);
-    SideDef* frontSide = HEDGE_SIDEDEF(hedge);
-    boolean visible = false;
     coord_t low, hi;
-
-    // Single sided?
-    if(!frontSec || !backSec ||
-       (hedge->twin && !HEDGE_SIDEDEF(hedge->twin))/*front side of a "window"*/)
-    {
-        low = frontSec->SP_floorvisheight;
-        hi  = frontSec->SP_ceilvisheight;
-
-        if(matOffset)
-        {
-            Surface* suf = &frontSide->SW_middlesurface;
-            matOffset[0] = suf->visOffset[0] + (float)(hedge->offset);
-            matOffset[1] = suf->visOffset[1];
-            if(hedge->lineDef->flags & DDLF_DONTPEGBOTTOM)
-            {
-                matOffset[1] += -(hi - low);
-            }
-        }
-
-        visible = hi > low;
-    }
-    else
-    {
-        LineDef* line = hedge->lineDef;
-        Plane* ffloor = frontSec->SP_plane(PLN_FLOOR);
-        Plane* fceil  = frontSec->SP_plane(PLN_CEILING);
-        Plane* bfloor = backSec->SP_plane(PLN_FLOOR);
-        Plane* bceil  = backSec->SP_plane(PLN_CEILING);
-        Surface* suf = &frontSide->SW_surface(section);
-        float clippedY;
-
-        visible = R_FindBottomTop(hedge->lineDef, hedge->side, section,
-                                  hedge->offset + suf->visOffset[VX], suf->visOffset[VY],
-                                  ffloor, fceil, bfloor, bceil,
-                                  (line->flags & DDLF_DONTPEGBOTTOM)? true : false,
-                                  (line->flags & DDLF_DONTPEGTOP)? true : false,
-                                  (frontSide->flags & SDF_MIDDLE_STRETCH)? true : false,
-                                  LINE_SELFREF(line)? true : false,
-                                  &low, &hi, matOffset, &clippedY);
-    }
-
+    boolean visible = R_FindBottomTop(hedge->lineDef, hedge->side, section,
+                                      frontSec, backSec, HEDGE_SIDEDEF(hedge),
+                                      &low, &hi, matOffset);
+    matOffset[0] += (float)(hedge->offset);
     if(!visible) return false;
 
     buildWallDiv(leftWallDivs,  hedge, section, low, hi, false/*is-left-edge*/);

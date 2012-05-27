@@ -916,7 +916,7 @@ void R_OrderVertices(const LineDef *line, const Sector *sector, Vertex *verts[2]
     verts[1] = line->L_v(edge^1);
 }
 
-boolean R_FindBottomTop(LineDef* lineDef, int side, SideDefSection section,
+static boolean findBottomTop(LineDef* lineDef, int side, SideDefSection section,
     coord_t matOffsetX, coord_t matOffsetY,
     const Plane* ffloor, const Plane* fceil,
     const Plane* bfloor, const Plane* bceil,
@@ -1040,6 +1040,148 @@ boolean R_FindBottomTop(LineDef* lineDef, int side, SideDefSection section,
     }
 
     return false;
+}
+
+boolean R_FindBottomTop(LineDef* line, int side, SideDefSection section,
+    Sector* frontSec, Sector* backSec, SideDef* frontSideDef,
+    coord_t* low, coord_t* hi, float matOffset[2])
+{
+    boolean visible = false;
+
+    // Single sided?
+    if(!frontSec || !backSec || !line->L_sidedef(side^1)/*front side of a "window"*/)
+    {
+        *low = frontSec->SP_floorvisheight;
+        *hi  = frontSec->SP_ceilvisheight;
+
+        if(matOffset)
+        {
+            Surface* suf = &frontSideDef->SW_middlesurface;
+            matOffset[0] = suf->visOffset[0];
+            matOffset[1] = suf->visOffset[1];
+            if(line->flags & DDLF_DONTPEGBOTTOM)
+            {
+                matOffset[1] += -(*hi - *low);
+            }
+        }
+
+        visible = *hi > *low;
+    }
+    else
+    {
+        Plane* ffloor = frontSec->SP_plane(PLN_FLOOR);
+        Plane* fceil  = frontSec->SP_plane(PLN_CEILING);
+        Plane* bfloor = backSec->SP_plane(PLN_FLOOR);
+        Plane* bceil  = backSec->SP_plane(PLN_CEILING);
+        Surface* suf = &frontSideDef->SW_surface(section);
+        float clippedY;
+
+        visible = findBottomTop(line, side, section,
+                                suf->visOffset[VX], suf->visOffset[VY],
+                                ffloor, fceil, bfloor, bceil,
+                                (line->flags & DDLF_DONTPEGBOTTOM)? true : false,
+                                (line->flags & DDLF_DONTPEGTOP)? true : false,
+                                (frontSideDef->flags & SDF_MIDDLE_STRETCH)? true : false,
+                                LINE_SELFREF(line)? true : false,
+                                low, hi, matOffset, &clippedY);
+    }
+    return visible;
+}
+
+boolean R_FindBottomTop2(LineDef* line, byte side, SideDefSection section,
+    Sector* frontSec, Sector* backSec, SideDef* frontSideDef,
+    coord_t* low, coord_t* hi, float matOffset[2])
+{
+    boolean visible = false;
+
+    // Single sided?
+    if(!frontSec || !backSec || !line->L_sidedef(side^1)/*front side of a "window"*/)
+    {
+        *low = frontSec->SP_floorvisheight;
+        *hi  = frontSec->SP_ceilvisheight;
+
+        if(matOffset)
+        {
+            matOffset[0] = matOffset[1] = 0;
+            if(line->flags & DDLF_DONTPEGBOTTOM)
+            {
+                matOffset[1] += (*hi) - (*low);
+            }
+        }
+
+        visible = *hi > *low;
+    }
+    else
+    {
+        Plane* ffloor = frontSec->SP_plane(PLN_FLOOR);
+        Plane* fceil  = frontSec->SP_plane(PLN_CEILING);
+        Plane* bfloor = backSec->SP_plane(PLN_FLOOR);
+        Plane* bceil  = backSec->SP_plane(PLN_CEILING);
+        Surface* suf = &frontSideDef->SW_surface(section);
+
+        switch(section)
+        {
+        case SS_MIDDLE: {
+            float texOffset[2], clippedY;
+
+            visible = findBottomTop(line, side, section,
+                                    suf->visOffset[VX], suf->visOffset[VY],
+                                    ffloor, fceil, bfloor, bceil,
+                                    (line->flags & DDLF_DONTPEGBOTTOM)? true : false,
+                                    (line->flags & DDLF_DONTPEGTOP)? true : false,
+                                    (frontSideDef->flags & SDF_MIDDLE_STRETCH)? true : false,
+                                    LINE_SELFREF(line)? true : false,
+                                    low, hi, texOffset, &clippedY);
+            if(matOffset)
+            {
+                matOffset[0] = matOffset[1] = 0;
+                if(line->flags & DDLF_DONTPEGBOTTOM)
+                {
+                    // Counteract surface material offset (interpreted as geometry offset).
+                    matOffset[1] += suf->visOffset[VY];
+                    matOffset[1] -= clippedY;
+                }
+            }
+            break; }
+
+        case SS_TOP:
+            if(line->L_backsidedef && bceil->visHeight < fceil->visHeight &&
+               (!Surface_IsSkyMasked(&bceil->surface) || !Surface_IsSkyMasked(&fceil->surface)))
+            {
+                *hi  = fceil->visHeight;
+                *low = bceil->visHeight;
+                if(matOffset)
+                {
+                    matOffset[0] = matOffset[1] = 0;
+                    if(!(line->flags & DDLF_DONTPEGTOP))
+                    {
+                        matOffset[1] += fceil->visHeight - bceil->visHeight;
+                    }
+                }
+            }
+            visible = *hi > *low;
+            break;
+
+        case SS_BOTTOM:
+            if(line->L_backsidedef && bfloor->visHeight > ffloor->visHeight &&
+               (!Surface_IsSkyMasked(&bfloor->surface) || !Surface_IsSkyMasked(&ffloor->surface)))
+            {
+                *hi  = bfloor->visHeight;
+                *low = ffloor->visHeight;
+                if(matOffset)
+                {
+                    matOffset[0] = matOffset[1] = 0;
+                    if(line->flags & DDLF_DONTPEGBOTTOM)
+                    {
+                        matOffset[1] -= fceil->visHeight - bfloor->visHeight;
+                    }
+                }
+            }
+            visible = *hi > *low;
+            break;
+        }
+    }
+    return visible;
 }
 
 LineDef* R_FindLineNeighbor(const Sector* sector, const LineDef* line,
