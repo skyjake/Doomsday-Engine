@@ -1,8 +1,8 @@
 #ifndef LIBDENG_UPDATEAVAILABLEDIALOG_H
 #define LIBDENG_UPDATEAVAILABLEDIALOG_H
 
-#include "versioninfo.h"
 #include <QDialog>
+#include "versioninfo.h"
 
 class UpdateAvailableDialog : public QDialog
 {
@@ -16,6 +16,7 @@ public:
 public slots:
     void neverCheckToggled(bool);
     void showWhatsNew();
+    void editSettings();
 
 private:
     struct Instance;

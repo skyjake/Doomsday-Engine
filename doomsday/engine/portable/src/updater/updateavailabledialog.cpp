@@ -1,10 +1,10 @@
 #include "updateavailabledialog.h"
 #include "updatersettings.h"
+#include "updatersettingsdialog.h"
 #include "versioninfo.h"
 #include <de/Log>
 #include <QUrl>
 #include <QDesktopServices>
-#include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QDialogButtonBox>
 #include <QCheckBox>
@@ -16,6 +16,7 @@ struct UpdateAvailableDialog::Instance
 {
     UpdateAvailableDialog* self;
     QLabel* info;
+    QCheckBox* neverCheck;
     VersionInfo latestVersion;
     de::String changeLog;
 
@@ -28,7 +29,8 @@ struct UpdateAvailableDialog::Instance
         info->setTextFormat(Qt::RichText);
         VersionInfo currentVersion;
         int bigFontSize = self->font().pointSize() * 1.2;
-        de::String channel = UpdaterSettings().channel() == UpdaterSettings::Stable? "stable" : "unstable";
+        de::String channel = (UpdaterSettings().channel() == UpdaterSettings::Stable?
+                                  "stable" : "unstable");
         bool askUpgrade = false;
 
         if(latestVersion > currentVersion)
@@ -46,13 +48,13 @@ struct UpdateAvailableDialog::Instance
         else
         {
             info->setText(QString("<span style=\"font-weight:bold; font-size:%1pt;\">You are up to date.</span>"
-                                  "<p>The installed version %2 is the latest available %3 build.")
+                                  "<p>The installed %2 is the latest available %3 build.")
                           .arg(bigFontSize)
                           .arg(currentVersion.asText())
                           .arg(channel));
         }
 
-        QCheckBox* neverCheck = new QCheckBox("Never check for updates automatically");
+        neverCheck = new QCheckBox("N&ever check for updates automatically");
         neverCheck->setChecked(UpdaterSettings().onlyCheckManually());
         QObject::connect(neverCheck, SIGNAL(toggled(bool)), self, SLOT(neverCheckToggled(bool)));
 
@@ -60,23 +62,24 @@ struct UpdateAvailableDialog::Instance
 
         if(!askUpgrade)
         {
-            QPushButton* ok = bbox->addButton("Ok", QDialogButtonBox::AcceptRole);
-            QObject::connect(ok, SIGNAL(clicked()), self, SLOT(accept()));
+            QPushButton* ok = bbox->addButton("&Close", QDialogButtonBox::AcceptRole);
+            QObject::connect(ok, SIGNAL(clicked()), self, SLOT(reject()));
         }
         else
         {
-            QPushButton* yes = bbox->addButton("Download and install", QDialogButtonBox::YesRole);
-            QPushButton* no = bbox->addButton("Not now", QDialogButtonBox::NoRole);
+            QPushButton* yes = bbox->addButton("&Download and install", QDialogButtonBox::YesRole);
+            QPushButton* no = bbox->addButton("&Not now", QDialogButtonBox::NoRole);
             QObject::connect(yes, SIGNAL(clicked()), self, SLOT(accept()));
             QObject::connect(no, SIGNAL(clicked()), self, SLOT(reject()));
         }
 
-        QPushButton* cfg = bbox->addButton("Settings...", QDialogButtonBox::ActionRole);
+        QPushButton* cfg = bbox->addButton("&Settings...", QDialogButtonBox::ActionRole);
+        QObject::connect(cfg, SIGNAL(clicked()), self, SLOT(editSettings()));
         cfg->setAutoDefault(false);
 
         if(askUpgrade)
         {
-            QPushButton* whatsNew = bbox->addButton("What's new?", QDialogButtonBox::HelpRole);
+            QPushButton* whatsNew = bbox->addButton("&What's new?", QDialogButtonBox::HelpRole);
             QObject::connect(whatsNew, SIGNAL(clicked()), self, SLOT(showWhatsNew()));
             whatsNew->setAutoDefault(false);
         }
@@ -110,4 +113,13 @@ void UpdateAvailableDialog::neverCheckToggled(bool set)
 void UpdateAvailableDialog::showWhatsNew()
 {
     QDesktopServices::openUrl(QUrl(d->changeLog));
+}
+
+void UpdateAvailableDialog::editSettings()
+{
+    UpdaterSettingsDialog st;
+    if(st.exec())
+    {
+        d->neverCheck->setChecked(UpdaterSettings().onlyCheckManually());
+    }
 }

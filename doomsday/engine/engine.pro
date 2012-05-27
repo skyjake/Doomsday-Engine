@@ -366,6 +366,7 @@ DENG_HEADERS += \
     portable/include/zipfile.h \
     portable/src/updater/updateavailabledialog.h \
     portable/src/updater/updatersettings.h \
+    portable/src/updater/updatersettingsdialog.h \
     portable/src/updater/versioninfo.h
 
 INCLUDEPATH += \
@@ -645,6 +646,7 @@ SOURCES += \
     portable/src/updater.cpp \
     portable/src/updater/updateavailabledialog.cpp \
     portable/src/updater/updatersettings.cpp \
+    portable/src/updater/updatersettingsdialog.cpp \
     portable/src/uri.c \
     portable/src/vertex.cpp \
     portable/src/wadfile.c \

@@ -115,11 +115,12 @@ struct Updater::Instance
                 << latestPackageUri << latestLogUri;
 
         // Is this newer than what we're running?
-        UpdateAvailableDialog* dlg = new UpdateAvailableDialog(latestVersion, latestLogUri);
-
-        dlg->exec();
-
-        delete dlg;
+        // TODO: Silent check flag.
+        UpdateAvailableDialog dlg(latestVersion, latestLogUri);
+        if(dlg.exec())
+        {
+            LOG_MSG("Download and install.");
+        }
     }
 };
 
