@@ -322,12 +322,19 @@ int LineDef_MiddleMaterialCoords(const LineDef* lineDef, int side,
         }
     }
 
-    if(texOffY && (*top[0] > openingTop[0] || *top[1] > openingTop[1]))
+    if(texOffY)
     {
-        if(*top[1] > *top[0])
-            *texOffY += *top[1] - openingTop[1];
+        if(*top[0] > openingTop[0] || *top[1] > openingTop[1])
+        {
+            if(*top[1] > *top[0])
+                *texOffY += *top[1] - openingTop[1];
+            else
+                *texOffY += *top[0] - openingTop[0];
+        }
         else
-            *texOffY += *top[0] - openingTop[0];
+        {
+            *texOffY = 0;
+        }
     }
 
     // Clip it.

@@ -922,7 +922,7 @@ boolean R_FindBottomTop(LineDef* lineDef, int side, SideDefSection section,
     const Plane* bfloor, const Plane* bceil,
     boolean unpegBottom, boolean unpegTop,
     boolean stretchMiddle, boolean isSelfRef,
-    coord_t* bottom, coord_t* top, float texOffset[2])
+    coord_t* bottom, coord_t* top, float texOffset[2], float* clippedY)
 {
     switch(section)
     {
@@ -1024,12 +1024,13 @@ boolean R_FindBottomTop(LineDef* lineDef, int side, SideDefSection section,
             }
 
             if(LineDef_MiddleMaterialCoords(lineDef, side, bottom, &vR_ZBottom, top,
-                                            &vR_ZTop, texOffset? &texOffset[VY] : NULL, unpegBottom,
+                                            &vR_ZTop, clippedY, unpegBottom,
                                             clipTop, clipBottom))
             {
                 if(texOffset)
                 {
                     texOffset[VX] = matOffsetX;
+                    texOffset[VY] = *clippedY;
                     if(!clipTop) texOffset[VY] = 0;
                 }
                 return true;

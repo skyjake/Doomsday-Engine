@@ -599,18 +599,21 @@ static void updateSideSectionDecorations(LineDef* line, byte side, SideDefSectio
             }
             else
             {
-                float texOffset[2];
+                float texOffset[2], clippedY;
                 if(R_FindBottomTop(line, side, SS_MIDDLE, suf->visOffset[VX], suf->visOffset[VY],
-                             frontFloor, frontCeil, backFloor, backCeil,
-                             (line->flags & DDLF_DONTPEGBOTTOM)? true : false,
-                             (line->flags & DDLF_DONTPEGTOP)? true : false,
-                             (sideDef->flags & SDF_MIDDLE_STRETCH)? true : false,
-                             LINE_SELFREF(line)? true : false,
-                             &bottom, &top, texOffset))
+                                   frontFloor, frontCeil, backFloor, backCeil,
+                                   (line->flags & DDLF_DONTPEGBOTTOM)? true : false,
+                                   (line->flags & DDLF_DONTPEGTOP)? true : false,
+                                   (sideDef->flags & SDF_MIDDLE_STRETCH)? true : false,
+                                   LINE_SELFREF(line)? true : false,
+                                   &bottom, &top, texOffset, &clippedY))
                 {
-                    //offsetS = texOffset[VX];
                     // Counteract surface material offset (interpreted as geometry offset).
-                    offsetT = suf->visOffset[VY];
+                    if(line->flags & DDLF_DONTPEGBOTTOM)
+                    {
+                        offsetT += suf->visOffset[VY];
+                        offsetT -= clippedY;
+                    }
                     visible = true;
                 }
             }

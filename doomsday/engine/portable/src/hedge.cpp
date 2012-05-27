@@ -326,6 +326,7 @@ boolean HEdge_PrepareWallDivs(HEdge* hedge, SideDefSection section,
         Plane* bfloor = backSec->SP_plane(PLN_FLOOR);
         Plane* bceil  = backSec->SP_plane(PLN_CEILING);
         Surface* suf = &frontSide->SW_surface(section);
+        float clippedY;
 
         visible = R_FindBottomTop(hedge->lineDef, hedge->side, section,
                                   hedge->offset + suf->visOffset[VX], suf->visOffset[VY],
@@ -334,7 +335,7 @@ boolean HEdge_PrepareWallDivs(HEdge* hedge, SideDefSection section,
                                   (line->flags & DDLF_DONTPEGTOP)? true : false,
                                   (frontSide->flags & SDF_MIDDLE_STRETCH)? true : false,
                                   LINE_SELFREF(line)? true : false,
-                                  &low, &hi, matOffset);
+                                  &low, &hi, matOffset, &clippedY);
     }
 
     if(!visible) return false;

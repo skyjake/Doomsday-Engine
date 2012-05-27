@@ -99,7 +99,7 @@ boolean R_FindBottomTop(LineDef* lineDef, int side, SideDefSection section,
     coord_t matOffsetX, coord_t matOffsetY,
     const Plane* ffloor, const Plane* fceil, const Plane* bfloor, const Plane* bceil,
     boolean unpegBottom, boolean unpegTop, boolean stretchMiddle, boolean isSelfRef,
-    coord_t* bottom, coord_t* top, float texOffset[2]);
+    coord_t* bottom, coord_t* top, float texOffset[2], float* clippedY);
 
 Plane*          R_NewPlaneForSector(Sector* sec);
 void            R_DestroyPlaneOfSector(uint id, Sector* sec);
