@@ -907,145 +907,19 @@ void R_SetupFogDefaults(void)
  * is the leftmost vertex and verts[1] is the rightmost vertex, when the
  * line lies at the edge of `sector.'
  */
-void R_OrderVertices(const LineDef *line, const Sector *sector, Vertex *verts[2])
+void R_OrderVertices(const LineDef* line, const Sector* sector, Vertex* verts[2])
 {
-    byte        edge;
-
-    edge = (sector == line->L_frontsector? 0:1);
+    byte edge = (sector == line->L_frontsector? 0:1);
     verts[0] = line->L_v(edge);
     verts[1] = line->L_v(edge^1);
-}
-
-static boolean findBottomTop(LineDef* lineDef, int side, SideDefSection section,
-    coord_t matOffsetX, coord_t matOffsetY,
-    const Plane* ffloor, const Plane* fceil,
-    const Plane* bfloor, const Plane* bceil,
-    boolean unpegBottom, boolean unpegTop,
-    boolean stretchMiddle, boolean isSelfRef,
-    coord_t* bottom, coord_t* top, float texOffset[2])
-{
-    switch(section)
-    {
-    case SS_TOP:
-        *top = fceil->visHeight;
-        // Can't go over front ceiling, would induce polygon flaws.
-        if(bceil->visHeight < ffloor->visHeight)
-            *bottom = ffloor->visHeight;
-        else
-            *bottom = bceil->visHeight;
-        if(*top > *bottom)
-        {
-            if(texOffset)
-            {
-                texOffset[0] = matOffsetX;
-                texOffset[1] = matOffsetY;
-
-                // Align with normal middle texture?
-                if(!unpegTop)
-                    texOffset[1] += -(fceil->visHeight - bceil->visHeight);
-            }
-            return true;
-        }
-        break;
-
-    case SS_BOTTOM: {
-        const boolean raiseToBackFloor = (Surface_IsSkyMasked(&fceil->surface) && Surface_IsSkyMasked(&bceil->surface) && fceil->visHeight < bceil->visHeight);
-        coord_t t = bfloor->visHeight;
-
-        *bottom = ffloor->visHeight;
-        // Can't go over the back ceiling, would induce polygon flaws.
-        if(bfloor->visHeight > bceil->visHeight)
-            t = bceil->visHeight;
-
-        // Can't go over front ceiling, would induce polygon flaws.
-        // In the special case of a sky masked upper we must extend the bottom
-        // section up to the height of the back floor.
-        if(t > fceil->visHeight && !raiseToBackFloor)
-            t = fceil->visHeight;
-        *top = t;
-
-        if(*top > *bottom)
-        {
-            if(texOffset)
-            {
-                texOffset[0] = matOffsetX;
-                texOffset[1] = matOffsetY;
-
-                if(bfloor->visHeight > fceil->visHeight)
-                    texOffset[1] += -((raiseToBackFloor? t : fceil->visHeight) - bfloor->visHeight);
-
-                // Align with normal middle texture?
-                if(unpegBottom)
-                    texOffset[1] += (raiseToBackFloor? t : fceil->visHeight) - bfloor->visHeight;
-            }
-            return true;
-        }
-        break; }
-
-    case SS_MIDDLE: {
-        coord_t ftop, fbottom, vR_ZBottom, vR_ZTop;
-
-        if(isSelfRef)
-        {
-            fbottom = MIN_OF(bfloor->visHeight, ffloor->visHeight);
-            ftop    = MAX_OF(bceil->visHeight, fceil->visHeight);
-        }
-        else
-        {
-            fbottom = MAX_OF(bfloor->visHeight, ffloor->visHeight);
-            ftop    = MIN_OF(bceil->visHeight, fceil->visHeight);
-        }
-
-        *bottom = vR_ZBottom = fbottom;
-        *top    = vR_ZTop    = ftop;
-
-        if(stretchMiddle)
-        {
-            if(*top > *bottom)
-            {
-                if(texOffset)
-                {
-                    texOffset[0] = matOffsetX;
-                    texOffset[1] = 0;
-                }
-                return true;
-            }
-        }
-        else
-        {
-            boolean clipBottom = true, clipTop = true;
-
-            if(!P_IsInVoid(viewPlayer))
-            {
-                if(Surface_IsSkyMasked(&ffloor->surface) && Surface_IsSkyMasked(&bfloor->surface))
-                    clipBottom = false;
-                if(Surface_IsSkyMasked(&fceil->surface)  && Surface_IsSkyMasked(&bceil->surface))
-                    clipTop = false;
-            }
-
-            if(LineDef_MiddleMaterialCoords(lineDef, side, bottom, &vR_ZBottom, top,
-                                            &vR_ZTop, texOffset? &texOffset[1] : NULL,
-                                            unpegBottom, clipTop, clipBottom))
-            {
-                if(texOffset)
-                {
-                    texOffset[0] = matOffsetX;
-                    if(!clipTop) texOffset[1] = 0;
-                }
-                return true;
-            }
-        }
-        break; }
-    }
-
-    return false;
 }
 
 boolean R_FindBottomTop(LineDef* line, int side, SideDefSection section,
     Sector* frontSec, Sector* backSec, SideDef* frontSideDef,
     coord_t* low, coord_t* hi, float matOffset[2])
 {
-    boolean visible = false;
+    const boolean unpegBottom   = !!(line->flags & DDLF_DONTPEGBOTTOM);
+    const boolean unpegTop      = !!(line->flags & DDLF_DONTPEGTOP);
 
     // Single sided?
     if(!frontSec || !backSec || !line->L_sidedef(side^1)/*front side of a "window"*/)
@@ -1058,32 +932,123 @@ boolean R_FindBottomTop(LineDef* line, int side, SideDefSection section,
             Surface* suf = &frontSideDef->SW_middlesurface;
             matOffset[0] = suf->visOffset[0];
             matOffset[1] = suf->visOffset[1];
-            if(line->flags & DDLF_DONTPEGBOTTOM)
+            if(unpegBottom)
             {
-                matOffset[1] += -(*hi - *low);
+                matOffset[1] -= *hi - *low;
             }
         }
-
-        visible = *hi > *low;
     }
     else
     {
+        const boolean stretchMiddle = !!(frontSideDef->flags & SDF_MIDDLE_STRETCH);
+        const boolean isSelfRef     = LINE_SELFREF(line);
         Plane* ffloor = frontSec->SP_plane(PLN_FLOOR);
         Plane* fceil  = frontSec->SP_plane(PLN_CEILING);
         Plane* bfloor = backSec->SP_plane(PLN_FLOOR);
         Plane* bceil  = backSec->SP_plane(PLN_CEILING);
         Surface* suf = &frontSideDef->SW_surface(section);
 
-        visible = findBottomTop(line, side, section,
-                                suf->visOffset[VX], suf->visOffset[VY],
-                                ffloor, fceil, bfloor, bceil,
-                                (line->flags & DDLF_DONTPEGBOTTOM)? true : false,
-                                (line->flags & DDLF_DONTPEGTOP)? true : false,
-                                (frontSideDef->flags & SDF_MIDDLE_STRETCH)? true : false,
-                                LINE_SELFREF(line)? true : false,
-                                low, hi, matOffset);
+        switch(section)
+        {
+        case SS_TOP:
+            // Can't go over front ceiling (would induce geometry flaws).
+            if(bceil->visHeight < ffloor->visHeight)
+                *low = ffloor->visHeight;
+            else
+                *low = bceil->visHeight;
+            *hi = fceil->visHeight;
+
+            if(matOffset)
+            {
+                matOffset[0] = suf->visOffset[0];
+                matOffset[1] = suf->visOffset[1];
+                if(!unpegTop)
+                {
+                    // Align with normal middle texture.
+                    matOffset[1] -= fceil->visHeight - bceil->visHeight;
+                }
+            }
+            break;
+
+        case SS_BOTTOM: {
+            const boolean raiseToBackFloor = (Surface_IsSkyMasked(&fceil->surface) && Surface_IsSkyMasked(&bceil->surface) && fceil->visHeight < bceil->visHeight);
+            coord_t t = bfloor->visHeight;
+
+            *low = ffloor->visHeight;
+            // Can't go over the back ceiling, would induce polygon flaws.
+            if(bfloor->visHeight > bceil->visHeight)
+                t = bceil->visHeight;
+
+            // Can't go over front ceiling, would induce polygon flaws.
+            // In the special case of a sky masked upper we must extend the bottom
+            // section up to the height of the back floor.
+            if(t > fceil->visHeight && !raiseToBackFloor)
+                t = fceil->visHeight;
+            *hi = t;
+
+            if(matOffset)
+            {
+                matOffset[0] = suf->visOffset[0];
+                matOffset[1] = suf->visOffset[1];
+                if(bfloor->visHeight > fceil->visHeight)
+                {
+                    matOffset[1] -= (raiseToBackFloor? t : fceil->visHeight) - bfloor->visHeight;
+                }
+
+                if(unpegBottom)
+                {
+                    // Align with normal middle texture.
+                    matOffset[1] += (raiseToBackFloor? t : fceil->visHeight) - bfloor->visHeight;
+                }
+            }
+            break; }
+
+        case SS_MIDDLE: {
+            coord_t ftop, fbottom, vR_ZBottom, vR_ZTop;
+
+            if(isSelfRef)
+            {
+                fbottom = MIN_OF(bfloor->visHeight, ffloor->visHeight);
+                ftop    = MAX_OF(bceil->visHeight,  fceil->visHeight);
+            }
+            else
+            {
+                fbottom = MAX_OF(bfloor->visHeight, ffloor->visHeight);
+                ftop    = MIN_OF(bceil->visHeight,  fceil->visHeight);
+            }
+
+            *low = vR_ZBottom = fbottom;
+            *hi  = vR_ZTop    = ftop;
+
+            if(!stretchMiddle)
+            {
+                const boolean clipBottom = !(!P_IsInVoid(viewPlayer) && Surface_IsSkyMasked(&ffloor->surface) && Surface_IsSkyMasked(&bfloor->surface));
+                const boolean clipTop    = !(!P_IsInVoid(viewPlayer) && Surface_IsSkyMasked(&fceil->surface)  && Surface_IsSkyMasked(&bceil->surface));
+
+                if(LineDef_MiddleMaterialCoords(line, side, low, &vR_ZBottom, hi,
+                                                &vR_ZTop, matOffset? &matOffset[1] : NULL,
+                                                unpegBottom, clipBottom, clipTop))
+                {
+                    if(matOffset)
+                    {
+                        matOffset[0] = suf->visOffset[0];
+                        if(!clipTop) matOffset[1] = 0;
+                    }
+                }
+            }
+            else
+            {
+                if(matOffset)
+                {
+                    matOffset[0] = suf->visOffset[0];
+                    matOffset[1] = 0; /// @todo Always??
+                }
+            }
+            break; }
+        }
     }
-    return visible;
+
+    return /*is_visible=*/ *hi > *low;
 }
 
 LineDef* R_FindLineNeighbor(const Sector* sector, const LineDef* line,
