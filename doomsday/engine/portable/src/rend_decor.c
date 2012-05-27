@@ -444,13 +444,13 @@ static uint generateDecorLights(const ded_decorlight_t* def, Surface* suf,
     V3d_Sum(originBase, originBase, v1);
 
     // Let's see where the top left light is.
-    s = M_CycleIntoRange(def->pos[0] - suf->visOffset[0] -
+    s = M_CycleIntoRange(def->pos[0] -
                          Material_Width(mat) * def->patternOffset[0] +
                          offsetS, patternW);
     num = 0;
     for(; s < width; s += patternW)
     {
-        t = M_CycleIntoRange(def->pos[1] - suf->visOffset[1] -
+        t = M_CycleIntoRange(def->pos[1] -
                              Material_Height(mat) * def->patternOffset[1] +
                              offsetT, patternH);
 
@@ -555,8 +555,8 @@ static void updatePlaneDecorations(Plane* pln)
         V3d_Set(v2, sec->aaBox.maxX, sec->aaBox.maxY, pln->visHeight);
     }
 
-    offsetS = -fmod(sec->aaBox.minX, 64);
-    offsetT = -fmod(sec->aaBox.minY, 64);
+    offsetS = -fmod(sec->aaBox.minX, 64) - suf->visOffset[0];
+    offsetT = -fmod(sec->aaBox.minY, 64) - suf->visOffset[1];
 
     updateSurfaceDecorations2(suf, offsetS, offsetT, v1, v2, sec, suf->material? true : false);
 }
@@ -574,9 +574,9 @@ static void updateSideSectionDecorations(LineDef* line, byte side, SideDefSectio
     if(surface->material)
     {
         coord_t low, hi;
-        visible = R_FindBottomTop2(line, side, section,
-                                   line->L_sector(side), line->L_sector(side^1), line->L_sidedef(side),
-                                   &low, &hi, matOffset);
+        visible = R_FindBottomTop(line, side, section,
+                                  line->L_sector(side), line->L_sector(side^1), line->L_sidedef(side),
+                                  &low, &hi, matOffset);
         if(visible)
         {
             V3d_Set(v1, line->L_vorigin(side  )[VX], line->L_vorigin(side  )[VY], hi);
@@ -584,7 +584,7 @@ static void updateSideSectionDecorations(LineDef* line, byte side, SideDefSectio
         }
     }
 
-    updateSurfaceDecorations2(surface, matOffset[0], matOffset[1], v1, v2, NULL, visible);
+    updateSurfaceDecorations2(surface, -matOffset[0], -matOffset[1], v1, v2, NULL, visible);
 }
 
 /**

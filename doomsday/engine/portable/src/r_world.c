@@ -922,7 +922,7 @@ static boolean findBottomTop(LineDef* lineDef, int side, SideDefSection section,
     const Plane* bfloor, const Plane* bceil,
     boolean unpegBottom, boolean unpegTop,
     boolean stretchMiddle, boolean isSelfRef,
-    coord_t* bottom, coord_t* top, float texOffset[2], float* clippedY)
+    coord_t* bottom, coord_t* top, float texOffset[2])
 {
     switch(section)
     {
@@ -937,12 +937,12 @@ static boolean findBottomTop(LineDef* lineDef, int side, SideDefSection section,
         {
             if(texOffset)
             {
-                texOffset[VX] = matOffsetX;
-                texOffset[VY] = matOffsetY;
+                texOffset[0] = matOffsetX;
+                texOffset[1] = matOffsetY;
 
                 // Align with normal middle texture?
                 if(!unpegTop)
-                    texOffset[VY] += -(fceil->visHeight - bceil->visHeight);
+                    texOffset[1] += -(fceil->visHeight - bceil->visHeight);
             }
             return true;
         }
@@ -968,15 +968,15 @@ static boolean findBottomTop(LineDef* lineDef, int side, SideDefSection section,
         {
             if(texOffset)
             {
-                texOffset[VX] = matOffsetX;
-                texOffset[VY] = matOffsetY;
+                texOffset[0] = matOffsetX;
+                texOffset[1] = matOffsetY;
 
                 if(bfloor->visHeight > fceil->visHeight)
-                    texOffset[VY] += -((raiseToBackFloor? t : fceil->visHeight) - bfloor->visHeight);
+                    texOffset[1] += -((raiseToBackFloor? t : fceil->visHeight) - bfloor->visHeight);
 
                 // Align with normal middle texture?
                 if(unpegBottom)
-                    texOffset[VY] += (raiseToBackFloor? t : fceil->visHeight) - bfloor->visHeight;
+                    texOffset[1] += (raiseToBackFloor? t : fceil->visHeight) - bfloor->visHeight;
             }
             return true;
         }
@@ -1005,8 +1005,8 @@ static boolean findBottomTop(LineDef* lineDef, int side, SideDefSection section,
             {
                 if(texOffset)
                 {
-                    texOffset[VX] = matOffsetX;
-                    texOffset[VY] = 0;
+                    texOffset[0] = matOffsetX;
+                    texOffset[1] = 0;
                 }
                 return true;
             }
@@ -1024,14 +1024,13 @@ static boolean findBottomTop(LineDef* lineDef, int side, SideDefSection section,
             }
 
             if(LineDef_MiddleMaterialCoords(lineDef, side, bottom, &vR_ZBottom, top,
-                                            &vR_ZTop, clippedY, unpegBottom,
-                                            clipTop, clipBottom))
+                                            &vR_ZTop, texOffset? &texOffset[1] : NULL,
+                                            unpegBottom, clipTop, clipBottom))
             {
                 if(texOffset)
                 {
-                    texOffset[VX] = matOffsetX;
-                    texOffset[VY] = *clippedY;
-                    if(!clipTop) texOffset[VY] = 0;
+                    texOffset[0] = matOffsetX;
+                    if(!clipTop) texOffset[1] = 0;
                 }
                 return true;
             }
@@ -1074,7 +1073,6 @@ boolean R_FindBottomTop(LineDef* line, int side, SideDefSection section,
         Plane* bfloor = backSec->SP_plane(PLN_FLOOR);
         Plane* bceil  = backSec->SP_plane(PLN_CEILING);
         Surface* suf = &frontSideDef->SW_surface(section);
-        float clippedY;
 
         visible = findBottomTop(line, side, section,
                                 suf->visOffset[VX], suf->visOffset[VY],
@@ -1083,103 +1081,7 @@ boolean R_FindBottomTop(LineDef* line, int side, SideDefSection section,
                                 (line->flags & DDLF_DONTPEGTOP)? true : false,
                                 (frontSideDef->flags & SDF_MIDDLE_STRETCH)? true : false,
                                 LINE_SELFREF(line)? true : false,
-                                low, hi, matOffset, &clippedY);
-    }
-    return visible;
-}
-
-boolean R_FindBottomTop2(LineDef* line, byte side, SideDefSection section,
-    Sector* frontSec, Sector* backSec, SideDef* frontSideDef,
-    coord_t* low, coord_t* hi, float matOffset[2])
-{
-    boolean visible = false;
-
-    // Single sided?
-    if(!frontSec || !backSec || !line->L_sidedef(side^1)/*front side of a "window"*/)
-    {
-        *low = frontSec->SP_floorvisheight;
-        *hi  = frontSec->SP_ceilvisheight;
-
-        if(matOffset)
-        {
-            matOffset[0] = matOffset[1] = 0;
-            if(line->flags & DDLF_DONTPEGBOTTOM)
-            {
-                matOffset[1] += (*hi) - (*low);
-            }
-        }
-
-        visible = *hi > *low;
-    }
-    else
-    {
-        Plane* ffloor = frontSec->SP_plane(PLN_FLOOR);
-        Plane* fceil  = frontSec->SP_plane(PLN_CEILING);
-        Plane* bfloor = backSec->SP_plane(PLN_FLOOR);
-        Plane* bceil  = backSec->SP_plane(PLN_CEILING);
-        Surface* suf = &frontSideDef->SW_surface(section);
-
-        switch(section)
-        {
-        case SS_MIDDLE: {
-            float texOffset[2], clippedY;
-
-            visible = findBottomTop(line, side, section,
-                                    suf->visOffset[VX], suf->visOffset[VY],
-                                    ffloor, fceil, bfloor, bceil,
-                                    (line->flags & DDLF_DONTPEGBOTTOM)? true : false,
-                                    (line->flags & DDLF_DONTPEGTOP)? true : false,
-                                    (frontSideDef->flags & SDF_MIDDLE_STRETCH)? true : false,
-                                    LINE_SELFREF(line)? true : false,
-                                    low, hi, texOffset, &clippedY);
-            if(matOffset)
-            {
-                matOffset[0] = matOffset[1] = 0;
-                if(line->flags & DDLF_DONTPEGBOTTOM)
-                {
-                    // Counteract surface material offset (interpreted as geometry offset).
-                    matOffset[1] += suf->visOffset[VY];
-                    matOffset[1] -= clippedY;
-                }
-            }
-            break; }
-
-        case SS_TOP:
-            if(line->L_backsidedef && bceil->visHeight < fceil->visHeight &&
-               (!Surface_IsSkyMasked(&bceil->surface) || !Surface_IsSkyMasked(&fceil->surface)))
-            {
-                *hi  = fceil->visHeight;
-                *low = bceil->visHeight;
-                if(matOffset)
-                {
-                    matOffset[0] = matOffset[1] = 0;
-                    if(!(line->flags & DDLF_DONTPEGTOP))
-                    {
-                        matOffset[1] += fceil->visHeight - bceil->visHeight;
-                    }
-                }
-            }
-            visible = *hi > *low;
-            break;
-
-        case SS_BOTTOM:
-            if(line->L_backsidedef && bfloor->visHeight > ffloor->visHeight &&
-               (!Surface_IsSkyMasked(&bfloor->surface) || !Surface_IsSkyMasked(&ffloor->surface)))
-            {
-                *hi  = bfloor->visHeight;
-                *low = ffloor->visHeight;
-                if(matOffset)
-                {
-                    matOffset[0] = matOffset[1] = 0;
-                    if(line->flags & DDLF_DONTPEGBOTTOM)
-                    {
-                        matOffset[1] -= fceil->visHeight - bfloor->visHeight;
-                    }
-                }
-            }
-            visible = *hi > *low;
-            break;
-        }
+                                low, hi, matOffset);
     }
     return visible;
 }
