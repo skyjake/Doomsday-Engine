@@ -67,6 +67,7 @@
 #include "dd_loop.h"
 #include "con_main.h"
 #include "window.h"
+#include "garbage.h"
 #include "displaymode.h"
 #include "sys_system.h"
 
@@ -126,6 +127,8 @@ int main(int argc, char** argv)
             useGUI = false;
         }
     }
+
+    Garbage_Init();
 
     // Application core.
     de::App dengApp(argc, argv, useGUI);

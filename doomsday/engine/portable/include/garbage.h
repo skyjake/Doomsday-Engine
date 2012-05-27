@@ -33,6 +33,8 @@
 extern "C" {
 #endif
 
+void Garbage_Init(void);
+
 /**
  * Recycles all collected garbage and deletes the collectors. Called at engine
  * shutdown. Should be called in the main thread.
