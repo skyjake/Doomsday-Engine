@@ -874,11 +874,11 @@ void C_AddViewRelOcclusion(coord_t const* v1, coord_t const* v2, coord_t height,
 }
 
 /**
- * @return  @c =true if the view relative point is occluded by an occlusion range.
+ * @return  Non-zero if the view relative point is occluded by an occlusion range.
  */
-static boolean C_IsPointOccluded(coord_t* viewrelpoint)
+static int C_IsPointOccluded(coord_t* viewRelPoint)
 {
-    binangle_t angle = C_PointToAngle(viewrelpoint);
+    binangle_t angle = C_PointToAngle(viewRelPoint);
     OccNode* orange;
 
     for(orange = occHead; orange; orange = orange->next)
@@ -890,7 +890,7 @@ static boolean C_IsPointOccluded(coord_t* viewrelpoint)
 
             // On which side of the occlusion plane is it?
             // The positive side is the occluded one.
-            if(V3d_DotProductf(viewrelpoint, orange->normal) > 0)
+            if(V3d_DotProductf(viewRelPoint, orange->normal) > 0)
                 return true;
         }
     }
@@ -899,10 +899,12 @@ static boolean C_IsPointOccluded(coord_t* viewrelpoint)
     return false;
 }
 
-boolean C_IsPointVisible(coord_t x, coord_t y, coord_t height)
+int C_IsPointVisible(coord_t x, coord_t y, coord_t height)
 {
     coord_t point[3];
     binangle_t angle;
+
+    if(devNoCulling) return true;
 
     point[0] = x - vOrigin[VX];
     point[1] = y - vOrigin[VZ];
@@ -1130,7 +1132,7 @@ static int C_IsRangeVisible(binangle_t startAngle, binangle_t endAngle)
 }
 
 /**
- * @return  @c =1 iff the range is not entirely clipped, else @c 0.
+ * @return  Non-zero iff the range is not entirely clipped, else @c 0.
  */
 static int C_SafeCheckRange(binangle_t startAngle, binangle_t endAngle)
 {
@@ -1147,7 +1149,7 @@ int C_CheckRangeFromViewRelPoints(coord_t const from[], coord_t const to[])
 {
     vec2d_t eye, fromDir, toDir;
 
-    if(devNoCulling) return 1;
+    if(devNoCulling) return true;
 
     V2d_Set(eye, vOrigin[VX], vOrigin[VZ]);
     V2d_Subtract(fromDir, from, eye);
@@ -1164,8 +1166,10 @@ int C_CheckRangeFromViewRelPointsXY(coord_t x1, coord_t y1, coord_t x2, coord_t 
     return C_CheckRangeFromViewRelPoints(from, to);
 }
 
-boolean C_IsAngleVisible(binangle_t bang)
+int C_IsAngleVisible(binangle_t bang)
 {
+    if(devNoCulling) return true;
+
     for(ClipNode* ci = clipHead; ci; ci = ci->next)
     {
         if(bang > ci->start && bang < ci->end)
@@ -1190,9 +1194,9 @@ static ClipNode* C_AngleClippedBy(binangle_t bang)
 
 int C_CheckBspLeaf(BspLeaf* leaf)
 {
-    if(!leaf || leaf->hedgeCount < 3) return 0;
+    if(!leaf || leaf->hedgeCount < 3) return false;
 
-    if(devNoCulling) return 1;
+    if(devNoCulling) return true;
 
     // Do we need to resize the angle list buffer?
     if(leaf->hedgeCount > anglistSize)
@@ -1230,26 +1234,26 @@ int C_CheckBspLeaf(BspLeaf* leaf)
         angLen = anglist[end] - anglist[i];
 
         // The viewer is on an edge, the leaf should be visible.
-        if(angLen == BANG_180) return 1;
+        if(angLen == BANG_180) return true;
 
         // Choose the start and end points so that length is < 180.
         if(angLen < BANG_180)
         {
             if(C_SafeCheckRange(anglist[i], anglist[end]))
-                return 1;
+                return true;
         }
         else
         {
             if(C_SafeCheckRange(anglist[end], anglist[i]))
-                return 1;
+                return true;
         }
     }
 
     // All clipped away, the leaf cannot be seen.
-    return 0;
+    return false;
 }
 
-boolean C_IsFull(void)
+int C_IsFull(void)
 {
     if(devNoCulling) return false;
 
