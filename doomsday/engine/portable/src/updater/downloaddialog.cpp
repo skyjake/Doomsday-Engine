@@ -41,7 +41,7 @@ struct DownloadDialog::Instance
         QObject::connect(install, SIGNAL(clicked()), self, SLOT(accept()));
         QObject::connect(cancel, SIGNAL(clicked()), self, SLOT(reject()));
 
-        mainLayout->addWidget(new QLabel(QString(tr("Downloading update from <b>%1</b>...")).arg(uri.host())));
+        mainLayout->addWidget(new QLabel(tr("Downloading update from <b>%1</b>...").arg(uri.host())));
         mainLayout->addWidget(bar);
 
         progText = new QLabel;
@@ -171,8 +171,8 @@ void DownloadDialog::progress(qint64 received, qint64 total)
     {
         d->bar->setValue(received * 100 / total);
         const double MB = 1.0e6; // MiB would be 2^20
-        d->setProgressText(QString(tr("Received %1 MB out of total %2 MB"))
-                             .arg(received/MB, 0, 'f', 1).arg(total/MB, 0, 'f', 1));
+        d->setProgressText(tr("Received %1 MB out of total %2 MB")
+                           .arg(received/MB, 0, 'f', 1).arg(total/MB, 0, 'f', 1));
     }
 }
 

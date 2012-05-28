@@ -36,9 +36,9 @@ struct UpdateAvailableDialog::Instance
         if(! (latestVersion > currentVersion))
         {
             askUpgrade = true;
-            info->setText(QString("<span style=\"font-weight:bold; font-size:%1pt;\">" +
-                                  tr("There is an update available.") + "</span><p>" +
-                                  tr("The latest %2 release is %3, while you are running %4."))
+            info->setText(("<span style=\"font-weight:bold; font-size:%1pt;\">" +
+                           tr("There is an update available.") + "</span><p>" +
+                           tr("The latest %2 release is %3, while you are running %4."))
                           .arg(bigFontSize)
                           .arg(channel)
                           .arg(latestVersion.asText())
@@ -46,9 +46,9 @@ struct UpdateAvailableDialog::Instance
         }
         else
         {
-            info->setText(QString("<span style=\"font-weight:bold; font-size:%1pt;\">" +
-                                  tr("You are up to date.") + "</span><p>" +
-                                  tr("The installed %2 is the latest available %3 build."))
+            info->setText(("<span style=\"font-weight:bold; font-size:%1pt;\">" +
+                           tr("You are up to date.") + "</span><p>" +
+                           tr("The installed %2 is the latest available %3 build."))
                           .arg(bigFontSize)
                           .arg(currentVersion.asText())
                           .arg(channel));
