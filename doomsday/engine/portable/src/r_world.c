@@ -918,8 +918,8 @@ boolean R_FindBottomTop(LineDef* line, int side, SideDefSection section,
     Sector* frontSec, Sector* backSec, SideDef* frontSideDef,
     coord_t* low, coord_t* hi, float matOffset[2])
 {
-    const boolean unpegBottom   = !!(line->flags & DDLF_DONTPEGBOTTOM);
-    const boolean unpegTop      = !!(line->flags & DDLF_DONTPEGTOP);
+    const boolean unpegBottom = !!(line->flags & DDLF_DONTPEGBOTTOM);
+    const boolean unpegTop    = !!(line->flags & DDLF_DONTPEGTOP);
 
     // Single sided?
     if(!frontSec || !backSec || !line->L_sidedef(side^1)/*front side of a "window"*/)
@@ -941,7 +941,6 @@ boolean R_FindBottomTop(LineDef* line, int side, SideDefSection section,
     else
     {
         const boolean stretchMiddle = !!(frontSideDef->flags & SDF_MIDDLE_STRETCH);
-        const boolean isSelfRef     = LINE_SELFREF(line);
         Plane* ffloor = frontSec->SP_plane(PLN_FLOOR);
         Plane* fceil  = frontSec->SP_plane(PLN_CEILING);
         Plane* bfloor = backSec->SP_plane(PLN_FLOOR);
@@ -1003,30 +1002,18 @@ boolean R_FindBottomTop(LineDef* line, int side, SideDefSection section,
             }
             break; }
 
-        case SS_MIDDLE: {
-            coord_t ftop, fbottom, vR_ZBottom, vR_ZTop;
-
-            if(isSelfRef)
-            {
-                fbottom = MIN_OF(bfloor->visHeight, ffloor->visHeight);
-                ftop    = MAX_OF(bceil->visHeight,  fceil->visHeight);
-            }
-            else
-            {
-                fbottom = MAX_OF(bfloor->visHeight, ffloor->visHeight);
-                ftop    = MIN_OF(bceil->visHeight,  fceil->visHeight);
-            }
-
-            *low = vR_ZBottom = fbottom;
-            *hi  = vR_ZTop    = ftop;
+        case SS_MIDDLE:
+            *low = vR_ZBottom = MAX_OF(bfloor->visHeight, ffloor->visHeight);
+            *hi  = vR_ZTop    = MIN_OF(bceil->visHeight,  fceil->visHeight);
 
             if(!stretchMiddle)
             {
                 const boolean clipBottom = !(!P_IsInVoid(viewPlayer) && Surface_IsSkyMasked(&ffloor->surface) && Surface_IsSkyMasked(&bfloor->surface));
                 const boolean clipTop    = !(!P_IsInVoid(viewPlayer) && Surface_IsSkyMasked(&fceil->surface)  && Surface_IsSkyMasked(&bceil->surface));
+                coord_t bottomRight, topRight;
 
-                if(LineDef_MiddleMaterialCoords(line, side, low, &vR_ZBottom, hi,
-                                                &vR_ZTop, matOffset? &matOffset[1] : NULL,
+                if(LineDef_MiddleMaterialCoords(line, side, low, &bottomRight, hi,
+                                                &topRight, matOffset? &matOffset[1] : NULL,
                                                 unpegBottom, clipBottom, clipTop))
                 {
                     if(matOffset)
@@ -1044,7 +1031,7 @@ boolean R_FindBottomTop(LineDef* line, int side, SideDefSection section,
                     matOffset[1] = 0; /// @todo Always??
                 }
             }
-            break; }
+            break;
         }
     }
 
