@@ -24,6 +24,7 @@
 #include "dd_version.h"
 #include "dd_types.h"
 #include "json.h"
+#include "updater/downloaddialog.h"
 #include "updater/updateavailabledialog.h"
 #include "updater/updatersettings.h"
 #include "updater/versioninfo.h"
@@ -120,6 +121,9 @@ struct Updater::Instance
         if(dlg.exec())
         {
             LOG_MSG("Download and install.");
+            DownloadDialog* downDlg = new DownloadDialog(latestPackageUri);
+            downDlg->show();
+            // The dialog will delete itself.
         }
     }
 };

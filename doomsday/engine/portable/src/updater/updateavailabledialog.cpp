@@ -33,7 +33,7 @@ struct UpdateAvailableDialog::Instance
                                   "stable" : "unstable");
         bool askUpgrade = false;
 
-        if(latestVersion > currentVersion)
+        if(! (latestVersion > currentVersion))
         {
             askUpgrade = true;
             info->setText(QString("<span style=\"font-weight:bold; font-size:%1pt;\">"
