@@ -21,6 +21,8 @@ struct UpdaterSettingsDialog::Instance
 
     Instance(UpdaterSettingsDialog* dlg) : self(dlg)
     {
+        self->setWindowTitle(tr("Updater Settings"));
+
         QVBoxLayout* mainLayout = new QVBoxLayout;
         self->setLayout(mainLayout);
 
