@@ -1003,8 +1003,8 @@ boolean R_FindBottomTop(LineDef* line, int side, SideDefSection section,
             break; }
 
         case SS_MIDDLE:
-            *low = vR_ZBottom = MAX_OF(bfloor->visHeight, ffloor->visHeight);
-            *hi  = vR_ZTop    = MIN_OF(bceil->visHeight,  fceil->visHeight);
+            *low = MAX_OF(bfloor->visHeight, ffloor->visHeight);
+            *hi  = MIN_OF(bceil->visHeight,  fceil->visHeight);
 
             if(!stretchMiddle)
             {
