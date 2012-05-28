@@ -35,16 +35,17 @@ struct DownloadDialog::Instance
         bar->setRange(0, 100);
 
         QDialogButtonBox* bbox = new QDialogButtonBox;
-        install = bbox->addButton("Install", QDialogButtonBox::AcceptRole);
+        install = bbox->addButton(tr("Install"), QDialogButtonBox::AcceptRole);
         install->setEnabled(false);
         QPushButton* cancel = bbox->addButton(QDialogButtonBox::Cancel);
         QObject::connect(install, SIGNAL(clicked()), self, SLOT(accept()));
         QObject::connect(cancel, SIGNAL(clicked()), self, SLOT(reject()));
 
-        mainLayout->addWidget(new QLabel(QString("Downloading update from <b>%1</b>...").arg(uri.host())));
+        mainLayout->addWidget(new QLabel(QString(tr("Downloading update from <b>%1</b>...")).arg(uri.host())));
         mainLayout->addWidget(bar);
 
-        progText = new QLabel("<small>Connecting...</small>");
+        progText = new QLabel;
+        setProgressText(tr("Connecting..."));
         mainLayout->addWidget(progText);
 
         mainLayout->addWidget(bbox);
@@ -69,6 +70,11 @@ struct DownloadDialog::Instance
 
         LOG_INFO("Downloading %s, saving as: %s") << uri.toString() << savedFilePath;
     }
+
+    void setProgressText(de::String text)
+    {
+        progText->setText("<small>" + text + "</small>");
+    }
 };
 
 DownloadDialog::DownloadDialog(de::String downloadUri, QWidget *parent)
@@ -88,6 +94,13 @@ void DownloadDialog::finished(QNetworkReply* reply)
 
     reply->deleteLater();
     d->reply = 0;
+
+    if(reply->error() != QNetworkReply::NoError)
+    {
+        LOG_WARNING("Failure: ") << reply->errorString();
+        d->setProgressText(reply->errorString());
+        return;
+    }
 
     /// @todo If/when we include WebKit, this can be done more intelligent using QWebPage. -jk
 
@@ -144,7 +157,7 @@ void DownloadDialog::finished(QNetworkReply* reply)
         emit downloadFailed(d->uri.toString());
     }
 
-    d->progText->setText("<small>Ready to install</small>");
+    d->setProgressText(tr("Ready to install"));
     d->install->setEnabled(true);
 
     LOG_DEBUG("Request finished.");
@@ -154,11 +167,11 @@ void DownloadDialog::progress(qint64 received, qint64 total)
 {
     LOG_AS("Download");
 
-    if(d->downloading)
+    if(d->downloading && total > 0)
     {
         d->bar->setValue(received * 100 / total);
         const double MB = 1.0e6; // MiB would be 2^20
-        d->progText->setText(QString("<small>Received %1 MB out of total %2 MB</small>")
+        d->setProgressText(QString(tr("Received %1 MB out of total %2 MB"))
                              .arg(received/MB, 0, 'f', 1).arg(total/MB, 0, 'f', 1));
     }
 }

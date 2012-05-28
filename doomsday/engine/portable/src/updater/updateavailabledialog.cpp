@@ -36,10 +36,9 @@ struct UpdateAvailableDialog::Instance
         if(! (latestVersion > currentVersion))
         {
             askUpgrade = true;
-            info->setText(QString("<span style=\"font-weight:bold; font-size:%1pt;\">"
-                                  "There is an update available.</span>"
-                                  "<p>The latest %2 release is %3, while you are "
-                                  "running %4.")
+            info->setText(QString("<span style=\"font-weight:bold; font-size:%1pt;\">" +
+                                  tr("There is an update available.") + "</span><p>" +
+                                  tr("The latest %2 release is %3, while you are running %4."))
                           .arg(bigFontSize)
                           .arg(channel)
                           .arg(latestVersion.asText())
@@ -47,14 +46,15 @@ struct UpdateAvailableDialog::Instance
         }
         else
         {
-            info->setText(QString("<span style=\"font-weight:bold; font-size:%1pt;\">You are up to date.</span>"
-                                  "<p>The installed %2 is the latest available %3 build.")
+            info->setText(QString("<span style=\"font-weight:bold; font-size:%1pt;\">" +
+                                  tr("You are up to date.") + "</span><p>" +
+                                  tr("The installed %2 is the latest available %3 build."))
                           .arg(bigFontSize)
                           .arg(currentVersion.asText())
                           .arg(channel));
         }
 
-        neverCheck = new QCheckBox("N&ever check for updates automatically");
+        neverCheck = new QCheckBox(tr("N&ever check for updates automatically"));
         neverCheck->setChecked(UpdaterSettings().onlyCheckManually());
         QObject::connect(neverCheck, SIGNAL(toggled(bool)), self, SLOT(neverCheckToggled(bool)));
 
@@ -62,24 +62,24 @@ struct UpdateAvailableDialog::Instance
 
         if(!askUpgrade)
         {
-            QPushButton* ok = bbox->addButton("&Close", QDialogButtonBox::AcceptRole);
+            QPushButton* ok = bbox->addButton(tr("&Close"), QDialogButtonBox::AcceptRole);
             QObject::connect(ok, SIGNAL(clicked()), self, SLOT(reject()));
         }
         else
         {
-            QPushButton* yes = bbox->addButton("&Download and install", QDialogButtonBox::YesRole);
-            QPushButton* no = bbox->addButton("&Not now", QDialogButtonBox::NoRole);
+            QPushButton* yes = bbox->addButton(tr("&Download and install"), QDialogButtonBox::YesRole);
+            QPushButton* no = bbox->addButton(tr("&Not now"), QDialogButtonBox::NoRole);
             QObject::connect(yes, SIGNAL(clicked()), self, SLOT(accept()));
             QObject::connect(no, SIGNAL(clicked()), self, SLOT(reject()));
         }
 
-        QPushButton* cfg = bbox->addButton("&Settings...", QDialogButtonBox::ActionRole);
+        QPushButton* cfg = bbox->addButton(tr("&Settings..."), QDialogButtonBox::ActionRole);
         QObject::connect(cfg, SIGNAL(clicked()), self, SLOT(editSettings()));
         cfg->setAutoDefault(false);
 
         if(askUpgrade)
         {
-            QPushButton* whatsNew = bbox->addButton("&What's new?", QDialogButtonBox::HelpRole);
+            QPushButton* whatsNew = bbox->addButton(tr("&What's new?"), QDialogButtonBox::HelpRole);
             QObject::connect(whatsNew, SIGNAL(clicked()), self, SLOT(showWhatsNew()));
             whatsNew->setAutoDefault(false);
         }
