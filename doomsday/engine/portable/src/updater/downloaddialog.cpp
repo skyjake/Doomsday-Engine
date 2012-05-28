@@ -1,4 +1,5 @@
 #include "downloaddialog.h"
+#include "updatersettings.h"
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QDialogButtonBox>
@@ -17,10 +18,15 @@ struct DownloadDialog::Instance
     DownloadDialog* self;
     QNetworkAccessManager* network;
     bool downloading;
+    QPushButton* install;
     QProgressBar* bar;
+    QLabel* progText;
     QUrl uri;
+    de::String savedFilePath;
+    QNetworkReply* reply;
+    de::String redirected;
 
-    Instance(DownloadDialog* d, de::String downloadUri) : self(d), downloading(false), uri(downloadUri)
+    Instance(DownloadDialog* d, de::String downloadUri) : self(d), downloading(false), uri(downloadUri), reply(0)
     {
         QVBoxLayout* mainLayout = new QVBoxLayout;
         self->setLayout(mainLayout);
@@ -29,7 +35,7 @@ struct DownloadDialog::Instance
         bar->setRange(0, 100);
 
         QDialogButtonBox* bbox = new QDialogButtonBox;
-        QPushButton* install = bbox->addButton("Install", QDialogButtonBox::AcceptRole);
+        install = bbox->addButton("Install", QDialogButtonBox::AcceptRole);
         install->setEnabled(false);
         QPushButton* cancel = bbox->addButton(QDialogButtonBox::Cancel);
         QObject::connect(install, SIGNAL(clicked()), self, SLOT(accept()));
@@ -37,6 +43,10 @@ struct DownloadDialog::Instance
 
         mainLayout->addWidget(new QLabel(QString("Downloading update from <b>%1</b>...").arg(uri.host())));
         mainLayout->addWidget(bar);
+
+        progText = new QLabel("<small>Connecting...</small>");
+        mainLayout->addWidget(progText);
+
         mainLayout->addWidget(bbox);
 
         network = new QNetworkAccessManager(self);
@@ -47,11 +57,17 @@ struct DownloadDialog::Instance
 
     void startDownload()
     {
-        LOG_INFO("Downloading %s.") << uri.toString();
+        downloading = true;
+        redirected.clear();
 
-        QNetworkReply* reply = network->get(QNetworkRequest(uri));
-        QObject::connect(reply, SIGNAL(downloadProgress(qint64,qint64)),
-                         self, SLOT(progress(qint64,qint64)));
+        reply = network->get(QNetworkRequest(uri));
+        QObject::connect(reply, SIGNAL(metaDataChanged()), self, SLOT(replyMetaDataChanged()));
+        QObject::connect(reply, SIGNAL(downloadProgress(qint64,qint64)), self, SLOT(progress(qint64,qint64)));
+
+        de::String path = uri.path();
+        savedFilePath = UpdaterSettings().downloadPath() / path.fileName();
+
+        LOG_INFO("Downloading %s, saving as: %s") << uri.toString() << savedFilePath;
     }
 };
 
@@ -68,12 +84,23 @@ DownloadDialog::~DownloadDialog()
 
 void DownloadDialog::finished(QNetworkReply* reply)
 {
+    LOG_AS("Download");
+
     reply->deleteLater();
+    d->reply = 0;
 
     /// @todo If/when we include WebKit, this can be done more intelligent using QWebPage. -jk
 
-    QString contentType = reply->header(QNetworkRequest::ContentTypeHeader).toString();
-    if(contentType == "text/html; charset=utf-8")
+    if(!d->redirected.isEmpty())
+    {
+        LOG_INFO("Redirected to: %s") << d->redirected;
+        d->uri = QUrl(d->redirected);
+        d->redirected.clear();
+        d->startDownload();
+        return;
+    }
+
+    if(!d->downloading)
     {
         // This does not look like a binary file... Let's see if we can parse the page.
         QString html = QString::fromUtf8(reply->readAll());
@@ -99,28 +126,61 @@ void DownloadDialog::finished(QNetworkReply* reply)
         // This is what we should actually be downloading.
         d->uri = QUrl::fromEncoded(equivRefresh.toAscii());
 
-        //d->startDownload();
+        LOG_INFO("Redirected to: %s") << d->uri.toString();
 
-        de::String path = d->uri.path();
-        qDebug() << path.fileName();
-        downloading = true;
+        d->startDownload();
+        return;
+    }
 
-
+    // Save the received data.
+    QFile file(d->savedFilePath);
+    if(file.open(QFile::WriteOnly | QFile::Truncate))
+    {
+        file.write(reply->readAll());
     }
     else
     {
-        //QFile file()
+        LOG_WARNING("Failed to write to: %s") << d->savedFilePath;
+        emit downloadFailed(d->uri.toString());
     }
 
-    LOG_DEBUG("Request finished.");
+    d->progText->setText("<small>Ready to install</small>");
+    d->install->setEnabled(true);
 
+    LOG_DEBUG("Request finished.");
 }
 
 void DownloadDialog::progress(qint64 received, qint64 total)
 {
-    if(downloading)
+    LOG_AS("Download");
+
+    if(d->downloading)
     {
-        LOG_DEBUG("Progress: %i bytes received, total %i bytes.") << received << total;
         d->bar->setValue(received * 100 / total);
+        const double MB = 1.0e6; // MiB would be 2^20
+        d->progText->setText(QString("<small>Received %1 MB out of total %2 MB</small>")
+                             .arg(received/MB, 0, 'f', 1).arg(total/MB, 0, 'f', 1));
+    }
+}
+
+void DownloadDialog::replyMetaDataChanged()
+{
+    LOG_AS("Download");
+
+    de::String contentType = d->reply->header(QNetworkRequest::ContentTypeHeader).toString();
+    de::String redirection = d->reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toString();
+
+    if(!redirection.isEmpty())
+    {
+        d->redirected = redirection;
+    }
+    else if(contentType.startsWith("text/html"))
+    {
+        // Looks like a redirection page.
+        d->downloading = false;
+    }
+    else
+    {
+        LOG_DEBUG("Receiving content of type '%s'.") << contentType;
     }
 }

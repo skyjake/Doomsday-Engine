@@ -22,9 +22,10 @@ signals:
     void downloadFailed(QString uri);
     
 public slots:
-    void finished(QNetworkReply*);
+    void replyMetaDataChanged();
     void progress(qint64 received, qint64 total);
-    
+    void finished(QNetworkReply*);
+
 private:
     struct Instance;
     Instance* d;
