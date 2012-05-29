@@ -26,6 +26,7 @@
 #include <assert.h>
 #include <map>
 #include <set>
+#include <QMutex>
 #include <de/Log>
 
 struct Garbage
@@ -60,17 +61,27 @@ struct Garbage
 };
 
 typedef std::map<uint, Garbage*> Garbages; // threadId => Garbage
+static QMutex garbageMutex; // for accessing Garbages
 static Garbages* garbages;
 
 static Garbage* garbageForThread(uint thread)
 {
-    Garbages::iterator i = garbages->find(thread);
-    if(i != garbages->end()) return i->second;
+    DENG2_ASSERT(garbages != 0);
 
-    // Allocate a new one.
-    Garbage* g = new Garbage;
-    (*garbages)[thread] = g;
-    return g;
+    Garbage* result;
+    garbageMutex.lock();
+    Garbages::iterator i = garbages->find(thread);
+    if(i != garbages->end())
+    {
+        result = i->second;
+    }
+    else
+    {
+        // Allocate a new one.
+        (*garbages)[thread] = result = new Garbage;
+    }
+    garbageMutex.unlock();
+    return result;
 }
 
 void Garbage_Init(void)
@@ -82,22 +93,27 @@ void Garbage_Init(void)
 void Garbage_Shutdown(void)
 {
     DENG2_ASSERT(garbages != 0);
+    garbageMutex.lock();
     for(Garbages::iterator i = garbages->begin(); i != garbages->end(); ++i)
     {
         delete i->second;
     }
     delete garbages;
     garbages = 0;
+    garbageMutex.unlock();
 }
 
 void Garbage_ClearForThread(void)
 {
+    garbageMutex.lock();
     Garbages::iterator i = garbages->find(Sys_CurrentThreadId());
-    if(i == garbages->end()) return;
-
-    Garbage* g = i->second;
-    delete g;
-    garbages->erase(i);
+    if(i != garbages->end())
+    {
+        Garbage* g = i->second;
+        delete g;
+        garbages->erase(i);
+    }
+    garbageMutex.unlock();
 }
 
 void Garbage_Trash(void* ptr)
