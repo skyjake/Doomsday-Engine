@@ -22,8 +22,9 @@
 
 #include "de_base.h"
 #include "de_console.h"
-#include "de_refresh.h"
 #include "de_play.h"
+#include "de_refresh.h"
+#include "de_render.h"
 
 #include "m_bams.h"
 #include "m_misc.h"
@@ -396,8 +397,8 @@ boolean LineDef_MiddleMaterialCoversOpening(LineDef *line, int side,
                 {
                     // Possibly; check the placement.
                     const boolean unpegBottom = !!(line->flags & DDLF_DONTPEGBOTTOM);
-                    const boolean clipBottom = !(!P_IsInVoid(viewPlayer) && Surface_IsSkyMasked(&frontSec->SP_floorsurface) && Surface_IsSkyMasked(&backSec->SP_floorsurface));
-                    const boolean clipTop    = !(!P_IsInVoid(viewPlayer) && Surface_IsSkyMasked(&frontSec->SP_ceilsurface)  && Surface_IsSkyMasked(&backSec->SP_ceilsurface));
+                    const boolean clipBottom = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && Surface_IsSkyMasked(&frontSec->SP_floorsurface) && Surface_IsSkyMasked(&backSec->SP_floorsurface));
+                    const boolean clipTop    = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && Surface_IsSkyMasked(&frontSec->SP_ceilsurface)  && Surface_IsSkyMasked(&backSec->SP_ceilsurface));
 
                     if(LineDef_MiddleMaterialCoords(line, side, &matBottom[0], &matBottom[1],
                                                     &matTop[0], &matTop[1], NULL, unpegBottom,

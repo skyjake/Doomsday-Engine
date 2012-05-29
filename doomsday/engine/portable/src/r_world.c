@@ -1008,8 +1008,8 @@ boolean R_FindBottomTop(LineDef* line, int side, SideDefSection section,
 
             if(!stretchMiddle)
             {
-                const boolean clipBottom = !(!P_IsInVoid(viewPlayer) && Surface_IsSkyMasked(&ffloor->surface) && Surface_IsSkyMasked(&bfloor->surface));
-                const boolean clipTop    = !(!P_IsInVoid(viewPlayer) && Surface_IsSkyMasked(&fceil->surface)  && Surface_IsSkyMasked(&bceil->surface));
+                const boolean clipBottom = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && Surface_IsSkyMasked(&ffloor->surface) && Surface_IsSkyMasked(&bfloor->surface));
+                const boolean clipTop    = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && Surface_IsSkyMasked(&fceil->surface)  && Surface_IsSkyMasked(&bceil->surface));
                 coord_t bottomRight, topRight;
 
                 if(LineDef_MiddleMaterialCoords(line, side, low, &bottomRight, hi,

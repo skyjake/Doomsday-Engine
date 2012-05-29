@@ -118,6 +118,10 @@ void RL_MapRtu(uint idx, const rtexmapunit_t* rtu);
  */
 void RL_CopyRtu(uint idx, const rtexmapunit_t* rtu);
 
+/// @todo Avoid modifying the RTU write state for the purposes of primitive
+///       specific translations by implementing these as arguments to the
+///       RL_Add* family of functions.
+
 /// Change the scale property of the identified @a idx texture unit.
 void RL_Rtu_SetScale(uint idx, float s, float t);
 void RL_Rtu_SetScalev(uint idx, float const st[2]);
@@ -140,6 +144,9 @@ void RL_Rtu_SetTextureUnmanaged(uint idx, DGLuint glName);
 /**
  * @param primType  Type of primitive being written.
  * @param flags  @see rendpolyFlags
+ * @param colors  Color data values for the primitive. If @c NULL the default
+ *                value set [R:255, G:255, B:255, A:255] will be used for all
+ *                vertices of the primitive.
  */
 void RL_AddPolyWithCoordsModulationReflection(primtype_t primType, int flags,
     uint numElements, const rvertex_t* vertices, const ColorRawf* colors,
@@ -151,6 +158,9 @@ void RL_AddPolyWithCoordsModulationReflection(primtype_t primType, int flags,
 /**
  * @param primType  Type of primitive being written.
  * @param flags  @see rendpolyFlags
+ * @param colors  Color data values for the primitive. If @c NULL the default
+ *                value set [R:255, G:255, B:255, A:255] will be used for all
+ *                vertices of the primitive.
  */
 void RL_AddPolyWithCoordsModulation(primtype_t primType, int flags,
     uint numElements, const rvertex_t* vertices, const ColorRawf* colors,
@@ -160,6 +170,9 @@ void RL_AddPolyWithCoordsModulation(primtype_t primType, int flags,
 /**
  * @param primType  Type of primitive being written.
  * @param flags  @see rendpolyFlags
+ * @param colors  Color data values for the primitive. If @c NULL the default
+ *                value set [R:255, G:255, B:255, A:255] will be used for all
+ *                vertices of the primitive.
  */
 void RL_AddPolyWithCoords(primtype_t primType, int flags, uint numElements,
     const rvertex_t* vertices, const ColorRawf* colors,
@@ -168,6 +181,9 @@ void RL_AddPolyWithCoords(primtype_t primType, int flags, uint numElements,
 /**
  * @param primType  Type of primitive being written.
  * @param flags  @see rendpolyFlags
+ * @param colors  Color data values for the primitive. If @c NULL the default
+ *                value set [R:255, G:255, B:255, A:255] will be used for all
+ *                vertices of the primitive.
  */
 void RL_AddPolyWithModulation(primtype_t primType, int flags, uint numElements,
     const rvertex_t* vertices, const ColorRawf* colors,
@@ -176,6 +192,9 @@ void RL_AddPolyWithModulation(primtype_t primType, int flags, uint numElements,
 /**
  * @param primType  Type of primitive being written.
  * @param flags  @see rendpolyFlags
+ * @param colors  Color data values for the primitive. If @c NULL the default
+ *                value set [R:255, G:255, B:255, A:255] will be used for all
+ *                vertices of the primitive.
  */
 void RL_AddPoly(primtype_t primType, int flags, uint numElements,
     const rvertex_t* vertices, const ColorRawf* colors);
