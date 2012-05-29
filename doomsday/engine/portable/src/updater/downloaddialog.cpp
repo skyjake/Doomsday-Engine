@@ -23,10 +23,12 @@ struct DownloadDialog::Instance
     QLabel* progText;
     QUrl uri;
     de::String savedFilePath;
+    bool fileReady;
     QNetworkReply* reply;
     de::String redirected;
 
-    Instance(DownloadDialog* d, de::String downloadUri) : self(d), downloading(false), uri(downloadUri), reply(0)
+    Instance(DownloadDialog* d, de::String downloadUri)
+        : self(d), downloading(false), uri(downloadUri), fileReady(false), reply(0)
     {
         QVBoxLayout* mainLayout = new QVBoxLayout;
         self->setLayout(mainLayout);
@@ -61,12 +63,12 @@ struct DownloadDialog::Instance
         downloading = true;
         redirected.clear();
 
+        de::String path = uri.path();
+        savedFilePath = UpdaterSettings().downloadPath() / path.fileName();
+
         reply = network->get(QNetworkRequest(uri));
         QObject::connect(reply, SIGNAL(metaDataChanged()), self, SLOT(replyMetaDataChanged()));
         QObject::connect(reply, SIGNAL(downloadProgress(qint64,qint64)), self, SLOT(progress(qint64,qint64)));
-
-        de::String path = uri.path();
-        savedFilePath = UpdaterSettings().downloadPath() / path.fileName();
 
         LOG_INFO("Downloading %s, saving as: %s") << uri.toString() << savedFilePath;
     }
@@ -88,6 +90,12 @@ DownloadDialog::~DownloadDialog()
     delete d;
 }
 
+de::String DownloadDialog::downloadedFilePath() const
+{
+    if(!d->fileReady) return "";
+    return d->savedFilePath;
+}
+
 void DownloadDialog::finished(QNetworkReply* reply)
 {
     LOG_AS("Download");
@@ -102,7 +110,7 @@ void DownloadDialog::finished(QNetworkReply* reply)
         return;
     }
 
-    /// @todo If/when we include WebKit, this can be done more intelligent using QWebPage. -jk
+    /// @todo If/when we include WebKit, this can be done more intelligently using QWebPage. -jk
 
     if(!d->redirected.isEmpty())
     {
@@ -132,7 +140,7 @@ void DownloadDialog::finished(QNetworkReply* reply)
             emit downloadFailed(d->uri.toString());
             return;
         }
-        start += 5;
+        start += 5; // skip: url="
         QString equivRefresh = html.mid(start, html.indexOf("\"", start) - start);
         equivRefresh.replace("&amp;", "&");
 
@@ -157,6 +165,7 @@ void DownloadDialog::finished(QNetworkReply* reply)
         emit downloadFailed(d->uri.toString());
     }
 
+    d->fileReady = true;
     d->setProgressText(tr("Ready to install"));
     d->install->setEnabled(true);
 

@@ -17,6 +17,14 @@ class DownloadDialog : public QDialog
 public:
     explicit DownloadDialog(de::String downloadUri, QWidget *parent = 0);
     ~DownloadDialog();
+
+    /**
+     * Returns the path of the downloaded file.
+     *
+     * @return Path, or an empty string if the download did not finish
+     * successfully.
+     */
+    de::String downloadedFilePath() const;
     
 signals:
     void downloadFailed(QString uri);
