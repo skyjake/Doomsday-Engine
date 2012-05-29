@@ -287,7 +287,7 @@ int LineDef_MiddleMaterialCoords(LineDef* lineDef, int side,
     int i, texHeight;
     assert(lineDef && bottomLeft && bottomRight && topLeft && topRight);
 
-    if(texOffY)  *texOffY  = 0;
+    if(texOffY) *texOffY  = 0;
 
     sideDef = lineDef->L_sidedef(side);
     if(!sideDef || !sideDef->SW_middlematerial) return false;
