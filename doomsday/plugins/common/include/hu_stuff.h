@@ -70,6 +70,7 @@ enum {
 extern fontid_t fonts[NUM_GAME_FONTS];
 
 extern patchid_t* pMapNames; // Name graphics of each map.
+extern uint pMapNamesSize;
 
 #if __JHERETIC__ || __JHEXEN__
 extern patchid_t pInvItemBox;
