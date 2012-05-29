@@ -43,25 +43,30 @@ extern int devNoCulling;
 void C_Init(void);
 
 /**
- * @return  @c =true if clipnodes cover the whole range [0..360] degrees.
+ * @return  Non-zero if clipnodes cover the whole range [0..360] degrees.
  */
-boolean C_IsFull(void);
+int C_IsFull(void);
 
 void C_ClearRanges(void);
 
 int C_SafeAddRange(binangle_t startAngle, binangle_t endAngle);
 
 /**
- * @return  @c =true if the point is visible after checking both the clipnodes
+ * @return  Non-zero if the point is visible after checking both the clipnodes
  *          and the occlusion planes.
  */
-boolean C_IsPointVisible(coord_t x, coord_t y, coord_t height);
+int C_IsPointVisible(coord_t x, coord_t y, coord_t height);
 
 /**
- * @return  @c =true if the angle is visible after checking both the clipnodes
+ * @return  Non-zero if the angle is visible after checking both the clipnodes
  *          and the occlusion planes.
  */
-boolean C_IsAngleVisible(binangle_t bang);
+int C_IsAngleVisible(binangle_t bang);
+
+/**
+ * @return  Non-zero if @a bspLeaf might be visible, else @c 0.
+ */
+int C_CheckBspLeaf(BspLeaf* bspLeaf);
 
 /**
  * Add a segment relative to the current viewpoint.
@@ -79,16 +84,6 @@ void C_AddViewRelOcclusion(coord_t const* v1, coord_t const* v2, coord_t height,
  */
 int C_CheckRangeFromViewRelPoints(coord_t const from[2], coord_t const to[2]);
 int C_CheckRangeFromViewRelPointsXY(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY);
-
-/**
- * @return  @c =1 if the specified @a angle is visible, else @c 0.
- */
-int C_IsAngleVisible(binangle_t angle);
-
-/**
- * @return  @c =1 if the BSP leaf might be visible, else @c 0.
- */
-int C_CheckBspLeaf(BspLeaf* bspLeaf);
 
 #if _DEBUG
 /**

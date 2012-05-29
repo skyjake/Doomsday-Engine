@@ -876,10 +876,17 @@ static void writePrimitive(const rendlist_t* list, uint base,
         const ColorRawf* rcolor = &rcolors[i];
         dgl_color_t* color = &colors[base + i];
 
-        color->rgba[CR] = (DGLubyte) (255 * MINMAX_OF(0, rcolor->rgba[CR], 1));
-        color->rgba[CG] = (DGLubyte) (255 * MINMAX_OF(0, rcolor->rgba[CG], 1));
-        color->rgba[CB] = (DGLubyte) (255 * MINMAX_OF(0, rcolor->rgba[CB], 1));
-        color->rgba[CA] = (DGLubyte) (255 * MINMAX_OF(0, rcolor->rgba[CA], 1));
+        if(rcolors)
+        {
+            color->rgba[CR] = (DGLubyte) (255 * MINMAX_OF(0, rcolor->rgba[CR], 1));
+            color->rgba[CG] = (DGLubyte) (255 * MINMAX_OF(0, rcolor->rgba[CG], 1));
+            color->rgba[CB] = (DGLubyte) (255 * MINMAX_OF(0, rcolor->rgba[CB], 1));
+            color->rgba[CA] = (DGLubyte) (255 * MINMAX_OF(0, rcolor->rgba[CA], 1));
+        }
+        else
+        {
+            color->rgba[CR] = color->rgba[CG] = color->rgba[CB] = color->rgba[CA] = 255;
+        }
         }
     }
 }

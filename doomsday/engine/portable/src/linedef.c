@@ -22,8 +22,9 @@
 
 #include "de_base.h"
 #include "de_console.h"
-#include "de_refresh.h"
 #include "de_play.h"
+#include "de_refresh.h"
+#include "de_render.h"
 
 #include "m_bams.h"
 #include "m_misc.h"
@@ -51,7 +52,7 @@ static float lightLevelDelta(const pvec2f_t normal)
  *     Tests consider all Planes which interface with this and the "middle"
  *     Material used on the relative front side (if any).
  */
-static boolean backClosedForBlendNeighbor(const LineDef* lineDef, int side, boolean ignoreOpacity)
+static boolean backClosedForBlendNeighbor(LineDef* lineDef, int side, boolean ignoreOpacity)
 {
     Sector* frontSec;
     Sector* backSec;
@@ -74,7 +75,7 @@ static boolean backClosedForBlendNeighbor(const LineDef* lineDef, int side, bool
     return LineDef_MiddleMaterialCoversOpening(lineDef, side, ignoreOpacity);
 }
 
-static LineDef* findBlendNeighbor(const LineDef* l, byte side, byte right,
+static LineDef* findBlendNeighbor(LineDef* l, byte side, byte right,
     binangle_t* diff)
 {
     const lineowner_t* farVertOwner = l->L_vo(right^side);
@@ -208,7 +209,7 @@ void LineDef_UpdateAABox(LineDef* line)
 /**
  * @todo Now that we store surface tangent space normals use those rather than angles.
  */
-void LineDef_LightLevelDelta(const LineDef* l, int side, float* deltaL, float* deltaR)
+void LineDef_LightLevelDelta(LineDef* l, int side, float* deltaL, float* deltaR)
 {
     binangle_t diff;
     LineDef* other;
@@ -276,9 +277,9 @@ void LineDef_LightLevelDelta(const LineDef* l, int side, float* deltaL, float* d
     }
 }
 
-int LineDef_MiddleMaterialCoords(const LineDef* lineDef, int side,
+int LineDef_MiddleMaterialCoords(LineDef* lineDef, int side,
     coord_t* bottomLeft, coord_t* bottomRight, coord_t* topLeft, coord_t* topRight,
-    float* texOffY, boolean lowerUnpeg, boolean clipTop, boolean clipBottom)
+    float* texOffY, boolean lowerUnpeg, boolean clipBottom, boolean clipTop)
 {
     coord_t* top[2], *bottom[2], openingTop[2], openingBottom[2]; // {left, right}
     coord_t tcYOff;
@@ -286,7 +287,7 @@ int LineDef_MiddleMaterialCoords(const LineDef* lineDef, int side,
     int i, texHeight;
     assert(lineDef && bottomLeft && bottomRight && topLeft && topRight);
 
-    if(texOffY)  *texOffY  = 0;
+    if(texOffY) *texOffY  = 0;
 
     sideDef = lineDef->L_sidedef(side);
     if(!sideDef || !sideDef->SW_middlematerial) return false;
@@ -359,7 +360,7 @@ int LineDef_MiddleMaterialCoords(const LineDef* lineDef, int side,
  * denote this. Is sensitive to plane heights, surface properties
  * (e.g. alpha) and surface texture properties.
  */
-boolean LineDef_MiddleMaterialCoversOpening(const LineDef *line, int side,
+boolean LineDef_MiddleMaterialCoversOpening(LineDef *line, int side,
     boolean ignoreOpacity)
 {
     assert(line);
@@ -390,18 +391,18 @@ boolean LineDef_MiddleMaterialCoversOpening(const LineDef *line, int side,
                 openBottom[0] = openBottom[1] =
                     matBottom[0] = matBottom[1] = LineDef_FloorMax(line)->visHeight;
 
-                // Could the mid texture fill enough of this gap for us
-                // to consider it completely closed?
+                // Might the middle material cover the whole gap?
                 if(ms->size.height >= (openTop[0] - openBottom[0]) &&
                    ms->size.height >= (openTop[1] - openBottom[1]))
                 {
-                    // Possibly. Check the placement of the mid texture.
+                    // Possibly; check the placement.
+                    const boolean unpegBottom = !!(line->flags & DDLF_DONTPEGBOTTOM);
+                    const boolean clipBottom = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && Surface_IsSkyMasked(&frontSec->SP_floorsurface) && Surface_IsSkyMasked(&backSec->SP_floorsurface));
+                    const boolean clipTop    = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && Surface_IsSkyMasked(&frontSec->SP_ceilsurface)  && Surface_IsSkyMasked(&backSec->SP_ceilsurface));
+
                     if(LineDef_MiddleMaterialCoords(line, side, &matBottom[0], &matBottom[1],
-                        &matTop[0], &matTop[1], NULL, 0 != (line->flags & DDLF_DONTPEGBOTTOM),
-                        !(Surface_IsSkyMasked(&frontSec->SP_ceilsurface) &&
-                          Surface_IsSkyMasked(&backSec->SP_ceilsurface)),
-                        !(Surface_IsSkyMasked(&frontSec->SP_floorsurface) &&
-                          Surface_IsSkyMasked(&backSec->SP_floorsurface))))
+                                                    &matTop[0], &matTop[1], NULL, unpegBottom,
+                                                    clipBottom, clipTop))
                     {
                         if(matTop[0] >= openTop[0] &&
                            matTop[1] >= openTop[1] &&

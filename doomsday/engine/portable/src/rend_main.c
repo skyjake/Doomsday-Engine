@@ -770,7 +770,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
     boolean useLights = false, useShadows = false, hasDynlights = false;
     rtexcoord_t* primaryCoords = NULL, *interCoords = NULL, *modCoords = NULL;
     uint realNumVertices = ((p->isWall && (p->wall.left.divCount || p->wall.right.divCount))? 3 + p->wall.left.divCount + 3 + p->wall.right.divCount : numVertices);
-    ColorRawf* rcolors;
+    ColorRawf* rcolors = NULL;
     ColorRawf* shinyColors = NULL;
     rtexcoord_t* shinyTexCoords = NULL;
     float modTexTC[2][2] = {{ 0, 0 }, { 0, 0 }};
@@ -778,6 +778,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
     DGLuint modTex = 0;
     float glowing = p->glowing;
     boolean drawAsVisSprite = false;
+    boolean skyMaskedMaterial = ((p->flags & RPF_SKYMASK) || (msA && Material_IsSkyMasked(MaterialVariant_GeneralCase(msA->material))));
 
     // Map RTU configuration from prepared MaterialSnapshot(s).
     const rtexmapunit_t* primaryRTU       = (!(p->flags & RPF_SKYMASK))? &MSU(msA, MTU_PRIMARY) : NULL;
@@ -791,12 +792,14 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
        (!msA->isOpaque || p->alpha < 1 || p->blendMode > 0))
         drawAsVisSprite = true;
 
-    rcolors = R_AllocRendColors(realNumVertices);
+    if(!skyMaskedMaterial)
+        rcolors = R_AllocRendColors(realNumVertices);
+
     primaryCoords = R_AllocRendTexCoords(realNumVertices);
     if(interRTU)
         interCoords = R_AllocRendTexCoords(realNumVertices);
 
-    if(!(p->flags & RPF_SKYMASK))
+    if(!skyMaskedMaterial)
     {
         // ShinySurface?
         if(shinyRTU && !drawAsVisSprite)
@@ -908,7 +911,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
     }
 
     // Light this polygon.
-    if(!(p->flags & RPF_SKYMASK))
+    if(!skyMaskedMaterial)
     {
         if(levelFullBright || !(glowing < 1))
         {   // Uniform colour. Apply to all vertices.
@@ -1051,16 +1054,15 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
 
         R_FreeRendTexCoords(primaryCoords);
         R_FreeRendColors(rcolors);
-
-        if(interCoords) R_FreeRendTexCoords(interCoords);
-        if(modCoords) R_FreeRendTexCoords(modCoords);
-        if(shinyTexCoords) R_FreeRendTexCoords(shinyTexCoords);
-        if(shinyColors) R_FreeRendColors(shinyColors);
+        R_FreeRendTexCoords(interCoords);
+        R_FreeRendTexCoords(modCoords);
+        R_FreeRendTexCoords(shinyTexCoords);
+        R_FreeRendColors(shinyColors);
 
         return false; // We HAD to use a vissprite, so it MUST not be opaque.
     }
 
-    if(!(p->flags & RPF_SKYMASK) && useLights)
+    if(useLights)
     {
         // Render all lights projected onto this surface.
         renderlightprojectionparams_t params;
@@ -1083,7 +1085,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
         hasDynlights = (0 != Rend_RenderLightProjections(p->lightListIdx, &params));
     }
 
-    if(!(p->flags & RPF_SKYMASK) && useShadows)
+    if(useShadows)
     {
         // Render all shadows projected onto this surface.
         rendershadowprojectionparams_t params;
@@ -1114,9 +1116,6 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
     RL_MapRtu(RTU_REFLECTION, shinyRTU);
     RL_MapRtu(RTU_REFLECTION_MASK, shinyMaskRTU);
 
-    /// @todo Avoid modifying the RTU write state for the purposes of primitive
-    ///       specific translations by implementing these as arguments to the
-    ///       RL_Add* family of functions.
     if(primaryRTU)
     {
         if(p->texOffset) RL_Rtu_TranslateOffsetv(RTU_PRIMARY, p->texOffset);
@@ -1170,7 +1169,10 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
 
         memcpy(origVerts, rvertices, sizeof(rvertex_t) * 4);
         memcpy(origTexCoords, primaryCoords, sizeof(rtexcoord_t) * 4);
-        memcpy(origColors, rcolors, sizeof(ColorRawf) * 4);
+        if(rcolors || shinyColors)
+        {
+            memcpy(origColors, rcolors, sizeof(ColorRawf) * 4);
+        }
 
         bL = origVerts[0].pos[VZ];
         tL = origVerts[1].pos[VZ];
@@ -1179,7 +1181,11 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
 
         R_DivVerts(rvertices, origVerts, p->wall.left.firstDiv, p->wall.left.divCount, p->wall.right.firstDiv, p->wall.right.divCount);
         R_DivTexCoords(primaryCoords, origTexCoords, p->wall.left.firstDiv, p->wall.left.divCount, p->wall.right.firstDiv, p->wall.right.divCount, bL, tL, bR, tR);
-        R_DivVertColors(rcolors, origColors, p->wall.left.firstDiv, p->wall.left.divCount, p->wall.right.firstDiv, p->wall.right.divCount, bL, tL, bR, tR);
+
+        if(rcolors)
+        {
+            R_DivVertColors(rcolors, origColors, p->wall.left.firstDiv, p->wall.left.divCount, p->wall.right.firstDiv, p->wall.right.divCount, bL, tL, bR, tR);
+        }
 
         if(interCoords)
         {
@@ -1213,7 +1219,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
         }
 
         RL_AddPolyWithCoordsModulationReflection(PT_FAN, p->flags | (hasDynlights? RPF_HAS_DYNLIGHTS : 0),
-            3 + p->wall.right.divCount, rvertices + 3 + p->wall.left.divCount, rcolors + 3 + p->wall.left.divCount,
+            3 + p->wall.right.divCount, rvertices + 3 + p->wall.left.divCount, rcolors? rcolors + 3 + p->wall.left.divCount : NULL,
             primaryCoords + 3 + p->wall.left.divCount, interCoords? interCoords + 3 + p->wall.left.divCount : NULL,
             modTex, &modColor, modCoords? modCoords + 3 + p->wall.left.divCount : NULL,
             shinyColors + 3 + p->wall.left.divCount, shinyTexCoords? shinyTexCoords + 3 + p->wall.left.divCount : NULL,
@@ -1235,17 +1241,13 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
     }
 
     R_FreeRendTexCoords(primaryCoords);
-    if(interCoords)
-        R_FreeRendTexCoords(interCoords);
-    if(modCoords)
-        R_FreeRendTexCoords(modCoords);
-    if(shinyTexCoords)
-        R_FreeRendTexCoords(shinyTexCoords);
+    R_FreeRendTexCoords(interCoords);
+    R_FreeRendTexCoords(modCoords);
+    R_FreeRendTexCoords(shinyTexCoords);
     R_FreeRendColors(rcolors);
-    if(shinyColors)
-        R_FreeRendColors(shinyColors);
+    R_FreeRendColors(shinyColors);
 
-    return (p->forceOpaque || (p->flags & RPF_SKYMASK) ||
+    return (p->forceOpaque || skyMaskedMaterial ||
         !(p->alpha < 1 || !msA->isOpaque || p->blendMode > 0));
 }
 
@@ -2092,7 +2094,7 @@ static void occludeFrontFacingSegsInBspLeaf(const BspLeaf* bspLeaf)
 static coord_t skyFixFloorZ(const Plane* frontFloor, const Plane* backFloor)
 {
     DENG_UNUSED(backFloor);
-    if(P_IsInVoid(viewPlayer))
+    if(devRendSkyMode || P_IsInVoid(viewPlayer))
         return frontFloor->visHeight;
     return GameMap_SkyFixFloor(theMap);
 }
@@ -2100,7 +2102,7 @@ static coord_t skyFixFloorZ(const Plane* frontFloor, const Plane* backFloor)
 static coord_t skyFixCeilZ(const Plane* frontCeil, const Plane* backCeil)
 {
     DENG_UNUSED(backCeil);
-    if(P_IsInVoid(viewPlayer))
+    if(devRendSkyMode || P_IsInVoid(viewPlayer))
         return frontCeil->visHeight;
     return GameMap_SkyFixCeiling(theMap);
 }
@@ -2201,7 +2203,7 @@ static int chooseHEdgeSkyFixes(HEdge* hedge, int skyCap)
                     const Plane* bfloor = backSec? backSec->SP_plane(PLN_FLOOR) : NULL;
                     const coord_t skyZ = skyFixFloorZ(ffloor, bfloor);
 
-                    if(hasClosedBack || (!Surface_IsSkyMasked(&bfloor->surface) || P_IsInVoid(viewPlayer)))
+                    if(hasClosedBack || (!Surface_IsSkyMasked(&bfloor->surface) || devRendSkyMode || P_IsInVoid(viewPlayer)))
                     {
                         const Plane* floor = (bfloor && Surface_IsSkyMasked(&bfloor->surface) && ffloor->visHeight < bfloor->visHeight? bfloor : ffloor);
                         if(floor->visHeight > skyZ)
@@ -2216,7 +2218,7 @@ static int chooseHEdgeSkyFixes(HEdge* hedge, int skyCap)
                     const Plane* bceil = backSec? backSec->SP_plane(PLN_CEILING) : NULL;
                     const coord_t skyZ = skyFixCeilZ(fceil, bceil);
 
-                    if(hasClosedBack || (!Surface_IsSkyMasked(&bceil->surface) || P_IsInVoid(viewPlayer)))
+                    if(hasClosedBack || (!Surface_IsSkyMasked(&bceil->surface) || devRendSkyMode || P_IsInVoid(viewPlayer)))
                     {
                         const Plane* ceil = (bceil && Surface_IsSkyMasked(&bceil->surface) && fceil->visHeight > bceil->visHeight? bceil : fceil);
                         if(ceil->visHeight < skyZ)
@@ -2229,16 +2231,46 @@ static int chooseHEdgeSkyFixes(HEdge* hedge, int skyCap)
     return fixes;
 }
 
+static __inline void Rend_BuildBspLeafSkyFixStripEdge(coord_t const vXY[2],
+    coord_t v1Z, coord_t v2Z, float texS,
+    rvertex_t* v1, rvertex_t* v2, rtexcoord_t* t1, rtexcoord_t* t2)
+{
+    if(v1)
+    {
+        assert(vXY);
+        V2f_Copyd(v1->pos, vXY);
+        v1->pos[VZ] = v1Z;
+    }
+    if(v2)
+    {
+        assert(vXY);
+        V2f_Copyd(v2->pos, vXY);
+        v2->pos[VZ] = v2Z;
+    }
+    if(t1)
+    {
+        t1->st[0] = texS;
+        t1->st[1] = v2Z - v1Z;
+    }
+    if(t2)
+    {
+        t2->st[0] = texS;
+        t2->st[1] = 0;
+    }
+}
+
 /**
  * Vertex layout:
- *   1--3    3--1
+ *   1--3    2--0
  *   |  | or |  | if antiClockwise
- *   0--2    2--0
+ *   0--2    3--1
  */
-static void Rend_BuildBspLeafSkyFixStripGeometry(BspLeaf* leaf, HEdge* startNode, HEdge* endNode,
-    boolean antiClockwise, int skyCap, rvertex_t** verts, uint* vertsSize)
+static void Rend_BuildBspLeafSkyFixStripGeometry(BspLeaf* leaf, HEdge* startNode,
+    HEdge* endNode, boolean antiClockwise, int skyCap,
+    rvertex_t** verts, uint* vertsSize, rtexcoord_t** coords)
 {
     HEdge* node;
+    float texS;
     uint n;
 
     *vertsSize = 0;
@@ -2264,7 +2296,13 @@ static void Rend_BuildBspLeafSkyFixStripGeometry(BspLeaf* leaf, HEdge* startNode
 
     // Build geometry.
     *verts = R_AllocRendVertices(*vertsSize);
+    if(coords)
+    {
+        *coords = R_AllocRendTexCoords(*vertsSize);
+    }
+
     node = startNode;
+    texS = 0;
     n = 0;
     do
     {
@@ -2277,41 +2315,80 @@ static void Rend_BuildBspLeafSkyFixStripGeometry(BspLeaf* leaf, HEdge* startNode
         if(n == 0)
         {
             // Add the first edge.
-            rvertex_t* v1 = &(*verts)[n + 0];
-            rvertex_t* v2 = &(*verts)[n + 1];
+            rvertex_t* v1 = &(*verts)[n + antiClockwise^0];
+            rvertex_t* v2 = &(*verts)[n + antiClockwise^1];
+            rtexcoord_t* t1 = coords? &(*coords)[n + antiClockwise^0] : NULL;
+            rtexcoord_t* t2 = coords? &(*coords)[n + antiClockwise^1] : NULL;
 
-            V2f_Copyd(v1->pos, node->HE_v1origin);
-            V2f_Copy(v2->pos, v1->pos);
+            Rend_BuildBspLeafSkyFixStripEdge(node->HE_v1origin, zBottom, zTop, texS,
+                                             v1, v2, t1, t2);
 
-            v1->pos[VZ] = zBottom;
-            v2->pos[VZ] = zTop;
+            if(coords)
+            {
+                texS += antiClockwise? -node->prev->length : hedge->length;
+            }
 
             n += 2;
         }
 
         // Add the next edge.
         {
-            rvertex_t* v1 = &(*verts)[n + 0];
-            rvertex_t* v2 = &(*verts)[n + 1];
+            rvertex_t* v1 = &(*verts)[n + antiClockwise^0];
+            rvertex_t* v2 = &(*verts)[n + antiClockwise^1];
+            rtexcoord_t* t1 = coords? &(*coords)[n + antiClockwise^0] : NULL;
+            rtexcoord_t* t2 = coords? &(*coords)[n + antiClockwise^1] : NULL;
 
-            V2f_Copyd(v1->pos, (antiClockwise? node->prev : node->next)->HE_v1origin);
-            V2f_Copy(v2->pos, v1->pos);
+            Rend_BuildBspLeafSkyFixStripEdge((antiClockwise? node->prev : node->next)->HE_v1origin,
+                                             zBottom, zTop, texS,
+                                             v1, v2, t1, t2);
 
-            v1->pos[VZ] = zBottom;
-            v2->pos[VZ] = zTop;
+            if(coords)
+            {
+                texS += antiClockwise? -node->prev->length : hedge->length;
+            }
 
             n += 2;
         }
     } while((node = antiClockwise? node->prev : node->next) != endNode);
 }
 
+static void Rend_WriteBspLeafSkyFixStripGeometry(BspLeaf* leaf, HEdge* startNode,
+    HEdge* endNode, boolean antiClockwise, int skyFix, material_t* material)
+{
+    const int rendPolyFlags = RPF_DEFAULT | (!devRendSkyMode? RPF_SKYMASK : 0);
+    rtexcoord_t* coords = 0;
+    rvertex_t* verts;
+    uint vertsSize;
+
+    Rend_BuildBspLeafSkyFixStripGeometry(leaf, startNode, endNode, antiClockwise, skyFix,
+                                         &verts, &vertsSize, devRendSkyMode? &coords : NULL);
+
+    if(!devRendSkyMode)
+    {
+        RL_AddPoly(PT_TRIANGLE_STRIP, rendPolyFlags, vertsSize, verts, NULL);
+    }
+    else
+    {
+        // Map RTU configuration from prepared MaterialSnapshot(s).
+        const materialvariantspecification_t* spec = mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT);
+        const materialsnapshot_t* ms = Materials_Prepare(material, spec, true);
+
+        RL_LoadDefaultRtus();
+        RL_MapRtu(RTU_PRIMARY, &MSU(ms, MTU_PRIMARY));
+        RL_AddPolyWithCoords(PT_TRIANGLE_STRIP, rendPolyFlags, vertsSize, verts, NULL, coords, NULL);
+    }
+
+    R_FreeRendVertices(verts);
+    R_FreeRendTexCoords(coords);
+}
+
 /// @param skyFix  @ref skyCapFlags
 static void Rend_WriteBspLeafSkyFixGeometry(BspLeaf* leaf, int skyFix)
 {
-    const int rendPolyFlags = RPF_DEFAULT | RPF_SKYMASK;
     const boolean antiClockwise = false;
     HEdge* baseNode, *startNode, *node;
     coord_t startZBottom, startZTop;
+    material_t* startMaterial;
 
     if(!leaf || !leaf->hedgeCount || !leaf->sector) return;
     if(!(skyFix & (SKYCAP_LOWER|SKYCAP_UPPER))) return;
@@ -2321,6 +2398,7 @@ static void Rend_WriteBspLeafSkyFixGeometry(BspLeaf* leaf, int skyFix)
     // We may need to break the loop into multiple strips.
     startNode = 0;
     startZBottom = startZTop = 0;
+    startMaterial = 0;
     node = baseNode;
     do
     {
@@ -2332,13 +2410,22 @@ static void Rend_WriteBspLeafSkyFixGeometry(BspLeaf* leaf, int skyFix)
         if(chooseHEdgeSkyFixes(hedge, skyFix))
         {
             coord_t zBottom, zTop;
+            material_t* skyMaterial = 0;
+
             skyFixZCoords(hedge, skyFix, &zBottom, &zTop);
+
+            if(devRendSkyMode)
+            {
+                skyMaterial = hedge->sector->SP_planematerial(skyFix == SKYCAP_UPPER? PLN_CEILING : PLN_FLOOR);
+            }
+
             if(zBottom >= zTop)
             {
                 // End the current strip.
                 endStrip = true;
             }
-            else if(startNode && (!FEQUAL(zBottom, startZBottom) || !FEQUAL(zTop, startZTop)))
+            else if(startNode && (!FEQUAL(zBottom, startZBottom) || !FEQUAL(zTop, startZTop) ||
+                                  (devRendSkyMode && skyMaterial != startMaterial)))
             {
                 // End the current strip and start another.
                 endStrip = true;
@@ -2352,6 +2439,7 @@ static void Rend_WriteBspLeafSkyFixGeometry(BspLeaf* leaf, int skyFix)
                 startNode = node;
                 startZBottom = zBottom;
                 startZTop = zTop;
+                startMaterial = skyMaterial;
             }
         }
         else
@@ -2362,14 +2450,9 @@ static void Rend_WriteBspLeafSkyFixGeometry(BspLeaf* leaf, int skyFix)
 
         if(endStrip && startNode)
         {
-            // We have complete strip; build it.
-            rvertex_t* verts;
-            uint vertsSize;
-
-            Rend_BuildBspLeafSkyFixStripGeometry(leaf, startNode, node, antiClockwise, skyFix,
-                                                 &verts, &vertsSize);
-            RL_AddPoly(PT_TRIANGLE_STRIP, rendPolyFlags, vertsSize, verts, NULL);
-            R_FreeRendVertices(verts);
+            // We have complete strip; build and write it.
+            Rend_WriteBspLeafSkyFixStripGeometry(leaf, startNode, node, antiClockwise,
+                                                 skyFix, startMaterial);
 
             if(beginNewStrip)
                 startNode = node; // Start a new strip from this node.
@@ -2381,13 +2464,8 @@ static void Rend_WriteBspLeafSkyFixGeometry(BspLeaf* leaf, int skyFix)
     // Have we an unwritten strip? - build it.
     if(startNode)
     {
-        rvertex_t* verts;
-        uint vertsSize;
-
-        Rend_BuildBspLeafSkyFixStripGeometry(leaf, startNode, baseNode, antiClockwise, skyFix,
-                                             &verts, &vertsSize);
-        RL_AddPoly(PT_TRIANGLE_STRIP, rendPolyFlags, vertsSize, verts, NULL);
-        R_FreeRendVertices(verts);
+        Rend_WriteBspLeafSkyFixStripGeometry(leaf, startNode, baseNode, antiClockwise,
+                                             skyFix, startMaterial);
     }
 }
 
@@ -2562,6 +2640,7 @@ static void Rend_RenderSkyCap(int skyCap)
     rvertex_t* verts;
     uint numVerts;
 
+    if(devRendSkyMode) return; // Caps are unnecessary (will be drawn as regular planes).
     if(!leaf || !skyCap) return;
 
     Rend_BuildBspLeafPlaneGeometry(leaf, !!(skyCap & SKYCAP_UPPER), R_SkyCapZ(leaf, skyCap),
@@ -2577,7 +2656,6 @@ static void Rend_RenderSkySurfaces(int skyCap)
     BspLeaf* leaf = currentBspLeaf;
 
     // Any work to do?
-    if(devRendSkyMode) return;
     if(!leaf || !leaf->hedgeCount || !leaf->sector || !R_SectorContainsSkySurfaces(leaf->sector)) return;
 
     // Sky caps are only necessary in sectors with sky-masked planes.
@@ -2588,8 +2666,11 @@ static void Rend_RenderSkySurfaces(int skyCap)
 
     if(!skyCap) return;
 
-    // All geometry uses the same (default) RTU write state.
-    RL_LoadDefaultRtus();
+    if(!devRendSkyMode)
+    {
+        // All geometry uses the same RTU write state.
+        RL_LoadDefaultRtus();
+    }
 
     // Lower?
     if(skyCap & SKYCAP_LOWER)
@@ -2685,7 +2766,7 @@ static void Rend_RenderPlanes(void)
         const Plane* plane = sect->planes[i];
         const Surface* suf = &plane->surface;
         boolean isSkyMasked = false;
-        boolean addDynLights = true;
+        boolean addDynLights = !devRendSkyMode;
         boolean clipBackFacing = false;
         float texOffset[2];
         float texScale[2];
@@ -2731,7 +2812,8 @@ static void Rend_RenderPlanes(void)
 
         Rend_RenderPlane(plane->type, plane->visHeight, suf->tangent, suf->bitangent, suf->normal,
             mat, suf->rgba, suf->blendMode, texOffset, texScale,
-            isSkyMasked, addDynLights, (i == PLN_FLOOR), BspLeaf_BiasSurfaceForGeometryGroup(leaf, (uint)plane->planeID), plane->planeID,
+            isSkyMasked, addDynLights, (!devRendSkyMode && i == PLN_FLOOR),
+            BspLeaf_BiasSurfaceForGeometryGroup(leaf, (uint)plane->planeID), plane->planeID,
             texMode, clipBackFacing);
     }
 }

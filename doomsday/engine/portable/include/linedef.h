@@ -104,33 +104,33 @@ void LineDef_UpdateAABox(LineDef* lineDef);
 
 /**
  * @param lineDef  LineDef instance.
- * @return  Minimal floor Plane which interfaces with this LineDef's face.
+ * @return  Minimal floor Plane which interfaces with this LineDef.
  *     If both front and back floor Plane interfaces exist and are equal,
- *     the front Plane is returned. May return @c NULL if no interfaces.
+ *     the front plane is returned. May return @c NULL if no interfaces.
  */
 Plane* LineDef_FloorMin(const LineDef* lineDef);
 
 /**
  * @param lineDef  LineDef instance.
- * @return  Maximal floor Plane which interfaces with this LineDef's face.
+ * @return  Maximal floor Plane which interfaces with this LineDef.
  *     If both front and back floor Plane interfaces exist and are equal,
- *     the front Plane is returned. May return @c NULL if no interfaces.
+ *     the front plane is returned. May return @c NULL if no interfaces.
  */
 Plane* LineDef_FloorMax(const LineDef* lineDef);
 
 /**
  * @param lineDef  LineDef instance.
- * @return  Minimal ceiling Plane which interfaces with this LineDef's face.
+ * @return  Minimal ceiling Plane which interfaces with this LineDef.
  *     If both front and back ceiling Plane interfaces exist and are equal,
- *     the front Plane is returned. May return @c NULL if no interfaces.
+ *     the front plane is returned. May return @c NULL if no interfaces.
  */
 Plane* LineDef_CeilingMin(const LineDef* lineDef);
 
 /**
  * @param lineDef  LineDef instance.
- * @return  Maximal ceiling Plane which interfaces with this LineDef's face.
+ * @return  Maximal ceiling Plane which interfaces with this LineDef.
  *     If both front and back ceiling Plane interfaces exist and are equal,
- *     the front Plane is returned. May return @c NULL if no interfaces.
+ *     the front plane is returned. May return @c NULL if no interfaces.
  */
 Plane* LineDef_CeilingMax(const LineDef* lineDef);
 
@@ -143,7 +143,7 @@ Plane* LineDef_CeilingMax(const LineDef* lineDef);
  * @param deltaL  Light delta for the left edge written here.
  * @param deltaR  Light delta for the right edge written here.
  */
-void LineDef_LightLevelDelta(const LineDef* lineDef, int side, float* deltaL, float* deltaR);
+void LineDef_LightLevelDelta(LineDef* lineDef, int side, float* deltaL, float* deltaR);
 
 /**
  * @param lineDef  LineDef instance.
@@ -153,7 +153,7 @@ void LineDef_LightLevelDelta(const LineDef* lineDef, int side, float* deltaL, fl
  *     a "middle" Material which completely covers any opening (gap between
  *     floor and ceiling planes) on that side of the line.
  */
-boolean LineDef_MiddleMaterialCoversOpening(const LineDef* lineDef, int side, boolean ignoreAlpha);
+boolean LineDef_MiddleMaterialCoversOpening(LineDef* lineDef, int side, boolean ignoreAlpha);
 
 /**
  * Calculate coordinates for a "middle" Material if present.
@@ -168,9 +168,9 @@ boolean LineDef_MiddleMaterialCoversOpening(const LineDef* lineDef, int side, bo
  *
  * @return  @c true iff the middle Material is visible (in the opening).
  */
-int LineDef_MiddleMaterialCoords(const LineDef* lineDef, int side,
+int LineDef_MiddleMaterialCoords(LineDef* lineDef, int side,
     coord_t* bottomLeft, coord_t* bottomRight, coord_t* topLeft, coord_t* topRight, float* texOffY,
-    boolean lowerUnpeg, boolean clipTop, boolean clipBottom);
+    boolean lowerUnpeg, boolean clipBottom, boolean clipTop);
 
 /**
  * Get a property value, selected by DMU_* name.
