@@ -1331,7 +1331,7 @@ void R_SetupMap(int mode, int flags)
         // Update everything again. Its possible that after loading we
         // now have more HOMs to fix, etc..
         GameMap_InitSkyFix(theMap);
-        R_MapInitSurfaces(false);
+        R_MapInitSurfaces(true);
         GameMap_InitPolyobjs(theMap);
         DD_ResetTimer();
         return;
@@ -1785,8 +1785,8 @@ boolean R_UpdateBspLeaf(BspLeaf* bspLeaf, boolean forceUpdate)
 
 boolean R_UpdateSector(Sector* sec, boolean forceUpdate)
 {
-    uint                i;
-    boolean             changed = false, planeChanged = false;
+    boolean changed = false, planeChanged = false;
+    uint i;
 
     // Check if there are any lightlevel or color changes.
     if(forceUpdate ||
@@ -1800,7 +1800,6 @@ boolean R_UpdateSector(Sector* sec, boolean forceUpdate)
         memcpy(sec->oldRGB, sec->rgb, sizeof(sec->oldRGB));
 
         LG_SectorChanged(sec);
-
         changed = true;
     }
     else
@@ -1817,12 +1816,11 @@ boolean R_UpdateSector(Sector* sec, boolean forceUpdate)
         }
     }
 
-    if(planeChanged)
+    if(forceUpdate || planeChanged)
     {
         Sector_UpdateBaseOrigin(sec);
         R_UpdateLinedefsOfSector(sec);
         S_CalcSectorReverb(sec);
-
         changed = true;
     }
 
