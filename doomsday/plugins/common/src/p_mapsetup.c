@@ -1055,7 +1055,8 @@ patchid_t P_FindMapTitlePatch(uint episode, uint map)
     if(!(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX)))
         map = (episode * 9) + map;
 #  endif
-    return pMapNames[map];
+    if(map < pMapNamesSize)
+        return pMapNames[map];
 #endif
     return 0;
 }

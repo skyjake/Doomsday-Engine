@@ -1,33 +1,25 @@
-/**\file hu_stuff.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1993-1996 by id Software, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * Heads-up displays, font handling, text drawing routines.
+ * @file hu_stuff.c
+ * Miscellaneous routines for heads-up displays and UI.
+ *
+ * @authors Copyright &copy; 2003-2012 Jaakko Ker�nen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 1993-1996 by id Software, Inc.
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <stdlib.h>
 #include <ctype.h>
@@ -36,15 +28,7 @@
 #include <string.h>
 #include <assert.h>
 
-#if __JDOOM__
-#  include "jdoom.h"
-#elif __JDOOM64__
-#  include "jdoom64.h"
-#elif __JHERETIC__
-#  include "jheretic.h"
-#elif __JHEXEN__
-#  include "jhexen.h"
-#endif
+#include "common.h"
 
 #include "hu_chat.h"
 #include "hu_log.h"
@@ -56,10 +40,6 @@
 #include "am_map.h"
 #include "fi_lib.h"
 #include "r_common.h"
-
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
 
 typedef struct {
     boolean         active;
@@ -92,21 +72,12 @@ typedef struct fogeffectdata_s {
     boolean         scrollDir;
 } fogeffectdata_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
 fontid_t fonts[NUM_GAME_FONTS];
 
 #if __JDOOM__ || __JDOOM64__
 // Name graphics of each map.
-patchid_t* pMapNames = NULL;
+patchid_t* pMapNames;
+uint pMapNamesSize;
 #endif
 
 #if __JDOOM__ || __JDOOM64__
@@ -164,14 +135,10 @@ const char shiftXForm[] = {
 
 patchid_t borderPatches[8];
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static scoreboardstate_t scoreStates[MAXPLAYERS];
 static fogeffectdata_t fogEffectData;
 
 static patchid_t m_pause; // Paused graphic.
-
-// CODE -------------------------------------------------------------------
 
 /**
  * Loads the font patches and inits various strings
@@ -182,7 +149,7 @@ void Hu_LoadData(void)
 #if __JDOOM__ || __JDOOM64__
     char name[9];
 #endif
-    int i;
+    uint i;
 
     // Intialize the background fog effect.
     fogEffectData.texture = 0;
@@ -228,38 +195,39 @@ void Hu_LoadData(void)
     // Load the map name patches.
 # if __JDOOM64__
     {
-        int NUMCMAPS = 32;
-        pMapNames = Z_Malloc(sizeof(patchid_t) * NUMCMAPS, PU_GAMESTATIC, 0);
-        for(i = 0; i < NUMCMAPS; ++i)
+        pMapNamesSize = 32;
+        pMapNames = Z_Malloc(sizeof(patchid_t) * pMapNamesSize, PU_GAMESTATIC, 0);
+        for(i = 0; i < pMapNamesSize; ++i)
         {
-            sprintf(name, "WILV%2.2d", i);
+            sprintf(name, "WILV%2.2u", i);
             pMapNames[i] = R_DeclarePatch(name);
         }
     }
 # else
     if(gameModeBits & GM_ANY_DOOM2)
     {
-        int NUMCMAPS = 32;
-        pMapNames = Z_Malloc(sizeof(patchid_t) * NUMCMAPS, PU_GAMESTATIC, 0);
-        for(i = 0; i < NUMCMAPS; ++i)
+        pMapNamesSize = 32;
+        pMapNames = Z_Malloc(sizeof(patchid_t) * pMapNamesSize, PU_GAMESTATIC, 0);
+        for(i = 0; i < pMapNamesSize; ++i)
         {
-            sprintf(name, "CWILV%2.2d", i);
+            sprintf(name, "CWILV%2.2u", i);
             pMapNames[i] = R_DeclarePatch(name);
         }
     }
     else
     {
-        int numEpisodes = (gameMode == doom_shareware? 1 : gameMode == doom_ultimate? 4 : 3);
-        int j;
+        uint numEpisodes = (gameMode == doom_shareware? 1 : gameMode == doom_ultimate? 4 : 3);
+        uint j;
 
         // Don't waste space - patches are loaded back to back
         // ie no space in the array is left for E1M10
-        pMapNames = Z_Malloc(sizeof(patchid_t) * (9*4), PU_GAMESTATIC, 0);
+        pMapNamesSize = 9*4;
+        pMapNames = Z_Malloc(sizeof(patchid_t) * pMapNamesSize, PU_GAMESTATIC, 0);
         for(i = 0; i < numEpisodes; ++i)
         {
             for(j = 0; j < 9; ++j) // Number of maps per episode.
             {
-                sprintf(name, "WILV%2.2d", (i * 10) + j);
+                sprintf(name, "WILV%2.2u", (i * 10) + j);
                 pMapNames[(i* 9) + j] = R_DeclarePatch(name);
             }
         }
@@ -283,8 +251,8 @@ void Hu_LoadData(void)
 #if __JDOOM__ || __JDOOM64__
     // Quit messages.
     endmsg[0] = GET_TXT(TXT_QUITMSG);
-    { int i;
     for(i = 1; i <= NUM_QUITMESSAGES; ++i)
+    {
         endmsg[i] = GET_TXT(TXT_QUITMESSAGE1 + i - 1);
     }
 #endif
@@ -1440,7 +1408,8 @@ void Hu_DrawMapTitle(const Point2Raw* offset)
     const char* lname, *lauthor;
     float y = 0, alpha = 1;
 #if __JDOOM__ || __JDOOM64__
-    int mapnum;
+    patchid_t patchId;
+    uint mapNum;
 #endif
 
     if(actualMapTime < 35)
@@ -1474,13 +1443,14 @@ void Hu_DrawMapTitle(const Point2Raw* offset)
     // Compose the mapnumber used to check the map name patches array.
 # if __JDOOM__
     if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
-        mapnum = gameMap;
+        mapNum = gameMap;
     else
-        mapnum = (gameEpisode * 9) + gameMap;
+        mapNum = (gameEpisode * 9) + gameMap;
 # else // __JDOOM64__
-    mapnum = gameMap;
+    mapNum = gameMap;
 # endif
-    WI_DrawPatchXY3(pMapNames[mapnum], Hu_ChoosePatchReplacement2(PRM_ALLOW_TEXT, pMapNames[mapnum], lname), 0, 0, ALIGN_TOP, 0, DTF_ONLY_SHADOW);
+    patchId = (mapNum < pMapNamesSize? pMapNames[mapNum] : 0);
+    WI_DrawPatchXY3(patchId, Hu_ChoosePatchReplacement2(PRM_ALLOW_TEXT, patchId, lname), 0, 0, ALIGN_TOP, 0, DTF_ONLY_SHADOW);
 
     y += 14;
 #elif __JHERETIC__ || __JHEXEN__
