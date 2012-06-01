@@ -62,12 +62,13 @@ struct Updater::Instance
 {
     Updater* self;
     QNetworkAccessManager* network;
+    DownloadDialog* download;
 
     VersionInfo latestVersion;
     QString latestPackageUri;
     QString latestLogUri;
 
-    Instance(Updater* up) : self(up)
+    Instance(Updater* up) : self(up), network(0), download(0)
     {
         network = new QNetworkAccessManager(self);
     }
@@ -121,10 +122,21 @@ struct Updater::Instance
         if(dlg.exec())
         {
             LOG_MSG("Download and install.");
-            DownloadDialog* downDlg = new DownloadDialog(latestPackageUri);
-            downDlg->show();
-            // The dialog will delete itself.
+            download = new DownloadDialog(latestPackageUri);
+            QObject::connect(download, SIGNAL(finished(int)), self, SLOT(downloadCompleted(int)));
+            download->show();
         }
+    }
+
+    /**
+     * Start the installation process using the provided distribution package.
+     * The engine is shut down gracefully (game is always autosaved first).
+     *
+     * @param distribPackagePath  File path of the distribution package.
+     */
+    void startInstall(de::String distribPackagePath)
+    {
+
     }
 };
 
@@ -144,6 +156,18 @@ Updater::~Updater()
 void Updater::gotReply(QNetworkReply* reply)
 {
     d->handleReply(reply);
+}
+
+void Updater::downloadCompleted(int result)
+{
+    if(result == DownloadDialog::Accepted)
+    {
+        d->startInstall(d->download->downloadedFilePath());
+    }
+
+    // The download dialgo can be dismissed now.
+    d->download->deleteLater();
+    d->download = 0;
 }
 
 void Updater_Init(void)
