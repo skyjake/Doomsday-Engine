@@ -258,25 +258,33 @@ void CommandLine::makeAbsolutePath(duint pos)
     if(!isOption(pos) && !QDir::isAbsolutePath(arg->c_str()) &&
        !String::fromStdString(*arg).startsWith("}"))
     {
-        // The path expansion logic here should match the native shell's behavior.
-        QDir oldDir = QDir::current();
-        QDir::setCurrent(d->initialDir.path());
+        QDir dir(arg->c_str()); // note: strips trailing slash
 
-        QDir dir(arg->c_str());
+        /// @todo The path expansion logic here should match the native shell's behavior.
 #ifdef UNIX
         if(dir.path().startsWith("~/"))
         {
             dir.setPath(QDir::home().filePath(dir.path().mid(2)));
         }
+        else
 #endif
-        *arg = dir.absolutePath().toStdString();
+        {
+            dir.setPath(d->initialDir.filePath(dir.path()));
+        }
+
+        // Update the argument string.
+        *arg = dir.path().toStdString();
+
+        QFileInfo info(dir.path());
+        if(info.isDir())
+        {
+            // Append a slash so libdeng1 will treat it as a directory.
+            arg->push_back('/');
+        }
 
         d->pointers[pos] = arg->c_str();
 
         LOG_DEBUG("Argument %i converted to absolute path: \"%s\"") << pos << d->pointers[pos];
-
-        // Restore previous current directory.
-        QDir::setCurrent(oldDir.path());
     }
 }
 
