@@ -30,14 +30,18 @@ struct VersionInfo
         parseVersionString(version);
     }
 
+    QString base() const
+    {
+        return QString("%1.%2.%3").arg(major).arg(minor).arg(revision);
+    }
+
     QString asText() const
     {
         if(patch > 0)
         {
-            return QString("%1.%2.%3-%4 Build %5")
-                    .arg(major).arg(minor).arg(revision).arg(patch).arg(build);
+            return base() + QString("-%1 Build %2").arg(patch).arg(build);
         }
-        return QString("%1.%2.%3 Build %4").arg(major).arg(minor).arg(revision).arg(build);
+        return base() + QString(" Build %1").arg(build);
     }
 
     void parseVersionString(const de::String& version)

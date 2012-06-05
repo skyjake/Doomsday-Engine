@@ -37,6 +37,7 @@ struct DownloadDialog::Instance
         bar->setRange(0, 100);
 
         QDialogButtonBox* bbox = new QDialogButtonBox;
+        /// @todo If game in progress, use "Autosave and Install"
         install = bbox->addButton(tr("Install"), QDialogButtonBox::AcceptRole);
         install->setEnabled(false);
         QPushButton* cancel = bbox->addButton(QDialogButtonBox::Cancel);

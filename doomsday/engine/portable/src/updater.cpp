@@ -23,11 +23,13 @@
 #include "updater.h"
 #include "dd_version.h"
 #include "dd_types.h"
+#include "nativeui.h"
 #include "json.h"
 #include "updater/downloaddialog.h"
 #include "updater/updateavailabledialog.h"
 #include "updater/updatersettings.h"
 #include "updater/versioninfo.h"
+#include <de/App>
 #include <de/Time>
 #include <de/Log>
 #include <QStringList>
@@ -142,6 +144,7 @@ struct Updater::Instance
      */
     void startInstall(de::String distribPackagePath)
     {
+#ifdef MACOSX
         // Generate a script to:
         // 1. Open the distrib package.
         // 2. Check that there is a "Doomsday Engine.app" inside.
@@ -150,9 +153,21 @@ struct Updater::Instance
         // 5. Close the distrib package.
         // 6. Open the new "Doomsday Engine.app".
 
-        de::String package = "Macintosh HD:Users:jaakko:Downloads:doomsday_1.9.9_build511_64bit.dmg";
-        de::String appPath = "Macintosh HD:Applications";
-        de::String volName = "Doomsday Engine 1.9.9";
+        // This assumes the Doomsday executable is inside the Snowberry bundle.
+        de::String execPath = QDir::cleanPath(QDir(DENG2_APP->executablePath().fileNamePath())
+                                              .filePath("../../../.."));
+        LOG_MSG(execPath);
+        if(!execPath.fileName().endsWith(".app"))
+        {
+            Sys_MessageBox2(MBT_ERROR, "Updating", "Automatic update failed.",
+                            ("Expected an application bundle, but found <b>" +
+                             execPath.fileName() + "</b> instead.").toUtf8(), 0);
+            return;
+        }
+
+        de::String appPath = execPath.fileNamePath();
+        de::String appName = "Doomsday Engine.app";
+        de::String volName = "Doomsday Engine " + latestVersion.base();
 
         QString scriptPath = QDir(QDesktopServices::storageLocation(QDesktopServices::TempLocation))
                              .filePath(INSTALL_SCRIPT_NAME);
@@ -161,25 +176,30 @@ struct Updater::Instance
         {
             QTextStream out(&file);
             out << "tell application \"Finder\"\n"
-                << "  open document file \"" << package << "\"\n"
+                << "  set oldAppFile to POSIX file \"" << execPath << "\"\n"
+                << "  set dmgFile to POSIX file \"" << distribPackagePath << "\"\n"
+                << "  set destFolder to POSIX file \"" << appPath << "\"\n"
+                << "  open document file dmgFile\n"
                 << "  -- Wait for it to get mounted\n"
                 << "  repeat until name of every disk contains \"" << volName << "\"\n"
                 << "    delay 1\n"
                 << "  end repeat\n"
                 << "  -- Move the old app to the trash\n"
-                << "  delete \"" << appPath << ":Doomsday Engine.app\"\n"
+                << "  try\n"
+                << "    delete oldAppFile\n"
+                << "  end try\n"
                 << "  -- Copy the new one\n"
-                << "  duplicate \"" << volName << ":Doomsday Engine.app\" to folder \"" << appPath << "\"\n"
+                << "  duplicate \"" << volName << ":" << appName << "\" to folder (destFolder as string)\n"
                 << "  -- Eject the disk\n"
                 << "  eject \"" << volName << "\"\n"
                 << "  -- Open the new app\n"
-                << "  open \"" << appPath << ":Doomsday Engine.app\"\n"
+                << "  open (destFolder as string) & \":" << appName << "\"\n"
                 << "end tell\n";
             file.close();
         }
 
         // Register a shutdown action to execute the script and quit.
-
+#endif
     }
 };
 

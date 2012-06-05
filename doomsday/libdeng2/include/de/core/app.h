@@ -24,6 +24,11 @@
 #include "../CommandLine"
 #include <QApplication>
 
+/**
+ * Macro for conveniently accessing the de::App singleton instance.
+ */
+#define DENG2_APP   (static_cast<de::App*>(qApp))
+
 namespace de
 {
     /**
@@ -44,11 +49,19 @@ namespace de
          */
         CommandLine& commandLine();
 
+        /**
+         * Returns the absolute path of the application executable.
+         */
+        de::String executablePath() const;
+
     signals:
         void uncaughtException(QString message);
 
     private:
         CommandLine _cmdLine;
+
+        /// Path of the application executable.
+        de::String _appPath;
     };
 }
 
