@@ -35,9 +35,15 @@
 #include <QDesktopServices>
 #include <QNetworkAccessManager>
 #include <QSettings>
+#include <QTextStream>
+#include <QDir>
 #include <QDebug>
 
 static Updater* updater = 0;
+
+#ifdef MACOSX
+#  define INSTALL_SCRIPT_NAME "deng-upgrade.scpt"
+#endif
 
 /// @todo The platform ID should come from the Builder.
 #if defined(WIN32)
@@ -136,6 +142,43 @@ struct Updater::Instance
      */
     void startInstall(de::String distribPackagePath)
     {
+        // Generate a script to:
+        // 1. Open the distrib package.
+        // 2. Check that there is a "Doomsday Engine.app" inside.
+        // 3. Move current app bundle to the Trash.
+        // 4. Copy the on-disk app bundle to the old app's place.
+        // 5. Close the distrib package.
+        // 6. Open the new "Doomsday Engine.app".
+
+        de::String package = "Macintosh HD:Users:jaakko:Downloads:doomsday_1.9.9_build511_64bit.dmg";
+        de::String appPath = "Macintosh HD:Applications";
+        de::String volName = "Doomsday Engine 1.9.9";
+
+        QString scriptPath = QDir(QDesktopServices::storageLocation(QDesktopServices::TempLocation))
+                             .filePath(INSTALL_SCRIPT_NAME);
+        QFile file(scriptPath);
+        if(file.open(QFile::WriteOnly | QFile::Truncate))
+        {
+            QTextStream out(&file);
+            out << "tell application \"Finder\"\n"
+                << "  open document file \"" << package << "\"\n"
+                << "  -- Wait for it to get mounted\n"
+                << "  repeat until name of every disk contains \"" << volName << "\"\n"
+                << "    delay 1\n"
+                << "  end repeat\n"
+                << "  -- Move the old app to the trash\n"
+                << "  delete \"" << appPath << ":Doomsday Engine.app\"\n"
+                << "  -- Copy the new one\n"
+                << "  duplicate \"" << volName << ":Doomsday Engine.app\" to folder \"" << appPath << "\"\n"
+                << "  -- Eject the disk\n"
+                << "  eject \"" << volName << "\"\n"
+                << "  -- Open the new app\n"
+                << "  open \"" << appPath << ":Doomsday Engine.app\"\n"
+                << "end tell\n";
+            file.close();
+        }
+
+        // Register a shutdown action to execute the script and quit.
 
     }
 };
