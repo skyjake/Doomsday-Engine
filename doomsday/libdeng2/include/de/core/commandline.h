@@ -45,6 +45,8 @@ namespace de
         DENG2_ERROR(ExecuteError)
         
     public:
+        CommandLine();
+
         /**
          * Constructs a CommandLine out of the provided strings. It is assumed
          * that @a argc and @a args are the ones passed from the system to the main() 
@@ -189,9 +191,9 @@ namespace de
          * specifies the file name of the executable. Returns immediately
          * after the process has been started.
          *
-         * @param envs  Environment variables passed to the new process.
+         * @return @c true if successful, otherwise @c false.
          */
-        void execute(char** envs) const;
+        bool execute() const;
         
     private:
         struct Instance;

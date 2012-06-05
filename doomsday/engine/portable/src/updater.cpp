@@ -20,11 +20,13 @@
  * 02110-1301 USA</small>
  */
 
-#include "updater.h"
+#include <stdlib.h>
+#include "sys_system.h"
 #include "dd_version.h"
 #include "dd_types.h"
 #include "nativeui.h"
 #include "json.h"
+#include "updater.h"
 #include "updater/downloaddialog.h"
 #include "updater/updateavailabledialog.h"
 #include "updater/updatersettings.h"
@@ -65,6 +67,18 @@ static Updater* updater = 0;
 #    define PLATFORM_ID     "linux-x86"
 #  endif
 #endif
+
+static de::CommandLine* installerCommand;
+
+/**
+ * Callback for atexit(). Create the installerCommand before calling this.
+ */
+static void startInstallerCallback(void)
+{
+    installerCommand->execute();
+    delete installerCommand;
+    installerCommand = 0;
+}
 
 struct Updater::Instance
 {
@@ -159,10 +173,14 @@ struct Updater::Instance
         LOG_MSG(execPath);
         if(!execPath.fileName().endsWith(".app"))
         {
+#ifdef _DEBUG
+            execPath = "/Applications/Doomsday Engine.app";
+#else
             Sys_MessageBox2(MBT_ERROR, "Updating", "Automatic update failed.",
                             ("Expected an application bundle, but found <b>" +
                              execPath.fileName() + "</b> instead.").toUtf8(), 0);
             return;
+#endif
         }
 
         de::String appPath = execPath.fileNamePath();
@@ -199,6 +217,11 @@ struct Updater::Instance
         }
 
         // Register a shutdown action to execute the script and quit.
+        installerCommand = new de::CommandLine;
+        installerCommand->append("osascript");
+        installerCommand->append(scriptPath);
+        atexit(startInstallerCallback);
+        Sys_Quit();
 #endif
     }
 };
