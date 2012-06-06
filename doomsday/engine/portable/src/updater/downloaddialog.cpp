@@ -34,6 +34,7 @@ struct DownloadDialog::Instance
         self->setLayout(mainLayout);
 
         bar = new QProgressBar;
+        bar->setTextVisible(false);
         bar->setRange(0, 100);
 
         QDialogButtonBox* bbox = new QDialogButtonBox;
