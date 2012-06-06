@@ -43,11 +43,17 @@ public:
 public slots:
     void gotReply(QNetworkReply*);
     void downloadCompleted(int result);
+    void checkNow();
 
 private:
     struct Instance;
     Instance* d;
 };
+
+/**
+ * @return Returns the singleton Updater instance.
+ */
+Updater* Updater_Instance();
 
 #endif // __cplusplus
 
@@ -66,6 +72,12 @@ void Updater_Init(void);
  * Shuts down the automatic updater. Must be called at engine shutdown.
  */
 void Updater_Shutdown(void);
+
+/**
+ * Tells the updater to check for updates now. This is called when a manual
+ * check is requested.
+ */
+void Updater_CheckNow(void);
 
 #ifdef __cplusplus
 } // extern "C"

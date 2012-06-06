@@ -85,6 +85,7 @@ struct Updater::Instance
     Updater* self;
     QNetworkAccessManager* network;
     DownloadDialog* download;
+    bool alwaysShowNotification;
 
     VersionInfo latestVersion;
     QString latestPackageUri;
@@ -97,6 +98,8 @@ struct Updater::Instance
 
     ~Instance()
     {
+        // Delete the ongoing download.
+        if(download) delete download;
     }
 
     QString composeCheckUri()
@@ -111,9 +114,52 @@ struct Updater::Instance
         return uri;
     }
 
-    void queryLatestVersion()
+    bool shouldCheckForUpdate() const
+    {
+        UpdaterSettings st;
+        float dayInterval;
+
+        switch(st.frequency())
+        {
+        case UpdaterSettings::Daily:
+            dayInterval = 1;
+            break;
+
+        case UpdaterSettings::Biweekly:
+            dayInterval = 5;
+            break;
+
+        case UpdaterSettings::Weekly:
+            dayInterval = 7;
+            break;
+
+        default:
+            dayInterval = 30;
+            break;
+        }
+
+        de::Time now;
+
+        // Check always when the day interval has passed.
+        if(st.lastCheckTime().deltaTo(now).asDays() >= dayInterval)
+            return true;
+
+        if(st.frequency() == UpdaterSettings::Biweekly)
+        {
+            // Check on Tuesday and Saturday, as the builds are usually on
+            // Monday and Friday.
+            int weekday = now.asDateTime().date().dayOfWeek();
+            if(weekday == 2 || weekday == 6) return true;
+        }
+
+        // No need to check right now.
+        return false;
+    }
+
+    void queryLatestVersion(bool notifyAlways)
     {
         UpdaterSettings().setLastCheckTime(de::Time());
+        alwaysShowNotification = notifyAlways;
         network->get(QNetworkRequest(composeCheckUri()));
     }
 
@@ -130,23 +176,27 @@ struct Updater::Instance
 
         latestVersion = VersionInfo(map["version"].toString(), map["build_uniqueid"].toInt());
 
+        VersionInfo currentVersion;
+
         LOG_VERBOSE("Received latest version information:\n"
                     " - version: %s (running %s)\n"
                     " - package: %s\n"
                     " - change log: %s")
                 << latestVersion.asText()
-                << VersionInfo().asText()
+                << currentVersion.asText()
                 << latestPackageUri << latestLogUri;
 
         // Is this newer than what we're running?
-        // TODO: Silent check flag.
-        UpdateAvailableDialog dlg(latestVersion, latestLogUri);
-        if(dlg.exec())
+        if(latestVersion > currentVersion || alwaysShowNotification)
         {
-            LOG_MSG("Download and install.");
-            download = new DownloadDialog(latestPackageUri);
-            QObject::connect(download, SIGNAL(finished(int)), self, SLOT(downloadCompleted(int)));
-            download->show();
+            UpdateAvailableDialog dlg(latestVersion, latestLogUri);
+            if(dlg.exec())
+            {
+                LOG_MSG("Download and install.");
+                download = new DownloadDialog(latestPackageUri);
+                QObject::connect(download, SIGNAL(finished(int)), self, SLOT(downloadCompleted(int)));
+                download->show();
+            }
         }
     }
 
@@ -239,7 +289,11 @@ Updater::Updater(QObject *parent) : QObject(parent)
     d = new Instance(this);
     connect(d->network, SIGNAL(finished(QNetworkReply*)), this, SLOT(gotReply(QNetworkReply*)));
 
-    d->queryLatestVersion();
+    // Do a silent auto-update check when starting.
+    if(d->shouldCheckForUpdate())
+    {
+        d->queryLatestVersion(false);
+    }
 }
 
 Updater::~Updater()
@@ -269,6 +323,14 @@ void Updater::downloadCompleted(int result)
     d->download = 0;
 }
 
+void Updater::checkNow()
+{
+    // Not if there is an ongoing download.
+    if(d->download) return;
+
+    d->queryLatestVersion(true /* manual check: show notification always */);
+}
+
 void Updater_Init(void)
 {
     updater = new Updater;
@@ -277,4 +339,14 @@ void Updater_Init(void)
 void Updater_Shutdown(void)
 {
     delete updater;
+}
+
+Updater* Updater_Instance(void)
+{
+    return updater;
+}
+
+void Updater_CheckNow(void)
+{
+    updater->checkNow();
 }

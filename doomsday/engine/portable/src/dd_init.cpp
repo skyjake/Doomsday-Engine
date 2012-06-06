@@ -58,6 +58,8 @@
 
 #include <QApplication>
 #include <QSettings>
+#include <QAction>
+#include <QMenuBar>
 #include <QNetworkProxyFactory>
 #include <QDebug>
 #include <stdlib.h>
@@ -95,9 +97,6 @@ LegacyCore* de2LegacyCore;
 
 static void continueInitWithEventLoopRunning(void)
 {
-    // Check for updates automatically.
-    Updater_Init();
-
     // This function only needs to be called once, so clear the callback.
     LegacyCore_SetLoopFunc(de2LegacyCore, 0);
 
@@ -154,9 +153,23 @@ int main(int argc, char** argv)
     de2LegacyCore = LegacyCore_New(&dengApp);
     LegacyCore_SetTerminateFunc(de2LegacyCore, handleLegacyCoreTerminate);
 
+    QMenuBar* menuBar = 0;
     if(useGUI)
     {
         DisplayMode_Init();
+
+        // Check for updates automatically.
+        Updater_Init();
+
+#ifdef MACOSX
+        // Set up the application-wide menu.
+        menuBar = new QMenuBar;
+
+        QMenu* gameMenu = menuBar->addMenu("&Game");
+
+        QAction* checkForUpdates = gameMenu->addAction("Check For &Updates...", Updater_Instance(), SLOT(checkNow()));
+        checkForUpdates->setMenuRole(QAction::ApplicationSpecificRole);
+#endif
     }
 
     // Initialize.
@@ -180,6 +193,8 @@ int main(int argc, char** argv)
     Sys_Shutdown();
     DD_Shutdown();
     LegacyCore_Delete(de2LegacyCore);
+
+    delete menuBar;
 
     return result;
 }
