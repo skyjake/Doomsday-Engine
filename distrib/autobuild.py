@@ -316,17 +316,17 @@ def generate_apidoc():
     print "\nDoom plugin docs..."
     os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/plugins/jdoom'))
     system_command('doxygen jdoom.doxy >/dev/null 2>../../doxyissues-doom.txt')
-    system_command('wc -l ../..doxyissues-doom.txt')
+    system_command('wc -l ../../doxyissues-doom.txt')
 
     print "\nHeretic plugin docs..."
     os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/plugins/jheretic'))
     system_command('doxygen jheretic.doxy >/dev/null 2>../../doxyissues-heretic.txt')
-    system_command('wc -l ../..doxyissues-heretic.txt')
+    system_command('wc -l ../../doxyissues-heretic.txt')
 
     print "\nHexen plugin docs..."
     os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/plugins/jhexen'))
     system_command('doxygen jhexen.doxy >/dev/null 2>../../doxyissues-hexen.txt')
-    system_command('wc -l ../..doxyissues-hexen.txt')
+    system_command('wc -l ../../doxyissues-hexen.txt')
 
 
 def generate_readme():
