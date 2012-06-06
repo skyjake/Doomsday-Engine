@@ -259,7 +259,7 @@ class FrontController
     {
         require_once(DIR_CLASSES.'/feed.class.php');
 
-        $feed = new Feed('http://code.iki.fi/builds/events.rss', 3);
+        $feed = new Feed('http://dl.dropbox.com/u/11948701/builds/events.rss', 3);
         $feed->setTitle('Build News', 'projectnews-label');
         $feed->setGenerateElementHTMLCallback('FrontController::generateFeedItemHtml',
                                               array('titleTemplate'=>'{title} complete',
@@ -561,8 +561,8 @@ class FrontController
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-    <link rel="icon" href="http://code.iki.fi/dengine.net/images/favicon.png" type="image/png" />
-    <link rel="shortcut icon" href="http://code.iki.fi/dengine.net/images/favicon.png" type="image/png" />
+    <link rel="icon" href="http://dl.dropbox.com/u/11948701/dengine.net/images/favicon.png" type="image/png" />
+    <link rel="shortcut icon" href="http://dl.dropbox.com/u/11948701/dengine.net/images/favicon.png" type="image/png" />
     <link rel="alternate" type="application/rss+xml" title="Doomsday Engine RSS News Feed" href="http://dengine.net/forums/rss.php?mode=news" />
     <meta http-equiv="expires" content="0" />
     <meta name="resource-type" content="DOCUMENT" />

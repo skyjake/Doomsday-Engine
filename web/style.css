@@ -75,12 +75,12 @@ a[class ="link-definition"]:after {
 
 a[class ="link-external"] {
     padding-right: 18px;
-    background: transparent url(http://code.iki.fi/dengine.net/images/Icon_External_Link.png) no-repeat center right;
+    background: transparent url(dl.dropbox.com/u/11948701/dengine.net/images/Icon_External_Link.png) no-repeat center right;
 }
 
 a[class ="link-rss"] {
     padding-left: 13px;
-    background: transparent url(http://code.iki.fi/dengine.net/images/rssicon.png) no-repeat center left;
+    background: transparent url(http://dl.dropbox.com/u/11948701/dengine.net/images/rssicon.png) no-repeat center left;
     background-size: 13px 12px;
 }
 
@@ -357,7 +357,7 @@ ol.jumplist li {
 }
 
 #menu li.logo {
-    background: url(http://code.iki.fi/dengine.net/images/denginelogo.png) no-repeat;
+    background: url(http://dl.dropbox.com/u/11948701/dengine.net/images/denginelogo.png) no-repeat;
     background-position: 0 22px;
     padding: 75px 0;
     margin: 0;
@@ -544,7 +544,7 @@ p.legal a {
     font-family: Verdana, Arial, Helvetica, sans-serif;
     font-weight: lighter;
     min-height: 139px;
-    background: url(http://code.iki.fi/dengine.net/images/shadow.png) no-repeat;
+    background: url(http://dl.dropbox.com/u/11948701/dengine.net/images/shadow.png) no-repeat;
 }
 
 #projectnews ul {
@@ -605,7 +605,7 @@ p.legal a {
     font-size: xx-small;
     font-family: Verdana, Arial, Helvetica, sans-serif;
     min-height: 139px;
-    background: url(http://code.iki.fi/dengine.net/images/shadow2.png) no-repeat;
+    background: url(http://dl.dropbox.com/u/11948701/dengine.net/images/shadow2.png) no-repeat;
     background-position: top right;
 }
 
@@ -1330,23 +1330,23 @@ ul.games_list li a.game_badge span {
 }
 
 .game_badge_doom {
-    background: url(http://code.iki.fi/dengine.net/images/doom_badge.png) no-repeat;
+    background: url(http://dl.dropbox.com/u/11948701/dengine.net/images/doom_badge.png) no-repeat;
 }
 
 .game_badge_heretic {
-    background: url(http://code.iki.fi/dengine.net/images/heretic_badge.png) no-repeat;
+    background: url(http://dl.dropbox.com/u/11948701/dengine.net/images/heretic_badge.png) no-repeat;
 }
 
 .game_badge_hexen {
-    background: url(http://code.iki.fi/dengine.net/images/hexen_badge.png) no-repeat;
+    background: url(http://dl.dropbox.com/u/11948701/dengine.net/images/hexen_badge.png) no-repeat;
 }
 
 .game_badge_hacx {
-    background: url(http://code.iki.fi/dengine.net/images/hacx_badge.png) no-repeat;
+    background: url(http://dl.dropbox.com/u/11948701/dengine.net/images/hacx_badge.png) no-repeat;
 }
 
 .game_badge_chex {
-    background: url(http://code.iki.fi/dengine.net/images/chex_badge.png) no-repeat;
+    background: url(http://dl.dropbox.com/u/11948701/dengine.net/images/chex_badge.png) no-repeat;
 }
 
 /*---------------- Platform Pages -----------------*/
@@ -1373,7 +1373,7 @@ ul.games_list li a.game_badge span {
 
 .package_badge {
     background-color: transparent;
-    background: url(http://code.iki.fi/dengine.net/images/download_badge.png) no-repeat;
+    background: url(http://dl.dropbox.com/u/11948701/dengine.net/images/download_badge.png) no-repeat;
     height: 60px;
     min-width: 320px;
     padding-top: 1.5em;

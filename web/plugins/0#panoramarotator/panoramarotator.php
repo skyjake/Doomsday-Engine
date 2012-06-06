@@ -59,7 +59,7 @@ class PanoramaRotatorPlugin extends Plugin implements RequestInterpreter
                         $paths = array();
 
                     //$paths[] = $imageDir.$file;
-                    $paths[] = 'http://code.iki.fi/dengine.net/images/panoramas/'.$file;
+                    $paths[] = 'http://dl.dropbox.com/u/11948701/dengine.net/images/panoramas/'.$file;
                     $i++;
                 }
             }
