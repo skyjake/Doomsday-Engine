@@ -301,26 +301,32 @@ def generate_apidoc():
     git_pull()
     os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/engine'))    
     
-    print "\n-=-=- PUBLIC API DOCS -=-=-"
-    system_command('doxygen api.doxy >/dev/null')
+    print "\nPublic API docs..."
+    system_command('doxygen api.doxy >/dev/null 2>../doxyissues-api.txt')
+    system_command('wc -l ../doxyissues-api.txt')
 
-    print "\n-=-=- INTERNAL WIN32 DOCS -=-=-"
-    system_command('doxygen engine-win32.doxy >/dev/null')
+    print "\nInternal Win32 docs..."
+    system_command('doxygen engine-win32.doxy >/dev/null 2>../doxyissues-win32.txt')
+    system_command('wc -l ../doxyissues-win32.txt')
 
-    print "\n-=-=- INTERNAL MAC/UNIX DOCS -=-=-"
-    system_command('doxygen engine-mac.doxy >/dev/null')        
+    print "\nInternal Mac/Unix docs..."
+    system_command('doxygen engine-mac.doxy >/dev/null 2>../doxyissues-mac.txt')        
+    system_command('wc -l ../doxyissues-mac.txt')
 
-    print "\n-=-=- JDOOM DOCS -=-=-"
+    print "\nDoom plugin docs..."
     os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/plugins/jdoom'))
-    system_command('doxygen jdoom.doxy >/dev/null')
+    system_command('doxygen jdoom.doxy >/dev/null 2>../../doxyissues-doom.txt')
+    system_command('wc -l ../..doxyissues-doom.txt')
 
-    print "\n-=-=- JHERETIC DOCS -=-=-"
+    print "\nHeretic plugin docs..."
     os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/plugins/jheretic'))
-    system_command('doxygen jheretic.doxy >/dev/null')
+    system_command('doxygen jheretic.doxy >/dev/null 2>../../doxyissues-heretic.txt')
+    system_command('wc -l ../..doxyissues-heretic.txt')
 
-    print "\n-=-=- JHEXEN DOCS -=-=-"
+    print "\nHexen plugin docs..."
     os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/plugins/jhexen'))
-    system_command('doxygen jhexen.doxy >/dev/null')
+    system_command('doxygen jhexen.doxy >/dev/null 2>../../doxyissues-hexen.txt')
+    system_command('wc -l ../..doxyissues-hexen.txt')
 
 
 def generate_readme():
