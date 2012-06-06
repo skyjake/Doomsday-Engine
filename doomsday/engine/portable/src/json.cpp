@@ -255,6 +255,7 @@ public:
         }
         // Rewind one char (the loop was broken when a non-digit was read).
         pos--;
+        skipWhite();
         str.append(0);
         double value = QString(str.constData()).toDouble();
         if(hasDecimal)
