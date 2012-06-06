@@ -13,3 +13,4 @@ server-runtime
 client-runtime
 Zcustom.conf
 .web.manifest
+doxyissues-*.txt
