@@ -33,7 +33,7 @@ struct UpdateAvailableDialog::Instance
                                   "stable" : "unstable");
         bool askUpgrade = false;
 
-        if(! (latestVersion > currentVersion))
+        if(latestVersion > currentVersion)
         {
             askUpgrade = true;
             info->setText(("<span style=\"font-weight:bold; font-size:%1pt;\">" +
@@ -62,13 +62,13 @@ struct UpdateAvailableDialog::Instance
 
         if(!askUpgrade)
         {
-            QPushButton* ok = bbox->addButton(tr("&Close"), QDialogButtonBox::AcceptRole);
+            QPushButton* ok = bbox->addButton(tr("&Close"), QDialogButtonBox::RejectRole);
             QObject::connect(ok, SIGNAL(clicked()), self, SLOT(reject()));
         }
         else
         {
-            QPushButton* yes = bbox->addButton(tr("&Download and install"), QDialogButtonBox::YesRole);
-            QPushButton* no = bbox->addButton(tr("&Not now"), QDialogButtonBox::NoRole);
+            QPushButton* yes = bbox->addButton(tr("&Download Update"), QDialogButtonBox::YesRole);
+            QPushButton* no = bbox->addButton(tr("&Not Now"), QDialogButtonBox::NoRole);
             QObject::connect(yes, SIGNAL(clicked()), self, SLOT(accept()));
             QObject::connect(no, SIGNAL(clicked()), self, SLOT(reject()));
         }
@@ -79,7 +79,7 @@ struct UpdateAvailableDialog::Instance
 
         if(askUpgrade)
         {
-            QPushButton* whatsNew = bbox->addButton(tr("&What's new?"), QDialogButtonBox::HelpRole);
+            QPushButton* whatsNew = bbox->addButton(tr("&What's New?"), QDialogButtonBox::HelpRole);
             QObject::connect(whatsNew, SIGNAL(clicked()), self, SLOT(showWhatsNew()));
             whatsNew->setAutoDefault(false);
         }
