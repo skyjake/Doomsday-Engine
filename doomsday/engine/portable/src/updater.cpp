@@ -73,7 +73,7 @@ static de::CommandLine* installerCommand;
 /**
  * Callback for atexit(). Create the installerCommand before calling this.
  */
-static void startInstallerCallback(void)
+static void runInstallerCommand(void)
 {
     installerCommand->execute();
     delete installerCommand;
@@ -151,13 +151,13 @@ struct Updater::Instance
     }
 
     /**
-     * Start the installation process using the provided distribution package.
-     * The engine is shut down gracefully (game is always autosaved first).
+     * Starts the installation process using the provided distribution package.
+     * The engine is first shut down gracefully (game has already been autosaved).
      *
      * @param distribPackagePath  File path of the distribution package.
      */
     void startInstall(de::String distribPackagePath)
-    {
+    {        
 #ifdef MACOSX
         // Generate a script to:
         // 1. Open the distrib package.
@@ -220,7 +220,15 @@ struct Updater::Instance
         installerCommand = new de::CommandLine;
         installerCommand->append("osascript");
         installerCommand->append(scriptPath);
-        atexit(startInstallerCallback);
+        atexit(runInstallerCommand);
+        Sys_Quit();
+#endif
+
+#ifdef WIN32
+        // The distribution package is an installer executable, we can just run it.
+        installerCommand = new de::CommandLine;
+        installerCommand->append(distribPackagePath);
+        atexit(runInstallerCommand);
         Sys_Quit();
 #endif
     }
@@ -248,6 +256,11 @@ void Updater::downloadCompleted(int result)
 {
     if(result == DownloadDialog::Accepted)
     {
+        // Autosave the game.
+
+        // Check the MD5 hash of the downloaded file.
+
+        // Everything is ready to begin the installation!
         d->startInstall(d->download->downloadedFilePath());
     }
 
