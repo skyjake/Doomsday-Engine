@@ -78,6 +78,12 @@ public:
          */
         duint64 asMilliSeconds() const;
 
+        ddouble asMinutes() const;
+
+        ddouble asHours() const;
+
+        ddouble asDays() const;
+
         static Delta fromMilliSeconds(duint64 milliseconds) {
             return Delta(milliseconds/1000.0);
         }

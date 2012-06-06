@@ -47,6 +47,21 @@ duint64 Time::Delta::asMilliSeconds() const
     return duint64(_seconds * 1000);
 }
 
+ddouble Time::Delta::asMinutes() const
+{
+    return _seconds / 60;
+}
+
+ddouble Time::Delta::asHours() const
+{
+    return _seconds / 3600;
+}
+
+ddouble Time::Delta::asDays() const
+{
+    return asHours() / 24;
+}
+
 void Time::Delta::sleep() const
 {
     if(_seconds < 60)
