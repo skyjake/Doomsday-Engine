@@ -58,6 +58,7 @@
 #include "de_filesys.h"
 
 #include "displaymode.h"
+#include "updater/downloaddialog.h"
 #include "cbuffer.h"
 #include "font.h"
 
@@ -2220,6 +2221,12 @@ D_CMD(Version)
 
 D_CMD(Quit)
 {
+    if(Updater_IsDownloadInProgress())
+    {
+        Con_Message("Cannot quit while downloading update.\n");
+        return false;
+    }
+
     if(argv[0][4] == '!' || isDedicated || !DD_GameLoaded() ||
        gx.TryShutdown == 0)
     {

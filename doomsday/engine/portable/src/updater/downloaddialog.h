@@ -1,6 +1,8 @@
 #ifndef DOWNLOADDIALOG_H
 #define DOWNLOADDIALOG_H
 
+#ifdef __cplusplus
+
 #include <QDialog>
 #include <de/String>
 
@@ -38,5 +40,18 @@ private:
     struct Instance;
     Instance* d;
 };
+
+#endif // __cplusplus
+
+// C API
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+int Updater_IsDownloadInProgress(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // DOWNLOADDIALOG_H

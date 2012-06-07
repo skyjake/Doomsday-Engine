@@ -32,7 +32,12 @@ de::Time UpdaterSettings::lastCheckTime() const
 
 bool UpdaterSettings::onlyCheckManually() const
 {
-    return QSettings().value(STK_ONLY_MANUAL, false).toBool();
+    bool byDefault = false;
+#if defined(UNIX) && !defined(MACOSX)
+    // On Unix platforms don't do automatic checks by default.
+    byDefault = true;
+#endif
+    return QSettings().value(STK_ONLY_MANUAL, byDefault).toBool();
 }
 
 bool UpdaterSettings::deleteAfterUpdate() const

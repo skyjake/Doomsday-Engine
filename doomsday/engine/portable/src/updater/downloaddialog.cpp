@@ -13,6 +13,8 @@
 #include <de/Log>
 #include <QDebug>
 
+static bool downloadInProgress;
+
 struct DownloadDialog::Instance
 {
     DownloadDialog* self;
@@ -73,6 +75,9 @@ struct DownloadDialog::Instance
         QObject::connect(reply, SIGNAL(downloadProgress(qint64,qint64)), self, SLOT(progress(qint64,qint64)));
 
         LOG_INFO("Downloading %s, saving as: %s") << uri.toString() << savedFilePath;
+
+        // Global state flag.
+        downloadInProgress = true;
     }
 
     void setProgressText(de::String text)
@@ -89,6 +94,7 @@ DownloadDialog::DownloadDialog(de::String downloadUri, QWidget *parent)
 
 DownloadDialog::~DownloadDialog()
 {
+    downloadInProgress = false;
     delete d;
 }
 
@@ -102,6 +108,7 @@ void DownloadDialog::finished(QNetworkReply* reply)
 {
     LOG_AS("Download");
 
+    downloadInProgress = false;
     reply->deleteLater();
     d->reply = 0;
 
@@ -167,6 +174,8 @@ void DownloadDialog::finished(QNetworkReply* reply)
         emit downloadFailed(d->uri.toString());
     }
 
+    raise();
+    activateWindow();
     d->fileReady = true;
     d->setProgressText(tr("Ready to install"));
     d->install->setEnabled(true);
@@ -207,4 +216,9 @@ void DownloadDialog::replyMetaDataChanged()
     {
         LOG_DEBUG("Receiving content of type '%s'.") << contentType;
     }
+}
+
+int Updater_IsDownloadInProgress(void)
+{
+    return downloadInProgress;
 }

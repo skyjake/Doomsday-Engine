@@ -20,7 +20,7 @@ struct UpdateAvailableDialog::Instance
     VersionInfo latestVersion;
     de::String changeLog;
 
-    Instance(UpdateAvailableDialog* d) : self(d)
+    Instance(UpdateAvailableDialog* d, const VersionInfo& latest) : self(d), latestVersion(latest)
     {
         QVBoxLayout* mainLayout = new QVBoxLayout(self);
         self->setLayout(mainLayout);
@@ -32,6 +32,7 @@ struct UpdateAvailableDialog::Instance
         de::String channel = (UpdaterSettings().channel() == UpdaterSettings::Stable?
                                   "stable" : "unstable");
         bool askUpgrade = false;
+        bool askDowngrade = false;
 
         if(latestVersion > currentVersion)
         {
@@ -44,11 +45,21 @@ struct UpdateAvailableDialog::Instance
                           .arg(latestVersion.asText())
                           .arg(currentVersion.asText()));
         }
-        else
+        else if(!channel.compareWithoutCase(DOOMSDAY_RELEASE_TYPE)) // same release type
         {
             info->setText(("<span style=\"font-weight:bold; font-size:%1pt;\">" +
                            tr("You are up to date.") + "</span><p>" +
                            tr("The installed %2 is the latest available %3 build."))
+                          .arg(bigFontSize)
+                          .arg(currentVersion.asText())
+                          .arg(channel));
+        }
+        else if(latestVersion < currentVersion)
+        {
+            askDowngrade = true;
+            info->setText(("<span style=\"font-weight:bold; font-size:%1pt;\">" +
+                           tr("You are up to date.") + "</span><p>" +
+                           tr("The installed %2 is newer than the latest available %3 build."))
                           .arg(bigFontSize)
                           .arg(currentVersion.asText())
                           .arg(channel));
@@ -60,17 +71,24 @@ struct UpdateAvailableDialog::Instance
 
         QDialogButtonBox* bbox = new QDialogButtonBox;
 
-        if(!askUpgrade)
+        if(askDowngrade)
         {
-            QPushButton* ok = bbox->addButton(tr("&Close"), QDialogButtonBox::RejectRole);
-            QObject::connect(ok, SIGNAL(clicked()), self, SLOT(reject()));
+            QPushButton* yes = bbox->addButton(tr("Downgrade to &Older"), QDialogButtonBox::YesRole);
+            QPushButton* no = bbox->addButton(tr("&Close"), QDialogButtonBox::RejectRole);
+            QObject::connect(yes, SIGNAL(clicked()), self, SLOT(accept()));
+            QObject::connect(no, SIGNAL(clicked()), self, SLOT(reject()));
         }
-        else
+        else if(askUpgrade)
         {
-            QPushButton* yes = bbox->addButton(tr("&Download Update"), QDialogButtonBox::YesRole);
+            QPushButton* yes = bbox->addButton(tr("&Upgrade"), QDialogButtonBox::YesRole);
             QPushButton* no = bbox->addButton(tr("&Not Now"), QDialogButtonBox::NoRole);
             QObject::connect(yes, SIGNAL(clicked()), self, SLOT(accept()));
             QObject::connect(no, SIGNAL(clicked()), self, SLOT(reject()));
+        }
+        else
+        {
+            QPushButton* ok = bbox->addButton(tr("&Close"), QDialogButtonBox::RejectRole);
+            QObject::connect(ok, SIGNAL(clicked()), self, SLOT(reject()));
         }
 
         QPushButton* cfg = bbox->addButton(tr("&Settings..."), QDialogButtonBox::ActionRole);
@@ -94,8 +112,7 @@ UpdateAvailableDialog::UpdateAvailableDialog(const VersionInfo& latestVersion, d
                                              QWidget *parent)
     : QDialog(parent)
 {
-    d = new Instance(this);
-    d->latestVersion = latestVersion;
+    d = new Instance(this, latestVersion);
     d->changeLog = changeLogUri;
 }
 
@@ -121,5 +138,6 @@ void UpdateAvailableDialog::editSettings()
     if(st.exec())
     {
         d->neverCheck->setChecked(UpdaterSettings().onlyCheckManually());
+        close();
     }
 }

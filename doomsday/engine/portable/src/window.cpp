@@ -39,6 +39,7 @@
 #include "consolewindow.h"
 #include "canvaswindow.h"
 #include "displaymode.h"
+#include "updater/downloaddialog.h"
 #include "sys_system.h"
 #include "dd_main.h"
 #include "con_main.h"
@@ -385,6 +386,11 @@ struct ddwindow_s
             case DDWA_FULLSCREEN:
                 if(IS_NONZERO(attribs[i]) != IS_NONZERO(checkFlag(DDWF_FULLSCREEN)))
                 {
+                    if(IS_NONZERO(attribs[i]) && Updater_IsDownloadInProgress())
+                    {
+                        // Can't go to fullscreen when downloading.
+                        return false;
+                    }
                     setFlag(DDWF_FULLSCREEN, attribs[i]);
                     changed = true;
                 }
