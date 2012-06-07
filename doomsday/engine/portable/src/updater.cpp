@@ -25,6 +25,7 @@
 #include "dd_version.h"
 #include "dd_types.h"
 #include "nativeui.h"
+#include "window.h"
 #include "json.h"
 #include "updater.h"
 #include "updater/downloaddialog.h"
@@ -32,6 +33,7 @@
 #include "updater/updatersettings.h"
 #include "updater/updatersettingsdialog.h"
 #include "updater/versioninfo.h"
+#include <de/c_wrapper.h>
 #include <de/App>
 #include <de/Time>
 #include <de/Log>
@@ -43,6 +45,8 @@
 #include <QTextStream>
 #include <QDir>
 #include <QDebug>
+
+extern LegacyCore* de2LegacyCore;
 
 static Updater* updater = 0;
 
@@ -79,6 +83,26 @@ static void runInstallerCommand(void)
     installerCommand->execute();
     delete installerCommand;
     installerCommand = 0;
+}
+
+static bool switchToWindowedMode()
+{
+    bool wasFull = Window_IsFullscreen(Window_Main());
+    if(wasFull)
+    {
+        int attribs[] = { DDWA_FULLSCREEN, false, DDWA_END };
+        Window_ChangeAttributes(Window_Main(), attribs);
+    }
+    return wasFull;
+}
+
+static void switchBackToFullscreen(bool wasFull)
+{
+    if(wasFull)
+    {
+        int attribs[] = { DDWA_FULLSCREEN, true, DDWA_END };
+        Window_ChangeAttributes(Window_Main(), attribs);
+    }
 }
 
 struct Updater::Instance
@@ -190,13 +214,20 @@ struct Updater::Instance
         // Is this newer than what we're running?
         if(latestVersion > currentVersion || alwaysShowNotification)
         {
-            UpdateAvailableDialog dlg(latestVersion, latestLogUri);
+            // Automatically switch to windowed mode for convenience.
+            bool wasFull = switchToWindowedMode();
+
+            UpdateAvailableDialog dlg(latestVersion, latestLogUri, Window_Widget(Window_Main()));
             if(dlg.exec())
             {
                 LOG_MSG("Download and install.");
                 download = new DownloadDialog(latestPackageUri);
                 QObject::connect(download, SIGNAL(finished(int)), self, SLOT(downloadCompleted(int)));
                 download->show();
+            }
+            else
+            {
+                switchBackToFullscreen(wasFull);
             }
         }
     }
@@ -349,11 +380,31 @@ Updater* Updater_Instance(void)
 
 void Updater_CheckNow(void)
 {
+    if(novideo || !updater) return;
+
     updater->checkNow();
+}
+
+static void showSettingsDialog(void)
+{
+    UpdaterSettingsDialog* st = new UpdaterSettingsDialog(Window_Widget(Window_Main()));
+    QObject::connect(st, SIGNAL(finished(int)), st, SLOT(deleteLater()));
+    st->open();
 }
 
 void Updater_ShowSettings(void)
 {
-    UpdaterSettingsDialog st;
-    st.exec();
+    if(novideo || !updater) return;
+
+    // Automatically switch to windowed mode for convenience.
+    int delay = 0;
+    if(switchToWindowedMode())
+    {
+        // The mode switch takes a while and may include deferred window resizing,
+        // so let's wait a while before opening the dialog to make sure everything
+        // has settled.
+        /// @todo Improve the mode changes so that this is not needed.
+        delay = 500;
+    }
+    LegacyCore_Timer(de2LegacyCore, delay, showSettingsDialog);
 }

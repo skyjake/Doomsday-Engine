@@ -127,8 +127,19 @@ static Game* nullGame; // Special "null-game" object.
 
 D_CMD(CheckForUpdates)
 {
-    Updater_ShowSettings();
+    Con_Message("Checking for available updates...\n");
+    Updater_CheckNow();
     return true;
+}
+
+D_CMD(Update)
+{
+    if(!stricmp(argv[1], "config"))
+    {
+        Updater_ShowSettings();
+        return true;
+    }
+    return false;
 }
 
 /**
@@ -137,6 +148,7 @@ D_CMD(CheckForUpdates)
 void DD_Register(void)
 {
     C_CMD("update", "", CheckForUpdates);
+    C_CMD("update", "s", Update);
 
     DD_RegisterLoop();
     DD_RegisterInput();

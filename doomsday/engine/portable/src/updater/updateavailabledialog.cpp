@@ -117,7 +117,7 @@ void UpdateAvailableDialog::showWhatsNew()
 
 void UpdateAvailableDialog::editSettings()
 {
-    UpdaterSettingsDialog st;
+    UpdaterSettingsDialog st(this);
     if(st.exec())
     {
         d->neverCheck->setChecked(UpdaterSettings().onlyCheckManually());
