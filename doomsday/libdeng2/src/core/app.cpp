@@ -26,7 +26,9 @@ using namespace de;
 App::App(int& argc, char** argv, bool useGUI)
     : QApplication(argc, argv, useGUI),
       _cmdLine(argc, argv)
-{}
+{
+    _appPath = applicationFilePath();
+}
 
 bool App::notify(QObject* receiver, QEvent* event)
 {
@@ -48,4 +50,9 @@ bool App::notify(QObject* receiver, QEvent* event)
 CommandLine& App::commandLine()
 {
     return _cmdLine;
+}
+
+String App::executablePath() const
+{
+    return _appPath;
 }

@@ -242,6 +242,7 @@ DENG_HEADERS += \
     portable/include/hedge.h \
     portable/include/image.h \
     portable/include/joystick.h \
+    portable/include/json.h \
     portable/include/kdtree.h \
     portable/include/keycode.h \
     portable/include/library.h \
@@ -358,10 +359,16 @@ DENG_HEADERS += \
     portable/include/ui_main.h \
     portable/include/ui_mpi.h \
     portable/include/ui_panel.h \
+    portable/include/updater.h \
     portable/include/vertex.h \
     portable/include/wadfile.h \
     portable/include/window.h \
-    portable/include/zipfile.h
+    portable/include/zipfile.h \
+    portable/src/updater/downloaddialog.h \
+    portable/src/updater/updateavailabledialog.h \
+    portable/src/updater/updatersettings.h \
+    portable/src/updater/updatersettingsdialog.h \
+    portable/src/updater/versioninfo.h
 
 INCLUDEPATH += \
     $$DENG_INCLUDE_DIR \
@@ -519,6 +526,7 @@ SOURCES += \
     portable/src/gridmap.c \
     portable/src/hedge.cpp \
     portable/src/image.c \
+    portable/src/json.cpp \
     portable/src/kdtree.c \
     portable/src/keycode.cpp \
     portable/src/library.c \
@@ -636,6 +644,11 @@ SOURCES += \
     portable/src/ui_main.c \
     portable/src/ui_mpi.c \
     portable/src/ui_panel.c \
+    portable/src/updater.cpp \
+    portable/src/updater/downloaddialog.cpp \
+    portable/src/updater/updateavailabledialog.cpp \
+    portable/src/updater/updatersettings.cpp \
+    portable/src/updater/updatersettingsdialog.cpp \
     portable/src/uri.c \
     portable/src/vertex.cpp \
     portable/src/wadfile.c \
@@ -715,7 +728,7 @@ macx {
     doPostLink("cp -fRp $$OUT_PWD/../libdeng2/libdeng2*dylib $$FW_DIR")
 
     # Fix the dynamic linker paths so they point to ../Frameworks/ inside the bundle.
-    fixInstallName("Doomsday.app/Contents/MacOS/Doomsday", "libdeng2.2.dylib", "..")
+    fixInstallName(Doomsday.app/Contents/MacOS/Doomsday, libdeng2.2.dylib, ..)
 
     # Clean up previous deployment.
     doPostLink("rm -rf Doomsday.app/Contents/PlugIns/")

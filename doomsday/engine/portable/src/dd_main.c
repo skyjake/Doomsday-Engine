@@ -58,6 +58,7 @@
 #include "m_misc.h"
 #include "texture.h"
 #include "displaymode.h"
+#include "updater.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -124,11 +125,31 @@ static Game* nullGame; // Special "null-game" object.
 
 // CODE --------------------------------------------------------------------
 
+D_CMD(CheckForUpdates)
+{
+    Con_Message("Checking for available updates...\n");
+    Updater_CheckNow();
+    return true;
+}
+
+D_CMD(Update)
+{
+    if(!stricmp(argv[1], "config"))
+    {
+        Updater_ShowSettings();
+        return true;
+    }
+    return false;
+}
+
 /**
  * Register the engine commands and variables.
  */
 void DD_Register(void)
 {
+    C_CMD("update", "", CheckForUpdates);
+    C_CMD("update", "s", Update);
+
     DD_RegisterLoop();
     DD_RegisterInput();
     F_Register();

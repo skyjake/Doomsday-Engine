@@ -109,6 +109,11 @@ struct CommandLine::Instance
     }
 };
 
+CommandLine::CommandLine()
+{
+    d = new Instance;
+}
+
 CommandLine::CommandLine(int argc, char** v)
 {
     d = new Instance;
@@ -410,48 +415,19 @@ bool CommandLine::matches(const String& full, const String& fullOrAlias) const
     return false;
 }
 
-void CommandLine::execute(char** /*envs*/) const
+bool CommandLine::execute() const
 {
-    qDebug("CommandLine: should call QProcess to execute!\n");
+    if(count() < 1) return false;
 
-    /*
-#ifdef Q_OS_UNIX
-    // Fork and execute new file.
-    pid_t result = fork();
-    if(!result)
-    {
-        // Here we go in the child process.
-        printf("Child loads %s...\n", _pointers[0]);
-        execve(_pointers[0], const_cast<char* const*>(argv()), const_cast<char* const*>(envs));
-    }
-    else
-    {
-        if(result < 0)
-        {
-            perror("CommandLine::execute");
-        }
-    }
-#endif    
+    QStringList args;
+    for(int i = 1; i < count(); ++i) args << at(i);
 
-#ifdef WIN32
-    String quotedCmdLine;
-    FOR_EACH(i, _arguments, Arguments::const_iterator)
+    if(!QProcess::startDetached(at(0), args))
     {
-        quotedCmdLine += "\"" + *i + "\" ";
+        qWarning() << "CommandLine: Failed to start" << at(0);
+        return false;
     }
 
-    STARTUPINFO startupInfo;
-    PROCESS_INFORMATION processInfo;
-    ZeroMemory(&startupInfo, sizeof(startupInfo));
-    startupInfo.cb = sizeof(startupInfo);
-    ZeroMemory(&processInfo, sizeof(processInfo));
-
-    if(!CreateProcess(_pointers[0], const_cast<char*>(quotedCmdLine.c_str()), 
-        NULL, NULL, FALSE, 0, NULL, NULL, &startupInfo, &processInfo))
-    {
-        /// @throw ExecuteError The system call to start a new process failed.
-        throw ExecuteError("CommandLine::execute", "Could not create process");
-    }
-#endif
-    */
+    qDebug() << "CommandLine: Started detached process" << at(0);
+    return true;
 }

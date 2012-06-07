@@ -47,6 +47,21 @@ duint64 Time::Delta::asMilliSeconds() const
     return duint64(_seconds * 1000);
 }
 
+ddouble Time::Delta::asMinutes() const
+{
+    return _seconds / 60;
+}
+
+ddouble Time::Delta::asHours() const
+{
+    return _seconds / 3600;
+}
+
+ddouble Time::Delta::asDays() const
+{
+    return asHours() / 24;
+}
+
 void Time::Delta::sleep() const
 {
     if(_seconds < 60)
@@ -104,6 +119,11 @@ Time::Delta Time::operator - (const Time& earlierTime) const
 #endif
 }
 
+dint Time::asBuildNumber() const
+{
+    return QDate(2011, 1, 1).daysTo(_time.date()) + 1;
+}
+
 String Time::asText(Format format) const
 {
     if(format == ISOFormat)
@@ -112,7 +132,7 @@ String Time::asText(Format format) const
     }
     else
     {
-        return QString("#%1 ").arg(QDate(2011, 1, 1).daysTo(_time.date()) + 1, -4) +
+        return QString("#%1 ").arg(asBuildNumber(), -4) +
                 _time.toString("hh:mm:ss.zzz");
     }
 }

@@ -58,6 +58,9 @@
 
 #include <QApplication>
 #include <QSettings>
+#include <QAction>
+#include <QMenuBar>
+#include <QNetworkProxyFactory>
 #include <QDebug>
 #include <stdlib.h>
 #include <de/App>
@@ -69,6 +72,7 @@
 #include "window.h"
 #include "garbage.h"
 #include "displaymode.h"
+#include "updater.h"
 #include "sys_system.h"
 
 extern "C" {
@@ -136,6 +140,9 @@ int main(int argc, char** argv)
     // Override the system locale (affects number/time formatting).
     QLocale::setDefault(QLocale("en_US.UTF-8"));
 
+    // Use the host system's proxy configuration.
+    QNetworkProxyFactory::setUseSystemConfiguration(true);
+
     // Metadata.
     QApplication::setOrganizationDomain("dengine.net");
     QApplication::setOrganizationName("Deng Team");
@@ -146,9 +153,22 @@ int main(int argc, char** argv)
     de2LegacyCore = LegacyCore_New(&dengApp);
     LegacyCore_SetTerminateFunc(de2LegacyCore, handleLegacyCoreTerminate);
 
+    QMenuBar* menuBar = 0;
     if(useGUI)
     {
         DisplayMode_Init();
+
+        // Check for updates automatically.
+        Updater_Init();
+
+#ifdef MACOSX
+        // Set up the application-wide menu.
+        menuBar = new QMenuBar;
+        QMenu* gameMenu = menuBar->addMenu("&Game");
+        QAction* checkForUpdates = gameMenu->addAction(
+                    "Check For &Updates...", Updater_Instance(), SLOT(checkNow()));
+        checkForUpdates->setMenuRole(QAction::ApplicationSpecificRole);
+#endif
     }
 
     // Initialize.
@@ -172,6 +192,8 @@ int main(int argc, char** argv)
     Sys_Shutdown();
     DD_Shutdown();
     LegacyCore_Delete(de2LegacyCore);
+
+    delete menuBar;
 
     return result;
 }
