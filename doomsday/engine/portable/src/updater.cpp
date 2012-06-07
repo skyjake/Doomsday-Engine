@@ -301,16 +301,22 @@ struct Updater::Instance
         installerCommand->append("osascript");
         installerCommand->append(scriptPath);
         atexit(runInstallerCommand);
-        Sys_Quit();
-#endif
 
-#ifdef WIN32
+#elif defined(WIN32)
         // The distribution package is an installer executable, we can just run it.
         installerCommand = new de::CommandLine;
         installerCommand->append(distribPackagePath);
         atexit(runInstallerCommand);
-        Sys_Quit();
+
+#else
+        // Open the package with the default handler.
+        installerCommand = new de::CommandLine;
+        installerCommand->append("xdg-open");
+        installerCommand->append(distribPackagePath);
+        atexit(runInstallerCommand);
 #endif
+
+        Sys_Quit();
     }
 };
 
