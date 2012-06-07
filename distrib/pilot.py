@@ -325,6 +325,10 @@ def doTask(task):
         msg("BUILD RELEASE")
         return autobuild('platform_release')
 
+    elif task == 'sign':
+        msg("SIGN PACKAGES")
+        return autobuild('sign')
+
     elif task == 'publish':
         msg("PUBLISH")
         systemCommand('deng_copy_build_to_sourceforge.sh')
@@ -387,6 +391,9 @@ def handleCompletedTasks():
             newTask('build', allClients=True)
         
         elif task == 'build':
+            newTask('sign', forClient='master')
+
+        elif task == 'sign':
             newTask('publish', forClient='master')
             newTask('apt_refresh', forClient='ubuntu')
             # After the build we can switch to the master again.

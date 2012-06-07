@@ -109,6 +109,7 @@ class Event:
         return self.name
         
     def number(self):
+        """Returns the event's build number as an integer."""
         return self.num
         
     def path(self):

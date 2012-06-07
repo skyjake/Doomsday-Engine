@@ -92,6 +92,16 @@ def todays_platform_release():
     git_checkout(builder.config.BRANCH)
 
 
+def sign_packages():
+    """Sign all packages in today's build."""
+    ev = builder.Event()
+    print "Signing today's build %i." % ev.number()    
+    for fn in os.listdir(ev.path()):
+        if fn.endswith('.exe') or fn.endswith('.dmg') or fn.endswith('.deb'):
+            # Make a signature for this.
+            os.system("gpg --output %s -ba %s" % (fn + '.gpg', fn))
+
+
 def find_previous_tag(toTag, version):
     builds = builder.events_by_time()
     #print [(e[1].number(), e[1].timestamp()) for e in builds]
@@ -417,6 +427,7 @@ commands = {
     'pull': pull_from_branch,
     'create': create_build_event,
     'platform_release': todays_platform_release,
+    'sign': sign_packages,
     'changes': update_changes,
     'debchanges': update_debian_changelog,
     'apt': rebuild_apt_repository,
