@@ -99,7 +99,7 @@ def sign_packages():
     for fn in os.listdir(ev.path()):
         if fn.endswith('.exe') or fn.endswith('.dmg') or fn.endswith('.deb'):
             # Make a signature for this.
-            os.system("gpg --output %s -ba %s" % (ev.file_path(fn) + '.gpg', ev.file_path(fn)))
+            os.system("gpg --output %s -ba %s" % (ev.file_path(fn) + '.sig', ev.file_path(fn)))
 
 
 def find_previous_tag(toTag, version):
