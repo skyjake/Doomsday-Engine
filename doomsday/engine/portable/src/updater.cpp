@@ -30,6 +30,7 @@
 #include "updater/downloaddialog.h"
 #include "updater/updateavailabledialog.h"
 #include "updater/updatersettings.h"
+#include "updater/updatersettingsdialog.h"
 #include "updater/versioninfo.h"
 #include <de/App>
 #include <de/Time>
@@ -117,8 +118,9 @@ struct Updater::Instance
     bool shouldCheckForUpdate() const
     {
         UpdaterSettings st;
-        float dayInterval;
+        if(st.onlyCheckManually()) return false;
 
+        float dayInterval = 30;
         switch(st.frequency())
         {
         case UpdaterSettings::Daily:
@@ -134,7 +136,6 @@ struct Updater::Instance
             break;
 
         default:
-            dayInterval = 30;
             break;
         }
 
@@ -349,4 +350,10 @@ Updater* Updater_Instance(void)
 void Updater_CheckNow(void)
 {
     updater->checkNow();
+}
+
+void Updater_ShowSettings(void)
+{
+    UpdaterSettingsDialog st;
+    st.exec();
 }

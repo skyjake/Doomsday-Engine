@@ -79,6 +79,11 @@ void Updater_Shutdown(void);
  */
 void Updater_CheckNow(void);
 
+/**
+ * Shows the Updater Settings dialog.
+ */
+void Updater_ShowSettings(void);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif
