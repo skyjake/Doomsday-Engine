@@ -33,8 +33,8 @@
 #include "updater/updatersettings.h"
 #include "updater/updatersettingsdialog.h"
 #include "updater/versioninfo.h"
-#include <de/c_wrapper.h>
 #include <de/App>
+#include <de/LegacyCore>
 #include <de/Time>
 #include <de/Log>
 #include <QStringList>
@@ -45,8 +45,6 @@
 #include <QTextStream>
 #include <QDir>
 #include <QDebug>
-
-extern LegacyCore* de2LegacyCore;
 
 static Updater* updater = 0;
 
@@ -406,5 +404,5 @@ void Updater_ShowSettings(void)
         /// @todo Improve the mode changes so that this is not needed.
         delay = 500;
     }
-    LegacyCore_Timer(de2LegacyCore, delay, showSettingsDialog);
+    de::LegacyCore::instance().timer(delay, showSettingsDialog);
 }

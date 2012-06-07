@@ -34,7 +34,7 @@ class LegacyNetwork;
  * via the deng2 C API and make sure it gets destroyed at shutdown. The C API
  * can be used to access functionality in LegacyCore.
  */
-class LegacyCore : public QObject
+class DENG2_PUBLIC LegacyCore : public QObject
 {
     Q_OBJECT
 
