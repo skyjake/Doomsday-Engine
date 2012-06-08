@@ -10,6 +10,7 @@
 #define STK_ONLY_MANUAL     "updater/onlyManually"
 #define STK_DELETE          "updater/delete"
 #define STK_DOWNLOAD_PATH   "updater/downloadPath"
+#define STK_DELETE_PATH     "updater/deleteAtStartup"
 
 UpdaterSettings::UpdaterSettings()
 {}
@@ -43,6 +44,18 @@ bool UpdaterSettings::onlyCheckManually() const
 bool UpdaterSettings::deleteAfterUpdate() const
 {
     return QSettings().value(STK_DELETE, true).toBool();
+}
+
+de::String UpdaterSettings::pathToDeleteAtStartup() const
+{
+    de::String p = de::String::fromNativePath(QSettings().value(STK_DELETE_PATH).toString());
+    de::String ext = p.fileNameExtension();
+    if(p.fileName().startsWith("doomsday") && (ext == ".exe" || ext == ".deb" || ext == ".dmg"))
+    {
+        return p;
+    }
+    // Doesn't look valid.
+    return "";
 }
 
 bool UpdaterSettings::isDefaultDownloadPath() const
@@ -98,6 +111,11 @@ void UpdaterSettings::setDeleteAfterUpdate(bool deleteAfter)
 void UpdaterSettings::useDefaultDownloadPath()
 {
     setDownloadPath(defaultDownloadPath());
+}
+
+void UpdaterSettings::setPathToDeleteAtStartup(de::String deletePath)
+{
+    QSettings().setValue(STK_DELETE_PATH, deletePath);
 }
 
 de::String UpdaterSettings::defaultDownloadPath()

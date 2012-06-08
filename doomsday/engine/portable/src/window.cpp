@@ -386,7 +386,7 @@ struct ddwindow_s
             case DDWA_FULLSCREEN:
                 if(IS_NONZERO(attribs[i]) != IS_NONZERO(checkFlag(DDWF_FULLSCREEN)))
                 {
-                    if(IS_NONZERO(attribs[i]) && Updater_IsDownloadInProgress())
+                    if(attribs[i] && Updater_IsDownloadInProgress())
                     {
                         // Can't go to fullscreen when downloading.
                         return false;

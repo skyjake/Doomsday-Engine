@@ -30,6 +30,7 @@ public:
     bool deleteAfterUpdate() const;
     bool isDefaultDownloadPath() const;
     de::String downloadPath() const;
+    de::String pathToDeleteAtStartup() const;
 
     void setFrequency(Frequency freq);
     void setChannel(Channel channel);
@@ -38,6 +39,7 @@ public:
     void setDeleteAfterUpdate(bool deleteAfter);
     void setDownloadPath(de::String downloadPath);
     void useDefaultDownloadPath();
+    void setPathToDeleteAtStartup(de::String deletePath);
 
     static de::String defaultDownloadPath();
 };

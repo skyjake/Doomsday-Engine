@@ -117,6 +117,23 @@ struct Updater::Instance
     Instance(Updater* up) : self(up), network(0), download(0)
     {
         network = new QNetworkAccessManager(self);
+
+        // Delete a package installed earlier?
+        UpdaterSettings st;
+        if(st.deleteAfterUpdate())
+        {
+            de::String p = st.pathToDeleteAtStartup();
+            if(!p.isEmpty())
+            {
+                QFile file(p);
+                if(file.exists())
+                {
+                    LOG_INFO("Deleting previously installed package: %s") << p;
+                    file.remove();
+                }
+            }
+        }
+        st.setPathToDeleteAtStartup("");
     }
 
     ~Instance()
@@ -315,6 +332,17 @@ struct Updater::Instance
         installerCommand->append(distribPackagePath);
         atexit(runInstallerCommand);
 #endif
+
+        // If requested, delete the downloaded package afterwards. Currently
+        // this occurs the next time when the engine is launched; on some
+        // platforms it could be incorporated into the reinstall procedure.
+        // (This will work better when there is no more separate frontend, as
+        // the engine is restarted after the install.)
+        UpdaterSettings st;
+        if(st.deleteAfterUpdate())
+        {
+            st.setPathToDeleteAtStartup(distribPackagePath);
+        }
 
         Sys_Quit();
     }

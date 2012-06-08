@@ -199,6 +199,13 @@ public:
      */
     static String fromLatin1(const IByteArray& byteArray);
 
+    /**
+     * Builds a String out of a native path. Path separators are converted to slashes.
+     * @param nativePath  Native path.
+     * @return String with a platform-independent path.
+     */
+    static String fromNativePath(const de::String& nativePath);
+
     static dint compareWithCase(const QChar* a, const QChar* b, dsize count);
 
     /**

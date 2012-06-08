@@ -501,3 +501,12 @@ String String::fromLatin1(const IByteArray& byteArray)
 {
     return QString::fromLatin1(reinterpret_cast<const char*>(Block(byteArray).data()));
 }
+
+String String::fromNativePath(const String& nativePath)
+{
+    String s = nativePath;
+#ifdef Q_OS_WIN32
+    s.replace("\\", "/");
+#endif
+    return s;
+}
