@@ -2,6 +2,14 @@
  * @file updater.cpp
  * Automatic updater that works with dengine.net. @ingroup base
  *
+ * When one of the updater dialogs are shown, the main window is automatically
+ * switched to windowed mode. This is because the dialogs would be hidden
+ * behind the main window or incorrectly located when the main window is in
+ * fullscreen mode. It is also possible that the screen resolution is too low
+ * to fit the shown dialogs. In the long term, the native dialogs should be
+ * replaced with the engine's own (scriptable) UI widgets (once they are
+ * available).
+ *
  * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2012 Daniel Swanson <danij@dengine.net>
  *
@@ -19,6 +27,21 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA</small>
  */
+
+#include <QStringList>
+#include <QDateTime>
+#include <QDesktopServices>
+#include <QNetworkAccessManager>
+#include <QSettings>
+#include <QTextStream>
+#include <QDir>
+#include <QDebug>
+
+#include "de_platform.h"
+
+#ifdef WIN32
+#  undef open
+#endif
 
 #include <stdlib.h>
 #include "sys_system.h"
@@ -38,14 +61,6 @@
 #include <de/LegacyCore>
 #include <de/Time>
 #include <de/Log>
-#include <QStringList>
-#include <QDateTime>
-#include <QDesktopServices>
-#include <QNetworkAccessManager>
-#include <QSettings>
-#include <QTextStream>
-#include <QDir>
-#include <QDebug>
 
 static Updater* updater = 0;
 
