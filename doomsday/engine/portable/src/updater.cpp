@@ -241,6 +241,12 @@ struct Updater::Instance
     {
         reply->deleteLater(); // make sure it gets deleted
 
+        if(reply->error() != QNetworkReply::NoError)
+        {
+            Con_Message("Network request failed: %s\n", reply->url().toString().toUtf8().constData());
+            return;
+        }
+
         QVariant result = parseJSON(QString::fromUtf8(reply->readAll()));
         if(!result.isValid()) return;
 
@@ -421,7 +427,7 @@ void Updater::downloadCompleted(int result)
     {
         // Autosave the game.
 
-        // Check the MD5 hash of the downloaded file.
+        // Check the signature of the downloaded file.
 
         // Everything is ready to begin the installation!
         d->startInstall(d->download->downloadedFilePath());
