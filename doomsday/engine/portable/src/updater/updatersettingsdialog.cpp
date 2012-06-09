@@ -22,6 +22,7 @@ struct UpdaterSettingsDialog::Instance
 
     Instance(UpdaterSettingsDialog* dlg) : self(dlg)
     {
+        self->setWindowFlags(self->windowFlags() & ~Qt::WindowContextHelpButtonHint);
         self->setWindowTitle(tr("Updater Settings"));
 
         QVBoxLayout* mainLayout = new QVBoxLayout;
