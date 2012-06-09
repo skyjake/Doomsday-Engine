@@ -132,6 +132,14 @@ D_CMD(CheckForUpdates)
     return true;
 }
 
+D_CMD(CheckForUpdatesAndNotify)
+{
+    /// @todo Combine into the same command with CheckForUpdates?
+    Con_Message("Checking for available updates...\n");
+    Updater_CheckNow(true);
+    return true;
+}
+
 D_CMD(ShowUpdateSettings)
 {
     Updater_ShowSettings();
@@ -144,6 +152,7 @@ D_CMD(ShowUpdateSettings)
 void DD_Register(void)
 {
     C_CMD("update", "", CheckForUpdates);
+    C_CMD("updateandnotify", "", CheckForUpdatesAndNotify);
     C_CMD("updatesettings", "", ShowUpdateSettings);
 
     DD_RegisterLoop();

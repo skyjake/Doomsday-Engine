@@ -11,6 +11,16 @@
 #include <de/Log>
 #include <QDebug>
 
+static QString defaultLocationName()
+{
+    QString name = QDesktopServices::displayName(QDesktopServices::TempLocation);
+    if(name.isEmpty())
+    {
+        name = "Temporary Files";
+    }
+    return name;
+}
+
 struct UpdaterSettingsDialog::Instance
 {
     UpdaterSettingsDialog* self;
@@ -47,7 +57,7 @@ struct UpdaterSettingsDialog::Instance
         form->addRow(tr("&Release type:"), channelList);
 
         pathList = new QComboBox;
-        pathList->addItem(QDesktopServices::displayName(QDesktopServices::TempLocation),
+        pathList->addItem(defaultLocationName(),
                           UpdaterSettings::defaultDownloadPath());
         pathList->addItem(tr("Select folder..."), "");
         form->addRow(tr("&Download location:"), pathList);
