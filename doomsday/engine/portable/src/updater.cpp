@@ -206,6 +206,10 @@ struct Updater::Instance
         {
             settingsDlg = new UpdaterSettingsDialog(Window_Widget(Window_Main()));
         }
+        else
+        {
+            settingsDlg->fetch();
+        }
         settingsDlg->open();
     }
 
