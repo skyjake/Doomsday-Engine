@@ -23,6 +23,8 @@
 #ifndef LIBDENG_UPDATER_H
 #define LIBDENG_UPDATER_H
 
+#include "dd_types.h"
+
 #ifdef __cplusplus
 
 #include <QObject>
@@ -43,7 +45,15 @@ public:
 public slots:
     void gotReply(QNetworkReply*);
     void downloadCompleted(int result);
-    void checkNow();
+    void showSettings();
+
+    /**
+     * Checks for available updates.
+     *
+     * @param notify  Show the update notification dialog even though
+     *                the current version is up to date.
+     */
+    void checkNow(bool notify = true);
 
 private:
     struct Instance;
@@ -76,8 +86,10 @@ void Updater_Shutdown(void);
 /**
  * Tells the updater to check for updates now. This is called when a manual
  * check is requested.
+ *
+ * @param notify  Show the notification dialog even when up to date.
  */
-void Updater_CheckNow(void);
+void Updater_CheckNow(boolean notify);
 
 /**
  * Shows the Updater Settings dialog.

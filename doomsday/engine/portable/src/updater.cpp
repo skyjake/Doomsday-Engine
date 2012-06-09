@@ -24,6 +24,7 @@
 #include "sys_system.h"
 #include "dd_version.h"
 #include "dd_types.h"
+#include "con_main.h"
 #include "nativeui.h"
 #include "window.h"
 #include "json.h"
@@ -109,12 +110,13 @@ struct Updater::Instance
     QNetworkAccessManager* network;
     DownloadDialog* download;
     bool alwaysShowNotification;
+    UpdaterSettingsDialog* settingsDlg;
 
     VersionInfo latestVersion;
     QString latestPackageUri;
     QString latestLogUri;
 
-    Instance(Updater* up) : self(up), network(0), download(0)
+    Instance(Updater* up) : self(up), network(0), download(0), settingsDlg(0)
     {
         network = new QNetworkAccessManager(self);
 
@@ -138,6 +140,8 @@ struct Updater::Instance
 
     ~Instance()
     {
+        if(settingsDlg) delete settingsDlg;
+
         // Delete the ongoing download.
         if(download) delete download;
     }
@@ -196,6 +200,15 @@ struct Updater::Instance
         return false;
     }
 
+    void showSettingsNonModal()
+    {
+        if(!settingsDlg)
+        {
+            settingsDlg = new UpdaterSettingsDialog(Window_Widget(Window_Main()));
+        }
+        settingsDlg->open();
+    }
+
     void queryLatestVersion(bool notifyAlways)
     {
         UpdaterSettings().setLastCheckTime(de::Time());
@@ -229,6 +242,8 @@ struct Updater::Instance
         // Is this newer than what we're running?
         if(latestVersion > currentVersion || alwaysShowNotification)
         {
+            Con_Message("Found an update: %s\n", latestVersion.asText().toUtf8().constData());
+
             // Automatically switch to windowed mode for convenience.
             bool wasFull = switchToWindowedMode();
 
@@ -244,6 +259,11 @@ struct Updater::Instance
             {
                 switchBackToFullscreen(wasFull);
             }
+        }
+        else
+        {
+            Con_Message("You are running the latest available %s release.\n",
+                        UpdaterSettings().channel() == UpdaterSettings::Stable? "stable" : "unstable");
         }
     }
 
@@ -387,12 +407,17 @@ void Updater::downloadCompleted(int result)
     d->download = 0;
 }
 
-void Updater::checkNow()
+void Updater::showSettings()
+{
+    d->showSettingsNonModal();
+}
+
+void Updater::checkNow(bool notify)
 {
     // Not if there is an ongoing download.
     if(d->download) return;
 
-    d->queryLatestVersion(true /* manual check: show notification always */);
+    d->queryLatestVersion(notify);
 }
 
 void Updater_Init(void)
@@ -410,18 +435,19 @@ Updater* Updater_Instance(void)
     return updater;
 }
 
-void Updater_CheckNow(void)
+void Updater_CheckNow(boolean notify)
 {
     if(novideo || !updater) return;
 
-    updater->checkNow();
+    updater->checkNow(notify);
 }
 
 static void showSettingsDialog(void)
 {
-    UpdaterSettingsDialog* st = new UpdaterSettingsDialog(Window_Widget(Window_Main()));
-    QObject::connect(st, SIGNAL(finished(int)), st, SLOT(deleteLater()));
-    st->open();
+    if(updater)
+    {
+        updater->showSettings();
+    }
 }
 
 void Updater_ShowSettings(void)
