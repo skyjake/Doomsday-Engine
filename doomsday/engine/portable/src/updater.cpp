@@ -2,7 +2,7 @@
  * @file updater.cpp
  * Automatic updater that works with dengine.net. @ingroup base
  *
- * When one of the updater dialogs are shown, the main window is automatically
+ * When one of the updater dialogs is shown, the main window is automatically
  * switched to windowed mode. This is because the dialogs would be hidden
  * behind the main window or incorrectly located when the main window is in
  * fullscreen mode. It is also possible that the screen resolution is too low
