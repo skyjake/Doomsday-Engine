@@ -42,9 +42,13 @@ public:
     explicit Updater(QObject* parent = 0);
     ~Updater();
 
+    void setBackToFullscreen(bool yes);
+
 public slots:
     void gotReply(QNetworkReply*);
     void downloadCompleted(int result);
+    void settingsDialogClosed(int result);
+
     void showSettings();
 
     /**

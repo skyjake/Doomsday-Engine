@@ -126,12 +126,13 @@ struct Updater::Instance
     DownloadDialog* download;
     bool alwaysShowNotification;
     UpdaterSettingsDialog* settingsDlg;
+    bool backToFullscreen;
 
     VersionInfo latestVersion;
     QString latestPackageUri;
     QString latestLogUri;
 
-    Instance(Updater* up) : self(up), network(0), download(0), settingsDlg(0)
+    Instance(Updater* up) : self(up), network(0), download(0), settingsDlg(0), backToFullscreen(false)
     {
         network = new QNetworkAccessManager(self);
 
@@ -220,6 +221,7 @@ struct Updater::Instance
         if(!settingsDlg)
         {
             settingsDlg = new UpdaterSettingsDialog(Window_Widget(Window_Main()));
+            QObject::connect(settingsDlg, SIGNAL(finished(int)), self, SLOT(settingsDialogClosed(int)));
         }
         else
         {
@@ -404,6 +406,11 @@ Updater::~Updater()
     delete d;
 }
 
+void Updater::setBackToFullscreen(bool yes)
+{
+    d->backToFullscreen = yes;
+}
+
 void Updater::gotReply(QNetworkReply* reply)
 {
     d->handleReply(reply);
@@ -424,6 +431,15 @@ void Updater::downloadCompleted(int result)
     // The download dialgo can be dismissed now.
     d->download->deleteLater();
     d->download = 0;
+}
+
+void Updater::settingsDialogClosed(int /*result*/)
+{
+    if(d->backToFullscreen)
+    {
+        d->backToFullscreen = false;
+        switchBackToFullscreen(true);
+    }
 }
 
 void Updater::showSettings()
@@ -477,6 +493,8 @@ void Updater_ShowSettings(void)
     int delay = 0;
     if(switchToWindowedMode())
     {
+        updater->setBackToFullscreen(true);
+
         // The mode switch takes a while and may include deferred window resizing,
         // so let's wait a while before opening the dialog to make sure everything
         // has settled.
