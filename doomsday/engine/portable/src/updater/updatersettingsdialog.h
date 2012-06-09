@@ -10,11 +10,14 @@ class UpdaterSettingsDialog : public QDialog
 public:
     explicit UpdaterSettingsDialog(QWidget *parent = 0);
     ~UpdaterSettingsDialog();
+
+    void fetch();
     
 signals:
     
 public slots:
     void accept();
+    void reject();
     void neverCheckToggled(bool);
     void pathActivated(int index);
     

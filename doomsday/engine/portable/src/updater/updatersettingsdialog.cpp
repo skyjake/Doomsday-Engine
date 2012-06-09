@@ -9,6 +9,7 @@
 #include <QDialogButtonBox>
 #include <QFileDialog>
 #include <de/Log>
+#include <QDebug>
 
 struct UpdaterSettingsDialog::Instance
 {
@@ -29,7 +30,7 @@ struct UpdaterSettingsDialog::Instance
         QFormLayout* form = new QFormLayout;
         mainLayout->addLayout(form);
 
-        neverCheck = new QCheckBox(tr("Never check for updates automatically"));
+        neverCheck = new QCheckBox(tr("&Never check for updates automatically"));
         form->addRow(neverCheck);
 
         freqList = new QComboBox;
@@ -37,20 +38,20 @@ struct UpdaterSettingsDialog::Instance
         freqList->addItem(tr("Biweekly"), UpdaterSettings::Biweekly);
         freqList->addItem(tr("Weekly"),   UpdaterSettings::Weekly);
         freqList->addItem(tr("Monthly"),  UpdaterSettings::Monthly);
-        form->addRow(tr("Check for updates:"), freqList);
+        form->addRow(tr("&Check for updates:"), freqList);
 
         channelList = new QComboBox;
         channelList->addItem(tr("Stable"), UpdaterSettings::Stable);
         channelList->addItem(tr("Unstable/Candidate"), UpdaterSettings::Unstable);
-        form->addRow(tr("Release type:"), channelList);
+        form->addRow(tr("&Release type:"), channelList);
 
         pathList = new QComboBox;
         pathList->addItem(QDesktopServices::displayName(QDesktopServices::TempLocation),
                           UpdaterSettings::defaultDownloadPath());
         pathList->addItem(tr("Select folder..."), "");
-        form->addRow(tr("Download location:"), pathList);
+        form->addRow(tr("&Download location:"), pathList);
 
-        deleteAfter = new QCheckBox(tr("Delete file after install"));
+        deleteAfter = new QCheckBox(tr("D&elete file after install"));
         form->addRow(new QWidget, deleteAfter);
 
         QDialogButtonBox* bbox = new QDialogButtonBox;
@@ -127,10 +128,20 @@ UpdaterSettingsDialog::~UpdaterSettingsDialog()
     delete d;
 }
 
+void UpdaterSettingsDialog::fetch()
+{
+    d->fetch();
+}
+
 void UpdaterSettingsDialog::accept()
 {
     d->apply();
     QDialog::accept();
+}
+
+void UpdaterSettingsDialog::reject()
+{
+    QDialog::reject();
 }
 
 void UpdaterSettingsDialog::neverCheckToggled(bool set)
