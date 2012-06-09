@@ -338,7 +338,7 @@ void I_DeviceReset(uint ident)
     inputdev_t* dev = &inputDevices[ident];
     int k;
 
-    DEBUG_Message(("I_DeviceReset: %s.\n", Str_Text(I_DeviceNameStr(ident))));
+    DEBUG_VERBOSE_Message(("I_DeviceReset: %s.\n", Str_Text(I_DeviceNameStr(ident))));
 
     for(k = 0; k < (int)dev->numKeys && dev->keys; ++k)
     {

@@ -308,7 +308,6 @@ struct Updater::Instance
         // This assumes the Doomsday executable is inside the Snowberry bundle.
         de::String execPath = QDir::cleanPath(QDir(DENG2_APP->executablePath().fileNamePath())
                                               .filePath("../../../.."));
-        LOG_MSG(execPath);
         if(!execPath.fileName().endsWith(".app"))
         {
 #ifdef _DEBUG
