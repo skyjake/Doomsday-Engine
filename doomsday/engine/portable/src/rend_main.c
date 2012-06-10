@@ -2331,6 +2331,8 @@ static void Rend_BuildBspLeafSkyFixStripGeometry(BspLeaf* leaf, HEdge* startNode
             n += 2;
         }
 
+        texS += (float)(hedge->offset);
+
         // Add the next edge.
         {
             rvertex_t* v1 = &(*verts)[n + antiClockwise^0];
@@ -2344,7 +2346,7 @@ static void Rend_BuildBspLeafSkyFixStripGeometry(BspLeaf* leaf, HEdge* startNode
 
             if(coords)
             {
-                texS += antiClockwise? -node->prev->length : hedge->length;
+                texS += antiClockwise? -hedge->length : hedge->next->length;
             }
 
             n += 2;
@@ -2399,8 +2401,8 @@ static void Rend_WriteBspLeafSkyFixGeometry(BspLeaf* leaf, int skyFix)
     startNode = 0;
     startZBottom = startZTop = 0;
     startMaterial = 0;
-    node = baseNode;
-    do
+
+    for(node = baseNode;;)
     {
         HEdge* hedge = (antiClockwise? node->prev : node);
         boolean endStrip = false;
@@ -2430,8 +2432,6 @@ static void Rend_WriteBspLeafSkyFixGeometry(BspLeaf* leaf, int skyFix)
                 // End the current strip and start another.
                 endStrip = true;
                 beginNewStrip = true;
-                startZBottom = zBottom;
-                startZTop = zTop;
             }
             else if(!startNode)
             {
@@ -2454,12 +2454,19 @@ static void Rend_WriteBspLeafSkyFixGeometry(BspLeaf* leaf, int skyFix)
             Rend_WriteBspLeafSkyFixStripGeometry(leaf, startNode, node, antiClockwise,
                                                  skyFix, startMaterial);
 
-            if(beginNewStrip)
-                startNode = node; // Start a new strip from this node.
-            else
-                startNode = 0;
+            // End the current strip.
+            startNode = 0;
         }
-    } while((node = antiClockwise? node->prev : node->next) != baseNode);
+
+        // Start a new strip from this node?
+        if(beginNewStrip) continue;
+
+        // On to the next node.
+        node = antiClockwise? node->prev : node->next;
+
+        // Are we done?
+        if(node == baseNode) break;
+    }
 
     // Have we an unwritten strip? - build it.
     if(startNode)
