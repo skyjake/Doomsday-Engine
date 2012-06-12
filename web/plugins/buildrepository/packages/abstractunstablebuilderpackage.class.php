@@ -50,6 +50,24 @@ abstract class AbstractUnstableBuilderPackage extends AbstractUnstablePackage im
         return $title;
     }
 
+    // Extends implementation in AbstractBuilderPackage.
+    public function populateGraphTemplate(&$tpl)
+    {
+        global $FrontController;
+
+        if(!is_array($tpl))
+            throw new Exception('Invalid template argument, array expected');
+
+        parent::populateGraphTemplate($tpl);
+
+        $build = $FrontController->findPlugin('BuildRepository')->buildByUniqueId($this->buildId);
+        if($build instanceof BuildEvent)
+        {
+            $tpl['build_startdate'] = date(DATE_ATOM, $build->startDate());
+            $tpl['build_uniqueid'] = $this->buildId;
+        };
+    }
+
     // Implements iBuilderProduct.
     public function setBuildUniqueId($id)
     {
