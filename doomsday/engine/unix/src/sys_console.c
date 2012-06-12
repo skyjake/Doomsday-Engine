@@ -72,7 +72,7 @@ static int getScreenSize(int axis)
 {
     int                 x, y;
 
-    if(!isValidConsoleWindow(Window_Main())) return;
+    if(!isValidConsoleWindow(Window_Main())) return 0;
 
     getmaxyx(mainConsole.winText, y, x);
     return axis == VX ? x : y;

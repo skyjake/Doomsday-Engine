@@ -455,7 +455,7 @@ boolean Uri_Equality(const Uri* uri, const Uri* other)
     }
 }
 
-static writeUri(const ddstring_t* scheme, const ddstring_t* path, Writer* writer)
+static void writeUri(const ddstring_t* scheme, const ddstring_t* path, Writer* writer)
 {
     Str_Write(scheme, writer);
     Str_Write(path, writer);

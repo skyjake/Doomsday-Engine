@@ -211,7 +211,7 @@ int Generators_IterateList(Generators* gens, uint listIndex,
 {
     listnode_t* it;
     assert(gens);
-    for(it = it = gens->lists[listIndex]; it; it = it->next)
+    for(it = gens->lists[listIndex]; it; it = it->next)
     {
         int result = callback(it->gen, parameters);
         if(result) return result;
