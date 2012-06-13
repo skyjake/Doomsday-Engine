@@ -242,11 +242,6 @@ struct Updater::Instance
     {
         UpdaterSettings().setLastCheckTime(de::Time());
         alwaysShowNotification = notifyAlways;
-        doCheckRequest();
-    }
-
-    void doCheckRequest()
-    {
         network->get(QNetworkRequest(composeCheckUri()));
     }
 
@@ -473,7 +468,7 @@ void Updater::settingsDialogClosed(int /*result*/)
 
 void Updater::recheck()
 {
-    d->doCheckRequest();
+    d->queryLatestVersion(d->alwaysShowNotification);
 }
 
 void Updater::showSettings()
@@ -494,7 +489,7 @@ void Updater::checkNowShowingProgress()
     // Not if there is an ongoing download.
     if(d->download) return;
 
-    d->availableDlg = new UpdateAvailableDialog;
+    d->availableDlg = new UpdateAvailableDialog(Window_Widget(Window_Main()));
     connect(d->availableDlg, SIGNAL(checkAgain()), this, SLOT(recheck()));
     d->queryLatestVersion(true);
     d->availableDlg->exec();

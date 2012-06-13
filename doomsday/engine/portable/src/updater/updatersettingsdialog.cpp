@@ -3,6 +3,7 @@
 #include <QDesktopServices>
 #include <QVBoxLayout>
 #include <QFormLayout>
+#include <QLabel>
 #include <QPushButton>
 #include <QCheckBox>
 #include <QComboBox>
@@ -26,6 +27,7 @@ struct UpdaterSettingsDialog::Instance
     UpdaterSettingsDialog* self;
     QCheckBox* neverCheck;
     QComboBox* freqList;
+    QLabel* lastChecked;
     QComboBox* channelList;
     QComboBox* pathList;
     QCheckBox* deleteAfter;
@@ -51,6 +53,9 @@ struct UpdaterSettingsDialog::Instance
         freqList->addItem(tr("Weekly"),     UpdaterSettings::Weekly);
         freqList->addItem(tr("Monthly"),    UpdaterSettings::Monthly);
         form->addRow(tr("&Check for updates:"), freqList);
+
+        lastChecked = new QLabel;
+        form->addRow(new QWidget, lastChecked);
 
         channelList = new QComboBox;
         channelList->addItem(tr("Stable"), UpdaterSettings::Stable);
@@ -84,12 +89,17 @@ struct UpdaterSettingsDialog::Instance
 
     void fetch()
     {
-        neverCheck->setChecked(UpdaterSettings().onlyCheckManually());
-        freqList->setEnabled(!UpdaterSettings().onlyCheckManually());
-        freqList->setCurrentIndex(freqList->findData(UpdaterSettings().frequency()));
-        channelList->setCurrentIndex(channelList->findData(UpdaterSettings().channel()));
-        setDownloadPath(UpdaterSettings().downloadPath());
-        deleteAfter->setChecked(UpdaterSettings().deleteAfterUpdate());
+        UpdaterSettings st;
+
+        lastChecked->setText(tr("<small>Last checked on %1.</small>")
+                             .arg(st.lastCheckTime().asText(de::Time::FriendlyFormat)));
+
+        neverCheck->setChecked(st.onlyCheckManually());
+        freqList->setEnabled(!st.onlyCheckManually());
+        freqList->setCurrentIndex(freqList->findData(st.frequency()));
+        channelList->setCurrentIndex(channelList->findData(st.channel()));
+        setDownloadPath(st.downloadPath());
+        deleteAfter->setChecked(st.deleteAfterUpdate());
     }
 
     void apply()

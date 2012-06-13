@@ -2,6 +2,7 @@
 #include "updatersettings.h"
 #include "updatersettingsdialog.h"
 #include "versioninfo.h"
+#include "window.h"
 #include <de/Log>
 #include <QUrl>
 #include <QDesktopServices>
@@ -39,6 +40,7 @@ struct UpdateAvailableDialog::Instance
     void initForChecking(void)
     {
         init();
+        createResultPage(VersionInfo());
         stack->setCurrentWidget(checkPage);
     }
 

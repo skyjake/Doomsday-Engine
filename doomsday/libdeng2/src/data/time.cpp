@@ -130,6 +130,10 @@ String Time::asText(Format format) const
     {
         return _time.toString("yyyy-MM-dd hh:mm:ss.zzz");
     }
+    else if(format == FriendlyFormat)
+    {
+        return _time.toString(Qt::TextDate);
+    }
     else
     {
         return QString("#%1 ").arg(asBuildNumber(), -4) +

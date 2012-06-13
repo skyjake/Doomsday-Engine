@@ -99,7 +99,8 @@ public:
 
     enum Format {
         ISOFormat,
-        BuildNumberAndTime
+        BuildNumberAndTime,
+        FriendlyFormat
     };
 
 public:
