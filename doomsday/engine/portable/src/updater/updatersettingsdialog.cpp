@@ -45,10 +45,11 @@ struct UpdaterSettingsDialog::Instance
         form->addRow(neverCheck);
 
         freqList = new QComboBox;
-        freqList->addItem(tr("Daily"),    UpdaterSettings::Daily);
-        freqList->addItem(tr("Biweekly"), UpdaterSettings::Biweekly);
-        freqList->addItem(tr("Weekly"),   UpdaterSettings::Weekly);
-        freqList->addItem(tr("Monthly"),  UpdaterSettings::Monthly);
+        freqList->addItem(tr("At startup"), UpdaterSettings::AtStartup);
+        freqList->addItem(tr("Daily"),      UpdaterSettings::Daily);
+        freqList->addItem(tr("Biweekly"),   UpdaterSettings::Biweekly);
+        freqList->addItem(tr("Weekly"),     UpdaterSettings::Weekly);
+        freqList->addItem(tr("Monthly"),    UpdaterSettings::Monthly);
         form->addRow(tr("&Check for updates:"), freqList);
 
         channelList = new QComboBox;

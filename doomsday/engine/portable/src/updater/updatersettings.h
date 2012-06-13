@@ -9,10 +9,11 @@ class UpdaterSettings
 public:
     enum Frequency
     {
-        Daily    = 0,
-        Biweekly = 1,   // 3.5 days
-        Weekly   = 2,   // 7 days
-        Monthly  = 3    // 30 days
+        Daily     = 0,
+        Biweekly  = 1,   // 3.5 days
+        Weekly    = 2,   // 7 days
+        Monthly   = 3,   // 30 days
+        AtStartup = 4
     };
     enum Channel
     {

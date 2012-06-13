@@ -60,6 +60,7 @@
 #include <de/App>
 #include <de/LegacyCore>
 #include <de/Time>
+#include <de/Date>
 #include <de/Log>
 
 static Updater* updater = 0;
@@ -182,6 +183,10 @@ struct Updater::Instance
         float dayInterval = 30;
         switch(st.frequency())
         {
+        case UpdaterSettings::AtStartup:
+            dayInterval = 0;
+            break;
+
         case UpdaterSettings::Daily:
             dayInterval = 1;
             break;
@@ -200,8 +205,10 @@ struct Updater::Instance
 
         de::Time now;
 
-        // Check always when the day interval has passed.
-        if(st.lastCheckTime().deltaTo(now).asDays() >= dayInterval)
+        // Check always when the day interval has passed. Note that this
+        // doesn't check the actual time interval since the last check, but the
+        // difference in "calendar" days.
+        if(st.lastCheckTime().asDate().daysTo(de::Date()) >= dayInterval)
             return true;
 
         if(st.frequency() == UpdaterSettings::Biweekly)

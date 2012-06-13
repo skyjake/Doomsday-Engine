@@ -48,6 +48,7 @@ public:
     int hours() const { return asDateTime().time().hour(); }
     int minutes() const { return asDateTime().time().minute(); }
     int seconds() const { return asDateTime().time().second(); }
+    int daysTo(const Date& other) const { return asDateTime().date().daysTo(other.asDateTime().date()); }
 
     /**
      * Forms a textual representation of the date.
