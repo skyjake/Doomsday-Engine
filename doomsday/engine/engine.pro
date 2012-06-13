@@ -525,7 +525,7 @@ SOURCES += \
     portable/src/gl_tga.c \
     portable/src/gridmap.c \
     portable/src/hedge.cpp \
-    portable/src/image.c \
+    portable/src/image.cpp \
     portable/src/json.cpp \
     portable/src/kdtree.c \
     portable/src/keycode.cpp \

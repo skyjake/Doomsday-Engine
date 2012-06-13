@@ -1,31 +1,37 @@
-/**\file r_lumobjs.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file image.cpp
+ * Image objects and relates routines. @ingroup gl
  *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #include "de_base.h"
 #include "de_console.h"
-
+#include "m_misc.h"
 #include "image.h"
+
+#include <de/Log>
+#include <QByteArray>
+#include <QImage>
+
+#if (QT_VERSION < QT_VERSION_CHECK(4, 7, 0))
+#  define constBits bits
+#endif
 
 void GL_ConvertToLuminance(image_t* image, boolean retainAlpha)
 {
@@ -49,7 +55,7 @@ void GL_ConvertToLuminance(image_t* image, boolean retainAlpha)
     if(retainAlpha && image->pixelSize == 4)
     {
         // Yes. Take a copy.
-        alphaChannel = malloc(numPels);
+        alphaChannel = reinterpret_cast<uint8_t*>(malloc(numPels));
         if(!alphaChannel)
             Con_Error("GL_ConvertToLuminance: Failed on allocation of %lu bytes for pixel alpha relocation buffer.", (unsigned long) numPels);
         ptr = image->pixels;
@@ -124,4 +130,37 @@ boolean GL_ImageHasAlpha(const image_t* image)
         return hasAlpha;
     }
     return false;
+}
+
+boolean Image_Load(image_t* img, const char* format, DFile* file)
+{
+    /// @todo There are too many copies made here. It would be best if image_t
+    /// contained an instance of QImage. -jk
+
+    assert(img);
+    assert(file);
+
+    GL_InitImage(img);
+
+    // Load the file contents to a memory buffer.
+    QByteArray data;
+    data.resize(DFile_Length(file));
+    DFile_Read(file, reinterpret_cast<uint8_t*>(data.data()), data.size());
+
+    QImage image = QImage::fromData(data, format).rgbSwapped();
+    if(image.isNull())
+    {
+        return false;
+    }
+
+    img->size.width  = image.width();
+    img->size.height = image.height();
+    img->pixelSize   = image.depth() / 8;
+
+    LOG_DEBUG("Image_Load: Size %i x %i depth %i alpha %b")
+              << img->size.width << img->size.height << img->pixelSize
+              << image.hasAlphaChannel();
+
+    img->pixels = reinterpret_cast<uint8_t*>(M_MemDup(image.constBits(), image.byteCount()));
+    return true;
 }

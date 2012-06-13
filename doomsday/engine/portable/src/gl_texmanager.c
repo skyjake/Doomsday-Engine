@@ -64,7 +64,7 @@ typedef struct {
     const char* name; // Format/handler name.
     const char* ext; // Expected file extension.
     boolean (*loadFunc)(image_t* img, DFile* file);
-    const char* (*getLastErrorFunc) (void);
+    const char* (*getLastErrorFunc) (void); // Can be NULL.
 } imagehandler_t;
 
 typedef struct texturevariantspecificationlist_node_s {
@@ -89,6 +89,7 @@ static void calcGammaTable(void);
 
 static boolean tryLoadPCX(image_t* img, DFile* file);
 static boolean tryLoadPNG(image_t* img, DFile* file);
+static boolean tryLoadJPG(image_t* img, DFile* file);
 static boolean tryLoadTGA(image_t* img, DFile* file);
 
 int ratioLimit = 0; // Zero if none.
@@ -129,9 +130,11 @@ static boolean initedOk = false; // Init done.
 
 // Image file handlers.
 static const imagehandler_t handlers[] = {
-    { "PNG", "png", tryLoadPNG, PNG_LastError },
-    { "TGA", "tga", tryLoadTGA, TGA_LastError },
-    { "PCX", "pcx", tryLoadPCX, PCX_LastError },
+    { "PNG",    "png",      tryLoadPNG, 0 },
+    { "JPG",    "jpg",      tryLoadJPG, 0 },
+    { "JPEG",   "jpeg",     tryLoadJPG, 0 },
+    { "TGA",    "tga",      tryLoadTGA, TGA_LastError },
+    { "PCX",    "pcx",      tryLoadPCX, PCX_LastError },
     { 0 } // Terminate.
 };
 
@@ -1428,12 +1431,21 @@ static boolean tryLoadPCX(image_t* img, DFile* file)
     return (0 != img->pixels);
 }
 
+static boolean tryLoadJPG(image_t* img, DFile* file)
+{
+    assert(img && file);
+    return Image_Load(img, "JPG", file);
+}
+
 static boolean tryLoadPNG(image_t* img, DFile* file)
 {
     assert(img && file);
+    /*
     GL_InitImage(img);
     img->pixels = PNG_Load(file, &img->size.width, &img->size.height, &img->pixelSize);
     return (0 != img->pixels);
+    */
+    return Image_Load(img, "PNG", file);
 }
 
 static boolean tryLoadTGA(image_t* img, DFile* file)
