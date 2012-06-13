@@ -166,7 +166,7 @@ int main(int argc, char** argv)
         menuBar = new QMenuBar;
         QMenu* gameMenu = menuBar->addMenu("&Game");
         QAction* checkForUpdates = gameMenu->addAction(
-                    "Check For &Updates...", Updater_Instance(), SLOT(checkNow()));
+                    "Check For &Updates...", Updater_Instance(), SLOT(checkNowShowingProgress()));
         checkForUpdates->setMenuRole(QAction::ApplicationSpecificRole);
 #endif
     }

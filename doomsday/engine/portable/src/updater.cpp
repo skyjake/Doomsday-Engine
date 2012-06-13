@@ -489,6 +489,19 @@ void Updater::checkNow(bool notify)
     d->queryLatestVersion(notify);
 }
 
+void Updater::checkNowShowingProgress()
+{
+    // Not if there is an ongoing download.
+    if(d->download) return;
+
+    d->availableDlg = new UpdateAvailableDialog;
+    connect(d->availableDlg, SIGNAL(checkAgain()), this, SLOT(recheck()));
+    d->queryLatestVersion(true);
+    d->availableDlg->exec();
+    delete d->availableDlg;
+    d->availableDlg = 0;
+}
+
 void Updater_Init(void)
 {
     updater = new Updater;

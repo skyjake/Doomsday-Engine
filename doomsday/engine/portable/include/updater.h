@@ -60,6 +60,8 @@ public slots:
      */
     void checkNow(bool notify = true);
 
+    void checkNowShowingProgress();
+
 private:
     struct Instance;
     Instance* d;
