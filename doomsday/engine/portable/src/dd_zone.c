@@ -982,6 +982,13 @@ char* Z_StrDup(const char* text)
     }
 }
 
+void* Z_MemDup(const void* ptr, size_t size)
+{
+    void* copy = Z_Malloc(size, PU_APPSTATIC, 0);
+    memcpy(copy, ptr, size);
+    return copy;
+}
+
 uint Z_VolumeCount(void)
 {
     memvolume_t    *volume;

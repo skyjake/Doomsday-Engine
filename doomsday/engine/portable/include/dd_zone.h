@@ -88,6 +88,8 @@ void            Z_DebugDrawer(void);
  */
 char* Z_StrDup(const char* text);
 
+void* Z_MemDup(const void* ptr, size_t size);
+
 typedef struct memblock_s {
     size_t          size; // Including header and possibly tiny fragments.
     void**          user; // NULL if a free block.
