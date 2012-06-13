@@ -9,24 +9,97 @@
 #include <QDialogButtonBox>
 #include <QCheckBox>
 #include <QPushButton>
+#include <QStackedWidget>
 #include <QFont>
 #include <QLabel>
 
 struct UpdateAvailableDialog::Instance
 {
     UpdateAvailableDialog* self;
+    QStackedWidget* stack;
+    QWidget* checkPage;
+    QWidget* resultPage;
+    QVBoxLayout* resultLayout;
+    QLabel* checking;
     QLabel* info;
     QCheckBox* neverCheck;
     VersionInfo latestVersion;
     de::String changeLog;
 
-    Instance(UpdateAvailableDialog* d, const VersionInfo& latest) : self(d), latestVersion(latest)
+    Instance(UpdateAvailableDialog* d) : self(d)
     {
+        initForChecking();
+    }
+
+    Instance(UpdateAvailableDialog* d, const VersionInfo& latest) : self(d)
+    {
+        initForResult(latest);
+    }
+
+    void initForChecking(void)
+    {
+        init();
+        stack->setCurrentWidget(checkPage);
+    }
+
+    void initForResult(const VersionInfo& latest)
+    {
+        init();
+        updateResult(latest);
+    }
+
+    void init()
+    {
+        stack = new QStackedWidget;
+        checkPage = new QWidget;
+        resultPage = new QWidget;
+
+        stack->setContentsMargins(0, 0, 0, 0);
+        stack->addWidget(checkPage);
+        stack->addWidget(resultPage);
+
+        // Create the Check page.
+        QVBoxLayout* checkLayout = new QVBoxLayout;
+        checkPage->setLayout(checkLayout);
+        checkLayout->setContentsMargins(0, 0, 0, 0);
+
+        checking = new QLabel(tr("Checking for available updates..."));
+        checkLayout->addWidget(checking, 1, Qt::AlignCenter);
+
+        QPushButton* stop = new QPushButton(tr("Cancel"));
+        QObject::connect(stop, SIGNAL(clicked()), self, SLOT(reject()));
+        checkLayout->addWidget(stop, 0, Qt::AlignHCenter);
+        stop->setAutoDefault(false);
+        stop->setDefault(false);
+
         QVBoxLayout* mainLayout = new QVBoxLayout(self);
+        mainLayout->addWidget(stack);
         self->setLayout(mainLayout);
+    }
+
+    void updateResult(const VersionInfo& latest)
+    {
+        createResultPage(latest);
+        stack->setCurrentWidget(resultPage);
+    }
+
+    void createResultPage(const VersionInfo& latest)
+    {
+        latestVersion = latest;
+
+        // Get rid of the existing page.
+        stack->removeWidget(resultPage);
+        delete resultPage;
+        resultPage = new QWidget;
+        stack->addWidget(resultPage);
+
+        resultLayout = new QVBoxLayout;
+        resultPage->setLayout(resultLayout);
+        resultLayout->setContentsMargins(0, 0, 0, 0);
 
         info = new QLabel;
         info->setTextFormat(Qt::RichText);
+
         VersionInfo currentVersion;
         int bigFontSize = self->font().pointSize() * 1.2;
         de::String channel = (UpdaterSettings().channel() == UpdaterSettings::Stable?
@@ -77,6 +150,7 @@ struct UpdateAvailableDialog::Instance
             QPushButton* no = bbox->addButton(tr("&Close"), QDialogButtonBox::RejectRole);
             QObject::connect(yes, SIGNAL(clicked()), self, SLOT(accept()));
             QObject::connect(no, SIGNAL(clicked()), self, SLOT(reject()));
+            no->setDefault(true);
         }
         else if(askUpgrade)
         {
@@ -84,11 +158,13 @@ struct UpdateAvailableDialog::Instance
             QPushButton* no = bbox->addButton(tr("&Not Now"), QDialogButtonBox::NoRole);
             QObject::connect(yes, SIGNAL(clicked()), self, SLOT(accept()));
             QObject::connect(no, SIGNAL(clicked()), self, SLOT(reject()));
+            yes->setDefault(true);
         }
         else
         {
             QPushButton* ok = bbox->addButton(tr("&Close"), QDialogButtonBox::RejectRole);
             QObject::connect(ok, SIGNAL(clicked()), self, SLOT(reject()));
+            ok->setDefault(true);
         }
 
         QPushButton* cfg = bbox->addButton(tr("&Settings..."), QDialogButtonBox::ActionRole);
@@ -102,11 +178,16 @@ struct UpdateAvailableDialog::Instance
             whatsNew->setAutoDefault(false);
         }
 
-        mainLayout->addWidget(info);
-        mainLayout->addWidget(neverCheck);
-        mainLayout->addWidget(bbox);
+        resultLayout->addWidget(info);
+        resultLayout->addWidget(neverCheck);
+        resultLayout->addWidget(bbox);
     }
 };
+
+UpdateAvailableDialog::UpdateAvailableDialog(QWidget *parent) : QDialog(parent)
+{
+    d = new Instance(this);
+}
 
 UpdateAvailableDialog::UpdateAvailableDialog(const VersionInfo& latestVersion, de::String changeLogUri,
                                              QWidget *parent)
@@ -119,6 +200,12 @@ UpdateAvailableDialog::UpdateAvailableDialog(const VersionInfo& latestVersion, d
 UpdateAvailableDialog::~UpdateAvailableDialog()
 {
     delete d;
+}
+
+void UpdateAvailableDialog::showResult(const VersionInfo& latestVersion, de::String changeLogUri)
+{
+    d->changeLog = changeLogUri;
+    d->updateResult(latestVersion);
 }
 
 void UpdateAvailableDialog::neverCheckToggled(bool set)
@@ -138,6 +225,10 @@ void UpdateAvailableDialog::editSettings()
     if(st.exec())
     {
         d->neverCheck->setChecked(UpdaterSettings().onlyCheckManually());
-        close();
+
+        d->stack->setCurrentWidget(d->checkPage);
+
+        // Rerun the check.
+        emit checkAgain();
     }
 }

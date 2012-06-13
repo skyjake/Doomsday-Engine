@@ -49,6 +49,7 @@ public slots:
     void downloadCompleted(int result);
     void settingsDialogClosed(int result);
 
+    void recheck();
     void showSettings();
 
     /**

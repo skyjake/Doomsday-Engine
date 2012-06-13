@@ -126,6 +126,7 @@ struct Updater::Instance
     QNetworkAccessManager* network;
     DownloadDialog* download;
     bool alwaysShowNotification;
+    UpdateAvailableDialog* availableDlg;
     UpdaterSettingsDialog* settingsDlg;
     bool backToFullscreen;
 
@@ -133,7 +134,7 @@ struct Updater::Instance
     QString latestPackageUri;
     QString latestLogUri;
 
-    Instance(Updater* up) : self(up), network(0), download(0), settingsDlg(0), backToFullscreen(false)
+    Instance(Updater* up) : self(up), network(0), download(0), availableDlg(0), settingsDlg(0), backToFullscreen(false)
     {
         network = new QNetworkAccessManager(self);
 
@@ -241,6 +242,11 @@ struct Updater::Instance
     {
         UpdaterSettings().setLastCheckTime(de::Time());
         alwaysShowNotification = notifyAlways;
+        doCheckRequest();
+    }
+
+    void doCheckRequest()
+    {
         network->get(QNetworkRequest(composeCheckUri()));
     }
 
@@ -273,6 +279,13 @@ struct Updater::Instance
                 << currentVersion.asText()
                 << latestPackageUri << latestLogUri;
 
+        if(availableDlg)
+        {
+            // This was a recheck.
+            availableDlg->showResult(latestVersion, latestLogUri);
+            return;
+        }
+
         // Is this newer than what we're running?
         if(latestVersion > currentVersion || alwaysShowNotification)
         {
@@ -282,8 +295,11 @@ struct Updater::Instance
             bool wasFull = switchToWindowedMode();
 
             UpdateAvailableDialog dlg(latestVersion, latestLogUri, Window_Widget(Window_Main()));
+            QObject::connect(&dlg, SIGNAL(checkAgain()), self, SLOT(recheck()));
+            availableDlg = &dlg;
             if(dlg.exec())
             {
+                availableDlg = 0;
                 LOG_MSG("Download and install.");
                 download = new DownloadDialog(latestPackageUri);
                 QObject::connect(download, SIGNAL(finished(int)), self, SLOT(downloadCompleted(int)));
@@ -291,6 +307,7 @@ struct Updater::Instance
             }
             else
             {
+                availableDlg = 0;
                 switchBackToFullscreen(wasFull);
             }
         }
@@ -452,6 +469,11 @@ void Updater::settingsDialogClosed(int /*result*/)
         d->backToFullscreen = false;
         switchBackToFullscreen(true);
     }
+}
+
+void Updater::recheck()
+{
+    d->doCheckRequest();
 }
 
 void Updater::showSettings()
