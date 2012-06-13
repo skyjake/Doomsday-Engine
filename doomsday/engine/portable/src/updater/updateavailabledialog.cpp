@@ -9,14 +9,14 @@
 #include <QDialogButtonBox>
 #include <QCheckBox>
 #include <QPushButton>
-#include <QStackedWidget>
+#include <QStackedLayout>
 #include <QFont>
 #include <QLabel>
 
 struct UpdateAvailableDialog::Instance
 {
     UpdateAvailableDialog* self;
-    QStackedWidget* stack;
+    QStackedLayout* stack;
     QWidget* checkPage;
     QWidget* resultPage;
     QVBoxLayout* resultLayout;
@@ -50,18 +50,19 @@ struct UpdateAvailableDialog::Instance
 
     void init()
     {
-        stack = new QStackedWidget;
+        stack = new QStackedLayout;
         checkPage = new QWidget;
         resultPage = new QWidget;
 
-        stack->setContentsMargins(0, 0, 0, 0);
+        // Adjust spacing around all stacked widgets.
+        self->setContentsMargins(9, 9, 9, 9);
+
         stack->addWidget(checkPage);
         stack->addWidget(resultPage);
 
         // Create the Check page.
         QVBoxLayout* checkLayout = new QVBoxLayout;
         checkPage->setLayout(checkLayout);
-        checkLayout->setContentsMargins(0, 0, 0, 0);
 
         checking = new QLabel(tr("Checking for available updates..."));
         checkLayout->addWidget(checking, 1, Qt::AlignCenter);
@@ -72,9 +73,7 @@ struct UpdateAvailableDialog::Instance
         stop->setAutoDefault(false);
         stop->setDefault(false);
 
-        QVBoxLayout* mainLayout = new QVBoxLayout(self);
-        mainLayout->addWidget(stack);
-        self->setLayout(mainLayout);
+        self->setLayout(stack);
     }
 
     void updateResult(const VersionInfo& latest)
@@ -95,7 +94,6 @@ struct UpdateAvailableDialog::Instance
 
         resultLayout = new QVBoxLayout;
         resultPage->setLayout(resultLayout);
-        resultLayout->setContentsMargins(0, 0, 0, 0);
 
         info = new QLabel;
         info->setTextFormat(Qt::RichText);
