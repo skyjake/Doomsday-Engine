@@ -140,6 +140,12 @@ D_CMD(CheckForUpdatesAndNotify)
     return true;
 }
 
+D_CMD(LastUpdated)
+{
+    Updater_PrintLastUpdated();
+    return true;
+}
+
 D_CMD(ShowUpdateSettings)
 {
     Updater_ShowSettings();
@@ -151,9 +157,10 @@ D_CMD(ShowUpdateSettings)
  */
 void DD_Register(void)
 {
-    C_CMD("update", "", CheckForUpdates);
+    C_CMD("update",          "", CheckForUpdates);
     C_CMD("updateandnotify", "", CheckForUpdatesAndNotify);
-    C_CMD("updatesettings", "", ShowUpdateSettings);
+    C_CMD("updatesettings",  "", ShowUpdateSettings);
+    C_CMD("lastupdated",     "", LastUpdated);
 
     DD_RegisterLoop();
     DD_RegisterInput();

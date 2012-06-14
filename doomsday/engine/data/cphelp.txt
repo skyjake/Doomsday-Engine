@@ -374,6 +374,9 @@ inf = Params: keymap (dkm-file)\nFor example, 'keymap finnish'.
 desc = Kick client out of the game (server only).
 inf = Params: kick (playernum)\nFor example, 'kick 1'.
 
+[lastupdated]
+desc = Show when the latest check for updates was made.
+
 [listcontrols]
 desc = List the names of all player controls.
 
@@ -537,8 +540,13 @@ desc = Unload the current game or one or more data files.
 inf = Params: unload (name) ...\nFor example, 'unload mylevel.wad'.
 
 [update]
-desc = Check for new available releases or adjust autoupdate settings.
-inf = Examples:\n  'update' checks for new releases.\n  'update config' shows the current settings.
+desc = Check for new available releases.
+
+[updateandnotify]
+desc = Check for new available releases and open the update notification dialog.
+
+[updatesettings]
+desc = Show the settings dialog for configuring automatic updates.
 
 [varstats]
 desc = Show detailed statistics for console variables.

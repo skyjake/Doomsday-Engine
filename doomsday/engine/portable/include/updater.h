@@ -103,6 +103,11 @@ void Updater_CheckNow(boolean notify);
  */
 void Updater_ShowSettings(void);
 
+/**
+ * Print in the console when the latest update check was made.
+ */
+void Updater_PrintLastUpdated(void);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif
