@@ -143,8 +143,9 @@ boolean Image_Load(image_t* img, const char* format, DFile* file)
     GL_InitImage(img);
 
     // Load the file contents to a memory buffer.
+    int pos = DFile_Tell(file);
     QByteArray data;
-    data.resize(DFile_Length(file));
+    data.resize(DFile_Length(file) - pos);
     DFile_Read(file, reinterpret_cast<uint8_t*>(data.data()), data.size());
 
     QImage image = QImage::fromData(data, format).rgbSwapped();
@@ -157,9 +158,9 @@ boolean Image_Load(image_t* img, const char* format, DFile* file)
     img->size.height = image.height();
     img->pixelSize   = image.depth() / 8;
 
-    LOG_DEBUG("Image_Load: Size %i x %i depth %i alpha %b")
+    LOG_TRACE("Image_Load: size %i x %i depth %i alpha %b bytes %i")
               << img->size.width << img->size.height << img->pixelSize
-              << image.hasAlphaChannel();
+              << image.hasAlphaChannel() << image.byteCount();
 
     img->pixels = reinterpret_cast<uint8_t*>(M_MemDup(image.constBits(), image.byteCount()));
     return true;
