@@ -1401,3 +1401,9 @@ ul.games_list li a.game_badge span {
     margin-top: .5em;
     font-size: small;
 }
+
+.stable_todo {
+    border: 0;
+    width: 100%;
+    height: 600px;
+}
