@@ -492,7 +492,9 @@ void Updater::checkNowShowingProgress()
     d->availableDlg = new UpdateAvailableDialog(Window_Widget(Window_Main()));
     connect(d->availableDlg, SIGNAL(checkAgain()), this, SLOT(recheck()));
     d->queryLatestVersion(true);
+
     d->availableDlg->exec();
+
     delete d->availableDlg;
     d->availableDlg = 0;
 }

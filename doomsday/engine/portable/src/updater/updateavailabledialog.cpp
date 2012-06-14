@@ -20,6 +20,7 @@ struct UpdateAvailableDialog::Instance
     QStackedLayout* stack;
     QWidget* checkPage;
     QWidget* resultPage;
+    bool emptyResultPage;
     QVBoxLayout* resultLayout;
     QLabel* checking;
     QLabel* info;
@@ -41,26 +42,34 @@ struct UpdateAvailableDialog::Instance
     {
         init();
         createResultPage(VersionInfo());
-        stack->setCurrentWidget(checkPage);
+
+        stack->addWidget(checkPage);
+        stack->addWidget(resultPage);
     }
 
     void initForResult(const VersionInfo& latest)
     {
         init();
-        updateResult(latest);
+        createResultPage(latest);
+
+        stack->addWidget(resultPage);
+        stack->addWidget(checkPage);
     }
 
     void init()
     {
-        stack = new QStackedLayout;
-        checkPage = new QWidget;
-        resultPage = new QWidget;
+        self->setWindowTitle(tr("Doomsday %1").arg(VersionInfo().asText()));
+        self->setWindowFlags(self->windowFlags() & ~Qt::WindowContextHelpButtonHint);
 
+        emptyResultPage = true;
+        stack = new QStackedLayout(self);
+        checkPage = new QWidget(self);
+        resultPage = new QWidget(self);
+
+#ifdef MACOSX
         // Adjust spacing around all stacked widgets.
         self->setContentsMargins(9, 9, 9, 9);
-
-        stack->addWidget(checkPage);
-        stack->addWidget(resultPage);
+#endif
 
         // Create the Check page.
         QVBoxLayout* checkLayout = new QVBoxLayout;
@@ -89,10 +98,14 @@ struct UpdateAvailableDialog::Instance
         latestVersion = latest;
 
         // Get rid of the existing page.
-        stack->removeWidget(resultPage);
-        delete resultPage;
-        resultPage = new QWidget;
-        stack->addWidget(resultPage);
+        if(!emptyResultPage)
+        {
+            stack->removeWidget(resultPage);
+            delete resultPage;
+            resultPage = new QWidget(self);
+            stack->addWidget(resultPage);
+        }
+        emptyResultPage = false;
 
         resultLayout = new QVBoxLayout;
         resultPage->setLayout(resultLayout);
