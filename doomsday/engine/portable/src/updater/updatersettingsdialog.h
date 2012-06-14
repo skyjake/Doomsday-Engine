@@ -18,7 +18,7 @@ signals:
 public slots:
     void accept();
     void reject();
-    void neverCheckToggled(bool);
+    void autoCheckToggled(bool);
     void pathActivated(int index);
     
 private:

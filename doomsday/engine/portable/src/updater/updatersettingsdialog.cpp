@@ -25,7 +25,7 @@ static QString defaultLocationName()
 struct UpdaterSettingsDialog::Instance
 {
     UpdaterSettingsDialog* self;
-    QCheckBox* neverCheck;
+    QCheckBox* autoCheck;
     QComboBox* freqList;
     QLabel* lastChecked;
     QComboBox* channelList;
@@ -43,16 +43,17 @@ struct UpdaterSettingsDialog::Instance
         QFormLayout* form = new QFormLayout;
         mainLayout->addLayout(form);
 
-        neverCheck = new QCheckBox(tr("&Never check for updates automatically"));
-        form->addRow(neverCheck);
-
         freqList = new QComboBox;
         freqList->addItem(tr("At startup"), UpdaterSettings::AtStartup);
         freqList->addItem(tr("Daily"),      UpdaterSettings::Daily);
         freqList->addItem(tr("Biweekly"),   UpdaterSettings::Biweekly);
         freqList->addItem(tr("Weekly"),     UpdaterSettings::Weekly);
         freqList->addItem(tr("Monthly"),    UpdaterSettings::Monthly);
-        form->addRow(tr("&Check for updates:"), freqList);
+
+        autoCheck = new QCheckBox(tr("&Check for updates:"));
+        form->addRow(autoCheck, freqList);
+        QLayoutItem* item = form->itemAt(0, QFormLayout::LabelRole);
+        item->setAlignment(Qt::AlignVCenter);
 
         lastChecked = new QLabel;
         form->addRow(new QWidget, lastChecked);
@@ -81,7 +82,7 @@ struct UpdaterSettingsDialog::Instance
         fetch();
 
         // Connections.
-        QObject::connect(neverCheck, SIGNAL(toggled(bool)), self, SLOT(neverCheckToggled(bool)));
+        QObject::connect(autoCheck, SIGNAL(toggled(bool)), self, SLOT(autoCheckToggled(bool)));
         QObject::connect(pathList, SIGNAL(activated(int)), self, SLOT(pathActivated(int)));
         QObject::connect(ok, SIGNAL(clicked()), self, SLOT(accept()));
         QObject::connect(cancel, SIGNAL(clicked()), self, SLOT(reject()));
@@ -94,7 +95,7 @@ struct UpdaterSettingsDialog::Instance
         lastChecked->setText(tr("<small>Last checked on %1.</small>")
                              .arg(st.lastCheckTime().asText(de::Time::FriendlyFormat)));
 
-        neverCheck->setChecked(st.onlyCheckManually());
+        autoCheck->setChecked(!st.onlyCheckManually());
         freqList->setEnabled(!st.onlyCheckManually());
         freqList->setCurrentIndex(freqList->findData(st.frequency()));
         channelList->setCurrentIndex(channelList->findData(st.channel()));
@@ -105,7 +106,7 @@ struct UpdaterSettingsDialog::Instance
     void apply()
     {
         UpdaterSettings st;
-        st.setOnlyCheckManually(neverCheck->isChecked());
+        st.setOnlyCheckManually(!autoCheck->isChecked());
         int sel = freqList->currentIndex();
         if(sel >= 0)
         {
@@ -166,9 +167,9 @@ void UpdaterSettingsDialog::reject()
     QDialog::reject();
 }
 
-void UpdaterSettingsDialog::neverCheckToggled(bool set)
+void UpdaterSettingsDialog::autoCheckToggled(bool set)
 {
-    d->freqList->setEnabled(!set);
+    d->freqList->setEnabled(set);
 }
 
 void UpdaterSettingsDialog::pathActivated(int index)
