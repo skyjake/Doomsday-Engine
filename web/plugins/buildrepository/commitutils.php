@@ -88,8 +88,10 @@ function formatCommitHTML($msg)
 
     // Process the commit message, replacing web URIs with clickable links.
     htmlspecialchars($msg);
-    $msg =  preg_replace_callback("/([^A-z0-9_])(http|ftp|https)([\:\/\/])([^\\s]+)/",
+
+    $msg = preg_replace_callback('/((?:[\w\d]+\:\/\/)?(?:[\w\-\d]+\.)+[\w\-\d]+(?:\/[\w\-\d]+)*(?:\/|\.[\w\-\d]+)?(?:\?[\w\-\d]+\=[\w\-\d]+\&?)?(?:\#[\w\-\d]*)?)/',
         "make_pretty_hyperlink", $msg);
+
     return $msg;
 }
 
