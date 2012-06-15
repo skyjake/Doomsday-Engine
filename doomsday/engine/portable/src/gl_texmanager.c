@@ -131,8 +131,7 @@ static boolean initedOk = false; // Init done.
 // Image file handlers.
 static const imagehandler_t handlers[] = {
     { "PNG",    "png",      tryLoadPNG, 0 },
-    { "JPG",    "jpg",      tryLoadJPG, 0 },
-    { "JPEG",   "jpeg",     tryLoadJPG, 0 },
+    { "JPG",    "jpg",      tryLoadJPG, 0 }, // TODO: add alternate "jpeg" extension
     { "TGA",    "tga",      tryLoadTGA, TGA_LastError },
     { "PCX",    "pcx",      tryLoadPCX, PCX_LastError },
     { 0 } // Terminate.
