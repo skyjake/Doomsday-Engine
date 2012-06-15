@@ -47,6 +47,12 @@ Name: "{app}\snowberry\lang"
 Name: "{app}\snowberry\plugins"
 Name: "{app}\doc"
 
+; Obsolete files which should be removed if present when upgrading.
+[InstallDelete]
+Type: files; Name: "bin\libcurl.dll"
+Type: files; Name: "bin\libpng15.dll"
+Type: files; Name: "bin\SDL_net.dll"
+
 [Files]
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 ; Binaries
