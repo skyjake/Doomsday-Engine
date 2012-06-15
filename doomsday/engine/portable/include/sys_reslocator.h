@@ -61,6 +61,7 @@ typedef enum {
     RT_WAD,
     RT_DED,
     RT_PNG,
+    RT_JPG,
     RT_TGA,
     RT_PCX,
     RT_DMD,

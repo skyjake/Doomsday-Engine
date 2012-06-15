@@ -90,6 +90,7 @@ static const resourcetypeinfo_t typeInfo[NUM_RESOURCE_TYPES] = {
     /* RT_WAD */        { RC_PACKAGE,      {"wad", 0} },
     /* RT_DED */        { RC_DEFINITION,   {"ded", 0} },
     /* RT_PNG */        { RC_GRAPHIC,      {"png", 0} },
+    /* RT_JPG */        { RC_GRAPHIC,      {"jpg", 0} },
     /* RT_TGA */        { RC_GRAPHIC,      {"tga", 0} },
     /* RT_PCX */        { RC_GRAPHIC,      {"pcx", 0} },
     /* RT_DMD */        { RC_MODEL,        {"dmd", 0} },
@@ -108,7 +109,7 @@ static const resourcetypeinfo_t typeInfo[NUM_RESOURCE_TYPES] = {
 static const resourcetype_t searchTypeOrder[RESOURCECLASS_COUNT][MAX_TYPEORDER] = {
     /* RC_PACKAGE */    { RT_ZIP, RT_WAD, 0 }, // Favor ZIP over WAD.
     /* RC_DEFINITION */ { RT_DED, 0 }, // Only DED files.
-    /* RC_GRAPHIC */    { RT_PNG, RT_TGA, RT_PCX, 0 }, // Favour quality.
+    /* RC_GRAPHIC */    { RT_PNG, RT_TGA, RT_JPG, RT_PCX, 0 }, // Favour quality.
     /* RC_MODEL */      { RT_DMD, RT_MD2, 0 }, // Favour DMD over MD2.
     /* RC_SOUND */      { RT_WAV, 0 }, // Only WAV files.
     /* RC_MUSIC */      { RT_OGG, RT_MP3, RT_WAV, RT_MOD, RT_MID, 0 },

@@ -140,17 +140,21 @@ boolean Image_Load(image_t* img, const char* format, DFile* file)
     assert(img);
     assert(file);
 
+    // It is assumed that file's position stays the same (could be trying multiple loaders).
+    size_t initPos = DFile_Tell(file);
+
     GL_InitImage(img);
 
     // Load the file contents to a memory buffer.
-    int pos = DFile_Tell(file);
     QByteArray data;
-    data.resize(DFile_Length(file) - pos);
+    data.resize(DFile_Length(file) - initPos);
     DFile_Read(file, reinterpret_cast<uint8_t*>(data.data()), data.size());
 
     QImage image = QImage::fromData(data, format).rgbSwapped();
     if(image.isNull())
     {
+        // Back to the original file position.
+        DFile_Seek(file, initPos, SEEK_SET);
         return false;
     }
 
@@ -163,5 +167,8 @@ boolean Image_Load(image_t* img, const char* format, DFile* file)
               << image.hasAlphaChannel() << image.byteCount();
 
     img->pixels = reinterpret_cast<uint8_t*>(M_MemDup(image.constBits(), image.byteCount()));
+
+    // Back to the original file position.
+    DFile_Seek(file, initPos, SEEK_SET);
     return true;
 }
