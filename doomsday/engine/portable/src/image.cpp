@@ -146,9 +146,8 @@ boolean Image_Load(image_t* img, const char* format, DFile* file)
     GL_InitImage(img);
 
     // Load the file contents to a memory buffer.
-    int pos = DFile_Tell(file);
     QByteArray data;
-    data.resize(DFile_Length(file) - pos);
+    data.resize(DFile_Length(file) - initPos);
     DFile_Read(file, reinterpret_cast<uint8_t*>(data.data()), data.size());
 
     QImage image = QImage::fromData(data, format).rgbSwapped();
