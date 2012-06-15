@@ -65,7 +65,7 @@ class Url
 
     private function parse($str)
     {
-        $u = parse_url($str);
+        $u = parse_url(trim($str));
 
         if(isset($u['scheme']))
             $this->scheme = $u['scheme'];
@@ -106,6 +106,37 @@ class Url
         $this->args = $a;
     }
 
+    public function setScheme($scheme='')
+    {
+        if(!strcasecmp(gettype($scheme), 'string') && strlen($scheme))
+        {
+            $this->scheme = $scheme;
+        }
+        else
+        {
+            unset($this->scheme);
+        }
+        return $this;
+    }
+
+    public function &scheme()
+    {
+        return $this->scheme;
+    }
+
+    public function setHost($host='')
+    {
+        if(!strcasecmp(gettype($host), 'string') && strlen($host))
+        {
+            $this->host = $host;
+        }
+        else
+        {
+            unset($this->host);
+        }
+        return $this;
+    }
+
     public function &host()
     {
         return $this->host;
@@ -126,7 +157,7 @@ class Url
      *
      * [scheme]://[user]:[pass]@[host]/[path]?[query]#[fragment]
      */
-    public function toString($sep, $encode=true)
+    public function toString($sep='&amp;', $encode=true)
     {
         $str = '';
         if(isset($this->scheme))
@@ -150,7 +181,7 @@ class Url
         {
             $str .= $this->path;
 
-            if(isset($this->args))
+            if(isset($this->args) && count($this->args))
             {
                 if($encode)
                 {

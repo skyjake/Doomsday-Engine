@@ -23,6 +23,8 @@
  * @author Copyright &copy; 2009-2012 Daniel Swanson <danij@dengine.net>
  */
 
+require_once(DIR_CLASSES.'/url.class.php');
+
 includeGuard('Utils');
 
 function checkImagePath($path, $formats)
@@ -230,7 +232,15 @@ function json_encode_clean(&$array, $flags=0, $indent_level=0)
 
 function generateHyperlinkHTML($uri, $maxLength=40, $cssClass=NULL)
 {
-    $uri = strval($uri);
+    if($uri instanceof Url)
+    {
+        $uri = $uri->toString();
+    }
+    else
+    {
+        $uri = strval($uri);
+    }
+
     $maxLength = (integer)$maxLength;
     if($maxLength < 0) $maxLength = 0;
     if(!is_null($cssClass))
