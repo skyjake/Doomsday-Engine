@@ -64,6 +64,7 @@ Source: "bin\QtCore4.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Component
 Source: "bin\QtGui4.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\QtNetwork4.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\QtOpenGL4.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\imageformats\qjpeg4.dll"; DestDir: "{app}\bin\imageformats"; Flags: ignoreversion; Components: Engine
 Source: "bin\SDL.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\eax.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\libogg-0.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine

@@ -5,7 +5,7 @@ QT += core network gui opengl
 
 win32 {
     # Install the required Qt DLLs into the products dir.
-    INSTALLS *= qtlibs
+    INSTALLS *= qtlibs qtplugins
     deng_debug: qtver = "d4"
     else:       qtver = "4"
     qtlibs.files += \
@@ -14,6 +14,9 @@ win32 {
         $$[QT_INSTALL_BINS]/QtGui$${qtver}.dll \
         $$[QT_INSTALL_BINS]/QtOpenGL$${qtver}.dll
     qtlibs.path = $$DENG_LIB_DIR
+
+    qtplugins.files = $$[QT_INSTALL_PLUGINS]/imageformats/qjpeg4.dll
+    qtplugins.path = $$DENG_LIB_DIR/imageformats
 }
 
 macx {
