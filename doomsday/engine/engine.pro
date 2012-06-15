@@ -19,7 +19,6 @@ echo(Doomsday version $${DENG_VERSION}.)
 include(../dep_sdl.pri)
 include(../dep_opengl.pri)
 include(../dep_zlib.pri)
-include(../dep_png.pri)
 include(../dep_curses.pri)
 include(../dep_lzss.pri)
 win32 {
@@ -234,7 +233,6 @@ DENG_HEADERS += \
     portable/include/gl_main.h \
     portable/include/gl_model.h \
     portable/include/gl_pcx.h \
-    portable/include/gl_png.h \
     portable/include/gl_tex.h \
     portable/include/gl_texmanager.h \
     portable/include/gl_tga.h \
@@ -519,7 +517,6 @@ SOURCES += \
     portable/src/gl_hq2x.c \
     portable/src/gl_main.c \
     portable/src/gl_pcx.c \
-    portable/src/gl_png.c \
     portable/src/gl_tex.c \
     portable/src/gl_texmanager.c \
     portable/src/gl_tga.c \

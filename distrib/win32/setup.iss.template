@@ -74,7 +74,6 @@ Source: "bin\SDL_mixer.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Compone
 Source: "bin\smpeg.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\lzss.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\zlib1.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "bin\libpng15.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\fmodex.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 
 ; Snowberry
