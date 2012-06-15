@@ -690,7 +690,7 @@ class FrontController
         if(ini_get('log_errors'))
         {
             error_log(sprintf("PHP %s:  %s in %s on line %d",
-                              $errortype[$errno], $errmsg, $filename, $linenum));
+                              isset($errortype[$errno])? $errortype[$errno] : "$errno", $errmsg, $filename, $linenum));
         }
 
         // Display it?
