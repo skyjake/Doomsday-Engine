@@ -504,7 +504,7 @@ static int ReadFloat(float* dest)
 
 static int ReadFlags(int* dest, const char* prefix)
 {
-    char                flag[1024];
+    char flag[1024];
 
     // By default, no flags are set.
     *dest = 0;
@@ -517,7 +517,16 @@ static int ReadFlags(int* dest, const char* prefix)
         if(!ReadString(flag, sizeof(flag)))
             return false;
 
-        *dest = Def_EvalFlags(flag);
+        M_Strip(flag, sizeof(flag));
+
+        if(strlen(flag))
+        {
+            *dest = Def_EvalFlags(flag);
+        }
+        else
+        {
+            *dest = 0;
+        }
         return true;
     }
 
@@ -535,7 +544,12 @@ static int ReadFlags(int* dest, const char* prefix)
             strcpy(flag, token);
         }
 
-        *dest |= Def_EvalFlags(flag);
+        M_Strip(flag, sizeof(flag));
+
+        if(strlen(flag))
+        {
+            *dest |= Def_EvalFlags(flag);
+        }
 
         if(!ReadToken())
             break;

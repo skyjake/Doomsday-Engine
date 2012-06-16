@@ -590,11 +590,20 @@ ded_ptcgen_t* Def_GetDamageGenerator(int mobjType)
 
 int Def_GetFlagValue(const char* flag)
 {
-    int                 i;
+    int i;
+
+    if(!flag || !flag[0])
+    {
+        DEBUG_Message(("Attempted Def_GetFlagValue with %s flag argument.\n",
+                       flag? "zero-length" : "<null>"));
+        return 0;
+    }
 
     for(i = defs.count.flags.num - 1; i >= 0; i--)
+    {
         if(!stricmp(defs.flags[i].id, flag))
             return defs.flags[i].value;
+    }
 
     Con_Message("Warning: Def_GetFlagValue: Undefined flag '%s'.\n", flag);
     return 0;
@@ -1554,7 +1563,7 @@ static int Friendly(int num)
  */
 void Def_CopyLineType(linetype_t* l, ded_linetype_t* def)
 {
-    int                 i, k, a, temp;
+    int i, k, a, temp;
 
     l->id = def->id;
     l->flags = def->flags[0];
@@ -1629,8 +1638,11 @@ void Def_CopyLineType(linetype_t* l, ded_linetype_t* def)
                 temp = Def_EvalFlags(def->iparmStr[k]);
                 if(temp)
                     l->iparm[k] = temp;
-            } else
+            }
+            else
+            {
                 l->iparm[k] = Friendly(Def_GetMusicNum(def->iparmStr[k]));
+            }
         }
         else
         {
