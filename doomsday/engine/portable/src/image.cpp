@@ -150,12 +150,30 @@ boolean Image_Load(image_t* img, const char* format, DFile* file)
     data.resize(DFile_Length(file) - initPos);
     DFile_Read(file, reinterpret_cast<uint8_t*>(data.data()), data.size());
 
-    QImage image = QImage::fromData(data, format).rgbSwapped();
+    QImage image = QImage::fromData(data, format);
     if(image.isNull())
     {
         // Back to the original file position.
         DFile_Seek(file, initPos, SEEK_SET);
         return false;
+    }
+
+    // Convert paletted images to RGB.
+    if(image.colorCount() && !image.hasAlphaChannel())
+    {
+        image = image.convertToFormat(QImage::Format_RGB888);
+        assert(!image.colorCount());
+        assert(image.depth() == 24);
+    }
+    else if(image.colorCount() && image.hasAlphaChannel())
+    {
+        image = image.convertToFormat(QImage::Format_ARGB32);
+        assert(image.depth() == 32);
+    }
+    else
+    {
+        // Swap the red and blue channels.
+        image = image.rgbSwapped();
     }
 
     img->size.width  = image.width();
