@@ -547,8 +547,8 @@ static int R_LoadModel(const Uri* uri)
             foundSkins = 1;
 
             VERBOSE(
-                Con_Message("Note: Assigned fallback skin \"%s\" to slot #%i for model \"%s\".\n",
-                            F_PrettyPath(Str_Text(&foundPath)), index, F_PrettyPath(mdl->fileName));
+                Con_Message("Note: Assigned fallback skin \"%s\" to slot #0 for model \"%s\".\n",
+                            F_PrettyPath(Str_Text(&foundPath)), F_PrettyPath(mdl->fileName));
             )
         }
         Dir_Delete(mydir);
