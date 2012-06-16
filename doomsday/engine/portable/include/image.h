@@ -73,27 +73,27 @@ void GL_PrintImageMetadata(const image_t* image);
  * The allocated memory buffer always has enough space for 4-component
  * colors.
  */
-uint8_t* GL_LoadImageFromFile(image_t* image, DFile* file);
+uint8_t* Image_LoadFromFile(image_t* image, DFile* file);
 
-boolean Image_Load(image_t* img, const char* format, DFile* file);
+boolean Image_LoadFromFileWithFormat(image_t* img, const char* format, DFile* file);
 
 /// Release image pixel data.
 void GL_DestroyImage(image_t* image);
 
 /// @return  @c true if the image pixel data contains alpha information.
-boolean GL_ImageHasAlpha(const image_t* image);
+boolean Image_HasAlpha(const image_t* image);
 
 /**
  * Converts the image by converting it to a luminance map and then moving
  * the resultant luminance data into the alpha channel. The color channel(s)
  * are then filled all-white.
  */
-void GL_ConvertToAlpha(image_t* image, boolean makeWhite);
+void Image_ConvertToAlpha(image_t* image, boolean makeWhite);
 
 /**
  * Converts the image data to grayscale luminance in-place.
  */
-void GL_ConvertToLuminance(image_t* image, boolean retainAlpha);
+void Image_ConvertToLuminance(image_t* image, boolean retainAlpha);
 
 #ifdef __cplusplus
 }

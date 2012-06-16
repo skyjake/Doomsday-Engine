@@ -896,7 +896,7 @@ static uploadcontentmethod_t prepareVariantFromImage(TextureVariant* tex, image_
             image->flags &= ~IMGF_IS_MASKED;
         }
 
-        GL_ConvertToLuminance(image, false);
+        Image_ConvertToLuminance(image, false);
         { long i, total = image->size.width * image->size.height;
         for(i = 0; i < total; ++i)
         {
@@ -951,7 +951,7 @@ static uploadcontentmethod_t prepareVariantFromImage(TextureVariant* tex, image_
             {
                 // No. We'll convert from RGB(+A) to Luminance(+A) and upload as is.
                 // Replace the old buffer.
-                GL_ConvertToLuminance(image, true);
+                Image_ConvertToLuminance(image, true);
                 AmplifyLuma(image->pixels, image->size.width, image->size.height, image->pixelSize == 2);
             }
             else
@@ -977,7 +977,7 @@ static uploadcontentmethod_t prepareVariantFromImage(TextureVariant* tex, image_
     {
         if(monochrome)
         {
-            GL_ConvertToLuminance(image, true);
+            Image_ConvertToLuminance(image, true);
             AmplifyLuma(image->pixels, image->size.width, image->size.height, image->pixelSize == 2);
         }
     }
@@ -1064,7 +1064,7 @@ static uploadcontentmethod_t prepareDetailVariantFromImage(TextureVariant* tex, 
     // We only want a luminance map.
     if(image->pixelSize > 2)
     {
-        GL_ConvertToLuminance(image, false);
+        Image_ConvertToLuminance(image, false);
     }
 
     // Try to normalize the luminance data so it works expectedly as a detail texture.
@@ -1433,7 +1433,7 @@ static boolean tryLoadPCX(image_t* img, DFile* file)
 static boolean tryLoadJPG(image_t* img, DFile* file)
 {
     assert(img && file);
-    return Image_Load(img, "JPG", file);
+    return Image_LoadFromFileWithFormat(img, "JPG", file);
 }
 
 static boolean tryLoadPNG(image_t* img, DFile* file)
@@ -1444,7 +1444,7 @@ static boolean tryLoadPNG(image_t* img, DFile* file)
     img->pixels = PNG_Load(file, &img->size.width, &img->size.height, &img->pixelSize);
     return (0 != img->pixels);
     */
-    return Image_Load(img, "PNG", file);
+    return Image_LoadFromFileWithFormat(img, "PNG", file);
 }
 
 static boolean tryLoadTGA(image_t* img, DFile* file)
@@ -1489,7 +1489,7 @@ static boolean isColorKeyed(const char* path)
     return result;
 }
 
-uint8_t* GL_LoadImageFromFile(image_t* img, DFile* file)
+uint8_t* Image_LoadFromFile(image_t* img, DFile* file)
 {
     const imagehandler_t* hdlr;
     const char* fileName;
@@ -1520,7 +1520,7 @@ uint8_t* GL_LoadImageFromFile(image_t* img, DFile* file)
 
     if(!img->pixels)
     {
-        VERBOSE2( Con_Message("GL_LoadImageFromFile: \"%s\" unrecognized, trying fallback loader...\n",
+        VERBOSE2( Con_Message("Image_LoadFromFile: \"%s\" unrecognized, trying fallback loader...\n",
                               F_PrettyPath(fileName)) )
         return NULL; // Not a recognised format. It may still be loadable, however.
     }
@@ -1540,10 +1540,10 @@ uint8_t* GL_LoadImageFromFile(image_t* img, DFile* file)
     }
 
     // Any alpha pixels?
-    if(GL_ImageHasAlpha(img))
+    if(Image_HasAlpha(img))
         img->flags |= IMGF_IS_MASKED;
 
-    VERBOSE( Con_Message("GL_LoadImageFromFile: \"%s\" (%ix%i)\n",
+    VERBOSE( Con_Message("Image_LoadFromFile: \"%s\" (%ix%i)\n",
                          F_PrettyPath(fileName), img->size.width, img->size.height) )
 
     return img->pixels;
@@ -1557,7 +1557,7 @@ uint8_t* GL_LoadImage(image_t* img, const char* filePath)
 
     if(file)
     {
-        pixels = GL_LoadImageFromFile(img, file);
+        pixels = Image_LoadFromFile(img, file);
         F_Delete(file);
     }
     return pixels;
@@ -2188,11 +2188,11 @@ TexSource GL_LoadExtTexture(image_t* image, const char* name, gfxmode_t mode)
         // Force it to grayscale?
         if(mode == LGM_GRAYSCALE_ALPHA || mode == LGM_WHITE_ALPHA)
         {
-            GL_ConvertToAlpha(image, mode == LGM_WHITE_ALPHA);
+            Image_ConvertToAlpha(image, mode == LGM_WHITE_ALPHA);
         }
         else if(mode == LGM_GRAYSCALE)
         {
-            GL_ConvertToLuminance(image, true);
+            Image_ConvertToLuminance(image, true);
         }
         source = TEXS_EXTERNAL;
     }
@@ -2347,7 +2347,7 @@ TexSource GL_LoadDetailTextureLump(image_t* image, DFile* file)
     TexSource source = TEXS_NONE;
     assert(image && file);
 
-    if(GL_LoadImageFromFile(image, file))
+    if(Image_LoadFromFile(image, file))
     {
         source = TEXS_ORIGINAL;
     }
@@ -2394,7 +2394,7 @@ TexSource GL_LoadFlatLump(image_t* image, DFile* file)
     TexSource source = TEXS_NONE;
     assert(image && file);
 
-    if(GL_LoadImageFromFile(image, file))
+    if(Image_LoadFromFile(image, file))
     {
         source = TEXS_EXTERNAL;
     }
@@ -2436,7 +2436,7 @@ static TexSource loadPatchLump(image_t* image, DFile* file, int tclass, int tmap
     TexSource source = TEXS_NONE;
     assert(image && file);
 
-    if(GL_LoadImageFromFile(image, file))
+    if(Image_LoadFromFile(image, file))
     {
         source = TEXS_EXTERNAL;
     }
@@ -2666,7 +2666,7 @@ TexSource GL_LoadRawTex(image_t* image, const rawtex_t* r)
         DFile* file = F_OpenLump(r->lumpNum);
         if(file)
         {
-            if(GL_LoadImageFromFile(image, file))
+            if(Image_LoadFromFile(image, file))
             {
                 source = TEXS_ORIGINAL;
             }

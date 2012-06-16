@@ -33,7 +33,7 @@
 #  define constBits bits
 #endif
 
-void GL_ConvertToLuminance(image_t* image, boolean retainAlpha)
+void Image_ConvertToLuminance(image_t* image, boolean retainAlpha)
 {
     uint8_t* alphaChannel = NULL, *ptr = NULL;
     long p, numPels;
@@ -84,11 +84,11 @@ void GL_ConvertToLuminance(image_t* image, boolean retainAlpha)
     image->pixelSize = 1;
 }
 
-void GL_ConvertToAlpha(image_t* image, boolean makeWhite)
+void Image_ConvertToAlpha(image_t* image, boolean makeWhite)
 {
     long p, total;
     assert(image);
-    GL_ConvertToLuminance(image, true);
+    Image_ConvertToLuminance(image, true);
 
     total = image->size.width * image->size.height;
     for(p = 0; p < total; ++p)
@@ -100,14 +100,14 @@ void GL_ConvertToAlpha(image_t* image, boolean makeWhite)
     image->pixelSize = 2;
 }
 
-boolean GL_ImageHasAlpha(const image_t* image)
+boolean Image_HasAlpha(const image_t* image)
 {
     assert(image);
 
     if(0 != image->paletteId || (image->flags & IMGF_IS_MASKED))
     {
 #if _DEBUG
-        Con_Message("Warning:GL_ImageHasAlpha: Attempt to determine alpha for "
+        Con_Message("Warning:Image_HasAlpha: Attempt to determine alpha for "
             "paletted/masked image. I don't know this format!");
 #endif
         return false;
@@ -132,7 +132,7 @@ boolean GL_ImageHasAlpha(const image_t* image)
     return false;
 }
 
-boolean Image_Load(image_t* img, const char* format, DFile* file)
+boolean Image_LoadFromFileWithFormat(image_t* img, const char* format, DFile* file)
 {
     /// @todo There are too many copies made here. It would be best if image_t
     /// contained an instance of QImage. -jk
