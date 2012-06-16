@@ -323,6 +323,8 @@ boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info);
 /// @return  Uri for the patch associated with @a id. Should be released with Uri_Delete()
 Uri* R_ComposePatchUri(patchid_t id);
 
+struct texture_s* R_CreateSkinTex(const Uri* filePath, boolean isShinySkin);
+
 struct texture_s* R_RegisterModelSkin(ddstring_t* foundPath, const char* skin, const char* modelfn, boolean isReflection);
 struct texture_s* R_FindModelSkinForResourcePath(const Uri* resourcePath);
 struct texture_s* R_FindModelReflectionSkinForResourcePath(const Uri* resourcePath);
