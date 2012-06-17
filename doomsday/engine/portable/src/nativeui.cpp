@@ -40,14 +40,12 @@ void Sys_MessageBox(messageboxtype_t type, const char* title, const char* msg, c
 
 void Sys_MessageBox2(messageboxtype_t type, const char* title, const char* msg, const char* informativeMsg, const char* detailedMsg)
 {
-#if defined(UNIX) && !defined(MACOSX)
     if(novideo)
     {
         // There's no GUI...
-        fprintf(stderr, "%s\n", msg);
+        qWarning("%s", msg);
         return;
     }
-#endif
 
     QMessageBox box;
     box.setWindowTitle(title);
