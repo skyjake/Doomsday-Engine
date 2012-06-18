@@ -290,26 +290,33 @@ struct Updater::Instance
             bool wasFull = switchToWindowedMode();
 
             UpdateAvailableDialog dlg(latestVersion, latestLogUri, Window_Widget(Window_Main()));
-            QObject::connect(&dlg, SIGNAL(checkAgain()), self, SLOT(recheck()));
             availableDlg = &dlg;
-            if(dlg.exec())
-            {
-                availableDlg = 0;
-                LOG_MSG("Download and install.");
-                download = new DownloadDialog(latestPackageUri);
-                QObject::connect(download, SIGNAL(finished(int)), self, SLOT(downloadCompleted(int)));
-                download->show();
-            }
-            else
-            {
-                availableDlg = 0;
-                switchBackToFullscreen(wasFull);
-            }
+            execAvailableDialog(wasFull);
         }
         else
         {
             Con_Message("You are running the latest available %s release.\n",
                         UpdaterSettings().channel() == UpdaterSettings::Stable? "stable" : "unstable");
+        }
+    }
+
+    void execAvailableDialog(bool wasFull)
+    {
+        QObject::connect(availableDlg, SIGNAL(checkAgain()), self, SLOT(recheck()));
+
+        if(availableDlg->exec())
+        {
+            availableDlg = 0;
+
+            LOG_MSG("Download and install.");
+            download = new DownloadDialog(latestPackageUri);
+            QObject::connect(download, SIGNAL(finished(int)), self, SLOT(downloadCompleted(int)));
+            download->show();
+        }
+        else
+        {
+            availableDlg = 0;
+            switchBackToFullscreen(wasFull);
         }
     }
 
@@ -490,10 +497,9 @@ void Updater::checkNowShowingProgress()
     if(d->download) return;
 
     d->availableDlg = new UpdateAvailableDialog(Window_Widget(Window_Main()));
-    connect(d->availableDlg, SIGNAL(checkAgain()), this, SLOT(recheck()));
     d->queryLatestVersion(true);
 
-    d->availableDlg->exec();
+    d->execAvailableDialog(false);
 
     delete d->availableDlg;
     d->availableDlg = 0;
