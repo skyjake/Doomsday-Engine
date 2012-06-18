@@ -75,7 +75,7 @@ a[class ="link-definition"]:after {
 
 a[class ="link-external"] {
     padding-right: 18px;
-    background: transparent url(dl.dropbox.com/u/11948701/dengine.net/images/Icon_External_Link.png) no-repeat center right;
+    background: transparent url(http://dl.dropbox.com/u/11948701/dengine.net/images/Icon_External_Link.png) no-repeat center right;
 }
 
 a[class ="link-rss"] {
