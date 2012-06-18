@@ -175,8 +175,11 @@ struct UpdateAvailableDialog::Instance
         }
         else
         {
+            QPushButton* reinst = bbox->addButton(tr("&Reinstall"), QDialogButtonBox::YesRole);
             QPushButton* ok = bbox->addButton(tr("&Close"), QDialogButtonBox::RejectRole);
+            QObject::connect(reinst, SIGNAL(clicked()), self, SLOT(accept()));
             QObject::connect(ok, SIGNAL(clicked()), self, SLOT(reject()));
+            reinst->setAutoDefault(false);
             ok->setDefault(true);
         }
 
