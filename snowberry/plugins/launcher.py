@@ -248,7 +248,7 @@ def startGame(profile):
         sh = file(shFile, 'w')
         print >> sh, '#!/bin/sh'
         print >> sh, "cd %s" % (paths.quote(os.getcwd()))
-        print >> sh, "%s @%s" % (paths.quote(engineBin), responseFile.replace('\\', '\\ '))
+        print >> sh, "%s @%s" % (paths.quote(engineBin), responseFile.replace(' ', '\\ '))
         sh.close()
         os.chmod(shFile, 0744)
         engineBin = paths.quote(shFile)
