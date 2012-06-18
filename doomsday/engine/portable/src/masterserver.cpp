@@ -22,7 +22,7 @@
  */
 
 #include <QNetworkAccessManager>
-#include <QDebug>
+#include <de/Log>
 #include "de_platform.h"
 #include <vector>
 #include <list>
@@ -42,10 +42,10 @@ typedef struct job_s {
 } job_t;
 
 // Master server info. Hardcoded defaults.
-char* masterAddress = const_cast<char*>("www.dengine.net"); /// @todo refactor cvars
-int masterPort = 0; // Defaults to port 80.
-char* masterPath = const_cast<char*>("/master.php"); /// @todo refactor cvars
-boolean masterAware = false;
+char*   masterAddress = const_cast<char*>("www.dengine.net"); /// @todo refactor cvars
+int     masterPort    = 0; // Defaults to port 80.
+char*   masterPath    = const_cast<char*>("/master.php"); /// @todo refactor cvars
+boolean masterAware   = false;
 
 static QString masterUrl(const char* suffix = 0)
 {
@@ -85,6 +85,8 @@ MasterWorker::~MasterWorker()
 
 void MasterWorker::newJob(Action action, void* data)
 {
+    LOG_AS("MasterWorker");
+
     job_t job;
     job.act = action;
     job.data = data;
@@ -136,15 +138,23 @@ void MasterWorker::nextJob()
         ddstring_t* msg = Str_NewStd();
         Sv_InfoToString((serverinfo_t*)job.data, msg);
 
-        qDebug() << "MasterWorker: POST request" << req.url() << req.rawHeaderList() << "content:";
-        qDebug() << Str_Text(msg);
+        LOG_DEBUG("POST request ") << req.url().toString();
+        foreach(const QByteArray& hdr, req.rawHeaderList())
+        {
+            LOG_DEBUG("%s: %s") << QString(hdr) << QString(req.rawHeader(hdr));
+        }
+        LOG_DEBUG("Request contents:\n%s") << Str_Text(msg);
 
         d->network->post(req, QString(Str_Text(msg)).toUtf8());
         Str_Delete(msg);
     }
     else
     {
-        qDebug() << "MasterWorker: GET request" << req.url() << req.rawHeaderList();
+        LOG_DEBUG("GET request ") << req.url().toString();
+        foreach(const QByteArray& hdr, req.rawHeaderList())
+        {
+            LOG_DEBUG("%s: %s") << QString(hdr) << QString(req.rawHeader(hdr));
+        }
 
         d->network->get(req);
     }
@@ -155,12 +165,14 @@ void MasterWorker::nextJob()
 
 void MasterWorker::requestFinished(QNetworkReply* reply)
 {
+    LOG_AS("MasterWorker");
+
     // Make sure the reply gets deleted afterwards.
     reply->deleteLater();
 
     if(reply->error() == QNetworkReply::NoError)
     {
-        qDebug() << "MasterWorker: Got reply.";
+        LOG_VERBOSE("Got reply.");
 
         if(d->currentAction == REQUEST_SERVERS)
         {
@@ -169,7 +181,7 @@ void MasterWorker::requestFinished(QNetworkReply* reply)
     }
     else
     {
-        qWarning() << "MasterWorker:" << reply->errorString();
+        LOG_WARNING(reply->errorString());
         /// @todo Log the error.
     }
 
@@ -226,7 +238,7 @@ bool MasterWorker::parseResponse(const QByteArray& response)
         }
     }
 
-    qDebug() << "MasterWorker: Parsed" << serverCount() << "servers.";
+    LOG_MSG("Received %i servers.") << serverCount();
 
     Str_Free(&line);
     Str_Free(&msg);
