@@ -101,6 +101,7 @@ typedef enum {
     hexen,
     hexen_deathkings,
     hexen_betademo, // hexen_demo with some bugs
+    hexen_v10,      // Hexen release 1.0
     NUM_GAME_MODES
 } gamemode_t;
 
@@ -109,8 +110,9 @@ typedef enum {
 #define GM_HEXEN            0x2
 #define GM_HEXEN_DEATHKINGS 0x4
 #define GM_HEXEN_BETA       0x8
+#define GM_HEXEN_V10        0x10
 
-#define GM_ANY              (GM_HEXEN_DEMO|GM_HEXEN|GM_HEXEN_DEATHKINGS|GM_HEXEN_BETA)
+#define GM_ANY              (GM_HEXEN_DEMO|GM_HEXEN|GM_HEXEN_DEATHKINGS|GM_HEXEN_BETA|GM_HEXEN_V10)
 
 #define SCREENWIDTH         320
 #define SCREENHEIGHT        200
