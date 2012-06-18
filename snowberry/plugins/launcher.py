@@ -209,8 +209,7 @@ def startGame(profile):
         return
 
     # Put the response file in the user's runtime directory.
-    responseFile = os.path.join(paths.getUserPath(paths.RUNTIME),
-                                'Options.rsp')
+    responseFile = os.path.join(paths.getUserPath(paths.RUNTIME), 'Options.rsp')
 
     file(responseFile, 'w').write(options + "\n")
 
@@ -239,7 +238,7 @@ def startGame(profile):
         def q2p(s): return '\\\\\\\"' + s + '\\\\\\\"'
         curDir = os.getcwd()
         print >> scpt, "    do script \"cd %s; %s @%s\"" % \
-            (q1p(curDir), engineBin.replace(' ', '\\\\ '), q2p(responseFile))
+            (q1p(curDir), engineBin.replace(' ', '\\\\ '), responseFile.replace(' ', '\\\\ '))
         print >> scpt, 'end tell'
         scpt.close()
         engineBin = osaFile
@@ -249,7 +248,7 @@ def startGame(profile):
         sh = file(shFile, 'w')
         print >> sh, '#!/bin/sh'
         print >> sh, "cd %s" % (paths.quote(os.getcwd()))
-        print >> sh, "%s @%s" % (paths.quote(engineBin), paths.quote(responseFile))
+        print >> sh, "%s @%s" % (paths.quote(engineBin), responseFile.replace(' ', '\\ '))
         sh.close()
         os.chmod(shFile, 0744)
         engineBin = paths.quote(shFile)
@@ -257,7 +256,7 @@ def startGame(profile):
     else:
         spawnFunc = os.spawnvp
 
-    spawnFunc(os.P_NOWAIT, engineBin, [engineBin, '@' + paths.quote(responseFile)])
+    spawnFunc(os.P_NOWAIT, engineBin, [engineBin, '@' + responseFile])
 
     # Shut down if the configuration settings say so.
     value = profile.getValue('quit-on-launch')
