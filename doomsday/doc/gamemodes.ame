@@ -27,7 +27,8 @@ distributed with Doomsday: @plugin{libdoom} (previously called jDoom),
 	@tab heretic-ext @tab Heretic: Shadow of the Serpent Riders** @row
 
 @plugin{libhexen} 
-    @tab hexen @tab Hexen @row
+    @tab hexen @tab Hexen v1.1 @row
+    @tab hexen-v10 @tab Hexen v1.0 @row
 	@tab hexen-dk @tab Hexen: Death Kings of Dark Citadel @row
 	@tab hexen-demo @tab The 4-level Hexen Demo
 }
