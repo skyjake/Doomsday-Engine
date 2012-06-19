@@ -22,6 +22,8 @@
 
 #include "de_base.h"
 #include "de_console.h"
+//#include "abstractfile.h"
+//#include "filelist.h"
 #include "m_misc.h"
 #include "image.h"
 
@@ -158,23 +160,18 @@ boolean Image_LoadFromFileWithFormat(image_t* img, const char* format, DFile* fi
         return false;
     }
 
+    //Con_Message("Loading %s\n", Str_Text(AbstractFile_Path(DFile_File_Const(file))));
+
     // Convert paletted images to RGB.
-    if(image.colorCount() && !image.hasAlphaChannel())
-    {
-        image = image.convertToFormat(QImage::Format_RGB888);
-        assert(!image.colorCount());
-        assert(image.depth() == 24);
-    }
-    else if(image.colorCount() && image.hasAlphaChannel())
+    if(image.colorCount())
     {
         image = image.convertToFormat(QImage::Format_ARGB32);
+        assert(!image.colorCount());
         assert(image.depth() == 32);
     }
-    else
-    {
-        // Swap the red and blue channels.
-        image = image.rgbSwapped();
-    }
+
+    // Swap the red and blue channels for GL.
+    image = image.rgbSwapped();
 
     img->size.width  = image.width();
     img->size.height = image.height();
