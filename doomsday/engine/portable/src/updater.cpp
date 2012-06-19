@@ -263,8 +263,6 @@ struct Updater::Instance
         latestPackageUri = map["direct_download_uri"].toString();
         latestLogUri = map["release_changeloguri"].toString();
 
-        latestPackageUri = "http://sourceforge.net/projects/deng/files/Doomsday%20Engine/Builds/doomsday_1.9.9_build999_64bit.dmg/download";
-
         // Check if a fallback location is specified for the download.
         if(map.contains("direct_download_fallback_uri"))
         {

@@ -149,6 +149,17 @@ void DownloadDialog::finished(QNetworkReply* reply)
         int start = html.indexOf("<meta http-equiv=\"refresh\"", 0, Qt::CaseInsensitive);
         if(start < 0)
         {
+            LOG_WARNING("Failed, received an HTML page.");
+
+            // Do we have a fallback option?
+            if(!d->uri2.isEmpty() && d->uri2 != d->uri)
+            {
+                d->uri = d->uri2;
+                d->updateLocation(d->uri);
+                d->startDownload();
+                return;
+            }
+
             emit downloadFailed(d->uri.toString());
             return;
         }
