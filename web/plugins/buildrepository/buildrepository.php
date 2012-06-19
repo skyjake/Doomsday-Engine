@@ -404,6 +404,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 
         $pack = PackageFactory::newDistribution(PID_WIN_X86, 'Doomsday', '1.8.6',
                                                 'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.8.6/deng-inst-1.8.6.exe/download',
+                                                NULL/*no fallback download uri*/,
                                                 false/*not an autobuilder packaged*/);
         $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.8.6');
         $packages[] = $pack;
@@ -705,7 +706,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                 if($pack->platformId() !== $platformId) continue;
                 if($matchTitle && strcasecmp($pack->title(), $title)) continue;
                 if($unstable != ($pack instanceof AbstractUnstablePackage)) continue;
-                if($downloadable != ($pack instanceof iDownloadable && $pack->hasDirectDownloadUri())) continue;
+                if($downloadable != ($pack instanceof iDownloadable && ($pack->hasDirectDownloadUri() || $pack->hasDirectDownloadFallbackUri()))) continue;
 
                 // Found something suitable.
                 return $pack;
@@ -901,7 +902,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
             // Filtered out?
             if($pack === $notThisPack) continue;
             if($unstable != -1 && (boolean)$unstable == ($pack instanceof AbstractUnstablePackage)) continue;
-            if($downloadable != -1 && (boolean)$downloadable != ($pack instanceof iDownloadable && $pack->hasDirectDownloadUri())) continue;
+            if($downloadable != -1 && (boolean)$downloadable != ($pack instanceof iDownloadable && ($pack->hasDirectDownloadUri() || $pack->hasDirectDownloadFallbackUri()))) continue;
             if(!is_null($chosenPlatformId) && $pack->platformId() === $chosenPlatformId) continue;
 
             // Begin the list?
@@ -945,12 +946,17 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         $FrontController->beginPage($pageTitle);
 
         // Output the redirect directive.
-?><meta http-equiv="REFRESH" content="2;url=<?php echo $pack->directDownloadUri(); ?>"><?php
+        if($pack->hasDirectDownloadUri())
+            $downloadUri = $pack->directDownloadUri();
+        else
+            $downloadUri = $pack->directDownloadFallbackUri();
+
+?><meta http-equiv="REFRESH" content="2;url=<?php echo $downloadUri; ?>"><?php
 
         // Generate page content.
 ?><div id="builds"><?php
 
-?><p>Redirecting to the download for <em><?php echo htmlspecialchars($pack->composeFullTitle()); ?></em>. Your package should begin to download automatically within a few seconds, if not please use this <a href="<?php echo $pack->directDownloadUri(); ?>" title="<?php echo htmlspecialchars('Download '. $pack->composeFullTitle()); ?>">direct link</a> instead.</p><?php
+?><p>Redirecting to the download for <em><?php echo htmlspecialchars($pack->composeFullTitle()); ?></em>. Your package should begin to download automatically within a few seconds, if not please use this <a href="<?php echo $downloadUri; ?>" title="<?php echo htmlspecialchars('Download '. $pack->composeFullTitle()); ?>">direct link</a> instead.</p><?php
 
 ?><p>Not what you wanted? Here are some alternatives:</p><?php
 
@@ -1046,7 +1052,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         {
             foreach($build->packages as &$pack)
             {
-                if($pack instanceof iDownloadable && $pack->hasDirectDownloadUri())
+                if($pack instanceof iDownloadable && ($pack->hasDirectDownloadUri() || $pack->hasDirectDownloadFallbackUri()))
                 {
                     $count++;
                 }
@@ -1117,7 +1123,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
             }
 
             // Determine issue level (think defcon).
-            if($errors > 0 || !$pack->hasDirectDownloadUri())
+            if($errors > 0 || (!$pack->hasDirectDownloadUri() && !$pack->hasDirectDownloadFallbackUri()))
             {
                 $issueLevel = 'major';
                 $issueTooltip = "$errors major errors occurred during the build";
@@ -1139,9 +1145,14 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 <td><?php
 
             $packTitle = $pack->composeFullTitle(true/*include version*/, false/*do not include the platform name*/, false/*do not include build Id*/);
-            if($pack instanceof iDownloadable && $pack->hasDirectDownloadUri())
+            if($pack instanceof iDownloadable && ($pack->hasDirectDownloadUri() || $pack->hasDirectDownloadFallbackUri()))
             {
-?><a href="<?php echo $pack->directDownloadUri(); ?>" title="Download <?php echo htmlspecialchars($pack->composeFullTitle()); ?>"><?php echo htmlspecialchars($packTitle); ?></a><?php
+                if($pack->hasDirectDownloadUri())
+                    $downloadUri = $pack->directDownloadUri();
+                else
+                    $downloadUri = $pack->directDownloadFallbackUri();
+
+?><a href="<?php echo $downloadUri; ?>" title="Download <?php echo htmlspecialchars($pack->composeFullTitle()); ?>"><?php echo htmlspecialchars($packTitle); ?></a><?php
             }
             else
             {

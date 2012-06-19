@@ -44,22 +44,28 @@ class PackageFactory
         return self::$nullPackage;
     }
 
-    public static function newDistribution($platformId, $name, $version, $directDownloadUrl, $builder=true)
+    public static function newDistribution($platformId, $name, $version, $directDownloadUri,
+                                           $directDownloadFallbackUri=NULL, $builder=true)
     {
         if($builder)
         {
-            return new DistributionBuilderPackage($platformId, $name, $version, $directDownloadUrl);
+            return new DistributionBuilderPackage($platformId, $name, $version,
+                                                  $directDownloadUri, $directDownloadFallbackUri);
         }
-        return new DistributionPackage($platformId, $name, $version, $directDownloadUrl);
+        return new DistributionPackage($platformId, $name, $version,
+                                       $directDownloadUri, $directDownloadFallbackUri);
     }
 
-    public static function newDistributionUnstable($platformId, $name, $version, $directDownloadUrl, $builder=true)
+    public static function newDistributionUnstable($platformId, $name, $version, $directDownloadUri,
+                                                   $directDownloadFallbackUri=NULL, $builder=true)
     {
         if($builder)
         {
-            return new DistributionUnstableBuilderPackage($platformId, $name, $version, $directDownloadUrl);
+            return new DistributionUnstableBuilderPackage($platformId, $name, $version,
+                                                          $directDownloadUri, $directDownloadFallbackUri);
         }
-        return new DistributionUnstablePackage($platformId, $name, $version, $directDownloadUrl);
+        return new DistributionUnstablePackage($platformId, $name, $version,
+                                               $directDownloadUri, $directDownloadFallbackUri);
     }
 
     /**
@@ -74,7 +80,16 @@ class PackageFactory
             throw new Exception('Received invalid log_pack');
 
         $platformId = BuildRepositoryPlugin::parsePlatformId(clean_text($log_pack->platform));
+
         $cleanDirectDownloadUri = safe_url($log_pack->downloadUri);
+        if(!empty($log_pack->downloadFallbackUri))
+        {
+            $cleanDirectDownloadFallbackUri = safe_url($log_pack->downloadFallbackUri);
+        }
+        else
+        {
+            $cleanDirectDownloadFallbackUri = NULL;
+        }
 
         if(!empty($log_pack->name))
         {
@@ -108,21 +123,29 @@ class PackageFactory
         case 'plugin':
             if($releaseType === RT_STABLE)
             {
-                $pack = new PluginBuilderPackage($platformId, $name, $version, $cleanDirectDownloadUri);
+                $pack = new PluginBuilderPackage($platformId, $name, $version,
+                                                 $cleanDirectDownloadUri,
+                                                 $cleanDirectDownloadFallbackUri);
             }
             else
             {
-                $pack = new PluginUnstableBuilderPackage($platformId, $name, $version, $cleanDirectDownloadUri);
+                $pack = new PluginUnstableBuilderPackage($platformId, $name, $version,
+                                                         $cleanDirectDownloadUri,
+                                                         $cleanDirectDownloadFallbackUri);
             }
             break;
         default:
             if($releaseType === RT_STABLE)
             {
-                $pack = new DistributionBuilderPackage($platformId, $name, $version, $cleanDirectDownloadUri);
+                $pack = new DistributionBuilderPackage($platformId, $name, $version,
+                                                       $cleanDirectDownloadUri,
+                                                       $cleanDirectDownloadFallbackUri);
             }
             else
             {
-                $pack = new DistributionUnstableBuilderPackage($platformId, $name, $version, $cleanDirectDownloadUri);
+                $pack = new DistributionUnstableBuilderPackage($platformId, $name, $version,
+                                                               $cleanDirectDownloadUri,
+                                                               $cleanDirectDownloadFallbackUri);
             }
             break;
         }

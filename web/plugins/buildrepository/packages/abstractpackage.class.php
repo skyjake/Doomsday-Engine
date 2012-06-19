@@ -31,6 +31,7 @@ abstract class AbstractPackage extends BasePackage implements iDownloadable
     static protected $emptyString = '';
 
     protected $directDownloadUri = NULL;
+    protected $directDownloadFallbackUri = NULL;
     protected $releaseNotesUri = NULL;
     protected $releaseChangeLogUri = NULL;
 
@@ -38,12 +39,17 @@ abstract class AbstractPackage extends BasePackage implements iDownloadable
     protected $compileWarnCount = NULL;
     protected $compileErrorCount = NULL;
 
-    public function __construct($platformId=PID_ANY, $title=NULL, $version=NULL, $directDownloadUri=NULL)
+    public function __construct($platformId=PID_ANY, $title=NULL, $version=NULL,
+                                $directDownloadUri=NULL,
+                                $directDownloadFallbackUri=NULL)
     {
         parent::__construct($platformId, $title, $version);
 
         if(!is_null($directDownloadUri) && strlen($directDownloadUri) > 0)
             $this->directDownloadUri = "$directDownloadUri";
+
+        if(!is_null($directDownloadFallbackUri) && strlen($directDownloadFallbackUri) > 0)
+            $this->directDownloadFallbackUri = "$directDownloadFallbackUri";
     }
 
     // Extends implementation in AbstractPackage.
@@ -56,7 +62,11 @@ abstract class AbstractPackage extends BasePackage implements iDownloadable
 
         parent::populateGraphTemplate($tpl);
 
-        $tpl['direct_download_uri'] = $this->directDownloadUri();
+        if($this->hasDirectDownloadUri())
+            $tpl['direct_download_uri'] = $this->directDownloadUri();
+
+        if($this->hasDirectDownloadFallbackUri())
+            $tpl['direct_download_fallback_uri'] = $this->directDownloadFallbackUri();
 
         if($this->hasReleaseChangeLogUri())
             $tpl['release_changeloguri'] = $this->releaseChangeLogUri;
@@ -171,12 +181,30 @@ abstract class AbstractPackage extends BasePackage implements iDownloadable
     }
 
     // Implements iDownloadable
+    public function &directDownloadFallbackUri()
+    {
+        if(!$this->hasDirectDownloadFallbackUri()) return $emptyString;
+        return $this->directDownloadFallbackUri;
+    }
+
+    // Implements iDownloadable
+    public function hasDirectDownloadFallbackUri()
+    {
+        return !is_null($this->directDownloadFallbackUri);
+    }
+
+    // Implements iDownloadable
     public function genDownloadBadge()
     {
         $fullTitle = $this->composeFullTitle();
-        if($this->hasDirectDownloadUri())
+        if($this->hasDirectDownloadUri() || $this->hasDirectDownloadFallbackUri())
         {
-            $html = '<a href="'. htmlspecialchars($this->directDownloadUri)
+            if($this->hasDirectDownloadUri())
+                $downloadUri = $this->directDownloadUri();
+            else
+                $downloadUri = $this->directDownloadFallbackUri();
+
+            $html = '<a href="'. htmlspecialchars($downloadUri)
                    .'" title="'. htmlspecialchars("Download $fullTitle")
                           .'">'. htmlspecialchars($fullTitle) .'</a>';
         }
