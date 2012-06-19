@@ -132,6 +132,7 @@ struct Updater::Instance
 
     VersionInfo latestVersion;
     QString latestPackageUri;
+    QString latestPackageUri2; // fallback location
     QString latestLogUri;
 
     Instance(Updater* up) : self(up), network(0), download(0), availableDlg(0), settingsDlg(0), backToFullscreen(false)
@@ -262,6 +263,18 @@ struct Updater::Instance
         latestPackageUri = map["direct_download_uri"].toString();
         latestLogUri = map["release_changeloguri"].toString();
 
+        latestPackageUri = "http://sourceforge.net/projects/deng/files/Doomsday%20Engine/Builds/doomsday_1.9.9_build999_64bit.dmg/download";
+
+        // Check if a fallback location is specified for the download.
+        if(map.contains("direct_download_fallback_uri"))
+        {
+            latestPackageUri2 = map["direct_download_fallback_uri"].toString();
+        }
+        else
+        {
+            latestPackageUri2 = "";
+        }
+
         latestVersion = VersionInfo(map["version"].toString(), map["build_uniqueid"].toInt());
 
         VersionInfo currentVersion;
@@ -296,7 +309,7 @@ struct Updater::Instance
             {
                 availableDlg = 0;
                 LOG_MSG("Download and install.");
-                download = new DownloadDialog(latestPackageUri);
+                download = new DownloadDialog(latestPackageUri, latestPackageUri2);
                 QObject::connect(download, SIGNAL(finished(int)), self, SLOT(downloadCompleted(int)));
                 download->show();
             }

@@ -22,15 +22,17 @@ struct DownloadDialog::Instance
     bool downloading;
     QPushButton* install;
     QProgressBar* bar;
+    QLabel* hostText;
     QLabel* progText;
     QUrl uri;
+    QUrl uri2;
     de::String savedFilePath;
     bool fileReady;
     QNetworkReply* reply;
     de::String redirected;
 
-    Instance(DownloadDialog* d, de::String downloadUri)
-        : self(d), downloading(false), uri(downloadUri), fileReady(false), reply(0)
+    Instance(DownloadDialog* d, de::String downloadUri, de::String fallbackUri)
+        : self(d), downloading(false), uri(downloadUri), uri2(fallbackUri), fileReady(false), reply(0)
     {
         QVBoxLayout* mainLayout = new QVBoxLayout;
         self->setLayout(mainLayout);
@@ -47,7 +49,9 @@ struct DownloadDialog::Instance
         QObject::connect(install, SIGNAL(clicked()), self, SLOT(accept()));
         QObject::connect(cancel, SIGNAL(clicked()), self, SLOT(reject()));
 
-        mainLayout->addWidget(new QLabel(tr("Downloading update from <b>%1</b>...").arg(uri.host())));
+        hostText = new QLabel;
+        updateLocation(uri);
+        mainLayout->addWidget(hostText);
         mainLayout->addWidget(bar);
 
         progText = new QLabel;
@@ -60,6 +64,11 @@ struct DownloadDialog::Instance
         QObject::connect(network, SIGNAL(finished(QNetworkReply*)), self, SLOT(finished(QNetworkReply*)));
 
         startDownload();
+    }
+
+    void updateLocation(const QUrl& url)
+    {
+        hostText->setText(tr("Downloading update from <b>%1</b>...").arg(url.host()));
     }
 
     void startDownload()
@@ -86,10 +95,10 @@ struct DownloadDialog::Instance
     }
 };
 
-DownloadDialog::DownloadDialog(de::String downloadUri, QWidget *parent)
+DownloadDialog::DownloadDialog(de::String downloadUri, de::String fallbackUri, QWidget *parent)
     : QDialog(parent)
 {
-    d = new Instance(this, downloadUri);
+    d = new Instance(this, downloadUri, fallbackUri);
 }
 
 DownloadDialog::~DownloadDialog()

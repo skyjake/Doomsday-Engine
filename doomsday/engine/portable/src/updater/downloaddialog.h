@@ -17,7 +17,7 @@ class DownloadDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit DownloadDialog(de::String downloadUri, QWidget *parent = 0);
+    explicit DownloadDialog(de::String downloadUri, de::String fallbackUri, QWidget *parent = 0);
     ~DownloadDialog();
 
     /**
