@@ -256,7 +256,10 @@ def startGame(profile):
     else:
         spawnFunc = os.spawnvp
 
-    spawnFunc(os.P_NOWAIT, engineBin, [engineBin, '@' + responseFile])
+    if host.isWindows():
+        spawnFunc(os.P_NOWAIT, engineBin, [engineBin, '@' + paths.quote(responseFile)])
+    else:
+        spawnFunc(os.P_NOWAIT, engineBin, [engineBin, '@' + responseFile])
 
     # Shut down if the configuration settings say so.
     value = profile.getValue('quit-on-launch')
@@ -267,14 +270,7 @@ def startGame(profile):
 
 def spawnWithTerminal(wait, launchScript, arguments):
     term = st.getSystemString('system-terminal').split(' ')
-    #print term + [launchScript]
     subprocess.Popen(term + [launchScript])
-
-    #if host.isWindows():
-    #    spawn = os.spawnv
-    #else:
-    #    spawn = os.spawnvp
-    #spawn(wait, term[0], term + [launchScript])    
 
 
 def generateOptions(profile):
