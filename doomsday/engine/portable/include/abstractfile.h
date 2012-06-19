@@ -28,6 +28,10 @@
 #include "dfile.h"
 #include "lumpinfo.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // File types.
 typedef enum {
     FT_UNKNOWNFILE,
@@ -153,5 +157,9 @@ size_t AbstractFile_ReadLump(abstractfile_t* af, int lumpIdx, uint8_t* buffer);
 
 /// @return  Number of "lumps" contained within this resource.
 int AbstractFile_LumpCount(abstractfile_t* af);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_FILESYS_ABSTRACTFILE_H */

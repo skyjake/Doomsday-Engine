@@ -24,11 +24,11 @@
 #ifndef LIBDENG_FILESYS_FILEHANDLE_H
 #define LIBDENG_FILESYS_FILEHANDLE_H
 
+#include "dd_types.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "dd_types.h"
 
 /// @addtogroup fs
 ///@{

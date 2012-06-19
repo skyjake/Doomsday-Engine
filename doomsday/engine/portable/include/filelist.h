@@ -26,6 +26,10 @@
 
 #include "dfile.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct abstractfile_s;
 struct ddstring_s;
 
@@ -213,5 +217,9 @@ void DFile_SetList(DFile* file, FileList* list);
 
 /// @return  File object represented by this handle.
 struct abstractfile_s* DFile_File_Const(const DFile* file);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_FILESYS_FILELIST_H */

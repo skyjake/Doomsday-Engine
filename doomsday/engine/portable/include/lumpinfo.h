@@ -27,6 +27,10 @@
 
 #include "dd_string.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct abstractfile_s;
 
 /**
@@ -44,5 +48,9 @@ typedef struct {
 void F_InitLumpInfo(LumpInfo* info);
 void F_CopyLumpInfo(LumpInfo* dst, const LumpInfo* src);
 void F_DestroyLumpInfo(LumpInfo* info);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_FILESYS_LUMPINFO_H */
