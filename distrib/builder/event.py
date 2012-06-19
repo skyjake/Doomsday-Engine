@@ -199,6 +199,9 @@ class Event:
                 return "http://sourceforge.net/projects/deng/files/Doomsday%%20Engine/Builds/%s/download" % fn
         # Default to the old location.
         return "%s/%s/%s" % (config.BUILD_URI, self.name, fn)
+        
+    def download_fallback_uri(self, fn):
+        return "%s/%s/%s" % (config.BUILD_URI, self.name, fn)
                 
     def compressed_log_filename(self, binaryFn):
         return log_filename(self.package_from_filename(binaryFn), 
@@ -341,6 +344,7 @@ class Event:
             msg += '<version>%s</version>' % self.version_from_filename(fn)
             msg += '<platform>%s</platform>' % self.platId[self.os_from_filename(fn)[2]]
             msg += '<downloadUri>%s</downloadUri>' % self.download_uri(fn)
+            msg += '<downloadFallbackUri>%s</downloadFallbackUri>' % self.download_fallback_uri(fn)
             logName = self.compressed_log_filename(fn)
             if os.path.exists(self.file_path(logName)):
                 msg += self.xml_log(logName)
