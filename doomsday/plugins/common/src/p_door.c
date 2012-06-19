@@ -61,25 +61,29 @@
 // Sounds played by the doors when changing state.
 // jHexen uses sound sequences, so it's are defined as 'SFX_NONE'.
 #if __JDOOM64__
-# define SFX_DOORCLOSE         (SFX_DORCLS)
+# define SFX_DOORCLOSING       (SFX_DORCLS)
+# define SFX_DOORCLOSED        (SFX_DORCLS)
 # define SFX_DOORBLAZECLOSE    (SFX_BDCLS)
 # define SFX_DOOROPEN          (SFX_DOROPN)
 # define SFX_DOORBLAZEOPEN     (SFX_BDOPN)
 # define SFX_DOORLOCKED        (SFX_OOF)
 #elif __JDOOM__
-# define SFX_DOORCLOSE         (SFX_DORCLS)
+# define SFX_DOORCLOSING       (SFX_DORCLS)
+# define SFX_DOORCLOSED        (SFX_DORCLS)
 # define SFX_DOORBLAZECLOSE    (SFX_BDCLS)
 # define SFX_DOOROPEN          (SFX_DOROPN)
 # define SFX_DOORBLAZEOPEN     (SFX_BDOPN)
 # define SFX_DOORLOCKED        (SFX_OOF)
 #elif __JHERETIC__
-# define SFX_DOORCLOSE         (SFX_DORCLS)
+# define SFX_DOORCLOSING       (SFX_DOROPN)
+# define SFX_DOORCLOSED        (SFX_DORCLS)
 # define SFX_DOORBLAZECLOSE    (SFX_NONE)
 # define SFX_DOOROPEN          (SFX_DOROPN)
 # define SFX_DOORBLAZEOPEN     (SFX_DOROPN)
 # define SFX_DOORLOCKED        (SFX_PLROOF)
 #elif __JHEXEN__
-# define SFX_DOORCLOSE         (SFX_NONE)
+# define SFX_DOORCLOSING       (SFX_NONE)
+# define SFX_DOORCLOSED        (SFX_NONE)
 # define SFX_DOORBLAZECLOSE    (SFX_NONE)
 # define SFX_DOOROPEN          (SFX_NONE)
 # define SFX_DOORBLAZEOPEN     (SFX_NONE)
@@ -137,7 +141,7 @@ void T_Door(door_t* door)
                 SN_StartSequence(P_SectorOrigin(door->sector),
                                  SEQ_DOOR_STONE + xsec->seqType);
 #else
-                S_PlaneSound(P_GetPtrp(door->sector, DMU_CEILING_PLANE), SFX_DOORCLOSE);
+                S_PlaneSound(P_GetPtrp(door->sector, DMU_CEILING_PLANE), SFX_DOORCLOSING);
 #endif
                 break;
 
@@ -218,7 +222,7 @@ void T_Door(door_t* door)
 #endif
                 DD_ThinkerRemove(&door->thinker); // Unlink and free.
 #if __JHERETIC__
-                S_PlaneSound(P_GetPtrp(door->sector, DMU_CEILING_PLANE), SFX_DOORCLOSE);
+                S_PlaneSound(P_GetPtrp(door->sector, DMU_CEILING_PLANE), SFX_DOORCLOSED);
 #endif
                 break;
 
@@ -369,7 +373,7 @@ static int EV_DoDoor2(int tag, float speed, int topwait, doortype_e type)
             door->topHeight -= 4;
             door->state = DS_DOWN;
 #if !__JHEXEN__
-            sound = SFX_DOORCLOSE;
+            sound = SFX_DOORCLOSING;
 #endif
             break;
 
@@ -377,7 +381,7 @@ static int EV_DoDoor2(int tag, float speed, int topwait, doortype_e type)
             door->topHeight = P_GetDoublep(sec, DMU_CEILING_HEIGHT);
             door->state = DS_DOWN;
 #if !__JHEXEN__
-            sound = SFX_DOORCLOSE;
+            sound = SFX_DOORCLOSING;
 #endif
             break;
 
