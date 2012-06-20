@@ -87,6 +87,20 @@ const gamesaveinfo_t* SV_GetGameSaveInfoForSlot(int slot);
 boolean SV_GetClientGameSavePathForGameId(uint gameId, ddstring_t* path);
 #endif
 
+#if __JHEXEN__
+void SV_HxInitBaseSlot(void);
+
+/**
+ * Copies the base slot to the reborn slot.
+ */
+void SV_HxUpdateRebornSlot(void);
+
+void SV_HxClearRebornSlot(void);
+
+int SV_HxGetRebornSlot(void);
+boolean SV_HxRebornSlotAvailable(void);
+#endif
+
 boolean SV_SaveGame(int slot, const char* name);
 
 boolean SV_LoadGame(int slot);

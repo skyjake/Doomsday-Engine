@@ -70,7 +70,6 @@
 # define SAVEGAME_DEFAULT_DIR  "hexndata"
 
 # define MOBJ_XX_PLAYER        -2
-# define MAX_MAPS              99
 # define BASE_SLOT             6
 # define REBORN_SLOT           7
 # define REBORN_DESCRIPTION    "TEMP GAME"

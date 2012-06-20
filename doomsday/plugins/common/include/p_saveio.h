@@ -92,16 +92,6 @@ boolean SV_GetGameSavePathForSlot(int slot, ddstring_t* path);
 boolean SV_GetGameSavePathForMapSlot(uint map, int slot, ddstring_t* path);
 #endif
 
-#if __JHEXEN__
-
-void SV_HxInitBaseSlot(void);
-void SV_HxUpdateRebornSlot(void);
-void SV_HxClearRebornSlot(void);
-boolean SV_HxRebornSlotAvailable(void);
-int SV_HxGetRebornSlot(void);
-
-boolean SV_ExistingFile(char *name);
-
 /**
  * Deletes all save game files associated with a slot number.
  */
@@ -112,8 +102,10 @@ void SV_ClearSaveSlot(int slot);
  */
 void SV_CopySaveSlot(int sourceSlot, int destSlot);
 
-saveptr_t* SV_HxSavePtr(void);
+#if __JHEXEN__
+boolean SV_ExistingFile(char* name);
 
+saveptr_t* SV_HxSavePtr(void);
 #endif // __JHEXEN__
 
 /*
@@ -132,6 +124,7 @@ void SV_WriteLong(unsigned int val);
 void SV_WriteLong(long val);
 #endif
 void SV_WriteFloat(float val);
+
 void SV_Read(void* data, int len);
 byte SV_ReadByte(void);
 short SV_ReadShort(void);

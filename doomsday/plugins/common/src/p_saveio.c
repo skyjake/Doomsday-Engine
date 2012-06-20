@@ -34,6 +34,8 @@
 #include "p_savedef.h"
 #include "materialarchive.h"
 
+#define MAX_HUB_MAPS 99
+
 static boolean inited;
 static LZFILE* savefile;
 static ddstring_t savePath; // e.g., "savegame/"
@@ -269,13 +271,14 @@ boolean SV_ExistingFile(char* name)
         return false;
     }
 }
+#endif
 
 void SV_ClearSaveSlot(int slot)
 {
     AutoStr* path;
 
     { int i;
-    for(i = 0; i < MAX_MAPS; ++i)
+    for(i = 0; i < MAX_HUB_MAPS; ++i)
     {
         path = composeGameSavePathForSlot2(slot, i);
         removeFile(path);
@@ -284,7 +287,6 @@ void SV_ClearSaveSlot(int slot)
     path = composeGameSavePathForSlot(slot);
     removeFile(path);
 }
-#endif
 
 boolean SV_IsValidSlot(int slot)
 {
@@ -520,14 +522,13 @@ boolean SV_GetGameSavePathForSlot(int slot, ddstring_t* path)
 #if __JHEXEN__
 boolean SV_GetGameSavePathForMapSlot(uint map, int slot, ddstring_t* path)
 {
-    errorIfNotInited("SV_GetGameSavePathForSlot");
+    errorIfNotInited("SV_GetGameSavePathForMapSlot");
     if(!path) return false;
     Str_CopyOrClear(path, composeGameSavePathForSlot2(slot, (int)map));
     return !Str_IsEmpty(path);
 }
 #endif
 
-#if __JHEXEN__
 void SV_CopySaveSlot(int sourceSlot, int destSlot)
 {
     AutoStr* src, *dst;
@@ -549,7 +550,7 @@ void SV_CopySaveSlot(int sourceSlot, int destSlot)
     }
 
     { int i;
-    for(i = 0; i < MAX_MAPS; ++i)
+    for(i = 0; i < MAX_HUB_MAPS; ++i)
     {
         src = composeGameSavePathForSlot2(sourceSlot, i);
         dst = composeGameSavePathForSlot2(destSlot, i);
@@ -560,43 +561,6 @@ void SV_CopySaveSlot(int sourceSlot, int destSlot)
     dst = composeGameSavePathForSlot(destSlot);
     copyFile(src, dst);
 }
-
-/**
- * Copies the base slot to the reborn slot.
- */
-void SV_HxUpdateRebornSlot(void)
-{
-    errorIfNotInited("SV_HxUpdateRebornSlot");
-    SV_ClearSaveSlot(REBORN_SLOT);
-    SV_CopySaveSlot(BASE_SLOT, REBORN_SLOT);
-}
-
-void SV_HxClearRebornSlot(void)
-{
-    errorIfNotInited("SV_HxClearRebornSlot");
-    SV_ClearSaveSlot(REBORN_SLOT);
-}
-
-int SV_HxGetRebornSlot(void)
-{
-    errorIfNotInited("SV_HxGetRebornSlot");
-    return (REBORN_SLOT);
-}
-
-boolean SV_HxRebornSlotAvailable(void)
-{
-    AutoStr* path;
-    errorIfNotInited("SV_HxRebornSlotAvailable");
-    path = composeGameSavePathForSlot(REBORN_SLOT);
-    return path && SV_ExistingFile(Str_Text(path));
-}
-
-void SV_HxInitBaseSlot(void)
-{
-    errorIfNotInited("SV_HxInitBaseSlot");
-    SV_ClearSaveSlot(BASE_SLOT);
-}
-#endif
 
 void SV_Write(const void* data, int len)
 {
