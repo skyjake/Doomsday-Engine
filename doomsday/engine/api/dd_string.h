@@ -155,16 +155,16 @@ void Str_Delete(ddstring_t* ds);
 /**
  * Empties a string, but does not free its memory.
  */
-void Str_Clear(ddstring_t* ds);
+ddstring_t* Str_Clear(ddstring_t* ds);
 
-void Str_Reserve(ddstring_t* ds, int length);
+ddstring_t* Str_Reserve(ddstring_t* ds, int length);
 
 /**
  * Reserves memory for the string. There will be at least @a length bytes
  * allocated for the string after this. If the string needs to be resized, its
  * contents are @em not preserved.
  */
-void Str_ReserveNotPreserving(ddstring_t* str, int length);
+ddstring_t* Str_ReserveNotPreserving(ddstring_t* str, int length);
 
 ddstring_t* Str_Set(ddstring_t* ds, const char* text);
 ddstring_t* Str_Append(ddstring_t* ds, const char* appendText);

@@ -198,33 +198,37 @@ void Str_Delete(ddstring_t* str)
     M_Free(str);
 }
 
-void Str_Clear(ddstring_t* str)
+ddstring_t* Str_Clear(ddstring_t* str)
 {
-    Str_Set(str, "");
+    return Str_Set(str, "");
 }
 
-void Str_Reserve(ddstring_t* str, int length)
+ddstring_t* Str_Reserve(ddstring_t* str, int length)
 {
     if(!str)
     {
         Con_Error("Attempted String::Reserve with invalid reference (this==0).");
-        return; // Unreachable.
+        exit(1); // Unreachable.
     }
-    if(length <= 0)
-        return;
-    allocateString(str, length, true);
+    if(length > 0)
+    {
+        allocateString(str, length, true);
+    }
+    return str;
 }
 
-void Str_ReserveNotPreserving(ddstring_t* str, int length)
+ddstring_t* Str_ReserveNotPreserving(ddstring_t* str, int length)
 {
     if(!str)
     {
         Con_Error("Attempted String::ReserveNotPreserving with invalid reference (this==0).");
-        return; // Unreachable.
+        exit(1); // Unreachable.
     }
-    if(length <= 0)
-        return;
-    allocateString(str, length, false);
+    if(length > 0)
+    {
+        allocateString(str, length, false);
+    }
+    return str;
 }
 
 ddstring_t* Str_Set(ddstring_t* str, const char* text)
