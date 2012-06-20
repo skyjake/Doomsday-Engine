@@ -451,6 +451,20 @@ ddstring_t* Str_Copy(ddstring_t* str, const ddstring_t* other)
     return str;
 }
 
+ddstring_t* Str_CopyOrClear(ddstring_t* dest, const ddstring_t* src)
+{
+    if(!dest)
+    {
+        Con_Error("Attempted String::CopyOrClear with invalid reference (this==0).");
+        exit(1); // Unreachable.
+    }
+    if(src)
+    {
+        return Str_Copy(dest, src);
+    }
+    return Str_Clear(dest);
+}
+
 ddstring_t* Str_StripLeft2(ddstring_t* str, int* count)
 {
     int i, num;

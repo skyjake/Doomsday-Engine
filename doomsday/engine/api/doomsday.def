@@ -257,6 +257,7 @@ EXPORTS
     Str_IsEmpty                 @474 NONAME
     Str_Text                    @475 NONAME
     Str_Copy                    @476 NONAME
+    Str_CopyOrClear             @843 NONAME
     Str_StripLeft               @477 NONAME
     Str_StripLeft2              @761 NONAME
     Str_StripRight              @478 NONAME

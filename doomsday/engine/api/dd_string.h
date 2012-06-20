@@ -218,6 +218,7 @@ char* Str_Text(const ddstring_t* ds);
  * Makes a true copy.
  */
 ddstring_t* Str_Copy(ddstring_t* dest, const ddstring_t* src);
+ddstring_t* Str_CopyOrClear(ddstring_t* dest, const ddstring_t* src);
 
 /**
  * Strip whitespace from beginning.
