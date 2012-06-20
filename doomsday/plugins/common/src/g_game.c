@@ -2009,11 +2009,13 @@ void G_DoReborn(int plrNum)
 
 #if __JHEXEN__
         if(SV_HxRebornSlotAvailable())
-        {   // Use the reborn code if the slot is available
+        {
+            // Use the reborn logic if the slot is available and in use.
             G_SetGameAction(GA_SINGLEREBORN);
         }
         else
-        {   // Start a new game if there's no reborn info
+        {
+            // Start a new game if there's no reborn info
             G_SetGameAction(GA_NEWGAME);
         }
 #else

@@ -277,6 +277,9 @@ void SV_ClearSaveSlot(int slot)
 {
     AutoStr* path;
 
+    errorIfNotInited("SV_ClearSaveSlot");
+    if(!SV_IsValidSlot(slot)) return;
+
     { int i;
     for(i = 0; i < MAX_HUB_MAPS; ++i)
     {
@@ -532,6 +535,8 @@ boolean SV_GetGameSavePathForMapSlot(uint map, int slot, ddstring_t* path)
 void SV_CopySaveSlot(int sourceSlot, int destSlot)
 {
     AutoStr* src, *dst;
+
+    errorIfNotInited("SV_CopySaveSlot");
 
     if(!SV_IsValidSlot(sourceSlot))
     {

@@ -106,7 +106,7 @@ boolean SV_SaveGame(int slot, const char* name);
 boolean SV_LoadGame(int slot);
 
 #if __JHEXEN__
-void            SV_MapTeleport(uint map, uint position);
+void SV_MapTeleport(uint map, uint position);
 #else
 /**
  * Saves a snapshot of the world, a still image.

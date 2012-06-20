@@ -400,20 +400,17 @@ void SV_Register(void)
 #if __JHEXEN__
 void SV_HxInitBaseSlot(void)
 {
-    errorIfNotInited("SV_HxInitBaseSlot");
     SV_ClearSaveSlot(BASE_SLOT);
 }
 
 void SV_HxUpdateRebornSlot(void)
 {
-    errorIfNotInited("SV_HxUpdateRebornSlot");
     SV_ClearSaveSlot(REBORN_SLOT);
     SV_CopySaveSlot(BASE_SLOT, REBORN_SLOT);
 }
 
 void SV_HxClearRebornSlot(void)
 {
-    errorIfNotInited("SV_HxClearRebornSlot");
     SV_ClearSaveSlot(REBORN_SLOT);
 }
 
