@@ -44,7 +44,6 @@ static gamesaveinfo_t* gameSaveInfo;
 
 #if __JHEXEN__
 static saveptr_t saveptr;
-static void CopyFile(const char* sourceName, const char* destName);
 #endif
 
 static void errorIfNotInited(const char* callerName)
@@ -53,6 +52,104 @@ static void errorIfNotInited(const char* callerName)
     Con_Error("%s: Savegame I/O is not presently initialized.", callerName);
     // Unreachable. Prevents static analysers from getting rather confused, poor things.
     exit(1);
+}
+
+static int removeFile(const ddstring_t* path)
+{
+    if(!path) return 1;
+    return remove(Str_Text(path));
+}
+
+static void copyFile(const ddstring_t* srcPath, const ddstring_t* destPath)
+{
+    size_t length;
+    char* buffer;
+    LZFILE* outf;
+
+    if(!srcPath || !destPath) return;
+
+#if __JHEXEN__
+    if(!SV_ExistingFile(Str_Text(srcPath))) return;
+#endif
+
+    length = M_ReadFile(Str_Text(srcPath), &buffer);
+    if(0 == length)
+    {
+        Con_Message("Warning: copyFile: Failed opening \"%s\" for reading.\n", Str_Text(srcPath));
+        return;
+    }
+
+    outf = lzOpen((char*)Str_Text(destPath), "wp");
+    if(outf)
+    {
+        lzWrite(buffer, length, outf);
+        lzClose(outf);
+    }
+    Z_Free(buffer);
+}
+
+/// @return  Possibly relative saved game directory. Does not need to be free'd.
+static AutoStr* composeSaveDir(void)
+{
+    AutoStr* dir = AutoStr_NewStd();
+
+    if(CommandLine_CheckWith("-savedir", 1))
+    {
+        Str_Set(dir, CommandLine_Next());
+        // Add a trailing backslash is necessary.
+        if(Str_RAt(dir, 0) != '/')
+            Str_AppendChar(dir, '/');
+        return dir;
+    }
+
+    // Use the default path.
+    { GameInfo gameInfo;
+    if(DD_GameInfo(&gameInfo))
+    {
+        Str_Appendf(dir, SAVEGAME_DEFAULT_DIR "/%s/", gameInfo.identityKey);
+        return dir;
+    }}
+
+    Con_Error("composeSaveDir: Error, failed retrieving GameInfo.");
+    exit(1); // Unreachable.
+}
+
+/**
+ * Compose the (possibly relative) path to the game-save associated
+ * with the logical save @a slot.
+ *
+ * @param slot  Logical save slot identifier.
+ * @param map   If @c >= 0 include this logical map index in the composed path.
+ * @return  The composed path if reachable (else @c NULL). Does not need to be free'd.
+ */
+static AutoStr* composeGameSavePathForSlot2(int slot, int map)
+{
+    AutoStr* path;
+    assert(inited);
+
+    // A valid slot?
+    if(!SV_IsValidSlot(slot)) return NULL;
+
+    // Do we have a valid path?
+    if(!F_MakePath(SV_SavePath())) return NULL;
+
+    // Compose the full game-save path and filename.
+    path = AutoStr_NewStd();
+    if(map >= 0)
+    {
+        Str_Appendf(path, "%s" SAVEGAMENAME "%i%02i." SAVEGAMEEXTENSION, SV_SavePath(), slot, map);
+    }
+    else
+    {
+        Str_Appendf(path, "%s" SAVEGAMENAME "%i." SAVEGAMEEXTENSION, SV_SavePath(), slot);
+    }
+    F_TranslatePath(path, path);
+    return path;
+}
+
+static AutoStr* composeGameSavePathForSlot(int slot)
+{
+    return composeGameSavePathForSlot2(slot, -1);
 }
 
 void SV_InitIO(void)
@@ -109,49 +206,18 @@ const char* SV_ClientSavePath(void)
 }
 #endif
 
-/// @return  Possibly relative saved game directory. Must be released with Str_Delete()
-static ddstring_t* composeSaveDir(void)
-{
-    ddstring_t* dir = Str_New();
-    if(CommandLine_CheckWith("-savedir", 1))
-    {
-        Str_Set(dir, CommandLine_Next());
-        // Add a trailing backslash is necessary.
-        if(Str_RAt(dir, 0) != '/')
-            Str_AppendChar(dir, '/');
-        return dir;
-    }
-
-    // Use the default path.
-    { GameInfo gameInfo;
-    if(DD_GameInfo(&gameInfo))
-    {
-#if __JHEXEN__
-        Str_Appendf(dir, "hexndata/%s/", gameInfo.identityKey);
-#else
-        Str_Appendf(dir, "savegame/%s/", gameInfo.identityKey);
-#endif
-        return dir;
-    }}
-
-    Str_Delete(dir);
-    Con_Error("composeSaveDir: Error, failed retrieving Game.");
-    return NULL; // Unreachable.
-}
-
 // Compose and create the saved game directories.
 void SV_ConfigureSavePaths(void)
 {
     assert(inited);
     {
-    ddstring_t* saveDir = composeSaveDir();
+    AutoStr* saveDir = composeSaveDir();
     boolean savePathExists;
 
     Str_Set(&savePath, Str_Text(saveDir));
 #if !__JHEXEN__
     Str_Clear(&clientSavePath); Str_Appendf(&clientSavePath, "%sclient/", Str_Text(saveDir));
 #endif
-    Str_Delete(saveDir);
 
     // Ensure that these paths exist.
     savePathExists = F_MakePath(Str_Text(&savePath));
@@ -161,7 +227,8 @@ void SV_ConfigureSavePaths(void)
 #endif
     if(!savePathExists)
         Con_Message("Warning:configureSavePaths: Failed to locate \"%s\"\nPerhaps it could "
-            "not be created (insufficent permissions?). Saving will not be possible.\n", Str_Text(&savePath));
+                    "not be created (insufficent permissions?). Saving will not be possible.\n",
+                    Str_Text(&savePath));
     }
 }
 
@@ -170,7 +237,7 @@ LZFILE* SV_File(void)
     return savefile;
 }
 
-LZFILE* SV_OpenFile(const char *fileName, const char* mode)
+LZFILE* SV_OpenFile(const char* fileName, const char* mode)
 {
     assert(savefile == 0);
     savefile = lzOpen((char*)fileName, (char*)mode);
@@ -188,9 +255,9 @@ void SV_CloseFile(void)
 
 
 #if __JHEXEN__
-boolean SV_ExistingFile(char *name)
+boolean SV_ExistingFile(char* name)
 {
-    FILE *fp;
+    FILE* fp;
 
     if((fp = fopen(name, "rb")) != NULL)
     {
@@ -205,45 +272,19 @@ boolean SV_ExistingFile(char *name)
 
 void SV_ClearSaveSlot(int slot)
 {
-    ddstring_t fileName;
-    Str_Init(&fileName);
+    AutoStr* path;
+
     { int i;
     for(i = 0; i < MAX_MAPS; ++i)
     {
-        Str_Clear(&fileName);
-        Str_Appendf(&fileName, "%shex%d%02d.hxs", Str_Text(&savePath), slot, i);
-        F_TranslatePath(&fileName, &fileName);
-        remove(Str_Text(&fileName));
+        path = composeGameSavePathForSlot2(slot, i);
+        removeFile(path);
     }}
-    Str_Clear(&fileName);
-    Str_Appendf(&fileName, "%shex%d.hxs", Str_Text(&savePath), slot);
-    F_TranslatePath(&fileName, &fileName);
-    remove(Str_Text(&fileName));
-    Str_Free(&fileName);
+
+    path = composeGameSavePathForSlot(slot);
+    removeFile(path);
 }
 #endif
-
-static void CopyFile(const char* sourceName, const char* destName)
-{
-    size_t length;
-    char* buffer;
-    LZFILE* outf;
-
-    length = M_ReadFile(sourceName, &buffer);
-    if(0 == length)
-    {
-        Con_Message("Warning:CopyFile: Failed opening \"%s\" for reading.\n", sourceName);
-        return;
-    }
-
-    outf = lzOpen((char*)destName, "wp");
-    if(NULL != outf)
-    {
-        lzWrite(buffer, length, outf);
-        lzClose(outf);
-    }
-    Z_Free(buffer);
-}
 
 boolean SV_IsValidSlot(int slot)
 {
@@ -324,27 +365,6 @@ static boolean readGameSaveInfoFromFile(const ddstring_t* savePath, ddstring_t* 
     return found;
 }
 
-/**
- * Compose the (possibly relative) path to the game-save associated
- * with the logical save @a slot. If the game-save path is unreachable
- * then @a path will be made empty.
- *
- * @param slot  Logical save slot identifier.
- * @param path  String buffer to populate with the game save path.
- * @return  @c true if @a path was set.
- */
-static boolean composeGameSavePathForSlot(int slot, ddstring_t* path)
-{
-    assert(inited && SV_IsValidSlot(slot) && path);
-    // Do we have a valid path?
-    if(!F_MakePath(SV_SavePath())) return false;
-    // Compose the full game-save path and filename.
-    Str_Clear(path);
-    Str_Appendf(path, "%s" SAVEGAMENAME "%i." SAVEGAMEEXTENSION, SV_SavePath(), slot);
-    F_TranslatePath(path, path);
-    return true;
-}
-
 /// Re-build game-save info by re-scanning the save paths and populating the list.
 static void buildGameSaveInfo(void)
 {
@@ -356,8 +376,8 @@ static void buildGameSaveInfo(void)
         // Not yet been here. We need to allocate and initialize the game-save info list.
         gameSaveInfo = (gamesaveinfo_t*) malloc(NUMSAVESLOTS * sizeof(*gameSaveInfo));
         if(!gameSaveInfo)
-            Con_Error("buildGameSaveInfo: Failed on allocation of %lu bytes for "
-                "game-save info list.", (unsigned long) (NUMSAVESLOTS * sizeof(*gameSaveInfo)));
+            Con_Error("buildGameSaveInfo: Failed on allocation of %lu bytes for game-save info list.",
+                      (unsigned long) (NUMSAVESLOTS * sizeof(*gameSaveInfo)));
 
         // Initialize.
         for(i = 0; i < NUMSAVESLOTS; ++i)
@@ -376,7 +396,7 @@ static void buildGameSaveInfo(void)
     {
         gamesaveinfo_t* info = &gameSaveInfo[i];
 
-        composeGameSavePathForSlot(i, &info->filePath);
+        Str_CopyOrClear(&info->filePath, composeGameSavePathForSlot(i));
         if(Str_IsEmpty(&info->filePath))
         {
             // The save path cannot be accessed for some reason. Perhaps its a
@@ -493,50 +513,42 @@ boolean SV_GetGameSavePathForSlot(int slot, ddstring_t* path)
 {
     errorIfNotInited("SV_GetGameSavePathForSlot");
     if(!path) return false;
-
-    Str_Clear(path);
-    if(!SV_IsValidSlot(slot)) return false;
-    return composeGameSavePathForSlot(slot, path);
+    Str_CopyOrClear(path, composeGameSavePathForSlot(slot));
+    return !Str_IsEmpty(path);
 }
 
 #if __JHEXEN__
 void SV_CopySaveSlot(int sourceSlot, int destSlot)
 {
-    ddstring_t src, dst;
+    AutoStr* src, *dst;
 
-    Str_Init(&src);
-    Str_Init(&dst);
+    if(!SV_IsValidSlot(sourceSlot))
+    {
+#if _DEBUG
+        Con_Message("Warning: SV_CopySaveSlot: Source slot %i invalid, save game not copied.\n", sourceSlot);
+#endif
+        return;
+    }
+
+    if(!SV_IsValidSlot(destSlot))
+    {
+#if _DEBUG
+        Con_Message("Warning: SV_CopySaveSlot: Dest slot %i invalid, save game not copied.\n", destSlot);
+#endif
+        return;
+    }
 
     { int i;
     for(i = 0; i < MAX_MAPS; ++i)
     {
-        Str_Clear(&src);
-        Str_Appendf(&src, "%shex%d%02d.hxs", Str_Text(&savePath), sourceSlot, i);
-        F_TranslatePath(&src, &src);
-
-        if(SV_ExistingFile(Str_Text(&src)))
-        {
-            Str_Clear(&dst);
-            Str_Appendf(&dst, "%shex%d%02d.hxs", Str_Text(&savePath), destSlot, i);
-            F_TranslatePath(&dst, &dst);
-            CopyFile(Str_Text(&src), Str_Text(&dst));
-        }
+        src = composeGameSavePathForSlot2(sourceSlot, i);
+        dst = composeGameSavePathForSlot2(destSlot, i);
+        copyFile(src, dst);
     }}
 
-    Str_Clear(&src);
-    Str_Appendf(&src, "%shex%d.hxs", Str_Text(&savePath), sourceSlot);
-    F_TranslatePath(&src, &src);
-
-    if(SV_ExistingFile(Str_Text(&src)))
-    {
-        Str_Clear(&dst);
-        Str_Appendf(&dst, "%shex%d.hxs", Str_Text(&savePath), destSlot);
-        F_TranslatePath(&dst, &dst);
-        CopyFile(Str_Text(&src), Str_Text(&dst));
-    }
-
-    Str_Free(&dst);
-    Str_Free(&src);
+    src = composeGameSavePathForSlot(sourceSlot);
+    dst = composeGameSavePathForSlot(destSlot);
+    copyFile(src, dst);
 }
 
 /**
@@ -563,15 +575,10 @@ int SV_HxGetRebornSlot(void)
 
 boolean SV_HxRebornSlotAvailable(void)
 {
-    boolean result;
-    ddstring_t path;
+    AutoStr* path;
     errorIfNotInited("SV_HxRebornSlotAvailable");
-    Str_Init(&path);
-    Str_Appendf(&path, "%shex%d.hxs", Str_Text(&savePath), REBORN_SLOT);
-    F_TranslatePath(&path, &path);
-    result = SV_ExistingFile(Str_Text(&path));
-    Str_Free(&path);
-    return result;
+    path = composeGameSavePathForSlot(REBORN_SLOT);
+    return path && SV_ExistingFile(Str_Text(path));
 }
 
 void SV_HxInitBaseSlot(void)

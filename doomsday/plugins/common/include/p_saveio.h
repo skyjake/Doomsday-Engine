@@ -86,6 +86,7 @@ void SV_UpdateGameSaveInfo(void);
  * @return  Save slot identifier of the slot else @c -1
  */
 int SV_ParseGameSaveSlot(const char* str);
+
 boolean SV_GetGameSavePathForSlot(int slot, ddstring_t* path);
 
 #if __JHEXEN__
@@ -95,6 +96,7 @@ void SV_HxUpdateRebornSlot(void);
 void SV_HxClearRebornSlot(void);
 boolean SV_HxRebornSlotAvailable(void);
 int SV_HxGetRebornSlot(void);
+
 boolean SV_ExistingFile(char *name);
 
 /**

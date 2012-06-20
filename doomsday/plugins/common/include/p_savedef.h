@@ -34,6 +34,7 @@
 # define SAVEGAMENAME          "DoomSav"
 # define CLIENTSAVEGAMENAME    "DoomCl"
 # define SAVEGAMEEXTENSION     "dsg"
+# define SAVEGAME_DEFAULT_DIR  "savegame"
 
 #elif __JDOOM64__
 # define MY_SAVE_MAGIC         0x1D6420F4
@@ -44,6 +45,7 @@
 # define SAVEGAMENAME          "D64Sav"
 # define CLIENTSAVEGAMENAME    "D64Cl"
 # define SAVEGAMEEXTENSION     "6sg"
+# define SAVEGAME_DEFAULT_DIR  "savegame"
 
 #elif __JHERETIC__
 # define MY_SAVE_MAGIC         0x7D9A12C5
@@ -54,6 +56,7 @@
 # define SAVEGAMENAME          "HticSav"
 # define CLIENTSAVEGAMENAME    "HticCl"
 # define SAVEGAMEEXTENSION     "hsg"
+# define SAVEGAME_DEFAULT_DIR  "savegame"
 
 #elif __JHEXEN__
 # define HXS_VERSION_TEXT      "HXS Ver " // Do not change me!
@@ -64,6 +67,7 @@
 # define SAVEGAMENAME          "hex"
 # define CLIENTSAVEGAMENAME    "hexencl"
 # define SAVEGAMEEXTENSION     "hxs"
+# define SAVEGAME_DEFAULT_DIR  "hexndata"
 
 # define MOBJ_XX_PLAYER        -2
 # define MAX_MAPS              99

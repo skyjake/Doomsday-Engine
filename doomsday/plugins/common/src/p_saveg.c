@@ -4841,6 +4841,11 @@ static boolean openGameSaveFile(const char* fileName, boolean write)
 
 boolean SV_LoadGame(int slot)
 {
+#if __JHEXEN__
+    const int logicalSlot = BASE_SLOT;
+#else
+    const int logicalSlot = slot;
+#endif
     boolean loadError = true;
     ddstring_t path;
 
@@ -4852,12 +4857,7 @@ boolean SV_LoadGame(int slot)
 
     // Compose the possibly relative game save path.
     Str_Init(&path);
-#if __JHEXEN__
-    Str_Appendf(&path, "%shex6.hxs", SV_SavePath());
-    F_TranslatePath(&path, &path);
-#else
-    SV_GetGameSavePathForSlot(slot, &path);
-#endif
+    SV_GetGameSavePathForSlot(logicalSlot, &path);
 
 #if __JHEXEN__
     // Copy all needed save files to the base slot
@@ -5226,6 +5226,11 @@ int SV_SaveGameWorker(void* ptr)
 
 boolean SV_SaveGame(int slot, const char* name)
 {
+#if __JHEXEN__
+    const int logicalSlot = BASE_SLOT;
+#else
+    const int logicalSlot = slot;
+#endif
     savegameparam_t params;
     ddstring_t path;
     int saveError;
@@ -5245,12 +5250,7 @@ boolean SV_SaveGame(int slot, const char* name)
     }
 
     Str_Init(&path);
-#if __JHEXEN__
-    Str_Appendf(&path, "%shex6.hxs", SV_SavePath());
-    F_TranslatePath(&path, &path);
-#else
-    SV_GetGameSavePathForSlot(slot, &path);
-#endif
+    SV_GetGameSavePathForSlot(logicalSlot, &path);
 
     params.path = &path;
     params.name = name;
@@ -5307,7 +5307,8 @@ void SV_MapTeleport(uint map, uint position)
     if(!deathmatch)
     {
         if(P_GetMapCluster(gameMap) == P_GetMapCluster(map))
-        {   // Same cluster - save current map without saving player mobjs.
+        {
+            // Same cluster - save current map without saving player mobjs.
             ddstring_t otherFileName;
 
             // Set the mobj archive numbers
@@ -5333,7 +5334,8 @@ void SV_MapTeleport(uint map, uint position)
             Str_Free(&otherFileName);
         }
         else
-        {   // Entering new cluster - clear base slot
+        {
+            // Entering new cluster - clear base slot
             SV_ClearSaveSlot(BASE_SLOT);
         }
     }
