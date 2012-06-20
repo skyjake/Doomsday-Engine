@@ -88,6 +88,9 @@ void SV_UpdateGameSaveInfo(void);
 int SV_ParseGameSaveSlot(const char* str);
 
 boolean SV_GetGameSavePathForSlot(int slot, ddstring_t* path);
+#if __JHEXEN__
+boolean SV_GetGameSavePathForMapSlot(uint map, int slot, ddstring_t* path);
+#endif
 
 #if __JHEXEN__
 

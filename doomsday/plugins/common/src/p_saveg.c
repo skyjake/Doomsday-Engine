@@ -5052,8 +5052,8 @@ static void unarchiveMap(void)
     size_t bufferSize;
 
     // Compose the full path to the saved map.
-    Str_Init(&path); Str_Appendf(&path, "%shex6%02u.hxs", SV_SavePath(), gameMap+1);
-    F_TranslatePath(&path, &path);
+    Str_Init(&path);
+    SV_GetGameSavePathForMapSlot(gameMap+1, BASE_SLOT, &path);
 
 #ifdef _DEBUG
     Con_Printf("unarchiveMap: Reading %s\n", Str_Text(&path));
@@ -5187,8 +5187,8 @@ int SV_SaveGameWorker(void* ptr)
     ddstring_t mapPath;
 
     // Compose the full name to the saved map file.
-    Str_Init(&mapPath); Str_Appendf(&mapPath, "%shex6%02u.hxs", SV_SavePath(), gameMap+1);
-    F_TranslatePath(&mapPath, &mapPath);
+    Str_Init(&mapPath);
+    SV_GetGameSavePathForMapSlot(gameMap+1, BASE_SLOT, &mapPath);
 
     SV_OpenFile(Str_Text(&mapPath), "wp");
     P_ArchiveMap(true); // true = save player info
@@ -5296,8 +5296,8 @@ void SV_MapTeleport(uint map, uint position)
      * First, determine whether we've been to this map previously and if so,
      * whether we need to load the archived map state.
      */
-    Str_Init(&fileName); Str_Appendf(&fileName, "%shex6%02u.hxs", SV_SavePath(), map+1);
-    F_TranslatePath(&fileName, &fileName);
+    Str_Init(&fileName);
+    SV_GetGameSavePathForMapSlot(map+1, BASE_SLOT, &fileName);
 
     if(!deathmatch && SV_ExistingFile(Str_Text(&fileName)))
         revisit = true;
@@ -5319,8 +5319,7 @@ void SV_MapTeleport(uint map, uint position)
 
             // Compose the full path name to the saved map file.
             Str_Init(&otherFileName);
-            Str_Appendf(&otherFileName, "%shex6%02u.hxs", SV_SavePath(), gameMap+1);
-            F_TranslatePath(&otherFileName, &otherFileName);
+            SV_GetGameSavePathForMapSlot(gameMap+1, BASE_SLOT, &otherFileName);
 
             SV_OpenFile(Str_Text(&otherFileName), "wp");
             P_ArchiveMap(false);

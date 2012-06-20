@@ -518,6 +518,16 @@ boolean SV_GetGameSavePathForSlot(int slot, ddstring_t* path)
 }
 
 #if __JHEXEN__
+boolean SV_GetGameSavePathForMapSlot(uint map, int slot, ddstring_t* path)
+{
+    errorIfNotInited("SV_GetGameSavePathForSlot");
+    if(!path) return false;
+    Str_CopyOrClear(path, composeGameSavePathForSlot2(slot, (int)map));
+    return !Str_IsEmpty(path);
+}
+#endif
+
+#if __JHEXEN__
 void SV_CopySaveSlot(int sourceSlot, int destSlot)
 {
     AutoStr* src, *dst;
