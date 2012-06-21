@@ -1998,26 +1998,29 @@ void G_DoReborn(int plrNum)
         FI_StackClear();
     }
 
-    if(!IS_NETGAME)
+    if(IS_NETGAME)
     {
-        // We've just died, don't do a briefing now.
-        briefDisabled = true;
-
-#if __JHEXEN__
-        // Use the latest autosave if available else start a new game.
-        if(!G_LoadGame(AUTO_SLOT))
-        {
-            G_SetGameAction(GA_NEWGAME);
-        }
-#else
-        // Reload the map from scratch.
-        G_SetGameAction(GA_LOADMAP);
-#endif
-    }
-    else
-    {   // In a net game.
         P_RebornPlayer(plrNum);
+        return;
     }
+
+    // We've just died, don't do a briefing now.
+    briefDisabled = true;
+
+    // Use the latest autosave?
+#if !__JHEXEN__
+    if(cfg.loadAutoSaveOnReborn) // Cannot be disabled in Hexen.
+#endif
+    {
+        if(G_LoadGame(AUTO_SLOT)) return;
+    }
+
+    // Reload the map from scratch.
+#if __JHEXEN__
+    G_SetGameAction(GA_NEWGAME);
+#else
+    G_SetGameAction(GA_LOADMAP);
+#endif
 }
 
 #if __JHEXEN__

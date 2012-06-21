@@ -311,6 +311,9 @@ desc = Color of HUD messages blue component.
 [msg-blink]
 desc = HUD messages blink for this number of tics when printed.
 
+[game-save-auto-loadonreborn]
+desc = 1=Load the auto save slot on player reborn. (default: off).
+
 [game-save-last-slot]
 desc = Last used save slot. -1=Not yet loaded/saved in this game session.
 
