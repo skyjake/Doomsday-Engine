@@ -1133,7 +1133,7 @@ void G_StartHelp(void)
     Con_Message("Warning: InFine script 'help' not defined, ignoring.\n");
 }
 
-int G_EndGameResponse(msgresponse_t response, void* context)
+int G_EndGameResponse(msgresponse_t response, int userValue, void* userPointer)
 {
     if(response == MSG_YES)
     {
@@ -1155,19 +1155,19 @@ void G_EndGame(void)
 
     if(!userGame)
     {
-        Hu_MsgStart(MSG_ANYKEY, ENDNOGAME, NULL, NULL);
+        Hu_MsgStart(MSG_ANYKEY, ENDNOGAME, NULL, 0, NULL);
         return;
     }
 
     /*
     if(IS_NETGAME)
     {
-        Hu_MsgStart(MSG_ANYKEY, NETEND, NULL, NULL);
+        Hu_MsgStart(MSG_ANYKEY, NETEND, NULL, 0, NULL);
         return;
     }
     */
 
-    Hu_MsgStart(MSG_YESNO, IS_CLIENT? GET_TXT(TXT_DISCONNECT) : ENDGAME, G_EndGameResponse, NULL);
+    Hu_MsgStart(MSG_YESNO, IS_CLIENT? GET_TXT(TXT_DISCONNECT) : ENDGAME, G_EndGameResponse, 0, NULL);
 }
 
 void G_DoLoadMap(void)
@@ -2688,7 +2688,7 @@ void G_InitNew(skillmode_t skill, uint episode, uint map)
     G_DoLoadMap();
 }
 
-int G_QuitGameResponse(msgresponse_t response, void* context)
+int G_QuitGameResponse(msgresponse_t response, int userValue, void* userPointer)
 {
     if(response == MSG_YES)
     {
@@ -2725,7 +2725,7 @@ void G_QuitGame(void)
 #endif
 
     Con_Open(false);
-    Hu_MsgStart(MSG_YESNO, endString, G_QuitGameResponse, NULL);
+    Hu_MsgStart(MSG_YESNO, endString, G_QuitGameResponse, 0, NULL);
 }
 
 /**
@@ -3356,11 +3356,11 @@ D_CMD(OpenSaveMenu)
     return true;
 }
 
-int loadGameConfirmResponse(msgresponse_t response, void* context)
+int loadGameConfirmResponse(msgresponse_t response, int userValue, void* userPointer)
 {
     if(response == MSG_YES)
     {
-        const int slot = *(int*)context;
+        const int slot = userValue;
         G_LoadGame(slot);
     }
     return true;
@@ -3377,7 +3377,7 @@ D_CMD(LoadGame)
     if(IS_NETGAME)
     {
         S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
-        Hu_MsgStart(MSG_ANYKEY, QLOADNET, NULL, NULL);
+        Hu_MsgStart(MSG_ANYKEY, QLOADNET, NULL, 0, NULL);
         return false;
     }
 
@@ -3399,13 +3399,13 @@ D_CMD(LoadGame)
         dd_snprintf(buf, 80, QLPROMPT, Str_Text(&info->name));
 
         S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
-        Hu_MsgStart(MSG_YESNO, buf, loadGameConfirmResponse, (void*)&slot);
+        Hu_MsgStart(MSG_YESNO, buf, loadGameConfirmResponse, slot, 0);
         return true;
     }
     else if(!stricmp(argv[1], "quick") || !stricmp(argv[1], "<quick>"))
     {
         S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
-        Hu_MsgStart(MSG_ANYKEY, QSAVESPOT, NULL, NULL);
+        Hu_MsgStart(MSG_ANYKEY, QSAVESPOT, NULL, 0, NULL);
         return true;
     }
 
@@ -3433,17 +3433,13 @@ D_CMD(QuickLoadGame)
     return DD_Execute(true, "loadgame quick");
 }
 
-typedef struct {
-    int slot;
-    const char* name;
-} savegameconfirmresponse_params_t;
-
-int saveGameConfirmResponse(msgresponse_t response, void* context)
+int saveGameConfirmResponse(msgresponse_t response, int userValue, void* userPointer)
 {
     if(response == MSG_YES)
     {
-        savegameconfirmresponse_params_t* p = (savegameconfirmresponse_params_t*)context;
-        G_SaveGame2(p->slot, p->name);
+        const int slot = userValue;
+        const char* name = (const char*)userPointer;
+        G_SaveGame2(slot, name);
     }
     return true;
 }
@@ -3465,14 +3461,14 @@ D_CMD(SaveGame)
     if(player->playerState == PST_DEAD || Get(DD_PLAYBACK))
     {
         S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
-        Hu_MsgStart(MSG_ANYKEY, SAVEDEAD, NULL, NULL);
+        Hu_MsgStart(MSG_ANYKEY, SAVEDEAD, NULL, 0, NULL);
         return true;
     }
 
     if(G_GameState() != GS_MAP)
     {
         S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
-        Hu_MsgStart(MSG_ANYKEY, SAVEOUTMAP, NULL, NULL);
+        Hu_MsgStart(MSG_ANYKEY, SAVEOUTMAP, NULL, 0, NULL);
         return true;
     }
 
@@ -3492,15 +3488,11 @@ D_CMD(SaveGame)
         }
 
         {
-        savegameconfirmresponse_params_t p;
         const gamesaveinfo_t* info = SV_GameSaveInfoForSlot(slot);
         dd_snprintf(buf, 80, QSPROMPT, Str_Text(&info->name));
 
-        p.slot = slot;
-        p.name = name;
-
         S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
-        Hu_MsgStart(MSG_YESNO, buf, saveGameConfirmResponse, (void*)&p);
+        Hu_MsgStart(MSG_YESNO, buf, saveGameConfirmResponse, slot, (void*)name);
         }
         return true;
     }

@@ -3668,13 +3668,13 @@ int Hu_MenuChangeWeaponPriority(mn_object_t* obj, mn_actionid_t action, void* pa
     return 0;
 }
 
-int Hu_MenuSelectSingleplayer(mn_object_t* obj, mn_actionid_t action, void* paramaters)
+int Hu_MenuSelectSingleplayer(mn_object_t* ob, mn_actionid_t action, void* parameters)
 {
     if(MNA_ACTIVEOUT != action) return 1;
 
     if(IS_NETGAME)
     {
-        Hu_MsgStart(MSG_ANYKEY, NEWGAME, NULL, NULL);
+        Hu_MsgStart(MSG_ANYKEY, NEWGAME, NULL, 0, NULL);
         return 0;
     }
 
@@ -3832,28 +3832,28 @@ int Hu_MenuSelectAcceptPlayerSetup(mn_object_t* obj, mn_actionid_t action, void*
     return 0;
 }
 
-int Hu_MenuSelectQuitGame(mn_object_t* obj, mn_actionid_t action, void* paramaters)
+int Hu_MenuSelectQuitGame(mn_object_t* ob, mn_actionid_t action, void* parameters)
 {
     if(MNA_ACTIVEOUT != action) return 1;
     G_QuitGame();
     return 0;
 }
 
-int Hu_MenuSelectEndGame(mn_object_t* obj, mn_actionid_t action, void* paramaters)
+int Hu_MenuSelectEndGame(mn_object_t* ob, mn_actionid_t action, void* parameters)
 {
     if(MNA_ACTIVEOUT != action) return 1;
     G_EndGame();
     return 0;
 }
 
-int Hu_MenuSelectLoadGame(mn_object_t* obj, mn_actionid_t action, void* paramaters)
+int Hu_MenuSelectLoadGame(mn_object_t* ob, mn_actionid_t action, void* parameters)
 {
     if(MNA_ACTIVEOUT != action) return 1;
     if(!Get(DD_DEDICATED))
     {
         if(IS_CLIENT && !Get(DD_PLAYBACK))
         {
-            Hu_MsgStart(MSG_ANYKEY, LOADNET, NULL, NULL);
+            Hu_MsgStart(MSG_ANYKEY, LOADNET, NULL, 0, NULL);
             return 0;
         }
     }
@@ -3863,7 +3863,7 @@ int Hu_MenuSelectLoadGame(mn_object_t* obj, mn_actionid_t action, void* paramate
     return 0;
 }
 
-int Hu_MenuSelectSaveGame(mn_object_t* obj, mn_actionid_t action, void* paramaters)
+int Hu_MenuSelectSaveGame(mn_object_t* ob, mn_actionid_t action, void* parameters)
 {
     player_t* player = &players[CONSOLEPLAYER];
 
@@ -3873,20 +3873,20 @@ int Hu_MenuSelectSaveGame(mn_object_t* obj, mn_actionid_t action, void* paramate
         if(IS_CLIENT)
         {
 #if __JDOOM__ || __JDOOM64__
-            Hu_MsgStart(MSG_ANYKEY, SAVENET, NULL, NULL);
+            Hu_MsgStart(MSG_ANYKEY, SAVENET, NULL, 0, NULL);
 #endif
             return 0;
         }
 
         if(G_GameState() != GS_MAP)
         {
-            Hu_MsgStart(MSG_ANYKEY, SAVEOUTMAP, NULL, NULL);
+            Hu_MsgStart(MSG_ANYKEY, SAVEOUTMAP, NULL, 0, NULL);
             return 0;
         }
 
         if(player->playerState == PST_DEAD)
         {
-            Hu_MsgStart(MSG_ANYKEY, SAVEDEAD, NULL, NULL);
+            Hu_MsgStart(MSG_ANYKEY, SAVEDEAD, NULL, 0, NULL);
             return 0;
         }
     }
@@ -3982,16 +3982,16 @@ int Hu_MenuFocusEpisode(mn_object_t* obj, mn_actionid_t action, void* paramaters
     return 0;
 }
 
-int Hu_MenuConfirmOrderCommericalVersion(msgresponse_t response, void* context)
+int Hu_MenuConfirmOrderCommericalVersion(msgresponse_t response, int userValue, void* userPointer)
 {
     G_StartHelp();
     return true;
 }
 
-int Hu_MenuActivateNotSharewareEpisode(mn_object_t* obj, mn_actionid_t action, void* paramaters)
+int Hu_MenuActivateNotSharewareEpisode(mn_object_t* ob, mn_actionid_t action, void* parameters)
 {
     if(MNA_ACTIVEOUT != action) return 1;
-    Hu_MsgStart(MSG_ANYKEY, SWSTRING, Hu_MenuConfirmOrderCommericalVersion, NULL);
+    Hu_MsgStart(MSG_ANYKEY, SWSTRING, Hu_MenuConfirmOrderCommericalVersion, 0, NULL);
     return 0;
 }
 #endif
@@ -4006,7 +4006,7 @@ int Hu_MenuFocusSkillMode(mn_object_t* obj, mn_actionid_t action, void* paramate
 }
 
 #if __JDOOM__
-int Hu_MenuConfirmInitNewGame(msgresponse_t response, void* context)
+int Hu_MenuConfirmInitNewGame(msgresponse_t response, int userValue, void* userPointer)
 {
     if(response == MSG_YES)
     {
@@ -4021,7 +4021,7 @@ void Hu_MenuInitNewGame(boolean confirmed)
 #if __JDOOM__
     if(!confirmed && SM_NIGHTMARE == mnSkillmode)
     {
-        Hu_MsgStart(MSG_YESNO, NIGHTMARE, Hu_MenuConfirmInitNewGame, NULL);
+        Hu_MsgStart(MSG_YESNO, NIGHTMARE, Hu_MenuConfirmInitNewGame, 0, NULL);
         return;
     }
 #endif

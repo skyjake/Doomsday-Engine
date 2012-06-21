@@ -36,6 +36,8 @@
 # define SAVEGAMEEXTENSION     "dsg"
 # define SAVEGAME_DEFAULT_DIR  "savegame"
 
+# define REBORN_SLOT           9
+
 #elif __JDOOM64__
 # define MY_SAVE_MAGIC         0x1D6420F4
 # define MY_CLIENT_SAVE_MAGIC  0x2D6420F4
@@ -47,6 +49,8 @@
 # define SAVEGAMEEXTENSION     "6sg"
 # define SAVEGAME_DEFAULT_DIR  "savegame"
 
+# define REBORN_SLOT           9
+
 #elif __JHERETIC__
 # define MY_SAVE_MAGIC         0x7D9A12C5
 # define MY_CLIENT_SAVE_MAGIC  0x1062AF43
@@ -57,6 +61,8 @@
 # define CLIENTSAVEGAMENAME    "HticCl"
 # define SAVEGAMEEXTENSION     "hsg"
 # define SAVEGAME_DEFAULT_DIR  "savegame"
+
+# define REBORN_SLOT           9
 
 #elif __JHEXEN__
 # define HXS_VERSION_TEXT      "HXS Ver " // Do not change me!
