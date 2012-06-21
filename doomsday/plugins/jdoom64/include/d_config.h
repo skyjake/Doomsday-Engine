@@ -115,6 +115,7 @@ typedef struct jdoom64_config_s {
 
     byte            confirmQuickGameSave;
     byte            loadAutoSaveOnReborn;
+    byte            loadLastSaveOnReborn;
 
     int             hudPatchReplaceMode;
     byte            hudShown[NUMHUDDISPLAYS]; // HUD data visibility.

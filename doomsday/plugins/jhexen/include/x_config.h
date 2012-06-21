@@ -85,7 +85,10 @@ typedef struct {
     byte            overrideHubMsg; // skip the transition hub message when 1
     int             cameraNoClip;
     float           bobView, bobWeapon;
+
     byte            confirmQuickGameSave;
+    byte            loadLastSaveOnReborn;
+
     int             jumpEnabled;
     float           jumpPower;
     int             airborneMovement;

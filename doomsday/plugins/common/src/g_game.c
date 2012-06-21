@@ -2007,6 +2007,12 @@ void G_DoReborn(int plrNum)
     // We've just died, don't do a briefing now.
     briefDisabled = true;
 
+    // Use the latest save?
+    if(cfg.loadLastSaveOnReborn)
+    {
+        if(G_LoadGame(Con_GetInteger("game-save-last-slot"))) return;
+    }
+
     // Use the latest autosave?
 #if !__JHEXEN__
     if(cfg.loadAutoSaveOnReborn) // Cannot be disabled in Hexen.

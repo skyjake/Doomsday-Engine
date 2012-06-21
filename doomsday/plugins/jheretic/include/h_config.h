@@ -114,6 +114,7 @@ typedef struct jheretic_config_s {
 
     byte            confirmQuickGameSave;
     byte            loadAutoSaveOnReborn;
+    byte            loadLastSaveOnReborn;
 
     int             hudPatchReplaceMode;
     byte            hudShown[6];   // HUD data visibility.
