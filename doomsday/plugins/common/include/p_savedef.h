@@ -28,7 +28,7 @@
 #if __JDOOM__
 # define MY_SAVE_MAGIC         0x1DEAD666
 # define MY_CLIENT_SAVE_MAGIC  0x2DEAD666
-# define MY_SAVE_VERSION       9
+# define MY_SAVE_VERSION       10
 # define SAVESTRINGSIZE        24
 # define CONSISTENCY           0x2c
 # define SAVEGAMENAME          "DoomSav"
@@ -41,7 +41,7 @@
 #elif __JDOOM64__
 # define MY_SAVE_MAGIC         0x1D6420F4
 # define MY_CLIENT_SAVE_MAGIC  0x2D6420F4
-# define MY_SAVE_VERSION       8
+# define MY_SAVE_VERSION       10
 # define SAVESTRINGSIZE        24
 # define CONSISTENCY           0x2c
 # define SAVEGAMENAME          "D64Sav"
@@ -54,7 +54,7 @@
 #elif __JHERETIC__
 # define MY_SAVE_MAGIC         0x7D9A12C5
 # define MY_CLIENT_SAVE_MAGIC  0x1062AF43
-# define MY_SAVE_VERSION       8
+# define MY_SAVE_VERSION       10
 # define SAVESTRINGSIZE        24
 # define CONSISTENCY           0x9d
 # define SAVEGAMENAME          "HticSav"
@@ -94,24 +94,7 @@ typedef struct targetplraddress_s {
 #endif
 
 #if !__JHEXEN__
-typedef struct saveheader_s {
-    int             magic;
-    int             version;
-    int             gameMode;
-    char            name[SAVESTRINGSIZE];
-    byte            skill;
-    byte            episode;
-    byte            map;
-    byte            deathmatch;
-    byte            noMonsters;
-    byte            respawnMonsters;
-    int             mapTime;
-    byte            players[MAXPLAYERS];
-    unsigned int    gameId;
-} saveheader_t;
-
 #define PRE_VER5_END_SPECIALS   7
-
 #endif
 
 #endif

@@ -29,6 +29,24 @@
 #include "lzss.h"
 #include "p_savedef.h"
 
+#if !__JHEXEN__
+typedef struct saveheader_s {
+    int             magic;
+    int             version;
+    int             gameMode;
+    char            name[SAVESTRINGSIZE];
+    byte            skill;
+    byte            episode;
+    byte            map;
+    byte            deathmatch;
+    byte            noMonsters;
+    byte            respawnMonsters;
+    int             mapTime;
+    byte            players[MAXPLAYERS];
+    unsigned int    gameId;
+} saveheader_t;
+#endif
+
 typedef struct gamesaveinfo_s {
     ddstring_t filePath;
     ddstring_t name;
@@ -142,6 +160,11 @@ void SV_CopySaveSlot(int sourceSlot, int destSlot);
 saveptr_t* SV_HxSavePtr(void);
 #endif // __JHEXEN__
 
+/**
+ * Seek forward @a offset bytes in the save file.
+ */
+void SV_Seek(uint offset);
+
 /*
  * Writing and reading values
  */
@@ -164,6 +187,11 @@ byte SV_ReadByte(void);
 short SV_ReadShort(void);
 long SV_ReadLong(void);
 float SV_ReadFloat(void);
+
+#if !__JHEXEN__
+void SV_Header_Write(saveheader_t* hdr);
+void SV_Header_Read(saveheader_t* hdr);
+#endif
 
 void SV_MaterialArchive_Write(MaterialArchive* arc);
 void SV_MaterialArchive_Read(MaterialArchive* arc, int version);

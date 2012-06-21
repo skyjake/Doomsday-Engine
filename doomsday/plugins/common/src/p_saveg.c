@@ -4563,7 +4563,7 @@ static boolean readSaveHeader(saveheader_t *hdr, LZFILE *savefile)
     randomClassParm = SV_ReadByte();
 
 #else
-    lzRead(hdr, sizeof(*hdr), SV_File());
+    SV_Header_Read(hdr);
 
     if(hdr->magic != MY_SAVE_MAGIC)
     {
@@ -4576,46 +4576,6 @@ static boolean readSaveHeader(saveheader_t *hdr, LZFILE *savefile)
     {
         return false; // A future version.
     }
-
-#if __JDOOM__ || __JHERETIC__
-# if __JDOOM__ //|| __JHEXEN__
-    if(hdr->version < 9)
-# elif __JHERETIC__
-    if(hdr->version < 8)
-# endif
-    {
-        static const gamemode_t oldGameModes[] = {
-# if __JDOOM__
-            doom_shareware,
-            doom,
-            doom2,
-            doom_ultimate
-# elif __JHERETIC__
-            heretic_shareware,
-            heretic,
-            heretic_extended
-# elif __JHEXEN__
-            hexen_demo,
-            hexen,
-            hexen_deathkings
-# endif
-        };
-        hdr->gameMode = oldGameModes[(int)hdr->gameMode];
-#  if __JDOOM__
-        /**
-         * \kludge Older versions did not differentiate between versions of
-         * Doom2 (i.e., Plutonia and TNT are marked as Doom2). If we detect
-         * that this save is from some version of Doom2, replace the marked
-         * gamemode with the current gamemode.
-         */
-        if(hdr->gameMode == doom2 && (gameModeBits & GM_ANY_DOOM2))
-        {
-            hdr->gameMode = gameMode;
-        }
-        /// kludge end.
-#  endif
-    }
-#endif
 
     if(hdr->gameMode != gameMode)
     {
@@ -4914,7 +4874,7 @@ void SV_SaveClient(uint gameId)
     hdr.respawnMonsters = respawnMonsters;
     hdr.mapTime = mapTime;
     hdr.gameId = gameId;
-    SV_Write(&hdr, sizeof(hdr));
+    SV_Header_Write(&hdr);
 
     // Some important information.
     // Our position and look angles.
@@ -4970,7 +4930,7 @@ void SV_LoadClient(uint gameId)
     }
     Str_Free(&gameSavePath);
 
-    SV_Read(&hdr, sizeof(hdr));
+    SV_Header_Read(&hdr);
     if(hdr.magic != MY_CLIENT_SAVE_MAGIC)
     {
         SV_CloseFile();
@@ -5133,7 +5093,7 @@ int SV_SaveGameWorker(void* ptr)
     hdr.gameId = SV_GenerateGameId();
     for(i = 0; i < MAXPLAYERS; i++)
         hdr.players[i] = players[i].plr->inGame;
-    lzWrite(&hdr, sizeof(hdr), SV_File());
+    SV_Header_Write(&hdr);
 
     // In netgames the server tells the clients to save their games.
     NetSv_SaveGame(hdr.gameId);

@@ -371,9 +371,10 @@ static boolean readGameSaveHeaderFromFile(const ddstring_t* savePath, ddstring_t
     if(SV_OpenFile(Str_Text(savePath), "rp"))
     {
         saveheader_t* hdr = SV_SaveHeader();
-        // Read the header.
-        lzRead(hdr, sizeof(*hdr), SV_File());
+
+        SV_Header_Read(hdr);
         SV_CloseFile();
+
         if(MY_SAVE_MAGIC == hdr->magic)
         {
             Str_Set(name, hdr->name);
@@ -683,6 +684,16 @@ void SV_WriteFloat(float val)
     lzPutL(temp, savefile);
 }
 
+void SV_Seek(uint offset)
+{
+    errorIfNotInited("SV_SetPos");
+#if __JHEXEN__
+    saveptr.b += offset;
+#else
+    lzSeek(savefile, offset);
+#endif
+}
+
 void SV_Read(void *data, int len)
 {
     errorIfNotInited("SV_Read");
@@ -772,6 +783,39 @@ static void swd(Writer* w, const char* data, int len)
     SV_Write(data, len);
 }
 
+#if !__JHEXEN__
+void SV_Header_Write(saveheader_t* hdr)
+{
+    Writer* svWriter = Writer_NewWithCallbacks(swi8, swi16, swi32, swf, swd);
+    ddstring_t name;
+
+    Writer_WriteInt32(svWriter, hdr->magic);
+    Writer_WriteInt32(svWriter, hdr->version);
+    Writer_WriteInt32(svWriter, hdr->gameMode);
+
+    Str_InitStatic(&name, hdr->name);
+    Str_Write(&name, svWriter);
+
+    Writer_WriteByte(svWriter, hdr->skill);
+    Writer_WriteByte(svWriter, hdr->episode);
+    Writer_WriteByte(svWriter, hdr->map);
+    Writer_WriteByte(svWriter, hdr->deathmatch);
+    Writer_WriteByte(svWriter, hdr->noMonsters);
+    Writer_WriteByte(svWriter, hdr->respawnMonsters);
+    Writer_WriteInt32(svWriter, hdr->mapTime);
+
+    { int i;
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        Writer_WriteByte(svWriter, hdr->players[i]);
+    }}
+
+    Writer_WriteInt32(svWriter, hdr->gameId);
+
+    Writer_Delete(svWriter);
+}
+#endif
+
 void SV_MaterialArchive_Write(MaterialArchive* arc)
 {
     Writer* svWriter = Writer_NewWithCallbacks(swi8, swi16, swi32, swf, swd);
@@ -808,6 +852,93 @@ static void srd(Reader* r, char* data, int len)
     if(!r) return;
     SV_Read(data, len);
 }
+
+#if !__JHEXEN__
+void SV_Header_Read(saveheader_t* hdr)
+{
+    Reader* svReader = Reader_NewWithCallbacks(sri8, sri16, sri32, srf, srd);
+
+    hdr->magic = Reader_ReadInt32(svReader);
+    hdr->version = Reader_ReadInt32(svReader);
+    hdr->gameMode = Reader_ReadInt32(svReader);
+
+    if(hdr->version >= 10)
+    {
+        ddstring_t buf;
+        Str_InitStd(&buf);
+        Str_Read(&buf, svReader);
+        memcpy(hdr->name, Str_Text(&buf), SAVESTRINGSIZE);
+        hdr->name[SAVESTRINGSIZE] = '\0';
+        Str_Free(&buf);
+    }
+    else
+    {
+        // Older formats use a fixed-length name (24 characters).
+        Reader_Read(svReader, hdr->name, SAVESTRINGSIZE);
+    }
+    hdr->skill = Reader_ReadByte(svReader);
+    hdr->episode = Reader_ReadByte(svReader);
+    hdr->map = Reader_ReadByte(svReader);
+    hdr->deathmatch = Reader_ReadByte(svReader);
+    hdr->noMonsters = Reader_ReadByte(svReader);
+    hdr->respawnMonsters = Reader_ReadByte(svReader);
+
+    // Older formats serialize the unpacked header struct; skip the junk values (alignment).
+    if(hdr->version < 10) SV_Seek(2);
+
+    hdr->mapTime = Reader_ReadInt32(svReader);
+
+    { int i;
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        hdr->players[i] = Reader_ReadByte(svReader);
+    }}
+    hdr->gameId = Reader_ReadInt32(svReader);
+
+    Reader_Delete(svReader);
+
+    // Translate gameMode identifiers from older save versions.
+#if __JDOOM__ || __JHERETIC__
+# if __JDOOM__ //|| __JHEXEN__
+    if(hdr->version < 9)
+# elif __JHERETIC__
+    if(hdr->version < 8)
+# endif
+    {
+        static const gamemode_t oldGameModes[] = {
+# if __JDOOM__
+            doom_shareware,
+            doom,
+            doom2,
+            doom_ultimate
+# elif __JHERETIC__
+            heretic_shareware,
+            heretic,
+            heretic_extended
+# elif __JHEXEN__
+            hexen_demo,
+            hexen,
+            hexen_deathkings
+# endif
+        };
+        hdr->gameMode = oldGameModes[(int)hdr->gameMode];
+#  if __JDOOM__
+        /**
+         * \kludge Older versions did not differentiate between versions of
+         * Doom2 (i.e., Plutonia and TNT are marked as Doom2). If we detect
+         * that this save is from some version of Doom2, replace the marked
+         * gamemode with the current gamemode.
+         */
+        if(hdr->gameMode == doom2 && (gameModeBits & GM_ANY_DOOM2))
+        {
+            hdr->gameMode = gameMode;
+        }
+        /// kludge end.
+#  endif
+    }
+#endif
+}
+#endif
 
 void SV_MaterialArchive_Read(MaterialArchive* arc, int version)
 {
