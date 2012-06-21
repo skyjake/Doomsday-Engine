@@ -2043,12 +2043,6 @@ void G_StartNewInit(void)
     // Default the player start spot group to 0
     rebornPosition = 0;
 }
-
-void G_StartNewGame(skillmode_t skill)
-{
-    G_StartNewInit();
-    G_InitNew(skill, 0, P_TranslateMap(0)); // Hexen has translated map numbers.
-}
 #endif
 
 /**
@@ -2567,7 +2561,8 @@ void G_DoNewGame(void)
     }
     G_InitNew(dSkill, dEpisode, dMap);
 #else
-    G_StartNewGame(dSkill);
+    G_StartNewInit();
+    G_InitNew(dSkill, 0, P_TranslateMap(0)); // Hexen has translated map numbers.
 #endif
     G_SetGameAction(GA_NONE);
 }
