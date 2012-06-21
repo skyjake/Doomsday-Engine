@@ -95,6 +95,17 @@ static void clearGameSaveInfo(gamesaveinfo_t* info)
     Str_Free(&info->name);
 }
 
+static boolean existingFile(char* name)
+{
+    FILE* fp;
+    if((fp = fopen(name, "rb")) != NULL)
+    {
+        fclose(fp);
+        return true;
+    }
+    return false;
+}
+
 static int removeFile(const ddstring_t* path)
 {
     if(!path) return 1;
@@ -108,10 +119,7 @@ static void copyFile(const ddstring_t* srcPath, const ddstring_t* destPath)
     LZFILE* outf;
 
     if(!srcPath || !destPath) return;
-
-#if __JHEXEN__
-    if(!SV_ExistingFile(Str_Text(srcPath))) return;
-#endif
+    if(!existingFile(Str_Text(srcPath))) return;
 
     length = M_ReadFile(Str_Text(srcPath), &buffer);
     if(0 == length)
@@ -295,17 +303,6 @@ void SV_CloseFile(void)
         lzClose(savefile);
         savefile = 0;
     }
-}
-
-boolean SV_ExistingFile(char* name)
-{
-    FILE* fp;
-    if((fp = fopen(name, "rb")) != NULL)
-    {
-        fclose(fp);
-        return true;
-    }
-    return false;
 }
 
 void SV_ClearSaveSlot(int slot)
@@ -511,6 +508,12 @@ int SV_ParseGameSaveSlot(const char* str)
     {
         return Con_GetInteger("game-save-quick-slot");
     }
+#if __JHEXEN__
+    if(!stricmp(str, "reborn") || !stricmp(str, "<reborn>"))
+    {
+        return REBORN_SLOT;
+    }
+#endif
 
     // Try logical slot identifier.
     if(M_IsStringValidInt(str))
@@ -605,6 +608,15 @@ boolean SV_IsGameSaveSlotUsed(int slot)
     info = SV_GameSaveInfoForSlot(slot);
     return !Str_IsEmpty(&info->filePath);
 }
+
+#if __JHEXEN__
+boolean SV_HxGameSaveSlotHasMapState(int slot, uint map)
+{
+    AutoStr* path = composeGameSavePathForSlot2(slot, (int)map);
+    if(!path || Str_IsEmpty(path)) return false;
+    return existingFile(Str_Text(path));
+}
+#endif
 
 void SV_CopySaveSlot(int sourceSlot, int destSlot)
 {

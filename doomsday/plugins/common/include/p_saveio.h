@@ -29,6 +29,11 @@
 #include "lzss.h"
 #include "p_savedef.h"
 
+typedef struct gamesaveinfo_s {
+    ddstring_t filePath;
+    ddstring_t name;
+} gamesaveinfo_t;
+
 typedef struct savegameparam_s {
     const ddstring_t* path;
     const char* name;
@@ -66,6 +71,16 @@ LZFILE* SV_File(void);
 void SV_UpdateGameSaveInfo(void);
 
 /**
+ * Lookup a save slot by searching for a match on game-save name.
+ * Search is in ascending logical slot order 0...N (where N is the number
+ * of available save slots in the current game).
+ *
+ * @param name  Name of the game-save to look for. Case insensitive.
+ * @return  Logical slot number of the found game-save else @c -1
+ */
+int SV_FindGameSaveSlotForName(const char* name);
+
+/**
  * Parse the given string and determine whether it references a logical
  * game-save slot.
  *
@@ -74,16 +89,37 @@ void SV_UpdateGameSaveInfo(void);
  *                 Search is in ascending logical slot order 0..N (where N is the
  *                 number of available save slots in the current game).
  *             Pass 2: Check for keyword identifiers.
- *                 <last> = The last used slot.
- *                 <quick> = The currently nominated "quick save" slot.
+ *                 <last>   = The last used slot.
+ *                 <quick>  = The currently nominated "quick save" slot.
+ *                 <reborn> = The reborn slot.
  *             Pass 3: Check for a logical save slot number.
  *
  * @return  Save slot identifier of the slot else @c -1
  */
 int SV_ParseGameSaveSlot(const char* str);
 
+/// @return  @c true iff @a slot is a valid logical save slot.
 boolean SV_IsValidSlot(int slot);
+
+/// @return  @c true iff @a slot is user-writable save slot (not "reborn" or similar).
 boolean SV_IsUserWritableSlot(int slot);
+
+/// @return  @c true iff a game-save is present for logical save @a slot.
+boolean SV_IsGameSaveSlotUsed(int slot);
+
+#if __JHEXEN__
+/**
+ * @return  @c true iff a game-save is present and serialized @a map state is
+ *      is present for logical save @a slot.
+ */
+boolean SV_HxGameSaveSlotHasMapState(int slot, uint map);
+#endif
+
+/**
+ * @return  Game-save info for logical save @a slot. Always returns valid
+ *      info even if supplied with an invalid or unused slot identifer.
+ */
+const gamesaveinfo_t* SV_GameSaveInfoForSlot(int slot);
 
 boolean SV_GameSavePathForSlot(int slot, ddstring_t* path);
 #if __JHEXEN__
@@ -101,8 +137,6 @@ void SV_ClearSaveSlot(int slot);
  * Copies all the save game files from one slot to another.
  */
 void SV_CopySaveSlot(int sourceSlot, int destSlot);
-
-boolean SV_ExistingFile(char* name);
 
 #if __JHEXEN__
 saveptr_t* SV_HxSavePtr(void);

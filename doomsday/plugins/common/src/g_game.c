@@ -2321,7 +2321,7 @@ void G_WorldDone(void)
 void G_DoWorldDone(void)
 {
 #if __JHEXEN__
-    SV_MapTeleport(nextMap, nextMapEntryPoint);
+    SV_HxMapTeleport(nextMap, nextMapEntryPoint);
 
     // In a non-network, non-deathmatch game, save immediately into the reborn slot.
     if(!IS_NETGAME && !deathmatch)

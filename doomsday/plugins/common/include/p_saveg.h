@@ -31,11 +31,6 @@
 
 #include "p_saveio.h"
 
-typedef struct gamesaveinfo_s {
-    ddstring_t filePath;
-    ddstring_t name;
-} gamesaveinfo_t;
-
 /// Register the console commands and variables of this module.
 void SV_Register(void);
 
@@ -52,37 +47,13 @@ int SV_SaveVersion(void);
 saveheader_t* SV_SaveHeader(void);
 #endif
 
-/**
- * Lookup a save slot by searching for a match on game-save name.
- * Search is in ascending logical slot order 0...N (where N is the number
- * of available save slots in the current game).
- *
- * @param name  Name of the game-save to look for. Case insensitive.
- * @return  Logical slot number of the found game-save else @c -1
- */
-int SV_FindGameSaveSlotForName(const char* name);
-
-/**
- * @return  @c true iff a game-save is present for logical save @a slot.
- */
-boolean SV_IsGameSaveSlotUsed(int slot);
-
-/**
- * @return  Game-save info for logical save @a slot. Always returns valid
- *      info even if supplied with an invalid or unused slot identifer.
- */
-const gamesaveinfo_t* SV_GameSaveInfoForSlot(int slot);
-
-#if __JHEXEN__
-void SV_HxInitBaseSlot(void);
-#endif
-
 boolean SV_SaveGame(int slot, const char* name);
 
 boolean SV_LoadGame(int slot);
 
 #if __JHEXEN__
-void SV_MapTeleport(uint map, uint position);
+void SV_HxInitBaseSlot(void);
+void SV_HxMapTeleport(uint map, uint position);
 #else
 /**
  * Saves a snapshot of the world, a still image.

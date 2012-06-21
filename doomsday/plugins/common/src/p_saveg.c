@@ -5255,10 +5255,9 @@ boolean SV_SaveGame(int slot, const char* name)
 }
 
 #if __JHEXEN__
-void SV_MapTeleport(uint map, uint position)
+void SV_HxMapTeleport(uint map, uint position)
 {
     int i, oldKeys = 0, oldPieces = 0, bestWeapon;
-    ddstring_t fileName;
     player_t playerBackup[MAXPLAYERS];
     uint numInventoryItems[MAXPLAYERS][NUM_INVENTORYITEM_TYPES];
     inventoryitemtype_t readyItem[MAXPLAYERS];
@@ -5274,10 +5273,7 @@ void SV_MapTeleport(uint map, uint position)
      * First, determine whether we've been to this map previously and if so,
      * whether we need to load the archived map state.
      */
-    Str_Init(&fileName);
-    SV_GameSavePathForMapSlot(map+1, BASE_SLOT, &fileName);
-
-    if(!deathmatch && SV_ExistingFile(Str_Text(&fileName)))
+    if(!deathmatch && SV_HxGameSaveSlotHasMapState(BASE_SLOT, map+1))
         revisit = true;
     else
         revisit = false;
@@ -5287,7 +5283,7 @@ void SV_MapTeleport(uint map, uint position)
         if(P_GetMapCluster(gameMap) == P_GetMapCluster(map))
         {
             // Same cluster - save current map without saving player mobjs.
-            ddstring_t otherFileName;
+            ddstring_t mapFilePath;
 
             // Set the mobj archive numbers
             SV_InitThingArchive(false, false);
@@ -5296,10 +5292,10 @@ void SV_MapTeleport(uint map, uint position)
             materialArchive = MaterialArchive_New(true);
 
             // Compose the full path name to the saved map file.
-            Str_Init(&otherFileName);
-            SV_GameSavePathForMapSlot(gameMap+1, BASE_SLOT, &otherFileName);
+            Str_Init(&mapFilePath);
+            SV_GameSavePathForMapSlot(gameMap+1, BASE_SLOT, &mapFilePath);
 
-            SV_OpenFile(Str_Text(&otherFileName), "wp");
+            SV_OpenFile(Str_Text(&mapFilePath), "wp");
             P_ArchiveMap(false);
 
             // We are done with the MaterialArchive.
@@ -5308,7 +5304,7 @@ void SV_MapTeleport(uint map, uint position)
 
             // Close the output file
             SV_CloseFile();
-            Str_Free(&otherFileName);
+            Str_Free(&mapFilePath);
         }
         else
         {
@@ -5498,7 +5494,5 @@ void SV_MapTeleport(uint map, uint position)
     {
         P_CheckACSStore(gameMap);
     }
-
-    Str_Free(&fileName);
 }
 #endif
