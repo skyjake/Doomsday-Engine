@@ -34,7 +34,6 @@
 typedef struct gamesaveinfo_s {
     ddstring_t filePath;
     ddstring_t name;
-    int slot;
 } gamesaveinfo_t;
 
 /// Register the console commands and variables of this module.
@@ -72,20 +71,7 @@ boolean SV_IsGameSaveSlotUsed(int slot);
  * @return  Game-save info for logical save @a slot. Always returns valid
  *      info even if supplied with an invalid or unused slot identifer.
  */
-const gamesaveinfo_t* SV_GetGameSaveInfoForSlot(int slot);
-
-#if !__JHEXEN__
-/**
- * Compose the (possibly relative) path to the game-save associated with
- * the unique @a gameId. If the game-save path is unreachable then
- * @a path will be made empty.
- *
- * @param gameId  Unique game identifier.
- * @param path  String buffer to populate with the game-save path.
- * @return  @c true if @a path was set.
- */
-boolean SV_GetClientGameSavePathForGameId(uint gameId, ddstring_t* path);
-#endif
+const gamesaveinfo_t* SV_GameSaveInfoForSlot(int slot);
 
 #if __JHEXEN__
 void SV_HxInitBaseSlot(void);

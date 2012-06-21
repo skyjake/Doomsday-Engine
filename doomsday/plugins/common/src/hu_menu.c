@@ -3295,7 +3295,7 @@ void Hu_MenuUpdateGameSaveWidgets(void)
     {
         mn_object_t* obj = MN_MustFindObjectOnPage(page, 0, saveSlotObjectIds[i]);
         mndata_edit_t* edit = (mndata_edit_t*) obj->_typedata;
-        const gamesaveinfo_t* info = SV_GetGameSaveInfoForSlot(edit->data2);
+        const gamesaveinfo_t* info = SV_GameSaveInfoForSlot(edit->data2);
         const char* text = "";
 
         MNObject_SetFlags(obj, FO_SET, MNF_DISABLED);

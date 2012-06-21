@@ -419,35 +419,6 @@ saveheader_t* SV_SaveHeader(void)
 {
     return &hdr;
 }
-
-/**
- * Compose the (possibly relative) path to the game-save associated
- * with @a gameId. If the game-save path is unreachable then @a path
- * will be made empty.
- *
- * @param gameId  Unique game identifier.
- * @param path  String buffer to populate with the game save path.
- * @return  @c true if @a path was set.
- */
-static boolean composeClientGameSavePathForGameId(uint gameId, ddstring_t* path)
-{
-    assert(inited && NULL != path);
-    // Do we have a valid path?
-    if(!F_MakePath(SV_ClientSavePath())) return false;
-    // Compose the full game-save path and filename.
-    Str_Clear(path);
-    Str_Appendf(path, "%s" CLIENTSAVEGAMENAME "%08X." SAVEGAMEEXTENSION, SV_ClientSavePath(), gameId);
-    F_TranslatePath(path, path);
-    return true;
-}
-
-boolean SV_GetClientGameSavePathForGameId(uint gameId, ddstring_t* path)
-{
-    errorIfNotInited("SV_GetGameSavePathForSlot");
-    if(!path) return false;
-    Str_Clear(path);
-    return composeClientGameSavePathForGameId(gameId, path);
-}
 #endif
 
 void SV_AssertSegment(int segType)
@@ -4864,7 +4835,7 @@ boolean SV_LoadGame(int slot)
 
     // Compose the possibly relative game save path.
     Str_Init(&path);
-    SV_GetGameSavePathForSlot(logicalSlot, &path);
+    SV_GameSavePathForSlot(logicalSlot, &path);
 
 #if __JHEXEN__
     // Copy all needed save files to the base slot
@@ -4918,7 +4889,7 @@ void SV_SaveClient(uint gameId)
     playerHeaderOK = false; // Uninitialized.
 
     Str_Init(&gameSavePath);
-    SV_GetClientGameSavePathForGameId(gameId, &gameSavePath);
+    SV_ClientGameSavePathForGameId(gameId, &gameSavePath);
     if(!SV_OpenFile(Str_Text(&gameSavePath), "wp"))
     {
         Con_Message("Warning:SV_SaveClient: Failed opening \"%s\" for writing.\n", Str_Text(&gameSavePath));
@@ -4985,7 +4956,7 @@ void SV_LoadClient(uint gameId)
     playerHeaderOK = false; // Uninitialized.
 
     Str_Init(&gameSavePath);
-    SV_GetClientGameSavePathForGameId(gameId, &gameSavePath);
+    SV_ClientGameSavePathForGameId(gameId, &gameSavePath);
 
     if(!SV_OpenFile(Str_Text(&gameSavePath), "rp"))
     {
@@ -5060,7 +5031,7 @@ static void unarchiveMap(void)
 
     // Compose the full path to the saved map.
     Str_Init(&path);
-    SV_GetGameSavePathForMapSlot(gameMap+1, BASE_SLOT, &path);
+    SV_GameSavePathForMapSlot(gameMap+1, BASE_SLOT, &path);
 
 #ifdef _DEBUG
     Con_Printf("unarchiveMap: Reading %s\n", Str_Text(&path));
@@ -5195,7 +5166,7 @@ int SV_SaveGameWorker(void* ptr)
 
     // Compose the full name to the saved map file.
     Str_Init(&mapPath);
-    SV_GetGameSavePathForMapSlot(gameMap+1, BASE_SLOT, &mapPath);
+    SV_GameSavePathForMapSlot(gameMap+1, BASE_SLOT, &mapPath);
 
     SV_OpenFile(Str_Text(&mapPath), "wp");
     P_ArchiveMap(true); // true = save player info
@@ -5257,7 +5228,7 @@ boolean SV_SaveGame(int slot, const char* name)
     }
 
     Str_Init(&path);
-    SV_GetGameSavePathForSlot(logicalSlot, &path);
+    SV_GameSavePathForSlot(logicalSlot, &path);
 
     params.path = &path;
     params.name = name;
@@ -5304,7 +5275,7 @@ void SV_MapTeleport(uint map, uint position)
      * whether we need to load the archived map state.
      */
     Str_Init(&fileName);
-    SV_GetGameSavePathForMapSlot(map+1, BASE_SLOT, &fileName);
+    SV_GameSavePathForMapSlot(map+1, BASE_SLOT, &fileName);
 
     if(!deathmatch && SV_ExistingFile(Str_Text(&fileName)))
         revisit = true;
@@ -5326,7 +5297,7 @@ void SV_MapTeleport(uint map, uint position)
 
             // Compose the full path name to the saved map file.
             Str_Init(&otherFileName);
-            SV_GetGameSavePathForMapSlot(gameMap+1, BASE_SLOT, &otherFileName);
+            SV_GameSavePathForMapSlot(gameMap+1, BASE_SLOT, &otherFileName);
 
             SV_OpenFile(Str_Text(&otherFileName), "wp");
             P_ArchiveMap(false);
@@ -5526,12 +5497,6 @@ void SV_MapTeleport(uint map, uint position)
     if(!deathmatch)
     {
         P_CheckACSStore(gameMap);
-    }
-
-    // For single play, save immediately into the reborn slot
-    if(!IS_NETGAME && !deathmatch)
-    {
-        SV_SaveGame(REBORN_SLOT, REBORN_DESCRIPTION);
     }
 
     Str_Free(&fileName);

@@ -72,7 +72,6 @@
 # define MOBJ_XX_PLAYER        -2
 # define BASE_SLOT             6
 # define REBORN_SLOT           7
-# define REBORN_DESCRIPTION    "TEMP GAME"
 
 typedef union saveptr_u {
     byte        *b;

@@ -43,10 +43,15 @@ static ddstring_t savePath; // e.g., "savegame/"
 static ddstring_t clientSavePath; // e.g., "savegame/client/"
 #endif
 static gamesaveinfo_t* gameSaveInfo;
+#if __JHEXEN__
+static gamesaveinfo_t rebornGameSaveInfo;
+#endif
 
 #if __JHEXEN__
 static saveptr_t saveptr;
 #endif
+
+static boolean readGameSaveHeaderFromFile(const ddstring_t* savePath, ddstring_t* name);
 
 static void errorIfNotInited(const char* callerName)
 {
@@ -54,6 +59,40 @@ static void errorIfNotInited(const char* callerName)
     Con_Error("%s: Savegame I/O is not presently initialized.", callerName);
     // Unreachable. Prevents static analysers from getting rather confused, poor things.
     exit(1);
+}
+
+static void initGameSaveInfo(gamesaveinfo_t* info)
+{
+    if(!info) return;
+    Str_Init(&info->filePath);
+    Str_Init(&info->name);
+}
+
+static void updateGameSaveInfo(gamesaveinfo_t* info, ddstring_t* savePath)
+{
+    if(!info) return;
+
+    Str_CopyOrClear(&info->filePath, savePath);
+    if(Str_IsEmpty(&info->filePath))
+    {
+        // The save path cannot be accessed for some reason. Perhaps its a
+        // network path? Clear the info for this slot.
+        Str_Clear(&info->name);
+        return;
+    }
+
+    if(!readGameSaveHeaderFromFile(&info->filePath, &info->name))
+    {
+        // Not a valid save file.
+        Str_Clear(&info->filePath);
+    }
+}
+
+static void clearGameSaveInfo(gamesaveinfo_t* info)
+{
+    if(!info) return;
+    Str_Free(&info->filePath);
+    Str_Free(&info->name);
 }
 
 static int removeFile(const ddstring_t* path)
@@ -177,10 +216,13 @@ void SV_ShutdownIO(void)
         for(i = 0; i < NUMSAVESLOTS; ++i)
         {
             gamesaveinfo_t* info = &gameSaveInfo[i];
-            Str_Free(&info->filePath);
-            Str_Free(&info->name);
+            clearGameSaveInfo(info);
         }
         free(gameSaveInfo); gameSaveInfo = NULL;
+
+#if __JHEXEN__
+        clearGameSaveInfo(&rebornGameSaveInfo);
+#endif
     }
 
     Str_Free(&savePath);
@@ -255,23 +297,16 @@ void SV_CloseFile(void)
     }
 }
 
-
-#if __JHEXEN__
 boolean SV_ExistingFile(char* name)
 {
     FILE* fp;
-
     if((fp = fopen(name, "rb")) != NULL)
     {
         fclose(fp);
         return true;
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }
-#endif
 
 void SV_ClearSaveSlot(int slot)
 {
@@ -295,11 +330,20 @@ boolean SV_IsValidSlot(int slot)
 {
 #if __JHEXEN__
     if(slot == REBORN_SLOT) return true;
+    if(slot == BASE_SLOT) return true;
 #endif
     return (slot >= 0  && slot < NUMSAVESLOTS);
 }
 
-static boolean readGameSaveInfoFromFile(const ddstring_t* savePath, ddstring_t* name)
+boolean SV_IsUserWritableSlot(int slot)
+{
+#if __JHEXEN__
+    if(slot == REBORN_SLOT || slot == BASE_SLOT) return false;
+#endif
+    return SV_IsValidSlot(slot);
+}
+
+static boolean readGameSaveHeaderFromFile(const ddstring_t* savePath, ddstring_t* name)
 {
     boolean found = false;
 #if __JHEXEN__
@@ -388,10 +432,11 @@ static void buildGameSaveInfo(void)
         for(i = 0; i < NUMSAVESLOTS; ++i)
         {
             gamesaveinfo_t* info = &gameSaveInfo[i];
-            Str_Init(&info->filePath);
-            Str_Init(&info->name);
-            info->slot = i;
+            initGameSaveInfo(info);
         }
+#if __JHEXEN__
+        initGameSaveInfo(&rebornGameSaveInfo);
+#endif
     }
 
     /// Scan the save paths and populate the list.
@@ -400,30 +445,29 @@ static void buildGameSaveInfo(void)
     for(i = 0; i < NUMSAVESLOTS; ++i)
     {
         gamesaveinfo_t* info = &gameSaveInfo[i];
-
-        Str_CopyOrClear(&info->filePath, composeGameSavePathForSlot(i));
-        if(Str_IsEmpty(&info->filePath))
-        {
-            // The save path cannot be accessed for some reason. Perhaps its a
-            // network path? Clear the info for this slot.
-            Str_Clear(&info->name);
-            continue;
-        }
-
-        if(!readGameSaveInfoFromFile(&info->filePath, &info->name))
-        {
-            // Not a valid save file.
-            Str_Clear(&info->filePath);
-        }
+        updateGameSaveInfo(info, composeGameSavePathForSlot(i));
     }
+#if __JHEXEN__
+    updateGameSaveInfo(&rebornGameSaveInfo, composeGameSavePathForSlot(REBORN_SLOT));
+#endif
 }
 
 /// Given a logical save slot identifier retrieve the assciated game-save info.
 static gamesaveinfo_t* findGameSaveInfoForSlot(int slot)
 {
-    static gamesaveinfo_t invalidInfo = { { "" }, { "" }, -1 };
+    static gamesaveinfo_t invalidInfo = { { "" }, { "" } };
     assert(inited);
 
+#if __JHEXEN__
+    if(slot == REBORN_SLOT)
+    {
+        // On first call - automatically build and populate game-save info.
+        if(!gameSaveInfo)
+            buildGameSaveInfo();
+        // Retrieve the info for this slot.
+        return &rebornGameSaveInfo;
+    }
+#endif
     if(slot >= 0 && slot < NUMSAVESLOTS)
     {
         // On first call - automatically build and populate game-save info.
@@ -435,9 +479,9 @@ static gamesaveinfo_t* findGameSaveInfoForSlot(int slot)
     return &invalidInfo;
 }
 
-const gamesaveinfo_t* SV_GetGameSaveInfoForSlot(int slot)
+const gamesaveinfo_t* SV_GameSaveInfoForSlot(int slot)
 {
-    errorIfNotInited("SV_GetGameSaveInfoForSlot");
+    errorIfNotInited("SV_GameSaveInfoForSlot");
     return findGameSaveInfoForSlot(slot);
 }
 
@@ -506,47 +550,60 @@ int SV_FindGameSaveSlotForName(const char* name)
     return saveSlot;
 }
 
-boolean SV_GetGameSavePathForSlot(int slot, ddstring_t* path)
+boolean SV_GameSavePathForSlot(int slot, ddstring_t* path)
 {
-    errorIfNotInited("SV_GetGameSavePathForSlot");
+    errorIfNotInited("SV_GameSavePathForSlot");
     if(!path) return false;
     Str_CopyOrClear(path, composeGameSavePathForSlot(slot));
     return !Str_IsEmpty(path);
 }
 
 #if __JHEXEN__
-boolean SV_GetGameSavePathForMapSlot(uint map, int slot, ddstring_t* path)
+boolean SV_GameSavePathForMapSlot(uint map, int slot, ddstring_t* path)
 {
-    errorIfNotInited("SV_GetGameSavePathForMapSlot");
+    errorIfNotInited("SV_GameSavePathForMapSlot");
     if(!path) return false;
     Str_CopyOrClear(path, composeGameSavePathForSlot2(slot, (int)map));
     return !Str_IsEmpty(path);
+}
+#else
+/**
+ * Compose the (possibly relative) path to the game-save associated
+ * with @a gameId. If the game-save path is unreachable then @a path
+ * will be made empty.
+ *
+ * @param gameId  Unique game identifier.
+ * @param path  String buffer to populate with the game save path.
+ * @return  @c true if @a path was set.
+ */
+static boolean composeClientGameSavePathForGameId(uint gameId, ddstring_t* path)
+{
+    assert(inited && NULL != path);
+    // Do we have a valid path?
+    if(!F_MakePath(SV_ClientSavePath())) return false;
+    // Compose the full game-save path and filename.
+    Str_Clear(path);
+    Str_Appendf(path, "%s" CLIENTSAVEGAMENAME "%08X." SAVEGAMEEXTENSION, SV_ClientSavePath(), gameId);
+    F_TranslatePath(path, path);
+    return true;
+}
+
+boolean SV_ClientGameSavePathForGameId(uint gameId, ddstring_t* path)
+{
+    errorIfNotInited("SV_GameSavePathForSlot");
+    if(!path) return false;
+    Str_Clear(path);
+    return composeClientGameSavePathForGameId(gameId, path);
 }
 #endif
 
 boolean SV_IsGameSaveSlotUsed(int slot)
 {
+    const gamesaveinfo_t* info;
     errorIfNotInited("SV_IsGameSaveSlotUsed");
 
-#if __JHEXEN__
-    if(slot == REBORN_SLOT)
-    {
-        ddstring_t path;
-        boolean result = false;
-        Str_InitStd(&path);
-        if(SV_GetGameSavePathForSlot(REBORN_SLOT, &path))
-        {
-            result = SV_ExistingFile(Str_Text(&path));
-        }
-        Str_Free(&path);
-        return result;
-    }
-    else
-#endif
-    {
-        const gamesaveinfo_t* info = SV_GetGameSaveInfoForSlot(slot);
-        return !Str_IsEmpty(&info->filePath);
-    }
+    info = SV_GameSaveInfoForSlot(slot);
+    return !Str_IsEmpty(&info->filePath);
 }
 
 void SV_CopySaveSlot(int sourceSlot, int destSlot)

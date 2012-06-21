@@ -2322,6 +2322,15 @@ void G_DoWorldDone(void)
 {
 #if __JHEXEN__
     SV_MapTeleport(nextMap, nextMapEntryPoint);
+
+    // In a non-network, non-deathmatch game, save immediately into the reborn slot.
+    if(!IS_NETGAME && !deathmatch)
+    {
+        ddstring_t* name = G_GenerateSaveGameName();
+        SV_SaveGame(REBORN_SLOT, Str_Text(name));
+        Str_Delete(name);
+    }
+
     rebornPosition = nextMapEntryPoint;
 #else
 # if __JDOOM__ || __JDOOM64__ || __JHERETIC__
@@ -2493,7 +2502,7 @@ void G_DoSaveGame(void)
     else
     {
         // No name specified.
-        const gamesaveinfo_t* info = SV_GetGameSaveInfoForSlot(gaSaveGameSlot);
+        const gamesaveinfo_t* info = SV_GameSaveInfoForSlot(gaSaveGameSlot);
         if(!gaSaveGameGenerateName && !Str_IsEmpty(&info->name))
         {
             // Slot already in use; reuse the existing name.
@@ -3402,7 +3411,7 @@ D_CMD(LoadGame)
             return G_LoadGame(slot);
         }
 
-        info = SV_GetGameSaveInfoForSlot(slot);
+        info = SV_GameSaveInfoForSlot(slot);
         dd_snprintf(buf, 80, QLPROMPT, Str_Text(&info->name));
 
         S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
@@ -3484,7 +3493,7 @@ D_CMD(SaveGame)
     }
 
     slot = SV_ParseGameSaveSlot(argv[1]);
-    if(slot >= 0)
+    if(SV_IsUserWritableSlot(slot))
     {
         // A known slot identifier.
         const boolean slotIsUsed = SV_IsGameSaveSlotUsed(slot);
@@ -3500,7 +3509,7 @@ D_CMD(SaveGame)
 
         {
         savegameconfirmresponse_params_t p;
-        const gamesaveinfo_t* info = SV_GetGameSaveInfoForSlot(slot);
+        const gamesaveinfo_t* info = SV_GameSaveInfoForSlot(slot);
         dd_snprintf(buf, 80, QSPROMPT, Str_Text(&info->name));
 
         p.slot = slot;
@@ -3522,7 +3531,11 @@ D_CMD(SaveGame)
     }
 
     // Clearly the caller needs some assistance...
-    Con_Message("Failed to determine game-save slot from \"%s\"\n", argv[1]);
+    if(!SV_IsValidSlot(slot))
+        Con_Message("Failed to determine game-save slot from \"%s\".\n", argv[1]);
+    else
+        Con_Message("Game-save slot #%i is non-user-writable.\n", slot);
+
     // No action means the command failed.
     return false;
 }

@@ -55,11 +55,6 @@ LZFILE* SV_OpenFile(const char *fileName, const char* mode);
 void SV_CloseFile(void);
 LZFILE* SV_File(void);
 
-/*
- * Save slots
- */
-boolean SV_IsValidSlot(int slot);
-
 /**
  * Force an update of the cached game-save info. To be called (sparingly)
  * at strategic points when an update is necessary (e.g., the game-save
@@ -87,9 +82,14 @@ void SV_UpdateGameSaveInfo(void);
  */
 int SV_ParseGameSaveSlot(const char* str);
 
-boolean SV_GetGameSavePathForSlot(int slot, ddstring_t* path);
+boolean SV_IsValidSlot(int slot);
+boolean SV_IsUserWritableSlot(int slot);
+
+boolean SV_GameSavePathForSlot(int slot, ddstring_t* path);
 #if __JHEXEN__
-boolean SV_GetGameSavePathForMapSlot(uint map, int slot, ddstring_t* path);
+boolean SV_GameSavePathForMapSlot(uint map, int slot, ddstring_t* path);
+#else
+boolean SV_ClientGameSavePathForGameId(uint gameId, ddstring_t* path);
 #endif
 
 /**
@@ -102,9 +102,9 @@ void SV_ClearSaveSlot(int slot);
  */
 void SV_CopySaveSlot(int sourceSlot, int destSlot);
 
-#if __JHEXEN__
 boolean SV_ExistingFile(char* name);
 
+#if __JHEXEN__
 saveptr_t* SV_HxSavePtr(void);
 #endif // __JHEXEN__
 
