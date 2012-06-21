@@ -158,12 +158,6 @@ void    G_DoScreenShot(void);
 void    G_DoQuitGame(void);
 boolean G_ValidateMap(uint *episode, uint *map);
 
-#if __JHEXEN__
-void    G_DoSingleReborn(void);
-void    H2_PageTicker(void);
-void    H2_AdvanceDemo(void);
-#endif
-
 void    G_StopDemo(void);
 
 void R_LoadColorPalettes(void);
@@ -1515,10 +1509,6 @@ static void runGameAction(void)
         case GA_INITNEW:
             G_DoInitNew();
             break;
-
-        case GA_SINGLEREBORN:
-            G_DoSingleReborn();
-            break;
 #endif
 
         case GA_LEAVEMAP:
@@ -2014,14 +2004,9 @@ void G_DoReborn(int plrNum)
         briefDisabled = true;
 
 #if __JHEXEN__
-        if(SV_IsGameSaveSlotUsed(REBORN_SLOT))
+        // Use the reborn logic if the slot is available else start a new game.
+        if(!G_LoadGame(REBORN_SLOT))
         {
-            // Use the reborn logic if the slot is available and in use.
-            G_SetGameAction(GA_SINGLEREBORN);
-        }
-        else
-        {
-            // Start a new game if there's no reborn info
             G_SetGameAction(GA_NEWGAME);
         }
 #else
@@ -2349,18 +2334,6 @@ void G_DoWorldDone(void)
     G_SetGameAction(GA_NONE);
 }
 
-#if __JHEXEN__
-/**
- * Called by G_Ticker based on gameaction.  Loads a game from the reborn
- * save slot.
- */
-void G_DoSingleReborn(void)
-{
-    G_SetGameAction(GA_NONE);
-    SV_LoadGame(REBORN_SLOT);
-}
-#endif
-
 boolean G_IsLoadGamePossible(void)
 {
     return !(IS_CLIENT && !Get(DD_PLAYBACK));
@@ -2393,10 +2366,15 @@ boolean G_LoadGame(int slot)
  */
 void G_DoLoadGame(void)
 {
+#if __JHEXEN__
+    boolean mustCopyBaseToReborn = (gaLoadGameSlot != REBORN_SLOT);
+#endif
+
     G_SetGameAction(GA_NONE);
     if(!SV_LoadGame(gaLoadGameSlot)) return;
 
 #if __JHEXEN__
+    if(!mustCopyBaseToReborn) return;
     if(IS_NETGAME) return;
 
     // Copy the base slot to the reborn slot.
