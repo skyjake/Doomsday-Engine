@@ -264,6 +264,7 @@ int gsvAmmo[NUM_AMMO_TYPES];
 char *gsvMapName = NOTAMAPNAME;
 
 int gamePauseWhenFocusLost;
+int gameUnpauseWhenFocusGained;
 
 #if __JHERETIC__ || __JHEXEN__ || __JDOOM64__
 int gsvInvItems[NUM_INVENTORYITEM_TYPES];
@@ -282,6 +283,7 @@ cvartemplate_t gamestatusCVars[] = {
    {"game-skill", READONLYCVAR, CVT_INT, &gameSkill, 0, 0},
 
    {"game-pause-focuslost", 0, CVT_INT, &gamePauseWhenFocusLost, 0, 1},
+   {"game-unpause-focusgained", 0, CVT_INT, &gameUnpauseWhenFocusGained, 0, 1},
 
    {"map-id", READONLYCVAR, CVT_INT, &gameMap, 0, 0},
    {"map-name", READONLYCVAR, CVT_CHARPTR, &gsvMapName, 0, 0},
@@ -452,6 +454,7 @@ void G_Register(void)
 
     // Default values (overridden by values from .cfg files).
     gamePauseWhenFocusLost = true;
+    gameUnpauseWhenFocusGained = false;
 
     for(i = 0; gamestatusCVars[i].path; ++i)
         Con_AddVariable(gamestatusCVars + i);
@@ -1310,10 +1313,13 @@ int G_Responder(event_t* ev)
     {
         if(ev->type == EV_FOCUS)
         {
-            if(gamePauseWhenFocusLost)
+            if(gamePauseWhenFocusLost && !ev->data1)
             {
-                // Pause when focus lost.
-                G_SetPause(!ev->data1);
+                G_SetPause(true);
+            }
+            else if(gameUnpauseWhenFocusGained && ev->data1)
+            {
+                G_SetPause(false);
             }
             return false; // others might be interested
         }

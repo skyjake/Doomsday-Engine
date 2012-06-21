@@ -1330,6 +1330,9 @@ void Window_UpdateCanvasFormat(Window* wnd)
 {
     assert(wnd != 0);
     wnd->needRecreateCanvas = true;
+
+    // Save the relevant format settings.
+    QSettings().setValue("window/fsaa", bool(Con_GetByte("vid-fsaa") != 0));
 }
 
 #if defined(UNIX) && !defined(MACOSX)
