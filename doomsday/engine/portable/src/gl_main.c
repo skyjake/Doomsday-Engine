@@ -123,7 +123,7 @@ static boolean initGLOk = false;
 static boolean gamma_support = false;
 static float oldgamma, oldcontrast, oldbright;
 static int fogModeDefault = 0;
-static byte fsaaEnabled = true;
+static byte fsaaEnabled = true; // default value also specified in CanvasWindow
 static byte vsyncEnabled = true;
 
 static viewport_t currentView;
