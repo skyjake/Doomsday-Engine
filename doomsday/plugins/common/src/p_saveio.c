@@ -43,9 +43,7 @@ static ddstring_t savePath; // e.g., "savegame/"
 static ddstring_t clientSavePath; // e.g., "savegame/client/"
 #endif
 static gamesaveinfo_t* gameSaveInfo;
-#if __JHEXEN__
 static gamesaveinfo_t autoGameSaveInfo;
-#endif
 
 #if __JHEXEN__
 static saveptr_t saveptr;
@@ -228,9 +226,7 @@ void SV_ShutdownIO(void)
         }
         free(gameSaveInfo); gameSaveInfo = NULL;
 
-#if __JHEXEN__
         clearGameSaveInfo(&autoGameSaveInfo);
-#endif
     }
 
     Str_Free(&savePath);
@@ -325,8 +321,8 @@ void SV_ClearSaveSlot(int slot)
 
 boolean SV_IsValidSlot(int slot)
 {
-#if __JHEXEN__
     if(slot == AUTO_SLOT) return true;
+#if __JHEXEN__
     if(slot == BASE_SLOT) return true;
 #endif
     return (slot >= 0  && slot < NUMSAVESLOTS);
@@ -334,8 +330,9 @@ boolean SV_IsValidSlot(int slot)
 
 boolean SV_IsUserWritableSlot(int slot)
 {
+    if(slot == AUTO_SLOT) return false;
 #if __JHEXEN__
-    if(slot == AUTO_SLOT || slot == BASE_SLOT) return false;
+    if(slot == BASE_SLOT) return false;
 #endif
     return SV_IsValidSlot(slot);
 }
@@ -431,9 +428,7 @@ static void buildGameSaveInfo(void)
             gamesaveinfo_t* info = &gameSaveInfo[i];
             initGameSaveInfo(info);
         }
-#if __JHEXEN__
         initGameSaveInfo(&autoGameSaveInfo);
-#endif
     }
 
     /// Scan the save paths and populate the list.
@@ -444,9 +439,7 @@ static void buildGameSaveInfo(void)
         gamesaveinfo_t* info = &gameSaveInfo[i];
         updateGameSaveInfo(info, composeGameSavePathForSlot(i));
     }
-#if __JHEXEN__
     updateGameSaveInfo(&autoGameSaveInfo, composeGameSavePathForSlot(AUTO_SLOT));
-#endif
 }
 
 /// Given a logical save slot identifier retrieve the assciated game-save info.
@@ -455,7 +448,6 @@ static gamesaveinfo_t* findGameSaveInfoForSlot(int slot)
     static gamesaveinfo_t invalidInfo = { { "" }, { "" } };
     assert(inited);
 
-#if __JHEXEN__
     if(slot == AUTO_SLOT)
     {
         // On first call - automatically build and populate game-save info.
@@ -464,7 +456,6 @@ static gamesaveinfo_t* findGameSaveInfoForSlot(int slot)
         // Retrieve the info for this slot.
         return &autoGameSaveInfo;
     }
-#endif
     if(slot >= 0 && slot < NUMSAVESLOTS)
     {
         // On first call - automatically build and populate game-save info.
@@ -508,12 +499,10 @@ int SV_ParseGameSaveSlot(const char* str)
     {
         return Con_GetInteger("game-save-quick-slot");
     }
-#if __JHEXEN__
     if(!stricmp(str, "auto") || !stricmp(str, "<auto>"))
     {
         return AUTO_SLOT;
     }
-#endif
 
     // Try logical slot identifier.
     if(M_IsStringValidInt(str))

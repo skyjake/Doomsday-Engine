@@ -2313,6 +2313,13 @@ void G_DoWorldDone(void)
 {
 #if __JHEXEN__
     SV_HxMapTeleport(nextMap, nextMapEntryPoint);
+    rebornPosition = nextMapEntryPoint;
+#else
+# if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+    gameMap = nextMap;
+# endif
+    G_DoLoadMap();
+#endif
 
     // In a non-network, non-deathmatch game, save immediately into the autosave slot.
     if(!IS_NETGAME && !deathmatch)
@@ -2321,15 +2328,6 @@ void G_DoWorldDone(void)
         SV_SaveGame(AUTO_SLOT, Str_Text(name));
         Str_Delete(name);
     }
-
-    rebornPosition = nextMapEntryPoint;
-#else
-# if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    gameMap = nextMap;
-# endif
-
-    G_DoLoadMap();
-#endif
 
     G_SetGameAction(GA_NONE);
 }
