@@ -2008,7 +2008,7 @@ void G_DoReborn(int plrNum)
         briefDisabled = true;
 
 #if __JHEXEN__
-        if(SV_HxRebornSlotAvailable())
+        if(SV_IsGameSaveSlotUsed(REBORN_SLOT))
         {
             // Use the reborn logic if the slot is available and in use.
             G_SetGameAction(GA_SINGLEREBORN);
@@ -2033,7 +2033,7 @@ void G_DoReborn(int plrNum)
 void G_StartNewInit(void)
 {
     SV_HxInitBaseSlot();
-    SV_HxClearRebornSlot();
+    SV_ClearSaveSlot(REBORN_SLOT);
 
     P_ACSInitNewGame();
 
@@ -2342,7 +2342,7 @@ void G_DoWorldDone(void)
 void G_DoSingleReborn(void)
 {
     G_SetGameAction(GA_NONE);
-    SV_LoadGame(SV_HxGetRebornSlot());
+    SV_LoadGame(REBORN_SLOT);
 }
 #endif
 
@@ -2379,16 +2379,15 @@ boolean G_LoadGame(int slot)
 void G_DoLoadGame(void)
 {
     G_SetGameAction(GA_NONE);
-    if(SV_LoadGame(gaLoadGameSlot))
-    {
+    if(!SV_LoadGame(gaLoadGameSlot)) return;
+
 #if __JHEXEN__
-        if(!IS_NETGAME)
-        {
-            // Copy the base slot to the reborn slot.
-            SV_HxUpdateRebornSlot();
-        }
+    if(IS_NETGAME) return;
+
+    // Copy the base slot to the reborn slot.
+    SV_ClearSaveSlot(REBORN_SLOT);
+    SV_CopySaveSlot(BASE_SLOT, REBORN_SLOT);
 #endif
-    }
 }
 
 boolean G_IsSaveGamePossible(void)

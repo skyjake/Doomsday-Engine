@@ -435,14 +435,6 @@ static gamesaveinfo_t* findGameSaveInfoForSlot(int slot)
     return &invalidInfo;
 }
 
-boolean SV_IsGameSaveSlotUsed(int slot)
-{
-    const gamesaveinfo_t* info;
-    errorIfNotInited("SV_IsGameSaveSlotUsed");
-    info = findGameSaveInfoForSlot(slot);
-    return !Str_IsEmpty(&info->filePath);
-}
-
 const gamesaveinfo_t* SV_GetGameSaveInfoForSlot(int slot)
 {
     errorIfNotInited("SV_GetGameSaveInfoForSlot");
@@ -531,6 +523,31 @@ boolean SV_GetGameSavePathForMapSlot(uint map, int slot, ddstring_t* path)
     return !Str_IsEmpty(path);
 }
 #endif
+
+boolean SV_IsGameSaveSlotUsed(int slot)
+{
+    errorIfNotInited("SV_IsGameSaveSlotUsed");
+
+#if __JHEXEN__
+    if(slot == REBORN_SLOT)
+    {
+        ddstring_t path;
+        boolean result = false;
+        Str_InitStd(&path);
+        if(SV_GetGameSavePathForSlot(REBORN_SLOT, &path))
+        {
+            result = SV_ExistingFile(Str_Text(&path));
+        }
+        Str_Free(&path);
+        return result;
+    }
+    else
+#endif
+    {
+        const gamesaveinfo_t* info = SV_GetGameSaveInfoForSlot(slot);
+        return !Str_IsEmpty(&info->filePath);
+    }
+}
 
 void SV_CopySaveSlot(int sourceSlot, int destSlot)
 {

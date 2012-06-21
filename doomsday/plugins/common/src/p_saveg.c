@@ -402,37 +402,6 @@ void SV_HxInitBaseSlot(void)
 {
     SV_ClearSaveSlot(BASE_SLOT);
 }
-
-void SV_HxUpdateRebornSlot(void)
-{
-    SV_ClearSaveSlot(REBORN_SLOT);
-    SV_CopySaveSlot(BASE_SLOT, REBORN_SLOT);
-}
-
-void SV_HxClearRebornSlot(void)
-{
-    SV_ClearSaveSlot(REBORN_SLOT);
-}
-
-int SV_HxGetRebornSlot(void)
-{
-    errorIfNotInited("SV_HxGetRebornSlot");
-    return (REBORN_SLOT);
-}
-
-boolean SV_HxRebornSlotAvailable(void)
-{
-    ddstring_t path;
-    boolean result = false;
-    errorIfNotInited("SV_HxRebornSlotAvailable");
-    Str_InitStd(&path);
-    if(SV_GetGameSavePathForSlot(REBORN_SLOT, &path))
-    {
-        result = SV_ExistingFile(Str_Text(&path));
-    }
-    Str_Free(&path);
-    return result;
-}
 #endif
 
 #if __JHEXEN__
