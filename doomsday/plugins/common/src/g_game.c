@@ -2347,6 +2347,7 @@ boolean G_LoadGame(int slot)
 
     // First ensure we have up-to-date info.
     SV_UpdateGameSaveInfo();
+
     if(!SV_IsGameSaveSlotUsed(slot))
     {
         Con_Message("Warning:G_LoadGame: Save slot #%i is not in use, aborting load.\n", slot);
@@ -3379,6 +3380,9 @@ D_CMD(LoadGame)
         return false;
     }
 
+    // Ensure we have up-to-date info.
+    SV_UpdateGameSaveInfo();
+
     slot = SV_ParseGameSaveSlot(argv[1]);
     if(SV_IsGameSaveSlotUsed(slot))
     {
@@ -3469,6 +3473,9 @@ D_CMD(SaveGame)
         Hu_MsgStart(MSG_ANYKEY, SAVEOUTMAP, NULL, 0, NULL);
         return true;
     }
+
+    // Ensure we have up-to-date info.
+    SV_UpdateGameSaveInfo();
 
     slot = SV_ParseGameSaveSlot(argv[1]);
     if(SV_IsUserWritableSlot(slot))
