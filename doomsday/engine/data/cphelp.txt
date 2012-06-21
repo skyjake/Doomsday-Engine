@@ -1208,3 +1208,6 @@ desc = Pause the game when game window loses focus.
 
 [game-monsters-floatoverblocking]
 desc = 1=Allow floating monsters to attempt floating over blocking things (avoids getting stuck).
+
+[game-unpause-focusgained]
+desc = Unpause the game when game window regains focus.
