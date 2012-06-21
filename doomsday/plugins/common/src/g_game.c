@@ -2004,8 +2004,8 @@ void G_DoReborn(int plrNum)
         briefDisabled = true;
 
 #if __JHEXEN__
-        // Use the reborn logic if the slot is available else start a new game.
-        if(!G_LoadGame(REBORN_SLOT))
+        // Use the latest autosave if available else start a new game.
+        if(!G_LoadGame(AUTO_SLOT))
         {
             G_SetGameAction(GA_NEWGAME);
         }
@@ -2024,7 +2024,7 @@ void G_DoReborn(int plrNum)
 void G_StartNewInit(void)
 {
     SV_HxInitBaseSlot();
-    SV_ClearSaveSlot(REBORN_SLOT);
+    SV_ClearSaveSlot(AUTO_SLOT);
 
     P_ACSInitNewGame();
 
@@ -2314,11 +2314,11 @@ void G_DoWorldDone(void)
 #if __JHEXEN__
     SV_HxMapTeleport(nextMap, nextMapEntryPoint);
 
-    // In a non-network, non-deathmatch game, save immediately into the reborn slot.
+    // In a non-network, non-deathmatch game, save immediately into the autosave slot.
     if(!IS_NETGAME && !deathmatch)
     {
         ddstring_t* name = G_GenerateSaveGameName();
-        SV_SaveGame(REBORN_SLOT, Str_Text(name));
+        SV_SaveGame(AUTO_SLOT, Str_Text(name));
         Str_Delete(name);
     }
 
@@ -2367,19 +2367,19 @@ boolean G_LoadGame(int slot)
 void G_DoLoadGame(void)
 {
 #if __JHEXEN__
-    boolean mustCopyBaseToReborn = (gaLoadGameSlot != REBORN_SLOT);
+    boolean mustCopyBaseToAutoSlot = (gaLoadGameSlot != AUTO_SLOT);
 #endif
 
     G_SetGameAction(GA_NONE);
     if(!SV_LoadGame(gaLoadGameSlot)) return;
 
 #if __JHEXEN__
-    if(!mustCopyBaseToReborn) return;
+    if(!mustCopyBaseToAutoSlot) return;
     if(IS_NETGAME) return;
 
-    // Copy the base slot to the reborn slot.
-    SV_ClearSaveSlot(REBORN_SLOT);
-    SV_CopySaveSlot(BASE_SLOT, REBORN_SLOT);
+    // Copy the base slot to the autosave slot.
+    SV_ClearSaveSlot(AUTO_SLOT);
+    SV_CopySaveSlot(BASE_SLOT, AUTO_SLOT);
 #endif
 }
 

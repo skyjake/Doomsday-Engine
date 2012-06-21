@@ -44,7 +44,7 @@ static ddstring_t clientSavePath; // e.g., "savegame/client/"
 #endif
 static gamesaveinfo_t* gameSaveInfo;
 #if __JHEXEN__
-static gamesaveinfo_t rebornGameSaveInfo;
+static gamesaveinfo_t autoGameSaveInfo;
 #endif
 
 #if __JHEXEN__
@@ -229,7 +229,7 @@ void SV_ShutdownIO(void)
         free(gameSaveInfo); gameSaveInfo = NULL;
 
 #if __JHEXEN__
-        clearGameSaveInfo(&rebornGameSaveInfo);
+        clearGameSaveInfo(&autoGameSaveInfo);
 #endif
     }
 
@@ -326,7 +326,7 @@ void SV_ClearSaveSlot(int slot)
 boolean SV_IsValidSlot(int slot)
 {
 #if __JHEXEN__
-    if(slot == REBORN_SLOT) return true;
+    if(slot == AUTO_SLOT) return true;
     if(slot == BASE_SLOT) return true;
 #endif
     return (slot >= 0  && slot < NUMSAVESLOTS);
@@ -335,7 +335,7 @@ boolean SV_IsValidSlot(int slot)
 boolean SV_IsUserWritableSlot(int slot)
 {
 #if __JHEXEN__
-    if(slot == REBORN_SLOT || slot == BASE_SLOT) return false;
+    if(slot == AUTO_SLOT || slot == BASE_SLOT) return false;
 #endif
     return SV_IsValidSlot(slot);
 }
@@ -432,7 +432,7 @@ static void buildGameSaveInfo(void)
             initGameSaveInfo(info);
         }
 #if __JHEXEN__
-        initGameSaveInfo(&rebornGameSaveInfo);
+        initGameSaveInfo(&autoGameSaveInfo);
 #endif
     }
 
@@ -445,7 +445,7 @@ static void buildGameSaveInfo(void)
         updateGameSaveInfo(info, composeGameSavePathForSlot(i));
     }
 #if __JHEXEN__
-    updateGameSaveInfo(&rebornGameSaveInfo, composeGameSavePathForSlot(REBORN_SLOT));
+    updateGameSaveInfo(&autoGameSaveInfo, composeGameSavePathForSlot(AUTO_SLOT));
 #endif
 }
 
@@ -456,13 +456,13 @@ static gamesaveinfo_t* findGameSaveInfoForSlot(int slot)
     assert(inited);
 
 #if __JHEXEN__
-    if(slot == REBORN_SLOT)
+    if(slot == AUTO_SLOT)
     {
         // On first call - automatically build and populate game-save info.
         if(!gameSaveInfo)
             buildGameSaveInfo();
         // Retrieve the info for this slot.
-        return &rebornGameSaveInfo;
+        return &autoGameSaveInfo;
     }
 #endif
     if(slot >= 0 && slot < NUMSAVESLOTS)
@@ -509,9 +509,9 @@ int SV_ParseGameSaveSlot(const char* str)
         return Con_GetInteger("game-save-quick-slot");
     }
 #if __JHEXEN__
-    if(!stricmp(str, "reborn") || !stricmp(str, "<reborn>"))
+    if(!stricmp(str, "auto") || !stricmp(str, "<auto>"))
     {
-        return REBORN_SLOT;
+        return AUTO_SLOT;
     }
 #endif
 

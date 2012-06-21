@@ -36,7 +36,7 @@
 # define SAVEGAMEEXTENSION     "dsg"
 # define SAVEGAME_DEFAULT_DIR  "savegame"
 
-# define REBORN_SLOT           9
+# define AUTO_SLOT             9
 
 #elif __JDOOM64__
 # define MY_SAVE_MAGIC         0x1D6420F4
@@ -49,7 +49,7 @@
 # define SAVEGAMEEXTENSION     "6sg"
 # define SAVEGAME_DEFAULT_DIR  "savegame"
 
-# define REBORN_SLOT           9
+# define AUTO_SLOT             9
 
 #elif __JHERETIC__
 # define MY_SAVE_MAGIC         0x7D9A12C5
@@ -62,7 +62,7 @@
 # define SAVEGAMEEXTENSION     "hsg"
 # define SAVEGAME_DEFAULT_DIR  "savegame"
 
-# define REBORN_SLOT           9
+# define AUTO_SLOT             9
 
 #elif __JHEXEN__
 # define HXS_VERSION_TEXT      "HXS Ver " // Do not change me!
@@ -77,7 +77,7 @@
 
 # define MOBJ_XX_PLAYER        -2
 # define BASE_SLOT             6
-# define REBORN_SLOT           7
+# define AUTO_SLOT             7
 
 typedef union saveptr_u {
     byte        *b;

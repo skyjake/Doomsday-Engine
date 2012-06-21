@@ -89,9 +89,9 @@ int SV_FindGameSaveSlotForName(const char* name);
  *                 Search is in ascending logical slot order 0..N (where N is the
  *                 number of available save slots in the current game).
  *             Pass 2: Check for keyword identifiers.
- *                 <last>   = The last used slot.
- *                 <quick>  = The currently nominated "quick save" slot.
- *                 <reborn> = The reborn slot.
+ *                 <last>  = The last used slot.
+ *                 <quick> = The currently nominated "quick save" slot.
+ *                 <auto>  = The autosave slot.
  *             Pass 3: Check for a logical save slot number.
  *
  * @return  Save slot identifier of the slot else @c -1
@@ -101,7 +101,7 @@ int SV_ParseGameSaveSlot(const char* str);
 /// @return  @c true iff @a slot is a valid logical save slot.
 boolean SV_IsValidSlot(int slot);
 
-/// @return  @c true iff @a slot is user-writable save slot (not "reborn" or similar).
+/// @return  @c true iff @a slot is user-writable save slot (not "auto" or similar).
 boolean SV_IsUserWritableSlot(int slot);
 
 /// @return  @c true iff a game-save is present for logical save @a slot.
