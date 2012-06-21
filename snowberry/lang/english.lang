@@ -185,7 +185,8 @@ game-mode-hacx: HacX
 game-mode-heretic: Heretic Registered
 game-mode-heretic-share: Heretic Shareware
 game-mode-heretic-ext: Heretic: Shadow of the Serpent Riders
-game-mode-hexen: Hexen
+game-mode-hexen: Hexen v1.1
+game-mode-hexen-v10: Hexen v1.0
 game-mode-hexen-demo: Hexen (4 level demo)
 game-mode-hexen-dk: Hexen: Death Kings of the Dark Citadel
 
