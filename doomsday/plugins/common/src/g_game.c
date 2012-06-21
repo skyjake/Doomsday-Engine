@@ -2024,6 +2024,9 @@ void G_DoReborn(int plrNum)
 void G_StartNewInit(void)
 {
     SV_HxInitBaseSlot();
+    /// @todo Do not clear this save slot. Instead we should set a game state
+    ///       flag to signal when a new game should be started instead of loading
+    ///       the autosave slot.
     SV_ClearSaveSlot(AUTO_SLOT);
 
     P_ACSInitNewGame();
