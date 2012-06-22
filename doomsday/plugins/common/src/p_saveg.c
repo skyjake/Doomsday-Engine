@@ -4551,20 +4551,18 @@ static void writeSaveHeader(const char* saveName)
     }}
 #endif
 
-    SV_Header_Write(&hdr);
+    SV_SaveInfo_Write(&hdr);
 }
 
-static boolean readSaveHeader(void)
+static boolean saveIsValidForCurrentGameSession(saveheader_t* info)
 {
-    SV_Header_Read(&hdr);
-
 #if __JHEXEN__
-    if(strncmp((const char*) hdr.magic, HXS_VERSION_TEXT, 8))
+    if(strncmp((const char*) info->magic, HXS_VERSION_TEXT, 8))
 #else
     if(hdr.magic != MY_SAVE_MAGIC)
 #endif
     {
-        Con_Message("SV_LoadGame: Bad magic.\n");
+        Con_Message("Warning: SV_LoadGame: Bad magic.\n");
         return false;
     }
 
@@ -4572,23 +4570,49 @@ static boolean readSaveHeader(void)
      * Check for unsupported versions.
      */
     // A future version?
-    if(hdr.version > MY_SAVE_VERSION) return false;
+    if(info->version > MY_SAVE_VERSION) return false;
 
 #if __JHEXEN__
     // We are incompatible with v3 saves due to an invalid test used to determine
     // present sidedefs (ver3 format's sidedefs contain chunks of junk data).
-    if(hdr.version == 3) return false;
+    if(info->version == 3) return false;
 #endif
 
 #if !__JHEXEN__
     // Game Mode missmatch?
     /// @todo Does Hexen need this too now we have a v1.0 game mode?
-    if(hdr.gameMode != gameMode)
+    if(info->gameMode != gameMode)
     {
-        Con_Message("SV_LoadGame: Game Mode missmatch (%i!=%i), aborting load.\n", (int)gameMode, (int)hdr.gameMode);
+        Con_Message("Warning: SV_LoadGame: Game Mode missmatch (%i!=%i), aborting load.\n", (int)gameMode, (int)info->gameMode);
         return false;
     }
 #endif
+
+    return true; // Read was OK.
+}
+
+static boolean SV_LoadGame2(void)
+{
+    int i;
+    char buf[80];
+    boolean loaded[MAXPLAYERS], infile[MAXPLAYERS];
+#if __JHEXEN__
+    int k;
+#endif
+
+    // Read the header.
+    SV_SaveInfo_Read(&hdr);
+
+    // Is this loadable?
+    if(!saveIsValidForCurrentGameSession(&hdr))
+        return false;
+
+    /**
+     * We now assume that loading will succeed.
+     * So first things first; stop whatever else we were doing.
+     */
+    G_StopDemo();
+    FI_StackClear();
 
     // Configure global game state:
     gameEpisode = hdr.episode - 1;
@@ -4606,29 +4630,6 @@ static boolean readSaveHeader(void)
 #else
     respawnMonsters = hdr.respawnMonsters;
 #endif
-
-    return true; // Read was OK.
-}
-
-static boolean SV_LoadGame2(void)
-{
-    int i;
-    char buf[80];
-    boolean loaded[MAXPLAYERS], infile[MAXPLAYERS];
-#if __JHEXEN__
-    int k;
-#endif
-
-    // Read the header.
-    if(!readSaveHeader())
-        return false;
-
-    /**
-     * We now assume that loading will succeed.
-     * So first things first; stop whatever else we were doing.
-     */
-    G_StopDemo();
-    FI_StackClear();
 
     // Read global save data not part of the game metadata.
 #if __JHEXEN__
@@ -4886,7 +4887,7 @@ void SV_SaveClient(uint gameId)
     hdr.respawnMonsters = respawnMonsters;
     hdr.mapTime = mapTime;
     hdr.gameId = gameId;
-    SV_Header_Write(&hdr);
+    SV_SaveInfo_Write(&hdr);
 
     // Some important information.
     // Our position and look angles.
@@ -4941,7 +4942,7 @@ void SV_LoadClient(uint gameId)
     }
     Str_Free(&gameSavePath);
 
-    SV_Header_Read(&hdr);
+    SV_SaveInfo_Read(&hdr);
     if(hdr.magic != MY_CLIENT_SAVE_MAGIC)
     {
         SV_CloseFile();

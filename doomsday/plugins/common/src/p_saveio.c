@@ -361,7 +361,7 @@ static boolean readGameSaveHeader(gamesaveinfo_t* info)
         SV_HxSavePtr()->b = saveBuffer;
 #endif
 
-        SV_Header_Read(hdr);
+        SV_SaveInfo_Read(hdr);
 
 #if __JHEXEN__
         Z_Free(saveBuffer);
@@ -781,62 +781,63 @@ static void swd(Writer* w, const char* data, int len)
 }
 
 #if __JHEXEN__
-void SV_Header_Write(saveheader_t* hdr)
+void SaveInfo_Write(saveheader_t* info, Writer* writer)
 {
-    Writer* svWriter = Writer_NewWithCallbacks(swi8, swi16, swi32, swf, swd);
     char versionText[HXS_VERSION_TEXT_LENGTH];
 
     // Write game save name.
-    Writer_Write(svWriter, hdr->name, SAVESTRINGSIZE);
+    Writer_Write(writer, info->name, SAVESTRINGSIZE);
 
     // Write version info.
     memset(versionText, 0, HXS_VERSION_TEXT_LENGTH);
-    sprintf(versionText, HXS_VERSION_TEXT"%i", hdr->version);
-    Writer_Write(svWriter, versionText, HXS_VERSION_TEXT_LENGTH);
+    sprintf(versionText, HXS_VERSION_TEXT"%i", info->version);
+    Writer_Write(writer, versionText, HXS_VERSION_TEXT_LENGTH);
 
-    Writer_WriteInt32(svWriter, 0); // Junk.
+    Writer_WriteInt32(writer, 0); // Junk.
 
     // Write current map and difficulty.
-    Writer_WriteByte(svWriter, hdr->map);
-    Writer_WriteByte(svWriter, hdr->skill);
-    Writer_WriteByte(svWriter, hdr->deathmatch);
-    Writer_WriteByte(svWriter, hdr->noMonsters);
-    Writer_WriteByte(svWriter, hdr->randomClasses);
-
-    Writer_Delete(svWriter);
+    Writer_WriteByte(writer, info->map);
+    Writer_WriteByte(writer, info->skill);
+    Writer_WriteByte(writer, info->deathmatch);
+    Writer_WriteByte(writer, info->noMonsters);
+    Writer_WriteByte(writer, info->randomClasses);
 }
 #else
-void SV_Header_Write(saveheader_t* hdr)
+void SaveInfo_Write(saveheader_t* info, Writer* writer)
 {
-    Writer* svWriter = Writer_NewWithCallbacks(swi8, swi16, swi32, swf, swd);
     ddstring_t name;
 
-    Writer_WriteInt32(svWriter, hdr->magic);
-    Writer_WriteInt32(svWriter, hdr->version);
-    Writer_WriteInt32(svWriter, hdr->gameMode);
+    Writer_WriteInt32(writer, info->magic);
+    Writer_WriteInt32(writer, info->version);
+    Writer_WriteInt32(writer, info->gameMode);
 
-    Str_InitStatic(&name, hdr->name);
-    Str_Write(&name, svWriter);
+    Str_InitStatic(&name, info->name);
+    Str_Write(&name, writer);
 
-    Writer_WriteByte(svWriter, hdr->skill);
-    Writer_WriteByte(svWriter, hdr->episode);
-    Writer_WriteByte(svWriter, hdr->map);
-    Writer_WriteByte(svWriter, hdr->deathmatch);
-    Writer_WriteByte(svWriter, hdr->noMonsters);
-    Writer_WriteByte(svWriter, hdr->respawnMonsters);
-    Writer_WriteInt32(svWriter, hdr->mapTime);
+    Writer_WriteByte(writer, info->skill);
+    Writer_WriteByte(writer, info->episode);
+    Writer_WriteByte(writer, info->map);
+    Writer_WriteByte(writer, info->deathmatch);
+    Writer_WriteByte(writer, info->noMonsters);
+    Writer_WriteByte(writer, info->respawnMonsters);
+    Writer_WriteInt32(writer, info->mapTime);
 
     { int i;
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        Writer_WriteByte(svWriter, hdr->players[i]);
+        Writer_WriteByte(writer, info->players[i]);
     }}
 
-    Writer_WriteInt32(svWriter, hdr->gameId);
-
-    Writer_Delete(svWriter);
+    Writer_WriteInt32(writer, info->gameId);
 }
 #endif
+
+void SV_SaveInfo_Write(saveheader_t* info)
+{
+    Writer* svWriter = Writer_NewWithCallbacks(swi8, swi16, swi32, swf, swd);
+    SaveInfo_Write(info, svWriter);
+    Writer_Delete(svWriter);
+}
 
 void SV_MaterialArchive_Write(MaterialArchive* arc)
 {
@@ -876,77 +877,74 @@ static void srd(Reader* r, char* data, int len)
 }
 
 #if __JHEXEN__
-void SV_Header_Read(saveheader_t* hdr)
+void SaveInfo_Read_Hx_v9(saveheader_t* info, Reader* reader)
 {
-    Reader* svReader = Reader_NewWithCallbacks(sri8, sri16, sri32, srf, srd);
     char verText[HXS_VERSION_TEXT_LENGTH];
 
-    Reader_Read(svReader, &hdr->name, SAVESTRINGSIZE);
-    Reader_Read(svReader, &verText, HXS_VERSION_TEXT_LENGTH);
-    hdr->version = atoi(&verText[8]);
-    memcpy(hdr->magic, verText, 8);
+    assert(info);
+
+    Reader_Read(reader, &info->name, SAVESTRINGSIZE);
+    Reader_Read(reader, &verText, HXS_VERSION_TEXT_LENGTH);
+    info->version = atoi(&verText[8]);
+    memcpy(info->magic, verText, 8);
 
     SV_Seek(4); // Junk.
 
-    hdr->episode = 1;
-    hdr->map = Reader_ReadByte(svReader);
-    hdr->skill = Reader_ReadByte(svReader);
-    hdr->deathmatch = Reader_ReadByte(svReader);
-    hdr->noMonsters = Reader_ReadByte(svReader);
-    hdr->randomClasses = Reader_ReadByte(svReader);
-
-    Reader_Delete(svReader);
+    info->episode = 1;
+    info->map = Reader_ReadByte(reader);
+    info->skill = Reader_ReadByte(reader);
+    info->deathmatch = Reader_ReadByte(reader);
+    info->noMonsters = Reader_ReadByte(reader);
+    info->randomClasses = Reader_ReadByte(reader);
 }
 #else
-void SV_Header_Read(saveheader_t* hdr)
+void SaveInfo_Read(saveheader_t* info, Reader* reader)
 {
-    Reader* svReader = Reader_NewWithCallbacks(sri8, sri16, sri32, srf, srd);
+    assert(info);
 
-    hdr->magic = Reader_ReadInt32(svReader);
-    hdr->version = Reader_ReadInt32(svReader);
-    hdr->gameMode = Reader_ReadInt32(svReader);
+    info->magic = Reader_ReadInt32(reader);
+    info->version = Reader_ReadInt32(reader);
+    info->gameMode = Reader_ReadInt32(reader);
 
-    if(hdr->version >= 10)
+    if(info->version >= 10)
     {
         ddstring_t buf;
         Str_InitStd(&buf);
-        Str_Read(&buf, svReader);
-        memcpy(hdr->name, Str_Text(&buf), SAVESTRINGSIZE);
-        hdr->name[SAVESTRINGSIZE] = '\0';
+        Str_Read(&buf, reader);
+        memcpy(info->name, Str_Text(&buf), SAVESTRINGSIZE);
+        info->name[SAVESTRINGSIZE] = '\0';
         Str_Free(&buf);
     }
     else
     {
         // Older formats use a fixed-length name (24 characters).
-        Reader_Read(svReader, hdr->name, SAVESTRINGSIZE);
+        Reader_Read(reader, info->name, SAVESTRINGSIZE);
     }
-    hdr->skill = Reader_ReadByte(svReader);
-    hdr->episode = Reader_ReadByte(svReader);
-    hdr->map = Reader_ReadByte(svReader);
-    hdr->deathmatch = Reader_ReadByte(svReader);
-    hdr->noMonsters = Reader_ReadByte(svReader);
-    hdr->respawnMonsters = Reader_ReadByte(svReader);
+    info->skill = Reader_ReadByte(reader);
+    info->episode = Reader_ReadByte(reader);
+    info->map = Reader_ReadByte(reader);
+    info->deathmatch = Reader_ReadByte(reader);
+    info->noMonsters = Reader_ReadByte(reader);
+    info->respawnMonsters = Reader_ReadByte(reader);
 
-    // Older formats serialize the unpacked header struct; skip the junk values (alignment).
-    if(hdr->version < 10) SV_Seek(2);
+    // Older formats serialize the unpacked saveheader_t struct; skip the junk values (alignment).
+    if(info->version < 10) SV_Seek(2);
 
-    hdr->mapTime = Reader_ReadInt32(svReader);
+    info->mapTime = Reader_ReadInt32(reader);
 
     { int i;
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        hdr->players[i] = Reader_ReadByte(svReader);
+        info->players[i] = Reader_ReadByte(reader);
     }}
-    hdr->gameId = Reader_ReadInt32(svReader);
-
-    Reader_Delete(svReader);
+    info->gameId = Reader_ReadInt32(reader);
 
     // Translate gameMode identifiers from older save versions.
 #if __JDOOM__ || __JHERETIC__
 # if __JDOOM__ //|| __JHEXEN__
-    if(hdr->version < 9)
+    if(info->version < 9)
 # elif __JHERETIC__
-    if(hdr->version < 8)
+    if(info->version < 8)
 # endif
     {
         static const gamemode_t oldGameModes[] = {
@@ -965,7 +963,7 @@ void SV_Header_Read(saveheader_t* hdr)
             hexen_deathkings
 # endif
         };
-        hdr->gameMode = oldGameModes[(int)hdr->gameMode];
+        info->gameMode = oldGameModes[(int)info->gameMode];
 #  if __JDOOM__
         /**
          * \kludge Older versions did not differentiate between versions of
@@ -973,9 +971,9 @@ void SV_Header_Read(saveheader_t* hdr)
          * that this save is from some version of Doom2, replace the marked
          * gamemode with the current gamemode.
          */
-        if(hdr->gameMode == doom2 && (gameModeBits & GM_ANY_DOOM2))
+        if(info->gameMode == doom2 && (gameModeBits & GM_ANY_DOOM2))
         {
-            hdr->gameMode = gameMode;
+            info->gameMode = gameMode;
         }
         /// kludge end.
 #  endif
@@ -983,6 +981,17 @@ void SV_Header_Read(saveheader_t* hdr)
 #endif
 }
 #endif
+
+void SV_SaveInfo_Read(saveheader_t* info)
+{
+    Reader* svReader = Reader_NewWithCallbacks(sri8, sri16, sri32, srf, srd);
+#if __JHEXEN__
+    SaveInfo_Read_Hx_v9(info, svReader);
+#else
+    SaveInfo_Read(info, svReader);
+#endif
+    Reader_Delete(svReader);
+}
 
 void SV_MaterialArchive_Read(MaterialArchive* arc, int version)
 {
