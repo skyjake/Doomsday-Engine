@@ -369,11 +369,7 @@ static boolean readGameSaveHeader(gamesaveinfo_t* info)
         SV_CloseFile();
 #endif
 
-#if __JHEXEN__
-        if(!strncmp((const char*) hdr->magic, HXS_VERSION_TEXT, 8))
-#else
         if(MY_SAVE_MAGIC == hdr->magic)
-#endif
         {
             Str_Set(&info->name, hdr->name);
             found = true;
@@ -780,57 +776,38 @@ static void swd(Writer* w, const char* data, int len)
     SV_Write(data, len);
 }
 
-#if __JHEXEN__
 void SaveInfo_Write(saveheader_t* info, Writer* writer)
 {
-    char versionText[HXS_VERSION_TEXT_LENGTH];
-
-    // Write game save name.
-    Writer_Write(writer, info->name, SAVESTRINGSIZE);
-
-    // Write version info.
-    memset(versionText, 0, HXS_VERSION_TEXT_LENGTH);
-    sprintf(versionText, HXS_VERSION_TEXT"%i", info->version);
-    Writer_Write(writer, versionText, HXS_VERSION_TEXT_LENGTH);
-
-    Writer_WriteInt32(writer, 0); // Junk.
-
-    // Write current map and difficulty.
-    Writer_WriteByte(writer, info->map);
-    Writer_WriteByte(writer, info->skill);
-    Writer_WriteByte(writer, info->deathmatch);
-    Writer_WriteByte(writer, info->noMonsters);
-    Writer_WriteByte(writer, info->randomClasses);
-}
-#else
-void SaveInfo_Write(saveheader_t* info, Writer* writer)
-{
-    ddstring_t name;
+    assert(info);
 
     Writer_WriteInt32(writer, info->magic);
     Writer_WriteInt32(writer, info->version);
     Writer_WriteInt32(writer, info->gameMode);
 
+    {
+    ddstring_t name;
     Str_InitStatic(&name, info->name);
     Str_Write(&name, writer);
+    }
 
     Writer_WriteByte(writer, info->skill);
     Writer_WriteByte(writer, info->episode);
     Writer_WriteByte(writer, info->map);
     Writer_WriteByte(writer, info->deathmatch);
     Writer_WriteByte(writer, info->noMonsters);
+#if __JHEXEN__
+    Writer_WriteByte(writer, info->randomClasses);
+#else
     Writer_WriteByte(writer, info->respawnMonsters);
+#endif
     Writer_WriteInt32(writer, info->mapTime);
-
     { int i;
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         Writer_WriteByte(writer, info->players[i]);
     }}
-
     Writer_WriteInt32(writer, info->gameId);
 }
-#endif
 
 void SV_SaveInfo_Write(saveheader_t* info)
 {
@@ -876,35 +853,49 @@ static void srd(Reader* r, char* data, int len)
     SV_Read(data, len);
 }
 
-#if __JHEXEN__
-void SaveInfo_Read_Hx_v9(saveheader_t* info, Reader* reader)
+#if __JDOOM__ || __JHERETIC__
+static void translateLegacyGameMode(gamemode_t* mode)
 {
-    char verText[HXS_VERSION_TEXT_LENGTH];
+    static const gamemode_t oldGameModes[] = {
+# if __JDOOM__
+        doom_shareware,
+        doom,
+        doom2,
+        doom_ultimate
+# else // __JHERETIC__
+        heretic_shareware,
+        heretic,
+        heretic_extended
+# endif
+    };
 
-    assert(info);
+    if(!mode) return;
 
-    Reader_Read(reader, &info->name, SAVESTRINGSIZE);
-    Reader_Read(reader, &verText, HXS_VERSION_TEXT_LENGTH);
-    info->version = atoi(&verText[8]);
-    memcpy(info->magic, verText, 8);
+    *mode = oldGameModes[(int)(*mode)];
 
-    SV_Seek(4); // Junk.
-
-    info->episode = 1;
-    info->map = Reader_ReadByte(reader);
-    info->skill = Reader_ReadByte(reader);
-    info->deathmatch = Reader_ReadByte(reader);
-    info->noMonsters = Reader_ReadByte(reader);
-    info->randomClasses = Reader_ReadByte(reader);
+# if __JDOOM__
+    /**
+     * @note Kludge: Older versions did not differentiate between versions
+     * of Doom2 (i.e., Plutonia and TNT are marked as Doom2). If we detect
+     * that this save is from some version of Doom2, replace the marked
+     * gamemode with the current gamemode.
+     */
+    if((*mode) == doom2 && (gameModeBits & GM_ANY_DOOM2))
+    {
+        (*mode) = gameMode;
+    }
+    /// kludge end.
+# endif
 }
-#else
+#endif
+
 void SaveInfo_Read(saveheader_t* info, Reader* reader)
 {
     assert(info);
 
     info->magic = Reader_ReadInt32(reader);
     info->version = Reader_ReadInt32(reader);
-    info->gameMode = Reader_ReadInt32(reader);
+    info->gameMode = (gamemode_t)Reader_ReadInt32(reader);
 
     if(info->version >= 10)
     {
@@ -925,13 +916,18 @@ void SaveInfo_Read(saveheader_t* info, Reader* reader)
     info->map = Reader_ReadByte(reader);
     info->deathmatch = Reader_ReadByte(reader);
     info->noMonsters = Reader_ReadByte(reader);
+#if __JHEXEN__
+    info->randomClasses = Reader_ReadByte(reader);
+#endif
+
+#if !__JHEXEN__
     info->respawnMonsters = Reader_ReadByte(reader);
 
     // Older formats serialize the unpacked saveheader_t struct; skip the junk values (alignment).
     if(info->version < 10) SV_Seek(2);
+#endif
 
     info->mapTime = Reader_ReadInt32(reader);
-
     { int i;
     for(i = 0; i < MAXPLAYERS; ++i)
     {
@@ -941,44 +937,53 @@ void SaveInfo_Read(saveheader_t* info, Reader* reader)
 
     // Translate gameMode identifiers from older save versions.
 #if __JDOOM__ || __JHERETIC__
-# if __JDOOM__ //|| __JHEXEN__
+# if __JDOOM__
     if(info->version < 9)
-# elif __JHERETIC__
+# else // __JHERETIC__
     if(info->version < 8)
 # endif
     {
-        static const gamemode_t oldGameModes[] = {
-# if __JDOOM__
-            doom_shareware,
-            doom,
-            doom2,
-            doom_ultimate
-# elif __JHERETIC__
-            heretic_shareware,
-            heretic,
-            heretic_extended
-# elif __JHEXEN__
-            hexen_demo,
-            hexen,
-            hexen_deathkings
-# endif
-        };
-        info->gameMode = oldGameModes[(int)info->gameMode];
-#  if __JDOOM__
-        /**
-         * \kludge Older versions did not differentiate between versions of
-         * Doom2 (i.e., Plutonia and TNT are marked as Doom2). If we detect
-         * that this save is from some version of Doom2, replace the marked
-         * gamemode with the current gamemode.
-         */
-        if(info->gameMode == doom2 && (gameModeBits & GM_ANY_DOOM2))
-        {
-            info->gameMode = gameMode;
-        }
-        /// kludge end.
-#  endif
+        translateLegacyGameMode(&info->gameMode);
     }
 #endif
+}
+
+#if __JHEXEN__
+void SaveInfo_Read_Hx_v9(saveheader_t* info, Reader* reader)
+{
+# define HXS_VERSION_TEXT      "HXS Ver " // Do not change me!
+# define HXS_VERSION_TEXT_LENGTH 16
+
+    char verText[HXS_VERSION_TEXT_LENGTH];
+
+    assert(info);
+
+    Reader_Read(reader, &info->name, SAVESTRINGSIZE);
+    Reader_Read(reader, &verText, HXS_VERSION_TEXT_LENGTH);
+    info->version = atoi(&verText[8]);
+
+    SV_Seek(4); // Junk.
+
+    info->episode = 1;
+    info->map = Reader_ReadByte(reader);
+    info->skill = Reader_ReadByte(reader);
+    info->deathmatch = Reader_ReadByte(reader);
+    info->noMonsters = Reader_ReadByte(reader);
+    info->randomClasses = Reader_ReadByte(reader);
+
+    info->magic = MY_SAVE_MAGIC; // Lets pretend...
+
+    /// @note Older formats do not contain all needed values:
+    info->gameMode = gameMode; // Assume the current mode.
+    info->mapTime = -1; // Unknown.
+    info->gameId  = 0; // None.
+
+    // Assume only one player.
+    memset(info->players, 0, sizeof(info->players));
+    info->players[0] = 1;
+
+# undef HXS_VERSION_TEXT_LENGTH
+# undef HXS_VERSION_TEXT
 }
 #endif
 
@@ -986,10 +991,20 @@ void SV_SaveInfo_Read(saveheader_t* info)
 {
     Reader* svReader = Reader_NewWithCallbacks(sri8, sri16, sri32, srf, srd);
 #if __JHEXEN__
-    SaveInfo_Read_Hx_v9(info, svReader);
-#else
-    SaveInfo_Read(info, svReader);
+    // Read the magic byte to determine the high-level format.
+    int magic = Reader_ReadInt32(svReader);
+    saveptr.b -= 4; // Rewind the stream.
+
+    if(magic != MY_SAVE_MAGIC)
+    {
+        // Perhaps the old v9 format?
+        SaveInfo_Read_Hx_v9(info, svReader);
+    }
+    else
 #endif
+    {
+        SaveInfo_Read(info, svReader);
+    }
     Reader_Delete(svReader);
 }
 

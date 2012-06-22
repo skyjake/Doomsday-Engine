@@ -65,10 +65,9 @@
 # define AUTO_SLOT             9
 
 #elif __JHEXEN__
-# define HXS_VERSION_TEXT      "HXS Ver " // Do not change me!
-# define HXS_VERSION_TEXT_LENGTH 16
-
-# define MY_SAVE_VERSION       9
+# define MY_SAVE_MAGIC         0x1B17CC00
+# define MY_CLIENT_SAVE_MAGIC  0x2B17CC00
+# define MY_SAVE_VERSION       10
 # define SAVESTRINGSIZE        24
 # define SAVEGAMENAME          "hex"
 # define CLIENTSAVEGAMENAME    "hexencl"

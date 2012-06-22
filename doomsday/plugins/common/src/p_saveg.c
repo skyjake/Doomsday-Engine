@@ -4512,12 +4512,7 @@ void SV_Shutdown(void)
 
 static void writeSaveHeader(const char* saveName)
 {
-#if __JHEXEN__
-    memcpy(hdr.magic, HXS_VERSION_TEXT, 8);
-#else
     hdr.magic = MY_SAVE_MAGIC;
-#endif
-
     hdr.version = MY_SAVE_VERSION;
     hdr.gameMode = gameMode;
     dd_snprintf(hdr.name, SAVESTRINGSIZE, "%s", saveName);
@@ -4542,6 +4537,7 @@ static void writeSaveHeader(const char* saveName)
     hdr.randomClasses = randomClassParm;
 #else
     hdr.respawnMonsters = respawnMonsters;
+#endif
     hdr.mapTime = mapTime;
     hdr.gameId = SV_GenerateGameId();
     { int i;
@@ -4549,18 +4545,13 @@ static void writeSaveHeader(const char* saveName)
     {
         hdr.players[i] = players[i].plr->inGame;
     }}
-#endif
 
     SV_SaveInfo_Write(&hdr);
 }
 
 static boolean saveIsValidForCurrentGameSession(saveheader_t* info)
 {
-#if __JHEXEN__
-    if(strncmp((const char*) info->magic, HXS_VERSION_TEXT, 8))
-#else
-    if(hdr.magic != MY_SAVE_MAGIC)
-#endif
+    if(info->magic != MY_SAVE_MAGIC)
     {
         Con_Message("Warning: SV_LoadGame: Bad magic.\n");
         return false;
@@ -4578,15 +4569,13 @@ static boolean saveIsValidForCurrentGameSession(saveheader_t* info)
     if(info->version == 3) return false;
 #endif
 
-#if !__JHEXEN__
     // Game Mode missmatch?
-    /// @todo Does Hexen need this too now we have a v1.0 game mode?
     if(info->gameMode != gameMode)
     {
-        Con_Message("Warning: SV_LoadGame: Game Mode missmatch (%i!=%i), aborting load.\n", (int)gameMode, (int)info->gameMode);
+        Con_Message("Warning: SV_LoadGame: Game Mode missmatch (%i!=%i), aborting load.\n",
+                    (int)gameMode, (int)info->gameMode);
         return false;
     }
-#endif
 
     return true; // Read was OK.
 }

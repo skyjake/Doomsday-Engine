@@ -30,13 +30,9 @@
 #include "p_savedef.h"
 
 typedef struct saveheader_s {
-#if __JHEXEN__
-    char            magic[8];
-#else
     int             magic;
-#endif
     int             version;
-    int             gameMode; // Presently unused in Hexen.
+    gamemode_t      gameMode; // Presently unused in Hexen.
     char            name[SAVESTRINGSIZE];
     byte            skill;
     byte            episode;
@@ -47,10 +43,10 @@ typedef struct saveheader_s {
     byte            randomClasses;
 #else
     byte            respawnMonsters;
+#endif
     int             mapTime;
     byte            players[MAXPLAYERS];
     unsigned int    gameId;
-#endif
 } saveheader_t;
 
 typedef struct gamesaveinfo_s {
