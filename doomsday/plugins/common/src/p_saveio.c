@@ -49,7 +49,7 @@ static gamesaveinfo_t autoGameSaveInfo;
 static saveptr_t saveptr;
 #endif
 
-static boolean readGameSaveHeaderFromFile(const ddstring_t* savePath, ddstring_t* name);
+static boolean readGameSaveHeader(gamesaveinfo_t* info);
 
 static void errorIfNotInited(const char* callerName)
 {
@@ -79,7 +79,7 @@ static void updateGameSaveInfo(gamesaveinfo_t* info, ddstring_t* savePath)
         return;
     }
 
-    if(!readGameSaveHeaderFromFile(&info->filePath, &info->name))
+    if(!readGameSaveHeader(info))
     {
         // Not a valid save file.
         Str_Clear(&info->filePath);
@@ -337,18 +337,18 @@ boolean SV_IsUserWritableSlot(int slot)
     return SV_IsValidSlot(slot);
 }
 
-static boolean readGameSaveHeaderFromFile(const ddstring_t* savePath, ddstring_t* name)
+static boolean readGameSaveHeader(gamesaveinfo_t* info)
 {
     boolean found = false;
 #if __JHEXEN__
     LZFILE* fp;
 #endif
-    assert(inited && savePath && name);
+    assert(inited && info);
 
-    if(Str_IsEmpty(savePath)) return false;
+    if(Str_IsEmpty(&info->filePath)) return false;
 
 #if __JHEXEN__
-    fp = lzOpen(Str_Text(savePath), "rp");
+    fp = lzOpen(Str_Text(&info->filePath), "rp");
     if(fp)
     {
         // Read the header.
@@ -359,16 +359,17 @@ static boolean readGameSaveHeaderFromFile(const ddstring_t* savePath, ddstring_t
         lzClose(fp); fp = NULL;
         if(!strncmp(versionText, HXS_VERSION_TEXT, 8))
         {
-            SV_SetSaveVersion(atoi(&versionText[8]));
+            const int ver = atoi(&versionText[8]);
+            SV_SetSaveVersion(ver);
             if(SV_SaveVersion() <= MY_SAVE_VERSION)
             {
-                Str_Set(name, nameBuffer);
+                Str_Set(&info->name, nameBuffer);
                 found = true;
             }
         }
     }
 #else
-    if(SV_OpenFile(Str_Text(savePath), "rp"))
+    if(SV_OpenFile(Str_Text(&info->filePath), "rp"))
     {
         saveheader_t* hdr = SV_SaveHeader();
 
@@ -377,7 +378,7 @@ static boolean readGameSaveHeaderFromFile(const ddstring_t* savePath, ddstring_t
 
         if(MY_SAVE_MAGIC == hdr->magic)
         {
-            Str_Set(name, hdr->name);
+            Str_Set(&info->name, hdr->name);
             found = true;
         }
     }
@@ -387,12 +388,12 @@ static boolean readGameSaveHeaderFromFile(const ddstring_t* savePath, ddstring_t
     if(!found)
     {
         // Perhaps a DOOM(2).EXE v19 saved game?
-        if(SV_OpenFile(Str_Text(savePath), "r"))
+        if(SV_OpenFile(Str_Text(&info->filePath), "r"))
         {
             char nameBuffer[SAVESTRINGSIZE];
             lzRead(nameBuffer, SAVESTRINGSIZE, SV_File());
             nameBuffer[SAVESTRINGSIZE - 1] = 0;
-            Str_Set(name, nameBuffer);
+            Str_Set(&info->name, nameBuffer);
             SV_CloseFile();
             found = true;
         }
@@ -401,9 +402,9 @@ static boolean readGameSaveHeaderFromFile(const ddstring_t* savePath, ddstring_t
 #endif
 
     // Ensure we have a non-empty name.
-    if(found && Str_IsEmpty(name))
+    if(found && Str_IsEmpty(&info->name))
     {
-        Str_Set(name, "UNNAMED");
+        Str_Set(&info->name, "UNNAMED");
     }
 
     return found;
@@ -853,7 +854,26 @@ static void srd(Reader* r, char* data, int len)
     SV_Read(data, len);
 }
 
-#if !__JHEXEN__
+#if __JHEXEN__
+void SV_Header_Read(saveheader_t* hdr)
+{
+    // Skip the name field.
+    SV_HxSavePtr()->b += SAVESTRINGSIZE;
+
+    memcpy(hdr->magic, SV_HxSavePtr()->b, 8);
+
+    hdr->version = atoi((const char*) (SV_HxSavePtr()->b + 8));
+    SV_HxSavePtr()->b += HXS_VERSION_TEXT_LENGTH;
+
+    SV_AssertSegment(ASEG_GAME_HEADER);
+    hdr->episode = 1;
+    hdr->map = SV_ReadByte();
+    hdr->skill = SV_ReadByte();
+    hdr->deathmatch = SV_ReadByte();
+    hdr->noMonsters = SV_ReadByte();
+    hdr->randomClasses = SV_ReadByte();
+}
+#else
 void SV_Header_Read(saveheader_t* hdr)
 {
     Reader* svReader = Reader_NewWithCallbacks(sri8, sri16, sri32, srf, srd);

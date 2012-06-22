@@ -29,23 +29,31 @@
 #include "lzss.h"
 #include "p_savedef.h"
 
-#if !__JHEXEN__
 typedef struct saveheader_s {
+#if __JHEXEN__
+    char            magic[8];
+#else
     int             magic;
+#endif
     int             version;
+#if !__JHEXEN__
     int             gameMode;
     char            name[SAVESTRINGSIZE];
+#endif
     byte            skill;
     byte            episode;
     byte            map;
     byte            deathmatch;
     byte            noMonsters;
+#if __JHEXEN__
+    byte            randomClasses;
+#else
     byte            respawnMonsters;
     int             mapTime;
     byte            players[MAXPLAYERS];
     unsigned int    gameId;
-} saveheader_t;
 #endif
+} saveheader_t;
 
 typedef struct gamesaveinfo_s {
     ddstring_t filePath;
@@ -74,7 +82,7 @@ const char* SV_ClientSavePath(void);
 /*
  * File management
  */
-LZFILE* SV_OpenFile(const char *fileName, const char* mode);
+LZFILE* SV_OpenFile(const char* fileName, const char* mode);
 void SV_CloseFile(void);
 LZFILE* SV_File(void);
 
@@ -190,8 +198,8 @@ float SV_ReadFloat(void);
 
 #if !__JHEXEN__
 void SV_Header_Write(saveheader_t* hdr);
-void SV_Header_Read(saveheader_t* hdr);
 #endif
+void SV_Header_Read(saveheader_t* hdr);
 
 void SV_MaterialArchive_Write(MaterialArchive* arc);
 void SV_MaterialArchive_Read(MaterialArchive* arc, int version);

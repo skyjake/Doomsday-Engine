@@ -176,9 +176,9 @@ static int cvarQuickSlot; // -1 = Not yet chosen/determined.
 
 #if __JHEXEN__
 static int saveVersion;
-#else
-static saveheader_t hdr;
 #endif
+static saveheader_t hdr;
+
 static playerheader_t playerHeader;
 static boolean playerHeaderOK;
 static mobj_t** thingArchive;
@@ -193,8 +193,6 @@ static int numSoundTargets;
 #endif
 
 static MaterialArchive* materialArchive;
-
-static byte* junkbuffer; // Old save data is read into here.
 
 static thinkerinfo_t thinkerInfo[] = {
     {
@@ -2663,7 +2661,7 @@ static int SV_ReadDoor(door_t *door)
     {
         // Its in the old format which serialized door_t
         // Padding at the start (an old thinker_t struct)
-        SV_Read(junkbuffer, (size_t) 16);
+        SV_Seek(16);
 
         // Start of used data members.
 #if __JHEXEN__
@@ -2789,7 +2787,7 @@ static int SV_ReadFloor(floor_t* floor)
     {
         // Its in the old format which serialized floor_t
         // Padding at the start (an old thinker_t struct)
-        SV_Read(junkbuffer, (size_t) 16);
+        SV_Seek(16);
 
         // Start of used data members.
 #if __JHEXEN__
@@ -3500,7 +3498,7 @@ static int SV_ReadFlash(lightflash_t* flash)
     {
         // Its in the old pre V5 format which serialized lightflash_t
         // Padding at the start (an old thinker_t struct)
-        SV_Read(junkbuffer, (size_t) 16);
+        SV_Seek(16);
 
         // Start of used data members.
         // A 32bit pointer to sector, serialized.
@@ -3559,7 +3557,7 @@ static int SV_ReadStrobe(strobe_t* strobe)
     {
         // Its in the old pre V5 format which serialized strobe_t
         // Padding at the start (an old thinker_t struct)
-        SV_Read(junkbuffer, (size_t) 16);
+        SV_Seek(16);
 
         // Start of used data members.
         // A 32bit pointer to sector, serialized.
@@ -3595,10 +3593,11 @@ static void SV_WriteGlow(const glow_t* glow)
 
 static int SV_ReadGlow(glow_t* glow)
 {
-    Sector*             sector;
+    Sector* sector;
 
     if(hdr.version >= 5)
-    {   // Note: the thinker class byte has already been read.
+    {
+        // Note: the thinker class byte has already been read.
         /*int ver =*/ SV_ReadByte(); // version byte.
 
         sector = P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
@@ -3614,7 +3613,7 @@ static int SV_ReadGlow(glow_t* glow)
     {
         // Its in the old pre V5 format which serialized strobe_t
         // Padding at the start (an old thinker_t struct)
-        SV_Read(junkbuffer, (size_t) 16);
+        SV_Seek(16);
 
         // Start of used data members.
         // A 32bit pointer to sector, serialized.
@@ -4340,7 +4339,7 @@ static void P_UnArchiveGlobalScriptData(void)
         }
 
         if(saveVersion < 7)
-            SV_Read(junkbuffer, 12); // Junk.
+            SV_Seek(12); // Junk.
 
         if(ACSStoreSize)
         {
@@ -4522,74 +4521,62 @@ void SV_Shutdown(void)
     inited = false;
 }
 
-#if __JHEXEN__
 static boolean readSaveHeader(void)
-#else
-static boolean readSaveHeader(saveheader_t *hdr, LZFILE *savefile)
-#endif
 {
 #if __JHEXEN__
-    // Set the save pointer and skip the name field
-    SV_HxSavePtr()->b = saveBuffer + SAVESTRINGSIZE;
-
-    if(strncmp((const char*) SV_HxSavePtr()->b, HXS_VERSION_TEXT, 8))
-    {
-        Con_Message("SV_LoadGame: Bad magic.\n");
-        return false;
-    }
-
-    saveVersion = atoi((const char*) (SV_HxSavePtr()->b + 8));
-
-    // Check for unsupported versions.
-    if(saveVersion > MY_SAVE_VERSION)
-    {
-        return false; // A future version
-    }
-    // We are incompatible with ver3 saves. Due to an invalid test
-    // used to determine present sidedefs, the ver3 format's sides
-    // included chunks of junk data.
-    if(saveVersion == 3)
-        return false;
-
-    SV_HxSavePtr()->b += HXS_VERSION_TEXT_LENGTH;
-
-    SV_AssertSegment(ASEG_GAME_HEADER);
-
-    gameEpisode = 0;
-    gameMap = SV_ReadByte() - 1;
-    gameSkill = SV_ReadByte();
-    deathmatch = SV_ReadByte();
-    noMonstersParm = SV_ReadByte();
-    randomClassParm = SV_ReadByte();
-
+    SV_Header_Read(&hdr);
+    saveVersion = hdr.version;
 #else
-    SV_Header_Read(hdr);
+    SV_Header_Read(&hdr);
+#endif
 
-    if(hdr->magic != MY_SAVE_MAGIC)
+#if __JHEXEN__
+    if(strncmp((const char*) hdr.magic, HXS_VERSION_TEXT, 8))
+#else
+    if(hdr.magic != MY_SAVE_MAGIC)
+#endif
     {
         Con_Message("SV_LoadGame: Bad magic.\n");
         return false;
     }
 
-    // Check for unsupported versions.
-    if(hdr->version > MY_SAVE_VERSION)
-    {
-        return false; // A future version.
-    }
+    /**
+     * Check for unsupported versions.
+     */
+    // A future version?
+    if(hdr.version > MY_SAVE_VERSION) return false;
 
-    if(hdr->gameMode != gameMode)
+#if __JHEXEN__
+    // We are incompatible with v3 saves due to an invalid test used to determine
+    // present sidedefs (ver3 format's sidedefs contain chunks of junk data).
+    if(hdr.version == 3) return false;
+#endif
+
+#if !__JHEXEN__
+    // Game Mode missmatch?
+    /// @todo Does Hexen need this too now we have a v1.0 game mode?
+    if(hdr.gameMode != gameMode)
     {
-        Con_Message("SV_LoadGame: Game Mode missmatch (%i!=%i), aborting load.\n", (int)gameMode, (int)hdr->gameMode);
+        Con_Message("SV_LoadGame: Game Mode missmatch (%i!=%i), aborting load.\n", (int)gameMode, (int)hdr.gameMode);
         return false;
     }
+#endif
 
-    gameSkill = hdr->skill & 0x7f;
-    fastParm = (hdr->skill & 0x80) != 0;
-    gameEpisode = hdr->episode - 1;
-    gameMap = hdr->map - 1;
-    deathmatch = hdr->deathmatch;
-    noMonstersParm = hdr->noMonsters;
-    respawnMonsters = hdr->respawnMonsters;
+    // Configure global game state:
+    gameEpisode = hdr.episode - 1;
+    gameMap = hdr.map - 1;
+#if __JHEXEN__
+    gameSkill = hdr.skill;
+#else
+    gameSkill = hdr.skill & 0x7f;
+    fastParm = (hdr.skill & 0x80) != 0;
+#endif
+    deathmatch = hdr.deathmatch;
+    noMonstersParm = hdr.noMonsters;
+#if __JHEXEN__
+    randomClassParm = hdr.randomClasses;
+#else
+    respawnMonsters = hdr.respawnMonsters;
 #endif
 
     return true; // Read was OK.
@@ -4597,19 +4584,15 @@ static boolean readSaveHeader(saveheader_t *hdr, LZFILE *savefile)
 
 static boolean SV_LoadGame2(void)
 {
-    int         i;
-    char        buf[80];
-    boolean     loaded[MAXPLAYERS], infile[MAXPLAYERS];
+    int i;
+    char buf[80];
+    boolean loaded[MAXPLAYERS], infile[MAXPLAYERS];
 #if __JHEXEN__
-    int         k;
+    int k;
 #endif
 
     // Read the header.
-#if __JHEXEN__
     if(!readSaveHeader())
-#else
-    if(!readSaveHeader(&hdr, SV_File()))
-#endif
         return false;
 
     /**
@@ -4618,10 +4601,6 @@ static boolean SV_LoadGame2(void)
      */
     G_StopDemo();
     FI_StackClear();
-
-    // Allocate a small junk buffer.
-    // (Data from old save versions is read into here).
-    junkbuffer = malloc(sizeof(byte) * 64);
 
     // Read global save data not part of the game metadata.
 #if __JHEXEN__
@@ -4773,7 +4752,12 @@ static boolean openGameSaveFile(const char* fileName, boolean write)
 {
 #if __JHEXEN__
     if(!write)
-        return M_ReadFile(fileName, (char**)&saveBuffer) > 0;
+    {
+        boolean result = M_ReadFile(fileName, (char**)&saveBuffer) > 0;
+        // Set the save pointer.
+        SV_HxSavePtr()->b = saveBuffer;
+        return result;
+    }
     else
 #endif
     SV_OpenFile(fileName, write? "wp" : "rp");
@@ -4898,7 +4882,6 @@ void SV_SaveClient(uint gameId)
     materialArchive = NULL;
 
     SV_CloseFile();
-    free(junkbuffer);
 
     // Update our game save info.
     SV_UpdateGameSaveInfo();
@@ -4937,10 +4920,6 @@ void SV_LoadClient(uint gameId)
         Con_Message("SV_LoadClient: Bad magic!\n");
         return;
     }
-
-    // Allocate a small junk buffer.
-    // (Data from old save versions is read into here)
-    junkbuffer = malloc(sizeof(byte) * 64);
 
     gameSkill = hdr.skill;
     deathmatch = hdr.deathmatch;
@@ -4983,7 +4962,6 @@ void SV_LoadClient(uint gameId)
     materialArchive = NULL;
 
     SV_CloseFile();
-    free(junkbuffer);
 #endif
 }
 
