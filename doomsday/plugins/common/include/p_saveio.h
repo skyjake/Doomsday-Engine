@@ -36,10 +36,8 @@ typedef struct saveheader_s {
     int             magic;
 #endif
     int             version;
-#if !__JHEXEN__
-    int             gameMode;
+    int             gameMode; // Presently unused in Hexen.
     char            name[SAVESTRINGSIZE];
-#endif
     byte            skill;
     byte            episode;
     byte            map;

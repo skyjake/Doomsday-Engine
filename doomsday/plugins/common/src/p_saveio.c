@@ -341,41 +341,39 @@ static boolean readGameSaveHeader(gamesaveinfo_t* info)
 {
     boolean found = false;
 #if __JHEXEN__
-    LZFILE* fp;
+    byte* saveBuffer;
 #endif
     assert(inited && info);
 
     if(Str_IsEmpty(&info->filePath)) return false;
 
 #if __JHEXEN__
-    fp = lzOpen(Str_Text(&info->filePath), "rp");
-    if(fp)
-    {
-        // Read the header.
-        char versionText[HXS_VERSION_TEXT_LENGTH];
-        char nameBuffer[SAVESTRINGSIZE];
-        lzRead(nameBuffer, SAVESTRINGSIZE, fp);
-        lzRead(versionText, HXS_VERSION_TEXT_LENGTH, fp);
-        lzClose(fp); fp = NULL;
-        if(!strncmp(versionText, HXS_VERSION_TEXT, 8))
-        {
-            const int ver = atoi(&versionText[8]);
-            if(ver <= MY_SAVE_VERSION)
-            {
-                Str_Set(&info->name, nameBuffer);
-                found = true;
-            }
-        }
-    }
+    /// @todo Do not buffer the whole file.
+    if(M_ReadFile(Str_Text(&info->filePath), (char**)&saveBuffer))
 #else
     if(SV_OpenFile(Str_Text(&info->filePath), "rp"))
+#endif
     {
         saveheader_t* hdr = SV_SaveHeader();
 
-        SV_Header_Read(hdr);
-        SV_CloseFile();
+#if __JHEXEN__
+        // Set the save pointer.
+        SV_HxSavePtr()->b = saveBuffer;
+#endif
 
+        SV_Header_Read(hdr);
+
+#if __JHEXEN__
+        Z_Free(saveBuffer);
+#else
+        SV_CloseFile();
+#endif
+
+#if __JHEXEN__
+        if(!strncmp((const char*) hdr->magic, HXS_VERSION_TEXT, 8))
+#else
         if(MY_SAVE_MAGIC == hdr->magic)
+#endif
         {
             Str_Set(&info->name, hdr->name);
             found = true;
@@ -383,7 +381,7 @@ static boolean readGameSaveHeader(gamesaveinfo_t* info)
     }
 
     // If not found or not recognized try other supported formats.
-#if !__JDOOM64__
+#if __JDOOM__ || __JHERETIC__
     if(!found)
     {
         // Perhaps a DOOM(2).EXE v19 saved game?
@@ -397,7 +395,6 @@ static boolean readGameSaveHeader(gamesaveinfo_t* info)
             found = true;
         }
     }
-# endif
 #endif
 
     // Ensure we have a non-empty name.
@@ -856,15 +853,15 @@ static void srd(Reader* r, char* data, int len)
 #if __JHEXEN__
 void SV_Header_Read(saveheader_t* hdr)
 {
-    // Skip the name field.
-    SV_HxSavePtr()->b += SAVESTRINGSIZE;
+    char verText[HXS_VERSION_TEXT_LENGTH];
 
-    memcpy(hdr->magic, SV_HxSavePtr()->b, 8);
-
-    hdr->version = atoi((const char*) (SV_HxSavePtr()->b + 8));
-    SV_HxSavePtr()->b += HXS_VERSION_TEXT_LENGTH;
+    SV_Read(&hdr->name, SAVESTRINGSIZE);
+    SV_Read(&verText, HXS_VERSION_TEXT_LENGTH);
+    hdr->version = atoi(&verText[8]);
+    memcpy(hdr->magic, verText, 8);
 
     SV_AssertSegment(ASEG_GAME_HEADER);
+
     hdr->episode = 1;
     hdr->map = SV_ReadByte();
     hdr->skill = SV_ReadByte();
