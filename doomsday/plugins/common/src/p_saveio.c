@@ -780,7 +780,30 @@ static void swd(Writer* w, const char* data, int len)
     SV_Write(data, len);
 }
 
-#if !__JHEXEN__
+#if __JHEXEN__
+void SV_Header_Write(saveheader_t* hdr)
+{
+    char versionText[HXS_VERSION_TEXT_LENGTH];
+
+    // Write game save name.
+    SV_Write(hdr->name, SAVESTRINGSIZE);
+
+    // Write version info.
+    memset(versionText, 0, HXS_VERSION_TEXT_LENGTH);
+    sprintf(versionText, HXS_VERSION_TEXT"%i", hdr->version);
+    SV_Write(versionText, HXS_VERSION_TEXT_LENGTH);
+
+    // Place a header marker.
+    SV_BeginSegment(ASEG_GAME_HEADER);
+
+    // Write current map and difficulty.
+    SV_WriteByte(hdr->map);
+    SV_WriteByte(hdr->skill);
+    SV_WriteByte(hdr->deathmatch);
+    SV_WriteByte(hdr->noMonsters);
+    SV_WriteByte(hdr->randomClasses);
+}
+#else
 void SV_Header_Write(saveheader_t* hdr)
 {
     Writer* svWriter = Writer_NewWithCallbacks(swi8, swi16, swi32, swf, swd);

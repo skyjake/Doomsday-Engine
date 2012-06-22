@@ -4510,6 +4510,50 @@ void SV_Shutdown(void)
     inited = false;
 }
 
+static void writeSaveHeader(const char* saveName)
+{
+#if __JHEXEN__
+    memcpy(hdr.magic, HXS_VERSION_TEXT, 8);
+#else
+    hdr.magic = MY_SAVE_MAGIC;
+#endif
+
+    hdr.version = MY_SAVE_VERSION;
+    hdr.gameMode = gameMode;
+    dd_snprintf(hdr.name, SAVESTRINGSIZE, "%s", saveName);
+
+    hdr.map = gameMap+1;
+#if __JHEXEN__
+    hdr.episode = 1;
+#else
+    hdr.episode = gameEpisode+1;
+#endif
+#if __JHEXEN__
+    hdr.skill = gameSkill;
+    hdr.randomClasses = randomClassParm;
+#else
+    hdr.skill = gameSkill;
+    if(fastParm) hdr.skill |= 0x80; // Set high byte.
+#endif
+    hdr.deathmatch = deathmatch;
+    hdr.noMonsters = noMonstersParm;
+
+#if __JHEXEN__
+    hdr.randomClasses = randomClassParm;
+#else
+    hdr.respawnMonsters = respawnMonsters;
+    hdr.mapTime = mapTime;
+    hdr.gameId = SV_GenerateGameId();
+    { int i;
+    for(i = 0; i < MAXPLAYERS; i++)
+    {
+        hdr.players[i] = players[i].plr->inGame;
+    }}
+#endif
+
+    SV_Header_Write(&hdr);
+}
+
 static boolean readSaveHeader(void)
 {
     SV_Header_Read(&hdr);
@@ -4994,17 +5038,11 @@ static void unarchiveMap(void)
 int SV_SaveGameWorker(void* ptr)
 {
     savegameparam_t* param = ptr;
-#if __JHEXEN__
-    char versionText[HXS_VERSION_TEXT_LENGTH];
-#else
-    int i;
-#endif
 
 #if _DEBUG
     VERBOSE( Con_Message("SV_SaveGame: Attempting save game to \"%s\".\n", Str_Text(param->path)) )
 #endif
 
-    // Open the output file
     if(!openGameSaveFile(Str_Text(param->path), true))
     {
         Con_BusyWorkerEnd();
@@ -5013,56 +5051,21 @@ int SV_SaveGameWorker(void* ptr)
 
     playerHeaderOK = false; // Uninitialized.
 
+    // Write the game session header.
+    writeSaveHeader(param->name);
+
 #if __JHEXEN__
-    // Write game save name
-    SV_Write(param->name, SAVESTRINGSIZE);
-
-    // Write version info
-    memset(versionText, 0, HXS_VERSION_TEXT_LENGTH);
-    sprintf(versionText, HXS_VERSION_TEXT"%i", MY_SAVE_VERSION);
-    SV_Write(versionText, HXS_VERSION_TEXT_LENGTH);
-
-    // Place a header marker
-    SV_BeginSegment(ASEG_GAME_HEADER);
-
-    // Write current map and difficulty
-    SV_WriteByte(gameMap+1);
-    SV_WriteByte(gameSkill);
-    SV_WriteByte(deathmatch);
-    SV_WriteByte(noMonstersParm);
-    SV_WriteByte(randomClassParm);
-
-    // Write global script info
     P_ArchiveGlobalScriptData();
-#else
-    // Write the header.
-    hdr.magic = MY_SAVE_MAGIC;
-    hdr.version = MY_SAVE_VERSION;
-# if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    hdr.gameMode = gameMode;
-# endif
-
-    dd_snprintf(hdr.name, SAVESTRINGSIZE, "%s", param->name);
-    hdr.skill = gameSkill;
-    if(fastParm)
-        hdr.skill |= 0x80;      // Set high byte.
-    hdr.episode = gameEpisode+1;
-    hdr.map = gameMap+1;
-    hdr.deathmatch = deathmatch;
-    hdr.noMonsters = noMonstersParm;
-    hdr.respawnMonsters = respawnMonsters;
-    hdr.mapTime = mapTime;
-    hdr.gameId = SV_GenerateGameId();
-    for(i = 0; i < MAXPLAYERS; i++)
-        hdr.players[i] = players[i].plr->inGame;
-    SV_Header_Write(&hdr);
+#endif
 
     // In netgames the server tells the clients to save their games.
+#if !__JHEXEN__
     NetSv_SaveGame(hdr.gameId);
 #endif
 
-    // Set the mobj archive numbers
+    // Set the mobj archive numbers.
     SV_InitThingArchive(false, true);
+
 #if !__JHEXEN__
     SV_WriteLong(thingArchiveSize);
 #endif
@@ -5081,11 +5084,11 @@ int SV_SaveGameWorker(void* ptr)
     SV_BeginSegment(ASEG_END);
 
 #if __JHEXEN__
-    // Close the output file (maps are saved into a seperate file).
+    // Close the game session file (maps are saved into a seperate file).
     SV_CloseFile();
 #endif
 
-    // Save out the current map
+    // Save out the current map.
 #if __JHEXEN__
     {
     ddstring_t mapPath;
@@ -5120,7 +5123,7 @@ int SV_SaveGameWorker(void* ptr)
     // Clear all save files at destination slot.
     SV_ClearSaveSlot(param->slot);
 
-    // Copy base slot to destination slot
+    // Copy base slot to destination slot.
     SV_CopySaveSlot(BASE_SLOT, param->slot);
 #endif
 

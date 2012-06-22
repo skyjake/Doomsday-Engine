@@ -194,9 +194,7 @@ short SV_ReadShort(void);
 long SV_ReadLong(void);
 float SV_ReadFloat(void);
 
-#if !__JHEXEN__
 void SV_Header_Write(saveheader_t* hdr);
-#endif
 void SV_Header_Read(saveheader_t* hdr);
 
 void SV_MaterialArchive_Write(MaterialArchive* arc);
