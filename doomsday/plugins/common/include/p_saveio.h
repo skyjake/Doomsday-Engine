@@ -43,8 +43,8 @@ typedef struct saveheader_s {
     byte            randomClasses;
 #else
     byte            respawnMonsters;
-#endif
     int             mapTime;
+#endif
     byte            players[MAXPLAYERS];
     unsigned int    gameId;
 } saveheader_t;

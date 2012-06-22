@@ -799,8 +799,8 @@ void SaveInfo_Write(saveheader_t* info, Writer* writer)
     Writer_WriteByte(writer, info->randomClasses);
 #else
     Writer_WriteByte(writer, info->respawnMonsters);
-#endif
     Writer_WriteInt32(writer, info->mapTime);
+#endif
     { int i;
     for(i = 0; i < MAXPLAYERS; ++i)
     {
@@ -925,9 +925,10 @@ void SaveInfo_Read(saveheader_t* info, Reader* reader)
 
     // Older formats serialize the unpacked saveheader_t struct; skip the junk values (alignment).
     if(info->version < 10) SV_Seek(2);
-#endif
 
     info->mapTime = Reader_ReadInt32(reader);
+#endif
+
     { int i;
     for(i = 0; i < MAXPLAYERS; ++i)
     {
@@ -975,7 +976,6 @@ void SaveInfo_Read_Hx_v9(saveheader_t* info, Reader* reader)
 
     /// @note Older formats do not contain all needed values:
     info->gameMode = gameMode; // Assume the current mode.
-    info->mapTime = -1; // Unknown.
     info->gameId  = 0; // None.
 
     // Assume only one player.

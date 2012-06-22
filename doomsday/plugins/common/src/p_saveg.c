@@ -4537,8 +4537,8 @@ static void writeSaveHeader(const char* saveName)
     hdr.randomClasses = randomClassParm;
 #else
     hdr.respawnMonsters = respawnMonsters;
-#endif
     hdr.mapTime = mapTime;
+#endif
     hdr.gameId = SV_GenerateGameId();
     { int i;
     for(i = 0; i < MAXPLAYERS; i++)
