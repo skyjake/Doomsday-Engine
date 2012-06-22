@@ -60,21 +60,20 @@ void SV_LoadClient(uint gameId);
 #endif
 
 typedef enum gamearchivesegment_e {
-    ASEG_GAME_HEADER = 101, //jhexen only
-    ASEG_MAP_HEADER, //jhexen only
+    ASEG_MAP_HEADER = 102, // Hexen only
     ASEG_WORLD,
-    ASEG_POLYOBJS, //jhexen only
-    ASEG_MOBJS, //jhexen < ver 4 only
+    ASEG_POLYOBJS, // Hexen only
+    ASEG_MOBJS, // Hexen < ver 4 only
     ASEG_THINKERS,
-    ASEG_SCRIPTS, //jhexen only
+    ASEG_SCRIPTS, // Hexen only
     ASEG_PLAYERS,
-    ASEG_SOUNDS, //jhexen only
-    ASEG_MISC, //jhexen only
+    ASEG_SOUNDS, // Hexen only
+    ASEG_MISC, // Hexen only
     ASEG_END,
     ASEG_MATERIAL_ARCHIVE,
-    ASEG_MAP_HEADER2, //jhexen only
+    ASEG_MAP_HEADER2, // Hexen only
     ASEG_PLAYER_HEADER,
-    ASEG_GLOBALSCRIPTDATA //jhexen only
+    ASEG_GLOBALSCRIPTDATA // Hexen only
 } gamearchivesegment_t;
 
 /**

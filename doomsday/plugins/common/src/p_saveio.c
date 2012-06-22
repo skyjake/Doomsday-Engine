@@ -783,25 +783,27 @@ static void swd(Writer* w, const char* data, int len)
 #if __JHEXEN__
 void SV_Header_Write(saveheader_t* hdr)
 {
+    Writer* svWriter = Writer_NewWithCallbacks(swi8, swi16, swi32, swf, swd);
     char versionText[HXS_VERSION_TEXT_LENGTH];
 
     // Write game save name.
-    SV_Write(hdr->name, SAVESTRINGSIZE);
+    Writer_Write(svWriter, hdr->name, SAVESTRINGSIZE);
 
     // Write version info.
     memset(versionText, 0, HXS_VERSION_TEXT_LENGTH);
     sprintf(versionText, HXS_VERSION_TEXT"%i", hdr->version);
-    SV_Write(versionText, HXS_VERSION_TEXT_LENGTH);
+    Writer_Write(svWriter, versionText, HXS_VERSION_TEXT_LENGTH);
 
-    // Place a header marker.
-    SV_BeginSegment(ASEG_GAME_HEADER);
+    Writer_WriteInt32(svWriter, 0); // Junk.
 
     // Write current map and difficulty.
-    SV_WriteByte(hdr->map);
-    SV_WriteByte(hdr->skill);
-    SV_WriteByte(hdr->deathmatch);
-    SV_WriteByte(hdr->noMonsters);
-    SV_WriteByte(hdr->randomClasses);
+    Writer_WriteByte(svWriter, hdr->map);
+    Writer_WriteByte(svWriter, hdr->skill);
+    Writer_WriteByte(svWriter, hdr->deathmatch);
+    Writer_WriteByte(svWriter, hdr->noMonsters);
+    Writer_WriteByte(svWriter, hdr->randomClasses);
+
+    Writer_Delete(svWriter);
 }
 #else
 void SV_Header_Write(saveheader_t* hdr)
@@ -876,21 +878,24 @@ static void srd(Reader* r, char* data, int len)
 #if __JHEXEN__
 void SV_Header_Read(saveheader_t* hdr)
 {
+    Reader* svReader = Reader_NewWithCallbacks(sri8, sri16, sri32, srf, srd);
     char verText[HXS_VERSION_TEXT_LENGTH];
 
-    SV_Read(&hdr->name, SAVESTRINGSIZE);
-    SV_Read(&verText, HXS_VERSION_TEXT_LENGTH);
+    Reader_Read(svReader, &hdr->name, SAVESTRINGSIZE);
+    Reader_Read(svReader, &verText, HXS_VERSION_TEXT_LENGTH);
     hdr->version = atoi(&verText[8]);
     memcpy(hdr->magic, verText, 8);
 
-    SV_AssertSegment(ASEG_GAME_HEADER);
+    SV_Seek(4); // Junk.
 
     hdr->episode = 1;
-    hdr->map = SV_ReadByte();
-    hdr->skill = SV_ReadByte();
-    hdr->deathmatch = SV_ReadByte();
-    hdr->noMonsters = SV_ReadByte();
-    hdr->randomClasses = SV_ReadByte();
+    hdr->map = Reader_ReadByte(svReader);
+    hdr->skill = Reader_ReadByte(svReader);
+    hdr->deathmatch = Reader_ReadByte(svReader);
+    hdr->noMonsters = Reader_ReadByte(svReader);
+    hdr->randomClasses = Reader_ReadByte(svReader);
+
+    Reader_Delete(svReader);
 }
 #else
 void SV_Header_Read(saveheader_t* hdr)
