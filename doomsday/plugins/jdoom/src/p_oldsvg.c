@@ -62,7 +62,7 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-extern void SV_UpdateReadMobjFlags(mobj_t *mo, int ver);
+extern void SV_TranslateLegacyMobjFlags(mobj_t *mo, int ver);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -323,7 +323,7 @@ static void SV_ReadMobj(void)
     SV_ReadLong();
 
     mo->info = info;
-    SV_UpdateReadMobjFlags(mo, 0);
+    SV_TranslateLegacyMobjFlags(mo, 0);
 
     mo->state = &STATES[PTR2INT(mo->state)];
     mo->target = NULL;
