@@ -800,12 +800,12 @@ void SaveInfo_Write(saveheader_t* info, Writer* writer)
 #else
     Writer_WriteByte(writer, info->respawnMonsters);
     Writer_WriteInt32(writer, info->mapTime);
-#endif
     { int i;
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         Writer_WriteByte(writer, info->players[i]);
     }}
+#endif
     Writer_WriteInt32(writer, info->gameId);
 }
 
@@ -927,13 +927,13 @@ void SaveInfo_Read(saveheader_t* info, Reader* reader)
     if(info->version < 10) SV_Seek(2);
 
     info->mapTime = Reader_ReadInt32(reader);
-#endif
-
     { int i;
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         info->players[i] = Reader_ReadByte(reader);
     }}
+#endif
+
     info->gameId = Reader_ReadInt32(reader);
 
     // Translate gameMode identifiers from older save versions.
@@ -977,10 +977,6 @@ void SaveInfo_Read_Hx_v9(saveheader_t* info, Reader* reader)
     /// @note Older formats do not contain all needed values:
     info->gameMode = gameMode; // Assume the current mode.
     info->gameId  = 0; // None.
-
-    // Assume only one player.
-    memset(info->players, 0, sizeof(info->players));
-    info->players[0] = 1;
 
 # undef HXS_VERSION_TEXT_LENGTH
 # undef HXS_VERSION_TEXT

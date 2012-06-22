@@ -4538,13 +4538,13 @@ static void writeSaveHeader(const char* saveName)
 #else
     hdr.respawnMonsters = respawnMonsters;
     hdr.mapTime = mapTime;
-#endif
     hdr.gameId = SV_GenerateGameId();
     { int i;
     for(i = 0; i < MAXPLAYERS; i++)
     {
         hdr.players[i] = players[i].plr->inGame;
     }}
+#endif
 
     SV_SaveInfo_Write(&hdr);
 }

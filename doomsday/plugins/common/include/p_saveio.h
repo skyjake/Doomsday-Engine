@@ -32,7 +32,7 @@
 typedef struct saveheader_s {
     int             magic;
     int             version;
-    gamemode_t      gameMode; // Presently unused in Hexen.
+    gamemode_t      gameMode;
     char            name[SAVESTRINGSIZE];
     byte            skill;
     byte            episode;
@@ -44,8 +44,8 @@ typedef struct saveheader_s {
 #else
     byte            respawnMonsters;
     int             mapTime;
-#endif
     byte            players[MAXPLAYERS];
+#endif
     unsigned int    gameId;
 } saveheader_t;
 
