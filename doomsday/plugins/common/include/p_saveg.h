@@ -40,12 +40,7 @@ void SV_Init(void);
 /// Shutdown this module.
 void SV_Shutdown(void);
 
-#ifdef __JHEXEN__
-void SV_SetSaveVersion(int version);
-int SV_SaveVersion(void);
-#else
 saveheader_t* SV_SaveHeader(void);
-#endif
 
 boolean SV_SaveGame(int slot, const char* name);
 

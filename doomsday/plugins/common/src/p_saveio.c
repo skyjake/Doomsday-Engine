@@ -360,8 +360,7 @@ static boolean readGameSaveHeader(gamesaveinfo_t* info)
         if(!strncmp(versionText, HXS_VERSION_TEXT, 8))
         {
             const int ver = atoi(&versionText[8]);
-            SV_SetSaveVersion(ver);
-            if(SV_SaveVersion() <= MY_SAVE_VERSION)
+            if(ver <= MY_SAVE_VERSION)
             {
                 Str_Set(&info->name, nameBuffer);
                 found = true;

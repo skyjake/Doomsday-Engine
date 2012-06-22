@@ -175,7 +175,7 @@ static int cvarLastSlot; // -1 = Not yet loaded/saved in this game session.
 static int cvarQuickSlot; // -1 = Not yet chosen/determined.
 
 #if __JHEXEN__
-static int saveVersion;
+static int mapVersion;
 #endif
 static saveheader_t hdr;
 
@@ -406,22 +406,10 @@ void SV_HxInitBaseSlot(void)
 }
 #endif
 
-#if __JHEXEN__
-void SV_SetSaveVersion(int version)
-{
-    saveVersion = version;
-}
-
-int SV_SaveVersion(void)
-{
-    return saveVersion;
-}
-#else
 saveheader_t* SV_SaveHeader(void)
 {
     return &hdr;
 }
-#endif
 
 void SV_AssertSegment(int segType)
 {
@@ -524,7 +512,7 @@ static uint SV_InitThingArchive(boolean load, boolean savePlayers)
 static void SV_SetArchiveThing(mobj_t* mo, int num)
 {
 #if __JHEXEN__
-    if(saveVersion >= 4)
+    if(mapVersion >= 4)
 #endif
         num -= 1;
 
@@ -651,8 +639,9 @@ mobj_t* SV_GetArchiveThing(int thingid, void *address)
 
     // Check that the thing archive id is valid.
 #if __JHEXEN__
-    if(saveVersion < 4)
-    {   // Old format is base 0.
+    if(mapVersion < 4)
+    {
+        // Old format is base 0.
         if(thingid == -1)
             return NULL; // A NULL reference.
 
@@ -1755,7 +1744,7 @@ static void P_ArchivePlayerHeader(void)
 static void P_UnArchivePlayerHeader(void)
 {
 #if __JHEXEN__
-    if(saveVersion >= 4)
+    if(hdr.version >= 4)
 #else
     if(hdr.version >= 5)
 #endif
@@ -1995,7 +1984,7 @@ static void SV_ReadSector(Sector* sec)
 
     // A type byte?
 #if __JHEXEN__
-    if(saveVersion < 4)
+    if(mapVersion < 4)
         type = sc_ploff;
     else
 #else
@@ -2007,7 +1996,7 @@ static void SV_ReadSector(Sector* sec)
 
     // A version byte?
 #if __JHEXEN__
-    if(saveVersion > 2)
+    if(mapVersion > 2)
 #else
     if(hdr.version > 4)
 #endif
@@ -2226,7 +2215,7 @@ static void SV_ReadLine(LineDef* li)
 
     // A type byte?
 #if __JHEXEN__
-    if(saveVersion < 4)
+    if(mapVersion < 4)
 #else
     if(hdr.version < 2)
 #endif
@@ -2236,7 +2225,7 @@ static void SV_ReadLine(LineDef* li)
 
     // A version byte?
 #if __JHEXEN__
-    if(saveVersion < 3)
+    if(mapVersion < 3)
 #else
     if(hdr.version < 5)
 #endif
@@ -2417,7 +2406,7 @@ static int SV_ReadPolyObj(void)
     Polyobj* po;
     int ver;
 
-    if(saveVersion >= 3)
+    if(mapVersion >= 3)
         ver = SV_ReadByte();
 
     po = P_PolyobjByTag(SV_ReadLong());
@@ -2466,7 +2455,7 @@ static void P_UnArchiveWorld(void)
     uint i;
 
 #if __JHEXEN__
-    if(saveVersion < 6)
+    if(mapVersion < 6)
 #else
     if(hdr.version < 6)
 #endif
@@ -2521,7 +2510,7 @@ static int SV_ReadCeiling(ceiling_t* ceiling)
     Sector*             sector;
 
 #if __JHEXEN__
-    if(saveVersion >= 4)
+    if(mapVersion >= 4)
 #else
     if(hdr.version >= 5)
 #endif
@@ -2634,7 +2623,7 @@ static int SV_ReadDoor(door_t *door)
     Sector *sector;
 
 #if __JHEXEN__
-    if(saveVersion >= 4)
+    if(mapVersion >= 4)
 #else
     if(hdr.version >= 5)
 #endif
@@ -2732,7 +2721,7 @@ static int SV_ReadFloor(floor_t* floor)
     Sector*             sector;
 
 #if __JHEXEN__
-    if(saveVersion >= 4)
+    if(mapVersion >= 4)
 #else
     if(hdr.version >= 5)
 #endif
@@ -2871,7 +2860,7 @@ static int SV_ReadPlat(plat_t *plat)
     Sector *sector;
 
 #if __JHEXEN__
-    if(saveVersion >= 4)
+    if(mapVersion >= 4)
 #else
     if(hdr.version >= 5)
 #endif
@@ -2971,7 +2960,7 @@ static int SV_ReadLight(light_t* th)
 {
     Sector*             sector;
 
-    if(saveVersion >= 4)
+    if(mapVersion >= 4)
     {
         /*int ver =*/ SV_ReadByte(); // version byte.
 
@@ -3032,7 +3021,7 @@ static int SV_ReadPhase(phase_t* th)
 {
     Sector*             sector;
 
-    if(saveVersion >= 4)
+    if(mapVersion >= 4)
     {
         // Note: the thinker class byte has already been read.
         /*int ver =*/ SV_ReadByte(); // version byte.
@@ -3093,7 +3082,7 @@ static int SV_ReadScript(acs_t* th)
     int                 temp;
     uint                i;
 
-    if(saveVersion >= 4)
+    if(mapVersion >= 4)
     {
         // Note: the thinker class byte has already been read.
         /*int ver =*/ SV_ReadByte(); // version byte.
@@ -3171,7 +3160,7 @@ static void SV_WriteDoorPoly(const polydoor_t* th)
 
 static int SV_ReadDoorPoly(polydoor_t* th)
 {
-    if(saveVersion >= 4)
+    if(mapVersion >= 4)
     {
         // Note: the thinker class byte has already been read.
         /*int ver =*/ SV_ReadByte(); // version byte.
@@ -3233,7 +3222,7 @@ static void SV_WriteMovePoly(const polyevent_t* th)
 
 static int SV_ReadMovePoly(polyevent_t* th)
 {
-    if(saveVersion >= 4)
+    if(mapVersion >= 4)
     {
         // Note: the thinker class byte has already been read.
         /*int ver =*/ SV_ReadByte(); // version byte.
@@ -3284,7 +3273,7 @@ static void SV_WriteRotatePoly(const polyevent_t* th)
 
 static int SV_ReadRotatePoly(polyevent_t* th)
 {
-    if(saveVersion >= 4)
+    if(mapVersion >= 4)
     {
         // Note: the thinker class byte has already been read.
         /*int ver =*/ SV_ReadByte(); // version byte.
@@ -3338,7 +3327,7 @@ static int SV_ReadPillar(pillar_t* th)
 {
     Sector*             sector;
 
-    if(saveVersion >= 4)
+    if(mapVersion >= 4)
     {
         // Note: the thinker class byte has already been read.
         /*int ver =*/ SV_ReadByte(); // version byte.
@@ -3407,7 +3396,7 @@ static int SV_ReadFloorWaggle(waggle_t* th)
 {
     Sector*             sector;
 
-    if(saveVersion >= 4)
+    if(mapVersion >= 4)
     {
         /*int ver =*/ SV_ReadByte(); // version byte.
 
@@ -3825,7 +3814,7 @@ static int restoreMobjLinks(thinker_t* th, void* context)
     case MT_THRUSTFLOOR_DOWN:
     case MT_MINOTAUR:
     case MT_SORCFX1:
-        if(saveVersion >= 3)
+        if(mapVersion >= 3)
         {
             mo->tracer = SV_GetArchiveThing(PTR2INT(mo->tracer), &mo->tracer);
         }
@@ -3845,7 +3834,7 @@ static int restoreMobjLinks(thinker_t* th, void* context)
     // Both tracer and special2
     case MT_HOLY_TAIL:
     case MT_LIGHTNING_CEILING:
-        if(saveVersion >= 3)
+        if(mapVersion >= 3)
         {
             mo->tracer = SV_GetArchiveThing(PTR2INT(mo->tracer), &mo->tracer);
         }
@@ -3884,7 +3873,7 @@ static void P_UnArchiveThinkers(void)
     boolean     found, knownThinker;
     boolean     inStasis;
 #if __JHEXEN__
-    boolean     doSpecials = (saveVersion >= 4);
+    boolean     doSpecials = (mapVersion >= 4);
 #else
     boolean     doSpecials = (hdr.version >= 5);
 #endif
@@ -3898,7 +3887,7 @@ static void P_UnArchiveThinkers(void)
     }
 
 #if __JHEXEN__
-    if(saveVersion < 4)
+    if(mapVersion < 4)
         SV_AssertSegment(ASEG_MOBJS);
     else
 #endif
@@ -3921,7 +3910,7 @@ static void P_UnArchiveThinkers(void)
             tClass = SV_ReadByte();
 
 #if __JHEXEN__
-        if(saveVersion < 4)
+        if(mapVersion < 4)
         {
             if(doSpecials) // Have we started on the specials yet?
             {
@@ -3992,7 +3981,7 @@ static void P_UnArchiveThinkers(void)
 
                     // Is there a thinker header block?
 #if __JHEXEN__
-                    if(saveVersion >= 6)
+                    if(mapVersion >= 6)
 #else
                     if(hdr.version >= 6)
 #endif
@@ -4208,7 +4197,7 @@ static void P_UnArchiveSounds(void)
     i = 0;
     while(i < numSequences)
     {
-        if(saveVersion >= 3)
+        if(mapVersion >= 3)
             ver = SV_ReadByte();
 
         sequence = SV_ReadLong();
@@ -4288,9 +4277,9 @@ static void P_ArchiveGlobalScriptData(void)
 
 static void P_UnArchiveGlobalScriptData(void)
 {
-    int                 i, ver = 1;
+    int i, ver = 1;
 
-    if(saveVersion >= 7)
+    if(hdr.version >= 7)
     {
         SV_AssertSegment(ASEG_GLOBALSCRIPTDATA);
         ver = SV_ReadByte();
@@ -4338,7 +4327,7 @@ static void P_UnArchiveGlobalScriptData(void)
                 store->args[j] = SV_ReadByte();
         }
 
-        if(saveVersion < 7)
+        if(hdr.version < 7)
             SV_Seek(12); // Junk.
 
         if(ACSStoreSize)
@@ -4430,11 +4419,11 @@ static void P_UnArchiveMap(void)
     // Determine the map version.
     if(segType == ASEG_MAP_HEADER2)
     {
-        saveVersion = SV_ReadByte();
+        mapVersion = SV_ReadByte();
     }
     else if(segType == ASEG_MAP_HEADER)
     {
-        saveVersion = 2;
+        mapVersion = 2;
     }
     else
     {
@@ -4523,12 +4512,7 @@ void SV_Shutdown(void)
 
 static boolean readSaveHeader(void)
 {
-#if __JHEXEN__
     SV_Header_Read(&hdr);
-    saveVersion = hdr.version;
-#else
-    SV_Header_Read(&hdr);
-#endif
 
 #if __JHEXEN__
     if(strncmp((const char*) hdr.magic, HXS_VERSION_TEXT, 8))
