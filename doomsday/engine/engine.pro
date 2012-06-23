@@ -364,6 +364,7 @@ DENG_HEADERS += \
     portable/include/zipfile.h \
     portable/src/updater/downloaddialog.h \
     portable/src/updater/updateavailabledialog.h \
+    portable/src/updater/updaterdialog.h \
     portable/src/updater/updatersettings.h \
     portable/src/updater/updatersettingsdialog.h \
     portable/src/updater/versioninfo.h
@@ -644,6 +645,7 @@ SOURCES += \
     portable/src/updater.cpp \
     portable/src/updater/downloaddialog.cpp \
     portable/src/updater/updateavailabledialog.cpp \
+    portable/src/updater/updaterdialog.cpp \
     portable/src/updater/updatersettings.cpp \
     portable/src/updater/updatersettingsdialog.cpp \
     portable/src/uri.c \

@@ -1,9 +1,8 @@
 /**
- * @file updatersettingsdialog.h
- * Dialog for configuring automatic updates. @ingroup updater
+ * @file updaterdialog.h
+ * Common base class for the updater dialogs. @ingroup updater
  *
  * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2012 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,32 +19,20 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_UPDATERSETTINGSDIALOG_H
-#define LIBDENG_UPDATERSETTINGSDIALOG_H
+#ifndef LIBDENG_UPDATERDIALOG_H
+#define LIBDENG_UPDATERDIALOG_H
 
-#include "updaterdialog.h"
+#include <QDialog>
 
-class UpdaterSettingsDialog : public UpdaterDialog
+/**
+ * Base class for all the updater dialogs.
+ */
+class UpdaterDialog : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit UpdaterSettingsDialog(QWidget *parent = 0);
-    ~UpdaterSettingsDialog();
-
-    void fetch();
-    
-signals:
-    
-public slots:
-    void accept();
-    void reject();
-    void autoCheckToggled(bool);
-    void pathActivated(int index);
-    
-private:
-    struct Instance;
-    Instance* d;
+    explicit UpdaterDialog(QWidget *parent = 0);
 };
 
-#endif // LIBDENG_UPDATERSETTINGSDIALOG_H
+#endif // UPDATERDIALOG_H
