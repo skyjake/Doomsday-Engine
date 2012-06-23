@@ -623,6 +623,9 @@ void MNList_UpdateGeometry(mn_object_t* ob, mn_page_t* page);
 /// @return  Index of the currently selected item else -1.
 int MNList_Selection(mn_object_t* ob);
 
+/// @return  Data of item at position @a index. 0 if index is out of bounds.
+int MNList_ItemData(const mn_object_t* obj, int index);
+
 /// @return  @c true if the currently selected item is presently visible.
 boolean MNList_SelectionIsVisible(mn_object_t* ob);
 

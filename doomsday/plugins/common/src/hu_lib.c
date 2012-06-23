@@ -2229,6 +2229,18 @@ boolean MNList_SelectionIsVisible(mn_object_t* obj)
     return (list->selection >= list->first && list->selection < list->first + list->numvis);
 }
 
+int MNList_ItemData(const mn_object_t* obj, int index)
+{
+    mndata_list_t* list = (mndata_list_t*)obj->_typedata;
+    mndata_listitem_t* item;
+
+    assert(obj && (obj->_type == MN_LIST || obj->_type == MN_LISTINLINE));
+    if(index < 0 || index >= list->count) return 0;
+
+    item = &((mndata_listitem_t*) list->items)[index];
+    return item->data;
+}
+
 int MNList_FindItem(const mn_object_t* obj, int dataValue)
 {
     mndata_list_t* list = (mndata_list_t*)obj->_typedata;
@@ -3417,6 +3429,7 @@ void MNMobjPreview_Drawer(mn_object_t* ob, const Point2Raw* offset)
     float s, t, scale;
     Point2Raw origin;
     Size2Raw size;
+
     assert(ob->_type == MN_MOBJPREVIEW);
 
     if(MT_NONE == mop->mobjType) return;
@@ -3439,7 +3452,9 @@ void MNMobjPreview_Drawer(mn_object_t* ob, const Point2Raw* offset)
     tMap = mop->tMap;
     // Are we cycling the translation map?
     if(tMap == NUMPLAYERCOLORS)
+    {
         tMap = menuTime / 5 % NUMPLAYERCOLORS;
+    }
 #if __JHEXEN__
     if(mop->plrClass >= PCLASS_FIGHTER)
         R_GetTranslation(mop->plrClass, tMap, &tClass, &tMap);
