@@ -173,6 +173,7 @@ void S_Reset(void)
 {
     Sfx_Reset();
     S_StopMusic();
+    S_ResetReverb();
 }
 
 void S_StartFrame(void)
