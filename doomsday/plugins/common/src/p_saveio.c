@@ -44,6 +44,9 @@ static ddstring_t clientSavePath; // e.g., "savegame/client/"
 #endif
 static saveinfo_t* saveInfo;
 static saveinfo_t autoSaveInfo;
+#if __JHEXEN__
+static saveinfo_t baseSaveInfo;
+#endif
 
 #if __JHEXEN__
 static saveptr_t saveptr;
@@ -227,6 +230,9 @@ void SV_ShutdownIO(void)
         free(saveInfo); saveInfo = NULL;
 
         clearSaveInfo(&autoSaveInfo);
+#if __JHEXEN__
+        clearSaveInfo(&baseSaveInfo);
+#endif
     }
 
     Str_Free(&savePath);
@@ -423,6 +429,9 @@ static void buildSaveInfo(void)
             initSaveInfo(info);
         }
         initSaveInfo(&autoSaveInfo);
+#if __JHEXEN__
+        initSaveInfo(&baseSaveInfo);
+#endif
     }
 
     /// Scan the save paths and populate the list.
@@ -434,6 +443,9 @@ static void buildSaveInfo(void)
         updateSaveInfo(info, composeGameSavePathForSlot(i));
     }
     updateSaveInfo(&autoSaveInfo, composeGameSavePathForSlot(AUTO_SLOT));
+#if __JHEXEN__
+    updateSaveInfo(&baseSaveInfo, composeGameSavePathForSlot(BASE_SLOT));
+#endif
 }
 
 /// Given a logical save slot identifier retrieve the assciated game-save info.
@@ -442,23 +454,20 @@ static saveinfo_t* findSaveInfoForSlot(int slot)
     static saveinfo_t invalidInfo = { { "" }, { "" } };
     assert(inited);
 
-    if(slot == AUTO_SLOT)
+    if(!SV_IsValidSlot(slot)) return &invalidInfo;
+
+    // On first call - automatically build and populate game-save info.
+    if(!saveInfo)
     {
-        // On first call - automatically build and populate game-save info.
-        if(!saveInfo)
-            buildSaveInfo();
-        // Retrieve the info for this slot.
-        return &autoSaveInfo;
+        buildSaveInfo();
     }
-    if(slot >= 0 && slot < NUMSAVESLOTS)
-    {
-        // On first call - automatically build and populate game-save info.
-        if(!saveInfo)
-            buildSaveInfo();
-        // Retrieve the info for this slot.
-        return &saveInfo[slot];
-    }
-    return &invalidInfo;
+
+    // Retrieve the info for this slot.
+    if(slot == AUTO_SLOT) return &autoSaveInfo;
+#if __JHEXEN__
+    if(slot == BASE_SLOT) return &baseSaveInfo;
+#endif
+    return &saveInfo[slot];
 }
 
 const saveinfo_t* SV_SaveInfoForSlot(int slot)
