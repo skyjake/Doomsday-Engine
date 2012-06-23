@@ -838,7 +838,7 @@ void NetCl_SaveGame(Reader* msg)
 
     /// @todo: Why not Hexen?
 #if !__JHEXEN__
-    SV_SaveClient(Reader_ReadUInt32(msg));
+    SV_SaveGameClient(Reader_ReadUInt32(msg));
 #endif
 #if __JDOOM__ || __JDOOM64__
     P_SetMessage(&players[CONSOLEPLAYER], TXT_GAMESAVED, false);
@@ -853,7 +853,7 @@ void NetCl_LoadGame(Reader* msg)
         return;
 
 #if !__JHEXEN__
-    SV_LoadClient(Reader_ReadUInt32(msg));
+    SV_LoadGameClient(Reader_ReadUInt32(msg));
 #endif
 #if __JDOOM__ || __JDOOM64__
     P_SetMessage(&players[CONSOLEPLAYER], GET_TXT(TXT_CLNETLOAD), false);

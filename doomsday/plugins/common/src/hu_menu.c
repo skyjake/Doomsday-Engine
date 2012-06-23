@@ -3316,7 +3316,7 @@ void Hu_MenuUpdateGameSaveWidgets(void)
     // Prompt a refresh of the game-save info. We don't yet actively monitor
     // the contents of the game-save paths, so instead we settle for manual
     // updates whenever the save/load menu is opened.
-    SV_UpdateGameSaveInfo();
+    SV_UpdateAllSaveInfo();
 
     // Update widgets.
     page = Hu_MenuFindPageByName("LoadGame");
@@ -3324,7 +3324,7 @@ void Hu_MenuUpdateGameSaveWidgets(void)
     {
         mn_object_t* obj = MN_MustFindObjectOnPage(page, 0, saveSlotObjectIds[i]);
         mndata_edit_t* edit = (mndata_edit_t*) obj->_typedata;
-        const gamesaveinfo_t* info = SV_GameSaveInfoForSlot(edit->data2);
+        const saveinfo_t* info = SV_SaveInfoForSlot(edit->data2);
         const char* text = "";
 
         MNObject_SetFlags(obj, FO_SET, MNF_DISABLED);

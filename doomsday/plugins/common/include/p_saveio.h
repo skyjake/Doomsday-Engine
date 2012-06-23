@@ -1,25 +1,23 @@
-/**\file p_saveio.h
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file p_saveio.h
+ * Game save file IO.
  *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #ifndef LIBCOMMON_SAVESTATE_INPUT_OUTPUT_H
@@ -49,10 +47,10 @@ typedef struct saveheader_s {
     unsigned int    gameId;
 } saveheader_t;
 
-typedef struct gamesaveinfo_s {
+typedef struct saveinfo_s {
     ddstring_t filePath;
     ddstring_t name;
-} gamesaveinfo_t;
+} saveinfo_t;
 
 typedef struct savegameparam_s {
     const ddstring_t* path;
@@ -67,6 +65,7 @@ enum {
 
 void SV_InitIO(void);
 void SV_ShutdownIO(void);
+
 void SV_ConfigureSavePaths(void);
 const char* SV_SavePath(void);
 #if !__JHEXEN__
@@ -88,7 +87,7 @@ LZFILE* SV_File(void);
  * \note It is not necessary to call this after a game-save is made,
  * this module will do so automatically.
  */
-void SV_UpdateGameSaveInfo(void);
+void SV_UpdateAllSaveInfo(void);
 
 /**
  * Lookup a save slot by searching for a match on game-save name.
@@ -98,7 +97,7 @@ void SV_UpdateGameSaveInfo(void);
  * @param name  Name of the game-save to look for. Case insensitive.
  * @return  Logical slot number of the found game-save else @c -1
  */
-int SV_FindGameSaveSlotForName(const char* name);
+int SV_SlotForSaveName(const char* name);
 
 /**
  * Parse the given string and determine whether it references a logical
@@ -106,17 +105,17 @@ int SV_FindGameSaveSlotForName(const char* name);
  *
  * @param str  String to be parsed. Parse is divided into three passes.
  *             Pass 1: Check for a known game-save name which matches this.
- *                 Search is in ascending logical slot order 0..N (where N is the
- *                 number of available save slots in the current game).
+ *                 Search is in ascending logical slot order 0..N (where N
+ *                 is the number of available save slots).
  *             Pass 2: Check for keyword identifiers.
  *                 <last>  = The last used slot.
  *                 <quick> = The currently nominated "quick save" slot.
- *                 <auto>  = The autosave slot.
+ *                 <auto>  = The "auto save" slot.
  *             Pass 3: Check for a logical save slot number.
  *
  * @return  Save slot identifier of the slot else @c -1
  */
-int SV_ParseGameSaveSlot(const char* str);
+int SV_ParseSlotIdentifier(const char* str);
 
 /// @return  @c true iff @a slot is a valid logical save slot.
 boolean SV_IsValidSlot(int slot);
@@ -125,38 +124,38 @@ boolean SV_IsValidSlot(int slot);
 boolean SV_IsUserWritableSlot(int slot);
 
 /// @return  @c true iff a game-save is present for logical save @a slot.
-boolean SV_IsGameSaveSlotUsed(int slot);
+boolean SV_IsSlotUsed(int slot);
 
 #if __JHEXEN__
 /**
  * @return  @c true iff a game-save is present and serialized @a map state is
  *      is present for logical save @a slot.
  */
-boolean SV_HxGameSaveSlotHasMapState(int slot, uint map);
+boolean SV_HxHaveMapSaveForSlot(int slot, uint map);
 #endif
 
 /**
  * @return  Game-save info for logical save @a slot. Always returns valid
  *      info even if supplied with an invalid or unused slot identifer.
  */
-const gamesaveinfo_t* SV_GameSaveInfoForSlot(int slot);
+const saveinfo_t* SV_SaveInfoForSlot(int slot);
 
-boolean SV_GameSavePathForSlot(int slot, ddstring_t* path);
+boolean SV_ComposeSavePathForSlot(int slot, ddstring_t* path);
 #if __JHEXEN__
-boolean SV_GameSavePathForMapSlot(uint map, int slot, ddstring_t* path);
+boolean SV_ComposeSavePathForMapSlot(uint map, int slot, ddstring_t* path);
 #else
-boolean SV_ClientGameSavePathForGameId(uint gameId, ddstring_t* path);
+boolean SV_ComposeSavePathForClientGameId(uint gameId, ddstring_t* path);
 #endif
 
 /**
  * Deletes all save game files associated with a slot number.
  */
-void SV_ClearSaveSlot(int slot);
+void SV_ClearSlot(int slot);
 
 /**
  * Copies all the save game files from one slot to another.
  */
-void SV_CopySaveSlot(int sourceSlot, int destSlot);
+void SV_CopySlot(int sourceSlot, int destSlot);
 
 #if __JHEXEN__
 saveptr_t* SV_HxSavePtr(void);

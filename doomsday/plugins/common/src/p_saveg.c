@@ -402,7 +402,7 @@ void SV_Register(void)
 #if __JHEXEN__
 void SV_HxInitBaseSlot(void)
 {
-    SV_ClearSaveSlot(BASE_SLOT);
+    SV_ClearSlot(BASE_SLOT);
 }
 #endif
 
@@ -1319,7 +1319,7 @@ Con_Error("SV_WriteMobj: Mobj using tracer. Possibly saved incorrectly.");
 }
 
 #if !__JDOOM64__
-void SV_UpdateReadMobjFlags(mobj_t* mo, int ver)
+void SV_TranslateLegacyMobjFlags(mobj_t* mo, int ver)
 {
 #if __JDOOM__ || __JHERETIC__
     if(ver < 6)
@@ -1427,7 +1427,7 @@ static void RestoreMobj(mobj_t *mo, int ver)
 #if !__JDOOM64__
     // Do we need to update this mobj's flag values?
     if(ver < MOBJ_SAVEVERSION)
-        SV_UpdateReadMobjFlags(mo, ver);
+        SV_TranslateLegacyMobjFlags(mo, ver);
 #endif
 
     P_MobjSetOrigin(mo);
@@ -4801,14 +4801,14 @@ boolean SV_LoadGame(int slot)
 
     // Compose the possibly relative game save path.
     Str_Init(&path);
-    SV_GameSavePathForSlot(logicalSlot, &path);
+    SV_ComposeSavePathForSlot(logicalSlot, &path);
 
 #if __JHEXEN__
     // Copy all needed save files to the base slot
     if(slot != BASE_SLOT)
     {
-        SV_ClearSaveSlot(BASE_SLOT);
-        SV_CopySaveSlot(slot, BASE_SLOT);
+        SV_ClearSlot(BASE_SLOT);
+        SV_CopySlot(slot, BASE_SLOT);
     }
 #endif
 
@@ -4840,14 +4840,14 @@ boolean SV_LoadGame(int slot)
     return !loadError;
 }
 
-void SV_SaveClient(uint gameId)
+void SV_SaveGameClient(uint gameId)
 {
 #if !__JHEXEN__ // unsupported in jHexen
     player_t* pl = &players[CONSOLEPLAYER];
     mobj_t* mo = pl->plr->mo;
     ddstring_t gameSavePath;
 
-    errorIfNotInited("SV_SaveClient");
+    errorIfNotInited("SV_SaveGameClient");
 
     if(!IS_CLIENT || !mo)
         return;
@@ -4855,10 +4855,10 @@ void SV_SaveClient(uint gameId)
     playerHeaderOK = false; // Uninitialized.
 
     Str_Init(&gameSavePath);
-    SV_ClientGameSavePathForGameId(gameId, &gameSavePath);
+    SV_ComposeSavePathForClientGameId(gameId, &gameSavePath);
     if(!SV_OpenFile(Str_Text(&gameSavePath), "wp"))
     {
-        Con_Message("Warning:SV_SaveClient: Failed opening \"%s\" for writing.\n", Str_Text(&gameSavePath));
+        Con_Message("Warning:SV_SaveGameClient: Failed opening \"%s\" for writing.\n", Str_Text(&gameSavePath));
         Str_Free(&gameSavePath);
         return;
     }
@@ -4902,18 +4902,18 @@ void SV_SaveClient(uint gameId)
     SV_CloseFile();
 
     // Update our game save info.
-    SV_UpdateGameSaveInfo();
+    SV_UpdateAllSaveInfo();
 #endif
 }
 
-void SV_LoadClient(uint gameId)
+void SV_LoadGameClient(uint gameId)
 {
 #if !__JHEXEN__ // unsupported in jHexen
     player_t* cpl = players + CONSOLEPLAYER;
     mobj_t* mo = cpl->plr->mo;
     ddstring_t gameSavePath;
 
-    errorIfNotInited("SV_LoadClient");
+    errorIfNotInited("SV_LoadGameClient");
 
     if(!IS_CLIENT || !mo)
         return;
@@ -4921,11 +4921,11 @@ void SV_LoadClient(uint gameId)
     playerHeaderOK = false; // Uninitialized.
 
     Str_Init(&gameSavePath);
-    SV_ClientGameSavePathForGameId(gameId, &gameSavePath);
+    SV_ComposeSavePathForClientGameId(gameId, &gameSavePath);
 
     if(!SV_OpenFile(Str_Text(&gameSavePath), "rp"))
     {
-        Con_Message("Warning:SV_LoadClient: Failed opening \"%s\" for reading.\n", Str_Text(&gameSavePath));
+        Con_Message("Warning:SV_LoadGameClient: Failed opening \"%s\" for reading.\n", Str_Text(&gameSavePath));
         Str_Free(&gameSavePath);
         return;
     }
@@ -4935,7 +4935,7 @@ void SV_LoadClient(uint gameId)
     if(hdr.magic != MY_CLIENT_SAVE_MAGIC)
     {
         SV_CloseFile();
-        Con_Message("SV_LoadClient: Bad magic!\n");
+        Con_Message("SV_LoadGameClient: Bad magic!\n");
         return;
     }
 
@@ -4991,7 +4991,7 @@ static void unarchiveMap(void)
 
     // Compose the full path to the saved map.
     Str_Init(&path);
-    SV_GameSavePathForMapSlot(gameMap+1, BASE_SLOT, &path);
+    SV_ComposeSavePathForMapSlot(gameMap+1, BASE_SLOT, &path);
 
 #ifdef _DEBUG
     Con_Printf("unarchiveMap: Reading %s\n", Str_Text(&path));
@@ -5085,7 +5085,7 @@ int SV_SaveGameWorker(void* ptr)
 
     // Compose the full name to the saved map file.
     Str_Init(&mapPath);
-    SV_GameSavePathForMapSlot(gameMap+1, BASE_SLOT, &mapPath);
+    SV_ComposeSavePathForMapSlot(gameMap+1, BASE_SLOT, &mapPath);
 
     SV_OpenFile(Str_Text(&mapPath), "wp");
     P_ArchiveMap(true); // true = save player info
@@ -5111,10 +5111,10 @@ int SV_SaveGameWorker(void* ptr)
 
 #if __JHEXEN__
     // Clear all save files at destination slot.
-    SV_ClearSaveSlot(param->slot);
+    SV_ClearSlot(param->slot);
 
     // Copy base slot to destination slot.
-    SV_CopySaveSlot(BASE_SLOT, param->slot);
+    SV_CopySlot(BASE_SLOT, param->slot);
 #endif
 
     Con_BusyWorkerEnd();
@@ -5147,7 +5147,7 @@ boolean SV_SaveGame(int slot, const char* name)
     }
 
     Str_Init(&path);
-    SV_GameSavePathForSlot(logicalSlot, &path);
+    SV_ComposeSavePathForSlot(logicalSlot, &path);
 
     params.path = &path;
     params.name = name;
@@ -5167,7 +5167,7 @@ boolean SV_SaveGame(int slot, const char* name)
     }
 
     // Update our game save info.
-    SV_UpdateGameSaveInfo();
+    SV_UpdateAllSaveInfo();
 
     Str_Free(&path);
     return !saveError;
@@ -5192,7 +5192,7 @@ void SV_HxMapTeleport(uint map, uint position)
      * First, determine whether we've been to this map previously and if so,
      * whether we need to load the archived map state.
      */
-    if(!deathmatch && SV_HxGameSaveSlotHasMapState(BASE_SLOT, map+1))
+    if(!deathmatch && SV_HxHaveMapSaveForSlot(BASE_SLOT, map+1))
         revisit = true;
     else
         revisit = false;
@@ -5212,7 +5212,7 @@ void SV_HxMapTeleport(uint map, uint position)
 
             // Compose the full path name to the saved map file.
             Str_Init(&mapFilePath);
-            SV_GameSavePathForMapSlot(gameMap+1, BASE_SLOT, &mapFilePath);
+            SV_ComposeSavePathForMapSlot(gameMap+1, BASE_SLOT, &mapFilePath);
 
             SV_OpenFile(Str_Text(&mapFilePath), "wp");
             P_ArchiveMap(false);
@@ -5228,7 +5228,7 @@ void SV_HxMapTeleport(uint map, uint position)
         else
         {
             // Entering new cluster - clear base slot
-            SV_ClearSaveSlot(BASE_SLOT);
+            SV_ClearSlot(BASE_SLOT);
         }
     }
 

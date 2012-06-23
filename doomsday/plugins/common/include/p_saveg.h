@@ -54,9 +54,9 @@ void SV_HxMapTeleport(uint map, uint position);
  * Saves a snapshot of the world, a still image.
  * No data of movement is included (server sends it).
  */
-void SV_SaveClient(uint gameId);
+void SV_SaveGameClient(uint gameId);
 
-void SV_LoadClient(uint gameId);
+void SV_LoadGameClient(uint gameId);
 #endif
 
 typedef enum gamearchivesegment_e {
@@ -116,14 +116,14 @@ typedef enum thinkclass_e {
 } thinkerclass_t;
 
 #if __JHEXEN__
-int             SV_ThingArchiveNum(mobj_t* mo);
+int SV_ThingArchiveNum(mobj_t* mo);
 #else
-unsigned short  SV_ThingArchiveNum(mobj_t* mo);
+unsigned short SV_ThingArchiveNum(mobj_t* mo);
 #endif
-mobj_t*         SV_GetArchiveThing(int thingid, void* address);
+mobj_t* SV_GetArchiveThing(int thingid, void* address);
 
 MaterialArchive* SV_MaterialArchive(void);
-material_t*     SV_GetArchiveMaterial(materialarchive_serialid_t serialId, int group);
+material_t* SV_GetArchiveMaterial(materialarchive_serialid_t serialId, int group);
 
 /**
  * Exit with a fatal error if the value at the current location in the
@@ -144,6 +144,6 @@ void SV_BeginSegment(int segType);
  * @param mo  Mobj whoose flags are to be updated.
  * @param ver  The MOBJ save version to update from.
  */
-void SV_UpdateReadMobjFlags(mobj_t* mo, int ver);
+void SV_TranslateLegacyMobjFlags(mobj_t* mo, int ver);
 
 #endif /* LIBCOMMON_SAVESTATE_H */

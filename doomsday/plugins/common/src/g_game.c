@@ -2036,7 +2036,7 @@ void G_StartNewInit(void)
     /// @todo Do not clear this save slot. Instead we should set a game state
     ///       flag to signal when a new game should be started instead of loading
     ///       the autosave slot.
-    SV_ClearSaveSlot(AUTO_SLOT);
+    SV_ClearSlot(AUTO_SLOT);
 
     P_ACSInitNewGame();
 
@@ -2352,9 +2352,9 @@ boolean G_LoadGame(int slot)
     // no guarantee that the game-save will be accessible come load time.
 
     // First ensure we have up-to-date info.
-    SV_UpdateGameSaveInfo();
+    SV_UpdateAllSaveInfo();
 
-    if(!SV_IsGameSaveSlotUsed(slot))
+    if(!SV_IsSlotUsed(slot))
     {
         Con_Message("Warning:G_LoadGame: Save slot #%i is not in use, aborting load.\n", slot);
         return false;
@@ -2383,8 +2383,8 @@ void G_DoLoadGame(void)
     if(IS_NETGAME) return;
 
     // Copy the base slot to the autosave slot.
-    SV_ClearSaveSlot(AUTO_SLOT);
-    SV_CopySaveSlot(BASE_SLOT, AUTO_SLOT);
+    SV_ClearSlot(AUTO_SLOT);
+    SV_CopySlot(BASE_SLOT, AUTO_SLOT);
 #endif
 }
 
@@ -2491,7 +2491,7 @@ void G_DoSaveGame(void)
     else
     {
         // No name specified.
-        const gamesaveinfo_t* info = SV_GameSaveInfoForSlot(gaSaveGameSlot);
+        const saveinfo_t* info = SV_SaveInfoForSlot(gaSaveGameSlot);
         if(!gaSaveGameGenerateName && !Str_IsEmpty(&info->name))
         {
             // Slot already in use; reuse the existing name.
@@ -3388,13 +3388,13 @@ D_CMD(LoadGame)
     }
 
     // Ensure we have up-to-date info.
-    SV_UpdateGameSaveInfo();
+    SV_UpdateAllSaveInfo();
 
-    slot = SV_ParseGameSaveSlot(argv[1]);
-    if(SV_IsGameSaveSlotUsed(slot))
+    slot = SV_ParseSlotIdentifier(argv[1]);
+    if(SV_IsSlotUsed(slot))
     {
         // A known used slot identifier.
-        const gamesaveinfo_t* info;
+        const saveinfo_t* info;
         char buf[80];
 
         if(confirm || !cfg.confirmQuickGameSave)
@@ -3404,7 +3404,7 @@ D_CMD(LoadGame)
             return G_LoadGame(slot);
         }
 
-        info = SV_GameSaveInfoForSlot(slot);
+        info = SV_SaveInfoForSlot(slot);
         dd_snprintf(buf, 80, QLPROMPT, Str_Text(&info->name));
 
         S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
@@ -3482,13 +3482,13 @@ D_CMD(SaveGame)
     }
 
     // Ensure we have up-to-date info.
-    SV_UpdateGameSaveInfo();
+    SV_UpdateAllSaveInfo();
 
-    slot = SV_ParseGameSaveSlot(argv[1]);
+    slot = SV_ParseSlotIdentifier(argv[1]);
     if(SV_IsUserWritableSlot(slot))
     {
         // A known slot identifier.
-        const boolean slotIsUsed = SV_IsGameSaveSlotUsed(slot);
+        const boolean slotIsUsed = SV_IsSlotUsed(slot);
         const char* name = (argc >= 3 && stricmp(argv[2], "confirm"))? argv[2] : NULL;
         char buf[80];
 
@@ -3500,7 +3500,7 @@ D_CMD(SaveGame)
         }
 
         {
-        const gamesaveinfo_t* info = SV_GameSaveInfoForSlot(slot);
+        const saveinfo_t* info = SV_SaveInfoForSlot(slot);
         dd_snprintf(buf, 80, QSPROMPT, Str_Text(&info->name));
 
         S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
