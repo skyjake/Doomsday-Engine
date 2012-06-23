@@ -139,16 +139,16 @@ typedef enum arraytype_e {
 extern gl_state_t GL_state;
 
 #ifdef WIN32
-extern PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
+extern PFNWGLSWAPINTERVALEXTPROC      wglSwapIntervalEXT;
 extern PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB;
 
-extern PFNGLBLENDEQUATIONEXTPROC glBlendEquationEXT;
-extern PFNGLLOCKARRAYSEXTPROC glLockArraysEXT;
-extern PFNGLUNLOCKARRAYSEXTPROC glUnlockArraysEXT;
-extern PFNGLCLIENTACTIVETEXTUREPROC glClientActiveTexture;
-extern PFNGLACTIVETEXTUREPROC glActiveTexture;
-extern PFNGLMULTITEXCOORD2FPROC glMultiTexCoord2f;
-extern PFNGLMULTITEXCOORD2FVPROC glMultiTexCoord2fv;
+extern PFNGLBLENDEQUATIONEXTPROC      glBlendEquationEXT;
+extern PFNGLLOCKARRAYSEXTPROC         glLockArraysEXT;
+extern PFNGLUNLOCKARRAYSEXTPROC       glUnlockArraysEXT;
+extern PFNGLCLIENTACTIVETEXTUREPROC   glClientActiveTexture;
+extern PFNGLACTIVETEXTUREPROC         glActiveTexture;
+extern PFNGLMULTITEXCOORD2FPROC       glMultiTexCoord2f;
+extern PFNGLMULTITEXCOORD2FVPROC      glMultiTexCoord2fv;
 #endif
 
 #ifndef GL_ATI_texture_env_combine3
