@@ -58,7 +58,9 @@ struct UpdateAvailableDialog::Instance
 
     void init()
     {
+#ifndef MACOSX
         self->setWindowTitle(tr("Doomsday %1").arg(VersionInfo().asText()));
+#endif
         self->setWindowFlags(self->windowFlags() & ~Qt::WindowContextHelpButtonHint);
 
         emptyResultPage = true;
