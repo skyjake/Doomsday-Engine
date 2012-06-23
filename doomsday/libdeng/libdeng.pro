@@ -39,8 +39,11 @@ DEFINES += __DENG__ __DOOMSDAY__
 
 # Source Files ---------------------------------------------------------------
 
-HEADERS +=
+# Public headers
+HEADERS += \
+    #include/version.h
 
+# Sources and private headers
 SOURCES += 
 
 # Installation ---------------------------------------------------------------
@@ -54,5 +57,5 @@ else {
 }
 
 #win32 {
-#    RC_FILE = windows/res/deng.rc
+#    RC_FILE = res/windows/deng.rc
 #}
