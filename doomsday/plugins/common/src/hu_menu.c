@@ -1225,6 +1225,19 @@ mndata_list_t list_player_color = {
     listit_player_color, NUMLISTITEMS(listit_player_color)
 };
 
+#ifdef __JHEXEN__
+mndata_listitem_t listit_player_color_v10[5] = {
+    { "Red",        0 },
+    { "Blue",       1 },
+    { "Yellow",     2 },
+    { "Green",      3 },
+    { "Automatic",  8 }
+};
+mndata_list_t list_player_color_v10 = {
+    listit_player_color_v10, NUMLISTITEMS(listit_player_color_v10)
+};
+#endif
+
 #if __JHEXEN__
 mndata_text_t txt_player_class = { "Class" };
 #endif
@@ -1876,6 +1889,22 @@ void Hu_MenuInit(void)
     cvarbutton_t* cvb;
 
     if(inited) return;
+
+#ifdef __JHEXEN__
+    // Setup the player color selection list.
+    memset(&list_player_color, 0, sizeof(list_player_color));
+    if(gameMode == hexen_v10)
+    {
+        // Hexen v1.0 has only four player colors.
+        list_player_color.items = listit_player_color_v10;
+        list_player_color.count = NUMLISTITEMS(listit_player_color_v10);
+    }
+    else
+    {
+        list_player_color.items = listit_player_color;
+        list_player_color.count = NUMLISTITEMS(listit_player_color);
+    }
+#endif
 
     pageCount = 0;
     pages = NULL;
@@ -3784,7 +3813,8 @@ int Hu_MenuSelectPlayerColor(mn_object_t* obj, mn_actionid_t action, void* param
     int selection;
     if(MNA_MODIFIED != action) return 1;
 
-    selection = MNList_Selection(obj);
+    // The color translation map is stored in the list item data member.
+    selection = MNList_ItemData(obj, MNList_Selection(obj));
     if(selection >= 0)
     {
         mn_object_t* mop = MN_MustFindObjectOnPage(MNObject_Page(obj), 0, MNF_ID0);
@@ -3805,7 +3835,8 @@ int Hu_MenuSelectAcceptPlayerSetup(mn_object_t* obj, mn_actionid_t action, void*
 #if __JHEXEN__
     cfg.netClass = MNList_Selection(plrClassList);
 #endif
-    cfg.netColor = MNList_Selection(plrColorList);
+    // The color translation map is stored in the list item data member.
+    cfg.netColor = MNList_ItemData(plrColorList, MNList_Selection(plrColorList));
 
     if(MNA_ACTIVEOUT != action) return 1;
 
