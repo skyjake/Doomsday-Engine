@@ -945,7 +945,7 @@ D_CMD(CheatNoClip)
     return true;
 }
 
-static int suicideResponse(msgresponse_t response, void* context)
+static int suicideResponse(msgresponse_t response, int userValue, void* userPointer)
 {
     if(response == MSG_YES)
     {
@@ -989,7 +989,7 @@ D_CMD(CheatSuicide)
 
         if(!IS_NETGAME || IS_CLIENT)
         {
-            Hu_MsgStart(MSG_YESNO, SUICIDEASK, suicideResponse, NULL);
+            Hu_MsgStart(MSG_YESNO, SUICIDEASK, suicideResponse, 0, NULL);
             return true;
         }
 
@@ -998,7 +998,7 @@ D_CMD(CheatSuicide)
     }
     else
     {
-        Hu_MsgStart(MSG_ANYKEY, SUICIDEOUTMAP, NULL, NULL);
+        Hu_MsgStart(MSG_ANYKEY, SUICIDEOUTMAP, NULL, 0, NULL);
     }
 
     return true;

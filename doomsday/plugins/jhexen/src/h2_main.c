@@ -246,6 +246,8 @@ void X_PreInit(void)
     cfg.inludePatchReplaceMode = PRM_ALLOW_TEXT;
 
     cfg.confirmQuickGameSave = true;
+    cfg.loadLastSaveOnReborn = false;
+
     cfg.hudFog = 5;
     cfg.menuSlam = true;
     cfg.menuGameSaveSuggestName = true;

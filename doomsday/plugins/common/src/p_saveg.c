@@ -175,10 +175,10 @@ static int cvarLastSlot; // -1 = Not yet loaded/saved in this game session.
 static int cvarQuickSlot; // -1 = Not yet chosen/determined.
 
 #if __JHEXEN__
-static int saveVersion;
-#else
-static saveheader_t hdr;
+static int mapVersion;
 #endif
+static saveheader_t hdr;
+
 static playerheader_t playerHeader;
 static boolean playerHeaderOK;
 static mobj_t** thingArchive;
@@ -193,8 +193,6 @@ static int numSoundTargets;
 #endif
 
 static MaterialArchive* materialArchive;
-
-static byte* junkbuffer; // Old save data is read into here.
 
 static thinkerinfo_t thinkerInfo[] = {
     {
@@ -371,7 +369,11 @@ static thinkerinfo_t thinkerInfo[] = {
 };
 
 cvartemplate_t cvars[] = {
+#if !__JHEXEN__
+    { "game-save-auto-loadonreborn", 0, CVT_BYTE, &cfg.loadAutoSaveOnReborn, 0, 1 },
+#endif
     { "game-save-confirm", 0, CVT_BYTE, &cfg.confirmQuickGameSave, 0, 1 },
+    { "game-save-last-loadonreborn", 0, CVT_BYTE, &cfg.loadLastSaveOnReborn, 0, 1 },
     { "game-save-last-slot", CVF_NO_MIN|CVF_NO_MAX|CVF_NO_ARCHIVE|CVF_READ_ONLY, CVT_INT, &cvarLastSlot },
     { "game-save-quick-slot", CVF_NO_MAX|CVF_NO_ARCHIVE, CVT_INT, &cvarQuickSlot, -1, 0 },
 
@@ -400,89 +402,14 @@ void SV_Register(void)
 #if __JHEXEN__
 void SV_HxInitBaseSlot(void)
 {
-    errorIfNotInited("SV_HxInitBaseSlot");
-    SV_ClearSaveSlot(BASE_SLOT);
-}
-
-void SV_HxUpdateRebornSlot(void)
-{
-    errorIfNotInited("SV_HxUpdateRebornSlot");
-    SV_ClearSaveSlot(REBORN_SLOT);
-    SV_CopySaveSlot(BASE_SLOT, REBORN_SLOT);
-}
-
-void SV_HxClearRebornSlot(void)
-{
-    errorIfNotInited("SV_HxClearRebornSlot");
-    SV_ClearSaveSlot(REBORN_SLOT);
-}
-
-int SV_HxGetRebornSlot(void)
-{
-    errorIfNotInited("SV_HxGetRebornSlot");
-    return (REBORN_SLOT);
-}
-
-boolean SV_HxRebornSlotAvailable(void)
-{
-    ddstring_t path;
-    boolean result = false;
-    errorIfNotInited("SV_HxRebornSlotAvailable");
-    Str_InitStd(&path);
-    if(SV_GetGameSavePathForSlot(REBORN_SLOT, &path))
-    {
-        result = SV_ExistingFile(Str_Text(&path));
-    }
-    Str_Free(&path);
-    return result;
+    SV_ClearSlot(BASE_SLOT);
 }
 #endif
 
-#if __JHEXEN__
-void SV_SetSaveVersion(int version)
-{
-    saveVersion = version;
-}
-
-int SV_SaveVersion(void)
-{
-    return saveVersion;
-}
-#else
 saveheader_t* SV_SaveHeader(void)
 {
     return &hdr;
 }
-
-/**
- * Compose the (possibly relative) path to the game-save associated
- * with @a gameId. If the game-save path is unreachable then @a path
- * will be made empty.
- *
- * @param gameId  Unique game identifier.
- * @param path  String buffer to populate with the game save path.
- * @return  @c true if @a path was set.
- */
-static boolean composeClientGameSavePathForGameId(uint gameId, ddstring_t* path)
-{
-    assert(inited && NULL != path);
-    // Do we have a valid path?
-    if(!F_MakePath(SV_ClientSavePath())) return false;
-    // Compose the full game-save path and filename.
-    Str_Clear(path);
-    Str_Appendf(path, "%s" CLIENTSAVEGAMENAME "%08X." SAVEGAMEEXTENSION, SV_ClientSavePath(), gameId);
-    F_TranslatePath(path, path);
-    return true;
-}
-
-boolean SV_GetClientGameSavePathForGameId(uint gameId, ddstring_t* path)
-{
-    errorIfNotInited("SV_GetGameSavePathForSlot");
-    if(!path) return false;
-    Str_Clear(path);
-    return composeClientGameSavePathForGameId(gameId, path);
-}
-#endif
 
 void SV_AssertSegment(int segType)
 {
@@ -585,7 +512,7 @@ static uint SV_InitThingArchive(boolean load, boolean savePlayers)
 static void SV_SetArchiveThing(mobj_t* mo, int num)
 {
 #if __JHEXEN__
-    if(saveVersion >= 4)
+    if(mapVersion >= 4)
 #endif
         num -= 1;
 
@@ -712,8 +639,9 @@ mobj_t* SV_GetArchiveThing(int thingid, void *address)
 
     // Check that the thing archive id is valid.
 #if __JHEXEN__
-    if(saveVersion < 4)
-    {   // Old format is base 0.
+    if(mapVersion < 4)
+    {
+        // Old format is base 0.
         if(thingid == -1)
             return NULL; // A NULL reference.
 
@@ -1391,7 +1319,7 @@ Con_Error("SV_WriteMobj: Mobj using tracer. Possibly saved incorrectly.");
 }
 
 #if !__JDOOM64__
-void SV_UpdateReadMobjFlags(mobj_t* mo, int ver)
+void SV_TranslateLegacyMobjFlags(mobj_t* mo, int ver)
 {
 #if __JDOOM__ || __JHERETIC__
     if(ver < 6)
@@ -1499,7 +1427,7 @@ static void RestoreMobj(mobj_t *mo, int ver)
 #if !__JDOOM64__
     // Do we need to update this mobj's flag values?
     if(ver < MOBJ_SAVEVERSION)
-        SV_UpdateReadMobjFlags(mo, ver);
+        SV_TranslateLegacyMobjFlags(mo, ver);
 #endif
 
     P_MobjSetOrigin(mo);
@@ -1816,7 +1744,7 @@ static void P_ArchivePlayerHeader(void)
 static void P_UnArchivePlayerHeader(void)
 {
 #if __JHEXEN__
-    if(saveVersion >= 4)
+    if(hdr.version >= 4)
 #else
     if(hdr.version >= 5)
 #endif
@@ -2056,7 +1984,7 @@ static void SV_ReadSector(Sector* sec)
 
     // A type byte?
 #if __JHEXEN__
-    if(saveVersion < 4)
+    if(mapVersion < 4)
         type = sc_ploff;
     else
 #else
@@ -2068,7 +1996,7 @@ static void SV_ReadSector(Sector* sec)
 
     // A version byte?
 #if __JHEXEN__
-    if(saveVersion > 2)
+    if(mapVersion > 2)
 #else
     if(hdr.version > 4)
 #endif
@@ -2287,7 +2215,7 @@ static void SV_ReadLine(LineDef* li)
 
     // A type byte?
 #if __JHEXEN__
-    if(saveVersion < 4)
+    if(mapVersion < 4)
 #else
     if(hdr.version < 2)
 #endif
@@ -2297,7 +2225,7 @@ static void SV_ReadLine(LineDef* li)
 
     // A version byte?
 #if __JHEXEN__
-    if(saveVersion < 3)
+    if(mapVersion < 3)
 #else
     if(hdr.version < 5)
 #endif
@@ -2478,7 +2406,7 @@ static int SV_ReadPolyObj(void)
     Polyobj* po;
     int ver;
 
-    if(saveVersion >= 3)
+    if(mapVersion >= 3)
         ver = SV_ReadByte();
 
     po = P_PolyobjByTag(SV_ReadLong());
@@ -2527,7 +2455,7 @@ static void P_UnArchiveWorld(void)
     uint i;
 
 #if __JHEXEN__
-    if(saveVersion < 6)
+    if(mapVersion < 6)
 #else
     if(hdr.version < 6)
 #endif
@@ -2582,7 +2510,7 @@ static int SV_ReadCeiling(ceiling_t* ceiling)
     Sector*             sector;
 
 #if __JHEXEN__
-    if(saveVersion >= 4)
+    if(mapVersion >= 4)
 #else
     if(hdr.version >= 5)
 #endif
@@ -2695,7 +2623,7 @@ static int SV_ReadDoor(door_t *door)
     Sector *sector;
 
 #if __JHEXEN__
-    if(saveVersion >= 4)
+    if(mapVersion >= 4)
 #else
     if(hdr.version >= 5)
 #endif
@@ -2722,7 +2650,7 @@ static int SV_ReadDoor(door_t *door)
     {
         // Its in the old format which serialized door_t
         // Padding at the start (an old thinker_t struct)
-        SV_Read(junkbuffer, (size_t) 16);
+        SV_Seek(16);
 
         // Start of used data members.
 #if __JHEXEN__
@@ -2793,7 +2721,7 @@ static int SV_ReadFloor(floor_t* floor)
     Sector*             sector;
 
 #if __JHEXEN__
-    if(saveVersion >= 4)
+    if(mapVersion >= 4)
 #else
     if(hdr.version >= 5)
 #endif
@@ -2848,7 +2776,7 @@ static int SV_ReadFloor(floor_t* floor)
     {
         // Its in the old format which serialized floor_t
         // Padding at the start (an old thinker_t struct)
-        SV_Read(junkbuffer, (size_t) 16);
+        SV_Seek(16);
 
         // Start of used data members.
 #if __JHEXEN__
@@ -2932,7 +2860,7 @@ static int SV_ReadPlat(plat_t *plat)
     Sector *sector;
 
 #if __JHEXEN__
-    if(saveVersion >= 4)
+    if(mapVersion >= 4)
 #else
     if(hdr.version >= 5)
 #endif
@@ -3032,7 +2960,7 @@ static int SV_ReadLight(light_t* th)
 {
     Sector*             sector;
 
-    if(saveVersion >= 4)
+    if(mapVersion >= 4)
     {
         /*int ver =*/ SV_ReadByte(); // version byte.
 
@@ -3093,7 +3021,7 @@ static int SV_ReadPhase(phase_t* th)
 {
     Sector*             sector;
 
-    if(saveVersion >= 4)
+    if(mapVersion >= 4)
     {
         // Note: the thinker class byte has already been read.
         /*int ver =*/ SV_ReadByte(); // version byte.
@@ -3154,7 +3082,7 @@ static int SV_ReadScript(acs_t* th)
     int                 temp;
     uint                i;
 
-    if(saveVersion >= 4)
+    if(mapVersion >= 4)
     {
         // Note: the thinker class byte has already been read.
         /*int ver =*/ SV_ReadByte(); // version byte.
@@ -3232,7 +3160,7 @@ static void SV_WriteDoorPoly(const polydoor_t* th)
 
 static int SV_ReadDoorPoly(polydoor_t* th)
 {
-    if(saveVersion >= 4)
+    if(mapVersion >= 4)
     {
         // Note: the thinker class byte has already been read.
         /*int ver =*/ SV_ReadByte(); // version byte.
@@ -3294,7 +3222,7 @@ static void SV_WriteMovePoly(const polyevent_t* th)
 
 static int SV_ReadMovePoly(polyevent_t* th)
 {
-    if(saveVersion >= 4)
+    if(mapVersion >= 4)
     {
         // Note: the thinker class byte has already been read.
         /*int ver =*/ SV_ReadByte(); // version byte.
@@ -3345,7 +3273,7 @@ static void SV_WriteRotatePoly(const polyevent_t* th)
 
 static int SV_ReadRotatePoly(polyevent_t* th)
 {
-    if(saveVersion >= 4)
+    if(mapVersion >= 4)
     {
         // Note: the thinker class byte has already been read.
         /*int ver =*/ SV_ReadByte(); // version byte.
@@ -3399,7 +3327,7 @@ static int SV_ReadPillar(pillar_t* th)
 {
     Sector*             sector;
 
-    if(saveVersion >= 4)
+    if(mapVersion >= 4)
     {
         // Note: the thinker class byte has already been read.
         /*int ver =*/ SV_ReadByte(); // version byte.
@@ -3468,7 +3396,7 @@ static int SV_ReadFloorWaggle(waggle_t* th)
 {
     Sector*             sector;
 
-    if(saveVersion >= 4)
+    if(mapVersion >= 4)
     {
         /*int ver =*/ SV_ReadByte(); // version byte.
 
@@ -3559,7 +3487,7 @@ static int SV_ReadFlash(lightflash_t* flash)
     {
         // Its in the old pre V5 format which serialized lightflash_t
         // Padding at the start (an old thinker_t struct)
-        SV_Read(junkbuffer, (size_t) 16);
+        SV_Seek(16);
 
         // Start of used data members.
         // A 32bit pointer to sector, serialized.
@@ -3618,7 +3546,7 @@ static int SV_ReadStrobe(strobe_t* strobe)
     {
         // Its in the old pre V5 format which serialized strobe_t
         // Padding at the start (an old thinker_t struct)
-        SV_Read(junkbuffer, (size_t) 16);
+        SV_Seek(16);
 
         // Start of used data members.
         // A 32bit pointer to sector, serialized.
@@ -3654,10 +3582,11 @@ static void SV_WriteGlow(const glow_t* glow)
 
 static int SV_ReadGlow(glow_t* glow)
 {
-    Sector*             sector;
+    Sector* sector;
 
     if(hdr.version >= 5)
-    {   // Note: the thinker class byte has already been read.
+    {
+        // Note: the thinker class byte has already been read.
         /*int ver =*/ SV_ReadByte(); // version byte.
 
         sector = P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
@@ -3673,7 +3602,7 @@ static int SV_ReadGlow(glow_t* glow)
     {
         // Its in the old pre V5 format which serialized strobe_t
         // Padding at the start (an old thinker_t struct)
-        SV_Read(junkbuffer, (size_t) 16);
+        SV_Seek(16);
 
         // Start of used data members.
         // A 32bit pointer to sector, serialized.
@@ -3885,7 +3814,7 @@ static int restoreMobjLinks(thinker_t* th, void* context)
     case MT_THRUSTFLOOR_DOWN:
     case MT_MINOTAUR:
     case MT_SORCFX1:
-        if(saveVersion >= 3)
+        if(mapVersion >= 3)
         {
             mo->tracer = SV_GetArchiveThing(PTR2INT(mo->tracer), &mo->tracer);
         }
@@ -3905,7 +3834,7 @@ static int restoreMobjLinks(thinker_t* th, void* context)
     // Both tracer and special2
     case MT_HOLY_TAIL:
     case MT_LIGHTNING_CEILING:
-        if(saveVersion >= 3)
+        if(mapVersion >= 3)
         {
             mo->tracer = SV_GetArchiveThing(PTR2INT(mo->tracer), &mo->tracer);
         }
@@ -3944,7 +3873,7 @@ static void P_UnArchiveThinkers(void)
     boolean     found, knownThinker;
     boolean     inStasis;
 #if __JHEXEN__
-    boolean     doSpecials = (saveVersion >= 4);
+    boolean     doSpecials = (mapVersion >= 4);
 #else
     boolean     doSpecials = (hdr.version >= 5);
 #endif
@@ -3958,7 +3887,7 @@ static void P_UnArchiveThinkers(void)
     }
 
 #if __JHEXEN__
-    if(saveVersion < 4)
+    if(mapVersion < 4)
         SV_AssertSegment(ASEG_MOBJS);
     else
 #endif
@@ -3981,7 +3910,7 @@ static void P_UnArchiveThinkers(void)
             tClass = SV_ReadByte();
 
 #if __JHEXEN__
-        if(saveVersion < 4)
+        if(mapVersion < 4)
         {
             if(doSpecials) // Have we started on the specials yet?
             {
@@ -4052,7 +3981,7 @@ static void P_UnArchiveThinkers(void)
 
                     // Is there a thinker header block?
 #if __JHEXEN__
-                    if(saveVersion >= 6)
+                    if(mapVersion >= 6)
 #else
                     if(hdr.version >= 6)
 #endif
@@ -4268,7 +4197,7 @@ static void P_UnArchiveSounds(void)
     i = 0;
     while(i < numSequences)
     {
-        if(saveVersion >= 3)
+        if(mapVersion >= 3)
             ver = SV_ReadByte();
 
         sequence = SV_ReadLong();
@@ -4348,9 +4277,9 @@ static void P_ArchiveGlobalScriptData(void)
 
 static void P_UnArchiveGlobalScriptData(void)
 {
-    int                 i, ver = 1;
+    int i, ver = 1;
 
-    if(saveVersion >= 7)
+    if(hdr.version >= 7)
     {
         SV_AssertSegment(ASEG_GLOBALSCRIPTDATA);
         ver = SV_ReadByte();
@@ -4398,8 +4327,8 @@ static void P_UnArchiveGlobalScriptData(void)
                 store->args[j] = SV_ReadByte();
         }
 
-        if(saveVersion < 7)
-            SV_Read(junkbuffer, 12); // Junk.
+        if(hdr.version < 7)
+            SV_Seek(12); // Junk.
 
         if(ACSStoreSize)
         {
@@ -4490,11 +4419,11 @@ static void P_UnArchiveMap(void)
     // Determine the map version.
     if(segType == ASEG_MAP_HEADER2)
     {
-        saveVersion = SV_ReadByte();
+        mapVersion = SV_ReadByte();
     }
     else if(segType == ASEG_MAP_HEADER)
     {
-        saveVersion = 2;
+        mapVersion = 2;
     }
     else
     {
@@ -4581,134 +4510,90 @@ void SV_Shutdown(void)
     inited = false;
 }
 
-#if __JHEXEN__
-static boolean readSaveHeader(void)
-#else
-static boolean readSaveHeader(saveheader_t *hdr, LZFILE *savefile)
-#endif
+static void writeSaveHeader(const char* saveName)
 {
+    hdr.magic = MY_SAVE_MAGIC;
+    hdr.version = MY_SAVE_VERSION;
+    hdr.gameMode = gameMode;
+    dd_snprintf(hdr.name, SAVESTRINGSIZE, "%s", saveName);
+
+    hdr.map = gameMap+1;
 #if __JHEXEN__
-    // Set the save pointer and skip the name field
-    SV_HxSavePtr()->b = saveBuffer + SAVESTRINGSIZE;
-
-    if(strncmp((const char*) SV_HxSavePtr()->b, HXS_VERSION_TEXT, 8))
-    {
-        Con_Message("SV_LoadGame: Bad magic.\n");
-        return false;
-    }
-
-    saveVersion = atoi((const char*) (SV_HxSavePtr()->b + 8));
-
-    // Check for unsupported versions.
-    if(saveVersion > MY_SAVE_VERSION)
-    {
-        return false; // A future version
-    }
-    // We are incompatible with ver3 saves. Due to an invalid test
-    // used to determine present sidedefs, the ver3 format's sides
-    // included chunks of junk data.
-    if(saveVersion == 3)
-        return false;
-
-    SV_HxSavePtr()->b += HXS_VERSION_TEXT_LENGTH;
-
-    SV_AssertSegment(ASEG_GAME_HEADER);
-
-    gameEpisode = 0;
-    gameMap = SV_ReadByte() - 1;
-    gameSkill = SV_ReadByte();
-    deathmatch = SV_ReadByte();
-    noMonstersParm = SV_ReadByte();
-    randomClassParm = SV_ReadByte();
-
+    hdr.episode = 1;
 #else
-    lzRead(hdr, sizeof(*hdr), SV_File());
+    hdr.episode = gameEpisode+1;
+#endif
+#if __JHEXEN__
+    hdr.skill = gameSkill;
+    hdr.randomClasses = randomClassParm;
+#else
+    hdr.skill = gameSkill;
+    if(fastParm) hdr.skill |= 0x80; // Set high byte.
+#endif
+    hdr.deathmatch = deathmatch;
+    hdr.noMonsters = noMonstersParm;
 
-    if(hdr->magic != MY_SAVE_MAGIC)
+#if __JHEXEN__
+    hdr.randomClasses = randomClassParm;
+#else
+    hdr.respawnMonsters = respawnMonsters;
+    hdr.mapTime = mapTime;
+    hdr.gameId = SV_GenerateGameId();
+    { int i;
+    for(i = 0; i < MAXPLAYERS; i++)
     {
-        Con_Message("SV_LoadGame: Bad magic.\n");
+        hdr.players[i] = players[i].plr->inGame;
+    }}
+#endif
+
+    SV_SaveInfo_Write(&hdr);
+}
+
+static boolean saveIsValidForCurrentGameSession(saveheader_t* info)
+{
+    if(info->magic != MY_SAVE_MAGIC)
+    {
+        Con_Message("Warning: SV_LoadGame: Bad magic.\n");
         return false;
     }
 
-    // Check for unsupported versions.
-    if(hdr->version > MY_SAVE_VERSION)
-    {
-        return false; // A future version.
-    }
+    /**
+     * Check for unsupported versions.
+     */
+    // A future version?
+    if(info->version > MY_SAVE_VERSION) return false;
 
-#if __JDOOM__ || __JHERETIC__
-# if __JDOOM__ //|| __JHEXEN__
-    if(hdr->version < 9)
-# elif __JHERETIC__
-    if(hdr->version < 8)
-# endif
-    {
-        static const gamemode_t oldGameModes[] = {
-# if __JDOOM__
-            doom_shareware,
-            doom,
-            doom2,
-            doom_ultimate
-# elif __JHERETIC__
-            heretic_shareware,
-            heretic,
-            heretic_extended
-# elif __JHEXEN__
-            hexen_demo,
-            hexen,
-            hexen_deathkings
-# endif
-        };
-        hdr->gameMode = oldGameModes[(int)hdr->gameMode];
-#  if __JDOOM__
-        /**
-         * \kludge Older versions did not differentiate between versions of
-         * Doom2 (i.e., Plutonia and TNT are marked as Doom2). If we detect
-         * that this save is from some version of Doom2, replace the marked
-         * gamemode with the current gamemode.
-         */
-        if(hdr->gameMode == doom2 && (gameModeBits & GM_ANY_DOOM2))
-        {
-            hdr->gameMode = gameMode;
-        }
-        /// kludge end.
-#  endif
-    }
+#if __JHEXEN__
+    // We are incompatible with v3 saves due to an invalid test used to determine
+    // present sidedefs (ver3 format's sidedefs contain chunks of junk data).
+    if(info->version == 3) return false;
 #endif
 
-    if(hdr->gameMode != gameMode)
+    // Game Mode missmatch?
+    if(info->gameMode != gameMode)
     {
-        Con_Message("SV_LoadGame: Game Mode missmatch (%i!=%i), aborting load.\n", (int)gameMode, (int)hdr->gameMode);
+        Con_Message("Warning: SV_LoadGame: Game Mode missmatch (%i!=%i), aborting load.\n",
+                    (int)gameMode, (int)info->gameMode);
         return false;
     }
-
-    gameSkill = hdr->skill & 0x7f;
-    fastParm = (hdr->skill & 0x80) != 0;
-    gameEpisode = hdr->episode - 1;
-    gameMap = hdr->map - 1;
-    deathmatch = hdr->deathmatch;
-    noMonstersParm = hdr->noMonsters;
-    respawnMonsters = hdr->respawnMonsters;
-#endif
 
     return true; // Read was OK.
 }
 
 static boolean SV_LoadGame2(void)
 {
-    int         i;
-    char        buf[80];
-    boolean     loaded[MAXPLAYERS], infile[MAXPLAYERS];
+    int i;
+    char buf[80];
+    boolean loaded[MAXPLAYERS], infile[MAXPLAYERS];
 #if __JHEXEN__
-    int         k;
+    int k;
 #endif
 
     // Read the header.
-#if __JHEXEN__
-    if(!readSaveHeader())
-#else
-    if(!readSaveHeader(&hdr, SV_File()))
-#endif
+    SV_SaveInfo_Read(&hdr);
+
+    // Is this loadable?
+    if(!saveIsValidForCurrentGameSession(&hdr))
         return false;
 
     /**
@@ -4718,9 +4603,22 @@ static boolean SV_LoadGame2(void)
     G_StopDemo();
     FI_StackClear();
 
-    // Allocate a small junk buffer.
-    // (Data from old save versions is read into here).
-    junkbuffer = malloc(sizeof(byte) * 64);
+    // Configure global game state:
+    gameEpisode = hdr.episode - 1;
+    gameMap = hdr.map - 1;
+#if __JHEXEN__
+    gameSkill = hdr.skill;
+#else
+    gameSkill = hdr.skill & 0x7f;
+    fastParm = (hdr.skill & 0x80) != 0;
+#endif
+    deathmatch = hdr.deathmatch;
+    noMonstersParm = hdr.noMonsters;
+#if __JHEXEN__
+    randomClassParm = hdr.randomClasses;
+#else
+    respawnMonsters = hdr.respawnMonsters;
+#endif
 
     // Read global save data not part of the game metadata.
 #if __JHEXEN__
@@ -4872,7 +4770,12 @@ static boolean openGameSaveFile(const char* fileName, boolean write)
 {
 #if __JHEXEN__
     if(!write)
-        return M_ReadFile(fileName, (char**)&saveBuffer) > 0;
+    {
+        boolean result = M_ReadFile(fileName, (char**)&saveBuffer) > 0;
+        // Set the save pointer.
+        SV_HxSavePtr()->b = saveBuffer;
+        return result;
+    }
     else
 #endif
     SV_OpenFile(fileName, write? "wp" : "rp");
@@ -4898,14 +4801,14 @@ boolean SV_LoadGame(int slot)
 
     // Compose the possibly relative game save path.
     Str_Init(&path);
-    SV_GetGameSavePathForSlot(logicalSlot, &path);
+    SV_ComposeSavePathForSlot(logicalSlot, &path);
 
 #if __JHEXEN__
     // Copy all needed save files to the base slot
     if(slot != BASE_SLOT)
     {
-        SV_ClearSaveSlot(BASE_SLOT);
-        SV_CopySaveSlot(slot, BASE_SLOT);
+        SV_ClearSlot(BASE_SLOT);
+        SV_CopySlot(slot, BASE_SLOT);
     }
 #endif
 
@@ -4937,14 +4840,14 @@ boolean SV_LoadGame(int slot)
     return !loadError;
 }
 
-void SV_SaveClient(uint gameId)
+void SV_SaveGameClient(uint gameId)
 {
 #if !__JHEXEN__ // unsupported in jHexen
     player_t* pl = &players[CONSOLEPLAYER];
     mobj_t* mo = pl->plr->mo;
     ddstring_t gameSavePath;
 
-    errorIfNotInited("SV_SaveClient");
+    errorIfNotInited("SV_SaveGameClient");
 
     if(!IS_CLIENT || !mo)
         return;
@@ -4952,10 +4855,10 @@ void SV_SaveClient(uint gameId)
     playerHeaderOK = false; // Uninitialized.
 
     Str_Init(&gameSavePath);
-    SV_GetClientGameSavePathForGameId(gameId, &gameSavePath);
+    SV_ComposeSavePathForClientGameId(gameId, &gameSavePath);
     if(!SV_OpenFile(Str_Text(&gameSavePath), "wp"))
     {
-        Con_Message("Warning:SV_SaveClient: Failed opening \"%s\" for writing.\n", Str_Text(&gameSavePath));
+        Con_Message("Warning:SV_SaveGameClient: Failed opening \"%s\" for writing.\n", Str_Text(&gameSavePath));
         Str_Free(&gameSavePath);
         return;
     }
@@ -4973,7 +4876,7 @@ void SV_SaveClient(uint gameId)
     hdr.respawnMonsters = respawnMonsters;
     hdr.mapTime = mapTime;
     hdr.gameId = gameId;
-    SV_Write(&hdr, sizeof(hdr));
+    SV_SaveInfo_Write(&hdr);
 
     // Some important information.
     // Our position and look angles.
@@ -4997,21 +4900,20 @@ void SV_SaveClient(uint gameId)
     materialArchive = NULL;
 
     SV_CloseFile();
-    free(junkbuffer);
 
     // Update our game save info.
-    SV_UpdateGameSaveInfo();
+    SV_UpdateAllSaveInfo();
 #endif
 }
 
-void SV_LoadClient(uint gameId)
+void SV_LoadGameClient(uint gameId)
 {
 #if !__JHEXEN__ // unsupported in jHexen
     player_t* cpl = players + CONSOLEPLAYER;
     mobj_t* mo = cpl->plr->mo;
     ddstring_t gameSavePath;
 
-    errorIfNotInited("SV_LoadClient");
+    errorIfNotInited("SV_LoadGameClient");
 
     if(!IS_CLIENT || !mo)
         return;
@@ -5019,27 +4921,23 @@ void SV_LoadClient(uint gameId)
     playerHeaderOK = false; // Uninitialized.
 
     Str_Init(&gameSavePath);
-    SV_GetClientGameSavePathForGameId(gameId, &gameSavePath);
+    SV_ComposeSavePathForClientGameId(gameId, &gameSavePath);
 
     if(!SV_OpenFile(Str_Text(&gameSavePath), "rp"))
     {
-        Con_Message("Warning:SV_LoadClient: Failed opening \"%s\" for reading.\n", Str_Text(&gameSavePath));
+        Con_Message("Warning:SV_LoadGameClient: Failed opening \"%s\" for reading.\n", Str_Text(&gameSavePath));
         Str_Free(&gameSavePath);
         return;
     }
     Str_Free(&gameSavePath);
 
-    SV_Read(&hdr, sizeof(hdr));
+    SV_SaveInfo_Read(&hdr);
     if(hdr.magic != MY_CLIENT_SAVE_MAGIC)
     {
         SV_CloseFile();
-        Con_Message("SV_LoadClient: Bad magic!\n");
+        Con_Message("SV_LoadGameClient: Bad magic!\n");
         return;
     }
-
-    // Allocate a small junk buffer.
-    // (Data from old save versions is read into here)
-    junkbuffer = malloc(sizeof(byte) * 64);
 
     gameSkill = hdr.skill;
     deathmatch = hdr.deathmatch;
@@ -5082,7 +4980,6 @@ void SV_LoadClient(uint gameId)
     materialArchive = NULL;
 
     SV_CloseFile();
-    free(junkbuffer);
 #endif
 }
 
@@ -5094,7 +4991,7 @@ static void unarchiveMap(void)
 
     // Compose the full path to the saved map.
     Str_Init(&path);
-    SV_GetGameSavePathForMapSlot(gameMap+1, BASE_SLOT, &path);
+    SV_ComposeSavePathForMapSlot(gameMap+1, BASE_SLOT, &path);
 
 #ifdef _DEBUG
     Con_Printf("unarchiveMap: Reading %s\n", Str_Text(&path));
@@ -5131,17 +5028,11 @@ static void unarchiveMap(void)
 int SV_SaveGameWorker(void* ptr)
 {
     savegameparam_t* param = ptr;
-#if __JHEXEN__
-    char versionText[HXS_VERSION_TEXT_LENGTH];
-#else
-    int i;
-#endif
 
 #if _DEBUG
     VERBOSE( Con_Message("SV_SaveGame: Attempting save game to \"%s\".\n", Str_Text(param->path)) )
 #endif
 
-    // Open the output file
     if(!openGameSaveFile(Str_Text(param->path), true))
     {
         Con_BusyWorkerEnd();
@@ -5150,56 +5041,21 @@ int SV_SaveGameWorker(void* ptr)
 
     playerHeaderOK = false; // Uninitialized.
 
+    // Write the game session header.
+    writeSaveHeader(param->name);
+
 #if __JHEXEN__
-    // Write game save name
-    SV_Write(param->name, SAVESTRINGSIZE);
-
-    // Write version info
-    memset(versionText, 0, HXS_VERSION_TEXT_LENGTH);
-    sprintf(versionText, HXS_VERSION_TEXT"%i", MY_SAVE_VERSION);
-    SV_Write(versionText, HXS_VERSION_TEXT_LENGTH);
-
-    // Place a header marker
-    SV_BeginSegment(ASEG_GAME_HEADER);
-
-    // Write current map and difficulty
-    SV_WriteByte(gameMap+1);
-    SV_WriteByte(gameSkill);
-    SV_WriteByte(deathmatch);
-    SV_WriteByte(noMonstersParm);
-    SV_WriteByte(randomClassParm);
-
-    // Write global script info
     P_ArchiveGlobalScriptData();
-#else
-    // Write the header.
-    hdr.magic = MY_SAVE_MAGIC;
-    hdr.version = MY_SAVE_VERSION;
-# if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    hdr.gameMode = gameMode;
-# endif
-
-    dd_snprintf(hdr.name, SAVESTRINGSIZE, "%s", param->name);
-    hdr.skill = gameSkill;
-    if(fastParm)
-        hdr.skill |= 0x80;      // Set high byte.
-    hdr.episode = gameEpisode+1;
-    hdr.map = gameMap+1;
-    hdr.deathmatch = deathmatch;
-    hdr.noMonsters = noMonstersParm;
-    hdr.respawnMonsters = respawnMonsters;
-    hdr.mapTime = mapTime;
-    hdr.gameId = SV_GenerateGameId();
-    for(i = 0; i < MAXPLAYERS; i++)
-        hdr.players[i] = players[i].plr->inGame;
-    lzWrite(&hdr, sizeof(hdr), SV_File());
+#endif
 
     // In netgames the server tells the clients to save their games.
+#if !__JHEXEN__
     NetSv_SaveGame(hdr.gameId);
 #endif
 
-    // Set the mobj archive numbers
+    // Set the mobj archive numbers.
     SV_InitThingArchive(false, true);
+
 #if !__JHEXEN__
     SV_WriteLong(thingArchiveSize);
 #endif
@@ -5218,18 +5074,18 @@ int SV_SaveGameWorker(void* ptr)
     SV_BeginSegment(ASEG_END);
 
 #if __JHEXEN__
-    // Close the output file (maps are saved into a seperate file).
+    // Close the game session file (maps are saved into a seperate file).
     SV_CloseFile();
 #endif
 
-    // Save out the current map
+    // Save out the current map.
 #if __JHEXEN__
     {
     ddstring_t mapPath;
 
     // Compose the full name to the saved map file.
     Str_Init(&mapPath);
-    SV_GetGameSavePathForMapSlot(gameMap+1, BASE_SLOT, &mapPath);
+    SV_ComposeSavePathForMapSlot(gameMap+1, BASE_SLOT, &mapPath);
 
     SV_OpenFile(Str_Text(&mapPath), "wp");
     P_ArchiveMap(true); // true = save player info
@@ -5255,10 +5111,10 @@ int SV_SaveGameWorker(void* ptr)
 
 #if __JHEXEN__
     // Clear all save files at destination slot.
-    SV_ClearSaveSlot(param->slot);
+    SV_ClearSlot(param->slot);
 
-    // Copy base slot to destination slot
-    SV_CopySaveSlot(BASE_SLOT, param->slot);
+    // Copy base slot to destination slot.
+    SV_CopySlot(BASE_SLOT, param->slot);
 #endif
 
     Con_BusyWorkerEnd();
@@ -5291,7 +5147,7 @@ boolean SV_SaveGame(int slot, const char* name)
     }
 
     Str_Init(&path);
-    SV_GetGameSavePathForSlot(logicalSlot, &path);
+    SV_ComposeSavePathForSlot(logicalSlot, &path);
 
     params.path = &path;
     params.name = name;
@@ -5311,17 +5167,16 @@ boolean SV_SaveGame(int slot, const char* name)
     }
 
     // Update our game save info.
-    SV_UpdateGameSaveInfo();
+    SV_UpdateAllSaveInfo();
 
     Str_Free(&path);
     return !saveError;
 }
 
 #if __JHEXEN__
-void SV_MapTeleport(uint map, uint position)
+void SV_HxMapTeleport(uint map, uint position)
 {
     int i, oldKeys = 0, oldPieces = 0, bestWeapon;
-    ddstring_t fileName;
     player_t playerBackup[MAXPLAYERS];
     uint numInventoryItems[MAXPLAYERS][NUM_INVENTORYITEM_TYPES];
     inventoryitemtype_t readyItem[MAXPLAYERS];
@@ -5337,10 +5192,7 @@ void SV_MapTeleport(uint map, uint position)
      * First, determine whether we've been to this map previously and if so,
      * whether we need to load the archived map state.
      */
-    Str_Init(&fileName);
-    SV_GetGameSavePathForMapSlot(map+1, BASE_SLOT, &fileName);
-
-    if(!deathmatch && SV_ExistingFile(Str_Text(&fileName)))
+    if(!deathmatch && SV_HxHaveMapSaveForSlot(BASE_SLOT, map+1))
         revisit = true;
     else
         revisit = false;
@@ -5350,7 +5202,7 @@ void SV_MapTeleport(uint map, uint position)
         if(P_GetMapCluster(gameMap) == P_GetMapCluster(map))
         {
             // Same cluster - save current map without saving player mobjs.
-            ddstring_t otherFileName;
+            ddstring_t mapFilePath;
 
             // Set the mobj archive numbers
             SV_InitThingArchive(false, false);
@@ -5359,10 +5211,10 @@ void SV_MapTeleport(uint map, uint position)
             materialArchive = MaterialArchive_New(true);
 
             // Compose the full path name to the saved map file.
-            Str_Init(&otherFileName);
-            SV_GetGameSavePathForMapSlot(gameMap+1, BASE_SLOT, &otherFileName);
+            Str_Init(&mapFilePath);
+            SV_ComposeSavePathForMapSlot(gameMap+1, BASE_SLOT, &mapFilePath);
 
-            SV_OpenFile(Str_Text(&otherFileName), "wp");
+            SV_OpenFile(Str_Text(&mapFilePath), "wp");
             P_ArchiveMap(false);
 
             // We are done with the MaterialArchive.
@@ -5371,12 +5223,12 @@ void SV_MapTeleport(uint map, uint position)
 
             // Close the output file
             SV_CloseFile();
-            Str_Free(&otherFileName);
+            Str_Free(&mapFilePath);
         }
         else
         {
             // Entering new cluster - clear base slot
-            SV_ClearSaveSlot(BASE_SLOT);
+            SV_ClearSlot(BASE_SLOT);
         }
     }
 
@@ -5561,13 +5413,5 @@ void SV_MapTeleport(uint map, uint position)
     {
         P_CheckACSStore(gameMap);
     }
-
-    // For single play, save immediately into the reborn slot
-    if(!IS_NETGAME && !deathmatch)
-    {
-        SV_SaveGame(REBORN_SLOT, REBORN_DESCRIPTION);
-    }
-
-    Str_Free(&fileName);
 }
 #endif

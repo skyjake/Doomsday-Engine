@@ -1,34 +1,26 @@
-/**\file hu_msg.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
- *\author Copyright © 1993-1996 by id Software, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
+ * @file hu_msg.c
  * Important state change messages.
+ *
+ * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ * @authors Copyright &copy; 1993-1996 by id Software, Inc.
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <assert.h>
 #include <stdlib.h>
@@ -48,21 +40,7 @@
 #include "hu_menu.h"
 #include "hu_stuff.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
 D_CMD(MsgResponse);
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 ccmdtemplate_t msgCCmds[] = {
     {"messageyes",      "",     CCmdMsgResponse},
@@ -71,8 +49,6 @@ ccmdtemplate_t msgCCmds[] = {
     {NULL}
 };
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static boolean awaitingResponse;
 static int messageToPrint; // 1 = message to be printed.
 static msgresponse_t messageResponse;
@@ -80,16 +56,11 @@ static msgresponse_t messageResponse;
 static msgtype_t msgType;
 static msgfunc_t msgCallback;
 static char* msgText;
-static void* msgContext;
+static int msgUserValue;
+static void* msgUserPointer;
 
 static char yesNoMessage[160];
 
-// CODE --------------------------------------------------------------------
-
-/**
- * Called during the PreInit of each game during start up.
- * Register Cvars and CCmds for the important messages.
- */
 void Hu_MsgRegister(void)
 {
     int                 i;
@@ -98,9 +69,6 @@ void Hu_MsgRegister(void)
         Con_AddCommand(msgCCmds + i);
 }
 
-/**
- * Called during init.
- */
 void Hu_MsgInit(void)
 {
     awaitingResponse = false;
@@ -109,12 +77,10 @@ void Hu_MsgInit(void)
 
     msgCallback = NULL;
     msgText = NULL;
-    msgContext = NULL;
+    msgUserValue = 0;
+    msgUserPointer = NULL;
 }
 
-/**
- * Called during engine shutdown.
- */
 void Hu_MsgShutdown(void)
 {
     if(msgText)
@@ -222,9 +188,6 @@ static void drawMessage(void)
 #undef LEADING
 }
 
-/**
- * Draw any active message.
- */
 void Hu_MsgDrawer(void)
 {
     borderedprojectionstate_t bp;
@@ -249,9 +212,6 @@ void Hu_MsgDrawer(void)
     GL_EndBorderedProjection(&bp);
 }
 
-/**
- * Updates on Game Tick.
- */
 void Hu_MsgTicker(void)
 {
     // Check if there has been a response to a message.
@@ -262,12 +222,9 @@ void Hu_MsgTicker(void)
     stopMessage();
 
     if(msgType != MSG_ANYKEY && msgCallback)
-        msgCallback(messageResponse, msgContext);
+        msgCallback(messageResponse, msgUserValue, msgUserPointer);
 }
 
-/**
- * If an "any key" message is active, respond to the event.
- */
 int Hu_MsgResponder(event_t* ev)
 {
     if(!messageToPrint || msgType != MSG_ANYKEY)
@@ -295,10 +252,7 @@ boolean Hu_IsMessageActiveWithCallback(msgfunc_t callback)
     return messageToPrint && msgCallback == callback;
 }
 
-/**
- * Begin a new message.
- */
-void Hu_MsgStart(msgtype_t type, const char* msg, msgfunc_t callback, void* context)
+void Hu_MsgStart(msgtype_t type, const char* msg, msgfunc_t callback, int userValue, void* userPointer)
 {
     assert(msg);
 
@@ -308,7 +262,8 @@ void Hu_MsgStart(msgtype_t type, const char* msg, msgfunc_t callback, void* cont
 
     msgType = type;
     msgCallback = callback;
-    msgContext = context;
+    msgUserValue = userValue;
+    msgUserPointer = userPointer;
 
     // Take a copy of the message string.
     msgText = calloc(1, strlen(msg)+1);

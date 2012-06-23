@@ -31,12 +31,6 @@
 
 #include "p_saveio.h"
 
-typedef struct gamesaveinfo_s {
-    ddstring_t filePath;
-    ddstring_t name;
-    int slot;
-} gamesaveinfo_t;
-
 /// Register the console commands and variables of this module.
 void SV_Register(void);
 
@@ -46,93 +40,40 @@ void SV_Init(void);
 /// Shutdown this module.
 void SV_Shutdown(void);
 
-#ifdef __JHEXEN__
-void SV_SetSaveVersion(int version);
-int SV_SaveVersion(void);
-#else
 saveheader_t* SV_SaveHeader(void);
-#endif
-
-/**
- * Lookup a save slot by searching for a match on game-save name.
- * Search is in ascending logical slot order 0...N (where N is the number
- * of available save slots in the current game).
- *
- * @param name  Name of the game-save to look for. Case insensitive.
- * @return  Logical slot number of the found game-save else @c -1
- */
-int SV_FindGameSaveSlotForName(const char* name);
-
-/**
- * @return  @c true iff a game-save is present for logical save @a slot.
- */
-boolean SV_IsGameSaveSlotUsed(int slot);
-
-/**
- * @return  Game-save info for logical save @a slot. Always returns valid
- *      info even if supplied with an invalid or unused slot identifer.
- */
-const gamesaveinfo_t* SV_GetGameSaveInfoForSlot(int slot);
-
-#if !__JHEXEN__
-/**
- * Compose the (possibly relative) path to the game-save associated with
- * the unique @a gameId. If the game-save path is unreachable then
- * @a path will be made empty.
- *
- * @param gameId  Unique game identifier.
- * @param path  String buffer to populate with the game-save path.
- * @return  @c true if @a path was set.
- */
-boolean SV_GetClientGameSavePathForGameId(uint gameId, ddstring_t* path);
-#endif
-
-#if __JHEXEN__
-void SV_HxInitBaseSlot(void);
-
-/**
- * Copies the base slot to the reborn slot.
- */
-void SV_HxUpdateRebornSlot(void);
-
-void SV_HxClearRebornSlot(void);
-
-int SV_HxGetRebornSlot(void);
-boolean SV_HxRebornSlotAvailable(void);
-#endif
 
 boolean SV_SaveGame(int slot, const char* name);
 
 boolean SV_LoadGame(int slot);
 
 #if __JHEXEN__
-void            SV_MapTeleport(uint map, uint position);
+void SV_HxInitBaseSlot(void);
+void SV_HxMapTeleport(uint map, uint position);
 #else
 /**
  * Saves a snapshot of the world, a still image.
  * No data of movement is included (server sends it).
  */
-void SV_SaveClient(uint gameId);
+void SV_SaveGameClient(uint gameId);
 
-void SV_LoadClient(uint gameId);
+void SV_LoadGameClient(uint gameId);
 #endif
 
 typedef enum gamearchivesegment_e {
-    ASEG_GAME_HEADER = 101, //jhexen only
-    ASEG_MAP_HEADER, //jhexen only
+    ASEG_MAP_HEADER = 102, // Hexen only
     ASEG_WORLD,
-    ASEG_POLYOBJS, //jhexen only
-    ASEG_MOBJS, //jhexen < ver 4 only
+    ASEG_POLYOBJS, // Hexen only
+    ASEG_MOBJS, // Hexen < ver 4 only
     ASEG_THINKERS,
-    ASEG_SCRIPTS, //jhexen only
+    ASEG_SCRIPTS, // Hexen only
     ASEG_PLAYERS,
-    ASEG_SOUNDS, //jhexen only
-    ASEG_MISC, //jhexen only
+    ASEG_SOUNDS, // Hexen only
+    ASEG_MISC, // Hexen only
     ASEG_END,
     ASEG_MATERIAL_ARCHIVE,
-    ASEG_MAP_HEADER2, //jhexen only
+    ASEG_MAP_HEADER2, // Hexen only
     ASEG_PLAYER_HEADER,
-    ASEG_GLOBALSCRIPTDATA //jhexen only
+    ASEG_GLOBALSCRIPTDATA // Hexen only
 } gamearchivesegment_t;
 
 /**
@@ -175,14 +116,14 @@ typedef enum thinkclass_e {
 } thinkerclass_t;
 
 #if __JHEXEN__
-int             SV_ThingArchiveNum(mobj_t* mo);
+int SV_ThingArchiveNum(mobj_t* mo);
 #else
-unsigned short  SV_ThingArchiveNum(mobj_t* mo);
+unsigned short SV_ThingArchiveNum(mobj_t* mo);
 #endif
-mobj_t*         SV_GetArchiveThing(int thingid, void* address);
+mobj_t* SV_GetArchiveThing(int thingid, void* address);
 
 MaterialArchive* SV_MaterialArchive(void);
-material_t*     SV_GetArchiveMaterial(materialarchive_serialid_t serialId, int group);
+material_t* SV_GetArchiveMaterial(materialarchive_serialid_t serialId, int group);
 
 /**
  * Exit with a fatal error if the value at the current location in the
@@ -203,6 +144,6 @@ void SV_BeginSegment(int segType);
  * @param mo  Mobj whoose flags are to be updated.
  * @param ver  The MOBJ save version to update from.
  */
-void SV_UpdateReadMobjFlags(mobj_t* mo, int ver);
+void SV_TranslateLegacyMobjFlags(mobj_t* mo, int ver);
 
 #endif /* LIBCOMMON_SAVESTATE_H */

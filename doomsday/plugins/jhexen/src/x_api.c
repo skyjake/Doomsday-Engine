@@ -103,7 +103,7 @@ int G_RegisterGames(int hookType, int param, void* data)
     gameIds[hexen_v10] = DD_DefineGame(&hexenV10Def);
     DD_AddGameResource(GID(hexen_v10), RC_PACKAGE, RF_STARTUP, "hexen.wad", "MAP08;MAP22;MAP41;TINTTAB;FOGMAP;DARTA1;ARTIPORK;SKYFOG;GROVER");
     DD_AddGameResource(GID(hexen_v10), RC_PACKAGE, RF_STARTUP, STARTUPPK3, 0);
-    DD_AddGameResource(GID(hexen_v10), RC_DEFINITION, 0, "hexen.ded", 0);
+    DD_AddGameResource(GID(hexen_v10), RC_DEFINITION, 0, "hexen-v10.ded", 0);
 
     /* Hexen (Demo) */
     gameIds[hexen_demo] = DD_DefineGame(&hexenDemoDef);

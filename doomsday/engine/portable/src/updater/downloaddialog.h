@@ -1,9 +1,31 @@
-#ifndef DOWNLOADDIALOG_H
-#define DOWNLOADDIALOG_H
+/**
+ * @file downloaddialog.h
+ * Dialog that downloads a distribution package. @ingroup updater
+ *
+ * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
+ */
+
+#ifndef LIBDENG_DOWNLOADDIALOG_H
+#define LIBDENG_DOWNLOADDIALOG_H
 
 #ifdef __cplusplus
 
-#include <QDialog>
+#include "updaterdialog.h"
 #include <de/String>
 
 class QNetworkReply;
@@ -12,7 +34,7 @@ class QNetworkReply;
  * Dialog for downloading an update in the background and then starting
  * the (re)installation process.
  */
-class DownloadDialog : public QDialog
+class DownloadDialog : public UpdaterDialog
 {
     Q_OBJECT
 
@@ -54,4 +76,4 @@ int Updater_IsDownloadInProgress(void);
 } // extern "C"
 #endif
 
-#endif // DOWNLOADDIALOG_H
+#endif // LIBDENG_DOWNLOADDIALOG_H

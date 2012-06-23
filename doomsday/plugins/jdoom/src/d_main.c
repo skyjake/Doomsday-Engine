@@ -329,6 +329,9 @@ void D_PreInit(void)
     cfg.hideIWADAuthor = true;
 
     cfg.confirmQuickGameSave = true;
+    cfg.loadAutoSaveOnReborn = false;
+    cfg.loadLastSaveOnReborn = false;
+
     cfg.maxSkulls = true;
     cfg.allowSkullsInWalls = false;
     cfg.anyBossDeath = false;

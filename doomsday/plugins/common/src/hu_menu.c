@@ -1225,6 +1225,19 @@ mndata_list_t list_player_color = {
     listit_player_color, NUMLISTITEMS(listit_player_color)
 };
 
+#ifdef __JHEXEN__
+mndata_listitem_t listit_player_color_v10[5] = {
+    { "Red",        0 },
+    { "Blue",       1 },
+    { "Yellow",     2 },
+    { "Green",      3 },
+    { "Automatic",  8 }
+};
+mndata_list_t list_player_color_v10 = {
+    listit_player_color_v10, NUMLISTITEMS(listit_player_color_v10)
+};
+#endif
+
 #if __JHEXEN__
 mndata_text_t txt_player_class = { "Class" };
 #endif
@@ -1876,6 +1889,22 @@ void Hu_MenuInit(void)
     cvarbutton_t* cvb;
 
     if(inited) return;
+
+#ifdef __JHEXEN__
+    // Setup the player color selection list.
+    memset(&list_player_color, 0, sizeof(list_player_color));
+    if(gameMode == hexen_v10)
+    {
+        // Hexen v1.0 has only four player colors.
+        list_player_color.items = listit_player_color_v10;
+        list_player_color.count = NUMLISTITEMS(listit_player_color_v10);
+    }
+    else
+    {
+        list_player_color.items = listit_player_color;
+        list_player_color.count = NUMLISTITEMS(listit_player_color);
+    }
+#endif
 
     pageCount = 0;
     pages = NULL;
@@ -3287,7 +3316,7 @@ void Hu_MenuUpdateGameSaveWidgets(void)
     // Prompt a refresh of the game-save info. We don't yet actively monitor
     // the contents of the game-save paths, so instead we settle for manual
     // updates whenever the save/load menu is opened.
-    SV_UpdateGameSaveInfo();
+    SV_UpdateAllSaveInfo();
 
     // Update widgets.
     page = Hu_MenuFindPageByName("LoadGame");
@@ -3295,7 +3324,7 @@ void Hu_MenuUpdateGameSaveWidgets(void)
     {
         mn_object_t* obj = MN_MustFindObjectOnPage(page, 0, saveSlotObjectIds[i]);
         mndata_edit_t* edit = (mndata_edit_t*) obj->_typedata;
-        const gamesaveinfo_t* info = SV_GetGameSaveInfoForSlot(edit->data2);
+        const saveinfo_t* info = SV_SaveInfoForSlot(edit->data2);
         const char* text = "";
 
         MNObject_SetFlags(obj, FO_SET, MNF_DISABLED);
@@ -3668,13 +3697,13 @@ int Hu_MenuChangeWeaponPriority(mn_object_t* obj, mn_actionid_t action, void* pa
     return 0;
 }
 
-int Hu_MenuSelectSingleplayer(mn_object_t* obj, mn_actionid_t action, void* paramaters)
+int Hu_MenuSelectSingleplayer(mn_object_t* ob, mn_actionid_t action, void* parameters)
 {
     if(MNA_ACTIVEOUT != action) return 1;
 
     if(IS_NETGAME)
     {
-        Hu_MsgStart(MSG_ANYKEY, NEWGAME, NULL, NULL);
+        Hu_MsgStart(MSG_ANYKEY, NEWGAME, NULL, 0, NULL);
         return 0;
     }
 
@@ -3784,7 +3813,8 @@ int Hu_MenuSelectPlayerColor(mn_object_t* obj, mn_actionid_t action, void* param
     int selection;
     if(MNA_MODIFIED != action) return 1;
 
-    selection = MNList_Selection(obj);
+    // The color translation map is stored in the list item data member.
+    selection = MNList_ItemData(obj, MNList_Selection(obj));
     if(selection >= 0)
     {
         mn_object_t* mop = MN_MustFindObjectOnPage(MNObject_Page(obj), 0, MNF_ID0);
@@ -3805,7 +3835,8 @@ int Hu_MenuSelectAcceptPlayerSetup(mn_object_t* obj, mn_actionid_t action, void*
 #if __JHEXEN__
     cfg.netClass = MNList_Selection(plrClassList);
 #endif
-    cfg.netColor = MNList_Selection(plrColorList);
+    // The color translation map is stored in the list item data member.
+    cfg.netColor = MNList_ItemData(plrColorList, MNList_Selection(plrColorList));
 
     if(MNA_ACTIVEOUT != action) return 1;
 
@@ -3832,28 +3863,28 @@ int Hu_MenuSelectAcceptPlayerSetup(mn_object_t* obj, mn_actionid_t action, void*
     return 0;
 }
 
-int Hu_MenuSelectQuitGame(mn_object_t* obj, mn_actionid_t action, void* paramaters)
+int Hu_MenuSelectQuitGame(mn_object_t* ob, mn_actionid_t action, void* parameters)
 {
     if(MNA_ACTIVEOUT != action) return 1;
     G_QuitGame();
     return 0;
 }
 
-int Hu_MenuSelectEndGame(mn_object_t* obj, mn_actionid_t action, void* paramaters)
+int Hu_MenuSelectEndGame(mn_object_t* ob, mn_actionid_t action, void* parameters)
 {
     if(MNA_ACTIVEOUT != action) return 1;
     G_EndGame();
     return 0;
 }
 
-int Hu_MenuSelectLoadGame(mn_object_t* obj, mn_actionid_t action, void* paramaters)
+int Hu_MenuSelectLoadGame(mn_object_t* ob, mn_actionid_t action, void* parameters)
 {
     if(MNA_ACTIVEOUT != action) return 1;
     if(!Get(DD_DEDICATED))
     {
         if(IS_CLIENT && !Get(DD_PLAYBACK))
         {
-            Hu_MsgStart(MSG_ANYKEY, LOADNET, NULL, NULL);
+            Hu_MsgStart(MSG_ANYKEY, LOADNET, NULL, 0, NULL);
             return 0;
         }
     }
@@ -3863,7 +3894,7 @@ int Hu_MenuSelectLoadGame(mn_object_t* obj, mn_actionid_t action, void* paramate
     return 0;
 }
 
-int Hu_MenuSelectSaveGame(mn_object_t* obj, mn_actionid_t action, void* paramaters)
+int Hu_MenuSelectSaveGame(mn_object_t* ob, mn_actionid_t action, void* parameters)
 {
     player_t* player = &players[CONSOLEPLAYER];
 
@@ -3873,20 +3904,20 @@ int Hu_MenuSelectSaveGame(mn_object_t* obj, mn_actionid_t action, void* paramate
         if(IS_CLIENT)
         {
 #if __JDOOM__ || __JDOOM64__
-            Hu_MsgStart(MSG_ANYKEY, SAVENET, NULL, NULL);
+            Hu_MsgStart(MSG_ANYKEY, SAVENET, NULL, 0, NULL);
 #endif
             return 0;
         }
 
         if(G_GameState() != GS_MAP)
         {
-            Hu_MsgStart(MSG_ANYKEY, SAVEOUTMAP, NULL, NULL);
+            Hu_MsgStart(MSG_ANYKEY, SAVEOUTMAP, NULL, 0, NULL);
             return 0;
         }
 
         if(player->playerState == PST_DEAD)
         {
-            Hu_MsgStart(MSG_ANYKEY, SAVEDEAD, NULL, NULL);
+            Hu_MsgStart(MSG_ANYKEY, SAVEDEAD, NULL, 0, NULL);
             return 0;
         }
     }
@@ -3982,16 +4013,16 @@ int Hu_MenuFocusEpisode(mn_object_t* obj, mn_actionid_t action, void* paramaters
     return 0;
 }
 
-int Hu_MenuConfirmOrderCommericalVersion(msgresponse_t response, void* context)
+int Hu_MenuConfirmOrderCommericalVersion(msgresponse_t response, int userValue, void* userPointer)
 {
     G_StartHelp();
     return true;
 }
 
-int Hu_MenuActivateNotSharewareEpisode(mn_object_t* obj, mn_actionid_t action, void* paramaters)
+int Hu_MenuActivateNotSharewareEpisode(mn_object_t* ob, mn_actionid_t action, void* parameters)
 {
     if(MNA_ACTIVEOUT != action) return 1;
-    Hu_MsgStart(MSG_ANYKEY, SWSTRING, Hu_MenuConfirmOrderCommericalVersion, NULL);
+    Hu_MsgStart(MSG_ANYKEY, SWSTRING, Hu_MenuConfirmOrderCommericalVersion, 0, NULL);
     return 0;
 }
 #endif
@@ -4006,7 +4037,7 @@ int Hu_MenuFocusSkillMode(mn_object_t* obj, mn_actionid_t action, void* paramate
 }
 
 #if __JDOOM__
-int Hu_MenuConfirmInitNewGame(msgresponse_t response, void* context)
+int Hu_MenuConfirmInitNewGame(msgresponse_t response, int userValue, void* userPointer)
 {
     if(response == MSG_YES)
     {
@@ -4021,7 +4052,7 @@ void Hu_MenuInitNewGame(boolean confirmed)
 #if __JDOOM__
     if(!confirmed && SM_NIGHTMARE == mnSkillmode)
     {
-        Hu_MsgStart(MSG_YESNO, NIGHTMARE, Hu_MenuConfirmInitNewGame, NULL);
+        Hu_MsgStart(MSG_YESNO, NIGHTMARE, Hu_MenuConfirmInitNewGame, 0, NULL);
         return;
     }
 #endif

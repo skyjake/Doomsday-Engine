@@ -267,6 +267,9 @@ void H_PreInit(void)
     cfg.menuGameSaveSuggestName = true;
 
     cfg.confirmQuickGameSave = true;
+    cfg.loadAutoSaveOnReborn = false;
+    cfg.loadLastSaveOnReborn = false;
+
     cfg.monstersStuckInDoors = false;
     cfg.avoidDropoffs = true;
     cfg.moveBlock = false;

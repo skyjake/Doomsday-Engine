@@ -158,12 +158,6 @@ void    G_DoScreenShot(void);
 void    G_DoQuitGame(void);
 boolean G_ValidateMap(uint *episode, uint *map);
 
-#if __JHEXEN__
-void    G_DoSingleReborn(void);
-void    H2_PageTicker(void);
-void    H2_AdvanceDemo(void);
-#endif
-
 void    G_StopDemo(void);
 
 void R_LoadColorPalettes(void);
@@ -1139,7 +1133,7 @@ void G_StartHelp(void)
     Con_Message("Warning: InFine script 'help' not defined, ignoring.\n");
 }
 
-int G_EndGameResponse(msgresponse_t response, void* context)
+int G_EndGameResponse(msgresponse_t response, int userValue, void* userPointer)
 {
     if(response == MSG_YES)
     {
@@ -1161,19 +1155,19 @@ void G_EndGame(void)
 
     if(!userGame)
     {
-        Hu_MsgStart(MSG_ANYKEY, ENDNOGAME, NULL, NULL);
+        Hu_MsgStart(MSG_ANYKEY, ENDNOGAME, NULL, 0, NULL);
         return;
     }
 
     /*
     if(IS_NETGAME)
     {
-        Hu_MsgStart(MSG_ANYKEY, NETEND, NULL, NULL);
+        Hu_MsgStart(MSG_ANYKEY, NETEND, NULL, 0, NULL);
         return;
     }
     */
 
-    Hu_MsgStart(MSG_YESNO, IS_CLIENT? GET_TXT(TXT_DISCONNECT) : ENDGAME, G_EndGameResponse, NULL);
+    Hu_MsgStart(MSG_YESNO, IS_CLIENT? GET_TXT(TXT_DISCONNECT) : ENDGAME, G_EndGameResponse, 0, NULL);
 }
 
 void G_DoLoadMap(void)
@@ -1514,10 +1508,6 @@ static void runGameAction(void)
 #if __JHEXEN__
         case GA_INITNEW:
             G_DoInitNew();
-            break;
-
-        case GA_SINGLEREBORN:
-            G_DoSingleReborn();
             break;
 #endif
 
@@ -2008,47 +1998,50 @@ void G_DoReborn(int plrNum)
         FI_StackClear();
     }
 
-    if(!IS_NETGAME)
+    if(IS_NETGAME)
     {
-        // We've just died, don't do a briefing now.
-        briefDisabled = true;
-
-#if __JHEXEN__
-        if(SV_HxRebornSlotAvailable())
-        {   // Use the reborn code if the slot is available
-            G_SetGameAction(GA_SINGLEREBORN);
-        }
-        else
-        {   // Start a new game if there's no reborn info
-            G_SetGameAction(GA_NEWGAME);
-        }
-#else
-        // Reload the map from scratch.
-        G_SetGameAction(GA_LOADMAP);
-#endif
-    }
-    else
-    {   // In a net game.
         P_RebornPlayer(plrNum);
+        return;
     }
+
+    // We've just died, don't do a briefing now.
+    briefDisabled = true;
+
+    // Use the latest save?
+    if(cfg.loadLastSaveOnReborn)
+    {
+        if(G_LoadGame(Con_GetInteger("game-save-last-slot"))) return;
+    }
+
+    // Use the latest autosave?
+#if !__JHEXEN__
+    if(cfg.loadAutoSaveOnReborn) // Cannot be disabled in Hexen.
+#endif
+    {
+        if(G_LoadGame(AUTO_SLOT)) return;
+    }
+
+    // Reload the map from scratch.
+#if __JHEXEN__
+    G_SetGameAction(GA_NEWGAME);
+#else
+    G_SetGameAction(GA_LOADMAP);
+#endif
 }
 
 #if __JHEXEN__
 void G_StartNewInit(void)
 {
     SV_HxInitBaseSlot();
-    SV_HxClearRebornSlot();
+    /// @todo Do not clear this save slot. Instead we should set a game state
+    ///       flag to signal when a new game should be started instead of loading
+    ///       the autosave slot.
+    SV_ClearSlot(AUTO_SLOT);
 
     P_ACSInitNewGame();
 
     // Default the player start spot group to 0
     rebornPosition = 0;
-}
-
-void G_StartNewGame(skillmode_t skill)
-{
-    G_StartNewInit();
-    G_InitNew(skill, 0, P_TranslateMap(0)); // Hexen has translated map numbers.
 }
 #endif
 
@@ -2325,30 +2318,25 @@ void G_WorldDone(void)
 void G_DoWorldDone(void)
 {
 #if __JHEXEN__
-    SV_MapTeleport(nextMap, nextMapEntryPoint);
+    SV_HxMapTeleport(nextMap, nextMapEntryPoint);
     rebornPosition = nextMapEntryPoint;
 #else
 # if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     gameMap = nextMap;
 # endif
-
     G_DoLoadMap();
 #endif
 
-    G_SetGameAction(GA_NONE);
-}
+    // In a non-network, non-deathmatch game, save immediately into the autosave slot.
+    if(!IS_NETGAME && !deathmatch)
+    {
+        ddstring_t* name = G_GenerateSaveGameName();
+        SV_SaveGame(AUTO_SLOT, Str_Text(name));
+        Str_Delete(name);
+    }
 
-#if __JHEXEN__
-/**
- * Called by G_Ticker based on gameaction.  Loads a game from the reborn
- * save slot.
- */
-void G_DoSingleReborn(void)
-{
     G_SetGameAction(GA_NONE);
-    SV_LoadGame(SV_HxGetRebornSlot());
 }
-#endif
 
 boolean G_IsLoadGamePossible(void)
 {
@@ -2364,8 +2352,9 @@ boolean G_LoadGame(int slot)
     // no guarantee that the game-save will be accessible come load time.
 
     // First ensure we have up-to-date info.
-    SV_UpdateGameSaveInfo();
-    if(!SV_IsGameSaveSlotUsed(slot))
+    SV_UpdateAllSaveInfo();
+
+    if(!SV_IsSlotUsed(slot))
     {
         Con_Message("Warning:G_LoadGame: Save slot #%i is not in use, aborting load.\n", slot);
         return false;
@@ -2382,17 +2371,21 @@ boolean G_LoadGame(int slot)
  */
 void G_DoLoadGame(void)
 {
-    G_SetGameAction(GA_NONE);
-    if(SV_LoadGame(gaLoadGameSlot))
-    {
 #if __JHEXEN__
-        if(!IS_NETGAME)
-        {
-            // Copy the base slot to the reborn slot.
-            SV_HxUpdateRebornSlot();
-        }
+    boolean mustCopyBaseToAutoSlot = (gaLoadGameSlot != AUTO_SLOT);
 #endif
-    }
+
+    G_SetGameAction(GA_NONE);
+    if(!SV_LoadGame(gaLoadGameSlot)) return;
+
+#if __JHEXEN__
+    if(!mustCopyBaseToAutoSlot) return;
+    if(IS_NETGAME) return;
+
+    // Copy the base slot to the autosave slot.
+    SV_ClearSlot(AUTO_SLOT);
+    SV_CopySlot(BASE_SLOT, AUTO_SLOT);
+#endif
 }
 
 boolean G_IsSaveGamePossible(void)
@@ -2498,7 +2491,7 @@ void G_DoSaveGame(void)
     else
     {
         // No name specified.
-        const gamesaveinfo_t* info = SV_GetGameSaveInfoForSlot(gaSaveGameSlot);
+        const saveinfo_t* info = SV_SaveInfoForSlot(gaSaveGameSlot);
         if(!gaSaveGameGenerateName && !Str_IsEmpty(&info->name))
         {
             // Slot already in use; reuse the existing name.
@@ -2568,7 +2561,8 @@ void G_DoNewGame(void)
     }
     G_InitNew(dSkill, dEpisode, dMap);
 #else
-    G_StartNewGame(dSkill);
+    G_StartNewInit();
+    G_InitNew(dSkill, 0, P_TranslateMap(0)); // Hexen has translated map numbers.
 #endif
     G_SetGameAction(GA_NONE);
 }
@@ -2700,7 +2694,7 @@ void G_InitNew(skillmode_t skill, uint episode, uint map)
     G_DoLoadMap();
 }
 
-int G_QuitGameResponse(msgresponse_t response, void* context)
+int G_QuitGameResponse(msgresponse_t response, int userValue, void* userPointer)
 {
     if(response == MSG_YES)
     {
@@ -2737,7 +2731,7 @@ void G_QuitGame(void)
 #endif
 
     Con_Open(false);
-    Hu_MsgStart(MSG_YESNO, endString, G_QuitGameResponse, NULL);
+    Hu_MsgStart(MSG_YESNO, endString, G_QuitGameResponse, 0, NULL);
 }
 
 /**
@@ -3368,11 +3362,11 @@ D_CMD(OpenSaveMenu)
     return true;
 }
 
-int loadGameConfirmResponse(msgresponse_t response, void* context)
+int loadGameConfirmResponse(msgresponse_t response, int userValue, void* userPointer)
 {
     if(response == MSG_YES)
     {
-        const int slot = *(int*)context;
+        const int slot = userValue;
         G_LoadGame(slot);
     }
     return true;
@@ -3389,15 +3383,18 @@ D_CMD(LoadGame)
     if(IS_NETGAME)
     {
         S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
-        Hu_MsgStart(MSG_ANYKEY, QLOADNET, NULL, NULL);
+        Hu_MsgStart(MSG_ANYKEY, QLOADNET, NULL, 0, NULL);
         return false;
     }
 
-    slot = SV_ParseGameSaveSlot(argv[1]);
-    if(SV_IsGameSaveSlotUsed(slot))
+    // Ensure we have up-to-date info.
+    SV_UpdateAllSaveInfo();
+
+    slot = SV_ParseSlotIdentifier(argv[1]);
+    if(SV_IsSlotUsed(slot))
     {
         // A known used slot identifier.
-        const gamesaveinfo_t* info;
+        const saveinfo_t* info;
         char buf[80];
 
         if(confirm || !cfg.confirmQuickGameSave)
@@ -3407,17 +3404,17 @@ D_CMD(LoadGame)
             return G_LoadGame(slot);
         }
 
-        info = SV_GetGameSaveInfoForSlot(slot);
+        info = SV_SaveInfoForSlot(slot);
         dd_snprintf(buf, 80, QLPROMPT, Str_Text(&info->name));
 
         S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
-        Hu_MsgStart(MSG_YESNO, buf, loadGameConfirmResponse, (void*)&slot);
+        Hu_MsgStart(MSG_YESNO, buf, loadGameConfirmResponse, slot, 0);
         return true;
     }
     else if(!stricmp(argv[1], "quick") || !stricmp(argv[1], "<quick>"))
     {
         S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
-        Hu_MsgStart(MSG_ANYKEY, QSAVESPOT, NULL, NULL);
+        Hu_MsgStart(MSG_ANYKEY, QSAVESPOT, NULL, 0, NULL);
         return true;
     }
 
@@ -3445,17 +3442,13 @@ D_CMD(QuickLoadGame)
     return DD_Execute(true, "loadgame quick");
 }
 
-typedef struct {
-    int slot;
-    const char* name;
-} savegameconfirmresponse_params_t;
-
-int saveGameConfirmResponse(msgresponse_t response, void* context)
+int saveGameConfirmResponse(msgresponse_t response, int userValue, void* userPointer)
 {
     if(response == MSG_YES)
     {
-        savegameconfirmresponse_params_t* p = (savegameconfirmresponse_params_t*)context;
-        G_SaveGame2(p->slot, p->name);
+        const int slot = userValue;
+        const char* name = (const char*)userPointer;
+        G_SaveGame2(slot, name);
     }
     return true;
 }
@@ -3477,22 +3470,25 @@ D_CMD(SaveGame)
     if(player->playerState == PST_DEAD || Get(DD_PLAYBACK))
     {
         S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
-        Hu_MsgStart(MSG_ANYKEY, SAVEDEAD, NULL, NULL);
+        Hu_MsgStart(MSG_ANYKEY, SAVEDEAD, NULL, 0, NULL);
         return true;
     }
 
     if(G_GameState() != GS_MAP)
     {
         S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
-        Hu_MsgStart(MSG_ANYKEY, SAVEOUTMAP, NULL, NULL);
+        Hu_MsgStart(MSG_ANYKEY, SAVEOUTMAP, NULL, 0, NULL);
         return true;
     }
 
-    slot = SV_ParseGameSaveSlot(argv[1]);
-    if(slot >= 0)
+    // Ensure we have up-to-date info.
+    SV_UpdateAllSaveInfo();
+
+    slot = SV_ParseSlotIdentifier(argv[1]);
+    if(SV_IsUserWritableSlot(slot))
     {
         // A known slot identifier.
-        const boolean slotIsUsed = SV_IsGameSaveSlotUsed(slot);
+        const boolean slotIsUsed = SV_IsSlotUsed(slot);
         const char* name = (argc >= 3 && stricmp(argv[2], "confirm"))? argv[2] : NULL;
         char buf[80];
 
@@ -3504,15 +3500,11 @@ D_CMD(SaveGame)
         }
 
         {
-        savegameconfirmresponse_params_t p;
-        const gamesaveinfo_t* info = SV_GetGameSaveInfoForSlot(slot);
+        const saveinfo_t* info = SV_SaveInfoForSlot(slot);
         dd_snprintf(buf, 80, QSPROMPT, Str_Text(&info->name));
 
-        p.slot = slot;
-        p.name = name;
-
         S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
-        Hu_MsgStart(MSG_YESNO, buf, saveGameConfirmResponse, (void*)&p);
+        Hu_MsgStart(MSG_YESNO, buf, saveGameConfirmResponse, slot, (void*)name);
         }
         return true;
     }
@@ -3527,7 +3519,11 @@ D_CMD(SaveGame)
     }
 
     // Clearly the caller needs some assistance...
-    Con_Message("Failed to determine game-save slot from \"%s\"\n", argv[1]);
+    if(!SV_IsValidSlot(slot))
+        Con_Message("Failed to determine game-save slot from \"%s\".\n", argv[1]);
+    else
+        Con_Message("Game-save slot #%i is non-user-writable.\n", slot);
+
     // No action means the command failed.
     return false;
 }
