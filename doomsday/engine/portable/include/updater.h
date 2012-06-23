@@ -20,6 +20,11 @@
  * 02110-1301 USA</small>
  */
 
+/**
+ * @defgroup updater
+ * Automatic updater
+ */
+
 #ifndef LIBDENG_UPDATER_H
 #define LIBDENG_UPDATER_H
 
