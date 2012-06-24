@@ -52,8 +52,6 @@ static saveinfo_t baseSaveInfo;
 static saveptr_t saveptr;
 #endif
 
-static boolean readGameSaveHeader(saveinfo_t* info);
-
 static void errorIfNotInited(const char* callerName)
 {
     if(inited) return;
@@ -72,6 +70,8 @@ static void initSaveInfo(saveinfo_t* info)
 static boolean saveInfoIsValidForCurrentGameSession(saveinfo_t* info)
 {
     if(!info) return false;
+
+    /// @fixme What about original game saves, they will fail here presently.
 
     // Magic must match.
     if(info->header.magic != MY_SAVE_MAGIC) return false;
@@ -94,6 +94,21 @@ static boolean saveInfoIsValidForCurrentGameSession(saveinfo_t* info)
     return true; // It's good!
 }
 
+static boolean recogniseAndReadHeader(saveinfo_t* info)
+{
+    if(SV_Recognise(info)) return true;
+
+    // Perhaps an original game save?
+#if __JDOOM__
+    if(SV_v19_Recognise(info)) return true;
+#endif
+#if __JHERETIC__
+    if(SV_v13_Recognise(info)) return true;
+#endif
+
+    return false;
+}
+
 static void updateSaveInfo(saveinfo_t* info, ddstring_t* savePath)
 {
     if(!info) return;
@@ -107,7 +122,20 @@ static void updateSaveInfo(saveinfo_t* info, ddstring_t* savePath)
         return;
     }
 
-    if(!readGameSaveHeader(info) || !saveInfoIsValidForCurrentGameSession(info))
+    if(!recogniseAndReadHeader(info))
+    {
+        // Not a loadable save.
+        Str_Clear(&info->filePath);
+        return;
+    }
+
+    // Ensure we have a valid name.
+    if(Str_IsEmpty(&info->name))
+    {
+        Str_Set(&info->name, "UNNAMED");
+    }
+
+    if(!saveInfoIsValidForCurrentGameSession(info))
     {
         // Not a loadable save.
         Str_Clear(&info->filePath);
@@ -368,9 +396,8 @@ boolean SV_IsUserWritableSlot(int slot)
     return SV_IsValidSlot(slot);
 }
 
-static boolean readGameSaveHeader(saveinfo_t* info)
+boolean SV_Recognise(saveinfo_t* info)
 {
-    boolean found = false;
 #if __JHEXEN__
     byte* saveBuffer;
 #endif
@@ -401,34 +428,10 @@ static boolean readGameSaveHeader(saveinfo_t* info)
         if(MY_SAVE_MAGIC == info->header.magic)
         {
             Str_Set(&info->name, info->header.name);
-            found = true;
+            return true;
         }
     }
-
-    // If not found or not recognized try other supported formats.
-#if __JDOOM__ || __JHERETIC__
-    if(!found)
-    {
-        // Perhaps a DOOM(2).EXE v19 saved game?
-        if(SV_OpenFile(Str_Text(&info->filePath), "r"))
-        {
-            char nameBuffer[SAVESTRINGSIZE];
-            lzRead(nameBuffer, SAVESTRINGSIZE, SV_File());
-            nameBuffer[SAVESTRINGSIZE - 1] = 0;
-            Str_Set(&info->name, nameBuffer);
-            SV_CloseFile();
-            found = true;
-        }
-    }
-#endif
-
-    // Ensure we have a non-empty name.
-    if(found && Str_IsEmpty(&info->name))
-    {
-        Str_Set(&info->name, "UNNAMED");
-    }
-
-    return found;
+    return false;
 }
 
 /// Re-build game-save info by re-scanning the save paths and populating the list.

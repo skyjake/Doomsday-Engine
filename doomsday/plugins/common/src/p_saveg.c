@@ -4760,17 +4760,13 @@ boolean SV_LoadGame(int slot)
     const int logicalSlot = slot;
 #endif
     boolean loadError = true;
-    ddstring_t path;
+    saveinfo_t* saveInfo;
 
     errorIfNotInited("SV_LoadGame");
 
     if(!SV_IsValidSlot(slot)) return false;
 
     VERBOSE( Con_Message("Attempting load of game-save slot #%i...\n", slot) )
-
-    // Compose the possibly relative game save path.
-    Str_Init(&path);
-    SV_ComposeSavePathForSlot(logicalSlot, &path);
 
 #if __JHEXEN__
     // Copy all needed save files to the base slot
@@ -4781,21 +4777,22 @@ boolean SV_LoadGame(int slot)
     }
 #endif
 
-    if(openGameSaveFile(Str_Text(&path), false))
+    saveInfo = SV_SaveInfoForSlot(logicalSlot);
+
+    playerHeaderOK = false; // Uninitialized.
+    if(openGameSaveFile(Str_Text(&saveInfo->filePath), false))
     {
-        playerHeaderOK = false; // Uninitialized.
-        loadError = !SV_LoadGame2(SV_SaveInfoForSlot(logicalSlot));
+        loadError = !SV_LoadGame2(saveInfo);
     }
     else
     {
         // It might be an original game save?
 #if __JDOOM__
-        loadError = !SV_v19_LoadGame(Str_Text(&path));
+        loadError = !SV_v19_LoadGame(saveInfo);
 #elif __JHERETIC__
-        loadError = !SV_v13_LoadGame(Str_Text(&path));
+        loadError = !SV_v13_LoadGame(saveInfo);
 #endif
     }
-    Str_Free(&path);
 
     if(!loadError)
     {
