@@ -102,9 +102,21 @@ boolean SV_HxHaveMapSaveForSlot(int slot, uint map);
 saveinfo_t* SV_SaveInfoForSlot(int slot);
 
 boolean SV_ComposeSavePathForSlot(int slot, ddstring_t* path);
+
 #if __JHEXEN__
 boolean SV_ComposeSavePathForMapSlot(uint map, int slot, ddstring_t* path);
-#else
+#endif
+
+#if !__JHEXEN__
+/**
+ * Compose the (possibly relative) path to the game-save associated
+ * with @a gameId. If the game-save path is unreachable then @a path
+ * will be made empty.
+ *
+ * @param gameId  Unique game identifier.
+ * @param path  String buffer to populate with the game save path.
+ * @return  @c true if @a path was set.
+ */
 boolean SV_ComposeSavePathForClientGameId(uint gameId, ddstring_t* path);
 #endif
 
@@ -125,7 +137,9 @@ boolean SV_LoadGame(int slot);
 #if __JHEXEN__
 void SV_HxInitBaseSlot(void);
 void SV_HxMapTeleport(uint map, uint position);
-#else
+#endif
+
+#if !__JHEXEN__
 /**
  * Saves a snapshot of the world, a still image.
  * No data of movement is included (server sends it).
@@ -134,23 +148,6 @@ void SV_SaveGameClient(uint gameId);
 
 void SV_LoadGameClient(uint gameId);
 #endif
-
-typedef enum gamearchivesegment_e {
-    ASEG_MAP_HEADER = 102, // Hexen only
-    ASEG_WORLD,
-    ASEG_POLYOBJS, // Hexen only
-    ASEG_MOBJS, // Hexen < ver 4 only
-    ASEG_THINKERS,
-    ASEG_SCRIPTS, // Hexen only
-    ASEG_PLAYERS,
-    ASEG_SOUNDS, // Hexen only
-    ASEG_MISC, // Hexen only
-    ASEG_END,
-    ASEG_MATERIAL_ARCHIVE,
-    ASEG_MAP_HEADER2, // Hexen only
-    ASEG_PLAYER_HEADER,
-    ASEG_GLOBALSCRIPTDATA // Hexen only
-} gamearchivesegment_t;
 
 /**
  * Original indices must remain unchanged!
@@ -200,16 +197,6 @@ mobj_t* SV_GetArchiveThing(int thingid, void* address);
 
 MaterialArchive* SV_MaterialArchive(void);
 material_t* SV_GetArchiveMaterial(materialarchive_serialid_t serialId, int group);
-
-/**
- * Exit with a fatal error if the value at the current location in the
- * game-save file does not match that associated with the segment type.
- *
- * @param segType  Segment type identifier to check alignment of.
- */
-void SV_AssertSegment(int segType);
-
-void SV_BeginSegment(int segType);
 
 /**
  * Update mobj flag values from those used in legacy game-save formats

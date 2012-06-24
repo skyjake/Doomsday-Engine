@@ -211,6 +211,25 @@ saveptr_t* SV_HxSavePtr(void)
 }
 #endif
 
+void SV_AssertSegment(int segType)
+{
+    errorIfNotInited("SV_AssertSegment");
+#if __JHEXEN__
+    if(SV_ReadLong() != segType)
+    {
+        Con_Error("Corrupt save game: Segment [%d] failed alignment check", segType);
+    }
+#endif
+}
+
+void SV_BeginSegment(int segType)
+{
+    errorIfNotInited("SV_BeginSegment");
+#if __JHEXEN__
+    SV_WriteLong(segType);
+#endif
+}
+
 void SV_Seek(uint offset)
 {
     errorIfNotInited("SV_SetPos");

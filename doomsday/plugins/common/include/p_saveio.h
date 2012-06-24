@@ -27,24 +27,41 @@
 #include "lzss.h"
 #include "p_savedef.h"
 
+typedef enum gamearchivesegment_e {
+    ASEG_MAP_HEADER = 102, // Hexen only
+    ASEG_WORLD,
+    ASEG_POLYOBJS, // Hexen only
+    ASEG_MOBJS, // Hexen < ver 4 only
+    ASEG_THINKERS,
+    ASEG_SCRIPTS, // Hexen only
+    ASEG_PLAYERS,
+    ASEG_SOUNDS, // Hexen only
+    ASEG_MISC, // Hexen only
+    ASEG_END,
+    ASEG_MATERIAL_ARCHIVE,
+    ASEG_MAP_HEADER2, // Hexen only
+    ASEG_PLAYER_HEADER,
+    ASEG_GLOBALSCRIPTDATA // Hexen only
+} gamearchivesegment_t;
+
 typedef struct saveheader_s {
-    int             magic;
-    int             version;
-    gamemode_t      gameMode;
-    char            name[SAVESTRINGSIZE];
-    byte            skill;
-    byte            episode;
-    byte            map;
-    byte            deathmatch;
-    byte            noMonsters;
+    int magic;
+    int version;
+    gamemode_t gameMode;
+    char name[SAVESTRINGSIZE];
+    byte skill;
+    byte episode;
+    byte map;
+    byte deathmatch;
+    byte noMonsters;
 #if __JHEXEN__
-    byte            randomClasses;
+    byte randomClasses;
 #else
-    byte            respawnMonsters;
-    int             mapTime;
-    byte            players[MAXPLAYERS];
+    byte respawnMonsters;
+    int mapTime;
+    byte players[MAXPLAYERS];
 #endif
-    unsigned int    gameId;
+    unsigned int gameId;
 } saveheader_t;
 
 typedef struct saveinfo_s {
@@ -82,6 +99,16 @@ void SV_CopyFile(const ddstring_t* srcPath, const ddstring_t* destPath);
 #if __JHEXEN__
 saveptr_t* SV_HxSavePtr(void);
 #endif // __JHEXEN__
+
+/**
+ * Exit with a fatal error if the value at the current location in the
+ * game-save file does not match that associated with the segment type.
+ *
+ * @param segType  Segment type identifier to check alignment of.
+ */
+void SV_AssertSegment(int segType);
+
+void SV_BeginSegment(int segType);
 
 /**
  * Seek forward @a offset bytes in the save file.

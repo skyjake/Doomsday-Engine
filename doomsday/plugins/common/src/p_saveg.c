@@ -738,15 +738,6 @@ boolean SV_ComposeSavePathForMapSlot(uint map, int slot, ddstring_t* path)
     return !Str_IsEmpty(path);
 }
 #else
-/**
- * Compose the (possibly relative) path to the game-save associated
- * with @a gameId. If the game-save path is unreachable then @a path
- * will be made empty.
- *
- * @param gameId  Unique game identifier.
- * @param path  String buffer to populate with the game save path.
- * @return  @c true if @a path was set.
- */
 static boolean composeClientGameSavePathForGameId(uint gameId, ddstring_t* path)
 {
     assert(inited && NULL != path);
@@ -827,25 +818,6 @@ void SV_HxInitBaseSlot(void)
     SV_ClearSlot(BASE_SLOT);
 }
 #endif
-
-void SV_AssertSegment(int segType)
-{
-    errorIfNotInited("SV_AssertSegment");
-#if __JHEXEN__
-    if(SV_ReadLong() != segType)
-    {
-        Con_Error("Corrupt save game: Segment [%d] failed alignment check", segType);
-    }
-#endif
-}
-
-void SV_BeginSegment(int segType)
-{
-    errorIfNotInited("SV_BeginSegment");
-#if __JHEXEN__
-    SV_WriteLong(segType);
-#endif
-}
 
 /**
  * @return              Ptr to the thinkerinfo for the given thinker.
