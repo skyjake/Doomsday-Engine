@@ -8,10 +8,10 @@ INCLUDEPATH += $$PWD/libdeng/include
     }
 }
 
-LIBS += -ldeng
+LIBS += -ldeng1
 
 macx {
     defineTest(linkToBundledLibdeng) {
-        fixInstallName($${1}.bundle/$$1, libdeng.1.dylib, ..)
+        fixInstallName($${1}.bundle/$$1, libdeng1.1.dylib, ..)
     }
 }

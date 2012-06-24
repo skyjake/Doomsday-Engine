@@ -3,7 +3,7 @@
 # Copyright (c) 2012 Daniel Swanson <danij@dengine.net>
 
 TEMPLATE = lib
-TARGET = deng
+TARGET = deng1
 
 # Build Configuration --------------------------------------------------------
 
@@ -56,9 +56,9 @@ macx {
     linkDylibToBundledLibdeng2(libdeng)
 
     defineTest(fixDengLinkage) {
-        doPostLink("install_name_tool -change $$1 @executable_path/../Frameworks/$$1 libdeng.1.dylib")
-        doPostLink("install_name_tool -change $$(QTDIR)lib/$$1 @executable_path/../Frameworks/$$1 libdeng.1.dylib")
-        doPostLink("install_name_tool -change $$(QTDIR)/lib/$$1 @executable_path/../Frameworks/$$1 libdeng.1.dylib")
+        doPostLink("install_name_tool -change $$1 @executable_path/../Frameworks/$$1 libdeng1.1.dylib")
+        doPostLink("install_name_tool -change $$(QTDIR)lib/$$1 @executable_path/../Frameworks/$$1 libdeng1.1.dylib")
+        doPostLink("install_name_tool -change $$(QTDIR)/lib/$$1 @executable_path/../Frameworks/$$1 libdeng1.1.dylib")
     }
     fixDengLinkage("QtCore.framework/Versions/4/QtCore")
     fixDengLinkage("QtNetwork.framework/Versions/4/QtNetwork")

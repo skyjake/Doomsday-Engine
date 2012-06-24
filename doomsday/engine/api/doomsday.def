@@ -987,9 +987,9 @@ EXPORTS
     Writer_Write                @580 NONAME
 
 ; Smoother.
-    Smoother_IsOnFloor          @581 NONAME
-    Smoother_Evaluate           @582 NONAME
-    Smoother_Clear              @583 NONAME
+;   Smoother_IsOnFloor          @581 NONAME
+;   Smoother_Evaluate           @582 NONAME
+;   Smoother_Clear              @583 NONAME
 
 ; MaterialArchive.
     MaterialArchive_New         @744 NONAME

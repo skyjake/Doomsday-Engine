@@ -24,8 +24,7 @@
 
 #include "libdeng.h"
 
-enum
-{
+enum {
     VX = 0,
     VY = 1,
     VZ = 2

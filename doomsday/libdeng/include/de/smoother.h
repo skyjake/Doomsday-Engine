@@ -46,7 +46,7 @@ typedef struct smoother_s Smoother;
  *
  * @return  Smoother instance.
  */
-Smoother* Smoother_New();
+DENG_PUBLIC Smoother* Smoother_New();
 
 /**
  * Destructs a smoother. This must be called when the smoother is no longer
@@ -54,7 +54,7 @@ Smoother* Smoother_New();
  *
  * @param sm  Smoother instance.
  */
-void Smoother_Delete(Smoother* sm);
+DENG_PUBLIC void Smoother_Delete(Smoother* sm);
 
 /**
  * If the difference between the smoother's past and now times is larger than
@@ -62,7 +62,7 @@ void Smoother_Delete(Smoother* sm);
  * occur if the smoother keeps being advanced but no new values are inserted.
  * The assumption is that new values are being inserted at a semi-regular rate.
  */
-void Smoother_SetMaximumPastNowDelta(Smoother* sm, float delta);
+DENG_PUBLIC void Smoother_SetMaximumPastNowDelta(Smoother* sm, float delta);
 
 /**
  * Resets the smoother instance. More than one discrete input point is needed before
@@ -71,7 +71,7 @@ void Smoother_SetMaximumPastNowDelta(Smoother* sm, float delta);
  *
  * @param sm  Smoother instance.
  */
-void Smoother_Clear(Smoother* sm);
+DENG_PUBLIC void Smoother_Clear(Smoother* sm);
 
 /**
  * Defines a new input point in the future of the smoother.
@@ -83,7 +83,7 @@ void Smoother_Clear(Smoother* sm);
  * @param z     Cooordinate.
  * @param onFloor  @c true if the z coordinate should be on the floor plane.
  */
-void Smoother_AddPos(Smoother* sm, float time, coord_t x, coord_t y, coord_t z, boolean onFloor);
+DENG_PUBLIC void Smoother_AddPos(Smoother* sm, float time, coord_t x, coord_t y, coord_t z, boolean onFloor);
 
 /**
  * Defines a new XY input point in the future of the smoother.
@@ -93,7 +93,7 @@ void Smoother_AddPos(Smoother* sm, float time, coord_t x, coord_t y, coord_t z, 
  * @param x     Cooordinate.
  * @param y     Cooordinate.
  */
-void Smoother_AddPosXY(Smoother* sm, float time, coord_t x, coord_t y);
+DENG_PUBLIC void Smoother_AddPosXY(Smoother* sm, float time, coord_t x, coord_t y);
 
 /**
  * Calculates the coordinates for the current point in time.
@@ -106,7 +106,7 @@ void Smoother_AddPosXY(Smoother* sm, float time, coord_t x, coord_t y);
  *
  * @see Smoother_Advance()
  */
-boolean Smoother_Evaluate(const Smoother* sm, coord_t* xyz);
+DENG_PUBLIC boolean Smoother_Evaluate(const Smoother* sm, coord_t* xyz);
 
 /**
  * Calculates a coordinate for the current point in time.
@@ -120,26 +120,26 @@ boolean Smoother_Evaluate(const Smoother* sm, coord_t* xyz);
  *
  * @see Smoother_Advance()
  */
-boolean Smoother_EvaluateComponent(const Smoother* sm, int component, coord_t* v);
+DENG_PUBLIC boolean Smoother_EvaluateComponent(const Smoother* sm, int component, coord_t* v);
 
 /**
  * Determines whether the smoother's Z coordinate is currently on the floor plane.
  * @param sm    Smoother instance.
  */
-boolean Smoother_IsOnFloor(const Smoother* sm);
+DENG_PUBLIC boolean Smoother_IsOnFloor(const Smoother* sm);
 
 /**
  * Determines whether the smoother is currently undergoing movement.
  * @param sm    Smoother instance.
  */
-boolean Smoother_IsMoving(const Smoother* sm);
+DENG_PUBLIC boolean Smoother_IsMoving(const Smoother* sm);
 
 /**
  * Advances the smoother @a sm by @a period amount of time.
  * @param sm    Smoother instance.
  * @param period  Amount of time to advance the Smoother's current time.
  */
-void Smoother_Advance(Smoother* sm, float period);
+DENG_PUBLIC void Smoother_Advance(Smoother* sm, float period);
 
 void Smoother_Debug(const Smoother* sm);
 
