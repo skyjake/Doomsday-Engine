@@ -53,7 +53,7 @@ SOURCES += \
 # Installation ---------------------------------------------------------------
 
 macx {
-    linkDylibToBundledLibdeng2(libdeng)
+    linkDylibToBundledLibdeng2(libdeng1)
 
     defineTest(fixDengLinkage) {
         doPostLink("install_name_tool -change $$1 @executable_path/../Frameworks/$$1 libdeng1.1.dylib")
@@ -67,7 +67,7 @@ macx {
 
     # Update the library included in the main app bundle.
     doPostLink("mkdir -p ../engine/Doomsday.app/Contents/Frameworks")
-    doPostLink("cp -fRp libdeng*dylib ../engine/Doomsday.app/Contents/Frameworks")
+    doPostLink("cp -fRp libdeng1*dylib ../engine/Doomsday.app/Contents/Frameworks")
 }
 else {
     INSTALLS += target
