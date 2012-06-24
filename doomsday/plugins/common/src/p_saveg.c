@@ -4548,37 +4548,6 @@ static void writeSaveHeader(const char* saveName, uint gameId)
     SV_SaveInfo_Write(&hdr);
 }
 
-static boolean saveIsValidForCurrentGameSession(saveinfo_t* saveInfo)
-{
-    if(saveInfo->header.magic != MY_SAVE_MAGIC)
-    {
-        Con_Message("Warning: SV_LoadGame: Bad magic.\n");
-        return false;
-    }
-
-    /**
-     * Check for unsupported versions.
-     */
-    // A future version?
-    if(saveInfo->header.version > MY_SAVE_VERSION) return false;
-
-#if __JHEXEN__
-    // We are incompatible with v3 saves due to an invalid test used to determine
-    // present sidedefs (ver3 format's sidedefs contain chunks of junk data).
-    if(saveInfo->header.version == 3) return false;
-#endif
-
-    // Game Mode missmatch?
-    if(saveInfo->header.gameMode != gameMode)
-    {
-        Con_Message("Warning: SV_LoadGame: Game Mode missmatch (%i!=%i), aborting load.\n",
-                    (int)gameMode, (int)saveInfo->header.gameMode);
-        return false;
-    }
-
-    return true; // Read was OK.
-}
-
 static boolean SV_LoadGame2(saveinfo_t* saveInfo)
 {
     int i;
@@ -4594,11 +4563,7 @@ static boolean SV_LoadGame2(saveinfo_t* saveInfo)
     saveheader_t tmp;
     SV_SaveInfo_Read(&tmp);
     }
-
-    // Is this loadable?
     hdr = &saveInfo->header;
-    if(!saveIsValidForCurrentGameSession(saveInfo))
-        return false;
 
     /**
      * We now assume that loading will succeed.
