@@ -34,18 +34,11 @@
 #include "p_savedef.h"
 #include "materialarchive.h"
 
-#define MAX_HUB_MAPS 99
-
 static boolean inited;
 static LZFILE* savefile;
 static ddstring_t savePath; // e.g., "savegame/"
 #if !__JHEXEN__
 static ddstring_t clientSavePath; // e.g., "savegame/client/"
-#endif
-static saveinfo_t* saveInfo;
-static saveinfo_t autoSaveInfo;
-#if __JHEXEN__
-static saveinfo_t baseSaveInfo;
 #endif
 
 #if __JHEXEN__
@@ -58,137 +51,6 @@ static void errorIfNotInited(const char* callerName)
     Con_Error("%s: Savegame I/O is not presently initialized.", callerName);
     // Unreachable. Prevents static analysers from getting rather confused, poor things.
     exit(1);
-}
-
-static void initSaveInfo(saveinfo_t* info)
-{
-    if(!info) return;
-    Str_Init(&info->filePath);
-    Str_Init(&info->name);
-}
-
-static boolean saveInfoIsValidForCurrentGameSession(saveinfo_t* info)
-{
-    if(!info) return false;
-
-    /// @fixme What about original game saves, they will fail here presently.
-
-    // Magic must match.
-    if(info->header.magic != MY_SAVE_MAGIC) return false;
-
-    /**
-     * Check for unsupported versions.
-     */
-    // A future version?
-    if(info->header.version > MY_SAVE_VERSION) return false;
-
-#if __JHEXEN__
-    // We are incompatible with v3 saves due to an invalid test used to determine
-    // present sidedefs (ver3 format's sidedefs contain chunks of junk data).
-    if(info->header.version == 3) return false;
-#endif
-
-    // Game Mode missmatch?
-    if(info->header.gameMode != gameMode) return false;
-
-    return true; // It's good!
-}
-
-static boolean recogniseAndReadHeader(saveinfo_t* info)
-{
-    if(SV_Recognise(info)) return true;
-
-    // Perhaps an original game save?
-#if __JDOOM__
-    if(SV_v19_Recognise(info)) return true;
-#endif
-#if __JHERETIC__
-    if(SV_v13_Recognise(info)) return true;
-#endif
-
-    return false;
-}
-
-static void updateSaveInfo(saveinfo_t* info, ddstring_t* savePath)
-{
-    if(!info) return;
-
-    Str_CopyOrClear(&info->filePath, savePath);
-    if(Str_IsEmpty(&info->filePath))
-    {
-        // The save path cannot be accessed for some reason. Perhaps its a
-        // network path? Clear the info for this slot.
-        Str_Clear(&info->name);
-        return;
-    }
-
-    if(!recogniseAndReadHeader(info))
-    {
-        // Not a loadable save.
-        Str_Clear(&info->filePath);
-        return;
-    }
-
-    // Ensure we have a valid name.
-    if(Str_IsEmpty(&info->name))
-    {
-        Str_Set(&info->name, "UNNAMED");
-    }
-
-    if(!saveInfoIsValidForCurrentGameSession(info))
-    {
-        // Not a loadable save.
-        Str_Clear(&info->filePath);
-    }
-}
-
-static void clearSaveInfo(saveinfo_t* info)
-{
-    if(!info) return;
-    Str_Free(&info->filePath);
-    Str_Free(&info->name);
-}
-
-static boolean existingFile(char* name)
-{
-    FILE* fp;
-    if((fp = fopen(name, "rb")) != NULL)
-    {
-        fclose(fp);
-        return true;
-    }
-    return false;
-}
-
-static int removeFile(const ddstring_t* path)
-{
-    if(!path) return 1;
-    return remove(Str_Text(path));
-}
-
-static void copyFile(const ddstring_t* srcPath, const ddstring_t* destPath)
-{
-    size_t length;
-    char* buffer;
-    LZFILE* outf;
-
-    if(!srcPath || !destPath) return;
-    if(!existingFile(Str_Text(srcPath))) return;
-
-    length = M_ReadFile(Str_Text(srcPath), &buffer);
-    if(0 == length)
-    {
-        Con_Message("Warning: copyFile: Failed opening \"%s\" for reading.\n", Str_Text(srcPath));
-        return;
-    }
-
-    outf = lzOpen((char*)Str_Text(destPath), "wp");
-    if(outf)
-    {
-        lzWrite(buffer, length, outf);
-        lzClose(outf);
-    }
-    Z_Free(buffer);
 }
 
 /// @return  Possibly relative saved game directory. Does not need to be free'd.
@@ -217,94 +79,34 @@ static AutoStr* composeSaveDir(void)
     exit(1); // Unreachable.
 }
 
-/**
- * Compose the (possibly relative) path to the game-save associated
- * with the logical save @a slot.
- *
- * @param slot  Logical save slot identifier.
- * @param map   If @c >= 0 include this logical map index in the composed path.
- * @return  The composed path if reachable (else @c NULL). Does not need to be free'd.
- */
-static AutoStr* composeGameSavePathForSlot2(int slot, int map)
-{
-    AutoStr* path;
-    assert(inited);
-
-    // A valid slot?
-    if(!SV_IsValidSlot(slot)) return NULL;
-
-    // Do we have a valid path?
-    if(!F_MakePath(SV_SavePath())) return NULL;
-
-    // Compose the full game-save path and filename.
-    path = AutoStr_NewStd();
-    if(map >= 0)
-    {
-        Str_Appendf(path, "%s" SAVEGAMENAME "%i%02i." SAVEGAMEEXTENSION, SV_SavePath(), slot, map);
-    }
-    else
-    {
-        Str_Appendf(path, "%s" SAVEGAMENAME "%i." SAVEGAMEEXTENSION, SV_SavePath(), slot);
-    }
-    F_TranslatePath(path, path);
-    return path;
-}
-
-static AutoStr* composeGameSavePathForSlot(int slot)
-{
-    return composeGameSavePathForSlot2(slot, -1);
-}
-
 void SV_InitIO(void)
 {
     Str_Init(&savePath);
 #if !__JHEXEN__
     Str_Init(&clientSavePath);
 #endif
-    saveInfo = NULL;
     inited = true;
     savefile = 0;
 }
 
 void SV_ShutdownIO(void)
 {
-    inited = false;
+    if(!inited) return;
 
     SV_CloseFile();
-
-    if(saveInfo)
-    {
-        int i;
-        for(i = 0; i < NUMSAVESLOTS; ++i)
-        {
-            saveinfo_t* info = &saveInfo[i];
-            clearSaveInfo(info);
-        }
-        free(saveInfo); saveInfo = NULL;
-
-        clearSaveInfo(&autoSaveInfo);
-#if __JHEXEN__
-        clearSaveInfo(&baseSaveInfo);
-#endif
-    }
 
     Str_Free(&savePath);
 #if !__JHEXEN__
     Str_Free(&clientSavePath);
 #endif
+
+    inited = false;
 }
 
 const char* SV_SavePath(void)
 {
     return Str_Text(&savePath);
 }
-
-#ifdef __JHEXEN__
-saveptr_t* SV_HxSavePtr(void)
-{
-    return &saveptr;
-}
-#endif
 
 #if !__JHEXEN__
 const char* SV_ClientSavePath(void)
@@ -360,315 +162,63 @@ void SV_CloseFile(void)
     }
 }
 
-void SV_ClearSlot(int slot)
+boolean SV_ExistingFile(char* name)
 {
-    AutoStr* path;
-
-    errorIfNotInited("SV_ClearSlot");
-    if(!SV_IsValidSlot(slot)) return;
-
-    { int i;
-    for(i = 0; i < MAX_HUB_MAPS; ++i)
+    FILE* fp;
+    if((fp = fopen(name, "rb")) != NULL)
     {
-        path = composeGameSavePathForSlot2(slot, i);
-        removeFile(path);
-    }}
-
-    path = composeGameSavePathForSlot(slot);
-    removeFile(path);
-}
-
-boolean SV_IsValidSlot(int slot)
-{
-    if(slot == AUTO_SLOT) return true;
-#if __JHEXEN__
-    if(slot == BASE_SLOT) return true;
-#endif
-    return (slot >= 0  && slot < NUMSAVESLOTS);
-}
-
-boolean SV_IsUserWritableSlot(int slot)
-{
-    if(slot == AUTO_SLOT) return false;
-#if __JHEXEN__
-    if(slot == BASE_SLOT) return false;
-#endif
-    return SV_IsValidSlot(slot);
-}
-
-boolean SV_Recognise(saveinfo_t* info)
-{
-#if __JHEXEN__
-    byte* saveBuffer;
-#endif
-    assert(inited && info);
-
-    if(Str_IsEmpty(&info->filePath)) return false;
-
-#if __JHEXEN__
-    /// @todo Do not buffer the whole file.
-    if(M_ReadFile(Str_Text(&info->filePath), (char**)&saveBuffer))
-#else
-    if(SV_OpenFile(Str_Text(&info->filePath), "rp"))
-#endif
-    {
-#if __JHEXEN__
-        // Set the save pointer.
-        SV_HxSavePtr()->b = saveBuffer;
-#endif
-
-        SV_SaveInfo_Read(&info->header);
-
-#if __JHEXEN__
-        Z_Free(saveBuffer);
-#else
-        SV_CloseFile();
-#endif
-
-        if(MY_SAVE_MAGIC == info->header.magic)
-        {
-            Str_Set(&info->name, info->header.name);
-            return true;
-        }
+        fclose(fp);
+        return true;
     }
     return false;
 }
 
-/// Re-build game-save info by re-scanning the save paths and populating the list.
-static void buildSaveInfo(void)
+int SV_RemoveFile(const ddstring_t* path)
 {
-    int i;
-    assert(inited);
+    if(!path) return 1;
+    return remove(Str_Text(path));
+}
 
-    if(!saveInfo)
+void SV_CopyFile(const ddstring_t* srcPath, const ddstring_t* destPath)
+{
+    size_t length;
+    char* buffer;
+    LZFILE* outf;
+
+    if(!srcPath || !destPath) return;
+    if(!SV_ExistingFile(Str_Text(srcPath))) return;
+
+    length = M_ReadFile(Str_Text(srcPath), &buffer);
+    if(0 == length)
     {
-        // Not yet been here. We need to allocate and initialize the game-save info list.
-        saveInfo = (saveinfo_t*) malloc(NUMSAVESLOTS * sizeof(*saveInfo));
-        if(!saveInfo)
-            Con_Error("buildSaveInfo: Failed on allocation of %lu bytes for game-save info list.",
-                      (unsigned long) (NUMSAVESLOTS * sizeof(*saveInfo)));
+        Con_Message("Warning: SV_CopyFile: Failed opening \"%s\" for reading.\n", Str_Text(srcPath));
+        return;
+    }
 
-        // Initialize.
-        for(i = 0; i < NUMSAVESLOTS; ++i)
-        {
-            saveinfo_t* info = &saveInfo[i];
-            initSaveInfo(info);
-        }
-        initSaveInfo(&autoSaveInfo);
-#if __JHEXEN__
-        initSaveInfo(&baseSaveInfo);
+    outf = lzOpen((char*)Str_Text(destPath), "wp");
+    if(outf)
+    {
+        lzWrite(buffer, length, outf);
+        lzClose(outf);
+    }
+    Z_Free(buffer);
+}
+
+#ifdef __JHEXEN__
+saveptr_t* SV_HxSavePtr(void)
+{
+    return &saveptr;
+}
 #endif
-    }
 
-    /// Scan the save paths and populate the list.
-    /// \todo We should look at all files on the save path and not just those
-    /// which match the default game-save file naming convention.
-    for(i = 0; i < NUMSAVESLOTS; ++i)
-    {
-        saveinfo_t* info = &saveInfo[i];
-        updateSaveInfo(info, composeGameSavePathForSlot(i));
-    }
-    updateSaveInfo(&autoSaveInfo, composeGameSavePathForSlot(AUTO_SLOT));
+void SV_Seek(uint offset)
+{
+    errorIfNotInited("SV_SetPos");
 #if __JHEXEN__
-    updateSaveInfo(&baseSaveInfo, composeGameSavePathForSlot(BASE_SLOT));
-#endif
-}
-
-/// Given a logical save slot identifier retrieve the assciated game-save info.
-static saveinfo_t* findSaveInfoForSlot(int slot)
-{
-    static saveinfo_t invalidInfo = { { "" }, { "" } };
-    assert(inited);
-
-    if(!SV_IsValidSlot(slot)) return &invalidInfo;
-
-    // On first call - automatically build and populate game-save info.
-    if(!saveInfo)
-    {
-        buildSaveInfo();
-    }
-
-    // Retrieve the info for this slot.
-    if(slot == AUTO_SLOT) return &autoSaveInfo;
-#if __JHEXEN__
-    if(slot == BASE_SLOT) return &baseSaveInfo;
-#endif
-    return &saveInfo[slot];
-}
-
-saveinfo_t* SV_SaveInfoForSlot(int slot)
-{
-    errorIfNotInited("SV_SaveInfoForSlot");
-    return findSaveInfoForSlot(slot);
-}
-
-void SV_UpdateAllSaveInfo(void)
-{
-    errorIfNotInited("SV_UpdateAllSaveInfo");
-    buildSaveInfo();
-}
-
-int SV_ParseSlotIdentifier(const char* str)
-{
-    int slot;
-
-    // Try game-save name match.
-    slot = SV_SlotForSaveName(str);
-    if(slot >= 0)
-    {
-        return slot;
-    }
-
-    // Try keyword identifiers.
-    if(!stricmp(str, "last") || !stricmp(str, "<last>"))
-    {
-        return Con_GetInteger("game-save-last-slot");
-    }
-    if(!stricmp(str, "quick") || !stricmp(str, "<quick>"))
-    {
-        return Con_GetInteger("game-save-quick-slot");
-    }
-    if(!stricmp(str, "auto") || !stricmp(str, "<auto>"))
-    {
-        return AUTO_SLOT;
-    }
-
-    // Try logical slot identifier.
-    if(M_IsStringValidInt(str))
-    {
-        return atoi(str);
-    }
-
-    // Unknown/not found.
-    return -1;
-}
-
-int SV_SlotForSaveName(const char* name)
-{
-    int saveSlot = -1;
-
-    errorIfNotInited("SV_SlotForSaveName");
-
-    if(name && name[0])
-    {
-        int i = 0;
-        // On first call - automatically build and populate game-save info.
-        if(!saveInfo)
-        {
-            buildSaveInfo();
-        }
-
-        do
-        {
-            const saveinfo_t* info = &saveInfo[i];
-            if(!Str_CompareIgnoreCase(&info->name, name))
-            {
-                // This is the one!
-                saveSlot = i;
-            }
-        } while(-1 == saveSlot && ++i < NUMSAVESLOTS);
-    }
-    return saveSlot;
-}
-
-boolean SV_ComposeSavePathForSlot(int slot, ddstring_t* path)
-{
-    errorIfNotInited("SV_ComposeSavePathForSlot");
-    if(!path) return false;
-    Str_CopyOrClear(path, composeGameSavePathForSlot(slot));
-    return !Str_IsEmpty(path);
-}
-
-#if __JHEXEN__
-boolean SV_ComposeSavePathForMapSlot(uint map, int slot, ddstring_t* path)
-{
-    errorIfNotInited("SV_ComposeSavePathForMapSlot");
-    if(!path) return false;
-    Str_CopyOrClear(path, composeGameSavePathForSlot2(slot, (int)map));
-    return !Str_IsEmpty(path);
-}
+    saveptr.b += offset;
 #else
-/**
- * Compose the (possibly relative) path to the game-save associated
- * with @a gameId. If the game-save path is unreachable then @a path
- * will be made empty.
- *
- * @param gameId  Unique game identifier.
- * @param path  String buffer to populate with the game save path.
- * @return  @c true if @a path was set.
- */
-static boolean composeClientGameSavePathForGameId(uint gameId, ddstring_t* path)
-{
-    assert(inited && NULL != path);
-    // Do we have a valid path?
-    if(!F_MakePath(SV_ClientSavePath())) return false;
-    // Compose the full game-save path and filename.
-    Str_Clear(path);
-    Str_Appendf(path, "%s" CLIENTSAVEGAMENAME "%08X." SAVEGAMEEXTENSION, SV_ClientSavePath(), gameId);
-    F_TranslatePath(path, path);
-    return true;
-}
-
-boolean SV_ComposeSavePathForClientGameId(uint gameId, ddstring_t* path)
-{
-    errorIfNotInited("SV_ComposeSavePathForSlot");
-    if(!path) return false;
-    Str_Clear(path);
-    return composeClientGameSavePathForGameId(gameId, path);
-}
+    lzSeek(savefile, offset);
 #endif
-
-boolean SV_IsSlotUsed(int slot)
-{
-    const saveinfo_t* info;
-    errorIfNotInited("SV_IsSlotUsed");
-
-    info = SV_SaveInfoForSlot(slot);
-    return !Str_IsEmpty(&info->filePath);
-}
-
-#if __JHEXEN__
-boolean SV_HxHaveMapSaveForSlot(int slot, uint map)
-{
-    AutoStr* path = composeGameSavePathForSlot2(slot, (int)map);
-    if(!path || Str_IsEmpty(path)) return false;
-    return existingFile(Str_Text(path));
-}
-#endif
-
-void SV_CopySlot(int sourceSlot, int destSlot)
-{
-    AutoStr* src, *dst;
-
-    errorIfNotInited("SV_CopySlot");
-
-    if(!SV_IsValidSlot(sourceSlot))
-    {
-#if _DEBUG
-        Con_Message("Warning: SV_CopySlot: Source slot %i invalid, save game not copied.\n", sourceSlot);
-#endif
-        return;
-    }
-
-    if(!SV_IsValidSlot(destSlot))
-    {
-#if _DEBUG
-        Con_Message("Warning: SV_CopySlot: Dest slot %i invalid, save game not copied.\n", destSlot);
-#endif
-        return;
-    }
-
-    { int i;
-    for(i = 0; i < MAX_HUB_MAPS; ++i)
-    {
-        src = composeGameSavePathForSlot2(sourceSlot, i);
-        dst = composeGameSavePathForSlot2(destSlot, i);
-        copyFile(src, dst);
-    }}
-
-    src = composeGameSavePathForSlot(sourceSlot);
-    dst = composeGameSavePathForSlot(destSlot);
-    copyFile(src, dst);
 }
 
 void SV_Write(const void* data, int len)
@@ -710,16 +260,6 @@ void SV_WriteFloat(float val)
     errorIfNotInited("SV_WriteFloat");
     memcpy(&temp, &val, 4);
     lzPutL(temp, savefile);
-}
-
-void SV_Seek(uint offset)
-{
-    errorIfNotInited("SV_SetPos");
-#if __JHEXEN__
-    saveptr.b += offset;
-#else
-    lzSeek(savefile, offset);
-#endif
 }
 
 void SV_Read(void *data, int len)
