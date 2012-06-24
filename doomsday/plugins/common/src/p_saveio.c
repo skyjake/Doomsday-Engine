@@ -360,14 +360,12 @@ static boolean readGameSaveHeader(saveinfo_t* info)
     if(SV_OpenFile(Str_Text(&info->filePath), "rp"))
 #endif
     {
-        saveheader_t* hdr = SV_SaveHeader();
-
 #if __JHEXEN__
         // Set the save pointer.
         SV_HxSavePtr()->b = saveBuffer;
 #endif
 
-        SV_SaveInfo_Read(hdr);
+        SV_SaveInfo_Read(&info->header);
 
 #if __JHEXEN__
         Z_Free(saveBuffer);
@@ -375,9 +373,9 @@ static boolean readGameSaveHeader(saveinfo_t* info)
         SV_CloseFile();
 #endif
 
-        if(MY_SAVE_MAGIC == hdr->magic)
+        if(MY_SAVE_MAGIC == info->header.magic)
         {
-            Str_Set(&info->name, hdr->name);
+            Str_Set(&info->name, info->header.name);
             found = true;
         }
     }
@@ -470,7 +468,7 @@ static saveinfo_t* findSaveInfoForSlot(int slot)
     return &saveInfo[slot];
 }
 
-const saveinfo_t* SV_SaveInfoForSlot(int slot)
+saveinfo_t* SV_SaveInfoForSlot(int slot)
 {
     errorIfNotInited("SV_SaveInfoForSlot");
     return findSaveInfoForSlot(slot);

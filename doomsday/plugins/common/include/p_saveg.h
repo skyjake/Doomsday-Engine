@@ -40,8 +40,6 @@ void SV_Init(void);
 /// Shutdown this module.
 void SV_Shutdown(void);
 
-saveheader_t* SV_SaveHeader(void);
-
 boolean SV_SaveGame(int slot, const char* name);
 
 boolean SV_LoadGame(int slot);

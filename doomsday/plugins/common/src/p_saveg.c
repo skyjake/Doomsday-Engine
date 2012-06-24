@@ -177,7 +177,7 @@ static int cvarQuickSlot; // -1 = Not yet chosen/determined.
 #if __JHEXEN__
 static int mapVersion;
 #endif
-static saveheader_t hdr;
+static saveheader_t* hdr;
 
 static playerheader_t playerHeader;
 static boolean playerHeaderOK;
@@ -406,11 +406,6 @@ void SV_HxInitBaseSlot(void)
 }
 #endif
 
-saveheader_t* SV_SaveHeader(void)
-{
-    return &hdr;
-}
-
 void SV_AssertSegment(int segType)
 {
     errorIfNotInited("SV_AssertSegment");
@@ -490,7 +485,7 @@ static uint SV_InitThingArchive(boolean load, boolean savePlayers)
     if(load)
     {
 #if !__JHEXEN__
-        if(hdr.version < 5)
+        if(hdr->version < 5)
             params.count = 1024; // Limit in previous versions.
         else
 #endif
@@ -1744,9 +1739,9 @@ static void P_ArchivePlayerHeader(void)
 static void P_UnArchivePlayerHeader(void)
 {
 #if __JHEXEN__
-    if(hdr.version >= 4)
+    if(hdr->version >= 4)
 #else
-    if(hdr.version >= 5)
+    if(hdr->version >= 5)
 #endif
     {
         int     ver;
@@ -1988,7 +1983,7 @@ static void SV_ReadSector(Sector* sec)
         type = sc_ploff;
     else
 #else
-    if(hdr.version <= 1)
+    if(hdr->version <= 1)
         type = sc_normal;
     else
 #endif
@@ -1998,7 +1993,7 @@ static void SV_ReadSector(Sector* sec)
 #if __JHEXEN__
     if(mapVersion > 2)
 #else
-    if(hdr.version > 4)
+    if(hdr->version > 4)
 #endif
         ver = SV_ReadByte();
 
@@ -2017,7 +2012,7 @@ static void SV_ReadSector(Sector* sec)
 #endif
 
 #if !__JHEXEN__
-    if(hdr.version == 1)
+    if(hdr->version == 1)
     {
         // The flat numbers are absolute lump indices.
         Uri* uri = Uri_NewWithPath2(MN_FLATS_NAME":", RC_NULL);
@@ -2028,7 +2023,7 @@ static void SV_ReadSector(Sector* sec)
         ceilingMaterial = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
         Uri_Delete(uri);
     }
-    else if(hdr.version >= 4)
+    else if(hdr->version >= 4)
 #endif
     {
         // The flat numbers are actually archive numbers.
@@ -2049,7 +2044,7 @@ static void SV_ReadSector(Sector* sec)
     lightlevel = (byte) SV_ReadShort();
 #else
     // In Ver1 the light level is a short
-    if(hdr.version == 1)
+    if(hdr->version == 1)
         lightlevel = (byte) SV_ReadShort();
     else
         lightlevel = SV_ReadByte();
@@ -2057,7 +2052,7 @@ static void SV_ReadSector(Sector* sec)
     P_SetFloatp(sec, DMU_LIGHT_LEVEL, (float) lightlevel / 255.f);
 
 #if !__JHEXEN__
-    if(hdr.version > 1)
+    if(hdr->version > 1)
 #endif
     {
         SV_Read(rgb, 3);
@@ -2102,7 +2097,7 @@ static void SV_ReadSector(Sector* sec)
 #endif
 
 #if !__JHEXEN__
-    if(hdr.version <= 1)
+    if(hdr->version <= 1)
 #endif
     {
         xsec->specialData = 0;
@@ -2217,7 +2212,7 @@ static void SV_ReadLine(LineDef* li)
 #if __JHEXEN__
     if(mapVersion < 4)
 #else
-    if(hdr.version < 2)
+    if(hdr->version < 2)
 #endif
         type = lc_normal;
     else
@@ -2227,7 +2222,7 @@ static void SV_ReadLine(LineDef* li)
 #if __JHEXEN__
     if(mapVersion < 3)
 #else
-    if(hdr.version < 5)
+    if(hdr->version < 5)
 #endif
         ver = 1;
     else
@@ -2346,7 +2341,7 @@ static void SV_ReadLine(LineDef* li)
         }
 
 #if !__JHEXEN__
-        if(hdr.version >= 4)
+        if(hdr->version >= 4)
 #endif
         {
             topMaterial    = SV_GetArchiveMaterial(SV_ReadShort(), 1);
@@ -2457,13 +2452,13 @@ static void P_UnArchiveWorld(void)
 #if __JHEXEN__
     if(mapVersion < 6)
 #else
-    if(hdr.version < 6)
+    if(hdr->version < 6)
 #endif
         matArchiveVer = 0;
 
     // Load the material archive for this map?
 #if !__JHEXEN__
-    if(hdr.version >= 4)
+    if(hdr->version >= 4)
 #endif
         SV_MaterialArchive_Read(materialArchive, matArchiveVer);
 
@@ -2512,7 +2507,7 @@ static int SV_ReadCeiling(ceiling_t* ceiling)
 #if __JHEXEN__
     if(mapVersion >= 4)
 #else
-    if(hdr.version >= 5)
+    if(hdr->version >= 5)
 #endif
     {   // Note: the thinker class byte has already been read.
         int                 ver = SV_ReadByte(); // version byte.
@@ -2521,7 +2516,7 @@ static int SV_ReadCeiling(ceiling_t* ceiling)
 
 #if !__JHEXEN__
         // Should we put this into stasis?
-        if(hdr.version == 5)
+        if(hdr->version == 5)
         {
             if(!SV_ReadByte())
                 DD_ThinkerSetStasis(&ceiling->thinker, true);
@@ -2625,7 +2620,7 @@ static int SV_ReadDoor(door_t *door)
 #if __JHEXEN__
     if(mapVersion >= 4)
 #else
-    if(hdr.version >= 5)
+    if(hdr->version >= 5)
 #endif
     {   // Note: the thinker class byte has already been read.
         /*int ver =*/ SV_ReadByte(); // version byte.
@@ -2723,7 +2718,7 @@ static int SV_ReadFloor(floor_t* floor)
 #if __JHEXEN__
     if(mapVersion >= 4)
 #else
-    if(hdr.version >= 5)
+    if(hdr->version >= 5)
 #endif
     {   // Note: the thinker class byte has already been read.
         byte                ver = SV_ReadByte(); // version byte.
@@ -2862,7 +2857,7 @@ static int SV_ReadPlat(plat_t *plat)
 #if __JHEXEN__
     if(mapVersion >= 4)
 #else
-    if(hdr.version >= 5)
+    if(hdr->version >= 5)
 #endif
     {   // Note: the thinker class byte has already been read.
         /*int ver =*/ SV_ReadByte(); // version byte.
@@ -2871,7 +2866,7 @@ static int SV_ReadPlat(plat_t *plat)
 
 #if !__JHEXEN__
         // Should we put this into stasis?
-        if(hdr.version == 5)
+        if(hdr->version == 5)
         {
         if(!SV_ReadByte())
             DD_ThinkerSetStasis(&plat->thinker, true);
@@ -3467,7 +3462,7 @@ static int SV_ReadFlash(lightflash_t* flash)
 {
     Sector*             sector;
 
-    if(hdr.version >= 5)
+    if(hdr->version >= 5)
     {   // Note: the thinker class byte has already been read.
         /*int ver =*/ SV_ReadByte(); // version byte.
 
@@ -3527,7 +3522,7 @@ static int SV_ReadStrobe(strobe_t* strobe)
 {
     Sector*             sector;
 
-    if(hdr.version >= 5)
+    if(hdr->version >= 5)
     {   // Note: the thinker class byte has already been read.
         /*int ver =*/ SV_ReadByte(); // version byte.
 
@@ -3584,7 +3579,7 @@ static int SV_ReadGlow(glow_t* glow)
 {
     Sector* sector;
 
-    if(hdr.version >= 5)
+    if(hdr->version >= 5)
     {
         // Note: the thinker class byte has already been read.
         /*int ver =*/ SV_ReadByte(); // version byte.
@@ -3875,7 +3870,7 @@ static void P_UnArchiveThinkers(void)
 #if __JHEXEN__
     boolean     doSpecials = (mapVersion >= 4);
 #else
-    boolean     doSpecials = (hdr.version >= 5);
+    boolean     doSpecials = (hdr->version >= 5);
 #endif
 
 #if !__JHEXEN__
@@ -3933,7 +3928,7 @@ static void P_UnArchiveThinkers(void)
             }
         }
 #else
-        if(hdr.version < 5)
+        if(hdr->version < 5)
         {
             if(doSpecials) // Have we started on the specials yet?
             {
@@ -3983,7 +3978,7 @@ static void P_UnArchiveThinkers(void)
 #if __JHEXEN__
                     if(mapVersion >= 6)
 #else
-                    if(hdr.version >= 6)
+                    if(hdr->version >= 6)
 #endif
                     {
                         inStasis = (boolean) SV_ReadByte();
@@ -4055,10 +4050,10 @@ static void P_UnArchiveBrain(void)
 {
     int i, numTargets, ver = 0;
 
-    if(hdr.version < 3)
+    if(hdr->version < 3)
         return; // No brain data before version 3.
 
-    if(hdr.version >= 8)
+    if(hdr->version >= 8)
         ver = SV_ReadByte();
 
     P_BrainClearTargets();
@@ -4112,7 +4107,7 @@ static void P_UnArchiveSoundTargets(void)
     xsector_t*          xsec;
 
     // Sound Target data was introduced in ver 5
-    if(hdr.version < 5)
+    if(hdr->version < 5)
         return;
 
     // Read the number of targets
@@ -4279,7 +4274,7 @@ static void P_UnArchiveGlobalScriptData(void)
 {
     int i, ver = 1;
 
-    if(hdr.version >= 7)
+    if(hdr->version >= 7)
     {
         SV_AssertSegment(ASEG_GLOBALSCRIPTDATA);
         ver = SV_ReadByte();
@@ -4327,7 +4322,7 @@ static void P_UnArchiveGlobalScriptData(void)
                 store->args[j] = SV_ReadByte();
         }
 
-        if(hdr.version < 7)
+        if(hdr->version < 7)
             SV_Seek(12); // Junk.
 
         if(ACSStoreSize)
@@ -4510,8 +4505,12 @@ void SV_Shutdown(void)
     inited = false;
 }
 
-static void writeSaveHeader(const char* saveName)
+static void writeSaveHeader(const char* saveName, uint gameId)
 {
+    saveheader_t hdr;
+
+    memset(&hdr, 0, sizeof(hdr));
+
     hdr.magic = MY_SAVE_MAGIC;
     hdr.version = MY_SAVE_VERSION;
     hdr.gameMode = gameMode;
@@ -4538,7 +4537,7 @@ static void writeSaveHeader(const char* saveName)
 #else
     hdr.respawnMonsters = respawnMonsters;
     hdr.mapTime = mapTime;
-    hdr.gameId = SV_GenerateGameId();
+    hdr.gameId = gameId;
     { int i;
     for(i = 0; i < MAXPLAYERS; i++)
     {
@@ -4549,9 +4548,9 @@ static void writeSaveHeader(const char* saveName)
     SV_SaveInfo_Write(&hdr);
 }
 
-static boolean saveIsValidForCurrentGameSession(saveheader_t* info)
+static boolean saveIsValidForCurrentGameSession(saveinfo_t* saveInfo)
 {
-    if(info->magic != MY_SAVE_MAGIC)
+    if(saveInfo->header.magic != MY_SAVE_MAGIC)
     {
         Con_Message("Warning: SV_LoadGame: Bad magic.\n");
         return false;
@@ -4561,26 +4560,26 @@ static boolean saveIsValidForCurrentGameSession(saveheader_t* info)
      * Check for unsupported versions.
      */
     // A future version?
-    if(info->version > MY_SAVE_VERSION) return false;
+    if(saveInfo->header.version > MY_SAVE_VERSION) return false;
 
 #if __JHEXEN__
     // We are incompatible with v3 saves due to an invalid test used to determine
     // present sidedefs (ver3 format's sidedefs contain chunks of junk data).
-    if(info->version == 3) return false;
+    if(saveInfo->header.version == 3) return false;
 #endif
 
     // Game Mode missmatch?
-    if(info->gameMode != gameMode)
+    if(saveInfo->header.gameMode != gameMode)
     {
         Con_Message("Warning: SV_LoadGame: Game Mode missmatch (%i!=%i), aborting load.\n",
-                    (int)gameMode, (int)info->gameMode);
+                    (int)gameMode, (int)saveInfo->header.gameMode);
         return false;
     }
 
     return true; // Read was OK.
 }
 
-static boolean SV_LoadGame2(void)
+static boolean SV_LoadGame2(saveinfo_t* saveInfo)
 {
     int i;
     char buf[80];
@@ -4589,11 +4588,16 @@ static boolean SV_LoadGame2(void)
     int k;
 #endif
 
-    // Read the header.
-    SV_SaveInfo_Read(&hdr);
+    // Read the header again.
+    /// @todo Seek past the header straight to the game state.
+    {
+    saveheader_t tmp;
+    SV_SaveInfo_Read(&tmp);
+    }
 
     // Is this loadable?
-    if(!saveIsValidForCurrentGameSession(&hdr))
+    hdr = &saveInfo->header;
+    if(!saveIsValidForCurrentGameSession(saveInfo))
         return false;
 
     /**
@@ -4604,20 +4608,20 @@ static boolean SV_LoadGame2(void)
     FI_StackClear();
 
     // Configure global game state:
-    gameEpisode = hdr.episode - 1;
-    gameMap = hdr.map - 1;
+    gameEpisode = hdr->episode - 1;
+    gameMap = hdr->map - 1;
 #if __JHEXEN__
-    gameSkill = hdr.skill;
+    gameSkill = hdr->skill;
 #else
-    gameSkill = hdr.skill & 0x7f;
-    fastParm = (hdr.skill & 0x80) != 0;
+    gameSkill = hdr->skill & 0x7f;
+    fastParm = (hdr->skill & 0x80) != 0;
 #endif
-    deathmatch = hdr.deathmatch;
-    noMonstersParm = hdr.noMonsters;
+    deathmatch = hdr->deathmatch;
+    noMonstersParm = hdr->noMonsters;
 #if __JHEXEN__
-    randomClassParm = hdr.randomClasses;
+    randomClassParm = hdr->randomClasses;
 #else
-    respawnMonsters = hdr.respawnMonsters;
+    respawnMonsters = hdr->respawnMonsters;
 #endif
 
     // Read global save data not part of the game metadata.
@@ -4634,7 +4638,7 @@ static boolean SV_LoadGame2(void)
 
 #if !__JHEXEN__
     // Set the time.
-    mapTime = hdr.mapTime;
+    mapTime = hdr->mapTime;
 
     SV_InitThingArchive(true, true);
 #endif
@@ -4657,7 +4661,7 @@ static boolean SV_LoadGame2(void)
     // discarded.
 #if !__JHEXEN__
     for(i = 0; i < MAXPLAYERS; ++i)
-        infile[i] = hdr.players[i];
+        infile[i] = hdr->players[i];
 #else
     for(i = 0; i < MAXPLAYERS; ++i)
         infile[i] = SV_ReadByte();
@@ -4754,7 +4758,7 @@ static boolean SV_LoadGame2(void)
 
 #if !__JHEXEN__
     // In netgames, the server tells the clients about this.
-    NetSv_LoadGame(hdr.gameId);
+    NetSv_LoadGame(hdr->gameId);
 #endif
 
     // Let the engine know where the local players are now.
@@ -4815,7 +4819,7 @@ boolean SV_LoadGame(int slot)
     if(openGameSaveFile(Str_Text(&path), false))
     {
         playerHeaderOK = false; // Uninitialized.
-        loadError = !SV_LoadGame2();
+        loadError = !SV_LoadGame2(SV_SaveInfoForSlot(logicalSlot));
     }
     else
     {
@@ -4846,6 +4850,7 @@ void SV_SaveGameClient(uint gameId)
     player_t* pl = &players[CONSOLEPLAYER];
     mobj_t* mo = pl->plr->mo;
     ddstring_t gameSavePath;
+    saveheader_t hdr;
 
     errorIfNotInited("SV_SaveGameClient");
 
@@ -4912,6 +4917,7 @@ void SV_LoadGameClient(uint gameId)
     player_t* cpl = players + CONSOLEPLAYER;
     mobj_t* mo = cpl->plr->mo;
     ddstring_t gameSavePath;
+    saveheader_t clientSaveHeader;
 
     errorIfNotInited("SV_LoadGameClient");
 
@@ -4931,26 +4937,27 @@ void SV_LoadGameClient(uint gameId)
     }
     Str_Free(&gameSavePath);
 
-    SV_SaveInfo_Read(&hdr);
-    if(hdr.magic != MY_CLIENT_SAVE_MAGIC)
+    SV_SaveInfo_Read(&clientSaveHeader);
+    hdr = &clientSaveHeader;
+    if(hdr->magic != MY_CLIENT_SAVE_MAGIC)
     {
         SV_CloseFile();
         Con_Message("SV_LoadGameClient: Bad magic!\n");
         return;
     }
 
-    gameSkill = hdr.skill;
-    deathmatch = hdr.deathmatch;
-    noMonstersParm = hdr.noMonsters;
-    respawnMonsters = hdr.respawnMonsters;
+    gameSkill = hdr->skill;
+    deathmatch = hdr->deathmatch;
+    noMonstersParm = hdr->noMonsters;
+    respawnMonsters = hdr->respawnMonsters;
     // Do we need to change the map?
-    if(gameMap != hdr.map - 1 || gameEpisode != hdr.episode - 1)
+    if(gameMap != hdr->map - 1 || gameEpisode != hdr->episode - 1)
     {
-        gameMap = hdr.map - 1;
-        gameEpisode = hdr.episode - 1;
+        gameMap = hdr->map - 1;
+        gameEpisode = hdr->episode - 1;
         G_InitNew(gameSkill, gameEpisode, gameMap);
     }
-    mapTime = hdr.mapTime;
+    mapTime = hdr->mapTime;
 
     P_MobjUnsetOrigin(mo);
     mo->origin[VX] = FIX2FLT(SV_ReadLong());
@@ -5025,15 +5032,16 @@ static void unarchiveMap(void)
 #endif
 }
 
-int SV_SaveGameWorker(void* ptr)
+int SV_SaveGameWorker(void* parameters)
 {
-    savegameparam_t* param = ptr;
+    savegameparam_t* parm = parameters;
+    uint gameId;
 
 #if _DEBUG
-    VERBOSE( Con_Message("SV_SaveGame: Attempting save game to \"%s\".\n", Str_Text(param->path)) )
+    VERBOSE( Con_Message("SV_SaveGame: Attempting save game to \"%s\".\n", Str_Text(parm->path)) )
 #endif
 
-    if(!openGameSaveFile(Str_Text(param->path), true))
+    if(!openGameSaveFile(Str_Text(parm->path), true))
     {
         Con_BusyWorkerEnd();
         return SV_INVALIDFILENAME; // No success.
@@ -5042,7 +5050,8 @@ int SV_SaveGameWorker(void* ptr)
     playerHeaderOK = false; // Uninitialized.
 
     // Write the game session header.
-    writeSaveHeader(param->name);
+    gameId = SV_GenerateGameId();
+    writeSaveHeader(parm->name, gameId);
 
 #if __JHEXEN__
     P_ArchiveGlobalScriptData();
@@ -5050,7 +5059,7 @@ int SV_SaveGameWorker(void* ptr)
 
     // In netgames the server tells the clients to save their games.
 #if !__JHEXEN__
-    NetSv_SaveGame(hdr.gameId);
+    NetSv_SaveGame(gameId);
 #endif
 
     // Set the mobj archive numbers.
@@ -5111,10 +5120,10 @@ int SV_SaveGameWorker(void* ptr)
 
 #if __JHEXEN__
     // Clear all save files at destination slot.
-    SV_ClearSlot(param->slot);
+    SV_ClearSlot(parm->slot);
 
     // Copy base slot to destination slot.
-    SV_CopySlot(BASE_SLOT, param->slot);
+    SV_CopySlot(BASE_SLOT, parm->slot);
 #endif
 
     Con_BusyWorkerEnd();

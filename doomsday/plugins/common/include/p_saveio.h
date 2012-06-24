@@ -50,6 +50,7 @@ typedef struct saveheader_s {
 typedef struct saveinfo_s {
     ddstring_t filePath;
     ddstring_t name;
+    saveheader_t header;
 } saveinfo_t;
 
 typedef struct savegameparam_s {
@@ -138,7 +139,7 @@ boolean SV_HxHaveMapSaveForSlot(int slot, uint map);
  * @return  Game-save info for logical save @a slot. Always returns valid
  *      info even if supplied with an invalid or unused slot identifer.
  */
-const saveinfo_t* SV_SaveInfoForSlot(int slot);
+saveinfo_t* SV_SaveInfoForSlot(int slot);
 
 boolean SV_ComposeSavePathForSlot(int slot, ddstring_t* path);
 #if __JHEXEN__
