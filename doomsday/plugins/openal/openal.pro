@@ -31,4 +31,8 @@ win32 {
     target.path = $$DENG_LIB_DIR
 }
 
-macx: linkToBundledLibdeng2(dsOpenAL)
+macx {
+    linkToBundledLibdeng2(dsOpenAL)
+    linkToBundledLibdeng(dsOpenAL)
+}
+

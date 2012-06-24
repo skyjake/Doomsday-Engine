@@ -117,4 +117,7 @@ win32 {
     RC_FILE = res/jhexen.rc
 }
 
-macx: linkToBundledLibdeng2(jHexen)
+macx {
+    linkToBundledLibdeng2(jHexen)
+    linkToBundledLibdeng(jHexen)
+}

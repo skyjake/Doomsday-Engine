@@ -35,11 +35,11 @@
 #ifndef LIBDENG_READER_H
 #define LIBDENG_READER_H
 
+#include "dd_types.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "dd_types.h"
 
 struct reader_s; // The reader instance (opaque).
 

@@ -80,7 +80,7 @@ macx {
     fixInstallName("QtOpenGL.framework/Versions/4/QtOpenGL")
 
     # Update the library included in the main app bundle.
-    doPostLink("mkdir -p ../engine/doomsday.app/Contents/Frameworks")
+    doPostLink("mkdir -p .p./engine/doomsday.app/Contents/Frameworks")
     doPostLink("cp -fRp libdeng2*dylib ../engine/doomsday.app/Contents/Frameworks")
 }
 

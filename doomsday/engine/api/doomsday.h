@@ -85,9 +85,9 @@ struct font_s;
 #include "reader.h"
 #include "rect.h"
 #include "size.h"
-#include "smoother.h"
 #include "stringpool.h"
 #include "writer.h"
+#include "de/smoother.h"
 
 //------------------------------------------------------------------------
 //

@@ -341,7 +341,7 @@ typedef enum {
 
 #define BLINKTHRESHOLD      (4*TICRATE)
 
-enum { VX, VY, VZ }; // Vertex indices.
+//enum { VX, VY, VZ }; // Vertex indices.
 
 enum { CR, CG, CB, CA }; // Color indices.
 

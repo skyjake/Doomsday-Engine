@@ -25,6 +25,7 @@ win32 {
     include(../dep_directx.pri)
 }
 include(../dep_deng2.pri)
+include(../dep_deng.pri)
 
 # Definitions ----------------------------------------------------------------
 
@@ -122,7 +123,6 @@ DENG_API_HEADERS = \
     api/reader.h \
     api/rect.h \
     api/size.h \
-    api/smoother.h \
     api/stringpool.h \
     api/sys_audiod.h \
     api/sys_audiod_mus.h \
@@ -615,7 +615,6 @@ SOURCES += \
     portable/src/sector.c \
     portable/src/sidedef.c \
     portable/src/size.c \
-    portable/src/smoother.c \
     portable/src/stringarray.cpp \
     portable/src/stringpool.cpp \
     portable/src/surface.c \
@@ -704,10 +703,10 @@ macx {
         mac/res/English.lproj \
         mac/res/deng.icns
 
-    data.path = $$res.path
-    startupdata.path = $${res.path}/data
+    data.path         = $${res.path}
+    startupdata.path  = $${res.path}/data
     startupfonts.path = $${res.path}/data/fonts
-    startupgfx.path = $${res.path}/data/graphics
+    startupgfx.path   = $${res.path}/data/graphics
 
     QMAKE_BUNDLE_DATA += res data startupfonts startupdata startupgfx
 
@@ -723,11 +722,13 @@ macx {
         !deng_nosdlmixer: doPostLink("cp -fRp $${SDL_FRAMEWORK_DIR}/SDL_mixer.framework $$FW_DIR")
     }
 
-    # libdeng2 dynamic library.
+    # libdeng1 and 2 dynamic libraries.
     doPostLink("cp -fRp $$OUT_PWD/../libdeng2/libdeng2*dylib $$FW_DIR")
+    doPostLink("cp -fRp $$OUT_PWD/../libdeng/libdeng*dylib $$FW_DIR")
 
     # Fix the dynamic linker paths so they point to ../Frameworks/ inside the bundle.
     fixInstallName(Doomsday.app/Contents/MacOS/Doomsday, libdeng2.2.dylib, ..)
+    fixInstallName(Doomsday.app/Contents/MacOS/Doomsday, libdeng.1.dylib, ..)
 
     # Clean up previous deployment.
     doPostLink("rm -rf Doomsday.app/Contents/PlugIns/")

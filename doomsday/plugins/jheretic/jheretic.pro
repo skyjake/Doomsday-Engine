@@ -102,4 +102,7 @@ win32 {
     RC_FILE = res/jheretic.rc
 }
 
-macx: linkToBundledLibdeng2(jHeretic)
+macx {
+    linkToBundledLibdeng2(jHeretic)
+    linkToBundledLibdeng(jHeretic)
+}

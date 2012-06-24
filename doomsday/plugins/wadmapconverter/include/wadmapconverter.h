@@ -34,9 +34,6 @@
 #include "dd_plugin.h"
 #include "dd_types.h"
 
-// Vertex indices.
-enum { VX, VY, VZ };
-
 // Line sides.
 #define RIGHT                   0
 #define LEFT                    1

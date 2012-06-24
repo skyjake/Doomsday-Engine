@@ -46,6 +46,7 @@
 #define LIBDENG_API_STRING_H
 
 #include <stddef.h>
+#include "de/types.h"
 #include "reader.h"
 #include "writer.h"
 

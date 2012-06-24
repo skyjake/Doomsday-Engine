@@ -1,42 +1,40 @@
-/**\file smoother.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2012 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * Calculation of smooth movement paths. This is used by the server
- * to approximate the movement path of the clients' player mobjs.
+ * @file smoother.cpp
+ * Interpolator for smoothing out a movement curve. @ingroup math
+ *
+ * The original movement path is composed out of discrete 3D points. Smoother
+ * calculates the points in between.
+ *
+ * This is used by the server to approximate the movement path of the clients'
+ * player mobjs.
  *
  * The movement of the smoother is guaranteed to not make jumps back
  * into the past or change its course once the interpolation has begun
  * between two points.
+ *
+ * @authors Copyright © 2011-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #include <stdlib.h>
 #include <string.h>
 
-#include "de_base.h"
-#include "de_console.h"
 #include "smoother.h"
+#include <de/Log>
 
 /**
  * Timed 3D point in space.
@@ -68,32 +66,32 @@ struct smoother_s {
 
 Smoother* Smoother_New()
 {
-    Smoother* sm = calloc(sizeof(Smoother), 1);
+    Smoother* sm = static_cast<Smoother*>(calloc(sizeof(Smoother), 1));
     return sm;
 }
 
 void Smoother_SetMaximumPastNowDelta(Smoother* sm, float delta)
 {
-    assert(sm);
+    DENG_ASSERT(sm);
     sm->maxDeltaBetweenPastAndNow = delta;
 }
 
 void Smoother_Delete(Smoother* sm)
 {
-    assert(sm);
+    DENG_ASSERT(sm);
     free(sm);
 }
 
 void Smoother_Debug(const Smoother* sm)
 {
-    assert(sm);
-    Con_Message("Smoother_Debug: [past=%3.3f / now=%3.3f / future=%3.3f] at=%3.3f\n",
-                sm->past.time, sm->now.time, sm->points[0].time, sm->at);
+    DENG_ASSERT(sm);
+    LOG_DEBUG("Smoother_Debug: [past=%3.3f / now=%3.3f / future=%3.3f] at=%3.3f")
+            << sm->past.time << sm->now.time << sm->points[0].time << sm->at;
 }
 
 static boolean Smoother_IsValid(const Smoother* sm)
 {
-    assert(sm);
+    DENG_ASSERT(sm);
     if(sm->past.time == 0 || sm->now.time == 0)
     {
         // We don't have valid data.
@@ -106,7 +104,7 @@ void Smoother_Clear(Smoother* sm)
 {
     float maxDelta;
 
-    assert(sm);
+    DENG_ASSERT(sm);
 
     maxDelta = sm->maxDeltaBetweenPastAndNow;
     memset(sm, 0, sizeof(*sm));
@@ -121,7 +119,7 @@ void Smoother_AddPosXY(Smoother* sm, float time, coord_t x, coord_t y)
 void Smoother_AddPos(Smoother* sm, float time, coord_t x, coord_t y, coord_t z, boolean onFloor)
 {
     pos_t* last;
-    assert(sm);
+    DENG_ASSERT(sm);
 
     // Is it the same point?
     last = &sm->points[SM_NUM_POINTS - 1];
@@ -141,7 +139,7 @@ void Smoother_AddPos(Smoother* sm, float time, coord_t x, coord_t y, coord_t z, 
     {
         // The new point would be in the past, this is no good.
 #ifdef _DEBUG
-        Con_Message("Smoother_AddPos: DISCARDING new pos, time=%f, now=%f.\n", time, sm->now.time);
+        LOG_DEBUG("Smoother_AddPos: DISCARDING new pos, time=%f, now=%f.") << time << sm->now.time;
 #endif
         Smoother_Clear(sm);
         return;
@@ -191,8 +189,8 @@ boolean Smoother_EvaluateComponent(const Smoother* sm, int component, coord_t* v
 {
     coord_t xyz[3];
 
-    assert(component >= 0 && component < 3);
-    assert(v != 0);
+    DENG_ASSERT(component >= 0 && component < 3);
+    DENG_ASSERT(v != 0);
 
     if(!Smoother_Evaluate(sm, xyz)) return false;
 
@@ -207,7 +205,7 @@ boolean Smoother_Evaluate(const Smoother* sm, coord_t* xyz)
     float t;
     int i;
 
-    assert(sm);
+    DENG_ASSERT(sm);
     past = &sm->past;
     now = &sm->now;
 
@@ -232,7 +230,7 @@ boolean Smoother_Evaluate(const Smoother* sm, coord_t* xyz)
 #endif*/
         return true;
     }
-    //assert(sm->at <= now->time);
+    //DENG_ASSERT(sm->at <= now->time);
     if(now->time <= past->time)
     {
         // Too far in the ever-shifting future.
@@ -274,20 +272,19 @@ boolean Smoother_Evaluate(const Smoother* sm, coord_t* xyz)
 
 boolean Smoother_IsOnFloor(const Smoother* sm)
 {
-    assert(sm);
-    {
+    DENG_ASSERT(sm);
+
     const pos_t* past = &sm->past;
     const pos_t* now = &sm->now;
 
     if(!Smoother_IsValid(sm)) return false;
     return (past->onFloor && now->onFloor);
-    }
 }
 
 boolean Smoother_IsMoving(const Smoother* sm)
 {
-    assert(sm);
-    {
+    DENG_ASSERT(sm);
+
     const pos_t* past = &sm->past;
     const pos_t* now = &sm->now;
 
@@ -297,14 +294,13 @@ boolean Smoother_IsMoving(const Smoother* sm)
             (!INRANGE_OF(past->xyz[VX], now->xyz[VX], SMOOTHER_MOVE_EPSILON) ||
              !INRANGE_OF(past->xyz[VY], now->xyz[VY], SMOOTHER_MOVE_EPSILON) ||
              !INRANGE_OF(past->xyz[VZ], now->xyz[VZ], SMOOTHER_MOVE_EPSILON));
-    }
 }
 
 void Smoother_Advance(Smoother* sm, float period)
 {
     int i;
 
-    assert(sm);
+    DENG_ASSERT(sm);
 
     if(period <= 0) return;
 

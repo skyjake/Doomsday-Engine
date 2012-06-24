@@ -16,3 +16,5 @@ INCLUDEPATH += $$DENG_API_DIR
 
 # The libdeng2 C wrapper can be used from all plugins.
 include(../dep_deng2_cwrapper.pri)
+
+include(../dep_deng.pri)

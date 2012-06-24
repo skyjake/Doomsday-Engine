@@ -82,6 +82,15 @@ defineTest(doPostLink) {
     export(QMAKE_POST_LINK)
 }
 
+macx {
+    defineTest(fixInstallName) {
+        # 1: binary file
+        # 2: library name
+        # 3: path to Frameworks/
+        doPostLink("install_name_tool -change $$2 @executable_path/$$3/Frameworks/$$2 $$1")
+    }
+}
+
 # Build Options --------------------------------------------------------------
 
 # Configure for Debug/Release build.

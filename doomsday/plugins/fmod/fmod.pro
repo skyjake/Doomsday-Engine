@@ -49,4 +49,8 @@ else {
     target.path = $$DENG_LIB_DIR
 }
 
-macx: linkToBundledLibdeng2(dsFMOD)
+macx {
+    linkToBundledLibdeng2(dsFMOD)
+    linkToBundledLibdeng(dsFMOD)
+}
+

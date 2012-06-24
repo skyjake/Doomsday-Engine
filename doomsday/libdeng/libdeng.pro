@@ -24,7 +24,7 @@ win32 {
     TARGET_EXT = .dll
 }
 
-INCLUDEPATH += api include
+INCLUDEPATH += src include include/de
 
 # Definitions ----------------------------------------------------------------
 
@@ -41,16 +41,34 @@ DEFINES += __DENG__ __DOOMSDAY__
 
 # Public headers
 HEADERS += \
+    include/de/smoother.h \
+    include/de/libdeng.h \
+    include/de/types.h
     #include/version.h
 
 # Sources and private headers
-SOURCES += 
+SOURCES += \
+    src/smoother.cpp
 
 # Installation ---------------------------------------------------------------
 
 macx {
     linkDylibToBundledLibdeng2(libdeng)
-} 
+
+    defineTest(fixDengLinkage) {
+        doPostLink("install_name_tool -change $$1 @executable_path/../Frameworks/$$1 libdeng.1.dylib")
+        doPostLink("install_name_tool -change $$(QTDIR)lib/$$1 @executable_path/../Frameworks/$$1 libdeng.1.dylib")
+        doPostLink("install_name_tool -change $$(QTDIR)/lib/$$1 @executable_path/../Frameworks/$$1 libdeng.1.dylib")
+    }
+    fixDengLinkage("QtCore.framework/Versions/4/QtCore")
+    fixDengLinkage("QtNetwork.framework/Versions/4/QtNetwork")
+    fixDengLinkage("QtGui.framework/Versions/4/QtGui")
+    fixDengLinkage("QtOpenGL.framework/Versions/4/QtOpenGL")
+
+    # Update the library included in the main app bundle.
+    doPostLink("mkdir -p ../engine/Doomsday.app/Contents/Frameworks")
+    doPostLink("cp -fRp libdeng*dylib ../engine/Doomsday.app/Contents/Frameworks")
+}
 else {
     INSTALLS += target
     target.path = $$DENG_LIB_DIR

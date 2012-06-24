@@ -243,7 +243,7 @@ typedef enum {
     IRONTICS = (60 * TICRATE)
 } powerduration_t;
 
-enum { VX, VY, VZ }; // Vertex indices.
+//enum { VX, VY, VZ }; // Vertex indices.
 
 enum { CR, CG, CB, CA }; // Color indices.
 

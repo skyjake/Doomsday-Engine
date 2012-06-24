@@ -32,4 +32,7 @@ win32 {
     target.path = $$DENG_LIB_DIR
 }
 
-macx: linkToBundledLibdeng2(dpWadMapConverter)
+macx {
+    linkToBundledLibdeng2(dpWadMapConverter)
+    linkToBundledLibdeng(dpWadMapConverter)
+}

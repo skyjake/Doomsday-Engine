@@ -139,4 +139,7 @@ win32 {
     RC_FILE = res/jdoom.rc
 }
 
-macx: linkToBundledLibdeng2(jDoom)
+macx {
+    linkToBundledLibdeng2(jDoom)
+    linkToBundledLibdeng(jDoom)
+}

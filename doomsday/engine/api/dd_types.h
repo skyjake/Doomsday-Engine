@@ -23,12 +23,16 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_TYPES_H
-#define LIBDENG_TYPES_H
+#ifndef ENGINE_TYPES_H
+#define ENGINE_TYPES_H
 
+#include "de/types.h" // libdeng types
+
+/*
 #if defined(__x86_64__) || defined(__x86_64) || defined(_LP64)
 #  define __64BIT__
 #endif
+*/
 
 /** In Win32 TCHAR and related macros change size depending on if they are
  using wide characters (unicode utf-16le) or ansi for functions and strings.
@@ -120,7 +124,7 @@ typedef uint16_t        thid_t;
 typedef double          timespan_t;
 
 /// All points in the map coordinate space should be defined using this type.
-typedef double          coord_t;
+//typedef double          coord_t;
 
 typedef enum slopetype_e {
     ST_HORIZONTAL,
@@ -172,6 +176,7 @@ typedef enum {
 
 #define VALID_RESOURCE_CLASS(n)     ((n) >= RESOURCECLASS_FIRST && (n) < RESOURCECLASS_COUNT)
 
+/*
 #ifndef __BYTEBOOL__
 #define __BYTEBOOL__
 #  ifndef __cplusplus
@@ -185,6 +190,7 @@ typedef enum {
 typedef int                 ddboolean_t;
 #endif
 #define boolean             ddboolean_t
+*/
 
 #define BAMS_BITS   16
 
@@ -238,4 +244,4 @@ struct material_s;
 #include "dd_string.h"
 #include "uri.h"
 
-#endif /* LIBDENG_TYPES_H */
+#endif /* ENGINE_TYPES_H */
