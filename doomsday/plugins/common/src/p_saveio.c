@@ -370,10 +370,12 @@ static void swd(Writer* w, const char* data, int len)
     SV_Write(data, len);
 }
 
-void SaveInfo_Write(saveheader_t* info, Writer* writer)
+void SaveInfo_Write(saveinfo_t* saveInfo, Writer* writer)
 {
-    assert(info);
+    saveheader_t* info;
+    assert(saveInfo);
 
+    info = &saveInfo->header;
     Writer_WriteInt32(writer, info->magic);
     Writer_WriteInt32(writer, info->version);
     Writer_WriteInt32(writer, info->gameMode);
@@ -403,7 +405,7 @@ void SaveInfo_Write(saveheader_t* info, Writer* writer)
     Writer_WriteInt32(writer, info->gameId);
 }
 
-void SV_SaveInfo_Write(saveheader_t* info)
+void SV_SaveInfo_Write(saveinfo_t* info)
 {
     Writer* svWriter = Writer_NewWithCallbacks(swi8, swi16, swi32, swf, swd);
     SaveInfo_Write(info, svWriter);
@@ -483,10 +485,12 @@ static void translateLegacyGameMode(gamemode_t* mode)
 }
 #endif
 
-void SaveInfo_Read(saveheader_t* info, Reader* reader)
+void SaveInfo_Read(saveinfo_t* saveInfo, Reader* reader)
 {
-    assert(info);
+    saveheader_t* info;
+    assert(saveInfo);
 
+    info = &saveInfo->header;
     info->magic = Reader_ReadInt32(reader);
     info->version = Reader_ReadInt32(reader);
     info->gameMode = (gamemode_t)Reader_ReadInt32(reader);
@@ -544,15 +548,16 @@ void SaveInfo_Read(saveheader_t* info, Reader* reader)
 }
 
 #if __JHEXEN__
-void SaveInfo_Read_Hx_v9(saveheader_t* info, Reader* reader)
+void SaveInfo_Read_Hx_v9(saveinfo_t* saveInfo, Reader* reader)
 {
 # define HXS_VERSION_TEXT      "HXS Ver " // Do not change me!
 # define HXS_VERSION_TEXT_LENGTH 16
 
     char verText[HXS_VERSION_TEXT_LENGTH];
+    saveheader_t* info;
+    assert(saveInfo);
 
-    assert(info);
-
+    info = &saveInfo->header;
     Reader_Read(reader, &info->name, SAVESTRINGSIZE);
     Reader_Read(reader, &verText, HXS_VERSION_TEXT_LENGTH);
     info->version = atoi(&verText[8]);
@@ -577,7 +582,7 @@ void SaveInfo_Read_Hx_v9(saveheader_t* info, Reader* reader)
 }
 #endif
 
-void SV_SaveInfo_Read(saveheader_t* info)
+void SV_SaveInfo_Read(saveinfo_t* info)
 {
     Reader* svReader = Reader_NewWithCallbacks(sri8, sri16, sri32, srf, srd);
 #if __JHEXEN__
@@ -585,7 +590,8 @@ void SV_SaveInfo_Read(saveheader_t* info)
     int magic = Reader_ReadInt32(svReader);
     saveptr.b -= 4; // Rewind the stream.
 
-    if(magic != MY_SAVE_MAGIC)
+    if((!IS_NETWORK_CLIENT && magic != MY_SAVE_MAGIC) ||
+       ( IS_NETWORK_CLIENT && magic != MY_CLIENT_SAVE_MAGIC))
     {
         // Perhaps the old v9 format?
         SaveInfo_Read_Hx_v9(info, svReader);

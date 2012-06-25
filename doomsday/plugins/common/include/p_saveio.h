@@ -138,8 +138,8 @@ short SV_ReadShort(void);
 long SV_ReadLong(void);
 float SV_ReadFloat(void);
 
-void SV_SaveInfo_Write(saveheader_t* info);
-void SV_SaveInfo_Read(saveheader_t* info);
+void SV_SaveInfo_Write(saveinfo_t* info);
+void SV_SaveInfo_Read(saveinfo_t* info);
 
 void SV_MaterialArchive_Write(MaterialArchive* arc);
 void SV_MaterialArchive_Read(MaterialArchive* arc, int version);

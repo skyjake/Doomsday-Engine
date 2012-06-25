@@ -381,6 +381,59 @@ static void initSaveInfo(saveinfo_t* info)
     if(!info) return;
     Str_Init(&info->filePath);
     Str_Init(&info->name);
+
+    memset(&info->header, 0, sizeof(info->header));
+}
+
+static void clearSaveInfo(saveinfo_t* info)
+{
+    if(!info) return;
+    Str_Free(&info->filePath);
+    Str_Free(&info->name);
+}
+
+static void setNameOfSaveInfo(saveinfo_t* info, const char* newName)
+{
+    if(!info) return;
+    dd_snprintf(info->header.name, SAVESTRINGSIZE, "%s", newName);
+}
+
+static void configureSaveInfoHeader(saveinfo_t* saveInfo, uint gameId)
+{
+    saveheader_t* hdr = &saveInfo->header;
+
+    hdr->magic    = IS_NETWORK_CLIENT? MY_CLIENT_SAVE_MAGIC : MY_SAVE_MAGIC;
+    hdr->version  = MY_SAVE_VERSION;
+    hdr->gameMode = gameMode;
+    hdr->gameId   = gameId;
+
+    hdr->map = gameMap+1;
+#if __JHEXEN__
+    hdr->episode = 1;
+#else
+    hdr->episode = gameEpisode+1;
+#endif
+#if __JHEXEN__
+    hdr->skill = gameSkill;
+    hdr->randomClasses = randomClassParm;
+#else
+    hdr->skill = gameSkill;
+    if(fastParm) hdr->skill |= 0x80; // Set high byte.
+#endif
+    hdr->deathmatch = deathmatch;
+    hdr->noMonsters = noMonstersParm;
+
+#if __JHEXEN__
+    hdr->randomClasses = randomClassParm;
+#else
+    hdr->respawnMonsters = respawnMonsters;
+    hdr->mapTime = mapTime;
+    { int i;
+    for(i = 0; i < MAXPLAYERS; i++)
+    {
+        hdr->players[i] = players[i].plr->inGame;
+    }}
+#endif
 }
 
 static boolean saveInfoIsValidForCurrentGameSession(saveinfo_t* info)
@@ -456,13 +509,6 @@ static void updateSaveInfo(saveinfo_t* info, ddstring_t* savePath)
         // Not a loadable save.
         Str_Clear(&info->filePath);
     }
-}
-
-static void clearSaveInfo(saveinfo_t* info)
-{
-    if(!info) return;
-    Str_Free(&info->filePath);
-    Str_Free(&info->name);
 }
 
 /**
@@ -629,7 +675,11 @@ boolean SV_Recognise(saveinfo_t* info)
         SV_HxSavePtr()->b = saveBuffer;
 #endif
 
-        SV_SaveInfo_Read(&info->header);
+        SV_SaveInfo_Read(info);
+        if(MY_SAVE_MAGIC == info->header.magic)
+        {
+            Str_Set(&info->name, info->header.name);
+        }
 
 #if __JHEXEN__
         Z_Free(saveBuffer);
@@ -637,11 +687,8 @@ boolean SV_Recognise(saveinfo_t* info)
         SV_CloseFile();
 #endif
 
-        if(MY_SAVE_MAGIC == info->header.magic)
-        {
-            Str_Set(&info->name, info->header.name);
-            return true;
-        }
+        return (MY_SAVE_MAGIC == info->header.magic) ||
+               (MY_CLIENT_SAVE_MAGIC == info->header.magic);
     }
     return false;
 }
@@ -4919,49 +4966,6 @@ void SV_Shutdown(void)
     inited = false;
 }
 
-static void writeSaveHeader(const char* saveName, uint gameId)
-{
-    saveheader_t hdr;
-
-    memset(&hdr, 0, sizeof(hdr));
-
-    hdr.magic = MY_SAVE_MAGIC;
-    hdr.version = MY_SAVE_VERSION;
-    hdr.gameMode = gameMode;
-    dd_snprintf(hdr.name, SAVESTRINGSIZE, "%s", saveName);
-
-    hdr.map = gameMap+1;
-#if __JHEXEN__
-    hdr.episode = 1;
-#else
-    hdr.episode = gameEpisode+1;
-#endif
-#if __JHEXEN__
-    hdr.skill = gameSkill;
-    hdr.randomClasses = randomClassParm;
-#else
-    hdr.skill = gameSkill;
-    if(fastParm) hdr.skill |= 0x80; // Set high byte.
-#endif
-    hdr.deathmatch = deathmatch;
-    hdr.noMonsters = noMonstersParm;
-
-#if __JHEXEN__
-    hdr.randomClasses = randomClassParm;
-#else
-    hdr.respawnMonsters = respawnMonsters;
-    hdr.mapTime = mapTime;
-    hdr.gameId = gameId;
-    { int i;
-    for(i = 0; i < MAXPLAYERS; i++)
-    {
-        hdr.players[i] = players[i].plr->inGame;
-    }}
-#endif
-
-    SV_SaveInfo_Write(&hdr);
-}
-
 static boolean SV_LoadGame2(saveinfo_t* saveInfo)
 {
     int i;
@@ -4974,8 +4978,10 @@ static boolean SV_LoadGame2(saveinfo_t* saveInfo)
     // Read the header again.
     /// @todo Seek past the header straight to the game state.
     {
-    saveheader_t tmp;
+    saveinfo_t tmp;
+    initSaveInfo(&tmp);
     SV_SaveInfo_Read(&tmp);
+    clearSaveInfo(&tmp);
     }
     hdr = &saveInfo->header;
 
@@ -5222,11 +5228,11 @@ boolean SV_LoadGame(int slot)
 
 void SV_SaveGameClient(uint gameId)
 {
-#if !__JHEXEN__ // unsupported in jHexen
+#if !__JHEXEN__ // unsupported in libhexen
     player_t* pl = &players[CONSOLEPLAYER];
     mobj_t* mo = pl->plr->mo;
     ddstring_t gameSavePath;
-    saveheader_t hdr;
+    saveinfo_t saveInfo;
 
     errorIfNotInited("SV_SaveGameClient");
 
@@ -5246,18 +5252,9 @@ void SV_SaveGameClient(uint gameId)
     Str_Free(&gameSavePath);
 
     // Prepare the header.
-    memset(&hdr, 0, sizeof(hdr));
-    hdr.magic = MY_CLIENT_SAVE_MAGIC;
-    hdr.version = MY_SAVE_VERSION;
-    hdr.skill = gameSkill;
-    hdr.episode = gameEpisode+1;
-    hdr.map = gameMap+1;
-    hdr.deathmatch = deathmatch;
-    hdr.noMonsters = noMonstersParm;
-    hdr.respawnMonsters = respawnMonsters;
-    hdr.mapTime = mapTime;
-    hdr.gameId = gameId;
-    SV_SaveInfo_Write(&hdr);
+    initSaveInfo(&saveInfo);
+    configureSaveInfoHeader(&saveInfo, gameId);
+    SV_SaveInfo_Write(&saveInfo);
 
     // Some important information.
     // Our position and look angles.
@@ -5281,19 +5278,17 @@ void SV_SaveGameClient(uint gameId)
     materialArchive = NULL;
 
     SV_CloseFile();
-
-    // Update our game save info.
-    SV_UpdateAllSaveInfo();
+    clearSaveInfo(&saveInfo);
 #endif
 }
 
 void SV_LoadGameClient(uint gameId)
 {
-#if !__JHEXEN__ // unsupported in jHexen
+#if !__JHEXEN__ // unsupported in libhexen
     player_t* cpl = players + CONSOLEPLAYER;
     mobj_t* mo = cpl->plr->mo;
     ddstring_t gameSavePath;
-    saveheader_t clientSaveHeader;
+    saveinfo_t saveInfo;
 
     errorIfNotInited("SV_LoadGameClient");
 
@@ -5313,10 +5308,13 @@ void SV_LoadGameClient(uint gameId)
     }
     Str_Free(&gameSavePath);
 
-    SV_SaveInfo_Read(&clientSaveHeader);
-    hdr = &clientSaveHeader;
+    initSaveInfo(&saveInfo);
+    SV_SaveInfo_Read(&saveInfo);
+
+    hdr = &saveInfo.header;
     if(hdr->magic != MY_CLIENT_SAVE_MAGIC)
     {
+        clearSaveInfo(&saveInfo);
         SV_CloseFile();
         Con_Message("SV_LoadGameClient: Bad magic!\n");
         return;
@@ -5362,6 +5360,7 @@ void SV_LoadGameClient(uint gameId)
     MaterialArchive_Delete(materialArchive);
     materialArchive = NULL;
 
+    clearSaveInfo(&saveInfo);
     SV_CloseFile();
 #endif
 }
@@ -5416,7 +5415,8 @@ typedef struct savegameparams_s {
 static int saveGameWorker(void* parameters)
 {
     savegameworkerparams_t* parm = parameters;
-    uint gameId;
+    uint gameId = SV_GenerateGameId();
+    saveinfo_t saveInfo;
 
 #if _DEBUG
     VERBOSE( Con_Message("SV_SaveGame: Attempting save game to \"%s\".\n", Str_Text(parm->path)) )
@@ -5431,8 +5431,10 @@ static int saveGameWorker(void* parameters)
     playerHeaderOK = false; // Uninitialized.
 
     // Write the game session header.
-    gameId = SV_GenerateGameId();
-    writeSaveHeader(parm->name, gameId);
+    initSaveInfo(&saveInfo);
+    setNameOfSaveInfo(&saveInfo, parm->name);
+    configureSaveInfoHeader(&saveInfo, gameId);
+    SV_SaveInfo_Write(&saveInfo);
 
 #if __JHEXEN__
     P_ArchiveGlobalScriptData();
@@ -5498,6 +5500,8 @@ static int saveGameWorker(void* parameters)
     SV_FreeThingArchive();
     SV_CloseFile();
 #endif
+
+    clearSaveInfo(&saveInfo);
 
     Con_BusyWorkerEnd();
     return SV_OK;
