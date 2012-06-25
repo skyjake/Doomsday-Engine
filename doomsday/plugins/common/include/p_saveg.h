@@ -149,6 +149,8 @@ void SV_SaveGameClient(uint gameId);
 void SV_LoadGameClient(uint gameId);
 #endif
 
+uint SV_GenerateGameId(void);
+
 /**
  * Original indices must remain unchanged!
  * Added new think classes to the end.

@@ -23,6 +23,7 @@
 #ifndef LIBCOMMON_SAVESTATE_INPUT_OUTPUT_H
 #define LIBCOMMON_SAVESTATE_INPUT_OUTPUT_H
 
+#include "saveinfo.h"
 #include "materialarchive.h"
 #include "lzss.h"
 #include "p_savedef.h"
@@ -43,32 +44,6 @@ typedef enum gamearchivesegment_e {
     ASEG_PLAYER_HEADER,
     ASEG_GLOBALSCRIPTDATA // Hexen only
 } gamearchivesegment_t;
-
-typedef struct saveheader_s {
-    int magic;
-    int version;
-    gamemode_t gameMode;
-    char name[SAVESTRINGSIZE];
-    byte skill;
-    byte episode;
-    byte map;
-    byte deathmatch;
-    byte noMonsters;
-#if __JHEXEN__
-    byte randomClasses;
-#else
-    byte respawnMonsters;
-    int mapTime;
-    byte players[MAXPLAYERS];
-#endif
-    unsigned int gameId;
-} saveheader_t;
-
-typedef struct saveinfo_s {
-    ddstring_t filePath;
-    ddstring_t name;
-    saveheader_t header;
-} saveinfo_t;
 
 enum {
     SV_OK = 0,

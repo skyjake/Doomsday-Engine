@@ -392,125 +392,6 @@ static void clearSaveInfo(saveinfo_t* info)
     Str_Free(&info->name);
 }
 
-static void setNameOfSaveInfo(saveinfo_t* info, const char* newName)
-{
-    if(!info) return;
-    dd_snprintf(info->header.name, SAVESTRINGSIZE, "%s", newName);
-}
-
-static void configureSaveInfoHeader(saveinfo_t* saveInfo, uint gameId)
-{
-    saveheader_t* hdr = &saveInfo->header;
-
-    hdr->magic    = IS_NETWORK_CLIENT? MY_CLIENT_SAVE_MAGIC : MY_SAVE_MAGIC;
-    hdr->version  = MY_SAVE_VERSION;
-    hdr->gameMode = gameMode;
-    hdr->gameId   = gameId;
-
-    hdr->map = gameMap+1;
-#if __JHEXEN__
-    hdr->episode = 1;
-#else
-    hdr->episode = gameEpisode+1;
-#endif
-#if __JHEXEN__
-    hdr->skill = gameSkill;
-    hdr->randomClasses = randomClassParm;
-#else
-    hdr->skill = gameSkill;
-    if(fastParm) hdr->skill |= 0x80; // Set high byte.
-#endif
-    hdr->deathmatch = deathmatch;
-    hdr->noMonsters = noMonstersParm;
-
-#if __JHEXEN__
-    hdr->randomClasses = randomClassParm;
-#else
-    hdr->respawnMonsters = respawnMonsters;
-    hdr->mapTime = mapTime;
-    { int i;
-    for(i = 0; i < MAXPLAYERS; i++)
-    {
-        hdr->players[i] = players[i].plr->inGame;
-    }}
-#endif
-}
-
-static boolean saveInfoIsValidForCurrentGameSession(saveinfo_t* info)
-{
-    if(!info) return false;
-
-    /// @fixme What about original game saves, they will fail here presently.
-
-    // Magic must match.
-    if(info->header.magic != MY_SAVE_MAGIC) return false;
-
-    /**
-     * Check for unsupported versions.
-     */
-    // A future version?
-    if(info->header.version > MY_SAVE_VERSION) return false;
-
-#if __JHEXEN__
-    // We are incompatible with v3 saves due to an invalid test used to determine
-    // present sidedefs (ver3 format's sidedefs contain chunks of junk data).
-    if(info->header.version == 3) return false;
-#endif
-
-    // Game Mode missmatch?
-    if(info->header.gameMode != gameMode) return false;
-
-    return true; // It's good!
-}
-
-static boolean recogniseAndReadHeader(saveinfo_t* info)
-{
-    if(SV_Recognise(info)) return true;
-
-    // Perhaps an original game save?
-#if __JDOOM__
-    if(SV_v19_Recognise(info)) return true;
-#endif
-#if __JHERETIC__
-    if(SV_v13_Recognise(info)) return true;
-#endif
-
-    return false;
-}
-
-static void updateSaveInfo(saveinfo_t* info, ddstring_t* savePath)
-{
-    if(!info) return;
-
-    Str_CopyOrClear(&info->filePath, savePath);
-    if(Str_IsEmpty(&info->filePath))
-    {
-        // The save path cannot be accessed for some reason. Perhaps its a
-        // network path? Clear the info for this slot.
-        Str_Clear(&info->name);
-        return;
-    }
-
-    if(!recogniseAndReadHeader(info))
-    {
-        // Not a loadable save.
-        Str_Clear(&info->filePath);
-        return;
-    }
-
-    // Ensure we have a valid name.
-    if(Str_IsEmpty(&info->name))
-    {
-        Str_Set(&info->name, "UNNAMED");
-    }
-
-    if(!saveInfoIsValidForCurrentGameSession(info))
-    {
-        // Not a loadable save.
-        Str_Clear(&info->filePath);
-    }
-}
-
 /**
  * Compose the (possibly relative) path to the game-save associated
  * with the logical save @a slot.
@@ -568,10 +449,15 @@ static void buildSaveInfo(void)
         {
             saveinfo_t* info = &saveInfo[i];
             initSaveInfo(info);
+            SaveInfo_SetFilePath(info, composeGameSavePathForSlot(i));
         }
+
         initSaveInfo(&autoSaveInfo);
+        SaveInfo_SetFilePath(&autoSaveInfo, composeGameSavePathForSlot(AUTO_SLOT));
+
 #if __JHEXEN__
         initSaveInfo(&baseSaveInfo);
+        SaveInfo_SetFilePath(&baseSaveInfo, composeGameSavePathForSlot(BASE_SLOT));
 #endif
     }
 
@@ -581,11 +467,11 @@ static void buildSaveInfo(void)
     for(i = 0; i < NUMSAVESLOTS; ++i)
     {
         saveinfo_t* info = &saveInfo[i];
-        updateSaveInfo(info, composeGameSavePathForSlot(i));
+        SaveInfo_Update(info);
     }
-    updateSaveInfo(&autoSaveInfo, composeGameSavePathForSlot(AUTO_SLOT));
+    SaveInfo_Update(&autoSaveInfo);
 #if __JHEXEN__
-    updateSaveInfo(&baseSaveInfo, composeGameSavePathForSlot(BASE_SLOT));
+    SaveInfo_Update(&baseSaveInfo);
 #endif
 }
 
@@ -5253,7 +5139,8 @@ void SV_SaveGameClient(uint gameId)
 
     // Prepare the header.
     initSaveInfo(&saveInfo);
-    configureSaveInfoHeader(&saveInfo, gameId);
+    SaveInfo_SetGameId(&saveInfo, gameId);
+    SaveInfo_Configure(&saveInfo);
     SV_SaveInfo_Write(&saveInfo);
 
     // Some important information.
@@ -5415,7 +5302,6 @@ typedef struct savegameparams_s {
 static int saveGameWorker(void* parameters)
 {
     savegameworkerparams_t* parm = parameters;
-    uint gameId = SV_GenerateGameId();
     saveinfo_t saveInfo;
 
 #if _DEBUG
@@ -5432,8 +5318,9 @@ static int saveGameWorker(void* parameters)
 
     // Write the game session header.
     initSaveInfo(&saveInfo);
-    setNameOfSaveInfo(&saveInfo, parm->name);
-    configureSaveInfoHeader(&saveInfo, gameId);
+    SaveInfo_SetName(&saveInfo, parm->name);
+    SaveInfo_SetGameId(&saveInfo, SV_GenerateGameId());
+    SaveInfo_Configure(&saveInfo);
     SV_SaveInfo_Write(&saveInfo);
 
 #if __JHEXEN__
@@ -5442,7 +5329,7 @@ static int saveGameWorker(void* parameters)
 
     // In netgames the server tells the clients to save their games.
 #if !__JHEXEN__
-    NetSv_SaveGame(gameId);
+    NetSv_SaveGame(saveInfo.header.gameId);
 #endif
 
     // Set the mobj archive numbers.
