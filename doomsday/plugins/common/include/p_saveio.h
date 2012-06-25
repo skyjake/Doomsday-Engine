@@ -23,40 +23,27 @@
 #ifndef LIBCOMMON_SAVESTATE_INPUT_OUTPUT_H
 #define LIBCOMMON_SAVESTATE_INPUT_OUTPUT_H
 
+#include "saveinfo.h"
 #include "materialarchive.h"
 #include "lzss.h"
 #include "p_savedef.h"
 
-typedef struct saveheader_s {
-    int             magic;
-    int             version;
-    gamemode_t      gameMode;
-    char            name[SAVESTRINGSIZE];
-    byte            skill;
-    byte            episode;
-    byte            map;
-    byte            deathmatch;
-    byte            noMonsters;
-#if __JHEXEN__
-    byte            randomClasses;
-#else
-    byte            respawnMonsters;
-    int             mapTime;
-    byte            players[MAXPLAYERS];
-#endif
-    unsigned int    gameId;
-} saveheader_t;
-
-typedef struct saveinfo_s {
-    ddstring_t filePath;
-    ddstring_t name;
-} saveinfo_t;
-
-typedef struct savegameparam_s {
-    const ddstring_t* path;
-    const char* name;
-    int slot;
-} savegameparam_t;
+typedef enum gamearchivesegment_e {
+    ASEG_MAP_HEADER = 102, // Hexen only
+    ASEG_WORLD,
+    ASEG_POLYOBJS, // Hexen only
+    ASEG_MOBJS, // Hexen < ver 4 only
+    ASEG_THINKERS,
+    ASEG_SCRIPTS, // Hexen only
+    ASEG_PLAYERS,
+    ASEG_SOUNDS, // Hexen only
+    ASEG_MISC, // Hexen only
+    ASEG_END,
+    ASEG_MATERIAL_ARCHIVE,
+    ASEG_MAP_HEADER2, // Hexen only
+    ASEG_PLAYER_HEADER,
+    ASEG_GLOBALSCRIPTDATA // Hexen only
+} gamearchivesegment_t;
 
 enum {
     SV_OK = 0,
@@ -72,94 +59,31 @@ const char* SV_SavePath(void);
 const char* SV_ClientSavePath(void);
 #endif
 
+boolean SV_Recognise(saveinfo_t* info);
+
 /*
  * File management
  */
 LZFILE* SV_OpenFile(const char* fileName, const char* mode);
 void SV_CloseFile(void);
 LZFILE* SV_File(void);
-
-/**
- * Force an update of the cached game-save info. To be called (sparingly)
- * at strategic points when an update is necessary (e.g., the game-save
- * paths have changed).
- *
- * \note It is not necessary to call this after a game-save is made,
- * this module will do so automatically.
- */
-void SV_UpdateAllSaveInfo(void);
-
-/**
- * Lookup a save slot by searching for a match on game-save name.
- * Search is in ascending logical slot order 0...N (where N is the number
- * of available save slots in the current game).
- *
- * @param name  Name of the game-save to look for. Case insensitive.
- * @return  Logical slot number of the found game-save else @c -1
- */
-int SV_SlotForSaveName(const char* name);
-
-/**
- * Parse the given string and determine whether it references a logical
- * game-save slot.
- *
- * @param str  String to be parsed. Parse is divided into three passes.
- *             Pass 1: Check for a known game-save name which matches this.
- *                 Search is in ascending logical slot order 0..N (where N
- *                 is the number of available save slots).
- *             Pass 2: Check for keyword identifiers.
- *                 <last>  = The last used slot.
- *                 <quick> = The currently nominated "quick save" slot.
- *                 <auto>  = The "auto save" slot.
- *             Pass 3: Check for a logical save slot number.
- *
- * @return  Save slot identifier of the slot else @c -1
- */
-int SV_ParseSlotIdentifier(const char* str);
-
-/// @return  @c true iff @a slot is a valid logical save slot.
-boolean SV_IsValidSlot(int slot);
-
-/// @return  @c true iff @a slot is user-writable save slot (not "auto" or similar).
-boolean SV_IsUserWritableSlot(int slot);
-
-/// @return  @c true iff a game-save is present for logical save @a slot.
-boolean SV_IsSlotUsed(int slot);
-
-#if __JHEXEN__
-/**
- * @return  @c true iff a game-save is present and serialized @a map state is
- *      is present for logical save @a slot.
- */
-boolean SV_HxHaveMapSaveForSlot(int slot, uint map);
-#endif
-
-/**
- * @return  Game-save info for logical save @a slot. Always returns valid
- *      info even if supplied with an invalid or unused slot identifer.
- */
-const saveinfo_t* SV_SaveInfoForSlot(int slot);
-
-boolean SV_ComposeSavePathForSlot(int slot, ddstring_t* path);
-#if __JHEXEN__
-boolean SV_ComposeSavePathForMapSlot(uint map, int slot, ddstring_t* path);
-#else
-boolean SV_ComposeSavePathForClientGameId(uint gameId, ddstring_t* path);
-#endif
-
-/**
- * Deletes all save game files associated with a slot number.
- */
-void SV_ClearSlot(int slot);
-
-/**
- * Copies all the save game files from one slot to another.
- */
-void SV_CopySlot(int sourceSlot, int destSlot);
+boolean SV_ExistingFile(char* name);
+int SV_RemoveFile(const ddstring_t* path);
+void SV_CopyFile(const ddstring_t* srcPath, const ddstring_t* destPath);
 
 #if __JHEXEN__
 saveptr_t* SV_HxSavePtr(void);
 #endif // __JHEXEN__
+
+/**
+ * Exit with a fatal error if the value at the current location in the
+ * game-save file does not match that associated with the segment type.
+ *
+ * @param segType  Segment type identifier to check alignment of.
+ */
+void SV_AssertSegment(int segType);
+
+void SV_BeginSegment(int segType);
 
 /**
  * Seek forward @a offset bytes in the save file.
@@ -189,8 +113,8 @@ short SV_ReadShort(void);
 long SV_ReadLong(void);
 float SV_ReadFloat(void);
 
-void SV_SaveInfo_Write(saveheader_t* info);
-void SV_SaveInfo_Read(saveheader_t* info);
+void SV_SaveInfo_Write(saveinfo_t* info);
+void SV_SaveInfo_Read(saveinfo_t* info);
 
 void SV_MaterialArchive_Write(MaterialArchive* arc);
 void SV_MaterialArchive_Read(MaterialArchive* arc, int version);

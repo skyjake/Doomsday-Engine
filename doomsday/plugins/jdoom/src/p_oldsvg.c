@@ -1,47 +1,38 @@
-/**\file p_oldsvg.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1993-1996 by id Software, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * Original DOOM saved game loader.
+ * @file p_oldsvg.c
+ * Doom ver 1.9 save game reader.
+ *
+ * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 1993-1996 by id Software, Inc.
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include "jdoom.h"
 
+#include "dmu_lib.h"
+#include "p_saveg.h"
 #include "p_map.h"
 #include "p_mapsetup.h"
 #include "p_tick.h"
-#include "dmu_lib.h"
 #include "p_ceiling.h"
 #include "p_door.h"
 #include "p_floor.h"
 #include "p_plat.h"
 #include "am_map.h"
-
-// MACROS ------------------------------------------------------------------
 
 #define PADSAVEP()          savePtr += (4 - ((savePtr - saveBuffer) & 3)) & 3
 
@@ -58,195 +49,179 @@
 #define SIZEOF_V19_THINKER_T 12
 #define V19_THINKER_T_FUNC_OFFSET 8
 
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-extern void SV_TranslateLegacyMobjFlags(mobj_t *mo, int ver);
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static byte* savePtr;
 static byte* saveBuffer;
 
-// CODE --------------------------------------------------------------------
-
-static void SV_Read(void* data, int len)
+static void SV_v19_Read(void* data, int len)
 {
     if(data)
+    {
         memcpy(data, savePtr, len);
+    }
     savePtr += len;
 }
 
-static short SV_ReadShort(void)
+static short SV_v19_ReadShort(void)
 {
     savePtr += 2;
     return *(int16_t *) (savePtr - 2);
 }
 
-static int SV_ReadLong(void)
+static int SV_v19_ReadLong(void)
 {
     savePtr += 4;
     return *(int32_t *) (savePtr - 4);
 }
 
-static void SV_ReadPlayer(player_t* pl)
+static void SV_v19_ReadPlayer(player_t* pl)
 {
-    int             i;
+    int i;
 
-    SV_ReadLong();
-    pl->playerState = SV_ReadLong();
-    SV_Read(NULL, 8);
-    pl->viewZ = FIX2FLT(SV_ReadLong());
-    pl->viewHeight = FIX2FLT(SV_ReadLong());
-    pl->viewHeightDelta = FIX2FLT(SV_ReadLong());
-    pl->bob = FLT2FIX(SV_ReadLong());
+    SV_v19_ReadLong();
+    pl->playerState = SV_v19_ReadLong();
+    SV_v19_Read(NULL, 8);
+    pl->viewZ = FIX2FLT(SV_v19_ReadLong());
+    pl->viewHeight = FIX2FLT(SV_v19_ReadLong());
+    pl->viewHeightDelta = FIX2FLT(SV_v19_ReadLong());
+    pl->bob = FLT2FIX(SV_v19_ReadLong());
     pl->flyHeight = 0;
-    pl->health = SV_ReadLong();
-    pl->armorPoints = SV_ReadLong();
-    pl->armorType = SV_ReadLong();
+    pl->health = SV_v19_ReadLong();
+    pl->armorPoints = SV_v19_ReadLong();
+    pl->armorType = SV_v19_ReadLong();
 
     memset(pl->powers, 0, sizeof(pl->powers));
-    pl->powers[PT_INVULNERABILITY] = (SV_ReadLong()? true : false);
-    pl->powers[PT_STRENGTH] = (SV_ReadLong()? true : false);
-    pl->powers[PT_INVISIBILITY] = (SV_ReadLong()? true : false);
-    pl->powers[PT_IRONFEET] = (SV_ReadLong()? true : false);
-    pl->powers[PT_ALLMAP] = (SV_ReadLong()? true : false);
+    pl->powers[PT_INVULNERABILITY] = (SV_v19_ReadLong()? true : false);
+    pl->powers[PT_STRENGTH] = (SV_v19_ReadLong()? true : false);
+    pl->powers[PT_INVISIBILITY] = (SV_v19_ReadLong()? true : false);
+    pl->powers[PT_IRONFEET] = (SV_v19_ReadLong()? true : false);
+    pl->powers[PT_ALLMAP] = (SV_v19_ReadLong()? true : false);
     if(pl->powers[PT_ALLMAP])
         ST_RevealAutomap(pl - players, true);
-    pl->powers[PT_INFRARED] = (SV_ReadLong()? true : false);
+    pl->powers[PT_INFRARED] = (SV_v19_ReadLong()? true : false);
 
     memset(pl->keys, 0, sizeof(pl->keys));
-    pl->keys[KT_BLUECARD] = (SV_ReadLong()? true : false);
-    pl->keys[KT_YELLOWCARD] = (SV_ReadLong()? true : false);
-    pl->keys[KT_REDCARD] = (SV_ReadLong()? true : false);
-    pl->keys[KT_BLUESKULL] = (SV_ReadLong()? true : false);
-    pl->keys[KT_YELLOWSKULL] = (SV_ReadLong()? true : false);
-    pl->keys[KT_REDSKULL] = (SV_ReadLong()? true : false);
+    pl->keys[KT_BLUECARD] = (SV_v19_ReadLong()? true : false);
+    pl->keys[KT_YELLOWCARD] = (SV_v19_ReadLong()? true : false);
+    pl->keys[KT_REDCARD] = (SV_v19_ReadLong()? true : false);
+    pl->keys[KT_BLUESKULL] = (SV_v19_ReadLong()? true : false);
+    pl->keys[KT_YELLOWSKULL] = (SV_v19_ReadLong()? true : false);
+    pl->keys[KT_REDSKULL] = (SV_v19_ReadLong()? true : false);
 
-    pl->backpack = SV_ReadLong();
+    pl->backpack = SV_v19_ReadLong();
 
     memset(pl->frags, 0, sizeof(pl->frags));
-    pl->frags[0] = SV_ReadLong();
-    pl->frags[1] = SV_ReadLong();
-    pl->frags[2] = SV_ReadLong();
-    pl->frags[3] = SV_ReadLong();
+    pl->frags[0] = SV_v19_ReadLong();
+    pl->frags[1] = SV_v19_ReadLong();
+    pl->frags[2] = SV_v19_ReadLong();
+    pl->frags[3] = SV_v19_ReadLong();
 
-    pl->readyWeapon = SV_ReadLong();
-    pl->pendingWeapon = SV_ReadLong();
+    pl->readyWeapon = SV_v19_ReadLong();
+    pl->pendingWeapon = SV_v19_ReadLong();
 
     memset(pl->weapons, 0, sizeof(pl->weapons));
-    pl->weapons[WT_FIRST].owned = (SV_ReadLong()? true : false);
-    pl->weapons[WT_SECOND].owned = (SV_ReadLong()? true : false);
-    pl->weapons[WT_THIRD].owned = (SV_ReadLong()? true : false);
-    pl->weapons[WT_FOURTH].owned = (SV_ReadLong()? true : false);
-    pl->weapons[WT_FIFTH].owned = (SV_ReadLong()? true : false);
-    pl->weapons[WT_SIXTH].owned = (SV_ReadLong()? true : false);
-    pl->weapons[WT_SEVENTH].owned = (SV_ReadLong()? true : false);
-    pl->weapons[WT_EIGHTH].owned = (SV_ReadLong()? true : false);
-    pl->weapons[WT_NINETH].owned = (SV_ReadLong()? true : false);
+    pl->weapons[WT_FIRST].owned = (SV_v19_ReadLong()? true : false);
+    pl->weapons[WT_SECOND].owned = (SV_v19_ReadLong()? true : false);
+    pl->weapons[WT_THIRD].owned = (SV_v19_ReadLong()? true : false);
+    pl->weapons[WT_FOURTH].owned = (SV_v19_ReadLong()? true : false);
+    pl->weapons[WT_FIFTH].owned = (SV_v19_ReadLong()? true : false);
+    pl->weapons[WT_SIXTH].owned = (SV_v19_ReadLong()? true : false);
+    pl->weapons[WT_SEVENTH].owned = (SV_v19_ReadLong()? true : false);
+    pl->weapons[WT_EIGHTH].owned = (SV_v19_ReadLong()? true : false);
+    pl->weapons[WT_NINETH].owned = (SV_v19_ReadLong()? true : false);
 
     memset(pl->ammo, 0, sizeof(pl->ammo));
-    pl->ammo[AT_CLIP].owned = SV_ReadLong();
-    pl->ammo[AT_SHELL].owned = SV_ReadLong();
-    pl->ammo[AT_CELL].owned = SV_ReadLong();
-    pl->ammo[AT_MISSILE].owned = SV_ReadLong();
-    pl->ammo[AT_CLIP].max = SV_ReadLong();
-    pl->ammo[AT_SHELL].max = SV_ReadLong();
-    pl->ammo[AT_CELL].max = SV_ReadLong();
-    pl->ammo[AT_MISSILE].max = SV_ReadLong();
+    pl->ammo[AT_CLIP].owned = SV_v19_ReadLong();
+    pl->ammo[AT_SHELL].owned = SV_v19_ReadLong();
+    pl->ammo[AT_CELL].owned = SV_v19_ReadLong();
+    pl->ammo[AT_MISSILE].owned = SV_v19_ReadLong();
+    pl->ammo[AT_CLIP].max = SV_v19_ReadLong();
+    pl->ammo[AT_SHELL].max = SV_v19_ReadLong();
+    pl->ammo[AT_CELL].max = SV_v19_ReadLong();
+    pl->ammo[AT_MISSILE].max = SV_v19_ReadLong();
 
-    pl->attackDown = SV_ReadLong();
-    pl->useDown = SV_ReadLong();
+    pl->attackDown = SV_v19_ReadLong();
+    pl->useDown = SV_v19_ReadLong();
 
-    pl->cheats = SV_ReadLong();
-    pl->refire = SV_ReadLong();
+    pl->cheats = SV_v19_ReadLong();
+    pl->refire = SV_v19_ReadLong();
 
-    pl->killCount = SV_ReadLong();
-    pl->itemCount = SV_ReadLong();
-    pl->secretCount = SV_ReadLong();
+    pl->killCount = SV_v19_ReadLong();
+    pl->itemCount = SV_v19_ReadLong();
+    pl->secretCount = SV_v19_ReadLong();
 
-    SV_ReadLong();
+    SV_v19_ReadLong();
 
-    pl->damageCount = SV_ReadLong();
-    pl->bonusCount = SV_ReadLong();
+    pl->damageCount = SV_v19_ReadLong();
+    pl->bonusCount = SV_v19_ReadLong();
 
-    SV_ReadLong();
+    SV_v19_ReadLong();
 
-    pl->plr->extraLight = SV_ReadLong();
-    pl->plr->fixedColorMap = SV_ReadLong();
-    pl->colorMap = SV_ReadLong();
+    pl->plr->extraLight = SV_v19_ReadLong();
+    pl->plr->fixedColorMap = SV_v19_ReadLong();
+    pl->colorMap = SV_v19_ReadLong();
     for(i = 0; i < 2; ++i)
     {
-        pspdef_t       *psp = &pl->pSprites[i];
+        pspdef_t* psp = &pl->pSprites[i];
 
-        psp->state = INT2PTR(state_t, SV_ReadLong());
-        psp->pos[VX] = SV_ReadLong();
-        psp->pos[VY] = SV_ReadLong();
-        psp->tics = SV_ReadLong();
+        psp->state = INT2PTR(state_t, SV_v19_ReadLong());
+        psp->pos[VX] = SV_v19_ReadLong();
+        psp->pos[VY] = SV_v19_ReadLong();
+        psp->tics = SV_v19_ReadLong();
     }
-    pl->didSecret = SV_ReadLong();
+    pl->didSecret = SV_v19_ReadLong();
 }
 
-static void SV_ReadMobj(void)
+static void SV_v19_ReadMobj(void)
 {
-    float               pos[3], mom[3], radius, height, floorz, ceilingz;
-    angle_t             angle;
-    spritenum_t         sprite;
-    int                 frame, valid, type, ddflags = 0;
-    mobj_t             *mo;
-    mobjinfo_t*         info;
+    float pos[3], mom[3], radius, height, floorz, ceilingz;
+    angle_t angle;
+    spritenum_t sprite;
+    int frame, valid, type, ddflags = 0;
+    mobj_t* mo;
+    mobjinfo_t* info;
 
     // List: thinker links.
-    SV_ReadLong();
-    SV_ReadLong();
-    SV_ReadLong();
+    SV_v19_ReadLong();
+    SV_v19_ReadLong();
+    SV_v19_ReadLong();
 
     // Info for drawing: position.
-    pos[VX] = FIX2FLT(SV_ReadLong());
-    pos[VY] = FIX2FLT(SV_ReadLong());
-    pos[VZ] = FIX2FLT(SV_ReadLong());
+    pos[VX] = FIX2FLT(SV_v19_ReadLong());
+    pos[VY] = FIX2FLT(SV_v19_ReadLong());
+    pos[VZ] = FIX2FLT(SV_v19_ReadLong());
 
     // More list: links in sector (if needed)
-    SV_ReadLong();
-    SV_ReadLong();
+    SV_v19_ReadLong();
+    SV_v19_ReadLong();
 
     //More drawing info: to determine current sprite.
-    angle = SV_ReadLong();  // orientation
-    sprite = SV_ReadLong(); // used to find patch_t and flip value
-    frame = SV_ReadLong();  // might be ORed with FF_FULLBRIGHT
+    angle = SV_v19_ReadLong();  // orientation
+    sprite = SV_v19_ReadLong(); // used to find patch_t and flip value
+    frame = SV_v19_ReadLong();  // might be ORed with FF_FULLBRIGHT
     if(frame & FF_FULLBRIGHT)
         frame &= FF_FRAMEMASK; // not used anymore.
 
     // Interaction info, by BLOCKMAP.
     // Links in blocks (if needed).
-    SV_ReadLong();
-    SV_ReadLong();
-    SV_ReadLong();
+    SV_v19_ReadLong();
+    SV_v19_ReadLong();
+    SV_v19_ReadLong();
 
     // The closest interval over all contacted Sectors.
-    floorz = FIX2FLT(SV_ReadLong());
-    ceilingz = FIX2FLT(SV_ReadLong());
+    floorz = FIX2FLT(SV_v19_ReadLong());
+    ceilingz = FIX2FLT(SV_v19_ReadLong());
 
     // For movement checking.
-    radius = FIX2FLT(SV_ReadLong());
-    height = FIX2FLT(SV_ReadLong());
+    radius = FIX2FLT(SV_v19_ReadLong());
+    height = FIX2FLT(SV_v19_ReadLong());
 
     // Momentums, used to update position.
-    mom[MX] = FIX2FLT(SV_ReadLong());
-    mom[MY] = FIX2FLT(SV_ReadLong());
-    mom[MZ] = FIX2FLT(SV_ReadLong());
+    mom[MX] = FIX2FLT(SV_v19_ReadLong());
+    mom[MY] = FIX2FLT(SV_v19_ReadLong());
+    mom[MZ] = FIX2FLT(SV_v19_ReadLong());
 
-    valid = SV_ReadLong();
-    type = SV_ReadLong();
+    valid = SV_v19_ReadLong();
+    type = SV_v19_ReadLong();
     info = &MOBJINFO[type];
 
     if(info->flags & MF_SOLID)
@@ -274,53 +249,53 @@ static void SV_ReadMobj(void)
     /**
      * Continue reading the mobj data.
      */
-    SV_ReadLong();              // &mobjinfo[mo->type]
+    SV_v19_ReadLong();              // &mobjinfo[mo->type]
 
-    mo->tics = SV_ReadLong();   // state tic counter
-    mo->state = INT2PTR(state_t, SV_ReadLong());
+    mo->tics = SV_v19_ReadLong();   // state tic counter
+    mo->state = INT2PTR(state_t, SV_v19_ReadLong());
     mo->damage = DDMAXINT; // Use damage set in mo->info->damage
-    mo->flags = SV_ReadLong();
-    mo->health = SV_ReadLong();
+    mo->flags = SV_v19_ReadLong();
+    mo->health = SV_v19_ReadLong();
 
     // Movement direction, movement generation (zig-zagging).
-    mo->moveDir = SV_ReadLong();    // 0-7
-    mo->moveCount = SV_ReadLong();  // when 0, select a new dir
+    mo->moveDir = SV_v19_ReadLong();    // 0-7
+    mo->moveCount = SV_v19_ReadLong();  // when 0, select a new dir
 
     // Thing being chased/attacked (or NULL),
     // also the originator for missiles.
-    SV_ReadLong();
+    SV_v19_ReadLong();
 
     // Reaction time: if non 0, don't attack yet.
     // Used by player to freeze a bit after teleporting.
-    mo->reactionTime = SV_ReadLong();
+    mo->reactionTime = SV_v19_ReadLong();
 
     // If >0, the target will be chased
     // no matter what (even if shot)
-    mo->threshold = SV_ReadLong();
+    mo->threshold = SV_v19_ReadLong();
 
     // Additional info record for player avatars only.
     // Only valid if type == MT_PLAYER
-    mo->player = INT2PTR(player_t, SV_ReadLong());
+    mo->player = INT2PTR(player_t, SV_v19_ReadLong());
 
     // Player number last looked for.
-    mo->lastLook = SV_ReadLong();
+    mo->lastLook = SV_v19_ReadLong();
 
     // For nightmare respawn.
-    mo->spawnSpot.origin[VX] = (float) SV_ReadShort();
-    mo->spawnSpot.origin[VY] = (float) SV_ReadShort();
+    mo->spawnSpot.origin[VX] = (float) SV_v19_ReadShort();
+    mo->spawnSpot.origin[VY] = (float) SV_v19_ReadShort();
     mo->spawnSpot.origin[VZ] = 0; // Initialize with "something".
-    mo->spawnSpot.angle = (angle_t) (ANG45 * ((int)SV_ReadShort() / 45));
-    /* mo->spawnSpot.type = (int) */ SV_ReadShort();
+    mo->spawnSpot.angle = (angle_t) (ANG45 * ((int)SV_v19_ReadShort() / 45));
+    /* mo->spawnSpot.type = (int) */ SV_v19_ReadShort();
 
     {
-    int spawnFlags = ((int) SV_ReadShort()) & ~MASK_UNKNOWN_MSF_FLAGS;
+    int spawnFlags = ((int) SV_v19_ReadShort()) & ~MASK_UNKNOWN_MSF_FLAGS;
     // Spawn on the floor by default unless the mobjtype flags override.
     spawnFlags |= MSF_Z_FLOOR;
     mo->spawnSpot.flags = spawnFlags;
     }
 
     // Thing being chased/attacked for tracers.
-    SV_ReadLong();
+    SV_v19_ReadLong();
 
     mo->info = info;
     SV_TranslateLegacyMobjFlags(mo, 0);
@@ -353,7 +328,7 @@ void P_v19_UnArchivePlayers(void)
 
         PADSAVEP();
 
-        SV_ReadPlayer(players + i);
+        SV_v19_ReadPlayer(players + i);
 
         // will be set when unarc thinker
         players[i].plr->mo = NULL;
@@ -465,7 +440,7 @@ enum thinkerclass_e {
 
         case TC_MOBJ:
             PADSAVEP();
-            SV_ReadMobj();
+            SV_v19_ReadMobj();
             break;
 
         default:
@@ -474,7 +449,7 @@ enum thinkerclass_e {
     }
 }
 
-static int SV_ReadCeiling(ceiling_t *ceiling)
+static int SV_v19_ReadCeiling(ceiling_t *ceiling)
 {
 /* Original DOOM format:
 typedef struct {
@@ -493,23 +468,23 @@ typedef struct {
     byte                temp[SIZEOF_V19_THINKER_T];
 
     // Padding at the start (an old thinker_t struct).
-    SV_Read(&temp, SIZEOF_V19_THINKER_T);
+    SV_v19_Read(&temp, SIZEOF_V19_THINKER_T);
 
     // Start of used data members.
-    ceiling->type = SV_ReadLong();
+    ceiling->type = SV_v19_ReadLong();
 
     // A 32bit pointer to sector, serialized.
-    ceiling->sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
+    ceiling->sector = P_ToPtr(DMU_SECTOR, SV_v19_ReadLong());
     if(!ceiling->sector)
         Con_Error("tc_ceiling: bad sector number\n");
 
-    ceiling->bottomHeight = FIX2FLT(SV_ReadLong());
-    ceiling->topHeight = FIX2FLT(SV_ReadLong());
-    ceiling->speed = FIX2FLT(SV_ReadLong());
-    ceiling->crush = SV_ReadLong();
-    ceiling->state = (SV_ReadLong() == -1? CS_DOWN : CS_UP);
-    ceiling->tag = SV_ReadLong();
-    ceiling->oldState = (SV_ReadLong() == -1? CS_DOWN : CS_UP);
+    ceiling->bottomHeight = FIX2FLT(SV_v19_ReadLong());
+    ceiling->topHeight = FIX2FLT(SV_v19_ReadLong());
+    ceiling->speed = FIX2FLT(SV_v19_ReadLong());
+    ceiling->crush = SV_v19_ReadLong();
+    ceiling->state = (SV_v19_ReadLong() == -1? CS_DOWN : CS_UP);
+    ceiling->tag = SV_v19_ReadLong();
+    ceiling->oldState = (SV_v19_ReadLong() == -1? CS_DOWN : CS_UP);
 
     ceiling->thinker.function = T_MoveCeiling;
     if(!(temp + V19_THINKER_T_FUNC_OFFSET))
@@ -519,7 +494,7 @@ typedef struct {
     return true; // Add this thinker.
 }
 
-static int SV_ReadDoor(door_t *door)
+static int SV_v19_ReadDoor(door_t *door)
 {
 /* Original DOOM format:
 typedef struct {
@@ -534,21 +509,21 @@ typedef struct {
 } v19_vldoor_t;
 */
     // Padding at the start (an old thinker_t struct)
-    SV_Read(NULL, SIZEOF_V19_THINKER_T);
+    SV_v19_Read(NULL, SIZEOF_V19_THINKER_T);
 
     // Start of used data members.
-    door->type = SV_ReadLong();
+    door->type = SV_v19_ReadLong();
 
     // A 32bit pointer to sector, serialized.
-    door->sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
+    door->sector = P_ToPtr(DMU_SECTOR, SV_v19_ReadLong());
     if(!door->sector)
         Con_Error("tc_door: bad sector number\n");
 
-    door->topHeight = FIX2FLT(SV_ReadLong());
-    door->speed = FIX2FLT(SV_ReadLong());
-    door->state = SV_ReadLong();
-    door->topWait = SV_ReadLong();
-    door->topCountDown = SV_ReadLong();
+    door->topHeight = FIX2FLT(SV_v19_ReadLong());
+    door->speed = FIX2FLT(SV_v19_ReadLong());
+    door->state = SV_v19_ReadLong();
+    door->topWait = SV_v19_ReadLong();
+    door->topCountDown = SV_v19_ReadLong();
 
     door->thinker.function = T_Door;
 
@@ -556,7 +531,7 @@ typedef struct {
     return true; // Add this thinker.
 }
 
-static int SV_ReadFloor(floor_t *floor)
+static int SV_v19_ReadFloor(floor_t *floor)
 {
 /* Original DOOM format:
 typedef struct {
@@ -572,22 +547,22 @@ typedef struct {
 } v19_floormove_t;
 */
     // Padding at the start (an old thinker_t struct)
-    SV_Read(NULL, SIZEOF_V19_THINKER_T);
+    SV_v19_Read(NULL, SIZEOF_V19_THINKER_T);
 
     // Start of used data members.
-    floor->type = SV_ReadLong();
-    floor->crush = SV_ReadLong();
+    floor->type = SV_v19_ReadLong();
+    floor->crush = SV_v19_ReadLong();
 
     // A 32bit pointer to sector, serialized.
-    floor->sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
+    floor->sector = P_ToPtr(DMU_SECTOR, SV_v19_ReadLong());
     if(!floor->sector)
         Con_Error("tc_floor: bad sector number\n");
 
-    floor->state = (int) SV_ReadLong();
-    floor->newSpecial = SV_ReadLong();
-    floor->material = P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_FLATS, SV_ReadShort()));
-    floor->floorDestHeight = FIX2FLT(SV_ReadLong());
-    floor->speed = FIX2FLT(SV_ReadLong());
+    floor->state = (int) SV_v19_ReadLong();
+    floor->newSpecial = SV_v19_ReadLong();
+    floor->material = P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_FLATS, SV_v19_ReadShort()));
+    floor->floorDestHeight = FIX2FLT(SV_v19_ReadLong());
+    floor->speed = FIX2FLT(SV_v19_ReadLong());
 
     floor->thinker.function = T_MoveFloor;
 
@@ -595,7 +570,7 @@ typedef struct {
     return true; // Add this thinker.
 }
 
-static int SV_ReadPlat(plat_t *plat)
+static int SV_v19_ReadPlat(plat_t *plat)
 {
 /* Original DOOM format:
 typedef struct {
@@ -616,24 +591,24 @@ typedef struct {
     byte                temp[SIZEOF_V19_THINKER_T];
 
     // Padding at the start (an old thinker_t struct)
-    SV_Read(temp, SIZEOF_V19_THINKER_T);
+    SV_v19_Read(temp, SIZEOF_V19_THINKER_T);
 
     // Start of used data members.
     // A 32bit pointer to sector, serialized.
-    plat->sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
+    plat->sector = P_ToPtr(DMU_SECTOR, SV_v19_ReadLong());
     if(!plat->sector)
         Con_Error("tc_plat: bad sector number\n");
 
-    plat->speed = FIX2FLT(SV_ReadLong());
-    plat->low = FIX2FLT(SV_ReadLong());
-    plat->high = FIX2FLT(SV_ReadLong());
-    plat->wait = SV_ReadLong();
-    plat->count = SV_ReadLong();
-    plat->state = SV_ReadLong();
-    plat->oldState = SV_ReadLong();
-    plat->crush = SV_ReadLong();
-    plat->tag = SV_ReadLong();
-    plat->type = SV_ReadLong();
+    plat->speed = FIX2FLT(SV_v19_ReadLong());
+    plat->low = FIX2FLT(SV_v19_ReadLong());
+    plat->high = FIX2FLT(SV_v19_ReadLong());
+    plat->wait = SV_v19_ReadLong();
+    plat->count = SV_v19_ReadLong();
+    plat->state = SV_v19_ReadLong();
+    plat->oldState = SV_v19_ReadLong();
+    plat->crush = SV_v19_ReadLong();
+    plat->tag = SV_v19_ReadLong();
+    plat->type = SV_v19_ReadLong();
 
     plat->thinker.function = T_PlatRaise;
     if(!(temp + V19_THINKER_T_FUNC_OFFSET))
@@ -643,7 +618,7 @@ typedef struct {
     return true; // Add this thinker.
 }
 
-static int SV_ReadFlash(lightflash_t *flash)
+static int SV_v19_ReadFlash(lightflash_t *flash)
 {
 /* Original DOOM format:
 typedef struct {
@@ -657,25 +632,25 @@ typedef struct {
 } v19_lightflash_t;
 */
     // Padding at the start (an old thinker_t struct)
-    SV_Read(NULL, SIZEOF_V19_THINKER_T);
+    SV_v19_Read(NULL, SIZEOF_V19_THINKER_T);
 
     // Start of used data members.
     // A 32bit pointer to sector, serialized.
-    flash->sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
+    flash->sector = P_ToPtr(DMU_SECTOR, SV_v19_ReadLong());
     if(!flash->sector)
         Con_Error("tc_flash: bad sector number\n");
 
-    flash->count = SV_ReadLong();
-    flash->maxLight = (float) SV_ReadLong() / 255.0f;
-    flash->minLight = (float) SV_ReadLong() / 255.0f;
-    flash->maxTime = SV_ReadLong();
-    flash->minTime = SV_ReadLong();
+    flash->count = SV_v19_ReadLong();
+    flash->maxLight = (float) SV_v19_ReadLong() / 255.0f;
+    flash->minLight = (float) SV_v19_ReadLong() / 255.0f;
+    flash->maxTime = SV_v19_ReadLong();
+    flash->minTime = SV_v19_ReadLong();
 
     flash->thinker.function = T_LightFlash;
     return true; // Add this thinker.
 }
 
-static int SV_ReadStrobe(strobe_t *strobe)
+static int SV_v19_ReadStrobe(strobe_t *strobe)
 {
 /* Original DOOM format:
 typedef struct {
@@ -689,25 +664,25 @@ typedef struct {
 } v19_strobe_t;
 */
     // Padding at the start (an old thinker_t struct)
-    SV_Read(NULL, SIZEOF_V19_THINKER_T);
+    SV_v19_Read(NULL, SIZEOF_V19_THINKER_T);
 
     // Start of used data members.
     // A 32bit pointer to sector, serialized.
-    strobe->sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
+    strobe->sector = P_ToPtr(DMU_SECTOR, SV_v19_ReadLong());
     if(!strobe->sector)
         Con_Error("tc_strobe: bad sector number\n");
 
-    strobe->count = SV_ReadLong();
-    strobe->minLight = (float) SV_ReadLong() / 255.0f;
-    strobe->maxLight = (float) SV_ReadLong() / 255.0f;
-    strobe->darkTime = SV_ReadLong();
-    strobe->brightTime = SV_ReadLong();
+    strobe->count = SV_v19_ReadLong();
+    strobe->minLight = (float) SV_v19_ReadLong() / 255.0f;
+    strobe->maxLight = (float) SV_v19_ReadLong() / 255.0f;
+    strobe->darkTime = SV_v19_ReadLong();
+    strobe->brightTime = SV_v19_ReadLong();
 
     strobe->thinker.function = T_StrobeFlash;
     return true; // Add this thinker.
 }
 
-static int SV_ReadGlow(glow_t *glow)
+static int SV_v19_ReadGlow(glow_t *glow)
 {
 /* Original DOOM format:
 typedef struct {
@@ -719,17 +694,17 @@ typedef struct {
 } v19_glow_t;
 */
     // Padding at the start (an old thinker_t struct)
-    SV_Read(NULL, SIZEOF_V19_THINKER_T);
+    SV_v19_Read(NULL, SIZEOF_V19_THINKER_T);
 
     // Start of used data members.
     // A 32bit pointer to sector, serialized.
-    glow->sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
+    glow->sector = P_ToPtr(DMU_SECTOR, SV_v19_ReadLong());
     if(!glow->sector)
         Con_Error("tc_glow: bad sector number\n");
 
-    glow->minLight = (float) SV_ReadLong() / 255.0f;
-    glow->maxLight = (float) SV_ReadLong() / 255.0f;
-    glow->direction = SV_ReadLong();
+    glow->minLight = (float) SV_v19_ReadLong() / 255.0f;
+    glow->maxLight = (float) SV_v19_ReadLong() / 255.0f;
+    glow->direction = SV_v19_ReadLong();
 
     glow->thinker.function = T_Glow;
     return true; // Add this thinker.
@@ -781,7 +756,7 @@ void P_v19_UnArchiveSpecials(void)
             PADSAVEP();
             ceiling = Z_Calloc(sizeof(*ceiling), PU_MAP, NULL);
 
-            SV_ReadCeiling(ceiling);
+            SV_v19_ReadCeiling(ceiling);
 
             DD_ThinkerAdd(&ceiling->thinker);
             break;
@@ -790,7 +765,7 @@ void P_v19_UnArchiveSpecials(void)
             PADSAVEP();
             door = Z_Calloc(sizeof(*door), PU_MAP, NULL);
 
-            SV_ReadDoor(door);
+            SV_v19_ReadDoor(door);
 
             DD_ThinkerAdd(&door->thinker);
             break;
@@ -799,7 +774,7 @@ void P_v19_UnArchiveSpecials(void)
             PADSAVEP();
             floor = Z_Calloc(sizeof(*floor), PU_MAP, NULL);
 
-            SV_ReadFloor(floor);
+            SV_v19_ReadFloor(floor);
 
             DD_ThinkerAdd(&floor->thinker);
             break;
@@ -808,7 +783,7 @@ void P_v19_UnArchiveSpecials(void)
             PADSAVEP();
             plat = Z_Calloc(sizeof(*plat), PU_MAP, NULL);
 
-            SV_ReadPlat(plat);
+            SV_v19_ReadPlat(plat);
 
             DD_ThinkerAdd(&plat->thinker);
             break;
@@ -817,7 +792,7 @@ void P_v19_UnArchiveSpecials(void)
             PADSAVEP();
             flash = Z_Calloc(sizeof(*flash), PU_MAP, NULL);
 
-            SV_ReadFlash(flash);
+            SV_v19_ReadFlash(flash);
 
             DD_ThinkerAdd(&flash->thinker);
             break;
@@ -826,7 +801,7 @@ void P_v19_UnArchiveSpecials(void)
             PADSAVEP();
             strobe = Z_Calloc(sizeof(*strobe), PU_MAP, NULL);
 
-            SV_ReadStrobe(strobe);
+            SV_v19_ReadStrobe(strobe);
 
             DD_ThinkerAdd(&strobe->thinker);
             break;
@@ -835,7 +810,7 @@ void P_v19_UnArchiveSpecials(void)
             PADSAVEP();
             glow = Z_Calloc(sizeof(*glow), PU_MAP, NULL);
 
-            SV_ReadGlow(glow);
+            SV_v19_ReadGlow(glow);
 
             DD_ThinkerAdd(&glow->thinker);
             break;
@@ -847,12 +822,16 @@ void P_v19_UnArchiveSpecials(void)
     }
 }
 
-boolean SV_v19_LoadGame(const char* savename)
+boolean SV_v19_LoadGame(saveinfo_t* info)
 {
-    int                 i, a, b, c;
-    size_t              length;
-    char                vcheck[VERSIONSIZE];
+    const char* savename;
+    int i, a, b, c;
+    size_t length;
+    char vcheck[VERSIONSIZE];
 
+    if(!info) return false;
+
+    savename = Str_Text(&info->filePath);
     if(!(length = M_ReadFile(savename, (char**)&saveBuffer)))
         return false;
 
@@ -914,4 +893,20 @@ boolean SV_v19_LoadGame(const char* savename)
     R_SetupMap(DDSMM_AFTER_LOADING, 0);
 
     return true;
+}
+
+boolean SV_v19_Recognise(saveinfo_t* info)
+{
+    if(!info || Str_IsEmpty(&info->filePath)) return false;
+
+    if(SV_OpenFile(Str_Text(&info->filePath), "r"))
+    {
+        char nameBuffer[SAVESTRINGSIZE];
+        lzRead(nameBuffer, SAVESTRINGSIZE, SV_File());
+        nameBuffer[SAVESTRINGSIZE - 1] = 0;
+        Str_Set(&info->name, nameBuffer);
+        SV_CloseFile();
+        return true;
+    }
+    return false;
 }

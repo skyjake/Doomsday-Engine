@@ -1,33 +1,25 @@
-/**\file p_oldsvg.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1999 Activision
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * Original Heretic saved game loader.
+ * @file p_oldsvg.c
+ * Heretic ver 1.3 save game reader.
+ *
+ * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 1999 Activision
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <stdio.h>
 #include <string.h>
@@ -47,8 +39,6 @@
 #include "p_inventory.h"
 #include "hu_inventory.h"
 
-// MACROS ------------------------------------------------------------------
-
 // Do NOT change this:
 #define SAVE_VERSION            130
 #define VERSIONSIZE             16
@@ -61,26 +51,8 @@
 #define SIZEOF_V13_THINKER_T    12
 #define V13_THINKER_T_FUNC_OFFSET 8
 
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-extern void SV_TranslateLegacyMobjFlags(mobj_t *mo, int ver);
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-byte *savebuffer;
-byte *save_p;
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
+static byte* savebuffer;
+static byte* save_p;
 
 static long SV_v13_ReadLong(void)
 {
@@ -859,12 +831,16 @@ enum {
     }
 }
 
-boolean SV_v13_LoadGame(const char* savename)
+boolean SV_v13_LoadGame(saveinfo_t* info)
 {
-    size_t              length;
-    int                 i, a, b, c;
-    char                vcheck[VERSIONSIZE];
+    const char* savename;
+    size_t length;
+    int i, a, b, c;
+    char vcheck[VERSIONSIZE];
 
+    if(!info) return false;
+
+    savename = Str_Text(&info->filePath);
     if(!(length = M_ReadFile(savename, (char**)&savebuffer)))
         return false;
 
@@ -912,4 +888,20 @@ boolean SV_v13_LoadGame(const char* savename)
     R_SetupMap(DDSMM_AFTER_LOADING, 0);
 
     return true;
+}
+
+boolean SV_v13_Recognise(saveinfo_t* info)
+{
+    if(!info || Str_IsEmpty(&info->filePath)) return false;
+
+    if(SV_OpenFile(Str_Text(&info->filePath), "r"))
+    {
+        char nameBuffer[SAVESTRINGSIZE];
+        lzRead(nameBuffer, SAVESTRINGSIZE, SV_File());
+        nameBuffer[SAVESTRINGSIZE - 1] = 0;
+        Str_Set(&info->name, nameBuffer);
+        SV_CloseFile();
+        return true;
+    }
+    return false;
 }

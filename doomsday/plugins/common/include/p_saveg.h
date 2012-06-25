@@ -40,7 +40,95 @@ void SV_Init(void);
 /// Shutdown this module.
 void SV_Shutdown(void);
 
-saveheader_t* SV_SaveHeader(void);
+/**
+ * Force an update of the cached game-save info. To be called (sparingly)
+ * at strategic points when an update is necessary (e.g., the game-save
+ * paths have changed).
+ *
+ * \note It is not necessary to call this after a game-save is made,
+ * this module will do so automatically.
+ */
+void SV_UpdateAllSaveInfo(void);
+
+/**
+ * Lookup a save slot by searching for a match on game-save name.
+ * Search is in ascending logical slot order 0...N (where N is the number
+ * of available save slots in the current game).
+ *
+ * @param name  Name of the game-save to look for. Case insensitive.
+ * @return  Logical slot number of the found game-save else @c -1
+ */
+int SV_SlotForSaveName(const char* name);
+
+/**
+ * Parse the given string and determine whether it references a logical
+ * game-save slot.
+ *
+ * @param str  String to be parsed. Parse is divided into three passes.
+ *             Pass 1: Check for a known game-save name which matches this.
+ *                 Search is in ascending logical slot order 0..N (where N
+ *                 is the number of available save slots).
+ *             Pass 2: Check for keyword identifiers.
+ *                 <last>  = The last used slot.
+ *                 <quick> = The currently nominated "quick save" slot.
+ *                 <auto>  = The "auto save" slot.
+ *             Pass 3: Check for a logical save slot number.
+ *
+ * @return  Save slot identifier of the slot else @c -1
+ */
+int SV_ParseSlotIdentifier(const char* str);
+
+/// @return  @c true iff @a slot is a valid logical save slot.
+boolean SV_IsValidSlot(int slot);
+
+/// @return  @c true iff @a slot is user-writable save slot (not "auto" or similar).
+boolean SV_IsUserWritableSlot(int slot);
+
+/// @return  @c true iff a game-save is present for logical save @a slot.
+boolean SV_IsSlotUsed(int slot);
+
+#if __JHEXEN__
+/**
+ * @return  @c true iff a game-save is present and serialized @a map state is
+ *      is present for logical save @a slot.
+ */
+boolean SV_HxHaveMapSaveForSlot(int slot, uint map);
+#endif
+
+/**
+ * @return  Game-save info for logical save @a slot. Always returns valid
+ *      info even if supplied with an invalid or unused slot identifer.
+ */
+saveinfo_t* SV_SaveInfoForSlot(int slot);
+
+boolean SV_ComposeSavePathForSlot(int slot, ddstring_t* path);
+
+#if __JHEXEN__
+boolean SV_ComposeSavePathForMapSlot(uint map, int slot, ddstring_t* path);
+#endif
+
+#if !__JHEXEN__
+/**
+ * Compose the (possibly relative) path to the game-save associated
+ * with @a gameId. If the game-save path is unreachable then @a path
+ * will be made empty.
+ *
+ * @param gameId  Unique game identifier.
+ * @param path  String buffer to populate with the game save path.
+ * @return  @c true if @a path was set.
+ */
+boolean SV_ComposeSavePathForClientGameId(uint gameId, ddstring_t* path);
+#endif
+
+/**
+ * Deletes all save game files associated with a slot number.
+ */
+void SV_ClearSlot(int slot);
+
+/**
+ * Copies all the save game files from one slot to another.
+ */
+void SV_CopySlot(int sourceSlot, int destSlot);
 
 boolean SV_SaveGame(int slot, const char* name);
 
@@ -49,7 +137,9 @@ boolean SV_LoadGame(int slot);
 #if __JHEXEN__
 void SV_HxInitBaseSlot(void);
 void SV_HxMapTeleport(uint map, uint position);
-#else
+#endif
+
+#if !__JHEXEN__
 /**
  * Saves a snapshot of the world, a still image.
  * No data of movement is included (server sends it).
@@ -59,22 +149,7 @@ void SV_SaveGameClient(uint gameId);
 void SV_LoadGameClient(uint gameId);
 #endif
 
-typedef enum gamearchivesegment_e {
-    ASEG_MAP_HEADER = 102, // Hexen only
-    ASEG_WORLD,
-    ASEG_POLYOBJS, // Hexen only
-    ASEG_MOBJS, // Hexen < ver 4 only
-    ASEG_THINKERS,
-    ASEG_SCRIPTS, // Hexen only
-    ASEG_PLAYERS,
-    ASEG_SOUNDS, // Hexen only
-    ASEG_MISC, // Hexen only
-    ASEG_END,
-    ASEG_MATERIAL_ARCHIVE,
-    ASEG_MAP_HEADER2, // Hexen only
-    ASEG_PLAYER_HEADER,
-    ASEG_GLOBALSCRIPTDATA // Hexen only
-} gamearchivesegment_t;
+uint SV_GenerateGameId(void);
 
 /**
  * Original indices must remain unchanged!
@@ -124,16 +199,6 @@ mobj_t* SV_GetArchiveThing(int thingid, void* address);
 
 MaterialArchive* SV_MaterialArchive(void);
 material_t* SV_GetArchiveMaterial(materialarchive_serialid_t serialId, int group);
-
-/**
- * Exit with a fatal error if the value at the current location in the
- * game-save file does not match that associated with the segment type.
- *
- * @param segType  Segment type identifier to check alignment of.
- */
-void SV_AssertSegment(int segType);
-
-void SV_BeginSegment(int segType);
 
 /**
  * Update mobj flag values from those used in legacy game-save formats
