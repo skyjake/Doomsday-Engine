@@ -371,7 +371,7 @@ static void swd(Writer* w, const char* data, int len)
     SV_Write(data, len);
 }
 
-void SV_SaveInfo_Write(saveinfo_t* info)
+void SV_SaveInfo_Write(SaveInfo* info)
 {
     Writer* svWriter = Writer_NewWithCallbacks(swi8, swi16, swi32, swf, swd);
     SaveInfo_Write(info, svWriter);
@@ -415,7 +415,7 @@ static void srd(Reader* r, char* data, int len)
     SV_Read(data, len);
 }
 
-void SV_SaveInfo_Read(saveinfo_t* info)
+void SV_SaveInfo_Read(SaveInfo* info)
 {
     Reader* svReader = Reader_NewWithCallbacks(sri8, sri16, sri32, srf, srd);
 #if __JHEXEN__

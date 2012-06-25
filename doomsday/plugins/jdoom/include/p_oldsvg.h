@@ -30,7 +30,7 @@
 
 #include "p_saveio.h"
 
-boolean SV_v19_Recognise(saveinfo_t* saveInfo);
-boolean SV_v19_LoadGame(saveinfo_t* saveInfo);
+boolean SV_v19_Recognise(SaveInfo* saveInfo);
+boolean SV_v19_LoadGame(SaveInfo* saveInfo);
 
 #endif /// LIBDOOM_OLD_SAVESTATE

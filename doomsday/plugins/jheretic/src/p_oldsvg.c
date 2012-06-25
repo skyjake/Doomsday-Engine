@@ -831,7 +831,7 @@ enum {
     }
 }
 
-boolean SV_v13_LoadGame(saveinfo_t* info)
+boolean SV_v13_LoadGame(SaveInfo* info)
 {
     const char* savename;
     size_t length;
@@ -840,7 +840,7 @@ boolean SV_v13_LoadGame(saveinfo_t* info)
 
     if(!info) return false;
 
-    savename = Str_Text(&info->filePath);
+    savename = Str_Text(SaveInfo_FilePath(info));
     if(!(length = M_ReadFile(savename, (char**)&savebuffer)))
         return false;
 
@@ -890,16 +890,16 @@ boolean SV_v13_LoadGame(saveinfo_t* info)
     return true;
 }
 
-boolean SV_v13_Recognise(saveinfo_t* info)
+boolean SV_v13_Recognise(SaveInfo* info)
 {
-    if(!info || Str_IsEmpty(&info->filePath)) return false;
+    if(!info || Str_IsEmpty(SaveInfo_FilePath(info))) return false;
 
-    if(SV_OpenFile(Str_Text(&info->filePath), "r"))
+    if(SV_OpenFile(Str_Text(SaveInfo_FilePath(info)), "r"))
     {
         char nameBuffer[SAVESTRINGSIZE];
         lzRead(nameBuffer, SAVESTRINGSIZE, SV_File());
         nameBuffer[SAVESTRINGSIZE - 1] = 0;
-        Str_Set(&info->name, nameBuffer);
+        SaveInfo_SetName(info, nameBuffer);
         SV_CloseFile();
         return true;
     }

@@ -23,6 +23,7 @@
 #ifndef LIBCOMMON_SAVEINFO_H
 #define LIBCOMMON_SAVEINFO_H
 
+#include "doomsday.h"
 #include "p_savedef.h"
 
 typedef struct saveheader_s {
@@ -45,21 +46,37 @@ typedef struct saveheader_s {
     unsigned int gameId;
 } saveheader_t;
 
-typedef struct saveinfo_s {
-    ddstring_t filePath;
-    ddstring_t name;
-    saveheader_t header;
-} saveinfo_t;
+/**
+ * SaveInfo instance (opaque).
+ */
+struct saveinfo_s;
+typedef struct saveinfo_s SaveInfo;
 
-void SaveInfo_SetFilePath(saveinfo_t* info, ddstring_t* newFilePath);
+SaveInfo* SaveInfo_New(void);
+SaveInfo* SaveInfo_NewWithFilePath(const ddstring_t* filePath);
 
-void SaveInfo_SetGameId(saveinfo_t* info, uint newGameId);
+void SaveInfo_Delete(SaveInfo* info);
 
-void SaveInfo_SetName(saveinfo_t* info, const char* newName);
+const ddstring_t* SaveInfo_FilePath(SaveInfo* info);
 
-void SaveInfo_Configure(saveinfo_t* info);
+const saveheader_t* SaveInfo_Header(SaveInfo* info);
 
-void SaveInfo_Update(saveinfo_t* info);
+const ddstring_t* SaveInfo_Name(SaveInfo* info);
+
+void SaveInfo_SetFilePath(SaveInfo* info, ddstring_t* newFilePath);
+
+void SaveInfo_SetGameId(SaveInfo* info, uint newGameId);
+
+void SaveInfo_SetName(SaveInfo* info, const char* newName);
+
+void SaveInfo_Configure(SaveInfo* info);
+
+void SaveInfo_Update(SaveInfo* info);
+
+/**
+ * @return  Is this state loadable for the current game session.
+ */
+boolean SaveInfo_IsLoadable(SaveInfo* info);
 
 /**
  * Serializes the save info using @a writer.
@@ -67,7 +84,7 @@ void SaveInfo_Update(saveinfo_t* info);
  * @param info  SaveInfo instance.
  * @param writer  Writer instance.
  */
-void SaveInfo_Write(saveinfo_t* info, Writer* writer);
+void SaveInfo_Write(SaveInfo* info, Writer* writer);
 
 /**
  * Deserializes the save info using @a reader.
@@ -75,14 +92,14 @@ void SaveInfo_Write(saveinfo_t* info, Writer* writer);
  * @param info  SaveInfo instance.
  * @param reader  Reader instance.
  */
-void SaveInfo_Read(saveinfo_t* info, Reader* reader);
+void SaveInfo_Read(SaveInfo* info, Reader* reader);
 
 #if __JHEXEN__
 /**
  * @brief libhexen specific version of @see SaveInfo_Read() for deserializing
  * legacy version 9 save state info.
  */
-void SaveInfo_Read_Hx_v9(saveinfo_t* info, Reader* reader);
+void SaveInfo_Read_Hx_v9(SaveInfo* info, Reader* reader);
 #endif
 
 #endif /* LIBCOMMON_SAVEINFO_H */

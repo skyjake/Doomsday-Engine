@@ -20,6 +20,7 @@
  * 02110-1301 USA</small>
  */
 
+#include <stdlib.h>
 #include <string.h>
 
 #include "common.h"
@@ -28,25 +29,77 @@
 #include "p_saveio.h"
 #include "saveinfo.h"
 
-void SaveInfo_SetFilePath(saveinfo_t* info, ddstring_t* newFilePath)
+struct saveinfo_s
+{
+    ddstring_t filePath;
+    ddstring_t name;
+    saveheader_t header;
+};
+
+SaveInfo* SaveInfo_NewWithFilePath(const ddstring_t* filePath)
+{
+    SaveInfo* info = (SaveInfo*)malloc(sizeof *info);
+    if(!info) Con_Error("SaveInfo_New: Failed on allocation of %lu bytes for new SaveInfo.", (unsigned long) sizeof *info);
+
+    Str_Init(&info->filePath);
+    if(filePath) Str_Set(&info->filePath, Str_Text(filePath));
+    Str_Init(&info->name);
+
+    memset(&info->header, 0, sizeof(info->header));
+    return info;
+}
+
+SaveInfo* SaveInfo_New(void)
+{
+    return SaveInfo_NewWithFilePath(0);
+}
+
+void SaveInfo_Delete(SaveInfo* info)
+{
+    assert(info);
+    Str_Free(&info->filePath);
+    Str_Free(&info->name);
+    free(info);
+}
+
+const ddstring_t* SaveInfo_FilePath(SaveInfo* info)
+{
+    assert(info);
+    return &info->filePath;
+}
+
+const saveheader_t* SaveInfo_Header(SaveInfo* info)
+{
+    assert(info);
+    if(!SaveInfo_IsLoadable(info)) return NULL;
+    return &info->header;
+}
+
+const ddstring_t* SaveInfo_Name(SaveInfo* info)
+{
+    assert(info);
+    return &info->name;
+}
+
+void SaveInfo_SetFilePath(SaveInfo* info, ddstring_t* newFilePath)
 {
     assert(info);
     Str_CopyOrClear(&info->filePath, newFilePath);
 }
 
-void SaveInfo_SetGameId(saveinfo_t* info, uint newGameId)
+void SaveInfo_SetGameId(SaveInfo* info, uint newGameId)
 {
     assert(info);
     info->header.gameId = newGameId;
 }
 
-void SaveInfo_SetName(saveinfo_t* info, const char* newName)
+void SaveInfo_SetName(SaveInfo* info, const char* newName)
 {
     assert(info);
     dd_snprintf(info->header.name, SAVESTRINGSIZE, "%s", newName);
 }
 
-void SaveInfo_Configure(saveinfo_t* info)
+void SaveInfo_Configure(SaveInfo* info)
 {
     saveheader_t* hdr;
     assert(info);
@@ -85,12 +138,12 @@ void SaveInfo_Configure(saveinfo_t* info)
 #endif
 }
 
-static boolean saveInfoIsValidForCurrentGameSession(saveinfo_t* info)
+/// @fixme What about original game saves, they will fail here presently.
+boolean SaveInfo_IsLoadable(SaveInfo* info)
 {
     assert(info);
 
-    /// @fixme What about original game saves, they will fail here presently.
-
+    if(Str_IsEmpty(&info->filePath)) return false;
     // Magic must match.
     if(info->header.magic != MY_SAVE_MAGIC) return false;
 
@@ -112,7 +165,7 @@ static boolean saveInfoIsValidForCurrentGameSession(saveinfo_t* info)
     return true; // It's good!
 }
 
-static boolean recogniseAndReadHeader(saveinfo_t* info)
+static boolean recogniseAndReadHeader(SaveInfo* info)
 {
     if(SV_Recognise(info)) return true;
 
@@ -127,7 +180,7 @@ static boolean recogniseAndReadHeader(saveinfo_t* info)
     return false;
 }
 
-void SaveInfo_Update(saveinfo_t* info)
+void SaveInfo_Update(SaveInfo* info)
 {
     assert(info);
 
@@ -142,7 +195,6 @@ void SaveInfo_Update(saveinfo_t* info)
     if(!recogniseAndReadHeader(info))
     {
         // Not a loadable save.
-        Str_Clear(&info->filePath);
         return;
     }
 
@@ -151,15 +203,9 @@ void SaveInfo_Update(saveinfo_t* info)
     {
         Str_Set(&info->name, "UNNAMED");
     }
-
-    if(!saveInfoIsValidForCurrentGameSession(info))
-    {
-        // Not a loadable save.
-        Str_Clear(&info->filePath);
-    }
 }
 
-void SaveInfo_Write(saveinfo_t* saveInfo, Writer* writer)
+void SaveInfo_Write(SaveInfo* saveInfo, Writer* writer)
 {
     saveheader_t* info;
     assert(saveInfo);
@@ -230,7 +276,7 @@ static void translateLegacyGameMode(gamemode_t* mode)
 }
 #endif
 
-void SaveInfo_Read(saveinfo_t* saveInfo, Reader* reader)
+void SaveInfo_Read(SaveInfo* saveInfo, Reader* reader)
 {
     saveheader_t* info;
     assert(saveInfo);
@@ -254,6 +300,8 @@ void SaveInfo_Read(saveinfo_t* saveInfo, Reader* reader)
         // Older formats use a fixed-length name (24 characters).
         Reader_Read(reader, info->name, SAVESTRINGSIZE);
     }
+    Str_Set(&saveInfo->name, info->name);
+
     info->skill = Reader_ReadByte(reader);
     info->episode = Reader_ReadByte(reader);
     info->map = Reader_ReadByte(reader);
@@ -293,7 +341,7 @@ void SaveInfo_Read(saveinfo_t* saveInfo, Reader* reader)
 }
 
 #if __JHEXEN__
-void SaveInfo_Read_Hx_v9(saveinfo_t* saveInfo, Reader* reader)
+void SaveInfo_Read_Hx_v9(SaveInfo* saveInfo, Reader* reader)
 {
 # define HXS_VERSION_TEXT      "HXS Ver " // Do not change me!
 # define HXS_VERSION_TEXT_LENGTH 16
@@ -304,6 +352,7 @@ void SaveInfo_Read_Hx_v9(saveinfo_t* saveInfo, Reader* reader)
 
     info = &saveInfo->header;
     Reader_Read(reader, &info->name, SAVESTRINGSIZE);
+    Str_Set(&saveInfo->name, info->name);
     Reader_Read(reader, &verText, HXS_VERSION_TEXT_LENGTH);
     info->version = atoi(&verText[8]);
 
