@@ -154,16 +154,17 @@ static boolean inited = false;
 static int cvarLastSlot; // -1 = Not yet loaded/saved in this game session.
 static int cvarQuickSlot; // -1 = Not yet chosen/determined.
 
-static saveinfo_t* saveInfo;
-static saveinfo_t autoSaveInfo;
+static SaveInfo** saveInfo;
+static SaveInfo* autoSaveInfo;
 #if __JHEXEN__
-static saveinfo_t baseSaveInfo;
+static SaveInfo* baseSaveInfo;
 #endif
+static SaveInfo* nullSaveInfo;
 
 #if __JHEXEN__
 static int mapVersion;
 #endif
-static saveheader_t* hdr;
+static const saveheader_t* hdr;
 
 static playerheader_t playerHeader;
 static boolean playerHeaderOK;
@@ -376,22 +377,6 @@ static void errorIfNotInited(const char* callerName)
     exit(1);
 }
 
-static void initSaveInfo(saveinfo_t* info)
-{
-    if(!info) return;
-    Str_Init(&info->filePath);
-    Str_Init(&info->name);
-
-    memset(&info->header, 0, sizeof(info->header));
-}
-
-static void clearSaveInfo(saveinfo_t* info)
-{
-    if(!info) return;
-    Str_Free(&info->filePath);
-    Str_Free(&info->name);
-}
-
 /**
  * Compose the (possibly relative) path to the game-save associated
  * with the logical save @a slot.
@@ -430,6 +415,35 @@ static AutoStr* composeGameSavePathForSlot(int slot)
     return composeGameSavePathForSlot2(slot, -1);
 }
 
+static void clearSaveInfo(void)
+{
+    if(saveInfo)
+    {
+        int i;
+        for(i = 0; i < NUMSAVESLOTS; ++i)
+        {
+            SaveInfo* info = saveInfo[i];
+            SaveInfo_Delete(info);
+        }
+        free(saveInfo); saveInfo = NULL;
+    }
+
+    if(autoSaveInfo)
+    {
+        SaveInfo_Delete(autoSaveInfo); autoSaveInfo = NULL;
+    }
+#if __JHEXEN__
+    if(baseSaveInfo)
+    {
+        SaveInfo_Delete(baseSaveInfo); baseSaveInfo = NULL;
+    }
+#endif
+    if(nullSaveInfo)
+    {
+        SaveInfo_Delete(nullSaveInfo); nullSaveInfo = NULL;
+    }
+}
+
 /// Re-build game-save info by re-scanning the save paths and populating the list.
 static void buildSaveInfo(void)
 {
@@ -439,7 +453,7 @@ static void buildSaveInfo(void)
     if(!saveInfo)
     {
         // Not yet been here. We need to allocate and initialize the game-save info list.
-        saveInfo = (saveinfo_t*) malloc(NUMSAVESLOTS * sizeof(*saveInfo));
+        saveInfo = (SaveInfo**) malloc(NUMSAVESLOTS * sizeof(*saveInfo));
         if(!saveInfo)
             Con_Error("buildSaveInfo: Failed on allocation of %lu bytes for game-save info list.",
                       (unsigned long) (NUMSAVESLOTS * sizeof(*saveInfo)));
@@ -447,18 +461,13 @@ static void buildSaveInfo(void)
         // Initialize.
         for(i = 0; i < NUMSAVESLOTS; ++i)
         {
-            saveinfo_t* info = &saveInfo[i];
-            initSaveInfo(info);
-            SaveInfo_SetFilePath(info, composeGameSavePathForSlot(i));
+            saveInfo[i] = SaveInfo_NewWithFilePath(composeGameSavePathForSlot(i));
         }
-
-        initSaveInfo(&autoSaveInfo);
-        SaveInfo_SetFilePath(&autoSaveInfo, composeGameSavePathForSlot(AUTO_SLOT));
-
+        autoSaveInfo = SaveInfo_NewWithFilePath(composeGameSavePathForSlot(AUTO_SLOT));
 #if __JHEXEN__
-        initSaveInfo(&baseSaveInfo);
-        SaveInfo_SetFilePath(&baseSaveInfo, composeGameSavePathForSlot(BASE_SLOT));
+        baseSaveInfo = SaveInfo_NewWithFilePath(composeGameSavePathForSlot(BASE_SLOT));
 #endif
+        nullSaveInfo = SaveInfo_New();
     }
 
     /// Scan the save paths and populate the list.
@@ -466,22 +475,21 @@ static void buildSaveInfo(void)
     /// which match the default game-save file naming convention.
     for(i = 0; i < NUMSAVESLOTS; ++i)
     {
-        saveinfo_t* info = &saveInfo[i];
+        SaveInfo* info = saveInfo[i];
         SaveInfo_Update(info);
     }
-    SaveInfo_Update(&autoSaveInfo);
+    SaveInfo_Update(autoSaveInfo);
 #if __JHEXEN__
-    SaveInfo_Update(&baseSaveInfo);
+    SaveInfo_Update(baseSaveInfo);
 #endif
 }
 
 /// Given a logical save slot identifier retrieve the assciated game-save info.
-static saveinfo_t* findSaveInfoForSlot(int slot)
+static SaveInfo* findSaveInfoForSlot(int slot)
 {
-    static saveinfo_t invalidInfo = { { "" }, { "" } };
     assert(inited);
 
-    if(!SV_IsValidSlot(slot)) return &invalidInfo;
+    if(!SV_IsValidSlot(slot)) return nullSaveInfo;
 
     // On first call - automatically build and populate game-save info.
     if(!saveInfo)
@@ -490,11 +498,11 @@ static saveinfo_t* findSaveInfoForSlot(int slot)
     }
 
     // Retrieve the info for this slot.
-    if(slot == AUTO_SLOT) return &autoSaveInfo;
+    if(slot == AUTO_SLOT) return autoSaveInfo;
 #if __JHEXEN__
-    if(slot == BASE_SLOT) return &baseSaveInfo;
+    if(slot == BASE_SLOT) return baseSaveInfo;
 #endif
-    return &saveInfo[slot];
+    return saveInfo[slot];
 }
 
 void SV_Register(void)
@@ -540,20 +548,20 @@ boolean SV_IsUserWritableSlot(int slot)
     return SV_IsValidSlot(slot);
 }
 
-boolean SV_Recognise(saveinfo_t* info)
+boolean SV_Recognise(SaveInfo* info)
 {
 #if __JHEXEN__
     byte* saveBuffer;
 #endif
-    assert(inited && info);
 
-    if(Str_IsEmpty(&info->filePath)) return false;
+    if(!info) return false;
+    if(Str_IsEmpty(SaveInfo_FilePath(info))) return false;
 
 #if __JHEXEN__
     /// @todo Do not buffer the whole file.
-    if(M_ReadFile(Str_Text(&info->filePath), (char**)&saveBuffer))
+    if(M_ReadFile(Str_Text(SaveInfo_FilePath(info)), (char**)&saveBuffer))
 #else
-    if(SV_OpenFile(Str_Text(&info->filePath), "rp"))
+    if(SV_OpenFile(Str_Text(SaveInfo_FilePath(info)), "rp"))
 #endif
     {
 #if __JHEXEN__
@@ -562,10 +570,6 @@ boolean SV_Recognise(saveinfo_t* info)
 #endif
 
         SV_SaveInfo_Read(info);
-        if(MY_SAVE_MAGIC == info->header.magic)
-        {
-            Str_Set(&info->name, info->header.name);
-        }
 
 #if __JHEXEN__
         Z_Free(saveBuffer);
@@ -573,13 +577,13 @@ boolean SV_Recognise(saveinfo_t* info)
         SV_CloseFile();
 #endif
 
-        return (MY_SAVE_MAGIC == info->header.magic) ||
-               (MY_CLIENT_SAVE_MAGIC == info->header.magic);
+        return (MY_SAVE_MAGIC == SaveInfo_Header(info)->magic) ||
+               (MY_CLIENT_SAVE_MAGIC == SaveInfo_Header(info)->magic);
     }
     return false;
 }
 
-saveinfo_t* SV_SaveInfoForSlot(int slot)
+SaveInfo* SV_SaveInfoForSlot(int slot)
 {
     errorIfNotInited("SV_SaveInfoForSlot");
     return findSaveInfoForSlot(slot);
@@ -643,8 +647,8 @@ int SV_SlotForSaveName(const char* name)
 
         do
         {
-            const saveinfo_t* info = &saveInfo[i];
-            if(!Str_CompareIgnoreCase(&info->name, name))
+            SaveInfo* info = saveInfo[i];
+            if(!Str_CompareIgnoreCase(SaveInfo_Name(info), name))
             {
                 // This is the one!
                 saveSlot = i;
@@ -694,11 +698,10 @@ boolean SV_ComposeSavePathForClientGameId(uint gameId, ddstring_t* path)
 
 boolean SV_IsSlotUsed(int slot)
 {
-    const saveinfo_t* info;
+    SaveInfo* info;
     errorIfNotInited("SV_IsSlotUsed");
-
     info = SV_SaveInfoForSlot(slot);
-    return !Str_IsEmpty(&info->filePath);
+    return info && SaveInfo_IsLoadable(info);
 }
 
 #if __JHEXEN__
@@ -743,6 +746,8 @@ void SV_CopySlot(int sourceSlot, int destSlot)
     src = composeGameSavePathForSlot(sourceSlot);
     dst = composeGameSavePathForSlot(destSlot);
     SV_CopyFile(src, dst);
+
+    SV_UpdateAllSaveInfo();
 }
 
 #if __JHEXEN__
@@ -4829,22 +4834,7 @@ void SV_Shutdown(void)
     if(!inited) return;
 
     SV_ShutdownIO();
-
-    if(saveInfo)
-    {
-        int i;
-        for(i = 0; i < NUMSAVESLOTS; ++i)
-        {
-            saveinfo_t* info = &saveInfo[i];
-            clearSaveInfo(info);
-        }
-        free(saveInfo); saveInfo = NULL;
-
-        clearSaveInfo(&autoSaveInfo);
-#if __JHEXEN__
-        clearSaveInfo(&baseSaveInfo);
-#endif
-    }
+    clearSaveInfo();
 
     cvarLastSlot  = -1;
     cvarQuickSlot = -1;
@@ -4852,7 +4842,7 @@ void SV_Shutdown(void)
     inited = false;
 }
 
-static boolean SV_LoadGame2(saveinfo_t* saveInfo)
+static boolean SV_LoadGame2(SaveInfo* saveInfo)
 {
     int i;
     char buf[80];
@@ -4864,12 +4854,11 @@ static boolean SV_LoadGame2(saveinfo_t* saveInfo)
     // Read the header again.
     /// @todo Seek past the header straight to the game state.
     {
-    saveinfo_t tmp;
-    initSaveInfo(&tmp);
-    SV_SaveInfo_Read(&tmp);
-    clearSaveInfo(&tmp);
+    SaveInfo* tmp = SaveInfo_New();
+    SV_SaveInfo_Read(tmp);
+    SaveInfo_Delete(tmp);
     }
-    hdr = &saveInfo->header;
+    hdr = SaveInfo_Header(saveInfo);
 
     /**
      * We now assume that loading will succeed.
@@ -5066,7 +5055,7 @@ boolean SV_LoadGame(int slot)
     const int logicalSlot = slot;
 #endif
     boolean loadError = true;
-    saveinfo_t* saveInfo;
+    SaveInfo* saveInfo;
 
     errorIfNotInited("SV_LoadGame");
 
@@ -5086,7 +5075,7 @@ boolean SV_LoadGame(int slot)
     saveInfo = SV_SaveInfoForSlot(logicalSlot);
 
     playerHeaderOK = false; // Uninitialized.
-    if(openGameSaveFile(Str_Text(&saveInfo->filePath), false))
+    if(openGameSaveFile(Str_Text(SaveInfo_FilePath(saveInfo)), false))
     {
         loadError = !SV_LoadGame2(saveInfo);
     }
@@ -5118,7 +5107,7 @@ void SV_SaveGameClient(uint gameId)
     player_t* pl = &players[CONSOLEPLAYER];
     mobj_t* mo = pl->plr->mo;
     ddstring_t gameSavePath;
-    saveinfo_t saveInfo;
+    SaveInfo* saveInfo;
 
     errorIfNotInited("SV_SaveGameClient");
 
@@ -5138,10 +5127,10 @@ void SV_SaveGameClient(uint gameId)
     Str_Free(&gameSavePath);
 
     // Prepare the header.
-    initSaveInfo(&saveInfo);
-    SaveInfo_SetGameId(&saveInfo, gameId);
-    SaveInfo_Configure(&saveInfo);
-    SV_SaveInfo_Write(&saveInfo);
+    saveInfo = SaveInfo_New();
+    SaveInfo_SetGameId(saveInfo, gameId);
+    SaveInfo_Configure(saveInfo);
+    SV_SaveInfo_Write(saveInfo);
 
     // Some important information.
     // Our position and look angles.
@@ -5165,7 +5154,7 @@ void SV_SaveGameClient(uint gameId)
     materialArchive = NULL;
 
     SV_CloseFile();
-    clearSaveInfo(&saveInfo);
+    SaveInfo_Delete(saveInfo);
 #endif
 }
 
@@ -5175,7 +5164,7 @@ void SV_LoadGameClient(uint gameId)
     player_t* cpl = players + CONSOLEPLAYER;
     mobj_t* mo = cpl->plr->mo;
     ddstring_t gameSavePath;
-    saveinfo_t saveInfo;
+    SaveInfo* saveInfo;
 
     errorIfNotInited("SV_LoadGameClient");
 
@@ -5195,13 +5184,13 @@ void SV_LoadGameClient(uint gameId)
     }
     Str_Free(&gameSavePath);
 
-    initSaveInfo(&saveInfo);
-    SV_SaveInfo_Read(&saveInfo);
+    saveInfo = SaveInfo_New();
+    SV_SaveInfo_Read(saveInfo);
 
-    hdr = &saveInfo.header;
+    hdr = SaveInfo_Header(saveInfo);
     if(hdr->magic != MY_CLIENT_SAVE_MAGIC)
     {
-        clearSaveInfo(&saveInfo);
+        SaveInfo_Delete(saveInfo);
         SV_CloseFile();
         Con_Message("SV_LoadGameClient: Bad magic!\n");
         return;
@@ -5247,8 +5236,8 @@ void SV_LoadGameClient(uint gameId)
     MaterialArchive_Delete(materialArchive);
     materialArchive = NULL;
 
-    clearSaveInfo(&saveInfo);
     SV_CloseFile();
+    SaveInfo_Delete(saveInfo);
 #endif
 }
 
@@ -5302,7 +5291,7 @@ typedef struct savegameparams_s {
 static int saveGameWorker(void* parameters)
 {
     savegameworkerparams_t* parm = parameters;
-    saveinfo_t saveInfo;
+    SaveInfo* saveInfo;
 
 #if _DEBUG
     VERBOSE( Con_Message("SV_SaveGame: Attempting save game to \"%s\".\n", Str_Text(parm->path)) )
@@ -5317,11 +5306,11 @@ static int saveGameWorker(void* parameters)
     playerHeaderOK = false; // Uninitialized.
 
     // Write the game session header.
-    initSaveInfo(&saveInfo);
-    SaveInfo_SetName(&saveInfo, parm->name);
-    SaveInfo_SetGameId(&saveInfo, SV_GenerateGameId());
-    SaveInfo_Configure(&saveInfo);
-    SV_SaveInfo_Write(&saveInfo);
+    saveInfo = SaveInfo_New();
+    SaveInfo_SetName(saveInfo, parm->name);
+    SaveInfo_SetGameId(saveInfo, SV_GenerateGameId());
+    SaveInfo_Configure(saveInfo);
+    SV_SaveInfo_Write(saveInfo);
 
 #if __JHEXEN__
     P_ArchiveGlobalScriptData();
@@ -5329,7 +5318,7 @@ static int saveGameWorker(void* parameters)
 
     // In netgames the server tells the clients to save their games.
 #if !__JHEXEN__
-    NetSv_SaveGame(saveInfo.header.gameId);
+    NetSv_SaveGame(SaveInfo_Header(saveInfo)->gameId);
 #endif
 
     // Set the mobj archive numbers.
@@ -5388,7 +5377,7 @@ static int saveGameWorker(void* parameters)
     SV_CloseFile();
 #endif
 
-    clearSaveInfo(&saveInfo);
+    SaveInfo_Delete(saveInfo);
 
     Con_BusyWorkerEnd();
     return SV_OK;

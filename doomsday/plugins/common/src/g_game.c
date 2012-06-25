@@ -2491,11 +2491,11 @@ void G_DoSaveGame(void)
     else
     {
         // No name specified.
-        const saveinfo_t* info = SV_SaveInfoForSlot(gaSaveGameSlot);
-        if(!gaSaveGameGenerateName && !Str_IsEmpty(&info->name))
+        SaveInfo* info = SV_SaveInfoForSlot(gaSaveGameSlot);
+        if(!gaSaveGameGenerateName && !Str_IsEmpty(SaveInfo_Name(info)))
         {
             // Slot already in use; reuse the existing name.
-            nameStr = &info->name;
+            nameStr = SaveInfo_Name(info);
         }
         else
         {
@@ -3394,7 +3394,7 @@ D_CMD(LoadGame)
     if(SV_IsSlotUsed(slot))
     {
         // A known used slot identifier.
-        const saveinfo_t* info;
+        SaveInfo* info;
         char buf[80];
 
         if(confirm || !cfg.confirmQuickGameSave)
@@ -3405,7 +3405,7 @@ D_CMD(LoadGame)
         }
 
         info = SV_SaveInfoForSlot(slot);
-        dd_snprintf(buf, 80, QLPROMPT, Str_Text(&info->name));
+        dd_snprintf(buf, 80, QLPROMPT, Str_Text(SaveInfo_Name(info)));
 
         S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
         Hu_MsgStart(MSG_YESNO, buf, loadGameConfirmResponse, slot, 0);
@@ -3500,8 +3500,8 @@ D_CMD(SaveGame)
         }
 
         {
-        const saveinfo_t* info = SV_SaveInfoForSlot(slot);
-        dd_snprintf(buf, 80, QSPROMPT, Str_Text(&info->name));
+        SaveInfo* info = SV_SaveInfoForSlot(slot);
+        dd_snprintf(buf, 80, QSPROMPT, Str_Text(SaveInfo_Name(info)));
 
         S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
         Hu_MsgStart(MSG_YESNO, buf, saveGameConfirmResponse, slot, (void*)name);

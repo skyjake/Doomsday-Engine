@@ -99,7 +99,7 @@ boolean SV_HxHaveMapSaveForSlot(int slot, uint map);
  * @return  Game-save info for logical save @a slot. Always returns valid
  *      info even if supplied with an invalid or unused slot identifer.
  */
-saveinfo_t* SV_SaveInfoForSlot(int slot);
+SaveInfo* SV_SaveInfoForSlot(int slot);
 
 boolean SV_ComposeSavePathForSlot(int slot, ddstring_t* path);
 
