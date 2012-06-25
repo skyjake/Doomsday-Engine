@@ -230,7 +230,7 @@ void* WAV_Load(const char* filename, int* bits, int* rate, int* samples)
     size = DFile_Length(file);
  
     DEBUG_Message(("WAD_Load: Loading from %s (size %i, fpos %i)\n", Str_Text(AbstractFile_Path(DFile_File_Const(file))),
-                   size, DFile_Tell(file)));
+                   (int)size, (int)DFile_Tell(file)));
 
     data = (uint8_t*)malloc(size);
     if(!data) Con_Error("WAV_Load: Failed on allocation of %lu bytes for sample load buffer.",
