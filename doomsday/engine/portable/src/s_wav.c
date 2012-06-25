@@ -224,12 +224,12 @@ void* WAV_Load(const char* filename, int* bits, int* rate, int* samples)
     uint8_t* data;
     size_t size;
 
-    if(!file)return NULL;
+    if(!file) return NULL;
 
     // Read in the whole thing.
     size = DFile_Length(file);
  
-    DEBUG_Message(("WAD_Load: Loading from %s (size %i, fpos %i)\n", Str_Text(AbstractFile_Path(DFile_File_Const(file))),
+    DEBUG_Message(("WAV_Load: Loading from %s (size %i, fpos %i)\n", Str_Text(AbstractFile_Path(DFile_File_Const(file))),
                    (int)size, (int)DFile_Tell(file)));
 
     data = (uint8_t*)malloc(size);
