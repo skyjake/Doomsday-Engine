@@ -831,18 +831,18 @@ enum {
     }
 }
 
-boolean SV_v13_LoadGame(SaveInfo* info)
+int SV_v13_LoadGame(SaveInfo* info)
 {
     const char* savename;
     size_t length;
     int i, a, b, c;
     char vcheck[VERSIONSIZE];
 
-    if(!info) return false;
+    if(!info) return 1;
 
     savename = Str_Text(SaveInfo_FilePath(info));
     if(!(length = M_ReadFile(savename, (char**)&savebuffer)))
-        return false;
+        return 1;
 
     save_p = savebuffer + V13_SAVESTRINGSIZE;
 
@@ -853,8 +853,10 @@ boolean SV_v13_LoadGame(SaveInfo* info)
     {
         // Bad version!
         Con_Message("Savegame ID '%s': incompatible?\n", save_p);
+        return 1;
     }
     save_p += VERSIONSIZE;
+
     gameSkill = *save_p++;
     gameEpisode = (*save_p++) - 1;
     gameMap = (*save_p++) - 1;
@@ -887,7 +889,7 @@ boolean SV_v13_LoadGame(SaveInfo* info)
     // Spawn particle generators.
     R_SetupMap(DDSMM_AFTER_LOADING, 0);
 
-    return true;
+    return 0; // Success!
 }
 
 boolean SV_v13_Recognise(SaveInfo* info)

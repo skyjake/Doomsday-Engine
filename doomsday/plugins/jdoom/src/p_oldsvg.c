@@ -822,18 +822,18 @@ void P_v19_UnArchiveSpecials(void)
     }
 }
 
-boolean SV_v19_LoadGame(SaveInfo* info)
+int SV_v19_LoadGame(SaveInfo* info)
 {
     const char* savename;
     int i, a, b, c;
     size_t length;
     char vcheck[VERSIONSIZE];
 
-    if(!info) return false;
+    if(!info) return 1;
 
     savename = Str_Text(SaveInfo_FilePath(info));
     if(!(length = M_ReadFile(savename, (char**)&saveBuffer)))
-        return false;
+        return 1;
 
     // Skip the description field.
     savePtr = saveBuffer + V19_SAVESTRINGSIZE;
@@ -853,7 +853,7 @@ boolean SV_v19_LoadGame(SaveInfo* info)
             Z_Free(saveBuffer);
             saveBuffer = NULL;
             savePtr = NULL;
-            return false;
+            return 1;
         }
 
         // Just give a warning.
@@ -883,8 +883,7 @@ boolean SV_v19_LoadGame(SaveInfo* info)
     P_v19_UnArchiveSpecials();
 
     if(*savePtr != 0x1d)
-        Con_Error
-            ("SV_v19_LoadGame: Bad savegame (consistency test failed!)\n");
+        Con_Error("SV_v19_LoadGame: Bad savegame (consistency test failed!)\n");
 
     Z_Free(saveBuffer);
     saveBuffer = NULL;
@@ -892,7 +891,7 @@ boolean SV_v19_LoadGame(SaveInfo* info)
     // Spawn particle generators.
     R_SetupMap(DDSMM_AFTER_LOADING, 0);
 
-    return true;
+    return 0; // Success!
 }
 
 boolean SV_v19_Recognise(SaveInfo* info)

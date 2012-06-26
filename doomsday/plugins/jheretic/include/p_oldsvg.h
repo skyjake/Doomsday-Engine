@@ -31,6 +31,10 @@
 #include "p_saveio.h"
 
 boolean SV_v13_Recognise(SaveInfo* saveInfo);
-boolean SV_v13_LoadGame(SaveInfo* saveInfo);
+
+/**
+ * @return  @c 0 on success else error code.
+ */
+int SV_v13_LoadGame(SaveInfo* saveInfo);
 
 #endif /// LIBHERETIC_OLD_SAVESTATE

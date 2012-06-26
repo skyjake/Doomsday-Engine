@@ -4836,7 +4836,24 @@ void SV_Shutdown(void)
     inited = false;
 }
 
-static boolean SV_LoadGame2(SaveInfo* saveInfo)
+static boolean openGameSaveFile(const char* fileName, boolean write)
+{
+#if __JHEXEN__
+    if(!write)
+    {
+        boolean result = M_ReadFile(fileName, (char**)&saveBuffer) > 0;
+        // Set the save pointer.
+        SV_HxSavePtr()->b = saveBuffer;
+        return result;
+    }
+    else
+#endif
+    SV_OpenFile(fileName, write? "wp" : "rp");
+    if(!SV_File()) return false;
+    return true;
+}
+
+static int loadGameWorker(SaveInfo* saveInfo)
 {
     int i;
     char buf[80];
@@ -4844,6 +4861,18 @@ static boolean SV_LoadGame2(SaveInfo* saveInfo)
 #if __JHEXEN__
     int k;
 #endif
+
+    playerHeaderOK = false; // Uninitialized.
+
+    if(!openGameSaveFile(Str_Text(SaveInfo_FilePath(saveInfo)), false))
+    {
+        // It might be an original game save?
+#if __JDOOM__
+        return SV_v19_LoadGame(saveInfo);
+#elif __JHERETIC__
+        return SV_v13_LoadGame(saveInfo);
+#endif
+    }
 
     // Read the header again.
     /// @todo Seek past the header straight to the game state.
@@ -5021,24 +5050,7 @@ static boolean SV_LoadGame2(SaveInfo* saveInfo)
         R_UpdateConsoleView(i);
     }
 
-    return true; // Success!
-}
-
-static boolean openGameSaveFile(const char* fileName, boolean write)
-{
-#if __JHEXEN__
-    if(!write)
-    {
-        boolean result = M_ReadFile(fileName, (char**)&saveBuffer) > 0;
-        // Set the save pointer.
-        SV_HxSavePtr()->b = saveBuffer;
-        return result;
-    }
-    else
-#endif
-    SV_OpenFile(fileName, write? "wp" : "rp");
-    if(!SV_File()) return false;
-    return true;
+    return 0; // Success!
 }
 
 boolean SV_LoadGame(int slot)
@@ -5048,8 +5060,8 @@ boolean SV_LoadGame(int slot)
 #else
     const int logicalSlot = slot;
 #endif
-    boolean loadError = true;
     SaveInfo* saveInfo;
+    int loadError;
 
     errorIfNotInited("SV_LoadGame");
 
@@ -5058,7 +5070,8 @@ boolean SV_LoadGame(int slot)
     VERBOSE( Con_Message("Attempting load of game-save slot #%i...\n", slot) )
 
 #if __JHEXEN__
-    // Copy all needed save files to the base slot
+    // Copy all needed save files to the base slot.
+    /// @todo Why do this BEFORE loading??
     if(slot != BASE_SLOT)
     {
         SV_ClearSlot(BASE_SLOT);
@@ -5067,21 +5080,7 @@ boolean SV_LoadGame(int slot)
 #endif
 
     saveInfo = SV_SaveInfoForSlot(logicalSlot);
-
-    playerHeaderOK = false; // Uninitialized.
-    if(openGameSaveFile(Str_Text(SaveInfo_FilePath(saveInfo)), false))
-    {
-        loadError = !SV_LoadGame2(saveInfo);
-    }
-    else
-    {
-        // It might be an original game save?
-#if __JDOOM__
-        loadError = !SV_v19_LoadGame(saveInfo);
-#elif __JHERETIC__
-        loadError = !SV_v13_LoadGame(saveInfo);
-#endif
-    }
+    loadError = loadGameWorker(saveInfo);
 
     if(!loadError)
     {
