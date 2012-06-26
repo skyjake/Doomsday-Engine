@@ -298,19 +298,14 @@ def doTask(task):
         task in pilotcfg.IGNORED_TASKS:
         return True
 
-    if task == 'patch':
-        msg("PATCH")
-        switchToBranch('stable')
-        return True
-        
-    elif task == 'branch_stable':
-        msg("SWITCH TO STABLE BRANCH")
-        switchToBranch('stable')
+    if task.startswith('branch_'):
+        msg("SWITCH TO BRANCH: " + task[7:])
+        switchToBranch(task[7:])
         return autobuild('pull')
-        
-    elif task == 'branch_master':
-        msg("SWITCH TO MASTER BRANCH")
-        switchToBranch('master')
+
+    elif task.startswith('buildfrom_'):
+        msg("SWITCH TO BRANCH FOR BUILD: " + task[10:])
+        switchToBranch(task[10:])
         return autobuild('pull')
 
     elif task == 'tag_build':
@@ -375,11 +370,7 @@ def handleCompletedTasks():
         
         print "Task '%s' has been completed (noticed at %s)" % (task, time.asctime())
         
-        if task == 'patch':
-            # Everyone must switch to the stable branch.
-            newTask('branch_stable', allClients=True)
-            
-        elif task == 'branch_stable':
+        if task.startswith('buildfrom_'):
             # Commence with a build when everyone is ready.
             newTask('tag_build', forClient='master')
         
