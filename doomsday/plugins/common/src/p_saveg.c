@@ -383,21 +383,20 @@ static void errorIfNotInited(const char* callerName)
  *
  * @param slot  Logical save slot identifier.
  * @param map   If @c >= 0 include this logical map index in the composed path.
- * @return  The composed path if reachable (else @c NULL). Does not need to be free'd.
+ * @return  The composed path if reachable (else a zero-length string).
  */
 static AutoStr* composeGameSavePathForSlot2(int slot, int map)
 {
-    AutoStr* path;
+    AutoStr* path = AutoStr_NewStd();
     assert(inited);
 
     // A valid slot?
-    if(!SV_IsValidSlot(slot)) return NULL;
+    if(!SV_IsValidSlot(slot)) return path;
 
     // Do we have a valid path?
-    if(!F_MakePath(SV_SavePath())) return NULL;
+    if(!F_MakePath(SV_SavePath())) return path;
 
     // Compose the full game-save path and filename.
-    path = AutoStr_NewStd();
     if(map >= 0)
     {
         Str_Appendf(path, "%s" SAVEGAMENAME "%i%02i." SAVEGAMEEXTENSION, SV_SavePath(), slot, map);
@@ -414,6 +413,19 @@ static AutoStr* composeGameSavePathForSlot(int slot)
 {
     return composeGameSavePathForSlot2(slot, -1);
 }
+
+#if !__JHEXEN__
+static AutoStr* composeGameSavePathForClientGameId(uint gameId)
+{
+    AutoStr* path = AutoStr_NewStd();
+    // Do we have a valid path?
+    if(!F_MakePath(SV_ClientSavePath())) return path; // return zero-length string.
+    // Compose the full game-save path and filename.
+    Str_Appendf(path, "%s" CLIENTSAVEGAMENAME "%08X." SAVEGAMEEXTENSION, SV_ClientSavePath(), gameId);
+    F_TranslatePath(path, path);
+    return path;
+}
+#endif
 
 static void clearSaveInfo(void)
 {
@@ -658,41 +670,23 @@ int SV_SlotForSaveName(const char* name)
     return saveSlot;
 }
 
-boolean SV_ComposeSavePathForSlot(int slot, ddstring_t* path)
+AutoStr* SV_ComposeSavePathForSlot(int slot)
 {
     errorIfNotInited("SV_ComposeSavePathForSlot");
-    if(!path) return false;
-    Str_CopyOrClear(path, composeGameSavePathForSlot(slot));
-    return !Str_IsEmpty(path);
+    return composeGameSavePathForSlot(slot);
 }
 
 #if __JHEXEN__
-boolean SV_ComposeSavePathForMapSlot(uint map, int slot, ddstring_t* path)
+AutoStr* SV_ComposeSavePathForMapSlot(uint map, int slot)
 {
     errorIfNotInited("SV_ComposeSavePathForMapSlot");
-    if(!path) return false;
-    Str_CopyOrClear(path, composeGameSavePathForSlot2(slot, (int)map));
-    return !Str_IsEmpty(path);
+    return composeGameSavePathForSlot2(slot, (int)map);
 }
 #else
-static boolean composeClientGameSavePathForGameId(uint gameId, ddstring_t* path)
+AutoStr* SV_ComposeSavePathForClientGameId(uint gameId)
 {
-    assert(inited && NULL != path);
-    // Do we have a valid path?
-    if(!F_MakePath(SV_ClientSavePath())) return false;
-    // Compose the full game-save path and filename.
-    Str_Clear(path);
-    Str_Appendf(path, "%s" CLIENTSAVEGAMENAME "%08X." SAVEGAMEEXTENSION, SV_ClientSavePath(), gameId);
-    F_TranslatePath(path, path);
-    return true;
-}
-
-boolean SV_ComposeSavePathForClientGameId(uint gameId, ddstring_t* path)
-{
-    errorIfNotInited("SV_ComposeSavePathForSlot");
-    if(!path) return false;
-    Str_Clear(path);
-    return composeClientGameSavePathForGameId(gameId, path);
+    errorIfNotInited("SV_ComposeSavePathForClientGameId");
+    return composeGameSavePathForClientGameId(gameId);
 }
 #endif
 
@@ -5106,7 +5100,7 @@ void SV_SaveGameClient(uint gameId)
 #if !__JHEXEN__ // unsupported in libhexen
     player_t* pl = &players[CONSOLEPLAYER];
     mobj_t* mo = pl->plr->mo;
-    ddstring_t gameSavePath;
+    AutoStr* gameSavePath;
     SaveInfo* saveInfo;
 
     errorIfNotInited("SV_SaveGameClient");
@@ -5116,15 +5110,12 @@ void SV_SaveGameClient(uint gameId)
 
     playerHeaderOK = false; // Uninitialized.
 
-    Str_Init(&gameSavePath);
-    SV_ComposeSavePathForClientGameId(gameId, &gameSavePath);
-    if(!SV_OpenFile(Str_Text(&gameSavePath), "wp"))
+    gameSavePath = SV_ComposeSavePathForClientGameId(gameId);
+    if(!SV_OpenFile(Str_Text(gameSavePath), "wp"))
     {
-        Con_Message("Warning:SV_SaveGameClient: Failed opening \"%s\" for writing.\n", Str_Text(&gameSavePath));
-        Str_Free(&gameSavePath);
+        Con_Message("Warning:SV_SaveGameClient: Failed opening \"%s\" for writing.\n", Str_Text(gameSavePath));
         return;
     }
-    Str_Free(&gameSavePath);
 
     // Prepare the header.
     saveInfo = SaveInfo_New();
@@ -5163,7 +5154,7 @@ void SV_LoadGameClient(uint gameId)
 #if !__JHEXEN__ // unsupported in libhexen
     player_t* cpl = players + CONSOLEPLAYER;
     mobj_t* mo = cpl->plr->mo;
-    ddstring_t gameSavePath;
+    AutoStr* gameSavePath;
     SaveInfo* saveInfo;
 
     errorIfNotInited("SV_LoadGameClient");
@@ -5173,16 +5164,12 @@ void SV_LoadGameClient(uint gameId)
 
     playerHeaderOK = false; // Uninitialized.
 
-    Str_Init(&gameSavePath);
-    SV_ComposeSavePathForClientGameId(gameId, &gameSavePath);
-
-    if(!SV_OpenFile(Str_Text(&gameSavePath), "rp"))
+    gameSavePath = SV_ComposeSavePathForClientGameId(gameId);
+    if(!SV_OpenFile(Str_Text(gameSavePath), "rp"))
     {
-        Con_Message("Warning:SV_LoadGameClient: Failed opening \"%s\" for reading.\n", Str_Text(&gameSavePath));
-        Str_Free(&gameSavePath);
+        Con_Message("Warning:SV_LoadGameClient: Failed opening \"%s\" for reading.\n", Str_Text(gameSavePath));
         return;
     }
-    Str_Free(&gameSavePath);
 
     saveInfo = SaveInfo_New();
     SV_SaveInfo_Read(saveInfo);
@@ -5244,23 +5231,19 @@ void SV_LoadGameClient(uint gameId)
 static void unarchiveMap(void)
 {
 #if __JHEXEN__
-    ddstring_t path;
+    // Compose the full path to the saved map.
+    AutoStr* path = SV_ComposeSavePathForMapSlot(gameMap+1, BASE_SLOT);
     size_t bufferSize;
 
-    // Compose the full path to the saved map.
-    Str_Init(&path);
-    SV_ComposeSavePathForMapSlot(gameMap+1, BASE_SLOT, &path);
-
 #ifdef _DEBUG
-    Con_Printf("unarchiveMap: Reading %s\n", Str_Text(&path));
+    Con_Printf("unarchiveMap: Reading %s\n", Str_Text(path));
 #endif
 
     // Load the file
-    bufferSize = M_ReadFile(Str_Text(&path), (char**)&saveBuffer);
+    bufferSize = M_ReadFile(Str_Text(path), (char**)&saveBuffer);
     if(0 == bufferSize)
     {
-        Con_Message("Warning:unarchiveMap: Failed opening \"%s\" for reading.\n", Str_Text(&path));
-        Str_Free(&path);
+        Con_Message("Warning:unarchiveMap: Failed opening \"%s\" for reading.\n", Str_Text(path));
         return;
     }
 
@@ -5277,10 +5260,6 @@ static void unarchiveMap(void)
 
     // Spawn particle generators, fix HOMS etc, etc...
     R_SetupMap(DDSMM_AFTER_LOADING, 0);
-
-#if __JHEXEN__
-    Str_Free(&path);
-#endif
 }
 
 static int saveGameWorker(void* parameters)
@@ -5339,17 +5318,12 @@ static int saveGameWorker(void* parameters)
     // Save out the current map.
 #if __JHEXEN__
     {
-    ddstring_t mapPath;
-
     // Compose the full name to the saved map file.
-    Str_Init(&mapPath);
-    SV_ComposeSavePathForMapSlot(gameMap+1, BASE_SLOT, &mapPath);
+    AutoStr* mapPath = SV_ComposeSavePathForMapSlot(gameMap+1, BASE_SLOT);
 
-    SV_OpenFile(Str_Text(&mapPath), "wp");
+    SV_OpenFile(Str_Text(mapPath), "wp");
     P_ArchiveMap(true); // true = save player info
     SV_CloseFile();
-
-    Str_Free(&mapPath);
     }
 #else
     P_ArchiveMap(true);
@@ -5379,7 +5353,8 @@ boolean SV_SaveGame(int slot, const char* name)
     const int logicalSlot = slot;
 #endif
     SaveInfo* saveInfo;
-    ddstring_t path, nameStr;
+    AutoStr* path;
+    ddstring_t nameStr;
     int saveError;
     assert(name);
 
@@ -5392,14 +5367,17 @@ boolean SV_SaveGame(int slot, const char* name)
     }
     if(!name[0])
     {
-        Con_Message("Warning: Empty name specified for slot #%i, game not save.\n", slot);
+        Con_Message("Warning: Empty name specified for slot #%i, game not saved.\n", slot);
         return false;
     }
 
-    Str_Init(&path);
-    SV_ComposeSavePathForSlot(logicalSlot, &path);
-
-    saveInfo = SaveInfo_NewWithFilePath(&path);
+    path = SV_ComposeSavePathForSlot(logicalSlot);
+    if(Str_IsEmpty(path))
+    {
+        Con_Message("Warning: Path \"%s\" is unreachable, game not saved.\n", SV_SavePath());
+        return false;
+    }
+    saveInfo = SaveInfo_NewWithFilePath(path);
     SaveInfo_SetName(saveInfo, Str_InitStatic(&nameStr, name));
     SaveInfo_SetGameId(saveInfo, SV_GenerateGameId());
     SaveInfo_Configure(saveInfo);
@@ -5424,13 +5402,12 @@ boolean SV_SaveGame(int slot, const char* name)
     }
     else if(saveError == SV_INVALIDFILENAME)
     {
-        Con_Message("Warning: Failed opening \"%s\" for writing.\n", Str_Text(&path));
+        Con_Message("Warning: Failed opening \"%s\" for writing.\n", Str_Text(path));
     }
 
     // Update our game save info.
     SV_UpdateAllSaveInfo();
 
-    Str_Free(&path);
     return !saveError;
 }
 
@@ -5462,8 +5439,11 @@ void SV_HxMapTeleport(uint map, uint position)
     {
         if(P_GetMapCluster(gameMap) == P_GetMapCluster(map))
         {
-            // Same cluster - save current map without saving player mobjs.
-            ddstring_t mapFilePath;
+            /**
+             * Same cluster - save current map without saving player mobjs.
+             */
+            // Compose the full path name to the saved map file.
+            AutoStr* mapFilePath = SV_ComposeSavePathForMapSlot(gameMap+1, BASE_SLOT);
 
             // Set the mobj archive numbers
             SV_InitThingArchive(false, false);
@@ -5471,11 +5451,7 @@ void SV_HxMapTeleport(uint map, uint position)
             // Create and populate the MaterialArchive.
             materialArchive = MaterialArchive_New(true);
 
-            // Compose the full path name to the saved map file.
-            Str_Init(&mapFilePath);
-            SV_ComposeSavePathForMapSlot(gameMap+1, BASE_SLOT, &mapFilePath);
-
-            SV_OpenFile(Str_Text(&mapFilePath), "wp");
+            SV_OpenFile(Str_Text(mapFilePath), "wp");
             P_ArchiveMap(false);
 
             // We are done with the MaterialArchive.
@@ -5484,7 +5460,6 @@ void SV_HxMapTeleport(uint map, uint position)
 
             // Close the output file
             SV_CloseFile();
-            Str_Free(&mapFilePath);
         }
         else
         {
