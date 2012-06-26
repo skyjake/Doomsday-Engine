@@ -33,6 +33,7 @@ struct saveinfo_s
 {
     ddstring_t filePath;
     ddstring_t name;
+    uint gameId;
     saveheader_t header;
 };
 
@@ -44,6 +45,7 @@ SaveInfo* SaveInfo_NewWithFilePath(const ddstring_t* filePath)
     Str_Init(&info->filePath);
     if(filePath) Str_Set(&info->filePath, Str_Text(filePath));
     Str_Init(&info->name);
+    info->gameId = 0;
 
     memset(&info->header, 0, sizeof(info->header));
     return info;
@@ -68,6 +70,12 @@ const ddstring_t* SaveInfo_FilePath(SaveInfo* info)
     return &info->filePath;
 }
 
+uint SaveInfo_GameId(SaveInfo* info)
+{
+    assert(info);
+    return info->gameId;
+}
+
 const saveheader_t* SaveInfo_Header(SaveInfo* info)
 {
     assert(info);
@@ -90,7 +98,7 @@ void SaveInfo_SetFilePath(SaveInfo* info, ddstring_t* newFilePath)
 void SaveInfo_SetGameId(SaveInfo* info, uint newGameId)
 {
     assert(info);
-    info->header.gameId = newGameId;
+    info->gameId = newGameId;
 }
 
 void SaveInfo_SetName(SaveInfo* info, const ddstring_t* newName)
@@ -144,8 +152,10 @@ boolean SaveInfo_IsLoadable(SaveInfo* info)
     assert(info);
 
     if(Str_IsEmpty(&info->filePath)) return false;
+
     // Magic must match.
-    if(info->header.magic != MY_SAVE_MAGIC) return false;
+    if(info->header.magic != MY_SAVE_MAGIC &&
+       info->header.magic != MY_CLIENT_SAVE_MAGIC) return false;
 
     /**
      * Check for unsupported versions.
@@ -232,7 +242,7 @@ void SaveInfo_Write(SaveInfo* saveInfo, Writer* writer)
         Writer_WriteByte(writer, info->players[i]);
     }}
 #endif
-    Writer_WriteInt32(writer, info->gameId);
+    Writer_WriteInt32(writer, saveInfo->gameId);
 }
 
 #if __JDOOM__ || __JHERETIC__
@@ -318,7 +328,7 @@ void SaveInfo_Read(SaveInfo* saveInfo, Reader* reader)
     }}
 #endif
 
-    info->gameId = Reader_ReadInt32(reader);
+    saveInfo->gameId = Reader_ReadInt32(reader);
 
     // Translate gameMode identifiers from older save versions.
 #if __JDOOM__ || __JHERETIC__
@@ -363,7 +373,7 @@ void SaveInfo_Read_Hx_v9(SaveInfo* saveInfo, Reader* reader)
 
     /// @note Older formats do not contain all needed values:
     info->gameMode = gameMode; // Assume the current mode.
-    info->gameId  = 0; // None.
+    saveInfo->gameId  = 0; // None.
 
 # undef HXS_NAME_LENGTH
 # undef HXS_VERSION_TEXT_LENGTH

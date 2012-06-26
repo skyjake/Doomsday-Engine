@@ -42,7 +42,6 @@ typedef struct saveheader_s {
     int mapTime;
     byte players[MAXPLAYERS];
 #endif
-    unsigned int gameId;
 } saveheader_t;
 
 /**
@@ -57,6 +56,8 @@ SaveInfo* SaveInfo_NewWithFilePath(const ddstring_t* filePath);
 void SaveInfo_Delete(SaveInfo* info);
 
 const ddstring_t* SaveInfo_FilePath(SaveInfo* info);
+
+uint SaveInfo_GameId(SaveInfo* info);
 
 const saveheader_t* SaveInfo_Header(SaveInfo* info);
 

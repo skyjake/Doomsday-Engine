@@ -589,8 +589,7 @@ boolean SV_Recognise(SaveInfo* info)
         SV_CloseFile();
 #endif
 
-        return (MY_SAVE_MAGIC == SaveInfo_Header(info)->magic) ||
-               (MY_CLIENT_SAVE_MAGIC == SaveInfo_Header(info)->magic);
+        return SaveInfo_IsLoadable(info);
     }
     return false;
 }
@@ -5041,7 +5040,7 @@ static int loadGameWorker(SaveInfo* saveInfo)
 
 #if !__JHEXEN__
     // In netgames, the server tells the clients about this.
-    NetSv_LoadGame(hdr->gameId);
+    NetSv_LoadGame(SaveInfo_GameId(saveInfo));
 #endif
 
     // Let the engine know where the local players are now.
@@ -5286,7 +5285,7 @@ static int saveGameWorker(void* parameters)
 
     // In netgames the server tells the clients to save their games.
 #if !__JHEXEN__
-    NetSv_SaveGame(SaveInfo_Header(saveInfo)->gameId);
+    NetSv_SaveGame(SaveInfo_GameId(saveInfo));
 #endif
 
     // Set the mobj archive numbers.
