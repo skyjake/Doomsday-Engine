@@ -2454,13 +2454,12 @@ static boolean expandSkinName(ddstring_t* foundPath, const char* skin, const cha
         // The "first choice" directory is that in which the model file resides.
         directory_t* mydir = Dir_ConstructFromPathDir(modelfn);
         Str_Appendf(&searchPath, "%s%s", mydir->path, skin);
-        found = F_FindResourceStr2(RC_GRAPHIC, &searchPath, foundPath) != 0;
+        found = 0 != F_FindResourceStr2(RC_GRAPHIC, &searchPath, foundPath);
         Dir_Delete(mydir);
     }
 
     if(!found)
-    {
-        // Try the resource locator.
+    {   // Try the resource locator.
         Str_Clear(&searchPath); Str_Appendf(&searchPath, MODELS_RESOURCE_NAMESPACE_NAME":%s", skin);
         found = F_FindResourceStr2(RC_GRAPHIC, &searchPath, foundPath) != 0;
     }
