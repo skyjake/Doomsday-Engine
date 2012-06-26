@@ -40,8 +40,6 @@
 // MACROS ------------------------------------------------------------------
 
 #ifdef __GNUC__
-#  define GCC_VERSION (__GNUC__*10000 + __GNUC_MINOR__*100 + __GNUC_PATCHLEVEL__)
-
 /*
  * Something in here is confusing GCC: when compiled with -O2, WAV_MemoryLoad()
  * reads corrupt data. It is likely that the optimizer gets the manipulation of

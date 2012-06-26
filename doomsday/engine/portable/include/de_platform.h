@@ -79,6 +79,10 @@ const char* strcasestr(const char* text, const char* sub);
 #include <string.h>
 #include <errno.h>
 
+#ifdef __GNUC__
+#  define GCC_VERSION (__GNUC__*10000 + __GNUC_MINOR__*100 + __GNUC_PATCHLEVEL__)
+#endif
+
 typedef long long int INTEGER64;
 typedef unsigned int DWORD;
 
