@@ -5352,7 +5352,7 @@ boolean SV_SaveGame(int slot, const char* name)
 #else
     const int logicalSlot = slot;
 #endif
-    SaveInfo* saveInfo;
+    SaveInfo* info;
     AutoStr* path;
     ddstring_t nameStr;
     int saveError;
@@ -5377,16 +5377,14 @@ boolean SV_SaveGame(int slot, const char* name)
         Con_Message("Warning: Path \"%s\" is unreachable, game not saved.\n", SV_SavePath());
         return false;
     }
-    saveInfo = SaveInfo_NewWithFilePath(path);
-    SaveInfo_SetName(saveInfo, Str_InitStatic(&nameStr, name));
-    SaveInfo_SetGameId(saveInfo, SV_GenerateGameId());
-    SaveInfo_Configure(saveInfo);
+    info = SaveInfo_NewWithFilePath(path);
+    SaveInfo_SetName(info, Str_InitStatic(&nameStr, name));
+    SaveInfo_SetGameId(info, SV_GenerateGameId());
+    SaveInfo_Configure(info);
 
     /// @todo Use progress bar mode and update progress during the setup.
     saveError = Con_Busy(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                         "Saving game...", saveGameWorker, saveInfo);
-
-    SaveInfo_Delete(saveInfo);
+                         "Saving game...", saveGameWorker, info);
 
     if(!saveError)
     {
@@ -5397,16 +5395,23 @@ boolean SV_SaveGame(int slot, const char* name)
         // Copy base slot to destination slot.
         SV_CopySlot(BASE_SLOT, slot);
 #endif
+        // Swap the save info.
+        if(saveInfo[slot]) SaveInfo_Delete(saveInfo[slot]);
+        saveInfo[slot] = info;
 
+        // The "last" save slot is now this.
         Con_SetInteger2("game-save-last-slot", slot, SVF_WRITE_OVERRIDE);
     }
-    else if(saveError == SV_INVALIDFILENAME)
+    else
     {
-        Con_Message("Warning: Failed opening \"%s\" for writing.\n", Str_Text(path));
-    }
+        // We no longer need the info.
+        SaveInfo_Delete(info);
 
-    // Update our game save info.
-    SV_UpdateAllSaveInfo();
+        if(saveError == SV_INVALIDFILENAME)
+        {
+            Con_Message("Warning: Failed opening \"%s\" for writing.\n", Str_Text(path));
+        }
+    }
 
     return !saveError;
 }

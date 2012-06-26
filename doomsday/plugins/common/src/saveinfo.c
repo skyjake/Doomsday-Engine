@@ -340,14 +340,13 @@ void SaveInfo_Read_Hx_v9(SaveInfo* saveInfo, Reader* reader)
 # define HXS_VERSION_TEXT_LENGTH 16
 # define HXS_NAME_LENGTH        24
 
-    char verText[HXS_VERSION_TEXT_LENGTH], name[HXS_NAME_LENGTH];
-    ddstring_t nameStr;
+    char verText[HXS_VERSION_TEXT_LENGTH], nameBuffer[HXS_NAME_LENGTH];
     saveheader_t* info;
     assert(saveInfo);
 
     info = &saveInfo->header;
-    Reader_Read(reader, name, HXS_NAME_LENGTH);
-    SaveInfo_SetName(saveInfo, Str_InitStatic(&nameStr, name));
+    Reader_Read(reader, nameBuffer, HXS_NAME_LENGTH);
+    Str_Set(&saveInfo->name, nameBuffer);
     Reader_Read(reader, &verText, HXS_VERSION_TEXT_LENGTH);
     info->version = atoi(&verText[8]);
 
