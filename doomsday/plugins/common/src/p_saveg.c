@@ -567,7 +567,7 @@ boolean SV_Recognise(SaveInfo* info)
 #endif
 
     if(!info) return false;
-    if(Str_IsEmpty(SaveInfo_FilePath(info))) return false;
+    if(!SV_ExistingFile(Str_Text(SaveInfo_FilePath(info)))) return false;
 
 #if __JHEXEN__
     /// @todo Do not buffer the whole file.
