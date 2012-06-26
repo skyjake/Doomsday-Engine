@@ -71,7 +71,7 @@ const ddstring_t* SaveInfo_FilePath(SaveInfo* info)
 const saveheader_t* SaveInfo_Header(SaveInfo* info)
 {
     assert(info);
-    if(!SaveInfo_IsLoadable(info)) return NULL;
+    //if(!SaveInfo_IsLoadable(info)) return NULL;
     return &info->header;
 }
 
