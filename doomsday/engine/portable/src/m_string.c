@@ -449,9 +449,14 @@ ddstring_t* Str_Copy(ddstring_t* str, const ddstring_t* other)
     }
     str->size = other->size;
     str->length = other->length;
+    if(str->size < str->length)
+    {
+        // Static strings do not use the character buffer.
+        str->size = str->length;
+    }
     assert(str->memAlloc);
-    str->str = str->memAlloc(other->size);
-    memcpy(str->str, other->str, other->size);
+    str->str = str->memAlloc(str->size);
+    memcpy(str->str, other->str, str->size);
     return str;
 }
 
