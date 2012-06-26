@@ -39,6 +39,16 @@
 
 // MACROS ------------------------------------------------------------------
 
+#ifdef __GNUC__
+/*
+ * Something in here is confusing GCC: when compiled with -O2, WAV_MemoryLoad()
+ * reads corrupt data. It is likely that the optimizer gets the manipulation of
+ * the 'data' pointer wrong.
+ */
+void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits, int* rate, 
+                     int* samples) __attribute__(( optimize(0) ));
+#endif
+
 #define WAVE_FORMAT_PCM     1
 
 // TYPES -------------------------------------------------------------------
@@ -63,18 +73,6 @@ typedef struct wav_format_s {
     uint16_t        wBitsPerSample; // Sample size
 } wav_format_t;
 #pragma pack()
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
 
@@ -238,6 +236,7 @@ void* WAV_Load(const char* filename, int* bits, int* rate, int* samples)
 
     DFile_Read(file, data, size);
     F_Delete(file);
+    file = 0;
 
     // Parse the RIFF data.
     sampledata = WAV_MemoryLoad((const byte*) data, size, bits, rate, samples);
