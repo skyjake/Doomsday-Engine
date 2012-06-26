@@ -93,10 +93,10 @@ void SaveInfo_SetGameId(SaveInfo* info, uint newGameId)
     info->header.gameId = newGameId;
 }
 
-void SaveInfo_SetName(SaveInfo* info, const char* newName)
+void SaveInfo_SetName(SaveInfo* info, const ddstring_t* newName)
 {
     assert(info);
-    dd_snprintf(info->header.name, SAVESTRINGSIZE, "%s", newName);
+    Str_CopyOrClear(&info->name, newName);
 }
 
 void SaveInfo_Configure(SaveInfo* info)
@@ -214,12 +214,7 @@ void SaveInfo_Write(SaveInfo* saveInfo, Writer* writer)
     Writer_WriteInt32(writer, info->magic);
     Writer_WriteInt32(writer, info->version);
     Writer_WriteInt32(writer, info->gameMode);
-
-    {
-    ddstring_t name;
-    Str_InitStatic(&name, info->name);
-    Str_Write(&name, writer);
-    }
+    Str_Write(&saveInfo->name, writer);
 
     Writer_WriteByte(writer, info->skill);
     Writer_WriteByte(writer, info->episode);
@@ -288,19 +283,17 @@ void SaveInfo_Read(SaveInfo* saveInfo, Reader* reader)
 
     if(info->version >= 10)
     {
-        ddstring_t buf;
-        Str_InitStd(&buf);
-        Str_Read(&buf, reader);
-        memcpy(info->name, Str_Text(&buf), SAVESTRINGSIZE);
-        info->name[SAVESTRINGSIZE] = '\0';
-        Str_Free(&buf);
+        Str_Read(&saveInfo->name, reader);
     }
     else
     {
         // Older formats use a fixed-length name (24 characters).
-        Reader_Read(reader, info->name, SAVESTRINGSIZE);
+#define OLD_NAME_LENGTH         24
+        char buf[OLD_NAME_LENGTH];
+        Reader_Read(reader, buf, OLD_NAME_LENGTH);
+        Str_Set(&saveInfo->name, buf);
+#undef OLD_NAME_LENGTH
     }
-    Str_Set(&saveInfo->name, info->name);
 
     info->skill = Reader_ReadByte(reader);
     info->episode = Reader_ReadByte(reader);
@@ -343,16 +336,18 @@ void SaveInfo_Read(SaveInfo* saveInfo, Reader* reader)
 #if __JHEXEN__
 void SaveInfo_Read_Hx_v9(SaveInfo* saveInfo, Reader* reader)
 {
-# define HXS_VERSION_TEXT      "HXS Ver " // Do not change me!
+# define HXS_VERSION_TEXT       "HXS Ver " // Do not change me!
 # define HXS_VERSION_TEXT_LENGTH 16
+# define HXS_NAME_LENGTH        24
 
-    char verText[HXS_VERSION_TEXT_LENGTH];
+    char verText[HXS_VERSION_TEXT_LENGTH], name[HXS_NAME_LENGTH];
+    ddstring_t nameStr;
     saveheader_t* info;
     assert(saveInfo);
 
     info = &saveInfo->header;
-    Reader_Read(reader, &info->name, SAVESTRINGSIZE);
-    Str_Set(&saveInfo->name, info->name);
+    Reader_Read(reader, name, HXS_NAME_LENGTH);
+    SaveInfo_SetName(saveInfo, Str_InitStatic(&nameStr, name));
     Reader_Read(reader, &verText, HXS_VERSION_TEXT_LENGTH);
     info->version = atoi(&verText[8]);
 
@@ -371,6 +366,7 @@ void SaveInfo_Read_Hx_v9(SaveInfo* saveInfo, Reader* reader)
     info->gameMode = gameMode; // Assume the current mode.
     info->gameId  = 0; // None.
 
+# undef HXS_NAME_LENGTH
 # undef HXS_VERSION_TEXT_LENGTH
 # undef HXS_VERSION_TEXT
 }

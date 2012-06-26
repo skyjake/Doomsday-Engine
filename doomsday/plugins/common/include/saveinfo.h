@@ -24,13 +24,12 @@
 #define LIBCOMMON_SAVEINFO_H
 
 #include "doomsday.h"
-#include "p_savedef.h"
+#include "common.h"
 
 typedef struct saveheader_s {
     int magic;
     int version;
     gamemode_t gameMode;
-    char name[SAVESTRINGSIZE];
     byte skill;
     byte episode;
     byte map;
@@ -67,7 +66,7 @@ void SaveInfo_SetFilePath(SaveInfo* info, ddstring_t* newFilePath);
 
 void SaveInfo_SetGameId(SaveInfo* info, uint newGameId);
 
-void SaveInfo_SetName(SaveInfo* info, const char* newName);
+void SaveInfo_SetName(SaveInfo* info, const ddstring_t* newName);
 
 void SaveInfo_Configure(SaveInfo* info);
 

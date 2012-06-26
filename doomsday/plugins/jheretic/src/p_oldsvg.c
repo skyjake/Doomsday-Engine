@@ -892,16 +892,21 @@ boolean SV_v13_LoadGame(SaveInfo* info)
 
 boolean SV_v13_Recognise(SaveInfo* info)
 {
+#define SAVESTRINGSIZE          24
+
     if(!info || Str_IsEmpty(SaveInfo_FilePath(info))) return false;
 
     if(SV_OpenFile(Str_Text(SaveInfo_FilePath(info)), "r"))
     {
         char nameBuffer[SAVESTRINGSIZE];
+        ddstring_t nameStr;
         lzRead(nameBuffer, SAVESTRINGSIZE, SV_File());
         nameBuffer[SAVESTRINGSIZE - 1] = 0;
-        SaveInfo_SetName(info, nameBuffer);
+        SaveInfo_SetName(info, Str_InitStatic(&nameStr, nameBuffer));
         SV_CloseFile();
         return true;
     }
     return false;
+
+#undef SAVESTRINGSIZE
 }

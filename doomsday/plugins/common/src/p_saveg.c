@@ -5283,21 +5283,15 @@ static void unarchiveMap(void)
 #endif
 }
 
-typedef struct savegameparams_s {
-    const ddstring_t* path;
-    const char* name;
-} savegameworkerparams_t;
-
 static int saveGameWorker(void* parameters)
 {
-    savegameworkerparams_t* parm = parameters;
-    SaveInfo* saveInfo;
+    SaveInfo* saveInfo = parameters;
 
 #if _DEBUG
-    VERBOSE( Con_Message("SV_SaveGame: Attempting save game to \"%s\".\n", Str_Text(parm->path)) )
+    VERBOSE( Con_Message("SV_SaveGame: Attempting save game to \"%s\".\n", Str_Text(SaveInfo_FilePath(saveInfo))) )
 #endif
 
-    if(!openGameSaveFile(Str_Text(parm->path), true))
+    if(!openGameSaveFile(Str_Text(SaveInfo_FilePath(saveInfo)), true))
     {
         Con_BusyWorkerEnd();
         return SV_INVALIDFILENAME; // No success.
@@ -5306,10 +5300,6 @@ static int saveGameWorker(void* parameters)
     playerHeaderOK = false; // Uninitialized.
 
     // Write the game session header.
-    saveInfo = SaveInfo_New();
-    SaveInfo_SetName(saveInfo, parm->name);
-    SaveInfo_SetGameId(saveInfo, SV_GenerateGameId());
-    SaveInfo_Configure(saveInfo);
     SV_SaveInfo_Write(saveInfo);
 
 #if __JHEXEN__
@@ -5377,8 +5367,6 @@ static int saveGameWorker(void* parameters)
     SV_CloseFile();
 #endif
 
-    SaveInfo_Delete(saveInfo);
-
     Con_BusyWorkerEnd();
     return SV_OK;
 }
@@ -5390,8 +5378,8 @@ boolean SV_SaveGame(int slot, const char* name)
 #else
     const int logicalSlot = slot;
 #endif
-    savegameworkerparams_t params;
-    ddstring_t path;
+    SaveInfo* saveInfo;
+    ddstring_t path, nameStr;
     int saveError;
     assert(name);
 
@@ -5411,12 +5399,16 @@ boolean SV_SaveGame(int slot, const char* name)
     Str_Init(&path);
     SV_ComposeSavePathForSlot(logicalSlot, &path);
 
-    params.path = &path;
-    params.name = name;
+    saveInfo = SaveInfo_NewWithFilePath(&path);
+    SaveInfo_SetName(saveInfo, Str_InitStatic(&nameStr, name));
+    SaveInfo_SetGameId(saveInfo, SV_GenerateGameId());
+    SaveInfo_Configure(saveInfo);
 
     /// @todo Use progress bar mode and update progress during the setup.
     saveError = Con_Busy(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                         "Saving game...", saveGameWorker, &params);
+                         "Saving game...", saveGameWorker, saveInfo);
+
+    SaveInfo_Delete(saveInfo);
 
     if(!saveError)
     {
