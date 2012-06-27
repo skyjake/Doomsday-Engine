@@ -517,6 +517,28 @@ static SaveInfo* findSaveInfoForSlot(int slot)
     return saveInfo[slot];
 }
 
+static void replaceSaveInfo(int slot, SaveInfo* newInfo)
+{
+    SaveInfo** destAdr;
+    assert(SV_IsValidSlot(slot));
+    if(slot == AUTO_SLOT)
+    {
+        destAdr = &autoSaveInfo;
+    }
+#if __JHEXEN__
+    else if(slot == BASE_SLOT)
+    {
+        destAdr = &baseSaveInfo;
+    }
+#endif
+    else
+    {
+        destAdr = &saveInfo[slot];
+    }
+    if(*destAdr) SaveInfo_Delete(*destAdr);
+    *destAdr = newInfo;
+}
+
 void SV_Register(void)
 {
     int i;
@@ -5394,8 +5416,7 @@ boolean SV_SaveGame(int slot, const char* name)
         SV_CopySlot(BASE_SLOT, slot);
 #endif
         // Swap the save info.
-        if(saveInfo[slot]) SaveInfo_Delete(saveInfo[slot]);
-        saveInfo[slot] = info;
+        replaceSaveInfo(slot, info);
 
         // The "last" save slot is now this.
         Con_SetInteger2("game-save-last-slot", slot, SVF_WRITE_OVERRIDE);
