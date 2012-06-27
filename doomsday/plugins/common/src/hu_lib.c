@@ -1852,7 +1852,7 @@ void MNEdit_Drawer(mn_object_t* ob, const Point2Raw* _origin)
     fontid_t fontId = rs.textFonts[ob->_pageFontIdx];
     float light = 1, textAlpha = rs.pageAlpha;
     uint numVisCharacters;
-    const char* string;
+    const char* string = 0;
     Point2Raw origin;
     assert(ob->_type == MN_EDIT);
 
@@ -1873,7 +1873,7 @@ void MNEdit_Drawer(mn_object_t* ob, const Point2Raw* _origin)
     DGL_Enable(DGL_TEXTURE_2D);
     FR_SetFont(fontId);
 
-    numVisCharacters = strlen(string);
+    numVisCharacters = string? strlen(string) : 0;
     if(edit->maxVisibleChars > 0 && edit->maxVisibleChars < numVisCharacters)
         numVisCharacters = edit->maxVisibleChars;
 
@@ -1903,8 +1903,8 @@ void MNEdit_Drawer(mn_object_t* ob, const Point2Raw* _origin)
         FR_DrawText3(string, &origin, ALIGN_TOPLEFT, MN_MergeMenuEffectWithDrawTextFlags(0));
 
         // Are we drawing a cursor?
-        if((ob->_flags & MNF_ACTIVE) && (ob->_flags & MNF_FOCUS) && (menuTime & 8)
-           /*&& Str_Length(&edit->text) < MAX_LENGTH*/)
+        if((ob->_flags & MNF_ACTIVE) && (ob->_flags & MNF_FOCUS) && (menuTime & 8) &&
+           (!edit->maxLength || (unsigned)Str_Length(&edit->text) < edit->maxLength))
         {
             origin.x += FR_TextWidth(string);
             FR_DrawChar3('_', &origin, ALIGN_TOPLEFT,  MN_MergeMenuEffectWithDrawTextFlags(0));
@@ -1962,6 +1962,25 @@ int MNEdit_CommandResponder(mn_object_t* ob, menucommand_e cmd)
     return false; // Not eaten.
 }
 
+uint MNEdit_MaxLength(mn_object_t* ob)
+{
+    mndata_edit_t* edit = (mndata_edit_t*)ob->_typedata;
+    assert(ob->_type == MN_EDIT);
+    return edit->maxLength;
+}
+
+void MNEdit_SetMaxLength(mn_object_t* ob, uint newMaxLength)
+{
+    mndata_edit_t* edit = (mndata_edit_t*)ob->_typedata;
+    assert(ob->_type == MN_EDIT);
+    if(newMaxLength < edit->maxLength)
+    {
+        Str_Truncate(&edit->text, newMaxLength);
+        Str_Truncate(&edit->oldtext, newMaxLength);
+    }
+    edit->maxLength = newMaxLength;
+}
+
 const ddstring_t* MNEdit_Text(mn_object_t* ob)
 {
     mndata_edit_t* edit = (mndata_edit_t*)ob->_typedata;
@@ -1974,7 +1993,16 @@ void MNEdit_SetText(mn_object_t* ob, int flags, const char* string)
     mndata_edit_t* edit = (mndata_edit_t*)ob->_typedata;
     assert(ob && ob->_type == MN_EDIT);
 
-    Str_Set(&edit->text, string);
+    if(!edit->maxLength)
+    {
+        Str_Set(&edit->text, string);
+    }
+    else
+    {
+        Str_Clear(&edit->text);
+        Str_PartAppend(&edit->text, string, 0, edit->maxLength);
+    }
+
     if(flags & MNEDIT_STF_REPLACEOLD)
     {
         Str_Copy(&edit->oldtext, &edit->text);
@@ -2029,7 +2057,7 @@ int MNEdit_Responder(mn_object_t* ob, event_t* ev)
         if(ch == '%')
             return true;
 
-        //if(Str_Length(&edit->text) < MAX_LENGTH)
+        if(!edit->maxLength || (unsigned)Str_Length(&edit->text) < edit->maxLength)
         {
             Str_AppendChar(&edit->text, ch);
             if(MNObject_HasAction(ob, MNA_MODIFIED))

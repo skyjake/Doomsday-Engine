@@ -553,6 +553,7 @@ int MNButton_SetFlags(mn_object_t* ob, flagop_t op, int flags);
 typedef struct mndata_edit_s {
     ddstring_t text;
     ddstring_t oldtext; // If the current edit is canceled...
+    uint maxLength;
     uint maxVisibleChars;
     const char* emptyString; // Drawn when editfield is empty/null.
     void* data1;
@@ -567,6 +568,9 @@ void MNEdit_Drawer(mn_object_t* ob, const Point2Raw* origin);
 int MNEdit_CommandResponder(mn_object_t* ob, menucommand_e command);
 int MNEdit_Responder(mn_object_t* ob, event_t* ev);
 void MNEdit_UpdateGeometry(mn_object_t* ob, mn_page_t* page);
+
+uint MNEdit_MaxLength(mn_object_t* ob);
+void MNEdit_SetMaxLength(mn_object_t* ob, uint newMaxLength);
 
 /**
  * @defgroup mneditSetTextFlags  MNEdit Set Text Flags

@@ -1541,6 +1541,7 @@ void Hu_MenuInitPlayerSetupMenu(void)
     Str_Init(&edit->text);
     Str_Init(&edit->oldtext);
     edit->data1 = "net-name";
+    edit->maxLength = 24;
     }
     ob++;
 
@@ -2742,6 +2743,7 @@ static void initAllPages(void)
         mndata_edit_t* slot = saveSlots + i;
         slot->emptyString = (const char*) TXT_EMPTYSTRING;
         slot->data2 = i;
+        slot->maxLength = 24;
     }
 
     loadMenuObjects = Z_Calloc(sizeof(*loadMenuObjects) * (NUMSAVESLOTS+1), PU_GAMESTATIC, 0);
@@ -3201,11 +3203,13 @@ int Hu_MenuFallbackResponder(event_t* ev)
 /**
  * User wants to load this game
  */
-int Hu_MenuSelectLoadSlot(mn_object_t* obj, mn_actionid_t action, void* paramaters)
+int Hu_MenuSelectLoadSlot(mn_object_t* obj, mn_actionid_t action, void* parameters)
 {
     mndata_edit_t* edit = (mndata_edit_t*)obj->_typedata;
     const int saveSlot = edit->data2;
     mn_page_t* saveGamePage;
+
+    DENG_UNUSED(parameters);
 
     if(MNA_ACTIVEOUT != action) return 1;
 
