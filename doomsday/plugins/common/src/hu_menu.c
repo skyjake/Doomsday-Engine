@@ -477,23 +477,6 @@ static mn_object_t OptionsMenuObjects[] = {
     { MN_NONE }
 };
 
-mndata_slider_t sld_sound_sfx_volume = { 0, 255, 0, 5, false, "sound-volume" };
-mndata_slider_t sld_sound_music_volume = { 0, 255, 0, 5, false, "music-volume" };
-
-mndata_text_t txt_sound_sfx_volume = { "SFX Volume" };
-mndata_text_t txt_sound_music_volume = { "Music Volume" };
-
-mndata_button_t btn_sound_open_audio_panel = { false, NULL, "Open Audio Panel" };
-
-mn_object_t SoundMenuObjects[] = {
-    { MN_TEXT,      0,  0,  { 0, 0 }, 0,   MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry,   MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_sound_sfx_volume },
-    { MN_SLIDER,    0,  0,  { 0, 0 }, 's', MENU_FONT1, MENU_COLOR1, MNSlider_Ticker, MNSlider_UpdateGeometry, MNSlider_Drawer, { Hu_MenuCvarSlider, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_sound_sfx_volume },
-    { MN_TEXT,      0,  0,  { 0, 0 }, 0,   MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry,   MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_sound_music_volume },
-    { MN_SLIDER,    0,  0,  { 0, 0 }, 'm', MENU_FONT1, MENU_COLOR1, MNSlider_Ticker, MNSlider_UpdateGeometry, MNSlider_Drawer, { Hu_MenuCvarSlider, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_sound_music_volume },
-    { MN_BUTTON,    0,  0,  { 0, 0 }, 'p', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuSelectControlPanelLink, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_sound_open_audio_panel, NULL, 1 },
-    { MN_NONE }
-};
-
 #if __JDOOM64__
 mndata_slider_t sld_hud_viewsize = { 3, 11, 0, 1, false, "view-size" };
 #else
@@ -1898,6 +1881,117 @@ void Hu_MenuInitWeaponsMenu(void)
     page->objects = WeaponMenuObjects;
 }
 
+void Hu_MenuInitSoundOptionsPage(void)
+{
+#if __JHEXEN__
+    const Point2Raw origin = { 97, 25 };
+#elif __JHERETIC__
+    const Point2Raw origin = { 97, 30 };
+#elif __JDOOM__ || __JDOOM64__
+    const Point2Raw origin = { 97, 40 };
+#endif
+    mn_object_t* objects, *ob;
+    const uint numObjects = 6;
+    mn_page_t* page;
+
+    page = Hu_MenuNewPage("SoundOptions", &origin, 0, Hu_MenuPageTicker, NULL, NULL, NULL);
+    MNPage_SetTitle(page, "Sound Options");
+    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
+    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Options"));
+
+    objects = Z_Calloc(sizeof(*objects) * numObjects, PU_GAMESTATIC, 0);
+    if(!objects) Con_Error("Hu_MenuInitFilesMenu: Failed on allocation of %lu bytes for menu objects.", (unsigned long) (sizeof(*objects) * numObjects));
+
+    ob = objects;
+
+    ob->_type = MN_TEXT;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "SFX Volume";
+    }
+    ob++;
+
+    ob->_type = MN_SLIDER;
+    ob->_shortcut = 's';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNSlider_Ticker;
+    ob->updateGeometry = MNSlider_UpdateGeometry;
+    ob->drawer = MNSlider_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarSlider;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNSlider_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_slider_t), PU_GAMESTATIC, 0);
+    { mndata_slider_t* sld = (mndata_slider_t*)ob->_typedata;
+    sld->min = 0;
+    sld->max = 255;
+    sld->value = 0;
+    sld->step = 5;
+    sld->floatMode = false;
+    sld->data1 = "sound-volume";
+    }
+    ob++;
+
+    ob->_type = MN_TEXT;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Music Volume";
+    }
+    ob++;
+
+    ob->_type = MN_SLIDER;
+    ob->_shortcut = 'm';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNSlider_Ticker;
+    ob->updateGeometry = MNSlider_UpdateGeometry;
+    ob->drawer = MNSlider_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarSlider;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNSlider_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_slider_t), PU_GAMESTATIC, 0);
+    { mndata_slider_t* sld = (mndata_slider_t*)ob->_typedata;
+    sld->min = 0;
+    sld->max = 255;
+    sld->value = 0;
+    sld->step = 5;
+    sld->floatMode = false;
+    sld->data1 = "music-volume";
+    }
+    ob++;
+
+    ob->_type = MN_BUTTON;
+    ob->_shortcut = 'p';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectControlPanelLink;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    ob->data2 = 1;
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+    btn->text = "Open Audio Panel";
+    }
+    ob++;
+
+    ob->_type = MN_NONE;
+
+    page->objects = objects;
+}
+
 #if __JDOOM__ || __JHERETIC__
 /**
  * Construct the episode selection menu.
@@ -2997,22 +3091,7 @@ static void initAllPages(void)
     }
 #endif
 
-    {
-#if __JHEXEN__
-    const Point2Raw origin = { 97, 25 };
-#elif __JHERETIC__
-    const Point2Raw origin = { 97, 30 };
-#elif __JDOOM__ || __JDOOM64__
-    const Point2Raw origin = { 97, 40 };
-#endif
-
-    page = Hu_MenuNewPage("SoundOptions", &origin, 0, Hu_MenuPageTicker, NULL, NULL, NULL);
-    MNPage_SetTitle(page, "Sound Options");
-    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
-    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Options"));
-    page->objects = SoundMenuObjects;
-    }
-
+    Hu_MenuInitSoundOptionsPage();
     Hu_MenuInitControlsPage();
 }
 
