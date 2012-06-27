@@ -1181,83 +1181,6 @@ mn_object_t MultiplayerMenuObjects[] = {
     { MN_NONE }
 };
 
-mndata_mobjpreview_t mop_player_preview;
-mndata_edit_t edit_player_name = { "", "", 0, NULL, "net-name" };
-
-#if __JHEXEN__
-mndata_listitem_t listit_player_class[3] = {
-    { (const char*)TXT_PLAYERCLASS1, PCLASS_FIGHTER },
-    { (const char*)TXT_PLAYERCLASS2, PCLASS_CLERIC },
-    { (const char*)TXT_PLAYERCLASS3, PCLASS_MAGE }
-};
-mndata_list_t list_player_class = {
-    listit_player_class, NUMLISTITEMS(listit_player_class)
-};
-#endif
-
-/// @todo Read these names from Text definitions.
-mndata_listitem_t listit_player_color[NUMPLAYERCOLORS+1] = {
-#if __JHEXEN__
-    { "Red",        0 },
-    { "Blue",       1 },
-    { "Yellow",     2 },
-    { "Green",      3 },
-    { "Jade",       4 },
-    { "White",      5 },
-    { "Hazel",      6 },
-    { "Purple",     7 },
-    { "Automatic",  8 }
-#elif __JHERETIC__
-    { "Green",      0 },
-    { "Orange",     1 },
-    { "Red",        2 },
-    { "Blue",       3 },
-    { "Automatic",  4 }
-#else
-    { "Green",      0 },
-    { "Indigo",     1 },
-    { "Brown",      2 },
-    { "Red",        3 },
-    { "Automatic",  4}
-#endif
-};
-mndata_list_t list_player_color = {
-    listit_player_color, NUMLISTITEMS(listit_player_color)
-};
-
-#ifdef __JHEXEN__
-mndata_listitem_t listit_player_color_v10[5] = {
-    { "Red",        0 },
-    { "Blue",       1 },
-    { "Yellow",     2 },
-    { "Green",      3 },
-    { "Automatic",  8 }
-};
-mndata_list_t list_player_color_v10 = {
-    listit_player_color_v10, NUMLISTITEMS(listit_player_color_v10)
-};
-#endif
-
-#if __JHEXEN__
-mndata_text_t txt_player_class = { "Class" };
-#endif
-mndata_text_t txt_player_color = { "Color" };
-
-mndata_button_t btn_player_save_changes = { false, NULL, "Save Changes" };
-
-mn_object_t PlayerSetupMenuObjects[] = {
-    { MN_MOBJPREVIEW, 0,MNF_ID0,    { 0, 0 }, 0,   MENU_FONT1, MENU_COLOR1, MNMobjPreview_Ticker, MNMobjPreview_UpdateGeometry, MNMobjPreview_Drawer, { NULL }, NULL, NULL, NULL, &mop_player_preview },
-    { MN_EDIT,      0,  MNF_ID1,    { 0, 0 }, 0,   MENU_FONT1, MENU_COLOR1, MNEdit_Ticker,   MNEdit_UpdateGeometry, MNEdit_Drawer, { NULL, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNEdit_CommandResponder, MNEdit_Responder, NULL, &edit_player_name },
-#if __JHEXEN__
-    { MN_TEXT,      0,  0,          { 0, 0 }, 0,   MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_player_class },
-    { MN_LISTINLINE, 0, MNF_ID2,    { 0, 0 }, 'c', MENU_FONT1, MENU_COLOR3, MNListInline_Ticker, MNListInline_UpdateGeometry, MNListInline_Drawer, { Hu_MenuSelectPlayerSetupPlayerClass, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNListInline_CommandResponder, NULL, NULL, &list_player_class },
-#endif
-    { MN_TEXT,      0,  0,          { 0, 0 }, 0,   MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_player_color },
-    { MN_LISTINLINE,0,  MNF_ID3,    { 0, 0 }, 0,   MENU_FONT1, MENU_COLOR3, MNListInline_Ticker, MNListInline_UpdateGeometry, MNListInline_Drawer, { Hu_MenuSelectPlayerColor, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNListInline_CommandResponder, NULL, NULL, &list_player_color },
-    { MN_BUTTON,    0,  0,          { 0, 0 }, 's', MENU_FONT2, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuSelectAcceptPlayerSetup, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_player_save_changes },
-    { MN_NONE }
-};
-
 mndata_slider_t sld_colorwidget_red = {
     0, 1, 0, .05f, true
 };
@@ -1565,6 +1488,222 @@ void Hu_MenuInitSkillMenu(void)
         MNButton_SetFlags(ob, FO_SET, MNBUTTON_NO_ALTTEXT);
     }
 #endif
+}
+
+void Hu_MenuInitPlayerSetupMenu(void)
+{
+#if __JHERETIC__ || __JHEXEN__
+    const Point2Raw origin = { 70, 54 };
+#else
+    const Point2Raw origin = { 70, 54 };
+#endif
+    mn_object_t* objects, *ob;
+    mn_page_t* page;
+    uint numObjects;
+
+    page = Hu_MenuNewPage("PlayerSetup", &origin, 0, Hu_MenuPageTicker, Hu_MenuDrawPlayerSetupPage, NULL, NULL);
+    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
+    MNPage_SetPredefinedFont(page, MENU_FONT2, FID(GF_FONTB));
+    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Multiplayer"));
+
+#if __JHEXEN__
+    numObjects = 8;
+#else
+    numObjects = 6;
+#endif
+    objects = Z_Calloc(sizeof(*objects) * numObjects, PU_GAMESTATIC, 0);
+    if(!objects) Con_Error("Hu_MenuInitPlayerSetupMenu: Failed on allocation of %lu bytes for player setup menu objects.", (unsigned long) (sizeof(*objects) * numObjects));
+
+    ob = objects;
+
+    ob->_type = MN_MOBJPREVIEW;
+    ob->_flags = MNF_ID0;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNMobjPreview_Ticker;
+    ob->updateGeometry = MNMobjPreview_UpdateGeometry;
+    ob->drawer = MNMobjPreview_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_mobjpreview_t), PU_GAMESTATIC, 0);
+    ob++;
+
+    ob->_type = MN_EDIT;
+    ob->_flags = MNF_ID1;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNEdit_Ticker;
+    ob->updateGeometry = MNEdit_UpdateGeometry;
+    ob->drawer = MNEdit_Drawer;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNEdit_CommandResponder;
+    ob->responder = MNEdit_Responder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_edit_t), PU_GAMESTATIC, 0);
+    { mndata_edit_t* edit = (mndata_edit_t*)ob->_typedata;
+    edit->data1 = "net-name";
+    }
+    ob++;
+
+#if __JHEXEN__
+    ob->_type = MN_TEXT;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Class";
+    }
+    ob++;
+
+    ob->_type = MN_LISTINLINE;
+    ob->_flags = MNF_ID2;
+    ob->_shortcut = 'c';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR3;
+    ob->ticker = MNListInline_Ticker;
+    ob->updateGeometry = MNListInline_UpdateGeometry;
+    ob->drawer = MNListInline_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuSelectPlayerSetupPlayerClass;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNListInline_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_list_t), PU_GAMESTATIC, 0);
+    { mndata_list_t* list = (mndata_list_t*)ob->_typedata;
+    list->count = 3;
+    list->items = (mndata_listitem_t*)Z_Calloc(sizeof(mndata_listitem_t) * list->count, PU_GAMESTATIC, 0);
+
+    { mndata_listitem_t* item = list->items;
+    item->text = (const char*)TXT_PLAYERCLASS1;
+    item->data = PCLASS_FIGHTER;
+    item++;
+
+    item->text = (const char*)TXT_PLAYERCLASS2;
+    item->data = PCLASS_CLERIC;
+    item++;
+
+    item->text = (const char*)TXT_PLAYERCLASS3;
+    item->data = PCLASS_MAGE;
+    }
+    }
+    ob++;
+#endif
+
+    ob->_type = MN_TEXT;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Color";
+    }
+    ob++;
+
+    // Setup the player color selection list.
+    ob->_type = MN_LISTINLINE;
+    ob->_flags = MNF_ID3;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR3;
+    ob->ticker = MNListInline_Ticker;
+    ob->updateGeometry = MNListInline_UpdateGeometry;
+    ob->drawer = MNListInline_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuSelectPlayerColor;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNListInline_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_list_t), PU_GAMESTATIC, 0);
+    { mndata_list_t* list = (mndata_list_t*)ob->_typedata;
+#if __JHEXEN__
+    // Hexen v1.0 has only four player colors.
+    list->count = (gameMode == hexen_v10? 4 : NUMPLAYERCOLORS) + 1/*auto*/;
+#else
+    list->count = NUMPLAYERCOLORS + 1/*auto*/;
+#endif
+    list->items = (mndata_listitem_t*)Z_Calloc(sizeof(mndata_listitem_t) * list->count, PU_GAMESTATIC, 0);
+
+    /// @todo Read these names from Text definitions.
+    { mndata_listitem_t* item = list->items;
+#if __JHEXEN__
+    item->text = "Red";         item->data = 0;
+    item++;
+
+    item->text = "Blue";        item->data = 1;
+    item++;
+
+    item->text = "Yellow";      item->data = 2;
+    item++;
+
+    item->text = "Green";       item->data = 3;
+    item++;
+
+    // Hexen v1.0 has only four player colors.
+    if(gameMode != hexen_v10)
+    {
+        item->text = "Jade";    item->data = 4;
+        item++;
+
+        item->text = "White";   item->data = 5;
+        item++;
+
+        item->text = "Hazel";   item->data = 6;
+        item++;
+
+        item->text = "Purple";  item->data = 7;
+        item++;
+    }
+
+    item->text = "Automatic";   item->data = 8;
+#elif __JHERETIC__
+    item->text = "Green";       item->data = 0;
+    item++;
+
+    item->text = "Orange";      item->data = 1;
+    item++;
+
+    item->text = "Red";         item->data = 2;
+    item++;
+
+    item->text = "Blue";        item->data = 3;
+    item++;
+
+    item->text = "Automatic";   item->data = 4;
+#else
+    item->text = "Green";       item->data = 0;
+    item++;
+
+    item->text = "Indigo";      item->data = 1;
+    item++;
+
+    item->text = "Brown";       item->data = 2;
+    item++;
+
+    item->text = "Red";         item->data = 3;
+    item++;
+
+    item->text = "Automatic";   item->data = 4;
+#endif
+    }
+    }
+    ob++;
+
+    ob->_type = MN_BUTTON;
+    ob->_shortcut = 's';
+    ob->_pageFontIdx = MENU_FONT2;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectPlayerColor;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+    btn->text = "Save Changes";
+    }
+    ob++;
+
+    ob->_type = MN_NONE;
+
+    page->objects = objects;
 }
 
 static int compareWeaponPriority(const void* _a, const void* _b)
@@ -1889,22 +2028,6 @@ void Hu_MenuInit(void)
     cvarbutton_t* cvb;
 
     if(inited) return;
-
-#ifdef __JHEXEN__
-    // Setup the player color selection list.
-    memset(&list_player_color, 0, sizeof(list_player_color));
-    if(gameMode == hexen_v10)
-    {
-        // Hexen v1.0 has only four player colors.
-        list_player_color.items = listit_player_color_v10;
-        list_player_color.count = NUMLISTITEMS(listit_player_color_v10);
-    }
-    else
-    {
-        list_player_color.items = listit_player_color;
-        list_player_color.count = NUMLISTITEMS(listit_player_color);
-    }
-#endif
 
     pageCount = 0;
     pages = NULL;
@@ -2580,19 +2703,7 @@ static void initAllPages(void)
     page->objects = MultiplayerMenuObjects;
     }
 
-    {
-#if __JHERETIC__ || __JHEXEN__
-    const Point2Raw origin = { 70, 54 };
-#else
-    const Point2Raw origin = { 70, 54 };
-#endif
-
-    page = Hu_MenuNewPage("PlayerSetup", &origin, 0, Hu_MenuPageTicker, Hu_MenuDrawPlayerSetupPage, NULL, NULL);
-    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
-    MNPage_SetPredefinedFont(page, MENU_FONT2, FID(GF_FONTB));
-    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Multiplayer"));
-    page->objects = PlayerSetupMenuObjects;
-    }
+    Hu_MenuInitPlayerSetupMenu();
 
 #if __JHERETIC__ || __JHEXEN__
     {
