@@ -76,10 +76,11 @@ void PO_StopSequence(Polyobj* po)
     SN_StopSequence((mobj_t*) po);
 }
 
-void PO_SetDestination(Polyobj* po, coord_t dist, uint an, float speed)
+void PO_SetDestination(Polyobj* po, coord_t dist, uint fineAngle, float speed)
 {
-    po->dest[VX] = po->origin[VX] + dist * FIX2FLT(finecosine[an]);
-    po->dest[VY] = po->origin[VY] + dist * FIX2FLT(finesine[an]);
+    assert(fineAngle < FINEANGLES);
+    po->dest[VX] = po->origin[VX] + dist * FIX2FLT(finecosine[fineAngle]);
+    po->dest[VY] = po->origin[VY] + dist * FIX2FLT(finesine[fineAngle]);
     po->speed = speed;
 }
 
