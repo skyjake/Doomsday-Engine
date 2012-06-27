@@ -67,7 +67,8 @@ typedef struct ddstring_s {
     /// String length (no terminating nulls).
     size_t length;
 
-    /// Allocated buffer size (note: not necessarily equal to ddstring_t::length).
+    /// Allocated buffer size: includes the terminating null and possibly
+    /// some extra space.
     size_t size;
 
     // Memory management.

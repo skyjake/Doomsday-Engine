@@ -57,36 +57,38 @@ static void autoselectMemoryManagement(ddstring_t* str)
     assert(str->memCalloc);
 }
 
-static void allocateString(ddstring_t *str, size_t for_length, int preserve)
+static void allocateString(ddstring_t *str, size_t forLength, int preserve)
 {
-    boolean old_data = false;
-    char   *buf;
+    size_t oldSize = str->size;
+    char *buf;
 
     // Include the terminating null character.
-    for_length++;
+    forLength++;
 
-    if(str->size >= for_length)
+    if(str->size >= forLength)
         return; // We're OK.
 
     autoselectMemoryManagement(str);
 
-    // Already some memory allocated?
-    if(str->size)
-        old_data = true;
-    else
-        str->size = 1;
-
-    while(str->size < for_length)
+    // Determine the new size of the memory buffer.
+    if(!str->size) str->size = 1;
+    while(str->size < forLength)
+    {
         str->size *= 2;
+    }
 
     assert(str->memCalloc);
     buf = str->memCalloc(str->size);
 
-    if(preserve && str->str)
-        strncpy(buf, str->str, str->size - 1);
+    if(preserve && str->str && oldSize)
+    {
+        // Copy the old contents of the string.
+        assert(oldSize <= str->size);
+        memcpy(buf, str->str, oldSize);
+    }
 
     // Replace the old string with the new buffer.
-    if(old_data)
+    if(oldSize)
     {
         assert(str->memFree);
         str->memFree(str->str);
