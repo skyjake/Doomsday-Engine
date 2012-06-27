@@ -211,6 +211,10 @@ void P_InitMapInfo(void)
         SC_MustGetString();
         strcpy(info->name, sc_String);
 
+#ifdef _DEBUG
+        Con_Message("MAPINFO: map%i \"%s\" warp:%i\n", map, info->name, info->warpTrans);
+#endif
+
         // Process optional tokens
         while(SC_GetString())
         {
@@ -369,13 +373,38 @@ static __inline uint qualifyMap(uint map)
 uint P_TranslateMap(uint map)
 {
     uint i;
+    uint matchWithoutCluster = 0;
+
     for(i = 0; i < 99; ++i)
     {
         const mapinfo_t* info = &MapInfo[i];
-        if(info->cluster && info->warpTrans == map)
-            return i;
+#ifdef _DEBUG
+        //Con_Message("P_TranslateMap: checking MAPINFO entry %i: warp %i name \"%s\"\n", i, info->warpTrans, info->name);
+#endif
+        if(info->warpTrans == map)
+        {
+            if(info->cluster)
+            {
+#ifdef _DEBUG
+                Con_Message("P_TranslateMap: warp %i translated to logical %i, cluster %i\n", map, i, info->cluster);
+                return i;
+#endif
+            }
+            else
+            {
+#ifdef _DEBUG
+                Con_Message("P_TranslateMap: warp %i matches logical %i, but it has no cluster\n", map, i);
+#endif
+                matchWithoutCluster = i;
+            }
+        }
     }
-    return 0; // Not found, default to map zero.
+
+#ifdef _DEBUG
+    Con_Message("P_TranslateMap: could not find warp %i, translating to logical %i\n",
+                map, matchWithoutCluster);
+#endif
+    return matchWithoutCluster; // 0 if nothing matched
 }
 
 /**
