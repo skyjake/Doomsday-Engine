@@ -446,17 +446,6 @@ static mn_object_t SkillMenuObjects[] = {
 };
 #endif
 
-#if __JHERETIC__ || __JHEXEN__
-mndata_button_t btn_files_load_game = { false, NULL, "Load Game" };
-mndata_button_t btn_files_save_game = { false, NULL, "Save Game" };
-
-static mn_object_t FilesMenuObjects[] = {
-    { MN_BUTTON,    0,  0,  { 0, 0 }, 'l', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuSelectLoadGame, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_files_load_game },
-    { MN_BUTTON,    0,  0,  { 0, FIXED_LINE_HEIGHT }, 's', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuSelectSaveGame, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_files_save_game },
-    { MN_NONE }
-};
-#endif
-
 mndata_button_t btn_options_end_game = { false, NULL, "End Game" };
 mndata_button_t btn_options_control_panel = { false, NULL, "Control Panel" };
 mndata_button_t btn_options_controls = { false, NULL, "Controls" };
@@ -1761,6 +1750,65 @@ void Hu_MenuInitPlayerSetupMenu(void)
     page->objects = objects;
 }
 
+#if __JHERETIC__ || __JHEXEN__
+void Hu_MenuInitFilesMenu(void)
+{
+    Point2Raw origin = { 110, 60 };
+    mn_object_t* objects, *ob;
+    const uint numObjects = 3;
+    mn_page_t* page;
+    int y;
+
+    page = Hu_MenuNewPage("Files", &origin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, NULL, NULL, NULL);
+    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTB));
+    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Main"));
+
+    objects = Z_Calloc(sizeof(*objects) * numObjects, PU_GAMESTATIC, 0);
+    if(!objects) Con_Error("Hu_MenuInitFilesMenu: Failed on allocation of %lu bytes for menu objects.", (unsigned long) (sizeof(*objects) * numObjects));
+
+    ob = objects;
+    y = 0;
+
+    ob->_type = MN_BUTTON;
+    ob->_origin.y = y;
+    ob->_shortcut = 'l';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectLoadGame;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+    btn->text = "Load Game";
+    }
+    ob++; y += FIXED_LINE_HEIGHT;
+
+    ob->_type = MN_BUTTON;
+    ob->_origin.y = y;
+    ob->_shortcut = 's';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectSaveGame;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+    btn->text = "Save Game";
+    }
+    ob++; y += FIXED_LINE_HEIGHT;
+
+    ob->_type = MN_NONE;
+
+    page->objects = objects;
+}
+#endif
+
 static int compareWeaponPriority(const void* _a, const void* _b)
 {
     const mndata_listitem_t* a = (const mndata_listitem_t*)_a;
@@ -2750,14 +2798,7 @@ static void initAllPages(void)
     Hu_MenuInitPlayerSetupMenu();
 
 #if __JHERETIC__ || __JHEXEN__
-    {
-    Point2Raw origin = { 110, 60 };
-
-    page = Hu_MenuNewPage("Files", &origin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, NULL, NULL, NULL);
-    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTB));
-    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Main"));
-    page->objects = FilesMenuObjects;
-    }
+    Hu_MenuInitFilesMenu();
 #endif
 
     {
