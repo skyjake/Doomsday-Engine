@@ -81,7 +81,18 @@ void PO_SetDestination(Polyobj* po, coord_t dist, uint fineAngle, float speed)
     assert(fineAngle < FINEANGLES);
     po->dest[VX] = po->origin[VX] + dist * FIX2FLT(finecosine[fineAngle]);
     po->dest[VY] = po->origin[VY] + dist * FIX2FLT(finesine[fineAngle]);
-    po->speed = speed;
+    po->speed    = speed;
+}
+
+void PODoor_UpdateDestination(polydoor_t* pd)
+{
+    Polyobj* po = P_GetPolyobj(pd->polyobj);
+
+    // Only sliding doors need the destination info. (Right? -jk)
+    if(pd->type == PODOOR_SLIDE)
+    {
+        PO_SetDestination(po, FIX2FLT(pd->dist), pd->direction, FIX2FLT(pd->intSpeed));
+    }
 }
 
 // ===== Polyobj Event Code =====
@@ -346,8 +357,7 @@ void T_PolyDoor(polydoor_t* pd)
             PO_StartSequence(po, SEQ_DOOR_STONE);
 
             // Movement is about to begin. Update the destination.
-            PO_SetDestination(P_GetPolyobj(pd->polyobj), FIX2FLT(pd->dist),
-                              pd->direction, FIX2FLT(pd->intSpeed));
+            PODoor_UpdateDestination(pd);
         }
         return;
     }
@@ -367,8 +377,7 @@ void T_PolyDoor(polydoor_t* pd)
                     pd->dist = pd->totalDist;
                     pd->close = true;
                     pd->tics = pd->waitTics;
-                    pd->direction =
-                        (ANGLE_MAX >> ANGLETOFINESHIFT) - pd->direction;
+                    pd->direction = (ANGLE_MAX >> ANGLETOFINESHIFT) - pd->direction;
                     pd->speed[MX] = -pd->speed[MX];
                     pd->speed[MY] = -pd->speed[MY];
                 }
@@ -391,13 +400,11 @@ void T_PolyDoor(polydoor_t* pd)
             else
             {   // Open back up.
                 pd->dist = pd->totalDist - pd->dist;
-                pd->direction =
-                    (ANGLE_MAX >> ANGLETOFINESHIFT) - pd->direction;
+                pd->direction = (ANGLE_MAX >> ANGLETOFINESHIFT) - pd->direction;
                 pd->speed[MX] = -pd->speed[MX];
                 pd->speed[MY] = -pd->speed[MY];
                 // Update destination.
-                PO_SetDestination(P_GetPolyobj(pd->polyobj), FIX2FLT(pd->dist),
-                                  pd->direction, FIX2FLT(pd->intSpeed));
+                PODoor_UpdateDestination(pd);
                 pd->close = false;
                 PO_StartSequence(po, SEQ_DOOR_STONE);
             }
@@ -505,7 +512,7 @@ boolean EV_OpenPolyDoor(LineDef* line, byte* args, podoortype_t type)
     }
 
     po->specialData = pd;
-    PO_SetDestination(po, FIX2FLT(pd->dist), pd->direction, FIX2FLT(pd->intSpeed));
+    PODoor_UpdateDestination(pd);
 
     while((mirror = getPolyobjMirror(polyNum)) != 0)
     {
@@ -544,7 +551,7 @@ boolean EV_OpenPolyDoor(LineDef* line, byte* args, podoortype_t type)
             PO_StartSequence(po, SEQ_DOOR_STONE);
         }
         polyNum = mirror;
-        PO_SetDestination(po, FIX2FLT(pd->dist), pd->direction, FIX2FLT(pd->intSpeed));
+        PODoor_UpdateDestination(pd);
     }
 
     return true;
@@ -676,7 +683,7 @@ void PO_InitForMap(void)
 
 boolean PO_Busy(int polyobj)
 {
-    Polyobj*            po = P_GetPolyobj(polyobj);
+    Polyobj* po = P_GetPolyobj(polyobj);
 
     if(po && po->specialData != NULL)
         return true;
