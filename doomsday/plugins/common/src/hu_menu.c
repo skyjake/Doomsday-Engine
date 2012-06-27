@@ -1135,41 +1135,6 @@ static mn_object_t GameplayMenuObjects[] = {
     { MN_NONE }
 };
 
-mndata_slider_t sld_colorwidget_red = {
-    0, 1, 0, .05f, true
-};
-mndata_slider_t sld_colorwidget_green = {
-    0, 1, 0, .05f, true
-};
-mndata_slider_t sld_colorwidget_blue = {
-    0, 1, 0, .05f, true
-};
-mndata_slider_t sld_colorwidget_alpha = {
-    0, 1, 0, .05f, true
-};
-
-mndata_colorbox_t cbox_colorwidget_mixcolor = {
-    SCREENHEIGHT/7, SCREENHEIGHT/7, 0, 0, 0, 0, true
-};
-
-mndata_text_t txt_colorwidget_red   = { "Red" };
-mndata_text_t txt_colorwidget_green = { "Green" };
-mndata_text_t txt_colorwidget_blue  = { "Blue" };
-mndata_text_t txt_colorwidget_alpha = { "Opacity" };
-
-static mn_object_t ColorWidgetMenuObjects[] = {
-    { MN_COLORBOX,  0,  MNF_ID0|MNF_NO_FOCUS, { 0, 0 }, 0, MENU_FONT1, MENU_COLOR1, MNColorBox_Ticker, MNColorBox_UpdateGeometry, MNColorBox_Drawer, { NULL }, NULL, NULL, NULL, &cbox_colorwidget_mixcolor },
-    { MN_TEXT,      0,  0,        { 0, 0 }, 0,   MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_colorwidget_red },
-    { MN_SLIDER,    0,  MNF_ID1,  { 0, 0 }, 'r', MENU_FONT1, MENU_COLOR1, MNSlider_Ticker, MNSlider_UpdateGeometry, MNSlider_Drawer, { Hu_MenuUpdateColorWidgetColor, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_colorwidget_red,   NULL, CR },
-    { MN_TEXT,      0,  0,        { 0, 0 }, 0,   MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_colorwidget_green },
-    { MN_SLIDER,    0,  MNF_ID2,  { 0, 0 }, 'g', MENU_FONT1, MENU_COLOR1, MNSlider_Ticker, MNSlider_UpdateGeometry, MNSlider_Drawer, { Hu_MenuUpdateColorWidgetColor, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_colorwidget_green, NULL, CG },
-    { MN_TEXT,      0,  0,        { 0, 0 }, 0,   MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_colorwidget_blue },
-    { MN_SLIDER,    0,  MNF_ID3,  { 0, 0 }, 'b', MENU_FONT1, MENU_COLOR1, MNSlider_Ticker, MNSlider_UpdateGeometry, MNSlider_Drawer, { Hu_MenuUpdateColorWidgetColor, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_colorwidget_blue,  NULL, CB },
-    { MN_TEXT,      0,  MNF_ID4,  { 0, 0 }, 0,   MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_colorwidget_alpha },
-    { MN_SLIDER,    0,  MNF_ID5,  { 0, 0 }, 'a', MENU_FONT1, MENU_COLOR1, MNSlider_Ticker, MNSlider_UpdateGeometry, MNSlider_Drawer, { Hu_MenuUpdateColorWidgetColor, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_colorwidget_alpha, NULL, CA },
-    { MN_NONE }
-};
-
 static boolean inited = false;
 
 typedef struct {
@@ -1375,6 +1340,182 @@ void Hu_MenuLoadResources(void)
 #endif
         pCursors[i] = R_DeclarePatch(buffer);
     }
+}
+
+void Hu_MenuInitColorWidgetPage(void)
+{
+#if __JHERETIC__ || __JHEXEN__
+    const Point2Raw origin = { 98, 60 };
+#else
+    const Point2Raw origin = { 124, 60 };
+#endif
+    mn_object_t* objects, *ob;
+    const uint numObjects = 10;
+    mn_page_t* page;
+
+    page = Hu_MenuNewPage("ColorWidget", &origin, MPF_NEVER_SCROLL, Hu_MenuPageTicker, NULL, Hu_MenuColorWidgetCmdResponder, NULL);
+    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
+
+    objects = Z_Calloc(sizeof(*objects) * numObjects, PU_GAMESTATIC, 0);
+    if(!objects) Con_Error("Hu_MenuInitColorWidgetPage: Failed on allocation of %lu bytes for menu objects.", (unsigned long) (sizeof(*objects) * numObjects));
+
+    ob = objects;
+
+    ob->_type = MN_COLORBOX;
+    ob->_flags = MNF_ID0|MNF_NO_FOCUS;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNColorBox_Ticker;
+    ob->updateGeometry = MNColorBox_UpdateGeometry;
+    ob->drawer = MNColorBox_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_colorbox_t), PU_GAMESTATIC, 0);
+    { mndata_colorbox_t* cbox = (mndata_colorbox_t*)ob->_typedata;
+    cbox->width  = SCREENHEIGHT/7;
+    cbox->height = SCREENHEIGHT/7;
+    cbox->rgbaMode = true;
+    }
+    ob++;
+
+    ob->_type = MN_TEXT;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Red";
+    }
+    ob++;
+
+    ob->_type = MN_SLIDER;
+    ob->_flags = MNF_ID1;
+    ob->_shortcut = 'r';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNSlider_Ticker;
+    ob->updateGeometry = MNSlider_UpdateGeometry;
+    ob->drawer = MNSlider_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuUpdateColorWidgetColor;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNSlider_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_slider_t), PU_GAMESTATIC, 0);
+    ob->data2 = CR;
+    { mndata_slider_t* sld = (mndata_slider_t*)ob->_typedata;
+    sld->min = 0;
+    sld->max = 1;
+    sld->value = 0;
+    sld->step = .05f;
+    sld->floatMode = true;
+    }
+    ob++;
+
+    ob->_type = MN_TEXT;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Green";
+    }
+    ob++;
+
+    ob->_type = MN_SLIDER;
+    ob->_flags = MNF_ID2;
+    ob->_shortcut = 'g';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNSlider_Ticker;
+    ob->updateGeometry = MNSlider_UpdateGeometry;
+    ob->drawer = MNSlider_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuUpdateColorWidgetColor;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNSlider_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_slider_t), PU_GAMESTATIC, 0);
+    ob->data2 = CG;
+    { mndata_slider_t* sld = (mndata_slider_t*)ob->_typedata;
+    sld->min = 0;
+    sld->max = 1;
+    sld->value = 0;
+    sld->step = .05f;
+    sld->floatMode = true;
+    }
+    ob++;
+
+    ob->_type = MN_TEXT;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Blue";
+    }
+    ob++;
+
+    ob->_type = MN_SLIDER;
+    ob->_flags = MNF_ID3;
+    ob->_shortcut = 'b';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNSlider_Ticker;
+    ob->updateGeometry = MNSlider_UpdateGeometry;
+    ob->drawer = MNSlider_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuUpdateColorWidgetColor;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNSlider_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_slider_t), PU_GAMESTATIC, 0);
+    ob->data2 = CB;
+    { mndata_slider_t* sld = (mndata_slider_t*)ob->_typedata;
+    sld->min = 0;
+    sld->max = 1;
+    sld->value = 0;
+    sld->step = .05f;
+    sld->floatMode = true;
+    }
+    ob++;
+
+    ob->_type = MN_TEXT;
+    ob->_flags = MNF_ID4;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Opacity";
+    }
+    ob++;
+
+    ob->_type = MN_SLIDER;
+    ob->_flags = MNF_ID5;
+    ob->_shortcut = 'o';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNSlider_Ticker;
+    ob->updateGeometry = MNSlider_UpdateGeometry;
+    ob->drawer = MNSlider_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuUpdateColorWidgetColor;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNSlider_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_slider_t), PU_GAMESTATIC, 0);
+    ob->data2 = CA;
+    { mndata_slider_t* sld = (mndata_slider_t*)ob->_typedata;
+    sld->min = 0;
+    sld->max = 1;
+    sld->value = 0;
+    sld->step = .05f;
+    sld->floatMode = true;
+    }
+    ob++;
+
+    ob->_type = MN_NONE;
+
+    page->objects = objects;
 }
 
 void Hu_MenuInitGameTypeMenu(void)
@@ -2880,17 +3021,7 @@ static void initAllPages(void)
 {
     mn_page_t* page;
 
-    {
-#if __JHERETIC__ || __JHEXEN__
-    const Point2Raw origin = { 98, 60 };
-#else
-    const Point2Raw origin = { 124, 60 };
-#endif
-
-    page = Hu_MenuNewPage("ColorWidget", &origin, MPF_NEVER_SCROLL, Hu_MenuPageTicker, NULL, Hu_MenuColorWidgetCmdResponder, NULL);
-    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
-    page->objects = ColorWidgetMenuObjects;
-    }
+    Hu_MenuInitColorWidgetPage();
 
     {
 #if __JHEXEN__ || __JHERETIC__
