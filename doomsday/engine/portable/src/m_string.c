@@ -445,20 +445,13 @@ ddstring_t* Str_Copy(ddstring_t* str, const ddstring_t* other)
     if(!other)
     {
 #if _DEBUG
-        Con_Message("Attempted String::Copy with invalid reference (@a other==0).\n");
+        Con_Message("Attempted String::Copy with invalid reference (other==0).\n");
 #endif
         return str;
     }
-    str->size = other->size;
+    allocateString(str, other->length, false);
+    strcpy(str->str, other->str);
     str->length = other->length;
-    if(str->size < str->length)
-    {
-        // Static strings do not use the character buffer.
-        str->size = str->length;
-    }
-    assert(str->memAlloc);
-    str->str = str->memAlloc(str->size);
-    memcpy(str->str, other->str, str->size);
     return str;
 }
 
