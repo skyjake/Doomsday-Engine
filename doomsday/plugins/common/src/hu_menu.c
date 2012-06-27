@@ -1152,15 +1152,6 @@ static mn_object_t GameplayMenuObjects[] = {
     { MN_NONE }
 };
 
-mndata_button_t btn_multiplayer_join_game = { false, NULL, "Join Game" };
-mndata_button_t btn_multiplayer_player_setup = { false, NULL, "Player Setup" };
-
-mn_object_t MultiplayerMenuObjects[] = {
-    { MN_BUTTON,  0,  MNF_ID0, { 0, 0 }, 'j', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuSelectJoinGame, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_multiplayer_join_game },
-    { MN_BUTTON,  0,  0,       { 0, 0 }, 's', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuSelectPlayerSetup, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_multiplayer_player_setup },
-    { MN_NONE }
-};
-
 mndata_slider_t sld_colorwidget_red = {
     0, 1, 0, .05f, true
 };
@@ -1529,6 +1520,64 @@ void Hu_MenuInitSkillMenu(void)
         MNButton_SetFlags(ob, FO_SET, MNBUTTON_NO_ALTTEXT);
     }
 #endif
+}
+
+void Hu_MenuInitMultiplayerMenu(void)
+{
+#if __JHERETIC__ || __JHEXEN__
+    const Point2Raw origin = { 97, 65 };
+#else
+    const Point2Raw origin = { 97, 65 };
+#endif
+    mn_object_t* objects, *ob;
+    const uint numObjects = 3;
+    mn_page_t* page;
+
+    page = Hu_MenuNewPage("Multiplayer", &origin, 0, Hu_MenuPageTicker, Hu_MenuDrawMultiplayerPage, NULL, NULL);
+    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTB));
+    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("GameType"));
+
+    objects = Z_Calloc(sizeof(*objects) * numObjects, PU_GAMESTATIC, 0);
+    if(!objects) Con_Error("Hu_MenuInitMultiplayerMenu: Failed on allocation of %lu bytes for menu objects.", (unsigned long) (sizeof(*objects) * numObjects));
+
+    ob = objects;
+
+    ob->_type = MN_BUTTON;
+    ob->_flags = MNF_ID0;
+    ob->_shortcut = 'j';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectJoinGame;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+    btn->text = "Join Game";
+    }
+    ob++;
+
+    ob->_type = MN_BUTTON;
+    ob->_shortcut = 's';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectPlayerSetup;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+    btn->text = "Player Setup";
+    }
+    ob++;
+
+    ob->_type = MN_NONE;
+
+    page->objects = objects;
 }
 
 void Hu_MenuInitPlayerSetupMenu(void)
@@ -2772,31 +2821,15 @@ static void initAllPages(void)
     }
 
     Hu_MenuInitGameTypeMenu();
-
 #if __JDOOM__ || __JHERETIC__
     Hu_MenuInitEpisodeMenu();
 #endif
 #if __JHEXEN__
     Hu_MenuInitPlayerClassMenu();
 #endif
-
     Hu_MenuInitSkillMenu();
-
-    {
-#if __JHERETIC__ || __JHEXEN__
-    const Point2Raw origin = { 97, 65 };
-#else
-    const Point2Raw origin = { 97, 65 };
-#endif
-
-    page = Hu_MenuNewPage("Multiplayer", &origin, 0, Hu_MenuPageTicker, Hu_MenuDrawMultiplayerPage, NULL, NULL);
-    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTB));
-    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("GameType"));
-    page->objects = MultiplayerMenuObjects;
-    }
-
+    Hu_MenuInitMultiplayerMenu();
     Hu_MenuInitPlayerSetupMenu();
-
 #if __JHERETIC__ || __JHEXEN__
     Hu_MenuInitFilesMenu();
 #endif
