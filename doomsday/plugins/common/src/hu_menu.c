@@ -1538,6 +1538,8 @@ void Hu_MenuInitPlayerSetupMenu(void)
     ob->responder = MNEdit_Responder;
     ob->_typedata = Z_Calloc(sizeof(mndata_edit_t), PU_GAMESTATIC, 0);
     { mndata_edit_t* edit = (mndata_edit_t*)ob->_typedata;
+    Str_Init(&edit->text);
+    Str_Init(&edit->oldtext);
     edit->data1 = "net-name";
     }
     ob++;
@@ -2749,6 +2751,7 @@ static void initAllPages(void)
     for(i = 0; i < NUMSAVESLOTS; ++i, y += FIXED_LINE_HEIGHT)
     {
         mn_object_t* ob = loadMenuObjects + i;
+        mndata_edit_t* edit = saveSlots + i;
         ob->_type = MN_EDIT;
         ob->_origin.x = 0;
         ob->_origin.y = y;
@@ -2761,8 +2764,10 @@ static void initAllPages(void)
         ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectLoadSlot;
         ob->actions[MNA_FOCUSOUT].callback = Hu_MenuDefaultFocusAction;
         ob->cmdResponder = MNObject_DefaultCommandResponder;
-        ob->_typedata = (void*)(saveSlots + i);
+        ob->_typedata = edit;
         ob->data2 = saveSlotObjectIds[i];
+        Str_Init(&edit->text);
+        Str_Init(&edit->oldtext);
     }
     loadMenuObjects[i]._type = MN_NONE;
 
@@ -2773,6 +2778,7 @@ static void initAllPages(void)
     for(i = 0; i < NUMSAVESLOTS; ++i, y += FIXED_LINE_HEIGHT)
     {
         mn_object_t* ob = saveMenuObjects + i;
+        mndata_edit_t* edit = saveSlots + i;
         ob->_type = MN_EDIT;
         ob->_origin.x = 0;
         ob->_origin.y = y;
@@ -2787,7 +2793,7 @@ static void initAllPages(void)
         ob->actions[MNA_FOCUSOUT].callback = Hu_MenuDefaultFocusAction;
         ob->cmdResponder = MNEdit_CommandResponder;
         ob->responder = MNEdit_Responder;
-        ob->_typedata = (void*)(saveSlots + i);
+        ob->_typedata = edit;
         ob->data2 = saveSlotObjectIds[i];
     }
     saveMenuObjects[i]._type = MN_NONE;
@@ -3451,12 +3457,13 @@ void Hu_MenuUpdateGameSaveWidgets(void)
 /**
  * Called after the save name has been modified and to action the game-save.
  */
-int Hu_MenuSelectSaveSlot(mn_object_t* obj, mn_actionid_t action, void* paramaters)
+int Hu_MenuSelectSaveSlot(mn_object_t* ob, mn_actionid_t action, void* parameters)
 {
-    mndata_edit_t* edit = (mndata_edit_t*)obj->_typedata;
+    mndata_edit_t* edit = (mndata_edit_t*)ob->_typedata;
     const int saveSlot = edit->data2;
-    const char* saveName = MNEdit_Text(obj);
     mn_page_t* page;
+
+    DENG_UNUSED(parameters);
 
     if(MNA_ACTIVEOUT != action) return 1;
 
@@ -3466,13 +3473,13 @@ int Hu_MenuSelectSaveSlot(mn_object_t* obj, mn_actionid_t action, void* paramate
         menuNominatingQuickSaveSlot = false;
     }
 
-    if(!G_SaveGame2(saveSlot, saveName)) return 0;
+    if(!G_SaveGame2(saveSlot, Str_Text(MNEdit_Text(ob)))) return 0;
 
     page = Hu_MenuFindPageByName("SaveGame");
-    MNPage_SetFocus(page, MN_MustFindObjectOnPage(page, 0, obj->data2));
+    MNPage_SetFocus(page, MN_MustFindObjectOnPage(page, 0, ob->data2));
 
     page = Hu_MenuFindPageByName("LoadGame");
-    MNPage_SetFocus(page, MN_MustFindObjectOnPage(page, 0, obj->data2));
+    MNPage_SetFocus(page, MN_MustFindObjectOnPage(page, 0, ob->data2));
 
     Hu_MenuCommand(chooseCloseMethod());
     return 0;
@@ -3553,8 +3560,10 @@ int Hu_MenuCvarList(mn_object_t* obj, mn_actionid_t action, void* paramaters)
     return 0;
 }
 
-int Hu_MenuSaveSlotEdit(mn_object_t* obj, mn_actionid_t action, void* paramaters)
+int Hu_MenuSaveSlotEdit(mn_object_t* obj, mn_actionid_t action, void* parameters)
 {
+    DENG_UNUSED(parameters);
+
     if(MNA_ACTIVE != action) return 1;
 
     // Are we suggesting a new name?
@@ -3567,21 +3576,23 @@ int Hu_MenuSaveSlotEdit(mn_object_t* obj, mn_actionid_t action, void* paramaters
     return 0;
 }
 
-int Hu_MenuCvarEdit(mn_object_t* obj, mn_actionid_t action, void* paramaters)
+int Hu_MenuCvarEdit(mn_object_t* ob, mn_actionid_t action, void* parameters)
 {
-    const mndata_edit_t* edit = (mndata_edit_t*)obj->_typedata;
+    const mndata_edit_t* edit = (mndata_edit_t*)ob->_typedata;
     cvartype_t varType = Con_GetVariableType(edit->data1);
+
+    DENG_UNUSED(parameters);
 
     if(MNA_MODIFIED != action) return 1;
 
     switch(varType)
     {
     case CVT_CHARPTR:
-        Con_SetString2(edit->data1, MNEdit_Text(obj), SVF_WRITE_OVERRIDE);
+        Con_SetString2(edit->data1, Str_Text(MNEdit_Text(ob)), SVF_WRITE_OVERRIDE);
         break;
     case CVT_URIPTR: {
         /// @todo Sanitize and validate against known schemas.
-        Uri* uri = Uri_NewWithPath2(MNEdit_Text(obj), RC_NULL);
+        Uri* uri = Uri_NewWithPath2(Str_Text(MNEdit_Text(ob)), RC_NULL);
         Con_SetUri2(edit->data1, uri, SVF_WRITE_OVERRIDE);
         Uri_Delete(uri);
         break;
@@ -3934,14 +3945,16 @@ int Hu_MenuSelectPlayerColor(mn_object_t* obj, mn_actionid_t action, void* param
     return 0;
 }
 
-int Hu_MenuSelectAcceptPlayerSetup(mn_object_t* obj, mn_actionid_t action, void* paramaters)
+int Hu_MenuSelectAcceptPlayerSetup(mn_object_t* ob, mn_actionid_t action, void* parameters)
 {
-    mn_object_t* plrNameEdit = MN_MustFindObjectOnPage(MNObject_Page(obj), 0, MNF_ID1);
+    mn_object_t* plrNameEdit = MN_MustFindObjectOnPage(MNObject_Page(ob), 0, MNF_ID1);
 #if __JHEXEN__
-    mn_object_t* plrClassList = MN_MustFindObjectOnPage(MNObject_Page(obj), 0, MNF_ID2);
+    mn_object_t* plrClassList = MN_MustFindObjectOnPage(MNObject_Page(ob), 0, MNF_ID2);
 #endif
-    mn_object_t* plrColorList = MN_MustFindObjectOnPage(MNObject_Page(obj), 0, MNF_ID3);
+    mn_object_t* plrColorList = MN_MustFindObjectOnPage(MNObject_Page(ob), 0, MNF_ID3);
     char buf[300];
+
+    DENG_UNUSED(parameters);
 
 #if __JHEXEN__
     cfg.netClass = MNList_Selection(plrClassList);
@@ -3952,13 +3965,13 @@ int Hu_MenuSelectAcceptPlayerSetup(mn_object_t* obj, mn_actionid_t action, void*
     if(MNA_ACTIVEOUT != action) return 1;
 
     strcpy(buf, "net-name ");
-    M_StrCatQuoted(buf, MNEdit_Text(plrNameEdit), 300);
+    M_StrCatQuoted(buf, Str_Text(MNEdit_Text(plrNameEdit)), 300);
     DD_Execute(false, buf);
 
     if(IS_NETGAME)
     {
         strcpy(buf, "setname ");
-        M_StrCatQuoted(buf, MNEdit_Text(plrNameEdit), 300);
+        M_StrCatQuoted(buf, Str_Text(MNEdit_Text(plrNameEdit)), 300);
         DD_Execute(false, buf);
 #if __JHEXEN__
         // Must do 'setclass' first; the real class and color do not change
