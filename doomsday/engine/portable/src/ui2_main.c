@@ -542,6 +542,14 @@ static void drawPageBackground(fi_page_t* p, float x, float y, float width, floa
     vec3f_t topColor, bottomColor;
     float topAlpha, bottomAlpha;
 
+    V3f_Set(topColor,    p->_bg.topColor   [0].value * light, p->_bg.topColor   [1].value * light, p->_bg.topColor   [2].value * light);
+    topAlpha = p->_bg.topColor[3].value * alpha;
+
+    V3f_Set(bottomColor, p->_bg.bottomColor[0].value * light, p->_bg.bottomColor[1].value * light, p->_bg.bottomColor[2].value * light);
+    bottomAlpha = p->_bg.bottomColor[3].value * alpha;
+
+    if(topAlpha <= 0 && bottomAlpha <= 0) return;
+
     if(p->_bg.material)
     {
         const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
@@ -551,12 +559,6 @@ static void drawPageBackground(fi_page_t* p, float x, float y, float width, floa
         GL_BindTexture(MST(ms, MTU_PRIMARY));
         glEnable(GL_TEXTURE_2D);
     }
-
-    V3f_Set(topColor,    p->_bg.topColor   [0].value * light, p->_bg.topColor   [1].value * light, p->_bg.topColor   [2].value * light);
-    topAlpha = p->_bg.topColor[3].value * alpha;
-
-    V3f_Set(bottomColor, p->_bg.bottomColor[0].value * light, p->_bg.bottomColor[1].value * light, p->_bg.bottomColor[2].value * light);
-    bottomAlpha = p->_bg.bottomColor[3].value * alpha;
 
     if(p->_bg.material || topAlpha < 1.0 || bottomAlpha < 1.0)
     {
