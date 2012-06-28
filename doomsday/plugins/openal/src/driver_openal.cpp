@@ -59,7 +59,7 @@
 #define SRC(buf) ((ALuint)buf->ptr3D)
 #define BUF(buf) ((ALuint)buf->ptr)
 
-enum { VX, VY, VZ };
+//enum { VX, VY, VZ };
 
 #ifdef WIN32
 ALenum(*EAXGet) (const struct _GUID* propertySetID, ALuint prop, ALuint source, ALvoid* value, ALuint size);
