@@ -2020,7 +2020,7 @@ void Hu_MenuInitPlayerSetupPage(void)
     ob->ticker = MNButton_Ticker;
     ob->updateGeometry = MNButton_UpdateGeometry;
     ob->drawer = MNButton_Drawer;
-    ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectPlayerColor;
+    ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectAcceptPlayerSetup;
     ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
     ob->cmdResponder = MNButton_CommandResponder;
     ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
@@ -3065,6 +3065,7 @@ boolean Hu_MenuIsVisible(void)
 
 int Hu_MenuDefaultFocusAction(mn_object_t* ob, mn_actionid_t action, void* parameters)
 {
+    DENG_UNUSED(parameters);
     if(MNA_FOCUS != action) return 1;
     Hu_MenuUpdateCursorState();
     return 0;
@@ -4129,6 +4130,7 @@ int Hu_MenuCvarButton(mn_object_t* obj, mn_actionid_t action, void* parameters)
     cvartype_t varType = Con_GetVariableType(cb->cvarname);
     int value;
 
+    DENG_UNUSED(parameters);
     if(MNA_MODIFIED != action) return 1;
 
     //strcpy(btn->text, cb->active? cb->yes : cb->no);
@@ -4164,6 +4166,7 @@ int Hu_MenuCvarList(mn_object_t* obj, mn_actionid_t action, void* parameters)
     cvartype_t varType;
     int value;
 
+    DENG_UNUSED(parameters);
     if(MNA_MODIFIED != action) return 1;
 
     if(MNList_Selection(obj) < 0) return 0; // Hmm?
@@ -4245,6 +4248,7 @@ int Hu_MenuCvarSlider(mn_object_t* obj, mn_actionid_t action, void* parameters)
     cvartype_t varType = Con_GetVariableType(sldr->data1);
     float value = MNSlider_Value(obj);
 
+    DENG_UNUSED(parameters);
     if(MNA_MODIFIED != action) return 1;
 
     if(CVT_NULL == varType) return 0;
@@ -4278,6 +4282,7 @@ int Hu_MenuActivateColorWidget(mn_object_t* obj, mn_actionid_t action, void* par
     mn_object_t* cboxMix, *sldrRed, *sldrGreen, *sldrBlue, *textAlpha, *sldrAlpha;
     mn_page_t* colorWidgetPage = Hu_MenuFindPageByName("ColorWidget");
 
+    DENG_UNUSED(parameters);
     if(action != MNA_ACTIVE) return 1;
 
     cboxMix   = MN_MustFindObjectOnPage(colorWidgetPage, 0, MNF_ID0);
@@ -4307,6 +4312,7 @@ int Hu_MenuActivateColorWidget(mn_object_t* obj, mn_actionid_t action, void* par
 int Hu_MenuCvarColorBox(mn_object_t* obj, mn_actionid_t action, void* parameters)
 {
     mndata_colorbox_t* cbox = (mndata_colorbox_t*)obj->_typedata;
+    DENG_UNUSED(parameters);
     if(action != MNA_MODIFIED) return 1;
     // MNColorBox's current color has already been updated and we know
     // that at least one of the color components have changed.
@@ -4356,6 +4362,7 @@ void Hu_MenuDrawSaveGamePage(mn_page_t* page, const Point2Raw* origin)
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__
 int Hu_MenuSelectHelp(mn_object_t* obj, mn_actionid_t action, void* parameters)
 {
+    DENG_UNUSED(parameters);
     if(MNA_ACTIVEOUT != action) return 1;
     G_StartHelp();
     return 0;
@@ -4405,6 +4412,7 @@ void Hu_MenuDrawPlayerSetupPage(mn_page_t* page, const Point2Raw* origin)
 int Hu_MenuActionSetActivePage(mn_object_t* obj, mn_actionid_t action, void* parameters)
 {
     assert(obj);
+    DENG_UNUSED(parameters);
     if(MNA_ACTIVEOUT != action) return 1;
     Hu_MenuSetActivePage(Hu_MenuFindPageByName((char*)obj->data1));
     return 0;
@@ -4415,6 +4423,7 @@ int Hu_MenuUpdateColorWidgetColor(mn_object_t* obj, mn_actionid_t action, void* 
     float value = MNSlider_Value(obj);
     mn_object_t* cboxMix = MN_MustFindObjectOnPage(Hu_MenuFindPageByName("ColorWidget"), 0, MNF_ID0);
 
+    DENG_UNUSED(parameters);
     if(MNA_MODIFIED != action) return 1;
 
     switch(obj->data2)
@@ -4431,6 +4440,7 @@ int Hu_MenuUpdateColorWidgetColor(mn_object_t* obj, mn_actionid_t action, void* 
 
 int Hu_MenuChangeWeaponPriority(mn_object_t* obj, mn_actionid_t action, void* parameters)
 {
+    DENG_UNUSED(parameters);
     if(MNA_MODIFIED != action) return 1;
     /*int         choice = option >> NUM_WEAPON_TYPES;
     int         temp;
@@ -4458,6 +4468,8 @@ int Hu_MenuChangeWeaponPriority(mn_object_t* obj, mn_actionid_t action, void* pa
 
 int Hu_MenuSelectSingleplayer(mn_object_t* ob, mn_actionid_t action, void* parameters)
 {
+    DENG_UNUSED(parameters);
+
     if(MNA_ACTIVEOUT != action) return 1;
 
     if(IS_NETGAME)
@@ -4487,6 +4499,7 @@ int Hu_MenuSelectMultiplayer(mn_object_t* obj, mn_actionid_t action, void* param
     mn_object_t* labelObj = MN_MustFindObjectOnPage(multiplayerPage, 0, MNF_ID0);
     mndata_button_t* btn = (mndata_button_t*)labelObj->_typedata;
 
+    DENG_UNUSED(parameters);
     if(MNA_ACTIVEOUT != action) return 1;
 
     // Set the appropriate label.
@@ -4502,8 +4515,11 @@ int Hu_MenuSelectMultiplayer(mn_object_t* obj, mn_actionid_t action, void* param
     return 0;
 }
 
-int Hu_MenuSelectJoinGame(mn_object_t* obj, mn_actionid_t action, void* parameters)
+int Hu_MenuSelectJoinGame(mn_object_t* ob, mn_actionid_t action, void* parameters)
 {
+    DENG_UNUSED(ob);
+    DENG_UNUSED(parameters);
+
     if(MNA_ACTIVEOUT != action) return 1;
     if(IS_NETGAME)
     {
@@ -4516,7 +4532,7 @@ int Hu_MenuSelectJoinGame(mn_object_t* obj, mn_actionid_t action, void* paramete
     return 0;
 }
 
-int Hu_MenuSelectPlayerSetup(mn_object_t* obj, mn_actionid_t action, void* parameters)
+int Hu_MenuSelectPlayerSetup(mn_object_t* ob, mn_actionid_t action, void* parameters)
 {
     mn_page_t* playerSetupPage = Hu_MenuFindPageByName("PlayerSetup");
     mn_object_t* mop    = MN_MustFindObjectOnPage(playerSetupPage, 0, MNF_ID0);
@@ -4526,6 +4542,8 @@ int Hu_MenuSelectPlayerSetup(mn_object_t* obj, mn_actionid_t action, void* param
     mn_object_t* class_;
 #endif
 
+    DENG_UNUSED(ob);
+    DENG_UNUSED(parameters);
     if(MNA_ACTIVEOUT != action) return 1;
 
 #if __JHEXEN__
@@ -4551,15 +4569,17 @@ int Hu_MenuSelectPlayerSetup(mn_object_t* obj, mn_actionid_t action, void* param
 }
 
 #if __JHEXEN__
-int Hu_MenuSelectPlayerSetupPlayerClass(mn_object_t* obj, mn_actionid_t action, void* parameters)
+int Hu_MenuSelectPlayerSetupPlayerClass(mn_object_t* ob, mn_actionid_t action, void* parameters)
 {
     int selection;
+
+    DENG_UNUSED(parameters);
     if(MNA_MODIFIED != action) return 1;
 
-    selection = MNList_Selection(obj);
+    selection = MNList_Selection(ob);
     if(selection >= 0)
     {
-        mn_object_t* mop = MN_MustFindObjectOnPage(MNObject_Page(obj), 0, MNF_ID0);
+        mn_object_t* mop = MN_MustFindObjectOnPage(MNObject_Page(ob), 0, MNF_ID0);
         MNMobjPreview_SetPlayerClass(mop, selection);
         MNMobjPreview_SetMobjType(mop, PCLASS_INFO(selection)->mobjType);
     }
@@ -4567,16 +4587,18 @@ int Hu_MenuSelectPlayerSetupPlayerClass(mn_object_t* obj, mn_actionid_t action, 
 }
 #endif
 
-int Hu_MenuSelectPlayerColor(mn_object_t* obj, mn_actionid_t action, void* parameters)
+int Hu_MenuSelectPlayerColor(mn_object_t* ob, mn_actionid_t action, void* parameters)
 {
     int selection;
+
+    DENG_UNUSED(parameters);
     if(MNA_MODIFIED != action) return 1;
 
     // The color translation map is stored in the list item data member.
-    selection = MNList_ItemData(obj, MNList_Selection(obj));
+    selection = MNList_ItemData(ob, MNList_Selection(ob));
     if(selection >= 0)
     {
-        mn_object_t* mop = MN_MustFindObjectOnPage(MNObject_Page(obj), 0, MNF_ID0);
+        mn_object_t* mop = MN_MustFindObjectOnPage(MNObject_Page(ob), 0, MNF_ID0);
         MNMobjPreview_SetTranslationMap(mop, selection);
     }
     return 0;
@@ -4626,6 +4648,8 @@ int Hu_MenuSelectAcceptPlayerSetup(mn_object_t* ob, mn_actionid_t action, void* 
 
 int Hu_MenuSelectQuitGame(mn_object_t* ob, mn_actionid_t action, void* parameters)
 {
+    DENG_UNUSED(ob);
+    DENG_UNUSED(parameters);
     if(MNA_ACTIVEOUT != action) return 1;
     G_QuitGame();
     return 0;
@@ -4633,6 +4657,8 @@ int Hu_MenuSelectQuitGame(mn_object_t* ob, mn_actionid_t action, void* parameter
 
 int Hu_MenuSelectEndGame(mn_object_t* ob, mn_actionid_t action, void* parameters)
 {
+    DENG_UNUSED(ob);
+    DENG_UNUSED(parameters);
     if(MNA_ACTIVEOUT != action) return 1;
     G_EndGame();
     return 0;
@@ -4640,7 +4666,11 @@ int Hu_MenuSelectEndGame(mn_object_t* ob, mn_actionid_t action, void* parameters
 
 int Hu_MenuSelectLoadGame(mn_object_t* ob, mn_actionid_t action, void* parameters)
 {
+    DENG_UNUSED(ob);
+    DENG_UNUSED(parameters);
+
     if(MNA_ACTIVEOUT != action) return 1;
+
     if(!Get(DD_DEDICATED))
     {
         if(IS_CLIENT && !Get(DD_PLAYBACK))
@@ -4658,6 +4688,9 @@ int Hu_MenuSelectLoadGame(mn_object_t* ob, mn_actionid_t action, void* parameter
 int Hu_MenuSelectSaveGame(mn_object_t* ob, mn_actionid_t action, void* parameters)
 {
     player_t* player = &players[CONSOLEPLAYER];
+
+    DENG_UNUSED(ob);
+    DENG_UNUSED(parameters);
 
     if(MNA_ACTIVEOUT != action) return 1;
     if(!Get(DD_DEDICATED))
@@ -4690,12 +4723,14 @@ int Hu_MenuSelectSaveGame(mn_object_t* ob, mn_actionid_t action, void* parameter
 }
 
 #if __JHEXEN__
-int Hu_MenuSelectPlayerClass(mn_object_t* obj, mn_actionid_t action, void* parameters)
+int Hu_MenuSelectPlayerClass(mn_object_t* ob, mn_actionid_t action, void* parameters)
 {
     mn_page_t* skillPage = Hu_MenuFindPageByName("Skill");
-    int option = obj->data2;
+    int option = ob->data2;
     mn_object_t* skillObj;
     const char* text;
+
+    DENG_UNUSED(parameters);
 
     if(MNA_ACTIVEOUT != action) return 1;
     if(IS_NETGAME)
@@ -4749,28 +4784,30 @@ int Hu_MenuSelectPlayerClass(mn_object_t* obj, mn_actionid_t action, void* param
     return 0;
 }
 
-int Hu_MenuFocusOnPlayerClass(mn_object_t* obj, mn_actionid_t action, void* parameters)
+int Hu_MenuFocusOnPlayerClass(mn_object_t* ob, mn_actionid_t action, void* parameters)
 {
-    playerclass_t plrClass = (playerclass_t)obj->data2;
+    playerclass_t plrClass = (playerclass_t)ob->data2;
     mn_object_t* mop;
 
+    DENG_UNUSED(parameters);
     if(MNA_FOCUS != action) return 1;
 
-    mop = MN_MustFindObjectOnPage(MNObject_Page(obj), 0, MNF_ID0);
+    mop = MN_MustFindObjectOnPage(MNObject_Page(ob), 0, MNF_ID0);
     MNMobjPreview_SetPlayerClass(mop, plrClass);
     MNMobjPreview_SetMobjType(mop, (PCLASS_NONE == plrClass? MT_NONE : PCLASS_INFO(plrClass)->mobjType));
 
-    Hu_MenuDefaultFocusAction(obj, action, parameters);
+    Hu_MenuDefaultFocusAction(ob, action, parameters);
     return 0;
 }
 #endif
 
 #if __JDOOM__ || __JHERETIC__
-int Hu_MenuFocusEpisode(mn_object_t* obj, mn_actionid_t action, void* parameters)
+int Hu_MenuFocusEpisode(mn_object_t* ob, mn_actionid_t action, void* parameters)
 {
+    DENG_UNUSED(parameters);
     if(MNA_FOCUS != action) return 1;
-    mnEpisode = obj->data2;
-    Hu_MenuDefaultFocusAction(obj, action, parameters);
+    mnEpisode = ob->data2;
+    Hu_MenuDefaultFocusAction(ob, action, parameters);
     return 0;
 }
 
@@ -4782,18 +4819,21 @@ int Hu_MenuConfirmOrderCommericalVersion(msgresponse_t response, int userValue, 
 
 int Hu_MenuActivateNotSharewareEpisode(mn_object_t* ob, mn_actionid_t action, void* parameters)
 {
+    DENG_UNUSED(ob);
+    DENG_UNUSED(parameters);
     if(MNA_ACTIVEOUT != action) return 1;
     Hu_MsgStart(MSG_ANYKEY, SWSTRING, Hu_MenuConfirmOrderCommericalVersion, 0, NULL);
     return 0;
 }
 #endif
 
-int Hu_MenuFocusSkillMode(mn_object_t* obj, mn_actionid_t action, void* parameters)
+int Hu_MenuFocusSkillMode(mn_object_t* ob, mn_actionid_t action, void* parameters)
 {
-    assert(obj);
+    assert(ob);
+    DENG_UNUSED(parameters);
     if(MNA_FOCUS != action) return 1;
-    mnSkillmode = (skillmode_t)obj->data2;
-    Hu_MenuDefaultFocusAction(obj, action, parameters);
+    mnSkillmode = (skillmode_t)ob->data2;
+    Hu_MenuDefaultFocusAction(ob, action, parameters);
     return 0;
 }
 
@@ -4826,14 +4866,16 @@ void Hu_MenuInitNewGame(boolean confirmed)
 #endif
 }
 
-int Hu_MenuActionInitNewGame(mn_object_t* obj, mn_actionid_t action, void* parameters)
+int Hu_MenuActionInitNewGame(mn_object_t* ob, mn_actionid_t action, void* parameters)
 {
+    DENG_UNUSED(ob);
+    DENG_UNUSED(parameters);
     if(MNA_ACTIVEOUT != action) return 1;
     Hu_MenuInitNewGame(false);
     return 0;
 }
 
-int Hu_MenuSelectControlPanelLink(mn_object_t* obj, mn_actionid_t action, void* parameters)
+int Hu_MenuSelectControlPanelLink(mn_object_t* ob, mn_actionid_t action, void* parameters)
 {
 #define NUM_PANEL_NAMES         3
 
@@ -4842,8 +4884,9 @@ int Hu_MenuSelectControlPanelLink(mn_object_t* obj, mn_actionid_t action, void* 
         "panel audio",
         "panel input"
     };
-    int idx = obj->data2;
+    int idx = ob->data2;
 
+    DENG_UNUSED(parameters);
     if(MNA_ACTIVEOUT != action) return 1;
 
     if(idx < 0 || idx > NUM_PANEL_NAMES - 1)
