@@ -321,57 +321,6 @@ static patchid_t pRotatingSkull[18];
 
 static patchid_t pCursors[MENU_CURSOR_FRAMECOUNT];
 
-#if __JDOOM__
-mndata_button_t btn_main_new_game  = { false, NULL, NULL, &pNGame };
-mndata_button_t btn_main_options   = { false, NULL, NULL, &pOptions };
-mndata_button_t btn_main_load_game = { false, NULL, NULL, &pLoadGame };
-mndata_button_t btn_main_save_game = { false, NULL, NULL, &pSaveGame };
-mndata_button_t btn_main_help      = { false, NULL, NULL, &pReadThis };
-mndata_button_t btn_main_quit_game = { false, NULL, NULL, &pQuitGame };
-#elif __JDOOM64__
-mndata_button_t btn_main_new_game  = { false, NULL, "New Game" };
-mndata_button_t btn_main_options   = { false, NULL, "Options" };
-mndata_button_t btn_main_load_game = { false, NULL, "Load Game" };
-mndata_button_t btn_main_save_game = { false, NULL, "Save Game" };
-mndata_button_t btn_main_quit_game = { false, NULL, "Quit Game" };
-#else
-mndata_button_t btn_main_new_game   = { false, NULL, "New Game" };
-mndata_button_t btn_main_options    = { false, NULL, "Options" };
-mndata_button_t btn_main_game_files = { false, NULL, "Game Files" };
-mndata_button_t btn_main_help       = { false, NULL, "Info" };
-mndata_button_t btn_main_quit_game  = { false, NULL, "Quit Game" };
-#endif
-
-#if __JDOOM__ || __JDOOM64__
-mndata_text_t txt_main_title = { NULL, &pMainTitle };
-#endif
-
-mn_object_t MainMenuObjects[] = {
-#if __JHERETIC__ || __JHEXEN__
-    { MN_BUTTON,    0,  0,  { 0,   0 }, 'n', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionSetActivePage, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_main_new_game, "GameType" },
-    { MN_BUTTON,    0,  0,  { 0,   FIXED_LINE_HEIGHT }, 'o', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionSetActivePage, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_main_options, "Options" },
-    { MN_BUTTON,    0,  0,  { 0, 2*FIXED_LINE_HEIGHT }, 'f', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionSetActivePage, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_main_game_files, "Files" },
-    { MN_BUTTON,    0,  0,  { 0, 3*FIXED_LINE_HEIGHT }, 'i', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuSelectHelp, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_main_help },
-    { MN_BUTTON,    0,  0,  { 0, 4*FIXED_LINE_HEIGHT }, 'q', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuSelectQuitGame, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_main_quit_game },
-#elif __JDOOM__
-    { MN_TEXT,      0,  0,       { -3, -70 }, 0, MENU_FONT1, MENU_COLOR1, MNText_Ticker, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_main_title },
-    { MN_BUTTON,    0,  0,       { 0,   0 }, 'n', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionSetActivePage, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_main_new_game, "GameType" },
-    { MN_BUTTON,    0,  0,       { 0,   FIXED_LINE_HEIGHT }, 'o', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionSetActivePage, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_main_options, "Options" },
-    { MN_BUTTON,    0,  0,       { 0, 2*FIXED_LINE_HEIGHT }, 'l', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuSelectLoadGame, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_main_load_game },
-    { MN_BUTTON,    0,  0,       { 0, 3*FIXED_LINE_HEIGHT }, 's', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuSelectSaveGame, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_main_save_game },
-    { MN_BUTTON,    0,  MNF_ID0, { 0, 4*FIXED_LINE_HEIGHT }, 'r', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuSelectHelp, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_main_help },
-    { MN_BUTTON,    0,  MNF_ID1, { 0, 5*FIXED_LINE_HEIGHT }, 'q', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuSelectQuitGame, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_main_quit_game },
-#elif __JDOOM64__
-    { MN_TEXT,      0,  0,  {-3, -70 }, 0, MENU_FONT1, MENU_COLOR1, MNText_Ticker, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_main_title },
-    { MN_BUTTON,    0,  0,  { 0,   0 }, 'n', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionSetActivePage, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_main_new_game, "GameType" },
-    { MN_BUTTON,    0,  0,  { 0,   FIXED_LINE_HEIGHT }, 'o', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionSetActivePage, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_main_options, "Options" },
-    { MN_BUTTON,    0,  0,  { 0, 2*FIXED_LINE_HEIGHT }, 'l', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuSelectLoadGame, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_main_load_game },
-    { MN_BUTTON,    0,  0,  { 0, 3*FIXED_LINE_HEIGHT }, 's', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuSelectSaveGame, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_main_save_game },
-    { MN_BUTTON,    0,  0,  { 0, 4*FIXED_LINE_HEIGHT }, 'q', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuSelectQuitGame, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_main_quit_game },
-#endif
-    { MN_NONE }
-};
-
 #if __JDOOM__ || __JDOOM64__
 mndata_button_t btn_skill_baby      = { false, NULL, NULL, &pSkillModeNames[0] };
 mndata_button_t btn_skill_easy      = { false, NULL, NULL, &pSkillModeNames[1] };
@@ -1470,10 +1419,18 @@ void Hu_MenuInitMainPage(void)
 {
 #if __JHEXEN__ || __JHERETIC__
     Point2Raw origin = { 110, 56 };
+    uint numObjects = 6;
 #else
     Point2Raw origin = {  97, 64 };
+# if __JDOOM64__
+    uint numObjects = 7;
+# else
+    uint numObjects = 8;
+# endif
 #endif
+    mn_object_t* objects, *ob;
     mn_page_t* page;
+    int y;
 
 #if __JDOOM__
     if(gameModeBits & GM_ANY_DOOM2)
@@ -1485,9 +1442,191 @@ void Hu_MenuInitMainPage(void)
 #else
     page = Hu_MenuNewPage("Main", &origin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, Hu_MenuDrawMainPage, NULL, NULL);
 #endif
-
     MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTB));
-    page->objects = MainMenuObjects;
+
+    objects = Z_Calloc(sizeof(*objects) * numObjects, PU_GAMESTATIC, 0);
+    if(!objects) Con_Error("Hu_MenuInitMainPage: Failed on allocation of %lu bytes for menu objects.", (unsigned long) (sizeof(*objects) * numObjects));
+
+    ob = objects;
+    y = 0;
+
+#if __JDOOM__ || __JDOOM64__
+    ob->_type = MN_TEXT;
+    ob->_origin.x = -3;
+    ob->_origin.y = -70;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->patch = &pMainTitle;
+    }
+    ob++;
+#endif
+
+    ob->_type = MN_BUTTON;
+    ob->_origin.y = y;
+    ob->_shortcut = 'n';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->data1 = "GameType";
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+#if defined(__JDOOM__) && !defined(__JDOOM64__)
+    btn->patch = &pNGame;
+#else
+    btn->text = "New Game";
+#endif
+    }
+    ob++; y += FIXED_LINE_HEIGHT;
+
+    ob->_type = MN_BUTTON;
+    ob->_origin.y = y;
+    ob->_shortcut = 'o';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->data1 = "Options";
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+#if defined(__JDOOM__) && !defined(__JDOOM64__)
+    btn->patch = &pOptions;
+#else
+    btn->text = "Options";
+#endif
+    }
+    ob++; y += FIXED_LINE_HEIGHT;
+
+#if __JDOOM__ || __JDOOM64__
+    ob->_type = MN_BUTTON;
+    ob->_origin.y = y;
+    ob->_shortcut = 'l';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectLoadGame;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+# if __JDOOM64__
+    btn->text = "Load Game";
+# else
+    btn->patch = &pLoadGame;
+# endif
+    }
+    ob++; y += FIXED_LINE_HEIGHT;
+
+    ob->_type = MN_BUTTON;
+    ob->_origin.y = y;
+    ob->_shortcut = 's';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectSaveGame;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+# if __JDOOM64__
+    btn->text = "Save Game";
+# else
+    btn->patch = &pSaveGame;
+# endif
+    }
+    ob++; y += FIXED_LINE_HEIGHT;
+#else
+    ob->_type = MN_BUTTON;
+    ob->_origin.y = y;
+    ob->_shortcut = 'f';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->data1 = "Files";
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+    btn->text = "Game Files";
+    }
+    ob++; y += FIXED_LINE_HEIGHT;
+#endif
+
+#if !__JDOOM64__
+    ob->_type = MN_BUTTON;
+    ob->_origin.y = y;
+# if __JDOOM__
+    ob->_flags = MNF_ID0;
+    ob->_shortcut = 'r';
+# else
+    ob->_shortcut = 'i';
+# endif
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectHelp;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+# if defined(__JDOOM__)
+    btn->patch = &pReadThis;
+# else
+    btn->text = "Info";
+# endif
+    }
+    ob++; y += FIXED_LINE_HEIGHT;
+#endif
+
+    ob->_type = MN_BUTTON;
+#if __JDOOM__
+    ob->_flags = MNF_ID1;
+#endif
+    ob->_origin.y = y;
+    ob->_shortcut = 'q';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectQuitGame;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+#if defined(__JDOOM__) && !defined(__JDOOM64__)
+    btn->patch = &pQuitGame;
+#else
+    btn->text = "Quit Game";
+#endif
+    }
+    ob++; y += FIXED_LINE_HEIGHT;
+
+    ob->_type = MN_NONE;
+
+    page->objects = objects;
 }
 
 void Hu_MenuInitGameTypePage(void)
