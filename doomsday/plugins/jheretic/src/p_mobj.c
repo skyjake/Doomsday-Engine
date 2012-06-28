@@ -1065,6 +1065,7 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
     mo->health = info->spawnHealth * (IS_NETGAME ? cfg.netMobHealthModifier : 1);
     mo->moveDir = DI_NODIR;
     mo->selector = 0;
+    P_UpdateHealthBits(mo); // Set the health bits of the selector.
 
     if(gameSkill != SM_NIGHTMARE)
         mo->reactionTime = info->reactionTime;

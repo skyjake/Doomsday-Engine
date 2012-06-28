@@ -44,7 +44,12 @@ void P_MobjAngleSRVOTicker(mobj_t* mo);
 
 boolean P_MobjIsCamera(const mobj_t* mo);
 
+/**
+ * The first three bits of the selector special byte contain a relative
+ * health level.
+ */
 void P_UpdateHealthBits(mobj_t* mo);
+
 statenum_t P_GetState(mobjtype_t mobjType, statename_t name);
 
 void P_ProcessDeferredSpawns(void);

@@ -839,6 +839,7 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t
 
     // Spectres get selector = 1.
     mo->selector = (type == MT_SHADOWS)? 1 : 0;
+    P_UpdateHealthBits(mo); // Set the health bits of the selector.
 
     mo->reactionTime = info->reactionTime;
 

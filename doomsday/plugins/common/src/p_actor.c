@@ -270,23 +270,19 @@ boolean P_MobjIsCamera(const mobj_t* mo)
             (mo->player->plr->flags & DDPF_CAMERA));
 }
 
-/**
- * The first three bits of the selector special byte contain a relative
- * health level.
- */
-void P_UpdateHealthBits(mobj_t* mobj)
+void P_UpdateHealthBits(mobj_t* mo)
 {
-    int                 i;
+    int i;
+    if(!mo || !mo->info) return;
 
-    if(mobj->info && mobj->info->spawnHealth > 0)
+    if(mo->info->spawnHealth > 0)
     {
-        mobj->selector &= DDMOBJ_SELECTOR_MASK; // Clear high byte.
-        i = (mobj->health << 3) / mobj->info->spawnHealth;
-        if(i > 7)
-            i = 7;
-        if(i < 0)
-            i = 0;
-        mobj->selector |= i << DDMOBJ_SELECTOR_SHIFT;
+        mo->selector &= DDMOBJ_SELECTOR_MASK; // Clear high byte.
+
+        i = (mo->health << 3) / mo->info->spawnHealth;
+        i = MINMAX_OF(0, i, 7);
+
+        mo->selector |= i << DDMOBJ_SELECTOR_SHIFT;
     }
 }
 
