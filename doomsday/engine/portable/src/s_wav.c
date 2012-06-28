@@ -39,6 +39,18 @@
 
 // MACROS ------------------------------------------------------------------
 
+#ifdef __GNUC__
+/*
+ * Something in here is confusing GCC: when compiled with -O2, WAV_MemoryLoad()
+ * reads corrupt data. It is likely that the optimizer gets the manipulation of
+ * the 'data' pointer wrong.
+ */
+#  if GCC_VERSION >= 40400
+void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits, int* rate,
+                     int* samples) __attribute__(( optimize(0) ));
+#  endif
+#endif
+
 #define WAVE_FORMAT_PCM     1
 
 // TYPES -------------------------------------------------------------------
@@ -64,25 +76,10 @@ typedef struct wav_format_s {
 } wav_format_t;
 #pragma pack()
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 // CODE --------------------------------------------------------------------
 
-static void WRead(void** ptr, void** dest, int length)
-{
-    *dest = *ptr;
-    *(char**) ptr += length;
-}
+#define WRead(ptr, dest, length) \
+    { memcpy(dest, *ptr, length); *(char**) ptr += length; }
 
 /**
  * @return              Non-zero if the "RIFF" and "WAVE" strings are found.
@@ -103,14 +100,16 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits,
 {
     const byte* end = data + datalength;
     byte* sampledata = NULL;
-    chunk_hdr_t* riff_chunk;
-    wav_format_t* wave_format = NULL;
+    chunk_hdr_t riff_chunk;
+    wav_format_t wave_format;
 
     if(!WAV_CheckFormat((const char*)data))
     {
         Con_Message("WAV_MemoryLoad: Not a WAV file.\n");
         return NULL;
     }
+    
+    memset(&wave_format, 0, sizeof(wave_format));
 
     // Read the RIFF header.
     data += sizeof(riff_hdr_t);
@@ -120,37 +119,45 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits,
 
     data += 4;
 
+#ifdef _DEBUG    
+    assert(sizeof(wave_format) == 16);
+    assert(sizeof(riff_chunk) == 8);
+#endif
+    
     // Start readin' the chunks, baby!
     while(data < end)
     {
         // Read next chunk header.
-        WRead((void **) &data, (void **) &riff_chunk, sizeof(*riff_chunk));
-
+        WRead((void **) &data, &riff_chunk, sizeof(riff_chunk));
+        
         // Correct endianness.
-        riff_chunk->len = ULONG(riff_chunk->len);
+        riff_chunk.len = ULONG(riff_chunk.len);
 
         // What have we got here?
-        if(!strncmp(riff_chunk->id, "fmt ", 4))
+        if(!strncmp(riff_chunk.id, "fmt ", 4))
         {
-            // Read format chunk.
-            WRead((void **) &data, (void **) &wave_format,
-                  sizeof(*wave_format));
+            assert(wave_format.wFormatTag == 0);
 
+            // Read format chunk.
+            WRead((void **) &data, &wave_format, sizeof(wave_format));
+                                                            
             // Correct endianness.
-            wave_format->wFormatTag = USHORT(wave_format->wFormatTag);
-            wave_format->wChannels = USHORT(wave_format->wChannels);
-            wave_format->dwSamplesPerSec = ULONG(wave_format->dwSamplesPerSec);
-            wave_format->dwAvgBytesPerSec = ULONG(wave_format->dwAvgBytesPerSec);
-            wave_format->wBlockAlign = USHORT(wave_format->wBlockAlign);
-            wave_format->wBitsPerSample = USHORT(wave_format->wBitsPerSample);
+            wave_format.wFormatTag = USHORT(wave_format.wFormatTag);
+            wave_format.wChannels = USHORT(wave_format.wChannels);
+            wave_format.dwSamplesPerSec = ULONG(wave_format.dwSamplesPerSec);
+            wave_format.dwAvgBytesPerSec = ULONG(wave_format.dwAvgBytesPerSec);
+            wave_format.wBlockAlign = USHORT(wave_format.wBlockAlign);
+            wave_format.wBitsPerSample = USHORT(wave_format.wBitsPerSample);
+
+            assert(wave_format.wFormatTag == WAVE_FORMAT_PCM); // linear PCM
 
             // Check that it's a format we know how to read.
-            if(wave_format->wFormatTag != WAVE_FORMAT_PCM)
+            if(wave_format.wFormatTag != WAVE_FORMAT_PCM)
             {
-                Con_Message("WAV_MemoryLoad: Unsupported format.\n");
+                Con_Message("WAV_MemoryLoad: Unsupported format (%i).\n", wave_format.wFormatTag);
                 return NULL;
             }
-            if(wave_format->wChannels != 1)
+            if(wave_format.wChannels != 1)
             {
                 Con_Message
                     ("WAV_MemoryLoad: Too many channels (only mono supported).\n");
@@ -166,28 +173,28 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits,
                }
                else
                { */
-            if(wave_format->wBitsPerSample != 8 &&
-               wave_format->wBitsPerSample != 16)
+            if(wave_format.wBitsPerSample != 8 &&
+               wave_format.wBitsPerSample != 16)
             {
                 Con_Message("WAV_MemoryLoad: Not a 8/16 bit WAVE.\n");
                 return NULL;
             }
             // Now we know some information about the sample.
-            *bits = wave_format->wBitsPerSample;
-            *rate = wave_format->dwSamplesPerSec;
+            *bits = wave_format.wBitsPerSample;
+            *rate = wave_format.dwSamplesPerSec;
         }
-        else if(!strncmp(riff_chunk->id, "data", 4))
+        else if(!strncmp(riff_chunk.id, "data", 4))
         {
-            if(!wave_format)
+            if(!wave_format.wFormatTag)
             {
                 Con_Message("WAV_MemoryLoad: Malformed WAVE data.\n");
                 return NULL;
             }
             // Read data chunk.
-            *samples = riff_chunk->len / wave_format->wBlockAlign;
+            *samples = riff_chunk.len / wave_format.wBlockAlign;
             // Allocate the sample buffer.
-            sampledata = Z_Malloc(riff_chunk->len, PU_APPSTATIC, 0);
-            memcpy(sampledata, data, riff_chunk->len);
+            sampledata = Z_Malloc(riff_chunk.len, PU_APPSTATIC, 0);
+            memcpy(sampledata, data, riff_chunk.len);
 #ifdef __BIG_ENDIAN__
             // Correct endianness.
             /*if(wave_format->wBitsPerSample == 16)
@@ -203,7 +210,7 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits,
         else
         {
             // Unknown chunk, just skip it.
-            data += riff_chunk->len;
+            data += riff_chunk.len;
         }
     }
 
@@ -217,16 +224,21 @@ void* WAV_Load(const char* filename, int* bits, int* rate, int* samples)
     uint8_t* data;
     size_t size;
 
-    if(!file)return NULL;
+    if(!file) return NULL;
 
     // Read in the whole thing.
     size = DFile_Length(file);
+ 
+    DEBUG_Message(("WAV_Load: Loading from %s (size %i, fpos %i)\n", Str_Text(AbstractFile_Path(DFile_File_Const(file))),
+                   (int)size, (int)DFile_Tell(file)));
+
     data = (uint8_t*)malloc(size);
     if(!data) Con_Error("WAV_Load: Failed on allocation of %lu bytes for sample load buffer.",
                 (unsigned long) size);
 
     DFile_Read(file, data, size);
     F_Delete(file);
+    file = 0;
 
     // Parse the RIFF data.
     sampledata = WAV_MemoryLoad((const byte*) data, size, bits, rate, samples);

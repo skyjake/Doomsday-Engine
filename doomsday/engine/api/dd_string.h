@@ -68,7 +68,8 @@ typedef struct ddstring_s {
     /// String length (no terminating nulls).
     size_t length;
 
-    /// Allocated buffer size (note: not necessarily equal to ddstring_t::length).
+    /// Allocated buffer size: includes the terminating null and possibly
+    /// some extra space.
     size_t size;
 
     // Memory management.
@@ -216,9 +217,20 @@ boolean Str_IsEmpty(const ddstring_t* ds);
 char* Str_Text(const ddstring_t* ds);
 
 /**
- * Makes a true copy.
+ * Makes a copy of @a src and replaces the previous contents of @a dest with
+ * it. The copy will have least as much memory reserved in its internal buffer
+ * as the original.
+ *
+ * If @a src is a static string (i.e., no memory allocated for its buffer), new
+ * memory will be allocated for the copy.
+ *
+ * @param dest  String where the copy is stored.
+ * @param src   Original string to copy.
+ *
+ * @return  The @a dest string with the copied content.
  */
 ddstring_t* Str_Copy(ddstring_t* dest, const ddstring_t* src);
+
 ddstring_t* Str_CopyOrClear(ddstring_t* dest, const ddstring_t* src);
 
 /**

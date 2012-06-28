@@ -219,7 +219,9 @@ static void hardenBSP(BspBuilder& builder, GameMap* dest)
     dest->bspLeafs = static_cast<BspLeaf**>(Z_Calloc(dest->numBspLeafs * sizeof(BspLeaf*), PU_MAPSTATIC, 0));
 
     BspTreeNode* rootNode = builder.root();
-    if(rootNode && rootNode->isLeaf())
+    dest->bsp = rootNode->userData();
+
+    if(rootNode->isLeaf())
     {
         // Take ownership of this leaf.
         Q_ASSERT(rootNode->userData());
@@ -229,10 +231,9 @@ static void hardenBSP(BspBuilder& builder, GameMap* dest)
         // Add this BspLeaf to the LUT.
         leaf->index = 0;
         dest->bspLeafs[0] = leaf;
+
         return;
     }
-
-    dest->bsp = rootNode->userData();
 
     populatebspobjectluts_params_t p;
     p.builder = &builder;

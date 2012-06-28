@@ -64,9 +64,6 @@ typedef struct bindingdrawerdata_s {
     float alpha;
 } bindingdrawerdata_t;
 
-static mn_object_t* ControlsMenuItems;
-static mndata_text_t* ControlsMenuTexts;
-
 static mndata_bindings_t controlConfig[] =
 {
     { "Movement" },
@@ -270,6 +267,8 @@ void Hu_MenuInitControlsPage(void)
     int i, textCount, bindingsCount, totalItems, group;
     int configCount = sizeof(controlConfig) / sizeof(controlConfig[0]);
     size_t objectIdx, textIdx;
+    mn_object_t* objects;
+    mndata_text_t* texts;
     mn_page_t* page;
 
     VERBOSE( Con_Message("Hu_MenuInitControlsPage: Creating controls items.\n") )
@@ -292,15 +291,15 @@ void Hu_MenuInitControlsPage(void)
 
     // Allocate the menu items array.
     totalItems = textCount + bindingsCount + 1/*terminator*/;
-    ControlsMenuItems = (mn_object_t*)Z_Calloc(sizeof(*ControlsMenuItems) * totalItems, PU_GAMESTATIC, 0);
-    if(!ControlsMenuItems)
+    objects = (mn_object_t*)Z_Calloc(sizeof(*objects) * totalItems, PU_GAMESTATIC, 0);
+    if(!objects)
         Con_Error("Hu_MenuInitControlsPage: Failed on allocation of %lu bytes for items array.",
-            (unsigned long) (sizeof(*ControlsMenuItems) * totalItems));
+            (unsigned long) (sizeof(*objects) * totalItems));
 
-    ControlsMenuTexts = (mndata_text_t*)Z_Calloc(sizeof(*ControlsMenuTexts) * textCount, PU_GAMESTATIC, 0);
-    if(!ControlsMenuTexts)
+    texts = (mndata_text_t*)Z_Calloc(sizeof(*texts) * textCount, PU_GAMESTATIC, 0);
+    if(!texts)
         Con_Error("Hu_MenuInitControlsPage: Failed on allocation of %lu bytes for texts array.",
-            (unsigned long) (sizeof(*ControlsMenuTexts) * textCount));
+            (unsigned long) (sizeof(*texts) * textCount));
 
     objectIdx = 0;
     textIdx = 0;
@@ -312,8 +311,8 @@ void Hu_MenuInitControlsPage(void)
         if(!binds->command && !binds->controlName)
         {
             // Inert.
-            mn_object_t* ob    = &ControlsMenuItems[objectIdx++];
-            mndata_text_t* txt = &ControlsMenuTexts[textIdx++];
+            mn_object_t* ob    = &objects[objectIdx++];
+            mndata_text_t* txt = &texts[textIdx++];
 
             ob->_type = MN_TEXT;
             txt->text = binds->text;
@@ -329,9 +328,9 @@ void Hu_MenuInitControlsPage(void)
         }
         else
         {
-            mn_object_t* labelOb    = &ControlsMenuItems[objectIdx++];
-            mn_object_t* bindingsOb = &ControlsMenuItems[objectIdx++];
-            mndata_text_t* txt = &ControlsMenuTexts[textIdx++];
+            mn_object_t* labelOb    = &objects[objectIdx++];
+            mn_object_t* bindingsOb = &objects[objectIdx++];
+            mndata_text_t* txt = &texts[textIdx++];
 
             labelOb->_type = MN_TEXT;
             txt->text = binds->text;
@@ -355,10 +354,10 @@ void Hu_MenuInitControlsPage(void)
             bindingsOb->_group = group;
         }
     }
-    ControlsMenuItems[objectIdx]._type = MN_NONE; // Terminate.
+    objects[objectIdx]._type = MN_NONE; // Terminate.
 
     page = Hu_MenuNewPage("ControlOptions", &pageOrigin, 0, Hu_MenuPageTicker, Hu_MenuDrawControlsPage, NULL, NULL);
-    page->objects = ControlsMenuItems;
+    page->objects = objects;
     MNPage_SetTitle(page, "Controls");
     MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
     MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Options"));

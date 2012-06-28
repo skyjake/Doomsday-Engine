@@ -20,6 +20,7 @@
  * 02110-1301 USA</small>
  */
 
+#include <stdlib.h>
 #include <string.h>
 
 #include "common.h"
@@ -28,25 +29,85 @@
 #include "p_saveio.h"
 #include "saveinfo.h"
 
-void SaveInfo_SetFilePath(saveinfo_t* info, ddstring_t* newFilePath)
+struct saveinfo_s
+{
+    ddstring_t filePath;
+    ddstring_t name;
+    uint gameId;
+    saveheader_t header;
+};
+
+SaveInfo* SaveInfo_NewWithFilePath(const ddstring_t* filePath)
+{
+    SaveInfo* info = (SaveInfo*)malloc(sizeof *info);
+    if(!info) Con_Error("SaveInfo_New: Failed on allocation of %lu bytes for new SaveInfo.", (unsigned long) sizeof *info);
+
+    Str_Init(&info->filePath);
+    if(filePath) Str_Set(&info->filePath, Str_Text(filePath));
+    Str_Init(&info->name);
+    info->gameId = 0;
+
+    memset(&info->header, 0, sizeof(info->header));
+    return info;
+}
+
+SaveInfo* SaveInfo_New(void)
+{
+    return SaveInfo_NewWithFilePath(0);
+}
+
+void SaveInfo_Delete(SaveInfo* info)
+{
+    assert(info);
+    Str_Free(&info->filePath);
+    Str_Free(&info->name);
+    free(info);
+}
+
+const ddstring_t* SaveInfo_FilePath(SaveInfo* info)
+{
+    assert(info);
+    return &info->filePath;
+}
+
+uint SaveInfo_GameId(SaveInfo* info)
+{
+    assert(info);
+    return info->gameId;
+}
+
+const saveheader_t* SaveInfo_Header(SaveInfo* info)
+{
+    assert(info);
+    //if(!SaveInfo_IsLoadable(info)) return NULL;
+    return &info->header;
+}
+
+const ddstring_t* SaveInfo_Name(SaveInfo* info)
+{
+    assert(info);
+    return &info->name;
+}
+
+void SaveInfo_SetFilePath(SaveInfo* info, ddstring_t* newFilePath)
 {
     assert(info);
     Str_CopyOrClear(&info->filePath, newFilePath);
 }
 
-void SaveInfo_SetGameId(saveinfo_t* info, uint newGameId)
+void SaveInfo_SetGameId(SaveInfo* info, uint newGameId)
 {
     assert(info);
-    info->header.gameId = newGameId;
+    info->gameId = newGameId;
 }
 
-void SaveInfo_SetName(saveinfo_t* info, const char* newName)
+void SaveInfo_SetName(SaveInfo* info, const ddstring_t* newName)
 {
     assert(info);
-    dd_snprintf(info->header.name, SAVESTRINGSIZE, "%s", newName);
+    Str_CopyOrClear(&info->name, newName);
 }
 
-void SaveInfo_Configure(saveinfo_t* info)
+void SaveInfo_Configure(SaveInfo* info)
 {
     saveheader_t* hdr;
     assert(info);
@@ -85,14 +146,16 @@ void SaveInfo_Configure(saveinfo_t* info)
 #endif
 }
 
-static boolean saveInfoIsValidForCurrentGameSession(saveinfo_t* info)
+/// @fixme What about original game saves, they will fail here presently.
+boolean SaveInfo_IsLoadable(SaveInfo* info)
 {
     assert(info);
 
-    /// @fixme What about original game saves, they will fail here presently.
+    if(Str_IsEmpty(&info->filePath)) return false;
 
     // Magic must match.
-    if(info->header.magic != MY_SAVE_MAGIC) return false;
+    if(info->header.magic != MY_SAVE_MAGIC &&
+       info->header.magic != MY_CLIENT_SAVE_MAGIC) return false;
 
     /**
      * Check for unsupported versions.
@@ -112,7 +175,7 @@ static boolean saveInfoIsValidForCurrentGameSession(saveinfo_t* info)
     return true; // It's good!
 }
 
-static boolean recogniseAndReadHeader(saveinfo_t* info)
+static boolean recogniseAndReadHeader(SaveInfo* info)
 {
     if(SV_Recognise(info)) return true;
 
@@ -127,7 +190,7 @@ static boolean recogniseAndReadHeader(saveinfo_t* info)
     return false;
 }
 
-void SaveInfo_Update(saveinfo_t* info)
+void SaveInfo_Update(SaveInfo* info)
 {
     assert(info);
 
@@ -142,7 +205,6 @@ void SaveInfo_Update(saveinfo_t* info)
     if(!recogniseAndReadHeader(info))
     {
         // Not a loadable save.
-        Str_Clear(&info->filePath);
         return;
     }
 
@@ -151,15 +213,9 @@ void SaveInfo_Update(saveinfo_t* info)
     {
         Str_Set(&info->name, "UNNAMED");
     }
-
-    if(!saveInfoIsValidForCurrentGameSession(info))
-    {
-        // Not a loadable save.
-        Str_Clear(&info->filePath);
-    }
 }
 
-void SaveInfo_Write(saveinfo_t* saveInfo, Writer* writer)
+void SaveInfo_Write(SaveInfo* saveInfo, Writer* writer)
 {
     saveheader_t* info;
     assert(saveInfo);
@@ -168,12 +224,7 @@ void SaveInfo_Write(saveinfo_t* saveInfo, Writer* writer)
     Writer_WriteInt32(writer, info->magic);
     Writer_WriteInt32(writer, info->version);
     Writer_WriteInt32(writer, info->gameMode);
-
-    {
-    ddstring_t name;
-    Str_InitStatic(&name, info->name);
-    Str_Write(&name, writer);
-    }
+    Str_Write(&saveInfo->name, writer);
 
     Writer_WriteByte(writer, info->skill);
     Writer_WriteByte(writer, info->episode);
@@ -191,7 +242,7 @@ void SaveInfo_Write(saveinfo_t* saveInfo, Writer* writer)
         Writer_WriteByte(writer, info->players[i]);
     }}
 #endif
-    Writer_WriteInt32(writer, info->gameId);
+    Writer_WriteInt32(writer, saveInfo->gameId);
 }
 
 #if __JDOOM__ || __JHERETIC__
@@ -230,7 +281,7 @@ static void translateLegacyGameMode(gamemode_t* mode)
 }
 #endif
 
-void SaveInfo_Read(saveinfo_t* saveInfo, Reader* reader)
+void SaveInfo_Read(SaveInfo* saveInfo, Reader* reader)
 {
     saveheader_t* info;
     assert(saveInfo);
@@ -242,18 +293,18 @@ void SaveInfo_Read(saveinfo_t* saveInfo, Reader* reader)
 
     if(info->version >= 10)
     {
-        ddstring_t buf;
-        Str_InitStd(&buf);
-        Str_Read(&buf, reader);
-        memcpy(info->name, Str_Text(&buf), SAVESTRINGSIZE);
-        info->name[SAVESTRINGSIZE] = '\0';
-        Str_Free(&buf);
+        Str_Read(&saveInfo->name, reader);
     }
     else
     {
         // Older formats use a fixed-length name (24 characters).
-        Reader_Read(reader, info->name, SAVESTRINGSIZE);
+#define OLD_NAME_LENGTH         24
+        char buf[OLD_NAME_LENGTH];
+        Reader_Read(reader, buf, OLD_NAME_LENGTH);
+        Str_Set(&saveInfo->name, buf);
+#undef OLD_NAME_LENGTH
     }
+
     info->skill = Reader_ReadByte(reader);
     info->episode = Reader_ReadByte(reader);
     info->map = Reader_ReadByte(reader);
@@ -277,7 +328,7 @@ void SaveInfo_Read(saveinfo_t* saveInfo, Reader* reader)
     }}
 #endif
 
-    info->gameId = Reader_ReadInt32(reader);
+    saveInfo->gameId = Reader_ReadInt32(reader);
 
     // Translate gameMode identifiers from older save versions.
 #if __JDOOM__ || __JHERETIC__
@@ -293,17 +344,19 @@ void SaveInfo_Read(saveinfo_t* saveInfo, Reader* reader)
 }
 
 #if __JHEXEN__
-void SaveInfo_Read_Hx_v9(saveinfo_t* saveInfo, Reader* reader)
+void SaveInfo_Read_Hx_v9(SaveInfo* saveInfo, Reader* reader)
 {
-# define HXS_VERSION_TEXT      "HXS Ver " // Do not change me!
+# define HXS_VERSION_TEXT       "HXS Ver " // Do not change me!
 # define HXS_VERSION_TEXT_LENGTH 16
+# define HXS_NAME_LENGTH        24
 
-    char verText[HXS_VERSION_TEXT_LENGTH];
+    char verText[HXS_VERSION_TEXT_LENGTH], nameBuffer[HXS_NAME_LENGTH];
     saveheader_t* info;
     assert(saveInfo);
 
     info = &saveInfo->header;
-    Reader_Read(reader, &info->name, SAVESTRINGSIZE);
+    Reader_Read(reader, nameBuffer, HXS_NAME_LENGTH);
+    Str_Set(&saveInfo->name, nameBuffer);
     Reader_Read(reader, &verText, HXS_VERSION_TEXT_LENGTH);
     info->version = atoi(&verText[8]);
 
@@ -320,8 +373,9 @@ void SaveInfo_Read_Hx_v9(saveinfo_t* saveInfo, Reader* reader)
 
     /// @note Older formats do not contain all needed values:
     info->gameMode = gameMode; // Assume the current mode.
-    info->gameId  = 0; // None.
+    saveInfo->gameId  = 0; // None.
 
+# undef HXS_NAME_LENGTH
 # undef HXS_VERSION_TEXT_LENGTH
 # undef HXS_VERSION_TEXT
 }

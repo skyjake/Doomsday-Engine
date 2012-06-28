@@ -88,7 +88,7 @@ boolean G_IsLoadGamePossible(void);
 /**
  * To be called to schedule a load game-save action.
  * @param slot  Logical identifier of the save slot to use.
- * @return  @c true iff @a saveSlot is in use and loading is presently possible.
+ * @return  @c true iff @a slot is in use and loading is presently possible.
  */
 boolean G_LoadGame(int slot);
 
@@ -104,7 +104,7 @@ ddstring_t* G_GenerateSaveGameName(void);
  * @param name  New name for the game-save. Can be @c NULL in which case
  *      the name will not change if the slot has already been used.
  *      If an empty string a new name will be generated automatically.
- * @return  @c true iff @a saveSlot is valid and saving is presently possible.
+ * @return  @c true iff @a slot is valid and saving is presently possible.
  */
 boolean G_SaveGame2(int slot, const char* name);
 boolean G_SaveGame(int slot);

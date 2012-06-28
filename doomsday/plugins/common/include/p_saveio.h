@@ -59,7 +59,7 @@ const char* SV_SavePath(void);
 const char* SV_ClientSavePath(void);
 #endif
 
-boolean SV_Recognise(saveinfo_t* info);
+boolean SV_Recognise(SaveInfo* info);
 
 /*
  * File management
@@ -113,8 +113,8 @@ short SV_ReadShort(void);
 long SV_ReadLong(void);
 float SV_ReadFloat(void);
 
-void SV_SaveInfo_Write(saveinfo_t* info);
-void SV_SaveInfo_Read(saveinfo_t* info);
+void SV_SaveInfo_Write(SaveInfo* info);
+void SV_SaveInfo_Read(SaveInfo* info);
 
 void SV_MaterialArchive_Write(MaterialArchive* arc);
 void SV_MaterialArchive_Read(MaterialArchive* arc, int version);

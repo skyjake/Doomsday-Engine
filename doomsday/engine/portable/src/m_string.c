@@ -57,36 +57,38 @@ static void autoselectMemoryManagement(ddstring_t* str)
     assert(str->memCalloc);
 }
 
-static void allocateString(ddstring_t *str, size_t for_length, int preserve)
+static void allocateString(ddstring_t *str, size_t forLength, int preserve)
 {
-    boolean old_data = false;
-    char   *buf;
+    size_t oldSize = str->size;
+    char *buf;
 
     // Include the terminating null character.
-    for_length++;
+    forLength++;
 
-    if(str->size >= for_length)
+    if(str->size >= forLength)
         return; // We're OK.
 
     autoselectMemoryManagement(str);
 
-    // Already some memory allocated?
-    if(str->size)
-        old_data = true;
-    else
-        str->size = 1;
-
-    while(str->size < for_length)
+    // Determine the new size of the memory buffer.
+    if(!str->size) str->size = 1;
+    while(str->size < forLength)
+    {
         str->size *= 2;
+    }
 
     assert(str->memCalloc);
     buf = str->memCalloc(str->size);
 
-    if(preserve && str->str)
-        strncpy(buf, str->str, str->size - 1);
+    if(preserve && str->str && oldSize)
+    {
+        // Copy the old contents of the string.
+        assert(oldSize <= str->size);
+        memcpy(buf, str->str, oldSize);
+    }
 
     // Replace the old string with the new buffer.
-    if(old_data)
+    if(oldSize)
     {
         assert(str->memFree);
         str->memFree(str->str);
@@ -443,15 +445,25 @@ ddstring_t* Str_Copy(ddstring_t* str, const ddstring_t* other)
     if(!other)
     {
 #if _DEBUG
-        Con_Message("Attempted String::Copy with invalid reference (@a other==0).\n");
+        Con_Message("Attempted String::Copy with invalid reference (other==0).\n");
 #endif
         return str;
     }
-    str->size = other->size;
-    str->length = other->length;
-    assert(str->memAlloc);
-    str->str = str->memAlloc(other->size);
-    memcpy(str->str, other->str, other->size);
+    if(!other->size)
+    {
+        // The original string has no memory allocated; it's a static string.
+        allocateString(str, other->length, false);
+        strcpy(str->str, other->str);
+        str->length = other->length;
+    }
+    else
+    {
+        // Duplicate the other string's buffer in its entirety.
+        str->str = str->memAlloc(other->size);
+        memcpy(str->str, other->str, other->size);
+        str->size = other->size;
+        str->length = other->length;
+    }
     return str;
 }
 

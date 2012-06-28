@@ -223,12 +223,9 @@ wbstartstruct_t wmInfo; // Params for world map / intermission.
 #endif
 
 // Game Action Variables:
-#define GA_SAVEGAME_NAME_LASTINDEX      (24)
-#define GA_SAVEGAME_NAME_MAXLENGTH      (GA_SAVEGAME_NAME_LASTINDEX+1)
-
 int gaSaveGameSlot = 0;
 boolean gaSaveGameGenerateName = true;
-char gaSaveGameName[GA_SAVEGAME_NAME_MAXLENGTH];
+ddstring_t* gaSaveGameName;
 int gaLoadGameSlot = 0;
 
 #if __JDOOM__ || __JDOOM64__
@@ -2407,17 +2404,19 @@ boolean G_SaveGame2(int slot, const char* name)
     if(!G_IsSaveGamePossible()) return false;
 
     gaSaveGameSlot = slot;
+    if(!gaSaveGameName)
+        gaSaveGameName = Str_New();
     if(name && name[0])
     {
         // A new name.
-        strncpy(gaSaveGameName, name, GA_SAVEGAME_NAME_LASTINDEX);
-        gaSaveGameName[GA_SAVEGAME_NAME_LASTINDEX] = '\0';
+        gaSaveGameGenerateName = false;
+        Str_Set(gaSaveGameName, name);
     }
     else
     {
         // Reusing the current name or generating a new one.
         gaSaveGameGenerateName = (name && !name[0]);
-        memset(gaSaveGameName, 0, GA_SAVEGAME_NAME_LASTINDEX);
+        Str_Clear(gaSaveGameName);
     }
     G_SetGameAction(GA_SAVEGAME);
     return true;
@@ -2484,18 +2483,18 @@ void G_DoSaveGame(void)
     const ddstring_t* nameStr = NULL;
     const char* name;
 
-    if(0 != strlen(gaSaveGameName))
+    if(gaSaveGameName && !Str_IsEmpty(gaSaveGameName))
     {
-        name = gaSaveGameName;
+        name = Str_Text(gaSaveGameName);
     }
     else
     {
         // No name specified.
-        const saveinfo_t* info = SV_SaveInfoForSlot(gaSaveGameSlot);
-        if(!gaSaveGameGenerateName && !Str_IsEmpty(&info->name))
+        SaveInfo* info = SV_SaveInfoForSlot(gaSaveGameSlot);
+        if(!gaSaveGameGenerateName && !Str_IsEmpty(SaveInfo_Name(info)))
         {
             // Slot already in use; reuse the existing name.
-            nameStr = &info->name;
+            nameStr = SaveInfo_Name(info);
         }
         else
         {
@@ -3394,8 +3393,8 @@ D_CMD(LoadGame)
     if(SV_IsSlotUsed(slot))
     {
         // A known used slot identifier.
-        const saveinfo_t* info;
-        char buf[80];
+        SaveInfo* info;
+        AutoStr* msg;
 
         if(confirm || !cfg.confirmQuickGameSave)
         {
@@ -3405,10 +3404,11 @@ D_CMD(LoadGame)
         }
 
         info = SV_SaveInfoForSlot(slot);
-        dd_snprintf(buf, 80, QLPROMPT, Str_Text(&info->name));
+        // Compose the confirmation message.
+        msg = Str_Appendf(AutoStr_NewStd(), QLPROMPT, Str_Text(SaveInfo_Name(info)));
 
         S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
-        Hu_MsgStart(MSG_YESNO, buf, loadGameConfirmResponse, slot, 0);
+        Hu_MsgStart(MSG_YESNO, Str_Text(msg), loadGameConfirmResponse, slot, 0);
         return true;
     }
     else if(!stricmp(argv[1], "quick") || !stricmp(argv[1], "<quick>"))
@@ -3447,8 +3447,10 @@ int saveGameConfirmResponse(msgresponse_t response, int userValue, void* userPoi
     if(response == MSG_YES)
     {
         const int slot = userValue;
-        const char* name = (const char*)userPointer;
-        G_SaveGame2(slot, name);
+        ddstring_t* name = (ddstring_t*)userPointer;
+        G_SaveGame2(slot, Str_Text(name));
+        // We're done with the name.
+        Str_Delete(name);
     }
     return true;
 }
@@ -3488,9 +3490,11 @@ D_CMD(SaveGame)
     if(SV_IsUserWritableSlot(slot))
     {
         // A known slot identifier.
-        const boolean slotIsUsed = SV_IsSlotUsed(slot);
         const char* name = (argc >= 3 && stricmp(argv[2], "confirm"))? argv[2] : NULL;
-        char buf[80];
+        const boolean slotIsUsed = SV_IsSlotUsed(slot);
+        SaveInfo* info = SV_SaveInfoForSlot(slot);
+        ddstring_t* nameStr;
+        AutoStr* msg;
 
         if(!slotIsUsed || confirm || !cfg.confirmQuickGameSave)
         {
@@ -3499,13 +3503,14 @@ D_CMD(SaveGame)
             return G_SaveGame2(slot, name);
         }
 
-        {
-        const saveinfo_t* info = SV_SaveInfoForSlot(slot);
-        dd_snprintf(buf, 80, QSPROMPT, Str_Text(&info->name));
+        // Compose the confirmation message.
+        msg = Str_Appendf(AutoStr_NewStd(), QSPROMPT, Str_Text(SaveInfo_Name(info)));
+
+        // Make a copy of the name.
+        nameStr = Str_Set(Str_New(), name);
 
         S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
-        Hu_MsgStart(MSG_YESNO, buf, saveGameConfirmResponse, slot, (void*)name);
-        }
+        Hu_MsgStart(MSG_YESNO, Str_Text(msg), saveGameConfirmResponse, slot, (void*)nameStr);
         return true;
     }
     else if(!stricmp(argv[1], "quick") || !stricmp(argv[1], "<quick>"))

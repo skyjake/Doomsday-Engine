@@ -822,18 +822,18 @@ void P_v19_UnArchiveSpecials(void)
     }
 }
 
-boolean SV_v19_LoadGame(saveinfo_t* info)
+int SV_v19_LoadGame(SaveInfo* info)
 {
     const char* savename;
     int i, a, b, c;
     size_t length;
     char vcheck[VERSIONSIZE];
 
-    if(!info) return false;
+    if(!info) return 1;
 
-    savename = Str_Text(&info->filePath);
+    savename = Str_Text(SaveInfo_FilePath(info));
     if(!(length = M_ReadFile(savename, (char**)&saveBuffer)))
-        return false;
+        return 1;
 
     // Skip the description field.
     savePtr = saveBuffer + V19_SAVESTRINGSIZE;
@@ -853,7 +853,7 @@ boolean SV_v19_LoadGame(saveinfo_t* info)
             Z_Free(saveBuffer);
             saveBuffer = NULL;
             savePtr = NULL;
-            return false;
+            return 1;
         }
 
         // Just give a warning.
@@ -883,8 +883,7 @@ boolean SV_v19_LoadGame(saveinfo_t* info)
     P_v19_UnArchiveSpecials();
 
     if(*savePtr != 0x1d)
-        Con_Error
-            ("SV_v19_LoadGame: Bad savegame (consistency test failed!)\n");
+        Con_Error("SV_v19_LoadGame: Bad savegame (consistency test failed!)\n");
 
     Z_Free(saveBuffer);
     saveBuffer = NULL;
@@ -892,21 +891,26 @@ boolean SV_v19_LoadGame(saveinfo_t* info)
     // Spawn particle generators.
     R_SetupMap(DDSMM_AFTER_LOADING, 0);
 
-    return true;
+    return 0; // Success!
 }
 
-boolean SV_v19_Recognise(saveinfo_t* info)
+boolean SV_v19_Recognise(SaveInfo* info)
 {
-    if(!info || Str_IsEmpty(&info->filePath)) return false;
+#define SAVESTRINGSIZE          24
 
-    if(SV_OpenFile(Str_Text(&info->filePath), "r"))
+    if(!info || Str_IsEmpty(SaveInfo_FilePath(info))) return false;
+
+    if(SV_OpenFile(Str_Text(SaveInfo_FilePath(info)), "r"))
     {
         char nameBuffer[SAVESTRINGSIZE];
+        ddstring_t nameStr;
         lzRead(nameBuffer, SAVESTRINGSIZE, SV_File());
         nameBuffer[SAVESTRINGSIZE - 1] = 0;
-        Str_Set(&info->name, nameBuffer);
+        SaveInfo_SetName(info, Str_InitStatic(&nameStr, nameBuffer));
         SV_CloseFile();
         return true;
     }
     return false;
+
+#undef SAVESTRINGSIZE
 }

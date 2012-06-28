@@ -45,7 +45,7 @@ void SV_Shutdown(void);
  * at strategic points when an update is necessary (e.g., the game-save
  * paths have changed).
  *
- * \note It is not necessary to call this after a game-save is made,
+ * @note It is not necessary to call this after a game-save is made,
  * this module will do so automatically.
  */
 void SV_UpdateAllSaveInfo(void);
@@ -99,25 +99,32 @@ boolean SV_HxHaveMapSaveForSlot(int slot, uint map);
  * @return  Game-save info for logical save @a slot. Always returns valid
  *      info even if supplied with an invalid or unused slot identifer.
  */
-saveinfo_t* SV_SaveInfoForSlot(int slot);
+SaveInfo* SV_SaveInfoForSlot(int slot);
 
-boolean SV_ComposeSavePathForSlot(int slot, ddstring_t* path);
+/**
+ * @return  File path to the reachable save directory. If the game-save path
+ *          is unreachable then a zero-length string is returned instead.
+ */
+AutoStr* SV_ComposeSavePathForSlot(int slot);
 
 #if __JHEXEN__
-boolean SV_ComposeSavePathForMapSlot(uint map, int slot, ddstring_t* path);
+/**
+ * @return  File path to the reachable save directory. If the game-save path
+ *          is unreachable then a zero-length string is returned instead.
+ */
+AutoStr* SV_ComposeSavePathForMapSlot(uint map, int slot);
 #endif
 
 #if !__JHEXEN__
 /**
  * Compose the (possibly relative) path to the game-save associated
- * with @a gameId. If the game-save path is unreachable then @a path
- * will be made empty.
+ * with @a gameId.
  *
  * @param gameId  Unique game identifier.
- * @param path  String buffer to populate with the game save path.
- * @return  @c true if @a path was set.
+ * @return  File path to the reachable save directory. If the game-save path
+ *          is unreachable then a zero-length string is returned instead.
  */
-boolean SV_ComposeSavePathForClientGameId(uint gameId, ddstring_t* path);
+AutoStr* SV_ComposeSavePathForClientGameId(uint gameId);
 #endif
 
 /**

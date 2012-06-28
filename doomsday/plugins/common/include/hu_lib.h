@@ -530,7 +530,6 @@ int MNButton_SetFlags(mn_object_t* ob, flagop_t op, int flags);
 /**
  * Edit field.
  */
-#define MNDATA_EDIT_TEXT_MAX_LENGTH             (24)
 #if __JDOOM__ || __JDOOM64__
 #  define MNDATA_EDIT_TEXT_COLORIDX             (0)
 #  define MNDATA_EDIT_OFFSET_X                  (0)
@@ -552,8 +551,9 @@ int MNButton_SetFlags(mn_object_t* ob, flagop_t op, int flags);
 #endif
 
 typedef struct mndata_edit_s {
-    char text[MNDATA_EDIT_TEXT_MAX_LENGTH+1];
-    char oldtext[MNDATA_EDIT_TEXT_MAX_LENGTH+1]; // If the current edit is canceled...
+    ddstring_t text;
+    ddstring_t oldtext; // If the current edit is canceled...
+    uint maxLength;
     uint maxVisibleChars;
     const char* emptyString; // Drawn when editfield is empty/null.
     void* data1;
@@ -569,6 +569,9 @@ int MNEdit_CommandResponder(mn_object_t* ob, menucommand_e command);
 int MNEdit_Responder(mn_object_t* ob, event_t* ev);
 void MNEdit_UpdateGeometry(mn_object_t* ob, mn_page_t* page);
 
+uint MNEdit_MaxLength(mn_object_t* ob);
+void MNEdit_SetMaxLength(mn_object_t* ob, uint newMaxLength);
+
 /**
  * @defgroup mneditSetTextFlags  MNEdit Set Text Flags
  * @{
@@ -578,7 +581,7 @@ void MNEdit_UpdateGeometry(mn_object_t* ob, mn_page_t* page);
 /**@}*/
 
 /// @return  A pointer to an immutable copy of the current contents of the edit field.
-const char* MNEdit_Text(mn_object_t* ob);
+const ddstring_t* MNEdit_Text(mn_object_t* ob);
 
 /**
  * Change the current contents of the edit field.
