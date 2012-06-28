@@ -1466,7 +1466,31 @@ void Hu_MenuInitColorWidgetPage(void)
     page->objects = objects;
 }
 
-void Hu_MenuInitGameTypeMenu(void)
+void Hu_MenuInitMainPage(void)
+{
+#if __JHEXEN__ || __JHERETIC__
+    Point2Raw origin = { 110, 56 };
+#else
+    Point2Raw origin = {  97, 64 };
+#endif
+    mn_page_t* page;
+
+#if __JDOOM__
+    if(gameModeBits & GM_ANY_DOOM2)
+        origin.y += 8;
+#endif
+
+#if __JDOOM__ || __JDOOM64__
+    page = Hu_MenuNewPage("Main", &origin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, NULL, NULL, NULL);
+#else
+    page = Hu_MenuNewPage("Main", &origin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, Hu_MenuDrawMainPage, NULL, NULL);
+#endif
+
+    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTB));
+    page->objects = MainMenuObjects;
+}
+
+void Hu_MenuInitGameTypePage(void)
 {
 #if __JDOOM__ || __JDOOM64__
     Point2Raw origin = { 97, 65 };
@@ -1527,7 +1551,7 @@ void Hu_MenuInitGameTypeMenu(void)
     page->objects = objects;
 }
 
-void Hu_MenuInitSkillMenu(void)
+void Hu_MenuInitSkillPage(void)
 {
 #if __JHEXEN__
     const Point2Raw origin = { 120, 44 };
@@ -1594,7 +1618,7 @@ void Hu_MenuInitSkillMenu(void)
 #endif
 }
 
-void Hu_MenuInitMultiplayerMenu(void)
+void Hu_MenuInitMultiplayerPage(void)
 {
 #if __JHERETIC__ || __JHEXEN__
     const Point2Raw origin = { 97, 65 };
@@ -1652,7 +1676,7 @@ void Hu_MenuInitMultiplayerMenu(void)
     page->objects = objects;
 }
 
-void Hu_MenuInitPlayerSetupMenu(void)
+void Hu_MenuInitPlayerSetupPage(void)
 {
 #if __JHERETIC__ || __JHEXEN__
     const Point2Raw origin = { 70, 54 };
@@ -1872,7 +1896,7 @@ void Hu_MenuInitPlayerSetupMenu(void)
 }
 
 #if __JHERETIC__ || __JHEXEN__
-void Hu_MenuInitFilesMenu(void)
+void Hu_MenuInitFilesPage(void)
 {
     Point2Raw origin = { 110, 60 };
     mn_object_t* objects, *ob;
@@ -1929,6 +1953,100 @@ void Hu_MenuInitFilesMenu(void)
     page->objects = objects;
 }
 #endif
+
+void Hu_MenuInitLoadGameAndSaveGamePages(void)
+{
+#if __JDOOM__ || __JDOOM64__
+    const Point2Raw origin = { 80, 54 };
+#else
+    const Point2Raw origin = { 70, 30 };
+#endif
+    mn_object_t* loadMenuObjects, *saveMenuObjects;
+    mndata_edit_t* saveSlots;
+    mn_page_t* page;
+    const int saveSlotObjectIds[NUMSAVESLOTS] = {
+        MNF_ID0, MNF_ID1, MNF_ID2, MNF_ID3, MNF_ID4, MNF_ID5,
+#if !__JHEXEN__
+        MNF_ID6, MNF_ID7
+#endif
+    };
+    int i, y;
+
+    saveSlots = Z_Calloc(sizeof(*saveSlots) * NUMSAVESLOTS, PU_GAMESTATIC, 0);
+    if(!saveSlots) Con_Error("Hu_MenuInitLoadGameAndSaveGamePages: Failed on allocation of %lu bytes for load/save menu edit fields.", (unsigned long) (sizeof(*saveSlots) * NUMSAVESLOTS));
+
+    for(i = 0; i < NUMSAVESLOTS; ++i)
+    {
+        mndata_edit_t* slot = saveSlots + i;
+        slot->emptyString = (const char*) TXT_EMPTYSTRING;
+        slot->data2 = i;
+        slot->maxLength = 24;
+    }
+
+    loadMenuObjects = Z_Calloc(sizeof(*loadMenuObjects) * (NUMSAVESLOTS+1), PU_GAMESTATIC, 0);
+    if(!loadMenuObjects) Con_Error("Hu_MenuInitLoadGameAndSaveGamePages: Failed on allocation of %lu bytes for load menu objects.", (unsigned long) (sizeof(*loadMenuObjects) * (NUMSAVESLOTS+1)));
+
+    y = 0;
+    for(i = 0; i < NUMSAVESLOTS; ++i, y += FIXED_LINE_HEIGHT)
+    {
+        mn_object_t* ob = loadMenuObjects + i;
+        mndata_edit_t* edit = saveSlots + i;
+        ob->_type = MN_EDIT;
+        ob->_origin.x = 0;
+        ob->_origin.y = y;
+        ob->_flags = saveSlotObjectIds[i] | MNF_DISABLED;
+        ob->_shortcut = '0' + i;
+        ob->_pageFontIdx = MENU_FONT1;
+        ob->_pageColorIdx = MENU_COLOR1;
+        ob->updateGeometry = MNEdit_UpdateGeometry;
+        ob->drawer = MNEdit_Drawer;
+        ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectLoadSlot;
+        ob->actions[MNA_FOCUSOUT].callback = Hu_MenuDefaultFocusAction;
+        ob->cmdResponder = MNObject_DefaultCommandResponder;
+        ob->_typedata = edit;
+        ob->data2 = saveSlotObjectIds[i];
+        Str_Init(&edit->text);
+        Str_Init(&edit->oldtext);
+    }
+    loadMenuObjects[i]._type = MN_NONE;
+
+    saveMenuObjects = Z_Calloc(sizeof(*saveMenuObjects) * (NUMSAVESLOTS+1), PU_GAMESTATIC, 0);
+    if(!saveMenuObjects) Con_Error("initAllPages: Failed on allocation of %lu bytes for save menu objects.", (unsigned long) (sizeof(*saveMenuObjects) * (NUMSAVESLOTS+1)));
+
+    y = 0;
+    for(i = 0; i < NUMSAVESLOTS; ++i, y += FIXED_LINE_HEIGHT)
+    {
+        mn_object_t* ob = saveMenuObjects + i;
+        mndata_edit_t* edit = saveSlots + i;
+        ob->_type = MN_EDIT;
+        ob->_origin.x = 0;
+        ob->_origin.y = y;
+        ob->_flags = saveSlotObjectIds[i];
+        ob->_shortcut = '0' + i;
+        ob->_pageFontIdx = MENU_FONT1;
+        ob->_pageColorIdx = MENU_COLOR1;
+        ob->updateGeometry = MNEdit_UpdateGeometry;
+        ob->drawer = MNEdit_Drawer;
+        ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectSaveSlot;
+        ob->actions[MNA_ACTIVE].callback = Hu_MenuSaveSlotEdit;
+        ob->actions[MNA_FOCUSOUT].callback = Hu_MenuDefaultFocusAction;
+        ob->cmdResponder = MNEdit_CommandResponder;
+        ob->responder = MNEdit_Responder;
+        ob->_typedata = edit;
+        ob->data2 = saveSlotObjectIds[i];
+    }
+    saveMenuObjects[i]._type = MN_NONE;
+
+    page = Hu_MenuNewPage("LoadGame", &origin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, Hu_MenuDrawLoadGamePage, NULL, NULL);
+    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
+    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Main"));
+    page->objects = loadMenuObjects;
+
+    page = Hu_MenuNewPage("SaveGame", &origin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, Hu_MenuDrawSaveGamePage, NULL, NULL);
+    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
+    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Main"));
+    page->objects = saveMenuObjects;
+}
 
 void Hu_MenuInitOptionsPage(void)
 {
@@ -2146,6 +2264,56 @@ void Hu_MenuInitOptionsPage(void)
     page->objects = objects;
 }
 
+void Hu_MenuInitGameplayOptionsPage(void)
+{
+#if __JHEXEN__
+    const Point2Raw origin = { 88, 25 };
+#elif __JHERETIC__
+    const Point2Raw origin = { 30, 40 };
+#else
+    const Point2Raw origin = { 30, 40 };
+#endif
+    mn_page_t* page;
+
+    page = Hu_MenuNewPage("GameplayOptions", &origin, 0, Hu_MenuPageTicker, NULL, NULL, NULL);
+    MNPage_SetTitle(page, "Gameplay Options");
+    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
+    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Options"));
+    page->objects = GameplayMenuObjects;
+}
+
+void Hu_MenuInitHUDOptionsPage(void)
+{
+#if __JDOOM__ || __JDOOM64__
+    const Point2Raw origin = { 97, 40 };
+#else
+    const Point2Raw origin = { 97, 28 };
+#endif
+    mn_page_t* page;
+
+    page = Hu_MenuNewPage("HudOptions", &origin, 0, Hu_MenuPageTicker, NULL, NULL, NULL);
+    MNPage_SetTitle(page, "HUD Options");
+    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
+    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Options"));
+    page->objects = HudMenuObjects;
+}
+
+void Hu_MenuInitAutomapOptionsPage(void)
+{
+#if __JHERETIC__ || __JHEXEN__
+    const Point2Raw origin = { 64, 28 };
+#else
+    const Point2Raw origin = { 70, 40 };
+#endif
+    mn_page_t* page;
+
+    page = Hu_MenuNewPage("AutomapOptions", &origin, 0, Hu_MenuPageTicker, NULL, NULL, NULL);
+    MNPage_SetTitle(page, "Automap Options");
+    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
+    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Options"));
+    page->objects = AutomapMenuObjects;
+}
+
 static int compareWeaponPriority(const void* _a, const void* _b)
 {
     const mndata_listitem_t* a = (const mndata_listitem_t*)_a;
@@ -2165,7 +2333,7 @@ static int compareWeaponPriority(const void* _a, const void* _b)
     return 0; // Should never happen.
 }
 
-void Hu_MenuInitWeaponsMenu(void)
+void Hu_MenuInitWeaponsPage(void)
 {
 #if __JDOOM__ || __JDOOM64__
     const Point2Raw origin = { 78, 40 };
@@ -2185,6 +2353,20 @@ void Hu_MenuInitWeaponsMenu(void)
     MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Options"));
     page->objects = WeaponMenuObjects;
 }
+
+#if __JHERETIC__ || __JHEXEN__
+void Hu_MenuInitInventoryOptionsPage(void)
+{
+    const Point2Raw origin = { 78, 48 };
+    mn_page_t* page;
+
+    page = Hu_MenuNewPage("InventoryOptions", &origin, 0, Hu_MenuPageTicker, NULL, NULL, NULL);
+    MNPage_SetTitle(page, "Inventory Options");
+    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
+    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Options"));
+    page->objects = InventoryMenuObjects;
+}
+#endif
 
 void Hu_MenuInitSoundOptionsPage(void)
 {
@@ -2301,7 +2483,7 @@ void Hu_MenuInitSoundOptionsPage(void)
 /**
  * Construct the episode selection menu.
  */
-void Hu_MenuInitEpisodeMenu(void)
+void Hu_MenuInitEpisodePage(void)
 {
 #if __JDOOM__
     const Point2Raw origin = { 48, 63 };
@@ -2394,7 +2576,7 @@ void Hu_MenuInitEpisodeMenu(void)
 /**
  * Construct the player class selection menu.
  */
-void Hu_MenuInitPlayerClassMenu(void)
+void Hu_MenuInitPlayerClassPage(void)
 {
     const Point2Raw pageOrigin = { 66, 66 };
     mndata_button_t* buttons, *btn;
@@ -3185,198 +3367,30 @@ static void destroyPage(mn_page_t* page)
 
 static void initAllPages(void)
 {
-    mn_page_t* page;
-
     Hu_MenuInitColorWidgetPage();
-
-    {
-#if __JHEXEN__ || __JHERETIC__
-    Point2Raw origin = { 110, 56 };
-#else
-    Point2Raw origin = {  97, 64 };
-#endif
-
-#if __JDOOM__
-    if(gameModeBits & GM_ANY_DOOM2)
-        origin.y += 8;
-#endif
-
-#if __JDOOM__ || __JDOOM64__
-    page = Hu_MenuNewPage("Main", &origin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, NULL, NULL, NULL);
-#else
-    page = Hu_MenuNewPage("Main", &origin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, Hu_MenuDrawMainPage, NULL, NULL);
-#endif
-
-    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTB));
-    page->objects = MainMenuObjects;
-    }
-
-    Hu_MenuInitGameTypeMenu();
+    Hu_MenuInitMainPage();
+    Hu_MenuInitGameTypePage();
 #if __JDOOM__ || __JHERETIC__
-    Hu_MenuInitEpisodeMenu();
+    Hu_MenuInitEpisodePage();
 #endif
 #if __JHEXEN__
-    Hu_MenuInitPlayerClassMenu();
+    Hu_MenuInitPlayerClassPage();
 #endif
-    Hu_MenuInitSkillMenu();
-    Hu_MenuInitMultiplayerMenu();
-    Hu_MenuInitPlayerSetupMenu();
+    Hu_MenuInitSkillPage();
+    Hu_MenuInitMultiplayerPage();
+    Hu_MenuInitPlayerSetupPage();
 #if __JHERETIC__ || __JHEXEN__
-    Hu_MenuInitFilesMenu();
+    Hu_MenuInitFilesPage();
 #endif
-
-    {
-#if __JDOOM__ || __JDOOM64__
-    const Point2Raw origin = { 80, 54 };
-#else
-    const Point2Raw origin = { 70, 30 };
-#endif
-    mn_object_t* loadMenuObjects, *saveMenuObjects;
-    mndata_edit_t* saveSlots;
-    const int saveSlotObjectIds[NUMSAVESLOTS] = {
-        MNF_ID0, MNF_ID1, MNF_ID2, MNF_ID3, MNF_ID4, MNF_ID5,
-#if !__JHEXEN__
-        MNF_ID6, MNF_ID7
-#endif
-    };
-    int i, y;
-
-    saveSlots = Z_Calloc(sizeof(*saveSlots) * NUMSAVESLOTS, PU_GAMESTATIC, 0);
-    if(!saveSlots) Con_Error("initAllPages: Failed on allocation of %lu bytes for load/save menu edit fields.", (unsigned long) (sizeof(*saveSlots) * NUMSAVESLOTS));
-
-    for(i = 0; i < NUMSAVESLOTS; ++i)
-    {
-        mndata_edit_t* slot = saveSlots + i;
-        slot->emptyString = (const char*) TXT_EMPTYSTRING;
-        slot->data2 = i;
-        slot->maxLength = 24;
-    }
-
-    loadMenuObjects = Z_Calloc(sizeof(*loadMenuObjects) * (NUMSAVESLOTS+1), PU_GAMESTATIC, 0);
-    if(!loadMenuObjects) Con_Error("initAllPages: Failed on allocation of %lu bytes for load menu objects.", (unsigned long) (sizeof(*loadMenuObjects) * (NUMSAVESLOTS+1)));
-
-    y = 0;
-    for(i = 0; i < NUMSAVESLOTS; ++i, y += FIXED_LINE_HEIGHT)
-    {
-        mn_object_t* ob = loadMenuObjects + i;
-        mndata_edit_t* edit = saveSlots + i;
-        ob->_type = MN_EDIT;
-        ob->_origin.x = 0;
-        ob->_origin.y = y;
-        ob->_flags = saveSlotObjectIds[i] | MNF_DISABLED;
-        ob->_shortcut = '0' + i;
-        ob->_pageFontIdx = MENU_FONT1;
-        ob->_pageColorIdx = MENU_COLOR1;
-        ob->updateGeometry = MNEdit_UpdateGeometry;
-        ob->drawer = MNEdit_Drawer;
-        ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectLoadSlot;
-        ob->actions[MNA_FOCUSOUT].callback = Hu_MenuDefaultFocusAction;
-        ob->cmdResponder = MNObject_DefaultCommandResponder;
-        ob->_typedata = edit;
-        ob->data2 = saveSlotObjectIds[i];
-        Str_Init(&edit->text);
-        Str_Init(&edit->oldtext);
-    }
-    loadMenuObjects[i]._type = MN_NONE;
-
-    saveMenuObjects = Z_Calloc(sizeof(*saveMenuObjects) * (NUMSAVESLOTS+1), PU_GAMESTATIC, 0);
-    if(!saveMenuObjects) Con_Error("initAllPages: Failed on allocation of %lu bytes for save menu objects.", (unsigned long) (sizeof(*saveMenuObjects) * (NUMSAVESLOTS+1)));
-
-    y = 0;
-    for(i = 0; i < NUMSAVESLOTS; ++i, y += FIXED_LINE_HEIGHT)
-    {
-        mn_object_t* ob = saveMenuObjects + i;
-        mndata_edit_t* edit = saveSlots + i;
-        ob->_type = MN_EDIT;
-        ob->_origin.x = 0;
-        ob->_origin.y = y;
-        ob->_flags = saveSlotObjectIds[i];
-        ob->_shortcut = '0' + i;
-        ob->_pageFontIdx = MENU_FONT1;
-        ob->_pageColorIdx = MENU_COLOR1;
-        ob->updateGeometry = MNEdit_UpdateGeometry;
-        ob->drawer = MNEdit_Drawer;
-        ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectSaveSlot;
-        ob->actions[MNA_ACTIVE].callback = Hu_MenuSaveSlotEdit;
-        ob->actions[MNA_FOCUSOUT].callback = Hu_MenuDefaultFocusAction;
-        ob->cmdResponder = MNEdit_CommandResponder;
-        ob->responder = MNEdit_Responder;
-        ob->_typedata = edit;
-        ob->data2 = saveSlotObjectIds[i];
-    }
-    saveMenuObjects[i]._type = MN_NONE;
-
-    page = Hu_MenuNewPage("LoadGame", &origin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, Hu_MenuDrawLoadGamePage, NULL, NULL);
-    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
-    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Main"));
-    page->objects = loadMenuObjects;
-
-    page = Hu_MenuNewPage("SaveGame", &origin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, Hu_MenuDrawSaveGamePage, NULL, NULL);
-    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
-    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Main"));
-    page->objects = saveMenuObjects;
-    }
-
+    Hu_MenuInitLoadGameAndSaveGamePages();
     Hu_MenuInitOptionsPage();
-
-    {
-#if __JHEXEN__
-    const Point2Raw origin = { 88, 25 };
-#elif __JHERETIC__
-    const Point2Raw origin = { 30, 40 };
-#else
-    const Point2Raw origin = { 30, 40 };
-#endif
-
-    page = Hu_MenuNewPage("GameplayOptions", &origin, 0, Hu_MenuPageTicker, NULL, NULL, NULL);
-    MNPage_SetTitle(page, "Gameplay Options");
-    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
-    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Options"));
-    page->objects = GameplayMenuObjects;
-    }
-
-    {
-#if __JDOOM__ || __JDOOM64__
-    const Point2Raw origin = { 97, 40 };
-#else
-    const Point2Raw origin = { 97, 28 };
-#endif
-
-    page = Hu_MenuNewPage("HudOptions", &origin, 0, Hu_MenuPageTicker, NULL, NULL, NULL);
-    MNPage_SetTitle(page, "HUD Options");
-    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
-    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Options"));
-    page->objects = HudMenuObjects;
-    }
-
-    {
+    Hu_MenuInitGameplayOptionsPage();
+    Hu_MenuInitHUDOptionsPage();
+    Hu_MenuInitAutomapOptionsPage();
+    Hu_MenuInitWeaponsPage();
 #if __JHERETIC__ || __JHEXEN__
-    const Point2Raw origin = { 64, 28 };
-#else
-    const Point2Raw origin = { 70, 40 };
+    Hu_MenuInitInventoryOptionsPage();
 #endif
-
-    page = Hu_MenuNewPage("AutomapOptions", &origin, 0, Hu_MenuPageTicker, NULL, NULL, NULL);
-    MNPage_SetTitle(page, "Automap Options");
-    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
-    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Options"));
-    page->objects = AutomapMenuObjects;
-    }
-
-    Hu_MenuInitWeaponsMenu();
-
-#if __JHERETIC__ || __JHEXEN__
-    {
-    const Point2Raw origin = { 78, 48 };
-
-    page = Hu_MenuNewPage("InventoryOptions", &origin, 0, Hu_MenuPageTicker, NULL, NULL, NULL);
-    MNPage_SetTitle(page, "Inventory Options");
-    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
-    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Options"));
-    page->objects = InventoryMenuObjects;
-    }
-#endif
-
     Hu_MenuInitSoundOptionsPage();
     Hu_MenuInitControlsPage();
 }
