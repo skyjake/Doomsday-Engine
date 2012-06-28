@@ -449,9 +449,21 @@ ddstring_t* Str_Copy(ddstring_t* str, const ddstring_t* other)
 #endif
         return str;
     }
-    allocateString(str, other->length, false);
-    strcpy(str->str, other->str);
-    str->length = other->length;
+    if(!other->size)
+    {
+        // The original string has no memory allocated; it's a static string.
+        allocateString(str, other->length, false);
+        strcpy(str->str, other->str);
+        str->length = other->length;
+    }
+    else
+    {
+        // Duplicate the other string's buffer in its entirety.
+        str->str = str->memAlloc(other->size);
+        memcpy(str->str, other->str, other->size);
+        str->size = other->size;
+        str->length = other->length;
+    }
     return str;
 }
 
