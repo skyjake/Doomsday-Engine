@@ -678,105 +678,6 @@ static mn_object_t HudMenuObjects[] = {
     { MN_NONE }
 };
 
-mndata_listitem_t listit_weapons_order[NUM_WEAPON_TYPES] = {
-#if __JDOOM__ || __JDOOM64__
-    { (const char*)TXT_WEAPON1,             WT_FIRST },
-    { (const char*)TXT_WEAPON2,             WT_SECOND },
-    { (const char*)TXT_WEAPON3,             WT_THIRD },
-    { (const char*)TXT_WEAPON4,             WT_FOURTH },
-    { (const char*)TXT_WEAPON5,             WT_FIFTH },
-    { (const char*)TXT_WEAPON6,             WT_SIXTH },
-    { (const char*)TXT_WEAPON7,             WT_SEVENTH },
-    { (const char*)TXT_WEAPON8,             WT_EIGHTH },
-    { (const char*)TXT_WEAPON9,             WT_NINETH },
-#  if __JDOOM64__
-    { (const char*)TXT_WEAPON10,            WT_TENTH }
-#  endif
-#elif __JHERETIC__
-    { (const char*)TXT_TXT_WPNSTAFF,        WT_FIRST },
-    { (const char*)TXT_TXT_WPNWAND,         WT_SECOND },
-    { (const char*)TXT_TXT_WPNCROSSBOW,     WT_THIRD },
-    { (const char*)TXT_TXT_WPNBLASTER,      WT_FOURTH },
-    { (const char*)TXT_TXT_WPNSKULLROD,     WT_FIFTH },
-    { (const char*)TXT_TXT_WPNPHOENIXROD,   WT_SIXTH },
-    { (const char*)TXT_TXT_WPNMACE,         WT_SEVENTH },
-    { (const char*)TXT_TXT_WPNGAUNTLETS,    WT_EIGHTH }
-#elif __JHEXEN__
-    /**
-     * @todo We should allow different weapon preferences per player-class.
-     */
-    { "First",  WT_FIRST },
-    { "Second", WT_SECOND },
-    { "Third",  WT_THIRD },
-    { "Fourth", WT_FOURTH }
-#endif
-};
-
-mndata_list_t list_weapons_order = {
-    listit_weapons_order, NUMLISTITEMS(listit_weapons_order)
-};
-
-mndata_listitem_t listit_weapons_autoswitch_pickup[] = {
-    { "Never", 0 },
-    { "If Better", 1 },
-    { "Always", 2 }
-};
-mndata_list_t list_weapons_autoswitch_pickup = {
-    listit_weapons_autoswitch_pickup, NUMLISTITEMS(listit_weapons_autoswitch_pickup), "player-autoswitch"
-};
-
-mndata_listitem_t listit_weapons_autoswitch_pickupammo[] = {
-    { "Never", 0 },
-    { "If Better", 1 },
-    { "Always", 2 }
-};
-mndata_list_t list_weapons_autoswitch_pickupammo = {
-    listit_weapons_autoswitch_pickupammo, NUMLISTITEMS(listit_weapons_autoswitch_pickupammo), "player-autoswitch-ammo"
-};
-
-mndata_text_t txt_weapons_priority_order = { "Priority Order" };
-mndata_text_t txt_weapons_cycling = { "Cycling" };
-mndata_text_t txt_weapons_cycl_use_priority_order = { "Use Priority Order" };
-mndata_text_t txt_weapons_cycl_sequential = { "Sequential" };
-mndata_text_t txt_weapons_autoswitch = { "Autoswitch" };
-mndata_text_t txt_weapons_aswch_pickup_weapon = { "Pickup Weapon" };
-mndata_text_t txt_weapons_aswch_pickup_weapon_ifnot_firing = { "   If Not Firing" };
-mndata_text_t txt_weapons_aswch_pickup_ammo = { "Pickup Ammo" };
-#if __JDOOM__ || __JDOOM64__
-mndata_text_t txt_weapons_aswch_pickup_berserk = { "Pickup Beserk" };
-#endif
-
-mndata_button_t btn_weapons_cycl_use_priority_order = { true, "player-weapon-nextmode" };
-mndata_button_t btn_weapons_cycl_sequential = { true, "player-weapon-cycle-sequential" };
-mndata_button_t btn_weapons_aswch_pickup_weapon_ifnot_firing = { true, "player-autoswitch-notfiring" };
-#if __JDOOM__ || __JDOOM64__
-mndata_button_t btn_weapons_aswch_pickup_berserk = { true, "player-autoswitch-berserk" };
-#endif
-
-static mn_object_t WeaponMenuObjects[] = {
-    { MN_TEXT,      0,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR2, MNText_Ticker, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_weapons_priority_order },
-    { MN_LIST,      0,  MNF_ID0,  { 0, 0 }, 'p',MENU_FONT1, MENU_COLOR3, MNList_Ticker, MNList_UpdateGeometry, MNList_Drawer, { Hu_MenuChangeWeaponPriority, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNList_CommandResponder, NULL, NULL, &list_weapons_order },
-
-    { MN_TEXT,      1,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR2, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_weapons_cycling },
-    { MN_TEXT,      1,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_weapons_cycl_use_priority_order },
-    { MN_BUTTON,    1,  0,  { 0, 0 }, 'o',MENU_FONT1, MENU_COLOR3, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_weapons_cycl_use_priority_order },
-    { MN_TEXT,      1,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_weapons_cycl_sequential },
-    { MN_BUTTON,    1,  0,  { 0, 0 }, 's',MENU_FONT1, MENU_COLOR3, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_weapons_cycl_sequential },
-
-    { MN_TEXT,      2,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR2, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_weapons_autoswitch },
-    { MN_TEXT,      2,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_weapons_aswch_pickup_weapon },
-    { MN_LISTINLINE, 2, 0,  { 0, 0 }, 'w',MENU_FONT1, MENU_COLOR3, MNListInline_Ticker, MNListInline_UpdateGeometry, MNListInline_Drawer, { Hu_MenuCvarList, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNListInline_CommandResponder, NULL, NULL, &list_weapons_autoswitch_pickup },
-    { MN_TEXT,      2,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_weapons_aswch_pickup_weapon_ifnot_firing },
-    { MN_BUTTON,    2,  0,  { 0, 0 }, 'f',MENU_FONT1, MENU_COLOR3, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_weapons_aswch_pickup_weapon_ifnot_firing },
-    { MN_TEXT,      2,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_weapons_aswch_pickup_ammo },
-    { MN_LISTINLINE, 2, 0,  { 0, 0 }, 'a',MENU_FONT1, MENU_COLOR3, MNListInline_Ticker, MNListInline_UpdateGeometry, MNListInline_Drawer, { Hu_MenuCvarList, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNListInline_CommandResponder, NULL, NULL, &list_weapons_autoswitch_pickupammo },
-#if __JDOOM__ || __JDOOM64__
-    { MN_TEXT,      2,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_weapons_aswch_pickup_berserk },
-    { MN_BUTTON,    2,  0,  { 0, 0 }, 'b',MENU_FONT1, MENU_COLOR3, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_weapons_aswch_pickup_berserk },
-#endif
-    { MN_NONE }
-};
-
 mndata_slider_t sld_map_opacity = { 0, 1, 0, 0.1f, true, "map-opacity" };
 mndata_slider_t sld_map_lineopacity = { 0, 1, 0, 0.1f, true, "map-line-opacity" };
 mndata_slider_t sld_map_linewidth = { .1f, 2, 0, 0.1f, true, "map-line-width" };
@@ -2937,16 +2838,344 @@ void Hu_MenuInitWeaponsPage(void)
 #elif __JHEXEN__
     const Point2Raw origin = { 78, 38 };
 #endif
+    mn_object_t* objects, *ob;
+#if __JDOOM__ || __JDOOM64__
+    const uint numObjects = 17;
+#elif __JHERETIC__ || __JHEXEN__
+    const uint numObjects = 15;
+#endif
+    const struct {
+        const char* text;
+        int data;
+    } weaponOrder[NUM_WEAPON_TYPES+1] = {
+#if __JDOOM__ || __JDOOM64__
+        { (const char*)TXT_WEAPON1,             WT_FIRST },
+        { (const char*)TXT_WEAPON2,             WT_SECOND },
+        { (const char*)TXT_WEAPON3,             WT_THIRD },
+        { (const char*)TXT_WEAPON4,             WT_FOURTH },
+        { (const char*)TXT_WEAPON5,             WT_FIFTH },
+        { (const char*)TXT_WEAPON6,             WT_SIXTH },
+        { (const char*)TXT_WEAPON7,             WT_SEVENTH },
+        { (const char*)TXT_WEAPON8,             WT_EIGHTH },
+        { (const char*)TXT_WEAPON9,             WT_NINETH },
+#  if __JDOOM64__
+        { (const char*)TXT_WEAPON10,            WT_TENTH },
+#  endif
+#elif __JHERETIC__
+        { (const char*)TXT_TXT_WPNSTAFF,        WT_FIRST },
+        { (const char*)TXT_TXT_WPNWAND,         WT_SECOND },
+        { (const char*)TXT_TXT_WPNCROSSBOW,     WT_THIRD },
+        { (const char*)TXT_TXT_WPNBLASTER,      WT_FOURTH },
+        { (const char*)TXT_TXT_WPNSKULLROD,     WT_FIFTH },
+        { (const char*)TXT_TXT_WPNPHOENIXROD,   WT_SIXTH },
+        { (const char*)TXT_TXT_WPNMACE,         WT_SEVENTH },
+        { (const char*)TXT_TXT_WPNGAUNTLETS,    WT_EIGHTH },
+#elif __JHEXEN__
+        /**
+         * @todo We should allow different weapon preferences per player-class.
+         */
+        { "First",  WT_FIRST },
+        { "Second", WT_SECOND },
+        { "Third",  WT_THIRD },
+        { "Fourth", WT_FOURTH },
+#endif
+        { 0 }
+    };
     mn_page_t* page;
-
-    qsort(listit_weapons_order, NUMLISTITEMS(listit_weapons_order),
-          sizeof(listit_weapons_order[0]), compareWeaponPriority);
 
     page = Hu_MenuNewPage("WeaponOptions", &origin, 0, Hu_MenuPageTicker, Hu_MenuDrawWeaponsPage, NULL, NULL);
     MNPage_SetTitle(page, "Weapons Options");
     MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
     MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Options"));
-    page->objects = WeaponMenuObjects;
+
+    objects = Z_Calloc(sizeof(*objects) * numObjects, PU_GAMESTATIC, 0);
+    if(!objects) Con_Error("Hu_MenuInitWeaponOptionsPage: Failed on allocation of %lu bytes for menu objects.", (unsigned long) (sizeof(*objects) * numObjects));
+
+    ob = objects;
+
+    ob->_type = MN_TEXT;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR2;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Priority Order";
+    }
+    ob++;
+
+    ob->_type = MN_LIST;
+    ob->_flags = MNF_ID0;
+    ob->_shortcut = 'p';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR3;
+    ob->ticker = MNList_Ticker;
+    ob->updateGeometry = MNList_UpdateGeometry;
+    ob->drawer = MNList_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuChangeWeaponPriority;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNList_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_list_t), PU_GAMESTATIC, 0);
+    { mndata_list_t* list = (mndata_list_t*)ob->_typedata;
+    mndata_listitem_t* item;
+    uint i;
+
+    list->count = NUM_WEAPON_TYPES;
+    item = list->items = (mndata_listitem_t*)Z_Calloc(sizeof(mndata_listitem_t) * list->count, PU_GAMESTATIC, 0);
+
+    for(i = 0; weaponOrder[i].text; ++i, item++)
+    {
+        item->text = weaponOrder[i].text;
+        item->data = weaponOrder[i].data;
+    }
+    qsort(list->items, list->count, sizeof(mndata_listitem_t), compareWeaponPriority);
+    }
+    ob++;
+
+    ob->_type = MN_TEXT;
+    ob->_group = 1;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR2;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Cycling";
+    }
+    ob++;
+
+    ob->_type = MN_TEXT;
+    ob->_group = 1;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Use Priority Order";
+    }
+    ob++;
+
+    ob->_type = MN_BUTTON;
+    ob->_group = 1;
+    ob->_shortcut = 'o';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR3;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+    btn->staydownMode = true;
+    btn->data = "player-weapon-nextmode";
+    }
+    ob++;
+
+    ob->_type = MN_TEXT;
+    ob->_group = 1;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Sequential";
+    }
+    ob++;
+
+    ob->_type = MN_BUTTON;
+    ob->_group = 1;
+    ob->_shortcut = 's';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR3;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+    btn->staydownMode = true;
+    btn->data = "player-weapon-cycle-sequential";
+    }
+    ob++;
+
+    ob->_type = MN_TEXT;
+    ob->_group = 2;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR2;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Autoswitch";
+    }
+    ob++;
+
+    ob->_type = MN_TEXT;
+    ob->_group = 2;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Pickup Weapon";
+    }
+    ob++;
+
+    ob->_type = MN_LISTINLINE;
+    ob->_group = 2;
+    ob->_shortcut = 'w';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR3;
+    ob->ticker = MNListInline_Ticker;
+    ob->updateGeometry = MNListInline_UpdateGeometry;
+    ob->drawer = MNListInline_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarList;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNListInline_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_list_t), PU_GAMESTATIC, 0);
+    { mndata_list_t* list = (mndata_list_t*)ob->_typedata;
+    mndata_listitem_t* item;
+
+    list->count = 3;
+    item = list->items = (mndata_listitem_t*)Z_Calloc(sizeof(mndata_listitem_t) * list->count, PU_GAMESTATIC, 0);
+
+    item->text = "Never";
+    item->data = 0;
+    item++;
+
+    item->text = "If Better";
+    item->data = 1;
+    item++;
+
+    item->text = "Always";
+    item->data = 2;
+    }
+    ob++;
+
+    ob->_type = MN_TEXT;
+    ob->_group = 2;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "   If Not Firing";
+    }
+    ob++;
+
+    ob->_type = MN_BUTTON;
+    ob->_group = 2;
+    ob->_shortcut = 'f';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR3;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+    btn->staydownMode = true;
+    btn->data = "player-autoswitch-notfiring";
+    }
+    ob++;
+
+    ob->_type = MN_TEXT;
+    ob->_group = 2;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Pickup Ammo";
+    }
+    ob++;
+
+    ob->_type = MN_LISTINLINE;
+    ob->_group = 2;
+    ob->_shortcut = 'a';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR3;
+    ob->ticker = MNListInline_Ticker;
+    ob->updateGeometry = MNListInline_UpdateGeometry;
+    ob->drawer = MNListInline_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarList;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNListInline_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_list_t), PU_GAMESTATIC, 0);
+    { mndata_list_t* list = (mndata_list_t*)ob->_typedata;
+    mndata_listitem_t* item;
+
+    list->count = 3;
+    item = list->items = (mndata_listitem_t*)Z_Calloc(sizeof(mndata_listitem_t) * list->count, PU_GAMESTATIC, 0);
+
+    item->text = "Never";
+    item->data = 0;
+    item++;
+
+    item->text = "If Better";
+    item->data = 1;
+    item++;
+
+    item->text = "Always";
+    item->data = 2;
+    }
+    ob++;
+
+#if __JDOOM__ || __JDOOM64__
+    ob->_type = MN_TEXT;
+    ob->_group = 2;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Pickup Beserk";
+    }
+    ob++;
+
+    ob->_type = MN_BUTTON;
+    ob->_group = 2;
+    ob->_shortcut = 'b';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR3;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+    btn->staydownMode = true;
+    btn->data = "player-autoswitch-berserk";
+    }
+    ob++;
+#endif
+
+    ob->_type = MN_NONE;
+
+    page->objects = objects;
 }
 
 #if __JHERETIC__ || __JHEXEN__
