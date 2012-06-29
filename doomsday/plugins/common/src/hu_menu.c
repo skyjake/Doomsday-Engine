@@ -871,127 +871,6 @@ mn_object_t AutomapMenuObjects[] = {
     { MN_NONE }
 };
 
-mndata_text_t txt_gameplay_always_run = { "Always Run" };
-mndata_text_t txt_gameplay_use_lookspring = { "Use LookSpring" };
-mndata_text_t txt_gameplay_use_noautoaim = { "Disable AutoAim" };
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-mndata_text_t txt_gameplay_allow_jumping = { "Allow Jumping" };
-#endif
-#if __JDOOM64__
-mndata_text_t txt_gameplay_weapon_recoil = { "Weapon Recoil" };
-#endif
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-mndata_text_t txt_gameplay_compatibility = { "Compatibility" };
-# if __JDOOM__ || __JDOOM64__
-mndata_text_t txt_gameplay_any_boss_trigger_666 = { "Any Boss Trigger 666" };
-#  if !__JDOOM64__
-mndata_text_t txt_gameplay_archvile_resurrects_ghosts = { "Av Resurrects Ghosts" };
-#  endif
-mndata_text_t txt_gameplay_painelemental_limit_lostsouls = { "PE Limited To 21 Lost Souls" };
-mndata_text_t txt_gameplay_lostsouls_stuck = { "LS Can Get Stuck Inside Walls" };
-# endif
-mndata_text_t txt_gameplay_monsters_stuck_in_doors = { "Monsters Can Get Stuck In Doors" };
-mndata_text_t txt_gameplay_monsters_float_over_blocking = { "Monsters Fly Over Obstacles" };
-mndata_text_t txt_gameplay_never_hang_over_ledges = { "Some Objects Never Hang Over Ledges" };
-mndata_text_t txt_gameplay_fall_under_own_weight = { "Objects Fall Under Own Weight" };
-mndata_text_t txt_gameplay_corpse_stair_slide = { "Corpses Slide Down Stairs" };
-mndata_text_t txt_gameplay_vanilla_exact_clipping = { "Use Exactly Doom's Clipping Code" };
-mndata_text_t txt_gameplay_vanilla_exact_clipping_ifnot_wallrun = { "  ^If Not NorthOnly WallRunning" };
-# if __JDOOM__ || __JDOOM64__
-mndata_text_t txt_gameplay_zombie_exits = { "Zombie Players Can Exit Maps" };
-mndata_text_t txt_gameplay_fix_ouch_face = { "Fix Ouch Face" };
-mndata_text_t txt_gameplay_fix_weapon_slot = { "Fix Weapon Slot Display" };
-# endif
-#endif
-
-mndata_button_t btn_gameplay_always_run = { true, "ctl-run" };
-mndata_button_t btn_gameplay_use_lookspring = { true, "ctl-look-spring" };
-mndata_button_t btn_gameplay_use_noautoaim = { true, "ctl-aim-noauto" };
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-mndata_button_t btn_gameplay_allow_jumping = { true, "player-jump" };
-#endif
-#if __JDOOM64__
-mndata_button_t btn_gameplay_weapon_recoil = { true, "player-weapon-recoil" };
-#endif
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-mndata_button_t btn_gameplay_monsters_float_over_blocking = { true, "game-monsters-floatoverblocking" };
-# if __JDOOM__ || __JDOOM64__
-mndata_button_t btn_gameplay_any_boss_trigger_666 = { true, "game-anybossdeath666" };
-#  if !__JDOOM64__
-mndata_button_t btn_gameplay_archvile_resurrects_ghosts = { true, "game-raiseghosts" };
-#  endif
-mndata_button_t btn_gameplay_painelemental_limit_lostsouls = { true, "game-maxskulls" };
-mndata_button_t btn_gameplay_lostsouls_stuck = { true, "game-skullsinwalls" };
-# endif
-mndata_button_t btn_gameplay_monsters_stuck_in_doors = { true, "game-monsters-stuckindoors" };
-mndata_button_t btn_gameplay_never_hang_over_ledges = { true, "game-objects-neverhangoverledges" };
-mndata_button_t btn_gameplay_fall_under_own_weight = { true, "game-objects-falloff" };
-mndata_button_t btn_gameplay_corpse_stair_slide = { true, "game-corpse-sliding" };
-mndata_button_t btn_gameplay_vanilla_exact_clipping = { true, "game-objects-clipping" };
-mndata_button_t btn_gameplay_vanilla_exact_clipping_ifnot_wallrun = { true, "game-player-wallrun-northonly" };
-# if __JDOOM__ || __JDOOM64__
-mndata_button_t btn_gameplay_zombie_exits = { true, "game-zombiescanexit" };
-mndata_button_t btn_gameplay_fix_ouch_face = { true, "hud-face-ouchfix" };
-mndata_button_t btn_gameplay_fix_weapon_slot = { true, "hud-status-weaponslots-ownedfix" };
-# endif
-#endif
-
-static mn_object_t GameplayMenuObjects[] = {
-    { MN_TEXT,      0,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_gameplay_always_run },
-    { MN_BUTTON,    0,  0,  { 0, 0 }, 'r',MENU_FONT1, MENU_COLOR3, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_gameplay_always_run },
-    { MN_TEXT,      0,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_gameplay_use_lookspring },
-    { MN_BUTTON,    0,  0,  { 0, 0 }, 'l',MENU_FONT1, MENU_COLOR3, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_gameplay_use_lookspring },
-    { MN_TEXT,      0,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_gameplay_use_noautoaim },
-    { MN_BUTTON,    0,  0,  { 0, 0 }, 'a',MENU_FONT1, MENU_COLOR3, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_gameplay_use_noautoaim },
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    { MN_TEXT,      0,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_gameplay_allow_jumping },
-    { MN_BUTTON,    0,  0,  { 0, 0 }, 'j',MENU_FONT1, MENU_COLOR3, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_gameplay_allow_jumping },
-#endif
-#if __JDOOM64__
-    { MN_TEXT,      0,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_gameplay_weapon_recoil },
-    { MN_BUTTON,    0,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR3, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_gameplay_weapon_recoil },
-#endif
-
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    { MN_TEXT,      1,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR2, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_gameplay_compatibility },
-# if __JDOOM__ || __JDOOM64__
-    { MN_TEXT,      1,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_gameplay_any_boss_trigger_666 },
-    { MN_BUTTON,    1,  0,  { 0, 0 }, 'b',MENU_FONT1, MENU_COLOR3, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_gameplay_any_boss_trigger_666 },
-#  if !__JDOOM64__
-    { MN_TEXT,      1,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_gameplay_archvile_resurrects_ghosts },
-    { MN_BUTTON,    1,  0,  { 0, 0 }, 'g',MENU_FONT1, MENU_COLOR3, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_gameplay_archvile_resurrects_ghosts },
-#  endif
-    { MN_TEXT,      1,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_gameplay_painelemental_limit_lostsouls },
-    { MN_BUTTON,    1,  0,  { 0, 0 }, 'p',MENU_FONT1, MENU_COLOR3, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_gameplay_painelemental_limit_lostsouls },
-    { MN_TEXT,      1,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_gameplay_lostsouls_stuck },
-    { MN_BUTTON,    1,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR3, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_gameplay_lostsouls_stuck },
-# endif
-    { MN_TEXT,      1,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_gameplay_monsters_float_over_blocking },
-    { MN_BUTTON,    1,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR3, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_gameplay_monsters_float_over_blocking },
-    { MN_TEXT,      1,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_gameplay_monsters_stuck_in_doors },
-    { MN_BUTTON,    1,  0,  { 0, 0 }, 'd',MENU_FONT1, MENU_COLOR3, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_gameplay_monsters_stuck_in_doors },
-    { MN_TEXT,      1,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_gameplay_never_hang_over_ledges },
-    { MN_BUTTON,    1,  0,  { 0, 0 }, 'h',MENU_FONT1, MENU_COLOR3, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_gameplay_never_hang_over_ledges },
-    { MN_TEXT,      1,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_gameplay_fall_under_own_weight },
-    { MN_BUTTON,    1,  0,  { 0, 0 }, 'f',MENU_FONT1, MENU_COLOR3, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_gameplay_fall_under_own_weight },
-    { MN_TEXT,      1,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_gameplay_corpse_stair_slide },
-    { MN_BUTTON,    1,  0,  { 0, 0 }, 's',MENU_FONT1, MENU_COLOR3, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_gameplay_corpse_stair_slide },
-    { MN_TEXT,      1,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_gameplay_vanilla_exact_clipping },
-    { MN_BUTTON,    1,  0,  { 0, 0 }, 'c',MENU_FONT1, MENU_COLOR3, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_gameplay_vanilla_exact_clipping },
-    { MN_TEXT,      1,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_gameplay_vanilla_exact_clipping_ifnot_wallrun },
-    { MN_BUTTON,    1,  0,  { 0, 0 }, 'w',MENU_FONT1, MENU_COLOR3, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_gameplay_vanilla_exact_clipping_ifnot_wallrun },
-# if __JDOOM__ || __JDOOM64__
-    { MN_TEXT,      1,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_gameplay_zombie_exits },
-    { MN_BUTTON,    1,  0,  { 0, 0 }, 'e',MENU_FONT1, MENU_COLOR3, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_gameplay_zombie_exits },
-    { MN_TEXT,      1,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_gameplay_fix_ouch_face },
-    { MN_BUTTON,    1,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR3, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_gameplay_fix_ouch_face },
-    { MN_TEXT,      1,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_gameplay_fix_weapon_slot },
-    { MN_BUTTON,    1,  0,  { 0, 0 }, 0,  MENU_FONT1, MENU_COLOR3, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_gameplay_fix_weapon_slot },
-# endif
-#endif
-    { MN_NONE }
-};
-
 static boolean inited = false;
 
 typedef struct {
@@ -2372,13 +2251,630 @@ void Hu_MenuInitGameplayOptionsPage(void)
 #else
     const Point2Raw origin = { 30, 40 };
 #endif
+    mn_object_t* objects, *ob;
+#if __JDOOM64__
+    const uint numObjects = 38;
+#elif __JDOOM__
+    const uint numObjects = 38;
+#elif __JHERETIC__
+    const uint numObjects = 24;
+#elif __JHEXEN__
+    const uint numObjects = 7;
+#endif
     mn_page_t* page;
 
     page = Hu_MenuNewPage("GameplayOptions", &origin, 0, Hu_MenuPageTicker, NULL, NULL, NULL);
     MNPage_SetTitle(page, "Gameplay Options");
     MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
     MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Options"));
-    page->objects = GameplayMenuObjects;
+
+    objects = Z_Calloc(sizeof(*objects) * numObjects, PU_GAMESTATIC, 0);
+    if(!objects) Con_Error("Hu_MenuInitGameplayOptionsPage: Failed on allocation of %lu bytes for menu objects.", (unsigned long) (sizeof(*objects) * numObjects));
+
+    ob = objects;
+
+    ob->_type = MN_TEXT;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Always Run";
+    }
+    ob++;
+
+    ob->_type = MN_BUTTON;
+    ob->_shortcut = 'r';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR3;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+    btn->staydownMode = true;
+    btn->data = "ctl-run";
+    }
+    ob++;
+
+    ob->_type = MN_TEXT;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Use LookSpring";
+    }
+    ob++;
+
+    ob->_type = MN_BUTTON;
+    ob->_shortcut = 'l';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR3;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+    btn->staydownMode = true;
+    btn->data = "ctl-look-spring";
+    }
+    ob++;
+
+    ob->_type = MN_TEXT;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Disable AutoAim";
+    }
+    ob++;
+
+    ob->_type = MN_BUTTON;
+    ob->_shortcut = 'a';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR3;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+    btn->staydownMode = true;
+    btn->data = "ctl-aim-noauto";
+    }
+    ob++;
+
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+    ob->_type = MN_TEXT;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Allow Jumping";
+    }
+    ob++;
+
+    ob->_type = MN_BUTTON;
+    ob->_shortcut = 'j';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR3;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+    btn->staydownMode = true;
+    btn->data = "player-jump";
+    }
+    ob++;
+#endif
+
+#if __JDOOM64__
+    ob->_type = MN_TEXT;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Weapon Recoil";
+    }
+    ob++;
+
+    ob->_type = MN_BUTTON;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR3;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+    btn->staydownMode = true;
+    btn->data = "player-weapon-recoil";
+    }
+    ob++;
+#endif
+
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+    ob->_type = MN_TEXT;
+    ob->_group = 1;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR2;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Compatibility";
+    }
+    ob++;
+
+# if __JDOOM__ || __JDOOM64__
+    ob->_type = MN_TEXT;
+    ob->_group = 1;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Any Boss Trigger 666";
+    }
+    ob++;
+
+    ob->_type = MN_BUTTON;
+    ob->_group = 1;
+    ob->_shortcut = 'b';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR3;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+    btn->staydownMode = true;
+    btn->data = "game-anybossdeath666";
+    }
+    ob++;
+
+#  if !__JDOOM64__
+    ob->_type = MN_TEXT;
+    ob->_group = 1;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Av Resurrects Ghosts";
+    }
+    ob++;
+
+    ob->_type = MN_BUTTON;
+    ob->_group = 1;
+    ob->_shortcut = 'g';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR3;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+    btn->staydownMode = true;
+    btn->data = "game-raiseghosts";
+    }
+    ob++;
+#  endif // !__JDOOM64__
+
+    ob->_type = MN_TEXT;
+    ob->_group = 1;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "PE Limited To 21 Lost Souls";
+    }
+    ob++;
+
+    ob->_type = MN_BUTTON;
+    ob->_group = 1;
+    ob->_shortcut = 'p';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR3;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+    btn->staydownMode = true;
+    btn->data = "game-maxskulls";
+    }
+    ob++;
+
+    ob->_type = MN_TEXT;
+    ob->_group = 1;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "LS Can Get Stuck Inside Walls";
+    }
+    ob++;
+
+    ob->_type = MN_BUTTON;
+    ob->_group = 1;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR3;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+    btn->staydownMode = true;
+    btn->data = "game-skullsinwalls";
+    }
+    ob++;
+# endif // __JDOOM__ || __JDOOM64__
+
+    ob->_type = MN_TEXT;
+    ob->_group = 1;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Monsters Fly Over Obstacles";
+    }
+    ob++;
+
+    ob->_type = MN_BUTTON;
+    ob->_group = 1;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR3;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+    btn->staydownMode = true;
+    btn->data = "game-monsters-floatoverblocking";
+    }
+    ob++;
+
+    ob->_type = MN_TEXT;
+    ob->_group = 1;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Monsters Can Get Stuck In Doors";
+    }
+    ob++;
+
+    ob->_type = MN_BUTTON;
+    ob->_group = 1;
+    ob->_shortcut = 'd';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR3;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+    btn->staydownMode = true;
+    btn->data = "game-monsters-stuckindoors";
+    }
+    ob++;
+
+    ob->_type = MN_TEXT;
+    ob->_group = 1;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Some Objects Never Hang Over Ledges";
+    }
+    ob++;
+
+    ob->_type = MN_BUTTON;
+    ob->_group = 1;
+    ob->_shortcut = 'h';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR3;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+    btn->staydownMode = true;
+    btn->data = "game-objects-neverhangoverledges";
+    }
+    ob++;
+
+    ob->_type = MN_TEXT;
+    ob->_group = 1;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Objects Fall Under Own Weight";
+    }
+    ob++;
+
+    ob->_type = MN_BUTTON;
+    ob->_group = 1;
+    ob->_shortcut = 'f';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR3;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+    btn->staydownMode = true;
+    btn->data = "game-objects-falloff";
+    }
+    ob++;
+
+    ob->_type = MN_TEXT;
+    ob->_group = 1;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Corpses Slide Down Stairs";
+    }
+    ob++;
+
+    ob->_type = MN_BUTTON;
+    ob->_group = 1;
+    ob->_shortcut = 's';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR3;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+    btn->staydownMode = true;
+    btn->data = "game-corpse-sliding";
+    }
+    ob++;
+
+    ob->_type = MN_TEXT;
+    ob->_group = 1;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Use Exactly Doom's Clipping Code";
+    }
+    ob++;
+
+    ob->_type = MN_BUTTON;
+    ob->_group = 1;
+    ob->_shortcut = 'c';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR3;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+    btn->staydownMode = true;
+    btn->data = "game-objects-clipping";
+    }
+    ob++;
+
+    ob->_type = MN_TEXT;
+    ob->_group = 1;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "  ^If Not NorthOnly WallRunning";
+    }
+    ob++;
+
+    ob->_type = MN_BUTTON;
+    ob->_group = 1;
+    ob->_shortcut = 'w';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR3;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+    btn->staydownMode = true;
+    btn->data = "game-player-wallrun-northonly";
+    }
+    ob++;
+
+# if __JDOOM__ || __JDOOM64__
+    ob->_type = MN_TEXT;
+    ob->_group = 1;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Zombie Players Can Exit Maps";
+    }
+    ob++;
+
+    ob->_type = MN_BUTTON;
+    ob->_group = 1;
+    ob->_shortcut = 'e';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR3;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+    btn->staydownMode = true;
+    btn->data = "game-zombiescanexit";
+    }
+    ob++;
+
+    ob->_type = MN_TEXT;
+    ob->_group = 1;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Fix Ouch Face";
+    }
+    ob++;
+
+    ob->_type = MN_BUTTON;
+    ob->_group = 1;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR3;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+    btn->staydownMode = true;
+    btn->data = "hud-face-ouchfix";
+    }
+    ob++;
+
+    ob->_type = MN_TEXT;
+    ob->_group = 1;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Fix Weapon Slot Display";
+    }
+    ob++;
+
+    ob->_type = MN_BUTTON;
+    ob->_group = 1;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR3;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+    btn->staydownMode = true;
+    btn->data = "hud-status-weaponslots-ownedfix";
+    }
+    ob++;
+# endif // __JDOOM__ || __JDOOM64__
+#endif // __JDOOM__ || __JHERETIC__ || __JDOOM64__
+
+    ob->_type = MN_NONE;
+
+    page->objects = objects;
 }
 
 void Hu_MenuInitHUDOptionsPage(void)
