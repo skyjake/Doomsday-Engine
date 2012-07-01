@@ -550,8 +550,18 @@ void R_GetTranslation(int plrClass, int plrColor, int* tclass, int* tmap)
         *tmap = plrColor;
 
     // Fighter's colors are a bit different.
-    if(plrClass == PCLASS_FIGHTER && *tmap > 1)
+    if(plrClass == PCLASS_FIGHTER)
+    {
         *tclass = 0;
+
+        if(plrColor == 0)
+            *tmap = 1;
+        else if(plrColor == 1)
+            *tmap = 2;
+        else if(plrColor == 2)
+            *tmap = 0; // untranslated Fighter is Yellow
+    }
+
 }
 
 void R_SetTranslation(mobj_t* mo)

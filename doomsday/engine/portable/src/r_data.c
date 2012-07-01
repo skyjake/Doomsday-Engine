@@ -2547,7 +2547,7 @@ void R_UpdateData(void)
 
 void R_InitTranslationTables(void)
 {
-    translationTables = Z_Calloc(256 * 3 * 7, PU_REFRESHTRANS, 0);
+    translationTables = Z_Calloc(256 * 3 * MAX_TRANSLATION_TABLES, PU_REFRESHTRANS, 0);
 }
 
 void R_UpdateTranslationTables(void)

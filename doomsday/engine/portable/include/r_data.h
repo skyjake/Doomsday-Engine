@@ -44,6 +44,9 @@ extern "C" {
 struct texture_s;
 struct font_s;
 
+// Maximum number of palette translation tables.
+#define MAX_TRANSLATION_TABLES     7
+
 // Flags for material decorations.
 #define DCRF_NO_IWAD        0x1 // Don't use if from IWAD.
 #define DCRF_PWAD           0x2 // Can use if from PWAD.
