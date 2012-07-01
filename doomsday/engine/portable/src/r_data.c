@@ -2547,7 +2547,9 @@ void R_UpdateData(void)
 
 void R_InitTranslationTables(void)
 {
-    translationTables = Z_Calloc(256 * 3 * MAX_TRANSLATION_TABLES, PU_REFRESHTRANS, 0);
+    // The translation tables consist of a number of translation maps, each
+    // containing 256 palette indices.
+    translationTables = Z_Calloc(NUM_TRANSLATION_TABLES * 256, PU_REFRESHTRANS, 0);
 }
 
 void R_UpdateTranslationTables(void)

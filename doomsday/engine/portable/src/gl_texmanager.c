@@ -2267,7 +2267,7 @@ static void loadDoomPatch(uint8_t* buffer, int texwidth, int texheight,
     if(tmap || tclass)
     {
         // We need to translate the patch.
-        trans = MAX_OF(0, 7 * tclass + tmap - 1);
+        trans = MAX_OF(0, NUM_TRANSLATION_MAPS_PER_CLASS * tclass + tmap - 1);
         DEBUG_Message(("loadDoomPatch: tclass=%i tmap=%i => TransPal# %i\n",
                        tclass, tmap, trans));
 
@@ -2308,7 +2308,7 @@ static void loadDoomPatch(uint8_t* buffer, int texwidth, int texheight,
                     if(trans >= 0)
                     {
                         // Check bounds.
-                        assert(trans + palidx < 256 * 3 * MAX_TRANSLATION_TABLES);
+                        assert(trans + palidx < 256 * NUM_TRANSLATION_TABLES);
 
                         palidx = translationTables[trans + palidx];
                     }

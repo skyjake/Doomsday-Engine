@@ -45,7 +45,9 @@ struct texture_s;
 struct font_s;
 
 // Maximum number of palette translation tables.
-#define MAX_TRANSLATION_TABLES     7
+#define NUM_TRANSLATION_CLASSES         3
+#define NUM_TRANSLATION_MAPS_PER_CLASS  7
+#define NUM_TRANSLATION_TABLES            (NUM_TRANSLATION_CLASSES * NUM_TRANSLATION_MAPS_PER_CLASS)
 
 // Flags for material decorations.
 #define DCRF_NO_IWAD        0x1 // Don't use if from IWAD.
