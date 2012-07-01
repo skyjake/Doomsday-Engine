@@ -387,8 +387,8 @@ uint P_TranslateMap(uint map)
             {
 #ifdef _DEBUG
                 Con_Message("P_TranslateMap: warp %i translated to logical %i, cluster %i\n", map, i, info->cluster);
-                return i;
 #endif
+                return i;
             }
             else
             {
