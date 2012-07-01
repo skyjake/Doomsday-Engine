@@ -321,59 +321,6 @@ static patchid_t pRotatingSkull[18];
 
 static patchid_t pCursors[MENU_CURSOR_FRAMECOUNT];
 
-#if __JDOOM__ || __JDOOM64__
-mndata_button_t btn_skill_baby      = { false, NULL, NULL, &pSkillModeNames[0] };
-mndata_button_t btn_skill_easy      = { false, NULL, NULL, &pSkillModeNames[1] };
-mndata_button_t btn_skill_medium    = { false, NULL, NULL, &pSkillModeNames[2] };
-mndata_button_t btn_skill_hard      = { false, NULL, NULL, &pSkillModeNames[3] };
-#  if !__JDOOM64__
-mndata_button_t btn_skill_nightmare = { false, NULL, NULL, &pSkillModeNames[4] };
-#  endif
-#else
-mndata_button_t btn_skill_baby;
-mndata_button_t btn_skill_easy;
-mndata_button_t btn_skill_medium;
-mndata_button_t btn_skill_hard;
-mndata_button_t btn_skill_nightmare;
-#endif
-
-#if __JHEXEN__
-static mn_object_t SkillMenuObjects[] = {
-    { MN_BUTTON,    0,  MNF_ID0,                { 0,   0 }, 0, MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuFocusSkillMode }, MNButton_CommandResponder, NULL, NULL, &btn_skill_baby, NULL, SM_BABY },
-    { MN_BUTTON,    0,  MNF_ID1,                { 0,   FIXED_LINE_HEIGHT }, 0, MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuFocusSkillMode }, MNButton_CommandResponder, NULL, NULL, &btn_skill_easy, NULL, SM_EASY },
-    { MN_BUTTON,    0,  MNF_ID2|MNF_DEFAULT,    { 0, 2*FIXED_LINE_HEIGHT }, 0, MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuFocusSkillMode }, MNButton_CommandResponder, NULL, NULL, &btn_skill_medium, NULL, SM_MEDIUM },
-    { MN_BUTTON,    0,  MNF_ID3,                { 0, 3*FIXED_LINE_HEIGHT }, 0, MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuFocusSkillMode }, MNButton_CommandResponder, NULL, NULL, &btn_skill_hard, NULL, SM_HARD },
-    { MN_BUTTON,    0,  MNF_ID4,                { 0, 4*FIXED_LINE_HEIGHT }, 0, MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuFocusSkillMode }, MNButton_CommandResponder, NULL, NULL, &btn_skill_nightmare, NULL, SM_NIGHTMARE },
-    { MN_NONE }
-};
-#elif __JHERETIC__
-static mn_object_t SkillMenuObjects[] = {
-    { MN_BUTTON,    0,  MNF_ID0,                { 0,   0 }, 'w', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuFocusSkillMode }, MNButton_CommandResponder, NULL, NULL, &btn_skill_baby, NULL, SM_BABY },
-    { MN_BUTTON,    0,  MNF_ID1,                { 0,   FIXED_LINE_HEIGHT }, 'y', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuFocusSkillMode }, MNButton_CommandResponder, NULL, NULL, &btn_skill_easy, NULL, SM_EASY },
-    { MN_BUTTON,    0,  MNF_ID2|MNF_DEFAULT,    { 0, 2*FIXED_LINE_HEIGHT }, 'b', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuFocusSkillMode }, MNButton_CommandResponder, NULL, NULL, &btn_skill_medium, NULL, SM_MEDIUM },
-    { MN_BUTTON,    0,  MNF_ID3,                { 0, 3*FIXED_LINE_HEIGHT }, 's', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuFocusSkillMode }, MNButton_CommandResponder, NULL, NULL, &btn_skill_hard, NULL, SM_HARD },
-    { MN_BUTTON,    0,  MNF_ID4,                { 0, 4*FIXED_LINE_HEIGHT }, 'p', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuFocusSkillMode }, MNButton_CommandResponder, NULL, NULL, &btn_skill_nightmare, NULL, SM_NIGHTMARE },
-    { MN_NONE }
-};
-#elif __JDOOM64__
-static mn_object_t SkillMenuObjects[] = {
-    { MN_BUTTON,    0,  MNF_ID0,                { 0,   0 }, 'g', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuFocusSkillMode }, MNButton_CommandResponder, NULL, NULL, &btn_skill_baby, NULL, SM_BABY },
-    { MN_BUTTON,    0,  MNF_ID1,                { 0,   FIXED_LINE_HEIGHT }, 'b', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuFocusSkillMode }, MNButton_CommandResponder, NULL, NULL, &btn_skill_easy, NULL, SM_EASY },
-    { MN_BUTTON,    0,  MNF_ID2|MNF_DEFAULT,    { 0, 2*FIXED_LINE_HEIGHT }, 'o', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuFocusSkillMode }, MNButton_CommandResponder, NULL, NULL, &btn_skill_medium, NULL, SM_MEDIUM },
-    { MN_BUTTON,    0,  MNF_ID3,                { 0, 3*FIXED_LINE_HEIGHT }, 'w', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuFocusSkillMode }, MNButton_CommandResponder, NULL, NULL, &btn_skill_hard, NULL, SM_HARD },
-    { MN_NONE }
-};
-#else
-static mn_object_t SkillMenuObjects[] = {
-    { MN_BUTTON,    0,  MNF_ID0,                { 0,   0 }, 'y', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuFocusSkillMode }, MNButton_CommandResponder, NULL, NULL, &btn_skill_baby, NULL, SM_BABY },
-    { MN_BUTTON,    0,  MNF_ID1,                { 0,   FIXED_LINE_HEIGHT }, 'r', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuFocusSkillMode }, MNButton_CommandResponder, NULL, NULL, &btn_skill_easy, NULL, SM_EASY },
-    { MN_BUTTON,    0,  MNF_ID2|MNF_DEFAULT,    { 0, 2*FIXED_LINE_HEIGHT }, 'h', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuFocusSkillMode }, MNButton_CommandResponder, NULL, NULL, &btn_skill_medium, NULL, SM_MEDIUM },
-    { MN_BUTTON,    0,  MNF_ID3,                { 0, 3*FIXED_LINE_HEIGHT }, 'u', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuFocusSkillMode }, MNButton_CommandResponder, NULL, NULL, &btn_skill_hard, NULL, SM_HARD },
-    { MN_BUTTON,    0,  MNF_ID4,                { 0, 4*FIXED_LINE_HEIGHT }, 'n', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuFocusSkillMode }, MNButton_CommandResponder, NULL, NULL, &btn_skill_nightmare, NULL, SM_NIGHTMARE },
-    { MN_NONE }
-};
-#endif
-
 #if __JDOOM64__
 mndata_slider_t sld_hud_viewsize = { 3, 11, 0, 1, false, "view-size" };
 #else
@@ -1345,25 +1292,32 @@ void Hu_MenuInitSkillPage(void)
 #else
     const Point2Raw origin = { 48, 63 };
 #endif
-    mn_page_t* page;
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    struct skillbutton_s {
-        int pageObjectId;
-        int textDefId;
-    } skillButtons[NUM_SKILL_MODES] = {
-        { MNF_ID0, TXT_SKILL1 },
-        { MNF_ID1, TXT_SKILL2 },
-        { MNF_ID2, TXT_SKILL3 },
-        { MNF_ID3, TXT_SKILL4 },
+    int skillButtonFlags[NUM_SKILL_MODES] = {
+        { MNF_ID0 },
+        { MNF_ID1 },
+        { MNF_ID2|MNF_DEFAULT },
+        { MNF_ID3 },
 #  if !__JDOOM64__
-        { MNF_ID4, TXT_SKILL5 }
+        { MNF_ID4 }
 #  endif
     };
-    int i;
+#if !__JHEXEN__
+    int skillButtonTexts[NUM_SKILL_MODES] = {
+        { TXT_SKILL1 },
+        { TXT_SKILL2 },
+        { TXT_SKILL3 },
+        { TXT_SKILL4 },
+#  if !__JDOOM64__
+        { TXT_SKILL5 }
+#  endif
+    };
 #endif
+    mn_object_t* objects, *ob;
+    const uint numObjects = NUM_SKILL_MODES + 1;
+    mn_page_t* page;
+    int y;
 
     page = Hu_MenuNewPage("Skill", &origin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, Hu_MenuDrawSkillPage, NULL, NULL);
-    page->objects = SkillMenuObjects;
     MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTB));
 #if __JHEXEN__
     MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("PlayerClass"));
@@ -1382,17 +1336,44 @@ void Hu_MenuInitSkillPage(void)
     }
 #endif
 
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    for(i = 0; i < NUM_SKILL_MODES; ++i)
-    {
-        const struct skillbutton_s* sb = &skillButtons[i];
-        mn_object_t* ob = MN_MustFindObjectOnPage(page, 0, sb->pageObjectId);
-        mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+    objects = Z_Calloc(sizeof(*objects) * numObjects, PU_GAMESTATIC, 0);
+    if(!objects) Con_Error("Hu_MenuInitSkillPage: Failed on allocation of %lu bytes for menu objects.", (unsigned long) (sizeof(*objects) * numObjects));
 
-        btn->text = GET_TXT(sb->textDefId);
-        MNObject_SetShortcut(ob, btn->text[0]);
-    }
+    ob = objects;
+    y = 0;
+
+    { uint i;
+    for(i = 0; i < NUM_SKILL_MODES; ++i, ob++, y += FIXED_LINE_HEIGHT)
+    {
+        ob->_type = MN_BUTTON;
+        ob->_flags = skillButtonFlags[i];
+#if !__JHEXEN__
+        ob->_shortcut = GET_TXT(skillButtonTexts[i])[0];
 #endif
+        ob->_origin.y = y;
+        ob->_pageFontIdx = MENU_FONT1;
+        ob->_pageColorIdx = MENU_COLOR1;
+        ob->ticker = MNButton_Ticker;
+        ob->updateGeometry = MNButton_UpdateGeometry;
+        ob->drawer = MNButton_Drawer;
+        ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuActionInitNewGame;
+        ob->actions[MNA_FOCUS].callback = Hu_MenuFocusSkillMode;
+        ob->cmdResponder = MNButton_CommandResponder;
+        ob->data2 = (int)(SM_BABY + i);
+        ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+#if !__JHEXEN__
+        { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+        btn->text = (const char*) skillButtonTexts[i];
+# if __JDOOM__ || __JDOOM64__
+        btn->patch = &pSkillModeNames[i];
+# endif
+        }
+#endif
+    }}
+
+    ob->_type = MN_NONE;
+
+    page->objects = objects;
 
 #if __JDOOM__
     if(gameMode != doom2_hacx && gameMode != doom_chex)
