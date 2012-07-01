@@ -3490,27 +3490,27 @@ D_CMD(SaveGame)
     if(SV_IsUserWritableSlot(slot))
     {
         // A known slot identifier.
-        const char* name = (argc >= 3 && stricmp(argv[2], "confirm"))? argv[2] : NULL;
         const boolean slotIsUsed = SV_IsSlotUsed(slot);
         SaveInfo* info = SV_SaveInfoForSlot(slot);
-        ddstring_t* nameStr;
+        ddstring_t localName, *name;
         AutoStr* msg;
 
+        Str_InitStatic(&localName, (argc >= 3 && stricmp(argv[2], "confirm"))? argv[2] : "");
         if(!slotIsUsed || confirm || !cfg.confirmQuickGameSave)
         {
             // Try to schedule a GA_LOADGAME action.
             S_LocalSound(SFX_MENU_ACCEPT, NULL);
-            return G_SaveGame2(slot, name);
+            return G_SaveGame2(slot, Str_Text(&localName));
         }
 
         // Compose the confirmation message.
         msg = Str_Appendf(AutoStr_NewStd(), QSPROMPT, Str_Text(SaveInfo_Name(info)));
 
         // Make a copy of the name.
-        nameStr = Str_Set(Str_New(), name);
+        name = Str_Copy(Str_New(), &localName);
 
         S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
-        Hu_MsgStart(MSG_YESNO, Str_Text(msg), saveGameConfirmResponse, slot, (void*)nameStr);
+        Hu_MsgStart(MSG_YESNO, Str_Text(msg), saveGameConfirmResponse, slot, (void*)name);
         return true;
     }
     else if(!stricmp(argv[1], "quick") || !stricmp(argv[1], "<quick>"))
