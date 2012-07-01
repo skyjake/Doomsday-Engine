@@ -678,100 +678,6 @@ static mn_object_t HudMenuObjects[] = {
     { MN_NONE }
 };
 
-mndata_slider_t sld_map_opacity = { 0, 1, 0, 0.1f, true, "map-opacity" };
-mndata_slider_t sld_map_lineopacity = { 0, 1, 0, 0.1f, true, "map-line-opacity" };
-mndata_slider_t sld_map_linewidth = { .1f, 2, 0, 0.1f, true, "map-line-width" };
-mndata_slider_t sld_map_doorglow = { 0, 200, 0, 5, true, "map-door-glow" };
-
-mndata_listitem_t lstit_map_statusbar[] = {
-    { "NONE", 0 },
-    { "CURRENT", 1 },
-    { "STATUSBAR", 2 }
-};
-mndata_list_t lst_map_statusbar = {
-    lstit_map_statusbar, NUMLISTITEMS(lstit_map_statusbar), "map-huddisplay"
-};
-
-mndata_listitem_t lstit_map_customcolors[] = {
-    { "NEVER", 0 },
-    { "AUTO", 1 },
-    { "ALWAYS", 2 }
-};
-mndata_list_t lst_map_customcolors = {
-    lstit_map_customcolors, NUMLISTITEMS(lstit_map_customcolors), "map-customcolors"
-};
-
-mndata_colorbox_t cbox_map_line_unseen_color = {
-    0, 0, 0, 0, 0, 0, false,
-    "map-wall-unseen-r", "map-wall-unseen-g", "map-wall-unseen-b"
-};
-mndata_colorbox_t cbox_map_line_solid_color = {
-    0, 0, 0, 0, 0, 0, false,
-    "map-wall-r", "map-wall-g", "map-wall-b"
-};
-mndata_colorbox_t cbox_map_line_floor_color = {
-    0, 0, 0, 0, 0, 0, false,
-    "map-wall-floorchange-r", "map-wall-floorchange-g", "map-wall-floorchange-b"
-};
-mndata_colorbox_t cbox_map_line_ceiling_color = {
-    0, 0, 0, 0, 0, 0, false,
-    "map-wall-ceilingchange-r", "map-wall-ceilingchange-g", "map-wall-ceilingchange-b"
-};
-mndata_colorbox_t cbox_map_mobj_color = {
-    0, 0, 0, 0, 0, 0, false,
-    "map-mobj-r", "map-mobj-g", "map-mobj-b"
-};
-mndata_colorbox_t cbox_map_background_color = {
-    0, 0, 0, 0, 0, 0, false,
-    "map-background-r", "map-background-g", "map-background-b"
-};
-
-mndata_text_t txt_map_opacity = { "Background Opacity" };
-mndata_text_t txt_map_line_opacity = { "Line Opacity" };
-mndata_text_t txt_map_line_width = { "Line Width" };
-mndata_text_t txt_map_hud_display = { "HUD Display" };
-mndata_text_t txt_map_door_colors = { "Door Colors" };
-mndata_text_t txt_map_door_glow = { "Door Glow" };
-mndata_text_t txt_map_use_custom_colors = { "Use Custom Colors" };
-mndata_text_t txt_map_color_wall = { "Wall" };
-mndata_text_t txt_map_color_floor_height_change = { "Floor Height Change" };
-mndata_text_t txt_map_color_ceiling_height_change = { "Ceiling Height Change" };
-mndata_text_t txt_map_color_unseen = { "Unseen" };
-mndata_text_t txt_map_color_thing = { "Thing" };
-mndata_text_t txt_map_color_background = { "Background" };
-
-mndata_button_t btn_map_door_colors = { true, "map-door-colors" };
-
-mn_object_t AutomapMenuObjects[] = {
-    { MN_TEXT,      0,  0,  { 0, 0 }, 0,   MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_opacity },
-    { MN_SLIDER,    0,  0,  { 0, 0 }, 'o', MENU_FONT1, MENU_COLOR1, MNSlider_Ticker, MNSlider_UpdateGeometry, MNSlider_Drawer, { Hu_MenuCvarSlider, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_map_opacity },
-    { MN_TEXT,      0,  0,  { 0, 0 }, 0,   MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_line_opacity },
-    { MN_SLIDER,    0,  0,  { 0, 0 }, 'l', MENU_FONT1, MENU_COLOR1, MNSlider_Ticker, MNSlider_UpdateGeometry, MNSlider_Drawer, { Hu_MenuCvarSlider, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_map_lineopacity },
-    { MN_TEXT,      0,  0,  { 0, 0 }, 0,   MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_line_width },
-    { MN_SLIDER,    0,  0,  { 0, 0 }, 0,   MENU_FONT1, MENU_COLOR1, MNSlider_Ticker, MNSlider_UpdateGeometry, MNSlider_Drawer, { Hu_MenuCvarSlider, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_map_linewidth },
-    { MN_TEXT,      0,  0,  { 0, 0 }, 0,   MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_hud_display },
-    { MN_LISTINLINE, 0, 0,  { 0, 0 }, 'h', MENU_FONT1, MENU_COLOR3, MNListInline_Ticker, MNListInline_UpdateGeometry, MNListInline_Drawer, { Hu_MenuCvarList, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNListInline_CommandResponder, NULL, NULL, &lst_map_statusbar },
-    { MN_TEXT,      0,  0,  { 0, 0 }, 0,   MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_door_colors },
-    { MN_BUTTON,    0,  0,  { 0, 0 }, 'c', MENU_FONT1, MENU_COLOR3, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_map_door_colors },
-    { MN_TEXT,      0,  0,  { 0, 0 }, 0,   MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_door_glow },
-    { MN_SLIDER,    0,  0,  { 0, 0 }, 'g', MENU_FONT1, MENU_COLOR1, MNSlider_Ticker, MNSlider_UpdateGeometry, MNSlider_Drawer, { Hu_MenuCvarSlider, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_map_doorglow },
-    { MN_TEXT,      0,  0,  { 0, 0 }, 0,   MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_use_custom_colors },
-    { MN_LISTINLINE, 0, 0,  { 0, 0 }, 0,   MENU_FONT1, MENU_COLOR3, MNListInline_Ticker, MNListInline_UpdateGeometry, MNListInline_Drawer, { Hu_MenuCvarList, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNListInline_CommandResponder, NULL, NULL, &lst_map_customcolors },
-    { MN_TEXT,      0,  0,  { 0, 0 }, 0,   MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_color_wall },
-    { MN_COLORBOX,  0,  0,  { 0, 0 }, 'w', MENU_FONT1, MENU_COLOR1, MNColorBox_Ticker, MNColorBox_UpdateGeometry, MNColorBox_Drawer, { Hu_MenuCvarColorBox, NULL, Hu_MenuActivateColorWidget, NULL, NULL, Hu_MenuDefaultFocusAction }, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_line_solid_color },
-    { MN_TEXT,      0,  0,  { 0, 0 }, 0,   MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_color_floor_height_change },
-    { MN_COLORBOX,  0,  0,  { 0, 0 }, 'f', MENU_FONT1, MENU_COLOR1, MNColorBox_Ticker, MNColorBox_UpdateGeometry, MNColorBox_Drawer, { Hu_MenuCvarColorBox, NULL, Hu_MenuActivateColorWidget, NULL, NULL, Hu_MenuDefaultFocusAction }, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_line_floor_color },
-    { MN_TEXT,      0,  0,  { 0, 0 }, 0,   MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_color_ceiling_height_change },
-    { MN_COLORBOX,  0,  0,  { 0, 0 }, 0,   MENU_FONT1, MENU_COLOR1, MNColorBox_Ticker, MNColorBox_UpdateGeometry, MNColorBox_Drawer, { Hu_MenuCvarColorBox, NULL, Hu_MenuActivateColorWidget, NULL, NULL, Hu_MenuDefaultFocusAction }, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_line_ceiling_color },
-    { MN_TEXT,      0,  0,  { 0, 0 }, 0,   MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_color_unseen },
-    { MN_COLORBOX,  0,  0,  { 0, 0 }, 'u', MENU_FONT1, MENU_COLOR1, MNColorBox_Ticker, MNColorBox_UpdateGeometry, MNColorBox_Drawer, { Hu_MenuCvarColorBox, NULL, Hu_MenuActivateColorWidget, NULL, NULL, Hu_MenuDefaultFocusAction }, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_line_unseen_color },
-    { MN_TEXT,      0,  0,  { 0, 0 }, 0,   MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_color_thing },
-    { MN_COLORBOX,  0,  0,  { 0, 0 }, 't', MENU_FONT1, MENU_COLOR1, MNColorBox_Ticker, MNColorBox_UpdateGeometry, MNColorBox_Drawer, { Hu_MenuCvarColorBox, NULL, Hu_MenuActivateColorWidget, NULL, NULL, Hu_MenuDefaultFocusAction }, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_mobj_color },
-    { MN_TEXT,      0,  0,  { 0, 0 }, 0,   MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_color_background },
-    { MN_COLORBOX,  0,  0,  { 0, 0 }, 'b', MENU_FONT1, MENU_COLOR1, MNColorBox_Ticker, MNColorBox_UpdateGeometry, MNColorBox_Drawer, { Hu_MenuCvarColorBox, NULL, Hu_MenuActivateColorWidget, NULL, NULL, Hu_MenuDefaultFocusAction }, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_background_color },
-    { MN_NONE }
-};
-
 static boolean inited = false;
 
 typedef struct {
@@ -2801,13 +2707,457 @@ void Hu_MenuInitAutomapOptionsPage(void)
 #else
     const Point2Raw origin = { 70, 40 };
 #endif
+    mn_object_t* objects, *ob;
+#if __JDOOM64__
+    const uint numObjects = 26;
+#else
+    const uint numObjects = 27;
+#endif
     mn_page_t* page;
 
     page = Hu_MenuNewPage("AutomapOptions", &origin, 0, Hu_MenuPageTicker, NULL, NULL, NULL);
     MNPage_SetTitle(page, "Automap Options");
     MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
     MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Options"));
-    page->objects = AutomapMenuObjects;
+
+    objects = Z_Calloc(sizeof(*objects) * numObjects, PU_GAMESTATIC, 0);
+    if(!objects) Con_Error("Hu_MenuInitAutomapOptionsPage: Failed on allocation of %lu bytes for menu objects.", (unsigned long) (sizeof(*objects) * numObjects));
+
+    ob = objects;
+
+    ob->_type = MN_TEXT;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Background Opacity";
+    }
+    ob++;
+
+    ob->_type = MN_SLIDER;
+    ob->_shortcut = 'o';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNSlider_Ticker;
+    ob->updateGeometry = MNSlider_UpdateGeometry;
+    ob->drawer = MNSlider_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarSlider;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNSlider_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_slider_t), PU_GAMESTATIC, 0);
+    { mndata_slider_t* sld = (mndata_slider_t*)ob->_typedata;
+    sld->min = 0;
+    sld->max = 1;
+    sld->value = 0;
+    sld->step = 0.1f;
+    sld->floatMode = true;
+    sld->data1 = "map-opacity";
+    }
+    ob++;
+
+    ob->_type = MN_TEXT;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Line Opacity";
+    }
+    ob++;
+
+    ob->_type = MN_SLIDER;
+    ob->_shortcut = 'l';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNSlider_Ticker;
+    ob->updateGeometry = MNSlider_UpdateGeometry;
+    ob->drawer = MNSlider_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarSlider;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNSlider_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_slider_t), PU_GAMESTATIC, 0);
+    { mndata_slider_t* sld = (mndata_slider_t*)ob->_typedata;
+    sld->min = 0;
+    sld->max = 1;
+    sld->value = 0;
+    sld->step = 0.1f;
+    sld->floatMode = true;
+    sld->data1 = "map-line-opacity";
+    }
+    ob++;
+
+    ob->_type = MN_TEXT;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Line Width";
+    }
+    ob++;
+
+    ob->_type = MN_SLIDER;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNSlider_Ticker;
+    ob->updateGeometry = MNSlider_UpdateGeometry;
+    ob->drawer = MNSlider_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarSlider;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNSlider_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_slider_t), PU_GAMESTATIC, 0);
+    { mndata_slider_t* sld = (mndata_slider_t*)ob->_typedata;
+    sld->min = .1f;
+    sld->max = 2;
+    sld->value = 0;
+    sld->step = 0.1f;
+    sld->floatMode = true;
+    sld->data1 = "map-line-width";
+    }
+    ob++;
+
+    ob->_type = MN_TEXT;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "HUD Display";
+    }
+    ob++;
+
+#if !__JDOOM64__
+    ob->_type = MN_LISTINLINE;
+    ob->_shortcut = 'h';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR3;
+    ob->ticker = MNListInline_Ticker;
+    ob->updateGeometry = MNListInline_UpdateGeometry;
+    ob->drawer = MNListInline_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarList;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNListInline_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_list_t), PU_GAMESTATIC, 0);
+    { mndata_list_t* list = (mndata_list_t*)ob->_typedata;
+    mndata_listitem_t* item;
+
+    list->count = 3;
+    item = list->items = (mndata_listitem_t*)Z_Calloc(sizeof(mndata_listitem_t) * list->count, PU_GAMESTATIC, 0);
+
+    item->text = "None";
+    item->data = 0;
+    item++;
+
+    item->text = "Current";
+    item->data = 1;
+    item++;
+
+    item->text = "Statusbar";
+    item->data = 2;
+    }
+    ob++;
+#endif
+
+    ob->_type = MN_TEXT;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Door Colors";
+    }
+    ob++;
+
+    ob->_type = MN_BUTTON;
+    ob->_shortcut = 'd';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR3;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+    btn->staydownMode = true;
+    btn->data = "map-door-colors";
+    }
+    ob++;
+
+    ob->_type = MN_TEXT;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Door Glow";
+    }
+    ob++;
+
+    ob->_type = MN_SLIDER;
+    ob->_shortcut = 'g';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNSlider_Ticker;
+    ob->updateGeometry = MNSlider_UpdateGeometry;
+    ob->drawer = MNSlider_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarSlider;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNSlider_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_slider_t), PU_GAMESTATIC, 0);
+    { mndata_slider_t* sld = (mndata_slider_t*)ob->_typedata;
+    sld->min = 0;
+    sld->max = 200;
+    sld->value = 0;
+    sld->step = 5;
+    sld->floatMode = true;
+    sld->data1 = "map-door-glow";
+    }
+    ob++;
+
+    ob->_type = MN_TEXT;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Use Custom Colors";
+    }
+    ob++;
+
+    ob->_type = MN_LISTINLINE;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR3;
+    ob->ticker = MNListInline_Ticker;
+    ob->updateGeometry = MNListInline_UpdateGeometry;
+    ob->drawer = MNListInline_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarList;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNListInline_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_list_t), PU_GAMESTATIC, 0);
+    { mndata_list_t* list = (mndata_list_t*)ob->_typedata;
+    mndata_listitem_t* item;
+
+    list->count = 3;
+    item = list->items = (mndata_listitem_t*)Z_Calloc(sizeof(mndata_listitem_t) * list->count, PU_GAMESTATIC, 0);
+
+    item->text = "Never";
+    item->data = 0;
+    item++;
+
+    item->text = "Auto";
+    item->data = 1;
+    item++;
+
+    item->text = "Always";
+    item->data = 2;
+    }
+    ob++;
+
+    ob->_type = MN_TEXT;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Wall";
+    }
+    ob++;
+
+    ob->_type = MN_COLORBOX;
+    ob->_shortcut = 'w';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNColorBox_Ticker;
+    ob->updateGeometry = MNColorBox_UpdateGeometry;
+    ob->drawer = MNColorBox_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarColorBox;
+    ob->actions[MNA_ACTIVE].callback = Hu_MenuActivateColorWidget;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNColorBox_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_colorbox_t), PU_GAMESTATIC, 0);
+    { mndata_colorbox_t* cbox = (mndata_colorbox_t*)ob->_typedata;
+    cbox->data1 = "map-wall-r";
+    cbox->data2 = "map-wall-g";
+    cbox->data3 = "map-wall-b";
+    }
+    ob++;
+
+    ob->_type = MN_TEXT;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Floor Height Change";
+    }
+    ob++;
+
+    ob->_type = MN_COLORBOX;
+    ob->_shortcut = 'f';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNColorBox_Ticker;
+    ob->updateGeometry = MNColorBox_UpdateGeometry;
+    ob->drawer = MNColorBox_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarColorBox;
+    ob->actions[MNA_ACTIVE].callback = Hu_MenuActivateColorWidget;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNColorBox_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_colorbox_t), PU_GAMESTATIC, 0);
+    { mndata_colorbox_t* cbox = (mndata_colorbox_t*)ob->_typedata;
+    cbox->data1 = "map-wall-floorchange-r";
+    cbox->data2 = "map-wall-floorchange-g";
+    cbox->data3 = "map-wall-floorchange-b";
+    }
+    ob++;
+
+    ob->_type = MN_TEXT;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Ceiling Height Change";
+    }
+    ob++;
+
+    ob->_type = MN_COLORBOX;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNColorBox_Ticker;
+    ob->updateGeometry = MNColorBox_UpdateGeometry;
+    ob->drawer = MNColorBox_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarColorBox;
+    ob->actions[MNA_ACTIVE].callback = Hu_MenuActivateColorWidget;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNColorBox_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_colorbox_t), PU_GAMESTATIC, 0);
+    { mndata_colorbox_t* cbox = (mndata_colorbox_t*)ob->_typedata;
+    cbox->data1 = "map-wall-ceilingchange-r";
+    cbox->data2 = "map-wall-ceilingchange-g";
+    cbox->data3 = "map-wall-ceilingchange-b";
+    }
+    ob++;
+
+    ob->_type = MN_TEXT;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Unseen";
+    }
+    ob++;
+
+    ob->_type = MN_COLORBOX;
+    ob->_shortcut = 'u';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNColorBox_Ticker;
+    ob->updateGeometry = MNColorBox_UpdateGeometry;
+    ob->drawer = MNColorBox_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarColorBox;
+    ob->actions[MNA_ACTIVE].callback = Hu_MenuActivateColorWidget;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNColorBox_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_colorbox_t), PU_GAMESTATIC, 0);
+    { mndata_colorbox_t* cbox = (mndata_colorbox_t*)ob->_typedata;
+    cbox->data1 = "map-wall-unseen-r";
+    cbox->data2 = "map-wall-unseen-g";
+    cbox->data3 = "map-wall-unseen-b";
+    }
+    ob++;
+
+    ob->_type = MN_TEXT;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Thing";
+    }
+    ob++;
+
+    ob->_type = MN_COLORBOX;
+    ob->_shortcut = 't';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNColorBox_Ticker;
+    ob->updateGeometry = MNColorBox_UpdateGeometry;
+    ob->drawer = MNColorBox_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarColorBox;
+    ob->actions[MNA_ACTIVE].callback = Hu_MenuActivateColorWidget;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNColorBox_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_colorbox_t), PU_GAMESTATIC, 0);
+    { mndata_colorbox_t* cbox = (mndata_colorbox_t*)ob->_typedata;
+    cbox->data1 = "map-mobj-r";
+    cbox->data2 = "map-mobj-g";
+    cbox->data3 = "map-mobj-b";
+    }
+    ob++;
+
+    ob->_type = MN_TEXT;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Background";
+    }
+    ob++;
+
+    ob->_type = MN_COLORBOX;
+    ob->_shortcut = 'b';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNColorBox_Ticker;
+    ob->updateGeometry = MNColorBox_UpdateGeometry;
+    ob->drawer = MNColorBox_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarColorBox;
+    ob->actions[MNA_ACTIVE].callback = Hu_MenuActivateColorWidget;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNColorBox_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_colorbox_t), PU_GAMESTATIC, 0);
+    { mndata_colorbox_t* cbox = (mndata_colorbox_t*)ob->_typedata;
+    cbox->data1 = "map-background-r";
+    cbox->data2 = "map-background-g";
+    cbox->data3 = "map-background-b";
+    }
+    ob++;
+
+    ob->_type = MN_NONE;
+
+    page->objects = objects;
 }
 
 static int compareWeaponPriority(const void* _a, const void* _b)
