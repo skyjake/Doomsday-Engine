@@ -29,14 +29,6 @@
 #include "p_saveio.h"
 #include "saveinfo.h"
 
-struct saveinfo_s
-{
-    ddstring_t filePath;
-    ddstring_t name;
-    uint gameId;
-    saveheader_t header;
-};
-
 SaveInfo* SaveInfo_NewWithFilePath(const ddstring_t* filePath)
 {
     SaveInfo* info = (SaveInfo*)malloc(sizeof *info);

@@ -892,23 +892,59 @@ int SV_v13_LoadGame(SaveInfo* info)
     return 0; // Success!
 }
 
+void SaveInfo_Read_Hr_v13(SaveInfo* info)
+{
+    saveheader_t* hdr = &info->header;
+    char nameBuffer[V13_SAVESTRINGSIZE];
+    char vcheck[VERSIONSIZE];
+    int i;
+    assert(info);
+
+    SV_Read(nameBuffer, V13_SAVESTRINGSIZE);
+    nameBuffer[V13_SAVESTRINGSIZE - 1] = 0;
+    Str_Set(&info->name, nameBuffer);
+
+    // Check version.
+    SV_Read(vcheck, VERSIONSIZE);
+    hdr->version = atoi(&vcheck[8]);
+    hdr->version = MY_SAVE_VERSION; /// @todo Remove me.
+
+    hdr->skill = SV_ReadByte();
+    hdr->episode = SV_ReadByte()-1;
+    hdr->map = SV_ReadByte()-1;
+    for(i = 0; i < 4; ++i)
+    {
+        hdr->players[i] = SV_ReadByte();
+    }
+    memset(&hdr->players[4], 0, sizeof(*hdr->players) * (MAXPLAYERS-4));
+
+    // Get the map time.
+    { int a = SV_ReadByte();
+    int b = SV_ReadByte();
+    int c = SV_ReadByte();
+    hdr->mapTime = (a << 16) + (b << 8) + c;
+    }
+
+    hdr->magic = MY_SAVE_MAGIC; // Lets pretend...
+
+    /// @note Older formats do not contain all needed values:
+    hdr->gameMode = gameMode; // Assume the current mode.
+    hdr->deathmatch = 0;
+    hdr->noMonsters = 0;
+    hdr->respawnMonsters = 0;
+
+    info->gameId  = 0; // None.
+}
+
 boolean SV_v13_Recognise(SaveInfo* info)
 {
-#define SAVESTRINGSIZE          24
-
     if(!info || Str_IsEmpty(SaveInfo_FilePath(info))) return false;
 
     if(SV_OpenFile(Str_Text(SaveInfo_FilePath(info)), "r"))
     {
-        char nameBuffer[SAVESTRINGSIZE];
-        ddstring_t nameStr;
-        lzRead(nameBuffer, SAVESTRINGSIZE, SV_File());
-        nameBuffer[SAVESTRINGSIZE - 1] = 0;
-        SaveInfo_SetName(info, Str_InitStatic(&nameStr, nameBuffer));
+        SaveInfo_Read_Hr_v13(info);
         SV_CloseFile();
         return true;
     }
     return false;
-
-#undef SAVESTRINGSIZE
 }

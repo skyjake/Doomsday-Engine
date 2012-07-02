@@ -45,10 +45,14 @@ typedef struct saveheader_s {
 } saveheader_t;
 
 /**
- * SaveInfo instance (opaque).
+ * SaveInfo instance.
  */
-struct saveinfo_s;
-typedef struct saveinfo_s SaveInfo;
+typedef struct saveinfo_s {
+    ddstring_t filePath;
+    ddstring_t name;
+    uint gameId;
+    saveheader_t header;
+} SaveInfo;
 
 SaveInfo* SaveInfo_New(void);
 SaveInfo* SaveInfo_NewWithFilePath(const ddstring_t* filePath);
