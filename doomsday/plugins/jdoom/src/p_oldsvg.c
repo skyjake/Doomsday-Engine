@@ -911,7 +911,7 @@ int SV_v19_LoadGame(SaveInfo* info)
     return 0; // Success!
 }
 
-void SaveInfo_Read_Dm_v19(SaveInfo* info)
+void SaveInfo_Read_Dm_v19(SaveInfo* info, Reader* reader)
 {
     saveheader_t* hdr = &info->header;
     char nameBuffer[V19_SAVESTRINGSIZE];
@@ -919,28 +919,28 @@ void SaveInfo_Read_Dm_v19(SaveInfo* info)
     int i;
     assert(info);
 
-    SV_Read(nameBuffer, V19_SAVESTRINGSIZE);
+    Reader_Read(reader, nameBuffer, V19_SAVESTRINGSIZE);
     nameBuffer[V19_SAVESTRINGSIZE - 1] = 0;
     Str_Set(&info->name, nameBuffer);
 
     // Check version.
-    SV_Read(vcheck, VERSIONSIZE);
+    Reader_Read(reader, vcheck, VERSIONSIZE);
     hdr->version = atoi(&vcheck[8]);
     hdr->version = MY_SAVE_VERSION; /// @todo Remove me.
 
-    hdr->skill = SV_ReadByte();
-    hdr->episode = SV_ReadByte()-1;
-    hdr->map = SV_ReadByte()-1;
+    hdr->skill = Reader_ReadByte(reader);
+    hdr->episode = Reader_ReadByte(reader)-1;
+    hdr->map = Reader_ReadByte(reader)-1;
     for(i = 0; i < 4; ++i)
     {
-        hdr->players[i] = SV_ReadByte();
+        hdr->players[i] = Reader_ReadByte(reader);
     }
     memset(&hdr->players[4], 0, sizeof(*hdr->players) * (MAXPLAYERS-4));
 
     // Get the map time.
-    { int a = SV_ReadByte();
-    int b = SV_ReadByte();
-    int c = SV_ReadByte();
+    { int a = Reader_ReadByte(reader);
+    int b = Reader_ReadByte(reader);
+    int c = Reader_ReadByte(reader);
     hdr->mapTime = (a << 16) + (b << 8) + c;
     }
 
@@ -953,17 +953,4 @@ void SaveInfo_Read_Dm_v19(SaveInfo* info)
     hdr->respawnMonsters = 0;
 
     info->gameId  = 0; // None.
-}
-
-boolean SV_v19_Recognise(SaveInfo* info)
-{
-    if(!info || Str_IsEmpty(SaveInfo_FilePath(info))) return false;
-
-    if(SV_OpenFile(Str_Text(SaveInfo_FilePath(info)), "r"))
-    {
-        SaveInfo_Read_Dm_v19(info);
-        SV_CloseFile();
-        return true;
-    }
-    return false;
 }

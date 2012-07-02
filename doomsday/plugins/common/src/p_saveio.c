@@ -371,18 +371,9 @@ static void swd(Writer* w, const char* data, int len)
     SV_Write(data, len);
 }
 
-void SV_SaveInfo_Write(SaveInfo* info)
+Writer* SV_NewWriter(void)
 {
-    Writer* svWriter = Writer_NewWithCallbacks(swi8, swi16, swi32, swf, swd);
-    SaveInfo_Write(info, svWriter);
-    Writer_Delete(svWriter);
-}
-
-void SV_MaterialArchive_Write(MaterialArchive* arc)
-{
-    Writer* svWriter = Writer_NewWithCallbacks(swi8, swi16, swi32, swf, swd);
-    MaterialArchive_Write(arc, svWriter);
-    Writer_Delete(svWriter);
+    return Writer_NewWithCallbacks(swi8, swi16, swi32, swf, swd);
 }
 
 static char sri8(Reader* r)
@@ -415,31 +406,7 @@ static void srd(Reader* r, char* data, int len)
     SV_Read(data, len);
 }
 
-void SV_SaveInfo_Read(SaveInfo* info)
+Reader* SV_NewReader(void)
 {
-    Reader* svReader = Reader_NewWithCallbacks(sri8, sri16, sri32, srf, srd);
-#if __JHEXEN__
-    // Read the magic byte to determine the high-level format.
-    int magic = Reader_ReadInt32(svReader);
-    saveptr.b -= 4; // Rewind the stream.
-
-    if((!IS_NETWORK_CLIENT && magic != MY_SAVE_MAGIC) ||
-       ( IS_NETWORK_CLIENT && magic != MY_CLIENT_SAVE_MAGIC))
-    {
-        // Perhaps the old v9 format?
-        SaveInfo_Read_Hx_v9(info, svReader);
-    }
-    else
-#endif
-    {
-        SaveInfo_Read(info, svReader);
-    }
-    Reader_Delete(svReader);
-}
-
-void SV_MaterialArchive_Read(MaterialArchive* arc, int version)
-{
-    Reader* svReader = Reader_NewWithCallbacks(sri8, sri16, sri32, srf, srd);
-    MaterialArchive_Read(arc, version, svReader);
-    Reader_Delete(svReader);
+    return Reader_NewWithCallbacks(sri8, sri16, sri32, srf, srd);
 }
