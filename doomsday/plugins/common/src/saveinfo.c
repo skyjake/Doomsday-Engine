@@ -29,14 +29,6 @@
 #include "p_saveio.h"
 #include "saveinfo.h"
 
-struct saveinfo_s
-{
-    ddstring_t filePath;
-    ddstring_t name;
-    uint gameId;
-    saveheader_t header;
-};
-
 SaveInfo* SaveInfo_NewWithFilePath(const ddstring_t* filePath)
 {
     SaveInfo* info = (SaveInfo*)malloc(sizeof *info);
@@ -175,21 +167,6 @@ boolean SaveInfo_IsLoadable(SaveInfo* info)
     return true; // It's good!
 }
 
-static boolean recogniseAndReadHeader(SaveInfo* info)
-{
-    if(SV_Recognise(info)) return true;
-
-    // Perhaps an original game save?
-#if __JDOOM__
-    if(SV_v19_Recognise(info)) return true;
-#endif
-#if __JHERETIC__
-    if(SV_v13_Recognise(info)) return true;
-#endif
-
-    return false;
-}
-
 void SaveInfo_Update(SaveInfo* info)
 {
     assert(info);
@@ -202,7 +179,7 @@ void SaveInfo_Update(SaveInfo* info)
         return;
     }
 
-    if(!recogniseAndReadHeader(info))
+    if(!SV_Recognise(info))
     {
         // Not a loadable save.
         return;

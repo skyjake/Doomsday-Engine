@@ -30,7 +30,7 @@
 
 #include "p_saveio.h"
 
-boolean SV_v13_Recognise(SaveInfo* saveInfo);
+void SaveInfo_Read_Hr_v13(SaveInfo* info, Reader* reader);
 
 /**
  * @return  @c 0 on success else error code.
