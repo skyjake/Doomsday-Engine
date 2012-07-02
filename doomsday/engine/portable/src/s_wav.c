@@ -78,8 +78,8 @@ typedef struct wav_format_s {
 
 // CODE --------------------------------------------------------------------
 
-#define WRead(ptr, dest, length) \
-    { memcpy(dest, *ptr, length); *(char**) ptr += length; }
+#define WReadAndAdvance(pByte, pDest, length) \
+    { memcpy(pDest, pByte, length); pByte += length; }
 
 /**
  * @return              Non-zero if the "RIFF" and "WAVE" strings are found.
@@ -109,15 +109,9 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits,
         return NULL;
     }
     
-    memset(&wave_format, 0, sizeof(wave_format));
-
     // Read the RIFF header.
     data += sizeof(riff_hdr_t);
-
-    // Correct endianness.
-    //riff_header->len = ULONG(riff_header->len);
-
-    data += 4;
+    data += 4; // "WAVE" already verified above
 
 #ifdef _DEBUG    
     assert(sizeof(wave_format) == 16);
@@ -128,7 +122,7 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits,
     while(data < end)
     {
         // Read next chunk header.
-        WRead((void **) &data, &riff_chunk, sizeof(riff_chunk));
+        WReadAndAdvance(data, &riff_chunk, sizeof(riff_chunk));
         
         // Correct endianness.
         riff_chunk.len = ULONG(riff_chunk.len);
@@ -136,18 +130,16 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits,
         // What have we got here?
         if(!strncmp(riff_chunk.id, "fmt ", 4))
         {
-            assert(wave_format.wFormatTag == 0);
-
             // Read format chunk.
-            WRead((void **) &data, &wave_format, sizeof(wave_format));
+            WReadAndAdvance(data, &wave_format, sizeof(wave_format));
                                                             
             // Correct endianness.
-            wave_format.wFormatTag = USHORT(wave_format.wFormatTag);
-            wave_format.wChannels = USHORT(wave_format.wChannels);
-            wave_format.dwSamplesPerSec = ULONG(wave_format.dwSamplesPerSec);
-            wave_format.dwAvgBytesPerSec = ULONG(wave_format.dwAvgBytesPerSec);
-            wave_format.wBlockAlign = USHORT(wave_format.wBlockAlign);
-            wave_format.wBitsPerSample = USHORT(wave_format.wBitsPerSample);
+            wave_format.wFormatTag       = USHORT(wave_format.wFormatTag      );
+            wave_format.wChannels        = USHORT(wave_format.wChannels       );
+            wave_format.dwSamplesPerSec  = ULONG (wave_format.dwSamplesPerSec );
+            wave_format.dwAvgBytesPerSec = ULONG (wave_format.dwAvgBytesPerSec);
+            wave_format.wBlockAlign      = USHORT(wave_format.wBlockAlign     );
+            wave_format.wBitsPerSample   = USHORT(wave_format.wBitsPerSample  );
 
             assert(wave_format.wFormatTag == WAVE_FORMAT_PCM); // linear PCM
 
@@ -164,7 +156,7 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits,
                 return NULL;
             }
             // Read the extra format information.
-            //WRead(&data, &wave_format2, sizeof(*wave_format2));
+            //WReadAndAdvance(&data, &wave_format2, sizeof(*wave_format2));
             /*if(wave_format->wBitsPerSample == 0)
                {
                // We'll have to guess...
