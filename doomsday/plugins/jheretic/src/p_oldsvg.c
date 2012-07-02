@@ -935,7 +935,6 @@ void SaveInfo_Read_Hr_v13(SaveInfo* info, Reader* reader)
     // Check version.
     Reader_Read(reader, vcheck, VERSIONSIZE);
     hdr->version = atoi(&vcheck[8]);
-    hdr->version = MY_SAVE_VERSION; /// @todo Remove me.
 
     hdr->skill = Reader_ReadByte(reader);
     hdr->episode = Reader_ReadByte(reader)-1;
@@ -953,7 +952,7 @@ void SaveInfo_Read_Hr_v13(SaveInfo* info, Reader* reader)
     hdr->mapTime = (a << 16) + (b << 8) + c;
     }
 
-    hdr->magic = MY_SAVE_MAGIC; // Lets pretend...
+    hdr->magic = 0; // Initialize with *something*.
 
     /// @note Older formats do not contain all needed values:
     hdr->gameMode = gameMode; // Assume the current mode.

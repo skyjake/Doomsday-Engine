@@ -633,7 +633,23 @@ static boolean recogniseSaveState(SaveInfo* info)
         SV_CloseFile();
 #endif
 
-        return SaveInfo_IsLoadable(info);
+        // Magic must match.
+        if(info->header.magic != MY_SAVE_MAGIC &&
+           info->header.magic != MY_CLIENT_SAVE_MAGIC) return false;
+
+        /**
+         * Check for unsupported versions.
+         */
+        // A future version?
+        if(info->header.version > MY_SAVE_VERSION) return false;
+
+#if __JHEXEN__
+        // We are incompatible with v3 saves due to an invalid test used to determine
+        // present sidedefs (ver3 format's sidedefs contain chunks of junk data).
+        if(info->header.version == 3) return false;
+#endif
+
+        return true;
     }
     return false;
 }
