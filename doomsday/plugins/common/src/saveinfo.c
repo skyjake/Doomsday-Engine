@@ -29,14 +29,6 @@
 #include "p_saveio.h"
 #include "saveinfo.h"
 
-struct saveinfo_s
-{
-    ddstring_t filePath;
-    ddstring_t name;
-    uint gameId;
-    saveheader_t header;
-};
-
 SaveInfo* SaveInfo_NewWithFilePath(const ddstring_t* filePath)
 {
     SaveInfo* info = (SaveInfo*)malloc(sizeof *info);
@@ -146,48 +138,18 @@ void SaveInfo_Configure(SaveInfo* info)
 #endif
 }
 
-/// @fixme What about original game saves, they will fail here presently.
 boolean SaveInfo_IsLoadable(SaveInfo* info)
 {
     assert(info);
 
-    if(Str_IsEmpty(&info->filePath)) return false;
-
-    // Magic must match.
-    if(info->header.magic != MY_SAVE_MAGIC &&
-       info->header.magic != MY_CLIENT_SAVE_MAGIC) return false;
-
-    /**
-     * Check for unsupported versions.
-     */
-    // A future version?
-    if(info->header.version > MY_SAVE_VERSION) return false;
-
-#if __JHEXEN__
-    // We are incompatible with v3 saves due to an invalid test used to determine
-    // present sidedefs (ver3 format's sidedefs contain chunks of junk data).
-    if(info->header.version == 3) return false;
-#endif
+    if(Str_IsEmpty(&info->filePath) || !SV_ExistingFile(Str_Text(&info->filePath))) return false;
 
     // Game Mode missmatch?
     if(info->header.gameMode != gameMode) return false;
 
+    /// @todo Validate loaded add-ons and checksum the definition database.
+
     return true; // It's good!
-}
-
-static boolean recogniseAndReadHeader(SaveInfo* info)
-{
-    if(SV_Recognise(info)) return true;
-
-    // Perhaps an original game save?
-#if __JDOOM__
-    if(SV_v19_Recognise(info)) return true;
-#endif
-#if __JHERETIC__
-    if(SV_v13_Recognise(info)) return true;
-#endif
-
-    return false;
 }
 
 void SaveInfo_Update(SaveInfo* info)
@@ -202,11 +164,8 @@ void SaveInfo_Update(SaveInfo* info)
         return;
     }
 
-    if(!recogniseAndReadHeader(info))
-    {
-        // Not a loadable save.
-        return;
-    }
+    // Is this a recognisable save state?
+    if(!SV_Recognise(info)) return;
 
     // Ensure we have a valid name.
     if(Str_IsEmpty(&info->name))

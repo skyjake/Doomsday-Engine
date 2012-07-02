@@ -582,7 +582,29 @@ boolean SV_IsUserWritableSlot(int slot)
     return SV_IsValidSlot(slot);
 }
 
-boolean SV_Recognise(SaveInfo* info)
+static void SV_SaveInfo_Read(SaveInfo* info)
+{
+    Reader* svReader = SV_NewReader();
+#if __JHEXEN__
+    // Read the magic byte to determine the high-level format.
+    int magic = Reader_ReadInt32(svReader);
+    SV_HxSavePtr()->b -= 4; // Rewind the stream.
+
+    if((!IS_NETWORK_CLIENT && magic != MY_SAVE_MAGIC) ||
+       ( IS_NETWORK_CLIENT && magic != MY_CLIENT_SAVE_MAGIC))
+    {
+        // Perhaps the old v9 format?
+        SaveInfo_Read_Hx_v9(info, svReader);
+    }
+    else
+#endif
+    {
+        SaveInfo_Read(info, svReader);
+    }
+    Reader_Delete(svReader);
+}
+
+static boolean recogniseSaveState(SaveInfo* info)
 {
 #if __JHEXEN__
     byte* saveBuffer;
@@ -611,8 +633,71 @@ boolean SV_Recognise(SaveInfo* info)
         SV_CloseFile();
 #endif
 
-        return SaveInfo_IsLoadable(info);
+        // Magic must match.
+        if(info->header.magic != MY_SAVE_MAGIC &&
+           info->header.magic != MY_CLIENT_SAVE_MAGIC) return false;
+
+        /**
+         * Check for unsupported versions.
+         */
+        // A future version?
+        if(info->header.version > MY_SAVE_VERSION) return false;
+
+#if __JHEXEN__
+        // We are incompatible with v3 saves due to an invalid test used to determine
+        // present sidedefs (ver3 format's sidedefs contain chunks of junk data).
+        if(info->header.version == 3) return false;
+#endif
+
+        return true;
     }
+    return false;
+}
+
+#if __JDOOM__
+static boolean recogniseSaveState_Dm_v19(SaveInfo* info)
+{
+    if(!info || Str_IsEmpty(SaveInfo_FilePath(info))) return false;
+    if(SV_OpenFile(Str_Text(SaveInfo_FilePath(info)), "r"))
+    {
+        Reader* svReader = SV_NewReader();
+        SaveInfo_Read_Dm_v19(info, svReader);
+        SV_CloseFile();
+        Reader_Delete(svReader);
+        svReader = NULL;
+        return true;
+    }
+    return false;
+}
+#endif
+
+#if __JHERETIC__
+static boolean recogniseSaveState_Hr_v13(SaveInfo* info)
+{
+    if(!info || Str_IsEmpty(SaveInfo_FilePath(info))) return false;
+    if(SV_OpenFile(Str_Text(SaveInfo_FilePath(info)), "r"))
+    {
+        Reader* svReader = SV_NewReader();
+        SaveInfo_Read_Hr_v13(info, svReader);
+        SV_CloseFile();
+        Reader_Delete(svReader);
+        svReader = NULL;
+        return true;
+    }
+    return false;
+}
+#endif
+
+boolean SV_Recognise(SaveInfo* info)
+{
+    if(recogniseSaveState(info)) return true;
+    // Perhaps an original game save?
+#if __JDOOM__
+    if(recogniseSaveState_Dm_v19(info)) return true;
+#endif
+#if __JHERETIC__
+    if(recogniseSaveState_Hr_v13(info)) return true;
+#endif
     return false;
 }
 
@@ -2774,7 +2859,10 @@ static void P_ArchiveWorld(void)
 {
     uint i;
 
-    SV_MaterialArchive_Write(materialArchive);
+    { Writer* svWriter = SV_NewWriter();
+    MaterialArchive_Write(materialArchive, svWriter);
+    Writer_Delete(svWriter);
+    }
 
     SV_BeginSegment(ASEG_WORLD);
     for(i = 0; i < numsectors; ++i)
@@ -2807,7 +2895,11 @@ static void P_UnArchiveWorld(void)
 #if !__JHEXEN__
     if(hdr->version >= 4)
 #endif
-        SV_MaterialArchive_Read(materialArchive, matArchiveVer);
+    {
+        Reader* svReader = SV_NewReader();
+        MaterialArchive_Read(materialArchive, matArchiveVer, svReader);
+        Reader_Delete(svReader);
+    }
 
     SV_AssertSegment(ASEG_WORLD);
     // Load sectors.
@@ -5141,7 +5233,11 @@ void SV_SaveGameClient(uint gameId)
     saveInfo = SaveInfo_New();
     SaveInfo_SetGameId(saveInfo, gameId);
     SaveInfo_Configure(saveInfo);
-    SV_SaveInfo_Write(saveInfo);
+
+    {Writer* svWriter = SV_NewWriter();
+    SaveInfo_Write(saveInfo, svWriter);
+    Writer_Delete(svWriter);
+    }
 
     // Some important information.
     // Our position and look angles.
@@ -5299,7 +5395,10 @@ static int saveGameWorker(void* parameters)
     playerHeaderOK = false; // Uninitialized.
 
     // Write the game session header.
-    SV_SaveInfo_Write(saveInfo);
+    { Writer* svWriter = SV_NewWriter();
+    SaveInfo_Write(saveInfo, svWriter);
+    Writer_Delete(svWriter);
+    }
 
 #if __JHEXEN__
     P_ArchiveGlobalScriptData();
