@@ -1,34 +1,24 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * s_wav.c: WAV Files
+ * @file s_wav.c
+ * WAV loader. @ingroup audio
  *
- * A 'bare necessities' WAV loader.
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
 #include "de_console.h"
@@ -36,8 +26,6 @@
 #include "de_filesys.h"
 
 #include "m_misc.h"
-
-// MACROS ------------------------------------------------------------------
 
 #ifdef __GNUC__
 /*
@@ -53,50 +41,36 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits, int* rate,
 
 #define WAVE_FORMAT_PCM     1
 
-// TYPES -------------------------------------------------------------------
-
 #pragma pack(1)
 typedef struct riff_hdr_s {
-    char            id[4]; // Identifier string = "RIFF"
-    uint32_t        len; // Remaining length after this header
+    char            id[4];              ///< Identifier string = "RIFF"
+    uint32_t        len;                ///< Remaining length after this header
 } riff_hdr_t;
 
-typedef struct chunk_hdr_s { // CHUNK 8-byte header
-    char            id[4]; // Identifier, e.g. "fmt " or "data"
-    uint32_t        len; // Remaining chunk length after header
-} chunk_hdr_t;           // data bytes follow chunk header
+typedef struct chunk_hdr_s {            ///< CHUNK 8-byte header
+    char            id[4];              ///< Identifier, e.g. "fmt " or "data"
+    uint32_t        len;                ///< Remaining chunk length after header
+} chunk_hdr_t;                          ///< data bytes follow chunk header
 
 typedef struct wav_format_s {
-    uint16_t        wFormatTag; // Format category
-    uint16_t        wChannels; // Number of channels
-    uint32_t        dwSamplesPerSec; // Sampling rate
-    uint32_t        dwAvgBytesPerSec; // For buffer estimation
-    uint16_t        wBlockAlign; // Data block size
-    uint16_t        wBitsPerSample; // Sample size
+    uint16_t        wFormatTag;         ///< Format category
+    uint16_t        wChannels;          ///< Number of channels
+    uint32_t        dwSamplesPerSec;    ///< Sampling rate
+    uint32_t        dwAvgBytesPerSec;   ///< For buffer estimation
+    uint16_t        wBlockAlign;        ///< Data block size
+    uint16_t        wBitsPerSample;     ///< Sample size
 } wav_format_t;
 #pragma pack()
-
-// CODE --------------------------------------------------------------------
 
 #define WReadAndAdvance(pByte, pDest, length) \
     { memcpy(pDest, pByte, length); pByte += length; }
 
-/**
- * @return              Non-zero if the "RIFF" and "WAVE" strings are found.
- */
 int WAV_CheckFormat(const char* data)
 {
     return !strncmp(data, "RIFF", 4) && !strncmp(data + 8, "WAVE", 4);
 }
 
-/**
- * The returned buffer contains the wave data. If NULL is returned, the
- * loading obviously failed. The caller must free the sample data using
- * Z_Free when it's no longer needed. The WAV file must have only one
- * channel! All parameters must be passed, no NULLs are allowed.
- */
-void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits,
-    int* rate, int* samples)
+void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits, int* rate, int* samples)
 {
     const byte* end = data + datalength;
     byte* sampledata = NULL;
