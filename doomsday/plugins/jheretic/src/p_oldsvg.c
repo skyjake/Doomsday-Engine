@@ -55,55 +55,35 @@ static byte* savePtr;
 static byte* saveBuffer;
 static Reader* svReader;
 
-static char SV_v13_ReadByte(void)
-{
-    savePtr++;
-    return *(char*) (savePtr - 1);
-}
-
-static short SV_v13_ReadShort(void)
-{
-    savePtr += 2;
-    return *(int16_t*) (savePtr - 2);
-}
-
-static int SV_v13_ReadLong(void)
-{
-    savePtr += 4;
-    return *(int32_t*) (savePtr - 4);
-}
-
-static void SV_v13_Read(void* data, int len)
-{
-    if(data)
-    {
-        memcpy(data, savePtr, len);
-    }
-    savePtr += len;
-}
-
 static char sri8(Reader* r)
 {
     if(!r) return 0;
-    return SV_v13_ReadByte();
+    savePtr++;
+    return *(char*) (savePtr - 1);
 }
 
 static short sri16(Reader* r)
 {
     if(!r) return 0;
-    return SV_v13_ReadShort();
+    savePtr += 2;
+    return *(int16_t*) (savePtr - 2);
 }
 
 static int sri32(Reader* r)
 {
     if(!r) return 0;
-    return SV_v13_ReadLong();
+    savePtr += 4;
+    return *(int32_t*) (savePtr - 4);
 }
 
 static void srd(Reader* r, char* data, int len)
 {
     if(!r) return;
-    SV_v13_Read(data, len);
+    if(data)
+    {
+        memcpy(data, savePtr, len);
+    }
+    savePtr += len;
 }
 
 static Reader* SV_NewReader_v13(void)
