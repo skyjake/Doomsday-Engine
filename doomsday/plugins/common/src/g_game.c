@@ -540,6 +540,8 @@ void G_CommonPreInit(void)
  */
 void R_GetTranslation(int plrClass, int plrColor, int* tclass, int* tmap)
 {
+    int mapped;
+
     if(gameMode == hexen_v10)
     {
         const int mapping[3][4] = {
@@ -547,41 +549,20 @@ void R_GetTranslation(int plrClass, int plrColor, int* tclass, int* tmap)
             /* Cleric */  { 1, 0, 2, 3 },
             /* Mage */    { 1, 0, 2, 3 }
         };
-
-        if(!mapping[plrClass][plrColor])
-        {
-            // This is the actual color of the sprite, no need to translate.
-            *tclass = 0;
-            *tmap = 0;
-            return;
-        }
-        *tclass = plrClass;
-        *tmap = mapping[plrClass][plrColor];
-        return;
+        mapped = mapping[plrClass][plrColor];
     }
-
-    *tclass = 1;
-
-    if(plrColor == 0)
-        *tmap = 1;
-    else if(plrColor == 1)
-        *tmap = 0;
     else
-        *tmap = plrColor;
-
-    // Fighter's colors are a bit different.
-    if(plrClass == PCLASS_FIGHTER)
     {
-        *tclass = 0;
-
-        if(plrColor == 0)
-            *tmap = 1;
-        else if(plrColor == 1)
-            *tmap = 2;
-        else if(plrColor == 2)
-            *tmap = 0; // untranslated Fighter is Yellow
+        const int mapping[3][8] = {
+            /* Fighter */ { 1, 2, 0, 3, 4, 5, 6, 7 },
+            /* Cleric */  { 1, 0, 2, 3, 4, 5, 6, 7 },
+            /* Mage */    { 1, 0, 2, 3, 4, 5, 6, 7 }
+        };
+        mapped = mapping[plrClass][plrColor];
     }
 
+    *tclass = (mapped? plrClass : 0);
+    *tmap   = mapped;
 }
 
 void R_SetTranslation(mobj_t* mo)
@@ -703,7 +684,12 @@ void R_LoadColorPalettes(void)
         for(i = 0; i < 7; ++i)
         {
             if(i == numPerClass) break; // Not present.
-            dd_snprintf(name, 9, "TRANTBL%X", idx++);
+            strcpy(name, "TRANTBL0");
+            if(idx < 10)
+                name[7] += idx;
+            else
+                name[7] = 'A' + idx - 10;
+            idx++;
 #ifdef _DEBUG
             Con_Message("Reading translation table '%s' as tclass=%i tmap=%i.\n", name, cl, i);
 #endif
