@@ -540,6 +540,26 @@ void G_CommonPreInit(void)
  */
 void R_GetTranslation(int plrClass, int plrColor, int* tclass, int* tmap)
 {
+    if(gameMode == hexen_v10)
+    {
+        const int mapping[3][4] = {
+            /* Fighter */ { 1, 2, 0, 3 },
+            /* Cleric */  { 1, 0, 2, 3 },
+            /* Mage */    { 1, 0, 2, 3 }
+        };
+
+        if(!mapping[plrClass][plrColor])
+        {
+            // This is the actual color of the sprite, no need to translate.
+            *tclass = 0;
+            *tmap = 0;
+            return;
+        }
+        *tclass = plrClass;
+        *tmap = mapping[plrClass][plrColor];
+        return;
+    }
+
     *tclass = 1;
 
     if(plrColor == 0)
@@ -668,19 +688,30 @@ void R_LoadColorPalettes(void)
     }
 #else // __JHEXEN__
     {
-    int i;
+    int i, cl, idx;
     uint8_t* translationtables = (uint8_t*) DD_GetVariable(DD_TRANSLATIONTABLES_ADDRESS);
     lumpnum_t lumpNum;
     char name[9];
+    int numPerClass = (gameMode == hexen_v10? 3 : 7);
 
-    for(i = 0; i < 3 * 7; ++i)
-    {
-        dd_snprintf(name, 9, "TRANTBL%X", i);
-        if(-1 != (lumpNum = W_CheckLumpNumForName(name)))
+    // In v1.0, the color translations are a bit different. There are only
+    // three translation maps per class, whereas Doomsday assumes seven maps
+    // per class. Thus we'll need to account for the difference.
+
+    idx = 0;
+    for(cl = 0; cl < 3; ++cl)
+        for(i = 0; i < 7; ++i)
         {
-            W_ReadLumpSection(lumpNum, &translationtables[i * 256], 0, 256);
+            if(i == numPerClass) break; // Not present.
+            dd_snprintf(name, 9, "TRANTBL%X", idx++);
+#ifdef _DEBUG
+            Con_Message("Reading translation table '%s' as tclass=%i tmap=%i.\n", name, cl, i);
+#endif
+            if(-1 != (lumpNum = W_CheckLumpNumForName(name)))
+            {
+                W_ReadLumpSection(lumpNum, &translationtables[(7*cl + i) * 256], 0, 256);
+            }
         }
-    }
     }
 #endif
 
