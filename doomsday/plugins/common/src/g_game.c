@@ -565,41 +565,25 @@ void R_GetTranslation(int plrClass, int plrColor, int* tclass, int* tmap)
     *tmap   = mapped;
 }
 
-void R_SetTranslation(mobj_t* mo)
+void Mobj_UpdateTranslationClassAndMap(mobj_t* mo)
 {
-    if(!(mo->flags & MF_TRANSLATION))
-    {   // No translation.
-        mo->tmap = mo->tclass = 0;
+    if(mo->player)
+    {
+        int plrColor = (mo->flags & MF_TRANSLATION) >> MF_TRANSSHIFT;
+        R_GetTranslation(mo->player->class_, plrColor, &mo->tclass, &mo->tmap);
+    }
+    else if(mo->flags & MF_TRANSLATION)
+    {
+        mo->tclass = mo->special1;
+        mo->tmap = (mo->flags & MF_TRANSLATION) >> MF_TRANSSHIFT;
     }
     else
     {
-        int tclass, tmap;
-        tmap = (mo->flags & MF_TRANSLATION) >> MF_TRANSSHIFT;
-
-        if(mo->player)
-        {
-            tclass = 1;
-
-            if(mo->player->class_ == PCLASS_FIGHTER)
-            {   // Fighter's colors are a bit different.
-                if(tmap == 0)
-                    tmap = 2;
-                else if(tmap == 2)
-                    tmap = 0;
-                else
-                    tclass = 0;
-            }
-
-            mo->tclass = tclass;
-        }
-        else
-            tclass = mo->special1;
-
-        mo->tmap = tmap;
-        mo->tclass = tclass;
+        // No translation.
+        mo->tmap = mo->tclass = 0;
     }
 }
-#endif
+#endif // __JHEXEN__
 
 void R_LoadColorPalettes(void)
 {

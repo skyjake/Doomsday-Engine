@@ -387,7 +387,7 @@ void R_SetAllDoomsdayFlags(void)
                                         !(mo->flags & MF_VIEWALIGN)))
                 mo->ddFlags |= DDMF_VIEWALIGN;
 
-            R_SetTranslation(mo);
+            Mobj_UpdateTranslationClassAndMap(mo);
 
             // An offset for the light emitted by this object.
             /*          Class = MobjLightOffsets[mo->type];

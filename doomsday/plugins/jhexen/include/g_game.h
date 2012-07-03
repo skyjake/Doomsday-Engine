@@ -59,7 +59,7 @@ void            G_CommonShutdown(void);
 
 void            R_InitRefresh(void);
 void            R_GetTranslation(int plrClass, int plrColor, int* tclass, int* tmap);
-void            R_SetTranslation(mobj_t* mo);
+void            Mobj_UpdateTranslationClassAndMap(mobj_t* mo);
 
 void            G_PrintMapList(void);
 void            G_PlayerReborn(int player);
