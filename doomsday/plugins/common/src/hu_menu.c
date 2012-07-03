@@ -1363,7 +1363,7 @@ void Hu_MenuInitSkillPage(void)
         ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
 #if !__JHEXEN__
         { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
-        btn->text = (const char*) skillButtonTexts[i];
+        btn->text = INT2PTR(const char, skillButtonTexts[i]);
 # if __JDOOM__ || __JDOOM64__
         btn->patch = &pSkillModeNames[i];
 # endif

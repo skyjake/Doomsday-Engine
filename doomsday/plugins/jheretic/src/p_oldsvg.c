@@ -196,9 +196,9 @@ static void SV_v13_ReadPlayer(player_t* pl)
     pl->colorMap = Reader_ReadInt32(svReader);
     for(i = 0; i < 2; ++i)
     {
-        pspdef_t       *psp = &pl->pSprites[i];
+        pspdef_t* psp = &pl->pSprites[i];
 
-        psp->state = (state_t*) Reader_ReadInt32(svReader);
+        psp->state = INT2PTR(state_t, Reader_ReadInt32(svReader));
         psp->pos[VX] = Reader_ReadInt32(svReader);
         psp->pos[VY] = Reader_ReadInt32(svReader);
         psp->tics = Reader_ReadInt32(svReader);
@@ -285,7 +285,7 @@ static void SV_v13_ReadMobj(void)
     Reader_ReadInt32(svReader);          // info
 
     mo->tics = Reader_ReadInt32(svReader);
-    mo->state = (state_t *) Reader_ReadInt32(svReader);
+    mo->state = INT2PTR(state_t, Reader_ReadInt32(svReader));
     mo->damage = Reader_ReadInt32(svReader);
     mo->flags = Reader_ReadInt32(svReader);
     mo->flags2 = Reader_ReadInt32(svReader);
@@ -317,7 +317,7 @@ static void SV_v13_ReadMobj(void)
     Reader_ReadInt32(svReader);          // target
     mo->reactionTime = Reader_ReadInt32(svReader);
     mo->threshold = Reader_ReadInt32(svReader);
-    mo->player = (player_t *) Reader_ReadInt32(svReader);
+    mo->player = INT2PTR(player_t, Reader_ReadInt32(svReader));
     mo->lastLook = Reader_ReadInt32(svReader);
 
     mo->spawnSpot.origin[VX] = (coord_t) Reader_ReadInt32(svReader);
