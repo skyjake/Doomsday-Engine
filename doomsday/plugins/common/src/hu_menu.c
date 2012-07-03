@@ -1293,22 +1293,22 @@ void Hu_MenuInitSkillPage(void)
     const Point2Raw origin = { 48, 63 };
 #endif
     int skillButtonFlags[NUM_SKILL_MODES] = {
-        { MNF_ID0 },
-        { MNF_ID1 },
-        { MNF_ID2|MNF_DEFAULT },
-        { MNF_ID3 },
+        MNF_ID0,
+        MNF_ID1,
+        MNF_ID2 | MNF_DEFAULT,
+        MNF_ID3,
 #  if !__JDOOM64__
-        { MNF_ID4 }
+        MNF_ID4
 #  endif
     };
 #if !__JHEXEN__
     int skillButtonTexts[NUM_SKILL_MODES] = {
-        { TXT_SKILL1 },
-        { TXT_SKILL2 },
-        { TXT_SKILL3 },
-        { TXT_SKILL4 },
+        TXT_SKILL1,
+        TXT_SKILL2,
+        TXT_SKILL3,
+        TXT_SKILL4,
 #  if !__JDOOM64__
-        { TXT_SKILL5 }
+        TXT_SKILL5
 #  endif
     };
 #endif
