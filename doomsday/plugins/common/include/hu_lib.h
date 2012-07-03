@@ -75,13 +75,15 @@ typedef enum {
  */
 ///@{
 #define MNF_HIDDEN              0x1
-#define MNF_DISABLED            0x2 // Can't be interacted with.
-#define MNF_PAUSED              0x4 // Ticker not called.
+#define MNF_DISABLED            0x2     ///< Can't be interacted with.
+#define MNF_PAUSED              0x4     ///< Ticker not called.
 #define MNF_CLICKED             0x8
-#define MNF_ACTIVE              0x10 // Object active.
-#define MNF_FOCUS               0x20 // Has focus.
-#define MNF_NO_FOCUS            0x40 // Can't receive focus.
-#define MNF_DEFAULT             0x80 // Has focus by default.
+#define MNF_ACTIVE              0x10    ///< Object active.
+#define MNF_FOCUS               0x20    ///< Has focus.
+#define MNF_NO_FOCUS            0x40    ///< Can't receive focus.
+#define MNF_DEFAULT             0x80    ///< Has focus by default.
+#define MNF_POSITION_FIXED      0x100   ///< XY position is fixed and predefined; automatic layout does not apply.
+#define MNF_LAYOUT_OFFSET       0x200   ///< Predefined XY position is applied to the dynamic layout origin.
 //#define MNF_LEFT_ALIGN          0x100
 //#define MNF_FADE_AWAY           0x200 // Fade UI away while the control is active.
 //#define MNF_NEVER_FADE          0x400

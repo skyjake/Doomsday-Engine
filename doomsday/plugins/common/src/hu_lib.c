@@ -868,6 +868,25 @@ static void applyPageLayout(mn_page_t* page)
             continue;
         }
 
+        // If the object has a fixed position, we will ignore it while doing
+        // dynamic layout.
+        if(MNObject_Flags(ob) & MNF_POSITION_FIXED)
+        {
+            Rect_SetXY(ob->_geometry, ob->_origin.x, ob->_origin.y);
+            Rect_Unite(page->geometry, ob->_geometry);
+
+            // To the next object.
+            i += 1;
+            continue;
+        }
+
+        // An additional offset requested?
+        if(MNObject_Flags(ob) & MNF_LAYOUT_OFFSET)
+        {
+            origin.x += ob->_origin.x;
+            origin.y += ob->_origin.y;
+        }
+
         Rect_SetXY(ob->_geometry, origin.x, origin.y);
 
         // Orient label plus button/inline-list/textual-slider pairs about a
