@@ -1445,7 +1445,7 @@ void Hu_MenuInitMultiplayerPage(void)
 void Hu_MenuInitPlayerSetupPage(void)
 {
 #if __JHERETIC__ || __JHEXEN__
-    const Point2Raw origin = { 70, 54 };
+    const Point2Raw origin = { 70, 44 };
 #else
     const Point2Raw origin = { 70, 54 };
 #endif
@@ -1469,7 +1469,9 @@ void Hu_MenuInitPlayerSetupPage(void)
     ob = objects;
 
     ob->_type = MN_MOBJPREVIEW;
-    ob->_flags = MNF_ID0;
+    ob->_origin.x = SCREENWIDTH/2 - origin.x;
+    ob->_origin.y = 60;
+    ob->_flags = MNF_ID0 | MNF_POSITION_FIXED;
     ob->_pageFontIdx = MENU_FONT1;
     ob->_pageColorIdx = MENU_COLOR1;
     ob->ticker = MNMobjPreview_Ticker;
@@ -1479,7 +1481,8 @@ void Hu_MenuInitPlayerSetupPage(void)
     ob++;
 
     ob->_type = MN_EDIT;
-    ob->_flags = MNF_ID1;
+    ob->_flags = MNF_ID1 | MNF_LAYOUT_OFFSET;
+    ob->_origin.y = 75;
     ob->_pageFontIdx = MENU_FONT1;
     ob->_pageColorIdx = MENU_COLOR1;
     ob->ticker = MNEdit_Ticker;
@@ -1499,6 +1502,8 @@ void Hu_MenuInitPlayerSetupPage(void)
 
 #if __JHEXEN__
     ob->_type = MN_TEXT;
+    ob->_flags = MNF_LAYOUT_OFFSET;
+    ob->_origin.y = 5;
     ob->_pageFontIdx = MENU_FONT1;
     ob->_pageColorIdx = MENU_COLOR1;
     ob->ticker = MNText_Ticker;
@@ -1543,6 +1548,10 @@ void Hu_MenuInitPlayerSetupPage(void)
 #endif
 
     ob->_type = MN_TEXT;
+#ifdef __JHERETIC__
+    ob->_flags = MNF_LAYOUT_OFFSET;
+    ob->_origin.y = 5;
+#endif
     ob->_pageFontIdx = MENU_FONT1;
     ob->_pageColorIdx = MENU_COLOR1;
     ob->ticker = MNText_Ticker;
