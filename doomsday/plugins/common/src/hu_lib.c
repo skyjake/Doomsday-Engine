@@ -3482,8 +3482,15 @@ void MNMobjPreview_Drawer(mn_object_t* ob, const Point2Raw* offset)
         tMap = menuTime / 5 % NUMPLAYERCOLORS;
     }
 #if __JHEXEN__
+    if(gameMode == hexen_v10)
+    {
+        // Cycle through the four available colors.
+        if(mop->tMap == NUMPLAYERCOLORS) tMap = menuTime / 5 % 4;
+    }
     if(mop->plrClass >= PCLASS_FIGHTER)
+    {
         R_GetTranslation(mop->plrClass, tMap, &tClass, &tMap);
+    }
 #endif
 
     DGL_MatrixMode(DGL_MODELVIEW);
