@@ -822,6 +822,7 @@ D_CMD(SetMap)
     // Only the server can change the map.
     if(!IS_SERVER)
         return false;
+
 #if __JDOOM__ || __JHERETIC__
     if(argc != 3)
     {
@@ -836,17 +837,7 @@ D_CMD(SetMap)
     }
 #endif
 
-    // Update game mode.
-    deathmatch = cfg.netDeathmatch;
-    noMonstersParm = cfg.netNoMonsters;
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    respawnMonsters = cfg.netRespawn;
-#endif
-#if __JHEXEN__
-    randomClassParm = cfg.netRandomClass;
-#endif
-    cfg.jumpEnabled = cfg.netJumping;
-
+    // Parse arguments.
 #if __JDOOM__ || __JHERETIC__
     ep = atoi(argv[1]);
     if(ep != 0) ep -= 1;
@@ -860,8 +851,24 @@ D_CMD(SetMap)
     map = atoi(argv[1]); if(map != 0) map -= 1;
 #endif
 #if __JHEXEN__
-    map = P_TranslateMap(map);
+    map = P_TranslateMapIfExists(map);
+    if(map == P_INVALID_LOGICAL_MAP)
+    {
+        Con_Message("Map not found.\n");
+        return false;
+    }
 #endif
+
+    // Update game mode.
+    deathmatch      = cfg.netDeathmatch;
+    noMonstersParm  = cfg.netNoMonsters;
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+    respawnMonsters = cfg.netRespawn;
+#endif
+#if __JHEXEN__
+    randomClassParm = cfg.netRandomClass;
+#endif
+    cfg.jumpEnabled = cfg.netJumping;
 
     // Use the configured network skill level for the new map.
     G_DeferedInitNew(cfg.netSkill, ep, map);

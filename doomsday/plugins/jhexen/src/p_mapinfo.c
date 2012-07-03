@@ -47,6 +47,7 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct mapinfo_s {
+    boolean         fromMAPINFO;    ///< The data for this was read from the MAPINFO lump.
     short           cluster;
     uint            warpTrans;
     uint            nextMap;
@@ -164,7 +165,10 @@ void P_InitMapInfo(void)
     mapinfo_t defMapInfo;
     mapinfo_t* info;
 
+    memset(&MapInfo, 0, sizeof(MapInfo));
+
     // Configure the defaults
+    defMapInfo.fromMAPINFO = false; // just default values
     defMapInfo.cluster = 0;
     defMapInfo.warpTrans = 0;
     defMapInfo.nextMap = 0; // Always go to map 0 if not specified.
@@ -203,6 +207,9 @@ void P_InitMapInfo(void)
 
         // Restore song lump name
         strcpy(info->songLump, songMulch);
+
+        // This information has been parsed from MAPINFO.
+        info->fromMAPINFO = true;
 
         // The warp translation defaults to the map number
         info->warpTrans = map;
@@ -363,48 +370,50 @@ static __inline uint qualifyMap(uint map)
     return (map >= mapCount) ? 0 : map;
 }
 
-/**
- * Translates a warp map number to logical map number.
- *
- * @param map           The warp map number to translate.
- *
- * @return              The logical map number given a warp map number.
- */
-uint P_TranslateMap(uint map)
+uint P_TranslateMapIfExists(uint map)
 {
     uint i;
-    uint matchWithoutCluster = 0;
+    uint matchedWithoutCluster = P_INVALID_LOGICAL_MAP;
 
     for(i = 0; i < 99; ++i)
     {
         const mapinfo_t* info = &MapInfo[i];
-#ifdef _DEBUG
-        //Con_Message("P_TranslateMap: checking MAPINFO entry %i: warp %i name \"%s\"\n", i, info->warpTrans, info->name);
-#endif
+        if(!info->fromMAPINFO) continue; // Ignoring, undefined values.
         if(info->warpTrans == map)
         {
             if(info->cluster)
             {
 #ifdef _DEBUG
-                Con_Message("P_TranslateMap: warp %i translated to logical %i, cluster %i\n", map, i, info->cluster);
+                Con_Message("P_TranslateMapIfExists: warp %i translated to logical %i, cluster %i\n", map, i, info->cluster);
 #endif
                 return i;
             }
             else
             {
 #ifdef _DEBUG
-                Con_Message("P_TranslateMap: warp %i matches logical %i, but it has no cluster\n", map, i);
+                Con_Message("P_TranslateMapIfExists: warp %i matches logical %i, but it has no cluster\n", map, i);
 #endif
-                matchWithoutCluster = i;
+                matchedWithoutCluster = i;
             }
         }
     }
 
 #ifdef _DEBUG
-    Con_Message("P_TranslateMap: could not find warp %i, translating to logical %i\n",
-                map, matchWithoutCluster);
+    Con_Message("P_TranslateMapIfExists: could not find warp %i, translating to logical %i\n",
+                map, matchedWithoutCluster);
 #endif
-    return matchWithoutCluster; // 0 if nothing matched
+    return matchedWithoutCluster;
+}
+
+uint P_TranslateMap(uint map)
+{
+    uint translated = P_TranslateMapIfExists(map);
+    if(translated == P_INVALID_LOGICAL_MAP)
+    {
+        // This function always returns a valid logical map.
+        return 0;
+    }
+    return translated;
 }
 
 /**

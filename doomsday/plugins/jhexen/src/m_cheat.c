@@ -388,8 +388,8 @@ int Cht_WarpFunc(const int* args, int player)
         return false;
     }
 
-    map = P_TranslateMap((tens * 10 + ones) - 1);
-    if(userGame && map == gameMap)
+    map = P_TranslateMapIfExists((tens * 10 + ones) - 1);
+    if((userGame && map == gameMap) || map == P_INVALID_LOGICAL_MAP)
     {
         // Do not allow warping to the current map.
         P_SetMessage(plr, TXT_CHEATBADINPUT, false);
