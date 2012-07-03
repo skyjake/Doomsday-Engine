@@ -1907,8 +1907,8 @@ void G_PlayerReborn(int player)
     p->secretCount = secretcount;
 #if __JHEXEN__
     p->worldTimer = worldTimer;
-    p->colorMap = cfg.playerColor[player];
 #endif
+    p->colorMap = cfg.playerColor[player];
     p->class_ = P_ClassForPlayerWhenRespawning(player, false);
     p->useDown = p->attackDown = true; // Don't do anything immediately.
     p->playerState = PST_LIVE;

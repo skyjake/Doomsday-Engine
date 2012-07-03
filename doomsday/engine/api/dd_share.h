@@ -1078,7 +1078,7 @@ typedef struct aaboxd_s {
     short           visTarget; /* -1 = mobj is becoming less visible, */ \
                                /* 0 = no change, 2= mobj is becoming more visible */ \
     int             reactionTime; /* if not zero, freeze controls */ \
-    int             tmap, tclass;\
+    int             tmap, tclass; /* color translation (0, 0 == none) */ \
     int             flags;\
     int             flags2;\
     int             flags3;\

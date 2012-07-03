@@ -748,25 +748,13 @@ D_CMD(SetColor)
         // bits directly.
 
         cfg.playerColor[player] = PLR_COLOR(player, cfg.netColor);
+        players[player].colorMap = cfg.playerColor[player];
 
         if(players[player].plr->mo)
         {
             // Change the color of the mobj (translation flags).
             players[player].plr->mo->flags &= ~MF_TRANSLATION;
-
-#if __JHEXEN__
-            // Additional difficulty is caused by the fact that the Fighter's
-            // colors 0 (blue) and 2 (yellow) must be swapped.
-            players[player].plr->mo->flags |=
-                (cfg.playerClass[player] ==
-                 PCLASS_FIGHTER ? (cfg.playerColor[player] ==
-                                   0 ? 2 : cfg.playerColor[player] ==
-                                   2 ? 0 : cfg.playerColor[player]) : cfg.
-                 playerColor[player]) << MF_TRANSSHIFT;
-            players[player].colorMap = cfg.playerColor[player];
-#else
-            players[player].plr->mo->flags |= cfg.playerColor[player] << MF_TRANSSHIFT;
-#endif
+            players[player].plr->mo->flags |= (cfg.playerColor[player] << MF_TRANSSHIFT);
         }
 
         // Tell the clients about the change.

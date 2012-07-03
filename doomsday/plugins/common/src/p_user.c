@@ -904,21 +904,10 @@ boolean P_UndoPlayerMorph(player_t* player)
         return false;
     }
 
-# if __JHEXEN__
-    if(player->class_ == PCLASS_FIGHTER)
-    {
-        // The first type should be blue, and the third should be the
-        // Fighter's original gold color
-        if(playerNum == 0)
-            mo->flags |= 2 << MF_TRANSSHIFT;
-        else if(playerNum != 2)
-            mo->flags |= playerNum << MF_TRANSSHIFT;
-    }
-    else
-# endif
     if(playerNum != 0)
-    {   // Set color translation bits for player sprites
-        mo->flags |= playerNum << MF_TRANSSHIFT;
+    {
+        // Set color translation bits for player sprites
+        mo->flags |= playerNum << MF_TRANSSHIFT; /// @todo Use configured color? -jk
     }
 
     mo->player = player;
@@ -1087,6 +1076,7 @@ void P_PlayerThinkMove(player_t *player)
             {
                 playerNum = P_GetPlayerNum(player);
 
+                /*
                 if(player->class_ == PCLASS_FIGHTER)
                 {
                     // The first type should be blue, and the
@@ -1100,9 +1090,11 @@ void P_PlayerThinkMove(player_t *player)
                         speedMo->flags |= playerNum << MF_TRANSSHIFT;
                     }
                 }
-                else if(playerNum)
-                {   // Set color translation bits for player sprites.
-                    speedMo->flags |= playerNum << MF_TRANSSHIFT;
+                else*/
+                if(playerNum)
+                {
+                    // Set color translation bits for player sprites.
+                    speedMo->flags |= playerNum << MF_TRANSSHIFT; /// @todo Use configured color? -jk
                 }
 
                 speedMo->target = plrmo;
