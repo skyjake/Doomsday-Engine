@@ -1076,21 +1076,6 @@ void P_PlayerThinkMove(player_t *player)
             {
                 playerNum = P_GetPlayerNum(player);
 
-                /*
-                if(player->class_ == PCLASS_FIGHTER)
-                {
-                    // The first type should be blue, and the
-                    // third should be the Fighter's original gold color.
-                    if(playerNum == 0)
-                    {
-                        speedMo->flags |= 2 << MF_TRANSSHIFT;
-                    }
-                    else if(playerNum != 2)
-                    {
-                        speedMo->flags |= playerNum << MF_TRANSSHIFT;
-                    }
-                }
-                else*/
                 if(playerNum)
                 {
                     // Set color translation bits for player sprites.
