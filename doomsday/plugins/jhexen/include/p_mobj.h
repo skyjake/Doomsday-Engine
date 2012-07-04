@@ -99,9 +99,10 @@
 #define MF_SKULLFLY     0x1000000  // skull in flight
 #define MF_NOTDMATCH    0x2000000  // don't spawn in death match (key cards)
 
-//#define   MF_TRANSLATION  0xc000000   // if 0x4 0x8 or 0xc, use a translation
-#define MF_TRANSLATION  0x1c000000 // use a translation table (>>MF_TRANSHIFT)
-#define MF_TRANSSHIFT   26         // table for player colormaps
+#define MF_TRANSLATION  0x1c000000 /**  Player color to use (0-7 << MF_TRANSHIFT),
+                                        use R_GetTranslation() to convert to tclass/tmap.
+                                        @see Mobj_UpdateTranslationClassAndMap() */
+#define MF_TRANSSHIFT   26         ///< Bitshift for table for player colormaps.
 
 #define MF_LOCAL            0x20000000
 

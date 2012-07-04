@@ -1159,12 +1159,11 @@ void NetSv_ChangePlayerInfo(int from, Reader* msg)
                 from, cfg.playerColor[from], newClass);
 #endif
 
-#if __JHEXEN__
-    // The 'colormap' variable controls the setting of the color
-    // translation flags when the player is (re)spawned (which will
-    // be done in P_PlayerChangeClass).
+    // The 'colorMap' variable controls the setting of the color
+    // translation flags when the player is (re)spawned.
     pl->colorMap = cfg.playerColor[from];
-#else
+
+#ifndef __JHEXEN__
     if(pl->plr->mo)
     {
         // Change the player's mobj's color translation flags.

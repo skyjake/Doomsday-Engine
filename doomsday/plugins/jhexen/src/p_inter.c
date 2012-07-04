@@ -1434,8 +1434,9 @@ void P_KillMobj(mobj_t* source, mobj_t* target)
         }
 
         if(target->flags2 & MF2_ICEDAMAGE)
-        {   // Player ice death.
-            target->flags &= ~(7 << MF_TRANSSHIFT); //no translation
+        {
+            // Player ice death.
+            target->flags &= ~MF_TRANSLATION; // no translation
             target->flags |= MF_ICECORPSE;
             //// \todo Should be pulled from the player class definition.
             switch(target->player->class_)

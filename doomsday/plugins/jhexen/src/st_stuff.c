@@ -610,15 +610,7 @@ void SBarChain_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     }
     else
     {
-        pColor = cfg.playerColor[obj->player];
-
-        if(pClass == PCLASS_FIGHTER)
-        {
-            if(pColor == 0)
-                pColor = 2;
-            else if(pColor == 2)
-                pColor = 0;
-        }
+        pColor = players[obj->player].colorMap; // cfg.playerColor[obj->player];
     }
 
     if(!R_GetPatchInfo(pChain[pClass], &pChainInfo)) return;

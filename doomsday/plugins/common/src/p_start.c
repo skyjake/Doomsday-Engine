@@ -491,30 +491,17 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y, coord
     }
 
     // Set color translations for player sprites.
-#if __JHEXEN__
-    if(p->class_ == PCLASS_FIGHTER &&
-       (p->colorMap == 0 || p->colorMap == 2))
+    if(p->colorMap > 0 && p->colorMap < NUMPLAYERCOLORS)
     {
-        // The first type should be blue, and the third should be the
-        // Fighter's original gold color
-        //if(spot->type == 1)
-        if(p->colorMap == 0)
-        {
-            mo->flags |= 2 << MF_TRANSSHIFT;
-        }
-    }
-    else if(p->colorMap > 0 && p->colorMap < 8)
-    {   // Set color translation bits for player sprites
-        //mo->flags |= (spot->type-1)<<MF_TRANSSHIFT;
         mo->flags |= p->colorMap << MF_TRANSSHIFT;
     }
-#else
+    /*
     if(cfg.playerColor[plrNum] > 0)
         mo->flags |= cfg.playerColor[plrNum] << MF_TRANSSHIFT;
-#endif
+        */
 
 #ifdef _DEBUG
-    Con_Message("P_SpawnPlayer: Player #%i spawning with translation %i.\n",
+    Con_Message("P_SpawnPlayer: Player #%i spawning with color translation %i.\n",
                 plrNum, (mo->flags & MF_TRANSLATION) >> MF_TRANSSHIFT);
 #endif
 
