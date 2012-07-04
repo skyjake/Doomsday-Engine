@@ -30,6 +30,12 @@
 
 #include "p_saveio.h"
 
+#define V13_SAVE_VERSION                    130 ///< Version number associated with a recognised heretic.exe game save state.
+
+boolean SV_OpenFile_Hr_v13(const char* filePath);
+void SV_CloseFile_Hr_v13(void);
+Reader* SV_NewReader_Hr_v13(void);
+
 void SaveInfo_Read_Hr_v13(SaveInfo* info, Reader* reader);
 
 /**

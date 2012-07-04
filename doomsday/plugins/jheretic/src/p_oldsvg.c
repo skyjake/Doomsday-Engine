@@ -40,7 +40,6 @@
 #include "hu_inventory.h"
 
 // Do NOT change this:
-#define SAVE_VERSION            130
 #define VERSIONSIZE             16
 #define SAVE_GAME_TERMINATOR    0x1d
 
@@ -53,6 +52,7 @@
 
 static byte* savePtr;
 static byte* saveBuffer;
+
 static Reader* svReader;
 
 static char sri8(Reader* r)
@@ -84,11 +84,6 @@ static void srd(Reader* r, char* data, int len)
         memcpy(data, savePtr, len);
     }
     savePtr += len;
-}
-
-static Reader* SV_NewReader_v13(void)
-{
-    return Reader_NewWithCallbacks(sri8, sri16, sri32, NULL, srd);
 }
 
 static void SV_v13_ReadPlayer(player_t* pl)
@@ -847,72 +842,50 @@ enum {
 
 int SV_v13_LoadGame(SaveInfo* info)
 {
-    const char* savename;
-    int i, a, b, c;
-    size_t length;
-    char vcheck[VERSIONSIZE];
-
+    const saveheader_t* hdr;
     if(!info) return 1;
 
-    savename = Str_Text(SaveInfo_FilePath(info));
-    if(!(length = M_ReadFile(savename, (char**)&saveBuffer)))
+    if(!SV_OpenFile_Hr_v13(Str_Text(SaveInfo_FilePath(info))))
         return 1;
-    savePtr = saveBuffer;
 
-    svReader = SV_NewReader_v13();
-    // Skip the description field.
-    Reader_Read(svReader, NULL, V13_SAVESTRINGSIZE);
+    svReader = SV_NewReader_Hr_v13();
 
-    // Check version.
-    memset(vcheck, 0, sizeof(vcheck));
-    Reader_Read(svReader, vcheck, sizeof(vcheck));
-
-    if(strncmp(vcheck, "version ", 8)) return 1;
-
+    // Read the header again.
+    /// @todo Seek past the header straight to the game state.
     {
-        int saveVer = atoi(&vcheck[8]);
-        if(saveVer != SAVE_VERSION)
-        {
-            // From the wrong game?
-            Con_Message("Bad savegame version.\n");
-            Reader_Delete(svReader);
-            svReader = NULL;
-            Z_Free(saveBuffer);
-            saveBuffer = NULL;
-            savePtr = NULL;
-            return 1;
-        }
+    SaveInfo* tmp = SaveInfo_New();
+    SaveInfo_Read_Hr_v13(tmp, svReader);
+    SaveInfo_Delete(tmp);
     }
+    hdr = SaveInfo_Header(info);
 
-    gameSkill = Reader_ReadByte(svReader);
-    gameEpisode = Reader_ReadByte(svReader) - 1;
-    gameMap = Reader_ReadByte(svReader) - 1;
-
-    for(i = 0; i < 4; ++i)
-    {
-        players[i].plr->inGame = Reader_ReadByte(svReader);
-    }
+    gameSkill = hdr->skill;
+    gameEpisode = hdr->episode;
+    gameMap = hdr->map;
 
     // Load a base map.
     G_InitNew(gameSkill, gameEpisode, gameMap);
 
-    // Create map time.
-    a = Reader_ReadByte(svReader);
-    b = Reader_ReadByte(svReader);
-    c = Reader_ReadByte(svReader);
-    mapTime = (a << 16) + (b << 8) + c;
-
-    // De-archive all the modifications.
+    // Recreate map state.
+    mapTime = hdr->mapTime;
     P_v13_UnArchivePlayers();
     P_v13_UnArchiveWorld();
     P_v13_UnArchiveThinkers();
     P_v13_UnArchiveSpecials();
 
     if(Reader_ReadByte(svReader) != SAVE_GAME_TERMINATOR)
-        Con_Error("Bad savegame"); // Missing savegame termination marker.
+    {
+        Reader_Delete(svReader);
+        svReader = NULL;
+        SV_CloseFile_Hr_v13();
 
-    Z_Free(saveBuffer);
+        Con_Error("Bad savegame"); // Missing savegame termination marker.
+        exit(1); // Unreachable.
+    }
+
     Reader_Delete(svReader);
+    svReader = NULL;
+    SV_CloseFile_Hr_v13();
 
     // Spawn particle generators.
     R_SetupMap(DDSMM_AFTER_LOADING, 0);
@@ -932,7 +905,6 @@ void SaveInfo_Read_Hr_v13(SaveInfo* info, Reader* reader)
     nameBuffer[V13_SAVESTRINGSIZE - 1] = 0;
     Str_Set(&info->name, nameBuffer);
 
-    // Check version.
     Reader_Read(reader, vcheck, VERSIONSIZE);
     hdr->version = atoi(&vcheck[8]);
 
@@ -961,4 +933,30 @@ void SaveInfo_Read_Hr_v13(SaveInfo* info, Reader* reader)
     hdr->respawnMonsters = 0;
 
     info->gameId  = 0; // None.
+}
+
+boolean SV_OpenFile_Hr_v13(const char* filePath)
+{
+    boolean fileOpened;
+#if _DEBUG
+    if(saveBuffer)
+        Con_Error("SV_OpenFile_Hr_v13: A save state file has already been opened!");
+#endif
+    fileOpened = 0 != M_ReadFile(filePath, (char**)&saveBuffer);
+    if(!fileOpened) return false;
+    savePtr = saveBuffer;
+    return true;
+}
+
+void SV_CloseFile_Hr_v13(void)
+{
+    if(!saveBuffer) return;
+    Z_Free(saveBuffer);
+    saveBuffer = savePtr = NULL;
+}
+
+Reader* SV_NewReader_Hr_v13(void)
+{
+    if(!saveBuffer) return NULL;
+    return Reader_NewWithCallbacks(sri8, sri16, sri32, NULL, srd);
 }

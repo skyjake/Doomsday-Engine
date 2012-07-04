@@ -657,15 +657,30 @@ static boolean recogniseSaveState(SaveInfo* info)
 #if __JDOOM__
 static boolean recogniseSaveState_Dm_v19(SaveInfo* info)
 {
-    if(!info || Str_IsEmpty(SaveInfo_FilePath(info))) return false;
-    if(SV_OpenFile(Str_Text(SaveInfo_FilePath(info)), "r"))
+    if(!info) return false;
+    if(!SV_ExistingFile(Str_Text(SaveInfo_FilePath(info)))) return false;
+
+    if(SV_OpenFile_Dm_v19(Str_Text(SaveInfo_FilePath(info))))
     {
-        Reader* svReader = SV_NewReader();
-        SaveInfo_Read_Dm_v19(info, svReader);
-        SV_CloseFile();
+        Reader* svReader = SV_NewReader_Dm_v19();
+        boolean result = false;
+
+        // Check version.
+        /*char vcheck[VERSIONSIZE];
+        memset(vcheck, 0, sizeof(vcheck));
+        Reader_Read(svReader, vcheck, sizeof(vcheck));
+
+        if(strncmp(vcheck, "version ", 8))*/
+        {
+            SaveInfo_Read_Dm_v19(info, svReader);
+            result = (SaveInfo_Header(info)->version <= V19_SAVE_VERSION);
+        }
+
         Reader_Delete(svReader);
         svReader = NULL;
-        return true;
+        SV_CloseFile_Dm_v19();
+
+        return result;
     }
     return false;
 }
@@ -674,15 +689,30 @@ static boolean recogniseSaveState_Dm_v19(SaveInfo* info)
 #if __JHERETIC__
 static boolean recogniseSaveState_Hr_v13(SaveInfo* info)
 {
-    if(!info || Str_IsEmpty(SaveInfo_FilePath(info))) return false;
-    if(SV_OpenFile(Str_Text(SaveInfo_FilePath(info)), "r"))
+    if(!info) return false;
+    if(!SV_ExistingFile(Str_Text(SaveInfo_FilePath(info)))) return false;
+
+    if(SV_OpenFile_Hr_v13(Str_Text(SaveInfo_FilePath(info))))
     {
-        Reader* svReader = SV_NewReader();
-        SaveInfo_Read_Hr_v13(info, svReader);
-        SV_CloseFile();
+        Reader* svReader = SV_NewReader_Hr_v13();
+        boolean result = false;
+
+        // Check version.
+        /*char vcheck[VERSIONSIZE];
+        memset(vcheck, 0, sizeof(vcheck));
+        Reader_Read(svReader, vcheck, sizeof(vcheck));
+
+        if(strncmp(vcheck, "version ", 8))*/
+        {
+            SaveInfo_Read_Hr_v13(info, svReader);
+            result = (SaveInfo_Header(info)->version == V13_SAVE_VERSION);
+        }
+
         Reader_Delete(svReader);
         svReader = NULL;
-        return true;
+        SV_CloseFile_Hr_v13();
+
+        return result;
     }
     return false;
 }

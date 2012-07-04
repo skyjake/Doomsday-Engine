@@ -38,8 +38,6 @@
 
 // All the versions of DOOM have different savegame IDs, but 500 will be the
 // savegame base from now on.
-#define SAVE_VERSION_BASE   500
-#define SAVE_VERSION        (SAVE_VERSION_BASE + gameMode)
 #define V19_SAVESTRINGSIZE  (24)
 #define VERSIONSIZE         (16)
 
@@ -82,11 +80,6 @@ static void srd(Reader* r, char* data, int len)
         memcpy(data, savePtr, len);
     }
     savePtr += len;
-}
-
-static Reader* SV_NewReader_v19(void)
-{
-    return Reader_NewWithCallbacks(sri8, sri16, sri32, NULL, srd);
 }
 
 static void SV_v19_ReadPlayer(player_t* pl)
@@ -834,76 +827,49 @@ void P_v19_UnArchiveSpecials(void)
 
 int SV_v19_LoadGame(SaveInfo* info)
 {
-    const char* savename;
-    int i, a, b, c;
-    size_t length;
-    char vcheck[VERSIONSIZE];
-
+    const saveheader_t* hdr;
     if(!info) return 1;
-
-    savename = Str_Text(SaveInfo_FilePath(info));
-    if(!(length = M_ReadFile(savename, (char**)&saveBuffer)))
+    if(!SV_OpenFile_Dm_v19(Str_Text(SaveInfo_FilePath(info))))
         return 1;
-    savePtr = saveBuffer;
 
-    svReader = SV_NewReader_v19();
-    // Skip the description field.
-    Reader_Read(svReader, NULL, V19_SAVESTRINGSIZE);
+    svReader = SV_NewReader_Dm_v19();
 
-    // Check version.
-    memset(vcheck, 0, sizeof(vcheck));
-    Reader_Read(svReader, vcheck, sizeof(vcheck));
-
-    if(strncmp(vcheck, "version ", 8)) return 1;
-
+    // Read the header again.
+    /// @todo Seek past the header straight to the game state.
     {
-        int saveVer = atoi(&vcheck[8]);
-        if(saveVer >= SAVE_VERSION_BASE)
-        {
-            // Must be from the wrong game.
-            Con_Message("Bad savegame version.\n");
-            Reader_Delete(svReader);
-            svReader = NULL;
-            Z_Free(saveBuffer);
-            saveBuffer = NULL;
-            savePtr = NULL;
-            return 1;
-        }
-
-        // Just give a warning.
-        Con_Message("Savegame ID '%s': incompatible?\n", vcheck);
+    SaveInfo* tmp = SaveInfo_New();
+    SaveInfo_Read_Dm_v19(tmp, svReader);
+    SaveInfo_Delete(tmp);
     }
+    hdr = SaveInfo_Header(info);
 
-    gameSkill = Reader_ReadByte(svReader);
-    gameEpisode = Reader_ReadByte(svReader) - 1;
-    gameMap = Reader_ReadByte(svReader) - 1;
-    for(i = 0; i < 4; ++i)
-    {
-        players[i].plr->inGame = Reader_ReadByte(svReader);
-    }
+    gameSkill = hdr->skill;
+    gameEpisode = hdr->episode;
+    gameMap = hdr->map;
 
     // Load a base map.
     G_InitNew(gameSkill, gameEpisode, gameMap);
 
-    // Get the map time.
-    a = Reader_ReadByte(svReader);
-    b = Reader_ReadByte(svReader);
-    c = Reader_ReadByte(svReader);
-    mapTime = (a << 16) + (b << 8) + c;
-
-    // Dearchive all the modifications.
+    // Recreate map state.
+    mapTime = hdr->mapTime;
     P_v19_UnArchivePlayers();
     P_v19_UnArchiveWorld();
     P_v19_UnArchiveThinkers();
     P_v19_UnArchiveSpecials();
 
     if(Reader_ReadByte(svReader) != 0x1d)
+    {
+        Reader_Delete(svReader);
+        svReader = NULL;
+        SV_CloseFile_Dm_v19();
+
         Con_Error("SV_v19_LoadGame: Bad savegame (consistency test failed!)\n");
+        exit(1); // Unreachable.
+    }
 
     Reader_Delete(svReader);
     svReader = NULL;
-    Z_Free(saveBuffer);
-    saveBuffer = NULL;
+    SV_CloseFile_Dm_v19();
 
     // Spawn particle generators.
     R_SetupMap(DDSMM_AFTER_LOADING, 0);
@@ -923,7 +889,6 @@ void SaveInfo_Read_Dm_v19(SaveInfo* info, Reader* reader)
     nameBuffer[V19_SAVESTRINGSIZE - 1] = 0;
     Str_Set(&info->name, nameBuffer);
 
-    // Check version.
     Reader_Read(reader, vcheck, VERSIONSIZE);
     hdr->version = atoi(&vcheck[8]);
 
@@ -952,4 +917,30 @@ void SaveInfo_Read_Dm_v19(SaveInfo* info, Reader* reader)
     hdr->respawnMonsters = 0;
 
     info->gameId  = 0; // None.
+}
+
+boolean SV_OpenFile_Dm_v19(const char* filePath)
+{
+    boolean fileOpened;
+#if _DEBUG
+    if(saveBuffer)
+        Con_Error("SV_OpenFile_Dm_v19: A save state file has already been opened!");
+#endif
+    fileOpened = 0 != M_ReadFile(filePath, (char**)&saveBuffer);
+    if(!fileOpened) return false;
+    savePtr = saveBuffer;
+    return true;
+}
+
+void SV_CloseFile_Dm_v19(void)
+{
+    if(!saveBuffer) return;
+    Z_Free(saveBuffer);
+    saveBuffer = savePtr = NULL;
+}
+
+Reader* SV_NewReader_Dm_v19(void)
+{
+    if(!saveBuffer) return NULL;
+    return Reader_NewWithCallbacks(sri8, sri16, sri32, NULL, srd);
 }
