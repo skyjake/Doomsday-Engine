@@ -998,7 +998,7 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
                                           material_t* mat, boolean matFlipS, boolean matFlipT, blendmode_t blendMode,
                                           float ambientColorR, float ambientColorG, float ambientColorB, float alpha,
                                           uint vLightListIdx,
-                                          int tMap, int tClass, BspLeaf* bspLeaf,
+                                          int tClass, int tMap, BspLeaf* bspLeaf,
                                           boolean floorAdjust, boolean fitTop, boolean fitBottom,
                                           boolean viewAligned)
 {
@@ -1010,6 +1010,10 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     spec = Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, tClass, tMap,
         GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false);
     variant = Materials_ChooseVariant(mat, spec, true, true);
+
+#ifdef _DEBUG
+    if(tClass || tMap) assert(spec->primarySpec->data.variant.translated);
+#endif
 
     params->center[VX] = x;
     params->center[VY] = y;
@@ -1155,7 +1159,6 @@ void R_ProjectSprite(mobj_t* mo)
     vec3d_t visOff;
     spritedef_t* sprDef;
     spriteframe_t* sprFrame = NULL;
-    int tmap = 0, tclass = 0;
     boolean matFlipS, matFlipT;
     vissprite_t* vis;
     boolean align, fullBright, viewAlign, floorAdjust;
@@ -1472,8 +1475,8 @@ void R_ProjectSprite(mobj_t* mo)
                                       floorClip, gzt, mat, matFlipS, matFlipT, blendMode,
                                       ambientColor[CR], ambientColor[CG], ambientColor[CB], alpha,
                                       vLightListIdx,
-                                      tmap,
-                                      tclass,
+                                      mo->tclass,
+                                      mo->tmap,
                                       mo->bspLeaf,
                                       floorAdjust,
                                       fitTop,

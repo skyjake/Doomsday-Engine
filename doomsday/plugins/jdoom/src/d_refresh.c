@@ -378,6 +378,19 @@ void D_EndFrame(void)
     }
 }
 
+void Mobj_UpdateColorMap(mobj_t* mo)
+{
+    if(mo->flags & MF_TRANSLATION)
+    {
+        mo->tmap = (mo->flags & MF_TRANSLATION) >> MF_TRANSSHIFT;
+        //Con_Message("Mobj %i color tmap:%i\n", mo->thinker.id, mo->tmap);
+    }
+    else
+    {
+        mo->tmap = 0;
+    }
+}
+
 /**
  * Updates the mobj flags used by Doomsday with the state of our local flags
  * for the given mobj.
@@ -386,7 +399,11 @@ void P_SetDoomsdayFlags(mobj_t *mo)
 {
     // Client mobjs can't be set here.
     if(IS_CLIENT && (mo->ddFlags & DDMF_REMOTE))
+    {
+        // Color translation can be applied for remote mobjs, too.
+        Mobj_UpdateColorMap(mo);
         return;
+    }
 
     // Reset the flags for a new frame.
     mo->ddFlags &= DDMF_CLEAR_MASK;
@@ -449,8 +466,7 @@ void P_SetDoomsdayFlags(mobj_t *mo)
        (mo->flags & MF_FLOAT))
         mo->ddFlags |= DDMF_VIEWALIGN;
 
-    if(mo->flags & MF_TRANSLATION)
-        mo->tmap = (mo->flags & MF_TRANSLATION) >> MF_TRANSSHIFT;
+    Mobj_UpdateColorMap(mo);
 }
 
 /**
@@ -464,8 +480,7 @@ void R_SetAllDoomsdayFlags(void)
     // Only visible things are in the sector thinglists, so this is good.
     for(i = 0; i < numsectors; ++i)
     {
-        for(iter = P_GetPtr(DMU_SECTOR, i, DMT_MOBJS); iter;
-            iter = iter->sNext)
+        for(iter = P_GetPtr(DMU_SECTOR, i, DMT_MOBJS); iter; iter = iter->sNext)
         {
             P_SetDoomsdayFlags(iter);
         }

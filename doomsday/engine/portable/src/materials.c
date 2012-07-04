@@ -1421,7 +1421,8 @@ const struct materialvariantspecification_s* Materials_VariantSpecificationForCo
 {
     errorIfNotInited("Materials::VariantSpecificationForContext");
     return getVariantSpecificationForContext(mc, flags, border, tClass, tMap, wrapS, wrapT,
-        minFilter, magFilter, anisoFilter, mipmapped, gammaCorrection, noStretch, toAlpha);
+                                             minFilter, magFilter, anisoFilter,
+                                             mipmapped, gammaCorrection, noStretch, toAlpha);
 }
 
 materialvariant_t* Materials_ChooseVariant(material_t* mat,

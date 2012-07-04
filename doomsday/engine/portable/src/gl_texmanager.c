@@ -1271,10 +1271,26 @@ texturevariantspecification_t* GL_TextureVariantSpecificationForContext(
     int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
     boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha)
 {
+    texturevariantspecification_t* tvs;
+
     if(!initedOk)
         Con_Error("GL_TextureVariantSpecificationForContext: GL texture manager not yet initialized.");
-    return getVariantSpecificationForContext(tc, flags, border, tClass, tMap, wrapS,
-        wrapT, minFilter, magFilter, anisoFilter, mipmapped, gammaCorrection, noStretch, toAlpha);
+
+    tvs = getVariantSpecificationForContext(tc, flags, border, tClass, tMap, wrapS, wrapT,
+                                            minFilter, magFilter, anisoFilter,
+                                            mipmapped, gammaCorrection, noStretch, toAlpha);
+
+#ifdef _DEBUG
+    if(tClass || tMap)
+    {
+        assert(tvs->data.variant.flags & TSF_HAS_COLORPALETTE_XLAT);
+        assert(tvs->data.variant.translated);
+        assert(tvs->data.variant.translated->tClass == tClass);
+        assert(tvs->data.variant.translated->tMap == tMap);
+    }
+#endif
+
+    return tvs;
 }
 
 texturevariantspecification_t* GL_DetailTextureVariantSpecificationForContext(

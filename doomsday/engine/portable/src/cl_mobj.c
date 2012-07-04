@@ -917,7 +917,7 @@ void ClMobj_ReadDelta2(boolean skip)
         d->ddFlags &= ~DDMF_PACK_MASK;
         d->ddFlags |= DDMF_REMOTE | (Reader_ReadUInt32(msgReader) & DDMF_PACK_MASK);
 
-        d->flags = Reader_ReadUInt32(msgReader);
+        d->flags  = Reader_ReadUInt32(msgReader);
         d->flags2 = Reader_ReadUInt32(msgReader);
         d->flags3 = Reader_ReadUInt32(msgReader);
     }
