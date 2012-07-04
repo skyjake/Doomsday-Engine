@@ -542,6 +542,13 @@ void R_GetTranslation(int plrClass, int plrColor, int* tclass, int* tmap)
 {
     int mapped;
 
+    if(plrClass == PCLASS_PIG)
+    {
+        // A pig is never translated.
+        *tclass = *tmap = 0;
+        return;
+    }
+
     if(gameMode == hexen_v10)
     {
         const int mapping[3][4] = {
