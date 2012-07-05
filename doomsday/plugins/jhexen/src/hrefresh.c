@@ -340,7 +340,10 @@ void R_SetAllDoomsdayFlags(void)
         for(mo = P_GetPtr(DMU_SECTOR, i, DMT_MOBJS); mo; mo = mo->sNext)
         {
             if(IS_CLIENT && mo->ddFlags & DDMF_REMOTE)
+            {
+                Mobj_UpdateTranslationClassAndMap(mo);
                 continue;
+            }
 
             // Reset the flags for a new frame.
             mo->ddFlags &= DDMF_CLEAR_MASK;
