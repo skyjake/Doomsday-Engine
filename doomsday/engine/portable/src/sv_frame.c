@@ -898,26 +898,6 @@ void Sv_SendFrame(int plrNum)
     // First send the gameTime of this frame.
     Writer_WriteFloat(msgWriter, gameTime);
 
-    /*
-    // The first byte contains the set number, which identifies this
-    // frame. The client will keep track of the numbers to detect
-    // duplicates.
-    Writer_WriteByte(msgWriter, pool->setDealer);
-    */
-
-    // The number of deltas in the packet will be here.
-    //deltaCountOffset = Msg_Offset();
-    /*
-#ifdef _NETDEBUG
-    Msg_WriteLong(0);
-#endif
-    */
-
-/*
-#ifdef _DEBUG
-Con_Printf("set%i\n", pool->setDealer);
-#endif
-*/
     // Keep writing until the maximum size is reached.
     while((delta = Sv_PoolQueueExtract(pool)) != NULL &&
           (lastStart = Writer_Size(msgWriter)) < maxFrameSize)

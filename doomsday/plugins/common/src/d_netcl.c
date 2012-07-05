@@ -795,17 +795,16 @@ void NetCl_UpdatePlayerInfo(Reader *msg)
 
     num = Reader_ReadByte(msg);
     cfg.playerColor[num] = Reader_ReadByte(msg);
+    players[num].colorMap = cfg.playerColor[num];
 #if __JHEXEN__ || __JHERETIC__
     cfg.playerClass[num] = Reader_ReadByte(msg);
     players[num].class_ = cfg.playerClass[num];
 #endif
 
 #if __JDOOM__ || __JSTRIFE__ || __JDOOM64__
-    Con_Message("NetCl_UpdatePlayerInfo: pl=%i color=%i\n", num,
-                cfg.playerColor[num]);
+    Con_Message("NetCl_UpdatePlayerInfo: pl=%i color=%i\n", num, cfg.playerColor[num]);
 #else
-    Con_Message("NetCl_UpdatePlayerInfo: pl=%i color=%i class=%i\n", num,
-                cfg.playerColor[num], cfg.playerClass[num]);
+    Con_Message("NetCl_UpdatePlayerInfo: pl=%i color=%i class=%i\n", num, cfg.playerColor[num], cfg.playerClass[num]);
 #endif
 }
 

@@ -502,8 +502,7 @@ void Sv_RegisterPoly(dt_poly_t* reg, uint number)
 /**
  * @return              @c true, if the result is not void.
  */
-boolean Sv_RegisterCompareMobj(cregister_t* reg, const mobj_t* s,
-                               mobjdelta_t* d)
+boolean Sv_RegisterCompareMobj(cregister_t* reg, const mobj_t* s, mobjdelta_t* d)
 {
     int                 df;
     reg_mobj_t*         regMo = NULL;
@@ -1215,7 +1214,12 @@ void Sv_ApplyDeltaData(void* destDelta, const void* srcDelta)
         if(sf & MDF_HEIGHT)
             d->height = s->height;
         if(sf & MDF_FLAGS)
+        {
             d->ddFlags = s->ddFlags;
+            d->flags   = s->flags;
+            d->flags2  = s->flags2;
+            d->flags3  = s->flags3;
+        }
         if(sf & MDF_FLOORCLIP)
             d->floorClip = s->floorClip;
         if(sf & MDFC_TRANSLUCENCY)

@@ -299,8 +299,13 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int fl
     //localMobj->nexttime = clmo->nexttime;
 #define DDMF_KEEP_MASK (DDMF_REMOTE | DDMF_SOLID)
     localMobj->ddFlags = (localMobj->ddFlags & DDMF_KEEP_MASK) | (remoteClientMobj->ddFlags & ~DDMF_KEEP_MASK);
-    localMobj->flags = (localMobj->flags & ~0x1c000000) |
-                       (remoteClientMobj->flags & 0x1c000000); // color translation flags (MF_TRANSLATION)
+    if(flags & MDF_FLAGS)
+    {
+        localMobj->flags = (localMobj->flags & ~0x1c000000) |
+                           (remoteClientMobj->flags & 0x1c000000); // color translation flags (MF_TRANSLATION)
+        //DEBUG_Message(("UpdateRealPlayerMobj: translation=%i\n", (localMobj->flags >> 26) & 7));
+    }
+
     localMobj->height = remoteClientMobj->height;
 /*#ifdef _DEBUG
     if(localMobj->floorClip != remoteClientMobj->floorClip)
