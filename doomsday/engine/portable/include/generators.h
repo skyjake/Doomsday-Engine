@@ -32,7 +32,7 @@
 typedef short ptcgenid_t;
 
 /// Maximum number of ptcgen_ts supported by a Generators instance.
-#define GENERATORS_MAX                  (256)
+#define GENERATORS_MAX                  512
 
 /**
  * Generators instance. Created with Generators_New().
