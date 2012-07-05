@@ -177,7 +177,6 @@ DENG_HEADERS += \
     portable/include/con_busy.h \
     portable/include/con_config.h \
     portable/include/con_main.h \
-    portable/include/concurrency.h \
     portable/include/consolewindow.h \
     portable/include/dam_file.h \
     portable/include/dam_main.h \
@@ -188,7 +187,6 @@ DENG_HEADERS += \
     portable/include/dd_main.h \
     portable/include/dd_pinit.h \
     portable/include/dd_version.h \
-    portable/include/dd_zone.h \
     portable/include/de_audio.h \
     portable/include/de_base.h \
     portable/include/de_bsp.h \
@@ -224,7 +222,6 @@ DENG_HEADERS += \
     portable/include/fs_util.h \
     portable/include/game.h \
     portable/include/gamemap.h \
-    portable/include/garbage.h \
     portable/include/generators.h \
     portable/include/gl_defer.h \
     portable/include/gl_deferredapi.h \
@@ -478,7 +475,6 @@ SOURCES += \
     portable/src/con_config.c \
     portable/src/con_data.c \
     portable/src/con_main.c \
-    portable/src/concurrency.cpp \
     portable/src/dam_file.c \
     portable/src/dam_main.c \
     portable/src/dd_help.c \
@@ -489,7 +485,6 @@ SOURCES += \
     portable/src/dd_pinit.c \
     portable/src/dd_plugin.c \
     portable/src/dd_wad.c \
-    portable/src/dd_zone.c \
     portable/src/def_data.c \
     portable/src/def_main.c \
     portable/src/def_read.c \
@@ -509,7 +504,6 @@ SOURCES += \
     portable/src/fs_util.c \
     portable/src/game.c \
     portable/src/gamemap.c \
-    portable/src/garbage.cpp \
     portable/src/generators.c \
     portable/src/gl_defer.c \
     portable/src/gl_deferredapi.c \

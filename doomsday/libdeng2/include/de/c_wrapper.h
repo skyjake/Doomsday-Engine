@@ -57,20 +57,22 @@ typedef enum legacycore_loglevel_e {
 
 DENG2_PUBLIC LegacyCore* LegacyCore_New(void* dengApp);
 DENG2_PUBLIC void LegacyCore_Delete(LegacyCore* lc);
-DENG2_PUBLIC void LegacyCore_SetLoopRate(LegacyCore* lc, int freqHz);
-DENG2_PUBLIC void LegacyCore_SetLoopFunc(LegacyCore* lc, void (*callback)(void));
-DENG2_PUBLIC void LegacyCore_PushLoop(LegacyCore* lc);
-DENG2_PUBLIC void LegacyCore_PopLoop(LegacyCore* lc);
-DENG2_PUBLIC void LegacyCore_PauseLoop(LegacyCore* lc);
-DENG2_PUBLIC void LegacyCore_ResumeLoop(LegacyCore* lc);
-DENG2_PUBLIC int LegacyCore_RunEventLoop(LegacyCore* lc);
-DENG2_PUBLIC void LegacyCore_Stop(LegacyCore* lc, int exitCode);
-DENG2_PUBLIC void LegacyCore_Timer(LegacyCore* lc, unsigned int milliseconds, void (*callback)(void));
-DENG2_PUBLIC int LegacyCore_SetLogFile(LegacyCore* lc, const char* filePath);
-DENG2_PUBLIC const char* LegacyCore_LogFile(LegacyCore* lc);
-DENG2_PUBLIC void LegacyCore_PrintLogFragment(LegacyCore* lc, const char* text);
-DENG2_PUBLIC void LegacyCore_PrintfLogFragmentAtLevel(LegacyCore* lc, legacycore_loglevel_t level, const char* format, ...);
-DENG2_PUBLIC void LegacyCore_SetTerminateFunc(LegacyCore* lc, void (*func)(const char*));
+DENG2_PUBLIC LegacyCore* LegacyCore_Instance();
+DENG2_PUBLIC void LegacyCore_SetLoopRate(int freqHz);
+DENG2_PUBLIC void LegacyCore_SetLoopFunc(void (*callback)(void));
+DENG2_PUBLIC void LegacyCore_PushLoop();
+DENG2_PUBLIC void LegacyCore_PopLoop();
+DENG2_PUBLIC void LegacyCore_PauseLoop();
+DENG2_PUBLIC void LegacyCore_ResumeLoop();
+DENG2_PUBLIC int LegacyCore_RunEventLoop();
+DENG2_PUBLIC void LegacyCore_Stop(int exitCode);
+DENG2_PUBLIC void LegacyCore_Timer(unsigned int milliseconds, void (*callback)(void));
+DENG2_PUBLIC int LegacyCore_SetLogFile(const char* filePath);
+DENG2_PUBLIC const char* LegacyCore_LogFile();
+DENG2_PUBLIC void LegacyCore_PrintLogFragment(const char* text);
+DENG2_PUBLIC void LegacyCore_PrintfLogFragmentAtLevel(legacycore_loglevel_t level, const char* format, ...);
+DENG2_PUBLIC void LegacyCore_SetTerminateFunc(void (*func)(const char*));
+DENG2_PUBLIC void LegacyCore_FatalError(const char* msg);
 
 /*
  * CommandLine

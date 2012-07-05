@@ -386,18 +386,6 @@ typedef struct gameinfo_s {
 #define FRACEPSILON         (1.0f/65535.f) // ~ 1.5e-5
 #define FLOATEPSILON        .000001f
 
-#define MAX_OF(x, y)        ((x) > (y)? (x) : (y))
-#define MIN_OF(x, y)        ((x) < (y)? (x) : (y))
-#define MINMAX_OF(a, x, b)  ((x) < (a)? (a) : (x) > (b)? (b) : (x))
-#define SIGN_OF(x)          ((x) > 0? +1 : (x) < 0? -1 : 0)
-#define INRANGE_OF(x, y, r) ((x) >= (y) - (r) && (x) <= (y) + (r))
-#define FEQUAL(x, y)        (INRANGE_OF(x, y, FLOATEPSILON))
-#define ROUND(x)            ((int) (((x) < 0.0f)? ((x) - 0.5f) : ((x) + 0.5f)))
-#define ABS(x)              ((x) >= 0 ? (x) : -(x))
-
-/// Ceiling of integer quotient of @a a divided by @a b.
-#define CEILING(a, b)       ((a) % (b) == 0 ? (a)/(b) : (a)/(b)+1)
-
 /**
  * Used to replace /255 as *reciprocal255 is less expensive with CPU cycles.
  * Note that this should err on the side of being < 1/255 to prevent result
@@ -588,31 +576,6 @@ typedef struct event_s {
 #define DD_MWHEEL_UP        3
 #define DD_MWHEEL_DOWN      4
 #define DD_MICKEY_ACCURACY  1000
-
-//------------------------------------------------------------------------
-//
-// Purge Levels
-//
-//------------------------------------------------------------------------
-
-/**
- * @defgroup memzone Memory Zone
- * @ingroup base
- */
-
-/**
- * @defgroup purgeLevels Purge Levels
- * @ingroup memzone
- */
-///@{
-#define PU_APPSTATIC         1 ///< Static entire execution time.
-#define PU_GAMESTATIC       40 ///< Static until the game plugin which allocated it is unloaded.
-#define PU_MAP              50 ///< Static until map exited (may still be freed during the map, though).
-#define PU_MAPSTATIC        52 ///< Not freed until map exited.
-
-#define PU_PURGELEVEL       100 ///< Tags >= 100 are purgable whenever needed.
-#define PU_CACHE            101
-///@}
 
 //------------------------------------------------------------------------
 //

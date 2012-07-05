@@ -139,7 +139,7 @@ void BusyTask_Begin(BusyTask* task)
     }
 
     // Switch the engine loop and window to the busy mode.
-    LegacyCore_SetLoopFunc(de2LegacyCore, BusyTask_Loop);
+    LegacyCore_SetLoopFunc(BusyTask_Loop);
 
     Window_SetDrawFunc(Window_Main(), BusyTask_Drawer);
 
@@ -363,11 +363,11 @@ static void preBusySetup(void)
     loadBusyTextures();
 
     // Save the present loop.
-    LegacyCore_PushLoop(de2LegacyCore);
+    LegacyCore_PushLoop();
 
     // Set up loop for busy mode.
-    LegacyCore_SetLoopRate(de2LegacyCore, 60);
-    LegacyCore_SetLoopFunc(de2LegacyCore, NULL); // don't call main loop's func while busy
+    LegacyCore_SetLoopRate(60);
+    LegacyCore_SetLoopFunc(NULL); // don't call main loop's func while busy
 
     Window_SetDrawFunc(Window_Main(), 0);
 }
@@ -377,7 +377,7 @@ static void postBusyCleanup(void)
     deleteBusyTextures();
 
     // Restore old loop.
-    LegacyCore_PopLoop(de2LegacyCore);
+    LegacyCore_PopLoop();
 
     // Resume drawing with the game loop drawer.
     Window_SetDrawFunc(Window_Main(), !Sys_IsShuttingDown()? DD_GameLoopDrawer : 0);
@@ -812,7 +812,8 @@ static void BusyTask_Drawer(void)
     }
 
 #ifdef _DEBUG
-    Z_DebugDrawer();
+    // TODO: enable this again
+    //Z_DebugDrawer();
 #endif
 
     glMatrixMode(GL_PROJECTION);

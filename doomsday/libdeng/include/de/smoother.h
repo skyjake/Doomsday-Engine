@@ -26,7 +26,7 @@
 #ifndef LIBDENG_SMOOTHER_H
 #define LIBDENG_SMOOTHER_H
 
-#include "de/types.h"
+#include <de/libdeng.h>
 
 #ifdef __cplusplus
 extern "C" {

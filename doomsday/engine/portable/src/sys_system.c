@@ -34,11 +34,6 @@
 #endif
 
 #include <signal.h>
-/*
-#include <SDL.h>
-#include <SDL_thread.h>
-*/
-#include "concurrency.h"
 
 #include "de_base.h"
 #include "de_console.h"
@@ -291,5 +286,5 @@ void Sys_Quit(void)
     appShutdown = true;
 
     // It's time to stop the main loop.
-    LegacyCore_Stop(de2LegacyCore, DD_GameLoopExitCode());
+    LegacyCore_Stop(DD_GameLoopExitCode());
 }

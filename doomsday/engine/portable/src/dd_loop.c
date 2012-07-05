@@ -114,7 +114,7 @@ int DD_GameLoop(void)
     noninteractive = CommandLine_Exists("-noinput");
 
     // Start the deng2 event loop.
-    return LegacyCore_RunEventLoop(de2LegacyCore);
+    return LegacyCore_RunEventLoop();
 }
 
 void DD_GameLoopCallback(void)
@@ -131,7 +131,7 @@ void DD_GameLoopCallback(void)
         for(i = 1; i < DDMAXPLAYERS; ++i)
             if(ddPlayers[i].shared.inGame) count++;
 
-        LegacyCore_SetLoopRate(de2LegacyCore, count || !noninteractive? 35 : 3);
+        LegacyCore_SetLoopRate(count || !noninteractive? 35 : 3);
 
         runTics();
 

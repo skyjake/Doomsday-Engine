@@ -1407,13 +1407,8 @@ int DD_EarlyInit(void)
 {
     ddstring_t dataPath, defsPath;
 
-    Sys_MarkAsMainThread();
-
     // Determine the requested degree of verbosity.
     verbose = CommandLine_Exists("-verbose");
-
-    // The memory zone must be online before the console module.
-    Z_Init();
 
     // Bring the console online as soon as we can.
     DD_ConsoleInit();
@@ -1495,7 +1490,7 @@ void DD_FinishInitializationAfterWindowReady(void)
     }
 
     // Now we can start executing the engine's main loop.
-    LegacyCore_SetLoopFunc(de2LegacyCore, DD_GameLoopCallback);
+    LegacyCore_SetLoopFunc(DD_GameLoopCallback);
 
     // Initialize engine subsystems and initial state.
     if(!DD_Init())
@@ -1893,7 +1888,7 @@ static int DD_StartupWorker(void* parm)
         Con_Open(true);
 
         // Also make sure the game loop isn't running needlessly often.
-        LegacyCore_SetLoopRate(de2LegacyCore, 35);
+        LegacyCore_SetLoopRate(35);
     }
 
     Con_SetProgress(199);

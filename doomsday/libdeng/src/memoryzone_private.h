@@ -1,10 +1,10 @@
 /**
- * @file dd_zone.h
- * Memory zone. @ingroup memzone
+ * @file memoryzone_private.h
+ * Memory zone (internal header). @ingroup memzone
  *
- *\author Copyright © 1999-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1993-1996 by id Software, Inc.
+ * @authors Copyright © 1999-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1993-1996 by id Software, Inc.
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,84 +21,38 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_ZONE_H
-#define LIBDENG_ZONE_H
+#ifndef LIBDENG_MEMORY_ZONE_PRIVATE_H
+#define LIBDENG_MEMORY_ZONE_PRIVATE_H
+
+#include "libdeng.h"
+#include "memoryzone.h" // public API
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /**
- * @def FAKE_MEMORY_ZONE
- * Define this to force all memory blocks to be allocated from
- * the real heap. Useful when debugging memory-related problems.
- */
-//#define FAKE_MEMORY_ZONE 1
-
-#define PU_REFRESHTRANS     13
-#define PU_REFRESHRAW       17
-
-/**
- * Determines if the memory zone is available for allocations.
- */
-boolean Z_IsInited(void);
-
-/**
  * Initialize the memory zone.
  */
 int Z_Init(void);
 
-void            Z_Shutdown(void);
-void*           Z_Malloc(size_t size, int tag, void* ptr);
-
 /**
- * Free memory that was allocated with Z_Malloc.
+ * Shut down the memory zone by destroying all the volumes.
  */
-void Z_Free(void* ptr);
+void Z_Shutdown(void);
 
-void            Z_FreeTags(int lowTag, int highTag);
-void            Z_CheckHeap(void);
-void            Z_ChangeTag2(void* ptr, int tag);
-void            Z_ChangeUser(void* ptr, void* newUser);
-void*           Z_GetUser(void* ptr);
-int             Z_GetTag(void* ptr);
-
-/**
- * Checks if @a ptr points to memory inside the memory zone.
- * @param ptr  Pointer.
- * @return @c true, if @a ptr points to a valid allocated memory block
- * inside the zone.
- */
-boolean         Z_Contains(void* ptr);
-
-void*           Z_Realloc(void* ptr, size_t n, int mallocTag);
-void*           Z_Calloc(size_t size, int tag, void* user);
-void*           Z_Recalloc(void* ptr, size_t n, int callocTag);
-size_t          Z_FreeMemory(void);
-void            Z_PrintStatus(void);
-void            Z_DebugDrawer(void);
-
-/**
- * Copies @a text into a buffer allocated from the zone.
- * Similar to strdup().
- *
- * @param text  Null-terminated C string.
- *
- * @return  Copy of the string (in the zone).
- */
-char* Z_StrDup(const char* text);
-
-void* Z_MemDup(const void* ptr, size_t size);
+size_t Z_FreeMemory(void);
+void Z_DebugDrawer(void);
 
 typedef struct memblock_s {
     size_t          size; // Including header and possibly tiny fragments.
     void**          user; // NULL if a free block.
     int             tag; // Purge level.
-    int             id; // Should be ZONEID.
+    int             id; // Should be LIBDENG_ZONEID.
     struct memvolume_s* volume; // Volume this block belongs to.
     struct memblock_s* next, *prev;
     struct memblock_s* seqLast, *seqFirst;
-#ifdef FAKE_MEMORY_ZONE
+#ifdef LIBDENG_LIBDENG_FAKE_MEMORY_ZONE
     void*           area; // The real memory area.
     size_t          areaSize; // Size of the allocated memory area.
 #endif
@@ -126,13 +80,13 @@ struct zblockset_block_s;
  *
  * The internal state of a blockset is managed automatically.
  */
-typedef struct zblockset_s {
+struct zblockset_s {
     unsigned int _elementsPerBlock;
     size_t _elementSize;
     int _tag; /// All blocks in a blockset have the same tag.
     unsigned int _blockCount;
     struct zblockset_block_s* _blocks;
-} zblockset_t;
+};
 
 /**
  * Creates a new block memory allocator in the Zone.
@@ -162,25 +116,15 @@ void ZBlockSet_Delete(zblockset_t* set);
  */
 void* ZBlockSet_Allocate(zblockset_t* set);
 
-#ifdef FAKE_MEMORY_ZONE
-// Fake memory zone allocates memory from the real heap.
-#define Z_ChangeTag(p,t) Z_ChangeTag2(p,t)
-
-memblock_t*     Z_GetBlock(void* ptr);
-
+#ifdef LIBDENG_LIBDENG_FAKE_MEMORY_ZONE
+memblock_t* Z_GetBlock(void* ptr);
 #else
 // Real memory zone allocates memory from a custom heap.
 #define Z_GetBlock(ptr) ((memblock_t*) ((byte*)(ptr) - sizeof(memblock_t)))
-#define Z_ChangeTag(p,t)                      \
-{ \
-if (( (memblock_t *)( (byte *)(p) - sizeof(memblock_t)))->id!=0x1d4a11) \
-    Con_Error("Z_CT at "__FILE__":%i",__LINE__); \
-Z_ChangeTag2(p,t); \
-};
 #endif
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif /* LIBDENG_ZONE_H */
+#endif /* LIBDENG_MEMORY_ZONE_PRIVATE_H */

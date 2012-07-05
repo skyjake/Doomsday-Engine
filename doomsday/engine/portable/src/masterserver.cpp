@@ -23,6 +23,7 @@
 
 #include <QNetworkAccessManager>
 #include <de/Log>
+#include <de/memory.h>
 #include "de_platform.h"
 #include <vector>
 #include <list>

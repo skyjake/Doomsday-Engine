@@ -365,14 +365,14 @@ EXPORTS
     W_LumpIsCustom              @239 NONAME
 
 ; Base: Zone.
-    Z_Malloc                    @24 NONAME
-    Z_Calloc                    @211 NONAME
-    Z_Realloc                   @212 NONAME
-    Z_Recalloc                  @213 NONAME
-    Z_Free                      @25 NONAME
-    Z_FreeTags                  @26 NONAME
-    Z_ChangeTag2                @27 NONAME
-    Z_CheckHeap                 @28 NONAME
+;   Z_Malloc                    @24 NONAME
+;   Z_Calloc                    @211 NONAME
+;   Z_Realloc                   @212 NONAME
+;   Z_Recalloc                  @213 NONAME
+;   Z_Free                      @25 NONAME
+;   Z_FreeTags                  @26 NONAME
+;   Z_ChangeTag2                @27 NONAME
+;   Z_CheckHeap                 @28 NONAME
 
 ; Base: Misc.
     dd_snprintf                 @447 NONAME

@@ -1866,7 +1866,7 @@ void Con_PrintRuler(void)
             Sys_ConPrint(mainWindowIdx, "\n", 0);
         }
 
-        LegacyCore_PrintLogFragment(de2LegacyCore, "$R\n");
+        LegacyCore_PrintLogFragment("$R\n");
     }
 }
 
@@ -1886,7 +1886,7 @@ static void conPrintf(int flags, const char* format, va_list args)
 
         if(consoleDump)
         {
-            LegacyCore_PrintLogFragment(de2LegacyCore, prbuff);
+            LegacyCore_PrintLogFragment(prbuff);
 #ifdef _DEBUG
             LogBuffer_Flush();
 #endif
@@ -2024,7 +2024,7 @@ void Con_Message(const char *message, ...)
         if(!consoleDump)
         {
             //printf("%s", buffer);
-            LegacyCore_PrintLogFragment(de2LegacyCore, buffer);
+            LegacyCore_PrintLogFragment(buffer);
 #ifdef _DEBUG
             LogBuffer_Flush();
 #endif
@@ -2074,8 +2074,8 @@ void Con_Error(const char* error, ...)
     dd_vsnprintf(err, sizeof(err), error, argptr);
     va_end(argptr);
     //fprintf(outFile, "%s\n", err);
-    LegacyCore_PrintLogFragment(de2LegacyCore, err);
-    LegacyCore_PrintLogFragment(de2LegacyCore, "\n");
+    LegacyCore_PrintLogFragment(err);
+    LegacyCore_PrintLogFragment("\n");
 
     strcpy(buff, "");
     if(histBuf != NULL)
@@ -2126,7 +2126,7 @@ void Con_AbnormalShutdown(const char* message)
         /// @todo Get the actual output filename (might be a custom one).
         Sys_MessageBoxWithDetailsFromFile(MBT_ERROR, DOOMSDAY_NICENAME, message,
                                           "See Details for complete messsage log contents.",
-                                          LegacyCore_LogFile(de2LegacyCore));
+                                          LegacyCore_LogFile());
     }
 
     DD_Shutdown();

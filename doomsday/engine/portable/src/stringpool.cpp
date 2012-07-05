@@ -21,7 +21,7 @@
  */
 
 #include "de_platform.h"
-#include "dd_zone.h"
+#include <de/memoryzone.h>
 #include "stringpool.h"
 #include "string.hh"
 #include "unittest.h"

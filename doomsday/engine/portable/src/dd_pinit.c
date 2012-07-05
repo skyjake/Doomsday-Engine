@@ -141,13 +141,13 @@ void DD_ConsoleInit(void)
     F_ToNativeSlashes(&nativePath, &nativePath);
 
     // We'll redirect stdout to a log file.
-    outFileOk = LegacyCore_SetLogFile(de2LegacyCore, Str_Text(&nativePath));
+    outFileOk = LegacyCore_SetLogFile(Str_Text(&nativePath));
     Str_Free(&nativePath);
 
     if(!outFileOk)
     {
         Sys_MessageBoxf(MBT_WARNING, "Console", "Couldn't open message output file: %s",
-                        LegacyCore_LogFile(de2LegacyCore));
+                        LegacyCore_LogFile());
     }
 
     // Get the console online ASAP.
@@ -191,7 +191,6 @@ void DD_ShutdownAll(void)
     Def_Destroy();
     F_ShutdownResourceLocator();
     F_Shutdown();
-    Garbage_Shutdown(); // before memzone
-    Z_Shutdown();
+    Libdeng_Shutdown();
     Sys_ShutdownWindowManager();
 }

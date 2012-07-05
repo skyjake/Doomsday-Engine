@@ -152,7 +152,7 @@ void Library_ReleaseGames(void)
         if(!lib) continue;
         if(lib->isGamePlugin && lib->handle)
         {
-            LegacyCore_PrintfLogFragmentAtLevel(de2LegacyCore, DE2_LOG_DEBUG,
+            LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_DEBUG,
                     "Library_ReleaseGames: Closing '%s'\n", Str_Text(lib->path));
 
             dlclose(lib->handle);
@@ -168,7 +168,7 @@ static void reopenLibraryIfNeeded(Library* lib)
     assert(lib);
     if(!lib->handle)
     {
-        LegacyCore_PrintfLogFragmentAtLevel(de2LegacyCore, DE2_LOG_DEBUG,
+        LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_DEBUG,
                 "reopenLibraryIfNeeded: Opening '%s'\n", Str_Text(lib->path));
 
         lib->handle = dlopen(Str_Text(lib->path), RTLD_NOW);

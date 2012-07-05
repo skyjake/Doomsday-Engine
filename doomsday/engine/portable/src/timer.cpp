@@ -39,7 +39,7 @@
 
 #include "de_base.h"
 #include "de_console.h"
-#include "concurrency.h"
+#include <de/concurrency.h>
 
 float ticsPerSecond = TICSPERSEC;
 

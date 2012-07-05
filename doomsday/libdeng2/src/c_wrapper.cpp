@@ -29,8 +29,9 @@
 #include <cstring>
 #include <stdarg.h>
 
+#define DENG2_LEGACYCORE()      de::LegacyCore::instance()
+#define DENG2_LEGACYNETWORK()   DENG2_LEGACYCORE().network()
 #define DENG2_COMMANDLINE()     static_cast<de::App*>(qApp)->commandLine()
-#define DENG2_LEGACYNETWORK()   de::LegacyCore::instance().network()
 
 LegacyCore* LegacyCore_New(void* dengApp)
 {
@@ -47,66 +48,61 @@ void LegacyCore_Delete(LegacyCore* lc)
     }
 }
 
-int LegacyCore_RunEventLoop(LegacyCore* lc)
+LegacyCore* LegacyCore_Instance()
 {
-    DENG2_SELF(LegacyCore, lc);
-    return self->runEventLoop();
+    return reinterpret_cast<LegacyCore*>(&de::LegacyCore::instance());
 }
 
-void LegacyCore_Stop(LegacyCore *lc, int exitCode)
+int LegacyCore_RunEventLoop()
 {
-    DENG2_SELF(LegacyCore, lc);
-    self->stop(exitCode);
+    return DENG2_LEGACYCORE().runEventLoop();
 }
 
-void LegacyCore_SetLoopRate(LegacyCore* lc, int freqHz)
+void LegacyCore_Stop(int exitCode)
 {
-    DENG2_SELF(LegacyCore, lc);
-    self->setLoopRate(freqHz);
+    DENG2_LEGACYCORE().stop(exitCode);
 }
 
-void LegacyCore_SetLoopFunc(LegacyCore* lc, void (*callback)(void))
+void LegacyCore_SetLoopRate(int freqHz)
 {
-    DENG2_SELF(LegacyCore, lc);
-    return self->setLoopFunc(callback);
+    DENG2_LEGACYCORE().setLoopRate(freqHz);
 }
 
-void LegacyCore_PushLoop(LegacyCore* lc)
+void LegacyCore_SetLoopFunc(void (*callback)(void))
 {
-    DENG2_SELF(LegacyCore, lc);
-    self->pushLoop();
+    return DENG2_LEGACYCORE().setLoopFunc(callback);
 }
 
-void LegacyCore_PopLoop(LegacyCore* lc)
+void LegacyCore_PushLoop()
 {
-    DENG2_SELF(LegacyCore, lc);
-    self->popLoop();
+    DENG2_LEGACYCORE().pushLoop();
 }
 
-void LegacyCore_PauseLoop(LegacyCore* lc)
+void LegacyCore_PopLoop()
 {
-    DENG2_SELF(LegacyCore, lc);
-    self->pauseLoop();
+    DENG2_LEGACYCORE().popLoop();
 }
 
-void LegacyCore_ResumeLoop(LegacyCore* lc)
+void LegacyCore_PauseLoop()
 {
-    DENG2_SELF(LegacyCore, lc);
-    self->resumeLoop();
+    DENG2_LEGACYCORE().pauseLoop();
 }
 
-void LegacyCore_Timer(LegacyCore* lc, unsigned int milliseconds, void (*callback)(void))
+void LegacyCore_ResumeLoop()
 {
-    DENG2_SELF(LegacyCore, lc);
-    self->timer(milliseconds, callback);
+    DENG2_LEGACYCORE().resumeLoop();
 }
 
-int LegacyCore_SetLogFile(LegacyCore* lc, const char* filePath)
+void LegacyCore_Timer(unsigned int milliseconds, void (*callback)(void))
+{
+    DENG2_LEGACYCORE().timer(milliseconds, callback);
+}
+
+int LegacyCore_SetLogFile(const char* filePath)
 {
     try
     {
-        DENG2_SELF(LegacyCore, lc);
-        self->setLogFileName(filePath);
+        DENG2_LEGACYCORE().setLogFileName(filePath);
         return true;
     }
     catch(de::LogBuffer::FileError& er)
@@ -117,26 +113,18 @@ int LegacyCore_SetLogFile(LegacyCore* lc, const char* filePath)
     }
 }
 
-const char* LegacyCore_LogFile(LegacyCore* lc)
+const char* LegacyCore_LogFile()
 {
-    DENG2_SELF(LegacyCore, lc);
-    return self->logFileName();
+    return DENG2_LEGACYCORE().logFileName();
 }
 
-void LegacyCore_PrintLogFragment(LegacyCore* lc, const char* text)
+void LegacyCore_PrintLogFragment(const char* text)
 {
-    DENG2_SELF(LegacyCore, lc);
-    self->printLogFragment(text);
+    DENG2_LEGACYCORE().printLogFragment(text);
 }
 
-void LegacyCore_PrintfLogFragmentAtLevel(LegacyCore* lc, legacycore_loglevel_t level, const char* format, ...)
+void LegacyCore_PrintfLogFragmentAtLevel(legacycore_loglevel_t level, const char* format, ...)
 {
-    char buffer[2048];
-    va_list args;
-    va_start(args, format);
-    vsprintf(buffer, format, args); /// @todo unsafe
-    va_end(args);
-
     // Validate the level.
     de::Log::LogLevel logLevel = de::Log::LogLevel(level);
     if(level < DE2_LOG_TRACE || level > DE2_LOG_CRITICAL)
@@ -144,14 +132,26 @@ void LegacyCore_PrintfLogFragmentAtLevel(LegacyCore* lc, legacycore_loglevel_t l
         logLevel = de::Log::MESSAGE;
     }
 
-    DENG2_SELF(LegacyCore, lc);
-    self->printLogFragment(buffer, logLevel);
+    // If this level is not enabled, just ignore.
+    if(!de::LogBuffer::appBuffer().enabled(logLevel)) return;
+
+    char buffer[2048];
+    va_list args;
+    va_start(args, format);
+    vsprintf(buffer, format, args); /// @todo unsafe
+    va_end(args);
+
+    DENG2_LEGACYCORE().printLogFragment(buffer, logLevel);
 }
 
-void LegacyCore_SetTerminateFunc(LegacyCore* lc, void (*func)(const char*))
+void LegacyCore_SetTerminateFunc(void (*func)(const char*))
 {
-    DENG2_SELF(LegacyCore, lc);
-    self->setTerminateFunc(func);
+    DENG2_LEGACYCORE().setTerminateFunc(func);
+}
+
+void LegacyCore_FatalError(const char* msg)
+{
+    DENG2_LEGACYCORE().handleUncaughtException(msg);
 }
 
 void CommandLine_Alias(const char* longname, const char* shortname)

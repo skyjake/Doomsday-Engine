@@ -41,14 +41,23 @@ DEFINES += __DENG__ __DOOMSDAY__
 
 # Public headers
 HEADERS += \
-    include/de/smoother.h \
+    include/de/concurrency.h \
+    include/de/garbage.h \
     include/de/libdeng.h \
+    include/de/memory.h \
+    include/de/memoryzone.h \
+    include/de/smoother.h \
     include/de/types.h
-    #include/version.h
 
 # Sources and private headers
 SOURCES += \
-    src/smoother.cpp
+    src/concurrency.cpp \
+    src/garbage.cpp \
+    src/memory.c \
+    src/memoryzone.c \
+    src/memoryzone_private.h \
+    src/smoother.cpp \
+    src/libdeng.c
 
 # Installation ---------------------------------------------------------------
 
