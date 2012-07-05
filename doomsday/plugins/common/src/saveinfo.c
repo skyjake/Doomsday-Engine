@@ -165,7 +165,7 @@ void SaveInfo_Update(SaveInfo* info)
     }
 
     // Is this a recognisable save state?
-    if(!SV_Recognise(info)) return;
+    if(!SV_RecogniseState(info)) return;
 
     // Ensure we have a valid name.
     if(Str_IsEmpty(&info->name))

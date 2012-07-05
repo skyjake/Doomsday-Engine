@@ -28,19 +28,13 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
-#include "p_saveio.h"
+#include "saveinfo.h"
 
-#define V13_SAVE_VERSION                    130 ///< Version number associated with a recognised heretic.exe game save state.
-
-boolean SV_OpenFile_Hr_v13(const char* filePath);
-void SV_CloseFile_Hr_v13(void);
-Reader* SV_NewReader_Hr_v13(void);
-
-void SaveInfo_Read_Hr_v13(SaveInfo* info, Reader* reader);
+boolean SV_RecogniseState_Hr_v13(SaveInfo* info);
 
 /**
  * @return  @c 0 on success else error code.
  */
-int SV_v13_LoadGame(SaveInfo* saveInfo);
+int SV_LoadState_Hr_v13(SaveInfo* saveInfo);
 
 #endif /// LIBHERETIC_OLD_SAVESTATE

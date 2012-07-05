@@ -604,7 +604,7 @@ static void SV_SaveInfo_Read(SaveInfo* info)
     Reader_Delete(svReader);
 }
 
-static boolean recogniseSaveState(SaveInfo* info)
+static boolean recogniseState(SaveInfo* info)
 {
 #if __JHEXEN__
     byte* saveBuffer;
@@ -648,85 +648,20 @@ static boolean recogniseSaveState(SaveInfo* info)
         // present sidedefs (ver3 format's sidedefs contain chunks of junk data).
         if(info->header.version == 3) return false;
 #endif
-
         return true;
     }
     return false;
 }
 
-#if __JDOOM__
-static boolean recogniseSaveState_Dm_v19(SaveInfo* info)
+boolean SV_RecogniseState(SaveInfo* info)
 {
-    if(!info) return false;
-    if(!SV_ExistingFile(Str_Text(SaveInfo_FilePath(info)))) return false;
-
-    if(SV_OpenFile_Dm_v19(Str_Text(SaveInfo_FilePath(info))))
-    {
-        Reader* svReader = SV_NewReader_Dm_v19();
-        boolean result = false;
-
-        // Check version.
-        /*char vcheck[VERSIONSIZE];
-        memset(vcheck, 0, sizeof(vcheck));
-        Reader_Read(svReader, vcheck, sizeof(vcheck));
-
-        if(strncmp(vcheck, "version ", 8))*/
-        {
-            SaveInfo_Read_Dm_v19(info, svReader);
-            result = (SaveInfo_Header(info)->version <= V19_SAVE_VERSION);
-        }
-
-        Reader_Delete(svReader);
-        svReader = NULL;
-        SV_CloseFile_Dm_v19();
-
-        return result;
-    }
-    return false;
-}
-#endif
-
-#if __JHERETIC__
-static boolean recogniseSaveState_Hr_v13(SaveInfo* info)
-{
-    if(!info) return false;
-    if(!SV_ExistingFile(Str_Text(SaveInfo_FilePath(info)))) return false;
-
-    if(SV_OpenFile_Hr_v13(Str_Text(SaveInfo_FilePath(info))))
-    {
-        Reader* svReader = SV_NewReader_Hr_v13();
-        boolean result = false;
-
-        // Check version.
-        /*char vcheck[VERSIONSIZE];
-        memset(vcheck, 0, sizeof(vcheck));
-        Reader_Read(svReader, vcheck, sizeof(vcheck));
-
-        if(strncmp(vcheck, "version ", 8))*/
-        {
-            SaveInfo_Read_Hr_v13(info, svReader);
-            result = (SaveInfo_Header(info)->version == V13_SAVE_VERSION);
-        }
-
-        Reader_Delete(svReader);
-        svReader = NULL;
-        SV_CloseFile_Hr_v13();
-
-        return result;
-    }
-    return false;
-}
-#endif
-
-boolean SV_Recognise(SaveInfo* info)
-{
-    if(recogniseSaveState(info)) return true;
+    if(recogniseState(info)) return true;
     // Perhaps an original game save?
 #if __JDOOM__
-    if(recogniseSaveState_Dm_v19(info)) return true;
+    if(SV_RecogniseState_Dm_v19(info)) return true;
 #endif
 #if __JHERETIC__
-    if(recogniseSaveState_Hr_v13(info)) return true;
+    if(SV_RecogniseState_Hr_v13(info)) return true;
 #endif
     return false;
 }
@@ -5011,9 +4946,9 @@ static int loadGameWorker(SaveInfo* saveInfo)
     {
         // It might be an original game save?
 #if __JDOOM__
-        return SV_v19_LoadGame(saveInfo);
+        return SV_LoadState_Dm_v19(saveInfo);
 #elif __JHERETIC__
-        return SV_v13_LoadGame(saveInfo);
+        return SV_LoadState_Hr_v13(saveInfo);
 #endif
     }
 

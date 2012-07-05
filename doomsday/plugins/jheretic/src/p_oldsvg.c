@@ -40,20 +40,25 @@
 #include "hu_inventory.h"
 
 // Do NOT change this:
-#define VERSIONSIZE             16
-#define SAVE_GAME_TERMINATOR    0x1d
+#define V13_SAVE_VERSION                130 ///< Version number associated with a recognised heretic.exe game save state.
+#define V13_SAVESTRINGSIZE              24
+#define VERSIONSIZE                     16
+#define SAVE_GAME_TERMINATOR            0x1d
 
-#define V13_SAVESTRINGSIZE      24
+#define FF_FRAMEMASK                    0x7fff
 
-#define FF_FRAMEMASK            0x7fff
-
-#define SIZEOF_V13_THINKER_T    12
-#define V13_THINKER_T_FUNC_OFFSET 8
+#define SIZEOF_V13_THINKER_T            12
+#define V13_THINKER_T_FUNC_OFFSET       8
 
 static byte* savePtr;
 static byte* saveBuffer;
-
 static Reader* svReader;
+
+static boolean SV_OpenFile_Hr_v13(const char* filePath);
+static void    SV_CloseFile_Hr_v13(void);
+static Reader* SV_NewReader_Hr_v13(void);
+
+static void    SaveInfo_Read_Hr_v13(SaveInfo* info, Reader* reader);
 
 static char sri8(Reader* r)
 {
@@ -840,7 +845,7 @@ enum {
     }
 }
 
-int SV_v13_LoadGame(SaveInfo* info)
+int SV_LoadState_Hr_v13(SaveInfo* info)
 {
     const saveheader_t* hdr;
     if(!info) return 1;
@@ -893,7 +898,7 @@ int SV_v13_LoadGame(SaveInfo* info)
     return 0; // Success!
 }
 
-void SaveInfo_Read_Hr_v13(SaveInfo* info, Reader* reader)
+static void SaveInfo_Read_Hr_v13(SaveInfo* info, Reader* reader)
 {
     saveheader_t* hdr = &info->header;
     char nameBuffer[V13_SAVESTRINGSIZE];
@@ -906,6 +911,7 @@ void SaveInfo_Read_Hr_v13(SaveInfo* info, Reader* reader)
     Str_Set(&info->name, nameBuffer);
 
     Reader_Read(reader, vcheck, VERSIONSIZE);
+    //assert(!strncmp(vcheck, "version ", 8)); // Ensure save state format has been recognised by now.
     hdr->version = atoi(&vcheck[8]);
 
     hdr->skill = Reader_ReadByte(reader);
@@ -935,7 +941,7 @@ void SaveInfo_Read_Hr_v13(SaveInfo* info, Reader* reader)
     info->gameId  = 0; // None.
 }
 
-boolean SV_OpenFile_Hr_v13(const char* filePath)
+static boolean SV_OpenFile_Hr_v13(const char* filePath)
 {
     boolean fileOpened;
 #if _DEBUG
@@ -948,15 +954,45 @@ boolean SV_OpenFile_Hr_v13(const char* filePath)
     return true;
 }
 
-void SV_CloseFile_Hr_v13(void)
+static void SV_CloseFile_Hr_v13(void)
 {
     if(!saveBuffer) return;
     Z_Free(saveBuffer);
     saveBuffer = savePtr = NULL;
 }
 
-Reader* SV_NewReader_Hr_v13(void)
+static Reader* SV_NewReader_Hr_v13(void)
 {
     if(!saveBuffer) return NULL;
     return Reader_NewWithCallbacks(sri8, sri16, sri32, NULL, srd);
+}
+
+boolean SV_RecogniseState_Hr_v13(SaveInfo* info)
+{
+    if(!info) return false;
+    if(!SV_ExistingFile(Str_Text(SaveInfo_FilePath(info)))) return false;
+
+    if(SV_OpenFile_Hr_v13(Str_Text(SaveInfo_FilePath(info))))
+    {
+        Reader* svReader = SV_NewReader_Hr_v13();
+        boolean result = false;
+
+        /// @todo Use the 'version' string as the "magic" identifier.
+        /*char vcheck[VERSIONSIZE];
+        memset(vcheck, 0, sizeof(vcheck));
+        Reader_Read(svReader, vcheck, sizeof(vcheck));
+
+        if(strncmp(vcheck, "version ", 8))*/
+        {
+            SaveInfo_Read_Hr_v13(info, svReader);
+            result = (SaveInfo_Header(info)->version == V13_SAVE_VERSION);
+        }
+
+        Reader_Delete(svReader);
+        svReader = NULL;
+        SV_CloseFile_Hr_v13();
+
+        return result;
+    }
+    return false;
 }

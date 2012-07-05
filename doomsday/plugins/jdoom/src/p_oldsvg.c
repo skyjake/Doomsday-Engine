@@ -34,22 +34,29 @@
 #include "p_plat.h"
 #include "am_map.h"
 
-#define PADSAVEP()          savePtr += (4 - ((savePtr - saveBuffer) & 3)) & 3
+#define PADSAVEP()                      savePtr += (4 - ((savePtr - saveBuffer) & 3)) & 3
 
 // All the versions of DOOM have different savegame IDs, but 500 will be the
 // savegame base from now on.
-#define V19_SAVESTRINGSIZE  (24)
-#define VERSIONSIZE         (16)
+#define V19_SAVE_VERSION                500 ///< Version number associated with a recognised doom.exe game save state.
+#define V19_SAVESTRINGSIZE              24
+#define VERSIONSIZE                     16
 
-#define FF_FULLBRIGHT       (0x8000) // Used to be a flag in thing->frame.
-#define FF_FRAMEMASK        (0x7fff)
+#define FF_FULLBRIGHT                   0x8000 ///< Used to be a flag in thing->frame.
+#define FF_FRAMEMASK                    0x7fff
 
-#define SIZEOF_V19_THINKER_T 12
-#define V19_THINKER_T_FUNC_OFFSET 8
+#define SIZEOF_V19_THINKER_T            12
+#define V19_THINKER_T_FUNC_OFFSET       8
 
 static byte* savePtr;
 static byte* saveBuffer;
 static Reader* svReader;
+
+static boolean SV_OpenFile_Dm_v19(const char* filePath);
+static void    SV_CloseFile_Dm_v19(void);
+static Reader* SV_NewReader_Dm_v19(void);
+
+static void    SaveInfo_Read_Dm_v19(SaveInfo* info, Reader* reader);
 
 static char sri8(Reader* r)
 {
@@ -825,7 +832,7 @@ void P_v19_UnArchiveSpecials(void)
     }
 }
 
-int SV_v19_LoadGame(SaveInfo* info)
+int SV_LoadState_Dm_v19(SaveInfo* info)
 {
     const saveheader_t* hdr;
     if(!info) return 1;
@@ -863,7 +870,7 @@ int SV_v19_LoadGame(SaveInfo* info)
         svReader = NULL;
         SV_CloseFile_Dm_v19();
 
-        Con_Error("SV_v19_LoadGame: Bad savegame (consistency test failed!)\n");
+        Con_Error("SV_LoadState_Dm_v19: Bad savegame (consistency test failed!)\n");
         exit(1); // Unreachable.
     }
 
@@ -877,7 +884,7 @@ int SV_v19_LoadGame(SaveInfo* info)
     return 0; // Success!
 }
 
-void SaveInfo_Read_Dm_v19(SaveInfo* info, Reader* reader)
+static void SaveInfo_Read_Dm_v19(SaveInfo* info, Reader* reader)
 {
     saveheader_t* hdr = &info->header;
     char nameBuffer[V19_SAVESTRINGSIZE];
@@ -890,6 +897,7 @@ void SaveInfo_Read_Dm_v19(SaveInfo* info, Reader* reader)
     Str_Set(&info->name, nameBuffer);
 
     Reader_Read(reader, vcheck, VERSIONSIZE);
+    //assert(!strncmp(vcheck, "version ", 8)); // Ensure save state format has been recognised by now.
     hdr->version = atoi(&vcheck[8]);
 
     hdr->skill = Reader_ReadByte(reader);
@@ -919,7 +927,7 @@ void SaveInfo_Read_Dm_v19(SaveInfo* info, Reader* reader)
     info->gameId  = 0; // None.
 }
 
-boolean SV_OpenFile_Dm_v19(const char* filePath)
+static boolean SV_OpenFile_Dm_v19(const char* filePath)
 {
     boolean fileOpened;
 #if _DEBUG
@@ -932,15 +940,45 @@ boolean SV_OpenFile_Dm_v19(const char* filePath)
     return true;
 }
 
-void SV_CloseFile_Dm_v19(void)
+static void SV_CloseFile_Dm_v19(void)
 {
     if(!saveBuffer) return;
     Z_Free(saveBuffer);
     saveBuffer = savePtr = NULL;
 }
 
-Reader* SV_NewReader_Dm_v19(void)
+static Reader* SV_NewReader_Dm_v19(void)
 {
     if(!saveBuffer) return NULL;
     return Reader_NewWithCallbacks(sri8, sri16, sri32, NULL, srd);
+}
+
+boolean SV_RecogniseState_Dm_v19(SaveInfo* info)
+{
+    if(!info) return false;
+    if(!SV_ExistingFile(Str_Text(SaveInfo_FilePath(info)))) return false;
+
+    if(SV_OpenFile_Dm_v19(Str_Text(SaveInfo_FilePath(info))))
+    {
+        Reader* svReader = SV_NewReader_Dm_v19();
+        boolean result = false;
+
+        /// @todo Use the 'version' string as the "magic" identifier.
+        /*char vcheck[VERSIONSIZE];
+        memset(vcheck, 0, sizeof(vcheck));
+        Reader_Read(svReader, vcheck, sizeof(vcheck));
+
+        if(strncmp(vcheck, "version ", 8))*/
+        {
+            SaveInfo_Read_Dm_v19(info, svReader);
+            result = (SaveInfo_Header(info)->version <= V19_SAVE_VERSION);
+        }
+
+        Reader_Delete(svReader);
+        svReader = NULL;
+        SV_CloseFile_Dm_v19();
+
+        return result;
+    }
+    return false;
 }

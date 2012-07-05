@@ -59,7 +59,7 @@ const char* SV_SavePath(void);
 const char* SV_ClientSavePath(void);
 #endif
 
-boolean SV_Recognise(SaveInfo* info);
+boolean SV_RecogniseState(SaveInfo* info);
 
 /*
  * File management

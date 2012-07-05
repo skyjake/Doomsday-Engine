@@ -28,19 +28,13 @@
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
-#include "p_saveio.h"
+#include "saveinfo.h"
 
-#define V19_SAVE_VERSION                    500 ///< Version number associated with a recognised doom.exe game save state.
-
-boolean SV_OpenFile_Dm_v19(const char* filePath);
-void SV_CloseFile_Dm_v19(void);
-Reader* SV_NewReader_Dm_v19(void);
-
-void SaveInfo_Read_Dm_v19(SaveInfo* info, Reader* reader);
+boolean SV_RecogniseState_Dm_v19(SaveInfo* info);
 
 /**
  * @return  @c 0 on success else error code.
  */
-int SV_v19_LoadGame(SaveInfo* saveInfo);
+int SV_LoadState_Dm_v19(SaveInfo* saveInfo);
 
 #endif /// LIBDOOM_OLD_SAVESTATE
