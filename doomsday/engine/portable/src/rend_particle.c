@@ -66,12 +66,12 @@ static Generators* gens;
 void Rend_ParticleRegister(void)
 {
     // Cvars
-    C_VAR_BYTE("rend-particle", &useParticles, 0, 0, 1);
-    C_VAR_INT("rend-particle-max", &maxParticles, CVF_NO_MAX, 0, 0);
-    C_VAR_FLOAT("rend-particle-rate", &particleSpawnRate, 0, 0, 5);
-    C_VAR_FLOAT("rend-particle-diffuse", &particleDiffuse, CVF_NO_MAX, 0, 0);
-    C_VAR_INT("rend-particle-visible-near", &particleNearLimit, CVF_NO_MAX, 0, 0);
-    C_VAR_BYTE("rend-dev-generator-show-indices", &devDrawGenerators, CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE ("rend-particle",                   &useParticles,      0,              0, 1);
+    C_VAR_INT  ("rend-particle-max",               &maxParticles,      CVF_NO_MAX,     0, 0);
+    C_VAR_FLOAT("rend-particle-rate",              &particleSpawnRate, 0,              0, 5);
+    C_VAR_FLOAT("rend-particle-diffuse",           &particleDiffuse,   CVF_NO_MAX,     0, 0);
+    C_VAR_INT  ("rend-particle-visible-near",      &particleNearLimit, CVF_NO_MAX,     0, 0);
+    C_VAR_BYTE ("rend-dev-generator-show-indices", &devDrawGenerators, CVF_NO_ARCHIVE, 0, 1);
 }
 
 static int markPtcGenVisible(ptcgen_t* gen, void* parameters)
