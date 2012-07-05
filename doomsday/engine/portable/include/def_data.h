@@ -39,15 +39,17 @@ extern "C" {
 #include "uri.h"
 
 // Version 6 does not require semicolons.
-#define DED_VERSION         6
+#define DED_VERSION                 6
 
-#define DED_SPRITEID_LEN    4
-#define DED_STRINGID_LEN    31
-#define DED_FUNC_LEN        255
+#define DED_SPRITEID_LEN            4
+#define DED_STRINGID_LEN            31
+#define DED_FUNC_LEN                255
 
-#define DED_MAX_SUB_MODELS  8
+#define DED_MAX_SUB_MODELS          8
 
-#define DED_MAX_MATERIAL_LAYERS 1 //// \temp
+#define DED_MAX_MATERIAL_LAYERS     1   ///< \temp
+
+#define DED_PTCGEN_ANY_MOBJ_TYPE    -2  ///< Particle generator applies to ANY mobj type.
 
 typedef char ded_stringid_t[DED_STRINGID_LEN + 1];
 typedef ded_stringid_t ded_string_t;

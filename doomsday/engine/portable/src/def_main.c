@@ -1300,7 +1300,10 @@ void Def_Read(void)
         ded_ptcgen_t*       pg = &defs.ptcGens[i];
         int                 st = Def_GetStateNum(pg->state);
 
-        pg->typeNum = Def_GetMobjNum(pg->type);
+        if(!strcmp(pg->type, "*"))
+            pg->typeNum = DED_PTCGEN_ANY_MOBJ_TYPE;
+        else
+            pg->typeNum = Def_GetMobjNum(pg->type);
         pg->type2Num = Def_GetMobjNum(pg->type2);
         pg->damageNum = Def_GetMobjNum(pg->damage);
 

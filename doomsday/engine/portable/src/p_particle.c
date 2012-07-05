@@ -740,7 +740,7 @@ static int manyNewParticles(thinker_t* th, void* context)
     mobj_t*             mo = (mobj_t *) th;
 
     // Type match?
-    if(mo->type == gen->type || mo->type == gen->type2)
+    if(gen->type == DED_PTCGEN_ANY_MOBJ_TYPE || mo->type == gen->type || mo->type == gen->type2)
     {
         // Someone might think this is a slight hack...
         gen->source = mo;
@@ -1208,7 +1208,7 @@ void P_PtcGenThinker(ptcgen_t* gen)
 
     // Spawn new particles?
     if((gen->age <= def->spawnAge || def->spawnAge < 0) &&
-       (gen->source || gen->plane || gen->type >= 0 ||
+       (gen->source || gen->plane || gen->type >= 0 || gen->type == DED_PTCGEN_ANY_MOBJ_TYPE ||
         (gen->flags & PGF_UNTRIGGERED)))
     {
         newparts = def->spawnRate * gen->spawnRateMultiplier;
@@ -1220,7 +1220,7 @@ void P_PtcGenThinker(ptcgen_t* gen)
         while(gen->spawnCount >= 1)
         {
             // Spawn a new particle.
-            if(gen->type >= 0) // Type-triggered?
+            if(gen->type == DED_PTCGEN_ANY_MOBJ_TYPE || gen->type >= 0) // Type-triggered?
             {
                 // Client's should also check the client mobjs.
                 if(isClient)
@@ -1284,8 +1284,8 @@ void P_SpawnTypeParticleGens(void)
     if(isDedicated || !useParticles) return;
 
     for(i = 0, def = defs.ptcGens; i < defs.count.ptcGens.num; ++i, def++)
-    {
-        if(def->typeNum < 0) continue;
+    {       
+        if(def->typeNum != DED_PTCGEN_ANY_MOBJ_TYPE && def->typeNum < 0) continue;
 
         gen = P_NewGenerator();
         if(!gen) return; // No more generators.
@@ -1390,6 +1390,10 @@ static int findDefForGenerator(ptcgen_t* gen, void* parameters)
     for(i = 0; i < defs.count.ptcGens.num; ++i, def++)
     {
         // A type generator?
+        if(def->typeNum == DED_PTCGEN_ANY_MOBJ_TYPE && gen->type == DED_PTCGEN_ANY_MOBJ_TYPE)
+        {
+            return i+1; // Stop iteration.
+        }
         if(def->typeNum >= 0 &&
            (gen->type == def->typeNum || gen->type2 == def->type2Num))
         {
@@ -1399,7 +1403,7 @@ static int findDefForGenerator(ptcgen_t* gen, void* parameters)
         // A damage generator?
         if(gen->source && gen->source->type == def->damageNum)
         {
-            return i+1;
+            return i+1; // Stop iteration.
         }
 
         // A flat generator?
