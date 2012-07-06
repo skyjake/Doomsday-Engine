@@ -19,9 +19,9 @@
  * 02110-1301 USA</small>
  */
 
-#include "garbage.h"
-#include "concurrency.h"
-#include "memoryzone.h"
+#include "de/garbage.h"
+#include "de/concurrency.h"
+#include "de/memoryzone.h"
 
 #include <map>
 #include <set>

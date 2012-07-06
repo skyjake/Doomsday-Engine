@@ -33,7 +33,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "smoother.h"
+#include "de/smoother.h"
 #include <de/Log>
 
 /**

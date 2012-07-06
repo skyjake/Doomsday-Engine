@@ -21,8 +21,8 @@
  * 02110-1301 USA</small>
  */
 
-#include "concurrency.h"
-#include "garbage.h"
+#include "de/concurrency.h"
+#include "de/garbage.h"
 #include <QMutex>
 #include <QApplication>
 #include <QDebug>
