@@ -98,34 +98,6 @@ struct zblockset_s {
     struct zblockset_block_s* _blocks;
 };
 
-/**
- * Creates a new block memory allocator in the Zone.
- *
- * @param sizeOfElement  Required size of each element.
- * @param batchSize  Number of elements in each block of the set.
- *
- * @return  Ptr to the newly created blockset.
- */
-zblockset_t* ZBlockSet_New(size_t sizeOfElement, uint batchSize, int tag);
-
-/**
- * Destroy the entire blockset.
- * All memory allocated is released for all elements in all blocks and any
- * used for the blockset itself.
- *
- * @param set  The blockset to be freed.
- */
-void ZBlockSet_Delete(zblockset_t* set);
-
-/**
- * Return a ptr to the next unused element in the blockset.
- *
- * @param blockset  The blockset to return the next element from.
- *
- * @return  Ptr to the next unused element in the blockset.
- */
-void* ZBlockSet_Allocate(zblockset_t* set);
-
 #ifdef LIBDENG_LIBDENG_FAKE_MEMORY_ZONE
 memblock_t* Z_GetBlock(void* ptr);
 #else
