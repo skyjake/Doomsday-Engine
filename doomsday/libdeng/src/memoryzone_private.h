@@ -24,8 +24,8 @@
 #ifndef LIBDENG_MEMORY_ZONE_PRIVATE_H
 #define LIBDENG_MEMORY_ZONE_PRIVATE_H
 
-#include "libdeng.h"
-#include "memoryzone.h" // public API
+#include <de/libdeng.h>
+#include <de/memoryzone.h> // public API
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,7 +42,6 @@ int Z_Init(void);
 void Z_Shutdown(void);
 
 size_t Z_FreeMemory(void);
-void Z_DebugDrawer(void);
 
 typedef struct memblock_s {
     size_t          size; // Including header and possibly tiny fragments.
@@ -64,6 +63,17 @@ typedef struct {
     memblock_t*     rover;
     memblock_t*     staticRover;
 } memzone_t;
+
+/**
+ * The memory is composed of multiple volumes. New volumes are allocated when
+ * necessary.
+ */
+typedef struct memvolume_s {
+    memzone_t* zone;
+    size_t size;
+    size_t allocatedBytes;  ///< Total number of allocated bytes.
+    struct memvolume_s *next;
+} memvolume_t;
 
 struct zblockset_block_s;
 
@@ -122,6 +132,20 @@ memblock_t* Z_GetBlock(void* ptr);
 // Real memory zone allocates memory from a custom heap.
 #define Z_GetBlock(ptr) ((memblock_t*) ((byte*)(ptr) - sizeof(memblock_t)))
 #endif
+
+#ifdef DENG_DEBUG
+/**
+ * Provides access to the internal data of the memory zone module.
+ * This is only needed for debugging purposes.
+ */
+struct memzone_private_s {
+    void (*lock)(void);
+    void (*unlock)(void);
+    boolean (*isVolumeTooFull)(memvolume_t*);
+    int volumeCount;
+    memvolume_t *volumeRoot;
+};
+#endif // DENG_DEBUG
 
 #ifdef __cplusplus
 } // extern "C"

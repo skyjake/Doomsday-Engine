@@ -51,5 +51,6 @@
 #include "library.h"
 #include "reader.h"
 #include "writer.h"
+#include "zonedebug.h"
 
 #endif /* LIBDENG_BASE_H */

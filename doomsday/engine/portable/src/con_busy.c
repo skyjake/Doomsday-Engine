@@ -812,8 +812,7 @@ static void BusyTask_Drawer(void)
     }
 
 #ifdef _DEBUG
-    // TODO: enable this again
-    //Z_DebugDrawer();
+    Z_DebugDrawer();
 #endif
 
     glMatrixMode(GL_PROJECTION);

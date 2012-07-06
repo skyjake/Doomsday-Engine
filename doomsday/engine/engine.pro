@@ -359,6 +359,7 @@ DENG_HEADERS += \
     portable/include/wadfile.h \
     portable/include/window.h \
     portable/include/zipfile.h \
+    portable/include/zonedebug.h \
     portable/src/updater/downloaddialog.h \
     portable/src/updater/updateavailabledialog.h \
     portable/src/updater/updaterdialog.h \
@@ -646,7 +647,8 @@ SOURCES += \
     portable/src/wadfile.c \
     portable/src/window.cpp \
     portable/src/writer.c \
-    portable/src/zipfile.c
+    portable/src/zipfile.c \
+    portable/src/zonedebug.c
 
 !deng_nosdlmixer:!deng_nosdl {
     HEADERS += portable/include/sys_audiod_sdlmixer.h

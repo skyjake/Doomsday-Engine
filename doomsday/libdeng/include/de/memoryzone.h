@@ -182,6 +182,12 @@ DENG_PUBLIC void Z_PrintStatus(void);
 
 ///@}
 
+#ifdef DENG_DEBUG
+struct memzone_private_s;
+typedef struct memzone_private_s MemoryZonePrivateData;
+DENG_PUBLIC void Z_GetPrivateData(MemoryZonePrivateData* pd);
+#endif
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

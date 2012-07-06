@@ -713,8 +713,7 @@ void Net_Drawer(void)
     Net_DrawDemoOverlay();
 
 #ifdef _DEBUG
-    // TODO: enable this
-    //Z_DebugDrawer();
+    Z_DebugDrawer();
 #endif
 }
 
