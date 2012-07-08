@@ -211,9 +211,9 @@ static void SV_v19_ReadMobj(void)
     Reader_ReadInt32(svReader);
 
     //More drawing info: to determine current sprite.
-    angle = Reader_ReadInt32(svReader);  // orientation
+    angle  = Reader_ReadInt32(svReader);  // orientation
     sprite = Reader_ReadInt32(svReader); // used to find patch_t and flip value
-    frame = Reader_ReadInt32(svReader);  // might be ORed with FF_FULLBRIGHT
+    frame  = Reader_ReadInt32(svReader);  // might be ORed with FF_FULLBRIGHT
     if(frame & FF_FULLBRIGHT)
         frame &= FF_FRAMEMASK; // not used anymore.
 
@@ -224,7 +224,7 @@ static void SV_v19_ReadMobj(void)
     Reader_ReadInt32(svReader);
 
     // The closest interval over all contacted Sectors.
-    floorz = FIX2FLT(Reader_ReadInt32(svReader));
+    floorz   = FIX2FLT(Reader_ReadInt32(svReader));
     ceilingz = FIX2FLT(Reader_ReadInt32(svReader));
 
     // For movement checking.
@@ -237,44 +237,42 @@ static void SV_v19_ReadMobj(void)
     mom[MZ] = FIX2FLT(Reader_ReadInt32(svReader));
 
     valid = Reader_ReadInt32(svReader);
-    type = Reader_ReadInt32(svReader);
+    type  = Reader_ReadInt32(svReader);
     info = &MOBJINFO[type];
 
-    if(info->flags & MF_SOLID)
-        ddflags |= DDMF_SOLID;
-    if(info->flags2 & MF2_DONTDRAW)
-        ddflags |= DDMF_DONTDRAW;
+    if(info->flags  & MF_SOLID)     ddflags |= DDMF_SOLID;
+    if(info->flags2 & MF2_DONTDRAW) ddflags |= DDMF_DONTDRAW;
 
     /**
      * We now have all the information we need to create the mobj.
      */
     mo = P_MobjCreateXYZ(P_MobjThinker, pos[VX], pos[VY], pos[VZ], angle,
-                      radius, height, ddflags);
+                         radius, height, ddflags);
 
-    mo->sprite = sprite;
-    mo->frame = frame;
-    mo->floorZ = floorz;
+    mo->sprite   = sprite;
+    mo->frame    = frame;
+    mo->floorZ   = floorz;
     mo->ceilingZ = ceilingz;
-    mo->mom[MX] = mom[MX];
-    mo->mom[MY] = mom[MY];
-    mo->mom[MZ] = mom[MZ];
-    mo->valid = valid;
-    mo->type = type;
-    mo->moveDir = DI_NODIR;
+    mo->mom[MX]  = mom[MX];
+    mo->mom[MY]  = mom[MY];
+    mo->mom[MZ]  = mom[MZ];
+    mo->valid    = valid;
+    mo->type     = type;
+    mo->moveDir  = DI_NODIR;
 
     /**
      * Continue reading the mobj data.
      */
     Reader_ReadInt32(svReader);              // &mobjinfo[mo->type]
 
-    mo->tics = Reader_ReadInt32(svReader);   // state tic counter
-    mo->state = INT2PTR(state_t, Reader_ReadInt32(svReader));
+    mo->tics   = Reader_ReadInt32(svReader);   // state tic counter
+    mo->state  = INT2PTR(state_t, Reader_ReadInt32(svReader));
     mo->damage = DDMAXINT; // Use damage set in mo->info->damage
-    mo->flags = Reader_ReadInt32(svReader);
+    mo->flags  = Reader_ReadInt32(svReader);
     mo->health = Reader_ReadInt32(svReader);
 
     // Movement direction, movement generation (zig-zagging).
-    mo->moveDir = Reader_ReadInt32(svReader);    // 0-7
+    mo->moveDir   = Reader_ReadInt32(svReader);    // 0-7
     mo->moveCount = Reader_ReadInt32(svReader);  // when 0, select a new dir
 
     // Thing being chased/attacked (or NULL),
@@ -320,7 +318,7 @@ static void SV_v19_ReadMobj(void)
     mo->target = NULL;
     if(mo->player)
     {
-        int     pnum = PTR2INT(mo->player) - 1;
+        int pnum = PTR2INT(mo->player) - 1;
 
         mo->player = &players[pnum];
         mo->dPlayer = mo->player->plr;
@@ -333,14 +331,13 @@ static void SV_v19_ReadMobj(void)
     mo->ceilingZ = P_GetDoublep(mo->bspLeaf, DMU_CEILING_HEIGHT);
 }
 
-void P_v19_UnArchivePlayers(void)
+static void P_v19_UnArchivePlayers(void)
 {
     int i, j;
 
     for(i = 0; i < 4; ++i)
     {
-        if(!players[i].plr->inGame)
-            continue;
+        if(!players[i].plr->inGame) continue;
 
         PADSAVEP();
 
@@ -361,7 +358,7 @@ void P_v19_UnArchivePlayers(void)
     }
 }
 
-void P_v19_UnArchiveWorld(void)
+static void P_v19_UnArchiveWorld(void)
 {
     uint i, j;
     float matOffset[2];
@@ -378,12 +375,12 @@ void P_v19_UnArchiveWorld(void)
 
         P_SetDoublep(sec, DMU_FLOOR_HEIGHT,   (coord_t) Reader_ReadInt16(svReader));
         P_SetDoublep(sec, DMU_CEILING_HEIGHT, (coord_t) Reader_ReadInt16(svReader));
-        P_SetPtrp(sec, DMU_FLOOR_MATERIAL,   P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_FLATS, Reader_ReadInt16(svReader))));
-        P_SetPtrp(sec, DMU_CEILING_MATERIAL, P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_FLATS, Reader_ReadInt16(svReader))));
+        P_SetPtrp   (sec, DMU_FLOOR_MATERIAL,   P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_FLATS, Reader_ReadInt16(svReader))));
+        P_SetPtrp   (sec, DMU_CEILING_MATERIAL, P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_FLATS, Reader_ReadInt16(svReader))));
 
         P_SetFloatp(sec, DMU_LIGHT_LEVEL, (float) (Reader_ReadInt16(svReader)) / 255.0f);
         xsec->special = Reader_ReadInt16(svReader); // needed?
-        /*xsec->tag = **/Reader_ReadInt16(svReader); // needed?
+        /*xsec->tag = */Reader_ReadInt16(svReader); // needed?
         xsec->specialData = 0;
         xsec->soundTarget = 0;
     }
@@ -394,9 +391,9 @@ void P_v19_UnArchiveWorld(void)
         line = P_ToPtr(DMU_LINEDEF, i);
         xline = P_ToXLine(line);
 
-        xline->flags = Reader_ReadInt16(svReader);
+        xline->flags   = Reader_ReadInt16(svReader);
         xline->special = Reader_ReadInt16(svReader);
-        /*xline->tag = **/Reader_ReadInt16(svReader);
+        /*xline->tag    =*/Reader_ReadInt16(svReader);
 
         for(j = 0; j < 2; ++j)
         {
@@ -406,13 +403,13 @@ void P_v19_UnArchiveWorld(void)
 
             matOffset[VX] = (float) (Reader_ReadInt16(svReader));
             matOffset[VY] = (float) (Reader_ReadInt16(svReader));
-            P_SetFloatpv(sdef, DMU_TOP_MATERIAL_OFFSET_XY, matOffset);
+            P_SetFloatpv(sdef, DMU_TOP_MATERIAL_OFFSET_XY,    matOffset);
             P_SetFloatpv(sdef, DMU_MIDDLE_MATERIAL_OFFSET_XY, matOffset);
             P_SetFloatpv(sdef, DMU_BOTTOM_MATERIAL_OFFSET_XY, matOffset);
 
-            P_SetPtrp(sdef, DMU_TOP_MATERIAL,    P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_TEXTURES, Reader_ReadInt16(svReader))));
-            P_SetPtrp(sdef, DMU_BOTTOM_MATERIAL, P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_TEXTURES, Reader_ReadInt16(svReader))));
-            P_SetPtrp(sdef, DMU_MIDDLE_MATERIAL, P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_TEXTURES, Reader_ReadInt16(svReader))));
+            P_SetPtrp   (sdef, DMU_TOP_MATERIAL,    P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_TEXTURES, Reader_ReadInt16(svReader))));
+            P_SetPtrp   (sdef, DMU_BOTTOM_MATERIAL, P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_TEXTURES, Reader_ReadInt16(svReader))));
+            P_SetPtrp   (sdef, DMU_MIDDLE_MATERIAL, P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_TEXTURES, Reader_ReadInt16(svReader))));
         }
     }
 }
@@ -427,7 +424,7 @@ static int removeThinker(thinker_t* th, void* context)
     return false; // Continue iteration.
 }
 
-void P_v19_UnArchiveThinkers(void)
+static void P_v19_UnArchiveThinkers(void)
 {
     enum thinkerclass_e {
         TC_END,
@@ -445,8 +442,7 @@ void P_v19_UnArchiveThinkers(void)
         tClass = Reader_ReadByte(svReader);
         switch(tClass)
         {
-        case TC_END:
-            return; // End of list.
+        case TC_END: return; // End of list.
 
         case TC_MOBJ:
             PADSAVEP();
@@ -459,7 +455,7 @@ void P_v19_UnArchiveThinkers(void)
     }
 }
 
-static int SV_v19_ReadCeiling(ceiling_t *ceiling)
+static int SV_v19_ReadCeiling(ceiling_t* ceiling)
 {
 /* Original DOOM format:
 typedef struct {
@@ -475,7 +471,7 @@ typedef struct {
     int     olddirection;
 } v19_ceiling_t;
 */
-    byte                temp[SIZEOF_V19_THINKER_T];
+    byte temp[SIZEOF_V19_THINKER_T];
 
     // Padding at the start (an old thinker_t struct).
     Reader_Read(svReader, &temp, SIZEOF_V19_THINKER_T);
@@ -489,11 +485,11 @@ typedef struct {
         Con_Error("tc_ceiling: bad sector number\n");
 
     ceiling->bottomHeight = FIX2FLT(Reader_ReadInt32(svReader));
-    ceiling->topHeight = FIX2FLT(Reader_ReadInt32(svReader));
+    ceiling->topHeight    = FIX2FLT(Reader_ReadInt32(svReader));
     ceiling->speed = FIX2FLT(Reader_ReadInt32(svReader));
     ceiling->crush = Reader_ReadInt32(svReader);
     ceiling->state = (Reader_ReadInt32(svReader) == -1? CS_DOWN : CS_UP);
-    ceiling->tag = Reader_ReadInt32(svReader);
+    ceiling->tag   = Reader_ReadInt32(svReader);
     ceiling->oldState = (Reader_ReadInt32(svReader) == -1? CS_DOWN : CS_UP);
 
     ceiling->thinker.function = T_MoveCeiling;
@@ -731,7 +727,7 @@ typedef struct {
  * T_Glow, (glow_t: Sector *),
  * T_PlatRaise, (plat_t: Sector *), - active list
  */
-void P_v19_UnArchiveSpecials(void)
+static void P_v19_UnArchiveSpecials(void)
 {
     enum {
         tc_ceiling,

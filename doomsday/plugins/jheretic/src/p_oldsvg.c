@@ -94,28 +94,28 @@ static void srd(Reader* r, char* data, int len)
 static void SV_v13_ReadPlayer(player_t* pl)
 {
     int i, plrnum = pl - players;
-    byte temp[12];
     ddplayer_t* ddpl = pl->plr;
+    byte temp[12];
 
     Reader_ReadInt32(svReader); // mo
     pl->playerState = Reader_ReadInt32(svReader);
     Reader_Read(svReader, temp, 10); // ticcmd_t
-    pl->viewZ = FIX2FLT(Reader_ReadInt32(svReader));
-    pl->viewHeight = FIX2FLT(Reader_ReadInt32(svReader));
+    pl->viewZ       = FIX2FLT(Reader_ReadInt32(svReader));
+    pl->viewHeight  = FIX2FLT(Reader_ReadInt32(svReader));
     pl->viewHeightDelta = FIX2FLT(Reader_ReadInt32(svReader));
-    pl->bob = FIX2FLT(Reader_ReadInt32(svReader));
-    pl->flyHeight = Reader_ReadInt32(svReader);
-    ddpl->lookDir = Reader_ReadInt32(svReader);
-    pl->centering = Reader_ReadInt32(svReader);
-    pl->health = Reader_ReadInt32(svReader);
+    pl->bob         = FIX2FLT(Reader_ReadInt32(svReader));
+    pl->flyHeight   = Reader_ReadInt32(svReader);
+    ddpl->lookDir   = Reader_ReadInt32(svReader);
+    pl->centering   = Reader_ReadInt32(svReader);
+    pl->health      = Reader_ReadInt32(svReader);
     pl->armorPoints = Reader_ReadInt32(svReader);
-    pl->armorType = Reader_ReadInt32(svReader);
+    pl->armorType   = Reader_ReadInt32(svReader);
 
     P_InventoryEmpty(plrnum);
     for(i = 0; i < 14; ++i)
     {
         inventoryitemtype_t type = Reader_ReadInt32(svReader);
-        int             j, count = Reader_ReadInt32(svReader);
+        int j, count = Reader_ReadInt32(svReader);
 
         for(j = 0; j < count; ++j)
             P_InventoryGive(plrnum, type, true);
@@ -127,21 +127,23 @@ static void SV_v13_ReadPlayer(player_t* pl)
     /*pl->inventorySlotNum =*/ Reader_ReadInt32(svReader);
 
     memset(pl->powers, 0, sizeof(pl->powers));
-    pl->powers[PT_INVULNERABILITY] = (Reader_ReadInt32(svReader)? true : false);
-    pl->powers[PT_INVISIBILITY] = (Reader_ReadInt32(svReader)? true : false);
-    pl->powers[PT_ALLMAP] = (Reader_ReadInt32(svReader)? true : false);
+    pl->powers[PT_INVULNERABILITY] = !!Reader_ReadInt32(svReader);
+    pl->powers[PT_INVISIBILITY]    = !!Reader_ReadInt32(svReader);
+    pl->powers[PT_ALLMAP]          = !!Reader_ReadInt32(svReader);
     if(pl->powers[PT_ALLMAP])
+    {
         ST_RevealAutomap(pl - players, true);
-    pl->powers[PT_INFRARED] = (Reader_ReadInt32(svReader)? true : false);
-    pl->powers[PT_WEAPONLEVEL2] = (Reader_ReadInt32(svReader)? true : false);
-    pl->powers[PT_FLIGHT] = (Reader_ReadInt32(svReader)? true : false);
-    pl->powers[PT_SHIELD] = (Reader_ReadInt32(svReader)? true : false);
-    pl->powers[PT_HEALTH2] = (Reader_ReadInt32(svReader)? true : false);
+    }
+    pl->powers[PT_INFRARED]     = !!Reader_ReadInt32(svReader);
+    pl->powers[PT_WEAPONLEVEL2] = !!Reader_ReadInt32(svReader);
+    pl->powers[PT_FLIGHT]       = !!Reader_ReadInt32(svReader);
+    pl->powers[PT_SHIELD]       = !!Reader_ReadInt32(svReader);
+    pl->powers[PT_HEALTH2]      = !!Reader_ReadInt32(svReader);
 
     memset(pl->keys, 0, sizeof(pl->keys));
-    pl->keys[KT_YELLOW] = (Reader_ReadInt32(svReader)? true : false);
-    pl->keys[KT_GREEN] = (Reader_ReadInt32(svReader)? true : false);
-    pl->keys[KT_BLUE] = (Reader_ReadInt32(svReader)? true : false);
+    pl->keys[KT_YELLOW] = !!Reader_ReadInt32(svReader);
+    pl->keys[KT_GREEN]  = !!Reader_ReadInt32(svReader);
+    pl->keys[KT_BLUE]   = !!Reader_ReadInt32(svReader);
 
     pl->backpack = Reader_ReadInt32(svReader);
 
@@ -151,40 +153,40 @@ static void SV_v13_ReadPlayer(player_t* pl)
     pl->frags[2] = Reader_ReadInt32(svReader);
     pl->frags[3] = Reader_ReadInt32(svReader);
 
-    pl->readyWeapon = Reader_ReadInt32(svReader);
+    pl->readyWeapon   = Reader_ReadInt32(svReader);
     pl->pendingWeapon = Reader_ReadInt32(svReader);
 
     // Owned weapons.
     memset(pl->weapons, 0, sizeof(pl->weapons));
-    pl->weapons[WT_FIRST].owned = (Reader_ReadInt32(svReader)? true : false);
-    pl->weapons[WT_SECOND].owned = (Reader_ReadInt32(svReader)? true : false);
-    pl->weapons[WT_THIRD].owned = (Reader_ReadInt32(svReader)? true : false);
-    pl->weapons[WT_FOURTH].owned = (Reader_ReadInt32(svReader)? true : false);
-    pl->weapons[WT_FIFTH].owned = (Reader_ReadInt32(svReader)? true : false);
-    pl->weapons[WT_SIXTH].owned = (Reader_ReadInt32(svReader)? true : false);
-    pl->weapons[WT_SEVENTH].owned = (Reader_ReadInt32(svReader)? true : false);
-    pl->weapons[WT_EIGHTH].owned = (Reader_ReadInt32(svReader)? true : false);
+    pl->weapons[WT_FIRST  ].owned = !!Reader_ReadInt32(svReader);
+    pl->weapons[WT_SECOND ].owned = !!Reader_ReadInt32(svReader);
+    pl->weapons[WT_THIRD  ].owned = !!Reader_ReadInt32(svReader);
+    pl->weapons[WT_FOURTH ].owned = !!Reader_ReadInt32(svReader);
+    pl->weapons[WT_FIFTH  ].owned = !!Reader_ReadInt32(svReader);
+    pl->weapons[WT_SIXTH  ].owned = !!Reader_ReadInt32(svReader);
+    pl->weapons[WT_SEVENTH].owned = !!Reader_ReadInt32(svReader);
+    pl->weapons[WT_EIGHTH ].owned = !!Reader_ReadInt32(svReader);
 
     memset(pl->ammo, 0, sizeof(pl->ammo));
     pl->ammo[AT_CRYSTAL].owned = Reader_ReadInt32(svReader);
-    pl->ammo[AT_ARROW].owned = Reader_ReadInt32(svReader);
-    pl->ammo[AT_ORB].owned = Reader_ReadInt32(svReader);
-    pl->ammo[AT_RUNE].owned = Reader_ReadInt32(svReader);
+    pl->ammo[AT_ARROW  ].owned = Reader_ReadInt32(svReader);
+    pl->ammo[AT_ORB    ].owned = Reader_ReadInt32(svReader);
+    pl->ammo[AT_RUNE   ].owned = Reader_ReadInt32(svReader);
     pl->ammo[AT_FIREORB].owned = Reader_ReadInt32(svReader);
     pl->ammo[AT_MSPHERE].owned = Reader_ReadInt32(svReader);
     pl->ammo[AT_CRYSTAL].max = Reader_ReadInt32(svReader);
-    pl->ammo[AT_ARROW].max = Reader_ReadInt32(svReader);
-    pl->ammo[AT_ORB].max = Reader_ReadInt32(svReader);
-    pl->ammo[AT_RUNE].max = Reader_ReadInt32(svReader);
+    pl->ammo[AT_ARROW  ].max = Reader_ReadInt32(svReader);
+    pl->ammo[AT_ORB    ].max = Reader_ReadInt32(svReader);
+    pl->ammo[AT_RUNE   ].max = Reader_ReadInt32(svReader);
     pl->ammo[AT_FIREORB].max = Reader_ReadInt32(svReader);
     pl->ammo[AT_MSPHERE].max = Reader_ReadInt32(svReader);
 
     pl->attackDown = Reader_ReadInt32(svReader);
-    pl->useDown = Reader_ReadInt32(svReader);
-    pl->cheats = Reader_ReadInt32(svReader);
-    pl->refire = Reader_ReadInt32(svReader);
-    pl->killCount = Reader_ReadInt32(svReader);
-    pl->itemCount = Reader_ReadInt32(svReader);
+    pl->useDown    = Reader_ReadInt32(svReader);
+    pl->cheats     = Reader_ReadInt32(svReader);
+    pl->refire     = Reader_ReadInt32(svReader);
+    pl->killCount  = Reader_ReadInt32(svReader);
+    pl->itemCount  = Reader_ReadInt32(svReader);
     pl->secretCount = Reader_ReadInt32(svReader);
     Reader_ReadInt32(svReader); // message, char*
     pl->damageCount = Reader_ReadInt32(svReader);
@@ -213,12 +215,12 @@ static void SV_v13_ReadPlayer(player_t* pl)
 
 static void SV_v13_ReadMobj(void)
 {
-    angle_t angle;
-    spritenum_t sprite;
-    int frame, valid, type, ddflags = 0;
     coord_t pos[3], mom[3], floorz, ceilingz, radius, height;
-    mobj_t* mo;
+    int frame, valid, type, ddflags = 0;
+    spritenum_t sprite;
     mobjinfo_t* info;
+    angle_t angle;
+    mobj_t* mo;
 
     // The thinker was 3 ints long.
     Reader_ReadInt32(svReader);
@@ -245,15 +247,16 @@ static void SV_v13_ReadMobj(void)
     // BspLeaf.
     Reader_ReadInt32(svReader);
 
-    floorz = FIX2FLT(Reader_ReadInt32(svReader));
+    floorz   = FIX2FLT(Reader_ReadInt32(svReader));
     ceilingz = FIX2FLT(Reader_ReadInt32(svReader));
-    radius = FIX2FLT(Reader_ReadInt32(svReader));
-    height = FIX2FLT(Reader_ReadInt32(svReader));
-    mom[MX] = FIX2FLT(Reader_ReadInt32(svReader));
-    mom[MY] = FIX2FLT(Reader_ReadInt32(svReader));
-    mom[MZ] = FIX2FLT(Reader_ReadInt32(svReader));
-    valid = Reader_ReadInt32(svReader);
-    type = Reader_ReadInt32(svReader);
+    radius   = FIX2FLT(Reader_ReadInt32(svReader));
+    height   = FIX2FLT(Reader_ReadInt32(svReader));
+    mom[MX]  = FIX2FLT(Reader_ReadInt32(svReader));
+    mom[MY]  = FIX2FLT(Reader_ReadInt32(svReader));
+    mom[MZ]  = FIX2FLT(Reader_ReadInt32(svReader));
+    valid    = Reader_ReadInt32(svReader);
+    type     = Reader_ReadInt32(svReader);
+
     info = &MOBJINFO[type];
 
     if(info->flags & MF_SOLID)
@@ -265,33 +268,33 @@ static void SV_v13_ReadMobj(void)
      * We now have all the information we need to create the mobj.
      */
     mo = P_MobjCreateXYZ(P_MobjThinker, pos[VX], pos[VY], pos[VZ], angle,
-                      radius, height, ddflags);
+                         radius, height, ddflags);
 
-    mo->sprite = sprite;
-    mo->frame = frame;
-    mo->floorZ = floorz;
+    mo->sprite  = sprite;
+    mo->frame   = frame;
+    mo->floorZ  = floorz;
     mo->ceilingZ = ceilingz;
     mo->mom[MX] = mom[MX];
     mo->mom[MY] = mom[MY];
     mo->mom[MZ] = mom[MZ];
-    mo->valid = valid;
-    mo->type = type;
+    mo->valid   = valid;
+    mo->type    = type;
     mo->moveDir = DI_NODIR;
 
     /**
      * Continue reading the mobj data.
      */
 
-    Reader_ReadInt32(svReader);          // info
+    Reader_ReadInt32(svReader); // info
 
-    mo->tics = Reader_ReadInt32(svReader);
-    mo->state = INT2PTR(state_t, Reader_ReadInt32(svReader));
-    mo->damage = Reader_ReadInt32(svReader);
-    mo->flags = Reader_ReadInt32(svReader);
-    mo->flags2 = Reader_ReadInt32(svReader);
+    mo->tics     = Reader_ReadInt32(svReader);
+    mo->state    = INT2PTR(state_t, Reader_ReadInt32(svReader));
+    mo->damage   = Reader_ReadInt32(svReader);
+    mo->flags    = Reader_ReadInt32(svReader);
+    mo->flags2   = Reader_ReadInt32(svReader);
     mo->special1 = Reader_ReadInt32(svReader);
     mo->special2 = Reader_ReadInt32(svReader);
-    mo->health = Reader_ReadInt32(svReader);
+    mo->health   = Reader_ReadInt32(svReader);
 
     // Fix a bunch of kludges in the original Heretic.
     switch(mo->type)
@@ -308,17 +311,16 @@ static void SV_v13_ReadMobj(void)
         mo->health = info->spawnHealth;
         break;
 
-    default:
-        break;
+    default: break;
     }
 
-    mo->moveDir = Reader_ReadInt32(svReader);
-    mo->moveCount = Reader_ReadInt32(svReader);
-    Reader_ReadInt32(svReader);          // target
+    mo->moveDir      = Reader_ReadInt32(svReader);
+    mo->moveCount    = Reader_ReadInt32(svReader);
+    Reader_ReadInt32(svReader); // target
     mo->reactionTime = Reader_ReadInt32(svReader);
-    mo->threshold = Reader_ReadInt32(svReader);
-    mo->player = INT2PTR(player_t, Reader_ReadInt32(svReader));
-    mo->lastLook = Reader_ReadInt32(svReader);
+    mo->threshold    = Reader_ReadInt32(svReader);
+    mo->player       = INT2PTR(player_t, Reader_ReadInt32(svReader));
+    mo->lastLook     = Reader_ReadInt32(svReader);
 
     mo->spawnSpot.origin[VX] = (coord_t) Reader_ReadInt32(svReader);
     mo->spawnSpot.origin[VY] = (coord_t) Reader_ReadInt32(svReader);
@@ -349,14 +351,13 @@ static void SV_v13_ReadMobj(void)
     mo->ceilingZ = P_GetDoublep(mo->bspLeaf, DMU_CEILING_HEIGHT);
 }
 
-void P_v13_UnArchivePlayers(void)
+static void P_v13_UnArchivePlayers(void)
 {
     int i, j;
 
     for(i = 0; i < 4; ++i)
     {
-        if(!players[i].plr->inGame)
-            continue;
+        if(!players[i].plr->inGame) continue;
 
         SV_v13_ReadPlayer(players + i);
         players[i].plr->mo = NULL; // Will be set when unarc thinker.
@@ -367,21 +368,20 @@ void P_v13_UnArchivePlayers(void)
 
             if(plr->pSprites[j].state)
             {
-                plr->pSprites[j].state =
-                    &STATES[PTR2INT(plr->pSprites[j].state)];
+                plr->pSprites[j].state = &STATES[PTR2INT(plr->pSprites[j].state)];
             }
         }
     }
 }
 
-void P_v13_UnArchiveWorld(void)
+static void P_v13_UnArchiveWorld(void)
 {
-    uint                i, j;
-    fixed_t             offx, offy;
-    Sector*             sec;
-    xsector_t*          xsec;
-    LineDef*            line;
-    xline_t*            xline;
+    uint i, j;
+    fixed_t offx, offy;
+    Sector* sec;
+    xsector_t* xsec;
+    LineDef* line;
+    xline_t* xline;
 
     // Do sectors.
     for(i = 0; i < numsectors; ++i)
@@ -389,11 +389,11 @@ void P_v13_UnArchiveWorld(void)
         sec = P_ToPtr(DMU_SECTOR, i);
         xsec = P_ToXSector(sec);
 
-        P_SetDoublep(sec, DMU_FLOOR_HEIGHT,   (coord_t)Reader_ReadInt16(svReader));
-        P_SetDoublep(sec, DMU_CEILING_HEIGHT, (coord_t)Reader_ReadInt16(svReader));
-        P_SetPtrp(sec, DMU_FLOOR_MATERIAL,   P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_FLATS, Reader_ReadInt16(svReader))));
-        P_SetPtrp(sec, DMU_CEILING_MATERIAL, P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_FLATS, Reader_ReadInt16(svReader))));
-        P_SetFloatp(sec, DMU_LIGHT_LEVEL, (float) (Reader_ReadInt16(svReader)) / 255.0f);
+        P_SetDoublep(sec, DMU_FLOOR_HEIGHT,     (coord_t)Reader_ReadInt16(svReader));
+        P_SetDoublep(sec, DMU_CEILING_HEIGHT,   (coord_t)Reader_ReadInt16(svReader));
+        P_SetPtrp   (sec, DMU_FLOOR_MATERIAL,   P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_FLATS, Reader_ReadInt16(svReader))));
+        P_SetPtrp   (sec, DMU_CEILING_MATERIAL, P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_FLATS, Reader_ReadInt16(svReader))));
+        P_SetFloatp (sec, DMU_LIGHT_LEVEL,      (float) (Reader_ReadInt16(svReader)) / 255.0f);
         xsec->special = Reader_ReadInt16(svReader); // needed?
         /*xsec->tag = **/Reader_ReadInt16(svReader); // needed?
         xsec->specialData = 0;
@@ -406,33 +406,26 @@ void P_v13_UnArchiveWorld(void)
         line = P_ToPtr(DMU_LINEDEF, i);
         xline = P_ToXLine(line);
 
-        xline->flags = Reader_ReadInt16(svReader);
+        xline->flags   = Reader_ReadInt16(svReader);
         xline->special = Reader_ReadInt16(svReader);
-        /*xline->tag = **/Reader_ReadInt16(svReader);
+        /*xline->tag    =*/Reader_ReadInt16(svReader);
 
         for(j = 0; j < 2; j++)
         {
-            SideDef* sdef;
-
-            if(j == 0)
-                sdef = P_GetPtrp(line, DMU_SIDEDEF0);
-            else
-                sdef = P_GetPtrp(line, DMU_SIDEDEF1);
-
-            if(!sdef)
-                continue;
+            SideDef* sdef = P_GetPtrp(line, j == 0? DMU_SIDEDEF0 : DMU_SIDEDEF1);
+            if(!sdef) continue;
 
             offx = Reader_ReadInt16(svReader) << FRACBITS;
             offy = Reader_ReadInt16(svReader) << FRACBITS;
-            P_SetFixedp(sdef, DMU_TOP_MATERIAL_OFFSET_X, offx);
-            P_SetFixedp(sdef, DMU_TOP_MATERIAL_OFFSET_Y, offy);
+            P_SetFixedp(sdef, DMU_TOP_MATERIAL_OFFSET_X,    offx);
+            P_SetFixedp(sdef, DMU_TOP_MATERIAL_OFFSET_Y,    offy);
             P_SetFixedp(sdef, DMU_MIDDLE_MATERIAL_OFFSET_X, offx);
             P_SetFixedp(sdef, DMU_MIDDLE_MATERIAL_OFFSET_Y, offy);
             P_SetFixedp(sdef, DMU_BOTTOM_MATERIAL_OFFSET_X, offx);
             P_SetFixedp(sdef, DMU_BOTTOM_MATERIAL_OFFSET_Y, offy);
-            P_SetPtrp(sdef, DMU_TOP_MATERIAL,    P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_TEXTURES, Reader_ReadInt16(svReader))));
-            P_SetPtrp(sdef, DMU_BOTTOM_MATERIAL, P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_TEXTURES, Reader_ReadInt16(svReader))));
-            P_SetPtrp(sdef, DMU_MIDDLE_MATERIAL, P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_TEXTURES, Reader_ReadInt16(svReader))));
+            P_SetPtrp  (sdef, DMU_TOP_MATERIAL,             P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_TEXTURES, Reader_ReadInt16(svReader))));
+            P_SetPtrp  (sdef, DMU_BOTTOM_MATERIAL,          P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_TEXTURES, Reader_ReadInt16(svReader))));
+            P_SetPtrp  (sdef, DMU_MIDDLE_MATERIAL,          P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_TEXTURES, Reader_ReadInt16(svReader))));
         }
     }
 }
@@ -447,7 +440,7 @@ static int removeThinker(thinker_t* th, void* context)
     return false; // Continue iteration.
 }
 
-void P_v13_UnArchiveThinkers(void)
+static void P_v13_UnArchiveThinkers(void)
 {
 typedef enum
 {
@@ -455,7 +448,7 @@ typedef enum
     TC_MOBJ
 } thinkerclass_t;
 
-    byte                tclass;
+    byte tclass;
 
     // Remove all the current thinkers.
     DD_IterateThinkers(NULL, removeThinker, NULL);
@@ -467,8 +460,7 @@ typedef enum
         tclass = Reader_ReadByte(svReader);
         switch(tclass)
         {
-        case TC_END:
-            return; // End of list.
+        case TC_END: return; // End of list.
 
         case TC_MOBJ:
             SV_v13_ReadMobj();
@@ -484,15 +476,15 @@ static int SV_ReadCeiling(ceiling_t *ceiling)
 {
 /* Original Heretic format:
 typedef struct {
-    thinker_t   thinker;        // was 12 bytes
-    ceilingtype_e   type;           // was 32bit int
-    Sector     *sector;
-    fixed_t     bottomheight, topheight;
-    fixed_t     speed;
-    boolean     crush;
-    int         direction;      // 1 = up, 0 = waiting, -1 = down
-    int         tag;            // ID
-    int         olddirection;
+    thinker_t thinker; ///< 12 bytes
+    ceilingtype_e type; ///< 32bit int
+    Sector* sector;
+    fixed_t bottomheight, topheight;
+    fixed_t speed;
+    boolean crush;
+    int direction; /// 1= up, 0= waiting, -1= down
+    int tag'
+    int olddirection;
 } v13_ceiling_t;
 */
     byte temp[SIZEOF_V13_THINKER_T];
@@ -509,12 +501,12 @@ typedef struct {
         Con_Error("tc_ceiling: bad sector number\n");
 
     ceiling->bottomHeight = FIX2FLT(Reader_ReadInt32(svReader));
-    ceiling->topHeight = FIX2FLT(Reader_ReadInt32(svReader));
-    ceiling->speed = FIX2FLT(Reader_ReadInt32(svReader));
-    ceiling->crush = Reader_ReadInt32(svReader);
-    ceiling->state = (Reader_ReadInt32(svReader) == -1? CS_DOWN : CS_UP);
-    ceiling->tag = Reader_ReadInt32(svReader);
-    ceiling->oldState = (Reader_ReadInt32(svReader) == -1? CS_DOWN : CS_UP);
+    ceiling->topHeight    = FIX2FLT(Reader_ReadInt32(svReader));
+    ceiling->speed        = FIX2FLT(Reader_ReadInt32(svReader));
+    ceiling->crush        = Reader_ReadInt32(svReader);
+    ceiling->state        = (Reader_ReadInt32(svReader) == -1? CS_DOWN : CS_UP);
+    ceiling->tag          = Reader_ReadInt32(svReader);
+    ceiling->oldState     = (Reader_ReadInt32(svReader) == -1? CS_DOWN : CS_UP);
 
     ceiling->thinker.function = T_MoveCeiling;
     if(!(temp + V13_THINKER_T_FUNC_OFFSET))
@@ -751,36 +743,35 @@ typedef struct {
  * T_Glow, (glow_t: Sector *),
  * T_PlatRaise, (plat_t: Sector *), - active list
  */
-void P_v13_UnArchiveSpecials(void)
+static void P_v13_UnArchiveSpecials(void)
 {
-enum {
-    tc_ceiling,
-    tc_door,
-    tc_floor,
-    tc_plat,
-    tc_flash,
-    tc_strobe,
-    tc_glow,
-    tc_endspecials
-};
+    enum {
+        tc_ceiling,
+        tc_door,
+        tc_floor,
+        tc_plat,
+        tc_flash,
+        tc_strobe,
+        tc_glow,
+        tc_endspecials
+    };
 
-    byte        tclass;
-    ceiling_t  *ceiling;
-    door_t   *door;
-    floor_t *floor;
-    plat_t     *plat;
-    lightflash_t *flash;
-    strobe_t   *strobe;
-    glow_t     *glow;
+    byte tclass;
+    ceiling_t* ceiling;
+    door_t* door;
+    floor_t* floor;
+    plat_t* plat;
+    lightflash_t* flash;
+    strobe_t* strobe;
+    glow_t* glow;
 
-    // read in saved thinkers
+    // Read in saved thinkers.
     for(;;)
     {
         tclass = Reader_ReadByte(svReader);
         switch(tclass)
         {
-        case tc_endspecials:
-            return;             // end of list
+        case tc_endspecials: return; // End of list.
 
         case tc_ceiling:
             ceiling = Z_Calloc(sizeof(*ceiling), PU_MAP, NULL);
