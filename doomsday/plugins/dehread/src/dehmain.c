@@ -44,9 +44,11 @@
 #  define strnicmp _strnicmp
 #endif
 
-// This plugin accesses the internal definition arrays. This dependency
-// should be removed entirely, either by making the plugin modify the
-// definitions via an API or by integrating the plugin into the engine.
+/**
+ * @todo This plugin accesses the internal definition arrays. This dependency
+ * should be removed entirely, either by making the plugin modify the
+ * definitions via an API or by integrating the plugin into the engine.
+ */
 #include "../../../engine/portable/include/def_data.h"
 struct font_s;
 

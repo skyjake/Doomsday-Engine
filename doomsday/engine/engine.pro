@@ -298,21 +298,21 @@ DENG_HEADERS += \
     portable/include/r_things.h \
     portable/include/r_util.h \
     portable/include/r_world.h \
-    portable/include/rend_bias.h \
-    portable/include/rend_clip.h \
-    portable/include/rend_console.h \
-    portable/include/rend_decor.h \
-    portable/include/rend_dynlight.h \
-    portable/include/rend_fakeradio.h \
-    portable/include/rend_font.h \
-    portable/include/rend_halo.h \
-    portable/include/rend_list.h \
-    portable/include/rend_main.h \
-    portable/include/rend_model.h \
-    portable/include/rend_particle.h \
-    portable/include/rend_shadow.h \
-    portable/include/rend_sky.h \
-    portable/include/rend_sprite.h \
+    portable/include/render/rend_bias.h \
+    portable/include/render/rend_clip.h \
+    portable/include/render/rend_console.h \
+    portable/include/render/rend_decor.h \
+    portable/include/render/rend_dynlight.h \
+    portable/include/render/rend_fakeradio.h \
+    portable/include/render/rend_font.h \
+    portable/include/render/rend_halo.h \
+    portable/include/render/rend_list.h \
+    portable/include/render/rend_main.h \
+    portable/include/render/rend_model.h \
+    portable/include/render/rend_particle.h \
+    portable/include/render/rend_shadow.h \
+    portable/include/render/rend_sky.h \
+    portable/include/render/rend_sprite.h \
     portable/include/resourcenamespace.h \
     portable/include/s_cache.h \
     portable/include/s_environ.h \
@@ -369,6 +369,7 @@ DENG_HEADERS += \
 
 INCLUDEPATH += \
     $$DENG_INCLUDE_DIR \
+    $$DENG_INCLUDE_DIR/render \
     $$DENG_API_DIR
 
 HEADERS += \
@@ -584,21 +585,21 @@ SOURCES += \
     portable/src/r_world.c \
     portable/src/reader.c \
     portable/src/rect.c \
-    portable/src/rend_bias.c \
-    portable/src/rend_clip.cpp \
-    portable/src/rend_console.c \
-    portable/src/rend_decor.c \
-    portable/src/rend_dynlight.c \
-    portable/src/rend_fakeradio.c \
-    portable/src/rend_font.c \
-    portable/src/rend_halo.c \
-    portable/src/rend_list.c \
-    portable/src/rend_main.c \
-    portable/src/rend_model.c \
-    portable/src/rend_particle.c \
-    portable/src/rend_shadow.c \
-    portable/src/rend_sky.c \
-    portable/src/rend_sprite.c \
+    portable/src/render/rend_bias.c \
+    portable/src/render/rend_clip.cpp \
+    portable/src/render/rend_console.c \
+    portable/src/render/rend_decor.c \
+    portable/src/render/rend_dynlight.c \
+    portable/src/render/rend_fakeradio.c \
+    portable/src/render/rend_font.c \
+    portable/src/render/rend_halo.c \
+    portable/src/render/rend_list.c \
+    portable/src/render/rend_main.c \
+    portable/src/render/rend_model.c \
+    portable/src/render/rend_particle.c \
+    portable/src/render/rend_shadow.c \
+    portable/src/render/rend_sky.c \
+    portable/src/render/rend_sprite.c \
     portable/src/resourcenamespace.c \
     portable/src/s_cache.c \
     portable/src/s_environ.cpp \
