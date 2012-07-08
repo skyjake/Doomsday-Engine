@@ -4931,7 +4931,7 @@ static boolean openGameSaveFile(const char* fileName, boolean write)
     return true;
 }
 
-static int loadGameWorker(SaveInfo* saveInfo)
+static int SV_LoadState(SaveInfo* saveInfo)
 {
     int i;
     char buf[80];
@@ -4943,14 +4943,7 @@ static int loadGameWorker(SaveInfo* saveInfo)
     playerHeaderOK = false; // Uninitialized.
 
     if(!openGameSaveFile(Str_Text(SaveInfo_FilePath(saveInfo)), false))
-    {
-        // It might be an original game save?
-#if __JDOOM__
-        return SV_LoadState_Dm_v19(saveInfo);
-#elif __JHERETIC__
-        return SV_LoadState_Hr_v13(saveInfo);
-#endif
-    }
+        return 1; // Failed?
 
     // Read the header again.
     /// @todo Seek past the header straight to the game state.
@@ -5122,13 +5115,48 @@ static int loadGameWorker(SaveInfo* saveInfo)
     NetSv_LoadGame(SaveInfo_GameId(saveInfo));
 #endif
 
+    return 0;
+}
+
+static void onLoadStateSuccess(void)
+{
+    int i;
+
     // Let the engine know where the local players are now.
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         R_UpdateConsoleView(i);
     }
 
-    return 0; // Success!
+    // Spawn particle generators, fix HOMS etc, etc...
+    R_SetupMap(DDSMM_AFTER_LOADING, 0);
+}
+
+static int loadStateWorker(SaveInfo* saveInfo)
+{
+    int loadError = true; // Failed.
+    if(recogniseState(saveInfo))
+    {
+        loadError = SV_LoadState(saveInfo);
+    }
+    // Perhaps an original game save?
+#if __JDOOM__
+    else if(SV_RecogniseState_Dm_v19(saveInfo))
+    {
+        loadError = SV_LoadState_Dm_v19(saveInfo);
+    }
+#endif
+#if __JHERETIC__
+    else if(SV_RecogniseState_Hr_v13(saveInfo))
+    {
+        loadError = SV_LoadState_Hr_v13(saveInfo);
+    }
+#endif
+    if(!loadError)
+    {
+        onLoadStateSuccess();
+    }
+    return !loadError;
 }
 
 boolean SV_LoadGame(int slot)
@@ -5158,7 +5186,7 @@ boolean SV_LoadGame(int slot)
 #endif
 
     saveInfo = SV_SaveInfoForSlot(logicalSlot);
-    loadError = loadGameWorker(saveInfo);
+    loadError = loadStateWorker(saveInfo);
 
     if(!loadError)
     {
@@ -5338,9 +5366,6 @@ static void unarchiveMap(void)
     SV_FreeThingArchive();
     Z_Free(saveBuffer);
 #endif
-
-    // Spawn particle generators, fix HOMS etc, etc...
-    R_SetupMap(DDSMM_AFTER_LOADING, 0);
 }
 
 static int saveGameWorker(void* parameters)

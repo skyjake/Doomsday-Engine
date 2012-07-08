@@ -883,9 +883,6 @@ int SV_LoadState_Hr_v13(SaveInfo* info)
     svReader = NULL;
     SV_CloseFile_Hr_v13();
 
-    // Spawn particle generators.
-    R_SetupMap(DDSMM_AFTER_LOADING, 0);
-
     return 0; // Success!
 }
 
