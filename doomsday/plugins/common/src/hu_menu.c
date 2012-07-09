@@ -5248,8 +5248,12 @@ void Hu_MenuPlayerClassPreviewTicker(mn_object_t* ob)
             pClass %= 3; // Number of user-selectable classes.
 
             MNMobjPreview_SetPlayerClass(ob, pClass);
-            MNMobjPreview_SetMobjType(ob, (PCLASS_NONE == pClass? MT_NONE : PCLASS_INFO(pClass)->mobjType));
+            MNMobjPreview_SetMobjType(ob, PCLASS_INFO(pClass)->mobjType);
         }
+
+        // Fighter is Yellow, others Red by default.
+        MNMobjPreview_SetTranslationClass(ob, pClass);
+        MNMobjPreview_SetTranslationMap(ob, pClass == PCLASS_FIGHTER? 2 : 0);
     }
 
     // Call MNMobjPreview's ticker now we've done our own processing.
