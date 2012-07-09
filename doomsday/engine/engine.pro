@@ -177,7 +177,6 @@ DENG_HEADERS += \
     portable/include/con_busy.h \
     portable/include/con_config.h \
     portable/include/con_main.h \
-    portable/include/concurrency.h \
     portable/include/consolewindow.h \
     portable/include/dam_file.h \
     portable/include/dam_main.h \
@@ -188,7 +187,6 @@ DENG_HEADERS += \
     portable/include/dd_main.h \
     portable/include/dd_pinit.h \
     portable/include/dd_version.h \
-    portable/include/dd_zone.h \
     portable/include/de_audio.h \
     portable/include/de_base.h \
     portable/include/de_bsp.h \
@@ -224,7 +222,6 @@ DENG_HEADERS += \
     portable/include/fs_util.h \
     portable/include/game.h \
     portable/include/gamemap.h \
-    portable/include/garbage.h \
     portable/include/generators.h \
     portable/include/gl_defer.h \
     portable/include/gl_deferredapi.h \
@@ -301,21 +298,22 @@ DENG_HEADERS += \
     portable/include/r_things.h \
     portable/include/r_util.h \
     portable/include/r_world.h \
-    portable/include/rend_bias.h \
-    portable/include/rend_clip.h \
-    portable/include/rend_console.h \
-    portable/include/rend_decor.h \
-    portable/include/rend_dynlight.h \
-    portable/include/rend_fakeradio.h \
-    portable/include/rend_font.h \
-    portable/include/rend_halo.h \
-    portable/include/rend_list.h \
-    portable/include/rend_main.h \
-    portable/include/rend_model.h \
-    portable/include/rend_particle.h \
-    portable/include/rend_shadow.h \
-    portable/include/rend_sky.h \
-    portable/include/rend_sprite.h \
+    portable/include/render/rend_bias.h \
+    portable/include/render/rend_clip.h \
+    portable/include/render/rend_console.h \
+    portable/include/render/rend_decor.h \
+    portable/include/render/rend_dynlight.h \
+    portable/include/render/rend_fakeradio.h \
+    portable/include/render/rend_font.h \
+    portable/include/render/rend_halo.h \
+    portable/include/render/rend_list.h \
+    portable/include/render/rend_main.h \
+    portable/include/render/rend_model.h \
+    portable/include/render/rend_particle.h \
+    portable/include/render/rend_shadow.h \
+    portable/include/render/rend_sky.h \
+    portable/include/render/rend_sprite.h \
+    portable/include/render/vignette.h \
     portable/include/resourcenamespace.h \
     portable/include/s_cache.h \
     portable/include/s_environ.h \
@@ -362,6 +360,7 @@ DENG_HEADERS += \
     portable/include/wadfile.h \
     portable/include/window.h \
     portable/include/zipfile.h \
+    portable/include/zonedebug.h \
     portable/src/updater/downloaddialog.h \
     portable/src/updater/updateavailabledialog.h \
     portable/src/updater/updaterdialog.h \
@@ -371,6 +370,7 @@ DENG_HEADERS += \
 
 INCLUDEPATH += \
     $$DENG_INCLUDE_DIR \
+    $$DENG_INCLUDE_DIR/render \
     $$DENG_API_DIR
 
 HEADERS += \
@@ -478,7 +478,6 @@ SOURCES += \
     portable/src/con_config.c \
     portable/src/con_data.c \
     portable/src/con_main.c \
-    portable/src/concurrency.cpp \
     portable/src/dam_file.c \
     portable/src/dam_main.c \
     portable/src/dd_help.c \
@@ -489,7 +488,6 @@ SOURCES += \
     portable/src/dd_pinit.c \
     portable/src/dd_plugin.c \
     portable/src/dd_wad.c \
-    portable/src/dd_zone.c \
     portable/src/def_data.c \
     portable/src/def_main.c \
     portable/src/def_read.c \
@@ -509,7 +507,6 @@ SOURCES += \
     portable/src/fs_util.c \
     portable/src/game.c \
     portable/src/gamemap.c \
-    portable/src/garbage.cpp \
     portable/src/generators.c \
     portable/src/gl_defer.c \
     portable/src/gl_deferredapi.c \
@@ -589,21 +586,22 @@ SOURCES += \
     portable/src/r_world.c \
     portable/src/reader.c \
     portable/src/rect.c \
-    portable/src/rend_bias.c \
-    portable/src/rend_clip.cpp \
-    portable/src/rend_console.c \
-    portable/src/rend_decor.c \
-    portable/src/rend_dynlight.c \
-    portable/src/rend_fakeradio.c \
-    portable/src/rend_font.c \
-    portable/src/rend_halo.c \
-    portable/src/rend_list.c \
-    portable/src/rend_main.c \
-    portable/src/rend_model.c \
-    portable/src/rend_particle.c \
-    portable/src/rend_shadow.c \
-    portable/src/rend_sky.c \
-    portable/src/rend_sprite.c \
+    portable/src/render/rend_bias.c \
+    portable/src/render/rend_clip.cpp \
+    portable/src/render/rend_console.c \
+    portable/src/render/rend_decor.c \
+    portable/src/render/rend_dynlight.c \
+    portable/src/render/rend_fakeradio.c \
+    portable/src/render/rend_font.c \
+    portable/src/render/rend_halo.c \
+    portable/src/render/rend_list.c \
+    portable/src/render/rend_main.c \
+    portable/src/render/rend_model.c \
+    portable/src/render/rend_particle.c \
+    portable/src/render/rend_shadow.c \
+    portable/src/render/rend_sky.c \
+    portable/src/render/rend_sprite.c \
+    portable/src/render/vignette.c \
     portable/src/resourcenamespace.c \
     portable/src/s_cache.c \
     portable/src/s_environ.cpp \
@@ -652,7 +650,8 @@ SOURCES += \
     portable/src/wadfile.c \
     portable/src/window.cpp \
     portable/src/writer.c \
-    portable/src/zipfile.c
+    portable/src/zipfile.c \
+    portable/src/zonedebug.c
 
 !deng_nosdlmixer:!deng_nosdl {
     HEADERS += portable/include/sys_audiod_sdlmixer.h

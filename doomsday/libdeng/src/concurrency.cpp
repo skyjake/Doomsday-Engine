@@ -1,6 +1,6 @@
 /**
  * @file concurrency.cpp
- * Brief description of the source file. @ingroup system
+ * Concurrency: threads, mutexes, semaphores. @ingroup system
  *
  * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
@@ -21,9 +21,8 @@
  * 02110-1301 USA</small>
  */
 
-#include "concurrency.h"
-#include "garbage.h"
-#include "dd_types.h"
+#include "de/concurrency.h"
+#include "de/garbage.h"
 #include <QMutex>
 #include <QApplication>
 #include <QDebug>

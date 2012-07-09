@@ -67,4 +67,59 @@
 #  define DENG_DEBUG_ONLY(x)
 #endif
 
+/*
+ * Utility macros.
+ */
+
+#define CPP_BOOL(x)         ((x) != 0)
+
+#define INRANGE_OF(x, y, r) ((x) >= (y) - (r) && (x) <= (y) + (r))
+
+#define MAX_OF(x, y)        ((x) > (y)? (x) : (y))
+
+#define MIN_OF(x, y)        ((x) < (y)? (x) : (y))
+
+#define MINMAX_OF(a, x, b)  ((x) < (a)? (a) : (x) > (b)? (b) : (x))
+
+#define SIGN_OF(x)          ((x) > 0? +1 : (x) < 0? -1 : 0)
+
+#define INRANGE_OF(x, y, r) ((x) >= (y) - (r) && (x) <= (y) + (r))
+
+#define FEQUAL(x, y)        (INRANGE_OF(x, y, FLOATEPSILON))
+
+#define ROUND(x)            ((int) (((x) < 0.0f)? ((x) - 0.5f) : ((x) + 0.5f)))
+
+#define ABS(x)              ((x) >= 0 ? (x) : -(x))
+
+/// Ceiling of integer quotient of @a a divided by @a b.
+#define CEILING(a, b)       ((a) % (b) == 0 ? (a)/(b) : (a)/(b)+1)
+
+// Automatically define the basic types for convenience.
+#include <de/types.h>
+
+/*
+ * Main interface.
+ */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ * Initializes the libdeng1 library. This must be the first function called
+ * before any other libdeng1 functions.
+ */
+DENG_PUBLIC void Libdeng_Init(void);
+
+/**
+ * Shuts down the libdeng1 library. Frees any internal resources allocated by
+ * the library's subsystems. Must be called when the library is no longer
+ * needed.
+ */
+DENG_PUBLIC void Libdeng_Shutdown(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
 #endif // LIBDENG_H

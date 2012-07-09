@@ -66,11 +66,11 @@
 #include <de/App>
 #include <de/Log>
 #include <de/c_wrapper.h>
+#include <de/garbage.h>
 #include "de_platform.h"
 #include "dd_loop.h"
 #include "con_main.h"
 #include "window.h"
-#include "garbage.h"
 #include "displaymode.h"
 #include "updater.h"
 #include "sys_system.h"
@@ -91,14 +91,14 @@ boolean DD_Init(void);
 /**
  * libdeng2 application core.
  */
-LegacyCore* de2LegacyCore;
+static LegacyCore* de2LegacyCore;
 
 }
 
 static void continueInitWithEventLoopRunning(void)
 {
     // This function only needs to be called once, so clear the callback.
-    LegacyCore_SetLoopFunc(de2LegacyCore, 0);
+    LegacyCore_SetLoopFunc(0);
 
     // Show the main window. This causes initialization to finish (in busy mode)
     // as the canvas is visible and ready for initialization.
@@ -132,8 +132,6 @@ int main(int argc, char** argv)
         }
     }
 
-    Garbage_Init();
-
     // Application core.
     de::App dengApp(argc, argv, useGUI);
 
@@ -151,7 +149,9 @@ int main(int argc, char** argv)
 
     // C interface to the app.
     de2LegacyCore = LegacyCore_New(&dengApp);
-    LegacyCore_SetTerminateFunc(de2LegacyCore, handleLegacyCoreTerminate);
+    LegacyCore_SetTerminateFunc(handleLegacyCoreTerminate);
+
+    Libdeng_Init();
 
     QMenuBar* menuBar = 0;
     if(useGUI)
@@ -183,7 +183,7 @@ int main(int argc, char** argv)
     DD_ComposeMainWindowTitle(title);
     Window_New(novideo? WT_CONSOLE : WT_NORMAL, title);
 
-    LegacyCore_SetLoopFunc(de2LegacyCore, continueInitWithEventLoopRunning);
+    LegacyCore_SetLoopFunc(continueInitWithEventLoopRunning);
 
     // Run the main loop.
     int result = DD_GameLoop();

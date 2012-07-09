@@ -85,33 +85,6 @@ extern int tantoangle[SLOPERANGE + 1];  // get from tables.c
 
 // CODE --------------------------------------------------------------------
 
-void *M_Malloc(size_t size)
-{
-    return malloc(size);
-}
-
-void *M_Calloc(size_t size)
-{
-    return calloc(size, 1);
-}
-
-void *M_Realloc(void *ptr, size_t size)
-{
-    return realloc(ptr, size);
-}
-
-void* M_MemDup(const void* ptr, size_t size)
-{
-    void* copy = M_Malloc(size);
-    memcpy(copy, ptr, size);
-    return copy;
-}
-
-void M_Free(void *ptr)
-{
-    free(ptr);
-}
-
 char* M_SkipWhite(char* str)
 {
     while(*str && ISSPACE(*str))

@@ -27,25 +27,11 @@
 #ifndef LIBDENG_GARBAGE_COLLECTOR_H
 #define LIBDENG_GARBAGE_COLLECTOR_H
 
-#include "dd_types.h"
+#include <de/libdeng.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-void Garbage_Init(void);
-
-/**
- * Recycles all collected garbage and deletes the collectors. Called at engine
- * shutdown. Should be called in the main thread.
- */
-void Garbage_Shutdown(void);
-
-/**
- * Recycles all garbage of the current thread and deletes the thread's garbage
- * collector. Should be called right before the thread ends.
- */
-void Garbage_ClearForThread(void);
 
 /**
  * Puts a region of allocated memory up for garbage collection in the current
@@ -54,7 +40,7 @@ void Garbage_ClearForThread(void);
  *
  * @param ptr  Pointer to memory. Can be allocated with malloc() or Z_Malloc().
  */
-void Garbage_Trash(void* ptr);
+DENG_PUBLIC void Garbage_Trash(void* ptr);
 
 /**
  * Pointer to an instance destructor;
@@ -68,7 +54,7 @@ typedef void (*GarbageDestructor)(void*);
  * @param ptr  Pointer to the object.
  * @param destructor  Function that destroys the object.
  */
-void Garbage_TrashInstance(void* ptr, GarbageDestructor destructor);
+DENG_PUBLIC void Garbage_TrashInstance(void* ptr, GarbageDestructor destructor);
 
 /**
  * Determines whether a memory pointer has been trashed. Only the current
@@ -78,7 +64,7 @@ void Garbage_TrashInstance(void* ptr, GarbageDestructor destructor);
  *
  * @return @c true if the pointer is in the trash.
  */
-boolean Garbage_IsTrashed(const void* ptr);
+DENG_PUBLIC boolean Garbage_IsTrashed(const void* ptr);
 
 /**
  * Removes a region from the current thread's collector, if it is still there.
@@ -87,7 +73,7 @@ boolean Garbage_IsTrashed(const void* ptr);
  *
  * @param ptr  Pointer to memory allocated from the @ref memzone.
  */
-void Garbage_Untrash(void* ptr);
+DENG_PUBLIC void Garbage_Untrash(void* ptr);
 
 /**
  * Removes a pointer from the garbage. This needs to be called if the
@@ -95,12 +81,32 @@ void Garbage_Untrash(void* ptr);
  *
  * @param ptr  Pointer to memory.
  */
-void Garbage_RemoveIfTrashed(void* ptr);
+DENG_PUBLIC void Garbage_RemoveIfTrashed(void* ptr);
 
 /**
  * Frees all pointers given over to the current thread's garbage collector.
+ * Every thread that uses garbage collection must call this periodically
+ * or the trashed memory will not be freed.
  */
-void Garbage_Recycle(void);
+DENG_PUBLIC void Garbage_Recycle(void);
+
+/**
+ * Recycles all garbage of the current thread and deletes the thread's garbage
+ * collector. Should be called right before the thread ends.
+ *
+ * This differs from Garbage_Recycle() in that all the thread-specific internal
+ * resources are freed, not just the thread's trashed memory. The thread can
+ * safely end after this.
+ */
+DENG_PUBLIC void Garbage_ClearForThread(void);
+
+void Garbage_Init(void);
+
+/**
+ * Recycles all collected garbage and deletes the collectors. Called at engine
+ * shutdown. Should be called in the main thread.
+ */
+void Garbage_Shutdown(void);
 
 #ifdef __cplusplus
 } // extern "C"

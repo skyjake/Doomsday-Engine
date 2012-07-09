@@ -48,6 +48,7 @@
 #include "de_ui.h"
 
 #include "font.h"
+#include "vignette.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1159,6 +1160,8 @@ void R_RenderPlayerView(int num)
     {
         GL_DrawFilter();
     }
+
+    Vignette_Render(&vd->window, fieldOfView);
 
     // Now we can show the viewPlayer's mobj again.
     if(!(player->shared.flags & DDPF_CHASECAM))

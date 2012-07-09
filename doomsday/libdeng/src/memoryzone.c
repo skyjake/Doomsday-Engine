@@ -1,5 +1,5 @@
 /**
- * @file dd_zone.c
+ * @file memoryzone.c
  * Memory zone implementation. @ingroup memzone
  *
  * The zone is composed of multiple memory volumes. New volumes get created on
@@ -52,22 +52,26 @@
  */
 
 #include <stdlib.h>
-#include <assert.h> // Define NDEBUG in release builds.
+#include <string.h>
+#include "de/memory.h"
+#include "de/concurrency.h"
+#include "de/c_wrapper.h"
+#include "memoryzone_private.h"
 
-#include "de_base.h"
-#include "de_console.h"
-#include "de_system.h"
-#include "de_misc.h"
+//#include "de_base.h"
+//#include "de_console.h"
+//#include "de_system.h"
+//#include "de_misc.h"
 
+/*
 #ifdef _DEBUG
 #  include "de_graphics.h"
 #  include "de_render.h"
 #endif
+*/
 
 // Size of one memory zone volume.
 #define MEMORY_VOLUME_SIZE  0x2000000   // 32 Mb
-
-#define ZONEID  0x1d4a11
 
 #define MINFRAGMENT (sizeof(memblock_t)+32)
 
@@ -75,17 +79,6 @@
 
 /// Special user pointer for blocks that are in use but have no single owner.
 #define MEMBLOCK_USER_ANONYMOUS    ((void*) 2)
-
-/**
- * The memory is composed of multiple volumes.  New volumes are
- * allocated when necessary.
- */
-typedef struct memvolume_s {
-    memzone_t  *zone;
-    size_t size;
-    size_t allocatedBytes;  ///< Total number of allocated bytes.
-    struct memvolume_s *next;
-} memvolume_t;
 
 // Used for block allocation of memory from the zone.
 typedef struct zblockset_block_s {
@@ -140,7 +133,7 @@ long superatol(char *s)
  * Create a new memory volume.  The new volume is added to the list of
  * memory volumes.
  */
-memvolume_t *Z_Create(size_t volumeSize)
+static memvolume_t *createVolume(size_t volumeSize)
 {
     memblock_t     *block;
     memvolume_t    *vol = M_Calloc(sizeof(memvolume_t));
@@ -182,7 +175,8 @@ memvolume_t *Z_Create(size_t volumeSize)
 
     unlockZone();
 
-    VERBOSE(Con_Message("Z_Create: New %.1f MB memory volume.\n", vol->size / 1024.0 / 1024.0));
+    LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_MESSAGE,
+            "Created a new %.1f MB memory volume.\n", vol->size / 1024.0 / 1024.0);
 
     Z_CheckHeap();
 
@@ -199,13 +193,10 @@ int Z_Init(void)
     zoneMutex = Sys_CreateMutex("ZONE_MUTEX");
 
     // Create the first volume.
-    Z_Create(MEMORY_VOLUME_SIZE);
+    createVolume(MEMORY_VOLUME_SIZE);
     return true;
 }
 
-/**
- * Shut down the memory zone by destroying all the volumes.
- */
 void Z_Shutdown(void)
 {
     int             numVolumes = 0;
@@ -221,7 +212,7 @@ void Z_Shutdown(void)
         numVolumes++;
         totalMemory += vol->size;
 
-#ifdef FAKE_MEMORY_ZONE
+#ifdef LIBDENG_FAKE_MEMORY_ZONE
         Z_FreeTags(0, DDMAXINT);
 #endif
 
@@ -229,14 +220,14 @@ void Z_Shutdown(void)
         M_Free(vol);
     }
 
-    LegacyCore_PrintfLogFragmentAtLevel(de2LegacyCore, DE2_LOG_INFO,
+    LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_INFO,
             "Z_Shutdown: Used %i volumes, total %u bytes.\n", numVolumes, totalMemory);
 
     Sys_DestroyMutex(zoneMutex);
     zoneMutex = 0;
 }
 
-#ifdef FAKE_MEMORY_ZONE
+#ifdef LIBDENG_FAKE_MEMORY_ZONE
 memblock_t *Z_GetBlock(void *ptr)
 {
     memvolume_t    *volume;
@@ -271,19 +262,18 @@ static void freeBlock(void* ptr, memblock_t** tracked)
     memblock_t     *block, *other;
     memvolume_t    *volume;
 
-    if(!ptr)
-    {
-        VERBOSE(Con_Message("Z_Free: Warning: Attempt to free NULL ignored.\n") );
-        return;
-    }
+    if(!ptr) return;
 
     lockZone();
 
     block = Z_GetBlock(ptr);
-    if(block->id != ZONEID)
+    if(block->id != LIBDENG_ZONEID)
     {
         unlockZone();
-        Con_Error("Z_Free: Attempt to free pointer without ZONEID.");
+        DENG_ASSERT(block->id == LIBDENG_ZONEID);
+        LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_WARNING,
+                "Attempted to free pointer without ZONEID.\n");
+        return;
     }
 
     // The block was allocated from this volume.
@@ -296,7 +286,7 @@ static void freeBlock(void* ptr, memblock_t** tracked)
     block->volume = NULL;
     block->id = 0;
 
-#ifdef FAKE_MEMORY_ZONE
+#ifdef LIBDENG_FAKE_MEMORY_ZONE
     M_Free(block->area);
     block->area = NULL;
     block->areaSize = 0;
@@ -411,7 +401,7 @@ static __inline memblock_t* rewindRover(memvolume_t* vol, memblock_t* rover, int
     return base;
 }
 
-static __inline boolean isVolumeTooFull(memvolume_t* vol)
+static boolean isVolumeTooFull(memvolume_t* vol)
 {
     return vol->allocatedBytes > vol->size * .95f;
 }
@@ -452,7 +442,7 @@ static void splitFreeBlock(memblock_t* block, size_t size)
     newBlock->next = block->next;
     newBlock->next->prev = newBlock;
     newBlock->seqFirst = newBlock->seqLast = NULL;
-#ifdef FAKE_MEMORY_ZONE
+#ifdef LIBDENG_FAKE_MEMORY_ZONE
     newBlock->area = 0;
     newBlock->areaSize = 0;
 #endif
@@ -460,19 +450,18 @@ static void splitFreeBlock(memblock_t* block, size_t size)
     block->size = size;
 }
 
-/**
- * You can pass a NULL user if the tag is < PU_PURGELEVEL.
- */
 void *Z_Malloc(size_t size, int tag, void *user)
 {
     memblock_t* start, *iter;
     memvolume_t* volume;
 
+    DENG_ASSERT(tag >= PU_APPSTATIC && tag <= PU_CACHE);
+
     if(tag < PU_APPSTATIC || tag > PU_CACHE)
     {
-        Con_Error("Z_Malloc: Invalid purgelevel %i.", tag);
+        LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_WARNING, "Z_Malloc: Invalid purgelevel %i, cannot allocate memory.\n", tag);
+        return NULL;
     }
-
     if(!size)
     {
         // You can't allocate "nothing."
@@ -503,7 +492,7 @@ void *Z_Malloc(size_t size, int tag, void *user)
             if(newVolumeSize < size + 0x1000)
                 newVolumeSize = size + 0x1000; // with some spare memory
 
-            volume = Z_Create(newVolumeSize);
+            volume = createVolume(newVolumeSize);
         }
 
         if(isVolumeTooFull(volume))
@@ -512,11 +501,7 @@ void *Z_Malloc(size_t size, int tag, void *user)
             continue;
         }
 
-        if(!volume->zone)
-        {
-            unlockZone();
-            Con_Error("Z_Malloc: Volume without zone.");
-        }
+        DENG_ASSERT(volume->zone);
 
         // Scan through the block list looking for the first free block of
         // sufficient size, throwing out any purgable blocks along the
@@ -558,7 +543,7 @@ void *Z_Malloc(size_t size, int tag, void *user)
                 {
                     memblock_t* old = iter;
                     iter = iter->prev; // Step back.
-#ifdef FAKE_MEMORY_ZONE
+#ifdef LIBDENG_FAKE_MEMORY_ZONE
                     freeBlock(old->area, &start);
 #else
                     freeBlock((byte *) old + sizeof(memblock_t), &start);
@@ -587,7 +572,7 @@ void *Z_Malloc(size_t size, int tag, void *user)
             {
                 // Scanned all the way through, no suitable space found.
                 gotoNextVolume = true;
-                LegacyCore_PrintfLogFragmentAtLevel(de2LegacyCore, DE2_LOG_DEBUG,
+                LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_DEBUG,
                         "Z_Malloc: gave up on volume after %i checks\n", numChecked);
                 break;
             }
@@ -604,7 +589,7 @@ void *Z_Malloc(size_t size, int tag, void *user)
             splitFreeBlock(iter, size);
         }
 
-#ifdef FAKE_MEMORY_ZONE
+#ifdef LIBDENG_FAKE_MEMORY_ZONE
         iter->areaSize = size - sizeof(memblock_t);
         iter->area = M_Malloc(iter->areaSize);
 #endif
@@ -612,7 +597,7 @@ void *Z_Malloc(size_t size, int tag, void *user)
         if(user)
         {
             iter->user = user;      // mark as an in use block
-#ifdef FAKE_MEMORY_ZONE
+#ifdef LIBDENG_FAKE_MEMORY_ZONE
             *(void **) user = iter->area;
 #else
             *(void **) user = (void *) ((byte *) iter + sizeof(memblock_t));
@@ -620,12 +605,9 @@ void *Z_Malloc(size_t size, int tag, void *user)
         }
         else
         {
-            if(tag >= PU_PURGELEVEL)
-            {
-                unlockZone();
-                Con_Error("Z_Malloc: an owner is required for "
-                          "purgable blocks.\n");
-            }
+            // An owner is required for purgable blocks.
+            DENG_ASSERT(tag < PU_PURGELEVEL);
+
             iter->user = MEMBLOCK_USER_ANONYMOUS; // mark as in use, but unowned
         }
         iter->tag = tag;
@@ -662,11 +644,11 @@ void *Z_Malloc(size_t size, int tag, void *user)
         volume->allocatedBytes += iter->size;
 
         iter->volume = volume;
-        iter->id = ZONEID;
+        iter->id = LIBDENG_ZONEID;
 
         unlockZone();
 
-#ifdef FAKE_MEMORY_ZONE
+#ifdef LIBDENG_FAKE_MEMORY_ZONE
         return iter->area;
 #else
         return (void *) ((byte *) iter + sizeof(memblock_t));
@@ -674,11 +656,6 @@ void *Z_Malloc(size_t size, int tag, void *user)
     }
 }
 
-/**
- * Only resizes blocks with no user. If a block with a user is
- * reallocated, the user will lose its current block and be set to
- * NULL. Does not change the tag of existing blocks.
- */
 void *Z_Realloc(void *ptr, size_t n, int mallocTag)
 {
     int     tag = ptr ? Z_GetTag(ptr) : mallocTag;
@@ -695,7 +672,7 @@ void *Z_Realloc(void *ptr, size_t n, int mallocTag)
 
         // Has old data; copy it.
         memblock_t *block = Z_GetBlock(ptr);
-#ifdef FAKE_MEMORY_ZONE
+#ifdef LIBDENG_FAKE_MEMORY_ZONE
         bsize = block->areaSize;
 #else
         bsize = block->size - sizeof(memblock_t);
@@ -708,9 +685,6 @@ void *Z_Realloc(void *ptr, size_t n, int mallocTag)
     return p;
 }
 
-/**
- * Free memory blocks in all volumes with a tag in the specified range.
- */
 void Z_FreeTags(int lowTag, int highTag)
 {
     memvolume_t *volume;
@@ -727,7 +701,7 @@ void Z_FreeTags(int lowTag, int highTag)
             if(block->user) // An allocated block?
             {
                 if(block->tag >= lowTag && block->tag <= highTag)
-#ifdef FAKE_MEMORY_ZONE
+#ifdef LIBDENG_FAKE_MEMORY_ZONE
                     Z_Free(block->area);
 #else
                     Z_Free((byte *) block + sizeof(memblock_t));
@@ -741,18 +715,13 @@ void Z_FreeTags(int lowTag, int highTag)
     rewindStaticRovers();
 }
 
-/**
- * Check all zone volumes for consistency.
- */
 void Z_CheckHeap(void)
 {
     memvolume_t *volume;
     memblock_t *block;
     boolean     isDone;
 
-#ifdef _DEBUG
-    VERBOSE2( Con_Message("Z_CheckHeap\n") );
-#endif
+    LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_TRACE, "Z_CheckHeap\n");
 
     lockZone();
 
@@ -762,8 +731,12 @@ void Z_CheckHeap(void)
 
         // Validate the counter.
         if(allocatedMemoryInVolume(volume) != volume->allocatedBytes)
-            Con_Error("Z_CheckHeap: allocated bytes counter is off (counter:%u != actual:%u)\n",
-                      volume->allocatedBytes, allocatedMemoryInVolume(volume));
+        {
+            LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_CRITICAL,
+                "Z_CheckHeap: allocated bytes counter is off (counter:%u != actual:%u)\n",
+                volume->allocatedBytes, allocatedMemoryInVolume(volume));
+            LegacyCore_FatalError("Z_CheckHeap: zone book-keeping is wrong");
+        }
 
         // Does the memory in the blocks sum up to the total volume size?
         for(block = volume->zone->blockList.next;
@@ -772,15 +745,23 @@ void Z_CheckHeap(void)
             total += block->size;
         }
         if(total != volume->size - sizeof(memzone_t))
-            Con_Error("Z_CheckHeap: invalid total size of blocks (%u != %u)\n",
-                      total, volume->size - sizeof(memzone_t));
+        {
+            LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_CRITICAL,
+                    "Z_CheckHeap: invalid total size of blocks (%u != %u)\n",
+                    total, volume->size - sizeof(memzone_t));
+            LegacyCore_FatalError("Z_CheckHeap: zone book-keeping is wrong");
+        }
 
         // Does the last block extend all the way to the end?
         block = volume->zone->blockList.prev;
         if((byte*)block - ((byte*)volume->zone + sizeof(memzone_t)) + block->size != volume->size - sizeof(memzone_t))
-            Con_Error("Z_CheckHeap: last block does not cover the end (%u != %u)\n",
-                      (byte*)block - ((byte*)volume->zone + sizeof(memzone_t)) + block->size,
-                      volume->size - sizeof(memzone_t));
+        {
+            LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_CRITICAL,
+                    "Z_CheckHeap: last block does not cover the end (%u != %u)\n",
+                     (byte*)block - ((byte*)volume->zone + sizeof(memzone_t)) + block->size,
+                     volume->size - sizeof(memzone_t));
+            LegacyCore_FatalError("Z_CheckHeap: zone is corrupted");
+        }
 
         block = volume->zone->blockList.next;
         isDone = false;
@@ -790,17 +771,20 @@ void Z_CheckHeap(void)
             if(block->next != &volume->zone->blockList)
             {
                 if(block->size == 0)
-                    Con_Error("Z_CheckHeap: zero-size block\n");
+                    LegacyCore_FatalError("Z_CheckHeap: zero-size block");
                 if((byte *) block + block->size != (byte *) block->next)
-                    Con_Error("Z_CheckHeap: block size does not touch the "
-                              "next block\n");
+                    LegacyCore_FatalError("Z_CheckHeap: block size does not touch the "
+                              "next block");
                 if(block->next->prev != block)
-                    Con_Error("Z_CheckHeap: next block doesn't have proper "
-                              "back link\n");
+                    LegacyCore_FatalError("Z_CheckHeap: next block doesn't have proper "
+                              "back link");
                 if(!block->user && !block->next->user)
-                    Con_Error("Z_CheckHeap: two consecutive free blocks\n");
+                    LegacyCore_FatalError("Z_CheckHeap: two consecutive free blocks");
                 if(block->user == (void **) -1)
-                    Con_Error("Z_CheckHeap: bad user pointer %p\n", block->user);
+                {
+                    DENG_ASSERT(block->user != (void**) -1);
+                    LegacyCore_FatalError("Z_CheckHeap: bad user pointer");
+                }
 
                 /*
                 if(block->seqFirst == block)
@@ -821,7 +805,7 @@ void Z_CheckHeap(void)
                     {
                         if(block->next->seqFirst != block->seqFirst)
                         {
-                            Con_Error("Z_CheckHeap: disconnected sequence\n");
+                            LegacyCore_FatalError("Z_CheckHeap: disconnected sequence");
                         }
                     }
                 }
@@ -836,50 +820,48 @@ void Z_CheckHeap(void)
     unlockZone();
 }
 
-/**
- * Change the tag of a memory block.
- */
 void Z_ChangeTag2(void *ptr, int tag)
 {
     lockZone();
     {
         memblock_t *block = Z_GetBlock(ptr);
 
-        if(block->id != ZONEID)
-            Con_Error("Z_ChangeTag: Modifying a block without ZONEID.");
+        DENG_ASSERT(block->id == LIBDENG_ZONEID);
 
-        if(tag >= PU_PURGELEVEL && (unsigned long) block->user < 0x100)
-            Con_Error("Z_ChangeTag: An owner is required for purgable blocks.");
-        block->tag = tag;
+        if(tag >= PU_PURGELEVEL && PTR2INT(block->user) < 0x100)
+        {
+            LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_ERROR,
+                "Z_ChangeTag: An owner is required for purgable blocks.\n");
+        }
+        else
+        {
+            block->tag = tag;
+        }
     }
     unlockZone();
 }
 
-/**
- * Change the user of a memory block.
- */
 void Z_ChangeUser(void *ptr, void *newUser)
 {
     lockZone();
     {
         memblock_t *block = Z_GetBlock(ptr);
-
-        if(block->id != ZONEID)
-            Con_Error("Z_ChangeUser: Block without ZONEID.");
+        DENG_ASSERT(block->id == LIBDENG_ZONEID);
         block->user = newUser;
     }
     unlockZone();
 }
 
-/**
- * Get the user of a memory block.
- */
+uint Z_GetId(void* ptr)
+{
+    return ((memblock_t*) ((byte*)(ptr) - sizeof(memblock_t)))->id;
+}
+
 void *Z_GetUser(void *ptr)
 {
-    memblock_t     *block = Z_GetBlock(ptr);
+    memblock_t* block = Z_GetBlock(ptr);
 
-    if(block->id != ZONEID)
-        Con_Error("Z_GetUser: Block without ZONEID.");
+    DENG_ASSERT(block->id == LIBDENG_ZONEID);
     return block->user;
 }
 
@@ -888,10 +870,9 @@ void *Z_GetUser(void *ptr)
  */
 int Z_GetTag(void *ptr)
 {
-    memblock_t     *block = Z_GetBlock(ptr);
+    memblock_t* block = Z_GetBlock(ptr);
 
-    if(block->id != ZONEID)
-        Con_Error("Z_GetTag: Block without ZONEID.");
+    DENG_ASSERT(block->id == LIBDENG_ZONEID);
     return block->tag;
 }
 
@@ -899,7 +880,7 @@ boolean Z_Contains(void* ptr)
 {
     memvolume_t* volume;
     memblock_t* block = Z_GetBlock(ptr);
-    if(block->id != ZONEID)
+    if(block->id != LIBDENG_ZONEID)
     {
         // Could be in the zone, but does not look like an allocated block.
         return false;
@@ -916,9 +897,6 @@ boolean Z_Contains(void* ptr)
     return false;
 }
 
-/**
- * Memory allocation utility: malloc and clear.
- */
 void *Z_Calloc(size_t size, int tag, void *user)
 {
     void *ptr = Z_Malloc(size, tag, user);
@@ -927,9 +905,6 @@ void *Z_Calloc(size_t size, int tag, void *user)
     return ptr;
 }
 
-/**
- * Realloc and set possible new memory to zero.
- */
 void *Z_Recalloc(void *ptr, size_t n, int callocTag)
 {
     memblock_t     *block;
@@ -944,7 +919,7 @@ void *Z_Recalloc(void *ptr, size_t n, int callocTag)
     {
         p = Z_Malloc(n, Z_GetTag(ptr), NULL);
         block = Z_GetBlock(ptr);
-#ifdef FAKE_MEMORY_ZONE
+#ifdef LIBDENG_FAKE_MEMORY_ZONE
         bsize = block->areaSize;
 #else
         bsize = block->size - sizeof(memblock_t);
@@ -1074,8 +1049,9 @@ void Z_PrintStatus(void)
     size_t allocated = Z_AllocatedMemory();
     size_t wasted = Z_FreeMemory();
 
-    Con_Message("Memory zone status: %u volumes, %u bytes allocated, %u bytes free (%f%% in use)\n",
-                Z_VolumeCount(), (uint)allocated, (uint)wasted, (float)allocated/(float)(allocated+wasted)*100.f);
+    LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_INFO,
+            "Memory zone status: %u volumes, %u bytes allocated, %u bytes free (%f%% in use)\n",
+            Z_VolumeCount(), (uint)allocated, (uint)wasted, (float)allocated/(float)(allocated+wasted)*100.f);
 #endif
 }
 
@@ -1096,9 +1072,10 @@ static void addBlockToSet(zblockset_t* set)
     set->_blockCount++;
     set->_blocks = Z_Recalloc(set->_blocks, sizeof(zblockset_block_t) * set->_blockCount, set->_tag);
 
-    DEBUG_VERBOSE_Message(("addBlockToSet: set=%p blockCount=%u elemSize=%u elemCount=%u (total=%u)\n",
-                           set, set->_blockCount, (uint)set->_elementSize, set->_elementsPerBlock,
-                           (uint)(set->_blockCount * set->_elementSize * set->_elementsPerBlock)));
+    LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_DEBUG,
+            "addBlockToSet: set=%p blockCount=%u elemSize=%u elemCount=%u (total=%u)\n",
+             set, set->_blockCount, (uint)set->_elementSize, set->_elementsPerBlock,
+            (uint)(set->_blockCount * set->_elementSize * set->_elementsPerBlock));
 
     // Initialize the block's data.
     block = &set->_blocks[set->_blockCount - 1];
@@ -1144,11 +1121,8 @@ zblockset_t* ZBlockSet_New(size_t sizeOfElement, unsigned int batchSize, int tag
 {
     zblockset_t* set;
 
-    if(sizeOfElement == 0)
-        Con_Error("Attempted ZBlockSet_New with invalid sizeOfElement (==0).");
-
-    if(batchSize == 0)
-        Con_Error("Attempted ZBlockSet_New with invalid batchSize (==0).");
+    DENG_ASSERT(sizeOfElement > 0);
+    DENG_ASSERT(batchSize > 0);
 
     // Allocate the blockset.
     set = Z_Calloc(sizeof(*set), tag, NULL);
@@ -1178,147 +1152,13 @@ void ZBlockSet_Delete(zblockset_t* set)
     unlockZone();
 }
 
-#ifdef _DEBUG
-void Z_DrawRegion(memvolume_t* volume, RectRaw* rect, size_t start, size_t size, const float* color)
+#ifdef DENG_DEBUG
+void Z_GetPrivateData(MemoryZonePrivateData* pd)
 {
-    const int bytesPerRow = (volume->size - sizeof(memzone_t)) / rect->size.height;
-    const float toPixelScale = (float)rect->size.width / (float)bytesPerRow;
-    const size_t edge = rect->origin.x + rect->size.width;
-    int x = (start % bytesPerRow)*toPixelScale + rect->origin.x;
-    int y = start / bytesPerRow + rect->origin.y;
-    int pixels = MAX_OF(1, ceil(size * toPixelScale));
-
-    assert(start + size <= volume->size);
-
-    while(pixels > 0)
-    {
-        const int availPixels = edge - x;
-        const int usedPixels = MIN_OF(availPixels, pixels);
-
-        glColor4fv(color);
-        glVertex2i(x, y);
-        glVertex2i(x + usedPixels, y);
-
-        pixels -= usedPixels;
-
-        // Move to the next row.
-        y++;
-        x = rect->origin.x;
-    }
-}
-
-void Z_DebugDrawVolume(memvolume_t* volume, RectRaw* rect)
-{
-    memblock_t* block;
-    char* base = ((char*)volume->zone) + sizeof(memzone_t);
-    float opacity = .85f;
-    float colAppStatic[4]   = { 1, 1, 1, .65f };
-    float colGameStatic[4]  = { 1, 0, 0, .65f };
-    float colMap[4]         = { 0, 1, 0, .65f };
-    float colMapStatic[4]   = { 0, .5f, 0, .65f };
-    float colCache[4]       = { 1, 0, 1, .65f };
-    float colOther[4]       = { 0, 0, 1, .65f };
-
-    // Clear the background.
-    glColor4f(0, 0, 0, opacity);
-    GL_DrawRect(rect);
-
-    // Outline.
-    glLineWidth(1);
-    glColor4f(1, 1, 1, opacity/2);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    GL_DrawRect(rect);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-    glBegin(GL_LINES);
-
-    // Visualize each block.
-    for(block = volume->zone->blockList.next;
-        block != &volume->zone->blockList;
-        block = block->next)
-    {
-        const float* color = colOther;
-        if(!block->user) continue; // Free is black.
-
-        // Choose the color for this block.
-        switch(block->tag)
-        {
-        case PU_GAMESTATIC: color = colGameStatic; break;
-        case PU_MAP:        color = colMap; break;
-        case PU_MAPSTATIC:  color = colMapStatic; break;
-        case PU_APPSTATIC:  color = colAppStatic; break;
-        case PU_CACHE:      color = colCache; break;
-        default:
-            break;
-        }
-
-        Z_DrawRegion(volume, rect, (char*)block - base, block->size, color);
-    }
-
-    glEnd();
-
-    if(isVolumeTooFull(volume))
-    {
-        glLineWidth(2);
-        glColor4f(1, 0, 0, 1);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        GL_DrawRect(rect);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    }
-}
-
-void Z_DebugDrawer(void)
-{
-    memvolume_t* volume;
-    int i, volCount, h;
-
-    if(!CommandLine_Exists("-zonedebug")) return;
-
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-    glDisable(GL_CULL_FACE);
-    glDisable(GL_DEPTH_TEST);
-
-    // Go into screen projection mode.
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    glOrtho(0, Window_Width(theWindow), Window_Height(theWindow), 0, -1, 1);
-
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
-
-    // Draw each volume.
-    lockZone();
-
-    // Make sure all the volumes fit vertically.
-    volCount = Z_VolumeCount();
-    h = 200;
-    if(h * volCount + 10*(volCount - 1) > Window_Height(theWindow))
-    {
-        h = (Window_Height(theWindow) - 10*(volCount - 1))/volCount;
-    }
-
-    i = 0;
-    for(volume = volumeRoot; volume; volume = volume->next, ++i)
-    {
-        RectRaw rect;
-        rect.size.width = MIN_OF(400, Window_Width(theWindow));
-        rect.size.height = h;
-        rect.origin.x = Window_Width(theWindow) - rect.size.width - 1;
-        rect.origin.y = Window_Height(theWindow) - rect.size.height*(i+1) - 10*i - 1;
-        Z_DebugDrawVolume(volume, &rect);
-    }
-
-    unlockZone();
-
-    // Cleanup.
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
-
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
+    pd->volumeCount     = Z_VolumeCount();
+    pd->volumeRoot      = volumeRoot;
+    pd->lock            = lockZone;
+    pd->unlock          = unlockZone;
+    pd->isVolumeTooFull = isVolumeTooFull;
 }
 #endif

@@ -41,6 +41,6 @@
 #include "gridmap.h"
 #include "m_decomp64.h"
 #include "stringarray.h"
-#include "de/smoother.h"
+#include <de/smoother.h>
 
 #endif /* LIBDENG_MISC_H */

@@ -1,6 +1,6 @@
 /**
  * @file concurrency.h
- * Brief description of the source file. @ingroup system
+ * Concurrency: threads, mutexes, semaphores. @ingroup system
  *
  * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
@@ -24,7 +24,7 @@
 #ifndef LIBDENG_SYSTEM_CONCURRENCY_H
 #define LIBDENG_SYSTEM_CONCURRENCY_H
 
-#include "dd_types.h"
+#include <de/libdeng.h>
 
 typedef void* thread_t;
 typedef int (*systhreadfunc_t) (void* parm);
@@ -34,8 +34,8 @@ typedef void* sem_t;
 
 #ifdef __cplusplus
 
+#ifdef __DENG__ // libdeng internal
 #include <QThread>
-
 /**
  * Thread that runs a user-specified callback function. Exceptions from the callback
  * function are caught.
@@ -59,6 +59,7 @@ private:
     void* _parm;
     int _returnValue;
 };
+#endif // __DENG__
 
 extern "C" {
 #endif // __cplusplus
@@ -68,7 +69,7 @@ extern "C" {
  * In a debug build, this asserts that the current code is executing in the main thread.
  */
 #ifdef _DEBUG
-#  define LIBDENG_ASSERT_IN_MAIN_THREAD() {assert(Sys_InMainThread());}
+#  define LIBDENG_ASSERT_IN_MAIN_THREAD() { DENG_ASSERT(Sys_InMainThread()); }
 #else
 #  define LIBDENG_ASSERT_IN_MAIN_THREAD()
 #endif
@@ -82,9 +83,9 @@ extern "C" {
  *
  * @return Thread handle.
  */
-thread_t Sys_StartThread(systhreadfunc_t startpos, void* parm);
+DENG_PUBLIC thread_t Sys_StartThread(systhreadfunc_t startpos, void* parm);
 
-void Thread_Sleep(int milliseconds);
+DENG_PUBLIC void Thread_Sleep(int milliseconds);
 
 /**
  * Wait for a thread to stop. If the thread does not stop after @a timeoutMs,
@@ -95,28 +96,26 @@ void Thread_Sleep(int milliseconds);
  *
  * @return  Return value of the thread.
  */
-int Sys_WaitThread(thread_t handle, int timeoutMs);
+DENG_PUBLIC int Sys_WaitThread(thread_t handle, int timeoutMs);
 
 /**
  * @param handle  Handle to the thread to return the id of.
  *                Can be @c NULL in which case the current thread is assumed.
  * @return  Identifier of the thread.
  */
-uint Sys_ThreadId(thread_t handle);
+DENG_PUBLIC uint Sys_ThreadId(thread_t handle);
 
-uint Sys_CurrentThreadId(void);
+DENG_PUBLIC uint Sys_CurrentThreadId(void);
 
-void Sys_MarkAsMainThread(void);
+DENG_PUBLIC boolean Sys_InMainThread(void);
 
-boolean Sys_InMainThread(void);
+DENG_PUBLIC mutex_t Sys_CreateMutex(const char* name);
 
-mutex_t Sys_CreateMutex(const char* name);
+DENG_PUBLIC void Sys_DestroyMutex(mutex_t mutexHandle);
 
-void Sys_DestroyMutex(mutex_t mutexHandle);
+DENG_PUBLIC void Sys_Lock(mutex_t mutexHandle);
 
-void Sys_Lock(mutex_t mutexHandle);
-
-void Sys_Unlock(mutex_t mutexHandle);
+DENG_PUBLIC void Sys_Unlock(mutex_t mutexHandle);
 
 #if 0
 /// @todo update these if/when needed
@@ -125,6 +124,12 @@ void Sem_Destroy(sem_t semaphore);
 void Sem_P(sem_t semaphore);
 void Sem_V(sem_t semaphore);
 #endif
+
+/*
+ * Private functions.
+ */
+
+void Sys_MarkAsMainThread(void);
 
 #ifdef __cplusplus
 } // extern "C"

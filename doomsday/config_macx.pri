@@ -64,6 +64,8 @@ else:deng_macx4u_32bit {
     QMAKE_CFLAGS += -mmacosx-version-min=10.4
     INCLUDEPATH = $$QMAKE_MAC_SDK/usr/X11R6/include $$INCLUDEPATH
     DEFINES += MACOS_10_4
+
+    QMAKE_CFLAGS_WARN_ON -= -fdiagnostics-show-option
 }
 else {
     error(Unspecified SDK configuration.)

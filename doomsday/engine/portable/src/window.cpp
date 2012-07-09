@@ -240,7 +240,7 @@ struct ddwindow_s
 
                 // The window is already visible, so let's allow a mode change to resolve itself
                 // before we go changing the window.
-                LegacyCore_Timer(de2LegacyCore, POST_MODE_CHANGE_WAIT_BEFORE_UPDATE, updateMainWindowLayout);
+                LegacyCore_Timer(POST_MODE_CHANGE_WAIT_BEFORE_UPDATE, updateMainWindowLayout);
             }
             else
             {
@@ -274,7 +274,7 @@ struct ddwindow_s
                     if(modeChanged)
                     {
                         needShowNormal = true;
-                        LegacyCore_Timer(de2LegacyCore, POST_MODE_CHANGE_WAIT_BEFORE_UPDATE, updateMainWindowLayout);
+                        LegacyCore_Timer(POST_MODE_CHANGE_WAIT_BEFORE_UPDATE, updateMainWindowLayout);
                         /// @todo  Save the correct xy coordinate for the window and use them here.
                         return;
                     }
@@ -826,7 +826,7 @@ static void drawCanvasWithCallback(Canvas& canvas)
         win->drawFunc();
     }
     // Now we can continue with the main loop (if it was paused).
-    LegacyCore_ResumeLoop(de2LegacyCore);
+    LegacyCore_ResumeLoop();
 }
 
 static void windowFocusChanged(Canvas& canvas, bool focus)
@@ -1161,7 +1161,7 @@ void Window_Draw(Window* win)
     else
     {
         // Don't run the main loop until after the paint event has been dealt with.
-        LegacyCore_PauseLoop(de2LegacyCore);
+        LegacyCore_PauseLoop();
 
         // Request update at the earliest convenience.
         win->widget->canvas().update();

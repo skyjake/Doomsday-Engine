@@ -19,11 +19,10 @@
  * 02110-1301 USA</small>
  */
 
-#include "garbage.h"
-#include "concurrency.h"
-#include "dd_zone.h"
+#include "de/garbage.h"
+#include "de/concurrency.h"
+#include "de/memoryzone.h"
 
-#include <assert.h>
 #include <map>
 #include <set>
 #include <QMutex>
@@ -53,7 +52,7 @@ struct Garbage
 
         for(Allocs::iterator i = allocs.begin(); i != allocs.end(); ++i)
         {
-            assert(i->second);
+            DENG_ASSERT(i->second);
             i->second(i->first);
         }
         allocs.clear();
@@ -66,7 +65,7 @@ static Garbages* garbages;
 
 static Garbage* garbageForThread(uint thread)
 {
-    DENG2_ASSERT(garbages != 0);
+    DENG_ASSERT(garbages != 0);
 
     Garbage* result;
     garbageMutex.lock();
@@ -86,13 +85,13 @@ static Garbage* garbageForThread(uint thread)
 
 void Garbage_Init(void)
 {
-    DENG2_ASSERT(garbages == 0);
+    DENG_ASSERT(garbages == 0);
     garbages = new Garbages;
 }
 
 void Garbage_Shutdown(void)
 {
-    DENG2_ASSERT(garbages != 0);
+    DENG_ASSERT(garbages != 0);
     garbageMutex.lock();
     for(Garbages::iterator i = garbages->begin(); i != garbages->end(); ++i)
     {
@@ -137,7 +136,7 @@ boolean Garbage_IsTrashed(const void* ptr)
 void Garbage_Untrash(void* ptr)
 {
     Garbage* g = garbageForThread(Sys_CurrentThreadId());
-    assert(g->contains(ptr));
+    DENG_ASSERT(g->contains(ptr));
     g->allocs.erase(ptr);
 }
 

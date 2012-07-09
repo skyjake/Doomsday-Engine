@@ -87,7 +87,7 @@ void BusyTask_StopEventLoopWithValue(int result)
 {
     // After the event loop is gone, we don't want any loop callbacks until the
     // busy state has been properly torn down.
-    LegacyCore_SetLoopFunc(de2LegacyCore, 0);
+    LegacyCore_SetLoopFunc(0);
 
     Q_ASSERT(eventLoop != 0);
     eventLoop->exit(result);

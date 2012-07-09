@@ -1326,6 +1326,7 @@ void GL_LoadSystemTextures(void)
     // Preload lighting system textures.
     GL_PrepareLSTexture(LST_DYNAMIC);
     GL_PrepareLSTexture(LST_GRADIENT);
+    GL_PrepareLSTexture(LST_CAMERA_VIGNETTE);
 
     GL_PrepareSysFlareTexture(FXT_ROUND);
     GL_PrepareSysFlareTexture(FXT_FLARE);
@@ -2162,14 +2163,16 @@ DGLuint GL_PrepareLSTexture(lightingtexid_t which)
         { "radioCO",    GL_CLAMP_TO_EDGE,   GL_CLAMP_TO_EDGE },
         { "radioCC",    GL_CLAMP_TO_EDGE,   GL_CLAMP_TO_EDGE },
         { "radioOO",    GL_CLAMP_TO_EDGE,   GL_CLAMP_TO_EDGE },
-        { "radioOE",    GL_CLAMP_TO_EDGE,   GL_CLAMP_TO_EDGE }
+        { "radioOE",    GL_CLAMP_TO_EDGE,   GL_CLAMP_TO_EDGE },
+        { "vignette",   GL_REPEAT,          GL_CLAMP_TO_EDGE }
     };
 
     if(novideo || which < 0 || which >= NUM_LIGHTING_TEXTURES) return 0;
 
     if(!lightingTextures[which].tex)
     {
-        lightingTextures[which].tex = GL_PrepareExtTexture(lstexes[which].name, LGM_WHITE_ALPHA,
+        lightingTextures[which].tex = GL_PrepareExtTexture(lstexes[which].name,
+            which == LST_CAMERA_VIGNETTE? LGM_NORMAL : LGM_WHITE_ALPHA,
             false, GL_LINEAR, GL_LINEAR, -1 /*best anisotropy*/, lstexes[which].wrapS,
             lstexes[which].wrapT, TXCF_NO_COMPRESSION);
     }

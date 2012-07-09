@@ -22,7 +22,6 @@
 
 #include "de_base.h"
 #include "de_console.h"
-#include "dd_zone.h"
 
 #include "generators.h"
 

@@ -263,6 +263,7 @@ typedef enum lightingtexid_e {
     LST_RADIO_CC, // FakeRadio closed/closed corner shadow
     LST_RADIO_OO, // FakeRadio open/open shadow
     LST_RADIO_OE, // FakeRadio open/edge shadow
+    LST_CAMERA_VIGNETTE,
     NUM_LIGHTING_TEXTURES
 } lightingtexid_t;
 

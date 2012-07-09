@@ -25,14 +25,14 @@
 #ifndef LIBDENG_SYSTEM_H
 #define LIBDENG_SYSTEM_H
 
+#include <de/concurrency.h>
+
 #include "sys_system.h"
 #include "sys_console.h"
 #include "sys_input.h"
 #include "sys_network.h"
 #include "masterserver.h"
-//#include "sys_sock.h" // obsolete
 #include "timer.h"
-#include "concurrency.h"
 #include "sys_opengl.h"
 
 // Use SDL for window management under *nix

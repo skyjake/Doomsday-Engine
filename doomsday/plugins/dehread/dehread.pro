@@ -11,7 +11,11 @@ win32|macx: TARGET = dpDehRead
 
 VERSION = $$DEHREAD_VERSION
 
-INCLUDEPATH += include
+# TODO: the dependencies to internal headers should be removed
+# (see comment in dehmain.c)
+INCLUDEPATH += include \
+    ../../engine/portable/include \
+    ../../engine/portable/include/render
 
 HEADERS += include/version.h
 
