@@ -34,8 +34,8 @@ typedef void* sem_t;
 
 #ifdef __cplusplus
 
+#ifdef __DENG__ // libdeng internal
 #include <QThread>
-
 /**
  * Thread that runs a user-specified callback function. Exceptions from the callback
  * function are caught.
@@ -59,6 +59,7 @@ private:
     void* _parm;
     int _returnValue;
 };
+#endif // __DENG__
 
 extern "C" {
 #endif // __cplusplus
