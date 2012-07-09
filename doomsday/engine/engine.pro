@@ -313,6 +313,7 @@ DENG_HEADERS += \
     portable/include/render/rend_shadow.h \
     portable/include/render/rend_sky.h \
     portable/include/render/rend_sprite.h \
+    portable/include/render/vignette.h \
     portable/include/resourcenamespace.h \
     portable/include/s_cache.h \
     portable/include/s_environ.h \
@@ -600,6 +601,7 @@ SOURCES += \
     portable/src/render/rend_shadow.c \
     portable/src/render/rend_sky.c \
     portable/src/render/rend_sprite.c \
+    portable/src/render/vignette.c \
     portable/src/resourcenamespace.c \
     portable/src/s_cache.c \
     portable/src/s_environ.cpp \

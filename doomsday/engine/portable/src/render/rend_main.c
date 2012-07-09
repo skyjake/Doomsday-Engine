@@ -42,6 +42,7 @@
 #include "texturevariant.h"
 #include "materialvariant.h"
 #include "blockmapvisual.h"
+#include "vignette.h"
 
 // Surface (tangent-space) Vector Flags.
 #define SVF_TANGENT             0x01
@@ -194,6 +195,7 @@ void Rend_Register(void)
     Rend_RadioRegister();
     Rend_SpriteRegister();
     Rend_ConsoleRegister();
+    Vignette_Register();
 }
 
 /**
