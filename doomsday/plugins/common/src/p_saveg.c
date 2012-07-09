@@ -5492,8 +5492,8 @@ boolean SV_SaveGame(int slot, const char* name)
     SaveInfo_Configure(info);
 
     /// @todo Use progress bar mode and update progress during the setup.
-    saveError = BusyMode_RunNewTask(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                                    "Saving game...", saveGameWorker, info);
+    saveError = BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                                            saveGameWorker, info, "Saving game...");
 
     if(!saveError)
     {

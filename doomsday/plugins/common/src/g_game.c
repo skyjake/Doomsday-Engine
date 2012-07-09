@@ -2261,7 +2261,7 @@ void G_DoMapCompleted(void)
 #endif
     S_PauseMusic(true);
 
-    BusyMode_RunNewTask(BUSYF_TRANSITION, NULL, prepareIntermission, NULL);
+    BusyMode_RunNewTask(BUSYF_TRANSITION, prepareIntermission, NULL);
 
 #if __JHERETIC__
     // @todo is this necessary at this time?
