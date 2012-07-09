@@ -1917,6 +1917,13 @@ void G_PlayerReborn(int player)
 #endif
     p->colorMap = cfg.playerColor[player];
     p->class_ = P_ClassForPlayerWhenRespawning(player, false);
+#if __JHEXEN__
+    if(p->class_ == PCLASS_FIGHTER && !IS_NETGAME)
+    {
+        // In Hexen single-player, the Fighter's default color is Yellow.
+        p->colorMap = 2;
+    }
+#endif
     p->useDown = p->attackDown = true; // Don't do anything immediately.
     p->playerState = PST_LIVE;
     p->health = maxHealth;
