@@ -5378,7 +5378,7 @@ static int saveGameWorker(void* parameters)
 
     if(!openGameSaveFile(Str_Text(SaveInfo_FilePath(saveInfo)), true))
     {
-        Con_BusyWorkerEnd();
+        BusyMode_WorkerEnd();
         return SV_INVALIDFILENAME; // No success.
     }
 
@@ -5450,7 +5450,7 @@ static int saveGameWorker(void* parameters)
     SV_CloseFile();
 #endif
 
-    Con_BusyWorkerEnd();
+    BusyMode_WorkerEnd();
     return SV_OK;
 }
 
@@ -5492,8 +5492,8 @@ boolean SV_SaveGame(int slot, const char* name)
     SaveInfo_Configure(info);
 
     /// @todo Use progress bar mode and update progress during the setup.
-    saveError = Con_Busy(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                         "Saving game...", saveGameWorker, info);
+    saveError = BusyMode_RunNewTask(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                                    "Saving game...", saveGameWorker, info);
 
     if(!saveError)
     {

@@ -41,9 +41,9 @@
 #include "displaymode.h"
 #include "updater/downloaddialog.h"
 #include "sys_system.h"
+#include "busymode.h"
 #include "dd_main.h"
 #include "con_main.h"
-#include "con_busy.h"
 #include "gl_main.h"
 #include "ui_main.h"
 
@@ -459,7 +459,7 @@ struct ddwindow_s
 
         // Update viewports.
         R_SetViewGrid(0, 0);
-        if(Con_IsBusy() || UI_IsActive() || !DD_GameLoaded())
+        if(BusyMode_Active() || UI_IsActive() || !DD_GameLoaded())
         {
             // Update for busy mode.
             R_UseViewPort(0);

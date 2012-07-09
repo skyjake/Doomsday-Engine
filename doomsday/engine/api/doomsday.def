@@ -1,6 +1,6 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 848 <--
+; Highest ordinal is currently: --> 852 <--
 ; Other free ordinals: 57
 
 NAME                            "DOOMSDAY"
@@ -378,6 +378,15 @@ EXPORTS
     dd_snprintf                 @447 NONAME
     dd_vsnprintf                @448 NONAME
 
+; Base: BusyMode.
+    BusyMode_Active             @126 NONAME
+    BusyMode_ElapsedTime        @851 NONAME
+    BusyMode_RunTask            @852 NONAME
+    BusyMode_RunTasks           @849 NONAME
+    BusyMode_RunNewTask         @330 NONAME
+    BusyMode_WorkerEnd          @331 NONAME
+    BusyMode_WorkerError        @850 NONAME
+
 ; Console.
     Con_Open                    @29 NONAME
     Con_AddCommand              @31 NONAME
@@ -405,10 +414,7 @@ EXPORTS
     DD_Executef                 @40 NONAME
     Con_Message                 @41 NONAME
     Con_Error                   @42 NONAME
-    Con_Busy                    @330 NONAME
-    Con_BusyWorkerEnd           @331 NONAME
     Con_SetPrintFilter          @536 NONAME
-    Con_IsBusy                  @126 NONAME
 
 ; Console: Bindings.
     B_BindingsForCommand        @428 NONAME

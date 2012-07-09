@@ -33,60 +33,64 @@
 #include "def_main.h"
 #include "sys_audiod.h"
 
-#define SF_RANDOM_SHIFT     0x1    // Random frequency shift.
-#define SF_RANDOM_SHIFT2    0x2    // 2x bigger random frequency shift.
-#define SF_GLOBAL_EXCLUDE   0x4    // Exclude all emitters.
-#define SF_NO_ATTENUATION   0x8    // Very, very loud...
-#define SF_REPEAT           0x10   // Repeats until stopped.
-#define SF_DONT_STOP        0x20   // Sound can't be stopped while playing.
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-extern int      showSoundInfo;
-extern int      soundMinDist, soundMaxDist;
-extern int      sfxVolume, musVolume;
+#define SF_RANDOM_SHIFT     0x1    ///< Random frequency shift.
+#define SF_RANDOM_SHIFT2    0x2    ///< 2x bigger random frequency shift.
+#define SF_GLOBAL_EXCLUDE   0x4    ///< Exclude all emitters.
+#define SF_NO_ATTENUATION   0x8    ///< Very, very loud...
+#define SF_REPEAT           0x10   ///< Repeats until stopped.
+#define SF_DONT_STOP        0x20   ///< Sound can't be stopped while playing.
 
-void            S_Register(void);
-boolean         S_Init(void);
-void            S_Shutdown(void);
-void            S_MapChange(void);
+extern int showSoundInfo;
+extern int soundMinDist, soundMaxDist;
+extern int sfxVolume, musVolume;
+
+void S_Register(void);
+boolean S_Init(void);
+void S_Shutdown(void);
+void S_MapChange(void);
 
 /**
  * Must be called after the map has been changed.
  */
 void S_SetupForChangedMap(void);
 
-void            S_Reset(void);
-void            S_StartFrame(void);
-void            S_EndFrame(void);
-sfxinfo_t*      S_GetSoundInfo(int sound_id, float* freq, float* volume);
-mobj_t*         S_GetListenerMobj(void);
-int             S_LocalSoundAtVolumeFrom(int sound_id, mobj_t* origin,
-                                         coord_t* fixedpos, float volume);
-int             S_LocalSoundAtVolume(int sound_id, mobj_t* origin,
-                                     float volume);
-int             S_LocalSound(int sound_id, mobj_t* origin);
-int             S_LocalSoundFrom(int sound_id, coord_t* fixedpos);
-int             S_StartSound(int soundId, mobj_t* origin);
-int             S_StartSoundEx(int soundId, mobj_t* origin);
-int             S_StartSoundAtVolume(int sound_id, mobj_t* origin,
-                                     float volume);
-int             S_ConsoleSound(int sound_id, mobj_t* origin,
-                               int target_console);
+void S_Reset(void);
+void S_StartFrame(void);
+void S_EndFrame(void);
+sfxinfo_t* S_GetSoundInfo(int soundId, float* freq, float* volume);
+mobj_t* S_GetListenerMobj(void);
+int S_LocalSoundAtVolumeFrom(int soundId, mobj_t* origin, coord_t* fixedpos, float volume);
+int S_LocalSoundAtVolume(int soundId, mobj_t* origin, float volume);
+int S_LocalSound(int soundId, mobj_t* origin);
+int S_LocalSoundFrom(int soundId, coord_t* fixedpos);
+int S_StartSound(int soundId, mobj_t* origin);
+int S_StartSoundEx(int soundId, mobj_t* origin);
+int S_StartSoundAtVolume(int soundId, mobj_t* origin, float volume);
+int S_ConsoleSound(int soundId, mobj_t* origin, int targetConsole);
 
 /**
  * Stop playing sound(s), either by their unique identifier or by their emitter(s).
  *
- * @param soundID       @c 0= stops all sounds emitted from the targeted origin(s).
+ * @param soundId       @c 0= stops all sounds emitted from the targeted origin(s).
  * @param origin        @c NULL= stops all sounds with the ID.
  *                      Otherwise both ID and origin must match.
  * @param flags         @ref soundStopFlags
  */
-void S_StopSound2(int sound_id, mobj_t* origin, int flags);
-void S_StopSound(int sound_id, mobj_t* origin/*flags=0*/);
+void S_StopSound2(int soundId, mobj_t* origin, int flags);
+void S_StopSound(int soundId, mobj_t* origin/*flags=0*/);
 
-int             S_IsPlaying(int sound_id, mobj_t* emitter);
-int             S_StartMusic(const char* musicid, boolean looped);
-void            S_StopMusic(void);
-void            S_PauseMusic(boolean paused);
-void            S_Drawer(void);
+int S_IsPlaying(int soundId, mobj_t* emitter);
+int S_StartMusic(const char* musicid, boolean looped);
+void S_StopMusic(void);
+void S_PauseMusic(boolean paused);
+void S_Drawer(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /// LIBDENG_SOUND_MAIN_H

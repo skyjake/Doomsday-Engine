@@ -403,7 +403,7 @@ void BitmapFont_DeleteGLTexture(font_t* font)
     if(novideo || isDedicated) return;
 
     font->_isDirty = true;
-    if(Con_IsBusy()) return;
+    if(BusyMode_Active()) return;
     if(bf->_tex)
     {
         glDeleteTextures(1, (const GLuint*) &bf->_tex);
@@ -537,7 +537,7 @@ void BitmapCompositeFont_Prepare(font_t* font)
     assert(font && font->_type == FT_BITMAPCOMPOSITE);
 
     if(!font->_isDirty) return;
-    if(novideo || isDedicated || Con_IsBusy()) return;
+    if(novideo || isDedicated || BusyMode_Active()) return;
 
     BitmapCompositeFont_ReleaseTextures(font);
 
@@ -591,7 +591,7 @@ void BitmapCompositeFont_ReleaseTextures(font_t* font)
     if(novideo || isDedicated) return;
 
     font->_isDirty = true;
-    if(Con_IsBusy()) return;
+    if(BusyMode_Active()) return;
 
     for(i = 0; i < 256; ++i)
     {

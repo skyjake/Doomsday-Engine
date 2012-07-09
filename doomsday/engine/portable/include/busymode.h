@@ -1,6 +1,6 @@
 /**
- * @file con_busy.h
- * Console Busy Mode @ingroup console
+ * @file busymode.h
+ * Busy Mode @ingroup core
  *
  * The Busy Mode is intended for long-running tasks that would otherwise block
  * the main engine (UI) thread. During busy mode, a progress screen is shown by
@@ -32,8 +32,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_CONSOLE_BUSY_H
-#define LIBDENG_CONSOLE_BUSY_H
+#ifndef LIBDENG_CORE_BUSYMODE_H
+#define LIBDENG_CORE_BUSYMODE_H
 
 #include "dd_share.h"
 
@@ -41,29 +41,11 @@
 extern "C" {
 #endif
 
-/// Busy mode transition style.
-typedef enum {
-    FIRST_TRANSITIONSTYLE,
-    TS_CROSSFADE = FIRST_TRANSITIONSTYLE, ///< Basic opacity crossfade.
-    TS_DOOMSMOOTH, ///< Emulates the DOOM "blood on wall" screen wipe (smoothed).
-    TS_DOOM, ///< Emulates the DOOM "blood on wall" screen wipe.
-    LAST_TRANSITIONSTYLE = TS_DOOM
-} transitionstyle_t;
+/// @return  @c true if we are currently busy.
+boolean BusyMode_Active(void);
 
-extern int rTransition;
-extern int rTransitionTics;
-
-/**
- * Process a single work task in Busy Mode.
- *
- * @param mode          Busy mode flags @ref busyModeFlags
- * @param taskName      Optional task name (drawn with the progress bar).
- * @param worker        Worker thread that does processing while in busy mode.
- * @param workerData    Data context for the worker thread.
- *
- * @return  Return value of the worker.
- */
-int Con_Busy(int mode, const char* taskName, busyworkerfunc_t worker, void* workerData);
+/// @return  Amount of time we have been busy (if not busy, @c 0).
+timespan_t BusyMode_ElapsedTime(void);
 
 /**
  * Process a list of work tasks in Busy Mode, from left to right sequentially.
@@ -75,45 +57,47 @@ int Con_Busy(int mode, const char* taskName, busyworkerfunc_t worker, void* work
  *
  * @param tasks  List of tasks.
  * @param numTasks  Number of tasks.
+ * @return  Return value for the worker(s).
  */
-void Con_BusyList(BusyTask* tasks, int numTasks);
+int BusyMode_RunTask(BusyTask* task);
+int BusyMode_RunTasks(BusyTask* tasks, int numTasks);
 
-/// @return  @c true if we are currently busy.
-boolean Con_IsBusy(void);
-
-/// @return  @c true if the current thread is the busy worker.
-boolean Con_InBusyWorker(void);
+/**
+ * Convenient shortcut method for constructing and then running of a single work
+ * task in Busy Mode.
+ *
+ * @param mode          Busy mode flags @ref busyModeFlags
+ * @param taskName      Optional task name (drawn with the progress bar).
+ * @param worker        Worker thread that does processing while in busy mode.
+ * @param workerData    Data context for the worker thread.
+ *
+ * @return  Return value of the worker.
+ */
+int BusyMode_RunNewTask(int mode, const char* taskName, busyworkerfunc_t worker, void* workerData);
 
 /**
  * To be called by the busy worker when it has finished processing, to signal
  * the end of the task.
  */
-void Con_BusyWorkerEnd(void);
+void BusyMode_WorkerEnd(void);
 
 /**
  * To be called by the busy worker to shutdown the engine immediately.
  *
  * @param message       Message, expected to exist until the engine closes.
  */
-void Con_BusyWorkerError(const char* message);
+void BusyMode_WorkerError(const char* message);
 
-void Con_AcquireScreenshotTexture(void);
-void Con_ReleaseScreenshotTexture(void);
+/// Internal to libdeng:
 
-/// @return  @c true if a busy mode transition animation is currently in progress.
-boolean Con_TransitionInProgress(void);
+/// @return  @c true if the current thread is the busy worker.
+boolean BusyMode_InWorkerThread(void);
 
-void Con_TransitionTicker(timespan_t ticLength);
-void Con_DrawTransition(void);
-
-// Private methods:
-int BusyTask_Run(int mode, const char* taskName, busyworkerfunc_t worker, void* workerData);
-void BusyTask_Begin(BusyTask* task);
-void BusyTask_End(BusyTask* task);
-void BusyTask_StopEventLoopWithValue(int result);
+/// @return  Current busy task, else @c NULL.
+BusyTask* BusyMode_CurrentTask(void);
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif /// LIBDENG_CONSOLE_BUSY
+#endif /// LIBDENG_CORE_BUSYMODE_H

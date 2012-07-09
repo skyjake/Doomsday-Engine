@@ -35,6 +35,8 @@
 #include "de_ui.h"
 #include "de_misc.h"
 
+#include "render/busyvisual.h"
+
 /// Development utility: on sharp tics, print player 0 movement state.
 //#define LIBDENG_PLAYER0_MOVEMENT_ANALYSIS
 
@@ -168,7 +170,7 @@ void DD_GameLoopDrawer(void)
 {
     if(novideo || Sys_IsShuttingDown()) return;
 
-    assert(!Con_IsBusy()); // Busy mode has its own drawer.
+    assert(!BusyMode_Active()); // Busy mode has its own drawer.
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -307,7 +309,7 @@ boolean DD_IsSharpTick(void)
 
 boolean DD_IsFrameTimeAdvancing(void)
 {
-    if(Con_IsBusy()) return false;
+    if(BusyMode_Active()) return false;
     if(Con_TransitionInProgress()) return false;
     return tickFrame || netGame;
 }
@@ -542,7 +544,7 @@ void DD_WaitForOptimalUpdateTime(void)
 
 timespan_t DD_LatestRunTicsStartTime(void)
 {
-    if(Con_IsBusy()) return Sys_GetSeconds();
+    if(BusyMode_Active()) return Sys_GetSeconds();
     return lastRunTicsTime;
 }
 

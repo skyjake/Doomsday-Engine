@@ -110,6 +110,18 @@ struct font_s;
  * @ingroup base
  */
 
+/// @addtogroup base
+///@{
+    boolean         BusyMode_Active(void);
+    timespan_t      BusyMode_ElapsedTime(void);
+    int             BusyMode_RunTask(BusyTask* task);
+    int             BusyMode_RunTasks(BusyTask* tasks, int numTasks);
+    int             BusyMode_RunNewTask(int flags, const char* taskName, busyworkerfunc_t worker, void* workerData);
+
+    void            BusyMode_WorkerEnd(void);
+    void            BusyMode_WorkerError(const char* message);
+///@}
+
 /// @addtogroup game
 ///@{
 /**
@@ -220,9 +232,6 @@ materialid_t DD_MaterialForTextureUniqueId(texturenamespaceid_t texNamespaceId, 
 
 /// @addtogroup console
 ///@{
-    int             Con_Busy(int flags, const char* taskName, int (*workerFunc)(void*), void* workerData);
-    void            Con_BusyWorkerEnd(void);
-    boolean         Con_IsBusy(void);
     void            Con_Open(int yes);
     void            Con_AddCommand(const ccmdtemplate_t* cmd);
     void            Con_AddVariable(const cvartemplate_t* var);

@@ -38,8 +38,6 @@
 #  include "de_render.h"
 #endif
 
-#include "con_busy.h"
-
 #define DEFAULT_JOYSTICK_DEADZONE .05f // 5%
 
 #define MAX_AXIS_FILTER 40

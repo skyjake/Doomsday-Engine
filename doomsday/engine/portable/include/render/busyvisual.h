@@ -1,0 +1,80 @@
+/**
+ * @file busyvisual.h
+ * Busy Mode visualizer. @ingroup render
+ *
+ * @authors Copyright © 2007-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
+ */
+
+#ifndef LIBDENG_RENDER_BUSYVISUAL_H
+#define LIBDENG_RENDER_BUSYVISUAL_H
+
+#include "busytask.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void BusyVisual_Register(void);
+
+void BusyVisual_InitTransition(void);
+
+void BusyVisual_LoadTextures(void);
+void BusyVisual_ReleaseTextures(void);
+
+void BusyVisual_PrepareResources(void);
+
+/**
+ * Take a screenshot and store it as a texture.
+ */
+void BusyVisual_AcquireScreenshotTexture(void);
+
+void BusyVisual_ReleaseScreenshotTexture(void);
+
+/**
+ * Busy Mode visual drawer function. The entire frame is drawn here.
+ */
+void BusyVisual_Render(void);
+
+/**
+ * @todo Does the console transition animation really belong in the busy visual?
+ */
+/// Busy mode transition style.
+typedef enum {
+    FIRST_TRANSITIONSTYLE,
+    TS_CROSSFADE = FIRST_TRANSITIONSTYLE, ///< Basic opacity crossfade.
+    TS_DOOMSMOOTH, ///< Emulates the DOOM "blood on wall" screen wipe (smoothed).
+    TS_DOOM, ///< Emulates the DOOM "blood on wall" screen wipe.
+    LAST_TRANSITIONSTYLE = TS_DOOM
+} transitionstyle_t;
+
+extern int rTransition;
+extern int rTransitionTics;
+
+void Con_TransitionBegin(void);
+
+/// @return  @c true if a busy mode transition animation is currently in progress.
+boolean Con_TransitionInProgress(void);
+
+void Con_TransitionTicker(timespan_t ticLength);
+void Con_DrawTransition(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
+#endif /* LIBDENG_RENDER_BUSYVISUAL_H */

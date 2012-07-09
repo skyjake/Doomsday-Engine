@@ -151,6 +151,7 @@ DENG_HEADERS += \
     portable/include/blockmap.h \
     portable/include/blockmapvisual.h \
     portable/include/blockset.h \
+    portable/include/busymode.h \
     portable/include/map/bspbuilder.h \
     portable/include/map/bsp/hedgeinfo.h \
     portable/include/map/bsp/hedgeintercept.h \
@@ -175,7 +176,6 @@ DENG_HEADERS += \
     portable/include/colorpalette.h \
     portable/include/con_bar.h \
     portable/include/con_bind.h \
-    portable/include/con_busy.h \
     portable/include/con_config.h \
     portable/include/con_main.h \
     portable/include/consolewindow.h \
@@ -299,6 +299,7 @@ DENG_HEADERS += \
     portable/include/r_things.h \
     portable/include/r_util.h \
     portable/include/r_world.h \
+    portable/include/render/busyvisual.h \
     portable/include/render/rend_bias.h \
     portable/include/render/rend_clip.h \
     portable/include/render/rend_console.h \
@@ -456,6 +457,7 @@ SOURCES += \
     portable/src/blockmap.c \
     portable/src/blockmapvisual.c \
     portable/src/blockset.c \
+    portable/src/busymode.cpp \
     portable/src/map/bspbuilder.cpp \
     portable/src/map/bsp/hplane.cpp \
     portable/src/map/bsp/partitioner.cpp \
@@ -475,7 +477,6 @@ SOURCES += \
     portable/src/cl_world.c \
     portable/src/colorpalette.c \
     portable/src/con_bar.c \
-    portable/src/con_busy.c \
     portable/src/con_config.c \
     portable/src/con_data.c \
     portable/src/con_main.c \
@@ -587,6 +588,7 @@ SOURCES += \
     portable/src/r_world.c \
     portable/src/reader.c \
     portable/src/rect.c \
+    portable/src/render/busyvisual.c \
     portable/src/render/rend_bias.c \
     portable/src/render/rend_clip.cpp \
     portable/src/render/rend_console.c \

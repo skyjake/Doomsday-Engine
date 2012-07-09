@@ -854,7 +854,7 @@ int P_SetupMapWorker(void* paramaters)
     // It ends.
     mapSetup = false;
 
-    Con_BusyWorkerEnd();
+    BusyMode_WorkerEnd();
     return 0;
 }
 
@@ -872,9 +872,9 @@ void P_SetupMap(uint episode, uint map, int playerMask, skillmode_t skill)
 
     DD_Executef(true, "texreset raw"); // Delete raw images to save memory.
 
-    // \todo Use progress bar mode and update progress during the setup.
-    Con_Busy(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ BUSYF_TRANSITION | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-             "Loading map...", P_SetupMapWorker, &param);
+    /// @todo Use progress bar mode and update progress during the setup.
+    BusyMode_RunNewTask(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ BUSYF_TRANSITION | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                        "Loading map...", P_SetupMapWorker, &param);
 
     // Wake up HUD widgets for players in the game.
     for(i = 0; i < MAXPLAYERS; ++i)

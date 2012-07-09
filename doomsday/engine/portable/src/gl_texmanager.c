@@ -576,7 +576,7 @@ static void destroyVariantSpecifications(void)
 static uploadcontentmethod_t chooseContentUploadMethod(const texturecontent_t* content)
 {
     // Must the operation be carried out immediately?
-    if((content->flags & TXCF_NEVER_DEFER) || !Con_IsBusy())
+    if((content->flags & TXCF_NEVER_DEFER) || !BusyMode_Active())
         return METHOD_IMMEDIATE;
     // We can defer.
     return METHOD_DEFERRED;
@@ -2971,14 +2971,14 @@ static int reloadTextures(void* parameters)
     if(usingBusyMode)
     {
         Con_SetProgress(200);
-        Con_BusyWorkerEnd();
+        BusyMode_WorkerEnd();
     }
     return 0;
 }
 
 void GL_TexReset(void)
 {
-    boolean useBusyMode = !Con_IsBusy();
+    boolean useBusyMode = !BusyMode_Active();
 
     GL_ReleaseTextures();
     Con_Printf("All DGL textures deleted.\n");
@@ -2986,7 +2986,8 @@ void GL_TexReset(void)
     if(useBusyMode)
     {
         Con_InitProgress(200);
-        Con_Busy(BUSYF_ACTIVITY | (verbose? BUSYF_CONSOLE_OUTPUT : 0), "Reseting textures...", reloadTextures, &useBusyMode);
+        BusyMode_RunNewTask(BUSYF_ACTIVITY | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                            "Reseting textures...", reloadTextures, &useBusyMode);
     }
     else
     {
@@ -3458,7 +3459,7 @@ void GL_BindTexture(TextureVariant* tex)
 {
     texturevariantspecification_t* spec = NULL;
 
-    if(Con_InBusyWorker()) return;
+    if(BusyMode_InWorkerThread()) return;
 
     if(tex)
     {

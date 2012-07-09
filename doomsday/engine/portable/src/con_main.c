@@ -58,6 +58,7 @@
 #include "de_filesys.h"
 
 #include "displaymode.h"
+#include "render/busyvisual.h"
 #include "updater/downloaddialog.h"
 #include "cbuffer.h"
 #include "font.h"
@@ -233,10 +234,9 @@ void Con_Register(void)
     // File
     C_VAR_CHARPTR("file-startup", &gameStartupFiles, 0, 0, 0);
 
-    C_VAR_INT("con-transition", &rTransition, 0, FIRST_TRANSITIONSTYLE, LAST_TRANSITIONSTYLE);
-    C_VAR_INT("con-transition-tics", &rTransitionTics, 0, 0, 60);
-
     Con_DataRegister();
+
+    BusyVisual_Register();
 }
 
 void Con_ResizeHistoryBuffer(void)
@@ -2049,7 +2049,7 @@ void Con_Error(const char* error, ...)
         dd_vsnprintf(buff, sizeof(buff), error, argptr);
         va_end(argptr);
 
-        if(!Con_InBusyWorker())
+        if(!BusyMode_InWorkerThread())
         {
             Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, buff, 0);
         }
@@ -2088,10 +2088,10 @@ void Con_Error(const char* error, ...)
     strcat(buff, "\n");
     strcat(buff, err);
 
-    if(Con_IsBusy())
+    if(BusyMode_Active())
     {
-        Con_BusyWorkerError(buff);
-        if(Con_InBusyWorker())
+        BusyMode_WorkerError(buff);
+        if(BusyMode_InWorkerThread())
         {
             // We should not continue to execute the worker any more.
             for(;;) Thread_Sleep(10000);

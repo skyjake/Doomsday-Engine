@@ -869,7 +869,7 @@ static int DD_BeginGameChangeWorker(void* paramaters)
     if(p->initiatedBusyMode)
     {
         Con_SetProgress(200);
-        Con_BusyWorkerEnd();
+        BusyMode_WorkerEnd();
     }
     return 0;
 }
@@ -932,7 +932,7 @@ static int DD_LoadGameStartupResourcesWorker(void* paramaters)
     if(p->initiatedBusyMode)
     {
         Con_SetProgress(200);
-        Con_BusyWorkerEnd();
+        BusyMode_WorkerEnd();
     }
     return 0;
 }
@@ -987,7 +987,7 @@ static int DD_LoadAddonResourcesWorker(void* paramaters)
     if(p->initiatedBusyMode)
     {
         Con_SetProgress(200);
-        Con_BusyWorkerEnd();
+        BusyMode_WorkerEnd();
     }
     return 0;
 }
@@ -1088,7 +1088,7 @@ static int DD_ActivateGameWorker(void* paramaters)
     if(p->initiatedBusyMode)
     {
         Con_SetProgress(200);
-        Con_BusyWorkerEnd();
+        BusyMode_WorkerEnd();
     }
     return 0;
 }
@@ -1282,7 +1282,7 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
             { DD_ActivateGameWorker,             &p, busyMode, "Starting game...",  200, 0.7f, 1.0f }
         };
 
-        p.initiatedBusyMode = !Con_IsBusy();
+        p.initiatedBusyMode = !BusyMode_Active();
 
         if(!DD_IsNullGame(theGame))
         {
@@ -1301,7 +1301,7 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
         }
         // kludge end
 
-        Con_BusyList(gameChangeTasks, sizeof(gameChangeTasks)/sizeof(gameChangeTasks[0]));
+        BusyMode_RunTasks(gameChangeTasks, sizeof(gameChangeTasks)/sizeof(gameChangeTasks[0]));
 
         // Process any GL-related tasks we couldn't while Busy.
         Rend_ParticleLoadExtraTextures();
@@ -1463,7 +1463,7 @@ static int DD_LocateAllGameResourcesWorker(void* paramaters)
 
         VERBOSE( DD_PrintGame(game, PGF_LIST_STARTUP_RESOURCES|PGF_STATUS) )
     }
-    Con_BusyWorkerEnd();
+    BusyMode_WorkerEnd();
     return 0;
 }
 
@@ -1569,8 +1569,8 @@ boolean DD_Init(void)
 
     // Enter busy mode until startup complete.
     Con_InitProgress2(200, 0, .25f); // First half.
-    Con_Busy(BUSYF_NO_UPLOADS | BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-            "Starting up...", DD_StartupWorker, 0);
+    BusyMode_RunNewTask(BUSYF_NO_UPLOADS | BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                        "Starting up...", DD_StartupWorker, 0);
 
     // Engine initialization is complete. Now finish up with the GL.
     GL_Init();
@@ -1578,8 +1578,8 @@ boolean DD_Init(void)
 
     // Do deferred uploads.
     Con_InitProgress2(200, .25f, .25f); // Stop here for a while.
-    Con_Busy(BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-             "Buffering...", DD_DummyWorker, 0);
+    BusyMode_RunNewTask(BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                        "Buffering...", DD_DummyWorker, 0);
 
     // Add resource paths specified using -iwad on the command line.
     { resourcenamespaceid_t rnId = F_DefaultResourceNamespaceForClass(RC_PACKAGE);
@@ -1612,8 +1612,8 @@ boolean DD_Init(void)
 
     // Try to locate all required data files for all registered games.
     Con_InitProgress2(200, .25f, 1); // Second half.
-    Con_Busy(BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-             "Locating game resources...", DD_LocateAllGameResourcesWorker, 0);
+    BusyMode_RunNewTask(BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                        "Locating game resources...", DD_LocateAllGameResourcesWorker, 0);
 
     /*
     // Unless we reenter busy-mode due to automatic game selection, we won't be
@@ -1902,7 +1902,7 @@ static int DD_StartupWorker(void* parm)
     CoUninitialize();
 #endif
 
-    Con_BusyWorkerEnd();
+    BusyMode_WorkerEnd();
     return 0;
 }
 
@@ -1913,7 +1913,7 @@ static int DD_StartupWorker(void* parm)
 static int DD_DummyWorker(void *parm)
 {
     Con_SetProgress(200);
-    Con_BusyWorkerEnd();
+    BusyMode_WorkerEnd();
     return 0;
 }
 
@@ -1959,7 +1959,7 @@ static int DD_UpdateEngineStateWorker(void* paramaters)
     if(p->initiatedBusyMode)
     {
         Con_SetProgress(200);
-        Con_BusyWorkerEnd();
+        BusyMode_WorkerEnd();
     }
     return 0;
     }
@@ -2004,15 +2004,16 @@ void DD_UpdateEngineState(void)
      * (which can happen during a runtime game change).
      */
     { ddupdateenginestateworker_paramaters_t p;
-    p.initiatedBusyMode = !Con_IsBusy();
+    p.initiatedBusyMode = !BusyMode_Active();
     if(p.initiatedBusyMode)
     {
         Con_InitProgress(200);
-        Con_Busy(BUSYF_ACTIVITY | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                 "Updating engine state...", DD_UpdateEngineStateWorker, &p);
+        BusyMode_RunNewTask(BUSYF_ACTIVITY | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                            "Updating engine state...", DD_UpdateEngineStateWorker, &p);
     }
     else
-    {   /// \todo Update the current task name and push progress.
+    {
+        /// @todo Update the current task name and push progress.
         DD_UpdateEngineStateWorker(&p);
     }
     }

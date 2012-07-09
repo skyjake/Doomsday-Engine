@@ -28,7 +28,7 @@ extern "C" {
 #endif
 
 /// Busy mode worker function.
-typedef int (C_DECL *busyworkerfunc_t) (void* parm);
+typedef int (*busyworkerfunc_t) (void* parm);
 
 /// POD structure for defining a task processable in busy mode.
 typedef struct {

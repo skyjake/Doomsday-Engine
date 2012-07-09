@@ -964,7 +964,7 @@ void Sfx_EndFrame(void)
     if(!sfxAvail)
         return;
 
-    if(!Con_IsBusy())
+    if(!BusyMode_Active())
     {
         Sfx_Update();
     }

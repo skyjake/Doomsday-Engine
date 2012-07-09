@@ -583,7 +583,7 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y, coord
     // Setup gun psprite.
     P_SetupPsprites(p);
 
-    if(!Con_IsBusy())
+    if(!BusyMode_Active())
     {
         /// @todo Is this really necessary after every time a player spawns?
         /// During map setup there are called after the busy mode ends.

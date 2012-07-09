@@ -31,7 +31,6 @@
 
 #include "con_main.h"
 #include "con_config.h"
-#include "con_busy.h"
 #include "con_bar.h"
 #include "b_main.h"
 #include "b_context.h"

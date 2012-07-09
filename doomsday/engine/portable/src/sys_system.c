@@ -275,7 +275,7 @@ void Sys_HideMouse(void)
  */
 void Sys_Quit(void)
 {
-    if(Con_IsBusy())
+    if(BusyMode_Active())
     {
         // The busy worker is running; we cannot just stop it abruptly.
         Sys_MessageBox2(MBT_WARNING, DOOMSDAY_NICENAME, "Cannot quit while in busy mode.",

@@ -1207,7 +1207,7 @@ int Net_StartConnection(const char* address, int port)
         Con_Message("TCP/IP not available.\n");
     }
 
-    Con_BusyWorkerEnd();
+    BusyMode_WorkerEnd();
     return returnValue;*/
 }
 

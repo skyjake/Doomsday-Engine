@@ -66,6 +66,17 @@ boolean         GL_IsInited(void);
 #  define LIBDENG_ASSERT_GL_CONTEXT_ACTIVE()
 #endif
 
+#ifdef _DEBUG
+#  define LIBDENG_ASSERT_GL_TEXTURE_ISBOUND(tex) { \
+    GLint p; \
+    glGetIntegerv(GL_TEXTURE_BINDING_2D, &p); \
+    Sys_GLCheckError(); \
+    assert(p == tex); \
+}
+#else
+#  define LIBDENG_ASSERT_GL_TEXTURE_ISBOUND(tex)
+#endif
+
 void GL_AssertContextActive(void);
 
 void            GL_Register(void);
