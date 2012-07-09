@@ -1,6 +1,6 @@
 /**
- * @file con_busy.c
- * Console Busy Mode @ingroup console
+ * @file busymode.cpp
+ * Busy Mode @ingroup base
  *
  * @authors Copyright © 2007-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
@@ -38,20 +38,22 @@ extern "C" LegacyCore* de2LegacyCore; // from dd_init.cpp
 static QEventLoop* eventLoop;
 
 static void BusyMode_Loop(void);
+static void BusyMode_Exit(void);
 
 static boolean busyInited;
+static volatile boolean busyDone;
+static volatile boolean busyDoneCopy;
+
+static mutex_t busy_Mutex; // To prevent Data races in the busy thread.
+
 static BusyTask* busyTask; // Current task.
 static thread_t busyThread;
 static timespan_t busyTime;
 static timespan_t accumulatedBusyTime; // Never cleared.
-static volatile boolean busyDone;
-static volatile boolean busyDoneCopy;
 static boolean busyTaskEndedWithError;
 static boolean busyWillAnimateTransition;
 static boolean busyWasIgnoringInput;
 static char busyError[256];
-
-static mutex_t busy_Mutex; // To prevent Data races in the busy thread.
 
 static boolean animatedTransitionActive(int busyMode)
 {
@@ -193,7 +195,7 @@ static int runTask(BusyTask* task)
     // Let's get busy!
     beginTask(task);
 
-    Q_ASSERT(eventLoop == 0);
+    DENG_ASSERT(eventLoop == 0);
 
     // Run a local event loop since the primary event loop is blocked while
     // we're busy. This event loop is able to handle window and input events
@@ -359,7 +361,7 @@ static void stopEventLoopWithValue(int result)
     // busy state has been properly torn down.
     LegacyCore_SetLoopFunc(0);
 
-    Q_ASSERT(eventLoop != 0);
+    DENG_ASSERT(eventLoop != 0);
     eventLoop->exit(result);
 }
 

@@ -91,7 +91,10 @@ void BusyMode_WorkerError(const char* message);
 
 /// Internal to libdeng:
 
-/// @return  @c true if the current thread is the busy worker.
+/// @return  @c true if specified thread is the current busy task worker.
+boolean BusyMode_IsWorkerThread(uint threadId);
+
+/// @return  @c true if the current thread is the busy task worker.
 boolean BusyMode_InWorkerThread(void);
 
 /// @return  Current busy task, else @c NULL.
