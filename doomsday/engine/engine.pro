@@ -464,7 +464,6 @@ SOURCES += \
     portable/src/map/bsp/superblockmap.cpp \
     portable/src/bspleaf.cpp \
     portable/src/bspnode.c \
-    portable/src/busytask.cpp \
     portable/src/canvas.cpp \
     portable/src/canvaswindow.cpp \
     portable/src/cbuffer.c \
