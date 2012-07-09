@@ -58,14 +58,14 @@ void Vignette_Render(const RectRaw* viewRect, float fov)
         // Small FOV angles cause the vignette to be thinner/lighter.
         outer *= (1 + 100.f/fov) / 2;
     }
-    inner = outer * vignetteWidth * .4f;
+    inner = outer * vignetteWidth * .32f;
     if(fov > 100)
     {
         // High FOV angles cause the vignette to be wider.
         inner *= 100.f/fov;
     }
 
-    alpha = vignetteDarkness * .5f;
+    alpha = vignetteDarkness * .6f;
     if(fov > 100)
     {
         // High FOV angles cause the vignette to be darker.
