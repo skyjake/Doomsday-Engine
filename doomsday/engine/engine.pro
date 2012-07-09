@@ -100,6 +100,7 @@ else {
 # Source Files ---------------------------------------------------------------
 
 DENG_API_HEADERS = \
+    api/busytask.h \
     api/dd_animator.h \
     api/dd_api.h \
     api/dd_fontrenderer.h \

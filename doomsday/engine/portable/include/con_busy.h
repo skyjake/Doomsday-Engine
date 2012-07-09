@@ -41,28 +41,6 @@
 extern "C" {
 #endif
 
-/// Busy mode worker function.
-typedef int (C_DECL *busyworkerfunc_t) (void* parm);
-
-/// POD structure for defining a task processable in busy mode.
-typedef struct {
-    busyworkerfunc_t worker; ///< Worker thread that does processing while in busy mode.
-    void* workerData; ///< Data context for the worker thread.
-
-    int mode; ///< Busy mode flags @ref busyModeFlags
-    const char* name; ///< Optional task name (drawn with the progress bar).
-
-    /// Used with task lists:
-    int maxProgress;
-    float progressStart;
-    float progressEnd;
-
-    // Internal state:
-    timespan_t _startTime;
-    boolean _willAnimateTransition;
-    boolean _wasIgnoringInput;
-} BusyTask;
-
 /// Busy mode transition style.
 typedef enum {
     FIRST_TRANSITIONSTYLE,

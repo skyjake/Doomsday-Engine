@@ -55,6 +55,7 @@ extern "C" {
 #include "dd_ui.h"
 #include "dd_infine.h"
 #include "def_share.h"
+#include "busytask.h"
 #include "thinker.h"
 
 /** @file
