@@ -47,6 +47,8 @@ static timespan_t accumulatedBusyTime; // Never cleared.
 static volatile boolean busyDone;
 static volatile boolean busyDoneCopy;
 static boolean busyTaskEndedWithError;
+static boolean busyWillAnimateTransition;
+static boolean busyWasIgnoringInput;
 static char busyError[256];
 
 static mutex_t busy_Mutex; // To prevent Data races in the busy thread.
@@ -108,18 +110,13 @@ static void beginTask(BusyTask* task)
         Con_Error("Con_Busy: Already busy.\n");
     }
 
-    // Discard input events so that any and all accumulated input
-    // events are ignored.
-    task->_wasIgnoringInput = DD_IgnoreInput(true);
-
     Sys_Lock(busy_Mutex);
     busyDone = false;
     busyTaskEndedWithError = false;
+    busyWillAnimateTransition = animatedTransitionActive(task->mode);
+
     // This is now the current task.
     busyTask = task;
-
-    /// @todo Should not be implemented at task level.
-    task->_willAnimateTransition = animatedTransitionActive(busyTask->mode);
 
     Sys_Unlock(busy_Mutex);
     busyInited = true;
@@ -132,7 +129,7 @@ static void beginTask(BusyTask* task)
     busyThread = Sys_StartThread(busyTask->worker, busyTask->workerData);
 
     // Are we doing a transition effect?
-    if(busyTask->_willAnimateTransition)
+    if(busyWillAnimateTransition)
     {
         BusyVisual_InitTransition();
     }
@@ -165,7 +162,7 @@ static void endTask(BusyTask* task)
         Con_AbnormalShutdown(busyError);
     }
 
-    if(task->_willAnimateTransition)
+    if(busyWillAnimateTransition)
     {
         Con_TransitionBegin();
     }
@@ -178,9 +175,6 @@ static void endTask(BusyTask* task)
 
     Sys_DestroyMutex(busy_Mutex);
     busyInited = false;
-
-    DD_IgnoreInput(task->_wasIgnoringInput);
-    DD_ResetTimer();
 }
 
 /**
@@ -217,7 +211,7 @@ static int runTask(BusyTask* task)
 
 static void preBusySetup(void)
 {
-    BusyVisual_LoadTextures();
+    busyWasIgnoringInput = DD_IgnoreInput(true);
 
     // Save the present loop.
     LegacyCore_PushLoop();
@@ -226,11 +220,17 @@ static void preBusySetup(void)
     LegacyCore_SetLoopRate(60);
     LegacyCore_SetLoopFunc(NULL); // don't call main loop's func while busy
 
+    BusyVisual_LoadTextures();
+
     Window_SetDrawFunc(Window_Main(), 0);
 }
 
 static void postBusyCleanup(void)
 {
+    // Discard input events so that any and all accumulated input events are ignored.
+    DD_IgnoreInput(busyWasIgnoringInput);
+    DD_ResetTimer();
+
     BusyVisual_ReleaseTextures();
 
     // Restore old loop.

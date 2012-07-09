@@ -45,8 +45,6 @@ typedef struct {
 
     // Internal state:
     timespan_t _startTime;
-    boolean _willAnimateTransition;
-    boolean _wasIgnoringInput;
 } BusyTask;
 
 #ifdef __cplusplus
