@@ -73,7 +73,8 @@ int BusyMode_RunTasks(BusyTask* tasks, int numTasks);
  *
  * @return  Return value of the worker.
  */
-int BusyMode_RunNewTask(int mode, const char* taskName, busyworkerfunc_t worker, void* workerData);
+int BusyMode_RunNewTask(int mode, busyworkerfunc_t worker, void* workerData);
+int BusyMode_RunNewTaskWithName(int mode, busyworkerfunc_t worker, void* workerData, const char* taskName);
 
 /**
  * To be called by the busy worker when it has finished processing, to signal

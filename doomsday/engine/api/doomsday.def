@@ -1,6 +1,6 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 852 <--
+; Highest ordinal is currently: --> 853 <--
 ; Other free ordinals: 57
 
 NAME                            "DOOMSDAY"
@@ -383,7 +383,8 @@ EXPORTS
     BusyMode_ElapsedTime        @851 NONAME
     BusyMode_RunTask            @852 NONAME
     BusyMode_RunTasks           @849 NONAME
-    BusyMode_RunNewTask         @330 NONAME
+    BusyMode_RunNewTask         @853 NONAME
+    BusyMode_RunNewTaskWithName @330 NONAME
     BusyMode_WorkerEnd          @331 NONAME
     BusyMode_WorkerError        @850 NONAME
 

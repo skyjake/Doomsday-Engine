@@ -116,7 +116,8 @@ struct font_s;
     timespan_t      BusyMode_ElapsedTime(void);
     int             BusyMode_RunTask(BusyTask* task);
     int             BusyMode_RunTasks(BusyTask* tasks, int numTasks);
-    int             BusyMode_RunNewTask(int flags, const char* taskName, busyworkerfunc_t worker, void* workerData);
+    int             BusyMode_RunNewTask(int flags, busyworkerfunc_t worker, void* workerData);
+    int             BusyMode_RunNewTaskWithName(int flags, busyworkerfunc_t worker, void* workerData, const char* taskName);
 
     void            BusyMode_WorkerEnd(void);
     void            BusyMode_WorkerError(const char* message);

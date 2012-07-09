@@ -1569,8 +1569,8 @@ boolean DD_Init(void)
 
     // Enter busy mode until startup complete.
     Con_InitProgress2(200, 0, .25f); // First half.
-    BusyMode_RunNewTask(BUSYF_NO_UPLOADS | BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                        "Starting up...", DD_StartupWorker, 0);
+    BusyMode_RunNewTaskWithName(BUSYF_NO_UPLOADS | BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                                DD_StartupWorker, 0, "Starting up...");
 
     // Engine initialization is complete. Now finish up with the GL.
     GL_Init();
@@ -1578,8 +1578,8 @@ boolean DD_Init(void)
 
     // Do deferred uploads.
     Con_InitProgress2(200, .25f, .25f); // Stop here for a while.
-    BusyMode_RunNewTask(BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                        "Buffering...", DD_DummyWorker, 0);
+    BusyMode_RunNewTaskWithName(BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                                DD_DummyWorker, 0, "Buffering...");
 
     // Add resource paths specified using -iwad on the command line.
     { resourcenamespaceid_t rnId = F_DefaultResourceNamespaceForClass(RC_PACKAGE);
@@ -1612,8 +1612,8 @@ boolean DD_Init(void)
 
     // Try to locate all required data files for all registered games.
     Con_InitProgress2(200, .25f, 1); // Second half.
-    BusyMode_RunNewTask(BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                        "Locating game resources...", DD_LocateAllGameResourcesWorker, 0);
+    BusyMode_RunNewTaskWithName(BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                                DD_LocateAllGameResourcesWorker, 0, "Locating game resources...");
 
     /*
     // Unless we reenter busy-mode due to automatic game selection, we won't be
@@ -2008,8 +2008,8 @@ void DD_UpdateEngineState(void)
     if(p.initiatedBusyMode)
     {
         Con_InitProgress(200);
-        BusyMode_RunNewTask(BUSYF_ACTIVITY | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                            "Updating engine state...", DD_UpdateEngineStateWorker, &p);
+        BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                                    DD_UpdateEngineStateWorker, &p, "Updating engine state...");
     }
     else
     {

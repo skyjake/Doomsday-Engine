@@ -242,15 +242,16 @@ static void postBusyCleanup(void)
 
 /**
  * @param mode          Busy mode flags @ref busyModeFlags
- * @param taskName      Optional task name (drawn with the progress bar).
  * @param worker        Worker thread that does processing while in busy mode.
  * @param workerData    Data context for the worker thread.
+ * @param taskName      Optional task name (drawn with the progress bar).
  */
-static BusyTask* newTask(int mode, const char* taskName, busyworkerfunc_t worker,
-    void* workerData)
+static BusyTask* newTask(int mode, busyworkerfunc_t worker, void* workerData,
+    const char* taskName)
 {
     // Initialize the task.
     BusyTask* task = (BusyTask*) calloc(1, sizeof(*task));
+    task->mode = mode;
     task->worker = worker;
     task->workerData = workerData;
     // Take a copy of the task name.
@@ -258,7 +259,6 @@ static BusyTask* newTask(int mode, const char* taskName, busyworkerfunc_t worker
     {
         task->name = strdup(taskName);
     }
-    task->mode = mode;
     return task;
 }
 
@@ -285,8 +285,7 @@ int BusyMode_RunTasks(BusyTask* tasks, int numTasks)
     task = tasks;
     for(i = 0; i < numTasks; ++i, task++)
     {
-        // If no name is specified for this task, continue using the name of the
-        // the previous task.
+        // If no new task name is specified, continue using the name of the previous task.
         if(task->name)
         {
             if(task->name[0])
@@ -295,33 +294,29 @@ int BusyMode_RunTasks(BusyTask* tasks, int numTasks)
                 currentTaskName = NULL;
         }
 
-        if(!task->worker)
-        {
-            // Null tasks are not processed; so signal success.
-            //task->retVal = 0;
-            continue;
-        }
-
-        // Process the work.
-
-        // Is the worker updating its progress?
-        if(task->maxProgress > 0)
-            Con_InitProgress2(task->maxProgress, task->progressStart, task->progressEnd);
-
         mode = task->mode;
-
-        /// @fixme Kludge: Force BUSYF_STARTUP here so that the animation of one task is
-        ///       not drawn on top of the last frame of the previous.
+        /// @fixme Kludge: Force BUSYF_STARTUP here so that the animation of one task
+        ///        is not drawn on top of the last frame of the previous.
         if(numTasks > 1)
         {
             mode |= BUSYF_STARTUP;
         }
         // kludge end
 
-        // Busy mode invokes the worker on our behalf in a new thread.
+        // Null tasks are not processed (implicit success).
+        if(!task->worker) continue;
 
+        /**
+         * Process the work.
+         */
+
+        // Is the worker updating its progress?
+        if(task->maxProgress > 0)
+            Con_InitProgress2(task->maxProgress, task->progressStart, task->progressEnd);
+
+        // Invoke the worker in a new thread.
         /// @fixme Use a new temporary task.
-        { BusyTask* tmp = newTask(mode, currentTaskName, task->worker, task->workerData);
+        { BusyTask* tmp = newTask(mode, task->worker, task->workerData, currentTaskName);
         result = runTask(tmp);
         // We are now done with this task.
         deleteTask(tmp);
@@ -341,12 +336,17 @@ int BusyMode_RunTask(BusyTask* task)
     return BusyMode_RunTasks(task, 1);
 }
 
-int BusyMode_RunNewTask(int mode, const char* taskName, busyworkerfunc_t worker, void* workerData)
+int BusyMode_RunNewTaskWithName(int mode, busyworkerfunc_t worker, void* workerData, const char* taskName)
 {
-    BusyTask* task = newTask(mode, taskName, worker, workerData);
+    BusyTask* task = newTask(mode, worker, workerData, taskName);
     int result = BusyMode_RunTask(task);
     deleteTask(task);
     return result;
+}
+
+int BusyMode_RunNewTask(int mode, busyworkerfunc_t worker, void* workerData)
+{
+    return BusyMode_RunNewTaskWithName(mode, worker, workerData, NULL/*no task name*/);
 }
 
 /**
