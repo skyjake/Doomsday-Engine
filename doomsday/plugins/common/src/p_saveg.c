@@ -5368,7 +5368,7 @@ static void unarchiveMap(void)
 #endif
 }
 
-static int saveGameWorker(void* parameters)
+static int saveStateWorker(void* parameters)
 {
     SaveInfo* saveInfo = parameters;
 
@@ -5378,7 +5378,6 @@ static int saveGameWorker(void* parameters)
 
     if(!openGameSaveFile(Str_Text(SaveInfo_FilePath(saveInfo)), true))
     {
-        BusyMode_WorkerEnd();
         return SV_INVALIDFILENAME; // No success.
     }
 
@@ -5450,8 +5449,20 @@ static int saveGameWorker(void* parameters)
     SV_CloseFile();
 #endif
 
-    BusyMode_WorkerEnd();
     return SV_OK;
+}
+
+/**
+ * Construct a new SaveInfo configured for the current game session.
+ */
+static SaveInfo* constructNewSaveInfo(const ddstring_t* path, const char* name)
+{
+    ddstring_t nameStr;
+    SaveInfo* info = SaveInfo_NewWithFilePath(path);
+    SaveInfo_SetName(info, Str_InitStatic(&nameStr, name));
+    SaveInfo_SetGameId(info, SV_GenerateGameId());
+    SaveInfo_Configure(info);
+    return info;
 }
 
 boolean SV_SaveGame(int slot, const char* name)
@@ -5463,7 +5474,6 @@ boolean SV_SaveGame(int slot, const char* name)
 #endif
     SaveInfo* info;
     AutoStr* path;
-    ddstring_t nameStr;
     int saveError;
     assert(name);
 
@@ -5486,14 +5496,9 @@ boolean SV_SaveGame(int slot, const char* name)
         Con_Message("Warning: Path \"%s\" is unreachable, game not saved.\n", SV_SavePath());
         return false;
     }
-    info = SaveInfo_NewWithFilePath(path);
-    SaveInfo_SetName(info, Str_InitStatic(&nameStr, name));
-    SaveInfo_SetGameId(info, SV_GenerateGameId());
-    SaveInfo_Configure(info);
 
-    /// @todo Use progress bar mode and update progress during the setup.
-    saveError = BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                                            saveGameWorker, info, "Saving game...");
+    info = constructNewSaveInfo(path, name);
+    saveError = saveStateWorker(info);
 
     if(!saveError)
     {

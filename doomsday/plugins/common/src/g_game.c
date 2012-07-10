@@ -2337,6 +2337,19 @@ void G_WorldDone(void)
     G_SetGameAction(GA_LEAVEMAP);
 }
 
+typedef struct {
+    const char* name;
+    int slot;
+} savestateworker_params_t;
+
+static int G_SaveStateWorker(void* parameters)
+{
+    savestateworker_params_t* p = (savestateworker_params_t*)parameters;
+    int result = SV_SaveGame(p->slot, p->name);
+    BusyMode_WorkerEnd();
+    return result;
+}
+
 void G_DoWorldDone(void)
 {
 #if __JHEXEN__
@@ -2353,7 +2366,14 @@ void G_DoWorldDone(void)
     if(!IS_NETGAME && !deathmatch)
     {
         ddstring_t* name = G_GenerateSaveGameName();
-        SV_SaveGame(AUTO_SLOT, Str_Text(name));
+        savestateworker_params_t p;
+
+        p.name = Str_Text(name);
+        p.slot = AUTO_SLOT;
+
+        /// @todo Use progress bar mode and update progress during the setup.
+        BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                                    G_SaveStateWorker, &p, "Auto-Saving game...");
         Str_Delete(name);
     }
 
@@ -2504,9 +2524,11 @@ ddstring_t* G_GenerateSaveGameName(void)
  */
 void G_DoSaveGame(void)
 {
+    savestateworker_params_t p;
     boolean mustFreeNameStr = false;
     const ddstring_t* nameStr = NULL;
     const char* name;
+    boolean didSave;
 
     if(gaSaveGameName && !Str_IsEmpty(gaSaveGameName))
     {
@@ -2529,8 +2551,15 @@ void G_DoSaveGame(void)
         name = Str_Text(nameStr);
     }
 
-    // Try to make a new game-save.
-    if(SV_SaveGame(gaSaveGameSlot, name))
+    /**
+     * Try to make a new game-save.
+     */
+    p.name =  name;
+    p.slot = gaSaveGameSlot;
+    /// @todo Use progress bar mode and update progress during the setup.
+    didSave = 0 == BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                                               G_SaveStateWorker, &p, "Saving game...");
+    if(didSave)
     {
         //Hu_MenuUpdateGameSaveWidgets();
         P_SetMessage(&players[CONSOLEPLAYER], TXT_GAMESAVED, false);
