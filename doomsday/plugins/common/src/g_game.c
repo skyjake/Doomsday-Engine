@@ -156,13 +156,24 @@ void    G_DoWorldDone(void);
 void    G_DoSaveGame(void);
 void    G_DoScreenShot(void);
 void    G_DoQuitGame(void);
-boolean G_ValidateMap(uint *episode, uint *map);
+
+boolean G_ValidateMap(uint* episode, uint* map);
 
 void    G_StopDemo(void);
 
+/**
+ * Updates game status cvars for the specified player.
+ */
+void G_UpdateGSVarsForPlayer(player_t* pl);
+
+/**
+ * Updates game status cvars for the current map.
+ */
+void G_UpdateGSVarsForMap(void);
+
 void R_LoadVectorGraphics(void);
 
-int Hook_DemoStop(int hookType, int val, void* paramaters);
+int Hook_DemoStop(int hookType, int val, void* parameters);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -1202,49 +1213,14 @@ static int G_LoadMapWorker(void* parameters)
 void G_DoLoadMap(void)
 {
     loadmapworker_params_t p;
-    char* lname, *ptr;
     ddfinale_t fin;
     boolean hasBrief;
     int i;
 
-#if __JHEXEN__
-    static int firstFragReset = 1;
-#endif
-
-    mapStartTic = (int) GAMETIC; // Fr time calculation.
+    mapStartTic = (int) GAMETIC; // For time calculation.
 
     // If we're the server, let clients know the map will change.
     NetSv_SendGameState(GSF_CHANGE_MAP, DDSP_ALL_PLAYERS);
-
-    for(i = 0; i < MAXPLAYERS; ++i)
-    {
-        player_t* plr = &players[i];
-
-        if(plr->plr->inGame && plr->playerState == PST_DEAD)
-            plr->playerState = PST_REBORN;
-
-#if __JHEXEN__
-        if(!IS_NETGAME || (IS_NETGAME != 0 && deathmatch != 0) ||
-            firstFragReset == 1)
-        {
-            memset(plr->frags, 0, sizeof(plr->frags));
-            firstFragReset = 0;
-        }
-#else
-        memset(plr->frags, 0, sizeof(plr->frags));
-#endif
-    }
-
-#if __JHEXEN__
-    SN_StopAllSequences();
-#endif
-
-    // Set all player mobjs to NULL, clear control state toggles etc.
-    for(i = 0; i < MAXPLAYERS; ++i)
-    {
-        players[i].plr->mo = NULL;
-        G_ResetLookOffset(i);
-    }
 
     // Determine whether there is a briefing to run before the map starts
     // (played after the map has been loaded).
@@ -1325,35 +1301,7 @@ void G_DoLoadMap(void)
 
     G_ControlReset(-1); // Clear all controls for all local players.
 
-    // Set the game status cvar for map name.
-    lname = (char *) DD_GetVariable(DD_MAP_NAME);
-    if(lname)
-    {
-        ptr = strchr(lname, ':'); // Skip the E#M# or Map #.
-        if(ptr)
-        {
-            lname = ptr + 1;
-            while(*lname && isspace(*lname))
-                lname++;
-        }
-    }
-
-#if __JHEXEN__
-    // In jHexen we can look in the MAPINFO for the map name
-    if(!lname)
-        lname = P_GetMapName(gameMap);
-#endif
-
-    // Set the map name
-    // If still no name, call it unnamed.
-    if(!lname)
-    {
-        Con_SetString2("map-name", UNNAMEDMAP, SVF_WRITE_OVERRIDE);
-    }
-    else
-    {
-        Con_SetString2("map-name", lname, SVF_WRITE_OVERRIDE);
-    }
+    G_UpdateGSVarsForMap();
 
     // Start a briefing, if there is one.
     if(hasBrief)
@@ -1370,7 +1318,7 @@ void G_DoLoadMap(void)
 
 int G_Responder(event_t* ev)
 {
-    assert(NULL != ev);
+    DENG_ASSERT(ev);
 
     // Eat all events once shutdown has begun.
     if(G_QuitInProgress()) return true;
@@ -1423,17 +1371,12 @@ int G_PrivilegedResponder(event_t* ev)
     return false; // Not eaten.
 }
 
-/**
- * Updates the game status cvars based on game and player data.
- * Called each tick by G_Ticker().
- */
 void G_UpdateGSVarsForPlayer(player_t* pl)
 {
-    int                 i, plrnum;
-    gamestate_t         gameState;
+    int i, plrnum;
+    gamestate_t gameState;
 
-    if(!pl)
-        return;
+    if(!pl) return;
 
     plrnum = pl - players;
     gameState = G_GameState();
@@ -1490,6 +1433,39 @@ void G_UpdateGSVarsForPlayer(player_t* pl)
             gsvInvItems[i] = 0;
     }
 #endif
+}
+
+void G_UpdateGSVarsForMap(void)
+{
+    char* name;
+
+    // First check for a MapInfo defined map name.
+    name = (char*) DD_GetVariable(DD_MAP_NAME);
+    if(name)
+    {
+        char* ch = strchr(name, ':'); // Skip the E#M# or Map #.
+        if(ch)
+        {
+            name = ch + 1;
+            while(*name && isspace(*name)) { name++; }
+        }
+    }
+
+#if __JHEXEN__
+    // In Hexen the MAPINFO lump may contain a map name.
+    if(!name)
+    {
+        name = P_GetMapName(gameMap);
+    }
+#endif
+
+    // If still no name, define it as "unnamed".
+    if(!name)
+    {
+        name = UNNAMEDMAP;
+    }
+
+    Con_SetString2("map-name", name, SVF_WRITE_OVERRIDE);
 }
 
 void G_DoQuitGame(void)

@@ -412,11 +412,14 @@ void FI_StackClearAll(void)
     stackClear(false);
 }
 
-int Hook_FinaleScriptStop(int hookType, int finaleId, void* paramaters)
+int Hook_FinaleScriptStop(int hookType, int finaleId, void* parameters)
 {
     gamestate_t initialGamestate;
     finale_mode_t mode;
     fi_state_t* s = stateForFinaleId(finaleId);
+
+    DENG_UNUSED(hookType);
+    DENG_UNUSED(parameters);
 
     if(IS_CLIENT && s == &remoteFinaleState)
     {
@@ -459,8 +462,8 @@ int Hook_FinaleScriptStop(int hookType, int finaleId, void* paramaters)
     // Go to the next game mode?
     if(mode == FIMODE_AFTER) // A map has been completed.
     {
-        if(IS_CLIENT)
-            return true;
+        if(IS_CLIENT) return true;
+
         G_SetGameAction(GA_MAPCOMPLETED);
         // Don't play the debriefing again.
         briefDisabled = true;

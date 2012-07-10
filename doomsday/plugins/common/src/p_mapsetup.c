@@ -849,7 +849,10 @@ void P_SetupMap(Uri* mapUri, uint episode, uint map)
  */
 static void P_ResetWorldState(void)
 {
-    int                 i, parm;
+#if __JHEXEN__
+    static int firstFragReset = 1;
+#endif
+    int i, parm;
 
 #if __JDOOM__ || __JDOOM64__
     wmInfo.maxFrags = 0;
@@ -861,6 +864,10 @@ static void P_ResetWorldState(void)
 
 #if __JDOOM__
     P_BrainInitForMap();
+#endif
+
+#if __JHEXEN__
+    SN_StopAllSequences();
 #endif
 
 #if __JHERETIC__
@@ -889,7 +896,25 @@ static void P_ResetWorldState(void)
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         player_t* plr = &players[i];
+        ddplayer_t* ddplr = plr->plr;
+
+        ddplr->mo = NULL;
         plr->killCount = plr->secretCount = plr->itemCount = 0;
+
+        if(ddplr->inGame && plr->playerState == PST_DEAD)
+            plr->playerState = PST_REBORN;
+
+#if __JHEXEN__
+        if(!IS_NETGAME || (IS_NETGAME != 0 && deathmatch != 0) || firstFragReset == 1)
+        {
+            memset(plr->frags, 0, sizeof(plr->frags));
+            firstFragReset = 0;
+        }
+#else
+        memset(plr->frags, 0, sizeof(plr->frags));
+#endif
+
+        G_ResetLookOffset(i);
     }
 
 #if __JDOOM__ || __JDOOM64__
@@ -942,10 +967,8 @@ static void P_FinalizeMap(void)
     }
 
 #elif __JHEXEN__
-    // Check if the map should have lightening.
+    // Initialize lightning & thunder clap effects (if in use).
     P_InitLightning();
-
-    SN_StopAllSequences();
 #endif
 
     // Do some fine tuning with mobj placement and orientation.
