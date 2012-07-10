@@ -1,0 +1,21 @@
+LIBRARY			DSFLUIDSYNTH
+
+; All exports should be prefixed DS_.
+
+EXPORTS
+
+DS_Init
+DS_Shutdown
+DS_Event
+DS_Set
+
+; Music interface
+DM_Music_Init
+DM_Music_Update
+DM_Music_Get
+DM_Music_Set
+DM_Music_Pause
+DM_Music_Stop
+DM_Music_SongBuffer
+DM_Music_Play
+DM_Music_PlayFile

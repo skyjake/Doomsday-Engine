@@ -5,7 +5,6 @@ TEMPLATE = subdirs
 CONFIG += ordered
 SUBDIRS = \
     build \
-    external \
     libdeng2 libdeng \
     engine plugins host \
     postbuild

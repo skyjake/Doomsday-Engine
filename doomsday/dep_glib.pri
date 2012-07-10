@@ -1,5 +1,10 @@
 # Build configuration for glib.
-unix {
-    QMAKE_CFLAGS += $$system(pkg-config --cflags glib-2.0)
-    LIBS += $$system(pkg-config --libs glib-2.0)
+macx {
+    QMAKE_CFLAGS += -I/usr/local/include/glib-2.0 -I/usr/local/lib/glib-2.0/include
+    LIBS += -L/usr/local/lib -lglib-2.0
 }
+#unix {
+#    QMAKE_CFLAGS += $$system(pkg-config --cflags glib-2.0)
+#    LIBS += $$system(pkg-config --libs glib-2.0)
+#}
+
