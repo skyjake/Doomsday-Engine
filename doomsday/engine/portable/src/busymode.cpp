@@ -303,8 +303,8 @@ int BusyMode_RunTasks(BusyTask* tasks, int numTasks)
         }
 
         mode = task->mode;
-        /// @fixme Kludge: Force BUSYF_STARTUP here so that the animation of one task
-        ///        is not drawn on top of the last frame of the previous.
+        /// @todo Kludge: Force BUSYF_STARTUP here so that the animation of one task
+        ///       is not drawn on top of the last frame of the previous.
         if(numTasks > 1)
         {
             mode |= BUSYF_STARTUP;
@@ -323,7 +323,8 @@ int BusyMode_RunTasks(BusyTask* tasks, int numTasks)
             Con_InitProgress2(task->maxProgress, task->progressStart, task->progressEnd);
 
         // Invoke the worker in a new thread.
-        /// @fixme Use a new temporary task.
+        /// @todo Kludge: Presently a temporary local task is needed so that we can modify
+        ///       the task name and mode flags.
         { BusyTask* tmp = newTask(mode, task->worker, task->workerData, currentTaskName);
         result = runTask(tmp);
         // We are now done with this task.

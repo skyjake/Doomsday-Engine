@@ -29,6 +29,8 @@
 #ifndef LIBCOMMON_PLAYSETUP_H
 #define LIBCOMMON_PLAYSETUP_H
 
+#include "common.h"
+
 #define numvertexes (*(uint*) DD_GetVariable(DD_VERTEX_COUNT))
 #define numhedges   (*(uint*) DD_GetVariable(DD_HEDGE_COUNT))
 #define numsectors  (*(uint*) DD_GetVariable(DD_SECTOR_COUNT))
@@ -48,8 +50,12 @@ void P_SetupForMapData(int type, uint num);
 
 /**
  * Load the specified map.
+ *
+ * @param uri      URI e.g., "E1M1".
+ * @param episode  Logical episode number.
+ * @param map      Logical map number.
  */
-void P_SetupMap(uint episode, uint map);
+void P_SetupMap(Uri* uri, uint episode, uint map);
 
 const char* P_GetMapNiceName(void);
 patchid_t P_FindMapTitlePatch(uint episode, uint map);
