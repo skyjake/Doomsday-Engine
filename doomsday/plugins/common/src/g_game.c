@@ -1188,14 +1188,12 @@ void G_EndGame(void)
 typedef struct {
     uint episode;
     uint map;
-    skillmode_t skill;
-    int playerMask;
 } loadmapworker_params_t;
 
 static int G_LoadMapWorker(void* parameters)
 {
     loadmapworker_params_t* p = (loadmapworker_params_t*) parameters;
-    P_SetupMap(p->episode, p->map, p->skill, p->playerMask);
+    P_SetupMap(p->episode, p->map);
     BusyMode_WorkerEnd();
     /// @fixme Do not assume!
     return 0; // Assume success.
@@ -1255,7 +1253,7 @@ void G_DoLoadMap(void)
     {
 #if __JHEXEN__
         /**
-         * \kludge Due to the way music is managed with Hexen, unless we
+         * @note Kludge: Due to the way music is managed with Hexen, unless we
          * explicitly stop the current playing track the engine will not
          * change tracks. This is due to the use of the runtime-updated
          * "currentmap" definition (the engine thinks music has not changed
@@ -1264,7 +1262,7 @@ void G_DoLoadMap(void)
          * The only reason it worked previously was because the
          * waiting-for-map-load song was started prior to load.
          *
-         * \todo Rethink the Music definition stuff with regard to Hexen.
+         * @todo Rethink the Music definition stuff with regard to Hexen.
          * Why not create definitions during startup by parsing MAPINFO?
          */
         S_StopMusic();
@@ -1281,8 +1279,6 @@ void G_DoLoadMap(void)
      */
     p.episode    = gameEpisode;
     p.map        = gameMap;
-    p.skill      = gameSkill;
-    p.playerMask = 0;
 
     /// @todo Use progress bar mode and update progress during the setup.
     BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ BUSYF_TRANSITION | (verbose? BUSYF_CONSOLE_OUTPUT : 0),

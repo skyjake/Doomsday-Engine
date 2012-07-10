@@ -719,7 +719,7 @@ static void spawnMapObjects(void)
     P_SpawnPlayers();
 }
 
-void P_SetupMap(uint episode, uint map, skillmode_t skill, int playerMask)
+void P_SetupMap(uint episode, uint map)
 {
     ddstring_t* mapPath;
     Uri* mapUri;

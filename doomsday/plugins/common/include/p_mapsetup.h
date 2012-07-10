@@ -49,7 +49,7 @@ void P_SetupForMapData(int type, uint num);
 /**
  * Load the specified map.
  */
-void P_SetupMap(uint episode, uint map, skillmode_t skill, int playermask);
+void P_SetupMap(uint episode, uint map);
 
 const char* P_GetMapNiceName(void);
 patchid_t P_FindMapTitlePatch(uint episode, uint map);
