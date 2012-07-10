@@ -66,6 +66,7 @@ void            G_Register(void);
 void            G_CommonPreInit(void);
 void            G_CommonPostInit(void);
 void            G_CommonShutdown(void);
+
 void            R_InitRefresh(void);
 
 void            G_PrintMapList(void);

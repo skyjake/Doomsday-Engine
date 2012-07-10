@@ -160,7 +160,6 @@ boolean G_ValidateMap(uint *episode, uint *map);
 
 void    G_StopDemo(void);
 
-void R_LoadColorPalettes(void);
 void R_LoadVectorGraphics(void);
 
 int Hook_DemoStop(int hookType, int val, void* paramaters);

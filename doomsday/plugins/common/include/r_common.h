@@ -46,6 +46,8 @@
 extern Size2Rawf viewScale;
 extern float aspectScale;
 
+void R_LoadColorPalettes(void);
+
 /**
  * @param flags  @ref resizeViewWindowFlags
  */
@@ -61,6 +63,7 @@ void R_UpdateConsoleView(int player);
 void R_PrecachePSprites(void);
 
 void R_GetGammaMessageStrings(void);
+
 void R_CycleGammaLevel(void);
 
 #endif /* LIBCOMMON_REFRESH_H */

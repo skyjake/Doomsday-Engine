@@ -2,6 +2,13 @@
  * @file memoryzone_private.h
  * Memory zone (internal header). @ingroup memzone
  *
+ * This header file is separate from the public one because it defines the data
+ * structures used internally by the memory zone module. The private data
+ * should not be accessed under normal circumstances. In a debug build, the
+ * memzone_private_s struct can be used to examine the contents of the zone for
+ * debugging purposes -- however, doing so requires directly including this
+ * internal header file.
+ *
  * @authors Copyright © 1999-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 1993-1996 by id Software, Inc.
