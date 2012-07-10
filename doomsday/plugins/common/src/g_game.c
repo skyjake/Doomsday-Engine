@@ -1159,6 +1159,46 @@ void G_StartHelp(void)
     Con_Message("Warning: InFine script 'help' not defined, ignoring.\n");
 }
 
+/**
+ * Prints a banner to the console containing information pertinent to the
+ * current map (e.g., map name, author...).
+ */
+static void printMapBanner(void)
+{
+    const char* name = P_GetMapNiceName();
+
+    Con_Printf("\n");
+    if(name)
+    {
+        char buf[64];
+#if __JHEXEN__
+        dd_snprintf(buf, 64, "Map %u (%u): %s", P_GetMapWarpTrans(gameMap)+1, gameMap+1, name);
+#else
+        dd_snprintf(buf, 64, "Map %u: %s", gameMap+1, name);
+#endif
+        Con_FPrintf(CPF_LIGHT|CPF_BLUE, "%s\n", buf);
+    }
+
+#if !__JHEXEN__
+    {
+    static const char* unknownAuthorStr = "Unknown";
+    Uri* uri = G_ComposeMapUri(gameEpisode, gameMap);
+    ddstring_t* path = Uri_Compose(uri);
+    const char* lauthor;
+
+    lauthor = P_GetMapAuthor(P_MapIsCustom(Str_Text(path)));
+    if(!lauthor)
+        lauthor = unknownAuthorStr;
+
+    Con_FPrintf(CPF_LIGHT|CPF_BLUE, "Author: %s\n", lauthor);
+
+    Str_Delete(path);
+    Uri_Delete(uri);
+    }
+#endif
+    Con_Printf("\n");
+}
+
 void G_BeginMap(void)
 {
     uint i;
@@ -1183,6 +1223,8 @@ void G_BeginMap(void)
     // Time can now progress in this map.
     mapStartTic = (int) GAMETIC;
     mapTime = actualMapTime = 0;
+
+    printMapBanner();
 
     // The music may have been paused for the briefing; unpause.
     S_PauseMusic(false);

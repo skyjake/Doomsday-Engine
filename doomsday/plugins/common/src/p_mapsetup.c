@@ -838,7 +838,6 @@ void P_SetupMap(Uri* mapUri, uint episode, uint map)
         R_SetAllDoomsdayFlags();
 
     P_FinalizeMap();
-    P_PrintMapBanner(episode, map);
 
     // It ends.
     mapSetup = false;
@@ -1044,45 +1043,4 @@ const char* P_GetMapAuthor(boolean supressGameAuthor)
     if((mapIsCustom || supressGameAuthor) && !stricmp(gameInfo.author, author))
         return NULL;
     return author;
-}
-
-/**
- * Prints a banner to the console containing information pertinent to the
- * current map (e.g., map name, author...).
- */
-static void P_PrintMapBanner(uint episode, uint map)
-{
-    const char* lname;
-
-    Con_Printf("\n");
-    lname = P_GetMapNiceName();
-    if(lname)
-    {
-        char name[64];
-#if __JHEXEN__
-        dd_snprintf(name, 64, "Map %u (%u): %s", P_GetMapWarpTrans(map)+1, map+1, lname);
-#else
-        dd_snprintf(name, 64, "Map %u: %s", map+1, lname);
-#endif
-        Con_FPrintf(CPF_LIGHT|CPF_BLUE, "%s\n", name);
-    }
-
-#if !__JHEXEN__
-    {
-    static const char* unknownAuthorStr = "Unknown";
-    Uri* uri = G_ComposeMapUri(episode, map);
-    ddstring_t* path = Uri_Compose(uri);
-    const char* lauthor;
-
-    lauthor = P_GetMapAuthor(P_MapIsCustom(Str_Text(path)));
-    if(!lauthor)
-        lauthor = unknownAuthorStr;
-
-    Con_FPrintf(CPF_LIGHT|CPF_BLUE, "Author: %s\n", lauthor);
-
-    Str_Delete(path);
-    Uri_Delete(uri);
-    }
-#endif
-    Con_Printf("\n");
 }
