@@ -49,6 +49,7 @@
 #include "p_inventory.h"
 #include "p_sound.h"
 #include "p_start.h"
+#include "r_common.h"
 #if __JHEXEN__
 #  include "m_cheat.h"
 #endif
@@ -150,6 +151,7 @@ void G_UpdateState(int step)
     case DD_POST:
         G_RestoreState();
         R_InitRefresh();
+        R_LoadColorPalettes();
         P_Update();
 #if !__JHEXEN__
         XG_Update();
