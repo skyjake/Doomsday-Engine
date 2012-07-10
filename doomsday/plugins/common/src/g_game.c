@@ -1195,7 +1195,7 @@ static int G_LoadMapWorker(void* parameters)
     loadmapworker_params_t* p = (loadmapworker_params_t*) parameters;
     P_SetupMap(p->mapUri, p->episode, p->map);
     BusyMode_WorkerEnd();
-    /// @fixme Do not assume!
+    /// @todo Fixme: Do not assume!
     return 0; // Assume success.
 }
 
