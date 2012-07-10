@@ -719,10 +719,11 @@ static void spawnMapObjects(void)
     P_SpawnPlayers();
 }
 
-void P_SetupMap(uint episode, uint map)
+void P_SetupMap(Uri* mapUri, uint episode, uint map)
 {
-    ddstring_t* mapPath;
-    Uri* mapUri;
+    ddstring_t* mapUriStr = mapUri? Uri_Compose(mapUri) : 0;
+
+    if(!mapUriStr) return;
 
     // It begins...
     mapSetup = true;
@@ -742,15 +743,13 @@ void P_SetupMap(uint episode, uint map)
     P_ClearBodyQueue();
 #endif
 
-    mapUri = G_ComposeMapUri(episode, map);
-    mapPath = Uri_Compose(mapUri);
-    if(!P_LoadMap(Str_Text(mapPath)))
+    if(!P_LoadMap(Str_Text(mapUriStr)))
     {
         ddstring_t* path = Uri_ToString(mapUri);
         Con_Error("P_SetupMap: Failed loading map \"%s\".\n", Str_Text(path));
+        exit(1); // Unreachable.
     }
-    Str_Delete(mapPath);
-    Uri_Delete(mapUri);
+    Str_Delete(mapUriStr);
 
     DD_InitThinkers();
 #if __JHERETIC__
@@ -839,11 +838,6 @@ void P_SetupMap(uint episode, uint map)
         R_SetAllDoomsdayFlags();
 
     P_FinalizeMap();
-
-    // Someone may want to do something special now that the map has been
-    // fully set up.
-    R_SetupMap(DDSMM_FINALIZE, 0);
-
     P_PrintMapBanner(episode, map);
 
     // It ends.
@@ -961,6 +955,9 @@ static void P_FinalizeMap(void)
 #if __JHERETIC__
     P_TurnGizmosAwayFromDoors();
 #endif
+
+    // Someone may want to do something special now that the map has been fully set up.
+    R_SetupMap(DDSMM_FINALIZE, 0);
 }
 
 const char* P_GetMapNiceName(void)

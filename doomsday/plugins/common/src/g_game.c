@@ -1186,6 +1186,7 @@ void G_EndGame(void)
 }
 
 typedef struct {
+    Uri* mapUri;
     uint episode;
     uint map;
 } loadmapworker_params_t;
@@ -1193,7 +1194,7 @@ typedef struct {
 static int G_LoadMapWorker(void* parameters)
 {
     loadmapworker_params_t* p = (loadmapworker_params_t*) parameters;
-    P_SetupMap(p->episode, p->map);
+    P_SetupMap(p->mapUri, p->episode, p->map);
     BusyMode_WorkerEnd();
     /// @fixme Do not assume!
     return 0; // Assume success.
@@ -1277,12 +1278,14 @@ void G_DoLoadMap(void)
     /**
      * Load the map.
      */
+    p.mapUri     = G_ComposeMapUri(gameEpisode, gameMap);
     p.episode    = gameEpisode;
     p.map        = gameMap;
 
     /// @todo Use progress bar mode and update progress during the setup.
     BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ BUSYF_TRANSITION | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
                                 G_LoadMapWorker, &p, "Loading map...");
+    Uri_Delete(p.mapUri);
 
     // Wake up HUD widgets for players in the game.
     for(i = 0; i < MAXPLAYERS; ++i)
