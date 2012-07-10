@@ -146,7 +146,14 @@ void    G_PlayerReborn(int player);
 void    G_InitNew(skillmode_t skill, uint episode, uint map);
 void    G_DoInitNew(void);
 void    G_DoReborn(int playernum);
-void    G_DoLoadMap(void);
+
+typedef struct {
+    Uri* mapUri;
+    uint episode;
+    uint map;
+} loadmap_params_t;
+void    G_DoLoadMap(loadmap_params_t* params);
+
 void    G_DoNewGame(void);
 void    G_DoLoadGame(void);
 void    G_DoPlayDemo(void);
@@ -1124,9 +1131,6 @@ boolean G_StartFinale(const char* script, int flags, finale_mode_t mode, const c
     return true;
 }
 
-/**
- * Begin the titlescreen animation sequence.
- */
 void G_StartTitle(void)
 {
     ddfinale_t fin;
@@ -1141,9 +1145,6 @@ void G_StartTitle(void)
     G_StartFinale(fin.script, FF_LOCAL, FIMODE_NORMAL, "title");
 }
 
-/**
- * Begin the helpscreen animation sequence.
- */
 void G_StartHelp(void)
 {
     ddfinale_t fin;
@@ -1156,6 +1157,35 @@ void G_StartHelp(void)
         return;
     }
     Con_Message("Warning: InFine script 'help' not defined, ignoring.\n");
+}
+
+void G_BeginMap(void)
+{
+    uint i;
+
+    G_ChangeGameState(GS_MAP);
+
+    R_SetViewPortPlayer(CONSOLEPLAYER, CONSOLEPLAYER); // View the guy you are playing.
+    R_ResizeViewWindow(RWF_FORCE|RWF_NO_LERP);
+
+    G_ControlReset(-1); // Clear all controls for all local players.
+
+    // Wake up HUD widgets for players in the game.
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        if(!players[i].plr->inGame) continue;
+        ST_Start(i);
+        HU_Start(i);
+    }
+
+    G_UpdateGSVarsForMap();
+
+    // Time can now progress in this map.
+    mapStartTic = (int) GAMETIC;
+    mapTime = actualMapTime = 0;
+
+    // The music may have been paused for the briefing; unpause.
+    S_PauseMusic(false);
 }
 
 int G_EndGameResponse(msgresponse_t response, int userValue, void* userPointer)
@@ -1195,36 +1225,49 @@ void G_EndGame(void)
     Hu_MsgStart(MSG_YESNO, IS_CLIENT? GET_TXT(TXT_DISCONNECT) : ENDGAME, G_EndGameResponse, 0, NULL);
 }
 
-typedef struct {
-    Uri* mapUri;
-    uint episode;
-    uint map;
-} loadmapworker_params_t;
-
-static int G_LoadMapWorker(void* parameters)
+static void R_SetupMapFog(void)
 {
-    loadmapworker_params_t* p = (loadmapworker_params_t*) parameters;
+#if __JHEXEN__
+    int fadeTable = P_GetMapFadeTable(gameMap);
+    if(fadeTable == W_GetLumpNumForName("COLORMAP"))
+    {
+        // We don't want fog in this case.
+        GL_UseFog(false);
+    }
+    else
+    {
+        // Probably fog ... don't use fullbright sprites
+        if(fadeTable == W_GetLumpNumForName("FOGMAP"))
+        {
+            // Tell the renderer to turn on the fog.
+            GL_UseFog(true);
+        }
+    }
+#endif
+}
+
+static int G_LoadMapWorker(void* params)
+{
+    loadmap_params_t* p = (loadmap_params_t*) params;
     P_SetupMap(p->mapUri, p->episode, p->map);
     BusyMode_WorkerEnd();
     /// @todo Fixme: Do not assume!
     return 0; // Assume success.
 }
 
-void G_DoLoadMap(void)
+void G_DoLoadMap(loadmap_params_t* p)
 {
-    loadmapworker_params_t p;
     ddfinale_t fin;
     boolean hasBrief;
-    int i;
 
-    mapStartTic = (int) GAMETIC; // For time calculation.
+    DENG_ASSERT(p);
 
     // If we're the server, let clients know the map will change.
     NetSv_SendGameState(GSF_CHANGE_MAP, DDSP_ALL_PLAYERS);
 
     // Determine whether there is a briefing to run before the map starts
     // (played after the map has been loaded).
-    hasBrief = G_BriefingEnabled(gameEpisode, gameMap, &fin);
+    hasBrief = G_BriefingEnabled(p->episode, p->map, &fin);
     if(!hasBrief)
     {
 #if __JHEXEN__
@@ -1244,75 +1287,40 @@ void G_DoLoadMap(void)
         S_StopMusic();
         //S_StartMusic("chess", true); // Waiting-for-map-load song
 #endif
-        S_MapMusic(gameEpisode, gameMap);
+        S_MapMusic(p->episode, p->map);
         S_PauseMusic(true);
     }
 
-    DD_Executef(true, "texreset raw"); // Delete raw images to save memory.
+    // Delete raw images to conserve texture memory.
+    DD_Executef(true, "texreset raw");
+
+    // Unpause the current game.
+    sendPause = paused = false;
 
     /**
      * Load the map.
      */
-    p.mapUri     = G_ComposeMapUri(gameEpisode, gameMap);
-    p.episode    = gameEpisode;
-    p.map        = gameMap;
-
     /// @todo Use progress bar mode and update progress during the setup.
     BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ BUSYF_TRANSITION | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                                G_LoadMapWorker, &p, "Loading map...");
-    Uri_Delete(p.mapUri);
+                                G_LoadMapWorker, p, "Loading map...");
 
-    // Wake up HUD widgets for players in the game.
-    for(i = 0; i < MAXPLAYERS; ++i)
-    {
-        if(!players[i].plr->inGame) continue;
-        ST_Start(i);
-        HU_Start(i);
-    }
-
+    // Process work which could not be done during busy mode...
     R_SetupMap(DDSMM_AFTER_BUSY, 0);
+    R_SetupMapFog();
 
-#if __JHEXEN__
-    // Load colormap and set the fullbright flag
-    { int fadeTable = P_GetMapFadeTable(gameMap);
-    if(fadeTable == W_GetLumpNumForName("COLORMAP"))
-    {
-        // We don't want fog in this case.
-        GL_UseFog(false);
-    }
-    else
-    {
-        // Probably fog ... don't use fullbright sprites
-        if(fadeTable == W_GetLumpNumForName("FOGMAP"))
-        {
-            // Tell the renderer to turn on the fog.
-            GL_UseFog(true);
-        }
-    }}
-#endif
-
-    R_SetViewPortPlayer(CONSOLEPLAYER, CONSOLEPLAYER); // View the guy you are playing.
+    // Wrap up, map loading is now complete.
     G_SetGameAction(GA_NONE);
-    nextMap = 0;
-
     Z_CheckHeap();
-
-    sendPause = paused = false;
-
-    G_ControlReset(-1); // Clear all controls for all local players.
-
-    G_UpdateGSVarsForMap();
 
     // Start a briefing, if there is one.
     if(hasBrief)
     {
         G_StartFinale(fin.script, 0, FIMODE_BEFORE, 0);
     }
-    else // No briefing, start the map.
+    else
     {
-        G_ChangeGameState(GS_MAP);
-        S_PauseMusic(false);
-        R_ResizeViewWindow(RWF_FORCE|RWF_NO_LERP);
+        // No briefing, start the map.
+        G_BeginMap();
     }
 }
 
@@ -1563,9 +1571,16 @@ static void runGameAction(void)
             G_DoWorldDone();
             break;
 
-        case GA_LOADMAP:
-            G_DoLoadMap();
-            break;
+        case GA_LOADMAP: {
+            loadmap_params_t p;
+            p.mapUri     = G_ComposeMapUri(gameEpisode, gameMap);
+            p.episode    = gameEpisode;
+            p.map        = gameMap;
+
+            G_DoLoadMap(&p);
+
+            Uri_Delete(p.mapUri);
+            break; }
 
         case GA_NEWGAME:
             G_DoNewGame();
@@ -2389,10 +2404,19 @@ void G_DoWorldDone(void)
     SV_HxMapTeleport(nextMap, nextMapEntryPoint);
     rebornPosition = nextMapEntryPoint;
 #else
+    loadmap_params_t p;
+
 # if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     gameMap = nextMap;
 # endif
-    G_DoLoadMap();
+
+    p.mapUri     = G_ComposeMapUri(gameEpisode, gameMap);
+    p.episode    = gameEpisode;
+    p.map        = gameMap;
+
+    G_DoLoadMap(&p);
+
+    Uri_Delete(p.mapUri);
 #endif
 
     // In a non-network, non-deathmatch game, save immediately into the autosave slot.
@@ -2777,7 +2801,15 @@ void G_InitNew(skillmode_t skill, uint episode, uint map)
 
     NetSv_UpdateGameConfig();
 
-    G_DoLoadMap();
+    { loadmap_params_t p;
+    p.mapUri     = G_ComposeMapUri(gameEpisode, gameMap);
+    p.episode    = gameEpisode;
+    p.map        = gameMap;
+
+    G_DoLoadMap(&p);
+
+    Uri_Delete(p.mapUri);
+    }
 }
 
 int G_QuitGameResponse(msgresponse_t response, int userValue, void* userPointer)

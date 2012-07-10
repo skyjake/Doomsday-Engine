@@ -468,14 +468,11 @@ int Hook_FinaleScriptStop(int hookType, int finaleId, void* parameters)
         // Don't play the debriefing again.
         briefDisabled = true;
     }
-    else if(mode == FIMODE_BEFORE)
+    else if(mode == FIMODE_BEFORE) // A briefing has ended.
     {
-        // Enter the map, this was a briefing.
-        G_ChangeGameState(GS_MAP);
+        // Its time to start the map; que music and begin!
         S_MapMusic(gameEpisode, gameMap);
-        R_ResizeViewWindow(RWF_FORCE|RWF_NO_LERP);
-        mapStartTic = (int) GAMETIC;
-        mapTime = actualMapTime = 0;
+        G_BeginMap();
     }
     return true;
 }

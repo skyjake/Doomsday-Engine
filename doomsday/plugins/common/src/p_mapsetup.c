@@ -854,6 +854,8 @@ static void P_ResetWorldState(void)
 #endif
     int i, parm;
 
+    nextMap = 0;
+
 #if __JDOOM__ || __JDOOM64__
     wmInfo.maxFrags = 0;
     wmInfo.parTime = -1;
@@ -922,8 +924,6 @@ static void P_ResetWorldState(void)
 #endif
 
     P_DestroyPlayerStarts();
-
-    mapTime = actualMapTime = 0;
 }
 
 /**
