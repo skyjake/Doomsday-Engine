@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2009-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * b_util.c: Bindings-related Utility Functions
+ * Bindings-related Utility Functions.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -31,11 +31,14 @@
 #include <math.h>
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_misc.h"
 
 #include "b_main.h"
 #include "b_util.h"
 #include "b_context.h"
+
+#include "net_main.h" // netGame
 
 // MACROS ------------------------------------------------------------------
 
@@ -261,30 +264,35 @@ boolean B_ParseAnglePosition(const char* desc, float* pos)
  */
 boolean B_ParseStateCondition(statecondition_t* cond, const char* desc)
 {
-    boolean successful = false;
-    ddstring_t* str = Str_New();
+    AutoStr* str = AutoStr_New();
     ddeventtype_t type;
 
     // First, we expect to encounter a device name.
     desc = Str_CopyDelim(str, desc, '-');
 
-    if(!Str_CompareIgnoreCase(str, "modifier"))
+    if(!Str_CompareIgnoreCase(str, "multiplayer"))
+    {
+        // This is only intended for multiplayer games.
+        cond->type = SCT_STATE;
+        cond->flags.multiplayer = true;
+    }
+    else if(!Str_CompareIgnoreCase(str, "modifier"))
     {
         cond->device = 0; // not used
         cond->type = SCT_MODIFIER_STATE;
-        
+
         // Parse the modifier number.
         desc = Str_CopyDelim(str, desc, '-');
         if(!B_ParseModifierId(Str_Text(str), &cond->id))
         {
-            goto parseEnded;
+            return false;
         }
 
         // The final part of a modifier is the state.
         desc = Str_CopyDelim(str, desc, '-');
         if(!B_ParseToggleState(Str_Text(str), &cond->state))
         {
-            goto parseEnded;
+            return false;
         }
     }
     else if(!Str_CompareIgnoreCase(str, "key"))
@@ -296,14 +304,14 @@ boolean B_ParseStateCondition(statecondition_t* cond, const char* desc)
         desc = Str_CopyDelim(str, desc, '-');
         if(!B_ParseKeyId(Str_Text(str), &cond->id))
         {
-            goto parseEnded;
+            return false;
         }
 
         // The final part of a key event is the state of the key toggle.
         desc = Str_CopyDelim(str, desc, '-');
         if(!B_ParseToggleState(Str_Text(str), &cond->state))
         {
-            goto parseEnded;
+            return false;
         }
     }
     else if(!Str_CompareIgnoreCase(str, "mouse"))
@@ -314,7 +322,7 @@ boolean B_ParseStateCondition(statecondition_t* cond, const char* desc)
         desc = Str_CopyDelim(str, desc, '-');
         if(!B_ParseMouseTypeAndId(Str_Text(str), &type, &cond->id))
         {
-            goto parseEnded;
+            return false;
         }
 
         desc = Str_CopyDelim(str, desc, '-');
@@ -323,7 +331,7 @@ boolean B_ParseStateCondition(statecondition_t* cond, const char* desc)
             cond->type = SCT_TOGGLE_STATE;
             if(!B_ParseToggleState(Str_Text(str), &cond->state))
             {
-                goto parseEnded;
+                return false;
             }
         }
         else if(type == E_AXIS)
@@ -331,7 +339,7 @@ boolean B_ParseStateCondition(statecondition_t* cond, const char* desc)
             cond->type = SCT_AXIS_BEYOND;
             if(!B_ParseAxisPosition(Str_Text(str), &cond->state, &cond->pos))
             {
-                goto parseEnded;
+                return false;
             }
         }
     }
@@ -343,7 +351,7 @@ boolean B_ParseStateCondition(statecondition_t* cond, const char* desc)
         desc = Str_CopyDelim(str, desc, '-');
         if(!B_ParseJoystickTypeAndId(cond->device, Str_Text(str), &type, &cond->id))
         {
-            goto parseEnded;
+            return false;
         }
 
         desc = Str_CopyDelim(str, desc, '-');
@@ -352,7 +360,7 @@ boolean B_ParseStateCondition(statecondition_t* cond, const char* desc)
             cond->type = SCT_TOGGLE_STATE;
             if(!B_ParseToggleState(Str_Text(str), &cond->state))
             {
-                goto parseEnded;
+                return false;
             }
         }
         else if(type == E_AXIS)
@@ -360,7 +368,7 @@ boolean B_ParseStateCondition(statecondition_t* cond, const char* desc)
             cond->type = SCT_AXIS_BEYOND;
             if(!B_ParseAxisPosition(Str_Text(str), &cond->state, &cond->pos))
             {
-                goto parseEnded;
+                return false;
             }
         }
         else // Angle.
@@ -368,14 +376,14 @@ boolean B_ParseStateCondition(statecondition_t* cond, const char* desc)
             cond->type = SCT_ANGLE_AT;
             if(!B_ParseAnglePosition(Str_Text(str), &cond->pos))
             {
-                goto parseEnded;
+                return false;
             }
         }
     }
     else
     {
         Con_Message("B_ParseEvent: Device \"%s\" unknown.\n", Str_Text(str));
-        goto parseEnded;
+        return false;
     }
 
     // Check for valid toggle states.
@@ -384,29 +392,25 @@ boolean B_ParseStateCondition(statecondition_t* cond, const char* desc)
     {
         Con_Message("B_ParseStateCondition: \"%s\": Toggle condition can only be 'up' or 'down'.\n",
                     desc);
-        goto parseEnded;
+        return false;
     }
 
     // Finally, there may be the negation at the end.
     desc = Str_CopyDelim(str, desc, '-');
     if(!Str_CompareIgnoreCase(str, "not"))
     {
-        cond->negate = true;
+        cond->flags.negate = true;
     }
 
     // Anything left that wasn't used?
     if(desc)
     {
         Con_Message("B_ParseStateCondition: Unrecognized \"%s\".\n", desc);
-        goto parseEnded;
+        return false;
     }
 
     // No errors detected.
-    successful = true;
-
-parseEnded:
-    Str_Delete(str);
-    return successful;
+    return true;
 }
 
 boolean B_CheckAxisPos(ebstate_t test, float testPos, float pos)
@@ -441,24 +445,29 @@ boolean B_CheckAxisPos(ebstate_t test, float testPos, float pos)
 
 boolean B_CheckCondition(statecondition_t* cond, int localNum, bcontext_t* context)
 {
-    boolean fulfilled = !cond->negate;
+    boolean fulfilled = !cond->flags.negate;
     inputdev_t* dev = I_GetDevice(cond->device, false);
 
     switch(cond->type)
     {
+    case SCT_STATE:
+        if(cond->flags.multiplayer && netGame)
+            return fulfilled;
+        break;
+
     case SCT_MODIFIER_STATE:
         if(context)
         {
             // Evaluate the current state of the modifier (in this context).
             float pos = 0, relative = 0;
             dbinding_t* binds = &B_GetControlBinding(context, cond->id)->deviceBinds[localNum];
-            B_EvaluateDeviceBindingList(localNum, binds, &pos, &relative, context);
+            B_EvaluateDeviceBindingList(localNum, binds, &pos, &relative, context, false /*no triggered*/);
             if((cond->state == EBTOG_DOWN && fabs(pos) > .5) ||
                (cond->state == EBTOG_UP && fabs(pos) < .5))
                 return fulfilled;
         }
         break;
-        
+
     case SCT_TOGGLE_STATE:
     {
         int isDown = (dev->keys[cond->id].isDown != 0);
@@ -467,7 +476,7 @@ boolean B_CheckCondition(statecondition_t* cond, int localNum, bcontext_t* conte
             return fulfilled;
         break;
     }
-    
+
     case SCT_AXIS_BEYOND:
         if(B_CheckAxisPos(cond->state, cond->pos, dev->axes[cond->id].position))
             return fulfilled;
@@ -479,6 +488,17 @@ boolean B_CheckCondition(statecondition_t* cond, int localNum, bcontext_t* conte
         break;
     }
     return !fulfilled;
+}
+
+boolean B_EqualConditions(const statecondition_t* a, const statecondition_t* b)
+{
+    return (a->device == b->device &&
+            a->type == b->type &&
+            a->id == b->id &&
+            a->state == b->state &&
+            FEQUAL(a->pos, b->pos) &&
+            a->flags.negate == b->flags.negate &&
+            a->flags.multiplayer == b->flags.multiplayer);
 }
 
 void B_AppendDeviceDescToString(uint device, ddeventtype_t type, int id, ddstring_t* str)
@@ -570,7 +590,14 @@ void B_AppendAnglePositionToString(float pos, ddstring_t* str)
  */
 void B_AppendConditionToString(const statecondition_t* cond, ddstring_t* str)
 {
-    if(cond->type == SCT_MODIFIER_STATE)
+    if(cond->type == SCT_STATE)
+    {
+        if(cond->flags.multiplayer)
+        {
+            Str_Append(str, "multiplayer");
+        }
+    }
+    else if(cond->type == SCT_MODIFIER_STATE)
     {
         Str_Appendf(str, "modifier-%i", cond->id - CTL_MODIFIER_1 + 1);
     }
@@ -596,7 +623,7 @@ void B_AppendConditionToString(const statecondition_t* cond, ddstring_t* str)
     }
 
     // Flags.
-    if(cond->negate)
+    if(cond->flags.negate)
     {
         Str_Append(str, "-not");
     }

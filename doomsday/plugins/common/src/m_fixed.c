@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2004 Lukasz Stelmach
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,7 +26,7 @@
 /**
  * m_fixed.c: Fixed-point math.
  *
- * Define NO_FIXED_ASM to disable the assembler version.
+ * Define DENG_NO_FIXED_ASM to disable the assembler version.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -53,7 +53,7 @@
 
 // CODE --------------------------------------------------------------------
 
-#ifdef NO_FIXED_ASM
+#ifdef DENG_NO_FIXED_ASM
 
 fixed_t FixedMul(fixed_t a, fixed_t b)
 {

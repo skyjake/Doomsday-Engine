@@ -1,5 +1,6 @@
 name: Final Doom: Plutonia Experiment
 game: game-jdoom
+game-mode: game-mode-doom2-plut
 banner: banner-doom2-plut
 hidden: yes
 

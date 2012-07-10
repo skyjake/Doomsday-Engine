@@ -30,6 +30,7 @@
 				</ResourceCompiler>
 				<Linker>
 					<Add option="/INCREMENTAL:NO" />
+					<Add option='/DEF:&quot;..\..\plugins\dehread\api\dpdehread.def&quot;' />
 					<Add library="bin\Release Win32\Doomsday.lib" />
 				</Linker>
 			</Target>
@@ -58,6 +59,7 @@
 					<Add directory="..\..\engine\api" />
 				</ResourceCompiler>
 				<Linker>
+					<Add option='/DEF:&quot;..\..\plugins\dehread\api\dpdehread.def&quot;' />
 					<Add option="/opt:noicf" />
 					<Add option="/opt:noref" />
 					<Add library="bin\Debug Win32\Doomsday.lib" />

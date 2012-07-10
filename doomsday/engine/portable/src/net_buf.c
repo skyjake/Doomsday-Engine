@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,10 +24,8 @@
  */
 
 /**
- * net_buf.c: Network Message Handling and Buffering
+ * Network Message Handling and Buffering
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
 #include "de_system.h"
@@ -36,36 +34,14 @@
 #include "de_misc.h"
 #include "de_play.h"
 
-// MACROS ------------------------------------------------------------------
+#include <de/c_wrapper.h>
+
+#include "zipfile.h" // uses compression for packet contents
 
 #define MSG_MUTEX_NAME  "MsgQueueMutex"
 
-// Flags for the sent message store (for to-be-confirmed messages):
-//#define SMSF_ORDERED  0x1     // Block other ordered messages until confirmed
-//#define SMSF_QUEUED       0x2     // Ordered message waiting to be sent
-//#define SMSF_CONFIRMED    0x4     // Delivery has been confirmed! (OK to remove)
-
-// Length of the received message ID history.
-//#define STORE_HISTORY_SIZE 100
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
 boolean allowSending;
 netbuffer_t netBuffer;
-
-// The Sent Message Store: list of sent or queued messages waiting to be
-// confirmed.
-//static store_t stores[DDMAXPLAYERS];
 
 // The message queue: list of incoming messages waiting for processing.
 static netmessage_t *msgHead, *msgTail;
@@ -75,15 +51,11 @@ static int msgCount;
 // the message queue.
 static mutex_t msgMutex;
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 // Number of bytes of outgoing data transmitted.
 static size_t numOutBytes;
 
 // Number of bytes sent over the network (compressed).
 static size_t numSentBytes;
-
-// CODE --------------------------------------------------------------------
 
 /**
  * Initialize the low-level network subsystem. This is called always
@@ -96,9 +68,11 @@ void N_Init(void)
 
     allowSending = false;
 
-    N_SockInit();
+    //N_SockInit();
     N_MasterInit();
     N_SystemInit();             // Platform dependent stuff.
+
+    N_InitService(false /* client mode by default */);
 }
 
 /**
@@ -109,18 +83,13 @@ void N_Shutdown(void)
 {
     N_SystemShutdown();
     N_MasterShutdown();
-    N_SockShutdown();
+    //N_SockShutdown();
 
     allowSending = false;
 
     // Close the handle of the message queue mutex.
     Sys_DestroyMutex(msgMutex);
     msgMutex = 0;
-
-    if(ArgExists("-huffavg"))
-    {
-        Con_Execute(CMDS_DDAY, "huffman", false, false);
-    }
 }
 
 /**
@@ -139,9 +108,9 @@ boolean N_LockQueue(boolean doAcquire)
 
 /**
  * Adds the given netmessage_s to the queue of received messages.
- * Before calling this, allocate the message using malloc().  We use a
- * mutex to synchronize access to the message queue.  This is called
- * in the network receiver thread.
+ * We use a mutex to synchronize access to the message queue.
+ *
+ * @note This is called in the network receiver thread.
  */
 void N_PostMessage(netmessage_t *msg)
 {
@@ -233,7 +202,7 @@ void N_ReleaseMessage(netmessage_t *msg)
 {
     if(msg->handle)
     {
-        N_ReturnBuffer(msg->handle);
+        LegacyNetwork_FreeBuffer(msg->handle);
         msg->handle = 0;
     }
     M_Free(msg);
@@ -245,9 +214,15 @@ void N_ReleaseMessage(netmessage_t *msg)
 void N_ClearMessages(void)
 {
     netmessage_t *msg;
+    float oldSim = netSimulatedLatencySeconds;
+
+    // No simulated latency now.
+    netSimulatedLatencySeconds = 0;
 
     while((msg = N_GetMessage()) != NULL)
         N_ReleaseMessage(msg);
+
+    netSimulatedLatencySeconds = oldSim;
 
     // The queue is now empty.
     msgHead = msgTail = NULL;
@@ -264,8 +239,6 @@ void N_ClearMessages(void)
 void N_SendPacket(int flags)
 {
     uint                i, dest = 0;
-    void               *data;
-    size_t              size;
 
     // Is the network available?
     if(!allowSending || !N_IsAvailable())
@@ -274,9 +247,6 @@ void N_SendPacket(int flags)
     // Figure out the destination DPNID.
     if(netServerMode)
     {
-        //player_t           *plr = &ddPlayers[netBuffer.player];
-        //ddplayer_t         *ddpl = &plr->shared;
-
         if(netBuffer.player >= 0 && netBuffer.player < DDMAXPLAYERS)
         {
             if(/*(ddpl->flags & DDPF_LOCAL) ||*/
@@ -303,50 +273,31 @@ void N_SendPacket(int flags)
         }
     }
 
-    // Message IDs are currently not used.
-    netBuffer.msg.id = 0;
-
     // This is what will be sent.
     numOutBytes += netBuffer.headerLength + netBuffer.length;
 
-    // Compress using Huffman codes.
-    data = Huff_Encode((byte *) &netBuffer.msg,
-                       netBuffer.headerLength + netBuffer.length, &size);
+    Protocol_Send(&netBuffer.msg, netBuffer.headerLength + netBuffer.length, dest);
+}
 
-    // This many bytes are actually sent.
-    numSentBytes += size;
-
-    // All messages are sent over a TCP connection.
-    N_SendDataBufferReliably(data, size, dest);
-#if _DEBUG
-    VERBOSE2(Con_Message("N_SendPacket: Sending %li bytes reliably to %i.\n", size, dest));
-#endif
+void N_AddSentBytes(size_t bytes)
+{
+    numSentBytes += bytes;
 }
 
 /**
- * @return              The player number that corresponds the DPNID.
+ * @return The player number that corresponds network node @a id.
  */
-uint N_IdentifyPlayer(nodeid_t id)
+int N_IdentifyPlayer(nodeid_t id)
 {
-    uint                i;
-    boolean             found;
-
     if(netServerMode)
-    {
+    {        
         // What is the corresponding player number? Only the server keeps
         // a list of all the IDs.
-        i = 0;
-        found = false;
-        while(i < DDMAXPLAYERS && !found)
+        int i;
+        for(i = 0; i < DDMAXPLAYERS; ++i)
             if(clients[i].nodeID == id)
-                found = true;
-            else
-                i++;
-
-        if(found)
-            return i;
-        else
-            return -1; // Bogus?
+                return i;
+        return -1;
     }
 
     // Clients receive messages only from the server.
@@ -354,12 +305,11 @@ uint N_IdentifyPlayer(nodeid_t id)
 }
 
 /**
- * Confirmations are handled here.
+ * Retrieves the next incoming message.
  *
- * \note Skips all messages from unknown nodeids!
- *
- * @return              The next message waiting in the incoming message
- *                      queue.
+ * @return  The next message waiting in the incoming message queue.
+ *          When the message is no longer needed you must call
+ *          N_ReleaseMessage() to delete it.
  */
 netmessage_t *N_GetNextMessage(void)
 {
@@ -367,24 +317,7 @@ netmessage_t *N_GetNextMessage(void)
 
     while((msg = N_GetMessage()) != NULL)
     {
-        //// \fixme When can player IDs be unknown?
-        /* if(msg->player < 0)
-        {
-            // From an unknown ID?
-            N_ReleaseMessage(msg);
-        }
-        else */
-        {
-            // Decode the Huffman codes. The returned buffer is static, so
-            // it doesn't need to be freed (not thread-safe, though).
-            msg->data = Huff_Decode(msg->data, msg->size, &msg->size);
-
-            // The original packet buffer can be freed.
-            N_ReturnBuffer(msg->handle);
-            msg->handle = NULL;
-
-            return msg;
-        }
+        return msg;
     }
     return NULL; // There are no more messages.
 }
@@ -455,32 +388,27 @@ boolean N_GetPacket(void)
  */
 void N_PrintBufferInfo(void)
 {
-    N_PrintHuffmanStats();
+    N_PrintTransmissionStats();
 }
 
 /**
- * Print status information about the workings of Huffman compression
+ * Print status information about the workings of data compression
  * in the network buffer.
+ *
+ * @note  Currently numOutBytes excludes transmission header, while
+ *        numSentBytes includes every byte written to the socket.
+ *        In other words, the efficiency includes protocol overhead.
  */
-void N_PrintHuffmanStats(void)
+void N_PrintTransmissionStats(void)
 {
     if(numOutBytes == 0)
     {
-        Con_Printf("Huffman efficiency: Nothing has been sent yet.\n");
+        Con_Message("Transmission efficiency: Nothing has been sent yet.\n");
     }
     else
     {
-        Con_Printf("Huffman efficiency: %.3f%% (data: %i bytes, sent: %i "
-                   "bytes)\n", 100 - (100.0f * numSentBytes) / numOutBytes,
-                   (int)numOutBytes, (int)numSentBytes);
+        Con_Message("Transmission efficiency: %.3f%% (data: %i bytes, sent: %i "
+                    "bytes)\n", 100 - (100.0f * numSentBytes) / numOutBytes,
+                    (int)numOutBytes, (int)numSentBytes);
     }
-}
-
-/**
- * Console command for printing the Huffman efficiency.
- */
-D_CMD(HuffmanStats)
-{
-    N_PrintHuffmanStats();
-    return true;
 }

@@ -1,10 +1,10 @@
-/**\file
+/**\file sys_path.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2004-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2004-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,46 +22,23 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * sys_path.c: File Path Processing
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include <unistd.h>
 #include <string.h>
 
 #include "de_base.h"
 #include "de_console.h"
-#include "de_misc.h"
-
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 /**
  * Removes references to the current (.) and parent (..) directories.
  * The given path should be an absolute path.
  */
-void DD_ResolvePath(char *path)
+static void resolvePath(char* path)
 {
-    char       *ch = path;
-    char       *end = path + strlen(path);
-    char       *prev = path;        // Assume an absolute path.
+    assert(path);
+    {
+    char* ch = path;
+    char* end = path + strlen(path);
+    char* prev = path; // Assume an absolute path.
 
     for(; *ch; ch++)
     {
@@ -84,46 +61,60 @@ void DD_ResolvePath(char *path)
         if(*ch == '/')
             prev = ch;
     }
+    }
 }
 
-/**
- * Convert the given path to an absolute path.
- */
-char *_fullpath(char *full, const char *original, int maxLen)
+char* _fullpath(char* full, const char* original, int maxLen)
 {
-    ddstring_t  dir;
-    char        workDir[512];       // Fixed-size array...
+    char* cwd, *buf;
 
-    Str_Init(&dir);
+    // @todo Check for '~'.
 
-    // \fixme Check for '~'.
-
-    if(original[0] != '/') // A relative path?
+    if(original[0] != DIR_SEP_CHAR) // A relative path?
     {
-        getcwd(workDir, sizeof(workDir)); // \fixme Check for ERANGE.
-        Str_Set(&dir, workDir);
-        Str_Append(&dir, "/");
-        Str_Append(&dir, original);
+        /// @todo Check for ERANGE.
+        cwd = getcwd(NULL, 0);
+        if(NULL == cwd)
+        {
+            // Yikes!
+            Con_AbnormalShutdown("_fullpath: Failed retrieving the current working directory.");
+            return NULL; // Unreachable.
+        }
+        // dj: I can't find any info about whether I can safely realloc the
+        // pointer returned by getcwd so I'm building a copy.
+        buf = (char*) malloc(strlen(cwd) + 1/*DIR_SEP_CHAR*/ + strlen(original) + 1);
+        strcpy(buf, cwd);
+        strcat(buf, DIR_SEP_STR);
+        strcat(buf, original);
+        free(cwd);
     }
     else
     {
-        Str_Set(&dir, original);
+        size_t len = strlen(original);
+        buf = (char*) malloc(len+1);
+        if(NULL == buf)
+        {
+            Con_AbnormalShutdown("_fullpath: Failed allocating storage for path copy.");
+            return NULL; // Unreachable.
+        }
+        memcpy(buf, original, len);
+        buf[len] = 0;
     }
 
     // Remove "."s and ".."s.
-    DD_ResolvePath(Str_Text(&dir));
+    resolvePath(buf);
 
     // Clear the given buffer and copy the full path there.
     memset(full, 0, maxLen);
-    strncpy(full, Str_Text(&dir), maxLen - 1);
-    Str_Free(&dir);
+    strncpy(full, buf, maxLen - 1);
+    free(buf);
     return full;
 }
 
-void strzncpy(char *dest, const char *src, int count)
+void strzncpy(char* dest, const char* src, int count)
 {
-    char       *out = dest;
-    const char *in = src;
+    char* out = dest;
+    const char* in = src;
 
     while(count-- > 0)
     {
@@ -134,10 +125,9 @@ void strzncpy(char *dest, const char *src, int count)
     *out = 0;
 }
 
-void _splitpath(const char *path, char *drive, char *dir, char *name,
-                char *ext)
+void _splitpath(const char* path, char* drive, char* dir, char* name, char* ext)
 {
-    char       *lastPeriod, *lastSlash;
+    char* lastPeriod, *lastSlash;
 
     if(drive)
         strcpy(drive, ""); // There is never a drive letter.

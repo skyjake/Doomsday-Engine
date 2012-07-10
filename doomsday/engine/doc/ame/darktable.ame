@@ -1,4 +1,0 @@
-@ifdef{HTML}{
-	@format{table}{@< <table@_width="95%"@_align="center"@_border="0"@_
-		cellpadding="5"@_cellspacing="0"@_class="doctable"> @> </table>}
-}

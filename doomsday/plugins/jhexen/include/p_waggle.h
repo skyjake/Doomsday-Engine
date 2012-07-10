@@ -1,10 +1,10 @@
-/**\file
+/**\file p_waggle.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2004-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2004-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,12 +23,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * p_waggle.h:
- */
-
-#ifndef __P_WAGGLE_H__
-#define __P_WAGGLE_H__
+#ifndef LIBHEXEN_P_WAGGLE_H
+#define LIBHEXEN_P_WAGGLE_H
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -41,19 +37,19 @@ typedef enum {
 } wagglestate_e;
 
 typedef struct {
-    thinker_t       thinker;
-    sector_t*       sector;
-    float           originalHeight;
-    float           accumulator;
-    float           accDelta;
-    float           targetScale;
-    float           scale;
-    float           scaleDelta;
-    int             ticker;
-    wagglestate_e   state;
+    thinker_t thinker;
+    Sector* sector;
+    coord_t originalHeight;
+    coord_t accumulator;
+    coord_t accDelta;
+    coord_t targetScale;
+    coord_t scale;
+    coord_t scaleDelta;
+    int ticker;
+    wagglestate_e state;
 } waggle_t;
 
-void        T_FloorWaggle(waggle_t* waggle);
-boolean     EV_StartFloorWaggle(int tag, int height, int speed, int offset,
-                                int timer);
-#endif
+void T_FloorWaggle(waggle_t* waggle);
+boolean EV_StartFloorWaggle(int tag, int height, int speed, int offset, int timer);
+
+#endif /// LIBHEXEN_P_WAGGLE_H

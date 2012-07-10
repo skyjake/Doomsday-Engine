@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,12 +29,20 @@
 #ifndef __DOOMSDAY_DEFS_H__
 #define __DOOMSDAY_DEFS_H__
 
+/**
+ * @defgroup flags Flags (Internal)
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "dd_types.h"
 #include "dd_api.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #ifdef WIN32
 // Disable annoying MSVC warnings.
@@ -45,7 +53,7 @@
 
 // if rangecheck is undefined, most parameter validation debugging code
 // will not be compiled
-#ifndef NORANGECHECKING
+#ifndef DENG_NO_RANGECHECKING
 #   define RANGECHECK
 #endif
 
@@ -67,9 +75,15 @@
 #   define DOOMSDAY_VER_ID_64BIT " 32-bit"
 #endif
 
-#define DOOMSDAY_VER_ID DOOMSDAY_RELEASE_TYPE DOOMSDAY_VER_ID_64BIT DOOMSDAY_VER_ID_DEBUG DOOMSDAY_VER_ID_RANGECHECK
+#if defined(DENG_STABLE) && defined(DOOMSDAY_BUILD_TEXT)
+#  define DOOMSDAY_VER_ID_BUILD " #" DOOMSDAY_BUILD_TEXT
+#else
+#  define DOOMSDAY_VER_ID_BUILD ""
+#endif
 
-#define DOOMSDAY_VERSION_FULLTEXT DOOMSDAY_VERSION_TEXT" ("DOOMSDAY_VER_ID") "__DATE__" "__TIME__
+#define DOOMSDAY_VER_ID     DOOMSDAY_RELEASE_TYPE DOOMSDAY_VER_ID_64BIT DOOMSDAY_VER_ID_DEBUG DOOMSDAY_VER_ID_RANGECHECK DOOMSDAY_VER_ID_BUILD
+
+#define DOOMSDAY_VERSION_FULLTEXT     DOOMSDAY_VERSION_TEXT" ("DOOMSDAY_VER_ID") "__DATE__" "__TIME__
 
 #define SAFEDIV(x,y)    (!(y) || !((x)/(y))? 1 : (x)/(y))
 #define ORDER(x,y,a,b)  ( (x)<(y)? ((a)=(x),(b)=(y)) : ((b)=(x),(a)=(y)) )
@@ -91,15 +105,17 @@
 #define SBARHEIGHT      39         // status bar height at bottom of screen
 #define PI              3.14159265359
 #define PI_D            3.14159265358979323846
+#define DEG2RAD(a)      (a * PI_D) / 180.0
+#define RAD2DEG(a)      (a / PI_D) * 180.0
 
-#define SECONDS_TO_TICKS(sec) ((int)(sec*35))
+#define SECONDS_TO_TICKS(sec) ((int)((sec)*35))
 
 // Heap relations.
 #define HEAP_PARENT(i)  (((i) + 1)/2 - 1)
 #define HEAP_LEFT(i)    (2*(i) + 1)
 #define HEAP_RIGHT(i)   (2*(i) + 2)
 
-enum { VX, VY, VZ };               // Vertex indices.
+//enum { VX, VY, VZ };               // Vertex indices.
 enum { CR, CG, CB, CA };           // Color indices.
 
 // dd_pinit.c
@@ -115,5 +131,9 @@ extern float    texGamma;
 // tab_tables.c
 extern fixed_t  finesine[5 * FINEANGLES / 4];
 extern fixed_t *fineCosine;
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

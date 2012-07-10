@@ -1,0 +1,212 @@
+#
+# Hacx - Doomsday Engine definitions.
+#
+# For information about DED syntax and semantics, see http://dengine.net/dew/?title=DED
+#
+
+# Include common definitions for games playable with jDoom.
+Include "jdoom.ded";
+
+Include "doom1/anim.ded";
+Include "doom2/anim.ded";
+Include "doom2/skies.ded";
+Include "hacx/maps.ded";
+Include "doom2/finales.ded";
+Include "hacx/materials.ded";
+Include "hacx/materialenvironments.ded";
+Include "doom2/music.ded";
+Include "hacx/fonts.ded";
+Include "hacx/menu.ded";
+Include "hacx/hud.ded";
+Include "hacx/inlude.ded";
+Include "hacx/lights.ded";
+
+# Make the photon rocket ammo's fullbright so we can add a light.
+State Mods "ROCK" {
+  Flags = fullbright;
+}
+
+State Mods "BROK" {
+  Flags = fullbright;
+}
+
+# Nerf the lights on fullbright but non-light emitting objects.
+State Mods "RKEY" {
+  Flags = noautolight;
+}
+
+State Mods "PSTR" {
+  Flags = fullbright|noautolight;
+}
+
+State Mods "PINS" {
+  Flags = fullbright|noautolight;
+}
+
+State Mods "PINS2" {
+  Flags = fullbright|noautolight;
+}
+
+State Mods "PINS3" {
+  Flags = fullbright|noautolight;
+}
+
+State Mods "PINS4" {
+  Flags = fullbright|noautolight;
+}
+
+State Mods "BON1" {
+  Flags = fullbright|noautolight;
+}
+
+State Mods "BON1A" {
+  Flags = fullbright|noautolight;
+}
+
+State Mods "BON1B" {
+  Flags = fullbright|noautolight;
+}
+
+State Mods "BON1C" {
+  Flags = fullbright|noautolight;
+}
+
+State Mods "BON1D" {
+  Flags = fullbright|noautolight;
+}
+
+State Mods "BON1E" {
+  Flags = fullbright|noautolight;
+}
+
+State Mods "GREENTORCH" {
+  Flags = fullbright|noautolight;
+}
+
+State Mods "GREENTORCH2" {
+  Flags = fullbright|noautolight;
+}
+
+State Mods "GREENTORCH3" {
+  Flags = fullbright|noautolight;
+}
+
+State Mods "GREENTORCH4" {
+  Flags = fullbright|noautolight;
+}
+
+State Mods "FLOATSKULL" {
+  Flags = fullbright|noautolight;
+}
+
+State Mods "FLOATSKULL2" {
+  Flags = fullbright|noautolight;
+}
+
+State Mods "FLOATSKULL3" {
+  Flags = fullbright|noautolight;
+}
+
+State Mods "BFUG" {
+  Flags = noautolight;
+}
+
+# The BFG shot is a metal bomb-like object in HacX so do not blend it when drawing.
+Thing {
+  ID = "BFG";
+  DoomEd number = -1;
+  Spawn state = "BFGSHOT";
+  See state = "NULL";
+  Pain state = "NULL";
+  Melee state = "NULL";
+  Missile state = "NULL";
+  Death state = "BFGLAND";
+  Xdeath state = "NULL";
+  Raise state = "NULL";
+  See sound = "None";
+  Attack sound = "None";
+  Pain sound = "None";
+  Death sound = "rxplod";
+  Active sound = "None";
+  Reaction time = 8;
+  Spawn health = 1000;
+  Speed = 25;
+  Radius = 13;
+  Height = 8;
+  Mass = 100;
+  Damage = 100;
+  Flags = noblockmap | missile | dropoff | nogravity;
+  Flags2 = noteleport;
+}
+
+# HacX uses different weapon names.
+Text {
+  ID = "WEAPON1";
+  Text = "Kick";
+}
+
+Text {
+  ID = "WEAPON2";
+  Text = "Pistol";
+}
+
+Text {
+  ID = "WEAPON3";
+  Text = "Tazer";
+}
+
+Text {
+  ID = "WEAPON4";
+  Text = "UZI";
+}
+
+Text {
+  ID = "WEAPON5";
+  Text = "Photon 'Zooka";
+}
+
+Text {
+  ID = "WEAPON6";
+  Text = "Big Stick";
+}
+
+Text {
+  ID = "WEAPON7";
+  Text = "Nuker";
+}
+
+Text {
+  ID = "WEAPON8";
+  Text = "HOIG Reznator";
+}
+
+Text {
+  ID = "WEAPON9";
+  Text = "Cryogun";
+}
+
+# HacX uses different skill level names.
+Text {
+  ID = "SKILL1";
+  Text = "Please don't shoot!";
+}
+
+Text {
+  ID = "SKILL2";
+  Text = "Arrgh, I need health!";
+}
+
+Text {
+  ID = "SKILL3";
+  Text = "Let's rip them apart!";
+}
+
+Text {
+  ID = "SKILL4";
+  Text = "I am immortal";
+}
+
+Text {
+  ID = "SKILL5";
+  Text = "Insanity!";
+}

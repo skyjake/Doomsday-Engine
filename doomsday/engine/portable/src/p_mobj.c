@@ -1,10 +1,10 @@
-/**\file
+/**\file p_mobj.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * p_mobj.c: Map Objects
+ * Map Objects
  *
  * Contains various routines for moving mobjs, collision and Z checking.
  */
@@ -76,18 +76,18 @@ void P_InitUnusedMobjList(void)
 /**
  * All mobjs must be allocated through this routine. Part of the public API.
  */
-mobj_t* P_MobjCreate(think_t function, float x, float y, float z,
-                     angle_t angle, float radius, float height, int ddflags)
+mobj_t* P_MobjCreate(think_t function, coord_t const pos[3], angle_t angle,
+    coord_t radius, coord_t height, int ddflags)
 {
-    mobj_t*             mo;
+    mobj_t* mo;
 
     if(!function)
-        Con_Error("P_MobjCreate: Think function invalid, cannot create mobj.");
+        Con_Error("P_MobjCreateXYZ: Think function invalid, cannot create mobj.");
 
 #ifdef _DEBUG
     if(isClient)
     {
-        VERBOSE2( Con_Message("P_MobjCreate: Client creating mobj at %f,%f\n", x, y) );
+        VERBOSE2( Con_Message("P_MobjCreate: Client creating mobj at [x:%f, y:%f, z:%f]\n", pos[VX], pos[VY], pos[VZ]) );
     }
 #endif
 
@@ -99,13 +99,12 @@ mobj_t* P_MobjCreate(think_t function, float x, float y, float z,
         memset(mo, 0, MOBJ_SIZE);
     }
     else
-    {   // No, we need to allocate another.
+    {
+        // No, we need to allocate another.
         mo = Z_Calloc(MOBJ_SIZE, PU_MAP, NULL);
     }
 
-    mo->pos[VX] = x;
-    mo->pos[VY] = y;
-    mo->pos[VZ] = z;
+    V3d_Copy(mo->origin, pos);
     mo->angle = angle;
     mo->visAngle = mo->angle >> 16; // "angle-servo"; smooth actor turning.
     mo->radius = radius;
@@ -114,16 +113,24 @@ mobj_t* P_MobjCreate(think_t function, float x, float y, float z,
     mo->thinker.function = function;
     if(mo->thinker.function)
     {
-        P_ThinkerAdd(&mo->thinker, true); // Make it public.
+        GameMap_ThinkerAdd(theMap, &mo->thinker, true); // Make it public.
     }
 
     return mo;
 }
 
+mobj_t* P_MobjCreateXYZ(think_t function, coord_t x, coord_t y, coord_t z,
+    angle_t angle, coord_t radius, coord_t height, int ddflags)
+{
+    coord_t pos[3];
+    V3d_Set(pos, x, y, z);
+    return P_MobjCreate(function, pos, angle, radius, height, ddflags);
+}
+
 /**
  * All mobjs must be destroyed through this routine. Part of the public API.
  *
- * \note Does not actually destroy the mobj. Instead, mobj is marked as
+ * @note Does not actually destroy the mobj. Instead, mobj is marked as
  * awaiting removal (which occurs when its turn for thinking comes around).
  */
 void P_MobjDestroy(mobj_t* mo)
@@ -140,7 +147,7 @@ void P_MobjDestroy(mobj_t* mo)
 
     S_StopSound(0, mo);
 
-    P_ThinkerRemove((thinker_t *) mo);
+    GameMap_ThinkerRemove(theMap, (thinker_t *) mo);
 }
 
 /**
@@ -185,29 +192,95 @@ void P_MobjSetState(mobj_t* mobj, int statenum)
         if(!(pg->flags & PGF_SPAWN_ONLY) || spawning)
         {
             // We are allowed to spawn the generator.
-            P_SpawnParticleGen(pg, mobj);
+            P_SpawnMobjParticleGen(pg, mobj);
         }
     }
 
     if(!(mobj->ddFlags & DDMF_REMOTE))
     {
         if(defs.states[statenum].execute)
-            Con_Execute(CMDS_DED, defs.states[statenum].execute, true, false);
+            Con_Execute(CMDS_SCRIPT, defs.states[statenum].execute, true, false);
     }
 }
 
-/**
- * Sets a mobj's position.
- *
- * @return  @c true if successful, @c false otherwise. The object's position is
- *          not changed if the move fails.
- *
- * @note  Internal to the engine.
- */
-boolean P_MobjSetPos(struct mobj_s* mo, float x, float y, float z)
+boolean Mobj_SetOrigin(struct mobj_s* mo, coord_t x, coord_t y, coord_t z)
 {
-    assert(gx.MobjTryMove3f != 0);
-    return gx.MobjTryMove3f(mo, x, y, z);
+    if(!gx.MobjTryMoveXYZ)
+    {
+        return false;
+    }
+    return gx.MobjTryMoveXYZ(mo, x, y, z);
+}
+
+void Mobj_OriginSmoothed(mobj_t* mo, coord_t origin[3])
+{
+    if(!origin) return;
+
+    V3d_Set(origin, 0, 0, 0);
+    if(!mo) return;
+
+    V3d_Copy(origin, mo->origin);
+
+    // Apply a Short Range Visual Offset?
+    if(useSRVO && mo->state && mo->tics >= 0)
+    {
+        const double mul = mo->tics / (float) mo->state->tics;
+        vec3d_t srvo;
+
+        V3d_Copy(srvo, mo->srvo);
+        V3d_Scale(srvo, mul);
+        V3d_Sum(origin, origin, srvo);
+    }
+
+    if(mo->dPlayer)
+    {
+        /// @todo What about splitscreen? We have smoothed origins for all local players.
+        if(P_GetDDPlayerIdx(mo->dPlayer) == consolePlayer &&
+           // $voodoodolls: Must be a real player to use the smoothed origin.
+           mo->dPlayer->mo == mo)
+        {
+            const viewdata_t* vd = R_ViewData(consolePlayer);
+            V3d_Copy(origin, vd->current.origin);
+        }
+        // The client may have a Smoother for this object.
+        else if(isClient)
+        {
+            Smoother_Evaluate(clients[P_GetDDPlayerIdx(mo->dPlayer)].smoother, origin);
+        }
+    }
+}
+
+angle_t Mobj_AngleSmoothed(mobj_t* mo)
+{
+    if(!mo) return 0;
+
+    if(mo->dPlayer)
+    {
+        /// @todo What about splitscreen? We have smoothed angles for all local players.
+        if(P_GetDDPlayerIdx(mo->dPlayer) == consolePlayer &&
+           // $voodoodolls: Must be a real player to use the smoothed angle.
+           mo->dPlayer->mo == mo)
+        {
+            const viewdata_t* vd = R_ViewData(consolePlayer);
+            return vd->current.angle;
+        }
+    }
+
+    // Apply a Short Range Visual Offset?
+    if(useSRVOAngle && !netGame && !playback)
+    {
+        return mo->visAngle << 16;
+    }
+
+    return mo->angle;
+}
+
+coord_t Mobj_ApproxPointDistance(mobj_t* mo, coord_t const* point)
+{
+    if(!mo || !point) return 0;
+    return M_ApproxDistance(point[VZ] - mo->origin[VZ],
+                            M_ApproxDistance(point[VX] - mo->origin[VX],
+                                             point[VY] - mo->origin[VY]));
 }
 
 D_CMD(InspectMobj)
@@ -226,7 +299,7 @@ D_CMD(InspectMobj)
     id = strtol(argv[1], NULL, 10);
 
     // Find the mobj.
-    mo = P_MobjForID(id);
+    mo = GameMap_MobjByID(theMap, id);
     if(!mo)
     {
         Con_Printf("Mobj with id %i not found.\n", id);
@@ -254,8 +327,19 @@ D_CMD(InspectMobj)
     Con_Printf("Height:%f Radius:%f\n", mo->height, mo->radius);
     Con_Printf("Angle:%x Pos:(%f,%f,%f) Mom:(%f,%f,%f)\n",
                mo->angle,
-               mo->pos[0], mo->pos[1], mo->pos[2],
+               mo->origin[0], mo->origin[1], mo->origin[2],
                mo->mom[0], mo->mom[1], mo->mom[2]);
+    Con_Printf("FloorZ:%f CeilingZ:%f\n", mo->floorZ, mo->ceilingZ);
+    if(mo->bspLeaf)
+    {
+        Con_Printf("Sector:%i (FloorZ:%f CeilingZ:%f)\n", P_ToIndex(mo->bspLeaf->sector),
+                   mo->bspLeaf->sector->SP_floorheight,
+                   mo->bspLeaf->sector->SP_ceilheight);
+    }
+    if(mo->onMobj)
+    {
+        Con_Printf("onMobj:%i\n", mo->onMobj->thinker.id);
+    }
 
     return true;
 }

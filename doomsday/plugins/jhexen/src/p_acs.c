@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -25,6 +25,9 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <string.h>
+#include <stdio.h>
+
 #include "jhexen.h"
 
 #include "dmu_lib.h"
@@ -32,6 +35,7 @@
 #include "p_map.h"
 #include "p_mapsetup.h"
 #include "p_mapspec.h"
+#include "p_sound.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -52,11 +56,13 @@
 
 // TYPES -------------------------------------------------------------------
 
+#pragma pack(1)
 typedef struct acsheader_s {
-    int     marker;
-    int     infoOffset;
-    int     code;
+    int32_t marker;
+    int32_t infoOffset;
+    int32_t code;
 } acsheader_t;
+#pragma pack()
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -205,31 +211,32 @@ static char ErrorMsg[128];
 
 static int (*PCodeCmds[]) (void) =
 {
-CmdNOP, CmdTerminate, CmdSuspend, CmdPushNumber, CmdLSpec1, CmdLSpec2,
-        CmdLSpec3, CmdLSpec4, CmdLSpec5, CmdLSpec1Direct, CmdLSpec2Direct,
-        CmdLSpec3Direct, CmdLSpec4Direct, CmdLSpec5Direct, CmdAdd,
-        CmdSubtract, CmdMultiply, CmdDivide, CmdModulus, CmdEQ, CmdNE,
-        CmdLT, CmdGT, CmdLE, CmdGE, CmdAssignScriptVar, CmdAssignMapVar,
-        CmdAssignWorldVar, CmdPushScriptVar, CmdPushMapVar,
-        CmdPushWorldVar, CmdAddScriptVar, CmdAddMapVar, CmdAddWorldVar,
-        CmdSubScriptVar, CmdSubMapVar, CmdSubWorldVar, CmdMulScriptVar,
-        CmdMulMapVar, CmdMulWorldVar, CmdDivScriptVar, CmdDivMapVar,
-        CmdDivWorldVar, CmdModScriptVar, CmdModMapVar, CmdModWorldVar,
-        CmdIncScriptVar, CmdIncMapVar, CmdIncWorldVar, CmdDecScriptVar,
-        CmdDecMapVar, CmdDecWorldVar, CmdGoto, CmdIfGoto, CmdDrop,
-        CmdDelay, CmdDelayDirect, CmdRandom, CmdRandomDirect,
-        CmdThingCount, CmdThingCountDirect, CmdTagWait, CmdTagWaitDirect,
-        CmdPolyWait, CmdPolyWaitDirect, CmdChangeFloor,
-        CmdChangeFloorDirect, CmdChangeCeiling, CmdChangeCeilingDirect,
-        CmdRestart, CmdAndLogical, CmdOrLogical, CmdAndBitwise,
-        CmdOrBitwise, CmdEorBitwise, CmdNegateLogical, CmdLShift,
-        CmdRShift, CmdUnaryMinus, CmdIfNotGoto, CmdLineSide, CmdScriptWait,
-        CmdScriptWaitDirect, CmdClearLineSpecial, CmdCaseGoto,
-        CmdBeginPrint, CmdEndPrint, CmdPrintString, CmdPrintNumber,
-        CmdPrintCharacter, CmdPlayerCount, CmdGameType, CmdGameSkill,
-        CmdTimer, CmdSectorSound, CmdAmbientSound, CmdSoundSequence,
-        CmdSetLineTexture, CmdSetLineBlocking, CmdSetLineSpecial,
-        CmdThingSound, CmdEndPrintBold};
+    CmdNOP, CmdTerminate, CmdSuspend, CmdPushNumber, CmdLSpec1, CmdLSpec2,
+    CmdLSpec3, CmdLSpec4, CmdLSpec5, CmdLSpec1Direct, CmdLSpec2Direct,
+    CmdLSpec3Direct, CmdLSpec4Direct, CmdLSpec5Direct, CmdAdd,
+    CmdSubtract, CmdMultiply, CmdDivide, CmdModulus, CmdEQ, CmdNE,
+    CmdLT, CmdGT, CmdLE, CmdGE, CmdAssignScriptVar, CmdAssignMapVar,
+    CmdAssignWorldVar, CmdPushScriptVar, CmdPushMapVar,
+    CmdPushWorldVar, CmdAddScriptVar, CmdAddMapVar, CmdAddWorldVar,
+    CmdSubScriptVar, CmdSubMapVar, CmdSubWorldVar, CmdMulScriptVar,
+    CmdMulMapVar, CmdMulWorldVar, CmdDivScriptVar, CmdDivMapVar,
+    CmdDivWorldVar, CmdModScriptVar, CmdModMapVar, CmdModWorldVar,
+    CmdIncScriptVar, CmdIncMapVar, CmdIncWorldVar, CmdDecScriptVar,
+    CmdDecMapVar, CmdDecWorldVar, CmdGoto, CmdIfGoto, CmdDrop,
+    CmdDelay, CmdDelayDirect, CmdRandom, CmdRandomDirect,
+    CmdThingCount, CmdThingCountDirect, CmdTagWait, CmdTagWaitDirect,
+    CmdPolyWait, CmdPolyWaitDirect, CmdChangeFloor,
+    CmdChangeFloorDirect, CmdChangeCeiling, CmdChangeCeilingDirect,
+    CmdRestart, CmdAndLogical, CmdOrLogical, CmdAndBitwise,
+    CmdOrBitwise, CmdEorBitwise, CmdNegateLogical, CmdLShift,
+    CmdRShift, CmdUnaryMinus, CmdIfNotGoto, CmdLineSide, CmdScriptWait,
+    CmdScriptWaitDirect, CmdClearLineSpecial, CmdCaseGoto,
+    CmdBeginPrint, CmdEndPrint, CmdPrintString, CmdPrintNumber,
+    CmdPrintCharacter, CmdPlayerCount, CmdGameType, CmdGameSkill,
+    CmdTimer, CmdSectorSound, CmdAmbientSound, CmdSoundSequence,
+    CmdSetLineTexture, CmdSetLineBlocking, CmdSetLineSpecial,
+    CmdThingSound, CmdEndPrintBold
+};
 
 // CODE --------------------------------------------------------------------
 
@@ -243,18 +250,29 @@ const char* GetACString(int id)
 
 void P_LoadACScripts(int lump)
 {
-    int                 i;
-    const int*          buffer;
-    const acsheader_t*  header;
-    acsinfo_t*          info;
+    size_t lumpLength = (lump >= 0? W_LumpLength(lump) : 0);
+    const acsheader_t* header;
+    const int* buffer = NULL;
+    acsinfo_t* info;
+    int i;
 
-    header = W_CacheLumpNum(lump, PU_MAP);
-    ActionCodeBase = (const byte*) header;
-    buffer = (int*) ((const byte*) header + LONG(header->infoOffset));
-    ACScriptCount = LONG(*buffer++);
+    ACScriptCount = 0;
+
+    if(lumpLength >= sizeof(acsheader_t))
+    {
+        header = (const acsheader_t*) W_CacheLump(lump, PU_MAP);
+        ActionCodeBase = (const byte*) header;
+
+        if(LONG(header->infoOffset) < (int)lumpLength)
+        {
+            buffer = (int*) ((const byte*) header + LONG(header->infoOffset));
+            ACScriptCount = LONG(*buffer++);
+        }
+    }
+
     if(ACScriptCount == 0 || IS_CLIENT)
-    {                           // Empty behavior lump
-        ACScriptCount = 0;
+    {   // Empty/Invalid lump.
+        Con_Message("Warning:P_LoadACSScripts: lumpnum %i does not appear to be valid ACS bytecode, ignoring.\n", lump);
         return;
     }
 
@@ -332,17 +350,17 @@ void P_CheckACSStore(uint map)
         memmove(&ACSStore[i], &ACSStore[i+1], sizeof(acsstore_t) * (ACSStoreSize-i));
     }
 
-    if(ACSStoreSize != origSize)
+    if(ACSStoreSize == origSize)
+        return;
+
+    if(ACSStoreSize)
     {
-        if(ACSStoreSize)
-        {
-            ACSStore = Z_Realloc(ACSStore, sizeof(acsstore_t) * ACSStoreSize, PU_STATIC);
-        }
-        else
-        {
-            Z_Free(ACSStore); ACSStore = NULL;
-        }
+        ACSStore = Z_Realloc(ACSStore, sizeof(acsstore_t) * ACSStoreSize, PU_GAMESTATIC);
+        return;
     }
+
+    Z_Free(ACSStore);
+    ACSStore = 0;
 }
 
 /**
@@ -351,7 +369,7 @@ void P_CheckACSStore(uint map)
  *                      map to start on (will be deferred).
  */
 boolean P_StartACS(int number, uint map, byte* args, mobj_t* activator,
-                   linedef_t* line, int side)
+                   LineDef* line, int side)
 {
     int                 i, infoIndex;
     acs_t*              script;
@@ -426,11 +444,11 @@ static boolean AddToACSStore(uint map, int number, const byte* args)
                 return false;
         }
 
-        ACSStore = Z_Realloc(ACSStore, ++ACSStoreSize * sizeof(acsstore_t), PU_STATIC);
+        ACSStore = Z_Realloc(ACSStore, ++ACSStoreSize * sizeof(acsstore_t), PU_GAMESTATIC);
     }
     else
     {
-        ACSStore = Z_Malloc(sizeof(acsstore_t), PU_STATIC, 0);
+        ACSStore = Z_Malloc(sizeof(acsstore_t), PU_GAMESTATIC, 0);
         ACSStoreSize = 1;
     }
 
@@ -446,7 +464,7 @@ static boolean AddToACSStore(uint map, int number, const byte* args)
     return true;
 }
 
-boolean P_StartLockedACS(linedef_t *line, byte *args, mobj_t *mo, int side)
+boolean P_StartLockedACS(LineDef *line, byte *args, mobj_t *mo, int side)
 {
     int         i;
     int         lock;
@@ -626,7 +644,7 @@ static void ScriptFinished(int number)
 static boolean TagBusy(int tag)
 {
     uint                k;
-    sector_t*           sec;
+    Sector*             sec;
     xsector_t*          xsec;
 
     // NOTE: We can't use the sector tag lists here as we might already be
@@ -1272,13 +1290,22 @@ static int CmdPolyWaitDirect(void)
 
 static int CmdChangeFloor(void)
 {
-    int                 tag;
-    material_t*         mat;
-    sector_t*           sec = NULL;
-    iterlist_t*         list;
+    Sector* sec = NULL;
+    iterlist_t* list;
+    material_t* mat;
+    ddstring_t path;
+    Uri* uri;
+    int tag;
 
-    mat = P_ToPtr(DMU_MATERIAL, P_MaterialNumForName(GetACString(Pop()),
-                                                     MN_FLATS));
+    Str_Init(&path);
+    Str_PercentEncode(Str_Set(&path, GetACString(Pop())));
+    uri = Uri_NewWithPath2(MN_FLATS_NAME":", RC_NULL);
+    Uri_SetPath(uri, Str_Text(&path));
+    Str_Free(&path);
+
+    mat = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
+    Uri_Delete(uri);
+
     tag = Pop();
 
     list = P_GetSectorIterListForTag(tag, false);
@@ -1297,14 +1324,22 @@ static int CmdChangeFloor(void)
 
 static int CmdChangeFloorDirect(void)
 {
-    int                 tag;
-    material_t*         mat;
-    sector_t*           sec = NULL;
-    iterlist_t*         list;
+    Sector* sec = NULL;
+    material_t* mat;
+    iterlist_t* list;
+    ddstring_t path;
+    Uri* uri;
+    int tag;
 
     tag = LONG(*PCodePtr++);
-    mat = P_ToPtr(DMU_MATERIAL, P_MaterialNumForName(
-        GetACString(LONG(*PCodePtr++)), MN_FLATS));
+    Str_Init(&path);
+    Str_PercentEncode(Str_Set(&path, GetACString(LONG(*PCodePtr++))));
+
+    uri = Uri_NewWithPath2(MN_FLATS_NAME":", RC_NULL);
+    Uri_SetPath(uri, Str_Text(&path));
+    mat = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
+    Uri_Delete(uri);
+    Str_Free(&path);
 
     list = P_GetSectorIterListForTag(tag, false);
     if(list)
@@ -1322,13 +1357,22 @@ static int CmdChangeFloorDirect(void)
 
 static int CmdChangeCeiling(void)
 {
-    int                 tag;
-    material_t*         mat;
-    sector_t*           sec = NULL;
-    iterlist_t*         list;
+    Sector* sec = NULL;
+    material_t* mat;
+    iterlist_t* list;
+    ddstring_t path;
+    Uri* uri;
+    int tag;
 
-    mat = P_ToPtr(DMU_MATERIAL,
-        P_MaterialNumForName(GetACString(Pop()), MN_FLATS));
+    Str_Init(&path);
+    Str_PercentEncode(Str_Set(&path, GetACString(Pop())));
+
+    uri = Uri_NewWithPath2(MN_FLATS_NAME":", RC_NULL);
+    Uri_SetPath(uri, Str_Text(&path));
+    mat = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
+    Uri_Delete(uri);
+    Str_Free(&path);
+
     tag = Pop();
 
     list = P_GetSectorIterListForTag(tag, false);
@@ -1347,14 +1391,22 @@ static int CmdChangeCeiling(void)
 
 static int CmdChangeCeilingDirect(void)
 {
-    int                 tag;
-    material_t*         mat;
-    sector_t*           sec = NULL;
-    iterlist_t*         list;
+    Sector* sec = NULL;
+    material_t* mat;
+    iterlist_t* list;
+    ddstring_t path;
+    Uri* uri;
+    int tag;
 
     tag = LONG(*PCodePtr++);
-    mat = P_ToPtr(DMU_MATERIAL,
-        P_MaterialNumForName(GetACString(LONG(*PCodePtr++)), MN_FLATS));
+    Str_Init(&path);
+    Str_PercentEncode(Str_Set(&path, GetACString(LONG(*PCodePtr++))));
+
+    uri = Uri_NewWithPath2(MN_FLATS_NAME":", RC_NULL);
+    Uri_SetPath(uri, Str_Text(&path));
+    mat = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
+    Uri_Delete(uri);
+    Str_Free(&path);
 
     list = P_GetSectorIterListForTag(tag, false);
     if(list)
@@ -1614,10 +1666,10 @@ static int CmdSectorSound(void)
     mobj = NULL;
     if(ACScript->line)
     {
-        sector_t*           front =
+        Sector*             front =
             P_GetPtrp(ACScript->line, DMU_FRONT_SECTOR);
 
-        mobj = P_GetPtrp(front, DMU_SOUND_ORIGIN);
+        mobj = P_GetPtrp(front, DMU_BASE);
     }
     volume = Pop();
 
@@ -1660,10 +1712,10 @@ static int CmdAmbientSound(void)
     {
         // SpawnMobj calls P_Random. We don't want that
         // the random generator gets out of sync.
-        if((mobj = P_SpawnMobj3f(MT_CAMERA,
-                                 plrmo->pos[VX] + (((M_Random() - 127) * 2) << FRACBITS),
-                                 plrmo->pos[VY] + (((M_Random() - 127) * 2) << FRACBITS),
-                                 plrmo->pos[VZ] + (((M_Random() - 127) * 2) << FRACBITS),
+        if((mobj = P_SpawnMobjXYZ(MT_CAMERA,
+                                 plrmo->origin[VX] + (((M_Random() - 127) * 2) << FRACBITS),
+                                 plrmo->origin[VY] + (((M_Random() - 127) * 2) << FRACBITS),
+                                 plrmo->origin[VZ] + (((M_Random() - 127) * 2) << FRACBITS),
                                  0, 0))) // A camera's a good temporary source.
             mobj->tics = 5 * TICSPERSEC; // Five seconds should be enough.
     }
@@ -1681,10 +1733,10 @@ static int CmdSoundSequence(void)
     mobj = NULL;
     if(ACScript->line)
     {
-        sector_t*           front =
+        Sector*             front =
             P_GetPtrp(ACScript->line, DMU_FRONT_SECTOR);
 
-        mobj = P_GetPtrp(front, DMU_SOUND_ORIGIN);
+        mobj = P_GetPtrp(front, DMU_BASE);
     }
     SN_StartSequenceName(mobj, GetACString(Pop()));
 
@@ -1693,12 +1745,22 @@ static int CmdSoundSequence(void)
 
 static int CmdSetLineTexture(void)
 {
-    int                 lineTag, side, position;
-    material_t*         mat;
-    linedef_t*          line;
-    iterlist_t*         list;
+    int lineTag, side, position;
+    material_t* mat;
+    LineDef* line;
+    iterlist_t* list;
+    ddstring_t path;
+    Uri* uri;
 
-    mat = P_ToPtr(DMU_MATERIAL, P_MaterialNumForName(GetACString(Pop()), MN_TEXTURES));
+    Str_Init(&path);
+    Str_PercentEncode(Str_Set(&path, GetACString(Pop())));
+
+    uri = Uri_NewWithPath2(MN_TEXTURES_NAME":", RC_NULL);
+    Uri_SetPath(uri, Str_Text(&path));
+    mat = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
+    Uri_Delete(uri);
+    Str_Free(&path);
+
     position = Pop();
     side = Pop();
     lineTag = Pop();
@@ -1710,7 +1772,7 @@ static int CmdSetLineTexture(void)
         IterList_RewindIterator(list);
         while((line = IterList_MoveIterator(list)) != NULL)
         {
-            sidedef_t*          sdef =
+            SideDef*            sdef =
                 P_GetPtrp(line, (side == 0? DMU_SIDEDEF0 : DMU_SIDEDEF1));
 
             if(position == TEXTURE_MIDDLE)
@@ -1733,7 +1795,7 @@ static int CmdSetLineTexture(void)
 
 static int CmdSetLineBlocking(void)
 {
-    linedef_t*          line;
+    LineDef*            line;
     int                 lineTag;
     boolean             blocking;
     iterlist_t*         list;
@@ -1758,7 +1820,7 @@ static int CmdSetLineBlocking(void)
 
 static int CmdSetLineSpecial(void)
 {
-    linedef_t*          line;
+    LineDef*            line;
     int                 lineTag;
     int                 special, arg1, arg2, arg3, arg4, arg5;
     iterlist_t*         list;
@@ -1792,7 +1854,7 @@ static int CmdSetLineSpecial(void)
 }
 
 // Console commands.
-DEFCC(CCmdScriptInfo)
+D_CMD(ScriptInfo)
 {
     int                 i, whichOne = -1;
     char*               scriptStates[] = {

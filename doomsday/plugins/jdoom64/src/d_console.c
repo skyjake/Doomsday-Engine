@@ -1,10 +1,10 @@
-/**\file
+/**\file d_console.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * d_console.c: jDoom64 specific console stuff
+ * Doom64 specific console stuff.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -34,7 +34,6 @@
 #include "jdoom64.h"
 
 #include "hu_stuff.h"
-#include "f_infine.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -42,39 +41,36 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-DEFCC(CCmdCheatGod);
-DEFCC(CCmdCheatNoClip);
-DEFCC(CCmdCheatWarp);
-DEFCC(CCmdCheatReveal);
-DEFCC(CCmdCheatGive);
-DEFCC(CCmdCheatMassacre);
-DEFCC(CCmdCheatWhere);
-DEFCC(CCmdCheatLeaveMap);
-DEFCC(CCmdCheatSuicide);
+D_CMD(CheatGod);
+D_CMD(CheatNoClip);
+D_CMD(CheatWarp);
+D_CMD(CheatReveal);
+D_CMD(CheatGive);
+D_CMD(CheatMassacre);
+D_CMD(CheatWhere);
+D_CMD(CheatLeaveMap);
+D_CMD(CheatSuicide);
 
-DEFCC(CCmdMakeLocal);
-DEFCC(CCmdSetCamera);
-DEFCC(CCmdSetViewLock);
-DEFCC(CCmdSetViewMode);
+D_CMD(MakeLocal);
+D_CMD(SetCamera);
+D_CMD(SetViewLock);
+D_CMD(SetViewMode);
 
-DEFCC(CCmdCycleSpy);
+D_CMD(CycleSpy);
 
-DEFCC(CCmdPlayDemo);
-DEFCC(CCmdRecordDemo);
-DEFCC(CCmdStopDemo);
+D_CMD(PlayDemo);
+D_CMD(RecordDemo);
+D_CMD(StopDemo);
 
-DEFCC(CCmdSpawnMobj);
+D_CMD(SpawnMobj);
 
-DEFCC(CCmdPrintPlayerCoords);
+D_CMD(PrintPlayerCoords);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-DEFCC(CCmdScreenShot);
-DEFCC(CCmdViewSize);
-DEFCC(CCmdDoom64Font);
-DEFCC(CCmdConBackground);
+D_CMD(ScreenShot);
 
-void G_UpdateEyeHeight(cvar_t* unused);
+void G_UpdateEyeHeight(void);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -82,16 +78,10 @@ void G_UpdateEyeHeight(cvar_t* unused);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-material_t* consoleBG = NULL;
-float consoleZoom = 1;
-
 // Console variables.
-cvar_t gameCVars[] = {
-// Console
-    {"con-zoom", 0, CVT_FLOAT, &consoleZoom, 0.1f, 100.0f},
-
+cvartemplate_t gameCVars[] = {
 // View/Refresh
-    {"view-size", CVF_PROTECTED, CVT_INT, &cfg.screenBlocks, 3, 11},
+    {"view-size", 0, CVT_INT, &cfg.setBlocks, 3, 11},
     {"hud-title", 0, CVT_BYTE, &cfg.mapTitle, 0, 1},
     {"hud-title-author-noiwad", 0, CVT_BYTE, &cfg.hideIWADAuthor, 0, 1},
 
@@ -116,7 +106,9 @@ cvar_t gameCVars[] = {
 
     // Items
     {"server-game-nobfg", 0, CVT_BYTE, &cfg.noNetBFG, 0, 1},
-    {"server-game-coop-nothing", 0, CVT_BYTE, &cfg.noCoopAnything, 0, 1},
+#if 0
+    {"server-game-coop-nothing", 0, CVT_BYTE, &cfg.noCoopAnything, 0, 1}, // not implemented atm, see P_SpawnMobjXYZ
+#endif
     {"server-game-coop-respawn-items", 0, CVT_BYTE,
         &cfg.coopRespawnItems, 0, 1},
     {"server-game-coop-noweapons", 0, CVT_BYTE, &cfg.noCoopWeapons, 0, 1},
@@ -170,6 +162,7 @@ cvar_t gameCVars[] = {
     {"player-weapon-order9", 0, CVT_INT, &cfg.weaponOrder[9], 0, NUM_WEAPON_TYPES},
 
     {"player-weapon-nextmode", 0, CVT_BYTE, &cfg.weaponNextMode, 0, 1},
+    {"player-weapon-cycle-sequential", 0, CVT_BYTE, &cfg.weaponCycleSequential, 0, 1},
 
     // Misc
     {"player-camera-noclip", 0, CVT_INT, &cfg.cameraNoClip, 0, 1},
@@ -187,6 +180,7 @@ cvar_t gameCVars[] = {
     {"game-objects-falloff", 0, CVT_BYTE, &cfg.fallOff, 0, 1},
     {"game-zclip", 0, CVT_BYTE, &cfg.moveCheckZ, 0, 1},
     {"game-corpse-sliding", 0, CVT_BYTE, &cfg.slidingCorpses, 0, 1},
+    {"game-monsters-floatoverblocking", 0, CVT_BYTE, &cfg.allowMonsterFloatOverBlocking, 0, 1},
 
 // Game state
     {"game-fastmonsters", 0, CVT_BYTE, &fastParm, 0, 1},
@@ -200,10 +194,9 @@ cvar_t gameCVars[] = {
 };
 
 //  Console commands
-ccmd_t  gameCCmds[] = {
+ccmdtemplate_t  gameCCmds[] = {
     {"spy",         "",     CCmdCycleSpy},
     {"screenshot",  "",     CCmdScreenShot},
-    {"viewsize",    "s",    CCmdViewSize},
 
     // $cheats
     {"god",         NULL,   CCmdCheatGod},
@@ -213,16 +206,8 @@ ccmd_t  gameCCmds[] = {
     {"give",        NULL,   CCmdCheatGive},
     {"kill",        "",     CCmdCheatMassacre},
     {"leavemap",    "",     CCmdCheatLeaveMap},
-    {"suicide",     NULL,     CCmdCheatSuicide},
+    {"suicide",     NULL,   CCmdCheatSuicide},
     {"where",       "",     CCmdCheatWhere},
-
-    {"doom64font",  "",     CCmdDoom64Font},
-    {"conbg",       "s",    CCmdConBackground},
-
-    // $infine
-    {"startinf",    "s",    CCmdStartInFine},
-    {"stopinf",     "",     CCmdStopInFine},
-    {"stopfinale",  "",     CCmdStopInFine},
 
     {"spawnmobj",   NULL,   CCmdSpawnMobj},
     {"coord",       "",     CCmdPrintPlayerCoords},
@@ -245,139 +230,25 @@ ccmd_t  gameCCmds[] = {
  */
 void G_ConsoleRegistration(void)
 {
-    uint                i;
-
-    for(i = 0; gameCVars[i].name; ++i)
+    int i;
+    for(i = 0; gameCVars[i].path; ++i)
         Con_AddVariable(&gameCVars[i]);
     for(i = 0; gameCCmds[i].name; ++i)
         Con_AddCommand(&gameCCmds[i]);
 }
 
 /**
- * Settings for console background drawing.
- * Called EVERY FRAME by the console drawer.
- */
-void D_ConsoleBg(int *width, int *height)
-{
-    if(consoleBG)
-    {
-        DGL_SetMaterial(consoleBG);
-        *width = (int) (64 * consoleZoom);
-        *height = (int) (64 * consoleZoom);
-    }
-    else
-    {
-        DGL_SetNoMaterial();
-        *width = *height = 0;
-    }
-}
-
-/**
  * Called when the player-eyeheight cvar is changed.
  */
-void G_UpdateEyeHeight(cvar_t* unused)
+void G_UpdateEyeHeight(void)
 {
-    player_t*           plr = &players[CONSOLEPLAYER];
-
+    player_t* plr = &players[CONSOLEPLAYER];
     if(!(plr->plr->flags & DDPF_CAMERA))
         plr->viewHeight = (float) cfg.plrViewHeight;
 }
 
-/**
- * Draw (char *) text in the game's font.
- * Called by the console drawer.
- */
-int ConTextOut(const char* text, int x, int y)
-{
-    M_WriteText3(x, y, text, GF_FONTA, -1, -1, -1, -1, false, false, 0);
-    return 0;
-}
-
-/**
- * Get the visual width of (char*) text in the game's font.
- */
-int ConTextWidth(const char* text)
-{
-    return M_StringWidth(text, GF_FONTA);
-}
-
-/**
- * Console command to take a screenshot (duh).
- */
-DEFCC(CCmdScreenShot)
+D_CMD(ScreenShot)
 {
     G_ScreenShot();
-    return true;
-}
-
-/**
- * Console command to change the size of the view window.
- */
-DEFCC(CCmdViewSize)
-{
-    int                 min = 3, max = 11, *val = &cfg.screenBlocks;
-
-    if(argc != 2)
-    {
-        Con_Printf("Usage: %s (size)\n", argv[0]);
-        Con_Printf("Size can be: +, -, (num).\n");
-        return true;
-    }
-
-    // Adjust/set the value
-    if(!stricmp(argv[1], "+"))
-        (*val)++;
-    else if(!stricmp(argv[1], "-"))
-        (*val)--;
-    else
-        *val = strtol(argv[1], NULL, 0);
-
-    // Clamp it
-    if(*val < min)
-        *val = min;
-    if(*val > max)
-        *val = max;
-
-    // Update the view size if necessary.
-    R_SetViewSize(cfg.screenBlocks);
-    return true;
-}
-
-/**
- * Configure the console to use the game's font.
- */
-DEFCC(CCmdDoom64Font)
-{
-    ddfont_t            cfont;
-
-    cfont.flags = DDFONT_WHITE;
-    cfont.height = 8;
-    cfont.sizeX = 1.5f;
-    cfont.sizeY = 2;
-    cfont.drawText = ConTextOut;
-    cfont.getWidth = ConTextWidth;
-    cfont.filterText = NULL;
-
-    Con_SetFont(&cfont);
-    return true;
-}
-
-/**
- * Configure the console background.
- */
-DEFCC(CCmdConBackground)
-{
-    material_t*         mat;
-
-    if(!stricmp(argv[1], "off") || !stricmp(argv[1], "none"))
-    {
-        consoleBG = NULL;
-        return true;
-    }
-
-    if((mat = P_ToPtr(DMU_MATERIAL,
-            P_MaterialCheckNumForName(argv[1], MN_ANY))))
-        consoleBG = mat;
-
     return true;
 }

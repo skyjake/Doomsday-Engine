@@ -1,10 +1,10 @@
-/**\file
+/**\file sys_findfile.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2004-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2004-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,53 +23,33 @@
  */
 
 /**
- * sys_findfile.c: Win32-Style File Finding (findfirst/findnext)
+ * Win32-Style File Finding (findfirst/findnext)
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <stdlib.h>
 #include <string.h>
 #include <glob.h>
 #include <sys/stat.h>
 
-#include "../include/sys_findfile.h"
-#include "../include/sys_path.h"
+#include "de_filesys.h"
 
-// MACROS ------------------------------------------------------------------
+#include "dd_string.h"
 
 #define FIND_ERROR  -1
 
-// TYPES -------------------------------------------------------------------
-
 typedef struct fdata_s {
-    char   *pattern;
-    glob_t  buf;
-    int     pos;
+    char* pattern;
+    glob_t buf;
+    int pos;
 } fdata_t;
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 /**
  * Get the info for the next file.
  */
-static int nextfinddata(finddata_t *fd)
+static int nextfinddata(finddata_t* fd)
 {
-    fdata_t    *data = fd->finddata;
-    char       *fn, *last;
-    char        ext[256];
+    fdata_t* data = fd->finddata;
+    char* fn, *last;
     struct stat st;
 
     if(data->buf.gl_pathc <= data->pos)
@@ -89,27 +69,24 @@ static int nextfinddata(finddata_t *fd)
     else
         fd->size = 0;
 
-    if(fd->name)
-        free(fd->name);
-    fd->name = malloc(strlen(fn) + 1);
-
     // Is it a directory?
     last = fn + strlen(fn) - 1;
     if(*last == '/')
     {
         // Return the name of the last directory in the path.
-        char *slash = last - 1;
-        int len;
+        char* slash = last - 1;
         while(*slash != '/' && slash > fn) --slash;
-        len = last - slash - 1;
-        strncpy(fd->name, slash + 1, len);
-        fd->name[len] = 0;
+        Str_Set(&fd->name, slash + 1);
         fd->attrib = A_SUBDIR;
     }
     else
     {
-        _splitpath(fn, NULL, NULL, fd->name, ext);
-        strcat(fd->name, ext);
+        char ext[256];
+        char name[356];
+
+        _splitpath(fn, NULL, NULL, name, ext);
+        Str_Clear(&fd->name); // It may have previously been populated.
+        Str_Appendf(&fd->name, "%s%s", name, ext);
         fd->attrib = 0;
     }
 
@@ -118,16 +95,13 @@ static int nextfinddata(finddata_t *fd)
     return 0;
 }
 
-/**
- * @return              @c 0, if successful(!).
- */
-int myfindfirst(const char *filename, finddata_t *fd)
+int myfindfirst(const char* filename, finddata_t* fd)
 {
-    fdata_t    *data;
+    fdata_t* data;
 
     // Allocate a new glob struct.
-    fd->finddata = data = calloc(1, sizeof(fdata_t));
-    fd->name = NULL;
+    fd->finddata = data = calloc(1, sizeof(*data));
+    Str_InitStd(&fd->name);
 
     // Make a copy of the pattern.
     data->pattern = malloc(strlen(filename) + 1);
@@ -137,34 +111,20 @@ int myfindfirst(const char *filename, finddata_t *fd)
     glob(filename, GLOB_MARK, NULL, &data->buf);
 
     return nextfinddata(fd);
-
-    /*  dta->hFile = _findfirst(filename, &dta->data);
-
-       dta->date = dta->data.time_write;
-       dta->time = dta->data.time_write;
-       dta->size = dta->data.size;
-       dta->name = dta->data.name;
-       dta->attrib = dta->data.attrib;
-
-       return dta->hFile<0; */
 }
 
-/**
- * @return              @c 0, if successful(!).
- */
-int myfindnext(finddata_t *fd)
+int myfindnext(finddata_t* fd)
 {
     if(!fd->finddata)
         return FIND_ERROR;
-
     return nextfinddata(fd);
 }
 
-void myfindend(finddata_t *fd)
+void myfindend(finddata_t* fd)
 {
-    globfree(&((fdata_t *) fd->finddata)->buf);
-    free(((fdata_t *) fd->finddata)->pattern);
-    free(fd->name);
+    globfree(&((fdata_t*) fd->finddata)->buf);
+    free(((fdata_t*) fd->finddata)->pattern);
+    Str_Free(&fd->name);
     free(fd->finddata);
     fd->finddata = NULL;
 }

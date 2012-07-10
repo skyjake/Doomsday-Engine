@@ -1,3 +1,10 @@
+# The Doomsday Engine Project
+# Copyright (c) 2011-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+#
+# Runs a Python script that reads the current version numbers and release
+# information from the headers of the various components. Python is assumed to
+# be on the system path.
+
 defineReplace(findVersion) {
     info = $$system(python \"$$PWD/../distrib/build_version.py\" \"$$PWD/$$1\")
     # Result: versionbase buildnum reltype winver
@@ -5,7 +12,19 @@ defineReplace(findVersion) {
     return($$member(info, 0))
 }
 
+defineReplace(dengReleaseType) {
+    info = $$system(python \"$$PWD/../distrib/build_version.py\"  \"$$PWD/engine/portable/include/dd_version.h\")
+    return($$member(info, 2))
+}
+
+defineTest(isStableRelease) {
+    relType = $$dengReleaseType()
+    contains(relType, Stable): return(true)
+    else: return(false)
+}
+
 DENG_VERSION            = $$findVersion(engine/portable/include/dd_version.h)
+DENG2_VERSION           = 2.0.0 # not yet defined in a header
 
 JDOOM_VERSION           = $$findVersion(plugins/jdoom/include/version.h)
 JHERETIC_VERSION        = $$findVersion(plugins/jheretic/include/version.h)

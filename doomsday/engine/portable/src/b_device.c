@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2009-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2009-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2009-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,12 +23,13 @@
  */
 
 /**
- * b_device.c: Control-Device Bindings
+ * Control-Device Bindings.
  */
 
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_misc.h"
 
 #include "b_main.h"
@@ -54,6 +55,7 @@
 
 float       stageThreshold = 6.f/35;
 float       stageFactor = .5f;
+byte        zeroControlUponConflict = true;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -94,8 +96,7 @@ void B_DestroyDeviceBindingList(dbinding_t* listRoot)
 
 boolean B_ParseDevice(dbinding_t* cb, const char* desc)
 {
-    boolean successful = false;
-    ddstring_t* str = Str_New();
+    AutoStr* str = AutoStr_New();
     ddeventtype_t type;
 
     // First, the device name.
@@ -109,7 +110,7 @@ boolean B_ParseDevice(dbinding_t* cb, const char* desc)
         desc = Str_CopyDelim(str, desc, '-');
         if(!B_ParseKeyId(Str_Text(str), &cb->id))
         {
-            goto parseEnded;
+            return false;
         }
     }
     else if(!Str_CompareIgnoreCase(str, "mouse"))
@@ -119,7 +120,7 @@ boolean B_ParseDevice(dbinding_t* cb, const char* desc)
         desc = Str_CopyDelim(str, desc, '-');
         if(!B_ParseMouseTypeAndId(Str_Text(str), &type, &cb->id))
         {
-            goto parseEnded;
+            return false;
         }
         cb->type = EVTYPE_TO_CBDTYPE(type);
     }
@@ -131,7 +132,7 @@ boolean B_ParseDevice(dbinding_t* cb, const char* desc)
         desc = Str_CopyDelim(str, desc, '-');
         if(!B_ParseJoystickTypeAndId(cb->device, Str_Text(str), &type, &cb->id))
         {
-            goto parseEnded;
+            return false;
         }
         cb->type = EVTYPE_TO_CBDTYPE(type);
 
@@ -141,7 +142,7 @@ boolean B_ParseDevice(dbinding_t* cb, const char* desc)
             desc = Str_CopyDelim(str, desc, '-');
             if(!B_ParseAnglePosition(Str_Text(str), &cb->angle))
             {
-                goto parseEnded;
+                return false;
             }
         }
     }
@@ -161,22 +162,16 @@ boolean B_ParseDevice(dbinding_t* cb, const char* desc)
         else
         {
             Con_Message("B_ParseEvent: Unrecognized \"%s\".\n", desc);
-            goto parseEnded;
+            return false;
         }
     }
 
-    // Success.
-    successful = true;
-
-parseEnded:
-    Str_Delete(str);
-    return successful;
+    return true;
 }
 
 boolean B_ParseDeviceDescriptor(dbinding_t* cb, const char* desc)
 {
-    boolean successful = false;
-    ddstring_t* str = Str_New();
+    AutoStr* str = AutoStr_New();
 
     // The first part specifies the device state.
     desc = Str_CopyDelim(str, desc, '+');
@@ -184,7 +179,7 @@ boolean B_ParseDeviceDescriptor(dbinding_t* cb, const char* desc)
     if(!B_ParseDevice(cb, Str_Text(str)))
     {
         // Failure in parsing the device.
-        goto parseEnded;
+        return false;
     }
 
     // Any conditions?
@@ -199,16 +194,12 @@ boolean B_ParseDeviceDescriptor(dbinding_t* cb, const char* desc)
         if(!B_ParseStateCondition(cond, Str_Text(str)))
         {
             // Failure parusing the condition.
-            goto parseEnded;
+            return false;
         }
     }
 
     // Success.
-    successful = true;
-
-parseEnded:
-    Str_Delete(str);
-    return successful;
+    return true;
 }
 
 dbinding_t* B_NewDeviceBinding(dbinding_t* listRoot, const char* deviceDesc)
@@ -240,7 +231,7 @@ dbinding_t* B_FindDeviceBinding(bcontext_t* context, uint device, cbdevtype_t bi
 
     if(!context)
         return NULL;
-    
+
     for(cb = context->controlBinds.next; cb != &context->controlBinds; cb = cb->next)
     {
         for(i = 0; i < DDMAXPLAYERS; ++i)
@@ -276,7 +267,8 @@ void B_DestroyDeviceBinding(dbinding_t* cb)
     }
 }
 
-void B_EvaluateDeviceBindingList(int localNum, dbinding_t* listRoot, float* pos, float* relativeOffset, bcontext_t* controlClass)
+void B_EvaluateDeviceBindingList(int localNum, dbinding_t* listRoot, float* pos, float* relativeOffset,
+                                 bcontext_t* controlClass, boolean allowTriggered)
 {
     dbinding_t* cb;
     int         i;
@@ -287,6 +279,8 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t* listRoot, float* pos,
     float       deviceOffset;
     uint        deviceTime;
     uint        nowTime = Sys_GetRealTime();
+    boolean     conflicted[NUM_CBD_TYPES] = { false, false, false };
+    boolean     appliedState[NUM_CBD_TYPES] = { false, false, false };
 
     *pos = 0;
     *relativeOffset = 0;
@@ -328,8 +322,12 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t* listRoot, float* pos,
             if(dev->keys[cb->id].assoc.flags & IDAF_EXPIRED)
                 break;
 
-            devicePos = (dev->keys[cb->id].isDown? 1.0f : 0.0f);
+            devicePos = (dev->keys[cb->id].isDown ||
+                         (allowTriggered && (dev->keys[cb->id].assoc.flags & IDAF_TRIGGERED))? 1.0f : 0.0f);
             deviceTime = dev->keys[cb->id].time;
+
+            // We've checked it, so clear the flag.
+            dev->keys[cb->id].assoc.flags &= ~IDAF_TRIGGERED;
             break;
 
         case CBD_AXIS:
@@ -396,9 +394,29 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t* listRoot, float* pos,
 
         *pos += devicePos;
         *relativeOffset += deviceOffset;
+
+        // Is this state contributing to the outcome?
+        if(!FEQUAL(devicePos, 0.f))
+        {
+            if(appliedState[cb->type])
+            {
+                // Another binding already influenced this; we have a conflict.
+                conflicted[cb->type] = true;
+            }
+
+            // We've found one effective binding that influences this control.
+            appliedState[cb->type] = true;
+        }
     }
 
-    // Clamp appropriately.
+    if(zeroControlUponConflict)
+    {
+        for(i = 0; i < NUM_CBD_TYPES; ++i)
+            if(conflicted[i])
+                *pos = 0;
+    }
+
+    // Clamp to the normalized range.
     *pos = MINMAX_OF(-1.0f, *pos, 1.0f);
 }
 

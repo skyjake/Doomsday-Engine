@@ -2,3 +2,6 @@ images
 build
 dist
 VERSION
+*.pyc
+shared
+

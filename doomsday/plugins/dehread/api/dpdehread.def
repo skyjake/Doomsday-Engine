@@ -1,0 +1,4 @@
+LIBRARY			DPDEHREAD
+
+EXPORTS
+    DP_Initialize   @1

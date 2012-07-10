@@ -1,5 +1,6 @@
 name: Doom 2
 game: game-jdoom
+game-mode: game-mode-doom2
 banner: banner-doom2
 hidden: yes
 

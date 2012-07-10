@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,8 +36,9 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
-#include "de_system.h"
 #include "de_console.h"
+#include "de_system.h"
+#include "de_filesys.h"
 #include "de_refresh.h"
 #include "de_audio.h"
 #include "de_misc.h"
@@ -534,13 +535,12 @@ void Sfx_CacheHit(int id)
     }
 }
 
-static sfxsample_t* cacheSample(int id, sfxinfo_t* info)
+static sfxsample_t* cacheSample(int id, const sfxinfo_t* info)
 {
-    void*               data = NULL;
-    int                 numSamples = 0, bytesPer = 0, rate = 0;
+    void* data = NULL;
+    int numSamples = 0, bytesPer = 0, rate = 0;
 
-    VERBOSE2(
-    Con_Message("Sfx_Cache: Caching sound %i (%s).\n", id, info->id));
+    VERBOSE2( Con_Message("Caching sound '%s' (#%i)...\n", info->id, id) )
 
     /**
      * Figure out where to get the sample data for this sound. It might be
@@ -549,83 +549,84 @@ static sfxsample_t* cacheSample(int id, sfxinfo_t* info)
      * the decision.
      */
 
-    // Has an external sound file been defined?
-    if(info->external[0])
-    {   // Yes.
-        filename_t          buf;
+    /// Has an external sound file been defined?
+    /// \note Path is relative to the base path.
+    if(!Str_IsEmpty(&info->external))
+    {
+        ddstring_t buf;
+        Str_Init(&buf);
+        F_PrependBasePath(&buf, &info->external);
 
-        // Try loading (note the file name is relative to the base path).
-        M_PrependBasePath(buf, info->external, FILENAME_T_MAXLEN);
-        if((data = WAV_Load(buf, &bytesPer, &rate, &numSamples)))
-        {   // Loading was successful!
+        // Try loading.
+        data = WAV_Load(Str_Text(&buf), &bytesPer, &rate, &numSamples);
+        if(NULL != data)
+        {
             bytesPer /= 8; // Was returned as bits.
         }
+        Str_Free(&buf);
     }
 
     // If external didn't succeed, let's try the default resource dir.
     if(!data)
     {
-        filename_t          buf;
-
         /**
          * If the sound has an invalid lumpname, search external anyway.
          * If the original sound is from a PWAD, we won't look for an
          * external resource (probably a custom sound).
-         * \fixme should be a cvar.
+         * @todo should be a cvar.
          */
-        if((info->lumpNum < 0 || W_IsFromIWAD(info->lumpNum)) &&
-           R_FindResource(RT_SOUND, buf, info->lumpName, NULL,
-                          FILENAME_T_MAXLEN) &&
-           (data = WAV_Load(buf, &bytesPer, &rate, &numSamples)))
-        {   // Loading was successful!
-            bytesPer /= 8; // Was returned as bits.
+        if(info->lumpNum < 0 || !F_LumpIsCustom(info->lumpNum))
+        {
+            ddstring_t foundPath; Str_Init(&foundPath);
+
+            if(F_FindResource2(RC_SOUND, info->lumpName, &foundPath) != 0 &&
+               (data = WAV_Load(Str_Text(&foundPath), &bytesPer, &rate, &numSamples)))
+            {   // Loading was successful!
+                bytesPer /= 8; // Was returned as bits.
+            }
+
+            Str_Free(&foundPath);
         }
     }
 
     // No sample loaded yet?
     if(!data)
     {
-        char                hdr[12];
+        abstractfile_t* fsObject;
+        size_t lumpLength;
+        int lumpIdx;
+        char hdr[12];
 
         // Try loading from the lump.
         if(info->lumpNum < 0)
         {
-            if(verbose)
-            {
-                Con_Message("Sfx_Cache: Sound %s has a missing lump: '%s'.\n",
-                            info->id, info->lumpName);
-                Con_Message("  Verifying... The lump number is %i.\n",
-                            W_CheckNumForName(info->lumpName));
-            }
-
+            Con_Message("Warning:Sfx_Cache: Failed to locate lump resource '%s' for sound '%s'.\n",
+                info->lumpName, info->id);
             return NULL;
         }
 
-        if(W_LumpLength(info->lumpNum) <= 8)
+        lumpLength = F_LumpLength(info->lumpNum);
+        if(lumpLength <= 8)
             return NULL;
 
-        W_ReadLumpSection(info->lumpNum, hdr, 0, 12);
+        fsObject = F_FindFileForLumpNum2(info->lumpNum, &lumpIdx);
+        F_ReadLumpSection(fsObject, lumpIdx, (uint8_t*)hdr, 0, 12);
 
         // Is this perhaps a WAV sound?
         if(WAV_CheckFormat(hdr))
         {
-            const void*         sp =
-                W_CacheLumpNum(info->lumpNum, PU_STATIC);
-
             // Load as WAV, then.
-            if(!(data = WAV_MemoryLoad((const byte*) sp,
-                                      W_LumpLength(info->lumpNum),
-                                      &bytesPer, &rate, &numSamples)))
+            const uint8_t* sp = F_CacheLump(fsObject, lumpIdx, PU_APPSTATIC);
+            data = WAV_MemoryLoad((const byte*) sp, lumpLength, &bytesPer, &rate, &numSamples);
+            F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
+
+            if(NULL == data)
             {
                 // Abort...
-                Con_Message("Sfx_Cache: WAV data in lump %s is bad.\n",
-                            info->lumpName);
-                W_ChangeCacheTag(info->lumpNum, PU_CACHE);
-
+                Con_Message("Warning:Sfx_Cache: Unknown WAV format in lump '%s', aborting.\n", info->lumpName);
                 return NULL;
             }
 
-            W_ChangeCacheTag(info->lumpNum, PU_CACHE);
             bytesPer /= 8;
         }
     }
@@ -646,21 +647,23 @@ static sfxsample_t* cacheSample(int id, sfxinfo_t* info)
          * We can use the sample data as-is, so make use of the lump cache
          * by loading from it directly.
          */
-        sfxcache_t*         node;
-        const void*         data, *sp =
-            W_CacheLumpNum(info->lumpNum, PU_STATIC);
+        int lumpIdx;
+        abstractfile_t* fsObject = F_FindFileForLumpNum2(info->lumpNum, &lumpIdx);
+        const uint8_t* sp = F_CacheLump(fsObject, lumpIdx, PU_APPSTATIC);
+        const void* data;
+        sfxcache_t* node;
 
-        data = ((const char*) sp) + 8; // Eight byte header.
+        data = sp + 8; // Eight byte header.
         bytesPer = 1; // 8-bit.
-        rate = SHORT(*(short*) (((const char*) sp) + 2));
-        numSamples = LONG(*(int*) (((const char*) sp) + 4));
+        rate = SHORT(*(const short*) (sp + 2));
+        numSamples = LONG(*(const int*) (sp + 4));
 
         // Insert a copy of this into the cache.
         node = Sfx_CacheInsert(id, data, bytesPer * numSamples, numSamples,
-                               bytesPer, rate, info->group);
+            bytesPer, rate, info->group);
 
         // We don't need the temporary sample any more, clean up.
-        W_ChangeCacheTag(info->lumpNum, PU_CACHE);
+        F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
 
         return &node->sample;
     }
@@ -689,8 +692,7 @@ sfxsample_t* Sfx_Cache(int id)
     info = S_GetSoundInfo(id, NULL, NULL);
     if(!info)
     {
-        Con_Message("Sfx_Cache: Warning, missing sound info for ID %i.\n",
-                    id);
+        Con_Message("Warning: Missing SoundInfo for Id %i, ignoring.\n", id);
         return NULL;
     }
 

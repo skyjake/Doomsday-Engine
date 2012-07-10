@@ -1,10 +1,10 @@
-/**\file
+/**\file net_demo.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,13 +20,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
- *
- * \bug - Demo playback is broken -> http://sourceforge.net/tracker/index.php?func=detail&aid=1693198&group_id=74815&atid=542099
  */
 
 /**
- * net_demo.c: Demos
- *
  * Handling of demo recording and playback.
  * Opening of, writing to, reading from and closing of demo files.
  */
@@ -36,13 +32,14 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
+#include "de_filesys.h"
 #include "de_network.h"
 #include "de_render.h"
 #include "de_misc.h"
 #include "de_play.h"
 
 #include "r_main.h"
-#include "gl_main.h" // For r_framecounter.
+//#include "gl_main.h" // For r_framecounter.
 
 // MACROS ------------------------------------------------------------------
 
@@ -56,19 +53,15 @@
 // TYPES -------------------------------------------------------------------
 
 #pragma pack(1)
-
 typedef struct {
-    //ushort        angle;
-    //short         lookdir;
     ushort          length;
 } demopacket_header_t;
-
 #pragma pack()
 
 typedef struct {
     boolean         first;
     int             begintime;
-    boolean         canwrite;           // False until Handshake packet.
+    boolean         canwrite; /// @c false until Handshake packet.
     int             cameratimer;
     int             pausetime;
     float           fov;
@@ -94,10 +87,9 @@ extern float netConnectTime;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-char demoPath[128] = "demo\\";
+filename_t demoPath = "demo/";
 
-//int demotic = 0;
-LZFILE *playdemo = 0;
+LZFILE* playdemo = 0;
 int playback = false;
 int viewangleDelta = 0;
 float lookdirDelta = 0;
@@ -116,18 +108,17 @@ static int demoStartTic;
 
 void Demo_Register(void)
 {
-    // Ccmds
-    C_CMD("demolump", "ss", DemoLump);
-    C_CMD("pausedemo", NULL, PauseDemo);
-    C_CMD("playdemo", "s", PlayDemo);
-    C_CMD("recorddemo", NULL, RecordDemo);
-    C_CMD("stopdemo", NULL, StopDemo);
+    C_CMD_FLAGS("demolump", "ss", DemoLump, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS("pausedemo", NULL, PauseDemo, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS("playdemo", "s", PlayDemo, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS("recorddemo", NULL, RecordDemo, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS("stopdemo", NULL, StopDemo, CMDF_NO_NULLGAME);
 }
 
 void Demo_Init(void)
 {
     // Make sure the demo path is there.
-    M_CheckPath(demoPath);
+    F_MakePath(demoPath);
 }
 
 /**
@@ -136,24 +127,27 @@ void Demo_Init(void)
  */
 boolean Demo_BeginRecording(const char* fileName, int plrNum)
 {
-    filename_t          buf;
-    client_t*           cl = &clients[plrNum];
-    player_t*           plr = &ddPlayers[plrNum];
+    client_t* cl = &clients[plrNum];
+    player_t* plr = &ddPlayers[plrNum];
+    ddstring_t buf;
 
     // Is a demo already being recorded for this client?
-    if(cl->recording || playback || (isDedicated && !plrNum) ||
-       !plr->shared.inGame)
+    if(cl->recording || playback || (isDedicated && !plrNum) || !plr->shared.inGame)
         return false;
 
     // Compose the real file name.
-    strncpy(buf, demoPath, FILENAME_T_MAXLEN);
-    strncat(buf, fileName, FILENAME_T_MAXLEN);
-    M_TranslatePath(buf, buf, FILENAME_T_MAXLEN);
+    Str_Init(&buf);
+    Str_Appendf(&buf, "%s%s", demoPath, fileName);
+    F_ExpandBasePath(&buf, &buf);
+    F_ToNativeSlashes(&buf, &buf);
 
     // Open the demo file.
-    cl->demo = lzOpen(buf, "wp");
+    cl->demo = lzOpen(Str_Text(&buf), "wp");
+    Str_Free(&buf);
     if(!cl->demo)
+    {
         return false; // Couldn't open it!
+    }
 
     cl->recording = true;
     cl->recordPaused = false;
@@ -315,8 +309,7 @@ void Demo_BroadcastPacket(void)
 
 boolean Demo_BeginPlayback(const char* fileName)
 {
-    filename_t          buf;
-    int                 i;
+    ddstring_t buf;
 
     if(playback)
         return false; // Already in playback.
@@ -324,15 +317,26 @@ boolean Demo_BeginPlayback(const char* fileName)
         return false; // Can't do it.
 
     // Check that we aren't recording anything.
+    { int i;
     for(i = 0; i < DDMAXPLAYERS; ++i)
+    {
         if(clients[i].recording)
             return false;
+    }}
+
+    // Compose the real file name.
+    Str_Init(&buf);
+    Str_Set(&buf, fileName);
+    if(!F_IsAbsolute(&buf))
+    {
+        Str_Prepend(&buf, demoPath);
+    }
+    F_ExpandBasePath(&buf, &buf);
+    F_ToNativeSlashes(&buf, &buf);
 
     // Open the demo file.
-    dd_snprintf(buf, FILENAME_T_MAXLEN, "%s%s",
-             Dir_IsAbsolute(fileName) ? "" : demoPath, fileName);
-    M_TranslatePath(buf, buf, FILENAME_T_MAXLEN);
-    playdemo = lzOpen(buf, "rp");
+    playdemo = lzOpen(Str_Text(&buf), "rp");
+    Str_Free(&buf);
     if(!playdemo)
         return false; // Failed to open the file.
 
@@ -349,15 +353,17 @@ boolean Demo_BeginPlayback(const char* fileName)
     demoStartTic = DEMOTIC;
     memset(posDelta, 0, sizeof(posDelta));
     // Start counting frames from here.
+    /*
     if(ArgCheck("-timedemo"))
         r_framecounter = 0;
+        */
 
     return true;
 }
 
 void Demo_StopPlayback(void)
 {
-    float           diff;
+    //float           diff;
 
     if(!playback)
         return;
@@ -372,6 +378,7 @@ void Demo_StopPlayback(void)
     fieldOfView = startFOV;
     Net_StopGame();
 
+    /*
     if(ArgCheck("-timedemo"))
     {
         diff = Sys_GetSeconds() - netConnectTime;
@@ -383,9 +390,10 @@ void Demo_StopPlayback(void)
         Con_Message("%f FPS\n", r_framecounter / diff);
         Sys_Quit();
     }
+    */
 
     // "Play demo once" mode?
-    if(ArgCheck("-playdemo"))
+    if(CommandLine_Check("-playdemo"))
         Sys_Quit();
 }
 
@@ -401,9 +409,8 @@ boolean Demo_ReadPacket(void)
     if(lzEOF(playdemo))
     {
         Demo_StopPlayback();
-        // Tell the Game the demo has ended.
-        if(gx.NetWorldEvent)
-            gx.NetWorldEvent(DDWE_DEMO_END, 0, 0);
+        // Any interested parties?
+        DD_CallHooks(HOOK_DEMO_STOP, false, 0);
         return false;
     }
 
@@ -424,7 +431,6 @@ boolean Demo_ReadPacket(void)
     // Get the packet.
     netBuffer.length = hdr.length - 1;
     netBuffer.player = 0; // From the server.
-    netBuffer.msg.id = 0;
     netBuffer.msg.type = lzGetC(playdemo);
     lzRead(netBuffer.msg.data, (long) netBuffer.length, playdemo);
     //netBuffer.cursor = netBuffer.msg.data;
@@ -458,7 +464,7 @@ void Demo_WriteLocalCamera(int plrNum)
 
     Msg_Begin(clients[plrNum].recordPaused ? PKT_DEMOCAM_RESUME : PKT_DEMOCAM);
     // Flags.
-    flags = (mo->pos[VZ] <= mo->floorZ ? LCAMF_ONGROUND : 0)  // On ground?
+    flags = (mo->origin[VZ] <= mo->floorZ ? LCAMF_ONGROUND : 0)  // On ground?
         | (incfov ? LCAMF_FOV : 0);
     if(ddpl->flags & DDPF_CAMERA)
     {
@@ -468,14 +474,14 @@ void Demo_WriteLocalCamera(int plrNum)
     Writer_WriteByte(msgWriter, flags);
 
     // Coordinates.
-    x = FLT2FIX(mo->pos[VX]);
-    y = FLT2FIX(mo->pos[VY]);
+    x = FLT2FIX(mo->origin[VX]);
+    y = FLT2FIX(mo->origin[VY]);
     Writer_WriteInt16(msgWriter, x >> 16);
     Writer_WriteByte(msgWriter, x >> 8);
     Writer_WriteInt16(msgWriter, y >> 16);
     Writer_WriteByte(msgWriter, y >> 8);
 
-    z = FLT2FIX(mo->pos[VZ] + viewData->current.pos[VZ]);
+    z = FLT2FIX(mo->origin[VZ] + viewData->current.origin[VZ]);
     Writer_WriteInt16(msgWriter, z >> 16);
     Writer_WriteByte(msgWriter, z >> 8);
 
@@ -525,9 +531,9 @@ void Demo_ReadLocalCamera(void)
 
     // X and Y coordinates are easy. Calculate deltas to the new coords.
     posDelta[VX] =
-        (FIX2FLT((Reader_ReadInt16(msgReader) << 16) + (Reader_ReadByte(msgReader) << 8)) - mo->pos[VX]) / intertics;
+        (FIX2FLT((Reader_ReadInt16(msgReader) << 16) + (Reader_ReadByte(msgReader) << 8)) - mo->origin[VX]) / intertics;
     posDelta[VY] =
-        (FIX2FLT((Reader_ReadInt16(msgReader) << 16) + (Reader_ReadByte(msgReader) << 8)) - mo->pos[VY]) / intertics;
+        (FIX2FLT((Reader_ReadInt16(msgReader) << 16) + (Reader_ReadByte(msgReader) << 8)) - mo->origin[VY]) / intertics;
 
     // The Z coordinate is a bit trickier. We are tracking the *camera's*
     // Z coordinate (z+viewheight), not the player mobj's Z.
@@ -587,9 +593,7 @@ void Demo_ReadLocalCamera(void)
  */
 void Demo_Ticker(timespan_t time)
 {
-    static trigger_t        fixed = { 1 / 35.0, 0 };
-
-    if(!M_RunTrigger(&fixed, time))
+    if(!DD_IsSharpTick())
         return;
 
     // Only playback is handled.
@@ -691,7 +695,7 @@ D_CMD(PauseDemo)
 
 D_CMD(StopDemo)
 {
-    int         plnum = consolePlayer;
+    int plnum = consolePlayer;
 
     if(argc > 2)
     {
@@ -708,10 +712,10 @@ D_CMD(StopDemo)
                clients[plnum].recording ? "recording" : "playback", plnum);
 
     if(playback)
-    {
+    {   // Aborted.
         Demo_StopPlayback();
-        // Tell the Game DLL that the playback was aborted.
-        gx.NetWorldEvent(DDWE_DEMO_END, true, 0);
+        // Any interested parties?
+        DD_CallHooks(HOOK_DEMO_STOP, true, 0);
     }
     else
         Demo_StopRecording(plnum);
@@ -723,8 +727,7 @@ D_CMD(StopDemo)
  */
 D_CMD(DemoLump)
 {
-    char        buf[64];
-
+    char buf[64];
     memset(buf, 0, sizeof(buf));
     strncpy(buf, argv[1], 64);
     return M_WriteFile(argv[2], buf, 64);

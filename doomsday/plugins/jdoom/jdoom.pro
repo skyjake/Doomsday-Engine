@@ -1,13 +1,14 @@
 # The Doomsday Engine Project
-# Copyright (c) 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
-# Copyright (c) 2011 Daniel Swanson <danij@dengine.net>
+# Copyright (c) 2011-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+# Copyright (c) 2011-2012 Daniel Swanson <danij@dengine.net>
 
 include(../config_plugin.pri)
 include(../common/common.pri)
 include(../../dep_lzss.pri)
 
 TEMPLATE = lib
-TARGET = jdoom
+win32|macx: TARGET = jDoom
+      else: TARGET = jdoom
 
 DEFINES += __JDOOM__
 
@@ -20,7 +21,7 @@ macx {
 
     QMAKE_BUNDLE_DATA += gamedata
 }
-else: {
+else {
     INSTALLS += target gamedata
 
     target.path = $$DENG_LIB_DIR
@@ -50,9 +51,7 @@ HEADERS += \
     include/info.h \
     include/jdoom.h \
     include/m_cheat.h \
-    include/m_menu.h \
     include/m_random.h \
-    include/mn_def.h \
     include/oldinfo.h \
     include/p_enemy.h \
     include/p_inter.h \
@@ -63,7 +62,6 @@ HEADERS += \
     include/p_oldsvg.h \
     include/p_pspr.h \
     include/p_setup.h \
-    include/p_sound.h \
     include/p_spec.h \
     include/p_telept.h \
     include/r_defs.h \
@@ -91,9 +89,7 @@ HEADERS += \
     include/info.h \
     include/jdoom.h \
     include/m_cheat.h \
-    include/m_menu.h \
     include/m_random.h \
-    include/mn_def.h \
     include/oldinfo.h \
     include/p_enemy.h \
     include/p_inter.h \
@@ -104,7 +100,6 @@ HEADERS += \
     include/p_oldsvg.h \
     include/p_pspr.h \
     include/p_setup.h \
-    include/p_sound.h \
     include/p_spec.h \
     include/p_telept.h \
     include/r_defs.h \
@@ -131,7 +126,6 @@ SOURCES += \
     src/p_oldsvg.c \
     src/p_pspr.c \
     src/p_setup.c \
-    src/p_sound.c \
     src/p_spec.c \
     src/p_telept.c \
     src/st_stuff.c \
@@ -143,4 +137,9 @@ win32 {
     OTHER_FILES += api/jdoom.def
 
     RC_FILE = res/jdoom.rc
+}
+
+macx {
+    linkToBundledLibdeng2(jDoom)
+    linkToBundledLibdeng(jDoom)
 }

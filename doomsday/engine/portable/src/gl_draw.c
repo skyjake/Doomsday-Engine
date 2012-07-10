@@ -1,10 +1,10 @@
-/**\file
+/**\file gl_draw.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * gl_draw.c: Basic (Generic) Drawing Routines
+ * Basic (Generic) Drawing Routines.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -33,10 +33,14 @@
 #include <math.h>
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_graphics.h"
 #include "de_refresh.h"
 #include "de_render.h"
 #include "de_misc.h"
+#include "de_play.h"
+
+#include "sys_opengl.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -54,315 +58,254 @@
 
 static boolean drawFilter = false;
 static float filterColor[4] = { 0, 0, 0, 0 };
-static boolean usePatchOffset = true;   // A bit of a hack...
 
 // CODE --------------------------------------------------------------------
 
-void GL_UsePatchOffset(boolean enable)
+void GL_DrawRectWithCoords(const RectRaw* rect, Point2Raw coords[4])
 {
-    usePatchOffset = enable;
-}
+    if(!rect) return;
 
-void GL_DrawRawScreen_CS(lumpnum_t lump, float offx, float offy,
-                         float scalex, float scaley)
-{
-    boolean             isTwoPart;
-    float               pixelBorder = 0;
-    float               tcb = 0;
-    rawtex_t*           raw;
-
-    if(lump < 0 || lump >= numLumps)
-        return;
-
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
-
-    // Setup offset and scale.
-    // Scale the offsets to match the resolution.
-    glTranslatef(offx * theWindow->width / 320.0f,
-                 offy * theWindow->height / 200.0f, 0);
-    glScalef(scalex, scaley, 1);
-
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
-
-    GL_SetRawImage(lump, false, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-    raw = R_GetRawTex(lump);
-    isTwoPart = (raw->tex2 != 0);
-
-    if(isTwoPart)
-    {
-        tcb = raw->height / 256.0f;
-    }
-    else
-    {
-        // Bottom texture coordinate.
-        tcb = 1;
-    }
-    pixelBorder = raw->width * theWindow->width / 320;
-
-    // The first part is rendered in any case.
-    glBegin(GL_QUADS);
-        glTexCoord2f(0, 0);
-        glVertex2f(0, 0);
-        glTexCoord2f(1, 0);
-        glVertex2f(pixelBorder, 0);
-        glTexCoord2f(1, tcb);
-        glVertex2f(pixelBorder, theWindow->height);
-        glTexCoord2f(0, tcb);
-        glVertex2f(0, theWindow->height);
-    glEnd();
-
-    if(isTwoPart)
-    {
-        // And the other part.
-        GL_SetRawImage(lump, true, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-        glBegin(GL_QUADS);
-            glTexCoord2f(0, 0);
-            glVertex2f(pixelBorder, 0);
-            glTexCoord2f(1, 0);
-            glVertex2f(theWindow->width, 0);
-            glTexCoord2f(1, tcb);
-            glVertex2f(theWindow->width, theWindow->height);
-            glTexCoord2f(0, tcb);
-            glVertex2f(pixelBorder, theWindow->height);
-        glEnd();
-    }
-
-    // Restore the old projection matrix.
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
-}
-
-/**
- * Raw screens are 320 x 200.
- */
-void GL_DrawRawScreen(lumpnum_t lump, float offx, float offy)
-{
-    glColor3f(1, 1, 1);
-    GL_DrawRawScreen_CS(lump, offx, offy, 1, 1);
-}
-
-/**
- * Drawing with the Current State.
- */
-void GL_DrawPatch_CS(int posX, int posY, lumpnum_t lump)
-{
-    float               x = posX;
-    float               y = posY;
-    float               w, h;
-    patchtex_t*         p = R_GetPatchTex(lump);
-
-    if(!p)
-        return;
-
-    // Set the texture.
-    GL_BindTexture(GL_PreparePatch(p), glmode[texMagMode]);
-
-    w = (float) p->width;
-    h = (float) p->height;
-
-    if(usePatchOffset)
-    {
-        x += (float) p->offX;
-        y += (float) p->offY;
-    }
-
-    if(p->extraOffset[VX])
-    {
-        // This offset is used only for the extra borders in the
-        // "upscaled and sharpened" patches, so we can tweak the values
-        // to our liking a bit more.
-        x += p->extraOffset[VX] * .75f;
-        y += p->extraOffset[VY] * .75f;
-        w -= fabs(p->extraOffset[VX]) / 2;
-        h -= fabs(p->extraOffset[VY]) / 2;
-    }
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glBegin(GL_QUADS);
-        glTexCoord2f(0, 0);
-        glVertex2f(x, y);
-        glTexCoord2f(1, 0);
-        glVertex2f(x + w, y);
-        glTexCoord2f(1, 1);
-        glVertex2f(x + w, y + h);
-        glTexCoord2f(0, 1);
-        glVertex2f(x, y + h);
+        // Upper left.
+        if(coords) glTexCoord2iv((GLint*)coords[0].xy);
+        glVertex2f(rect->origin.x, rect->origin.y);
+
+        // Upper Right.
+        if(coords) glTexCoord2iv((GLint*)coords[1].xy);
+        glVertex2f(rect->origin.x + rect->size.width, rect->origin.y);
+
+        // Lower right.
+        if(coords) glTexCoord2iv((GLint*)coords[2].xy);
+        glVertex2f(rect->origin.x + rect->size.width, rect->origin.y + rect->size.height);
+
+        // Lower left.
+        if(coords) glTexCoord2iv((GLint*)coords[3].xy);
+        glVertex2f(rect->origin.x, rect->origin.y + rect->size.height);
     glEnd();
-
-    // Is there a second part?
-    if(GL_PreparePatchOtherPart(p))
-    {
-        x += (float) p->width2;
-
-        GL_BindTexture(GL_PreparePatchOtherPart(p), glmode[texMagMode]);
-        w = (float) p->width2;
-
-        glBegin(GL_QUADS);
-            glTexCoord2f(0, 0);
-            glVertex2f(x, y);
-            glTexCoord2f(1, 0);
-            glVertex2f(x + w, y);
-            glTexCoord2f(1, 1);
-            glVertex2f(x + w, y + h);
-            glTexCoord2f(0, 1);
-            glVertex2f(x, y + h);
-        glEnd();
-    }
 }
 
-void GL_DrawPatchLitAlpha(int x, int y, float light, float alpha,
-                          lumpnum_t lump)
+void GL_DrawRect(const RectRaw* rect)
 {
-    glColor4f(light, light, light, alpha);
-    GL_DrawPatch_CS(x, y, lump);
+    Point2Raw coords[4];
+    coords[0].x = 0;
+    coords[0].y = 0;
+    coords[1].x = 1;
+    coords[1].y = 0;
+    coords[2].x = 1;
+    coords[2].y = 1;
+    coords[3].x = 0;
+    coords[3].y = 1;
+    GL_DrawRectWithCoords(rect, coords);
 }
 
-void GL_DrawPatch(int x, int y, lumpnum_t lump)
+void GL_DrawRect2(int x, int y, int w, int h)
 {
-    if(lump < 0)
-        return;
-    GL_DrawPatchLitAlpha(x, y, 1, 1, lump);
+    RectRaw rect;
+    rect.origin.x = x;
+    rect.origin.y = y;
+    rect.size.width = w;
+    rect.size.height = h;
+    GL_DrawRect(&rect);
 }
 
-void GL_DrawFuzzPatch(int x, int y, lumpnum_t lump)
+void GL_DrawRectfWithCoords(const RectRawf* rect, Point2Rawf coords[4])
 {
-    if(lump < 0)
-        return;
-    GL_DrawPatchLitAlpha(x, y, 1, .333f, lump);
+    if(!rect) return;
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+
+    glBegin(GL_QUADS);
+        // Upper left.
+        if(coords) glTexCoord2dv((GLdouble*)coords[0].xy);
+        glVertex2d(rect->origin.x, rect->origin.y);
+
+        // Upper Right.
+        if(coords) glTexCoord2dv((GLdouble*)coords[1].xy);
+        glVertex2d(rect->origin.x + rect->size.width, rect->origin.y);
+
+        // Lower right.
+        if(coords) glTexCoord2dv((GLdouble*)coords[2].xy);
+        glVertex2d(rect->origin.x + rect->size.width, rect->origin.y + rect->size.height);
+
+        // Lower left.
+        if(coords) glTexCoord2dv((GLdouble*)coords[3].xy);
+        glVertex2d(rect->origin.x, rect->origin.y + rect->size.height);
+    glEnd();
 }
 
-void GL_DrawAltFuzzPatch(int x, int y, lumpnum_t lump)
+void GL_DrawRectf(const RectRawf* rect)
 {
-    if(lump < 0)
-        return;
-    GL_DrawPatchLitAlpha(x, y, 1, .666f, lump);
+    Point2Rawf coords[4];
+    coords[0].x = 0;
+    coords[0].y = 0;
+    coords[1].x = 1;
+    coords[1].y = 0;
+    coords[2].x = 1;
+    coords[2].y = 1;
+    coords[3].x = 0;
+    coords[3].y = 1;
+    GL_DrawRectfWithCoords(rect, coords);
 }
 
-void GL_DrawShadowedPatch(int x, int y, lumpnum_t lump)
+void GL_DrawRectf2(double x, double y, double w, double h)
 {
-    if(lump < 0)
-        return;
-    GL_DrawPatchLitAlpha(x + 2, y + 2, 0, .4f, lump);
-    GL_DrawPatchLitAlpha(x, y, 1, 1, lump);
+    RectRawf rect;
+    rect.origin.x = x;
+    rect.origin.y = y;
+    rect.size.width = w;
+    rect.size.height = h;
+    GL_DrawRectf(&rect);
 }
 
-void GL_DrawRect(float x, float y, float w, float h, float r, float g,
-                 float b, float a)
+void GL_DrawRectf2Color(double x, double y, double w, double h, float r, float g, float b, float a)
 {
     glColor4f(r, g, b, a);
+    GL_DrawRectf2(x, y, w, h);
+}
+
+void GL_DrawRectf2TextureColor(double x, double y, double width, double height,
+    int texW, int texH, const float topColor[3], float topAlpha,
+    const float bottomColor[3], float bottomAlpha)
+{
+    if(topAlpha <= 0 && bottomAlpha <= 0) return;
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+
     glBegin(GL_QUADS);
+        // Top color.
+        glColor4f(topColor[0], topColor[1], topColor[2], topAlpha);
         glTexCoord2f(0, 0);
         glVertex2f(x, y);
-        glTexCoord2f(1, 0);
-        glVertex2f(x + w, y);
-        glTexCoord2f(1, 1);
-        glVertex2f(x + w, y + h);
-        glTexCoord2f(0, 1);
-        glVertex2f(x, y + h);
+        glTexCoord2f(width / (float) texW, 0);
+        glVertex2f(x + width, y);
+
+        // Bottom color.
+        glColor4f(bottomColor[0], bottomColor[1], bottomColor[2], bottomAlpha);
+        glTexCoord2f(width / (float) texW, height / (float) texH);
+        glVertex2f(x + width, y + height);
+        glTexCoord2f(0, height / (float) texH);
+        glVertex2f(x, y + height);
     glEnd();
 }
 
-void GL_DrawRectTiled(float x, float y, float w, float h, int tw, int th)
+void GL_DrawRectf2Tiled(double x, double y, double w, double h, int tw, int th)
 {
-    // Make sure the current texture will be tiled.
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glBegin(GL_QUADS);
         glTexCoord2f(0, 0);
-        glVertex2f(x, y);
+        glVertex2d(x, y);
         glTexCoord2f(w / (float) tw, 0);
-        glVertex2f(x + w, y);
+        glVertex2d(x + w, y);
         glTexCoord2f(w / (float) tw, h / (float) th);
-        glVertex2f(x + w, y + h);
+        glVertex2d(x + w, y + h);
         glTexCoord2f(0, h / (float) th);
-        glVertex2f(x, y + h);
+        glVertex2d(x, y + h);
     glEnd();
 }
 
-/**
- * The cut rectangle must be inside the other one.
- */
-void GL_DrawCutRectTiled(float x, float y, float w, float h, int tw, int th,
-                         int txoff, int tyoff, float cx, float cy, float cw,
-                         float ch)
+void GL_DrawCutRectfTiled(const RectRawf* rect, int tw, int th, int txoff, int tyoff,
+    const RectRawf* cutRect)
 {
-    float               ftw = tw, fth = th;
-    float               txo = (1.0f / (float)tw) * (float)txoff;
-    float               tyo = (1.0f / (float)th) * (float)tyoff;
+    float ftw = tw, fth = th;
+    float txo = (1.0f / (float)tw) * (float)txoff;
+    float tyo = (1.0f / (float)th) * (float)tyoff;
 
     // We'll draw at max four rectangles.
-    float     toph = cy - y, bottomh = y + h - (cy + ch), sideh =
-        h - toph - bottomh, lefth = cx - x, righth = x + w - (cx + cw);
+    float toph = cutRect->origin.y - rect->origin.y;
+    float bottomh = rect->origin.y + rect->size.height - (cutRect->origin.y + cutRect->size.height);
+    float sideh = rect->size.height - toph - bottomh;
+    float lefth = cutRect->origin.x - rect->origin.x;
+    float righth = rect->origin.x + rect->size.width - (cutRect->origin.x + cutRect->size.width);
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glBegin(GL_QUADS);
     if(toph > 0)
     {
         // The top rectangle.
         glTexCoord2f(txo, tyo);
-        glVertex2f(x, y);
-        glTexCoord2f(txo + (w / ftw), tyo);
-        glVertex2f(x + w, y );
-        glTexCoord2f(txo + (w / ftw), tyo + (toph / fth));
-        glVertex2f(x + w, y + toph);
+        glVertex2f(rect->origin.x, rect->origin.y);
+        glTexCoord2f(txo + (rect->size.width / ftw), tyo);
+        glVertex2f(rect->origin.x + rect->size.width, rect->origin.y);
+        glTexCoord2f(txo + (rect->size.width / ftw), tyo + (toph / fth));
+        glVertex2f(rect->origin.x + rect->size.width, rect->origin.y + toph);
         glTexCoord2f(txo, tyo + (toph / fth));
-        glVertex2f(x, y + toph);
+        glVertex2f(rect->origin.x, rect->origin.y + toph);
     }
 
     if(lefth > 0 && sideh > 0)
     {
-        float               yoff = toph / fth;
+        float yoff = toph / fth;
 
         // The left rectangle.
         glTexCoord2f(txo, yoff + tyo);
-        glVertex2f(x, y + toph);
+        glVertex2f(rect->origin.x, rect->origin.y + toph);
         glTexCoord2f(txo + (lefth / ftw), yoff + tyo);
-        glVertex2f(x + lefth, y + toph);
+        glVertex2f(rect->origin.x + lefth, rect->origin.y + toph);
         glTexCoord2f(txo + (lefth / ftw), yoff + tyo + sideh / fth);
-        glVertex2f(x + lefth, y + toph + sideh);
+        glVertex2f(rect->origin.x + lefth, rect->origin.y + toph + sideh);
         glTexCoord2f(txo, yoff + tyo + sideh / fth);
-        glVertex2f(x, y + toph + sideh);
+        glVertex2f(rect->origin.x, rect->origin.y + toph + sideh);
     }
 
     if(righth > 0 && sideh > 0)
     {
-        float               ox = x + lefth + cw;
-        float               xoff = (lefth + cw) / ftw;
-        float               yoff = toph / fth;
+        float ox = rect->origin.x + lefth + cutRect->size.width;
+        float xoff = (lefth + cutRect->size.width) / ftw;
+        float yoff = toph / fth;
 
         // The left rectangle.
         glTexCoord2f(xoff + txo, yoff + tyo);
-        glVertex2f(ox, y + toph);
+        glVertex2f(ox, rect->origin.y + toph);
         glTexCoord2f(xoff + txo + righth / ftw, yoff + tyo);
-        glVertex2f(ox + righth, y + toph);
+        glVertex2f(ox + righth, rect->origin.y + toph);
         glTexCoord2f(xoff + txo + righth / ftw, yoff + tyo + sideh / fth);
-        glVertex2f(ox + righth, y + toph + sideh);
+        glVertex2f(ox + righth, rect->origin.y + toph + sideh);
         glTexCoord2f(xoff + txo, yoff + tyo + sideh / fth);
-        glVertex2f(ox, y + toph + sideh);
+        glVertex2f(ox, rect->origin.y + toph + sideh);
     }
 
     if(bottomh > 0)
     {
-        float               oy = y + toph + sideh;
-        float               yoff = (toph + sideh) / fth;
+        float oy = rect->origin.y + toph + sideh;
+        float yoff = (toph + sideh) / fth;
 
         glTexCoord2f(txo, yoff + tyo);
-        glVertex2f(x, oy);
-        glTexCoord2f(txo + w / ftw, yoff + tyo);
-        glVertex2f(x + w, oy);
-        glTexCoord2f(txo + w / ftw, yoff + tyo + bottomh / fth);
-        glVertex2f(x + w, oy + bottomh);
+        glVertex2f(rect->origin.x, oy);
+        glTexCoord2f(txo + rect->size.width / ftw, yoff + tyo);
+        glVertex2f(rect->origin.x + rect->size.width, oy);
+        glTexCoord2f(txo + rect->size.width / ftw, yoff + tyo + bottomh / fth);
+        glVertex2f(rect->origin.x + rect->size.width, oy + bottomh);
         glTexCoord2f(txo, yoff + tyo + bottomh / fth);
-        glVertex2f(x, oy + bottomh);
+        glVertex2f(rect->origin.x, oy + bottomh);
     }
     glEnd();
+}
+
+void GL_DrawCutRectf2Tiled(double x, double y, double w, double h, int tw, int th,
+    int txoff, int tyoff, double cx, double cy, double cw, double ch)
+{
+    RectRawf rect, cutRect;
+
+    rect.origin.x = x;
+    rect.origin.y = y;
+    rect.size.width  = w;
+    rect.size.height = h;
+
+    cutRect.origin.x = cx;
+    cutRect.origin.y = cy;
+    cutRect.size.width  = cw;
+    cutRect.size.height = ch;
+
+    GL_DrawCutRectfTiled(&rect, tw, th, txoff, tyoff, &cutRect);
 }
 
 /**
@@ -371,11 +314,19 @@ void GL_DrawCutRectTiled(float x, float y, float w, float h, int tw, int th,
 void GL_DrawLine(float x1, float y1, float x2, float y2, float r, float g,
                  float b, float a)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+
     glColor4f(r, g, b, a);
     glBegin(GL_LINES);
         glVertex2f(x1, y1);
         glVertex2f(x2, y2);
     glEnd();
+}
+
+boolean GL_FilterIsVisible(void)
+{
+    return (0 != drawFilter && filterColor[CA] > 0);
 }
 
 void GL_SetFilter(boolean enabled)
@@ -394,23 +345,170 @@ void GL_SetFilterColor(float r, float g, float b, float a)
 /**
  * @return              Non-zero if the filter was drawn.
  */
-int GL_DrawFilter(void)
+void GL_DrawFilter(void)
 {
-    if(!drawFilter)
-        return 0; // No filter needed.
+    const viewdata_t* vd = R_ViewData(displayPlayer);
+    assert(NULL != vd);
 
-    // No texture, please.
-    glDisable(GL_TEXTURE_2D);
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glColor4fv(filterColor);
-
     glBegin(GL_QUADS);
-        glVertex2f(viewwindowx, viewwindowy);
-        glVertex2f(viewwindowx + viewwidth, viewwindowy);
-        glVertex2f(viewwindowx + viewwidth, viewwindowy + viewheight);
-        glVertex2f(viewwindowx, viewwindowy + viewheight);
+        glVertex2f(vd->window.origin.x, vd->window.origin.y);
+        glVertex2f(vd->window.origin.x + vd->window.size.width, vd->window.origin.y);
+        glVertex2f(vd->window.origin.x + vd->window.size.width, vd->window.origin.y + vd->window.size.height);
+        glVertex2f(vd->window.origin.x, vd->window.origin.y + vd->window.size.height);
     glEnd();
+}
 
-    glEnable(GL_TEXTURE_2D);
-    return 1;
+/// \note Part of the Doomsday public API.
+void GL_ConfigureBorderedProjection2(borderedprojectionstate_t* bp, int flags,
+    int width, int height, int availWidth, int availHeight, scalemode_t overrideMode,
+    float stretchEpsilon)
+{
+    if(!bp) Con_Error("GL_ConfigureBorderedProjection2: Invalid 'bp' argument.");
+
+    bp->flags  = flags;
+    bp->width  = width;
+    bp->height = height;
+    bp->availWidth  = availWidth;
+    bp->availHeight = availHeight;
+
+    bp->scaleMode = R_ChooseScaleMode2(bp->width, bp->height, bp->availWidth,
+        bp->availHeight, overrideMode, stretchEpsilon);
+    bp->alignHorizontal = R_ChooseAlignModeAndScaleFactor(&bp->scaleFactor,
+        bp->width, bp->height, bp->availWidth, bp->availHeight, bp->scaleMode);
+
+    bp->scissorState = 0;
+    bp->scissorRegion.origin.x = bp->scissorRegion.origin.y = 0;
+    bp->scissorRegion.size.width = bp->scissorRegion.size.height = 0;
+}
+
+/// \note Part of the Doomsday public API.
+void GL_ConfigureBorderedProjection(borderedprojectionstate_t* bp, int flags,
+    int width, int height, int availWidth, int availHeight, scalemode_t overrideMode)
+{
+    GL_ConfigureBorderedProjection2(bp, flags, width, height, availWidth,
+        availHeight, overrideMode, DEFAULT_SCALEMODE_STRETCH_EPSILON);
+}
+
+/// \note Part of the Doomsday public API.
+void GL_BeginBorderedProjection(borderedprojectionstate_t* bp)
+{
+    if(!bp)
+    {
+#if _DEBUG
+        Con_Message("Warning: GL_BeginBorderedProjection: Invalid 'bp' argument, ignoring.\n");
+#endif
+        return;
+    }
+
+    if(SCALEMODE_STRETCH == bp->scaleMode) return;
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+
+    /**
+     * Use an orthographic projection in screenspace, translating and
+     * scaling the coordinate space using the modelview matrix producing
+     * an aspect-corrected space of availWidth x availHeight and centered
+     * on the larger of the horizontal and vertical axes.
+     */
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    DGL_Ortho(0, 0, bp->availWidth, bp->availHeight, -1, 1);
+
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    if(bp->alignHorizontal)
+    {
+        // "Pillarbox":
+        if(bp->flags & BPF_OVERDRAW_CLIP)
+        {
+            int w = .5f + (bp->availWidth - bp->width * bp->scaleFactor) / 2;
+            bp->scissorState = DGL_GetInteger(DGL_SCISSOR_TEST);
+            DGL_Scissor(&bp->scissorRegion);
+            DGL_SetScissor2(w, 0, bp->width * bp->scaleFactor, bp->availHeight);
+            DGL_Enable(DGL_SCISSOR_TEST);
+        }
+
+        glTranslatef((float)bp->availWidth/2, 0, 0);
+        //glScalef(1/1.2f, 1, 1); // Aspect correction.
+        glScalef(bp->scaleFactor, bp->scaleFactor, 1);
+        glTranslatef(-bp->width/2, 0, 0);
+    }
+    else
+    {
+        // "Letterbox":
+        if(bp->flags & BPF_OVERDRAW_CLIP)
+        {
+            int h = .5f + (bp->availHeight - bp->height * bp->scaleFactor) / 2;
+            bp->scissorState = DGL_GetInteger(DGL_SCISSOR_TEST);
+            DGL_Scissor(&bp->scissorRegion);
+            DGL_SetScissor2(0, h, bp->availWidth, bp->height * bp->scaleFactor);
+            DGL_Enable(DGL_SCISSOR_TEST);
+        }
+
+        glTranslatef(0, (float)bp->availHeight/2, 0);
+        //glScalef(1, 1.2f, 1); // Aspect correction.
+        glScalef(bp->scaleFactor, bp->scaleFactor, 1);
+        glTranslatef(0, -bp->height/2, 0);
+    }
+}
+
+/// \note Part of the Doomsday public API.
+void GL_EndBorderedProjection(borderedprojectionstate_t* bp)
+{
+    if(!bp)
+    {
+#if _DEBUG
+        Con_Message("Warning: GL_EndBorderedProjection: Invalid 'bp' argument, ignoring.\n");
+#endif
+        return;
+    }
+
+    if(SCALEMODE_STRETCH == bp->scaleMode) return;
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+
+    if(bp->flags & BPF_OVERDRAW_CLIP)
+    {
+        if(!bp->scissorState)
+            DGL_Disable(DGL_SCISSOR_TEST);
+        DGL_SetScissor(&bp->scissorRegion);
+    }
+
+    if(bp->flags & BPF_OVERDRAW_MASK)
+    {
+        // It shouldn't be necessary to bind the "not-texture" but the game
+        // may have left whatever GL texture state it was using on. As this
+        // isn't cleaned up until drawing control returns to the engine we
+        // must explicitly disable it here.
+        GL_SetNoTexture();
+        glColor4f(0, 0, 0, 1);
+
+        if(bp->alignHorizontal)
+        {
+            // "Pillarbox":
+            int w = .5f + (bp->availWidth  - bp->width  * bp->scaleFactor) / 2;
+            GL_DrawRectf2(0, 0, w, bp->availHeight);
+            GL_DrawRectf2(bp->availWidth - w, 0, w, bp->availHeight);
+        }
+        else
+        {
+            // "Letterbox":
+            int h = .5f + (bp->availHeight - bp->height * bp->scaleFactor) / 2;
+            GL_DrawRectf2(0, 0, bp->availWidth, h);
+            GL_DrawRectf2(0, bp->availHeight - h, bp->availWidth, h);
+        }
+    }
+
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
 }

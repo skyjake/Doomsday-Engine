@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -145,5 +145,34 @@ typedef struct player_s {
 
     int             flyHeight;
 } player_t;
+
+//
+// INTERMISSION
+// Structure passed e.g. to WI_Init(wb)
+//
+typedef struct {
+    boolean         inGame; // Whether the player is in game.
+
+    // Player stats, kills, collected items etc.
+    int             kills;
+    int             items;
+    int             secret;
+    int             time;
+    int             frags[MAXPLAYERS];
+    int             score; // Current score on entry, modified on return.
+} wbplayerstruct_t;
+
+typedef struct {
+    uint            episode;
+    boolean         didSecret; // If true, splash the secret level.
+    uint            currentMap, nextMap; // This and next maps.
+    int             maxKills;
+    int             maxItems;
+    int             maxSecret;
+    int             maxFrags;
+    int             parTime;
+    int             pNum; // Index of this player in game.
+    wbplayerstruct_t plyr[MAXPLAYERS];
+} wbstartstruct_t;
 
 #endif

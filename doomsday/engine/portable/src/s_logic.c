@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@
 #include "de_console.h"
 #include "de_audio.h"
 
-#include "sys_timer.h"
+#include "timer.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -151,6 +151,12 @@ void Sfx_StartLogical(int id, mobj_t *origin, boolean isRepeating)
     {
         // This is not a valid sound.
         return;
+    }
+
+    if(origin && sfxOneSoundPerEmitter)
+    {
+        // Stop all previous sounds from this origin (only one per origin).
+        Sfx_StopLogical(0, origin);
     }
 
     id &= ~DDSF_FLAG_MASK;

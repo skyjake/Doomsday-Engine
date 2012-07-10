@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,20 +29,30 @@
 #ifndef __DOOMSDAY_CLIENT_WORLD_H__
 #define __DOOMSDAY_CLIENT_WORLD_H__
 
-typedef enum {
-    MVT_FLOOR,
-    MVT_CEILING
-} clmovertype_t;
+void            Cl_WorldInit(void);
+void            Cl_WorldReset(void);
 
-void            Cl_InitTranslations(void);
-void            Cl_InitMovers(void);
-void            Cl_RemoveMovers(void);
-lumpnum_t       Cl_TranslateLump(lumpnum_t lump);
+/**
+ * Handles the PSV_MATERIAL_ARCHIVE packet sent by the server. The list of
+ * materials is stored until the client disconnects.
+ */
+void Cl_ReadServerMaterials(void);
+
+/**
+ * Handles the PSV_MOBJ_TYPE_ID_LIST packet sent by the server.
+ */
+void Cl_ReadServerMobjTypeIDs(void);
+
+/**
+ * Handles the PSV_MOBJ_STATE_ID_LIST packet sent by the server.
+ */
+void Cl_ReadServerMobjStateIDs(void);
+
+int Cl_LocalMobjType(int serverMobjType);
+int Cl_LocalMobjState(int serverMobjState);
+
 void            Cl_SetPolyMover(uint number, int move, int rotate);
-void            Cl_AddMover(uint sectornum, clmovertype_t type, float dest,
-                            float speed);
 
-int             Cl_ReadLumpDelta(void);
 void            Cl_ReadSectorDelta2(int deltaType, boolean skip);
 void            Cl_ReadSideDelta2(int deltaType, boolean skip);
 void            Cl_ReadPolyDelta2(boolean skip);

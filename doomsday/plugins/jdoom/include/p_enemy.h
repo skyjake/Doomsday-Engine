@@ -1,9 +1,9 @@
-/**\file
+/**\file p_enemy.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2009-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2009-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,11 +22,11 @@
  */
 
 /**
- * p_enemy.h: Enemy thinking, AI (jDoom-specific).
+ * Enemy thinking, AI (jDoom-specific).
  */
 
-#ifndef __P_ENEMY_H__
-#define __P_ENEMY_H__
+#ifndef LIBDOOM_P_ENEMY_H
+#define LIBDOOM_P_ENEMY_H
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
@@ -36,20 +36,22 @@
  * Global state of boss brain.
  */
 typedef struct braindata_s {
-    int             easy;
-    int             targetOn;
+    int easy;
+    int targetOn;
+    int numTargets;
+    int maxTargets;
+    mobj_t** targets;
 } braindata_t;
 
 extern braindata_t brain;
-extern mobj_t **brainTargets;
-extern int numBrainTargets;
-extern int numBrainTargetsAlloc;
 
 extern boolean bossKilled;
 
-void        P_SpawnBrainTargets(void);
-
+void P_BrainInitForMap(void);
+void P_BrainShutdown(void);
+void P_BrainClearTargets(void);
+void P_BrainAddTarget(mobj_t* mo);
 void        P_NoiseAlert(mobj_t *target, mobj_t *emmiter);
 int         P_Massacre(void);
 
-#endif
+#endif /* LIBDOOM_ENEMY_H */

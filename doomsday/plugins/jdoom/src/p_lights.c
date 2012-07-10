@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
  *\author Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
  *\author Copyright © 1993-1996 by id Software, Inc.
@@ -74,7 +74,7 @@ void T_FireFlicker(fireflicker_t *flick)
     flick->count = 4;
 }
 
-void P_SpawnFireFlicker(sector_t *sector)
+void P_SpawnFireFlicker(Sector *sector)
 {
     float               lightLevel = P_GetFloatp(sector, DMU_LIGHT_LEVEL);
     float               otherLevel = DDMAXFLOAT;
@@ -127,7 +127,7 @@ void T_LightFlash(lightflash_t *flash)
  * After the map has been loaded, scan each sector
  * for specials that spawn thinkers
  */
-void P_SpawnLightFlash(sector_t *sector)
+void P_SpawnLightFlash(Sector *sector)
 {
     float               lightLevel = P_GetFloatp(sector, DMU_LIGHT_LEVEL);
     float               otherLevel = DDMAXFLOAT;
@@ -181,7 +181,7 @@ void T_StrobeFlash(strobe_t *flash)
  * After the map has been loaded, scan each sector for specials that spawn
  * thinkers.
  */
-void P_SpawnStrobeFlash(sector_t *sector, int fastOrSlow, int inSync)
+void P_SpawnStrobeFlash(Sector *sector, int fastOrSlow, int inSync)
 {
     strobe_t           *flash;
     float               lightLevel = P_GetFloatp(sector, DMU_LIGHT_LEVEL);
@@ -217,9 +217,9 @@ void P_SpawnStrobeFlash(sector_t *sector, int fastOrSlow, int inSync)
 /**
  * Start strobing lights (usually from a trigger)
  */
-void EV_StartLightStrobing(linedef_t *line)
+void EV_StartLightStrobing(LineDef *line)
 {
-    sector_t           *sec = NULL;
+    Sector             *sec = NULL;
     iterlist_t         *list;
 
     list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
@@ -237,9 +237,9 @@ void EV_StartLightStrobing(linedef_t *line)
     }
 }
 
-void EV_TurnTagLightsOff(linedef_t *line)
+void EV_TurnTagLightsOff(LineDef *line)
 {
-    sector_t           *sec = NULL;
+    Sector             *sec = NULL;
     iterlist_t         *list;
     float               lightLevel;
     float               otherLevel;
@@ -262,11 +262,11 @@ void EV_TurnTagLightsOff(linedef_t *line)
     }
 }
 
-void EV_LightTurnOn(linedef_t *line, float max)
+void EV_LightTurnOn(LineDef *line, float max)
 {
-    sector_t           *sec = NULL;
+    Sector             *sec = NULL;
     iterlist_t         *list;
-    float               lightLevel, otherLevel;
+    float               lightLevel = 0, otherLevel;
 
     list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
     if(!list)
@@ -327,7 +327,7 @@ void T_Glow(glow_t *g)
     P_SetFloatp(g->sector, DMU_LIGHT_LEVEL, lightLevel);
 }
 
-void P_SpawnGlowingLight(sector_t *sector)
+void P_SpawnGlowingLight(Sector *sector)
 {
     float               lightLevel = P_GetFloatp(sector, DMU_LIGHT_LEVEL);
     float               otherLevel = DDMAXFLOAT;

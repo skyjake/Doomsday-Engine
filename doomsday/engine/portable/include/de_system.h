@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,22 +22,17 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * de_system.h: Operating System Dependent Subsystems
- */
+#ifndef LIBDENG_SYSTEM_H
+#define LIBDENG_SYSTEM_H
 
-#ifndef __DOOMSDAY_SYSTEM__
-#define __DOOMSDAY_SYSTEM__
+#include <de/concurrency.h>
 
 #include "sys_system.h"
 #include "sys_console.h"
-#include "sys_direc.h"
-#include "sys_file.h"
 #include "sys_input.h"
 #include "sys_network.h"
-#include "sys_sock.h"
-#include "sys_master.h"
-#include "sys_timer.h"
+#include "masterserver.h"
+#include "timer.h"
 #include "sys_opengl.h"
 
 // Use SDL for window management under *nix
@@ -46,6 +41,6 @@
 #  include "../../unix/include/sys_path.h"
 #endif
 
-#include "sys_window.h"
+#include "window.h"
 
-#endif
+#endif /* LIBDENG_SYSTEM_H */

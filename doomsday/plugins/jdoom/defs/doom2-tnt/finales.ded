@@ -1,0 +1,390 @@
+# DOOM2 (TNT) - Intermissions and Finales (Final DOOM/TNT)
+#
+# For further information on the InFine system, script syntax
+# and semantics see:
+#
+#   http://dengine.net/dew/?title=InFine_script_reference
+#
+
+Header { Version = 5; }
+
+# I'm using "textdef" to allow compatibility with DeHackEd.
+# A better way would just be to use "text" and define the text
+# in the script, no need to go about modifying the Text defs.
+
+InFine 
+{
+  ID = "title";
+  Script {
+    # There is no skipping during the titlescreen loop.
+    NoSkip 
+    
+    # Any event shows the menu.
+    Trigger
+    
+    MARKER title_loop
+
+    # Step 1.
+    Patch back 0 0 "TITLEPIC"
+    MusicOnce "dm2ttl"
+    Wait 13 # Original was 11; this'll play the whole song.
+        
+    # Step 2.
+    PlayDemo "tdemo1.cdm"
+
+    # Step 3.
+    Set back "CREDIT"
+    Wait 5.714 # Original is 200 tics.
+      
+    # Step 4.
+    PlayDemo "tdemo2.cdm"
+    
+    # Step 5.
+    Set back "TITLEPIC"
+    Music "dm2ttl"
+    Wait 13 # Original was 11.
+
+    # Step 6.
+    PlayDemo "tdemo3.cdm"
+      
+    GOTO title_loop
+  };
+}
+
+InFine {
+  ID = "help";
+  Script {
+    NoTrigger; NoFlat;
+
+    Patch back 0 0 "HELP"
+    Patch cursor 298 160 M_SKULL1
+
+    # Configure the animating cursor
+    Clranim cursor
+    Anim cursor M_SKULL1 0.223857
+    Anim cursor M_SKULL2 0.223857
+    Repeat cursor
+
+    Pause
+
+    Set back "CREDIT"
+    Pause
+  };
+}
+
+Finale
+{
+  Before = "MAP07";
+  Script {
+    music "read_m"
+    flat SLIME16
+    wait 0.5
+    textdef msg 10 10 "T1TEXT"
+    waittext msg
+    wait 7 # The original TEXTWAIT is 250 tics.
+  };
+}
+
+Finale
+{
+  Before = "MAP12";
+  Script {
+    music "read_m"
+    flat RROCK14
+    wait 0.5
+    textdef msg 10 10 "T2TEXT"
+    waittext msg
+    wait 7 # The original TEXTWAIT is 250 tics.
+  };
+}
+
+Finale
+{
+  Before = "MAP21";
+  Script {
+    music "read_m"
+    flat RROCK07
+    wait 0.5
+    textdef msg 10 10 "T3TEXT"
+    waittext msg
+    wait 7 # The original TEXTWAIT is 250 tics.
+  };
+}
+
+# This is the actual finale of TNT: Evilution.
+Finale
+{
+  After = "MAP30";
+  Script {
+    music "read_m"
+    flat RROCK17
+    wait 0.5
+    textdef msg 10 10 "T4TEXT"
+    waittext msg; wait 7
+    skiphere
+
+    #####====--- The Cast ---====#####
+    # Castloop continues forever.
+    # Quite a number of monsters here...!
+    noskip  # No more skipping (pause waits for a key, though).
+    deltext msg
+    music "evil"
+    noflat; patch back 0 0 BOSSBACK
+    marker castloop
+    # Create a text for the name.
+    textdef name 160 180 CC_ZOMBIE
+    center name; rate name 0
+    patch mo 160 170 POSSA1   # "mo" is used for all the monsters.
+
+    # --- Zombieman ---
+    clranim mo
+    states mo POSS_RUN1 12
+    states mo POSS_ATK1 2; picsound mo "pistol"
+    states mo POSS_ATK3 1
+    repeat mo
+    seesound POSSESSED; pause; diesound POSSESSED
+    clranim mo
+    states mo POSS_DIE1 5
+    waitanim mo; wait 0.43
+
+    # --- Shotgun Guy ---
+    clranim mo
+    states mo SPOS_RUN1 12
+    states mo SPOS_ATK1 2; picsound mo "shotgn"
+    states mo SPOS_ATK3 1
+    repeat mo
+    settextdef name CC_SHOTGUN
+    seesound SHOTGUY; pause; diesound SHOTGUY
+    clranim mo
+    states mo SPOS_DIE1 5
+    waitanim mo; wait 0.43
+
+    # --- Heavy Weapon Dude ---
+    clranim mo
+    states mo CPOS_RUN1 12
+    states mo CPOS_ATK1 2; picsound mo "shotgn"
+    states mo CPOS_ATK3 1; picsound mo "shotgn"
+    states mo CPOS_ATK4 1; picsound mo "shotgn"
+    states mo CPOS_ATK3 1; picsound mo "shotgn"
+    states mo CPOS_ATK4 1; picsound mo "shotgn"
+    states mo CPOS_ATK3 1; picsound mo "shotgn"
+    repeat mo
+    settextdef name CC_HEAVY
+    seesound CHAINGUY; pause; diesound CHAINGUY
+    clranim mo
+    states mo CPOS_DIE1 7
+    waitanim mo; wait 0.43
+
+    # --- Imp ---
+    clranim mo
+    states mo TROO_RUN1 12
+    states mo TROO_ATK1 3; picsound mo "claw"
+    repeat mo
+    settextdef name CC_IMP
+    seesound TROOP; pause; diesound TROOP
+    clranim mo
+    states mo TROO_DIE1 5
+    waitanim mo; wait 0.43
+
+    # --- Demon ---
+    clranim mo
+    states mo SARG_RUN1 12
+    states mo SARG_ATK1 2; picsound mo "sgtatk"
+    states mo SARG_ATK3 1
+    repeat mo
+    settextdef name CC_DEMON
+    seesound SERGEANT; pause; diesound SERGEANT
+    clranim mo
+    states mo SARG_DIE1 6
+    waitanim mo; wait 0.43
+
+    # --- Lost Soul ---
+    clranim mo
+    states mo SKULL_RUN1 12
+    states mo SKULL_ATK1 2; picsound mo "sklatk"
+    states mo SKULL_ATK3 8
+    repeat mo
+    settextdef name CC_LOST
+    seesound SKULL; pause; diesound SKULL
+    clranim mo
+    states mo SKULL_DIE1 6
+    waitanim mo; wait 0.43
+
+    # --- Cacodemon ---
+    clranim mo
+    states mo HEAD_RUN1 12
+    states mo HEAD_ATK1 2; picsound mo "firsht"
+    states mo HEAD_ATK3 1
+    repeat mo
+    settextdef name CC_CACO
+    seesound HEAD; pause; diesound HEAD
+    clranim mo
+    states mo HEAD_DIE1 6
+    waitanim mo; wait 0.43
+
+    # --- Hell Knight ---
+    clranim mo
+    states mo BOS2_RUN1 12
+    states mo BOS2_ATK1 2; picsound mo "firsht"
+    states mo BOS2_ATK3 1
+    repeat mo
+    settextdef name CC_HELL
+    seesound KNIGHT; pause; diesound KNIGHT
+    clranim mo
+    states mo BOS2_DIE1 7
+    waitanim mo; wait 0.43
+
+    # --- Baron of Hell ---
+    clranim mo
+    states mo BOSS_RUN1 12
+    states mo BOSS_ATK1 2; picsound mo "firsht"
+    states mo BOSS_ATK3 1
+    repeat mo
+    settextdef name CC_BARON
+    seesound BRUISER; pause; diesound BRUISER
+    clranim mo
+    states mo BOSS_DIE1 7
+    waitanim mo; wait 0.43
+
+    # --- Arachnotron ---
+    clranim mo
+    states mo BSPI_SIGHT 12
+    states mo BSPI_ATK1 2; picsound mo "plasma"
+    states mo BSPI_ATK3 3; picsound mo "plasma"
+    states mo BSPI_ATK3 3; picsound mo "plasma"
+    states mo BSPI_ATK3 3; picsound mo "plasma"
+    states mo BSPI_ATK3 2
+    repeat mo
+    settextdef name CC_ARACH
+    seesound BABY; pause; diesound BABY
+    clranim mo
+    states mo BSPI_DIE1 7
+    waitanim mo; wait 0.43
+
+    # --- Pain Elemental ---
+    clranim mo
+    states mo PAIN_RUN1 12
+    states mo PAIN_ATK1 3; picsound mo "sklatk"
+    states mo PAIN_ATK4 1
+    repeat mo
+    settextdef name CC_PAIN
+    seesound PAIN; pause; diesound PAIN
+    clranim mo
+    states mo PAIN_DIE1 6
+    waitanim mo; wait 0.43
+
+    # --- Revenant ---
+    clranim mo
+    states mo SKEL_RUN1 12
+    states mo SKEL_MISS1 2; picsound mo "skeatk"
+    states mo SKEL_MISS3 2
+    states mo SKEL_RUN1 12
+    states mo SKEL_FIST1 2; picsound mo "skeswg"
+    states mo SKEL_FIST3 2; picsound mo "skepch"
+    repeat mo
+    settextdef name CC_REVEN
+    seesound UNDEAD; pause; diesound UNDEAD
+    clranim mo
+    states mo SKEL_DIE1 6
+    waitanim mo; wait 0.43
+
+    # --- Mancubus ---
+    clranim mo
+    states mo FATT_RUN1 12
+    states mo FATT_ATK1 2; picsound mo "firsht"
+    states mo FATT_ATK3 3; picsound mo "firsht"
+    states mo FATT_ATK6 3; picsound mo "firsht"
+    states mo FATT_ATK9 2
+    repeat mo
+    settextdef name CC_MANCU
+    seesound FATSO; pause; diesound FATSO
+    clranim mo
+    states mo FATT_DIE1 10
+    waitanim mo; wait 0.43
+
+    # --- Arch-Vile ---
+    clranim mo
+    states mo VILE_RUN1 12
+    states mo VILE_ATK1 2; picsound mo "vilatk"
+    states mo VILE_ATK3 9
+    repeat mo
+    settextdef name CC_ARCH
+    seesound VILE; pause; diesound VILE
+    clranim mo
+    states mo VILE_DIE1 10
+    waitanim mo; wait 0.43
+
+    # --- The Spider Mastermind ---
+    clranim mo
+    states mo SPID_RUN1 12
+    states mo SPID_ATK1 2; picsound mo "shotgn"
+    states mo SPID_ATK3 1; picsound mo "shotgn"
+    states mo SPID_ATK4 2; picsound mo "shotgn"
+    states mo SPID_ATK3 1; picsound mo "shotgn"
+    states mo SPID_ATK4 2; picsound mo "shotgn"
+    states mo SPID_ATK3 1; picsound mo "shotgn"
+    states mo SPID_ATK4 2; picsound mo "shotgn"
+    states mo SPID_ATK3 1; picsound mo "shotgn"
+    repeat mo
+    settextdef name CC_SPIDER
+    seesound SPIDER; pause; diesound SPIDER
+    clranim mo
+    states mo SPID_DIE1 11
+    waitanim mo; wait 0.43
+
+    # --- Cyberdemon ---
+    clranim mo
+    states mo CYBER_RUN1 12
+    states mo CYBER_ATK1 2; picsound mo "rlaunc"
+    states mo CYBER_ATK3 2; picsound mo "rlaunc"
+    states mo CYBER_ATK5 2; picsound mo "rlaunc"
+    repeat mo
+    settextdef name CC_CYBER
+    seesound CYBORG; pause; diesound CYBORG
+    clranim mo
+    states mo CYBER_DIE1 10
+    waitanim mo; wait 0.43
+
+    # --- Our Hero (finally!) ---
+    clranim mo
+    states mo PLAY_RUN1 12
+    states mo PLAY_ATK1 1
+    repeat mo
+    settextdef name CC_HERO
+    seesound PLAYER; pause; diesound PLAYER
+    clranim mo
+    states mo PLAY_DIE1 7
+    waitanim mo; wait 0.43
+
+    # Restart the loop.
+    goto castloop
+  };
+}
+
+# Secret level 1.
+Finale
+{
+  Before = "MAP31";
+  Script {
+    music "read_m";
+    flat RROCK13;
+    wait 0.5;
+    textdef msg 10 10 "T5TEXT";
+    waittext msg;
+    wait 7; # The original TEXTWAIT is 250 tics.
+  };
+}
+
+# Secret level 2.
+Finale
+{
+  Before = "MAP32";
+  Script {
+    music "read_m";
+    flat RROCK19;
+    wait 0.5;
+    textdef msg 10 10 "T6TEXT";
+    waittext msg;
+    wait 7; # The original TEXTWAIT is 250 tics.
+  };
+}

@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2004-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2009-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2004-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2009-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,14 +23,17 @@
  */
 
 /**
- * sys_path.h: File Path Processing
+ * File Path Processing.
  */
 
-#ifndef __DOOMSDAY_PATHS_H__
-#define __DOOMSDAY_PATHS_H__
+#ifndef LIBDENG_FILESYS_PATH_H
+#define LIBDENG_FILESYS_PATH_H
 
-char           *_fullpath(char *full, const char *original, int len);
-void            _splitpath(const char *path, char *drive, char *dir,
-                           char *name, char *ext);
+/**
+ * Convert the given path to an absolute path.
+ */
+char* _fullpath(char* full, const char* original, int len);
 
-#endif                          // __DOOMSDAY_PATHS_H__
+void _splitpath(const char* path, char* drive, char* dir, char* name, char* ext);
+
+#endif /* LIBDENG_FILESYS_PATH_H */

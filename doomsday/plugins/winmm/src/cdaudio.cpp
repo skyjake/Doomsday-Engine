@@ -1,10 +1,10 @@
-/**\file
+/**\file cdaudio.cpp
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,9 +23,9 @@
  */
 
 /**
- * cdaudio.cpp: Compact Disc-Digital Audio (CD-DA) / "Redbook".
+ * Compact Disc-Digital Audio (CD-DA) / "Redbook".
  *
- * WIN32-specific, uses the MCI interface.
+ * Uses the Windows API MCI interface.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -157,7 +157,7 @@ int DM_CDAudio_Get(int prop, void* ptr)
     case MUSIP_ID:
         if(ptr)
         {
-            strcpy((char*) ptr, "Win/CD");
+            strcpy((char*) ptr, "WinMM::CD");
             return true;
         }
         break;
@@ -230,7 +230,7 @@ void DM_CDAudio_Update(void)
  */
 int DM_CDAudio_Play(int track, int looped)
 {
-    int                 len;
+    int len;
 
     if(!cdInited)
         return false;
@@ -246,7 +246,7 @@ int DM_CDAudio_Play(int track, int looped)
         return false;
 
     // Success!
-    cdLooping = looped;
+    cdLooping = (looped? true:false);
     cdStartTime = Sys_GetSeconds();
     return cdCurrentTrack = track;
 }

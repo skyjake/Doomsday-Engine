@@ -1,33 +1,32 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file sys_audiod.h
+ * Audio driver interface. @ingroup audio
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
+
+#ifndef LIBDENG_AUDIO_DRIVER_INTERFACE_H
+#define LIBDENG_AUDIO_DRIVER_INTERFACE_H
 
 /**
- * sys_audiod.h: Audio Driver.
+ * @defgroup audio Audio
  */
-
-#ifndef __DOOMSDAY_AUDIO_DRIVER_H__
-#define __DOOMSDAY_AUDIO_DRIVER_H__
+///@{
 
 typedef enum {
     AUDIOD_DUMMY,
@@ -35,8 +34,15 @@ typedef enum {
     AUDIOD_OPENAL,
     AUDIOD_FMOD,
     AUDIOD_DSOUND,  // Win32 only
-    AUDIOD_WINMM    // Win32 only
+    AUDIOD_WINMM,   // Win32 only
+    AUDIODRIVER_COUNT
 } audiodriver_e;
+
+#ifdef WIN32
+#  define VALID_AUDIODRIVER_IDENTIFIER(id)    ((id) >= AUDIOD_DUMMY && (id) < AUDIODRIVER_COUNT)
+#else
+#  define VALID_AUDIODRIVER_IDENTIFIER(id)    ((id) >= AUDIOD_DUMMY && (id) <= AUDIOD_FMOD)
+#endif
 
 // Audio driver properties.
 enum {
@@ -44,10 +50,16 @@ enum {
 };
 
 typedef struct audiodriver_s {
-    int             (*Init) (void);
-    void            (*Shutdown) (void);
-    void            (*Event) (int type);
-    int             (*Set) (int prop, const void* ptr);
+    int (*Init) (void);
+    void (*Shutdown) (void);
+    void (*Event) (int type);
+    int (*Set) (int prop, const void* ptr);
 } audiodriver_t;
 
-#endif
+typedef struct audiointerface_base_s {
+    int (*Init) (void);
+} audiointerface_base_t;
+
+///@}
+
+#endif /* LIBDENG_AUDIO_DRIVER_INTERFACE_H */

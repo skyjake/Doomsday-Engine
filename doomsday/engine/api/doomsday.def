@@ -1,63 +1,328 @@
-NAME            "DOOMSDAY"
+; Doomsday Engine API (Routines exported from Doomsday.exe).
+;
+; Highest ordinal is currently: --> 853 <--
+; Other free ordinals: 57
 
-; Highest ordinal is currently
-; --> 457 <--
-; Free ordinals:
-; 95 formerly R_FlatNumForName
-; 96 formerly R_CheckTextureNumForName
-; 98 formerly R_TextureNameForNum
-; 99 formerly R_MaterialSetTranslation
-; 100 formerly R_SetTextureTranslation
-; 106 formerly DD_GetDGLProcAddress
-; 107 formerly GL_DoUpdate
-; 108 formerly GL_ChangeResolution
-; 112 formerly GL_TextureFilterMode
-; 113 formerly DGL_Color
-; 116 formerly GL_SetSprite
-; 118 formerly GL_SetTexture
-; 131 formerly GL_DrawPSprite
-; 143 formerly M_Random
-; 144 formerly M_FRandom
-; 197 formerly PCX_GetSize
-; 198 formerly PCX_Load
-; 199 formerly PCX_MemoryLoad
-; 200 formerly PNG_Load
-; 201 formerly TGA_Save24_rgb565
-; 202 formerly TGA_Save24_rgb888
-; 203 formerly TGA_Save24_rgba8888
-; 204 formerly TGA_Save16_rgb888
-; 205 formerly TGA_GetSize
-; 206 formerly GL_Update
-; 238 formerly DGL_Color2
-; 255 formerly P_PointToBlock
-; 326 formerly PO_Alloc
-; 332 formerly P_ControlReset
-; 317 formerly P_Copy
-; 318 formerly P_Copyp
-; 319 formerly P_Swap
-; 320 formerly P_Swapp
-; 328 formerly P_RegisterCustomMapProperty
-; 333 formerly P_MergeCommand
-; 349 formerly R_MaterialIsCustom
-; 375 formerly DGL_MultiTexCoord2f
-; 376 formerly DGL_MultiTexCoord2fv
+NAME                            "DOOMSDAY"
 
 EXPORTS
 ; Plugins.
     Plug_AddHook                @1 NONAME
     Plug_RemoveHook             @2 NONAME
-    Plug_DoHook                 @3 NONAME
+    Plug_CheckForHook           @3 NONAME
 
 ; Base.
-    DD_AddIWAD                  @4 NONAME
-    DD_AddStartupWAD            @5 NONAME
-    DD_SetConfigFile            @6 NONAME
-    DD_SetDefsFile              @7 NONAME
+    DD_DefineGame               @4 NONAME
+    DD_GameIdForKey             @7 NONAME
+    DD_AddGameResource          @5 NONAME
+    DD_GameInfo                 @6 NONAME
     DD_GetInteger               @8 NONAME
     DD_SetInteger               @9 NONAME
-    DD_SetVariable              @249 NONAME
-    DD_GetVariable              @250 NONAME
-    DD_GetPlayer                @10 NONAME
+    DD_SetVariable              @10 NONAME
+    DD_GetVariable              @43 NONAME
+    DD_GetPlayer                @44 NONAME
+    DD_MaterialForTextureUniqueId @234 NONAME
+    DD_ParseTextureNamespace    @502 NONAME
+    DD_ParseMaterialNamespace   @503 NONAME
+
+; Base: Types.
+    ; Animator.
+    Animator_Init               @449 NONAME
+    Animator_Set                @450 NONAME
+    Animator_Think              @451 NONAME
+
+    ; 2D vector Animator.
+    AnimatorVector2_Init        @452 NONAME
+    AnimatorVector2_Set         @453 NONAME
+    AnimatorVector2_Think       @454 NONAME
+
+    ; 3D vector Animator.
+    AnimatorVector3_Init        @455 NONAME
+    AnimatorVector3_Set         @456 NONAME
+    AnimatorVector3_Think       @457 NONAME
+
+    ; 4D vector Animator.
+    AnimatorVector4_Init        @458 NONAME
+    AnimatorVector4_Set         @459 NONAME
+    AnimatorVector4_Think       @460 NONAME
+
+    ; 2D plane Point.
+    Point2_New                  @597 NONAME
+    Point2_NewWithCoords        @598 NONAME
+    Point2_NewFromRaw           @599 NONAME
+    Point2_Delete               @600 NONAME
+    Point2_Raw                  @601 NONAME
+    Point2_IsNull               @602 NONAME
+    Point2_X                    @603 NONAME
+    Point2_Y                    @604 NONAME
+    Point2_SetX                 @605 NONAME
+    Point2_SetY                 @606 NONAME
+    Point2_XY                   @607 NONAME
+    Point2_SetXY                @608 NONAME
+    Point2_Translate            @813 NONAME
+    Point2_TranslateXY          @609 NONAME
+    Point2_TranslateX           @610 NONAME
+    Point2_TranslateY           @611 NONAME
+    Point2_Sum                  @612 NONAME
+    Point2_Equality             @613 NONAME
+
+    Point2f_New                 @614 NONAME
+    Point2f_NewWithCoords       @615 NONAME
+    Point2f_NewFromRaw          @616 NONAME
+    Point2f_Delete              @617 NONAME
+    Point2f_Raw                 @618 NONAME
+    Point2f_IsNull              @619 NONAME
+    Point2f_X                   @620 NONAME
+    Point2f_Y                   @621 NONAME
+    Point2f_SetX                @622 NONAME
+    Point2f_SetY                @623 NONAME
+    Point2f_XY                  @624 NONAME
+    Point2f_SetXY               @625 NONAME
+    Point2f_Translate           @814 NONAME
+    Point2f_TranslateXY         @626 NONAME
+    Point2f_TranslateX          @627 NONAME
+    Point2f_TranslateY          @628 NONAME
+    Point2f_Sum                 @629 NONAME
+    Point2f_Equality            @630 NONAME
+
+    ; 2D Size.
+    Size2_New                   @631 NONAME
+    Size2_NewWithDimensions     @632 NONAME
+    Size2_NewFromRaw            @633 NONAME
+    Size2_Delete                @634 NONAME
+    Size2_Raw                   @635 NONAME
+    Size2_IsNull                @636 NONAME
+    Size2_Width                 @637 NONAME
+    Size2_Height                @638 NONAME
+    Size2_SetWidth              @639 NONAME
+    Size2_SetHeight             @640 NONAME
+    Size2_WidthHeight           @641 NONAME
+    Size2_SetWidthHeight        @642 NONAME
+    Size2_Sum                   @643 NONAME
+    Size2_Equality              @644 NONAME
+
+    Size2f_New                  @645 NONAME
+    Size2f_NewWithDimensions    @646 NONAME
+    Size2f_NewFromRaw           @647 NONAME
+    Size2f_Delete               @648 NONAME
+    Size2f_Raw                  @649 NONAME
+    Size2f_IsNull               @650 NONAME
+    Size2f_Width                @651 NONAME
+    Size2f_Height               @652 NONAME
+    Size2f_SetWidth             @653 NONAME
+    Size2f_SetHeight            @654 NONAME
+    Size2f_WidthHeight          @655 NONAME
+    Size2f_SetWidthHeight       @656 NONAME
+    Size2f_Sum                  @657 NONAME
+    Size2f_Equality             @658 NONAME
+
+    ; Rectangle.
+    Rect_New                    @659 NONAME
+    Rect_NewWithOriginSize      @660 NONAME
+    Rect_NewWithOriginSize2     @661 NONAME
+    Rect_NewFromRaw             @662 NONAME
+    Rect_Delete                 @663 NONAME
+    Rect_Copy                   @817 NONAME
+    Rect_CopyRaw                @825 NONAME
+    Rect_Raw                    @664 NONAME
+    Rect_IsNull                 @665 NONAME
+    Rect_Width                  @666 NONAME
+    Rect_Height                 @667 NONAME
+    Rect_SetWidth               @668 NONAME
+    Rect_SetHeight              @669 NONAME
+    Rect_Origin                 @670 NONAME
+    Rect_X                      @671 NONAME
+    Rect_Y                      @672 NONAME
+    Rect_SetOrigin              @673 NONAME
+    Rect_SetXY                  @674 NONAME
+    Rect_SetX                   @731 NONAME
+    Rect_SetY                   @732 NONAME
+    Rect_Translate              @815 NONAME
+    Rect_TranslateXY            @809 NONAME
+    Rect_TranslateX             @807 NONAME
+    Rect_TranslateY             @808 NONAME
+    Rect_Size                   @675 NONAME
+    Rect_SetSize                @676 NONAME
+    Rect_SetWidthHeight         @677 NONAME
+    Rect_TopLeft                @678 NONAME
+    Rect_TopRight               @679 NONAME
+    Rect_BottomLeft             @680 NONAME
+    Rect_BottomRight            @681 NONAME
+    Rect_Normalize              @682 NONAME
+    Rect_Unite                  @683 NONAME
+    Rect_UniteRaw               @684 NONAME
+    Rect_Equality               @685 NONAME
+
+    Rect_Normalized             @686 NONAME
+    Rect_United                 @687 NONAME
+
+    Rectf_New                   @688 NONAME
+    Rectf_NewWithOriginSize     @703 NONAME
+    Rectf_NewWithOriginSize2    @704 NONAME
+    Rectf_NewFromRaw            @705 NONAME
+    Rectf_Delete                @706 NONAME
+    Rectf_Copy                  @818 NONAME
+    Rectf_CopyRaw               @826 NONAME
+    Rectf_Raw                   @707 NONAME
+    Rectf_IsNull                @708 NONAME
+    Rectf_Width                 @709 NONAME
+    Rectf_Height                @710 NONAME
+    Rectf_SetWidth              @711 NONAME
+    Rectf_SetHeight             @712 NONAME
+    Rectf_Origin                @713 NONAME
+    Rectf_X                     @714 NONAME
+    Rectf_Y                     @715 NONAME
+    Rectf_SetOrigin             @716 NONAME
+    Rectf_SetXY                 @717 NONAME
+    Rectf_SetX                  @733 NONAME
+    Rectf_SetY                  @734 NONAME
+    Rectf_Translate             @816 NONAME
+    Rectf_TranslateXY           @810 NONAME
+    Rectf_TranslateX            @811 NONAME
+    Rectf_TranslateY            @812 NONAME
+    Rectf_Size                  @718 NONAME
+    Rectf_SetSize               @719 NONAME
+    Rectf_SetWidthHeight        @720 NONAME
+    Rectf_TopLeft               @721 NONAME
+    Rectf_TopRight              @722 NONAME
+    Rectf_BottomLeft            @723 NONAME
+    Rectf_BottomRight           @724 NONAME
+    Rectf_Normalize             @725 NONAME
+    Rectf_Unite                 @726 NONAME
+    Rectf_UniteRaw              @727 NONAME
+    Rectf_Equality              @728 NONAME
+
+    Rectf_Normalized            @729 NONAME
+    Rectf_United                @730 NONAME
+
+    ; 3D space Point.
+    Point3_New                  @765 NONAME
+    Point3_NewWithCoords        @766 NONAME
+    Point3_NewFromRaw           @767 NONAME
+    Point3_Delete               @768 NONAME
+    Point3_Raw                  @769 NONAME
+    Point3_IsNull               @770 NONAME
+    Point3_X                    @771 NONAME
+    Point3_Y                    @772 NONAME
+    Point3_Z                    @773 NONAME
+    Point3_SetX                 @774 NONAME
+    Point3_SetY                 @775 NONAME
+    Point3_SetZ                 @776 NONAME
+    Point3_XYZ                  @777 NONAME
+    Point3_SetXYZ               @778 NONAME
+    Point3_Translate            @779 NONAME
+    Point3_TranslateX           @780 NONAME
+    Point3_TranslateY           @781 NONAME
+    Point3_TranslateZ           @782 NONAME
+    Point3_Sum                  @783 NONAME
+    Point3_Equality             @784 NONAME
+
+    Point3f_New                 @785 NONAME
+    Point3f_NewWithCoords       @786 NONAME
+    Point3f_NewFromRaw          @787 NONAME
+    Point3f_Delete              @788 NONAME
+    Point3f_Raw                 @789 NONAME
+    Point3f_IsNull              @790 NONAME
+    Point3f_X                   @791 NONAME
+    Point3f_Y                   @792 NONAME
+    Point3f_Z                   @793 NONAME
+    Point3f_SetX                @794 NONAME
+    Point3f_SetY                @795 NONAME
+    Point3f_SetZ                @796 NONAME
+    Point3f_XYZ                 @797 NONAME
+    Point3f_SetXYZ              @798 NONAME
+    Point3f_Translate           @799 NONAME
+    Point3f_TranslateX          @800 NONAME
+    Point3f_TranslateY          @801 NONAME
+    Point3f_TranslateZ          @802 NONAME
+    Point3f_Sum                 @803 NONAME
+    Point3f_Equality            @804 NONAME
+
+    ; String.
+    Str_New                     @461 NONAME
+    Str_FromAutoStr             @844 NONAME
+    Str_Init                    @462 NONAME
+    Str_InitStd                 @848 NONAME
+    Str_InitStatic              @756 NONAME
+    Str_Free                    @463 NONAME
+    Str_Delete                  @464 NONAME
+    Str_Clear                   @465 NONAME
+    Str_Reserve                 @466 NONAME
+    Str_Set                     @467 NONAME
+    Str_Append                  @468 NONAME
+    Str_AppendChar              @469 NONAME
+    Str_Appendf                 @470 NONAME
+    Str_PartAppend              @471 NONAME
+    Str_Prepend                 @472 NONAME
+    Str_Length                  @473 NONAME
+    Str_IsEmpty                 @474 NONAME
+    Str_Text                    @475 NONAME
+    Str_Copy                    @476 NONAME
+    Str_CopyOrClear             @843 NONAME
+    Str_StripLeft               @477 NONAME
+    Str_StripLeft2              @761 NONAME
+    Str_StripRight              @478 NONAME
+    Str_StripRight2             @762 NONAME
+    Str_Strip                   @479 NONAME
+    Str_Strip2                  @763 NONAME
+    Str_GetLine                 @480 NONAME
+    Str_CopyDelim2              @481 NONAME
+    Str_CopyDelim               @482 NONAME
+    Str_CompareIgnoreCase       @483 NONAME
+    Str_At                      @484 NONAME
+    Str_RAt                     @485 NONAME
+    Str_Truncate                @498 NONAME
+    Str_PrependChar             @336 NONAME
+    Str_PercentEncode           @757 NONAME
+    Str_PercentEncode2          @758 NONAME
+    Str_PercentDecode           @759 NONAME
+    Str_Write                   @739 NONAME
+    Str_Read                    @740 NONAME
+
+    AutoStr_New                 @845 NONAME
+    AutoStr_NewStd              @846 NONAME
+    AutoStr_FromStr             @847 NONAME
+
+    ; StringPool.
+    StringPool_New              @537 NONAME
+    StringPool_NewWithStrings   @538 NONAME
+    StringPool_Delete           @539 NONAME
+    StringPool_Clear            @540 NONAME
+    StringPool_Empty            @541 NONAME
+    StringPool_Size             @542 NONAME
+    StringPool_Intern           @543 NONAME
+    StringPool_InternAndRetrieve @544 NONAME
+    StringPool_IsInterned       @545 NONAME
+    StringPool_String           @546 NONAME
+
+    ; Uri.
+    Uri_New                     @238 NONAME
+    Uri_NewWithPath2            @497 NONAME
+    Uri_NewWithPath             @244 NONAME
+    Uri_NewCopy                 @249 NONAME
+    Uri_NewFromReader           @741 NONAME
+    Uri_Copy                    @250 NONAME
+    Uri_Delete                  @255 NONAME
+    Uri_SetUri                  @326 NONAME
+    Uri_SetUri2                 @328 NONAME
+    Uri_SetUri3                 @332 NONAME
+    Uri_Resolved                @405 NONAME
+    Uri_Clear                   @406 NONAME
+    Uri_Scheme                  @486 NONAME
+    Uri_Path                    @487 NONAME
+    Uri_Compose                 @488 NONAME
+    Uri_ToString                @489 NONAME
+    Uri_ToString2               @760 NONAME
+    Uri_Equality                @493 NONAME
+    Uri_SetPath                 @437 NONAME
+    Uri_SetScheme               @500 NONAME
+    Uri_Write                   @735 NONAME
+    Uri_Write2                  @736 NONAME
+    Uri_Read                    @737 NONAME
+    Uri_ReadWithDefaultScheme   @738 NONAME
+    Uri_Print                   @821 NONAME
+    Uri_Print2                  @822 NONAME
+    Uri_Print3                  @823 NONAME
 
 ; Base: Definitions.
     Def_Get                     @11 NONAME
@@ -68,65 +333,94 @@ EXPORTS
     DD_ClearKeyRepeaters        @13 NONAME
     DD_GetKeyCode               @236 NONAME
 
-; Base: WAD.
-    W_CheckNumForName           @14 NONAME
-    W_GetNumForName             @15 NONAME
-    W_LumpLength                @16 NONAME
-    W_LumpName                  @17 NONAME
+; Base: File system.
+    F_Access                    @245 NONAME
+    F_FileExists                @139 NONAME
+    F_GetLastModified           @246 NONAME
+    F_MakePath                  @138 NONAME
+
+    M_ReadFile                  @134 NONAME
+    M_WriteFile                 @135 NONAME
+
+    F_ExtractFileBase           @136 NONAME
+    F_FileName                  @752 NONAME
+    F_FindFileExtension         @137 NONAME
+    F_TranslatePath             @140 NONAME
+    F_PrettyPath                @421 NONAME
+
+    ; WAD interface.
+    W_CheckLumpNumForName       @14 NONAME
+    W_CheckLumpNumForName2      @45 NONAME
+    W_GetLumpNumForName         @15 NONAME
+
     W_ReadLump                  @18 NONAME
     W_ReadLumpSection           @253 NONAME
-    W_CacheLumpNum              @19 NONAME
-    W_CacheLumpName             @20 NONAME
-    W_ChangeCacheTag            @21 NONAME
+    W_CacheLump                 @19 NONAME
+    W_CacheChangeTag            @21 NONAME
+
+    W_LumpLength                @16 NONAME
+    W_LumpName                  @17 NONAME
+    W_LumpLastModified          @585 NONAME
     W_LumpSourceFile            @22 NONAME
-    W_CRCNumber                 @23 NONAME
-    W_IsFromIWAD                @239 NONAME
-    W_OpenAuxiliary             @247 NONAME
+    W_LumpIsCustom              @239 NONAME
 
 ; Base: Zone.
-    Z_Malloc                    @24 NONAME
-    Z_Calloc                    @211 NONAME
-    Z_Realloc                   @212 NONAME
-    Z_Recalloc                  @213 NONAME
-    Z_Free                      @25 NONAME
-    Z_FreeTags                  @26 NONAME
-    Z_ChangeTag2                @27 NONAME
-    Z_CheckHeap                 @28 NONAME
+;   Z_Malloc                    @24 NONAME
+;   Z_Calloc                    @211 NONAME
+;   Z_Realloc                   @212 NONAME
+;   Z_Recalloc                  @213 NONAME
+;   Z_Free                      @25 NONAME
+;   Z_FreeTags                  @26 NONAME
+;   Z_ChangeTag2                @27 NONAME
+;   Z_CheckHeap                 @28 NONAME
 
 ; Base: Misc.
     dd_snprintf                 @447 NONAME
     dd_vsnprintf                @448 NONAME
 
+; Base: BusyMode.
+    BusyMode_Active             @126 NONAME
+    BusyMode_ElapsedTime        @851 NONAME
+    BusyMode_RunTask            @852 NONAME
+    BusyMode_RunTasks           @849 NONAME
+    BusyMode_RunNewTask         @853 NONAME
+    BusyMode_RunNewTaskWithName @330 NONAME
+    BusyMode_WorkerEnd          @331 NONAME
+    BusyMode_WorkerError        @850 NONAME
+
 ; Console.
     Con_Open                    @29 NONAME
-    Con_SetFont                 @30 NONAME
     Con_AddCommand              @31 NONAME
     Con_AddVariable             @32 NONAME
     Con_AddCommandList          @33 NONAME
     Con_AddVariableList         @34 NONAME
-    Con_GetVariable             @35 NONAME
+    Con_GetVariableType         @35 NONAME
     Con_GetInteger              @226 NONAME
     Con_GetFloat                @227 NONAME
     Con_GetByte                 @228 NONAME
     Con_GetString               @229 NONAME
+    Con_GetUri                  @337 NONAME
     Con_SetInteger              @230 NONAME
+    Con_SetInteger2             @490 NONAME
     Con_SetFloat                @231 NONAME
+    Con_SetFloat2               @491 NONAME
     Con_SetString               @36 NONAME
+    Con_SetString2              @492 NONAME
+    Con_SetUri                  @590 NONAME
+    Con_SetUri2                 @591 NONAME
     Con_Printf                  @37 NONAME
     Con_FPrintf                 @38 NONAME
+    Con_PrintRuler              @584 NONAME
     DD_Execute                  @39 NONAME
     DD_Executef                 @40 NONAME
     Con_Message                 @41 NONAME
     Con_Error                   @42 NONAME
-    Con_Busy                    @330 NONAME
-    Con_BusyWorkerEnd           @331 NONAME
+    Con_SetPrintFilter          @536 NONAME
 
 ; Console: Bindings.
     B_BindingsForCommand        @428 NONAME
     B_BindingsForControl        @429 NONAME
     B_SetContextFallback        @440 NONAME
-    B_SetContextFallback        @440 NONAME
-
 ; System.
 ;   Sys_TicksPerSecond          @46 NONAME
     Sys_GetTime                 @47 NONAME
@@ -135,10 +429,6 @@ EXPORTS
     Sys_Sleep                   @50 NONAME
     Sys_CriticalMessage         @51 NONAME
     Sys_Quit                    @52 NONAME
-
-; System: File I/O.
-    F_Access                    @245 NONAME
-    F_LastModified              @246 NONAME
 
 ; Map building interface.
     MPE_Begin                   @350 NONAME
@@ -155,34 +445,37 @@ EXPORTS
 
 ; Network.
     Net_SendPacket              @53 NONAME
-    Net_GetTicCmd               @54 NONAME
     Net_GetPlayerName           @55 NONAME
     Net_GetPlayerID             @56 NONAME
-    Net_PlayerSmoother          @455 NONAME
-    Sv_CanTrustClientPos        @456 NONAME
+    Net_PlayerSmoother          @586 NONAME
+    Sv_CanTrustClientPos        @587 NONAME
 
-    ; Play.
-    P_AccurateDistance          @57 NONAME
-    P_ApproxDistance            @58 NONAME
-    P_ApproxDistance3           @243 NONAME
-    P_PointOnLinedefSide        @45 NONAME
-    P_PointOnLinedefSideXY      @59 NONAME
-    P_BoxOnLineSide             @60 NONAME
-    P_MakeDivline               @61 NONAME
-    P_PointOnDivlineSide        @62 NONAME
-    P_InterceptVector           @63 NONAME
-    P_LineOpening               @64 NONAME
+; Play.
+    LineDef_BoxOnSide           @60 NONAME
+    LineDef_PointDistance       @208 NONAME
+    LineDef_PointXYDistance     @209 NONAME
+    LineDef_PointOnSide         @695 NONAME
+    LineDef_PointXYOnSide       @59 NONAME
+    LineDef_SetDivline          @61 NONAME
+    Divline_PointOnSide         @838 NONAME
+    Divline_PointXYOnSide       @62 NONAME
+    Divline_Intersection        @63 NONAME
+    P_TraceLOS                  @829 NONAME
+    P_TraceOpening              @828 NONAME
+    P_SetTraceOpening           @64 NONAME
+    P_BspLeafAtPoint            @841 NONAME
+    P_BspLeafAtPointXY          @102 NONAME
     P_MobjsBoxIterator          @346 NONAME
     P_LinesBoxIterator          @435 NONAME
     P_AllLinesBoxIterator       @347 NONAME
     P_PolyobjsBoxIterator       @348 NONAME
-    P_SubsectorsBoxIterator     @345 NONAME
+    P_BspLeafsBoxIterator       @345 NONAME
     P_LineMobjsIterator         @73 NONAME
     P_SectorTouchingMobjsIterator @74 NONAME
-    P_PathTraverse              @77 NONAME
-    P_PathTraverse2             @78 NONAME
-    P_PathTraverseXY            @75 NONAME
-    P_PathTraverseXY2           @70 NONAME
+    P_PathTraverse              @692 NONAME
+    P_PathTraverse2             @693 NONAME
+    P_PathXYTraverse            @75 NONAME
+    P_PathXYTraverse2           @694 NONAME
     P_CheckLineSight            @76 NONAME
     P_MobjSetState              @207 NONAME
     P_SpawnDamageParticleGen    @233 NONAME
@@ -191,12 +484,16 @@ EXPORTS
     P_NewPlayerControl          @251 NONAME
     P_GetControlState           @252 NONAME
     P_GetImpulseControlState    @339 NONAME
-    P_Impulse                   @457 NONAME
+    P_Impulse                   @592 NONAME
 
-; Play: Setup.
+; Maps.
+    P_MapExists                 @533 NONAME
+    P_MapIsCustom               @534 NONAME
+    P_MapSourceFile             @535 NONAME
+
     P_LoadMap                   @254 NONAME
 
-; Play: Map Data Updates and Information Access.
+; Maps: Map Data Updates and Information Access.
     P_ToIndex                   @256 NONAME
     P_ToPtr                     @257 NONAME
     P_Callback                  @258 NONAME
@@ -217,6 +514,7 @@ EXPORTS
     P_SetFixed                  @263 NONAME
     P_SetAngle                  @264 NONAME
     P_SetFloat                  @265 NONAME
+    P_SetDouble                 @830 NONAME
     P_SetPtr                    @267 NONAME
 
     P_SetBoolv                  @268 NONAME
@@ -225,6 +523,7 @@ EXPORTS
     P_SetFixedv                 @271 NONAME
     P_SetAnglev                 @272 NONAME
     P_SetFloatv                 @273 NONAME
+    P_SetDoublev                @831 NONAME
     P_SetPtrv                   @274 NONAME
 
     ; pointer-based write functions
@@ -234,6 +533,7 @@ EXPORTS
     P_SetFixedp                 @278 NONAME
     P_SetAnglep                 @279 NONAME
     P_SetFloatp                 @280 NONAME
+    P_SetDoublep                @832 NONAME
     P_SetPtrp                   @281 NONAME
 
     P_SetBoolpv                 @282 NONAME
@@ -242,6 +542,7 @@ EXPORTS
     P_SetFixedpv                @285 NONAME
     P_SetAnglepv                @286 NONAME
     P_SetFloatpv                @287 NONAME
+    P_SetDoublepv               @833 NONAME
     P_SetPtrpv                  @288 NONAME
 
     ; index-based read functions
@@ -251,6 +552,7 @@ EXPORTS
     P_GetFixed                  @292 NONAME
     P_GetAngle                  @293 NONAME
     P_GetFloat                  @294 NONAME
+    P_GetDouble                 @834 NONAME
     P_GetPtr                    @295 NONAME
 
     P_GetBoolv                  @296 NONAME
@@ -259,6 +561,7 @@ EXPORTS
     P_GetFixedv                 @299 NONAME
     P_GetAnglev                 @300 NONAME
     P_GetFloatv                 @301 NONAME
+    P_GetDoublev                @835 NONAME
     P_GetPtrv                   @302 NONAME
 
     ; pointer-based read functions
@@ -268,6 +571,7 @@ EXPORTS
     P_GetFixedp                 @306 NONAME
     P_GetAnglep                 @307 NONAME
     P_GetFloatp                 @308 NONAME
+    P_GetDoublep                @836 NONAME
     P_GetPtrp                   @309 NONAME
 
     P_GetBoolpv                 @310 NONAME
@@ -276,6 +580,7 @@ EXPORTS
     P_GetFixedpv                @313 NONAME
     P_GetAnglepv                @314 NONAME
     P_GetFloatpv                @315 NONAME
+    P_GetDoublepv               @837 NONAME
     P_GetPtrpv                  @316 NONAME
 
     P_CountGameMapObjs          @414 NONAME
@@ -291,32 +596,35 @@ EXPORTS
     P_RegisterMapObjProperty    @412 NONAME
 
 ; Play: Mobjs.
-    P_MobjCreate                @357 NONAME
+    P_MobjCreateXYZ                @357 NONAME
     P_MobjDestroy               @358 NONAME
     P_MobjLink                  @66 NONAME
     P_MobjUnlink                @67 NONAME
     P_MobjLinesIterator         @71 NONAME
     P_MobjSectorsIterator       @72 NONAME
-    P_MobjForID                 @449 NONAME
-    ClMobj_IsValid              @43 NONAME
-    ClPlayer_ClMobj             @451 NONAME
+    P_MobjForID                 @333 NONAME
+    Mobj_OriginSmoothed         @702 NONAME
+    Mobj_AngleSmoothed          @824 NONAME
+    ClMobj_IsValid              @103 NONAME
+    ClMobj_Find                 @753 NONAME
+    ClMobj_EnableLocalActions   @754 NONAME
+    ClMobj_LocalActionsEnabled  @755 NONAME
+    ClPlayer_ClMobj             @588 NONAME
 
 ; Play: Polyobjs.
-    P_PolyobjMove               @79 NONAME
+    P_PolyobjMoveXY             @79 NONAME
     P_PolyobjRotate             @80 NONAME
     P_PolyobjLink               @82 NONAME
-    P_PolyobjUnLink             @81 NONAME
+    P_PolyobjUnlink             @81 NONAME
 
-    P_GetPolyobj                @424 NONAME
+    P_PolyobjByID               @424 NONAME
+    P_PolyobjByTag              @827 NONAME
     P_SetPolyobjCallback        @83 NONAME
 
-; Play: Materials.
-    P_MaterialCheckNumForName   @336 NONAME
-    P_GetMaterialName           @337 NONAME
-    P_MaterialNumForName        @97 NONAME
-    P_MaterialCheckNumForIndex  @438 NONAME
-    P_MaterialNumForIndex       @437 NONAME
-    P_MaterialPrecache          @436 NONAME
+; Materials.
+    Materials_ComposeUri        @494 NONAME
+    Materials_ResolveUri        @495 NONAME
+    Materials_ResolveUriCString @496 NONAME
 
 ; Play: Thinkers.
     DD_ThinkerAdd               @86 NONAME
@@ -328,49 +636,71 @@ EXPORTS
     DD_IterateThinkers          @425 NONAME
 
 ; Refresh.
-    DD_IsSharpTick              @44 NONAME
+    DD_IsSharpTick              @589 NONAME
     DD_GetFrameRate             @88 NONAME
-    R_SetDataPath               @234 NONAME
-    R_SetupMap                  @89 NONAME
-    R_PrecacheMap               @90 NONAME
-    R_PrecacheMobjNum           @427 NONAME
-    R_PrecacheSkinsForState     @240 NONAME
-    R_PrecachePatch             @335 NONAME
-    R_RenderPlayerView          @91 NONAME
-    R_SetViewWindow             @92 NONAME
-    R_GetViewPort               @430 NONAME
-    R_SetViewPortPlayer         @450 NONAME
-    R_SetViewOrigin             @68 NONAME
-    R_SetViewAngle              @69 NONAME
-    R_SetViewPitch              @65 NONAME
 
+    R_SetupMap                  @89 NONAME
+
+    R_PrecacheMobjNum           @427 NONAME
+    R_PrecacheModelsForState    @240 NONAME
+
+    R_RenderPlayerView          @90 NONAME
+
+    R_ViewWindowGeometry        @91 NONAME
+    R_ViewWindowOrigin          @593 NONAME
+    R_ViewWindowSize            @594 NONAME
+    R_SetViewWindowGeometry     @92 NONAME
     R_SetBorderGfx              @93 NONAME
+
+    R_ViewPortGeometry          @430 NONAME
+    R_ViewPortOrigin            @595 NONAME
+    R_ViewPortSize              @596 NONAME
+
+    R_SetViewPortPlayer         @65 NONAME
+
+    R_SetViewOrigin             @689 NONAME
+    R_SetViewAngle              @690 NONAME
+    R_SetViewPitch              @691 NONAME
+
     R_GetSpriteInfo             @94 NONAME
+
+    R_DeclarePatch              @335 NONAME
     R_GetPatchInfo              @237 NONAME
-    R_PointToAngle2             @101 NONAME
-    R_PointInSubsector          @102 NONAME
+    R_ComposePatchUri           @247 NONAME
+
+    R_TextureUniqueId           @438 NONAME
+    R_TextureUniqueId2          @501 NONAME
+
     R_CreateAnimGroup           @241 NONAME
-    R_AddToAnimGroup            @242 NONAME
+    R_AddAnimGroupFrame         @242 NONAME
+
     R_HSVToRGB                  @439 NONAME
+
     R_CreateColorPalette        @444 NONAME
     R_GetColorPaletteNumForName @446 NONAME
     R_GetColorPaletteNameForNum @445 NONAME
     R_GetColorPaletteRGBf       @423 NONAME
+    R_GetColorPaletteRGBubv     @436 NONAME
+
+    R_ChooseAlignModeAndScaleFactor @504 NONAME
+    R_ChooseScaleMode2          @505 NONAME
+    R_ChooseScaleMode           @506 NONAME
+
+    R_SkyParams                 @105 NONAME
 
 ; DGL.
-    DGL_SetMaterial             @117 NONAME
+    DGL_SetMaterialUI           @117 NONAME
     DGL_SetNoMaterial           @115 NONAME
     DGL_SetPSprite              @114 NONAME
+    DGL_SetPSprite2             @334 NONAME
     DGL_SetPatch                @196 NONAME
-    DGL_SetTranslatedSprite     @334 NONAME
     DGL_SetRawImage             @119 NONAME
     DGL_Enable                  @387 NONAME
     DGL_Disable                 @388 NONAME
-    DGL_EnableTexUnit           @405 NONAME
-    DGL_DisableTexUnit          @406 NONAME
     DGL_GetIntegerv             @392 NONAME
     DGL_GetInteger              @393 NONAME
     DGL_SetInteger              @394 NONAME
+    DGL_GetFloatv               @375 NONAME
     DGL_GetFloat                @399 NONAME
     DGL_SetFloat                @401 NONAME
     DGL_BlendFunc               @389 NONAME
@@ -381,7 +711,9 @@ EXPORTS
     DGL_PopMatrix               @361 NONAME
     DGL_LoadIdentity            @362 NONAME
     DGL_Ortho                   @390 NONAME
-    DGL_Scissor                 @404 NONAME
+    DGL_SetScissor              @340 NONAME
+    DGL_SetScissor2             @404 NONAME
+    DGL_Scissor                 @805 NONAME
     DGL_Bind                    @396 NONAME
     DGL_DeleteTextures          @403 NONAME
     DGL_Begin                   @363 NONAME
@@ -411,31 +743,111 @@ EXPORTS
     DGL_Vertices3ftv            @382 NONAME
     DGL_Vertices3fctv           @383 NONAME
     DGL_DrawLine                @127 NONAME
-    DGL_DrawRect                @128 NONAME
-    DGL_DrawRectTiled           @129 NONAME
-    DGL_DrawCutRectTiled        @130 NONAME
+    DGL_DrawRect                @511 NONAME
+    DGL_DrawRect2               @764 NONAME
+    DGL_DrawRectf               @512 NONAME
+    DGL_DrawRectf2              @133 NONAME
+    DGL_DrawRectf2Color         @128 NONAME
+    DGL_DrawRectf2Tiled         @129 NONAME
+    DGL_DrawCutRectfTiled       @806 NONAME
+    DGL_DrawCutRectf2Tiled      @130 NONAME
+    DGL_DrawQuadOutline         @819 NONAME
+    DGL_DrawQuad2Outline        @820 NONAME
+    DGL_NewTextureWithParams    @329 NONAME
 
 ; Renderer.
-    Rend_Reset                  @103 NONAME
-    Rend_SkyParams              @105 NONAME
+    GL_UseFog                   @104 NONAME
+
+; InFine.
+    FI_Execute                  @68 NONAME
+    FI_Execute2                 @69 NONAME
+    FI_ScriptTerminate          @70 NONAME
+    FI_ScriptSuspend            @77 NONAME
+    FI_ScriptResume             @78 NONAME
+    FI_ScriptActive             @95 NONAME
+    FI_ScriptSuspended          @96 NONAME
+    FI_ScriptIsMenuTrigger      @98 NONAME
+    FI_ScriptRequestSkip        @99 NONAME
+    FI_ScriptResponder          @100 NONAME
+    FI_ScriptFlags              @235 NONAME
+
+; SVG
+    R_NewSvg                    @317 NONAME
+
+    GL_DrawSvg                  @318 NONAME
+    GL_DrawSvg2                 @319 NONAME
+    GL_DrawSvg3                 @320 NONAME
 
 ; Graphics.
-    GL_UseFog                   @104 NONAME
     GL_GrabScreen               @109 NONAME
-    GL_LoadGraphics             @244 NONAME
-    GL_NewTextureWithParams3    @329 NONAME
     GL_SetFilter                @132 NONAME
     GL_SetFilterColor           @441 NONAME
+    GL_ConfigureBorderedProjection @507 NONAME
+    GL_ConfigureBorderedProjection2 @508 NONAME
+    GL_BeginBorderedProjection  @509 NONAME
+    GL_EndBorderedProjection    @510 NONAME
 
-; Graphics: 2D drawing.
-    GL_DrawPatch                @120 NONAME
-    GL_DrawPatch_CS             @121 NONAME
-    GL_DrawPatchLitAlpha        @122 NONAME
-    GL_DrawFuzzPatch            @123 NONAME
-    GL_DrawAltFuzzPatch         @124 NONAME
-    GL_DrawShadowedPatch        @125 NONAME
-    GL_DrawRawScreen            @126 NONAME
-    GL_DrawRawScreen_CS         @235 NONAME
+; Graphics: Text
+    FR_Font                     @106 NONAME
+    FR_SetFont                  @107 NONAME
+    FR_PushAttrib               @108 NONAME
+    FR_PopAttrib                @112 NONAME
+    FR_LoadDefaultAttrib        @113 NONAME
+
+    FR_ResetTypeinTimer         @116 NONAME
+
+    FR_Leading                  @118 NONAME
+    FR_SetLeading               @120 NONAME
+    FR_Tracking                 @121 NONAME
+    FR_SetTracking              @122 NONAME
+    FR_SetColor                 @123 NONAME
+    FR_SetColorv                @124 NONAME
+    FR_ColorAndAlpha            @125 NONAME
+    FR_SetColorAndAlpha         @131 NONAME
+    FR_SetColorAndAlphav        @197 NONAME
+    FR_ColorRed                 @198 NONAME
+    FR_SetColorRed              @199 NONAME
+    FR_ColorGreen               @200 NONAME
+    FR_SetColorGreen            @201 NONAME
+    FR_ColorBlue                @202 NONAME
+    FR_SetColorBlue             @203 NONAME
+    FR_Alpha                    @204 NONAME
+    FR_SetAlpha                 @205 NONAME
+    FR_ShadowOffset             @206 NONAME
+    FR_SetShadowOffset          @513 NONAME
+    FR_ShadowStrength           @514 NONAME
+    FR_SetShadowStrength        @515 NONAME
+    FR_GlitterStrength          @516 NONAME
+    FR_SetGlitterStrength       @517 NONAME
+    FR_CaseScale                @518 NONAME
+    FR_SetCaseScale             @519 NONAME
+
+    FR_TextSize                 @520 NONAME
+    FR_TextWidth                @521 NONAME
+    FR_TextHeight               @522 NONAME
+
+    FR_DrawText                 @523 NONAME
+    FR_DrawText2                @524 NONAME
+    FR_DrawText3                @525 NONAME
+
+    FR_DrawTextXY               @696 NONAME
+    FR_DrawTextXY2              @697 NONAME
+    FR_DrawTextXY3              @698 NONAME
+
+    FR_DrawChar                 @526 NONAME
+    FR_DrawChar2                @527 NONAME
+    FR_DrawChar3                @528 NONAME
+
+    FR_DrawCharXY               @699 NONAME
+    FR_DrawCharXY2              @700 NONAME
+    FR_DrawCharXY3              @701 NONAME
+
+    FR_CharSize                 @529 NONAME
+    FR_CharWidth                @530 NONAME
+    FR_CharHeight               @531 NONAME
+
+; Fonts.
+    Fonts_ResolveUri            @532 NONAME
 
 ; Audio.
     S_MapChange                 @225 NONAME
@@ -448,6 +860,7 @@ EXPORTS
     S_StartSoundAtVolume        @224 NONAME
     S_ConsoleSound              @218 NONAME
     S_StopSound                 @223 NONAME
+    S_StopSound2                @842 NONAME
     S_IsPlaying                 @110 NONAME
     S_StartMusic                @219 NONAME
     S_StartMusicNum             @222 NONAME
@@ -455,51 +868,53 @@ EXPORTS
     S_PauseMusic                @232 NONAME
 
 ; Miscellaneous.
-    M_ReadFile                  @133 NONAME
-    M_ReadFileCLib              @134 NONAME
-    M_WriteFile                 @135 NONAME
-    M_ExtractFileBase           @136 NONAME
-    M_FindFileExtension         @137 NONAME
-    M_FileExists                @139 NONAME
-    M_CheckPath                 @138 NONAME
-    M_TranslatePath             @140 NONAME
-    M_PrettyPath                @421 NONAME
     M_SkipWhite                 @141 NONAME
     M_FindWhite                 @142 NONAME
     M_StrCatQuoted              @248 NONAME
-    RNG_RandByte                @452 NONAME
-    M_ClearBox                  @208 NONAME
-    M_AddToBox                  @209 NONAME
+    M_IsStringValidInt          @20 NONAME
+    M_IsStringValidByte         @23 NONAME
+    M_IsStringValidFloat        @30 NONAME
     M_ScreenShot                @210 NONAME
-    M_CheckTrigger              @340 NONAME
-    M_RunTrigger                @341 NONAME
     M_CeilPow2                  @422 NONAME
+    M_NumDigits                 @143 NONAME
+    M_RatioReduce               @499 NONAME
 
 ; Math.
+    RNG_RandByte                @97 NONAME
+
     ; Binary angles.
     bamsAtan2                   @145 NONAME
 
     ; Vectors.
-    V2_Rotate                   @344 NONAME
+    V2d_Sum                     @54 NONAME
+    V2d_Subtract                @341 NONAME
+    V2d_Rotate                  @344 NONAME
+    V2d_PointOnLineSide         @376 NONAME
+    V2d_PointLineDistance       @442 NONAME
+    V2d_ProjectOnLine           @443 NONAME
+    V2d_Intersection            @349 NONAME
 
     ; Utilities.
-    M_PointLineDistance         @442 NONAME
-    M_ProjectPointOnLine        @443 NONAME
+    M_ApproxDistance            @58 NONAME
+    M_ApproxDistance3           @243 NONAME
+    M_PointXYToAngle            @839 NONAME
+    M_PointToAngle2             @840 NONAME
+    M_PointXYToAngle2           @101 NONAME
 
 ; Miscellaneous: Command line.
-    ArgAbbreviate               @146 NONAME
-    Argc                        @147 NONAME
-    Argv                        @148 NONAME
-    ArgvPtr                     @149 NONAME
-    ArgNext                     @150 NONAME
-    ArgCheck                    @151 NONAME
-    ArgCheckWith                @152 NONAME
-    ArgExists                   @153 NONAME
-    ArgIsOption                 @154 NONAME
+;   ArgAbbreviate               @146 NONAME
+;   Argc                        @147 NONAME
+;   Argv                        @148 NONAME
+;   ArgvPtr                     @149 NONAME
+;   ArgNext                     @150 NONAME
+;   ArgCheck                    @151 NONAME
+;   ArgCheckWith                @152 NONAME
+;   ArgExists                   @153 NONAME
+;   ArgIsOption                 @154 NONAME
 
 ; Doomsday Engine Definitions.
     DED_Init                    @155 NONAME
-    DED_Destroy                 @156 NONAME
+    DED_Clear                   @156 NONAME
     DED_Read                    @157 NONAME
     DED_AddFlag                 @159 NONAME
     DED_AddMobj                 @160 NONAME
@@ -539,44 +954,56 @@ EXPORTS
     DED_DelArray                @195 NONAME
     
 ; Reader.
-    Reader_NewWithBuffer        @1000 NONAME
-    Reader_Delete               @1001 NONAME
-    Reader_ReadChar             @1002 NONAME
-    Reader_ReadByte             @1003 NONAME
-    Reader_ReadInt16            @1004 NONAME    
-    Reader_ReadUInt16           @1005 NONAME    
-    Reader_ReadInt32            @1006 NONAME    
-    Reader_ReadUInt32           @1007 NONAME    
-    Reader_ReadFloat            @1008 NONAME
-    Reader_ReadPackedUInt16     @1009 NONAME
-    Reader_ReadPackedUInt32     @1010 NONAME
-    Reader_Read                 @1011 NONAME
-    Reader_AtEnd                @1012 NONAME
-    Reader_Pos                  @1013 NONAME
-    Reader_SetPos               @1014 NONAME
-    Reader_Size                 @1015 NONAME
+    Reader_NewWithBuffer        @547 NONAME
+    Reader_NewWithCallbacks     @743 NONAME
+    Reader_Delete               @548 NONAME
+    Reader_ReadChar             @549 NONAME
+    Reader_ReadByte             @550 NONAME
+    Reader_ReadInt16            @551 NONAME
+    Reader_ReadUInt16           @552 NONAME
+    Reader_ReadInt32            @553 NONAME
+    Reader_ReadUInt32           @554 NONAME
+    Reader_ReadFloat            @555 NONAME
+    Reader_ReadPackedUInt16     @556 NONAME
+    Reader_ReadPackedUInt32     @557 NONAME
+    Reader_Read                 @558 NONAME
+    Reader_AtEnd                @559 NONAME
+    Reader_Pos                  @560 NONAME
+    Reader_SetPos               @561 NONAME
+    Reader_Size                 @562 NONAME
 
 ; Writer.
-    Writer_NewWithBuffer        @1050 NONAME
-    Writer_NewWithDynamicBuffer @1051 NONAME
-    Writer_Delete               @1052 NONAME
-    Writer_Size                 @1053 NONAME
-    Writer_Data                 @1054 NONAME
-    Writer_TotalBufferSize      @1055 NONAME
-    Writer_BytesLeft            @1056 NONAME
-    Writer_SetPos               @1057 NONAME
-    Writer_WriteChar            @1058 NONAME
-    Writer_WriteByte            @1059 NONAME
-    Writer_WriteInt16           @1060 NONAME
-    Writer_WriteUInt16          @1061 NONAME
-    Writer_WriteInt32           @1062 NONAME
-    Writer_WriteUInt32          @1063 NONAME
-    Writer_WriteFloat           @1064 NONAME
-    Writer_WritePackedUInt16    @1065 NONAME
-    Writer_WritePackedUInt32    @1066 NONAME
-    Writer_Write                @1067 NONAME
+    Writer_NewWithBuffer        @563 NONAME
+    Writer_NewWithDynamicBuffer @564 NONAME
+    Writer_NewWithCallbacks     @742 NONAME
+    Writer_Delete               @565 NONAME
+    Writer_Size                 @566 NONAME
+    Writer_Data                 @567 NONAME
+    Writer_TotalBufferSize      @568 NONAME
+    Writer_BytesLeft            @569 NONAME
+    Writer_SetPos               @570 NONAME
+    Writer_WriteChar            @571 NONAME
+    Writer_WriteByte            @572 NONAME
+    Writer_WriteInt16           @573 NONAME
+    Writer_WriteUInt16          @574 NONAME
+    Writer_WriteInt32           @575 NONAME
+    Writer_WriteUInt32          @576 NONAME
+    Writer_WriteFloat           @577 NONAME
+    Writer_WritePackedUInt16    @578 NONAME
+    Writer_WritePackedUInt32    @579 NONAME
+    Writer_Write                @580 NONAME
 
 ; Smoother.
-    Smoother_IsOnFloor          @1100 NONAME
-    Smoother_Evaluate           @1101 NONAME
-    Smoother_Clear              @1102 NONAME
+;   Smoother_IsOnFloor          @581 NONAME
+;   Smoother_Evaluate           @582 NONAME
+;   Smoother_Clear              @583 NONAME
+
+; MaterialArchive.
+    MaterialArchive_New         @744 NONAME
+    MaterialArchive_NewEmpty    @745 NONAME
+    MaterialArchive_Delete      @746 NONAME
+    MaterialArchive_Read        @747 NONAME
+    MaterialArchive_Write       @748 NONAME
+    MaterialArchive_Find        @749 NONAME
+    MaterialArchive_FindUniqueSerialId @750 NONAME
+    MaterialArchive_Count       @751 NONAME

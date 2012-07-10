@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -141,13 +141,13 @@ void T_Light(light_t *light)
     }
 }
 
-boolean EV_SpawnLight(linedef_t *line, byte *arg, lighttype_t type)
+boolean EV_SpawnLight(LineDef *line, byte *arg, lighttype_t type)
 {
     int         arg1, arg2, arg3, arg4;
     boolean     think = false;
     boolean     rtn = false;
     light_t    *light;
-    sector_t   *sec = NULL;
+    Sector     *sec = NULL;
     iterlist_t *list;
 
     arg1 = (int) arg[1];
@@ -262,7 +262,7 @@ void T_Phase(phase_t *phase)
                      phase->baseValue + phaseTable[phase->index]);
 }
 
-void P_SpawnPhasedLight(sector_t* sector, float base, int index)
+void P_SpawnPhasedLight(Sector* sector, float base, int index)
 {
     phase_t*            phase;
 
@@ -289,15 +289,15 @@ void P_SpawnPhasedLight(sector_t* sector, float base, int index)
 
 typedef struct {
     int                 seqSpecial, count;
-    sector_t*           sec, *nextSec;
+    Sector*             sec, *nextSec;
 } findlightsequencesectorparams_t;
 
 static int findLightSequenceSector(void* p, void* context)
 {
-    linedef_t*          li = (linedef_t*) p;
+    LineDef*            li = (LineDef*) p;
     findlightsequencesectorparams_t* params =
         (findlightsequencesectorparams_t*) context;
-    sector_t*           tempSec = P_GetNextSector(li, params->sec);
+    Sector*             tempSec = P_GetNextSector(li, params->sec);
 
     if(tempSec)
     {
@@ -317,15 +317,15 @@ static int findLightSequenceSector(void* p, void* context)
 }
 
 typedef struct {
-    sector_t*           sec, *nextSec;
+    Sector*             sec, *nextSec;
 } findlightsequencestartsectorparams_t;
 
 static int findLightSequenceStartSector(void* p, void* context)
 {
-    linedef_t*          li = (linedef_t*) p;
+    LineDef*           li = (LineDef*) p;
     findlightsequencestartsectorparams_t* params =
         (findlightsequencestartsectorparams_t*) context;
-    sector_t*           tempSec = P_GetNextSector(li, params->sec);
+    Sector*             tempSec = P_GetNextSector(li, params->sec);
 
     if(tempSec)
     {
@@ -338,7 +338,7 @@ static int findLightSequenceStartSector(void* p, void* context)
     return false; // Continue iteration.
 }
 
-void P_SpawnLightSequence(sector_t* sector, int indexStep)
+void P_SpawnLightSequence(Sector* sector, int indexStep)
 {
     int                 count;
 

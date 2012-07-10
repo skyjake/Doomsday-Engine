@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -47,6 +47,11 @@
 #define NUMREDPALS          (8)
 #define NUMBONUSPALS        (4)
 
+// For HacX's invulnerablity blue palette shift.
+/// @note These do not correspond to real palette indices.
+#define STARTINVULPALS      (14)
+#define NUMINVULPALS        (4)
+
 #define FLOATSPEED          (4)
 
 #define DELTAMUL            (6.324555320) // Used when calculating ticcmd_t.lookdirdelta
@@ -63,7 +68,6 @@
 // MAXRADIUS is for precalculated sector block boxes the spider demon is
 // larger, but we do not have any moving sectors nearby.
 #define MAXRADIUS           (32)
-#define MAXMOVE             (30)
 
 #define USERANGE            (64)
 #define MELEERANGE          (64)
@@ -72,15 +76,6 @@
 #define BASETHRESHOLD       (100)
 
 #define sentient(mobj)      ((mobj)->health > 0 && P_GetState((mobj)->type, SN_SEE))
-
-#define FRICTION_NORMAL     (0.90625f)
-#define FRICTION_FLY        (0.91796875f)
-#define FRICTION_HIGH       (0.5f)
-
-#define OPENRANGE           (*(float*) DD_GetVariable(DD_OPENRANGE))
-#define OPENTOP             (*(float*) DD_GetVariable(DD_OPENTOP))
-#define OPENBOTTOM          (*(float*) DD_GetVariable(DD_OPENBOTTOM))
-#define LOWFLOOR            (*(float*) DD_GetVariable(DD_LOWFLOOR))
 
 extern float turboMul;
 extern int maxAmmo[NUM_AMMO_TYPES];

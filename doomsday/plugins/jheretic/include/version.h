@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,15 +24,18 @@
  */
 
 /**
- * version.h: Version numbering, naming etc.
+ * Version numbering, naming etc.
  */
 
-#ifndef __JHERETIC_VERSION_H__
-#define __JHERETIC_VERSION_H__
+#ifndef JHERETIC_VERSION_H
+#define JHERETIC_VERSION_H
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
+
+#include "dengproject.h"
+#include "dd_plugin.h"
 
 #ifndef JHERETIC_VER_ID
 #  ifdef _DEBUG
@@ -43,14 +46,22 @@
 #endif
 
 // Used to derive filepaths.
-#define GAMENAMETEXT        "jheretic"
+#define PLUGIN_NAMETEXT     "jheretic"
 
 // Presented to the user in dialogs, messages etc.
-#define GAME_NICENAME       "jHeretic"
-#define GAME_DETAILS        "jHeretic is based on Heretic v1.3 by Raven Software."
+#define PLUGIN_NICENAME     "jHeretic"
+#define PLUGIN_NICEAUTHOR   "deng team"
+#define PLUGIN_DETAILS      "jHeretic is based on Heretic v1.3 by Raven Software."
 
-#define GAME_VERSION_TEXT   "1.4.8"
-#define GAME_VERSION_TEXTLONG GAME_VERSION_TEXT " " __DATE__ " (" JHERETIC_VER_ID ")"
-#define GAME_VERSION_NUMBER 1,4,8,0 // For WIN32 version info.
+#define PLUGIN_HOMEURL      DOOMSDAY_HOMEURL
+#define PLUGIN_DOCSURL      DOOMSDAY_DOCSURL
 
-#endif
+#define PLUGIN_VERSION_TEXT "1.5.2"
+#define PLUGIN_VERSION_TEXTLONG "Version " PLUGIN_VERSION_TEXT " " __DATE__ " (" JHERETIC_VER_ID ")"
+#define PLUGIN_VERSION_NUMBER 1,5,2,0 // For WIN32 version info.
+
+// For WIN32 version info:
+#define PLUGIN_DESC         PLUGIN_NICENAME " " LIBDENG_PLUGINDESC
+#define PLUGIN_COPYRIGHT    "2003-2012, " DENGPROJECT_NICEAUTHOR
+
+#endif /* JHERETIC_VERSION_H */

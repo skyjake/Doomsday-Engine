@@ -1,10 +1,10 @@
-/**\file
+/**\file x_config.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,10 +22,6 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * x_config.h:
- */
-
 #ifndef __JHEXEN_CONFIG_H__
 #define __JHEXEN_CONFIG_H__
 
@@ -33,10 +29,15 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
+#include "h2def.h"
+#include "hu_lib.h"
+
 enum {
     HUD_MANA,
     HUD_HEALTH,
-    HUD_CURRENTITEM
+    HUD_READYITEM,
+    HUD_LOG,
+    NUMHUDDISPLAYS
 };
 
 // Hud Unhide Events (the hud will unhide on these events if enabled).
@@ -65,16 +66,17 @@ typedef struct {
     float           turnSpeed;
     int             quakeFly;
     byte            fastMonsters;
-    int             useMLook, useJLook;
+    int             useJLook;
     int             screenBlocks;
     int             setBlocks;
+
+    int             hudPatchReplaceMode;
     byte            hudShown[4]; // HUD data visibility.
     float           hudScale;
     float           hudColor[4];
     float           hudIconAlpha;
     float           hudTimer; // Number of seconds until the hud/statusbar auto-hides.
     byte            hudUnHide[NUMHUDUNHIDEEVENTS]; // when the hud/statusbar unhides.
-    byte            usePatchReplacement;
     int             showFPS, lookSpring;
     int             mlookInverseY;
     int             echoMsg;
@@ -83,7 +85,10 @@ typedef struct {
     byte            overrideHubMsg; // skip the transition hub message when 1
     int             cameraNoClip;
     float           bobView, bobWeapon;
-    byte            askQuickSaveLoad;
+
+    byte            confirmQuickGameSave;
+    byte            loadLastSaveOnReborn;
+
     int             jumpEnabled;
     float           jumpPower;
     int             airborneMovement;
@@ -92,11 +97,12 @@ typedef struct {
     int             jLookDeltaMode;
 
     int             xhair;
+    float           xhairAngle;
     float           xhairSize;
     byte            xhairVitality;
     float           xhairColor[4];
 
-    int             statusbarScale;
+    float           statusbarScale;
     float           statusbarOpacity;
     float           statusbarCounterAlpha;
 
@@ -105,16 +111,19 @@ typedef struct {
     float           msgUptime;
     int             msgBlink;
     int             msgAlign;
-    byte            msgShow;
     float           msgColor[3];
     byte            weaponAutoSwitch;
     byte            noWeaponAutoSwitchIfFiring;
     byte            ammoAutoSwitch;
+    byte            allowMonsterFloatOverBlocking; // if true, floating mobjs are allowed to climb over mobjs blocking the way.
+    byte            weaponCycleSequential; // if true multiple next/prev weapon impulses can be chained to allow the user to "count-click-switch".
     int             weaponOrder[NUM_WEAPON_TYPES];
     byte            weaponNextMode; // if true use the weaponOrder for next/previous.
     float           filterStrength;
-    byte            counterCheat;
-    float           counterCheatScale;
+
+    byte            hudShownCheatCounters;
+    float           hudCheatCounterScale;
+    byte            hudCheatCounterShowWithAutomap; ///< Only show when the automap is open.
 
     // Automap stuff.
 /*    int             automapPos;
@@ -128,6 +137,7 @@ typedef struct {
     float           automapBack[3];
     float           automapOpacity;
     float           automapLineAlpha;
+    float           automapLineWidth; ///< In fixed 320x200 pixels.
     byte            automapRotate;
     byte            automapHudDisplay;
     int             automapCustomColors;
@@ -146,21 +156,27 @@ typedef struct {
     float           sndReverbFactor;
     byte            reverbDebug;
 
-    int             dclickUse;
     int             plrViewHeight;
     byte            mapTitle, hideIWADAuthor;
-    float           menuScale;
-    int             menuEffects;
     int             hudFog;
-    float           menuGlitter;
+
+    float           menuScale;
+    int             menuEffectFlags;
     float           menuShadow;
-    float           flashColor[3];
-    int             flashSpeed;
-    byte            turningSkull;
-    float           menuColor[3];
-    float           menuColor2[3];
+
     byte            menuSlam;
-    byte            menuHotkeys;
+    byte            menuShortcutsEnabled;
+    byte            menuScaleMode;
+    int             menuPatchReplaceMode;
+    byte            menuGameSaveSuggestName;
+    byte            menuCursorRotate;
+    float           menuTextColors[MENU_COLOR_COUNT][3];
+    float           menuTextFlashColor[3];
+    int             menuTextFlashSpeed;
+    float           menuTextGlitter;
+
+    byte            inludeScaleMode;
+    int             inludePatchReplaceMode;
 
     byte            netMap, netClass, netColor, netSkill;
     byte            netEpisode; // Unused in Hexen.
@@ -168,7 +184,7 @@ typedef struct {
     byte            netJumping;
     byte            netMobDamageModifier; // Multiplier for non-player mobj damage.
     byte            netMobHealthModifier; // Health modifier for non-player mobjs.
-    int             netGravity; // Multiplayer custom gravity.
+    int             netGravity; // Custom gravity multiplier.
     byte            netNoMaxZRadiusAttack; // Radius attacks are infinitely tall.
     byte            netNoMaxZMonsterMeleeAttack; // Melee attacks are infinitely tall.
 

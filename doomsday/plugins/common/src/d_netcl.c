@@ -1,177 +1,104 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * d_netcl.c : Common code related to net games (client-side).
+ * @file d_netcl.c
+ * Common code related to netgames (client-side). @ingroup client
+ *
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
 
 #include "common.h"
-#include "am_map.h"
 #include "p_saveg.h"
 #include "d_net.h"
 #include "d_netsv.h"
-#include "f_infine.h"
 #include "p_player.h"
 #include "p_map.h"
+#include "p_start.h"
 #include "g_common.h"
 #include "p_actor.h"
 #include "p_inventory.h"
-
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-//static byte *readbuffer;
-
-// CODE --------------------------------------------------------------------
-
-/*
-// Mini-Msg routines.
-void NetCl_SetReadBuffer(byte *data)
-{
-    readbuffer = data;
-}
-
-byte NetCl_ReadByte(void)
-{
-    return *readbuffer++;
-}
-
-short NetCl_ReadShort(void)
-{
-    readbuffer += 2;
-    return SHORT( *(short*) (readbuffer - 2) );
-}
-
-unsigned short NetCl_ReadUShort(void)
-{
-    readbuffer += 2;
-    return SHORT( *(unsigned short*) (readbuffer - 2) );
-}
-
-int NetCl_ReadLong(void)
-{
-    readbuffer += 4;
-    return LONG( *(int*) (readbuffer - 4) );
-}
-
-float NetCl_ReadFloat(void)
-{
-    int value = LONG( *(int*) readbuffer );
-    readbuffer += 4;
-    return *(float*) &value;
-}
-
-void NetCl_Read(byte *buf, int len)
-{
-    memcpy(buf, readbuffer, len);
-    readbuffer += len;
-}
-*/
-
-#if __JDOOM__
-int NetCl_IsCompatible(int other, int us)
-{
-    char                comp[5][5] =        // [other][us]
-    {
-        {1, 1, 0, 1, 0},
-        {0, 1, 0, 1, 0},
-        {0, 0, 1, 0, 0},
-        {0, 0, 0, 1, 0},
-        {0, 0, 0, 0, 0}
-    };
-    /*  shareware,  // DOOM 1 shareware, E1, M9
-       registered,  // DOOM 1 registered, E3, M27
-       commercial,  // DOOM 2 retail, E1 M34
-       retail,      // DOOM 1 retail, E4, M36
-     */
-    return comp[other][us];
-}
-#endif
+#include "hu_inventory.h"
+#include "st_stuff.h"
 
 void NetCl_UpdateGameState(Reader* msg)
 {
-    byte gsGameMode = 0;
+    byte len;
     byte gsFlags = 0;
+    char gsGameIdentity[256];
+    Uri* mapUri;
     byte gsEpisode = 0;
     byte gsMap = 0;
-    byte flags = 0;
+    byte configFlags = 0;
     byte gsDeathmatch = 0;
     byte gsMonsters = 0;
     byte gsRespawn = 0;
     byte gsJumping = 0;
     byte gsSkill = 0;
-    float gsGravity = 0;
+    coord_t gsGravity = 0;
 
-    gsGameMode = Reader_ReadByte(msg);
     gsFlags = Reader_ReadByte(msg);
-    gsEpisode = Reader_ReadByte(msg) - 1;
-    gsMap = Reader_ReadByte(msg) - 1;
-    flags = Reader_ReadByte(msg);
-    gsDeathmatch = flags & 0x3;
-    gsMonsters = (flags & 0x4? true : false);
-    gsRespawn = (flags & 0x8? true : false);
-    gsJumping = (flags & 0x10? true : false);
-//#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-//    gsSkill = (flags >> 5);
-//#else
+
+    // Game identity key.
+    len = Reader_ReadByte(msg);
+    Reader_Read(msg, gsGameIdentity, len);
+    gsGameIdentity[len] = 0;
+
+    // Current map.
+    mapUri = Uri_NewFromReader(msg);
+
+    gsEpisode = Reader_ReadByte(msg);
+    gsMap = Reader_ReadByte(msg);
+
+    configFlags = Reader_ReadByte(msg);
+    gsDeathmatch = configFlags & 0x3;
+    gsMonsters = (configFlags & 0x4? true : false);
+    gsRespawn = (configFlags & 0x8? true : false);
+    gsJumping = (configFlags & 0x10? true : false);
     gsSkill = Reader_ReadByte(msg);
-//#endif
     gsGravity = Reader_ReadFloat(msg);
+
+    VERBOSE(
+        ddstring_t* str = Uri_ToString(mapUri);
+        Con_Message("NetCl_UpdateGameState: Flags=%x, Map uri=\"%s\"\n", gsFlags, Str_Text(str));
+        Str_Delete(str);
+    )
 
     // Demo game state changes are only effective during demo playback.
     if(gsFlags & GSF_DEMO && !Get(DD_PLAYBACK))
         return;
 
-#if __JDOOM__
-    if(!NetCl_IsCompatible(gsGameMode, gameMode))
+    // Check for a game mode mismatch.
+    /// @todo  Automatically load the server's game if it is available.
+    /// However, note that this can only occur if the server changes its game
+    /// while a netgame is running (which currently will end the netgame).
     {
-        // Wrong game mode! This is highly irregular!
-        Con_Message("NetCl_UpdateGameState: Game mode mismatch!\n");
-        // Stop the demo if one is being played.
-        DD_Execute(false, "stopdemo");
-        return;
+        GameInfo gameInfo;
+        DD_GameInfo(&gameInfo);
+        if(strcmp(gameInfo.identityKey, gsGameIdentity))
+        {
+            Con_Message("NetCl_UpdateGameState: Server's game mode (%s) is different than yours (%s).\n",
+                        gsGameIdentity, gameInfo.identityKey);
+            DD_Execute(false, "net disconnect");
+            return;
+        }
     }
-#endif
 
     deathmatch = gsDeathmatch;
     noMonstersParm = !gsMonsters;
@@ -200,15 +127,6 @@ void NetCl_UpdateGameState(Reader* msg)
                 gsJumping ? "yes" : "no", gsGravity);
 #endif
 
-    /*
-    // Start reading after the GS packet.
-#if __JHEXEN__ || __JSTRIFE__
-    NetCl_SetReadBuffer(data + 16);
-#else
-    NetCl_SetReadBuffer(data + 8);
-#endif
-    */
-
     // Do we need to change the map?
     if(gsFlags & GSF_CHANGE_MAP)
     {
@@ -222,6 +140,7 @@ void NetCl_UpdateGameState(Reader* msg)
     }
 
     // Set gravity.
+    /// @todo This is a map-property, not a global property.
     DD_SetVariable(DD_GRAVITY, &gsGravity);
 
     // Camera init included?
@@ -233,17 +152,17 @@ void NetCl_UpdateGameState(Reader* msg)
         mo = pl->plr->mo;
         if(mo)
         {
-            P_MobjUnsetPosition(mo);
-            mo->pos[VX] = Reader_ReadFloat(msg);
-            mo->pos[VY] = Reader_ReadFloat(msg);
-            mo->pos[VZ] = Reader_ReadFloat(msg);
-            P_MobjSetPosition(mo);
+            P_MobjUnsetOrigin(mo);
+            mo->origin[VX] = Reader_ReadFloat(msg);
+            mo->origin[VY] = Reader_ReadFloat(msg);
+            mo->origin[VZ] = Reader_ReadFloat(msg);
+            P_MobjSetOrigin(mo);
             mo->angle = Reader_ReadUInt32(msg);
             // Update floorz and ceilingz.
 #if __JDOOM__ || __JDOOM64__
-            P_CheckPosition3fv(mo, mo->pos);
+            P_CheckPosition(mo, mo->origin);
 #else
-            P_CheckPosition2f(mo, mo->pos[VX], mo->pos[VY]);
+            P_CheckPositionXY(mo, mo->origin[VX], mo->origin[VY]);
 #endif
             mo->floorZ = tmFloorZ;
             mo->ceilingZ = tmCeilingZ;
@@ -260,7 +179,7 @@ void NetCl_UpdateGameState(Reader* msg)
     }
 
     // Tell the server we're ready to begin receiving frames.
-    Net_SendPacket(DDSP_CONFIRM, DDPT_OK, 0, 0);
+    Net_SendPacket(0, DDPT_OK, 0, 0);
 }
 
 void NetCl_MobjImpulse(Reader* msg)
@@ -291,9 +210,9 @@ void NetCl_MobjImpulse(Reader* msg)
 void NetCl_PlayerSpawnPosition(Reader* msg)
 {
     player_t* p = &players[CONSOLEPLAYER];
-    mobj_t* mo;
-    float x, y, z;
+    coord_t x, y, z;
     angle_t angle;
+    mobj_t* mo;
 
     x = Reader_ReadFloat(msg);
     y = Reader_ReadFloat(msg);
@@ -308,7 +227,7 @@ void NetCl_PlayerSpawnPosition(Reader* msg)
     mo = p->plr->mo;
     assert(mo != 0);
 
-    P_TryMove3f(mo, x, y, z);
+    P_TryMoveXYZ(mo, x, y, z);
     mo->angle = angle;
 }
 
@@ -450,7 +369,16 @@ void NetCl_UpdatePlayerState(Reader *msg, int plrNum)
             ST_HUDUnHide(plrNum, HUE_ON_DAMAGE);
 
         pl->health = health;
-        pl->plr->mo->health = pl->health;
+        if(pl->plr->mo)
+        {
+            pl->plr->mo->health = pl->health;
+        }
+        else
+        {
+#if _DEBUG
+            Con_Message("FIXME: NetCl_UpdatePlayerState: Player mobj not yet allocated at this time, ignoring.\n");
+#endif
+        }
     }
 
     if(flags & PSF_ARMOR_POINTS)
@@ -548,7 +476,7 @@ void NetCl_UpdatePlayerState(Reader *msg, int plrNum)
 #ifdef _DEBUG
                     Con_Message("NetCl_UpdatePlayerState: Revealing automap.\n");
 #endif
-                    AM_RevealMap(AM_MapForPlayer(plrNum), true);
+                    ST_RevealAutomap(plrNum, true);
                 }
             }
         }
@@ -732,9 +660,14 @@ void NetCl_Intermission(Reader* msg)
     {
         uint i;
 
-        // Close any automaps left open at the end of the previous map.
+        // Close any HUDs left open at the end of the previous map.
         for(i = 0; i < MAXPLAYERS; ++i)
-            AM_Open(AM_MapForPlayer(i), false, true);
+        {
+            ST_AutomapOpen(i, false, true);
+#if __JHERETIC__ || __JHEXEN__
+            Hu_InventoryOpen(i, false);
+#endif
+        }
 
         GL_SetFilter(false);
 
@@ -742,7 +675,7 @@ void NetCl_Intermission(Reader* msg)
         SN_StopAllSequences();
 #endif
 
-        // @fixme jHeretic does not transmit the intermission info!
+        // @todo jHeretic does not transmit the intermission info!
 #if __JDOOM__ || __JDOOM64__
         wmInfo.maxKills = Reader_ReadUInt16(msg);
         wmInfo.maxItems = Reader_ReadUInt16(msg);
@@ -770,7 +703,7 @@ void NetCl_Intermission(Reader* msg)
 #if __JDOOM64__
         S_StartMusic("dm2int", true);
 #elif __JDOOM__
-        S_StartMusic(gameMode == commercial? "dm2int" : "inter", true);
+        S_StartMusic((gameModeBits & GM_ANY_DOOM2)? "dm2int" : "inter", true);
 #elif __JHERETIC__
         S_StartMusic("intr", true);
 #elif __JHEXEN__
@@ -791,9 +724,9 @@ void NetCl_Intermission(Reader* msg)
     if(flags & IMF_STATE)
     {
 #if __JDOOM__ || __JDOOM64__
-        WI_SetState(Reader_ReadByte(msg));
+        WI_SetState(Reader_ReadInt16(msg));
 #elif __JHERETIC__ || __JHEXEN__
-        interState = (int) Reader_ReadByte(msg);
+        interState = Reader_ReadInt16(msg);
 #endif
     }
 
@@ -803,6 +736,7 @@ void NetCl_Intermission(Reader* msg)
 #endif
 }
 
+#if 0 // MOVED INTO THE ENGINE
 /**
  * This is where clients start their InFine interludes.
  */
@@ -850,6 +784,7 @@ void NetCl_Finale(int packetType, Reader* msg)
         FI_SkipRequest();
     }
 }
+#endif
 
 /**
  * Clients have other players' info, but it's only "FYI"; they don't really need it.
@@ -860,17 +795,16 @@ void NetCl_UpdatePlayerInfo(Reader *msg)
 
     num = Reader_ReadByte(msg);
     cfg.playerColor[num] = Reader_ReadByte(msg);
+    players[num].colorMap = cfg.playerColor[num];
 #if __JHEXEN__ || __JHERETIC__
     cfg.playerClass[num] = Reader_ReadByte(msg);
     players[num].class_ = cfg.playerClass[num];
 #endif
 
 #if __JDOOM__ || __JSTRIFE__ || __JDOOM64__
-    Con_Message("NetCl_UpdatePlayerInfo: pl=%i color=%i\n", num,
-                cfg.playerColor[num]);
+    Con_Message("NetCl_UpdatePlayerInfo: pl=%i color=%i\n", num, cfg.playerColor[num]);
 #else
-    Con_Message("NetCl_UpdatePlayerInfo: pl=%i color=%i class=%i\n", num,
-                cfg.playerColor[num], cfg.playerClass[num]);
+    Con_Message("NetCl_UpdatePlayerInfo: pl=%i color=%i class=%i\n", num, cfg.playerColor[num], cfg.playerClass[num]);
 #endif
 }
 
@@ -887,13 +821,13 @@ void NetCl_SendPlayerInfo()
     msg = D_NetWrite();
 
     Writer_WriteByte(msg, cfg.netColor);
-#if __JHEXEN__
+#ifdef __JHEXEN__
     Writer_WriteByte(msg, cfg.netClass);
-#elif __JHERETIC__
+#else
     Writer_WriteByte(msg, PCLASS_PLAYER);
 #endif
 
-    Net_SendPacket(DDSP_ORDERED, GPT_PLAYER_INFO, Writer_Data(msg), Writer_Size(msg));
+    Net_SendPacket(0, GPT_PLAYER_INFO, Writer_Data(msg), Writer_Size(msg));
 }
 
 void NetCl_SaveGame(Reader* msg)
@@ -901,7 +835,10 @@ void NetCl_SaveGame(Reader* msg)
     if(Get(DD_PLAYBACK))
         return;
 
-    SV_SaveClient(Reader_ReadUInt32(msg));
+    /// @todo: Why not Hexen?
+#if !__JHEXEN__
+    SV_SaveGameClient(Reader_ReadUInt32(msg));
+#endif
 #if __JDOOM__ || __JDOOM64__
     P_SetMessage(&players[CONSOLEPLAYER], TXT_GAMESAVED, false);
 #endif
@@ -914,8 +851,9 @@ void NetCl_LoadGame(Reader* msg)
     if(Get(DD_PLAYBACK))
         return;
 
-    SV_LoadClient(Reader_ReadUInt32(msg));
-    //  Net_SendPacket(DDSP_RELIABLE, GPT_LOAD, &con, 1);
+#if !__JHEXEN__
+    SV_LoadGameClient(Reader_ReadUInt32(msg));
+#endif
 #if __JDOOM__ || __JDOOM64__
     P_SetMessage(&players[CONSOLEPLAYER], GET_TXT(TXT_CLNETLOAD), false);
 #endif
@@ -941,7 +879,7 @@ void NetCl_CheatRequest(const char *command)
     Writer_Write(msg, command, strlen(command));
 
     if(IS_CLIENT)
-        Net_SendPacket(DDSP_CONFIRM, GPT_CHEAT_REQUEST, Writer_Data(msg), Writer_Size(msg));
+        Net_SendPacket(0, GPT_CHEAT_REQUEST, Writer_Data(msg), Writer_Size(msg));
     else
         NetSv_ExecuteCheat(CONSOLEPLAYER, command);
 }
@@ -973,9 +911,9 @@ void NetCl_FloorHitRequest(player_t* player)
 #endif
 
     // Include the position and momentum of the hit.
-    Writer_WriteFloat(msg, mo->pos[VX]);
-    Writer_WriteFloat(msg, mo->pos[VY]);
-    Writer_WriteFloat(msg, mo->pos[VZ]);
+    Writer_WriteFloat(msg, mo->origin[VX]);
+    Writer_WriteFloat(msg, mo->origin[VY]);
+    Writer_WriteFloat(msg, mo->origin[VZ]);
     Writer_WriteFloat(msg, mo->mom[MX]);
     Writer_WriteFloat(msg, mo->mom[MY]);
     Writer_WriteFloat(msg, mo->mom[MZ]);
@@ -1008,11 +946,11 @@ void NetCl_PlayerActionRequest(player_t *player, int actionType, int actionParam
     Writer_WriteInt32(msg, actionType);
 
     // Position of the action.
-    if(G_GetGameState() == GS_MAP)
+    if(G_GameState() == GS_MAP)
     {
-        Writer_WriteFloat(msg, player->plr->mo->pos[VX]);
-        Writer_WriteFloat(msg, player->plr->mo->pos[VY]);
-        Writer_WriteFloat(msg, player->plr->mo->pos[VZ]);
+        Writer_WriteFloat(msg, player->plr->mo->origin[VX]);
+        Writer_WriteFloat(msg, player->plr->mo->origin[VY]);
+        Writer_WriteFloat(msg, player->plr->mo->origin[VZ]);
 
         // Which way is the player looking at?
         Writer_WriteUInt32(msg, player->plr->mo->angle);
@@ -1038,7 +976,52 @@ void NetCl_PlayerActionRequest(player_t *player, int actionType, int actionParam
         Writer_WriteInt32(msg, player->readyWeapon);
     }
 
-    Net_SendPacket(DDSP_CONFIRM, GPT_ACTION_REQUEST, Writer_Data(msg), Writer_Size(msg));
+    Net_SendPacket(0, GPT_ACTION_REQUEST, Writer_Data(msg), Writer_Size(msg));
+}
+
+void NetCl_LocalMobjState(Reader* msg)
+{
+    thid_t mobjId = Reader_ReadUInt16(msg);
+    thid_t targetId = Reader_ReadUInt16(msg);
+    int newState = 0;
+    int special1 = 0;
+    mobj_t* mo = 0;
+    ddstring_t* stateName = Str_New();
+
+    Str_Read(stateName, msg);
+    newState = Def_Get(DD_DEF_STATE, Str_Text(stateName), 0);
+    Str_Delete(stateName);
+
+    special1 = Reader_ReadInt32(msg);
+
+    if(!(mo = ClMobj_Find(mobjId)))
+    {
+#ifdef _DEBUG
+        Con_Message("NetCl_LocalMobjState: ClMobj %i not found.\n", mobjId);
+        return;
+#endif
+    }
+
+    // Let it run the sequence locally.
+    ClMobj_EnableLocalActions(mo, true);
+
+#ifdef _DEBUG
+    Con_Message("NetCl_LocalMobjState: ClMobj %i => state %i (target:%i, special1:%i)\n",
+                mobjId, newState, targetId, special1);
+#endif
+
+    if(!targetId)
+    {
+        mo->target = NULL;
+    }
+    else
+    {
+        mo->target = ClMobj_Find(targetId);
+    }
+#if !defined(__JDOOM__) && !defined(__JDOOM64__)
+    mo->special1 = special1;
+#endif
+    P_MobjChangeState(mo, newState);
 }
 
 void NetCl_DamageRequest(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damage)
@@ -1063,5 +1046,5 @@ void NetCl_DamageRequest(mobj_t* target, mobj_t* inflictor, mobj_t* source, int 
     Writer_WriteUInt16(msg, inflictor? inflictor->thinker.id : 0);
     Writer_WriteUInt16(msg, source? source->thinker.id : 0);
 
-    Net_SendPacket(DDSP_CONFIRM, GPT_DAMAGE_REQUEST, Writer_Data(msg), Writer_Size(msg));
+    Net_SendPacket(0, GPT_DAMAGE_REQUEST, Writer_Data(msg), Writer_Size(msg));
 }

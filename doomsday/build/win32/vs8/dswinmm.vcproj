@@ -764,10 +764,18 @@
 				>
 			</File>
 		</Filter>
-		<File
-			RelativePath="..\..\..\plugins\winmm\api\dswinmm.def"
+		<Filter
+			Name="API"
 			>
-		</File>
+			<Filter
+				Name="Win32"
+				>
+				<File
+					RelativePath="..\..\..\plugins\winmm\api\dswinmm.def"
+					>
+				</File>
+			</Filter>
+		</Filter>
 	</Files>
 	<Globals>
 	</Globals>

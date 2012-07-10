@@ -1,36 +1,27 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * r_model.c: 3D Model Resources
+ * @file r_model.c
+ * 3D Model Resources. @ingroup resource
  *
  * MD2/DMD2 loading and setup.
- * My variable naming convention is a bit incoherent.
+ *
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include "de_platform.h"
 
@@ -40,36 +31,29 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
+#include "de_filesys.h"
 #include "de_graphics.h"
 #include "de_refresh.h"
 #include "de_play.h"
 #include "de_misc.h"
 
 #include "def_main.h"
-
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
+#include "stringpool.h"
+#include "texture.h"
+#include "texturevariant.h"
+#include "materialvariant.h"
 
 typedef struct {
     float           pos[3];
 } vector_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
 float rModelAspectMod = 1 / 1.2f; //.833334f;
 
+static StringPool* modelRepository; // owns model_t instances
+
 // The dummy is used for model zero.
-model_t dummy = { true, "Dummy-Dummy" };
-model_t* modellist[MAX_MODELS] = { &dummy };
+//model_t dummy = { true, "Dummy-Dummy" };
+//model_t* modellist[MAX_MODELS] = { &dummy };
 byte useModels = true;
 
 modeldef_t* modefs = NULL;
@@ -79,21 +63,17 @@ float avertexnormals[NUMVERTEXNORMALS][3] = {
 #include "tab_anorms.h"
 };
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static int maxModelDefs;
 static modeldef_t** stateModefs;
-
-// CODE --------------------------------------------------------------------
 
 /**
  * Packed: pppppppy yyyyyyyy. Yaw is on the XY plane.
  */
 static void UnpackVector(unsigned short packed, float vec[3])
 {
-    float               yaw = (packed & 511) / 512.0f * 2 * PI;
-    float               pitch = ((packed >> 9) / 127.0f - 0.5f) * PI;
-    float               cosp = (float) cos(pitch);
+    float yaw = (packed & 511) / 512.0f * 2 * PI;
+    float pitch = ((packed >> 9) / 127.0f - 0.5f) * PI;
+    float cosp = (float) cos(pitch);
 
     vec[VX] = (float) cos(yaw) * cosp;
     vec[VY] = (float) sin(yaw) * cosp;
@@ -101,24 +81,29 @@ static void UnpackVector(unsigned short packed, float vec[3])
 }
 
 /**
- * Returns an index if the specified model has already been loaded.
+ * Returns an id if the specified model has already been loaded.
+ * Otherwise returns 0.
  */
-static int R_FindModelFor(const char* filename)
+static uint findModelFor(const ddstring_t* filename)
 {
+    return StringPool_IsInterned(modelRepository, filename);
+
+    /*
     int                 i;
 
     for(i = 0; i < MAX_MODELS; ++i)
         if(modellist[i] && !stricmp(modellist[i]->fileName, filename))
             return i;
-    return -1;
+    return -1;*/
+
 }
 
 /**
- * Allocates a new model. Returns the index.
+ * Allocates a new model. Returns the id.
  */
-static int R_NewModelFor(void /*const char *filename*/)
+static uint newModelFor(const ddstring_t* filename)
 {
-    int                 i;
+/*    int                 i;
 
     // Take the first empty spot.
     for(i = 0; i < MAX_MODELS; ++i)
@@ -128,7 +113,13 @@ static int R_NewModelFor(void /*const char *filename*/)
             return i;
         }
     // Dang, we're out of models.
-    return -1;
+    return -1;*/
+
+    StringPoolId id = StringPool_Intern(modelRepository, filename);
+    assert(StringPool_UserPointer(modelRepository, id) == NULL);
+
+    StringPool_SetUserPointer(modelRepository, id, M_Calloc(sizeof(model_t)));
+    return id;
 }
 
 /**
@@ -145,10 +136,10 @@ static void R_VertexNormals(model_t *mdl)
     dmd_triangle_t *tri;
 
     // Renormalizing?
-    if(!ArgCheck("-renorm"))
+    if(!CommandLine_Check("-renorm"))
         return;
 
-    normals = Z_Malloc(sizeof(vector_t) * tris, PU_STATIC, 0);
+    normals = Z_Malloc(sizeof(vector_t) * tris, PU_APPSTATIC, 0);
 
     // Calculate the normal for each vertex.
     for(i = 0; i < mdl->info.numFrames; ++i)
@@ -158,10 +149,11 @@ static void R_VertexNormals(model_t *mdl)
         {
             tri = mdl->lods[0].triangles + k;
             // First calculate surface normals, combine them to vertex ones.
-            M_PointCrossProduct(list[tri->vertexIndices[0]].vertex,
-            list[tri->vertexIndices[2]].vertex,
-            list[tri->vertexIndices[1]].vertex, normals[k].pos);
-            M_Normalize(normals[k].pos);
+            V3f_PointCrossProduct(normals[k].pos,
+                                  list[tri->vertexIndices[0]].vertex,
+                                  list[tri->vertexIndices[2]].vertex,
+                                  list[tri->vertexIndices[1]].vertex);
+            V3f_Normalize(normals[k].pos);
         }
 
         for(k = 0; k < verts; ++k)
@@ -188,7 +180,7 @@ static void R_VertexNormals(model_t *mdl)
                 norm.pos[n] /= cnt;
 
             // Normalize it.
-            M_Normalize(norm.pos);
+            V3f_Normalize(norm.pos);
             memcpy(list[k].normal, norm.pos, sizeof(norm.pos));
         }
     }
@@ -196,33 +188,33 @@ static void R_VertexNormals(model_t *mdl)
 }
 #endif
 
-static void *AllocAndLoad(DFILE *file, int offset, int len)
+static void* AllocAndLoad(DFile* file, int offset, int len)
 {
-    void       *ptr = M_Malloc(len);
-
-    F_Seek(file, offset, SEEK_SET);
-    F_Read(ptr, len, file);
+    uint8_t* ptr = (uint8_t*)malloc(len);
+    if(!ptr)
+        Con_Error("AllocAndLoad: Failed on allocation of %lu bytes for load buffer.", (unsigned long)len);
+    DFile_Seek(file, offset, SEEK_SET);
+    DFile_Read(file, ptr, len);
     return ptr;
 }
 
 static void R_MissingModel(const char* fn)
 {
-    //if(verbose)
-    Con_Printf("Warning: Failed to locate model \"%s\".\n", fn);
+    Con_Printf("Warning: Failed locating model \"%s\", ignoring.\n", fn);
 }
 
-static void R_LoadModelMD2(DFILE *file, model_t *mdl)
+static void R_LoadModelMD2(DFile* file, model_t* mdl)
 {
-    md2_header_t        oldhd;
-    dmd_header_t       *hd = &mdl->header;
-    dmd_info_t         *inf = &mdl->info;
-    model_frame_t      *frame;
-    byte               *frames;
-    int                 i, k, c;
-    const int           axis[3] = { 0, 2, 1 };
+    md2_header_t oldhd;
+    dmd_header_t* hd = &mdl->header;
+    dmd_info_t* inf = &mdl->info;
+    model_frame_t* frame;
+    byte* frames;
+    int i, k, c;
+    const int axis[3] = { 0, 2, 1 };
 
     // Read the header.
-    F_Read(&oldhd, sizeof(oldhd), file);
+    DFile_Read(file, (uint8_t*)&oldhd, sizeof(oldhd));
 
     // Convert it to DMD.
     hd->magic = MD2_MAGIC;
@@ -250,14 +242,12 @@ static void R_LoadModelMD2(DFILE *file, model_t *mdl)
     inf->offsetEnd = LONG(oldhd.offsetEnd);
 
     // The frames need to be unpacked.
-    frames =
-        AllocAndLoad(file, inf->offsetFrames, inf->frameSize * inf->numFrames);
+    frames = AllocAndLoad(file, inf->offsetFrames, inf->frameSize * inf->numFrames);
     mdl->frames = M_Malloc(sizeof(model_frame_t) * inf->numFrames);
     for(i = 0, frame = mdl->frames; i < inf->numFrames; ++i, frame++)
     {
-        md2_packedFrame_t *pfr =
-            (md2_packedFrame_t *) (frames + inf->frameSize * i);
-        md2_triangleVertex_t *pVtx;
+        md2_packedFrame_t* pfr = (md2_packedFrame_t*) (frames + inf->frameSize * i);
+        md2_triangleVertex_t* pVtx;
 
         memcpy(frame->name, pfr->name, sizeof(pfr->name));
         frame->vertices = M_Malloc(sizeof(model_vertex_t) * inf->numVertices);
@@ -266,8 +256,9 @@ static void R_LoadModelMD2(DFILE *file, model_t *mdl)
         // Translate each vertex.
         for(k = 0, pVtx = pfr->vertices; k < inf->numVertices; ++k, pVtx++)
         {
-            memcpy(frame->normals[k].xyz,
-                   avertexnormals[pVtx->lightNormalIndex], sizeof(float) * 3);
+            const byte lightNormalIndex = pVtx->lightNormalIndex;
+
+            memcpy(frame->normals[k].xyz, avertexnormals[lightNormalIndex], sizeof(float) * 3);
 
             for(c = 0; c < 3; ++c)
             {
@@ -295,31 +286,35 @@ static void R_LoadModelMD2(DFILE *file, model_t *mdl)
                      sizeof(int) * mdl->lodInfo[0].numGlCommands);
 
     // Load skins.
-    mdl->skins = M_Calloc(sizeof(dmd_skin_t) * inf->numSkins);
-    F_Seek(file, inf->offsetSkins, SEEK_SET);
+    mdl->skins = (dmd_skin_t*) calloc(1, sizeof(*mdl->skins) * inf->numSkins);
+    if(NULL == mdl->skins)
+        Con_Error("R_LoadModelMD2: Failed on allocation of %lu bytes for skin list.",
+            (unsigned long) (sizeof(*mdl->skins) * inf->numSkins));
+
+    DFile_Seek(file, inf->offsetSkins, SEEK_SET);
     for(i = 0; i < inf->numSkins; ++i)
-        F_Read(mdl->skins[i].name, 64, file);
+        DFile_Read(file, (uint8_t*)mdl->skins[i].name, 64);
 }
 
-static void R_LoadModelDMD(DFILE *file, model_t *mo)
+static void R_LoadModelDMD(DFile* file, model_t* mo)
 {
-    dmd_chunk_t         chunk;
-    char               *temp;
-    dmd_info_t         *inf = &mo->info;
-    model_frame_t      *frame;
-    int                 i, k, c;
-    dmd_triangle_t     *triangles[MAX_LODS];
-    const int           axis[3] = { 0, 2, 1 };
+    dmd_chunk_t chunk;
+    char* temp;
+    dmd_info_t* inf = &mo->info;
+    model_frame_t* frame;
+    int i, k, c;
+    dmd_triangle_t* triangles[MAX_LODS];
+    const int axis[3] = { 0, 2, 1 };
 
     // Read the chunks.
-    F_Read(&chunk, sizeof(chunk), file);
+    DFile_Read(file, (uint8_t*)&chunk, sizeof(chunk));
 
     while(LONG(chunk.type) != DMC_END)
     {
-        switch (LONG(chunk.type))
+        switch(LONG(chunk.type))
         {
         case DMC_INFO:          // Standard DMD information chunk.
-            F_Read(inf, LONG(chunk.length), file);
+            DFile_Read(file, (uint8_t*)inf, LONG(chunk.length));
             inf->skinWidth = LONG(inf->skinWidth);
             inf->skinHeight = LONG(inf->skinHeight);
             inf->frameSize = LONG(inf->frameSize);
@@ -337,19 +332,18 @@ static void R_LoadModelDMD(DFILE *file, model_t *mo)
 
         default:
             // Just skip all unknown chunks.
-            temp = M_Malloc(LONG(chunk.length));
-            F_Read(temp, LONG(chunk.length), file);
-            free(temp);
+            DFile_Seek(file, LONG(chunk.length), SEEK_CUR);
+            break;
         }
         // Read the next chunk header.
-        F_Read(&chunk, sizeof(chunk), file);
+        DFile_Read(file, (uint8_t*)&chunk, sizeof(chunk));
     }
 
     // Allocate and load in the data.
     mo->skins = M_Calloc(sizeof(dmd_skin_t) * inf->numSkins);
-    F_Seek(file, inf->offsetSkins, SEEK_SET);
+    DFile_Seek(file, inf->offsetSkins, SEEK_SET);
     for(i = 0; i < inf->numSkins; ++i)
-        F_Read(mo->skins[i].name, 64, file);
+        DFile_Read(file, (uint8_t*)mo->skins[i].name, 64);
 
     temp = AllocAndLoad(file, inf->offsetFrames,
         inf->frameSize * inf->numFrames);
@@ -388,8 +382,8 @@ static void R_LoadModelDMD(DFILE *file, model_t *mo)
     }
     M_Free(temp);
 
-    F_Seek(file, inf->offsetLODs, SEEK_SET);
-    F_Read(mo->lodInfo, sizeof(dmd_levelOfDetail_t) * inf->numLODs, file);
+    DFile_Seek(file, inf->offsetLODs, SEEK_SET);
+    DFile_Read(file, (uint8_t*)mo->lodInfo, sizeof(dmd_levelOfDetail_t) * inf->numLODs);
 
     for(i = 0; i < inf->numLODs; ++i)
     {
@@ -420,108 +414,172 @@ static void R_LoadModelDMD(DFILE *file, model_t *mo)
         M_Free(triangles[i]);
 }
 
-static void R_RegisterModelSkin(model_t* mdl, int index)
+static boolean registerModelSkin(model_t* mdl, int index)
 {
-    mdl->skins[index].id = R_RegisterSkin(NULL, mdl->skins[index].name,
-        mdl->fileName, false, FILENAME_T_MAXLEN);
+    mdl->skins[index].texture = R_RegisterModelSkin(0, mdl->skins[index].name, mdl->fileName, false);
+    if(mdl->skins[index].texture) return true;
 
-    if(!mdl->skins[index].id)
-    {   // Not found!
-        VERBOSE(Con_Printf("  %s (#%i) not found.\n",
-                           mdl->skins[index].name, index));
-    }
+    Con_Message("Warning: Failed locating skin \"%s\" (#%i) for model \"%s\".\n",
+                mdl->skins[index].name, index, F_PrettyPath(mdl->fileName));
+    return false;
+}
+
+model_t* R_ModelForId(uint modelRepositoryId)
+{
+    assert(modelRepository);
+    return StringPool_UserPointer(modelRepository, modelRepositoryId);
 }
 
 /**
  * Finds the existing model or loads in a new one.
  */
-static int R_LoadModel(char* origfn)
+static int R_LoadModel(const Uri* uri)
 {
-    int                 i, index;
-    model_t*            mdl;
-    DFILE*              file = NULL;
-    filename_t          filename;
+    const char* searchPath;
+    ddstring_t foundPath;
+    DFile* file = NULL;
+    model_t* mdl;
+    int i, foundSkins;
+    uint index;
 
-    if(!origfn || !origfn[0])
-        return 0; // No model specified.
+    if(!uri) return 0;
+    searchPath = Str_Text(Uri_Path(uri));
+    if(!searchPath || !searchPath[0]) return 0;
 
-    if(!R_FindResource2(RT_MODEL, DDRC_MODEL, filename, origfn, NULL,
-                        FILENAME_T_MAXLEN))
+    Str_Init(&foundPath);
+    if(F_FindResource2(RC_MODEL, searchPath, &foundPath) != 0)
     {
-        R_MissingModel(origfn);
+        // Has this been already loaded?
+        index = findModelFor(&foundPath);
+        if(!index)
+        {
+            // Not loaded yet, try to open the file.
+            file = F_Open(Str_Text(&foundPath), "rb");
+            if(!file)
+            {
+                R_MissingModel(Str_Text(&foundPath));
+                Str_Free(&foundPath);
+                return 0;
+            }
+
+            // Allocate a new model_t.
+            index = newModelFor(&foundPath);
+            if(!index)
+            {
+                F_Delete(file);
+                Str_Free(&foundPath);
+                return 0;
+            }
+        }
+    }
+    else
+    {
+        R_MissingModel(searchPath);
+        Str_Free(&foundPath);
         return 0;
     }
 
-    // Has this been already loaded?
-    if((index = R_FindModelFor(filename)) < 0)
-    {
-        // Not loaded yet, try to open the file.
-        if((file = F_Open(filename, "rb")) == NULL)
-        {
-            R_MissingModel(filename);
-            return 0;
-        }
-
-        // Allocate a new model_t.
-        if((index = R_NewModelFor(/*filename*/)) < 0)
-        {
-            F_Close(file);
-            return 0;
-        }
-    }
-
-    mdl = modellist[index];
+    mdl = StringPool_UserPointer(modelRepository, index);
     if(mdl->loaded)
     {
-        if(file)
-            F_Close(file);
+        if(file) F_Delete(file);
+        Str_Free(&foundPath);
         return index; // Already loaded.
     }
 
     // Now we can load in the data.
-    F_Read(&mdl->header, sizeof(mdl->header), file);
+    DFile_Read(file, (uint8_t*)&mdl->header, sizeof(mdl->header));
     if(LONG(mdl->header.magic) == MD2_MAGIC)
-    {   // Load as MD2.
-        F_Rewind(file);
+    {
+        // Load as MD2.
+        DFile_Rewind(file);
         R_LoadModelMD2(file, mdl);
     }
     else if(LONG(mdl->header.magic) == DMD_MAGIC)
-    {   // Load as DMD.
+    {
+        // Load as DMD.
         R_LoadModelDMD(file, mdl);
     }
-    else
-    {   // Bad magic!
+    else // Bad magic!
+    {
         // Cancel the loading.
         M_Free(mdl);
-        modellist[index] = 0;
-        F_Close(file);
+        StringPool_SetUserPointer(modelRepository, index, 0);
+        //modellist[index] = 0;
+        F_Delete(file);
+        Str_Free(&foundPath);
         return 0;
     }
 
     // We're done.
     mdl->loaded = true;
     mdl->allowTexComp = true;
-    F_Close(file);
-    strncpy(mdl->fileName, filename, FILENAME_T_MAXLEN);
+    F_Delete(file);
+    //strncpy(mdl->fileName, Str_Text(&foundPath), FILENAME_T_MAXLEN);
+    mdl->fileName = Str_Text(StringPool_String(modelRepository, index));
 
     // Determine the actual (full) paths.
+    foundSkins = 0;
     for(i = 0; i < mdl->info.numSkins; ++i)
     {
-        R_RegisterModelSkin(mdl, i);
+        if(registerModelSkin(mdl, i))
+        {
+            // We have found one more skin for this model.
+            foundSkins += 1;
+        }
     }
 
+    if(!foundSkins)
+    {
+        // Lastly try a skin named similarly to the model in the same directory.
+        directory_t* mydir = Dir_ConstructFromPathDir(mdl->fileName);
+        AutoStr* skinSearchPath = AutoStr_New();
+
+        F_FileName(skinSearchPath, mdl->fileName);
+        Str_Prepend(skinSearchPath, mydir->path);
+        if(F_FindResourceStr2(RC_GRAPHIC, skinSearchPath, &foundPath))
+        {
+            // Huzzah! we found a skin.
+            Uri* uri = Uri_NewWithPath2(Str_Text(&foundPath), RC_NULL);
+            mdl->skins[0].texture = R_CreateSkinTex(uri, false/*not a shiny skin*/);
+            Uri_Delete(uri);
+
+            foundSkins = 1;
+
+            VERBOSE(
+                Con_Message("Note: Assigned fallback skin \"%s\" to slot #0 for model \"%s\".\n",
+                            F_PrettyPath(Str_Text(&foundPath)), F_PrettyPath(mdl->fileName));
+            )
+        }
+        Dir_Delete(mydir);
+    }
+
+    if(!foundSkins)
+    {
+        Con_Message("Warning: Failed to locate a skin for model \"%s\".\n"
+                    "  This model will be rendered without a skin.\n",
+                    F_PrettyPath(mdl->fileName));
+    }
+
+    // Enlarge the vertex buffers to enable drawing of this model.
+    if(!Rend_ModelExpandVertexBuffers(mdl->info.numVertices))
+    {
+        Con_Message("Warning: Model \"%s\" contains more than %u vertices (%u), it will not be rendered.\n",
+                    Str_Text(&foundPath), (uint)RENDER_MAX_MODEL_VERTS, (uint)mdl->info.numVertices);
+    }
+
+    Str_Free(&foundPath);
     return index;
 }
 
-int R_ModelFrameNumForName(int modelnum, char *fname)
+int R_ModelFrameNumForName(int modelnum, char* fname)
 {
-    int                 i;
-    model_t            *mdl;
+    model_t* mdl;
+    int i;
 
-    if(!modelnum)
-        return 0;
+    if(!modelnum) return 0;
 
-    mdl = modellist[modelnum];
+    mdl = R_ModelForId(modelnum);
     for(i = 0; i < mdl->info.numFrames; ++i)
     {
         if(!stricmp(mdl->frames[i].name, fname))
@@ -533,45 +591,45 @@ int R_ModelFrameNumForName(int modelnum, char *fname)
 /**
  * Returns the appropriate modeldef for the given state.
  */
-static modeldef_t *GetStateModel(state_t *st, int select)
+static modeldef_t* GetStateModel(state_t* st, int select)
 {
-    modeldef_t         *modef, *iter;
-    int                 mosel;
+    modeldef_t* modef, *iter;
+    int mosel;
 
-    if(!st || !stateModefs[st - states])
-        return 0;
+    if(!st || !stateModefs[st - states]) return 0;
 
     modef = stateModefs[st - states];
     mosel = select & DDMOBJ_SELECTOR_MASK;
 
     if(select)
     {
-        boolean             found;
+        boolean found;
 
-        // Choose the correct selector, or selector zero if the given
-        // one not available.
+        // Choose the correct selector, or selector zero if the given one not available.
         found = false;
         for(iter = modef; iter && !found; iter = iter->selectNext)
-            if(iter->select == mosel)
-            {
-                modef = iter;
-                found = true;
-            }
+        {
+            if(iter->select != mosel) continue;
+
+            modef = iter;
+            found = true;
+        }
     }
 
     return modef;
 }
 
-modeldef_t *R_CheckIDModelFor(const char *id)
+modeldef_t* R_CheckIDModelFor(const char* id)
 {
-    int                 i;
+    int i;
 
-    if(!id[0])
-        return NULL;
+    if(!id[0]) return NULL;
 
     for(i = 0; i < numModelDefs; ++i)
+    {
         if(!strcmp(modefs[i].id, id))
             return modefs + i;
+    }
     return NULL;
 }
 
@@ -580,24 +638,23 @@ modeldef_t *R_CheckIDModelFor(const char *id)
  * state and tics of the mobj. Returns the modeldefs that are in effect
  * at the moment (interlinks checked appropriately).
  */
-float R_CheckModelFor(mobj_t *mo, modeldef_t **modef, modeldef_t **nextmodef)
+float R_CheckModelFor(mobj_t* mo, modeldef_t** modef, modeldef_t** nextmodef)
 {
-    float               interp = -1;
-    state_t            *st = mo->state;
-    modeldef_t         *mdit;
-    boolean             worldTime = false;
+    float interp = -1;
+    state_t* st = mo->state;
+    modeldef_t* mdit;
+    boolean worldTime = false;
 
     // By default there are no models.
     *nextmodef = NULL;
     *modef = GetStateModel(st, mo->selector);
-    if(!*modef)
-        return -1; // No model available.
+    if(!*modef) return -1; // No model available.
 
     // World time animation?
     if((*modef)->flags & MFF_WORLD_TIME_ANIM)
     {
-        float               duration = (*modef)->interRange[0];
-        float               offset = (*modef)->interRange[1];
+        float duration = (*modef)->interRange[0];
+        float offset = (*modef)->interRange[1];
 
         // Validate/modify the values.
         if(duration == 0)
@@ -614,12 +671,11 @@ float R_CheckModelFor(mobj_t *mo, modeldef_t **modef, modeldef_t **nextmodef)
         // Calculate the currently applicable intermark.
         interp = 1.0f - (mo->tics - frameTimePos) / (float) st->tics;
     }
-/*
-#if _DEBUG
-if(mo->dPlayer)
-    Con_Printf("itp:%f mot:%i stt:%i\n", interp, mo->tics, st->tics);
-#endif
-*/
+
+/*#if _DEBUG
+    if(mo->dPlayer)
+        Con_Printf("itp:%f mot:%i stt:%i\n", interp, mo->tics, st->tics);
+#endif*/
 
     // First find the modef for the interpoint. Intermark is 'stronger'
     // than interrange.
@@ -647,16 +703,16 @@ if(mo->dPlayer)
     }
     else if(st->nextState > 0) // Check next state.
     {
-        int                 max;
-        boolean             foundNext;
-        state_t            *it;
+        boolean foundNext;
+        state_t* it;
+        int max;
 
         // Find the appropriate state based on interrange.
         it = states + st->nextState;
         foundNext = false;
         if((*modef)->interRange[1] < 1)
         {
-            boolean             stopScan;
+            boolean stopScan;
 
             // Current modef doesn't interpolate to the end, find the
             // proper destination modef (it isn't just the next one).
@@ -676,7 +732,8 @@ if(mo->dPlayer)
                     // Scan interlinks, then go to the next state.
                     if((mdit = GetStateModel(it, mo->selector)) && mdit->interNext)
                     {
-                        boolean                 isDone = false;
+                        boolean isDone = false;
+
                         while(!isDone)
                         {
                             mdit = mdit->interNext;
@@ -709,7 +766,7 @@ if(mo->dPlayer)
                 if(max-- <= 0)
                     stopScan = true;
             }
-            // \fixme What about max == -1? What should 'it' be then?
+            // @todo What about max == -1? What should 'it' be then?
         }
 
         if(!foundNext)
@@ -728,13 +785,14 @@ if(mo->dPlayer)
 
 static model_frame_t* R_GetModelFrame(int model, int frame)
 {
-    return modellist[model]->frames + frame;
+    model_t* ptr = R_ModelForId(model);
+    assert(ptr != 0);
+    return ptr->frames + frame;
 }
 
-static void R_GetModelBounds(int model, int frame, float min[3],
-                             float max[3])
+static void R_GetModelBounds(int model, int frame, float min[3], float max[3])
 {
-    model_frame_t*      mframe = R_GetModelFrame(model, frame);
+    model_frame_t* mframe = R_GetModelFrame(model, frame);
 
     if(!mframe)
         Con_Error("R_GetModelBounds: bad model/frame.\n");
@@ -748,7 +806,7 @@ static void R_GetModelBounds(int model, int frame, float min[3],
  */
 static float R_GetModelHRange(int model, int frame, float *top, float *bottom)
 {
-    float               min[3], max[3];
+    float min[3], max[3];
 
     R_GetModelBounds(model, frame, min, max);
     *top = max[VY];
@@ -761,15 +819,14 @@ static float R_GetModelHRange(int model, int frame, float *top, float *bottom)
  * The measurements are based on submodel zero. The scaling is done
  * uniformly!
  */
-static void R_ScaleModel(modeldef_t *mf, float destHeight, float offset)
+static void R_ScaleModel(modeldef_t* mf, float destHeight, float offset)
 {
-    submodeldef_t      *smf = &mf->sub[0];
-    int                 i;
-    float               top, bottom, height;
-    float               scale;
+    submodeldef_t* smf = &mf->sub[0];
+    float top, bottom, height, scale;
+    int i;
 
-    if(!smf->model)
-        return;                 // No model to scale!
+    // No model to scale?
+    if(!smf->model) return;
 
     // Find the top and bottom heights.
     height = R_GetModelHRange(smf->model, smf->frame, &top, &bottom);
@@ -785,26 +842,38 @@ static void R_ScaleModel(modeldef_t *mf, float destHeight, float offset)
 
 static void R_ScaleModelToSprite(modeldef_t* mf, int sprite, int frame)
 {
-    int                 off;
-    spritedef_t*        spr = &sprites[sprite];
-    material_snapshot_t ms;
+    spritedef_t* spr = &sprites[sprite];
+    const materialvariantspecification_t* spec;
+    const materialsnapshot_t* ms;
+    patchtex_t* pTex;
+    int off;
 
     if(!spr->numFrames || spr->spriteFrames == NULL)
         return;
-    Material_Prepare(&ms, spr->spriteFrames[frame].mats[0], true, NULL);
 
-    off = spriteTextures[ms.units[MTU_PRIMARY].texInst->tex->ofTypeID]->offY -
-        ms.height;
+    spec = Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0,
+        GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false);
+    ms = Materials_Prepare(spr->spriteFrames[frame].mats[0], spec, true);
+
+#if _DEBUG
+    if(Textures_Namespace(Textures_Id(MSU_texture(ms, MTU_PRIMARY))) != TN_SPRITES)
+        Con_Error("R_ScaleModelToSprite: Internal error, material snapshot's primary texture is not a SpriteTex!");
+#endif
+
+    pTex = (patchtex_t*) Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
+    assert(pTex);
+
+    off = -pTex->offY - ms->size.height;
     if(off < 0)
         off = 0;
 
-    R_ScaleModel(mf, ms.height, off);
+    R_ScaleModel(mf, ms->size.height, off);
 }
 
 float R_GetModelVisualRadius(modeldef_t* mf)
 {
-    int                 i;
-    float               maxRadius = 0;
+    float maxRadius = 0;
+    int i;
 
     if(!mf->sub[0].model)
         return 0;
@@ -812,10 +881,9 @@ float R_GetModelVisualRadius(modeldef_t* mf)
     // Use the first frame bounds.
     for(i = 0; i < MAX_FRAME_MODELS; ++i)
     {
-        float               min[3], max[3], radius;
+        float min[3], max[3], radius;
 
-        if(!mf->sub[i].model)
-            break;
+        if(!mf->sub[i].model) break;
 
         R_GetModelBounds(mf->sub[i].model, mf->sub[i].frame, min, max);
 
@@ -833,28 +901,29 @@ float R_GetModelVisualRadius(modeldef_t* mf)
  * Allocate room for a new skin file name. This allows using more than
  * the maximum number of skins.
  */
-static short R_NewModelSkin(model_t *mdl, const char *fileName)
+static short R_NewModelSkin(model_t* mdl, const Uri* path)
 {
-    int                 added = mdl->info.numSkins, i;
+    int added = mdl->info.numSkins, i;
+    const char* fileName = Str_Text(Uri_Path(path));
 
-    mdl->skins =
-        M_Realloc(mdl->skins, sizeof(dmd_skin_t) * ++mdl->info.numSkins);
+    mdl->skins = (dmd_skin_t*)realloc(mdl->skins, sizeof *mdl->skins * ++mdl->info.numSkins);
+    if(!mdl->skins)
+        Con_Error("R_NewModelSkin: Failed on (re)allocation of %lu bytes enlarging DmdSkin list.", sizeof *mdl->skins * mdl->info.numSkins);
     memset(mdl->skins + added, 0, sizeof(dmd_skin_t));
+
     strncpy(mdl->skins[added].name, fileName, 64);
-    R_RegisterModelSkin(mdl, added);
+    registerModelSkin(mdl, added);
 
     // Did we get a dupe?
     for(i = 0; i < mdl->info.numSkins - 1; ++i)
     {
-        if(mdl->skins[i].id == mdl->skins[added].id)
-        {
-            // This is the same skin file.
-            // We did a lot of unnecessary work...
-            mdl->info.numSkins--;
-            mdl->skins =
-                M_Realloc(mdl->skins, sizeof(dmd_skin_t) * mdl->info.numSkins);
-            return i;
-        }
+        if(mdl->skins[i].texture != mdl->skins[added].texture) continue;
+
+        // This is the same skin file. We did a lot of unnecessary work...
+        mdl->skins = (dmd_skin_t*)realloc(mdl->skins, sizeof *mdl->skins * --mdl->info.numSkins);
+        if(!mdl->skins)
+            Con_Error("R_NewModelSkin: Failed on (re)allocation of %lu bytes shrinking DmdSkin list.", sizeof *mdl->skins * mdl->info.numSkins);
+        return i;
     }
 
     return added;
@@ -863,17 +932,16 @@ static short R_NewModelSkin(model_t *mdl, const char *fileName)
 /**
  * Create a new modeldef or find an existing one. This is for ID'd models.
  */
-static modeldef_t *R_GetIDModelDef(const char *id)
+static modeldef_t* R_GetIDModelDef(const char* id)
 {
-    modeldef_t         *md;
+    modeldef_t* md;
 
     // ID defined?
-    if(!id[0])
-        return NULL;
+    if(!id[0]) return NULL;
 
     // First try to find an existing modef.
-    if((md = R_CheckIDModelFor(id)) != NULL)
-        return md;
+    md = R_CheckIDModelFor(id);
+    if(md) return md;
 
     // Get a new entry.
     md = modefs + numModelDefs++;
@@ -886,13 +954,13 @@ static modeldef_t *R_GetIDModelDef(const char *id)
  * Create a new modeldef or find an existing one. There can be only one
  * model definition associated with a state/intermark pair.
  */
-static modeldef_t *R_GetModelDef(int state, float interMark, int select)
+static modeldef_t* R_GetModelDef(int state, float interMark, int select)
 {
-    int                 i;
-    modeldef_t         *md;
+    modeldef_t* md;
+    int i;
 
-    if(state < 0 || state >= countStates.num)
-        return NULL; // Not a valid state.
+    // Is this a valid state?
+    if(state < 0 || state >= countStates.num) return NULL;
 
     // First try to find an existing modef.
     for(i = 0; i < numModelDefs; ++i)
@@ -905,8 +973,7 @@ static modeldef_t *R_GetModelDef(int state, float interMark, int select)
         }
 
     // This is impossible, but checking won't hurt...
-    if(numModelDefs >= maxModelDefs)
-        return NULL;
+    if(numModelDefs >= maxModelDefs) return NULL;
 
     md = modefs + numModelDefs++;
     memset(md, 0, sizeof(*md));
@@ -926,30 +993,28 @@ static modeldef_t *R_GetModelDef(int state, float interMark, int select)
  * State that has a model will have a pointer to the one with the
  * smallest intermark (start of a chain).
  */
-static void setupModel(ded_model_t *def)
+static void setupModel(ded_model_t* def)
 {
-    modeldef_t         *modef;
-    int                 modelScopeFlags = def->flags | defs.modelFlags;
-    ded_submodel_t     *subdef;
-    submodeldef_t      *sub;
-    int                 i, k, statenum = Def_GetStateNum(def->state);
-    float               min[3], max[3];
+    modeldef_t* modef;
+    int modelScopeFlags = def->flags | defs.modelFlags;
+    ded_submodel_t* subdef;
+    submodeldef_t* sub;
+    int i, k, statenum = Def_GetStateNum(def->state);
+    float min[3], max[3];
 
     // Is this an ID'd model?
-    if((modef = R_GetIDModelDef(def->id)) == NULL)
+    modef = R_GetIDModelDef(def->id);
+    if(!modef)
     {
         // No, normal State-model.
         if(statenum < 0)
         {
-            Con_Message("R_SetupModel: Undefined state '%s'.\n", def->state);
+            //Con_Message("R_SetupModel: Undefined state '%s'.\n", def->state);
             return;
         }
 
-        modef =
-            R_GetModelDef(statenum + def->off, def->interMark, def->selector);
-
-        if(!modef)
-            return; // Can't get a modef, quit!
+        modef = R_GetModelDef(statenum + def->off, def->interMark, def->selector);
+        if(!modef) return; // Can't get a modef, quit!
     }
 
     // Init modef info (state & intermark already set).
@@ -976,8 +1041,10 @@ static void setupModel(ded_model_t *def)
     for(i = 0, subdef = def->sub, sub = modef->sub; i < MAX_FRAME_MODELS;
         ++i, subdef++, sub++)
     {
-        sub->model = R_LoadModel(subdef->filename.path);
+        if(!subdef->filename)
+            continue;
 
+        sub->model = R_LoadModel(subdef->filename);
         if(!sub->model)
             continue;
 
@@ -987,14 +1054,49 @@ static void setupModel(ded_model_t *def)
         if(sub->frameRange < 1)
             sub->frameRange = 1;
 
+        sub->alpha = (byte) (255 - subdef->alpha * 255);
+        sub->blendMode = subdef->blendMode;
+
         // Submodel-specific flags cancel out model-scope flags!
         sub->flags = modelScopeFlags ^ subdef->flags;
-        if(subdef->skinFilename.path[0])
+
+        // Flags may override alpha and/or blendmode.
+        if(sub->flags & MFF_BRIGHTSHADOW)
+        {
+            sub->alpha = (byte)(256 * .80f);
+            sub->blendMode = BM_ADD;
+        }
+        else if(sub->flags & MFF_BRIGHTSHADOW2)
+        {
+            sub->blendMode = BM_ADD;
+        }
+        else if(sub->flags & MFF_DARKSHADOW)
+        {
+            sub->blendMode = BM_DARK;
+        }
+        else if(sub->flags & MFF_SHADOW2)
+        {
+            sub->alpha = (byte)(256 * .2f);
+        }
+        else if(sub->flags & MFF_SHADOW1)
+        {
+            sub->alpha = (byte)(256 * .62f);
+        }
+
+        // Extra blendmodes:
+        if(sub->flags & MFF_REVERSE_SUBTRACT)
+        {
+            sub->blendMode = BM_REVERSE_SUBTRACT;
+        }
+        else if(sub->flags & MFF_SUBTRACT)
+        {
+            sub->blendMode = BM_SUBTRACT;
+        }
+
+        if(subdef->skinFilename && !Str_IsEmpty(Uri_Path(subdef->skinFilename)))
         {
             // A specific file name has been given for the skin.
-            sub->skin =
-                R_NewModelSkin(modellist[sub->model],
-                               subdef->skinFilename.path);
+            sub->skin = R_NewModelSkin(R_ModelForId(sub->model), subdef->skinFilename);
         }
         else
         {
@@ -1010,15 +1112,13 @@ static void setupModel(ded_model_t *def)
         for(k = 0; k < 3; ++k)
             sub->offset[k] = subdef->offset[k];
 
-        sub->alpha = (byte) (subdef->alpha * 255);
-        sub->shinySkin = R_RegisterSkin(subdef->filename.path,
-            subdef->shinySkin, NULL, true, DED_PATH_LEN);
+        sub->shinySkin = R_RegisterModelSkin(NULL, subdef->shinySkin, R_ModelForId(sub->model)->fileName, true);
 
         // Should we allow texture compression with this model?
         if(sub->flags & MFF_NO_TEXCOMP)
         {
             // All skins of this model will no longer use compression.
-            modellist[sub->model]->allowTexComp = false;
+            R_ModelForId(sub->model)->allowTexComp = false;
         }
     }
 
@@ -1093,23 +1193,58 @@ static void setupModel(ded_model_t *def)
     }
 }
 
+static int destroyModelInRepository(StringPoolId id, void* parm)
+{
+    model_t* m = StringPool_UserPointer(modelRepository, id);
+    int k;
+
+    M_Free(m->skins);
+    //M_Free(modellist[i]->texCoords);
+    for(k = 0; k < m->info.numFrames; ++k)
+    {
+        M_Free(m->frames[k].vertices);
+        M_Free(m->frames[k].normals);
+    }
+    M_Free(m->frames);
+
+    for(k = 0; k < m->info.numLODs; ++k)
+    {
+        //M_Free(modellist[i]->lods[k].triangles);
+        M_Free(m->lods[k].glCommands);
+    }
+    M_Free(m->vertexUsage);
+    M_Free(m);
+
+    return 0;
+}
+
+static void clearModelList(void)
+{
+    if(!modelRepository) return;
+
+    StringPool_Iterate(modelRepository, destroyModelInRepository, 0);
+}
+
 /**
  * States must be initialized before this.
  */
 void R_InitModels(void)
 {
-    int                 i, k, minsel;
-    float               minmark;
-    modeldef_t*         me, *other, *closest;
-    uint                usedTime;
+    int i, k, minsel;
+    float minmark;
+    modeldef_t* me, *other, *closest;
+    uint usedTime;
 
     // Dedicated servers do nothing with models.
-    if(isDedicated || ArgCheck("-nomd2"))
+    if(isDedicated || CommandLine_Check("-nomd2"))
         return;
 
-    Con_Message("R_InitModels: Initializing MD2 models.\n");
+    modelRepository = StringPool_New();
+
+    VERBOSE( Con_Message("Initializing Models...\n") )
     usedTime = Sys_GetRealTime();
 
+    clearModelList();
     if(modefs)
         M_Free(modefs);
 
@@ -1127,7 +1262,12 @@ void R_InitModels(void)
     // Use the latest definition available for each sprite ID.
     for(i = defs.count.models.num - 1; i >= 0; --i)
     {
-        //Con_Progress(1, PBARF_DONTSHOW);
+        if(!(i % 100))
+        {
+            // This may take a while, so keep updating the progress.
+            Con_SetProgress(130 + 70*(defs.count.models.num - i)/defs.count.models.num);
+        }
+
         setupModel(defs.models + i);
     }
 
@@ -1182,19 +1322,15 @@ if(closest)
 #endif*/
     }
 
-    Con_Message("R_InitModels: Done in %.2f seconds.\n",
-                (Sys_GetRealTime() - usedTime) / 1000.0f);
+    VERBOSE2( Con_Message("R_InitModels: Done in %.2f seconds.\n", (Sys_GetRealTime() - usedTime) / 1000.0f) );
 }
 
 /**
  * Frees all memory allocated for models.
- * \fixme Why only centralized memory deallocation? Bad design...
+ * @todo Why only centralized memory deallocation? Bad design...
  */
 void R_ShutdownModels(void)
 {
-    int                 i, k;
-    model_t            *m;
-
     if(modefs)
         M_Free(modefs);
     modefs = NULL;
@@ -1202,28 +1338,12 @@ void R_ShutdownModels(void)
         M_Free(stateModefs);
     stateModefs = NULL;
 
-    for(i = 1; i < MAX_MODELS; ++i)
+    clearModelList();
+
+    if(modelRepository)
     {
-        if(!(m = modellist[i]))
-            continue;
-
-        M_Free(m->skins);
-        //M_Free(modellist[i]->texCoords);
-        for(k = 0; k < m->info.numFrames; ++k)
-        {
-            M_Free(m->frames[k].vertices);
-            M_Free(m->frames[k].normals);
-        }
-        M_Free(m->frames);
-
-        for(k = 0; k < m->info.numLODs; ++k)
-        {
-            //M_Free(modellist[i]->lods[k].triangles);
-            M_Free(m->lods[k].glCommands);
-        }
-        M_Free(m->vertexUsage);
-        M_Free(m);
-        modellist[i] = NULL;
+        StringPool_Delete(modelRepository);
+        modelRepository = 0;
     }
 }
 
@@ -1237,81 +1357,70 @@ void R_SetModelFrame(modeldef_t* modef, int frame)
         if(!modef->sub[k].model)
             continue;
 
-        mdl = modellist[modef->sub[k].model];
+        mdl = R_ModelForId(modef->sub[k].model);
         // Modify the modeldef itself: set the current frame.
         modef->sub[k].frame = frame % mdl->info.numFrames;
     }
 }
 
-void R_PrecacheModelSkins(modeldef_t* modef)
+void R_PrecacheModel(modeldef_t* modef)
 {
-    int                 k, sub;
-    model_t*            mdl;
-
-    if(!(useModels && precacheSkins))
-        return;
+    int k, sub;
+    model_t* mdl;
 
     // Precache this.
     for(sub = 0; sub < MAX_FRAME_MODELS; ++sub)
     {
-        const skinname_t*       sn;
+        Texture* tex;
 
-        if(!modef->sub[sub].model)
-            continue;
+        if(!modef->sub[sub].model) continue;
 
-        mdl = modellist[modef->sub[sub].model];
+        mdl = R_ModelForId(modef->sub[sub].model);
         // Load all skins.
         for(k = 0; k < mdl->info.numSkins; ++k)
         {
-            if((sn = R_GetSkinNameByIndex(mdl->skins[k].id)))
+            tex = mdl->skins[k].texture;
+            if(tex)
             {
-                material_load_params_t params;
-
-                memset(&params, 0, sizeof(params));
-                params.flags = (!mdl->allowTexComp? MLF_TEX_NO_COMPRESSION : 0);
-
-                GL_PrepareGLTexture(sn->id, &params, NULL);
+                GL_PrepareTexture(tex, Rend_ModelDiffuseTextureSpec(!mdl->allowTexComp));
             }
         }
 
-        // Load the shiny skin.
-        if((sn = R_GetSkinNameByIndex(modef->sub[sub].shinySkin)))
+        // Load the shiny skin too.
+        tex = modef->sub[sub].shinySkin;
+        if(tex)
         {
-            GL_PrepareGLTexture(sn->id, NULL, NULL);
+            GL_PrepareTexture(tex, Rend_ModelShinyTextureSpec());
         }
     }
 }
 
-void R_PrecacheSkinsForState(int stateIndex)
+void R_PrecacheModelsForState(int stateIndex)
 {
-    if(stateIndex <= 0 || stateIndex >= defs.count.states.num ||
-       !stateModefs[stateIndex])
-        return;
+    if(!useModels) return;
+    if(stateIndex <= 0 || stateIndex >= defs.count.states.num) return;
+    if(!stateModefs[stateIndex]) return;
 
-    R_PrecacheModelSkins(stateModefs[stateIndex]);
+    R_PrecacheModel(stateModefs[stateIndex]);
 }
 
-/**
- * The skins are also bound here once so they should be ready for use the
- * next time they're needed.
- */
-int R_PrecacheSkinsForMobj(thinker_t* th, void* context)
+int R_PrecacheModelsForMobj(thinker_t* th, void* context)
 {
-    int                 i;
-    mobj_t*             mo = (mobj_t*) th;
-    modeldef_t*         modef;
+    mobj_t* mo = (mobj_t*) th;
+    modeldef_t* modef;
+    int i;
+
+    if(!(useModels && precacheSkins))
+        return true;
 
     // Check through all the model definitions.
     for(i = 0, modef = modefs; i < numModelDefs; ++i, modef++)
     {
-        if(!modef->state)
-            continue;
-        if(mo->type < 0 || mo->type >= defs.count.mobjs.num)
-            continue; // Hmm?
-        if(stateOwners[modef->state - states] != &mobjInfo[mo->type])
-            continue;
+        if(!modef->state) continue;
+        if(mo->type < 0 || mo->type >= defs.count.mobjs.num) continue; // Hmm?
+        if(stateOwners[modef->state - states] != &mobjInfo[mo->type]) continue;
 
-        R_PrecacheModelSkins(modef);
+        R_PrecacheModel(modef);
     }
 
     return false; // Used as iterator.

@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -106,11 +106,11 @@ typedef struct player_s {
     boolean         centering; // The player's view pitch is centering back to zero.
     int             update, startSpot;
 
-    float           viewOffset[3]; // Relative to position of the player mobj.
-    float           viewZ; // Focal origin above r.z.
-    float           viewHeight; // Base height above floor for viewZ.
-    float           viewHeightDelta;
-    float           bob; // Bounded/scaled total momentum.
+    coord_t         viewOffset[3]; // Relative to position of the player mobj.
+    coord_t         viewZ; // Focal origin above r.z.
+    coord_t         viewHeight; // Base height above floor for viewZ.
+    coord_t         viewHeightDelta;
+    coord_t         bob; // Bounded/scaled total momentum.
 
     // Target view to a mobj (NULL=disabled):
     mobj_t*         viewLock; // $democam

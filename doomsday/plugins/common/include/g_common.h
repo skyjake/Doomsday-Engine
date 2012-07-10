@@ -1,10 +1,10 @@
-/**\file
+/**\file g_common.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,18 +22,13 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * g_common.h:
- */
-
-#ifndef __COMMON_GAME_H__
-#define __COMMON_GAME_H__
+#ifndef LIBCOMMON_GAME_H
+#define LIBCOMMON_GAME_H
 
 #include "dd_share.h"
 #include "g_controls.h"
+#include "mobj.h"
 #include "common.h"
-
-#define OBSOLETE        CVF_HIDE|CVF_NO_ARCHIVE
 
 enum {
     JOYAXIS_NONE,
@@ -46,24 +41,25 @@ enum {
 extern boolean singledemo;
 
 void            G_Register(void);
-void            G_PreInit(void);
-void            G_PostInit(void);
 void            G_StartTitle(void);
+void            G_StartHelp(void);
+void            G_EndGame(void);
 
-gamestate_t     G_GetGameState(void);
+gamestate_t     G_GameState(void);
 void            G_ChangeGameState(gamestate_t state);
 
-gameaction_t    G_GetGameAction(void);
+gameaction_t    G_GameAction(void);
 void            G_SetGameAction(gameaction_t action);
+
+boolean G_QuitInProgress(void);
 
 int             P_CameraXYMovement(mobj_t* mo);
 int             P_CameraZMovement(mobj_t* mo);
-void            P_Thrust3D(struct player_s* player, angle_t angle,
-                           float lookdir, int forwardmove, int sidemove);
+void            P_Thrust3D(struct player_s* player, angle_t angle, float lookdir, coord_t forwardMove, coord_t sideMove);
 
-DEFCC( CCmdMakeLocal );
-DEFCC( CCmdSetCamera );
-DEFCC( CCmdSetViewLock );
-DEFCC( CCmdLocalMessage );
-DEFCC( CCmdExitLevel );
-#endif
+D_CMD( CCmdMakeLocal );
+D_CMD( CCmdSetCamera );
+D_CMD( CCmdSetViewLock );
+D_CMD( CCmdLocalMessage );
+D_CMD( CCmdExitLevel );
+#endif /* LIBCOMMON_GAME_H */

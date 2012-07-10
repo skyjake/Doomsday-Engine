@@ -1,138 +1,133 @@
 <?php
-/*
- * The Doomsday Master Server 2.0
- * by Jaakko Keranen <jaakko.keranen@iki.fi>
+/**
+ * @file master.php
+ * Doomsday Master Server interface
  *
- * This file is the main interface to the master server.
+ * @section License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation; either version 2 of the License, or (at your option)
+ * any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+ *
+ * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2009-2012 Daniel Swanson <danij@dengine.net>
  */
 
-require('masterdb.php');
+require_once('classes/masterserver.class.php');
 
 function write_server($info)
 {
-	// We will not write empty infos.
-	if(count($info) <= 10) return;
-	
-	$db = new Database;	
-	$db->insert($info);
-	$db->close();
+    // We will not write empty infos.
+    if(count($info) <= 10) return;
+
+    $ms = new MasterServer(true/*writable*/);
+    $ms->insert($info);
 }
 
 function update_server($announcement, $addr)
 {
-	$info = array();
-	
-	// First we must determine if the announcement is valid.
-	$lines = split("\n", $announcement);
-	while(list($line_number, $line) = each($lines))
-	{
-		// Separate the label from the value.
-		$colon = strpos($line, ":");
+    $info = array();
 
-		// It must exist near the beginning.
-		if($colon === false || $colon >= 16) continue;
-		
-		$label = substr($line, 0, $colon);
-		$value = substr($line, $colon + 1, strlen($line) - $colon - 1);
-		
-		// Let's make sure we know the label.
-		if(in_array($label, array("port", "ver", "map", "game", "name", 
-			"info", "nump", "maxp", "open", "mode", "setup", "iwad", "pwads",
-			"wcrc", "plrn",	"data0", "data1", "data2"))
-			&& strlen($value) < 128)
-		{
-			// This will be included in the datafile.
-			$info[$label] = $value;
-		}
-	}
+    // First we must determine if the announcement is valid.
+    $lines = split("\n", $announcement);
+    while(list($line_number, $line) = each($lines))
+    {
+        // Separate the label from the value.
+        $colon = strpos($line, ":");
 
-	// Also include the remote address.
-	$info['at'] = $addr;
-	$info['time'] = time();
-	
-	// Let's write this info into the datafile.
-	write_server($info);
+        // It must exist near the beginning.
+        if($colon === false || $colon >= 16) continue;
+
+        $label = substr($line, 0, $colon);
+        $value = substr($line, $colon + 1, strlen($line) - $colon - 1);
+
+        // Let's make sure we know the label.
+        if(in_array($label, array("port", "ver", "map", "game", "name",
+            "info", "nump", "maxp", "open", "mode", "setup", "iwad", "pwads",
+            "wcrc", "plrn", "data0", "data1", "data2"))
+            && strlen($value) < 128)
+        {
+            // This will be included in the datafile.
+            $info[$label] = $value;
+        }
+    }
+
+    // Also include the remote address.
+    $info['at'] = $addr;
+    $info['time'] = time();
+
+    // Let's write this info into the datafile.
+    write_server($info);
 }
 
 function answer_request()
 {
-	$db = new Database;	
-    $db->load();
-    
-	while(list($ident, $info) = each($db->servers))
-	{
-		while(list($label, $value) = each($info))
-		{
-			if($label != "time") print "$label:$value\n";
-		}
-		// An empty line ends the server.
-		print "\n";
-	}
-	$db->close();
+    $ms = new MasterServer();
+    while(list($ident, $info) = each($ms->servers))
+    {
+        while(list($label, $value) = each($info))
+        {
+            if($label != "time") print "$label:$value\n";
+        }
+        // An empty line ends the server.
+        print "\n";
+    }
 }
 
-function web_page()
+function return_xmllog()
 {
-	$db = new Database;
-    $db->load();
-	
-	print '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">';
-	print "\n<html><head><title>Public Doomsday Servers</title></head>\n";
-	print "<body>\n";
-	print "<p>Server list at " . date("D, j M Y H:i:s O") . ":</p>\n";
-	print "<table border=1 cellpadding=4>\n";
-	print "<tr><th>Open <th>Location <th>Name <th>Info " .
-		"<th>Version\n";
-		
-	//<th>Map <th>Setup <th>WAD <th>Players <th>Who's Playing?
-	
-	while(list($ident, $info) = each($db->servers))
-	{
-		print "<tr><td>";
-		print $info['open']? "Yes" : "<font color=\"red\">No</font>";
-		print "<td>{$info['at']}:{$info['port']}";
-		print "<td>" . $info['name'];
-		print "<td>" . $info['info'];
-		print "<td>Doomsday {$info['ver']}, {$info['game']}";
-		
-		print "<tr><td><th>Setup<td>";
-		
-		print "{$info['mode']} <td colspan=2>{$info['map']} {$info['setup']}";
-		
-		print "<tr><td><th>WADs<td colspan=3>";
-		print "{$info['iwad']} (" . dechex($info['wcrc']) . ") {$info['pwads']}";
-		
-		print "<tr><td><th>Players<td colspan=3>";
-		print "{$info['nump']} / {$info['maxp']}: ";
-	  print "{$info['plrn']}";
-	}
-	
-	print "</table></body></html>\n";
-		
-	$db->close();
+    $ms = new MasterServer();
+    // Update the log if necessary.
+    $logPath = $ms->xmlLogFile();
+
+    if($logPath !== false)
+    {
+        $result = file_get_contents_utf8($logPath, 'text/xml', 'utf-8');
+        if($result !== false)
+        {
+            // Return the log to the client.
+            header("Content-Type: text/xml; charset=utf-8");
+            echo mb_ereg_replace('http', 'https', $result);
+        }
+    }
 }
 
-//global $HTTP_SERVER_VARS;
+$query = $HTTP_SERVER_VARS['QUERY_STRING'];
 
-$query  = $HTTP_SERVER_VARS['QUERY_STRING'];
-$remote = $HTTP_SERVER_VARS['REMOTE_ADDR'];
- 
-// There are three operating modes:
+// There are four operating modes:
 // 1. Server announcement processing.
-// 2. Answering a request for servers.
-// 3. WWW-friendly presentation for web browsers.
+// 2. Answering a request for servers (returns plain text).
+// 3. Retrieve a log of recent events (returns XML file).
+// 4. Web page.
 
-if($HTTP_RAW_POST_DATA && !$query)
+if(isset($GLOBALS['HTTP_RAW_POST_DATA']) && !$query)
 {
-	update_server($HTTP_RAW_POST_DATA, $remote);
+    $announcement = $GLOBALS['HTTP_RAW_POST_DATA'];
+    $remote = $HTTP_SERVER_VARS['REMOTE_ADDR'];
+
+    update_server($announcement, $remote);
 }
-else if($query == "list")
+else if($query == 'list')
 {
-	answer_request();
+    answer_request();
+}
+else if($query == 'xml')
+{
+    return_xmllog();
 }
 else
 {
-	web_page();
+    // Forward this request to the server browser interface.
+    header("Location: http://dengine.net/masterserver");
 }
-
-?>

@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -75,9 +75,9 @@ void Cl_InitID(void)
     FILE*               file;
     size_t              result;
 
-    if((i = ArgCheckWith("-id", 1)) != 0)
+    if((i = CommandLine_CheckWith("-id", 1)) != 0)
     {
-        clientID = strtoul(Argv(i + 1), 0, 0);
+        clientID = strtoul(CommandLine_At(i + 1), 0, 0);
         Con_Message("Cl_InitID: Using custom id 0x%08x.\n", clientID);
         return;
     }
@@ -115,9 +115,13 @@ void Cl_CleanUp(void)
     clientPaused = false;
     handshakeReceived = false;
 
-    Cl_DestroyClientMobjs();
+    if(theMap)
+    {
+        GameMap_DestroyClMobjs(theMap);
+    }
+
     Cl_InitPlayers();
-    Cl_RemoveMovers();
+    Cl_WorldReset();
     GL_SetFilter(false);
 }
 
@@ -134,7 +138,7 @@ void Cl_SendHello(void)
 
     // The game mode is included in the hello packet.
     memset(buf, 0, sizeof(buf));
-    strncpy(buf, (char *) gx.GetVariable(DD_GAME_MODE), sizeof(buf) - 1);
+    strncpy(buf, Str_Text(Game_IdentityKey(theGame)), sizeof(buf) - 1);
 
 #ifdef _DEBUG
     Con_Message("Cl_SendHello: game mode = %s\n", buf);
@@ -175,9 +179,18 @@ void Cl_AnswerHandshake(void)
     gameTime = remoteGameTime;
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
+        /// @todo With multiple local players, must clear only the appropriate flags.
+        ddPlayers[i].shared.flags &= ~DDPF_LOCAL;
+
         ddPlayers[i].shared.inGame = (playersInGame & (1 << i)) != 0;
     }
     consolePlayer = displayPlayer = myConsole;
+    clients[consolePlayer].viewConsole = consolePlayer;
+
+    // Mark us as the only local player.
+    ddPlayers[consolePlayer].shared.flags |= DDPF_LOCAL;
+
+    Smoother_Clear(clients[consolePlayer].smoother);
 
     isClient = true;
     isServer = false;
@@ -204,8 +217,8 @@ void Cl_AnswerHandshake(void)
     gx.NetPlayerEvent(consolePlayer, DDPE_ARRIVAL, 0);
 
     // Prepare the client-side data.
-    Cl_InitClientMobjs();
-    Cl_InitMovers();
+    Cl_InitPlayers();
+    Cl_WorldInit();
 
     // Get ready for ticking.
     DD_ResetTimer();
@@ -322,6 +335,18 @@ void Cl_GetPackets(void)
             Cl_AnswerHandshake();
             break;
 
+        case PSV_MATERIAL_ARCHIVE:
+            Cl_ReadServerMaterials();
+            break;
+
+        case PSV_MOBJ_TYPE_ID_LIST:
+            Cl_ReadServerMobjTypeIDs();
+            break;
+
+        case PSV_MOBJ_STATE_ID_LIST:
+            Cl_ReadServerMobjStateIDs();
+            break;
+
         case PKT_PLAYER_INFO:
             Cl_HandlePlayerInfo();
             break;
@@ -365,6 +390,10 @@ void Cl_GetPackets(void)
             // Server responds to our login request. Let's see if we
             // were successful.
             netLoggedIn = Reader_ReadByte(msgReader);
+            break;
+
+        case PSV_FINALE:
+            Cl_Finale(msgReader);
             break;
 
         default:
@@ -454,9 +483,9 @@ void Cl_Ticker(timespan_t ticLength)
             if(ddPlayers[i].shared.mo)
             {
                 Smoother_AddPos(clients[i].smoother, Cl_FrameGameTime(),
-                                ddPlayers[i].shared.mo->pos[VX],
-                                ddPlayers[i].shared.mo->pos[VY],
-                                ddPlayers[i].shared.mo->pos[VZ],
+                                ddPlayers[i].shared.mo->origin[VX],
+                                ddPlayers[i].shared.mo->origin[VY],
+                                ddPlayers[i].shared.mo->origin[VZ],
                                 false);
             }
 
@@ -465,14 +494,17 @@ void Cl_Ticker(timespan_t ticLength)
         }
 
         ClPlayer_ApplyPendingFixes(i);
-        ClPlayer_UpdatePos(i);
+        ClPlayer_UpdateOrigin(i);
 
 #ifdef _DEBUG
         Cl_Assertions(i);
 #endif
     }
 
-    Cl_ExpireMobjs();
+    if(theMap)
+    {
+        GameMap_ExpireClMobjs(theMap);
+    }
 }
 
 /**

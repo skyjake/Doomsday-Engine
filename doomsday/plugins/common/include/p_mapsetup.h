@@ -1,10 +1,10 @@
-/**\file
+/**\file p_mapsetup.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,20 +23,19 @@
  */
 
 /**
- * p_setup.c: Common map setup routines.
+ * Common map setup routines
  */
 
-#ifndef __COMMON_PLAYSETUP_H__
-#define __COMMON_PLAYSETUP_H__
+#ifndef LIBCOMMON_PLAYSETUP_H
+#define LIBCOMMON_PLAYSETUP_H
 
 #define numvertexes (*(uint*) DD_GetVariable(DD_VERTEX_COUNT))
-#define numsegs     (*(uint*) DD_GetVariable(DD_SEG_COUNT))
+#define numhedges   (*(uint*) DD_GetVariable(DD_HEDGE_COUNT))
 #define numsectors  (*(uint*) DD_GetVariable(DD_SECTOR_COUNT))
-#define numsubsectors (*(uint*) DD_GetVariable(DD_SUBSECTOR_COUNT))
-#define numnodes    (*(uint*) DD_GetVariable(DD_NODE_COUNT))
+#define numbspleafs (*(uint*) DD_GetVariable(DD_BSPLEAF_COUNT))
+#define numbspnodes (*(uint*) DD_GetVariable(DD_BSPNODE_COUNT))
 #define numlines    (*(uint*) DD_GetVariable(DD_LINE_COUNT))
 #define numsides    (*(uint*) DD_GetVariable(DD_SIDE_COUNT))
-#define nummaterials (*(uint*) DD_GetVariable(DD_MATERIAL_COUNT))
 
 #if __JHEXEN__
 #define numpolyobjs (*(uint*) DD_GetVariable(DD_POLYOBJ_COUNT))
@@ -45,9 +44,15 @@
 // If true we are in the process of setting up a map.
 extern boolean mapSetup;
 
-void        P_SetupForMapData(int type, uint num);
+void P_SetupForMapData(int type, uint num);
 
-void        P_SetupMap(uint episode, uint map, int playermask, skillmode_t skill);
+/**
+ * Load the specified map.
+ */
+void P_SetupMap(uint episode, uint map);
+
 const char* P_GetMapNiceName(void);
-const char* P_GetMapAuthor(boolean surpressIWADAuthors);
-#endif
+patchid_t P_FindMapTitlePatch(uint episode, uint map);
+const char* P_GetMapAuthor(boolean supressGameAuthor);
+
+#endif /* LIBCOMMON_PLAYSETUP_H */

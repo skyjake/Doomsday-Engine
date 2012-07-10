@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -45,7 +45,6 @@
 #include "p_mapsetup.h"
 #include "p_saveg.h"
 #include "p_xg.h"
-#include "p_svtexarc.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -65,7 +64,7 @@
 
 // CODE --------------------------------------------------------------------
 
-void SV_WriteXGLine(linedef_t *li)
+void SV_WriteXGLine(LineDef *li)
 {
     xgline_t *xg;
     linetype_t *info;
@@ -97,7 +96,7 @@ void SV_WriteXGLine(linedef_t *li)
     SV_WriteFloat(xg->chTimer);
 }
 
-void SV_ReadXGLine(linedef_t *li)
+void SV_ReadXGLine(LineDef *li)
 {
     xgline_t *xg;
     xline_t *xline = P_ToXLine(li);
@@ -207,10 +206,10 @@ void SV_ReadXGSector(struct sector_s *sec)
     SV_ReadXGFunction(xg, &xg->light);
 }
 
-void SV_WriteXGPlaneMover(thinker_t *th)
+void SV_WriteXGPlaneMover(thinker_t* th)
 {
-    uint        i;
-    xgplanemover_t *mov = (xgplanemover_t *) th;
+    xgplanemover_t* mov = (xgplanemover_t*) th;
+    uint i;
 
     SV_WriteByte(3); // Version.
 
@@ -219,17 +218,17 @@ void SV_WriteXGPlaneMover(thinker_t *th)
     SV_WriteLong(mov->flags);
 
     i = P_ToIndex(mov->origin);
-    if(i >= numlines)  // Is it a real line?
-        i = 0;         // No...
-    else
+    if(i < numlines) // Is it a real line?
         i++;
+    else // No.
+        i = 0;
 
     SV_WriteLong(i); // Zero means there is no origin.
 
     SV_WriteLong(FLT2FIX(mov->destination));
     SV_WriteLong(FLT2FIX(mov->speed));
     SV_WriteLong(FLT2FIX(mov->crushSpeed));
-    SV_WriteLong(SV_MaterialArchiveNum(mov->setMaterial));
+    SV_WriteLong(MaterialArchive_FindUniqueSerialId(SV_MaterialArchive(), mov->setMaterial));
     SV_WriteLong(mov->setSectorType);
     SV_WriteLong(mov->startSound);
     SV_WriteLong(mov->endSound);
@@ -244,29 +243,39 @@ void SV_WriteXGPlaneMover(thinker_t *th)
  */
 int SV_ReadXGPlaneMover(xgplanemover_t* mov)
 {
-    int                 i, num;
-    byte                ver;
-
-    ver = SV_ReadByte(); // Version.
+    byte ver = SV_ReadByte(); // Version.
 
     mov->sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
-
     mov->ceiling = SV_ReadByte();
     mov->flags = SV_ReadLong();
 
-    i = SV_ReadLong();
-    if(i)
-        mov->origin = P_ToPtr(DMU_LINEDEF, i - 1);
+    {
+    int lineDefIndex = SV_ReadLong();
+    if(lineDefIndex > 0)
+        mov->origin = P_ToPtr(DMU_LINEDEF, lineDefIndex - 1);
+    }
 
     mov->destination = FIX2FLT(SV_ReadLong());
     mov->speed = FIX2FLT(SV_ReadLong());
     mov->crushSpeed = FIX2FLT(SV_ReadLong());
-    num = SV_ReadLong();
+
     if(ver >= 3)
-        mov->setMaterial = SV_GetArchiveMaterial(num, 0);
+    {
+        mov->setMaterial = SV_GetArchiveMaterial(SV_ReadLong(), 0);
+    }
     else
-        mov->setMaterial = P_ToPtr(DMU_MATERIAL,
-            P_MaterialNumForName(W_LumpName(num), MN_FLATS));
+    {
+        // Flat number is an absolute lump index.
+        Uri* uri = Uri_NewWithPath2(MN_FLATS_NAME":", RC_NULL);
+        ddstring_t name;
+        Str_Init(&name);
+        F_FileName(&name, W_LumpName(SV_ReadLong()));
+        Uri_SetPath(uri, Str_Text(&name));
+        mov->setMaterial = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
+        Uri_Delete(uri);
+        Str_Free(&name);
+    }
+
     mov->setSectorType = SV_ReadLong();
     mov->startSound = SV_ReadLong();
     mov->endSound = SV_ReadLong();

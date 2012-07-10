@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,8 +36,6 @@
 #  include "jheretic.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
-#elif __JSTRIFE__
-#  include "jstrife.h"
 #endif
 
 #include "p_actor.h"
@@ -48,6 +46,7 @@
 #include "hu_menu.h"
 #include "hu_msg.h"
 #include "d_netsv.h"
+#include "r_common.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -127,7 +126,7 @@ void P_DoTick(void)
     P_ThunderSector();
 #endif
 
-    P_DoDeferredSpawns();
+    P_ProcessDeferredSpawns();
 
 #if __JHERETIC__
     P_AmbientSound();

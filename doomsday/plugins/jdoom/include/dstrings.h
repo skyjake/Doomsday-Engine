@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <skyjake@dengine.net>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <skyjake@dengine.net>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -42,10 +42,5 @@
  */
 #define DEVMAPS             "devmaps"
 #define DEVDATA             "devdata"
-
-// QuitDOOM messages:
-#define NUM_QUITMESSAGES    22
-
-extern char *endmsg[NUM_QUITMESSAGES + 1];
 
 #endif

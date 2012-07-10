@@ -9,5 +9,11 @@ win32 {
     zlibs.path = $$DENG_LIB_DIR
 }
 else:macx {
+    # Mac OS X.
     LIBS += -lz
+}
+else {
+    # Generic Unix.
+    QMAKE_CFLAGS += $$system(pkg-config zlib --cflags)
+    LIBS += $$system(pkg-config zlib --libs)
 }

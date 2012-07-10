@@ -1,0 +1,56 @@
+# Chex Quest - Map metadata
+#
+# For further information on Map Info definition syntax and semantics see:
+#
+#   http://dengine.net/dew/?title=Map_Info
+#
+
+Header { Version = 5; }
+
+# The default definition, used for any maps without a map info definition.
+Map Info {
+  ID = "*";
+  Author = "Unknown";
+  Music = "e1m1";
+  Gravity = 1;
+  Sky = "sky1";
+}
+
+Map Info {
+  ID = "E1M1";
+  Name = "HUSTR_E1M1";
+  Author = "Digital Cafe";
+  Music = "e1m1";
+  Par time = 30;
+  Gravity = 1;
+  Sky = "sky1";
+}
+
+Copy Map Info {
+  ID = "E1M2";
+  Name = "HUSTR_E1M2";
+  Music = "e1m2";
+  Par time = 75;
+}
+
+Copy Map Info {
+  ID = "E1M3";
+  Name = "HUSTR_E1M3";
+  Music = "e1m3";
+  Par time = 120;
+}
+
+Copy Map Info {
+  ID = "E1M4";
+  Name = "HUSTR_E1M4";
+  Music = "e1m4";
+  Par time = 90;
+}
+
+Copy Map Info {
+  ID = "E1M5";
+  Name = "HUSTR_E1M5";
+  Music = "e1m5";
+  Flags = nointermission;
+  Par time = 165;
+}

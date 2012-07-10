@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -29,14 +29,17 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "jhexen.h"
 
 // MACROS ------------------------------------------------------------------
 
-#define MAX_SCRIPTNAME_LEN      (32)
+#define SCRIPTNAME_MAXLEN       (33)
+#define SCRIPTNAME_LASTINDEX    (32)
+
 #define MAX_STRING_SIZE         (64)
 #define ASCII_COMMENT           (';')
 #define ASCII_QUOTE             (34)
@@ -63,13 +66,12 @@ const char* sc_ScriptsDir = "";
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static char ScriptName[MAX_SCRIPTNAME_LEN+1];
-static char* ScriptBuffer;
-static char* ScriptPtr;
-static char* ScriptEndPtr;
+static char ScriptName[SCRIPTNAME_MAXLEN];
+static const char* ScriptBuffer;
+static const char* ScriptPtr;
+static const char* ScriptEndPtr;
 static char StringBuffer[MAX_STRING_SIZE];
 static boolean ScriptOpen = false;
-static boolean ScriptFreeCLib; // true = de-allocate using free()
 static size_t ScriptSize;
 static boolean AlreadyGot = false;
 
@@ -83,16 +85,19 @@ static void checkOpen(void)
     }
 }
 
-static void openScriptLump(lumpnum_t lump)
+static void openScriptLump(lumpnum_t lumpNum)
 {
     SC_Close();
 
-    strcpy(ScriptName, W_LumpName(lump));
-
-    ScriptBuffer = (char *) W_CacheLumpNum(lump, PU_STATIC);
-    ScriptSize = W_LumpLength(lump);
-
-    ScriptFreeCLib = false; // De-allocate using Z_Free()
+    ScriptBuffer = (const char*)W_CacheLump(lumpNum, PU_GAMESTATIC);
+    if(NULL == ScriptBuffer)
+    {
+        Con_Message("Warning:SC_OpenLump: Failed caching lump index #%i, ignoring.\n", lumpNum);
+        return;
+    }
+    ScriptSize = W_LumpLength(lumpNum);
+    memset(ScriptName, 0, sizeof(*ScriptName));
+    strncpy(ScriptName, W_LumpName(lumpNum), sizeof(*ScriptName)-1);
 
     ScriptPtr = ScriptBuffer;
     ScriptEndPtr = ScriptPtr + ScriptSize;
@@ -105,28 +110,19 @@ static void openScriptLump(lumpnum_t lump)
 
 static void openScriptFile(const char* name)
 {
+    char* bufferHandle;
+    // Close any other open script file.
     SC_Close();
 
-    ScriptSize = M_ReadFile(name, (byte **) &ScriptBuffer);
-    M_ExtractFileBase(ScriptName, name, MAX_SCRIPTNAME_LEN);
-    ScriptFreeCLib = false; // De-allocate using Z_Free()
+    ScriptSize = M_ReadFile(name, &bufferHandle);
+    if(0 == ScriptSize)
+    {
+        Con_Message("Warning:SC_Open: Failed opening \"%s\" for reading.\n", name);
+        return;
+    }
 
-    ScriptPtr = ScriptBuffer;
-    ScriptEndPtr = ScriptPtr + ScriptSize;
-    sc_Line = 1;
-    sc_End = false;
-    ScriptOpen = true;
-    sc_String = StringBuffer;
-    AlreadyGot = false;
-}
-
-static void openScriptCLib(const char* name)
-{
-    SC_Close();
-
-    ScriptSize = M_ReadFileCLib(name, (byte **) &ScriptBuffer);
-    M_ExtractFileBase(ScriptName, name, MAX_SCRIPTNAME_LEN);
-    ScriptFreeCLib = true;  // De-allocate using free()
+    ScriptBuffer = bufferHandle;
+    F_ExtractFileBase(ScriptName, name, SCRIPTNAME_LASTINDEX);
 
     ScriptPtr = ScriptBuffer;
     ScriptEndPtr = ScriptPtr + ScriptSize;
@@ -139,65 +135,43 @@ static void openScriptCLib(const char* name)
 
 void SC_Open(const char* name)
 {
-    char                fileName[128];
-
     if(sc_FileScripts == true)
     {
+        char fileName[128];
         sprintf(fileName, "%s%s.txt", sc_ScriptsDir, name);
         SC_OpenFile(fileName);
     }
     else
     {
-        lumpnum_t           lump = W_CheckNumForName(name);
-
-        if(lump == -1)
-            Con_Error("SC_Open: Failed opening lump %s.\n", name);
-
-        SC_OpenLump(lump);
+        SC_OpenLump(W_CheckLumpNumForName(name));
     }
 }
 
 /**
  * Loads a script (from the WAD files) and prepares it for parsing.
  */
-void SC_OpenLump(lumpnum_t lump)
+void SC_OpenLump(lumpnum_t lumpNum)
 {
-    openScriptLump(lump);
-}
-
-/**
- * Loads a script (from a file) and prepares it for parsing.  Uses the
- * zone memory allocator for memory allocation and de-allocation.
- */
-void SC_OpenFile(const char* name)
-{
-    openScriptFile(name);
+    openScriptLump(lumpNum);
 }
 
 /**
  * Loads a script (from a file) and prepares it for parsing.  Uses C
  * library function calls for memory allocation and de-allocation.
  */
-void SC_OpenFileCLib(const char* name)
+void SC_OpenFile(const char* name)
 {
-    openScriptCLib(name);
+    openScriptFile(name);
 }
 
 void SC_Close(void)
 {
-    if(ScriptOpen)
-    {
-        if(ScriptFreeCLib == true)
-        {
-            free(ScriptBuffer);
-        }
-        else
-        {
-            Z_Free(ScriptBuffer);
-        }
+    if(!ScriptOpen)
+        return;
 
-        ScriptOpen = false;
-    }
+    Z_Free((char*)ScriptBuffer);
+    ScriptBuffer = NULL;
+    ScriptOpen = false;
 }
 
 boolean SC_GetString(void)

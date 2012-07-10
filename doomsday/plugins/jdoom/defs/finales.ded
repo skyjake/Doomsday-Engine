@@ -1,76 +1,7 @@
-# jDoom: Intermissions and Finales
+# jDoom: Default intermissions and Finales
 # (see Doc\InFine.txt)
 
 Header { Version = 5; }
-
-InFine 
-{
-  ID = "title";
-  Script {
-    # There is no skipping during the titlescreen loop.
-    NoSkip 
-    
-    # Any event shows the menu.
-    Trigger
-    
-    MARKER title_loop
-
-    # Step 1.
-    Patch back 0 0 "TITLEPIC"
-    IF commercial DO
-      MusicOnce "dm2ttl"
-      Wait 13 # Original was 11; this'll play the whole song.
-    ;
-    ELSE DO
-      MusicOnce "intro"
-      Wait 4.857 # Original wait is 170 tics.
-    ;
-        
-    # Step 2.
-    IF MODE:doom1-share     PlayDemo "sdemo1.cdm"
-    IF MODE:doom1           PlayDemo "rdemo1.cdm"
-    IF MODE:doom1-ultimate  PlayDemo "udemo1.cdm"
-    IF MODE:doom2           PlayDemo "2demo1.cdm"
-    IF MODE:doom2-plut      PlayDemo "pdemo1.cdm"
-    IF MODE:doom2-tnt       PlayDemo "tdemo1.cdm"
-
-    # Step 3.
-    Set back "CREDIT"
-    Wait 5.714 # Original is 200 tics.
-      
-    # Step 4.
-    IF MODE:doom1-share     PlayDemo "sdemo2.cdm"
-    IF MODE:doom1           PlayDemo "rdemo2.cdm"
-    IF MODE:doom1-ultimate  PlayDemo "udemo2.cdm"
-    IF MODE:doom2           PlayDemo "2demo2.cdm"
-    IF MODE:doom2-plut      PlayDemo "pdemo2.cdm"
-    IF MODE:doom2-tnt       PlayDemo "tdemo2.cdm"
-    
-    # Step 5.
-    IF commercial DO
-      Set back "TITLEPIC"
-      Music "dm2ttl"
-      Wait 13 # Original was 11.
-    ;
-    ELSE DO
-      IF ultimate Set back "CREDIT" ELSE Set back "HELP2"
-      Wait 5.714 # 200 tics.
-    ;
-      
-    # Step 6.
-    IF MODE:doom1-share     PlayDemo "sdemo3.cdm"
-    IF MODE:doom1           PlayDemo "rdemo3.cdm"
-    IF MODE:doom1-ultimate  PlayDemo "udemo3.cdm"
-    IF MODE:doom2           PlayDemo "2demo3.cdm"
-    IF MODE:doom2-plut      PlayDemo "pdemo3.cdm"
-    IF MODE:doom2-tnt       PlayDemo "tdemo3.cdm"
-
-    # Step 7.
-    IF ultimate PlayDemo "udemo4.cdm"
-      
-    GOTO title_loop
-  };
-}
 
 InFine {
   ID = "imp";
@@ -187,11 +118,3 @@ InFine {
     CanSkip    
   };
 }
-
-IncludeIf doom1 "doom1finales.ded";
-IncludeIf doom1-share "doom1finales.ded";
-IncludeIf doom1-ultimate "doom1finales.ded";
-
-IncludeIf doom2 "doom2finales.ded";
-IncludeIf doom2-tnt "doom2-tntfinales.ded";
-IncludeIf doom2-plut "doom2-plutfinales.ded";

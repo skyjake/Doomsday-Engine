@@ -1,45 +1,42 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2009-2011 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * sys_network.h: Low-Level Network Services
+ * @file sys_network.h
+ * Low-level network socket routines. @ingroup network
+ *
+ * @see @ref sysNetwork
+ *
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2009-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-#ifndef __DOOMSDAY_SYSTEM_NETWORK_H__
-#define __DOOMSDAY_SYSTEM_NETWORK_H__
+#ifndef LIBDENG_SYSTEM_NETWORK_H
+#define LIBDENG_SYSTEM_NETWORK_H
 
 #include "dd_share.h"
 #include "net_buf.h"
+#include "monitor.h"
 
 #ifdef __cplusplus
-extern          "C" {
+extern "C" {
 #endif
-
-#include "con_decl.h"
 
 #define DEFAULT_TCP_PORT    13209
 #define DEFAULT_UDP_PORT    13209
+
+    typedef void (*expectedresponder_t)(int, const byte*, int);
 
     // If a master action fails, the action queue is emptied.
     typedef enum {
@@ -48,7 +45,6 @@ extern          "C" {
         MAC_LIST // Print the server list in the console.
     } masteraction_t;
 
-    extern size_t   maxDatagramSize;
     extern boolean  allowSending;
     extern int      maxQueuePackets;
 
@@ -72,26 +68,21 @@ extern          "C" {
     void            N_ShutdownService(void);
     boolean         N_IsAvailable(void);
     boolean         N_UsingInternet(void);
-    boolean         N_LookForHosts(const char *address, int port);
+    void            N_PrintInfo(void);
+    boolean         N_LookForHosts(const char *address, int port, expectedresponder_t responder);
+    void            N_ClientHandleResponseToInfoQuery(int nodeId, const byte *data, int size);
     void            N_Listen(void);
-    void            N_ListenUnjoinedNodes(void);
+    void            N_ListenNodes(void);
 
     boolean         N_Connect(int index);
     boolean         N_Disconnect(void);
     boolean         N_ServerOpen(void);
     boolean         N_ServerClose(void);
 
-    /*
-    void            N_SendDataBuffer(void *data, size_t size,
-                                     nodeid_t destination);*/
-    void            N_SendDataBufferReliably(void *data, size_t size,
-                                             nodeid_t destination);
-    void            N_ReturnBuffer(void *handle);
-    //uint            N_GetSendQueueCount(int player);
-    //uint            N_GetSendQueueSize(int player);
     void            N_TerminateNode(nodeid_t id);
-    //void            N_FlushOutgoing(void);
 
+    int             N_GetNodeSocket(nodeid_t id);
+    boolean         N_HasNodeJoined(nodeid_t id);
     boolean         N_GetNodeName(nodeid_t id, char *name);
     const char     *N_GetProtocolName(void);
 
@@ -103,4 +94,5 @@ extern          "C" {
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif /* LIBDENG_SYSTEM_NETWORK_H */

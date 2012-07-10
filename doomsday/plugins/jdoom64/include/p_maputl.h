@@ -3,7 +3,7 @@
  * License: GPL + jHeretic/jHexen Exception
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2009-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2009-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,11 +34,6 @@
 
 #include "p_mobj.h"
 
-#define OPENRANGE           (*(float*) DD_GetVariable(DD_OPENRANGE))
-#define OPENTOP             (*(float*) DD_GetVariable(DD_OPENTOP))
-#define OPENBOTTOM          (*(float*) DD_GetVariable(DD_OPENBOTTOM))
-#define LOWFLOOR            (*(float*) DD_GetVariable(DD_LOWFLOOR))
-
-void            P_ApplyTorque(mobj_t *mo);
+void P_ApplyTorque(mobj_t* mo);
 
 #endif

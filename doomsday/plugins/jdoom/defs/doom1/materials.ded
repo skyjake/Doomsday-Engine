@@ -1,0 +1,180 @@
+# DOOM - Material Enhancements
+#
+# Patch the Material definitions created automatically by the engine,
+# adding new effects to them.
+#
+# For further information on Material definition syntax and semantics see:
+#
+#   http://dengine.net/dew/?title=Ded_material
+
+Header { Version = 6; }
+
+SkipIf -nodefaultfx;
+
+#
+# Glowing flats:
+#
+
+Material Mods "flats:NUKAGE1" {
+  Layer {
+      Stage { Glow = .5;  Tics = 24; Rnd = .5; }
+      Stage { Glow = .44; Tics = 24; Rnd = .5; }
+  }
+}
+
+Material Mods "flats:NUKAGE2" {
+  Layer {
+      Stage { Glow = .5;  Tics = 24; Rnd = .5; }
+      Stage { Glow = .44; Tics = 24; Rnd = .5; }
+  }
+}
+
+Material Mods "flats:NUKAGE3" {
+  Layer {
+      Stage { Glow = .5;  Tics = 24; Rnd = .5; }
+      Stage { Glow = .44; Tics = 24; Rnd = .5; }
+  }
+}
+
+# The rest of this file is skipped if DOOM - shareware.
+SkipIf doom1-share;
+
+Material Mods "flats:LAVA1" {
+  Layer {
+      Stage { Glow = 1.8; Tics = 35; Rnd = .8; }
+      Stage { Glow = 1.6; Tics = 35; Rnd = .8; }
+  }
+}
+
+Material Mods "flats:LAVA2" {
+  Layer {
+      Stage { Glow = 1.8; Tics = 35; Rnd = .8; }
+      Stage { Glow = 1.6; Tics = 35; Rnd = .8; }
+  }
+}
+
+Material Mods "flats:LAVA3" {
+  Layer {
+      Stage { Glow = 1.8; Tics = 35; Rnd = .8; }
+      Stage { Glow = 1.6; Tics = 35; Rnd = .8; }
+  }
+}
+
+Material Mods "flats:LAVA4" {
+  Layer {
+      Stage { Glow = 1.8; Tics = 35; Rnd = .8; }
+      Stage { Glow = 1.6; Tics = 35; Rnd = .8; }
+  }
+}
+
+Material Mods "flats:FWATER1" {
+  Layer {
+      Stage { Glow = .116; Tics = 24; Rnd = .5; }
+      Stage { Glow = .033; Tics = 24; Rnd = .5; }
+  }
+}
+
+Material Mods "flats:FWATER2" {
+  Layer {
+      Stage { Glow = .116; Tics = 24; Rnd = .5; }
+      Stage { Glow = .066; Tics = 24; Rnd = .5; }
+  }
+}
+
+Material Mods "flats:FWATER3" {
+  Layer {
+      Stage { Glow = .116; Tics = 24; Rnd = .5; }
+      Stage { Glow = .066; Tics = 24; Rnd = .5; }
+  }
+}
+
+Material Mods "flats:FWATER4" {
+  Layer {
+      Stage { Glow = .116; Tics = 24; Rnd = .5; }
+      Stage { Glow = .066; Tics = 24; Rnd = .5; }
+  }
+}
+
+# The rest of this file is skipped if HacX.
+SkipIf hacx;
+
+#
+# Glowing textures:
+#
+
+Material Mods "textures:FIREBLU1" {
+  Layer {
+      Stage { Glow = 1.8; Tics = 17; Rnd = .8; }
+      Stage { Glow = 1.6; Tics = 17; Rnd = .8; }
+  }
+}
+
+Material Mods "textures:FIREBLU2" {
+  Layer {
+      Stage { Glow = 1.8; Tics = 17; Rnd = .8; }
+      Stage { Glow = 1.6; Tics = 17; Rnd = .8; }
+  }
+}
+
+Material Mods "textures:FIRELAVA" {
+  Layer {
+      Stage { Glow = 1.8; Tics = 17; Rnd = .8; }
+      Stage { Glow = 1.6; Tics = 17; Rnd = .8; }
+  }
+}
+
+Material Mods "textures:FIRELAV2" {
+  Layer {
+      Stage { Glow = 1.8; Tics = 17; Rnd = .8; }
+      Stage { Glow = 1.6; Tics = 17; Rnd = .8; }
+  }
+}
+
+Material Mods "textures:FIRELAV3" {
+  Layer {
+      Stage { Glow = 1.8; Tics = 17; Rnd = .8; }
+      Stage { Glow = 1.6; Tics = 17; Rnd = .8; }
+  }
+}
+
+Material Mods "textures:FIREMAG1" {
+  Layer {
+      Stage { Glow = 1.8; Tics = 17; Rnd = .8; }
+      Stage { Glow = 1.6; Tics = 17; Rnd = .8; }
+  }
+}
+
+Material Mods "textures:FIREMAG2" {
+  Layer {
+      Stage { Glow = 1.8; Tics = 17; Rnd = .8; }
+      Stage { Glow = 1.6; Tics = 17; Rnd = .8; }
+  }
+}
+
+Material Mods "textures:FIREMAG3" {
+  Layer {
+      Stage { Glow = 1.8; Tics = 17; Rnd = .8; }
+      Stage { Glow = 1.6; Tics = 17; Rnd = .8; }
+  }
+}
+
+Material Mods "textures:FIREWALL" {
+  Layer {
+      Stage { Glow = 1.8; Tics = 17; Rnd = .8; }
+      Stage { Glow = 1.6; Tics = 17; Rnd = .8; }
+  }
+}
+
+Material Mods "textures:FIREWALA" {
+  Layer {
+      Stage { Glow = 1.8; Tics = 17; Rnd = .8; }
+      Stage { Glow = 1.6; Tics = 17; Rnd = .8; }
+  }
+}
+
+Material Mods "textures:FIREWALB" {
+  Layer {
+      Stage { Glow = 1.8; Tics = 17; Rnd = .8; }
+      Stage { Glow = 1.6; Tics = 17; Rnd = .8; }
+  }
+}

@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -50,7 +50,7 @@
 #define MINIMUM_FRAME_SIZE  1800 // bytes
 
 // The first frame should contain as much information as possible.
-#define MAX_FIRST_FRAME_SIZE    NETBUFFER_MAXDATA // 256000
+#define MAX_FIRST_FRAME_SIZE    64000
 
 // The frame size is calculated by multiplying the bandwidth rating
 // (max 100) with this factor (+min).
@@ -98,7 +98,7 @@ void Sv_TransmitFrame(void)
     int                 i, cTime, numInGame, pCount;
 
     // Obviously clients don't transmit anything.
-    if(!allowFrames || isClient)
+    if(!allowFrames || isClient || Sys_IsShuttingDown())
     {
         return;
     }
@@ -249,13 +249,19 @@ void Sv_WriteMobjDelta(const void* deltaPtr)
     if(d->selector & ~DDMOBJ_SELECTOR_MASK)
         df |= MDF_SELSPEC;
 
+    // Omit NULL state.
+    if(!d->state)
+    {
+        df &= ~MDF_STATE;
+    }
+
     /*
     // Floor/ceiling z?
-    if(df & MDF_POS_Z)
+    if(df & MDF_ORIGIN_Z)
     {
         if(d->pos[VZ] == DDMINFLOAT || d->pos[VZ] == DDMAXFLOAT)
         {
-            df &= ~MDF_POS_Z;
+            df &= ~MDF_ORIGIN_Z;
             df |= MDF_MORE_FLAGS;
             moreFlags |= (d->pos[VZ] == DDMINFLOAT ? MDFE_Z_FLOOR : MDFE_Z_CEILING);
         }
@@ -284,24 +290,24 @@ void Sv_WriteMobjDelta(const void* deltaPtr)
     }
 
     // Coordinates with three bytes.
-    if(df & MDF_POS_X)
+    if(df & MDF_ORIGIN_X)
     {
-        fixed_t vx = FLT2FIX(d->pos[VX]);
+        fixed_t vx = FLT2FIX(d->origin[VX]);
 
         Writer_WriteInt16(msgWriter, vx >> FRACBITS);
         Writer_WriteByte(msgWriter, vx >> 8);
     }
-    if(df & MDF_POS_Y)
+    if(df & MDF_ORIGIN_Y)
     {
-        fixed_t vy = FLT2FIX(d->pos[VY]);
+        fixed_t vy = FLT2FIX(d->origin[VY]);
 
         Writer_WriteInt16(msgWriter, vy >> FRACBITS);
         Writer_WriteByte(msgWriter, vy >> 8);
     }
 
-    if(df & MDF_POS_Z)
+    if(df & MDF_ORIGIN_Z)
     {
-        fixed_t vz = FLT2FIX(d->pos[VZ]);
+        fixed_t vz = FLT2FIX(d->origin[VZ]);
         Writer_WriteInt16(msgWriter, vz >> FRACBITS);
         Writer_WriteByte(msgWriter, vz >> 8);
 
@@ -337,8 +343,9 @@ void Sv_WriteMobjDelta(const void* deltaPtr)
     if(df & MDF_SELSPEC)
         Writer_WriteByte(msgWriter, d->selector >> 24);
 
-    if((df & MDF_STATE) && d->state)
+    if(df & MDF_STATE)
     {
+        assert(d->state != 0);
         Writer_WritePackedUInt16(msgWriter, d->state - states);
     }
 
@@ -502,9 +509,9 @@ void Sv_WriteSectorDelta(const void* deltaPtr)
     Writer_WritePackedUInt32(msgWriter, df);
 
     if(df & SDF_FLOOR_MATERIAL)
-        Writer_WritePackedUInt16(msgWriter, P_ToMaterialNum(d->planes[PLN_FLOOR].surface.material));
+        Writer_WritePackedUInt16(msgWriter, Sv_IdForMaterial(d->planes[PLN_FLOOR].surface.material));
     if(df & SDF_CEILING_MATERIAL)
-        Writer_WritePackedUInt16(msgWriter, P_ToMaterialNum(d->planes[PLN_CEILING].surface.material));
+        Writer_WritePackedUInt16(msgWriter, Sv_IdForMaterial(d->planes[PLN_CEILING].surface.material));
     if(df & SDF_LIGHT)
     {
         // Must fit into a byte.
@@ -554,31 +561,6 @@ void Sv_WriteSectorDelta(const void* deltaPtr)
         Writer_WriteByte(msgWriter, (byte) (255 * d->planes[PLN_CEILING].surface.rgba[1]));
     if(df & SDF_CEIL_COLOR_BLUE)
         Writer_WriteByte(msgWriter, (byte) (255 * d->planes[PLN_CEILING].surface.rgba[2]));
-
-    /*
-    if(df & SDF_FLOOR_GLOW_RED)
-        Writer_WriteByte(msgWriter, (byte) (255 * d->planes[PLN_FLOOR].glowRGB[0]));
-    if(df & SDF_FLOOR_GLOW_GREEN)
-        Writer_WriteByte(msgWriter, (byte) (255 * d->planes[PLN_FLOOR].glowRGB[1]));
-    if(df & SDF_FLOOR_GLOW_BLUE)
-        Writer_WriteByte(msgWriter, (byte) (255 * d->planes[PLN_FLOOR].glowRGB[2]));
-
-    if(df & SDF_CEIL_GLOW_RED)
-        Writer_WriteByte(msgWriter, (byte) (255 * d->planes[PLN_CEILING].glowRGB[0]));
-    if(df & SDF_CEIL_GLOW_GREEN)
-        Writer_WriteByte(msgWriter, (byte) (255 * d->planes[PLN_CEILING].glowRGB[1]));
-    if(df & SDF_CEIL_GLOW_BLUE)
-        Writer_WriteByte(msgWriter, (byte) (255 * d->planes[PLN_CEILING].glowRGB[2]));
-
-    if(df & SDF_FLOOR_GLOW)
-        Msg_WriteShort(d->planes[PLN_FLOOR].glow < 0 ? 0 :
-                       d->planes[PLN_FLOOR].glow > 1 ? DDMAXSHORT :
-                       (short)(d->planes[PLN_FLOOR].glow * DDMAXSHORT));
-    if(df & SDF_CEIL_GLOW)
-        Msg_WriteShort(d->planes[PLN_CEILING].glow < 0 ? 0 :
-                       d->planes[PLN_CEILING].glow > 1 ? DDMAXSHORT :
-                       (short)(d->planes[PLN_CEILING].glow * DDMAXSHORT));
-                       */
 }
 
 /**
@@ -597,11 +579,11 @@ void Sv_WriteSideDelta(const void* deltaPtr)
     Writer_WritePackedUInt32(msgWriter, df);
 
     if(df & SIDF_TOP_MATERIAL)
-        Writer_WritePackedUInt16(msgWriter, P_ToMaterialNum(d->top.material));
+        Writer_WritePackedUInt16(msgWriter, Sv_IdForMaterial(d->top.material));
     if(df & SIDF_MID_MATERIAL)
-        Writer_WritePackedUInt16(msgWriter, P_ToMaterialNum(d->middle.material));
+        Writer_WritePackedUInt16(msgWriter, Sv_IdForMaterial(d->middle.material));
     if(df & SIDF_BOTTOM_MATERIAL)
-        Writer_WritePackedUInt16(msgWriter, P_ToMaterialNum(d->bottom.material));
+        Writer_WritePackedUInt16(msgWriter, Sv_IdForMaterial(d->bottom.material));
 
     if(df & SIDF_LINE_FLAGS)
         Writer_WriteByte(msgWriter, d->lineFlags);
@@ -659,9 +641,9 @@ void Sv_WritePolyDelta(const void* deltaPtr)
     Writer_WriteByte(msgWriter, df & 0xff);
 
     if(df & PODF_DEST_X)
-        Writer_WriteFloat(msgWriter, d->dest.pos[VX]);
+        Writer_WriteFloat(msgWriter, d->dest[VX]);
     if(df & PODF_DEST_Y)
-        Writer_WriteFloat(msgWriter, d->dest.pos[VY]);
+        Writer_WriteFloat(msgWriter, d->dest[VY]);
     if(df & PODF_SPEED)
         Writer_WriteFloat(msgWriter, d->speed);
     if(df & PODF_DEST_ANGLE)
@@ -736,6 +718,7 @@ if(type >= NUM_DELTA_TYPES)
 
     if(delta->state == DELTA_UNACKED)
     {
+        assert(false);
         // Flag this as Resent.
         type |= DT_RESENT;
     }
@@ -851,8 +834,8 @@ size_t Sv_GetMaxFrameSize(int playerNumber)
     size_t              size = MINIMUM_FRAME_SIZE + FRAME_SIZE_FACTOR * clients[playerNumber].bandwidthRating;
 
     // What about the communications medium?
-    if(size > maxDatagramSize)
-        size = maxDatagramSize;
+    if(size > PROTOCOL_MAX_DATAGRAM_SIZE)
+        size = PROTOCOL_MAX_DATAGRAM_SIZE;
 
     return size;
 }
@@ -915,26 +898,6 @@ void Sv_SendFrame(int plrNum)
     // First send the gameTime of this frame.
     Writer_WriteFloat(msgWriter, gameTime);
 
-    /*
-    // The first byte contains the set number, which identifies this
-    // frame. The client will keep track of the numbers to detect
-    // duplicates.
-    Writer_WriteByte(msgWriter, pool->setDealer);
-    */
-
-    // The number of deltas in the packet will be here.
-    //deltaCountOffset = Msg_Offset();
-    /*
-#ifdef _NETDEBUG
-    Msg_WriteLong(0);
-#endif
-    */
-
-/*
-#ifdef _DEBUG
-Con_Printf("set%i\n", pool->setDealer);
-#endif
-*/
     // Keep writing until the maximum size is reached.
     while((delta = Sv_PoolQueueExtract(pool)) != NULL &&
           (lastStart = Writer_Size(msgWriter)) < maxFrameSize)

@@ -1,10 +1,10 @@
-/**\file
+/**\file r_draw.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,18 +23,24 @@
  */
 
 /**
- * r_draw.h: Drawing Routines
+ * Misc drawing routines.
  */
 
-#ifndef __DOOMSDAY_REFRESH_DRAW_H__
-#define __DOOMSDAY_REFRESH_DRAW_H__
+#ifndef LIBDENG_REFRESH_DRAW_H
+#define LIBDENG_REFRESH_DRAW_H
 
-extern byte    *translationTables;
+#include "texture.h"
 
-void            R_InitTranslationTables(void);
-void            R_UpdateTranslationTables(void);
-void            R_InitViewBorder(void);
-void            R_SetBorderGfx(char *gfx[9]);
-void            R_DrawViewBorder(void);
+void R_InitViewWindow(void);
+void R_ShutdownViewWindow(void);
 
-#endif
+void R_SetBorderGfx(const Uri* const* paths);
+void R_DrawViewBorder(void);
+
+void R_DrawPatch(Texture* texture, int x, int y);
+void R_DrawPatch2(Texture* texture, int x, int y, int w, int h);
+void R_DrawPatch3(Texture* texture, int x, int y, int w, int h, boolean useOffsets);
+
+void R_DrawPatchTiled(Texture* texture, int x, int y, int w, int h, int wrapS, int wrapT);
+
+#endif /* LIBDENG_REFRESH_DRAW_H */

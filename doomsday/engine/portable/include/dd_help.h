@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,8 +26,8 @@
  * dd_help.h: Help Text Strings
  */
 
-#ifndef __DOOMSDAY_HELP_H__
-#define __DOOMSDAY_HELP_H__
+#ifndef LIBDENG_HELP_H
+#define LIBDENG_HELP_H
 
 // Help string types.
 enum {
@@ -38,10 +38,13 @@ enum {
     NUM_HELPSTRING_TYPES
 };
 
-void            DH_Register(void);
-void            DD_InitHelp(void);
-void            DD_ShutdownHelp(void);
-void           *DH_Find(const char *id);
-char           *DH_GetString(void *found, int type);
+void DH_Register(void);
 
-#endif
+void DD_InitHelp(void);
+void DD_ReadGameHelp(void);
+void DD_ShutdownHelp(void);
+
+void* DH_Find(const char* id);
+char* DH_GetString(void* found, int type);
+
+#endif /* LIBDENG_HELP_H */

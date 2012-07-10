@@ -1,9 +1,9 @@
-/**\file
+/**\file jdoom64.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  */
 
 /**
- * jdoom64.h: All jDoom64 Headers
+ * All jDoom64 Headers
  *
  * A convenience header for including all jDoom64 headers.
  */
@@ -44,15 +44,12 @@
 #include "../../jdoom64/include/info.h"
 #include "../../jdoom64/include/m_cheat.h"
 #include "../../jdoom64/include/m_random.h"
-#include "../../jdoom64/include/m_menu.h"
-#include "../../jdoom64/include/mn_def.h"
 #include "../../jdoom64/include/p_enemy.h"
 #include "../../jdoom64/include/p_inter.h"
 #include "../../jdoom64/include/p_lights.h"
 #include "../../jdoom64/include/p_maputl.h"
 #include "../../jdoom64/include/p_pspr.h"
 #include "../../jdoom64/include/p_setup.h"
-#include "../../jdoom64/include/p_sound.h"
 #include "../../jdoom64/include/p_spec.h"
 #include "../../jdoom64/include/p_telept.h"
 #include "../../jdoom64/include/r_defs.h"

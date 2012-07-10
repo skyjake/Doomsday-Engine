@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -49,7 +49,7 @@ typedef struct sfxchannel_s {
     int             flags;
     sfxbuffer_t*    buffer;
     mobj_t*         emitter; // Mobj that is emitting the sound.
-    float           pos[3]; // Emit from here (synced with emitter).
+    coord_t         origin[3]; // Emit from here (synced with emitter).
     float           volume; // Sound volume: 1.0 is max.
     float           frequency; // Frequency adjustment: 1.0 is normal.
     int             startTime; // When was the channel last started?
@@ -60,22 +60,26 @@ extern float sfxReverbStrength;
 extern int sfxMaxCacheKB, sfxMaxCacheTics;
 extern int sfxBits, sfxRate;
 extern int sfx3D, sfx16Bit, sfxSampleRate;
+extern byte sfxOneSoundPerEmitter;
 
 boolean         Sfx_Init(void);
 void            Sfx_Shutdown(void);
 void            Sfx_Reset(void);
 void            Sfx_AllowRefresh(boolean allow);
 void            Sfx_MapChange(void);
+void            Sfx_SetListener(mobj_t* mobj);
 void            Sfx_StartFrame(void);
 void            Sfx_EndFrame(void);
 void            Sfx_PurgeCache(void);
 void            Sfx_RefreshChannels(void);
 int             Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
-                               mobj_t* emitter, float* fixedpos, int flags);
+                               mobj_t* emitter, coord_t* fixedpos, int flags);
 int             Sfx_StopSound(int id, mobj_t* emitter);
+int             Sfx_StopSoundWithLowerPriority(int id, mobj_t* emitter, ddboolean_t byPriority);
 void            Sfx_StopSoundGroup(int group, mobj_t* emitter);
 int             Sfx_CountPlaying(int id);
 void            Sfx_UnloadSoundID(int id);
+void            Sfx_UpdateReverb(void);
 
 void            Sfx_DebugInfo(void);
 

@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,41 +23,24 @@
  */
 
 /**
- * p_mapspec.c: Line Tag handling. Line and Sector groups.
- *
- * Specialized iteration routines, respective utility functions...
+ * Crossed line special list and other Map utility functions.
  */
 
-#ifndef __COMMON_MAP_SPEC_H__
-#define __COMMON_MAP_SPEC_H__
+#ifndef LIBCOMMON_MAP_SPEC_H
+#define LIBCOMMON_MAP_SPEC_H
 
 #include "p_iterlist.h"
 
-extern iterlist_t *spechit; // for crossed line specials.
-extern iterlist_t *linespecials; // for surfaces that tick eg wall scrollers.
+/// For crossed line specials.
+extern iterlist_t* spechit;
 
-void            P_DestroyLineTagLists(void);
-iterlist_t     *P_GetLineIterListForTag(int tag, boolean createNewList);
+typedef struct spreadsoundtoneighborsparams_s {
+    Sector* baseSec;
+    int soundBlocks;
+    mobj_t* soundTarget;
+} spreadsoundtoneighborsparams_t;
 
-void            P_DestroySectorTagLists(void);
-iterlist_t     *P_GetSectorIterListForTag(int tag, boolean createNewList);
+/// Recursively traverse adjacent sectors, sound blocking lines cut off traversal.
+void P_RecursiveSound(struct mobj_s* soundTarget, Sector* sec, int soundBlocks);
 
-sector_t*       P_GetNextSector(linedef_t *line, sector_t *sec);
-
-sector_t*       P_FindSectorSurroundingLowestFloor(sector_t *sec, float max, float *val);
-sector_t*       P_FindSectorSurroundingHighestFloor(sector_t *sec, float min, float *val);
-sector_t*       P_FindSectorSurroundingLowestCeiling(sector_t *sec, float max, float *val);
-sector_t*       P_FindSectorSurroundingHighestCeiling(sector_t *sec, float min, float *val);
-sector_t*       P_FindSectorSurroundingLowestLight(sector_t *sector, float *val);
-sector_t*       P_FindSectorSurroundingHighestLight(sector_t *sector, float *val);
-
-sector_t*       P_FindSectorSurroundingNextHighestFloor(sector_t *sec, float baseHeight, float *val);
-sector_t*       P_FindSectorSurroundingNextLowestFloor(sector_t *sec, float baseHeight, float *val);
-sector_t*       P_FindSectorSurroundingNextHighestCeiling(sector_t *sec, float baseHeight, float *val);
-sector_t*       P_FindSectorSurroundingNextLowestCeiling(sector_t *sec, float baseHeight, float *val);
-sector_t*       P_FindSectorSurroundingNextLowestLight(sector_t *sector, float baseLight, float *val);
-sector_t*       P_FindSectorSurroundingNextHighestLight(sector_t *sector, float baseLight, float *val);
-
-void            P_RecursiveSound(struct mobj_s *soundTarget, sector_t *sec, int soundBlocks);
-
-#endif
+#endif /* LIBCOMMON_MAP_SPEC_H */

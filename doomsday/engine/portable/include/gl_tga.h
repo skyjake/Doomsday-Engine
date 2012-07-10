@@ -1,10 +1,10 @@
-/**\file
+/**\file gl_tga.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2009-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2009-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,48 +23,75 @@
  */
 
 /**
- * gl_tga.h: TGA Images
+ * Truevision TGA (a.k.a Targa) image reader/writer.
  */
 
-#ifndef __TARGA_FILE_FORMAT_LIB__
-#define __TARGA_FILE_FORMAT_LIB__
+#ifndef LIBDENG_GRAPHICS_TGA_H
+#define LIBDENG_GRAPHICS_TGA_H
 
-#include "sys_file.h"
+#include "dfile.h"
 
-#ifdef __cplusplus
-extern          "C" {
-#endif
+/**
+ * Saves the buffer (which is formatted rgb565) to a Targa 24 image file.
+ *
+ * @param file          Handle to the open file to be written to.
+ * @param w             Width of the image in pixels.
+ * @param h             Height of the image in pixels.
+ * @param buf           Ptr to the image data to be written.
+ *
+ * @return  Non-zero iff successful.
+ */
+int TGA_Save24_rgb565(FILE* file, int w, int h, const uint16_t* buffer);
 
-enum {
-    TGA_FALSE,
-    TGA_TRUE,
-    TGA_TARGA24, // rgb888
-    TGA_TARGA32 // rgba8888
-};
+/**
+ * Save the rgb888 buffer as Targa 24.
+ *
+ * @param file          Handle to the open file to be written to.
+ * @param w             Width of the image in pixels.
+ * @param h             Height of the image in pixels.
+ * @param buf           Ptr to the image data to be written.
+ *
+ * @return  Non-zero iff successful.
+ */
+int TGA_Save24_rgb888(FILE* file, int w, int h, const uint8_t* buf);
 
-// Save the rgb565 buffer as Targa 16.
-int             TGA_Save24_rgb565(const char* filename, int w, int h,
-                                  const ushort* buffer);
+/**
+ * Save the rgb8888 buffer as Targa 24.
+ *
+ * @param file          Handle to the open file to be written to.
+ * @param w             Width of the image in pixels.
+ * @param h             Height of the image in pixels.
+ * @param buf           Ptr to the image data to be written.
+ *
+ * @return  Non-zero iff successful.
+ */
+int TGA_Save24_rgba8888(FILE* file, int w, int h, const uint8_t* buf);
 
-// Save the rgb888 buffer as Targa 24.
-int             TGA_Save24_rgb888(const char* filename, int w, int h,
-                                  const byte* buf);
+/**
+ * Save the rgb888 buffer as Targa 16.
+ *
+ * @param file          Handle to the open file to be written to.
+ * @param w             Width of the image in pixels.
+ * @param h             Height of the image in pixels.
+ * @param buf           Ptr to the image data to be written.
+ *
+ * @return  Non-zero iff successful.
+ */
+int TGA_Save16_rgb888(FILE* file, int w, int h, const uint8_t* buf);
 
-int             TGA_Save24_rgba8888(const char* filename, int w, int h,
-                                    const byte* buf);
+/**
+ * Loads a 24-bit or a 32-bit image (24-bit color + 8-bit alpha).
+ *
+ * \warning: This is not a generic TGA loader. Only type 2, 24/32 pixel
+ *     size, attrbits 0/8 and lower left origin supported.
+ *
+ * @return  Non-zero iff the image is loaded successfully.
+ */
+uint8_t* TGA_Load(DFile* file, int* width, int* height, int* pixelSize);
 
-// Save the rgb888 buffer as Targa 16.
-int             TGA_Save16_rgb888(const char* filename, int w, int h,
-                                  const byte* buf);
+/**
+ * @return  Textual message detailing the last error encountered else @c 0.
+ */
+const char* TGA_LastError(void);
 
-// Load an rgba8888 image (32 bits per pixel).
-int             TGA_Load32_rgba8888(DFILE* file, int w, int h,
-                                    byte* buf);
-
-// Get the dimensions of a Targa image.
-int             TGA_GetSize(const char* filename, int* w, int* h);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
+#endif /* LIBDENG_GRAPHICS_TGA_H */

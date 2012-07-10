@@ -1,0 +1,74 @@
+# Chex Quest - Lights and Light Decorations
+#
+
+Header { Version = 5; }
+
+SkipIf -nodefaultfx;
+
+#####====--- LIGHT SOURCES ---====#####
+#
+# The default properties of all light-emitting objects are determined
+# automatically by the engine. Here we make a couple of minor tweaks.
+#
+# For further information on Light definition syntax and semantics see:
+#
+#   http://dengine.net/dew/index.php?title=Light
+
+# Make the flashing yellow and blue light posts more dynamic.
+Light {
+  State = "BTORCHSHRT";
+  Flags = nohalo;
+  Color { .82 .8 .3 };
+  Size = 1;
+  Y Offset = 32;
+}
+
+Copy Light {
+  State = "BTORCHSHRT2";
+  Color { .7 .7 .5 };
+  Size = 1;
+}
+
+Copy Light {
+  State = "BTORCHSHRT3";
+  Color { .62 .6 .7 };
+  Size = 1;
+}
+
+Copy Light {
+  State = "BTORCHSHRT4";
+  Color { .78 .72 .5 };
+  Size = 1;
+}
+
+# Use a smaller less brillant light for the blue liquid boiler things.
+Light {
+  State = "EVILEYE";
+  Color { .1 .1 .28 };
+  Size = .4;
+}
+
+Copy Light {
+  State = "EVILEYE2";
+  Color { .1 .1 .24 };
+  Size = .35;
+}
+
+Copy Light {
+  State = "EVILEYE3";
+  Color { .06 .06 .2 };
+  Size = .5;
+}
+
+Copy Light {
+  State = "EVILEYE4";
+  Color { .1 .1 .28 };
+  Size = .35;
+}
+
+Light {
+  State = "ROCKET";
+  Color { .98 .72 .72 };
+  Size = .4;
+  Y Offset = 12;
+}

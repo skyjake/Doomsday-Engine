@@ -1,10 +1,10 @@
-/**\file
+/**\file b_context.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2009-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * b_context.c: Bindings Contexts.
+ * Bindings Contexts.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -237,6 +237,8 @@ void B_UpdateDeviceStateAssociations(void)
             {
                 // No longer valid.
                 dev->keys[j].assoc.flags |= IDAF_EXPIRED;
+                dev->keys[j].assoc.flags &= ~IDAF_TRIGGERED; // Not any more.
+                DD_ClearKeyRepeaterForKey(j, -1);
             }
         }
 
@@ -301,7 +303,7 @@ static void B_RemoveContext(bcontext_t* bc)
  */
 bcontext_t* B_NewContext(const char* name)
 {
-    bcontext_t*           bc = M_Calloc(sizeof(bcontext_t));
+    bcontext_t* bc = M_Calloc(sizeof(bcontext_t));
 
     bc->name = strdup(name);
     B_InitCommandBindingList(&bc->commandBinds);
@@ -332,9 +334,12 @@ void B_ActivateContext(bcontext_t* bc, boolean doActivate)
     if(!bc)
         return;
 
-    VERBOSE( Con_Message("B_ActivateContext: %s context \"%s\".\n",
-                         doActivate? "Activating" : "Deactivating",
-                         bc->name) );
+#if !defined(_DEBUG)
+    if(!(bc->flags & BCF_PROTECTED) && verbose >= 1)
+#endif
+    {
+        Con_Message("%s binding context '%s'...\n", doActivate? "Activating" : "Deactivating", bc->name);
+    }
 
     bc->flags &= ~BCF_ACTIVE;
     if(doActivate)
@@ -343,11 +348,7 @@ void B_ActivateContext(bcontext_t* bc, boolean doActivate)
 
     if(bc->flags & BCF_ACQUIRE_ALL)
     {
-        int i;
-        for(i = 0; i < NUM_INPUT_DEVICES; ++i)
-        {
-            I_DeviceReset(i);
-        }
+        I_ResetAllDevices();
     }
 }
 
@@ -365,6 +366,16 @@ void B_AcquireAll(bcontext_t* bc, boolean doAcquire)
     if(doAcquire)
         bc->flags |= BCF_ACQUIRE_ALL;
     B_UpdateDeviceStateAssociations();
+}
+
+void B_SetContextFallbackForDDEvents(const char* name, int (*ddResponderFunc)(const ddevent_t*))
+{
+    bcontext_t *ctx = B_ContextByName(name);
+
+    if(!ctx)
+        return;
+
+    ctx->ddFallbackResponder = ddResponderFunc;
 }
 
 void B_SetContextFallback(const char* name, int (*responderFunc)(event_t*))
@@ -559,7 +570,7 @@ boolean B_TryEvent(ddevent_t* event)
 
     for(i = 0; i < bindContextCount; ++i)
     {
-        bcontext_t*           bc = bindContexts[i];
+        bcontext_t* bc = bindContexts[i];
 
         if(!(bc->flags & BCF_ACTIVE))
             continue;
@@ -571,7 +582,9 @@ boolean B_TryEvent(ddevent_t* event)
                 return true;
         }
 
-        // Try the fallback.
+        // Try the fallbacks.
+        if(bc->ddFallbackResponder && bc->ddFallbackResponder(event))
+            return true;
         if(bc->fallbackResponder && bc->fallbackResponder(&ev))
             return true;
     }
@@ -699,6 +712,34 @@ int B_BindingsForControl(int localPlayer, const char* controlName,
     return numFound;
 }
 
+boolean B_AreConditionsEqual(int count1, const statecondition_t* conds1,
+                             int count2, const statecondition_t* conds2)
+{
+    int i, k;
+
+    // Quick test (assumes there are no duplicated conditions).
+    if(count1 != count2) return false;
+
+    for(i = 0; i < count1; ++i)
+    {
+        boolean found = false;
+        for(k = 0; k < count2; ++k)
+        {
+            if(B_EqualConditions(conds1 + i, conds2 + k))
+            {
+                found = true;
+                break;
+            }
+        }
+        if(!found) return false;
+    }
+    return true;
+}
+
+/**
+ * Looks through context @a bc and looks for a binding that matches either
+ * @a match1 or @a match2.
+ */
 boolean B_FindMatchingBinding(bcontext_t* bc, evbinding_t* match1,
                               dbinding_t* match2, evbinding_t** evResult,
                               dbinding_t** dResult)
@@ -713,15 +754,11 @@ boolean B_FindMatchingBinding(bcontext_t* bc, evbinding_t* match1,
 
     for(e = bc->commandBinds.next; e != &bc->commandBinds; e = e->next)
     {
-        // TODO: A bit lazy here, should also match all the conditions.
-        // Now we just consider all bindings with conditions unique...
-        if(e->numConds)
-            continue;
-
         if(match1 && match1->bid != e->bid)
         {
-            if(match1->device == e->device && match1->id == e->id &&
-               match1->type == e->type && match1->state == e->state)
+            if(B_AreConditionsEqual(match1->numConds, match1->conds, e->numConds, e->conds) &&
+                    match1->device == e->device && match1->id == e->id &&
+                    match1->type == e->type && match1->state == e->state)
             {
                 *evResult = e;
                 return true;
@@ -729,8 +766,9 @@ boolean B_FindMatchingBinding(bcontext_t* bc, evbinding_t* match1,
         }
         if(match2)
         {
-            if(match2->device == e->device && match2->id == e->id &&
-               match2->type == e->type)
+            if(B_AreConditionsEqual(match2->numConds, match2->conds, e->numConds, e->conds) &&
+                    match2->device == e->device && match2->id == e->id &&
+                    match2->type == e->type)
             {
                 *evResult = e;
                 return true;
@@ -744,15 +782,11 @@ boolean B_FindMatchingBinding(bcontext_t* bc, evbinding_t* match1,
         {
             for(d = c->deviceBinds[i].next; d != &c->deviceBinds[i]; d = d->next)
             {
-                // Should also match all the conditions, now we just
-                // consider all bindings with conditions unique...
-                if(d->numConds)
-                    continue;
-
                 if(match1)
                 {
-                    if(match1->device == d->device && match1->id == d->id &&
-                       match1->type == d->type)
+                    if(B_AreConditionsEqual(match1->numConds, match1->conds, d->numConds, d->conds) &&
+                            match1->device == d->device && match1->id == d->id &&
+                            match1->type == d->type)
                     {
                         *dResult = d;
                         return true;
@@ -761,8 +795,9 @@ boolean B_FindMatchingBinding(bcontext_t* bc, evbinding_t* match1,
 
                 if(match2 && match2->bid != d->bid)
                 {
-                    if(match2->device == d->device && match2->id == d->id &&
-                       match2->type == d->type)
+                    if(B_AreConditionsEqual(match2->numConds, match2->conds, d->numConds, d->conds) &&
+                            match2->device == d->device && match2->id == d->id &&
+                            match2->type == d->type)
                     {
                         *dResult = d;
                         return true;
@@ -798,7 +833,7 @@ void B_PrintAllBindings(void)
     evbinding_t*        e;
     controlbinding_t*   c;
     dbinding_t*         d;
-    ddstring_t*         str = Str_New();
+    AutoStr*            str = AutoStr_New();
 
     Con_Printf("%i binding contexts defined.\n", bindContextCount);
 
@@ -854,8 +889,6 @@ void B_PrintAllBindings(void)
             }
         }
     }
-
-    Str_Delete(str);
 }
 
 void B_WriteContextToFile(const bcontext_t* bc, FILE* file)
@@ -864,7 +897,7 @@ void B_WriteContextToFile(const bcontext_t* bc, FILE* file)
     controlbinding_t*   c;
     dbinding_t*         d;
     int                 k;
-    ddstring_t*         str = Str_New();
+    AutoStr*            str = AutoStr_New();
 
     // Commands.
     for(e = bc->commandBinds.next; e != &bc->commandBinds; e = e->next)
@@ -878,8 +911,7 @@ void B_WriteContextToFile(const bcontext_t* bc, FILE* file)
     // Controls.
     for(c = bc->controlBinds.next; c != &bc->controlBinds; c = c->next)
     {
-        const char*         controlName =
-            P_PlayerControlById(c->control)->name;
+        const char* controlName = P_PlayerControlById(c->control)->name;
 
         for(k = 0; k < DDMAXPLAYERS; ++k)
         {
@@ -891,6 +923,4 @@ void B_WriteContextToFile(const bcontext_t* bc, FILE* file)
             }
         }
     }
-
-    Str_Delete(str);
 }

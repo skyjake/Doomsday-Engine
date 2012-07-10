@@ -1,10 +1,10 @@
-/**\file
+/**\file de_graphics.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,22 +23,20 @@
  */
 
 /**
- * de_graphics.h: Graphics Subsystem
+ * Graphics Subsystem
  */
 
-#ifndef __DOOMSDAY_GRAPHICS__
-#define __DOOMSDAY_GRAPHICS__
+#ifndef LIBDENG_GRAPHICS
+#define LIBDENG_GRAPHICS
 
 #include "gl_main.h"
 #include "gl_draw.h"
 #include "gl_texmanager.h"
 #include "gl_tex.h"
 #include "gl_hq2x.h"
-#include "gl_font.h"
 #include "gl_model.h"
 #include "gl_pcx.h"
-#include "gl_png.h"
 #include "gl_tga.h"
 #include "gl_defer.h"
 
-#endif
+#endif /* LIBDENG_GRAPHICS */

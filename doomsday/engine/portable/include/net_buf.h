@@ -1,40 +1,39 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * net_buf.h: Network Message Handling and Buffering
+ * @file net_buf.h
+ * Network message handling and buffering. @ingroup network
+ *
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-#ifndef __DOOMSDAY_NETWORK_BUFFER_H__
-#define __DOOMSDAY_NETWORK_BUFFER_H__
+#ifndef LIBDENG_NETWORK_BUFFER_H
+#define LIBDENG_NETWORK_BUFFER_H
+
+#include "dd_types.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 // Send Packet flags:
 #define SPF_REBOUND     0x00020000 // Write only to local loopback
 #define SPF_DONT_SEND   0x00040000 // Don't really send out anything
 
-#define NETBUFFER_MAXDATA   (0x7fff - 8) // 32 KB
-#define NETBUFFER_ACTUALSIZE    0xffff  // 64 KB
+#define NETBUFFER_MAXSIZE    0x7ffff  // 512 KB
 
 // Each network node is identified by a number.
 typedef unsigned int nodeid_t;
@@ -50,13 +49,10 @@ typedef struct netmessage_s {
     double          receivedAt;     // Time when received (seconds).
 } netmessage_t;
 
-typedef unsigned short msgid_t;
-
 #pragma pack(1)
 typedef struct {
-    msgid_t         id;             // Unused.
     byte            type;           // Type of the message.
-    byte            data[NETBUFFER_ACTUALSIZE];
+    byte            data[NETBUFFER_MAXSIZE];
 } netdata_t;
 #pragma pack()
 
@@ -83,9 +79,14 @@ void            N_Shutdown(void);
 void            N_ClearMessages(void);
 void            N_SendPacket(int flags);
 boolean         N_GetPacket(void);
-uint            N_IdentifyPlayer(nodeid_t id);
+int             N_IdentifyPlayer(nodeid_t id);
 void            N_PrintBufferInfo(void);
-void            N_PrintHuffmanStats(void);
+void            N_PrintTransmissionStats(void);
 void            N_PostMessage(netmessage_t *msg);
+void            N_AddSentBytes(size_t bytes);
 
+#ifdef __cplusplus
+}
 #endif
+
+#endif /* LIBDENG_NETWORK_BUFFER_H */

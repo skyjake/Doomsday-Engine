@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@ typedef enum {
  * IterList. A LIFO stack of pointers with facilities for bidirectional
  * iteration through the use of an integral iterator (thus scopeless).
  *
- * \important Not thread safe!
+ * @warning Not thread safe!
  */
 typedef struct iterlist_s {
     /// Direction of traversal.

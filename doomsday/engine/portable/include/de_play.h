@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,24 +30,24 @@
 #define __DOOMSDAY_PLAYSIM__
 
 #include "p_mapdata.h"
-#include "p_vertex.h"
-#include "p_material.h"
-#include "p_surface.h"
-#include "p_sidedef.h"
-#include "p_linedef.h"
-#include "p_plane.h"
-#include "p_seg.h"
-#include "p_subsector.h"
-#include "p_sector.h"
-#include "p_polyobj.h"
+#include "vertex.h"
+#include "material.h"
+#include "surface.h"
+#include "sidedef.h"
+#include "linedef.h"
+#include "plane.h"
+#include "hedge.h"
+#include "bspleaf.h"
+#include "bspnode.h"
+#include "sector.h"
+#include "p_polyobjs.h"
 #include "p_dmu.h"
-#include "p_think.h"
+#include "thinker.h"
 #include "p_object.h"
 #include "p_intercept.h"
 #include "p_maputil.h"
-#include "p_bmap.h"
 #include "p_particle.h"
-#include "p_polyob.h"
+#include "polyobj.h"
 #include "p_sight.h"
 #include "p_ticker.h"
 #include "p_players.h"

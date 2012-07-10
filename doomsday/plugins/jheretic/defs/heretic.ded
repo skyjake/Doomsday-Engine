@@ -1,0 +1,18 @@
+#
+# Heretic - Doomsday Engine definitions.
+#
+# For information about DED syntax and semantics, see http://dengine.net/dew/?title=DED
+#
+
+# Include common definitions for games playable with jHeretic.
+Include "jheretic.ded";
+
+Include "heretic/anim.ded";
+Include "heretic/particles.ded";
+Include "heretic/skies.ded";
+Include "heretic/maps.ded";
+Include "heretic/finales.ded";
+Include "heretic/lights.ded";
+Include "heretic/materials.ded";
+Include "heretic/materialenvironments.ded";
+Include "heretic/music.ded";

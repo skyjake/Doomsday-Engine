@@ -1,0 +1,6 @@
+Your runtime files (savegames, screenshots) are stored into a folder called
+@file{~/Library/Application Support/Doomsday Engine/runtime}.
+
+Additional noteworthy files inside @file{~/Library/Application Support/Doomsday Engine/}:
+
+@include{runtimefiles}

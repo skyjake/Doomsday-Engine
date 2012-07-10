@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -62,8 +62,8 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
     byte                flags = 0;
     mobj_t             *cmo = NULL;
     thid_t              mobjId = 0;
-    sector_t           *sector = NULL;
-    polyobj_t          *poly = NULL;
+    Sector             *sector = NULL;
+    Polyobj            *poly = NULL;
     mobj_t             *emitter = NULL;
     float               volume = 1;
 
@@ -93,22 +93,22 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
     {
         uint index = Reader_ReadUInt16(msgReader);
 
-        if(index < numSectors)
+        if(index < NUM_SECTORS)
         {
-        	sector = SECTOR_PTR(index);
-		}
-		else
+            sector = SECTOR_PTR(index);
+        }
+        else
         {
             Con_Message("Cl_ReadSoundDelta2: DT_SECTOR_SOUND contains "
                         "invalid sector num %u. Skipping.\n", index);
-			skip = true;
-	    }
+            skip = true;
+        }
     }
     else                        /* DT_POLY_SOUND */
     {
         uint index = Reader_ReadUInt16(msgReader);
 
-        if(index < numPolyObjs)
+        if(index < NUM_POLYOBJS)
         {
             poly = polyObjs[index];
             emitter = (mobj_t *) poly;
@@ -117,8 +117,8 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
         {
             Con_Message("Cl_ReadSoundDelta2: DT_POLY_SOUND contains "
                         "invalid polyobj num %u. Skipping.\n", index);
-			skip = true;
-		}
+            skip = true;
+        }
     }
 
     flags = Reader_ReadByte(msgReader);
@@ -132,12 +132,12 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
     if(type == DT_SECTOR_SOUND)
     {
         // Should we use a specific origin?
-        if(flags & SNDDF_FLOOR)
-            emitter = (mobj_t *) &sector->planes[PLN_FLOOR]->soundOrg;
-        else if(flags & SNDDF_CEILING)
-            emitter = (mobj_t *) &sector->planes[PLN_CEILING]->soundOrg;
+        if(flags & SNDDF_PLANE_FLOOR)
+            emitter = (mobj_t*) &sector->SP_floorsurface.base;
+        else if(flags & SNDDF_PLANE_CEILING)
+            emitter = (mobj_t*) &sector->SP_ceilsurface.base;
         else
-            emitter = (mobj_t *) &sector->soundOrg;
+            emitter = (mobj_t*) &sector->base;
     }
 
     if(flags & SNDDF_VOLUME)
@@ -253,11 +253,11 @@ else Con_Printf("\n");
  */
 void Cl_Sound(void)
 {
-    int         sound, volume = 127;
-    float       pos[3];
-    byte        flags;
-    uint        num;
-    mobj_t     *mo = NULL;
+    int sound, volume = 127;
+    coord_t pos[3];
+    byte flags;
+    uint num;
+    mobj_t* mo = NULL;
 
     flags = Reader_ReadByte(msgReader);
 
@@ -302,12 +302,12 @@ void Cl_Sound(void)
     else if(flags & SNDF_SECTOR)
     {
         num = Reader_ReadPackedUInt16(msgReader);
-        if(num >= numSectors)
+        if(num >= NUM_SECTORS)
         {
             Con_Message("Cl_Sound: Invalid sector number %i.\n", num);
             return;
         }
-        mo = (mobj_t *) &SECTOR_PTR(num)->soundOrg;
+        mo = (mobj_t*) &SECTOR_PTR(num)->base;
         //S_StopSound(0, mo);
         S_LocalSoundAtVolume(sound, mo, volume / 127.0f);
     }

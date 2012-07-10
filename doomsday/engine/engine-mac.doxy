@@ -1,0 +1,11 @@
+# API documentation for the engine
+@INCLUDE = ../doomsday.doxy
+
+PROJECT_NAME        = "Doomsday Engine"
+PROJECT_NUMBER      = 1.9.9
+PROJECT_BRIEF       = "Internal documentation (Mac OS X)"
+OUTPUT_DIRECTORY    = ../apidoc/mac/
+
+INPUT               = api mac portable unix
+
+PREDEFINED          = __DOOMSDAY__ UNIX MACOSX __cplusplus

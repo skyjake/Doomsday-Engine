@@ -1,5 +1,6 @@
 name: Shareware Heretic
 game: game-jheretic
+game-mode: game-mode-heretic-share
 banner: banner-heretic
 hidden: yes
 

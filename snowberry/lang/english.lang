@@ -173,6 +173,22 @@ game-jhexen: jHexen
 game-jdoom-icon: orb-doom
 game-jheretic-icon: orb-heretic
 game-jhexen-icon: orb-hexen
+game-mode: Game mode
+game-mode-chex: Chex Quest
+game-mode-doom1: DOOM Registered
+game-mode-doom1-ultimate: DOOM Ultimate
+game-mode-doom1-share: DOOM Shareware
+game-mode-doom2: DOOM II
+game-mode-doom2-plut: Final Doom: Plutonia Experiment
+game-mode-doom2-tnt: Final Doom: TNT Evilution
+game-mode-hacx: HacX
+game-mode-heretic: Heretic Registered
+game-mode-heretic-share: Heretic Shareware
+game-mode-heretic-ext: Heretic: Shadow of the Serpent Riders
+game-mode-hexen: Hexen v1.1
+game-mode-hexen-v10: Hexen v1.0
+game-mode-hexen-demo: Hexen (4 level demo)
+game-mode-hexen-dk: Hexen: Death Kings of the Dark Citadel
 
 #
 # Button Labels
@@ -353,6 +369,8 @@ game: Game component
 iwad: Game data file
 iwad-selection-title: Choose Game Data File
 memory-zone: Memory usage (MB)
+dedicated-server: Run as a dedicated server
+server-port: Incoming TCP port
 
 color-depth: Color depth
 color-depth-16: 16-bit
@@ -374,6 +392,9 @@ window-size-1024x640: 1024 x 640 (16:10)
 window-size-1280x800: 1280 x 800 (16:10)
 window-size-1600x1000: 1600 x 1000 (16:10)
 window-size-1680x1050: 1680 x 1050 (16:10)
+window-size-1920x1080: 1920 x 1080 (16:9)
+window-size-1920x1200: 1920 x 1200 (16:10)
+window-size-2560x1440: 2560 x 1440 (16:9)
 window-size-custom: Custom
 
 custom-window-group: Custom Window
@@ -404,7 +425,6 @@ texture-depth-32: 32-bit
 texture-options: Texture Options
 extres-with-pwad: Allow external with PWADs
 disable-anisotropic-filter: Disable Anisotropic filtering
-paletted-textures: Use paletted (256-color) textures
 
 maximum-texture-size: Maximum size
 maximum-texture-size-unlimited: Hardware
@@ -417,6 +437,7 @@ maximum-texture-size-2048: 2048 x 2048
 maximum-texture-size-4096: 4096 x 4096
 
 sound-driver: Sound driver
+sound-driver-fmod: FMOD Ex
 sound-driver-directsound: DirectSound
 sound-driver-sdlmixer: SDL_mixer
 sound-driver-openal: OpenAL

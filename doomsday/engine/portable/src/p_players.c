@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -90,6 +90,11 @@ int P_ConsoleToLocal(int playerNum)
     int                 i, count = 0;
     player_t*           plr = &ddPlayers[playerNum];
 
+    if(playerNum < 0 || playerNum >= DDMAXPLAYERS)
+    {
+        // Invalid.
+        return -1;
+    }
     if(playerNum == consolePlayer)
     {
         return 0;
@@ -134,9 +139,9 @@ int P_GetDDPlayerIdx(ddplayer_t* ddpl)
 /**
  * Do we THINK the given (camera) player is currently in the void.
  * The method used to test this is to compare the position of the mobj
- * each time it is linked into a subsector.
+ * each time it is linked into a BSP leaf.
  *
- * \note Cannot be 100% accurate so best not to use it for anything critical...
+ * @note Cannot be 100% accurate so best not to use it for anything critical...
  *
  * @param player        The player to test.
  *
@@ -144,7 +149,7 @@ int P_GetDDPlayerIdx(ddplayer_t* ddpl)
  */
 boolean P_IsInVoid(player_t* player)
 {
-    ddplayer_t*         ddpl;
+    ddplayer_t* ddpl;
 
     if(!player)
         return false;
@@ -158,24 +163,26 @@ boolean P_IsInVoid(player_t* player)
         if(ddpl->inVoid)
             return true;
 
-        if(ddpl->mo && ddpl->mo->subsector)
+        if(ddpl->mo && ddpl->mo->bspLeaf)
         {
-            sector_t*           sec = ddpl->mo->subsector->sector;
+            Sector* sec = ddpl->mo->bspLeaf->sector;
 
-            if(R_IsSkySurface(&sec->SP_ceilsurface))
+            if(Surface_IsSkyMasked(&sec->SP_ceilsurface))
             {
-               if(ddpl->mo->pos[VZ] > skyFix[PLN_CEILING].height - 4)
-                   return true;
-            }
-            else if(ddpl->mo->pos[VZ] > sec->SP_ceilvisheight - 4)
-                return true;
-
-            if(R_IsSkySurface(&sec->SP_floorsurface))
-            {
-                if(ddpl->mo->pos[VZ] < skyFix[PLN_FLOOR].height + 4)
+                const coord_t skyCeil = GameMap_SkyFixCeiling(theMap);
+                if(skyCeil < DDMAXFLOAT && ddpl->mo->origin[VZ] > skyCeil - 4)
                     return true;
             }
-            else if(ddpl->mo->pos[VZ] < sec->SP_floorvisheight + 4)
+            else if(ddpl->mo->origin[VZ] > sec->SP_ceilvisheight - 4)
+                return true;
+
+            if(Surface_IsSkyMasked(&sec->SP_floorsurface))
+            {
+                const coord_t skyFloor = GameMap_SkyFixFloor(theMap);
+                if(skyFloor > DDMINFLOAT && ddpl->mo->origin[VZ] < skyFloor + 4)
+                    return true;
+            }
+            else if(ddpl->mo->origin[VZ] < sec->SP_floorvisheight + 4)
                 return true;
         }
     }

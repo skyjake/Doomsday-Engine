@@ -1,32 +1,37 @@
+# jDoom - Doomsday Engine Definitions
 #
-# -=- jDoom Definitions -=-
+# Default set of definitions common to all games playable with jDoom.
+# For information about DED syntax and semantics, see
 #
-# This file is overwritten on every upgrade. Add custom definitions
-# to User.ded.
-#
-# For information about DED syntax and semantics, see Doc\DEDDoc.txt.
+#  http://dengine.net/dew/?title=DED
 #
 
 Header {
   Version = 5;
   Default model scale = 1.2;
-  Model path = "data\jdoom\models";
+}
+
+Material Mods "flats:F_SKY1" {
+  Flags = skymask;
+}
+
+Sound {
+  ID = "None";
+  Link pitch = -1;
+  Link volume = -1;
+  Max channels = -1;
+}
+
+Music {
+  ID = "None";
 }
 
 Include "flags.ded";
+Include "values.ded";
 Include "objects.ded";
 Include "sprites.ded";
-Include "materials.ded";
-Include "anim.ded";
-Include "audio.ded";
-Include "special.ded";
-Include "lights.ded";
-Include "skies.ded";
-Include "maps.ded";
-Include "finales.ded";
 Include "text.ded";
-Include "values.ded";
-Include "models.ded";
-Include "user.ded";
+Include "finales.ded";
 
-IncludeIf Not -noauto "auto\*.ded";
+# todo: Split up into separate files for doom1 and doom2.
+Include "sounds.ded";

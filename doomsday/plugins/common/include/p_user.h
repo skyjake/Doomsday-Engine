@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -52,7 +52,7 @@ extern int armorClass[4];
 
 extern classinfo_t classInfo[];
 
-void            P_Thrust(player_t *player, angle_t angle, float move);
+void            P_Thrust(player_t *player, angle_t angle, coord_t move);
 boolean         P_IsPlayerOnGround(player_t *player);
 void            P_CheckPlayerJump(player_t *player);
 void            P_MovePlayer(player_t *player);

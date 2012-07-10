@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -299,7 +299,7 @@ boolean P_GivePower(player_t* player, int power)
         player->powers[power] = 1;
         player->plr->mo->flags2 |= MF2_FLY;
         player->plr->mo->flags |= MF_NOGRAVITY;
-        if(player->plr->mo->pos[VZ] <= player->plr->mo->floorZ)
+        if(player->plr->mo->origin[VZ] <= player->plr->mo->floorZ)
         {
             player->flyHeight = 10; // Thrust the player in the air a bit.
             player->plr->mo->flags |= DDPF_FIXMOM;
@@ -328,7 +328,7 @@ boolean P_GivePower(player_t* player, int power)
     }
 
     if(power == PT_ALLMAP)
-        AM_RevealMap(AM_MapForPlayer(player - players), true);
+        ST_RevealAutomap(player - players, true);
 
     // Maybe unhide the HUD?
     ST_HUDUnHide(player - players, HUE_ON_PICKUP_POWER);
@@ -343,7 +343,7 @@ boolean P_TakePower(player_t* player, int power)
     player->update |= PSF_POWERS;
     if(player->powers[PT_FLIGHT])
     {
-        if(plrmo->pos[VZ] != plrmo->floorZ && cfg.lookSpring)
+        if(plrmo->origin[VZ] != plrmo->floorZ && cfg.lookSpring)
         {
             player->centering = true;
         }
@@ -358,7 +358,7 @@ boolean P_TakePower(player_t* player, int power)
         return false; // Dont got it.
 
     if(power == PT_ALLMAP)
-        AM_RevealMap(AM_MapForPlayer(player - players), false);
+        ST_RevealAutomap(player - players, false);
 
     player->powers[power] = 0;
     return true;
@@ -638,7 +638,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         break;
 
     case IT_MEGASPHERE:
-        if(gameMode != commercial)
+        if(!(gameModeBits & GM_ANY_DOOM2))
             return false;
         plr->health = megaSphereHealth;
         plr->plr->mo->health = plr->health;
@@ -835,11 +835,11 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
 
 void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
 {
-    player_t*           player;
-    float               delta;
-    itemtype_t          item;
+    player_t* player;
+    coord_t delta;
+    itemtype_t item;
 
-    delta = special->pos[VZ] - toucher->pos[VZ];
+    delta = special->origin[VZ] - toucher->origin[VZ];
     if(delta > toucher->height || delta < -8)
     {   // Out of reach.
         return;
@@ -931,7 +931,10 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
         P_DropWeapon(target->player);
 
         // Don't die with the automap open.
-        AM_Open(AM_MapForPlayer(target->player - players), false, false);
+        ST_AutomapOpen(target->player - players, false, false);
+#if __JHERETIC__ || __JHEXEN__
+        Hu_InventoryOpen(target->player - players, false);
+#endif
     }
 
     if(target->health < -target->info->spawnHealth &&
@@ -948,6 +951,10 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
 
     if(target->tics < 1)
         target->tics = 1;
+
+    // Enemies in Chex Quest don't drop stuff.
+    if(gameMode == doom_chex)
+        return;
 
     // Drop stuff.
     // This determines the kind of object spawned during the death frame
@@ -975,9 +982,9 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
     // 3D sprites.
     angle = P_Random() << 24;
     an = angle >> ANGLETOFINESHIFT;
-    if((mo = P_SpawnMobj3f(item, target->pos[VX] + 3 * FIX2FLT(finecosine[an]),
-                           target->pos[VY] + 3 * FIX2FLT(finesine[an]),
-                           0, angle, MSF_Z_FLOOR)))
+    if((mo = P_SpawnMobjXYZ(item, target->origin[VX] + 3 * FIX2FLT(finecosine[an]),
+                            target->origin[VY] + 3 * FIX2FLT(finesine[an]),
+                            0, angle, MSF_Z_FLOOR)))
         mo->flags |= MF_DROPPED; // Special versions of items.
 }
 
@@ -1076,17 +1083,15 @@ int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
         source->player->readyWeapon != WT_EIGHTH) &&
        !(inflictor->flags2 & MF2_NODMGTHRUST))
     {
-        uint                an;
-        float               thrust;
+        uint an;
+        coord_t thrust;
 
-        angle = R_PointToAngle2(inflictor->pos[VX], inflictor->pos[VY],
-                                target->pos[VX], target->pos[VY]);
-
+        angle = M_PointToAngle2(inflictor->origin, target->origin);
         thrust = FIX2FLT(damage * (FRACUNIT>>3) * 100 / target->info->mass);
 
         // Make fall forwards sometimes.
         if(damage < 40 && damage > target->health &&
-           target->pos[VZ] - inflictor->pos[VZ] > 64 && (P_Random() & 1))
+           target->origin[VZ] - inflictor->origin[VZ] > 64 && (P_Random() & 1))
         {
             angle += ANG180;
             thrust *= 4;
@@ -1105,7 +1110,7 @@ int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
     if(player)
     {   // Player specific.
         // End of game hell hack.
-        if(P_ToXSectorOfSubsector(target->subsector)->special == 11 &&
+        if(P_ToXSectorOfBspLeaf(target->bspLeaf)->special == 11 &&
            damage >= target->health)
         {
             damage = target->health - 1;

@@ -9,34 +9,70 @@ Header { Version = 6; }
 # Skymasked textures:
 #
 
-Material {
-  ID = "F_SKYA";
-  Namespace = textures;
+Material Mods "textures:F_SKYA" {
   Flags = skymask;
 }
 
-* Material { ID = "F_SKYB"; }
-* Material { ID = "F_SKYC"; }
-* Material { ID = "F_SKYD"; }
-* Material { ID = "F_SKYE"; }
-* Material { ID = "F_SKYF"; }
-* Material { ID = "F_SKYG"; }
-* Material { ID = "F_SKYH"; }
-* Material { ID = "F_SKYI"; }
-* Material { ID = "F_SKYJ"; }
-* Material { ID = "F_SKYK"; }
+Material Mods "textures:F_SKYB" {
+  Flags = skymask;
+}
+
+Material Mods "textures:F_SKYC" {
+  Flags = skymask;
+}
+
+Material Mods "textures:F_SKYD" {
+  Flags = skymask;
+}
+
+Material Mods "textures:F_SKYE" {
+  Flags = skymask;
+}
+
+Material Mods "textures:F_SKYF" {
+  Flags = skymask;
+}
+
+Material Mods "textures:F_SKYG" {
+  Flags = skymask;
+}
+
+Material Mods "textures:F_SKYH" {
+  Flags = skymask;
+}
+
+Material Mods "textures:F_SKYI" {
+  Flags = skymask;
+}
+
+Material Mods "textures:F_SKYJ" {
+  Flags = skymask;
+}
+
+Material Mods "textures:F_SKYK" {
+  Flags = skymask;
+}
 
 #
 # Glowing textures:
 #
 
-Material {
-  ID = "CBTRAKA";
-  Namespace = textures;
-  Flags = glow;
+Material Mods "textures:CBTRAKA" {
+  Layer { Stage { Glow = 1.8; } }
 }
 
-* Material { ID = "CRTRAKA"; }
-* Material { ID = "CYTRAKA"; }
-* Material { ID = "SEXIT"; }
-* Material { ID = "SEXITA"; }
+Material Mods "textures:CRTRAKA" {
+  Layer { Stage { Glow = 1.8; } }
+}
+
+Material Mods "textures:CYTRAKA" {
+  Layer { Stage { Glow = 1.8; } }
+}
+
+Material Mods "textures:SEXIT" {
+  Layer { Stage { Glow = 1.8; } }
+}
+
+Material Mods "textures:SEXITA" {
+  Layer { Stage { Glow = 1.8; } }
+}

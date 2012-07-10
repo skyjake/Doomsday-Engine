@@ -1,5 +1,6 @@
 name:  Final Doom: TNT Evilution
 game: game-jdoom
+game-mode: game-mode-doom2-tnt
 banner: banner-doom2-tnt
 hidden: yes
 

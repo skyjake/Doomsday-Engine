@@ -1,10 +1,10 @@
-/**\file
+/**\file p_mobj.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -25,11 +25,11 @@
  */
 
 /**
- * p_mobj.h: Map Objects, Mobj, definition and handling jDoom64 - specific.
+ * Map Objects, Mobj, definition and handling jDoom64 - specific.
  */
 
-#ifndef __P_MOBJ__
-#define __P_MOBJ__
+#ifndef LIBDOOM64_P_MOBJ_H
+#define LIBDOOM64_P_MOBJ_H
 
 #ifndef __JDOOM64__
 #  error "Using jDoom64 headers without __JDOOM64__"
@@ -42,9 +42,15 @@
 #include "d_think.h"
 #include "info.h"
 
-#define FRICTION_NORMAL     (0.90625f)
-#define FRICTION_FLY        (0.91796875f)
-#define FRICTION_HIGH       (0.5f)
+#define NOMOM_THRESHOLD     (0.0001) // (integer) 0
+#define DROPOFFMOM_THRESHOLD (0.25) // FRACUNIT/4
+#define MAXMOM              (30) // 30*FRACUNIT
+#define MAXMOMSTEP          (15) // 30*FRACUNIT/2
+
+#define FRICTION_LOW        (0.97265625) // 0xf900
+#define FRICTION_FLY        (0.91796875) // 0xeb00
+#define FRICTION_NORMAL     (0.90625000) // 0xe800
+#define FRICTION_HIGH       (0.41992187) // 0xd700/2
 
 // Player radius for movement checking.
 #define PLAYERRADIUS        (25)
@@ -52,7 +58,6 @@
 // MAXRADIUS is for precalculated sector block boxes the spider demon is
 // larger, but we do not have any moving sectors nearby.
 #define MAXRADIUS           (32)
-#define MAXMOVE             (30)
 
 #define USERANGE            (64)
 #define MELEERANGE          (64)
@@ -89,7 +94,7 @@
  * A walking creature will have its z equal to the floor
  * it is standing on.
  *
- * The sound code uses the x,y, and subsector fields
+ * The sound code uses the x,y, and BSP leaf fields
  * to do stereo positioning of any sound effited by the mobj_t.
  *
  * The play simulation uses the blocklinks, x,y,z, radius, height
@@ -101,8 +106,8 @@
  *
  * Every mobj_t is linked into a single sector
  * based on its origin coordinates.
- * The subsector_t is found with R_PointInSubsector(x,y),
- * and the sector_t can be found with subsector->sector.
+ * The BspLeaf is found with P_BspLeafAtPointXY(x,y),
+ * and the Sector can be found with bspLeaf->sector.
  * The sector links are only used by the rendering code,
  * the play simulation does not care about them at all.
  *
@@ -114,13 +119,13 @@
  * but only as the instigator (missiles will run into other
  * things, but nothing can run into a missile).
  * Each block in the grid is 128*128 units, and knows about
- * every linedef_t that it contains a piece of, and every
+ * every LineDef that it contains a piece of, and every
  * interactable mobj_t that has its origin contained.
  *
- * A valid mobj_t is a mobj_t that has the proper subsector_t
+ * A valid mobj_t is a mobj_t that has the proper BspLeaf
  * filled in for its xy coordinates and is linked into the
- * sector from which the subsector was made, or has the
- * MF_NOSECTOR flag set (the subsector_t needs to be valid
+ * sector from which the BSP leaf was made, or has the
+ * MF_NOSECTOR flag set (the BspLeaf needs to be valid
  * even if MF_NOSECTOR is set).
  * Links should only be modified by the P_[Un]SetThingPosition()
  * functions.
@@ -222,6 +227,7 @@
 // --- mobj.flags3 ---
 
 #define MF3_NOINFIGHT       0x00000001  // Mobj will never be targeted for in-fighting
+#define MF3_CLIENTACTION    0x00000002  // States' action funcs are executed by client
 
 // --- mobj.intflags ---
 // Internal mobj flags cannot be set using an external definition.
@@ -250,6 +256,8 @@ typedef enum dirtype_s {
     NUMDIRS
 } dirtype_t;
 
+#define VALID_MOVEDIR(v)    ((v) >= DI_EAST && (v) <= DI_SOUTHEAST)
+
 // Map Object definition.
 typedef struct mobj_s {
     // Defined in dd_share.h; required mobj elements.
@@ -264,33 +272,33 @@ typedef struct mobj_s {
 
     // Thing being chased/attacked (or NULL),
     // also the originator for missiles.
-    struct mobj_s  *target;
+    struct mobj_s* target;
 
     // If >0, the target will be chased
     // no matter what (even if shot)
     int             threshold;
 
     int             intFlags;       // internal flags
-    float           dropOffZ;       // $dropoff_fix
+    coord_t         dropOffZ;       // $dropoff_fix
     short           gear;           // used in torque simulation
     boolean         wallRun;        // true = last move was the result of a wallrun
 
     // Additional info record for player avatars only.
     // Only valid if type == MT_PLAYER
-    struct player_s *player;
+    struct player_s* player;
 
     // Player number last looked for.
     int             lastLook;
 
     // For nightmare/multiplayer respawn.
     struct {
-        float           pos[3];
+        coord_t         origin[3];
         angle_t         angle;
         int             flags; // MSF_* flags
     } spawnSpot;
 
     // Thing being chased/attacked for tracers.
-    struct mobj_s  *tracer;
+    struct mobj_s* tracer;
 
     int             turnTime;       // $visangle-facetarget
     int             corpseTics;     // $vanish: how long has this been dead?
@@ -302,34 +310,53 @@ typedef struct polyobj_s {
     DD_BASE_POLYOBJ_ELEMENTS()
 
     // Doom64-specific data:
-} polyobj_t;
+} Polyobj;
 
-void            P_ExplodeMissile(mobj_t* mo);
-float           P_MobjGetFriction(mobj_t* mo);
-mobj_t*         P_SPMAngle(mobjtype_t type, mobj_t* source,
-                           angle_t angle);
+void P_ExplodeMissile(mobj_t* mo);
 
-mobj_t*         P_SpawnMobj3f(mobjtype_t type, float x, float y,
-                              float z, angle_t angle, int spawnFlags);
-mobj_t*         P_SpawnMobj3fv(mobjtype_t type, const float pos[3],
-                               angle_t angle, int spawnFlags);
+coord_t P_MobjGetFriction(mobj_t* mo);
 
-void            P_SpawnPuff(float x, float y, float z, angle_t angle);
-mobj_t*         P_SpawnCustomPuff(mobjtype_t type, float x, float y,
-                                  float z, angle_t angle);
-void            P_SpawnBlood(float x, float y, float z, int damage,
-                             angle_t angle);
-mobj_t*         P_SpawnMissile(mobjtype_t type, mobj_t* source,
-                               mobj_t* dest);
-mobj_t*         P_SpawnTeleFog(float x, float y, angle_t angle);
-mobj_t*         P_SpawnMotherMissile(mobjtype_t type, float x, float y,
-                                     float z, mobj_t* source,
-                                     mobj_t* dest);
+mobj_t* P_SPMAngle(mobjtype_t type, mobj_t* source, angle_t angle);
 
-boolean         P_MobjChangeState(mobj_t* mo, statenum_t state);
-void            P_MobjThinker(mobj_t* mo);
+/**
+ * Spawns a mobj of "type" at the specified position.
+ */
+mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t angle, int spawnFlags);
+mobj_t* P_SpawnMobj(mobjtype_t type, coord_t const pos[3], angle_t angle, int spawnFlags);
+
+void P_SpawnPuff(coord_t x, coord_t y, coord_t z, angle_t angle);
+
+mobj_t* P_SpawnCustomPuff(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t angle);
+
+void P_SpawnBlood(coord_t x, coord_t y, coord_t z, int damage, angle_t angle);
+
+/**
+ * Tries to aim at a nearby monster if source is a player. Else aim is
+ * taken at dest.
+ *
+ * @param source        The mobj doing the shooting.
+ * @param dest          The mobj being shot at. Can be @c NULL if source
+ *                      is a player.
+ * @param type          The type of mobj to be shot.
+ *
+ * @return              Pointer to the newly spawned missile.
+ */
+mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest);
+
+mobj_t* P_SpawnTeleFog(coord_t x, coord_t y, angle_t angle);
+
+mobj_t* P_SpawnMotherMissile(mobjtype_t type, coord_t x, coord_t y, coord_t z, mobj_t* source, mobj_t* dest);
+
+boolean P_MobjChangeState(mobj_t* mo, statenum_t state);
+
+void P_MobjThinker(mobj_t* mo);
+
 const terraintype_t* P_MobjGetFloorTerrainType(mobj_t* mo);
-void            P_RipperBlood(mobj_t* mo);
-void            P_SetDoomsdayFlags(mobj_t* mo);
-void            P_HitFloor(mobj_t* mo);
-#endif
+
+void P_RipperBlood(mobj_t* mo);
+
+void P_SetDoomsdayFlags(mobj_t* mo);
+
+void P_HitFloor(mobj_t* mo);
+
+#endif /// LIBDOOM64_P_MOBJ_H

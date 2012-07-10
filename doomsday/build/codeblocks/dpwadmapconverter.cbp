@@ -34,6 +34,7 @@
 					<Add directory="..\..\plugins\wadmapconverter\include" />
 				</ResourceCompiler>
 				<Linker>
+					<Add option='/DEF:&quot;..\..\plugins\wadmapconverter\api\dpwadmapconverter.def&quot;' />
 					<Add option="/opt:noicf" />
 					<Add option="/opt:noref" />
 					<Add library="bin\Debug Win32\Doomsday.lib" />
@@ -65,6 +66,7 @@
 					<Add directory="..\..\plugins\wadmapconverter\include" />
 				</ResourceCompiler>
 				<Linker>
+					<Add option='/DEF:&quot;..\..\plugins\wadmapconverter\api\dpwadmapconverter.def&quot;' />
 					<Add option="/INCREMENTAL:NO" />
 					<Add library="bin\Release Win32\Doomsday.lib" />
 				</Linker>

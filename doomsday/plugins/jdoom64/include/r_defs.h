@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -75,11 +75,11 @@ typedef struct xsector_s {
  * xline_t flags:
  */
 
-#define ML_BLOCKMONSTERS        2 // Blocks monsters only.
-#define ML_SECRET               32 // In AutoMap: don't map as two sided: IT'S A SECRET!
-#define ML_SOUNDBLOCK           64 // Sound rendering: don't let sound cross two of these.
-#define ML_DONTDRAW             128 // Don't draw on the automap at all.
-#define ML_MAPPED               256 // Set if already seen, thus drawn in automap.
+#define ML_BLOCKMONSTERS        0x0002 // Blocks monsters only.
+#define ML_SECRET               0x0020 // In AutoMap: don't map as two sided: IT'S A SECRET!
+#define ML_SOUNDBLOCK           0x0040 // Sound rendering: don't let sound cross two of these.
+#define ML_DONTDRAW             0x0080 // Don't draw on the automap at all.
+#define ML_MAPPED               0x0100 // Set if already seen, thus drawn in automap.
 
 // FIXME! DJS - This is important!
 // Doom64tc unfortunetly used non standard values for the linedef flags
@@ -88,14 +88,14 @@ typedef struct xsector_s {
 // once jDoom64 is released with 1.9.0 I imagine we'll see a bunch
 // PWADs start cropping up.
 
-//#define ML_PASSUSE            512 // Allows a USE action to pass through a linedef with a special
-//#define ML_ALLTRIGGER         1024 // If set allows any mobj to trigger the linedef's special
-//#define ML_INVALID            2048 // If set ALL flags NOT in DOOM v1.9 will be zeroed upon map load. ML_BLOCKING -> ML_MAPPED inc will persist.
-//#define VALIDMASK             0x000001ff
+//#define ML_PASSUSE            0x0200 // Allows a USE action to pass through a linedef with a special
+//#define ML_ALLTRIGGER         0x0400 // If set allows any mobj to trigger the linedef's special
 
-#define ML_ALLTRIGGER           512 // Anything can use linedef if this is set - kaiser
-#define ML_PASSUSE              1024
-#define ML_BLOCKALL             2048
+#define ML_ALLTRIGGER           0x0200 // Anything can use linedef if this is set - kaiser
+#define ML_PASSUSE              0x0400
+#define ML_BLOCKALL             0x0800
+
+#define ML_VALID_MASK           (ML_BLOCKMONSTERS|ML_SECRET|ML_SOUNDBLOCK|ML_DONTDRAW|ML_MAPPED|ML_ALLTRIGGER|ML_PASSUSE|ML_BLOCKALL)
 
 typedef struct xline_s {
     short           special;
@@ -120,9 +120,18 @@ extern xline_t* xlines;
 // If true we are in the process of setting up a map.
 extern boolean mapSetup;
 
-xline_t*        P_ToXLine(linedef_t* line);
-xsector_t*      P_ToXSector(sector_t* sector);
-xsector_t*      P_ToXSectorOfSubsector(subsector_t* sub);
+xline_t*        P_ToXLine(LineDef* line);
+xsector_t*      P_ToXSector(Sector* sector);
+xsector_t*      P_ToXSectorOfBspLeaf(BspLeaf* sub);
+
+/**
+ * Update the specified player's automap.
+ *
+ * @param player  Local player number whose map is to change.
+ * @param line  Line to change.
+ * @param visible  @c true= mark the line as visible.
+ */
+void P_SetLinedefAutomapVisibility(int player, uint line, boolean visible);
 
 xline_t*        P_GetXLine(uint index);
 xsector_t*      P_GetXSector(uint index);

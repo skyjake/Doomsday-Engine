@@ -1,5 +1,6 @@
 name: Ultimate Doom
 game: game-jdoom
+game-mode: game-mode-doom1-ultimate
 banner: banner-doom1-ultimate
 hidden: yes
 

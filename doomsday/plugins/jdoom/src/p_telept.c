@@ -1,10 +1,10 @@
-/**\file
+/**\file p_telept.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,12 +23,6 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * p_telept.c:
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "jdoom.h"
 
 #include "dmu_lib.h"
@@ -37,39 +31,21 @@
 #include "p_mapspec.h"
 #include "p_terraintype.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
-
-mobj_t* P_SpawnTeleFog(float x, float y, angle_t angle)
+mobj_t* P_SpawnTeleFog(coord_t x, coord_t y, angle_t angle)
 {
-    return P_SpawnMobj3f(MT_TFOG, x, y, 0, angle, MSF_Z_FLOOR);
+    return P_SpawnMobjXYZ(MT_TFOG, x, y, 0, angle, MSF_Z_FLOOR);
 }
 
 typedef struct {
-    sector_t*           sec;
-    mobjtype_t          type;
-    mobj_t*             foundMobj;
+    Sector* sec;
+    mobjtype_t type;
+    mobj_t* foundMobj;
 } findmobjparams_t;
 
 static int findMobj(thinker_t* th, void* context)
 {
-    findmobjparams_t*   params = (findmobjparams_t*) context;
-    mobj_t*             mo = (mobj_t *) th;
+    findmobjparams_t* params = (findmobjparams_t*) context;
+    mobj_t* mo = (mobj_t *) th;
 
     // Must be of the correct type?
     if(params->type >= 0 && params->type != mo->type)
@@ -77,7 +53,7 @@ static int findMobj(thinker_t* th, void* context)
 
     // Must be in the specified sector?
     if(params->sec &&
-       params->sec != P_GetPtrp(mo->subsector, DMU_SECTOR))
+       params->sec != P_GetPtrp(mo->bspLeaf, DMU_SECTOR))
         return false; // Continue iteration.
 
     // Found it!
@@ -87,13 +63,11 @@ static int findMobj(thinker_t* th, void* context)
 
 static mobj_t* getTeleportDestination(short tag)
 {
-    iterlist_t*         list;
-
-    list = P_GetSectorIterListForTag(tag, false);
+    iterlist_t* list = P_GetSectorIterListForTag(tag, false);
     if(list)
     {
-        sector_t*           sec = NULL;
-        findmobjparams_t    params;
+        Sector* sec = NULL;
+        findmobjparams_t params;
 
         params.type = MT_TELEPORTMAN;
         params.foundMobj = NULL;
@@ -114,7 +88,7 @@ static mobj_t* getTeleportDestination(short tag)
     return NULL;
 }
 
-int EV_Teleport(linedef_t* line, int side, mobj_t* mo, boolean spawnFog)
+int EV_Teleport(LineDef* line, int side, mobj_t* mo, boolean spawnFog)
 {
     mobj_t*             dest;
 
@@ -130,36 +104,37 @@ int EV_Teleport(linedef_t* line, int side, mobj_t* mo, boolean spawnFog)
         return 0;
 
     if((dest = getTeleportDestination(P_ToXLine(line)->tag)) != NULL)
-    {   // A suitable destination has been found.
-        mobj_t*             fog;
-        uint                an;
-        float               oldPos[3];
-        float               aboveFloor;
-        angle_t             oldAngle;
+    {
+        // A suitable destination has been found.
+        mobj_t* fog;
+        coord_t oldPos[3];
+        coord_t aboveFloor;
+        angle_t oldAngle;
+        uint an;
 
-        memcpy(oldPos, mo->pos, sizeof(mo->pos));
+        memcpy(oldPos, mo->origin, sizeof(mo->origin));
         oldAngle = mo->angle;
-        aboveFloor = mo->pos[VZ] - mo->floorZ;
+        aboveFloor = mo->origin[VZ] - mo->floorZ;
 
-        if(!P_TeleportMove(mo, dest->pos[VX], dest->pos[VY], false))
+        if(!P_TeleportMove(mo, dest->origin[VX], dest->origin[VY], false))
             return 0;
 
         // In Final Doom things teleported to their destination but the
         // height wasn't set to the floor.
-        if(gameMission != GM_TNT && gameMission != GM_PLUT)
-            mo->pos[VZ] = mo->floorZ;
+        if(gameMode != GM_DOOM2_TNT && gameMode != GM_DOOM2_PLUT)
+            mo->origin[VZ] = mo->floorZ;
 
         if(spawnFog)
         {
             // Spawn teleport fog at source and destination.
-            if((fog = P_SpawnMobj3fv(MT_TFOG, oldPos, oldAngle + ANG180, 0)))
+            if((fog = P_SpawnMobj(MT_TFOG, oldPos, oldAngle + ANG180, 0)))
                 S_StartSound(SFX_TELEPT, fog);
 
             an = dest->angle >> ANGLETOFINESHIFT;
-            if((fog = P_SpawnMobj3f(MT_TFOG,
-                                    dest->pos[VX] + 20 * FIX2FLT(finecosine[an]),
-                                    dest->pos[VY] + 20 * FIX2FLT(finesine[an]),
-                                    mo->pos[VZ], dest->angle + ANG180, 0)))
+            if((fog = P_SpawnMobjXYZ(MT_TFOG,
+                                     dest->origin[VX] + 20 * FIX2FLT(finecosine[an]),
+                                     dest->origin[VY] + 20 * FIX2FLT(finesine[an]),
+                                     mo->origin[VZ], dest->angle + ANG180, 0)))
             {
                 // Emit sound, where?
                 S_StartSound(SFX_TELEPT, fog);
@@ -171,7 +146,7 @@ int EV_Teleport(linedef_t* line, int side, mobj_t* mo, boolean spawnFog)
         {
             mo->floorClip = 0;
 
-            if(mo->pos[VZ] == P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT))
+            if(FEQUAL(mo->origin[VZ], P_GetDoublep(mo->bspLeaf, DMU_FLOOR_HEIGHT)))
             {
                 const terraintype_t* tt = P_MobjGetFloorTerrainType(mo);
 
@@ -184,16 +159,16 @@ int EV_Teleport(linedef_t* line, int side, mobj_t* mo, boolean spawnFog)
 
         mo->mom[MX] = mo->mom[MY] = mo->mom[MZ] = 0;
 
-        // Don't move for a bit.
-        if(mo->player)
+        // $voodoodolls Must be the real player.
+        if(mo->player && mo->player->plr->mo == mo)
         {
-            mo->reactionTime = 18;
+            mo->reactionTime = 18; // Don't move for a bit.
             if(mo->player->powers[PT_FLIGHT] && aboveFloor > 0)
             {
-                mo->pos[VZ] = mo->floorZ + aboveFloor;
-                if(mo->pos[VZ] + mo->height > mo->ceilingZ)
+                mo->origin[VZ] = mo->floorZ + aboveFloor;
+                if(mo->origin[VZ] + mo->height > mo->ceilingZ)
                 {
-                    mo->pos[VZ] = mo->ceilingZ - mo->height;
+                    mo->origin[VZ] = mo->ceilingZ - mo->height;
                 }
             }
             else
@@ -201,14 +176,14 @@ int EV_Teleport(linedef_t* line, int side, mobj_t* mo, boolean spawnFog)
                 //mo->dPlayer->clLookDir = 0; /* $unifiedangles */
                 mo->dPlayer->lookDir = 0;
             }
-            mo->player->viewHeight = (float) cfg.plrViewHeight;
+            mo->player->viewHeight = (coord_t) cfg.plrViewHeight;
             mo->player->viewHeightDelta = 0;
-            mo->player->viewZ = mo->pos[VZ] + mo->player->viewHeight;
+            mo->player->viewZ = mo->origin[VZ] + mo->player->viewHeight;
+            mo->player->viewOffset[VX] = mo->player->viewOffset[VY] = mo->player->viewOffset[VZ] = 0;
+            mo->player->bob = 0;
 
             //mo->dPlayer->clAngle = mo->angle; /* $unifiedangles */
-            mo->dPlayer->flags |=
-                DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
-
+            mo->dPlayer->flags |= DDPF_FIXANGLES | DDPF_FIXORIGIN | DDPF_FIXMOM;
 #ifdef _DEBUG
             Con_Message("EV_Teleport: Player %p set FIX flags.\n", mo->dPlayer);
 #endif

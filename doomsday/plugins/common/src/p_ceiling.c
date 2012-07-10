@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Martin Eyre <martineyre@btinternet.com>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
@@ -45,6 +45,7 @@
 
 #include "dmu_lib.h"
 #include "p_mapspec.h"
+#include "p_sound.h"
 #include "p_start.h"
 #include "p_tick.h"
 #include "p_ceiling.h"
@@ -113,14 +114,14 @@ void T_MoveCeiling(ceiling_t* ceiling)
         if(!(mapTime & 7))
         {
 # if __JHERETIC__
-            S_SectorSound(ceiling->sector, SORG_CEILING, SFX_CEILINGMOVE);
+            S_PlaneSound(P_GetPtrp(ceiling->sector, DMU_CEILING_PLANE), SFX_CEILINGMOVE);
 # else
             switch(ceiling->type)
             {
             case CT_SILENTCRUSHANDRAISE:
                 break;
             default:
-                S_SectorSound(ceiling->sector, SORG_CEILING, SFX_CEILINGMOVE);
+                S_PlaneSound(P_GetPtrp(ceiling->sector, DMU_CEILING_PLANE), SFX_CEILINGMOVE);
                 break;
             }
 # endif
@@ -130,7 +131,7 @@ void T_MoveCeiling(ceiling_t* ceiling)
         if(res == pastdest)
         {
 #if __JHEXEN__
-            SN_StopSequence(P_SectorSoundOrigin(ceiling->sector));
+            SN_StopSequence(P_SectorOrigin(ceiling->sector));
 #endif
             switch(ceiling->type)
             {
@@ -143,7 +144,7 @@ void T_MoveCeiling(ceiling_t* ceiling)
                 break;
 # if !__JHERETIC__
             case CT_SILENTCRUSHANDRAISE:
-                S_SectorSound(ceiling->sector, SORG_CEILING, SFX_CEILINGSTOP);
+                S_PlaneSound(P_GetPtrp(ceiling->sector, DMU_CEILING_PLANE), SFX_CEILINGSTOP);
 # endif
             case CT_CRUSHANDRAISEFAST:
 #endif
@@ -174,14 +175,14 @@ void T_MoveCeiling(ceiling_t* ceiling)
         if(!(mapTime & 7))
         {
 # if __JHERETIC__
-            S_SectorSound(ceiling->sector, SORG_CEILING, SFX_CEILINGMOVE);
+            S_PlaneSound(P_GetPtrp(ceiling->sector, DMU_CEILING_PLANE), SFX_CEILINGMOVE);
 # else
             switch(ceiling->type)
             {
             case CT_SILENTCRUSHANDRAISE:
                 break;
             default:
-                S_SectorSound(ceiling->sector, SORG_CEILING, SFX_CEILINGMOVE);
+                S_PlaneSound(P_GetPtrp(ceiling->sector, DMU_CEILING_PLANE), SFX_CEILINGMOVE);
             }
 # endif
         }
@@ -190,13 +191,13 @@ void T_MoveCeiling(ceiling_t* ceiling)
         if(res == pastdest)
         {
 #if __JHEXEN__
-            SN_StopSequence(P_SectorSoundOrigin(ceiling->sector));
+            SN_StopSequence(P_SectorOrigin(ceiling->sector));
 #endif
             switch(ceiling->type)
             {
 #if __JDOOM__ || __JDOOM64__
             case CT_SILENTCRUSHANDRAISE:
-                S_SectorSound(ceiling->sector, SORG_CEILING, SFX_CEILINGSTOP);
+                S_PlaneSound(P_GetPtrp(ceiling->sector, DMU_CEILING_PLANE), SFX_CEILINGSTOP);
                 ceiling->speed = CEILSPEED;
                 ceiling->state = CS_UP;
                 break;
@@ -263,7 +264,7 @@ void T_MoveCeiling(ceiling_t* ceiling)
 }
 
 #if __JDOOM64__
-static int EV_DoCeiling2(linedef_t* line, int tag, float basespeed,
+static int EV_DoCeiling2(LineDef* line, int tag, float basespeed,
                          ceilingtype_e type)
 #elif __JHEXEN__
 static int EV_DoCeiling2(byte* arg, int tag, float basespeed, ceilingtype_e type)
@@ -273,7 +274,7 @@ static int EV_DoCeiling2(int tag, float basespeed, ceilingtype_e type)
 {
     int             rtn = 0;
     xsector_t*      xsec;
-    sector_t*       sec = NULL;
+    Sector*         sec = NULL;
     ceiling_t*      ceiling;
     iterlist_t*     list;
 
@@ -307,9 +308,8 @@ static int EV_DoCeiling2(int tag, float basespeed, ceilingtype_e type)
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
         case CT_CRUSHANDRAISEFAST:
             ceiling->crush = true;
-            ceiling->topHeight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
-            ceiling->bottomHeight =
-                P_GetFloatp(sec, DMU_FLOOR_HEIGHT) + 8;
+            ceiling->topHeight = P_GetDoublep(sec, DMU_CEILING_HEIGHT);
+            ceiling->bottomHeight = P_GetDoublep(sec, DMU_FLOOR_HEIGHT) + 8;
 
             ceiling->state = CS_DOWN;
             ceiling->speed *= 2;
@@ -318,8 +318,8 @@ static int EV_DoCeiling2(int tag, float basespeed, ceilingtype_e type)
 #if __JHEXEN__
         case CT_CRUSHRAISEANDSTAY:
             ceiling->crush = (int) arg[2];    // arg[2] = crushing value
-            ceiling->topHeight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
-            ceiling->bottomHeight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT) + 8;
+            ceiling->topHeight = P_GetDoublep(sec, DMU_CEILING_HEIGHT);
+            ceiling->bottomHeight = P_GetDoublep(sec, DMU_FLOOR_HEIGHT) + 8;
             ceiling->state = CS_DOWN;
             break;
 #endif
@@ -330,14 +330,14 @@ static int EV_DoCeiling2(int tag, float basespeed, ceilingtype_e type)
 #if !__JHEXEN__
             ceiling->crush = true;
 #endif
-            ceiling->topHeight = P_GetFloatp(sec, DMU_CEILING_HEIGHT);
+            ceiling->topHeight = P_GetDoublep(sec, DMU_CEILING_HEIGHT);
 
         case CT_LOWERANDCRUSH:
 #if __JHEXEN__
             ceiling->crush = (int) arg[2];    // arg[2] = crushing value
 #endif
         case CT_LOWERTOFLOOR:
-            ceiling->bottomHeight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
+            ceiling->bottomHeight = P_GetDoublep(sec, DMU_FLOOR_HEIGHT);
 
             if(type != CT_LOWERTOFLOOR)
                 ceiling->bottomHeight += 8;
@@ -358,13 +358,13 @@ static int EV_DoCeiling2(int tag, float basespeed, ceilingtype_e type)
         case CT_CUSTOM: // jd64
             {
             //bitmip? wha?
-            sidedef_t *front = P_GetPtrp(line, DMU_SIDEDEF0);
-            sidedef_t *back = P_GetPtrp(line, DMU_SIDEDEF1);
-            float bitmipL = 0, bitmipR = 0;
+            SideDef* front = P_GetPtrp(line, DMU_SIDEDEF0);
+            SideDef* back = P_GetPtrp(line, DMU_SIDEDEF1);
+            coord_t bitmipL = 0, bitmipR = 0;
 
-            bitmipL = P_GetFloatp(front, DMU_MIDDLE_MATERIAL_OFFSET_X);
+            bitmipL = P_GetDoublep(front, DMU_MIDDLE_MATERIAL_OFFSET_X);
             if(back)
-                bitmipR = P_GetFloatp(back, DMU_MIDDLE_MATERIAL_OFFSET_X);
+                bitmipR = P_GetDoublep(back, DMU_MIDDLE_MATERIAL_OFFSET_X);
 
             if(bitmipR > 0)
             {
@@ -375,7 +375,7 @@ static int EV_DoCeiling2(int tag, float basespeed, ceilingtype_e type)
             }
             else
             {
-                ceiling->bottomHeight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
+                ceiling->bottomHeight = P_GetDoublep(sec, DMU_FLOOR_HEIGHT);
                 ceiling->bottomHeight -= bitmipR;
                 ceiling->state = CS_DOWN;
                 ceiling->speed *= bitmipL;
@@ -385,31 +385,31 @@ static int EV_DoCeiling2(int tag, float basespeed, ceilingtype_e type)
 #if __JHEXEN__
         case CT_LOWERBYVALUE:
             ceiling->bottomHeight =
-                P_GetFloatp(sec, DMU_CEILING_HEIGHT) - (float) arg[2];
+                P_GetDoublep(sec, DMU_CEILING_HEIGHT) - (coord_t) arg[2];
             ceiling->state = CS_DOWN;
             break;
 
         case CT_RAISEBYVALUE:
             ceiling->topHeight =
-                P_GetFloatp(sec, DMU_CEILING_HEIGHT) + (float) arg[2];
+                P_GetDoublep(sec, DMU_CEILING_HEIGHT) + (coord_t) arg[2];
             ceiling->state = CS_UP;
             break;
 
         case CT_MOVETOVALUEMUL8:
             {
-            float   destHeight = (float) arg[2] * 8;
+            coord_t destHeight = (coord_t) arg[2] * 8;
 
             if(arg[3]) // Going down?
                 destHeight = -destHeight;
 
-            if(P_GetFloatp(sec, DMU_CEILING_HEIGHT) <= destHeight)
+            if(P_GetDoublep(sec, DMU_CEILING_HEIGHT) <= destHeight)
             {
                 ceiling->state = CS_UP;
                 ceiling->topHeight = destHeight;
-                if(P_GetFloatp(sec, DMU_CEILING_HEIGHT) == destHeight)
+                if(FEQUAL(P_GetDoublep(sec, DMU_CEILING_HEIGHT), destHeight))
                     rtn = 0;
             }
-            else if(P_GetFloatp(sec, DMU_CEILING_HEIGHT) > destHeight)
+            else if(P_GetDoublep(sec, DMU_CEILING_HEIGHT) > destHeight)
             {
                 ceiling->state = CS_DOWN;
                 ceiling->bottomHeight = destHeight;
@@ -430,7 +430,7 @@ static int EV_DoCeiling2(int tag, float basespeed, ceilingtype_e type)
 #if __JHEXEN__
         if(rtn)
         {
-            SN_StartSequence(P_SectorSoundOrigin(ceiling->sector),
+            SN_StartSequence(P_SectorOrigin(ceiling->sector),
                              SEQ_PLATFORM + P_ToXSector(ceiling->sector)->seqType);
         }
 #endif
@@ -442,9 +442,9 @@ static int EV_DoCeiling2(int tag, float basespeed, ceilingtype_e type)
  * Move a ceiling up/down.
  */
 #if __JHEXEN__
-int EV_DoCeiling(linedef_t *line, byte *args, ceilingtype_e type)
+int EV_DoCeiling(LineDef *line, byte *args, ceilingtype_e type)
 #else
-int EV_DoCeiling(linedef_t *line, ceilingtype_e type)
+int EV_DoCeiling(LineDef *line, ceilingtype_e type)
 #endif
 {
 #if __JHEXEN__
@@ -528,7 +528,7 @@ static int deactivateCeiling(thinker_t* th, void* context)
 #if __JHEXEN__
     if(ceiling->tag == (int) params->tag)
     {   // Destroy it.
-        SN_StopSequence(P_SectorSoundOrigin(ceiling->sector));
+        SN_StopSequence(P_SectorOrigin(ceiling->sector));
         stopCeiling(ceiling);
         params->count++;
         return true; // Stop iteration.

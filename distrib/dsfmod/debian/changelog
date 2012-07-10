@@ -1,5 +1,11 @@
+doomsday-fmod (1.0.0-build350) maverick; urgency=low
+
+  * New release: Doomsday Engine build 350.
+
+ -- Jaakko Keränen (skyjake) <jaakko.keranen@iki.fi>  Fri, 16 Dec 2011 13:13:49 +0200
+
 doomsday-fmod (1.0.0) UNRELEASED; urgency=low
 
   * Initial release.
 
- -- Jaakko Keränen <jaakko.keranen@iki.fi>  Tue, 04 Oct 2011 14:34:21 +0300
+ -- Jaakko Keränen (skyjake) <jaakko.keranen@iki.fi>  Tue, 04 Oct 2011 14:34:21 +0300

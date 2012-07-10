@@ -1,10 +1,10 @@
-/**\file
+/**\file doomdef.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,13 +23,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * doomdef.h: Internally used data structures for virtually everything,
- * key definitions, lots of other stuff.
- */
-
-#ifndef __DOOMDEF_H__
-#define __DOOMDEF_H__
+#ifndef LIBDOOM_DEFS_H
+#define LIBDOOM_DEFS_H
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
@@ -46,6 +41,7 @@
 #  define strupr _strupr
 #endif
 
+#include <de/c_wrapper.h>
 #include "doomsday.h"
 #include "dd_api.h"
 #include "version.h"
@@ -54,11 +50,9 @@
 #define Set                 DD_SetInteger
 #define Get                 DD_GetInteger
 
-#define CONFIGFILE          GAMENAMETEXT".cfg"
-#define DEFSFILE            GAMENAMETEXT"\\"GAMENAMETEXT".ded"
-#define DATAPATH            "}data\\"GAMENAMETEXT"\\"
-#define STARTUPWAD          "}data\\"GAMENAMETEXT"\\"GAMENAMETEXT".wad"
-#define STARTUPPK3          "}data\\"GAMENAMETEXT"\\"GAMENAMETEXT".pk3"
+// Verbose messages.
+#define VERBOSE(code)       { if(verbose >= 1) { code; } }
+#define VERBOSE2(code)      { if(verbose >= 2) { code; } }
 
 extern game_import_t gi;
 extern game_export_t gx;
@@ -71,44 +65,31 @@ extern game_export_t gx;
 #define STATES              (*gi.states)
 #define VALIDCOUNT          (*gi.validCount)
 
-// Verbose messages.
-#define VERBOSE(code)       { if(verbose >= 1) { code; } }
-#define VERBOSE2(code)      { if(verbose >= 2) { code; } }
-
-/**
- * Game mode handling - identify IWAD version to handle IWAD dependant
- * animations, game logic etc.
- * \note DOOM 2 german edition not detected.
- */
 typedef enum {
-    shareware, // DOOM 1 shareware, E1, M9
-    registered, // DOOM 1 registered, E3, M27
-    commercial, // DOOM 2 retail, E1 M34
-    retail, // DOOM 1 retail, E4, M36
-    indetermined, // Well, no IWAD found.
+    doom_shareware,
+    doom,
+    doom_ultimate,
+    doom_chex,
+    doom2,
+    doom2_plut,
+    doom2_tnt,
+    doom2_hacx,
     NUM_GAME_MODES
 } gamemode_t;
 
 // Game mode bits for the above.
-#define GM_SHAREWARE        0x1 // DOOM 1 shareware, E1, M9
-#define GM_REGISTERED       0x2 // DOOM 1 registered, E3, M27
-#define GM_COMMERCIAL       0x4 // DOOM 2 retail, E1 M34
-// DOOM 2 german edition not handled.
-#define GM_RETAIL           0x8 // DOOM 1 retail, E4, M36
-#define GM_INDETERMINED     0x16 // Well, no IWAD found.
+#define GM_DOOM_SHAREWARE   0x1
+#define GM_DOOM             0x2
+#define GM_DOOM_ULTIMATE    0x4
+#define GM_DOOM_CHEX        0x8
+#define GM_DOOM2            0x10
+#define GM_DOOM2_PLUT       0x20
+#define GM_DOOM2_TNT        0x40
+#define GM_DOOM2_HACX       0x80
 
-#define GM_ANY              (GM_SHAREWARE|GM_REGISTERED|GM_COMMERCIAL|GM_RETAIL)
-#define GM_NOTSHAREWARE     (GM_REGISTERED|GM_COMMERCIAL|GM_RETAIL)
-
-// Mission packs - might be useful for TC stuff?
-typedef enum {
-    GM_DOOM, // DOOM 1
-    GM_DOOM2, // DOOM 2
-    GM_TNT, // TNT mission pack
-    GM_PLUT, // Plutonia pack
-    GM_NONE,
-    NUM_GAME_MISSIONS
-} gamemission_t;
+#define GM_ANY_DOOM         (GM_DOOM|GM_DOOM_SHAREWARE|GM_DOOM_ULTIMATE|GM_DOOM_CHEX)
+#define GM_ANY_DOOM2        (GM_DOOM2|GM_DOOM2_PLUT|GM_DOOM2_TNT|GM_DOOM2_HACX)
+#define GM_ANY              (GM_ANY_DOOM|GM_ANY_DOOM2)
 
 #define SCREENWIDTH         320
 #define SCREENHEIGHT        200
@@ -116,9 +97,14 @@ typedef enum {
 
 // The maximum number of players, multiplayer/networking.
 #define MAXPLAYERS          16
+#define NUMPLAYERCOLORS     4
+
+#define NUMTEAMS            4 // Color = team.
 
 // State updates, number of tics / second.
 #define TICRATE             35
+
+#define NUMSAVESLOTS        8
 
 /**
  * The current (high-level) state of the game: whether we are playing,
@@ -145,6 +131,7 @@ typedef enum {
 #define PCLASS_INFO(class)  (&classInfo[class])
 
 typedef struct classinfo_s{
+    playerclass_t plrClass;
     char*       niceName;
     boolean     userSelectable;
     mobjtype_t  mobjType;
@@ -178,7 +165,8 @@ typedef enum {
 // Key cards.
 //
 typedef enum {
-    KT_BLUECARD,
+    KT_FIRST,
+    KT_BLUECARD = KT_FIRST,
     KT_YELLOWCARD,
     KT_REDCARD,
     KT_BLUESKULL,
@@ -206,11 +194,14 @@ typedef enum {
     WT_NOCHANGE
 } weapontype_t;
 
+#define VALID_WEAPONTYPE(val) ((val) >= WT_FIRST && (val) < WT_FIRST + NUM_WEAPON_TYPES)
+
 #define NUMWEAPLEVELS       2 // DOOM weapons have 1 power level.
 
 // Ammunition types defined.
 typedef enum {
-    AT_CLIP, // Pistol / chaingun ammo.
+    AT_FIRST,
+    AT_CLIP = AT_FIRST, // Pistol / chaingun ammo.
     AT_SHELL, // Shotgun / double barreled shotgun.
     AT_CELL, // Plasma rifle, BFG.
     AT_MISSILE, // Missile launcher.
@@ -241,7 +232,7 @@ typedef enum {
     IRONTICS = (60 * TICRATE)
 } powerduration_t;
 
-enum { VX, VY, VZ }; // Vertex indices.
+//enum { VX, VY, VZ }; // Vertex indices.
 
 enum { CR, CG, CB, CA }; // Color indices.
 
@@ -250,13 +241,8 @@ enum { CR, CG, CB, CA }; // Color indices.
 #define IS_NETGAME          (Get(DD_NETGAME))
 #define IS_DEDICATED        (Get(DD_DEDICATED))
 
-#define CVAR(typ, x)        (*((typ) *) Con_GetVariable(x)->ptr)
-
 #define SFXVOLUME           (Get(DD_SFX_VOLUME) / 17)
 #define MUSICVOLUME         (Get(DD_MUSIC_VOLUME) / 17)
-
-#define VIEWWINDOWX         (Get(DD_VIEWWINDOW_X))
-#define VIEWWINDOWY         (Get(DD_VIEWWINDOW_Y))
 
 // Player taking events, and displaying.
 #define CONSOLEPLAYER       (Get(DD_CONSOLEPLAYER))
@@ -265,4 +251,5 @@ enum { CR, CG, CB, CA }; // Color indices.
 #define GAMETIC             (*((timespan_t*) DD_GetVariable(DD_GAMETIC)))
 
 #define DEFAULT_PLAYER_VIEWHEIGHT (41)
-#endif
+
+#endif /* LIBDOOM_DEFS_H */

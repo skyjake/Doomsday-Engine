@@ -1,37 +1,48 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file doomsday.h
+ * Primary header file for the Doomsday Engine Public API
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ * @todo Break this header file up into group-specific ones.
+ * Including doomsday.h should include all of the public API headers.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 /**
- * doomsday.h: Doomsday Engine API (Routines exported from Doomsday.exe).
+ * @mainpage libdeng API
  *
- * Games and plugins need to include this to gain access to the engine's
- * features.
+ * This documentation covers all the functions and data that Doomsday makes
+ * available for games and other plugins.
+ *
+ * @section Overview
+ * The documentation has been organized into <a href="modules.html">modules</a>.
+ * The primary ones are listed below:
+ * - @ref base
+ * - @ref console
+ * - @ref input
+ * - @ref network
+ * - @ref resource
+ * - @ref render
  */
 
-#ifndef __DOOMSDAY_EXPORTS_H__
-#define __DOOMSDAY_EXPORTS_H__
+#ifndef LIBDENG_EXPORTS_H
+#define LIBDENG_EXPORTS_H
 
 // The calling convention.
 #if defined(WIN32)
@@ -41,122 +52,244 @@
 #endif
 
 #ifdef __cplusplus
-extern          "C" {
+extern "C" {
 #endif
 
 /**
  * Public definitions of the internal map data pointers.  These can be
  * accessed externally, but only as identifiers to data instances.
- * For example, a game could use sector_t to identify to sector to
+ * For example, a game could use Sector to identify to sector to
  * change with the Map Update API.
  *
- * Define __INTERNAL_MAP_DATA_ACCESS__ if access to the internal map data
+ * Define @c __INTERNAL_MAP_DATA_ACCESS__ if access to the internal map data
  * structures is needed.
  */
 #ifndef __INTERNAL_MAP_DATA_ACCESS__
-    typedef struct node_s { int type; } node_t;
-    typedef struct vertex_s {int type; } vertex_t;
-    typedef struct linedef_s { int type; } linedef_t;
-    typedef struct sidedef_s { int type; } sidedef_t;
-    typedef struct seg_s { int type; } seg_t;
-    typedef struct subsector_s { int type; } subsector_t;
-    typedef struct sector_s { int type; } sector_t;
-    typedef struct plane_s { int type; } plane_t;
+    typedef struct bspnode_s  { int type; } BspNode;
+    typedef struct vertex_s   { int type; } Vertex;
+    typedef struct linedef_s  { int type; } LineDef;
+    typedef struct sidedef_s  { int type; } SideDef;
+    typedef struct hedge_s    { int type; } HEdge;
+    typedef struct bspleaf_s  { int type; } BspLeaf;
+    typedef struct sector_s   { int type; } Sector;
+    typedef struct plane_s    { int type; } Plane;
     typedef struct material_s { int type; } material_t;
 #endif
 
+struct font_s;
+
 #include "dd_share.h"
 #include "dd_plugin.h"
-#include "smoother.h"
+#include "dfile.h"
+#include "point.h"
 #include "reader.h"
+#include "rect.h"
+#include "size.h"
+#include "stringpool.h"
 #include "writer.h"
+#include <de/memoryzone.h>
+#include <de/smoother.h>
 
-    // Base.
-    void            DD_AddIWAD(const char* path);
-    void            DD_AddStartupWAD(const char* file);
-    void            DD_SetConfigFile(const char* filename);
-    void            DD_SetDefsFile(const char* file);
+//------------------------------------------------------------------------
+//
+// Base.
+//
+//------------------------------------------------------------------------
+
+/**
+ * @defgroup base Base
+ */
+
+/**
+ * @defgroup defs Definitions
+ * @ingroup base
+ */
+
+/**
+ * @defgroup fs File System
+ * @ingroup base
+ */
+
+/// @addtogroup base
+///@{
+    boolean         BusyMode_Active(void);
+    timespan_t      BusyMode_ElapsedTime(void);
+    int             BusyMode_RunTask(BusyTask* task);
+    int             BusyMode_RunTasks(BusyTask* tasks, int numTasks);
+    int             BusyMode_RunNewTask(int flags, busyworkerfunc_t worker, void* workerData);
+    int             BusyMode_RunNewTaskWithName(int flags, busyworkerfunc_t worker, void* workerData, const char* taskName);
+
+    void            BusyMode_WorkerEnd(void);
+    void            BusyMode_WorkerError(const char* message);
+///@}
+
+/// @addtogroup game
+///@{
+/**
+ * Register a new game.
+ *
+ * @param definition  GameDef structure defining the new game.
+ * @return  Unique identifier/name assigned to resultant game.
+ *
+ * @note Game registration order defines the order of the automatic game
+ * identification/selection logic.
+ */
+gameid_t DD_DefineGame(const GameDef* definition);
+
+/**
+ * Retrieves the game identifier for a previously defined game.
+ * @see DD_DefineGame().
+ *
+ * @param identityKey  Identity key of the game.
+ * @return Game identifier.
+ */
+gameid_t DD_GameIdForKey(const char* identityKey);
+
+/**
+ * Registers a new resource for the specified game.
+ *
+ * @param game          Unique identifier/name of the game.
+ * @param rclass        Class of resource being added.
+ * @param rflags        Resource flags (see @ref resourceFlags).
+ * @param names         One or more known potential names, seperated by semicolon e.g., "name1;name2".
+ *                      Names may include valid absolute, or relative file paths. These paths include
+ *                      valid symbolbolic escape tokens, predefined symbols into the virtual file system.
+ * @param params        Additional parameters.
+ *
+ * @note Resource registration order defines the load order of resources
+ * (among those of the same type).
+ */
+void DD_AddGameResource(gameid_t game, resourceclass_t rclass, int rflags, const char* names, void* params);
+
+/**
+ * Retrieve extended info about the current game.
+ *
+ * @param info          Info structure to be populated.
+ * @return              @c true if successful else @c false (i.e., no game loaded).
+ */
+boolean DD_GameInfo(GameInfo* info);
+
     int _DECALL     DD_GetInteger(int ddvalue);
     void            DD_SetInteger(int ddvalue, int parm);
     void            DD_SetVariable(int ddvalue, void* ptr);
     void*           DD_GetVariable(int ddvalue);
     ddplayer_t*     DD_GetPlayer(int number);
+///@}
 
+/// @addtogroup namespace
+///@{
+texturenamespaceid_t DD_ParseTextureNamespace(const char* str);
+materialnamespaceid_t DD_ParseMaterialNamespace(const char* str);
+///@}
+
+/**
+ * @defgroup material Materials
+ * @ingroup resource
+ */
+///@{
+materialid_t DD_MaterialForTextureUniqueId(texturenamespaceid_t texNamespaceId, int uniqueId);
+///@}
+
+/// @addtogroup defs
+///@{
     // Base: Definitions.
     int             Def_Get(int type, const char* id, void* out);
     int             Def_Set(int type, int index, int value, const void* ptr);
     int             Def_EvalFlags(char* flags);
+///@}
 
+/// @addtogroup input
+///@{
     // Base: Input.
     void            DD_ClearKeyRepeaters(void);
     int             DD_GetKeyCode(const char* name);
+///@}
 
-    // Base: WAD.
-    lumpnum_t       W_CheckNumForName(const char* name);
-    lumpnum_t       W_GetNumForName(const char* name);
-    size_t          W_LumpLength(lumpnum_t lump);
-    const char*     W_LumpName(lumpnum_t lump);
-    void            W_ReadLump(lumpnum_t lump, void* dest);
-    void            W_ReadLumpSection(lumpnum_t lump, void* dest,
-                                      size_t startOffset, size_t length);
-    const void*     W_CacheLumpNum(lumpnum_t lump, int tag);
-    const void*     W_CacheLumpName(const char* name, int tag);
-    void            W_ChangeCacheTag(lumpnum_t lump, int tag);
-    const char*     W_LumpSourceFile(lumpnum_t lump);
-    uint            W_CRCNumber(void);
-    boolean         W_IsFromIWAD(lumpnum_t lump);
-    lumpnum_t       W_OpenAuxiliary(const char* fileName);
+/// @addtogroup fs
+///@{
+    // Base: File system.
+    int             F_Access(const char* path);
+    int             F_FileExists(const char* path);
+    unsigned int    F_GetLastModified(const char* path);
+    boolean         F_MakePath(const char* path);
 
-    // Base: Zone.
-    void* _DECALL   Z_Malloc(size_t size, int tag, void* ptr);
-    void* _DECALL   Z_Calloc(size_t size, int tag, void* user);
-    void*           Z_Realloc(void* ptr, size_t n, int mallocTag);
-    void*           Z_Recalloc(void* ptr, size_t n, int callocTag);
-    void _DECALL    Z_Free(void* ptr);
-    void            Z_FreeTags(int lowTag, int highTag);
-    void            Z_ChangeTag2(void* ptr, int tag);
-    void            Z_CheckHeap(void);
+    size_t          M_ReadFile(const char* path, char** buffer);
+    boolean         M_WriteFile(const char* path, const char* source, size_t length);
 
-    // Console.
-    int             Con_Busy(int flags, const char* taskName,
-                             int (*workerFunc)(void*), void* workerData);
-    void            Con_BusyWorkerEnd(void);
-    boolean         Con_IsBusy(void);
+    // Base: File system path/name utilities.
+    void            F_FileName(ddstring_t* dst, const char* src);
+    void            F_ExtractFileBase(char* dst, const char* path, size_t len);
+    const char*     F_FindFileExtension(const char* path);
+
+    boolean         F_TranslatePath(ddstring_t* dst, const ddstring_t* src);
+    const char*     F_PrettyPath(const char* path);
+///@}
+
+//------------------------------------------------------------------------
+//
+// Console.
+//
+//------------------------------------------------------------------------
+
+/// @addtogroup console
+///@{
     void            Con_Open(int yes);
-    void            Con_SetFont(ddfont_t* cfont);
-    void            Con_AddCommand(ccmd_t* cmd);
-    void            Con_AddVariable(cvar_t* var);
-    void            Con_AddCommandList(ccmd_t* cmdlist);
-    void            Con_AddVariableList(cvar_t* varlist);
-    cvar_t*         Con_GetVariable(const char* name);
-    byte            Con_GetByte(const char* name);
-    int             Con_GetInteger(const char* name);
-    float           Con_GetFloat(const char* name);
-    char*           Con_GetString(const char* name);
-    void            Con_SetInteger(const char* name, int value,
-                                   byte override);
-    void            Con_SetFloat(const char* name, float value,
-                                 byte override);
-    void            Con_SetString(const char* name, char* text,
-                                  byte override);
-    void            Con_Printf(const char* format, ...) PRINTF_F(1,2);
-    void            Con_FPrintf(int flags, const char* format, ...) PRINTF_F(2,3);
+    void            Con_AddCommand(const ccmdtemplate_t* cmd);
+    void            Con_AddVariable(const cvartemplate_t* var);
+    void            Con_AddCommandList(const ccmdtemplate_t* cmdList);
+    void            Con_AddVariableList(const cvartemplate_t* varList);
+
+cvartype_t Con_GetVariableType(const char* name);
+
+byte Con_GetByte(const char* name);
+int Con_GetInteger(const char* name);
+float Con_GetFloat(const char* name);
+char* Con_GetString(const char* name);
+Uri* Con_GetUri(const char* name);
+
+void Con_SetInteger2(const char* name, int value, int svflags);
+void Con_SetInteger(const char* name, int value);
+
+void Con_SetFloat2(const char* name, float value, int svflags);
+void Con_SetFloat(const char* name, float value);
+
+void Con_SetString2(const char* name, const char* text, int svflags);
+void Con_SetString(const char* name, const char* text);
+
+void Con_SetUri2(const char* name, const Uri* uri, int svflags);
+void Con_SetUri(const char* name, const Uri* uri);
+
+void Con_Printf(const char* format, ...) PRINTF_F(1,2);
+void Con_FPrintf(int flags, const char* format, ...) PRINTF_F(2,3);
+void Con_PrintRuler(void);
+void Con_Message(const char* message, ...) PRINTF_F(1,2);
+void Con_Error(const char* error, ...) PRINTF_F(1,2);
+
+void Con_SetPrintFilter(con_textfilter_t filter);
+
     int             DD_Execute(int silent, const char* command);
     int             DD_Executef(int silent, const char* command, ...);
-    void            Con_Message(const char* message, ...) PRINTF_F(1,2);
-    void            Con_Error(const char* error, ...) PRINTF_F(1,2);
+///@}
 
+/// @addtogroup bindings
+///@{
     // Console: Bindings.
-    void            B_SetContextFallback(const char* name,
-                                         int (*responderFunc)(event_t*));
-    int             B_BindingsForCommand(const char* cmd, char* buf,
-                                         size_t bufSize);
-    int             B_BindingsForControl(int localPlayer,
-                                         const char* controlName,
-                                         int inverse,
-                                         char* buf, size_t bufSize);
+    void            B_SetContextFallback(const char* name, int (*responderFunc)(event_t*));
+    int             B_BindingsForCommand(const char* cmd, char* buf, size_t bufSize);
+    int             B_BindingsForControl(int localPlayer, const char* controlName, int inverse, char* buf, size_t bufSize);
+///@}
+//------------------------------------------------------------------------
+//
+// System.
+//
+//------------------------------------------------------------------------
 
-    // System.
+/**
+ * @defgroup system System Routines
+ * @ingroup base
+ * Functionality provided by or related to the operating system.
+ */
+///@{
     void            Sys_TicksPerSecond(float num);
     int             Sys_GetTime(void);
     double          Sys_GetSeconds(void);
@@ -164,301 +297,481 @@ extern          "C" {
     void            Sys_Sleep(int millisecs);
     int             Sys_CriticalMessage(char* msg);
     void            Sys_Quit(void);
+///@}
 
-    // System: Files.
-    int             F_Access(const char* path);
-    unsigned int    F_LastModified(const char* fileName);
+//------------------------------------------------------------------------
+//
+// Map Edit.
+//
+//------------------------------------------------------------------------
 
-    // Map building interface.
-    boolean         MPE_Begin(const char* name);
-    boolean         MPE_End(void);
+/// @defgroup mapEdit Map Editor
+/// @ingroup map
+///@{
+boolean MPE_Begin(const char* mapUri);
+boolean MPE_End(void);
 
-    uint            MPE_VertexCreate(float x, float y);
-    boolean         MPE_VertexCreatev(size_t num, float* values, uint* indices);
-    uint            MPE_SidedefCreate(uint sector, short flags,
-                                      materialnum_t topMaterial,
-                                      float topOffsetX, float topOffsetY, float topRed,
-                                      float topGreen, float topBlue,
-                                      materialnum_t middleMaterial,
-                                      float middleOffsetX, float middleOffsetY,
-                                      float middleRed, float middleGreen,
-                                      float middleBlue, float middleAlpha,
-                                      materialnum_t bottomMaterial,
-                                      float bottomOffsetX, float bottomOffsetY,
-                                      float bottomRed, float bottomGreen,
-                                      float bottomBlue);
-    uint            MPE_LinedefCreate(uint v1, uint v2, uint frontSide,
-                                      uint backSide, int flags);
+    uint            MPE_VertexCreate(coord_t x, coord_t y);
+    boolean         MPE_VertexCreatev(size_t num, coord_t* values, uint* indices);
+    uint            MPE_SidedefCreate(short flags, materialid_t topMaterial, float topOffsetX, float topOffsetY, float topRed, float topGreen, float topBlue, materialid_t middleMaterial, float middleOffsetX, float middleOffsetY, float middleRed, float middleGreen, float middleBlue, float middleAlpha, materialid_t bottomMaterial, float bottomOffsetX, float bottomOffsetY, float bottomRed, float bottomGreen, float bottomBlue);
+    uint            MPE_LinedefCreate(uint v1, uint v2, uint frontSector, uint backSector, uint frontSide, uint backSide, int flags);
     uint            MPE_SectorCreate(float lightlevel, float red, float green, float blue);
-    uint            MPE_PlaneCreate(uint sector, float height,
-                                    materialnum_t num,
-                                    float matOffsetX, float matOffsetY,
-                                    float r, float g, float b, float a,
-                                    float normalX, float normalY, float normalZ);
-    uint            MPE_PolyobjCreate(uint* lines, uint linecount,
-                                      int tag, int sequenceType, float anchorX, float anchorY);
-    boolean         MPE_GameObjProperty(const char* objName, uint idx,
-                                        const char* propName, valuetype_t type,
-                                        void* data);
+    uint            MPE_PlaneCreate(uint sector, coord_t height, materialid_t materialId, float matOffsetX, float matOffsetY, float r, float g, float b, float a, float normalX, float normalY, float normalZ);
+    uint            MPE_PolyobjCreate(uint* lines, uint linecount, int tag, int sequenceType, coord_t originX, coord_t originY);
+    boolean         MPE_GameObjProperty(const char* objName, uint idx, const char* propName, valuetype_t type, void* data);
+///@}
 
+/// @addtogroup mobj
+///@{
     // Custom map object data types.
     boolean         P_RegisterMapObj(int identifier, const char* name);
-    boolean         P_RegisterMapObjProperty(int identifier, int propIdentifier,
-                                             const char* propName, valuetype_t type);
+    boolean         P_RegisterMapObjProperty(int identifier, int propIdentifier, const char* propName, valuetype_t type);
+///@}
 
-    // Network.
-    void            Net_SendPacket(int to_player, int type, const void* data, size_t length);
-    int             Net_GetTicCmd(void* command, int player);
-    const char*     Net_GetPlayerName(int player);
-    ident_t         Net_GetPlayerID(int player);
-    Smoother*       Net_PlayerSmoother(int player);
-    boolean         Sv_CanTrustClientPos(int player);
+//------------------------------------------------------------------------
+//
+// Networking.
+//
+//------------------------------------------------------------------------
 
-    // Play.
-    float           P_AccurateDistance(float dx, float dy);
-    float           P_ApproxDistance(float dx, float dy);
-    float           P_ApproxDistance3(float dx, float dy, float dz);
-    int             P_PointOnLinedefSide(float xy[2], const struct linedef_s* lineDef);
-    int             P_PointOnLinedefSideXY(float x, float y, const struct linedef_s* lineDef);
-    int             P_BoxOnLineSide(const AABoxf* box, const struct linedef_s* ld);
-    void            P_MakeDivline(struct linedef_s* li, divline_t* dl);
-    int             P_PointOnDivlineSide(float x, float y, const divline_t* line);
-    float           P_InterceptVector(divline_t* v2, divline_t* v1);
-    void            P_LineOpening(struct linedef_s* linedef);
+/// @addtogroup network
+///@{
 
-    // Object in bounding box iterators.
-    int             P_MobjsBoxIterator(const AABoxf* box,
-                                       int (*func) (struct mobj_s*, void*),
-                                       void* data);
-    int             P_LinesBoxIterator(const AABoxf* box,
-                                       int (*func) (struct linedef_s*, void*),
-                                       void* data);
-    int             P_AllLinesBoxIterator(const AABoxf* box,
-                                          int (*func) (struct linedef_s*, void*),
-                                          void* data);
-    int             P_SubsectorsBoxIterator(const AABoxf* box, sector_t* sector,
-                                           int (*func) (subsector_t*, void*),
-                                           void* data);
-    int             P_PolyobjsBoxIterator(const AABoxf* box,
-                                          int (*func) (struct polyobj_s*, void*),
-                                          void* data);
+/**
+ * Send a packet over the network.
+ *
+ * @param to_player  Player number to send to. The server is number zero.
+ *                   May include @ref netSendFlags.
+ * @param type       Type of the packet.
+ * @param data       Data of the packet.
+ * @param length     Length of the data.
+ */
+void Net_SendPacket(int to_player, int type, const void* data, size_t length);
 
-    // Object type touching mobjs iterators.
-    int             P_LineMobjsIterator(struct linedef_s* line,
-                                        int (*func) (struct mobj_s*, void *), void* data);
-    int             P_SectorTouchingMobjsIterator
-                        (sector_t* sector, int (*func) (struct mobj_s*, void*),
-                         void* data);
+/**
+ * @return The name of player @a player.
+ */
+const char* Net_GetPlayerName(int player);
 
-    int             P_PathTraverse(float const from[2], float const to[2], int flags, traverser_t callback); /*paramaters=NULL*/
-    int             P_PathTraverse2(float const from[2], float const to[2], int flags, traverser_t callback, void* paramaters);
+/**
+ * @return Client identifier for player @a player.
+ */
+ident_t Net_GetPlayerID(int player);
 
-    int             P_PathTraverseXY(float fromX, float fromY, float toX, float toY, int flags, traverser_t callback); /*paramaters=NULL*/
-    int             P_PathTraverseXY2(float fromX, float fromY, float toX, float toY, int flags, traverser_t callback, void* paramaters);
+/**
+ * Provides access to the player's movement smoother.
+ */
+Smoother* Net_PlayerSmoother(int player);
 
-    boolean         P_CheckLineSight(const float from[3], const float to[3], float bottomSlope, float topSlope, int flags);
+/**
+ * Determines whether the coordinates sent by a player are valid at the moment.
+ */
+boolean Sv_CanTrustClientPos(int player);
 
-    // Play: Controls.
-    void            P_NewPlayerControl(int id, controltype_t type, const char* name, const char* bindContext);
-    void            P_GetControlState(int playerNum, int control, float* pos, float* relativeOffset);
-    int             P_GetImpulseControlState(int playerNum, int control);
-    void            P_Impulse(int playerNum, int control);
+/**
+ * Searches through the client mobj hash table for the CURRENT map and
+ * returns the clmobj with the specified ID, if that exists. Note that
+ * client mobjs are also linked to the thinkers list.
+ *
+ * @param id  Mobj identifier.
+ *
+ * @return  Pointer to the mobj.
+ */
+struct mobj_s* ClMobj_Find(thid_t id);
 
-    // Play: Setup.
-    boolean         P_LoadMap(const char* mapID);
+/**
+ * Enables or disables local action function execution on the client.
+ *
+ * @param mo  Client mobj.
+ * @param enable  @c true to enable local actions, @c false to disable.
+ */
+void ClMobj_EnableLocalActions(struct mobj_s* mo, boolean enable);
 
-    // Play: World data access (Map Data Updates and access to other information).
+/**
+ * Determines if local action functions are enabled for client mobj @a mo.
+ */
+boolean ClMobj_LocalActionsEnabled(struct mobj_s* mo);
+
+///@}
+
+//------------------------------------------------------------------------
+//
+// Playsim.
+//
+//------------------------------------------------------------------------
+
+/**
+ * @defgroup playsim Playsim
+ * @ingroup game
+ */
+///@{
+
+int LineDef_BoxOnSide(LineDef* line, const AABoxd* box);
+
+coord_t LineDef_PointDistance(LineDef* lineDef, coord_t const point[2], coord_t* offset);
+coord_t LineDef_PointXYDistance(LineDef* lineDef, coord_t x, coord_t y, coord_t* offset);
+
+coord_t LineDef_PointOnSide(LineDef* lineDef, coord_t const point[2]);
+coord_t LineDef_PointXYOnSide(LineDef* lineDef, coord_t x, coord_t y);
+
+void LineDef_SetDivline(LineDef* lineDef, divline_t* dl);
+
+int Divline_PointOnSide(const divline_t* line, coord_t const point[2]);
+int Divline_PointXYOnSide(const divline_t* line, coord_t x, coord_t y);
+
+fixed_t Divline_Intersection(divline_t* v1, divline_t* v2);
+
+const divline_t* P_TraceLOS(void);
+
+TraceOpening* P_TraceOpening(void);
+
+void P_SetTraceOpening(struct linedef_s* linedef);
+
+BspLeaf* P_BspLeafAtPoint(coord_t const point[2]);
+BspLeaf* P_BspLeafAtPointXY(coord_t x, coord_t y);
+
+// Object in bounding box iterators.
+int P_MobjsBoxIterator(const AABoxd* box, int (*callback) (struct mobj_s*, void*), void* parameters);
+
+int P_LinesBoxIterator(const AABoxd* box, int (*callback) (struct linedef_s*, void*), void* parameters);
+
+int P_AllLinesBoxIterator(const AABoxd* box, int (*callback) (struct linedef_s*, void*), void* parameters);
+
+int P_BspLeafsBoxIterator(const AABoxd* box, Sector* sector, int (*callback) (struct bspleaf_s*, void*), void* parameters);
+
+int P_PolyobjsBoxIterator(const AABoxd* box, int (*callback) (struct polyobj_s*, void*), void* parameters);
+
+// Object type touching mobjs iterators.
+int P_LineMobjsIterator(struct linedef_s* line, int (*callback) (struct mobj_s*, void *), void* parameters);
+
+int P_SectorTouchingMobjsIterator(struct sector_s* sector, int (*callback) (struct mobj_s*, void*), void* parameters);
+
+int P_PathTraverse2(coord_t const from[2], coord_t const to[2], int flags, traverser_t callback, void* parameters);
+int P_PathTraverse(coord_t const from[2], coord_t const to[2], int flags, traverser_t callback/*parameters=NULL*/);
+
+int P_PathXYTraverse2(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags, traverser_t callback, void* parameters);
+int P_PathXYTraverse(coord_t fromX, coord_t fromY, coord_t toX, coord_t toY, int flags, traverser_t callback/*parameters=NULL*/);
+
+boolean P_CheckLineSight(coord_t const from[3], coord_t const to[3], coord_t bottomSlope, coord_t topSlope, int flags);
+///@}
+
+/**
+ * @defgroup controls Controls
+ * @ingroup input
+ */
+///@{
+// Play: Controls.
+void P_NewPlayerControl(int id, controltype_t type, const char* name, const char* bindContext);
+void P_GetControlState(int playerNum, int control, float* pos, float* relativeOffset);
+int P_GetImpulseControlState(int playerNum, int control);
+void P_Impulse(int playerNum, int control);
+///@}
+
+/// @addtogroup map
+///@{
+// Play: Setup.
+boolean P_MapExists(const char* uri);
+boolean P_MapIsCustom(const char* uri);
+const char* P_MapSourceFile(const char* uri);
+
+boolean P_LoadMap(const char* uri);
+///@}
+
+// Play: World data access (Map Data Updates and access to other information).
 #include "dd_world.h"
 
-    // Play: Misc.
-    void            P_SpawnDamageParticleGen(struct mobj_s* mo,
-                                             struct mobj_s* inflictor,
-                                             int amount);
+/// @addtogroup playsim
+///@{
+// Play: Misc.
+void P_SpawnDamageParticleGen(struct mobj_s* mo, struct mobj_s* inflictor, int amount);
+///@}
 
-    // Play: Mobjs.
-    struct mobj_s*  P_MobjCreate(think_t function, float x, float y, float z,
-                                 angle_t angle, float radius, float height, int ddflags);
-    void            P_MobjDestroy(struct mobj_s* mo);
-    void            P_MobjSetState(struct mobj_s* mo, int statenum);
-    void            P_MobjLink(struct mobj_s* mo, byte flags);
-    int             P_MobjUnlink(struct mobj_s* mo);
-    struct mobj_s*  P_MobjForID(int id);
-    boolean         ClMobj_IsValid(struct mobj_s* mo);
-    struct mobj_s*  ClPlayer_ClMobj(int plrNum);
+/// @addtogroup mobj
+///@{
+// Play: Mobjs.
+struct mobj_s* P_MobjCreateXYZ(think_t function, coord_t x, coord_t y, coord_t z, angle_t angle, coord_t radius, coord_t height, int ddflags);
 
-    // Mobj linked object iterators.
-    int             P_MobjLinesIterator(struct mobj_s* mo,
-                                        int (*func) (struct linedef_s*,
-                                                          void*), void*);
-    int             P_MobjSectorsIterator(struct mobj_s* mo,
-                                          int (*func) (sector_t*, void*),
-                                          void* data);
+void P_MobjDestroy(struct mobj_s* mo);
 
-    // Play: Polyobjs.
-    boolean         P_PolyobjMove(struct polyobj_s* po, float x, float y);
-    boolean         P_PolyobjRotate(struct polyobj_s* po, angle_t angle);
-    void            P_PolyobjLink(struct polyobj_s* po);
-    void            P_PolyobjUnLink(struct polyobj_s* po);
+void P_MobjSetState(struct mobj_s* mo, int statenum);
 
-    struct polyobj_s* P_GetPolyobj(uint num);
-    void            P_SetPolyobjCallback(void (*func)(struct mobj_s*, void*, void*));
+void P_MobjLink(struct mobj_s* mo, byte flags);
 
-    // Play: Materials.
-    materialnum_t   P_MaterialCheckNumForName(const char* name, material_namespace_t mnamespace);
-    materialnum_t   P_MaterialNumForName(const char* name, material_namespace_t mnamespace);
-    materialnum_t   P_MaterialCheckNumForIndex(uint idx, material_namespace_t mnamespace);
-    materialnum_t   P_MaterialNumForIndex(uint idx, material_namespace_t mnamespace);
-    const char*     P_GetMaterialName(material_t* mat);
+int P_MobjUnlink(struct mobj_s* mo);
 
-    void            P_MaterialPrecache(material_t* mat);
+struct mobj_s* P_MobjForID(int id);
 
-    // Play: Thinkers.
-    void            DD_InitThinkers(void);
-    void            DD_RunThinkers(void);
-    void            DD_ThinkerAdd(thinker_t* th);
-    void            DD_ThinkerRemove(thinker_t* th);
-    void            DD_ThinkerSetStasis(thinker_t* th, boolean on);
+void Mobj_OriginSmoothed(struct mobj_s* mobj, coord_t origin[3]);
 
-    int             DD_IterateThinkers(think_t type, int (*func) (thinker_t *th, void*), void* data);
+angle_t Mobj_AngleSmoothed(struct mobj_s* mobj);
 
-    // Refresh.
-    boolean         DD_IsSharpTick(void);
-    int             DD_GetFrameRate(void);
-    void            R_SetDataPath(const char* path);
-    void            R_SetupMap(int mode, int flags);
-    void            R_PrecacheMap(void);
-    void            R_PrecacheMobjNum(int mobjtypeNum);
-    void            R_PrecachePatch(lumpnum_t lump);
-    void            R_PrecacheSkinsForState(int stateIndex);
-    void            R_RenderPlayerView(int num);
-    void            R_SetViewWindow(int x, int y, int w, int h);
-    int             R_GetViewPort(int player, int* x, int* y, int* w, int* h);
-    void            R_SetViewPortPlayer(int consoleNum, int viewPlayer);
+boolean ClMobj_IsValid(struct mobj_s* mo);
 
-void R_SetViewOrigin(int player, float const origin[3]);
+struct mobj_s* ClPlayer_ClMobj(int plrNum);
+
+// Mobj linked object iterators.
+int P_MobjLinesIterator(struct mobj_s* mo, int (*callback) (struct linedef_s*, void*), void* parameters);
+
+int P_MobjSectorsIterator(struct mobj_s* mo, int (*callback) (Sector*, void*), void* parameters);
+
+///@}
+
+/**
+ * @defgroup polyobj Polygon Objects
+ * @ingroup map
+ */
+///@{
+
+// Play: Polyobjs.
+boolean P_PolyobjMoveXY(struct polyobj_s* po, coord_t x, coord_t y);
+boolean P_PolyobjRotate(struct polyobj_s* po, angle_t angle);
+void P_PolyobjLink(struct polyobj_s* po);
+void P_PolyobjUnlink(struct polyobj_s* po);
+
+struct polyobj_s* P_PolyobjByID(uint id);
+struct polyobj_s* P_PolyobjByTag(int tag);
+void P_SetPolyobjCallback(void (*func)(struct mobj_s*, void*, void*));
+
+///@}
+
+/// @addtogroup material
+///@{
+
+// Play: Materials.
+materialid_t Materials_ResolveUri(const Uri* uri);
+materialid_t Materials_ResolveUriCString(const char* path);
+Uri* Materials_ComposeUri(materialid_t materialId);
+
+///@}
+
+//------------------------------------------------------------------------
+//
+// UI.
+//
+//------------------------------------------------------------------------
+
+/// @addtogroup gl
+///@{
+
+fontid_t Fonts_ResolveUri(const Uri* uri);
+
+///@}
+
+//------------------------------------------------------------------------
+//
+// Refresh.
+//
+//------------------------------------------------------------------------
+
+/**
+ * Determines whether the current run of the thinkers should be considered a
+ * "sharp" tick. Sharp ticks occur exactly 35 times per second. Thinkers may be
+ * called at any rate faster than this; in order to retain compatibility with
+ * the original Doom engine game logic that ran at 35 Hz, such logic should
+ * only be executed on sharp ticks.
+ *
+ * @return @c true, if a sharp tick is currently in effect.
+ *
+ * @ingroup playsim
+ */
+boolean DD_IsSharpTick(void);
+
+/**
+ * @defgroup render Renderer
+ */
+///@{
+
+int DD_GetFrameRate(void);
+
+void R_SetupMap(int mode, int flags);
+
+void R_PrecacheMobjNum(int mobjtypeNum);
+void R_PrecacheModelsForState(int stateIndex);
+
+void R_RenderPlayerView(int num);
+
+void R_SetViewOrigin(int player, coord_t const origin[3]);
 void R_SetViewAngle(int player, angle_t angle);
 void R_SetViewPitch(int player, float pitch);
 
-    void            R_SetBorderGfx(char* lumps[9]);
-    boolean         R_GetSpriteInfo(int sprite, int frame,
-                                    spriteinfo_t* sprinfo);
-    boolean         R_GetPatchInfo(lumpnum_t lump, patchinfo_t* info);
-    int             R_CreateAnimGroup(int flags);
-    void            R_AddToAnimGroup(int groupNum, materialnum_t num,
-                                     int tics, int randomTics);
-    void            R_HSVToRGB(float* rgb, float h, float s, float v);
-    angle_t         R_PointToAngle2(float x1, float y1, float x2,
-                                    float y2);
-    struct subsector_s* R_PointInSubsector(float x, float y);
+/**
+ * Retrieve the geometry of the specified viewwindow by console player num.
+ */
+int R_ViewWindowGeometry(int player, RectRaw* geometry);
+int R_ViewWindowOrigin(int player, Point2Raw* origin);
+int R_ViewWindowSize(int player, Size2Raw* size);
 
-    colorpaletteid_t R_CreateColorPalette(const char* fmt, const char* name,
-                                          const byte* data, size_t num);
-    colorpaletteid_t R_GetColorPaletteNumForName(const char* name);
-    const char*     R_GetColorPaletteNameForNum(colorpaletteid_t id);
-    void            R_GetColorPaletteRGBf(colorpaletteid_t id, float rgb[3],
-                                          int idx, boolean correctGamma);
+void R_SetViewWindowGeometry(int player, const RectRaw* geometry, boolean interpolate);
 
-    // Renderer.
-    void            Rend_Reset(void);
-    void            Rend_SkyParams(int layer, int param, void* data);
+void R_SetBorderGfx(const Uri* const* paths);
 
-    // Graphics.
-    void            GL_UseFog(int yes);
-    byte*           GL_GrabScreen(void);
-    DGLuint         GL_LoadGraphics(ddresourceclass_t resClass,
-                                     const char* name, gfxmode_t mode,
-                                     int useMipmap, boolean clamped,
-                                     int otherFlags);
-    DGLuint         GL_NewTextureWithParams3(int format, int width,
-                                             int height, const void* pixels,
-                                             int flags, int minFilter,
-                                             int magFilter, int anisoFilter,
-                                             int wrapS, int wrapT);
-    void            GL_SetFilter(boolean enable);
-    void            GL_SetFilterColor(float r, float g, float b, float a);
+/**
+ * Retrieve the geometry of the specified viewport by console player num.
+ */
+int R_ViewPortGeometry(int player, RectRaw* geometry);
+int R_ViewPortOrigin(int player, Point2Raw* origin);
+int R_ViewPortSize(int player, Size2Raw* size);
 
-    // Graphics: 2D drawing.
-    void            GL_DrawPatch(int x, int y, lumpnum_t lump);
-    void            GL_DrawPatch_CS(int x, int y, lumpnum_t lump);
-    void            GL_DrawPatchLitAlpha(int x, int y, float light,
-                                         float alpha, lumpnum_t lump);
-    void            GL_DrawFuzzPatch(int x, int y, lumpnum_t lump);
-    void            GL_DrawAltFuzzPatch(int x, int y, lumpnum_t lump);
-    void            GL_DrawShadowedPatch(int x, int y, lumpnum_t lump);
-    void            GL_DrawRawScreen(lumpnum_t lump, float offx,
-                                     float offy);
-    void            GL_DrawRawScreen_CS(lumpnum_t lump, float offx,
-                                        float offy, float scalex,
-                                        float scaley);
+/**
+ * Change the view player for the specified viewport by console player num.
+ *
+ * @param player  Console player number of whose viewport to change.
+ * @param viewPlayer  Player that will be viewed by @a player.
+ */
+void R_SetViewPortPlayer(int player, int viewPlayer);
 
-    // Audio.
-    void            S_MapChange(void);
-    int             S_LocalSoundAtVolumeFrom(int sound_id,
-                                             struct mobj_s* origin,
-                                             float* pos, float volume);
-    int             S_LocalSoundAtVolume(int soundID, struct mobj_s* origin,
-                                         float volume);
-    int             S_LocalSound(int soundID, struct mobj_s* origin);
-    int             S_LocalSoundFrom(int soundID, float* fixedpos);
-    int             S_StartSound(int soundId, struct mobj_s* origin);
-    int             S_StartSoundEx(int soundId, struct mobj_s* origin);
-    int             S_StartSoundAtVolume(int soundID, struct mobj_s* origin,
-                                         float volume);
-    int             S_ConsoleSound(int soundID, struct mobj_s* origin,
-                                   int targetConsole);
-    void            S_StopSound(int soundID, struct mobj_s* origin);
-    int             S_IsPlaying(int soundID, struct mobj_s* origin);
-    int             S_StartMusic(const char* musicID, boolean looped);
-    int             S_StartMusicNum(int id, boolean looped);
-    void            S_StopMusic(void);
-    void            S_PauseMusic(boolean doPause);
+boolean R_ChooseAlignModeAndScaleFactor(float* scale, int width, int height, int availWidth, int availHeight, scalemode_t scaleMode);
+scalemode_t R_ChooseScaleMode2(int width, int height, int availWidth, int availHeight, scalemode_t overrideMode, float stretchEpsilon);
+scalemode_t R_ChooseScaleMode(int width, int height, int availWidth, int availHeight, scalemode_t overrideMode);
 
-    // Miscellaneous.
-    size_t          M_ReadFile(const char* name, byte** buffer);
-    size_t          M_ReadFileCLib(const char* name, byte** buffer);
-    boolean         M_WriteFile(const char* name, void* source,
-                                size_t length);
-    void            M_ExtractFileBase(char* dest, const char* path,
-                                      size_t len);
-    char*           M_FindFileExtension(char* path);
-    boolean         M_CheckPath(const char* path);
-    int             M_FileExists(const char* file);
-    void            M_TranslatePath(char* translated, const char* path,
-                                    size_t len);
-    const char*     M_PrettyPath(const char* path);
-    char*           M_SkipWhite(char* str);
-    char*           M_FindWhite(char* str);
-    char*           M_StrCatQuoted(char* dest, const char* src, size_t len);
+boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* sprinfo);
+
+patchid_t R_DeclarePatch(const char* name);
+boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info);
+Uri* R_ComposePatchUri(patchid_t id);
+
+int R_TextureUniqueId2(const Uri* uri, boolean quiet);
+int R_TextureUniqueId(const Uri* uri); /*quiet=false*/
+
+int R_CreateAnimGroup(int flags);
+void R_AddAnimGroupFrame(int groupNum, const Uri* texture, int tics, int randomTics);
+
+colorpaletteid_t R_CreateColorPalette(const char* fmt, const char* name, const uint8_t* colorData, int colorCount);
+colorpaletteid_t R_GetColorPaletteNumForName(const char* name);
+const char* R_GetColorPaletteNameForNum(colorpaletteid_t id);
+
+void R_GetColorPaletteRGBubv(colorpaletteid_t id, int colorIdx, uint8_t rgb[3], boolean applyTexGamma);
+void R_GetColorPaletteRGBf(colorpaletteid_t id, int colorIdx, float rgb[3], boolean applyTexGamma);
+
+void R_HSVToRGB(float* rgb, float h, float s, float v);
+
+///@}
+
+//------------------------------------------------------------------------
+//
+// Renderer.
+//
+//------------------------------------------------------------------------
+
+/// @addtogroup render
+///@{
+
+void R_SkyParams(int layer, int param, void* data);
+
+///@}
+
+//------------------------------------------------------------------------
+//
+// Graphics.
+//
+//------------------------------------------------------------------------
+
+/// @addtogroup gl
+///@{
+
+void GL_UseFog(int yes);
+byte* GL_GrabScreen(void);
+void GL_SetFilter(boolean enable);
+void GL_SetFilterColor(float r, float g, float b, float a);
+
+void GL_ConfigureBorderedProjection2(borderedprojectionstate_t* bp, int flags, int width, int height, int availWidth, int availHeight, scalemode_t overrideMode, float stretchEpsilon);
+void GL_ConfigureBorderedProjection(borderedprojectionstate_t* bp, int flags, int width, int height, int availWidth, int availHeight, scalemode_t overrideMode);
+void GL_BeginBorderedProjection(borderedprojectionstate_t* bp);
+void GL_EndBorderedProjection(borderedprojectionstate_t* bp);
+
+///@}
+
+//------------------------------------------------------------------------
+//
+// Audio.
+//
+//------------------------------------------------------------------------
+
+/// @addtogroup audio
+///@{
+
+void S_MapChange(void);
+int S_LocalSoundAtVolumeFrom(int sound_id, struct mobj_s* origin, coord_t* pos, float volume);
+int S_LocalSoundAtVolume(int soundID, struct mobj_s* origin, float volume);
+int S_LocalSound(int soundID, struct mobj_s* origin);
+int S_LocalSoundFrom(int soundID, coord_t* fixedpos);
+int S_StartSound(int soundId, struct mobj_s* origin);
+int S_StartSoundEx(int soundId, struct mobj_s* origin);
+int S_StartSoundAtVolume(int soundID, struct mobj_s* origin, float volume);
+int S_ConsoleSound(int soundID, struct mobj_s* origin, int targetConsole);
+
+void S_StopSound2(int soundID, struct mobj_s* origin, int flags);
+void S_StopSound(int soundID, struct mobj_s* origin/*,flags=0*/);
+
+int S_IsPlaying(int soundID, struct mobj_s* origin);
+int S_StartMusic(const char* musicID, boolean looped);
+int S_StartMusicNum(int id, boolean looped);
+void S_StopMusic(void);
+void S_PauseMusic(boolean doPause);
+
+///@}
+
+//------------------------------------------------------------------------
+//
+// Miscellaneous.
+//
+//------------------------------------------------------------------------
+
+/**
+ * @ingroup render
+ */
+int M_ScreenShot(const char* filename, int bits);
+
+/// @addtogroup base
+///@{
+
+char* M_SkipWhite(char* str);
+char* M_FindWhite(char* str);
+char* M_StrCatQuoted(char* dest, const char* src, size_t len);
+boolean M_IsStringValidInt(const char* str);
+boolean M_IsStringValidByte(const char* str);
+boolean M_IsStringValidFloat(const char* str);
+
+///@}
+
+/// @addtogroup math
+///@{
+
+double M_ApproxDistance(double dx, double dy);
+double M_ApproxDistance3(double dx, double dy, double dz);
+
+angle_t M_PointXYToAngle(double x, double y);
+
+angle_t M_PointToAngle2(double const a[2], double const b[2]);
+angle_t M_PointXYToAngle2(double x1, double y1, double x2, double y2);
+
+void V2d_Sum(double dest[2], double const a[2], double const b[2]);
+void V2d_Subtract(double dest[2], double const a[2], double const b[2]);
+void V2d_Rotate(double vec[2], double radians);
+double V2d_PointOnLineSide(double const point[2], double const lineOrigin[2], double const lineDirection[2]);
+double V2d_PointLineDistance(double const point[2], double const linePoint[2], double const lineDirection[2], double* offset);
+double V2d_ProjectOnLine(double dest[2], double const point[2], double const lineOrigin[2], double const lineDirection[2]);
+double V2d_Intersection(double const linePointA[2], double const lineDirectionA[2], double const linePointB[2], double const lineDirectionB[2], double point[2]);
+
+int M_RatioReduce(int* numerator, int* denominator);
+int M_CeilPow2(int num);
+int M_NumDigits(int value);
+
+binangle_t bamsAtan2(int y, int x);
+
+///@}
+
+/// @addtogroup base
+///@{
+
+    // Miscellaneous: Random Number Generator facilities.
     byte            RNG_RandByte(void);
     float           RNG_RandFloat(void);
-    void            M_ClearBox(fixed_t* box);
-    void            M_AddToBox(fixed_t* box, fixed_t x, fixed_t y);
-    int             M_ScreenShot(const char* filename, int bits);
-    int             M_CeilPow2(int num);
 
-    // Miscellaneous: Time utilities.
-    boolean         M_RunTrigger(trigger_t* trigger, timespan_t advanceTime);
-    boolean         M_CheckTrigger(const trigger_t* trigger, timespan_t advanceTime);
-
-    // Miscellaneous: Math.
-    void            V2_Rotate(float vec[2], float radians);
-    float           M_PointLineDistance(const float* a, const float* b, const float* c);
-    float           M_ProjectPointOnLine(const float* point, const float* linepoint,
-                                         const float* delta, float gap, float* result);
-    binangle_t      bamsAtan2(int y, int x);
-
-    // Miscellaneous: Command line.
-    void _DECALL    ArgAbbreviate(const char* longName, const char* shortName);
-    int _DECALL     Argc(void);
-    const char* _DECALL Argv(int i);
-    const char** _DECALL ArgvPtr(int i);
-    const char* _DECALL ArgNext(void);
-    int _DECALL     ArgCheck(const char* check);
-    int _DECALL     ArgCheckWith(const char* check, int num);
-    int _DECALL     ArgExists(const char* check);
-    int _DECALL     ArgIsOption(int i);
+///@}
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
-#endif
+
+#endif /* LIBDENG_EXPORTS_H */

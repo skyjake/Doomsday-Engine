@@ -1,0 +1,11 @@
+name: HacX
+game: game-jdoom
+game-mode: game-mode-hacx
+banner: banner-default
+hidden: yes
+
+story = "<i>HacX</i> - originally a commercial <i>Doom2 TC</i>.
+
+<p>Originally released by Banjo Software in, 1997. <i>HacX</i> failed to make any real impact
+on the gaming community despite the challenging array of enemies and interesting level design.
+A fan favorite, its popularity led to a stand-alone release of <i>HacX</i> in October 2010."

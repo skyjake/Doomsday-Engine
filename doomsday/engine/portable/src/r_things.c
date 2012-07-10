@@ -1,10 +1,10 @@
-/**\file
+/**\file r_things.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -25,7 +25,7 @@
  */
 
 /**
- * r_things.c: Object Management and Refresh
+ * Object Management and Refresh.
  */
 
 /**
@@ -38,6 +38,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include <math.h>
 #include <assert.h>
 
@@ -52,7 +53,11 @@
 
 #include "def_main.h"
 
+#include "blockset.h"
 #include "m_stack.h"
+#include "texture.h"
+#include "texturevariant.h"
+#include "materialvariant.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -72,23 +77,21 @@ typedef struct vlightlist_s {
 } vlightlist_t;
 
 typedef struct {
-    vec3_t          pos;
+    vec3d_t         origin;
     boolean         haveList;
     uint            listIdx;
 } vlightiterparams_t;
 
 typedef struct spriterecord_frame_s {
-    lumpnum_t       lump;
-    byte            frame[2];
-    byte            rotation[2];
-
-    material_t*     mat;
+    byte frame[2];
+    byte rotation[2];
+    material_t* mat;
     struct spriterecord_frame_s* next;
 } spriterecord_frame_t;
 
 typedef struct spriterecord_s {
-    char            name[5];
-    int             numFrames;
+    char name[5];
+    int numFrames;
     spriterecord_frame_t* frames;
     struct spriterecord_s* next;
 } spriterecord_t;
@@ -106,6 +109,7 @@ typedef struct spriterecord_s {
 float weaponOffsetScale = 0.3183f; // 1/Pi
 int weaponOffsetScaleY = 1000;
 float weaponFOVShift = 45;
+byte weaponScaleMode = SCALEMODE_SMART_STRETCH;
 float modelSpinSpeed = 1;
 int alwaysAlign = 0;
 int noSpriteZWrite = false;
@@ -117,7 +121,7 @@ int psp3d;
 
 // Variables used to look up and range check sprites patches.
 spritedef_t* sprites = 0;
-int numSprites;
+int numSprites = 0;
 
 vissprite_t visSprites[MAXVISSPRITES], *visSpriteP;
 vispsprite_t visPSprites[DDMAXPSPRITES];
@@ -143,24 +147,16 @@ static const float worldLight[3] = {-.400891f, -.200445f, .601336f};
 // Tempory storage, used when reading sprite definitions.
 static int numSpriteRecords;
 static spriterecord_t* spriteRecords;
-static zblockset_t* spriteRecordBlockSet, *spriteRecordFrameBlockSet;
+static blockset_t* spriteRecordBlockSet, *spriteRecordFrameBlockSet;
 
 // CODE --------------------------------------------------------------------
 
-/**
- * Initialize the vlight system in preparation for rendering view(s) of the
- * game world. Called by R_InitLevel().
- */
 void VL_InitForMap(void)
 {
     vLightLinkLists = NULL;
     numVLightLinkLists = 0, vLightLinkListCursor = 0;
 }
 
-/**
- * Moves all used vlight nodes to the list of unused nodes, so they can be
- * reused.
- */
 void VL_InitForNewFrame(void)
 {
     // Start reusing nodes from the first one in the list.
@@ -211,7 +207,7 @@ static vlightnode_t* newVLightNode(void)
     // Have we run out of nodes?
     if(vLightCursor == NULL)
     {
-        node = Z_Malloc(sizeof(vlightnode_t), PU_STATIC, NULL);
+        node = Z_Malloc(sizeof(vlightnode_t), PU_APPSTATIC, NULL);
 
         // Link the new node to the list.
         node->nextUsed = vLightFirst;
@@ -273,12 +269,22 @@ static void linkVLightNodeToList(vlightnode_t* node, uint listIndex)
     list->head = node;
 }
 
-/**
- * Local function for R_InitSprites.
- */
+static void clearSpriteDefs(void)
+{
+    int i;
+    if(numSprites <= 0) return;
+
+    for(i = 0; i < numSprites; ++i)
+    {
+        spritedef_t* sprDef = &sprites[i];
+        if(sprDef->spriteFrames) free(sprDef->spriteFrames);
+    }
+    free(sprites), sprites = NULL;
+    numSprites = 0;
+}
+
 static void installSpriteLump(spriteframe_t* sprTemp, int* maxFrame,
-                              material_t* mat, uint frame, uint rotation,
-                              boolean flipped)
+    material_t* mat, uint frame, uint rotation, boolean flipped)
 {
     if(frame >= 30 || rotation > 8)
     {
@@ -290,25 +296,107 @@ static void installSpriteLump(spriteframe_t* sprTemp, int* maxFrame,
 
     if(rotation == 0)
     {
-        int                 r;
-
-        // The lump should be used for all rotations.
+        int r;
+        // This frame should be used for all rotations.
         sprTemp[frame].rotate = false;
         for(r = 0; r < 8; ++r)
         {
             sprTemp[frame].mats[r] = mat;
             sprTemp[frame].flip[r] = (byte) flipped;
         }
-
         return;
     }
 
-    sprTemp[frame].rotate = true;
-
     rotation--; // Make 0 based.
 
+    sprTemp[frame].rotate = true;
     sprTemp[frame].mats[rotation] = mat;
     sprTemp[frame].flip[rotation] = (byte) flipped;
+}
+
+static spriterecord_t* findSpriteRecordForName(const ddstring_t* name)
+{
+    spriterecord_t* rec = NULL;
+    if(name && !Str_IsEmpty(name) && spriteRecords)
+    {
+        rec = spriteRecords;
+        while(strnicmp(rec->name, Str_Text(name), 4) && (rec = rec->next)) {}
+    }
+    return rec;
+}
+
+static int buildSpriteRotationsWorker(textureid_t texId, void* paramaters)
+{
+    ddstring_t* path, decodedPath;
+    spriterecord_frame_t* frame;
+    spriterecord_t* rec;
+    boolean link;
+    Uri* uri;
+
+    // Have we already encountered this name?
+    path = Textures_ComposePath(texId);
+    rec = findSpriteRecordForName(path);
+    if(!rec)
+    {
+        // An entirely new sprite.
+        rec = BlockSet_Allocate(spriteRecordBlockSet);
+        strncpy(rec->name, Str_Text(path), 4);
+        rec->name[4] = '\0';
+        rec->numFrames = 0;
+        rec->frames = NULL;
+
+        rec->next = spriteRecords;
+        spriteRecords = rec;
+        ++numSpriteRecords;
+    }
+
+    // Add the frame(s).
+    Str_Init(&decodedPath);
+    Str_PercentDecode(Str_Set(&decodedPath, Str_Text(path)));
+
+    link = false;
+    frame = rec->frames;
+    if(rec->frames)
+    {
+        while(!(frame->frame[0]    == toupper(Str_At(&decodedPath, 4)) - 'A' + 1 &&
+                frame->rotation[0] == toupper(Str_At(&decodedPath, 5)) - '0') &&
+              (frame = frame->next)) {}
+    }
+
+    if(!frame)
+    {
+        // A new frame.
+        frame = BlockSet_Allocate(spriteRecordFrameBlockSet);
+        link = true;
+    }
+
+    uri = Uri_NewWithPath2(MN_SPRITES_NAME":", RC_NULL);
+    Uri_SetPath(uri, Str_Text(path));
+    frame->mat = Materials_ToMaterial(Materials_ResolveUri(uri));
+    Uri_Delete(uri);
+
+    frame->frame[0]    = toupper(Str_At(&decodedPath, 4)) - 'A' + 1;
+    frame->rotation[0] = toupper(Str_At(&decodedPath, 5)) - '0';
+    if(Str_At(&decodedPath, 6))
+    {
+        frame->frame[1]    = toupper(Str_At(&decodedPath, 6)) - 'A' + 1;
+        frame->rotation[1] = toupper(Str_At(&decodedPath, 7)) - '0';
+    }
+    else
+    {
+        frame->frame[1] = 0;
+        frame->rotation[1] = 0;
+    }
+
+    if(link)
+    {
+        frame->next = rec->frames;
+        rec->frames = frame;
+    }
+
+    Str_Free(&decodedPath);
+    Str_Delete(path);
+    return 0; // Continue iteration.
 }
 
 /**
@@ -329,208 +417,48 @@ static void installSpriteLump(spriteframe_t* sprTemp, int* maxFrame,
  * but that the sprite patch should be flipped horizontally (right to
  * left) during the loading phase.
  */
-void R_PreInitSprites(void)
+static void buildSpriteRotations(void)
 {
-    float               startTime = Sys_GetSeconds();
+    uint startTime = (verbose >= 2? Sys_GetRealTime() : 0);
 
-    int                 i, numSpritePatches = 0;
-    ddstack_t*          stack = Stack_New();
-
-    // Free all memory acquired for spritetex_t structures.
-    Z_FreeTags(PU_SPRITE, PU_SPRITE);
-
-    /**
-     * Step 1: Build database of lumps which may describe sprites.
-     */
     numSpriteRecords = 0;
-    spriteRecords = NULL;
-    spriteRecordBlockSet = Z_BlockCreate(sizeof(spriterecord_t), 64,
-                                         PU_STATIC),
-    spriteRecordFrameBlockSet = Z_BlockCreate(sizeof(spriterecord_frame_t),
-                                              256, PU_STATIC);
-    for(i = 0; i < numLumps; ++i)
-    {
-        const char*         name = W_LumpName(i);
-        spriterecord_t*     rec;
+    spriteRecords = 0;
+    spriteRecordBlockSet = BlockSet_New(sizeof(spriterecord_t), 64),
+    spriteRecordFrameBlockSet = BlockSet_New(sizeof(spriterecord_frame_t), 256);
 
-        if(name[0] == 'S')
-        {
-            if(!strnicmp(name + 1, "_START", 6) ||
-               !strnicmp(name + 2, "_START", 6))
-            {
-                // We've arrived at *a* sprite block.
-                Stack_Push(stack, NULL);
-                continue;
-            }
-            else if(!strnicmp(name + 1, "_END", 4) ||
-                    !strnicmp(name + 2, "_END", 4))
-            {
-                // The sprite block ends.
-                Stack_Pop(stack);
-                continue;
-            }
-        }
+    Textures_IterateDeclared(TN_SPRITES, buildSpriteRotationsWorker);
 
-        if(!Stack_Height(stack))
-            continue;
-
-        /**
-         * This lump is potentially a sprite.
-         */
-
-        // Check that the name is valid.
-        if(!name[4] || !name[5] || (name[6] && !name[7]))
-            continue; // This is not a sprite frame.
-
-        // Indices 5 and 7 must be numbers (0-8).
-        if(name[5] < '0' || name[5] > '8')
-            continue;
-
-        if(name[7] && (name[7] < '0' || name[7] > '8'))
-            continue;
-
-        if(W_LumpLength(i) < 8)
-            continue;
-
-        numSpritePatches++;
-
-        // Its a valid, name. Have we already come accross it?
-        rec = spriteRecords;
-        while(rec)
-        {
-            if(!strnicmp(rec->name, name, 4))
-                break;
-            rec = rec->next;
-        }
-
-        if(!rec)
-        {   // An entirely new sprite.
-            rec = Z_BlockNewElement(spriteRecordBlockSet);
-            strncpy(rec->name, name, 4);
-            rec->name[4] = '\0';
-            rec->numFrames = 0;
-            rec->frames = NULL;
-
-            rec->next = spriteRecords;
-            spriteRecords = rec;
-            numSpriteRecords++;
-        }
-
-        // Add the frame(s).
-        {
-        spriterecord_frame_t* sprFrame = rec->frames;
-        boolean             link = false;
-
-        while(sprFrame)
-        {
-            if(sprFrame->frame[0] == name[4] - 'A' + 1 &&
-               sprFrame->rotation[0] == name[5] - '0')
-                break;
-            sprFrame = sprFrame->next;
-        }
-
-        if(!sprFrame)
-        {   // A new frame.
-            sprFrame = Z_BlockNewElement(spriteRecordFrameBlockSet);
-            link = true;
-        }
-
-        sprFrame->lump = i;
-        sprFrame->frame[0] = name[4] - 'A' + 1;
-        sprFrame->rotation[0] = name[5] - '0';
-        if(name[6])
-        {
-            sprFrame->frame[1] = name[6] - 'A' + 1;
-            sprFrame->rotation[1] = name[7] - '0';
-        }
-        else
-        {
-            sprFrame->frame[1] = 0;
-        }
-
-        if(link)
-        {
-            sprFrame->next = rec->frames;
-            rec->frames = sprFrame;
-        }
-        }
-    }
-
-    while(Stack_Height(stack))
-        Stack_Pop(stack);
-    Stack_Delete(stack);
-
-    /**
-     * Step 2: Create gltextures and materials for ALL sprite patches.
-     */
-    numSpriteTextures = numSpritePatches;
-    spriteTextures = NULL;
-
-    if(numSpritePatches)
-    {
-        int                 idx = 0;
-        spritetex_t*        storage;
-        spriterecord_t*     rec = spriteRecords;
-
-        spriteTextures = Z_Malloc(sizeof(spritetex_t*) * numSpriteTextures, PU_SPRITE, 0);
-        storage = Z_Malloc(sizeof(spritetex_t) * numSpriteTextures, PU_SPRITE, 0);
-
-        do
-        {
-            spriterecord_frame_t* frame = rec->frames;
-
-            do
-            {
-                const char*         name;
-                const lumppatch_t*  patch;
-                spritetex_t*        sprTex;
-                const gltexture_t*  glTex;
-
-                spriteTextures[idx] = sprTex = &storage[idx];
-
-                patch = (const lumppatch_t *)
-                    W_CacheLumpNum(frame->lump, PU_CACHE);
-                name = W_LumpName(frame->lump);
-
-                sprTex->lump = frame->lump;
-                sprTex->offX = SHORT(patch->leftOffset);
-                sprTex->offY = SHORT(patch->topOffset);
-                sprTex->width = SHORT(patch->width);
-                sprTex->height = SHORT(patch->height);
-
-                glTex = GL_CreateGLTexture(name, idx++, GLT_SPRITE);
-
-                // Create a new material for this sprite patch.
-                frame->mat = P_MaterialCreate(name, sprTex->width,
-                    sprTex->height, 0, glTex->id, MN_SPRITES, NULL);
-            } while((frame = frame->next));
-        } while((rec = rec->next));
-    }
-
-    VERBOSE(Con_Message("R_InitSpriteRecords: Done in %.2f seconds.\n",
-                        Sys_GetSeconds() - startTime));
+    VERBOSE2( Con_Message("buildSpriteRotations: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) )
 }
 
+/**
+ * Builds the sprite rotation matrixes to account for horizontally flipped
+ * sprites.  Will report an error if the lumps are inconsistant.
+ *
+ * Sprite lump names are 4 characters for the actor, a letter for the frame,
+ * and a number for the rotation, A sprite that is flippable will have an
+ * additional letter/number appended.  The rotation character can be 0 to
+ * signify no rotations.
+ */
 static void initSpriteDefs(spriterecord_t* const * sprRecords, int num)
 {
-    numSprites = num;
-    if(sprites)
-        Z_Free(sprites);
-    sprites = NULL;
+    clearSpriteDefs();
 
+    numSprites = num;
     if(numSprites)
     {
-        int                 n;
-        spriteframe_t       sprTemp[MAX_FRAMES];
-        int                 maxFrame;
+        spriteframe_t sprTemp[MAX_FRAMES];
+        int maxFrame, rotation, n, j;
 
-        sprites = Z_Malloc(numSprites * sizeof(*sprites), PU_STATIC, NULL);
+        sprites = (spritedef_t*)malloc(sizeof *sprites * numSprites);
+        if(!sprites)
+            Con_Error("initSpriteDefs: Failed on allocation of %lu bytes for SpriteDef list.", (unsigned long) sizeof *sprites * numSprites);
 
         for(n = 0; n < num; ++n)
         {
-            int                 frame;
+            spritedef_t* sprDef = &sprites[n];
+            const spriterecord_frame_t* frame;
             const spriterecord_t* rec;
-            spritedef_t*        sprDef = &sprites[n];
 
             if(!sprRecords[n])
             {   // A record for a sprite we were unable to locate.
@@ -544,60 +472,48 @@ static void initSpriteDefs(spriterecord_t* const * sprRecords, int num)
             memset(sprTemp, -1, sizeof(sprTemp));
             maxFrame = -1;
 
-            {
-            const spriterecord_frame_t* frame = rec->frames;
-
+            frame = rec->frames;
             do
             {
-                installSpriteLump(sprTemp, &maxFrame, frame->mat,
-                                  frame->frame[0] - 1, frame->rotation[0],
-                                  false);
+                installSpriteLump(sprTemp, &maxFrame, frame->mat, frame->frame[0] - 1,
+                    frame->rotation[0], false);
                 if(frame->frame[1])
-                    installSpriteLump(sprTemp, &maxFrame, frame->mat,
-                                      frame->frame[1] - 1, frame->rotation[1],
-                                      true);
+                    installSpriteLump(sprTemp, &maxFrame, frame->mat, frame->frame[1] - 1,
+                        frame->rotation[1], true);
             } while((frame = frame->next));
-            }
 
             /**
              * Check the frames that were found for completeness.
              */
-            if(maxFrame == -1)
-            {   // Should NEVER happen.
+            if(-1 == maxFrame)
+            {
+                // Should NEVER happen. djs - So why is this here then?
                 sprDef->numFrames = 0;
             }
 
-            maxFrame++;
-            for(frame = 0; frame < maxFrame; ++frame)
+            ++maxFrame;
+            for(j = 0; j < maxFrame; ++j)
             {
-                switch((int) sprTemp[frame].rotate)
+                switch((int) sprTemp[j].rotate)
                 {
                 case -1: // No rotations were found for that frame at all.
-                    Con_Error("R_InitSprites: No patches found for %s frame %c.",
-                              rec->name, frame + 'A');
+                    Con_Error("R_InitSprites: No patches found for %s frame %c.", rec->name, j + 'A');
                     break;
 
                 case 0: // Only the first rotation is needed.
                     break;
 
                 case 1: // Must have all 8 frames.
-                    {
-                    int                 rotation;
                     for(rotation = 0; rotation < 8; ++rotation)
                     {
-                        if(!sprTemp[frame].mats[rotation])
-                            Con_Error("R_InitSprites: Sprite %s frame %c is "
-                                      "missing rotations.", rec->name,
-                                      frame + 'A');
-                    }
+                        if(!sprTemp[j].mats[rotation])
+                            Con_Error("R_InitSprites: Sprite %s frame %c is missing rotations.", rec->name, j + 'A');
                     }
                     break;
 
                 default:
-                    Con_Error("R_InitSpriteDefs: Invalid value, "
-                              "sprTemp[frame].rotate = %i.",
-                              (int) sprTemp[frame].rotate);
-                    break;
+                    Con_Error("R_InitSpriteDefs: Invalid value, sprTemp[frame].rotate = %i.", (int) sprTemp[j].rotate);
+                    exit(1); // Unreachable.
                 }
             }
 
@@ -605,35 +521,28 @@ static void initSpriteDefs(spriterecord_t* const * sprRecords, int num)
             strncpy(sprDef->name, rec->name, 4);
             sprDef->name[4] = '\0';
             sprDef->numFrames = maxFrame;
-            sprDef->spriteFrames =
-                Z_Malloc(maxFrame * sizeof(spriteframe_t), PU_SPRITE, NULL);
-            memcpy(sprDef->spriteFrames, sprTemp,
-                   maxFrame * sizeof(spriteframe_t));
+            sprDef->spriteFrames = (spriteframe_t*)malloc(sizeof *sprDef->spriteFrames * maxFrame);
+            if(!sprDef->spriteFrames)
+                Con_Error("R_InitSpriteDefs: Failed on allocation of %lu bytes for sprite frame list.", (unsigned long) sizeof *sprDef->spriteFrames * maxFrame);
+
+            memcpy(sprDef->spriteFrames, sprTemp, sizeof *sprDef->spriteFrames * maxFrame);
         }
     }
 }
 
-/**
- * Builds the sprite rotation matrixes to account for horizontally flipped
- * sprites.  Will report an error if the lumps are inconsistant.
- *
- * Sprite lump names are 4 characters for the actor, a letter for the frame,
- * and a number for the rotation, A sprite that is flippable will have an
- * additional letter/number appended.  The rotation character can be 0 to
- * signify no rotations.
- */
 void R_InitSprites(void)
 {
-    float               startTime = Sys_GetSeconds();
+    uint startTime = (verbose >= 2? Sys_GetRealTime() : 0);
 
-    int                 n, max;
-    spriterecord_t*     rec, **list;
+    VERBOSE( Con_Message("Initializing Sprites...\n") )
+
+    buildSpriteRotations();
 
     /**
      * \kludge
-     * As the games still rely upon the sprite definition indices to match
-     * those of the sprite name table, use the later to re-index the sprite
-     * records database before using them to derive the sprite definitions.
+     * As the games still rely upon the sprite definition indices matching
+     * those of the sprite name table, use the latter to re-index the sprite
+     * record database.
      * New sprites added in mods that we do not have sprite name defs for
      * are pushed to the end of the list (this is fine as the game will not
      * attempt to reference them by either name or indice as they are not
@@ -644,58 +553,68 @@ void R_InitSprites(void)
      * This unobvious requirement should be broken somehow and perhaps even
      * get rid of the sprite name definitions entirely.
      */
-    max = MAX_OF(numSpriteRecords, countSprNames.num);
-    n = max-1;
-    list = M_Calloc(sizeof(spriterecord_t*) * max);
-    rec = spriteRecords;
-    do
+    if(numSpriteRecords)
     {
-        int                 idx = Def_GetSpriteNum(rec->name);
-        list[idx == -1? n-- : idx] = rec;
-    } while((rec = rec->next));
+        int max = MAX_OF(numSpriteRecords, countSprNames.num);
+        if(max > 0)
+        {
+            spriterecord_t* rec, **list = M_Calloc(sizeof(spriterecord_t*) * max);
+            int n = max-1;
+
+            rec = spriteRecords;
+            do
+            {
+                int idx = Def_GetSpriteNum(rec->name);
+                list[idx == -1? n-- : idx] = rec;
+            } while((rec = rec->next));
+
+            // Create sprite definitions from the located sprite patch lumps.
+            initSpriteDefs(list, max);
+            M_Free(list);
+        }
+    }
     /// \kludge end
 
-    // Create sprite definitions from the located sprite patch lumps.
-    initSpriteDefs(list, max);
-
-    M_Free(list);
-
     // We are now done with the sprite records.
-    Z_BlockDestroy(spriteRecordBlockSet);
+    BlockSet_Delete(spriteRecordBlockSet);
     spriteRecordBlockSet = NULL;
-    Z_BlockDestroy(spriteRecordFrameBlockSet);
+    BlockSet_Delete(spriteRecordFrameBlockSet);
     spriteRecordFrameBlockSet = NULL;
     numSpriteRecords = 0;
 
-    VERBOSE(Con_Message("R_InitSprites: Done in %.2f seconds.\n",
-                        Sys_GetSeconds() - startTime));
+    VERBOSE2( Con_Message("R_InitSprites: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
+}
+
+void R_ShutdownSprites(void)
+{
+    clearSpriteDefs();
 }
 
 material_t* R_GetMaterialForSprite(int sprite, int frame)
 {
-    spritedef_t*        sprDef;
-
-    if((unsigned) sprite >= (unsigned) numSprites)
-        return NULL;
-    sprDef = &sprites[sprite];
-
-    if(frame >= sprDef->numFrames)
-        return NULL;
-
-    return sprDef->spriteFrames[frame].mats[0];
+    if((unsigned) sprite < (unsigned) numSprites)
+    {
+        spritedef_t* sprDef = &sprites[sprite];
+        if(frame < sprDef->numFrames)
+            return sprDef->spriteFrames[frame].mats[0];
+    }
+    //Con_Message("Warning:R_GetMaterialForSprite: Invalid sprite %i and/or frame %i.\n", sprite, frame);
+    return NULL;
 }
 
 boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
 {
-    spritedef_t*        sprDef;
-    spriteframe_t*      sprFrame;
-    spritetex_t*        sprTex;
-    material_t*         mat;
-    material_snapshot_t ms;
+    spritedef_t* sprDef;
+    spriteframe_t* sprFrame;
+    patchtex_t* pTex;
+    material_t* mat;
+    const materialvariantspecification_t* spec;
+    const materialsnapshot_t* ms;
+    const variantspecification_t* texSpec;
 
     if((unsigned) sprite >= (unsigned) numSprites)
     {
-        Con_Message("R_GetSpriteInfo: Warning, invalid sprite number %i.\n", sprite);
+        Con_Message("Warning:R_GetSpriteInfo: Invalid sprite number %i.\n", sprite);
         return false;
     }
 
@@ -704,80 +623,182 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     if(frame >= sprDef->numFrames)
     {
         // We have no information to return.
+        Con_Message("Warning:R_GetSpriteInfo: Invalid sprite frame %i.\n", frame);
         memset(info, 0, sizeof(*info));
         return false;
     }
 
     sprFrame = &sprDef->spriteFrames[frame];
-    mat = sprFrame->mats[0];
-    Material_Prepare(&ms, mat, false, NULL);
 
-    sprTex = spriteTextures[ms.units[MTU_PRIMARY].texInst->tex->ofTypeID];
-
-    info->numFrames = sprDef->numFrames;
-    info->material = mat;
-    info->realLump = sprTex->lump;
-    info->flip = sprFrame->flip[0];
-    info->offset = sprTex->offX;
-    info->topOffset = sprTex->offY;
-    info->width = ms.width;
-    info->height = ms.height;
-    return true;
-}
-
-boolean R_GetPatchInfo(lumpnum_t lump, patchinfo_t* info)
-{
-    if(info)
-        return false;
-
-    memset(info, 0, sizeof(*info));
-
-    if(lump >= 0 && lump < numLumps)
+    if(novideo)
     {
-        lumppatch_t*        patch =
-            (lumppatch_t*) W_CacheLumpNum(lump, PU_CACHE);
-
-        info->lump = info->realLump = lump;
-        info->width = SHORT(patch->width);
-        info->height = SHORT(patch->height);
-        info->topOffset = SHORT(patch->topOffset);
-        info->offset = SHORT(patch->leftOffset);
+        // We can't prepare the material.
+        memset(info, 0, sizeof(*info));
+        info->numFrames = sprDef->numFrames;
+        info->flip = sprFrame->flip[0];
         return true;
     }
 
-    VERBOSE(Con_Message("R_GetPatchInfo: Warning, invalid lumpnum %i.\n", lump));
-    return false;
+    mat = sprFrame->mats[0];
+
+    spec = Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, 0, 0,
+        GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, -1, false, true, true, false);
+    ms = Materials_Prepare(mat, spec, false);
+
+#if _DEBUG
+    if(Textures_Namespace(Textures_Id(MSU_texture(ms, MTU_PRIMARY))) != TN_SPRITES)
+        Con_Error("R_GetSpriteInfo: Internal error, material snapshot's primary texture is not a SpriteTex!");
+#endif
+
+    pTex = (patchtex_t*) Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
+    assert(pTex);
+    texSpec = TS_GENERAL(MSU_texturespec(ms, MTU_PRIMARY));
+    assert(texSpec);
+
+    info->numFrames = sprDef->numFrames;
+    info->material = mat;
+    info->flip = sprFrame->flip[0];
+    info->geometry.origin.x = -pTex->offX + -texSpec->border;
+    info->geometry.origin.y = -pTex->offY + texSpec->border;
+    info->geometry.size.width  = ms->size.width  + texSpec->border*2;
+    info->geometry.size.height = ms->size.height + texSpec->border*2;
+    TextureVariant_Coords(MST(ms, MTU_PRIMARY), &info->texCoord[0], &info->texCoord[1]);
+
+    return true;
 }
 
-/**
- * @return              Radius of the mobj as it would visually appear to be.
- */
-float R_VisualRadius(mobj_t* mo)
+/// @return  Default sprite material specification.
+static const materialvariantspecification_t* spriteMaterialSpec(void)
 {
-    modeldef_t*         mf, *nextmf;
-    material_snapshot_t ms;
+    return Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0, GL_CLAMP_TO_EDGE,
+                                                    GL_CLAMP_TO_EDGE, 1, -2, -1,
+                                                    true, true, true, false);
+}
 
+static modeldef_t* currentModelDefForMobj(mobj_t* mo)
+{
     // If models are being used, use the model's radius.
     if(useModels)
     {
+        modeldef_t* mf, *nextmf;
         R_CheckModelFor(mo, &mf, &nextmf);
-        if(mf)
+        return mf;
+    }
+    return NULL;
+}
+
+coord_t R_VisualRadius(mobj_t* mo)
+{
+    material_t* material;
+    modeldef_t* mf;
+
+    // If models are being used, use the model's radius.
+    mf = currentModelDefForMobj(mo);
+    if(mf)
+    {
+        return mf->visualRadius;
+    }
+
+    // Use the sprite frame's width?
+    material = R_GetMaterialForSprite(mo->sprite, mo->frame);
+    if(material)
+    {
+        const materialsnapshot_t* ms = Materials_Prepare(material, spriteMaterialSpec(), true);
+        return ms->size.width / 2;
+    }
+
+    // Use the physical radius.
+    return mo->radius;
+}
+
+float R_ShadowStrength(mobj_t* mo)
+{
+    const float minSpriteAlphaLimit = .1f;
+
+    float ambientLightLevel, strength = .65f; ///< Default strength factor.
+    assert(mo);
+
+    // Is this mobj in a valid state for shadow casting?
+    if(!mo->state || !mo->bspLeaf) return 0;
+
+    // Should this mobj even have a shadow?
+    if((mo->state->flags & STF_FULLBRIGHT) ||
+       (mo->ddFlags & DDMF_DONTDRAW) || (mo->ddFlags & DDMF_ALWAYSLIT))
+        return 0;
+
+    // Sample the ambient light level at the mobj's position.
+    if(useBias)
+    {
+        // Evaluate in the light grid.
+        vec3d_t point; V3d_Set(point, mo->origin[VX], mo->origin[VY], mo->origin[VZ]);
+        ambientLightLevel = LG_EvaluateLightLevel(point);
+    }
+    else
+    {
+        ambientLightLevel = mo->bspLeaf->sector->lightLevel;
+        Rend_ApplyLightAdaptation(&ambientLightLevel);
+    }
+
+    // Sprites have their own shadow strength factor.
+    if(!currentModelDefForMobj(mo))
+    {
+        material_t* mat = R_GetMaterialForSprite(mo->sprite, mo->frame);
+        if(mat)
         {
-            // Returns the model's radius!
-            return mf->visualRadius;
+            // Ensure we've prepared this.
+            const materialsnapshot_t* ms = Materials_Prepare(mat, spriteMaterialSpec(), true);
+            const averagealpha_analysis_t* aa = (const averagealpha_analysis_t*) Texture_Analysis(MSU_texture(ms, MTU_PRIMARY), TA_ALPHA);
+            float weightedSpriteAlpha;
+            if(!aa) Con_Error("R_ShadowStrength: Texture id:%u has no TA_ALPHA analysis.", Textures_Id(MSU_texture(ms, MTU_PRIMARY)));
+
+            // We use an average which factors in the coverage ratio
+            // of alpha:non-alpha pixels.
+            /// @todo Constant weights could stand some tweaking...
+            weightedSpriteAlpha = aa->alpha * (0.4f + (1-aa->coverage) * 0.6f);
+
+            // Almost entirely translucent sprite? => no shadow.
+            if(weightedSpriteAlpha < minSpriteAlphaLimit) return 0;
+
+            // Apply this factor.
+            strength *= MIN_OF(1, 0.2f + weightedSpriteAlpha);
         }
     }
 
-    // Use the sprite frame's width.
-    Material_Prepare(&ms, R_GetMaterialForSprite(mo->sprite, mo->frame),
-                     true, NULL);
-    return ms.width / 2;
+    // Factor in Mobj alpha.
+    strength *= R_Alpha(mo);
+
+    /// @note This equation is the same as that used for fakeradio.
+    return (0.6f - ambientLightLevel * 0.4f) * strength;
 }
 
-/**
- * Called at frame start.
- */
-void R_ClearSprites(void)
+float R_Alpha(mobj_t* mo)
+{
+    assert(mo);
+    {
+    float alpha = (mo->ddFlags & DDMF_BRIGHTSHADOW)? .80f :
+                        (mo->ddFlags & DDMF_SHADOW)? .33f :
+                     (mo->ddFlags & DDMF_ALTSHADOW)? .66f : 1;
+    /**
+     * The three highest bits of the selector are used for alpha.
+     * 0 = opaque (alpha -1)
+     * 1 = 1/8 transparent
+     * 4 = 1/2 transparent
+     * 7 = 7/8 transparent
+     */
+    int selAlpha = mo->selector >> DDMOBJ_SELECTOR_SHIFT;
+    if(selAlpha & 0xe0)
+    {
+        alpha *= 1 - ((selAlpha & 0xe0) >> 5) / 8.0f;
+    }
+    else if(mo->translucency)
+    {
+        alpha *= 1 - mo->translucency * reciprocal255;
+    }
+    return alpha;
+    }
+}
+
+void R_ClearVisSprites(void)
 {
     visSpriteP = visSprites;
 }
@@ -868,12 +889,12 @@ void R_ProjectPlayerSprites(void)
 
             spr->type = VPSPR_MODEL;
 
-            spr->data.model.subsector = ddpl->mo->subsector;
+            spr->data.model.bspLeaf = ddpl->mo->bspLeaf;
             spr->data.model.flags = 0;
             // 32 is the raised weapon height.
-            spr->data.model.gzt = viewData->current.pos[VZ];
-            spr->data.model.secFloor = ddpl->mo->subsector->sector->SP_floorvisheight;
-            spr->data.model.secCeil = ddpl->mo->subsector->sector->SP_ceilvisheight;
+            spr->data.model.gzt = viewData->current.origin[VZ];
+            spr->data.model.secFloor = ddpl->mo->bspLeaf->sector->SP_floorvisheight;
+            spr->data.model.secCeil = ddpl->mo->bspLeaf->sector->SP_ceilvisheight;
             spr->data.model.pClass = 0;
             spr->data.model.floorClip = 0;
 
@@ -881,9 +902,9 @@ void R_ProjectPlayerSprites(void)
             spr->data.model.nextMF = nextmf;
             spr->data.model.inter = inter;
             spr->data.model.viewAligned = true;
-            spr->center[VX] = viewData->current.pos[VX];
-            spr->center[VY] = viewData->current.pos[VY];
-            spr->center[VZ] = viewData->current.pos[VZ];
+            spr->origin[VX] = viewData->current.origin[VX];
+            spr->origin[VY] = viewData->current.origin[VY];
+            spr->origin[VZ] = viewData->current.origin[VZ];
 
             // Offsets to rotation angles.
             spr->data.model.yawAngleOffset = psp->pos[VX] * weaponOffsetScale - 90;
@@ -906,34 +927,44 @@ void R_ProjectPlayerSprites(void)
             spr->type = VPSPR_SPRITE;
 
             // Adjust the center slightly so an angle can be calculated.
-            spr->center[VX] = viewData->current.pos[VX];
-            spr->center[VY] = viewData->current.pos[VY];
-            spr->center[VZ] = viewData->current.pos[VZ];
+            spr->origin[VX] = viewData->current.origin[VX];
+            spr->origin[VY] = viewData->current.origin[VY];
+            spr->origin[VZ] = viewData->current.origin[VZ];
 
-            spr->data.sprite.subsector = ddpl->mo->subsector;
+            spr->data.sprite.bspLeaf = ddpl->mo->bspLeaf;
             spr->data.sprite.alpha = psp->alpha;
             spr->data.sprite.isFullBright = (psp->flags & DDPSPF_FULLBRIGHT)!=0;
         }
     }
 }
 
-float R_MovementYaw(float momx, float momy)
+float R_MovementYaw(float const mom[])
 {
     // Multiply by 100 to get some artificial accuracy in bamsAtan2.
-    return BANG2DEG(bamsAtan2(-100 * momy, 100 * momx));
+    return BANG2DEG(bamsAtan2(-100 * mom[MY], 100 * mom[MX]));
 }
 
-float R_MovementPitch(float momx, float momy, float momz)
+float R_MovementXYYaw(float momx, float momy)
 {
-    return
-        BANG2DEG(bamsAtan2
-                 (100 * momz, 100 * P_AccurateDistance(momx, momy)));
+    float mom[2] = { momx, momy };
+    return R_MovementYaw(mom);
+}
+
+float R_MovementPitch(float const mom[])
+{
+    return BANG2DEG(bamsAtan2 (100 * mom[MZ], 100 * V2f_Length(mom)));
+}
+
+float R_MovementXYZPitch(float momx, float momy, float momz)
+{
+    float mom[3] = { momx, momy, momz };
+    return R_MovementPitch(mom);
 }
 
 typedef struct {
-    vissprite_t*        vis;
-    const mobj_t*       mo;
-    boolean             floorAdjust;
+    vissprite_t* vis;
+    const mobj_t* mo;
+    boolean floorAdjust;
 } vismobjzparams_t;
 
 /**
@@ -941,22 +972,20 @@ typedef struct {
  * may be slightly different than the actual Z coordinate due to smoothed
  * plane movement.
  */
-int RIT_VisMobjZ(sector_t* sector, void* data)
+int RIT_VisMobjZ(Sector* sector, void* parameters)
 {
-    vismobjzparams_t*   params;
+    vismobjzparams_t* p = (vismobjzparams_t*) parameters;
+    assert(sector);
+    assert(p);
 
-    assert(sector != NULL);
-    assert(data != NULL);
-    params = (vismobjzparams_t*) data;
-
-    if(params->floorAdjust && params->mo->pos[VZ] == sector->SP_floorheight)
+    if(p->floorAdjust && p->mo->origin[VZ] == sector->SP_floorheight)
     {
-        params->vis->center[VZ] = sector->SP_floorvisheight;
+        p->vis->origin[VZ] = sector->SP_floorvisheight;
     }
 
-    if(params->mo->pos[VZ] + params->mo->height == sector->SP_ceilheight)
+    if(p->mo->origin[VZ] + p->mo->height == sector->SP_ceilheight)
     {
-        params->vis->center[VZ] = sector->SP_ceilvisheight - params->mo->height;
+        p->vis->origin[VZ] = sector->SP_ceilvisheight - p->mo->height;
     }
 
     return false; // Continue iteration.
@@ -969,29 +998,22 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
                                           material_t* mat, boolean matFlipS, boolean matFlipT, blendmode_t blendMode,
                                           float ambientColorR, float ambientColorG, float ambientColorB, float alpha,
                                           uint vLightListIdx,
-                                          int transMap, int transClass, subsector_t* ssec,
+                                          int tClass, int tMap, BspLeaf* bspLeaf,
                                           boolean floorAdjust, boolean fitTop, boolean fitBottom,
-                                          boolean viewAligned,
-                                          boolean brightShadow, boolean shadow, boolean altShadow,
-                                          boolean fullBright)
+                                          boolean viewAligned)
 {
-    spritetex_t*        sprTex = NULL;
-    material_snapshot_t ms;
-    material_load_params_t mparams;
+    const materialvariantspecification_t* spec;
+    materialvariant_t* variant;
 
-    if(!params)
-        return; // Wha?
+    if(!params) return; // Wha?
 
-    memset(&mparams, 0, sizeof(mparams));
-    mparams.tmap = transMap;
-    mparams.tclass = transClass;
+    spec = Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, tClass, tMap,
+        GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false);
+    variant = Materials_ChooseVariant(mat, spec, true, true);
 
-    Material_Prepare(&ms, mat, true, &mparams);
-
-    sprTex = spriteTextures[ms.units[MTU_PRIMARY].texInst->tex->ofTypeID];
-
-    params->width = ms.width;
-    params->height = ms.height;
+#ifdef _DEBUG
+    if(tClass || tMap) assert(spec->primarySpec->data.variant.translated);
+#endif
 
     params->center[VX] = x;
     params->center[VY] = y;
@@ -1000,24 +1022,19 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     params->srvo[VY] = visOffY;
     params->srvo[VZ] = visOffZ;
     params->distance = distance;
-    params->viewOffX = (float) sprTex->offX - ms.width / 2.0f;
-    params->subsector = ssec;
+    params->bspLeaf = bspLeaf;
     params->viewAligned = viewAligned;
     params->noZWrite = noSpriteZWrite;
 
-    params->mat = mat;
-    params->tMap = transMap;
-    params->tClass = transClass;
-    params->matOffset[0] = ms.units[MTU_PRIMARY].texInst->data.sprite.texCoord[0];
-    params->matOffset[1] = ms.units[MTU_PRIMARY].texInst->data.sprite.texCoord[1];
+    params->material = variant;
     params->matFlip[0] = matFlipS;
     params->matFlip[1] = matFlipT;
-    params->blendMode = blendMode;
+    params->blendMode = (useSpriteBlend? blendMode : BM_NORMAL);
 
     params->ambientColor[CR] = ambientColorR;
     params->ambientColor[CG] = ambientColorG;
     params->ambientColor[CB] = ambientColorB;
-    params->ambientColor[CA] = alpha;
+    params->ambientColor[CA] = (useSpriteAlpha? alpha : 1);
 
     params->vLightListIdx = vLightListIdx;
 }
@@ -1028,7 +1045,7 @@ void setupModelParamsForVisSprite(rendmodelparams_t *params,
                                   struct modeldef_s* mf, struct modeldef_s* nextMF, float inter,
                                   float ambientColorR, float ambientColorG, float ambientColorB, float alpha,
                                   uint vLightListIdx,
-                                  int id, int selector, subsector_t* ssec, int mobjDDFlags, int tmap,
+                                  int id, int selector, BspLeaf* bspLeaf, int mobjDDFlags, int tmap,
                                   boolean viewAlign, boolean fullBright,
                                   boolean alwaysInterpolate)
 {
@@ -1043,9 +1060,9 @@ void setupModelParamsForVisSprite(rendmodelparams_t *params,
     params->selector = selector;
     params->flags = mobjDDFlags;
     params->tmap = tmap;
-    params->center[VX] = x;
-    params->center[VY] = y;
-    params->center[VZ] = z;
+    params->origin[VX] = x;
+    params->origin[VY] = y;
+    params->origin[VZ] = z;
     params->srvo[VX] = visOffX;
     params->srvo[VY] = visOffY;
     params->srvo[VZ] = visOffZ;
@@ -1073,9 +1090,8 @@ void setupModelParamsForVisSprite(rendmodelparams_t *params,
     params->vLightListIdx = vLightListIdx;
 }
 
-void getLightingParams(float x, float y, float z, subsector_t* ssec,
-                       float distance, boolean fullBright,
-                       float ambientColor[3], uint* vLightListIdx)
+void getLightingParams(coord_t x, coord_t y, coord_t z, BspLeaf* bspLeaf,
+    coord_t distance, boolean fullBright, float ambientColor[3], uint* vLightListIdx)
 {
     if(fullBright)
     {
@@ -1088,17 +1104,16 @@ void getLightingParams(float x, float y, float z, subsector_t* ssec,
 
         if(useBias)
         {
-            vec3_t              point;
+            vec3d_t point;
 
             // Evaluate the position in the light grid.
-            V3_Set(point, x, y, z);
+            V3d_Set(point, x, y, z);
             LG_Evaluate(point, ambientColor);
         }
         else
         {
-            float               lightLevel = ssec->sector->lightLevel;
-            const float*        secColor =
-                R_GetSectorLightColor(ssec->sector);
+            float lightLevel = bspLeaf->sector->lightLevel;
+            const float* secColor = R_GetSectorLightColor(bspLeaf->sector);
 
             /* if(spr->type == VSPR_DECORATION)
             {
@@ -1123,10 +1138,10 @@ void getLightingParams(float x, float y, float z, subsector_t* ssec,
         Rend_ApplyTorchLight(ambientColor, distance);
 
         lparams.starkLight = false;
-        lparams.center[VX] = x;
-        lparams.center[VY] = y;
-        lparams.center[VZ] = z;
-        lparams.subsector = ssec;
+        lparams.origin[VX] = x;
+        lparams.origin[VY] = y;
+        lparams.origin[VZ] = z;
+        lparams.bspLeaf = bspLeaf;
         lparams.ambientColor = ambientColor;
 
         *vLightListIdx = R_CollectAffectingLights(&lparams);
@@ -1138,48 +1153,42 @@ void getLightingParams(float x, float y, float z, subsector_t* ssec,
  */
 void R_ProjectSprite(mobj_t* mo)
 {
-    sector_t* sect = mo->subsector->sector;
+    Sector* sect = mo->bspLeaf->sector;
     float thangle = 0, alpha, floorClip, secFloor, secCeil;
-    float pos[2], yaw, pitch;
-    vec3_t visOff;
+    float pos[2], yaw = 0, pitch = 0;
+    vec3d_t visOff;
     spritedef_t* sprDef;
     spriteframe_t* sprFrame = NULL;
-    int i, tmap = 0, tclass = 0;
-    unsigned rot;
     boolean matFlipS, matFlipT;
     vissprite_t* vis;
-    angle_t ang;
     boolean align, fullBright, viewAlign, floorAdjust;
     modeldef_t* mf = NULL, *nextmf = NULL;
-    float interp = 0, distance, gzt;
-    spritetex_t* sprTex;
+    float interp = 0;
+    coord_t distance, gzt;
+    patchtex_t* pTex;
     vismobjzparams_t params;
     visspritetype_t visType = VSPR_SPRITE;
     float ambientColor[3];
     uint vLightListIdx = 0;
     material_t* mat;
-    material_snapshot_t ms;
-    material_load_params_t mparams;
+    const materialvariantspecification_t* spec;
+    const materialsnapshot_t* ms;
     const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
-    float moPos[3];
+    coord_t moPos[3];
 
-    if(mo->ddFlags & DDMF_DONTDRAW || mo->translucency == 0xff ||
-       mo->state == NULL || mo->state == states)
-    {
-        // Never make a vissprite when DDMF_DONTDRAW is set or when
-        // the mo is fully transparent, or when the mo hasn't got
-        // a valid state.
-        return;
-    }
-    if(sect->SP_floorvisheight >= sect->SP_ceilvisheight)
-    {
-        // Never make a vissprite when the mobj's origin sector is of zero height.
-        return;
-    }
+    // Never make a vissprite when DDMF_DONTDRAW is set or when
+    // when the mo hasn't got a valid state.
+    if(mo->ddFlags & DDMF_DONTDRAW || mo->state == NULL || mo->state == states) return;
+    // Never make a vissprite when the mobj's origin sector is of zero height.
+    if(sect->SP_floorvisheight >= sect->SP_ceilvisheight) return;
 
-    moPos[VX] = mo->pos[VX];
-    moPos[VY] = mo->pos[VY];
-    moPos[VZ] = mo->pos[VZ];
+    alpha = R_Alpha(mo);
+    // Never make a vissprite when the mobj is fully transparent.
+    if(alpha <= 0) return;
+
+    moPos[VX] = mo->origin[VX];
+    moPos[VY] = mo->origin[VY];
+    moPos[VZ] = mo->origin[VZ];
 
     // The client may have a Smoother for this object.
     if(isClient && mo->dPlayer && P_GetDDPlayerIdx(mo->dPlayer) != consolePlayer)
@@ -1188,16 +1197,15 @@ void R_ProjectSprite(mobj_t* mo)
     }
 
     // Transform the origin point.
-    pos[VX] = moPos[VX] - viewData->current.pos[VX];
-    pos[VY] = moPos[VY] - viewData->current.pos[VY];
+    pos[VX] = moPos[VX] - viewData->current.origin[VX];
+    pos[VY] = moPos[VY] - viewData->current.origin[VY];
 
     // Decide which patch to use for sprite relative to player.
 
 #ifdef RANGECHECK
     if((unsigned) mo->sprite >= (unsigned) numSprites)
     {
-        Con_Error("R_ProjectSprite: invalid sprite number %i\n",
-                  mo->sprite);
+        Con_Error("R_ProjectSprite: invalid sprite number %i\n", mo->sprite);
     }
 #endif
     sprDef = &sprites[mo->sprite];
@@ -1226,8 +1234,8 @@ void R_ProjectSprite(mobj_t* mo)
 
     if(sprFrame->rotate && !mf)
     {   // Choose a different rotation based on player view.
-        ang = R_PointToAngle(moPos[VX], moPos[VY]);
-        rot = (ang - mo->angle + (unsigned) (ANG45 / 2) * 9) >> 29;
+        angle_t ang = R_ViewPointXYToAngle(mo->origin[VX], mo->origin[VY]);
+        uint rot = (ang - mo->angle + (unsigned) (ANG45 / 2) * 9) >> 29;
         mat = sprFrame->mats[rot];
         matFlipS = (boolean) sprFrame->flip[rot];
     }
@@ -1238,16 +1246,17 @@ void R_ProjectSprite(mobj_t* mo)
     }
     matFlipT = false;
 
-    tmap = mo->tmap;
-    tclass = mo->tclass;
+    spec = Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, mo->tclass,
+        mo->tmap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false);
+    ms = Materials_Prepare(mat, spec, true);
 
-    memset(&mparams, 0, sizeof(mparams));
-    mparams.tmap = tmap;
-    mparams.tclass = tclass;
+#if _DEBUG
+    if(Textures_Namespace(Textures_Id(MSU_texture(ms, MTU_PRIMARY))) != TN_SPRITES)
+        Con_Error("R_ProjectSprite: Internal error, material snapshot's primary texture is not a SpriteTex!");
+#endif
 
-    Material_Prepare(&ms, mat, true, &mparams);
-
-    sprTex = spriteTextures[ms.units[MTU_PRIMARY].texInst->tex->ofTypeID];
+    pTex = (patchtex_t*) Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
+    assert(pTex);
 
     // Align to the view plane?
     if(mo->ddFlags & DDMF_VIEWALIGN)
@@ -1259,31 +1268,34 @@ void R_ProjectSprite(mobj_t* mo)
         align = true;
 
     // Perform visibility checking.
+    /// @todo R_VisualRadius() does not consider sprite rotation.
     {
-    float               center[2], v1[2], v2[2];
-    float               width = R_VisualRadius(mo)*2, offset = 0;
+    coord_t center[2], v1[2], v2[2];
+    coord_t width = R_VisualRadius(mo)*2, offset = 0;
 
     if(!mf)
-        offset = (float) sprTex->offX - (width / 2);
+    {
+        offset = (coord_t) -pTex->offX - (width / 2);
+    }
 
     // Project a line segment relative to the view in 2D, then check
     // if not entirely clipped away in the 360 degree angle clipper.
     center[VX] = moPos[VX];
     center[VY] = moPos[VY];
-    M_ProjectViewRelativeLine2D(center, mf || (align || alwaysAlign == 3),
+    R_ProjectViewRelativeLine2D(center, mf || (align || alwaysAlign == 3),
                                 width, offset, v1, v2);
 
     // Check for visibility.
-    if(!C_CheckViewRelSeg(v1[VX], v1[VY], v2[VX], v2[VY]))
-    {   // Isn't visible.
+    if(!C_CheckRangeFromViewRelPoints(v1, v2))
+    {
+        // Isn't visible.
         if(mf)
         {
             // If the model is close to the viewpoint we will need to
             // draw it. Otherwise large models are likely to disappear
             // too early.
-            if(P_ApproxDistance
-                (distance, moPos[VZ] + (mo->height / 2) - viewData->current.pos[VZ]) >
-               MAX_OBJECT_RADIUS)
+            if(M_ApproxDistance(distance, moPos[VZ] + (mo->height / 2) -
+                                          viewData->current.origin[VZ]) > MAX_OBJECT_RADIUS)
             {
                 return; // Can't be visible.
             }
@@ -1312,9 +1324,9 @@ void R_ProjectSprite(mobj_t* mo)
     // Store information in a vissprite.
     vis = R_NewVisSprite();
     vis->type = visType;
-    vis->center[VX] = moPos[VX];
-    vis->center[VY] = moPos[VY];
-    vis->center[VZ] = moPos[VZ];
+    vis->origin[VX] = moPos[VX];
+    vis->origin[VY] = moPos[VY];
+    vis->origin[VZ] = moPos[VZ];
     vis->distance = distance;
 
     floorAdjust = (fabs(sect->SP_floorvisheight - sect->SP_floorheight) < 8);
@@ -1330,13 +1342,13 @@ void R_ProjectSprite(mobj_t* mo)
     params.floorAdjust = floorAdjust;
     P_MobjSectorsIterator(mo, RIT_VisMobjZ, &params);
 
-    gzt = vis->center[VZ] + ((float) sprTex->offY);
+    gzt = vis->origin[VZ] + ((float) -pTex->offY);
 
     viewAlign = (align || alwaysAlign == 3)? true : false;
     fullBright = ((mo->state->flags & STF_FULLBRIGHT) || levelFullBright)? true : false;
 
-    secFloor = mo->subsector->sector->SP_floorvisheight;
-    secCeil = mo->subsector->sector->SP_ceilvisheight;
+    secFloor = mo->bspLeaf->sector->SP_floorvisheight;
+    secCeil = mo->bspLeaf->sector->SP_ceilvisheight;
 
     // Foot clipping.
     floorClip = mo->floorClip;
@@ -1359,14 +1371,11 @@ void R_ProjectSprite(mobj_t* mo)
         }
         else if(mf->sub[0].flags & MFF_MOVEMENT_YAW)
         {
-            yaw = R_MovementYaw(mo->mom[MX], mo->mom[MY]);
+            yaw = R_MovementXYYaw(mo->mom[MX], mo->mom[MY]);
         }
         else
         {
-            if(useSRVOAngle && !netGame && !playback)
-                yaw = (mo->visAngle << 16) / (float) ANGLE_MAX * -360;
-            else
-                yaw = mo->angle / (float) ANGLE_MAX * -360;
+            yaw = Mobj_AngleSmoothed(mo) / (float) ANGLE_MAX * -360;
         }
 
         // How about a unique offset?
@@ -1379,95 +1388,56 @@ void R_ProjectSprite(mobj_t* mo)
         if(mf->sub[0].flags & MFF_ALIGN_PITCH)
         {
             pitch = -BANG2DEG(bamsAtan2
-                (((vis->center[VZ] + gzt) / 2 - viewData->current.pos[VZ]) * 10,
+                (((vis->origin[VZ] + gzt) / 2 - viewData->current.origin[VZ]) * 10,
                               distance * 10));
         }
         else if(mf->sub[0].flags & MFF_MOVEMENT_PITCH)
         {
-            pitch = R_MovementPitch(mo->mom[MX], mo->mom[MY], mo->mom[MZ]);
+            pitch = R_MovementXYZPitch(mo->mom[MX], mo->mom[MY], mo->mom[MZ]);
         }
         else
+        {
             pitch = 0;
-    }
-
-    /**
-     * The three highest bits of the selector are used for an alpha level.
-     * 0 = opaque (alpha -1)
-     * 1 = 1/8 transparent
-     * 4 = 1/2 transparent
-     * 7 = 7/8 transparent
-     */
-    i = mo->selector >> DDMOBJ_SELECTOR_SHIFT;
-    if(i & 0xe0)
-    {
-        alpha = 1 - ((i & 0xe0) >> 5) / 8.0f;
-    }
-    else
-    {
-        if(mo->translucency)
-            alpha = 1 - mo->translucency * reciprocal255;
-        else
-            alpha = -1;
+        }
     }
 
     // Determine possible short-range visual offset.
-    V3_Set(visOff, 0, 0, 0);
+    V3d_Set(visOff, 0, 0, 0);
 
     if((mf && useSRVO > 0) || (!mf && useSRVO > 1))
     {
         if(mo->state && mo->tics >= 0)
         {
-            V3_Set(visOff, mo->srvo[VX], mo->srvo[VY], mo->srvo[VZ]);
-            V3_Scale(visOff, (mo->tics - frameTimePos) / (float) mo->state->tics);
+            V3d_Set(visOff, mo->srvo[VX], mo->srvo[VY], mo->srvo[VZ]);
+            V3d_Scale(visOff, (mo->tics - frameTimePos) / (float) mo->state->tics);
         }
 
         if(!INRANGE_OF(mo->mom[MX], 0, NOMOMENTUM_THRESHOLD) ||
            !INRANGE_OF(mo->mom[MY], 0, NOMOMENTUM_THRESHOLD) ||
            !INRANGE_OF(mo->mom[MZ], 0, NOMOMENTUM_THRESHOLD))
         {
-            vec3_t              tmp;
+            vec3d_t tmp;
 
             // Use the object's speed to calculate a short-range offset.
-            V3_Set(tmp, mo->mom[MX], mo->mom[MY], mo->mom[MZ]);
-            V3_Scale(tmp, frameTimePos);
+            V3d_Set(tmp, mo->mom[MX], mo->mom[MY], mo->mom[MZ]);
+            V3d_Scale(tmp, frameTimePos);
 
-            V3_Sum(visOff, visOff, tmp);
+            V3d_Sum(visOff, visOff, tmp);
         }
     }
 
     if(!mf && mat)
     {
         boolean brightShadow = (mo->ddFlags & DDMF_BRIGHTSHADOW)? true : false;
-        boolean shadow = (mo->ddFlags & DDMF_SHADOW)? true : false;
-        boolean altShadow = (mo->ddFlags & DDMF_ALTSHADOW)? true : false;
         boolean fitTop = (mo->ddFlags & DDMF_FITTOP)? true : false;
         boolean fitBottom = (mo->ddFlags & DDMF_NOFITBOTTOM)? false : true;
-        float finalAlpha;
         blendmode_t blendMode;
 
-        if(useSpriteAlpha)
-        {
-            if(missileBlend && brightShadow)
-                finalAlpha = .8f; // 80 %.
-            else if(shadow)
-                finalAlpha = .333f; // One third.
-            else if(altShadow)
-                finalAlpha = .666f; // Two thirds.
-            else
-                finalAlpha = 1;
-
-            // Sprite has a custom alpha multiplier?
-            if(alpha >= 0)
-                finalAlpha *= alpha;
-        }
-        else
-            finalAlpha = 1;
-
-        if(missileBlend && brightShadow)
+        if(brightShadow)
         {   // Additive blending.
             blendMode = BM_ADD;
         }
-        else if(noSpriteTrans && finalAlpha >= .98f)
+        else if(noSpriteTrans && alpha >= .98f)
         {   // Use the "no translucency" blending mode.
             blendMode = BM_ZEROALPHA;
         }
@@ -1478,56 +1448,54 @@ void R_ProjectSprite(mobj_t* mo)
 
         // We must find the correct positioning using the sector floor
         // and ceiling heights as an aid.
-        if(ms.height < secCeil - secFloor)
+        if(ms->size.height < secCeil - secFloor)
         {   // Sprite fits in, adjustment possible?
             // Check top.
             if(fitTop && gzt > secCeil)
                 gzt = secCeil;
             // Check bottom.
             if(floorAdjust && fitBottom &&
-               gzt - ms.height < secFloor)
-                gzt = secFloor + ms.height;
+               gzt - ms->size.height < secFloor)
+                gzt = secFloor + ms->size.height;
         }
         // Adjust by the floor clip.
         gzt -= floorClip;
 
-        getLightingParams(vis->center[VX], vis->center[VY],
-                          gzt - ms.height / 2.0f,
-                          mo->subsector, vis->distance, fullBright,
+        getLightingParams(vis->origin[VX], vis->origin[VY],
+                          gzt - ms->size.height / 2.0f,
+                          mo->bspLeaf, vis->distance, fullBright,
                           ambientColor, &vLightListIdx);
 
         setupSpriteParamsForVisSprite(&vis->data.sprite,
-                                      vis->center[VX], vis->center[VY],
-                                      gzt - ms.height / 2.0f,
+                                      vis->origin[VX], vis->origin[VY],
+                                      gzt - ms->size.height / 2.0f,
                                       vis->distance,
                                       visOff[VX], visOff[VY], visOff[VZ],
                                       secFloor, secCeil,
                                       floorClip, gzt, mat, matFlipS, matFlipT, blendMode,
-                                      ambientColor[CR], ambientColor[CG], ambientColor[CB], finalAlpha,
+                                      ambientColor[CR], ambientColor[CG], ambientColor[CB], alpha,
                                       vLightListIdx,
-                                      tmap,
-                                      tclass,
-                                      mo->subsector,
+                                      mo->tclass,
+                                      mo->tmap,
+                                      mo->bspLeaf,
                                       floorAdjust,
                                       fitTop,
                                       fitBottom,
-                                      viewAlign,
-                                      brightShadow, shadow, altShadow,
-                                      fullBright);
+                                      viewAlign);
     }
     else
     {
-        getLightingParams(vis->center[VX], vis->center[VY], vis->center[VZ],
-                          mo->subsector, vis->distance, fullBright,
+        getLightingParams(vis->origin[VX], vis->origin[VY], vis->origin[VZ],
+                          mo->bspLeaf, vis->distance, fullBright,
                           ambientColor, &vLightListIdx);
 
         setupModelParamsForVisSprite(&vis->data.model,
-                                     vis->center[VX], vis->center[VY], vis->center[VZ], vis->distance,
+                                     vis->origin[VX], vis->origin[VY], vis->origin[VZ], vis->distance,
                                      visOff[VX], visOff[VY], visOff[VZ] - floorClip, gzt, yaw, 0, pitch, 0,
                                      mf, nextmf, interp,
                                      ambientColor[CR], ambientColor[CG], ambientColor[CB], alpha,
                                      vLightListIdx, mo->thinker.id, mo->selector,
-                                     mo->subsector, mo->ddFlags,
+                                     mo->bspLeaf, mo->ddFlags,
                                      mo->tmap,
                                      viewAlign,
                                      fullBright && !(mf && (mf->sub[0].flags & MFF_DIM)),
@@ -1543,18 +1511,16 @@ void R_ProjectSprite(mobj_t* mo)
         spritedef_t* sprDef;
         spriteframe_t* sprFrame;
         material_t* mat;
-        material_snapshot_t ms;
-        const gltexture_inst_t* texInst;
+        const materialvariantspecification_t* spec;
+        const materialsnapshot_t* ms;
+        const pointlight_analysis_t* pl;
 
         // Determine the sprite frame lump of the source.
         sprDef = &sprites[mo->sprite];
         sprFrame = &sprDef->spriteFrames[mo->frame];
         if(sprFrame->rotate)
         {
-            mat =
-                sprFrame->
-                mats[(R_PointToAngle(moPos[VX], moPos[VY]) - mo->angle +
-                      (unsigned) (ANG45 / 2) * 9) >> 29];
+            mat = sprFrame->mats[(R_ViewPointXYToAngle(moPos[VX], moPos[VY]) - mo->angle + (unsigned) (ANG45 / 2) * 9) >> 29];
         }
         else
         {
@@ -1562,16 +1528,19 @@ void R_ProjectSprite(mobj_t* mo)
         }
 
 #if _DEBUG
-if(!mat)
-    Con_Error("R_ProjectSprite: Sprite '%i' frame '%i' missing material.",
-              (int) mo->sprite, mo->frame);
+        if(!mat)
+            Con_Error("R_ProjectSprite: Sprite '%i' frame '%i' missing material.", (int) mo->sprite, mo->frame);
 #endif
 
         // Ensure we have up-to-date information about the material.
-        Material_Prepare(&ms, mat, true, NULL);
-        if(ms.units[MTU_PRIMARY].texInst->tex->type != GLT_SPRITE)
-            return; // *Very* strange...
-        texInst = ms.units[MTU_PRIMARY].texInst;
+        spec = Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0,
+            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1,-2, -1, true, true, true, false);
+        ms = Materials_Prepare(mat, spec, true);
+
+        pl = (const pointlight_analysis_t*)
+            Texture_Analysis(MSU_texture(ms, MTU_PRIMARY), TA_SPRITE_AUTOLIGHT);
+        if(!pl)
+            Con_Error("R_ProjectSprite: Texture id:%u has no TA_SPRITE_AUTOLIGHT analysis.", Textures_Id(MSU_texture(ms, MTU_PRIMARY)));
 
         lum = LO_GetLuminous(mo->lumIdx);
         def = (mo->state? stateLights[mo->state - states] : 0);
@@ -1581,12 +1550,12 @@ if(!mat)
         vis->distance = distance;
 
         // Determine the exact center of the flare.
-        V3_Sum(vis->center, moPos, visOff);
-        vis->center[VZ] += LUM_OMNI(lum)->zOff;
+        V3d_Sum(vis->origin, moPos, visOff);
+        vis->origin[VZ] += LUM_OMNI(lum)->zOff;
 
-        flareSize = texInst->data.sprite.lumSize;
+        flareSize = pl->brightMul;
         // X offset to the flare position.
-        xOffset = ms.width * texInst->data.sprite.flareX - spriteTextures[texInst->tex->ofTypeID]->offX;
+        xOffset = ms->size.width * pl->originX - -pTex->offX;
 
         // Does the mobj have an active light definition?
         if(def)
@@ -1605,7 +1574,7 @@ if(!mat)
         if(vis->data.flare.size < 8) vis->data.flare.size = 8;
 
         // Color is taken from the associated lumobj.
-        V3_Copy(vis->data.flare.color, LUM_OMNI(lum)->color);
+        V3f_Copy(vis->data.flare.color, LUM_OMNI(lum)->color);
 
         vis->data.flare.factor = mo->haloFactors[viewPlayer - ddPlayers];
         vis->data.flare.xOff = xOffset;
@@ -1613,10 +1582,9 @@ if(!mat)
 
         if(def)
         {
-            if(!(def->flare.id && def->flare.id[0] == '-'))
+            if(!def->flare || Str_CompareIgnoreCase(Uri_Path(def->flare), "-"))
             {
-                vis->data.flare.tex =
-                    GL_GetFlareTexture(def->flare.id, -1);
+                vis->data.flare.tex = GL_PrepareFlareTexture(def->flare, -1);
             }
             else
             {
@@ -1628,77 +1596,70 @@ if(!mat)
 }
 
 typedef struct {
-    subsector_t*        ssec;
+    BspLeaf* bspLeaf;
 } addspriteparams_t;
 
-boolean RIT_AddSprite(void* ptr, void* data)
+int RIT_AddSprite(void* ptr, void* paramaters)
 {
-    mobj_t*             mo = (mobj_t*) ptr;
-    addspriteparams_t*  params = (addspriteparams_t*) data;
-    sector_t*           sec = params->ssec->sector;
+    mobj_t* mo = (mobj_t*) ptr;
+    addspriteparams_t* params = (addspriteparams_t*)paramaters;
+    Sector* sec = params->bspLeaf->sector;
+    GameMap* map = theMap; /// @todo Do not assume mobj is from the CURRENT map.
 
     if(mo->addFrameCount != frameCount)
     {
-        material_t*         mat;
-
+        material_t* mat;
         R_ProjectSprite(mo);
 
         // Hack: Sprites have a tendency to extend into the ceiling in
         // sky sectors. Here we will raise the skyfix dynamically, to make sure
         // that no sprites get clipped by the sky.
         // Only check
-        if((mat = R_GetMaterialForSprite(mo->sprite, mo->frame)) &&
-           R_IsSkySurface(&sec->SP_ceilsurface))
+        mat = R_GetMaterialForSprite(mo->sprite, mo->frame);
+        if(mat && Surface_IsSkyMasked(&sec->SP_ceilsurface))
         {
             if(!(mo->dPlayer && mo->dPlayer->flags & DDPF_CAMERA) && // Cameramen don't exist!
-               mo->pos[VZ] <= sec->SP_ceilheight &&
-               mo->pos[VZ] >= sec->SP_floorheight)
+               mo->origin[VZ] <= sec->SP_ceilheight &&
+               mo->origin[VZ] >= sec->SP_floorheight)
             {
-                float               visibleTop;
-
-                visibleTop = mo->pos[VZ] + mat->height;
-
-                if(visibleTop > skyFix[PLN_CEILING].height)
+                coord_t visibleTop = mo->origin[VZ] + Material_Height(mat);
+                if(visibleTop > GameMap_SkyFixCeiling(map))
                 {
                     // Raise skyfix ceiling.
-                    skyFix[PLN_CEILING].height = visibleTop + 16; // Add some leeway.
+                    GameMap_SetSkyFixCeiling(map, visibleTop + 16/*leeway*/);
                 }
             }
         }
-
         mo->addFrameCount = frameCount;
     }
-
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
-void R_AddSprites(subsector_t* ssec)
+void R_AddSprites(BspLeaf* bspLeaf)
 {
     addspriteparams_t params;
 
-    // Don't use validCount, because other parts of the renderer may
-    // change it.
-    if(ssec->addSpriteCount == frameCount)
+    // Do not use validCount because other parts of the renderer may change it.
+    if(bspLeaf->addSpriteCount == frameCount)
         return; // Already added.
 
-    params.ssec = ssec;
-    R_IterateSubsectorContacts(ssec, OT_MOBJ, RIT_AddSprite, &params);
+    params.bspLeaf = bspLeaf;
+    R_IterateBspLeafContacts2(bspLeaf, OT_MOBJ, RIT_AddSprite, &params);
 
-    ssec->addSpriteCount = frameCount;
+    bspLeaf->addSpriteCount = frameCount;
 }
 
 void R_SortVisSprites(void)
 {
-    int                 i, count;
-    vissprite_t*        ds, *best = 0;
-    vissprite_t         unsorted;
-    float               bestdist;
+    int i, count;
+    vissprite_t* ds, *best = 0;
+    vissprite_t unsorted;
+    coord_t bestdist;
 
     count = visSpriteP - visSprites;
 
     unsorted.next = unsorted.prev = &unsorted;
-    if(!count)
-        return;
+    if(!count) return;
 
     for(ds = visSprites; ds < visSpriteP; ds++)
     {
@@ -1716,8 +1677,8 @@ void R_SortVisSprites(void)
     /**
      * \todo
      * Oprofile results from nuts.wad show over 25% of total execution time
-     * was spent sorting vissprites (nuts.wad map01 is a perfect
-     * pathological test case).
+     * was spent sorting vissprites (nuts.wad map01 is a perfect pathological
+     * test case).
      *
      * Rather than try to speed up the sort, it would make more sense to
      * actually construct the vissprites in z order if it can be done in
@@ -1756,27 +1717,25 @@ static void scaleFloatRGB(float* out, const float* in, float mul)
 /**
  * Iterator for processing light sources around a vissprite.
  */
-boolean visSpriteLightIterator(const lumobj_t* lum, float xyDist, void* data)
+int RIT_VisSpriteLightIterator(const lumobj_t* lum, coord_t xyDist, void* paramaters)
 {
-    float               dist;
-    float               intensity;
-    boolean             addLight = false;
-    vlightiterparams_t* params = (vlightiterparams_t*) data;
+    vlightiterparams_t* params = (vlightiterparams_t*)paramaters;
+    boolean addLight = false;
+    coord_t dist;
+    float intensity;
 
     if(!(lum->type == LT_OMNI || lum->type == LT_PLANE))
-        return true; // Continue iteration.
+        return 0; // Continue iteration.
 
     // Is the light close enough to make the list?
     switch(lum->type)
     {
-    case LT_OMNI:
-        {
-        float               zDist;
+    case LT_OMNI: {
+        coord_t zDist = params->origin[VZ] - lum->origin[VZ] + LUM_OMNI(lum)->zOff;
 
-        zDist = params->pos[VZ] - lum->pos[VZ] + LUM_OMNI(lum)->zOff;
-        dist = P_ApproxDistance(xyDist, zDist);
+        dist = M_ApproxDistance(xyDist, zDist);
 
-        if(dist < (float) loMaxRadius)
+        if(dist < (coord_t) loMaxRadius)
         {
             // The intensity of the light.
             intensity = MINMAX_OF(0, (1 - dist / LUM_OMNI(lum)->radius) * 2, 1);
@@ -1784,29 +1743,26 @@ boolean visSpriteLightIterator(const lumobj_t* lum, float xyDist, void* data)
                 addLight = true;
         }
         break;
-        }
+      }
     case LT_PLANE:
         if(LUM_PLANE(lum)->intensity &&
            (LUM_PLANE(lum)->color[0] > 0 || LUM_PLANE(lum)->color[1] > 0 ||
             LUM_PLANE(lum)->color[2] > 0))
         {
-            float           glowHeight =
-                (MAX_GLOWHEIGHT * LUM_PLANE(lum)->intensity) * glowHeightFactor;
+            float glowHeight = (GLOW_HEIGHT_MAX * LUM_PLANE(lum)->intensity) * glowHeightFactor;
 
             // Don't make too small or too large glows.
             if(glowHeight > 2)
             {
-                float           delta[3];
+                coord_t delta[3];
 
                 if(glowHeight > glowHeightMax)
                     glowHeight = glowHeightMax;
 
-                delta[VX] = params->pos[VX] - lum->pos[VX];
-                delta[VY] = params->pos[VY] - lum->pos[VY];
-                delta[VZ] = params->pos[VZ] - lum->pos[VZ];
-
-                if(!((dist = M_DotProduct(delta, LUM_PLANE(lum)->normal)) < 0))
-                {   // Is on the front of the glow plane.
+                V3d_Subtract(delta, params->origin, lum->origin);
+                if(!((dist = V3d_DotProductf(delta, LUM_PLANE(lum)->normal)) < 0))
+                {
+                    // Is on the front of the glow plane.
                     addLight = true;
                     intensity = 1 - dist / glowHeight;
                 }
@@ -1815,21 +1771,17 @@ boolean visSpriteLightIterator(const lumobj_t* lum, float xyDist, void* data)
         break;
 
     default:
-        Con_Error("visSpriteLightIterator: Invalid value, lum->type = %i.",
-                  (int) lum->type);
-        break;
+        Con_Error("RIT_VisSpriteLightIterator: Invalid value, lum->type = %i.", (int) lum->type);
+        exit(1); // Unreachable.
     }
 
     // If the light is not close enough, skip it.
     if(addLight)
     {
-        vlightnode_t*       node = NULL;
-
-        node = newVLight();
-
+        vlightnode_t* node = newVLight();
         if(node)
         {
-            vlight_t*            vlight = &node->vlight;
+            vlight_t* vlight = &node->vlight;
 
             switch(lum->type)
             {
@@ -1842,10 +1794,9 @@ boolean visSpriteLightIterator(const lumobj_t* lum, float xyDist, void* data)
 
                 // Calculate the normalized direction vector, pointing out of
                 // the light origin.
-                vlight->vector[VX] = (lum->pos[VX] - params->pos[VX]) / dist;
-                vlight->vector[VY] = (lum->pos[VY] - params->pos[VY]) / dist;
-                vlight->vector[VZ] = (lum->pos[VZ] + LUM_OMNI(lum)->zOff -
-                                        params->pos[VZ]) / dist;
+                vlight->vector[VX] = (lum->origin[VX] - params->origin[VX]) / dist;
+                vlight->vector[VY] = (lum->origin[VY] - params->origin[VY]) / dist;
+                vlight->vector[VZ] = (lum->origin[VZ] + LUM_OMNI(lum)->zOff - params->origin[VZ]) / dist;
 
                 vlight->color[CR] = LUM_OMNI(lum)->color[CR] * intensity;
                 vlight->color[CG] = LUM_OMNI(lum)->color[CG] * intensity;
@@ -1862,11 +1813,12 @@ boolean visSpriteLightIterator(const lumobj_t* lum, float xyDist, void* data)
                 /**
                  * Calculate the normalized direction vector, pointing out of
                  * the vissprite.
-                 * \fixme Project the nearest point on the surface to
-                 * determine the real direction vector.
+                 *
+                 * @todo Project the nearest point on the surface to determine
+                 *        the real direction vector.
                  */
-                vlight->vector[VX] = LUM_PLANE(lum)->normal[VX];
-                vlight->vector[VY] = LUM_PLANE(lum)->normal[VY];
+                vlight->vector[VX] =  LUM_PLANE(lum)->normal[VX];
+                vlight->vector[VY] =  LUM_PLANE(lum)->normal[VY];
                 vlight->vector[VZ] = -LUM_PLANE(lum)->normal[VZ];
 
                 vlight->color[CR] = LUM_PLANE(lum)->color[CR] * intensity;
@@ -1875,24 +1827,23 @@ boolean visSpriteLightIterator(const lumobj_t* lum, float xyDist, void* data)
                 break;
 
             default:
-                Con_Error("visSpriteLightIterator: Invalid value, "
-                          "lum->type = %i.", (int) lum->type);
-                break;
+                Con_Error("visSpriteLightIterator: Invalid value, lum->type = %i.", (int) lum->type);
+                exit(1); // Unreachable.
             }
 
             linkVLightNodeToList(node, params->listIdx);
         }
     }
 
-    return true; // Continue iteration.
+    return 0; // Continue iteration.
 }
 
 uint R_CollectAffectingLights(const collectaffectinglights_params_t* params)
 {
-    uint                vLightListIdx;
-    uint                i;
-    vlightnode_t*       node;
-    vlight_t*           vlight;
+    uint vLightListIdx;
+    vlightnode_t* node;
+    vlight_t* vlight;
+    uint i;
 
     if(!params)
         return 0;
@@ -1934,35 +1885,22 @@ uint R_CollectAffectingLights(const collectaffectinglights_params_t* params)
     linkVLightNodeToList(node, vLightListIdx);
 
     // Add extra light by interpreting lumobjs into vlights.
-    if(loInited && params->subsector)
+    if(loInited && params->bspLeaf)
     {
         vlightiterparams_t vars;
 
-        vars.pos[VX] = params->center[VX];
-        vars.pos[VY] = params->center[VY];
-        vars.pos[VZ] = params->center[VZ];
+        V3d_Copy(vars.origin, params->origin);
         vars.haveList = true;
         vars.listIdx = vLightListIdx;
 
-        LO_LumobjsRadiusIterator(params->subsector, params->center[VX],
-                                 params->center[VY], (float) loMaxRadius,
-                                 &vars, visSpriteLightIterator);
+        LO_LumobjsRadiusIterator2(params->bspLeaf, params->origin[VX], params->origin[VY],
+            (float) loMaxRadius, RIT_VisSpriteLightIterator, (void*)&vars);
     }
 
     return vLightListIdx + 1;
 }
 
-/**
- * Calls func for all vlights in the given list.
- *
- * @param listIdx       Identifier of the list to process.
- * @param data          Ptr to pass to the callback.
- * @param func          Callback to make for each object.
- *
- * @return              @c true, iff every callback returns @c true.
- */
-boolean VL_ListIterator(uint listIdx, void* data,
-                        boolean (*func) (const vlight_t*, void*))
+boolean VL_ListIterator(uint listIdx, void* data, boolean (*func) (const vlight_t*, void*))
 {
     vlightnode_t*       node;
     boolean             retVal, isDone;
@@ -1992,12 +1930,12 @@ boolean VL_ListIterator(uint listIdx, void* data,
  * @return              The current floatbob offset for the mobj, if the mobj
  *                      is flagged for bobbing, else @c 0.
  */
-float R_GetBobOffset(mobj_t* mo)
+coord_t R_GetBobOffset(mobj_t* mo)
 {
     if(mo->ddFlags & DDMF_BOB)
     {
         return (sin(MOBJ_TO_ID(mo) + ddMapTime / 1.8286 * 2 * PI) * 8);
     }
-
     return 0;
 }
+

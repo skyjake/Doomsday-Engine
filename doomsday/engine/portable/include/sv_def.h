@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,17 +23,23 @@
  */
 
 /**
- * sv_def.h: Server Definitions
+ * Server Definitions.
  */
 
 #ifndef __DOOMSDAY_SERVER_H__
 #define __DOOMSDAY_SERVER_H__
 
 #include "dd_def.h"
-#include "m_string.h"
+#include "sys_network.h"
 
-#define SV_VERSION          16
-#define SV_WELCOME_STRING   "Doomsday "DOOMSDAY_VERSION_TEXT" Server (R16)"
+struct material_s;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define SV_VERSION          21
+#define SV_WELCOME_STRING   "Doomsday "DOOMSDAY_VERSION_TEXT" Server (R21)"
 
 // Anything closer than this is always taken into consideration when
 // deltas are being generated.
@@ -50,11 +56,17 @@ extern char* netPassword; // Remote login password.
 
 void            Sv_Shutdown(void);
 void            Sv_StartNetGame(void);
-boolean         Sv_PlayerArrives(unsigned int nodeID, char* name);
-void            Sv_PlayerLeaves(unsigned int nodeID);
+void            Sv_StopNetGame(void);
+boolean         Sv_PlayerArrives(nodeid_t nodeID, char* name);
+void            Sv_PlayerLeaves(nodeid_t nodeID);
 void            Sv_Handshake(int playernum, boolean newplayer);
 void            Sv_GetPackets(void);
-void            Sv_SendText(int to, int conFlags, char* text);
+
+/**
+ * @param flags  @see consolePrintFlags
+ */
+void            Sv_SendText(int to, int flags, const char* text);
+
 void            Sv_Ticker(timespan_t ticLength);
 int             Sv_Latency(byte cmdTime);
 void            Sv_Kick(int who);
@@ -65,5 +77,14 @@ int             Sv_GetNumPlayers(void);
 int             Sv_GetNumConnected(void);
 boolean         Sv_CheckBandwidth(int playerNumber);
 boolean         Sv_CanTrustClientPos(int plrNum);
+
+/**
+ * Returns a unique id for material @a mat that can be passed on to clients.
+ */
+unsigned int Sv_IdForMaterial(struct material_s* mat);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

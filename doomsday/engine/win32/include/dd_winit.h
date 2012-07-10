@@ -1,10 +1,10 @@
-/**\file
+/**\file dd_winit.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Kernen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Kernen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,38 +23,49 @@
  */
 
 /**
- * dd_winit.h: Win32 Initialization.
+ * Win32 Initialization.
  */
 
-#ifndef __DOOMSDAY_WINIT_H__
-#define __DOOMSDAY_WINIT_H__
+#ifndef LIBDENG_WINIT_H
+#define LIBDENG_WINIT_H
+
+#define WIN32_LEAN_AND_MEAN
 
 #include "dd_pinit.h"
 #include <windows.h>
 
-#define MAINWCLASS          TEXT("DoomsdayMainWClass")
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+//#define MAINWCLASS          "DoomsdayMainWClass"
 
 typedef struct {
-    HINSTANCE       hInstance;
+    HINSTANCE hInstance;
+/*
 #ifdef UNICODE
-    LPCWSTR         className;
+    LPCWSTR className;
 #else
-    LPCSTR          className;
+    LPCSTR className;
 #endif
-    BOOL            suspendMsgPump; // Set to true to disable checking windows msgs.
-    BOOL            userDirOk;
+*/
+    /// @c true = We are using a custom user dir specified on the command line.
+    BOOL usingUserDir;
 
-    HINSTANCE       hInstGame; // Instance handle to the game DLL.
-    HINSTANCE       hInstPlug[MAX_PLUGS]; // Instances to plugin DLLs.
-    GETGAMEAPI      GetGameAPI;
+    HINSTANCE hInstPlug[MAX_PLUGS];
+    GETGAMEAPI GetGameAPI;
 } application_t;
 
-extern uint windowIDX; // Main window.
 extern application_t app;
 
+boolean DD_Win32_Init(void);
+void DD_Shutdown(void);
+
+const char* DD_Win32_GetLastErrorMessage(void);
+
 #ifdef UNICODE
-LPCWSTR         ToWideString(const char* str);
-LPCSTR          ToAnsiString(const wchar_t* wstr);
+LPCWSTR ToWideString(const char* str);
+LPCSTR  ToAnsiString(const wchar_t* wstr);
 #  define WIN_STRING(s)     (ToWideString(s))
 #  define UTF_STRING(ws)    (ToAnsiString(ws))
 #else
@@ -62,6 +73,8 @@ LPCSTR          ToAnsiString(const wchar_t* wstr);
 #  define UTF_STRING(ws)    (ws)
 #endif
 
-void            DD_Shutdown(void);
-
+#ifdef __cplusplus
+}
 #endif
+
+#endif /* LIBDENG_WINIT_H */

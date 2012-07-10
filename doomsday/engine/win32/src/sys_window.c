@@ -1,10 +1,12 @@
-/**\file
+// OBSOLETE: see window.cpp (GUI) and sys_console.c (text-mode)
+
+/**\file sys_window.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +25,7 @@
  */
 
 /**
- * sys_window.c: Win32-specific window management.
+ * Win32-specific window management.
  *
  * This code wraps system-specific window management routines in order to
  * provide a cross-platform interface and common behavior.
@@ -50,15 +52,9 @@
 #include "de_misc.h"
 #include "de_ui.h"
 
+#include "rend_particle.h" // \todo Should not be necessary at this level.
+
 // MACROS ------------------------------------------------------------------
-
-#define WINDOWEDSTYLE (WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | \
-                       WS_CLIPCHILDREN | WS_CLIPSIBLINGS)
-#define FULLSCREENSTYLE (WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS)
-
-#define LINELEN         80
-#define TEXT_ATTRIB     (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE)
-#define CMDLINE_ATTRIB  (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY)
 
 // TYPES -------------------------------------------------------------------
 
@@ -72,9 +68,6 @@ static void destroyWindow(ddwindow_t *win);
 static boolean setDDWindow(ddwindow_t *win, int newX, int newY, int newWidth,
                            int newHeight, int newBPP, int wFlags,
                            int uFlags);
-
-static void setConWindowCmdLine(ddwindow_t *win, const char *text,
-                                uint cursorPos, int flags);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -103,243 +96,6 @@ static __inline ddwindow_t *getWindow(uint idx)
         return NULL;
 
     return windows[idx];
-}
-
-static void setCmdLineCursor(ddwindow_t *win, int x, int y)
-{
-    COORD       pos;
-
-    pos.X = x;
-    pos.Y = y;
-    SetConsoleCursorPosition(win->console.hcScreen, pos);
-}
-
-static void scrollLine(ddwindow_t *win)
-{
-    SMALL_RECT  src;
-    COORD       dest;
-    CHAR_INFO   fill;
-
-    src.Left = 0;
-    src.Right = win->console.cbInfo.dwSize.X - 1;
-    src.Top = 1;
-    src.Bottom = win->console.cbInfo.dwSize.Y - 2;
-    dest.X = 0;
-    dest.Y = 0;
-    fill.Attributes = TEXT_ATTRIB;
-#ifdef UNICODE
-    fill.Char.UnicodeChar = L' ';
-#else
-    fill.Char.AsciiChar = ' ';
-#endif
-
-    ScrollConsoleScreenBuffer(win->console.hcScreen, &src, NULL, dest, &fill);
-}
-
-static void setAttrib(ddwindow_t *win, int flags)
-{
-    win->console.attrib = 0;
-    if(flags & CBLF_WHITE)
-        win->console.attrib =
-            FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
-    if(flags & CBLF_BLUE)
-        win->console.attrib = FOREGROUND_BLUE;
-    if(flags & CBLF_GREEN)
-        win->console.attrib = FOREGROUND_GREEN;
-    if(flags & CBLF_CYAN)
-        win->console.attrib = FOREGROUND_BLUE | FOREGROUND_GREEN;
-    if(flags & CBLF_RED)
-        win->console.attrib = FOREGROUND_RED;
-    if(flags & CBLF_MAGENTA)
-        win->console.attrib = FOREGROUND_RED | FOREGROUND_BLUE;
-    if(flags & CBLF_YELLOW)
-        win->console.attrib = FOREGROUND_RED | FOREGROUND_GREEN;
-    if(flags & CBLF_LIGHT)
-        win->console.attrib |= FOREGROUND_INTENSITY;
-    if((flags & CBLF_WHITE) != CBLF_WHITE)
-        win->console.attrib |= FOREGROUND_INTENSITY;
-
-    SetConsoleTextAttribute(win->console.hcScreen, win->console.attrib);
-}
-
-/**
- * Writes the text at the (cx,cy).
- */
-static void writeText(ddwindow_t *win, CHAR_INFO *line, int len)
-{
-    COORD       linesize;
-    COORD       from = {0, 0};
-    SMALL_RECT  rect;
-
-    linesize.X = len;
-    linesize.Y = 1;
-    rect.Left = win->console.cx;
-    rect.Right = win->console.cx + len;
-    rect.Top = win->console.cy;
-    rect.Bottom = win->console.cy;
-
-    WriteConsoleOutput(win->console.hcScreen, line, linesize, from, &rect);
-}
-
-void Sys_ConPrint(uint idx, const char* text, int clflags)
-{
-    ddwindow_t* win;
-    unsigned int i;
-    int linestart, bpos;
-    const char* ptr = text;
-    CHAR_INFO line[LINELEN];
-    size_t len;
-    char ch;
-#ifdef UNICODE
-    wchar_t wch;
-#endif
-
-    if(!winManagerInited || !text)
-        return;
-
-    win = getWindow(idx - 1);
-    if(!win || win->type != WT_CONSOLE)
-        return;
-
-    if(win->console.needNewLine)
-    {   // Need to make some room.
-        win->console.cx = 0;
-        win->console.cy++;
-        if(win->console.cy == win->console.cbInfo.dwSize.Y - 1)
-        {
-            win->console.cy--;
-            scrollLine(win);
-        }
-        win->console.needNewLine = false;
-    }
-
-    bpos = linestart = win->console.cx;
-    setAttrib(win, clflags);
-    len = strlen(text);
-    for(i = 0; i < len; i++, ptr++)
-    {
-        ch = *ptr;
-        if(ch != '\n' && bpos < LINELEN)
-        {
-            line[bpos].Attributes = win->console.attrib;
-#ifdef UNICODE
-            mbtowc(&wch, &ch, MB_CUR_MAX);
-            line[bpos].Char.UnicodeChar = wch;
-#else
-            line[bpos].Char.AsciiChar = ch;
-#endif
-            bpos++;
-        }
-
-        // Time for newline?
-        if(ch == '\n' || bpos == LINELEN)
-        {
-            writeText(win, line + linestart, bpos - linestart);
-            win->console.cx += bpos - linestart;
-            bpos = 0;
-            linestart = 0;
-            if(i < len - 1)
-            {   // Not the last character.
-                win->console.needNewLine = false;
-                win->console.cx = 0;
-                win->console.cy++;
-                if(win->console.cy == win->console.cbInfo.dwSize.Y - 1)
-                {
-                    scrollLine(win);
-                    win->console.cy--;
-                }
-            }
-            else
-            {
-                win->console.needNewLine = true;
-            }
-        }
-    }
-
-    // Something left in the buffer?
-    if(bpos - linestart)
-    {
-        writeText(win, line + linestart, bpos - linestart);
-        win->console.cx += bpos - linestart;
-    }
-}
-
-/**
- * Set the command line display of the specified console window.
- *
- * @param idx           Console window identifier.
- * @param text          Text string to copy.
- * @param cursorPos     Position to set the cursor on the command line.
- * @param flags         CLF_* flags control the appearance of the
- *                      command line.
- */
-void Sys_SetConWindowCmdLine(uint idx, const char *text, uint cursorPos,
-                             int flags)
-{
-    ddwindow_t     *win;
-
-    if(!winManagerInited)
-        return;
-
-    win = getWindow(idx - 1);
-
-    if(!win || win->type != WT_CONSOLE)
-        return;
-
-    setConWindowCmdLine(win, text, cursorPos, flags);
-}
-
-static void setConWindowCmdLine(ddwindow_t* win, const char* text, uint cursorPos, int flags)
-{
-    CHAR_INFO line[LINELEN], *ch;
-    COORD linesize = {LINELEN, 1};
-    COORD from = {0, 0};
-    SMALL_RECT rect;
-    uint i;
-#ifdef UNICODE
-    wchar_t wch;
-#endif
-
-    // Do we need to change the look of the cursor?
-    if((flags & CLF_CURSOR_LARGE) !=
-        (win->console.cmdline.flags & CLF_CURSOR_LARGE))
-    {
-        CONSOLE_CURSOR_INFO curInfo;
-
-        curInfo.bVisible = TRUE;
-        curInfo.dwSize = ((flags & CLF_CURSOR_LARGE)? 100 : 10);
-
-        SetConsoleCursorInfo(win->console.hcScreen, &curInfo);
-        win->console.cmdline.flags ^= CLF_CURSOR_LARGE;
-    }
-
-#ifdef UNICODE
-    line[0].Char.UnicodeChar = L'>';
-#else
-    line[0].Char.AsciiChar = '>';
-#endif
-    line[0].Attributes = CMDLINE_ATTRIB;
-    for(i = 0, ch = line + 1; i < LINELEN - 1; ++i, ch++)
-    {
-#ifdef UNICODE
-        if(i < strlen(text))
-            mbtowc(&wch, &text[i], MB_CUR_MAX);
-        else
-            wch = L' ';
-        ch->Char.UnicodeChar = wch;
-#else
-        ch->Char.AsciiChar = (i < strlen(text)? text[i] : ' ');
-#endif
-        // Gray color.
-        ch->Attributes = CMDLINE_ATTRIB;
-    }
-
-    rect.Left = 0;
-    rect.Right = LINELEN - 1;
-    rect.Top = win->console.cbInfo.dwSize.Y - 1;
-    rect.Bottom = win->console.cbInfo.dwSize.Y - 1;
-    WriteConsoleOutput(win->console.hcScreen, line, linesize, from, &rect);
-    setCmdLineCursor(win, cursorPos, win->console.cbInfo.dwSize.Y - 1);
 }
 
 /**
@@ -384,8 +140,10 @@ int Sys_ChangeVideoMode(int width, int height, int bpp)
     int                 res, i;
     DEVMODE             current, testMode, newMode;
 
-    if(!winManagerInited)
+    if(!winManagerInited || width < 0 || height < 0)
         return 0;
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     Sys_GetDesktopBPP(&screenBPP);
 
@@ -402,8 +160,10 @@ int Sys_ChangeVideoMode(int width, int height, int bpp)
         bpp = 16;
     }
 
-    if(width == current.dmPelsWidth && height == current.dmPelsHeight &&
-       bpp == current.dmBitsPerPel)
+    if(bpp < 0) return 0;
+
+    if((unsigned)width == current.dmPelsWidth && (unsigned)height == current.dmPelsHeight &&
+       (unsigned)bpp == current.dmBitsPerPel)
        return 1; // No need to change, so success!
 
     // Override refresh rate?
@@ -521,8 +281,6 @@ static boolean createContext(ddwindow_t *window)
     HDC                 hdc;
     boolean             ok = true;
 
-    Con_Message("createContext: OpenGL.\n");
-
     if(window->type != WT_NORMAL)
         Sys_CriticalMessage("createContext: Window type does not support "
                             "rendering contexts.");
@@ -579,13 +337,13 @@ boolean Sys_GetWindowManagerInfo(wminfo_t *info)
     return true;
 }
 
-static ddwindow_t *createGLWindow(application_t *app, uint parentIDX,
-                                  int x, int y, int w, int h, int bpp,
-                                  int flags, const char *title)
+static ddwindow_t* createGLWindow(application_t* app, uint parentIdx,
+    const Point2Raw* origin, const Size2Raw* size, int bpp, int flags,
+    const char* title)
 {
-    ddwindow_t         *win, *pWin = NULL;
-    HWND                phWnd = NULL;
-    boolean             ok = true;
+    ddwindow_t* win, *pWin = NULL;
+    HWND phWnd = NULL;
+    boolean ok = true;
 
     if(!(bpp == 32 || bpp == 16))
     {
@@ -593,23 +351,20 @@ static ddwindow_t *createGLWindow(application_t *app, uint parentIDX,
         return NULL;
     }
 
-    if(parentIDX)
+    if(parentIdx)
     {
-        pWin = getWindow(parentIDX - 1);
-        if(pWin)
-            phWnd = pWin->hWnd;
+        pWin = getWindow(parentIdx - 1);
+        if(pWin) phWnd = pWin->hWnd;
     }
 
-    // Allocate a structure to wrap the various handles and state variables
-    // used with this window.
-    if((win = (ddwindow_t*) M_Calloc(sizeof(ddwindow_t))) == NULL)
-        return 0;
+    win = (ddwindow_t*) calloc(1, sizeof *win);
+    if(!win) return NULL;
 
     win->type = WT_NORMAL;
 
     // Create the window.
     win->hWnd =
-        CreateWindowEx(WS_EX_APPWINDOW, MAINWCLASS, WIN_STRING(title),
+        CreateWindowEx(WS_EX_APPWINDOW, TEXT(MAINWCLASS), WIN_STRING(title),
                        WINDOWEDSTYLE,
                        CW_USEDEFAULT, CW_USEDEFAULT,
                        CW_USEDEFAULT, CW_USEDEFAULT,
@@ -623,12 +378,12 @@ static ddwindow_t *createGLWindow(application_t *app, uint parentIDX,
     else // Initialize.
     {
         PIXELFORMATDESCRIPTOR pfd;
-        int         pixForm = 0;
-        HDC         hDC = NULL;
+        int pixForm = 0;
+        HDC hDC = NULL;
 
         // Setup the pixel format descriptor.
-        ZeroMemory(&pfd, sizeof(pfd));
-        pfd.nSize = sizeof(pfd);
+        ZeroMemory(&pfd, sizeof pfd);
+        pfd.nSize = sizeof pfd;
         pfd.nVersion = 1;
         pfd.iPixelType = PFD_TYPE_RGBA;
         pfd.iLayerType = PFD_MAIN_PLANE;
@@ -670,7 +425,7 @@ static ddwindow_t *createGLWindow(application_t *app, uint parentIDX,
         {
             // Choose a suitable pixel format.
             // If multisampling is available, make use of it.
-            if(GL_state_ext.wglMultisampleARB)
+            if(GL_state.features.multisample)
             {
                 pixForm = GL_state.multisampleFormat;
             }
@@ -688,7 +443,7 @@ static ddwindow_t *createGLWindow(application_t *app, uint parentIDX,
 
         if(ok)
         {   // Make sure that the driver is hardware-accelerated.
-            DescribePixelFormat(hDC, pixForm, sizeof(pfd), &pfd);
+            DescribePixelFormat(hDC, pixForm, sizeof pfd, &pfd);
             if((pfd.dwFlags & PFD_GENERIC_FORMAT) && !ArgCheck("-allowsoftware"))
             {
                 Sys_CriticalMessage("DD_CreateWindow: GL driver not accelerated!\n"
@@ -702,8 +457,8 @@ static ddwindow_t *createGLWindow(application_t *app, uint parentIDX,
             // (unless we release the context and acquire another).
             if(!SetPixelFormat(hDC, pixForm, &pfd))
             {
-                Sys_CriticalMessage("DD_CreateWindow: Warning, setting of pixel "
-                                    "format failed.");
+                Sys_CriticalMessage("DD_CreateWindow: Failed setting pixel format.");
+                ok = false;
             }
         }
 
@@ -712,11 +467,14 @@ static ddwindow_t *createGLWindow(application_t *app, uint parentIDX,
             ReleaseDC(win->hWnd, hDC);
     }
 
-    setDDWindow(win, x, y, w, h, bpp, flags,
+    setDDWindow(win, origin->x, origin->y, size->width, size->height, bpp, flags,
                 DDSW_NOVISIBLE | DDSW_NOCENTER | DDSW_NOFULLSCREEN);
 
-    // Ensure new windows are hidden on creation.
-    ShowWindow(win->hWnd, SW_HIDE);
+    if(win->hWnd)
+    {
+        // Ensure new windows are hidden on creation.
+        ShowWindow(win->hWnd, SW_HIDE);
+    }
 
     if(!ok)
     {   // Damn, something went wrong... clean up.
@@ -727,131 +485,24 @@ static ddwindow_t *createGLWindow(application_t *app, uint parentIDX,
     return win;
 }
 
-static ddwindow_t *createConsoleWindow(application_t *app, uint parentIDX,
-                                       int x, int y, int w, int h, int bpp,
-                                       int flags, const char *title)
+uint Sys_CreateWindow(application_t* app, uint parentIdx, const Point2Raw* origin,
+    const Size2Raw* size, int bpp, int flags, ddwindowtype_t type, const char* title,
+    void* userData)
 {
-    ddwindow_t         *win, *pWin = NULL;
-    uint                i;
-    HWND                phWnd = NULL;
-    boolean             ok = true;
-    HANDLE              hcScreen;
-
-    // We only support one dedicated console.
-    for(i = 0; i < numWindows; ++i)
-    {
-        ddwindow_t         *other = windows[i];
-
-        if(other && other->type == WT_CONSOLE)
-        {
-            Con_Message("createWindow: maxConsoles limit reached.\n");
-            return NULL;
-        }
-    }
-
-    if(parentIDX)
-    {
-        pWin = getWindow(parentIDX - 1);
-        if(pWin)
-            phWnd = pWin->hWnd;
-    }
-
-    // Allocate a structure to wrap the various handles and state variables
-    // used with this window.
-    if((win = (ddwindow_t*) M_Calloc(sizeof(ddwindow_t))) == NULL)
-        return 0;
-
-    if(!AllocConsole())
-    {
-        Con_Error("createWindow: Couldn't allocate a console! error %i\n",
-                  GetLastError());
-    }
-
-    win->hWnd = GetConsoleWindow();
-    if(!win->hWnd)
-    {
-        win->hWnd = NULL;
-        ok = false;
-    }
-    else  // Initialize.
-    {
-        if(!SetWindowText(win->hWnd, WIN_STRING(title)))
-            Con_Error("createWindow: Setting console title: error %i\n",
-                      GetLastError());
-
-        hcScreen = GetStdHandle(STD_OUTPUT_HANDLE);
-        if(hcScreen == INVALID_HANDLE_VALUE)
-            Con_Error("createWindow: Bad output handle\n");
-
-        win->type = WT_CONSOLE;
-
-        win->console.hcScreen = hcScreen;
-        GetConsoleScreenBufferInfo(hcScreen, &win->console.cbInfo);
-
-        // This is the location of the print cursor.
-        win->console.cx = 0;
-        win->console.cy = win->console.cbInfo.dwSize.Y - 2;
-
-        setConWindowCmdLine(win, "", 1, 0);
-
-        // We'll be needing the console input handler.
-        Sys_ConInputInit();
-    }
-
-    setDDWindow(win, x, y, w, h, bpp, flags,
-                DDSW_NOVISIBLE | DDSW_NOCENTER | DDSW_NOFULLSCREEN);
-
-    // Ensure new windows are hidden on creation.
-    ShowWindow(win->hWnd, SW_HIDE);
-
-    if(!ok)
-    {   // Damn, something went wrong... clean up.
-        destroyWindow(win);
-        return NULL;
-    }
-
-    return win;
-}
-
-/**
- * Create a new window.
- *
- * @param app           Ptr to the application structure holding our globals.
- * @param parentIDX     Index number of the window that is to be the parent
- *                      of the new window. If @c 0, window has no
- *                      parent.
- * @param x             X position (in desktop-space).
- * @param y             Y position (in desktop-space).
- * @param w             Width (client area).
- * @param h             Height (client area).
- * @param bpp           BPP (bits-per-pixel)
- * @param flags         DDWF_* flags, control appearance/behavior.
- * @param type          Type of window to be created (WT_*)
- * @param title         Window title string, ELSE @c NULL,.
- * @param data          Platform specific data.
- *
- * @return              If @c 0, window creation was unsuccessful,
- *                      ELSE 1-based index identifier of the new window.
- */
-uint Sys_CreateWindow(application_t *app, uint parentIDX,
-                      int x, int y, int w, int h, int bpp, int flags,
-                      ddwindowtype_t type, const char *title, void *data)
-{
-    ddwindow_t         *win = NULL;
+    ddwindow_t* win = NULL;
     /* Currently ignored.
-    int                nCmdShow = (data? *((int*) data) : 0); */
+    int nCmdShow = (userData? *((int*) userData) : 0); */
 
-    if(!winManagerInited)
-        return 0; // Window manager not initialized yet.
+    if(!winManagerInited) return 0;
 
     switch(type)
     {
     case WT_NORMAL:
-        win = createGLWindow(app, parentIDX, x, y, w, h, bpp, flags, title);
+        win = createGLWindow(app, parentIdx, origin, size, bpp, flags, title);
         break;
 
     case WT_CONSOLE:
-        win = createConsoleWindow(app, parentIDX, x, y, w, h, bpp, flags, title);
+        win = createConsoleWindow(app, parentIdx, origin, size, bpp, flags, title);
         break;
 
     default:
@@ -861,8 +512,8 @@ uint Sys_CreateWindow(application_t *app, uint parentIDX,
 
     if(win)
     {   // Success, link it in.
-        uint        i = 0;
-        ddwindow_t **newList = M_Malloc(sizeof(ddwindow_t*) * ++numWindows);
+        uint i = 0;
+        ddwindow_t** newList = malloc(sizeof *newList * ++numWindows);
 
         // Copy the existing list?
         if(windows)
@@ -875,8 +526,7 @@ uint Sys_CreateWindow(application_t *app, uint parentIDX,
         newList[i] = win;
 
         // Replace the list.
-        if(windows)
-            M_Free(windows); // Free windows? har, har.
+        if(windows) free(windows); // Free windows? har, har.
         windows = newList;
     }
     else
@@ -906,17 +556,6 @@ static boolean destroyGLWindow(ddwindow_t *window)
     return true;
 }
 
-static boolean destroyConsoleWindow(ddwindow_t *window)
-{
-    // We no longer need the input handler.
-    Sys_ConInputShutdown();
-
-    // Detach the console for this process.
-    if(!FreeConsole())
-        return false;
-
-    return true;
-}
 
 static void destroyWindow(ddwindow_t *window)
 {
@@ -1006,27 +645,27 @@ static boolean setDDWindow(ddwindow_t *window, int newX, int newY,
                            int newWidth, int newHeight, int newBPP,
                            int wFlags, int uFlags)
 {
-    int                 x, y, width, height, bpp, flags;
-    HWND                hWnd;
-    boolean             newGLContext = false;
-    boolean             updateStyle = false;
-    boolean             changeVideoMode = false;
-    boolean             changeWindowDimensions = false;
-    boolean             noMove = (uFlags & DDSW_NOMOVE);
-    boolean             noSize = (uFlags & DDSW_NOSIZE);
-    boolean             inControlPanel = false;
+    RectRaw geometry;
+    int bpp, flags;
+    HWND hWnd;
+    boolean newGLContext = false;
+    boolean updateStyle = false;
+    boolean changeVideoMode = false;
+    boolean changeWindowDimensions = false;
+    boolean noMove = (uFlags & DDSW_NOMOVE);
+    boolean noSize = (uFlags & DDSW_NOSIZE);
+    boolean inControlPanel = false;
+    boolean noFrame;
 
     if(uFlags & DDSW_NOCHANGES)
         return true; // Nothing to do.
 
     // Grab the current values.
     hWnd = window->hWnd;
-    x = window->x;
-    y = window->y;
-    width = window->width;
-    height = window->height;
+    memcpy(&geometry, &window->geometry, sizeof geometry);
     bpp = window->normal.bpp;
     flags = window->flags;
+    noFrame = ArgCheck("-noframe");
     // Force update on init?
     if(!window->inited && window->type == WT_NORMAL)
     {
@@ -1058,10 +697,11 @@ static boolean setDDWindow(ddwindow_t *window, int newX, int newY,
     }
 
     // Change window size?
-    if(!(uFlags & DDSW_NOSIZE) && (width != newWidth || height != newHeight))
+    if(!(uFlags & DDSW_NOSIZE) &&
+       (geometry.size.width != newWidth || geometry.size.height != newHeight))
     {
-        width = newWidth;
-        height = newHeight;
+        geometry.size.width  = newWidth;
+        geometry.size.height = newHeight;
 
         if(window->type == WT_NORMAL)
         {
@@ -1100,7 +740,7 @@ static boolean setDDWindow(ddwindow_t *window, int newX, int newY,
     {
         if(flags & DDWF_FULLSCREEN)
         {
-            if(!Sys_ChangeVideoMode(width, height, bpp))
+            if(!Sys_ChangeVideoMode(geometry.size.width, geometry.size.height, bpp))
             {
                 Sys_CriticalMessage("Sys_SetWindow: Resolution change failed.");
                 return false;
@@ -1116,9 +756,9 @@ static boolean setDDWindow(ddwindow_t *window, int newX, int newY,
     // Change window position?
     if(flags & DDWF_FULLSCREEN)
     {
-        if(x != 0 || y != 0)
+        if(geometry.origin.x != 0 || geometry.origin.y != 0)
         {   // Force move to [0,0]
-            x = y = 0;
+            geometry.origin.x = geometry.origin.y = 0;
             noMove = false;
         }
     }
@@ -1126,21 +766,21 @@ static boolean setDDWindow(ddwindow_t *window, int newX, int newY,
     {
         if(flags & DDWF_CENTER)
         {   // Auto centering mode.
-            x = (GetSystemMetrics(SM_CXSCREEN) - width) / 2;
-            y = (GetSystemMetrics(SM_CYSCREEN) - height) / 2;
+            geometry.origin.x = (GetSystemMetrics(SM_CXVIRTUALSCREEN) - geometry.size.width) / 2;
+            geometry.origin.y = (GetSystemMetrics(SM_CYVIRTUALSCREEN) - geometry.size.height) / 2;
         }
-        else if(x != newX || y != newY)
+        else if(geometry.origin.x != newX || geometry.origin.y != newY)
         {
-            x = newX;
-            y = newY;
+            geometry.origin.x = newX;
+            geometry.origin.y = newY;
         }
 
         // Are we in range here?
-        if(width > GetSystemMetrics(SM_CXSCREEN))
-            width = GetSystemMetrics(SM_CXSCREEN);
+        if(geometry.size.width > GetSystemMetrics(SM_CXVIRTUALSCREEN))
+            geometry.size.width = GetSystemMetrics(SM_CXVIRTUALSCREEN);
 
-        if(height > GetSystemMetrics(SM_CYSCREEN))
-            height = GetSystemMetrics(SM_CYSCREEN);
+        if(geometry.size.height > GetSystemMetrics(SM_CYVIRTUALSCREEN))
+            geometry.size.height = GetSystemMetrics(SM_CYVIRTUALSCREEN);
     }
 
     // Change visibility?
@@ -1155,10 +795,7 @@ static boolean setDDWindow(ddwindow_t *window, int newX, int newY,
         ShowWindow(hWnd, SW_HIDE);
 
     // Update the current values.
-    window->x = x;
-    window->y = y;
-    window->width = width;
-    window->height = height;
+    memcpy(&window->geometry, &geometry, sizeof window->geometry);
     if(window->type == WT_NORMAL)
         window->normal.bpp = bpp;
     window->flags = flags;
@@ -1171,7 +808,7 @@ static boolean setDDWindow(ddwindow_t *window, int newX, int newY,
     {   // We need to request changes to the window style.
         LONG    style;
 
-        if(flags & DDWF_FULLSCREEN)
+        if((flags & DDWF_FULLSCREEN) || noFrame)
             style = FULLSCREENSTYLE;
         else
             style = WINDOWEDSTYLE;
@@ -1179,23 +816,24 @@ static boolean setDDWindow(ddwindow_t *window, int newX, int newY,
         SetWindowLong(hWnd, GWL_STYLE, style);
     }
 
-    if(!(flags & DDWF_FULLSCREEN))
+    if(!(flags & DDWF_FULLSCREEN) && !noFrame)
     {   // We need to have a large enough client area.
         RECT        rect;
 
-        rect.left = x;
-        rect.top = y;
-        rect.right = x + width;
-        rect.bottom = y + height;
+        rect.left  = geometry.origin.x;
+        rect.right = geometry.origin.x + geometry.size.width;
+        rect.top    = geometry.origin.y;
+        rect.bottom = geometry.origin.y + geometry.size.height;
         AdjustWindowRect(&rect, WINDOWEDSTYLE, false);
-        width = rect.right - rect.left;
-        height = rect.bottom - rect.top;
+        geometry.size.width  = rect.right  - rect.left;
+        geometry.size.height = rect.bottom - rect.top;
         noSize = false;
     }
 
     // Make it so.
     SetWindowPos(hWnd, 0,
-                 x, y, width, height,
+                 geometry.origin.x, geometry.origin.y,
+                 geometry.size.width, geometry.size.height,
                  (noSize? SWP_NOSIZE : 0) |
                  (noMove? SWP_NOMOVE : 0) |
                  (updateStyle? SWP_FRAMECHANGED : 0) |
@@ -1203,20 +841,24 @@ static boolean setDDWindow(ddwindow_t *window, int newX, int newY,
 
     // Do we need a new GL context due to changes to the window?
     if(!novideo && newGLContext)
-    {   // Maybe requires a renderer restart.
+    {
+        // Maybe requires a renderer restart.
 extern boolean usingFog;
 
-        boolean         glIsInited = GL_IsInited();
-        boolean         hadFog;
+        boolean glIsInited = GL_IsInited();
+        boolean hadFog;
 
         if(glIsInited)
         {
             // Shut everything down, but remember our settings.
             hadFog = usingFog;
             GL_TotalReset();
-            gx.UpdateState(DD_RENDER_RESTART_PRE);
 
-            UI_ClearTextures();
+            if(DD_GameLoaded() && gx.UpdateState)
+                gx.UpdateState(DD_RENDER_RESTART_PRE);
+
+            R_UnloadSvgs();
+            GL_ReleaseTextures();
 
             wglMakeCurrent(NULL, NULL);
             wglDeleteContext(window->normal.glContext);
@@ -1225,7 +867,7 @@ extern boolean usingFog;
         if(createContext(window))
         {
             // We can get on with initializing the OGL state.
-            Sys_InitGLState();
+            Sys_GLConfigureDefaultState();
         }
 
         if(glIsInited)
@@ -1236,9 +878,9 @@ extern boolean usingFog;
 
             if(hadFog)
                 GL_UseFog(true);
-            gx.UpdateState(DD_RENDER_RESTART_POST);
 
-            UI_LoadTextures();
+            if(DD_GameLoaded() && gx.UpdateState)
+                gx.UpdateState(DD_RENDER_RESTART_POST);
         }
     }
 
@@ -1310,13 +952,12 @@ boolean Sys_SetWindow(uint idx, int newX, int newY, int newWidth, int newHeight,
 {
     if(winManagerInited)
     {
-        ddwindow_t         *window = getWindow(idx - 1);
-
+        ddwindow_t* window = getWindow(idx - 1);
         if(window)
-            return setDDWindow(window, newX, newY, newWidth, newHeight,
-                               newBPP, wFlags, uFlags);
+        {
+            return setDDWindow(window, newX, newY, newWidth, newHeight, newBPP, wFlags, uFlags);
+        }
     }
-
     return false;
 }
 
@@ -1327,14 +968,16 @@ void Sys_UpdateWindow(uint idx)
 {
     if(winManagerInited)
     {
-        ddwindow_t         *window = getWindow(idx - 1);
+        ddwindow_t* window = getWindow(idx - 1);
 
         if(window->type == WT_NORMAL)
         {
             if(window->normal.glContext)
             {   // Window has a glContext attached, so make the content of the
                 // framebuffer visible.
-                HDC     hdc = GetDC(window->hWnd);
+                HDC hdc = GetDC(window->hWnd);
+
+                LIBDENG_ASSERT_IN_MAIN_THREAD();
 
                 if(GL_state.forceFinishBeforeSwap)
                 {
@@ -1362,52 +1005,35 @@ boolean Sys_SetWindowTitle(uint idx, const char *title)
 {
     if(winManagerInited)
     {
-        ddwindow_t *window = getWindow(idx - 1);
-
+        ddwindow_t* window = getWindow(idx - 1);
+        LIBDENG_ASSERT_IN_MAIN_THREAD();
         if(window)
         {
             return (SetWindowText(window->hWnd, WIN_STRING(title))? true : false);
         }
     }
-
     return false;
 }
 
-/**
- * Attempt to get the dimensions (and position) of the given window (client
- * area) in screen-space.
- *
- * @param idx           Index identifier (1-based) to the window.
- * @param x             Address to write the x position back to (if any).
- * @param y             Address to write the y position back to (if any).
- * @param width         Address to write the width back to (if any).
- * @param height        Address to write the height back to (if any).
- *
- * @return              @c true, if successful.
- */
-boolean Sys_GetWindowDimensions(uint idx, int *x, int *y, int *width,
-                                int *height)
+const RectRaw* Sys_GetWindowGeometry(uint idx)
 {
-    if(winManagerInited)
-    {
-        ddwindow_t         *window = getWindow(idx - 1);
+    ddwindow_t* window = getWindow(idx - 1);
+    if(!window) return NULL;
+    return &window->geometry;
+}
 
-        if(!window || (!x && !y && !width && !height))
-            return false;
+const Point2Raw* Sys_GetWindowOrigin(uint idx)
+{
+    ddwindow_t* window = getWindow(idx - 1);
+    if(!window) return NULL;
+    return &window->geometry.origin;
+}
 
-        if(x)
-            *x = window->x;
-        if(y)
-            *y = window->y;
-        if(width)
-            *width = window->width;
-        if(height)
-            *height = window->height;
-
-        return true;
-    }
-
-    return false;
+const Size2Raw* Sys_GetWindowSize(uint idx)
+{
+    ddwindow_t* window = getWindow(idx - 1);
+    if(!window) return NULL;
+    return &window->geometry.size;
 }
 
 /**
@@ -1418,11 +1044,11 @@ boolean Sys_GetWindowDimensions(uint idx, int *x, int *y, int *width,
  *
  * @return              @c true, if successful.
  */
-boolean Sys_GetWindowBPP(uint idx, int *bpp)
+boolean Sys_GetWindowBPP(uint idx, int* bpp)
 {
     if(winManagerInited)
     {
-        ddwindow_t         *window = getWindow(idx - 1);
+        ddwindow_t* window = getWindow(idx - 1);
 
         if(window)
         {

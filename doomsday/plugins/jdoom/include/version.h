@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,15 +24,18 @@
  */
 
 /**
- * version.h: Version numbering, naming etc.
+ * Version numbering, naming etc.
  */
 
-#ifndef __JDOOM_VERSION_H__
-#define __JDOOM_VERSION_H__
+#ifndef JDOOM_VERSION_H
+#define JDOOM_VERSION_H
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
 #endif
+
+#include "dengproject.h"
+#include "dd_plugin.h"
 
 #ifndef JDOOM_VER_ID
 #  ifdef _DEBUG
@@ -43,14 +46,22 @@
 #endif
 
 // Used to derive filepaths.
-#define GAMENAMETEXT        "jdoom"
+#define PLUGIN_NAMETEXT     "jdoom"
 
 // Presented to the user in dialogs, messages etc.
-#define GAME_NICENAME       "jDoom"
-#define GAME_DETAILS        "jDoom is based on linuxdoom-1.10."
+#define PLUGIN_NICENAME     "jDoom"
+#define PLUGIN_NICEAUTHOR   "deng team"
+#define PLUGIN_DETAILS      "jDoom is based on linuxdoom-1.10."
 
-#define GAME_VERSION_TEXT   "1.15.9"
-#define GAME_VERSION_TEXTLONG GAME_VERSION_TEXT " " __DATE__ " (" JDOOM_VER_ID ")"
-#define GAME_VERSION_NUMBER 1,15,9,0 // For WIN32 version info.
+#define PLUGIN_HOMEURL      DOOMSDAY_HOMEURL
+#define PLUGIN_DOCSURL      DOOMSDAY_DOCSURL
 
-#endif
+#define PLUGIN_VERSION_TEXT "1.16.2"
+#define PLUGIN_VERSION_TEXTLONG "Version " PLUGIN_VERSION_TEXT " " __DATE__ " (" JDOOM_VER_ID ")"
+#define PLUGIN_VERSION_NUMBER 1,16,2,0 // For WIN32 version info.
+
+// For WIN32 version info:
+#define PLUGIN_DESC         PLUGIN_NICENAME " " LIBDENG_PLUGINDESC
+#define PLUGIN_COPYRIGHT    "2003-2012, " DENGPROJECT_NICEAUTHOR
+
+#endif /* JDOOM_VERSION_H */

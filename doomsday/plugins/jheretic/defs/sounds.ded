@@ -1,0 +1,1004 @@
+# Heretic: Sound Effects
+
+Header { Version = 5; }
+
+Sound {
+  ID = "gldhit";
+  Lump = "GLDHIT";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "gntful";
+  Lump = "GNTFUL";
+  Priority = 32;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "gnthit";
+  Lump = "GNTHIT";
+  Priority = 32;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "gntpow";
+  Lump = "GNTPOW";
+  Priority = 32;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "gntact";
+  Lump = "GNTACT";
+  Priority = 32;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "gntuse";
+  Lump = "GNTUSE";
+  Priority = 32;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "phosht";
+  Lump = "PHOSHT";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "phohit";
+  Lump = "PHOHIT";
+  Priority = 32;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "phopow";
+  Lump = "PHOPOW";
+  Link = "hedat1";
+  Priority = 32;
+  Max channels = 1;
+}
+
+Sound {
+  ID = "lobsht";
+  Lump = "LOBSHT";
+  Priority = 20;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "lobhit";
+  Lump = "LOBHIT";
+  Priority = 20;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "lobpow";
+  Lump = "LOBPOW";
+  Priority = 20;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "hrnsht";
+  Lump = "HRNSHT";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "hrnhit";
+  Lump = "HRNHIT";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "hrnpow";
+  Lump = "HRNPOW";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "ramphit";
+  Lump = "RAMPHIT";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "ramrain";
+  Lump = "RAMRAIN";
+  Priority = 10;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "bowsht";
+  Lump = "BOWSHT";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "stfhit";
+  Lump = "STFHIT";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "stfpow";
+  Lump = "STFPOW";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "stfcrk";
+  Lump = "STFCRK";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "impsit";
+  Lump = "IMPSIT";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "impat1";
+  Lump = "IMPAT1";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "impat2";
+  Lump = "IMPAT2";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "impdth";
+  Lump = "IMPDTH";
+  Priority = 80;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "impact";
+  Lump = "IMPACT";
+  Link = "impsit";
+  Priority = 20;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "imppai";
+  Lump = "IMPPAI";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "mumsit";
+  Lump = "MUMSIT";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "mumat1";
+  Lump = "MUMAT1";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "mumat2";
+  Lump = "MUMAT2";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "mumdth";
+  Lump = "MUMDTH";
+  Priority = 80;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "mumact";
+  Lump = "MUMACT";
+  Link = "mumsit";
+  Priority = 20;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "mumpai";
+  Lump = "MUMPAI";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "mumhed";
+  Lump = "MUMHED";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "bstsit";
+  Lump = "BSTSIT";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "bstatk";
+  Lump = "BSTATK";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "bstdth";
+  Lump = "BSTDTH";
+  Priority = 80;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "bstact";
+  Lump = "BSTACT";
+  Priority = 20;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "bstpai";
+  Lump = "BSTPAI";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "clksit";
+  Lump = "CLKSIT";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "clkatk";
+  Lump = "CLKATK";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "clkdth";
+  Lump = "CLKDTH";
+  Priority = 80;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "clkact";
+  Lump = "CLKACT";
+  Priority = 20;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "clkpai";
+  Lump = "CLKPAI";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "snksit";
+  Lump = "SNKSIT";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "snkatk";
+  Lump = "SNKATK";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "snkdth";
+  Lump = "SNKDTH";
+  Priority = 80;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "snkact";
+  Lump = "SNKACT";
+  Priority = 20;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "snkpai";
+  Lump = "SNKPAI";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "kgtsit";
+  Lump = "KGTSIT";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "kgtatk";
+  Lump = "KGTATK";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "kgtat2";
+  Lump = "KGTAT2";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "kgtdth";
+  Lump = "KGTDTH";
+  Priority = 80;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "kgtact";
+  Lump = "KGTACT";
+  Link = "kgtsit";
+  Priority = 20;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "kgtpai";
+  Lump = "KGTPAI";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "wizsit";
+  Lump = "WIZSIT";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "wizatk";
+  Lump = "WIZATK";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "wizdth";
+  Lump = "WIZDTH";
+  Priority = 80;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "wizact";
+  Lump = "WIZACT";
+  Priority = 20;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "wizpai";
+  Lump = "WIZPAI";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "minsit";
+  Lump = "MINSIT";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "minat1";
+  Lump = "MINAT1";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "minat2";
+  Lump = "MINAT2";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "minat3";
+  Lump = "MINAT3";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "mindth";
+  Lump = "MINDTH";
+  Priority = 80;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "minact";
+  Lump = "MINACT";
+  Priority = 20;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "minpai";
+  Lump = "MINPAI";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "hedsit";
+  Lump = "HEDSIT";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "hedat1";
+  Lump = "HEDAT1";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "hedat2";
+  Lump = "HEDAT2";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "hedat3";
+  Lump = "HEDAT3";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "heddth";
+  Lump = "HEDDTH";
+  Priority = 80;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "hedact";
+  Lump = "HEDACT";
+  Priority = 20;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "hedpai";
+  Lump = "HEDPAI";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "sorzap";
+  Lump = "SORZAP";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "sorrise";
+  Lump = "SORRISE";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "sorsit";
+  Lump = "SORSIT";
+  Priority = 200;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "soratk";
+  Lump = "SORATK";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "soract";
+  Lump = "SORACT";
+  Priority = 200;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "sorpai";
+  Lump = "SORPAI";
+  Priority = 200;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "sordsph";
+  Lump = "SORDSPH";
+  Priority = 200;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "sordexp";
+  Lump = "SORDEXP";
+  Priority = 200;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "sordbon";
+  Lump = "SORDBON";
+  Priority = 200;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "sbtsit";
+  Lump = "SBTSIT";
+  Link = "bstsit";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "sbtatk";
+  Lump = "SBTATK";
+  Link = "bstatk";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "sbtdth";
+  Lump = "SBTDTH";
+  Priority = 80;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "sbtact";
+  Lump = "SBTACT";
+  Priority = 20;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "sbtpai";
+  Lump = "SBTPAI";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "plroof";
+  Lump = "PLROOF";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "plrpai";
+  Lump = "PLRPAI";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "plrdth";
+  Lump = "PLRDTH";
+  Priority = 80;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "gibdth";
+  Lump = "GIBDTH";
+  Priority = 100;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "plrwdth";
+  Lump = "PLRWDTH";
+  Priority = 80;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "plrcdth";
+  Lump = "PLRCDTH";
+  Priority = 100;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "itemup";
+  Lump = "ITEMUP";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "wpnup";
+  Lump = "WPNUP";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "telept";
+  Lump = "TELEPT";
+  Priority = 50;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "doropn";
+  Lump = "DOROPN";
+  Priority = 40;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "dorcls";
+  Lump = "DORCLS";
+  Priority = 40;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "dormov";
+  Lump = "DORMOV";
+  Priority = 40;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "artiup";
+  Lump = "ARTIUP";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "switch";
+  Lump = "SWITCH";
+  Priority = 40;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "pstart";
+  Lump = "PSTART";
+  Priority = 40;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "pstop";
+  Lump = "PSTOP";
+  Priority = 40;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "stnmov";
+  Lump = "STNMOV";
+  Priority = 40;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "chicpai";
+  Lump = "CHICPAI";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "chicatk";
+  Lump = "CHICATK";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "chicdth";
+  Lump = "CHICDTH";
+  Priority = 40;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "chicact";
+  Lump = "CHICACT";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "chicpk1";
+  Lump = "CHICPK1";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "chicpk2";
+  Lump = "CHICPK2";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "chicpk3";
+  Lump = "CHICPK3";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "keyup";
+  Lump = "KEYUP";
+  Priority = 50;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "ripslop";
+  Lump = "RIPSLOP";
+  Priority = 16;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "newpod";
+  Lump = "NEWPOD";
+  Priority = 16;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "podexp";
+  Lump = "PODEXP";
+  Priority = 40;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "bounce";
+  Lump = "BOUNCE";
+  Priority = 16;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "volsht";
+  Lump = "VOLSHT";
+  Link = "bstatk";
+  Priority = 16;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "volhit";
+  Lump = "VOLHIT";
+  Link = "lobhit";
+  Priority = 16;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "burn";
+  Lump = "BURN";
+  Priority = 10;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "splash";
+  Lump = "SPLASH";
+  Priority = 10;
+  Max channels = 1;
+}
+
+Sound {
+  ID = "gloop";
+  Lump = "GLOOP";
+  Priority = 10;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "respawn";
+  Lump = "RESPAWN";
+  Priority = 10;
+  Max channels = 1;
+}
+
+Sound {
+  ID = "blssht";
+  Lump = "BLSSHT";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "blshit";
+  Lump = "BLSHIT";
+  Priority = 32;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "chat";
+  Lump = "CHAT";
+  Priority = 100;
+  Max channels = 1;
+}
+
+Sound {
+  ID = "artiuse";
+  Lump = "ARTIUSE";
+  Priority = 32;
+  Max channels = 1;
+}
+
+Sound {
+  ID = "gfrag";
+  Lump = "GFRAG";
+  Priority = 100;
+  Max channels = 1;
+}
+
+Sound {
+  ID = "waterfl";
+  Lump = "WATERFL";
+  Priority = 16;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "wind";
+  Lump = "WIND";
+  Priority = 16;
+  Max channels = 1;
+}
+
+Sound {
+  ID = "amb1";
+  Lump = "AMB1";
+  Priority = 1;
+  Max channels = 1;
+}
+
+Sound {
+  ID = "amb2";
+  Lump = "AMB2";
+  Priority = 1;
+  Max channels = 1;
+}
+
+Sound {
+  ID = "amb3";
+  Lump = "AMB3";
+  Priority = 1;
+  Max channels = 1;
+}
+
+Sound {
+  ID = "amb4";
+  Lump = "AMB4";
+  Priority = 1;
+  Max channels = 1;
+}
+
+Sound {
+  ID = "amb5";
+  Lump = "AMB5";
+  Priority = 1;
+  Max channels = 1;
+}
+
+Sound {
+  ID = "amb6";
+  Lump = "AMB6";
+  Priority = 1;
+  Max channels = 1;
+}
+
+Sound {
+  ID = "amb7";
+  Lump = "AMB7";
+  Priority = 1;
+  Max channels = 1;
+}
+
+Sound {
+  ID = "amb8";
+  Lump = "AMB8";
+  Priority = 1;
+  Max channels = 1;
+}
+
+Sound {
+  ID = "amb9";
+  Lump = "AMB9";
+  Priority = 1;
+  Max channels = 1;
+}
+
+Sound {
+  ID = "amb10";
+  Lump = "AMB10";
+  Priority = 1;
+  Max channels = 1;
+}
+
+Sound {
+  ID = "amb11";
+  Lump = "AMB11";
+  Priority = 1;
+}
+
+Sound {
+  ID = "secret";
+  Lump = "WPNUP";
+  Priority = 32;
+  Max channels = 2;
+}

@@ -1,10 +1,10 @@
-/**\file
+/**\file s_main.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * s_main.c: Sound Subsystem
+ * Sound Subsystem.
  *
  * Interface to the Sfx and Mus modules.
  * High-level (and exported) sound control.
@@ -41,7 +41,7 @@
 #include "de_misc.h"
 #include "de_defs.h"
 
-#include "r_extres.h"
+#include "sys_reslocator.h"
 #include "sys_audio.h"
 
 // MACROS ------------------------------------------------------------------
@@ -81,6 +81,11 @@ static boolean noRndPitch;
 
 // CODE --------------------------------------------------------------------
 
+static void S_ReverbVolumeChanged(void)
+{
+    Sfx_UpdateReverb();
+}
+
 void S_Register(void)
 {
     // Cvars
@@ -89,7 +94,8 @@ void S_Register(void)
     C_VAR_INT("sound-rate", &sfxSampleRate, 0, 11025, 44100);
     C_VAR_INT("sound-16bit", &sfx16Bit, 0, 0, 1);
     C_VAR_INT("sound-3d", &sfx3D, 0, 0, 1);
-    C_VAR_FLOAT("sound-reverb-volume", &sfxReverbStrength, 0, 0, 10);
+    C_VAR_BYTE("sound-overlap-stop", &sfxOneSoundPerEmitter, 0, 0, 1);
+    C_VAR_FLOAT2("sound-reverb-volume", &sfxReverbStrength, 0, 0, 10, S_ReverbVolumeChanged);
 
     // Ccmds
     C_CMD_FLAGS("playsound", NULL, PlaySound, CMDF_NO_DEDICATED);
@@ -98,124 +104,36 @@ void S_Register(void)
 }
 
 /**
- * Initializes the audio driver interfaces.
- *
- * @return              @c true, if successful.
- */
-boolean S_InitDriver(audiodriver_e drvid)
-{
-    Con_Printf("  Driver: ");
-
-    switch(drvid)
-    {
-    case AUDIOD_DUMMY:
-        Con_Printf("Dummy\n");
-        audioDriver = &audiod_dummy;
-        break;
-
-#ifndef DENG_DISABLE_SDLMIXER
-    case AUDIOD_SDL_MIXER:
-        Con_Printf("SDLMixer\n");
-        audioDriver = &audiod_sdlmixer;
-        break;
-#endif
-
-    case AUDIOD_FMOD:
-        Con_Printf("FMOD Ex\n");
-        if(!(audioDriver = Sys_LoadAudioDriver("fmod")))
-            return false;
-        break;
-
-    case AUDIOD_OPENAL:
-        Con_Printf("OpenAL\n");
-        if(!(audioDriver = Sys_LoadAudioDriver("openal")))
-            return false;
-        break;
-
-#ifdef WIN32
-    case AUDIOD_DSOUND:
-        Con_Printf("DirectSound\n");
-        if(!(audioDriver = Sys_LoadAudioDriver("directsound")))
-            return false;
-        break;
-
-    case AUDIOD_WINMM:
-        Con_Printf("WinMM\n");
-        if(!(audioDriver = Sys_LoadAudioDriver("winmm")))
-            return false;
-        break;
-#endif
-
-    default:
-        Con_Error("S_InitDriver: Unknown driver id %i.\n", drvid);
-    }
-
-    // Initialize the audioDriver.
-    return audioDriver->Init();
-}
-
-/**
  * Main sound system initialization. Inits both the Sfx and Mus modules.
  *
- * @return              @c true, if there were no errors.
+ * @return  @c true, if there were no errors.
  */
 boolean S_Init(void)
 {
-    boolean             ok, sfxOK, musOK;
+    boolean ok = false, sfxOK, musOK;
 
-    if(ArgExists("-nosound"))
+    if(CommandLine_Exists("-nosound") || CommandLine_Exists("-noaudio"))
         return true;
 
-    // First let's set up the drivers. First we much choose which one we
-    // want to use.
-    if(isDedicated || ArgExists("-dummy"))
+    // Try to load the audio driver plugin(s).
+    if(!AudioDriver_Init())
     {
-        ok = S_InitDriver(AUDIOD_DUMMY);
-    }
-    else if(ArgExists("-fmod"))
-    {
-        ok = S_InitDriver(AUDIOD_FMOD);
-    }
-    else if(ArgExists("-oal"))
-    {
-        ok = S_InitDriver(AUDIOD_OPENAL);
-    }
-#ifdef WIN32
-    else if(ArgExists("-dsound"))
-    {   // DirectSound with 3D sound support, EAX effects.
-        ok = S_InitDriver(AUDIOD_DSOUND);
-    }
-    else if(ArgExists("-winmm"))
-    {   // Windows Multimedia.
-        ok = S_InitDriver(AUDIOD_WINMM);
-    }
-#endif
-    else
-    {
-        // Use the default audio driver.
-#ifndef DENG_DISABLE_SDLMIXER
-        ok = S_InitDriver(AUDIOD_SDL_MIXER);
-#else
-        ok = S_InitDriver(AUDIOD_DUMMY);
-#endif
-    }
-
-    // Did we succeed?
-    if(!ok)
-    {
-        Con_Message("S_Init: Driver init failed. Sound is disabled.\n");
+        Con_Message("Music and Sound Effects disabled.\n");
         return false;
     }
 
     // Disable random pitch changes?
-    noRndPitch = ArgExists("-noRndPitch");
+    noRndPitch = CommandLine_Exists("-norndpitch");
 
     sfxOK = Sfx_Init();
     musOK = Mus_Init();
 
-    Con_Message("S_Init: %s.\n", sfxOK &&
-                musOK ? "OK" : "Errors during initialization.");
-    return (sfxOK && musOK);
+    if(!sfxOK || !musOK)
+    {
+        Con_Message("Errors during audio subsystem initialization.\n");
+        return false;
+    }
+    return true;
 }
 
 /**
@@ -227,8 +145,7 @@ void S_Shutdown(void)
     Mus_Shutdown();
 
     // Finally, close the audio driver.
-    Sys_ShutdownAudioDriver();
-    audioDriver = NULL;
+    AudioDriver_Shutdown();
 }
 
 /**
@@ -240,6 +157,13 @@ void S_MapChange(void)
     Sfx_InitLogical();
 
     Sfx_MapChange();
+    S_ResetReverb();
+}
+
+void S_SetupForChangedMap(void)
+{
+    // Update who is listening now.
+    Sfx_SetListener(S_GetListenerMobj());
 }
 
 /**
@@ -249,6 +173,7 @@ void S_Reset(void)
 {
     Sfx_Reset();
     S_StopMusic();
+    S_ResetReverb();
 }
 
 void S_StartFrame(void)
@@ -275,6 +200,7 @@ BEGIN_PROF( PROF_SOUND_STARTFRAME );
 
     Sfx_StartFrame();
     Mus_StartFrame();
+    S_UpdateReverb();
 
     // Remove stopped sounds from the LSM.
     Sfx_PurgeLogical();
@@ -307,7 +233,7 @@ sfxinfo_t* S_GetSoundInfo(int soundID, float* freq, float* volume)
     sfxinfo_t*          info;
     int                 i;
 
-    if(soundID <= 0)
+    if(soundID <= 0 || soundID >= defs.count.sounds.num)
         return NULL;
 
     if(!freq)
@@ -326,6 +252,8 @@ sfxinfo_t* S_GetSoundInfo(int soundID, float* freq, float* volume)
         (info->linkPitch > 0 ? info->linkPitch / 128.0f : *freq), *volume +=
         (info->linkVolume != -1 ? info->linkVolume / 127.0f : 0), soundID =
         info - sounds, i++);
+
+    assert(soundID < defs.count.sounds.num);
 
     return info;
 }
@@ -359,7 +287,7 @@ boolean S_IsRepeating(int idFlags)
  * @return              Non-zero if a sound was started.
  */
 int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t* origin,
-                             float* fixedPos, float volume)
+                             coord_t* point, float volume)
 {
     int                 soundId = (soundIdAndFlags & ~DDSF_FLAG_MASK);
     sfxsample_t*        sample;
@@ -368,9 +296,8 @@ int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t* origin,
     int                 result;
     boolean             isRepeating = false;
 
-    // A dedicated server never starts any local sounds (only logical
-    // sounds in the LSM).
-    if(isDedicated)
+    // A dedicated server never starts any local sounds (only logical sounds in the LSM).
+    if(isDedicated || BusyMode_Active())
         return false;
 
     if(soundId <= 0 || soundId >= defs.count.sounds.num || sfxVolume <= 0 ||
@@ -398,8 +325,9 @@ int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t* origin,
        !(soundIdAndFlags & DDSF_NO_ATTENUATION))
     {
         // If origin is too far, don't even think about playing the sound.
-        if(P_MobjPointDistancef(S_GetListenerMobj(), origin, fixedPos) >
-           soundMaxDist)
+        coord_t* fixPoint = origin? origin->origin : point;
+
+        if(Mobj_ApproxPointDistance(S_GetListenerMobj(), fixPoint) > soundMaxDist)
             return false;
     }
 
@@ -436,7 +364,7 @@ int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t* origin,
 
     // Let's play it.
     result =
-        Sfx_StartSound(sample, volume, freq, origin, fixedPos,
+        Sfx_StartSound(sample, volume, freq, origin, point,
                        ((info->flags & SF_NO_ATTENUATION) ||
                         (soundIdAndFlags & DDSF_NO_ATTENUATION) ?
                         SF_NO_ATTENUATION : 0) | (isRepeating ? SF_REPEAT : 0)
@@ -474,7 +402,7 @@ int S_LocalSound(int soundID, mobj_t* origin)
  *
  * @return              Non-zero if a sound was started.
  */
-int S_LocalSoundFrom(int soundID, float* fixedPos)
+int S_LocalSoundFrom(int soundID, coord_t* fixedPos)
 {
     return S_LocalSoundAtVolumeFrom(soundID, NULL, fixedPos, 1);
 }
@@ -544,12 +472,37 @@ int S_ConsoleSound(int soundID, mobj_t* origin, int targetConsole)
 }
 
 /**
- * @param soundID       @c 0 = stops all sounds of the origin.
- * @param origin        @c NULL = stops all sounds with the ID.
- *                      Otherwise both ID and origin must match.
+ * @param sec  Sector in which to stop sounds.
+ * @param soundID  Unique identifier of the sound to be stopped. @c= 0 (do not match).
+ * @param flags  @ref soundStopFlags
  */
+static void stopSectorSounds(ddmobj_base_t* sectorEmitter, int soundID, int flags)
+{
+    ddmobj_base_t* base;
+
+    if(!sectorEmitter || !flags) return;
+
+    // Are we stopping with this sector's emitter?
+    if(flags & SSF_SECTOR)
+    {
+        S_StopSound(soundID, (mobj_t*)sectorEmitter);
+    }
+
+    // Are we stopping with linked emitters?
+    if(!(flags & SSF_SECTOR_LINKED_SURFACES)) return;
+
+    // Process the rest of the emitter chain.
+    base = (ddmobj_base_t*)sectorEmitter;
+    while((base = (ddmobj_base_t*)base->thinker.next))
+    {
+        // Stop sounds from this emitter.
+        S_StopSound(soundID, (mobj_t*)base);
+    }
+}
+
 void S_StopSound(int soundID, mobj_t* emitter)
 {
+    // No special stop behavior.
     // Sfx provides a routine for this.
     Sfx_StopSound(soundID, emitter);
 
@@ -561,6 +514,32 @@ void S_StopSound(int soundID, mobj_t* emitter)
         // stopped somewhere in the world.
         Sv_StopSound(soundID, emitter);
     }
+}
+
+void S_StopSound2(int soundID, mobj_t* emitter, int flags)
+{
+    // Are we performing any special stop behaviors?
+    if(emitter && flags)
+    {
+        if(emitter->thinker.id)
+        {
+            // Emitter is a real Mobj.
+            Sector* sector = emitter->bspLeaf->sector;
+            stopSectorSounds((ddmobj_base_t*)&sector->base, soundID, flags);
+            return;
+        }
+
+        // The head of the chain is the sector. Find it.
+        while(emitter->thinker.prev)
+        {
+            emitter = (mobj_t*)emitter->thinker.prev;
+        }
+        stopSectorSounds((ddmobj_base_t*)emitter, soundID, flags);
+        return;
+    }
+
+    // A regular stop.
+    S_StopSound(soundID, emitter);
 }
 
 /**
@@ -594,25 +573,22 @@ int S_StartMusicNum(int id, boolean looped)
     if(isDedicated)
         return true;
 
-    if(verbose)
-        Con_Message("S_StartMusic: %s.\n", def->id);
+    VERBOSE( Con_Message("Starting music '%s'...\n", def->id) )
 
     return Mus_Start(def, looped);
 }
 
 /**
- * @return              @c NULL, if the song is found.
+ * @return  @c NULL, if the song is found.
  */
 int S_StartMusic(const char* musicID, boolean looped)
 {
-    int                 idx = Def_GetMusicNum(musicID);
-
+    int idx = Def_GetMusicNum(musicID);
     if(idx < 0)
     {
-        Con_Message("S_StartMusic: song %s not defined.\n", musicID);
+        Con_Message("Warning:S_StartMusic: Song \"%s\" not defined.\n", musicID);
         return false;
     }
-
     return S_StartMusicNum(idx, looped);
 }
 
@@ -637,14 +613,16 @@ void S_PauseMusic(boolean paused)
  */
 void S_Drawer(void)
 {
-    if(!showSoundInfo)
-        return;
+    if(!showSoundInfo) return;
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Go into screen projection mode.
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
+    glOrtho(0, Window_Width(theWindow), Window_Height(theWindow), 0, -1, 1);
 
     Sfx_DebugInfo();
 
@@ -658,11 +636,10 @@ void S_Drawer(void)
  */
 D_CMD(PlaySound)
 {
-    int                 id = 0;
-    float               volume = 1;
-    float               fixedPos[3];
-    int                 p;
-    boolean             useFixedPos = false;
+    coord_t fixedPos[3];
+    boolean useFixedPos = false;
+    float volume = 1;
+    int p, id = 0;
 
     if(argc < 2)
     {

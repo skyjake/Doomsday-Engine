@@ -1,0 +1,34 @@
+# Heretic - Sky Definitions
+#
+# For further information on Sky definition syntax and semantics see:
+#
+#   http://dengine.net/dew/?title=Sky
+
+Header { Version = 6; }
+
+Sky {
+  ID = "sky1";
+  Height = 0.6;
+  Horizon offset = -0.105;
+  Layer 1 {
+    Flags = enable;
+    Material = "textures:SKY1";
+  };
+}
+
+# The rest of the file is skipped if Heretic Shareware.
+SkipIf heretic-share;
+
+Copy Sky {
+  ID = "sky2";
+  Layer 1 {
+    Material = "textures:SKY2";
+  };
+}
+
+Copy Sky {
+  ID = "sky3";
+  Layer 1 {
+    Material = "textures:SKY3";
+  };
+}

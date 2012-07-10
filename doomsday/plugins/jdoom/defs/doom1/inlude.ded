@@ -1,0 +1,30 @@
+# DOOM - Interlude Patch Replacements
+#
+# The "Patch Replacement" values are used to replace patches with 
+# strings of text. For further information on syntax see values.ded
+
+Header { Version = 5; }
+
+SkipIf -nodefaultfx;
+
+Values {
+  Patch Replacement {
+    WIF      = "{tracking=-1}Finished";
+    WIENTER  = "{tracking=-1}Entering";
+    WIOSTK   = "{tracking=-1}Kills";
+    WIOSTS   = "{tracking=-1}Secret";
+    WISCRT2  = "{tracking=-1}Secret";
+    WIOSTI   = "{tracking=-1}Items";
+    WIFRGS   = "{tracking=-1}Frags";
+    WITIME   = "{tracking=-1}Time";
+    WISUCKS  = "{tracking=-1}Sucks";
+    WIPAR    = "{tracking=-1}PAR";
+    WIKILRS  = "{tracking=-1,scalex=.78, scaley=.6,angle=270,x=-63}Killers";
+    WIVCTMS  = "{tracking=-1,scalex=.7, scaley=.6}Victims";
+    WIMSTT   = "{tracking=-1}Total";
+    WIBP1    = "{tracking=2}P1";
+    WIBP2    = "{tracking=2}P2";
+    WIBP3    = "{tracking=2}P3";
+    WIBP4    = "{tracking=2}P4";
+  };
+}

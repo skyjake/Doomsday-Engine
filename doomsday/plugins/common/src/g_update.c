@@ -1,10 +1,10 @@
-/**\file
+/**\file g_update.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * g_update.c: Routines to call when updating the state of the engine
+ * Routines to call when updating the state of the engine
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -38,13 +38,20 @@
 #  include "jheretic.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
-#  include "m_cheat.h"
 #endif
 
-#include "hu_pspr.h"
+#include "hu_chat.h"
+#include "hu_log.h"
 #include "hu_menu.h"
-#include "rend_automap.h"
+#include "hu_pspr.h"
+#include "hu_stuff.h"
+#include "hu_automap.h"
 #include "p_inventory.h"
+#include "p_sound.h"
+#include "p_start.h"
+#if __JHEXEN__
+#  include "m_cheat.h"
+#endif
 
 // MACROS ------------------------------------------------------------------
 
@@ -134,30 +141,22 @@ void G_UpdateState(int step)
 {
     switch(step)
     {
-    case DD_GAME_MODE:
-        // Set the game mode string.
-        G_IdentifyVersion();
-        break;
-
     case DD_PRE:
         G_MangleState();
+        // Redefine the texture animations.
+        P_InitPicAnims();
         break;
 
     case DD_POST:
         G_RestoreState();
         R_InitRefresh();
-        P_Init();
-        //// \fixme Detect gameMode changes (GM_DOOM -> GM_DOOM2, for instance).
+        P_Update();
 #if !__JHEXEN__
         XG_Update();
 #endif
 
 #if __JHERETIC__ || __JHEXEN__ || __JDOOM64__
         P_InitInventory();
-#endif
-
-#if __JHERETIC__ || __JHEXEN__
-        ST_Init();
 #endif
 
         Hu_MenuInit();
@@ -172,19 +171,13 @@ void G_UpdateState(int step)
         break;
 
     case DD_RENDER_RESTART_PRE:
-        // Free the background fog effect texture.
         Hu_UnloadData();
-
-        // Free the automap mask texture.
-        Rend_AutomapUnloadData();
+        GUI_ReleaseResources();
         break;
 
     case DD_RENDER_RESTART_POST:
-        // Reload the background fog effect texture.
         Hu_LoadData();
-
-        // Reload the automap mask texture.
-        Rend_AutomapLoadData();
+        GUI_LoadResources();
         break;
     }
 }

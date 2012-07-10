@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -63,6 +63,7 @@ void        DS_Dummy_SFX_Set(sfxbuffer_t* buf, int prop, float value);
 void        DS_Dummy_SFX_Setv(sfxbuffer_t* buf, int prop, float* values);
 void        DS_Dummy_SFX_Listener(int prop, float value);
 void        DS_Dummy_SFX_Listenerv(int prop, float* values);
+int         DS_Dummy_SFX_Getv(int prop, void* values);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -88,7 +89,8 @@ audiointerface_sfx_t audiod_dummy_sfx = { {
     DS_Dummy_SFX_Set,
     DS_Dummy_SFX_Setv,
     DS_Dummy_SFX_Listener,
-    DS_Dummy_SFX_Listenerv
+    DS_Dummy_SFX_Listenerv,
+    DS_Dummy_SFX_Getv
 } };
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -137,7 +139,7 @@ sfxbuffer_t* DS_Dummy_SFX_CreateBuffer(int flags, int bits, int rate)
     sfxbuffer_t* buf;
 
     // Clear the buffer.
-    buf = Z_Calloc(sizeof(*buf), PU_STATIC, 0);
+    buf = Z_Calloc(sizeof(*buf), PU_APPSTATIC, 0);
 
     buf->bytes = bits / 8;
     buf->rate = rate;
@@ -306,4 +308,30 @@ void DS_DummyListenerEnvironment(float* rev)
 void DS_Dummy_SFX_Listenerv(int prop, float* values)
 {
     // Nothing to do.
+}
+
+/**
+ * Gets a driver property.
+ *
+ * @param prop    Property (SFXP_*).
+ * @param values  Pointer to return value(s).
+ */
+int DS_Dummy_SFX_Getv(int prop, void* values)
+{
+    switch(prop)
+    {
+    case SFXIP_DISABLE_CHANNEL_REFRESH: {
+        /// The return value is a single 32-bit int.
+        int* wantDisable = (int*) values;
+        if(wantDisable)
+        {
+            // We are not playing any audio.
+            *wantDisable = true;
+        }
+        break; }
+
+    default:
+        return false;
+    }
+    return true;
 }

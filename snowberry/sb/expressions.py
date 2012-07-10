@@ -24,7 +24,7 @@
 
 import string
 import os
-#import sb.confdb as st
+import confdb as st
 import paths
 
 
@@ -148,14 +148,21 @@ def execute(src, contextAddon):
             return contextAddon.getContentPath()
         else:
             return ''
+            
+    if command == 'SBROOT':
+        import __main__
+        arg = evaluate(argSrc, contextAddon)
+        return paths.quote(os.path.join(os.path.dirname(
+            os.path.abspath(__main__.__file__)), arg))
 
     if command == 'DENGBASE':
         arg = evaluate(argSrc, contextAddon)
-        #if st.isDefined('doomsday-base'):
-        #    return os.path.join(st.getSystemString('doomsday-base'), arg)
-        #else:
-        return '}' + arg
-
+        if st.isDefined('doomsday-base'):
+            return paths.quote(os.path.abspath(os.path.join(
+                st.getSystemString('doomsday-base'), arg)))
+        else:
+            return '}' + arg
+        
     if command == 'PATH':
         arg = os.path.normpath(evaluate(argSrc, contextAddon))
         return paths.quote(arg)

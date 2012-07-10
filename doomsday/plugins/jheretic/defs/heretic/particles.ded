@@ -1,0 +1,49 @@
+# Heretic - Default Particle Effects
+#
+# For further information on Generator definition syntax and semantics see:
+#
+#   http://dengine.net/dew/?title=Generator
+#
+
+Header { Version = 6; }
+
+SkipIf -nodefaultfx;
+
+# Sparks from Gold Wand hits.
+Generator {
+  State = "GWANDPUFF1_1";
+  Flags = "gnf_blend";
+  Particles = 10;
+  Speed = 5;
+  Speed rnd = .7;
+  Spawn age = 2;
+  Max age = 45;
+  Spawn rate = 5;
+  Vector rnd = 1;
+  Stage {
+    Type = "pt_point";
+    Flags = "ptf_bright";
+    Radius = 8;
+    Tics = 4;
+    Rnd = .1;
+    Color { 1 1 1 1 };
+    Gravity = 0.1;
+    Resistance = 0.02;
+    Bounce = 0.5;
+  };
+  Stage {
+    Type = "pt_point";
+    Flags = "ptf_bright";
+    Radius = 1.5;
+    Tics = 41;
+    Rnd = .4;
+    Color { 1 .7 0 .8 };
+    Gravity = 0.1;
+    Resistance = 0.02;
+    Bounce = 0.5;
+  };
+  Stage {
+    Type = "pt_point";
+    Color { 1 0 0 0 };
+  };
+}

@@ -1,0 +1,269 @@
+# Heretic - Intermissions and Finales
+#
+# For further information on the InFine system, script syntax
+# and semantics see:
+#
+#   http://dengine.net/dew/?title=InFine_script_reference
+#
+
+Header { Version = 5; }
+
+# I'm using "textdef" to allow compatibility with DeHackEd.
+# A better way would just be to use "text" and define the text
+# in the script, no need to go about modifying the Text defs.
+
+InFine 
+{
+  ID = "title";
+  Script {
+    # There is no skipping during the titlescreen loop.
+    NoSkip 
+    
+    # Any event shows the menu.
+    Trigger
+    
+    MARKER title_loop
+
+    # Step 1.
+    Image back "TITLE"
+    Music "titl"
+    Wait 5
+
+    # Step 2.
+    Patch advice 4 160 "ADVISOR"
+    In 0 Alpha advice 0
+    In 1 Alpha advice 1
+    Wait 5
+    
+    # Step 3.
+    PlayDemo "demo1.cdm"
+    
+    # Step 4.
+    DelPic advice
+    Image back "CREDIT"
+    Wait 5.714  # Original is 200 tics.
+    
+    # Step 5.
+    PlayDemo "demo2.cdm"
+    
+    # Step 6.
+    IF shareware
+      Image back "ORDER"
+    ELSE
+      Image back "CREDIT"
+    Wait 5.714  # Original is 200 tics.
+
+    # Step 7.
+    PlayDemo "demo3.cdm"
+    
+    GOTO title_loop
+  };
+}
+
+InFine {
+  ID = "help";
+  Script {
+    NoTrigger; NoFlat;
+
+    Image back "HELP1"
+    Pause
+
+    Del back
+    Image back "HELP2"
+    Pause
+
+    Del back
+    Image back "CREDIT"
+    Pause
+  };
+}
+
+# Episode I: City Of The Damned
+Finale
+{
+  After = "E1M8";
+  Script {
+    noskip; # This is the end, no more levels after this.
+    music "cptd";
+    flat FLOOR25;
+    wait 0.5;
+    text msg 20 5
+      "with the destruction of the iron\n
+      liches and their minions, the last\n
+      of the undead are cleared from this\n
+      plane of existence.\n\n
+      those creatures had to come from\n
+      somewhere, though, and you have the\n
+      sneaky suspicion that the fiery\n
+      portal of hell's maw opens onto\n
+      their home dimension.\n\n
+      to make sure that more undead\n
+      (or even worse things) don't come\n
+      through, you'll have to seal hell's\n
+      maw from the other side. of course\n
+      this means you may get stuck in a\n
+      very unfriendly world, but no one\n
+      ever said being a Heretic was easy!";
+    waittext msg;
+    wait 7; # The original TEXTWAIT is 250 tics.
+    deltext msg;
+    # Show shareware or credits screen.
+    if shareware image back ORDER;
+    ifnot shareware image back CREDIT;
+  };
+}
+
+# Episode II: Hell's Maw
+Finale
+{
+  After = "E2M8";
+  Script {
+    noskip; # This is the end, no more levels after this.
+    music "cptd";
+    flat FLATHUH1;
+    wait 0.5;
+    text msg 20 5
+      "the mighty maulotaurs have proved\n
+      to be no match for you, and as\n
+      their steaming corpses slide to the\n
+      ground you feel a sense of grim\n
+      satisfaction that they have been\n
+      destroyed.\n\n
+      the gateways which they guarded\n
+      have opened, revealing what you\n
+      hope is the way home. but as you\n
+      step through, mocking laughter\n
+      rings in your ears.\n\n
+      was some other force controlling\n
+      the maulotaurs? could there be even\n
+      more horrific beings through this\n
+      gate? the sweep of a crystal dome\n
+      overhead where the sky should be is\n
+      certainly not a good sign....";
+    waittext msg;
+    wait 7; # The original TEXTWAIT is 250 tics.
+    deltext msg;
+    # Underwater dome. E2ENDPCX is in jHeretic.wad.
+    noflat; image back E2ENDPCX;
+  };
+}
+
+# Episode III: The Dome of D'Sparil
+Finale
+{
+  After = "E3M8";
+  Script {
+    noskip; # This is the end, no more levels after this.
+    music "cptd";
+    flat FLTWAWA2;
+    # Start with a blue filter.
+    filter 0 0.3 1 1; in 3 filter 0 0 0 0;
+    wait 2;
+    text msg 20 5
+      "the death of d'sparil has loosed\n
+      the magical bonds holding his\n
+      creatures on this plane, their\n
+      dying screams overwhelming his own\n
+      cries of agony.\n\n
+      your oath of vengeance fulfilled,\n
+      you enter the portal to your own\n
+      world, mere moments before the dome\n
+      shatters into a million pieces.\n\n
+      but if d'sparil's power is broken\n
+      forever, why don't you feel safe?\n
+      was it that last shout just before\n
+      his death, the one that sounded\n
+      like a curse? or a summoning? you\n
+      can't really be sure, but it might\n
+      just have been a scream.\n\n
+      then again, what about the other\n
+      serpent riders?";
+    waittext msg;
+    wait 6; # The original TEXTWAIT is 250 tics.
+    # Flash to red while we change to the demon.
+    in 1 filter 1 0.1 0 1; wait 1;
+    deltext msg;
+    # Demon scroll.
+    noflat;
+    in 0 offy 200;
+    imageat f1 0 200 FINAL1;
+    imageat f2 0 0 FINAL2;
+    in 1 filter 0 0 0 0; wait 3;
+    in 17.15 offy 0; # Original scroll time is 600 tics.
+  };
+}
+
+# Episode IV: The Ossuary
+Finale
+{
+  After = "E4M8";
+  Script {
+    noskip; # This is the end, no more levels after this.
+    music "cptd";
+    flat FLOOR28;
+    wait 0.5;
+    text msg 20 5
+      "you thought you would return to your\n
+      own world after d'sparil died, but\n
+      his final act banished you to his\n
+      own plane. here you entered the\n
+      shattered remnants of lands\n
+      conquered by d'sparil. you defeated\n
+      the last guardians of these lands,\n
+      but now you stand before the gates\n
+      to d'sparil's stronghold. until this\n
+      moment you had no doubts about your\n
+      ability to face anything you might\n
+      encounter, but beyond this portal\n
+      lies the very heart of the evil\n
+      which invaded your world. d'sparil\n
+      might be dead, but the pit where he\n
+      was spawned remains. now you must\n
+      enter that pit in the hopes of\n
+      finding a way out. and somewhere,\n
+      in the darkest corner of d'sparil's\n
+      demesne, his personal bodyguards\n
+      await your arrival ...";
+    waittext msg;
+    wait 7; # The original TEXTWAIT is 250 tics.
+    deltext msg;
+    noflat; image back CREDIT;
+  };
+}
+
+# Episode V: The Stagnant Demesne
+Finale
+{
+  After = "E5M8";
+  Script {
+    noskip; # This is the end, no more levels after this.
+    music "cptd";
+    flat FLOOR08;
+    wait 0.5;
+    text msg 20 5
+      "as the final maulotaur bellows his\n
+      death-agony, you realize that you\n
+      have never come so close to your own\n
+      destruction. not even the fight with\n
+      d'sparil and his disciples had been\n
+      this desperate. grimly you stare at\n
+      the gates which open before you,\n
+      wondering if they lead home, or if\n
+      they open onto some undreamed-of\n
+      horror. you find yourself wondering\n
+      if you have the strength to go on,\n
+      if nothing but death and pain await\n
+      you. but what else can you do, if\n
+      the will to fight is gone? can you\n
+      force yourself to continue in the\n
+      face of such despair? do you have\n
+      the courage? you find, in the end,\n
+      that it is not within you to\n
+      surrender without a fight. eyes\n
+      wide, you go to meet your fate.";
+    waittext msg;
+    wait 7; # The original TEXTWAIT is 250 tics.
+    deltext msg;
+    noflat; image back CREDIT;
+  };
+}

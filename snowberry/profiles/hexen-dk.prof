@@ -1,5 +1,6 @@
 name: Hexen: Death Kings of the Dark Citadel
 game: game-jhexen
+game-mode: game-mode-hexen-dk
 banner: banner-hexen-dk
 hidden: yes
 

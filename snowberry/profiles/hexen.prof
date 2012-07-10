@@ -1,5 +1,6 @@
 name: Hexen
 game: game-jhexen
+game-mode: game-mode-hexen
 banner: banner-hexen
 hidden: yes
 

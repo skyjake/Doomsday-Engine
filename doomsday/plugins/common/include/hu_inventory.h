@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,8 +40,7 @@ boolean         Hu_InventoryIsOpen(int player);
 boolean         Hu_InventorySelect(int player, inventoryitemtype_t type);
 boolean         Hu_InventoryMove(int player, int dir, boolean canWrap,
                                  boolean silent);
-void            Hu_InventoryDraw(int player, int x, int y, float alpha,
-                                 float textAlpha, float iconAlpha);
+void            Hu_InventoryDraw(int player, int x, int y, float textAlpha, float iconAlpha);
 void            Hu_InventoryDraw2(int player, int x, int y, float alpha);
 
 /// \todo refactor this away.

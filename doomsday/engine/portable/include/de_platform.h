@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,6 +41,10 @@
  */
 #if defined(WIN32)
 
+#if __cplusplus
+#  include <QIODevice> // must be included before anything that defines open
+#endif
+
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <io.h>
@@ -64,6 +68,8 @@
 #define strdup _strdup
 #define spawnlp _spawnlp
 
+const char* strcasestr(const char* text, const char* sub);
+
 #endif                          // WIN32
 
 /*
@@ -72,6 +78,10 @@
 #if defined(UNIX)
 #include <string.h>
 #include <errno.h>
+
+#ifdef __GNUC__
+#  define GCC_VERSION (__GNUC__*10000 + __GNUC_MINOR__*100 + __GNUC_PATCHLEVEL__)
+#endif
 
 typedef long long int INTEGER64;
 typedef unsigned int DWORD;
@@ -95,17 +105,6 @@ typedef unsigned int DWORD;
 #define DIR_WRONG_SEP_CHAR  '\\'
 
 #include "../../unix/include/sys_path.h"
-
-/*
- * Replacements for the Win32 findfirst/next routines.
- */
-#include "../../unix/include/sys_findfile.h"
-
-#define _A_SUBDIR   A_SUBDIR
-
-#define _findfirst  myfindfirst
-#define _findnext   myfindnext
-#define _findend    myfindend
 
 #endif                          // UNIX
 

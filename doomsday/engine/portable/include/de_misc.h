@@ -1,10 +1,10 @@
-/**\file
+/**\file de_misc.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,28 +22,25 @@
  * Boston, MA  02110-1301  USA
  */
 
+#ifndef LIBDENG_MISC_H
+#define LIBDENG_MISC_H
+
 /**
- * de_misc.h: Miscellaneous Services
+ * Miscellaneous Services.
  */
 
-#ifndef __DOOMSDAY_MISC__
-#define __DOOMSDAY_MISC__
-
 #include "m_misc.h"
-#include "m_args.h"
 #include "m_bams.h"
 #include "m_vector.h"
-#include "m_string.h"
 #include "m_nodepile.h"
-#include "m_filehash.h"
-#include "m_huffman.h"
-#include "m_vector.h"
 #include "m_profiler.h"
 #include "m_md5.h"
 #include "m_linkedlist.h"
-#include "m_binarytree.h"
-#include "m_gridmap.h"
+#include "m_stack.h"
+#include "binarytree.h"
+#include "gridmap.h"
 #include "m_decomp64.h"
-#include "smoother.h"
+#include "stringarray.h"
+#include <de/smoother.h>
 
-#endif
+#endif /* LIBDENG_MISC_H */

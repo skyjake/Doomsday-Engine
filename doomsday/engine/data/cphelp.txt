@@ -48,7 +48,7 @@ desc = The minimum sample rate for all sound effects. Samples with a smaller rat
 [Show status of channels]
 cvar = sound-info
 def = No
-desc = The status of all sound channels is drawn on screen. This is intended for debugging. The displayed information consists of sample cache size, channel flags, volume, frequency, latest start time, cursor positions, buffer flags and sample information.\bO = Origin, A = Attenuated, E = Emitter, 3 = 3D, P = Playing, R = Repeat, L = Reload.
+desc = The status of all sound channels is drawn on screen. This is intended for debugging. The displayed information consists of sample cache size, channel flags, volume, frequency, latest start time, cursor positions, buffer flags and sample information.\bO = Origin\nA = Attenuated\nE = Emitter\n3 = 3D\nP = Playing\nR = Repeat\nL = Reload
 
 #
 # GRAPHICS 
@@ -62,11 +62,6 @@ desc = Adjust the camera's Field Of View angle according to your monitor configu
 cvar = rend-sky-distance
 def = 1600
 desc = The sky is composed of two capped hemispheres rendered around the camera location. The sky sphere radius is the radius of these hemispheres. The primary purpose of this setting is to determine how large an impact fog has on the sky. Larger radii will result in a sky with heavier fog.
-
-[Always render full sky]
-cvar = rend-sky-full
-def = No
-desc = Always render both the upper and lower sky hemispheres, even if one of them might be fully occluded by world geometry. If your video card has sufficient fill rate, keeping this set to Yes is a good idea. In some maps there may be a hall-of-mirrors effect visible in the sky when this is set to No.
 
 [Shadow visible distance]
 cvar = rend-shadow-far
@@ -224,9 +219,8 @@ inf = Params: after (tics) (cmd)\nFor example, 'after 35 "echo End"'.
 [alias]
 desc = Create aliases for a (set of) console commands.
 
-[bgturn]
-desc = Set console background rotation speed.
-inf = Params: bgturn (speed)\nFor example, 'bgturn 20'.\nNegative speeds are allowed.
+[apropos]
+desc = Summarize all help containing a search term.
 
 [bindevent]
 desc = Bind a console command to an event.
@@ -321,7 +315,11 @@ inf = Params: demolump (demofile) (lumpfile)\nFor example, 'demolump demo1.dmo D
 
 [dir]
 desc = Print contents of directories.
-inf = Params: dir (dirs) ...\nFor example, 'dir data\'.\nVirtual files are listed, too.\nPaths are relative to the base path.
+inf = Params: dir (dirs) ...\nFor example, 'dir data/'.\nVirtual files are listed, too.\nPaths are relative to the base path.
+
+[ls]
+desc = Print contents of directories.
+inf = Params: ls (dirs) ...\nFor example, 'ls data/'.\nVirtual files are listed, too.\nPaths are relative to the base path.
 
 [dump]
 desc = Dump a data lump currently loaded in memory.
@@ -354,14 +352,19 @@ desc = Modify console font settings.
 [help]
 desc = Show information about the console.
 
-[huffman]
-desc = Print Huffman efficiency and number of bytes sent.
-
 [if]
 desc = Execute a command if the condition is true.
 
 [inc]
 desc = Add 1 to a cvar.
+
+[inspectmaterial]
+desc = Print extended information about a Material to the console.
+inf = Params: inspectmaterial (uri)\nFor example, 'inspectmaterial flats:fwater1'.
+
+[inspecttexture]
+desc = Print extended information about a Texture to the console.
+inf = Params: inspecttexture (uri)\nFor example, 'inspecttexture flats:fwater1'.
 
 [keymap]
 desc = Load a DKM keymap file.
@@ -370,6 +373,9 @@ inf = Params: keymap (dkm-file)\nFor example, 'keymap finnish'.
 [kick]
 desc = Kick client out of the game (server only).
 inf = Params: kick (playernum)\nFor example, 'kick 1'.
+
+[lastupdated]
+desc = Show when the latest check for updates was made.
 
 [listcontrols]
 desc = List the names of all player controls.
@@ -387,7 +393,13 @@ desc = List all event binding classes.
 desc = List all console commands.
 
 [listfiles]
-desc = List all the loaded data files and show information about them.
+desc = List all loaded resource data files.
+
+[listfonts]
+desc = List all known fonts.
+
+[listgames]
+desc = List all games.
 
 [listmaterials]
 desc = List all known surface materials.
@@ -395,12 +407,15 @@ desc = List all known surface materials.
 [listmobjtypes]
 desc = List all known mobj types.
 
+[listtextures]
+desc = List all known textures.
+
 [listvars]
 desc = List all console variables and their values.
 
 [load]
-desc = Load data file(s) (a WAD or a lump).
-inf = Params: load (file) ...\nFor example, 'load mylevel.wad'.
+desc = Load a complete game or one or more data files (e.g., a WAD or a lump).
+inf = Params: load (name) ...\nFor example, 'load (gamename)' or 'load mylevel.wad'.
 
 [login]
 desc = Log in to server console.
@@ -410,10 +425,6 @@ desc = Terminate remote connection to server console.
 
 [lowres]
 desc = Select the poorest rendering quality.
-
-[ls]
-desc = Print contents of directories.
-inf = Params: ls (dirs) ...\nFor example, 'ls data\'.\nVirtual files are listed, too.\nPaths are relative to the base path.
 
 [mipmap]
 desc = Set the mipmapping mode.
@@ -444,8 +455,11 @@ desc = Play a music track, music lump, external file or a CD track.
 [playsound]
 desc = Play a sound effect.
 
+[quit]
+desc = If a game is loaded execute a quit request, otherwise, exit immediately.
+
 [quit!]
-desc = Exit the game immediately.
+desc = Exit immediately and return to the OS.
 
 [recorddemo]
 desc = Start recording a demo.
@@ -455,7 +469,10 @@ desc = Repeat a command at given intervals.
 inf = Params: repeat (count) (interval) (cmd)\nFor example, 'repeat 10 35 "screenshot"'.
 
 [reset]
-desc = Reset the data files into what they were at startup.
+desc = Resets the engine (reloading all data files and definitions).
+
+[reload]
+desc = Reloads the current game (if loaded).
 
 [safebind]
 desc = Bind a command to an  unless the event is already bound.
@@ -498,18 +515,6 @@ inf = Params: settics (tics)\nFor example, 'settics 15'.
 [setvidramp]
 desc = Update display's hardware gamma ramp.
 
-[skydetail]
-desc = Set the number of sky sphere quadrant subdivisions.
-inf = Params: skydetail (num)\nFor example, 'skydetail 4'.
-
-[skyrows]
-desc = Set the number of sky sphere rows.
-inf = Params: skyrows (num)\nFor example, 'skyrows 8'.
-
-[smoothscr]
-desc = Set the rendering mode of fullscreen images.
-inf = Params: smoothscr (0-1)\n0 = GL_NEAREST\n1 = GL_LINEAR
-
 [stopdemo]
 desc = Stop currently playing demo.
 
@@ -531,8 +536,20 @@ desc = Change Doomsday user interface colors.
 inf = Params: uicolor (object) (red) (green) (blue)\nFor example, 'uicolor text 1 1 1'.\nPossible objects are:\n text, shadow, bglight, bgmed, bgdark,\n borhigh, bormed, borlow, help
 
 [unload]
-desc = Unload a data file from memory.
-inf = Params: unload (file) ...\nFor example, 'unload mylevel.wad'.
+desc = Unload the current game or one or more data files.
+inf = Params: unload (name) ...\nFor example, 'unload mylevel.wad'.
+
+[update]
+desc = Check for new available releases.
+
+[updateandnotify]
+desc = Check for new available releases and open the update notification dialog.
+
+[updatesettings]
+desc = Show the settings dialog for configuring automatic updates.
+
+[varstats]
+desc = Show detailed statistics for console variables.
 
 [version]
 desc = Show detailed version information.
@@ -544,11 +561,20 @@ inf = Params: write (filename)\nFor example, 'write myconfig.cfg'.
 #
 # CONSOLE VARIABLES
 #
-[con-alpha]
+[con-background-alpha]
 desc = Console background translucency.
 
-[con-light]
+[con-background-light]
 desc = Console background light level.
+
+[con-background-material]
+desc = Console background material uri. For example, 'Flats:FLOOR0_1'
+
+[con-background-turn]
+desc = Console background rotation speed. Negative speeds are allowed. 0=Disabled.
+
+[con-background-zoom]
+desc = Zoom factor for the console background.
 
 [con-completion]
 desc = How to complete words when pressing Tab: 0=Show completions, 1=Cycle through them.
@@ -556,26 +582,32 @@ desc = How to complete words when pressing Tab: 0=Show completions, 1=Cycle thro
 [con-dump]
 desc = 1=Dump all console messages to Doomsday.out.
 
-[con-key-activate]
-desc = Key to activate the console (ASCII code, default is tilde, 96).
-
-[con-var-silent]
-desc = 1=Don't show the value of a cvar when setting it.
-
 [con-fps]
 desc = 1=Show FPS counter on screen.
+
+[con-key-activate]
+desc = Key to activate the console (DDKEY code; default is tilde, 96).
 
 [con-move-speed]
 desc = Speed of console opening/closing.
 
-[con-text-shadow]
-desc = 1=Text in the console has a shadow (might be slow).
+[con-snapback]
+desc = 1=Automatically reset the position of the console history buffer when a new message is printed.
 
 [con-transition]
 desc = Transition effect used when leaving busy mode: 0=Crossfade, 1=DOOM (smooth), 2=DOOM
 
 [con-transition-tics]
 desc = Duration of transition effect in tics. 0= Disabled.
+
+[con-text-shadow]
+desc = 1=Text in the console has a shadow (might be slow with some fonts).
+
+[con-var-silent]
+desc = 1=Don't show the value of a cvar when setting it.
+
+[rend-finale-stretch]
+desc = Fixed aspect ratio finale stretch-scaling strategy 0=Smart, 1=Never, 2=Always.
 
 [ui-panel-help]
 desc = 1=Enable help window in Control Panel.
@@ -605,7 +637,10 @@ desc = Display contrast: 1=normal.
 desc = Display brightness: -1=dark, 0=normal, 1=light.
 
 [rend-dev-wireframe]
-desc = 1=Render player view in wireframe mode.
+desc = 1=Render player view in wireframe mode. 2=Also render UI and text as wireframes.
+
+[rend-dev-fakeradio-update]
+desc = 1=Enable updating of the shadow edges used with simulated radiosity.
 
 [rend-dev-framecount]
 desc = Frame counter.
@@ -616,14 +651,17 @@ desc = 1=Display lumobj debug display.
 [rend-dev-generator-show-indices]
 desc = 1=Display particle generator indices.
 
-[rend-dev-blockmap-debug]
-desc = Enable drawing of the blockmap debug display: 1=Mobjs, 2=Linedefs, 3=Subsectors, 4=Polyobjs.
+[rend-dev-blockmap]
+desc = Enable drawing of the blockmap debug display: 1=Mobjs, 2=Linedefs, 3=BspLeafs, 4=Polyobjs.
 
-[rend-dev-blockmap-debug-size]
+[rend-dev-blockmap-size]
 desc = Scale multiplier for the blockmap debug display.
 
 [rend-dev-nosprite]
 desc = 1=Disable drawing of all sprites and masked walls.
+
+[rend-dev-soundorigins]
+desc = 3-bit bitfield. Show sound origins (for debug): 0x1= Sector, 0x2= Plane, 0x4= SideDef.
 
 [rend-info-lums]
 desc = 1=Print lumobj count after rendering a frame.
@@ -683,10 +721,13 @@ desc = Brightness of light decorations.
 desc = Reduce brightness if surface/view angle too steep.
 
 [rend-light-sky]
-desc = 1=Use special light color in sky sectors.
+desc = Sky light color blending factor for sky sectors (off: 0, default: .2).
+
+[rend-light-sky-auto]
+desc = 1=Enable automatic calculation of the sky light color.
 
 [rend-glow]
-desc = 1=Enable glowing textures.
+desc = Glow strength factor (default: 1).
 
 [rend-glow-wall]
 desc = 1=Render glow on walls.
@@ -696,7 +737,6 @@ desc = Max height of wall glow (default: 100).
 
 [rend-glow-scale]
 desc = A multiplier for glow height (default: 1).
-
 
 [rend-halo]
 desc = Number of flares to draw per light.
@@ -722,6 +762,9 @@ desc = Distance at which halos are no longer visible.
 [rend-halo-fade-near]
 desc = Distance to begin fading halos.
 
+[rend-map-material-precache]
+desc = 1=Precache materials during map setup.
+
 [rend-tex]
 desc = 1=Render with textures. 2=Render with gray texture.
 
@@ -730,9 +773,6 @@ desc = Texture gamma correction factor.
 
 [rend-tex-mipmap]
 desc = The mipmapping mode for textures.
-
-[rend-tex-paletted]
-desc = 1=Use the GL_EXT_shared_texture_palette extension.
 
 [rend-tex-external-always]
 desc = 1=Always use external texture resources (overrides -pwadtex).
@@ -743,8 +783,8 @@ desc = The quality of textures (0-8).
 [rend-tex-filter-sprite]
 desc = 1=Render smooth sprites.
 
-[rend-tex-filter-raw]
-desc = 1=Fullscreen images (320x200) use linear interpolation.
+[rend-tex-filter-ui]
+desc = 1=User interface uses linear interpolation.
 
 [rend-tex-filter-smart]
 desc = 1=Use hq2x-filtering on all textures.
@@ -776,12 +816,6 @@ desc = Number of sky sphere rows.
 [rend-sky-distance]
 desc = Sky sphere radius.
 
-[rend-sky-full]
-desc = 1=Always render the full sky sphere.
-
-[rend-sky-simple]
-desc = Sky rendering mode: 0=normal, 1=quads.
-
 [rend-sprite-align]
 desc = 1=Always align sprites with the view plane. 2=Align to camera, unless slant > r_maxSpriteAngle.
 
@@ -792,7 +826,7 @@ desc = Maximum angle for slanted sprites (spralign 2).
 desc = 1=Enable variable translucency on sprites.
 
 [rend-sprite-blend]
-desc = 1=Use additive blending for explosions.
+desc = 1=Use additive blending for sprites.
 
 [rend-sprite-lights]
 desc = Maximum number of light sources on sprites.
@@ -804,7 +838,7 @@ desc = 1=Draw sprites and masked walls with hard edges.
 desc = 1=Don't write sprites in the Z buffer.
 
 [rend-sprite-precache]
-desc = 1=Precache sprites at level setup (slow).
+desc = 1=Precache sprites during map setup (slow).
 
 [rend-model]
 desc = Render using 3D models when possible.
@@ -835,6 +869,9 @@ desc = Speed of model spinning, 1=normal.
 
 [rend-model-shiny-multitex]
 desc = 1=Enable multitexturing with shiny model skins.
+
+[rend-hud-stretch]
+desc = Fixed aspect ratio player weapon stretch-scaling strategy 0=Smart, 1=Never, 2=Always.
 
 [rend-hud-offset-scale]
 desc = Scaling of player weapon (x,y) offset.
@@ -911,6 +948,9 @@ desc = Sound effects sample rate (11025, 22050, 44100).
 [sound-16bit]
 desc = 1=16-bit sound effects/resampling.
 
+[sound-overlap-stop]
+desc = 1=Only allow one sound per emitter object (as in traditional Doom).
+
 [sound-3d]
 desc = 1=Play sound effects in 3D.
 
@@ -938,6 +978,15 @@ desc = Automatically generate reject data when necessary, 0=Never, 1=When needed
 [refresh-rate-maximum]
 desc = Maximum limit for the frame rate (default: 200).
 
+[input-sharp-lateprocessing]
+desc = 1=Process sharp events after tickers during sharp tics. Increases input latency by 1/35 seconds.
+
+[input-toggle-sharp]
+desc = 1=Process toggle events only on sharp ticks for backwards compatible behavior.
+
+[input-conflict-zerocontrol]
+desc = 1=If a control is influenced by two or more conflicting input device states, the control position gets zeroed.
+
 [input-key-delay1]
 desc = The number of milliseconds to wait before first key repeat.
 
@@ -961,12 +1010,6 @@ desc = TCP/IP address for searching servers.
 
 [net-ip-port]
 desc = TCP port to use for control connections.
-
-[net-port-control]
-desc = TCP port to use for control connections.
-
-[net-port-data]
-desc = UDP port to use for client data traffic.
 
 [net-queue-show]
 desc = Monitor send queue.
@@ -1023,7 +1066,7 @@ desc = 1=Filter camera movement between game tics (OBSOLETE).
 desc = 1=Load generated GL nodes data from the bspcache directory. 0=Always generate new GL data.
 
 [bsp-factor]
-desc = glBSP: changes the cost assigned to SEG splits (default: 7).
+desc = glBSP: changes the cost assigned to edge splits (default: 7).
 
 [con-show-during-setup]
 desc = 1=Show console when a map is being loaded.
@@ -1049,8 +1092,8 @@ desc = Halo dimming relative end distance.
 [rend-dev-freeze]
 desc = 1=Stop updating rendering lists.
 
-[rend-dev-cull-subsectors]
-desc = 1=Disable non-visible subsector culling.
+[rend-dev-cull-leafs]
+desc = 1=Disable non-visible bsp leaf culling.
 
 [rend-dev-mobj-bbox]
 desc = 1=Render mobj bounding boxes (as used for collision detection).
@@ -1058,8 +1101,11 @@ desc = 1=Render mobj bounding boxes (as used for collision detection).
 [rend-dev-polyobj-bbox]
 desc = 1=Render polyobj bounding boxes.
 
+[rend-dev-mobj-show-vlights]
+desc = 1=Render mobj vlight vectors (for debug).
+
 [rend-dev-sky]
-desc = 1=Render the sky as a solid surface. 2= Draw sky surface planes.
+desc = 1=Render the sky as a solid surface.
 
 [rend-dev-sky-always]
 desc = 1=Always render the sky, even if there are no sky surfaces visible.
@@ -1082,8 +1128,8 @@ desc = Sector light range compression (brighten dark areas / darken light areas)
 [rend-dev-light-mod]
 desc = Show the light-level mod range.
 
-[rend-dev-surface-show-normals]
-desc = 1=Enable drawing of world surface normals, for debug.
+[rend-dev-surface-show-vectors]
+desc = 3-bit bitfield. Show surface tangent-space vectors (red:tangent, green:bitangent, blue:normal).
 
 [rend-dev-vertex-show-indices]
 desc = 1=Enable drawing of vertex indices, for debug.
@@ -1150,3 +1196,18 @@ desc = 1=Default to fullscreen.
 
 [vid-bpp]
 desc = Default color depth (bits per pixel), 16 or 32.
+
+
+#
+# CONSOLE VARIABLES: libcommon
+# @todo  Move these to a 'commonhelp.txt' under plugins/common/data.
+#
+
+[game-pause-focuslost]
+desc = Pause the game when game window loses focus.
+
+[game-monsters-floatoverblocking]
+desc = 1=Allow floating monsters to attempt floating over blocking things (avoids getting stuck).
+
+[game-unpause-focusgained]
+desc = Unpause the game when game window regains focus.

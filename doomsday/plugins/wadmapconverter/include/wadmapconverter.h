@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,20 +31,19 @@
 #ifndef __MAPCONVERTER_H__
 #define __MAPCONVERTER_H__
 
+#include "dd_plugin.h"
 #include "dd_types.h"
-
-// Vertex indices.
-enum { VX, VY, VZ };
 
 // Line sides.
 #define RIGHT                   0
 #define LEFT                    1
 
-#define VERBOSE(code)   { if(verbose) { code; } }
+#define VERBOSE(code)   { if(DENG_PLUGIN_GLOBAL(verbose) >= 1) { code; } }
+#define VERBOSE2(code)  { if(DENG_PLUGIN_GLOBAL(verbose) >= 2) { code; } }
 
 typedef struct materialref_s {
     char            name[9];
-    materialnum_t   num; // Doomsday's unique identifier for this.
+    materialid_t    id; // Doomsday's unique identifier for this.
 } materialref_t;
 
 typedef struct mside_s {
@@ -81,6 +80,7 @@ typedef struct mline_s {
     byte            d64useType;
     int16_t         d64tag;
 
+    int             ddFlags;
     uint            validCount; // Used for Polyobj LineDef collection.
 } mline_t;
 
@@ -103,10 +103,11 @@ typedef struct msector_s {
 } msector_t;
 
 typedef struct mthing_s {
-    int16_t         pos[3];
+    int16_t         origin[3];
     angle_t         angle;
     int16_t         doomEdNum;
     int32_t         flags;
+    int32_t         skillModes;
 
     // Hexen format members:
     int16_t         xTID;
@@ -140,7 +141,6 @@ typedef enum {
 } mapformatid_t;
 
 typedef struct map_s {
-    char            name[9];
     uint            numVertexes;
     uint            numSectors;
     uint            numLines;
@@ -149,7 +149,7 @@ typedef struct map_s {
     uint            numThings;
     uint            numLights;
 
-    float*          vertexes; // Array of vertex coords [v0 X, vo Y, v1 X, v1 Y...]
+    coord_t*        vertexes; // Array of vertex coords [v0:X, vo:Y, v1:X, v1:Y, ..]
     msector_t*      sectors;
     mline_t*        lines;
     mside_t*        sides;
@@ -168,13 +168,13 @@ typedef struct map_s {
     void*           blockMap;
 } map_t;
 
-extern map_t* map;
-extern boolean verbose;
+extern map_t* DENG_PLUGIN_GLOBAL(map);
+extern boolean DENG_PLUGIN_GLOBAL(verbose);
 
-boolean         IsSupportedFormat(const int* lumpList, int numLumps);
+boolean IsSupportedFormat(const lumpnum_t* lumpList, int numLumps);
 
-boolean         LoadMap(const int* lumpList, int numLumps);
-void            AnalyzeMap(void);
-boolean         TransferMap();
+boolean LoadMap(const lumpnum_t* lumpList, int numLumps);
+void AnalyzeMap(void);
+boolean TransferMap();
 
 #endif

@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -35,7 +35,7 @@
 #  error "Using jDoom64 headers without __JDOOM64__"
 #endif
 
-#define GET_TXT(x)          ((*gi.text)[x].text)
+#define GET_TXT(x)          ((*gi.text)? (*gi.text)[x].text : "")
 
 #define D_DEVSTR            GET_TXT(TXT_D_DEVSTR)
 #define PRESSKEY            GET_TXT(TXT_PRESSKEY)
@@ -152,7 +152,7 @@
 #define HUSTR_PLRBROWN      GET_TXT(TXT_HUSTR_PLRBROWN)
 #define HUSTR_PLRRED        GET_TXT(TXT_HUSTR_PLRRED)
 
-//// \fixme What are these doing here??
+//// @todo What are these doing here??
 #define HUSTR_KEYGREEN      'g'
 #define HUSTR_KEYINDIGO     'i'
 #define HUSTR_KEYBROWN      'b'

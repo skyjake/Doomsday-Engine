@@ -1,10 +1,10 @@
-/**\file
+/**\file p_anim.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,63 +23,34 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * p_anim.c: Flat and Texture animations, parsed from ANIMDEFS.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "jhexen.h"
 
 #include "p_mapsetup.h"
 #include "p_mapspec.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
-
-static void parseAnimGroup(material_namespace_t mnamespace)
+static void parseAnimGroup(boolean isTexture, boolean isCustom)
 {
-    boolean             ignore;
-    boolean             done;
-    int                 groupNumber = 0;
-    materialnum_t       matNumBase = 0, lumpNumBase = 0;
-
-    if(!(mnamespace == MN_FLATS || mnamespace == MN_TEXTURES))
-        Con_Error("parseAnimGroup: Internal Error, invalid namespace %i.",
-                  (int) mnamespace);
+    boolean ignore = true, done;
+    int groupNumber = 0;
+    int texNumBase = -1;
+    ddstring_t path;
+    Uri* uri;
 
     if(!SC_GetString()) // Name.
     {
         SC_ScriptError("Missing string.");
     }
 
-    ignore = true;
-    if(mnamespace == MN_TEXTURES)
-    {
-        if((matNumBase = P_MaterialCheckNumForName(sc_String,
-                                                   MN_TEXTURES)) != 0)
-            ignore = false;
-    }
-    else
-    {
-        if((lumpNumBase = W_CheckNumForName(sc_String)) != -1)
-            ignore = false;
-    }
+    uri = Uri_New();
+    Uri_SetScheme(uri, isTexture? TN_TEXTURES_NAME : TN_FLATS_NAME);
+    Str_Init(&path);
+    Str_PercentEncode(Str_Set(&path, sc_String));
+    Uri_SetPath(uri, Str_Text(&path));
+    Str_Free(&path);
+
+    texNumBase = R_TextureUniqueId2(uri, !isCustom);
+    if(texNumBase != -1)
+        ignore = false;
 
     if(!ignore)
         groupNumber = R_CreateAnimGroup(AGF_SMOOTH | AGF_FIRST_ONLY);
@@ -91,7 +62,7 @@ static void parseAnimGroup(material_namespace_t mnamespace)
         {
             if(SC_Compare("pic"))
             {
-                int                 picNum, min = 0, max = 0;
+                int picNum, min = 0, max = 0;
 
                 SC_MustGetNumber();
                 picNum = sc_Number;
@@ -111,31 +82,23 @@ static void parseAnimGroup(material_namespace_t mnamespace)
                 }
                 else
                 {
-                    SC_ScriptError(NULL);
+                    Uri_Delete(uri);
+                    SC_ScriptError(0);
                 }
 
                 if(!ignore)
                 {
-                    if(mnamespace == MN_TEXTURES)
-                    {
-                        /**
-                         * \fixme Here an assumption is made that
-                         * MN_TEXTURES type materials are registered in the
-                         * same order as they are defined in the
-                         * TEXTURE(1...) lump(s).
-                         */
-                        R_AddToAnimGroup(groupNumber, matNumBase + picNum - 1,
-                                         min, (max > 0? max - min : 0));
-                    }
-                    else
-                    {
-                        materialnum_t       frame =
-                            P_MaterialCheckNumForName(W_LumpName(lumpNumBase + picNum - 1),
-                                                      MN_FLATS);
+                    Uri* frameUrn = Uri_NewWithPath2("urn:", RC_NULL);
+                    ddstring_t framePath;
 
-                        R_AddToAnimGroup(groupNumber, frame,
-                                         min, (max > 0? max - min : 0));
-                    }
+                    Str_Init(&framePath);
+                    Str_Appendf(&framePath, "%s:%i", isTexture? TN_TEXTURES_NAME : TN_FLATS_NAME, texNumBase + picNum - 1);
+                    Uri_SetPath(frameUrn, Str_Text(&framePath));
+
+                    R_AddAnimGroupFrame(groupNumber, frameUrn, min, (max > 0? max - min : 0));
+
+                    Str_Free(&framePath);
+                    Uri_Delete(frameUrn);
                 }
             }
             else
@@ -149,35 +112,35 @@ static void parseAnimGroup(material_namespace_t mnamespace)
             done = true;
         }
     } while(!done);
+
+    Uri_Delete(uri);
 }
 
-/**
- * Parse an ANIMDEFS definition for flat/texture animations.
- */
 void P_InitPicAnims(void)
 {
-    lumpnum_t       lump = W_CheckNumForName("ANIMDEFS");
+    lumpnum_t lumpNum = W_CheckLumpNumForName("ANIMDEFS");
+    boolean isCustom, isTexture = false; // Shut up compiler!
 
-    if(lump != -1)
+    if(lumpNum == -1) return;
+    isCustom = W_LumpIsCustom(lumpNum);
+
+    SC_OpenLump(lumpNum);
+    while(SC_GetString())
     {
-        SC_OpenLump(lump);
-
-        while(SC_GetString())
+        if(SC_Compare("texture"))
         {
-            if(SC_Compare("flat"))
-            {
-                parseAnimGroup(MN_FLATS);
-            }
-            else if(SC_Compare("texture"))
-            {
-                parseAnimGroup(MN_TEXTURES);
-            }
-            else
-            {
-                SC_ScriptError(NULL);
-            }
+            isTexture = true;
+        }
+        else if(SC_Compare("flat"))
+        {
+            isTexture = false;
+        }
+        else
+        {
+            SC_ScriptError(0);
         }
 
-        SC_Close();
+        parseAnimGroup(isTexture, isCustom);
     }
+    SC_Close();
 }

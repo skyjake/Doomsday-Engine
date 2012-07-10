@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -168,20 +168,21 @@ mobjtype_t TranslateThingType[] = {
 
 boolean EV_ThingProjectile(byte* args, boolean gravity)
 {
-    uint            an;
-    int             tid, searcher;
-    angle_t         angle;
-    float           speed, vspeed;
-    mobjtype_t      moType;
-    mobj_t         *mobj, *newMobj;
-    boolean         success;
+    uint an;
+    int tid, searcher;
+    angle_t angle;
+    coord_t speed, vspeed;
+    mobjtype_t moType;
+    mobj_t* mobj, *newMobj;
+    boolean success;
 
     success = false;
     searcher = -1;
     tid = args[0];
     moType = TranslateThingType[args[1]];
     if(noMonstersParm && (MOBJINFO[moType].flags & MF_COUNTKILL))
-    {   // Don't spawn monsters if -nomonsters
+    {
+        // Don't spawn monsters if -nomonsters
         return false;
     }
 
@@ -191,7 +192,7 @@ boolean EV_ThingProjectile(byte* args, boolean gravity)
     vspeed = FIX2FLT((int) args[4] << 13);
     while((mobj = P_FindMobjFromTID(tid, &searcher)) != NULL)
     {
-        if((newMobj = P_SpawnMobj3fv(moType, mobj->pos, angle, 0)))
+        if((newMobj = P_SpawnMobj(moType, mobj->origin, angle, 0)))
         {
             if(newMobj->info->seeSound)
                 S_StartSound(newMobj->info->seeSound, newMobj);
@@ -217,30 +218,31 @@ boolean EV_ThingProjectile(byte* args, boolean gravity)
     return success;
 }
 
-boolean EV_ThingSpawn(byte *args, boolean fog)
+boolean EV_ThingSpawn(byte* args, boolean fog)
 {
-    int         tid, searcher;
-    angle_t     angle;
-    mobj_t     *mobj, *newMobj, *fogMobj;
-    mobjtype_t  moType;
-    boolean     success;
-    float       z;
+    int tid, searcher;
+    angle_t angle;
+    mobj_t* mobj, *newMobj, *fogMobj;
+    mobjtype_t moType;
+    boolean success;
+    coord_t z;
 
     success = false;
     searcher = -1;
     tid = args[0];
     moType = TranslateThingType[args[1]];
     if(noMonstersParm && (MOBJINFO[moType].flags & MF_COUNTKILL))
-    {   // Don't spawn monsters if -nomonsters
+    {
+        // Don't spawn monsters if -nomonsters
         return false;
     }
 
     angle = (int) args[2] << 24;
     while((mobj = P_FindMobjFromTID(tid, &searcher)) != NULL)
     {
-        z = mobj->pos[VZ];
+        z = mobj->origin[VZ];
 
-        if((newMobj = P_SpawnMobj3fv(moType, mobj->pos, angle, 0)))
+        if((newMobj = P_SpawnMobj(moType, mobj->origin, angle, 0)))
         {
             if(P_TestMobjLocation(newMobj) == false)
             {   // Didn't fit
@@ -250,18 +252,16 @@ boolean EV_ThingSpawn(byte *args, boolean fog)
             {
                 if(fog)
                 {
-                    if((fogMobj = P_SpawnMobj3f(MT_TFOG,
-                                                mobj->pos[VX], mobj->pos[VY],
-                                                mobj->pos[VZ] + TELEFOGHEIGHT,
-                                                angle + ANG180, 0)))
+                    if((fogMobj = P_SpawnMobjXYZ(MT_TFOG, mobj->origin[VX], mobj->origin[VY],
+                                                          mobj->origin[VZ] + TELEFOGHEIGHT,
+                                                          angle + ANG180, 0)))
                         S_StartSound(SFX_TELEPORT, fogMobj);
                 }
 
                 newMobj->flags2 |= MF2_DROPPED; // Don't respawn
                 if(newMobj->flags2 & MF2_FLOATBOB)
                 {
-                    newMobj->special1 =
-                        FLT2FIX(newMobj->pos[VZ] - newMobj->floorZ);
+                    newMobj->special1 = FLT2FIX(newMobj->origin[VZ] - newMobj->floorZ);
                 }
 
                 success = true;

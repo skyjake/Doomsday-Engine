@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
  */
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_play.h"
 
 #define MININTERCEPTS       128
@@ -58,14 +59,14 @@ static InterceptNode* newInterceptNode(void)
         interceptFirst = node->next;
         return node;
     }
-    return Z_BlockNewElement(interceptNodeSet);
+    return ZBlockSet_Allocate(interceptNodeSet);
 }
 
 void P_ClearIntercepts(void)
 {
     if(!interceptNodeSet)
     {
-        interceptNodeSet = Z_BlockCreate(sizeof(InterceptNode), MININTERCEPTS, PU_STATIC);
+        interceptNodeSet = ZBlockSet_New(sizeof(InterceptNode), MININTERCEPTS, PU_APPSTATIC);
 
         // Configure the static head and tail.
         head.intercept.distance = 0.0f;

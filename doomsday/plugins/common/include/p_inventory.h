@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -48,7 +48,7 @@ typedef struct {
     textenum_t      niceName;
     acfnptr_t       action;
     sfxenum_t       useSnd;
-    lumpnum_t       patchLump;
+    patchid_t       patchId;
 } invitem_t;
 
 extern int didUseItem;

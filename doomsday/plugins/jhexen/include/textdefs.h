@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2004-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2004-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
-#define GET_TXT(x)          ((*gi.text)[x].text)
+#define GET_TXT(x)          ((*gi.text)? (*gi.text)[x].text : "")
 
 #define NUM_QUITMESSAGES    0
 

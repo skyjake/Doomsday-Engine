@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2004-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2004-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -45,9 +45,17 @@ enum {
 #define ML_DONTDRAW         0x0080 // don't draw on the automap
 #define ML_MAPPED           0x0100 // set if already drawn in automap
 #define ML_REPEAT_SPECIAL   0x0200 // special is repeatable
+#define ML_SPAC_USE         0x0400
+#define ML_SPAC_MCROSS      0x0800
+#define ML_SPAC_IMPACT      0x0C00
+#define ML_SPAC_PUSH        0x1000
+#define ML_SPAC_PCROSS      0x1400
+
 #define ML_SPAC_SHIFT       10
 #define ML_SPAC_MASK        0x1c00
 #define GET_SPAC(flags) ((flags&ML_SPAC_MASK)>>ML_SPAC_SHIFT)
+
+#define ML_VALID_MASK       (ML_BLOCKMONSTERS|ML_SECRET|ML_SOUNDBLOCK|ML_DONTDRAW|ML_MAPPED|ML_REPEAT_SPECIAL|ML_SPAC_USE|ML_SPAC_MCROSS|ML_SPAC_IMPACT|ML_SPAC_PUSH|ML_SPAC_PCROSS)
 
 // Special activation types
 #define SPAC_CROSS      0          // when player crosses line
