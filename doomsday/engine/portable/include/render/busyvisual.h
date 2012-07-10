@@ -29,21 +29,10 @@
 extern "C" {
 #endif
 
-void BusyVisual_Register(void);
-
-void BusyVisual_InitTransition(void);
-
 void BusyVisual_LoadTextures(void);
 void BusyVisual_ReleaseTextures(void);
 
 void BusyVisual_PrepareResources(void);
-
-/**
- * Take a screenshot and store it as a texture.
- */
-void BusyVisual_AcquireScreenshotTexture(void);
-
-void BusyVisual_ReleaseScreenshotTexture(void);
 
 /**
  * Busy Mode visual drawer function. The entire frame is drawn here.
@@ -65,6 +54,9 @@ typedef enum {
 extern int rTransition;
 extern int rTransitionTics;
 
+void Con_TransitionRegister(void);
+
+void Con_TransitionConfigure(void);
 void Con_TransitionBegin(void);
 
 /// @return  @c true if a busy mode transition animation is currently in progress.

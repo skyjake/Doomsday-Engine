@@ -46,36 +46,54 @@
 #define SCREENSHOT_TEXTURE_SIZE 512
 #endif
 
-#define DOOMWIPESINE_NUMSAMPLES 320
-
-static void seedDoomWipeSine(void);
-
-int rTransition = (int) TS_CROSSFADE; ///< cvar Default transition style.
-int rTransitionTics = 28; ///< cvar Default transition duration (in tics).
-
 static fontid_t busyFont = 0;
 static int busyFontHgt; // Height of the font.
 
 static DGLuint texLoading[2];
 static DGLuint texScreenshot; // Captured screenshot of the latest frame.
 
-typedef struct {
-    boolean inProgress; /// @c true= a transition is presently being animated.
-    transitionstyle_t style; /// Style of transition (cross-fade, wipe, etc...).
-    uint startTime; /// Time at the moment the transition began (in 35hz tics).
-    uint tics; /// Time duration of the animation.
-    float position; /// Animation interpolation point [0..1].
-} transitionstate_t;
-
-static transitionstate_t transition;
-
-static float doomWipeSine[DOOMWIPESINE_NUMSAMPLES];
-static float doomWipeSamples[SCREENWIDTH+1];
-
-void BusyVisual_Register(void)
+static void releaseScreenshotTexture(void)
 {
-    C_VAR_INT("con-transition", &rTransition, 0, FIRST_TRANSITIONSTYLE, LAST_TRANSITIONSTYLE);
-    C_VAR_INT("con-transition-tics", &rTransitionTics, 0, 0, 60);
+    glDeleteTextures(1, (const GLuint*) &texScreenshot);
+    texScreenshot = 0;
+}
+
+static void acquireScreenshotTexture(void)
+{
+#if 0
+    int oldMaxTexSize = GL_state.maxTexSize;
+    uint8_t* frame;
+#ifdef _DEBUG
+    timespan_t startTime;
+#endif
+#endif
+    //timespan_t startTime = Sys_GetRealSeconds();
+
+    if(texScreenshot)
+    {
+        releaseScreenshotTexture();
+    }
+    texScreenshot = Window_GrabAsTexture(Window_Main(), true /*halfsized*/);
+
+    //Con_Message("Acquired screenshot texture %i in %f seconds.", texScreenshot, Sys_GetRealSeconds() - startTime));
+
+#if 0
+#ifdef _DEBUG
+    startTime = Sys_GetRealSeconds();
+#endif
+    frame = malloc(Window_Width(theWindow) * Window_Height(theWindow) * 3);
+    GL_Grab(0, 0, Window_Width(theWindow), Window_Height(theWindow), DGL_RGB, frame);
+    GL_state.maxTexSize = SCREENSHOT_TEXTURE_SIZE; // A bit of a hack, but don't use too large a texture.
+    texScreenshot = GL_NewTextureWithParams2(DGL_RGB, Window_Width(theWindow), Window_Height(theWindow),
+        frame, TXCF_NEVER_DEFER|TXCF_NO_COMPRESSION|TXCF_UPLOAD_ARG_NOSMARTFILTER, 0, GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/,
+        GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+    GL_state.maxTexSize = oldMaxTexSize;
+    free(frame);
+#ifdef _DEBUG
+    printf("Con_AcquireScreenshotTexture: Took %.2f seconds.\n",
+           Sys_GetRealSeconds() - startTime);
+#endif
+#endif
 }
 
 void BusyVisual_ReleaseTextures(void)
@@ -86,19 +104,12 @@ void BusyVisual_ReleaseTextures(void)
     texLoading[0] = texLoading[1] = 0;
 
     // Don't release yet if doing a transition.
-    if(!transition.inProgress)
-        BusyVisual_ReleaseScreenshotTexture();
+    if(!Con_TransitionInProgress())
+    {
+        releaseScreenshotTexture();
+    }
 
     busyFont = 0;
-}
-
-void BusyVisual_InitTransition(void)
-{
-    transition.tics = rTransitionTics;
-    transition.style = rTransition;
-    if(transition.style == TS_DOOM || transition.style == TS_DOOMSMOOTH)
-        seedDoomWipeSine();
-    transition.inProgress = true;
 }
 
 void BusyVisual_PrepareResources(void)
@@ -110,7 +121,7 @@ void BusyVisual_PrepareResources(void)
     if(!(task->mode & BUSYF_STARTUP))
     {
         // Not in startup, so take a copy of the current frame contents.
-        BusyVisual_AcquireScreenshotTexture();
+        acquireScreenshotTexture();
     }
 
     // Need to load any fonts for log messages etc?
@@ -137,50 +148,6 @@ void BusyVisual_PrepareResources(void)
             busyFontHgt = FR_SingleLineHeight("Busy");
         }
     }
-}
-
-void BusyVisual_AcquireScreenshotTexture(void)
-{
-#if 0
-    int oldMaxTexSize = GL_state.maxTexSize;
-    uint8_t* frame;
-#ifdef _DEBUG
-    timespan_t startTime;
-#endif
-#endif
-    //timespan_t startTime = Sys_GetRealSeconds();
-
-    if(texScreenshot)
-    {
-        BusyVisual_ReleaseScreenshotTexture();
-    }
-    texScreenshot = Window_GrabAsTexture(Window_Main(), true /*halfsized*/);
-
-    //Con_Message("Acquired screenshot texture %i in %f seconds.", texScreenshot, Sys_GetRealSeconds() - startTime));
-
-#if 0
-#ifdef _DEBUG
-    startTime = Sys_GetRealSeconds();
-#endif
-    frame = malloc(Window_Width(theWindow) * Window_Height(theWindow) * 3);
-    GL_Grab(0, 0, Window_Width(theWindow), Window_Height(theWindow), DGL_RGB, frame);
-    GL_state.maxTexSize = SCREENSHOT_TEXTURE_SIZE; // A bit of a hack, but don't use too large a texture.
-    texScreenshot = GL_NewTextureWithParams2(DGL_RGB, Window_Width(theWindow), Window_Height(theWindow),
-        frame, TXCF_NEVER_DEFER|TXCF_NO_COMPRESSION|TXCF_UPLOAD_ARG_NOSMARTFILTER, 0, GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/,
-        GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-    GL_state.maxTexSize = oldMaxTexSize;
-    free(frame);
-#ifdef _DEBUG
-    printf("Con_AcquireScreenshotTexture: Took %.2f seconds.\n",
-           Sys_GetRealSeconds() - startTime);
-#endif
-#endif
-}
-
-void BusyVisual_ReleaseScreenshotTexture(void)
-{
-    glDeleteTextures(1, (const GLuint*) &texScreenshot);
-    texScreenshot = 0;
 }
 
 void BusyVisual_LoadTextures(void)
@@ -510,6 +477,47 @@ void BusyVisual_Render(void)
     Window_SwapBuffers(Window_Main());
 }
 
+/**
+ * Transition effect:
+ */
+
+#define DOOMWIPESINE_NUMSAMPLES 320
+
+static void seedDoomWipeSine(void);
+
+int rTransition = (int) TS_CROSSFADE; ///< cvar Default transition style.
+int rTransitionTics = 28; ///< cvar Default transition duration (in tics).
+
+typedef struct {
+    boolean inProgress; /// @c true= a transition is presently being animated.
+    transitionstyle_t style; /// Style of transition (cross-fade, wipe, etc...).
+    uint startTime; /// Time at the moment the transition began (in 35hz tics).
+    uint tics; /// Time duration of the animation.
+    float position; /// Animation interpolation point [0..1].
+} transitionstate_t;
+
+static transitionstate_t transition;
+
+static float doomWipeSine[DOOMWIPESINE_NUMSAMPLES];
+static float doomWipeSamples[SCREENWIDTH+1];
+
+void Con_TransitionRegister(void)
+{
+    C_VAR_INT("con-transition", &rTransition, 0, FIRST_TRANSITIONSTYLE, LAST_TRANSITIONSTYLE);
+    C_VAR_INT("con-transition-tics", &rTransitionTics, 0, 0, 60);
+}
+
+void Con_TransitionConfigure(void)
+{
+    transition.tics = rTransitionTics;
+    transition.style = rTransition;
+    if(transition.style == TS_DOOM || transition.style == TS_DOOMSMOOTH)
+    {
+        seedDoomWipeSine();
+    }
+    transition.inProgress = true;
+}
+
 void Con_TransitionBegin(void)
 {
     transition.startTime = Sys_GetTime();
@@ -529,7 +537,7 @@ static void Con_EndTransition(void)
     DD_ClearEvents();
     B_ActivateContext(B_ContextByName(UI_BINDING_CONTEXT_NAME), false);
 
-    BusyVisual_ReleaseScreenshotTexture();
+    releaseScreenshotTexture();
     transition.inProgress = false;
 }
 

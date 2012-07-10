@@ -57,7 +57,7 @@ static char busyError[256];
 
 static boolean animatedTransitionActive(int busyMode)
 {
-    return (!isDedicated && !netGame && !(busyMode & BUSYF_STARTUP) &&
+    return (!novideo && !isDedicated && !netGame && !(busyMode & BUSYF_STARTUP) &&
             rTransitionTics > 0 && (busyMode & BUSYF_TRANSITION));
 }
 
@@ -115,26 +115,17 @@ static void beginTask(BusyTask* task)
     Sys_Lock(busy_Mutex);
     busyDone = false;
     busyTaskEndedWithError = false;
-    busyWillAnimateTransition = animatedTransitionActive(task->mode);
-
     // This is now the current task.
     busyTask = task;
-
     Sys_Unlock(busy_Mutex);
     busyInited = true;
 
-    // Load any textures needed in this mode.
+    // Load any resources needed to visual this task's progress.
     BusyVisual_PrepareResources();
 
     // Start the busy worker thread, which will process the task in the
     // background while we keep the user occupied with nice animations.
     busyThread = Sys_StartThread(busyTask->worker, busyTask->workerData);
-
-    // Are we doing a transition effect?
-    if(busyWillAnimateTransition)
-    {
-        BusyVisual_InitTransition();
-    }
 
     // Switch the engine loop and window to the busy mode.
     LegacyCore_SetLoopFunc(BusyMode_Loop);
@@ -211,8 +202,15 @@ static int runTask(BusyTask* task)
     return result;
 }
 
-static void preBusySetup(void)
+static void preBusySetup(int initialMode)
 {
+    // Are we doing a transition effect?
+    busyWillAnimateTransition = animatedTransitionActive(initialMode);
+    if(busyWillAnimateTransition)
+    {
+        Con_TransitionConfigure();
+    }
+
     busyWasIgnoringInput = DD_IgnoreInput(true);
 
     // Save the present loop.
@@ -278,13 +276,21 @@ int BusyMode_RunTasks(BusyTask* tasks, int numTasks)
     int i, mode;
     int result = 0;
 
+    if(BusyMode_Active())
+    {
+        Con_Error("BusyMode: Internal error, already busy...");
+        exit(1); // Unreachable.
+    }
+
     if(!tasks || numTasks <= 0) return result; // Hmm, no work?
 
-    /// @todo Assert no task is currently running.
-    preBusySetup();
+    // Pick the first task.
+    task = tasks;
+
+    int initialMode = task->mode;
+    preBusySetup(initialMode);
 
     // Process tasks.
-    task = tasks;
     for(i = 0; i < numTasks; ++i, task++)
     {
         // If no new task name is specified, continue using the name of the previous task.

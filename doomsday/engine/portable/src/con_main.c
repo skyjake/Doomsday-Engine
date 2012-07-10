@@ -236,7 +236,7 @@ void Con_Register(void)
 
     Con_DataRegister();
 
-    BusyVisual_Register();
+    Con_TransitionRegister();
 }
 
 void Con_ResizeHistoryBuffer(void)
