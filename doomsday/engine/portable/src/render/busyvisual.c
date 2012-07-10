@@ -30,21 +30,13 @@
 #include "de_render.h"
 #include "de_refresh.h"
 #include "de_ui.h"
-#include "de_misc.h"
-#include "de_network.h"
 
-#include "s_main.h"
 #include "image.h"
 #include "texturecontent.h"
 #include "cbuffer.h"
 #include "font.h"
-#include "busymode.h"
 
 #include "render/busyvisual.h"
-
-#if 0
-#define SCREENSHOT_TEXTURE_SIZE 512
-#endif
 
 static fontid_t busyFont = 0;
 static int busyFontHgt; // Height of the font.
@@ -60,40 +52,23 @@ static void releaseScreenshotTexture(void)
 
 static void acquireScreenshotTexture(void)
 {
-#if 0
-    int oldMaxTexSize = GL_state.maxTexSize;
-    uint8_t* frame;
 #ifdef _DEBUG
     timespan_t startTime;
 #endif
-#endif
-    //timespan_t startTime = Sys_GetRealSeconds();
 
     if(texScreenshot)
     {
         releaseScreenshotTexture();
     }
-    texScreenshot = Window_GrabAsTexture(Window_Main(), true /*halfsized*/);
 
-    //Con_Message("Acquired screenshot texture %i in %f seconds.", texScreenshot, Sys_GetRealSeconds() - startTime));
-
-#if 0
 #ifdef _DEBUG
     startTime = Sys_GetRealSeconds();
 #endif
-    frame = malloc(Window_Width(theWindow) * Window_Height(theWindow) * 3);
-    GL_Grab(0, 0, Window_Width(theWindow), Window_Height(theWindow), DGL_RGB, frame);
-    GL_state.maxTexSize = SCREENSHOT_TEXTURE_SIZE; // A bit of a hack, but don't use too large a texture.
-    texScreenshot = GL_NewTextureWithParams2(DGL_RGB, Window_Width(theWindow), Window_Height(theWindow),
-        frame, TXCF_NEVER_DEFER|TXCF_NO_COMPRESSION|TXCF_UPLOAD_ARG_NOSMARTFILTER, 0, GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/,
-        GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-    GL_state.maxTexSize = oldMaxTexSize;
-    free(frame);
-#ifdef _DEBUG
-    printf("Con_AcquireScreenshotTexture: Took %.2f seconds.\n",
-           Sys_GetRealSeconds() - startTime);
-#endif
-#endif
+
+    texScreenshot = Window_GrabAsTexture(Window_Main(), true /*halfsized*/);
+
+    DEBUG_Message(("Busy Mode: Took %.2f seconds acquiring screenshot texture #%i.\n",
+                   Sys_GetRealSeconds() - startTime, texScreenshot));
 }
 
 void BusyVisual_ReleaseTextures(void)
@@ -140,6 +115,7 @@ void BusyVisual_PrepareResources(void)
         Uri* uri = Uri_NewWithPath2(fonts[fontIdx].name, RC_NULL);
         font_t* font = R_CreateFontFromFile(uri, fonts[fontIdx].path);
         Uri_Delete(uri);
+
         if(font)
         {
             busyFont = Fonts_Id(font);
@@ -153,7 +129,6 @@ void BusyVisual_PrepareResources(void)
 void BusyVisual_LoadTextures(void)
 {
     image_t image;
-
     if(novideo) return;
 
     if(GL_LoadImage(&image, "}data/graphics/loading1.png"))
@@ -212,10 +187,9 @@ static void drawPositionIndicator(float x, float y, float radius, float pos,
 {
     const timespan_t accumulatedBusyTime = BusyMode_ElapsedTime();
     const float col[4] = {1.f, 1.f, 1.f, .25f};
-    int i = 0, edgeCount = 0;
-    int backW, backH;
-
-    backW = backH = (radius * 2);
+    const int backW = (radius * 2);
+    const int backH = (radius * 2);
+    int i, edgeCount;
 
     pos = MINMAX_OF(0, pos, 1);
     edgeCount = MAX_OF(1, pos * 30);
@@ -305,11 +279,10 @@ static void drawPositionIndicator(float x, float y, float radius, float pos,
 static int GetBufLines(CBuffer* buffer, cbline_t const **oldLines)
 {
     cbline_t const* bufLines[LINE_COUNT + 1];
-    int count;
-    int newCount = 0;
-    int i, k;
+    const int count = CBuffer_GetLines2(buffer, LINE_COUNT, -LINE_COUNT, bufLines, BLF_OMIT_RULER|BLF_OMIT_EMPTYLINE);
+    int i, k, newCount;
 
-    count = CBuffer_GetLines2(buffer, LINE_COUNT, -LINE_COUNT, bufLines, BLF_OMIT_RULER|BLF_OMIT_EMPTYLINE);
+    newCount = 0;
     for(i = 0; i < count; ++i)
     {
         for(k = 0; k < 2 * LINE_COUNT - newCount; ++k)
@@ -322,13 +295,14 @@ static int GetBufLines(CBuffer* buffer, cbline_t const **oldLines)
 
         newCount++;
         for(k = 0; k < (2 * LINE_COUNT - 1); ++k)
+        {
             oldLines[k] = oldLines[k+1];
-
-        //memmove(oldLines, oldLines + 1, sizeof(cbline_t*) * (2 * LINE_COUNT - 1));
+        }
         oldLines[2 * LINE_COUNT - 1] = bufLines[i];
 
 lineIsNotNew:;
     }
+
     return newCount;
 }
 
@@ -480,6 +454,7 @@ void BusyVisual_Render(void)
 /**
  * Transition effect:
  */
+#include "de_misc.h"
 
 #define DOOMWIPESINE_NUMSAMPLES 320
 
