@@ -719,15 +719,8 @@ static void spawnMapObjects(void)
     P_SpawnPlayers();
 }
 
-typedef struct setupmapparams_s {
-    uint episode;
-    uint map;
-    skillmode_t skill;
-} setupmapparams_t;
-
-int P_SetupMapWorker(void* paramaters)
+void P_SetupMap(uint episode, uint map, skillmode_t skill, int playerMask)
 {
-    setupmapparams_t* param = (setupmapparams_t*)paramaters;
     ddstring_t* mapPath;
     Uri* mapUri;
 
@@ -749,7 +742,7 @@ int P_SetupMapWorker(void* paramaters)
     P_ClearBodyQueue();
 #endif
 
-    mapUri = G_ComposeMapUri(param->episode, param->map);
+    mapUri = G_ComposeMapUri(episode, map);
     mapPath = Uri_Compose(mapUri);
     if(!P_LoadMap(Str_Text(mapPath)))
     {
@@ -777,7 +770,7 @@ int P_SetupMapWorker(void* paramaters)
     PO_InitForMap();
 
     { lumpname_t mapId;
-    G_MapId(param->episode, param->map, mapId);
+    G_MapId(episode, map, mapId);
     Con_Message("Load ACS scripts\n");
     // @todo Should be interpreted by the map converter.
     P_LoadACScripts(W_GetLumpNumForName(mapId) + 11 /*ML_BEHAVIOR*/); // ACS object code
@@ -791,10 +784,10 @@ int P_SetupMapWorker(void* paramaters)
 
 #if __JHEXEN__
     // Initialize the sky.
-    P_InitSky(param->map);
+    P_InitSky(map);
 #endif
 
-    // Preload graphics.
+    // Preload resources we'll likely need but which aren't present (usually) in the map.
     if(precache)
     {
 #if __JDOOM__
@@ -832,8 +825,10 @@ int P_SetupMapWorker(void* paramaters)
 
 #if __JDOOM__
         for(i = 0; types[i].type != 0; ++i)
+        {
             if(types[i].gameModeBits & gameModeBits)
                 R_PrecacheMobjNum(types[i].type);
+        }
 
         if(IS_NETGAME)
             R_PrecacheMobjNum(MT_IFOG);
@@ -849,64 +844,10 @@ int P_SetupMapWorker(void* paramaters)
     // fully set up.
     R_SetupMap(DDSMM_FINALIZE, 0);
 
-    P_PrintMapBanner(param->episode, param->map);
+    P_PrintMapBanner(episode, map);
 
     // It ends.
     mapSetup = false;
-
-    BusyMode_WorkerEnd();
-    return 0;
-}
-
-/**
- * Loads map and glnode data for the requested episode and map.
- */
-void P_SetupMap(uint episode, uint map, int playerMask, skillmode_t skill)
-{
-    setupmapparams_t param;
-    int i;
-
-    param.episode = episode;
-    param.map = map;
-    param.skill = skill;
-
-    DD_Executef(true, "texreset raw"); // Delete raw images to save memory.
-
-    /// @todo Use progress bar mode and update progress during the setup.
-    BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ BUSYF_TRANSITION | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                                P_SetupMapWorker, &param, "Loading map...");
-
-    // Wake up HUD widgets for players in the game.
-    for(i = 0; i < MAXPLAYERS; ++i)
-    {
-        if(!players[i].plr->inGame) continue;
-        ST_Start(i);
-        HU_Start(i);
-    }
-
-    R_SetupMap(DDSMM_AFTER_BUSY, 0);
-
-#if __JHEXEN__
-    {
-    int i;
-    // Load colormap and set the fullbright flag
-    i = P_GetMapFadeTable(map);
-    if(i == W_GetLumpNumForName("COLORMAP"))
-    {
-        // We don't want fog in this case.
-        GL_UseFog(false);
-    }
-    else
-    {
-        // Probably fog ... don't use fullbright sprites
-        if(i == W_GetLumpNumForName("FOGMAP"))
-        {
-            // Tell the renderer to turn on the fog.
-            GL_UseFog(true);
-        }
-    }
-    }
-#endif
 }
 
 /**

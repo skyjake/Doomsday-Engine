@@ -46,7 +46,10 @@ extern boolean mapSetup;
 
 void P_SetupForMapData(int type, uint num);
 
-void P_SetupMap(uint episode, uint map, int playermask, skillmode_t skill);
+/**
+ * Load the specified map.
+ */
+void P_SetupMap(uint episode, uint map, skillmode_t skill, int playermask);
 
 const char* P_GetMapNiceName(void);
 patchid_t P_FindMapTitlePatch(uint episode, uint map);

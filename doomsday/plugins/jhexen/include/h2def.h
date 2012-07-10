@@ -388,17 +388,10 @@ void            H2_Main(void);
 
 void            P_Init(void);
 
-void            P_SetupMap(uint episode, uint map, int playermask, skillmode_t skill);
-
-extern boolean setsizeneeded;
-
 extern int      localQuakeHappening[MAXPLAYERS];
 
 byte            P_Random(void);
 void            M_ResetRandom(void);
-
-extern unsigned char rndtable[256];
-extern boolean  chatmodeon;
 
 void            SC_Open(const char* name);
 void            SC_OpenLump(lumpnum_t lumpNum);

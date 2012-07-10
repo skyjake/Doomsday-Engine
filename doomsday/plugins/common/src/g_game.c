@@ -1185,8 +1185,25 @@ void G_EndGame(void)
     Hu_MsgStart(MSG_YESNO, IS_CLIENT? GET_TXT(TXT_DISCONNECT) : ENDGAME, G_EndGameResponse, 0, NULL);
 }
 
+typedef struct {
+    uint episode;
+    uint map;
+    skillmode_t skill;
+    int playerMask;
+} loadmapworker_params_t;
+
+static int G_LoadMapWorker(void* parameters)
+{
+    loadmapworker_params_t* p = (loadmapworker_params_t*) parameters;
+    P_SetupMap(p->episode, p->map, p->skill, p->playerMask);
+    BusyMode_WorkerEnd();
+    /// @fixme Do not assume!
+    return 0; // Assume success.
+}
+
 void G_DoLoadMap(void)
 {
+    loadmapworker_params_t p;
     char* lname, *ptr;
     ddfinale_t fin;
     boolean hasBrief;
@@ -1257,7 +1274,49 @@ void G_DoLoadMap(void)
         S_PauseMusic(true);
     }
 
-    P_SetupMap(gameEpisode, gameMap, 0, gameSkill);
+    DD_Executef(true, "texreset raw"); // Delete raw images to save memory.
+
+    /**
+     * Load the map.
+     */
+    p.episode    = gameEpisode;
+    p.map        = gameMap;
+    p.skill      = gameSkill;
+    p.playerMask = 0;
+
+    /// @todo Use progress bar mode and update progress during the setup.
+    BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ BUSYF_TRANSITION | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                                G_LoadMapWorker, &p, "Loading map...");
+
+    // Wake up HUD widgets for players in the game.
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        if(!players[i].plr->inGame) continue;
+        ST_Start(i);
+        HU_Start(i);
+    }
+
+    R_SetupMap(DDSMM_AFTER_BUSY, 0);
+
+#if __JHEXEN__
+    // Load colormap and set the fullbright flag
+    { int fadeTable = P_GetMapFadeTable(gameMap);
+    if(fadeTable == W_GetLumpNumForName("COLORMAP"))
+    {
+        // We don't want fog in this case.
+        GL_UseFog(false);
+    }
+    else
+    {
+        // Probably fog ... don't use fullbright sprites
+        if(fadeTable == W_GetLumpNumForName("FOGMAP"))
+        {
+            // Tell the renderer to turn on the fog.
+            GL_UseFog(true);
+        }
+    }}
+#endif
+
     R_SetViewPortPlayer(CONSOLEPLAYER, CONSOLEPLAYER); // View the guy you are playing.
     G_SetGameAction(GA_NONE);
     nextMap = 0;
